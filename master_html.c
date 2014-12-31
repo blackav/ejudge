@@ -1,5 +1,4 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
 /* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
 
@@ -245,6 +244,14 @@ write_xml_tests_report(
   if (!(r = testing_report_parse_xml(txt))) {
     fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
     fprintf(f, "<pre>%s</pre>\n", ARMOR(txt));
+    goto done;
+  }
+
+  if (r->compile_error) {
+    fprintf(f, "<h2><font color=\"red\">%s</font></h2>\n", run_status_str(r->status, 0, 0, 0, 0));
+    if (r->compiler_output) {
+      fprintf(f, "<pre>%s</pre>\n", ARMOR(r->compiler_output));
+    }
     goto done;
   }
 

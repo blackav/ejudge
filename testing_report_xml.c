@@ -1,5 +1,4 @@
 /* -*- c -*- */
-/* $Id$ */
 
 /* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
 
@@ -144,6 +143,7 @@ enum
   TR_A_USER_SCORE,
   TR_A_USER_MAX_SCORE,
   TR_A_USER_RUN_TESTS,
+  TR_A_COMPILE_ERROR,
 
   TR_A_LAST_ATTR,
 };
@@ -227,6 +227,7 @@ static const char * const attr_map[] =
   [TR_A_USER_SCORE] = "user-score",
   [TR_A_USER_MAX_SCORE] = "user-max-score",
   [TR_A_USER_RUN_TESTS] = "user-run-tests",
+  [TR_A_COMPILE_ERROR] = "compile-error",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -774,6 +775,11 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
       r->max_memory_used_available = x;
       break;
 
+    case TR_A_COMPILE_ERROR:
+      if (xml_attr_bool(a, &x) < 0) return -1;
+      r->compile_error = x;
+      break;
+
       /*
         The total number of tests is allowed to be 0.
        */
@@ -1209,6 +1215,11 @@ testing_report_alloc(int run_id, int judge_id)
   r->status = RUN_CHECK_FAILED;
   r->scoring_system = -1;
   r->marked_flag = -1;
+  r->user_status = -1;
+  r->user_tests_passed = -1;
+  r->user_score = -1;
+  r->user_max_score = -1;
+  r->user_run_tests = -1;
   return r;
 }
 
@@ -1319,6 +1330,7 @@ testing_report_unparse_xml(
                     r->max_memory_used_available);
   unparse_bool_attr(out, TR_A_CORRECT_AVAILABLE, r->correct_available);
   unparse_bool_attr(out, TR_A_INFO_AVAILABLE, r->info_available);
+  unparse_bool_attr(out, TR_A_COMPILE_ERROR, r->compile_error);
   if (r->variant > 0) {
     fprintf(out, " %s=\"%d\"", attr_map[TR_A_VARIANT], r->variant);
   }

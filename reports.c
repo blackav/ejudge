@@ -1,5 +1,4 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
 /* Copyright (C) 2007-2014 Alexander Chernov <cher@ejudge.ru> */
 
@@ -2778,6 +2777,13 @@ write_xml_tex_testing_report(
 
   if (!(r = testing_report_parse_xml(start_ptr))) {
     fprintf(fout, "\n\nXML report parse error.\n\n");
+    goto cleanup;
+  }
+
+  if (r->compile_error) {
+    fprintf(fout, "%s:\n", _("Compiler output"));
+    fprintf(fout, "\\begin{verbatim}\n%s\n\\end{verbatim}\n\n",
+            tex_armor_verbatim_2(chop2(r->compiler_output), VERBATIM_WIDTH));
     goto cleanup;
   }
 

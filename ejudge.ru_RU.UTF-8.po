@@ -1,14 +1,13 @@
 # -*- mode: po; coding: UTF-8 -*-
 # ejudge messages catalog
-# $Id$
 # Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-11-12 16:37+0300\n"
-"PO-Revision-Date: 2014-11-26 12:52+0300\n"
+"POT-Creation-Date: 2014-12-31 01:12+0300\n"
+"PO-Revision-Date: 2014-12-31 19:10+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -83,7 +82,10 @@ msgstr "<b>====== Тест #%d =======</b>\n"
 msgid ""
 "<b>Note</b>, that you must log in 24 hours after the form is filled and "
 "submitted, or your registration will be cancelled!"
-msgstr "<b>Обратите внимание</b>, что Вы должны зайти в систему в течение 24 часов после заполнения и посылки анкеты, или в противном случае Ваша регистрация будет отменена!"
+msgstr ""
+"<b>Обратите внимание</b>, что Вы должны зайти в систему в течение 24 часов "
+"после заполнения и посылки анкеты, или в противном случае Ваша регистрация "
+"будет отменена!"
 
 msgid ""
 "<b>Note</b>, that you should log in to the system for the first time no "
@@ -813,6 +815,9 @@ msgstr "Ошибка компиляции"
 
 msgid "Compiled"
 msgstr "Скомпилировано"
+
+msgid "Compiler output"
+msgstr "Вывод компилятора"
 
 msgid "Compiling and running"
 msgstr "Компилируется и тестируется"

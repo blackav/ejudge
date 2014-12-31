@@ -1,5 +1,4 @@
 /* -*- c -*- */
-/* $Id$ */
 
 /* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
 
@@ -789,6 +788,7 @@ process_run_packet(
     fprintf(stderr, ">>%s<<\n", start_ptr);
     ASSERT(report);
   }
+  ASSERT(!report->compile_error);
 
   out_text = make_report_data(report, &submit);
   pi->pkt->ops->set_submit(pi->pkt, pi->log_f, run_index, 

@@ -1,5 +1,4 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
 /* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
@@ -2180,6 +2179,7 @@ serve_read_compile_packet(
   path_t txt_report_path;
   path_t txt_packet_path;
   size_t min_txt_size = 1;
+  testing_report_xml_t testing_report = NULL;
 
   if ((r = generic_read_file(&comp_pkt_buf, 0, &comp_pkt_size, SAFE | REMOVE,
                              compile_status_dir, pname, "")) <= 0)
@@ -2235,6 +2235,72 @@ serve_read_compile_packet(
   }
 
   snprintf(pkt_name, sizeof(pkt_name), "%06d", comp_pkt->run_id);
+
+  // experimental
+  if ((comp_pkt->status == RUN_CHECK_FAILED || comp_pkt->status == RUN_COMPILE_ERR || comp_pkt->status == RUN_STYLE_ERR)
+      && re.store_flags == 1) {
+    if (generic_read_file(&txt_text, 0, &txt_size, REMOVE, compile_report_dir, pname, NULL) < 0) {
+      snprintf(errmsg, sizeof(errmsg),
+               "generic_read_file: %s, %s failed\n", compile_report_dir, pname);
+      goto report_check_failed;
+    }
+    testing_report = testing_report_alloc(comp_pkt->run_id, re.judge_id);
+    testing_report->status = comp_pkt->status;
+    testing_report->compiler_output = xstrdup(txt_text);
+    testing_report->scoring_system = global->score_system;
+    testing_report->compile_error = 1;
+
+    xfree(txt_text); txt_text = NULL; txt_size = 0;
+    FILE *tr_f = open_memstream(&txt_text, &txt_size);
+    fprintf(tr_f, "Content-type: text/xml\n\n");
+    fprintf(tr_f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
+    testing_report_unparse_xml(tr_f, 1, global->max_file_length, global->max_line_length, testing_report);
+    fclose(tr_f); tr_f = NULL;
+
+    rep_flags = uuid_archive_make_write_path(state, rep_path, sizeof(rep_path),
+                                             re.run_uuid, txt_size, DFLT_R_UUID_XML_REPORT, 0);
+    if (rep_flags < 0) {
+      snprintf(errmsg, sizeof(errmsg),
+               "archive_make_write_path: %s, %d, %ld failed\n",
+               global->xml_report_archive_dir, comp_pkt->run_id,
+               (long) txt_size);
+      goto report_check_failed;
+    }
+
+    if (uuid_archive_dir_prepare(state, re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0) {
+      snprintf(errmsg, sizeof(errmsg),
+               "uuid_archive_dir_prepare: failed\n");
+      goto report_check_failed;
+    }
+
+    if (generic_write_file(txt_text, txt_size, rep_flags, 0, rep_path, 0) < 0) {
+      snprintf(errmsg, sizeof(errmsg),
+               "generic_write_file failed: %s, %ld\n",
+               rep_path, (long) rep_flags);
+      goto report_check_failed;
+    }
+
+    if (comp_pkt->status == RUN_CHECK_FAILED) {
+      if (run_change_status_4(state->runlog_state, comp_pkt->run_id, RUN_CHECK_FAILED) < 0)
+        goto non_fatal_error;
+      serve_send_check_failed_email(config, cnts, comp_pkt->run_id);
+      goto success;
+    }
+
+    if (comp_pkt->status == RUN_COMPILE_ERR || comp_pkt->status == RUN_STYLE_ERR) {
+      if (run_change_status_4(state->runlog_state, comp_pkt->run_id, comp_pkt->status) < 0)
+        goto non_fatal_error;
+
+      serve_update_standings_file(state, cnts, 0);
+      if (global->notify_status_change > 0 && !re.is_hidden && comp_extra->notify_flag) {
+        serve_notify_user_run_status_change(config, cnts, state, re.user_id,
+                                            comp_pkt->run_id, comp_pkt->status);
+      }
+      goto success;
+    }
+
+    abort();
+  }
 
   if (comp_pkt->status == RUN_CHECK_FAILED
       || comp_pkt->status == RUN_COMPILE_ERR
@@ -2411,6 +2477,7 @@ serve_read_compile_packet(
   xfree(comp_pkt_buf);
   xfree(txt_text);
   compile_reply_packet_free(comp_pkt);
+  testing_report_free(testing_report);
   return 1;
 
  report_check_failed:
@@ -2441,6 +2508,7 @@ serve_read_compile_packet(
   xfree(comp_pkt_buf);
   xfree(txt_text);
   compile_reply_packet_free(comp_pkt);
+  testing_report_free(testing_report);
   return 0;
 }
 
