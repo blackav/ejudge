@@ -230,7 +230,7 @@ testinfo.o: testinfo.c testinfo.h
 pic/testinfo.o: testinfo.c testinfo.h
 
 testinfo.h: ../include/ejudge/testinfo.h
-	ln -f ../include/ejudge/testinfo.h .
+	ln -sf ../include/ejudge/testinfo.h .
 testinfo.c: ../testinfo.c
 	ln -sf ../testinfo.c
 
