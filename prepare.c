@@ -4285,27 +4285,23 @@ create_dirs(serve_state_t state, int mode)
   return 0;
 }
 
-int
+static int
 parse_version_string(int *pmajor, int *pminor, int *ppatch, int *pbuild)
 {
   const unsigned char *p = compile_version;
   int n, x;
 
-  if (sscanf(p, "%d.%dpre%d #%d%n", pmajor, pminor, ppatch, pbuild, &n) == 4
-      && !p[n]) {
+  if (sscanf(p, "%d.%dpre%d #%d%n", pmajor, pminor, ppatch, pbuild, &n) == 4 && !p[n]) {
     *ppatch = -*ppatch;
-  } else if (sscanf(p, "%d.%dpre%d%n", pmajor, pminor, ppatch, &n) == 3
-             && !p[n]) {
+  } else if (sscanf(p, "%d.%dpre%d%n", pmajor, pminor, ppatch, &n) == 3 && !p[n]) {
     *ppatch = -*ppatch;
     *pbuild = 0;
-  } else if (sscanf(p, "%d.%d.%d+ (SVN r%d) #%d%n", pmajor, pminor, ppatch,
-                    pbuild, &x, &n) == 5 && !p[n]) {
-  } else if (sscanf(p, "%d.%d.%d+ (SVN r%d)%n", pmajor, pminor, ppatch,
-                    pbuild, &n) == 4 && !p[n]) {
-  } else if (sscanf(p, "%d.%d.%d #%d%n", pmajor, pminor, ppatch, pbuild, &n)==4
-             && !p[n]) {
-  } else if (sscanf(p, "%d.%d.%d%n", pmajor, pminor, ppatch, &n) == 3
-             && !p[n]) {
+  } else if (sscanf(p, "%d.%d.%d+ (GIT %x) #%d%n", pmajor, pminor, ppatch, pbuild, &x, &n) == 5 && !p[n]) {
+  } else if (sscanf(p, "%d.%d.%d+ (GIT %x)%n", pmajor, pminor, ppatch, pbuild, &n) == 4 && !p[n]) {
+  } else if (sscanf(p, "%d.%d.%d+ (SVN r%d) #%d%n", pmajor, pminor, ppatch, pbuild, &x, &n) == 5 && !p[n]) {
+  } else if (sscanf(p, "%d.%d.%d+ (SVN r%d)%n", pmajor, pminor, ppatch, pbuild, &n) == 4 && !p[n]) {
+  } else if (sscanf(p, "%d.%d.%d #%d%n", pmajor, pminor, ppatch, pbuild, &n)==4 && !p[n]) {
+  } else if (sscanf(p, "%d.%d.%d%n", pmajor, pminor, ppatch, &n) == 3 && !p[n]) {
     *pbuild = 0;
   } else {
     err("cannot parse version string %s", compile_version);
