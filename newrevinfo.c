@@ -187,7 +187,36 @@ get_file_type(const unsigned char *path)
     return FILE_OTHER;
 }
 
-static int
+/*static*/ int
+read_git_commit_id_by_version(unsigned char *id_buf, int id_buf_size, const unsigned char *version)
+{
+    unsigned char cmd_buf[1024];
+    snprintf(cmd_buf, sizeof(cmd_buf), "git show --format=%%H \"v%s\"", version);
+    FILE *f = popen(cmd_buf, "r");
+    if (!f) {
+        fprintf(stderr, "cannot invoke git\n");
+        exit(1);
+    }
+
+    unsigned char buf[1024];
+    if (!fgets(buf, sizeof(buf), f)) {
+        fprintf(stderr, "unexpected EOF in call to git show\n");
+        exit(1);
+    }
+    int len = strlen(buf);
+    while (len > 0 && isspace(buf[len - 1])) --len;
+    buf[len] = 0;
+    if (len <= 0) {
+        fprintf(stderr, "empty commit_id for version '%s'\n", version);
+        exit(1);
+    }
+    snprintf(id_buf, id_buf_size, "%s", buf);
+    while (fgets(buf, sizeof(buf), f)) {}
+    fclose(f); f = NULL;
+    return 0;
+}
+
+/*static*/ int
 read_git_commit_id(unsigned char *id_buf, int id_buf_size)
 {
     FILE *f = popen("git rev-parse --short HEAD", "r");
@@ -436,10 +465,7 @@ new_minor_version(const unsigned char *versions_file, const unsigned char *check
     int mode = 0;
 
     if (get_file_type(".git") == FILE_DIR) {
-        if (read_git_status(id_str, sizeof(id_str), &changed_flag) < 0) {
-            fprintf(stderr, "Failed to parse SVN status\n");
-            exit(1);
-        }
+        snprintf(id_str, sizeof(id_str), "tagged");
         mode = MODE_GIT;
     } else if (get_file_type(".svn") == FILE_DIR) {
         if (read_svn_status(id_str, sizeof(id_str), &changed_flag) < 0) {
@@ -473,6 +499,7 @@ new_minor_version(const unsigned char *versions_file, const unsigned char *check
     unsigned char out_file[1024];
     snprintf(out_file, sizeof(out_file), "%s%s", checksum_prefix, full_version);
 
+    /*
     if (mode == MODE_GIT) {
         // create and commit empty file to learn the commit id
         FILE *f = fopen(out_file, "w");
@@ -498,6 +525,7 @@ new_minor_version(const unsigned char *versions_file, const unsigned char *check
         }
         fprintf(stderr, "id_str: %s\n", id_str);
     }
+    */
 
     FILE *cf = fopen(out_file, "w");
     if (!cf) {
@@ -533,7 +561,12 @@ new_minor_version(const unsigned char *versions_file, const unsigned char *check
             fprintf(stderr, "Command '%s' failed\n", cmd_buf);
             exit(1);
         }
-        snprintf(cmd_buf, sizeof(cmd_buf), "git commit --amend");
+        snprintf(cmd_buf, sizeof(cmd_buf), "git commit -m \"version %s\"", full_version);
+        if (system(cmd_buf) != 0) {
+            fprintf(stderr, "Command '%s' failed\n", cmd_buf);
+            exit(1);
+        }
+        snprintf(cmd_buf, sizeof(cmd_buf), "git tag \"v%s\"", full_version);
         if (system(cmd_buf) != 0) {
             fprintf(stderr, "Command '%s' failed\n", cmd_buf);
             exit(1);
