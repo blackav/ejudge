@@ -187,11 +187,11 @@ get_file_type(const unsigned char *path)
     return FILE_OTHER;
 }
 
-/*static*/ int
+static int
 read_git_commit_id_by_version(unsigned char *id_buf, int id_buf_size, const unsigned char *version)
 {
     unsigned char cmd_buf[1024];
-    snprintf(cmd_buf, sizeof(cmd_buf), "git show --format=%%H \"v%s\"", version);
+    snprintf(cmd_buf, sizeof(cmd_buf), "git show --format=%%h \"v%s\"", version);
     FILE *f = popen(cmd_buf, "r");
     if (!f) {
         fprintf(stderr, "cannot invoke git\n");
@@ -210,29 +210,6 @@ read_git_commit_id_by_version(unsigned char *id_buf, int id_buf_size, const unsi
         fprintf(stderr, "empty commit_id for version '%s'\n", version);
         exit(1);
     }
-    snprintf(id_buf, id_buf_size, "%s", buf);
-    while (fgets(buf, sizeof(buf), f)) {}
-    fclose(f); f = NULL;
-    return 0;
-}
-
-/*static*/ int
-read_git_commit_id(unsigned char *id_buf, int id_buf_size)
-{
-    FILE *f = popen("git rev-parse --short HEAD", "r");
-    if (!f) {
-        fprintf(stderr, "cannot invoke git\n");
-        exit(1);
-    }
-
-    unsigned char buf[1024];
-    if (!fgets(buf, sizeof(buf), f)) {
-        fprintf(stderr, "unexpected EOF in call to rev-parse\n");
-        exit(1);
-    }
-    int len = strlen(buf);
-    while (len > 0 && isspace(buf[len - 1])) --len;
-    buf[len] = 0;
     snprintf(id_buf, id_buf_size, "%s", buf);
     while (fgets(buf, sizeof(buf), f)) {}
     fclose(f); f = NULL;
@@ -499,34 +476,6 @@ new_minor_version(const unsigned char *versions_file, const unsigned char *check
     unsigned char out_file[1024];
     snprintf(out_file, sizeof(out_file), "%s%s", checksum_prefix, full_version);
 
-    /*
-    if (mode == MODE_GIT) {
-        // create and commit empty file to learn the commit id
-        FILE *f = fopen(out_file, "w");
-        if (!f) {
-            fprintf(stderr, "Cannot open '%s' for writing\n", out_file);
-            exit(1);
-        }
-        fclose(f); f = NULL;
-        unsigned char cmd_buf[1024];
-        snprintf(cmd_buf, sizeof(cmd_buf), "git add \"%s\"", out_file);
-        if (system(cmd_buf) != 0) {
-            fprintf(stderr, "Command '%s' failed\n", cmd_buf);
-            exit(1);
-        }
-        snprintf(cmd_buf, sizeof(cmd_buf), "git commit -m \"%s\" \"%s\"", full_version, out_file);
-        if (system(cmd_buf) != 0) {
-            fprintf(stderr, "Command '%s' failed\n", cmd_buf);
-            exit(1);
-        }
-        if (read_git_commit_id(id_str, sizeof(id_str)) < 0) {
-            fprintf(stderr, "Failed to read commit_id\n");
-            exit(1);
-        }
-        fprintf(stderr, "id_str: %s\n", id_str);
-    }
-    */
-
     FILE *cf = fopen(out_file, "w");
     if (!cf) {
         fprintf(stderr, "Cannot open '%s' for writing\n", out_file);
@@ -608,6 +557,16 @@ main(int argc, char **argv)
     unsigned char rev_id[1024];
     rev_id[0] = 0;
     if (get_file_type(".git") == FILE_DIR) {
+        if (!strcmp(latest->id, "tagged")) {
+            unsigned char full_version[1024];
+            snprintf(full_version, sizeof(full_version), "%s.%d", latest->version, latest->patch);
+            fprintf(stderr, "Full version: %s\n", full_version);
+            unsigned char version_rev_id[1024];
+            read_git_commit_id_by_version(version_rev_id, sizeof(version_rev_id), full_version);
+            fprintf(stderr, "Commit ID: %s\n", version_rev_id);
+            latest->id = strdup(version_rev_id);
+        }
+
         read_git_status(rev_id, sizeof(rev_id), &changed_flag);
         if (changed_flag < 0) exit(1);
         if (!changed_flag && !strcmp(latest->id, rev_id)) {
