@@ -2249,6 +2249,7 @@ serve_read_compile_packet(
     testing_report->compiler_output = xstrdup(txt_text);
     testing_report->scoring_system = global->score_system;
     testing_report->compile_error = 1;
+    memcpy(testing_report->uuid, re.run_uuid, sizeof(testing_report->uuid));
 
     xfree(txt_text); txt_text = NULL; txt_size = 0;
     FILE *tr_f = open_memstream(&txt_text, &txt_size);

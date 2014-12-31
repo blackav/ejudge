@@ -23,6 +23,7 @@
 #include "ejudge/runlog.h"
 #include "ejudge/digest_io.h"
 #include "ejudge/misctext.h"
+#include "ejudge/ej_uuid.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -88,6 +89,7 @@ enum
   TR_T_TTCELLS,
   TR_T_TTCELL,
   TR_T_COMPILER_OUTPUT,
+  TR_T_UUID,
 
   TR_T_LAST_TAG,
 };
@@ -172,6 +174,7 @@ static const char * const elem_map[] =
   [TR_T_TTCELLS] = "ttcells",
   [TR_T_TTCELL] = "ttcell",
   [TR_T_COMPILER_OUTPUT] = "compiler_output",
+  [TR_T_UUID] = "uuid",
 
   [TR_T_LAST_TAG] = 0,
 };
@@ -1076,6 +1079,21 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
     case TR_T_COMPILER_OUTPUT:
       if (xml_leaf_elem(t2, &r->compiler_output, 1, 1) < 0) return -1;
       break;
+    case TR_T_UUID:
+      {
+        unsigned char *uuid = NULL;
+        if (xml_leaf_elem(t2, &uuid, 1, 1) < 0) {
+          xfree(uuid);
+          return -1;
+        }
+        if (ej_uuid_parse(uuid, r->uuid) < 0) {
+          xml_err(t2, "invalid value of <uuid>");
+          xfree(uuid);
+          return -1;
+        }
+        xfree(uuid);
+      }
+      break;
     case TR_T_TESTS:
       if (was_tests) {
         xml_err(t2, "duplicated element <tests>");
@@ -1398,6 +1416,10 @@ testing_report_unparse_xml(
             r->user_run_tests);
   }
   fprintf(out, " >\n");
+
+  if (r->uuid[0] || r->uuid[1] || r->uuid[2] || r->uuid[3]) {
+    fprintf(out, "  <%s>%s</%s>\n", elem_map[TR_T_UUID], ej_uuid_unparse(r->uuid, NULL), elem_map[TR_T_UUID]);
+  }
 
   unparse_string_elem(out, &ab, TR_T_COMMENT, r->comment);
   unparse_string_elem(out, &ab, TR_T_VALUER_COMMENT, r->valuer_comment);

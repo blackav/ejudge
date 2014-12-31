@@ -16,6 +16,8 @@
  * GNU General Public License for more details.
  */
 
+#include "ejudge/ej_types.h"
+
 #include <stdio.h>
 
 struct testing_report_test
@@ -127,6 +129,8 @@ typedef struct testing_report_xml
   unsigned char *cpu_mhz;
   unsigned char *errors;
   unsigned char *compiler_output;
+
+  ruint32_t uuid[4];
 
   struct testing_report_test **tests;
 
