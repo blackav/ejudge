@@ -1,5 +1,4 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
 /* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
 
@@ -5843,6 +5842,16 @@ write_xml_team_testing_report(
     return 0;
   }
 
+  if (r->compile_error) {
+    fprintf(f, "<h2><font color=\"red\">%s</font></h2>\n", run_status_str(r->status, 0, 0, 0, 0));
+    if (r->compiler_output) {
+      fprintf(f, "<pre>%s</pre>\n", ARMOR(r->compiler_output));
+    }
+    testing_report_free(r);
+    html_armor_free(&ab);
+    return 0;
+  }
+
   status = r->status;
   score = r->score;
   max_score = r->max_score;
@@ -6182,9 +6191,20 @@ write_xml_team_output_only_acc_report(
   unsigned char *font_color = 0, *s;
   int i, act_status, tests_to_show;
   unsigned char *cl = "";
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (!(r = testing_report_parse_xml(txt))) {
     fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
+    return 0;
+  }
+
+  if (r->compile_error) {
+    fprintf(f, "<h2><font color=\"red\">%s</font></h2>\n", run_status_str(r->status, 0, 0, 0, 0));
+    if (r->compiler_output) {
+      fprintf(f, "<pre>%s</pre>\n", ARMOR(r->compiler_output));
+    }
+    testing_report_free(r);
+    html_armor_free(&ab);
     return 0;
   }
 
@@ -6310,6 +6330,7 @@ write_xml_team_accepting_report(
   unsigned char opening_a[512];
   unsigned char *closing_a = "";
   unsigned char cl[128] = { 0 };
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (table_class && *table_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
@@ -6320,6 +6341,16 @@ write_xml_team_accepting_report(
 
   if (!(r = testing_report_parse_xml(txt))) {
     fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
+    return 0;
+  }
+
+  if (r->compile_error) {
+    fprintf(f, "<h2><font color=\"red\">%s</font></h2>\n", run_status_str(r->status, 0, 0, 0, 0));
+    if (r->compiler_output) {
+      fprintf(f, "<pre>%s</pre>\n", ARMOR(r->compiler_output));
+    }
+    testing_report_free(r);
+    html_armor_free(&ab);
     return 0;
   }
 
@@ -6661,6 +6692,14 @@ write_xml_team_tests_report(
     goto done;
   }
 
+  if (r->compile_error) {
+    fprintf(f, "<h2><font color=\"red\">%s</font></h2>\n", run_status_str(r->status, 0, 0, 0, 0));
+    if (r->compiler_output) {
+      fprintf(f, "<pre>%s</pre>\n", ARMOR(r->compiler_output));
+    }
+    goto done;
+  }
+
   if (!r->tests_mode) {
     fprintf(f, "<p><big>Invalid XML file!</big></p>\n");
     fprintf(f, "<pre>%s</pre>\n", ARMOR(txt));
@@ -6782,6 +6821,16 @@ write_xml_testing_report(
     s = html_armor_string_dup(txt);
     fprintf(f, "<pre>%s</pre>\n", s);
     xfree(s);
+    return 0;
+  }
+
+  if (r->compile_error) {
+    fprintf(f, "<h2><font color=\"red\">%s</font></h2>\n", run_status_str(r->status, 0, 0, 0, 0));
+    if (r->compiler_output) {
+      fprintf(f, "<pre>%s</pre>\n", ARMOR(r->compiler_output));
+    }
+    testing_report_free(r);
+    html_armor_free(&ab);
     return 0;
   }
 
