@@ -1,5 +1,3 @@
-/* $Id$ */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +6,12 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
+enum
+{
+    MODE_SVN = 1,
+    MODE_GIT = 2
+};
 
 struct verdb
 {
@@ -181,6 +185,65 @@ get_file_type(const unsigned char *path)
     if (S_ISREG(stbuf.st_mode)) return FILE_NORMAL;
     if (S_ISDIR(stbuf.st_mode)) return FILE_DIR;
     return FILE_OTHER;
+}
+
+static int
+read_git_commit_id(unsigned char *id_buf, int id_buf_size)
+{
+    FILE *f = popen("git rev-parse --short HEAD", "r");
+    if (!f) {
+        fprintf(stderr, "cannot invoke git\n");
+        exit(1);
+    }
+
+    unsigned char buf[1024];
+    if (!fgets(buf, sizeof(buf), f)) {
+        fprintf(stderr, "unexpected EOF in call to rev-parse\n");
+        exit(1);
+    }
+    int len = strlen(buf);
+    while (len > 0 && isspace(buf[len - 1])) --len;
+    buf[len] = 0;
+    snprintf(id_buf, id_buf_size, "%s", buf);
+    while (fgets(buf, sizeof(buf), f)) {}
+    fclose(f); f = NULL;
+    return 0;
+}
+
+static int
+read_git_status(unsigned char *id_buf, int id_buf_size, int *p_has_changes)
+{
+    FILE *f = popen("git rev-parse --short HEAD", "r");
+    if (!f) {
+        fprintf(stderr, "cannot invoke git\n");
+        exit(1);
+    }
+
+    unsigned char buf[1024];
+    if (!fgets(buf, sizeof(buf), f)) {
+        fprintf(stderr, "unexpected EOF in call to rev-parse\n");
+        exit(1);
+    }
+    int len = strlen(buf);
+    while (len > 0 && isspace(buf[len - 1])) --len;
+    buf[len] = 0;
+    snprintf(id_buf, id_buf_size, "%s", buf);
+    while (fgets(buf, sizeof(buf), f)) {}
+    fclose(f); f = NULL;
+
+    int has_changes = 0;
+    f = popen("git status --porcelain", "r");
+    while (fgets(buf, sizeof(buf), f)) {
+        int len = strlen(buf);
+        while (len > 0 && isspace(buf[len - 1])) --len;
+        buf[len] = 0;
+        if (!strncmp(buf, "db/", 3)) continue;
+        if (!strncmp(buf, "NEWS", 4)) continue;
+        if (len > 0) has_changes = 1;
+    }
+    fclose(f); f = NULL;
+    if (p_has_changes) *p_has_changes = has_changes;
+    return 0;
 }
 
 static int
@@ -367,24 +430,35 @@ new_minor_version(const unsigned char *versions_file, const unsigned char *check
 {
     struct verdb *latest = &verdb[verdb_u - 1];
 
-    if (get_file_type(".svn") != FILE_DIR) {
-        fprintf(stderr, "SVN is not connected\n");
-        exit(1);
-    }
     unsigned char id_str[1024];
     int changed_flag = 0;
     id_str[0] = 0;
-    if (read_svn_status(id_str, sizeof(id_str), &changed_flag) < 0) {
-        fprintf(stderr, "Failed to parse SVN status\n");
+    int mode = 0;
+
+    if (get_file_type(".git") == FILE_DIR) {
+        if (read_git_status(id_str, sizeof(id_str), &changed_flag) < 0) {
+            fprintf(stderr, "Failed to parse SVN status\n");
+            exit(1);
+        }
+        mode = MODE_GIT;
+    } else if (get_file_type(".svn") == FILE_DIR) {
+        if (read_svn_status(id_str, sizeof(id_str), &changed_flag) < 0) {
+            fprintf(stderr, "Failed to parse SVN status\n");
+            exit(1);
+        }
+        int id_val = 0;
+        if (sscanf(id_str, "%d", &id_val) != 1) {
+            fprintf(stderr, "Invalid revision id\n");
+            exit(1);
+        }
+        snprintf(id_str, sizeof(id_str), "%d", id_val + 1);
+        mode = MODE_SVN;
+    } else {
+        fprintf(stderr, "SVN/GIT is not connected\n");
         exit(1);
     }
     if (changed_flag) {
         fprintf(stderr, "There are uncommited changes\n");
-        exit(1);
-    }
-    int id_val = 0;
-    if (sscanf(id_str, "%d", &id_val) != 1) {
-        fprintf(stderr, "Invalid revision id\n");
         exit(1);
     }
 
@@ -398,6 +472,32 @@ new_minor_version(const unsigned char *versions_file, const unsigned char *check
     snprintf(full_version, sizeof(full_version), "%s.%d", version, patch);
     unsigned char out_file[1024];
     snprintf(out_file, sizeof(out_file), "%s%s", checksum_prefix, full_version);
+
+    if (mode == MODE_GIT) {
+        // create and commit empty file to learn the commit id
+        FILE *f = fopen(out_file, "w");
+        if (!f) {
+            fprintf(stderr, "Cannot open '%s' for writing\n", out_file);
+            exit(1);
+        }
+        fclose(f); f = NULL;
+        unsigned char cmd_buf[1024];
+        snprintf(cmd_buf, sizeof(cmd_buf), "git add \"%s\"", out_file);
+        if (system(cmd_buf) != 0) {
+            fprintf(stderr, "Command '%s' failed\n", cmd_buf);
+            exit(1);
+        }
+        snprintf(cmd_buf, sizeof(cmd_buf), "git commit -m \"%s\" \"%s\"", full_version, out_file);
+        if (system(cmd_buf) != 0) {
+            fprintf(stderr, "Command '%s' failed\n", cmd_buf);
+            exit(1);
+        }
+        if (read_git_commit_id(id_str, sizeof(id_str)) < 0) {
+            fprintf(stderr, "Failed to read commit_id\n");
+            exit(1);
+        }
+    }
+
     FILE *cf = fopen(out_file, "w");
     if (!cf) {
         fprintf(stderr, "Cannot open '%s' for writing\n", out_file);
@@ -421,9 +521,23 @@ new_minor_version(const unsigned char *versions_file, const unsigned char *check
         fprintf(stderr, "Cannot open '%s' for appending\n", versions_file);
         exit(1);
     }
-    fprintf(f, "%d %s %d %04d/%02d/%02d\n", id_val + 1, version, patch,
+    fprintf(f, "%s %s %d %04d/%02d/%02d\n", id_str, version, patch,
             ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
     fclose(f); f = NULL;
+
+    if (mode == MODE_GIT) {
+        unsigned char cmd_buf[1024];
+        snprintf(cmd_buf, sizeof(cmd_buf), "git add \"%s\" \"%s\"", out_file, versions_file);
+        if (system(cmd_buf) != 0) {
+            fprintf(stderr, "Command '%s' failed\n", cmd_buf);
+            exit(1);
+        }
+        snprintf(cmd_buf, sizeof(cmd_buf), "git commit --amend");
+        if (system(cmd_buf) != 0) {
+            fprintf(stderr, "Command '%s' failed\n", cmd_buf);
+            exit(1);
+        }
+    }
 }
 
 int
@@ -459,7 +573,31 @@ main(int argc, char **argv)
     int changed_flag = 0;
     unsigned char rev_id[1024];
     rev_id[0] = 0;
-    if (get_file_type(".svn") == FILE_DIR) {
+    if (get_file_type(".git") == FILE_DIR) {
+        read_git_status(rev_id, sizeof(rev_id), &changed_flag);
+        if (changed_flag < 0) exit(1);
+        if (!changed_flag && !strcmp(latest->id, rev_id)) {
+            // the version exactly
+            snprintf(version_string, sizeof(version_string), "%s", full_version);
+            write_build(build_file, 0);
+        } else if (!changed_flag) {
+            // some SVN rev exactly
+            snprintf(version_string, sizeof(version_string), "%s+ (GIT %s)", full_version, rev_id);
+            write_build(build_file, 0);
+        } else if (!strcmp(latest->id, rev_id)) {
+            // some changed version
+            read_build(build_file, &build);
+            build++;
+            write_build(build_file, build);
+            sprintf(version_string, "%s #%d", full_version, build);
+        } else {
+            // some SVN changed revision
+            read_build(build_file, &build);
+            build++;
+            write_build(build_file, build);
+            snprintf(version_string, sizeof(version_string), "%s+ (GIT %s) #%d", full_version, rev_id, build);
+        }
+    } else if (get_file_type(".svn") == FILE_DIR) {
         read_svn_status(rev_id, sizeof(rev_id), &changed_flag);
         if (changed_flag < 0) exit(1);
         //printf("changed flag: %d, id: %s\n", changed_flag, rev_id);
