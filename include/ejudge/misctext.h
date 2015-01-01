@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -256,6 +255,13 @@ text_normalize_dup(
 void
 html_print_by_line(
         FILE *f,
+        int utf8_mode,
+        int max_file_length,
+        int max_line_length,
+        unsigned char const *s,
+        size_t size);
+unsigned char *
+html_print_by_line_str(
         int utf8_mode,
         int max_file_length,
         int max_line_length,

@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2091,6 +2090,22 @@ html_print_by_line(
     p = s;
   }
   putc('\n', f);
+}
+
+unsigned char *
+html_print_by_line_str(
+        int utf8_mode,
+        int max_file_length,
+        int max_line_length,
+        unsigned char const *s,
+        size_t size)
+{
+  char *txt = 0;
+  size_t len = 0;
+  FILE *f = open_memstream(&txt, &len);
+  html_print_by_line(f, utf8_mode, max_file_length, max_line_length, s, size);
+  fclose(f); f = NULL;
+  return txt;
 }
 
 int
