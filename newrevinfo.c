@@ -1,3 +1,19 @@
+/* -*- mode: c -*- */
+
+/* Copyright (C) 2014-2015 Alexander Chernov <cher@ejudge.ru> */
+
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -560,10 +576,10 @@ main(int argc, char **argv)
         if (!strcmp(latest->id, "tagged")) {
             unsigned char full_version[1024];
             snprintf(full_version, sizeof(full_version), "%s.%d", latest->version, latest->patch);
-            fprintf(stderr, "Full version: %s\n", full_version);
+            //fprintf(stderr, "Full version: %s\n", full_version);
             unsigned char version_rev_id[1024];
             read_git_commit_id_by_version(version_rev_id, sizeof(version_rev_id), full_version);
-            fprintf(stderr, "Commit ID: %s\n", version_rev_id);
+            //fprintf(stderr, "Commit ID: %s\n", version_rev_id);
             latest->id = strdup(version_rev_id);
         }
 
