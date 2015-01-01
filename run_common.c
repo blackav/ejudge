@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +35,8 @@
 #include "ejudge/curtime.h"
 #include "ejudge/cpu.h"
 #include "ejudge/ej_process.h"
+#include "ejudge/testing_report_xml.h"
+#include "ejudge/ej_uuid.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -120,23 +121,6 @@ prepare_checker_comment(int utf8_mode, const unsigned char *str)
   return cmt;
 }
 
-static const char * const scoring_system_strs[] =
-{
-  [SCORE_ACM] "ACM",
-  [SCORE_KIROV] "KIROV",
-  [SCORE_OLYMPIAD] "OLYMPIAD",
-  [SCORE_MOSCOW] "MOSCOW",
-};
-static const unsigned char *
-unparse_scoring_system(unsigned char *buf, size_t size, int val)
-{
-  if (val >= SCORE_ACM && val < SCORE_TOTAL) return scoring_system_strs[val];
-  snprintf(buf, size, "scoring_%d", val);
-  return buf;
-}
-
-#define ARMOR(s)  html_armor_buf(&ab, s)
-
 static int
 generate_xml_report(
         const struct super_run_in_packet *srp,
@@ -165,240 +149,208 @@ generate_xml_report(
         const unsigned char *cpu_mhz)
 {
   FILE *f = 0;
-  unsigned char buf1[32], buf2[32], buf3[128];
   int i;
   unsigned char *msg = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const struct super_run_in_global_packet *srgp = srp->global;
+
+  testing_report_xml_t tr = testing_report_alloc(srgp->contest_id, srgp->run_id, srgp->judge_id);
+  tr->status = reply_pkt->status;
+  tr->scoring_system = srgp->scoring_system_val;
+  tr->archive_available = (srgp->enable_full_archive > 0);
+  tr->correct_available = correct_available_flag;
+  tr->info_available = info_available_flag;
+  tr->real_time_available = has_real_time;
+  tr->max_memory_used_available = has_max_memory_used;
+  tr->run_tests = total_tests - 1;
+  tr->variant = variant;
+  if (srgp->scoring_system_val == SCORE_OLYMPIAD) {
+    tr->accepting_mode = (srgp->accepting_mode > 0);
+  }
+
+  if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode > 0 && reply_pkt->status != RUN_ACCEPTED) {
+    tr->tests_passed = reply_pkt->tests_passed;
+    tr->failed_test = total_tests - 1;
+  } else if (srgp->scoring_system_val == SCORE_ACM && reply_pkt->status != RUN_OK) {
+    tr->tests_passed = reply_pkt->tests_passed;
+    tr->failed_test = total_tests - 1;
+  } else if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0) {
+    tr->tests_passed = reply_pkt->tests_passed;
+    tr->score = reply_pkt->score;
+    tr->max_score = max_score;
+  } else if (srgp->scoring_system_val == SCORE_KIROV) {
+    tr->tests_passed = reply_pkt->tests_passed;
+    tr->score = reply_pkt->score;
+    tr->max_score = max_score;
+  } else if (srgp->scoring_system_val == SCORE_MOSCOW) {
+    if (reply_pkt->status != RUN_OK) {
+      tr->failed_test = total_tests - 1;
+    }
+    tr->tests_passed = reply_pkt->tests_passed;
+    tr->score = reply_pkt->score;
+    tr->max_score = max_score;
+  } else {
+    tr->tests_passed = reply_pkt->tests_passed;
+  }
+  if (report_time_limit_ms > 0) {
+    tr->time_limit_ms = report_time_limit_ms;
+  }
+  if (report_real_time_limit_ms > 0) {
+    tr->real_time_limit_ms = report_real_time_limit_ms;
+  }
+  if (marked_flag >= 0) {
+    tr->marked_flag = (marked_flag > 0);
+  }
+  tr->tests_mode = 0;
+  if (srgp->separate_user_score > 0) {
+    if (reply_pkt->user_status >= 0) {
+      tr->user_status = reply_pkt->user_status;
+    }
+    if (reply_pkt->user_score >= 0) {
+      tr->user_score = reply_pkt->user_score;
+    }
+    if (user_max_score < 0) user_max_score = max_score;
+    tr->user_max_score = user_max_score;
+    if (reply_pkt->user_tests_passed >= 0) {
+      tr->user_tests_passed = reply_pkt->user_tests_passed;
+    }
+    if (user_run_tests >= 0) {
+      tr->user_run_tests = user_run_tests;
+    }
+  }
+  tr->compile_error = 0;
+  if (additional_comment) {
+    tr->comment = xstrdup(additional_comment);
+  }
+  if (valuer_comment) {
+    tr->valuer_comment = xstrdup(valuer_comment);
+  }
+  if (valuer_judge_comment) {
+    tr->valuer_judge_comment = xstrdup(valuer_judge_comment);
+  }
+  if (valuer_errors) {
+    tr->valuer_errors = xstrdup(valuer_errors);
+  }
+  if ((msg = os_NodeName())) {
+    tr->host = xstrdup(msg);
+  }
+  if (cpu_model) {
+    tr->cpu_model = xstrdup(cpu_model);
+  }
+  if (cpu_mhz) {
+    tr->cpu_mhz = xstrdup(cpu_mhz);
+  }
+  if (srgp->run_uuid) {
+    ej_uuid_parse(srgp->run_uuid, tr->uuid);
+  }
+
+  XCALLOC(tr->tests, total_tests - 1);
+  for (i = 1; i < total_tests - 1; ++i) {
+    struct testing_report_test *trt = xcalloc(1, sizeof(*trt));
+    tr->tests[i - 1] = trt;
+
+    trt->num = i;
+    trt->status = tests[i].status;
+    if (tests[i].status == RUN_RUN_TIME_ERR) {
+      if (tests[i].code == 256) {
+        trt->term_signal = tests[i].termsig;
+      } else {
+        trt->exit_code = tests[i].code;
+      }
+    }
+    trt->time = tests[i].times;
+    if (tests[i].real_time >= 0 && has_real_time) {
+      trt->real_time = tests[i].real_time;
+    }
+    if (tests[i].max_memory_used > 0) {
+      trt->max_memory_used = tests[i].max_memory_used;
+    }
+    if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0) {
+      trt->nominal_score = tests[i].max_score;
+      trt->score = tests[i].score;
+    } else if (srgp->scoring_system_val == SCORE_KIROV) {
+      trt->nominal_score = tests[i].max_score;
+      trt->score = tests[i].score;
+    }
+    if (tests[i].comment && tests[i].comment[0]) {
+      trt->comment = xstrdup(tests[i].comment);
+    }
+    if (tests[i].team_comment && tests[i].team_comment[0]) {
+      trt->team_comment = tests[i].team_comment;
+    }
+    if (tests[i].exit_comment && tests[i].exit_comment[0]) {
+      trt->exit_comment = tests[i].exit_comment;
+    }
+    if ((tests[i].status == RUN_WRONG_ANSWER_ERR || tests[i].status == RUN_PRESENTATION_ERR || tests[i].status == RUN_OK)
+        && tests[i].chk_out_size > 0 && tests[i].chk_out && tests[i].chk_out[0]) {
+      trt->checker_comment = prepare_checker_comment(utf8_mode, tests[i].chk_out);
+    }
+    if (srgp->enable_full_archive > 0) {
+      if (tests[i].has_input_digest) {
+        trt->has_input_digest = 1;
+        digest_to_ascii(DIGEST_SHA1, tests[i].input_digest, trt->input_digest);
+      }
+      if (tests[i].has_correct_digest) {
+        trt->has_correct_digest = 1;
+        digest_to_ascii(DIGEST_SHA1, tests[i].correct_digest, trt->correct_digest);
+      }
+      if (tests[i].has_info_digest) {
+        trt->has_info_digest = 1;
+        digest_to_ascii(DIGEST_SHA1, tests[i].info_digest, trt->info_digest);
+      }
+    }
+    if (srgp->enable_full_archive > 0) {
+      if (tests[i].output_size >= 0) {
+        trt->output_available = 1;
+      }
+      if (tests[i].error_size >= 0) {
+        trt->stderr_available = 1;
+      }
+      if (tests[i].chk_out_size >= 0) {
+        trt->checker_output_available = 1;
+      }
+    }
+    if (tests[i].args && strlen(tests[i].args) >= srgp->max_cmd_length) {
+      trt->args_too_long = 1;
+    }
+    if (tests[i].visibility > 0) {
+      trt->visibility = tests[i].visibility;
+    }
+    if (tests[i].args && strlen(tests[i].args) < srgp->max_cmd_length) {
+      trt->args = xstrdup(tests[i].args);
+    }
+    if (srgp->enable_full_archive <= 0) {
+      if (tests[i].input_size >= 0) {
+        trt->input = html_print_by_line_str(utf8_mode, srgp->max_file_length, srgp->max_line_length,
+                                            tests[i].input, tests[i].input_size);
+      }
+      if (tests[i].output_size >= 0) {
+        trt->output = html_print_by_line_str(utf8_mode, srgp->max_file_length, srgp->max_line_length,
+                                             tests[i].output, tests[i].output_size);
+      }
+      if (tests[i].correct_size >= 0) {
+        trt->correct = html_print_by_line_str(utf8_mode, srgp->max_file_length, srgp->max_line_length,
+                                              tests[i].correct, tests[i].correct_size);
+      }
+      if (tests[i].error_size >= 0) {
+        trt->error = html_print_by_line_str(utf8_mode, srgp->max_file_length, srgp->max_line_length,
+                                            tests[i].error, tests[i].error_size);
+      }
+      if (tests[i].chk_out_size >= 0) {
+        trt->checker = html_print_by_line_str(utf8_mode, srgp->max_file_length, srgp->max_line_length,
+                                              tests[i].chk_out, tests[i].chk_out_size);
+      }
+    }
+  }
 
   if (!(f = fopen(report_path, "w"))) {
     err("generate_xml_report: cannot open protocol file %s", report_path);
     return -1;
   }
-
   fprintf(f, "Content-type: text/xml\n\n");
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
-
-  run_status_to_str_short(buf1, sizeof(buf1), reply_pkt->status);
-  fprintf(f, "<testing-report run-id=\"%d\" judge-id=\"%d\" status=\"%s\" scoring=\"%s\" archive-available=\"%s\" run-tests=\"%d\"",
-          srgp->run_id, srgp->judge_id, buf1,
-          unparse_scoring_system(buf2, sizeof(buf2), srgp->scoring_system_val),
-          (srgp->enable_full_archive > 0)?"yes":"no", total_tests - 1);
-  if (has_real_time) {
-    fprintf(f, " real-time-available=\"yes\"");
-  }
-  if (has_max_memory_used) {
-    fprintf(f, " max-memory-used-available=\"yes\"");
-  }
-  if (correct_available_flag) {
-    fprintf(f, " correct-available=\"yes\"");
-  }
-  if (info_available_flag) {
-    fprintf(f, " info-available=\"yes\"");
-  }
-  if (variant > 0) {
-    fprintf(f, " variant=\"%d\"", variant);
-  }
-  if (srgp->scoring_system_val == SCORE_OLYMPIAD) {
-    fprintf(f, " accepting-mode=\"%s\"", (srgp->accepting_mode > 0)?"yes":"no");
-  }
-  if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode > 0
-      && reply_pkt->status != RUN_ACCEPTED) {
-    fprintf(f, " tests-passed=\"%d\" failed-test=\"%d\"", reply_pkt->tests_passed, total_tests - 1);
-  } else if (srgp->scoring_system_val == SCORE_ACM && reply_pkt->status != RUN_OK) {
-    fprintf(f, " tests-passed=\"%d\" failed-test=\"%d\"", reply_pkt->tests_passed, total_tests - 1);
-  } else if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0) {
-    fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
-            reply_pkt->tests_passed, reply_pkt->score, max_score);
-  } else if (srgp->scoring_system_val == SCORE_KIROV) {
-    fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"",
-            reply_pkt->tests_passed, reply_pkt->score, max_score);
-  } else if (srgp->scoring_system_val == SCORE_MOSCOW) {
-    if (reply_pkt->status != RUN_OK) {
-      fprintf(f, " failed-test=\"%d\"", total_tests - 1);
-    }
-    fprintf(f, " tests-passed=\"%d\" score=\"%d\" max-score=\"%d\"", reply_pkt->tests_passed, reply_pkt->score, max_score);
-  } else {
-    fprintf(f, " tests-passed=\"%d\"", reply_pkt->tests_passed);
-  }
-  if (report_time_limit_ms > 0) {
-    fprintf(f, " time-limit-ms=\"%d\"", report_time_limit_ms);
-  }
-  if (report_real_time_limit_ms > 0) {
-    fprintf(f, " real-time-limit-ms=\"%d\"", report_real_time_limit_ms);
-  }
-  if (marked_flag >= 0) {
-    fprintf(f, " marked-flag=\"%s\"", marked_flag?"yes":"no");
-  }
-  if (srgp->separate_user_score > 0 && reply_pkt->user_status >= 0) {
-    run_status_to_str_short(buf1, sizeof(buf1), reply_pkt->user_status);
-    fprintf(f, " user-status=\"%s\"", buf1);
-  }
-  if (srgp->separate_user_score > 0 && reply_pkt->user_score >= 0) {
-    fprintf(f, " user-score=\"%d\"", reply_pkt->user_score);
-  }
-  if (srgp->separate_user_score > 0) {
-    if (user_max_score < 0) user_max_score = max_score;
-    fprintf(f, " user-max-score=\"%d\"", user_max_score);
-  }
-  if (srgp->separate_user_score > 0 && reply_pkt->user_tests_passed >= 0) {
-    fprintf(f, " user-tests-passed=\"%d\"", reply_pkt->user_tests_passed);
-  }
-  if (srgp->separate_user_score > 0 && user_run_tests >= 0) {
-    fprintf(f, " user-run-tests=\"%d\"", user_run_tests);
-  }
-  fprintf(f, " >\n");
-
-  if (additional_comment) {
-    fprintf(f, "  <comment>%s</comment>\n", ARMOR(additional_comment));
-  }
-  if (valuer_comment) {
-    fprintf(f, "  <valuer-comment>%s</valuer-comment>\n",
-            ARMOR(valuer_comment));
-  }
-  if (valuer_judge_comment) {
-    fprintf(f, "  <valuer-judge-comment>%s</valuer-judge-comment>\n",
-            ARMOR(valuer_judge_comment));
-  }
-  if (valuer_errors) {
-    fprintf(f, "  <valuer-errors>%s</valuer-errors>\n",
-            ARMOR(valuer_errors));
-  }
-  if ((msg = os_NodeName())) {
-    fprintf(f, "  <host>%s</host>\n", msg);
-  }
-  if (cpu_model) {
-    fprintf(f, "  <cpu-model>%s</cpu-model>\n", cpu_model);
-  }
-  if (cpu_mhz) {
-    fprintf(f, "  <cpu-mhz>%s</cpu-mhz>\n", cpu_mhz);
-  }
-
-  fprintf(f, "  <tests>\n");
-
-  for (i = 1; i < total_tests; i++) {
-    run_status_to_str_short(buf1, sizeof(buf1), tests[i].status);
-    fprintf(f, "    <test num=\"%d\" status=\"%s\"", i, buf1);
-    if (tests[i].status == RUN_RUN_TIME_ERR) {
-      if (tests[i].code == 256) {
-        fprintf(f, " term-signal=\"%d\"", tests[i].termsig);
-      } else {
-        fprintf(f, " exit-code=\"%d\"", tests[i].code);
-      }
-    }
-    fprintf(f, " time=\"%lu\"", tests[i].times);
-    if (tests[i].real_time >= 0 && has_real_time) {
-      fprintf(f, " real-time=\"%ld\"", tests[i].real_time);
-    }
-    if (tests[i].max_memory_used > 0) {
-      fprintf(f, " max-memory-used=\"%lu\"", tests[i].max_memory_used);
-    }
-    if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0) {
-      fprintf(f, " nominal-score=\"%d\" score=\"%d\"",
-              tests[i].max_score, tests[i].score);
-    } else if (srgp->scoring_system_val == SCORE_KIROV) {
-      fprintf(f, " nominal-score=\"%d\" score=\"%d\"",
-              tests[i].max_score, tests[i].score);
-    }
-    if (tests[i].comment && tests[i].comment[0]) {
-      fprintf(f, " comment=\"%s\"", ARMOR(tests[i].comment));
-    }
-    if (tests[i].team_comment && tests[i].team_comment[0]) {
-      fprintf(f, " team-comment=\"%s\"", ARMOR(tests[i].team_comment));
-    }
-    if (tests[i].exit_comment && tests[i].exit_comment[0]) {
-      fprintf(f, " exit-comment=\"%s\"", ARMOR(tests[i].exit_comment));
-    }
-    if ((tests[i].status == RUN_WRONG_ANSWER_ERR 
-         || tests[i].status == RUN_PRESENTATION_ERR || tests[i].status == RUN_OK)
-        && tests[i].chk_out_size > 0 && tests[i].chk_out && tests[i].chk_out[0]) {
-      msg = prepare_checker_comment(utf8_mode, tests[i].chk_out);
-      fprintf(f, " checker-comment=\"%s\"", msg);
-      xfree(msg);
-    }
-    if (srgp->enable_full_archive > 0) {
-      if (tests[i].has_input_digest) {
-        digest_to_ascii(DIGEST_SHA1, tests[i].input_digest, buf3);
-        fprintf(f, " input-digest=\"%s\"", buf3);
-      }
-      if (tests[i].has_correct_digest) {
-        digest_to_ascii(DIGEST_SHA1, tests[i].correct_digest, buf3);
-        fprintf(f, " correct-digest=\"%s\"", buf3);
-      }
-      if (tests[i].has_info_digest) {
-        digest_to_ascii(DIGEST_SHA1, tests[i].info_digest, buf3);
-        fprintf(f, " info-digest=\"%s\"", buf3);
-      }
-    }
-    if (tests[i].output_size >= 0 && srgp->enable_full_archive > 0) {
-      fprintf(f, " output-available=\"yes\"");
-    }
-    if (tests[i].error_size >= 0 && srgp->enable_full_archive > 0) {
-      fprintf(f, " stderr-available=\"yes\"");
-    }
-    if (tests[i].chk_out_size >= 0 && srgp->enable_full_archive > 0) {
-      fprintf(f, " checker-output-available=\"yes\"");
-    }
-    if (tests[i].args && strlen(tests[i].args) >= srgp->max_cmd_length) {
-      fprintf(f, " args-too-long=\"yes\"");
-    }
-    if (tests[i].visibility > 0) {
-      fprintf(f, " visibility=\"%s\"", test_visibility_unparse(tests[i].visibility));
-    }
-    fprintf(f, " >\n");
-
-    if (tests[i].args && strlen(tests[i].args) < srgp->max_cmd_length) {
-      fprintf(f, "      <args>%s</args>\n", ARMOR(tests[i].args));
-    }
-
-    if (tests[i].input_size >= 0 && srgp->enable_full_archive <= 0) {
-      fprintf(f, "      <input>");
-      html_print_by_line(f, utf8_mode, srgp->max_file_length,
-                         srgp->max_line_length,
-                         tests[i].input, tests[i].input_size);
-      fprintf(f, "</input>\n");
-    }
-
-    if (tests[i].output_size >= 0 && srgp->enable_full_archive <= 0) {
-      fprintf(f, "      <output>");
-      html_print_by_line(f, utf8_mode, srgp->max_file_length,
-                         srgp->max_line_length,
-                         tests[i].output, tests[i].output_size);
-      fprintf(f, "</output>\n");
-    }
-
-    if (tests[i].correct_size >= 0 && srgp->enable_full_archive <= 0) {
-      fprintf(f, "      <correct>");
-      html_print_by_line(f, utf8_mode, srgp->max_file_length,
-                         srgp->max_line_length,
-                         tests[i].correct, tests[i].correct_size);
-      fprintf(f, "</correct>\n");
-    }
-
-    if (tests[i].error_size >= 0 && srgp->enable_full_archive <= 0) {
-      fprintf(f, "      <stderr>");
-      html_print_by_line(f, utf8_mode, srgp->max_file_length,
-                         srgp->max_line_length,
-                         tests[i].error, tests[i].error_size);
-      fprintf(f, "</stderr>\n");
-    }
-
-    if (tests[i].chk_out_size >= 0 && srgp->enable_full_archive <= 0) {
-      fprintf(f, "      <checker>");
-      html_print_by_line(f, utf8_mode, srgp->max_file_length,
-                         srgp->max_line_length,
-                         tests[i].chk_out, tests[i].chk_out_size);
-      fprintf(f, "</checker>\n");
-    }
-
-    fprintf(f, "    </test>\n");
-  }
-
-  fprintf(f, "  </tests>\n");
-
-  fprintf(f, "</testing-report>\n");
+  testing_report_unparse_xml(f, utf8_mode, srgp->max_file_length, srgp->max_line_length, tr);
   fclose(f); f = 0;
-  html_armor_free(&ab);
+  testing_report_free(tr);
   return 0;
 }
 
