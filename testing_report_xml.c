@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -146,6 +146,7 @@ enum
   TR_A_USER_MAX_SCORE,
   TR_A_USER_RUN_TESTS,
   TR_A_COMPILE_ERROR,
+  TR_A_CONTEST_ID,
 
   TR_A_LAST_ATTR,
 };
@@ -231,6 +232,7 @@ static const char * const attr_map[] =
   [TR_A_USER_MAX_SCORE] = "user-max-score",
   [TR_A_USER_RUN_TESTS] = "user-run-tests",
   [TR_A_COMPILE_ERROR] = "compile-error",
+  [TR_A_CONTEST_ID] = "contest-id",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -712,6 +714,14 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
 
   for (a = t->first; a; a = a->next) {
     switch (a->tag) {
+    case TR_A_CONTEST_ID:
+      if (xml_attr_int(a, &x) < 0) return -1;
+      if (x <= 0) {
+        xml_err_attr_invalid(a);
+        return -1;
+      }
+      r->contest_id = x;
+      break;
     case TR_A_RUN_ID:
       if (xml_attr_int(a, &x) < 0) return -1;
       if (x < 0 || x > EJ_MAX_RUN_ID) {
@@ -1224,10 +1234,11 @@ testing_report_free(testing_report_xml_t r)
 }
 
 testing_report_xml_t
-testing_report_alloc(int run_id, int judge_id)
+testing_report_alloc(int contest_id, int run_id, int judge_id)
 {
   testing_report_xml_t r = 0;
   XCALLOC(r, 1);
+  r->contest_id = contest_id;
   r->run_id = run_id;
   r->judge_id = judge_id;
   r->status = RUN_CHECK_FAILED;
@@ -1342,6 +1353,9 @@ testing_report_unparse_xml(
           attr_map[TR_A_SCORING], scoring,
           attr_map[TR_A_RUN_TESTS], r->run_tests);
 
+  if (r->contest_id > 0) {
+    fprintf(out, " %s=\"%d\"", attr_map[TR_A_CONTEST_ID], r->contest_id);
+  }
   unparse_bool_attr(out, TR_A_ARCHIVE_AVAILABLE, r->archive_available);
   unparse_bool_attr(out, TR_A_REAL_TIME_AVAILABLE, r->real_time_available);
   unparse_bool_attr(out, TR_A_MAX_MEMORY_USED_AVAILABLE,

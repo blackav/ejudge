@@ -2244,7 +2244,7 @@ serve_read_compile_packet(
                "generic_read_file: %s, %s failed\n", compile_report_dir, pname);
       goto report_check_failed;
     }
-    testing_report = testing_report_alloc(comp_pkt->run_id, re.judge_id);
+    testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.judge_id);
     testing_report->status = comp_pkt->status;
     testing_report->compiler_output = xstrdup(txt_text);
     testing_report->scoring_system = global->score_system;
@@ -2307,7 +2307,7 @@ serve_read_compile_packet(
     snprintf(txt_packet_path, sizeof(txt_packet_path), "%s/%s.txt", compile_report_dir, pname);
     generic_read_file(&txt_text, 0, &txt_size, REMOVE, NULL, txt_packet_path, NULL);
 
-    testing_report = testing_report_alloc(comp_pkt->run_id, re.judge_id);
+    testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.judge_id);
     testing_report->status = RUN_RUNNING;
     if (txt_text) {
       testing_report->compiler_output = xstrdup(txt_text);
@@ -3127,7 +3127,7 @@ serve_report_check_failed(
         const unsigned char *error_text)
 {
   const struct section_global_data *global = state->global;
-  testing_report_xml_t tr = testing_report_alloc(run_id, 0);
+  testing_report_xml_t tr = testing_report_alloc(cnts->id, run_id, 0);
   FILE *tr_f = NULL;
   size_t tr_z = 0;
   char *tr_t = NULL;

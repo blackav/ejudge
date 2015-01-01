@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1108,7 +1107,7 @@ run_inverse_testing(
   get_current_time(&reply_pkt->ts5, &reply_pkt->ts5_us);
 
   /* create the testing report */
-  report_xml = testing_report_alloc(reply_pkt->run_id, reply_pkt->judge_id);
+  report_xml = testing_report_alloc(srgp->contest_id, reply_pkt->run_id, reply_pkt->judge_id);
   report_xml->status = RUN_CHECK_FAILED;
   report_xml->scoring_system = srgp->scoring_system_val;
   report_xml->archive_available = 0;
