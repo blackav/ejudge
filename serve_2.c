@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2303,6 +2303,40 @@ serve_read_compile_packet(
     abort();
   }
 
+  if (re.store_flags == 1) {
+    snprintf(txt_packet_path, sizeof(txt_packet_path), "%s/%s.txt", compile_report_dir, pname);
+    generic_read_file(&txt_text, 0, &txt_size, REMOVE, NULL, txt_packet_path, NULL);
+
+    testing_report = testing_report_alloc(comp_pkt->run_id, re.judge_id);
+    testing_report->status = RUN_RUNNING;
+    if (txt_text) {
+      testing_report->compiler_output = xstrdup(txt_text);
+    }
+    testing_report->scoring_system = global->score_system;
+    testing_report->compile_error = 1;
+    memcpy(testing_report->uuid, re.run_uuid, sizeof(testing_report->uuid));
+
+    xfree(txt_text); txt_text = NULL; txt_size = 0;
+    FILE *tr_f = open_memstream(&txt_text, &txt_size);
+    fprintf(tr_f, "Content-type: text/xml\n\n");
+    fprintf(tr_f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
+    testing_report_unparse_xml(tr_f, 1, global->max_file_length, global->max_line_length, testing_report);
+    fclose(tr_f); tr_f = NULL;
+
+    rep_flags = uuid_archive_make_write_path(state, rep_path, sizeof(rep_path),
+                                             re.run_uuid, txt_size, DFLT_R_UUID_XML_REPORT, 0);
+    ASSERT(rep_flags >= 0);
+    if (uuid_archive_dir_prepare(state, re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0) {
+      snprintf(errmsg, sizeof(errmsg), "uuid_archive_dir_prepare: failed\n");
+      goto report_check_failed;
+    }
+    if (generic_write_file(txt_text, txt_size, rep_flags, 0, rep_path, 0) < 0) {
+      snprintf(errmsg, sizeof(errmsg), "generic_write_file failed: %s, %ld\n", rep_path, (long) rep_flags);
+      goto report_check_failed;
+    }
+    goto prepare_run_request;
+  }
+
   if (comp_pkt->status == RUN_CHECK_FAILED
       || comp_pkt->status == RUN_COMPILE_ERR
       || comp_pkt->status == RUN_STYLE_ERR) {
@@ -2408,6 +2442,8 @@ serve_read_compile_packet(
     }
     goto success;
   }
+
+prepare_run_request:
 
   /* check run parameters */
   if (re.prob_id < 1 || re.prob_id > state->max_prob
