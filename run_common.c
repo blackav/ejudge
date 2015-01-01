@@ -244,12 +244,9 @@ generate_xml_report(
   }
 
   XCALLOC(tr->tests, total_tests - 1);
-  for (i = 1; i < total_tests - 1; ++i) {
-    struct testing_report_test *trt = xcalloc(1, sizeof(*trt));
+  for (i = 1; i < total_tests; ++i) {
+    struct testing_report_test *trt = testing_report_test_alloc(i, tests[i].status);
     tr->tests[i - 1] = trt;
-
-    trt->num = i;
-    trt->status = tests[i].status;
     if (tests[i].status == RUN_RUN_TIME_ERR) {
       if (tests[i].code == 256) {
         trt->term_signal = tests[i].termsig;
@@ -320,24 +317,44 @@ generate_xml_report(
     }
     if (srgp->enable_full_archive <= 0) {
       if (tests[i].input_size >= 0) {
+        trt->input = xmemdup(tests[i].input, tests[i].input_size);
+        trt->input_size = tests[i].input_size;
+        /*
         trt->input = html_print_by_line_str(utf8_mode, srgp->max_file_length, srgp->max_line_length,
                                             tests[i].input, tests[i].input_size);
+        */
       }
       if (tests[i].output_size >= 0) {
+        trt->output = xmemdup(tests[i].output, tests[i].output_size);
+        trt->output_size = tests[i].output_size;
+        /*
         trt->output = html_print_by_line_str(utf8_mode, srgp->max_file_length, srgp->max_line_length,
                                              tests[i].output, tests[i].output_size);
+        */
       }
       if (tests[i].correct_size >= 0) {
+        trt->correct = xmemdup(tests[i].correct, tests[i].correct_size);
+        trt->correct_size = tests[i].correct_size;
+        /*
         trt->correct = html_print_by_line_str(utf8_mode, srgp->max_file_length, srgp->max_line_length,
                                               tests[i].correct, tests[i].correct_size);
+        */
       }
       if (tests[i].error_size >= 0) {
+        trt->error = xmemdup(tests[i].error, tests[i].error_size);
+        trt->error_size = tests[i].error_size;
+        /*
         trt->error = html_print_by_line_str(utf8_mode, srgp->max_file_length, srgp->max_line_length,
                                             tests[i].error, tests[i].error_size);
+        */
       }
       if (tests[i].chk_out_size >= 0) {
+        trt->checker = xmemdup(tests[i].chk_out, tests[i].chk_out_size);
+        trt->checker_size = tests[i].chk_out_size;
+        /*
         trt->checker = html_print_by_line_str(utf8_mode, srgp->max_file_length, srgp->max_line_length,
                                               tests[i].chk_out, tests[i].chk_out_size);
+        */
       }
     }
   }

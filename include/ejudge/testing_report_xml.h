@@ -40,9 +40,9 @@ struct testing_report_test
   int visibility;
   unsigned long max_memory_used;
 
-  unsigned char input_digest[32];
-  unsigned char correct_digest[32];
-  unsigned char info_digest[32];
+  unsigned char input_digest[64];
+  unsigned char correct_digest[64];
+  unsigned char info_digest[64];
 
   unsigned char *comment;
   unsigned char *team_comment;
@@ -140,6 +140,9 @@ typedef struct testing_report_xml
   struct testing_report_row **tt_rows;
   struct testing_report_cell ***tt_cells;
 } *testing_report_xml_t;
+
+struct testing_report_test *
+testing_report_test_alloc(int num, int status);
 
 testing_report_xml_t testing_report_alloc(int contest_id, int run_id, int judge_id);
 testing_report_xml_t testing_report_parse_xml(const unsigned char *path);

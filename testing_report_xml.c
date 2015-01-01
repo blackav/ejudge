@@ -1233,6 +1233,20 @@ testing_report_free(testing_report_xml_t r)
   return 0;
 }
 
+struct testing_report_test *
+testing_report_test_alloc(int num, int status)
+{
+  struct testing_report_test *trt = calloc(1, sizeof(*trt));
+  trt->num = num;
+  trt->status = status;
+  trt->input_size = -1;
+  trt->output_size = -1;
+  trt->correct_size = -1;
+  trt->error_size = -1;
+  trt->checker_size = -1;
+  return trt;
+}
+
 testing_report_xml_t
 testing_report_alloc(int contest_id, int run_id, int judge_id)
 {
@@ -1474,11 +1488,11 @@ testing_report_unparse_xml(
       if (r->scoring_system == SCORE_OLYMPIAD && r->accepting_mode <= 0) {
         fprintf(out, " %s=\"%d\" %s=\"%d\"",
                 attr_map[TR_A_NOMINAL_SCORE], t->nominal_score,
-                attr_map[TR_A_SCORE], r->score);
+                attr_map[TR_A_SCORE], t->score);
       } else if (r->scoring_system == SCORE_KIROV) {
         fprintf(out, " %s=\"%d\" %s=\"%d\"",
                 attr_map[TR_A_NOMINAL_SCORE], t->nominal_score,
-                attr_map[TR_A_SCORE], r->score);
+                attr_map[TR_A_SCORE], t->score);
       }
       unparse_string_attr(out, &ab, TR_A_COMMENT, t->comment);
       unparse_string_attr(out, &ab, TR_A_TEAM_COMMENT, t->team_comment);
@@ -1493,7 +1507,7 @@ testing_report_unparse_xml(
                         t->checker_output_available);
       unparse_bool_attr(out, TR_A_ARGS_TOO_LONG, t->args_too_long);
       if (t->visibility > 0) {
-        fprintf(out, " %s=\"%d\"", attr_map[TR_A_VISIBILITY], t->visibility);
+        fprintf(out, " %s=\"%s\"", attr_map[TR_A_VISIBILITY], test_visibility_unparse(t->visibility));
       }
       fprintf(out, " >\n");
 
