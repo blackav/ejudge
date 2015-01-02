@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -6130,8 +6130,8 @@ write_xml_team_testing_report(
         if (is_marked) visibility = TV_FULL;
       }
       if (visibility != TV_FULL) continue;
-      if (!t->args && !t->args_too_long && !t->input
-          && !t->output && !t->error && !t->correct && !t->checker)
+      if (!t->args && !t->args_too_long && t->input.size < 0
+          && t->output.size < 0 && t->error.size < 0 && t->correct.size < 0 && t->checker.size < 0)
         continue;
       fprintf(f, _("<b>====== Test #%d =======</b>\n"), t->num);
       if (t->args || t->args_too_long) {
@@ -6143,30 +6143,25 @@ write_xml_team_testing_report(
           fprintf(f, "%s", ARMOR(t->args));
         }
       }
-      if (t->input) {
+      if (t->input.size >= 0) {
         fprintf(f, "<a name=\"%dI\"></a>", t->num);
-        fprintf(f, _("<u>--- Input ---</u>\n"));
-        fprintf(f, "%s", ARMOR(t->input));
+        html_print_testing_report_file_content(f, &ab, &t->input, TESTING_REPORT_INPUT);
       }
-      if (t->output) {
+      if (t->output.size >= 0) {
         fprintf(f, "<a name=\"%dO\"></a>", t->num);
-        fprintf(f, _("<u>--- Output ---</u>\n"));
-        fprintf(f, "%s", ARMOR(t->output));
+        html_print_testing_report_file_content(f, &ab, &t->output, TESTING_REPORT_OUTPUT);
       }
-      if (t->correct) {
+      if (t->correct.size >= 0) {
         fprintf(f, "<a name=\"%dA\"></a>", t->num);
-        fprintf(f, _("<u>--- Correct ---</u>\n"));
-        fprintf(f, "%s", ARMOR(t->correct));
+        html_print_testing_report_file_content(f, &ab, &t->correct, TESTING_REPORT_CORRECT);
       }
-      if (t->error) {
+      if (t->error.size >= 0) {
         fprintf(f, "<a name=\"%dE\"></a>", t->num);
-        fprintf(f, _("<u>--- Stderr ---</u>\n"));
-        fprintf(f, "%s", ARMOR(t->error));
+        html_print_testing_report_file_content(f, &ab, &t->error, TESTING_REPORT_ERROR);
       }
-      if (t->checker) {
+      if (t->checker.size >= 0) {
         fprintf(f, "<a name=\"%dC\"></a>", t->num);
-        fprintf(f, _("<u>--- Checker output ---</u>\n"));
-        fprintf(f, "%s", ARMOR(t->checker));
+        html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
       }
     }
     fprintf(f, "</pre>");
@@ -6508,7 +6503,7 @@ write_xml_team_accepting_report(
       ns_aref(opening_a, sizeof(opening_a), phr, NEW_SRV_ACTION_VIEW_TEST_INPUT,
                     "run_id=%d&test_num=%d", r->run_id, t->num);
       closing_a = "</a>";
-    } else if (t->input) {
+    } else if (t->input.size >= 0) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dI\">", t->num);
       closing_a = "</a>";
     } else {
@@ -6521,7 +6516,7 @@ write_xml_team_accepting_report(
       ns_aref(opening_a, sizeof(opening_a), phr, NEW_SRV_ACTION_VIEW_TEST_OUTPUT,
                     "run_id=%d&test_num=%d", r->run_id, t->num);
       closing_a = "</a>";
-    } else if (t->output) {
+    } else if (t->output.size >= 0) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dO\">", t->num);
       closing_a = "</a>";
     } else {
@@ -6534,7 +6529,7 @@ write_xml_team_accepting_report(
       ns_aref(opening_a, sizeof(opening_a), phr, NEW_SRV_ACTION_VIEW_TEST_ANSWER,
                     "run_id=%d&test_num=%d", r->run_id, t->num);
       closing_a = "</a>";
-    } else if (t->correct) {
+    } else if (t->correct.size >= 0) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dA\">", t->num);
       closing_a = "</a>";
     } else {
@@ -6547,7 +6542,7 @@ write_xml_team_accepting_report(
       ns_aref(opening_a, sizeof(opening_a), phr, NEW_SRV_ACTION_VIEW_TEST_ERROR,
                     "run_id=%d&test_num=%d", r->run_id, t->num);
       closing_a = "</a>";
-    } else if (t->error) {
+    } else if (t->error.size >= 0) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dE\">", t->num);
       closing_a = "</a>";
     } else {
@@ -6560,7 +6555,7 @@ write_xml_team_accepting_report(
       ns_aref(opening_a, sizeof(opening_a), phr, NEW_SRV_ACTION_VIEW_TEST_CHECKER,
                     "run_id=%d&test_num=%d", r->run_id, t->num);
       closing_a = "</a>";
-    } else if (t->checker) {
+    } else if (t->checker.size >= 0) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dC\">", t->num);
       closing_a = "</a>";
     } else {
@@ -6607,8 +6602,8 @@ write_xml_team_accepting_report(
   fprintf(f, "<pre>");
   for (i = 0; i < tests_to_show; i++) {
     if (!(t = r->tests[i])) continue;
-    if (!t->args && !t->args_too_long && !t->input
-        && !t->output && !t->error && !t->correct && !t->checker) continue;
+    if (!t->args && !t->args_too_long && t->input.size < 0
+        && t->output.size < 0 && t->error.size < 0 && t->correct.size < 0 && t->checker.size < 0) continue;
 
     fprintf(f, _("<b>====== Test #%d =======</b>\n"), t->num);
     if (t->args || t->args_too_long) {
@@ -6622,40 +6617,25 @@ write_xml_team_accepting_report(
         xfree(s);
       }
     }
-    if (t->input) {
+    if (t->input.size >= 0) {
       fprintf(f, "<a name=\"%dI\"></a>", t->num);
-      fprintf(f, _("<u>--- Input ---</u>\n"));
-      s = html_armor_string_dup(t->input);
-      fprintf(f, "%s", s);
-      xfree(s);
+      html_print_testing_report_file_content(f, &ab, &t->input, TESTING_REPORT_INPUT);
     }
-    if (t->output) {
+    if (t->output.size >= 0) {
       fprintf(f, "<a name=\"%dO\"></a>", t->num);
-      fprintf(f, _("<u>--- Output ---</u>\n"));
-      s = html_armor_string_dup(t->output);
-      fprintf(f, "%s", s);
-      xfree(s);
+      html_print_testing_report_file_content(f, &ab, &t->output, TESTING_REPORT_OUTPUT);
     }
-    if (t->correct) {
+    if (t->correct.size >= 0) {
       fprintf(f, "<a name=\"%dA\"></a>", t->num);
-      fprintf(f, _("<u>--- Correct ---</u>\n"));
-      s = html_armor_string_dup(t->correct);
-      fprintf(f, "%s", s);
-      xfree(s);
+      html_print_testing_report_file_content(f, &ab, &t->correct, TESTING_REPORT_CORRECT);
     }
-    if (t->error) {
+    if (t->error.size >= 0) {
       fprintf(f, "<a name=\"%dE\"></a>", t->num);
-      fprintf(f, _("<u>--- Stderr ---</u>\n"));
-      s = html_armor_string_dup(t->error);
-      fprintf(f, "%s", s);
-      xfree(s);
+      html_print_testing_report_file_content(f, &ab, &t->error, TESTING_REPORT_ERROR);
     }
-    if (t->checker) {
+    if (t->checker.size >= 0) {
       fprintf(f, "<a name=\"%dC\"></a>", t->num);
-      fprintf(f, _("<u>--- Checker output ---</u>\n"));
-      s = html_armor_string_dup(t->checker);
-      fprintf(f, "%s", s);
-      xfree(s);
+      html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
     }
   }
   fprintf(f, "</pre>");
@@ -7081,7 +7061,7 @@ write_xml_testing_report(
       ns_aref(opening_a, sizeof(opening_a), phr, NEW_SRV_ACTION_VIEW_TEST_INPUT,
               "run_id=%d&test_num=%d", r->run_id, t->num);
       closing_a = "</a>";
-    } else if (t->input) {
+    } else if (t->input.size >= 0) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dI\">", t->num);
       closing_a = "</a>";
     } else {
@@ -7094,7 +7074,7 @@ write_xml_testing_report(
       ns_aref(opening_a, sizeof(opening_a), phr, NEW_SRV_ACTION_VIEW_TEST_OUTPUT,
               "run_id=%d&test_num=%d", r->run_id, t->num);
       closing_a = "</a>";
-    } else if (t->output) {
+    } else if (t->output.size >= 0) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dO\">", t->num);
       closing_a = "</a>";
     } else {
@@ -7107,7 +7087,7 @@ write_xml_testing_report(
       ns_aref(opening_a, sizeof(opening_a), phr, NEW_SRV_ACTION_VIEW_TEST_ANSWER,
               "run_id=%d&test_num=%d", r->run_id, t->num);
       closing_a = "</a>";
-    } else if (t->correct) {
+    } else if (t->correct.size >= 0) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dA\">", t->num);
       closing_a = "</a>";
     } else {
@@ -7120,7 +7100,7 @@ write_xml_testing_report(
       ns_aref(opening_a, sizeof(opening_a), phr, NEW_SRV_ACTION_VIEW_TEST_ERROR,
               "run_id=%d&test_num=%d", r->run_id, t->num);
       closing_a = "</a>";
-    } else if (t->error) {
+    } else if (t->error.size >= 0) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dE\">", t->num);
       closing_a = "</a>";
     } else {
@@ -7133,7 +7113,7 @@ write_xml_testing_report(
       ns_aref(opening_a, sizeof(opening_a), phr, NEW_SRV_ACTION_VIEW_TEST_CHECKER,
               "run_id=%d&test_num=%d", r->run_id, t->num);
       closing_a = "</a>";
-    } else if (t->checker) {
+    } else if (t->checker.size >= 0) {
       snprintf(opening_a, sizeof(opening_a), "<a href=\"#%dC\">", t->num);
       closing_a = "</a>";
     } else {
@@ -7180,8 +7160,8 @@ write_xml_testing_report(
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
     if (t->status == RUN_SKIPPED) continue;
-    if (!t->args && !t->args_too_long && !t->input
-        && !t->output && !t->error && !t->correct && !t->checker) continue;
+    if (!t->args && !t->args_too_long && t->input.size < 0
+        && t->output.size < 0 && t->error.size < 0 && t->correct.size < 0 && t->checker.size < 0) continue;
 
     fprintf(f, _("<b>====== Test #%d =======</b>\n"), t->num);
     if (t->args || t->args_too_long) {
@@ -7195,40 +7175,25 @@ write_xml_testing_report(
         xfree(s);
       }
     }
-    if (t->input) {
+    if (t->input.size >= 0) {
       fprintf(f, "<a name=\"%dI\"></a>", t->num);
-      fprintf(f, _("<u>--- Input ---</u>\n"));
-      s = html_armor_string_dup(t->input);
-      fprintf(f, "%s", s);
-      xfree(s);
+      html_print_testing_report_file_content(f, &ab, &t->input, TESTING_REPORT_INPUT);
     }
-    if (t->output) {
+    if (t->output.size >= 0) {
       fprintf(f, "<a name=\"%dO\"></a>", t->num);
-      fprintf(f, _("<u>--- Output ---</u>\n"));
-      s = html_armor_string_dup(t->output);
-      fprintf(f, "%s", s);
-      xfree(s);
+      html_print_testing_report_file_content(f, &ab, &t->output, TESTING_REPORT_OUTPUT);
     }
-    if (t->correct) {
+    if (t->correct.size >= 0) {
       fprintf(f, "<a name=\"%dA\"></a>", t->num);
-      fprintf(f, _("<u>--- Correct ---</u>\n"));
-      s = html_armor_string_dup(t->correct);
-      fprintf(f, "%s", s);
-      xfree(s);
+      html_print_testing_report_file_content(f, &ab, &t->correct, TESTING_REPORT_CORRECT);
     }
-    if (t->error) {
+    if (t->error.size >= 0) {
       fprintf(f, "<a name=\"%dE\"></a>", t->num);
-      fprintf(f, _("<u>--- Stderr ---</u>\n"));
-      s = html_armor_string_dup(t->error);
-      fprintf(f, "%s", s);
-      xfree(s);
+      html_print_testing_report_file_content(f, &ab, &t->error, TESTING_REPORT_ERROR);
     }
-    if (t->checker) {
+    if (t->checker.size >= 0) {
       fprintf(f, "<a name=\"%dC\"></a>", t->num);
-      fprintf(f, _("<u>--- Checker output ---</u>\n"));
-      s = html_armor_string_dup(t->checker);
-      fprintf(f, "%s", s);
-      xfree(s);
+      html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
     }
   }
   fprintf(f, "</pre>");

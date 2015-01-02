@@ -37,6 +37,7 @@
 #include "ejudge/ej_process.h"
 #include "ejudge/testing_report_xml.h"
 #include "ejudge/ej_uuid.h"
+#include "ejudge/base64.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -119,6 +120,60 @@ prepare_checker_comment(int utf8_mode, const unsigned char *str)
   cmt = html_armor_string_dup(wstr);
   xfree(wstr);
   return cmt;
+}
+
+static int
+need_base64(unsigned char *data, long long size)
+{
+  if (!data) return 0;
+  if (size > 1000000000) return 1;
+  long sz = size;
+  for (int i = 0; i < sz; ++i) {
+    unsigned char c = data[i];
+    if (c == 127) {
+      return 1;
+    } else if (c >= ' ' || c == '\t' || c == '\n' || c == '\r') {
+    } else {
+      return 1;
+    }
+  }
+  return 0;
+}
+
+static void
+make_file_content(
+        struct testing_report_file_content *fc,
+        const struct super_run_in_global_packet *srgp,
+        unsigned char *data,
+        long long size)
+{
+  if (size < 0) {
+    fc->size = -1;
+    fc->orig_size = -1;
+    fc->data = NULL;
+    fc->is_too_big = 0;
+    fc->is_base64 = 0;
+  } else if (size > srgp->max_file_length) {
+    fc->is_too_big = 1;
+    fc->size = 0;
+    fc->orig_size = size;
+    fc->data = NULL;
+    fc->is_base64 = 0;
+  } else if (need_base64(data, size)) {
+    fc->is_too_big = 0;
+    fc->is_base64 = 1;
+    fc->orig_size = -1;
+    fc->size = size;
+    fc->data = xmalloc(size * 4 / 3 + 64);
+    int len = base64_encode(data, size, fc->data);
+    fc->data[len] = 0;
+  } else {
+    fc->is_too_big = 0;
+    fc->is_base64 = 0;
+    fc->size = size;
+    fc->orig_size = -1;
+    fc->data = xmemdup(data, size);
+  }
 }
 
 static int
@@ -315,46 +370,11 @@ generate_xml_report(
       trt->args = xstrdup(tests[i].args);
     }
     if (srgp->enable_full_archive <= 0) {
-      if (tests[i].input_size >= 0) {
-        trt->input = xmemdup(tests[i].input, tests[i].input_size);
-        trt->input_size = tests[i].input_size;
-        /*
-        trt->input = html_print_by_line_str(utf8_mode, srgp->max_file_length, srgp->max_line_length,
-                                            tests[i].input, tests[i].input_size);
-        */
-      }
-      if (tests[i].output_size >= 0) {
-        trt->output = xmemdup(tests[i].output, tests[i].output_size);
-        trt->output_size = tests[i].output_size;
-        /*
-        trt->output = html_print_by_line_str(utf8_mode, srgp->max_file_length, srgp->max_line_length,
-                                             tests[i].output, tests[i].output_size);
-        */
-      }
-      if (tests[i].correct_size >= 0) {
-        trt->correct = xmemdup(tests[i].correct, tests[i].correct_size);
-        trt->correct_size = tests[i].correct_size;
-        /*
-        trt->correct = html_print_by_line_str(utf8_mode, srgp->max_file_length, srgp->max_line_length,
-                                              tests[i].correct, tests[i].correct_size);
-        */
-      }
-      if (tests[i].error_size >= 0) {
-        trt->error = xmemdup(tests[i].error, tests[i].error_size);
-        trt->error_size = tests[i].error_size;
-        /*
-        trt->error = html_print_by_line_str(utf8_mode, srgp->max_file_length, srgp->max_line_length,
-                                            tests[i].error, tests[i].error_size);
-        */
-      }
-      if (tests[i].chk_out_size >= 0) {
-        trt->checker = xmemdup(tests[i].chk_out, tests[i].chk_out_size);
-        trt->checker_size = tests[i].chk_out_size;
-        /*
-        trt->checker = html_print_by_line_str(utf8_mode, srgp->max_file_length, srgp->max_line_length,
-                                              tests[i].chk_out, tests[i].chk_out_size);
-        */
-      }
+      make_file_content(&trt->input, srgp, tests[i].input, tests[i].input_size);
+      make_file_content(&trt->output, srgp, tests[i].output, tests[i].output_size);
+      make_file_content(&trt->correct, srgp, tests[i].correct, tests[i].correct_size);
+      make_file_content(&trt->error, srgp, tests[i].error, tests[i].error_size);
+      make_file_content(&trt->checker, srgp, tests[i].chk_out, tests[i].chk_out_size);
     }
   }
 

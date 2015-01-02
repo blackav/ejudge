@@ -20,6 +20,25 @@
 
 #include <stdio.h>
 
+// outputs preserved in the testing report
+enum
+{
+  TESTING_REPORT_INPUT,
+  TESTING_REPORT_OUTPUT,
+  TESTING_REPORT_CORRECT,
+  TESTING_REPORT_ERROR,
+  TESTING_REPORT_CHECKER
+};
+
+struct testing_report_file_content
+{
+  long long      size;
+  long long      orig_size;
+  unsigned char *data;
+  int            is_too_big;
+  int            is_base64;
+};
+
 struct testing_report_test
 {
   int num;
@@ -52,24 +71,15 @@ struct testing_report_test
   unsigned char *args;
 
   /* input data for the program */
-  unsigned char *input;
-  long long input_size;
-
+  struct testing_report_file_content input;
   /* output data */
-  unsigned char *output;
-  long long output_size;
-
+  struct testing_report_file_content output;
   /* correct answer */
-  unsigned char *correct;
-  long long correct_size;
-
+  struct testing_report_file_content correct;
   /* stderr */
-  unsigned char *error;
-  long long error_size;
-
+  struct testing_report_file_content error;
   /* checker output */
-  unsigned char *checker;
-  long long checker_size;
+  struct testing_report_file_content checker;
 };
 
 struct testing_report_row

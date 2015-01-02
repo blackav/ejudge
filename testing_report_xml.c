@@ -147,6 +147,10 @@ enum
   TR_A_USER_RUN_TESTS,
   TR_A_COMPILE_ERROR,
   TR_A_CONTEST_ID,
+  TR_A_SIZE,
+  TR_A_TOO_BIG,
+  TR_A_ORIGINAL_SIZE,
+  TR_A_BASE64,
 
   TR_A_LAST_ATTR,
 };
@@ -233,6 +237,10 @@ static const char * const attr_map[] =
   [TR_A_USER_RUN_TESTS] = "user-run-tests",
   [TR_A_COMPILE_ERROR] = "compile-error",
   [TR_A_CONTEST_ID] = "contest-id",
+  [TR_A_SIZE] = "size",
+  [TR_A_TOO_BIG] = "too-big",
+  [TR_A_ORIGINAL_SIZE] = "original-size",
+  [TR_A_BASE64] = "base64",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -270,6 +278,86 @@ parse_scoring(const unsigned char *str, int *px)
 }
 
 static struct testing_report_test * testing_report_test_free(struct testing_report_test *p);
+
+static int
+parse_file(
+        struct xml_tree *t,
+        struct testing_report_file_content *fc)
+{
+  long long size = -1;
+  int oversized = 0;
+  long long orig_size = -1;
+  int base64 = 0;
+  for (struct xml_attr *a = t->first; a; a = a->next) {
+    switch (a->tag) {
+    case TR_A_SIZE:
+      {
+        long long x = -1;
+        if (xml_attr_long_long(a, &x) < 0) goto failure;
+        if (x < 0) {
+          xml_err_attr_invalid(a);
+          goto failure;
+        }
+        size = x;
+      }
+      break;
+    case TR_A_TOO_BIG:
+      {
+        int x;
+        if (xml_attr_bool(a, &x) < 0) goto failure;
+        oversized = x;
+      }
+      break;
+    case TR_A_ORIGINAL_SIZE:
+      {
+        long long x = -1;
+        if (xml_attr_long_long(a, &x) < 0) goto failure;
+        if (x < 0) {
+          xml_err_attr_invalid(a);
+          goto failure;
+        }
+        orig_size = x;
+      }
+      break;
+    case TR_A_BASE64:
+      {
+        int x;
+        if (xml_attr_bool(a, &x) < 0) goto failure;
+        base64 = x;
+      }
+      break;
+    default:
+      xml_err_attr_not_allowed(t, a);
+      goto failure;
+    }
+  }
+  if (t->first_down) {
+    xml_err_nested_elems(t);
+    goto failure;
+  }
+  if (oversized) {
+    if (orig_size < 0) {
+      orig_size = 0;
+    }
+    fc->data = NULL;
+    fc->size = -1;
+    fc->is_too_big = oversized;
+    fc->orig_size = orig_size;
+    fc->is_base64 = 0;
+  } else {
+    if (size < 0) size = strlen(t->text);
+    fc->data = t->text; t->text = 0;
+    fc->size = size;
+    fc->is_too_big = 0;
+    fc->orig_size = -1;
+    fc->is_base64 = base64;
+  }
+
+  return 0;
+
+failure:
+  return -1;
+}
 
 static int
 parse_test(struct xml_tree *t, testing_report_xml_t r)
@@ -461,19 +549,19 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       if (xml_leaf_elem(t2, &q->args, 1, 1) < 0) goto failure;
       break;
     case TR_T_INPUT:
-      if (xml_leaf_elem(t2, &q->input, 1, 1) < 0) goto failure;
+      if (parse_file(t2, &q->input) < 0) goto failure;
       break;
     case TR_T_OUTPUT:
-      if (xml_leaf_elem(t2, &q->output, 1, 1) < 0) goto failure;
+      if (parse_file(t2, &q->output) < 0) goto failure;
       break;
     case TR_T_CORRECT:
-      if (xml_leaf_elem(t2, &q->correct, 1, 1) < 0) goto failure;
+      if (parse_file(t2, &q->correct) < 0) goto failure;
       break;
     case TR_T_STDERR:
-      if (xml_leaf_elem(t2, &q->error, 1, 1) < 0) goto failure;
+      if (parse_file(t2, &q->error) < 0) goto failure;
       break;
     case TR_T_CHECKER:
-      if (xml_leaf_elem(t2, &q->checker, 1, 1) < 0) goto failure;
+      if (parse_file(t2, &q->checker) < 0) goto failure;
       break;
 
     default:
@@ -1170,11 +1258,11 @@ testing_report_test_free(struct testing_report_test *p)
   xfree(p->exit_comment); p->exit_comment = 0;
 
   xfree(p->args); p->args = 0;
-  xfree(p->input); p->input = 0;
-  xfree(p->output); p->output = 0;
-  xfree(p->correct); p->correct = 0;
-  xfree(p->error); p->error = 0;
-  xfree(p->checker); p->checker = 0;
+  xfree(p->input.data); p->input.data = 0;
+  xfree(p->output.data); p->output.data = 0;
+  xfree(p->correct.data); p->correct.data = 0;
+  xfree(p->error.data); p->error.data = 0;
+  xfree(p->checker.data); p->checker.data = 0;
 
   xfree(p);
   return 0;
@@ -1239,11 +1327,16 @@ testing_report_test_alloc(int num, int status)
   struct testing_report_test *trt = calloc(1, sizeof(*trt));
   trt->num = num;
   trt->status = status;
-  trt->input_size = -1;
-  trt->output_size = -1;
-  trt->correct_size = -1;
-  trt->error_size = -1;
-  trt->checker_size = -1;
+  trt->input.size = -1;
+  trt->input.orig_size = -1;
+  trt->output.size = -1;
+  trt->output.orig_size = -1;
+  trt->correct.size = -1;
+  trt->correct.orig_size = -1;
+  trt->error.size = -1;
+  trt->error.orig_size = -1;
+  trt->checker.size = -1;
+  trt->checker.orig_size = -1;
   return trt;
 }
 
@@ -1323,19 +1416,23 @@ unparse_string_attr(
 }
 
 static void
-unparse_file_contents(
+unparse_file_content(
         FILE *out,
-        int utf8_mode,
-        int max_file_length,
-        int max_line_length,
+        struct html_armor_buffer *pab,
         int elem_index,
-        const unsigned char *str,
-        int size)
+        struct testing_report_file_content *fc)
 {
-  if (size >= 0) {
-    fprintf(out, "      <%s>", elem_map[elem_index]);
-    html_print_by_line(out, utf8_mode, max_file_length, max_line_length,
-                       str, size);
+  if (fc->size >= 0) {
+    fprintf(out, "      <%s", elem_map[elem_index]);
+    if (fc->is_too_big) {
+      unparse_bool_attr(out, TR_A_TOO_BIG, 1);
+      fprintf(out, " %s=\"%lld\"", attr_map[TR_A_ORIGINAL_SIZE], fc->orig_size);
+    } else {
+      fprintf(out, " %s=\"%lld\"", attr_map[TR_A_SIZE], fc->size);
+      unparse_bool_attr(out, TR_A_BASE64, fc->is_base64);
+    }
+    fprintf(out, ">");
+    fprintf(out, "%s", html_armor_buf(pab, fc->data));
     fprintf(out, "</%s>\n", elem_map[elem_index]);
   }
 }
@@ -1513,16 +1610,11 @@ testing_report_unparse_xml(
 
       unparse_string_elem(out, &ab, TR_T_ARGS, t->args);
 
-      unparse_file_contents(out, utf8_mode, max_file_length, max_line_length,
-                            TR_T_INPUT, t->input, t->input_size);
-      unparse_file_contents(out, utf8_mode, max_file_length, max_line_length,
-                            TR_T_OUTPUT, t->output, t->output_size);
-      unparse_file_contents(out, utf8_mode, max_file_length, max_line_length,
-                            TR_T_CORRECT, t->correct, t->correct_size);
-      unparse_file_contents(out, utf8_mode, max_file_length, max_line_length,
-                            TR_T_STDERR, t->error, t->error_size);
-      unparse_file_contents(out, utf8_mode, max_file_length, max_line_length,
-                            TR_T_CHECKER, t->checker, t->checker_size);
+      unparse_file_content(out, &ab, TR_T_INPUT, &t->input);
+      unparse_file_content(out, &ab, TR_T_OUTPUT, &t->output);
+      unparse_file_content(out, &ab, TR_T_CORRECT, &t->correct);
+      unparse_file_content(out, &ab, TR_T_STDERR, &t->error);
+      unparse_file_content(out, &ab, TR_T_CHECKER, &t->checker);
       fprintf(out, "    </%s>\n", elem_map[TR_T_TEST]);
     }
     fprintf(out, "  </%s>\n", elem_map[TR_T_TESTS]);
