@@ -1,12 +1,12 @@
 # -*- mode: po; coding: UTF-8 -*-
 # ejudge messages catalog
-# Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-02 12:31+0300\n"
+"POT-Creation-Date: 2015-01-02 22:09+0300\n"
 "PO-Revision-Date: 2015-01-02 12:27+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -310,10 +310,6 @@ msgstr ""
 msgid "<p>You may define up to %d members.</p>"
 msgstr "<p>Вы можете добавить до %d членов команды.</p>"
 
-#, c-format
-msgid "<u>--- Checker output ---</u>\n"
-msgstr "<u>--- Вывод проверяющей программы ---</u>\n"
-
 #, fuzzy, c-format
 msgid "<u>--- Checker output: file is binary, size %lld ---</u>\n"
 msgstr "<u>--- Входные данные: файл бинарный, размер %lld ---</u>\n"
@@ -329,10 +325,6 @@ msgstr "<u>--- Вывод проверяющей программы ---</u>\n"
 #, c-format
 msgid "<u>--- Command line arguments ---</u>\n"
 msgstr "<u>--- Аргументы командной строки ---</u>\n"
-
-#, c-format
-msgid "<u>--- Correct ---</u>\n"
-msgstr "<u>--- Правильный ответ ---</u>\n"
 
 #, fuzzy, c-format
 msgid "<u>--- Correct: file is binary, size %lld ---</u>\n"
@@ -358,10 +350,6 @@ msgstr "<u>--- Входные данные: файл слишком велик, 
 msgid "<u>--- Input: size %lld ---</u>\n"
 msgstr "<u>--- Входные данные: размер %lld ---</u>\n"
 
-#, c-format
-msgid "<u>--- Output ---</u>\n"
-msgstr "<u>--- Результат работы программы ---</u>\n"
-
 #, fuzzy, c-format
 msgid "<u>--- Output: file is binary, size %lld ---</u>\n"
 msgstr "<u>--- Входные данные: файл бинарный, размер %lld ---</u>\n"
@@ -373,10 +361,6 @@ msgstr "<u>--- Входные данные: файл слишком велик, 
 #, fuzzy, c-format
 msgid "<u>--- Output: size %lld ---</u>\n"
 msgstr "<u>--- Входные данные: размер %lld ---</u>\n"
-
-#, c-format
-msgid "<u>--- Stderr ---</u>\n"
-msgstr "<u>--- Ошибки ---</u>\n"
 
 #, fuzzy, c-format
 msgid "<u>--- Stderr: file is binary, size %lld ---</u>\n"
