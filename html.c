@@ -4477,9 +4477,41 @@ html_print_testing_report_file_content(
     }
     break;
   case TESTING_REPORT_OUTPUT:
+    if (fc->is_too_big) {
+      fprintf(out_f, _("<u>--- Output: file is too large, original size %lld ---</u>\n"), fc->orig_size);
+    } else if (fc->is_base64) {
+      fprintf(out_f, _("<u>--- Output: file is binary, size %lld ---</u>\n"), fc->size);
+    } else {
+      fprintf(out_f, _("<u>--- Output: size %lld ---</u>\n"), fc->size);
+    }
+    break;
   case TESTING_REPORT_CORRECT:
+    if (fc->is_too_big) {
+      fprintf(out_f, _("<u>--- Correct: file is too large, original size %lld ---</u>\n"), fc->orig_size);
+    } else if (fc->is_base64) {
+      fprintf(out_f, _("<u>--- Correct: file is binary, size %lld ---</u>\n"), fc->size);
+    } else {
+      fprintf(out_f, _("<u>--- Correct: size %lld ---</u>\n"), fc->size);
+    }
+    break;
   case TESTING_REPORT_ERROR:
+    if (fc->is_too_big) {
+      fprintf(out_f, _("<u>--- Stderr: file is too large, original size %lld ---</u>\n"), fc->orig_size);
+    } else if (fc->is_base64) {
+      fprintf(out_f, _("<u>--- Stderr: file is binary, size %lld ---</u>\n"), fc->size);
+    } else {
+      fprintf(out_f, _("<u>--- Stderr: size %lld ---</u>\n"), fc->size);
+    }
+    break;
   case TESTING_REPORT_CHECKER:
+    if (fc->is_too_big) {
+      fprintf(out_f, _("<u>--- Checker output: file is too large, original size %lld ---</u>\n"), fc->orig_size);
+    } else if (fc->is_base64) {
+      fprintf(out_f, _("<u>--- Checker output: file is binary, size %lld ---</u>\n"), fc->size);
+    } else {
+      fprintf(out_f, _("<u>--- Checker output: size %lld ---</u>\n"), fc->size);
+    }
+    break;
   default:
     abort();
   }
