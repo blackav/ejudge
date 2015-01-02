@@ -4519,13 +4519,16 @@ html_print_testing_report_file_content(
   if (fc->is_too_big) {
   } else if (fc->is_base64) {
     const unsigned char * const *at = html_get_armor_table();
+    int b64len = strlen(fc->data);
+    unsigned char *data = xmalloc(b64len + 1);
+    int size = base64_decode(fc->data, b64len, data, NULL);
 
-    for (int offset = 0; offset < fc->size; offset += 16) {
+    for (int offset = 0; offset < size; offset += 16) {
       fprintf(out_f, "%06x", offset);
       for (int i = 0; i < 16; ++i) {
         int off2 = offset + i;
-        if (off2 < fc->size) {
-          fprintf(out_f, " %02x", fc->data[off2]);
+        if (off2 < size) {
+          fprintf(out_f, " %02x", data[off2]);
         } else {
           fprintf(out_f, "   ");
         }
@@ -4533,13 +4536,13 @@ html_print_testing_report_file_content(
       fprintf(out_f, " ");
       for (int i = 0; i < 16; ++i) {
         int off2 = offset + i;
-        if (off2 < fc->size) {
-          if (fc->data[off2] >= ' ' && fc->data[off2] < 127) {
-            const unsigned char *ate = at[fc->data[off2]];
+        if (off2 < size) {
+          if (data[off2] >= ' ' && data[off2] < 127) {
+            const unsigned char *ate = at[data[off2]];
             if (ate) {
               fprintf(out_f, "%s", ate);
             } else {
-              putc(fc->data[off2], out_f);
+              putc(data[off2], out_f);
             }
           } else {
             fprintf(out_f, ".");
@@ -4550,6 +4553,7 @@ html_print_testing_report_file_content(
       }
       fprintf(out_f, "\n");
     }
+    xfree(data);
   } else {
     fprintf(out_f, "%s", html_armor_buf(pab, fc->data));
   }
