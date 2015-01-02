@@ -242,4 +242,13 @@ enum
   | (1 << RUN_VIEW_SCORE)
 };
 
+struct testing_report_file_content;
+struct html_armor_buffer;
+void
+html_print_testing_report_file_content(
+        FILE *out_f,
+        struct html_armor_buffer *pab,
+        struct testing_report_file_content *fc,
+        int type);
+
 #endif /* __HTML_H__ */

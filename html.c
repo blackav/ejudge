@@ -4458,3 +4458,67 @@ write_public_log(
                     SAFE, stat_dir, name, "");
   return;
 }
+
+void
+html_print_testing_report_file_content(
+        FILE *out_f,
+        struct html_armor_buffer *pab,
+        struct testing_report_file_content *fc,
+        int type)
+{
+  switch (type) {
+  case TESTING_REPORT_INPUT:
+    if (fc->is_too_big) {
+      fprintf(out_f, _("<u>--- Input: file is too large, original size %lld ---</u>\n"), fc->orig_size);
+    } else if (fc->is_base64) {
+      fprintf(out_f, _("<u>--- Input: file is binary, size %lld ---</u>\n"), fc->size);
+    } else {
+      fprintf(out_f, _("<u>--- Input: size %lld ---</u>\n"), fc->size);
+    }
+    break;
+  case TESTING_REPORT_OUTPUT:
+  case TESTING_REPORT_CORRECT:
+  case TESTING_REPORT_ERROR:
+  case TESTING_REPORT_CHECKER:
+  default:
+    abort();
+  }
+
+  if (fc->is_too_big) {
+  } else if (fc->is_base64) {
+    const unsigned char * const *at = html_get_armor_table();
+
+    for (int offset = 0; offset < fc->size; offset += 16) {
+      fprintf(out_f, "%06x", offset);
+      for (int i = 0; i < 16; ++i) {
+        int off2 = offset + i;
+        if (off2 < fc->size) {
+          fprintf(out_f, " %02x", fc->data[off2]);
+        } else {
+          fprintf(out_f, "   ");
+        }
+      }
+      fprintf(out_f, " ");
+      for (int i = 0; i < 16; ++i) {
+        int off2 = offset + i;
+        if (off2 < fc->size) {
+          if (fc->data[off2] >= ' ' && fc->data[off2] < 127) {
+            const unsigned char *ate = at[fc->data[off2]];
+            if (ate) {
+              fprintf(out_f, "%s", ate);
+            } else {
+              putc(fc->data[off2], out_f);
+            }
+          } else {
+            fprintf(out_f, ".");
+          }
+        } else {
+          fprintf(out_f, " ");
+        }
+      }
+      fprintf(out_f, "\n");
+    }
+  } else {
+    fprintf(out_f, "%s", html_armor_buf(pab, fc->data));
+  }
+}
