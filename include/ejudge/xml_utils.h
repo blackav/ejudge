@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __XML_UTILS_H__
 #define __XML_UTILS_H__
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -84,6 +83,7 @@ int xml_empty_text_c(const struct xml_tree *tree);
 int xml_attr_bool(const struct xml_attr *attr, int *value_ptr);
 int xml_attr_bool_byte(struct xml_attr *attr, unsigned char *value_ptr);
 int xml_attr_int(struct xml_attr *attr, int *value_ptr);
+int xml_attr_long_long(struct xml_attr *attr, long long *value_ptr);
 int xml_attr_ulong(struct xml_attr *attr, unsigned long *value_ptr);
 int xml_attr_date(struct xml_attr *attr, time_t *value_ptr);
 
