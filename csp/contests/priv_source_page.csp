@@ -1,11 +1,11 @@
 <%
-/* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
 #include "ejudge/ej_uuid.h"
 #include "ejudge/mime_type.h"
 #include "ejudge/charsets.h"
 #include "ejudge/fileutl.h"
+#include "ejudge/testing_report_xml.h"
 %><%@set getter_name = "csp_get_priv_source_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"
@@ -35,6 +35,12 @@
   unsigned char title[1024];
   int run_id;
   int enable_main_menu = 0;
+  int rep_flag = 0;
+  path_t rep_path;
+  char *rep_text = NULL;
+  size_t rep_len = 0;
+  testing_report_xml_t tr = NULL;
+  unsigned char *compiler_output = NULL;
 
   if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0)
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
@@ -71,6 +77,30 @@
   if (start_time < 0) start_time = 0;
   if (run_time < start_time) run_time = start_time;
 
+  rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &info);
+  if (rep_flag >= 0) {
+    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0) >= 0) {
+      const unsigned char *start_ptr = NULL;
+      int content_type = get_content_type(rep_text, &start_ptr);
+      if (content_type == CONTENT_TYPE_XML && start_ptr) {
+        tr = testing_report_parse_xml(start_ptr);
+        if (tr && tr->compiler_output) {
+          compiler_output = tr->compiler_output; tr->compiler_output = NULL;
+        }
+        testing_report_free(tr); tr = NULL;
+      }
+      xfree(rep_text); rep_text = NULL; rep_len = 0;
+    }
+  }
+
+  if (!compiler_output) {
+    txt_flags = serve_make_report_read_path(cs, txt_path, sizeof(txt_path), &info);
+    if (txt_flags >= 0) {
+      if (generic_read_file(&txt_text, 0, &txt_size, txt_flags, 0, txt_path, 0) >= 0) {
+        compiler_output = txt_text; txt_text = 0; txt_size = 0;
+      }
+    }
+  }
 
   snprintf(title, sizeof(title), "%s %d", _("Viewing run"), run_id);
 %><%@include "priv_header.csp"
@@ -426,18 +456,13 @@ function setDivVisibility(oper, value)
 %>
 
 <%
-  txt_flags = serve_make_report_read_path(cs, txt_path, sizeof(txt_path), &info);
-  if (txt_flags >= 0) {
-    if (generic_read_file(&txt_text, 0, &txt_size, txt_flags, 0,
-                          txt_path, 0) >= 0) {
+  if (compiler_output && *compiler_output) {
 %>
 
 <div id="output">
-<h2><s:_>Style checker output</s:_></h2>
-<pre><s:v value="txt_text" /></pre></div>
+<h2><s:_>Compiler/style checker output</s:_></h2>
+<pre><s:v value="compiler_output" /></pre></div>
 <%
-      xfree(txt_text); txt_text = 0; txt_size = 0;
-    }
   }
 %>
 
@@ -469,4 +494,8 @@ function setDivVisibility(oper, value)
 cleanup:
   l10n_resetlocale();
   html_armor_free(&ab);
+  xfree(rep_text);
+  testing_report_free(tr);
+  xfree(compiler_output);
+  xfree(txt_text);
 %>
