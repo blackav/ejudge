@@ -2670,8 +2670,8 @@ serve_read_run_packet(
         const unsigned char *pname)
 {
   const struct section_global_data *global = state->global;
-  path_t rep_path, full_path;
-  int r, rep_flags, rep_size, full_flags, i;
+  path_t rep_path, full_path, cur_rep_path;
+  int r, rep_flags, full_flags, i, cur_rep_flag;
   struct run_entry re, pe;
   char *reply_buf = 0;          /* need char* for generic_read_file */
   size_t reply_buf_size = 0;
@@ -2684,6 +2684,13 @@ serve_read_run_packet(
   int ignore_prev_ac = 0;
   int bad_packet_line = 0;
   const unsigned char *full_suffix = "";
+  char *cur_rep_text = NULL;
+  size_t cur_rep_len = 0;
+  testing_report_xml_t cur_tr = NULL;
+  unsigned char *compiler_output = NULL;
+  char *new_rep_text = NULL;
+  size_t new_rep_len = 0;
+  testing_report_xml_t new_tr = NULL;
 
   get_current_time(&ts8, &ts8_us);
   if ((r = generic_read_file(&reply_buf, 0, &reply_buf_size, SAFE | REMOVE,
@@ -2810,23 +2817,61 @@ serve_read_run_packet(
     serve_notify_user_run_status_change(config, cnts, state, re.user_id,
                                         reply_pkt->run_id, reply_pkt->status);
   }
-  rep_size = generic_file_size(run_report_dir, pname, "");
-  if (rep_size < 0) goto failed;
+
+  // read the new testing report
+  if (generic_read_file(&new_rep_text, 0, &new_rep_len, REMOVE, run_report_dir, pname, NULL) < 0) {
+    goto failed;
+  }
+
+  // try to read the existing testing report
+  cur_rep_flag = serve_make_xml_report_read_path(state, cur_rep_path, sizeof(cur_rep_path), &re);
+  if (cur_rep_flag >= 0) {
+    if (generic_read_file(&cur_rep_text, 0, &cur_rep_len, cur_rep_flag, 0, cur_rep_path, 0) >= 0) {
+      const unsigned char *cur_start_ptr = NULL;
+      int cur_content_type = get_content_type(cur_rep_text, &cur_start_ptr);
+      if (cur_content_type == CONTENT_TYPE_XML && cur_start_ptr) {
+        cur_tr = testing_report_parse_xml(cur_start_ptr);
+        if (cur_tr && cur_tr->compiler_output) {
+          compiler_output = cur_tr->compiler_output; cur_tr->compiler_output = NULL;
+        }
+        testing_report_free(cur_tr); cur_tr = NULL;
+      }
+      xfree(cur_rep_text); cur_rep_text = NULL;
+    }
+  }
+
+  // try to merge the testing reports
+  if (compiler_output) {
+    const unsigned char *new_start_ptr = NULL;
+    int new_content_type = get_content_type(new_rep_text, &new_start_ptr);
+    if (new_content_type == CONTENT_TYPE_XML && new_start_ptr) {
+      new_tr = testing_report_parse_xml(new_start_ptr);
+      if (new_tr && !new_tr->compiler_output) {
+        new_tr->compiler_output = compiler_output; compiler_output = NULL;
+        xfree(new_rep_text); new_rep_text = NULL; new_rep_len = 0;
+        testing_report_to_str(&new_rep_text, &new_rep_len, 1, global->max_file_length, global->max_line_length, new_tr);
+      }
+      testing_report_free(new_tr); new_tr = NULL;
+      xfree(compiler_output); compiler_output = NULL;
+    }
+  }
 
   if (re.store_flags == 1) {
     rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
-                                                re.run_uuid, rep_size, DFLT_R_UUID_XML_REPORT, 0, 0);
+                                                re.run_uuid, new_rep_len, DFLT_R_UUID_XML_REPORT, 0, 0);
   } else {
     rep_flags = archive_prepare_write_path(state, rep_path, sizeof(rep_path),
                                            global->xml_report_archive_dir, reply_pkt->run_id,
-                                           rep_size, NULL, 0, 0);
+                                           new_rep_len, NULL, 0, 0);
   }
   if (rep_flags < 0)
     goto failed;
 
-  if (generic_copy_file(REMOVE, run_report_dir, pname, "",
-                        rep_flags, 0, rep_path, "") < 0)
+  // save the new testing report
+  if (generic_write_file(new_rep_text, new_rep_len, rep_flags, 0, rep_path, 0) < 0) {
     goto failed;
+  }
+
   if (global->enable_full_archive) {
     full_flags = -1;
     if (generic_file_size(run_full_archive_dir, pname, ".zip") >= 0) {
@@ -2906,6 +2951,11 @@ serve_read_run_packet(
   }
 
   run_reply_packet_free(reply_pkt);
+  testing_report_free(cur_tr);
+  testing_report_free(new_tr);
+  xfree(cur_rep_text);
+  xfree(compiler_output);
+  xfree(new_rep_text);
 
   return 1;
 
@@ -2915,6 +2965,11 @@ serve_read_run_packet(
  failed:
   xfree(reply_buf);
   run_reply_packet_free(reply_pkt);
+  testing_report_free(cur_tr);
+  testing_report_free(new_tr);
+  xfree(cur_rep_text);
+  xfree(compiler_output);
+  xfree(new_rep_text);
   return 0;
 }
 
