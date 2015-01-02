@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 2.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-12-31 01:12+0300\n"
-"PO-Revision-Date: 2014-12-31 19:10+0300\n"
+"POT-Creation-Date: 2015-01-02 12:31+0300\n"
+"PO-Revision-Date: 2015-01-02 12:27+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -314,6 +314,18 @@ msgstr "<p>Вы можете добавить до %d членов команд�
 msgid "<u>--- Checker output ---</u>\n"
 msgstr "<u>--- Вывод проверяющей программы ---</u>\n"
 
+#, fuzzy, c-format
+msgid "<u>--- Checker output: file is binary, size %lld ---</u>\n"
+msgstr "<u>--- Входные данные: файл бинарный, размер %lld ---</u>\n"
+
+#, fuzzy, c-format
+msgid "<u>--- Checker output: file is too large, original size %lld ---</u>\n"
+msgstr "<u>--- Входные данные: файл слишком велик, размер %lld ---</u>\n"
+
+#, fuzzy, c-format
+msgid "<u>--- Checker output: size %lld ---</u>\n"
+msgstr "<u>--- Вывод проверяющей программы ---</u>\n"
+
 #, c-format
 msgid "<u>--- Command line arguments ---</u>\n"
 msgstr "<u>--- Аргументы командной строки ---</u>\n"
@@ -322,17 +334,61 @@ msgstr "<u>--- Аргументы командной строки ---</u>\n"
 msgid "<u>--- Correct ---</u>\n"
 msgstr "<u>--- Правильный ответ ---</u>\n"
 
+#, fuzzy, c-format
+msgid "<u>--- Correct: file is binary, size %lld ---</u>\n"
+msgstr "<u>--- Входные данные: файл бинарный, размер %lld ---</u>\n"
+
+#, fuzzy, c-format
+msgid "<u>--- Correct: file is too large, original size %lld ---</u>\n"
+msgstr "<u>--- Входные данные: файл слишком велик, размер %lld ---</u>\n"
+
+#, fuzzy, c-format
+msgid "<u>--- Correct: size %lld ---</u>\n"
+msgstr "<u>--- Входные данные: размер %lld ---</u>\n"
+
 #, c-format
-msgid "<u>--- Input ---</u>\n"
-msgstr "<u>--- Входные данные ---</u>\n"
+msgid "<u>--- Input: file is binary, size %lld ---</u>\n"
+msgstr "<u>--- Входные данные: файл бинарный, размер %lld ---</u>\n"
+
+#, c-format
+msgid "<u>--- Input: file is too large, original size %lld ---</u>\n"
+msgstr "<u>--- Входные данные: файл слишком велик, размер %lld ---</u>\n"
+
+#, c-format
+msgid "<u>--- Input: size %lld ---</u>\n"
+msgstr "<u>--- Входные данные: размер %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Output ---</u>\n"
 msgstr "<u>--- Результат работы программы ---</u>\n"
 
+#, fuzzy, c-format
+msgid "<u>--- Output: file is binary, size %lld ---</u>\n"
+msgstr "<u>--- Входные данные: файл бинарный, размер %lld ---</u>\n"
+
+#, fuzzy, c-format
+msgid "<u>--- Output: file is too large, original size %lld ---</u>\n"
+msgstr "<u>--- Входные данные: файл слишком велик, размер %lld ---</u>\n"
+
+#, fuzzy, c-format
+msgid "<u>--- Output: size %lld ---</u>\n"
+msgstr "<u>--- Входные данные: размер %lld ---</u>\n"
+
 #, c-format
 msgid "<u>--- Stderr ---</u>\n"
 msgstr "<u>--- Ошибки ---</u>\n"
+
+#, fuzzy, c-format
+msgid "<u>--- Stderr: file is binary, size %lld ---</u>\n"
+msgstr "<u>--- Входные данные: файл бинарный, размер %lld ---</u>\n"
+
+#, fuzzy, c-format
+msgid "<u>--- Stderr: file is too large, original size %lld ---</u>\n"
+msgstr "<u>--- Входные данные: файл слишком велик, размер %lld ---</u>\n"
+
+#, fuzzy, c-format
+msgid "<u>--- Stderr: size %lld ---</u>\n"
+msgstr "<u>--- Входные данные: размер %lld ---</u>\n"
 
 msgid "A request parameter is invalid. Please, contact the site administrator."
 msgstr ""

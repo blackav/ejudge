@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-12-31 19:14+0300\n"
+"POT-Creation-Date: 2015-01-02 12:31+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -261,6 +261,18 @@ msgid "<u>--- Checker output ---</u>\n"
 msgstr ""
 
 #, c-format
+msgid "<u>--- Checker output: file is binary, size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Checker output: file is too large, original size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Checker output: size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
 msgid "<u>--- Command line arguments ---</u>\n"
 msgstr ""
 
@@ -269,7 +281,27 @@ msgid "<u>--- Correct ---</u>\n"
 msgstr ""
 
 #, c-format
-msgid "<u>--- Input ---</u>\n"
+msgid "<u>--- Correct: file is binary, size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Correct: file is too large, original size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Correct: size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Input: file is binary, size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Input: file is too large, original size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Input: size %lld ---</u>\n"
 msgstr ""
 
 #, c-format
@@ -277,7 +309,31 @@ msgid "<u>--- Output ---</u>\n"
 msgstr ""
 
 #, c-format
+msgid "<u>--- Output: file is binary, size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Output: file is too large, original size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Output: size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
 msgid "<u>--- Stderr ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Stderr: file is binary, size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Stderr: file is too large, original size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Stderr: size %lld ---</u>\n"
 msgstr ""
 
 msgid "A request parameter is invalid. Please, contact the site administrator."
