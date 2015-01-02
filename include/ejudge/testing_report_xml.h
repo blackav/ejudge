@@ -53,23 +53,23 @@ struct testing_report_test
 
   /* input data for the program */
   unsigned char *input;
-  int input_size;
+  long long input_size;
 
   /* output data */
   unsigned char *output;
-  int output_size;
+  long long output_size;
 
   /* correct answer */
   unsigned char *correct;
-  int correct_size;
+  long long correct_size;
 
   /* stderr */
   unsigned char *error;
-  int error_size;
+  long long error_size;
 
   /* checker output */
   unsigned char *checker;
-  int checker_size;
+  long long checker_size;
 };
 
 struct testing_report_row
