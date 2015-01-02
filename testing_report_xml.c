@@ -1576,3 +1576,46 @@ testing_report_unparse_xml(
   fprintf(out, "</%s>\n", elem_map[TR_T_TESTING_REPORT]);
   html_armor_free(&ab);
 }
+
+void
+testing_report_to_str(
+        char **pstr,
+        size_t *psize,
+        int utf8_mode,
+        int max_file_length,
+        int max_line_length,
+        testing_report_xml_t r)
+{
+  FILE *f = open_memstream(pstr, psize);
+  fprintf(f, "Content-type: text/xml\n\n");
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
+  testing_report_unparse_xml(f, utf8_mode, max_file_length, max_line_length, r);
+  fclose(f); f = NULL;
+}
+
+int
+testing_report_to_file(
+        const unsigned char *path,
+        int utf8_mode,
+        int max_file_length,
+        int max_line_length,
+        testing_report_xml_t r)
+{
+  FILE *f = fopen(path, "w");
+  if (!f) {
+    return -1;
+  }
+  fprintf(f, "Content-type: text/xml\n\n");
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
+  testing_report_unparse_xml(f, utf8_mode, max_file_length, max_line_length, r);
+  if (ferror(f)) {
+    fclose(f);
+    return -1;
+  }
+  if (fflush(f) < 0) {
+    fclose(f);
+    return -1;
+  }
+  fclose(f); f = NULL;
+  return 0;
+}

@@ -1047,7 +1047,7 @@ run_inverse_testing(
   path_t exe_path;
   path_t extra_path;
   path_t log_path;
-  FILE *log_f = 0, *rep_f = 0;
+  FILE *log_f = 0;
   unsigned char *log_text = 0;
   size_t log_size = 0;
   struct testing_report_cell ***tt_cells = 0, *tt_cell = 0;
@@ -1386,16 +1386,10 @@ cleanup:
   reply_pkt->ts7 = reply_pkt->ts6;
   reply_pkt->ts7_us = reply_pkt->ts6_us;
 
-  if ((rep_f = fopen(report_path, "w"))) {
-    fprintf(rep_f, "Content-type: text/xml\n\n");
-    fprintf(rep_f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
-    testing_report_unparse_xml(rep_f, utf8_mode,
-                               srgp->max_file_length,
-                               srgp->max_line_length,
-                               report_xml);
-    fclose(rep_f); rep_f = 0;
+  if (testing_report_to_file(report_path, utf8_mode, srgp->max_file_length, srgp->max_line_length, report_xml) < 0) {
+    // too late to report error
+    //perr("run_inverse_testing: failed to save file '%s'", report_path);
   }
-
   report_xml = testing_report_free(report_xml);
 
   if (log_f) {

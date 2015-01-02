@@ -148,7 +148,6 @@ generate_xml_report(
         const unsigned char *cpu_model,
         const unsigned char *cpu_mhz)
 {
-  FILE *f = 0;
   int i;
   unsigned char *msg = 0;
   const struct super_run_in_global_packet *srgp = srp->global;
@@ -359,14 +358,10 @@ generate_xml_report(
     }
   }
 
-  if (!(f = fopen(report_path, "w"))) {
-    err("generate_xml_report: cannot open protocol file %s", report_path);
+  if (testing_report_to_file(report_path, utf8_mode, srgp->max_file_length, srgp->max_line_length, tr) < 0) {
+    err("generate_xml_report: failed to save file '%s'", report_path);
     return -1;
   }
-  fprintf(f, "Content-type: text/xml\n\n");
-  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
-  testing_report_unparse_xml(f, utf8_mode, srgp->max_file_length, srgp->max_line_length, tr);
-  fclose(f); f = 0;
   testing_report_free(tr);
   return 0;
 }

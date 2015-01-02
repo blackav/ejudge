@@ -2252,11 +2252,7 @@ serve_read_compile_packet(
     memcpy(testing_report->uuid, re.run_uuid, sizeof(testing_report->uuid));
 
     xfree(txt_text); txt_text = NULL; txt_size = 0;
-    FILE *tr_f = open_memstream(&txt_text, &txt_size);
-    fprintf(tr_f, "Content-type: text/xml\n\n");
-    fprintf(tr_f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
-    testing_report_unparse_xml(tr_f, 1, global->max_file_length, global->max_line_length, testing_report);
-    fclose(tr_f); tr_f = NULL;
+    testing_report_to_str(&txt_text, &txt_size, 1, global->max_file_length, global->max_line_length, testing_report);
 
     rep_flags = uuid_archive_make_write_path(state, rep_path, sizeof(rep_path),
                                              re.run_uuid, txt_size, DFLT_R_UUID_XML_REPORT, 0);
@@ -2317,11 +2313,7 @@ serve_read_compile_packet(
     memcpy(testing_report->uuid, re.run_uuid, sizeof(testing_report->uuid));
 
     xfree(txt_text); txt_text = NULL; txt_size = 0;
-    FILE *tr_f = open_memstream(&txt_text, &txt_size);
-    fprintf(tr_f, "Content-type: text/xml\n\n");
-    fprintf(tr_f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
-    testing_report_unparse_xml(tr_f, 1, global->max_file_length, global->max_line_length, testing_report);
-    fclose(tr_f); tr_f = NULL;
+    testing_report_to_str(&txt_text, &txt_size, 1, global->max_file_length, global->max_line_length, testing_report);
 
     rep_flags = uuid_archive_make_write_path(state, rep_path, sizeof(rep_path),
                                              re.run_uuid, txt_size, DFLT_R_UUID_XML_REPORT, 0);
@@ -3128,7 +3120,6 @@ serve_report_check_failed(
 {
   const struct section_global_data *global = state->global;
   testing_report_xml_t tr = testing_report_alloc(cnts->id, run_id, 0);
-  FILE *tr_f = NULL;
   size_t tr_z = 0;
   char *tr_t = NULL;
   unsigned char tr_p[PATH_MAX];
@@ -3143,11 +3134,7 @@ serve_report_check_failed(
   tr->user_status = -1;
   tr->errors = xstrdup(error_text);
 
-  tr_f = open_memstream(&tr_t, &tr_z);
-  fprintf(tr_f, "Content-type: text/xml\n\n");
-  fprintf(tr_f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
-  testing_report_unparse_xml(tr_f, 1/*utf8_mode*/, global->max_file_length, global->max_line_length, tr);
-  fclose(tr_f); tr_f = NULL;
+  testing_report_to_str(&tr_t, &tr_z, 1/*utf8_mode*/, global->max_file_length, global->max_line_length, tr);
   tr = testing_report_free(tr);
 
   serve_audit_log(state, run_id, &re, 0, 0, 0,
