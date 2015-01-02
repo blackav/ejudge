@@ -340,7 +340,7 @@ parse_file(
       orig_size = 0;
     }
     fc->data = NULL;
-    fc->size = -1;
+    fc->size = 0;
     fc->is_too_big = oversized;
     fc->orig_size = orig_size;
     fc->is_base64 = 0;
@@ -1427,10 +1427,12 @@ unparse_file_content(
     if (fc->is_too_big) {
       unparse_bool_attr(out, TR_A_TOO_BIG, 1);
       fprintf(out, " %s=\"%lld\"", attr_map[TR_A_ORIGINAL_SIZE], fc->orig_size);
-    } else {
-      fprintf(out, " %s=\"%lld\"", attr_map[TR_A_SIZE], fc->size);
-      unparse_bool_attr(out, TR_A_BASE64, fc->is_base64);
+      fprintf(out, " />\n");
+      return;
     }
+
+    fprintf(out, " %s=\"%lld\"", attr_map[TR_A_SIZE], fc->size);
+    unparse_bool_attr(out, TR_A_BASE64, fc->is_base64);
     fprintf(out, ">");
     fprintf(out, "%s", html_armor_buf(pab, fc->data));
     fprintf(out, "</%s>\n", elem_map[elem_index]);
