@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-02 22:09+0300\n"
+"POT-Creation-Date: 2015-01-03 02:55+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -790,6 +790,9 @@ msgid "Compiled"
 msgstr ""
 
 msgid "Compiler output"
+msgstr ""
+
+msgid "Compiler/style checker output"
 msgstr ""
 
 msgid "Compiling and running"
@@ -3443,9 +3446,6 @@ msgid "Street address"
 msgstr ""
 
 msgid "Student"
-msgstr ""
-
-msgid "Style checker output"
 msgstr ""
 
 msgid "Subject"

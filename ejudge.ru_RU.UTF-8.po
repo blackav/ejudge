@@ -4,10 +4,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: ejudge 2.3\n"
+"Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-02 22:09+0300\n"
-"PO-Revision-Date: 2015-01-02 12:27+0300\n"
+"POT-Creation-Date: 2015-01-03 02:55+0300\n"
+"PO-Revision-Date: 2015-01-03 03:03+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -310,33 +310,33 @@ msgstr ""
 msgid "<p>You may define up to %d members.</p>"
 msgstr "<p>Вы можете добавить до %d членов команды.</p>"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<u>--- Checker output: file is binary, size %lld ---</u>\n"
-msgstr "<u>--- Входные данные: файл бинарный, размер %lld ---</u>\n"
+msgstr "<u>--- Вывод проверяющей программы: файл бинарный, размер %lld ---</u>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<u>--- Checker output: file is too large, original size %lld ---</u>\n"
-msgstr "<u>--- Входные данные: файл слишком велик, размер %lld ---</u>\n"
+msgstr "<u>--- Вывод проверяющей программы: файл слишком велик, размер %lld ---</u>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<u>--- Checker output: size %lld ---</u>\n"
-msgstr "<u>--- Вывод проверяющей программы ---</u>\n"
+msgstr "<u>--- Вывод проверяющей программы: размер %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Command line arguments ---</u>\n"
 msgstr "<u>--- Аргументы командной строки ---</u>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<u>--- Correct: file is binary, size %lld ---</u>\n"
-msgstr "<u>--- Входные данные: файл бинарный, размер %lld ---</u>\n"
+msgstr "<u>--- Правильный ответ: файл бинарный, размер %lld ---</u>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<u>--- Correct: file is too large, original size %lld ---</u>\n"
-msgstr "<u>--- Входные данные: файл слишком велик, размер %lld ---</u>\n"
+msgstr "<u>--- Правильный ответ: файл слишком велик, размер %lld ---</u>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<u>--- Correct: size %lld ---</u>\n"
-msgstr "<u>--- Входные данные: размер %lld ---</u>\n"
+msgstr "<u>--- Правильный ответ: размер %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Input: file is binary, size %lld ---</u>\n"
@@ -350,29 +350,29 @@ msgstr "<u>--- Входные данные: файл слишком велик, 
 msgid "<u>--- Input: size %lld ---</u>\n"
 msgstr "<u>--- Входные данные: размер %lld ---</u>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<u>--- Output: file is binary, size %lld ---</u>\n"
-msgstr "<u>--- Входные данные: файл бинарный, размер %lld ---</u>\n"
+msgstr "<u>--- Результат работы: файл бинарный, размер %lld ---</u>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<u>--- Output: file is too large, original size %lld ---</u>\n"
-msgstr "<u>--- Входные данные: файл слишком велик, размер %lld ---</u>\n"
+msgstr "<u>--- Результат работы: файл слишком велик, размер %lld ---</u>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<u>--- Output: size %lld ---</u>\n"
-msgstr "<u>--- Входные данные: размер %lld ---</u>\n"
+msgstr "<u>--- Результат работы: размер %lld ---</u>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<u>--- Stderr: file is binary, size %lld ---</u>\n"
-msgstr "<u>--- Входные данные: файл бинарный, размер %lld ---</u>\n"
+msgstr "<u>--- Поток ошибок: файл бинарный, размер %lld ---</u>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<u>--- Stderr: file is too large, original size %lld ---</u>\n"
-msgstr "<u>--- Входные данные: файл слишком велик, размер %lld ---</u>\n"
+msgstr "<u>--- Поток ошибок: файл слишком велик, размер %lld ---</u>\n"
 
-#, fuzzy, c-format
+#, c-format
 msgid "<u>--- Stderr: size %lld ---</u>\n"
-msgstr "<u>--- Входные данные: размер %lld ---</u>\n"
+msgstr "<u>--- Поток ошибок: размер %lld ---</u>\n"
 
 msgid "A request parameter is invalid. Please, contact the site administrator."
 msgstr ""
@@ -858,6 +858,9 @@ msgstr "Скомпилировано"
 
 msgid "Compiler output"
 msgstr "Вывод компилятора"
+
+msgid "Compiler/style checker output"
+msgstr "Вывод компилятора и программы проверки стиля"
 
 msgid "Compiling and running"
 msgstr "Компилируется и тестируется"
@@ -3611,9 +3614,6 @@ msgstr "Улица, дом, квартира"
 
 msgid "Student"
 msgstr "Студент"
-
-msgid "Style checker output"
-msgstr "Вывод программы проверки стиля"
 
 msgid "Subject"
 msgstr "Тема"
