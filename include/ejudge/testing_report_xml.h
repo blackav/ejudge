@@ -59,9 +59,10 @@ struct testing_report_test
   int visibility;
   unsigned long max_memory_used;
 
-  unsigned char input_digest[64];
-  unsigned char correct_digest[64];
-  unsigned char info_digest[64];
+  // digests are BINARY SHA1 (20 bytes)
+  unsigned char input_digest[32];
+  unsigned char correct_digest[32];
+  unsigned char info_digest[32];
 
   unsigned char *comment;
   unsigned char *team_comment;

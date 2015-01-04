@@ -338,15 +338,15 @@ generate_xml_report(
     if (srgp->enable_full_archive > 0) {
       if (tests[i].has_input_digest) {
         trt->has_input_digest = 1;
-        digest_to_ascii(DIGEST_SHA1, tests[i].input_digest, trt->input_digest);
+        filehash_copy(trt->input_digest, tests[i].input_digest);
       }
       if (tests[i].has_correct_digest) {
         trt->has_correct_digest = 1;
-        digest_to_ascii(DIGEST_SHA1, tests[i].correct_digest, trt->correct_digest);
+        filehash_copy(trt->correct_digest, tests[i].correct_digest);
       }
       if (tests[i].has_info_digest) {
         trt->has_info_digest = 1;
-        digest_to_ascii(DIGEST_SHA1, tests[i].info_digest, trt->info_digest);
+        filehash_copy(trt->info_digest, tests[i].info_digest);
       }
     }
     if (srgp->enable_full_archive > 0) {

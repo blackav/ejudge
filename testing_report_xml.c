@@ -374,7 +374,7 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
   }
   if (xml_empty_text(t) < 0) goto failure;
 
-  XCALLOC(p, 1);
+  p = testing_report_test_alloc(-1, -1);
   p->num = -1;
   p->status = -1;
   p->time = -1;
@@ -1416,6 +1416,20 @@ unparse_string_attr(
 }
 
 static void
+unparse_digest_attr(
+        FILE *out,
+        int attr_index,
+        const void *raw)
+{
+  const unsigned int *v = raw;
+  if (v[0] || v[1] || v[2] || v[3] || v[4]) {
+    fprintf(out, "  %s=\"", attr_map[attr_index]);
+    digest_to_file(out, DIGEST_SHA1, raw);
+    fprintf(out, "\"");
+  } 
+}
+
+static void
 unparse_file_content(
         FILE *out,
         struct html_armor_buffer *pab,
@@ -1434,7 +1448,9 @@ unparse_file_content(
     fprintf(out, " %s=\"%lld\"", attr_map[TR_A_SIZE], fc->size);
     unparse_bool_attr(out, TR_A_BASE64, fc->is_base64);
     fprintf(out, ">");
-    fprintf(out, "%s", html_armor_buf(pab, fc->data));
+    if (fc->data) {
+      fprintf(out, "%s", html_armor_buf(pab, fc->data));
+    }
     fprintf(out, "</%s>\n", elem_map[elem_index]);
   }
 }
@@ -1597,9 +1613,9 @@ testing_report_unparse_xml(
       unparse_string_attr(out, &ab, TR_A_TEAM_COMMENT, t->team_comment);
       unparse_string_attr(out, &ab, TR_A_EXIT_COMMENT, t->exit_comment);
       unparse_string_attr(out, &ab, TR_A_CHECKER_COMMENT, t->checker_comment);
-      unparse_string_attr(out, &ab, TR_A_INPUT_DIGEST, t->input_digest);
-      unparse_string_attr(out, &ab, TR_A_CORRECT_DIGEST, t->correct_digest);
-      unparse_string_attr(out, &ab, TR_A_INFO_DIGEST, t->info_digest);
+      unparse_digest_attr(out, TR_A_INPUT_DIGEST, t->input_digest);
+      unparse_digest_attr(out, TR_A_CORRECT_DIGEST, t->correct_digest);
+      unparse_digest_attr(out, TR_A_INFO_DIGEST, t->info_digest);
       unparse_bool_attr(out, TR_A_OUTPUT_AVAILABLE, t->output_available);
       unparse_bool_attr(out, TR_A_STDERR_AVAILABLE, t->stderr_available);
       unparse_bool_attr(out, TR_A_CHECKER_OUTPUT_AVAILABLE,
