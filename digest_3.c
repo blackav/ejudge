@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,6 +34,25 @@ digest_to_ascii(int kind, const void *raw, unsigned char *asc)
 
   for (i = 0; i < dlen; i++, p++, asc += 2)
     sprintf(asc, "%02x", *p);
+
+  return dlen * 2;
+}
+
+int
+digest_to_file(FILE *f, int kind, const void *raw)
+{
+  int dlen, i;
+  const unsigned char *p = (const unsigned char*) raw;
+
+  switch (kind) {
+  case DIGEST_SHA1: dlen = 20; break;
+  default:
+    SWERR(("unhandled digest type %d", kind));
+  }
+
+  for (i = 0; i < dlen; i++, p++) {
+    fprintf(f, "%02x", *p);
+  }
 
   return dlen * 2;
 }
