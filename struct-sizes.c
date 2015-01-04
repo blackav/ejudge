@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2007-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -34,6 +33,7 @@ int main(void)
   printf("run_header:            %zu\n", sizeof(struct run_header));
   printf("run_entry:             %zu\n", sizeof(struct run_entry));
   printf("clar_entry_v1:         %zu\n", sizeof(struct clar_entry_v1));
+  printf("clar_entry_v2:         %zu\n", sizeof(struct clar_entry_v2));
   printf("section_global_data:   %zu\n", sizeof(struct section_global_data));
   printf("section_problem_data:  %zu\n", sizeof(struct section_problem_data));
   printf("section_language_data: %zu\n", sizeof(struct section_language_data));

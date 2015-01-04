@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __CLARLOG_H__
 #define __CLARLOG_H__
 
-/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -82,6 +81,39 @@ struct clar_entry_v1
   unsigned char charset[CLAR_ENTRY_CHARSET_SIZE];
   unsigned char subj[CLAR_ENTRY_SUBJ_SIZE];
 };                              /* 128 */
+
+enum { CLAR_ENTRY_V2_SUBJ_SIZE = 96, CLAR_ENTRY_V2_CHARSET_SIZE = 16 };
+
+struct clar_entry_v2
+{
+  int id;                       /* 4 */
+  ruint32_t uuid[4];            /* 16 */
+  ej_size_t size;               /* 4 */
+  ej_time64_t time;             /* 8 */
+  int nsec;                     /* 4 */
+  int from;                     /* 4 */
+  int to;                       /* 4 */
+  int j_from;                   /* 4 */
+  unsigned int flags;           /* 4 */
+  unsigned char ipv6_flag;      /* 1 */
+  unsigned char hide_flag;      /* 1 */
+  unsigned char ssl_flag;       /* 1 */
+  unsigned char appeal_flag;    /* 1 */
+  union
+  {
+    ej_ip4_t ip;
+    unsigned char ipv6[16];
+  } a;                          /* 16 */
+  unsigned short locale_id;     /* 2 */
+  unsigned char _pad2[2];       /* 2 */
+  int in_reply_to;              /* 4 */ /* 1 means in clar_id 0! */
+  ruint32_t in_reply_uuid[4];   /* 16 */
+  int run_id;                   /* 4 */ /* 1 means run_id 0! */
+  ruint32_t run_uuid[4];        /* 16 */
+  unsigned char _pad3[28];      /* 28 */
+  unsigned char charset[CLAR_ENTRY_V2_CHARSET_SIZE];
+  unsigned char subj[CLAR_ENTRY_V2_SUBJ_SIZE];
+};
 
 struct ejudge_cfg;
 struct contest_desc;
