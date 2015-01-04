@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __FILEHASH_H__
 #define __FILEHASH_H__
 
-/* Copyright (C) 2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,11 +19,8 @@
 
 int filehash_get(const unsigned char *path, unsigned char *val);
 
+// copy binary SHA1
+#define filehash_copy(dst,src) (memcpy((dst), (src), 20))
+
 #endif /* __FILEHASH_H__ */
 
-/**
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */
