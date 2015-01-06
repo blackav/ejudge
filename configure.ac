@@ -1,5 +1,4 @@
-dnl $Id$
-dnl Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru>
+dnl Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru>
 
 AC_INIT(ejudge,3)
 AC_PREREQ(2.59)
@@ -405,7 +404,15 @@ AC_CHECK_LIB([curl],[curl_easy_init],[ac_cv_has_lib_libcurl=-lcurl],[ac_cv_has_l
 
 dnl check libuuid library
 AC_CHECK_HEADER([uuid/uuid.h],[ac_cv_has_libuuid=1],[ac_cv_has_libuuid=0])
+if [[ x"${ac_cv_has_libuuid}" != x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
+then
+  AC_MSG_FAILURE([please install libuuid development package])
+fi
 AC_CHECK_LIB([uuid],[uuid_parse],[ac_cv_has_lib_libuuid=-luuid],[ac_cv_has_lib_libuuid=])
+if [[ x"${ac_cv_has_libuuid}" != x1 -a x"${ac_cv_ejudge_arch}" != xwin32 ]]
+then
+  AC_MSG_FAILURE([please install libuuid development package])
+fi
 
 dnl check regex library
 AC_CHECK_HEADER([regex.h],[ac_cv_has_regex=1],[ac_cv_has_regex=0])

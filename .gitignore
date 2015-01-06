@@ -56,3 +56,5 @@ filter_expr.h
 filter_scan.c
 genmatcher
 /Makefile.in
+autom4te.cache
+struct-sizes
