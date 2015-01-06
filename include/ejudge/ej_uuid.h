@@ -25,5 +25,6 @@ void ej_uuid_generate(ruint32_t uuid[4]);
 int ej_uuid_supported(void);
 
 #define ej_uuid_is_nonempty(uuid) ((uuid)[0] || (uuid)[1] || (uuid)[2] || (uuid)[3])
+#define ej_uuid_copy(dst, src) (memcpy((dst), (src), 16))
 
 #endif /* __EJ_UUID_H__ */
