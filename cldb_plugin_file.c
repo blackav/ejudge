@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +35,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+#define CURRENT_VERSION 2
 
 /* new clarification log header */
 struct clar_header_v1
@@ -253,7 +254,7 @@ create_new_clar_log(
 
   memset(&cs->header, 0, sizeof(cs->header));
   strncpy(cs->header.signature, signature_v1, sizeof(cs->header.signature));
-  cs->header.version = 1;
+  cs->header.version = CURRENT_VERSION;
 
   if (cl_state->clars.v) {
     xfree(cl_state->clars.v);
@@ -365,6 +366,35 @@ read_clar_file_header(
 {
   int rsz = 0;
 
+  // read signature bytes
+  unsigned char file_signature[16];
+  if (sf_lseek(cs->clar_fd, 0, SEEK_SET, "clar_open") < 0) return -1;
+  if ((rsz = sf_read(cs->clar_fd, file_signature, sizeof(file_signature), "clar_open")) < 0)
+    return -1;
+  if (rsz != sizeof(file_signature)) return 0;
+  if (memcmp(file_signature, signature_v1, sizeof(file_signature)) != 0) {
+    // file signature mismatch
+    return 0;
+  }
+  unsigned char version = 0xff;
+  unsigned char endianness = 0xff;
+
+  if ((rsz = sf_read(cs->clar_fd, &version, sizeof(version), "clar_open")) < 0) return -1;
+  if (rsz != 1) return 0;
+  if ((rsz = sf_read(cs->clar_fd, &endianness, sizeof(endianness), "clar_open")) < 0) return -1;
+  if (rsz != 1) return 0;
+
+  if (endianness == 1) {
+    err("big-endian clarlog files are not supported");
+    return -1;
+  }
+  if (endianness != 0) {
+    err("invalid endianness");
+    return -1;
+  }
+  if (version > 2) return -1;
+  return version;
+  /*
   if (length < sizeof(struct clar_header_v1)) return 0;
   if ((length - sizeof(struct clar_header_v1))
       % sizeof(struct clar_entry_v1) != 0) return 0;
@@ -376,6 +406,7 @@ read_clar_file_header(
   if (strcmp(cs->header.signature, signature_v1)) return 0;
   if (cs->header.endianness > 1) return 0;
   return cs->header.version;
+  */
 }
 
 static int
