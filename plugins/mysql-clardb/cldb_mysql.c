@@ -323,7 +323,9 @@ do_open(struct cldb_mysql_state *state)
     clar_version = 2;
   }
   if (clar_version == 2) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sclars ADD COLUMN uuid CHAR(40) DEFAULT UUID() AFTER clar_id, ADD COLUMN in_reply_uuid CHAR(40) DEFAULT NULL AFTER in_reply_to, ADD COLUMN run_uuid CHAR(40) DEFAULT NULL AFTER run_id ;", md->table_prefix) < 0)
+    if (mi->simple_fquery(md, "ALTER TABLE %sclars ADD COLUMN uuid CHAR(40) DEFAULT NULL AFTER clar_id, ADD COLUMN in_reply_uuid CHAR(40) DEFAULT NULL AFTER in_reply_to, ADD COLUMN run_uuid CHAR(40) DEFAULT NULL AFTER run_id ;", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sclars SET uuid = UUID() WHERE uuid IS NULL ;", md->table_prefix) < 0)
       return -1;
     if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '3' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
       return -1;
