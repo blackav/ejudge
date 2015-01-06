@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -91,6 +90,32 @@ ej_uuid_unparse(const ruint32_t uuid[4], const unsigned char *default_value)
     return default_value;
   }
 #endif
+}
+
+const unsigned char *
+ej_uuid_unparse_r(
+        unsigned char *buf,
+        size_t size,
+        const ruint32_t uuid[4],
+        const unsigned char *default_value)
+{
+  if (uuid[0] || uuid[1] || uuid[2] || uuid[3] || !default_value) {
+#if CONF_HAS_LIBUUID - 0 != 0
+    uuid_unparse((void*) uuid, buf);
+#else
+    // must support unparse in any case
+    // "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"; 
+    const unsigned char *u = (const unsigned char *) uuid;
+    snprintf(buf, size,
+             "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+             u[0], u[1], u[2], u[3], u[4], u[5], u[6], u[7],
+             u[8], u[9], u[10], u[11], u[12], u[13], u[14], u[15]);
+#endif
+    return buf;
+  } else {
+    snprintf(buf, size, "%s", default_value);
+    return buf;
+  }
 }
 
 void
