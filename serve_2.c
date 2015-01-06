@@ -5331,7 +5331,7 @@ serve_count_unread_clars(
         time_t start_time)
 {
   int i, total = 0;
-  struct clar_entry_v1 clar;
+  struct clar_entry_v2 clar;
 
   for (i = clar_get_total(state->clarlog_state) - 1; i >= 0; i--) {
     if (clar_get_record(state->clarlog_state, i, &clar) < 0)

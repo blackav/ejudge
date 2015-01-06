@@ -29,11 +29,12 @@ enum
 struct clarlog_state;
 typedef struct clarlog_state *clarlog_state_t;
 
-enum { CLAR_ENTRY_SUBJ_SIZE = 32, CLAR_ENTRY_CHARSET_SIZE = 16 };
+enum { CLAR_ENTRY_V1_SUBJ_SIZE = 32, CLAR_ENTRY_V1_CHARSET_SIZE = 16 };
 
 enum
 {
   CLAR_FIELD_ID,
+  CLAR_FIELD_UUID,
   CLAR_FIELD_SIZE,
   CLAR_FIELD_TIME,
   CLAR_FIELD_NSEC,
@@ -47,7 +48,9 @@ enum
   CLAR_FIELD_IP,
   CLAR_FIELD_LOCALE_ID,
   CLAR_FIELD_IN_REPLY_TO,
+  CLAR_FIELD_IN_REPLY_UUID,
   CLAR_FIELD_RUN_ID,
+  CLAR_FIELD_RUN_UUID,
   CLAR_FIELD_CHARSET,
   CLAR_FIELD_SUBJECT,
 
@@ -78,8 +81,8 @@ struct clar_entry_v1
   int in_reply_to;              /* 4 */ /* 1 means in clar_id 0! */
   int run_id;                   /* 4 */ /* 1 means run_id 0! */
   unsigned char _pad3[12];
-  unsigned char charset[CLAR_ENTRY_CHARSET_SIZE];
-  unsigned char subj[CLAR_ENTRY_SUBJ_SIZE];
+  unsigned char charset[CLAR_ENTRY_V1_CHARSET_SIZE];
+  unsigned char subj[CLAR_ENTRY_V1_SUBJ_SIZE];
 };                              /* 128 */
 
 enum { CLAR_ENTRY_V2_SUBJ_SIZE = 96, CLAR_ENTRY_V2_CHARSET_SIZE = 16 };
@@ -142,7 +145,9 @@ int clar_add_record(
         int             hide_flag,
         int             locale_id,
         int             in_reply_to,
+        ruint32_t      *in_reply_uuid,
         int             run_id,
+        ruint32_t      *run_uuid,
         int             appeal_flag,
         int             utf8_mode,
         const unsigned char *charset,
@@ -153,15 +158,20 @@ int clar_set_charset(
         int id,
         const unsigned char *charset);
 int clar_get_total(clarlog_state_t state);
-int clar_get_record(clarlog_state_t state,
-                    int clar_id,
-                    struct clar_entry_v1 *pclar);
-int clar_put_record(clarlog_state_t state,
-                    int clar_id,
-                    const struct clar_entry_v1 *pclar);
-int clar_get_charset_id(clarlog_state_t state,
-                        int clar_id);
-const unsigned char *clar_get_subject(clarlog_state_t state, int clar_id);
+int clar_get_record(
+        clarlog_state_t state,
+        int clar_id,
+        struct clar_entry_v2 *pclar);
+int clar_put_record(
+        clarlog_state_t state,
+        int clar_id,
+        const struct clar_entry_v2 *pclar);
+int clar_get_charset_id(
+        clarlog_state_t state,
+        int clar_id);
+const unsigned char *clar_get_subject(
+        clarlog_state_t state,
+        int clar_id);
 
 void clar_get_user_usage(
         clarlog_state_t state,
@@ -203,11 +213,15 @@ clar_modify_record(
         clarlog_state_t state,
         int clar_id,
         int mask,
-        const struct clar_entry_v1 *pclar);
+        const struct clar_entry_v2 *pclar);
 
 void
-clar_entry_to_ipv6(const struct clar_entry_v1 *pe, ej_ip_t *pip);
+clar_entry_to_ipv6(
+        const struct clar_entry_v2 *pe,
+        ej_ip_t *pip);
 void
-ipv6_to_clar_entry(const ej_ip_t *pip, struct clar_entry_v1 *pe);
+ipv6_to_clar_entry(
+        const ej_ip_t *pip,
+        struct clar_entry_v2 *pe);
 
 #endif /* __CLARLOG_H__ */

@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -149,7 +148,7 @@ main(int argc, char *argv[])
   int i = 1;
   char *eptr = 0;
   int total_clars, clar_id;
-  struct clar_entry_v1 clar;
+  struct clar_entry_v2 clar;
   unsigned char *text = 0;
   size_t size = 0;
 

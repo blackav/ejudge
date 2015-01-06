@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "unpriv_includes.csp"
 %><%
 #include "ejudge/team_extra.h"
@@ -11,7 +10,7 @@
 %><%
   int clar_id, show_astr_time;
   size_t clar_size = 0;
-  struct clar_entry_v1 ce;
+  struct clar_entry_v2 ce;
   time_t clar_time;
   unsigned char *clar_text = 0;
   unsigned char dur_str[64];

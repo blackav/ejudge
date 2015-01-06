@@ -1147,7 +1147,7 @@ ns_write_all_clars(
   unsigned char durstr[64];
   int show_astr_time;
   unsigned char bbuf[1024];
-  struct clar_entry_v1 clar;
+  struct clar_entry_v2 clar;
   unsigned char cl[128];
   int first_clar = -1, last_clar = -10, show_num;
 
@@ -1394,7 +1394,7 @@ ns_priv_edit_clar_action(
   serve_state_t cs = extra->serve_state;
   int retval = 0, r;
   int clar_id = -1;
-  struct clar_entry_v1 clar, new_clar;
+  struct clar_entry_v2 clar, new_clar;
   const unsigned char *s = NULL;
   int new_from = 0, new_to = 0, new_j_from = 0, new_flags = 0;
   int new_hide_flag = 0, new_appeal_flag = 0, new_ssl_flag = 0;
@@ -5726,7 +5726,7 @@ new_write_user_clars(
   int   asubj_len = 0; /* html armored subj len */
   unsigned char href[128];
   unsigned char *cl = "";
-  struct clar_entry_v1 clar;
+  struct clar_entry_v2 clar;
 
   if (table_class && *table_class) {
     cl = alloca(strlen(table_class) + 16);

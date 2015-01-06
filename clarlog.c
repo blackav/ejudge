@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +27,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/charsets.h"
 #include "ejudge/prepare.h"
+#include "ejudge/ej_uuid.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -74,6 +74,33 @@ clar_destroy(clarlog_state_t state)
   memset(state, 0, sizeof(*state));
   xfree(state);
   return 0;
+}
+
+static int
+clar_expand(
+        clarlog_state_t state,
+        int new_id)
+{
+  if (new_id < 0) new_id = state->clars.u;
+  if (new_id >= state->clars.a) {
+    int new_a = state->clars.a;
+    struct clar_entry_v2 *new_v = 0;
+
+    if (!new_a) new_a = 128;
+    while (new_id >= new_a) new_a *= 2;
+    XCALLOC(new_v, new_a);
+    if (state->clars.a) {
+      memcpy(new_v, state->clars.v, state->clars.a * sizeof(new_v[0]));
+    }
+    for (int i = state->clars.a; i < new_a; new_v[i++].id = -1);
+    xfree(state->clars.v);
+    state->clars.v = new_v;
+    state->clars.a = new_a;
+  }
+  if (new_id >= state->clars.u) {
+    state->clars.u = new_id + 1;
+  }
+  return new_id;
 }
 
 int
@@ -172,41 +199,25 @@ clar_add_record(
         int             hide_flag,
         int             locale_id,
         int             in_reply_to,
+        ruint32_t      *in_reply_uuid,
         int             run_id,
+        ruint32_t      *run_uuid,
         int             appeal_flag,
         int             utf8_mode,
         const unsigned char *charset,
         const unsigned char *subj)
 {
   int i, j;
-  unsigned char subj2[CLAR_ENTRY_SUBJ_SIZE];
+  unsigned char subj2[CLAR_ENTRY_V2_SUBJ_SIZE];
   size_t subj_len;
-  struct clar_entry_v1 *pc;
+  struct clar_entry_v2 *pc;
 
-  if (state->clars.u >= state->clars.a) {
-    int new_a = state->clars.a;
-    struct clar_entry_v1 *new_v = 0;
-
-    if (!new_a) new_a = 128;
-    while (state->clars.u >= new_a) new_a *= 2;
-    XCALLOC(new_v, new_a);
-    if (state->clars.a)
-      memcpy(new_v, state->clars.v, state->clars.a * sizeof(new_v[0]));
-    for (i = state->clars.a; i < new_a; new_v[i++].id = -1);
-    xfree(state->clars.v);
-    state->clars.v = new_v;
-    state->clars.a = new_a;
-    /*
-    if (!(state->clars.a *= 2)) state->clars.a = 128;
-    state->clars.v = xrealloc(state->clars.v, state->clars.a * sizeof(state->clars.v[0]));
-    info("clar_add_record: array extended: %d", state->clars.a);
-    */
-  }
-  i = state->clars.u++;
+  i = clar_expand(state, -1);
   pc = &state->clars.v[i];
 
   memset(pc, 0, sizeof(*pc));
   pc->id = i;
+  ej_uuid_generate(pc->uuid);
   pc->time = time;
   pc->nsec = nsec;
   pc->size = size;
@@ -219,20 +230,26 @@ clar_add_record(
   pc->ssl_flag = ssl_flag;
   pc->locale_id = locale_id;
   pc->in_reply_to = in_reply_to;
+  if (in_reply_uuid) {
+    ej_uuid_copy(pc->in_reply_uuid, in_reply_uuid);
+  }
   pc->run_id = run_id;
+  if (run_uuid) {
+    ej_uuid_copy(pc->run_uuid, run_uuid);
+  }
   pc->appeal_flag = appeal_flag;
 
   if (!charset) charset = INTERNAL_CHARSET;
-  strncpy(pc->charset, charset, CLAR_ENTRY_CHARSET_SIZE);
-  pc->charset[CLAR_ENTRY_CHARSET_SIZE - 1] = 0;
+  strncpy(pc->charset, charset, CLAR_ENTRY_V2_CHARSET_SIZE);
+  pc->charset[CLAR_ENTRY_V2_CHARSET_SIZE - 1] = 0;
   for (j = 0; pc->charset[j]; j++)
     pc->charset[j] = tolower(pc->charset[j]);
 
   if (!subj) subj = "";
   subj_len = strlen(subj);
-  if (subj_len >= CLAR_ENTRY_SUBJ_SIZE) {
-    memcpy(subj2, subj, CLAR_ENTRY_SUBJ_SIZE);
-    j = CLAR_ENTRY_SUBJ_SIZE - 4;
+  if (subj_len >= CLAR_ENTRY_V2_SUBJ_SIZE) {
+    memcpy(subj2, subj, CLAR_ENTRY_V2_SUBJ_SIZE);
+    j = CLAR_ENTRY_V2_SUBJ_SIZE - 4;
     if (utf8_mode) {
       while (j >= 0 && subj2[j] >= 0x80 && subj2[j] <= 0xbf) j--;
       if (j < 0) j = 0;
@@ -254,26 +271,11 @@ int
 clar_put_record(
         clarlog_state_t state,
         int clar_id,
-        const struct clar_entry_v1 *pclar)
+        const struct clar_entry_v2 *pclar)
 {
   if (clar_id < 0) ERR_R("bad id: %d", clar_id);
   if (!pclar || pclar->id < 0) ERR_R("bad pclar");
-  if (clar_id >= state->clars.u) {
-    int new_a = state->clars.a;
-    struct clar_entry_v1 *new_v;
-    int i;
-
-    if (!new_a) new_a = 128;
-    while (clar_id >= new_a) new_a *= 2;
-    XCALLOC(new_v, new_a);
-    if (state->clars.a) memcpy(new_v, state->clars.v,
-                               sizeof(new_v[0]) * state->clars.a);
-    for (i = state->clars.a; i < new_a; new_v[i++].id = -1);
-    xfree(state->clars.v);
-    state->clars.v = new_v;
-    state->clars.a = new_a;
-    if (clar_id >= state->clars.u) state->clars.u = clar_id + 1;
-  }
+  clar_expand(state, clar_id);
   if (state->clars.v[clar_id].id >= 0) ERR_R("clar %d already used", clar_id);
   memcpy(&state->clars.v[clar_id], pclar, sizeof(state->clars.v[clar_id]));
   state->clars.v[clar_id].id = clar_id;
@@ -286,7 +288,7 @@ int
 clar_get_record(
         clarlog_state_t state,
         int clar_id,
-        struct clar_entry_v1 *pclar)
+        struct clar_entry_v2 *pclar)
 {
   if (clar_id < 0 || clar_id >= state->clars.u) ERR_R("bad id: %d", clar_id);
   if (state->clars.v[clar_id].id >= 0 && state->clars.v[clar_id].id != clar_id)
@@ -545,10 +547,10 @@ clar_modify_record(
         clarlog_state_t state,
         int clar_id,
         int mask,
-        const struct clar_entry_v1 *pclar)
+        const struct clar_entry_v2 *pclar)
 {
   if (clar_id < 0 || clar_id >= state->clars.u) ERR_R("bad id: %d", clar_id);
-  struct clar_entry_v1 *pe = &state->clars.v[clar_id];
+  struct clar_entry_v2 *pe = &state->clars.v[clar_id];
 
   if (mask & (1 << CLAR_FIELD_SIZE)) {
     pe->size = pclar->size;
@@ -584,8 +586,14 @@ clar_modify_record(
   if (mask & (1 << CLAR_FIELD_IN_REPLY_TO)) {
     pe->in_reply_to = pclar->in_reply_to;
   }
+  if (mask & (1 << CLAR_FIELD_IN_REPLY_UUID)) {
+    ej_uuid_copy(pe->in_reply_uuid, pclar->in_reply_uuid);
+  }
   if (mask & (1 << CLAR_FIELD_RUN_ID)) {
     pe->run_id = pclar->run_id;
+  }
+  if (mask & (1 << CLAR_FIELD_RUN_UUID)) {
+    ej_uuid_copy(pe->run_uuid, pclar->run_uuid);
   }
   if (mask & (1 << CLAR_FIELD_CHARSET)) {
     snprintf(pe->charset, sizeof(pe->charset), "%s", pclar->charset);
@@ -598,7 +606,7 @@ clar_modify_record(
 }
 
 void
-clar_entry_to_ipv6(const struct clar_entry_v1 *pe, ej_ip_t *p_ip)
+clar_entry_to_ipv6(const struct clar_entry_v2 *pe, ej_ip_t *p_ip)
 {
   memset(p_ip, 0, sizeof(*p_ip));
   if (pe->ipv6_flag) {
@@ -610,7 +618,7 @@ clar_entry_to_ipv6(const struct clar_entry_v1 *pe, ej_ip_t *p_ip)
 }
 
 void
-ipv6_to_clar_entry(const ej_ip_t *p_ip, struct clar_entry_v1 *pe)
+ipv6_to_clar_entry(const ej_ip_t *p_ip, struct clar_entry_v2 *pe)
 {
   pe->ipv6_flag = 0;
   memset(&pe->a, 0, sizeof(pe->a));

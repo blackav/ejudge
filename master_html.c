@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -635,7 +635,7 @@ generate_daily_statistics(
   int clar_total = 0, clar_total_today = 0, clar_from_judges = 0;
   int clar_to_judges = 0;
   time_t clar_time;
-  struct clar_entry_v1 clar;
+  struct clar_entry_v2 clar;
 
   /* u_tot             - total number of teams in index array
    * u_max             - maximal possible number of teams

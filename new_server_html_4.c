@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -690,7 +689,7 @@ cmd_clar_operation(
   int retval = 0;
   const unsigned char *s = 0;
   int clar_id = -1;
-  struct clar_entry_v1 ce;
+  struct clar_entry_v2 ce;
   unsigned char *msg_txt = 0;
   size_t msg_len = 0;
 

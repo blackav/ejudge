@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3045,7 +3044,12 @@ priv_submit_clar(
                                  &phr->ip,
                                  phr->ssl_flag,
                                  0, user_id, 0, phr->user_id,
-                                 hide_flag, phr->locale_id, 0, 0, 0,
+                                 hide_flag, phr->locale_id,
+                                 0 /* in_reply_to */,
+                                 NULL /* in_reply_uuid */,
+                                 0 /* run_id */,
+                                 NULL /* run_uuid */,
+                                 0 /* appeal_flag */,
                                  utf8_mode, NULL, subj2)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto cleanup;
@@ -3245,7 +3249,12 @@ priv_submit_run_comment(
                                  &phr->ip,
                                  phr->ssl_flag,
                                  0, re.user_id, 0, phr->user_id,
-                                 0, phr->locale_id, 0, run_id + 1, 0,
+                                 0, phr->locale_id,
+                                 0 /* in_reply_to */,
+                                 NULL /* in_reply_uuid */,
+                                 run_id + 1,
+                                 re.run_uuid,
+                                 0 /* appeal_flag */,
                                  utf8_mode, NULL, subj2)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto cleanup;
@@ -3349,7 +3358,7 @@ priv_clar_reply(
   const unsigned char *errmsg;
   const unsigned char *s, *reply_txt;
   int in_reply_to, n, clar_id, from_id;
-  struct clar_entry_v1 clar;
+  struct clar_entry_v2 clar;
   unsigned char *reply_txt_2;
   size_t reply_len;
   unsigned char *orig_txt = 0;
@@ -3450,10 +3459,13 @@ priv_clar_reply(
                             &phr->ip,
                             phr->ssl_flag,
                             0, from_id, 0, phr->user_id, 0,
-                            clar.locale_id, in_reply_to + 1, 0, 0,
+                            clar.locale_id, in_reply_to + 1,
+                            clar.uuid,
+                            0 /* run_id*/,
+                            NULL /* run_uuid */,
+                            0 /* appeal_flag */,
                             utf8_mode, NULL,
-                            clar_get_subject(cs->clarlog_state,
-                                             in_reply_to));
+                            clar_get_subject(cs->clarlog_state, in_reply_to));
 
   if (clar_id < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
@@ -8953,7 +8965,12 @@ unpriv_submit_clar(FILE *fout,
                                  &phr->ip,
                                  phr->ssl_flag,
                                  phr->user_id, 0, 0, 0, 0,
-                                 phr->locale_id, 0, 0, 0,
+                                 phr->locale_id,
+                                 0 /* in_reply_to */,
+                                 NULL /* in_reply_uuid */,
+                                 0 /* run_id */,
+                                 NULL /* run_uuid */,
+                                 0 /* appeal_flag */,
                                  utf8_mode, NULL, subj3)) < 0) {
     FAIL2(NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
   }
@@ -9079,7 +9096,12 @@ unpriv_submit_appeal(FILE *fout,
                                  &phr->ip,
                                  phr->ssl_flag,
                                  phr->user_id, 0, 0, 0, 0,
-                                 phr->locale_id, 0, 0, 1,
+                                 phr->locale_id,
+                                 0 /* in_reply_to */,
+                                 NULL /* in_reply_uuid */,
+                                 0 /* run_id */,
+                                 NULL /* run_uuid */,
+                                 1,
                                  utf8_mode, NULL, subj3)) < 0) {
     FAIL2(NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
   }

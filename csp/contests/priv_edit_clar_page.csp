@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "priv_includes.csp"
 %><%@set getter_name = "csp_get_priv_edit_clar_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
@@ -7,7 +6,7 @@
 %><%@page csp_view_priv_edit_clar_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
-  struct clar_entry_v1 clar;
+  struct clar_entry_v2 clar;
   const unsigned char *from_str = NULL, *to_str = NULL;
   unsigned char from_buf[128], to_buf[128];
   unsigned char *msg_txt = NULL;

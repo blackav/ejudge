@@ -1,13 +1,14 @@
 <%
-/* $Id$ */
 %><%@include "priv_includes.csp"
+%><%
+#include "ejudge/ej_uuid.h"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@set getter_name = "csp_get_priv_clar_page"
 %><%@page csp_view_priv_clar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
-  struct clar_entry_v1 clar;
+  struct clar_entry_v2 clar;
   time_t start_time;
   unsigned char *msg_txt = 0;
   size_t msg_len = 0;
@@ -49,6 +50,7 @@
 </h2>
 <table border="0">
 <tr><td><s:_>Clar ID</s:_>:</td><td><s:v value="clar_id" /></td></tr>
+<tr><td>Clar UUID:</td><td><s:v type="uuid" value="clar.uuid" /></td></tr>
 <%  if (clar.hide_flag) { %>
 <tr><td><s:_>Available only after contest start</s:_>:</td><td><%
   fputs(clar.hide_flag?_("YES"):_("NO"), out_f);
@@ -93,7 +95,13 @@
 <s:url name="ViewOtherClarUrl" ac="view-clar">
   <s:param name="clar_id" value="clar.in_reply_to - 1" />
 </s:url>
-<tr><td><s:_>In reply to</s:_>:</td><td><s:a url="ViewOtherClarUrl"><s:v value="clar.in_reply_to - 1" /></s:a></td></tr>
+<tr><td><s:_>In reply to</s:_>:</td><td><s:a url="ViewOtherClarUrl"><s:v value="clar.in_reply_to - 1" /></s:a> (<s:v type="uuid" value="clar.in_reply_uuid" />)</td></tr>
+<%  } %>
+<%  if (clar.run_id > 0) { %>
+<s:url name="ViewSourceUrl" ac="view-source">
+  <s:param name="run_id" value="clar.run_id - 1" />
+</s:url>
+<tr><td>Run ID:</td><td><s:a url="ViewSourceUrl"><s:v value="clar.run_id - 1" /></s:a> (<s:v type="uuid" value="clar.run_uuid" />)</td></tr>
 <%  } %>
 <tr><td><s:_>Locale code</s:_>:</td><td><s:v value="clar.locale_id" /></td></tr>
 <tr><td><s:_>Subject</s:_>:</td><td><s:v value="clar_subj" /></td></tr>

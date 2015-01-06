@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __CLDB_PLUGIN_H__
 #define __CLDB_PLUGIN_H__
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,7 +32,7 @@ struct section_global_data;
 struct clarlog_state;
 struct cldb_plugin_data;
 struct cldb_plugin_cnts;
-struct clar_entry_v1;
+struct clar_entry_v2;
 
 struct cldb_plugin_iface
 {
@@ -73,7 +72,7 @@ struct cldb_plugin_iface
   // modify the message text
   int (*modify_text)(struct cldb_plugin_cnts *, int clar_id, const unsigned char *text, size_t size);
   // modify the message record
-  int (*modify_record)(struct cldb_plugin_cnts *, int clar_id, int mask, const struct clar_entry_v1 *pe);
+  int (*modify_record)(struct cldb_plugin_cnts *, int clar_id, int mask, const struct clar_entry_v2 *pe);
 };
 
 /* default plugin: compiled into new-server */
