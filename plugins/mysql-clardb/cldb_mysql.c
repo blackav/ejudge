@@ -329,6 +329,11 @@ do_open(struct cldb_mysql_state *state)
       return -1;
     if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '3' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
       return -1;
+    // FIX uuid indices
+    if (mi->simple_fquery(md, "UPDATE %sclars AS t1, %sclars AS t2 SET t1.in_reply_uuid = t2.uuid WHERE t1.in_reply_to > 0 AND t1.contest_id = t2.contest_id AND t1.in_reply_to - 1 = t2.clar_id;", md->table_prefix, md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sclars AS t1, %sruns AS t2 SET t1.run_uuid = t2.run_uuid WHERE t1.run_id > 0 AND t1.contest_id = t2.contest_id AND t1.run_id - 1 = t2.run_id;", md->table_prefix, md->table_prefix) < 0)
+      return -1;
     clar_version = 3;
   }
   return 0;
