@@ -1,6 +1,4 @@
-/*$Id$*/
-
-/* Copyright (C) 1997-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1997-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -203,6 +201,7 @@ vwrite_log(int facility, int level, char const *format, va_list args)
     abort();
   }
 
+  /*
   if (write(log_fd, msg, r) < 0) {
     fprintf(stderr, "log file write error: %s\n", strerror(errno));
     fprintf(stderr, "closing log file\n");
@@ -210,6 +209,9 @@ vwrite_log(int facility, int level, char const *format, va_list args)
     log_fd = -1;
     return -1;
   }
+  */
+  // ignore errors that may happen on logger fd
+  write(log_fd, msg, r);
   if (log2_fd >= 0) write(log2_fd, msg, r);
 
   return r;
