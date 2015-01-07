@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -551,7 +550,7 @@ serve_parse_group_dates(int contest_id, serve_state_t state)
 
 const size_t serve_struct_sizes_array[] =
 {
-  sizeof(struct clar_entry_v1),
+  sizeof(struct clar_entry_v2),
   sizeof(struct compile_dir_item),
   sizeof(struct compile_run_extra),
   sizeof(struct contest_access),

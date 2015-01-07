@@ -29,8 +29,6 @@ enum
 struct clarlog_state;
 typedef struct clarlog_state *clarlog_state_t;
 
-enum { CLAR_ENTRY_V1_SUBJ_SIZE = 32, CLAR_ENTRY_V1_CHARSET_SIZE = 16 };
-
 enum
 {
   CLAR_FIELD_ID,
@@ -56,34 +54,6 @@ enum
 
   CLAR_FIELD_LAST,
 };
-
-struct clar_entry_v1
-{
-  int id;                       /* 4 */
-  ej_size_t size;               /* 4 */
-  ej_time64_t time;             /* 8 */
-  int nsec;                     /* 4 */
-  int from;                     /* 4 */
-  int to;                       /* 4 */
-  int j_from;                   /* 4 */
-  unsigned int flags;           /* 4 */
-  unsigned char ipv6_flag;      /* 1 */
-  unsigned char hide_flag;      /* 1 */
-  unsigned char ssl_flag;       /* 1 */
-  unsigned char appeal_flag;    /* 1 */
-  union
-  {
-    ej_ip4_t ip;
-    unsigned char ipv6[16];
-  } a;                          /* 16 */
-  unsigned short locale_id;     /* 2 */
-  unsigned char _pad2[2];       /* 2 */
-  int in_reply_to;              /* 4 */ /* 1 means in clar_id 0! */
-  int run_id;                   /* 4 */ /* 1 means run_id 0! */
-  unsigned char _pad3[12];
-  unsigned char charset[CLAR_ENTRY_V1_CHARSET_SIZE];
-  unsigned char subj[CLAR_ENTRY_V1_SUBJ_SIZE];
-};                              /* 128 */
 
 enum { CLAR_ENTRY_V2_SUBJ_SIZE = 96, CLAR_ENTRY_V2_CHARSET_SIZE = 16 };
 
