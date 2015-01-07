@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -258,7 +257,7 @@ start_open_log(const unsigned char *log_path)
   int log_fd = -1;
 
   if (!log_path) log_path = "/dev/null";
-  if ((log_fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0600)) < 0) {
+  if ((log_fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND | O_LARGEFILE, 0600)) < 0) {
     err("cannot open log file `%s'", log_path);
     return -1;
   }

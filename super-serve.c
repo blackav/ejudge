@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3669,7 +3668,7 @@ start_run(struct ss_contest_extra *cur, time_t current_time)
     err("contest %d [%d] open(/dev/null) failed: %s", cur->id, pid, os_ErrorMsg());
     _exit(1);
   }
-  if ((log_fd = open(cur->run_log_file, O_WRONLY | O_APPEND | O_CREAT, 0600)) < 0) {
+  if ((log_fd = open(cur->run_log_file, O_WRONLY | O_APPEND | O_CREAT | O_LARGEFILE, 0600)) < 0) {
     err("contest %d [%d] open(%s) failed: %s", cur->id, pid, cur->run_log_file, os_ErrorMsg());
     _exit(1);
   }
