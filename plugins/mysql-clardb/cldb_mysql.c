@@ -347,7 +347,6 @@ do_open(struct cldb_mysql_state *state)
                           "ALTER TABLE %sclars "
                           " ADD COLUMN old_run_status TINYINT NOT NULL DEFAULT 0 AFTER run_uuid, "
                           " ADD COLUMN new_run_status TINYINT NOT NULL DEFAULT 0 AFTER old_run_status, "
-                          " ADD PRIMARY KEY (clar_id, contest_id), "
                           " ADD UNIQUE KEY clars_uuid_uk (uuid), "
                           " ADD KEY clars_contest_id_k (contest_id), "
                           " ADD KEY clars_run_uuid_k (run_uuid), "
