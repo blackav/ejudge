@@ -189,7 +189,7 @@ struct clar_entry_internal
   unsigned char *subj;
 };
 
-#define CLAR_VERSION 5
+#define CLAR_VERSION 6
 
 enum { CLARS_ROW_WIDTH = 24 };
 
@@ -225,7 +225,7 @@ static const struct common_mysql_parse_spec clars_spec[CLARS_ROW_WIDTH] =
 static const char create_clars_query[] =
 "CREATE TABLE %sclars("
 "        clar_id INT UNSIGNED NOT NULL,"
-"        uuid CHAR(40) DEFAULT UUID(),"
+"        uuid CHAR(40) NOT NULL,"
 "        contest_id INT UNSIGNED NOT NULL,"
 "        size INT UNSIGNED NOT NULL DEFAULT 0,"
 "        create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,"
@@ -248,23 +248,30 @@ static const char create_clars_query[] =
 "        new_run_status TINYINT NOT NULL DEFAULT 0,"
 "        clar_charset VARCHAR(32),"
 "        subj VARBINARY(128),"
-"        PRIMARY KEY (clar_id, contest_id)"
+"        PRIMARY KEY (clar_id, contest_id),"
+"        UNIQUE KEY clars_uuid_uk (uuid),"
+"        KEY clars_contest_id_k (contest_id),"
+"        KEY clars_run_uuid_k (run_uuid),"
+"        KEY clars_user_from_k (user_from),"
+"        KEY clars_user_to_k (user_to)"
 "        );";
 
 struct clartext_entry_internal
 {
   int clar_id;
   int contest_id;
+  unsigned char *uuid;
   unsigned char *clar_text;
 };
 
-enum { CLARTEXTS_ROW_WIDTH = 3 };
+enum { CLARTEXTS_ROW_WIDTH = 4 };
 
 #define CLARTEXTS_OFFSET(f) XOFFSET(struct clartext_entry_internal, f)
 static const struct common_mysql_parse_spec clartexts_spec[CLARTEXTS_ROW_WIDTH]=
 {
   { 0, 'd', "clar_id", CLARTEXTS_OFFSET(clar_id), 0 },
   { 0, 'd', "contest_id", CLARTEXTS_OFFSET(contest_id), 0 },
+  { 0, 's', "uuid", CLARTEXTS_OFFSET(uuid), 0 },
   { 0, 's', "clar_text", CLARTEXTS_OFFSET(clar_text), 0 },
 };
 
@@ -272,8 +279,10 @@ static const char create_texts_query[] =
 "CREATE TABLE %sclartexts("
 "        clar_id INT UNSIGNED NOT NULL,"
 "        contest_id INT UNSIGNED NOT NULL,"
+"        uuid CHAR(40) NOT NULL,"
 "        clar_text VARBINARY(4096),"
-"        PRIMARY KEY (clar_id, contest_id)"
+"        PRIMARY KEY (clar_id, contest_id),"
+"        UNIQUE KEY clartexts_uuid_uk (uuid)"
 "        );";
 
 static int
@@ -370,6 +379,29 @@ do_open(struct cldb_mysql_state *state)
     if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '5' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
       return -1;
     clar_version = 5;
+  }
+  if (clar_version == 5) {
+    if (mi->simple_fquery(md,
+                          "ALTER TABLE %sclars "
+                          " MODIFY uuid CHAR(40) NOT NULL ;",
+                          md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md,
+                          "ALTER TABLE %sclartexts "
+                          " ADD COLUMN uuid CHAR(40) DEFAULT NULL AFTER contest_id;",
+                          md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sclartexts AS t1, %sclars AS t2 SET t1.uuid = t2.uuid WHERE t1.contest_id = t2.contest_id AND t1.clar_id = t2.clar_id;", md->table_prefix, md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md,
+                          "ALTER TABLE %sclartexts "
+                          " MODIFY uuid CHAR(40) NOT NULL,"
+                          " ADD UNIQUE KEY clartexts_uuid_uk (uuid) ;",
+                          md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '6' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
+      return -1;
+    clar_version = 6;
   }
 
   // just in case
