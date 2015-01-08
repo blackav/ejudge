@@ -23,6 +23,7 @@
 #include "ejudge/clarlog.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/compat.h"
+#include "ejudge/ej_uuid.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -227,6 +228,9 @@ main(int argc, char *argv[])
   for (clar_id = 0; clar_id < total_clars; clar_id++) {
     if (clar_get_record(src_clarlog, clar_id, &clar) < 0) continue;
     if (clar.id < 0) continue;
+    if (!ej_uuid_is_nonempty(clar.uuid)) {
+      ej_uuid_generate(&clar.uuid);
+    }
     clar_put_record(dst_clarlog, clar_id, &clar);
     if (clar_get_raw_text(src_clarlog, clar_id, &text, &size) < 0) continue;
     clar_add_text(dst_clarlog, clar_id, &clar.uuid, text, size);
