@@ -244,8 +244,8 @@ static const char create_clars_query[] =
 "        run_uuid CHAR(40),"
 "        old_run_status TINYINT NOT NULL DEFAULT 0,"
 "        new_run_status TINYINT NOT NULL DEFAULT 0,"
-"        clar_charset VARCHAR(64),"
-"        subj VARBINARY(64),"
+"        clar_charset VARCHAR(32),"
+"        subj VARBINARY(128),"
 "        PRIMARY KEY (clar_id, contest_id)"
 "        );";
 
@@ -285,7 +285,7 @@ do_create(struct cldb_mysql_state *state)
     db_error_fail(md);
   if (mi->simple_fquery(md, create_texts_query, md->table_prefix) < 0)
     db_error_fail(md);
-  if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('clar_version', '3') ;", md->table_prefix) < 0)
+  if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('clar_version', '5') ;", md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
 
@@ -358,6 +358,18 @@ do_open(struct cldb_mysql_state *state)
       return -1;
     clar_version = 4;
   }
+  if (clar_version == 4) {
+    if (mi->simple_fquery(md,
+                          "ALTER TABLE %sclars "
+                          " MODIFY clar_charset VARCHAR(32),"
+                          " MODIFY subj VARCHAR(128); ",
+                          md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '5' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
+      return -1;
+    clar_version = 5;
+  }
+
   return 0;
 
  fail:
