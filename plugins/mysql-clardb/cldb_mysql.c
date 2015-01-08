@@ -583,8 +583,8 @@ open_func(
     if (make_clarlog_entry(data, cs->contest_id, 0, &ce) < 0)
       goto fail;
 
-    expand_clar_array(&cl_state->clars, cl.clar_id);
-    cl_state->clars.v[cl.clar_id] = ce;
+    expand_clar_array(&cl_state->clars, ce.clar_id);
+    cl_state->clars.v[ce.clar_id] = ce;
   }
   state->mi->free_res(state->md);
 
