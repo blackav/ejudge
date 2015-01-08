@@ -183,11 +183,13 @@ struct clar_entry_internal
   unsigned char *in_reply_uuid;
   int run_id;
   unsigned char *run_uuid;
+  int old_run_status;
+  int new_run_status;
   unsigned char *clar_charset;
   unsigned char *subj;
 };
 
-enum { CLARS_ROW_WIDTH = 22 };
+enum { CLARS_ROW_WIDTH = 24 };
 
 #define CLARS_OFFSET(f) XOFFSET(struct clar_entry_internal, f)
 static const struct common_mysql_parse_spec clars_spec[CLARS_ROW_WIDTH] =
@@ -212,6 +214,8 @@ static const struct common_mysql_parse_spec clars_spec[CLARS_ROW_WIDTH] =
   { 1, 's', "in_reply_uuid", CLARS_OFFSET(in_reply_uuid), 0 },
   { 0, 'd', "run_id", CLARS_OFFSET(run_id), 0 },
   { 1, 's', "run_uuid", CLARS_OFFSET(run_uuid), 0 },
+  { 0, 'd', "old_run_status", CLARS_OFFSET(old_run_status), 0 },
+  { 0, 'd', "new_run_status", CLARS_OFFSET(new_run_status), 0 },
   { 0, 's', "clar_charset", CLARS_OFFSET(clar_charset), 0 },
   { 0, 's', "subj", CLARS_OFFSET(subj), 0 },
 };
@@ -238,6 +242,8 @@ static const char create_clars_query[] =
 "        in_reply_uuid CHAR(40),"
 "        run_id INT NOT NULL DEFAULT 0,"
 "        run_uuid CHAR(40),"
+"        old_run_status TINYINT NOT NULL DEFAULT 0,"
+"        new_run_status TINYINT NOT NULL DEFAULT 0,"
 "        clar_charset VARCHAR(64),"
 "        subj VARBINARY(64),"
 "        PRIMARY KEY (clar_id, contest_id)"
@@ -327,14 +333,31 @@ do_open(struct cldb_mysql_state *state)
       return -1;
     if (mi->simple_fquery(md, "UPDATE %sclars SET uuid = UUID() WHERE uuid IS NULL ;", md->table_prefix) < 0)
       return -1;
-    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '3' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
-      return -1;
-    // FIX uuid indices
+    // update uuid indices
     if (mi->simple_fquery(md, "UPDATE %sclars AS t1, %sclars AS t2 SET t1.in_reply_uuid = t2.uuid WHERE t1.in_reply_to > 0 AND t1.contest_id = t2.contest_id AND t1.in_reply_to - 1 = t2.clar_id;", md->table_prefix, md->table_prefix) < 0)
       return -1;
     if (mi->simple_fquery(md, "UPDATE %sclars AS t1, %sruns AS t2 SET t1.run_uuid = t2.run_uuid WHERE t1.run_id > 0 AND t1.contest_id = t2.contest_id AND t1.run_id - 1 = t2.run_id;", md->table_prefix, md->table_prefix) < 0)
       return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '3' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
+      return -1;
     clar_version = 3;
+  }
+  if (clar_version == 3) {
+    if (mi->simple_fquery(md,
+                          "ALTER TABLE %sclars "
+                          " ADD COLUMN old_run_status TINYINT NOT NULL DEFAULT 0 AFTER run_uuid, "
+                          " ADD COLUMN new_run_status TINYINT NOT NULL DEFAULT 0 AFTER old_run_status, "
+                          " ADD PRIMARY KEY (clar_id, contest_id), "
+                          " ADD UNIQUE KEY clars_uuid_uk (uuid), "
+                          " ADD KEY clars_contest_id_k (contest_id), "
+                          " ADD KEY clars_run_uuid_k (run_uuid), "
+                          " ADD KEY clars_user_from_k (user_from), "
+                          " ADD KEY clars_user_key_k (user_to) ; ",
+                          md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '4' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
+      return -1;
+    clar_version = 4;
   }
   return 0;
 
@@ -482,6 +505,8 @@ open_func(
     ej_uuid_copy(ce->in_reply_uuid, in_reply_uuid);
     ce->run_id = cl.run_id;
     ej_uuid_copy(ce->run_uuid, run_uuid);
+    ce->old_run_status = cl.old_run_status;
+    ce->new_run_status = cl.new_run_status;
     strcpy(ce->charset, cl.clar_charset);
     strcpy(ce->subj, subj2);
     if (cl.clar_id >= cl_state->clars.u) cl_state->clars.u = cl.clar_id + 1;
@@ -591,6 +616,8 @@ add_entry_func(struct cldb_plugin_cnts *cdata, int clar_id)
     ej_uuid_unparse_r(run_uuid_str, sizeof(run_uuid_str), ce->run_uuid, NULL);
     cc.run_uuid = run_uuid_str;
   }
+  cc.old_run_status = ce->old_run_status;
+  cc.new_run_status = ce->new_run_status;
   cc.clar_charset = ce->charset;
   cc.subj = ce->subj;
 
@@ -871,6 +898,14 @@ modify_record_func(
       fprintf(cmd_f, "NULL");
     }
     sep = sep1;    
+  }
+  if (mask & (1 << CLAR_FIELD_OLD_RUN_STATUS)) {
+    fprintf(cmd_f, "%sold_run_status = %d", sep, pe->old_run_status);
+    sep = sep1;
+  }
+  if (mask & (1 << CLAR_FIELD_NEW_RUN_STATUS)) {
+    fprintf(cmd_f, "%snew_run_status = %d", sep, pe->new_run_status);
+    sep = sep1;
   }
   if (mask & (1 << CLAR_FIELD_CHARSET)) {
     fprintf(cmd_f, "%s", sep);

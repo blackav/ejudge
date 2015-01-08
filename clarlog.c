@@ -203,6 +203,8 @@ clar_add_record(
         int             run_id,
         ruint32_t      *run_uuid,
         int             appeal_flag,
+        int             old_run_status,
+        int             new_run_status,
         int             utf8_mode,
         const unsigned char *charset,
         const unsigned char *subj)
@@ -594,6 +596,12 @@ clar_modify_record(
   }
   if (mask & (1 << CLAR_FIELD_RUN_UUID)) {
     ej_uuid_copy(pe->run_uuid, pclar->run_uuid);
+  }
+  if (mask & (1 << CLAR_FIELD_OLD_RUN_STATUS)) {
+    pe->old_run_status = pclar->old_run_status;
+  }
+  if (mask & (1 << CLAR_FIELD_NEW_RUN_STATUS)) {
+    pe->new_run_status = pclar->new_run_status;
   }
   if (mask & (1 << CLAR_FIELD_CHARSET)) {
     snprintf(pe->charset, sizeof(pe->charset), "%s", pclar->charset);

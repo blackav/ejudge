@@ -3050,6 +3050,8 @@ priv_submit_clar(
                                  0 /* run_id */,
                                  NULL /* run_uuid */,
                                  0 /* appeal_flag */,
+                                 0 /* old_run_status */,
+                                 0 /* new_run_status */,
                                  utf8_mode, NULL, subj2)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto cleanup;
@@ -3255,6 +3257,8 @@ priv_submit_run_comment(
                                  run_id + 1,
                                  re.run_uuid,
                                  0 /* appeal_flag */,
+                                 0 /* old_run_status */,
+                                 0 /* new_run_status */,
                                  utf8_mode, NULL, subj2)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto cleanup;
@@ -3464,6 +3468,8 @@ priv_clar_reply(
                             0 /* run_id*/,
                             NULL /* run_uuid */,
                             0 /* appeal_flag */,
+                            0 /* old_run_status */,
+                            0 /* new_run_status */,
                             utf8_mode, NULL,
                             clar_get_subject(cs->clarlog_state, in_reply_to));
 
@@ -8971,6 +8977,8 @@ unpriv_submit_clar(FILE *fout,
                                  0 /* run_id */,
                                  NULL /* run_uuid */,
                                  0 /* appeal_flag */,
+                                 0 /* old_run_status */,
+                                 0 /* new_run_status */,
                                  utf8_mode, NULL, subj3)) < 0) {
     FAIL2(NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
   }
@@ -9102,6 +9110,8 @@ unpriv_submit_appeal(FILE *fout,
                                  0 /* run_id */,
                                  NULL /* run_uuid */,
                                  1,
+                                 0 /* old_run_status */,
+                                 0 /* new_run_status */,
                                  utf8_mode, NULL, subj3)) < 0) {
     FAIL2(NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
   }

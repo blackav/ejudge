@@ -49,6 +49,8 @@ enum
   CLAR_FIELD_IN_REPLY_UUID,
   CLAR_FIELD_RUN_ID,
   CLAR_FIELD_RUN_UUID,
+  CLAR_FIELD_OLD_RUN_STATUS,
+  CLAR_FIELD_NEW_RUN_STATUS,
   CLAR_FIELD_CHARSET,
   CLAR_FIELD_SUBJECT,
 
@@ -78,7 +80,8 @@ struct clar_entry_v2
     unsigned char ipv6[16];
   } a;                          /* 16 */
   unsigned short locale_id;     /* 2 */
-  unsigned char _pad2[2];       /* 2 */
+  unsigned char old_run_status; /* 1 */ /* 1 means OK */
+  unsigned char new_run_status; /* 1 */ /* 1 means OK */
   int in_reply_to;              /* 4 */ /* 1 means in clar_id 0! */
   ruint32_t in_reply_uuid[4];   /* 16 */
   int run_id;                   /* 4 */ /* 1 means run_id 0! */
@@ -119,6 +122,8 @@ int clar_add_record(
         int             run_id,
         ruint32_t      *run_uuid,
         int             appeal_flag,
+        int             old_run_status,
+        int             new_run_status,
         int             utf8_mode,
         const unsigned char *charset,
         const unsigned char *subj);
