@@ -91,6 +91,19 @@ struct clar_entry_v2
   unsigned char subj[CLAR_ENTRY_V2_SUBJ_SIZE];
 };
 
+struct full_clar_entry
+{
+  struct clar_entry_v2 e;
+  unsigned char *text; // size+1 allocation, \0-terminated
+  size_t size;
+};
+
+struct full_clar_entry_vector
+{
+  int a, u;
+  struct full_clar_entry *v;
+};
+
 struct ejudge_cfg;
 struct contest_desc;
 struct section_global_data;
@@ -200,5 +213,14 @@ void
 ipv6_to_clar_entry(
         const ej_ip_t *pip,
         struct clar_entry_v2 *pe);
+
+int
+clar_fetch_run_messages(
+        clarlog_state_t state,
+        const ej_uuid_t *p_run_uuid,
+        struct full_clar_entry_vector *pfcev);
+
+void
+clar_free_fcev(struct full_clar_entry_vector *pfcev);
 
 #endif /* __CLARLOG_H__ */

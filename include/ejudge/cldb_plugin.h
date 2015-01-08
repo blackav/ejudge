@@ -33,6 +33,7 @@ struct clarlog_state;
 struct cldb_plugin_data;
 struct cldb_plugin_cnts;
 struct clar_entry_v2;
+struct full_clar_entry_vector;
 
 struct cldb_plugin_iface
 {
@@ -73,6 +74,11 @@ struct cldb_plugin_iface
   int (*modify_text)(struct cldb_plugin_cnts *, int clar_id, const unsigned char *text, size_t size);
   // modify the message record
   int (*modify_record)(struct cldb_plugin_cnts *, int clar_id, int mask, const struct clar_entry_v2 *pe);
+  // fetch the messages related to the specified run UUID
+  int (*fetch_run_messages)(
+        struct cldb_plugin_cnts *,
+        const ej_uuid_t *p_run_uuid,
+        struct full_clar_entry_vector *pfcev);
 };
 
 /* default plugin: compiled into new-server */

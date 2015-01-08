@@ -642,3 +642,29 @@ ipv6_to_clar_entry(const ej_ip_t *p_ip, struct clar_entry_v2 *pe)
     pe->a.ip = p_ip->u.v4.addr;
   }
 }
+
+int
+clar_fetch_run_messages(
+        clarlog_state_t state,
+        const ej_uuid_t *p_run_uuid,
+        struct full_clar_entry_vector *pfcev)
+{
+  if (state->iface->fetch_run_messages) {
+    return (*state->iface->fetch_run_messages)(state->cnts, p_run_uuid, pfcev);
+  } else {
+    ERR_R("not supported");
+  }
+  return -1;
+}
+
+void
+clar_free_fcev(struct full_clar_entry_vector *pfcev)
+{
+  if (pfcev) {
+    for (int i = 0; i < pfcev->u; ++i) {
+      xfree(pfcev->v[i].text);
+    }
+    xfree(pfcev->v);
+    memset(pfcev, 0, sizeof(*pfcev));
+  }
+}
