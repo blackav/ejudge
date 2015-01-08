@@ -232,7 +232,7 @@
 <tr><td class="b0">Size:</td><td class="b0"><s:textfield name="size" size="20" disabledExpr="info.is_readonly" value="info.size" /></td></tr>
 <tr><td class="b0">SHA1:</td><td class="b0"><s:textfield name="sha1" size="60" disabledExpr="info.is_readonly" escape="false" value="unparse_sha1(info.sha1)" /></td></tr>
 <% #if CONF_HAS_LIBUUID - 0 != 0 %>
-<tr><td class="b0">UUID:</td><td class="b0"><s:textfield name="uuid" size="60" disabledExpr="info.is_readonly" escape="false" value='ej_uuid_unparse(info.run_uuid, "")' /></td></tr>
+<tr><td class="b0">UUID:</td><td class="b0"><s:textfield name="uuid" size="60" disabledExpr="info.is_readonly" escape="false" value='ej_uuid_unparse(&info.run_uuid, "")' /></td></tr>
 <% #endif %>
 <%  if (!info.lang_id) { %>
 <tr><td class="b0">Content type:</td><td class="b0"><s:textfield name="mime_type" size="60" disabledExpr="info.is_readonly" value="mime_type_get_type(info.mime_type)" /></td></tr>

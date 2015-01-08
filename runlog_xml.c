@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -503,7 +502,7 @@ process_run_elements(struct xml_tree *xt, struct run_xml_helpers *helper)
       case RUNLOG_A_RUN_UUID:
 #if CONF_HAS_LIBUUID - 0 != 0
         if (xa->text && xa->text[0]) {
-          ej_uuid_parse(xa->text, xr->r.run_uuid);
+          ej_uuid_parse(xa->text, &xr->r.run_uuid);
         }
 #endif
         break;
@@ -914,8 +913,8 @@ unparse_runlog_xml(
     if (ts < 0) ts = 0;
     fprintf(f, " %s=\"%ld\"", attr_map[RUNLOG_A_TIME], ts);
 #if CONF_HAS_LIBUUID - 0 != 0
-    if (pp->run_uuid[0] || pp->run_uuid[1] || pp->run_uuid[2] || pp->run_uuid[3]) {
-      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_RUN_UUID], ej_uuid_unparse(pp->run_uuid, ""));
+    if (pp->run_uuid.v[0] || pp->run_uuid.v[1] || pp->run_uuid.v[2] || pp->run_uuid.v[3]) {
+      fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_RUN_UUID], ej_uuid_unparse(&pp->run_uuid, ""));
     }
 #endif
     if (!external_mode && pp->size > 0) {

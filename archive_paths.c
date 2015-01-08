@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -390,13 +389,13 @@ uuid_archive_make_write_path(
         const serve_state_t state,
         unsigned char *path,
         size_t size,
-        const ruint32_t run_uuid[4],
+        const ej_uuid_t *prun_uuid,
         long long file_size,
         const unsigned char *name,
         int zip_mode)
 {
-  ASSERT(run_uuid);
-  ASSERT(ej_uuid_is_nonempty(run_uuid));
+  ASSERT(prun_uuid);
+  ASSERT(ej_uuid_is_nonempty(*prun_uuid));
 
   const unsigned char *suffix = "";
   if ((zip_mode & ZIP)) {
@@ -408,9 +407,9 @@ uuid_archive_make_write_path(
   }
 
   snprintf(path, size, "%s/%02x/%02x/%s/%s%s",
-           state->global->uuid_archive_dir, ((const unsigned char *) run_uuid)[0],
-           ((const unsigned char *) run_uuid)[1],
-           ej_uuid_unparse(run_uuid, NULL), name, suffix);
+           state->global->uuid_archive_dir, ej_uuid_bytes(prun_uuid)[0],
+           ej_uuid_bytes(prun_uuid)[1],
+           ej_uuid_unparse(prun_uuid, NULL), name, suffix);
   return zip_mode;
 }
 
@@ -419,19 +418,19 @@ uuid_archive_make_read_path(
         const serve_state_t state,
         unsigned char *path,
         size_t size,
-        const ruint32_t run_uuid[4],
+        const ej_uuid_t *prun_uuid,
         const unsigned char *name,
         int gzip_preferred)
 {
   struct stat sb;
 
-  ASSERT(run_uuid);
-  ASSERT(ej_uuid_is_nonempty(run_uuid));
+  ASSERT(prun_uuid);
+  ASSERT(ej_uuid_is_nonempty(*prun_uuid));
 
   int len = snprintf(path, size - 4, "%s/%02x/%02x/%s/%s",
-                     state->global->uuid_archive_dir, ((const unsigned char *) run_uuid)[0],
-                     ((const unsigned char *) run_uuid)[1],
-                     ej_uuid_unparse(run_uuid, NULL), name);
+                     state->global->uuid_archive_dir, ej_uuid_bytes(prun_uuid)[0],
+                     ej_uuid_bytes(prun_uuid)[1],
+                     ej_uuid_unparse(prun_uuid, NULL), name);
   if (len >= size - 4) {
     err("uuid_archive_make_read_path: archive path is too long");
     return -1;
@@ -464,20 +463,20 @@ uuid_archive_make_read_path(
 int
 uuid_archive_dir_prepare(
         const serve_state_t state,
-        const ruint32_t run_uuid[4],
+        const ej_uuid_t *prun_uuid,
         const unsigned char *name,
         int no_unlink_flag)
 {
   unsigned char path[PATH_MAX];
   unsigned char path2[PATH_MAX];
 
-  ASSERT(run_uuid);
-  ASSERT(ej_uuid_is_nonempty(run_uuid));
+  ASSERT(prun_uuid);
+  ASSERT(ej_uuid_is_nonempty(*prun_uuid));
 
   snprintf(path, sizeof(path), "%s/%02x/%02x/%s",
-           state->global->uuid_archive_dir, ((const unsigned char *) run_uuid)[0],
-           ((const unsigned char *) run_uuid)[1],
-           ej_uuid_unparse(run_uuid, NULL));
+           state->global->uuid_archive_dir, ej_uuid_bytes(prun_uuid)[0],
+           ej_uuid_bytes(prun_uuid)[1],
+           ej_uuid_unparse(prun_uuid, NULL));
   if (os_MakeDirPath(path, 0755) < 0) {
     err("uuid_archive_dir_prepare: mkdir '%s' failed: %s", path, os_ErrorMsg());
     return -1;
@@ -500,15 +499,15 @@ uuid_archive_prepare_write_path(
         const serve_state_t state,
         unsigned char *path,
         size_t size,
-        const ruint32_t run_uuid[4],
+        const ej_uuid_t *prun_uuid,
         long long file_size,
         const unsigned char *name,
         int zip_mode,
         int no_unlink_flag)
 {
-  int flags = uuid_archive_make_write_path(state, path, size, run_uuid, file_size, name, zip_mode);
+  int flags = uuid_archive_make_write_path(state, path, size, prun_uuid, file_size, name, zip_mode);
   if (flags < 0) return flags;
-  if (uuid_archive_dir_prepare(state, run_uuid, name, no_unlink_flag) < 0) return -1;
+  if (uuid_archive_dir_prepare(state, prun_uuid, name, no_unlink_flag) < 0) return -1;
   return flags;
 }
 
@@ -528,20 +527,20 @@ remove_all_suffixes(const unsigned char *base)
 int
 uuid_archive_remove(
         const serve_state_t state,
-        const ruint32_t run_uuid[4],
+        const ej_uuid_t *prun_uuid,
         int preserve_source)
 {
   unsigned char base[PATH_MAX];
   unsigned char path[PATH_MAX];
 
-  ASSERT(run_uuid);
-  ASSERT(ej_uuid_is_nonempty(run_uuid));
+  ASSERT(prun_uuid);
+  ASSERT(ej_uuid_is_nonempty(*prun_uuid));
 
   snprintf(base, sizeof(base), "%s/%02x/%02x/%s",
            state->global->uuid_archive_dir,
-           ((const unsigned char *) run_uuid)[0],
-           ((const unsigned char *) run_uuid)[1],
-           ej_uuid_unparse(run_uuid, NULL));
+           ej_uuid_bytes(prun_uuid)[0],
+           ej_uuid_bytes(prun_uuid)[1],
+           ej_uuid_unparse(prun_uuid, NULL));
   if (preserve_source <= 0) {
     snprintf(path, sizeof(path), "%s/%s", base, DFLT_R_UUID_SOURCE);
     remove_all_suffixes(path);

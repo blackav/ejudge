@@ -497,7 +497,7 @@ read_clar_file_v1(
 
     struct clar_entry_v2 *nce = &cl_state->clars.v[i];
     nce->id = ce.id;
-    ej_uuid_generate(nce->uuid);
+    ej_uuid_generate(&nce->uuid);
     nce->size = ce.size;
     nce->time = ce.time;
     nce->nsec = ce.nsec;
@@ -523,7 +523,7 @@ read_clar_file_v1(
       for (int j = 0; j < cl_state->clars.u; ++j) {
         struct clar_entry_v2 *ce2 = &cl_state->clars.v[j];
         if (ce2->id == ce->in_reply_to - 1) {
-          ej_uuid_copy(ce->in_reply_uuid, ce2->uuid);
+          ej_uuid_copy(&ce->in_reply_uuid, &ce2->uuid);
           break;
         }
       }

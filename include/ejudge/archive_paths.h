@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __ARCHIVE_PATHS_H__
 #define __ARCHIVE_PATHS_H__
 
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -53,7 +52,7 @@ uuid_archive_make_write_path(
         const serve_state_t state,
         unsigned char *path,
         size_t size,
-        const ruint32_t run_uuid[4],
+        const ej_uuid_t *prun_uuid,
         long long file_size,
         const unsigned char *name,
         int zip_mode);
@@ -62,13 +61,13 @@ uuid_archive_make_read_path(
         const serve_state_t state,
         unsigned char *path,
         size_t size,
-        const ruint32_t run_uuid[4],
+        const ej_uuid_t *prun_uuid,
         const unsigned char *name,
         int gzip_preferred);
 int
 uuid_archive_dir_prepare(
         const serve_state_t state,
-        const ruint32_t run_uuid[4],
+        const ej_uuid_t *prun_uuid,
         const unsigned char *name,
         int no_unlink_flag);
 int
@@ -76,7 +75,7 @@ uuid_archive_prepare_write_path(
         const serve_state_t state,
         unsigned char *path,
         size_t size,
-        const ruint32_t run_uuid[4],
+        const ej_uuid_t *prun_uuid,
         long long file_size,
         const unsigned char *name,
         int zip_mode,
@@ -84,7 +83,7 @@ uuid_archive_prepare_write_path(
 int
 uuid_archive_remove(
         const serve_state_t state,
-        const ruint32_t run_uuid[4],
+        const ej_uuid_t *prun_uuid,
         int preserve_source);
 
 #endif /* __ARCHIVE_PATHS_H__ */

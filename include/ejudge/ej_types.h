@@ -195,4 +195,10 @@ enum
   TOKEN_FINALTESTS_BIT = 6  // show the final test info
 };
 
+typedef struct ej_uuid_t
+{
+  ruint32_t v[4];
+} ej_uuid_t;
+
+
 #endif /* __EJ_TYPES_H__ */

@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -129,7 +128,7 @@ is_missing_source(
 
   if (re->store_flags == 1) {
     if ((src_flags = uuid_archive_make_read_path(cs, src_path, sizeof(src_path),
-                                                 re->run_uuid, DFLT_R_UUID_SOURCE, 0)) < 0)
+                                                 &re->run_uuid, DFLT_R_UUID_SOURCE, 0)) < 0)
       return 1;
   } else {
     if ((src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
@@ -309,7 +308,7 @@ do_eval(struct filter_env *env,
     case TOK_UUID:
       res->kind = TOK_STRING_L;
       res->type = FILTER_TYPE_STRING;
-      res->v.s = envdup(env, ej_uuid_unparse(env->rentries[r1.v.i].run_uuid, ""));
+      res->v.s = envdup(env, ej_uuid_unparse(&env->rentries[r1.v.i].run_uuid, ""));
       break;
     case TOK_IP:
       res->kind = TOK_IP_L;
@@ -621,7 +620,7 @@ do_eval(struct filter_env *env,
   case TOK_CURUUID:
     res->kind = TOK_STRING_L;
     res->type = FILTER_TYPE_STRING;
-    res->v.s = envdup(env, ej_uuid_unparse(env->cur->run_uuid, ""));
+    res->v.s = envdup(env, ej_uuid_unparse(&env->cur->run_uuid, ""));
     break;
   case TOK_CURIP:
     res->kind = TOK_IP_L;

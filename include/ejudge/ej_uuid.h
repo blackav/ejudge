@@ -18,18 +18,20 @@
 
 #include "ejudge/ej_types.h"
 
-int ej_uuid_parse(const unsigned char *str, ruint32_t uuid[4]);
-const unsigned char *ej_uuid_unparse(const ruint32_t uuid[4], const unsigned char *default_value);
-void ej_uuid_generate(ruint32_t uuid[4]);
+int ej_uuid_parse(const unsigned char *str, ej_uuid_t *puuid);
+const unsigned char *ej_uuid_unparse(const ej_uuid_t *puuid, const unsigned char *default_value);
+void ej_uuid_generate(ej_uuid_t *puuid);
 int ej_uuid_supported(void);
+
 const unsigned char *
 ej_uuid_unparse_r(
         unsigned char *buf,
         size_t size,
-        const ruint32_t uuid[4],
+        const ej_uuid_t *puuid,
         const unsigned char *default_value);
 
-#define ej_uuid_is_nonempty(uuid) ((uuid)[0] || (uuid)[1] || (uuid)[2] || (uuid)[3])
+#define ej_uuid_is_nonempty(uuid) ((uuid).v[0] || (uuid).v[1] || (uuid).v[2] || (uuid).v[3])
 #define ej_uuid_copy(dst, src) (memcpy((dst), (src), 16))
+#define ej_uuid_bytes(puuid) (((const unsigned char *) (puuid)))
 
 #endif /* __EJ_UUID_H__ */

@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1155,7 +1154,7 @@ add_entry_func(
     memcpy(de->sha1, re->sha1, sizeof(de->sha1));
   }
   if ((flags & RE_RUN_UUID)) {
-    memcpy(de->run_uuid, re->run_uuid, sizeof(de->run_uuid));
+    memcpy(&de->run_uuid, &re->run_uuid, sizeof(de->run_uuid));
   }
   if ((flags & RE_USER_ID)) {
     de->user_id = re->user_id;

@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -71,10 +70,10 @@ compile_reply_packet_read(size_t in_size, const void *in_data,
   FAIL_IF(pout->ts3_us < 0 || pout->ts3_us > USEC_MAX);
 
   pout->use_uuid = cvt_bin_to_host_32(pin->use_uuid);
-  pout->uuid[0] = cvt_bin_to_host_32(pin->uuid[0]);
-  pout->uuid[1] = cvt_bin_to_host_32(pin->uuid[1]);
-  pout->uuid[2] = cvt_bin_to_host_32(pin->uuid[2]);
-  pout->uuid[3] = cvt_bin_to_host_32(pin->uuid[3]);
+  pout->uuid.v[0] = cvt_bin_to_host_32(pin->uuid.v[0]);
+  pout->uuid.v[1] = cvt_bin_to_host_32(pin->uuid.v[1]);
+  pout->uuid.v[2] = cvt_bin_to_host_32(pin->uuid.v[2]);
+  pout->uuid.v[3] = cvt_bin_to_host_32(pin->uuid.v[3]);
 
   in_ptr = (const unsigned char*) pin + sizeof(*pin);
   end_ptr = (const unsigned char*) pin + pkt_size;

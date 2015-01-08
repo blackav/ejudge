@@ -1184,7 +1184,7 @@ parse_testing_report(struct xml_tree *t, testing_report_xml_t r)
           xfree(uuid);
           return -1;
         }
-        if (ej_uuid_parse(uuid, r->uuid) < 0) {
+        if (ej_uuid_parse(uuid, &r->uuid) < 0) {
           xml_err(t2, "invalid value of <uuid>");
           xfree(uuid);
           return -1;
@@ -1560,8 +1560,8 @@ testing_report_unparse_xml(
   }
   fprintf(out, " >\n");
 
-  if (r->uuid[0] || r->uuid[1] || r->uuid[2] || r->uuid[3]) {
-    fprintf(out, "  <%s>%s</%s>\n", elem_map[TR_T_UUID], ej_uuid_unparse(r->uuid, NULL), elem_map[TR_T_UUID]);
+  if (r->uuid.v[0] || r->uuid.v[1] || r->uuid.v[2] || r->uuid.v[3]) {
+    fprintf(out, "  <%s>%s</%s>\n", elem_map[TR_T_UUID], ej_uuid_unparse(&r->uuid, NULL), elem_map[TR_T_UUID]);
   }
 
   unparse_string_elem(out, &ab, TR_T_COMMENT, r->comment);

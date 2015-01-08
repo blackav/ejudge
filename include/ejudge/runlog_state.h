@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __RUNLOG_STATE_H__
 #define __RUNLOG_STATE_H__
 
-/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -53,7 +52,7 @@ struct run_entry_extra
 struct uuid_hash_entry
 {
   int       run_id;            /* < 0, if the entry is empty */
-  unsigned  uuid[4];
+  ej_uuid_t uuid;
 };
 
 struct rldb_plugin_iface;

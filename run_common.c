@@ -294,7 +294,7 @@ generate_xml_report(
     tr->cpu_mhz = xstrdup(cpu_mhz);
   }
   if (srgp->run_uuid) {
-    ej_uuid_parse(srgp->run_uuid, tr->uuid);
+    ej_uuid_parse(srgp->run_uuid, &tr->uuid);
   }
 
   XCALLOC(tr->tests, total_tests - 1);
