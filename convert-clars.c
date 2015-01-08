@@ -229,7 +229,7 @@ main(int argc, char *argv[])
     if (clar.id < 0) continue;
     clar_put_record(dst_clarlog, clar_id, &clar);
     if (clar_get_raw_text(src_clarlog, clar_id, &text, &size) < 0) continue;
-    clar_add_text(dst_clarlog, clar_id, text, size);
+    clar_add_text(dst_clarlog, clar_id, &clar.uuid, text, size);
     xfree(text); text = 0; size = 0;
   }
   return 0;

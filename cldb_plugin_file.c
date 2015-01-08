@@ -128,6 +128,7 @@ static int
 add_text_func(
         struct cldb_plugin_cnts *cdata,
         int clar_id,
+        const ej_uuid_t *puuid,
         const unsigned char *text,
         size_t size);
 static int
@@ -759,6 +760,7 @@ static int
 add_text_func(
         struct cldb_plugin_cnts *cdata,
         int clar_id,
+        const ej_uuid_t *puuid,
         const unsigned char *text,
         size_t size)
 {

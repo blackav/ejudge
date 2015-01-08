@@ -126,7 +126,8 @@ int clar_add_record(
         int             new_run_status,
         int             utf8_mode,
         const unsigned char *charset,
-        const unsigned char *subj);
+        const unsigned char *subj,
+        ej_uuid_t       *puuid);
 int clar_update_flags(clarlog_state_t state, int id, int flags);
 int clar_set_charset(
         clarlog_state_t state,
@@ -175,7 +176,8 @@ int
 clar_add_text(
         clarlog_state_t state,
         int clar_id,
-        unsigned char *text,
+        const ej_uuid_t *puuid,
+        const unsigned char *text,
         size_t size);
 int
 clar_modify_text(

@@ -207,7 +207,8 @@ clar_add_record(
         int             new_run_status,
         int             utf8_mode,
         const unsigned char *charset,
-        const unsigned char *subj)
+        const unsigned char *subj,
+        ej_uuid_t       *puuid)
 {
   int i, j;
   unsigned char subj2[CLAR_ENTRY_V2_SUBJ_SIZE];
@@ -266,6 +267,9 @@ clar_add_record(
   }
 
   if (state->iface->add_entry(state->cnts, i) < 0) return -1;
+  if (puuid) {
+    ej_uuid_copy(puuid, &pc->uuid);
+  }
   return i;
 }
 
@@ -528,10 +532,11 @@ int
 clar_add_text(
         clarlog_state_t state,
         int clar_id,
-        unsigned char *text,
+        const ej_uuid_t *puuid,
+        const unsigned char *text,
         size_t size)
 {
-  return state->iface->add_text(state->cnts, clar_id, text, size);
+  return state->iface->add_text(state->cnts, clar_id, puuid, text, size);
 }
 
 int

@@ -3036,6 +3036,7 @@ priv_submit_clar(
   text3 = alloca(subj_len + text_len + 32);
   text3_len = sprintf(text3, "Subject: %s\n\n%s\n", subj2, text2);
 
+  ej_uuid_t clar_uuid = {};
   gettimeofday(&precise_time, 0);
   if ((clar_id = clar_add_record(cs->clarlog_state,
                                  precise_time.tv_sec,
@@ -3052,12 +3053,12 @@ priv_submit_clar(
                                  0 /* appeal_flag */,
                                  0 /* old_run_status */,
                                  0 /* new_run_status */,
-                                 utf8_mode, NULL, subj2)) < 0) {
+                                 utf8_mode, NULL, subj2, &clar_uuid)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto cleanup;
   }
 
-  if (clar_add_text(cs->clarlog_state, clar_id, text3, text3_len) < 0) {
+  if (clar_add_text(cs->clarlog_state, clar_id, &clar_uuid, text3, text3_len) < 0) {
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto cleanup;
   }
@@ -3243,6 +3244,7 @@ priv_submit_run_comment(
   text3 = alloca(subj_len + text_len + 32);
   text3_len = sprintf(text3, "Subject: %s\n\n%s\n", subj2, text2);
 
+  ej_uuid_t clar_uuid = {};
   gettimeofday(&precise_time, 0);
   if ((clar_id = clar_add_record(cs->clarlog_state,
                                  precise_time.tv_sec,
@@ -3259,12 +3261,12 @@ priv_submit_run_comment(
                                  0 /* appeal_flag */,
                                  0 /* old_run_status */,
                                  0 /* new_run_status */,
-                                 utf8_mode, NULL, subj2)) < 0) {
+                                 utf8_mode, NULL, subj2, &clar_uuid)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto cleanup;
   }
 
-  if (clar_add_text(cs->clarlog_state, clar_id, text3, text3_len) < 0) {
+  if (clar_add_text(cs->clarlog_state, clar_id, &clar_uuid, text3, text3_len) < 0) {
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto cleanup;
   }
@@ -3455,6 +3457,7 @@ priv_clar_reply(
   from_id = clar.from;
   if (phr->action == NEW_SRV_ACTION_CLAR_REPLY_ALL) from_id = 0;
 
+  ej_uuid_t clar_uuid = {};
   gettimeofday(&precise_time, 0);
   clar_id = clar_add_record(cs->clarlog_state,
                             precise_time.tv_sec,
@@ -3471,14 +3474,15 @@ priv_clar_reply(
                             0 /* old_run_status */,
                             0 /* new_run_status */,
                             utf8_mode, NULL,
-                            clar_get_subject(cs->clarlog_state, in_reply_to));
+                            clar_get_subject(cs->clarlog_state, in_reply_to),
+                            &clar_uuid);
 
   if (clar_id < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto cleanup;
   }
 
-  if (clar_add_text(cs->clarlog_state, clar_id, msg, msg_len) < 0) {
+  if (clar_add_text(cs->clarlog_state, clar_id, &clar_uuid, msg, msg_len) < 0) {
     ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
     goto cleanup;
   }
@@ -8963,6 +8967,7 @@ unpriv_submit_clar(FILE *fout,
     FAIL2(NEW_SRV_ERR_CLAR_QUOTA_EXCEEDED);
   }
 
+  ej_uuid_t clar_uuid = {};
   gettimeofday(&precise_time, 0);
   if ((clar_id = clar_add_record(cs->clarlog_state,
                                  precise_time.tv_sec,
@@ -8979,11 +8984,11 @@ unpriv_submit_clar(FILE *fout,
                                  0 /* appeal_flag */,
                                  0 /* old_run_status */,
                                  0 /* new_run_status */,
-                                 utf8_mode, NULL, subj3)) < 0) {
+                                 utf8_mode, NULL, subj3, &clar_uuid)) < 0) {
     FAIL2(NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
   }
 
-  if (clar_add_text(cs->clarlog_state, clar_id, text3, text3_len) < 0) {
+  if (clar_add_text(cs->clarlog_state, clar_id, &clar_uuid, text3, text3_len) < 0) {
     FAIL2(NEW_SRV_ERR_DISK_WRITE_ERROR);
   }
 
@@ -9096,6 +9101,7 @@ unpriv_submit_appeal(FILE *fout,
     FAIL2(NEW_SRV_ERR_CLAR_QUOTA_EXCEEDED);
   }
 
+  ej_uuid_t clar_uuid = {};
   gettimeofday(&precise_time, 0);
   if ((clar_id = clar_add_record(cs->clarlog_state,
                                  precise_time.tv_sec,
@@ -9112,11 +9118,11 @@ unpriv_submit_appeal(FILE *fout,
                                  1,
                                  0 /* old_run_status */,
                                  0 /* new_run_status */,
-                                 utf8_mode, NULL, subj3)) < 0) {
+                                 utf8_mode, NULL, subj3, &clar_uuid)) < 0) {
     FAIL2(NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
   }
 
-  if (clar_add_text(cs->clarlog_state, clar_id, text3, text3_len) < 0) {
+  if (clar_add_text(cs->clarlog_state, clar_id, &clar_uuid, text3, text3_len) < 0) {
     FAIL2(NEW_SRV_ERR_DISK_WRITE_ERROR);
   }
 

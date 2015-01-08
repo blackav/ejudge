@@ -79,7 +79,7 @@ set_charset_func(struct cldb_plugin_cnts *, int);
 static int
 get_raw_text_func(struct cldb_plugin_cnts *, int, unsigned char **,size_t*);
 static int
-add_text_func(struct cldb_plugin_cnts *, int, const unsigned char *, size_t);
+add_text_func(struct cldb_plugin_cnts *, int, const ej_uuid_t *, const unsigned char *, size_t);
 static int
 modify_text_func(struct cldb_plugin_cnts *, int, const unsigned char *, size_t);
 static int
@@ -774,6 +774,7 @@ static int
 add_text_func(
         struct cldb_plugin_cnts *cdata,
         int clar_id,
+        const ej_uuid_t *puuid,
         const unsigned char *text,
         size_t size)
 {
@@ -785,6 +786,7 @@ add_text_func(
   FILE *cmd_f = 0;
   char *cmd_t = 0;
   size_t cmd_z = 0;
+  unsigned char uuid_str[40];
 
   if (!text) {
     text = "";
@@ -799,6 +801,9 @@ add_text_func(
   memset(&ct, 0, sizeof(ct));
   ct.clar_id = clar_id;
   ct.contest_id = cs->contest_id;
+  uuid_str[0] = 0;
+  ej_uuid_unparse_r(uuid_str, sizeof(uuid_str), puuid, NULL);
+  ct.uuid = uuid_str;
   ct.clar_text = (unsigned char*) text;
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %sclartexts VALUES ( ", md->table_prefix);

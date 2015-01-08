@@ -68,7 +68,7 @@ struct cldb_plugin_iface
   // get the message text as is
   int (*get_raw_text)(struct cldb_plugin_cnts *, int, unsigned char **,size_t*);
   // add the message text
-  int (*add_text)(struct cldb_plugin_cnts *, int, const unsigned char *,size_t);
+  int (*add_text)(struct cldb_plugin_cnts *, int, const ej_uuid_t *, const unsigned char *,size_t);
   // modify the message text
   int (*modify_text)(struct cldb_plugin_cnts *, int clar_id, const unsigned char *text, size_t size);
   // modify the message record
