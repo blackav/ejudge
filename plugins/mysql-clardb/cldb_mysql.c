@@ -473,66 +473,66 @@ make_clarlog_entry(
   if (mi->parse_spec(md, -1, md->row, md->lengths, CLARS_ROW_WIDTH, clars_spec, &cl) < 0)
     goto fail;
 
-    if (cl.clar_id < 0) db_error_inv_value_fail(md, "clar_id");
-    if (cl.uuid && ej_uuid_parse(cl.uuid, &uuid) < 0) db_error_inv_value_fail(md, "uuid");
-    if (cl.contest_id != contest_id)
-      db_error_inv_value_fail(md, "contest_id");
-    if (cl.size < 0 || cl.size >= 65536) db_error_inv_value_fail(md, "size");
-    if (cl.create_time <= 0) db_error_inv_value_fail(md, "create_time");
-    if (cl.nsec < 0 || cl.nsec >= 1000000000)
-      db_error_inv_value_fail(md, "nsec");
-    if (cl.user_from < 0) db_error_inv_value_fail(md, "user_from");
-    if (cl.user_to < 0) db_error_inv_value_fail(md, "user_to");
-    if (cl.j_from < 0) db_error_inv_value_fail(md, "j_from");
-    if (cl.flags < 0 || cl.flags > 2) db_error_inv_value_fail(md, "flags");
-    if (cl.locale_id < 0 || cl.locale_id > 255)
-      db_error_inv_value_fail(md, "locale_id");
-    if (cl.in_reply_to < 0) db_error_inv_value_fail(md, "in_reply_to");
-    if (cl.in_reply_uuid && ej_uuid_parse(cl.in_reply_uuid, &in_reply_uuid)) db_error_inv_value_fail(md, "in_reply_uuid");
-    if (cl.run_id < 0) db_error_inv_value_fail(md, "run_id");
-    if (cl.run_uuid && ej_uuid_parse(cl.run_uuid, &run_uuid) < 0) db_error_inv_value_fail(md, "run_uuid");
-    if (!is_valid_charset(cl.clar_charset)) db_error_inv_value_fail(md, "clar_charset");
-    int subj_len = 0;
-    if (cl.subj) subj_len = strlen(cl.subj);
-    if (subj_len < CLAR_ENTRY_V2_SUBJ_SIZE) {
-      if (cl.subj) strcpy(subj2, cl.subj);
-    } else {
-      memcpy(subj2, cl.subj, CLAR_ENTRY_V2_SUBJ_SIZE);
-      int j = CLAR_ENTRY_V2_SUBJ_SIZE - 4;
-      if (cl.clar_charset && !strcasecmp(cl.clar_charset, "utf-8")) {
-        while (j >= 0 && subj2[j] >= 0x80 && subj2[j] <= 0xbf) j--;
-        if (j < 0) j = 0;
-      }
-      subj2[j++] = '.';
-      subj2[j++] = '.';
-      subj2[j++] = '.';
-      subj2[j++] = 0;
-      for (; j < CLAR_ENTRY_V2_SUBJ_SIZE; subj2[j++] = 0);
+  if (cl.clar_id < 0) db_error_inv_value_fail(md, "clar_id");
+  if (cl.uuid && ej_uuid_parse(cl.uuid, &uuid) < 0) db_error_inv_value_fail(md, "uuid");
+  if (cl.contest_id != contest_id)
+    db_error_inv_value_fail(md, "contest_id");
+  if (cl.size < 0 || cl.size >= 65536) db_error_inv_value_fail(md, "size");
+  if (cl.create_time <= 0) db_error_inv_value_fail(md, "create_time");
+  if (cl.nsec < 0 || cl.nsec >= 1000000000)
+    db_error_inv_value_fail(md, "nsec");
+  if (cl.user_from < 0) db_error_inv_value_fail(md, "user_from");
+  if (cl.user_to < 0) db_error_inv_value_fail(md, "user_to");
+  if (cl.j_from < 0) db_error_inv_value_fail(md, "j_from");
+  if (cl.flags < 0 || cl.flags > 2) db_error_inv_value_fail(md, "flags");
+  if (cl.locale_id < 0 || cl.locale_id > 255)
+    db_error_inv_value_fail(md, "locale_id");
+  if (cl.in_reply_to < 0) db_error_inv_value_fail(md, "in_reply_to");
+  if (cl.in_reply_uuid && ej_uuid_parse(cl.in_reply_uuid, &in_reply_uuid)) db_error_inv_value_fail(md, "in_reply_uuid");
+  if (cl.run_id < 0) db_error_inv_value_fail(md, "run_id");
+  if (cl.run_uuid && ej_uuid_parse(cl.run_uuid, &run_uuid) < 0) db_error_inv_value_fail(md, "run_uuid");
+  if (!is_valid_charset(cl.clar_charset)) db_error_inv_value_fail(md, "clar_charset");
+  int subj_len = 0;
+  if (cl.subj) subj_len = strlen(cl.subj);
+  if (subj_len < CLAR_ENTRY_V2_SUBJ_SIZE) {
+    if (cl.subj) strcpy(subj2, cl.subj);
+  } else {
+    memcpy(subj2, cl.subj, CLAR_ENTRY_V2_SUBJ_SIZE);
+    int j = CLAR_ENTRY_V2_SUBJ_SIZE - 4;
+    if (cl.clar_charset && !strcasecmp(cl.clar_charset, "utf-8")) {
+      while (j >= 0 && subj2[j] >= 0x80 && subj2[j] <= 0xbf) j--;
+      if (j < 0) j = 0;
     }
+    subj2[j++] = '.';
+    subj2[j++] = '.';
+    subj2[j++] = '.';
+    subj2[j++] = 0;
+    for (; j < CLAR_ENTRY_V2_SUBJ_SIZE; subj2[j++] = 0);
+  }
 
-    ce->id = cl.clar_id;
-    ej_uuid_copy(&ce->uuid, &uuid);
-    ce->size = cl.size;
-    ce->time = cl.create_time;
-    ce->nsec = cl.nsec;
-    ce->from = cl.user_from;
-    ce->to = cl.user_to;
-    ce->j_from = cl.j_from;
-    ce->flags = cl.flags;
-    ce->ssl_flag = cl.ssl_flag;
-    ce->appeal_flag = cl.appeal_flag;
-    ipv6_to_clar_entry(&cl.ip, ce);
-    ce->ipv6_flag = cl.ip.ipv6_flag;
-    ce->locale_id = cl.locale_id;
-    ce->in_reply_to = cl.in_reply_to;
-    ej_uuid_copy(&ce->in_reply_uuid, &in_reply_uuid);
-    ce->run_id = cl.run_id;
-    ej_uuid_copy(&ce->run_uuid, &run_uuid);
-    ce->old_run_status = cl.old_run_status;
-    ce->new_run_status = cl.new_run_status;
-    strcpy(ce->charset, cl.clar_charset);
-    strcpy(ce->subj, subj2);
-    retval = 0;
+  ce->id = cl.clar_id;
+  ej_uuid_copy(&ce->uuid, &uuid);
+  ce->size = cl.size;
+  ce->time = cl.create_time;
+  ce->nsec = cl.nsec;
+  ce->from = cl.user_from;
+  ce->to = cl.user_to;
+  ce->j_from = cl.j_from;
+  ce->flags = cl.flags;
+  ce->ssl_flag = cl.ssl_flag;
+  ce->appeal_flag = cl.appeal_flag;
+  ipv6_to_clar_entry(&cl.ip, ce);
+  ce->ipv6_flag = cl.ip.ipv6_flag;
+  ce->locale_id = cl.locale_id;
+  ce->in_reply_to = cl.in_reply_to;
+  ej_uuid_copy(&ce->in_reply_uuid, &in_reply_uuid);
+  ce->run_id = cl.run_id;
+  ej_uuid_copy(&ce->run_uuid, &run_uuid);
+  ce->old_run_status = cl.old_run_status;
+  ce->new_run_status = cl.new_run_status;
+  strcpy(ce->charset, cl.clar_charset);
+  strcpy(ce->subj, subj2);
+  retval = 0;
 
   //done:;
 fail:;
@@ -558,10 +558,8 @@ open_func(
   struct common_mysql_state *md = state->md;
   struct cldb_mysql_cnts *cs = 0;
   int i;
-  struct clar_entry_internal cl;
   struct clar_entry_v2 ce;
 
-  memset(&cl, 0, sizeof(cl));
   XCALLOC(cs, 1);
   cs->plugin_state = state;
   if (state) state->nref++;
@@ -585,14 +583,13 @@ open_func(
 
     expand_clar_array(&cl_state->clars, ce.id);
     cl_state->clars.v[ce.id] = ce;
+    if (ce.id >= cl_state->clars.u) cl_state->clars.u = ce.id + 1;
   }
   state->mi->free_res(state->md);
 
   return (struct cldb_plugin_cnts*) cs;
 
  fail:
-  xfree(cl.clar_charset);
-  xfree(cl.subj);
   state->mi->free_res(state->md);
   close_func((struct cldb_plugin_cnts*) cs);
   return 0;
