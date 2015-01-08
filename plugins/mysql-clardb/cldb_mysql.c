@@ -446,57 +446,36 @@ is_valid_charset(const unsigned char *charset)
   return 1;
 }
 
-static struct cldb_plugin_cnts *
-open_func(
+static int
+make_clarlog_entry(
         struct cldb_plugin_data *data,
-        struct clarlog_state *cl_state,
-        const struct ejudge_cfg *config,
-        const struct contest_desc *cnts,
-        const struct section_global_data *global,
-        int flags)
+        int contest_id,
+        int extra_columns,
+        struct clar_entry_v2 *ce)
 {
   struct cldb_mysql_state *state = (struct cldb_mysql_state*) data;
   struct common_mysql_iface *mi = state->mi;
   struct common_mysql_state *md = state->md;
-  struct cldb_mysql_cnts *cs = 0;
-  int i, j;
-  struct clar_entry_internal cl;
-  struct clar_entry_v2 *ce;
-  unsigned char subj2[CLAR_ENTRY_V2_SUBJ_SIZE];
-  int subj_len;
-  ej_uuid_t uuid;
-  ej_uuid_t in_reply_uuid;
-  ej_uuid_t run_uuid;
+  int retval = -1;
 
-  memset(&cl, 0, sizeof(cl));
-  XCALLOC(cs, 1);
-  cs->plugin_state = state;
-  if (state) state->nref++;
-  cs->cl_state = cl_state;
-  if (cnts) cs->contest_id = cnts->id;
-  if (!cs->contest_id && global) cs->contest_id = global->contest_id;
-  if (!cs->contest_id) {
-    err("undefined contest_id");
+  struct clar_entry_internal cl = {};
+  ej_uuid_t uuid = {};
+  ej_uuid_t in_reply_uuid = {};
+  ej_uuid_t run_uuid = {};
+  unsigned char subj2[CLAR_ENTRY_V2_SUBJ_SIZE] = {};
+
+  memset(ce, 0, sizeof(*ce));
+
+  if (md->field_count != CLARS_ROW_WIDTH + extra_columns) {
+    err("wrong field_count (%d instead of %d). invalid table format?", md->field_count, CLARS_ROW_WIDTH + extra_columns);
     goto fail;
   }
-  if (do_open(state) < 0) goto fail;
+  if (mi->parse_spec(md, -1, md->row, md->lengths, CLARS_ROW_WIDTH, clars_spec, &cl) < 0)
+    goto fail;
 
-  if (mi->fquery(md, CLARS_ROW_WIDTH,
-                 "SELECT * FROM %sclars WHERE contest_id=%d ORDER BY clar_id;",
-                md->table_prefix, cs->contest_id) < 0)
-    db_error_fail(md);
-  for (i = 0; i < md->row_count; i++) {
-    if (mi->next_row(md) < 0) goto fail;
-    memset(&cl, 0, sizeof(cl));
-    memset(&uuid, 0, sizeof(uuid));
-    memset(&in_reply_uuid, 0, sizeof(in_reply_uuid));
-    memset(&run_uuid, 0, sizeof(run_uuid));
-    if (mi->parse_spec(md, md->field_count, md->row, md->lengths,
-                       CLARS_ROW_WIDTH, clars_spec, &cl) < 0)
-      goto fail;
     if (cl.clar_id < 0) db_error_inv_value_fail(md, "clar_id");
     if (cl.uuid && ej_uuid_parse(cl.uuid, &uuid) < 0) db_error_inv_value_fail(md, "uuid");
-    if (cl.contest_id != cs->contest_id)
+    if (cl.contest_id != contest_id)
       db_error_inv_value_fail(md, "contest_id");
     if (cl.size < 0 || cl.size >= 65536) db_error_inv_value_fail(md, "size");
     if (cl.create_time <= 0) db_error_inv_value_fail(md, "create_time");
@@ -513,14 +492,13 @@ open_func(
     if (cl.run_id < 0) db_error_inv_value_fail(md, "run_id");
     if (cl.run_uuid && ej_uuid_parse(cl.run_uuid, &run_uuid) < 0) db_error_inv_value_fail(md, "run_uuid");
     if (!is_valid_charset(cl.clar_charset)) db_error_inv_value_fail(md, "clar_charset");
-    memset(subj2, 0, sizeof(subj2));
-    subj_len = 0;
+    int subj_len = 0;
     if (cl.subj) subj_len = strlen(cl.subj);
     if (subj_len < CLAR_ENTRY_V2_SUBJ_SIZE) {
       if (cl.subj) strcpy(subj2, cl.subj);
     } else {
       memcpy(subj2, cl.subj, CLAR_ENTRY_V2_SUBJ_SIZE);
-      j = CLAR_ENTRY_V2_SUBJ_SIZE - 4;
+      int j = CLAR_ENTRY_V2_SUBJ_SIZE - 4;
       if (cl.clar_charset && !strcasecmp(cl.clar_charset, "utf-8")) {
         while (j >= 0 && subj2[j] >= 0x80 && subj2[j] <= 0xbf) j--;
         if (j < 0) j = 0;
@@ -531,9 +509,6 @@ open_func(
       subj2[j++] = 0;
       for (; j < CLAR_ENTRY_V2_SUBJ_SIZE; subj2[j++] = 0);
     }
-
-    expand_clar_array(&cl_state->clars, cl.clar_id);
-    ce = &cl_state->clars.v[cl.clar_id];
 
     ce->id = cl.clar_id;
     ej_uuid_copy(&ce->uuid, &uuid);
@@ -557,13 +532,59 @@ open_func(
     ce->new_run_status = cl.new_run_status;
     strcpy(ce->charset, cl.clar_charset);
     strcpy(ce->subj, subj2);
-    if (cl.clar_id >= cl_state->clars.u) cl_state->clars.u = cl.clar_id + 1;
+    retval = 0;
 
-    xfree(cl.uuid); cl.uuid = NULL;
-    xfree(cl.in_reply_uuid); cl.in_reply_uuid = NULL;
-    xfree(cl.run_uuid); cl.run_uuid = NULL;
-    xfree(cl.clar_charset); cl.clar_charset = 0;
-    xfree(cl.subj); cl.subj = 0;
+  //done:;
+fail:;
+  xfree(cl.uuid);
+  xfree(cl.in_reply_uuid);
+  xfree(cl.run_uuid);
+  xfree(cl.clar_charset);
+  xfree(cl.subj);
+  return retval;
+}
+
+static struct cldb_plugin_cnts *
+open_func(
+        struct cldb_plugin_data *data,
+        struct clarlog_state *cl_state,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags)
+{
+  struct cldb_mysql_state *state = (struct cldb_mysql_state*) data;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  struct cldb_mysql_cnts *cs = 0;
+  int i;
+  struct clar_entry_internal cl;
+  struct clar_entry_v2 ce;
+
+  memset(&cl, 0, sizeof(cl));
+  XCALLOC(cs, 1);
+  cs->plugin_state = state;
+  if (state) state->nref++;
+  cs->cl_state = cl_state;
+  if (cnts) cs->contest_id = cnts->id;
+  if (!cs->contest_id && global) cs->contest_id = global->contest_id;
+  if (!cs->contest_id) {
+    err("undefined contest_id");
+    goto fail;
+  }
+  if (do_open(state) < 0) goto fail;
+
+  if (mi->fquery(md, CLARS_ROW_WIDTH,
+                 "SELECT * FROM %sclars WHERE contest_id=%d ORDER BY clar_id;",
+                md->table_prefix, cs->contest_id) < 0)
+    db_error_fail(md);
+  for (i = 0; i < md->row_count; i++) {
+    if (mi->next_row(md) < 0) goto fail;
+    if (make_clarlog_entry(data, cs->contest_id, 0, &ce) < 0)
+      goto fail;
+
+    expand_clar_array(&cl_state->clars, cl.clar_id);
+    cl_state->clars.v[cl.clar_id] = ce;
   }
   state->mi->free_res(state->md);
 
