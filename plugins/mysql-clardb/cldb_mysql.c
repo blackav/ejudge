@@ -189,6 +189,8 @@ struct clar_entry_internal
   unsigned char *subj;
 };
 
+#define CLAR_VERSION 5
+
 enum { CLARS_ROW_WIDTH = 24 };
 
 #define CLARS_OFFSET(f) XOFFSET(struct clar_entry_internal, f)
@@ -285,7 +287,7 @@ do_create(struct cldb_mysql_state *state)
     db_error_fail(md);
   if (mi->simple_fquery(md, create_texts_query, md->table_prefix) < 0)
     db_error_fail(md);
-  if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('clar_version', '5') ;", md->table_prefix) < 0)
+  if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('clar_version', '%d') ;", md->table_prefix, CLAR_VERSION) < 0)
     db_error_fail(md);
   return 0;
 
@@ -317,7 +319,7 @@ do_open(struct cldb_mysql_state *state)
     db_error_inv_value_fail(md, "config_val");
   mi->free_res(md);
 
-  if (clar_version < 1 || clar_version > 3) {
+  if (clar_version < 1 || clar_version > CLAR_VERSION) {
     err("clar_version == %d is not supported", clar_version);
     goto fail;
   }
@@ -369,6 +371,9 @@ do_open(struct cldb_mysql_state *state)
       return -1;
     clar_version = 5;
   }
+
+  // just in case
+  ASSERT(clar_version == CLAR_VERSION);
 
   return 0;
 
