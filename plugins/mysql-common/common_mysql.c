@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -637,7 +636,7 @@ parse_spec_func(
   ej_ip4_t *p_ip;
   ej_ip_t *p_ipv6;
 
-  if (field_count != spec_num) {
+  if (field_count >= 0 && field_count != spec_num) {
     err("wrong field_count (%d instead of %d). invalid table format?",
         field_count, spec_num);
     return -1;
