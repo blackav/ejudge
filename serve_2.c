@@ -935,7 +935,7 @@ serve_audit_log(
 
   if (re && re->store_flags == 1) {
     flags = uuid_archive_prepare_write_path(state, audit_path, sizeof(audit_path),
-                                            re->run_uuid, 0, DFLT_R_UUID_AUDIT, 0, 1);
+                                            &re->run_uuid, 0, DFLT_R_UUID_AUDIT, 0, 1);
   } else {
     flags = archive_prepare_write_path(state, audit_path, sizeof(audit_path),
                                        state->global->audit_log_dir, run_id, 0,
@@ -1023,7 +1023,7 @@ serve_compile_request(
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
         int no_db_flag,
-        const ruint32_t uuid[4],
+        const ej_uuid_t *puuid,
         int store_flags,
         int rejudge_flag)
 {
@@ -1155,12 +1155,9 @@ serve_compile_request(
   cp.max_vm_size = -1L;
   cp.max_stack_size = -1L;
   cp.max_file_size = -1L;
-  if (uuid && (uuid[0] || uuid[1] || uuid[2] || uuid[3])) {
+  if (puuid && (puuid->v[0] || puuid->v[1] || puuid->v[2] || puuid->v[3])) {
     cp.use_uuid = 1;
-    cp.uuid[0] = uuid[0];
-    cp.uuid[1] = uuid[1];
-    cp.uuid[2] = uuid[2];
-    cp.uuid[3] = uuid[3];
+    cp.uuid = *puuid;
   }
   if (lang) {
     if (((ssize_t) lang->max_vm_size) > 0) {
@@ -1225,7 +1222,7 @@ serve_compile_request(
     if (len < 0) {
       if (store_flags == 1) {
         arch_flags = uuid_archive_make_read_path(state, run_arch, sizeof(run_arch),
-                                                 uuid, DFLT_R_UUID_SOURCE, 0);
+                                                 puuid, DFLT_R_UUID_SOURCE, 0);
       } else {
         arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
                                             global->run_archive_dir, run_id,0,0);
@@ -1260,7 +1257,7 @@ serve_compile_request(
     // copy from archive
     if (store_flags == 1) {
       arch_flags = uuid_archive_make_read_path(state, run_arch, sizeof(run_arch),
-                                               uuid, DFLT_R_UUID_SOURCE, 0);
+                                               puuid, DFLT_R_UUID_SOURCE, 0);
     } else {
       arch_flags = archive_make_read_path(state, run_arch, sizeof(run_arch),
                                           global->run_archive_dir, run_id, 0,0);
@@ -1391,7 +1388,7 @@ serve_run_request(
         const unsigned char *compile_report_dir,
         const struct compile_reply_packet *comp_pkt,
         int no_db_flag,
-        ruint32_t uuid[4],
+        ej_uuid_t *puuid,
         int rejudge_flag)
 {
   int cn;
@@ -1552,10 +1549,10 @@ serve_run_request(
 
   if (!run_text) {
     if (comp_pkt && comp_pkt->use_uuid > 0
-        && comp_pkt->uuid[0] && comp_pkt->uuid[1]
-        && comp_pkt->uuid[2] && comp_pkt->uuid[3]) {
+        && comp_pkt->uuid.v[0] && comp_pkt->uuid.v[1]
+        && comp_pkt->uuid.v[2] && comp_pkt->uuid.v[3]) {
       snprintf(exe_in_name, sizeof(exe_in_name), "%s%s",
-               ej_uuid_unparse(comp_pkt->uuid, NULL), exe_sfx);
+               ej_uuid_unparse(&comp_pkt->uuid, NULL), exe_sfx);
     } else {
       snprintf(exe_in_name, sizeof(exe_in_name), "%06d%s", run_id, exe_sfx);
     }
@@ -1609,8 +1606,8 @@ serve_run_request(
   srgp->enable_max_stack_size = global->enable_max_stack_size;
   srgp->priority = prio;
   srgp->arch = xstrdup(arch);
-  if (uuid && (uuid[0] || uuid[1] || uuid[2] || uuid[3])) {
-    srgp->run_uuid = xstrdup(ej_uuid_unparse(uuid, NULL));
+  if (puuid && (puuid->v[0] || puuid->v[1] || puuid->v[2] || puuid->v[3])) {
+    srgp->run_uuid = xstrdup(ej_uuid_unparse(puuid, NULL));
   }
   if (comp_pkt) {
     srgp->ts1 = comp_pkt->ts1;
@@ -2196,9 +2193,9 @@ serve_read_compile_packet(
   }
   int new_run_id = -1;
   if (run_get_uuid_hash_state(state->runlog_state) >= 0 && comp_pkt->use_uuid > 0) {
-    new_run_id = run_find_run_id_by_uuid(state->runlog_state, comp_pkt->uuid);
+    new_run_id = run_find_run_id_by_uuid(state->runlog_state, &comp_pkt->uuid);
     if (new_run_id < 0) {
-      err("read_compile_packet: non-existing UUID %s (packet run_id %d)", ej_uuid_unparse(comp_pkt->uuid, NULL), comp_pkt->run_id);
+      err("read_compile_packet: non-existing UUID %s (packet run_id %d)", ej_uuid_unparse(&comp_pkt->uuid, NULL), comp_pkt->run_id);
       goto non_fatal_error;
     }
     if (new_run_id != comp_pkt->run_id) {
@@ -2212,7 +2209,7 @@ serve_read_compile_packet(
     goto non_fatal_error;
   }
   if (new_run_id >= 0) {
-    if (memcmp(re.run_uuid, comp_pkt->uuid, sizeof(re.run_uuid)) != 0) {
+    if (memcmp(&re.run_uuid, &comp_pkt->uuid, sizeof(re.run_uuid)) != 0) {
       err("read_compile_packet: UUID mismatch for run_id %d", comp_pkt->run_id);
       goto non_fatal_error;
     }
@@ -2247,14 +2244,14 @@ serve_read_compile_packet(
     testing_report->compiler_output = xstrdup(txt_text);
     testing_report->scoring_system = global->score_system;
     testing_report->compile_error = 1;
-    memcpy(testing_report->uuid, re.run_uuid, sizeof(testing_report->uuid));
+    memcpy(&testing_report->uuid, &re.run_uuid, sizeof(testing_report->uuid));
 
     xfree(txt_text); txt_text = NULL; txt_size = 0;
     testing_report_to_str(&txt_text, &txt_size, 1, global->max_file_length, global->max_line_length, testing_report);
 
     if (re.store_flags == 1) {
       rep_flags = uuid_archive_make_write_path(state, rep_path, sizeof(rep_path),
-                                               re.run_uuid, txt_size, DFLT_R_UUID_XML_REPORT, 0);
+                                               &re.run_uuid, txt_size, DFLT_R_UUID_XML_REPORT, 0);
     } else {
       rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
                                           global->xml_report_archive_dir, comp_pkt->run_id, txt_size, 0, 0);
@@ -2268,7 +2265,7 @@ serve_read_compile_packet(
     }
 
     if (re.store_flags == 1) {
-      if (uuid_archive_dir_prepare(state, re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0) {
+      if (uuid_archive_dir_prepare(state, &re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0) {
         snprintf(errmsg, sizeof(errmsg), "uuid_archive_dir_prepare: failed\n");
         goto report_check_failed;
       }
@@ -2319,21 +2316,21 @@ serve_read_compile_packet(
     }
     testing_report->scoring_system = global->score_system;
     testing_report->compile_error = 1;
-    memcpy(testing_report->uuid, re.run_uuid, sizeof(testing_report->uuid));
+    memcpy(&testing_report->uuid, &re.run_uuid, sizeof(testing_report->uuid));
 
     xfree(txt_text); txt_text = NULL; txt_size = 0;
     testing_report_to_str(&txt_text, &txt_size, 1, global->max_file_length, global->max_line_length, testing_report);
 
     if (re.store_flags == 1) {
       rep_flags = uuid_archive_make_write_path(state, rep_path, sizeof(rep_path),
-                                               re.run_uuid, txt_size, DFLT_R_UUID_XML_REPORT, 0);
+                                               &re.run_uuid, txt_size, DFLT_R_UUID_XML_REPORT, 0);
     } else {
       rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
                                           global->xml_report_archive_dir, comp_pkt->run_id, txt_size, 0, 0);
     }
     ASSERT(rep_flags >= 0);
     if (re.store_flags == 1) {
-      if (uuid_archive_dir_prepare(state, re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0) {
+      if (uuid_archive_dir_prepare(state, &re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0) {
         snprintf(errmsg, sizeof(errmsg), "uuid_archive_dir_prepare: failed\n");
         goto report_check_failed;
       }
@@ -2362,7 +2359,7 @@ serve_read_compile_packet(
 
     if (re.store_flags == 1) {
       rep_flags = uuid_archive_make_write_path(state, rep_path, sizeof(rep_path),
-                                               re.run_uuid, report_size, DFLT_R_UUID_XML_REPORT, 0);
+                                               &re.run_uuid, report_size, DFLT_R_UUID_XML_REPORT, 0);
     } else {
       rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
                                           global->xml_report_archive_dir,
@@ -2386,7 +2383,7 @@ serve_read_compile_packet(
       && txt_size >= min_txt_size) {
     if (re.store_flags == 1) {
       arch_flags = uuid_archive_make_write_path(state, txt_report_path, sizeof(txt_report_path),
-                                                re.run_uuid, txt_size, DFLT_R_UUID_REPORT, 0);
+                                                &re.run_uuid, txt_size, DFLT_R_UUID_REPORT, 0);
     } else {
       arch_flags = archive_make_write_path(state, txt_report_path, sizeof(txt_report_path),
                                            global->report_archive_dir, comp_pkt->run_id, txt_size, 0, 0);
@@ -2402,7 +2399,7 @@ serve_read_compile_packet(
                             RUN_CHECK_FAILED) < 0)
       goto non_fatal_error;
     if (re.store_flags == 1) {
-      if (uuid_archive_dir_prepare(state, re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0)
+      if (uuid_archive_dir_prepare(state, &re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0)
         goto non_fatal_error;
     } else {
       if (archive_dir_prepare(state, global->xml_report_archive_dir,
@@ -2428,7 +2425,7 @@ serve_read_compile_packet(
       goto non_fatal_error;
 
     if (re.store_flags == 1) {
-      if (uuid_archive_dir_prepare(state, re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0) {
+      if (uuid_archive_dir_prepare(state, &re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0) {
         snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
                  global->uuid_archive_dir, comp_pkt->run_id);
         goto report_check_failed;
@@ -2516,7 +2513,7 @@ prepare_run_request:
                         comp_extra->priority_adjustment,
                         comp_pkt->judge_id, comp_extra->accepting_mode,
                         comp_extra->notify_flag, re.mime_type, re.eoln_type,
-                        re.locale_id, compile_report_dir, comp_pkt, 0, re.run_uuid,
+                        re.locale_id, compile_report_dir, comp_pkt, 0, &re.run_uuid,
                         comp_extra->rejudge_flag) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
@@ -2541,7 +2538,7 @@ prepare_run_request:
   report_size = strlen(errmsg);
   if (re.store_flags == 1) {
     rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
-                                                re.run_uuid, report_size, DFLT_R_UUID_XML_REPORT, 0, 0);
+                                                &re.run_uuid, report_size, DFLT_R_UUID_XML_REPORT, 0, 0);
   } else {
     rep_flags = archive_prepare_write_path(state, rep_path, sizeof(rep_path),
                                            global->xml_report_archive_dir, comp_pkt->run_id,
@@ -2730,10 +2727,10 @@ serve_read_run_packet(
 
   int new_run_id = -1;
   if (run_get_uuid_hash_state(state->runlog_state) >= 0
-      && (reply_pkt->uuid[0] || reply_pkt->uuid[1] || reply_pkt->uuid[2] || reply_pkt->uuid[3])) {
-    new_run_id = run_find_run_id_by_uuid(state->runlog_state, reply_pkt->uuid);
+      && (reply_pkt->uuid.v[0] || reply_pkt->uuid.v[1] || reply_pkt->uuid.v[2] || reply_pkt->uuid.v[3])) {
+    new_run_id = run_find_run_id_by_uuid(state->runlog_state, &reply_pkt->uuid);
     if (new_run_id < 0) {
-      err("read_run_packet: non-existing UUID %s (packet run_id %d)", ej_uuid_unparse(reply_pkt->uuid, NULL), reply_pkt->run_id);
+      err("read_run_packet: non-existing UUID %s (packet run_id %d)", ej_uuid_unparse(&reply_pkt->uuid, NULL), reply_pkt->run_id);
       goto failed;
     }
     if (new_run_id != reply_pkt->run_id) {
@@ -2747,7 +2744,7 @@ serve_read_run_packet(
     goto failed;
   }
   if (new_run_id >= 0) {
-    if (memcmp(re.run_uuid, reply_pkt->uuid, sizeof(re.run_uuid)) != 0) {
+    if (memcmp(&re.run_uuid, &reply_pkt->uuid, sizeof(re.run_uuid)) != 0) {
       err("read_run_packet: UUID mismatch for run_id %d", reply_pkt->run_id);
       goto failed;
     }
@@ -2879,7 +2876,7 @@ serve_read_run_packet(
 
   if (re.store_flags == 1) {
     rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
-                                                re.run_uuid, new_rep_len, DFLT_R_UUID_XML_REPORT, 0, 0);
+                                                &re.run_uuid, new_rep_len, DFLT_R_UUID_XML_REPORT, 0, 0);
   } else {
     rep_flags = archive_prepare_write_path(state, rep_path, sizeof(rep_path),
                                            global->xml_report_archive_dir, reply_pkt->run_id,
@@ -2901,7 +2898,7 @@ serve_read_run_packet(
     }
     if (re.store_flags == 1) {
       full_flags = uuid_archive_prepare_write_path(state, full_path, sizeof(full_path),
-                                                   re.run_uuid, 0, DFLT_R_UUID_FULL_ARCHIVE, full_flags, 0);
+                                                   &re.run_uuid, 0, DFLT_R_UUID_FULL_ARCHIVE, full_flags, 0);
     } else {
       full_flags = archive_prepare_write_path(state, full_path, sizeof(full_path),
                                               global->full_archive_dir,
@@ -3174,7 +3171,7 @@ serve_judge_built_in_problem(
   run_get_entry(state->runlog_state, run_id, re);
   if (re->store_flags == 1) {
     rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
-                                                re->run_uuid, xml_len, DFLT_R_UUID_XML_REPORT, 0, 0);
+                                                &re->run_uuid, xml_len, DFLT_R_UUID_XML_REPORT, 0, 0);
   } else {
     rep_flags = archive_prepare_write_path(state, rep_path, sizeof(rep_path),
                                            global->xml_report_archive_dir, run_id,
@@ -3219,7 +3216,7 @@ serve_report_check_failed(
 
   if (re.store_flags) {
     flags = uuid_archive_prepare_write_path(state, tr_p, sizeof(tr_p),
-                                            re.run_uuid, tr_z, DFLT_R_UUID_XML_REPORT, 0, 0);
+                                            &re.run_uuid, tr_z, DFLT_R_UUID_XML_REPORT, 0, 0);
   } else {
     flags = archive_prepare_write_path(state, tr_p, sizeof(tr_p), global->xml_report_archive_dir, run_id,
                                        tr_z, NULL, 0, 0);
@@ -3311,7 +3308,7 @@ serve_rejudge_run(
                                 priority_adjustment,
                                 1 /* notify flag */,
                                 prob, NULL /* lang */,
-                                0 /* no_db_flag */, re.run_uuid, re.store_flags,
+                                0 /* no_db_flag */, &re.run_uuid, re.store_flags,
                                 1 /* rejudge_flag */);
       if (r < 0) {
         serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
@@ -3332,7 +3329,7 @@ serve_rejudge_run(
                       re.user_id, re.prob_id, re.lang_id,
                       re.variant, priority_adjustment,
                       -1, accepting_mode, 1, re.mime_type, re.eoln_type,
-                      re.locale_id, 0, 0, 0, re.run_uuid,
+                      re.locale_id, 0, 0, 0, &re.run_uuid,
                       1 /* rejudge_flag */);
     xfree(run_text);
     return;
@@ -3356,7 +3353,7 @@ serve_rejudge_run(
                             0, prob->style_checker_cmd,
                             prob->style_checker_env,
                             accepting_mode, priority_adjustment, 1, prob, lang, 0,
-                            re.run_uuid, re.store_flags,
+                            &re.run_uuid, re.store_flags,
                             1 /* rejudge_flag */);
   if (r < 0) {
     serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
@@ -4629,7 +4626,7 @@ serve_clear_by_mask(serve_state_t state,
         && !run_is_readonly(state->runlog_state, r)) {
       if (run_get_entry(state->runlog_state, r, &re) >= 0 && run_clear_entry(state->runlog_state, r) >= 0) {
         if (re.store_flags == 1) {
-          uuid_archive_remove(state, re.run_uuid, 0);
+          uuid_archive_remove(state, &re.run_uuid, 0);
         } else {
           archive_remove(state, global->run_archive_dir, r, 0);
           archive_remove(state, global->xml_report_archive_dir, r, 0);
@@ -4689,7 +4686,7 @@ serve_ignore_by_mask(serve_state_t state,
     re.status = new_status;
     if (run_set_entry(state->runlog_state, r, RE_STATUS, &re) >= 0) {
       if (re.store_flags == 1) {
-        uuid_archive_remove(state, re.run_uuid, 1);
+        uuid_archive_remove(state, &re.run_uuid, 1);
       } else {
         archive_remove(state, global->xml_report_archive_dir, r, 0);
         archive_remove(state, global->report_archive_dir, r, 0);
@@ -5234,7 +5231,7 @@ serve_make_source_read_path(
   int ret;
   if (re->store_flags == 1) {
     ret = uuid_archive_make_read_path(state, path, size,
-                                      re->run_uuid, DFLT_R_UUID_SOURCE, 1);
+                                      &re->run_uuid, DFLT_R_UUID_SOURCE, 1);
   } else {
     ret = archive_make_read_path(state, path, size, state->global->run_archive_dir,
                                  re->run_id, NULL, 1);
@@ -5252,7 +5249,7 @@ serve_make_xml_report_read_path(
   int ret;
   if (re->store_flags == 1) {
     ret = uuid_archive_make_read_path(state, path, size,
-                                      re->run_uuid, DFLT_R_UUID_XML_REPORT, 1);
+                                      &re->run_uuid, DFLT_R_UUID_XML_REPORT, 1);
   } else {
     ret = archive_make_read_path(state, path, size, state->global->xml_report_archive_dir,
                                  re->run_id, NULL, 1);
@@ -5270,7 +5267,7 @@ serve_make_report_read_path(
   int ret;
   if (re->store_flags == 1) {
     ret = uuid_archive_make_read_path(state, path, size,
-                                      re->run_uuid, DFLT_R_UUID_REPORT, 1);
+                                      &re->run_uuid, DFLT_R_UUID_REPORT, 1);
   } else {
     ret = archive_make_read_path(state, path, size, state->global->report_archive_dir,
                                  re->run_id, NULL, 1);
@@ -5298,7 +5295,7 @@ serve_make_full_report_read_path(
   int ret;
   if (re->store_flags == 1) {
     ret = uuid_archive_make_read_path(state, path, size,
-                                      re->run_uuid, DFLT_R_UUID_FULL_ARCHIVE, ZIP);
+                                      &re->run_uuid, DFLT_R_UUID_FULL_ARCHIVE, ZIP);
   } else {
     ret = archive_make_read_path(state, path, size, state->global->full_archive_dir,
                                  re->run_id, NULL, ZIP);
@@ -5316,7 +5313,7 @@ serve_make_audit_read_path(
   int ret;
   if (re->store_flags == 1) {
     ret = uuid_archive_make_read_path(state, path, size,
-                                      re->run_uuid, DFLT_R_UUID_AUDIT, 0);
+                                      &re->run_uuid, DFLT_R_UUID_AUDIT, 0);
   } else {
     ret = archive_make_read_path(state, path, size, state->global->audit_log_dir,
                                  re->run_id, NULL, 0);

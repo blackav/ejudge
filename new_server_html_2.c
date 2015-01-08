@@ -763,7 +763,7 @@ ns_write_priv_all_runs(
                 marked_str, saved_str);
       }
       if (run_fields & (1 << RUN_VIEW_RUN_UUID)) {
-        fprintf(f, "<td%s>%s</td>", cl, ej_uuid_unparse(pe->run_uuid, "&nbsp;"));
+        fprintf(f, "<td%s>%s</td>", cl, ej_uuid_unparse(&pe->run_uuid, "&nbsp;"));
       }
       if (run_fields & (1 << RUN_VIEW_STORE_FLAGS)) {
         fprintf(f, "<td%s>%d</td>", cl, pe->store_flags);
@@ -2130,21 +2130,21 @@ ns_priv_edit_run_action(
     FAIL(NEW_SRV_ERR_INV_PARAM);    
   }
   if (r > 0 && s && *s) {
-    ruint32_t new_uuid[4];
-    if (ej_uuid_parse(s, new_uuid) < 0) {
+    ej_uuid_t new_uuid;
+    if (ej_uuid_parse(s, &new_uuid) < 0) {
       fprintf(log_f, "invalid 'uuid' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);    
     }
-    if (memcmp(info.run_uuid, new_uuid, sizeof(info.run_uuid)) != 0) {
-      memcpy(new_info.run_uuid, new_uuid, sizeof(new_info.run_uuid));
+    if (memcmp(&info.run_uuid, &new_uuid, sizeof(info.run_uuid)) != 0) {
+      memcpy(&new_info.run_uuid, &new_uuid, sizeof(new_info.run_uuid));
       mask |= RE_RUN_UUID;
     }
   } else if (r > 0) {
-    if (info.run_uuid[0] || info.run_uuid[1] || info.run_uuid[2] || info.run_uuid[3]) {
-      new_info.run_uuid[0] = 0;
-      new_info.run_uuid[1] = 0;
-      new_info.run_uuid[2] = 0;
-      new_info.run_uuid[3] = 0;
+    if (info.run_uuid.v[0] || info.run_uuid.v[1] || info.run_uuid.v[2] || info.run_uuid.v[3]) {
+      new_info.run_uuid.v[0] = 0;
+      new_info.run_uuid.v[1] = 0;
+      new_info.run_uuid.v[2] = 0;
+      new_info.run_uuid.v[3] = 0;
       mask |= RE_RUN_UUID;
     }
   }
@@ -2936,16 +2936,16 @@ do_add_row(
   int arch_flags = 0;
   path_t run_path;
 
-  ruint32_t run_uuid[4];
+  ej_uuid_t run_uuid;
   int store_flags = 0;
   gettimeofday(&precise_time, 0);
-  ej_uuid_generate(run_uuid);
+  ej_uuid_generate(&run_uuid);
   if (cs->global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
     store_flags = 1;
   }
   run_id = run_add_record(cs->runlog_state, 
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
-                          run_size, re->sha1, run_uuid,
+                          run_size, re->sha1, &run_uuid,
                           &phr->ip, phr->ssl_flag, phr->locale_id,
                           re->user_id, re->prob_id, re->lang_id, re->eoln_type,
                           re->variant, re->is_hidden, re->mime_type, store_flags);
@@ -2957,7 +2957,7 @@ do_add_row(
 
   if (store_flags == 1) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
-                                                 run_uuid, run_size,
+                                                 &run_uuid, run_size,
                                                  DFLT_R_UUID_SOURCE, 0, 0);
   } else {
     arch_flags = archive_prepare_write_path(cs, run_path, sizeof(run_path),

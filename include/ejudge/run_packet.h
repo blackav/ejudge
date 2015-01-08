@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __RUN_PACKET_H__
 #define __RUN_PACKET_H__
 
-/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+#include "ejudge/ej_types.h"
 
 #include <stdlib.h>
 
@@ -56,7 +57,7 @@ struct run_reply_packet
   int ts7;
   int ts7_us;
   /* UUID of the run */
-  unsigned uuid[4];
+  ej_uuid_t uuid;
 };
 
 int

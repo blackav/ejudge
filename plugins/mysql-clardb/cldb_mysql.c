@@ -432,9 +432,9 @@ open_func(
   struct clar_entry_v2 *ce;
   unsigned char subj2[CLAR_ENTRY_V2_SUBJ_SIZE];
   int subj_len;
-  ruint32_t uuid[4];
-  ruint32_t in_reply_uuid[4];
-  ruint32_t run_uuid[4];
+  ej_uuid_t uuid;
+  ej_uuid_t in_reply_uuid;
+  ej_uuid_t run_uuid;
 
   memset(&cl, 0, sizeof(cl));
   XCALLOC(cs, 1);
@@ -456,14 +456,14 @@ open_func(
   for (i = 0; i < md->row_count; i++) {
     if (mi->next_row(md) < 0) goto fail;
     memset(&cl, 0, sizeof(cl));
-    memset(uuid, 0, sizeof(uuid));
-    memset(in_reply_uuid, 0, sizeof(in_reply_uuid));
-    memset(run_uuid, 0, sizeof(run_uuid));
+    memset(&uuid, 0, sizeof(uuid));
+    memset(&in_reply_uuid, 0, sizeof(in_reply_uuid));
+    memset(&run_uuid, 0, sizeof(run_uuid));
     if (mi->parse_spec(md, md->field_count, md->row, md->lengths,
                        CLARS_ROW_WIDTH, clars_spec, &cl) < 0)
       goto fail;
     if (cl.clar_id < 0) db_error_inv_value_fail(md, "clar_id");
-    if (cl.uuid && ej_uuid_parse(cl.uuid, uuid) < 0) db_error_inv_value_fail(md, "uuid");
+    if (cl.uuid && ej_uuid_parse(cl.uuid, &uuid) < 0) db_error_inv_value_fail(md, "uuid");
     if (cl.contest_id != cs->contest_id)
       db_error_inv_value_fail(md, "contest_id");
     if (cl.size < 0 || cl.size >= 65536) db_error_inv_value_fail(md, "size");
@@ -477,9 +477,9 @@ open_func(
     if (cl.locale_id < 0 || cl.locale_id > 255)
       db_error_inv_value_fail(md, "locale_id");
     if (cl.in_reply_to < 0) db_error_inv_value_fail(md, "in_reply_to");
-    if (cl.in_reply_uuid && ej_uuid_parse(cl.in_reply_uuid, in_reply_uuid)) db_error_inv_value_fail(md, "in_reply_uuid");
+    if (cl.in_reply_uuid && ej_uuid_parse(cl.in_reply_uuid, &in_reply_uuid)) db_error_inv_value_fail(md, "in_reply_uuid");
     if (cl.run_id < 0) db_error_inv_value_fail(md, "run_id");
-    if (cl.run_uuid && ej_uuid_parse(cl.run_uuid, run_uuid) < 0) db_error_inv_value_fail(md, "run_uuid");
+    if (cl.run_uuid && ej_uuid_parse(cl.run_uuid, &run_uuid) < 0) db_error_inv_value_fail(md, "run_uuid");
     if (!is_valid_charset(cl.clar_charset)) db_error_inv_value_fail(md, "clar_charset");
     memset(subj2, 0, sizeof(subj2));
     subj_len = 0;
@@ -504,7 +504,7 @@ open_func(
     ce = &cl_state->clars.v[cl.clar_id];
 
     ce->id = cl.clar_id;
-    ej_uuid_copy(ce->uuid, uuid);
+    ej_uuid_copy(&ce->uuid, &uuid);
     ce->size = cl.size;
     ce->time = cl.create_time;
     ce->nsec = cl.nsec;
@@ -518,9 +518,9 @@ open_func(
     ce->ipv6_flag = cl.ip.ipv6_flag;
     ce->locale_id = cl.locale_id;
     ce->in_reply_to = cl.in_reply_to;
-    ej_uuid_copy(ce->in_reply_uuid, in_reply_uuid);
+    ej_uuid_copy(&ce->in_reply_uuid, &in_reply_uuid);
     ce->run_id = cl.run_id;
-    ej_uuid_copy(ce->run_uuid, run_uuid);
+    ej_uuid_copy(&ce->run_uuid, &run_uuid);
     ce->old_run_status = cl.old_run_status;
     ce->new_run_status = cl.new_run_status;
     strcpy(ce->charset, cl.clar_charset);
@@ -604,7 +604,7 @@ add_entry_func(struct cldb_plugin_cnts *cdata, int clar_id)
   memset(&cc, 0, sizeof(cc));
   cc.clar_id = ce->id;
   if (ej_uuid_is_nonempty(ce->uuid)) {
-    ej_uuid_unparse_r(uuid_str, sizeof(uuid_str), ce->uuid, NULL);
+    ej_uuid_unparse_r(uuid_str, sizeof(uuid_str), &ce->uuid, NULL);
     cc.uuid = uuid_str;
   }
   cc.contest_id = cs->contest_id;
@@ -624,12 +624,12 @@ add_entry_func(struct cldb_plugin_cnts *cdata, int clar_id)
   cc.locale_id = ce->locale_id;
   cc.in_reply_to = ce->in_reply_to;
   if (ej_uuid_is_nonempty(ce->in_reply_uuid)) {
-    ej_uuid_unparse_r(in_reply_uuid_str, sizeof(in_reply_uuid_str), ce->in_reply_uuid, NULL);
+    ej_uuid_unparse_r(in_reply_uuid_str, sizeof(in_reply_uuid_str), &ce->in_reply_uuid, NULL);
     cc.in_reply_uuid = in_reply_uuid_str;
   }
   cc.run_id = ce->run_id;
   if (ej_uuid_is_nonempty(ce->run_uuid)) {
-    ej_uuid_unparse_r(run_uuid_str, sizeof(run_uuid_str), ce->run_uuid, NULL);
+    ej_uuid_unparse_r(run_uuid_str, sizeof(run_uuid_str), &ce->run_uuid, NULL);
     cc.run_uuid = run_uuid_str;
   }
   cc.old_run_status = ce->old_run_status;
@@ -896,7 +896,7 @@ modify_record_func(
   if (mask & (1 << CLAR_FIELD_IN_REPLY_UUID)) {
     fprintf(cmd_f, "%sin_reply_uuid = ", sep);
     if (ej_uuid_is_nonempty(pe->in_reply_uuid)) {
-      fprintf(cmd_f, "'%s'", ej_uuid_unparse(pe->in_reply_uuid, NULL));
+      fprintf(cmd_f, "'%s'", ej_uuid_unparse(&pe->in_reply_uuid, NULL));
     } else {
       fprintf(cmd_f, "NULL");
     }
@@ -909,7 +909,7 @@ modify_record_func(
   if (mask & (1 << CLAR_FIELD_RUN_UUID)) {
     fprintf(cmd_f, "%srun_uuid = ", sep);
     if (ej_uuid_is_nonempty(pe->run_uuid)) {
-      fprintf(cmd_f, "'%s'", ej_uuid_unparse(pe->run_uuid, NULL));
+      fprintf(cmd_f, "'%s'", ej_uuid_unparse(&pe->run_uuid, NULL));
     } else {
       fprintf(cmd_f, "NULL");
     }

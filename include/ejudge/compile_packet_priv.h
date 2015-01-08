@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __COMPILE_PACKET_PRIV_H__
 #define __COMPILE_PACKET_PRIV_H__
 
-/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -47,7 +46,7 @@ struct compile_request_bin_packet
   rint32_t env_num;             /* the number of env. variables */
   rint32_t sc_env_num;          /* the number of style checker env. vars */
   rint32_t use_uuid;            /* use UUID instead of run_id */
-  ruint32_t uuid[4];            /* UUID */
+  ej_uuid_t uuid;               /* UUID */
   unsigned char pad[4];         /* padding to 16-byte boundary */
   /* style checker command (aligned to 16 byte boundary) */
   /* run_block (aligned to 16 byte boundary) */
@@ -78,7 +77,7 @@ struct compile_reply_bin_packet
   rint32_t ts3_us;
   rint32_t run_block_len;       /* the length of the run block */
   rint32_t use_uuid;
-  ruint32_t uuid[4];            /* UUID */
+  ej_uuid_t uuid;              /* UUID */
   unsigned char pad[8];        /* padding to 64-byte boundary */
   /* run block (aligned to 16 byte boundary) */
 };

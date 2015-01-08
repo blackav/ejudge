@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -426,7 +425,7 @@ serve_compile_request(
         const struct section_problem_data *prob,
         const struct section_language_data *lang,
         int no_db_flag,
-        const ruint32_t uuid[4],
+        const ej_uuid_t *puuid,
         int store_flags,
         int rejudge_flag)
 #if defined __GNUC__
@@ -458,7 +457,7 @@ serve_run_request(
         const unsigned char *compile_report_dir,
         const struct compile_reply_packet *comp_pkt,
         int no_db_flag,
-        ruint32_t uuid[4],
+        ej_uuid_t *puuid,
         int rejudge_flag);
 
 int serve_is_valid_status(serve_state_t state, int status, int mode);

@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -91,15 +90,13 @@ struct run_entry_v1
   rint32_t       nsec;          /* nanosecond component of timestamp */
 };
 
-typedef ruint32_t ej_uuid_t[4];
-
 static int update_user_flags(runlog_state_t state);
 static void build_indices(runlog_state_t state, int flags);
 static struct user_entry *get_user_entry(runlog_state_t state, int user_id);
 static struct user_entry *try_user_entry(runlog_state_t state, int user_id);
 static void extend_run_extras(runlog_state_t state);
 static void run_drop_uuid_hash(runlog_state_t state);
-static int find_free_uuid_hash_index(runlog_state_t state, ruint32_t *uuid);
+static int find_free_uuid_hash_index(runlog_state_t state, const ej_uuid_t *puuid);
 
 runlog_state_t
 run_init(teamdb_state_t ts)
@@ -304,7 +301,7 @@ run_add_record(
         int            nsec,
         size_t         size,
         const ruint32_t sha1[5],
-        const ruint32_t uuid[4],
+        const ej_uuid_t *puuid,
         const ej_ip_t *pip,
         int            ssl_flag,
         int            locale_id,
@@ -435,24 +432,24 @@ run_add_record(
     flags |= RE_SHA1;
   }
 #if CONF_HAS_LIBUUID - 0 != 0
-  if (!uuid) {
-    ruint32_t tmp_uuid[4];
-    ej_uuid_generate(tmp_uuid);
-    memcpy(re.run_uuid, tmp_uuid, sizeof(ej_uuid_t));
+  if (!puuid) {
+    ej_uuid_t tmp_uuid;
+    ej_uuid_generate(&tmp_uuid);
+    memcpy(&re.run_uuid, &tmp_uuid, sizeof(ej_uuid_t));
     flags |= RE_RUN_UUID;
   } else {
-    memcpy(re.run_uuid, uuid, sizeof(ej_uuid_t));
+    memcpy(&re.run_uuid, puuid, sizeof(ej_uuid_t));
     flags |= RE_RUN_UUID;
   }
 #endif
 
   int uuid_hash_index = -1;
   if (state->uuid_hash_state >= 0) {
-    if (!re.run_uuid[0] && !re.run_uuid[1] && !re.run_uuid[2] && !re.run_uuid[3]) {
+    if (!re.run_uuid.v[0] && !re.run_uuid.v[1] && !re.run_uuid.v[2] && !re.run_uuid.v[3]) {
       err("run_add_record: UUID is NULL");
       return -1;
     }
-    uuid_hash_index = find_free_uuid_hash_index(state, re.run_uuid);
+    uuid_hash_index = find_free_uuid_hash_index(state, &re.run_uuid);
     if (uuid_hash_index < 0) {
       err("run_add_record: failed to find UUID hash index");
       return -1;
@@ -495,7 +492,7 @@ run_add_record(
 
   if (uuid_hash_index >= 0) {
     state->uuid_hash[uuid_hash_index].run_id = i;
-    memcpy(state->uuid_hash[uuid_hash_index].uuid, re.run_uuid, sizeof(re.run_uuid));
+    memcpy(&state->uuid_hash[uuid_hash_index].uuid, &re.run_uuid, sizeof(re.run_uuid));
     state->uuid_hash_last_added_index = uuid_hash_index;
     state->uuid_hash_last_added_run_id = i;
     ++state->uuid_hash_used;
@@ -519,7 +516,7 @@ run_undo_add_record(runlog_state_t state, int run_id)
   if (state->uuid_hash_state > 0) {
     if (state->uuid_hash_last_added_run_id == run_id) {
       state->uuid_hash[state->uuid_hash_last_added_index].run_id = -1;
-      memset(state->uuid_hash[state->uuid_hash_last_added_index].uuid, 0, sizeof(ej_uuid_t));
+      memset(&state->uuid_hash[state->uuid_hash_last_added_index].uuid, 0, sizeof(ej_uuid_t));
       --state->uuid_hash_used;
     } else {
       run_drop_uuid_hash(state);
@@ -1257,12 +1254,12 @@ run_set_entry(
     memcpy(te.sha1, in->sha1, sizeof(te.sha1));
     f = 1;
   }
-  if ((mask & RE_RUN_UUID) && memcmp(te.run_uuid, in->run_uuid, sizeof(te.run_uuid))) {
+  if ((mask & RE_RUN_UUID) && memcmp(&te.run_uuid, &in->run_uuid, sizeof(te.run_uuid))) {
     if (state->uuid_hash_state >= 0) {
       err("run_set_entry: %d: change of 'uuid' is not permitted", run_id);
       return -1;
     }
-    memcpy(te.run_uuid, in->run_uuid, sizeof(te.run_uuid));
+    memcpy(&te.run_uuid, &in->run_uuid, sizeof(te.run_uuid));
     f = 1;
   }
   if ((mask & RE_USER_ID) && te.user_id != in->user_id) {
@@ -2271,12 +2268,12 @@ static void
 build_uuid_hash(runlog_state_t state, int incr);
 
 int
-run_find_run_id_by_uuid(runlog_state_t state, ruint32_t *uuid)
+run_find_run_id_by_uuid(runlog_state_t state, const ej_uuid_t *puuid)
 {
   if (state->uuid_hash_state <= 0) return -1;
-  int index = uuid[0] % state->uuid_hash_size;
+  int index = puuid->v[0] % state->uuid_hash_size;
   while (state->uuid_hash[index].run_id >= 0) {
-    if (!memcmp(uuid, state->uuid_hash[index].uuid, sizeof(ej_uuid_t))) {
+    if (!memcmp(puuid, &state->uuid_hash[index].uuid, sizeof(ej_uuid_t))) {
       return state->uuid_hash[index].run_id;
     }
     index = (index + 1) % state->uuid_hash_size;
@@ -2285,9 +2282,9 @@ run_find_run_id_by_uuid(runlog_state_t state, ruint32_t *uuid)
 }
 
 static int
-find_free_uuid_hash_index(runlog_state_t state, ruint32_t *uuid)
+find_free_uuid_hash_index(runlog_state_t state, const ej_uuid_t *puuid)
 {
-  ruint32_t tmp_uuid[4];
+  ej_uuid_t tmp_uuid;
 
   if (state->uuid_hash_state < 0) return -1;
   if (!state->uuid_hash_state || 2 * (state->uuid_hash_used + 1) >= state->uuid_hash_size) {
@@ -2295,9 +2292,9 @@ find_free_uuid_hash_index(runlog_state_t state, ruint32_t *uuid)
     if (state->uuid_hash_state < 0) return -1;
   }
 
-  int index = uuid[0] % state->uuid_hash_size;
+  int index = puuid->v[0] % state->uuid_hash_size;
   while (state->uuid_hash[index].run_id >= 0) {
-    if (!memcmp(uuid, state->uuid_hash[index].uuid, sizeof(tmp_uuid))) {
+    if (!memcmp(puuid, &state->uuid_hash[index].uuid, sizeof(tmp_uuid))) {
       err("find_uuid_hash_index: UUID collision");
       return -1;
     }
@@ -2318,7 +2315,7 @@ build_uuid_hash(runlog_state_t state, int incr)
   for (int run_id = 0; run_id < state->run_u; ++run_id) {
     const struct run_entry *re = &state->runs[run_id];
     if (re->status < 0 || (re->status > RUN_MAX_STATUS && re->status < RUN_TRANSIENT_FIRST) || re->status > RUN_LAST) continue;
-    if (!re->run_uuid[0] && !re->run_uuid[1] && !re->run_uuid[2] && !re->run_uuid[3]) {
+    if (!re->run_uuid.v[0] && !re->run_uuid.v[1] && !re->run_uuid.v[2] && !re->run_uuid.v[3]) {
       err("run_id %d has NULL UUID, uuid indexing is not possible", run_id);
       return;
     }
@@ -2341,9 +2338,9 @@ build_uuid_hash(runlog_state_t state, int incr)
   for (int run_id = 0; run_id < state->run_u; ++run_id) {
     const struct run_entry *re = &state->runs[run_id];
     if (re->status < 0 || (re->status > RUN_MAX_STATUS && re->status < RUN_TRANSIENT_FIRST) || re->status > RUN_LAST) continue;
-    int index = re->run_uuid[0] % hash_size;
+    int index = re->run_uuid.v[0] % hash_size;
     while (hash[index].run_id >= 0) {
-      if (!memcmp(re->run_uuid, hash[index].uuid, sizeof(re->run_uuid))) {
+      if (!memcmp(&re->run_uuid, &hash[index].uuid, sizeof(re->run_uuid))) {
         err("build_uuid_hash: UUID collision for run_ids %d and %d", run_id, hash[index].run_id);
         return;
       }
@@ -2351,7 +2348,7 @@ build_uuid_hash(runlog_state_t state, int incr)
       index = (index + 1) % hash_size;
     }
     hash[index].run_id = run_id;
-    memcpy(hash[index].uuid, re->run_uuid, sizeof(hash[index].uuid));
+    memcpy(&hash[index].uuid, &re->run_uuid, sizeof(hash[index].uuid));
     ++hash_count;
   }
   ASSERT(hash_count == run_count);
@@ -2483,7 +2480,7 @@ run_find(
         int team_id,
         int prob_id,
         int lang_id,
-        ruint32_t *p_run_uuid,
+        ej_uuid_t *p_run_uuid,
         int *p_store_flags)
 {
   int i;
@@ -2510,7 +2507,7 @@ run_find(
         if (prob_id && prob_id != state->runs[i].prob_id) continue;
         if (lang_id && lang_id != state->runs[i].lang_id) continue;
 
-        if (p_run_uuid) memcpy(p_run_uuid, state->runs[i].run_uuid, sizeof(state->runs[i].run_uuid));
+        if (p_run_uuid) memcpy(p_run_uuid, &state->runs[i].run_uuid, sizeof(state->runs[i].run_uuid));
         if (p_store_flags) *p_store_flags = state->runs[i].store_flags;
         return i;
       }
@@ -2521,7 +2518,7 @@ run_find(
         if (prob_id && prob_id != state->runs[i].prob_id) continue;
         if (lang_id && lang_id != state->runs[i].lang_id) continue;
 
-        if (p_run_uuid) memcpy(p_run_uuid, state->runs[i].run_uuid, sizeof(state->runs[i].run_uuid));
+        if (p_run_uuid) memcpy(p_run_uuid, &state->runs[i].run_uuid, sizeof(state->runs[i].run_uuid));
         if (p_store_flags) *p_store_flags = state->runs[i].store_flags;
         return i;
       }
@@ -2534,7 +2531,7 @@ run_find(
         if (prob_id && prob_id != state->runs[i].prob_id) continue;
         if (lang_id && lang_id != state->runs[i].lang_id) continue;
 
-        if (p_run_uuid) memcpy(p_run_uuid, state->runs[i].run_uuid, sizeof(state->runs[i].run_uuid));
+        if (p_run_uuid) memcpy(p_run_uuid, &state->runs[i].run_uuid, sizeof(state->runs[i].run_uuid));
         if (p_store_flags) *p_store_flags = state->runs[i].store_flags;
         return i;
       }
@@ -2544,7 +2541,7 @@ run_find(
         if (prob_id && prob_id != state->runs[i].prob_id) continue;
         if (lang_id && lang_id != state->runs[i].lang_id) continue;
 
-        if (p_run_uuid) memcpy(p_run_uuid, state->runs[i].run_uuid, sizeof(state->runs[i].run_uuid));
+        if (p_run_uuid) memcpy(p_run_uuid, &state->runs[i].run_uuid, sizeof(state->runs[i].run_uuid));
         if (p_store_flags) *p_store_flags = state->runs[i].store_flags;
         return i;
       }

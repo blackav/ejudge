@@ -62,7 +62,7 @@ enum { CLAR_ENTRY_V2_SUBJ_SIZE = 96, CLAR_ENTRY_V2_CHARSET_SIZE = 16 };
 struct clar_entry_v2
 {
   int id;                       /* 4 */
-  ruint32_t uuid[4];            /* 16 */
+  ej_uuid_t uuid;               /* 16 */
   ej_size_t size;               /* 4 */
   ej_time64_t time;             /* 8 */
   int nsec;                     /* 4 */
@@ -83,9 +83,9 @@ struct clar_entry_v2
   unsigned char old_run_status; /* 1 */ /* 1 means OK */
   unsigned char new_run_status; /* 1 */ /* 1 means OK */
   int in_reply_to;              /* 4 */ /* 1 means in clar_id 0! */
-  ruint32_t in_reply_uuid[4];   /* 16 */
+  ej_uuid_t in_reply_uuid;      /* 16 */
   int run_id;                   /* 4 */ /* 1 means run_id 0! */
-  ruint32_t run_uuid[4];        /* 16 */
+  ej_uuid_t run_uuid;           /* 16 */
   unsigned char _pad3[28];      /* 28 */
   unsigned char charset[CLAR_ENTRY_V2_CHARSET_SIZE];
   unsigned char subj[CLAR_ENTRY_V2_SUBJ_SIZE];
@@ -118,9 +118,9 @@ int clar_add_record(
         int             hide_flag,
         int             locale_id,
         int             in_reply_to,
-        ruint32_t      *in_reply_uuid,
+        const ej_uuid_t *pin_reply_uuid,
         int             run_id,
-        ruint32_t      *run_uuid,
+        const ej_uuid_t *prun_uuid,
         int             appeal_flag,
         int             old_run_status,
         int             new_run_status,

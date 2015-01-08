@@ -142,7 +142,7 @@ typedef struct testing_report_xml
   unsigned char *errors;
   unsigned char *compiler_output;
 
-  ruint32_t uuid[4];
+  ej_uuid_t uuid;
 
   struct testing_report_test **tests;
 

@@ -199,9 +199,9 @@ clar_add_record(
         int             hide_flag,
         int             locale_id,
         int             in_reply_to,
-        ruint32_t      *in_reply_uuid,
+        const ej_uuid_t *pin_reply_uuid,
         int             run_id,
-        ruint32_t      *run_uuid,
+        const ej_uuid_t *prun_uuid,
         int             appeal_flag,
         int             old_run_status,
         int             new_run_status,
@@ -219,7 +219,7 @@ clar_add_record(
 
   memset(pc, 0, sizeof(*pc));
   pc->id = i;
-  ej_uuid_generate(pc->uuid);
+  ej_uuid_generate(&pc->uuid);
   pc->time = time;
   pc->nsec = nsec;
   pc->size = size;
@@ -232,12 +232,12 @@ clar_add_record(
   pc->ssl_flag = ssl_flag;
   pc->locale_id = locale_id;
   pc->in_reply_to = in_reply_to;
-  if (in_reply_uuid) {
-    ej_uuid_copy(pc->in_reply_uuid, in_reply_uuid);
+  if (pin_reply_uuid) {
+    ej_uuid_copy(&pc->in_reply_uuid, pin_reply_uuid);
   }
   pc->run_id = run_id;
-  if (run_uuid) {
-    ej_uuid_copy(pc->run_uuid, run_uuid);
+  if (prun_uuid) {
+    ej_uuid_copy(&pc->run_uuid, prun_uuid);
   }
   pc->appeal_flag = appeal_flag;
 
@@ -589,13 +589,13 @@ clar_modify_record(
     pe->in_reply_to = pclar->in_reply_to;
   }
   if (mask & (1 << CLAR_FIELD_IN_REPLY_UUID)) {
-    ej_uuid_copy(pe->in_reply_uuid, pclar->in_reply_uuid);
+    ej_uuid_copy(&pe->in_reply_uuid, &pclar->in_reply_uuid);
   }
   if (mask & (1 << CLAR_FIELD_RUN_ID)) {
     pe->run_id = pclar->run_id;
   }
   if (mask & (1 << CLAR_FIELD_RUN_UUID)) {
-    ej_uuid_copy(pe->run_uuid, pclar->run_uuid);
+    ej_uuid_copy(&pe->run_uuid, &pclar->run_uuid);
   }
   if (mask & (1 << CLAR_FIELD_OLD_RUN_STATUS)) {
     pe->old_run_status = pclar->old_run_status;

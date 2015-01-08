@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -283,7 +282,7 @@ handle_packet(
     reply_pkt.ts4_us = srgp->ts4_us;
     get_current_time(&reply_pkt.ts5, &reply_pkt.ts5_us);
     if (srgp->run_uuid && srgp->run_uuid[0]) {
-      ej_uuid_parse(srgp->run_uuid, reply_pkt.uuid);
+      ej_uuid_parse(srgp->run_uuid, &reply_pkt.uuid);
     }
 
     //if (cr_serialize_lock(state) < 0) return -1;

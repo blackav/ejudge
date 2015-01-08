@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __COMPILE_PACKET_H__
 #define __COMPILE_PACKET_H__
 
-/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +15,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+#include "ejudge/ej_types.h"
 
 #include <stdlib.h>
 
@@ -31,7 +32,7 @@ struct compile_request_packet
   int ts1;
   int ts1_us;
   int use_uuid;
-  unsigned uuid[4];
+  ej_uuid_t uuid;
   size_t max_vm_size;
   size_t max_stack_size;
   size_t max_file_size;
@@ -63,7 +64,7 @@ struct compile_reply_packet
   int run_block_len;
   void *run_block;
   int use_uuid;
-  unsigned int uuid[4];
+  ej_uuid_t uuid;
 };
 
 int

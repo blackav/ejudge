@@ -26,15 +26,15 @@
 #endif
 
 int
-ej_uuid_parse(const unsigned char *str, ruint32_t uuid[4])
+ej_uuid_parse(const unsigned char *str, ej_uuid_t *puuid)
 {
 #if CONF_HAS_LIBUUID - 0 != 0
-  return uuid_parse(str, (void*) uuid);
+  return uuid_parse(str, (void*) puuid);
 #else
-  uuid[0] = 0;
-  uuid[1] = 0;
-  uuid[2] = 0;
-  uuid[3] = 0;
+  puuid->v[0] = 0;
+  puuid->v[1] = 0;
+  puuid->v[2] = 0;
+  puuid->v[3] = 0;
   if (!str || !*str) return 0;
   unsigned char *dst = (unsigned char *) uuid;
   for (int i = 0; i < 16; ++i) {
@@ -65,22 +65,22 @@ ej_uuid_parse(const unsigned char *str, ruint32_t uuid[4])
 }
 
 const unsigned char *
-ej_uuid_unparse(const ruint32_t uuid[4], const unsigned char *default_value)
+ej_uuid_unparse(const ej_uuid_t *puuid, const unsigned char *default_value)
 {
 #if CONF_HAS_LIBUUID - 0 != 0
-  if (uuid[0] || uuid[1] || uuid[2] || uuid[3] || !default_value) {
+  if (puuid->v[0] || puuid->v[1] || puuid->v[2] || puuid->v[3] || !default_value) {
     static char uuid_buf[40];
-    uuid_unparse((void*) uuid, uuid_buf);
+    uuid_unparse((void*) puuid, uuid_buf);
     return uuid_buf;
   } else {
     return default_value;
   }
 #else
-  if (uuid[0] || uuid[1] || uuid[2] || uuid[3] || !default_value) {
+  if (puuid->v[0] || puuid->v[1] || puuid->v[2] || puuid->v[3] || !default_value) {
     // must support unparse in any case
     // "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"; 
     static char uuid_buf[40];
-    const unsigned char *u = (const unsigned char *) uuid;
+    const unsigned char *u = (const unsigned char *) puuid;
     snprintf(uuid_buf, sizeof(uuid_buf),
              "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
              u[0], u[1], u[2], u[3], u[4], u[5], u[6], u[7],
@@ -96,16 +96,16 @@ const unsigned char *
 ej_uuid_unparse_r(
         unsigned char *buf,
         size_t size,
-        const ruint32_t uuid[4],
+        const ej_uuid_t *puuid,
         const unsigned char *default_value)
 {
-  if (uuid[0] || uuid[1] || uuid[2] || uuid[3] || !default_value) {
+  if (puuid->v[0] || puuid->v[1] || puuid->v[2] || puuid->v[3] || !default_value) {
 #if CONF_HAS_LIBUUID - 0 != 0
-    uuid_unparse((void*) uuid, buf);
+    uuid_unparse((void*) puuid, buf);
 #else
     // must support unparse in any case
     // "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"; 
-    const unsigned char *u = (const unsigned char *) uuid;
+    const unsigned char *u = (const unsigned char *) puuid;
     snprintf(buf, size,
              "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
              u[0], u[1], u[2], u[3], u[4], u[5], u[6], u[7],
@@ -119,15 +119,15 @@ ej_uuid_unparse_r(
 }
 
 void
-ej_uuid_generate(ruint32_t uuid[4])
+ej_uuid_generate(ej_uuid_t *puuid)
 {
 #if CONF_HAS_LIBUUID - 0 != 0
-  uuid_generate((void*) uuid);
+  uuid_generate((void*) puuid);
 #else
-  uuid[0] = 0;
-  uuid[1] = 0;
-  uuid[2] = 0;
-  uuid[3] = 0;
+  puuid->v[0] = 0;
+  puuid->v[1] = 0;
+  puuid->v[2] = 0;
+  puuid->v[3] = 0;
 #endif
 }
 
