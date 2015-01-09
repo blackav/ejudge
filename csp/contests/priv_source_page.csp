@@ -42,6 +42,7 @@
   testing_report_xml_t tr = NULL;
   unsigned char *compiler_output = NULL;
   struct full_clar_entry_vector fcev = {};
+  int i;
 
   if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0)
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
@@ -474,7 +475,7 @@ function setDivVisibility(oper, value)
 <hr style="clear: both;" />
 
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
-<h2></h2>
+<h2>Change status</h2>
 </div>
 
 <div class="buttons" style="margin-top: -13px;">
@@ -485,19 +486,56 @@ function setDivVisibility(oper, value)
 </s:form>
 </div>
 
+<%
+  if (fcev.u > 0) {
+%>
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
 <h2><s:_>Messages</s:_></h2>
 </div>
 
-<pre>
+<table border="1">
+    <tr>
+        <td>Author</td>
+        <td>Message</td>
+    </tr>
 <%
-  for (int i = 0; i < fcev.u; ++i) {
+    for (i = 0; i < fcev.u; ++i) {
 %>
-<s:v type="uuid" value="fcev.v[i].e.uuid" />
+   <tr>
+       <td>
+<%
+      if (!fcev.v[i].e.from) {
+        if (!fcev.v[i].e.j_from) {
+%><b>Judge</b><%
+        } else {
+%><b><s:v value="teamdb_get_name_2(cs->teamdb_state, fcev.v[i].e.j_from)" /></b><%
+        }
+      } else {
+%><s:v value="teamdb_get_name_2(cs->teamdb_state, fcev.v[i].e.from)" /><%
+      }
+%>
+<br/>
+<s:v value="fcev.v[i].e.time" />
+<%
+      if (phr->role == USER_ROLE_ADMIN) {
+%>
+<br/>
+<s:v value="fcev.v[i].e.a.ip" />
+<%
+      }
+%>
+       </td>
+<pre><s:v value="fcev.v[i].text" /></pre>
+       <td>
+       </td>
+   </tr>
+<%
+    }
+%>
+</table>
 <%
   }
 %>
-</pre>
 
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
 <h2><s:_>Send a message about this run</s:_></h2></div>
