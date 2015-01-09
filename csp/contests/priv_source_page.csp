@@ -473,6 +473,9 @@ function setDivVisibility(oper, value)
 
 <hr style="clear: both;" />
 
+<div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
+</div>
+
 <div class="buttons" style="margin-top: -13px;">
 <s:form id="just_change">
 <s:hidden name="run_id" checkExpr=">=0" />
@@ -504,9 +507,7 @@ function setDivVisibility(oper, value)
 
 <div class="buttons" style="margin-top: -13px;">
 <s:hidden name="run_id" checkExpr=">=0" />
-<s:submit ac="priv-submit-run-just-ignore" />
-<s:submit ac="priv-submit-run-just-ok" />
-<s:button onclick="formatViolation()" label="Formatting rules violation" />
+<s:button onclick="formatViolation()" label="Formatting rules violation" /></br/>
 <s:submit ac="priv-submit-run-comment" />
 <s:submit ac="priv-submit-run-comment-and-ignore" />
 <s:submit ac="priv-submit-run-comment-and-ok" />
