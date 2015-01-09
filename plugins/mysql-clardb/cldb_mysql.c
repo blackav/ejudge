@@ -1021,7 +1021,7 @@ fetch_run_messages_func(
   int i;
 
   if (mi->fquery(md, CLARS_ROW_WIDTH + 1,
-                 "SELECT t1.*, t2.clar_text FROM %sclars AS t1, %sclartexts AS t2 WHERE t1.contest_id=%d AND t1.uuid = '%s' AND t1.uuid = t2.uuid ORDER BY t1.clar_id;",
+                 "SELECT t1.*, t2.clar_text FROM %sclars AS t1, %sclartexts AS t2 WHERE t1.contest_id=%d AND t1.run_uuid = '%s' AND t1.uuid = t2.uuid ORDER BY t1.clar_id;",
                  md->table_prefix, md->table_prefix,
                  cs->contest_id, ej_uuid_unparse(p_run_uuid, "")) < 0)
     db_error_fail(md);
