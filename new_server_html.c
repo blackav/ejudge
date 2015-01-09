@@ -3244,6 +3244,22 @@ priv_submit_run_comment(
   text3 = alloca(subj_len + text_len + 32);
   text3_len = sprintf(text3, "Subject: %s\n\n%s\n", subj2, text2);
 
+  int old_status = 0;
+  int new_status = 0;
+  if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT) {
+  } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE) {
+    old_status = re.status + 1;
+    new_status = RUN_IGNORED + 1;
+  } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT) {
+    old_status = re.status + 1;
+    new_status = RUN_REJECTED + 1;
+  } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK) {
+    old_status = re.status + 1;
+    new_status = RUN_OK + 1;
+  } else {
+    abort();
+  }
+
   ej_uuid_t clar_uuid = {};
   gettimeofday(&precise_time, 0);
   if ((clar_id = clar_add_record(cs->clarlog_state,
@@ -3259,8 +3275,8 @@ priv_submit_run_comment(
                                  run_id + 1,
                                  &re.run_uuid,
                                  0 /* appeal_flag */,
-                                 0 /* old_run_status */,
-                                 0 /* new_run_status */,
+                                 old_status,
+                                 new_status,
                                  utf8_mode, NULL, subj2, &clar_uuid)) < 0) {
     ns_error(log_f, NEW_SRV_ERR_CLARLOG_UPDATE_FAILED);
     goto cleanup;
@@ -3273,6 +3289,8 @@ priv_submit_run_comment(
 
   if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE) {
     run_change_status_4(cs->runlog_state, run_id, RUN_IGNORED);
+  } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT) {
+    run_change_status_4(cs->runlog_state, run_id, RUN_REJECTED);
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK) {
     struct section_problem_data *prob = 0;
     int full_score = 0;
@@ -3323,6 +3341,8 @@ priv_submit_run_comment(
     msg_f = open_memstream(&msg_t, &msg_z);
     if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE) {
       fprintf(msg_f, _("You submit has been commented and ignored\n"));
+    } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT) {
+      fprintf(msg_f, _("You submit has been commented and rejected\n"));
     } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK) {
       fprintf(msg_f, _("You submit has been commented and accepted\n"));
     } else {
@@ -6258,6 +6278,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SET_PRIORITIES] = priv_set_priorities,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = priv_submit_run_comment,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = priv_submit_run_comment,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT] = priv_submit_run_comment,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_simple_change_status,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_simple_change_status,
   [NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED] = priv_set_run_style_error_status,
@@ -6667,6 +6688,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SET_PRIORITIES] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED] = priv_generic_operation,

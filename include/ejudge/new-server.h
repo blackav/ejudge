@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __NEW_SERVER_H__
 #define __NEW_SERVER_H__
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -320,6 +319,7 @@ enum
   NEW_SRV_ACTION_VIEW_IP_USERS,
   NEW_SRV_ACTION_CHANGE_FINISH_TIME,
   NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK,
+  NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT,
   NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE,
   NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK,
   NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED,

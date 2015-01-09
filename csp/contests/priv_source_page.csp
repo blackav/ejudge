@@ -550,7 +550,7 @@ function setDivVisibility(oper, value)
 <s:submit ac="priv-submit-run-comment" />
 <s:submit ac="priv-submit-run-comment-and-ignore" />
 <s:submit ac="priv-submit-run-comment-and-ok" />
-<s:submit ac="priv-set-run-rejected" />
+<s:submit ac="priv-submit-run-comment-and-reject" />
 </div></s:form>
 
 <br />

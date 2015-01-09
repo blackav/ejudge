@@ -235,6 +235,7 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_IP_USERS] = "view-ip-users",
   [NEW_SRV_ACTION_CHANGE_FINISH_TIME] = "change-finish-time",
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = "priv-submit-run-comment-and-ok",
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT] = "priv-submit-run-comment-and-reject",
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = "priv-submit-run-just-ignore",
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = "priv-submit-run-just-ok",
   [NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED] = "priv-set-run-rejected",
