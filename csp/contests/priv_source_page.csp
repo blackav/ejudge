@@ -525,8 +525,8 @@ function setDivVisibility(oper, value)
       }
 %>
        </td>
-<pre><s:v value="fcev.v[i].text" /></pre>
        <td>
+<pre><s:v value="fcev.v[i].text" /></pre>
        </td>
    </tr>
 <%
