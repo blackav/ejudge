@@ -1026,6 +1026,10 @@ fetch_run_messages_func(
                  cs->contest_id, ej_uuid_unparse(p_run_uuid, "")) < 0)
     db_error_fail(md);
 
+  if (md->row_count <= 0) {
+    return 0;
+  }
+
   count = md->row_count;
   XCALLOC(fce, count);
 
