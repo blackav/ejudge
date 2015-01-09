@@ -650,7 +650,21 @@ clar_fetch_run_messages(
         struct full_clar_entry_vector *pfcev)
 {
   if (state->iface->fetch_run_messages) {
-    return (*state->iface->fetch_run_messages)(state->cnts, p_run_uuid, pfcev);
+    struct full_clar_entry *pp = NULL;
+    int count = (*state->iface->fetch_run_messages)(state->cnts, p_run_uuid, &pp);
+    if (count <= 0) return count;
+
+    if (pfcev->u + count > pfcev->a) {
+      int new_sz = pfcev->a * 2;
+      if (!new_sz) new_sz = 8;
+      while (pfcev->u + count > new_sz) new_sz *= 2;
+      XREALLOC(pfcev->v, new_sz);
+      pfcev->a = new_sz;
+    }
+    memcpy(&pfcev->v[pfcev->u], pp, count * sizeof(pp[0]));
+    pfcev->u += count;
+    xfree(pp);
+    return count;
   } else {
     ERR_R("not supported");
   }

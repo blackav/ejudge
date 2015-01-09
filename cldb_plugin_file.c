@@ -147,7 +147,7 @@ static int
 fetch_run_messages_func(
         struct cldb_plugin_cnts *cdata,
         const ej_uuid_t *p_run_uuid,
-        struct full_clar_entry_vector *pfcev);
+        struct full_clar_entry **pp);
 
 struct cldb_plugin_iface cldb_plugin_file =
 {
@@ -814,7 +814,7 @@ static int
 fetch_run_messages_func(
         struct cldb_plugin_cnts *cdata,
         const ej_uuid_t *p_run_uuid,
-        struct full_clar_entry_vector *pfcev)
+        struct full_clar_entry **pp)
 {
   struct cldb_file_cnts *cs = (struct cldb_file_cnts*) cdata;
   struct clarlog_state *cl_state = cs->cl_state;
@@ -851,15 +851,6 @@ fetch_run_messages_func(
     }
   }
 
-  if (pfcev->u + count > pfcev->a) {
-    int new_sz = pfcev->a * 2;
-    if (!new_sz) new_sz = 8;
-    while (pfcev->u + count > new_sz) new_sz *= 2;
-    XREALLOC(pfcev->v, new_sz);
-    pfcev->a = new_sz;
-  }
-  memcpy(&pfcev->v[pfcev->u], fce, count * sizeof(fce[0]));
-  pfcev->u += count;
-  memset(fce, 0, count * sizeof(fce[0]));
+  *pp = fce;
   return count;
 }

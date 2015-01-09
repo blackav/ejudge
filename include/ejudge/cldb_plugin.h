@@ -33,7 +33,7 @@ struct clarlog_state;
 struct cldb_plugin_data;
 struct cldb_plugin_cnts;
 struct clar_entry_v2;
-struct full_clar_entry_vector;
+struct full_clar_entry;
 
 struct cldb_plugin_iface
 {
@@ -78,7 +78,7 @@ struct cldb_plugin_iface
   int (*fetch_run_messages)(
         struct cldb_plugin_cnts *,
         const ej_uuid_t *p_run_uuid,
-        struct full_clar_entry_vector *pfcev);
+        struct full_clar_entry **pfce);
 };
 
 /* default plugin: compiled into new-server */

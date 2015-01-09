@@ -92,7 +92,7 @@ static int
 fetch_run_messages_func(
         struct cldb_plugin_cnts *cdata,
         const ej_uuid_t *p_run_uuid,
-        struct full_clar_entry_vector *pfcev);
+        struct full_clar_entry **pp);
 
 /* plugin entry point */
 struct cldb_plugin_iface plugin_cldb_mysql =
@@ -1010,7 +1010,7 @@ static int
 fetch_run_messages_func(
         struct cldb_plugin_cnts *cdata,
         const ej_uuid_t *p_run_uuid,
-        struct full_clar_entry_vector *pfcev)
+        struct full_clar_entry **pp)
 {
   struct cldb_mysql_cnts *cs = (struct cldb_mysql_cnts*) cdata;
   struct cldb_mysql_state *state = cs->plugin_state;
@@ -1049,16 +1049,7 @@ fetch_run_messages_func(
   }
   state->mi->free_res(state->md);
 
-  if (pfcev->u + count > pfcev->a) {
-    int new_sz = pfcev->a * 2;
-    if (!new_sz) new_sz = 8;
-    while (pfcev->u + count > new_sz) new_sz *= 2;
-    XREALLOC(pfcev->v, new_sz);
-    pfcev->a = new_sz;
-  }
-  memcpy(&pfcev->v[pfcev->u], fce, count * sizeof(fce[0]));
-  pfcev->u += count;
-  memset(fce, 0, count * sizeof(fce[0]));
+  *pp = fce;
   return count;
 
 fail:
