@@ -490,13 +490,13 @@ function setDivVisibility(oper, value)
   if (fcev.u > 0) {
 %>
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
-<h2><s:_>Messages</s:_></h2>
+<h2><s:_>Run comments</s:_></h2>
 </div>
 
 <table border="1">
     <tr>
         <td>Author</td>
-        <td>Message</td>
+        <td>Run comment</td>
     </tr>
 <%
     for (i = 0; i < fcev.u; ++i) {
@@ -538,7 +538,7 @@ function setDivVisibility(oper, value)
 %>
 
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
-<h2><s:_>Send a message about this run</s:_></h2></div>
+<h2><s:_>Add a new run comment</s:_></h2></div>
 
 <s:form id="run_comment">
 
