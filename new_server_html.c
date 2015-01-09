@@ -3340,13 +3340,13 @@ priv_submit_run_comment(
              cnts->id);
     msg_f = open_memstream(&msg_t, &msg_z);
     if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE) {
-      fprintf(msg_f, _("You submit has been commented and ignored\n"));
+      fprintf(msg_f, _("Your submit has been commented and ignored\n"));
     } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT) {
-      fprintf(msg_f, _("You submit has been commented and rejected\n"));
+      fprintf(msg_f, _("Your submit has been commented and rejected\n"));
     } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK) {
-      fprintf(msg_f, _("You submit has been commented and accepted\n"));
+      fprintf(msg_f, _("Your submit has been commented and accepted\n"));
     } else {
-      fprintf(msg_f, _("You submit has been commented\n"));
+      fprintf(msg_f, _("Your submit has been commented\n"));
     }
     fprintf(msg_f, _("Contest: %d (%s)\n"), cnts->id, cnts->name);
     fprintf(msg_f, "Run Id: %d\n", run_id);
