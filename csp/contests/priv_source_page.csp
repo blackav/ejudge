@@ -478,7 +478,7 @@ function setDivVisibility(oper, value)
 <h2>Change status</h2>
 </div>
 
-<div class="buttons" style="margin-top: -13px;">
+<div class="buttons">
 <s:form id="just_change">
 <s:hidden name="run_id" checkExpr=">=0" />
 <s:submit ac="priv-submit-run-just-ignore" />
@@ -489,12 +489,13 @@ function setDivVisibility(oper, value)
 <%
   if (fcev.u > 0) {
 %>
-<div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
+<div class="h2-long" style="margin-top: 13px; margin-bottom: 10px;">
 <h2><s:_>Run comments</s:_></h2>
 </div>
 
-<table border="1">
-    <tr>
+<div class="width-100">
+<table class="message-table">
+    <tr class="mes-top">
         <td>Author</td>
         <td>Run comment</td>
     </tr>
@@ -502,7 +503,7 @@ function setDivVisibility(oper, value)
     for (i = 0; i < fcev.u; ++i) {
 %>
    <tr>
-       <td>
+       <td class="profile">
 <%
       if (!fcev.v[i].e.from) {
         if (!fcev.v[i].e.j_from) {
@@ -533,6 +534,7 @@ function setDivVisibility(oper, value)
     }
 %>
 </table>
+</div>
 <%
   }
 %>
