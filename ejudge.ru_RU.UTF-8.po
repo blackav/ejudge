@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-03 02:55+0300\n"
-"PO-Revision-Date: 2015-01-03 03:03+0300\n"
+"POT-Creation-Date: 2015-01-09 13:56+0300\n"
+"PO-Revision-Date: 2015-01-09 13:56+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -312,11 +312,13 @@ msgstr "<p>Вы можете добавить до %d членов команд�
 
 #, c-format
 msgid "<u>--- Checker output: file is binary, size %lld ---</u>\n"
-msgstr "<u>--- Вывод проверяющей программы: файл бинарный, размер %lld ---</u>\n"
+msgstr ""
+"<u>--- Вывод проверяющей программы: файл бинарный, размер %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Checker output: file is too large, original size %lld ---</u>\n"
-msgstr "<u>--- Вывод проверяющей программы: файл слишком велик, размер %lld ---</u>\n"
+msgstr ""
+"<u>--- Вывод проверяющей программы: файл слишком велик, размер %lld ---</u>\n"
 
 #, c-format
 msgid "<u>--- Checker output: size %lld ---</u>\n"
@@ -417,6 +419,9 @@ msgstr "Добавить роль ЭКЗАМЕНАТОРА"
 
 msgid "Add OBSERVER"
 msgstr "Добавить роль НАБЛЮДАТЕЛЯ"
+
+msgid "Add a new run comment"
+msgstr "Добавить комментарий к программе"
 
 msgid "Add a new user specifying his/her User Id"
 msgstr "Добавить нового пользователя, задавая его User Id"
@@ -3228,6 +3233,9 @@ msgstr "Посылка"
 msgid "Run ID"
 msgstr "Номер решения"
 
+msgid "Run comments"
+msgstr "Комментарии к программе"
+
 msgid "Run filter expression"
 msgstr "Условие отбора посылок"
 
@@ -3337,9 +3345,6 @@ msgstr "Выбрать вариант"
 msgid "Send a message"
 msgstr "Отправить сообщение судьям"
 
-msgid "Send a message about this run"
-msgstr "Отправить комментарий к программе"
-
 msgid "Send a message to judges"
 msgstr "Отправить сообщение судьям"
 
@@ -3357,6 +3362,9 @@ msgstr "Отправить комментарий к программе"
 
 msgid "Send run comment and OK run"
 msgstr "Отправить комментарий к программе и принять посылку"
+
+msgid "Send run comment and REJECT run"
+msgstr "Отправить комментарий к программе и отклонить посылку"
 
 msgid "Send run comment and ignore run"
 msgstr "Отправить комментарий к программе и игнорировать посылку"
@@ -4418,23 +4426,27 @@ msgstr ""
 "пароль для входа в систему. Этот пароль необходимо использовать для первого "
 "входа в систему, после чего его можно будет поменять."
 
-#, c-format
-msgid "You submit has been commented\n"
-msgstr "Ваша посылка была прокомментирована\n"
-
-#, c-format
-msgid "You submit has been commented and accepted\n"
-msgstr "Ваша посылка была прокомментирована и принята\n"
-
-#, c-format
-msgid "You submit has been commented and ignored\n"
-msgstr "Ваша посылка была прокомментирована и проигнорирована\n"
-
 msgid ""
 "Your request has caused an internal server error. Please, report it as a bug."
 msgstr ""
 "Ваш запрос вызвал внутреннюю ошибку сервера. Пожалуйста, сообщите об этом "
 "как об ошибке."
+
+#, c-format
+msgid "Your submit has been commented\n"
+msgstr "Ваша посылка была прокомментирована\n"
+
+#, c-format
+msgid "Your submit has been commented and accepted\n"
+msgstr "Ваша посылка была прокомментирована и принята\n"
+
+#, c-format
+msgid "Your submit has been commented and ignored\n"
+msgstr "Ваша посылка была прокомментирована и проигнорирована\n"
+
+#, c-format
+msgid "Your submit has been commented and rejected\n"
+msgstr "Ваша посылка была прокомментирована и отклонена\n"
 
 #, c-format
 msgid "Your submit has been commented in contest %d"
@@ -4822,3 +4834,6 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
+
+#~ msgid "Send a message about this run"
+#~ msgstr "Отправить комментарий к программе"

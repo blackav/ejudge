@@ -4851,6 +4851,31 @@ int ns_match_action(const unsigned char *str)
                                                                         return 0;
                                                                       }
                                                                     } else {
+                                                                      if (c == 'r') {
+                                                                        c = str[29];
+                                                                        if (c == 'e') {
+                                                                          c = str[30];
+                                                                          if (c == 'j') {
+                                                                            c = str[31];
+                                                                            if (c == 'e') {
+                                                                              c = str[32];
+                                                                              if (c == 'c') {
+                                                                                c = str[33];
+                                                                                if (c == 't') {
+                                                                                  c = str[34];
+                                                                                  if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT;
+                                                                                  return 0;
+                                                                                }
+                                                                                return 0;
+                                                                              }
+                                                                              return 0;
+                                                                            }
+                                                                            return 0;
+                                                                          }
+                                                                          return 0;
+                                                                        }
+                                                                        return 0;
+                                                                      }
                                                                     }
                                                                     return 0;
                                                                   }

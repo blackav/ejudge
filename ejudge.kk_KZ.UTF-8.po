@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-03 02:55+0300\n"
+"POT-Creation-Date: 2015-01-09 13:56+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -357,6 +357,9 @@ msgid "Add EXAMINER"
 msgstr ""
 
 msgid "Add OBSERVER"
+msgstr ""
+
+msgid "Add a new run comment"
 msgstr ""
 
 msgid "Add a new user specifying his/her User Id"
@@ -3063,6 +3066,9 @@ msgstr ""
 msgid "Run ID"
 msgstr ""
 
+msgid "Run comments"
+msgstr ""
+
 msgid "Run filter expression"
 msgstr ""
 
@@ -3170,9 +3176,6 @@ msgstr ""
 msgid "Send a message"
 msgstr ""
 
-msgid "Send a message about this run"
-msgstr ""
-
 msgid "Send a message to judges"
 msgstr ""
 
@@ -3189,6 +3192,9 @@ msgid "Send run comment"
 msgstr ""
 
 msgid "Send run comment and OK run"
+msgstr ""
+
+msgid "Send run comment and REJECT run"
 msgstr ""
 
 msgid "Send run comment and ignore run"
@@ -4203,20 +4209,24 @@ msgid ""
 "change the password."
 msgstr ""
 
-#, c-format
-msgid "You submit has been commented\n"
-msgstr ""
-
-#, c-format
-msgid "You submit has been commented and accepted\n"
-msgstr ""
-
-#, c-format
-msgid "You submit has been commented and ignored\n"
-msgstr ""
-
 msgid ""
 "Your request has caused an internal server error. Please, report it as a bug."
+msgstr ""
+
+#, c-format
+msgid "Your submit has been commented\n"
+msgstr ""
+
+#, c-format
+msgid "Your submit has been commented and accepted\n"
+msgstr ""
+
+#, c-format
+msgid "Your submit has been commented and ignored\n"
+msgstr ""
+
+#, c-format
+msgid "Your submit has been commented and rejected\n"
 msgstr ""
 
 #, c-format
