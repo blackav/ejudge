@@ -41,6 +41,7 @@
   size_t rep_len = 0;
   testing_report_xml_t tr = NULL;
   unsigned char *compiler_output = NULL;
+  struct full_clar_entry_vector fcev = {};
 
   if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0)
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
@@ -100,6 +101,10 @@
         compiler_output = txt_text; txt_text = 0; txt_size = 0;
       }
     }
+  }
+
+  if (ej_uuid_is_nonempty(info.run_uuid)) {
+    clar_fetch_run_messages(cs->clarlog_state, &info.run_uuid, &fcev);
   }
 
   snprintf(title, sizeof(title), "%s %d", _("Viewing run"), run_id);
@@ -468,6 +473,27 @@ function setDivVisibility(oper, value)
 
 <hr style="clear: both;" />
 
+<div class="buttons" style="margin-top: -13px;">
+<s:form id="just_change">
+<s:hidden name="run_id" checkExpr=">=0" />
+<s:submit ac="priv-submit-run-just-ignore" />
+<s:submit ac="priv-submit-run-just-ok" />
+</s:form>
+</div>
+
+<div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
+<h2><s:_>Messages</s:_></h2>
+</div>
+
+<pre>
+<%
+  for (int i = 0; i < fcev.u; ++i) {
+%>
+<s:v type="uuid" value="fcev.v[i].e.uuid" />
+<%
+  }
+%>
+</pre>
 
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
 <h2><s:_>Send a message about this run</s:_></h2></div>
@@ -492,6 +518,7 @@ function setDivVisibility(oper, value)
 <%@include "priv_footer.csp"
 %><%
 cleanup:
+  clar_free_fcev(&fcev);
   l10n_resetlocale();
   html_armor_free(&ab);
   xfree(rep_text);
