@@ -474,6 +474,7 @@ function setDivVisibility(oper, value)
 <hr style="clear: both;" />
 
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
+<h2></h2>
 </div>
 
 <div class="buttons" style="margin-top: -13px;">
