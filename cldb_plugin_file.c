@@ -143,6 +143,11 @@ modify_record_func(
         int clar_id,
         int mask,
         const struct clar_entry_v2 *pe);
+static int
+fetch_run_messages_func(
+        struct cldb_plugin_cnts *cdata,
+        const ej_uuid_t *p_run_uuid,
+        struct full_clar_entry_vector *pfcev);
 
 struct cldb_plugin_iface cldb_plugin_file =
 {
@@ -170,6 +175,7 @@ struct cldb_plugin_iface cldb_plugin_file =
   add_text_func,
   modify_text_func,
   modify_record_func,
+  fetch_run_messages_func,
 };
 
 static struct common_plugin_data *
@@ -802,4 +808,58 @@ modify_record_func(
 {
   struct cldb_file_cnts *cs = (struct cldb_file_cnts*) cdata;
   return do_flush_entry(cs, clar_id);
+}
+
+static int
+fetch_run_messages_func(
+        struct cldb_plugin_cnts *cdata,
+        const ej_uuid_t *p_run_uuid,
+        struct full_clar_entry_vector *pfcev)
+{
+  struct cldb_file_cnts *cs = (struct cldb_file_cnts*) cdata;
+  struct clarlog_state *cl_state = cs->cl_state;
+  int i, j, count = 0;
+  struct full_clar_entry *fce = NULL;
+  unsigned char name_buf[PATH_MAX];
+
+  for (i = 0; i < cl_state->clars.u; ++i) {
+    const struct clar_entry_v2 *pe = &cl_state->clars.v[i];
+    if (pe->id >= 0
+        && pe->run_uuid.v[0] == p_run_uuid->v[0]
+        && pe->run_uuid.v[1] == p_run_uuid->v[1]
+        && pe->run_uuid.v[2] == p_run_uuid->v[2]
+        && pe->run_uuid.v[3] == p_run_uuid->v[3]) {
+      ++count;
+    }
+  }
+  if (count <= 0) return 0;
+
+  XCALLOC(fce, count);
+
+  for (i = 0, j = 0; i < cl_state->clars.u; ++i) {
+    const struct clar_entry_v2 *pe = &cl_state->clars.v[i];
+    if (pe->id >= 0
+        && pe->run_uuid.v[0] == p_run_uuid->v[0]
+        && pe->run_uuid.v[1] == p_run_uuid->v[1]
+        && pe->run_uuid.v[2] == p_run_uuid->v[2]
+        && pe->run_uuid.v[3] == p_run_uuid->v[3]) {
+      char *p = 0;
+      fce[j].e = *pe;
+      snprintf(name_buf, sizeof(name_buf), "%06d", pe->id);
+      generic_read_file(&p, 0, &fce[j].size, 0, cs->clar_archive_dir, name_buf, NULL);
+      fce[j].text = p; p = NULL;
+    }
+  }
+
+  if (pfcev->u + count > pfcev->a) {
+    int new_sz = pfcev->a * 2;
+    if (!new_sz) new_sz = 8;
+    while (pfcev->u + count > new_sz) new_sz *= 2;
+    XREALLOC(pfcev->v, new_sz);
+    pfcev->a = new_sz;
+  }
+  memcpy(&pfcev->v[pfcev->u], fce, count * sizeof(fce[0]));
+  pfcev->u += count;
+  memset(fce, 0, count * sizeof(fce[0]));
+  return count;
 }
