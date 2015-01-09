@@ -88,6 +88,11 @@ modify_record_func(
         int clar_id,
         int mask,
         const struct clar_entry_v2 *pe);
+static int
+fetch_run_messages_func(
+        struct cldb_plugin_cnts *cdata,
+        const ej_uuid_t *p_run_uuid,
+        struct full_clar_entry_vector *pfcev);
 
 /* plugin entry point */
 struct cldb_plugin_iface plugin_cldb_mysql =
@@ -116,6 +121,7 @@ struct cldb_plugin_iface plugin_cldb_mysql =
   add_text_func,
   modify_text_func,
   modify_record_func,
+  fetch_run_messages_func,
 };
 
 static struct common_plugin_data *
@@ -448,12 +454,11 @@ is_valid_charset(const unsigned char *charset)
 
 static int
 make_clarlog_entry(
-        struct cldb_plugin_data *data,
+        struct cldb_mysql_state *state,
         int contest_id,
         int extra_columns,
         struct clar_entry_v2 *ce)
 {
-  struct cldb_mysql_state *state = (struct cldb_mysql_state*) data;
   struct common_mysql_iface *mi = state->mi;
   struct common_mysql_state *md = state->md;
   int retval = -1;
@@ -578,7 +583,7 @@ open_func(
     db_error_fail(md);
   for (i = 0; i < md->row_count; i++) {
     if (mi->next_row(md) < 0) goto fail;
-    if (make_clarlog_entry(data, cs->contest_id, 0, &ce) < 0)
+    if (make_clarlog_entry(state, cs->contest_id, 0, &ce) < 0)
       goto fail;
 
     expand_clar_array(&cl_state->clars, ce.id);
@@ -998,6 +1003,68 @@ modify_record_func(
  fail:
   if (cmd_f) fclose(cmd_f);
   xfree(cmd_t);
+  return -1;
+}
+
+static int
+fetch_run_messages_func(
+        struct cldb_plugin_cnts *cdata,
+        const ej_uuid_t *p_run_uuid,
+        struct full_clar_entry_vector *pfcev)
+{
+  struct cldb_mysql_cnts *cs = (struct cldb_mysql_cnts*) cdata;
+  struct cldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  int count = 0;
+  struct full_clar_entry *fce = NULL;
+  int i;
+
+  if (mi->fquery(md, CLARS_ROW_WIDTH + 1,
+                 "SELECT t1.*, t2.clar_text FROM %sclars AS t1, %sclartexts AS t2 WHERE t1.contest_id=%d AND t1.uuid = '%s' AND t1.uuid = t2.uuid ORDER BY t1.clar_id;",
+                 md->table_prefix, md->table_prefix,
+                 cs->contest_id, ej_uuid_unparse(p_run_uuid, "")) < 0)
+    db_error_fail(md);
+
+  count = md->row_count;
+  XCALLOC(fce, count);
+
+  for (i = 0; i < md->row_count; i++) {
+    if (mi->next_row(md) < 0) goto fail;
+    if (make_clarlog_entry(state, cs->contest_id, 1, &fce[i].e) < 0)
+      goto fail;
+    if (!md->row[CLARS_ROW_WIDTH]) {
+      fce[i].text = NULL;
+      fce[i].size = 0;
+    } else {
+      fce[i].text = xmalloc(fce[i].size + 1);
+      memcpy(fce[i].text, md->row[CLARS_ROW_WIDTH], md->lengths[CLARS_ROW_WIDTH]);
+      fce[i].text[fce[i].size] = 0;
+    }
+  }
+  state->mi->free_res(state->md);
+
+  if (pfcev->u + count > pfcev->a) {
+    int new_sz = pfcev->a * 2;
+    if (!new_sz) new_sz = 8;
+    while (pfcev->u + count > new_sz) new_sz *= 2;
+    XREALLOC(pfcev->v, new_sz);
+    pfcev->a = new_sz;
+  }
+  if (count > 0) {
+    memcpy(&pfcev->v[pfcev->u], fce, count * sizeof(fce[0]));
+    pfcev->u += count;
+    memset(fce, 0, count * sizeof(fce[0]));
+  }
+  return count;
+
+fail:
+  if (fce) {
+    for (i = 0; i < count; ++i) {
+      xfree(fce[i].text);
+    }
+    xfree(fce);
+  }
   return -1;
 }
 
