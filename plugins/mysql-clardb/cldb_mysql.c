@@ -1041,6 +1041,7 @@ fetch_run_messages_func(
       fce[i].text = NULL;
       fce[i].size = 0;
     } else {
+      fce[i].size = md->lengths[CLARS_ROW_WIDTH];
       fce[i].text = xmalloc(fce[i].size + 1);
       memcpy(fce[i].text, md->row[CLARS_ROW_WIDTH], md->lengths[CLARS_ROW_WIDTH]);
       fce[i].text[fce[i].size] = 0;
@@ -1055,11 +1056,9 @@ fetch_run_messages_func(
     XREALLOC(pfcev->v, new_sz);
     pfcev->a = new_sz;
   }
-  if (count > 0) {
-    memcpy(&pfcev->v[pfcev->u], fce, count * sizeof(fce[0]));
-    pfcev->u += count;
-    memset(fce, 0, count * sizeof(fce[0]));
-  }
+  memcpy(&pfcev->v[pfcev->u], fce, count * sizeof(fce[0]));
+  pfcev->u += count;
+  memset(fce, 0, count * sizeof(fce[0]));
   return count;
 
 fail:
