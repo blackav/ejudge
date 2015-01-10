@@ -1200,6 +1200,13 @@ ns_write_all_clars(
 
   u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
 
+  if (mode_clar < 0) mode_clar = 0;
+  if (phr->role == USER_ROLE_ADMIN && mode_clar > CLAR_FILTER_NONE) {
+    mode_clar = 0;
+  } else if (mode_clar > CLAR_FILTER_NONE - 1) {
+    mode_clar = 0;
+  }
+
   fprintf(f, "<hr><h2>%s</h2>\n", _("Messages"));
 
   start = run_get_start_time(cs->runlog_state);
