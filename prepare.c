@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2106,6 +2105,9 @@ parse_tokens_cost(
       value2 &= ~TOKEN_TESTS_MASK;
       value2 |= TOKEN_FINALTESTS_BIT;
       p += 14;
+    } else if (!strncasecmp(p, "valuerjudgecomment", 18)) {
+      value2 |= TOKEN_VALUER_JUDGE_COMMENT_BIT;
+      p += 18;
     } else {
       break;
     }

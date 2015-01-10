@@ -5982,6 +5982,10 @@ write_xml_team_testing_report(
     fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
             ARMOR(r->valuer_comment));
   }
+  if ((token_flags & TOKEN_VALUER_JUDGE_COMMENT_BIT) && r->valuer_judge_comment) {
+    fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
+            ARMOR(r->valuer_judge_comment));
+  }
 
   for (i = 0; i < r->run_tests; ++i) {
     if (!(t = r->tests[i])) continue;

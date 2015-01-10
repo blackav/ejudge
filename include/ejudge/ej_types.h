@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __EJ_TYPES_H__
 #define __EJ_TYPES_H__
 
-/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -192,7 +191,8 @@ enum
   TOKEN_TESTS_MASK = 6,
   TOKEN_BASICTESTS_BIT = 2, // show the basic test info
   TOKEN_TOKENTESTS_BIT = 4, // show the token test info
-  TOKEN_FINALTESTS_BIT = 6  // show the final test info
+  TOKEN_FINALTESTS_BIT = 6, // show the final test info
+  TOKEN_VALUER_JUDGE_COMMENT_BIT = 8 // show the judge's valuer comment
 };
 
 typedef struct ej_uuid_t
