@@ -1153,6 +1153,16 @@ match_clar(serve_state_t cs, int clar_id, int mode_clar)
   }
 }
 
+const unsigned char * const clar_filter_options[] =
+{
+  NULL,
+  [CLAR_FILTER_ALL_CLARS] = __("All clars"),
+  [CLAR_FILTER_UNANS_CLARS_COMMENTS] = __("Unanswered clars"),
+  [CLAR_FILTER_ALL_CLARS_COMMENTS] = __("All clars and comments"),
+  [CLAR_FILTER_CLARS_TO_ALL] = __("Clars to all"),
+  [CLAR_FILTER_NONE] = __("All entries"),
+};
+
 void
 ns_write_all_clars(
         FILE *f,
@@ -1178,7 +1188,7 @@ ns_write_all_clars(
   struct clar_entry_v2 clar;
   unsigned char cl[128];
   int first_clar = -1, last_clar = -10;
-  int count;
+  int count, max_mode_clar;
 
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
@@ -1186,6 +1196,7 @@ ns_write_all_clars(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *clar_subj = 0;
   const unsigned char *judge_name = NULL;
+  const unsigned char *s = "";
 
   u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
 
@@ -1248,14 +1259,15 @@ ns_write_all_clars(
 
   fprintf(f, "<p>");
   html_start_form(f, 0, phr->self_url, phr->hidden_vars);
-  fprintf(f,
-          "<select name=\"%s\"><option value=\"1\"%s>%s</option>"
-          "<option value=\"2\"%s>%s</option></select>\n",
-          "filter_mode_clar",
-          (mode_clar == 1) ? " selected=\"1\"" : "",
-          _("All clars"),
-          (mode_clar == 2) ? " selected=\"1\"" : "",
-          _("Unanswered clars"));
+  fprintf(f, "<select name=\"%s\">", "filter_mode_clar");
+  max_mode_clar = CLAR_FILTER_NONE;
+  if (phr->role != USER_ROLE_ADMIN) max_mode_clar = CLAR_FILTER_NONE - 1;
+  for (int j = 1; j <= max_mode_clar; ++j) {
+    s = "";
+    if (mode_clar == j) s = " selected=\"selected\"";
+    fprintf(f, "<option value=\"%d\"%s>%s</option>", j, s, gettext(clar_filter_options[j]));
+  }
+  fprintf(f, "</select>\n");
   fprintf(f, "%s: <input type=\"text\" name=\"filter_first_clar\" size=\"16\" value=\"%s\"/>", _("First clar"), first_clar_buf);
   fprintf(f, "%s: <input type=\"text\" name=\"filter_last_clar\" size=\"16\" value=\"%s\"/>", _("Last clar"), last_clar_buf);
   fprintf(f, "%s",
