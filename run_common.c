@@ -297,84 +297,86 @@ generate_xml_report(
     ej_uuid_parse(srgp->run_uuid, &tr->uuid);
   }
 
-  XCALLOC(tr->tests, total_tests - 1);
-  for (i = 1; i < total_tests; ++i) {
-    struct testing_report_test *trt = testing_report_test_alloc(i, tests[i].status);
-    tr->tests[i - 1] = trt;
-    if (tests[i].status == RUN_RUN_TIME_ERR) {
-      if (tests[i].code == 256) {
-        trt->term_signal = tests[i].termsig;
-      } else {
-        trt->exit_code = tests[i].code;
+  if (total_tests > 1) {
+    XCALLOC(tr->tests, total_tests - 1);
+    for (i = 1; i < total_tests; ++i) {
+      struct testing_report_test *trt = testing_report_test_alloc(i, tests[i].status);
+      tr->tests[i - 1] = trt;
+      if (tests[i].status == RUN_RUN_TIME_ERR) {
+        if (tests[i].code == 256) {
+          trt->term_signal = tests[i].termsig;
+        } else {
+          trt->exit_code = tests[i].code;
+        }
       }
-    }
-    trt->time = tests[i].times;
-    if (tests[i].real_time >= 0 && has_real_time) {
-      trt->real_time = tests[i].real_time;
-    }
-    if (tests[i].max_memory_used > 0) {
-      trt->max_memory_used = tests[i].max_memory_used;
-    }
-    if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0) {
-      trt->nominal_score = tests[i].max_score;
-      trt->score = tests[i].score;
-    } else if (srgp->scoring_system_val == SCORE_KIROV) {
-      trt->nominal_score = tests[i].max_score;
-      trt->score = tests[i].score;
-    }
-    if (tests[i].comment && tests[i].comment[0]) {
-      trt->comment = xstrdup(tests[i].comment);
-    }
-    if (tests[i].team_comment && tests[i].team_comment[0]) {
-      trt->team_comment = tests[i].team_comment;
-    }
-    if (tests[i].exit_comment && tests[i].exit_comment[0]) {
-      trt->exit_comment = tests[i].exit_comment;
-    }
-    if ((tests[i].status == RUN_WRONG_ANSWER_ERR || tests[i].status == RUN_PRESENTATION_ERR || tests[i].status == RUN_OK)
-        && tests[i].chk_out_size > 0 && tests[i].chk_out && tests[i].chk_out[0]) {
-      trt->checker_comment = prepare_checker_comment(utf8_mode, tests[i].chk_out);
-    }
-    if (srgp->enable_full_archive > 0) {
-      if (tests[i].has_input_digest) {
-        trt->has_input_digest = 1;
-        filehash_copy(trt->input_digest, tests[i].input_digest);
+      trt->time = tests[i].times;
+      if (tests[i].real_time >= 0 && has_real_time) {
+        trt->real_time = tests[i].real_time;
       }
-      if (tests[i].has_correct_digest) {
-        trt->has_correct_digest = 1;
-        filehash_copy(trt->correct_digest, tests[i].correct_digest);
+      if (tests[i].max_memory_used > 0) {
+        trt->max_memory_used = tests[i].max_memory_used;
       }
-      if (tests[i].has_info_digest) {
-        trt->has_info_digest = 1;
-        filehash_copy(trt->info_digest, tests[i].info_digest);
+      if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0) {
+        trt->nominal_score = tests[i].max_score;
+        trt->score = tests[i].score;
+      } else if (srgp->scoring_system_val == SCORE_KIROV) {
+        trt->nominal_score = tests[i].max_score;
+        trt->score = tests[i].score;
       }
-    }
-    if (srgp->enable_full_archive > 0) {
-      if (tests[i].output_size >= 0) {
-        trt->output_available = 1;
+      if (tests[i].comment && tests[i].comment[0]) {
+        trt->comment = xstrdup(tests[i].comment);
       }
-      if (tests[i].error_size >= 0) {
-        trt->stderr_available = 1;
+      if (tests[i].team_comment && tests[i].team_comment[0]) {
+        trt->team_comment = tests[i].team_comment;
       }
-      if (tests[i].chk_out_size >= 0) {
-        trt->checker_output_available = 1;
+      if (tests[i].exit_comment && tests[i].exit_comment[0]) {
+        trt->exit_comment = tests[i].exit_comment;
       }
-    }
-    if (tests[i].args && strlen(tests[i].args) >= srgp->max_cmd_length) {
-      trt->args_too_long = 1;
-    }
-    if (tests[i].visibility > 0) {
-      trt->visibility = tests[i].visibility;
-    }
-    if (tests[i].args && strlen(tests[i].args) < srgp->max_cmd_length) {
-      trt->args = xstrdup(tests[i].args);
-    }
-    if (srgp->enable_full_archive <= 0) {
-      make_file_content(&trt->input, srgp, tests[i].input, tests[i].input_size);
-      make_file_content(&trt->output, srgp, tests[i].output, tests[i].output_size);
-      make_file_content(&trt->correct, srgp, tests[i].correct, tests[i].correct_size);
-      make_file_content(&trt->error, srgp, tests[i].error, tests[i].error_size);
-      make_file_content(&trt->checker, srgp, tests[i].chk_out, tests[i].chk_out_size);
+      if ((tests[i].status == RUN_WRONG_ANSWER_ERR || tests[i].status == RUN_PRESENTATION_ERR || tests[i].status == RUN_OK)
+          && tests[i].chk_out_size > 0 && tests[i].chk_out && tests[i].chk_out[0]) {
+        trt->checker_comment = prepare_checker_comment(utf8_mode, tests[i].chk_out);
+      }
+      if (srgp->enable_full_archive > 0) {
+        if (tests[i].has_input_digest) {
+          trt->has_input_digest = 1;
+          filehash_copy(trt->input_digest, tests[i].input_digest);
+        }
+        if (tests[i].has_correct_digest) {
+          trt->has_correct_digest = 1;
+          filehash_copy(trt->correct_digest, tests[i].correct_digest);
+        }
+        if (tests[i].has_info_digest) {
+          trt->has_info_digest = 1;
+          filehash_copy(trt->info_digest, tests[i].info_digest);
+        }
+      }
+      if (srgp->enable_full_archive > 0) {
+        if (tests[i].output_size >= 0) {
+          trt->output_available = 1;
+        }
+        if (tests[i].error_size >= 0) {
+          trt->stderr_available = 1;
+        }
+        if (tests[i].chk_out_size >= 0) {
+          trt->checker_output_available = 1;
+        }
+      }
+      if (tests[i].args && strlen(tests[i].args) >= srgp->max_cmd_length) {
+        trt->args_too_long = 1;
+      }
+      if (tests[i].visibility > 0) {
+        trt->visibility = tests[i].visibility;
+      }
+      if (tests[i].args && strlen(tests[i].args) < srgp->max_cmd_length) {
+        trt->args = xstrdup(tests[i].args);
+      }
+      if (srgp->enable_full_archive <= 0) {
+        make_file_content(&trt->input, srgp, tests[i].input, tests[i].input_size);
+        make_file_content(&trt->output, srgp, tests[i].output, tests[i].output_size);
+        make_file_content(&trt->correct, srgp, tests[i].correct, tests[i].correct_size);
+        make_file_content(&trt->error, srgp, tests[i].error, tests[i].error_size);
+        make_file_content(&trt->checker, srgp, tests[i].chk_out, tests[i].chk_out_size);
+      }
     }
   }
 
