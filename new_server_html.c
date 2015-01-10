@@ -3320,6 +3320,9 @@ priv_submit_run_comment(
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE) {
     audit_cmd = "comment-run-ignore";
     status = RUN_IGNORED;
+  } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT) {
+    audit_cmd = "comment-run-rejuect";
+    status = RUN_REJECTED;
   } else {
     abort();
   }
