@@ -5764,6 +5764,7 @@ new_write_user_clars(
   unsigned char href[128];
   unsigned char *cl = "";
   struct clar_entry_v2 clar;
+  const unsigned char *clar_flags = 0;
 
   if (table_class && *table_class) {
     cl = alloca(strlen(table_class) + 16);
@@ -5808,10 +5809,10 @@ new_write_user_clars(
     if (start_time > time) time = start_time;
     duration_str(show_astr_time, time, start_time, dur_str, 0);
 
+    clar_flags = team_clar_flags(state, phr->user_id, i, clar.flags, clar.from, clar.to);
     fputs("<tr>", f);
     fprintf(f, "<td%s>%d</td>", cl, i);
-    fprintf(f, "<td%s>%s</td>", cl,
-            team_clar_flags(state, phr->user_id, i, clar.flags, clar.from, clar.to));
+    fprintf(f, "<td%s>%s</td>", cl, clar_flags);
     fprintf(f, "<td%s>%s</td>", cl, dur_str);
     fprintf(f, "<td%s>%zu</td>", cl, (size_t) clar.size);
     if (!clar.from) {
@@ -5830,7 +5831,13 @@ new_write_user_clars(
     }
     fprintf(f, "<td%s>%s</td>", cl, asubj);
     fprintf(f, "<td%s>", cl);
-    fprintf(f, "%s", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_VIEW_CLAR, "clar_id=%d", i));
+    if (clar.run_id > 0 && clar_flags && clar_flags[0] == 'N') {
+      fprintf(f, "%s", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_VIEW_REPORT, "run_id=%d&clar_id=%d", clar.run_id - 1, i));
+    } else if (clar.run_id > 0) {
+      fprintf(f, "%s", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_VIEW_REPORT, "run_id=%d", clar.run_id - 1));
+    } else {
+      fprintf(f, "%s", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_VIEW_CLAR, "clar_id=%d", i));
+    }
     fprintf(f, "%s</a>", _("View"));
     fprintf(f, "</td>");
     fprintf(f, "</tr>\n");
