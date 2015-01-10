@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -440,6 +439,38 @@ ipv6_to_run_entry(const ej_ip_t *p_ip, struct run_entry *p_re)
   } else {
     p_re->a.ip = p_ip->u.v4.addr;
   }
+}
+
+static const unsigned char * const status_short_str[] =
+{
+  [RUN_OK] = "OK",
+  [RUN_COMPILE_ERR] = "CE",
+  [RUN_RUN_TIME_ERR] = "RT",
+  [RUN_TIME_LIMIT_ERR] = "TL",
+  [RUN_PRESENTATION_ERR] = "PE",
+  [RUN_WRONG_ANSWER_ERR] = "WA",
+  [RUN_CHECK_FAILED] = "CF",
+  [RUN_PARTIAL] = "PT",
+  [RUN_ACCEPTED] = "AC",
+  [RUN_IGNORED] = "IG",
+  [RUN_DISQUALIFIED] = "DQ",
+  [RUN_PENDING] = "PD",
+  [RUN_MEM_LIMIT_ERR] = "ML",
+  [RUN_SECURITY_ERR] = "SE",
+  [RUN_STYLE_ERR] = "SV",
+  [RUN_WALL_TIME_LIMIT_ERR] = "WT",
+  [RUN_PENDING_REVIEW] = "PR",
+};
+
+const unsigned char *
+run_status_short_str(int status)
+{
+  if (status < 0 || status >= sizeof(status_short_str) / sizeof(status_short_str[0]) || !status_short_str[status]) {
+    static unsigned char buf[64];
+    snprintf(buf, sizeof(buf), "%d", status);
+    return buf;
+  }
+  return status_short_str[status];
 }
 
 /*

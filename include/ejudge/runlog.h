@@ -169,6 +169,7 @@ int  run_get_attempts(runlog_state_t, int, int *, int *, int);
 int run_count_all_attempts(runlog_state_t state, int user_id, int prob_id);
 int run_count_all_attempts_2(runlog_state_t state, int user_id, int prob_id, int ignored_set);
 char *run_status_str(int, char *, int, int, int);
+const unsigned char * run_status_short_str(int status);
 
 int run_get_fog_period(runlog_state_t, time_t, int, int);
 int run_reset(runlog_state_t, time_t, time_t, time_t);
