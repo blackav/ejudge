@@ -517,6 +517,14 @@ function setDivVisibility(oper, value)
 %>
 <br/>
 <s:v value="fcev.v[i].e.time" />
+<%    if (fcev.v[i].e.old_run_status > 0) { %>
+<br/>
+Old status: <s:v value="run_status_short_str(fcev.v[i].e.old_run_status)" escape="false" />
+<%    } %>
+<%    if (fcev.v[i].e.new_run_status > 0) { %>
+<br/>
+New status: <s:v value="run_status_short_str(fcev.v[i].e.new_run_status)" escape="false" />
+<%    } %>
 <%
       if (phr->role == USER_ROLE_ADMIN) {
 %>
