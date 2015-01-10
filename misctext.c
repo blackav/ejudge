@@ -401,6 +401,15 @@ message_reply_subj(char const *intxt, char *outtxt)
   return strlen(outtxt);
 }
 
+const unsigned char *
+skip_message_headers(const unsigned char *intxt)
+{
+  if (!intxt) return intxt;
+  const char *p = strstr(intxt, "\n\n");
+  if (p) return p + 2;
+  return intxt;
+}
+
 int
 message_base64_subj(char const *msg, char *out, int maxlen)
 {

@@ -281,4 +281,7 @@ size_t csv_armored_strlen(char const *str);
 int csv_armor_needed(const unsigned char *str, size_t *psz);
 const unsigned char *csv_armor_buf(struct html_armor_buffer *pb, const unsigned char *s);
 
+const unsigned char *
+skip_message_headers(const unsigned char *intxt);
+
 #endif /* __MISCTEXT_H__ */
