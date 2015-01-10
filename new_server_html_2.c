@@ -1309,9 +1309,13 @@ ns_write_all_clars(
               ARMOR(teamdb_get_name_2(cs->teamdb_state, clar.to)));
     }
     fprintf(f, "<td%s>%s</td>", cl, ARMOR(clar_subj));
-    fprintf(f, "<td%s><a href=\"%s\">%s</a></td>", cl,
-            ns_url(bbuf, sizeof(bbuf), phr, NEW_SRV_ACTION_VIEW_CLAR,
-                   "clar_id=%d", i), _("View"));
+    fprintf(f, "<td%s>", cl);
+    if (clar.run_id > 0) {
+      fprintf(f, "<a href=\"%s\">", ns_url(bbuf, sizeof(bbuf), phr, NEW_SRV_ACTION_VIEW_SOURCE, "run_id=%d", clar.run_id - 1));
+    } else {
+      fprintf(f, "<a href=\"%s\">", ns_url(bbuf, sizeof(bbuf), phr, NEW_SRV_ACTION_VIEW_CLAR, "clar_id=%d", i));
+    }
+    fprintf(f, "%s</a></td>", _("View"));
     fprintf(f, "</tr>\n");
   }
   fputs("</table>\n", f);
