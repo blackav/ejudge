@@ -4554,6 +4554,6 @@ html_print_testing_report_file_content(
     }
     xfree(data);
   } else {
-    fprintf(out_f, "%s", html_armor_buf(pab, fc->data));
+    fprintf(out_f, "%s\n", html_armor_buf(pab, fc->data));
   }
 }
