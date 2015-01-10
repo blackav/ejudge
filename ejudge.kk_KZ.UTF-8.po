@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-09 13:56+0300\n"
+"POT-Creation-Date: 2015-01-10 12:53+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -441,6 +441,12 @@ msgstr ""
 msgid "All clars"
 msgstr ""
 
+msgid "All clars and comments"
+msgstr ""
+
+msgid "All entries"
+msgstr ""
+
 msgid "Allow"
 msgstr ""
 
@@ -688,6 +694,9 @@ msgid "Clarification requests are disabled"
 msgstr ""
 
 msgid "Clars"
+msgstr ""
+
+msgid "Clars to all"
 msgstr ""
 
 msgid "Clear"

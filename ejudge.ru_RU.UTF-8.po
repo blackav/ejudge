@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-09 13:56+0300\n"
-"PO-Revision-Date: 2015-01-09 13:56+0300\n"
+"POT-Creation-Date: 2015-01-10 12:53+0300\n"
+"PO-Revision-Date: 2015-01-10 13:01+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -502,6 +502,12 @@ msgstr "Все изменения в старом турнире будут по
 msgid "All clars"
 msgstr "Все сообщения"
 
+msgid "All clars and comments"
+msgstr "Все вопросы и комментарии"
+
+msgid "All entries"
+msgstr "Все записи"
+
 msgid "Allow"
 msgstr "Разрешить"
 
@@ -756,6 +762,9 @@ msgstr "Сообщения отключены"
 
 msgid "Clars"
 msgstr "Сообщения"
+
+msgid "Clars to all"
+msgstr "Сообщения всем участникам"
 
 msgid "Clear"
 msgstr "Очистить"

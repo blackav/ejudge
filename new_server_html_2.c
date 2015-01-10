@@ -1203,7 +1203,7 @@ ns_write_all_clars(
   if (mode_clar < 0) mode_clar = 0;
   if (phr->role == USER_ROLE_ADMIN && mode_clar > CLAR_FILTER_NONE) {
     mode_clar = 0;
-  } else if (mode_clar > CLAR_FILTER_NONE - 1) {
+  } else if (phr->role != USER_ROLE_ADMIN && mode_clar > CLAR_FILTER_NONE - 1) {
     mode_clar = 0;
   }
 
