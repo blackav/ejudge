@@ -7580,10 +7580,12 @@ unpriv_use_token(
   case RUN_WALL_TIME_LIMIT_ERR:
   case RUN_PENDING_REVIEW:
   case RUN_REJECTED:
+    /*
     if (prob->team_enable_rep_view > 0) {
       ns_refresh_page(fout, phr, back_action, param_buf);
       goto cleanup;
     }
+    */
     break;
 
   case RUN_COMPILE_ERR:
