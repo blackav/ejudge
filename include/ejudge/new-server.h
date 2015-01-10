@@ -534,6 +534,17 @@ ns_write_priv_all_runs(FILE *f,
                        struct contest_extra *extra,
                        int first_run_set, int first_run, int last_run_set, int last_run,
                        unsigned char const *filter_expr);
+
+// clar filter options
+enum
+{
+  CLAR_FILTER_ALL_CLARS = 1,
+  CLAR_FILTER_UNANS_CLARS_COMMENTS,
+  CLAR_FILTER_ALL_CLARS_COMMENTS,
+  CLAR_FILTER_CLARS_TO_ALL,
+  CLAR_FILTER_NONE, // show even empty entries
+};
+
 void
 ns_write_all_clars(
         FILE *f,

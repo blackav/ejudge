@@ -1129,22 +1129,26 @@ parse_clar_num(
 // 1: all clars
 // 2: unanswered clars & comments (default)
 // 3: all clars & comments
-// 4: all including empty entries
+// 4: clars to all
+// 5: all including empty entries
 static int
 match_clar(serve_state_t cs, int clar_id, int mode_clar)
 {
   struct clar_entry_v2 clar;
 
-  if (mode_clar == 4) return 1;
+  if (mode_clar == CLAR_FILTER_NONE) return 1;
   if (clar_get_record(cs->clarlog_state, clar_id, &clar) < 0) return 0;
   if (clar.id < 0) return 0;
 
-  if (mode_clar == 1) {
+  switch (mode_clar) {
+  case CLAR_FILTER_ALL_CLARS:
     return clar.run_id <= 0;
-  } else if (mode_clar == 3) {
+  case CLAR_FILTER_ALL_CLARS_COMMENTS:
     return 1;
-  } else {
-    // mode_clar == 2 and default
+  case CLAR_FILTER_CLARS_TO_ALL:
+    return clar.from == 0 && clar.to == 0;
+  case CLAR_FILTER_UNANS_CLARS_COMMENTS:
+  default:
     return clar.from > 0 && clar.flags < 2;
   }
 }
@@ -1193,8 +1197,8 @@ ns_write_all_clars(
   first_clar = parse_clar_num(first_clar_str,-total,total-1,u->prev_first_clar);
   last_clar = parse_clar_num(last_clar_str, -total, total-1, u->prev_last_clar);
   if (!mode_clar) {
-    mode_clar = 1;
-    if (phr->role != USER_ROLE_ADMIN) mode_clar = 2;
+    mode_clar = CLAR_FILTER_ALL_CLARS;
+    if (phr->role != USER_ROLE_ADMIN) mode_clar = CLAR_FILTER_UNANS_CLARS_COMMENTS;
   }
   u->prev_mode_clar = mode_clar;
   u->prev_first_clar = first_clar;
@@ -1276,8 +1280,6 @@ ns_write_all_clars(
     i = list_idx[j];
 
     if (clar_get_record(cs->clarlog_state, i, &clar) < 0) continue;
-    if (clar.id < 0) continue;
-    if (mode_clar != 1 && (clar.from <= 0 || clar.flags >= 2)) continue; 
 
     clar_subj = clar_get_subject(cs->clarlog_state, i);
     submit_time = clar.time;
