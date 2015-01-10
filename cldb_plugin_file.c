@@ -848,6 +848,7 @@ fetch_run_messages_func(
       snprintf(name_buf, sizeof(name_buf), "%06d", pe->id);
       generic_read_file(&p, 0, &fce[j].size, 0, cs->clar_archive_dir, name_buf, NULL);
       fce[j].text = p; p = NULL;
+      ++j;
     }
   }
 
