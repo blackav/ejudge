@@ -407,6 +407,8 @@ skip_message_headers(const unsigned char *intxt)
   if (!intxt) return intxt;
   const char *p = strstr(intxt, "\n\n");
   if (p) return p + 2;
+  p = strstr(intxt, "\r\n\r\n");
+  if (p) return p + 4;
   return intxt;
 }
 
