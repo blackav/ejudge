@@ -5876,6 +5876,7 @@ write_xml_team_testing_report(
   int run_tests, tests_passed;
   unsigned char hbuf[1024];
   unsigned char tbuf[1024];
+  int hide_score = 0;
 
   if (table_class && *table_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
@@ -5981,10 +5982,12 @@ write_xml_team_testing_report(
   if (r->valuer_comment) {
     fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
             ARMOR(r->valuer_comment));
+    hide_score = 1;
   }
   if ((token_flags & TOKEN_VALUER_JUDGE_COMMENT_BIT) && r->valuer_judge_comment) {
     fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
             ARMOR(r->valuer_judge_comment));
+    hide_score = 1;
   }
 
   for (i = 0; i < r->run_tests; ++i) {
@@ -6018,7 +6021,7 @@ write_xml_team_testing_report(
   if (need_info) {
     fprintf(f, "<th%s>%s</th>", cl, _("Extra info"));
   }
-  if (is_kirov) {
+  if (is_kirov && !hide_score) {
     fprintf(f, "<th%s>%s</th>", cl, _("Score"));
   }
   if (need_comment) {
@@ -6048,7 +6051,7 @@ write_xml_team_testing_report(
       if (need_info) {
         fprintf(f, "<td%s>&nbsp;</td>", cl); // info
       }
-      if (is_kirov) {
+      if (is_kirov && !hide_score) {
         fprintf(f, "<td%s>&nbsp;</td>", cl); // score
       }
       if (need_comment) {
@@ -6099,7 +6102,7 @@ write_xml_team_testing_report(
       }
       fprintf(f, "</td>");
     }
-    if (is_kirov) {
+    if (is_kirov && !hide_score) {
       fprintf(f, "<td%s>%d (%d)</td>", cl, t->score, t->nominal_score);
     }
     if (need_comment) {
