@@ -1137,8 +1137,8 @@ ns_write_all_clars(
 {
   int total, i, j;
 
-  int *list_idx;
-  int list_tot;
+  int *list_idx = NULL;
+  int list_tot = 0;
 
   unsigned char first_clar_buf[64] = { 0 };
   unsigned char last_clar_buf[64] = { 0 };
@@ -1149,7 +1149,8 @@ ns_write_all_clars(
   unsigned char bbuf[1024];
   struct clar_entry_v2 clar;
   unsigned char cl[128];
-  int first_clar = -1, last_clar = -10, show_num;
+  int first_clar = -1, last_clar = -10;
+  int count;
 
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
@@ -1181,39 +1182,43 @@ ns_write_all_clars(
     first_clar = total + first_clar;
     if (first_clar < 0) first_clar = 0;
   }
-  if (last_clar < 0) {
-    last_clar = total + last_clar;
-    if (last_clar < 0) last_clar = 0;
-  }
 
-  list_idx = alloca((total + 1) * sizeof(list_idx[0]));
-  memset(list_idx, 0, (total + 1) * sizeof(list_idx[0]));
-  list_tot = 0;
-  if (first_clar <= last_clar) {
-    show_num = last_clar - first_clar + 1;
+  XCALLOC(list_idx, total + 1);
+
+  // last_clar is actually count
+  // count == 0, show all matching in descending order
+  // count < 0, descending order
+  // count > 0, ascending order
+  if (!(count = last_clar)) {
+    count = total;
+  } else if (count < 0) {
+    count = -count;
+  }
+  if (last_clar > 0) {
     if (mode_clar == 1) {
-      // all clars in the ascending order
-      for (i = first_clar; i <= last_clar && i < total; i++)
+      for (i = first_clar; i < total && list_tot < count; ++i) {
         list_idx[list_tot++] = i;
+      }
     } else {
       // unanswered clars in the ascending order
-      for (i = first_clar; i < total && list_tot < show_num; ++i)
-        if (clar_get_record(cs->clarlog_state, i, &clar) >= 0
-            && clar.id >= 0 && clar.from > 0 && clar.flags < 2)
+      for (i = first_clar; i < total && list_tot < count; ++i) {
+        if (clar_get_record(cs->clarlog_state, i, &clar) >= 0 && clar.id >= 0 && clar.from > 0 && clar.flags < 2) {
           list_idx[list_tot++] = i;
+        }
+      }
     }
   } else {
-    show_num = first_clar - last_clar + 1;
     if (mode_clar == 1) {
-      // all clars in the descending order
-      for (i = first_clar; i >= last_clar; i--)
+      for (i = first_clar; i >= 0 && list_tot < count; --i) {
         list_idx[list_tot++] = i;
+      }
     } else {
       // unanswered clars in the descending order
-      for (i = first_clar; i >= 0 && list_tot < show_num; --i)
-        if (clar_get_record(cs->clarlog_state, i, &clar) >= 0
-            && clar.id >= 0 && clar.from > 0 && clar.flags < 2)
+      for (i = first_clar; i >= 0 && list_tot < count; --i) {
+        if (clar_get_record(cs->clarlog_state, i, &clar) >= 0 && clar.id >= 0 && clar.from > 0 && clar.flags < 2) {
           list_idx[list_tot++] = i;
+        }
+      }
     }
   }
 
@@ -1320,11 +1325,8 @@ ns_write_all_clars(
   }
   fputs("</table>\n", f);
 
-  /*
-  print_nav_buttons(state, f, 0, sid, self_url, hidden_vars, extra_args,
-                    0, 0, 0, 0, 0, 0, 0);
-  */
   html_armor_free(&ab);
+  xfree(list_idx);
 }
 
 // 0 - undefined or empty, -1 - invalid, 1 - ok
