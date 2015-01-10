@@ -1,5 +1,4 @@
-/* $Id$ */
-/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -82,6 +81,7 @@ class Group
     bool sets_marked = false;
     bool skip = false;
     bool skip_if_not_rejudge = false;
+    bool stat_to_judges = false;
     int score = 0;
     int test_score = -1;
     int pass_if_count = -1;
@@ -121,6 +121,9 @@ public:
 
     void set_skip_if_not_rejudge(bool skip) { this->skip_if_not_rejudge = skip; }
     bool get_skip_if_not_rejudge() const { return skip_if_not_rejudge; }
+
+    void set_stat_to_judges(bool stat) { this->stat_to_judges = stat; }
+    bool get_stat_to_judges() const { return stat_to_judges; }
 
     void set_score(int score) { this->score = score; }
     int get_score() const { return score; }
@@ -339,6 +342,11 @@ public:
                 if (t_type != ';') parse_error("';' expected");
                 next_token();
                 g.set_skip_if_not_rejudge(true);
+            } else if (token == "stat_to_judges") {
+                next_token();
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
+                g.set_stat_to_judges(true);
             } else if (token == "score") {
                 next_token();
                 if (t_type != T_IDENT) parse_error("NUM expected");
@@ -616,6 +624,9 @@ main(int argc, char *argv[])
     FILE *fcmt = fopen(argv[1], "w");
     if (!fcmt) die("cannot open file '%s' for writing", argv[1]);
 
+    FILE *fjcmt = fopen(argv[2], "w");
+    if (!fjcmt) die("cannot open file '%s' for writing", argv[2]);
+
     int score = 0, user_status = RUN_OK, user_score = 0, user_tests_passed = 0;
     for (const Group &g : parser.get_groups()) {
         if (g.has_comment()) {
@@ -635,12 +646,18 @@ main(int argc, char *argv[])
             }
             if (!failed) valuer_marked = 1;
         }
+        int group_score = g.calc_score();
+        if (g.get_stat_to_judges()) {
+            fprintf(fjcmt, "Группа тестов %s: тесты %d-%d: балл %d\n",
+                    g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
+
+        }
         if (g.get_offline()) {
-            score += g.calc_score();
+            score += group_score;
         } else {
             user_tests_passed += g.get_passed_count();
-            score += g.calc_score();
-            user_score += g.calc_score();
+            score += group_score;
+            user_score += group_score;
             if (!g.is_passed()) {
                 user_status = RUN_PARTIAL;
             }
