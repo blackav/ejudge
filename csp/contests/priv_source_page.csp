@@ -150,9 +150,6 @@
     <th style="width: 10em;"><s:_>Run ID</s:_></th>
     <th><s:_>Submission time</s:_></th>
     <th><s:_>Contest time</s:_></th>
-<% #if CONF_HAS_LIBUUID - 0 != 0 %>
-    <th>UUID</th>
-<% #endif %>
     <th><s:_>Originator IP</s:_></th>
     <th><s:_>User ID</s:_></th>
     <th><s:_>User login</s:_></th>
@@ -204,9 +201,6 @@
     <td><s:v value="info.run_id" /></td>
     <td><s:v value="info.time" />:<s:v value="info.nsec" /></td>
     <td><s:v type="duration" value="run_time - start_time, info.nsec" /></td>
-<% #if CONF_HAS_LIBUUID - 0 != 0 %>
-    <td><s:v type="uuid" value="info.run_uuid" /></td>
-<% #endif %>
 <% snprintf(filtbuf1, sizeof(filtbuf1), "ip == ip(%d)", run_id); %>
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
@@ -340,6 +334,9 @@ function setDivVisibility(oper, value)
 <% if (!info.lang_id) { %>
 <th><s:_>Content type</s:_></th><td><s:v type="mime_type" value="info.mime_type" /></td>
 <% } %>
+<% #if CONF_HAS_LIBUUID - 0 != 0 %>
+    <th>UUID</th>
+<% #endif %>
 <th style="width: 10em;"><s:_>Imported?</s:_></th>
 <th><s:_>Hidden?</s:_></th>
 <th><s:_>Saved?</s:_></th>
@@ -356,6 +353,9 @@ function setDivVisibility(oper, value)
 <% if (!info.lang_id) { %>
 <td><s:v type="mime_type" value="info.mime_type" /></td>
 <% } %>
+<% #if CONF_HAS_LIBUUID - 0 != 0 %>
+    <td><s:v type="uuid" value="info.run_uuid" /></td>
+<% #endif %>
 <td><s:vb value="info.is_imported" /></td>
 <td><s:vb value="info.is_hidden" /></td>
 <td><s:vb value="info.is_saved" /></td>
