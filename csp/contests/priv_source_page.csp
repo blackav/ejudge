@@ -519,11 +519,11 @@ function setDivVisibility(oper, value)
 <s:v value="fcev.v[i].e.time" />
 <%    if (fcev.v[i].e.old_run_status > 0) { %>
 <br/>
-Old status: <s:v value="run_status_short_str(fcev.v[i].e.old_run_status)" escape="false" />
+Old status: <s:v value="run_status_short_str(fcev.v[i].e.old_run_status - 1)" escape="false" />
 <%    } %>
 <%    if (fcev.v[i].e.new_run_status > 0) { %>
 <br/>
-New status: <s:v value="run_status_short_str(fcev.v[i].e.new_run_status)" escape="false" />
+New status: <s:v value="run_status_short_str(fcev.v[i].e.new_run_status - 1)" escape="false" />
 <%    } %>
 <%
       if (phr->role == USER_ROLE_ADMIN) {
@@ -535,7 +535,7 @@ New status: <s:v value="run_status_short_str(fcev.v[i].e.new_run_status)" escape
 %>
        </td>
        <td>
-<pre><s:v value="fcev.v[i].text" /></pre>
+<pre><s:v value="skip_message_headers(fcev.v[i].text)" /></pre>
        </td>
    </tr>
 <%

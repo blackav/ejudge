@@ -212,7 +212,7 @@ ns_unpriv_parse_run_id(
 <s:v value="fcev.v[i].e.time" />
        </td>
        <td>
-<pre><s:v value="fcev.v[i].text" checkExpr="" /></pre>
+<pre><s:v value="skip_message_headers(fcev.v[i].text)" checkExpr="" /></pre>
        </td>
    </tr>
 <%
