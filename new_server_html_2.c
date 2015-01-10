@@ -1125,6 +1125,30 @@ parse_clar_num(
   return val;
 }
 
+// mode_clar
+// 1: all clars
+// 2: unanswered clars & comments (default)
+// 3: all clars & comments
+// 4: all including empty entries
+static int
+match_clar(serve_state_t cs, int clar_id, int mode_clar)
+{
+  struct clar_entry_v2 clar;
+
+  if (mode_clar == 4) return 1;
+  if (clar_get_record(cs->clarlog_state, clar_id, &clar) < 0) return 0;
+  if (clar.id < 0) return 0;
+
+  if (mode_clar == 1) {
+    return clar.run_id <= 0;
+  } else if (mode_clar == 3) {
+    return 1;
+  } else {
+    // mode_clar == 2 and default
+    return clar.from > 0 && clar.flags < 2;
+  }
+}
+
 void
 ns_write_all_clars(
         FILE *f,
@@ -1195,29 +1219,15 @@ ns_write_all_clars(
     count = -count;
   }
   if (last_clar > 0) {
-    if (mode_clar == 1) {
-      for (i = first_clar; i < total && list_tot < count; ++i) {
+    for (i = first_clar; i < total && list_tot < count; ++i) {
+      if (match_clar(cs, i, mode_clar)) {
         list_idx[list_tot++] = i;
-      }
-    } else {
-      // unanswered clars in the ascending order
-      for (i = first_clar; i < total && list_tot < count; ++i) {
-        if (clar_get_record(cs->clarlog_state, i, &clar) >= 0 && clar.id >= 0 && clar.from > 0 && clar.flags < 2) {
-          list_idx[list_tot++] = i;
-        }
       }
     }
   } else {
-    if (mode_clar == 1) {
-      for (i = first_clar; i >= 0 && list_tot < count; --i) {
+    for (i = first_clar; i >= 0 && list_tot < count; --i) {
+      if (match_clar(cs, i, mode_clar)) {
         list_idx[list_tot++] = i;
-      }
-    } else {
-      // unanswered clars in the descending order
-      for (i = first_clar; i >= 0 && list_tot < count; --i) {
-        if (clar_get_record(cs->clarlog_state, i, &clar) >= 0 && clar.id >= 0 && clar.from > 0 && clar.flags < 2) {
-          list_idx[list_tot++] = i;
-        }
       }
     }
   }
