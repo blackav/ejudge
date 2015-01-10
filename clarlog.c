@@ -240,6 +240,8 @@ clar_add_record(
   if (prun_uuid) {
     ej_uuid_copy(&pc->run_uuid, prun_uuid);
   }
+  pc->old_run_status = old_run_status;
+  pc->new_run_status = new_run_status;
   pc->appeal_flag = appeal_flag;
 
   if (!charset) charset = INTERNAL_CHARSET;
