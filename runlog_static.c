@@ -460,6 +460,8 @@ static const unsigned char * const status_short_str[] =
   [RUN_STYLE_ERR] = "SV",
   [RUN_WALL_TIME_LIMIT_ERR] = "WT",
   [RUN_PENDING_REVIEW] = "PR",
+  [RUN_REJECTED] = "RJ",
+  [RUN_SKIPPED] = "SK",
 };
 
 const unsigned char *
