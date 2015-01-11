@@ -356,6 +356,7 @@ enum
   CNTSPROB_unrestricted_statement,
   CNTSPROB_restricted_statement,
   CNTSPROB_hide_file_names,
+  CNTSPROB_hide_real_time_limit,
   CNTSPROB_enable_tokens,
   CNTSPROB_disable_submit_after_ok,
   CNTSPROB_disable_auto_testing,

@@ -396,6 +396,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_unrestricted_statement] = { CNTSPROB_unrestricted_statement, 'B', XSIZE(struct section_problem_data, unrestricted_statement), "unrestricted_statement", XOFFSET(struct section_problem_data, unrestricted_statement) },
   [CNTSPROB_restricted_statement] = { CNTSPROB_restricted_statement, 'B', XSIZE(struct section_problem_data, restricted_statement), "restricted_statement", XOFFSET(struct section_problem_data, restricted_statement) },
   [CNTSPROB_hide_file_names] = { CNTSPROB_hide_file_names, 'B', XSIZE(struct section_problem_data, hide_file_names), "hide_file_names", XOFFSET(struct section_problem_data, hide_file_names) },
+  [CNTSPROB_hide_real_time_limit] = { CNTSPROB_hide_real_time_limit, 'B', XSIZE(struct section_problem_data, hide_real_time_limit), "hide_real_time_limit", XOFFSET(struct section_problem_data, hide_real_time_limit) },
   [CNTSPROB_enable_tokens] = { CNTSPROB_enable_tokens, 'B', XSIZE(struct section_problem_data, enable_tokens), "enable_tokens", XOFFSET(struct section_problem_data, enable_tokens) },
   [CNTSPROB_disable_submit_after_ok] = { CNTSPROB_disable_submit_after_ok, 'B', XSIZE(struct section_problem_data, disable_submit_after_ok), "disable_submit_after_ok", XOFFSET(struct section_problem_data, disable_submit_after_ok) },
   [CNTSPROB_disable_auto_testing] = { CNTSPROB_disable_auto_testing, 'B', XSIZE(struct section_problem_data, disable_auto_testing), "disable_auto_testing", XOFFSET(struct section_problem_data, disable_auto_testing) },
