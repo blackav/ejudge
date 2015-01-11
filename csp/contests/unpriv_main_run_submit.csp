@@ -397,7 +397,7 @@
         }
       }
 %><%
-      if (!cnts->exam_mode) {
+      if (!cnts->exam_mode && 0) {
         if (global->problem_navigation <= 0) {
 %><h2><s:_>Select another problem</s:_></h2>
 <%
