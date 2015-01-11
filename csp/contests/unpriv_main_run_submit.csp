@@ -96,7 +96,7 @@
           }
 %>
 <%
-          if (prob->real_time_limit > 0) {
+          if (prob->real_time_limit > 0 && prob->hide_real_time_limit <= 0) {
 %>
     <tr><td class="b0"><b><s:_>Real time limit</s:_>:</b></td><td class="b0"><tt><s:v value="prob->real_time_limit" /> <s:_>s</s:_></tt></td></tr>
 <%

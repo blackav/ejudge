@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1371,6 +1370,8 @@ prepare_unparse_prob(
     unparse_bool(f, "unrestricted_statement", prob->unrestricted_statement);
   if (prob->hide_file_names >= 0)
     unparse_bool(f, "hide_file_names", prob->hide_file_names);
+  if (prob->hide_real_time_limit >= 0)
+    unparse_bool(f, "hide_real_time_limit", prob->hide_real_time_limit);
   if (prob->enable_tokens >= 0)
     unparse_bool(f, "enable_tokens", prob->enable_tokens);
   if (prob->disable_submit_after_ok >= 0)
@@ -1729,6 +1730,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "unrestricted_statement", prob->unrestricted_statement);
   if (prob->hide_file_names > 0)
     unparse_bool(f, "hide_file_names", prob->hide_file_names);
+  if (prob->hide_real_time_limit > 0)
+    unparse_bool(f, "hide_real_time_limit", prob->hide_real_time_limit);
   if (prob->enable_tokens > 0)
     unparse_bool(f, "enable_tokens", prob->enable_tokens);
   if (prob->disable_submit_after_ok > 0)

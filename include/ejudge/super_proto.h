@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __SUPER_PROTO_H__
 #define __SUPER_PROTO_H__
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -633,6 +632,7 @@ enum
   SSERV_CMD_PROB_CHANGE_DISABLE_TAB,
   SSERV_CMD_PROB_CHANGE_UNRESTRICTED_STATEMENT,
   SSERV_CMD_PROB_CHANGE_HIDE_FILE_NAMES,
+  SSERV_CMD_PROB_CHANGE_HIDE_REAL_TIME_LIMIT,
   SSERV_CMD_PROB_CHANGE_ENABLE_TOKENS,
   SSERV_CMD_PROB_CHANGE_DISABLE_SUBMIT_AFTER_OK,
   SSERV_CMD_PROB_CHANGE_DISABLE_SECURITY,

@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __PROBLEM_CONFIG_H__
 #define __PROBLEM_CONFIG_H__
 
-/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -70,6 +69,7 @@ struct problem_config_section
   ejintbool_t disable_tab;
   ejintbool_t unrestricted_statement;
   ejintbool_t hide_file_names;
+  ejintbool_t hide_real_time_limit;
   ejintbool_t enable_tokens;
   ejintbool_t disable_submit_after_ok;
   ejintbool_t disable_auto_testing;

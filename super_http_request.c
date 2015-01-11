@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -529,6 +528,7 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_PROB_CHANGE_DISABLE_TAB] = 0,
   [SSERV_CMD_PROB_CHANGE_UNRESTRICTED_STATEMENT] = 0,
   [SSERV_CMD_PROB_CHANGE_HIDE_FILE_NAMES] = 0,
+  [SSERV_CMD_PROB_CHANGE_HIDE_REAL_TIME_LIMIT] = 0,
   [SSERV_CMD_PROB_CHANGE_ENABLE_TOKENS] = 0,
   [SSERV_CMD_PROB_CHANGE_DISABLE_SUBMIT_AFTER_OK] = 0,
   [SSERV_CMD_PROB_CHANGE_DISABLE_SECURITY] = 0,

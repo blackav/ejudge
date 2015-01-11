@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -661,6 +660,7 @@ merge_problem_section(
         { CNTSPROB_disable_tab, META_PROBLEM_CONFIG_SECTION_disable_tab },
         { CNTSPROB_unrestricted_statement, META_PROBLEM_CONFIG_SECTION_unrestricted_statement },
         { CNTSPROB_hide_file_names, META_PROBLEM_CONFIG_SECTION_hide_file_names },
+        { CNTSPROB_hide_real_time_limit, META_PROBLEM_CONFIG_SECTION_hide_real_time_limit },
         { CNTSPROB_enable_tokens, META_PROBLEM_CONFIG_SECTION_enable_tokens },
         { CNTSPROB_disable_submit_after_ok, META_PROBLEM_CONFIG_SECTION_disable_submit_after_ok },
         { CNTSPROB_disable_auto_testing, META_PROBLEM_CONFIG_SECTION_disable_auto_testing },
