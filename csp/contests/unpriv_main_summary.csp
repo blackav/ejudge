@@ -48,6 +48,7 @@
       } else {
         int separate_user_score = (global->separate_user_score > 0 && cs->online_view_judge_score <= 0);
         int total_score = 0;
+        int total_score_uncertain = 0;
         int act_status = RUN_CHECK_FAILED;
 %>
 <table border="1" class="b1">
@@ -252,6 +253,7 @@
                 break;
               }
             } else if (global->score_system == SCORE_KIROV) {
+              if (pinfo[prob_id].last_untokenized) total_score_uncertain = 1;
               total_score += pinfo[prob_id].best_score;
               switch (status) {
               case RUN_OK:
@@ -268,7 +270,7 @@
                   }
                 }
 %>
-        <td class="b1"><% score_view_display_f(out_f, prob, pinfo[prob_id].best_score); %></td>
+        <td class="b1"><% score_view_display_f(out_f, prob, pinfo[prob_id].best_score); %><% if (pinfo[prob_id].last_untokenized) { %> - <i><s:_>May change!</s:_></i><% } %></td>
 <%
                 break;
               default:
@@ -384,7 +386,12 @@
         if ((global->score_system == SCORE_OLYMPIAD && !accepting_mode)
             || global->score_system == SCORE_KIROV || global->score_system == SCORE_MOSCOW) {
 %>
-<p><big><s:_>Total score</s:_>: <s:v value="total_score" /></big></p>
+<p><big><s:_>Total score</s:_>: <% 
+          if (!total_score_uncertain) {
+%><s:v value="total_score" /><%
+          } else {
+%><s:_><b>Uncertain</b> (there exist runs with hidden results)</s:_><%
+          } %></big></p>
 <%
         }
       }
