@@ -4442,7 +4442,7 @@ ns_get_user_problems_summary(
       continue;
     }
 
-    // re.user_id == user_id
+    ASSERT(re.user_id == user_id);
     pinfo[re.prob_id].token_count += re.token_count;
     if (status != RUN_IGNORED && (status != RUN_COMPILE_ERR || cur_prob->ignore_compile_errors <= 0)) {
       ++pinfo[re.prob_id].eff_attempts;

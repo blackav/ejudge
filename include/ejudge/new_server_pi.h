@@ -126,6 +126,7 @@ typedef struct UserProblemInfo
     unsigned char trans_flag;
     unsigned char status;
     unsigned char last_untokenized;
+    unsigned char marked_flag;
 } UserProblemInfo;
 
 #endif /* __NEW_SERVER_PI_H__ */
