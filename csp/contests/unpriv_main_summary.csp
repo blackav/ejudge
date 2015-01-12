@@ -253,7 +253,7 @@
                 break;
               }
             } else if (global->score_system == SCORE_KIROV) {
-              if (pinfo[prob_id].last_untokenized) total_score_uncertain = 1;
+              if (pinfo[prob_id].last_untokenized && !pinfo[prob_id].solved_flag) total_score_uncertain = 1;
               total_score += pinfo[prob_id].best_score;
               switch (status) {
               case RUN_OK:
@@ -270,7 +270,7 @@
                   }
                 }
 %>
-        <td class="b1"><% score_view_display_f(out_f, prob, pinfo[prob_id].best_score); %><% if (pinfo[prob_id].last_untokenized) { %> - <i><s:_>May change!</s:_></i><% } %></td>
+        <td class="b1"><% score_view_display_f(out_f, prob, pinfo[prob_id].best_score); %><% if (pinfo[prob_id].last_untokenized && !pinfo[prob_id].solved_flag) { %> - <i><s:_>May change!</s:_></i><% } %></td>
 <%
                 break;
               default:
