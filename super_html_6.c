@@ -10236,6 +10236,12 @@ super_serve_op_DOWNLOAD_PROGRESS_PAGE(
       // check that the process still exists
       if (kill(pid, 0) < 0) {
         // the process does not exists, so create status file
+        if (us->log_file) {
+          if ((f = fopen(us->log_file, "a")) != NULL) {
+            fprintf(f, "\nej-polygon process has terminated unexpectedly!\n");
+            fclose(f); f = NULL;
+          }
+        }
         if (us->status_file) {
           if ((f = fopen(us->status_file, "w")) != NULL) {
             fprintf(f, "127\n0\n");
