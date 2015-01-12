@@ -393,7 +393,7 @@
           ns_write_olympiads_user_runs(phr, out_f, cnts, extra, all_runs,
                                        prob_id, "b1", pinfo, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT);
         } else {
-          new_write_user_runs(cs, out_f, phr, all_runs, prob->id, "b1", pinfo, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT);
+          new_write_user_runs(cs, out_f, phr, all_runs, prob->id, "b1", pinfo, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT, start_time, stop_time);
         }
       }
 %><%

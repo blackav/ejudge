@@ -5443,12 +5443,14 @@ new_write_user_runs(
         int prob_id,
         const unsigned char *table_class,
         const UserProblemInfo *pinfo,
-        int back_action)
+        int back_action,
+        time_t start_time,
+        time_t stop_time)
 {
   const struct section_global_data *global = state->global;
   int i, showed, runs_to_show = 0;
   int attempts, disq_attempts, prev_successes;
-  time_t start_time, time;
+  time_t time;
   unsigned char dur_str[64];
   unsigned char stat_str[128];
   unsigned char *prob_str;
@@ -5473,11 +5475,6 @@ new_write_user_runs(
       || !state->probs || !state->probs[prob_id])
     prob_id = 0;
 
-  if (global->is_virtual) {
-    start_time = run_get_virtual_start_time(state->runlog_state, phr->user_id);
-  } else {
-    start_time = run_get_start_time(state->runlog_state);
-  }
   if (prob_id > 0) runs_to_show = state->probs[prob_id]->prev_runs_to_show;
   if (runs_to_show <= 0) runs_to_show = 15;
   if (show_flags) runs_to_show = 100000;
@@ -5637,13 +5634,15 @@ new_write_user_runs(
           // report is paid by tokens
           enable_report_link = 1;
         }
-        if (cur_prob->token_info
-            && (re.token_flags & cur_prob->token_info->open_flags) != cur_prob->token_info->open_flags
-            && available_tokens >= cur_prob->token_info->open_cost) {
-          if (cur_prob->tokens_for_user_ac <= 0) {
-            enable_use_link = 1;
-          } else if (re.is_saved && re.saved_status == RUN_ACCEPTED) {
-            enable_use_link = 1;
+        if (start_time > 0 && stop_time <= 0) {
+          if (cur_prob->token_info
+              && (re.token_flags & cur_prob->token_info->open_flags) != cur_prob->token_info->open_flags
+              && available_tokens >= cur_prob->token_info->open_cost) {
+            if (cur_prob->tokens_for_user_ac <= 0) {
+              enable_use_link = 1;
+            } else if (re.is_saved && re.saved_status == RUN_ACCEPTED) {
+              enable_use_link = 1;
+            }
           }
         }
         break;

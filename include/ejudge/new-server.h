@@ -935,7 +935,9 @@ new_write_user_runs(
         int prob_id,
         const unsigned char *table_class,
         const struct UserProblemInfo *pinfo,
-        int back_action);
+        int back_action,
+        time_t start_time,
+        time_t stop_time);
 
 void
 new_write_user_clars(
