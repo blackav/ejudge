@@ -1279,7 +1279,6 @@ process_problem_row(
 
     pi->mtime = lt;
 
-    /*
     if (!(s = strstr(s, "<td>"))) {
         fprintf(log_f, "expected column 7, but got nothing in row %s\n", text);
         goto cleanup;
@@ -1288,7 +1287,6 @@ process_problem_row(
         fprintf(log_f, "failed to extract the content of column 7: %.60s...\n", s);
         goto cleanup;
     }
-    */
 
     if (!(s = strstr(s, "<td>"))) {
         fprintf(log_f, "expected column 8 (links), but got nothing in row %s\n", text);
