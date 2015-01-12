@@ -4593,6 +4593,122 @@ kirov_score_latest(
   }
 }
 
+static void
+kirov_score_default(
+        const struct section_problem_data *cur_prob,
+        struct run_entry *re,
+        UserProblemInfo *pinfo,
+        time_t start_time,
+        int run_id,
+        int separate_user_score,
+        int status,
+        int score)
+{
+  int cur_score = 0;
+
+  if (pinfo->solved_flag) {
+    // if the problem is already solved, no need to process this run
+    return;
+  }
+  if (cur_prob->ignore_unmarked > 0 && !re->is_marked) {
+    // ignore "unmarked" runs, if the option is set
+    return;
+  }
+
+  cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
+                               1 /* user_mode */, re->token_flags, re, cur_prob,
+                               pinfo->attempts,
+                               pinfo->disqualified,
+                               pinfo->prev_successes, 0, 0);
+
+  switch (status) {
+  case RUN_OK:
+    pinfo->solved_flag = 1;
+    if (cur_score >= pinfo->best_score) {
+      pinfo->best_score = cur_score;
+      pinfo->best_run = run_id;
+    }
+    break;
+
+  case RUN_PENDING_REVIEW:
+    pinfo->pr_flag = 1;
+    if (cur_score >= pinfo->best_score) {
+      pinfo->best_score = cur_score;
+      pinfo->best_run = run_id;
+    }
+    break;
+
+  case RUN_COMPILE_ERR:
+  case RUN_STYLE_ERR:
+    if (cur_prob->ignore_compile_errors > 0) break;
+
+    ++pinfo->attempts;
+    cur_score = 0;
+    if (cur_score >= pinfo->best_score) {
+      pinfo->best_score = cur_score;
+      pinfo->best_run = run_id;
+    }
+    break;
+
+  case RUN_RUN_TIME_ERR:
+  case RUN_TIME_LIMIT_ERR:
+  case RUN_WALL_TIME_LIMIT_ERR:
+  case RUN_PRESENTATION_ERR:
+  case RUN_WRONG_ANSWER_ERR:
+  case RUN_MEM_LIMIT_ERR:
+  case RUN_SECURITY_ERR:
+  case RUN_PARTIAL:
+    ++pinfo->attempts;
+    if (cur_score >= pinfo->best_score) {
+      pinfo->best_score = cur_score;
+      pinfo->best_run = run_id;
+    }
+    break;
+
+  case RUN_ACCEPTED:
+    pinfo->accepted_flag = 1;
+    if (cur_score >= pinfo->best_score) {
+      pinfo->best_score = cur_score;
+      pinfo->best_run = run_id;
+    }
+    break;
+
+  case RUN_REJECTED:
+    cur_score = 0;
+    if (cur_score >= pinfo->best_score) {
+      pinfo->best_score = cur_score;
+      pinfo->best_run = run_id;
+    }
+    break;
+
+  case RUN_CHECK_FAILED:
+  case RUN_IGNORED:
+    break;
+
+  case RUN_DISQUALIFIED:
+    ++pinfo->disqualified;
+    cur_score = 0;
+    if (cur_score >= pinfo->best_score) {
+      pinfo->best_score = cur_score;
+      pinfo->best_run = run_id;
+    }
+    break;
+
+  case RUN_PENDING:
+    pinfo->pending_flag = 1;
+    ++pinfo->attempts;
+    cur_score = 0;
+    if (cur_score >= pinfo->best_score) {
+      pinfo->best_score = cur_score;
+      pinfo->best_run = run_id;
+    }
+    break;
+
+  default:
+    abort();
+  }
+}
+
 void
 ns_get_user_problems_summary(
         const serve_state_t cs,
@@ -4851,107 +4967,8 @@ ns_get_user_problems_summary(
         kirov_score_latest(cur_prob, &re, &pinfo[re.prob_id],
                            start_time, run_id, separate_user_score, status, score);
       } else {
-        if (pinfo[re.prob_id].solved_flag) {
-          // if the problem is already solved, no need to process this run
-          continue;
-        }
-        if (cur_prob->ignore_unmarked > 0 && !re.is_marked) {
-          // ignore "unmarked" runs, if the option is set
-          continue;
-        }
-
-        cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
-                                     1 /* user_mode */, re.token_flags, &re, cur_prob,
-                                     pinfo[re.prob_id].attempts,
-                                     pinfo[re.prob_id].disqualified,
-                                     pinfo[re.prob_id].prev_successes, 0, 0);
-
-        switch (status) {
-        case RUN_OK:
-          pinfo[re.prob_id].solved_flag = 1;
-          if (cur_score >= pinfo[re.prob_id].best_score) {
-            pinfo[re.prob_id].best_score = cur_score;
-            pinfo[re.prob_id].best_run = run_id;
-          }
-          break;
-
-        case RUN_PENDING_REVIEW:
-          pinfo[re.prob_id].pr_flag = 1;
-          if (cur_score >= pinfo[re.prob_id].best_score) {
-            pinfo[re.prob_id].best_score = cur_score;
-            pinfo[re.prob_id].best_run = run_id;
-          }
-          break;
-
-        case RUN_COMPILE_ERR:
-        case RUN_STYLE_ERR:
-          if (cur_prob->ignore_compile_errors > 0) break;
-
-          ++pinfo[re.prob_id].attempts;
-          cur_score = 0;
-          if (cur_score >= pinfo[re.prob_id].best_score) {
-            pinfo[re.prob_id].best_score = cur_score;
-            pinfo[re.prob_id].best_run = run_id;
-          }
-          break;
-
-        case RUN_RUN_TIME_ERR:
-        case RUN_TIME_LIMIT_ERR:
-        case RUN_WALL_TIME_LIMIT_ERR:
-        case RUN_PRESENTATION_ERR:
-        case RUN_WRONG_ANSWER_ERR:
-        case RUN_MEM_LIMIT_ERR:
-        case RUN_SECURITY_ERR:
-        case RUN_PARTIAL:
-          ++pinfo[re.prob_id].attempts;
-          if (cur_score >= pinfo[re.prob_id].best_score) {
-            pinfo[re.prob_id].best_score = cur_score;
-            pinfo[re.prob_id].best_run = run_id;
-          }
-          break;
-
-        case RUN_ACCEPTED:
-          pinfo[re.prob_id].accepted_flag = 1;
-          if (cur_score >= pinfo[re.prob_id].best_score) {
-            pinfo[re.prob_id].best_score = cur_score;
-            pinfo[re.prob_id].best_run = run_id;
-          }
-          break;
-
-        case RUN_REJECTED:
-          cur_score = 0;
-          if (cur_score >= pinfo[re.prob_id].best_score) {
-            pinfo[re.prob_id].best_score = cur_score;
-            pinfo[re.prob_id].best_run = run_id;
-          }
-          break;
-
-        case RUN_CHECK_FAILED:
-        case RUN_IGNORED:
-          break;
-
-        case RUN_DISQUALIFIED:
-          ++pinfo[re.prob_id].disqualified;
-          cur_score = 0;
-          if (cur_score >= pinfo[re.prob_id].best_score) {
-            pinfo[re.prob_id].best_score = cur_score;
-            pinfo[re.prob_id].best_run = run_id;
-          }
-          break;
-
-        case RUN_PENDING:
-          pinfo[re.prob_id].pending_flag = 1;
-          ++pinfo[re.prob_id].attempts;
-          cur_score = 0;
-          if (cur_score >= pinfo[re.prob_id].best_score) {
-            pinfo[re.prob_id].best_score = cur_score;
-            pinfo[re.prob_id].best_run = run_id;
-          }
-          break;
-
-        default:
-          abort();
-        }
+        kirov_score_default(cur_prob, &re, &pinfo[re.prob_id],
+                            start_time, run_id, separate_user_score, status, score);
       }
     } else if (global->score_system == SCORE_MOSCOW) {
       if (pinfo[re.prob_id].solved_flag) continue;
