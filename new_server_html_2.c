@@ -4594,6 +4594,94 @@ kirov_score_latest(
 }
 
 static void
+kirov_score_tokenized(
+        const struct section_problem_data *cur_prob,
+        struct run_entry *re,
+        UserProblemInfo *pinfo,
+        time_t start_time,
+        int run_id,
+        int separate_user_score,
+        int status,
+        int score)
+{
+  ASSERT(cur_prob->score_tokenized > 0);
+
+  int cur_score = 0;
+
+  if (!re->token_flags) {
+    if (cur_prob->tokens_for_user_ac > 0 && re->is_saved) {
+      if (re->saved_status == RUN_OK || re->saved_status == RUN_ACCEPTED) {
+        pinfo->last_untokenized = 1;
+      }
+    }
+    // FIXME: handle other cases?
+    return;
+  }
+
+  pinfo->last_untokenized = 0;
+  cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
+                               1 /* user_mode */, re->token_flags, re, cur_prob,
+                               pinfo->attempts,
+                               pinfo->disqualified,
+                               pinfo->prev_successes, 0, 0);
+
+  switch (status) {
+  case RUN_OK:
+    pinfo->solved_flag = 1;
+    break;
+
+  case RUN_PENDING_REVIEW:
+    pinfo->pr_flag = 1;
+    break;
+
+  case RUN_COMPILE_ERR:
+  case RUN_STYLE_ERR:
+    if (cur_prob->ignore_compile_errors > 0) return;
+    cur_score = 0;
+    break;
+
+  case RUN_RUN_TIME_ERR:
+  case RUN_TIME_LIMIT_ERR:
+  case RUN_WALL_TIME_LIMIT_ERR:
+  case RUN_PRESENTATION_ERR:
+  case RUN_WRONG_ANSWER_ERR:
+  case RUN_MEM_LIMIT_ERR:
+  case RUN_SECURITY_ERR:
+  case RUN_PARTIAL:
+    break;
+
+  case RUN_ACCEPTED:
+    pinfo->accepted_flag = 1;
+    break;
+
+  case RUN_REJECTED:
+    return;
+
+  case RUN_CHECK_FAILED:
+  case RUN_IGNORED:
+    return;
+
+  case RUN_DISQUALIFIED:
+    ++pinfo->disqualified;
+    cur_score = 0;
+    break;
+
+  case RUN_PENDING:
+    pinfo->pending_flag = 1;
+    break;
+
+  default:
+    abort();
+  }
+
+  ++pinfo->attempts;
+  if (cur_score >= pinfo->best_score) {
+    pinfo->best_score = cur_score;
+    pinfo->best_run = run_id;
+  }
+}
+
+static void
 kirov_score_default(
         const struct section_problem_data *cur_prob,
         struct run_entry *re,
@@ -4966,6 +5054,9 @@ ns_get_user_problems_summary(
       } else if (cur_prob->score_latest > 0) {
         kirov_score_latest(cur_prob, &re, &pinfo[re.prob_id],
                            start_time, run_id, separate_user_score, status, score);
+      } else if (cur_prob->score_tokenized > 0) {
+        kirov_score_tokenized(cur_prob, &re, &pinfo[re.prob_id],
+                              start_time, run_id, separate_user_score, status, score);
       } else {
         kirov_score_default(cur_prob, &re, &pinfo[re.prob_id],
                             start_time, run_id, separate_user_score, status, score);
