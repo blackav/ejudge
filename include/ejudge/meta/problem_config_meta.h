@@ -24,6 +24,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_score_latest,
   META_PROBLEM_CONFIG_SECTION_score_latest_or_unmarked,
   META_PROBLEM_CONFIG_SECTION_score_latest_marked,
+  META_PROBLEM_CONFIG_SECTION_score_tokenized,
   META_PROBLEM_CONFIG_SECTION_use_ac_not_ok,
   META_PROBLEM_CONFIG_SECTION_ignore_prev_ac,
   META_PROBLEM_CONFIG_SECTION_team_enable_rep_view,

@@ -366,6 +366,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_score_latest] = { CNTSPROB_score_latest, 'B', XSIZE(struct section_problem_data, score_latest), "score_latest", XOFFSET(struct section_problem_data, score_latest) },
   [CNTSPROB_score_latest_or_unmarked] = { CNTSPROB_score_latest_or_unmarked, 'B', XSIZE(struct section_problem_data, score_latest_or_unmarked), "score_latest_or_unmarked", XOFFSET(struct section_problem_data, score_latest_or_unmarked) },
   [CNTSPROB_score_latest_marked] = { CNTSPROB_score_latest_marked, 'B', XSIZE(struct section_problem_data, score_latest_marked), "score_latest_marked", XOFFSET(struct section_problem_data, score_latest_marked) },
+  [CNTSPROB_score_tokenized] = { CNTSPROB_score_tokenized, 'B', XSIZE(struct section_problem_data, score_tokenized), "score_tokenized", XOFFSET(struct section_problem_data, score_tokenized) },
   [CNTSPROB_real_time_limit] = { CNTSPROB_real_time_limit, 'i', XSIZE(struct section_problem_data, real_time_limit), "real_time_limit", XOFFSET(struct section_problem_data, real_time_limit) },
   [CNTSPROB_time_limit] = { CNTSPROB_time_limit, 'i', XSIZE(struct section_problem_data, time_limit), "time_limit", XOFFSET(struct section_problem_data, time_limit) },
   [CNTSPROB_time_limit_millis] = { CNTSPROB_time_limit_millis, 'i', XSIZE(struct section_problem_data, time_limit_millis), "time_limit_millis", XOFFSET(struct section_problem_data, time_limit_millis) },

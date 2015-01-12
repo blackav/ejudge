@@ -326,6 +326,7 @@ enum
   CNTSPROB_score_latest,
   CNTSPROB_score_latest_or_unmarked,
   CNTSPROB_score_latest_marked,
+  CNTSPROB_score_tokenized,
   CNTSPROB_real_time_limit,
   CNTSPROB_time_limit,
   CNTSPROB_time_limit_millis,
