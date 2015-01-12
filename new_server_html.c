@@ -7531,6 +7531,7 @@ unpriv_use_token(
   const struct section_problem_data *prob = 0;
   int back_action = 0;
   unsigned char param_buf[1024];
+  time_t start_time = 0, stop_time = 0;
 
   if (unpriv_parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0)
     goto cleanup;
@@ -7549,20 +7550,29 @@ unpriv_use_token(
     back_action = NEW_SRV_ACTION_MAIN_PAGE;
   }
 
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+  }
+
+  if (cs->clients_suspended) goto back_action;
+  if (start_time <= 0) goto back_action;
+  if (stop_time > 0) goto back_action;
+
   if (prob->enable_tokens <= 0 || !prob->token_info || !prob->token_info->open_sign || prob->token_info->open_cost <= 0) {
-    ns_refresh_page(fout, phr, back_action, param_buf);
-    goto cleanup;
+    goto back_action;
   }
 
   if ((re.token_flags & prob->token_info->open_flags) == prob->token_info->open_flags) {
     // nothing new to open
-    ns_refresh_page(fout, phr, back_action, param_buf);
-    goto cleanup;
+    goto back_action;
   }
 
   if (!run_is_team_report_available(re.status)) {
-    ns_refresh_page(fout, phr, back_action, param_buf);
-    goto cleanup;
+    goto back_action;
   }
 
   int separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
@@ -7571,8 +7581,7 @@ unpriv_use_token(
     status = re.saved_status;
   }
   if (separate_user_score && prob->tokens_for_user_ac > 0 && re.is_saved && re.saved_status != RUN_ACCEPTED) {
-    ns_refresh_page(fout, phr, back_action, param_buf);
-    goto cleanup;
+    goto back_action;
   }
 
   switch (status) {
@@ -7600,8 +7609,7 @@ unpriv_use_token(
   case RUN_COMPILE_ERR:
   case RUN_STYLE_ERR:
     if (prob->team_enable_ce_view > 0 || prob->team_enable_rep_view > 0) {
-      ns_refresh_page(fout, phr, back_action, param_buf);
-      goto cleanup;
+      goto back_action;
     }
     break;
 
@@ -7612,17 +7620,10 @@ unpriv_use_token(
       case RUN_SKIPPED:
     */
   default:
-    ns_refresh_page(fout, phr, back_action, param_buf);
-    goto cleanup;
+    goto back_action;
   }
 
   // count the amount of spent and available tokens
-  time_t start_time = 0;
-  if (global->is_virtual) {
-    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
-  } else {
-    start_time = run_get_start_time(cs->runlog_state);
-  }
   int available_tokens = compute_available_tokens(cs, prob, start_time) - run_count_tokens(cs->runlog_state, phr->user_id, prob->id);
   if (available_tokens < 0) available_tokens = 0;
   if (available_tokens < prob->token_info->open_cost) {
@@ -7643,6 +7644,11 @@ unpriv_use_token(
   ns_refresh_page(fout, phr, back_action, param_buf);
 
 cleanup:;
+  return;
+
+back_action:
+  ns_refresh_page(fout, phr, back_action, param_buf);
+  goto cleanup;
 }
 
 int
