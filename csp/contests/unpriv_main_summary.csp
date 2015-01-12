@@ -143,31 +143,46 @@
           }
 
           if (pinfo[prob_id].best_run < 0) {
-            if (global->score_system == SCORE_KIROV || (global->score_system == SCORE_OLYMPIAD && !accepting_mode) || global->score_system == SCORE_MOSCOW) {
+            if (pinfo[prob_id].last_untokenized) {
+              total_score_uncertain = 1;
+              if (global->score_system == SCORE_KIROV || (global->score_system == SCORE_OLYMPIAD && !accepting_mode) || global->score_system == SCORE_MOSCOW) {
 %>
-        <td class="b1">&nbsp;</td>
-        <td class="b1">&nbsp;</td>
+        <td class="b1">??? </td>
+        <td class="b1">??? </td>
 <%
-              if (global->disable_passed_tests <= 0) {
+                if (global->disable_passed_tests <= 0) {
 %>
-        <td class="b1">&nbsp;</td>
+        <td class="b1">??? </td>
 <%
-              }
-              if (!cnts->exam_mode) {
+                }
+              } else {
 %>
-        <td class="b1">&nbsp;</td>
+        <td class="b1">??? </td>
+        <td class="b1">??? </td>
 <%
               }
             } else {
+              if (global->score_system == SCORE_KIROV || (global->score_system == SCORE_OLYMPIAD && !accepting_mode) || global->score_system == SCORE_MOSCOW) {
 %>
         <td class="b1">&nbsp;</td>
         <td class="b1">&nbsp;</td>
 <%
-              if (!cnts->exam_mode) {
+                if (global->disable_passed_tests <= 0) {
 %>
+        <td class="b1">&nbsp;</td>
+<%
+                }
+              } else {
+%>
+        <td class="b1">&nbsp;</td>
         <td class="b1">&nbsp;</td>
 <%
               }
+            }
+            if (!cnts->exam_mode) {
+%>
+        <td class="b1">&nbsp;</td>
+<%
             }
           } else {
             int status, test;
