@@ -1920,6 +1920,30 @@
 %>
 
 <%
+  if (show_adv && global->score_system == SCORE_KIROV) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>Score only tokenized submits?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = (prob->score_tokenized == 1);
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_score_tokenized, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->score_tokenized" default="tmp_prob->score_tokenized" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-score-tokenized" label="Change" /></td>
+        <td><s:help ac="prob-change-score-tokenized" /></td>
+    </s:tr>
+</s:form>
+<%
+  }
+%>
+
+<%
   if (show_adv) {
 %>
 <s:form>

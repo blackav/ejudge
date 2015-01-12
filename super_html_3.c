@@ -401,6 +401,7 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_SCORE_LATEST] = "Serve.cfg:problem:score_latest",
   [SSERV_CMD_PROB_CHANGE_SCORE_LATEST_OR_UNMARKED] = "Serve.cfg:problem:score_latest_or_unmarked",
   [SSERV_CMD_PROB_CHANGE_SCORE_LATEST_MARKED] = "Serve.cfg:problem:score_latest_marked",
+  [SSERV_CMD_PROB_CHANGE_SCORE_TOKENIZED] = "Serve.cfg:problem:score_tokenized",
   [SSERV_CMD_PROB_CHANGE_TIME_LIMIT] = "Serve.cfg:problem:time_limit",
   [SSERV_CMD_PROB_CHANGE_TIME_LIMIT_MILLIS] = "Serve.cfg:problem:time_limit_millis",
   [SSERV_CMD_PROB_CHANGE_REAL_TIME_LIMIT] = "Serve.cfg:problem:real_time_limit",
@@ -2009,6 +2010,7 @@ super_html_add_abstract_problem(
   prob->score_latest = 0;
   prob->score_latest_or_unmarked = 0;
   prob->score_latest_marked = 0;
+  prob->score_tokenized = 0;
   prob->time_limit = 1;
   prob->time_limit_millis = 0;
   prob->real_time_limit = 5;
@@ -2288,6 +2290,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_SCORE_LATEST_MARKED:
     p_int = &prob->score_latest_marked;
+    goto handle_boolean_1;
+
+  case SSERV_CMD_PROB_CHANGE_SCORE_TOKENIZED:
+    p_int = &prob->score_tokenized;
     goto handle_boolean_1;
 
   case SSERV_CMD_PROB_CHANGE_TIME_LIMIT:

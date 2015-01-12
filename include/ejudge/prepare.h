@@ -813,6 +813,8 @@ struct section_problem_data
   ejintbool_t score_latest_or_unmarked;
   /** for KIROV contests: score the latest marked submit */
   ejintbool_t score_latest_marked;
+  /** for KIROV contests: score only the tokenized submits (with tokens spent on them) */
+  ejintbool_t score_tokenized;
   /** maximum astronomical time for a problem (seconds) */
   int real_time_limit;
   /** time limit in seconds */

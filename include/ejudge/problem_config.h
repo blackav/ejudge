@@ -52,6 +52,7 @@ struct problem_config_section
   ejintbool_t score_latest;
   ejintbool_t score_latest_or_unmarked;
   ejintbool_t score_latest_marked;
+  ejintbool_t score_tokenized;
   ejintbool_t use_ac_not_ok;
   ejintbool_t ignore_prev_ac;
   ejintbool_t team_enable_rep_view;

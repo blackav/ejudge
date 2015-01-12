@@ -1078,6 +1078,9 @@ prepare_unparse_prob(
   if ((prob->abstract && prob->score_latest_marked == 1)
       || (!prob->abstract && prob->score_latest_marked >= 0))
     unparse_bool(f, "score_latest_marked", prob->score_latest_marked);
+  if ((prob->abstract && prob->score_tokenized > 0)
+      || (!prob->abstract && prob->score_tokenized >= 0))
+    unparse_bool(f, "score_tokenized", prob->score_tokenized);
   if (prob->xml_file[0])
     fprintf(f, "xml_file = \"%s\"\n", CARMOR(prob->xml_file));
   if (prob->alternatives_file[0])
@@ -1510,6 +1513,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "score_latest_or_unmarked", prob->score_latest_or_unmarked);
   if (prob->score_latest_marked > 0)
     unparse_bool(f, "score_latest_marked", prob->score_latest_marked);
+  if (prob->score_tokenized > 0)
+    unparse_bool(f, "score_tokenized", prob->score_tokenized);
   if ((show_paths || (global && global->advanced_layout > 0)) && prob->xml_file[0])
     fprintf(f, "xml_file = \"%s\"\n", CARMOR(prob->xml_file));
   if (show_paths && prob->alternatives_file[0])
