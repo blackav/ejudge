@@ -4372,7 +4372,6 @@ ns_get_user_problems_summary(
   struct run_entry re;
   struct section_problem_data *cur_prob = 0;
   unsigned char *user_flag = 0;
-  unsigned char *marked_flag = 0;
   int status, score;
   int separate_user_score = 0;
   int need_prev_succ = 0; // 1, if we need to compute 'prev_successes' array
@@ -4409,7 +4408,6 @@ ns_get_user_problems_summary(
   if (need_prev_succ) {
     XCALLOC(user_flag, (cs->max_prob + 1) * total_teams);
   }
-  XALLOCAZ(marked_flag, cs->max_prob + 1);
 
   for (run_id = need_prev_succ?0:run_get_user_first_run_id(cs->runlog_state, user_id);
        run_id >= 0 && run_id < total_runs;
@@ -4610,11 +4608,11 @@ ns_get_user_problems_summary(
          * if there exists a "marked" run, the last "marked" score is taken
          * if there is no "marked" run, the max score is taken
          */
-        if (marked_flag[re.prob_id] && !re.is_marked) {
+        if (pinfo[re.prob_id].marked_flag && !re.is_marked) {
           // already have a "marked" run, so ignore "unmarked" runs
           continue;
         }
-        marked_flag[re.prob_id] = re.is_marked;
+        pinfo[re.prob_id].marked_flag = re.is_marked;
 
         switch (status) {
         case RUN_OK:
@@ -4709,7 +4707,7 @@ ns_get_user_problems_summary(
                                      pinfo[re.prob_id].prev_successes, 0, 0);
         switch (status) {
         case RUN_OK:
-          marked_flag[re.prob_id] = re.is_marked;
+          pinfo[re.prob_id].marked_flag = re.is_marked;
           pinfo[re.prob_id].solved_flag = 1;
           pinfo[re.prob_id].accepted_flag = 0;
           pinfo[re.prob_id].pr_flag = 0;
@@ -4719,7 +4717,7 @@ ns_get_user_problems_summary(
           break;
 
         case RUN_PENDING_REVIEW:
-          marked_flag[re.prob_id] = re.is_marked;
+          pinfo[re.prob_id].marked_flag = re.is_marked;
           pinfo[re.prob_id].solved_flag = 0;
           pinfo[re.prob_id].accepted_flag = 0;
           pinfo[re.prob_id].pr_flag = 1;
@@ -4730,7 +4728,7 @@ ns_get_user_problems_summary(
           break;
 
         case RUN_ACCEPTED:
-          marked_flag[re.prob_id] = re.is_marked;
+          pinfo[re.prob_id].marked_flag = re.is_marked;
           pinfo[re.prob_id].solved_flag = 0;
           pinfo[re.prob_id].accepted_flag = 1;
           pinfo[re.prob_id].pr_flag = 0;
@@ -4743,7 +4741,7 @@ ns_get_user_problems_summary(
         case RUN_COMPILE_ERR:
         case RUN_STYLE_ERR:
           if (cur_prob->ignore_compile_errors > 0) break;
-          marked_flag[re.prob_id] = re.is_marked;
+          pinfo[re.prob_id].marked_flag = re.is_marked;
           pinfo[re.prob_id].solved_flag = 0;
           pinfo[re.prob_id].accepted_flag = 0;
           pinfo[re.prob_id].pr_flag = 0;
@@ -4758,7 +4756,7 @@ ns_get_user_problems_summary(
           break;
 
         case RUN_REJECTED:
-          marked_flag[re.prob_id] = re.is_marked;
+          pinfo[re.prob_id].marked_flag = re.is_marked;
           pinfo[re.prob_id].solved_flag = 0;
           pinfo[re.prob_id].accepted_flag = 0;
           pinfo[re.prob_id].pr_flag = 0;
@@ -4768,7 +4766,7 @@ ns_get_user_problems_summary(
           break;
 
         case RUN_DISQUALIFIED:
-          marked_flag[re.prob_id] = re.is_marked;
+          pinfo[re.prob_id].marked_flag = re.is_marked;
           pinfo[re.prob_id].solved_flag = 0;
           pinfo[re.prob_id].accepted_flag = 0;
           pinfo[re.prob_id].pr_flag = 0;
@@ -4779,7 +4777,7 @@ ns_get_user_problems_summary(
           break;
 
         case RUN_PENDING:
-          marked_flag[re.prob_id] = re.is_marked;
+          pinfo[re.prob_id].marked_flag = re.is_marked;
           pinfo[re.prob_id].solved_flag = 0;
           pinfo[re.prob_id].accepted_flag = 0;
           pinfo[re.prob_id].pr_flag = 0;
@@ -4796,7 +4794,7 @@ ns_get_user_problems_summary(
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
         case RUN_WALL_TIME_LIMIT_ERR:
-          marked_flag[re.prob_id] = re.is_marked;
+          pinfo[re.prob_id].marked_flag = re.is_marked;
           pinfo[re.prob_id].solved_flag = 0;
           pinfo[re.prob_id].accepted_flag = 0;
           pinfo[re.prob_id].pr_flag = 0;
