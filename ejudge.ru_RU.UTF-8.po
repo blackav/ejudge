@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-10 12:53+0300\n"
-"PO-Revision-Date: 2015-01-11 22:27+0300\n"
+"POT-Creation-Date: 2015-01-12 13:43+0300\n"
+"PO-Revision-Date: 2015-01-12 13:45+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -94,6 +94,9 @@ msgstr ""
 "<b>Обратите внимание</b>, вы должны войти в систему в первый раз не позднее, "
 "чем через 24 часа от этого момента, иначе данная\n"
 "учетная запись будет уничтожена."
+
+msgid "<b>Uncertain</b> (there exist runs with hidden results)"
+msgstr "<b>Неизвестно</b> (есть посылки со скрытыми результатами)"
 
 #, c-format
 msgid "<big>%d total tests runs, %d passed, %d failed.<br/>\n"
@@ -2321,6 +2324,9 @@ msgstr "Максимальное случайное число"
 
 msgid "May"
 msgstr "Май"
+
+msgid "May change!"
+msgstr "Может измениться!"
 
 msgid "Memory limit"
 msgstr "Ограничение памяти"

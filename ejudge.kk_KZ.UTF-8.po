@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-10 12:53+0300\n"
+"POT-Creation-Date: 2015-01-12 13:43+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -83,6 +83,9 @@ msgstr ""
 msgid ""
 "<b>Note</b>, that you should log in to the system for the first time no "
 "later, than in 24 hours after this moment, or the new account is removed."
+msgstr ""
+
+msgid "<b>Uncertain</b> (there exist runs with hidden results)"
 msgstr ""
 
 #, c-format
@@ -2171,6 +2174,9 @@ msgid "Maximal random number"
 msgstr ""
 
 msgid "May"
+msgstr ""
+
+msgid "May change!"
 msgstr ""
 
 msgid "Memory limit"
