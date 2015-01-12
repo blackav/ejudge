@@ -1374,6 +1374,8 @@ prepare_unparse_prob(
     unparse_bool(f, "hide_real_time_limit", prob->hide_real_time_limit);
   if (prob->enable_tokens >= 0)
     unparse_bool(f, "enable_tokens", prob->enable_tokens);
+  if (prob->tokens_for_user_ac >= 0)
+    unparse_bool(f, "tokens_for_user_ac", prob->tokens_for_user_ac);
   if (prob->disable_submit_after_ok >= 0)
     unparse_bool(f, "disable_submit_after_ok", prob->disable_submit_after_ok);
   if (prob->disable_security >= 0)
@@ -1734,6 +1736,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "hide_real_time_limit", prob->hide_real_time_limit);
   if (prob->enable_tokens > 0)
     unparse_bool(f, "enable_tokens", prob->enable_tokens);
+  if (prob->tokens_for_user_ac > 0)
+    unparse_bool(f, "tokens_for_user_ac", prob->tokens_for_user_ac);
   if (prob->disable_submit_after_ok > 0)
     unparse_bool(f, "disable_submit_after_ok", prob->disable_submit_after_ok);
   if (prob->disable_security > 0)

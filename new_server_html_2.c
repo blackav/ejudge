@@ -5640,7 +5640,11 @@ new_write_user_runs(
         if (cur_prob->token_info
             && (re.token_flags & cur_prob->token_info->open_flags) != cur_prob->token_info->open_flags
             && available_tokens >= cur_prob->token_info->open_cost) {
-          enable_use_link = 1;
+          if (cur_prob->tokens_for_user_ac <= 0) {
+            enable_use_link = 1;
+          } else if (re.is_saved && re.saved_status == RUN_ACCEPTED) {
+            enable_use_link = 1;
+          }
         }
         break;
 

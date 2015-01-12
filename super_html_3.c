@@ -417,6 +417,7 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CHANGE_HIDE_FILE_NAMES] = "Serve.cfg:problem:hide_file_names",
   [SSERV_CMD_PROB_CHANGE_HIDE_REAL_TIME_LIMIT] = "Serve.cfg:problem:hide_real_time_limit",
   [SSERV_CMD_PROB_CHANGE_ENABLE_TOKENS] = "Serve.cfg:problem:enable_tokens",
+  [SSERV_CMD_PROB_CHANGE_TOKENS_FOR_USER_AC] = "Serve.cfg:problem:tokens_for_user_ac",
   [SSERV_CMD_PROB_CHANGE_DISABLE_SUBMIT_AFTER_OK] = "Serve.cfg:problem:disable_submit_after_ok",
   [SSERV_CMD_PROB_CHANGE_DISABLE_SECURITY] = "Serve.cfg:problem:disable_security",
   [SSERV_CMD_PROB_CHANGE_DISABLE_TESTING] = "Serve.cfg:problem:disable_testing",
@@ -2363,6 +2364,10 @@ super_html_prob_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_PROB_CHANGE_ENABLE_TOKENS:
     p_int = &prob->enable_tokens;
+    goto handle_boolean_2;
+
+  case SSERV_CMD_PROB_CHANGE_TOKENS_FOR_USER_AC:
+    p_int = &prob->tokens_for_user_ac;
     goto handle_boolean_2;
 
   case SSERV_CMD_PROB_CHANGE_DISABLE_SUBMIT_AFTER_OK:

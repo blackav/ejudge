@@ -401,6 +401,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(hide_file_names, "d"),
   PROBLEM_PARAM(hide_real_time_limit, "d"),
   PROBLEM_PARAM(enable_tokens, "d"),
+  PROBLEM_PARAM(tokens_for_user_ac, "d"),
   PROBLEM_PARAM(disable_submit_after_ok, "d"),
   PROBLEM_PARAM(disable_security, "d"),
   PROBLEM_PARAM(enable_compilation, "d"),
@@ -963,6 +964,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->hide_file_names = -1;
   p->hide_real_time_limit = -1;
   p->enable_tokens = -1;
+  p->tokens_for_user_ac = -1;
   p->disable_submit_after_ok = -1;
   p->disable_security = -1;
   p->enable_compilation = -1;
@@ -3152,6 +3154,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_hide_file_names, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_hide_real_time_limit, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_tokens, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_tokens_for_user_ac, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_submit_after_ok, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_auto_testing, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_testing, prob, aprob, g);
@@ -5634,6 +5637,13 @@ prepare_set_prob_value(
       out->enable_tokens = 0;
     break;
 
+  case CNTSPROB_tokens_for_user_ac:
+    if (out->tokens_for_user_ac < 0 && abstr)
+      out->tokens_for_user_ac = abstr->tokens_for_user_ac;
+    if (out->tokens_for_user_ac < 0)
+      out->tokens_for_user_ac = 0;
+    break;
+
   case CNTSPROB_disable_submit_after_ok:
     if (out->disable_submit_after_ok < 0 && abstr)
       out->disable_submit_after_ok = abstr->disable_submit_after_ok;
@@ -6340,7 +6350,7 @@ static const int prob_settable_list[] =
   CNTSPROB_disable_auto_testing, CNTSPROB_disable_testing,
   CNTSPROB_disable_user_submit, CNTSPROB_disable_tab,
   CNTSPROB_unrestricted_statement, CNTSPROB_hide_file_names, CNTSPROB_hide_real_time_limit,
-  CNTSPROB_enable_tokens, CNTSPROB_disable_submit_after_ok,
+  CNTSPROB_enable_tokens, CNTSPROB_tokens_for_user_ac, CNTSPROB_disable_submit_after_ok,
   CNTSPROB_disable_security, CNTSPROB_enable_compilation,
   CNTSPROB_skip_testing, CNTSPROB_variable_full_score, CNTSPROB_hidden,
   CNTSPROB_priority_adjustment, CNTSPROB_spelling, CNTSPROB_stand_hide_time,
@@ -6437,6 +6447,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_hide_file_names] = 1,
   [CNTSPROB_hide_real_time_limit] = 1,
   [CNTSPROB_enable_tokens] = 1,
+  [CNTSPROB_tokens_for_user_ac] = 1,
   [CNTSPROB_disable_submit_after_ok] = 1,
   [CNTSPROB_disable_security] = 1,
   [CNTSPROB_enable_compilation] = 1,
@@ -6569,7 +6580,7 @@ static const int prob_inheritable_list[] =
   CNTSPROB_disable_auto_testing, CNTSPROB_disable_testing,
   CNTSPROB_disable_user_submit, CNTSPROB_disable_tab,
   CNTSPROB_unrestricted_statement, CNTSPROB_hide_file_names, CNTSPROB_hide_real_time_limit,
-  CNTSPROB_enable_tokens, CNTSPROB_disable_submit_after_ok,
+  CNTSPROB_enable_tokens, CNTSPROB_tokens_for_user_ac, CNTSPROB_disable_submit_after_ok,
   CNTSPROB_disable_security, CNTSPROB_enable_compilation,
   CNTSPROB_skip_testing, CNTSPROB_variable_full_score,
   CNTSPROB_hidden, CNTSPROB_priority_adjustment, CNTSPROB_spelling,
@@ -6665,6 +6676,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_hide_file_names] = 1,
   [CNTSPROB_hide_real_time_limit] = 1,
   [CNTSPROB_enable_tokens] = 1,
+  [CNTSPROB_tokens_for_user_ac] = 1,
   [CNTSPROB_disable_submit_after_ok] = 1,
   [CNTSPROB_disable_security] = 1,
   [CNTSPROB_enable_compilation] = 1,
@@ -6822,6 +6834,7 @@ static const struct section_problem_data prob_undef_values =
   .hide_file_names = -1,
   .hide_real_time_limit = -1,
   .enable_tokens = -1,
+  .tokens_for_user_ac = -1,
   .disable_submit_after_ok = -1,
   .disable_auto_testing = -1,
   .disable_testing = -1,
@@ -6984,6 +6997,7 @@ static const struct section_problem_data prob_default_values =
   .hide_file_names = 0,
   .hide_real_time_limit = 0,
   .enable_tokens = 0,
+  .tokens_for_user_ac = 0,
   .disable_submit_after_ok = 0,
   .disable_auto_testing = 0,
   .disable_testing = 0,

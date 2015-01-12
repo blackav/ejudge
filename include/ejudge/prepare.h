@@ -877,6 +877,8 @@ struct section_problem_data
   ejintbool_t hide_real_time_limit;
   /** enable tokens for this problem */
   ejintbool_t enable_tokens;
+  /** enable tokens only for user AC status */
+  ejintbool_t tokens_for_user_ac;
   /** disable submission after this problem is solved */
   ejintbool_t disable_submit_after_ok;
   /** do not test this problem automatically */

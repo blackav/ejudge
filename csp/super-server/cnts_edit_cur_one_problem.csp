@@ -1683,8 +1683,8 @@
 %><s:yesno3 name="param" value="prob->hide_real_time_limit" default="tmp_prob->hide_real_time_limit" /><%
     }
 %></td>
-        <td><s:submit ac="prob-change-hide-file-names" label="Change" /></td>
-        <td><s:help ac="prob-change-hide-file-names" /></td>
+        <td><s:submit ac="prob-change-hide-real-time-limit" label="Change" /></td>
+        <td><s:help ac="prob-change-hide-real-time-limit" /></td>
     </s:tr>
 </s:form>
 <%
@@ -2293,6 +2293,30 @@
 %></td>
         <td><s:submit ac="prob-change-enable-tokens" label="Change" /></td>
         <td><s:help ac="prob-change-enable-tokens" /></td>
+    </s:tr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>Tokens only for user AC submits?</td>
+        <td><%
+    if (is_abstract || !sup_prob) {
+      int value = prob->tokens_for_user_ac == 1;
+%><s:yesno name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_tokens_for_user_ac, tmp_prob, sup_prob, global);
+%><s:yesno3 name="param" value="prob->tokens_for_user_ac" default="tmp_prob->tokens_for_user_ac" /><%
+    }
+%></td>
+        <td><s:submit ac="prob-change-tokens-for-user-ac" label="Change" /></td>
+        <td><s:help ac="prob-change-tokens-for-user-ac" /></td>
     </s:tr>
 </s:form>
 <%

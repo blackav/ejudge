@@ -71,6 +71,7 @@ struct problem_config_section
   ejintbool_t hide_file_names;
   ejintbool_t hide_real_time_limit;
   ejintbool_t enable_tokens;
+  ejintbool_t tokens_for_user_ac;
   ejintbool_t disable_submit_after_ok;
   ejintbool_t disable_auto_testing;
   ejintbool_t disable_testing;

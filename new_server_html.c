@@ -7560,10 +7560,19 @@ unpriv_use_token(
     goto cleanup;
   }
 
+  if (!run_is_team_report_available(re.status)) {
+    ns_refresh_page(fout, phr, back_action, param_buf);
+    goto cleanup;
+  }
+
   int separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
   int status = re.status;
   if (separate_user_score > 0 && re.is_saved) {
     status = re.saved_status;
+  }
+  if (separate_user_score && prob->tokens_for_user_ac > 0 && re.is_saved && re.saved_status != RUN_ACCEPTED) {
+    ns_refresh_page(fout, phr, back_action, param_buf);
+    goto cleanup;
   }
 
   switch (status) {
