@@ -43,6 +43,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_hide_file_names,
   META_PROBLEM_CONFIG_SECTION_hide_real_time_limit,
   META_PROBLEM_CONFIG_SECTION_enable_tokens,
+  META_PROBLEM_CONFIG_SECTION_tokens_for_user_ac,
   META_PROBLEM_CONFIG_SECTION_disable_submit_after_ok,
   META_PROBLEM_CONFIG_SECTION_disable_auto_testing,
   META_PROBLEM_CONFIG_SECTION_disable_testing,

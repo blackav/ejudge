@@ -398,6 +398,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_hide_file_names] = { CNTSPROB_hide_file_names, 'B', XSIZE(struct section_problem_data, hide_file_names), "hide_file_names", XOFFSET(struct section_problem_data, hide_file_names) },
   [CNTSPROB_hide_real_time_limit] = { CNTSPROB_hide_real_time_limit, 'B', XSIZE(struct section_problem_data, hide_real_time_limit), "hide_real_time_limit", XOFFSET(struct section_problem_data, hide_real_time_limit) },
   [CNTSPROB_enable_tokens] = { CNTSPROB_enable_tokens, 'B', XSIZE(struct section_problem_data, enable_tokens), "enable_tokens", XOFFSET(struct section_problem_data, enable_tokens) },
+  [CNTSPROB_tokens_for_user_ac] = { CNTSPROB_tokens_for_user_ac, 'B', XSIZE(struct section_problem_data, tokens_for_user_ac), "tokens_for_user_ac", XOFFSET(struct section_problem_data, tokens_for_user_ac) },
   [CNTSPROB_disable_submit_after_ok] = { CNTSPROB_disable_submit_after_ok, 'B', XSIZE(struct section_problem_data, disable_submit_after_ok), "disable_submit_after_ok", XOFFSET(struct section_problem_data, disable_submit_after_ok) },
   [CNTSPROB_disable_auto_testing] = { CNTSPROB_disable_auto_testing, 'B', XSIZE(struct section_problem_data, disable_auto_testing), "disable_auto_testing", XOFFSET(struct section_problem_data, disable_auto_testing) },
   [CNTSPROB_disable_testing] = { CNTSPROB_disable_testing, 'B', XSIZE(struct section_problem_data, disable_testing), "disable_testing", XOFFSET(struct section_problem_data, disable_testing) },
