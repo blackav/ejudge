@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __NEW_SERVER_PI_H__
 #define __NEW_SERVER_PI_H__
 
-/* Copyright (C) 2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -126,6 +125,7 @@ typedef struct UserProblemInfo
     unsigned char pr_flag;
     unsigned char trans_flag;
     unsigned char status;
+    unsigned char last_untokenized;
 } UserProblemInfo;
 
 #endif /* __NEW_SERVER_PI_H__ */
