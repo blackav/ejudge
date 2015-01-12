@@ -189,9 +189,15 @@
             struct run_entry re;
             run_get_entry(cs->runlog_state, pinfo[prob_id].best_run, &re);
             if (separate_user_score > 0 && re.is_saved) {
-              status = re.saved_status;
-              act_status = re.saved_status;
-              test = re.saved_test;
+              if (re.token_count > 0 && (re.token_flags & TOKEN_FINALSCORE_BIT)) {
+                status = re.status;
+                act_status = re.status;
+                test = re.test;
+              } else {
+                status = re.saved_status;
+                act_status = re.saved_status;
+                test = re.saved_test;
+              }
             } else {
               status = re.status;
               act_status = re.status;
