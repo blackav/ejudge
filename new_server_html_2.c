@@ -4464,6 +4464,135 @@ kirov_score_latest_or_unmarked(
   }
 }
 
+static void
+kirov_score_latest(
+        const struct section_problem_data *cur_prob,
+        struct run_entry *re,
+        UserProblemInfo *pinfo,
+        time_t start_time,
+        int run_id,
+        int separate_user_score,
+        int status,
+        int score)
+{
+  int cur_score = 0;
+
+  ASSERT(cur_prob->score_latest > 0);
+
+  if (cur_prob->ignore_unmarked > 0 && !re->is_marked) {
+    // ignore submits which are not "marked"
+    return;
+  }
+
+  cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
+                               1 /* user_mode */, re->token_flags, re, cur_prob,
+                               pinfo->attempts,
+                               pinfo->disqualified,
+                               pinfo->prev_successes, 0, 0);
+  switch (status) {
+  case RUN_OK:
+    pinfo->marked_flag = re->is_marked;
+    pinfo->solved_flag = 1;
+    pinfo->accepted_flag = 0;
+    pinfo->pr_flag = 0;
+    pinfo->pending_flag = 0;
+    pinfo->best_score = cur_score;
+    pinfo->best_run = run_id;
+    break;
+
+  case RUN_PENDING_REVIEW:
+    pinfo->marked_flag = re->is_marked;
+    pinfo->solved_flag = 0;
+    pinfo->accepted_flag = 0;
+    pinfo->pr_flag = 1;
+    pinfo->pending_flag = 0;
+    pinfo->best_score = cur_score;
+    pinfo->best_run = run_id;
+    ++pinfo->attempts;
+    break;
+
+  case RUN_ACCEPTED:
+    pinfo->marked_flag = re->is_marked;
+    pinfo->solved_flag = 0;
+    pinfo->accepted_flag = 1;
+    pinfo->pr_flag = 0;
+    pinfo->pending_flag = 0;
+    pinfo->best_score = cur_score;
+    pinfo->best_run = run_id;
+    ++pinfo->attempts;
+    break;
+
+  case RUN_COMPILE_ERR:
+  case RUN_STYLE_ERR:
+    if (cur_prob->ignore_compile_errors > 0) break;
+    pinfo->marked_flag = re->is_marked;
+    pinfo->solved_flag = 0;
+    pinfo->accepted_flag = 0;
+    pinfo->pr_flag = 0;
+    pinfo->pending_flag = 0;
+    pinfo->best_score = 0;
+    pinfo->best_run = run_id;
+    ++pinfo->attempts;
+    break;
+
+  case RUN_CHECK_FAILED:
+  case RUN_IGNORED:
+    break;
+
+  case RUN_REJECTED:
+    pinfo->marked_flag = re->is_marked;
+    pinfo->solved_flag = 0;
+    pinfo->accepted_flag = 0;
+    pinfo->pr_flag = 0;
+    pinfo->pending_flag = 0;
+    pinfo->best_score = 0;
+    pinfo->best_run = run_id;
+    break;
+
+  case RUN_DISQUALIFIED:
+    pinfo->marked_flag = re->is_marked;
+    pinfo->solved_flag = 0;
+    pinfo->accepted_flag = 0;
+    pinfo->pr_flag = 0;
+    pinfo->pending_flag = 0;
+    pinfo->best_score = 0;
+    pinfo->best_run = run_id;
+    ++pinfo->disqualified;
+    break;
+
+  case RUN_PENDING:
+    pinfo->marked_flag = re->is_marked;
+    pinfo->solved_flag = 0;
+    pinfo->accepted_flag = 0;
+    pinfo->pr_flag = 0;
+    pinfo->pending_flag = 1;
+    pinfo->best_score = 0;
+    pinfo->best_run = run_id;
+    break;
+
+  case RUN_RUN_TIME_ERR:
+  case RUN_TIME_LIMIT_ERR:
+  case RUN_PRESENTATION_ERR:
+  case RUN_WRONG_ANSWER_ERR:
+  case RUN_PARTIAL:
+  case RUN_MEM_LIMIT_ERR:
+  case RUN_SECURITY_ERR:
+  case RUN_WALL_TIME_LIMIT_ERR:
+    pinfo->marked_flag = re->is_marked;
+    pinfo->solved_flag = 0;
+    pinfo->accepted_flag = 0;
+    pinfo->pr_flag = 0;
+    pinfo->pending_flag = 0;
+    pinfo->best_score = cur_score;
+    pinfo->best_run = run_id;
+    ++pinfo->attempts;
+    break;
+
+  default:
+    abort();
+  }
+}
+
 void
 ns_get_user_problems_summary(
         const serve_state_t cs,
@@ -4719,118 +4848,8 @@ ns_get_user_problems_summary(
         kirov_score_latest_or_unmarked(cur_prob, &re, &pinfo[re.prob_id],
                                        start_time, run_id, separate_user_score, status, score);
       } else if (cur_prob->score_latest > 0) {
-        if (cur_prob->ignore_unmarked > 0 && !re.is_marked) {
-          // ignore submits which are not "marked"
-          continue;
-        }
-
-        cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
-                                     1 /* user_mode */, re.token_flags, &re, cur_prob,
-                                     pinfo[re.prob_id].attempts,
-                                     pinfo[re.prob_id].disqualified,
-                                     pinfo[re.prob_id].prev_successes, 0, 0);
-        switch (status) {
-        case RUN_OK:
-          pinfo[re.prob_id].marked_flag = re.is_marked;
-          pinfo[re.prob_id].solved_flag = 1;
-          pinfo[re.prob_id].accepted_flag = 0;
-          pinfo[re.prob_id].pr_flag = 0;
-          pinfo[re.prob_id].pending_flag = 0;
-          pinfo[re.prob_id].best_score = cur_score;
-          pinfo[re.prob_id].best_run = run_id;
-          break;
-
-        case RUN_PENDING_REVIEW:
-          pinfo[re.prob_id].marked_flag = re.is_marked;
-          pinfo[re.prob_id].solved_flag = 0;
-          pinfo[re.prob_id].accepted_flag = 0;
-          pinfo[re.prob_id].pr_flag = 1;
-          pinfo[re.prob_id].pending_flag = 0;
-          pinfo[re.prob_id].best_score = cur_score;
-          pinfo[re.prob_id].best_run = run_id;
-          ++pinfo[re.prob_id].attempts;
-          break;
-
-        case RUN_ACCEPTED:
-          pinfo[re.prob_id].marked_flag = re.is_marked;
-          pinfo[re.prob_id].solved_flag = 0;
-          pinfo[re.prob_id].accepted_flag = 1;
-          pinfo[re.prob_id].pr_flag = 0;
-          pinfo[re.prob_id].pending_flag = 0;
-          pinfo[re.prob_id].best_score = cur_score;
-          pinfo[re.prob_id].best_run = run_id;
-          ++pinfo[re.prob_id].attempts;
-          break;
-
-        case RUN_COMPILE_ERR:
-        case RUN_STYLE_ERR:
-          if (cur_prob->ignore_compile_errors > 0) break;
-          pinfo[re.prob_id].marked_flag = re.is_marked;
-          pinfo[re.prob_id].solved_flag = 0;
-          pinfo[re.prob_id].accepted_flag = 0;
-          pinfo[re.prob_id].pr_flag = 0;
-          pinfo[re.prob_id].pending_flag = 0;
-          pinfo[re.prob_id].best_score = 0;
-          pinfo[re.prob_id].best_run = run_id;
-          ++pinfo[re.prob_id].attempts;
-          break;
-
-        case RUN_CHECK_FAILED:
-        case RUN_IGNORED:
-          break;
-
-        case RUN_REJECTED:
-          pinfo[re.prob_id].marked_flag = re.is_marked;
-          pinfo[re.prob_id].solved_flag = 0;
-          pinfo[re.prob_id].accepted_flag = 0;
-          pinfo[re.prob_id].pr_flag = 0;
-          pinfo[re.prob_id].pending_flag = 0;
-          pinfo[re.prob_id].best_score = 0;
-          pinfo[re.prob_id].best_run = run_id;
-          break;
-
-        case RUN_DISQUALIFIED:
-          pinfo[re.prob_id].marked_flag = re.is_marked;
-          pinfo[re.prob_id].solved_flag = 0;
-          pinfo[re.prob_id].accepted_flag = 0;
-          pinfo[re.prob_id].pr_flag = 0;
-          pinfo[re.prob_id].pending_flag = 0;
-          pinfo[re.prob_id].best_score = 0;
-          pinfo[re.prob_id].best_run = run_id;
-          ++pinfo[re.prob_id].disqualified;
-          break;
-
-        case RUN_PENDING:
-          pinfo[re.prob_id].marked_flag = re.is_marked;
-          pinfo[re.prob_id].solved_flag = 0;
-          pinfo[re.prob_id].accepted_flag = 0;
-          pinfo[re.prob_id].pr_flag = 0;
-          pinfo[re.prob_id].pending_flag = 1;
-          pinfo[re.prob_id].best_score = 0;
-          pinfo[re.prob_id].best_run = run_id;
-          break;
-
-        case RUN_RUN_TIME_ERR:
-        case RUN_TIME_LIMIT_ERR:
-        case RUN_PRESENTATION_ERR:
-        case RUN_WRONG_ANSWER_ERR:
-        case RUN_PARTIAL:
-        case RUN_MEM_LIMIT_ERR:
-        case RUN_SECURITY_ERR:
-        case RUN_WALL_TIME_LIMIT_ERR:
-          pinfo[re.prob_id].marked_flag = re.is_marked;
-          pinfo[re.prob_id].solved_flag = 0;
-          pinfo[re.prob_id].accepted_flag = 0;
-          pinfo[re.prob_id].pr_flag = 0;
-          pinfo[re.prob_id].pending_flag = 0;
-          pinfo[re.prob_id].best_score = cur_score;
-          pinfo[re.prob_id].best_run = run_id;
-          ++pinfo[re.prob_id].attempts;
-          break;
-
-        default:
-          abort();
-        }
+        kirov_score_latest(cur_prob, &re, &pinfo[re.prob_id],
+                           start_time, run_id, separate_user_score, status, score);
       } else {
         if (pinfo[re.prob_id].solved_flag) {
           // if the problem is already solved, no need to process this run
