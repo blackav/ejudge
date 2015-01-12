@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1281,11 +1280,20 @@ process_problem_row(
     pi->mtime = lt;
 
     if (!(s = strstr(s, "<td>"))) {
-        fprintf(log_f, "expected column 7 (links), but got nothing in row %s\n", text);
+        fprintf(log_f, "expected column 7, but got nothing in row %s\n", text);
+        goto cleanup;
+    }
+    if (extract_td_content(s, buf, &s) < 0) {
+        fprintf(log_f, "failed to extract the content of column 7: %.60s...\n", s);
+        goto cleanup;
+    }
+
+    if (!(s = strstr(s, "<td>"))) {
+        fprintf(log_f, "expected column 8 (links), but got nothing in row %s\n", text);
         goto cleanup;
     }
     if (extract_raw_td_content(s, buf, &s) < 0) {
-        fprintf(log_f, "failed to extract the content of column 7 (links): %.60s...\n", s);
+        fprintf(log_f, "failed to extract the content of column 8 (links): %.60s...\n", s);
         goto cleanup;
     }
 
