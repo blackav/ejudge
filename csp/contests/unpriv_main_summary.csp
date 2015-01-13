@@ -51,7 +51,7 @@
         int total_score_uncertain = 0;
         int act_status = RUN_CHECK_FAILED;
 %>
-<table border="1" class="b1">
+<table class="table">
     <tr>
 <%
         if (cnts->exam_mode > 0 || global->disable_prob_long_name > 0) {
@@ -108,11 +108,11 @@
 
           const unsigned char *s = "";
           if (pinfo[prob_id].accepted_flag || pinfo[prob_id].solved_flag || pinfo[prob_id].pr_flag) {
-            s = " bgcolor=\"#ddffdd\"";
+            s = " class=\"green-tr\"";
           } else if (pinfo[prob_id].pending_flag) {
             s = " bgcolor=\"#ffffdd\"";
           } else if (!pinfo[prob_id].pending_flag && pinfo[prob_id].attempts) {
-            s = " bgcolor=\"#ffdddd\"";
+            s = " bgcolor=\"red-tr\"";
           }
 %>
     <s:tr attr="s">
