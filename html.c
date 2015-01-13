@@ -1940,12 +1940,13 @@ do_write_kirov_standings(
         write_standings_header(state, cnts, f, client_flag, 0, header_str, 0);
 
       /* print "Last success" information */
+      fprintf(f, "<table class=\"table-14\">\n");
       if (last_success_run >= 0) {
         duration_str(global->show_astr_time,
                      runs[last_success_run].time, start_time,
                      dur_str, sizeof(dur_str));
 
-        fprintf(f, "<p%s>%s: %s, ",
+        fprintf(f, "<tr%s><td>%s:</td><td>%s, ",
                 ss.success_attr, _("Last success"), dur_str);
         if (global->team_info_url[0]) {
           teamdb_export_team(state->teamdb_state,
@@ -1976,14 +1977,14 @@ do_write_kirov_standings(
         if (global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
-        fprintf(f, ".</p>\n");
+        fprintf(f, ".</td></tr>\n");
       }
       /* print "Last submit" information */
       if (last_submit_run >= 0) {
         duration_str(global->show_astr_time,
                      runs[last_submit_run].time, start_time,
                      dur_str, sizeof(dur_str));
-        fprintf(f, "<p%s>%s: %s, ",
+        fprintf(f, "<tr%s><td>%s:</td><td>%s, ",
                 ss.success_attr, _("Last submit"), dur_str);
         if (global->team_info_url[0]) {
           teamdb_export_team(state->teamdb_state,
@@ -2014,25 +2015,26 @@ do_write_kirov_standings(
         if (global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
-        fprintf(f, ".</p>\n");
+        fprintf(f, ".</td></tr>\n");
       }
       if (total_trans) {
-        fprintf(f, "<p%s>%s: %d</p>",
+        fprintf(f, "<tr%s><td>%s</td>:<td>%d</td></tr>",
                 ss.success_attr, _("Runs being processed"), total_trans);
       }
       if (total_prs > 0) {
-        fprintf(f, "<p%s>%s: %d</p>",
+        fprintf(f, "<tr%s><td>%s:</td><td>%d</td></tr>",
                 ss.success_attr, _("Runs pending review"), total_prs);
       }
 
       if (total_pages > 1) {
-        fprintf(f, _("<p%s>Page %d of %d.</p>\n"),
+        fprintf(f, _("<tr%s><td colspan=\"2\">Page %d of %d.</td></tr>\n"),
                 ss.page_cur_attr, current_page, total_pages);
 
         write_kirov_page_table(&ss, f, total_pages, current_page, pgrefs,
                                t_sort, tot_full, tot_score, pg_n1, pg_n2,
                                pr_attrs, pc_attrs);
       }
+      fprintf(f, "</table>\n");
 
       /* print table header */
       fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",

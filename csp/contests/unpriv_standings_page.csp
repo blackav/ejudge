@@ -1,5 +1,4 @@
 <% // -*- mode: html -*-
-/* $Id$ */
 %><%@include "unpriv_includes.csp"
 %><%
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
@@ -70,6 +69,7 @@
 %><%@include "unpriv_menu.csp"
 %><%@include "unpriv_status.csp"
 %>
+<div class="l14">
 <h2><s:v value="title" escape="false" /></h2>
 
 <%  if (global->disable_user_standings > 0) {
@@ -93,7 +93,9 @@
     do_write_moscow_standings(cs, cnts, out_f, 0, 1, 1, phr->user_id,
                               0, 0, 0, 0, 1, cur_time, 0, NULL);
   }
-%><%@include "unpriv_footer.csp"
+%>
+</div>
+<%@include "unpriv_footer.csp"
 %><%
   l10n_resetlocale();
 //cleanup:;

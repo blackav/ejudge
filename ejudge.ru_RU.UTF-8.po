@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-13 13:13+0300\n"
-"PO-Revision-Date: 2015-01-12 13:45+0300\n"
+"POT-Creation-Date: 2015-01-13 23:06+0300\n"
+"PO-Revision-Date: 2015-01-13 23:07+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -309,6 +309,10 @@ msgstr ""
 #, c-format
 msgid "<p>You may define up to %d members.</p>"
 msgstr "<p>Вы можете добавить до %d членов команды.</p>"
+
+#, c-format
+msgid "<tr%s><td colspan=\"2\">Page %d of %d.</td></tr>\n"
+msgstr "<tr%s><td colspan=\"2\">Страница %d из %d.</td></tr>\n"
 
 #, c-format
 msgid "<u>--- Checker output: file is binary, size %lld ---</u>\n"
