@@ -4042,7 +4042,7 @@ ns_write_olympiads_user_runs(
 
   XALLOCAZ(latest_flag, cs->max_prob + 1);
 
-  fprintf(fout, "<table border=\"1\"%s><tr>", cl);
+  fprintf(fout, "<table class=\"table\"><tr>");
   if (!cnts->exam_mode) fprintf(fout, "<th%s>%s</th>", cl, _("Run ID"));
   if (cnts->exam_mode) fprintf(fout,"<th%s>%s</th>", cl, "NN");
   if (!cnts->exam_mode) fprintf(fout,"<th%s>%s</th>", cl, _("Time"));
@@ -5629,10 +5629,10 @@ new_write_user_runs(
   if (show_flags) runs_to_show = 100000;
 
   /* write run statistics: show last 15 in the reverse order */
-  fprintf(f,"<table border=\"1\"%s><tr><th%s>%s</th><th%s>%s</th>"
+  fprintf(f,"<table class=\"table\"><tr><th%s>%s</th><th%s>%s</th>"
           "<th%s>%s</th>"
           "<th%s>%s</th><th%s>%s</th><th%s>%s</th>",
-          cl, cl, _("Run ID"), cl, _("Time"), cl, _("Size"), cl, _("Problem"),
+          cl, _("Run ID"), cl, _("Time"), cl, _("Size"), cl, _("Problem"),
           cl, _("Language"), cl, _("Result"));
 
   if (global->score_system == SCORE_KIROV
