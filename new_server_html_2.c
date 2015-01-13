@@ -5932,10 +5932,10 @@ new_write_user_clars(
   if (global->is_virtual) show_astr_time = 1;
 
   /* write clars statistics for the last 15 in the reverse order */
-  fprintf(f,"<table border=\"1\"%s><tr><th%s>%s</th><th%s>%s</th><th%s>%s</th>"
+  fprintf(f,"<table class=\"table\"><tr><th%s>%s</th><th%s>%s</th><th%s>%s</th>"
           "<th%s>%s</th>"
           "<th%s>%s</th><th%s>%s</th>"
-          "<th%s>%s</th><th%s>%s</th></tr>\n", cl, cl,
+          "<th%s>%s</th><th%s>%s</th></tr>\n", cl,
           _("Clar ID"), cl, _("Flags"), cl, _("Time"), cl, _("Size"),
           cl, _("From"), cl, _("To"), cl, _("Subject"), cl, _("View"));
   for (showed = 0, i = clar_get_total(state->clarlog_state) - 1;
