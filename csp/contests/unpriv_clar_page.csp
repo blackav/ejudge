@@ -71,20 +71,22 @@
 %><%@include "unpriv_menu.csp"
 %><%@include "unpriv_status.csp"
 %>
+<div class="l14">
+
 <h2><s:_>Message</s:_> #<s:v value="clar_id" /></h2>
 
-<table class="b0">
-<tr><td class="b0"><s:_>Number</s:_>:</td><td class="b0"><s:v value="clar_id" /></td></tr>
-<tr><td class="b0"><s:_>Time</s:_>:</td><td class="b0"><s:v value="dur_str" escape="false" /></td></tr>
-<tr><td class="b0"><s:_>Size</s:_>:</td><td class="b0"><s:v value="ce.size" /></td></tr>
-<tr><td class="b0"><s:_>Sender</s:_>:</td><td class="b0"><%
+<table class="table-14">
+<tr><td><s:_>Number</s:_>:</td><td><s:v value="clar_id" /></td></tr>
+<tr><td><s:_>Time</s:_>:</td><td><s:v value="dur_str" escape="false" /></td></tr>
+<tr><td><s:_>Size</s:_>:</td><td><s:v value="ce.size" /></td></tr>
+<tr><td><s:_>Sender</s:_>:</td><td><%
   if (!ce.from) {
 %><b><s:_>judges</s:_></b><%
   } else {
 %><s:v value="teamdb_get_name(cs->teamdb_state, ce.from)" /><%
   }
 %></td></tr>
-<tr><td class="b0"><s:_>To</s:_>:</td><td class="b0"><%
+<tr><td><s:_>To</s:_>:</td><td><%
   if (!ce.to && !ce.from) {
 %><b><s:_>all</s:_></b><%
   } else if (!ce.to) {
@@ -93,11 +95,12 @@
 %><s:v value="teamdb_get_name(cs->teamdb_state, ce.to)" /><%
   }
 %></td></tr>
-<tr><td class="b0"><s:_>Subject</s:_>:</td><td class="b0"><s:v value="clar_subj" /></td></tr>
+<tr><td><s:_>Subject</s:_>:</td><td><s:v value="clar_subj" /></td></tr>
 </table>
 <hr/>
-<pre><s:v value="clar_text" /></pre>
+<pre class="message"><s:v value="clar_text" /></pre>
 <hr/>
+</div>
 
 <%@include "unpriv_footer.csp"
 %><%
