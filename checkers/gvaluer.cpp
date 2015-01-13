@@ -122,6 +122,7 @@ class Group
     bool skip = false;
     bool skip_if_not_rejudge = false;
     bool stat_to_judges = false;
+    bool test_all = false;
     int score = 0;
     int test_score = -1;
     int pass_if_count = -1;
@@ -171,6 +172,9 @@ public:
 
     void set_pass_if_count(int count) { this->pass_if_count = count; }
     int get_pass_if_count() const { return pass_if_count; }
+
+    void set_test_all(bool value) { test_all = value; }
+    bool get_test_all() const { return test_all; }
 
     void inc_passed_count() { ++passed_count; }
     int get_passed_count() const { return passed_count; }
@@ -391,6 +395,11 @@ public:
                 if (t_type != ';') parse_error("';' expected");
                 next_token();
                 g.set_stat_to_judges(true);
+            } else if (token == "test_all") {
+                next_token();
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
+                g.set_test_all(true);
             } else if (token == "score") {
                 next_token();
                 if (t_type != T_IDENT) parse_error("NUM expected");
@@ -631,7 +640,7 @@ main(int argc, char *argv[])
             g->inc_passed_count();
             g->add_total_score();
             ++test_num;
-        } else if (g->get_test_score() >= 0) {
+        } else if (g->get_test_score() >= 0 || g->get_test_all()) {
             // by-test score, just go on
             ++test_num;
         } else {
