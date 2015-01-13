@@ -407,11 +407,9 @@
         if ((global->score_system == SCORE_OLYMPIAD && !accepting_mode)
             || global->score_system == SCORE_KIROV || global->score_system == SCORE_MOSCOW) {
 %>
-<p><big><s:_>Total score</s:_>: <% 
-          if (!total_score_uncertain) {
-%><s:v value="total_score" /><%
-          } else {
-%><s:_><b>Uncertain</b> (there exist runs with hidden results)</s:_><%
+<p><big><s:_>Total score</s:_>: <s:v value="total_score" /><% 
+          if (total_score_uncertain) {
+%> - <i><s:_>May change!</s:_></i><%
           } %></big></p>
 <%
         }
