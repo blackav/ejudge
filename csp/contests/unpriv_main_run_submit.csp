@@ -45,25 +45,25 @@
         }
 %></h2>
 
-<table class="b0">
+<table class="line-table-wb">
 <%
         if (prob->type == PROB_TYPE_STANDARD) {
 %>
 <%
           if (global->score_system == SCORE_KIROV) {
 %>
-    <tr><td class="b0"><b><s:_>Full score</s:_>:</b></td><td class="b0"><tt><s:v value="prob->full_score" /></tt></td></tr>
+    <tr><td><b><s:_>Full score</s:_>:</b></td><td><tt><s:v value="prob->full_score" /></tt></td></tr>
 <%
             if (prob->run_penalty > 0) {
 %>
-    <tr><td class="b0"><b><s:_>Run penalty</s:_>:</b></td><td class="b0"><tt><s:v value="prob->run_penalty" /></tt></td></tr>
+    <tr><td><b><s:_>Run penalty</s:_>:</b></td><td><tt><s:v value="prob->run_penalty" /></tt></td></tr>
 <%
             }
 %>
 <%
             if (prob->score_bonus && prob->score_bonus[0]) {
 %>
-    <tr><td class="b0"><b><s:_>Score bonus</s:_>:</b></td><td class="b0"><tt><s:v value="prob->score_bonus" /></tt></td></tr>
+    <tr><td><b><s:_>Score bonus</s:_>:</b></td><td><tt><s:v value="prob->score_bonus" /></tt></td></tr>
 <%
             }
 %>
@@ -73,46 +73,46 @@
 <%
           if (prob->use_stdin <= 0 && prob->input_file[0] && prob->hide_file_names <= 0) {
 %>
-    <tr><td class="b0"><b><s:_>Input file name</s:_>:</b></td><td class="b0"><tt><s:v value="prob->input_file" /></tt></td></tr>
+    <tr><td><b><s:_>Input file name</s:_>:</b></td><td><tt><s:v value="prob->input_file" /></tt></td></tr>
 <%
           }
 %>
 <%
           if (prob->use_stdout <= 0 && prob->output_file[0] && prob->hide_file_names <= 0) {
 %>
-    <tr><td class="b0"><b><s:_>Output file name</s:_>:</b></td><td class="b0"><tt><s:v value="prob->output_file" /></tt></td></tr>
+    <tr><td><b><s:_>Output file name</s:_>:</b></td><td><tt><s:v value="prob->output_file" /></tt></td></tr>
 <%
           }
 %>
 <%
           if (prob->time_limit_millis > 0) {
 %>
-    <tr><td class="b0"><b><s:_>Time limit</s:_>:</b></td><td class="b0"><tt><s:v value="prob->time_limit_millis" /> <s:_>ms</s:_></tt></td></tr>
+    <tr><td><b><s:_>Time limit</s:_>:</b></td><td><tt><s:v value="prob->time_limit_millis" /> <s:_>ms</s:_></tt></td></tr>
 <%
           } else if (prob->time_limit > 0) {
 %>
-    <tr><td class="b0"><b><s:_>Time limit</s:_>:</b></td><td class="b0"><tt><s:v value="prob->time_limit" /> <s:_>s</s:_></tt></td></tr>
+    <tr><td><b><s:_>Time limit</s:_>:</b></td><td><tt><s:v value="prob->time_limit" /> <s:_>s</s:_></tt></td></tr>
 <%
           }
 %>
 <%
           if (prob->real_time_limit > 0 && prob->hide_real_time_limit <= 0) {
 %>
-    <tr><td class="b0"><b><s:_>Real time limit</s:_>:</b></td><td class="b0"><tt><s:v value="prob->real_time_limit" /> <s:_>s</s:_></tt></td></tr>
+    <tr><td><b><s:_>Real time limit</s:_>:</b></td><td><tt><s:v value="prob->real_time_limit" /> <s:_>s</s:_></tt></td></tr>
 <%
           }
 %>
 <%
           if (prob->max_vm_size != 0 && prob->max_vm_size != ~(size_t) 0) {
 %>
-    <tr><td class="b0"><b><s:_>Memory limit</s:_>:</b></td><td class="b0"><tt><s:v format="V" value="prob->max_vm_size" /></tt></td></tr>
+    <tr><td><b><s:_>Memory limit</s:_>:</b></td><td><tt><s:v format="V" value="prob->max_vm_size" /></tt></td></tr>
 <%
           }
 %>
 <%
           if (prob->max_stack_size != 0 && prob->max_stack_size != ~(size_t) 0 && prob->max_stack_size != prob->max_vm_size) {
 %>
-    <tr><td class="b0"><b><s:_>Stack limit</s:_>:</b></td><td class="b0"><tt><s:v format="V" value="prob->max_stack_size" /></tt></td></tr>
+    <tr><td><b><s:_>Stack limit</s:_>:</b></td><td><tt><s:v format="V" value="prob->max_stack_size" /></tt></td></tr>
 <%
           }
 %>
@@ -123,7 +123,7 @@
 <%
         if (prob->start_date > 0) {
 %>
-    <tr><td class="b0"><b><s:_>Open date</s:_>:</b></td><td class="b0"><tt><s:v value="prob->start_date" /></tt></td></tr>
+    <tr><td><b><s:_>Open date</s:_>:</b></td><td><tt><s:v value="prob->start_date" /></tt></td></tr>
 <%
         }
 %>
@@ -131,7 +131,7 @@
 <%
         if (pinfo[prob_id].deadline > 0) {
 %>
-    <tr><td class="b0"><b><s:_>Deadline</s:_>:</b></td><td class="b0"><tt><s:v value="pinfo[prob_id].deadline" /></tt></td></tr>
+    <tr><td><b><s:_>Deadline</s:_>:</b></td><td><tt><s:v value="pinfo[prob_id].deadline" /></tt></td></tr>
 <%
         }
 %>
@@ -140,7 +140,7 @@
         if ((pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE) && prob->date_penalty) {
           int dpi;
 %>
-    <tr><td class="b0"><b><s:_>Date penalty</s:_>:</b></td><td class="b0"><tt><%
+    <tr><td><b><s:_>Date penalty</s:_>:</b></td><td><tt><%
           for (dpi = 0; prob->date_penalty[dpi]; ++dpi) {
             char *dp = prob->date_penalty[dpi];
             if (dp != prob->date_penalty[0]) {
@@ -160,7 +160,7 @@
         int remain_count = prob->max_user_run_count - pinfo[prob_id].eff_attempts;
         if (remain_count < 0) remain_count = 0;
 %>
-    <tr><td class="b0"><b><s:_>Remaining attempts</s:_>:</b></td><td class="b0"><tt><s:v value="remain_count" /></tt></td></tr>
+    <tr><td><b><s:_>Remaining attempts</s:_>:</b></td><td><tt><s:v value="remain_count" /></tt></td></tr>
 <%
         if (remain_count <= 0) pinfo[prob_id].status &= ~PROB_STATUS_SUBMITTABLE;
       }
