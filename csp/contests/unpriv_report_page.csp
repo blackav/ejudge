@@ -186,6 +186,7 @@ ns_unpriv_parse_run_id(
   case CONTENT_TYPE_XML:
     if (fcev.u > 0) {
 %>
+<div class="l14">
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 10px;">
 <h2><s:_>Run comments</s:_></h2>
 </div>
@@ -248,8 +249,9 @@ ns_unpriv_parse_run_id(
   default:
     abort();
   }
-%><%
-%><%@include "unpriv_footer.csp"
+%>
+</div>
+<%@include "unpriv_footer.csp"
 %><%
 cleanup:;
   clar_free_fcev(&fcev);

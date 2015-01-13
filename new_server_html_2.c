@@ -6019,7 +6019,7 @@ write_xml_team_testing_report(
   const struct section_global_data *global = state->global;
   testing_report_xml_t r = 0;
   struct testing_report_test *t;
-  unsigned char *font_color = 0, *s;
+  unsigned char *style = 0, *s, *font_color = 0;
   int need_comment = 0, need_info = 0, is_kirov = 0, i;
   unsigned char cl[128] = { 0 };
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -6040,7 +6040,7 @@ write_xml_team_testing_report(
   }
 
   if (r->compile_error) {
-    fprintf(f, "<h2><font color=\"red\">%s</font></h2>\n", run_status_str(r->status, 0, 0, 0, 0));
+    fprintf(f, "<h2 style=\"color: #A32C2C; margin-bottom: 7px;\">%s</h2>\n", run_status_str(r->status, 0, 0, 0, 0));
     if (r->compiler_output) {
       fprintf(f, "<pre>%s</pre>\n", ARMOR(r->compiler_output));
     }
@@ -6063,12 +6063,12 @@ write_xml_team_testing_report(
   }
 
   if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW) {
-    font_color = "green";
+    style = "color: green; margin-bottom: 7px;";
   } else {
-    font_color = "red";
+    style = "color: #A32C2C; margin-bottom: 7px;";
   }
-  fprintf(f, "<h2><font color=\"%s\">%s</font></h2>\n",
-          font_color, run_status_str(status, 0, 0, output_only, 0));
+  fprintf(f, "<h2 style=\"%s\">%s</h2>\n",
+          style, run_status_str(status, 0, 0, output_only, 0));
 
   if (output_only) {
     if (r->run_tests != 1 || !(t = r->tests[0])) {
@@ -6076,9 +6076,9 @@ write_xml_team_testing_report(
       return 0;
     }
     fprintf(f,
-            "<table%s>"
-            "<tr><th%s>N</th><th%s>%s</th>",
-            cl, cl, cl, _("Result"));
+      "<table class=\"table\">"
+      "<tr><th%s>N</th><th%s>%s</th>",
+      cl, cl, _("Result"));
     if (t->score >= 0 && t->nominal_score >= 0)
       fprintf(f, "<th%s>%s</th>", cl, _("Score"));
     if (t->status == RUN_PRESENTATION_ERR || prob->show_checker_comment > 0) {
