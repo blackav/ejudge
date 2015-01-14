@@ -671,3 +671,14 @@ td.a-button-style, td.a-button-style:hover {
 	display: block;
 	border-bottom: 1px solid rgba(102, 102, 102, 0.72);
 }
+
+.table-14 {
+	margin-top: 7px;
+	border-collapse: collapse;
+}
+
+.table-14 td, .table-14 td.b0 {
+	font-size: 14px;
+	padding: 1px 10px 0 0;
+	border: none;
+}
