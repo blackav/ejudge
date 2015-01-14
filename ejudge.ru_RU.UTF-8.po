@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-13 23:06+0300\n"
-"PO-Revision-Date: 2015-01-13 23:07+0300\n"
+"POT-Creation-Date: 2015-01-14 09:30+0300\n"
+"PO-Revision-Date: 2015-01-14 09:31+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -3276,11 +3276,17 @@ msgstr "Ошибка выполнения"
 msgid "Running..."
 msgstr "Выполняется..."
 
+msgid "Runs accepted for testing"
+msgstr "Посылок, принятых на проверку"
+
 msgid "Runs being processed"
 msgstr "Обрабатываемые посылки"
 
 msgid "Runs pending review"
 msgstr "Посылок ожидает подтверждения"
+
+msgid "Runs pending testing"
+msgstr "Посылок ожидающих тестирования"
 
 msgid "STATUS UPDATE FAILED!"
 msgstr "ОШИБКА ОБНОВЛЕНИЯ СТАТУСА!"

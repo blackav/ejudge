@@ -1060,6 +1060,8 @@ do_write_kirov_standings(
   int prev_prob = -1, row_ind = 0, group_ind = 1;
   int total_trans = 0;
   int total_prs = 0;
+  int total_pending = 0;
+  int total_accepted = 0;
   struct standings_style ss;
   int sort_flag;
   struct sformat_extra_data fed;
@@ -1533,9 +1535,13 @@ do_write_kirov_standings(
         } else if (run_status == RUN_PENDING_REVIEW) {
           pr_flag[up_ind] = 1;
           ++total_prs;
-        } else if (run_status == RUN_PENDING
-                   || run_status == RUN_ACCEPTED
-                   || run_status == RUN_COMPILING
+        } else if (run_status == RUN_PENDING) {
+          ++trans_num[up_ind];
+          ++total_pending;
+        } else if (run_status == RUN_ACCEPTED) {
+          ++trans_num[up_ind];
+          ++total_accepted;
+        } else if (run_status == RUN_COMPILING
                    || run_status == RUN_RUNNING) {
           trans_num[up_ind]++;
           total_trans++;
@@ -1654,9 +1660,13 @@ do_write_kirov_standings(
         } else if (run_status == RUN_PENDING_REVIEW) {
           pr_flag[up_ind] = 1;
           ++total_prs;
-        } else if (run_status == RUN_PENDING
-                   || run_status == RUN_ACCEPTED
-                   || run_status == RUN_COMPILING
+        } else if (run_status == RUN_PENDING) {
+          ++trans_num[up_ind];
+          ++total_pending;
+        } else if (run_status == RUN_ACCEPTED) {
+          ++trans_num[up_ind];
+          ++total_accepted;
+        } else if (run_status == RUN_COMPILING
                    || run_status == RUN_RUNNING) {
           trans_num[up_ind]++;
           total_trans++;
@@ -2024,6 +2034,14 @@ do_write_kirov_standings(
       if (total_prs > 0) {
         fprintf(f, "<tr%s><td>%s:</td><td>%d</td></tr>",
                 ss.success_attr, _("Runs pending review"), total_prs);
+      }
+      if (total_pending > 0) {
+        fprintf(f, "<tr%s><td>%s:</td><td>%d</td></tr>",
+                ss.success_attr, _("Runs pending testing"), total_pending);
+      }
+      if (total_accepted > 0) {
+        fprintf(f, "<tr%s><td>%s:</td><td>%d</td></tr>",
+                ss.success_attr, _("Runs accepted for testing"), total_accepted);
       }
 
       if (total_pages > 1) {
