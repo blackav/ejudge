@@ -1063,6 +1063,7 @@ do_write_kirov_standings(
   int total_pending = 0;
   int total_accepted = 0;
   int total_disqualified = 0;
+  int total_check_failed = 0;
   struct standings_style ss;
   int sort_flag;
   struct sformat_extra_data fed;
@@ -1549,6 +1550,7 @@ do_write_kirov_standings(
           total_trans++;
         } else if (run_status == RUN_CHECK_FAILED) {
           cf_num[up_ind]++;
+          ++total_check_failed;
         } else {
           /* something strange... */
         }
@@ -1675,6 +1677,7 @@ do_write_kirov_standings(
           total_trans++;
         } else if (run_status == RUN_CHECK_FAILED) {
           cf_num[up_ind]++;
+          ++total_check_failed;
         } else {
           /* something strange... */
         }
@@ -2037,21 +2040,29 @@ do_write_kirov_standings(
                 ss.success_attr, row_attr, _("Runs being processed"), row_attr, total_trans);
       }
       if (total_prs > 0) {
-        fprintf(f, "<tr%s><td>%s:</td><td>%d</td></tr>",
-                ss.success_attr, _("Runs pending review"), total_prs);
+        if (ss.pr_attr && ss.pr_attr[0]) row_attr = ss.pr_attr;
+        fprintf(f, "<tr%s><td%s>%s:</td><td%s>%d</td></tr>",
+                ss.success_attr, row_attr, _("Runs pending review"), row_attr, total_prs);
       }
       if (total_pending > 0) {
-        fprintf(f, "<tr%s><td>%s:</td><td>%d</td></tr>",
-                ss.success_attr, _("Runs pending testing"), total_pending);
+        if (ss.trans_attr && ss.trans_attr[0]) row_attr = ss.trans_attr;
+        fprintf(f, "<tr%s><td%s>%s:</td><td%s>%d</td></tr>",
+                ss.success_attr, row_attr, _("Runs pending testing"), row_attr, total_pending);
       }
       if (total_accepted > 0) {
-        fprintf(f, "<tr%s><td>%s:</td><td>%d</td></tr>",
-                ss.success_attr, _("Runs accepted for testing"), total_accepted);
+        if (ss.trans_attr && ss.trans_attr[0]) row_attr = ss.trans_attr;
+        fprintf(f, "<tr%s><td%s>%s:</td><td%s>%d</td></tr>",
+                ss.success_attr, row_attr, _("Runs accepted for testing"), row_attr, total_accepted);
       }
-
       if (total_disqualified > 0) {
-        fprintf(f, "<tr%s><td>%s:</td><td>%d</td></tr>",
-                ss.success_attr, _("Disqualified runs"), total_disqualified);
+        if (ss.disq_attr && ss.disq_attr[0]) row_attr = ss.disq_attr;
+        fprintf(f, "<tr%s><td%s>%s:</td><td%s>%d</td></tr>",
+                ss.success_attr, row_attr, _("Disqualified runs"), row_attr, total_disqualified);
+      }
+      if (total_check_failed > 0) {
+        if (ss.fail_attr && ss.fail_attr[0]) row_attr = ss.fail_attr;
+        fprintf(f, "<tr%s><td%s>%s:</td><td%s>%d</td></tr>",
+                ss.success_attr, row_attr, _("Check failed runs"), row_attr, total_check_failed);
       }
 
       if (total_pages > 1) {
