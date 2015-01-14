@@ -110,9 +110,9 @@
           if (pinfo[prob_id].accepted_flag || pinfo[prob_id].solved_flag || pinfo[prob_id].pr_flag) {
             s = " class=\"green-tr\"";
           } else if (pinfo[prob_id].pending_flag) {
-            s = " bgcolor=\"#ffffdd\"";
+            s = " class=\"yellow-tr\"";
           } else if (!pinfo[prob_id].pending_flag && pinfo[prob_id].attempts) {
-            s = " bgcolor=\"red-tr\"";
+            s = " class=\"red-tr\"";
           }
 %>
     <s:tr attr="s">

@@ -749,6 +749,11 @@ table.standings td {
 .red-tr td {
 	background: rgb(231, 169, 156);
 }
+
+.yellow-tr td {
+	background: #ffffdd;
+}
+
 /**************** DIV PROB ******************/
 
 div.probOk {
