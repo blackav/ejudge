@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-14 09:30+0300\n"
+"POT-Creation-Date: 2015-01-14 09:39+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -1135,6 +1135,9 @@ msgid "Disqualification explanation"
 msgstr ""
 
 msgid "Disqualified"
+msgstr ""
+
+msgid "Disqualified runs"
 msgstr ""
 
 msgid "Disqualified?"

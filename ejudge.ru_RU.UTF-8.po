@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-14 09:30+0300\n"
+"POT-Creation-Date: 2015-01-14 09:39+0300\n"
 "PO-Revision-Date: 2015-01-14 09:31+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -1205,6 +1205,10 @@ msgstr "Объяснение причины дисквалификации"
 
 msgid "Disqualified"
 msgstr "Дисквалифицирован"
+
+#, fuzzy
+msgid "Disqualified runs"
+msgstr "Дисквалифицировать посылки"
 
 msgid "Disqualified?"
 msgstr "Дисквалифицирован?"

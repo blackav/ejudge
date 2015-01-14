@@ -1062,6 +1062,7 @@ do_write_kirov_standings(
   int total_prs = 0;
   int total_pending = 0;
   int total_accepted = 0;
+  int total_disqualified = 0;
   struct standings_style ss;
   int sort_flag;
   struct sformat_extra_data fed;
@@ -1532,6 +1533,7 @@ do_write_kirov_standings(
         } else if (run_status == RUN_DISQUALIFIED) {
           if (!full_sol[up_ind]) sol_att[up_ind]++;
           disq_num[up_ind]++;
+          ++total_disqualified;
         } else if (run_status == RUN_PENDING_REVIEW) {
           pr_flag[up_ind] = 1;
           ++total_prs;
@@ -1657,6 +1659,7 @@ do_write_kirov_standings(
         } else if (run_status == RUN_DISQUALIFIED) {
           if (!full_sol[up_ind]) sol_att[up_ind]++;
           disq_num[up_ind]++;
+          ++total_disqualified;
         } else if (run_status == RUN_PENDING_REVIEW) {
           pr_flag[up_ind] = 1;
           ++total_prs;
@@ -2028,8 +2031,10 @@ do_write_kirov_standings(
         fprintf(f, ".</td></tr>\n");
       }
       if (total_trans) {
-        fprintf(f, "<tr%s><td>%s</td>:<td>%d</td></tr>",
-                ss.success_attr, _("Runs being processed"), total_trans);
+        row_attr = "";
+        if (ss.trans_attr && ss.trans_attr[0]) row_attr = ss.trans_attr;
+        fprintf(f, "<tr%s><td%s>%s:</td><td%s>%d</td></tr>",
+                ss.success_attr, row_attr, _("Runs being processed"), row_attr, total_trans);
       }
       if (total_prs > 0) {
         fprintf(f, "<tr%s><td>%s:</td><td>%d</td></tr>",
@@ -2042,6 +2047,11 @@ do_write_kirov_standings(
       if (total_accepted > 0) {
         fprintf(f, "<tr%s><td>%s:</td><td>%d</td></tr>",
                 ss.success_attr, _("Runs accepted for testing"), total_accepted);
+      }
+
+      if (total_disqualified > 0) {
+        fprintf(f, "<tr%s><td>%s:</td><td>%d</td></tr>",
+                ss.success_attr, _("Disqualified runs"), total_disqualified);
       }
 
       if (total_pages > 1) {
