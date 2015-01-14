@@ -6166,9 +6166,9 @@ write_xml_team_testing_report(
   }
 
   fprintf(f,
-          "<table%s>"
+          "<table class=\"table\">"
           "<tr><th%s>N</th><th%s>%s</th><th%s>%s</th>",
-          cl, cl, cl, _("Result"), cl, _("Time (sec)")/*,
+          cl, cl, _("Result"), cl, _("Time (sec)")/*,
           cl, _("Real time (sec)")*/);
   if (need_info) {
     fprintf(f, "<th%s>%s</th>", cl, _("Extra info"));
