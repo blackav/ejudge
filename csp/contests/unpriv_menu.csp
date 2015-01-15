@@ -130,14 +130,14 @@
   }
 %><%
   if (global && start_time > 0 && global->disable_user_standings <= 0) {
-%><li><div class="contest_actions_item"><%
     if (phr->action == NEW_SRV_ACTION_STANDINGS) {
-%><%
+%><li class="current"><div class="contest_actions_item"><%
       if (cnts->personal) {
 %><s:_>User standings</s:_><%
       } else {
 %><s:_>Standings</s:_><%
       }
+%></div></li><%
     } else {
       if (cnts->standings_url) {
         memset(&tdb, 0, sizeof(tdb));
@@ -148,24 +148,23 @@
         sformat_message(hbuf, sizeof(hbuf), 0,
                         cnts->standings_url, global, 0, 0, 0, &tdb,
                         tdb.user, cnts, &fe);
-%><a class="menu" href="<s:v value="hbuf" escape="false" />" target="_blank"><%
+%><li><div class="contest_actions_item"><a class="menu" href="<s:v value="hbuf" escape="false" />" target="_blank"><%
         if (cnts->personal) {
 %><s:_>User standings</s:_><%
         } else {
 %><s:_>Standings</s:_><%
         }
-%></a><%
+%></a></div></li><%
       } else {
-%><s:a class="menu" ac="standings"><%
+%><li><div class="contest_actions_item"><s:a class="menu" ac="standings"><%
         if (cnts->personal) {
 %><s:_>User standings</s:_><%
         } else {
 %><s:_>Standings</s:_><%
         }
-%></s:a><%
+%></s:a></div></li><%
       }
     }
-%></div></li><%
   }
 %><%
   if (global && global->disable_team_clars <= 0 && global->disable_clars <= 0 && start_time > 0
