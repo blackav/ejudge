@@ -175,7 +175,9 @@ ns_unpriv_parse_run_id(
 %><%@include "unpriv_header.csp" 
 %><%@include "unpriv_menu.csp"
 %><%@include "unpriv_status.csp"
-%><%
+%>
+<div class="l14">
+<%
   switch (content_type) {
   case CONTENT_TYPE_TEXT:
 %><pre><s:v value="rep_text" /></pre><%
@@ -186,7 +188,6 @@ ns_unpriv_parse_run_id(
   case CONTENT_TYPE_XML:
     if (fcev.u > 0) {
 %>
-<div class="l14">
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 10px;">
 <h2><s:_>Run comments</s:_></h2>
 </div>
