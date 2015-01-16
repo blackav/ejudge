@@ -1058,6 +1058,7 @@ ns_write_priv_all_runs(
     fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_CLEAR_DISPLAYED_1));
     fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_IGNORE_DISPLAYED_1));
     fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1));
+    fprintf(f, "<td>%s</td>", BUTTON(NEW_SRV_ACTION_TOKENIZE_DISPLAYED_1));
     fprintf(f, "</tr></table></form>\n");
   }
 

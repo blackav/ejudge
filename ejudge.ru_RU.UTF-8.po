@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-16 08:16+0300\n"
-"PO-Revision-Date: 2015-01-16 08:17+0300\n"
+"POT-Creation-Date: 2015-01-16 17:05+0300\n"
+"PO-Revision-Date: 2015-01-16 17:06+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -3993,6 +3993,12 @@ msgstr "Кому (рег. номер)"
 
 msgid "To user login"
 msgstr "Кому (рег. имя)"
+
+msgid "Tokenize displayed runs"
+msgstr "Редактировать токены отображённых посылок"
+
+msgid "Tokenize displayed runs!"
+msgstr "Изменить токены отображённых посылок!"
 
 msgid "Too few lines in CSV file"
 msgstr "В CSV-файле слишком мало строк"
