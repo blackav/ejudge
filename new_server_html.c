@@ -4234,6 +4234,60 @@ priv_clear_displayed(FILE *fout,
 }
 
 static int
+priv_tokenize_displayed(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  unsigned long *mask = 0;
+  size_t mask_size = 0;
+  int retval = 0;
+  int token_count = 0;
+  int token_flags = 0;
+  const unsigned char *s = 0;
+
+  if (ns_parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0) goto invalid_param;
+  if (!mask_size) FAIL(NEW_SRV_ERR_NO_RUNS_TO_REJUDGE);
+  if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  if (hr_cgi_param_int(phr, "token_count", &token_count) < 0)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  if (token_count < 0 || token_count > 1000000)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  s = NULL;
+  if (hr_cgi_param(phr, "finalscore_bit", &s) > 0 && s != NULL)
+    token_flags |= TOKEN_FINALSCORE_BIT;
+  s = NULL;
+  if (hr_cgi_param(phr, "valuer_judge_comment_bit", &s) > 0 && s != NULL)
+    token_flags |= TOKEN_VALUER_JUDGE_COMMENT_BIT;
+  s = NULL;
+  if (hr_cgi_param(phr, "tests_bits", &s) > 0 && s != NULL) {
+    if (!strcmp(s, "2")) {
+      token_flags |= TOKEN_BASICTESTS_BIT;
+    } else if (!strcmp(s, "4")) {
+      token_flags |= TOKEN_TOKENTESTS_BIT;
+    } else if (!strcmp(s, "6")) {
+      token_flags |= TOKEN_FINALTESTS_BIT;
+    }
+  }
+
+  serve_tokenize_by_mask(cs, phr->user_id, &phr->ip, phr->ssl_flag, mask_size, mask, token_count, token_flags);
+
+ cleanup:
+  xfree(mask);
+  return retval;
+
+ invalid_param:
+  ns_html_err_inv_param(fout, phr, 0, 0);
+  xfree(mask);
+  return -1;
+}
+
+static int
 priv_rejudge_displayed(FILE *fout,
                        FILE *log_f,
                        struct http_request_info *phr,
@@ -6266,6 +6320,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2] = priv_clear_displayed,
+  [NEW_SRV_ACTION_TOKENIZE_DISPLAYED_2] = priv_tokenize_displayed,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_2] = priv_upsolving_operation,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_3] = priv_upsolving_operation,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_4] = priv_upsolving_operation,
@@ -6665,6 +6720,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_IGNORE_DISPLAYED_2] = priv_generic_operation,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1] = priv_generic_page,
   [NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2] = priv_generic_operation,
+  [NEW_SRV_ACTION_TOKENIZE_DISPLAYED_2] = priv_generic_operation,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_2] = priv_generic_operation,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_3] = priv_generic_operation,
   [NEW_SRV_ACTION_UPSOLVING_CONFIG_4] = priv_generic_operation,
