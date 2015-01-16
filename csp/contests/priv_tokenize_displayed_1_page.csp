@@ -17,6 +17,10 @@
     int count = 0;
     int token_count = 1;
 
+    if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
+        FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+
     if (ns_parse_run_mask(phr, &mask_size_str, &mask_str, &mask_size, &mask) < 0) {
         FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
     }
