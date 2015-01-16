@@ -52,8 +52,8 @@
 %></p>
 
 <s:form>
-<s:hidden name="mask_size" escape="false" value="mask_size_str" />
-<s:hidden name="mask" escape="false" value="mask_str" />
+<s:hidden name="run_mask_size" escape="false" value="mask_size_str" />
+<s:hidden name="run_mask" escape="false" value="mask_str" />
 
 <p><s:_>Token counter</s:_>: <s:textfield name="token_count" /></p>
 
