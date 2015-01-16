@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-14 09:43+0300\n"
-"PO-Revision-Date: 2015-01-14 09:44+0300\n"
+"POT-Creation-Date: 2015-01-16 08:16+0300\n"
+"PO-Revision-Date: 2015-01-16 08:17+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -38,6 +38,12 @@ msgstr " (использовано: %d)"
 #, c-format
 msgid " / <b>%d unread message(s)</b>"
 msgstr " / <b>%d непрочитанных сообщений</b>"
+
+msgid " or standard input"
+msgstr " или стандартный поток ввода"
+
+msgid " or standard output"
+msgstr " или стандартный поток вывода"
 
 msgid "(no subject)"
 msgstr "(без темы)"

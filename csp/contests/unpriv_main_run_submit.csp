@@ -71,14 +71,22 @@
           }
 %>
 <%
-          if (prob->use_stdin <= 0 && prob->input_file[0] && prob->hide_file_names <= 0) {
+          if (prob->combined_stdin > 0 && prob->input_file[0] && prob->hide_file_names <= 0) {
+%>
+    <tr><td><b><s:_>Input file name</s:_>:</b></td><td><tt><s:v value="prob->input_file" /></tt><s:_> or standard input</s:_></td></tr>
+<%
+          } else if (prob->use_stdin <= 0 && prob->input_file[0] && prob->hide_file_names <= 0) {
 %>
     <tr><td><b><s:_>Input file name</s:_>:</b></td><td><tt><s:v value="prob->input_file" /></tt></td></tr>
 <%
           }
 %>
 <%
-          if (prob->use_stdout <= 0 && prob->output_file[0] && prob->hide_file_names <= 0) {
+          if (prob->combined_stdout > 0 && prob->output_file[0] && prob->hide_file_names <= 0) {
+%>
+    <tr><td><b><s:_>Output file name</s:_>:</b></td><td><tt><s:v value="prob->output_file" /></tt><s:_> or standard output</s:_></td></tr>
+<%
+          } else if (prob->use_stdout <= 0 && prob->output_file[0] && prob->hide_file_names <= 0) {
 %>
     <tr><td><b><s:_>Output file name</s:_>:</b></td><td><tt><s:v value="prob->output_file" /></tt></td></tr>
 <%
