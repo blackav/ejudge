@@ -1,7 +1,6 @@
 /* -*- mode: fundamental -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -399,13 +398,13 @@ exprA :
 | "eoln_type" { $1->kind = TOK_CUREOLN_TYPE; $$ = $1; }
 | "cureoln_type" { $$ = $1; }
 | "store_flags" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
-| "store_flags" { $1->kind = TOK_STORE_FLAGS; $$ = $1; }
+| "store_flags" { $1->kind = TOK_CURSTORE_FLAGS; $$ = $1; }
 | "curstore_flags" { $$ = $1; }
 | "token_flags" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
-| "token_flags" { $1->kind = TOK_TOKEN_FLAGS; $$ = $1; }
+| "token_flags" { $1->kind = TOK_CURTOKEN_FLAGS; $$ = $1; }
 | "curtoken_flags" { $$ = $1; }
 | "token_count" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
-| "token_count" { $1->kind = TOK_TOKEN_COUNT; $$ = $1; }
+| "token_count" { $1->kind = TOK_CURTOKEN_COUNT; $$ = $1; }
 | "curtoken_count" { $$ = $1; }
 | "total_score" { $1->kind = TOK_CURTOTAL_SCORE; $$ = $1; }
 | "cypher" { $1->kind = TOK_CURCYPHER; $$ = $1; }
