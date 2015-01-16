@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-16 17:16+0300\n"
-"PO-Revision-Date: 2015-01-16 17:16+0300\n"
+"POT-Creation-Date: 2015-01-16 19:00+0300\n"
+"PO-Revision-Date: 2015-01-16 19:01+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -532,6 +532,12 @@ msgstr "Разрешить просмотр краткого протокола"
 
 msgid "Allow viewing source code"
 msgstr "Разрешить просмотр исходного текста"
+
+msgid "Allow viewing the final scores"
+msgstr "Разрешить просмотр итогового балла"
+
+msgid "Allow viewing the judge comment of the valuer"
+msgstr "Разрешить просмотр комментария для судей, полученного от программы оценивания"
 
 #, c-format
 msgid "An e-mail messages is sent to the address <tt>%s</tt>."
@@ -3303,6 +3309,9 @@ msgstr "Посылок ожидает подтверждения"
 msgid "Runs pending testing"
 msgstr "Посылок ожидающих тестирования"
 
+msgid "Runs to change token info:"
+msgstr "Посылки для изменения информации о токене:"
+
 msgid "STATUS UPDATE FAILED!"
 msgstr "ОШИБКА ОБНОВЛЕНИЯ СТАТУСА!"
 
@@ -3523,6 +3532,9 @@ msgstr "Показать детали"
 
 msgid "Show hidden contests"
 msgstr "Показать скрытые турниры"
+
+msgid "Show tests"
+msgstr "Разрешить просмотр согласно правилам видимости тестов"
 
 msgid "Show unmanageable contests"
 msgstr "Показать неуправляемые турниры"
@@ -3996,6 +4008,9 @@ msgstr "Кому (рег. номер)"
 
 msgid "To user login"
 msgstr "Кому (рег. имя)"
+
+msgid "Token counter"
+msgstr "Число использованных токенов"
 
 msgid "Tokenize displayed runs"
 msgstr "Редактировать токены отображённых посылок"

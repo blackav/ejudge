@@ -7,6 +7,19 @@
 %><%
     int enable_main_menu = 0;
     const unsigned char *title = NULL;
+    const unsigned char *mask_size_str = 0;
+    const unsigned char *mask_str = 0;
+    size_t mask_size = 0;
+    unsigned long *mask = 0;
+    const unsigned char *s = 0;
+    int n, i;
+    long m;
+    int count = 0;
+    int token_count = 1;
+
+    if (ns_parse_run_mask(phr, &mask_size_str, &mask_str, &mask_size, &mask) < 0) {
+        FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
+    }
 
     l10n_setlocale(phr->locale_id);
     title = _("Change tokens for displayed runs");
@@ -15,6 +28,52 @@
 </div>
 
 <p><s:a ac="main-page"><s:_>To main page</s:_></s:a></p>
+
+<p><s:_>Runs to change token info:</s:_><%
+    s = "";
+    for (n = 0; n < 8 * sizeof(mask[0]) * mask_size; n++) {
+      i = n / (8 * sizeof(mask[0]));
+      m = 1L << (n % (8 * sizeof(mask[0])));
+      if ((mask[i] & m)) {
+        fprintf(out_f, "%s%d", s, n);
+        s = ", ";
+        ++count;
+      }
+    }
+    if (!count) {
+%><i>no runs!</i><%
+    } else {
+%> (<b><s:v value="count" /> total</b>)?<%
+    }
+%></p>
+
+<s:form>
+<s:hidden name="mask_size" escape="false" value="mask_size_str" />
+<s:hidden name="mask" escape="false" value="mask_str" />
+
+<p><s:_>Token counter</s:_>: <s:textfield name="token_count" /></p>
+
+<table>
+    <tr><td><input type="checkbox" name="finalscore_bit" value="1"/></td><td><s:_>Allow viewing the final scores</s:_></td></tr>
+    <tr>
+        <td>
+            <select name="tests_bits">
+                <option value="0"></option>
+                <option value="2">Basic (open_tests)</option>
+                <option value="4">Token (token_open_tests)</option>
+                <option value="6">Final (final_open_tests)</option>
+            </select>
+        </td>
+        <td><s:_>Show tests</s:_></td>
+    </tr>
+    <tr><td><input type="checkbox" name="valuer_judge_comment_bit" value="1"/></td><s:_>Allow viewing the judge comment of the valuer</s:_><td></td></tr>
+</table>
+
+<table>
+    <tr><td><s:submit ac="tokenize-displayed-2" /></td></tr>
+    <tr><td><s:a ac="main-page"><s:_>Main page</s:_></s:a></td></tr>
+</table>
+</s:form>
 
 <%@include "priv_footer.csp"
 %><%
