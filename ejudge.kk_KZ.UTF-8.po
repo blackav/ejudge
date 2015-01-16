@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-16 17:05+0300\n"
+"POT-Creation-Date: 2015-01-16 17:16+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -639,6 +639,9 @@ msgid "Change password"
 msgstr ""
 
 msgid "Change status"
+msgstr ""
+
+msgid "Change tokens for displayed runs"
 msgstr ""
 
 msgid "Change!"
