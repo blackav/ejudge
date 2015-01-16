@@ -513,6 +513,17 @@ serve_mark_by_mask(
         unsigned long *mask,
         int mark_value);
 
+void
+serve_tokenize_by_mask(
+        serve_state_t state,
+        int user_id,
+        const ej_ip_t *ip,
+        int ssl_flag,
+        int mask_size,
+        unsigned long *mask,
+        int token_count,
+        int token_flags);
+
 struct server_framework_job *
 serve_rejudge_problem(
         const struct ejudge_cfg *config,

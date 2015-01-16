@@ -4744,6 +4744,46 @@ serve_mark_by_mask(
   }
 }
 
+void
+serve_tokenize_by_mask(
+        serve_state_t state,
+        int user_id,
+        const ej_ip_t *ip,
+        int ssl_flag,
+        int mask_size,
+        unsigned long *mask,
+        int token_count,
+        int token_flags)
+{
+  int total_runs, r;
+  struct run_entry re;
+
+  ASSERT(mask_size > 0);
+
+  total_runs = run_get_total(state->runlog_state);
+  if (total_runs > mask_size * BITS_PER_LONG) {
+    total_runs = mask_size * BITS_PER_LONG;
+  }
+
+  for (r = total_runs - 1; r >= 0; r--) {
+    if (!(mask[r / BITS_PER_LONG] & (1L << (r % BITS_PER_LONG)))
+        || run_is_readonly(state->runlog_state, r))
+      continue;
+    if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
+    if (!run_is_valid_status(re.status)) continue;
+    if (re.status > RUN_MAX_STATUS) continue;
+
+    if (re.token_count != token_count || re.token_flags != token_flags) {
+      re.token_count = token_count;
+      re.token_flags = token_flags;
+      run_set_entry(state->runlog_state, r, RE_TOKEN_COUNT | RE_TOKEN_FLAGS, &re);
+    }
+
+    serve_audit_log(state, r, &re, user_id, ip, ssl_flag,
+                    "change-token", "ok", -1, NULL);
+  }
+}
+
 static int
 testing_queue_unlock_entry(
         const unsigned char *run_queue_dir,
