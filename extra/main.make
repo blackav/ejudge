@@ -21,7 +21,7 @@ LDDEBUGFLAGS=-g
 endif
 
 ifdef STATIC
-CDEBUGFLAGS += -static
+LDDEBUGFLAGS += -static
 endif
 
 CC=gcc
