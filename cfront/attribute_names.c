@@ -1,7 +1,6 @@
 /* -*- mode: C -*- */
-/* $Id$ */
 
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -24,15 +23,15 @@
 
 static const unsigned char * attr_names[C_ATTR_LAST] =
 {
-  [C_ATTR_NORETURN] "noreturn",
-  [C_ATTR_PURE] "pure",
-  [C_ATTR_CONST] "const",
-  [C_ATTR_NOTHROW] "nothrow",
-  [C_ATTR_STRING_PRE] "string_pre",
-  [C_ATTR_BUFFER_PRE] "buffer_pre",
-  [C_ATTR_MALLOC] "malloc",
-  [C_ATTR_ALLOCA] "alloca",
-  [C_ATTR_FORMAT] "format",
+  [C_ATTR_NORETURN] = "noreturn",
+  [C_ATTR_PURE] = "pure",
+  [C_ATTR_CONST] = "const",
+  [C_ATTR_NOTHROW] = "nothrow",
+  [C_ATTR_STRING_PRE] = "string_pre",
+  [C_ATTR_BUFFER_PRE] = "buffer_pre",
+  [C_ATTR_MALLOC] = "malloc",
+  [C_ATTR_ALLOCA] = "alloca",
+  [C_ATTR_FORMAT] = "format",
 };
 static ident_t attr_ids[C_ATTR_LAST];
 static size_t id_attrs_size;

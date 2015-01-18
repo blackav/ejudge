@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -558,20 +557,20 @@ testinfo_free(testinfo_t *pt)
 
 static const unsigned char * const error_codes[] =
 {
-  [TINF_E_OK] "OK - no error",
-  [TINF_E_EOF] "EOF",
-  [TINF_E_IO_ERROR] "IO error",
-  [TINF_E_NO_MEMORY] "memory exhausted",
-  [TINF_E_UNCLOSED_QUOTE] "unclosed quote",
-  [TINF_E_STRAY_CONTROL_CHAR] "stray control character",
-  [TINF_E_INVALID_ESCAPE] "invalid escape sequence",
-  [TINF_E_IDENT_EXPECTED] "variable name expected",
-  [TINF_E_EQUAL_EXPECTED] "'=' expected",
-  [TINF_E_CANNOT_OPEN] "cannot open input file",
-  [TINF_E_INVALID_VAR_NAME] "invalid variable name",
-  [TINF_E_VAR_REDEFINED] "variable is redefined",
-  [TINF_E_EMPTY_VALUE] "variable value is empty",
-  [TINF_E_MULTIPLE_VALUE] "variable value is multiple",
+  [TINF_E_OK] = "OK - no error",
+  [TINF_E_EOF] = "EOF",
+  [TINF_E_IO_ERROR] = "IO error",
+  [TINF_E_NO_MEMORY] = "memory exhausted",
+  [TINF_E_UNCLOSED_QUOTE] = "unclosed quote",
+  [TINF_E_STRAY_CONTROL_CHAR] = "stray control character",
+  [TINF_E_INVALID_ESCAPE] = "invalid escape sequence",
+  [TINF_E_IDENT_EXPECTED] = "variable name expected",
+  [TINF_E_EQUAL_EXPECTED] = "'=' expected",
+  [TINF_E_CANNOT_OPEN] = "cannot open input file",
+  [TINF_E_INVALID_VAR_NAME] = "invalid variable name",
+  [TINF_E_VAR_REDEFINED] = "variable is redefined",
+  [TINF_E_EMPTY_VALUE] = "variable value is empty",
+  [TINF_E_MULTIPLE_VALUE] = "variable value is multiple",
   [TINF_E_INVALID_VALUE] = "variable value is invalid",
 };
 const char *

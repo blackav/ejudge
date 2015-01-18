@@ -1,7 +1,6 @@
 /* -*- mode: C -*- */
-/* $Id$ */
 
-/* Copyright (C) 1999-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1999-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -2731,27 +2730,27 @@ sema_index_to_typeinfo(int idx)
 /* assumption: type sizes are equal to the host compiler's type sizes */
 static unsigned long base_type_sizes[] =
 {
-  [C_BOOL]    sizeof(unsigned char),
-  [C_CHAR]    sizeof(char),
-  [C_SCHAR]   sizeof(signed char),
-  [C_UCHAR]   sizeof(unsigned char),
-  [C_SHORT]   sizeof(short),
-  [C_USHORT]  sizeof(unsigned short),
-  [C_INT]     sizeof(int),
-  [C_UINT]    sizeof(unsigned int),
-  [C_LONG]    sizeof(long),
-  [C_ULONG]   sizeof(unsigned long),
-  [C_LLONG]   sizeof(long long),
-  [C_ULLONG]  sizeof(unsigned long long),
-  [C_FLOAT]   sizeof(float),
-  [C_DOUBLE]  sizeof(double),
-  [C_LDOUBLE] sizeof(long double),
-  [C_FIMAGINARY] sizeof(float),
-  [C_DIMAGINARY] sizeof(double),
-  [C_LIMAGINARY] sizeof(long double),
-  [C_FCOMPLEX] sizeof(struct r_fcomplex),
-  [C_DCOMPLEX] sizeof(struct r_dcomplex),
-  [C_LCOMPLEX] sizeof(struct r_lcomplex),
+  [C_BOOL]    = sizeof(unsigned char),
+  [C_CHAR]    = sizeof(char),
+  [C_SCHAR]   = sizeof(signed char),
+  [C_UCHAR]   = sizeof(unsigned char),
+  [C_SHORT]   = sizeof(short),
+  [C_USHORT]  = sizeof(unsigned short),
+  [C_INT]     = sizeof(int),
+  [C_UINT]    = sizeof(unsigned int),
+  [C_LONG]    = sizeof(long),
+  [C_ULONG]   = sizeof(unsigned long),
+  [C_LLONG]   = sizeof(long long),
+  [C_ULLONG]  = sizeof(unsigned long long),
+  [C_FLOAT]   = sizeof(float),
+  [C_DOUBLE]  = sizeof(double),
+  [C_LDOUBLE] = sizeof(long double),
+  [C_FIMAGINARY] = sizeof(float),
+  [C_DIMAGINARY] = sizeof(double),
+  [C_LIMAGINARY] = sizeof(long double),
+  [C_FCOMPLEX] = sizeof(struct r_fcomplex),
+  [C_DCOMPLEX] = sizeof(struct r_dcomplex),
+  [C_LCOMPLEX] = sizeof(struct r_lcomplex),
 };
 
 unsigned long
@@ -6450,7 +6449,7 @@ analyze_local_declaration(tree_t node, struct sema_scope *scope,
     } else {
       oldst = SSC_GET_SCLASS(d->flags);
       if (!SSC_IS_PLAIN(d->flags)) goto _redefinition;
-      if ((oldst == SSC_EXTERN)) {
+      if (oldst == SSC_EXTERN) {
         dg = sema_search_this_scope(id, global, SSC_REGULAR);
         // extern variable must be duplicated at the global level
         ASSERT(dg);

@@ -1,7 +1,6 @@
 /* -*- mode:c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -418,7 +417,7 @@ list_all_compilers(void)
 
   memset(&langs, 0, sizeof(langs));
   if (is_term && (env = getenv("COLUMNS")) && sscanf(env, "%d%n", &x, &n) == 1
-      && !env[n] && x > 0 && x < 10000 && (column_num = x));
+      && !env[n] && x > 0 && x < 10000 && (column_num = x)) {}
   if (is_term) {
     if (column_num < 10) column_num = 10;
     outbuf_size = column_num + 100;

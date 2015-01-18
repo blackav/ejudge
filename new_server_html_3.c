@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -44,6 +43,8 @@
 #if !defined CONF_STYLE_PREFIX
 #define CONF_STYLE_PREFIX "/ejudge/"
 #endif
+
+#pragma GCC diagnostic ignored "-Wformat-security" 
 
 #define ARMOR(s)  html_armor_buf(&ab, s)
 

@@ -1,7 +1,6 @@
 /* -*- mode:c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,15 +23,15 @@
 
 static const unsigned char * const node_names[] =
 {
-  [TEX__DOC] "_DOC",
-  [TEX__PAR] "_PAR",
-  [TEX__WORD] "_WORD",
-  [TEX__SPACE] "_SPACE",
-  [TEX__BLOCK] "_BLOCK",
-  [TEX_BEGIN] "\\begin",
-  [TEX_END] "\\end",
-  [TEX_IT] "\\it",
-  [TEX_ENV_CENTER] "\\begin{center}",
+  [TEX__DOC] = "_DOC",
+  [TEX__PAR] = "_PAR",
+  [TEX__WORD] = "_WORD",
+  [TEX__SPACE] = "_SPACE",
+  [TEX__BLOCK] = "_BLOCK",
+  [TEX_BEGIN] = "\\begin",
+  [TEX_END] = "\\end",
+  [TEX_IT] = "\\it",
+  [TEX_ENV_CENTER] = "\\begin{center}",
 };
 
 const unsigned char *

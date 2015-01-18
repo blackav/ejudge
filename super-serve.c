@@ -193,7 +193,7 @@ client_state_delete(struct client_state *p)
 
   // sanity check
   if (!p) return;
-  for (q = clients_first; q && q != p; q = q->next);
+  for (q = clients_first; q && q != p; q = q->next) {}
   ASSERT(q);
 
   if (p->next && p->prev) {
@@ -3602,7 +3602,7 @@ handle_inotify_read(void *context, void *fds, void *user)
         break;
       }
       pev = (struct inotify_event *) &buf[cur_ind];
-      if (pev->len < 0 || pev->len > 1024) {
+      if (/* pev->len < 0 || */ pev->len > 1024) {
         err("%s: ridiculuos len: %zu", __FUNCTION__, (size_t) pev->len);
         return;
       }

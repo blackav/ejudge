@@ -2993,10 +2993,10 @@ serve_read_run_packet(
 
 static const char * const scoring_system_strs[] =
 {
-  [SCORE_ACM] "ACM",
-  [SCORE_KIROV] "KIROV",
-  [SCORE_OLYMPIAD] "OLYMPIAD",
-  [SCORE_MOSCOW] "MOSCOW",
+  [SCORE_ACM] = "ACM",
+  [SCORE_KIROV] = "KIROV",
+  [SCORE_OLYMPIAD] = "OLYMPIAD",
+  [SCORE_MOSCOW] = "MOSCOW",
 };
 static const unsigned char *
 unparse_scoring_system(unsigned char *buf, size_t size, int val)
@@ -3582,7 +3582,7 @@ rejudge_by_mask_get_status_func(
   return xstrdup(buf);
 }
 
-static const struct server_framework_job_funcs rejudge_by_mask_funcs =
+static const struct server_framework_job_funcs rejudge_by_mask_funcs __attribute__((unused)) =
 {
   rejudge_by_mask_destroy_func,
   rejudge_by_mask_run_func,
@@ -3774,7 +3774,7 @@ rejudge_problem_get_status_func(
   return xstrdup(buf);
 }
 
-static const struct server_framework_job_funcs rejudge_problem_funcs =
+static const struct server_framework_job_funcs rejudge_problem_funcs __attribute__((unused)) =
 {
   rejudge_problem_destroy_func,
   rejudge_problem_run_func,

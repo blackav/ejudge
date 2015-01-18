@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -142,7 +141,7 @@ new_server_clnt_http_request(
     XALLOCAZ(arg_sizes, arg_num);
     for (i = 0; i < arg_num; i++) {
       arg_sizes[i] = t = strlen(args[i]);
-      if (t < 0 || t > MAX_PARAM_SIZE) {
+      if (/* t < 0 || */ t > MAX_PARAM_SIZE) {
         msg(log_f, "invalid argument length %d", t);
         goto failed;
       }
@@ -154,7 +153,7 @@ new_server_clnt_http_request(
     XALLOCAZ(env_sizes, env_num);
     for (i = 0; i < env_num; i++) {
       env_sizes[i] = t = strlen(envs[i]);
-      if (t < 0 || t > MAX_PARAM_SIZE) {
+      if (/* t < 0 || */ t > MAX_PARAM_SIZE) {
         msg(log_f, "invalid environment var length %d", t);
         goto failed;
       }
@@ -167,13 +166,13 @@ new_server_clnt_http_request(
     XALLOCAZ(param_sizes, param_num);
     for (i = 0; i < param_num; i++) {
       param_name_sizes[i] = t = strlen(param_names[i]);
-      if (t < 0 || t > MAX_PARAM_SIZE) {
+      if (/* t < 0 || */ t > MAX_PARAM_SIZE) {
         msg(log_f, "invalid parameter name length %d", t);
         goto failed;
       }
       out_size += t + 1;
       param_sizes[i] = t = param_sizes_in[i];
-      if (t < 0 || t > MAX_PARAM_SIZE) {
+      if (/* t < 0 || */ t > MAX_PARAM_SIZE) {
         msg(log_f, "invalid parameter value length %d", t);
         goto failed;
       }
@@ -181,7 +180,7 @@ new_server_clnt_http_request(
     }
   }
 
-  if (out_size < 0 || out_size > MAX_PARAM_SIZE) {
+  if (/* out_size < 0 || */ out_size > MAX_PARAM_SIZE) {
     msg(log_f, "invalid total packet size %zu", out_size);
     goto failed;
   }

@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1735,7 +1734,7 @@ static unsigned char const * const contests_errors[] =
   "cannot create a file in contest directory",
   "i/o error",
 
-  [CONTEST_ERR_LAST] "unknown error"
+  [CONTEST_ERR_LAST] = "unknown error"
 };
 
 const unsigned char *

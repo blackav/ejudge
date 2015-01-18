@@ -1684,8 +1684,8 @@ parse_personal_deadlines(char **pdstr, int *p_total,
     if (sscanf(pdstr[i], "%s%s%s%n", s1, s2, s3, &n) == 3 && !pdstr[i][n]) {
       strcat(s2, " ");
       strcat(s2, s3);
-    } else if (!sscanf(pdstr[i], "%s%s%n", s1, s2, &n) == 2 && !pdstr[i][n]) {
-    } else if (!sscanf(pdstr[i], "%s%n", s1, &n) == 1 && !pdstr[i][n]) {
+    } else if (sscanf(pdstr[i], "%s%s%n", s1, s2, &n) == 2 && !pdstr[i][n]) {
+    } else if (sscanf(pdstr[i], "%s%n", s1, &n) == 1 && !pdstr[i][n]) {
       strcpy(s2, "2038/01/19");
     }
 
@@ -6568,7 +6568,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_umask] = 1,
 };
 
-static const int prob_inheritable_list[] =
+static const int prob_inheritable_list[] __attribute__((unused)) =
 {
   CNTSPROB_scoring_checker, CNTSPROB_interactive_valuer, CNTSPROB_disable_pe, CNTSPROB_disable_wtl,
   CNTSPROB_manual_checking,  
@@ -6905,7 +6905,6 @@ static const struct section_problem_data prob_undef_values =
   .info_pat = { 1, 0 },
   .tgz_pat = { 1, 0 },
   .tgzdir_pat = { 1, 0 },
-  .type = -1,
   .test_sets = 0,
   .deadline = -1,
   .start_date = -1,

@@ -1524,8 +1524,8 @@ static const unsigned char valid_user_run_statuses[256] =
   [RUN_COMPILED]            = 1,
   [RUN_COMPILING]           = 1,
   [RUN_AVAILABLE]           = 1,
-  [RUN_REJUDGE]             = 1,
-  [RUN_TRANSIENT_LAST]      = 1,
+  //[RUN_REJUDGE]             = 1,
+  //[RUN_TRANSIENT_LAST]      = 1,
 };
 
 static struct user_entry *

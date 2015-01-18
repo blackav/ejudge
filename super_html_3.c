@@ -63,16 +63,6 @@
 
 #define ARMOR(s)  html_armor_buf(&ab, (s))
 
-static const unsigned char head_row_attr[] =
-  " bgcolor=\"#a0a0a0\"";
-static const unsigned char prob_row_attr[] =
-  " bgcolor=\"#b0b0b0\"";
-static const unsigned char * const form_row_attrs[]=
-{
-  " bgcolor=\"#d0d0d0\"",
-  " bgcolor=\"#e0e0e0\"",
-};
-
 void
 html_select(FILE *f, int value, const unsigned char *param_name,
             const unsigned char * const *options)
@@ -3288,7 +3278,7 @@ check_test_file(
       if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, ".."))
         continue;
       if (!strcasecmp(name, dd->d_name)) {
-        snprintf(name2, sizeof(name2), dd->d_name);
+        snprintf(name2, sizeof(name2), "%s", dd->d_name);
         break;
       }
     }

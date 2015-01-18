@@ -1,7 +1,6 @@
 /* -*- mode:c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -152,14 +151,14 @@ ncurses_yesno(int init_val, unsigned char const *fmt, ...)
   while (1) {
     c = getch();
     switch (c) {
-    case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
+    case 'q': case 'Q': /* case 'Ê' & 255: case 'ê' & 255: */
     case 'G' & 31:
       c = 'q';
       goto menu_done;
-    case 'y': case 'Y': case 'Î' & 255: case 'î' & 255:
+    case 'y': case 'Y': /* case 'Î' & 255: case 'î' & 255: */
       c = 'y';
       goto menu_done;
-    case 'n': case 'N': case 'Ô' & 255: case 'ô' & 255:
+    case 'n': case 'N': /* case 'Ô' & 255: case 'ô' & 255: */
       c = 'n';
       goto menu_done;
     case '\n': case '\r': case ' ':
@@ -286,7 +285,7 @@ ncurses_msgbox(unsigned char const *fmt, ...)
   while (1) {
     c = getch();
     switch (c) {
-    case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
+    case 'q': case 'Q': /* case 'Ê' & 255: case 'ê' & 255: */
     case 'G' & 31:
       c = 'q';
       goto menu_done;
@@ -383,7 +382,7 @@ ncurses_errbox(unsigned char const *fmt, ...)
   while (1) {
     c = getch();
     switch (c) {
-    case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255:
+    case 'q': case 'Q': /* case 'Ê' & 255: case 'ê' & 255: */
     case 'G' & 31:
       c = 'q';
       goto menu_done;
@@ -1292,16 +1291,16 @@ do_choose_file(
         c = 'd';
         goto menu_done;
         */
-      case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
+      case 'q': case 'Q': /* case 'Ê' & 255: case 'ê' & 255: */ case 'G' & 31:
         c = 'q';
         goto menu_done;
       case '\n': case '\r':
         c = '\n';
         goto menu_done;
-      case 'h': case 'H': case 'Ò' & 255: case 'ò' & 255:
+      case 'h': case 'H': /* case 'Ò' & 255: case 'ò' & 255: */
         c = 'h';
         goto menu_done;
-      case 'm': case 'M': case 'Ø' & 255: case 'ø' & 255:
+      case 'm': case 'M': /* case 'Ø' & 255: case 'ø' & 255: */
         c = 'm';
         goto menu_done;
       case ' ':
@@ -1394,7 +1393,7 @@ do_choose_file(
         ncurses_errbox("\\begin{center}\nERROR!\n\n%s!\n\\end{center}\n", strerror(i));
         continue;
       }
-      snprintf(path_buf, PATH_MAX, tmp_path);
+      snprintf(path_buf, PATH_MAX, "%s", tmp_path);
       retcode = -2;
       break;
     }
@@ -1604,7 +1603,7 @@ ncurses_view_text(const unsigned char *header, const unsigned char *txt)
     while (1) {
       c = getch();
       switch (c) {
-      case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
+      case 'q': case 'Q': /* case 'Ê' & 255: case 'ê' & 255: */ case 'G' & 31:
         c = 'q';
         goto menu_done;
       case KEY_UP:
@@ -1813,6 +1812,7 @@ latin_kbd_map[128] =
 
 static unsigned char koi8_kdb_map[256] =
 {
+  /*
   ['£' & 255] = '~',
   ['³' & 255] = '~',
   ['Ê' & 255] = 'q',
@@ -1879,6 +1879,7 @@ static unsigned char koi8_kdb_map[256] =
   ['â' & 255] = ',',
   ['À' & 255] = '.',
   ['à' & 255] = '.',
+  */
 };
 
 static unsigned char utf8_kbd_map[0x500] =

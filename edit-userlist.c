@@ -1,7 +1,6 @@
 /* -*- mode:c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1083,13 +1082,13 @@ static unsigned char const * const participant_sort_keys[] =
 };
 static unsigned char const * const sort_hotkeys[] =
 {
-  "NnôÔ",
-  "IiûÛ",
-  "Dd÷×",
-  "LläÄ",
-  "GgðÐ",
-  "AaæÆ",
-  "EeõÕ",
+  "Nn",
+  "Ii",
+  "Dd",
+  "Ll",
+  "Gg",
+  "Aa",
+  "Ee",
 };
 static int
 display_participant_sort_menu(int curval)
@@ -1113,13 +1112,13 @@ static unsigned char const * const search_menu_items[] =
 };
 static unsigned char const * const search_menu_hotkeys[] =
 {
-  "RrëË",
-  "FfáÁ",
-  "BbéÉ",
-  "NnôÔ",
-  "EeõÕ",
-  "TtåÅ",
-  "XxþÞ",
+  "Rr",
+  "Ff",
+  "Bb",
+  "Nn",
+  "Ee",
+  "Tt",
+  "Xx",
 };
 static int
 display_search_menu(int curval)
@@ -1232,37 +1231,37 @@ static const struct user_field_desc user_descs[] =
 };
 static const struct user_field_desc member_descs[] =
 {
-  [USERLIST_NM_SERIAL]     { "Serial", 1, 1 },
-  [USERLIST_NM_FIRSTNAME]  { "Firstname", 1, 1 },
-  [USERLIST_NM_FIRSTNAME_EN] { "Firstname (En)", 1, 1 },
-  [USERLIST_NM_MIDDLENAME] { "Middlename", 1, 1 },
-  [USERLIST_NM_MIDDLENAME_EN] { "Middlename (En)", 1, 1 },
-  [USERLIST_NM_SURNAME]    { "Surname", 1, 1 },
-  [USERLIST_NM_SURNAME_EN] { "Surname (En)", 1, 1 },
-  [USERLIST_NM_STATUS]     { "Status", 1, 1 },
-  [USERLIST_NM_GENDER]     { "Gender", 1, 1 },
-  [USERLIST_NM_GRADE]      { "Grade", 1, 1 },
-  [USERLIST_NM_GROUP]      { "Group", 1, 1 },
-  [USERLIST_NM_GROUP_EN]   { "Group (En)", 1, 1 },
-  [USERLIST_NM_OCCUPATION] { "Occupation", 1, 1 },
-  [USERLIST_NM_OCCUPATION_EN] { "Occupation (En)", 1, 1 },
-  [USERLIST_NM_DISCIPLINE] { "Discipline", 1, 1 },
-  [USERLIST_NM_EMAIL]      { "E-mail", 1, 1 },
-  [USERLIST_NM_HOMEPAGE]   { "Homepage", 1, 1 },
-  [USERLIST_NM_PHONE]      { "Phone", 1, 1 },
-  [USERLIST_NM_INST]       { "Institution", 1, 1 },
-  [USERLIST_NM_INST_EN]    { "Institution (En)", 1, 1 },
-  [USERLIST_NM_INSTSHORT]  { "Inst. (short)", 1, 1 },
-  [USERLIST_NM_INSTSHORT_EN] { "Inst. (short) (En)", 1, 1 },
-  [USERLIST_NM_FAC]        { "Faculty", 1, 1 },
-  [USERLIST_NM_FAC_EN]     { "Faculty (En)", 1, 1 },
-  [USERLIST_NM_FACSHORT]   { "Fac. (short)", 1, 1 },
-  [USERLIST_NM_FACSHORT_EN] { "Fac. (short) (En)", 1, 1 },
-  [USERLIST_NM_BIRTH_DATE] { "Birth date", 1, 1 },
-  [USERLIST_NM_ENTRY_DATE] { "Inst. entry date", 1, 1 },
-  [USERLIST_NM_GRADUATION_DATE] { "Exp. grad. date", 1, 1 },
-  [USERLIST_NM_CREATE_TIME] { "Create time", 1, 1 },
-  [USERLIST_NM_LAST_CHANGE_TIME] { "Change time", 1, 1 },
+  [USERLIST_NM_SERIAL]     = { "Serial", 1, 1 },
+  [USERLIST_NM_FIRSTNAME]  = { "Firstname", 1, 1 },
+  [USERLIST_NM_FIRSTNAME_EN] = { "Firstname (En)", 1, 1 },
+  [USERLIST_NM_MIDDLENAME] = { "Middlename", 1, 1 },
+  [USERLIST_NM_MIDDLENAME_EN] = { "Middlename (En)", 1, 1 },
+  [USERLIST_NM_SURNAME]    = { "Surname", 1, 1 },
+  [USERLIST_NM_SURNAME_EN] = { "Surname (En)", 1, 1 },
+  [USERLIST_NM_STATUS]     = { "Status", 1, 1 },
+  [USERLIST_NM_GENDER]     = { "Gender", 1, 1 },
+  [USERLIST_NM_GRADE]      = { "Grade", 1, 1 },
+  [USERLIST_NM_GROUP]      = { "Group", 1, 1 },
+  [USERLIST_NM_GROUP_EN]   = { "Group (En)", 1, 1 },
+  [USERLIST_NM_OCCUPATION] = { "Occupation", 1, 1 },
+  [USERLIST_NM_OCCUPATION_EN] = { "Occupation (En)", 1, 1 },
+  [USERLIST_NM_DISCIPLINE] = { "Discipline", 1, 1 },
+  [USERLIST_NM_EMAIL]      = { "E-mail", 1, 1 },
+  [USERLIST_NM_HOMEPAGE]   = { "Homepage", 1, 1 },
+  [USERLIST_NM_PHONE]      = { "Phone", 1, 1 },
+  [USERLIST_NM_INST]       = { "Institution", 1, 1 },
+  [USERLIST_NM_INST_EN]    = { "Institution (En)", 1, 1 },
+  [USERLIST_NM_INSTSHORT]  = { "Inst. (short)", 1, 1 },
+  [USERLIST_NM_INSTSHORT_EN] = { "Inst. (short) (En)", 1, 1 },
+  [USERLIST_NM_FAC]        = { "Faculty", 1, 1 },
+  [USERLIST_NM_FAC_EN]     = { "Faculty (En)", 1, 1 },
+  [USERLIST_NM_FACSHORT]   = { "Fac. (short)", 1, 1 },
+  [USERLIST_NM_FACSHORT_EN] = { "Fac. (short) (En)", 1, 1 },
+  [USERLIST_NM_BIRTH_DATE] = { "Birth date", 1, 1 },
+  [USERLIST_NM_ENTRY_DATE] = { "Inst. entry date", 1, 1 },
+  [USERLIST_NM_GRADUATION_DATE] = { "Exp. grad. date", 1, 1 },
+  [USERLIST_NM_CREATE_TIME] = { "Create time", 1, 1 },
+  [USERLIST_NM_LAST_CHANGE_TIME] = { "Change time", 1, 1 },
 };
 
 static int
@@ -2293,12 +2292,12 @@ display_user(unsigned char const *upper, int user_id, int contest_id)
 
 static unsigned char const * search_regex_kind_full[] =
 {
-  [SRCH_REGEX_LOGIN_FORWARD]  "Enter regexp for forward login search",
-  [SRCH_REGEX_LOGIN_BACKWARD] "Enter regexp for backward login search",
-  [SRCH_REGEX_NAME_FORWARD]   "Enter regexp for forward name search",
-  [SRCH_REGEX_NAME_BACKWARD]  "Enter regexp for backward name search",
-  [SRCH_REGEX_TEXT_FORWARD]   "Enter regexp for forward text search",
-  [SRCH_REGEX_TEXT_BACKWARD]  "Enter regexp for backward text search"
+  [SRCH_REGEX_LOGIN_FORWARD]  = "Enter regexp for forward login search",
+  [SRCH_REGEX_LOGIN_BACKWARD] = "Enter regexp for backward login search",
+  [SRCH_REGEX_NAME_FORWARD]   = "Enter regexp for forward name search",
+  [SRCH_REGEX_NAME_BACKWARD]  = "Enter regexp for backward name search",
+  [SRCH_REGEX_TEXT_FORWARD]   = "Enter regexp for forward text search",
+  [SRCH_REGEX_TEXT_BACKWARD]  = "Enter regexp for backward text search"
 };
 static regex_t search_regex_comp;
 static unsigned char search_regex_buf[1024];
@@ -2507,10 +2506,10 @@ static const unsigned char * const field_op_names[] =
 };
 static const unsigned char * const field_op_keys[] =
 {
-  "QqêÊ",
-  "CcóÓ",
-  "Ss÷×",
-  "FfáÁ",
+  "Qq",
+  "Cc",
+  "Ss",
+  "Ff",
   0,
 };
 static const unsigned char * const field_names[] =
@@ -2525,12 +2524,12 @@ static const unsigned char * const field_names[] =
 };
 static const unsigned char * const field_keys[] =
 {
-  "QqêÊ",
-  "RrëË",
-  "EeõÕ",
-  "CcóÓ",
-  "LläÄ",
-  "PpúÚ",
+  "Qq",
+  "Rr",
+  "Ee",
+  "Cc",
+  "Ll",
+  "Pp",
   0,
 };
 static const int field_codes[] =

@@ -1,7 +1,6 @@
 /* -*- mode:c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -152,6 +151,8 @@ static unsigned char config_workdisk_size[64];
 static unsigned char config_install_flag[64];
 
 static unsigned char tmp_work_dir[PATH_MAX];
+
+#pragma GCC diagnostic ignored "-Winvalid-source-encoding" 
 
 static unsigned char const login_accept_chars[] =
 "._-0123456789?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -875,13 +876,13 @@ do_paths_menu(int *p_cur_item)
       cmd = -1;
       switch (c) {
       case KEY_BACKSPACE: case KEY_DC: case 127: case 8:
-      case 'd': case 'D': case '÷' & 255: case '×' & 255:
+      case 'd': case 'D': /* case '÷' & 255: case '×' & 255: */
         c = 'd';
         goto menu_done;
-      case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
+      case 'q': case 'Q': /* case 'Ê' & 255: case 'ê' & 255: */ case 'G' & 31:
         c = 'q';
         goto menu_done;
-      case 'b': case 'B': case 'É' & 255: case 'é' & 255:
+      case 'b': case 'B': /* case 'É' & 255: case 'é' & 255: */
         c = 'b';
         goto menu_done;
       case '\n': case '\r':
@@ -1217,10 +1218,10 @@ do_identity_menu(int *p_cur_item)
       cmd = -1;
       switch (c) {
       case KEY_BACKSPACE: case KEY_DC: case 127: case 8:
-      case 'd': case 'D': case '÷' & 255: case '×' & 255:
+      case 'd': case 'D': /* case '÷' & 255: case '×' & 255: */
         c = 'd';
         goto menu_done;
-      case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
+      case 'q': case 'Q': /* case 'Ê' & 255: case 'ê' & 255: */ case 'G' & 31:
         c = 'q';
         goto menu_done;
       case '\n': case '\r':
@@ -1984,16 +1985,16 @@ do_settings_menu(int *p_cur_item)
       cmd = -1;
       switch (c) {
       case KEY_BACKSPACE: case KEY_DC: case 127: case 8:
-      case 'd': case 'D': case '÷' & 255: case '×' & 255:
+      case 'd': case 'D': /* case '÷' & 255: case '×' & 255: */
         c = 'd';
         goto menu_done;
-      case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
+      case 'q': case 'Q': /* case 'Ê' & 255: case 'ê' & 255: */ case 'G' & 31:
         c = 'q';
         goto menu_done;
       case '\n': case '\r':
         c = '\n';
         goto menu_done;
-      case 'b': case 'B': case 'É' & 255: case 'é' & 255:
+      case 'b': case 'B': /* case 'É' & 255: case 'é' & 255: */
         c = 'b';
         goto menu_done;
       case KEY_UP: case KEY_LEFT:
@@ -3539,7 +3540,7 @@ static const unsigned char * const preview_menu_items[] =
 };
 static const unsigned char * const preview_menu_hotkeys[] =
 {
-  "qQÊê", "1", "2", "3", "4", "5", "6", "7", "8", "9", "aAÆæ",
+  "qQ", "1", "2", "3", "4", "5", "6", "7", "8", "9", "aA",
 };
 
 static void
@@ -4528,7 +4529,7 @@ create_tmp_dir(void)
   }
 }
 
-static const unsigned char initial_warning[] =
+static const unsigned char initial_warning[] __attribute__((unused)) =
 "\\begin{center}\n"
 "WARNING!\n"
 "\\end{center}\n"

@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1362,9 +1361,9 @@ separator_row(
                      "ssLoad1(%d)", copy_cmd);
     }
     if (!*p_detail_flag) {
-      ss_dojo_button(out_f, 0, "zoom_in-16x16", "Show Detail", bbuf);
+      ss_dojo_button(out_f, 0, "zoom_in-16x16", "Show Detail", "%s", bbuf);
     } else {
-      ss_dojo_button(out_f, 0, "zoom_out-16x16", "Hide Detail", bbuf);
+      ss_dojo_button(out_f, 0, "zoom_out-16x16", "Hide Detail", "%s", bbuf);
     }
     fprintf(out_f, "</td>");
   }

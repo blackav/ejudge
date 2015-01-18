@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -531,31 +530,31 @@ stage4_pushback(void)
 
 static unsigned char const * const token_strings[] =
 {
-  [TOK_INCR]      "++",
-  [TOK_DECR]      "--",
-  [TOK_LSHIFT]    "<<",
-  [TOK_RSHIFT]    ">>",
-  [TOK_LEQ]       "<=",
-  [TOK_GEQ]       ">=",
-  [TOK_EQ]        "==",
-  [TOK_NEQ]       "!=",
-  [TOK_LOGAND]    "&&",
-  [TOK_LOGOR]     "||",
-  [TOK_LOGXOR]    "^^",
-  [TOK_ELLIPSIS]  "...",
-  [TOK_MULASSIGN] "*=",
-  [TOK_DIVASSIGN] "/=",
-  [TOK_MODASSIGN] "%=",
-  [TOK_ADDASSIGN] "+=",
-  [TOK_SUBASSIGN] "-=",
-  [TOK_LSHASSIGN] "<<=",
-  [TOK_RSHASSIGN] ">>=",
-  [TOK_ANDASSIGN] "&=",
-  [TOK_XORASSIGN] "^=",
-  [TOK_ORASSIGN]  "|=",
-  [TOK_ARROW]     "->",
-  [TOK_PASTE]     "##",
-  [TOK_PASTE_VA]  "[##]",
+  [TOK_INCR]      = "++",
+  [TOK_DECR]      = "--",
+  [TOK_LSHIFT]    = "<<",
+  [TOK_RSHIFT]    = ">>",
+  [TOK_LEQ]       = "<=",
+  [TOK_GEQ]       = ">=",
+  [TOK_EQ]        = "==",
+  [TOK_NEQ]       = "!=",
+  [TOK_LOGAND]    = "&&",
+  [TOK_LOGOR]     = "||",
+  [TOK_LOGXOR]    = "^^",
+  [TOK_ELLIPSIS]  = "...",
+  [TOK_MULASSIGN] = "*=",
+  [TOK_DIVASSIGN] = "/=",
+  [TOK_MODASSIGN] = "%=",
+  [TOK_ADDASSIGN] = "+=",
+  [TOK_SUBASSIGN] = "-=",
+  [TOK_LSHASSIGN] = "<<=",
+  [TOK_RSHASSIGN] = ">>=",
+  [TOK_ANDASSIGN] = "&=",
+  [TOK_XORASSIGN] = "^=",
+  [TOK_ORASSIGN]  = "|=",
+  [TOK_ARROW]     = "->",
+  [TOK_PASTE]     = "##",
+  [TOK_PASTE_VA]  = "[##]",
 };
 
 static int
@@ -3109,11 +3108,11 @@ parse_unary_expr(int need_eval, long long *pres)
     }
   }
   if (!op) {
-    if (!parse_primary_expr(need_eval, &v1) < 0) return -1;
+    if (parse_primary_expr(need_eval, &v1) < 0) return -1;
     if (need_eval) *pres = v1;
     return 0;
   } else {
-    if (!parse_unary_expr(need_eval, &v1) < 0) return -1;
+    if (parse_unary_expr(need_eval, &v1) < 0) return -1;
   }
   if (need_eval) {
     switch (op) {
@@ -3326,43 +3325,43 @@ handle_directive_conditional(ident_t id, FILE *out)
 
 static const unsigned char * const directive_names[] =
 {
-  [ID_DEFINE] "define",
-  [ID_DEFINED] "defined",
-  [ID_ERROR] "error",
-  [ID_ENDIF] "endif",
-  [ID_ELIF] "elif",
-  [ID_ELSE] "else",
-  [ID_IDENT] "ident",
-  [ID_IF] "if",
-  [ID_IFDEF] "ifdef",
-  [ID_IFNDEF] "ifndef",
-  [ID_INCLUDE] "include",
-  [ID_LINE] "line",
-  [ID_PRAGMA] "pragma",
-  [ID_UNDEF] "undef",
-  [ID_WARNING] "warning",
-  [ID___LINE__] "__LINE__",
-  [ID___FILE__] "__FILE__",
-  [ID___VA_ARGS__] "__VA_ARGS__",
-  [ID_DEFCONST] "defconst",
+  [ID_DEFINE] = "define",
+  [ID_DEFINED] = "defined",
+  [ID_ERROR] = "error",
+  [ID_ENDIF] = "endif",
+  [ID_ELIF] = "elif",
+  [ID_ELSE] = "else",
+  [ID_IDENT] = "ident",
+  [ID_IF] = "if",
+  [ID_IFDEF] = "ifdef",
+  [ID_IFNDEF] = "ifndef",
+  [ID_INCLUDE] = "include",
+  [ID_LINE] = "line",
+  [ID_PRAGMA] = "pragma",
+  [ID_UNDEF] = "undef",
+  [ID_WARNING] = "warning",
+  [ID___LINE__] = "__LINE__",
+  [ID___FILE__] = "__FILE__",
+  [ID___VA_ARGS__] = "__VA_ARGS__",
+  [ID_DEFCONST] = "defconst",
 };
 static int (*directive_funcs[])(ident_t id, FILE *out) =
 {
-  [ID_DEFINE] handle_directive_define,
-  [ID_ERROR] handle_directive_error,
-  [ID_ENDIF] handle_directive_conditional,
-  [ID_ELIF] handle_directive_conditional,
-  [ID_ELSE] handle_directive_conditional,
-  [ID_IDENT] handle_directive_pragma,
-  [ID_IF] handle_directive_conditional,
-  [ID_IFDEF] handle_directive_conditional,
-  [ID_IFNDEF] handle_directive_conditional,
-  [ID_INCLUDE] handle_directive_include,
-  [ID_LINE] handle_directive_line,
-  [ID_PRAGMA] handle_directive_pragma,
-  [ID_UNDEF] handle_directive_undef,
-  [ID_WARNING] handle_directive_warning,
-  [ID_DEFCONST] handle_directive_defconst,
+  [ID_DEFINE] = handle_directive_define,
+  [ID_ERROR] = handle_directive_error,
+  [ID_ENDIF] = handle_directive_conditional,
+  [ID_ELIF] = handle_directive_conditional,
+  [ID_ELSE] = handle_directive_conditional,
+  [ID_IDENT] = handle_directive_pragma,
+  [ID_IF] = handle_directive_conditional,
+  [ID_IFDEF] = handle_directive_conditional,
+  [ID_IFNDEF] = handle_directive_conditional,
+  [ID_INCLUDE] = handle_directive_include,
+  [ID_LINE] = handle_directive_line,
+  [ID_PRAGMA] = handle_directive_pragma,
+  [ID_UNDEF] = handle_directive_undef,
+  [ID_WARNING] = handle_directive_warning,
+  [ID_DEFCONST] = handle_directive_defconst,
 };
 
 static void
@@ -3384,7 +3383,7 @@ handle_directive(FILE *out)
   if (c != TOK_IDENT) goto skip_rest_of_line;
 
   direct_id = cur_val.id.id;
-  if (direct_id < 0) goto skip_rest_of_line;
+  //if (direct_id < 0) goto skip_rest_of_line;
   if (direct_id >= (sizeof(directive_funcs)/sizeof(directive_funcs[0])))
     goto skip_rest_of_line;
   if (!directive_funcs[direct_id]) goto skip_rest_of_line;

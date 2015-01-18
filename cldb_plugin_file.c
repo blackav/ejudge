@@ -271,7 +271,7 @@ clar_read_entry(
   if (clars.v[n].to && !teamdb_lookup(clars.v[n].to))
     ERR_R("[%d]: bad to: %d", n, clars.v[n].to);
   */
-  if (cl_state->clars.v[n].flags < 0 || cl_state->clars.v[n].flags > 255)
+  if (/*cl_state->clars.v[n].flags < 0 ||*/ cl_state->clars.v[n].flags > 255)
     ERR_R("[%d]: bad flags: %d", n, cl_state->clars.v[n].flags);
   if (strlen(b2) > IP_STRING_SIZE) ERR_R("[%d]: ip is too long", n);
   if (strlen(b3) > SUBJ_STRING_SIZE) ERR_R("[%d]: subj is too long", n);

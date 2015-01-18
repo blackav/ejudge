@@ -142,7 +142,7 @@ static const char * const elem_map[] =
   [RUNLOG_T_XML_REPORT]   = "xml_report",
   [RUNLOG_T_FULL_ARCHIVE] = "full_archive",
 
-  [RUNLOG_LAST_TAG] 0,
+  [RUNLOG_LAST_TAG] = 0,
 };
 static const char * const attr_map[] =
 {
@@ -192,11 +192,11 @@ static const char * const attr_map[] =
   [RUNLOG_A_TOKEN_FLAGS]      = "token_flags",
   [RUNLOG_A_TOKEN_COUNT]      = "token_count",
 
-  [RUNLOG_LAST_ATTR] 0,
+  [RUNLOG_LAST_ATTR] = 0,
 };
 static size_t const elem_sizes[RUNLOG_LAST_TAG] =
 {
-  [RUNLOG_T_RUN] sizeof(struct run_element),
+  [RUNLOG_T_RUN] = sizeof(struct run_element),
 };
 
 static struct xml_parse_spec runlog_parse_spec =

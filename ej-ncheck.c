@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -112,7 +111,7 @@ static const struct config_parse_info config_global_params[] =
   { 0, 0, 0, 0 }
 };
 
-static const struct config_section_info params[] =
+static const struct config_section_info params[] __attribute__((unused)) =
 {
   { "global", sizeof(struct config_global_data), config_global_params, 0, 0, 0 },
   { NULL, 0, NULL }

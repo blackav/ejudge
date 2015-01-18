@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -646,8 +645,6 @@ super_html_unparse_access(const struct contest_access *acc)
   return acc_txt;
 }
 
-static const unsigned char head_row_attr[] =
-  " bgcolor=\"#a0a0a0\"";
 static const unsigned char * const form_row_attrs[]=
 {
   " bgcolor=\"#d0d0d0\"",

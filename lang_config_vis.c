@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1027,14 +1026,14 @@ lang_config_menu(
       c = getch();
       cmd = -1;
       switch (c) {
-      case 'q': case 'Q': case 'Ê' & 255: case 'ê' & 255: case 'G' & 31:
+      case 'q': case 'Q': /*case 'Ê' & 255: case 'ê' & 255:*/ case 'G' & 31:
       case 033:
         c = 'q';
         goto menu_done;
       case '\n': case '\r':
         c = '\n';
         goto menu_done;
-      case 'b': case 'B': case 'É' & 255: case 'é' & 255:
+      case 'b': case 'B': /*case 'É' & 255: case 'é' & 255:*/
         c = 'b';
         goto menu_done;
       case KEY_UP: case KEY_LEFT:

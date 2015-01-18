@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -40,7 +39,7 @@ static const struct config_parse_info ncheck_in_params[] =
   NCHECK_IN_PARAM(use_contest_id_in_reply, "d"),
   NCHECK_IN_PARAM(type, "d"),
 };
-static const struct config_section_info ncheck_in_config[] =
+static const struct config_section_info ncheck_in_config[] __attribute__((unused)) =
 {
   { "global", sizeof(struct ncheck_in_packet), ncheck_in_params, 0, 0, 0 },
   { NULL, 0, NULL }
@@ -53,7 +52,7 @@ static const struct config_section_info ncheck_in_config[] =
 static const struct config_parse_info ncheck_out_params[] =
 {
 };
-static const struct config_section_info ncheck_out_config[] =
+static const struct config_section_info ncheck_out_config[] __attribute__((unused)) =
 {
   { "global", sizeof(struct ncheck_out_packet), ncheck_out_params, 0, 0, 0 },
   { NULL, 0, NULL }

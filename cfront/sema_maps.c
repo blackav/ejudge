@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,36 +23,36 @@
 
 static int binop_to_c_operation_map [] =
 {
-  ['='] COP_ASSIGN,
-  [TOK_MULASSIGN] COP_MULASSIGN,
-  [TOK_DIVASSIGN] COP_DIVASSIGN,
-  [TOK_MODASSIGN] COP_MODASSIGN,
-  [TOK_ADDASSIGN] COP_ADDASSIGN,
-  [TOK_SUBASSIGN] COP_SUBASSIGN,
-  [TOK_LSHASSIGN] COP_ASLASSIGN,
-  [TOK_RSHASSIGN] COP_ASRASSIGN,
-  [TOK_ANDASSIGN] COP_ANDASSIGN,
-  [TOK_XORASSIGN] COP_XORASSIGN,
-  [TOK_ORASSIGN] COP_ORASSIGN,
-  [','] COP_COMMA,
-  [TOK_LOGOR] COP_LOGOR,
-  [TOK_LOGAND] COP_LOGAND,
-  ['|'] COP_BITOR,
-  ['^'] COP_BITXOR,
-  ['&'] COP_BITAND,
-  [TOK_EQ] COP_EQ,
-  [TOK_NEQ] COP_NE,
-  ['<'] COP_LT,
-  ['>'] COP_GT,
-  [TOK_LEQ] COP_LE,
-  [TOK_GEQ] COP_GE,
-  [TOK_RSHIFT] COP_ASR,
-  [TOK_LSHIFT] COP_ASL,
-  ['+'] COP_ADD,
-  ['-'] COP_SUB,
-  ['*'] COP_MUL,
-  ['/'] COP_DIV,
-  ['%'] COP_MOD,
+  ['='] = COP_ASSIGN,
+  [TOK_MULASSIGN] = COP_MULASSIGN,
+  [TOK_DIVASSIGN] = COP_DIVASSIGN,
+  [TOK_MODASSIGN] = COP_MODASSIGN,
+  [TOK_ADDASSIGN] = COP_ADDASSIGN,
+  [TOK_SUBASSIGN] = COP_SUBASSIGN,
+  [TOK_LSHASSIGN] = COP_ASLASSIGN,
+  [TOK_RSHASSIGN] = COP_ASRASSIGN,
+  [TOK_ANDASSIGN] = COP_ANDASSIGN,
+  [TOK_XORASSIGN] = COP_XORASSIGN,
+  [TOK_ORASSIGN] = COP_ORASSIGN,
+  [','] = COP_COMMA,
+  [TOK_LOGOR] = COP_LOGOR,
+  [TOK_LOGAND] = COP_LOGAND,
+  ['|'] = COP_BITOR,
+  ['^'] = COP_BITXOR,
+  ['&'] = COP_BITAND,
+  [TOK_EQ] = COP_EQ,
+  [TOK_NEQ] = COP_NE,
+  ['<'] = COP_LT,
+  ['>'] = COP_GT,
+  [TOK_LEQ] = COP_LE,
+  [TOK_GEQ] = COP_GE,
+  [TOK_RSHIFT] = COP_ASR,
+  [TOK_LSHIFT] = COP_ASL,
+  ['+'] = COP_ADD,
+  ['-'] = COP_SUB,
+  ['*'] = COP_MUL,
+  ['/'] = COP_DIV,
+  ['%'] = COP_MOD,
 };
 int
 sema_binop_to_c_operation(int op)
@@ -66,15 +65,15 @@ sema_binop_to_c_operation(int op)
 
 static int unop_to_c_operation_map [] =
 {
-  [TOK_INCR] COP_PREINC,
-  [TOK_DECR] COP_PREDEC,
-  [TOK_SIZEOF] COP_SIZEOF,
-  ['*'] COP_DEREF,
-  ['&'] COP_ADDRESS,
-  ['+'] COP_PLUS,
-  ['-'] COP_MINUS,
-  ['~'] COP_BITNOT,
-  ['!'] COP_LOGNOT,
+  [TOK_INCR] = COP_PREINC,
+  [TOK_DECR] = COP_PREDEC,
+  [TOK_SIZEOF] = COP_SIZEOF,
+  ['*'] = COP_DEREF,
+  ['&'] = COP_ADDRESS,
+  ['+'] = COP_PLUS,
+  ['-'] = COP_MINUS,
+  ['~'] = COP_BITNOT,
+  ['!'] = COP_LOGNOT,
 };
 int
 sema_unop_to_c_operation(int op)
@@ -87,10 +86,10 @@ sema_unop_to_c_operation(int op)
 
 static int postop_to_c_operation_map [] =
 {
-  [TOK_INCR] COP_POSTINC,
-  [TOK_DECR] COP_POSTDEC,
-  ['.'] COP_FIELD,
-  [TOK_ARROW] COP_FIELDREF,
+  [TOK_INCR] = COP_POSTINC,
+  [TOK_DECR] = COP_POSTDEC,
+  ['.'] = COP_FIELD,
+  [TOK_ARROW] = COP_FIELDREF,
 };
 int
 sema_postop_to_c_operation(int op)

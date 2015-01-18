@@ -1,7 +1,6 @@
 /* -*- mode: C -*- */
-/* $Id$ */
 
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -25,10 +24,10 @@
 
 static const unsigned char * builtin_names[C_BUILTIN_LAST] =
 {
-  [C_BUILTIN_FUNCTION] "__FUNCTION__",
-  [C_BUILTIN_ALLOCA] "__builtin_alloca",
-  [C_BUILTIN_RETVAL] "__builtin_retval",
-  [C_BUILTIN_FUNC] "__func__",
+  [C_BUILTIN_FUNCTION] = "__FUNCTION__",
+  [C_BUILTIN_ALLOCA] = "__builtin_alloca",
+  [C_BUILTIN_RETVAL] = "__builtin_retval",
+  [C_BUILTIN_FUNC] = "__func__",
 };
 static ident_t builtin_ids[C_BUILTIN_LAST];
 static size_t id_builtins_size;

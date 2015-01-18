@@ -87,6 +87,8 @@
 #define URLARMOR(s)  url_armor_buf(&ab, s)
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
+#pragma GCC diagnostic ignored "-Wformat-security" 
+
 enum { CONTEST_EXPIRE_TIME = 300 };
 static struct contest_extra **extras = 0;
 static size_t extra_a = 0, extra_u = 0;
@@ -1635,7 +1637,7 @@ priv_add_priv_user_by_login(FILE *fout,
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   int retval = 0;
 
-  if ((r = hr_cgi_param(phr, "add_login", &login)) < 0 || !s) {
+  if ((r = hr_cgi_param(phr, "add_login", &login)) < 0 || !login) {
     ns_error(log_f, NEW_SRV_ERR_INV_USER_LOGIN);
     goto cleanup;
   }
@@ -4647,11 +4649,13 @@ priv_new_run(FILE *fout,
   return retval;
 }
 
+/*
 static const unsigned char * const form_row_attrs[]=
 {
   " bgcolor=\"#d0d0d0\"",
   " bgcolor=\"#e0e0e0\"",
 };
+*/
 
 static const unsigned char * const confirmation_headers[NEW_SRV_ACTION_LAST] =
 {

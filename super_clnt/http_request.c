@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -113,7 +112,7 @@ super_clnt_http_request(
     XALLOCAZ(arg_sizes, arg_num);
     for (i = 0; i < arg_num; i++) {
       arg_sizes[i] = t = strlen(args[i]);
-      if (t < 0 || t > MAX_PARAM_SIZE) goto failed;
+      if (/* t < 0 || */ t > MAX_PARAM_SIZE) goto failed;
       out_size += t + 1;
     }
   }
@@ -122,7 +121,7 @@ super_clnt_http_request(
     XALLOCAZ(env_sizes, env_num);
     for (i = 0; i < env_num; i++) {
       env_sizes[i] = t = strlen(envs[i]);
-      if (t < 0 || t > MAX_PARAM_SIZE) goto failed;
+      if (/* t < 0 || */ t > MAX_PARAM_SIZE) goto failed;
       out_size += t + 1;
     }
   }
@@ -132,15 +131,15 @@ super_clnt_http_request(
     XALLOCAZ(param_sizes, param_num);
     for (i = 0; i < param_num; i++) {
       param_name_sizes[i] = t = strlen(param_names[i]);
-      if (t < 0 || t > MAX_PARAM_SIZE) goto failed;
+      if (/* t < 0 || */ t > MAX_PARAM_SIZE) goto failed;
       out_size += t + 1;
       param_sizes[i] = t = param_sizes_in[i];
-      if (t < 0 || t > MAX_PARAM_SIZE) goto failed;
+      if (/* t < 0 || */ t > MAX_PARAM_SIZE) goto failed;
       out_size += t + 1;
     }
   }
 
-  if (out_size < 0 || out_size > MAX_PARAM_SIZE)
+  if (/* out_size < 0 || */ out_size > MAX_PARAM_SIZE)
     return -SSERV_ERR_PARAM_OUT_OF_RANGE;
 
   out = (struct prot_super_pkt_http_request*) xcalloc(out_size, 1);

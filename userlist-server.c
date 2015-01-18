@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -6585,11 +6584,18 @@ cmd_generate_team_passwords_2(
   const struct userlist_contest *c;
   unsigned char buf[16];
   ptr_iterator_t iter;
-  const struct contest_desc *cnts;
+  const struct contest_desc *cnts = NULL;
   unsigned char logbuf[1024];
+  int errcode = 0;
 
   snprintf(logbuf, sizeof(logbuf), "GENERATE_TEAM_PASSWORDS_2: %d, %d",
            p->user_id, data->contest_id);
+
+  if ((errcode = contests_get(data->contest_id, &cnts)) < 0) {
+    err("%s -> invalid contest: %s", logbuf, contests_strerror(-errcode));
+    send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
+    return;
+  }
 
   if (is_admin(p, logbuf) < 0) return;
   if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
@@ -9573,7 +9579,7 @@ cmd_get_groups(
            p->user_id, data->data);
 
   /* space-separated list of group names */
-  if (data->info_len <= 0 || data->info_len > 64 * 1024) {
+  if (data->info_len <= 0 /* || data->info_len > 64 * 1024 */) {
     err("%s -> invalid size %d", logbuf, data->info_len);
     send_reply(p, -ULS_ERR_INVALID_SIZE);
     goto cleanup;
@@ -10361,7 +10367,7 @@ static void (*cmd_table[])() =
   [ULS_GET_GROUP_INFO] =        cmd_get_group_info,
   [ULS_PRIV_CHECK_PASSWORD] =   cmd_priv_check_password,
 
-  [ULS_LAST_CMD] 0
+  [ULS_LAST_CMD] = 0
 };
 
 static int (*check_table[])() =
@@ -10465,7 +10471,7 @@ static int (*check_table[])() =
   [ULS_LIST_ALL_USERS_4] =      check_pk_list_users_2,
   [ULS_GET_GROUP_INFO] =        check_pk_map_contest,
 
-  [ULS_LAST_CMD] 0
+  [ULS_LAST_CMD] = 0
 };
 
 static void

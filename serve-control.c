@@ -133,9 +133,9 @@ static const char * const attr_map[] =
 };
 static size_t elem_sizes[TG_LAST_TAG] =
 {
-  [TG_CONFIG] sizeof(struct config_node),
-  [TG_SERVE_CONTROL_ACCESS] sizeof(struct access_node),
-  [TG_IP] sizeof(struct ip_node),
+  [TG_CONFIG] = sizeof(struct config_node),
+  [TG_SERVE_CONTROL_ACCESS] = sizeof(struct access_node),
+  [TG_IP] = sizeof(struct ip_node),
 };
 
 static struct xml_parse_spec serve_control_config_parse_spec =
@@ -1765,8 +1765,6 @@ static const int next_action_map[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_XML_FILE] = SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE,
   [SSERV_CMD_PROB_CHANGE_ALTERNATIVES_FILE] = SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE,
   [SSERV_CMD_PROB_CLEAR_ALTERNATIVES_FILE] = SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE,
-  [SSERV_CMD_PROB_CHANGE_PLUGIN_FILE] = SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE,
-  [SSERV_CMD_PROB_CLEAR_PLUGIN_FILE] = SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE,
   [SSERV_CMD_PROB_CHANGE_PLUGIN_FILE] = SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE,
   [SSERV_CMD_PROB_CLEAR_PLUGIN_FILE] = SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE,
   [SSERV_CMD_PROB_CHANGE_STAND_ATTR] = SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE,
