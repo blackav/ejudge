@@ -258,6 +258,7 @@ COMMON_CFILES=\
  varsubst.c\
  vcs.c\
  watched_file.c\
+ xuser_plugin_file.c\
  zip_utils.c\
  xml_utils/attr_bool.c\
  xml_utils/attr_bool_byte.c\
@@ -611,6 +612,7 @@ HFILES=\
  ./include/ejudge/new_server_proto.h\
  new_server_clnt/new_server_clnt_priv.h\
  ./include/ejudge/xml_utils.h\
+ ./include/ejudge/xuser_plugin.h\
  ./include/ejudge/zip_utils.h
 
 OTHERFILES=\
