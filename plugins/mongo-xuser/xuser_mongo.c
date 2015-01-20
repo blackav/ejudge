@@ -34,6 +34,19 @@
 
 struct xuser_plugin_iface plugin_xuser_mongo =
 {
+  {
+    {
+      sizeof(struct xuser_plugin_iface),
+      EJUDGE_PLUGIN_IFACE_VERSION,
+      "xuser",
+      "mongo",
+    },
+    COMMON_PLUGIN_IFACE_VERSION,
+    NULL, /* init */
+    NULL, /* finish */
+    NULL, /* prepare */
+  },
+  XUSER_PLUGIN_IFACE_VERSION,
 };
 
 /*

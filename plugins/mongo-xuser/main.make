@@ -21,9 +21,9 @@ CFLAGS = -I../../include $(MONGO_CFLAGS) $(CDEBUGFLAGS) $(CCOMPFLAGS) $(CEXTRAFL
 LDFLAGS = $(MYSQL_LIB_OPT) $(EXPAT_LIB_OPT) $(CDEBUGFLAGS) $(LDCOMPFLAGS) $(LDEXTRAFLAGS)
 LDLIBS = $(EXTRALIBS) $(MONGO_LIBS) -lexpat -lm
 
-CFILES = mongo_xuser.c
+CFILES = xuser_mongo.c
 
-PLUGINS = mongo_xuser.so
+PLUGINS = xuser_mongo.so
 
 all : $(PLUGINS)
 
@@ -42,6 +42,6 @@ deps.make : $(CFILES) $(HFILES)
 
 include deps.make
 
-mongo_xuser.so : $(XUSER_MONGO_OFILES)
+xuser_mongo.so : $(XUSER_MONGO_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
