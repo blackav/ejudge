@@ -37,6 +37,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/win32_compat.h"
 #include "ejudge/variant_map.h"
+#include "ejudge/xuser_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -110,7 +111,9 @@ serve_state_destroy(
 
   xfree(state->config_path);
   run_destroy(state->runlog_state);
-  team_extra_destroy(state->team_extra_state);
+  if (state->xuser_state) {
+    state->xuser_state->vt->close(state->xuser_state);
+  }
   teamdb_destroy(state->teamdb_state);
   clar_destroy(state->clarlog_state);
 
