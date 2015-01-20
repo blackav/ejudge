@@ -624,6 +624,9 @@ enable_option_checking=no
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 subdirs
+ac_cv_libmongo_client_libs
+ac_cv_libmongo_client_cflags
+ac_cv_has_libmongo_client
 ac_cv_lang_config_dir_expanded
 ac_cv_lang_config_dir
 ac_cv_ejudge_server_bin_path_m
@@ -7543,6 +7546,25 @@ fi
 
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libmongo-client" >&5
+$as_echo_n "checking for libmongo-client... " >&6; }
+if pkg-config --exists libmongo-client
+then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+  ac_cv_has_libmongo_client=1
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+  ac_cv_has_libmongo_client=
+fi
+
+if [ x"${ac_cv_has_libmongo_client}" = x1 ]
+then
+  ac_cv_libmongo_client_cflags=`pkg-config --cflags libmongo-client`
+  ac_cv_libmongo_client_libs=`pkg-config --libs libmongo-client`
+fi
+
 
 
 if [ x"${prefix}" = xNONE ]
@@ -7679,6 +7701,9 @@ if [ x"${ac_cv_rest}" = x ]
 then
   ac_cv_rest="/ej/"
 fi
+
+
+
 
 
 
@@ -8018,6 +8043,12 @@ fi
 if [ x"${ac_cv_has___int64}" = x1 ]
 then
   $as_echo "#define R_HAS___INT64 1" >>confdefs.h
+
+fi
+
+if [ x"${ac_cv_has_libmongo_client}" = x1 ]
+then
+  $as_echo "#define HAVE_LIBMONGO_CLIENT 1" >>confdefs.h
 
 fi
 
