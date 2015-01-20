@@ -18,6 +18,9 @@
 #include "ejudge/team_extra.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
+#include "ejudge/prepare.h"
+#include "ejudge/common_plugin.h"
+#include "ejudge/xuser_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -430,4 +433,67 @@ team_extra_set_run_fields(team_extra_state_t state, int user_id, int run_fields)
   te->run_fields = run_fields;
   te->is_dirty = 1;
   return 1;
+}
+
+extern struct xuser_plugin_iface plugin_xuser_file;
+struct xuser_cnts_state *
+team_extra_open(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        const unsigned char *plugin_name,
+        int flags)
+{
+  const struct common_loaded_plugin *loaded_plugin = NULL;
+  const struct xuser_plugin_iface *iface = NULL;
+
+  if (!plugin_register_builtin(&plugin_xuser_file.b, config)) {
+    err("cannot register default plugin");
+    return NULL;
+  }
+
+  if (!plugin_name) {
+    if (global) plugin_name = global->xuser_plugin;
+  }
+  if (!plugin_name) plugin_name = "";
+
+  if (!plugin_name[0] || !strcmp(plugin_name, "file")) {
+    if (!(loaded_plugin = plugin_get("xuser", "file"))) {
+      err("cannot load default plugin");
+      return NULL;
+    }
+    iface = (struct xuser_plugin_iface*) loaded_plugin->iface;
+    return iface->open(loaded_plugin->data, config, cnts, global, flags);
+  }
+
+  if ((loaded_plugin = plugin_get("xuser", plugin_name))) {
+    iface = (struct xuser_plugin_iface*) loaded_plugin->iface;
+    return iface->open(loaded_plugin->data, config, cnts, global, flags);
+  }
+
+  if (!config) {
+    err("cannot load any plugin");
+    return NULL;
+  }
+
+  const struct xml_tree *p = NULL;
+  const struct ejudge_plugin *plg = NULL;
+  for (p = config->plugin_list; p; p = p->right) {
+    plg = (const struct ejudge_plugin*) p;
+    if (plg->load_flag && !strcmp(plg->type, "xuser")
+        && !strcmp(plg->name, plugin_name))
+      break;
+  }
+  if (!p || !plg) {
+    err("xuser plugin '%s' is not registered", plugin_name);
+    return NULL;
+  }
+
+  loaded_plugin = plugin_load_external(plg->path, plg->type, plg->name, config);
+  if (!loaded_plugin) {
+    err("cannot load plugin %s, %s", plg->type, plg->name);
+    return NULL;
+  }
+  iface = (struct xuser_plugin_iface*) loaded_plugin->iface;
+  return iface->open(loaded_plugin->data, config, cnts, global, flags);
 }

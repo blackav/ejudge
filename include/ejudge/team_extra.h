@@ -90,6 +90,19 @@ team_extra_get_run_fields(team_extra_state_t state, int user_id);
 int
 team_extra_set_run_fields(team_extra_state_t state, int user_id, int run_fields);
 
+struct xuser_cnts_state;
+struct ejudge_cfg;
+struct contest_desc;
+struct section_global_data;
+
+struct xuser_cnts_state *
+team_extra_open(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        const unsigned char *plugin_name,
+        int flags);
+
 #endif /* __TEAM_EXTRA_H__ */
 
 /*
