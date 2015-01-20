@@ -20,6 +20,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/xuser_plugin.h"
+#include "ejudge/contests.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -43,6 +44,7 @@ struct xuser_mongo_state
 
 struct xuser_mongo_cnts_state
 {
+    struct xuser_cnts_state b;
     struct xuser_mongo_state *plugin_state;
     int contest_id;
 };
@@ -56,6 +58,14 @@ prepare_func(
         struct common_plugin_data *data,
         const struct ejudge_cfg *config,
         struct xml_tree *tree);
+
+static struct xuser_cnts_state *
+open_func(
+        struct common_plugin_data *data,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags);
 
 struct xuser_plugin_iface plugin_xuser_mongo =
 {
@@ -72,6 +82,7 @@ struct xuser_plugin_iface plugin_xuser_mongo =
         prepare_func,
     },
     XUSER_PLUGIN_IFACE_VERSION,
+    open_func,
 };
 
 static struct common_plugin_data *
@@ -137,9 +148,13 @@ prepare_func(
     return 0;
 }
 
-struct xuser_cnts_state *
+static struct xuser_cnts_state *
 open_func(
-        struct common_plugin_data *data)
+        struct common_plugin_data *data,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags)
 {
     struct xuser_mongo_state *plugin_state = (struct xuser_mongo_state *) data;
     struct xuser_mongo_cnts_state *state = NULL;
@@ -147,8 +162,10 @@ open_func(
     if (!plugin_state) return NULL;
 
     XCALLOC(state, 1);
+    state->b.vt = &plugin_xuser_mongo;
     state->plugin_state = plugin_state;
     ++state->plugin_state->nref;
+    state->contest_id = cnts->id;
 
     return (struct xuser_cnts_state *) state;
 }
