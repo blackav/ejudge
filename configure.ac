@@ -897,6 +897,22 @@ then
   AC_CHECK_HEADER([libintl.h],[],[ac_cv_nls=""])
 fi
 
+AC_MSG_CHECKING([for libmongo-client])
+if pkg-config --exists libmongo-client
+then
+  AC_MSG_RESULT([yes])
+  ac_cv_has_libmongo_client=1
+else
+  AC_MSG_RESULT([no])
+  ac_cv_has_libmongo_client=
+fi
+
+if [[ x"${ac_cv_has_libmongo_client}" = x1 ]]
+then
+  ac_cv_libmongo_client_cflags=`pkg-config --cflags libmongo-client`
+  ac_cv_libmongo_client_libs=`pkg-config --libs libmongo-client`
+fi
+
 dnl Checking for available languages
 dnl AC_MSG_NOTICE([checking available languages])
 
@@ -1104,6 +1120,9 @@ AC_SUBST(ac_cv_libcap_link)
 AC_SUBST(ac_cv_ejudge_server_bin_path_m)
 AC_SUBST(ac_cv_lang_config_dir)
 AC_SUBST(ac_cv_lang_config_dir_expanded)
+AC_SUBST(ac_cv_has_libmongo_client)
+AC_SUBST(ac_cv_libmongo_client_cflags)
+AC_SUBST(ac_cv_libmongo_client_libs)
 
 if [[ x"${ac_cv_has_regex}" = x1 ]]
 then
@@ -1285,6 +1304,11 @@ fi
 if [[ x"${ac_cv_has___int64}" = x1 ]]
 then
   AC_DEFINE(R_HAS___INT64, 1)
+fi
+
+if [[ x"${ac_cv_has_libmongo_client}" = x1 ]]
+then
+  AC_DEFINE(HAVE_LIBMONGO_CLIENT, 1)
 fi
 
 AC_CONFIG_HEADERS([config.h])
