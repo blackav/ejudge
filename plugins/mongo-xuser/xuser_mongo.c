@@ -41,6 +41,12 @@ struct xuser_mongo_state
   mongo_sync_connection *conn;
 };
 
+struct xuser_mongo_cnts_state
+{
+  struct xuser_mongo_state *plugin_state;
+  int contest_id;
+};
+
 static struct common_plugin_data *
 init_func(void);
 static int
@@ -129,6 +135,22 @@ prepare_func(
   }
 
   return 0;
+}
+
+struct xuser_cnts_state *
+open_func(
+        struct common_plugin_data *data)
+{
+  struct xuser_mongo_state *plugin_state = (struct xuser_mongo_state *) data;
+  struct xuser_mongo_cnts_state *state = NULL;
+
+  if (!plugin_state) return NULL;
+
+  XCALLOC(state, 1);
+  state->plugin_state = plugin_state;
+  ++state->plugin_state->nref;
+
+  return (struct xuser_cnts_state *) state;
 }
 
 /*

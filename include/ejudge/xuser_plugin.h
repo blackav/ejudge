@@ -32,4 +32,8 @@ struct xuser_plugin_iface
   int xuser_version;
 };
 
+struct xuser_cnts_state
+{
+};
+
 #endif /* __CLDB_PLUGIN_H__ */
