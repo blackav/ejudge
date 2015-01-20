@@ -19,6 +19,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
+#include "ejudge/xuser_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -30,6 +31,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <mongo.h>
+
+struct xuser_plugin_iface plugin_xuser_mongo =
+{
+};
 
 /*
  * Local variables:
