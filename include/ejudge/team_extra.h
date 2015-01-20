@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __TEAM_EXTRA_H__
 #define __TEAM_EXTRA_H__
 
-/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -53,6 +52,8 @@ struct team_extra
   // run table fields
   int run_fields;
 };
+
+struct team_extra *team_extra_free(struct team_extra *te);
 
 struct team_extra_state;
 typedef struct team_extra_state *team_extra_state_t;

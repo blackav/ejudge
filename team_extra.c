@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -73,17 +72,13 @@ team_extra_init(void)
   return p;
 }
 
-team_extra_state_t
-team_extra_destroy(team_extra_state_t state)
+struct team_extra *
+team_extra_free(struct team_extra *te)
 {
-  int i, j;
-  struct team_extra *te;
-  struct team_warning *tw;
+  if (te) {
+    int j;
+    struct team_warning *tw;
 
-  if (!state) return 0;
-  xfree(state->team_extra_dir);
-  for (i = 0; i < state->team_map_size; i++) {
-    if (!(te = state->team_map[i])) continue;
     for (j = 0; j < te->warn_u; j++) {
       if (!(tw = te->warns[j])) continue;
       xfree(tw->text);
@@ -94,6 +89,19 @@ team_extra_destroy(team_extra_state_t state)
     xfree(te->clar_map);
     xfree(te->disq_comment);
     xfree(te);
+  }
+  return NULL;
+}
+
+team_extra_state_t
+team_extra_destroy(team_extra_state_t state)
+{
+  int i;
+
+  if (!state) return 0;
+  xfree(state->team_extra_dir);
+  for (i = 0; i < state->team_map_size; i++) {
+    team_extra_free(state->team_map[i]);
   }
   xfree(state->team_map);
   memset(state, 0, sizeof(*state));
