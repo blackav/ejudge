@@ -243,8 +243,8 @@ team_extra_get_entry(team_extra_state_t state, int user_id)
   return tmpval;
 }
 
-static void
-extend_clar_map(struct team_extra *te, int clar_id)
+void
+team_extra_extend_clar_map(struct team_extra *te, int clar_id)
 {
   int new_size = te->clar_map_size;
   int new_alloc;
@@ -294,7 +294,7 @@ team_extra_set_clar_status(team_extra_state_t state, int user_id, int clar_id)
   te = get_entry(state, user_id, 0);
   if (te == (struct team_extra*) -1) return -1;
   ASSERT(te->user_id == user_id);
-  if (clar_id >= te->clar_map_size) extend_clar_map(te, clar_id);
+  if (clar_id >= te->clar_map_size) team_extra_extend_clar_map(te, clar_id);
   if ((te->clar_map[clar_id / BPE] & (1UL << clar_id % BPE)))
     return 1;
   te->clar_map[clar_id / BPE] |= (1UL << clar_id % BPE);
