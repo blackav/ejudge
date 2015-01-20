@@ -34,17 +34,17 @@
 
 struct xuser_mongo_state
 {
-  int nref;
+    int nref;
 
-  unsigned char *host;
-  int port;
-  mongo_sync_connection *conn;
+    unsigned char *host;
+    int port;
+    mongo_sync_connection *conn;
 };
 
 struct xuser_mongo_cnts_state
 {
-  struct xuser_mongo_state *plugin_state;
-  int contest_id;
+    struct xuser_mongo_state *plugin_state;
+    int contest_id;
 };
 
 static struct common_plugin_data *
@@ -59,46 +59,46 @@ prepare_func(
 
 struct xuser_plugin_iface plugin_xuser_mongo =
 {
-  {
     {
-      sizeof(struct xuser_plugin_iface),
-      EJUDGE_PLUGIN_IFACE_VERSION,
-      "xuser",
-      "mongo",
+        {
+            sizeof(struct xuser_plugin_iface),
+            EJUDGE_PLUGIN_IFACE_VERSION,
+            "xuser",
+            "mongo",
+        },
+        COMMON_PLUGIN_IFACE_VERSION,
+        init_func,
+        finish_func,
+        prepare_func,
     },
-    COMMON_PLUGIN_IFACE_VERSION,
-    init_func,
-    finish_func,
-    prepare_func,
-  },
-  XUSER_PLUGIN_IFACE_VERSION,
+    XUSER_PLUGIN_IFACE_VERSION,
 };
 
 static struct common_plugin_data *
 init_func(void)
 {
-  struct xuser_mongo_state *state = NULL;
-  XCALLOC(state, 1);
-  return (struct common_plugin_data *) state;
+    struct xuser_mongo_state *state = NULL;
+    XCALLOC(state, 1);
+    return (struct common_plugin_data *) state;
 }
 
 static int
 finish_func(struct common_plugin_data *data)
 {
-  struct xuser_mongo_state *state = (struct xuser_mongo_state *) data;
+    struct xuser_mongo_state *state = (struct xuser_mongo_state *) data;
 
-  if (state) {
-    if (state->nref > 0) {
-      err("xuser_mongo::finish: reference counter > 0");
-      return -1;
+    if (state) {
+        if (state->nref > 0) {
+            err("xuser_mongo::finish: reference counter > 0");
+            return -1;
+        }
+
+        xfree(state->host);
+        memset(state, 0, sizeof(*state));
+        xfree(state);
     }
 
-    xfree(state->host);
-    memset(state, 0, sizeof(*state));
-    xfree(state);
-  }
-
-  return 0;
+    return 0;
 }
 
 static int
@@ -107,54 +107,55 @@ prepare_func(
         const struct ejudge_cfg *config,
         struct xml_tree *tree)
 {
-  struct xuser_mongo_state *state = (struct xuser_mongo_state *) data;
+    struct xuser_mongo_state *state = (struct xuser_mongo_state *) data;
 
-  // this plugin configuration subtree is pointed by 'tree'
+    // this plugin configuration subtree is pointed by 'tree'
 
-  for (struct xml_tree *p = tree->first_down; p; p = p->right) {
-    if (!strcmp(p->name[0], "host")) {
-      if (xml_leaf_elem(p, &state->host, 1, 0) < 0) return -1;
-    } else if (!strcmp(p->name[0], "port")) {
-      if (xml_parse_int(NULL, "", p->line, p->column, p->text, &state->port) < 0) return -1;
-      if (state->port < 0 || state->port > 65535) {
-        xml_err_elem_invalid(p);
-        return -1;
-      }
-    } else {
-      return xml_err_elem_not_allowed(p);
+    for (struct xml_tree *p = tree->first_down; p; p = p->right) {
+        if (!strcmp(p->name[0], "host")) {
+            if (xml_leaf_elem(p, &state->host, 1, 0) < 0) return -1;
+        } else if (!strcmp(p->name[0], "port")) {
+            if (xml_parse_int(NULL, "", p->line, p->column, p->text, &state->port) < 0) return -1;
+            if (state->port < 0 || state->port > 65535) {
+                xml_err_elem_invalid(p);
+                return -1;
+            }
+        } else {
+            return xml_err_elem_not_allowed(p);
+        }
     }
-  }
 
-  if (!state->host) state->host = xstrdup("localhost");
-  if (state->port <= 0) state->port = 27027;
+    if (!state->host) state->host = xstrdup("localhost");
+    if (state->port <= 0) state->port = 27027;
 
-  state->conn = mongo_sync_connect(state->host, state->port, 0);
-  if (!state->conn) {
-    err("cannot connect to mongodb: %s", os_ErrorMsg());
-    return -1;
-  }
+    state->conn = mongo_sync_connect(state->host, state->port, 0);
+    if (!state->conn) {
+        err("cannot connect to mongodb: %s", os_ErrorMsg());
+        return -1;
+    }
 
-  return 0;
+    return 0;
 }
 
 struct xuser_cnts_state *
 open_func(
         struct common_plugin_data *data)
 {
-  struct xuser_mongo_state *plugin_state = (struct xuser_mongo_state *) data;
-  struct xuser_mongo_cnts_state *state = NULL;
+    struct xuser_mongo_state *plugin_state = (struct xuser_mongo_state *) data;
+    struct xuser_mongo_cnts_state *state = NULL;
 
-  if (!plugin_state) return NULL;
+    if (!plugin_state) return NULL;
 
-  XCALLOC(state, 1);
-  state->plugin_state = plugin_state;
-  ++state->plugin_state->nref;
+    XCALLOC(state, 1);
+    state->plugin_state = plugin_state;
+    ++state->plugin_state->nref;
 
-  return (struct xuser_cnts_state *) state;
+    return (struct xuser_cnts_state *) state;
 }
 
 /*
  * Local variables:
+ *  c-basic-offset: 4
  *  compile-command: "make"
  * End:
  */
