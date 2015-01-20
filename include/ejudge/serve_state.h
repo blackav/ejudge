@@ -39,6 +39,7 @@ struct user_filter_info;
 struct teamdb_db_callbacks;
 struct userlist_clnt;
 struct ejudge_cfg;
+struct xuser_cnts_state;
 
 /* error codes */
 enum
@@ -194,6 +195,9 @@ struct serve_state
 
   /* team_extra internal state */
   struct team_extra_state *team_extra_state;
+
+  /* new team extra internal state */
+  struct xuser_cnts_state *xuser_state;
 
   /* runlog internal state */
   struct runlog_state *runlog_state;

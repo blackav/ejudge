@@ -57,7 +57,7 @@ serve_state_init(int contest_id)
   XCALLOC(state, 1);
   state->clarlog_state = clar_init();
   state->teamdb_state = teamdb_init(contest_id);
-  state->team_extra_state = team_extra_init();
+  state->team_extra_state = NULL;
   state->runlog_state = run_init(state->teamdb_state);
   return state;
 }
@@ -767,7 +767,11 @@ serve_state_load_contest(
     return 1;
   }
 
-  team_extra_set_dir(state->team_extra_state, global->team_extra_dir);
+  state->xuser_state = team_extra_open(config, cnts, global, NULL, 0);
+  if (!state->xuser_state) {
+    err("load_contest: contest %d xuser plugin failed to load", contest_id);
+    goto failure;
+  }
 
   if (teamdb_set_callbacks(state->teamdb_state, teamdb_callbacks, cnts->id) < 0)
     goto failure;

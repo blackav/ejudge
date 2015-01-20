@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -158,8 +157,12 @@ main(int argc, char *argv[])
     return 1;
   }
   serve_state.teamdb_state = teamdb_init(global->contest_id);
-  serve_state.team_extra_state = team_extra_init();
-  team_extra_set_dir(serve_state.team_extra_state, global->team_extra_dir);
+  serve_state.team_extra_state = NULL;
+  serve_state.xuser_state = team_extra_open(config, cur_contest, global, NULL, 0);
+  if (!serve_state.xuser_state) {
+    err("xuser plugin failed to load");
+    return 1;
+  }
   if (!initialize_mode) {
     if (teamdb_open_client(serve_state.teamdb_state, global->socket_path,
                            global->contest_id) < 0)
