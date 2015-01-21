@@ -578,7 +578,7 @@ count_read_clars_func(
     if (user_id >= state->team_map_size) return 0;
     if (!(te = get_entry(state, user_id, 0))) return 0;
     int count = 0;
-    for (int i = 0; i < te->clar_map_size; ++i) {
+    for (int i = 0; i < te->clar_map_alloc; ++i) {
         count += __builtin_popcount(te->clar_map[i]);
     }
     return count;
