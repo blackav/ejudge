@@ -58,7 +58,6 @@ serve_state_init(int contest_id)
   XCALLOC(state, 1);
   state->clarlog_state = clar_init();
   state->teamdb_state = teamdb_init(contest_id);
-  state->team_extra_state = NULL;
   state->runlog_state = run_init(state->teamdb_state);
   return state;
 }

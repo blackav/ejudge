@@ -158,7 +158,6 @@ main(int argc, char *argv[])
     return 1;
   }
   serve_state.teamdb_state = teamdb_init(global->contest_id);
-  serve_state.team_extra_state = NULL;
   serve_state.xuser_state = team_extra_open(config, cur_contest, global, NULL, 0);
   if (!serve_state.xuser_state) {
     err("xuser plugin failed to load");
