@@ -56,9 +56,6 @@ struct team_extra
 struct team_extra *team_extra_free(struct team_extra *te);
 void team_extra_extend_clar_map(struct team_extra *te, int clar_id);
 
-struct team_extra_state;
-typedef struct team_extra_state *team_extra_state_t;
-
 int team_extra_parse_xml(const unsigned char *path, struct team_extra **pte);
 int team_extra_unparse_xml(FILE *f, const struct team_extra *te);
 
