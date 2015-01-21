@@ -1,8 +1,8 @@
 <%
-/* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
 #include "ejudge/team_extra.h"
+#include "ejudge/xuser_plugin.h"
 %><%@set getter_name = "csp_get_priv_user_info_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"
@@ -34,7 +34,9 @@
 
     // initialization
     teamdb_export_team(cs->teamdb_state, view_user_id, &u_info);
-    u_extra = team_extra_get_entry(cs->team_extra_state, view_user_id);
+    if (cs->xuser_state) {
+      u_extra = cs->xuser_state->vt->get_entry(cs->xuser_state, view_user_id);
+    }
     run_get_team_usage(cs->runlog_state, view_user_id, &runs_num, &runs_total);
     clar_get_user_usage(cs->clarlog_state,view_user_id, &clars_num, &clars_total);
     pages_total = run_get_total_pages(cs->runlog_state, view_user_id);

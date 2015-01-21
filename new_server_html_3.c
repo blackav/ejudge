@@ -27,6 +27,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/copyright.h"
 #include "ejudge/team_extra.h"
+#include "ejudge/xuser_plugin.h"
 
 #include "ejudge/xalloc.h"
 
@@ -895,7 +896,7 @@ ns_html_err_disqualified(
   }
   fprintf(fout, "<p>%s</p>\n",
           _("You are disqualified by the contest administration."));
-  if ((t_extra = team_extra_get_entry(cs->team_extra_state, phr->user_id))
+  if (cs->xuser_state && (t_extra = cs->xuser_state->vt->get_entry(cs->xuser_state, phr->user_id))
       && t_extra->disq_comment) {
     fprintf(fout, "%s", t_extra->disq_comment);
   }

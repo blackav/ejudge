@@ -38,6 +38,7 @@
 #include "ejudge/charsets.h"
 #include "ejudge/compat.h"
 #include "ejudge/filter_eval.h"
+#include "ejudge/xuser_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -2156,12 +2157,13 @@ do_write_kirov_standings(
     } else {
       memset(&u_info, 0, sizeof(u_info));
     }
+    t_extra = NULL;
     if (global->stand_show_contestant_status
         || global->stand_show_warn_number
         || global->contestant_status_row_attr) {
-      t_extra = team_extra_get_entry(state->team_extra_state, t_ind[t]);
-    } else {
-      t_extra = 0;
+      if (state->xuser_state) {
+        t_extra = state->xuser_state->vt->get_entry(state->xuser_state, t_ind[t]);
+      }
     }
     if (tot_full[t] != prev_prob) {
       prev_prob = tot_full[t];
@@ -3274,8 +3276,11 @@ do_write_moscow_standings(
     u_extra = 0;
     if (global->stand_show_contestant_status
         || global->stand_show_warn_number
-        || global->contestant_status_row_attr)
-      u_extra = team_extra_get_entry(state->team_extra_state, u_ind[u]);
+        || global->contestant_status_row_attr) {
+      if (state->xuser_state) {
+        u_extra = state->xuser_state->vt->get_entry(state->xuser_state, u_ind[u]);
+      }
+    }
     /* FIXME: consider virtual and real users */
     if (prev_prob != u_score[u]) {
       prev_prob = u_score[u];
@@ -4009,12 +4014,13 @@ do_write_standings(
     for (i = 0; i < t_tot; i++) {
       t = t_sort[i];
 
+      t_extra = 0;
       if (global->stand_show_contestant_status
           || global->stand_show_warn_number
           || global->contestant_status_row_attr) {
-        t_extra = team_extra_get_entry(state->team_extra_state, t_ind[t]);
-      } else {
-        t_extra = 0;
+        if (state->xuser_state) {
+          t_extra = state->xuser_state->vt->get_entry(state->xuser_state, t_ind[t]);
+        }
       }
 
       if (prev_prob != t_prob[t]) {

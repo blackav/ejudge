@@ -1697,7 +1697,10 @@ priv_user_operation(FILE *fout,
       FAIL(NEW_SRV_ERR_INV_STATUS);
     if (opcaps_check(phr->caps, OPCAP_EDIT_REG) < 0)
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-    if (!(t_extra = team_extra_get_entry(cs->team_extra_state, user_id)))
+    if (cs->xuser_state) {
+      t_extra = cs->xuser_state->vt->get_entry(cs->xuser_state, user_id);
+    }
+    if (!t_extra)
       FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
     if (t_extra->status == new_status) goto cleanup;
     team_extra_set_status(cs->team_extra_state, user_id, new_status);

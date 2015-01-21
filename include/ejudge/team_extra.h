@@ -62,11 +62,6 @@ typedef struct team_extra_state *team_extra_state_t;
 int team_extra_parse_xml(const unsigned char *path, struct team_extra **pte);
 int team_extra_unparse_xml(FILE *f, const struct team_extra *te);
 
-int _team_extra_set_clar_status(team_extra_state_t, int user_id, int clar_id);
-
-const struct team_extra* team_extra_get_entry(team_extra_state_t state,
-                                              int user_id);
-
 int team_extra_append_warning(team_extra_state_t state,
                               int user_id,
                               int issuer_id,
