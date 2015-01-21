@@ -1754,9 +1754,9 @@ priv_user_issue_warning(
     cmt_txt[cmt_len] = 0;
   }
 
-  team_extra_append_warning(cs->team_extra_state, user_id, phr->user_id,
-                            &phr->ip, cs->current_time, warn_txt, cmt_txt);
   if (cs->xuser_state) {
+    cs->xuser_state->vt->append_warning(cs->xuser_state, user_id, phr->user_id,
+                                        &phr->ip, cs->current_time, warn_txt, cmt_txt);
     cs->xuser_state->vt->flush(cs->xuser_state);
   }
 
