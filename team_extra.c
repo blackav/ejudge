@@ -176,19 +176,6 @@ get_entry(team_extra_state_t state, int user_id, int try_flag)
   return te;
 }
 
-const struct team_extra*
-team_extra_get_entry(team_extra_state_t state, int user_id)
-{
-  struct team_extra *tmpval;
-
-  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
-  if (user_id >= state->team_map_size) extend_team_map(state, user_id);
-
-  tmpval = get_entry(state, user_id, 0);
-  if (tmpval == (struct team_extra*) -1) tmpval = 0;
-  return tmpval;
-}
-
 void
 team_extra_extend_clar_map(struct team_extra *te, int clar_id)
 {
@@ -207,44 +194,6 @@ team_extra_extend_clar_map(struct team_extra *te, int clar_id)
   te->clar_map_size = new_size;
   te->clar_map_alloc = new_alloc;
   te->clar_map = new_map;
-}
-
-int
-team_extra_append_warning(
-        team_extra_state_t state,
-        int user_id,
-        int issuer_id,
-        const ej_ip_t *issuer_ip,
-        time_t issue_date,
-        const unsigned char *txt,
-        const unsigned char *cmt)
-{
-  struct team_extra *te;
-  struct team_warning *cur_warn;
-
-  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
-
-  if (user_id >= state->team_map_size) extend_team_map(state, user_id);
-  te = get_entry(state, user_id, 0);
-  if (te == (struct team_extra*) -1) return -1;
-  ASSERT(te->user_id == user_id);
-
-  if (te->warn_u == te->warn_a) {
-    te->warn_a *= 2;
-    if (!te->warn_a) te->warn_a = 8;
-    XREALLOC(te->warns, te->warn_a);
-  }
-  XCALLOC(cur_warn, 1);
-  te->warns[te->warn_u++] = cur_warn;
-
-  cur_warn->date = issue_date;
-  cur_warn->issuer_id = issuer_id;
-  cur_warn->issuer_ip = *issuer_ip;
-  cur_warn->text = xstrdup(txt);
-  cur_warn->comment = xstrdup(cmt);
-
-  te->is_dirty = 1;
-  return 0;
 }
 
 int
