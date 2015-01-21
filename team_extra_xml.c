@@ -21,6 +21,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/xml_utils.h"
+#include "ejudge/ej_uuid.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -48,6 +49,7 @@ enum
   TE_T_STATUS,
   TE_T_DISQ_COMMENT,
   TE_T_RUN_FIELDS,
+  TE_T_UUID,
 
   TE_T_LAST_TAG,
 };
@@ -72,6 +74,7 @@ static const char * const elem_map[] =
   [TE_T_STATUS]       = "status",
   [TE_T_DISQ_COMMENT] = "disq_comment",
   [TE_T_RUN_FIELDS]   = "run_fields",
+  [TE_T_UUID]         = "uuid",
   [TE_T_LAST_TAG]     = 0,
 };
 static const char * const attr_map[] =
@@ -335,6 +338,12 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
     case TE_T_RUN_FIELDS:
       if (parse_run_felds(t2, te) < 0) goto cleanup;
       break;
+    case TE_T_UUID:
+      if (ej_uuid_parse(t2->text, &te->uuid) < 0) {
+        xml_err_elem_invalid(t2);
+        goto cleanup;
+      }
+      break;
     default:
       xml_err_elem_not_allowed(t2);
       goto cleanup;
@@ -364,6 +373,11 @@ team_extra_unparse_xml(FILE *f, const struct team_extra *te)
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
   fprintf(f, "<%s %s=\"%d\">\n", elem_map[TE_T_TEAM_EXTRA],
           attr_map[TE_A_USER_ID], te->user_id);
+  if (ej_uuid_is_nonempty(te->uuid)) {
+    fprintf(f, "  <%s>%s</%s>\n", attr_map[TE_T_UUID],
+            ej_uuid_unparse(&te->uuid, NULL),
+            attr_map[TE_T_UUID]);
+  }
   fprintf(f, "  <%s>", elem_map[TE_T_VIEWED_CLARS]);
   for (i = 0, j = 0; i < te->clar_map_size; i++) {
     if (te->clar_map[i / BPE] & (1UL << i % BPE)) {

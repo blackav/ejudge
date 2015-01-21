@@ -19,6 +19,7 @@
 #include "ejudge/prepare.h"
 #include "ejudge/team_extra.h"
 #include "ejudge/errlog.h"
+#include "ejudge/ej_uuid.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -414,23 +415,27 @@ flush_func(
         struct xuser_cnts_state *data)
 {
     struct xuser_file_cnts_state *state = (struct xuser_file_cnts_state *) data;
+    struct team_extra *te;
     int i;
     path_t wpath;
     FILE *f;
 
     for (i = 1; i < state->team_map_size; i++) {
-        if (!state->team_map[i]) continue;
-        if (state->team_map[i] == (struct team_extra*) ~(size_t) 0) continue;
-        ASSERT(state->team_map[i]->user_id == i);
-        if (!state->team_map[i]->is_dirty) continue;
+        if (!(te = state->team_map[i])) continue;
+        if (te == (struct team_extra*) ~(size_t) 0) continue;
+        ASSERT(te->user_id == i);
+        if (!te->is_dirty) continue;
         if (make_write_path(state, wpath, sizeof(wpath), i) < 0) continue;
+        if (!ej_uuid_is_nonempty(te->uuid)) {
+            ej_uuid_generate(&te->uuid);
+        }
         if (!(f = fopen(wpath, "w"))) {
             unlink(wpath);
             continue;
         }
-        team_extra_unparse_xml(f, state->team_map[i]);
+        team_extra_unparse_xml(f, te);
         fclose(f);
-        state->team_map[i]->is_dirty = 0;
+        te->is_dirty = 0;
     }
 }
 

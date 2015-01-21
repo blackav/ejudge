@@ -33,6 +33,9 @@ struct team_warning
 
 struct team_extra
 {
+  // primary key
+  ej_uuid_t uuid;
+
   int is_dirty;
   int user_id;
   int clar_map_size;
