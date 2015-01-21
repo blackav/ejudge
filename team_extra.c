@@ -197,24 +197,6 @@ team_extra_extend_clar_map(struct team_extra *te, int clar_id)
 }
 
 int
-team_extra_set_status(team_extra_state_t state, int user_id, int status)
-{
-  struct team_extra *te;
-
-  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
-
-  if (user_id >= state->team_map_size) extend_team_map(state, user_id);
-  te = get_entry(state, user_id, 0);
-  if (te == (struct team_extra*) -1) return -1;
-  ASSERT(te->user_id == user_id);
-
-  if (te->status == status) return 0;
-  te->status = status;
-  te->is_dirty = 1;
-  return 1;
-}
-
-int
 team_extra_set_disq_comment(team_extra_state_t state, int user_id,
                             const unsigned char *disq_comment)
 {

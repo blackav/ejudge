@@ -1703,8 +1703,8 @@ priv_user_operation(FILE *fout,
     if (!t_extra)
       FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
     if (t_extra->status == new_status) goto cleanup;
-    team_extra_set_status(cs->team_extra_state, user_id, new_status);
     if (cs->xuser_state) {
+      cs->xuser_state->vt->set_status(cs->xuser_state, user_id, new_status);
       cs->xuser_state->vt->flush(cs->xuser_state);
     }
     break;
