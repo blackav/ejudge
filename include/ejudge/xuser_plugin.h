@@ -81,6 +81,9 @@ struct xuser_plugin_iface
         struct xuser_cnts_state *data,
         int user_id,
         int run_fields);
+    int (*count_read_clars)(
+        struct xuser_cnts_state *data,
+        int user_id);
 };
 
 struct xuser_cnts_state

@@ -5378,9 +5378,13 @@ serve_count_unread_clars(
     if (clar.to > 0 && clar.to != user_id) continue;
     if (!clar.to && clar.from > 0) continue;
     if (start_time <= 0 && clar.hide_flag) continue;
-    if (clar.from != user_id && state->xuser_state && !state->xuser_state->vt->get_clar_status(state->xuser_state, user_id, i)) {
+    if (clar.from != user_id) {
       total++;
     }
   }
+  if (state->xuser_state) {
+    total -= state->xuser_state->vt->count_read_clars(state->xuser_state, user_id);
+  }
+  if (total < 0) total = 0;
   return total;
 }

@@ -112,6 +112,10 @@ set_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id,
         int run_fields);
+static int
+count_read_clars_func(
+        struct xuser_cnts_state *data,
+        int user_id);
 
 struct xuser_plugin_iface plugin_xuser_file =
 {
@@ -139,6 +143,7 @@ struct xuser_plugin_iface plugin_xuser_file =
     set_disq_comment_func,
     get_run_fields_func,
     set_run_fields_func,
+    count_read_clars_func,
 };
 
 static struct common_plugin_data *
@@ -559,6 +564,24 @@ set_run_fields_func(
     te->run_fields = run_fields;
     te->is_dirty = 1;
     return 1;
+}
+
+static int
+count_read_clars_func(
+        struct xuser_cnts_state *data,
+        int user_id)
+{
+    struct xuser_file_cnts_state *state = (struct xuser_file_cnts_state *) data;
+    struct team_extra *te;
+
+    if (user_id <= 0) return 0;
+    if (user_id >= state->team_map_size) return 0;
+    if (!(te = get_entry(state, user_id, 0))) return 0;
+    int count = 0;
+    for (int i = 0; i < te->clar_map_size; ++i) {
+        count += __builtin_popcount(te->clar_map[i]);
+    }
+    return count;
 }
 
 /*
