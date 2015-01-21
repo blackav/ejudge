@@ -115,47 +115,6 @@ make_read_path(team_extra_state_t state, unsigned char *path, size_t size,
                   state->team_extra_dir, b32[0], b32[1], b32[2], user_id);
 }
 
-static int
-make_write_path(team_extra_state_t state, unsigned char *path, size_t size,
-                int user_id)
-{
-  unsigned char b32[16];
-  unsigned char *mpath = 0, *p;
-  //struct stat sb;
-  int i;
-
-  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
-  b32_number(user_id, MAX_USER_ID_32DIGITS + 1, b32);
-
-  mpath = alloca(strlen(state->team_extra_dir) + 32);
-  strcpy(mpath, state->team_extra_dir);
-  p = mpath + strlen(mpath);
-  for (i = 0; i < MAX_USER_ID_32DIGITS - 1; i++) {
-    *p++ = '/';
-    *p++ = b32[i];
-    *p = 0;
-    if (os_MakeDir(mpath, 0770) < 0) {
-      if (errno != EEXIST) {
-        err("team_extra: %s: mkdir failed: %s", mpath, os_ErrorMsg());
-        return -1;
-      }
-      /*
-      if (lstat(mpath, &sb) < 0) {
-        err("team_extra: %s: lstat failed: %s", mpath, os_ErrorMsg());
-        return -1;
-      }
-      if (!S_ISDIR(sb.st_mode)) {
-        err("team_extra: %s: is not a directory", mpath);
-        return -1;
-      }
-      */
-    }
-  }
-
-  return snprintf(path, size, "%s/%c/%c/%c/%06d.xml",
-                  state->team_extra_dir, b32[0], b32[1], b32[2], user_id);
-}
-
 static void
 extend_team_map(team_extra_state_t state, int user_id)
 {
@@ -268,29 +227,6 @@ team_extra_set_clar_status(team_extra_state_t state, int user_id, int clar_id)
   te->clar_map[clar_id / BPE] |= (1UL << clar_id % BPE);
   te->is_dirty = 1;
   return 0;
-}
-
-void
-team_extra_flush(team_extra_state_t state)
-{
-  int i;
-  path_t wpath;
-  FILE *f;
-
-  for (i = 1; i < state->team_map_size; i++) {
-    if (!state->team_map[i]) continue;
-    if (state->team_map[i] == (struct team_extra*) -1) continue;
-    ASSERT(state->team_map[i]->user_id == i);
-    if (!state->team_map[i]->is_dirty) continue;
-    if (make_write_path(state, wpath, sizeof(wpath), i) < 0) continue;
-    if (!(f = fopen(wpath, "w"))) {
-      unlink(wpath);
-      continue;
-    }
-    team_extra_unparse_xml(f, state->team_map[i]);
-    fclose(f);
-    state->team_map[i]->is_dirty = 0;
-  }
 }
 
 int
