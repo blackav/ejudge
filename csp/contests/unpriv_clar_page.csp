@@ -2,6 +2,7 @@
 %><%@include "unpriv_includes.csp"
 %><%
 #include "ejudge/team_extra.h"
+#include "ejudge/xuser_plugin.h"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@set getter_name = "csp_get_unpriv_clar_page"
@@ -48,8 +49,8 @@
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
-  if (ce.from != phr->user_id) {
-    team_extra_set_clar_status(cs->team_extra_state, phr->user_id, clar_id);
+  if (ce.from != phr->user_id && cs->xuser_state) {
+    cs->xuser_state->vt->set_clar_status(cs->xuser_state, phr->user_id, clar_id);
   }
 
   if (clar_get_text(cs->clarlog_state, clar_id, &clar_text, &clar_size) < 0) {

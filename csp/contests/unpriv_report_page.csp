@@ -5,6 +5,7 @@
 #include "ejudge/archive_paths.h"
 #include "ejudge/team_extra.h"
 #include "ejudge/ej_uuid.h"
+#include "ejudge/xuser_plugin.h"
 
 int
 ns_unpriv_parse_run_id(
@@ -160,7 +161,9 @@ ns_unpriv_parse_run_id(
     if (clar_get_record(cs->clarlog_state, clar_id, &clar) >= 0) {
       if (clar.to == phr->user_id && clar.run_id > 0 && !memcmp(&re.run_uuid, &clar.run_uuid, sizeof(re.run_uuid))) {
         // mark as read
-        team_extra_set_clar_status(cs->team_extra_state, phr->user_id, clar_id);
+        if (cs->xuser_state) {
+          cs->xuser_state->vt->set_clar_status(cs->xuser_state, phr->user_id, clar_id);
+        }
       }
     }
   }
