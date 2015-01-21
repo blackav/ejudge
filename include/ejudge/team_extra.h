@@ -38,9 +38,15 @@ struct team_extra
 
   int is_dirty;
   int user_id;
+
   int clar_map_size;
   int clar_map_alloc;
   unsigned long *clar_map;
+
+  /* the sorted vector of viewed clar uuids */
+  int clar_uuids_size;
+  int clar_uuids_alloc;
+  ej_uuid_t *clar_uuids;
 
   // disqualification reason
   unsigned char *disq_comment;

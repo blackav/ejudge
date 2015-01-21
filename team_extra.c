@@ -54,6 +54,7 @@ team_extra_free(struct team_extra *te)
     xfree(te->warns);
     xfree(te->clar_map);
     xfree(te->disq_comment);
+    xfree(te->clar_uuids);
     xfree(te);
   }
   return NULL;

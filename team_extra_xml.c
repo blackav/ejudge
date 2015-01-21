@@ -50,6 +50,7 @@ enum
   TE_T_DISQ_COMMENT,
   TE_T_RUN_FIELDS,
   TE_T_UUID,
+  TE_T_CLAR_UUIDS,
 
   TE_T_LAST_TAG,
 };
@@ -75,6 +76,7 @@ static const char * const elem_map[] =
   [TE_T_DISQ_COMMENT] = "disq_comment",
   [TE_T_RUN_FIELDS]   = "run_fields",
   [TE_T_UUID]         = "uuid",
+  [TE_T_CLAR_UUIDS]   = "clar_uuids",
   [TE_T_LAST_TAG]     = 0,
 };
 static const char * const attr_map[] =
@@ -144,6 +146,42 @@ parse_viewed_clars(struct xml_tree *t, struct team_extra *te, int *pv_flag)
     te->clar_map[x / BPE] |= (1UL << x % BPE);
   }
 
+  return 0;
+}
+
+static int
+parse_clar_uuids(struct xml_tree *t, struct team_extra *te, int *pu_flag)
+{
+  if (!*pu_flag) return xml_err_elem_redefined(t);
+  *pu_flag = 1;
+
+  if (t->first) return xml_err_attrs(t);
+  if (xml_empty_text(t) < 0) return -1;
+
+  for (struct xml_tree *wt = t->first_down; wt; wt = wt->right) {
+    if (wt->tag != TE_T_UUID) return xml_err_elem_not_allowed(wt);
+    if (wt->first) return xml_err_attrs(t);
+    if (wt->first_down) return xml_err_nested_elems(wt);
+    ej_uuid_t uuid = {};
+    if (ej_uuid_parse(wt->text, &uuid) < 0) return xml_err_elem_invalid(wt);
+    int i;
+    for (i = 0; i < te->clar_uuids_size; ++i) {
+      if (te->clar_uuids[i].v[0] == uuid.v[0] && te->clar_uuids[i].v[1] == uuid.v[1]
+          && te->clar_uuids[i].v[2] == uuid.v[2] && te->clar_uuids[i].v[3] == uuid.v[2]) {
+        break;
+      }
+    }
+    if (i == te->clar_uuids_size) {
+      if (te->clar_uuids_size == te->clar_uuids_alloc) {
+        int new_size = te->clar_uuids_alloc * 2;
+        if (!new_size) new_size = 32;
+        ej_uuid_t *new_uuids = xrealloc(te->clar_uuids, new_size * sizeof(te->clar_uuids[0]));
+        te->clar_uuids_alloc = new_size;
+        te->clar_uuids = new_uuids;
+      }
+      te->clar_uuids[te->clar_uuids_size++] = uuid;
+    }
+  }
   return 0;
 }
 
@@ -281,7 +319,7 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
   struct xml_tree *t = 0, *t2 = 0;
   struct team_extra *te = 0;
   struct xml_attr *a = 0;
-  int user_id = -1, x, n, v_flag = 0, w_flag = 0, s_flag = 0;
+  int user_id = -1, x, n, v_flag = 0, w_flag = 0, s_flag = 0, u_flag = 0;
 
   xml_err_path = path;
   xml_err_spec = &team_extra_parse_spec;
@@ -343,6 +381,9 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
         xml_err_elem_invalid(t2);
         goto cleanup;
       }
+      break;
+    case TE_T_CLAR_UUIDS:
+      if (parse_clar_uuids(t2, te, &u_flag) < 0) goto cleanup;
       break;
     default:
       xml_err_elem_not_allowed(t2);
