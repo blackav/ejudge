@@ -374,9 +374,9 @@ team_extra_unparse_xml(FILE *f, const struct team_extra *te)
   fprintf(f, "<%s %s=\"%d\">\n", elem_map[TE_T_TEAM_EXTRA],
           attr_map[TE_A_USER_ID], te->user_id);
   if (ej_uuid_is_nonempty(te->uuid)) {
-    fprintf(f, "  <%s>%s</%s>\n", attr_map[TE_T_UUID],
+    fprintf(f, "  <%s>%s</%s>\n", elem_map[TE_T_UUID],
             ej_uuid_unparse(&te->uuid, NULL),
-            attr_map[TE_T_UUID]);
+            elem_map[TE_T_UUID]);
   }
   fprintf(f, "  <%s>", elem_map[TE_T_VIEWED_CLARS]);
   for (i = 0, j = 0; i < te->clar_map_size; i++) {
