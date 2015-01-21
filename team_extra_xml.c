@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -354,7 +353,7 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
 }
 
 int
-team_extra_unparse_xml(FILE *f, struct team_extra *te)
+team_extra_unparse_xml(FILE *f, const struct team_extra *te)
 {
   int i, j;
 
