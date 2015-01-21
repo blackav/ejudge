@@ -62,8 +62,6 @@ typedef struct team_extra_state *team_extra_state_t;
 int team_extra_parse_xml(const unsigned char *path, struct team_extra **pte);
 int team_extra_unparse_xml(FILE *f, const struct team_extra *te);
 
-int team_extra_set_disq_comment(team_extra_state_t state, int user_id,
-                                const unsigned char *disq_comment);
 int
 team_extra_get_run_fields(team_extra_state_t state, int user_id);
 int

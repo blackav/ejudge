@@ -1389,8 +1389,9 @@ priv_registration_operation(FILE *fout,
       case NEW_SRV_ACTION_USERS_SET_DISQUALIFIED:
         cmd = 1;
         flag = USERLIST_UC_DISQUALIFIED;
-        team_extra_set_disq_comment(cs->team_extra_state, uset.v[i],
-                                    disq_comment);
+        if (cs->xuser_state) {
+          cs->xuser_state->vt->set_disq_comment(cs->xuser_state, uset.v[i], disq_comment);
+        }
         break;
       case NEW_SRV_ACTION_USERS_CLEAR_DISQUALIFIED:
         cmd = 2;
@@ -1929,8 +1930,8 @@ priv_user_disqualify(
     goto cleanup;
   }
 
-  team_extra_set_disq_comment(cs->team_extra_state, user_id, warn_txt);
   if (cs->xuser_state) {
+    cs->xuser_state->vt->set_disq_comment(cs->xuser_state, user_id, warn_txt);
     cs->xuser_state->vt->flush(cs->xuser_state);
   }
 
