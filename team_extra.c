@@ -38,13 +38,6 @@
 
 #define BPE (CHAR_BIT * sizeof(((struct team_extra*)0)->clar_map[0]))
 
-struct team_extra_state
-{
-  unsigned char *team_extra_dir;
-  size_t team_map_size;
-  struct team_extra **team_map;
-};
-
 struct team_extra *
 team_extra_free(struct team_extra *te)
 {
@@ -64,22 +57,6 @@ team_extra_free(struct team_extra *te)
     xfree(te);
   }
   return NULL;
-}
-
-team_extra_state_t
-team_extra_destroy(team_extra_state_t state)
-{
-  int i;
-
-  if (!state) return 0;
-  xfree(state->team_extra_dir);
-  for (i = 0; i < state->team_map_size; i++) {
-    team_extra_free(state->team_map[i]);
-  }
-  xfree(state->team_map);
-  memset(state, 0, sizeof(*state));
-  xfree(state);
-  return 0;
 }
 
 void
