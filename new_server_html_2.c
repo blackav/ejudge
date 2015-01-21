@@ -49,6 +49,7 @@
 #include "ejudge/super_run_packet.h"
 #include "ejudge/ej_uuid.h"
 #include "ejudge/new_server_pi.h"
+#include "ejudge/xuser_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -5889,8 +5890,9 @@ team_clar_flags(
         int to)
 {
   if (from != user_id) {
-    if (!team_extra_get_clar_status(state->team_extra_state, user_id, clar_id))
+    if (state->xuser_state && !state->xuser_state->vt->get_clar_status(state->xuser_state, user_id, clar_id)) {
       return "N";
+    }
     else return "&nbsp;";
   }
   if (!flags) return "U";

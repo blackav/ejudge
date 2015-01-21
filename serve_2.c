@@ -47,6 +47,7 @@
 #include "ejudge/ej_uuid.h"
 #include "ejudge/team_extra.h"
 #include "ejudge/packet_name.h"
+#include "ejudge/xuser_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -5377,9 +5378,9 @@ serve_count_unread_clars(
     if (clar.to > 0 && clar.to != user_id) continue;
     if (!clar.to && clar.from > 0) continue;
     if (start_time <= 0 && clar.hide_flag) continue;
-    if (clar.from != user_id
-        && !team_extra_get_clar_status(state->team_extra_state, user_id, i))
+    if (clar.from != user_id && state->xuser_state && !state->xuser_state->vt->get_clar_status(state->xuser_state, user_id, i)) {
       total++;
+    }
   }
   return total;
 }
