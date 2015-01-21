@@ -56,6 +56,7 @@
 #include "ejudge/new_server_match.h"
 #include "ejudge/external_action.h"
 #include "ejudge/new_server_pi.h"
+#include "ejudge/xuser_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -275,7 +276,9 @@ do_unload_contest(int idx)
   if (extra->serve_state) {
     serve_check_stat_generation(ejudge_config, extra->serve_state, cnts, 1, utf8_mode);
     serve_update_status_file(extra->serve_state, 1);
-    team_extra_flush(extra->serve_state->team_extra_state);
+    if (extra->serve_state->xuser_state) {
+      extra->serve_state->xuser_state->vt->flush(extra->serve_state->xuser_state);
+    }
     extra->serve_state = serve_state_destroy(ejudge_config, extra->serve_state, cnts, ul_conn);
   }
 
@@ -1413,7 +1416,9 @@ priv_registration_operation(FILE *fout,
   }
 
   if (phr->action == NEW_SRV_ACTION_USERS_SET_DISQUALIFIED) {
-    team_extra_flush(cs->team_extra_state);
+    if (cs->xuser_state) {
+      cs->xuser_state->vt->flush(cs->xuser_state);
+    }
   }
 
  cleanup:
@@ -1696,7 +1701,9 @@ priv_user_operation(FILE *fout,
       FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
     if (t_extra->status == new_status) goto cleanup;
     team_extra_set_status(cs->team_extra_state, user_id, new_status);
-    team_extra_flush(cs->team_extra_state);
+    if (cs->xuser_state) {
+      cs->xuser_state->vt->flush(cs->xuser_state);
+    }
     break;
   }
 
@@ -1746,7 +1753,9 @@ priv_user_issue_warning(
 
   team_extra_append_warning(cs->team_extra_state, user_id, phr->user_id,
                             &phr->ip, cs->current_time, warn_txt, cmt_txt);
-  team_extra_flush(cs->team_extra_state);
+  if (cs->xuser_state) {
+    cs->xuser_state->vt->flush(cs->xuser_state);
+  }
 
  cleanup:
   xfree(warn_txt);
@@ -1918,7 +1927,9 @@ priv_user_disqualify(
   }
 
   team_extra_set_disq_comment(cs->team_extra_state, user_id, warn_txt);
-  team_extra_flush(cs->team_extra_state);
+  if (cs->xuser_state) {
+    cs->xuser_state->vt->flush(cs->xuser_state);
+  }
 
  cleanup:
   xfree(warn_txt);
@@ -5921,7 +5932,9 @@ priv_change_run_fields(
     if (u->run_fields <= 0) goto cleanup;
     u->run_fields = 0;
     team_extra_set_run_fields(cs->team_extra_state, phr->user_id, 0);
-    team_extra_flush(cs->team_extra_state);
+    if (cs->xuser_state) {
+      cs->xuser_state->vt->flush(cs->xuser_state);
+    }
     goto cleanup;
   }
 
@@ -5936,7 +5949,9 @@ priv_change_run_fields(
   if (new_fields == u->run_fields) goto cleanup;
   u->run_fields = new_fields;
   team_extra_set_run_fields(cs->team_extra_state, phr->user_id, u->run_fields);
-  team_extra_flush(cs->team_extra_state);
+  if (cs->xuser_state) {
+    cs->xuser_state->vt->flush(cs->xuser_state);
+  }
 
 cleanup:
   return retval;

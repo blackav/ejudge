@@ -44,6 +44,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/fileutl.h"
+#include "ejudge/xuser_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -194,7 +195,9 @@ main(int argc, char *argv[])
   if (serve_create_symlinks(&serve_state) < 0) return 1;
   serve_state.current_time = time(0);
   serve_update_status_file(&serve_state, 1);
-  team_extra_flush(serve_state.team_extra_state);
+  if (serve_state.xuser_state) {
+    serve_state.xuser_state->vt->flush(serve_state.xuser_state);
+  }
   return 0;
 
  print_usage:
