@@ -62,11 +62,6 @@ typedef struct team_extra_state *team_extra_state_t;
 int team_extra_parse_xml(const unsigned char *path, struct team_extra **pte);
 int team_extra_unparse_xml(FILE *f, const struct team_extra *te);
 
-int
-team_extra_get_run_fields(team_extra_state_t state, int user_id);
-int
-team_extra_set_run_fields(team_extra_state_t state, int user_id, int run_fields);
-
 struct xuser_cnts_state;
 struct ejudge_cfg;
 struct contest_desc;

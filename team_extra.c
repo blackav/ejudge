@@ -36,7 +36,6 @@
 #include <malloc.h>
 #endif
 
-#define MAX_USER_ID_32DIGITS 4
 #define BPE (CHAR_BIT * sizeof(((struct team_extra*)0)->clar_map[0]))
 
 struct team_extra_state
@@ -45,26 +44,6 @@ struct team_extra_state
   size_t team_map_size;
   struct team_extra **team_map;
 };
-
-static const unsigned char b32_digits[]=
-"0123456789ABCDEFGHIJKLMNOPQRSTUV";
-static void
-b32_number(unsigned num, size_t size, unsigned char buf[])
-{
-  int i;
-
-  ASSERT(size > 1);
-
-  memset(buf, '0', size - 1);
-  buf[size - 1] = 0;
-  i = size - 2;
-  while (num > 0 && i >= 0) {
-    buf[i] = b32_digits[num & 0x1f];
-    i--;
-    num >>= 5;
-  }
-  ASSERT(!num);
-}
 
 struct team_extra *
 team_extra_free(struct team_extra *te)
@@ -103,79 +82,6 @@ team_extra_destroy(team_extra_state_t state)
   return 0;
 }
 
-static int
-make_read_path(team_extra_state_t state, unsigned char *path, size_t size,
-               int user_id)
-{
-  unsigned char b32[16];
-
-  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
-  b32_number(user_id, MAX_USER_ID_32DIGITS + 1, b32);
-  return snprintf(path, size, "%s/%c/%c/%c/%06d.xml",
-                  state->team_extra_dir, b32[0], b32[1], b32[2], user_id);
-}
-
-static void
-extend_team_map(team_extra_state_t state, int user_id)
-{
-  size_t new_size = state->team_map_size;
-  struct team_extra **new_map = 0;
-
-  if (!new_size) new_size = 32;
-  while (new_size <= user_id) new_size *= 2;
-  XCALLOC(new_map, new_size);
-  if (state->team_map_size > 0) {
-    memcpy(new_map, state->team_map, state->team_map_size * sizeof(new_map[0]));
-    xfree(state->team_map);
-  }
-  state->team_map = new_map;
-  state->team_map_size = new_size;
-}
-
-static struct team_extra *
-get_entry(team_extra_state_t state, int user_id, int try_flag)
-{
-  struct team_extra *te = state->team_map[user_id];
-  path_t rpath;
-  //struct stat sb;
-
-  if (te) return te;
-
-  make_read_path(state, rpath, sizeof(rpath), user_id);
-  if (os_CheckAccess(rpath, REUSE_F_OK) < 0) {
-    if (try_flag) return NULL;
-    XCALLOC(te, 1);
-    te->user_id = user_id;
-    state->team_map[user_id] = te;
-    return te;
-  }
-  /*    
-  if (lstat(rpath, &sb) < 0) {
-    XCALLOC(te, 1);
-    te->user_id = user_id;
-    state->team_map[user_id] = te;
-    return te;
-  }
-  if (!S_ISREG(sb.st_mode)) {
-    err("team_extra: %s: not a regular file", rpath);
-    state->team_map[user_id] = (struct team_extra*) -1;
-    return (struct team_extra*) -1;
-  }
-  */
-  if (team_extra_parse_xml(rpath, &te) < 0) {
-    state->team_map[user_id] = (struct team_extra*) -1;
-    return (struct team_extra*) -1;
-  }
-  if (te->user_id != user_id) {
-    err("team_extra: %s: user_id mismatch: %d, %d",
-        rpath, te->user_id, user_id);
-    state->team_map[user_id] = (struct team_extra*) -1;
-    return (struct team_extra*) -1;
-  }
-  state->team_map[user_id] = te;
-  return te;
-}
-
 void
 team_extra_extend_clar_map(struct team_extra *te, int clar_id)
 {
@@ -194,38 +100,6 @@ team_extra_extend_clar_map(struct team_extra *te, int clar_id)
   te->clar_map_size = new_size;
   te->clar_map_alloc = new_alloc;
   te->clar_map = new_map;
-}
-
-int
-team_extra_get_run_fields(team_extra_state_t state, int user_id)
-{
-  struct team_extra *te;
-
-  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
-
-  if (user_id >= state->team_map_size) extend_team_map(state, user_id);
-  te = get_entry(state, user_id, 1);
-  if (!te || te == (struct team_extra*) -1) return 0;
-  ASSERT(te->user_id == user_id);
-  return te->run_fields;
-}
-
-int
-team_extra_set_run_fields(team_extra_state_t state, int user_id, int run_fields)
-{
-  struct team_extra *te;
-
-  ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
-
-  if (user_id >= state->team_map_size) extend_team_map(state, user_id);
-  te = get_entry(state, user_id, 0);
-  if (te == (struct team_extra*) -1) return -1;
-  ASSERT(te->user_id == user_id);
-
-  if (te->run_fields == run_fields) return 0;
-  te->run_fields = run_fields;
-  te->is_dirty = 1;
-  return 1;
 }
 
 extern struct xuser_plugin_iface plugin_xuser_file;

@@ -5935,8 +5935,8 @@ priv_change_run_fields(
   if (hr_cgi_param(phr, "reset", &s) > 0 && s) {
     if (u->run_fields <= 0) goto cleanup;
     u->run_fields = 0;
-    team_extra_set_run_fields(cs->team_extra_state, phr->user_id, 0);
     if (cs->xuser_state) {
+      cs->xuser_state->vt->set_run_fields(cs->xuser_state, phr->user_id, 0);
       cs->xuser_state->vt->flush(cs->xuser_state);
     }
     goto cleanup;
@@ -5952,8 +5952,8 @@ priv_change_run_fields(
   }
   if (new_fields == u->run_fields) goto cleanup;
   u->run_fields = new_fields;
-  team_extra_set_run_fields(cs->team_extra_state, phr->user_id, u->run_fields);
   if (cs->xuser_state) {
+    cs->xuser_state->vt->set_run_fields(cs->xuser_state, phr->user_id, u->run_fields);
     cs->xuser_state->vt->flush(cs->xuser_state);
   }
 

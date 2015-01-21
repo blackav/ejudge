@@ -141,8 +141,8 @@ ns_write_priv_all_runs(
   if (!u) u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
 
   run_fields = u->run_fields;
-  if (run_fields <= 0) {
-    run_fields = team_extra_get_run_fields(cs->team_extra_state, phr->user_id);
+  if (run_fields <= 0 && cs->xuser_state) {
+    run_fields = cs->xuser_state->vt->get_run_fields(cs->xuser_state, phr->user_id);
   }
   if (run_fields <= 0) {
     run_fields = RUN_VIEW_DEFAULT;
