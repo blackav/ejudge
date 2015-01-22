@@ -152,7 +152,7 @@ parse_viewed_clars(struct xml_tree *t, struct team_extra *te, int *pv_flag)
 static int
 parse_clar_uuids(struct xml_tree *t, struct team_extra *te, int *pu_flag)
 {
-  if (!*pu_flag) return xml_err_elem_redefined(t);
+  if (*pu_flag) return xml_err_elem_redefined(t);
   *pu_flag = 1;
 
   if (t->first) return xml_err_attrs(t);
@@ -403,15 +403,17 @@ team_extra_unparse_xml(FILE *f, const struct team_extra *te)
             ej_uuid_unparse(&te->uuid, NULL),
             elem_map[TE_T_UUID]);
   }
-  fprintf(f, "  <%s>", elem_map[TE_T_VIEWED_CLARS]);
-  for (i = 0, j = 0; i < te->clar_map_size; i++) {
-    if (te->clar_map[i / BPE] & (1UL << i % BPE)) {
-      if (j) putc(' ', f);
-      fprintf(f, "%d", i);
-      j++;
+  if (te->clar_map_size > 0) {
+    fprintf(f, "  <%s>", elem_map[TE_T_VIEWED_CLARS]);
+    for (i = 0, j = 0; i < te->clar_map_size; i++) {
+      if (te->clar_map[i / BPE] & (1UL << i % BPE)) {
+        if (j) putc(' ', f);
+        fprintf(f, "%d", i);
+        j++;
+      }
     }
+    fprintf(f, "  </%s>\n", elem_map[TE_T_VIEWED_CLARS]);
   }
-  fprintf(f, "  </%s>\n", elem_map[TE_T_VIEWED_CLARS]);
   if (te->status > 0) {
     fprintf(f, "  <%s>%d</%s>\n", elem_map[TE_T_STATUS],
             te->status, elem_map[TE_T_STATUS]);

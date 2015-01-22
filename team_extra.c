@@ -42,22 +42,23 @@
 struct team_extra *
 team_extra_free(struct team_extra *te)
 {
-  if (te) {
-    int j;
-    struct team_warning *tw;
+  if (!te) return NULL;
+  if (te == (struct team_extra*) ~(size_t) 0) return NULL;
 
-    for (j = 0; j < te->warn_u; j++) {
-      if (!(tw = te->warns[j])) continue;
-      xfree(tw->text);
-      xfree(tw->comment);
-      xfree(tw);
-    }
-    xfree(te->warns);
-    xfree(te->clar_map);
-    xfree(te->disq_comment);
-    xfree(te->clar_uuids);
-    xfree(te);
+  int j;
+  struct team_warning *tw;
+
+  for (j = 0; j < te->warn_u; j++) {
+    if (!(tw = te->warns[j])) continue;
+    xfree(tw->text);
+    xfree(tw->comment);
+    xfree(tw);
   }
+  xfree(te->warns);
+  xfree(te->clar_map);
+  xfree(te->disq_comment);
+  xfree(te->clar_uuids);
+  xfree(te);
   return NULL;
 }
 
@@ -161,8 +162,8 @@ team_extra_add_clar_uuid(
   }
   if (low < te->clar_uuids_size) {
     memmove(&te->clar_uuids[low + 1], &te->clar_uuids[low], (te->clar_uuids_size - low) * sizeof(te->clar_uuids[0]));
-    ++te->clar_uuids_size;
   }
+  ++te->clar_uuids_size;
   te->clar_uuids[low] = *puuid;
   return 1;
 }
