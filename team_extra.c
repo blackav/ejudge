@@ -86,18 +86,37 @@ team_extra_add_clar_uuid(
         struct team_extra *te,
         const ej_uuid_t *puuid)
 {
-  int i;
+  int mid, low = 0, high = te->clar_uuids_size;
+  const ej_uuid_t *p;
 
   if (!puuid) return;
   if (!ej_uuid_is_nonempty(*puuid)) return;
 
-  for (i = 0; i < te->clar_uuids_size; ++i) {
-    if (te->clar_uuids[i].v[0] == puuid->v[0]
-        && te->clar_uuids[i].v[1] == puuid->v[1]
-        && te->clar_uuids[i].v[2] == puuid->v[2]
-        && te->clar_uuids[i].v[3] == puuid->v[3])
+  while (low < high) {
+    mid = (low + high) / 2;
+    p = &te->clar_uuids[mid];
+    if (p->v[0] < puuid->v[0]) {
+      high = mid;
+    } else if (p->v[0] > puuid->v[0]) {
+      low = mid + 1;
+    } else if (p->v[1] < puuid->v[1]) {
+      high = mid;
+    } else if (p->v[1] > puuid->v[1]) {
+      low = mid + 1;
+    } else if (p->v[2] < puuid->v[2]) {
+      high = mid;
+    } else if (p->v[2] > puuid->v[2]) {
+      low = mid + 1;
+    } else if (p->v[3] < puuid->v[3]) {
+      high = mid;
+    } else if (p->v[3] > puuid->v[3]) {
+      low = mid + 1;
+    } else {
       return;
+    }
   }
+
+  ASSERT(low == high);
 
   if (te->clar_uuids_size == te->clar_uuids_alloc) {
     if (!(te->clar_uuids_alloc *= 2)) te->clar_uuids_alloc = 16;

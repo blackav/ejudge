@@ -164,23 +164,7 @@ parse_clar_uuids(struct xml_tree *t, struct team_extra *te, int *pu_flag)
     if (wt->first_down) return xml_err_nested_elems(wt);
     ej_uuid_t uuid = {};
     if (ej_uuid_parse(wt->text, &uuid) < 0) return xml_err_elem_invalid(wt);
-    int i;
-    for (i = 0; i < te->clar_uuids_size; ++i) {
-      if (te->clar_uuids[i].v[0] == uuid.v[0] && te->clar_uuids[i].v[1] == uuid.v[1]
-          && te->clar_uuids[i].v[2] == uuid.v[2] && te->clar_uuids[i].v[3] == uuid.v[2]) {
-        break;
-      }
-    }
-    if (i == te->clar_uuids_size) {
-      if (te->clar_uuids_size == te->clar_uuids_alloc) {
-        int new_size = te->clar_uuids_alloc * 2;
-        if (!new_size) new_size = 32;
-        ej_uuid_t *new_uuids = xrealloc(te->clar_uuids, new_size * sizeof(te->clar_uuids[0]));
-        te->clar_uuids_alloc = new_size;
-        te->clar_uuids = new_uuids;
-      }
-      te->clar_uuids[te->clar_uuids_size++] = uuid;
-    }
+    team_extra_add_clar_uuid(te, &uuid);
   }
   return 0;
 }
