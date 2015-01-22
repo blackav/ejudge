@@ -162,7 +162,7 @@ ns_unpriv_parse_run_id(
       if (clar.to == phr->user_id && clar.run_id > 0 && !memcmp(&re.run_uuid, &clar.run_uuid, sizeof(re.run_uuid))) {
         // mark as read
         if (cs->xuser_state) {
-          cs->xuser_state->vt->set_clar_status(cs->xuser_state, phr->user_id, clar_id);
+          cs->xuser_state->vt->set_clar_status(cs->xuser_state, phr->user_id, clar_id, &clar.uuid);
         }
       }
     }

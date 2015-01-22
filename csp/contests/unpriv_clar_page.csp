@@ -50,7 +50,7 @@
   }
 
   if (ce.from != phr->user_id && cs->xuser_state) {
-    cs->xuser_state->vt->set_clar_status(cs->xuser_state, phr->user_id, clar_id);
+    cs->xuser_state->vt->set_clar_status(cs->xuser_state, phr->user_id, clar_id, &ce.uuid);
   }
 
   if (clar_get_text(cs->clarlog_state, clar_id, &clar_text, &clar_size) < 0) {
