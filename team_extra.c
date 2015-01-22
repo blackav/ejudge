@@ -21,6 +21,7 @@
 #include "ejudge/prepare.h"
 #include "ejudge/common_plugin.h"
 #include "ejudge/xuser_plugin.h"
+#include "ejudge/ej_uuid.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -78,6 +79,31 @@ team_extra_extend_clar_map(struct team_extra *te, int clar_id)
   te->clar_map_size = new_size;
   te->clar_map_alloc = new_alloc;
   te->clar_map = new_map;
+}
+
+void
+team_extra_add_clar_uuid(
+        struct team_extra *te,
+        const ej_uuid_t *puuid)
+{
+  int i;
+
+  if (!puuid) return;
+  if (!ej_uuid_is_nonempty(*puuid)) return;
+
+  for (i = 0; i < te->clar_uuids_size; ++i) {
+    if (te->clar_uuids[i].v[0] == puuid->v[0]
+        && te->clar_uuids[i].v[1] == puuid->v[1]
+        && te->clar_uuids[i].v[2] == puuid->v[2]
+        && te->clar_uuids[i].v[3] == puuid->v[3])
+      return;
+  }
+
+  if (te->clar_uuids_size == te->clar_uuids_alloc) {
+    if (!(te->clar_uuids_alloc *= 2)) te->clar_uuids_alloc = 16;
+    XREALLOC(te->clar_uuids, te->clar_uuids_alloc);
+  }
+  te->clar_uuids[te->clar_uuids_size++] = *puuid;
 }
 
 extern struct xuser_plugin_iface plugin_xuser_file;
