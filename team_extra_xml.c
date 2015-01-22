@@ -432,6 +432,14 @@ team_extra_unparse_xml(FILE *f, const struct team_extra *te)
     }
     fprintf(f, "  </%s>\n", elem_map[TE_T_WARNINGS]);
   }
+  if (te->clar_uuids_size > 0) {
+    fprintf(f, "  <%s>\n", elem_map[TE_T_CLAR_UUIDS]);
+    for (i = 0; i < te->clar_uuids_size; ++i) {
+      fprintf(f, "    <%s>%s</%s>\n", elem_map[TE_T_UUID],
+              ej_uuid_unparse(&te->clar_uuids[i], NULL), elem_map[TE_T_UUID]);
+    }
+    fprintf(f, "  </%s>\n", elem_map[TE_T_CLAR_UUIDS]);
+  }
   if (te->disq_comment) {
     xml_unparse_text(f, elem_map[TE_T_DISQ_COMMENT], te->disq_comment, "  ");
   }
