@@ -5885,12 +5885,13 @@ team_clar_flags(
         const serve_state_t state,
         int user_id,
         int clar_id,
+        const ej_uuid_t *p_clar_uuid,
         int flags,
         int from,
         int to)
 {
   if (from != user_id) {
-    if (state->xuser_state && !state->xuser_state->vt->get_clar_status(state->xuser_state, user_id, clar_id)) {
+    if (state->xuser_state && !state->xuser_state->vt->get_clar_status(state->xuser_state, user_id, clar_id, p_clar_uuid)) {
       return "N";
     }
     else return "&nbsp;";
@@ -5964,7 +5965,7 @@ new_write_user_clars(
     if (start_time > time) time = start_time;
     duration_str(show_astr_time, time, start_time, dur_str, 0);
 
-    clar_flags = team_clar_flags(state, phr->user_id, i, clar.flags, clar.from, clar.to);
+    clar_flags = team_clar_flags(state, phr->user_id, i, &clar.uuid, clar.flags, clar.from, clar.to);
     fputs("<tr>", f);
     fprintf(f, "<td%s>%d</td>", cl, i);
     fprintf(f, "<td%s>%s</td>", cl, clar_flags);

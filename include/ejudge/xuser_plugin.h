@@ -51,7 +51,8 @@ struct xuser_plugin_iface
     int (*get_clar_status)(
         struct xuser_cnts_state *data,
         int user_id,
-        int clar_id);
+        int clar_id,
+        const ej_uuid_t *p_clar_uuid);
     int (*set_clar_status)(
         struct xuser_cnts_state *data,
         int user_id,

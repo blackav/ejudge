@@ -75,7 +75,8 @@ static int
 get_clar_status_func(
         struct xuser_cnts_state *data,
         int user_id,
-        int clar_id);
+        int clar_id,
+        const ej_uuid_t *p_clar_uuid);
 static int
 set_clar_status_func(
         struct xuser_cnts_state *data,
@@ -327,22 +328,33 @@ static int
 get_clar_status_func(
         struct xuser_cnts_state *data,
         int user_id,
-        int clar_id)
+        int clar_id,
+        const ej_uuid_t *p_clar_uuid)
 {
     struct xuser_file_cnts_state *state = (struct xuser_file_cnts_state *) data;
     struct team_extra *te;
 
     ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
-    ASSERT(clar_id >= 0 && clar_id <= EJ_MAX_CLAR_ID);
 
     if (user_id >= state->team_map_size) extend_team_map(state, user_id);
     te = get_entry(state, user_id, 0);
     if (te == (struct team_extra*) ~(size_t) 0) return -1;
     ASSERT(te->user_id == user_id);
 
-    if (clar_id >= te->clar_map_size) return 0;
-    if ((te->clar_map[clar_id / BPE] & (1UL << clar_id % BPE)))
+    if (p_clar_uuid && team_extra_find_clar_uuid(te, p_clar_uuid) >= 0) {
         return 1;
+    }
+
+    if (clar_id < 0 || clar_id >= te->clar_map_size) return 0;
+    if ((te->clar_map[clar_id / BPE] & (1UL << clar_id % BPE))) {
+        if (p_clar_uuid) {
+            // migrate to uuid representation
+            team_extra_add_clar_uuid(te, p_clar_uuid);
+            te->clar_map[clar_id / BPE] &= ~(1UL << clar_id % BPE);
+            te->is_dirty = 1;
+        }
+        return 1;
+    }
     return 0;
 }
 
