@@ -81,6 +81,43 @@ team_extra_extend_clar_map(struct team_extra *te, int clar_id)
   te->clar_map = new_map;
 }
 
+int
+team_extra_find_clar_uuid(
+        struct team_extra *te,
+        const ej_uuid_t *puuid)
+{
+  int mid, low = 0, high = te->clar_uuids_size;
+  const ej_uuid_t *p;
+
+  if (!puuid) return -1;
+  if (!ej_uuid_is_nonempty(*puuid)) return -1;
+
+  while (low < high) {
+    mid = (low + high) / 2;
+    p = &te->clar_uuids[mid];
+    if (p->v[0] < puuid->v[0]) {
+      high = mid;
+    } else if (p->v[0] > puuid->v[0]) {
+      low = mid + 1;
+    } else if (p->v[1] < puuid->v[1]) {
+      high = mid;
+    } else if (p->v[1] > puuid->v[1]) {
+      low = mid + 1;
+    } else if (p->v[2] < puuid->v[2]) {
+      high = mid;
+    } else if (p->v[2] > puuid->v[2]) {
+      low = mid + 1;
+    } else if (p->v[3] < puuid->v[3]) {
+      high = mid;
+    } else if (p->v[3] > puuid->v[3]) {
+      low = mid + 1;
+    } else {
+      return mid;
+    }
+  }
+  return -1;
+}
+
 void
 team_extra_add_clar_uuid(
         struct team_extra *te,
@@ -122,7 +159,11 @@ team_extra_add_clar_uuid(
     if (!(te->clar_uuids_alloc *= 2)) te->clar_uuids_alloc = 16;
     XREALLOC(te->clar_uuids, te->clar_uuids_alloc);
   }
-  te->clar_uuids[te->clar_uuids_size++] = *puuid;
+  if (low < te->clar_uuids_size) {
+    memmove(&te->clar_uuids[low + 1], &te->clar_uuids[low], (te->clar_uuids_size - low) * sizeof(te->clar_uuids[0]));
+    ++te->clar_uuids_size;
+  }
+  te->clar_uuids[low] = *puuid;
 }
 
 extern struct xuser_plugin_iface plugin_xuser_file;

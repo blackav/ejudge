@@ -64,6 +64,11 @@ struct team_extra
 
 struct team_extra *team_extra_free(struct team_extra *te);
 void team_extra_extend_clar_map(struct team_extra *te, int clar_id);
+
+int
+team_extra_find_clar_uuid(
+        struct team_extra *te,
+        const ej_uuid_t *puuid);
 void
 team_extra_add_clar_uuid(
         struct team_extra *te,
