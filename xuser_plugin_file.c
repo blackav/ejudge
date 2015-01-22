@@ -118,6 +118,11 @@ static int
 count_read_clars_func(
         struct xuser_cnts_state *data,
         int user_id);
+static struct xuser_team_extras *
+get_entries_func(
+        struct xuser_cnts_state *data,
+        int count,
+        int *user_ids);
 
 struct xuser_plugin_iface plugin_xuser_file =
 {
@@ -146,6 +151,7 @@ struct xuser_plugin_iface plugin_xuser_file =
     get_run_fields_func,
     set_run_fields_func,
     count_read_clars_func,
+    get_entries_func,
 };
 
 static struct common_plugin_data *
@@ -614,6 +620,59 @@ count_read_clars_func(
         count += __builtin_popcount(te->clar_map[i]);
     }
     return count;
+}
+
+static struct xuser_team_extras *
+xuser_team_extras_free(struct xuser_team_extras *x)
+{
+    if (x) {
+        xfree(x->v);
+        xfree(x);
+    }
+    return NULL;
+}
+
+static int
+team_extra_sort_func(const void *p1, const void *p2)
+{
+    const struct team_extra *t1 = (const struct team_extra*) p1;
+    const struct team_extra *t2 = (const struct team_extra*) p2;
+    if (t1->user_id < t2->user_id) return -1;
+    if (t1->user_id > t2->user_id) return 1;
+    return 0;
+}
+
+static struct xuser_team_extras *
+get_entries_func(
+        struct xuser_cnts_state *data,
+        int count,
+        int *user_ids)
+{
+    struct xuser_file_cnts_state *state = (struct xuser_file_cnts_state *) data;
+    struct xuser_team_extras *vec = NULL;
+
+    if (count <= 0 || !user_ids) return NULL;
+
+    XCALLOC(vec, 1);
+    vec->free = xuser_team_extras_free;
+    for (int i = 0; i < count; ++i) {
+        int user_id = user_ids[i];
+        if (user_id > 0 && user_id <= EJ_MAX_USER_ID) {
+            if (user_id >= state->team_map_size) extend_team_map(state, user_id);
+            struct team_extra *s = get_entry(state, user_id, 1);
+            if (s == (struct team_extra*) ~(size_t) 0) s = 0;
+            if (s) {
+                if (vec->u == vec->a) {
+                    if (!(vec->a *= 2)) vec->a = 32;
+                    XREALLOC(vec->v, vec->a);
+                }
+                vec->v[vec->u++] = s;
+            }
+        }
+    }
+    qsort(vec, vec->u, sizeof(vec->v[0]), team_extra_sort_func);
+
+    return vec;
 }
 
 /*

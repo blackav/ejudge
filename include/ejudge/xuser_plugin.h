@@ -32,6 +32,14 @@ struct section_global_data;
 struct xuser_cnts_state;
 struct team_extra;
 
+struct xuser_team_extras
+{
+    struct xuser_team_extras *(*free)(struct xuser_team_extras *e);
+
+    int a, u;
+    struct team_extra **v;
+};
+
 struct xuser_plugin_iface
 {
     struct common_plugin_iface b;
@@ -86,6 +94,10 @@ struct xuser_plugin_iface
     int (*count_read_clars)(
         struct xuser_cnts_state *data,
         int user_id);
+    struct xuser_team_extras * (*get_entries)(
+        struct xuser_cnts_state *data,
+        int count,
+        int *user_ids);
 };
 
 struct xuser_cnts_state
