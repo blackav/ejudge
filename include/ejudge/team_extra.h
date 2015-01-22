@@ -69,7 +69,8 @@ int
 team_extra_find_clar_uuid(
         struct team_extra *te,
         const ej_uuid_t *puuid);
-void
+/* returns: -1 error, 0 - already exists, 1 - added */
+int
 team_extra_add_clar_uuid(
         struct team_extra *te,
         const ej_uuid_t *puuid);

@@ -118,7 +118,7 @@ team_extra_find_clar_uuid(
   return -1;
 }
 
-void
+int
 team_extra_add_clar_uuid(
         struct team_extra *te,
         const ej_uuid_t *puuid)
@@ -126,8 +126,8 @@ team_extra_add_clar_uuid(
   int mid, low = 0, high = te->clar_uuids_size;
   const ej_uuid_t *p;
 
-  if (!puuid) return;
-  if (!ej_uuid_is_nonempty(*puuid)) return;
+  if (!puuid) return 0;
+  if (!ej_uuid_is_nonempty(*puuid)) return 0;
 
   while (low < high) {
     mid = (low + high) / 2;
@@ -149,7 +149,7 @@ team_extra_add_clar_uuid(
     } else if (p->v[3] > puuid->v[3]) {
       low = mid + 1;
     } else {
-      return;
+      return 0;
     }
   }
 
@@ -164,6 +164,7 @@ team_extra_add_clar_uuid(
     ++te->clar_uuids_size;
   }
   te->clar_uuids[low] = *puuid;
+  return 1;
 }
 
 extern struct xuser_plugin_iface plugin_xuser_file;
