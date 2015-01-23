@@ -35,9 +35,7 @@ struct team_extra;
 struct xuser_team_extras
 {
     struct xuser_team_extras *(*free)(struct xuser_team_extras *e);
-
-    int a, u;
-    struct team_extra **v;
+    const struct team_extra *(*get)(struct xuser_team_extras *e, int user_id);
 };
 
 struct xuser_plugin_iface

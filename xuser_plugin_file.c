@@ -622,24 +622,29 @@ count_read_clars_func(
     return count;
 }
 
-static struct xuser_team_extras *
-xuser_team_extras_free(struct xuser_team_extras *x)
+struct xuser_file_team_extras
 {
-    if (x) {
-        xfree(x->v);
-        xfree(x);
+    struct xuser_team_extras b;
+
+    struct xuser_file_cnts_state *state;
+};
+
+static struct xuser_team_extras *
+xuser_file_team_extras_free(struct xuser_team_extras *x)
+{
+    struct xuser_file_team_extras *xf = (struct xuser_file_team_extras *) x;
+
+    if (xf) {
+        xfree(xf);
     }
     return NULL;
 }
 
-static int
-team_extra_sort_func(const void *p1, const void *p2)
+static const struct team_extra *
+xuser_file_team_extras_get(struct xuser_team_extras *x, int user_id)
 {
-    const struct team_extra *t1 = (const struct team_extra*) p1;
-    const struct team_extra *t2 = (const struct team_extra*) p2;
-    if (t1->user_id < t2->user_id) return -1;
-    if (t1->user_id > t2->user_id) return 1;
-    return 0;
+    struct xuser_file_team_extras *xf = (struct xuser_file_team_extras *) x;
+    return get_entry_func(&xf->state->b, user_id);
 }
 
 static struct xuser_team_extras *
@@ -649,30 +654,15 @@ get_entries_func(
         int *user_ids)
 {
     struct xuser_file_cnts_state *state = (struct xuser_file_cnts_state *) data;
-    struct xuser_team_extras *vec = NULL;
+    struct xuser_file_team_extras *vec = NULL;
 
     if (count <= 0 || !user_ids) return NULL;
 
     XCALLOC(vec, 1);
-    vec->free = xuser_team_extras_free;
-    for (int i = 0; i < count; ++i) {
-        int user_id = user_ids[i];
-        if (user_id > 0 && user_id <= EJ_MAX_USER_ID) {
-            if (user_id >= state->team_map_size) extend_team_map(state, user_id);
-            struct team_extra *s = get_entry(state, user_id, 1);
-            if (s == (struct team_extra*) ~(size_t) 0) s = 0;
-            if (s) {
-                if (vec->u == vec->a) {
-                    if (!(vec->a *= 2)) vec->a = 32;
-                    XREALLOC(vec->v, vec->a);
-                }
-                vec->v[vec->u++] = s;
-            }
-        }
-    }
-    qsort(vec, vec->u, sizeof(vec->v[0]), team_extra_sort_func);
-
-    return vec;
+    vec->b.free = xuser_file_team_extras_free;
+    vec->b.get = xuser_file_team_extras_get;
+    vec->state = state;
+    return &vec->b;
 }
 
 /*
