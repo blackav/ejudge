@@ -1075,6 +1075,7 @@ do_write_kirov_standings(
   struct filter_env env;
   int separate_user_score = 0;
   int token_flags = 0;
+  struct xuser_team_extras *extras = NULL;
 
   memset(&env, 0, sizeof(env));
 
@@ -1195,6 +1196,14 @@ do_write_kirov_standings(
     // use a fast function, if no `stand_collate_name'
     teamdb_get_user_map(state, cur_time, t_max,t_runs,&t_tot, t_rev, t_ind,
                         user_filter);
+  }
+
+  if (global->stand_show_contestant_status
+      || global->stand_show_warn_number
+      || global->contestant_status_row_attr) {
+    if (state->xuser_state) {
+      extras = state->xuser_state->vt->get_entries(state->xuser_state, t_tot, t_ind);
+    }
   }
 
   /* make problem index */
@@ -2158,12 +2167,8 @@ do_write_kirov_standings(
       memset(&u_info, 0, sizeof(u_info));
     }
     t_extra = NULL;
-    if (global->stand_show_contestant_status
-        || global->stand_show_warn_number
-        || global->contestant_status_row_attr) {
-      if (state->xuser_state) {
-        t_extra = state->xuser_state->vt->get_entry(state->xuser_state, t_ind[t]);
-      }
+    if (extras) {
+      t_extra = extras->get(extras, t_ind[t]);
     }
     if (tot_full[t] != prev_prob) {
       prev_prob = tot_full[t];
@@ -2512,6 +2517,7 @@ do_write_kirov_standings(
   xfree(marked_flag);
   html_armor_free(&ab);
   env.mem = filter_tree_delete(env.mem);
+  if (extras) extras->free(extras);
 }
 
 static int
@@ -2682,6 +2688,7 @@ do_write_moscow_standings(
   size_t encode_len = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct filter_env env;
+  struct xuser_team_extras *extras = NULL;
   
   memset(&env, 0, sizeof(env));
 
@@ -2783,6 +2790,14 @@ do_write_moscow_standings(
       u_tot++;
     }
   */
+
+  if (global->stand_show_contestant_status
+      || global->stand_show_warn_number
+      || global->contestant_status_row_attr) {
+    if (state->xuser_state) {
+      extras = state->xuser_state->vt->get_entries(state->xuser_state, u_tot, u_ind);
+    }
+  }
 
   /* sorted index to u_ind */
   XALLOCA(u_sort, u_tot);
@@ -3274,12 +3289,8 @@ do_write_moscow_standings(
       memset(&u_info, 0, sizeof(u_info));
     }
     u_extra = 0;
-    if (global->stand_show_contestant_status
-        || global->stand_show_warn_number
-        || global->contestant_status_row_attr) {
-      if (state->xuser_state) {
-        u_extra = state->xuser_state->vt->get_entry(state->xuser_state, u_ind[u]);
-      }
+    if (extras) {
+      u_extra = extras->get(extras, u_ind[u]);
     }
     /* FIXME: consider virtual and real users */
     if (prev_prob != u_score[u]) {
@@ -3528,6 +3539,7 @@ do_write_moscow_standings(
   xfree(up_pen);
   html_armor_free(&ab);
   env.mem = filter_tree_delete(env.mem);
+  if (extras) extras->free(extras);
 }
 
 /*
@@ -3607,6 +3619,7 @@ do_write_standings(
   unsigned char *cf_flag = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct filter_env env;
+  struct xuser_team_extras *extras = NULL;
 
   memset(&env, 0, sizeof(env));
 
@@ -3713,6 +3726,14 @@ do_write_standings(
   XALLOCAZ(t_pen,t_tot);
   XALLOCA(t_n1, t_tot);
   XALLOCA(t_n2, t_tot);
+
+  if (global->stand_show_contestant_status
+      || global->stand_show_warn_number
+      || global->contestant_status_row_attr) {
+    if (state->xuser_state) {
+      extras = state->xuser_state->vt->get_entries(state->xuser_state, t_tot, t_ind);
+    }
+  }
 
   /* make problem index */
   p_max = state->max_prob + 1;
@@ -4015,12 +4036,8 @@ do_write_standings(
       t = t_sort[i];
 
       t_extra = 0;
-      if (global->stand_show_contestant_status
-          || global->stand_show_warn_number
-          || global->contestant_status_row_attr) {
-        if (state->xuser_state) {
-          t_extra = state->xuser_state->vt->get_entry(state->xuser_state, t_ind[t]);
-        }
+      if (extras) {
+        t_extra = extras->get(extras, t_ind[t]);
       }
 
       if (prev_prob != t_prob[t]) {
@@ -4238,6 +4255,7 @@ do_write_standings(
   xfree(cf_flag);
   html_armor_free(&ab);
   env.mem = filter_tree_delete(env.mem);
+  if (extras) extras->free(extras);
 }
 
 void
