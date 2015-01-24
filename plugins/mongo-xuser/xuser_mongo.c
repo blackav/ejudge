@@ -257,7 +257,12 @@ get_entry_func(
         int user_id)
 {
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
-    struct team_extra *res = NULL;
+    struct team_extra *extra = NULL;
+
+    bson *query = NULL;
+    mongo_packet *pkt = NULL;
+    mongo_sync_cursor *cursor = NULL;
+    bson *result = NULL;
 
     if (user_id <= 0) return NULL;
 
@@ -274,29 +279,45 @@ get_entry_func(
     }
     mid = low;
 
-    bson *query = bson_new();
+    query = bson_new();
     bson_append_int32(query, "contest_id", state->contest_id);
     bson_append_int32(query, "user_id", user_id);
     bson_finish(query);
-    mongo_packet *pkt = mongo_sync_cmd_query(state->plugin_state->conn, "ejudge.xuser",
-                                             0, 0, 1, query, NULL);
-    bson_free(query); query = NULL;
-    if (!pkt) {
-        return NULL;
+    if (!(pkt = mongo_sync_cmd_query(state->plugin_state->conn, "ejudge.xuser", 0, 0, 1, query, NULL))) {
+        goto done;
     }
-    mongo_sync_cursor *cur = mongo_sync_cursor_new(state->plugin_state->conn, "ejudge.xuser", pkt);
-    if (!cur) {
-        mongo_wire_packet_free(pkt);
-        return NULL;
+    if (!(cursor = mongo_sync_cursor_new(state->plugin_state->conn, "ejudge.xuser", pkt))) {
+        goto done;
     }
-    while (mongo_sync_cursor_next(cur)) {
-        bson *result = mongo_sync_cursor_get_data(cur);
-        res = parse_bson(result);
-        bson_free(result);
+    pkt = NULL; // ownership passed to 'cursor'
+    while (mongo_sync_cursor_next(cursor)) {
+        result = mongo_sync_cursor_get_data(cursor);
+        if (!(extra = parse_bson(result))) {
+            goto done;
+        }
+        bson_free(result); result = NULL;
     }
-    mongo_sync_cursor_free(cur);
+    if (!extra) {
+        // query returned empty set
+        XCALLOC(extra, 1);
+        extra->user_id = user_id;
+    }
+    if (state->u == state->a) {
+        if (!(state->a *= 2)) state->a = 32;
+        XREALLOC(state->v, state->a);
+    }
+    if (low < state->u) {
+        memmove(&state->v[low + 1], &state->v, (state->u - low) * sizeof(state->v[0]));
+    }
+    state->v[low] = extra;
+    ++state->u;
 
-    return res;
+done:
+    if (result) bson_free(result);
+    if (cursor) mongo_sync_cursor_free(cursor);
+    if (pkt) mongo_wire_packet_free(pkt);
+    if (query) bson_free(query);
+    return extra;
 }
 
 
