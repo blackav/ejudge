@@ -35,6 +35,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define BPE (CHAR_BIT * sizeof(((struct team_extra*)0)->clar_map[0]))
+
 struct xuser_mongo_state
 {
     int nref;
@@ -192,43 +194,181 @@ struct xuser_cnts_state *close_func(
     return NULL;
 }
 
-/*
-struct team_extra
+static int
+parse_bson_int(
+        bson_cursor *bc,
+        const unsigned char *field_name,
+        int *p_value,
+        int check_low,
+        int low_value,
+        int check_high,
+        int high_value)
 {
-  // primary key
-  ej_uuid_t uuid;
+    if (bson_cursor_type(bc) != BSON_TYPE_INT32) {
+        err("parse_bson_int: int32 field type expected for '%s'", field_name);
+        return -1;
+    }
+    int value = 0;
+    if (!bson_cursor_get_int32(bc, &value)) {
+        err("parse_bson_int: failed to fetch int32 value of '%s'", field_name);
+        return -1;
+    }
+    if ((check_low > 0 && value < low_value) || (check_high > 0 && value >= high_value)) {
+        err("parse_bson_int: invalid value of '%s': %d", field_name, value);
+        return -1;
+    }
+    *p_value = value;
+    return 1;
+}
 
-  int is_dirty;
-  int user_id;
-
-  int clar_map_size;
-  int clar_map_alloc;
-  unsigned long *clar_map;
-
-  int clar_uuids_size;
-  int clar_uuids_alloc;
-  ej_uuid_t *clar_uuids;
-
-  // disqualification reason
-  unsigned char *disq_comment;
-
-  // warnings
-  int warn_u, warn_a;
-  struct team_warning **warns;
-
-  // status
-  int status;
-
-  // run table fields
-  int run_fields;
-};
- */
-
-static struct team_extra *
-parse_bson(bson *b)
+static int
+parse_bson_utc_datetime(
+        bson_cursor *bc,
+        const unsigned char *field_name,
+        time_t *p_value)
 {
+    if (bson_cursor_type(bc) != BSON_TYPE_UTC_DATETIME) {
+        err("parse_bson_utc_datetime: utc_datetime field type expected for '%s'", field_name);
+        return -1;
+    }
+    long long value = 0;
+    if (!bson_cursor_get_utc_datetime(bc, &value)) {
+        err("parse_bson_utc_datetime: failed to fetch utc_datetime value of '%s'", field_name);
+        return -1;
+    }
+    if (p_value) {
+        *p_value = (time_t) (value / 1000);
+    }
+    return 1;
+}
+
+static int
+parse_bson_uuid(
+        bson_cursor *bc,
+        const unsigned char *field_name,
+        ej_uuid_t *p_value)
+{
+    if (bson_cursor_type(bc) != BSON_TYPE_BINARY) {
+        err("parse_bson_uuid: uuid field type expected for '%s'", field_name);
+        return -1;
+    }
+
+    bson_binary_subtype bt = 0;
+    const unsigned char *bd = NULL;
+    int bz = 0;
+    if (!bson_cursor_get_binary(bc, &bt, &bd, &bz)) {
+        err("parse_bson_uuid: failed to fetch binary data for '%s'", field_name);
+        return -1;
+    }
+    if (bt != BSON_BINARY_SUBTYPE_UUID || bz != sizeof(ej_uuid_t)) {
+        err("parse_bson_uuid: invalid binary data for in '%s'", field_name);
+        return -1;
+    }
+    if (p_value) {
+        memcpy(p_value, bd, sizeof(ej_uuid_t));
+    }
+    return 1;
+}
+
+static int
+parse_bson_ip(
+        bson_cursor *bc,
+        const unsigned char *field_name,
+        ej_ip_t *p_value)
+{
+    if (bson_cursor_type(bc) != BSON_TYPE_STRING) {
+        err("parse_bson_ip: string field type expected for '%s'", field_name);
+        return -1;
+    }
+    const char *data = NULL;
+    if (!bson_cursor_get_string(bc, &data)) {
+        err("parse_bson_ip: failed to fetch string for '%s'", field_name);
+        return -1;
+    }
+    if (!data) {
+        err("parse_bson_ip: invalid string for in '%s'", field_name);
+        return -1;
+    }
+    if (xml_parse_ipv6(NULL, 0, 0, 0, data, p_value) < 0) return -1;
+    return 1;
+}
+
+static int
+parse_bson_string(
+        bson_cursor *bc,
+        const unsigned char *field_name,
+        unsigned char **p_value)
+{
+    if (bson_cursor_type(bc) != BSON_TYPE_STRING) {
+        err("parse_bson_string: string field type expected for '%s'", field_name);
+        return -1;
+    }
+    const char *data = NULL;
+    if (!bson_cursor_get_string(bc, &data)) {
+        err("parse_bson_string: failed to fetch string for '%s'", field_name);
+        return -1;
+    }
+    if (!data) {
+        err("parse_bson_string: invalid string for in '%s'", field_name);
+        return -1;
+    }
+    if (p_value) {
+        *p_value = xstrdup(data);
+    }
+    return 1;
+}
+
+static int
+parse_bson_array(
+        bson_cursor *bc,
+        const unsigned char *field_name,
+        bson **p_value)
+{
+    if (bson_cursor_type(bc) != BSON_TYPE_ARRAY) {
+        err("parse_bson_array: array field type expected for '%s'", field_name);
+        return -1;
+    }
+    bson *data = NULL;
+    if (!bson_cursor_get_array(bc, &data) || !data) {
+        err("parse_bson_array: failed to fetch array for '%s'", field_name);
+        return -1;
+    }
+    if (p_value) {
+        *p_value = data;
+    } else {
+        bson_free(data);
+    }
+    return 1;
+}
+
+static int
+parse_bson_document(
+        bson_cursor *bc,
+        const unsigned char *field_name,
+        bson **p_value)
+{
+    if (bson_cursor_type(bc) != BSON_TYPE_DOCUMENT) {
+        err("parse_bson_document: array field type expected for '%s'", field_name);
+        return -1;
+    }
+    bson *data = NULL;
+    if (!bson_cursor_get_document(bc, &data) || !data) {
+        err("parse_bson_document: failed to fetch document for '%s'", field_name);
+        return -1;
+    }
+    if (p_value) {
+        *p_value = data;
+    } else {
+        bson_free(data);
+    }
+    return 1;
+}
+
+static struct team_warning *
+parse_bson_team_warning(bson *b)
+{
+    struct team_warning *res = NULL;
     bson_cursor *bc = NULL;
-    struct team_extra *res = NULL;
 
     if (!b) return NULL;
 
@@ -236,19 +376,109 @@ parse_bson(bson *b)
     bc = bson_cursor_new(b);
     while (bson_cursor_next(bc)) {
         const unsigned char *key = bson_cursor_key(bc);
-        if (!strcmp(key, "uuid")) {
+        if (!strcmp(key, "date")) {
+            if (parse_bson_utc_datetime(bc, "date", &res->date) < 0) goto fail;
+        } else if (!strcmp(key, "issuer_id")) {
+            if (parse_bson_int(bc, "issuer_id", &res->issuer_id, 1, 1, 0, 0) < 0) goto fail;
+        } else if (!strcmp(key, "issuer_ip")) {
+            if (parse_bson_ip(bc, "issuer_ip", &res->issuer_ip) < 0) goto fail;
+        } else if (!strcmp(key, "text")) {
+            if (parse_bson_string(bc, "text", &res->text) < 0) goto fail;
+        } else if (!strcmp(key, "comment")) {
+            if (parse_bson_string(bc, "comment", &res->comment) < 0) goto fail;
+        }
+    }
+    bson_cursor_free(bc);
+
+    return NULL;
+
+fail:
+    if (res) {
+        xfree(res->text);
+        xfree(res->comment);
+        xfree(res);
+    }
+    if (bc) bson_cursor_free(bc);
+    return NULL;
+}
+
+static struct team_extra *
+parse_bson(bson *b)
+{
+    bson_cursor *bc = NULL;
+    bson_cursor *bc2 = NULL;
+    struct team_extra *res = NULL;
+    bson *arr = NULL;
+    bson *doc = NULL;
+    struct team_warning *tw = NULL;
+
+    if (!b) return NULL;
+
+    XCALLOC(res, 1);
+    bc = bson_cursor_new(b);
+    while (bson_cursor_next(bc)) {
+        const unsigned char *key = bson_cursor_key(bc);
+        if (!strcmp(key, "_id")) {
+            if (parse_bson_uuid(bc, "_id", &res->uuid) < 0) goto fail;
         } else if (!strcmp(key, "contest_id")) {
+            int dummy_value = 0;
+            if (parse_bson_int(bc, "contest_id", &dummy_value, 1, 1, 0, 0) < 0) goto fail;
         } else if (!strcmp(key, "user_id")) {
+            if (parse_bson_int(bc, "user_id", &res->user_id, 1, 1, 0, 0) < 0) goto fail;
         } else if (!strcmp(key, "viewed_clars")) {
+            if (parse_bson_array(bc, "viewed_clars", &arr) < 0) goto fail;
+            bc2 = bson_cursor_new(arr);
+            while (bson_cursor_next(bc2)) {
+                int clar_id = 0;
+                if (parse_bson_int(bc2, "viewed_clars/clar_id", &clar_id, 1, 0, 0, 0) < 0) goto fail;
+                if (clar_id >= res->clar_map_size) team_extra_extend_clar_map(res, clar_id);
+                res->clar_map[clar_id / BPE] |= (1UL << clar_id % BPE);
+            }
+            bson_cursor_free(bc2); bc2 = NULL;
+            bson_free(arr); arr = NULL;
         } else if (!strcmp(key, "clar_uuids")) {
-        } else if (!strcmp(key, "disc_comment")) {
+            if (parse_bson_array(bc, "clar_uuids", &arr) < 0) goto fail;
+            bc2 = bson_cursor_new(arr);
+            while (bson_cursor_next(bc2)) {
+                ej_uuid_t uuid;
+                if (parse_bson_uuid(bc2, "clar_uuids/uuid", &uuid) < 0) goto fail;
+                team_extra_add_clar_uuid(res, &uuid);
+            }
+            bson_cursor_free(bc2); bc2 = NULL;
+            bson_free(arr); arr = NULL;
+        } else if (!strcmp(key, "disq_comment")) {
+            if (parse_bson_string(bc, "disq_comment", &res->disq_comment) < 0) goto fail;
         } else if (!strcmp(key, "warnings")) {
+            if (parse_bson_array(bc, "warnings", &arr) < 0) goto fail;
+            bc2 = bson_cursor_new(arr);
+            while (bson_cursor_next(bc2)) {
+                if (parse_bson_document(bc, "warnings/warning", &doc) < 0) goto fail;
+                if (!(tw = parse_bson_team_warning(doc))) goto fail;
+                if (res->warn_u == res->warn_a) {
+                    if (!(res->warn_a *= 2)) res->warn_a = 16;
+                    XREALLOC(res->warns, res->warn_a);
+                }
+                res->warns[res->warn_u++] = tw; tw = NULL;
+                bson_free(doc); doc = NULL;
+            }
+            bson_cursor_free(bc2); bc2 = NULL;
+            bson_free(arr); arr = NULL;
         } else if (!strcmp(key, "status")) {
+            if (parse_bson_int(bc, "status", &res->status, 1, 0, 0, 0) < 0) goto fail;
         } else if (!strcmp(key, "run_fields")) {
+            if (parse_bson_int(bc, "run_fields", &res->run_fields, 1, 0, 0, 0) < 0) goto fail;
         }
     }
     bson_cursor_free(bc);
     return res;
+
+fail:
+    team_extra_free(res);
+    if (doc) bson_free(doc);
+    if (arr) bson_free(arr);
+    if (bc2) bson_cursor_free(bc2);
+    if (bc) bson_cursor_free(bc);
+    return NULL;
 }
 
 const struct team_extra *
