@@ -97,6 +97,10 @@ set_clar_status_func(
 static void
 flush_func(
         struct xuser_cnts_state *data);
+static int
+count_read_clars_func(
+        struct xuser_cnts_state *data,
+        int user_id);
 
 struct xuser_plugin_iface plugin_xuser_mongo =
 {
@@ -119,13 +123,13 @@ struct xuser_plugin_iface plugin_xuser_mongo =
     get_clar_status_func,
     set_clar_status_func,
     flush_func,
-    // append_warning_func,
-    // set_status_func,
-    // set_disq_comment_func,
-    // get_run_fields_func,
-    // set_run_fields_func,
-    // count_read_clars_func,
-    // get_entries_func,
+    NULL, // append_warning_func,
+    NULL, // set_status_func,
+    NULL, // set_disq_comment_func,
+    NULL, // get_run_fields_func,
+    NULL, // set_run_fields_func,
+    count_read_clars_func,
+    NULL, // get_entries_func,
 };
 
 static struct common_plugin_data *
@@ -744,6 +748,17 @@ static void
 flush_func(
         struct xuser_cnts_state *data)
 {
+}
+
+static int
+count_read_clars_func(
+        struct xuser_cnts_state *data,
+        int user_id)
+{
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    struct team_extra *extra = do_get_entry(state, user_id);
+    if (!extra) return 0;
+    return extra->clar_uuids_size;
 }
 
 /*
