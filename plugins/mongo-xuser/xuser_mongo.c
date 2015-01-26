@@ -22,6 +22,7 @@
 #include "ejudge/xuser_plugin.h"
 #include "ejudge/contests.h"
 #include "ejudge/team_extra.h"
+#include "ejudge/ej_uuid.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -74,8 +75,27 @@ open_func(
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         int flags);
-struct xuser_cnts_state *
+static struct xuser_cnts_state *
 close_func(
+        struct xuser_cnts_state *data);
+static const struct team_extra *
+get_entry_func(
+        struct xuser_cnts_state *data,
+        int user_id);
+static int
+get_clar_status_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        int clar_id,
+        const ej_uuid_t *p_clar_uuid);
+static int
+set_clar_status_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        int clar_id,
+        const ej_uuid_t *p_clar_uuid);
+static void
+flush_func(
         struct xuser_cnts_state *data);
 
 struct xuser_plugin_iface plugin_xuser_mongo =
@@ -95,6 +115,17 @@ struct xuser_plugin_iface plugin_xuser_mongo =
     XUSER_PLUGIN_IFACE_VERSION,
     open_func,
     close_func,
+    get_entry_func,
+    get_clar_status_func,
+    set_clar_status_func,
+    flush_func,
+    // append_warning_func,
+    // set_status_func,
+    // set_disq_comment_func,
+    // get_run_fields_func,
+    // set_run_fields_func,
+    // count_read_clars_func,
+    // get_entries_func,
 };
 
 static struct common_plugin_data *
@@ -182,7 +213,8 @@ open_func(
     return (struct xuser_cnts_state *) state;
 }
 
-struct xuser_cnts_state *close_func(
+static struct xuser_cnts_state *
+close_func(
         struct xuser_cnts_state *data)
 {
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
@@ -480,14 +512,12 @@ fail:
     return NULL;
 }
 
-const struct team_extra *
-get_entry_func(
-        struct xuser_cnts_state *data,
+static struct team_extra *
+do_get_entry(
+        struct xuser_mongo_cnts_state *state,
         int user_id)
 {
-    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = NULL;
-
     bson *query = NULL;
     mongo_packet *pkt = NULL;
     mongo_sync_cursor *cursor = NULL;
@@ -530,6 +560,7 @@ get_entry_func(
         // query returned empty set
         XCALLOC(extra, 1);
         extra->user_id = user_id;
+        extra->contest_id = state->contest_id;
     }
     if (state->u == state->a) {
         if (!(state->a *= 2)) state->a = 32;
@@ -549,6 +580,117 @@ done:
     return extra;
 }
 
+static const struct team_extra *
+get_entry_func(
+        struct xuser_cnts_state *data,
+        int user_id)
+{
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    return do_get_entry(state, user_id);
+}
+
+static int
+get_clar_status_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        int clar_id,
+        const ej_uuid_t *p_clar_uuid)
+{
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    struct team_extra *extra = do_get_entry(state, user_id);
+    if (!extra) return 0;
+    if (p_clar_uuid && team_extra_find_clar_uuid(extra, p_clar_uuid) >= 0) {
+        return 1;
+    }
+    return 0;
+}
+
+static bson *
+unparse_bson(const struct team_extra *extra)
+{
+    bson *res = bson_new();
+    bson_append_binary(res, "_id", BSON_BINARY_SUBTYPE_UUID, (const unsigned char *) &extra->uuid, sizeof(extra->uuid));
+    bson_append_int32(res, "user_id", extra->user_id);
+    bson_append_int32(res, "contest_id", extra->contest_id);
+    if (extra->disq_comment) {
+        bson_append_string(res, "disq_comment", extra->disq_comment, strlen(extra->disq_comment));
+    }
+    bson_append_int32(res, "status", extra->status);
+    bson_append_int32(res, "run_fields", extra->run_fields);
+    if (extra->clar_map_size > 0) {
+    }
+    if (extra->clar_uuids_size > 0) {
+    }
+    if (extra->warn_u > 0) {
+    }
+    /* FIXME: do clars, clar_uuids, warnings */
+    bson_finish(res);
+    return res;
+}
+
+/*
+struct team_extra
+{
+  int clar_map_size;
+  int clar_map_alloc;
+  unsigned long *clar_map;
+
+  int clar_uuids_size;
+  int clar_uuids_alloc;
+  ej_uuid_t *clar_uuids;
+
+  // warnings
+  int warn_u, warn_a;
+  struct team_warning **warns;
+};
+*/
+
+static int
+do_insert(
+        struct xuser_mongo_cnts_state *state,
+        struct team_extra *extra)
+{
+    if (extra->contest_id <= 0) extra->contest_id = state->contest_id;
+    if (!ej_uuid_is_nonempty(extra->uuid)) {
+        ej_uuid_generate(&extra->uuid);
+    }
+    bson *b = unparse_bson(extra);
+    if (!mongo_sync_cmd_insert(state->plugin_state->conn, "ejudge.xuser", b, NULL)) {
+        err("do_insert: mongo query failed: %s", os_ErrorMsg());
+        bson_free(b);
+        return -1;
+    }
+    extra->is_dirty = 0;
+    bson_free(b);
+    return 0;
+}
+
+static int
+set_clar_status_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        int clar_id,
+        const ej_uuid_t *p_clar_uuid)
+{
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    struct team_extra *extra = do_get_entry(state, user_id);
+    if (!extra) return -1;
+    if (!p_clar_uuid) return -1;
+    int r = team_extra_add_clar_uuid(extra, p_clar_uuid);
+    if (r <= 0) return r;
+    if (ej_uuid_is_nonempty(extra->uuid)) {
+        // FIXME: update operation
+    } else {
+        return do_insert(state, extra);
+    }
+    return -1;
+}
+
+static void
+flush_func(
+        struct xuser_cnts_state *data)
+{
+}
 
 /*
  * Local variables:
