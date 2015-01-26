@@ -38,6 +38,7 @@ struct team_extra
 
   int is_dirty;
   int user_id;
+  int contest_id;
 
   int clar_map_size;
   int clar_map_alloc;

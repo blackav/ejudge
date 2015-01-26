@@ -61,6 +61,7 @@ enum
   TE_A_ISSUER_ID,
   TE_A_ISSUER_IP,
   TE_A_DATE,
+  TE_A_CONTEST_ID,
 
   TE_A_LAST_ATTR,
 };
@@ -85,6 +86,7 @@ static const char * const attr_map[] =
   [TE_A_ISSUER_ID] = "issuer_id",
   [TE_A_ISSUER_IP] = "issuer_ip",
   [TE_A_DATE]      = "date",
+  [TE_A_CONTEST_ID]= "contest_id",
   [TE_A_LAST_ATTR] = 0,
 };
 
@@ -328,6 +330,9 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
       }
       user_id = x;
       break;
+    case TE_A_CONTEST_ID:
+      if (xml_attr_int(a, &te->contest_id) < 0) goto cleanup;
+      break;
     default:
       xml_err_attr_not_allowed(t, a);
       goto cleanup;
@@ -396,8 +401,12 @@ team_extra_unparse_xml(FILE *f, const struct team_extra *te)
   ASSERT(te->user_id > 0);
 
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
-  fprintf(f, "<%s %s=\"%d\">\n", elem_map[TE_T_TEAM_EXTRA],
+  fprintf(f, "<%s %s=\"%d\"", elem_map[TE_T_TEAM_EXTRA],
           attr_map[TE_A_USER_ID], te->user_id);
+  if (te->contest_id > 0) {
+    fprintf(f, " %s=\"%d\"", attr_map[TE_A_CONTEST_ID], te->contest_id);
+  }
+  fprintf(f, ">\n");
   if (ej_uuid_is_nonempty(te->uuid)) {
     fprintf(f, "  <%s>%s</%s>\n", elem_map[TE_T_UUID],
             ej_uuid_unparse(&te->uuid, NULL),

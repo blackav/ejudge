@@ -421,8 +421,7 @@ parse_bson(bson *b)
         if (!strcmp(key, "_id")) {
             if (parse_bson_uuid(bc, "_id", &res->uuid) < 0) goto fail;
         } else if (!strcmp(key, "contest_id")) {
-            int dummy_value = 0;
-            if (parse_bson_int(bc, "contest_id", &dummy_value, 1, 1, 0, 0) < 0) goto fail;
+            if (parse_bson_int(bc, "contest_id", &res->contest_id, 1, 1, 0, 0) < 0) goto fail;
         } else if (!strcmp(key, "user_id")) {
             if (parse_bson_int(bc, "user_id", &res->user_id, 1, 1, 0, 0) < 0) goto fail;
         } else if (!strcmp(key, "viewed_clars")) {

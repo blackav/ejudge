@@ -309,6 +309,14 @@ get_entry(
         state->team_map[user_id] = (struct team_extra*) ~(size_t) 0;
         return (struct team_extra*) ~(size_t) 0;
     }
+    if (te->contest_id <= 0) {
+        te->contest_id = state->contest_id;
+    }
+    if (te->contest_id != state->contest_id) {
+        err("team_extra: %s: contest_id mismatch: %d, %d", rpath, te->contest_id, state->contest_id);
+        state->team_map[user_id] = (struct team_extra*) ~(size_t) 0;
+        return (struct team_extra*) ~(size_t) 0;
+    }
     state->team_map[user_id] = te;
     return te;
 }
