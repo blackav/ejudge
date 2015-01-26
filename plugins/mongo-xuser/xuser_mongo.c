@@ -98,6 +98,25 @@ static void
 flush_func(
         struct xuser_cnts_state *data);
 static int
+append_warning_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        int issuer_id,
+        const ej_ip_t *issuer_ip,
+        time_t issue_date,
+        const unsigned char *txt,
+        const unsigned char *cmt);
+static int
+set_status_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        int status);
+static int
+set_disq_comment_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        const unsigned char *disq_comment);
+static int
 get_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id);
@@ -137,9 +156,9 @@ struct xuser_plugin_iface plugin_xuser_mongo =
     get_clar_status_func,
     set_clar_status_func,
     flush_func,
-    NULL, // append_warning_func,
-    NULL, // set_status_func,
-    NULL, // set_disq_comment_func,
+    append_warning_func,
+    set_status_func,
+    set_disq_comment_func,
     get_run_fields_func,
     set_run_fields_func,
     count_read_clars_func,
@@ -765,6 +784,40 @@ flush_func(
 }
 
 static int
+append_warning_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        int issuer_id,
+        const ej_ip_t *issuer_ip,
+        time_t issue_date,
+        const unsigned char *txt,
+        const unsigned char *cmt)
+{
+    // TODO
+    return -1;
+}
+
+static int
+set_status_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        int status)
+{
+    // TODO
+    return -1;
+}
+
+static int
+set_disq_comment_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        const unsigned char *disq_comment)
+{
+    // TODO
+    return -1;
+}
+
+static int
 get_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id)
@@ -829,6 +882,7 @@ get_entries_func(
         int count,
         int *user_ids)
 {
+    // TODO
     return NULL;
 }
 
