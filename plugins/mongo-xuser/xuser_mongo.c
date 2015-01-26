@@ -98,6 +98,10 @@ static void
 flush_func(
         struct xuser_cnts_state *data);
 static int
+get_run_fields_func(
+        struct xuser_cnts_state *data,
+        int user_id);
+static int
 count_read_clars_func(
         struct xuser_cnts_state *data,
         int user_id);
@@ -126,7 +130,7 @@ struct xuser_plugin_iface plugin_xuser_mongo =
     NULL, // append_warning_func,
     NULL, // set_status_func,
     NULL, // set_disq_comment_func,
-    NULL, // get_run_fields_func,
+    get_run_fields_func,
     NULL, // set_run_fields_func,
     count_read_clars_func,
     NULL, // get_entries_func,
@@ -748,6 +752,17 @@ static void
 flush_func(
         struct xuser_cnts_state *data)
 {
+}
+
+static int
+get_run_fields_func(
+        struct xuser_cnts_state *data,
+        int user_id)
+{
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    struct team_extra *extra = do_get_entry(state, user_id);
+    if (!extra) return 0;
+    return extra->run_fields;
 }
 
 static int
