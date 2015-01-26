@@ -110,6 +110,11 @@ static int
 count_read_clars_func(
         struct xuser_cnts_state *data,
         int user_id);
+static struct xuser_team_extras *
+get_entries_func(
+        struct xuser_cnts_state *data,
+        int count,
+        int *user_ids);
 
 struct xuser_plugin_iface plugin_xuser_mongo =
 {
@@ -138,7 +143,7 @@ struct xuser_plugin_iface plugin_xuser_mongo =
     get_run_fields_func,
     set_run_fields_func,
     count_read_clars_func,
-    NULL, // get_entries_func,
+    get_entries_func,
 };
 
 static struct common_plugin_data *
@@ -816,6 +821,15 @@ count_read_clars_func(
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return 0;
     return extra->clar_uuids_size;
+}
+
+static struct xuser_team_extras *
+get_entries_func(
+        struct xuser_cnts_state *data,
+        int count,
+        int *user_ids)
+{
+    return NULL;
 }
 
 /*
