@@ -605,11 +605,30 @@ get_clar_status_func(
     return 0;
 }
 
+static void
+bson_append_uuid(bson *b, const unsigned char *key, const ej_uuid_t *p_uuid)
+{
+    bson_append_binary(b, key, BSON_BINARY_SUBTYPE_UUID, (const unsigned char *) p_uuid, sizeof(*p_uuid));
+}
+
+static bson *
+unparse_clar_uuids(const struct team_extra *extra)
+{
+    bson *arr = bson_new();
+    for (int i = 0; i < extra->clar_uuids_size; ++i) {
+        unsigned char buf[32];
+        sprintf(buf, "%d", i);
+        bson_append_uuid(arr, buf, &extra->clar_uuids[i]);
+    }
+    bson_finish(arr);
+    return arr;
+ }
+
 static bson *
 unparse_bson(const struct team_extra *extra)
 {
     bson *res = bson_new();
-    bson_append_binary(res, "_id", BSON_BINARY_SUBTYPE_UUID, (const unsigned char *) &extra->uuid, sizeof(extra->uuid));
+    bson_append_uuid(res, "_id", &extra->uuid);
     bson_append_int32(res, "user_id", extra->user_id);
     bson_append_int32(res, "contest_id", extra->contest_id);
     if (extra->disq_comment) {
@@ -618,12 +637,26 @@ unparse_bson(const struct team_extra *extra)
     bson_append_int32(res, "status", extra->status);
     bson_append_int32(res, "run_fields", extra->run_fields);
     if (extra->clar_map_size > 0) {
+        bson *arr = bson_new();
+        for (int i = 0, j = 0; i < extra->clar_map_size; ++i) {
+            if (extra->clar_map[i / BPE] & (1UL << i % BPE)) {
+                unsigned char buf[32];
+                sprintf(buf, "%d", j++);
+                bson_append_int32(arr, buf, i);
+            }
+        }
+        bson_finish(arr);
+        bson_append_document(res, "viewed_clars", arr);
+        bson_free(arr); arr = NULL;
     }
     if (extra->clar_uuids_size > 0) {
+        bson *arr = NULL;
+        bson_append_document(res, "clar_uuids", (arr = unparse_clar_uuids(extra)));
+        bson_free(arr); arr = NULL;
     }
     if (extra->warn_u > 0) {
     }
-    /* FIXME: do clars, clar_uuids, warnings */
+    /* FIXME: do warnings */
     bson_finish(res);
     return res;
 }
@@ -679,7 +712,28 @@ set_clar_status_func(
     int r = team_extra_add_clar_uuid(extra, p_clar_uuid);
     if (r <= 0) return r;
     if (ej_uuid_is_nonempty(extra->uuid)) {
-        // FIXME: update operation
+        bson *filter = bson_new();
+        bson_append_uuid(filter, "_id", &extra->uuid);
+        bson_finish(filter);
+        bson *update = bson_new();
+        bson *arr = unparse_clar_uuids(extra);
+        bson *doc = bson_new();
+        bson_append_array(doc, "clar_uuids", arr);
+        bson_free(arr); arr = NULL;
+        bson_finish(doc);
+        bson_append_document(update, "$set", doc);
+        bson_free(doc); doc = NULL;
+        bson_finish(update);
+
+        int retval = 0;
+        if (!mongo_sync_cmd_update(state->plugin_state->conn, "ejudge.xuser", 0, filter, update)) {
+            err("set_clar_status: mongo update query failed: %s", os_ErrorMsg());
+            retval = -1;
+        }
+
+        bson_free(update); update = NULL;
+        bson_free(filter); filter = NULL;
+        return retval;
     } else {
         return do_insert(state, extra);
     }
