@@ -102,6 +102,11 @@ get_run_fields_func(
         struct xuser_cnts_state *data,
         int user_id);
 static int
+set_run_fields_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        int run_fields);
+static int
 count_read_clars_func(
         struct xuser_cnts_state *data,
         int user_id);
@@ -131,7 +136,7 @@ struct xuser_plugin_iface plugin_xuser_mongo =
     NULL, // set_status_func,
     NULL, // set_disq_comment_func,
     get_run_fields_func,
-    NULL, // set_run_fields_func,
+    set_run_fields_func,
     count_read_clars_func,
     NULL, // get_entries_func,
 };
@@ -763,6 +768,43 @@ get_run_fields_func(
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return 0;
     return extra->run_fields;
+}
+
+static int
+set_run_fields_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        int run_fields)
+{
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    struct team_extra *extra = do_get_entry(state, user_id);
+    if (!extra) return -1;
+    if (extra->run_fields == run_fields) return 0;
+    extra->run_fields = run_fields;
+    if (ej_uuid_is_nonempty(extra->uuid)) {
+        bson *filter = bson_new();
+        bson_append_uuid(filter, "_id", &extra->uuid);
+        bson_finish(filter);
+        bson *update = bson_new();
+        bson *doc = bson_new();
+        bson_append_int32(doc, "run_fields", run_fields);
+        bson_finish(doc);
+        bson_append_document(update, "$set", doc);
+        bson_free(doc); doc = NULL;
+        bson_finish(update);
+
+        int retval = 0;
+        if (!mongo_sync_cmd_update(state->plugin_state->conn, "ejudge.xuser", 0, filter, update)) {
+            err("set_clar_status: mongo update query failed: %s", os_ErrorMsg());
+            retval = -1;
+        }
+
+        bson_free(update); update = NULL;
+        bson_free(filter); filter = NULL;
+        return retval;
+    } else {
+        return do_insert(state, extra);
+    }
 }
 
 static int
