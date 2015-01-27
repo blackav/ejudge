@@ -659,7 +659,53 @@ unparse_clar_uuids(const struct team_extra *extra)
     }
     bson_finish(arr);
     return arr;
- }
+}
+
+/*
+struct team_warning
+{
+  time_t date;
+  int issuer_id;
+  ej_ip_t issuer_ip;
+  unsigned char *text;
+  unsigned char *comment;
+};
+ */
+static bson *
+unparse_team_warning(const struct team_warning *tw)
+{
+    bson *res = bson_new();
+    long long utc_dt = tw->date * 1000;
+    bson_append_utc_datetime(res, "date", utc_dt);
+    bson_append_int32(res, "issuer_id", tw->issuer_id);
+    const unsigned char *ips = xml_unparse_ipv6(&tw->issuer_ip);
+    bson_append_string(res, "issuer_ip", ips, strlen(ips));
+    if (tw->text) {
+        bson_append_string(res, "text", tw->text, strlen(tw->text));
+    }
+    if (tw->comment) {
+        bson_append_string(res, "comment", tw->comment, strlen(tw->comment));
+    }
+    bson_finish(res);
+    return res;
+}
+
+static bson *
+unparse_team_warnings(struct team_warning **tws, int count)
+{
+    bson *res = bson_new();
+    if (tws && count > 0) {
+        for (int i = 0; i < count; ++i) {
+            unsigned char buf[32];
+            bson *w;
+            sprintf(buf, "%d", i);
+            bson_append_document(res, buf, (w = unparse_team_warning(tws[i])));
+            bson_free(w);
+        }
+    }
+    bson_finish(res);
+    return res;
+}
 
 static bson *
 unparse_bson(const struct team_extra *extra)
@@ -692,8 +738,10 @@ unparse_bson(const struct team_extra *extra)
         bson_free(arr); arr = NULL;
     }
     if (extra->warn_u > 0) {
+        bson *arr = unparse_team_warnings(extra->warns, extra->warn_u);
+        bson_append_document(res, "warnings", arr);
+        bson_free(arr); arr = NULL;
     }
-    /* FIXME: do warnings */
     bson_finish(res);
     return res;
 }
