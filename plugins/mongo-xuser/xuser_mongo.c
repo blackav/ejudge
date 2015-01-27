@@ -787,13 +787,15 @@ static int
 do_update(
         struct xuser_mongo_cnts_state *state,
         struct team_extra *extra,
+        const unsigned char *op,
         bson *update_doc)
 {
     bson *filter = bson_new();
     bson_append_uuid(filter, "_id", &extra->uuid);
     bson_finish(filter);
     bson *update = bson_new();
-    bson_append_document(update, "$set", update_doc);
+    if (!op) op = "$set";
+    bson_append_document(update, op, update_doc);
     bson_finish(update);
 
     int retval = 0;
@@ -827,7 +829,7 @@ set_clar_status_func(
         bson_append_array(doc, "clar_uuids", arr);
         bson_free(arr); arr = NULL;
         bson_finish(doc);
-        return do_update(state, extra, doc);
+        return do_update(state, extra, NULL, doc);
     } else {
         return do_insert(state, extra);
     }
@@ -850,8 +852,34 @@ append_warning_func(
         const unsigned char *txt,
         const unsigned char *cmt)
 {
-    // TODO
-    return -1;
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    struct team_extra *te = do_get_entry(state, user_id);
+    if (!te) return -1;
+
+    if (te->warn_u == te->warn_a) {
+        te->warn_a *= 2;
+        if (!te->warn_a) te->warn_a = 8;
+        XREALLOC(te->warns, te->warn_a);
+    }
+    struct team_warning *cur_warn = NULL;
+    XCALLOC(cur_warn, 1);
+    te->warns[te->warn_u++] = cur_warn;
+
+    cur_warn->date = issue_date;
+    cur_warn->issuer_id = issuer_id;
+    cur_warn->issuer_ip = *issuer_ip;
+    cur_warn->text = xstrdup(txt);
+    cur_warn->comment = xstrdup(cmt);
+    if (ej_uuid_is_nonempty(te->uuid)) {
+        bson *w = unparse_team_warning(cur_warn);
+        bson *doc = bson_new();
+        bson_append_array(doc, "warnings", w);
+        bson_free(w); w = NULL;
+        bson_finish(doc);
+        return do_update(state, te, "$push", doc);
+    } else {
+        return do_insert(state, te);
+    }
 }
 
 static int
@@ -901,7 +929,7 @@ set_run_fields_func(
         bson_append_int32(doc, "run_fields", run_fields);
         bson_finish(doc);
 
-        return do_update(state, extra, doc);
+        return do_update(state, extra, NULL, doc);
     } else {
         return do_insert(state, extra);
     }
