@@ -550,6 +550,64 @@ fail:
 }
 
 static struct team_extra *
+find_entry(
+        struct xuser_mongo_cnts_state *state,
+        int user_id,
+        int *p_pos)
+{
+    if (user_id <= 0) return NULL;
+
+    int low = 0, high = state->u, mid;
+    while (low < high) {
+        mid = (low + high) / 2;
+        if (state->v[mid]->user_id == user_id) {
+            if (p_pos) *p_pos = mid;
+            return state->v[mid];
+        } else if (state->v[mid]->user_id < user_id) {
+            low = mid + 1;
+        } else {
+            high = mid;
+        }
+    }
+    if (p_pos) *p_pos = low;
+    return NULL;
+}
+
+static void
+insert_entry(
+        struct xuser_mongo_cnts_state *state,
+        int user_id,
+        struct team_extra *extra,
+        int pos)
+{
+    ASSERT(user_id > 0);
+    if (pos < 0) {
+        int low = 0, high = state->u, mid;
+        while (low < high) {
+            mid = (low + high) / 2;
+            if (state->v[mid]->user_id == user_id) {
+                err("insert_entry: entry %d is already inserted", user_id);
+                abort();
+            } else if (state->v[mid]->user_id < user_id) {
+                low = mid + 1;
+            } else {
+                high = mid;
+            }
+        }
+        pos = low;
+    }
+    if (state->u == state->a) {
+        if (!(state->a *= 2)) state->a = 32;
+        XREALLOC(state->v, state->a);
+    }
+    if (pos < state->u) {
+        memmove(&state->v[pos + 1], &state->v, (state->u - pos) * sizeof(state->v[0]));
+    }
+    state->v[pos] = extra;
+    ++state->u;
+}
+
+static struct team_extra *
 do_get_entry(
         struct xuser_mongo_cnts_state *state,
         int user_id)
@@ -705,6 +763,19 @@ unparse_team_warnings(struct team_warning **tws, int count)
     }
     bson_finish(res);
     return res;
+}
+
+static bson *
+unparse_array_int(const int *values, int count)
+{
+    bson *arr = bson_new();
+    for (int i = 0; i < count; ++i) {
+        unsigned char buf[32];
+        sprintf(buf, "%d", i);
+        bson_append_int32(arr, buf, values[i]);
+    }
+    bson_finish(arr);
+    return arr;
 }
 
 static bson *
@@ -981,14 +1052,151 @@ count_read_clars_func(
     return extra->clar_uuids_size;
 }
 
+static int 
+isort_func(const void *p1, const void *p2)
+{
+    const int *i1 = (const int *) p1;
+    const int *i2 = (const int *) p2;
+    if (*i1 < *i2) return -1;
+    if (*i1 > *i2) return 1;
+    return 0;
+}
+
+struct xuser_mongo_team_extras
+{
+    struct xuser_team_extras b;
+
+    struct xuser_mongo_cnts_state *state;
+};
+
+static struct xuser_team_extras *
+xuser_mongo_team_extras_free(struct xuser_team_extras *x)
+{
+    struct xuser_mongo_team_extras *xm = (struct xuser_mongo_team_extras *) x;
+    if (xm) {
+        xfree(xm);
+    }
+    return NULL;
+}
+
+static const struct team_extra *
+xuser_mongo_team_extras_get(struct xuser_team_extras *x, int user_id)
+{
+    struct xuser_mongo_team_extras *xm = (struct xuser_mongo_team_extras*) x;
+    return find_entry(xm->state, user_id, NULL);
+}
+
 static struct xuser_team_extras *
 get_entries_func(
         struct xuser_cnts_state *data,
         int count,
         int *user_ids)
 {
-    // TODO
-    return NULL;
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    int *loc_users = NULL;
+    int loc_count = count;
+    struct xuser_mongo_team_extras *res = NULL;
+
+    if (count <= 0 || !user_ids) return NULL;
+
+    XCALLOC(res, 1);
+    res->b.free = xuser_mongo_team_extras_free;
+    res->b.get = xuser_mongo_team_extras_get;
+    res->state = state;
+
+    XCALLOC(loc_users, loc_count);
+    memcpy(loc_users, user_ids, loc_count * sizeof(user_ids[0]));
+    qsort(loc_users, loc_count, sizeof(loc_users[0]), isort_func);
+
+    // copy the existing users
+    for (int i1 = 0, i2 = 0; i1 < state->u && i2 < loc_count; ) {
+        if (state->v[i1]->user_id == loc_users[i2]) {
+            // copy that user
+            loc_users[i2++] = 0;
+            ++i1;
+        } else if (state->v[i1]->user_id < loc_users[i2]) {
+            ++i1;
+        } else {
+            ++i2;
+        }
+    }
+
+    // compress the user_ids
+    int i1 = 0, i2 = 0;
+    for (; i2 < loc_count; ++i2) {
+        if (loc_users[i2] > 0) {
+            if (i1 == i2) {
+                ++i1;
+            } else {
+                loc_users[i1++] = loc_users[i2];
+            }
+        }
+    }
+    loc_count = i1;
+
+    bson *arr = unparse_array_int(loc_users, loc_count);
+    bson *indoc = bson_new();
+    bson_append_array(indoc, "$in", arr);
+    bson_finish(indoc);
+    bson_free(arr); arr = NULL;
+    bson *query = bson_new();
+    bson_append_int32(query, "contest_id", state->contest_id);
+    bson_append_document(query, "user_id", indoc);
+    bson_finish(query);
+    bson_free(indoc); indoc = NULL;
+
+    mongo_packet *pkt = NULL;
+    if ((pkt = mongo_sync_cmd_query(state->plugin_state->conn, "ejudge.xuser", 0, 0, 1, query, NULL))) {
+        mongo_sync_cursor *cursor = NULL;
+        if ((cursor = mongo_sync_cursor_new(state->plugin_state->conn, "ejudge.xuser", pkt))) {
+            pkt = NULL;
+            while (mongo_sync_cursor_next(cursor)) {
+                bson *result = mongo_sync_cursor_get_data(cursor);
+                struct team_extra *extra = NULL;
+                if ((extra = parse_bson(result))) {
+                    insert_entry(state, extra->user_id, extra, -1);
+                }
+                bson_free(result); result = NULL;
+            }
+            mongo_sync_cursor_free(cursor);
+        } else {
+            mongo_wire_packet_free(pkt);
+        }
+    }
+
+    // remove existing entries from loc_count
+    for (i1 = 0, i2 = 0; i1 < state->u && i2 < loc_count; ) {
+        if (state->v[i1]->user_id == loc_users[i2]) {
+            // copy that user
+            loc_users[i2++] = 0;
+            ++i1;
+        } else if (state->v[i1]->user_id < loc_users[i2]) {
+            ++i1;
+        } else {
+            ++i2;
+        }
+    }
+    i1 = 0; i2 = 0;
+    for (; i2 < loc_count; ++i2) {
+        if (loc_users[i2] > 0) {
+            if (i1 == i2) {
+                ++i1;
+            } else {
+                loc_users[i1++] = loc_users[i2];
+            }
+        }
+    }
+    loc_count = i1;
+
+    for (i1 = 0; i1 < loc_count; ++i1) {
+        struct team_extra *extra = NULL;
+        XCALLOC(extra, 1);
+        extra->user_id = loc_users[i1];
+        extra->contest_id = state->contest_id;
+        insert_entry(state, extra->user_id, extra, -1);
+    }
+
+    return &res->b;
 }
 
 /*
