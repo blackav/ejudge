@@ -853,32 +853,32 @@ append_warning_func(
         const unsigned char *cmt)
 {
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
-    struct team_extra *te = do_get_entry(state, user_id);
-    if (!te) return -1;
+    struct team_extra *extra = do_get_entry(state, user_id);
+    if (!extra) return -1;
 
-    if (te->warn_u == te->warn_a) {
-        te->warn_a *= 2;
-        if (!te->warn_a) te->warn_a = 8;
-        XREALLOC(te->warns, te->warn_a);
+    if (extra->warn_u == extra->warn_a) {
+        extra->warn_a *= 2;
+        if (!extra->warn_a) extra->warn_a = 8;
+        XREALLOC(extra->warns, extra->warn_a);
     }
     struct team_warning *cur_warn = NULL;
     XCALLOC(cur_warn, 1);
-    te->warns[te->warn_u++] = cur_warn;
+    extra->warns[extra->warn_u++] = cur_warn;
 
     cur_warn->date = issue_date;
     cur_warn->issuer_id = issuer_id;
     cur_warn->issuer_ip = *issuer_ip;
     cur_warn->text = xstrdup(txt);
     cur_warn->comment = xstrdup(cmt);
-    if (ej_uuid_is_nonempty(te->uuid)) {
+    if (ej_uuid_is_nonempty(extra->uuid)) {
         bson *w = unparse_team_warning(cur_warn);
         bson *doc = bson_new();
         bson_append_array(doc, "warnings", w);
         bson_free(w); w = NULL;
         bson_finish(doc);
-        return do_update(state, te, "$push", doc);
+        return do_update(state, extra, "$push", doc);
     } else {
-        return do_insert(state, te);
+        return do_insert(state, extra);
     }
 }
 
