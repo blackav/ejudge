@@ -888,8 +888,19 @@ set_status_func(
         int user_id,
         int status)
 {
-    // TODO
-    return -1;
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    struct team_extra *extra = do_get_entry(state, user_id);
+    if (!extra) return -1;
+    if (extra->status == status) return 0;
+    extra->status = status;
+    if (ej_uuid_is_nonempty(extra->uuid)) {
+        bson *doc = bson_new();
+        bson_append_int32(doc, "status", status);
+        bson_finish(doc);
+        return do_update(state, extra, NULL, doc);
+    } else {
+        return do_insert(state, extra);
+    }
 }
 
 static int
@@ -898,8 +909,32 @@ set_disq_comment_func(
         int user_id,
         const unsigned char *disq_comment)
 {
-    // TODO
-    return -1;
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    struct team_extra *extra = do_get_entry(state, user_id);
+    if (!extra) return -1;
+    if (!extra->disq_comment && !disq_comment) {
+        return 0;
+    }
+    if (extra->disq_comment && !disq_comment) {
+        ASSERT(ej_uuid_is_nonempty(extra->uuid));
+        xfree(extra->disq_comment); extra->disq_comment = NULL;
+        bson *doc = bson_new();
+        bson_append_string(doc, "disq_comment", "", 0);
+        bson_finish(doc);
+        return do_update(state, extra, "$unset", doc);
+    }
+    if (extra->disq_comment && !strcmp(extra->disq_comment, disq_comment))
+        return 0;
+    xfree(extra->disq_comment);
+    extra->disq_comment = xstrdup(disq_comment);
+    if (ej_uuid_is_nonempty(extra->uuid)) {
+        bson *doc = bson_new();
+        bson_append_string(doc, "disq_comment", extra->disq_comment, strlen(extra->disq_comment));
+        bson_finish(doc);
+        return do_update(state, extra, NULL, doc);
+    } else {
+        return do_insert(state, extra);
+    }
 }
 
 static int
