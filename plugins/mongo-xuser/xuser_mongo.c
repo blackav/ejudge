@@ -617,21 +617,12 @@ do_get_entry(
     mongo_packet *pkt = NULL;
     mongo_sync_cursor *cursor = NULL;
     bson *result = NULL;
+    int pos = 0;
 
     if (user_id <= 0) return NULL;
 
-    int low = 0, high = state->u, mid;
-    while (low < high) {
-        mid = (low + high) / 2;
-        if (state->v[mid]->user_id == user_id) {
-            return state->v[mid];
-        } else if (state->v[mid]->user_id < user_id) {
-            low = mid + 1;
-        } else {
-            high = mid;
-        }
-    }
-    mid = low;
+    if ((extra = find_entry(state, user_id, &pos)))
+        return extra;
 
     query = bson_new();
     bson_append_int32(query, "contest_id", state->contest_id);
@@ -657,15 +648,7 @@ do_get_entry(
         extra->user_id = user_id;
         extra->contest_id = state->contest_id;
     }
-    if (state->u == state->a) {
-        if (!(state->a *= 2)) state->a = 32;
-        XREALLOC(state->v, state->a);
-    }
-    if (low < state->u) {
-        memmove(&state->v[low + 1], &state->v, (state->u - low) * sizeof(state->v[0]));
-    }
-    state->v[low] = extra;
-    ++state->u;
+    insert_entry(state, user_id, extra, pos);
 
 done:
     if (result) bson_free(result);
