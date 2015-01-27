@@ -736,6 +736,31 @@ do_insert(
 }
 
 static int
+do_update(
+        struct xuser_mongo_cnts_state *state,
+        struct team_extra *extra,
+        bson *update_doc)
+{
+    bson *filter = bson_new();
+    bson_append_uuid(filter, "_id", &extra->uuid);
+    bson_finish(filter);
+    bson *update = bson_new();
+    bson_append_document(update, "$set", update_doc);
+    bson_finish(update);
+
+    int retval = 0;
+    if (!mongo_sync_cmd_update(state->plugin_state->conn, "ejudge.xuser", 0, filter, update)) {
+        err("do_update: mongo update query failed: %s", os_ErrorMsg());
+        retval = -1;
+    }
+
+    bson_free(update); update = NULL;
+    bson_free(filter); filter = NULL;
+    bson_free(update_doc); update_doc = NULL;
+    return retval;
+}
+
+static int
 set_clar_status_func(
         struct xuser_cnts_state *data,
         int user_id,
@@ -749,28 +774,12 @@ set_clar_status_func(
     int r = team_extra_add_clar_uuid(extra, p_clar_uuid);
     if (r <= 0) return r;
     if (ej_uuid_is_nonempty(extra->uuid)) {
-        bson *filter = bson_new();
-        bson_append_uuid(filter, "_id", &extra->uuid);
-        bson_finish(filter);
-        bson *update = bson_new();
         bson *arr = unparse_clar_uuids(extra);
         bson *doc = bson_new();
         bson_append_array(doc, "clar_uuids", arr);
         bson_free(arr); arr = NULL;
         bson_finish(doc);
-        bson_append_document(update, "$set", doc);
-        bson_free(doc); doc = NULL;
-        bson_finish(update);
-
-        int retval = 0;
-        if (!mongo_sync_cmd_update(state->plugin_state->conn, "ejudge.xuser", 0, filter, update)) {
-            err("set_clar_status: mongo update query failed: %s", os_ErrorMsg());
-            retval = -1;
-        }
-
-        bson_free(update); update = NULL;
-        bson_free(filter); filter = NULL;
-        return retval;
+        return do_update(state, extra, doc);
     } else {
         return do_insert(state, extra);
     }
@@ -840,26 +849,11 @@ set_run_fields_func(
     if (extra->run_fields == run_fields) return 0;
     extra->run_fields = run_fields;
     if (ej_uuid_is_nonempty(extra->uuid)) {
-        bson *filter = bson_new();
-        bson_append_uuid(filter, "_id", &extra->uuid);
-        bson_finish(filter);
-        bson *update = bson_new();
         bson *doc = bson_new();
         bson_append_int32(doc, "run_fields", run_fields);
         bson_finish(doc);
-        bson_append_document(update, "$set", doc);
-        bson_free(doc); doc = NULL;
-        bson_finish(update);
 
-        int retval = 0;
-        if (!mongo_sync_cmd_update(state->plugin_state->conn, "ejudge.xuser", 0, filter, update)) {
-            err("set_clar_status: mongo update query failed: %s", os_ErrorMsg());
-            retval = -1;
-        }
-
-        bson_free(update); update = NULL;
-        bson_free(filter); filter = NULL;
-        return retval;
+        return do_update(state, extra, doc);
     } else {
         return do_insert(state, extra);
     }
