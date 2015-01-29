@@ -27,7 +27,9 @@ struct _bson_cursor;
 
 void
 ej_bson_unparse(
-        FILE *out, struct _bson *, int is_array);
+        FILE *out,
+        struct _bson *,
+        int is_array);
 
 int
 ej_bson_parse_int(

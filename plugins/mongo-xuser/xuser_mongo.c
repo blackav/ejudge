@@ -23,6 +23,7 @@
 #include "ejudge/contests.h"
 #include "ejudge/team_extra.h"
 #include "ejudge/ej_uuid.h"
+#include "ejudge/bson_utils.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -263,239 +264,6 @@ close_func(
     return NULL;
 }
 
-static void
-bson_unparse(FILE *out, bson *b, int is_array)
-{
-    if (!b) {
-        fprintf(out, "NULL");
-        return;
-    }
-    if (is_array) {
-        fprintf(out, "[ ");
-    } else {
-        fprintf(out, "{ ");
-    }
-    bson_cursor *cursor = bson_cursor_new(b);
-    int first = 1;
-    while (bson_cursor_next(cursor)) {
-        if (!first) fprintf(out, ", ");
-        if (!is_array) {
-            fprintf(out, "%s : ", bson_cursor_key(cursor));
-        }
-        bson_type t = bson_cursor_type(cursor);
-        switch (t) {
-        case BSON_TYPE_DOUBLE:
-            break;
-        case BSON_TYPE_STRING:
-            {
-                const char *value = NULL;
-                if (bson_cursor_get_string(cursor, &value)) {
-                    fprintf(out, "\"%s\"", value);
-                }
-            }
-            break;
-        case BSON_TYPE_DOCUMENT:
-            {
-                bson *doc = NULL;
-                if (bson_cursor_get_document(cursor, &doc)) {
-                    bson_unparse(out, doc, 0);
-                    bson_free(doc);
-                }
-            }
-            break;
-        case BSON_TYPE_ARRAY:
-            {
-                bson *doc = NULL;
-                if (bson_cursor_get_array(cursor, &doc)) {
-                    bson_unparse(out, doc, 1);
-                    bson_free(doc);
-                }
-            }
-            break;
-        case BSON_TYPE_BINARY:
-            {
-                bson_binary_subtype bt = 0;
-                const unsigned char *bd = NULL;
-                int bz = 0;
-                if (bson_cursor_get_binary(cursor, &bt, &bd, &bz)
-                    && bt == BSON_BINARY_SUBTYPE_UUID && bz == sizeof(ej_uuid_t)) {
-                    ej_uuid_t value;
-                    memcpy(&value, bd, sizeof(value));
-                    fprintf(out, "\"%s\"", ej_uuid_unparse(&value, NULL));
-                }
-            }
-            break;
-        case BSON_TYPE_OID:
-        case BSON_TYPE_BOOLEAN:
-            break;
-        case BSON_TYPE_UTC_DATETIME:
-            {
-                long long ts = 0;
-                if (bson_cursor_get_utc_datetime(cursor, &ts)) {
-                    time_t tt = (time_t) (ts / 1000);
-                    int ms = (int) (ts % 1000);
-                    struct tm *ptm = gmtime(&tt);
-                    fprintf(out, "%d/%02d/%02d %02d:%02d:%02d.%04d",
-                            ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
-                            ptm->tm_hour, ptm->tm_min, ptm->tm_sec, ms);
-                }
-            }
-            break;
-        case BSON_TYPE_NULL:
-            break;
-        case BSON_TYPE_INT32:
-            {
-                int value = 0;
-                if (bson_cursor_get_int32(cursor, &value)) {
-                    fprintf(out, "%d", value);
-                }
-            }
-            break;
-        case BSON_TYPE_INT64:
-            {
-                long long value = 0;
-                if (bson_cursor_get_int64(cursor, &value)) {
-                    fprintf(out, "%lld", value);
-                }
-            }
-            break;
-        default:
-            break;
-        }
-        first = 0;
-    }
-    bson_cursor_free(cursor); cursor = NULL;
-    if (is_array) {
-        fprintf(out, " ]");
-    } else {
-        fprintf(out, " }");
-    }
-}
-
-static int
-parse_bson_int(
-        bson_cursor *bc,
-        const unsigned char *field_name,
-        int *p_value,
-        int check_low,
-        int low_value,
-        int check_high,
-        int high_value)
-{
-    if (bson_cursor_type(bc) != BSON_TYPE_INT32) {
-        err("parse_bson_int: int32 field type expected for '%s'", field_name);
-        return -1;
-    }
-    int value = 0;
-    if (!bson_cursor_get_int32(bc, &value)) {
-        err("parse_bson_int: failed to fetch int32 value of '%s'", field_name);
-        return -1;
-    }
-    if ((check_low > 0 && value < low_value) || (check_high > 0 && value >= high_value)) {
-        err("parse_bson_int: invalid value of '%s': %d", field_name, value);
-        return -1;
-    }
-    *p_value = value;
-    return 1;
-}
-
-static int
-parse_bson_utc_datetime(
-        bson_cursor *bc,
-        const unsigned char *field_name,
-        time_t *p_value)
-{
-    if (bson_cursor_type(bc) != BSON_TYPE_UTC_DATETIME) {
-        err("parse_bson_utc_datetime: utc_datetime field type expected for '%s'", field_name);
-        return -1;
-    }
-    long long value = 0;
-    if (!bson_cursor_get_utc_datetime(bc, &value)) {
-        err("parse_bson_utc_datetime: failed to fetch utc_datetime value of '%s'", field_name);
-        return -1;
-    }
-    if (p_value) {
-        *p_value = (time_t) (value / 1000);
-    }
-    return 1;
-}
-
-static int
-parse_bson_uuid(
-        bson_cursor *bc,
-        const unsigned char *field_name,
-        ej_uuid_t *p_value)
-{
-    if (bson_cursor_type(bc) != BSON_TYPE_BINARY) {
-        err("parse_bson_uuid: uuid field type expected for '%s'", field_name);
-        return -1;
-    }
-
-    bson_binary_subtype bt = 0;
-    const unsigned char *bd = NULL;
-    int bz = 0;
-    if (!bson_cursor_get_binary(bc, &bt, &bd, &bz)) {
-        err("parse_bson_uuid: failed to fetch binary data for '%s'", field_name);
-        return -1;
-    }
-    if (bt != BSON_BINARY_SUBTYPE_UUID || bz != sizeof(ej_uuid_t)) {
-        err("parse_bson_uuid: invalid binary data for in '%s'", field_name);
-        return -1;
-    }
-    if (p_value) {
-        memcpy(p_value, bd, sizeof(ej_uuid_t));
-    }
-    return 1;
-}
-
-static int
-parse_bson_ip(
-        bson_cursor *bc,
-        const unsigned char *field_name,
-        ej_ip_t *p_value)
-{
-    if (bson_cursor_type(bc) != BSON_TYPE_STRING) {
-        err("parse_bson_ip: string field type expected for '%s'", field_name);
-        return -1;
-    }
-    const char *data = NULL;
-    if (!bson_cursor_get_string(bc, &data)) {
-        err("parse_bson_ip: failed to fetch string for '%s'", field_name);
-        return -1;
-    }
-    if (!data) {
-        err("parse_bson_ip: invalid string for in '%s'", field_name);
-        return -1;
-    }
-    if (xml_parse_ipv6(NULL, 0, 0, 0, data, p_value) < 0) return -1;
-    return 1;
-}
-
-static int
-parse_bson_string(
-        bson_cursor *bc,
-        const unsigned char *field_name,
-        unsigned char **p_value)
-{
-    if (bson_cursor_type(bc) != BSON_TYPE_STRING) {
-        err("parse_bson_string: string field type expected for '%s'", field_name);
-        return -1;
-    }
-    const char *data = NULL;
-    if (!bson_cursor_get_string(bc, &data)) {
-        err("parse_bson_string: failed to fetch string for '%s'", field_name);
-        return -1;
-    }
-    if (!data) {
-        err("parse_bson_string: invalid string for in '%s'", field_name);
-        return -1;
-    }
-    if (p_value) {
-        *p_value = xstrdup(data);
-    }
-    return 1;
-}
-
 static int
 parse_bson_array(
         bson_cursor *bc,
@@ -555,15 +323,15 @@ parse_bson_team_warning(bson *b)
     while (bson_cursor_next(bc)) {
         const unsigned char *key = bson_cursor_key(bc);
         if (!strcmp(key, "date")) {
-            if (parse_bson_utc_datetime(bc, "date", &res->date) < 0) goto fail;
+            if (ej_bson_parse_utc_datetime(bc, "date", &res->date) < 0) goto fail;
         } else if (!strcmp(key, "issuer_id")) {
-            if (parse_bson_int(bc, "issuer_id", &res->issuer_id, 1, 1, 0, 0) < 0) goto fail;
+            if (ej_bson_parse_int(bc, "issuer_id", &res->issuer_id, 1, 1, 0, 0) < 0) goto fail;
         } else if (!strcmp(key, "issuer_ip")) {
-            if (parse_bson_ip(bc, "issuer_ip", &res->issuer_ip) < 0) goto fail;
+            if (ej_bson_parse_ip(bc, "issuer_ip", &res->issuer_ip) < 0) goto fail;
         } else if (!strcmp(key, "text")) {
-            if (parse_bson_string(bc, "text", &res->text) < 0) goto fail;
+            if (ej_bson_parse_string(bc, "text", &res->text) < 0) goto fail;
         } else if (!strcmp(key, "comment")) {
-            if (parse_bson_string(bc, "comment", &res->comment) < 0) goto fail;
+            if (ej_bson_parse_string(bc, "comment", &res->comment) < 0) goto fail;
         }
     }
     bson_cursor_free(bc);
@@ -597,17 +365,17 @@ parse_bson(bson *b)
     while (bson_cursor_next(bc)) {
         const unsigned char *key = bson_cursor_key(bc);
         if (!strcmp(key, "_id")) {
-            if (parse_bson_uuid(bc, "_id", &res->uuid) < 0) goto fail;
+            if (ej_bson_parse_uuid(bc, "_id", &res->uuid) < 0) goto fail;
         } else if (!strcmp(key, "contest_id")) {
-            if (parse_bson_int(bc, "contest_id", &res->contest_id, 1, 1, 0, 0) < 0) goto fail;
+            if (ej_bson_parse_int(bc, "contest_id", &res->contest_id, 1, 1, 0, 0) < 0) goto fail;
         } else if (!strcmp(key, "user_id")) {
-            if (parse_bson_int(bc, "user_id", &res->user_id, 1, 1, 0, 0) < 0) goto fail;
+            if (ej_bson_parse_int(bc, "user_id", &res->user_id, 1, 1, 0, 0) < 0) goto fail;
         } else if (!strcmp(key, "viewed_clars")) {
             if (parse_bson_array(bc, "viewed_clars", &arr) < 0) goto fail;
             bc2 = bson_cursor_new(arr);
             while (bson_cursor_next(bc2)) {
                 int clar_id = 0;
-                if (parse_bson_int(bc2, "viewed_clars/clar_id", &clar_id, 1, 0, 0, 0) < 0) goto fail;
+                if (ej_bson_parse_int(bc2, "viewed_clars/clar_id", &clar_id, 1, 0, 0, 0) < 0) goto fail;
                 if (clar_id >= res->clar_map_size) team_extra_extend_clar_map(res, clar_id);
                 res->clar_map[clar_id / BPE] |= (1UL << clar_id % BPE);
             }
@@ -618,13 +386,13 @@ parse_bson(bson *b)
             bc2 = bson_cursor_new(arr);
             while (bson_cursor_next(bc2)) {
                 ej_uuid_t uuid;
-                if (parse_bson_uuid(bc2, "clar_uuids/uuid", &uuid) < 0) goto fail;
+                if (ej_bson_parse_uuid(bc2, "clar_uuids/uuid", &uuid) < 0) goto fail;
                 team_extra_add_clar_uuid(res, &uuid);
             }
             bson_cursor_free(bc2); bc2 = NULL;
             bson_free(arr); arr = NULL;
         } else if (!strcmp(key, "disq_comment")) {
-            if (parse_bson_string(bc, "disq_comment", &res->disq_comment) < 0) goto fail;
+            if (ej_bson_parse_string(bc, "disq_comment", &res->disq_comment) < 0) goto fail;
         } else if (!strcmp(key, "warnings")) {
             if (parse_bson_array(bc, "warnings", &arr) < 0) goto fail;
             bc2 = bson_cursor_new(arr);
@@ -641,9 +409,9 @@ parse_bson(bson *b)
             bson_cursor_free(bc2); bc2 = NULL;
             bson_free(arr); arr = NULL;
         } else if (!strcmp(key, "status")) {
-            if (parse_bson_int(bc, "status", &res->status, 1, 0, 0, 0) < 0) goto fail;
+            if (ej_bson_parse_int(bc, "status", &res->status, 1, 0, 0, 0) < 0) goto fail;
         } else if (!strcmp(key, "run_fields")) {
-            if (parse_bson_int(bc, "run_fields", &res->run_fields, 1, 0, 0, 0) < 0) goto fail;
+            if (ej_bson_parse_int(bc, "run_fields", &res->run_fields, 1, 0, 0, 0) < 0) goto fail;
         }
     }
     bson_cursor_free(bc);
@@ -743,7 +511,7 @@ do_get_entry(
     bson_append_int32(query, "contest_id", state->contest_id);
     bson_append_int32(query, "user_id", user_id);
     bson_finish(query);
-    fprintf(stderr, "query: "); bson_unparse(stderr, query, 0); fprintf(stderr, "\n");
+    fprintf(stderr, "query: "); ej_bson_unparse(stderr, query, 0); fprintf(stderr, "\n");
     if (!(pkt = mongo_sync_cmd_query(state->plugin_state->conn, "ejudge.xuser", 0, 0, 1, query, NULL)) && errno != ENOENT) {
         err("do_get_entry: query failed: %s", os_ErrorMsg());
         goto done;
@@ -802,12 +570,6 @@ get_clar_status_func(
     return 0;
 }
 
-static void
-bson_append_uuid(bson *b, const unsigned char *key, const ej_uuid_t *p_uuid)
-{
-    bson_append_binary(b, key, BSON_BINARY_SUBTYPE_UUID, (const unsigned char *) p_uuid, sizeof(*p_uuid));
-}
-
 static bson *
 unparse_clar_uuids(const struct team_extra *extra)
 {
@@ -815,7 +577,7 @@ unparse_clar_uuids(const struct team_extra *extra)
     for (int i = 0; i < extra->clar_uuids_size; ++i) {
         unsigned char buf[32];
         sprintf(buf, "%d", i);
-        bson_append_uuid(arr, buf, &extra->clar_uuids[i]);
+        ej_bson_append_uuid(arr, buf, &extra->clar_uuids[i]);
     }
     bson_finish(arr);
     return arr;
@@ -828,8 +590,7 @@ unparse_team_warning(const struct team_warning *tw)
     long long utc_dt = tw->date * 1000;
     bson_append_utc_datetime(res, "date", utc_dt);
     bson_append_int32(res, "issuer_id", tw->issuer_id);
-    const unsigned char *ips = xml_unparse_ipv6(&tw->issuer_ip);
-    bson_append_string(res, "issuer_ip", ips, strlen(ips));
+    ej_bson_append_ip(res, "issuer_ip", &tw->issuer_ip);
     if (tw->text) {
         bson_append_string(res, "text", tw->text, strlen(tw->text));
     }
@@ -874,7 +635,7 @@ static bson *
 unparse_bson(const struct team_extra *extra)
 {
     bson *res = bson_new();
-    bson_append_uuid(res, "_id", &extra->uuid);
+    ej_bson_append_uuid(res, "_id", &extra->uuid);
     bson_append_int32(res, "user_id", extra->user_id);
     bson_append_int32(res, "contest_id", extra->contest_id);
     if (extra->disq_comment) {
@@ -919,7 +680,7 @@ do_insert(
         ej_uuid_generate(&extra->uuid);
     }
     bson *b = unparse_bson(extra);
-    fprintf(stderr, "insert: "); bson_unparse(stderr, b, 0); fprintf(stderr, "\n");
+    fprintf(stderr, "insert: "); ej_bson_unparse(stderr, b, 0); fprintf(stderr, "\n");
     if (!mongo_sync_cmd_insert(state->plugin_state->conn, "ejudge.xuser", b, NULL)) {
         err("do_insert: mongo query failed: %s", os_ErrorMsg());
         bson_free(b);
@@ -938,15 +699,15 @@ do_update(
         bson *update_doc)
 {
     bson *filter = bson_new();
-    bson_append_uuid(filter, "_id", &extra->uuid);
+    ej_bson_append_uuid(filter, "_id", &extra->uuid);
     bson_finish(filter);
     bson *update = bson_new();
     if (!op) op = "$set";
     bson_append_document(update, op, update_doc);
     bson_finish(update);
 
-    fprintf(stderr, "update filter: "); bson_unparse(stderr, filter, 0); fprintf(stderr, "\n");
-    fprintf(stderr, "update value: "); bson_unparse(stderr, update, 0); fprintf(stderr, "\n");
+    fprintf(stderr, "update filter: "); ej_bson_unparse(stderr, filter, 0); fprintf(stderr, "\n");
+    fprintf(stderr, "update value: "); ej_bson_unparse(stderr, update, 0); fprintf(stderr, "\n");
 
     int retval = 0;
     if (!mongo_sync_cmd_update(state->plugin_state->conn, "ejudge.xuser", 0, filter, update)) {

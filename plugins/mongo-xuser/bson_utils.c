@@ -19,9 +19,267 @@
 #if HAVE_LIBMONGO_CLIENT - 0 == 1
 
 #include "ejudge/bson_utils.h"
+#include "ejudge/ej_uuid.h"
+#include "ejudge/errlog.h"
+#include "ejudge/xml_utils.h"
+
+#include "ejudge/xalloc.h"
 
 #include <mongo.h>
 
+void
+ej_bson_unparse(
+        FILE *out,
+        struct _bson *b,
+        int is_array)
+{
+    if (!b) {
+        fprintf(out, "NULL");
+        return;
+    }
+    if (is_array) {
+        fprintf(out, "[ ");
+    } else {
+        fprintf(out, "{ ");
+    }
+    bson_cursor *cursor = bson_cursor_new(b);
+    int first = 1;
+    while (bson_cursor_next(cursor)) {
+        if (!first) fprintf(out, ", ");
+        if (!is_array) {
+            fprintf(out, "%s : ", bson_cursor_key(cursor));
+        }
+        bson_type t = bson_cursor_type(cursor);
+        switch (t) {
+        case BSON_TYPE_DOUBLE:
+            break;
+        case BSON_TYPE_STRING:
+            {
+                const char *value = NULL;
+                if (bson_cursor_get_string(cursor, &value)) {
+                    fprintf(out, "\"%s\"", value);
+                }
+            }
+            break;
+        case BSON_TYPE_DOCUMENT:
+            {
+                bson *doc = NULL;
+                if (bson_cursor_get_document(cursor, &doc)) {
+                    ej_bson_unparse(out, doc, 0);
+                    bson_free(doc);
+                }
+            }
+            break;
+        case BSON_TYPE_ARRAY:
+            {
+                bson *doc = NULL;
+                if (bson_cursor_get_array(cursor, &doc)) {
+                    ej_bson_unparse(out, doc, 1);
+                    bson_free(doc);
+                }
+            }
+            break;
+        case BSON_TYPE_BINARY:
+            {
+                bson_binary_subtype bt = 0;
+                const unsigned char *bd = NULL;
+                int bz = 0;
+                if (bson_cursor_get_binary(cursor, &bt, &bd, &bz)
+                    && bt == BSON_BINARY_SUBTYPE_UUID && bz == sizeof(ej_uuid_t)) {
+                    ej_uuid_t value;
+                    memcpy(&value, bd, sizeof(value));
+                    fprintf(out, "\"%s\"", ej_uuid_unparse(&value, NULL));
+                }
+            }
+            break;
+        case BSON_TYPE_OID:
+        case BSON_TYPE_BOOLEAN:
+            break;
+        case BSON_TYPE_UTC_DATETIME:
+            {
+                long long ts = 0;
+                if (bson_cursor_get_utc_datetime(cursor, &ts)) {
+                    time_t tt = (time_t) (ts / 1000);
+                    int ms = (int) (ts % 1000);
+                    struct tm *ptm = gmtime(&tt);
+                    fprintf(out, "%d/%02d/%02d %02d:%02d:%02d.%04d",
+                            ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
+                            ptm->tm_hour, ptm->tm_min, ptm->tm_sec, ms);
+                }
+            }
+            break;
+        case BSON_TYPE_NULL:
+            break;
+        case BSON_TYPE_INT32:
+            {
+                int value = 0;
+                if (bson_cursor_get_int32(cursor, &value)) {
+                    fprintf(out, "%d", value);
+                }
+            }
+            break;
+        case BSON_TYPE_INT64:
+            {
+                long long value = 0;
+                if (bson_cursor_get_int64(cursor, &value)) {
+                    fprintf(out, "%lld", value);
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        first = 0;
+    }
+    bson_cursor_free(cursor); cursor = NULL;
+    if (is_array) {
+        fprintf(out, " ]");
+    } else {
+        fprintf(out, " }");
+    }
+}
+
+int
+ej_bson_parse_int(
+        struct _bson_cursor *bc,
+        const unsigned char *field_name,
+        int *p_value,
+        int check_low,
+        int low_value,
+        int check_high,
+        int high_value)
+{
+    if (bson_cursor_type(bc) != BSON_TYPE_INT32) {
+        err("parse_bson_int: int32 field type expected for '%s'", field_name);
+        return -1;
+    }
+    int value = 0;
+    if (!bson_cursor_get_int32(bc, &value)) {
+        err("parse_bson_int: failed to fetch int32 value of '%s'", field_name);
+        return -1;
+    }
+    if ((check_low > 0 && value < low_value) || (check_high > 0 && value >= high_value)) {
+        err("parse_bson_int: invalid value of '%s': %d", field_name, value);
+        return -1;
+    }
+    *p_value = value;
+    return 1;
+}
+
+int
+ej_bson_parse_utc_datetime(
+        struct _bson_cursor *bc,
+        const unsigned char *field_name,
+        time_t *p_value)
+{
+    if (bson_cursor_type(bc) != BSON_TYPE_UTC_DATETIME) {
+        err("parse_bson_utc_datetime: utc_datetime field type expected for '%s'", field_name);
+        return -1;
+    }
+    long long value = 0;
+    if (!bson_cursor_get_utc_datetime(bc, &value)) {
+        err("parse_bson_utc_datetime: failed to fetch utc_datetime value of '%s'", field_name);
+        return -1;
+    }
+    if (p_value) {
+        *p_value = (time_t) (value / 1000);
+    }
+    return 1;
+}
+
+int
+ej_bson_parse_uuid(
+        struct _bson_cursor *bc,
+        const unsigned char *field_name,
+        ej_uuid_t *p_value)
+{
+    if (bson_cursor_type(bc) != BSON_TYPE_BINARY) {
+        err("parse_bson_uuid: uuid field type expected for '%s'", field_name);
+        return -1;
+    }
+
+    bson_binary_subtype bt = 0;
+    const unsigned char *bd = NULL;
+    int bz = 0;
+    if (!bson_cursor_get_binary(bc, &bt, &bd, &bz)) {
+        err("parse_bson_uuid: failed to fetch binary data for '%s'", field_name);
+        return -1;
+    }
+    if (bt != BSON_BINARY_SUBTYPE_UUID || bz != sizeof(ej_uuid_t)) {
+        err("parse_bson_uuid: invalid binary data for in '%s'", field_name);
+        return -1;
+    }
+    if (p_value) {
+        memcpy(p_value, bd, sizeof(ej_uuid_t));
+    }
+    return 1;
+}
+
+int
+ej_bson_parse_ip(
+        struct _bson_cursor *bc,
+        const unsigned char *field_name,
+        ej_ip_t *p_value)
+{
+    if (bson_cursor_type(bc) != BSON_TYPE_STRING) {
+        err("parse_bson_ip: string field type expected for '%s'", field_name);
+        return -1;
+    }
+    const char *data = NULL;
+    if (!bson_cursor_get_string(bc, &data)) {
+        err("parse_bson_ip: failed to fetch string for '%s'", field_name);
+        return -1;
+    }
+    if (!data) {
+        err("parse_bson_ip: invalid string for in '%s'", field_name);
+        return -1;
+    }
+    if (xml_parse_ipv6(NULL, 0, 0, 0, data, p_value) < 0) return -1;
+    return 1;
+}
+
+int
+ej_bson_parse_string(
+        struct _bson_cursor *bc,
+        const unsigned char *field_name,
+        unsigned char **p_value)
+{
+    if (bson_cursor_type(bc) != BSON_TYPE_STRING) {
+        err("parse_bson_string: string field type expected for '%s'", field_name);
+        return -1;
+    }
+    const char *data = NULL;
+    if (!bson_cursor_get_string(bc, &data)) {
+        err("parse_bson_string: failed to fetch string for '%s'", field_name);
+        return -1;
+    }
+    if (!data) {
+        err("parse_bson_string: invalid string for in '%s'", field_name);
+        return -1;
+    }
+    if (p_value) {
+        *p_value = xstrdup(data);
+    }
+    return 1;
+}
+
+void
+ej_bson_append_uuid(
+        struct _bson *b,
+        const unsigned char *key,
+        const ej_uuid_t *p_uuid)
+{
+    bson_append_binary(b, key, BSON_BINARY_SUBTYPE_UUID, (const unsigned char *) p_uuid, sizeof(*p_uuid));
+}
+
+void
+ej_bson_append_ip(
+        struct _bson *b,
+        const unsigned char *key,
+        const ej_ip_t *p_ip)
+{
+    bson_append_string(b, key, xml_unparse_ipv6(p_ip), -1);
+}
 
 #endif
 
