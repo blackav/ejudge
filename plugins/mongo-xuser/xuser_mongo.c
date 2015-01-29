@@ -217,7 +217,7 @@ prepare_func(
     }
 
     if (!state->host) state->host = xstrdup("localhost");
-    if (state->port <= 0) state->port = 27027;
+    if (state->port <= 0) state->port = 27017;
 
     state->conn = mongo_sync_connect(state->host, state->port, 0);
     if (!state->conn) {
@@ -261,6 +261,91 @@ close_func(
         xfree(state);
     }
     return NULL;
+}
+
+static void
+bson_unparse(FILE *out, bson *b)
+{
+    if (!b) {
+        fprintf(out, "NULL");
+        return;
+    }
+    fprintf(out, "{ ");
+    bson_cursor *cursor = bson_cursor_new(b);
+    int first = 1;
+    while (bson_cursor_next(cursor)) {
+        if (!first) fprintf(out, ", ");
+        fprintf(out, "%s : ", bson_cursor_key(cursor));
+        bson_type t = bson_cursor_type(cursor);
+        switch (t) {
+        case BSON_TYPE_DOUBLE:
+            break;
+        case BSON_TYPE_STRING:
+            {
+                const char *value = NULL;
+                if (bson_cursor_get_string(cursor, &value)) {
+                    fprintf(out, "\"%s\"", value);
+                }
+            }
+            break;
+        case BSON_TYPE_DOCUMENT:
+        case BSON_TYPE_ARRAY:
+            {
+                bson *doc = NULL;
+                if (bson_cursor_get_document(cursor, &doc)) {
+                    bson_unparse(out, doc);
+                    bson_free(doc);
+                }
+            }
+            break;
+        case BSON_TYPE_BINARY:
+            {
+                bson_binary_subtype bt = 0;
+                const unsigned char *bd = NULL;
+                int bz = 0;
+                if (bson_cursor_get_binary(cursor, &bt, &bd, &bz)
+                    && bt == BSON_BINARY_SUBTYPE_UUID && bz == sizeof(ej_uuid_t)) {
+                    ej_uuid_t value;
+                    memcpy(&value, bd, sizeof(value));
+                    fprintf(out, "%s", ej_uuid_unparse(&value, NULL));
+                }
+            }
+            break;
+        case BSON_TYPE_OID:
+        case BSON_TYPE_BOOLEAN:
+            break;
+        case BSON_TYPE_UTC_DATETIME:
+            {
+                long long ts = 0;
+                if (bson_cursor_get_utc_datetime(cursor, &ts)) {
+                    time_t tt = (time_t) (ts / 1000);
+                    int ms = (int) (ts % 1000);
+                    struct tm *ptm = gmtime(&tt);
+                    fprintf(out, "%d/%02d/%02d %02d:%02d:%02d.%04d",
+                            ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
+                            ptm->tm_hour, ptm->tm_min, ptm->tm_sec, ms);
+                }
+            }
+            break;
+        case BSON_TYPE_NULL:
+            break;
+        case BSON_TYPE_INT32:
+            {
+                int value = 0;
+                if (bson_cursor_get_int32(cursor, &value)) {
+                    fprintf(out, "%d", value);
+                }
+            }
+            break;
+        case BSON_TYPE_INT64:
+            break;
+        default:
+            break;
+        }
+        first = 0;
+    }
+    bson_cursor_free(cursor); cursor = NULL;
+    fprintf(out, " }");
 }
 
 static int
@@ -628,6 +713,7 @@ do_get_entry(
     bson_append_int32(query, "contest_id", state->contest_id);
     bson_append_int32(query, "user_id", user_id);
     bson_finish(query);
+    fprintf(stderr, "query: "); bson_unparse(stderr, query); fprintf(stderr, "\n");
     if (!(pkt = mongo_sync_cmd_query(state->plugin_state->conn, "ejudge.xuser", 0, 0, 1, query, NULL))) {
         goto done;
     }
@@ -827,6 +913,7 @@ do_insert(
         ej_uuid_generate(&extra->uuid);
     }
     bson *b = unparse_bson(extra);
+    fprintf(stderr, "insert: "); bson_unparse(stderr, b); fprintf(stderr, "\n");
     if (!mongo_sync_cmd_insert(state->plugin_state->conn, "ejudge.xuser", b, NULL)) {
         err("do_insert: mongo query failed: %s", os_ErrorMsg());
         bson_free(b);
@@ -851,6 +938,9 @@ do_update(
     if (!op) op = "$set";
     bson_append_document(update, op, update_doc);
     bson_finish(update);
+
+    fprintf(stderr, "update filter: "); bson_unparse(stderr, filter); fprintf(stderr, "\n");
+    fprintf(stderr, "update value: "); bson_unparse(stderr, update); fprintf(stderr, "\n");
 
     int retval = 0;
     if (!mongo_sync_cmd_update(state->plugin_state->conn, "ejudge.xuser", 0, filter, update)) {
