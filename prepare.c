@@ -2474,6 +2474,10 @@ set_defaults(
     snprintf(g->rundb_plugin, sizeof(g->rundb_plugin), "%s",
              ejudge_config->default_rundb_plugin);
   }
+  if (!g->xuser_plugin[0] && ejudge_config
+      && ejudge_config->default_xuser_plugin && ejudge_config->default_xuser_plugin[0]) {
+    snprintf(g->xuser_plugin, sizeof(g->xuser_plugin), "%s", ejudge_config->default_xuser_plugin);
+  }
 
   if (!g->conf_dir[0]) {
     snprintf(g->conf_dir, sizeof(g->conf_dir), "conf");
