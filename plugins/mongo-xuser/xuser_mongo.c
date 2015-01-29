@@ -45,9 +45,12 @@ struct xuser_mongo_state
 
     unsigned char *host;
     int port;
+    unsigned char *database;
+    unsigned char *table_prefix;
     unsigned char *password_file;
     unsigned char *user;
     unsigned char *password;
+    unsigned char *xuser_table;
 
     mongo_sync_connection *conn;
 };
@@ -193,6 +196,9 @@ finish_func(struct common_plugin_data *data)
         xfree(state->password);
         xfree(state->password_file);
         xfree(state->host);
+        xfree(state->database);
+        xfree(state->table_prefix);
+        xfree(state->xuser_table);
         memset(state, 0, sizeof(*state));
         xfree(state);
     }
@@ -273,6 +279,10 @@ prepare_func(
                 xml_err_elem_invalid(p);
                 return -1;
             }
+        } else if (!strcmp(p->name[0], "database")) {
+            if (xml_leaf_elem(p, &state->database, 1, 0) < 0) return -1;
+        } else if (!strcmp(p->name[0], "table_prefix")) {
+            if (xml_leaf_elem(p, &state->table_prefix, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "password_file")) {
             if (xml_leaf_elem(p, &state->password_file, 1, 0) < 0) return -1;
         } else {
@@ -298,9 +308,16 @@ prepare_func(
         if (parse_passwd_file(state, ppath) < 0) return -1;
     }
 
-
+    if (!state->database) state->database = xstrdup("ejudge");
     if (!state->host) state->host = xstrdup("localhost");
     if (state->port <= 0) state->port = 27017;
+    if (!state->table_prefix) state->table_prefix = xstrdup("");
+
+    {
+        unsigned char buf[1024];
+        snprintf(buf, sizeof(buf), "%s.%sxuser", state->database, state->table_prefix);
+        state->xuser_table = xstrdup(buf);
+    }
 
     state->conn = mongo_sync_connect(state->host, state->port, 0);
     if (!state->conn) {
@@ -308,7 +325,7 @@ prepare_func(
         return -1;
     }
     if (state->user && state->password) {
-        if (!mongo_sync_cmd_authenticate(state->conn, "ejudge", state->user, state->password)) {
+        if (!mongo_sync_cmd_authenticate(state->conn, state->database, state->user, state->password)) {
             err("authentification failed: %s", os_ErrorMsg());
             return -1;
         }
@@ -594,12 +611,12 @@ do_get_entry(
     bson_append_int32(query, "user_id", user_id);
     bson_finish(query);
     fprintf(stderr, "query: "); ej_bson_unparse(stderr, query, 0); fprintf(stderr, "\n");
-    if (!(pkt = mongo_sync_cmd_query(state->plugin_state->conn, "ejudge.xuser", 0, 0, 1, query, NULL)) && errno != ENOENT) {
+    if (!(pkt = mongo_sync_cmd_query(state->plugin_state->conn, state->plugin_state->xuser_table, 0, 0, 1, query, NULL)) && errno != ENOENT) {
         err("do_get_entry: query failed: %s", os_ErrorMsg());
         goto done;
     }
     if (pkt) {
-        if (!(cursor = mongo_sync_cursor_new(state->plugin_state->conn, "ejudge.xuser", pkt))) {
+        if (!(cursor = mongo_sync_cursor_new(state->plugin_state->conn, state->plugin_state->xuser_table, pkt))) {
             goto done;
         }
         pkt = NULL; // ownership passed to 'cursor'
@@ -764,7 +781,7 @@ do_insert(
     }
     bson *b = unparse_bson(extra);
     fprintf(stderr, "insert: "); ej_bson_unparse(stderr, b, 0); fprintf(stderr, "\n");
-    if (!mongo_sync_cmd_insert(state->plugin_state->conn, "ejudge.xuser", b, NULL)) {
+    if (!mongo_sync_cmd_insert(state->plugin_state->conn, state->plugin_state->xuser_table, b, NULL)) {
         err("do_insert: mongo query failed: %s", os_ErrorMsg());
         bson_free(b);
         return -1;
@@ -793,7 +810,7 @@ do_update(
     fprintf(stderr, "update value: "); ej_bson_unparse(stderr, update, 0); fprintf(stderr, "\n");
 
     int retval = 0;
-    if (!mongo_sync_cmd_update(state->plugin_state->conn, "ejudge.xuser", 0, filter, update)) {
+    if (!mongo_sync_cmd_update(state->plugin_state->conn, state->plugin_state->xuser_table, 0, filter, update)) {
         err("do_update: mongo update query failed: %s", os_ErrorMsg());
         retval = -1;
     }
@@ -1108,9 +1125,9 @@ get_entries_func(
     fprintf(stderr, "query: "); ej_bson_unparse(stderr, query, 0); fprintf(stderr, "\n");
 
     mongo_packet *pkt = NULL;
-    if ((pkt = mongo_sync_cmd_query(state->plugin_state->conn, "ejudge.xuser", 0, 0, loc_count, query, NULL))) {
+    if ((pkt = mongo_sync_cmd_query(state->plugin_state->conn, state->plugin_state->xuser_table, 0, 0, loc_count, query, NULL))) {
         mongo_sync_cursor *cursor = NULL;
-        if ((cursor = mongo_sync_cursor_new(state->plugin_state->conn, "ejudge.xuser", pkt))) {
+        if ((cursor = mongo_sync_cursor_new(state->plugin_state->conn, state->plugin_state->xuser_table, pkt))) {
             pkt = NULL;
             while (mongo_sync_cursor_next(cursor)) {
                 bson *result = mongo_sync_cursor_get_data(cursor);
