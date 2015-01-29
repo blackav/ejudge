@@ -120,7 +120,6 @@ COMMON_CFILES=\
  archive_paths.c\
  base64.c\
  bitset.c\
- bson_utils.c\
  build_support.c\
  cgi.c\
  charsets.c\
