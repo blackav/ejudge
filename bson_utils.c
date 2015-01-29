@@ -17,6 +17,12 @@
 #include "ejudge/config.h"
 
 #if HAVE_LIBMONGO_CLIENT - 0 == 1
+
+#include "ejudge/bson_utils.h"
+
+#include <mongo.h>
+
+
 #endif
 
 /*
