@@ -102,7 +102,7 @@ ej_bson_unparse(
                     time_t tt = (time_t) (ts / 1000);
                     int ms = (int) (ts % 1000);
                     struct tm *ptm = gmtime(&tt);
-                    fprintf(out, "%d/%02d/%02d %02d:%02d:%02d.%04d",
+                    fprintf(out, "\"%d/%02d/%02d %02d:%02d:%02d.%04d\"",
                             ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
                             ptm->tm_hour, ptm->tm_min, ptm->tm_sec, ms);
                 }

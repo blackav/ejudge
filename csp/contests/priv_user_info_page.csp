@@ -311,7 +311,7 @@
 <s:form>
 <s:hidden name="user_id" value="view_user_id" />
 <p><s:_>Disqualification explanation</s:_>:<br/>
-<p><textarea name="disq_comment" rows="5" cols="60"><% if (u_extra->disq_comment) { %><s:v value="u_extra->disq_comment" /><% } %></textarea></p>
+<p><textarea name="disq_comment" rows="5" cols="60"><% if (u_extra && u_extra->disq_comment) { %><s:v value="u_extra->disq_comment" /><% } %></textarea></p>
 
 <table class="b0"><tr><td class="b0"><%
   if ((flags & TEAM_DISQUALIFIED)) {

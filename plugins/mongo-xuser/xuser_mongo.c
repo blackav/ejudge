@@ -294,7 +294,7 @@ parse_bson_document(
         bson **p_value)
 {
     if (bson_cursor_type(bc) != BSON_TYPE_DOCUMENT) {
-        err("parse_bson_document: array field type expected for '%s'", field_name);
+        err("parse_bson_document: document field type expected for '%s', got %s", field_name, bson_cursor_type_as_string(bc));
         return -1;
     }
     bson *data = NULL;
@@ -336,7 +336,7 @@ parse_bson_team_warning(bson *b)
     }
     bson_cursor_free(bc);
 
-    return NULL;
+    return res;
 
 fail:
     if (res) {
@@ -397,7 +397,7 @@ parse_bson(bson *b)
             if (parse_bson_array(bc, "warnings", &arr) < 0) goto fail;
             bc2 = bson_cursor_new(arr);
             while (bson_cursor_next(bc2)) {
-                if (parse_bson_document(bc, "warnings/warning", &doc) < 0) goto fail;
+                if (parse_bson_document(bc2, "warnings/warning", &doc) < 0) goto fail;
                 if (!(tw = parse_bson_team_warning(doc))) goto fail;
                 if (res->warn_u == res->warn_a) {
                     if (!(res->warn_a *= 2)) res->warn_a = 16;
@@ -434,14 +434,11 @@ find_entry(
 {
     if (user_id <= 0) return NULL;
 
-    fprintf(stderr, "looking for %d\n", user_id);
-
     int low = 0, high = state->u, mid;
     while (low < high) {
         mid = (low + high) / 2;
         if (state->v[mid]->user_id == user_id) {
             if (p_pos) *p_pos = mid;
-            fprintf(stderr, "found at pos %d\n", mid);
             return state->v[mid];
         } else if (state->v[mid]->user_id < user_id) {
             low = mid + 1;
@@ -450,7 +447,6 @@ find_entry(
         }
     }
     if (p_pos) *p_pos = low;
-    fprintf(stderr, "not found\n");
     return NULL;
 }
 
@@ -482,12 +478,10 @@ insert_entry(
         XREALLOC(state->v, state->a);
     }
     if (pos < state->u) {
-        memmove(&state->v[pos + 1], &state->v, (state->u - pos) * sizeof(state->v[0]));
+        memmove(&state->v[pos + 1], &state->v[pos], (state->u - pos) * sizeof(state->v[0]));
     }
     state->v[pos] = extra;
     ++state->u;
-
-    fprintf(stderr, "size: %d\n", state->u);
 }
 
 static struct team_extra *
@@ -523,6 +517,7 @@ do_get_entry(
         pkt = NULL; // ownership passed to 'cursor'
         while (mongo_sync_cursor_next(cursor)) {
             result = mongo_sync_cursor_get_data(cursor);
+            fprintf(stderr, "result: "); ej_bson_unparse(stderr, result, 0); fprintf(stderr, "\n");
             if (!(extra = parse_bson(result))) {
                 goto done;
             }
@@ -587,7 +582,7 @@ static bson *
 unparse_team_warning(const struct team_warning *tw)
 {
     bson *res = bson_new();
-    long long utc_dt = tw->date * 1000;
+    long long utc_dt = (long long) tw->date * 1000;
     bson_append_utc_datetime(res, "date", utc_dt);
     bson_append_int32(res, "issuer_id", tw->issuer_id);
     ej_bson_append_ip(res, "issuer_ip", &tw->issuer_ip);
@@ -784,7 +779,7 @@ append_warning_func(
     if (ej_uuid_is_nonempty(extra->uuid)) {
         bson *w = unparse_team_warning(cur_warn);
         bson *doc = bson_new();
-        bson_append_array(doc, "warnings", w);
+        bson_append_document(doc, "warnings", w);
         bson_free(w); w = NULL;
         bson_finish(doc);
         return do_update(state, extra, "$push", doc);
@@ -944,9 +939,30 @@ get_entries_func(
     res->b.get = xuser_mongo_team_extras_get;
     res->state = state;
 
+    /*
+    fprintf(stderr, "[ ");
+    for (int ii = 0; ii < count; ++ii)
+        fprintf(stderr, " %d", user_ids[ii]);
+    fprintf(stderr, " ]\n");
+    */
+
     XCALLOC(loc_users, loc_count);
     memcpy(loc_users, user_ids, loc_count * sizeof(user_ids[0]));
     qsort(loc_users, loc_count, sizeof(loc_users[0]), isort_func);
+
+    /*
+    fprintf(stderr, "[ ");
+    for (int ii = 0; ii < loc_count; ++ii)
+        fprintf(stderr, " %d", loc_users[ii]);
+    fprintf(stderr, " ]\n");
+    */
+
+    /*
+    fprintf(stderr, "<");
+    for (int ii = 0; ii < state->u; ++ii)
+        fprintf(stderr, " %d", state->v[ii]->user_id);
+    fprintf(stderr, " >\n");
+    */
 
     // copy the existing users
     for (int i1 = 0, i2 = 0; i1 < state->u && i2 < loc_count; ) {
@@ -961,6 +977,13 @@ get_entries_func(
         }
     }
 
+    /*
+    fprintf(stderr, "[ ");
+    for (int ii = 0; ii < loc_count; ++ii)
+        fprintf(stderr, " %d", loc_users[ii]);
+    fprintf(stderr, " ]\n");
+    */
+
     // compress the user_ids
     int i1 = 0, i2 = 0;
     for (; i2 < loc_count; ++i2) {
@@ -974,6 +997,15 @@ get_entries_func(
     }
     loc_count = i1;
 
+    /*
+    fprintf(stderr, "[ ");
+    for (int ii = 0; ii < loc_count; ++ii)
+        fprintf(stderr, " %d", loc_users[ii]);
+    fprintf(stderr, " ]\n");
+    */
+
+    if (loc_count <= 0) goto done;
+
     bson *arr = unparse_array_int(loc_users, loc_count);
     bson *indoc = bson_new();
     bson_append_array(indoc, "$in", arr);
@@ -985,13 +1017,16 @@ get_entries_func(
     bson_finish(query);
     bson_free(indoc); indoc = NULL;
 
+    fprintf(stderr, "query: "); ej_bson_unparse(stderr, query, 0); fprintf(stderr, "\n");
+
     mongo_packet *pkt = NULL;
-    if ((pkt = mongo_sync_cmd_query(state->plugin_state->conn, "ejudge.xuser", 0, 0, 1, query, NULL))) {
+    if ((pkt = mongo_sync_cmd_query(state->plugin_state->conn, "ejudge.xuser", 0, 0, loc_count, query, NULL))) {
         mongo_sync_cursor *cursor = NULL;
         if ((cursor = mongo_sync_cursor_new(state->plugin_state->conn, "ejudge.xuser", pkt))) {
             pkt = NULL;
             while (mongo_sync_cursor_next(cursor)) {
                 bson *result = mongo_sync_cursor_get_data(cursor);
+                fprintf(stderr, "result: "); ej_bson_unparse(stderr, result, 0); fprintf(stderr, "\n");
                 struct team_extra *extra = NULL;
                 if ((extra = parse_bson(result))) {
                     insert_entry(state, extra->user_id, extra, -1);
@@ -1028,6 +1063,13 @@ get_entries_func(
     }
     loc_count = i1;
 
+    /*
+    fprintf(stderr, "[ ");
+    for (int ii = 0; ii < loc_count; ++ii)
+        fprintf(stderr, " %d", loc_users[ii]);
+    fprintf(stderr, " ]\n");
+    */
+
     for (i1 = 0; i1 < loc_count; ++i1) {
         struct team_extra *extra = NULL;
         XCALLOC(extra, 1);
@@ -1036,6 +1078,14 @@ get_entries_func(
         insert_entry(state, extra->user_id, extra, -1);
     }
 
+    /*
+    fprintf(stderr, "<");
+    for (int ii = 0; ii < state->u; ++ii)
+        fprintf(stderr, " %d", state->v[ii]->user_id);
+    fprintf(stderr, " >\n");
+    */
+
+done:
     return &res->b;
 }
 
