@@ -264,18 +264,24 @@ close_func(
 }
 
 static void
-bson_unparse(FILE *out, bson *b)
+bson_unparse(FILE *out, bson *b, int is_array)
 {
     if (!b) {
         fprintf(out, "NULL");
         return;
     }
-    fprintf(out, "{ ");
+    if (is_array) {
+        fprintf(out, "[ ");
+    } else {
+        fprintf(out, "{ ");
+    }
     bson_cursor *cursor = bson_cursor_new(b);
     int first = 1;
     while (bson_cursor_next(cursor)) {
         if (!first) fprintf(out, ", ");
-        fprintf(out, "%s : ", bson_cursor_key(cursor));
+        if (!is_array) {
+            fprintf(out, "%s : ", bson_cursor_key(cursor));
+        }
         bson_type t = bson_cursor_type(cursor);
         switch (t) {
         case BSON_TYPE_DOUBLE:
@@ -289,11 +295,19 @@ bson_unparse(FILE *out, bson *b)
             }
             break;
         case BSON_TYPE_DOCUMENT:
-        case BSON_TYPE_ARRAY:
             {
                 bson *doc = NULL;
                 if (bson_cursor_get_document(cursor, &doc)) {
-                    bson_unparse(out, doc);
+                    bson_unparse(out, doc, 0);
+                    bson_free(doc);
+                }
+            }
+            break;
+        case BSON_TYPE_ARRAY:
+            {
+                bson *doc = NULL;
+                if (bson_cursor_get_array(cursor, &doc)) {
+                    bson_unparse(out, doc, 1);
                     bson_free(doc);
                 }
             }
@@ -307,7 +321,7 @@ bson_unparse(FILE *out, bson *b)
                     && bt == BSON_BINARY_SUBTYPE_UUID && bz == sizeof(ej_uuid_t)) {
                     ej_uuid_t value;
                     memcpy(&value, bd, sizeof(value));
-                    fprintf(out, "%s", ej_uuid_unparse(&value, NULL));
+                    fprintf(out, "\"%s\"", ej_uuid_unparse(&value, NULL));
                 }
             }
             break;
@@ -338,6 +352,12 @@ bson_unparse(FILE *out, bson *b)
             }
             break;
         case BSON_TYPE_INT64:
+            {
+                long long value = 0;
+                if (bson_cursor_get_int64(cursor, &value)) {
+                    fprintf(out, "%lld", value);
+                }
+            }
             break;
         default:
             break;
@@ -345,7 +365,11 @@ bson_unparse(FILE *out, bson *b)
         first = 0;
     }
     bson_cursor_free(cursor); cursor = NULL;
-    fprintf(out, " }");
+    if (is_array) {
+        fprintf(out, " ]");
+    } else {
+        fprintf(out, " }");
+    }
 }
 
 static int
@@ -642,11 +666,14 @@ find_entry(
 {
     if (user_id <= 0) return NULL;
 
+    fprintf(stderr, "looking for %d\n", user_id);
+
     int low = 0, high = state->u, mid;
     while (low < high) {
         mid = (low + high) / 2;
         if (state->v[mid]->user_id == user_id) {
             if (p_pos) *p_pos = mid;
+            fprintf(stderr, "found at pos %d\n", mid);
             return state->v[mid];
         } else if (state->v[mid]->user_id < user_id) {
             low = mid + 1;
@@ -655,6 +682,7 @@ find_entry(
         }
     }
     if (p_pos) *p_pos = low;
+    fprintf(stderr, "not found\n");
     return NULL;
 }
 
@@ -690,6 +718,8 @@ insert_entry(
     }
     state->v[pos] = extra;
     ++state->u;
+
+    fprintf(stderr, "size: %d\n", state->u);
 }
 
 static struct team_extra *
@@ -713,20 +743,23 @@ do_get_entry(
     bson_append_int32(query, "contest_id", state->contest_id);
     bson_append_int32(query, "user_id", user_id);
     bson_finish(query);
-    fprintf(stderr, "query: "); bson_unparse(stderr, query); fprintf(stderr, "\n");
-    if (!(pkt = mongo_sync_cmd_query(state->plugin_state->conn, "ejudge.xuser", 0, 0, 1, query, NULL))) {
+    fprintf(stderr, "query: "); bson_unparse(stderr, query, 0); fprintf(stderr, "\n");
+    if (!(pkt = mongo_sync_cmd_query(state->plugin_state->conn, "ejudge.xuser", 0, 0, 1, query, NULL)) && errno != ENOENT) {
+        err("do_get_entry: query failed: %s", os_ErrorMsg());
         goto done;
     }
-    if (!(cursor = mongo_sync_cursor_new(state->plugin_state->conn, "ejudge.xuser", pkt))) {
-        goto done;
-    }
-    pkt = NULL; // ownership passed to 'cursor'
-    while (mongo_sync_cursor_next(cursor)) {
-        result = mongo_sync_cursor_get_data(cursor);
-        if (!(extra = parse_bson(result))) {
+    if (pkt) {
+        if (!(cursor = mongo_sync_cursor_new(state->plugin_state->conn, "ejudge.xuser", pkt))) {
             goto done;
         }
-        bson_free(result); result = NULL;
+        pkt = NULL; // ownership passed to 'cursor'
+        while (mongo_sync_cursor_next(cursor)) {
+            result = mongo_sync_cursor_get_data(cursor);
+            if (!(extra = parse_bson(result))) {
+                goto done;
+            }
+            bson_free(result); result = NULL;
+        }
     }
     if (!extra) {
         // query returned empty set
@@ -788,16 +821,6 @@ unparse_clar_uuids(const struct team_extra *extra)
     return arr;
 }
 
-/*
-struct team_warning
-{
-  time_t date;
-  int issuer_id;
-  ej_ip_t issuer_ip;
-  unsigned char *text;
-  unsigned char *comment;
-};
- */
 static bson *
 unparse_team_warning(const struct team_warning *tw)
 {
@@ -874,34 +897,17 @@ unparse_bson(const struct team_extra *extra)
     }
     if (extra->clar_uuids_size > 0) {
         bson *arr = NULL;
-        bson_append_document(res, "clar_uuids", (arr = unparse_clar_uuids(extra)));
+        bson_append_array(res, "clar_uuids", (arr = unparse_clar_uuids(extra)));
         bson_free(arr); arr = NULL;
     }
     if (extra->warn_u > 0) {
         bson *arr = unparse_team_warnings(extra->warns, extra->warn_u);
-        bson_append_document(res, "warnings", arr);
+        bson_append_array(res, "warnings", arr);
         bson_free(arr); arr = NULL;
     }
     bson_finish(res);
     return res;
 }
-
-/*
-struct team_extra
-{
-  int clar_map_size;
-  int clar_map_alloc;
-  unsigned long *clar_map;
-
-  int clar_uuids_size;
-  int clar_uuids_alloc;
-  ej_uuid_t *clar_uuids;
-
-  // warnings
-  int warn_u, warn_a;
-  struct team_warning **warns;
-};
-*/
 
 static int
 do_insert(
@@ -913,7 +919,7 @@ do_insert(
         ej_uuid_generate(&extra->uuid);
     }
     bson *b = unparse_bson(extra);
-    fprintf(stderr, "insert: "); bson_unparse(stderr, b); fprintf(stderr, "\n");
+    fprintf(stderr, "insert: "); bson_unparse(stderr, b, 0); fprintf(stderr, "\n");
     if (!mongo_sync_cmd_insert(state->plugin_state->conn, "ejudge.xuser", b, NULL)) {
         err("do_insert: mongo query failed: %s", os_ErrorMsg());
         bson_free(b);
@@ -939,8 +945,8 @@ do_update(
     bson_append_document(update, op, update_doc);
     bson_finish(update);
 
-    fprintf(stderr, "update filter: "); bson_unparse(stderr, filter); fprintf(stderr, "\n");
-    fprintf(stderr, "update value: "); bson_unparse(stderr, update); fprintf(stderr, "\n");
+    fprintf(stderr, "update filter: "); bson_unparse(stderr, filter, 0); fprintf(stderr, "\n");
+    fprintf(stderr, "update value: "); bson_unparse(stderr, update, 0); fprintf(stderr, "\n");
 
     int retval = 0;
     if (!mongo_sync_cmd_update(state->plugin_state->conn, "ejudge.xuser", 0, filter, update)) {
