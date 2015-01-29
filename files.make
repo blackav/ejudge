@@ -120,6 +120,7 @@ COMMON_CFILES=\
  archive_paths.c\
  base64.c\
  bitset.c\
+ bson_utils.c\
  build_support.c\
  cgi.c\
  charsets.c\
@@ -495,6 +496,7 @@ HFILES=\
  ./include/ejudge/archive_paths.h\
  ./include/ejudge/base64.h\
  ./include/ejudge/bitset.h\
+ ./include/ejudge/bson_utils.h\
  ./include/ejudge/build_support.h\
  ./include/ejudge/cgi.h\
  ./include/ejudge/charsets.h\
