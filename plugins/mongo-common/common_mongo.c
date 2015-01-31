@@ -220,6 +220,8 @@ prepare_func(
         err("cannot connect to mongodb: %s", os_ErrorMsg());
         return -1;
     }
+    mongo_sync_conn_set_safe_mode(state->conn, 1);
+    mongo_sync_conn_set_auto_reconnect(state->conn, 1);
     if (state->user && state->password) {
         if (!mongo_sync_cmd_authenticate(state->conn, state->database, state->user, state->password)) {
             err("authentification failed: %s", os_ErrorMsg());
