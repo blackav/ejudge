@@ -174,6 +174,7 @@ subdirs_all:
 	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" all
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" all
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" all
@@ -232,6 +233,7 @@ install: local_install
 	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" install
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" install
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" install
@@ -369,6 +371,7 @@ subdir_clean:
 	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" clean
@@ -390,6 +393,7 @@ subdir_distclean :
 	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" distclean
