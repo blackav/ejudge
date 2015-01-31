@@ -60,6 +60,16 @@ ej_bson_parse_string(
         struct _bson_cursor *bc,
         const unsigned char *field_name,
         unsigned char **p_value);
+int
+ej_bson_parse_array(
+        struct _bson_cursor *bc,
+        const unsigned char *field_name,
+        struct _bson **p_value);
+int
+ej_bson_parse_document(
+        struct _bson_cursor *bc,
+        const unsigned char *field_name,
+        struct _bson **p_value);
 
 void
 ej_bson_append_uuid(

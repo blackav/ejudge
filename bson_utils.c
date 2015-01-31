@@ -263,6 +263,52 @@ ej_bson_parse_string(
     return 1;
 }
 
+int
+ej_bson_parse_array(
+        bson_cursor *bc,
+        const unsigned char *field_name,
+        bson **p_value)
+{
+    if (bson_cursor_type(bc) != BSON_TYPE_ARRAY) {
+        err("parse_bson_array: array field type expected for '%s'", field_name);
+        return -1;
+    }
+    bson *data = NULL;
+    if (!bson_cursor_get_array(bc, &data) || !data) {
+        err("parse_bson_array: failed to fetch array for '%s'", field_name);
+        return -1;
+    }
+    if (p_value) {
+        *p_value = data;
+    } else {
+        bson_free(data);
+    }
+    return 1;
+}
+
+int
+ej_bson_parse_document(
+        bson_cursor *bc,
+        const unsigned char *field_name,
+        bson **p_value)
+{
+    if (bson_cursor_type(bc) != BSON_TYPE_DOCUMENT) {
+        err("parse_bson_document: document field type expected for '%s', got %s", field_name, bson_cursor_type_as_string(bc));
+        return -1;
+    }
+    bson *data = NULL;
+    if (!bson_cursor_get_document(bc, &data) || !data) {
+        err("parse_bson_document: failed to fetch document for '%s'", field_name);
+        return -1;
+    }
+    if (p_value) {
+        *p_value = data;
+    } else {
+        bson_free(data);
+    }
+    return 1;
+}
+
 void
 ej_bson_append_uuid(
         struct _bson *b,
