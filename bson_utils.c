@@ -327,6 +327,19 @@ ej_bson_append_ip(
     bson_append_string(b, key, xml_unparse_ipv6(p_ip), -1);
 }
 
+bson *
+ej_bson_unparse_array_int(const int *values, int count)
+{
+    bson *arr = bson_new();
+    for (int i = 0; i < count; ++i) {
+        unsigned char buf[32];
+        sprintf(buf, "%d", i);
+        bson_append_int32(arr, buf, values[i]);
+    }
+    bson_finish(arr);
+    return arr;
+}
+
 #endif
 
 int ej_bson_force_link_dummy = 0;

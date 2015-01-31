@@ -82,6 +82,11 @@ ej_bson_append_ip(
         const unsigned char *key,
         const ej_ip_t *p_ip);
 
+struct _bson *
+ej_bson_unparse_array_int(
+        const int *values,
+        int count);
+
 #endif /* __BSON_UTILS_H__ */
 
 /*
