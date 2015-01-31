@@ -30,7 +30,7 @@
 void
 ej_bson_unparse(
         FILE *out,
-        struct _bson *b,
+        const struct _bson *b,
         int is_array)
 {
     if (!b) {
