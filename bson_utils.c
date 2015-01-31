@@ -340,6 +340,22 @@ ej_bson_unparse_array_int(const int *values, int count)
     return arr;
 }
 
+bson *
+ej_bson_unparse_array_uuid(
+        ej_uuid_t *values,
+        int count)
+{
+    bson *arr = bson_new();
+    for (int i = 0; i < count; ++i) {
+        unsigned char buf[32];
+        sprintf(buf, "%d", i);
+        ej_bson_append_uuid(arr, buf, &values[i]);
+    }
+    bson_finish(arr);
+    return arr;
+
+}
+
 #endif
 
 int ej_bson_force_link_dummy = 0;

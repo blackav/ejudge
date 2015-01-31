@@ -86,6 +86,10 @@ struct _bson *
 ej_bson_unparse_array_int(
         const int *values,
         int count);
+struct _bson *
+ej_bson_unparse_array_uuid(
+        ej_uuid_t *values,
+        int count);
 
 #endif /* __BSON_UTILS_H__ */
 
