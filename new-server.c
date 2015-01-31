@@ -698,6 +698,13 @@ setup_log_file(void)
   ejudge_config->new_server_log = xstrdup("/tmp/ej-contests.log");
 }
 
+extern int ej_bson_force_link_dummy;
+
+static void *forced_symbols[] __attribute__((unused)) =
+{
+  &ej_bson_force_link_dummy
+};
+
 int
 main(int argc, char *argv[])
 {

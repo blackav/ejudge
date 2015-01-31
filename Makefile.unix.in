@@ -1,8 +1,7 @@
 # -*- Makefile -*-
-# $Id$
 # @configure_input@
 
-# Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -51,6 +50,10 @@ EXPAT_LIB_OPT=@ac_cv_expat_lib_opt@
 LIBCAP_DIR=@ac_cv_libcap_root@
 LIBCAP_INCL_OPT=@ac_cv_libcap_include_opt@
 LIBCAP_LIB_OPT=@ac_cv_libcap_lib_opt@
+
+MONGO_EXISTS=@ac_cv_has_libmongo_client@
+MONGO_CFLAGS=@ac_cv_libmongo_client_cflags@
+MONGO_LIBS=@ac_cv_libmongo_client_libs@
 
 WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@
 NCURSES_SUFFIX=@ac_cv_ncurses_suffix@

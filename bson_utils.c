@@ -283,6 +283,8 @@ ej_bson_append_ip(
 
 #endif
 
+int ej_bson_force_link_dummy = 0;
+
 /*
  * Local variables:
  *  c-basic-offset: 4
