@@ -23,6 +23,7 @@
 #define COMMON_MONGO_PLUGIN_IFACE_VERSION 1
 
 struct _mongo_sync_connection;
+struct _bson;
 
 struct common_mongo_iface;
 
@@ -38,6 +39,7 @@ struct common_mongo_state
     unsigned char *password_file;
     unsigned char *user;
     unsigned char *password;
+    int show_queries;
 
     struct _mongo_sync_connection *conn;
 };
@@ -46,6 +48,33 @@ struct common_mongo_iface
 {
     struct common_plugin_iface b;
     int common_mongo_version;
+
+    int (*query)(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        int skip,
+        int count,
+        const struct _bson *query,
+        const struct _bson *sel,
+        struct _bson ***p_res);
+    int (*insert)(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        const struct _bson *b);
+    int (*insert_and_free)(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        struct _bson **b);
+    int (*update)(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        const struct _bson *selector,
+        const struct _bson *update);
+    int (*update_and_free)(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        struct _bson **selector,
+        struct _bson **update);
 };
 
 #endif /* __COMMON_MONGO_PLUGIN_H__ */

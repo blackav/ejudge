@@ -17,6 +17,7 @@
 #include "ejudge/common_mongo_plugin.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/errlog.h"
+#include "ejudge/bson_utils.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -26,6 +27,7 @@
 #include <string.h>
 #include <limits.h>
 #include <ctype.h>
+#include <errno.h>
 
 static struct common_plugin_data *
 init_func(void);
@@ -36,6 +38,37 @@ prepare_func(
         struct common_plugin_data *data,
         const struct ejudge_cfg *config,
         struct xml_tree *tree);
+static int
+query_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        int skip,
+        int count,
+        const struct _bson *query,
+        const struct _bson *sel,
+        struct _bson ***p_res);
+static int
+insert_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        const struct _bson *b);
+static int
+insert_and_free_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        struct _bson **b);
+static int
+update_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        const struct _bson *selector,
+        const struct _bson *update);
+static int
+update_and_free_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        struct _bson **pselector,
+        struct _bson **pupdate);
 
 struct common_mongo_iface plugin_common_mongo =
 {
@@ -52,6 +85,11 @@ struct common_mongo_iface plugin_common_mongo =
         prepare_func,
     },
     COMMON_MONGO_PLUGIN_IFACE_VERSION,
+    query_func,
+    insert_func,
+    insert_and_free_func,
+    update_func,
+    update_and_free_func,
 };
 
 static struct common_plugin_data *
@@ -175,6 +213,7 @@ prepare_func(
     if (!state->host) state->host = xstrdup("localhost");
     if (state->port <= 0) state->port = 27017;
     if (!state->table_prefix) state->table_prefix = xstrdup("");
+    state->show_queries = 1;
 
     state->conn = mongo_sync_connect(state->host, state->port, 0);
     if (!state->conn) {
@@ -191,6 +230,139 @@ prepare_func(
     return 0;
 }
 
+static int
+query_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        int skip,
+        int count,
+        const struct _bson *query,
+        const struct _bson *sel,
+        struct _bson ***p_res)
+{
+    mongo_packet *pkt = NULL;
+    mongo_sync_cursor *cursor = NULL;
+    unsigned char ns[1024];
+    bson **res = NULL;
+    int a = 0, u = 0;
+    bson *result = NULL;
+
+    if (state->show_queries > 0) {
+        fprintf(stderr, "query: "); ej_bson_unparse(stderr, query, 0); fprintf(stderr, "\n");
+    }
+
+    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, table);
+    if (!(pkt = mongo_sync_cmd_query(state->conn, ns, 0, skip, count, query, sel))) {
+        if (errno == ENOENT) {
+            // empty result set
+            *p_res = NULL;
+            return 0;
+        }
+        err("common_mongo::query: failed: %s", os_ErrorMsg());
+        return -1;
+    }
+
+    if (!(cursor = mongo_sync_cursor_new(state->conn, ns, pkt))) {
+        err("common_mongo::query: cannot create cursor: %s", os_ErrorMsg());
+        mongo_wire_packet_free(pkt);
+        return -1;
+    }
+    pkt = NULL;
+    while (mongo_sync_cursor_next(cursor)) {
+        result = mongo_sync_cursor_get_data(cursor);
+        if (state->show_queries > 0) {
+            fprintf(stderr, "result: "); ej_bson_unparse(stderr, result, 0); fprintf(stderr, "\n");
+        }
+        if (u == a) {
+            if (!(a *= 2)) a = 8;
+            XREALLOC(res, a);
+        }
+        res[u++] = result;
+        result = NULL;
+    }
+    mongo_sync_cursor_free(cursor);
+    *p_res = res;
+    return u;
+}
+
+static int
+insert_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        const struct _bson *b)
+{
+    unsigned char ns[1024];
+
+    if (state->show_queries > 0) {
+        fprintf(stderr, "insert: "); ej_bson_unparse(stderr, b, 0); fprintf(stderr, "\n");
+    }
+    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, table);
+    if (!mongo_sync_cmd_insert(state->conn, ns, b, NULL)) {
+        err("common_mongo::insert: failed: %s", os_ErrorMsg());
+        return -1;
+    }
+    return 0;
+}
+
+static int
+insert_and_free_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        struct _bson **b)
+{
+    bson *p = NULL;
+    if (b) p = *b;
+    int res = insert_func(state, table, p);
+    if (p) {
+        bson_free(p);
+        *b = NULL;
+    }
+    return res;
+}
+
+static int
+update_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        const struct _bson *selector,
+        const struct _bson *update)
+{
+    unsigned char ns[1024];
+
+    if (state->show_queries > 0) {
+        fprintf(stderr, "update selector: "); ej_bson_unparse(stderr, selector, 0); fprintf(stderr, "\n");
+        fprintf(stderr, "update update: "); ej_bson_unparse(stderr, update, 0); fprintf(stderr, "\n");
+    }
+    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, table);
+    if (!mongo_sync_cmd_update(state->conn, ns, 0, selector, update)) {
+        err("common_mongo::update: failed: %s", os_ErrorMsg());
+        return -1;
+    }
+    return 0;
+}
+
+static int
+update_and_free_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        struct _bson **pselector,
+        struct _bson **pupdate)
+{
+    bson *selector = NULL;
+    bson *update = NULL;
+    if (pselector) selector = *pselector;
+    if (pupdate) update = *pupdate;
+    int res = update_func(state, table, selector, update);
+    if (selector) {
+        bson_free(selector);
+        *pselector = NULL;
+    }
+    if (update) {
+        bson_free(update);
+        *pupdate = NULL;
+    }
+    return res;
+}
 
 /*
  * Local variables:

@@ -24,6 +24,7 @@
 #include "ejudge/team_extra.h"
 #include "ejudge/ej_uuid.h"
 #include "ejudge/bson_utils.h"
+#include "ejudge/common_mongo_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -41,18 +42,9 @@
 
 struct xuser_mongo_state
 {
+    struct common_mongo_state *common;
     int nref;
-
-    unsigned char *host;
-    int port;
-    unsigned char *database;
-    unsigned char *table_prefix;
-    unsigned char *password_file;
-    unsigned char *user;
-    unsigned char *password;
     unsigned char *xuser_table;
-
-    mongo_sync_connection *conn;
 };
 
 struct xuser_mongo_cnts_state
@@ -187,77 +179,12 @@ finish_func(struct common_plugin_data *data)
     struct xuser_mongo_state *state = (struct xuser_mongo_state *) data;
 
     if (state) {
-        if (state->nref > 0) {
-            err("xuser_mongo::finish: reference counter > 0");
-            return -1;
-        }
-
-        xfree(state->user);
-        xfree(state->password);
-        xfree(state->password_file);
-        xfree(state->host);
-        xfree(state->database);
-        xfree(state->table_prefix);
         xfree(state->xuser_table);
         memset(state, 0, sizeof(*state));
         xfree(state);
     }
 
     return 0;
-}
-
-static int
-parse_passwd_file(
-        struct xuser_mongo_state *state,
-        const unsigned char *path)
-{
-  FILE *f = 0;
-  const unsigned char *fname = __FUNCTION__;
-  unsigned char buser[1024];
-  unsigned char bpwd[1024];
-  int len, c;
-
-  if (!(f = fopen(path, "r"))) {
-    err("%s: cannot open password file %s", fname, path);
-    goto cleanup;
-  }
-  if (!fgets(buser, sizeof(buser), f)) {
-    err("%s: cannot read the user line from %s", fname, path);
-    goto cleanup;
-  }
-  if ((len = strlen(buser)) > sizeof(buser) - 24) {
-    err("%s: user is too long in %s", fname, path);
-    goto cleanup;
-  }
-  while (len > 0 && isspace(buser[--len]));
-  buser[++len] = 0;
-
-  if (!fgets(bpwd, sizeof(bpwd), f)) {
-    err("%s: cannot read the password line from %s", fname, path);
-    goto cleanup;
-  }
-  if ((len = strlen(bpwd)) > sizeof(bpwd) - 24) {
-    err("%s: password is too long in %s", fname, path);
-    goto cleanup;
-  }
-  while (len > 0 && isspace(bpwd[--len]));
-  bpwd[++len] = 0;
-  while ((c = getc(f)) && isspace(c));
-  if (c != EOF) {
-    err("%s: garbage in %s", fname, path);
-    goto cleanup;
-  }
-  fclose(f); f = 0;
-  state->user = xstrdup(buser);
-  state->password = xstrdup(bpwd);
-
-  // debug
-  //fprintf(stderr, "login: %s\npassword: %s\n", state->user, state->password);
-  return 0;
-
- cleanup:
-  if (f) fclose(f);
-  return -1;
 }
 
 static int
@@ -268,68 +195,16 @@ prepare_func(
 {
     struct xuser_mongo_state *state = (struct xuser_mongo_state *) data;
 
-    // this plugin configuration subtree is pointed by 'tree'
-
-    for (struct xml_tree *p = tree->first_down; p; p = p->right) {
-        if (!strcmp(p->name[0], "host")) {
-            if (xml_leaf_elem(p, &state->host, 1, 0) < 0) return -1;
-        } else if (!strcmp(p->name[0], "port")) {
-            if (xml_parse_int(NULL, "", p->line, p->column, p->text, &state->port) < 0) return -1;
-            if (state->port < 0 || state->port > 65535) {
-                xml_err_elem_invalid(p);
-                return -1;
-            }
-        } else if (!strcmp(p->name[0], "database")) {
-            if (xml_leaf_elem(p, &state->database, 1, 0) < 0) return -1;
-        } else if (!strcmp(p->name[0], "table_prefix")) {
-            if (xml_leaf_elem(p, &state->table_prefix, 1, 0) < 0) return -1;
-        } else if (!strcmp(p->name[0], "password_file")) {
-            if (xml_leaf_elem(p, &state->password_file, 1, 0) < 0) return -1;
-        } else {
-            return xml_err_elem_not_allowed(p);
-        }
-    }
-
-    if (state->password_file) {
-        unsigned char ppath[PATH_MAX];
-        ppath[0] = 0;
-        if (os_IsAbsolutePath(state->password_file)) {
-            snprintf(ppath, sizeof(ppath), "%s", state->password_file);
-        }
-#if defined EJUDGE_CONF_DIR
-        if (!ppath[0]) {
-            snprintf(ppath, sizeof(ppath), "%s/%s", EJUDGE_CONF_DIR,
-                     state->password_file);
-        }
-#endif
-        if (!ppath[0]) {
-            snprintf(ppath, sizeof(ppath), "%s", state->password_file);
-        }
-        if (parse_passwd_file(state, ppath) < 0) return -1;
-    }
-
-    if (!state->database) state->database = xstrdup("ejudge");
-    if (!state->host) state->host = xstrdup("localhost");
-    if (state->port <= 0) state->port = 27017;
-    if (!state->table_prefix) state->table_prefix = xstrdup("");
-
-    {
-        unsigned char buf[1024];
-        snprintf(buf, sizeof(buf), "%s.%sxuser", state->database, state->table_prefix);
-        state->xuser_table = xstrdup(buf);
-    }
-
-    state->conn = mongo_sync_connect(state->host, state->port, 0);
-    if (!state->conn) {
-        err("cannot connect to mongodb: %s", os_ErrorMsg());
+    const struct common_loaded_plugin *common_plugin = NULL;
+    if (!(common_plugin = plugin_load_external(0, "common", "mongo", config))) {
+        err("cannot load common_mongo plugin");
         return -1;
     }
-    if (state->user && state->password) {
-        if (!mongo_sync_cmd_authenticate(state->conn, state->database, state->user, state->password)) {
-            err("authentification failed: %s", os_ErrorMsg());
-            return -1;
-        }
-    }
+
+    state->common = (struct common_mongo_state *) common_plugin->data;
+    unsigned char buf[1024];
+    snprintf(buf, sizeof(buf), "%s.%sxuser", state->common->database, state->common->table_prefix);
+    state->xuser_table = xstrdup(buf);
 
     return 0;
 }
@@ -596,10 +471,8 @@ do_get_entry(
 {
     struct team_extra *extra = NULL;
     bson *query = NULL;
-    mongo_packet *pkt = NULL;
-    mongo_sync_cursor *cursor = NULL;
-    bson *result = NULL;
-    int pos = 0;
+    int pos = 0, count = 0;
+    bson **results = NULL;
 
     if (user_id <= 0) return NULL;
 
@@ -610,27 +483,18 @@ do_get_entry(
     bson_append_int32(query, "contest_id", state->contest_id);
     bson_append_int32(query, "user_id", user_id);
     bson_finish(query);
-    fprintf(stderr, "query: "); ej_bson_unparse(stderr, query, 0); fprintf(stderr, "\n");
-    if (!(pkt = mongo_sync_cmd_query(state->plugin_state->conn, state->plugin_state->xuser_table, 0, 0, 1, query, NULL)) && errno != ENOENT) {
-        err("do_get_entry: query failed: %s", os_ErrorMsg());
+    count = state->plugin_state->common->i->query(state->plugin_state->common, "xuser", 0, 1, query, NULL, &results);
+    if (count < 0) goto done;
+    if (count > 1) {
+        err("do_get_entry: multiple entries returned: %d", count);
         goto done;
     }
-    if (pkt) {
-        if (!(cursor = mongo_sync_cursor_new(state->plugin_state->conn, state->plugin_state->xuser_table, pkt))) {
+    if (count == 1) {
+        if (!(extra = parse_bson(results[0]))) {
             goto done;
-        }
-        pkt = NULL; // ownership passed to 'cursor'
-        while (mongo_sync_cursor_next(cursor)) {
-            result = mongo_sync_cursor_get_data(cursor);
-            fprintf(stderr, "result: "); ej_bson_unparse(stderr, result, 0); fprintf(stderr, "\n");
-            if (!(extra = parse_bson(result))) {
-                goto done;
-            }
-            bson_free(result); result = NULL;
         }
     }
     if (!extra) {
-        // query returned empty set
         XCALLOC(extra, 1);
         extra->user_id = user_id;
         extra->contest_id = state->contest_id;
@@ -638,10 +502,13 @@ do_get_entry(
     insert_entry(state, user_id, extra, pos);
 
 done:
-    if (result) bson_free(result);
-    if (cursor) mongo_sync_cursor_free(cursor);
-    if (pkt) mongo_wire_packet_free(pkt);
     if (query) bson_free(query);
+    if (results) {
+        for (int i = 0; i < count; ++i) {
+            bson_free(results[i]);
+        }
+        xfree(results);
+    }
     return extra;
 }
 
@@ -780,14 +647,9 @@ do_insert(
         ej_uuid_generate(&extra->uuid);
     }
     bson *b = unparse_bson(extra);
-    fprintf(stderr, "insert: "); ej_bson_unparse(stderr, b, 0); fprintf(stderr, "\n");
-    if (!mongo_sync_cmd_insert(state->plugin_state->conn, state->plugin_state->xuser_table, b, NULL)) {
-        err("do_insert: mongo query failed: %s", os_ErrorMsg());
-        bson_free(b);
+    if (state->plugin_state->common->i->insert_and_free(state->plugin_state->common, "xuser", &b) < 0) {
         return -1;
     }
-    extra->is_dirty = 0;
-    bson_free(b);
     return 0;
 }
 
@@ -806,15 +668,7 @@ do_update(
     bson_append_document(update, op, update_doc);
     bson_finish(update);
 
-    fprintf(stderr, "update filter: "); ej_bson_unparse(stderr, filter, 0); fprintf(stderr, "\n");
-    fprintf(stderr, "update value: "); ej_bson_unparse(stderr, update, 0); fprintf(stderr, "\n");
-
-    int retval = 0;
-    if (!mongo_sync_cmd_update(state->plugin_state->conn, state->plugin_state->xuser_table, 0, filter, update)) {
-        err("do_update: mongo update query failed: %s", os_ErrorMsg());
-        retval = -1;
-    }
-
+    int retval = state->plugin_state->common->i->update(state->plugin_state->common, "xuser", filter, update);
     bson_free(update); update = NULL;
     bson_free(filter); filter = NULL;
     bson_free(update_doc); update_doc = NULL;
@@ -1034,8 +888,10 @@ get_entries_func(
 {
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     int *loc_users = NULL;
-    int loc_count = count;
+    int loc_count = count, query_count = 0;
     struct xuser_mongo_team_extras *res = NULL;
+    bson **query_results = NULL;
+    struct team_extra *extra = NULL;
 
     if (count <= 0 || !user_ids) return NULL;
 
@@ -1122,27 +978,17 @@ get_entries_func(
     bson_finish(query);
     bson_free(indoc); indoc = NULL;
 
-    fprintf(stderr, "query: "); ej_bson_unparse(stderr, query, 0); fprintf(stderr, "\n");
-
-    mongo_packet *pkt = NULL;
-    if ((pkt = mongo_sync_cmd_query(state->plugin_state->conn, state->plugin_state->xuser_table, 0, 0, loc_count, query, NULL))) {
-        mongo_sync_cursor *cursor = NULL;
-        if ((cursor = mongo_sync_cursor_new(state->plugin_state->conn, state->plugin_state->xuser_table, pkt))) {
-            pkt = NULL;
-            while (mongo_sync_cursor_next(cursor)) {
-                bson *result = mongo_sync_cursor_get_data(cursor);
-                fprintf(stderr, "result: "); ej_bson_unparse(stderr, result, 0); fprintf(stderr, "\n");
-                struct team_extra *extra = NULL;
-                if ((extra = parse_bson(result))) {
-                    insert_entry(state, extra->user_id, extra, -1);
-                }
-                bson_free(result); result = NULL;
+    query_count = state->plugin_state->common->i->query(state->plugin_state->common, "xuser", 0, loc_count, query, NULL, &query_results);
+    if (query_count > 0) {
+        for (i1 = 0; i1 < query_count; ++i1) {
+            if ((extra = parse_bson(query_results[i1]))) {
+                insert_entry(state, extra->user_id, extra, -1);
             }
-            mongo_sync_cursor_free(cursor);
-        } else {
-            mongo_wire_packet_free(pkt);
+            bson_free(query_results[i1]); query_results[i1] = NULL;
         }
     }
+    bson_free(query); query = NULL;
+    xfree(query_results); query_results = NULL;
 
     // remove existing entries from loc_count
     for (i1 = 0, i2 = 0; i1 < state->u && i2 < loc_count; ) {
