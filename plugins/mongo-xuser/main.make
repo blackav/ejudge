@@ -21,7 +21,7 @@ CFLAGS = -I../../include $(MONGO_CFLAGS) $(CDEBUGFLAGS) $(CCOMPFLAGS) $(CEXTRAFL
 LDFLAGS = $(MYSQL_LIB_OPT) $(EXPAT_LIB_OPT) $(CDEBUGFLAGS) $(LDCOMPFLAGS) $(LDEXTRAFLAGS)
 LDLIBS = $(EXTRALIBS) $(MONGO_LIBS) -lexpat -lm
 
-CFILES = xuser_mongo.c
+CFILES = xuser_mongo.c team_extra_bson.c
 
 PLUGINS = xuser_mongo.so
 
