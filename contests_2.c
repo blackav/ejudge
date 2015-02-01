@@ -61,9 +61,9 @@ contests_write_header(
 
   fprintf(f, "<%s", contests_elem_map[CONTEST_CONTEST]);
   if (auto_contest_id > 0 && cnts->id == auto_contest_id) {
-    fprintf(f, "%s=\"auto\"", contests_attr_map[CONTEST_A_ID]);
+    fprintf(f, " %s=\"auto\"", contests_attr_map[CONTEST_A_ID]);
   } else {
-    fprintf(f, "%s=\"%d\"", contests_attr_map[CONTEST_A_ID], cnts->id);
+    fprintf(f, " %s=\"%d\"", contests_attr_map[CONTEST_A_ID], cnts->id);
   }
 
   flist = (const int[]) {
