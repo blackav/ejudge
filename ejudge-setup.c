@@ -1444,7 +1444,7 @@ initialize_mysql_vars(
         const unsigned char *mysql_password)
 {
 #if CONF_HAS_MYSQL - 0 == 0
-  return 0;
+  return;
 #endif
 
   config_mysql_enable_for_users = 1;
