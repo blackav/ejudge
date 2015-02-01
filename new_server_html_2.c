@@ -1242,16 +1242,18 @@ ns_write_all_clars(
   } else if (count < 0) {
     count = -count;
   }
-  if (last_clar > 0) {
-    for (i = first_clar; i < total && list_tot < count; ++i) {
-      if (match_clar(cs, i, mode_clar)) {
-        list_idx[list_tot++] = i;
+  if (total > 0) {
+    if (last_clar > 0) {
+      for (i = first_clar; i < total && list_tot < count; ++i) {
+        if (match_clar(cs, i, mode_clar)) {
+          list_idx[list_tot++] = i;
+        }
       }
-    }
-  } else {
-    for (i = first_clar; i >= 0 && list_tot < count; --i) {
-      if (match_clar(cs, i, mode_clar)) {
-        list_idx[list_tot++] = i;
+    } else {
+      for (i = first_clar; i >= 0 && list_tot < count; --i) {
+        if (match_clar(cs, i, mode_clar)) {
+          list_idx[list_tot++] = i;
+        }
       }
     }
   }
