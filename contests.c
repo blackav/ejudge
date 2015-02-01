@@ -846,8 +846,26 @@ fix_personal_contest(struct contest_desc *cnts)
   }
 }
 
+int
+contests_guess_id(const char *path)
+{
+  if (!path) return -1;
+  const char *p = strrchr(path, '/');
+  if (!p) p = path;
+  else ++p;
+  int x = 0, n = 0;
+  if (sscanf(p, "%d%n", &x, &n) != 1) return -1;
+  if (x <= 0) return -1;
+  if (strcmp(p + n, ".xml") != 0) return -1;
+  return x;
+}
+
 static int
-parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
+parse_contest(
+        struct contest_desc *cnts,
+        char const *path,
+        int no_subst_flag,
+        int auto_contest_id)
 {
   struct xml_attr *a;
   struct xml_tree *t;
@@ -872,10 +890,19 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
 
     switch (a->tag) {
     case CONTEST_A_ID:
-      x = n = 0;
-      if (sscanf(a->text, "%d %n", &x, &n) != 1 || a->text[n]
-          || x <= 0 || x > EJ_MAX_CONTEST_ID) return xml_err_attr_invalid(a);
-      cnts->id = x;
+      if (!strcmp(a->text, "auto")) {
+        if (auto_contest_id > 0) {
+          cnts->id = auto_contest_id;
+        } else if (auto_contest_id == -1) {
+          x = contests_guess_id(path);
+          if (x > 0) cnts->id = x;
+        }
+      } else {
+        x = n = 0;
+        if (sscanf(a->text, "%d %n", &x, &n) != 1 || a->text[n]
+            || x <= 0 || x > EJ_MAX_CONTEST_ID) return xml_err_attr_invalid(a);
+        cnts->id = x;
+      }
       break;
     default:
       return xml_err_attr_not_allowed(&cnts->b, a);
@@ -1108,7 +1135,10 @@ parse_contest(struct contest_desc *cnts, char const *path, int no_subst_flag)
 }
 
 static struct contest_desc *
-parse_one_contest_xml(char const *path, int no_subst_flag)
+parse_one_contest_xml(
+        char const *path,
+        int no_subst_flag,
+        int auto_contest_id)
 {
   struct xml_tree *tree = 0;
   struct contest_desc *d = 0;
@@ -1123,7 +1153,7 @@ parse_one_contest_xml(char const *path, int no_subst_flag)
     goto failed;
   }
   d = (struct contest_desc *) tree;
-  if (parse_contest(d, path, no_subst_flag) < 0) goto failed;
+  if (parse_contest(d, path, no_subst_flag, auto_contest_id) < 0) goto failed;
   return d;
 
  failed:
@@ -1233,7 +1263,7 @@ contests_load(int number, struct contest_desc **p_cnts)
   *p_cnts = 0;
   contests_make_path(c_path, sizeof(c_path), number);
   if (stat(c_path, &sb) < 0) return -CONTEST_ERR_NO_CONTEST;
-  cnts = parse_one_contest_xml(c_path, 1);
+  cnts = parse_one_contest_xml(c_path, 1, number);
   if (!cnts) return -CONTEST_ERR_BAD_XML;
   if (cnts->id != number) {
     contests_free(cnts);
@@ -1252,7 +1282,7 @@ contests_load_file(const unsigned char *path, struct contest_desc **p_cnts)
   ASSERT(p_cnts);
   *p_cnts = 0;
   if (stat(path, &sb) < 0) return -CONTEST_ERR_NO_CONTEST;
-  cnts = parse_one_contest_xml(path, 1);
+  cnts = parse_one_contest_xml(path, 1, -1);
   if (!cnts) return -CONTEST_ERR_BAD_XML;
   *p_cnts = cnts;
   return 0;
@@ -1651,7 +1681,7 @@ contests_get(int number, const struct contest_desc **p_desc)
     contests_make_path(c_path, sizeof(c_path), number);
     if (stat(c_path, &sb) < 0) return -CONTEST_ERR_NO_CONTEST;
     // load the info and adjust time marks
-    cnts = parse_one_contest_xml(c_path, 0);
+    cnts = parse_one_contest_xml(c_path, 0, number);
     if (!cnts) return -CONTEST_ERR_BAD_XML;
     if (cnts->id != number) {
       contests_free(cnts);
@@ -1704,7 +1734,7 @@ contests_get(int number, const struct contest_desc **p_desc)
   }
 
   // load the info and adjust time marks
-  cnts = parse_one_contest_xml(c_path, 0);
+  cnts = parse_one_contest_xml(c_path, 0, number);
   if (!cnts) return -CONTEST_ERR_BAD_XML;
   if (cnts->id != number) {
     contests_free(cnts);
