@@ -739,7 +739,10 @@ enum
 
 void
 ns_download_runs(
-        const serve_state_t cs, FILE *fout, FILE *log_f,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        FILE *fout,
+        FILE *log_f,
         int run_selection,
         int dir_struct,
         int file_name_mask,

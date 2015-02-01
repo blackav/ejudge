@@ -1108,7 +1108,7 @@ cmd_submit_run(
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
-      if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
+      if ((r = serve_compile_request(cs, run_text, run_size, cnts->id,
                                      run_id, phr->user_id,
                                      lang->compile_id, variant,
                                      phr->locale_id, 0,
@@ -1132,7 +1132,7 @@ cmd_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
+        if ((r = serve_compile_request(cs, run_text, run_size, cnts->id,
                                        run_id, phr->user_id, 0 /* lang_id */, variant,
                                        0 /* locale_id */, 1 /* output_only*/,
                                        mime_type_get_suffix(mime_type),
@@ -1150,7 +1150,7 @@ cmd_submit_run(
         }
       } else {
         if (serve_run_request(cs, cnts, stderr, run_text, run_size,
-                              global->contest_id, run_id,
+                              cnts->id, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                               0 /* rejudge_flag */) < 0)
@@ -1183,7 +1183,7 @@ cmd_submit_run(
       } else if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
-        if ((r = serve_compile_request(cs, run_text, run_size, global->contest_id,
+        if ((r = serve_compile_request(cs, run_text, run_size, cnts->id,
                                        run_id, phr->user_id, 0 /* lang_id */, variant,
                                        0 /* locale_id */, 1 /* output_only*/,
                                        mime_type_get_suffix(mime_type),
@@ -1203,7 +1203,7 @@ cmd_submit_run(
         serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_RUNNING, NULL);
         if (serve_run_request(cs, cnts, stderr, run_text, run_size,
-                              global->contest_id, run_id,
+                              cnts->id, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                               0 /* rejudge_flag */) < 0)

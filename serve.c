@@ -145,27 +145,22 @@ main(int argc, char *argv[])
   // initialize the current time to avoid some asserts
   serve_state.current_time = time(0);
 
-  if (prepare(&serve_state, argv[i], p_flags, PREPARE_SERVE, cpp_opts,
+  if (prepare(NULL, &serve_state, argv[i], p_flags, PREPARE_SERVE, cpp_opts,
               (cmdline_socket_fd >= 0), 0, 0) < 0) return 1;
-  if (prepare_serve_defaults(&serve_state, &cur_contest) < 0) return 1;
+  if (prepare_serve_defaults(NULL, &serve_state, &cur_contest) < 0) return 1;
 
   global = serve_state.global;
   l10n_prepare(global->enable_l10n, global->l10n_dir);
 
   if (create_dirs(&serve_state, PREPARE_SERVE) < 0) return 1;
-  if (global->contest_id <= 0) {
-    err("contest_id is not defined");
-    return 1;
-  }
-  serve_state.teamdb_state = teamdb_init(global->contest_id);
+  serve_state.teamdb_state = teamdb_init(cur_contest->id);
   serve_state.xuser_state = team_extra_open(config, cur_contest, global, NULL, 0);
   if (!serve_state.xuser_state) {
     err("xuser plugin failed to load");
     return 1;
   }
   if (!initialize_mode) {
-    if (teamdb_open_client(serve_state.teamdb_state, global->socket_path,
-                           global->contest_id) < 0)
+    if (teamdb_open_client(serve_state.teamdb_state, global->socket_path, cur_contest->id) < 0)
       return 1;
   }
   serve_state.runlog_state = run_init(serve_state.teamdb_state);
@@ -190,7 +185,7 @@ main(int argc, char *argv[])
     return 1;
   serve_load_status_file(&serve_state);
   serve_build_compile_dirs(&serve_state);
-  serve_build_run_dirs(&serve_state, global->contest_id);
+  serve_build_run_dirs(&serve_state, cur_contest->id);
   if (serve_create_symlinks(&serve_state) < 0) return 1;
   serve_state.current_time = time(0);
   serve_update_status_file(&serve_state, 1);

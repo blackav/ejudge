@@ -2232,6 +2232,7 @@ prepare_insert_variant_num(
 
 static int
 set_defaults(
+        const struct contest_desc *cnts,
         serve_state_t state,
         int mode,
         const unsigned char **subst_src,
@@ -2255,6 +2256,7 @@ set_defaults(
   path_t xml_path;
   path_t tmp_buf;
 
+  int contest_id = 0;
   /* find global section */
   for (p = state->config; p; p = p->next)
     if (!p->name[0] || !strcmp(p->name, "global"))
@@ -2264,6 +2266,12 @@ set_defaults(
     return -1;
   }
   g = state->global = (struct section_global_data*) p;
+
+  if (cnts) {
+    contest_id = cnts->id;
+  } else {
+    contest_id = g->contest_id;
+  }
 
   /* userlist-server interaction */
   if (mode == PREPARE_SERVE) {
@@ -2439,7 +2447,7 @@ set_defaults(
   }
 
   if (!g->root_dir[0]) {
-    snprintf(g->root_dir, sizeof(g->root_dir), "%06d", g->contest_id);
+    snprintf(g->root_dir, sizeof(g->root_dir), "%06d", contest_id);
   }
   if (!os_IsAbsolutePath(g->root_dir) && ejudge_config
       && ejudge_config->contests_home_dir
@@ -2577,7 +2585,7 @@ set_defaults(
   if (mode == PREPARE_SERVE) {
     /* compile_out_dir is no longer parametrized, also it uses compile_dir */
     snprintf(g->compile_out_dir, sizeof(g->compile_out_dir),
-             "%s/%06d", g->compile_dir, g->contest_id);
+             "%s/%06d", g->compile_dir, contest_id);
     vinfo("global.compile_out_dir is %s", g->compile_out_dir);
     pathmake(g->compile_status_dir, g->compile_out_dir, "/",
              DFLT_G_COMPILE_STATUS_DIR, 0);
@@ -2626,7 +2634,7 @@ set_defaults(
   }
   if (mode == PREPARE_SERVE) {
     snprintf(g->run_out_dir, sizeof(g->run_out_dir),
-             "%s/%06d", g->run_dir, g->contest_id);
+             "%s/%06d", g->run_dir, contest_id);
     vinfo("global.run_out_dir is %s", g->run_out_dir);
     pathmake(g->run_status_dir, g->run_out_dir, "/",
              DFLT_G_RUN_STATUS_DIR, 0);
@@ -2650,14 +2658,14 @@ set_defaults(
 #if defined EJUDGE_LOCAL_DIR
     if (!g->run_work_dir[0]) {
       snprintf(g->run_work_dir, sizeof(g->run_work_dir),
-               "%s/%06d/work", EJUDGE_LOCAL_DIR, g->contest_id);
+               "%s/%06d/work", EJUDGE_LOCAL_DIR, contest_id);
     }
 #endif
     GLOBAL_INIT_FIELD(run_work_dir, DFLT_G_RUN_WORK_DIR, work_dir);
 #if defined EJUDGE_LOCAL_DIR
     if (!g->run_check_dir[0]) {
       snprintf(g->run_check_dir, sizeof(g->run_check_dir),
-               "%s/%06d/check", EJUDGE_LOCAL_DIR, g->contest_id);
+               "%s/%06d/check", EJUDGE_LOCAL_DIR, contest_id);
     }
 #endif
     GLOBAL_INIT_FIELD(run_check_dir, DFLT_G_RUN_CHECK_DIR, work_dir);
@@ -2964,7 +2972,7 @@ set_defaults(
         pathmake(lang->compile_src_dir, lang->compile_dir, "/",
                  DFLT_G_COMPILE_SRC_DIR, 0);
         snprintf(lang->compile_out_dir, sizeof(lang->compile_out_dir),
-                 "%s/%06d", lang->compile_dir, g->contest_id);
+                 "%s/%06d", lang->compile_dir, contest_id);
         pathmake(lang->compile_status_dir, lang->compile_out_dir, "/",
                  DFLT_G_COMPILE_STATUS_DIR, 0);
         pathmake(lang->compile_report_dir, lang->compile_out_dir, "/",
@@ -2986,7 +2994,7 @@ set_defaults(
                  DFLT_G_COMPILE_SRC_DIR, 0);
         vinfo("language.%d.compile_src_dir is %s", i, lang->compile_src_dir);
         snprintf(lang->compile_out_dir, sizeof(lang->compile_out_dir),
-                 "%s/%06d", lang->compile_dir, g->contest_id);
+                 "%s/%06d", lang->compile_dir, contest_id);
         vinfo("language.%d.compile_out_dir is %s", i, lang->compile_out_dir);
         pathmake(lang->compile_status_dir, lang->compile_out_dir, "/",
                  DFLT_G_COMPILE_STATUS_DIR, 0);
@@ -3721,7 +3729,7 @@ set_defaults(
                    DFLT_G_RUN_EXE_DIR, 0);
           vinfo("tester.%d.run_exe_dir is %s", i, tp->run_exe_dir);
           snprintf(tp->run_out_dir, sizeof(tp->run_out_dir), "%s/%06d",
-                   tp->run_dir, g->contest_id);
+                   tp->run_dir, cnts->id);
           vinfo("tester.%d.run_out_dir is %s", i, tp->run_out_dir);
           pathmake(tp->run_status_dir, tp->run_out_dir, "/",
                    DFLT_G_RUN_STATUS_DIR, 0);
@@ -4329,6 +4337,7 @@ parse_version_string(int *pmajor, int *pminor, int *ppatch, int *pbuild)
 
 int
 prepare(
+        const struct contest_desc *cnts,
         serve_state_t state,
         char const *config_file,
         int flags,
@@ -4389,7 +4398,7 @@ prepare(
     return -1;
   }
   */
-  if (set_defaults(state, mode, subst_src, subst_dst) < 0) return -1;
+  if (set_defaults(cnts, state, mode, subst_src, subst_dst) < 0) return -1;
   return 0;
 }
 
@@ -5032,7 +5041,6 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->rounding_mode = SEC_FLOOR;
   global->is_virtual = 0;
 
-  global->contest_id = contest_id;
   global->sleep_time = DFLT_G_SLEEP_TIME;
   global->serve_sleep_time = DFLT_G_SERVE_SLEEP_TIME;
   global->contest_time = DFLT_G_CONTEST_TIME;

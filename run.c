@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1138,7 +1137,7 @@ main(int argc, char *argv[])
 
   if (!strcasecmp(EJUDGE_CHARSET, "UTF-8")) utf8_mode = 1;
 
-  if (prepare(&serve_state, argv[i], p_flags, PREPARE_RUN,
+  if (prepare(NULL, &serve_state, argv[i], p_flags, PREPARE_RUN,
               cpp_opts, managed_mode_flag, 0, 0) < 0)
     return 1;
   if (filter_testers(key) < 0) return 1;

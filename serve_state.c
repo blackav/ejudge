@@ -103,9 +103,9 @@ serve_state_destroy(
     xfree(state->pending_xml_import);
   }
 
-  if (ul_conn && state->global && state->global->contest_id > 0) {
+  if (ul_conn && state->global && cnts->id > 0) {
     // ignore error code
-    userlist_clnt_notify(ul_conn, ULS_DEL_NOTIFY, state->global->contest_id);
+    userlist_clnt_notify(ul_conn, ULS_DEL_NOTIFY, cnts->id);
   }
 
   xfree(state->config_path);
@@ -667,9 +667,9 @@ serve_state_load_contest_config(
   state->current_time = time(0);
   state->load_time = state->current_time;
 
-  if (prepare(state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
+  if (prepare(cnts, state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
     goto failure;
-  if (prepare_serve_defaults(state, NULL) < 0) goto failure;
+  if (prepare_serve_defaults(cnts, state, NULL) < 0) goto failure;
 
   if (state->global) {
     teamdb_disable(state->teamdb_state, state->global->disable_user_database);
@@ -748,9 +748,9 @@ serve_state_load_contest(
   state->load_time = state->current_time;
 
   info("loading contest %d configuration file", contest_id);
-  if (prepare(state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
+  if (prepare(cnts, state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
     goto failure;
-  if (prepare_serve_defaults(state, p_cnts) < 0) goto failure;
+  if (prepare_serve_defaults(cnts, state, p_cnts) < 0) goto failure;
   if (create_dirs(state, PREPARE_SERVE) < 0) goto failure;
 
   global = state->global;

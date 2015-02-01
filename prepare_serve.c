@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -209,7 +208,10 @@ find_user_priority_adjustment(const serve_state_t state, int user_id)
 }
 
 int
-prepare_serve_defaults(serve_state_t state, const struct contest_desc **p_cnts)
+prepare_serve_defaults(
+        const struct contest_desc *cnts,
+        serve_state_t state,
+        const struct contest_desc **p_cnts)
 {
   int i;
 
@@ -229,7 +231,13 @@ prepare_serve_defaults(serve_state_t state, const struct contest_desc **p_cnts)
     return -1;
   }
   if (p_cnts) {
-    if ((i = contests_get(state->global->contest_id, p_cnts)) < 0) {
+    int contest_id = 0;
+    if (cnts) {
+      contest_id = cnts->id;
+    } else {
+      contest_id = state->global->contest_id;
+    }
+    if ((i = contests_get(contest_id, p_cnts)) < 0) {
       err("cannot load contest information: %s",
           contests_strerror(-i));
       return -1;

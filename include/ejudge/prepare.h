@@ -1330,10 +1330,23 @@ struct section_tester_data
   int secure_exec_type_val META_ATTRIB((meta_private));
 };
 
-int prepare(serve_state_t, char const *, int flags, int mode, char const *opts,
-            int managed_flag, const unsigned char **, const unsigned char **);
+int
+prepare(
+        const struct contest_desc *cnts,
+        serve_state_t,
+        char const *, 
+        int flags,
+        int mode,
+        char const *opts,
+        int managed_flag,
+        const unsigned char **,
+        const unsigned char **);
 int create_dirs(serve_state_t, int mode);
-int prepare_serve_defaults(serve_state_t, const struct contest_desc **);
+int
+prepare_serve_defaults(
+        const struct contest_desc *cnts,
+        serve_state_t,
+        const struct contest_desc **);
 
 int find_tester(const serve_state_t, int, char const *);
 int find_variant(const serve_state_t, int, int, int *);
@@ -1375,8 +1388,13 @@ void prepare_set_prob_value(int field, struct section_problem_data *out,
                             const struct section_problem_data *abstr,
                             const struct section_global_data *global);
 
-void prepare_unparse_global(FILE *f, struct section_global_data *global,
-                            const unsigned char *compile_dir, int need_variant_map);
+void
+prepare_unparse_global(
+        FILE *f,
+        const struct contest_desc *cnts,
+        struct section_global_data *global,
+        const unsigned char *compile_dir,
+        int need_variant_map);
 void prepare_unparse_unhandled_global(FILE *f,
                                       const struct section_global_data *global);
 int prepare_check_forbidden_global(FILE *f, const struct section_global_data *global);

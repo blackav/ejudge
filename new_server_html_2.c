@@ -2674,6 +2674,7 @@ ns_reset_stand_filter(
 
 void
 ns_download_runs(
+        const struct contest_desc *cnts,
         const serve_state_t cs,
         FILE *fout,
         FILE *log_f,
@@ -2743,7 +2744,7 @@ ns_download_runs(
   need_remove = 1;
 
   snprintf(name3, sizeof(name3), "contest_%d_%04d%02d%02d%02d%02d%02d",
-           cs->global->contest_id, 
+           cnts->id, 
            ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
            ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
   snprintf(dir3, sizeof(dir3), "%s/%s", dir2, name3);

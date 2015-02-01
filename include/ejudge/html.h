@@ -160,8 +160,13 @@ write_xml_tests_report(
         const unsigned char *class1,
         const unsigned char *class2);
 
-void generate_daily_statistics(const serve_state_t, FILE *f,
-                               time_t from_time, time_t to_time, int utf8_mode);
+void
+generate_daily_statistics(
+        const struct contest_desc *cnts,
+        const serve_state_t, FILE *f,
+        time_t from_time,
+        time_t to_time,
+        int utf8_mode);
 
 void
 write_change_status_dialog(const serve_state_t state,

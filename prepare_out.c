@@ -97,9 +97,12 @@ do_xstr(
 }
 
 void
-prepare_unparse_global(FILE *f, struct section_global_data *global,
-                       const unsigned char *compile_dir,
-                       int need_variant_map)
+prepare_unparse_global(
+        FILE *f,
+        const struct contest_desc *cnts,
+        struct section_global_data *global,
+        const unsigned char *compile_dir,
+        int need_variant_map)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   path_t compile_spool_dir, tmp1, tmp2, contests_home_dir;
@@ -122,7 +125,9 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   unsigned char nbuf[64];
   unsigned char size_buf[256];
 
+  /*
   fprintf(f, "contest_id = %d\n", global->contest_id);
+  */
 
   // make the contests_home_dir path for future use
   contests_home_dir[0] = 0;
@@ -141,8 +146,7 @@ prepare_unparse_global(FILE *f, struct section_global_data *global,
   skip_elem = 0;
   if (contests_home_dir[0] && global->root_dir[0]) {
     len = strlen(contests_home_dir);
-    snprintf(tmp1, sizeof(tmp1), "%s/%06d", contests_home_dir,
-             global->contest_id);
+    snprintf(tmp1, sizeof(tmp1), "%s/%06d", contests_home_dir, cnts->id);
     if (!strcmp(tmp1, global->root_dir)) {
       // do nothing, <root_dir> has the default value
       skip_elem = 1;

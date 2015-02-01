@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -137,8 +136,7 @@ super_html_read_serve(
 
   // set up the default value of the root_dir
   if (!global->root_dir[0]) {
-    snprintf(global->root_dir, sizeof(global->root_dir), "%06d",
-             global->contest_id);
+    snprintf(global->root_dir, sizeof(global->root_dir), "%06d", cnts->id);
   }
   if (!os_IsAbsolutePath(global->root_dir) && config
       && config->contests_home_dir
@@ -163,10 +161,6 @@ super_html_read_serve(
   if (prepare_check_forbidden_global(flog, global) < 0) return -1;
 
   // contest_id, conf_dir, root_dir must match
-  if (global->contest_id != cnts->id) {
-    fprintf(flog, "contest_id does not match\n");
-    return -1;
-  }
   if (strcmp(global->root_dir, cnts->root_dir)) {
     fprintf(flog, "root_dir does not match\n");
     return -1;
@@ -1090,7 +1084,6 @@ super_html_serve_unparse_serve_cfg(
   if (sstate->serve_parse_errors) return;
 
   if (cnts) {
-    global->contest_id = cnts->id;
     if (cnts->root_dir)
       snprintf(global->root_dir, sizeof(global->root_dir), "%s", cnts->root_dir);
     if (cnts->conf_dir)
@@ -1113,7 +1106,7 @@ super_html_serve_unparse_serve_cfg(
     if (sstate->probs[i] && sstate->probs[i]->variant_num > 0)
       need_variant_map = 1;
 
-  prepare_unparse_global(f, global, sstate->compile_home_dir, need_variant_map);
+  prepare_unparse_global(f, cnts, global, sstate->compile_home_dir, need_variant_map);
 
   if (sstate->lang_a > 0) {
     for (i = 1, active_langs = 0; i < sstate->lang_a; i++) {

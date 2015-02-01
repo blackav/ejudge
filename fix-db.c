@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -555,7 +554,7 @@ process_contest(int contest_id)
   state->config_path = xstrdup(config_path);
   state->current_time = time(0);
   state->load_time = state->current_time;
-  if (prepare(state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
+  if (prepare(NULL, state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
     goto failure;
   global = state->global;
   if (!global) {

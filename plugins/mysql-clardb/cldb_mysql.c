@@ -570,7 +570,6 @@ open_func(
   if (state) state->nref++;
   cs->cl_state = cl_state;
   if (cnts) cs->contest_id = cnts->id;
-  if (!cs->contest_id && global) cs->contest_id = global->contest_id;
   if (!cs->contest_id) {
     err("undefined contest_id");
     goto fail;

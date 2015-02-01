@@ -715,10 +715,10 @@ generate_statistics_email(
   snprintf(esubj, sizeof(esubj),
            "Daily statistics for %04d/%02d/%02d, contest %d",
            ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
-           state->global->contest_id);
+           cnts->id);
 
   eout = open_memstream(&etxt, &elen);
-  generate_daily_statistics(state, eout, from_time, to_time, utf8_mode);
+  generate_daily_statistics(cnts, state, eout, from_time, to_time, utf8_mode);
   close_memstream(eout); eout = 0;
   if (!etxt || !*etxt) {
     xfree(etxt);
@@ -737,7 +737,7 @@ generate_statistics_email(
           "-\n"
           "Regards,\n"
           "the ejudge contest management system\n",
-          state->global->contest_id, cnts->name,
+          cnts->id, cnts->name,
           tm1.tm_year + 1900, tm1.tm_mon + 1, tm1.tm_mday,
           etxt);
   close_memstream(fout); fout = 0;
@@ -2509,7 +2509,7 @@ prepare_run_request:
   }
 
   if (serve_run_request(state, cnts, stderr, run_text, run_size,
-                        global->contest_id, comp_pkt->run_id,
+                        cnts->id, comp_pkt->run_id,
                         re.user_id, re.prob_id, re.lang_id, re.variant,
                         comp_extra->priority_adjustment,
                         comp_pkt->judge_id, comp_extra->accepting_mode,
@@ -3297,7 +3297,7 @@ serve_rejudge_run(
     }
 
     if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-      r = serve_compile_request(state, 0 /* str*/, -1 /* len*/, global->contest_id,
+      r = serve_compile_request(state, 0 /* str*/, -1 /* len*/, cnts->id,
                                 run_id, re.user_id, 0 /* lang_id */, re.variant,
                                 0 /* locale_id */, 1 /* output_only*/,
                                 mime_type_get_suffix(re.mime_type),
@@ -3326,7 +3326,7 @@ serve_rejudge_run(
       return;
 
     serve_run_request(state, cnts, stderr, run_text, run_size,
-                      global->contest_id, run_id,
+                      cnts->id, run_id,
                       re.user_id, re.prob_id, re.lang_id,
                       re.variant, priority_adjustment,
                       -1, accepting_mode, 1, re.mime_type, re.eoln_type,
@@ -3346,7 +3346,7 @@ serve_rejudge_run(
     accepting_mode = 0;
   }
 
-  r = serve_compile_request(state, 0, -1, global->contest_id, run_id, re.user_id,
+  r = serve_compile_request(state, 0, -1, cnts->id, run_id, re.user_id,
                             lang->compile_id, re.variant, re.locale_id,
                             (prob->type > 0),
                             lang->src_sfx,

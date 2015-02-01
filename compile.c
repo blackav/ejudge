@@ -879,7 +879,7 @@ main(int argc, char *argv[])
   subst_dst_ptr = subst_dst;
 #endif
 
-  if (prepare(&serve_state, compile_cfg_path, prepare_flags, PREPARE_COMPILE,
+  if (prepare(NULL, &serve_state, compile_cfg_path, prepare_flags, PREPARE_COMPILE,
               cpp_opts, 0, subst_src_ptr, subst_dst_ptr) < 0)
     return 1;
 #if HAVE_OPEN_MEMSTREAM - 0
