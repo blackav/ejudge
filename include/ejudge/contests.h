@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -569,5 +568,8 @@ contests_set_member_counts(
 /* This is INTENTIONALLY not an `extern' variable */
 struct ejudge_cfg;
 struct ejudge_cfg *ejudge_config;
+
+int
+contests_guess_id(const char *path);
 
 #endif /* __CONTESTS_H__ */
