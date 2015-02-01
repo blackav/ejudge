@@ -51,14 +51,20 @@ extern char const * const contests_member_field_map[];
 extern unsigned char *contests_dir;
 
 void
-contests_write_header(FILE *f, const struct contest_desc *cnts)
+contests_write_header(
+        FILE *f,
+        const struct contest_desc *cnts,
+        int auto_contest_id)
 {
   const int *flist;
   int i, j;
 
-  fprintf(f,
-          "<%s %s=\"%d\"", contests_elem_map[CONTEST_CONTEST],
-          contests_attr_map[CONTEST_A_ID], cnts->id);
+  fprintf(f, "<%s", contests_elem_map[CONTEST_CONTEST]);
+  if (auto_contest_id > 0 && cnts->id == auto_contest_id) {
+    fprintf(f, "%s=\"auto\"", contests_attr_map[CONTEST_A_ID]);
+  } else {
+    fprintf(f, "%s=\"%d\"", contests_attr_map[CONTEST_A_ID], cnts->id);
+  }
 
   flist = (const int[]) {
     CONTEST_A_AUTOREGISTER, CONTEST_A_DISABLE_TEAM_PASSWORD,
@@ -199,8 +205,10 @@ unparse_texts(
 }
 
 void
-contests_unparse(FILE *f,
-                 const struct contest_desc *cnts)
+contests_unparse(
+        FILE *f,
+        const struct contest_desc *cnts,
+        int auto_contest_id)
 {
   const struct opcap_list_item *cap;
   unsigned char *s;
@@ -208,7 +216,7 @@ contests_unparse(FILE *f,
   struct xml_tree *p;
   path_t tmp1, tmp2;
 
-  contests_write_header(f, cnts);
+  contests_write_header(f, cnts, auto_contest_id);
   fprintf(f, "\n");
 
   unparse_texts(f, cnts, (const int[]) {
@@ -358,10 +366,11 @@ contests_unparse(FILE *f,
 }
 
 int
-contests_save_xml(struct contest_desc *cnts,
-                  const unsigned char *txt1,
-                  const unsigned char *txt2,
-                  const unsigned char *txt3)
+contests_save_xml(
+        struct contest_desc *cnts,
+        const unsigned char *txt1,
+        const unsigned char *txt2,
+        const unsigned char *txt3)
 {
   int serial = 1;
   unsigned char tmp_path[1024];
@@ -384,7 +393,7 @@ contests_save_xml(struct contest_desc *cnts,
   }
 
   fputs(txt1, f);
-  contests_write_header(f, cnts);
+  contests_write_header(f, cnts, cnts->id);
   fputs(txt2, f);
   fputs(txt3, f);
   if (ferror(f)) {
@@ -454,7 +463,7 @@ contests_unparse_and_save(
   f = open_memstream(&new_text, &new_size);
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", charset);
   if (header) fputs(header, f);
-  contests_unparse(f, cnts);
+  contests_unparse(f, cnts, cnts->id);
   if (footer) fputs(footer, f);
   close_memstream(f); f = 0;
 
