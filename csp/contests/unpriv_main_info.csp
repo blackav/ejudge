@@ -186,3 +186,106 @@
 %></s:form><%
   }
 %>
+
+<script language="javascript">
+function setOperationVisibility(oper, value)
+{
+  obj1 = document.getElementById("Show" + oper);
+  obj2 = document.getElementById("Hide" + oper);
+  if (value) {
+    obj1.style.display = "none";
+    obj2.style.display = "";
+  } else {
+    obj1.style.display = "";
+    obj2.style.display = "none";
+  }
+}
+</script>
+
+<div id="ShowOptions"><a onclick="setOperationVisibility('Options', true)">[Compiler options]</a></div>
+<div style="display: none;" id="HideOptions"><a onclick="setOperationVisibility('Options', false)">[Hide compiler options]</a><br/>
+<table class="b0">
+<%
+  int cur_lang_id;
+  for (cur_lang_id = 1; cur_lang_id <= cs->max_lang; ++cur_lang_id) {
+    const struct section_language_data *lang = cs->langs[cur_lang_id];
+    if (!lang || lang->disabled > 0) continue;
+    const unsigned char *opts = 0;
+    const unsigned char *mandatory = "";
+    if (lang->compiler_env) {
+      int oi;
+      for (oi = 0; lang->compiler_env[oi]; ++oi) {
+        if (!strncmp(lang->compiler_env[io], "EJUDGE_FLAGS=", 13)) {
+          opts = lang->compiler_env[io] + 13;
+          break;
+        }
+      }
+    }
+    if (!opts) {
+      if (!strcmp(lang->short_name, "clang")) {
+        opts = "-Wall -O2 -std=gnu99";
+      } else if (!strcmp(lang->short_name, "clang-32")) {
+        opts = "-Wall -O2 -std=gnu99";
+        mandatory = "-m32 ";
+      } else if (!strcmp(lang->short_name, "clang++")) {
+        opts = "-Wall -O2";
+      } else if (!strcmp(lang->short_name, "clang++-32")) {
+        opts = "-Wall -O2";
+        mandatory = "-m32 ";
+      } else if (!strcmp(lang->short_name, "dcc")) {
+        opts = "";
+        mandatory = "-Q ";
+      } else if (!strcmp(lang->short_name, "fbc")) {
+        opts = "";
+        mandatory = "-lang qb ";
+      } else if (!strcmp(lang->short_name, "fpc")) {
+        opts = "";
+        mandatory = "-XS ";
+      } else if (!strcmp(lang->short_name, "fpc-32")) {
+        opts = "";
+        mandatory = "-XS ";
+      } else if (!strcmp(lang->short_name, "g++")) {
+        opts = "-Wall -O2 -std=gnu++11";
+        mandatory = "-static ";
+      } else if (!strcmp(lang->short_name, "g++-32")) {
+        opts = "-Wall -O2";
+        mandatory = "-m32 ";
+      } else if (!strcmp(lang->short_name, "g77")) {
+        opts = "-O2";
+        mandatory = "-static ";
+      } else if (!strcmp(lang->short_name, "gcc")) {
+        opts = "-Wall -O2 -std=gnu11";
+        mandatory = "-static ";
+      } else if (!strcmp(lang->short_name, "gcc-32")) {
+        opts = "-Wall -O2 -std=gnu99";
+        mandatory = "-m32 ";
+      } else if (!strcmp(lang->short_name, "gcc-vg")) {
+        opts = "-g -O2 -std=gnu11";
+        mandatory = "";
+      } else if (!strcmp(lang->short_name, "gccgo")) {
+        opts = "";
+        mandatory = "-g ";
+      } else if (!strcmp(lang->short_name, "gcj")) {
+        opts = "-Wall -O2";
+        mandatory = "--main=Main Main.java ";
+      } else if (!strcmp(lang->short_name, "gfortran")) {
+        opts = "-O2";
+        mandatory = "-static ";
+      } else if (!strcmp(lang->short_name, "ghc")) {
+        opts = "-O -H14m";
+        mandatory = "";
+      } else {
+        opts = "";
+      }
+    }
+%>
+  <tr>
+    <td class="b0"><tt><s:v value="lang->short_name" /></tt></td>
+    <td class="b0"><s:v value="lang->long_name" /></td>
+    <td class="b0"><tt><s:v value="opts" /></tt></td>
+  </tr>
+<%
+  }
+%>
+</table>
+</div>
