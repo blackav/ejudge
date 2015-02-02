@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-16 19:00+0300\n"
+"POT-Creation-Date: 2015-02-02 14:50+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -821,6 +821,9 @@ msgid "Compilation error"
 msgstr ""
 
 msgid "Compiled"
+msgstr ""
+
+msgid "Compiler options"
 msgstr ""
 
 msgid "Compiler output"
@@ -1685,6 +1688,9 @@ msgid "Hide advanced"
 msgstr ""
 
 msgid "Hide closed contests"
+msgstr ""
+
+msgid "Hide compiler options"
 msgstr ""
 
 msgid "Hide details"

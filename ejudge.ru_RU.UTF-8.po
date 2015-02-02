@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-01-16 19:00+0300\n"
-"PO-Revision-Date: 2015-01-16 19:01+0300\n"
+"POT-Creation-Date: 2015-02-02 14:50+0300\n"
+"PO-Revision-Date: 2015-02-02 14:50+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -537,7 +537,8 @@ msgid "Allow viewing the final scores"
 msgstr "Разрешить просмотр итогового балла"
 
 msgid "Allow viewing the judge comment of the valuer"
-msgstr "Разрешить просмотр комментария для судей, полученного от программы оценивания"
+msgstr ""
+"Разрешить просмотр комментария для судей, полученного от программы оценивания"
 
 #, c-format
 msgid "An e-mail messages is sent to the address <tt>%s</tt>."
@@ -891,6 +892,9 @@ msgstr "Ошибка компиляции"
 
 msgid "Compiled"
 msgstr "Скомпилировано"
+
+msgid "Compiler options"
+msgstr "Опции компиляторов"
 
 msgid "Compiler output"
 msgstr "Вывод компилятора"
@@ -1823,6 +1827,9 @@ msgstr "Скрыть расширенный"
 
 msgid "Hide closed contests"
 msgstr "Скрыть закрытые турниры"
+
+msgid "Hide compiler options"
+msgstr "Скрыть опции компиляторов"
 
 msgid "Hide details"
 msgstr "Скрыть детали"

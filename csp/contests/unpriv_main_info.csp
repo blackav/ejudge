@@ -202,8 +202,8 @@ function setOperationVisibility(oper, value)
 }
 </script>
 
-<div id="ShowOptions"><a onclick="setOperationVisibility('Options', true)">[Compiler options]</a></div>
-<div style="display: none;" id="HideOptions"><a onclick="setOperationVisibility('Options', false)">[Hide compiler options]</a><br/>
+<div id="ShowOptions"><a onclick="setOperationVisibility('Options', true)">[<s:_>Compiler options</s:_>]</a></div>
+<div style="display: none;" id="HideOptions"><a onclick="setOperationVisibility('Options', false)">[<s:_>Hide compiler options</s:_>]</a><br/>
 <table class="b0">
 <%
   int cur_lang_id;
