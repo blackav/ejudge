@@ -92,6 +92,8 @@ ns_unpriv_parse_run_id(
   case RUN_SECURITY_ERR:
   case RUN_STYLE_ERR:
   case RUN_REJECTED:
+  case RUN_IGNORED:
+  case RUN_DISQUALIFIED:
     // these statuses have viewable reports
     break;
   default:
