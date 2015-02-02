@@ -5388,3 +5388,174 @@ serve_count_unread_clars(
   if (total < 0) total = 0;
   return total;
 }
+
+static unsigned char *
+get_compiler_option(
+        const serve_state_t state,
+        const struct section_language_data *lang)
+{
+  if (!lang) return NULL;
+
+  const unsigned char *flags = NULL;
+  const unsigned char *libs = NULL;
+
+  if (lang->compiler_env) {
+    for (int i = 0; lang->compiler_env[i]; ++i) {
+      if (!strncmp(lang->compiler_env[i], "EJUDGE_FLAGS=", 13)) {
+        flags = lang->compiler_env[i] + 13;
+      } else if (!strncmp(lang->compiler_env[i], "EJUDGE_LIBS=", 12)) {
+        libs = lang->compiler_env[i] + 12;
+      }
+    }
+  }
+
+  const unsigned char *mandatory = "";
+  if (!strcmp(lang->short_name, "clang-32")) {
+    mandatory = "-m32";
+  } else if (!strcmp(lang->short_name, "clang++-32")) {
+    mandatory = "-m32";
+  } else if (!strcmp(lang->short_name, "dcc")) {
+    mandatory = "-Q";
+  } else if (!strcmp(lang->short_name, "fbc")) {
+    mandatory = "-lang qb";
+  } else if (!strcmp(lang->short_name, "fpc")) {
+    mandatory = "-XS";
+  } else if (!strcmp(lang->short_name, "gcc")) {
+    mandatory = "-static";
+  } else if (!strcmp(lang->short_name, "gcc-32")) {
+    mandatory = "-m32";
+  } else if (!strcmp(lang->short_name, "g++")) {
+    mandatory = "-static";
+  } else if (!strcmp(lang->short_name, "g++-32")) {
+    mandatory = "-m32";
+  } else if (!strcmp(lang->short_name, "g77")) {
+    mandatory = "-static";
+  } else if (!strcmp(lang->short_name, "gfortran")) {
+    mandatory = "-static";
+  } else if (!strcmp(lang->short_name, "gccgo")) {
+    mandatory = "-g";
+  } else if (!strcmp(lang->short_name, "gcj")) {
+    mandatory = "--main=Main Main.java";
+  } else if (!strcmp(lang->short_name, "gpc")) {
+    mandatory = "-static";
+  } else if (!strcmp(lang->short_name, "gprolog")) {
+    mandatory = "--min-size";
+  } else if (!strcmp(lang->short_name, "nasm-x86")) {
+    mandatory = "-DUNIX -f elf";
+  }
+
+  if (!flags) {
+    if (!strcmp(lang->short_name, "clang")) {
+      flags = "-Wall -O2 -std=gnu99";
+    } else if (!strcmp(lang->short_name, "clang-32")) {
+      flags = "-Wall -O2 -std=gnu99";
+    } else if (!strcmp(lang->short_name, "clang++")) {
+      flags = "-Wall -O2";
+    } else if (!strcmp(lang->short_name, "clang++-32")) {
+      flags = "-Wall -O2";
+    } else if (!strcmp(lang->short_name, "gcc")) {
+      flags = "-Wall -O2 -std=gnu11";
+    } else if (!strcmp(lang->short_name, "gcc-32")) {
+      flags = "-Wall -O2 -std=gnu99";
+    } else if (!strcmp(lang->short_name, "gcc-vg")) {
+      flags = "-g -O2 -std=gnu11";
+    } else if (!strcmp(lang->short_name, "g++")) {
+      flags = "-Wall -O2 -std=gnu++11";
+    } else if (!strcmp(lang->short_name, "g++-32")) {
+      flags = "-Wall -O2";
+    } else if (!strcmp(lang->short_name, "g++-vg")) {
+      flags = "-g -O2";
+    } else if (!strcmp(lang->short_name, "g77")) {
+      flags = "-O2";
+    } else if (!strcmp(lang->short_name, "gfortran")) {
+      flags = "-O2";
+    } else if (!strcmp(lang->short_name, "gccgo")) {
+      flags = "-O2";
+    } else if (!strcmp(lang->short_name, "gcj")) {
+      flags = "-Wall -O2";
+    } else if (!strcmp(lang->short_name, "gpc")) {
+      flags = "-O2";
+    } else if (!strcmp(lang->short_name, "mcs")) {
+      flags = "-optimize+";
+    } else if (!strcmp(lang->short_name, "nasm-x86")) {
+      flags = "-Werror";
+    }
+  }
+
+  if (!libs) {
+    if (!strcmp(lang->short_name, "clang")) {
+      libs = "-lm";
+    } else if (!strcmp(lang->short_name, "clang-32")) {
+      libs = "-lm";
+    } else if (!strcmp(lang->short_name, "clang++")) {
+      libs = "-lm";
+    } else if (!strcmp(lang->short_name, "clang++-32")) {
+      libs = "-lm";
+    } else if (!strcmp(lang->short_name, "gcc")) {
+      libs = "-lm";
+    } else if (!strcmp(lang->short_name, "gcc-32")) {
+      libs = "-lm";
+    } else if (!strcmp(lang->short_name, "gcc-vg")) {
+      libs = "-lm";
+    } else if (!strcmp(lang->short_name, "g++")) {
+      libs = "-lm";
+    } else if (!strcmp(lang->short_name, "g++-32")) {
+      libs = "-lm";
+    } else if (!strcmp(lang->short_name, "g++-vg")) {
+      libs = "-lm";
+    }
+  }
+
+  if (!mandatory) mandatory = "";
+  if (!flags) flags = "";
+  if (!libs) libs = "";
+
+  const unsigned char *spc = "";
+  unsigned char *out = xmalloc(strlen(mandatory) + strlen(flags) + strlen(libs) + 3);
+  *out = 0;
+  if (*mandatory) {
+    strcat(out, mandatory);
+    spc = " ";
+  }
+  if (*flags) {
+    strcat(out, spc);
+    strcat(out, flags);
+    spc = " ";
+  }
+  if (*libs) {
+    strcat(out, spc);
+    strcat(out, libs);
+  }
+  return out;
+}
+
+static void
+fill_compiler_options(const serve_state_t state)
+{
+  if (state->compiler_options) return;
+  if (state->max_lang <= 0) return;
+  XCALLOC(state->compiler_options, state->max_lang + 1);
+
+  for (int lang_id = 1; lang_id <= state->max_lang; ++lang_id) {
+    const struct section_language_data *lang = state->langs[lang_id];
+    state->compiler_options[lang_id] = get_compiler_option(state, lang);
+  }
+}
+
+const unsigned char *
+serve_get_compiler_options(
+        const serve_state_t state,
+        int lang_id)
+{
+  const unsigned char *s = 0;
+
+  if (lang_id <= 0 || lang_id > state->max_lang) return "";
+
+  if (!state->compiler_options) {
+    fill_compiler_options(state);
+  }
+
+  s = state->compiler_options[lang_id];
+  if (!s) s = "";
+  return s;
+}

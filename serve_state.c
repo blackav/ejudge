@@ -211,6 +211,13 @@ serve_state_destroy(
 
   xfree(state->user_results);
 
+  if (state->compiler_options) {
+    for (i = 1; i <= state->max_lang; ++i) {
+      xfree(state->compiler_options[i]);
+    }
+    xfree(state->compiler_options);
+  }
+
   memset(state, 0, sizeof(*state));
   xfree(state);
   return 0;

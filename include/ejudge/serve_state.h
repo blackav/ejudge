@@ -304,6 +304,9 @@ struct serve_state
   // memoized user results
   int user_result_a; // allocated size
   struct serve_user_results *user_results;
+
+  // compiler options to report
+  unsigned char **compiler_options;
 };
 typedef struct serve_state *serve_state_t;
 
@@ -758,5 +761,10 @@ serve_make_audit_read_path(
         unsigned char *path,
         size_t size,
         const struct run_entry *re);
+
+const unsigned char *
+serve_get_compiler_options(
+        const serve_state_t state,
+        int lang_id);
 
 #endif /* __SERVE_STATE_H__ */
