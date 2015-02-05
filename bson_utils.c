@@ -97,7 +97,7 @@ ej_bson_unparse(
             break;
         case BSON_TYPE_UTC_DATETIME:
             {
-                long long ts = 0;
+                gint64 ts = 0;
                 if (bson_cursor_get_utc_datetime(cursor, &ts)) {
                     time_t tt = (time_t) (ts / 1000);
                     int ms = (int) (ts % 1000);
@@ -120,9 +120,9 @@ ej_bson_unparse(
             break;
         case BSON_TYPE_INT64:
             {
-                long long value = 0;
+                gint64 value = 0;
                 if (bson_cursor_get_int64(cursor, &value)) {
-                    fprintf(out, "%lld", value);
+                    fprintf(out, "%lld", (long long) value);
                 }
             }
             break;
@@ -176,7 +176,7 @@ ej_bson_parse_utc_datetime(
         err("parse_bson_utc_datetime: utc_datetime field type expected for '%s'", field_name);
         return -1;
     }
-    long long value = 0;
+    gint64 value = 0;
     if (!bson_cursor_get_utc_datetime(bc, &value)) {
         err("parse_bson_utc_datetime: failed to fetch utc_datetime value of '%s'", field_name);
         return -1;
