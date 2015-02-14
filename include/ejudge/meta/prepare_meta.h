@@ -250,6 +250,7 @@ enum
   CNTSGLOB_checker_real_time_limit,
   CNTSGLOB_show_deadline,
   CNTSGLOB_separate_user_score,
+  CNTSGLOB_show_sha1,
   CNTSGLOB_use_gzip,
   CNTSGLOB_min_gzip_size,
   CNTSGLOB_use_dir_hierarchy,
