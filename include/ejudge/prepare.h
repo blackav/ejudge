@@ -957,6 +957,8 @@ struct section_problem_data
   unsigned char *tokens;
   /** process umask */
   unsigned char *umask;
+  /** success status (generalization of use_ac_not_ok) */
+  unsigned char *ok_status;
 
   struct token_info *token_info META_ATTRIB((meta_private));
 

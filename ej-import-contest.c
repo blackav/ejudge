@@ -828,6 +828,7 @@ merge_problem_section(
         { CNTSPROB_standard_checker, META_PROBLEM_CONFIG_SECTION_standard_checker },
         { CNTSPROB_tokens, META_PROBLEM_CONFIG_SECTION_tokens },
         { CNTSPROB_umask, META_PROBLEM_CONFIG_SECTION_umask },
+        { CNTSPROB_ok_status, META_PROBLEM_CONFIG_SECTION_ok_status },
 
         { 0, 0 },
     };

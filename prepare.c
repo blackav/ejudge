@@ -514,6 +514,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(super_run_dir, "S"),
   PROBLEM_PARAM(tokens, "S"),
   PROBLEM_PARAM(umask, "S"),
+  PROBLEM_PARAM(ok_status, "S"),
 
   { 0, 0, 0, 0 }
 };
@@ -1029,6 +1030,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->tokens);
   xfree(p->token_info);
   xfree(p->umask);
+  xfree(p->ok_status);
   sarray_free(p->test_sets);
   sarray_free(p->date_penalty);
   sarray_free(p->group_start_date);
@@ -3151,6 +3153,7 @@ set_defaults(
 
     prepare_set_prob_value(CNTSPROB_type, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_use_ac_not_ok, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_ok_status, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_ignore_prev_ac, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_team_enable_rep_view, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_team_enable_ce_view, prob, aprob, g);
@@ -5411,6 +5414,9 @@ prepare_copy_problem(const struct section_problem_data *in)
   if (in->umask) {
     out->umask = xstrdup(in->umask);
   }
+  if (in->ok_status) {
+    out->ok_status = xstrdup(in->ok_status);
+  }
 
   return out;
 }
@@ -5564,6 +5570,12 @@ prepare_set_prob_value(
       out->use_ac_not_ok = global->use_ac_not_ok;
     if (out->use_ac_not_ok == -1)
       out->use_ac_not_ok = 0;
+    break;
+
+  case CNTSPROB_ok_status:
+    if (!out->use_ac_not_ok && abstr && abstr->use_ac_not_ok) {
+      out->use_ac_not_ok = xstrdup(abstr->use_ac_not_ok);
+    }
     break;
 
   case CNTSPROB_ignore_prev_ac:
@@ -6389,7 +6401,7 @@ static const int prob_settable_list[] =
   CNTSPROB_test_dir, CNTSPROB_test_sfx,
   CNTSPROB_corr_dir, CNTSPROB_corr_sfx, CNTSPROB_info_dir, CNTSPROB_info_sfx,
   CNTSPROB_tgz_dir, CNTSPROB_tgz_sfx, CNTSPROB_tgzdir_sfx, CNTSPROB_input_file,
-  CNTSPROB_output_file, CNTSPROB_test_score_list, CNTSPROB_tokens, CNTSPROB_umask, CNTSPROB_score_tests,
+  CNTSPROB_output_file, CNTSPROB_test_score_list, CNTSPROB_tokens, CNTSPROB_umask, CNTSPROB_ok_status, CNTSPROB_score_tests,
   CNTSPROB_test_sets, CNTSPROB_deadline, CNTSPROB_start_date,
   CNTSPROB_variant_num, CNTSPROB_date_penalty, CNTSPROB_group_start_date,
   CNTSPROB_group_deadline, CNTSPROB_disable_language,
@@ -6578,6 +6590,7 @@ static const unsigned char prob_settable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_super_run_dir] = 1,
   [CNTSPROB_tokens] = 1,
   [CNTSPROB_umask] = 1,
+  [CNTSPROB_ok_status] = 1,
 };
 
 static const int prob_inheritable_list[] __attribute__((unused)) =
@@ -6623,7 +6636,7 @@ static const int prob_inheritable_list[] __attribute__((unused)) =
   CNTSPROB_test_dir, CNTSPROB_test_sfx, CNTSPROB_corr_dir, CNTSPROB_corr_sfx,
   CNTSPROB_info_dir, CNTSPROB_info_sfx, CNTSPROB_tgz_dir, CNTSPROB_tgz_sfx,
   CNTSPROB_tgzdir_sfx,
-  CNTSPROB_input_file, CNTSPROB_output_file, CNTSPROB_test_score_list, CNTSPROB_tokens, CNTSPROB_umask,
+  CNTSPROB_input_file, CNTSPROB_output_file, CNTSPROB_test_score_list, CNTSPROB_tokens, CNTSPROB_umask, CNTSPROB_ok_status,
   CNTSPROB_score_tests, CNTSPROB_test_sets, CNTSPROB_deadline,
   CNTSPROB_start_date, CNTSPROB_variant_num, CNTSPROB_date_penalty,
   CNTSPROB_group_start_date, CNTSPROB_group_deadline,
@@ -6798,6 +6811,7 @@ static const unsigned char prob_inheritable_set[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_super_run_dir] = 1,
   [CNTSPROB_tokens] = 1,
   [CNTSPROB_umask] = 1,
+  [CNTSPROB_ok_status] = 1,
 
   0,
 };
@@ -6964,6 +6978,7 @@ static const struct section_problem_data prob_undef_values =
   .super_run_dir = NULL,
   .tokens = NULL,
   .umask = NULL,
+  .ok_status = NULL,
 };
 
 static const struct section_problem_data prob_default_values =
@@ -7107,6 +7122,7 @@ static const struct section_problem_data prob_default_values =
   .super_run_dir = NULL,
   .tokens = NULL,
   .umask = NULL,
+  .ok_status = NULL,
 };
 
 static const int prob_global_map[CNTSPROB_LAST_FIELD] =

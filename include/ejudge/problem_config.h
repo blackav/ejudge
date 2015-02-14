@@ -168,6 +168,7 @@ struct problem_config_section
   unsigned char *revision;
   unsigned char *tokens;
   unsigned char *umask;
+  unsigned char *ok_status;
 
   char **test_sets;
   char **date_penalty;

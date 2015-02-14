@@ -2801,6 +2801,12 @@ serve_read_run_packet(
       && reply_pkt->status == RUN_ACCEPTED
       && prob->ignore_prev_ac > 0) {
     ignore_prev_ac = 1;
+  } else if (prob->ok_status && *prob->ok_status && reply_pkt->status == RUN_OK) {
+    int status = 0;
+    if (run_str_short_to_status(prob->ok_status, &status) >= 0) {
+      reply_pkt->status = status;
+      if (prob->ignore_prev_ac > 0) ignore_prev_ac = 1;
+    }
   } else if (prob->use_ac_not_ok > 0 && reply_pkt->status == RUN_OK) {
     reply_pkt->status = RUN_PENDING_REVIEW;
     if (prob->ignore_prev_ac > 0) ignore_prev_ac = 1;
