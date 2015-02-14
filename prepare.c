@@ -5573,8 +5573,8 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_ok_status:
-    if (!out->use_ac_not_ok && abstr && abstr->use_ac_not_ok) {
-      out->use_ac_not_ok = xstrdup(abstr->use_ac_not_ok);
+    if (!out->ok_status && abstr && abstr->ok_status) {
+      out->ok_status = xstrdup(abstr->ok_status);
     }
     break;
 
