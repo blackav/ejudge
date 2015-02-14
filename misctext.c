@@ -651,6 +651,27 @@ unparse_sha1(const void *shabuf)
   return buf;
 }
 
+unsigned char *
+unparse_abbrev_sha1(const void *shabuf)
+{
+  const unsigned char *s = (const unsigned char *) shabuf;
+  int i;
+  static unsigned char buf[64];
+  unsigned char *p;
+  static const unsigned char hexd[] = "0123456789abcdef";
+
+  for (i = 0, p = buf; i < 4; i++, s++) {
+    *p++ = hexd[(*s >> 4) & 0xf];
+    *p++ = hexd[*s & 0xf];
+  }
+  *p++ = '.';
+  *p++ = '.';
+  *p++ = '.';
+  *p = 0;
+
+  return buf;
+}
+
 int
 parse_sha1(void *shabuf, const unsigned char *str)
 {
