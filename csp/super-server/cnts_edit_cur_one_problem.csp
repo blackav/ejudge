@@ -1416,7 +1416,7 @@
 %>
 
 <%
-  if (prob_type == PROB_TYPE_STANDARD && show_adv) {
+  if (show_adv) {
 %>
 <s:form>
     <s:hidden name="prob_id" check="false" />
@@ -1433,6 +1433,22 @@
 %></td>
         <td><s:submit ac="prob-change-use-ac-not-ok" label="Change" /></td>
         <td><s:help ac="prob-change-use-ac-not-ok" /></td>
+    </s:tr>
+</s:form>
+<%
+  }
+%>
+
+<%
+  if (show_adv) {
+%>
+<s:form>
+    <s:hidden name="prob_id" check="false" />
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>Success status:</td>
+        <td><s:textfield name="param" value="prob->ok_status" size="48" maxlength="1024" checkExpr="" /></td>
+        <td><s:submit ac="prob-change-ok-status" label="Change" /><s:submit ac="prob-clear-ok-status" label="Clear" /></td>
+        <td><s:help ac="prob-change-ok-status" /></td>
     </s:tr>
 </s:form>
 <%
