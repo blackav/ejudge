@@ -438,6 +438,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_test_score_list] = { CNTSPROB_test_score_list, 's', XSIZE(struct section_problem_data, test_score_list), "test_score_list", XOFFSET(struct section_problem_data, test_score_list) },
   [CNTSPROB_tokens] = { CNTSPROB_tokens, 's', XSIZE(struct section_problem_data, tokens), "tokens", XOFFSET(struct section_problem_data, tokens) },
   [CNTSPROB_umask] = { CNTSPROB_umask, 's', XSIZE(struct section_problem_data, umask), "umask", XOFFSET(struct section_problem_data, umask) },
+  [CNTSPROB_ok_status] = { CNTSPROB_ok_status, 's', XSIZE(struct section_problem_data, ok_status), "ok_status", XOFFSET(struct section_problem_data, ok_status) },
   [CNTSPROB_token_info] = { CNTSPROB_token_info, '?', XSIZE(struct section_problem_data, token_info), NULL, XOFFSET(struct section_problem_data, token_info) },
   [CNTSPROB_score_tests] = { CNTSPROB_score_tests, 'S', XSIZE(struct section_problem_data, score_tests), "score_tests", XOFFSET(struct section_problem_data, score_tests) },
   [CNTSPROB_standard_checker] = { CNTSPROB_standard_checker, 'S', XSIZE(struct section_problem_data, standard_checker), "standard_checker", XOFFSET(struct section_problem_data, standard_checker) },

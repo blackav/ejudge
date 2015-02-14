@@ -398,6 +398,7 @@ enum
   CNTSPROB_test_score_list,
   CNTSPROB_tokens,
   CNTSPROB_umask,
+  CNTSPROB_ok_status,
   CNTSPROB_token_info,
   CNTSPROB_score_tests,
   CNTSPROB_standard_checker,
