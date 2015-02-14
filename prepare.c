@@ -288,6 +288,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(checker_real_time_limit, "d"),
   GLOBAL_PARAM(compile_real_time_limit, "d"),
   GLOBAL_PARAM(show_deadline, "d"),
+  GLOBAL_PARAM(show_sha1, "d"),
   GLOBAL_PARAM(enable_runlog_merge, "d"),
   GLOBAL_PARAM(prune_empty_users, "d"),
   GLOBAL_PARAM(enable_report_upload, "d"),
@@ -818,6 +819,7 @@ global_init_func(struct generic_section_config *gp)
   p->team_download_time = -1;
   p->ignore_duplicated_runs = -1;
   p->show_deadline = -1;
+  p->show_sha1 = -1;
   p->inactivity_timeout = -1;
   p->checker_real_time_limit = -1;
   p->compile_real_time_limit = -1;

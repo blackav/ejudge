@@ -453,6 +453,15 @@ static const unsigned char * const form_row_attrs[]=
 
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
+            <td>Show abbreviated SHA1 in the submit list:</td>
+            <td><s:yesno name="param" value="global->show_sha1" /></td>
+            <td><s:submit ac="glob-change-show-sha1" label="Change" /></td>
+            <td><s:help ac="glob-change-show-sha1" /></td>
+        </s:tr>
+    </s:form>
+
+    <s:form>
+        <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Contestants may print their submits:</td>
             <td><s:yesno name="param" value="global->enable_printing" /></td>
             <td><s:submit ac="glob-change-enable-printing" label="Change" /></td>

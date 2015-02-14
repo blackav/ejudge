@@ -5636,9 +5636,13 @@ new_write_user_runs(
   /* write run statistics: show last 15 in the reverse order */
   fprintf(f,"<table class=\"table\"><tr><th%s>%s</th><th%s>%s</th>"
           "<th%s>%s</th>"
-          "<th%s>%s</th><th%s>%s</th><th%s>%s</th>",
+          "<th%s>%s</th><th%s>%s</th>",
           cl, _("Run ID"), cl, _("Time"), cl, _("Size"), cl, _("Problem"),
-          cl, _("Language"), cl, _("Result"));
+          cl, _("Language"));
+  if (global->show_sha1 > 0) {
+    fprintf(f, "<th%s>%s</th>", cl, "SHA1");
+  }
+  fprintf(f, "<th%s>%s</th>", cl, _("Result"));
 
   if (global->score_system == SCORE_KIROV
       || global->score_system == SCORE_OLYMPIAD) {
@@ -5748,6 +5752,7 @@ new_write_user_runs(
     fprintf(f, "<td%s>%u</td>", cl, re.size);
     fprintf(f, "<td%s>%s</td>", cl, prob_str);
     fprintf(f, "<td%s>%s</td>", cl, lang_str);
+    fprintf(f, "<td%s><tt>%s</tt></td>", cl, unparse_abbrev_sha1(re.sha1));
 
     write_html_run_status(state, f, start_time, &re, 1 /* user_mode */,
                           0, attempts, disq_attempts,

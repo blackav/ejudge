@@ -665,6 +665,8 @@ struct section_global_data
   ejintbool_t show_deadline;
   /** store separate scores for participants */
   ejintbool_t separate_user_score;
+  /** show abbreviated SHA1 to users */
+  ejintbool_t show_sha1;
 
   /** use gzip compression for large files */
   ejintbool_t use_gzip;

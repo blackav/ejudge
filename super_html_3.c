@@ -215,6 +215,7 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_IGNORE_DUPLICATED_RUNS] = "Serve.cfg:global:ignore_duplicated_runs",
   [SSERV_CMD_GLOB_CHANGE_REPORT_ERROR_CODE] = "Serve.cfg:global:report_error_code",
   [SSERV_CMD_GLOB_CHANGE_SHOW_DEADLINE] = "Serve.cfg:global:show_deadline",
+  [SSERV_CMD_GLOB_CHANGE_SHOW_SHA1] = "Serve.cfg:global:show_sha1",
   [SSERV_CMD_GLOB_CHANGE_ENABLE_PRINTING] = "Serve.cfg:global:enable_printing",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_BANNER_PAGE] = "Serve.cfg:global:disable_banner_page",
   [SSERV_CMD_GLOB_CHANGE_PRINTOUT_USES_LOGIN] = "Serve.cfg:global:printout_uses_login",
@@ -708,6 +709,10 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_SHOW_DEADLINE:
     p_int = &global->show_deadline;
+    goto handle_boolean;
+
+  case SSERV_CMD_GLOB_CHANGE_SHOW_SHA1:
+    p_int = &global->show_sha1;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_ENABLE_PRINTING:
