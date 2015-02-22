@@ -626,42 +626,43 @@ update_all_user_contests(int user_id)
   }
 }
 
+static const unsigned char password_chars[] = "wy23456789abcdefghijkzmnxpqrstuv";
+
 static void
 generate_random_password(int size, unsigned char *buf)
 {
-  int rand_bytes;
+  int aligned_size, rand_size, i, j;
   unsigned char *rnd_buf = 0;
   unsigned char *b64_buf = 0;
-  unsigned char *p;
+  unsigned char *p, *q;
+  long long w;
 
   ASSERT(size > 0 && size <= 128);
   ASSERT(buf);
 
-  // estimate the number of random bytes to generate
-  rnd_buf = (unsigned char*) alloca(size + 16);
-  b64_buf = (unsigned char *) alloca(size + 16);
-  if (size % 4) {
-    rand_bytes = (size / 4 + 1) * 3;
-  } else {
-    rand_bytes = (size / 4) * 3;
-  }
+  // 5 bits per character, 8 characters require 40 bits
+  // align up the size
+  aligned_size = (size + 7) & ~7;
+  b64_buf = alloca(aligned_size + 1);
 
-  // generate the needed number of bytes
-  random_bytes(rnd_buf, rand_bytes);
+  rand_size = aligned_size / 8 * 5;
+  rnd_buf = alloca(rand_size);
+  random_bytes(rnd_buf, rand_size);
 
-  // convert to base64
-  base64_encode(rnd_buf, rand_bytes, b64_buf);
-  b64_buf[size] = 0;
-  for (p = b64_buf; *p; p++) {
-    /* rename: l, I, 1, O, 0*/
-    switch (*p) {
-    case 'l': *p = '!'; break;
-    case 'I': *p = '@'; break;
-    case '1': *p = '^'; break;
-    case 'O': *p = '*'; break;
-    case '0': *p = '-'; break;
+  q = b64_buf;
+  p = rnd_buf;
+  for (i = 0; i < rand_size; i += 5) {
+    w = *p++;
+    for (j = 0; j < 4; ++j) {
+      w <<= 8;
+      w |= *p++;
+    }
+    for (j = 0; j < 8; ++j) {
+      *q++ = password_chars[(unsigned) w & 31];
+      w >>= 5;
     }
   }
+  b64_buf[size] = 0;
   strcpy(buf, b64_buf);
 }
 
