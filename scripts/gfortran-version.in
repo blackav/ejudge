@@ -1,6 +1,5 @@
 #!/bin/sh
-# $Id$
-# Copyright (c) 2008-2012 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2008-2015 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
@@ -41,7 +40,7 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether GNU Fortran is available..." >&2
   "${GFORTRANRUN}" -v >/dev/null 2>/dev/null || failure
-  version=`"${GFORTRANRUN}" --version | grep "GCC" | gawk '{ print $4; }'` || failure
+  version=`"${GFORTRANRUN}" --version | head -1 | gawk '{ print $4; }'` || failure
   [ "${version}" != x ] || failure
   echo "        END" > conftest.for
   "${GFORTRANRUN}" -static conftest.for -o conftest 2>/dev/null >/dev/null || failure
@@ -97,6 +96,6 @@ fi
 
 [ x"$1" = x-f ] && echo -n "GNU Fortran "
 
-"${GFORTRANRUN}" --version | grep "GNU Fortran" | grep "GCC" | gawk '{ print $4; }'
+"${GFORTRANRUN}" --version | head -1 | grep "GCC" | gawk '{ print $4; }'
 [ $? != 0 -a $? != 1 ] && exit 1
 exit 0
