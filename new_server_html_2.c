@@ -5752,7 +5752,9 @@ new_write_user_runs(
     fprintf(f, "<td%s>%u</td>", cl, re.size);
     fprintf(f, "<td%s>%s</td>", cl, prob_str);
     fprintf(f, "<td%s>%s</td>", cl, lang_str);
-    fprintf(f, "<td%s><tt>%s</tt></td>", cl, unparse_abbrev_sha1(re.sha1));
+    if (global->show_sha1 > 0) {
+      fprintf(f, "<td%s><tt>%s</tt></td>", cl, unparse_abbrev_sha1(re.sha1));
+    }
 
     write_html_run_status(state, f, start_time, &re, 1 /* user_mode */,
                           0, attempts, disq_attempts,
