@@ -9930,7 +9930,7 @@ cmd_create_user_2(
   }
 
   if (data->random_password_flag) {
-    generate_random_password(16, random_reg_password_buf);
+    generate_random_password(8, random_reg_password_buf);
     reg_password_str = random_reg_password_buf;
     reg_password_len = strlen(reg_password_str);
   }
@@ -9988,7 +9988,7 @@ cmd_create_user_2(
       // do nothing...
     } else {
       if (data->cnts_random_password_flag) {
-        generate_random_password(16, random_cnts_password_buf);
+        generate_random_password(8, random_cnts_password_buf);
         cnts_password_str = random_cnts_password_buf;
         cnts_password_len = strlen(cnts_password_str);
       }
