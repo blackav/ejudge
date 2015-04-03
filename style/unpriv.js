@@ -1,6 +1,4 @@
-// $Id$
-
-// Copyright (C) 2008-2010 Alexander Chernov <cher@ejudge.ru>
+// Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru>
 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -129,111 +127,53 @@ function reloadPage()
 function updateTime()
 {
   clearInterval(pingTimer);
-  jQuery.get(script_name,
-             {
-                 "SID": SID,
-                 "action": NEW_SRV_ACTION_JSON_USER_STATE,
-                 "x": need_reload_check
-             },
-             function (data)
-             {
-
-                 alert('Here!');
-        jsonState = data;
-        printTime();
-
-        if (jsonState.z != null) {
-          setStatusString(testingCompleted, "TESTING COMPLETED");
-          loc = document.getElementById("reloadButton");
-          if (loc != null) {
-            loc.style.visibility = "visible";
-          }
-          loc = document.getElementById("statusLine");
-          if (loc != null) {
-            loc.className = "server_status_alarm";
-          }
-          pingTimer = window.setInterval(updateTime, 60000);
-        } else if (jsonState.x != null) {
-          if (need_reload_check == 0) need_reload_check = 1;
-          if (need_reload_check == 2) {
-            pingTimer = window.setInterval(updateTime, 60000);
-          } else if (++reload_check_count > 24) {
-            // give up on a bad job...
-            need_reload_check = 2;
-            reload_check_count = 0;
-            loc = document.getElementById("reloadButton");
-            if (loc != null) {
-              loc.style.visibility = "visible";
-            }
-            setStatusString(waitingTooLong, "REFRESH PAGE MANUALLY!");
-            pingTimer = window.setInterval(updateTime, 60000);
-          } else {
-            setStatusString(testingInProgressMessage, "TESTING IN PROGRESS...");
-            pingTimer = window.setInterval(updateTime, 5000);
-          }
-        } else {
-          need_reload_check = 0;
-          reload_check_count = 0;
-          hideStatusString();
-          pingTimer = window.setInterval(updateTime, 60000);
-        }
-
-
-
-             }, "ajax").done(function (data) { alert('There!'); } );
-
-/*
-  dojo.xhrGet({
-      url: script_name,
-      content: {
-        "SID": SID,
-        "action": NEW_SRV_ACTION_JSON_USER_STATE,
-        "x": need_reload_check
+  jQuery.ajax({
+      url : script_name,
+      data : {
+          "SID": SID,
+          "action": NEW_SRV_ACTION_JSON_USER_STATE,
+          "x": need_reload_check
       },
-      handleAs: "json",
-      error: handleError,
-      load: function(data, ioargs) {
-        jsonState = data;
-        printTime();
-
-        if (jsonState.z != null) {
-          setStatusString(testingCompleted, "TESTING COMPLETED");
-          loc = document.getElementById("reloadButton");
-          if (loc != null) {
-            loc.style.visibility = "visible";
-          }
-          loc = document.getElementById("statusLine");
-          if (loc != null) {
-            loc.className = "server_status_alarm";
-          }
-          pingTimer = window.setInterval(updateTime, 60000);
-        } else if (jsonState.x != null) {
-          if (need_reload_check == 0) need_reload_check = 1;
-          if (need_reload_check == 2) {
-            pingTimer = window.setInterval(updateTime, 60000);
-          } else if (++reload_check_count > 24) {
-            // give up on a bad job...
-            need_reload_check = 2;
-            reload_check_count = 0;
-            loc = document.getElementById("reloadButton");
-            if (loc != null) {
-              loc.style.visibility = "visible";
-            }
-            setStatusString(waitingTooLong, "REFRESH PAGE MANUALLY!");
-            pingTimer = window.setInterval(updateTime, 60000);
+      dataType : "json",
+      success : function (data) {
+          jsonState = data;
+          printTime();
+          if (jsonState.z != null) {
+              setStatusString(testingCompleted, "TESTING COMPLETED");
+              loc = document.getElementById("reloadButton");
+              if (loc != null) {
+                  loc.style.visibility = "visible";
+              }
+              loc = document.getElementById("statusLine");
+              if (loc != null) {
+                  loc.className = "server_status_alarm";
+              }
+              pingTimer = window.setInterval(updateTime, 60000);
+          } else if (jsonState.x != null) {
+              if (need_reload_check == 0) need_reload_check = 1;
+              if (need_reload_check == 2) {
+                  pingTimer = window.setInterval(updateTime, 60000);
+              } else if (++reload_check_count > 24) {
+                  // give up on a bad job...
+                  need_reload_check = 2;
+                  reload_check_count = 0;
+                  loc = document.getElementById("reloadButton");
+                  if (loc != null) {
+                      loc.style.visibility = "visible";
+                  }
+                  setStatusString(waitingTooLong, "REFRESH PAGE MANUALLY!");
+                  pingTimer = window.setInterval(updateTime, 60000);
+              } else {
+                  setStatusString(testingInProgressMessage, "TESTING IN PROGRESS...");
+                  pingTimer = window.setInterval(updateTime, 5000);
+              }
           } else {
-            setStatusString(testingInProgressMessage, "TESTING IN PROGRESS...");
-            pingTimer = window.setInterval(updateTime, 5000);
+              need_reload_check = 0;
+              reload_check_count = 0;
+              hideStatusString();
+              pingTimer = window.setInterval(updateTime, 60000);
           }
-        } else {
-          need_reload_check = 0;
-          reload_check_count = 0;
-          hideStatusString();
-          pingTimer = window.setInterval(updateTime, 60000);
-        }
-      }
-  });
-*/
+      }});
 }
 
 function startClock()
@@ -255,27 +195,27 @@ function submitStatus(type, data, evt)
 
 function submitAnswer(action, probId, answer, next_action, nextProbId)
 {
-  dojo.xhrPost({
+    jQuery.ajax({
       url: script_name,
-      content: {
-        "SID": SID,
-        "action": action,
-        "prob_id": probId,
-        "json": 1,
-        "file": answer
+      data: {
+          "SID": SID,
+          "action": action,
+          "prob_id": probId,
+          "json": 1,
+          "file": answer
       },
-      handleAs: "json",
-      error: function(data, ioargs) {
-        alert("Request failed: " + data);
+      dataType: "json",
+      error: function(jqxhr, textStatus, errorThrown) {
+          alert("Request failed: " + textStatus);
       },
-      load: function(data, ioargs) {
-        if (data.status < 0) {
-          alert("Operation failed: " + data.text);
-        } else {
-          if (nextProbId != null) {
-            document.location.href = self_url + "?SID=" + SID + "&action=" + next_action + "&prob_id=" + nextProbId;
+      success: function(data) {
+          if (data.status < 0) {
+              alert("Operation failed: " + data.text);
+          } else {
+              if (nextProbId != null) {
+                  document.location.href = self_url + "?SID=" + SID + "&action=" + next_action + "&prob_id=" + nextProbId;
+              }
           }
-        }
       }
   });
 }
@@ -287,14 +227,10 @@ function displayProblemSubmitForm(action, probId)
 
 jQuery(document).ready(function()
 {
-    $.subscribe('errorHandler', function(event, data)
-    {
-	alert('ErrorEvent: ' + event + ', Data: ' + data);
-    });
-
     $(document).ajaxError(function()
     {
-	alert('ErrorEvent: ' + event + ', Data: ' + data);
+	//alert('ErrorEvent: ' + event + ', Data: ' + data);
+        handleError();
     });
 });
 
