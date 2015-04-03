@@ -129,6 +129,60 @@ function reloadPage()
 function updateTime()
 {
   clearInterval(pingTimer);
+  jQuery.get(script_name,
+             {
+                 "SID": SID,
+                 "action": NEW_SRV_ACTION_JSON_USER_STATE,
+                 "x": need_reload_check
+             },
+             function (data)
+             {
+
+                 alert('Here!');
+        jsonState = data;
+        printTime();
+
+        if (jsonState.z != null) {
+          setStatusString(testingCompleted, "TESTING COMPLETED");
+          loc = document.getElementById("reloadButton");
+          if (loc != null) {
+            loc.style.visibility = "visible";
+          }
+          loc = document.getElementById("statusLine");
+          if (loc != null) {
+            loc.className = "server_status_alarm";
+          }
+          pingTimer = window.setInterval(updateTime, 60000);
+        } else if (jsonState.x != null) {
+          if (need_reload_check == 0) need_reload_check = 1;
+          if (need_reload_check == 2) {
+            pingTimer = window.setInterval(updateTime, 60000);
+          } else if (++reload_check_count > 24) {
+            // give up on a bad job...
+            need_reload_check = 2;
+            reload_check_count = 0;
+            loc = document.getElementById("reloadButton");
+            if (loc != null) {
+              loc.style.visibility = "visible";
+            }
+            setStatusString(waitingTooLong, "REFRESH PAGE MANUALLY!");
+            pingTimer = window.setInterval(updateTime, 60000);
+          } else {
+            setStatusString(testingInProgressMessage, "TESTING IN PROGRESS...");
+            pingTimer = window.setInterval(updateTime, 5000);
+          }
+        } else {
+          need_reload_check = 0;
+          reload_check_count = 0;
+          hideStatusString();
+          pingTimer = window.setInterval(updateTime, 60000);
+        }
+
+
+
+             }, "ajax").done(function (data) { alert('There!'); } );
+
+/*
   dojo.xhrGet({
       url: script_name,
       content: {
@@ -179,6 +233,7 @@ function updateTime()
         }
       }
   });
+*/
 }
 
 function startClock()
@@ -229,6 +284,19 @@ function displayProblemSubmitForm(action, probId)
 {
   document.location.href = script_name + "?SID=" + SID + "&action=" + action + "&prob_id=" + probId;
 }
+
+jQuery(document).ready(function()
+{
+    $.subscribe('errorHandler', function(event, data)
+    {
+	alert('ErrorEvent: ' + event + ', Data: ' + data);
+    });
+
+    $(document).ajaxError(function()
+    {
+	alert('ErrorEvent: ' + event + ', Data: ' + data);
+    });
+});
 
 /*
  * Local variables:

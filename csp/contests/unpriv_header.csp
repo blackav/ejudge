@@ -1,6 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html><head>
 <meta http-equiv="Content-type" content="text/html; charset=<s:config name="charset" />"/>
+<script type="text/javascript" src="<s:config name="style-prefix" />jquery-2.1.3.min.js"></script>
 <script type="text/javascript" src="<s:config name="style-prefix" />dojo/dojo.js" djConfig="isDebug: false, parseOnLoad: true, dojoIframeHistoryUrl:'<s:config name="style-prefix" />dojo/resources/iframe_history.html'"></script>
 <script type="text/javascript" src="<s:config name="style-prefix" />unpriv.js"></script>
 <script type="text/javascript">
