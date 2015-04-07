@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "includes.csp"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@page csp_view_main_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -115,7 +114,7 @@
 %></td>
         <td><%
         if (ci->edit_users_enabled) {
-%><s:url name="UsersUrl" ac="user-browse-page"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="UsersUrl"><s:_>Users</s:_></s:a><%
+%><s:url name="UsersUrl" ac="user-new-browse-page"><s:param name="contest_id" value="ci->id" /></s:url><s:a url="UsersUrl"><s:_>Users</s:_></s:a><%
         } else {
 %>&nbsp;<%
         }

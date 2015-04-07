@@ -1015,4 +1015,5 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_CNTS_EDIT_CUR_VARIANT_PAGE] = 1,
   [SSERV_CMD_CNTS_NEW_SERVE_CFG_PAGE] = 1,
   [SSERV_CMD_CNTS_COMMIT_PAGE] = 1,
+  [SSERV_CMD_USER_NEW_BROWSE_PAGE] = 1,
 };

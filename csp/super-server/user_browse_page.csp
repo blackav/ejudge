@@ -1,0 +1,37 @@
+<% //-*- html -*-
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_user_browse_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_user_browse_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = 0;
+    const unsigned char *subtitle = 0;
+    unsigned char subtitle_buf[1024];
+
+    int contest_id = 0;
+    int group_id = 0;
+
+%><s:read var="contest_id" default="0" /><%
+%><s:read var="group_id" default="0" /><%
+
+    if (contest_id > 0 && group_id > 0) {
+        snprintf(subtitle_buf, sizeof(subtitle_buf), "browsing users for contest %d, group %d", contest_id, group_id);
+    } else if (contest_id > 0) {
+        snprintf(subtitle_buf, sizeof(subtitle_buf), "browsing users for contest %d", contest_id);
+    } else if (group_id > 0) {
+        snprintf(subtitle_buf, sizeof(subtitle_buf), "browsing users for group %d", group_id);
+    } else {
+        snprintf(subtitle_buf, sizeof(subtitle_buf), "browsing users");
+    }
+    subtitle = subtitle_buf;
+%><%@include "header.csp"
+%>
+
+<%@include "footer.csp"
+%><%
+cleanup:
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>
