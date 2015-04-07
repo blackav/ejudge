@@ -26,8 +26,39 @@
         snprintf(subtitle_buf, sizeof(subtitle_buf), "browsing users");
     }
     subtitle = subtitle_buf;
-%><%@include "header.csp"
+%><%@include "header_jqgrid.csp"
 %>
+
+<table id="usertable"></table>
+<div id="pager"></div>
+
+<script type="text/javascript">
+jQuery(document).ready(function()
+{
+    jQuery("#usertable").jqGrid({
+        url: 'zzz',
+        datatype: 'json',
+        colNames: [ 'NN', 'User Id', 'User Login', 'E-mail', 'Name', 'Status', 'Flags', 'Operations' ],
+        colModel: [
+            { name: 'nn', index: 'nn' },
+            { name: 'id', index: 'id' },
+            { name: 'login', index: 'login' },
+            { name: 'email', index: 'email' },
+            { name: 'name', index: 'name' },
+            { name: 'status', index: 'status' },
+            { name: 'flags', index: 'flags' },
+            { name: 'operations', index: 'operations' }
+        ],
+        rowNum : 10,
+        rowList : [10,20,30],
+        pager : '#pager',
+        sortname: 'id',
+        viewrecords: true,
+        caption : 'Users'
+    });
+    jQuery("#usertable").jqGrid('navGrid', '#pager', {edit:false, add:false, del:false});
+});
+</script>
 
 <%@include "footer.csp"
 %><%
