@@ -29,6 +29,17 @@
 %><%@include "header_jqgrid.csp"
 %>
 
+<script type="text/javascript">
+  var SID='<s:v value="phr->session_id" />';
+  var self_url='<s:v value="phr->self_url" escape="false" />';
+  var script_name='<s:v value="phr->script_name" escape="false" />';
+  var contest_id='<s:v value="phr->contest_id" escape="false" />';
+  var user_browse_data=<s:ac ac="user-browse-data" />;
+</script>
+
+<form id="extraParams">
+</form>
+
 <table id="usertable"></table>
 <div id="pager"></div>
 
@@ -36,7 +47,8 @@
 jQuery(document).ready(function()
 {
     jQuery("#usertable").jqGrid({
-        url: 'zzz',
+        url: self_url,
+        postData: { 'SID' : SID, 'contest_id' : contest_id, 'action' : user_browse_data }, 
         datatype: 'json',
         colNames: [ 'NN', 'User Id', 'User Login', 'E-mail', 'Name', 'Status', 'Flags', 'Operations' ],
         colModel: [
@@ -53,6 +65,7 @@ jQuery(document).ready(function()
         rowList : [10,20,30],
         pager : '#pager',
         sortname: 'id',
+        sortorder : 'asc',
         viewrecords: true,
         caption : 'Users'
     });

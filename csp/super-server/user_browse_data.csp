@@ -1,0 +1,26 @@
+<% //-*- c -*-
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_user_browse_data"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_user_browse_data(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
+%>
+{
+    "page" : 0,
+    "total" : 1,
+    "records" : 2,
+    "rows" : [{
+        "id" : "1000",
+          "cell" : [ "1", "1000", "login1", "somewhere@no.com", "The name", "registered", "hidden", "none" ] 
+          },
+{
+        "id" : "1001",
+          "cell" : [ "2", "1001", "login2", "some@no.com", "The name 2", "registered", "hidden", "none" ] 
+        }]
+}
+<%
+  html_armor_free(&ab);
+%>

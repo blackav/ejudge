@@ -6733,6 +6733,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_NEW_SERVE_CFG_PAGE] = "cnts_new_serve_cfg_page",
   [SSERV_CMD_CNTS_COMMIT_PAGE] = "cnts_commit_page",
   [SSERV_CMD_USER_NEW_BROWSE_PAGE] = "user_browse_page",
+  [SSERV_CMD_USER_BROWSE_DATA] = "user_browse_data",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 
