@@ -524,7 +524,7 @@ static const unsigned char * const flag_op_legends[] =
 };
 
 int
-super_serve_op_USER_OLD_BROWSE_PAGE(
+super_serve_op_USER_BROWSE_PAGE(
         FILE *log_f,
         FILE *out_f,
         struct http_request_info *phr)
