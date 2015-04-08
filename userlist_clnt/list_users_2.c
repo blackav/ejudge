@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +28,11 @@ userlist_clnt_list_users_2(
         const unsigned char *filter,
         int offset,
         int count,
+        int page,
+        int sort_field,
+        int sort_order,
+        int filter_field,
+        int filter_op,
         unsigned char **p_info)
 {
   struct userlist_pk_list_users_2 *out = 0;
@@ -52,6 +56,11 @@ userlist_clnt_list_users_2(
   out->filter_len = filter_len;
   out->offset = offset;
   out->count = count;
+  out->page = page;
+  out->sort_field = sort_field;
+  out->sort_order = sort_order;
+  out->filter_field = filter_field;
+  out->filter_op = filter_op;
   memcpy(out->data, filter, filter_len + 1);
 
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;

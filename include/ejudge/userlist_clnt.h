@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __USERLIST_CLNT_H__
 #define __USERLIST_CLNT_H__
 
-/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -438,7 +437,12 @@ userlist_clnt_list_users_2(
         const unsigned char *filter,
         int offset,
         int count,
-        unsigned char **p_info);
+        int page,
+        int sort_field,
+        int sort_order,
+        int filter_field,
+        int filter_op,
+        /* OUT */ unsigned char **p_info);
 
 int
 userlist_clnt_get_count(
@@ -447,7 +451,9 @@ userlist_clnt_get_count(
         int contest_id,
         int group_id,
         const unsigned char *filter,
-        long long *p_count);
+        int filter_field,
+        int filter_op,
+        /* OUT */ long long *p_count);
 
 struct userlist_pk_create_user_2;
 int

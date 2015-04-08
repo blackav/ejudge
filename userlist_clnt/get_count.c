@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +25,8 @@ userlist_clnt_get_count(
         int contest_id,
         int group_id,
         const unsigned char *filter,
+        int filter_field,
+        int filter_op,
         long long *p_count)
 {
   struct userlist_pk_list_users_2 *out = 0;
@@ -47,6 +48,8 @@ userlist_clnt_get_count(
   out->request_id = cmd;
   out->contest_id = contest_id;
   out->group_id = group_id;
+  out->filter_field = filter_field;
+  out->filter_op = filter_op;
   out->filter_len = filter_len;
   memcpy(out->data, filter, filter_len + 1);
 

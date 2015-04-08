@@ -724,6 +724,9 @@ super_serve_op_USER_BROWSE_PAGE(
 
   r = userlist_clnt_list_users_2(phr->userlist_clnt, ULS_LIST_ALL_USERS_2,
                                  contest_id, group_id, user_filter, user_offset, user_count,
+                                 // FIXME: fill these fields
+                                 -1 /* page */, -1 /* sort_field */, 0 /* sort_order */,
+                                 -1 /* filter_field */, 0 /* filter_op */,
                                  &xml_text);
   if (r < 0) {
     fprintf(out_f, "</form>\n");
@@ -1225,7 +1228,10 @@ super_serve_op_USER_FILTER_CHANGE_ACTION(
     goto cleanup;
   }
   if ((r = userlist_clnt_get_count(phr->userlist_clnt, ULS_GET_USER_COUNT,
-                                   contest_id, group_id, 0, &total_count)) < 0) {
+                                   contest_id, group_id, 0,
+                                   // FIXME: fill these fields
+                                   -1 /* filter_field */, 0 /* filter_op */,
+                                   &total_count)) < 0) {
     err("set_user_filter: get_count failed: %d", -r);
     goto cleanup;
   }
@@ -1634,6 +1640,9 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
   if (!phr->userlist_clnt) FAIL(SSERV_ERR_DB_ERROR);
   r = userlist_clnt_list_users_2(phr->userlist_clnt, ULS_LIST_ALL_USERS_3,
                                  contest_id, group_id, marked_str, 0, 0,
+                                 // FIXME: fill these fields
+                                 -1 /* page */, -1 /* sort_field */, 0 /* sort_order */,
+                                 -1 /* filter_field */, 0 /* filter_op */,
                                  &xml_text);
   if (r < 0) FAIL(SSERV_ERR_DB_ERROR);
   users = userlist_parse_str(xml_text);
@@ -2294,6 +2303,9 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
   if (!phr->userlist_clnt) FAIL(SSERV_ERR_DB_ERROR);
   r = userlist_clnt_list_users_2(phr->userlist_clnt, ULS_LIST_ALL_USERS_3,
                                  contest_id, group_id, marked_str, 0, 0,
+                                 // FIXME: fill the fields
+                                 -1 /* page */, -1 /* sort_field */, 0 /* sort_order */,
+                                 -1 /* filter_field */, 0 /* filter_op */,
                                  &xml_text);
   if (r < 0) FAIL(SSERV_ERR_DB_ERROR);
   users = userlist_parse_str(xml_text);
@@ -7228,6 +7240,9 @@ super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
   if (!phr->userlist_clnt) FAIL(SSERV_ERR_DB_ERROR);
   r = userlist_clnt_list_users_2(phr->userlist_clnt, ULS_LIST_ALL_USERS_4,
                                  contest_id, group_id, marked_str, 0, 0,
+                                 // FIXME: fill the fields
+                                 -1 /* page */, -1 /* sort_field */, 0 /* sort_order */,
+                                 -1 /* filter_field */, 0 /* filter_op */,
                                  &xml_text);
 
   if (r < 0) FAIL(SSERV_ERR_DB_ERROR);
@@ -7862,6 +7877,9 @@ super_serve_op_GROUP_BROWSE_PAGE(
 
   r = userlist_clnt_list_users_2(phr->userlist_clnt, ULS_LIST_ALL_GROUPS_2,
                                  0, 0, group_filter, group_offset, group_count,
+                                 // FIXME: fill the fields
+                                 -1 /* page */, -1 /* sort_field */, 0 /* sort_order */,
+                                 -1 /* filter_field */, 0 /* filter_op */,
                                  &xml_text);
   if (r < 0) {
     fprintf(out_f, "</form>\n");
@@ -7982,7 +8000,10 @@ super_serve_GROUP_FILTER_CHANGE_ACTION(
     goto cleanup;
   }
   if ((r = userlist_clnt_get_count(phr->userlist_clnt, ULS_GET_GROUP_COUNT,
-                                   0, 0, 0, &total_count)) < 0) {
+                                   0, 0, 0,
+                                   // FIXME: fill the fields
+                                   -1 /* filter_field */, 0 /* filter_op */,
+                                   &total_count)) < 0) {
     err("set_group_filter: get_count failed: %d", -r);
     goto cleanup;
   }
