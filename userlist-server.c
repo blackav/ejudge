@@ -606,7 +606,7 @@ link_client_state(struct client_state *p)
 #define default_get_contest_reg(a, b) dflt_iface->get_contest_reg(uldb_default->data, a, b)
 #define default_try_new_login(a, b, c, d, e) dflt_iface->try_new_login(uldb_default->data, a, b, c, d, e)
 #define default_set_simple_reg(a, b, c) dflt_iface->set_simple_reg(uldb_default->data, a, b, c)
-#define default_get_brief_list_iterator_2(a, b, c, d, e) dflt_iface->get_brief_list_iterator_2(uldb_default->data, a, b, c, d, e)
+#define default_get_brief_list_iterator_2(a, b, c, d, e, f, g, h, i, j) dflt_iface->get_brief_list_iterator_2(uldb_default->data, a, b, c, d, e, f, g, h, i, j)
 #define default_get_user_count(a, b, c, d, e, f) dflt_iface->get_user_count(uldb_default->data, a, b, c, d, e, f)
 #define default_get_group_iterator_2(a, b, c) dflt_iface->get_group_iterator_2(uldb_default->data, a, b, c)
 #define default_get_group_count(a, b) dflt_iface->get_group_count(uldb_default->data, a, b)
@@ -9681,7 +9681,8 @@ cmd_list_all_users_2(
 
   f = open_memstream(&xml_ptr, &xml_size);
   userlist_write_xml_header(f);
-  iter = default_get_brief_list_iterator_2(data->contest_id, data->group_id, data->data, data->offset, data->count);
+  iter = default_get_brief_list_iterator_2(data->contest_id, data->group_id, data->data, data->offset, data->count,
+                                           data->page, data->sort_field, data->sort_order, data->filter_field, data->filter_op);
   if (iter) {
     for (; iter->has_next(iter); iter->next(iter)) {
       if (!(u = (const struct userlist_user*) iter->get(iter))) continue;

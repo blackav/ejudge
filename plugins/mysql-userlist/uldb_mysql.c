@@ -4983,7 +4983,12 @@ get_brief_list_iterator_2_func(
         int group_id,
         const unsigned char *filter,
         int offset,
-        int count)
+        int count,
+        int page,
+        int sort_field,
+        int sort_order,
+        int filter_field,
+        int filter_op)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct brief_list_iterator *iter = 0;

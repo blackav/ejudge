@@ -452,7 +452,12 @@ get_brief_list_iterator_2_func(
         int group_id,
         const unsigned char *filter,
         int offset,
-        int count);
+        int count,
+        int page,
+        int sort_field,
+        int sort_order,
+        int filter_field,
+        int filter_op);
 static int
 get_user_count_func(
         void *data,

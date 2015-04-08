@@ -240,7 +240,18 @@ struct uldb_plugin_iface
   // remove a group member
   int (*remove_group_member)(void *, int group_id, int user_id);
   // list users
-  ptr_iterator_t (*get_brief_list_iterator_2)(void *, int contest_id, int group_id, const unsigned char *filter, int offset, int count);
+  ptr_iterator_t (*get_brief_list_iterator_2)(
+        void *, 
+        int contest_id,
+        int group_id,
+        const unsigned char *filter,
+        int offset,
+        int count,
+        int page,
+        int sort_field,
+        int sort_order,
+        int filter_field,
+        int filter_op);
   // get the total count of users for the given filter
   int (*get_user_count)(void *, int contest_id, int group_id, const unsigned char *filter, int filter_field, int filter_op, long long *p_count);
   // get the group iterator
