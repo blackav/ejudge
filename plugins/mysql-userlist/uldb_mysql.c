@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -5218,6 +5217,8 @@ get_user_count_func(
         int contest_id,
         int group_id,
         const unsigned char *filter,
+        int filter_field,
+        int filter_op,
         long long *p_count)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;

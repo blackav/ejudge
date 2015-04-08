@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __ULDB_PLUGIN_H__
 #define __ULDB_PLUGIN_H__
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -243,7 +242,7 @@ struct uldb_plugin_iface
   // list users
   ptr_iterator_t (*get_brief_list_iterator_2)(void *, int contest_id, int group_id, const unsigned char *filter, int offset, int count);
   // get the total count of users for the given filter
-  int (*get_user_count)(void *, int contest_id, int group_id, const unsigned char *filter, long long *p_count);
+  int (*get_user_count)(void *, int contest_id, int group_id, const unsigned char *filter, int filter_field, int filter_op, long long *p_count);
   // get the group iterator
   ptr_iterator_t (*get_group_iterator_2)(void *, const unsigned char *filter, int offset, int count);
   // get the total number of groups to display

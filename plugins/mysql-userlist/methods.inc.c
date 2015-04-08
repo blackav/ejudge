@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -460,6 +459,8 @@ get_user_count_func(
         int contest_id,
         int group_id,
         const unsigned char *filter,
+        int filter_field,
+        int filter_op,
         long long *p_count);
 static ptr_iterator_t
 get_group_iterator_2_func(
