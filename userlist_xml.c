@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -172,6 +171,7 @@ static char const * const attr_map[] =
   "description",
   "user_id",
   "client_key",
+  "total",
 
   0
 };
@@ -1398,6 +1398,7 @@ do_parse_userlist(char const *path, struct userlist_list *lst)
   struct userlist_user *u;
   int map_size;
 
+  lst->total = -1;
   for (a = lst->b.first; a; a = a->next) {
     switch (a->tag) {
     case USERLIST_A_NAME:
@@ -1412,6 +1413,14 @@ do_parse_userlist(char const *path, struct userlist_list *lst)
             || x < 0)
           return xml_err_attr_invalid(a);
         lst->member_serial = x;
+      }
+      break;
+    case USERLIST_A_TOTAL:
+      {
+        long long total = 0;
+        if (xml_attr_long_long(a, &total))
+          return xml_err_attr_invalid(a);
+        lst->total = total;
       }
       break;
     default:
@@ -2324,11 +2333,15 @@ userlist_unparse_short(struct userlist_list *p, FILE *f, int contest_id)
 }
 
 void
-userlist_write_xml_header(FILE *f)
+userlist_write_xml_header(FILE *f, long long total)
 {
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n",
           EJUDGE_CHARSET);
-  fprintf(f, "<%s>", elem_map[USERLIST_T_USERLIST]);
+  fprintf(f, "<%s", elem_map[USERLIST_T_USERLIST]);
+  if (total >= 0) {
+    fprintf(f, " %s=\"%lld\"", attr_map[USERLIST_A_TOTAL], total);
+  }
+  fprintf(f, ">");
 }
 
 void

@@ -4713,7 +4713,7 @@ cmd_list_all_users(
   if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
 
   f = open_memstream(&xml_ptr, &xml_size);
-  userlist_write_xml_header(f);
+  userlist_write_xml_header(f, -1);
   iter = default_get_brief_list_iterator(data->contest_id);
   if (iter) {
     for (; iter->has_next(iter); iter->next(iter)) {
@@ -4778,7 +4778,7 @@ cmd_list_standings_users(
   }
 
   f = open_memstream(&xml_ptr, &xml_size);
-  userlist_write_xml_header(f);
+  userlist_write_xml_header(f, -1);
   for (iter = default_get_standings_list_iterator(data->contest_id);
        iter->has_next(iter);
        iter->next(iter)) {
@@ -9258,7 +9258,7 @@ cmd_list_all_groups(
   }
 
   fout = open_memstream(&xml_ptr, &xml_size);
-  userlist_write_xml_header(fout);
+  userlist_write_xml_header(fout, -1);
   userlist_write_groups_header(fout);
   iter = plugin_call0(get_group_iterator);
   if (iter) {
@@ -9444,7 +9444,7 @@ cmd_list_group_users(
   }
 
   fout = open_memstream(&xml_ptr, &xml_size);
-  userlist_write_xml_header(fout);
+  userlist_write_xml_header(fout, -1);
   iter = plugin_call(get_group_user_iterator, grp->group_id);
   if (iter) {
     for (; iter->has_next(iter); iter->next(iter)) {
@@ -9613,7 +9613,7 @@ cmd_get_groups(
   ASSERT(i == group_count);
 
   xml_file = open_memstream(&xml_text, &xml_size);
-  userlist_write_xml_header(xml_file);
+  userlist_write_xml_header(xml_file, -1);
   userlist_write_groups_header(xml_file);
   for (i = 0; i < group_count; ++i) {
     grp = plugin_call(get_group, groups[i]);
@@ -9680,9 +9680,11 @@ cmd_list_all_users_2(
   if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
 
   f = open_memstream(&xml_ptr, &xml_size);
-  userlist_write_xml_header(f);
   iter = default_get_brief_list_iterator_2(data->contest_id, data->group_id, data->data, data->offset, data->count,
                                            data->page, data->sort_field, data->sort_order, data->filter_field, data->filter_op);
+  long long total = -1;
+  if (iter->get_total) total = iter->get_total(iter);
+  userlist_write_xml_header(f, total);
   if (iter) {
     for (; iter->has_next(iter); iter->next(iter)) {
       if (!(u = (const struct userlist_user*) iter->get(iter))) continue;
@@ -9768,7 +9770,7 @@ cmd_list_all_groups_2(
   if (is_dbcnts_capable(p, NULL, OPCAP_LIST_USERS, logbuf) < 0) return;
 
   fout = open_memstream(&xml_ptr, &xml_size);
-  userlist_write_xml_header(fout);
+  userlist_write_xml_header(fout, -1);
   userlist_write_groups_header(fout);
   iter = default_get_group_iterator_2(data->data, data->offset, data->count);
   if (iter) {
@@ -10139,7 +10141,7 @@ cmd_list_all_users_3(
 
   bitset_url_decode(data->data, &marked);
   f = open_memstream(&xml_ptr, &xml_size);
-  userlist_write_xml_header(f);
+  userlist_write_xml_header(f, -1);
   if (marked.size > 0) {
     for (user_id = 1; user_id < marked.size; ++user_id) {
       if (bitset_get(&marked, user_id)) {
@@ -10194,7 +10196,7 @@ cmd_list_all_users_4(
 
   bitset_url_decode(data->data, &marked);
   f = open_memstream(&xml_ptr, &xml_size);
-  userlist_write_xml_header(f);
+  userlist_write_xml_header(f, -1);
   if (marked.size > 0) {
     for (user_id = 1; user_id < marked.size; ++user_id) {
       if (bitset_get(&marked, user_id)) {
@@ -10249,7 +10251,7 @@ cmd_get_group_info(
   }
 
   fout = open_memstream(&xml_ptr, &xml_size);
-  userlist_write_xml_header(fout);
+  userlist_write_xml_header(fout, -1);
   userlist_write_groups_header(fout);
   userlist_unparse_usergroup(fout, grp, "      ", "\n");
   userlist_write_groups_footer(fout);

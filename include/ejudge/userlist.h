@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __USERLIST_H__
 #define __USERLIST_H__
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -204,6 +203,7 @@ enum
     USERLIST_A_DESCRIPTION,
     USERLIST_A_USER_ID,
     USERLIST_A_CLIENT_KEY,
+    USERLIST_A_TOTAL,
 
     USERLIST_LAST_ATTN,
   };
@@ -582,6 +582,7 @@ struct userlist_list
   int user_map_size;
   struct userlist_user **user_map;
   int member_serial;
+  long long total;
 
   /* login hash information */
   size_t login_hash_size;
@@ -752,7 +753,7 @@ struct userlist_member *
 userlist_get_member_nc(struct userlist_members *, int, int *, int *);
 void userlist_clear_copied_from(struct userlist_members *mm);
 
-void userlist_write_xml_header(FILE *f);
+void userlist_write_xml_header(FILE *f, long long total);
 void userlist_write_xml_footer(FILE *f);
 void userlist_write_contests_xml_header(FILE *f);
 void userlist_write_contests_xml_footer(FILE *f);
