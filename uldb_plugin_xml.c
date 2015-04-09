@@ -4293,6 +4293,12 @@ brief_list_3_iterator_destroy_func(ptr_iterator_t data)
   xfree(iter->user_ids);
   xfree(iter);
 }
+static long long
+brief_list_3_iterator_get_total_func(ptr_iterator_t data)
+{
+  struct brief_list_3_iterator *iter = (struct brief_list_3_iterator*) data;
+  return iter->total;
+}
 
 static struct ptr_iterator brief_list_3_iterator_funcs =
 {
