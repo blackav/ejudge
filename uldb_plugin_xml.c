@@ -4306,6 +4306,7 @@ static struct ptr_iterator brief_list_3_iterator_funcs =
   brief_list_3_iterator_get_func,
   brief_list_3_iterator_next_func,
   brief_list_3_iterator_destroy_func,
+  brief_list_3_iterator_get_total_func,
 };
 
 static ptr_iterator_t
