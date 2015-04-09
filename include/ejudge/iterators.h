@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __ITERATORS_H__
 #define __ITERATORS_H__
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +35,7 @@ struct ptr_iterator
   const void *(*get)(ptr_iterator_t);
   void (*next)(ptr_iterator_t);
   void (*destroy)(ptr_iterator_t);
+  long long (*get_total)(ptr_iterator_t); // may be NULL, returns the total number of items in collection
 };
 
 #endif /* __ITERATORS_H__ */
