@@ -27,6 +27,7 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
+#include "ejudge/xml_utils.h"
 
 #include <string.h>
 #include <sys/types.h>
@@ -3945,6 +3946,454 @@ remove_group_member_func(void *data, int group_id, int user_id)
   return 0;
 }
 
+static const struct userlist_groupmember *
+find_user_group(const struct userlist_user *u, int group_id)
+{
+  if (!u) return NULL;
+  if (!u->group_first) return NULL;
+
+  const struct userlist_groupmember *gm;
+  for (gm = (const struct userlist_groupmember*) u->group_first;
+       gm && gm->group_id < group_id;
+       gm = (const struct userlist_groupmember*) gm->group_next) {
+  }
+  if (gm && gm->group_id == group_id) return gm;
+  return NULL;
+}
+
+static const struct userlist_contest *
+find_user_contest(const struct userlist_user *u, int contest_id)
+{
+  if (!u) return NULL;
+  if (!u->contests) return NULL;
+
+  const struct xml_tree *t;
+  for (t = u->contests->first_down; t; t = t->right) {
+    const struct userlist_contest *c = (const struct userlist_contest*) t;
+    if (c->id == contest_id) return c;
+  }
+  return NULL;
+}
+
+static int
+match_string(const unsigned char *value, int filter_op, const unsigned char *pattern)
+{
+  if (!value) value = "";
+  if (!pattern) pattern = "";
+  int vlen = strlen(value);
+  int plen = strlen(pattern);
+
+  switch (filter_op) {
+  case USER_FILTER_OP_EQ: // "eq": 'equal'
+    return strcmp(value, pattern) == 0;
+  case USER_FILTER_OP_NE: // "ne": 'not equal'
+    return strcmp(value, pattern) != 0;
+  case USER_FILTER_OP_LT: // "lt": 'less'
+    return strcmp(value, pattern) < 0;
+  case USER_FILTER_OP_LE: // "le": 'less or equal'
+    return strcmp(value, pattern) <= 0;
+  case USER_FILTER_OP_GT: // "gt": 'greater'
+    return strcmp(value, pattern) > 0;
+  case USER_FILTER_OP_GE: // "ge": 'greater or equal'
+    return strcmp(value, pattern) >= 0;
+  case USER_FILTER_OP_BW: // "bw": 'begins with'
+    return vlen >= plen && !strncmp(value, pattern, plen);
+  case USER_FILTER_OP_BN: // "bn": 'does not begin with'
+    return vlen < plen || strncmp(value, pattern, plen) != 0;
+  case USER_FILTER_OP_IN: // "in": 'is in'
+    return 0;
+  case USER_FILTER_OP_NI: // "ni": 'is not in'
+    return 0;
+  case USER_FILTER_OP_EW: // "ew": 'ends with'
+    return vlen >= plen && !strcmp(value + vlen - plen, pattern);
+  case USER_FILTER_OP_EN: // "en": 'does not end with'
+    return vlen < plen || strcmp(value + vlen - plen, pattern) != 0;
+  case USER_FILTER_OP_CN: // "cn": 'contains'
+    return strstr(value, pattern) != NULL;
+  case USER_FILTER_OP_NC: // "nc": 'does not contain'
+    return strstr(value, pattern) == NULL;
+  default:
+    return 0;
+  }
+  return 0;
+}
+
+static int
+match_int(int value, int filter_op, int pattern)
+{
+  switch (filter_op) {
+  case USER_FILTER_OP_EQ: // "eq": 'equal'
+    return value == pattern;
+  case USER_FILTER_OP_NE: // "ne": 'not equal'
+    return value != pattern;
+  case USER_FILTER_OP_LT: // "lt": 'less'
+    return value < pattern;
+  case USER_FILTER_OP_LE: // "le": 'less or equal'
+    return value <= pattern;
+  case USER_FILTER_OP_GT: // "gt": 'greater'
+    return value > pattern;
+  case USER_FILTER_OP_GE: // "ge": 'greater or equal'
+    return value >= pattern;
+  case USER_FILTER_OP_BW: // "bw": 'begins with'
+    return 0;
+  case USER_FILTER_OP_BN: // "bn": 'does not begin with'
+    return 0;
+  case USER_FILTER_OP_IN: // "in": 'is in'
+    return 0;
+  case USER_FILTER_OP_NI: // "ni": 'is not in'
+    return 0;
+  case USER_FILTER_OP_EW: // "ew": 'ends with'
+    return 0;
+  case USER_FILTER_OP_EN: // "en": 'does not end with'
+    return 0;
+  case USER_FILTER_OP_CN: // "cn": 'contains'
+    return 0;
+  case USER_FILTER_OP_NC: // "nc": 'does not contain'
+    return 0;
+  default:
+    return 0;
+  }
+  return 0;
+}
+
+static int
+does_user_match(
+        const struct userlist_user *u,
+        int contest_id,
+        int group_id,
+        int filter_field,
+        int filter_op,
+        const void *vvalue)
+{
+  if (!u) return 0;
+  if (contest_id > 0 && !find_user_contest(u, contest_id)) return 0;
+  if (group_id > 0 && !find_user_group(u, group_id)) return 0;
+
+  switch (filter_field) {
+  case USERLIST_NN_ID:
+    return match_int(u->id, filter_op, *(const int*) vvalue);
+  case USERLIST_NN_LOGIN:
+    return match_string(u->login, filter_op, (const unsigned char*) vvalue);
+  case USERLIST_NN_EMAIL:
+    return match_string(u->email, filter_op, (const unsigned char *) vvalue);
+  case USERLIST_NC_NAME:
+    {
+      const struct userlist_user_info *ui = NULL;
+      if (contest_id <= 0) {
+        ui = u->cnts0;
+      } else {
+        ui = userlist_get_user_info(u, contest_id);
+      }
+      if (!ui) return 0;
+      return match_string(ui->name, filter_op, (const unsigned char *) vvalue);
+    }
+  default:
+    return 0;
+  }
+
+  return 0;
+}
+
+struct userlist_sorting_context
+{
+  const struct userlist_list *userlist;
+  int contest_id;
+};
+
+static int
+sort_func_user_id_asc(const void *v1, const void *v2, void *vc)
+{
+  const struct userlist_sorting_context *cntx = (const struct userlist_sorting_context *) vc;
+  int idx1 = *(const int*) v1;
+  int idx2 = *(const int*) v2;
+  const struct userlist_user *u1 = NULL;
+  const struct userlist_user *u2 = NULL;
+  if (idx1 > 0 && idx1 < cntx->userlist->user_map_size) u1 = cntx->userlist->user_map[idx1];
+  if (idx2 > 0 && idx2 < cntx->userlist->user_map_size) u2 = cntx->userlist->user_map[idx2];
+  int id1 = 0;
+  int id2 = 0;
+  if (u1) id1 = u1->id;
+  if (u2) id2 = u2->id;
+  if (id1 < id2) return -1;
+  if (id1 > id2) return 1;
+  return 0;
+}
+static int
+sort_func_user_id_dsc(const void *v1, const void *v2, void *vc)
+{
+  const struct userlist_sorting_context *cntx = (const struct userlist_sorting_context *) vc;
+  int idx1 = *(const int*) v1;
+  int idx2 = *(const int*) v2;
+  const struct userlist_user *u1 = NULL;
+  const struct userlist_user *u2 = NULL;
+  if (idx1 > 0 && idx1 < cntx->userlist->user_map_size) u1 = cntx->userlist->user_map[idx1];
+  if (idx2 > 0 && idx2 < cntx->userlist->user_map_size) u2 = cntx->userlist->user_map[idx2];
+  int id1 = 0;
+  int id2 = 0;
+  if (u1) id1 = u1->id;
+  if (u2) id2 = u2->id;
+  if (id1 > id2) return -1;
+  if (id1 < id2) return 1;
+  return 0;
+}
+static int
+sort_func_login_asc(const void *v1, const void *v2, void *vc)
+{
+  const struct userlist_sorting_context *cntx = (const struct userlist_sorting_context *) vc;
+  int idx1 = *(const int*) v1;
+  int idx2 = *(const int*) v2;
+  const struct userlist_user *u1 = NULL;
+  const struct userlist_user *u2 = NULL;
+  if (idx1 > 0 && idx1 < cntx->userlist->user_map_size) u1 = cntx->userlist->user_map[idx1];
+  if (idx2 > 0 && idx2 < cntx->userlist->user_map_size) u2 = cntx->userlist->user_map[idx2];
+  const unsigned char *str1 = NULL;
+  const unsigned char *str2 = NULL;
+  if (u1) str1 = u1->login;
+  if (!str1) str1 = "";
+  if (u2) str2 = u2->login;
+  if (!str2) str2 = "";
+  return strcmp(str1, str2);
+}
+static int
+sort_func_login_dsc(const void *v1, const void *v2, void *vc)
+{
+  const struct userlist_sorting_context *cntx = (const struct userlist_sorting_context *) vc;
+  int idx1 = *(const int*) v1;
+  int idx2 = *(const int*) v2;
+  const struct userlist_user *u1 = NULL;
+  const struct userlist_user *u2 = NULL;
+  if (idx1 > 0 && idx1 < cntx->userlist->user_map_size) u1 = cntx->userlist->user_map[idx1];
+  if (idx2 > 0 && idx2 < cntx->userlist->user_map_size) u2 = cntx->userlist->user_map[idx2];
+  const unsigned char *str1 = NULL;
+  const unsigned char *str2 = NULL;
+  if (u1) str1 = u1->login;
+  if (!str1) str1 = "";
+  if (u2) str2 = u2->login;
+  if (!str2) str2 = "";
+  return strcmp(str2, str1);
+}
+static int
+sort_func_email_asc(const void *v1, const void *v2, void *vc)
+{
+  const struct userlist_sorting_context *cntx = (const struct userlist_sorting_context *) vc;
+  int idx1 = *(const int*) v1;
+  int idx2 = *(const int*) v2;
+  const struct userlist_user *u1 = NULL;
+  const struct userlist_user *u2 = NULL;
+  if (idx1 > 0 && idx1 < cntx->userlist->user_map_size) u1 = cntx->userlist->user_map[idx1];
+  if (idx2 > 0 && idx2 < cntx->userlist->user_map_size) u2 = cntx->userlist->user_map[idx2];
+  const unsigned char *str1 = NULL;
+  const unsigned char *str2 = NULL;
+  if (u1) str1 = u1->email;
+  if (!str1) str1 = "";
+  if (u2) str2 = u2->email;
+  if (!str2) str2 = "";
+  return strcmp(str1, str2);
+}
+static int
+sort_func_email_dsc(const void *v1, const void *v2, void *vc)
+{
+  const struct userlist_sorting_context *cntx = (const struct userlist_sorting_context *) vc;
+  int idx1 = *(const int*) v1;
+  int idx2 = *(const int*) v2;
+  const struct userlist_user *u1 = NULL;
+  const struct userlist_user *u2 = NULL;
+  if (idx1 > 0 && idx1 < cntx->userlist->user_map_size) u1 = cntx->userlist->user_map[idx1];
+  if (idx2 > 0 && idx2 < cntx->userlist->user_map_size) u2 = cntx->userlist->user_map[idx2];
+  const unsigned char *str1 = NULL;
+  const unsigned char *str2 = NULL;
+  if (u1) str1 = u1->email;
+  if (!str1) str1 = "";
+  if (u2) str2 = u2->email;
+  if (!str2) str2 = "";
+  return strcmp(str2, str1);
+}
+static int
+sort_func_name_asc(const void *v1, const void *v2, void *vc)
+{
+  const struct userlist_sorting_context *cntx = (const struct userlist_sorting_context *) vc;
+  int idx1 = *(const int*) v1;
+  int idx2 = *(const int*) v2;
+  const struct userlist_user *u1 = NULL;
+  const struct userlist_user *u2 = NULL;
+  if (idx1 > 0 && idx1 < cntx->userlist->user_map_size) u1 = cntx->userlist->user_map[idx1];
+  if (idx2 > 0 && idx2 < cntx->userlist->user_map_size) u2 = cntx->userlist->user_map[idx2];
+  const struct userlist_user_info *ui1 = NULL;
+  const struct userlist_user_info *ui2 = NULL;
+  if (u1) ui1 = userlist_get_user_info(u1, cntx->contest_id);
+  if (u2) ui2 = userlist_get_user_info(u2, cntx->contest_id);
+  const unsigned char *str1 = NULL;
+  const unsigned char *str2 = NULL;
+  if (ui1) str1 = ui1->name;
+  if (!str1) str1 = "";
+  if (ui2) str2 = ui2->name;
+  if (!str2) str2 = "";
+  return strcmp(str1, str2);
+}
+static int
+sort_func_name_dsc(const void *v1, const void *v2, void *vc)
+{
+  const struct userlist_sorting_context *cntx = (const struct userlist_sorting_context *) vc;
+  int idx1 = *(const int*) v1;
+  int idx2 = *(const int*) v2;
+  const struct userlist_user *u1 = NULL;
+  const struct userlist_user *u2 = NULL;
+  if (idx1 > 0 && idx1 < cntx->userlist->user_map_size) u1 = cntx->userlist->user_map[idx1];
+  if (idx2 > 0 && idx2 < cntx->userlist->user_map_size) u2 = cntx->userlist->user_map[idx2];
+  const struct userlist_user_info *ui1 = NULL;
+  const struct userlist_user_info *ui2 = NULL;
+  if (u1) ui1 = userlist_get_user_info(u1, cntx->contest_id);
+  if (u2) ui2 = userlist_get_user_info(u2, cntx->contest_id);
+  const unsigned char *str1 = NULL;
+  const unsigned char *str2 = NULL;
+  if (ui1) str1 = ui1->name;
+  if (!str1) str1 = "";
+  if (ui2) str2 = ui2->name;
+  if (!str2) str2 = "";
+  return strcmp(str1, str2);
+}
+
+struct brief_list_3_iterator
+{
+  struct ptr_iterator b;
+  struct uldb_xml_state *state;
+  int *user_ids;
+  int total;
+  int count;
+  int index;
+};
+
+static int
+brief_list_3_iterator_has_next_func(ptr_iterator_t data)
+{
+  struct brief_list_3_iterator *iter = (struct brief_list_3_iterator*) data;
+  return iter->index < iter->count;
+}
+static const void *
+brief_list_3_iterator_get_func(ptr_iterator_t data)
+{
+  struct brief_list_3_iterator *iter = (struct brief_list_3_iterator*) data;
+  struct userlist_list *ul = iter->state->userlist;
+  if (iter->index >= iter->count) return NULL;
+  int user_id = iter->user_ids[iter->index];
+  if (user_id > 0 && user_id < ul->user_map_size)
+    return (const void *) ul->user_map[user_id];
+  return NULL;
+}
+static void
+brief_list_3_iterator_next_func(ptr_iterator_t data)
+{
+  struct brief_list_3_iterator *iter = (struct brief_list_3_iterator*) data;
+  if (iter->index < iter->count) ++iter->index;
+}
+static void
+brief_list_3_iterator_destroy_func(ptr_iterator_t data)
+{
+  struct brief_list_3_iterator *iter = (struct brief_list_3_iterator*) data;
+  xfree(iter->user_ids);
+  xfree(iter);
+}
+
+static struct ptr_iterator brief_list_3_iterator_funcs =
+{
+  brief_list_3_iterator_has_next_func,
+  brief_list_3_iterator_get_func,
+  brief_list_3_iterator_next_func,
+  brief_list_3_iterator_destroy_func,
+};
+
+static ptr_iterator_t
+new_get_brief_list_iterator_2_func(
+        void *data,
+        int contest_id,
+        int group_id,
+        const unsigned char *filter,
+        int offset,
+        int count,
+        int page,
+        int sort_field,
+        int sort_order,
+        int filter_field,
+        int filter_op)
+{
+  struct uldb_xml_state *state = (struct uldb_xml_state*) data;
+
+  int *user_ids = 0;
+  int user_ids_a = 16;
+  int user_ids_u = 0;
+  XCALLOC(user_ids, user_ids_a);
+
+  const void *filter_data = filter;
+  int int_key = 0;
+  if (filter_field == USERLIST_NN_ID) {
+    if (xml_parse_int(NULL, NULL, 0, 0, filter, &int_key) >= 0) {
+      filter_data = &int_key;
+    } else {
+      filter_op = 0;
+    }
+  }
+
+  for (int user_id = 1; user_id < state->userlist->user_map_size; ++user_id) {
+    if (does_user_match(state->userlist->user_map[user_id], contest_id, group_id, filter_field, filter_op, filter_data)) {
+      if (user_ids_u >= user_ids_a) {
+        if (!(user_ids_a *= 2)) user_ids_a = 32;
+        XREALLOC(user_ids, user_ids_a);
+      }
+      user_ids[user_ids_u++] = user_id;
+    }
+  }
+
+  // sort data according to sort_field/sort_order
+  int (*sort_func)(const void *, const void *, void *) = NULL;
+  switch (sort_field) {
+  case USERLIST_NN_ID:
+    if (sort_order == 1) {
+      sort_func = sort_func_user_id_asc;
+    } else if (sort_order == 2) {
+      sort_func = sort_func_user_id_dsc;
+    }
+  case USERLIST_NN_LOGIN:
+    if (sort_order == 1) {
+      sort_func = sort_func_login_asc;
+    } else if (sort_order == 2) {
+      sort_func = sort_func_login_dsc;
+    }
+  case USERLIST_NN_EMAIL:
+    if (sort_order == 1) {
+      sort_func = sort_func_email_asc;
+    } else if (sort_order == 2) {
+      sort_func = sort_func_email_dsc;
+    }
+  case USERLIST_NC_NAME:
+    if (sort_order == 1) {
+      sort_func = sort_func_name_asc;
+    } else if (sort_order == 2) {
+      sort_func = sort_func_name_dsc;
+    }
+  }
+
+  qsort_r(user_ids, user_ids_u, sizeof(user_ids[0]), sort_func,
+          (struct userlist_sorting_context[]){{ state->userlist, contest_id }});
+
+  // extract the requested window
+  // page is numbered from 0
+  if (count <= 0) count = 15; // default page size
+  if (page < 0) page = 0;
+  if (page * count >= user_ids_u) page = user_ids_u / count;
+  if ((page + 1) * count > user_ids_u) count = user_ids_u - page * count;
+
+  struct brief_list_3_iterator *iter = NULL;
+  XCALLOC(iter, 1);
+  iter->b = brief_list_3_iterator_funcs;
+  iter->state = state;
+  iter->total = user_ids_u;
+  iter->count = count;
+  XCALLOC(iter->user_ids, count);
+  memcpy(iter->user_ids, user_ids + page * count, count * sizeof(user_ids[0]));
+  xfree(user_ids); user_ids = NULL;
+  return (ptr_iterator_t) iter;
+}
+
 static void
 brief_list_2_do_skip(
         struct brief_list_2_iterator *iter,
@@ -3953,18 +4402,12 @@ brief_list_2_do_skip(
   const struct userlist_user *u;
   const struct xml_tree *t;
   const struct userlist_contest *c;
-  const struct userlist_groupmember *gm;
 
   for (;; ++iter->user_id) {
     if (iter->user_id >= ul->user_map_size) return;
     if (!(u = ul->user_map[iter->user_id])) continue;
     if (iter->contest_id > 0 && iter->group_id > 0) {
-      if (!u->group_first) continue;
-      for (gm = (const struct userlist_groupmember*) u->group_first;
-           gm && gm->group_id < iter->group_id;
-           gm = (struct userlist_groupmember*) gm->group_next) {
-      }
-      if (!gm || gm->group_id != iter->group_id) continue;
+      if (!find_user_group(u, iter->group_id)) continue;
       if (!u->contests) continue;
       for (t = u->contests->first_down; t; t = t->right) {
         c = (const struct userlist_contest*) t;
@@ -3975,12 +4418,7 @@ brief_list_2_do_skip(
         }
       }
     } else if (iter->group_id > 0) {
-      if (!u->group_first) continue;
-      for (gm = (const struct userlist_groupmember*) u->group_first;
-           gm && gm->group_id < iter->group_id;
-           gm = (struct userlist_groupmember*) gm->group_next) {
-      }
-      if (!gm || gm->group_id != iter->group_id) continue;
+      if (!find_user_group(u, iter->group_id)) continue;
       if (iter->offset <= 0) return;
       --iter->offset;
     } else if (iter->contest_id > 0) {
@@ -4064,6 +4502,11 @@ get_brief_list_iterator_2_func(
         int filter_field,
         int filter_op)
 {
+  if (page >= 0) {
+    return new_get_brief_list_iterator_2_func(data, contest_id, group_id, filter, offset, count, page, sort_field, sort_order,
+                                              filter_field, filter_op);
+  }
+
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
   struct brief_list_2_iterator *iter;
 

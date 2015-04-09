@@ -824,4 +824,24 @@ userlist_lookup_csv_field_name(const unsigned char *str);
 const unsigned char *
 userlist_get_csv_field_name(int field_id);
 
+// field filter operations (jqgrid)
+enum
+{
+  USER_FILTER_OP_NONE,
+  USER_FILTER_OP_EQ, // "eq": 'equal'
+  USER_FILTER_OP_NE, // "ne": 'not equal'
+  USER_FILTER_OP_LT, // "lt": 'less'
+  USER_FILTER_OP_LE, // "le": 'less or equal'
+  USER_FILTER_OP_GT, // "gt": 'greater'
+  USER_FILTER_OP_GE, // "ge": 'greater or equal'
+  USER_FILTER_OP_BW, // "bw": 'begins with'
+  USER_FILTER_OP_BN, // "bn": 'does not begin with'
+  USER_FILTER_OP_IN, // "in": 'is in'
+  USER_FILTER_OP_NI, // "ni": 'is not in'
+  USER_FILTER_OP_EW, // "ew": 'ends with'
+  USER_FILTER_OP_EN, // "en": 'does not end with'
+  USER_FILTER_OP_CN, // "cn": 'contains'
+  USER_FILTER_OP_NC, // "nc": 'does not contain'
+};
+
 #endif /* __USERLIST_H__ */
