@@ -4068,6 +4068,7 @@ does_user_match(
   if (!u) return 0;
   if (contest_id > 0 && !find_user_contest(u, contest_id)) return 0;
   if (group_id > 0 && !find_user_group(u, group_id)) return 0;
+  if (filter_field < 0) return 1;
 
   switch (filter_field) {
   case USERLIST_NN_ID:
@@ -4100,6 +4101,7 @@ struct userlist_sorting_context
   int contest_id;
 };
 
+/*
 static int
 sort_func_user_id_asc(const void *v1, const void *v2, void *vc)
 {
@@ -4118,6 +4120,7 @@ sort_func_user_id_asc(const void *v1, const void *v2, void *vc)
   if (id1 > id2) return 1;
   return 0;
 }
+*/
 static int
 sort_func_user_id_dsc(const void *v1, const void *v2, void *vc)
 {
@@ -4355,38 +4358,45 @@ new_get_brief_list_iterator_2_func(
   switch (sort_field) {
   case USERLIST_NN_ID:
     if (sort_order == 1) {
-      sort_func = sort_func_user_id_asc;
+      //sort_func = sort_func_user_id_asc;
     } else if (sort_order == 2) {
       sort_func = sort_func_user_id_dsc;
     }
+    break;
   case USERLIST_NN_LOGIN:
     if (sort_order == 1) {
       sort_func = sort_func_login_asc;
     } else if (sort_order == 2) {
       sort_func = sort_func_login_dsc;
     }
+    break;
   case USERLIST_NN_EMAIL:
     if (sort_order == 1) {
       sort_func = sort_func_email_asc;
     } else if (sort_order == 2) {
       sort_func = sort_func_email_dsc;
     }
+    break;
   case USERLIST_NC_NAME:
     if (sort_order == 1) {
       sort_func = sort_func_name_asc;
     } else if (sort_order == 2) {
       sort_func = sort_func_name_dsc;
     }
+    break;
   }
 
-  qsort_r(user_ids, user_ids_u, sizeof(user_ids[0]), sort_func,
-          (struct userlist_sorting_context[]){{ state->userlist, contest_id }});
+  if (sort_func) {
+    qsort_r(user_ids, user_ids_u, sizeof(user_ids[0]), sort_func,
+            (struct userlist_sorting_context[]){{ state->userlist, contest_id }});
+  }
 
   // extract the requested window
   // page is numbered from 0
   if (count <= 0) count = 15; // default page size
   if (page < 0) page = 0;
   if (page * count >= user_ids_u) page = user_ids_u / count;
+  int page_size = count;
   if ((page + 1) * count > user_ids_u) count = user_ids_u - page * count;
 
   struct brief_list_3_iterator *iter = NULL;
@@ -4395,8 +4405,10 @@ new_get_brief_list_iterator_2_func(
   iter->state = state;
   iter->total = user_ids_u;
   iter->count = count;
-  XCALLOC(iter->user_ids, count);
-  memcpy(iter->user_ids, user_ids + page * count, count * sizeof(user_ids[0]));
+  if (count > 0) {
+    XCALLOC(iter->user_ids, count);
+    memcpy(iter->user_ids, user_ids + page * page_size, count * sizeof(user_ids[0]));
+  }
   xfree(user_ids); user_ids = NULL;
   return (ptr_iterator_t) iter;
 }
