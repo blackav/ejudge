@@ -44,21 +44,37 @@
 <div id="pager"></div>
 
 <script type="text/javascript">
+function statusAttrFunc(rowId, val, rawObject, cm, rdata)
+{
+/*
+    if (val == "OK") {
+        return "style=\"{color:\'green\';}\"";
+    } else if (val == "Pending") {
+        return "color: \"magenta\"";
+    } else if (val == "Rejected") {
+        return "color: \"red\"";
+    } else if (val == "Invalid status") {
+        return "color: \"red\"";
+    }
+*/
+    return null;
+}
+
 jQuery(document).ready(function()
 {
     jQuery("#usertable").jqGrid({
         url: self_url,
         postData: { 'SID' : SID, 'contest_id' : contest_id, 'action' : user_browse_data }, 
         datatype: 'json',
-        colNames: [ 'NN', 'User Id', 'User Login', 'E-mail', 'Name', 'Status', 'Flags' ],
+        colNames: [ 'NN', 'UId', 'User Login', 'E-mail', 'Name', 'Status', 'Flags' ],
         colModel: [
-            { name: 'nn', index: 'nn', sortable: false, searchable: false },
-            { name: 'id', index: 'id' },
-            { name: 'login', index: 'login' },
-            { name: 'email', index: 'email' },
-            { name: 'name', index: 'name' },
-            { name: 'status', index: 'status', sortable: false, searchable: false },
-            { name: 'flags', index: 'flags', sortable: false, searchable: false },
+            { name: 'nn', index: 'nn', sortable: false, search: false, resizable: false, width: "60px" },
+            { name: 'id', index: 'id', resizable: false, width: "60px", searchoptions: { sopt: ['eq','ne','lt','le','gt','ge'] } },
+            { name: 'login', index: 'login', searchoptions: { sopt: ['eq','ne','lt','le','gt','ge','bw','bn','ew','en','cn','nc'] }  },
+            { name: 'email', index: 'email', searchoptions: { sopt: ['eq','ne','lt','le','gt','ge','bw','bn','ew','en','cn','nc'] } },
+            { name: 'name', index: 'name', searchoptions: { sopt: ['eq','ne','lt','le','gt','ge','bw','bn','ew','en','cn','nc'] } },
+            { name: 'status', index: 'status', sortable: false, search: false, cellattr: statusAttrFunc },
+            { name: 'flags', index: 'flags', sortable: false, search: false },
         ],
         rowNum : 10,
         rowList : [10,20,30],
@@ -66,7 +82,10 @@ jQuery(document).ready(function()
         sortname: 'id',
         sortorder : 'asc',
         viewrecords: true,
-        caption : 'Users'
+        caption : 'Users',
+        height: 'auto',
+        multiselect: true,
+        altRows : true
     });
     jQuery("#usertable").jqGrid('navGrid', '#pager', {edit:false, add:false, del:false});
 });
