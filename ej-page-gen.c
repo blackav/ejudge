@@ -4685,13 +4685,25 @@ string_type_handler(
         TypeInfo *type_info)
 {
     int need_escape = 1;
+    int need_json = 0;
     HtmlAttribute *at = NULL;
     if (elem) {
-        at = html_element_find_attribute(elem, "escape");
+        at = html_element_find_attribute(elem, "json");
     }
     if (at) {
         int v;
-        if (xml_parse_bool(NULL, NULL, 0, 0, at->value, &v) >= 0) need_escape = v;
+        if (xml_parse_bool(NULL, NULL, 0, 0, at->value, &v) >= 0) need_json = v;
+        if (need_json) need_escape = 0;
+    }
+    at = NULL;
+    if (!need_json) {
+        if (elem) {
+            at = html_element_find_attribute(elem, "escape");
+        }
+        if (at) {
+            int v;
+            if (xml_parse_bool(NULL, NULL, 0, 0, at->value, &v) >= 0) need_escape = v;
+        }
     }
     if (need_escape) {
         if (!strcmp(elem->name, "s:param")) {
@@ -4700,6 +4712,8 @@ string_type_handler(
         } else {
             fprintf(prg_f, "fputs(html_armor_buf(&ab, (%s)), out_f);\n", text);
         }
+    } else if (need_json) {
+        fprintf(prg_f, "fputs(c_armor_buf(&ab, (%s)), out_f);\n", text);
     } else {
         fprintf(prg_f, "fputs((%s), out_f);\n", text);
     }
