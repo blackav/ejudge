@@ -845,4 +845,6 @@ enum
   USER_FILTER_OP_NC, // "nc": 'does not contain'
 };
 
+int userlist_parse_filter_op(const unsigned char *str);
+
 #endif /* __USERLIST_H__ */

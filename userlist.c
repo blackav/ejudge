@@ -2206,3 +2206,31 @@ userlist_get_csv_field_name(int field_id)
   return field_lookup_table[field_id][0];
 }
 
+static const unsigned char * const filter_parse_table[] =
+{
+  [USER_FILTER_OP_EQ] = "eq", // 'equal'
+  [USER_FILTER_OP_NE] = "ne", // 'not equal'
+  [USER_FILTER_OP_LT] = "lt", // 'less'
+  [USER_FILTER_OP_LE] = "le", // 'less or equal'
+  [USER_FILTER_OP_GT] = "gt", // 'greater'
+  [USER_FILTER_OP_GE] = "ge", // 'greater or equal'
+  [USER_FILTER_OP_BW] = "bw", // 'begins with'
+  [USER_FILTER_OP_BN] = "bn", // 'does not begin with'
+  [USER_FILTER_OP_IN] = "in", // 'is in'
+  [USER_FILTER_OP_NI] = "ni", // 'is not in'
+  [USER_FILTER_OP_EW] = "ew", // 'ends with'
+  [USER_FILTER_OP_EN] = "en", // 'does not end with'
+  [USER_FILTER_OP_CN] = "cn", // 'contains'
+  [USER_FILTER_OP_NC] = "nc", // 'does not contain'
+};
+
+int
+userlist_parse_filter_op(const unsigned char *str)
+{
+  if (!str) return 0;
+  for (int op = 0; op <= USER_FILTER_OP_NC; ++op) {
+    if (filter_parse_table[op] && !strcmp(filter_parse_table[op], str))
+      return op;
+  }
+  return 0;
+}
