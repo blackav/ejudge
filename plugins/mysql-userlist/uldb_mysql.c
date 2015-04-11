@@ -1973,7 +1973,7 @@ brief_list_iterator_get_func(ptr_iterator_t data)
     }
     if (!(ui = get_user_info_from_pool(state, user_id, iter->contest_id))) {
       rr = &iter->noreg_rows[iter->cur_ind].user_info_row;
-      if (rr->field_count == USER_INFO_WIDTH) {
+      if (rr->field_count == USER_INFO_WIDTH && rr->row[0] != NULL) {
         ui = allocate_user_info_on_pool(state, user_id, iter->contest_id);
         if (ui && parse_user_info(state, rr->field_count,rr->row,rr->lengths,ui) < 0) {
           remove_user_info_from_pool(state, user_id, iter->contest_id);
@@ -2003,7 +2003,7 @@ brief_list_iterator_get_func(ptr_iterator_t data)
     }
     if (!(ui = get_user_info_from_pool(state, user_id, iter->contest_id))) {
       rr = &iter->full_rows[iter->cur_ind].user_info_row;
-      if (rr->field_count == USER_INFO_WIDTH) {
+      if (rr->field_count == USER_INFO_WIDTH && rr->row[0] != NULL) {
         ui = allocate_user_info_on_pool(state, user_id, iter->contest_id);
         if (ui && parse_user_info(state, rr->field_count,rr->row,rr->lengths,ui) < 0) {
           remove_user_info_from_pool(state, user_id, iter->contest_id);
@@ -5137,7 +5137,7 @@ emit_filter(
     fprintf(out_f, " l.email ");
     return emit_filter_string(state, out_f, filter_op, filter);
   case USERLIST_NC_NAME:
-    fprintf(out_f, " u.name ");
+    fprintf(out_f, " u.username ");
     return emit_filter_string(state, out_f, filter_op, filter);
   default:
     return -1;
@@ -5220,7 +5220,7 @@ emit_query(
     fprintf(q_f, " l.email ");
     break;
   case USERLIST_NC_NAME:
-    fprintf(q_f, " u.name ");
+    fprintf(q_f, " u.username ");
     break;
   case USERLIST_NN_ID:
   default:
@@ -5317,6 +5317,7 @@ new_get_brief_list_iterator_2_func(
     }
   }
 
+  state->mi->free_res(state->md);
   xfree(query); query = NULL;
   return (ptr_iterator_t) iter;
 
