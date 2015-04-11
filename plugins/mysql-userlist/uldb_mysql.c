@@ -5273,7 +5273,7 @@ new_get_brief_list_iterator_2_func(
   iter->contest_id = contest_id;
   iter->cur_ind = 0;
 
-  if (state->mi->simple_query(state->md, query, strlen(query)) < 0) {
+  if (state->mi->query(state->md, query, strlen(query), width) < 0) {
     goto fail;
   }
   xfree(query); query = NULL;
