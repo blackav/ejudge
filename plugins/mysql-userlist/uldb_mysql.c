@@ -5163,7 +5163,7 @@ emit_query(
   FILE *q_f = open_memstream(&q_s, &q_z);
   fprintf(q_f, "SELECT ");
   if (count_mode > 0) {
-    fprintf(q_f, " COUNT(l.*) ");
+    fprintf(q_f, " COUNT(l.user_id) ");
   } else if (contest_id > 0) {
     fprintf(q_f, " l.*, u.*, r.* ");
   } else {
