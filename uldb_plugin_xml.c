@@ -206,6 +206,7 @@ get_user_count_func(
         const unsigned char *filter,
         int filter_field,
         int filter_op,
+        int new_mode,
         long long *p_count);
 static ptr_iterator_t
 get_group_iterator_2_func(
@@ -4553,6 +4554,7 @@ get_user_count_func(
         const unsigned char *filter,
         int filter_field,
         int filter_op,
+        int new_mode,
         long long *p_count)
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;

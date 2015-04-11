@@ -253,7 +253,15 @@ struct uldb_plugin_iface
         int filter_field,
         int filter_op);
   // get the total count of users for the given filter
-  int (*get_user_count)(void *, int contest_id, int group_id, const unsigned char *filter, int filter_field, int filter_op, long long *p_count);
+  int (*get_user_count)(
+        void *,
+        int contest_id,
+        int group_id,
+        const unsigned char *filter,
+        int filter_field,
+        int filter_op,
+        int new_mode,
+        long long *p_count);
   // get the group iterator
   ptr_iterator_t (*get_group_iterator_2)(void *, const unsigned char *filter, int offset, int count);
   // get the total number of groups to display

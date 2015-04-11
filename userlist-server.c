@@ -607,7 +607,7 @@ link_client_state(struct client_state *p)
 #define default_try_new_login(a, b, c, d, e) dflt_iface->try_new_login(uldb_default->data, a, b, c, d, e)
 #define default_set_simple_reg(a, b, c) dflt_iface->set_simple_reg(uldb_default->data, a, b, c)
 #define default_get_brief_list_iterator_2(a, b, c, d, e, f, g, h, i, j) dflt_iface->get_brief_list_iterator_2(uldb_default->data, a, b, c, d, e, f, g, h, i, j)
-#define default_get_user_count(a, b, c, d, e, f) dflt_iface->get_user_count(uldb_default->data, a, b, c, d, e, f)
+#define default_get_user_count(a, b, c, d, e, f, g) dflt_iface->get_user_count(uldb_default->data, a, b, c, d, e, f, g)
 #define default_get_group_iterator_2(a, b, c) dflt_iface->get_group_iterator_2(uldb_default->data, a, b, c)
 #define default_get_group_count(a, b) dflt_iface->get_group_count(uldb_default->data, a, b)
 #define default_new_cookie_2(a, b, c, d, e, f, g, h, i, j, k, l, m) dflt_iface->new_cookie_2(uldb_default->data, a, b, c, d, e, f, g, h, i, j, k, l, m)
@@ -9684,6 +9684,8 @@ cmd_list_all_users_2(
                                            data->page, data->sort_field, data->sort_order, data->filter_field, data->filter_op);
   long long total = -1;
   if (iter->get_total) total = iter->get_total(iter);
+  if (total < 0) {
+  }
   userlist_write_xml_header(f, total);
   if (iter) {
     for (; iter->has_next(iter); iter->next(iter)) {
@@ -9729,7 +9731,7 @@ cmd_get_user_count(
   }
   if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf) < 0) return;
 
-  r = default_get_user_count(data->contest_id, data->group_id, data->data, data->filter_field, data->filter_op, &count);
+  r = default_get_user_count(data->contest_id, data->group_id, data->data, data->filter_field, data->filter_op, 0, &count);
   if (r < 0) {
     err("%s -> database error %d", logbuf, -r);
     send_reply(p, -ULS_ERR_DB_ERROR);

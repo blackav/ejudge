@@ -5574,6 +5574,19 @@ get_brief_list_iterator_2_func(
 }
 
 static int
+new_get_user_count_func(
+        void *data,
+        int contest_id,
+        int group_id,
+        const unsigned char *filter,
+        int filter_field,
+        int filter_op,
+        int new_mode,
+        long long *p_count)
+{
+}
+
+static int
 get_user_count_func(
         void *data,
         int contest_id,
@@ -5581,8 +5594,12 @@ get_user_count_func(
         const unsigned char *filter,
         int filter_field,
         int filter_op,
+        int new_mode,
         long long *p_count)
 {
+  if (filter_field >= 0) {
+    return new_get_user_count_func(data, contest_id, group_id, filter, filter_field, filter_op, new_mode, p_count);
+  }
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   unsigned char cmdbuf[1024];
   int cmdlen, count = 0;
