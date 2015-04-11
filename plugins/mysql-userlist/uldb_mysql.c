@@ -5584,6 +5584,26 @@ new_get_user_count_func(
         int new_mode,
         long long *p_count)
 {
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  unsigned char *query = emit_query(state, contest_id, group_id, filter,
+                                    0, 0, -1, 0,
+                                    filter_field, filter_op, 1);
+  int query_len = strlen(query);
+  int count = 0;
+  if (state->mi->query_one_row(state->md, query, query_len, 1) < 0) goto fail;
+  if (!state->md->lengths[0])
+    db_error_inv_value_fail(state->md, "value");
+  if (state->mi->parse_int(state->md, state->md->row[0], &count) < 0 || count <= 0)
+    db_error_inv_value_fail(state->md, "value");
+  state->mi->free_res(state->md);
+  if (p_count) *p_count = count;
+  xfree(query); query = NULL;
+  return 0;
+
+fail:
+  xfree(query);
+  state->mi->free_res(state->md);
+  return 0;
 }
 
 static int
@@ -5597,7 +5617,7 @@ get_user_count_func(
         int new_mode,
         long long *p_count)
 {
-  if (filter_field >= 0) {
+  if (new_mode) {
     return new_get_user_count_func(data, contest_id, group_id, filter, filter_field, filter_op, new_mode, p_count);
   }
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;

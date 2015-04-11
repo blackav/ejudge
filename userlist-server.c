@@ -9685,6 +9685,7 @@ cmd_list_all_users_2(
   long long total = -1;
   if (iter->get_total) total = iter->get_total(iter);
   if (total < 0) {
+    default_get_user_count(data->contest_id, data->group_id, data->data, data->filter_field, data->filter_op, 1, &total);
   }
   userlist_write_xml_header(f, total);
   if (iter) {
