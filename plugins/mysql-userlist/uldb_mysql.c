@@ -5197,7 +5197,8 @@ emit_query(
             group_id);
   } else {
     fprintf(q_f,
-            " FROM (%slogins AS l LEFT JOIN %susers AS u ON l.user_id = u.user_id AND u.contest_id = 0) ",
+            " FROM (%slogins AS l LEFT JOIN %susers AS u ON l.user_id = u.user_id AND u.contest_id = 0) "
+            " WHERE 1 ",
             state->md->table_prefix, state->md->table_prefix);
   }
 
