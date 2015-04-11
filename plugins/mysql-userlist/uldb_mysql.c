@@ -1891,6 +1891,27 @@ copy_saved_row(struct uldb_mysql_state *state, struct saved_row *r)
   }
 }
 
+static void
+copy_saved_row_2(struct uldb_mysql_state *state, struct saved_row *r, int offset, int count)
+{
+  int i;
+
+  ASSERT(offset >= 0);
+  ASSERT(count > 0);
+  ASSERT(offset + count <= state->md->field_count);
+  r->field_count = count;
+  XCALLOC(r->lengths, r->field_count);
+  XCALLOC(r->row, r->field_count);
+  memcpy(r->lengths, state->md->lengths + offset, sizeof(r->lengths[0]) * count);
+  for (i = 0; i < r->field_count; ++i) {
+    if (!state->md->row[i + offset]) {
+      r->row[i] = 0;
+    } else {
+      r->row[i] = xstrdup(state->md->row[i + offset]);
+    }
+  }
+}
+
 struct user_list_noreg_row
 {
   int user_id;
@@ -4976,6 +4997,324 @@ remove_group_member_func(void *data, int group_id, int user_id)
   return 0;
 }
 
+static int
+emit_filter_int(
+        struct uldb_mysql_state *state,
+        FILE *out_f,
+        int filter_op,
+        const unsigned char *filter)
+{
+  if (!filter) return -1;
+  int len = strlen(filter);
+  while (len > 0 && isspace(filter[len - 1])) --len;
+  if (!len) return -1; // empty string
+  errno = 0;
+  char *eptr = NULL;
+  int value = strtol(filter, &eptr, 10);
+  if (errno) return -1;
+  if (filter + len != (const unsigned char *) eptr) return -1;
+
+  switch (filter_op) {
+  case USER_FILTER_OP_EQ: // "eq": 'equal'
+    fprintf(out_f, " = ");
+    break;
+  case USER_FILTER_OP_NE: // "ne": 'not equal'
+    fprintf(out_f, " != ");
+    break;
+  case USER_FILTER_OP_LT: // "lt": 'less'
+    fprintf(out_f, " < ");
+    break;
+  case USER_FILTER_OP_LE: // "le": 'less or equal'
+    fprintf(out_f, " <= ");
+    break;
+  case USER_FILTER_OP_GT: // "gt": 'greater'
+    fprintf(out_f, " > ");
+    break;
+  case USER_FILTER_OP_GE: // "ge": 'greater or equal'
+    fprintf(out_f, " >= ");
+    break;
+  default:
+    return -1;
+  }
+  fprintf(out_f, " %d ", value);
+  return 0;
+}
+static int
+emit_filter_string(
+        struct uldb_mysql_state *state,
+        FILE *out_f,
+        int filter_op,
+        const unsigned char *filter)
+{
+  switch (filter_op) {
+  case USER_FILTER_OP_EQ: // "eq": 'equal'
+    if (!filter) {
+      fprintf(out_f, " IS NULL ");
+    } else {
+      state->mi->write_escaped_string(state->md, out_f, " = ", filter);
+    }
+    return 0;
+  case USER_FILTER_OP_NE: // "ne": 'not equal'
+    if (!filter) {
+      fprintf(out_f, " IS NOT NULL ");
+    } else {
+      state->mi->write_escaped_string(state->md, out_f, " != ", filter);
+    }
+    return 0;
+  case USER_FILTER_OP_LT: // "lt": 'less'
+    if (!filter) return -1;
+    state->mi->write_escaped_string(state->md, out_f, " < ", filter);
+    return 0;
+  case USER_FILTER_OP_LE: // "le": 'less or equal'
+    if (!filter) return -1;
+    state->mi->write_escaped_string(state->md, out_f, " <= ", filter);
+    return 0;
+  case USER_FILTER_OP_GT: // "gt": 'greater'
+    if (!filter) return -1;
+    state->mi->write_escaped_string(state->md, out_f, " > ", filter);
+    return 0;
+  case USER_FILTER_OP_GE: // "ge": 'greater or equal'
+    if (!filter) return -1;
+    state->mi->write_escaped_string(state->md, out_f, " >= ", filter);
+    return 0;
+  case USER_FILTER_OP_BW: // "bw": 'begins with'
+    if (!filter) return -1;
+    fprintf(out_f, " LIKE '");
+    state->mi->escape_string(state->md, out_f, filter);
+    fprintf(out_f, "%%' ");
+    return 0;
+  case USER_FILTER_OP_BN: // "bn": 'does not begin with'
+    if (!filter) return -1;
+    fprintf(out_f, " NOT LIKE '");
+    state->mi->escape_string(state->md, out_f, filter);
+    fprintf(out_f, "%%' ");
+    return 0;
+  case USER_FILTER_OP_EW: // "ew": 'ends with'
+    if (!filter) return -1;
+    fprintf(out_f, " LIKE '%%");
+    state->mi->escape_string(state->md, out_f, filter);
+    fprintf(out_f, "' ");
+    return 0;
+  case USER_FILTER_OP_EN: // "en": 'does not end with'
+    if (!filter) return -1;
+    fprintf(out_f, " NOT LIKE '%%");
+    state->mi->escape_string(state->md, out_f, filter);
+    fprintf(out_f, "' ");
+    return 0;
+  case USER_FILTER_OP_CN: // "cn": 'contains'
+    if (!filter) return -1;
+    fprintf(out_f, " LIKE '%%");
+    state->mi->escape_string(state->md, out_f, filter);
+    fprintf(out_f, "%%' ");
+    return 0;
+  case USER_FILTER_OP_NC: // "nc": 'does not contain'
+    if (!filter) return -1;
+    fprintf(out_f, " NOT LIKE '%%");
+    state->mi->escape_string(state->md, out_f, filter);
+    fprintf(out_f, "%%' ");
+    return 0;
+  default:
+    return -1;
+  }
+}
+
+static int
+emit_filter(
+        struct uldb_mysql_state *state,
+        FILE *out_f,
+        int filter_field,
+        int filter_op,
+        const unsigned char *filter)
+{
+  switch (filter_field) {
+  case USERLIST_NN_ID:
+    fprintf(out_f, " l.user_id ");
+    return emit_filter_int(state, out_f, filter_op, filter);
+  case USERLIST_NN_LOGIN:
+    fprintf(out_f, " l.login ");
+    return emit_filter_string(state, out_f, filter_op, filter);
+  case USERLIST_NN_EMAIL:
+    fprintf(out_f, " l.email ");
+    return emit_filter_string(state, out_f, filter_op, filter);
+  case USERLIST_NC_NAME:
+    fprintf(out_f, " u.name ");
+    return emit_filter_string(state, out_f, filter_op, filter);
+  default:
+    return -1;
+  }
+}
+
+static unsigned char *
+emit_query(
+        struct uldb_mysql_state *state,
+        int contest_id,
+        int group_id,
+        const unsigned char *filter,
+        int count,
+        int page,
+        int sort_field,
+        int sort_order,
+        int filter_field,
+        int filter_op,
+        int count_mode)
+{
+  char *q_s = NULL;
+  size_t q_z = 0;
+  FILE *q_f = open_memstream(&q_s, &q_z);
+  fprintf(q_f, "SELECT ");
+  if (count_mode > 0) {
+    fprintf(q_f, " COUNT(l.*) ");
+  } else if (contest_id > 0) {
+    fprintf(q_f, " l.*, u.*, r.* ");
+  } else {
+    fprintf(q_f, " l.*, u.* ");
+  }
+  if (contest_id > 0 && group_id > 0) {
+    fprintf(q_f,
+            " FROM (%slogins AS l LEFT JOIN %susers AS u ON l.user_id = u.user_id AND u.contest_id = %d)"
+            ", %scntsregs AS r"
+            ", %sgroupmembers AS m"
+            " WHERE l.user_id = r.user_id AND r.contest_id = %d AND l.user_id = m.user_id AND m.group_id = %d",
+            state->md->table_prefix, state->md->table_prefix, contest_id,
+            state->md->table_prefix,
+            state->md->table_prefix,
+            contest_id, group_id);
+  } else if (contest_id > 0) {
+    fprintf(q_f,
+            " FROM (%slogins AS l LEFT JOIN %susers AS u ON l.user_id = u.user_id AND u.contest_id = %d)"
+            ", %scntsregs AS r"
+            " WHERE l.user_id = r.user_id AND r.contest_id = %d ",
+            state->md->table_prefix, state->md->table_prefix, contest_id,
+            state->md->table_prefix,
+            contest_id);
+  } else if (group_id > 0) {
+    fprintf(q_f,
+            " FROM (%slogins AS l LEFT JOIN %susers AS u ON l.user_id = u.user_id AND u.contest_id = 0)"
+            ", %sgroupmembers AS m"
+            " WHERE l.user_id = m.user_id AND m.group_id = %d",
+            state->md->table_prefix, state->md->table_prefix,
+            state->md->table_prefix,
+            group_id);
+  } else {
+    fprintf(q_f,
+            " FROM (%slogins AS l LEFT JOIN %susers AS u ON l.user_id = u.user_id AND u.contest_id = 0) ",
+            state->md->table_prefix, state->md->table_prefix);
+  }
+
+  char *sq_s = NULL;
+  size_t sq_z = 0;
+  FILE *sq_f = open_memstream(&sq_s, &sq_z);
+  int res = emit_filter(state, sq_f, filter_field, filter_op, filter);
+  fclose(sq_f); sq_f = NULL;
+  if (res >= 0) {
+    fprintf(q_f, " AND ( %s ) ", sq_s);
+  }
+  xfree(sq_s); sq_s = NULL; sq_z = 0;
+
+  fprintf(q_f, " ORDER BY ");
+  switch (sort_field) {
+  case USERLIST_NN_LOGIN:
+    fprintf(q_f, " l.login ");
+    break;
+  case USERLIST_NN_EMAIL:
+    fprintf(q_f, " l.email ");
+    break;
+  case USERLIST_NC_NAME:
+    fprintf(q_f, " u.name ");
+    break;
+  case USERLIST_NN_ID:
+  default:
+    fprintf(q_f, " l.user_id ");
+    break;
+  }
+  if (sort_order == 2) {
+    fprintf(q_f, " DESC ");
+  }
+
+  if (count_mode <= 0) {
+    if (count <= 0) count = 15;
+    if (page < 0) page = 0;
+    fprintf(q_f, " LIMIT %d, %d;", page * count, count);
+  }
+
+  fclose(q_f); q_f = NULL;
+  return q_s;
+}
+
+static ptr_iterator_t
+new_get_brief_list_iterator_2_func(
+        void *data,
+        int contest_id,
+        int group_id,
+        const unsigned char *filter,
+        int offset,
+        int count,
+        int page,
+        int sort_field,
+        int sort_order,
+        int filter_field,
+        int filter_op)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  struct brief_list_iterator *iter = 0;
+  int i;
+
+  unsigned char *query = emit_query(state, contest_id, group_id, filter,
+                                    count, page, sort_field, sort_order,
+                                    filter_field, filter_op, 0);
+  int width = LOGIN_WIDTH + USER_INFO_WIDTH;
+  if (contest_id > 0) {
+    width += CNTSREG_WIDTH;
+  }
+
+  XCALLOC(iter, 1);
+  iter->b = brief_list_iterator_funcs;
+  iter->state = state;
+  iter->contest_id = contest_id;
+  iter->cur_ind = 0;
+
+  if (state->mi->simple_query(state->md, query, strlen(query)) < 0) {
+    goto fail;
+  }
+  xfree(query); query = NULL;
+
+  iter->total_ids = state->md->row_count;
+  if (!iter->total_ids) {
+    state->mi->free_res(state->md);
+    return (ptr_iterator_t) iter;
+  }
+
+  if (contest_id > 0) {
+    XCALLOC(iter->full_rows, iter->total_ids);
+    for (i = 0; i < iter->total_ids; ++i) {
+      if (!(state->md->row = mysql_fetch_row(state->md->res)))
+        db_error_no_data_fail(state->md);
+      state->md->lengths = mysql_fetch_lengths(state->md->res);
+      copy_saved_row_2(state, &iter->full_rows[i].login_row, 0, LOGIN_WIDTH);
+      copy_saved_row_2(state, &iter->full_rows[i].user_info_row, LOGIN_WIDTH, USER_INFO_WIDTH);
+      copy_saved_row_2(state, &iter->full_rows[i].cntsreg_row, LOGIN_WIDTH + USER_INFO_WIDTH, CNTSREG_WIDTH);
+    }
+  } else {
+    XCALLOC(iter->noreg_rows, iter->total_ids);
+    for (i = 0; i < iter->total_ids; ++i) {
+      if (!(state->md->row = mysql_fetch_row(state->md->res)))
+        db_error_no_data_fail(state->md);
+      state->md->lengths = mysql_fetch_lengths(state->md->res);
+      copy_saved_row_2(state, &iter->noreg_rows[i].login_row, 0, LOGIN_WIDTH);
+      copy_saved_row_2(state, &iter->noreg_rows[i].user_info_row, LOGIN_WIDTH, USER_INFO_WIDTH);
+    }
+  }
+
+  xfree(query); query = NULL;
+  return (ptr_iterator_t) iter;
+
+fail:
+  xfree(query);
+  state->mi->free_res(state->md);
+  brief_list_iterator_destroy_func((ptr_iterator_t) iter);
+  return NULL;
+}
+
 static ptr_iterator_t
 get_brief_list_iterator_2_func(
         void *data,
@@ -4990,6 +5329,11 @@ get_brief_list_iterator_2_func(
         int filter_field,
         int filter_op)
 {
+  if (page >= 0) {
+    return new_get_brief_list_iterator_2_func(data, contest_id, group_id, filter, offset, count, page, sort_field, sort_order,
+                                              filter_field, filter_op);
+  }
+
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct brief_list_iterator *iter = 0;
   int i, val, j;
