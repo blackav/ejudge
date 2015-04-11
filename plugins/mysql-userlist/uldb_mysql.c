@@ -5298,7 +5298,7 @@ new_get_brief_list_iterator_2_func(
         db_error_inv_value_fail(state->md, "value");
       if (state->mi->parse_int(state->md, state->md->row[0], &val) < 0 || val <= 0)
         db_error_inv_value_fail(state->md, "value");
-      iter->noreg_rows[i].user_id = val;
+      iter->full_rows[i].user_id = val;
     }
   } else {
     XCALLOC(iter->noreg_rows, iter->total_ids);
