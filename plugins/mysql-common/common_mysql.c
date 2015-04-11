@@ -128,6 +128,11 @@ parse_int_func(
         struct common_mysql_state *state,
         const unsigned char *str,
         int *p_val);
+static void
+escape_string_func(
+        struct common_mysql_state *state,
+        FILE *f,
+        const unsigned char *str);
 
 /* plugin entry point */
 struct common_mysql_iface plugin_common_mysql =
@@ -169,6 +174,8 @@ struct common_mysql_iface plugin_common_mysql =
   write_timestamp_func,
   write_date_func,
   parse_int_func,
+
+  escape_string_func,
 };
 
 static struct common_plugin_data *
@@ -951,6 +958,22 @@ write_escaped_string_func(
   str2 = (unsigned char*) alloca(len2);
   mysql_real_escape_string(state->conn, str2, str, len1);
   fprintf(f, "%s'%s'", pfx, str2);
+}
+
+static void
+escape_string_func(
+        struct common_mysql_state *state,
+        FILE *f,
+        const unsigned char *str)
+{
+  size_t len1, len2;
+  unsigned char *str2;
+
+  len1 = strlen(str);
+  len2 = 2 * len1 + 1;
+  str2 = (unsigned char*) alloca(len2);
+  mysql_real_escape_string(state->conn, str2, str, len1);
+  fprintf(f, "%s", str2);
 }
 
 static void

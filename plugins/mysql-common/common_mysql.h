@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __COMMON_MYSQL_H__
 #define __COMMON_MYSQL_H__
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -148,6 +147,11 @@ struct common_mysql_iface
         struct common_mysql_state *state,
         const unsigned char *str,
         int *p_val);
+
+  void (*escape_string)(
+        struct common_mysql_state *state,
+        FILE *f,
+        const unsigned char *str);
 };
 
 #define db_error_fail(s) do { s->i->error(s); goto fail; } while (0)
