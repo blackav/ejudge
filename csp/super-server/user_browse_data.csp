@@ -128,36 +128,40 @@ static const unsigned char * const reg_status_strs[] =
             if (contest_id > 0) {
                 reg = userlist_get_user_contest(u, contest_id);
             }
-            const unsigned char *status_str = NULL;
-            if (reg->status >= 0 && reg->status < USERLIST_REG_LAST) {
-                status_str = reg_status_strs[reg->status];
-            } else {
-                status_str = reg_status_strs[USERLIST_REG_LAST];
+            const unsigned char *status_str = "";
+            if (reg) {
+                if (reg->status >= 0 && reg->status < USERLIST_REG_LAST) {
+                    status_str = reg_status_strs[reg->status];
+                } else {
+                    status_str = reg_status_strs[USERLIST_REG_LAST];
+                }
             }
             char *flags_s = NULL; size_t flags_z = 0;
-            FILE *flags_f = open_memstream(&flags_s, &flags_z);
-            r = 0;
-            if ((reg->flags & USERLIST_UC_INVISIBLE)) {
-                if (r++) fprintf(flags_f, ", ");
-                fprintf(flags_f, "invisible");
+            if (reg) {
+                FILE *flags_f = open_memstream(&flags_s, &flags_z);
+                r = 0;
+                if ((reg->flags & USERLIST_UC_INVISIBLE)) {
+                    if (r++) fprintf(flags_f, ", ");
+                    fprintf(flags_f, "invisible");
+                }
+                if ((reg->flags & USERLIST_UC_BANNED)) {
+                    if (r++) fprintf(flags_f, ", ");
+                    fprintf(flags_f, "banned");
+                }
+                if ((reg->flags & USERLIST_UC_LOCKED)) {
+                    if (r++) fprintf(flags_f, ", ");
+                    fprintf(flags_f, "locked");
+                }
+                if ((reg->flags & USERLIST_UC_INCOMPLETE)) {
+                    if (r++) fprintf(flags_f, ", ");
+                    fprintf(flags_f, "incomplete");
+                }
+                if ((reg->flags & USERLIST_UC_DISQUALIFIED)) {
+                    if (r++) fprintf(flags_f, ", ");
+                    fprintf(flags_f, "disqualified");
+                }
+                fclose(flags_f); flags_f = NULL;
             }
-            if ((reg->flags & USERLIST_UC_BANNED)) {
-                if (r++) fprintf(flags_f, ", ");
-                fprintf(flags_f, "banned");
-            }
-            if ((reg->flags & USERLIST_UC_LOCKED)) {
-                if (r++) fprintf(flags_f, ", ");
-                fprintf(flags_f, "locked");
-            }
-            if ((reg->flags & USERLIST_UC_INCOMPLETE)) {
-                if (r++) fprintf(flags_f, ", ");
-                fprintf(flags_f, "incomplete");
-            }
-            if ((reg->flags & USERLIST_UC_DISQUALIFIED)) {
-                if (r++) fprintf(flags_f, ", ");
-                fprintf(flags_f, "disqualified");
-            }
-            fclose(flags_f); flags_f = NULL;
             if (!flags_s) flags_s = xstrdup("");
 %>
         <s:v value="separator" escape="false" />
