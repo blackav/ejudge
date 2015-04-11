@@ -20,6 +20,7 @@
 <script src='<s:config name="style-prefix" />jquery-ui/jquery-ui.min.js'></script>
 <script src='<s:config name="style-prefix" />jqgrid/js/i18n/grid.locale-en.js' type="text/javascript"></script>
 <script src='<s:config name="style-prefix" />jqgrid/js/jquery.jqGrid.min.js' type="text/javascript"></script>
+<script src='<s:config name="style-prefix" />jqgrid/plugins/jquery.contextmenu.js' type="text/javascript"></script>
 
 
 <!--[if (IE)]>
