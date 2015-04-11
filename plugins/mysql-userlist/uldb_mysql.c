@@ -5257,7 +5257,7 @@ new_get_brief_list_iterator_2_func(
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
   struct brief_list_iterator *iter = 0;
-  int i;
+  int i, val;
 
   unsigned char *query = emit_query(state, contest_id, group_id, filter,
                                     count, page, sort_field, sort_order,
@@ -5293,6 +5293,12 @@ new_get_brief_list_iterator_2_func(
       copy_saved_row_2(state, &iter->full_rows[i].login_row, 0, LOGIN_WIDTH);
       copy_saved_row_2(state, &iter->full_rows[i].user_info_row, LOGIN_WIDTH, USER_INFO_WIDTH);
       copy_saved_row_2(state, &iter->full_rows[i].cntsreg_row, LOGIN_WIDTH + USER_INFO_WIDTH, CNTSREG_WIDTH);
+
+      if (!state->md->lengths[0])
+        db_error_inv_value_fail(state->md, "value");
+      if (state->mi->parse_int(state->md, state->md->row[0], &val) < 0 || val <= 0)
+        db_error_inv_value_fail(state->md, "value");
+      iter->noreg_rows[i].user_id = val;
     }
   } else {
     XCALLOC(iter->noreg_rows, iter->total_ids);
@@ -5302,6 +5308,12 @@ new_get_brief_list_iterator_2_func(
       state->md->lengths = mysql_fetch_lengths(state->md->res);
       copy_saved_row_2(state, &iter->noreg_rows[i].login_row, 0, LOGIN_WIDTH);
       copy_saved_row_2(state, &iter->noreg_rows[i].user_info_row, LOGIN_WIDTH, USER_INFO_WIDTH);
+
+      if (!state->md->lengths[0])
+        db_error_inv_value_fail(state->md, "value");
+      if (state->mi->parse_int(state->md, state->md->row[0], &val) < 0 || val <= 0)
+        db_error_inv_value_fail(state->md, "value");
+      iter->noreg_rows[i].user_id = val;
     }
   }
 
