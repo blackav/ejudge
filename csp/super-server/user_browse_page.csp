@@ -13,6 +13,19 @@
     int contest_id = 0;
     int group_id = 0;
 
+    opcap_t gcaps = 0;
+    opcap_t caps = 0;
+
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_LIST_USERS) >= 0) {
+    } else if (!phr->cnts) {
+        FAIL(SSERV_ERR_PERM_DENIED);
+    } else {
+        if (opcaps_find(&phr->cnts->capabilities, phr->login, &caps) >= 0 && opcaps_check(caps, OPCAP_LIST_USERS) >= 0) {
+        } else {
+            FAIL(SSERV_ERR_PERM_DENIED);
+        }
+    }
+
 %><s:read var="contest_id" default="0" /><%
 %><s:read var="group_id" default="0" /><%
 
@@ -168,6 +181,62 @@ jQuery(document).ready(function()
     jQuery("#usertable").jqGrid('navGrid', '#pager', {edit:false, add:false, del:false});
 });
 </script>
+
+<script type="text/javascript">
+function setOperationVisibility(oper, value)
+{
+    obj1 = document.getElementById("Show" + oper + "Menu");
+    obj2 = document.getElementById("Hide" + oper + "Menu");
+    if (value) {
+        obj1.style.display = "none";
+        obj2.style.display = "";
+    } else {
+        obj1.style.display = "";
+        obj2.style.display = "none";
+    }
+}
+</script>
+
+<%
+  if (opcaps_check(gcaps, OPCAP_CREATE_USER) >= 0) {
+%>
+<div id="ShowCreateUserMenu"><a onclick="setOperationVisibility('CreateUser', true)">[User creation operations]</a></div>
+<div style="display: none;" id="HideCreateUserMenu">
+    <a onclick="setOperationVisibility('CreateUser', false)">[Hide user creation operations]</a><br/>
+
+    <s:url name="OneNewUserUrl" ac="user-create-one-page">
+        <s:param name="contest_id" value="contest_id" fullCheckExpr="contest_id &gt; 0" />
+        <s:param name="group_id" value="group_id" fullCheckExpr="group_id &gt; 0" />
+    </s:url>
+    <s:url name="ManyNewUsersUrl" ac="user-create-many-page">
+        <s:param name="contest_id" value="contest_id" fullCheckExpr="contest_id &gt; 0" />
+        <s:param name="group_id" value="group_id" fullCheckExpr="group_id &gt; 0" />
+    </s:url>
+    <s:url name="CreateCSVUsersUrl" ac="user-create-from-csv-page">
+        <s:param name="contest_id" value="contest_id" fullCheckExpr="contest_id &gt; 0" />
+        <s:param name="group_id" value="group_id" fullCheckExpr="group_id &gt; 0" />
+    </s:url>
+    <s:url name="ImportCSVUsersUrl" ac="user-import-csv-page">
+        <s:param name="contest_id" value="contest_id" fullCheckExpr="contest_id &gt; 0" />
+        <s:param name="group_id" value="group_id" fullCheckExpr="group_id &gt; 0" />
+    </s:url>
+
+    <table class="b0"><tr>
+        <td class="b0"><s:a url="OneNewUserUrl">Create one new user</s:a></td>
+        <td class="b0"><s:a url="ManyNewUsersUrl">Create MANY new users</s:a></td>
+        <td class="b0"><s:a url="CreateCSVUsersUrl">Create users from a CSV table</s:a></td>
+<%
+    if (contest_id > 0) {
+%>
+        <td class="b0"><s:a url="ImportCSVUsersUrl">Import user data from a CSV table</s:a></td>
+<%
+    }
+%>
+    </tr></table>
+</div>
+<%
+  }
+%>
 
 <%@include "footer.csp"
 %><%
