@@ -3544,6 +3544,7 @@ handle_form_open(
     const unsigned char *method = "post";
     const unsigned char *enctype = NULL;
     const unsigned char *id = NULL;
+    const unsigned char *onsubmit = NULL;
 
     HtmlAttribute *at = html_element_find_attribute(elem, "method");
     if (at && !strcmp(at->value, "get")) {
@@ -3560,6 +3561,9 @@ handle_form_open(
     if ((at = html_element_find_attribute(elem, "id"))) {
         id = at->value;
     }
+    if ((at = html_element_find_attribute(elem, "onsubmit"))) {
+        onsubmit = at->value;
+    }
 
     // FIXME: handle action, or ac
     char *str_p = 0;
@@ -3571,6 +3575,9 @@ handle_form_open(
     }
     if (id && *id) {
         fprintf(str_f, " id=\"%s\"", id);
+    }
+    if (onsubmit && *onsubmit) {
+        fprintf(str_f, " onsubmit=\"%s\"", onsubmit);
     }
     fprintf(str_f, " action=\"");
     fclose(str_f); str_f = 0;
