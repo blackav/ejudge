@@ -57,7 +57,7 @@
   var script_name='<s:v value="phr->script_name" escape="false" />';
   var contest_id='<s:v value="phr->contest_id" escape="false" />';
   var group_id='<s:v value="group_id" escape="false" />';
-  var user_browse_page=<s:ac ac="user-new-browse-page" />;
+  var user_browse_page=<s:ac ac="user-browse-page" />;
   var user_browse_data=<s:ac ac="user-browse-data" />;
   var user_password_page=<s:ac ac="user-password-page" />;
   var user_detail_page=<s:ac ac="user-detail-page" />;

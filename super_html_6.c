@@ -476,7 +476,7 @@ print_top_navigation_links(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d%s",
-                        SSERV_CMD_USER_NEW_BROWSE_PAGE, marked_param),
+                        SSERV_CMD_USER_BROWSE_PAGE, marked_param),
           "Browse users");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
@@ -487,7 +487,7 @@ print_top_navigation_links(
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d%s%s",
-                          SSERV_CMD_USER_NEW_BROWSE_PAGE,
+                          SSERV_CMD_USER_BROWSE_PAGE,
                           contest_id_str, marked_param),
             "Browse users of contest", contest_id);
   }
@@ -495,7 +495,7 @@ print_top_navigation_links(
     fprintf(out_f, "<li>%s%s %d</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d%s%s",
-                          SSERV_CMD_USER_NEW_BROWSE_PAGE,
+                          SSERV_CMD_USER_BROWSE_PAGE,
                           group_id_str, marked_param),
             "Browse users of group", group_id);
   }
@@ -910,7 +910,7 @@ super_serve_op_USER_BROWSE_PAGE(
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;next_op=%d&amp;other_user_id=%d%s%s",
                           SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_PASSWORD_PAGE,
-                          SSERV_CMD_USER_NEW_BROWSE_PAGE,
+                          SSERV_CMD_USER_BROWSE_PAGE,
                           user_id, contest_id_str, group_id_str),
             "[Reg. password]");
     if (contest_id > 0 && cnts && !cnts->disable_team_password) {
@@ -918,7 +918,7 @@ super_serve_op_USER_BROWSE_PAGE(
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                             NULL, "action=%d&amp;op=%d&amp;next_op=%d&amp;other_user_id=%d%s%s",
                             SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_CNTS_PASSWORD_PAGE,
-                            SSERV_CMD_USER_NEW_BROWSE_PAGE,
+                            SSERV_CMD_USER_BROWSE_PAGE,
                             user_id, contest_id_str, group_id_str),
               "[Cnts. password]");
     }
@@ -927,14 +927,14 @@ super_serve_op_USER_BROWSE_PAGE(
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                             NULL, "action=%d&amp;op=%d&amp;next_op=%d&amp;other_user_id=%d&amp;other_contest_id=%d%s%s",
                             SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_EDIT_REG_PAGE,
-                            SSERV_CMD_USER_NEW_BROWSE_PAGE,
+                            SSERV_CMD_USER_BROWSE_PAGE,
                             user_id, contest_id, contest_id_str, group_id_str),
               "Change");
       fprintf(out_f, "&nbsp;%s[%s]</a>",
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                             NULL, "action=%d&amp;op=%d&amp;next_op=%d&amp;other_user_id=%d&amp;other_contest_id=%d%s%s",
                             SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_DELETE_REG_PAGE,
-                            SSERV_CMD_USER_NEW_BROWSE_PAGE,
+                            SSERV_CMD_USER_BROWSE_PAGE,
                             user_id, contest_id, contest_id_str, group_id_str),
               "Delete");
     }
@@ -1307,7 +1307,7 @@ super_serve_op_USER_FILTER_CHANGE_ACTION(
   phr->ss->user_count = user_count;
 
 cleanup:
-  ss_redirect(out_f, phr, SSERV_CMD_USER_NEW_BROWSE_PAGE, extra_t);
+  ss_redirect(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, extra_t);
   bitset_free(&marked);
   xfree(marked_str);
   if (extra_f) fclose(extra_f);
@@ -1338,7 +1338,7 @@ super_serve_op_USER_JUMP_CONTEST_ACTION(
     }
   }
 
-  ss_redirect_2(out_f, phr, SSERV_CMD_USER_NEW_BROWSE_PAGE, jump_contest_id, group_id, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, jump_contest_id, group_id, 0, NULL);
 
   return retval;
 }
@@ -1389,7 +1389,7 @@ super_serve_op_USER_JUMP_GROUP_ACTION(
   }
 
 cleanup:
-  ss_redirect_2(out_f, phr, SSERV_CMD_USER_NEW_BROWSE_PAGE, contest_id, real_jump_group_id, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, contest_id, real_jump_group_id, 0, NULL);
 
   userlist_free(&users->b); users = NULL;
   xfree(xml_text); xml_text = NULL;
@@ -1471,7 +1471,7 @@ cleanup:
     fprintf(extra_f, "marked=%s", marked_str);
   }
   fclose(extra_f); extra_f = 0;
-  ss_redirect(out_f, phr, SSERV_CMD_USER_NEW_BROWSE_PAGE, extra_t);
+  ss_redirect(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, extra_t);
   xfree(marked_str);
   bitset_free(&marked);
   if (extra_f) fclose(extra_f);
@@ -1745,7 +1745,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     }
   }
   if (user_count <= 0) {
-    ss_redirect_2(out_f, phr, SSERV_CMD_USER_NEW_BROWSE_PAGE, contest_id, group_id, 0, NULL);
+    ss_redirect_2(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, contest_id, group_id, 0, NULL);
     goto cleanup;
   }
 
@@ -1777,7 +1777,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     break;
   case SSERV_CMD_USER_SEL_CHANGE_REG_FLAGS_PAGE:
     if (!(invisible_op + banned_op + locked_op + incomplete_op + disqualified_op)) {
-      ss_redirect_2(out_f, phr, SSERV_CMD_USER_NEW_BROWSE_PAGE, contest_id, group_id, 0, marked_str);
+      ss_redirect_2(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, contest_id, group_id, 0, marked_str);
       goto cleanup;
     }
     snprintf(buf, sizeof(buf), "serve-control: %s, change registration flags in contest %d",
@@ -2485,7 +2485,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
   }
 
 done:
-  ss_redirect_2(out_f, phr, SSERV_CMD_USER_NEW_BROWSE_PAGE, contest_id, group_id, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, contest_id, group_id, 0, NULL);
 
 cleanup:
   userlist_free(&users->b); users = 0;
@@ -2508,7 +2508,7 @@ super_serve_op_USER_SEL_CANCEL_ACTION(
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   hr_cgi_param_int_opt(phr, "group_id", &group_id, 0);
   marked_str = collect_marked_set(phr, &marked);
-  ss_redirect_2(out_f, phr, SSERV_CMD_USER_NEW_BROWSE_PAGE, contest_id, group_id, 0, marked_str);
+  ss_redirect_2(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, contest_id, group_id, 0, marked_str);
 
   xfree(marked_str);
   bitset_free(&marked);
@@ -3990,7 +3990,7 @@ super_serve_op_USER_EDIT_REG_PAGE(
   if (contests_get(other_contest_id, &cnts) < 0 || !cnts) {
     FAIL(SSERV_ERR_INV_CONTEST);
   }
-  if (next_op != SSERV_CMD_USER_DETAIL_PAGE && next_op != SSERV_CMD_USER_NEW_BROWSE_PAGE) next_op = 0;
+  if (next_op != SSERV_CMD_USER_DETAIL_PAGE && next_op != SSERV_CMD_USER_BROWSE_PAGE) next_op = 0;
   next_op_str[0] = 0;
   if (next_op > 0) {
     snprintf(next_op_str, sizeof(next_op_str), "&amp;next_op=%d", next_op);
@@ -4167,7 +4167,7 @@ super_serve_op_USER_DELETE_REG_PAGE(
   if (contests_get(other_contest_id, &cnts) < 0 || !cnts) {
     FAIL(SSERV_ERR_INV_CONTEST);
   }
-  if (next_op != SSERV_CMD_USER_NEW_BROWSE_PAGE && next_op != SSERV_CMD_USER_DETAIL_PAGE) next_op = 0;
+  if (next_op != SSERV_CMD_USER_BROWSE_PAGE && next_op != SSERV_CMD_USER_DETAIL_PAGE) next_op = 0;
   next_op_str[0] = 0;
   if (next_op > 0) {
     snprintf(next_op_str, sizeof(next_op_str), "&amp;next_op=%d", next_op);
@@ -5437,7 +5437,7 @@ super_serve_op_USER_CHANGE_PASSWORD_ACTION(
   if (next_op == SSERV_CMD_USER_DETAIL_PAGE) {
     ss_redirect_2(out_f, phr, SSERV_CMD_USER_DETAIL_PAGE, contest_id, group_id, other_user_id, NULL);
   } else {
-    ss_redirect_2(out_f, phr, SSERV_CMD_USER_NEW_BROWSE_PAGE, contest_id, group_id, 0, NULL);
+    ss_redirect_2(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, contest_id, group_id, 0, NULL);
   }
 
 cleanup:
@@ -5537,7 +5537,7 @@ super_serve_op_USER_CHANGE_CNTS_PASSWORD_ACTION(
   if (next_op == SSERV_CMD_USER_DETAIL_PAGE) {
     ss_redirect_2(out_f, phr, SSERV_CMD_USER_DETAIL_PAGE, contest_id, group_id, other_user_id, NULL);
   } else {
-    ss_redirect_2(out_f, phr, SSERV_CMD_USER_NEW_BROWSE_PAGE, contest_id, group_id, 0, NULL);
+    ss_redirect_2(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, contest_id, group_id, 0, NULL);
   }
 
 cleanup:
@@ -5647,7 +5647,7 @@ super_serve_op_USER_CREATE_ONE_ACTION(
     FAIL(SSERV_ERR_DB_ERROR);
   }
 
-  ss_redirect_2(out_f, phr, SSERV_CMD_USER_NEW_BROWSE_PAGE, params.contest_id, params.group_id, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, params.contest_id, params.group_id, 0, NULL);
 
 cleanup:
   xfree(xml_text); xml_text = 0;
@@ -5838,7 +5838,7 @@ super_serve_op_USER_CREATE_MANY_ACTION(
     }
   }
 
-  ss_redirect_2(out_f, phr, SSERV_CMD_USER_NEW_BROWSE_PAGE, params.contest_id, params.group_id, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, params.contest_id, params.group_id, 0, NULL);
 
 cleanup:
   if (login_strs) {
@@ -6136,7 +6136,7 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
     xfree(cnts_name_str); cnts_name_str = 0;
   }
 
-  ss_redirect_2(out_f, phr, SSERV_CMD_USER_NEW_BROWSE_PAGE, params.contest_id, params.group_id, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, params.contest_id, params.group_id, 0, NULL);
 
 cleanup:
   xfree(login_str); login_str = 0;
@@ -6556,9 +6556,9 @@ super_serve_op_USER_SAVE_ACTION(
     userlist_clnt_get_prev_user_id(phr->userlist_clnt, ULS_NEXT_USER, contest_id, group_id, other_user_id,
                                    NULL, &next_user_id);
   } else {
-    next_op = SSERV_CMD_USER_NEW_BROWSE_PAGE;
+    next_op = SSERV_CMD_USER_BROWSE_PAGE;
   }
-  if (next_user_id <= 0) next_op = SSERV_CMD_USER_NEW_BROWSE_PAGE;
+  if (next_user_id <= 0) next_op = SSERV_CMD_USER_BROWSE_PAGE;
 
   ss_redirect_2(out_f, phr, next_op, contest_id, group_id, next_user_id, NULL);
 
@@ -6604,9 +6604,9 @@ super_serve_op_USER_CANCEL_ACTION(
     userlist_clnt_get_prev_user_id(phr->userlist_clnt, ULS_NEXT_USER, contest_id, group_id, other_user_id,
                                    NULL, &next_user_id);
   } else {
-    next_op = SSERV_CMD_USER_NEW_BROWSE_PAGE;
+    next_op = SSERV_CMD_USER_BROWSE_PAGE;
   }
-  if (next_user_id <= 0) next_op = SSERV_CMD_USER_NEW_BROWSE_PAGE;
+  if (next_user_id <= 0) next_op = SSERV_CMD_USER_BROWSE_PAGE;
 
   ss_redirect_2(out_f, phr, next_op, contest_id, group_id, next_user_id, NULL);
 
@@ -6954,7 +6954,7 @@ super_serve_op_USER_EDIT_REG_ACTION(
 
   if (params.group_id < 0) params.group_id = 0;
 
-  if (params.next_op != SSERV_CMD_USER_DETAIL_PAGE) params.next_op = SSERV_CMD_USER_NEW_BROWSE_PAGE;
+  if (params.next_op != SSERV_CMD_USER_DETAIL_PAGE) params.next_op = SSERV_CMD_USER_BROWSE_PAGE;
 
   if (phr->priv_level <= 0) FAIL(SSERV_ERR_PERM_DENIED);
   opcap_t gcaps = 0, caps = 0;
@@ -7023,7 +7023,7 @@ super_serve_op_USER_DELETE_REG_ACTION(
       contest_id = 0;
   }
   if (group_id < 0) group_id = 0;
-  if (next_op != SSERV_CMD_USER_DETAIL_PAGE) next_op = SSERV_CMD_USER_NEW_BROWSE_PAGE;
+  if (next_op != SSERV_CMD_USER_DETAIL_PAGE) next_op = SSERV_CMD_USER_BROWSE_PAGE;
 
   cnts = 0;
   if (other_contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
@@ -7819,7 +7819,7 @@ super_serve_op_USER_IMPORT_CSV_ACTION(
     deleted_count = 0;
   }
 
-  ss_redirect_2(out_f, phr, SSERV_CMD_USER_NEW_BROWSE_PAGE, contest_id, group_id, 0, NULL);
+  ss_redirect_2(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, contest_id, group_id, 0, NULL);
 
 cleanup:
   xfree(serials);
@@ -7972,7 +7972,7 @@ super_serve_op_GROUP_BROWSE_PAGE(
     fprintf(out_f, "&nbsp;%s%s</a>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;group_id=%d",
-                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_NEW_BROWSE_PAGE,
+                          SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE,
                           group_id),
             "[Members]");
     fprintf(out_f, "&nbsp;%s%s</a>",
@@ -8778,7 +8778,7 @@ migration_page(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_NEW_BROWSE_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE),
           "Browse users");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
@@ -9003,7 +9003,7 @@ super_serve_op_EJUDGE_XML_MUST_RESTART(
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                         NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_NEW_BROWSE_PAGE),
+                        SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE),
           "Browse users");
   fprintf(out_f, "<li>%s%s</a></li>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,

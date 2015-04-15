@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "includes.csp"
 %><%@set getter_name = "csp_get_contest_page"
 %><%@set ac_prefix = "SSERV_CMD_"
@@ -383,7 +382,7 @@
 <table border="0">
     <tr>
 <% if (opcaps_check(caps, OPCAP_LIST_USERS) >= 0) { %>
-<s:url name="ViewUsersUrl" ac="user-new-browse-page">
+<s:url name="ViewUsersUrl" ac="user-browse-page">
     <s:param name="contest_id" value="phr->contest_id" />
 </s:url>
         <td>[<s:a url="ViewUsersUrl">View/edit users</s:a>]</td>
