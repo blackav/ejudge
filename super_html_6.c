@@ -1134,6 +1134,35 @@ collect_marked_set(
 {
   const unsigned char *s = 0;
 
+  if (hr_cgi_param(phr, "selected_users", &s) > 0 && s) {
+    const unsigned char *p = s;
+    int max_user_id = -1;
+    while (1) {
+      int n, v;
+      if (sscanf(p, "%d%n", &v, &n) != 1) break;
+      p += n;
+      if (v > 0 && v < 10000000 && v > max_user_id) {
+        max_user_id = v;
+      }
+      if (*p == ',') ++p;
+    }
+    if (max_user_id <= 0) {
+      return bitset_url_encode(pms);
+    }
+    bitset_init(pms, max_user_id + 1);
+    p = s;
+    while (1) {
+      int n, v;
+      if (sscanf(p, "%d%n", &v, &n) != 1) break;
+      p += n;
+      if (v > 0 && v < 10000000) {
+        bitset_on(pms, v);
+      }
+      if (*p == ',') ++p;
+    }
+    return bitset_url_encode(pms);
+  }
+
   if (hr_cgi_param(phr, "marked", &s) > 0 && s) {
     bitset_url_decode(s, pms);
   }
