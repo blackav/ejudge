@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2011-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -46,7 +45,7 @@ static signed char const base64_decode_table[] =
 };
 
 enum { ENCODE_BASE = 64 };
-enum { MAX_VALUE = 1000000000 };
+enum { MAX_VALUE = 10000000 };
 
 int
 bitset_url_decode(
@@ -390,6 +389,17 @@ bitset_resize(bitset_t *ss, int new_size)
     memcpy(new_set, ss->set, old_alloc);
     xfree(ss->set); ss->set = 0;
   }
+  ss->size = new_size;
+  ss->set = new_set;
+}
+
+void
+bitset_init(bitset_t *ss, int new_size)
+{
+  if (!ss || new_size <= 0 || new_size > MAX_VALUE) return;
+  int new_alloc = (new_size + 7) / 8;
+  unsigned char *new_set = (unsigned char *) malloc(new_alloc);
+  memset(new_set, 0, new_alloc);
   ss->size = new_size;
   ss->set = new_set;
 }
