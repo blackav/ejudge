@@ -16,18 +16,22 @@
     opcap_t gcaps = 0;
     opcap_t caps = 0;
 
+%><s:read var="contest_id" default="0" /><%
+%><s:read var="group_id" default="0" /><%
+
+    if (contest_id > 0) {
+        contests_get(contest_id, &cnts);
+    }
+
     if (ejudge_cfg_opcaps_find(phr->config, phr->login, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_LIST_USERS) >= 0) {
-    } else if (!phr->cnts) {
+    } else if (!cnts) {
         FAIL(SSERV_ERR_PERM_DENIED);
     } else {
-        if (opcaps_find(&phr->cnts->capabilities, phr->login, &caps) >= 0 && opcaps_check(caps, OPCAP_LIST_USERS) >= 0) {
+        if (opcaps_find(&cnts->capabilities, phr->login, &caps) >= 0 && opcaps_check(caps, OPCAP_LIST_USERS) >= 0) {
         } else {
             FAIL(SSERV_ERR_PERM_DENIED);
         }
     }
-
-%><s:read var="contest_id" default="0" /><%
-%><s:read var="group_id" default="0" /><%
 
     const unsigned char *cnts_password_disabled = "true";
     if (cnts && !cnts->disable_team_password) {
@@ -204,7 +208,164 @@ function setOperationVisibility(oper, value)
         obj2.style.display = "none";
     }
 }
+
+function injectSelectedUsers(id)
+{
+    var form = document.getElementById(id);
+    if (form != null) {
+        form.selected_users.value = jQuery("#usertable").jqGrid('getGridParam','selarrrow');
+    }
+    return true;
+}
 </script>
+
+<s:form id="ActionsForm" onsubmit="return injectSelectedUsers('ActionsForm')">
+    <s:hidden name="contest_id" checkExpr=" > 0" />
+    <s:hidden name="group_id" checkExpr=" > 0" />
+    <s:hidden name="selected_users" value="" />
+
+    <div id="ShowRegistrationMenu">
+        <a onclick="setOperationVisibility('Registration', true)">[Registration operations]</a>
+    </div>
+    <div style="display: none;" id="HideRegistrationMenu">
+        <a onclick="setOperationVisibility('Registration', false)">[Hide registration operations]</a><br/>
+        <table class="b0">
+            <tr><td class="b0" colspan="2"><b>Contest ID:</b> <input type="text" name="other_contest_id" /></td></tr>
+            <tr>
+                <td class="b0"><s:submit ac="user-sel-create-reg-page" label="Register for another contest" /></td>
+<%
+  if (contest_id > 0) {
+%>
+                <td class="b0"><s:submit ac="user-sel-create-reg-and-copy-page" label="Register for another contest and copy data" /></td>
+<%
+  }
+%>
+            </tr>
+        </table>
+    </div>
+
+    <div id="ShowGroupMenu">
+        <a onclick="setOperationVisibility('Group', true)">[Group operations]</a>
+    </div>
+    <div style="display: none;" id="HideGroupMenu">
+        <a onclick="setOperationVisibility('Group', false)">[Hide group operations]</a><br/>
+        <table class="b0">
+            <tr><td class="b0" colspan="2"><b>Group ID:</b> <input type="text" name="other_group_id" /></td></tr>
+            <tr>
+                <td class="b0"><s:submit ac="user-sel-create-group-member-page" label="Add users to another group" /></td>
+<%
+  if (group_id > 0) {
+%>
+                <td class="b0"><s:submit ac="user-sel-delete-group-member-page" label="Remove from group" /></td>
+<%
+  }
+%>
+            </tr>
+        </table>
+    </div>
+
+<%
+  if (cnts) {
+%>
+    <div id="ShowPasswordMenu">
+        <a onclick="setOperationVisibility('Password', true)">[Password operations]</a>
+    </div>
+    <div style="display: none;" id="HidePasswordMenu">
+        <a onclick="setOperationVisibility('Password', false)">[Hide password operations]</a><br/>
+
+        <table class="b0">
+            <tr>
+                <td class="b0"><b>Registration passwords:</b></td>
+                <td class="b0"><s:submit ac="user-sel-view-passwd-redirect" value='"View"' /></td>
+                <td class="b0">&nbsp;</td>
+                <td class="b0"><s:submit ac="user-sel-random-passwd-page" value='"Generate random"' /></td>
+            </tr>
+<%
+    if (!cnts->disable_team_password) {
+%>
+            <tr>
+                <td class="b0"><b>Contest passwords:</b></td>
+                <td class="b0"><s:submit ac="user-sel-view-cnts-passwd-redirect" value='"View"' /></td>
+                <td class="b0"><s:submit ac="user-sel-clear-cnts-passwd-page" value='"Clear"' /></td>
+                <td class="b0"><s:submit ac="user-sel-random-cnts-passwd-page" value='"Generate random"' /></td>
+            </tr>
+<%
+    }
+%>
+        </table>
+    </div>
+
+    <div id="ShowStatusMenu">
+        <a onclick="setOperationVisibility('Status', true)">[Status operations]</a>
+    </div>
+    <div style="display: none;" id="HideStatusMenu">
+        <a onclick="setOperationVisibility('Status', false)">[Hide status operations]</a><br/>
+
+        <table class="b0">
+            <tr><td class="b0"><s:submit ac="user-sel-delete-reg-page" value='"Delete registrations"' /></td></tr>
+            <tr>
+                <td class="b0"><b>Status:</b></td>
+                <td class="b0">
+                    <select name="status">
+                        <option value="0">OK</option>
+                        <option value="1">Pending</option>
+                        <option value="2">Rejected</option>
+                    </select>
+                </td>
+                <td class="b0"><s:submit ac="user-sel-change-reg-status-page" value='"Change status"' /></td>
+            </tr>
+        </table>
+    </div>
+
+    <div id="ShowFlagsMenu">
+        <a onclick="setOperationVisibility('Flags', true)">[Flags operations]</a>
+    </div>
+    <div style="display: none;" id="HideFlagsMenu">
+        <a onclick="setOperationVisibility('Flags', false)">[Hide flags operations]</a><br/>
+
+        <table class="b0">
+            <tr>
+                <td class="b0"><b>Invisible</b></td>
+                <td class="b0"><input type="radio" name="invisible_op" value="0" checked="checked" /> Do nothing</td>
+                <td class="b0"><input type="radio" name="invisible_op" value="1" /> Clear</td>
+                <td class="b0"><input type="radio" name="invisible_op" value="2" /> Set</td>
+                <td class="b0"><input type="radio" name="invisible_op" value="3" /> Toggle</td>
+            </tr>
+            <tr>
+                <td class="b0"><b>Banned</b></td>
+                <td class="b0"><input type="radio" name="banned_op" value="0" checked="checked" /> Do nothing</td>
+                <td class="b0"><input type="radio" name="banned_op" value="1" /> Clear</td>
+                <td class="b0"><input type="radio" name="banned_op" value="2" /> Set</td>
+                <td class="b0"><input type="radio" name="banned_op" value="3" /> Toggle</td>
+            </tr>
+            <tr>
+                <td class="b0"><b>Locked</b></td>
+                <td class="b0"><input type="radio" name="locked_op" value="0" checked="checked" /> Do nothing</td>
+                <td class="b0"><input type="radio" name="locked_op" value="1" /> Clear</td>
+                <td class="b0"><input type="radio" name="locked_op" value="2" /> Set</td>
+                <td class="b0"><input type="radio" name="locked_op" value="3" /> Toggle</td>
+            </tr>
+            <tr>
+                <td class="b0"><b>Incomplete</b></td>
+                <td class="b0"><input type="radio" name="incomplete_op" value="0" checked="checked" /> Do nothing</td>
+                <td class="b0"><input type="radio" name="incomplete_op" value="1" /> Clear</td>
+                <td class="b0"><input type="radio" name="incomplete_op" value="2" /> Set</td>
+                <td class="b0"><input type="radio" name="incomplete_op" value="3" /> Toggle</td>
+            </tr>
+            <tr>
+                <td class="b0"><b>Disqualified</b></td>
+                <td class="b0"><input type="radio" name="disqualified_op" value="0" checked="checked" /> Do nothing</td>
+                <td class="b0"><input type="radio" name="disqualified_op" value="1" /> Clear</td>
+                <td class="b0"><input type="radio" name="disqualified_op" value="2" /> Set</td>
+                <td class="b0"><input type="radio" name="disqualified_op" value="3" /> Toggle</td>
+            </tr>
+            <tr><td class="b0"><s:submit ac="user-sel-change-reg-flags-page" value='"Change flags"'/></td></tr>
+        </table>
+    </div>
+<%
+  }
+%>
+</s:form>
 
 <%
   if (opcaps_check(gcaps, OPCAP_CREATE_USER) >= 0) {

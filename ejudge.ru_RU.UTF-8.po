@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-15 08:56+0300\n"
-"PO-Revision-Date: 2015-04-15 08:59+0300\n"
+"POT-Creation-Date: 2015-04-15 13:08+0300\n"
+"PO-Revision-Date: 2015-04-15 14:08+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -477,6 +477,9 @@ msgstr "Разрешить работу в роли ЭКЗАМЕНАТОРА о�
 
 msgid "Add the OBSERVER role to the selected users"
 msgstr "Разрешить работу в роли НАБЛЮДАТЕЛЯ отмеченным пользователям"
+
+msgid "Add users to another group"
+msgstr "Добавить пользователей в другую группу"
 
 msgid "Adding new runs"
 msgstr "Добавление новых посылок"
@@ -3079,6 +3082,12 @@ msgstr "Перегенерировать регистрационные паро
 msgid "Region"
 msgstr "Регион"
 
+msgid "Register for another contest"
+msgstr "Зарегистрировать на другой турнир"
+
+msgid "Register for another contest and copy data"
+msgstr "Зарегистрировать на другой турнир и скопировать данные"
+
 msgid "Registration"
 msgstr "Регистрация"
 
@@ -3189,6 +3198,9 @@ msgstr "Снять блокировку"
 
 msgid "Remove examiner"
 msgstr "Удалить экзаменатора"
+
+msgid "Remove from group"
+msgstr "Удалить из группы"
 
 msgid "Remove registrations"
 msgstr "Удалить регистрации"

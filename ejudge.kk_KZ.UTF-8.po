@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-15 08:56+0300\n"
+"POT-Creation-Date: 2015-04-15 13:08+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -415,6 +415,9 @@ msgid "Add the EXAMINER role to the selected users"
 msgstr ""
 
 msgid "Add the OBSERVER role to the selected users"
+msgstr ""
+
+msgid "Add users to another group"
 msgstr ""
 
 msgid "Adding new runs"
@@ -2913,6 +2916,12 @@ msgstr ""
 msgid "Region"
 msgstr ""
 
+msgid "Register for another contest"
+msgstr ""
+
+msgid "Register for another contest and copy data"
+msgstr ""
+
 msgid "Registration"
 msgstr ""
 
@@ -3022,6 +3031,9 @@ msgid "Remove ban"
 msgstr ""
 
 msgid "Remove examiner"
+msgstr ""
+
+msgid "Remove from group"
 msgstr ""
 
 msgid "Remove registrations"
