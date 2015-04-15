@@ -52,7 +52,7 @@
   var self_url='<s:v value="phr->self_url" escape="false" />';
   var script_name='<s:v value="phr->script_name" escape="false" />';
   var contest_id='<s:v value="phr->contest_id" escape="false" />';
-  var group_id='<s:v value="phr->group_id" escape="false" />';
+  var group_id='<s:v value="group_id" escape="false" />';
   var user_browse_page=<s:ac ac="user-new-browse-page" />;
   var user_browse_data=<s:ac ac="user-browse-data" />;
   var user_password_page=<s:ac ac="user-password-page" />;
@@ -62,6 +62,15 @@
   var user_delete_reg_page=<s:ac ac="user-delete-reg-page" />;
   var cnts_password_disabled=<s:v value="cnts_password_disabled" escape="false" />;
 </script>
+
+<s:form>
+    <s:hidden name="contest_id" checkExpr="> 0" />
+    <s:hidden name="group_id" checkExpr=" > 0" />
+    <table class="b0">
+        <tr><td><b>Jump to contest:</b></td><td><s:textfield name="jump_contest_id" value="contest_id" checkExpr="> 0" /></td><td><s:submit ac="user-jump-contest-action" label="Jump to contest" /></td></tr>
+        <tr><td><b>Jump to group:</b></td><td><s:textfield name="jump_group_id" value="group_id" checkExpr="> 0" /></td><td><s:submit ac="user-jump-group-action" label="Jump to group" /></td></tr>
+    </table>
+</s:form>
 
 <form id="extraParams">
 </form>

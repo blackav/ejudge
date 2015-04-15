@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-02-02 14:50+0300\n"
+"POT-Creation-Date: 2015-04-15 08:56+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -2001,6 +2001,12 @@ msgid "Judging priorities"
 msgstr ""
 
 msgid "Jul"
+msgstr ""
+
+msgid "Jump to contest"
+msgstr ""
+
+msgid "Jump to group"
 msgstr ""
 
 msgid "Jun"
