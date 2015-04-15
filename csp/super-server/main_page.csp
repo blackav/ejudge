@@ -26,7 +26,7 @@
 <div class="icons" style="margin-top: -25px; height: 57px; border-bottom: 1px solid rgb(207, 207, 207); margin-bottom: 0;">
 <div style="float: left;">
    
-    <s:a ac="user-old-browse-page"><img src="<s:config name="style-prefix" />user_sh.png" alt="User editor" title="User editor" /></s:a>
+    <s:a ac="user-new-browse-page"><img src="<s:config name="style-prefix" />user_sh.png" alt="User editor" title="User editor" /></s:a>
     <s:a ac="user-map-main-page"><img src="<s:config name="style-prefix" />mapping_sh.png" alt="System user mapping" title="System user mapping" /></s:a>
     <s:a ac="caps-main-page"><img src="<s:config name="style-prefix" />capabilities_sh.png" alt="Global user capabilities" title="Global user capabilities" /></s:a>
     <s:a ac="group-browse-page"><img src="<s:config name="style-prefix" />group_sh.png" alt="Group editor" title="Group editor" /></s:a>

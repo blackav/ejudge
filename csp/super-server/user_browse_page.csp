@@ -13,8 +13,26 @@
     int contest_id = 0;
     int group_id = 0;
 
+    opcap_t gcaps = 0;
+    opcap_t caps = 0;
+
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_LIST_USERS) >= 0) {
+    } else if (!phr->cnts) {
+        FAIL(SSERV_ERR_PERM_DENIED);
+    } else {
+        if (opcaps_find(&phr->cnts->capabilities, phr->login, &caps) >= 0 && opcaps_check(caps, OPCAP_LIST_USERS) >= 0) {
+        } else {
+            FAIL(SSERV_ERR_PERM_DENIED);
+        }
+    }
+
 %><s:read var="contest_id" default="0" /><%
 %><s:read var="group_id" default="0" /><%
+
+    const unsigned char *cnts_password_disabled = "true";
+    if (cnts && !cnts->disable_team_password) {
+        cnts_password_disabled = "false";
+    }
 
     if (contest_id > 0 && group_id > 0) {
         snprintf(subtitle_buf, sizeof(subtitle_buf), "browsing users for contest %d, group %d", contest_id, group_id);
@@ -34,14 +52,56 @@
   var self_url='<s:v value="phr->self_url" escape="false" />';
   var script_name='<s:v value="phr->script_name" escape="false" />';
   var contest_id='<s:v value="phr->contest_id" escape="false" />';
+  var group_id='<s:v value="group_id" escape="false" />';
+  var user_browse_page=<s:ac ac="user-new-browse-page" />;
   var user_browse_data=<s:ac ac="user-browse-data" />;
+  var user_password_page=<s:ac ac="user-password-page" />;
+  var user_detail_page=<s:ac ac="user-detail-page" />;
+  var user_cnts_password_page=<s:ac ac="user-cnts-password-page" />;
+  var user_edit_reg_page=<s:ac ac="user-edit-reg-page" />;
+  var user_delete_reg_page=<s:ac ac="user-delete-reg-page" />;
+  var cnts_password_disabled=<s:v value="cnts_password_disabled" escape="false" />;
 </script>
+
+<s:form>
+    <s:hidden name="contest_id" checkExpr="> 0" />
+    <s:hidden name="group_id" checkExpr=" > 0" />
+    <table class="b0">
+        <tr><td><b>Jump to contest:</b></td><td><s:textfield name="jump_contest_id" value="contest_id" checkExpr="> 0" /></td><td><s:submit ac="user-jump-contest-action" label="Jump to contest" /></td></tr>
+        <tr><td><b>Jump to group:</b></td><td><s:textfield name="jump_group_id" value="group_id" checkExpr="> 0" /></td><td><s:submit ac="user-jump-group-action" label="Jump to group" /></td></tr>
+    </table>
+</s:form>
 
 <form id="extraParams">
 </form>
 
 <table id="usertable"></table>
 <div id="pager"></div>
+
+<div class="contextMenu" id="contextMenu" style="display:none">
+    <ul style="width: 400px">
+        <li id="details">
+            <span class="ui-icon ui-icon-pencil" style="float:left"></span>
+            <span>Details</span>
+        </li>
+        <li id="regPasswd">
+            <span class="ui-icon ui-icon-pencil" style="float:left"></span>
+            <span>Reg. password</span>
+        </li>
+        <li id="cntsPasswd">
+            <span class="ui-icon ui-icon-pencil" style="float:left"></span>
+            <span>Cnts. password</span>
+        </li>
+        <li id="registr">
+            <span class="ui-icon ui-icon-pencil" style="float:left"></span>
+            <span>Registration</span>
+        </li>
+        <li id="del">
+            <span class="ui-icon ui-icon-trash" style="float:left"></span>
+            <span>Delete</span>
+        </li>
+    </ul>
+</div>
 
 <script type="text/javascript">
 function statusAttrFunc(rowId, val, rawObject, cm, rdata)
@@ -77,7 +137,7 @@ jQuery(document).ready(function()
             { name: 'flags', index: 'flags', sortable: false, search: false },
         ],
         rowNum : 10,
-        rowList : [10,20,30],
+        rowList : [10,20,30,50,100],
         pager : '#pager',
         sortname: 'id',
         sortorder : 'asc',
@@ -85,11 +145,107 @@ jQuery(document).ready(function()
         caption : 'Users',
         height: 'auto',
         multiselect: true,
-        altRows : true
+        altRows : true,
+        ondblClickRow : function(rowid) {
+            window.location.href = self_url + '?SID=' + SID + '&contest_id=' + contest_id + '&group_id=' + group_id + '&action=' + user_detail_page + '&other_user_id=' + rowid;
+        },
+        loadComplete : function() {
+            $("tr.jqgrow", this).contextMenu('contextMenu', {
+                bindings : {
+                    'details' : function(trigger) {
+                        var rowid = trigger.id;
+                        window.location.href = self_url + '?SID=' + SID + '&contest_id=' + contest_id + '&group_id=' + group_id + '&action=' + user_detail_page + '&other_user_id=' + rowid;
+                    },
+                    'regPasswd' : function(trigger) {
+                        var rowid = trigger.id;
+                        window.location.href = self_url + '?SID=' + SID + '&contest_id=' + contest_id + '&group_id=' + group_id + '&action=' + user_password_page + '&other_user_id=' + rowid + '&next_op=' + user_browse_page;
+                    },
+                    'cntsPasswd' : function(trigger) {
+                        var rowid = trigger.id;
+                        window.location.href = self_url + '?SID=' + SID + '&contest_id=' + contest_id + '&group_id=' + group_id + '&action=' + user_cnts_password_page + '&other_user_id=' + rowid + '&next_op=' + user_browse_page;
+                    },
+                    'registr' : function(trigger) {
+                        var rowid = trigger.id;
+                        window.location.href = self_url + '?SID=' + SID + '&other_contest_id=' + contest_id + '&group_id=' + group_id + '&action=' + user_edit_reg_page + '&other_user_id=' + rowid + '&next_op=' + user_browse_page;
+                    },
+                    'del' : function(trigger) {
+                        var rowid = trigger.id;
+                        window.location.href = self_url + '?SID=' + SID + '&other_contest_id=' + contest_id + '&group_id=' + group_id + '&action=' + user_delete_reg_page + '&other_user_id=' + rowid + '&next_op=' + user_browse_page;
+                    }
+                },
+                onContextMenu: function(event) {
+                    var rowId = $(event.target).closest("tr.jqgrow").attr("id");
+                    if (contest_id <= 0) {
+                        $('#registr').attr("disabled","disabled").addClass('ui-state-disabled');
+                        $('#del').attr("disabled","disabled").addClass('ui-state-disabled');
+                    }
+                    if (cnts_password_disabled) {
+                        $('#cntsPasswd').attr("disabled","disabled").addClass('ui-state-disabled');
+                    }
+                    return true;
+                }
+            });
+        }
     });
     jQuery("#usertable").jqGrid('navGrid', '#pager', {edit:false, add:false, del:false});
 });
 </script>
+
+<script type="text/javascript">
+function setOperationVisibility(oper, value)
+{
+    obj1 = document.getElementById("Show" + oper + "Menu");
+    obj2 = document.getElementById("Hide" + oper + "Menu");
+    if (value) {
+        obj1.style.display = "none";
+        obj2.style.display = "";
+    } else {
+        obj1.style.display = "";
+        obj2.style.display = "none";
+    }
+}
+</script>
+
+<%
+  if (opcaps_check(gcaps, OPCAP_CREATE_USER) >= 0) {
+%>
+<div id="ShowCreateUserMenu"><a onclick="setOperationVisibility('CreateUser', true)">[User creation operations]</a></div>
+<div style="display: none;" id="HideCreateUserMenu">
+    <a onclick="setOperationVisibility('CreateUser', false)">[Hide user creation operations]</a><br/>
+
+    <s:url name="OneNewUserUrl" ac="user-create-one-page">
+        <s:param name="contest_id" value="contest_id" fullCheckExpr="contest_id &gt; 0" />
+        <s:param name="group_id" value="group_id" fullCheckExpr="group_id &gt; 0" />
+    </s:url>
+    <s:url name="ManyNewUsersUrl" ac="user-create-many-page">
+        <s:param name="contest_id" value="contest_id" fullCheckExpr="contest_id &gt; 0" />
+        <s:param name="group_id" value="group_id" fullCheckExpr="group_id &gt; 0" />
+    </s:url>
+    <s:url name="CreateCSVUsersUrl" ac="user-create-from-csv-page">
+        <s:param name="contest_id" value="contest_id" fullCheckExpr="contest_id &gt; 0" />
+        <s:param name="group_id" value="group_id" fullCheckExpr="group_id &gt; 0" />
+    </s:url>
+    <s:url name="ImportCSVUsersUrl" ac="user-import-csv-page">
+        <s:param name="contest_id" value="contest_id" fullCheckExpr="contest_id &gt; 0" />
+        <s:param name="group_id" value="group_id" fullCheckExpr="group_id &gt; 0" />
+    </s:url>
+
+    <table class="b0"><tr>
+        <td class="b0"><s:a url="OneNewUserUrl">Create one new user</s:a></td>
+        <td class="b0"><s:a url="ManyNewUsersUrl">Create MANY new users</s:a></td>
+        <td class="b0"><s:a url="CreateCSVUsersUrl">Create users from a CSV table</s:a></td>
+<%
+    if (contest_id > 0) {
+%>
+        <td class="b0"><s:a url="ImportCSVUsersUrl">Import user data from a CSV table</s:a></td>
+<%
+    }
+%>
+    </tr></table>
+</div>
+<%
+  }
+%>
 
 <%@include "footer.csp"
 %><%

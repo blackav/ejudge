@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-02-02 14:50+0300\n"
-"PO-Revision-Date: 2015-02-02 14:50+0300\n"
+"POT-Creation-Date: 2015-04-15 08:56+0300\n"
+"PO-Revision-Date: 2015-04-15 08:59+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -2146,6 +2146,12 @@ msgstr "Приоритет проверки"
 
 msgid "Jul"
 msgstr "Июль"
+
+msgid "Jump to contest"
+msgstr "Перейти к турниру"
+
+msgid "Jump to group"
+msgstr "Перейти к группе"
 
 msgid "Jun"
 msgstr "Июнь"
