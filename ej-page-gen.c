@@ -4249,6 +4249,10 @@ handle_yesno_open(
     if (id_attr) {
         fprintf(str_f, " id=\"%s\"", id_attr->value);
     }
+    HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabled");
+    if (disabled_attr) {
+        fprintf(str_f, " disabled=\"%s\"", disabled_attr->value);
+    }
     fprintf(str_f, " name=\"%s\"><option value=\"0\"", name_attr->value);
     fclose(str_f); str_f = 0;
     handle_html_string(prg_f, txt_f, log_f, str_p);
