@@ -146,6 +146,12 @@ hr_cgi_param_bin(
         const unsigned char **p_value,
         size_t *p_size);
 
+int
+hr_cgi_param_string(
+        const struct http_request_info *phr,
+        const unsigned char *param,
+        unsigned char **p_value);
+
 const unsigned char *
 hr_cgi_nname(
         const struct http_request_info *phr,
