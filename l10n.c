@@ -211,6 +211,37 @@ l10n_html_locale_select_2(
 #endif
 }
 
+void
+l10n_html_locale_select_3(
+        FILE *out_f,
+        const unsigned char *id,
+        const unsigned char *cl,
+        const unsigned char *name,
+        const unsigned char *onchange,
+        int locale_id)
+{
+#if CONF_HAS_LIBINTL - 0 == 1
+  const unsigned char *ss = 0;
+  int i;
+
+  if (locale_id < 0 || locale_id >= sizeof(locales)/sizeof(locales[0])) locale_id = 0;
+  fprintf(out_f, "<select");
+  if (id) fprintf(out_f, " id=\"%s\"", id);
+  if (cl) fprintf(out_f, " class=\"%s\"", cl);
+  if (name) fprintf(out_f, " name=\"%s\"", name);
+  if (onchange) fprintf(out_f, " onChange='%s'", onchange);
+  fprintf(out_f, ">");
+  fprintf(out_f, "<option></option>");
+  for (i = 0; locales[i]; i++) {
+    ss = "";
+    if (i == locale_id) ss = " selected=\"selected\"";
+    fprintf(out_f, "<option value=\"%s\"%s>%s</option>",
+            locales[i], ss, gettext(locales[i]));
+  }
+  fprintf(out_f, "</select>\n");
+#endif
+}
+
 static struct locale_names 
 {
   const char * const name;
