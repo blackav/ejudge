@@ -3497,6 +3497,10 @@ handle_tr_open(
     if (valign_attr) {
         fprintf(str_f, " valign=\"%s\"", valign_attr->value);
     }
+    HtmlAttribute *onclick_attr = html_element_find_attribute(elem, "onclick");
+    if (onclick_attr) {
+        fprintf(str_f, " onclick=\"%s\"", onclick_attr->value);
+    }
 
     HtmlAttribute *attr_attr = html_element_find_attribute(elem, "attr");
     if (attr_attr) {
@@ -3944,10 +3948,12 @@ handle_textfield_open(
         input_type = "radio";
     }
 
+    /*
     if (html_element_find_attribute(elem, "disabled")) {
         parser_error_2(ps, "use disabledExpr instead of disabled");
         return -1;
     }
+    */
 
     HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabledexpr");
 
@@ -3962,6 +3968,26 @@ handle_textfield_open(
     HtmlAttribute *maxlength_attr = html_element_find_attribute(elem, "maxlength");
     if (maxlength_attr) {
         fprintf(str_f, " maxlength=\"%s\"", maxlength_attr->value);
+    }
+    HtmlAttribute *disabled2_attr = html_element_find_attribute(elem, "disabled");
+    if (disabled2_attr) {
+        fprintf(str_f, " disabled=\"%s\"", disabled2_attr->value);
+    }
+    HtmlAttribute *readonly_attr = html_element_find_attribute(elem, "readonly");
+    if (readonly_attr) {
+        fprintf(str_f, " readonly=\"%s\"", readonly_attr->value);
+    }
+    HtmlAttribute *onclick_attr = html_element_find_attribute(elem, "onclick");
+    if (onclick_attr) {
+        fprintf(str_f, " onclick=\"%s\"", onclick_attr->value);
+    }
+    HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
+    if (id_attr) {
+        fprintf(str_f, " id=\"%s\"", id_attr->value);
+    }
+    HtmlAttribute *class_attr = html_element_find_attribute(elem, "class");
+    if (class_attr) {
+        fprintf(str_f, " class=\"%s\"", class_attr->value);
     }
     if (skip_value) {
         if (disabled_attr) {
