@@ -4244,7 +4244,12 @@ handle_yesno_open(
     char *str_p = 0;
     size_t str_z = 0;
     FILE *str_f = open_memstream(&str_p, &str_z);
-    fprintf(str_f, "<select name=\"%s\"><option value=\"0\"", name_attr->value);
+    fprintf(str_f, "<select");
+    HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
+    if (id_attr) {
+        fprintf(str_f, " id=\"%s\"", id_attr->value);
+    }
+    fprintf(str_f, " name=\"%s\"><option value=\"0\"", name_attr->value);
     fclose(str_f); str_f = 0;
     handle_html_string(prg_f, txt_f, log_f, str_p);
     free(str_p); str_p = 0; str_z = 0;
