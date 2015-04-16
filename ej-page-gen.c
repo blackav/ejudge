@@ -5490,6 +5490,8 @@ process_unit(
                                      ej_ip_t_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_ip4_t")),
                                      ej_ipv4_t_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ejbytebool_t")),
+                                     int_type_handler);
 
     processor_state_set_type_handler(ps, tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_uuid_t")),
                                      ej_uuid_type_handler);
