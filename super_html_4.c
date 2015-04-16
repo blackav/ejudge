@@ -6734,6 +6734,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_COMMIT_PAGE] = "cnts_commit_page",
   [SSERV_CMD_USER_BROWSE_PAGE] = "user_browse_page",
   [SSERV_CMD_USER_BROWSE_DATA] = "user_browse_data",
+  [SSERV_CMD_GET_CONTEST_LIST] = "get_contest_list",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 
