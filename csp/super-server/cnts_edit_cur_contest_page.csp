@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "includes.csp"
 %><%
 %><%@set getter_name = "csp_get_cnts_edit_cur_contest_page"
@@ -30,71 +29,160 @@ static const unsigned char * const form_row_attrs[]=
 
     snprintf(subtitle_buf, sizeof(subtitle_buf), "editing contest.xml");
     cnts = phr->ss->edited_cnts;
-%><%@include "header.csp"
+%><%@include "header_jqgrid.csp"
 %>
 
 <%@include "cnts_edit_cur_top_menu.csp"
 %>
 
+<div id="basicDialogDiv" title="Basic Contest Settings">
+    <s:form id="BasicDialogForm">
+        <s:hidden name="action" ac="cnts-save-basic-form" />
+        <fieldset>
+            <label for="BasicDialogName">Name:</label>
+            <s:textfield size="48" name="name" id="BasicDialogName" value="" class="text ui-widget-content ui-corner-all" /><br/>
+            <label for="BasicDialogNameEn">Name (English):</label>
+            <s:textfield size="48" name="name_en" id="BasicDialogNameEn" value="" class="text ui-widget-content ui-corner-all" /><br/>
+            <label for="BasicDialogMainUrl">Main URL:</label>
+            <s:textfield size="48" name="main_url" id="BasicDialogMainUrl" value="" class="text ui-widget-content ui-corner-all" /><br/>
+            <label for="BasicDialogKeywords">Keywords:</label>
+            <s:textfield size="48" name="keywords" id="BasicDialogKeywords" value="" class="text ui-widget-content ui-corner-all" /><br/>
+            <label for="BasicDialogUserContest">Contest to share users with:</label>
+            <select id="BasicDialogUserContest" name="user_contest"></select><br/>
+            <label for="BasicDialogDefaultLocale">Default Locale:</label>
+<% l10n_html_locale_select_3(out_f, "BasicDialogDefaultLocale", NULL, "default_locale", NULL, -1); %>
+            <br/>
+            <label for="BasicDialogPersonal">The contest is personal?</label>
+            <input type="checkbox" name="personal" id="BasicDialogPersonal" value="1" />
+        </fieldset>
+    </s:form>
+</div>
+
+<script type="text/javascript">
+$(function() {
+    dialog = $("#basicDialogDiv").dialog({
+        autoOpen: false,
+        height: 300,
+        width: 600,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#BasicDialogForm").serialize();
+                var formURL = $("#BasicDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                dialog.dialog("close");
+            }
+        },
+        close: function() {
+        }
+    });
+});
+
+function popupBasicDialog()
+{
+    var selWidget=document.getElementById("BasicDialogUserContest");
+    if (selWidget != null) {
+        if (selWidget.options.length == 0) {
+            jQuery.ajax({
+                url : '<s:v value="phr->self_url" escape="false" />',
+                data : {
+                    SID : '<s:v value="phr->session_id" />',
+                    action : '<s:ac ac="get-contest-list" />'
+                },
+                dataType : "text",
+                success : function(data) {
+                    $("#BasicDialogUserContest").html(data);
+                    $("#BasicDialogUserContest").val(document.getElementById("OrigUserContest").value);
+                }
+            });
+        } else {
+            $("#BasicDialogUserContest").val(document.getElementById("OrigUserContest").value);
+        }
+    }
+
+    document.getElementById("BasicDialogName").value = document.getElementById("OrigName").value;
+    document.getElementById("BasicDialogNameEn").value = document.getElementById("OrigNameEn").value;
+    document.getElementById("BasicDialogMainUrl").value = document.getElementById("OrigMainUrl").value;
+    document.getElementById("BasicDialogKeywords").value = document.getElementById("OrigKeywords").value;
+    $("#BasicDialogDefaultLocale").val(document.getElementById("OrigDefaultLocale").value);
+    document.getElementById("BasicDialogPersonal").checked = false;
+    if (document.getElementById("OrigPersonal").value == "1") {
+        document.getElementById("BasicDialogPersonal").checked = true;
+    }
+    $("#basicDialogDiv").dialog('open');
+}
+</script>
+
 <table border="0">
-    <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Basic contest identification</b></td></s:tr>
+    <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Basic contest identification</b> [<a onclick="popupBasicDialog();">Edit</a>]</td></s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]"><td>Contest ID:</td><td><s:v value="cnts->id" /></td><td>&nbsp;</td><td>&nbsp;</td></s:tr>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Name:</td>
-            <td><s:textfield size="48" name="param" value="cnts->name" /><% if (!cnts->name) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-name" label="Change" /><s:submit ac="cnts-clear-name" label="Clear" /></td>
-            <td><s:help ac="cnts-change-name" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Name (English):</td>
-            <td><s:textfield size="48" name="param" value="cnts->name_en" /><% if (!cnts->name_en) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-name-en" label="Change" /><s:submit ac="cnts-clear-name-en" label="Clear" /></td>
-            <td><s:help ac="cnts-change-name-en" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Main URL:</td>
-            <td><s:textfield size="48" name="param" value="cnts->main_url" /><% if (!cnts->main_url) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-main-url" label="Change" /><s:submit ac="cnts-clear-main-url" label="Clear" /></td>
-            <td><s:help ac="cnts-change-main-url" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Keywords:</td>
-            <td><s:textfield size="48" name="param" value="cnts->keywords" /><% if (!cnts->keywords) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-keywords" label="Change" /><s:submit ac="cnts-clear-keywords" label="Clear" /></td>
-            <td><s:help ac="cnts-change-keywords" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Contest to share users with:</td>
-            <td><s:textfield size="48" name="param" value="cnts->user_contest" /><% if (!cnts->user_contest) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-user-contest" label="Change" /><s:submit ac="cnts-clear-user-contest" label="Clear" /></td>
-            <td><s:help ac="cnts-change-user-contest" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Default locale:</td>
-            <td><s:textfield size="48" name="param" value="cnts->default_locale" /><% if (!cnts->default_locale) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-default-locale" label="Change" /><s:submit ac="cnts-clear-default-locale" label="Clear" /></td>
-            <td><s:help ac="cnts-change-default-locale" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>The contest is personal?</td>
-            <td><s:yesno name="param" value="cnts->personal" /></td>
-            <td><s:submit ac="cnts-change-personal" label="Change" /></td>
-            <td><s:help ac="cnts-change-personal" /></td>
-        </s:tr>
-    </s:form>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td onclick="popupBasicDialog();">Name:</td>
+        <td onclick="popupBasicDialog();"><s:textfield id="OrigName" readonly="readonly" size="48" name="param" value="cnts->name" /><% if (!cnts->name) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-name" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-name" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td onclick="popupBasicDialog();">Name (English):</td>
+        <td onclick="popupBasicDialog();"><s:textfield id="OrigNameEn" readonly="readonly" size="48" name="param" value="cnts->name_en" /><% if (!cnts->name_en) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-name-en" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-name-en" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td onclick="popupBasicDialog();">Main URL:</td>
+        <td onclick="popupBasicDialog();"><s:textfield id="OrigMainUrl" readonly="readonly" size="48" name="param" value="cnts->main_url" /><% if (!cnts->main_url) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-main-url" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-main-url" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td onclick="popupBasicDialog();">Keywords:</td>
+        <td onclick="popupBasicDialog();"><s:textfield id="OrigKeywords" readonly="readonly" size="48" name="param" value="cnts->keywords" /><% if (!cnts->keywords) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-keywords" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-keywords" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td onclick="popupBasicDialog();">Contest to share users with:</td>
+        <td onclick="popupBasicDialog();"><s:textfield id="OrigUserContest" readonly="readonly" size="48" name="param" value="cnts->user_contest" /><% if (!cnts->user_contest) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-user-contest" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-user-contest" /></td>
+    </s:tr>
+<%
+  if (cnts->default_locale && *cnts->default_locale) {
+    int locale_id = l10n_parse_locale(cnts->default_locale);
+    if (locale_id >= 0) {
+      const unsigned char *str = l10n_unparse_locale(locale_id);
+      xfree(phr->ss->edited_cnts->default_locale); phr->ss->edited_cnts->default_locale = NULL;
+      if (str) phr->ss->edited_cnts->default_locale = xstrdup(str);
+    } else {
+      xfree(phr->ss->edited_cnts->default_locale); phr->ss->edited_cnts->default_locale = NULL;
+    }
+  }
+%>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td onclick="popupBasicDialog();">Default locale:</td>
+        <td onclick="popupBasicDialog();"><s:textfield id="OrigDefaultLocale" readonly="readonly" size="48" name="param" value="cnts->default_locale" /><% if (!cnts->default_locale) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-default-locale" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-default-locale" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td onclick="popupBasicDialog();">The contest is personal?</td>
+        <td onclick="popupBasicDialog();"><s:yesno id="OrigPersonal" disabled="disabled" name="param" value="cnts->personal" /></td>
+        <td>&nbsp;</td>
+        <td><s:help ac="cnts-change-personal" /></td>
+    </s:tr>
 
     <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Registration settings</b></td></s:tr>
 <% row = 1; %>

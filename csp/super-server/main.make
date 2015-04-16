@@ -62,6 +62,8 @@ CFILES = \
  csp_problem_packages_page.c\
  csp_user_browse_page.c\
  csp_user_browse_data.c\
+ csp_get_contest_list.c\
+ csp_cnts_save_basic_form.c\
  csp_error_unknown_page.c
 
 SOFILES = $(CFILES:.c=.so)
@@ -114,6 +116,8 @@ csp_main_page.c : main_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_problem_packages_page.c : problem_packages_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_user_browse_page.c : user_browse_page.csp includes.csp stdvars.csp header_jqgrid.csp footer.csp
 csp_user_browse_data.c : user_browse_data.csp includes.csp stdvars.csp
+csp_get_contest_list.c : get_contest_list.csp includes.csp stdvars.csp
+csp_cnts_save_basic_form.c : cnts_save_basic_form.csp includes.csp stdvars.csp
 
 csp_error_unknown_page.c : error_unknown_page.csp includes.csp stdvars.csp header.csp footer.csp
 

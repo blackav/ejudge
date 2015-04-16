@@ -1,0 +1,26 @@
+<% //-*- html -*-
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_get_contest_list"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_get_contest_list(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    int other_contest_id = 0;
+
+%><s:read var="other_contest_id" default="0" /><%
+
+    const int *contests = 0;
+    int contest_num = contests_get_list(&contests);
+%><option value="0"></option><%
+    for (int j = 0; j < contest_num; j++) {
+        int cnts_id = contests[j];
+        const struct contest_desc *cnts = 0;
+        if (contests_get(cnts_id, &cnts) < 0) continue;
+%><s:option value="cnts_id" selectedExpr="other_contest_id == cnts_id" ><s:v value="cnts_id" /> - <s:v value="cnts->name" /></s:option><%
+    }
+
+%><%
+cleanup:
+  html_armor_free(&ab);
+%>

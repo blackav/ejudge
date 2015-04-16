@@ -1,0 +1,108 @@
+<% //-*- c -*-
+%><%@include "includes.csp"
+%><%
+
+%><%@set getter_name = "csp_get_cnts_save_basic_form"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_cnts_save_basic_form(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
+
+    unsigned char *name = NULL;
+    unsigned char *name_en = NULL;
+    unsigned char *main_url = NULL;
+    unsigned char *keywords = NULL;
+    int user_contest = 0;
+    unsigned char *default_locale = NULL;
+    int personal = 0;
+    int locale_id = -1;
+
+    char *msg_s = NULL;
+    size_t msg_z = 0;
+    FILE *msg_f = open_memstream(&msg_s, &msg_z);
+%><s:read var="name" normalize="yes" /><%
+%><s:read var="name_en" normalize="yes" /><%
+%><s:read var="main_url" normalize="yes" /><%
+%><s:read var="keywords" normalize="yes" /><%
+%><s:read var="user_contest" default="0" /><%
+%><s:read var="default_locale" normalize="yes" /><%
+%><s:read var="personal" default="0" /><%
+
+    if (!name) {
+        fprintf(msg_f, "Contest Name must be specified<br/>");
+        retval = SSERV_ERR_INV_PARAM;
+    }
+    if (user_contest < 0) user_contest = 0;
+    if (user_contest > 0) {
+        const struct contest_desc *other_cnts = NULL;
+        if (contests_get(user_contest, &other_cnts) < 0 || !other_cnts) {
+            fprintf(msg_f, "Invalid User Contest<br/>");
+            retval = SSERV_ERR_INV_PARAM;
+            user_contest = 0;
+        } else if (other_cnts->user_contest) {
+            fprintf(msg_f, "Invalid User Contest<br/>");
+            retval = SSERV_ERR_INV_PARAM;
+            user_contest = 0;
+        }
+    }
+    if (default_locale) {
+        locale_id = l10n_parse_locale(default_locale);
+        if (locale_id < 0) {
+            fprintf(msg_f, "Invalid Default Locale<br/>");
+            retval = SSERV_ERR_INV_PARAM;
+        }
+    }
+    if (personal != 1) personal = 0;
+
+    if (!retval && phr->ss) {
+        struct contest_desc *edited_cnts = phr->ss->edited_cnts;
+        if (edited_cnts) {
+            xfree(edited_cnts->name);
+            edited_cnts->name = xstrdup2(name);
+            xfree(edited_cnts->name_en);
+            edited_cnts->name_en = xstrdup2(name_en);
+            xfree(edited_cnts->main_url);
+            edited_cnts->main_url = xstrdup2(main_url);
+            xfree(edited_cnts->keywords);
+            edited_cnts->keywords = xstrdup2(keywords);
+            xfree(edited_cnts->user_contest); edited_cnts->user_contest = NULL;
+            if (user_contest > 0) {
+                unsigned char cnts_buf[64];
+                snprintf(cnts_buf, sizeof(cnts_buf), "%d", user_contest);
+                edited_cnts->user_contest = xstrdup(cnts_buf);
+            }
+            xfree(edited_cnts->default_locale); edited_cnts->default_locale = NULL;
+            if (locale_id >= 0) {
+                edited_cnts->default_locale = xstrdup2(l10n_unparse_locale(locale_id));
+            }
+            edited_cnts->personal = personal;
+        }
+    }
+
+cleanup:;
+    fclose(msg_f); msg_f = NULL;
+%>
+{
+    "input" : {
+        "name" : "<s:v value="name" json="yes" checkExpr="" />",
+        "name_en" : "<s:v value="name_en" json="yes" checkExpr="" />",
+        "main_url" : "<s:v value="main_url" json="yes" checkExpr="" />",
+        "keywords" : "<s:v value="keywords" json="yes" checkExpr="" />",
+        "user_contest" : "<s:v value="user_contest" checkExpr=" > 0" />",
+        "default_locale" : "<s:v value="default_locale" json="yes" checkExpr="" />",
+        "personal" : "<s:v value="personal" json="yes" />"
+    },
+    "retval" : <s:v value="retval" />,
+    "messages" : "<s:v value="msg_s" json="yes" checkExpr="" />"
+}
+<%
+    html_armor_free(&ab);
+    xfree(name);
+    xfree(name_en);
+    xfree(main_url);
+    xfree(keywords);
+    xfree(default_locale);
+    xfree(msg_s);
+%>
