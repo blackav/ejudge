@@ -1017,4 +1017,5 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_USER_BROWSE_PAGE] = 1,
   [SSERV_CMD_USER_BROWSE_DATA] = 1,
   [SSERV_CMD_GET_CONTEST_LIST] = 1,
+  [SSERV_CMD_CNTS_SAVE_BASIC_FORM] = 1,
 };
