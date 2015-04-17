@@ -5018,6 +5018,12 @@ int_read_type_handler(
         TypeInfo *type_info)
 {
     unsigned char errcode_buf[1024];
+    const unsigned char *type_str = "int";
+
+    if (type_info == tc_find_typedef_type(cntx, tc_get_ident(cntx, "ejintbool_t"))) {
+        type_str = "bool";
+    }
+
     int required = html_attribute_get_bool(html_element_find_attribute(elem, "required"), 0);
     if (required) {
         // <s:read var="VAR" name="NAME" required="yes" [ignoreerrors="BOOL"] [gotoerrors="BOOL"] [error="CODE"] [missing="CODE"] [invalid="CODE"] />
@@ -5028,29 +5034,29 @@ int_read_type_handler(
         if (!missing_code) missing_code = error_code;
         if (!invalid_code) invalid_code = error_code;
         if (ignoreerrors) {
-            fprintf(prg_f, "hr_cgi_param_int_2(phr, \"%s\", &(%s));\n", param_name, var_name);
+            fprintf(prg_f, "hr_cgi_param_%s_2(phr, \"%s\", &(%s));\n", type_str, param_name, var_name);
         } else {
             int gotoerrors = html_attribute_get_bool(html_element_find_attribute(elem, "gotoerrors"), 0);
             if (!missing_code) missing_code = "inv-param";
             if (!invalid_code) invalid_code = "inv-param";
             if (!strcmp(missing_code, invalid_code)) {
                 if (gotoerrors) {
-                    fprintf(prg_f, "if (hr_cgi_param_int_2(phr, \"%s\", &(%s)) <= 0) {\n"
+                    fprintf(prg_f, "if (hr_cgi_param_%s_2(phr, \"%s\", &(%s)) <= 0) {\n"
                             "  goto %s;\n"
                             "}\n",
-                            param_name, var_name, invalid_code);
+                            type_str, param_name, var_name, invalid_code);
                 } else {
-                    fprintf(prg_f, "if (hr_cgi_param_int_2(phr, \"%s\", &(%s)) <= 0) {\n"
+                    fprintf(prg_f, "if (hr_cgi_param_%s_2(phr, \"%s\", &(%s)) <= 0) {\n"
                             "  FAIL(%s);\n"
                             "}\n",
-                            param_name, var_name,
+                            type_str, param_name, var_name,
                             process_err_attr(log_f, cntx, ps, errcode_buf, sizeof(errcode_buf), invalid_code));
                 }
             } else {
                 fprintf(prg_f,
                         "{\n"
-                        "  int tmp_err = hr_cgi_param_int_2(phr, \"%s\", &(%s));\n",
-                        param_name, var_name);
+                        "  int tmp_err = hr_cgi_param_%s_2(phr, \"%s\", &(%s));\n",
+                        type_str, param_name, var_name);
                 if (gotoerrors) {
                     fprintf(prg_f,
                             "  if (!tmp_err) {\n"
@@ -5080,7 +5086,7 @@ int_read_type_handler(
             // <s:read var="VAR" name="NAME" flagvar="VAR" [ignoreerrors="BOOL"] [error="CODE"] [invalid="CODE"] />
             int ignoreerrors = html_attribute_get_bool(html_element_find_attribute(elem, "ignoreerrors"), 0);
             if (ignoreerrors) {
-                fprintf(prg_f, "hr_cgi_param_int_opt_2(phr, \"%s\", &(%s), &(%s));\n", param_name, var_name, flagvar_name);
+                fprintf(prg_f, "hr_cgi_param_%s_opt_2(phr, \"%s\", &(%s), &(%s));\n", type_str, param_name, var_name, flagvar_name);
             } else {
                 const unsigned char *error_code = html_element_find_attribute_value(elem, "error");
                 const unsigned char *invalid_code = html_element_find_attribute_value(elem, "invalid");
@@ -5088,15 +5094,15 @@ int_read_type_handler(
                 if (!invalid_code) invalid_code = error_code;
                 if (!invalid_code) invalid_code = "inv-param";
                 if(gotoerrors) {
-                    fprintf(prg_f, "if (hr_cgi_param_int_opt_2(phr, \"%s\", &(%s), &(%s)) < 0) {\n"
+                    fprintf(prg_f, "if (hr_cgi_param_%s_opt_2(phr, \"%s\", &(%s), &(%s)) < 0) {\n"
                             "  goto %s;\n"
                             "}\n",
-                            param_name, var_name, flagvar_name, invalid_code);
+                            type_str, param_name, var_name, flagvar_name, invalid_code);
                 } else {
-                    fprintf(prg_f, "if (hr_cgi_param_int_opt_2(phr, \"%s\", &(%s), &(%s)) < 0) {\n"
+                    fprintf(prg_f, "if (hr_cgi_param_%s_opt_2(phr, \"%s\", &(%s), &(%s)) < 0) {\n"
                             "  FAIL(%s);\n"
                             "}\n",
-                            param_name, var_name, flagvar_name,
+                            type_str, param_name, var_name, flagvar_name,
                             process_err_attr(log_f, cntx, ps, errcode_buf, sizeof(errcode_buf), invalid_code));
                 }
             }
@@ -5106,7 +5112,7 @@ int_read_type_handler(
             const unsigned char *default_value = html_element_find_attribute_value(elem, "default");
             if (!default_value) default_value = "0";
             if (ignoreerrors) {
-                fprintf(prg_f, "hr_cgi_param_int_opt(phr, \"%s\", &(%s), %s);\n", param_name, var_name, default_value);
+                fprintf(prg_f, "hr_cgi_param_%s_opt(phr, \"%s\", &(%s), %s);\n", type_str, param_name, var_name, default_value);
             } else {
                 const unsigned char *error_code = html_element_find_attribute_value(elem, "error");
                 const unsigned char *invalid_code = html_element_find_attribute_value(elem, "invalid");
@@ -5114,15 +5120,15 @@ int_read_type_handler(
                 if (!invalid_code) invalid_code = error_code;
                 if (!invalid_code) invalid_code = "inv-param";
                 if (gotoerrors) {
-                    fprintf(prg_f, "if (hr_cgi_param_int_opt(phr, \"%s\", &(%s), %s) < 0) {\n"
+                    fprintf(prg_f, "if (hr_cgi_param_%s_opt(phr, \"%s\", &(%s), %s) < 0) {\n"
                             "  goto %s;\n"
                             "}\n",
-                            param_name, var_name, default_value, invalid_code);
+                            type_str, param_name, var_name, default_value, invalid_code);
                 } else {
-                    fprintf(prg_f, "if (hr_cgi_param_int_opt(phr, \"%s\", &(%s), %s) < 0) {\n"
+                    fprintf(prg_f, "if (hr_cgi_param_%s_opt(phr, \"%s\", &(%s), %s) < 0) {\n"
                             "  FAIL(%s);\n"
                             "}\n",
-                            param_name, var_name, default_value,
+                            type_str, param_name, var_name, default_value,
                             process_err_attr(log_f, cntx, ps, errcode_buf, sizeof(errcode_buf), invalid_code));
                 }
             }
@@ -5512,6 +5518,7 @@ process_unit(
     processor_state_set_array_type_handler(ps, tc_get_i8_type(cntx), string_type_handler);
 
     processor_state_set_read_type_handler(ps, tc_get_i32_type(cntx), int_read_type_handler);
+    processor_state_set_read_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ejintbool_t")), int_read_type_handler);
     processor_state_set_read_type_handler(ps, tc_get_ptr_type(cntx, tc_get_const_type(cntx, tc_get_u8_type(cntx))),
                                           string_read_type_handler);
     processor_state_set_read_type_handler(ps, tc_get_ptr_type(cntx, tc_get_const_type(cntx, tc_get_i8_type(cntx))),
