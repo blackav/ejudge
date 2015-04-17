@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -175,6 +174,20 @@ hr_cgi_param_int_opt(
   if (errno || *eptr) return -1;
   if (p_val) *p_val = x;
   return 0;
+}
+
+int
+hr_cgi_param_bool_opt(
+        struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val,
+        int default_value)
+{
+    int ret = hr_cgi_param_int_opt(phr, name, p_val, default_value);
+    if (p_val) {
+        if (*p_val != 1) *p_val = 0;
+    }
+    return ret;
 }
 
 int
