@@ -16,7 +16,7 @@
     unsigned char *keywords = NULL;
     int user_contest = 0;
     unsigned char *default_locale = NULL;
-    int personal = 0;
+    ejintbool_t personal = 0;
     int locale_id = -1;
 
     char *msg_s = NULL;
@@ -54,7 +54,6 @@
             retval = SSERV_ERR_INV_PARAM;
         }
     }
-    if (personal != 1) personal = 0;
 
     if (!retval && phr->ss) {
         struct contest_desc *edited_cnts = phr->ss->edited_cnts;
