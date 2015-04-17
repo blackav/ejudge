@@ -1,0 +1,80 @@
+<% //-*- c -*-
+%><%@include "includes.csp"
+%><%
+
+%><%@set getter_name = "csp_get_cnts_save_flags_form"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_cnts_save_flags_form(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
+
+    ejintbool_t closed = 0;
+    ejintbool_t disable_team_password = 0;
+    ejintbool_t simple_registration = 0;
+    ejintbool_t send_passwd_email = 0;
+    ejintbool_t invisible = 0;
+    ejintbool_t clean_users = 0;
+    ejintbool_t disable_member_delete = 0;
+    ejintbool_t assign_logins = 0;
+    ejintbool_t force_registration = 0;
+    ejintbool_t disable_name = 0;
+    ejintbool_t enable_password_recovery = 0;
+    ejintbool_t exam_mode = 0;
+    ejintbool_t disable_password_change = 0;
+    ejintbool_t disable_locale_change = 0;
+    ejintbool_t allow_reg_data_edit = 0;
+
+    char *msg_s = NULL;
+    size_t msg_z = 0;
+    FILE *msg_f = open_memstream(&msg_s, &msg_z);
+%><s:read var="closed" default="0" /><%
+%><s:read var="disable_team_password" default="0" /><%
+%><s:read var="simple_registration" default="0" /><%
+%><s:read var="send_passwd_email" default="0" /><%
+%><s:read var="invisible" default="0" /><%
+%><s:read var="clean_users" default="0" /><%
+%><s:read var="disable_member_delete" default="0" /><%
+%><s:read var="assign_logins" default="0" /><%
+%><s:read var="force_registration" default="0" /><%
+%><s:read var="disable_name" default="0" /><%
+%><s:read var="enable_password_recovery" default="0" /><%
+%><s:read var="exam_mode" default="0" /><%
+%><s:read var="disable_password_change" default="0" /><%
+%><s:read var="disable_locale_change" default="0" /><%
+%><s:read var="allow_reg_data_edit" default="0" /><%
+
+    if (!retval && phr->ss) {
+        struct contest_desc *edited_cnts = phr->ss->edited_cnts;
+        if (edited_cnts) {
+            edited_cnts->closed = closed;
+            edited_cnts->disable_team_password = disable_team_password;
+            edited_cnts->simple_registration = simple_registration;
+            edited_cnts->send_passwd_email = send_passwd_email;
+            edited_cnts->invisible = invisible;
+            edited_cnts->clean_users = clean_users;
+            edited_cnts->disable_member_delete = disable_member_delete;
+            edited_cnts->assign_logins = assign_logins;
+            edited_cnts->force_registration = force_registration;
+            edited_cnts->disable_name = disable_name;
+            edited_cnts->enable_password_recovery = enable_password_recovery;
+            edited_cnts->exam_mode = exam_mode;
+            edited_cnts->disable_password_change = disable_password_change;
+            edited_cnts->disable_locale_change = disable_locale_change;
+            edited_cnts->allow_reg_data_edit = allow_reg_data_edit;
+        }
+    }
+
+cleanup:;
+    fclose(msg_f); msg_f = NULL;
+%>
+{
+    "input" : {
+    },
+    "retval" : <s:v value="retval" />,
+    "messages" : "<s:v value="msg_s" json="yes" checkExpr="" />"
+}
+<%
+    html_armor_free(&ab);
+%>
