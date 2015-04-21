@@ -111,6 +111,59 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
+<div id="RegistrationDialogDiv" title="Registration Options">
+    <s:form id="RegistrationDialogForm">
+        <s:hidden name="action" ac="cnts-save-basic-form" />
+        <fieldset>
+            <label for="FlagsDialogClosed">Closed for participation?</label>
+            <input type="checkbox" name="closed" id="FlagsDialogClosed" value="1" />
+            <br/>
+            <label for="FlagsDialogDisableTeamPassword">Disable separate team password?</label>
+            <input type="checkbox" name="disable_team_password" id="FlagsDialogDisableTeamPassword" value="1" />
+            <br/>
+            <label for="FlagsDialogSimpleRegistration">Enable simple registration (no email)?</label>
+            <input type="checkbox" name="simple_registration" id="FlagsDialogSimpleRegistration" value="1" />
+            <br/>
+            <label for="FlagsDialogSendPasswdEmail">Always send password e-mail?</label>
+            <input type="checkbox" name="send_passwd_email" id="FlagsDialogSendPasswdEmail" value="1" />
+            <br/>
+            <label for="FlagsDialogInvisible">Invisible in serve-control?</label>
+            <input type="checkbox" name="invisible" id="FlagsDialogInvisible" value="1" />
+            <br/>
+            <label for="FlagsDialogCleanUsers">Allow removal of non-active users?</label>
+            <input type="checkbox" name="clean_users" id="FlagsDialogCleanUsers" value="1" />
+            <br/>
+            <label for="FlagsDialogDisableMemberDelete">Disallow removal of team members?</label>
+            <input type="checkbox" name="disable_member_delete" id="FlagsDialogDisableMemberDelete" value="1" />
+            <br/>
+            <label for="FlagsDialogAssignLogins">Auto-assign logins?</label>
+            <input type="checkbox" name="assign_logins" id="FlagsDialogAssignLogins" value="1" />
+            <br/>
+            <label for="FlagsDialogForceRegistration">Force contest registration?</label>
+            <input type="checkbox" name="force_registration" id="FlagsDialogForceRegistration" value="1" />
+            <br/>
+            <label for="FlagsDialogDisableName">Disable user &quot;Name&quot; field?</label>
+            <input type="checkbox" name="disable_name" id="FlagsDialogDisableName" value="1" />
+            <br/>
+            <label for="FlagsDialogEnablePasswordRecovery">Enable password recovery?</label>
+            <input type="checkbox" name="enable_password_recovery" id="FlagsDialogEnablePasswordRecovery" value="1" />
+            <br/>
+            <label for="FlagsDialogExamMode">Examination (simplified) mode?</label>
+            <input type="checkbox" name="exam_mode" id="FlagsDialogExamMode" value="1" />
+            <br/>
+            <label for="FlagsDialogDisablePasswordChange">Disable password change?</label>
+            <input type="checkbox" name="disable_password_change" id="FlagsDialogDisablePasswordChange" value="1" />
+            <br/>
+            <label for="FlagsDialogDisableLocaleChange">Disable locale change?</label>
+            <input type="checkbox" name="disable_locale_change" id="FlagsDialogDisableLocaleChange" value="1" />
+            <br/>
+            <label for="FlagsDialogAllowRegDataEdit">Allow edit registration data during contest?</label>
+            <input type="checkbox" name="allow_reg_data_edit" id="FlagsDialogAllowRegDataEdit" value="1" />
+            <br/>
+        </fieldset>
+    </s:form>
+</div>
+
 <script type="text/javascript">
 $(function() {
     dialog = $("#BasicDialogDiv").dialog({
@@ -166,6 +219,35 @@ $(function() {
             },
             Cancel: function() {
                 flagsDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
+    registrationDialog = $("#RegistrationDialogDiv").dialog({
+        autoOpen: false,
+        height: 500,
+        width: 600,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#RegistrationDialogForm").serialize();
+                var formURL = $("#RegistrationDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                registrationDialog.dialog("close");
             }
         },
         close : function() {
@@ -232,6 +314,11 @@ function popupFlagsDialog()
 
     $("#FlagsDialogDiv").dialog('open');
 }
+
+function popupRegistrationDialog()
+{
+    $("#RegistrationDialogDiv").dialog('open');
+}
 </script>
 
 <table border="0">
@@ -295,9 +382,9 @@ function popupFlagsDialog()
     <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Registration settings</b></td></s:tr>
 <% row = 1; %>
     <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
+        <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupRegistrationDialog();">
             <td>Registration mode:</td>
-            <td><s:yesno name="param" value="cnts->autoregister" noLabel="Moderated registration" yesLabel="Free registration" /></td>
+            <td><s:yesno disabled="disabled" id="OrigAutoregister" name="param" value="cnts->autoregister" noLabel="Moderated registration" yesLabel="Free registration" /></td>
             <td><s:submit ac="cnts-change-autoregister" label="Change" /></td>
             <td><s:help ac="cnts-change-autoregister" /></td>
         </s:tr>
@@ -310,6 +397,49 @@ function popupFlagsDialog()
             <td><s:help ac="cnts-change-deadline" /></td>
         </s:tr>
     </s:form>
+    <s:form>
+        <s:tr attr="form_row_attrs[row ^= 1]">
+            <td onclick="popupRegistrationDialog();">Registration email sender (From: field):</td>
+            <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterEmail" size="48" name="param" value="cnts->register_email" /><% if (!cnts->register_email) { %>(<i>Not set</i>)<% } %></td>
+            <td><s:submit ac="cnts-change-register-email" label="Change" /><s:submit ac="cnts-clear-register-email" label="Clear" /></td>
+            <td><s:help ac="cnts-change-register-email" /></td>
+        </s:tr>
+    </s:form>
+    <s:form>
+        <s:tr attr="form_row_attrs[row ^= 1]">
+            <td onclick="popupRegistrationDialog();">URL for registration:</td>
+            <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterUrl" size="48" name="param" value="cnts->register_url" /><% if (!cnts->register_url) { %>(<i>Not set</i>)<% } %></td>
+            <td><s:submit ac="cnts-change-register-url" label="Change" /><s:submit ac="cnts-clear-register-url" label="Clear" /></td>
+            <td><s:help ac="cnts-change-register-url" /></td>
+        </s:tr>
+    </s:form>
+    <s:form>
+        <s:tr attr="form_row_attrs[row ^= 1]">
+            <td onclick="popupRegistrationDialog();">Registration letter subject:</td>
+            <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterSubject" size="48" name="param" value="cnts->register_subject" /><% if (!cnts->register_subject) { %>(<i>Not set</i>)<% } %></td>
+            <td><s:submit ac="cnts-change-register-subject" label="Change" /><s:submit ac="cnts-clear-register-subject" label="Clear" /></td>
+            <td><s:help ac="cnts-change-register-subject" /></td>
+        </s:tr>
+    </s:form>
+    <s:form>
+        <s:tr attr="form_row_attrs[row ^= 1]">
+            <td onclick="popupRegistrationDialog();">Registration letter subject (en):</td>
+            <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterSubjectEn" size="48" name="param" value="cnts->register_subject_en" /><% if (!cnts->register_subject_en) { %>(<i>Not set</i>)<% } %></td>
+            <td><s:submit ac="cnts-change-register-subject-en" label="Change" /><s:submit ac="cnts-clear-register-subject-en" label="Clear" /></td>
+            <td><s:help ac="cnts-change-register-subject-en" /></td>
+        </s:tr>
+    </s:form>
+    <s:form>
+        <s:tr attr="form_row_attrs[row ^= 1]">
+            <td onclick="popupRegistrationDialog();">Registration letter template file:</td>
+            <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterEmailFile" size="48" name="param" value="cnts->register_email_file" /><% if (!cnts->register_email_file) { %>(<i>Not set</i>)<% } %></td>
+            <td><s:submit ac="cnts-change-register-email-file" label="Change" /><s:submit ac="cnts-clear-register-email-file" label="Clear" />[<s:a ac="cnts-edit-register-email-file-page">Edit</s:a>]</td>
+            <td><s:help ac="cnts-change-register-email-file" /></td>
+        </s:tr>
+    </s:form>
+
+    <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Contest timing</b></td></s:tr>
+<% row = 1; %>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Contest start date:</td>
@@ -332,46 +462,6 @@ function popupFlagsDialog()
             <td><% html_date_select(out_f, cnts->close_time); %></td>
             <td><s:submit ac="cnts-change-close-time" label="Change" /><s:submit ac="cnts-clear-close-time" label="Clear" /></td>
             <td><s:help ac="cnts-change-close-time" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Registration email sender (From: field):</td>
-            <td><s:textfield size="48" name="param" value="cnts->register_email" /><% if (!cnts->register_email) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-register-email" label="Change" /><s:submit ac="cnts-clear-register-email" label="Clear" /></td>
-            <td><s:help ac="cnts-change-register-email" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>URL for registration:</td>
-            <td><s:textfield size="48" name="param" value="cnts->register_url" /><% if (!cnts->register_url) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-register-url" label="Change" /><s:submit ac="cnts-clear-register-url" label="Clear" /></td>
-            <td><s:help ac="cnts-change-register-url" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Registration letter subject:</td>
-            <td><s:textfield size="48" name="param" value="cnts->register_subject" /><% if (!cnts->register_subject) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-register-subject" label="Change" /><s:submit ac="cnts-clear-register-subject" label="Clear" /></td>
-            <td><s:help ac="cnts-change-register-subject" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Registration letter subject (en):</td>
-            <td><s:textfield size="48" name="param" value="cnts->register_subject_en" /><% if (!cnts->register_subject_en) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-register-subject-en" label="Change" /><s:submit ac="cnts-clear-register-subject-en" label="Clear" /></td>
-            <td><s:help ac="cnts-change-register-subject-en" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Registration letter template file:</td>
-            <td><s:textfield size="48" name="param" value="cnts->register_email_file" /><% if (!cnts->register_email_file) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-register-email-file" label="Change" /><s:submit ac="cnts-clear-register-email-file" label="Clear" />[<s:a ac="cnts-edit-register-email-file-page">Edit</s:a>]</td>
-            <td><s:help ac="cnts-change-register-email-file" /></td>
         </s:tr>
     </s:form>
 
