@@ -6737,6 +6737,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_GET_CONTEST_LIST] = "get_contest_list",
   [SSERV_CMD_CNTS_SAVE_BASIC_FORM] = "cnts_save_basic_form",
   [SSERV_CMD_CNTS_SAVE_FLAGS_FORM] = "cnts_save_flags_form",
+  [SSERV_CMD_CNTS_SAVE_REGISTRATION_FORM] = "cnts_save_registration_form",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 
