@@ -113,53 +113,38 @@ static const unsigned char * const form_row_attrs[]=
 
 <div id="RegistrationDialogDiv" title="Registration Options">
     <s:form id="RegistrationDialogForm">
-        <s:hidden name="action" ac="cnts-save-basic-form" />
+        <s:hidden name="action" ac="cnts-save-registration-form" />
         <fieldset>
-            <label for="FlagsDialogClosed">Closed for participation?</label>
-            <input type="checkbox" name="closed" id="FlagsDialogClosed" value="1" />
+            <label for="RegistrationDialogAutoregister">Registration mode:</label>
+            <s:yesno id="RegistrationDialogAutoregister" name="autoregister" noLabel="Moderated registration" yesLabel="Free registration" />
             <br/>
-            <label for="FlagsDialogDisableTeamPassword">Disable separate team password?</label>
-            <input type="checkbox" name="disable_team_password" id="FlagsDialogDisableTeamPassword" value="1" />
+
+<!--
+    <s:form>
+        <s:tr attr="form_row_attrs[row ^= 1]">
+            <td>Registration deadline:</td>
+            <td><% html_date_select(out_f, cnts->reg_deadline); %></td>
+            <td><s:submit ac="cnts-change-deadline" label="Change" /><s:submit ac="cnts-clear-deadline" label="Clear" /></td>
+            <td><s:help ac="cnts-change-deadline" /></td>
+        </s:tr>
+    </s:form>
+-->
+
+
+            <label for="RegistrationDialogRegisterEmail">Registration email sender (From: field):</label>
+            <s:textfield size="48" name="register_email" id="RegistrationDialogRegisterEmail" value="" class="text ui-widget-content ui-corner-all" />
             <br/>
-            <label for="FlagsDialogSimpleRegistration">Enable simple registration (no email)?</label>
-            <input type="checkbox" name="simple_registration" id="FlagsDialogSimpleRegistration" value="1" />
+            <label for="RegistrationDialogRegisterUrl">URL for registration:</label>
+            <s:textfield size="48" name="register_url" id="RegistrationDialogRegisterUrl" value="" class="text ui-widget-content ui-corner-all" />
             <br/>
-            <label for="FlagsDialogSendPasswdEmail">Always send password e-mail?</label>
-            <input type="checkbox" name="send_passwd_email" id="FlagsDialogSendPasswdEmail" value="1" />
+            <label for="RegistrationDialogRegisterSubject">Registration letter subject:</label>
+            <s:textfield size="48" name="register_subject" id="RegistrationDialogRegisterSubject" value="" class="text ui-widget-content ui-corner-all" />
             <br/>
-            <label for="FlagsDialogInvisible">Invisible in serve-control?</label>
-            <input type="checkbox" name="invisible" id="FlagsDialogInvisible" value="1" />
+            <label for="RegistrationDialogRegisterSubjectEn">Registration letter subject (en):</label>
+            <s:textfield size="48" name="register_subject_en" id="RegistrationDialogRegisterSubjectEn" value="" class="text ui-widget-content ui-corner-all" />
             <br/>
-            <label for="FlagsDialogCleanUsers">Allow removal of non-active users?</label>
-            <input type="checkbox" name="clean_users" id="FlagsDialogCleanUsers" value="1" />
-            <br/>
-            <label for="FlagsDialogDisableMemberDelete">Disallow removal of team members?</label>
-            <input type="checkbox" name="disable_member_delete" id="FlagsDialogDisableMemberDelete" value="1" />
-            <br/>
-            <label for="FlagsDialogAssignLogins">Auto-assign logins?</label>
-            <input type="checkbox" name="assign_logins" id="FlagsDialogAssignLogins" value="1" />
-            <br/>
-            <label for="FlagsDialogForceRegistration">Force contest registration?</label>
-            <input type="checkbox" name="force_registration" id="FlagsDialogForceRegistration" value="1" />
-            <br/>
-            <label for="FlagsDialogDisableName">Disable user &quot;Name&quot; field?</label>
-            <input type="checkbox" name="disable_name" id="FlagsDialogDisableName" value="1" />
-            <br/>
-            <label for="FlagsDialogEnablePasswordRecovery">Enable password recovery?</label>
-            <input type="checkbox" name="enable_password_recovery" id="FlagsDialogEnablePasswordRecovery" value="1" />
-            <br/>
-            <label for="FlagsDialogExamMode">Examination (simplified) mode?</label>
-            <input type="checkbox" name="exam_mode" id="FlagsDialogExamMode" value="1" />
-            <br/>
-            <label for="FlagsDialogDisablePasswordChange">Disable password change?</label>
-            <input type="checkbox" name="disable_password_change" id="FlagsDialogDisablePasswordChange" value="1" />
-            <br/>
-            <label for="FlagsDialogDisableLocaleChange">Disable locale change?</label>
-            <input type="checkbox" name="disable_locale_change" id="FlagsDialogDisableLocaleChange" value="1" />
-            <br/>
-            <label for="FlagsDialogAllowRegDataEdit">Allow edit registration data during contest?</label>
-            <input type="checkbox" name="allow_reg_data_edit" id="FlagsDialogAllowRegDataEdit" value="1" />
-            <br/>
+            <label for="RegistrationDialogRegisterEmailFile">Registration letter template file:</label>
+            <s:textfield size="48" name="register_email_file" id="RegistrationDialogRegisterEmailFile" value="" class="text ui-widget-content ui-corner-all" />
         </fieldset>
     </s:form>
 </div>
