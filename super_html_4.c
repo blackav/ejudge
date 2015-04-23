@@ -6720,6 +6720,11 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SAVE_FLAGS_FORM] = "cnts_save_flags_form",
   [SSERV_CMD_CNTS_SAVE_REGISTRATION_FORM] = "cnts_save_registration_form",
   [SSERV_CMD_CNTS_SAVE_TIMING_FORM] = "cnts_save_timing_form",
+  [SSERV_CMD_CNTS_SAVE_URLS_FORM] = "cnts_save_urls_form",
+  [SSERV_CMD_CNTS_SAVE_HEADERS_FORM] = "cnts_save_headers_form",
+  [SSERV_CMD_CNTS_SAVE_ATTRS_FORM] = "cnts_save_attrs_form",
+  [SSERV_CMD_CNTS_SAVE_NOTIFICATIONS_FORM] = "cnts_save_notifications_form",
+  [SSERV_CMD_CNTS_SAVE_ADVANCED_FORM] = "cnts_save_advanced_form",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 
