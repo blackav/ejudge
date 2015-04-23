@@ -11,12 +11,28 @@
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
     // more variables
+    unsigned char *dir_mode = NULL;
+    unsigned char *dir_group = NULL;
+    unsigned char *file_mode = NULL;
+    unsigned char *file_group = NULL;
+    unsigned char *allowed_languages = NULL;
+    unsigned char *allowed_regions = NULL;
+    unsigned char *login_template = NULL;
+    unsigned char *login_template_options = NULL;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
     // reading form vars
+%><s:read var="dir_mode" normalize="yes" /><%
+%><s:read var="dir_group" normalize="yes" /><%
+%><s:read var="file_mode" normalize="yes" /><%
+%><s:read var="file_group" normalize="yes" /><%
+%><s:read var="allowed_languages" normalize="yes" /><%
+%><s:read var="allowed_regions" normalize="yes" /><%
+%><s:read var="login_template" normalize="yes" /><%
+%><s:read var="login_template_options" normalize="yes" /><%
 
     // validating form vars
 
@@ -24,10 +40,18 @@
         struct contest_desc *edited_cnts = phr->ss->edited_cnts;
         if (edited_cnts) {
             // updating edited_cnts
+            edited_cnts->dir_mode = xstrdup2(dir_mode);
+            edited_cnts->dir_group = xstrdup2(dir_group);
+            edited_cnts->file_mode = xstrdup2(file_mode);
+            edited_cnts->file_group = xstrdup2(file_group);
+            edited_cnts->allowed_languages = xstrdup2(allowed_languages);
+            edited_cnts->allowed_regions = xstrdup2(allowed_regions);
+            edited_cnts->login_template = xstrdup2(login_template);
+            edited_cnts->login_template_options = xstrdup2(login_template_options);
         }
     }
 
-//cleanup:;
+cleanup:;
     fclose(msg_f); msg_f = NULL;
 %>
 {
@@ -37,6 +61,14 @@
     "messages" : "<s:v value="msg_s" json="yes" checkExpr="" />"
 }
 <%
+    xfree(dir_mode);
+    xfree(dir_group);
+    xfree(file_mode);
+    xfree(file_group);
+    xfree(allowed_languages);
+    xfree(allowed_regions);
+    xfree(login_template);
+    xfree(login_template_options);
     html_armor_free(&ab);
     xfree(msg_s);
 %>

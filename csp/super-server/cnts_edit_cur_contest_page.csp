@@ -265,9 +265,30 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="AdvancedDialogForm">
         <s:hidden name="action" ac="cnts-save-advanced-form" />
         <fieldset>
-
-
-
+            <label for="AdvancedDialogDirMode">The directory permissions (octal):</label>
+            <s:textfield size="48" name="dir_mode" id="AdvancedDialogDirMode" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="AdvancedDialogDirGroup">The directory group:</label>
+            <s:textfield size="48" name="dir_group" id="AdvancedDialogDirGroup" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="AdvancedDialogFileMode">The file permissions (octal):</label>
+            <s:textfield size="48" name="file_mode" id="AdvancedDialogFileMode" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="AdvancedDialogFileGroup">The file group:</label>
+            <s:textfield size="48" name="file_group" id="AdvancedDialogFileGroup" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="AdvancedDialogAllowedLanguages">Allowed programming languages:</label>
+            <s:textfield size="48" name="allowed_languages" id="AdvancedDialogAllowedLanguages" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="AdvancedDialogAllowedRegions">Allowed regions:</label>
+            <s:textfield size="48" name="allowed_regions" id="AdvancedDialogAllowedRegions" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="AdvancedDialogLoginTemplate">Template for new logins:</label>
+            <s:textfield size="48" name="login_template" id="AdvancedDialogLoginTemplate" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="AdvancedDialogLoginTemplateOptions">Login auto-assign options:</label>
+            <s:textfield size="48" name="login_template_options" id="AdvancedDialogLoginTemplateOptions" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
         </fieldset>
     </s:form>
 </div>
@@ -520,6 +541,36 @@ $(function() {
         close : function() {
         }
     });
+
+    advancedDialog = $("#AdvancedDialogDiv").dialog({
+        autoOpen: false,
+        height: 500,
+        width: 600,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#AdvancedDialogForm").serialize();
+                var formURL = $("#AdvancedDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                advancedDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
 });
 
 function copyCheckbox(dst, src)
@@ -648,6 +699,20 @@ function popupNotificationsDialog()
     }
 
     $("#NotificationsDialogDiv").dialog('open');
+}
+
+function popupAdvancedDialog()
+{
+    var fields = [ "DirMode", "DirGroup", "FileMode", "FileGroup", "AllowedLanguages", "AllowedRegions", "LoginTemplate", "LoginTemplateOptions" ];
+    for (var i in fields) {
+        var dst = document.getElementById("AdvancedDialog" + fields[i]);
+        var src = document.getElementById("Orig" + fields[i]);
+        if (dst != null && src != null) {
+            dst.value = src.value;
+        }
+    }
+
+    $("#AdvancedDialogDiv").dialog('open');
 }
 </script>
 
@@ -1363,70 +1428,51 @@ initial count = <s:v value="memb->init_count" />
 <table border="0">
 <% row = 1; %>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>The directory permissions (octal):</td>
-            <td><s:textfield size="48" name="param" value="cnts->dir_mode" /><% if (!cnts->dir_mode) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-dir-mode" label="Change" /><s:submit ac="cnts-clear-dir-mode" label="Clear" /></td>
-            <td><s:help ac="cnts-change-dir-mode" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>The directory group:</td>
-            <td><s:textfield size="48" name="param" value="cnts->dir_group" /><% if (!cnts->dir_group) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-dir-group" label="Change" /><s:submit ac="cnts-clear-dir-group" label="Clear" /></td>
-            <td><s:help ac="cnts-change-dir-group" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>The file permissions (octal):</td>
-            <td><s:textfield size="48" name="param" value="cnts->file_mode" /><% if (!cnts->file_mode) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-file-mode" label="Change" /><s:submit ac="cnts-clear-file-mode" label="Clear" /></td>
-            <td><s:help ac="cnts-change-file-mode" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>The file group:</td>
-            <td><s:textfield size="48" name="param" value="cnts->file_group" /><% if (!cnts->file_group) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-file-group" label="Change" /><s:submit ac="cnts-clear-file-group" label="Clear" /></td>
-            <td><s:help ac="cnts-change-file-group" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Allowed programming languages:</td>
-            <td><s:textfield size="48" name="param" value="cnts->allowed_languages" /><% if (!cnts->allowed_languages) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-allowed-languages" label="Change" /><s:submit ac="cnts-clear-allowed-languages" label="Clear" /></td>
-            <td><s:help ac="cnts-change-allowed-languages" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Allowed regions:</td>
-            <td><s:textfield size="48" name="param" value="cnts->allowed_regions" /><% if (!cnts->allowed_regions) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-allowed-regions" label="Change" /><s:submit ac="cnts-clear-allowed-regions" label="Clear" /></td>
-            <td><s:help ac="cnts-change-allowed-regions" /></td>
-        </s:tr>
-    </s:form>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+        <td>The directory permissions (octal):</td>
+        <td><s:textfield id="OrigDirMode" readonly="readonly" size="48" name="param" value="cnts->dir_mode" /><% if (!cnts->dir_mode) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-dir-mode" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-dir-mode" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+        <td>The directory group:</td>
+        <td><s:textfield id="OrigDirGroup" readonly="readonly" size="48" name="param" value="cnts->dir_group" /><% if (!cnts->dir_group) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-dir-group" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-dir-group" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+        <td>The file permissions (octal):</td>
+        <td><s:textfield id="OrigFileMode" readonly="readonly" size="48" name="param" value="cnts->file_mode" /><% if (!cnts->file_mode) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-file-mode" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-file-mode" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+        <td>The file group:</td>
+        <td><s:textfield id="OrigFileGroup" readonly="readonly" size="48" name="param" value="cnts->file_group" /><% if (!cnts->file_group) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-file-group" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-file-group" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+        <td>Allowed programming languages:</td>
+        <td><s:textfield id="OrigAllowedLanguages" readonly="readonly" size="48" name="param" value="cnts->allowed_languages" /><% if (!cnts->allowed_languages) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-allowed-languages" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-allowed-languages" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+        <td>Allowed regions:</td>
+        <td><s:textfield id="OrigAllowedRegions" readonly="readonly" size="48" name="param" value="cnts->allowed_regions" /><% if (!cnts->allowed_regions) { %>(<i>Not</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-allowed-regions" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-allowed-regions" /></td>
+    </s:tr>
 <%
   if (cnts->assign_logins) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Template for new logins:</td>
-            <td><s:textfield size="48" name="param" value="cnts->login_template" /><% if (!cnts->login_template) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-login-template" label="Change" /><s:submit ac="cnts-clear-login-template" label="Clear" /></td>
-            <td><s:help ac="cnts-change-login-template" /></td>
-        </s:tr>
-    </s:form>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+        <td>Template for new logins:</td>
+        <td><s:textfield id="OrigLoginTemplate" readonly="readonly" size="48" name="param" value="cnts->login_template" /><% if (!cnts->login_template) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-login-template" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-login-template" /></td>
+    </s:tr>
 <%
   }
 %>
@@ -1434,14 +1480,12 @@ initial count = <s:v value="memb->init_count" />
 <%
   if (cnts->assign_logins) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Login auto-assign options:</td>
-            <td><s:textfield size="48" name="param" value="cnts->login_template_options" /><% if (!cnts->login_template_options) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-login-template-options" label="Change" /><s:submit ac="cnts-clear-login-template-options" label="Clear" /></td>
-            <td><s:help ac="cnts-change-login-template-options" /></td>
-        </s:tr>
-    </s:form>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+        <td>Login auto-assign options:</td>
+        <td><s:textfield id="OrigLoginTemplateOptions" readonly="readonly" size="48" name="param" value="cnts->login_template_options" /><% if (!cnts->login_template_options) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-login-template-options" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-login-template-options" /></td>
+    </s:tr>
 <%
   }
 %>
