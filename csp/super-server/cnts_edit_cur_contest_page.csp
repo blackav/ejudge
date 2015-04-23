@@ -521,7 +521,7 @@ function popupTimingDialog()
 </table>
     </div>
 
-    <h3>Participation settings</h3>
+    <h3>URLs</h3>
 
     <div>
 <table border="0">
@@ -1000,7 +1000,7 @@ initial count = <s:v value="memb->init_count" />
 
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Participant's welcome message:</td>
+            <td>Participant's welcome message file:</td>
             <td><s:textfield size="48" name="param" value="cnts->welcome_file" /><% if (!cnts->welcome_file) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-welcome" label="Change" /><s:submit ac="cnts-clear-welcome" label="Clear" />[<s:a ac="cnts-edit-welcome-page">Edit</s:a>]</td>
             <td><s:help ac="cnts-change-welcome" /></td>
@@ -1009,7 +1009,7 @@ initial count = <s:v value="memb->init_count" />
 
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Registration welcome message:</td>
+            <td>Registration welcome message file:</td>
             <td><s:textfield size="48" name="param" value="cnts->reg_welcome_file" /><% if (!cnts->reg_welcome_file) { %>(<i>Not set</i>)<% } %></td>
             <td><s:submit ac="cnts-change-reg-welcome" label="Change" /><s:submit ac="cnts-clear-reg-welcome" label="Clear" />[<s:a ac="cnts-edit-reg-welcome-page">Edit</s:a>]</td>
             <td><s:help ac="cnts-change-reg-welcome" /></td>
@@ -1106,23 +1106,6 @@ initial count = <s:v value="memb->init_count" />
         </s:tr>
     </s:form>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Allowed programming languages:</td>
-            <td><s:textfield size="48" name="param" value="cnts->allowed_languages" /><% if (!cnts->allowed_languages) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-allowed-languages" label="Change" /><s:submit ac="cnts-clear-allowed-languages" label="Clear" /></td>
-            <td><s:help ac="cnts-change-allowed-languages" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Allowed regions:</td>
-            <td><s:textfield size="48" name="param" value="cnts->allowed_regions" /><% if (!cnts->allowed_regions) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-allowed-regions" label="Change" /><s:submit ac="cnts-clear-allowed-regions" label="Clear" /></td>
-            <td><s:help ac="cnts-change-allowed-regions" /></td>
-        </s:tr>
-    </s:form>
 </table>
 
     </div>
@@ -1193,7 +1176,7 @@ initial count = <s:v value="memb->init_count" />
 
     </div>
 
-    <h3>Advanced path settings</h3>
+    <h3>Advanced settings</h3>
 
     <div>
 <table border="0">
@@ -1234,6 +1217,25 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-file-group" /></td>
         </s:tr>
     </s:form>
+
+    <s:form>
+        <s:tr attr="form_row_attrs[row ^= 1]">
+            <td>Allowed programming languages:</td>
+            <td><s:textfield size="48" name="param" value="cnts->allowed_languages" /><% if (!cnts->allowed_languages) { %>(<i>Not set</i>)<% } %></td>
+            <td><s:submit ac="cnts-change-allowed-languages" label="Change" /><s:submit ac="cnts-clear-allowed-languages" label="Clear" /></td>
+            <td><s:help ac="cnts-change-allowed-languages" /></td>
+        </s:tr>
+    </s:form>
+
+    <s:form>
+        <s:tr attr="form_row_attrs[row ^= 1]">
+            <td>Allowed regions:</td>
+            <td><s:textfield size="48" name="param" value="cnts->allowed_regions" /><% if (!cnts->allowed_regions) { %>(<i>Not set</i>)<% } %></td>
+            <td><s:submit ac="cnts-change-allowed-regions" label="Change" /><s:submit ac="cnts-clear-allowed-regions" label="Clear" /></td>
+            <td><s:help ac="cnts-change-allowed-regions" /></td>
+        </s:tr>
+    </s:form>
+
 </table>
     </div>
 
