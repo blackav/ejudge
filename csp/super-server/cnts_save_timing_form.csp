@@ -1,0 +1,35 @@
+<% //-*- c -*-
+%><%@include "includes.csp"
+%><%
+
+%><%@set getter_name = "csp_get_cnts_save_timing_form"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_cnts_save_timing_form(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
+
+    char *msg_s = NULL;
+    size_t msg_z = 0;
+    FILE *msg_f = open_memstream(&msg_s, &msg_z);
+
+    if (!retval && phr->ss) {
+        struct contest_desc *edited_cnts = phr->ss->edited_cnts;
+        if (edited_cnts) {
+        }
+    }
+
+//cleanup:;
+    fclose(msg_f); msg_f = NULL;
+%>
+{
+    "input" : {
+    },
+    "retval" : <s:v value="retval" />,
+    "messages" : "<s:v value="msg_s" json="yes" checkExpr="" />"
+}
+<%
+    html_armor_free(&ab);
+    xfree(msg_s);
+%>
