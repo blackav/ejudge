@@ -191,9 +191,20 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="HeadersDialogForm">
         <s:hidden name="action" ac="cnts-save-headers-form" />
         <fieldset>
-
-
-
+            <label for="HeadersDialogUsersHeaderFile">HTML header file for 'users' CGI-program:</label>
+            <s:textfield size="48" name="users_header_file" id="HeadersDialogUsersHeaderFile" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="HeadersDialogUsersFooterFile">HTML footer file for 'users' CGI-program:</label>
+            <s:textfield size="48" name="users_footer_file" id="HeadersDialogUsersFooterFile" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="HeadersDialogCopyrightFile">Copyright notice file:</label>
+            <s:textfield size="48" name="copyright_file" id="HeadersDialogCopyrightFile" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="HeadersDialogWelcomeFile">Participant welcome message file:</label>
+            <s:textfield size="48" name="welcome_file" id="HeadersDialogWelcomeFile" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="HeadersDialogRegWelcomeFile">Registration welcome message file:</label>
+            <s:textfield size="48" name="reg_welcome_file" id="HeadersDialogRegWelcomeFile" value="" class="text ui-widget-content ui-corner-all" />
         </fieldset>
     </s:form>
 </div>
@@ -389,6 +400,36 @@ $(function() {
         close : function() {
         }
     });
+
+    headersDialog = $("#HeadersDialogDiv").dialog({
+        autoOpen: false,
+        height: 500,
+        width: 600,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#HeadersDialogForm").serialize();
+                var formURL = $("#HeadersDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                headersDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
 });
 
 function copyCheckbox(dst, src)
@@ -486,6 +527,16 @@ function popupUrlDialog()
     document.getElementById("UrlDialogCssUrl").value = document.getElementById("OrigCssUrl").value;
 
     $("#UrlDialogDiv").dialog('open');
+}
+
+function popupHeadersDialog()
+{
+    var fields = ["UsersHeaderFile", "UsersFooterFile", "CopyrightFile", "WelcomeFile", "RegWelcomeFile"];
+    for (var i in fields) {
+        document.getElementById("HeadersDialog" + fields[i]).value = document.getElementById("Orig" + fields[i]).value;
+    }
+
+    $("#HeadersDialogDiv").dialog('open');
 }
 </script>
 
@@ -1069,50 +1120,36 @@ initial count = <s:v value="memb->init_count" />
 <table border="0">
 <% row = 1; %>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>HTML header file for 'users' CGI-program:</td>
-            <td><s:textfield size="48" name="param" value="cnts->users_header_file" /><% if (!cnts->users_header_file) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-users-header" label="Change" /><s:submit ac="cnts-clear-users-header" label="Clear" />[<s:a ac="cnts-edit-users-header-page">Edit</s:a>]</td>
-            <td><s:help ac="cnts-change-users-header" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>HTML footer file for 'users' CGI-program:</td>
-            <td><s:textfield size="48" name="param" value="cnts->users_footer_file" /><% if (!cnts->users_footer_file) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-users-footer" label="Change" /><s:submit ac="cnts-clear-users-footer" label="Clear" />[<s:a ac="cnts-edit-users-footer-page">Edit</s:a>]</td>
-            <td><s:help ac="cnts-change-users-footer" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Copyright notice file:</td>
-            <td><s:textfield size="48" name="param" value="cnts->copyright_file" /><% if (!cnts->copyright_file) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-copyright" label="Change" /><s:submit ac="cnts-clear-copyright" label="Clear" />[<s:a ac="cnts-edit-copyright-page">Edit</s:a>]</td>
-            <td><s:help ac="cnts-change-copyright" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Participant's welcome message file:</td>
-            <td><s:textfield size="48" name="param" value="cnts->welcome_file" /><% if (!cnts->welcome_file) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-welcome" label="Change" /><s:submit ac="cnts-clear-welcome" label="Clear" />[<s:a ac="cnts-edit-welcome-page">Edit</s:a>]</td>
-            <td><s:help ac="cnts-change-welcome" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Registration welcome message file:</td>
-            <td><s:textfield size="48" name="param" value="cnts->reg_welcome_file" /><% if (!cnts->reg_welcome_file) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-reg-welcome" label="Change" /><s:submit ac="cnts-clear-reg-welcome" label="Clear" />[<s:a ac="cnts-edit-reg-welcome-page">Edit</s:a>]</td>
-            <td><s:help ac="cnts-change-reg-welcome" /></td>
-        </s:tr>
-    </s:form>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupHeadersDialog();">
+        <td>HTML header file for 'users' CGI-program:</td>
+        <td><s:textfield id="OrigUsersHeaderFile" readonly="readonly" size="48" name="param" value="cnts->users_header_file" /><% if (!cnts->users_header_file) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-users-header" label="Clear" /></s:form>[<s:a ac="cnts-edit-users-header-page">Edit</s:a>]</td>
+        <td><s:help ac="cnts-change-users-header" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupHeadersDialog();">
+        <td>HTML footer file for 'users' CGI-program:</td>
+        <td><s:textfield id="OrigUsersFooterFile" readonly="readonly" size="48" name="param" value="cnts->users_footer_file" /><% if (!cnts->users_footer_file) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-users-footer" label="Clear" /></s:form>[<s:a ac="cnts-edit-users-footer-page">Edit</s:a>]</td>
+        <td><s:help ac="cnts-change-users-footer" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupHeadersDialog();">
+        <td>Copyright notice file:</td>
+        <td><s:textfield id="OrigCopyrightFile" readonly="readonly" size="48" name="param" value="cnts->copyright_file" /><% if (!cnts->copyright_file) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-copyright" label="Clear" /></s:form>[<s:a ac="cnts-edit-copyright-page">Edit</s:a>]</td>
+        <td><s:help ac="cnts-change-copyright" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupHeadersDialog();">
+        <td>Participant's welcome message file:</td>
+        <td><s:textfield id="OrigWelcomeFile" readonly="readonly" size="48" name="param" value="cnts->welcome_file" /><% if (!cnts->welcome_file) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-welcome" label="Clear" /></s:form>[<s:a ac="cnts-edit-welcome-page">Edit</s:a>]</td>
+        <td><s:help ac="cnts-change-welcome" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupHeadersDialog();">
+        <td>Registration welcome message file:</td>
+        <td><s:textfield id="OrigRegWelcomeFile" readonly="readonly" size="48" name="param" value="cnts->reg_welcome_file" /><% if (!cnts->reg_welcome_file) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-reg-welcome" label="Clear" /></s:form>[<s:a ac="cnts-edit-reg-welcome-page">Edit</s:a>]</td>
+        <td><s:help ac="cnts-change-reg-welcome" /></td>
+    </s:tr>
 </table>
 
     </div>

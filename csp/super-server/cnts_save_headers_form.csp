@@ -11,12 +11,22 @@
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
     // more variables
+    unsigned char *users_header_file = NULL;
+    unsigned char *users_footer_file = NULL;
+    unsigned char *copyright_file = NULL;
+    unsigned char *welcome_file = NULL;
+    unsigned char *reg_welcome_file = NULL;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
     // reading form vars
+%><s:read var="users_header_file" normalize="yes" /><%
+%><s:read var="users_footer_file" normalize="yes" /><%
+%><s:read var="copyright_file" normalize="yes" /><%
+%><s:read var="welcome_file" normalize="yes" /><%
+%><s:read var="reg_welcome_file" normalize="yes" /><%
 
     // validating form vars
 
@@ -24,10 +34,15 @@
         struct contest_desc *edited_cnts = phr->ss->edited_cnts;
         if (edited_cnts) {
             // updating edited_cnts
+            edited_cnts->users_header_file = xstrdup2(users_header_file);
+            edited_cnts->users_footer_file = xstrdup2(users_footer_file);
+            edited_cnts->copyright_file = xstrdup2(copyright_file);
+            edited_cnts->welcome_file = xstrdup2(welcome_file);
+            edited_cnts->reg_welcome_file = xstrdup2(reg_welcome_file);
         }
     }
 
-//cleanup:;
+cleanup:;
     fclose(msg_f); msg_f = NULL;
 %>
 {
@@ -37,6 +52,11 @@
     "messages" : "<s:v value="msg_s" json="yes" checkExpr="" />"
 }
 <%
+    xfree(users_header_file);
+    xfree(users_footer_file);
+    xfree(copyright_file);
+    xfree(welcome_file);
+    xfree(reg_welcome_file);
     html_armor_free(&ab);
     xfree(msg_s);
 %>
