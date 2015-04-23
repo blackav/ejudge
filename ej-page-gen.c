@@ -4611,8 +4611,13 @@ handle_help_open(
     HtmlElement *elem = ps->el_stack->el;
     unsigned char buf[1024];
 
-    if (process_ac_attr(log_f, cntx, ps, elem, buf, sizeof(buf)) > 0) {
-        fprintf(prg_f, "hr_print_help_url(out_f, %s);\n", buf);
+    HtmlAttribute *topic_attr = html_element_find_attribute(elem, "topic");
+    if (topic_attr != NULL) {
+        fprintf(prg_f, "hr_print_help_url_2(out_f, \"%s\");\n", topic_attr->value);
+    } else {
+        if (process_ac_attr(log_f, cntx, ps, elem, buf, sizeof(buf)) > 0) {
+            fprintf(prg_f, "hr_print_help_url(out_f, %s);\n", buf);
+        }
     }
     return 0;
 }
