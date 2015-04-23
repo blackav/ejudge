@@ -102,15 +102,6 @@ struct sid_state
   unsigned char *user_name;
   int edit_page;
 
-  //ejintbool_t advanced_view;
-  //ejintbool_t show_html_attrs;
-  //ejintbool_t show_html_headers;
-  //ejintbool_t show_paths;
-  //ejintbool_t show_access_rules;
-  //ejintbool_t show_permissions;
-  //ejintbool_t show_form_fields;
-  //ejintbool_t show_notifications;
-
   unsigned char *users_header_text;
   unsigned char *users_footer_text;
   unsigned char *register_header_text;
