@@ -86,7 +86,7 @@ html_date_select_2(
   value_date[0] = 0;
   if (tt) {
     snprintf(value_time, sizeof(value_time), "%02d:%02d:%02d",
-             tt->tm_hour, tt->tm_mon, tt->tm_year);
+             tt->tm_hour, tt->tm_min, tt->tm_sec);
     snprintf(value_date, sizeof(value_date), "%04d-%02d-%02d",
              tt->tm_year + 1900, tt->tm_mon + 1, tt->tm_mday);
   }
