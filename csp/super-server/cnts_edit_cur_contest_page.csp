@@ -711,20 +711,8 @@ function popupRegistrationDialog()
 
     <div>
 <table border="0">
-    <s:form>
-        <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Registration form fields</b><%
-  if (phr->ss->show_form_fields) {
-%><s:submit ac="cnts-hide-form-fields" label="Hide" /><%
-  } else {
-%><s:submit ac="cnts-show-form-fields" label="Show" /><%
-  }
-%></td></s:tr>
-    </s:form>
 <% row = 1; %>
 
-<%
-  if (phr->ss->show_form_fields) {
-%>
     <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
         <td>Primary registration fields</td>
         <td><font size=\"-1\"><pre><%
@@ -740,12 +728,9 @@ function popupRegistrationDialog()
         <td><s:a ac="cnts-edit-user-fields-page">Edit</s:a></td>
         <td>&nbsp;</td>
     </s:tr>
-<%
-  }
-%>
 
 <%
-  if (phr->ss->show_form_fields) {
+  {
     struct contest_member *memb = 0;
     if (cnts->members) memb = cnts->members[CONTEST_M_CONTESTANT];
 %>
@@ -779,7 +764,7 @@ initial count = <s:v value="memb->init_count" />
 %>
 
 <%
-  if (phr->ss->show_form_fields) {
+  {
     struct contest_member *memb = 0;
     if (cnts->members) memb = cnts->members[CONTEST_M_RESERVE];
 %>
@@ -813,7 +798,7 @@ initial count = <s:v value="memb->init_count" />
 %>
 
 <%
-  if (phr->ss->show_form_fields) {
+  {
     struct contest_member *memb = 0;
     if (cnts->members) memb = cnts->members[CONTEST_M_COACH];
 %>
@@ -847,7 +832,7 @@ initial count = <s:v value="memb->init_count" />
 %>
 
 <%
-  if (phr->ss->show_form_fields) {
+  {
     struct contest_member *memb = 0;
     if (cnts->members) memb = cnts->members[CONTEST_M_ADVISOR];
 %>
@@ -881,7 +866,7 @@ initial count = <s:v value="memb->init_count" />
 %>
 
 <%
-  if (phr->ss->show_form_fields) {
+  {
     struct contest_member *memb = 0;
     if (cnts->members) memb = cnts->members[CONTEST_M_GUEST];
 %>

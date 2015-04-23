@@ -884,7 +884,6 @@ static const struct cnts_edit_info cnts_edit_info[] =
   { NS_CONTEST, CNTS_serve_control_access, 'p', 0, 0, 0, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "<tt>serve-control</tt> access rules", "Access rules for the serve-control program", NULL },
 
   { 0, 0, 130, 0, 0, 0, 0, 0, 0, 0, 0, },
-  { NS_SID_STATE, SSSS_show_form_fields, '-', 1, 0, 0, 0, 0, "Registration Form Fields", 0, 0 },
   { 0, 0, 131, 0, 0, 0, 0, 0, 0, 0, 0, },
 
   { NS_SID_STATE, SSSS_show_html_headers, '-', 1, 0, 0, 0, 0, "HTML Headers and Footers", 0, 0 },
@@ -1516,7 +1515,6 @@ write_editing_rows(
     }
 
     if (ce->type == 131) {
-      if (!phr->ss->show_form_fields) continue;
       print_registration_fields(out_f, ecnts, phr);
       continue;
     }
@@ -2964,7 +2962,6 @@ static unsigned char valid_ss_visibilities[SSSS_LAST_FIELD] =
   [SSSS_show_html_attrs] = 1,
   [SSSS_show_html_headers] = 1,
   [SSSS_show_paths] = 1,
-  [SSSS_show_form_fields] = 1,
   [SSSS_show_notifications] = 1,
 
   // these are visibilities for global configuration page
