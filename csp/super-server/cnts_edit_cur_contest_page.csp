@@ -213,9 +213,33 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="AttrsDialogForm">
         <s:hidden name="action" ac="cnts-save-attrs-form" />
         <fieldset>
-
-
-
+            <label for="AttrsDialogUsersHeadStyle">HTML attributes for 'users' headers:</label>
+            <s:textfield size="48" name="users_head_style" id="AttrsDialogUsersHeadStyle" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="AttrsDialogUsersParStyle">HTML attributes for 'users' paragraphs:</label>
+            <s:textfield size="48" name="users_par_style" id="AttrsDialogUsersParStyle" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="AttrsDialogUsersTableStyle">HTML attributes for 'users' tables:</label>
+            <s:textfield size="48" name="users_table_style" id="AttrsDialogUsersTableStyle" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="AttrsDialogUsersVerbStyle">HTML attributes for 'users' verbatim text:</label>
+            <s:textfield size="48" name="users_verb_style" id="AttrsDialogUsersVerbStyle" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="AttrsDialogUsersTableFormat">Format specification for users table:</label>
+            <s:textfield size="48" name="users_table_format" id="AttrsDialogUsersTableFormat" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="AttrsDialogUsersTableFormatEn">Format specification for users table (en):</label>
+            <s:textfield size="48" name="users_table_format_en" id="AttrsDialogUsersTableFormatEn" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="AttrsDialogUsersTableLegend">Legend specification for users table:</label>
+            <s:textfield size="48" name="users_table_legend" id="AttrsDialogUsersTableLegend" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="AttrsDialogUsersTableLegendEn">Legend specification for users table (en):</label>
+            <s:textfield size="48" name="users_table_legend_en" id="AttrsDialogUsersTableLegendEn" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="AttrsDialogUserNameComment">Additional comment for user name field:</label>
+            <s:textfield size="48" name="user_name_comment" id="AttrsDialogUserNameComment" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
         </fieldset>
     </s:form>
 </div>
@@ -430,6 +454,36 @@ $(function() {
         close : function() {
         }
     });
+
+    attrsDialog = $("#AttrsDialogDiv").dialog({
+        autoOpen: false,
+        height: 500,
+        width: 600,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#AttrsDialogForm").serialize();
+                var formURL = $("#AttrsDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                attrsDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
 });
 
 function copyCheckbox(dst, src)
@@ -537,6 +591,17 @@ function popupHeadersDialog()
     }
 
     $("#HeadersDialogDiv").dialog('open');
+}
+
+function popupAttrsDialog()
+{
+    var fields = [ "UsersHeadStyle", "UsersParStyle", "UsersTableStyle", "UsersVerbStyle", "UsersTableFormat",
+                   "UsersTableFormatEn", "UsersTableLegend", "UsersTableLegendEn", "UserNameComment" ];
+    for (var i in fields) {
+        document.getElementById("AttrsDialog" + fields[i]).value = document.getElementById("Orig" + fields[i]).value;
+    }
+
+    $("#AttrsDialogDiv").dialog('open');
 }
 </script>
 
@@ -1160,87 +1225,60 @@ initial count = <s:v value="memb->init_count" />
 <table border="0">
 <% row = 1; %>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>HTML attributes for 'users' headers:</td>
-            <td><s:textfield size="48" name="param" value="cnts->users_head_style" /><% if (!cnts->users_head_style) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-users-head-style" label="Change" /><s:submit ac="cnts-clear-users-head-style" label="Clear" /></td>
-            <td><s:help ac="cnts-change-users-head-style" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>HTML attributes for 'users' paragraphs:</td>
-            <td><s:textfield size="48" name="param" value="cnts->users_par_style" /><% if (!cnts->users_par_style) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-users-par-style" label="Change" /><s:submit ac="cnts-clear-users-par-style" label="Clear" /></td>
-            <td><s:help ac="cnts-change-users-par-style" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>HTML attributes for 'users' tables:</td>
-            <td><s:textfield size="48" name="param" value="cnts->users_table_style" /><% if (!cnts->users_table_style) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-users-table-style" label="Change" /><s:submit ac="cnts-clear-users-table-style" label="Clear" /></td>
-            <td><s:help ac="cnts-change-users-table-style" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>HTML attributes for 'users' verbatim text:</td>
-            <td><s:textfield size="48" name="param" value="cnts->users_verb_style" /><% if (!cnts->users_verb_style) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-users-verb-style" label="Change" /><s:submit ac="cnts-clear-users-verb-style" label="Clear" /></td>
-            <td><s:help ac="cnts-change-users-verb-style" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Format specification for users table:</td>
-            <td><s:textfield size="48" name="param" value="cnts->users_table_format" /><% if (!cnts->users_table_format) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-users-table-format" label="Change" /><s:submit ac="cnts-clear-users-table-format" label="Clear" /></td>
-            <td><s:help ac="cnts-change-users-table-format" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Format specification for users table (En):</td>
-            <td><s:textfield size="48" name="param" value="cnts->users_table_format_en" /><% if (!cnts->users_table_format_en) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-users-table-format-en" label="Change" /><s:submit ac="cnts-clear-users-table-format-en" label="Clear" /></td>
-            <td><s:help ac="cnts-change-users-table-format-en" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Legend specification for users table:</td>
-            <td><s:textfield size="48" name="param" value="cnts->users_table_legend" /><% if (!cnts->users_table_legend) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-users-table-legend" label="Change" /><s:submit ac="cnts-clear-users-table-legend" label="Clear" /></td>
-            <td><s:help ac="cnts-change-users-table-legend" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Legend specification for users table (En):</td>
-            <td><s:textfield size="48" name="param" value="cnts->users_table_legend_en" /><% if (!cnts->users_table_legend_en) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-users-table-legend-en" label="Change" /><s:submit ac="cnts-clear-users-table-legend-en" label="Clear" /></td>
-            <td><s:help ac="cnts-change-users-table-legend-en" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Additional comment for user name field:</td>
-            <td><s:textfield size="48" name="param" value="cnts->user_name_comment" /><% if (!cnts->user_name_comment) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-register-name-comment" label="Change" /><s:submit ac="cnts-clear-register-name-comment" label="Clear" /></td>
-            <td><s:help ac="cnts-change-register-name-comment" /></td>
-        </s:tr>
-    </s:form>
-
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+        <td>HTML attributes for 'users' headers:</td>
+        <td><s:textfield id="OrigUsersHeadStyle" readonly="readonly" size="48" name="param" value="cnts->users_head_style" /><% if (!cnts->users_head_style) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-users-head-style" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-users-head-style" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+        <td>HTML attributes for 'users' paragraphs:</td>
+        <td><s:textfield id="OrigUsersParStyle" readonly="readonly" size="48" name="param" value="cnts->users_par_style" /><% if (!cnts->users_par_style) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-users-par-style" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-users-par-style" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+        <td>HTML attributes for 'users' tables:</td>
+        <td><s:textfield id="OrigUsersTableStyle" readonly="readonly" size="48" name="param" value="cnts->users_table_style" /><% if (!cnts->users_table_style) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-users-table-style" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-users-table-style" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+        <td>HTML attributes for 'users' verbatim text:</td>
+        <td><s:textfield id="OrigUsersVerbStyle" readonly="readonly" size="48" name="param" value="cnts->users_verb_style" /><% if (!cnts->users_verb_style) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-users-verb-style" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-users-verb-style" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+        <td>Format specification for users table:</td>
+        <td><s:textfield id="OrigUsersTableFormat" readonly="readonly" size="48" name="param" value="cnts->users_table_format" /><% if (!cnts->users_table_format) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-users-table-format" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-users-table-format" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+        <td>Format specification for users table (En):</td>
+        <td><s:textfield id="OrigUsersTableFormatEn" readonly="readonly" size="48" name="param" value="cnts->users_table_format_en" /><% if (!cnts->users_table_format_en) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-users-table-format-en" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-users-table-format-en" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+        <td>Legend specification for users table:</td>
+        <td><s:textfield id="OrigUsersTableLegend" readonly="readonly" size="48" name="param" value="cnts->users_table_legend" /><% if (!cnts->users_table_legend) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-users-table-legend" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-users-table-legend" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+        <td>Legend specification for users table (En):</td>
+        <td><s:textfield id="OrigUsersTableLegendEn" readonly="readonly" size="48" name="param" value="cnts->users_table_legend_en" /><% if (!cnts->users_table_legend_en) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-users-table-legend-en" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-users-table-legend-en" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+        <td>Additional comment for user name field:</td>
+        <td><s:textfield id="OrigUserNameComment" readonly="readonly" size="48" name="param" value="cnts->user_name_comment" /><% if (!cnts->user_name_comment) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-register-name-comment" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-register-name-comment" /></td>
+    </s:tr>
 </table>
 
     </div>

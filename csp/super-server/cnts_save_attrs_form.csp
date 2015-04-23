@@ -11,23 +11,49 @@
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
     // more variables
+    unsigned char *users_head_style = NULL;
+    unsigned char *users_par_style = NULL;
+    unsigned char *users_table_style = NULL;
+    unsigned char *users_verb_style = NULL;
+    unsigned char *users_table_format = NULL;
+    unsigned char *users_table_format_en = NULL;
+    unsigned char *users_table_legend = NULL;
+    unsigned char *users_table_legend_en = NULL;
+    unsigned char *user_name_comment = NULL;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
     // reading form vars
-
+%><s:read var="users_head_style" normalize="yes" /><%
+%><s:read var="users_par_style" normalize="yes" /><%
+%><s:read var="users_table_style" normalize="yes" /><%
+%><s:read var="users_verb_style" normalize="yes" /><%
+%><s:read var="users_table_format" normalize="yes" /><%
+%><s:read var="users_table_format_en" normalize="yes" /><%
+%><s:read var="users_table_legend" normalize="yes" /><%
+%><s:read var="users_table_legend_en" normalize="yes" /><%
+%><s:read var="user_name_comment" normalize="yes" /><%
     // validating form vars
 
     if (!retval && phr->ss) {
         struct contest_desc *edited_cnts = phr->ss->edited_cnts;
         if (edited_cnts) {
             // updating edited_cnts
+            edited_cnts->users_head_style = xstrdup2(users_head_style);
+            edited_cnts->users_par_style = xstrdup2(users_par_style);
+            edited_cnts->users_table_style = xstrdup2(users_table_style);
+            edited_cnts->users_verb_style = xstrdup2(users_verb_style);
+            edited_cnts->users_table_format = xstrdup2(users_table_format);
+            edited_cnts->users_table_format_en = xstrdup2(users_table_format_en);
+            edited_cnts->users_table_legend = xstrdup2(users_table_legend);
+            edited_cnts->users_table_legend_en = xstrdup2(users_table_legend_en);
+            edited_cnts->user_name_comment = xstrdup2(user_name_comment);
         }
     }
 
-//cleanup:;
+cleanup:;
     fclose(msg_f); msg_f = NULL;
 %>
 {
@@ -37,6 +63,15 @@
     "messages" : "<s:v value="msg_s" json="yes" checkExpr="" />"
 }
 <%
+    xfree(users_head_style);
+    xfree(users_par_style);
+    xfree(users_table_style);
+    xfree(users_verb_style);
+    xfree(users_table_format);
+    xfree(users_table_format_en);
+    xfree(users_table_legend);
+    xfree(users_table_legend_en);
+    xfree(user_name_comment);
     html_armor_free(&ab);
     xfree(msg_s);
 %>
