@@ -1260,7 +1260,6 @@ super_serve_clear_edited_contest(struct sid_state *p)
 
   p->edit_page = 0;
   p->show_html_attrs = 0;
-  p->show_html_headers = 0;
   p->show_paths = 0;
   p->show_notifications = 0;
 
@@ -1334,7 +1333,7 @@ super_serve_move_edited_contest(struct sid_state *dst, struct sid_state *src)
   // ejintbool_t fields
   static int ejintbool_fields[] =
   {
-    SSSS_show_html_attrs, SSSS_show_html_headers,
+    SSSS_show_html_attrs,
     SSSS_show_paths, 
     SSSS_show_notifications,
     SSSS_users_header_loaded, SSSS_users_footer_loaded,
@@ -1535,12 +1534,6 @@ cmd_simple_top_command(struct client_state *p, int len,
     break;
   case SSERV_CMD_HIDE_UNMNG:
     sstate->flags &= ~SID_STATE_SHOW_UNMNG;
-    break;
-  case SSERV_CMD_CNTS_SHOW_HTML_HEADERS:
-    sstate->show_html_headers = 1;
-    break;
-  case SSERV_CMD_CNTS_HIDE_HTML_HEADERS:
-    sstate->show_html_headers = 0;
     break;
   case SSERV_CMD_CNTS_SHOW_HTML_ATTRS:
     sstate->show_html_attrs = 1;
@@ -2639,8 +2632,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_HIDE_CLOSED] = { cmd_simple_top_command },
   [SSERV_CMD_SHOW_UNMNG] = { cmd_simple_top_command },
   [SSERV_CMD_HIDE_UNMNG] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_SHOW_HTML_HEADERS] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_HIDE_HTML_HEADERS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_SHOW_HTML_ATTRS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_HIDE_HTML_ATTRS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_FORGET] = { cmd_simple_top_command },

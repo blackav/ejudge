@@ -905,20 +905,8 @@ initial count = <s:v value="memb->init_count" />
 
     <div>
 <table border="0">
-    <s:form>
-        <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>HTML headers and footers</b><%
-  if (phr->ss->show_html_headers) {
-%><s:submit ac="cnts-hide-html-headers" label="Hide" /><%
-  } else {
-%><s:submit ac="cnts-show-html-headers" label="Show" /><%
-  }
-%></td></s:tr>
-    </s:form>
 <% row = 1; %>
 
-<%
-  if (phr->ss->show_html_headers) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML header file for 'users' CGI-program:</td>
@@ -927,13 +915,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-users-header" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_html_headers) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML footer file for 'users' CGI-program:</td>
@@ -942,13 +924,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-users-footer" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_html_headers) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Copyright notice file:</td>
@@ -957,13 +933,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-copyright" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_html_headers) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Participant's welcome message:</td>
@@ -972,13 +942,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-welcome" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_html_headers) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Registration welcome message:</td>
@@ -987,9 +951,6 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-reg-welcome" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 </table>
 
     </div>

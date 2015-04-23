@@ -886,7 +886,6 @@ static const struct cnts_edit_info cnts_edit_info[] =
   { 0, 0, 130, 0, 0, 0, 0, 0, 0, 0, 0, },
   { 0, 0, 131, 0, 0, 0, 0, 0, 0, 0, 0, },
 
-  { NS_SID_STATE, SSSS_show_html_headers, '-', 1, 0, 0, 0, 0, "HTML Headers and Footers", 0, 0 },
   { NS_CONTEST, CNTS_users_header_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML header file for <tt>users</tt>", "HTML header file for the users program", "SidState.show_html_headers" },
   { NS_CONTEST, CNTS_users_footer_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML footer file for <tt>users</tt>", "HTML footer file for the users program", "SidState.show_html_headers" },
   { NS_CONTEST, CNTS_register_header_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML header file for <tt>register</tt>", "HTML header file for the register program", "SidState.show_html_headers" },
@@ -2960,7 +2959,6 @@ cmd_edit_contest_xml_field(
 static unsigned char valid_ss_visibilities[SSSS_LAST_FIELD] =
 {
   [SSSS_show_html_attrs] = 1,
-  [SSSS_show_html_headers] = 1,
   [SSSS_show_paths] = 1,
   [SSSS_show_notifications] = 1,
 
