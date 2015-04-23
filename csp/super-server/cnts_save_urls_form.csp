@@ -11,23 +11,41 @@
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
     // more variables
+    unsigned char *team_url = NULL;
+    unsigned char *standings_url = NULL;
+    unsigned char *problems_url = NULL;
+    unsigned char *logo_url = NULL;
+    unsigned char *css_url = NULL;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
     // reading form vars
-
-    // validating form vars
+%><s:read var="team_url" normalize="yes" /><%
+%><s:read var="standings_url" normalize="yes" /><%
+%><s:read var="problems_url" normalize="yes" /><%
+%><s:read var="logo_url" normalize="yes" /><%
+%><s:read var="css_url" normalize="yes" /><%
 
     if (!retval && phr->ss) {
         struct contest_desc *edited_cnts = phr->ss->edited_cnts;
         if (edited_cnts) {
             // updating edited_cnts
+            edited_cnts->team_url = xstrdup2(team_url);
+            edited_cnts->standings_url = xstrdup2(standings_url);
+            edited_cnts->problems_url = xstrdup2(problems_url);
+            edited_cnts->logo_url = xstrdup2(logo_url);
+            edited_cnts->css_url = xstrdup2(css_url);
         }
     }
 
-//cleanup:;
+cleanup:;
+    xfree(team_url);
+    xfree(standings_url);
+    xfree(problems_url);
+    xfree(logo_url);
+    xfree(css_url);
     fclose(msg_f); msg_f = NULL;
 %>
 {

@@ -161,8 +161,75 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
+<div id="UrlDialogDiv" title="Contest URLs">
+    <s:form id="UrlDialogForm">
+        <s:hidden name="action" ac="cnts-save-urls-form" />
+        <fieldset>
+            <label for="UrlDialogTeamUrl">URL for participation:</label>
+            <s:textfield size="48" name="team_url" id="UrlDialogTeamUrl" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+
+            <label for="UrlDialogStandingsUrl">URL for the current standings:</label>
+            <s:textfield size="48" name="standings_url" id="UrlDialogStandingsUrl" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+
+            <label for="UrlDialogProblemsUrl">URL for the problemset:</label>
+            <s:textfield size="48" name="problems_url" id="UrlDialogProblemsUrl" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+
+            <label for="UrlDialogLogoUrl">URL for the contest logo:</label>
+            <s:textfield size="48" name="logo_url" id="UrlDialogLogoUrl" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+
+            <label for="UrlDialogCssUrl">URL for the contest CSS:</label>
+            <s:textfield size="48" name="css_url" id="UrlDialogCssUrl" value="" class="text ui-widget-content ui-corner-all" />
+        </fieldset>
+    </s:form>
+</div>
+
+<div id="HeadersDialogDiv" title="Header/Footer Files">
+    <s:form id="HeadersDialogForm">
+        <s:hidden name="action" ac="cnts-save-headers-form" />
+        <fieldset>
 
 
+
+        </fieldset>
+    </s:form>
+</div>
+
+<div id="AttrsDialogDiv" title="HTML Attributes">
+    <s:form id="AttrsDialogForm">
+        <s:hidden name="action" ac="cnts-save-attrs-form" />
+        <fieldset>
+
+
+
+        </fieldset>
+    </s:form>
+</div>
+
+<div id="NotificationsDialogDiv" title="Notifications">
+    <s:form id="NotificationsDialogForm">
+        <s:hidden name="action" ac="cnts-save-notifications-form" />
+        <fieldset>
+
+
+
+        </fieldset>
+    </s:form>
+</div>
+
+<div id="AdvancedDialogDiv" title="Advanced">
+    <s:form id="AdvancedDialogForm">
+        <s:hidden name="action" ac="cnts-save-advanced-form" />
+        <fieldset>
+
+
+
+        </fieldset>
+    </s:form>
+</div>
 
 <script type="text/javascript">
 $(function() {
@@ -292,6 +359,36 @@ $(function() {
     $('#TimingDialogOpenTimeDate').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
     $('#TimingDialogCloseTimeTime').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
     $('#TimingDialogCloseTimeDate').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
+
+    urlDialog = $("#UrlDialogDiv").dialog({
+        autoOpen: false,
+        height: 500,
+        width: 600,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#UrlDialogForm").serialize();
+                var formURL = $("#UrlDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                urlDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
 });
 
 function copyCheckbox(dst, src)
@@ -378,6 +475,17 @@ function popupTimingDialog()
     document.getElementById("TimingDialogCloseTimeDate").value = document.getElementById("OrigCloseTimeDate").value;
 
     $("#TimingDialogDiv").dialog('open');
+}
+
+function popupUrlDialog()
+{
+    document.getElementById("UrlDialogTeamUrl").value = document.getElementById("OrigTeamUrl").value;
+    document.getElementById("UrlDialogStandingsUrl").value = document.getElementById("OrigStandingsUrl").value;
+    document.getElementById("UrlDialogProblemsUrl").value = document.getElementById("OrigProblemsUrl").value;
+    document.getElementById("UrlDialogLogoUrl").value = document.getElementById("OrigLogoUrl").value;
+    document.getElementById("UrlDialogCssUrl").value = document.getElementById("OrigCssUrl").value;
+
+    $("#UrlDialogDiv").dialog('open');
 }
 </script>
 
@@ -527,46 +635,36 @@ function popupTimingDialog()
 <table border="0">
 <% row = 1; %>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>URL for participation:</td>
-            <td><s:textfield size="48" name="param" value="cnts->team_url" /><% if (!cnts->team_url) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-team-url" label="Change" /><s:submit ac="cnts-clear-team-url" label="Clear" /></td>
-            <td><s:help ac="cnts-change-team-url" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>URL for the current standings:</td>
-            <td><s:textfield size="48" name="param" value="cnts->standings_url" /><% if (!cnts->standings_url) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-standings-url" label="Change" /><s:submit ac="cnts-clear-standings-url" label="Clear" /></td>
-            <td><s:help ac="cnts-change-standings-url" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>URL for the problemset:</td>
-            <td><s:textfield size="48" name="param" value="cnts->problems_url" /><% if (!cnts->problems_url) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-problems-url" label="Change" /><s:submit ac="cnts-clear-problems-url" label="Clear" /></td>
-            <td><s:help ac="cnts-change-problems-url" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>URL for the contest logo:</td>
-            <td><s:textfield size="48" name="param" value="cnts->logo_url" /><% if (!cnts->logo_url) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-logo-url" label="Change" /><s:submit ac="cnts-clear-logo-url" label="Clear" /></td>
-            <td><s:help ac="cnts-change-logo-url" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>URL for the contest CSS:</td>
-            <td><s:textfield size="48" name="param" value="cnts->css_url" /><% if (!cnts->css_url) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-css-url" label="Change" /><s:submit ac="cnts-clear-css-url" label="Clear" /></td>
-            <td><s:help ac="cnts-change-css-url" /></td>
-        </s:tr>
-    </s:form>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupUrlDialog();">
+        <td>URL for participation:</td>
+        <td><s:textfield id="OrigTeamUrl" readonly="readonly" size="48" name="param" value="cnts->team_url" /><% if (!cnts->team_url) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-team-url" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-team-url" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupUrlDialog();">
+        <td>URL for the current standings:</td>
+        <td><s:textfield id="OrigStandingsUrl" readonly="readonly" size="48" name="param" value="cnts->standings_url" /><% if (!cnts->standings_url) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-standings-url" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-standings-url" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupUrlDialog();">
+        <td>URL for the problemset:</td>
+        <td><s:textfield id="OrigProblemsUrl" readonly="readonly" size="48" name="param" value="cnts->problems_url" /><% if (!cnts->problems_url) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-problems-url" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-problems-url" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupUrlDialog();">
+        <td>URL for the contest logo:</td>
+        <td><s:textfield id="OrigLogoUrl" readonly="readonly" size="48" name="param" value="cnts->logo_url" /><% if (!cnts->logo_url) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-logo-url" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-logo-url" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupUrlDialog();">
+        <td>URL for the contest CSS:</td>
+        <td><s:textfield id="OrigCssUrl" readonly="readonly" size="48" name="param" value="cnts->css_url" /><% if (!cnts->css_url) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-css-url" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-css-url" /></td>
+    </s:tr>
 </table>
     </div>
 
