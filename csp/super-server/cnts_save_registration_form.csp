@@ -33,7 +33,7 @@
 %><s:read var="register_subject_en" normalize="yes" /><%
 %><s:read var="register_email_file" normalize="yes" /><%
 
-     if (parse_date_twopart(reg_deadline_date, reg_deadline_time, &reg_deadline) < 0) {
+    if (parse_date_twopart(reg_deadline_date, reg_deadline_time, &reg_deadline) < 0) {
         fprintf(msg_f, "registration deadline is invalid<br/>");
         retval = SSERV_ERR_INV_PARAM;
     }

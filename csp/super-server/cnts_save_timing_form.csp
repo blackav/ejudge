@@ -10,17 +10,50 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
+    const unsigned char *sched_time_time = NULL;
+    const unsigned char *sched_time_date = NULL;
+    const unsigned char *open_time_time = NULL;
+    const unsigned char *open_time_date = NULL;
+    const unsigned char *close_time_time = NULL;
+    const unsigned char *close_time_date = NULL;
+    time_t sched_time = 0;
+    time_t open_time = 0;
+    time_t close_time = 0;
+
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
+%><s:read var="sched_time_time" /><%
+%><s:read var="sched_time_date" /><%
+%><s:read var="open_time_time" /><%
+%><s:read var="open_time_date" /><%
+%><s:read var="close_time_time" /><%
+%><s:read var="close_time_date" /><%
+
+    if (parse_date_twopart(sched_time_date, sched_time_time, &sched_time) < 0) {
+        fprintf(msg_f, "scheduled start time is invalid<br/>");
+        retval = SSERV_ERR_INV_PARAM;
+    }
+    if (parse_date_twopart(open_time_date, open_time_time, &open_time) < 0) {
+        fprintf(msg_f, "contest open time is invalid is invalid<br/>");
+        retval = SSERV_ERR_INV_PARAM;
+    }
+    if (parse_date_twopart(close_time_date, close_time_time, &close_time) < 0) {
+        fprintf(msg_f, "contest close time is invalid is invalid<br/>");
+        retval = SSERV_ERR_INV_PARAM;
+    }
+
     if (!retval && phr->ss) {
         struct contest_desc *edited_cnts = phr->ss->edited_cnts;
         if (edited_cnts) {
+            edited_cnts->sched_time = sched_time;
+            edited_cnts->open_time = open_time;
+            edited_cnts->close_time = close_time;
         }
     }
 
-//cleanup:;
+cleanup:;
     fclose(msg_f); msg_f = NULL;
 %>
 {

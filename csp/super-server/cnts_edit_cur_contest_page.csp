@@ -117,7 +117,7 @@ static const unsigned char * const form_row_attrs[]=
             <s:yesno id="RegistrationDialogAutoregister" name="autoregister" noLabel="Moderated registration" yesLabel="Free registration" />
             <br/>
 
-            <label fpr="RegistrationDialogRegDeadlineTime">Registration deadline:</label>
+            <label for="RegistrationDialogRegDeadlineTime">Registration deadline:</label>
             <input id="RegistrationDialogRegDeadlineTime" type="text" name="reg_deadline_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
             <input id="RegistrationDialogRegDeadlineDate" type="text" name="reg_deadline_date" size="10" class="text ui-widget-content ui-corner-all" />
             <br/>
@@ -140,8 +140,33 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
+<div id="TimingDialogDiv" title="Contest Timing">
+    <s:form id="TimingDialogForm">
+        <s:hidden name="action" ac="cnts-save-timing-form" />
+        <fieldset>
+            <label for="TimingDialogSchedTime">Contest start date:</label>
+            <input id="TimingDialogSchedTimeTime" type="text" name="sched_time_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
+            <input id="TimingDialogSchedTimeDate" type="text" name="sched_time_date" size="10" class="text ui-widget-content ui-corner-all" />
+            <br/>
+
+            <label for="TimingDialogOpenTime">Virtual contest open time:</label>
+            <input id="TimingDialogOpenTimeTime" type="text" name="open_time_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
+            <input id="TimingDialogOpenTimeDate" type="text" name="open_time_date" size="10" class="text ui-widget-content ui-corner-all" />
+            <br/>
+
+            <label for="TimingDialogCloseTime">Virtual contest close time:</label>
+            <input id="TimingDialogCloseTimeTime" type="text" name="close_time_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
+            <input id="TimingDialogCloseTimeDate" type="text" name="close_time_date" size="10" class="text ui-widget-content ui-corner-all" />
+        </fieldset>
+    </s:form>
+</div>
+
+
+
+
 <script type="text/javascript">
 $(function() {
+    $('#ContestAccordion').accordion({ heightStyle: "content" });
     dialog = $("#BasicDialogDiv").dialog({
         autoOpen: false,
         height: 300,
@@ -231,7 +256,42 @@ $(function() {
     });
     $('#RegistrationDialogRegDeadlineTime').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
     $('#RegistrationDialogRegDeadlineDate').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
-    $('#ContestAccordion').accordion({ heightStyle: "content" });
+
+    timingDialog = $("#TimingDialogDiv").dialog({
+        autoOpen: false,
+        height: 500,
+        width: 600,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#TimingDialogForm").serialize();
+                var formURL = $("#TimingDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                timingDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
+    $('#TimingDialogSchedTimeTime').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
+    $('#TimingDialogSchedTimeDate').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
+    $('#TimingDialogOpenTimeTime').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
+    $('#TimingDialogOpenTimeDate').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
+    $('#TimingDialogCloseTimeTime').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
+    $('#TimingDialogCloseTimeDate').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
 });
 
 function copyCheckbox(dst, src)
@@ -306,6 +366,18 @@ function popupRegistrationDialog()
     document.getElementById("RegistrationDialogRegisterEmailFile").value = document.getElementById("OrigRegisterEmailFile").value;
 
     $("#RegistrationDialogDiv").dialog('open');
+}
+
+function popupTimingDialog()
+{
+    document.getElementById("TimingDialogSchedTimeTime").value = document.getElementById("OrigSchedTimeTime").value;
+    document.getElementById("TimingDialogSchedTimeDate").value = document.getElementById("OrigSchedTimeDate").value;
+    document.getElementById("TimingDialogOpenTimeTime").value = document.getElementById("OrigOpenTimeTime").value;
+    document.getElementById("TimingDialogOpenTimeDate").value = document.getElementById("OrigOpenTimeDate").value;
+    document.getElementById("TimingDialogCloseTimeTime").value = document.getElementById("OrigCloseTimeTime").value;
+    document.getElementById("TimingDialogCloseTimeDate").value = document.getElementById("OrigCloseTimeDate").value;
+
+    $("#TimingDialogDiv").dialog('open');
 }
 </script>
 
@@ -428,30 +500,24 @@ function popupRegistrationDialog()
     <div>
 <table border="0">
 <% row = 1; %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Contest start date:</td>
-            <td><% html_date_select(out_f, cnts->sched_time); %></td>
-            <td><s:submit ac="cnts-change-sched-time" label="Change" /><s:submit ac="cnts-clear-sched-time" label="Clear" /></td>
-            <td><s:help ac="cnts-change-sched-time" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Virtual contest open date:</td>
-            <td><% html_date_select(out_f, cnts->open_time); %></td>
-            <td><s:submit ac="cnts-change-open-time" label="Change" /><s:submit ac="cnts-clear-open-time" label="Clear" /></td>
-            <td><s:help ac="cnts-change-open-time" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Virtual contest close date:</td>
-            <td><% html_date_select(out_f, cnts->close_time); %></td>
-            <td><s:submit ac="cnts-change-close-time" label="Change" /><s:submit ac="cnts-clear-close-time" label="Clear" /></td>
-            <td><s:help ac="cnts-change-close-time" /></td>
-        </s:tr>
-    </s:form>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td onclick="popupTimingDialog();">Contest start date:</td>
+        <td onclick="popupTimingDialog();"><% html_date_select_2(out_f, cnts->sched_time, "OrigSchedTime", "param", NULL, 1, 0); %></td>
+        <td><s:form><s:submit ac="cnts-clear-sched-time" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-sched-time" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td onclick="popupTimingDialog();">Virtual contest open date:</td>
+        <td onclick="popupTimingDialog();"><% html_date_select_2(out_f, cnts->open_time, "OrigOpenTime", "param", NULL, 1, 0); %></td>
+        <td><s:form><s:submit ac="cnts-clear-open-time" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-open-time" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td onclick="popupTimingDialog();">Virtual contest close date:</td>
+        <td onclick="popupTimingDialog();"><% html_date_select_2(out_f, cnts->close_time, "OrigCloseTime", "param", NULL, 1, 0); %></td>
+        <td><s:form><s:submit ac="cnts-clear-close-time" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-close-time" /></td>
+    </s:tr>
 </table>
     </div>
 
