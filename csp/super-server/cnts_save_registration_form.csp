@@ -10,73 +10,60 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-    unsigned char *name = NULL;
-    unsigned char *name_en = NULL;
-    unsigned char *main_url = NULL;
-    unsigned char *keywords = NULL;
-    int user_contest = 0;
-    unsigned char *default_locale = NULL;
-    ejintbool_t personal = 0;
-    int locale_id = -1;
+    ejintbool_t autoregister;
+    unsigned char *reg_deadline_time = NULL;
+    unsigned char *reg_deadline_date = NULL;
+    unsigned char *register_email = NULL;
+    unsigned char *register_url = NULL;
+    unsigned char *register_subject = NULL;
+    unsigned char *register_subject_en = NULL;
+    unsigned char *register_email_file = NULL;
+    unsigned char *full_reg_deadline = NULL;
+    size_t full_len;
+    time_t reg_deadline = 0;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
-%><s:read var="name" normalize="yes" /><%
-%><s:read var="name_en" normalize="yes" /><%
-%><s:read var="main_url" normalize="yes" /><%
-%><s:read var="keywords" normalize="yes" /><%
-%><s:read var="user_contest" default="0" /><%
-%><s:read var="default_locale" normalize="yes" /><%
-%><s:read var="personal" default="0" /><%
 
-    if (!name) {
-        fprintf(msg_f, "Contest Name must be specified<br/>");
-        retval = SSERV_ERR_INV_PARAM;
-    }
-    if (user_contest < 0) user_contest = 0;
-    if (user_contest > 0) {
-        const struct contest_desc *other_cnts = NULL;
-        if (contests_get(user_contest, &other_cnts) < 0 || !other_cnts) {
-            fprintf(msg_f, "Invalid User Contest<br/>");
+%><s:read var="autoregister" default="0" /><%
+%><s:read var="reg_deadline_time" normalize="yes" /><%
+%><s:read var="reg_deadline_date" normalize="yes" /><%
+%><s:read var="register_email" normalize="yes" /><%
+%><s:read var="register_url" normalize="yes" /><%
+%><s:read var="register_subject" normalize="yes" /><%
+%><s:read var="register_subject_en" normalize="yes" /><%
+%><s:read var="register_email_file" normalize="yes" /><%
+
+    if (reg_deadline_time || reg_deadline_date) {
+        if (!reg_deadline_time) reg_deadline_time = xstrdup("");
+        if (!reg_deadline_date) reg_deadline_date = xstrdup("");
+        full_len = strlen(reg_deadline_date) + strlen(reg_deadline_time) + 1;
+        full_reg_deadline = xmalloc(full_len + 1);
+        snprintf(full_reg_deadline, full_len, "%s %s", reg_deadline_date, reg_deadline_time);
+        if (xml_parse_date(NULL, NULL, 0, 0, full_reg_deadline, &reg_deadline) < 0) {
+            fprintf(msg_f, "registration deadline is invalid<br/>");
             retval = SSERV_ERR_INV_PARAM;
-            user_contest = 0;
-        } else if (other_cnts->user_contest) {
-            fprintf(msg_f, "Invalid User Contest<br/>");
-            retval = SSERV_ERR_INV_PARAM;
-            user_contest = 0;
+            reg_deadline = 0;
         }
-    }
-    if (default_locale) {
-        locale_id = l10n_parse_locale(default_locale);
-        if (locale_id < 0) {
-            fprintf(msg_f, "Invalid Default Locale<br/>");
+        if (reg_deadline == 0 || reg_deadline == ~(time_t) 0) {
+            fprintf(msg_f, "registration deadline is invalid<br/>");
             retval = SSERV_ERR_INV_PARAM;
+            reg_deadline = 0;
         }
     }
 
     if (!retval && phr->ss) {
         struct contest_desc *edited_cnts = phr->ss->edited_cnts;
         if (edited_cnts) {
-            xfree(edited_cnts->name);
-            edited_cnts->name = xstrdup2(name);
-            xfree(edited_cnts->name_en);
-            edited_cnts->name_en = xstrdup2(name_en);
-            xfree(edited_cnts->main_url);
-            edited_cnts->main_url = xstrdup2(main_url);
-            xfree(edited_cnts->keywords);
-            edited_cnts->keywords = xstrdup2(keywords);
-            xfree(edited_cnts->user_contest); edited_cnts->user_contest = NULL;
-            if (user_contest > 0) {
-                unsigned char cnts_buf[64];
-                snprintf(cnts_buf, sizeof(cnts_buf), "%d", user_contest);
-                edited_cnts->user_contest = xstrdup(cnts_buf);
-            }
-            xfree(edited_cnts->default_locale); edited_cnts->default_locale = NULL;
-            if (locale_id >= 0) {
-                edited_cnts->default_locale = xstrdup2(l10n_unparse_locale(locale_id));
-            }
-            edited_cnts->personal = personal;
+            edited_cnts->autoregister = autoregister;
+            edited_cnts->reg_deadline = reg_deadline;
+            xfree(edited_cnts->register_email);
+            edited_cnts->register_email = xstrdup2(register_email);
+            edited_cnts->register_url = xstrdup2(register_url);
+            edited_cnts->register_subject = xstrdup2(register_subject);
+            edited_cnts->register_subject_en = xstrdup2(register_subject_en);
+            edited_cnts->register_email_file = xstrdup2(register_email_file);
         }
     }
 
@@ -85,23 +72,27 @@ cleanup:;
 %>
 {
     "input" : {
-        "name" : "<s:v value="name" json="yes" checkExpr="" />",
-        "name_en" : "<s:v value="name_en" json="yes" checkExpr="" />",
-        "main_url" : "<s:v value="main_url" json="yes" checkExpr="" />",
-        "keywords" : "<s:v value="keywords" json="yes" checkExpr="" />",
-        "user_contest" : "<s:v value="user_contest" checkExpr=" > 0" />",
-        "default_locale" : "<s:v value="default_locale" json="yes" checkExpr="" />",
-        "personal" : "<s:v value="personal" json="yes" />"
+        "autoregister" : "<s:v value="autoregister" json="yes" />",
+        "reg_deadline_time" : "<s:v value="reg_deadline_time" json="yes" checkExpr="" />",
+        "reg_deadline_date" : "<s:v value="reg_deadline_date" json="yes" checkExpr="" />",
+        "register_email" : "<s:v value="register_email" json="yes" checkExpr="" />",
+        "register_url" : "<s:v value="register_url" json="yes" checkExpr="" />",
+        "register_subject" : "<s:v value="register_subject" json="yes" checkExpr="" />",
+        "register_subject_en" : "<s:v value="register_subject_en" json="yes" checkExpr="" />",
+        "register_email_file" : "<s:v value="register_email_file" json="yes" checkExpr="" />"
     },
     "retval" : <s:v value="retval" />,
     "messages" : "<s:v value="msg_s" json="yes" checkExpr="" />"
 }
 <%
     html_armor_free(&ab);
-    xfree(name);
-    xfree(name_en);
-    xfree(main_url);
-    xfree(keywords);
-    xfree(default_locale);
+    xfree(reg_deadline_time);
+    xfree(reg_deadline_date);
+    xfree(full_reg_deadline);
+    xfree(register_email);
+    xfree(register_url);
+    xfree(register_subject);
+    xfree(register_subject_en);
+    xfree(register_email_file);
     xfree(msg_s);
 %>

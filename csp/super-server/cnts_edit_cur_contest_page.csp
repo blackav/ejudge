@@ -119,17 +119,10 @@ static const unsigned char * const form_row_attrs[]=
             <s:yesno id="RegistrationDialogAutoregister" name="autoregister" noLabel="Moderated registration" yesLabel="Free registration" />
             <br/>
 
-<!--
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Registration deadline:</td>
-            <td><% html_date_select(out_f, cnts->reg_deadline); %></td>
-            <td><s:submit ac="cnts-change-deadline" label="Change" /><s:submit ac="cnts-clear-deadline" label="Clear" /></td>
-            <td><s:help ac="cnts-change-deadline" /></td>
-        </s:tr>
-    </s:form>
--->
-
+            <label fpr="RegistrationDialogRegDeadlineTime">Registration deadline:</label>
+            <input id="RegistrationDialogRegDeadlineTime" type="text" name="reg_deadline_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
+            <input id="RegistrationDialogRegDeadlineDate" type="text" name="reg_deadline_date" size="10" class="text ui-widget-content ui-corner-all" />
+            <br/>
 
             <label for="RegistrationDialogRegisterEmail">Registration email sender (From: field):</label>
             <s:textfield size="48" name="register_email" id="RegistrationDialogRegisterEmail" value="" class="text ui-widget-content ui-corner-all" />
@@ -238,6 +231,8 @@ $(function() {
         close : function() {
         }
     });
+    $('#RegistrationDialogRegDeadlineTime').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
+    $('#RegistrationDialogRegDeadlineDate').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
 });
 
 function copyCheckbox(dst, src)
@@ -302,12 +297,21 @@ function popupFlagsDialog()
 
 function popupRegistrationDialog()
 {
+    $("#RegistrationDialogAutoregister").val(document.getElementById("OrigAutoregister").value);
+    document.getElementById("RegistrationDialogRegDeadlineTime").value = document.getElementById("OrigRegDeadlineTime").value;
+    document.getElementById("RegistrationDialogRegDeadlineDate").value = document.getElementById("OrigRegDeadlineDate").value;
+    document.getElementById("RegistrationDialogRegisterEmail").value = document.getElementById("OrigRegisterEmail").value;
+    document.getElementById("RegistrationDialogRegisterUrl").value = document.getElementById("OrigRegisterUrl").value;
+    document.getElementById("RegistrationDialogRegisterSubject").value = document.getElementById("OrigRegisterSubject").value;
+    document.getElementById("RegistrationDialogRegisterSubjectEn").value = document.getElementById("OrigRegisterSubjectEn").value;
+    document.getElementById("RegistrationDialogRegisterEmailFile").value = document.getElementById("OrigRegisterEmailFile").value;
+
     $("#RegistrationDialogDiv").dialog('open');
 }
 </script>
 
 <table border="0">
-    <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Basic contest identification</b> [<a onclick="popupBasicDialog();">Edit</a>]</td></s:tr>
+    <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Basic contest identification</b></td></s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]"><td>Contest ID:</td><td><s:v value="cnts->id" /></td><td>&nbsp;</td><td>&nbsp;</td></s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupBasicDialog();">Name:</td>
@@ -366,62 +370,48 @@ function popupRegistrationDialog()
 
     <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Registration settings</b></td></s:tr>
 <% row = 1; %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupRegistrationDialog();">
-            <td>Registration mode:</td>
-            <td><s:yesno disabled="disabled" id="OrigAutoregister" name="param" value="cnts->autoregister" noLabel="Moderated registration" yesLabel="Free registration" /></td>
-            <td><s:submit ac="cnts-change-autoregister" label="Change" /></td>
-            <td><s:help ac="cnts-change-autoregister" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Registration deadline:</td>
-            <td><% html_date_select(out_f, cnts->reg_deadline); %></td>
-            <td><s:submit ac="cnts-change-deadline" label="Change" /><s:submit ac="cnts-clear-deadline" label="Clear" /></td>
-            <td><s:help ac="cnts-change-deadline" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td onclick="popupRegistrationDialog();">Registration email sender (From: field):</td>
-            <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterEmail" size="48" name="param" value="cnts->register_email" /><% if (!cnts->register_email) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-register-email" label="Change" /><s:submit ac="cnts-clear-register-email" label="Clear" /></td>
-            <td><s:help ac="cnts-change-register-email" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td onclick="popupRegistrationDialog();">URL for registration:</td>
-            <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterUrl" size="48" name="param" value="cnts->register_url" /><% if (!cnts->register_url) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-register-url" label="Change" /><s:submit ac="cnts-clear-register-url" label="Clear" /></td>
-            <td><s:help ac="cnts-change-register-url" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td onclick="popupRegistrationDialog();">Registration letter subject:</td>
-            <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterSubject" size="48" name="param" value="cnts->register_subject" /><% if (!cnts->register_subject) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-register-subject" label="Change" /><s:submit ac="cnts-clear-register-subject" label="Clear" /></td>
-            <td><s:help ac="cnts-change-register-subject" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td onclick="popupRegistrationDialog();">Registration letter subject (en):</td>
-            <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterSubjectEn" size="48" name="param" value="cnts->register_subject_en" /><% if (!cnts->register_subject_en) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-register-subject-en" label="Change" /><s:submit ac="cnts-clear-register-subject-en" label="Clear" /></td>
-            <td><s:help ac="cnts-change-register-subject-en" /></td>
-        </s:tr>
-    </s:form>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td onclick="popupRegistrationDialog();">Registration letter template file:</td>
-            <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterEmailFile" size="48" name="param" value="cnts->register_email_file" /><% if (!cnts->register_email_file) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-register-email-file" label="Change" /><s:submit ac="cnts-clear-register-email-file" label="Clear" />[<s:a ac="cnts-edit-register-email-file-page">Edit</s:a>]</td>
-            <td><s:help ac="cnts-change-register-email-file" /></td>
-        </s:tr>
-    </s:form>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupRegistrationDialog();">
+        <td>Registration mode:</td>
+        <td><s:yesno disabled="disabled" id="OrigAutoregister" name="param" value="cnts->autoregister" noLabel="Moderated registration" yesLabel="Free registration" /></td>
+        <td>&nbsp;</td>
+        <td><s:help ac="cnts-change-autoregister" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupRegistrationDialog();">
+        <td>Registration deadline:</td>
+        <td><% html_date_select_2(out_f, cnts->reg_deadline, "OrigRegDeadline", "param", NULL, 1, 0); %></td>
+        <td><s:form><s:submit ac="cnts-clear-deadline" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-deadline" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td onclick="popupRegistrationDialog();">Registration email sender (From: field):</td>
+        <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterEmail" size="48" name="param" value="cnts->register_email" /><% if (!cnts->register_email) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-register-email" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-register-email" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td onclick="popupRegistrationDialog();">URL for registration:</td>
+        <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterUrl" size="48" name="param" value="cnts->register_url" /><% if (!cnts->register_url) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-register-url" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-register-url" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td onclick="popupRegistrationDialog();">Registration letter subject:</td>
+        <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterSubject" size="48" name="param" value="cnts->register_subject" /><% if (!cnts->register_subject) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-register-subject" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-register-subject" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td onclick="popupRegistrationDialog();">Registration letter subject (en):</td>
+        <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterSubjectEn" size="48" name="param" value="cnts->register_subject_en" /><% if (!cnts->register_subject_en) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-register-subject-en" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-register-subject-en" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td onclick="popupRegistrationDialog();">Registration letter template file:</td>
+        <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterEmailFile" size="48" name="param" value="cnts->register_email_file" /><% if (!cnts->register_email_file) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-register-email-file" label="Clear" /></s:form>[<s:a ac="cnts-edit-register-email-file-page">Edit</s:a>]</td>
+        <td><s:help ac="cnts-change-register-email-file" /></td>
+    </s:tr>
 
     <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Contest timing</b></td></s:tr>
 <% row = 1; %>
@@ -501,8 +491,7 @@ function popupRegistrationDialog()
   } else {
 %><s:submit ac="cnts-advanced-view" label="Advanced view" /><%
   }
-%> [<a onclick="popupFlagsDialog();">Edit</a>]</td></s:tr>
-    </s:form>
+%></s:form>
 <% row = 1; %>
 
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
