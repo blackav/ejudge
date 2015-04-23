@@ -1259,7 +1259,6 @@ super_serve_clear_edited_contest(struct sid_state *p)
   xfree(p->register_email_text); p->register_email_text = 0;
 
   p->edit_page = 0;
-  p->show_paths = 0;
   p->show_notifications = 0;
 
   xfree(p->serve_parse_errors); p->serve_parse_errors = 0;
@@ -1332,7 +1331,6 @@ super_serve_move_edited_contest(struct sid_state *dst, struct sid_state *src)
   // ejintbool_t fields
   static int ejintbool_fields[] =
   {
-    SSSS_show_paths, 
     SSSS_show_notifications,
     SSSS_users_header_loaded, SSSS_users_footer_loaded,
     SSSS_register_header_loaded, SSSS_register_footer_loaded,
@@ -1532,12 +1530,6 @@ cmd_simple_top_command(struct client_state *p, int len,
     break;
   case SSERV_CMD_HIDE_UNMNG:
     sstate->flags &= ~SID_STATE_SHOW_UNMNG;
-    break;
-  case SSERV_CMD_CNTS_SHOW_PATHS:
-    sstate->show_paths = 1;
-    break;
-  case SSERV_CMD_CNTS_HIDE_PATHS:
-    sstate->show_paths = 0;
     break;
   case SSERV_CMD_CNTS_SHOW_NOTIFICATIONS:
     sstate->show_notifications = 1;
@@ -2625,8 +2617,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_SHOW_UNMNG] = { cmd_simple_top_command },
   [SSERV_CMD_HIDE_UNMNG] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_FORGET] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_SHOW_PATHS] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_HIDE_PATHS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_SHOW_NOTIFICATIONS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_HIDE_NOTIFICATIONS] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_NAME] = { cmd_simple_top_command },

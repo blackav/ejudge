@@ -1161,20 +1161,8 @@ initial count = <s:v value="memb->init_count" />
 
     <div>
 <table border="0">
-    <s:form>
-        <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Advanced path settings</b><%
-  if (phr->ss->show_paths) {
-%><s:submit ac="cnts-hide-paths" label="Hide" /><%
-  } else {
-%><s:submit ac="cnts-show-paths" label="Show" /><%
-  }
-%></td></s:tr>
-    </s:form>
 <% row = 1; %>
 
-<%
-  if (phr->ss->show_paths) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>The directory permissions (octal):</td>
@@ -1183,13 +1171,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-dir-mode" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_paths) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>The directory group:</td>
@@ -1198,13 +1180,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-dir-group" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_paths) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>The file permissions (octal):</td>
@@ -1213,13 +1189,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-file-mode" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_paths) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>The file group:</td>
@@ -1228,9 +1198,6 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-file-group" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 </table>
     </div>
 

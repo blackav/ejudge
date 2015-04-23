@@ -943,7 +943,6 @@ static const struct cnts_edit_info cnts_edit_info[] =
   { NS_CONTEST, CNTS_allowed_languages, 's', 1, 1, 1, 1, 0, "Allowed programming languages", "Allowed programming languages", NULL },
   { NS_CONTEST, CNTS_allowed_regions, 's', 1, 1, 1, 1, 0, "Allowed regions", "Allowed regions", NULL },
 
-  { NS_SID_STATE, SSSS_show_paths, '-', 1, 0, 0, 0, 0, "Advanced Filesystem Settings", 0, 0 },
   { NS_CONTEST, CNTS_dir_mode, 's', 1, 1, 1, 1, 0, "The directories permission", "Octal number", "SidState.show_paths" },
   { NS_CONTEST, CNTS_dir_group, 's', 1, 1, 1, 1, 0, "The directories group", "Octal number", "SidState.show_paths" },
   { NS_CONTEST, CNTS_file_mode, 's', 1, 1, 1, 1, 0, "The files permission", "Octal number", "SidState.show_paths" },
@@ -2957,7 +2956,6 @@ cmd_edit_contest_xml_field(
 
 static unsigned char valid_ss_visibilities[SSSS_LAST_FIELD] =
 {
-  [SSSS_show_paths] = 1,
   [SSSS_show_notifications] = 1,
 
   // these are visibilities for global configuration page
