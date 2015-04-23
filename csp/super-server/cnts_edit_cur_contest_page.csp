@@ -491,7 +491,8 @@ function popupRegistrationDialog()
   } else {
 %><s:submit ac="cnts-advanced-view" label="Advanced view" /><%
   }
-%></s:form>
+%></td></s:tr>
+    </s:form>
 <% row = 1; %>
 
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
