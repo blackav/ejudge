@@ -682,3 +682,158 @@ td.a-button-style, td.a-button-style:hover {
 	padding: 1px 10px 0 0;
 	border: none;
 }
+
+/************* UI-WIDGET ***************/
+
+.ui-front, .ui-jqdialog {
+	box-shadow: rgba(102, 102, 102, 0.61) 0 0 15px 1px; 
+}
+
+.ui-widget-header {
+	background: rgb(95, 151, 203) !important;
+}
+
+
+.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default {
+	color: rgb(16, 35, 63) !important;
+	background: rgb(185,211,232) !important; /* Old browsers */
+	background: -moz-linear-gradient(top,  rgba(185,211,232,1) 0%, rgba(118,178,228,1) 4%, rgba(122,184,234,1) 33%, rgba(102,155,207,1) 100%) !important; /* FF3.6+ */
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(185,211,232,1)), color-stop(4%,rgba(118,178,228,1)), color-stop(33%,rgba(122,184,234,1)), color-stop(100%,rgba(102,155,207,1))) !important; /* Chrome,Safari4+ */
+	background: -webkit-linear-gradient(top,  rgba(185,211,232,1) 0%,rgba(118,178,228,1) 4%,rgba(122,184,234,1) 33%,rgba(102,155,207,1) 100%) !important; /* Chrome10+,Safari5.1+ */
+	background: -o-linear-gradient(top,  rgba(185,211,232,1) 0%,rgba(118,178,228,1) 4%,rgba(122,184,234,1) 33%,rgba(102,155,207,1) 100%) !important; /* Opera 11.10+ */
+	background: -ms-linear-gradient(top,  rgba(185,211,232,1) 0%,rgba(118,178,228,1) 4%,rgba(122,184,234,1) 33%,rgba(102,155,207,1) 100%) !important; /* IE10+ */
+	background: linear-gradient(to bottom,  rgba(185,211,232,1) 0%,rgba(118,178,228,1) 4%,rgba(122,184,234,1) 33%,rgba(102,155,207,1) 100%) !important; /* W3C */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b9d3e8', endColorstr='#669bcf',GradientType=0 ) !important; /* IE6-9 */
+}
+
+.ui-state-default, .ui-widget-content .ui-state-default, .ui-widget-header .ui-state-default {
+	border-color: rgb(56, 120, 189) !important;
+}
+
+.ui-jqgrid .ui-pg-selbox {
+	height: 22px !important;
+}
+
+.ui-jqgrid .ui-jqgrid-pager .ui-pager-control {
+	height: 33px !important;
+}
+
+.ui-widget-content  td{
+	border-color: rgb(171, 171, 171) !important;
+}
+
+.ui-widget {
+	border: 1px solid #CBCBCB !important;
+}
+
+.ui-state-highlight, .ui-widget-content .ui-state-highlight, .ui-widget-header .ui-state-highlight {
+	background: #CCE5CC !important;
+	color: #41422F !important;
+}
+
+.ui-state-hover,
+.ui-widget-content .ui-state-hover,
+.ui-widget-header .ui-state-hover,
+.ui-state-focus,
+.ui-widget-content .ui-state-focus,
+.ui-widget-header .ui-state-focus {
+	background: #B5D3EF !important;
+}
+
+.ui-state-hover td {
+	color: #195083 !important;
+}
+
+.fm-button {
+	padding-top: .3em !important;
+	border-radius: 2px !important;
+}
+
+#jqContextMenu ul {
+	width: 150px !important;
+}
+
+.ui-dialog-content fieldset, .ui-widget-content fieldset {
+	border: none;
+}
+
+.ui-dialog-content select, .ui-widget-content select {
+	max-width: 530px !important;
+}
+
+.ui-dialog-content select, .ui-widget-content select, .ui-dialog-content input[type=text], .ui-dialog-content label, .ui-search-table input[type=text] {
+	margin: 2px 0 !important;
+}	
+
+.ui-dialog-content select, .ui-widget-content select, .ui-dialog-content input[type=text], .ui-search-table input[type=text]	{
+	border: 1px solid rgb(154, 154, 154) !important;
+	border-radius: 0 !important;
+}
+
+.ui-pager-control select {
+	border: none !important;
+	border-radius: 5px !important;
+}
+
+.ui-dialog-titlebar {
+	border-radius: 2px 2px 0 0 !important;
+	padding: 0 5px !important;
+}
+
+.ui-dialog-content label {
+	min-width: 109px;
+	display: inline-block;
+}
+
+.ui-button {
+	font-family: "Verdana", "Arial" !important;
+	padding: .3em .6em .3em .6em !important;
+	border: 1px solid #929292 !important;
+	border-radius: 2px !important;
+	margin: 2px !important;
+	display: inline-block !important;
+	background-clip: border-box !important;
+	font: -webkit-small-control !important;
+	letter-spacing: normal !important;
+	word-spacing: normal !important;
+	text-transform: none !important;
+	text-indent: 0px !important;
+	text-shadow: none !important;
+	font-size: 15px !important;
+	height: 28px !important;
+}
+
+.ui-dialog-buttonpane {
+	border-top: none !important;
+	padding: 4px 10px !important;
+}
+
+.ui-dialog-titlebar {
+	overflow: auto !important;
+}
+
+.ui-dialog-titlebar  .ui-dialog-title {
+	display: inline-block !important;
+	margin-top: 5px !important;
+}
+
+.ui-dialog-titlebar .ui-button {
+	margin-left: 5px !important;
+	float: right !important;
+	font-size: 1.1em !important;
+	padding-top: 2px !important;
+	height: 22px !important;
+}
+
+.ui-widget-content {
+	border-color: #CBCBCB !important;
+}
+
+.ui-widget-content .ui-widget-content {
+	border-left: none;
+	border-right: none;
+}
+
+.ui-search-table {
+	border: none !important;
+}
