@@ -233,6 +233,7 @@ $(function() {
     });
     $('#RegistrationDialogRegDeadlineTime').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
     $('#RegistrationDialogRegDeadlineDate').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
+    $('#ContestAccordion').accordion({ heightStyle: "content" });
 });
 
 function copyCheckbox(dst, src)
@@ -310,8 +311,12 @@ function popupRegistrationDialog()
 }
 </script>
 
+<div id="ContestAccordion">
+
+    <h3>Basic contest identification</h3>
+    <div>
+
 <table border="0">
-    <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Basic contest identification</b></td></s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]"><td>Contest ID:</td><td><s:v value="cnts->id" /></td><td>&nbsp;</td><td>&nbsp;</td></s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupBasicDialog();">Name:</td>
@@ -367,8 +372,13 @@ function popupRegistrationDialog()
         <td>&nbsp;</td>
         <td><s:help ac="cnts-change-personal" /></td>
     </s:tr>
+</table>
+    </div>
 
-    <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Registration settings</b></td></s:tr>
+    <h3>Registration settings</h3>
+
+    <div>
+<table border="0">
 <% row = 1; %>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupRegistrationDialog();">
         <td>Registration mode:</td>
@@ -412,8 +422,13 @@ function popupRegistrationDialog()
         <td><s:form><s:submit ac="cnts-clear-register-email-file" label="Clear" /></s:form>[<s:a ac="cnts-edit-register-email-file-page">Edit</s:a>]</td>
         <td><s:help ac="cnts-change-register-email-file" /></td>
     </s:tr>
+</table>
+    </div>
 
-    <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Contest timing</b></td></s:tr>
+    <h3>Contest timing</h3>
+
+    <div>
+<table border="0">
 <% row = 1; %>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
@@ -439,8 +454,13 @@ function popupRegistrationDialog()
             <td><s:help ac="cnts-change-close-time" /></td>
         </s:tr>
     </s:form>
+</table>
+    </div>
 
-    <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Participation settings</b></td></s:tr>
+    <h3>Participation settings</h3>
+
+    <div>
+<table border="0">
 <% row = 1; %>
 
     <s:form>
@@ -483,7 +503,13 @@ function popupRegistrationDialog()
             <td><s:help ac="cnts-change-css-url" /></td>
         </s:tr>
     </s:form>
+</table>
+    </div>
 
+    <h3>Contest flags</h3>
+
+    <div>
+<table border="0">
     <s:form>
         <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Various contest's flags</b><%
   if (phr->ss->advanced_view) {
@@ -523,7 +549,7 @@ function popupRegistrationDialog()
 %>
 
 <%
-  if (phr->ss->advanced_view) {
+  if (/*phr->ss->advanced_view*/ 1) {
 %>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Allow pruning users?</td>
@@ -545,7 +571,7 @@ function popupRegistrationDialog()
     </s:tr>
 
 <%
-  if (phr->ss->advanced_view) {
+  if (/*phr->ss->advanced_view*/ 1) {
 %>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Invisible in serve-control?</td>
@@ -560,7 +586,7 @@ function popupRegistrationDialog()
 %>
 
 <%
-  if (phr->ss->advanced_view) {
+  if (/*phr->ss->advanced_view*/ 1) {
 %>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Disallow team member removal?</td>
@@ -575,7 +601,7 @@ function popupRegistrationDialog()
 %>
 
 <%
-  if (phr->ss->advanced_view) {
+  if (/*phr->ss->advanced_view*/ 1) {
 %>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Auto-assign logins?</td>
@@ -590,7 +616,7 @@ function popupRegistrationDialog()
 %>
 
 <%
-  if (phr->ss->advanced_view) {
+  if (/*phr->ss->advanced_view*/ 1) {
 %>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Force contest registration?</td>
@@ -605,7 +631,7 @@ function popupRegistrationDialog()
 %>
 
 <%
-  if (phr->ss->advanced_view) {
+  if (/*phr->ss->advanced_view*/ 1) {
 %>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Disable &quot;Name&quot; field?</td>
@@ -620,7 +646,7 @@ function popupRegistrationDialog()
 %>
 
 <%
-  if (phr->ss->advanced_view) {
+  if (/*phr->ss->advanced_view*/ 1) {
 %>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Enable password recovery?</td>
@@ -635,7 +661,7 @@ function popupRegistrationDialog()
 %>
 
 <%
-  if (phr->ss->advanced_view) {
+  if (/*phr->ss->advanced_view*/ 1) {
 %>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Examination mode?</td>
@@ -650,7 +676,7 @@ function popupRegistrationDialog()
 %>
 
 <%
-  if (phr->ss->advanced_view) {
+  if (/*phr->ss->advanced_view*/ 1) {
 %>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Disable password change?</td>
@@ -665,7 +691,7 @@ function popupRegistrationDialog()
 %>
 
 <%
-  if (phr->ss->advanced_view) {
+  if (/*phr->ss->advanced_view*/ 1) {
 %>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Disable locale change?</td>
@@ -680,7 +706,7 @@ function popupRegistrationDialog()
 %>
 
 <%
-  if (phr->ss->advanced_view) {
+  if (/*phr->ss->advanced_view*/ 1) {
 %>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Allow edit registration data during contest?</td>
@@ -693,7 +719,13 @@ function popupRegistrationDialog()
 %><s:hidden id="OrigAllowRegDataEdit" name="allow_reg_data_edit" value="cnts->allow_reg_data_edit" check="no" /><%
   }
 %>
+</table>
+    </div>
 
+    <h3>IP-address access restrictions</h3>
+
+    <div>
+<table border="0">
     <s:form>
         <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>IP-address access restrictions</b><%
   if (phr->ss->show_access_rules) {
@@ -753,7 +785,14 @@ function popupRegistrationDialog()
         <td><s:help ac="cnts-edit-serve-control-access-page" /></td>
     </s:tr>
 <% } %>
+</table>
 
+    </div>
+
+    <h3>User permissions</h3>
+
+    <div>
+<table border="0">
     <s:form>
         <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>User permissions</b><%
   if (phr->ss->show_permissions) {
@@ -797,7 +836,13 @@ function popupRegistrationDialog()
 <%
   }
 %>
+</table>
+    </div>
 
+    <h3>Registration form fields</h3>
+
+    <div>
+<table border="0">
     <s:form>
         <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Registration form fields</b><%
   if (phr->ss->show_form_fields) {
@@ -1000,7 +1045,13 @@ initial count = <s:v value="memb->init_count" />
 <%
   }
 %>
+</table>
+    </div>
 
+    <h3>HTML headers and footers</h3>
+
+    <div>
+<table border="0">
     <s:form>
         <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>HTML headers and footers</b><%
   if (phr->ss->show_html_headers) {
@@ -1086,7 +1137,14 @@ initial count = <s:v value="memb->init_count" />
 <%
   }
 %>
+</table>
 
+    </div>
+
+    <h3>Extra HTML attributes</h3>
+
+    <div>
+<table border="0">
     <s:form>
         <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Extra HTML attributes</b><%
   if (phr->ss->show_html_attrs) {
@@ -1263,6 +1321,15 @@ initial count = <s:v value="memb->init_count" />
   }
 %>
 
+</table>
+
+    </div>
+
+    <h3>E-mail notifications</h3>
+
+    <div>
+<table border="0">
+
     <s:form>
         <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>E-mail notifications</b><%
   if (phr->ss->show_notifications) {
@@ -1348,7 +1415,14 @@ initial count = <s:v value="memb->init_count" />
 <%
   }
 %>
+</table>
 
+    </div>
+
+    <h3>Advanced path settings</h3>
+
+    <div>
+<table border="0">
     <s:form>
         <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Advanced path settings</b><%
   if (phr->ss->show_paths) {
@@ -1420,6 +1494,9 @@ initial count = <s:v value="memb->init_count" />
   }
 %>
 </table>
+    </div>
+
+</div>
 
 <%@include "cnts_edit_cur_bottom_menu.csp"
 %>
