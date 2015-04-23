@@ -959,20 +959,8 @@ initial count = <s:v value="memb->init_count" />
 
     <div>
 <table border="0">
-    <s:form>
-        <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Extra HTML attributes</b><%
-  if (phr->ss->show_html_attrs) {
-%><s:submit ac="cnts-hide-html-attrs" label="Hide" /><%
-  } else {
-%><s:submit ac="cnts-show-html-attrs" label="Show" /><%
-  }
-%></td></s:tr>
-    </s:form>
 <% row = 1; %>
 
-<%
-  if (phr->ss->show_html_attrs) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for 'users' headers:</td>
@@ -981,13 +969,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-users-head-style" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_html_attrs) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for 'users' paragraphs:</td>
@@ -996,13 +978,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-users-par-style" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_html_attrs) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for 'users' tables:</td>
@@ -1011,13 +987,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-users-table-style" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_html_attrs) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>HTML attributes for 'users' verbatim text:</td>
@@ -1026,13 +996,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-users-verb-style" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_html_attrs) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Format specification for users table:</td>
@@ -1041,13 +1005,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-users-table-format" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_html_attrs) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Format specification for users table (En):</td>
@@ -1056,13 +1014,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-users-table-format-en" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_html_attrs) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Legend specification for users table:</td>
@@ -1071,13 +1023,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-users-table-legend" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_html_attrs) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Legend specification for users table (En):</td>
@@ -1086,13 +1032,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-users-table-legend-en" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_html_attrs) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Additional comment for user name field:</td>
@@ -1101,13 +1041,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-register-name-comment" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_html_attrs) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Allowed programming languages:</td>
@@ -1116,13 +1050,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-allowed-languages" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_html_attrs) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Allowed regions:</td>
@@ -1131,10 +1059,6 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-allowed-regions" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
-
 </table>
 
     </div>

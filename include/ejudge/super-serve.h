@@ -103,7 +103,7 @@ struct sid_state
   int edit_page;
 
   //ejintbool_t advanced_view;
-  ejintbool_t show_html_attrs;
+  //ejintbool_t show_html_attrs;
   //ejintbool_t show_html_headers;
   ejintbool_t show_paths;
   //ejintbool_t show_access_rules;

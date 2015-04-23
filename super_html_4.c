@@ -902,7 +902,6 @@ static const struct cnts_edit_info cnts_edit_info[] =
   { NS_CONTEST, CNTS_welcome_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML welcome message file", "HTML welcome message file", "SidState.show_html_headers" },
   { NS_CONTEST, CNTS_reg_welcome_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML registration welcome message file", "HTML registration welcome message file", "SidState.show_html_headers" },
 
-  { NS_SID_STATE, SSSS_show_html_attrs, '-', 1, 0, 0, 0, 0, "HTML Styles", 0, 0 },
   { NS_CONTEST, CNTS_users_head_style, 's', 1, 1, 1, 1, 0, "HTML attributes for <tt>users</tt> headers", "Attributes for users headers", "SidState.show_html_attrs" },
   { NS_CONTEST, CNTS_users_par_style, 's', 1, 1, 1, 1, 0, "HTML attributes for <tt>users</tt> paragraphs", "Attributes for users paragraphs", "SidState.show_html_attrs" },
   { NS_CONTEST, CNTS_users_table_style, 's', 1, 1, 1, 1, 0, "HTML attributes for <tt>users</tt> tables", "Attributes for users tables", "SidState.show_html_attrs" },
@@ -2958,7 +2957,6 @@ cmd_edit_contest_xml_field(
 
 static unsigned char valid_ss_visibilities[SSSS_LAST_FIELD] =
 {
-  [SSSS_show_html_attrs] = 1,
   [SSSS_show_paths] = 1,
   [SSSS_show_notifications] = 1,
 
