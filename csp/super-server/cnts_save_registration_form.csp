@@ -11,15 +11,13 @@
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
     ejintbool_t autoregister;
-    unsigned char *reg_deadline_time = NULL;
-    unsigned char *reg_deadline_date = NULL;
+    const unsigned char *reg_deadline_time = NULL;
+    const unsigned char *reg_deadline_date = NULL;
     unsigned char *register_email = NULL;
     unsigned char *register_url = NULL;
     unsigned char *register_subject = NULL;
     unsigned char *register_subject_en = NULL;
     unsigned char *register_email_file = NULL;
-    unsigned char *full_reg_deadline = NULL;
-    size_t full_len;
     time_t reg_deadline = 0;
 
     char *msg_s = NULL;
@@ -27,30 +25,17 @@
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
 %><s:read var="autoregister" default="0" /><%
-%><s:read var="reg_deadline_time" normalize="yes" /><%
-%><s:read var="reg_deadline_date" normalize="yes" /><%
+%><s:read var="reg_deadline_time" /><%
+%><s:read var="reg_deadline_date" /><%
 %><s:read var="register_email" normalize="yes" /><%
 %><s:read var="register_url" normalize="yes" /><%
 %><s:read var="register_subject" normalize="yes" /><%
 %><s:read var="register_subject_en" normalize="yes" /><%
 %><s:read var="register_email_file" normalize="yes" /><%
 
-    if (reg_deadline_time || reg_deadline_date) {
-        if (!reg_deadline_time) reg_deadline_time = xstrdup("");
-        if (!reg_deadline_date) reg_deadline_date = xstrdup("");
-        full_len = strlen(reg_deadline_date) + strlen(reg_deadline_time) + 1;
-        full_reg_deadline = xmalloc(full_len + 1);
-        snprintf(full_reg_deadline, full_len, "%s %s", reg_deadline_date, reg_deadline_time);
-        if (xml_parse_date(NULL, NULL, 0, 0, full_reg_deadline, &reg_deadline) < 0) {
-            fprintf(msg_f, "registration deadline is invalid<br/>");
-            retval = SSERV_ERR_INV_PARAM;
-            reg_deadline = 0;
-        }
-        if (reg_deadline == 0 || reg_deadline == ~(time_t) 0) {
-            fprintf(msg_f, "registration deadline is invalid<br/>");
-            retval = SSERV_ERR_INV_PARAM;
-            reg_deadline = 0;
-        }
+     if (parse_date_twopart(reg_deadline_date, reg_deadline_time, &reg_deadline) < 0) {
+        fprintf(msg_f, "registration deadline is invalid<br/>");
+        retval = SSERV_ERR_INV_PARAM;
     }
 
     if (!retval && phr->ss) {
@@ -86,9 +71,6 @@ cleanup:;
 }
 <%
     html_armor_free(&ab);
-    xfree(reg_deadline_time);
-    xfree(reg_deadline_date);
-    xfree(full_reg_deadline);
     xfree(register_email);
     xfree(register_url);
     xfree(register_subject);
