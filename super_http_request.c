@@ -1004,4 +1004,5 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_CNTS_SAVE_BASIC_FORM] = 1,
   [SSERV_CMD_CNTS_SAVE_FLAGS_FORM] = 1,
   [SSERV_CMD_CNTS_SAVE_REGISTRATION_FORM] = 1,
+  [SSERV_CMD_CNTS_SAVE_TIMING_FORM] = 1,
 };
