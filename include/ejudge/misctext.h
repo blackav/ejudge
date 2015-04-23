@@ -285,4 +285,10 @@ const unsigned char *csv_armor_buf(struct html_armor_buffer *pb, const unsigned 
 const unsigned char *
 skip_message_headers(const unsigned char *intxt);
 
+int
+parse_date_twopart(
+        const unsigned char *date_str,
+        const unsigned char *time_str,
+        time_t *p_time);
+
 #endif /* __MISCTEXT_H__ */

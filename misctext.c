@@ -17,6 +17,7 @@
 #include "ejudge/misctext.h"
 #include "ejudge/base64.h"
 #include "ejudge/compat.h"
+#include "ejudge/xml_utils.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -1504,6 +1505,14 @@ is_empty_string(const unsigned char *s)
   return !*s;
 }
 
+int
+is_empty_string_2(const unsigned char *s)
+{
+  if (!s) return 1;
+  while (*s && (*s <= ' ' || *s == 0x7f)) ++s;
+  return !*s;
+}
+
 #define SIZE_T (1024L * 1024L * 1024L * 1024L)
 #define SIZE_G (1024 * 1024 * 1024)
 #define SIZE_M (1024 * 1024)
@@ -2424,4 +2433,34 @@ csv_armor_buf(struct html_armor_buffer *pb, const unsigned char *s)
   }
   csv_armor_string(s, pb->buf);
   return pb->buf;
+}
+
+int
+parse_date_twopart(
+        const unsigned char *date_str,
+        const unsigned char *time_str,
+        time_t *p_time)
+{
+  if (is_empty_string_2(date_str)) date_str = "";
+  if (is_empty_string_2(time_str)) time_str = "";
+
+  *p_time = 0;
+  if (!*date_str) {
+    return 0;
+  }
+  size_t dlen = strlen(date_str);
+  size_t tlen = strlen(time_str);
+  if (dlen >= 128) return -1;
+  if (tlen >= 128) return -1;
+  unsigned char *str = alloca(dlen + tlen + 2);
+  sprintf(str, "%s %s", date_str, time_str);
+  if (xml_parse_date(NULL, NULL, 0, 0, str, p_time) < 0) {
+    *p_time = 0;
+    return -1;
+  }
+  if (*p_time == 0 || *p_time == ~(time_t) 0) {
+    *p_time = 0;
+    return -1;
+  }
+  return 1;
 }
