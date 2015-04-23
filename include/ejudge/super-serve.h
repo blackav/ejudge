@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __SUPER_SERVE_H__
 #define __SUPER_SERVE_H__
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -103,7 +102,7 @@ struct sid_state
   unsigned char *user_name;
   int edit_page;
 
-  ejintbool_t advanced_view;
+  //ejintbool_t advanced_view;
   ejintbool_t show_html_attrs;
   ejintbool_t show_html_headers;
   ejintbool_t show_paths;

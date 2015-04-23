@@ -510,15 +510,6 @@ function popupRegistrationDialog()
 
     <div>
 <table border="0">
-    <s:form>
-        <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>Various contest's flags</b><%
-  if (phr->ss->advanced_view) {
-%><s:submit ac="cnts-basic-view" label="Basic view" /><%
-  } else {
-%><s:submit ac="cnts-advanced-view" label="Advanced view" /><%
-  }
-%></td></s:tr>
-    </s:form>
 <% row = 1; %>
 
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
@@ -548,20 +539,12 @@ function popupRegistrationDialog()
   }
 %>
 
-<%
-  if (/*phr->ss->advanced_view*/ 1) {
-%>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Allow pruning users?</td>
         <td><s:yesno id="OrigCleanUsers" disabled="disabled" name="param" value="cnts->clean_users" /></td>
         <td>&nbsp;</td>
         <td><s:help ac="cnts-change-clean-users" /></td>
     </s:tr>
-<%
-  } else {
-%><s:hidden id="OrigCleanUsers" name="clean_users" value="cnts->clean_users" check="no" /><%
-  }
-%>
 
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Closed for participation?</td>
@@ -570,155 +553,75 @@ function popupRegistrationDialog()
         <td><s:help ac="cnts-change-closed" /></td>
     </s:tr>
 
-<%
-  if (/*phr->ss->advanced_view*/ 1) {
-%>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Invisible in serve-control?</td>
         <td><s:yesno id="OrigInvisible" disabled="disabled" name="param" value="cnts->invisible" /></td>
         <td>&nbsp;</td>
         <td><s:help ac="cnts-change-invisible" /></td>
     </s:tr>
-<%
-  } else {
-%><s:hidden id="OrigInvisible" name="invisible" value="cnts->invisible" check="no" /><%
-  }
-%>
 
-<%
-  if (/*phr->ss->advanced_view*/ 1) {
-%>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Disallow team member removal?</td>
         <td><s:yesno id="OrigDisableMemberDelete" disabled="disabled" name="param" value="cnts->disable_member_delete" /></td>
         <td>&nbsp;</td>
         <td><s:help ac="cnts-change-member-delete" /></td>
     </s:tr>
-<%
-  } else {
-%><s:hidden id="OrigDisableMemberDelete" name="disable_member_delete" value="cnts->disable_member_delete" check="no" /><%
-  }
-%>
 
-<%
-  if (/*phr->ss->advanced_view*/ 1) {
-%>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Auto-assign logins?</td>
         <td><s:yesno id="OrigAssignLogins" disabled="disabled" name="param" value="cnts->assign_logins" /></td>
         <td>&nbsp;</td>
         <td><s:help ac="cnts-change-assign-logins" /></td>
     </s:tr>
-<%
-  } else {
-%><s:hidden id="OrigAssignLogins" name="assign_logins" value="cnts->assign_logins" check="no" /><%
-  }
-%>
 
-<%
-  if (/*phr->ss->advanced_view*/ 1) {
-%>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Force contest registration?</td>
         <td><s:yesno id="OrigForceRegistration" disabled="disabled" name="param" value="cnts->force_registration" /></td>
         <td>&nbsp;</td>
         <td><s:help ac="cnts-change-force-registration" /></td>
     </s:tr>
-<%
-  } else {
-%><s:hidden id="OrigForceRegistration" name="force_registration" value="cnts->force_registration" check="no" /><%
-  }
-%>
 
-<%
-  if (/*phr->ss->advanced_view*/ 1) {
-%>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Disable &quot;Name&quot; field?</td>
         <td><s:yesno id="OrigDisableName" disabled="disabled" name="param" value="cnts->disable_name" /></td>
         <td>&nbsp;</td>
         <td><s:help ac="cnts-change-disable-name" /></td>
     </s:tr>
-<%
-  } else {
-%><s:hidden id="OrigDisableName" name="disable_name" value="cnts->disable_name" check="no" /><%
-  }
-%>
 
-<%
-  if (/*phr->ss->advanced_view*/ 1) {
-%>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Enable password recovery?</td>
         <td><s:yesno id="OrigEnablePasswordRecovery" disabled="disabled" name="param" value="cnts->enable_password_recovery" /></td>
         <td>&nbsp;</td>
         <td><s:help ac="cnts-change-enable-password-recovery" /></td>
     </s:tr>
-<%
-  } else {
-%><s:hidden id="OrigEnablePasswordRecovery" name="enable_password_recovery" value="cnts->enable_password_recovery" check="no" /><%
-  }
-%>
 
-<%
-  if (/*phr->ss->advanced_view*/ 1) {
-%>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Examination mode?</td>
         <td><s:yesno id="OrigExamMode" disabled="disabled" name="param" value="cnts->exam_mode" /></td>
         <td>&nbsp;</td>
         <td><s:help ac="cnts-change-exam-mode" /></td>
     </s:tr>
-<%
-  } else {
-%><s:hidden id="OrigExamMode" name="exam_mode" value="cnts->exam_mode" check="no" /><%
-  }
-%>
 
-<%
-  if (/*phr->ss->advanced_view*/ 1) {
-%>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Disable password change?</td>
         <td><s:yesno id="OrigDisablePasswordChange" disabled="disabled" name="param" value="cnts->disable_password_change" /></td>
         <td>&nbsp;</td>
         <td><s:help ac="cnts-change-disable-password-change" /></td>
     </s:tr>
-<%
-  } else {
-%><s:hidden id="OrigDisablePasswordChange" name="disable_password_change" value="cnts->disable_password_change" check="no" /><%
-  }
-%>
 
-<%
-  if (/*phr->ss->advanced_view*/ 1) {
-%>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Disable locale change?</td>
         <td><s:yesno id="OrigDisableLocaleChange" disabled="disabled" name="param" value="cnts->disable_locale_change" /></td>
         <td>&nbsp;</td>
         <td><s:help ac="cnts-change-disable-locale-change" /></td>
     </s:tr>
-<%
-  } else {
-%><s:hidden id="OrigDisableLocaleChange" name="disable_locale_change" value="cnts->disable_locale_change" check="no" /><%
-  }
-%>
 
-<%
-  if (/*phr->ss->advanced_view*/ 1) {
-%>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
         <td>Allow edit registration data during contest?</td>
         <td><s:yesno id="OrigAllowRegDataEdit" disabled="disabled" name="param" value="cnts->allow_reg_data_edit" /></td>
         <td>&nbsp;</td>
         <td><s:help ac="cnts-change-allow-reg-data-edit" /></td>
     </s:tr>
-<%
-  } else {
-%><s:hidden id="OrigAllowRegDataEdit" name="allow_reg_data_edit" value="cnts->allow_reg_data_edit" check="no" /><%
-  }
-%>
 </table>
     </div>
 
