@@ -67,6 +67,11 @@ CFILES = \
  csp_cnts_save_flags_form.c\
  csp_cnts_save_registration_form.c\
  csp_cnts_save_timing_form.c\
+ csp_cnts_save_urls_form.c\
+ csp_cnts_save_headers_form.c\
+ csp_cnts_save_attrs_form.c\
+ csp_cnts_save_notifications_form.c\
+ csp_cnts_save_advanced_form.c\
  csp_error_unknown_page.c
 
 SOFILES = $(CFILES:.c=.so)
@@ -124,6 +129,11 @@ csp_cnts_save_basic_form.c : cnts_save_basic_form.csp includes.csp stdvars.csp
 csp_cnts_save_flags_form.c : cnts_save_flags_form.csp includes.csp stdvars.csp
 csp_cnts_save_registration_form.c : cnts_save_registration_form.csp includes.csp stdvars.csp
 csp_cnts_save_timing_form.c : cnts_save_timing_form.csp includes.csp stdvars.csp
+csp_cnts_save_urls_form.c : cnts_save_urls_form.csp includes.csp stdvars.csp
+csp_cnts_save_headers_form.c : cnts_save_headers_form.csp includes.csp stdvars.csp
+csp_cnts_save_attrs_form.c : cnts_save_attrs_form.csp includes.csp stdvars.csp
+csp_cnts_save_notifications_form.c : cnts_save_notifications_form.csp includes.csp stdvars.csp
+csp_cnts_save_advanced_form.c : cnts_save_advanced_form.csp includes.csp stdvars.csp
 
 csp_error_unknown_page.c : error_unknown_page.csp includes.csp stdvars.csp header.csp footer.csp
 
