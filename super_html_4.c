@@ -883,7 +883,6 @@ static const struct cnts_edit_info cnts_edit_info[] =
   { NS_CONTEST, CNTS_master_access, 'p', 0, 0, 0, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "<tt>master</tt> access rules", "Access rules for the master program", NULL },
   { NS_CONTEST, CNTS_serve_control_access, 'p', 0, 0, 0, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "<tt>serve-control</tt> access rules", "Access rules for the serve-control program", NULL },
 
-  { NS_SID_STATE, SSSS_show_permissions, '-', 1, 0, 0, 0, SSERV_CMD_COPY_ALL_PRIV_USERS_PAGE, "Administrators, Judges, etc", 0, 0 },
   { 0, 0, 130, 0, 0, 0, 0, 0, 0, 0, 0, },
   { NS_SID_STATE, SSSS_show_form_fields, '-', 1, 0, 0, 0, 0, "Registration Form Fields", 0, 0 },
   { 0, 0, 131, 0, 0, 0, 0, 0, 0, 0, 0, },
@@ -1488,8 +1487,6 @@ write_editing_rows(
     }
 
     if (ce->type == 130) {
-      if (!phr->ss->show_permissions) continue;
-
       for (perms = CNTS_FIRST_PERM(ecnts), j = 0; perms;
            perms = CNTS_NEXT_PERM(perms), ++j) {
         fprintf(out_f, "<tr%s>", form_row_attrs[row ^= 1]);
@@ -2967,7 +2964,6 @@ static unsigned char valid_ss_visibilities[SSSS_LAST_FIELD] =
   [SSSS_show_html_attrs] = 1,
   [SSSS_show_html_headers] = 1,
   [SSSS_show_paths] = 1,
-  [SSSS_show_permissions] = 1,
   [SSSS_show_form_fields] = 1,
   [SSSS_show_notifications] = 1,
 

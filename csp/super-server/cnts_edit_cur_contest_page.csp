@@ -675,20 +675,8 @@ function popupRegistrationDialog()
 
     <div>
 <table border="0">
-    <s:form>
-        <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>User permissions</b><%
-  if (phr->ss->show_permissions) {
-%><s:submit ac="cnts-hide-permissions" label="Hide" /><%
-  } else {
-%><s:submit ac="cnts-show-permissions" label="Show" /><%
-  }
-%></td></s:tr>
-    </s:form>
 <% row = 1; %>
 
-<%
-  if (phr->ss->show_permissions) {
-%>
 <%
     const struct opcap_list_item *p;
     int i;
@@ -715,9 +703,7 @@ function popupRegistrationDialog()
             <td>&nbsp;</td>
          </s:tr>
     </s:form>
-<%
-  }
-%>
+
 </table>
     </div>
 
