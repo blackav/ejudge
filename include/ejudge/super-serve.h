@@ -106,7 +106,7 @@ struct sid_state
   ejintbool_t show_html_attrs;
   ejintbool_t show_html_headers;
   ejintbool_t show_paths;
-  ejintbool_t show_access_rules;
+  //ejintbool_t show_access_rules;
   ejintbool_t show_permissions;
   ejintbool_t show_form_fields;
   ejintbool_t show_notifications;

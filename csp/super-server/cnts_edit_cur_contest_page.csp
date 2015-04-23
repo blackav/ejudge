@@ -629,65 +629,44 @@ function popupRegistrationDialog()
 
     <div>
 <table border="0">
-    <s:form>
-        <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>IP-address access restrictions</b><%
-  if (phr->ss->show_access_rules) {
-%><s:submit ac="cnts-hide-access-rules" label="Hide" /><%
-  } else {
-%><s:submit ac="cnts-show-access-rules" label="Show" /><%
-  }
-%></td></s:tr>
-    </s:form>
 <% row = 1; %>
 
-<% if (phr->ss->show_access_rules) { %>
     <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
         <td>Access to contest registration</td>
         <td><pre><% super_html_unparse_access_2(out_f, cnts->register_access); %></pre></td>
         <td><s:a ac="cnts-edit-register-access-page">Edit</s:a></td>
         <td><s:help ac="cnts-edit-register-access-page" /></td>
     </s:tr>
-<% } %>
-<% if (phr->ss->show_access_rules) { %>
     <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
         <td>Access to user list display</td>
         <td><pre><% super_html_unparse_access_2(out_f, cnts->users_access); %></pre></td>
         <td><s:a ac="cnts-edit-users-access-page">Edit</s:a></td>
         <td><s:help ac="cnts-edit-users-access-page" /></td>
     </s:tr>
-<% } %>
-<% if (phr->ss->show_access_rules) { %>
     <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
         <td>Access to contest participation</td>
         <td><pre><% super_html_unparse_access_2(out_f, cnts->team_access); %></pre></td>
         <td><s:a ac="cnts-edit-team-access-page">Edit</s:a></td>
         <td><s:help ac="cnts-edit-team-access-page" /></td>
     </s:tr>
-<% } %>
-<% if (phr->ss->show_access_rules) { %>
     <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
         <td>Access to contest administration</td>
         <td><pre><% super_html_unparse_access_2(out_f, cnts->master_access); %></pre></td>
         <td><s:a ac="cnts-edit-master-access-page">Edit</s:a></td>
         <td><s:help ac="cnts-edit-master-access-page" /></td>
     </s:tr>
-<% } %>
-<% if (phr->ss->show_access_rules) { %>
     <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
         <td>Access to contest judging</td>
         <td><pre><% super_html_unparse_access_2(out_f, cnts->judge_access); %></pre></td>
         <td><s:a ac="cnts-edit-judge-access-page">Edit</s:a></td>
         <td><s:help ac="cnts-edit-judge-access-page" /></td>
     </s:tr>
-<% } %>
-<% if (phr->ss->show_access_rules) { %>
     <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
         <td>Access to contest setup</td>
         <td><pre><% super_html_unparse_access_2(out_f, cnts->serve_control_access); %></pre></td>
         <td><s:a ac="cnts-edit-serve-control-access-page">Edit</s:a></td>
         <td><s:help ac="cnts-edit-serve-control-access-page" /></td>
     </s:tr>
-<% } %>
 </table>
 
     </div>
