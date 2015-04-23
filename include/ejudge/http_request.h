@@ -244,6 +244,8 @@ hr_redirect_2(
 
 void
 hr_print_help_url(FILE *f, int action);
+void
+hr_print_help_url_2(FILE *f, const unsigned char *topic);
 
 #endif /* __HTTP_REQUEST_H__ */
 
