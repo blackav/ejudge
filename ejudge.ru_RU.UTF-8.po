@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-15 13:08+0300\n"
+"POT-Creation-Date: 2015-04-23 13:06+0300\n"
 "PO-Revision-Date: 2015-04-15 14:08+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -500,9 +500,6 @@ msgstr "Доп. инф. о тесте"
 msgid "Administrator"
 msgstr "Администратор"
 
-msgid "Advanced view"
-msgstr "Расширенный просмотр"
-
 msgid "Advisor"
 msgstr "Руководитель команды"
 
@@ -649,9 +646,6 @@ msgstr "Заблокировать"
 
 msgid "Banned?"
 msgstr "Заблокированный?"
-
-msgid "Basic view"
-msgstr "Базовый просмотр"
 
 msgid ""
 "Be careful and type the e-mail address correctly. If you make a mistake, you "
