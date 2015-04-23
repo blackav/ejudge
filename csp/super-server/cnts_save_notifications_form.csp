@@ -11,12 +11,18 @@
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
     // more variables
+    unsigned char *cf_notify_email = NULL;
+    unsigned char *clar_notify_email = NULL;
+    unsigned char *daily_stat_email = NULL;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
     // reading form vars
+%><s:read var="cf_notify_email" normalize="yes" /><%
+%><s:read var="clar_notify_email" normalize="yes" /><%
+%><s:read var="daily_stat_email" normalize="yes" /><%
 
     // validating form vars
 
@@ -24,10 +30,13 @@
         struct contest_desc *edited_cnts = phr->ss->edited_cnts;
         if (edited_cnts) {
             // updating edited_cnts
+            edited_cnts->cf_notify_email = xstrdup2(cf_notify_email);
+            edited_cnts->clar_notify_email = xstrdup2(clar_notify_email);
+            edited_cnts->daily_stat_email = xstrdup2(daily_stat_email);
         }
     }
 
-//cleanup:;
+cleanup:;
     fclose(msg_f); msg_f = NULL;
 %>
 {
@@ -37,6 +46,9 @@
     "messages" : "<s:v value="msg_s" json="yes" checkExpr="" />"
 }
 <%
+    xfree(cf_notify_email);
+    xfree(clar_notify_email);
+    xfree(daily_stat_email);
     html_armor_free(&ab);
     xfree(msg_s);
 %>

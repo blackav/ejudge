@@ -248,9 +248,15 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="NotificationsDialogForm">
         <s:hidden name="action" ac="cnts-save-notifications-form" />
         <fieldset>
-
-
-
+            <label for="NotificationsDialogCfNotifyEmail">CHECK FAILED e-mail notification address:</label>
+            <s:textfield size="48" name="cf_notify_email" id="NotificationsDialogCfNotifyEmail" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="NotificationsDialogClarNotifyEmail">Clar request e-mail notification address:</label>
+            <s:textfield size="48" name="clar_notify_email" id="NotificationsDialogClarNotifyEmail" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
+            <label for="NotificationsDialogDailyStatEmail">Daily statistics email address:</label>
+            <s:textfield size="48" name="daily_stat_email" id="NotificationsDialogDailyStatEmail" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
         </fieldset>
     </s:form>
 </div>
@@ -484,6 +490,36 @@ $(function() {
         close : function() {
         }
     });
+
+    notificationsDialog = $("#NotificationsDialogDiv").dialog({
+        autoOpen: false,
+        height: 500,
+        width: 600,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#NotificationsDialogForm").serialize();
+                var formURL = $("#NotificationsDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                notificationsDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
 });
 
 function copyCheckbox(dst, src)
@@ -602,6 +638,16 @@ function popupAttrsDialog()
     }
 
     $("#AttrsDialogDiv").dialog('open');
+}
+
+function popupNotificationsDialog()
+{
+    var fields = [ "CfNotifyEmail", "ClarNotifyEmail", "DailyStatEmail" ];
+    for (var i in fields) {
+        document.getElementById("NotificationsDialog" + fields[i]).value = document.getElementById("Orig" + fields[i]).value;
+    }
+
+    $("#NotificationsDialogDiv").dialog('open');
 }
 </script>
 
@@ -1289,62 +1335,24 @@ initial count = <s:v value="memb->init_count" />
 <table border="0">
 <% row = 1; %>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>CHECK FAILED e-mail notification address:</td>
-            <td><s:textfield size="48" name="param" value="cnts->cf_notify_email" /><% if (!cnts->cf_notify_email) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-cf-notify-email" label="Change" /><s:submit ac="cnts-clear-cf-notify-email" label="Clear" /></td>
-            <td><s:help ac="cnts-change-cf-notify-email" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Clar request e-mail notification address:</td>
-            <td><s:textfield size="48" name="param" value="cnts->clar_notify_email" /><% if (!cnts->clar_notify_email) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-clar-notify-email" label="Change" /><s:submit ac="cnts-clear-clar-notify-email" label="Clear" /></td>
-            <td><s:help ac="cnts-change-clar-notify-email" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Daily statistics email address:</td>
-            <td><s:textfield size="48" name="param" value="cnts->daily_stat_email" /><% if (!cnts->daily_stat_email) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-daily-stat-email" label="Change" /><s:submit ac="cnts-clear-daily-stat-email" label="Clear" /></td>
-            <td><s:help ac="cnts-change-daily-stat-email" /></td>
-        </s:tr>
-    </s:form>
-
-<%
-  if (cnts->assign_logins) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Template for new logins:</td>
-            <td><s:textfield size="48" name="param" value="cnts->login_template" /><% if (!cnts->login_template) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-login-template" label="Change" /><s:submit ac="cnts-clear-login-template" label="Clear" /></td>
-            <td><s:help ac="cnts-change-login-template" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (cnts->assign_logins) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Login auto-assign options:</td>
-            <td><s:textfield size="48" name="param" value="cnts->login_template_options" /><% if (!cnts->login_template_options) { %>(<i>Not set</i>)<% } %></td>
-            <td><s:submit ac="cnts-change-login-template-options" label="Change" /><s:submit ac="cnts-clear-login-template-options" label="Clear" /></td>
-            <td><s:help ac="cnts-change-login-template-options" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupNotificationsDialog();">
+        <td>CHECK FAILED e-mail notification address:</td>
+        <td><s:textfield id="OrigCfNotifyEmail" readonly="readonly" size="48" name="param" value="cnts->cf_notify_email" /><% if (!cnts->cf_notify_email) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-cf-notify-email" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-cf-notify-email" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupNotificationsDialog();">
+        <td>Clar request e-mail notification address:</td>
+        <td><s:textfield id="OrigClarNotifyEmail" readonly="readonly" size="48" name="param" value="cnts->clar_notify_email" /><% if (!cnts->clar_notify_email) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-clar-notify-email" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-clar-notify-email" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupNotificationsDialog();">
+        <td>Daily statistics email address:</td>
+        <td><s:textfield id="OrigDailyStatEmail" readonly="readonly" size="48" name="param" value="cnts->daily_stat_email" /><% if (!cnts->daily_stat_email) { %>(<i>Not set</i>)<% } %></td>
+        <td><s:form><s:submit ac="cnts-clear-daily-stat-email" label="Clear" /></s:form></td>
+        <td><s:help ac="cnts-change-daily-stat-email" /></td>
+    </s:tr>
 </table>
 
     </div>
@@ -1408,6 +1416,35 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-allowed-regions" /></td>
         </s:tr>
     </s:form>
+<%
+  if (cnts->assign_logins) {
+%>
+    <s:form>
+        <s:tr attr="form_row_attrs[row ^= 1]">
+            <td>Template for new logins:</td>
+            <td><s:textfield size="48" name="param" value="cnts->login_template" /><% if (!cnts->login_template) { %>(<i>Not set</i>)<% } %></td>
+            <td><s:submit ac="cnts-change-login-template" label="Change" /><s:submit ac="cnts-clear-login-template" label="Clear" /></td>
+            <td><s:help ac="cnts-change-login-template" /></td>
+        </s:tr>
+    </s:form>
+<%
+  }
+%>
+
+<%
+  if (cnts->assign_logins) {
+%>
+    <s:form>
+        <s:tr attr="form_row_attrs[row ^= 1]">
+            <td>Login auto-assign options:</td>
+            <td><s:textfield size="48" name="param" value="cnts->login_template_options" /><% if (!cnts->login_template_options) { %>(<i>Not set</i>)<% } %></td>
+            <td><s:submit ac="cnts-change-login-template-options" label="Change" /><s:submit ac="cnts-clear-login-template-options" label="Clear" /></td>
+            <td><s:help ac="cnts-change-login-template-options" /></td>
+        </s:tr>
+    </s:form>
+<%
+  }
+%>
 
 </table>
     </div>
