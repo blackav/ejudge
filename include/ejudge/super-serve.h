@@ -109,7 +109,7 @@ struct sid_state
   //ejintbool_t show_access_rules;
   //ejintbool_t show_permissions;
   //ejintbool_t show_form_fields;
-  ejintbool_t show_notifications;
+  //ejintbool_t show_notifications;
 
   unsigned char *users_header_text;
   unsigned char *users_footer_text;

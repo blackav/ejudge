@@ -14,8 +14,6 @@
     int row = 1;
     int cur_page = 1;
 
-static const unsigned char head_row_attr[] =
-  " bgcolor=\"#a0a0a0\"";
 static const unsigned char * const form_row_attrs[]=
 {
   " bgcolor=\"#d0d0d0\"",
@@ -1067,21 +1065,8 @@ initial count = <s:v value="memb->init_count" />
 
     <div>
 <table border="0">
-
-    <s:form>
-        <s:tr attr="head_row_attr"><td colspan="4" align="center"><b>E-mail notifications</b><%
-  if (phr->ss->show_notifications) {
-%><s:submit ac="cnts-hide-notifications" label="Hide" /><%
-  } else {
-%><s:submit ac="cnts-show-notifications" label="Show" /><%
-  }
-%></td></s:tr>
-    </s:form>
 <% row = 1; %>
 
-<%
-  if (phr->ss->show_notifications) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>CHECK FAILED e-mail notification address:</td>
@@ -1090,13 +1075,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-cf-notify-email" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_notifications) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Clar request e-mail notification address:</td>
@@ -1105,13 +1084,7 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-clar-notify-email" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
-<%
-  if (phr->ss->show_notifications) {
-%>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
             <td>Daily statistics email address:</td>
@@ -1120,12 +1093,9 @@ initial count = <s:v value="memb->init_count" />
             <td><s:help ac="cnts-change-daily-stat-email" /></td>
         </s:tr>
     </s:form>
-<%
-  }
-%>
 
 <%
-  if (phr->ss->show_notifications && cnts->assign_logins) {
+  if (cnts->assign_logins) {
 %>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">
@@ -1140,7 +1110,7 @@ initial count = <s:v value="memb->init_count" />
 %>
 
 <%
-  if (phr->ss->show_notifications && cnts->assign_logins) {
+  if (cnts->assign_logins) {
 %>
     <s:form>
         <s:tr attr="form_row_attrs[row ^= 1]">

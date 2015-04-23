@@ -919,7 +919,6 @@ static const struct cnts_edit_info cnts_edit_info[] =
   { NS_CONTEST, CNTS_team_par_style, 's', 1, 1, 1, 1, 0, "HTML attributes for <tt>client</tt> paragraphs", "HTML attributes for client paragraphs", "SidState.show_html_attrs" },
   */
 
-  { NS_SID_STATE, SSSS_show_notifications, '-', 1, 0, 0, 0, 0, "E-mail Notifications", 0, 0 },
   { NS_CONTEST, CNTS_cf_notify_email, 's', 1, 1, 1, 1, 0, "e-mail for &quot;Check failed&quot; messages", "e-mail for &quot;Check failed&quot; messages", "SidState.show_notifications" },
   { NS_CONTEST, CNTS_clar_notify_email, 's', 1, 1, 1, 1, 0, "e-mail for clar notifications", "e-mail for clar notifications", "SidState.show_notifications" },
   { NS_CONTEST, CNTS_daily_stat_email, 's', 1, 1, 1, 1, 0, "e-mail for daily statistics", "e-mail for daily statistics", "SidState.show_notifications" },
@@ -2956,8 +2955,6 @@ cmd_edit_contest_xml_field(
 
 static unsigned char valid_ss_visibilities[SSSS_LAST_FIELD] =
 {
-  [SSSS_show_notifications] = 1,
-
   // these are visibilities for global configuration page
   [SSSS_show_global_1] = 1,
   [SSSS_show_global_2] = 1,
