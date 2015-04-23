@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __MISCHTML_H__
 #define __MISCHTML_H__
 
-/* Copyright (C) 2005-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -49,6 +48,15 @@ void html_start_form_id(FILE *f, int mode,
                         unsigned char const *hidden_vars);
 
 void html_date_select(FILE *f, time_t t);
+void
+html_date_select_2(
+        FILE *out_f,
+        time_t t,
+        const unsigned char *id_prefix,
+        const unsigned char *name_prefix,
+        const unsigned char *html_class,
+        int is_readonly,
+        int use_gmtime);
 
 void html_hidden(FILE *fout, const unsigned char *var_name,
                  const char *format, ...)
