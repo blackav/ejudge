@@ -580,7 +580,7 @@ function copyCheckbox(dst, src)
     }
 }
 
-function popupBasicDialog()
+function popupBasicDialog(e, skipField)
 {
     var selWidget=document.getElementById("BasicDialogUserContest");
     if (selWidget != null) {
@@ -609,6 +609,15 @@ function popupBasicDialog()
     $("#BasicDialogDefaultLocale").val(document.getElementById("OrigDefaultLocale").value);
     document.getElementById("BasicDialogPersonal").checked = false;
     copyCheckbox("BasicDialogPersonal", "OrigPersonal");
+
+    if (typeof skipField !== 'undefined') {
+        var dst = document.getElementById("BasicDialog" + skipField);
+        if (dst != null) {
+            dst.value = "";
+        }
+    }
+
+    if (e) e.stopPropagation();
     $("#BasicDialogDiv").dialog('open');
 }
 
@@ -633,7 +642,7 @@ function popupFlagsDialog()
     $("#FlagsDialogDiv").dialog('open');
 }
 
-function popupRegistrationDialog()
+function popupRegistrationDialog(e, skipField)
 {
     $("#RegistrationDialogAutoregister").val(document.getElementById("OrigAutoregister").value);
     document.getElementById("RegistrationDialogRegDeadlineTime").value = document.getElementById("OrigRegDeadlineTime").value;
@@ -644,60 +653,116 @@ function popupRegistrationDialog()
     document.getElementById("RegistrationDialogRegisterSubjectEn").value = document.getElementById("OrigRegisterSubjectEn").value;
     document.getElementById("RegistrationDialogRegisterEmailFile").value = document.getElementById("OrigRegisterEmailFile").value;
 
+    if (skipField == "RegDeadline") {
+        document.getElementById("RegistrationDialogRegDeadlineTime").value = "";
+        document.getElementById("RegistrationDialogRegDeadlineDate").value = "";
+    } else if (typeof skipField !== 'undefined') {
+        var dst = document.getElementById("RegistrationDialog" + skipField);
+        if (dst != null) {
+            dst.value = "";
+        }
+    }
+
+    if (e) e.stopPropagation();
     $("#RegistrationDialogDiv").dialog('open');
 }
 
-function popupTimingDialog()
+function popupTimingDialog(e, skipField)
 {
-    document.getElementById("TimingDialogSchedTimeTime").value = document.getElementById("OrigSchedTimeTime").value;
-    document.getElementById("TimingDialogSchedTimeDate").value = document.getElementById("OrigSchedTimeDate").value;
-    document.getElementById("TimingDialogOpenTimeTime").value = document.getElementById("OrigOpenTimeTime").value;
-    document.getElementById("TimingDialogOpenTimeDate").value = document.getElementById("OrigOpenTimeDate").value;
-    document.getElementById("TimingDialogCloseTimeTime").value = document.getElementById("OrigCloseTimeTime").value;
-    document.getElementById("TimingDialogCloseTimeDate").value = document.getElementById("OrigCloseTimeDate").value;
+    var fields = [ "SchedTime", "OpenTime", "CloseTime" ];
+    for (var i in fields) {
+        var dst = document.getElementById("TimingDialog" + fields[i] + "Time");
+        var src = document.getElementById("Orig" + fields[i] + "Time");
+        if (dst != null && src != null) {
+            dst.value = src.value;
+        }
+        dst = document.getElementById("TimingDialog" + fields[i] + "Date");
+        src = document.getElementById("Orig" + fields[i] + "Date");
+        if (dst != null && src != null) {
+            dst.value = src.value;
+        }
+    }
+    if (typeof skipField !== 'undefined') {
+        var dst = document.getElementById("TimingDialog" + skipField + "Time");
+        if (dst != null) {
+            dst.value = "";
+        }
+        dst = document.getElementById("TimingDialog" + skipField + "Date");
+        if (dst != null) {
+            dst.value = "";
+        }
+    }
 
+    if (e) e.stopPropagation();
     $("#TimingDialogDiv").dialog('open');
 }
 
-function popupUrlDialog()
+function popupUrlDialog(e, skipField)
 {
-    document.getElementById("UrlDialogTeamUrl").value = document.getElementById("OrigTeamUrl").value;
-    document.getElementById("UrlDialogStandingsUrl").value = document.getElementById("OrigStandingsUrl").value;
-    document.getElementById("UrlDialogProblemsUrl").value = document.getElementById("OrigProblemsUrl").value;
-    document.getElementById("UrlDialogLogoUrl").value = document.getElementById("OrigLogoUrl").value;
-    document.getElementById("UrlDialogCssUrl").value = document.getElementById("OrigCssUrl").value;
+    var fields = ["TeamUrl", "StandingsUrl", "ProblemsUrl", "LogoUrl", "CssUrl"];
+    for (var i in fields) {
+        document.getElementById("UrlDialog" + fields[i]).value = document.getElementById("Orig" + fields[i]).value;
+    }
+    if (typeof skipField !== 'undefined') {
+        var dst = document.getElementById("UrlDialog" + skipField);
+        if (dst != null) {
+            dst.value = "";
+        }
+    }
 
+    if (e) e.stopPropagation();
     $("#UrlDialogDiv").dialog('open');
 }
 
-function popupHeadersDialog()
+function popupHeadersDialog(e, skipField)
 {
     var fields = ["UsersHeaderFile", "UsersFooterFile", "CopyrightFile", "WelcomeFile", "RegWelcomeFile"];
     for (var i in fields) {
         document.getElementById("HeadersDialog" + fields[i]).value = document.getElementById("Orig" + fields[i]).value;
     }
+    if (typeof skipField !== 'undefined') {
+        var dst = document.getElementById("HeadersDialog" + skipField);
+        if (dst != null) {
+            dst.value = "";
+        }
+    }
 
+    if (e) e.stopPropagation();
     $("#HeadersDialogDiv").dialog('open');
 }
 
-function popupAttrsDialog()
+function popupAttrsDialog(e, skipField)
 {
     var fields = [ "UsersHeadStyle", "UsersParStyle", "UsersTableStyle", "UsersVerbStyle", "UsersTableFormat",
                    "UsersTableFormatEn", "UsersTableLegend", "UsersTableLegendEn", "UserNameComment" ];
     for (var i in fields) {
         document.getElementById("AttrsDialog" + fields[i]).value = document.getElementById("Orig" + fields[i]).value;
     }
+    if (typeof skipField !== 'undefined') {
+        var dst = document.getElementById("AttrsDialog" + skipField);
+        if (dst != null) {
+            dst.value = "";
+        }
+    }
 
+    if (e) e.stopPropagation();
     $("#AttrsDialogDiv").dialog('open');
 }
 
-function popupNotificationsDialog()
+function popupNotificationsDialog(e, skipField)
 {
     var fields = [ "CfNotifyEmail", "ClarNotifyEmail", "DailyStatEmail" ];
     for (var i in fields) {
         document.getElementById("NotificationsDialog" + fields[i]).value = document.getElementById("Orig" + fields[i]).value;
     }
+    if (typeof skipField !== 'undefined') {
+        var dst = document.getElementById("NotificationsDialog" + skipField);
+        if (dst != null) {
+            dst.value = "";
+        }
+    }
 
+    if (e) e.stopPropagation();
     $("#NotificationsDialogDiv").dialog('open');
 }
 
@@ -705,12 +770,10 @@ function popupAdvancedDialog(e, skipField)
 {
     var fields = [ "DirMode", "DirGroup", "FileMode", "FileGroup", "AllowedLanguages", "AllowedRegions", "LoginTemplate", "LoginTemplateOptions" ];
     for (var i in fields) {
-        if (skipField != fields[i]) {
-            var dst = document.getElementById("AdvancedDialog" + fields[i]);
-            var src = document.getElementById("Orig" + fields[i]);
-            if (dst != null && src != null) {
-                dst.value = src.value;
-            }
+        var dst = document.getElementById("AdvancedDialog" + fields[i]);
+        var src = document.getElementById("Orig" + fields[i]);
+        if (dst != null && src != null) {
+            dst.value = src.value;
         }
     }
     if (typeof skipField !== 'undefined') {
@@ -735,31 +798,31 @@ function popupAdvancedDialog(e, skipField)
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupBasicDialog();">Name:</td>
         <td onclick="popupBasicDialog();"><s:textfield id="OrigName" readonly="readonly" size="48" name="param" value="cnts->name" /><% if (!cnts->name) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-name" label="Clear" /></s:form></td>
+        <td>&nbsp;</td>
         <td><s:help topic="Contest.xml:name" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupBasicDialog();">Name (English):</td>
         <td onclick="popupBasicDialog();"><s:textfield id="OrigNameEn" readonly="readonly" size="48" name="param" value="cnts->name_en" /><% if (!cnts->name_en) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-name-en" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupBasicDialog(event, 'NameEn');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:name_en" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupBasicDialog();">Main URL:</td>
         <td onclick="popupBasicDialog();"><s:textfield id="OrigMainUrl" readonly="readonly" size="48" name="param" value="cnts->main_url" /><% if (!cnts->main_url) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-main-url" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupBasicDialog(event, 'MainUrl');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:main_url" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupBasicDialog();">Keywords:</td>
         <td onclick="popupBasicDialog();"><s:textfield id="OrigKeywords" readonly="readonly" size="48" name="param" value="cnts->keywords" /><% if (!cnts->keywords) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-keywords" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupBasicDialog(event, 'Keywords');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:keywords" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupBasicDialog();">Contest to share users with:</td>
         <td onclick="popupBasicDialog();"><s:textfield id="OrigUserContest" readonly="readonly" size="48" name="param" value="cnts->user_contest" /><% if (!cnts->user_contest) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-user-contest" label="Clear" /></s:form></td>
+        <td>&nbsp;</td>
         <td><s:help topic="Contest.xml:user_contest" /></td>
     </s:tr>
 <%
@@ -777,7 +840,7 @@ function popupAdvancedDialog(e, skipField)
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupBasicDialog();">Default locale:</td>
         <td onclick="popupBasicDialog();"><s:textfield id="OrigDefaultLocale" readonly="readonly" size="48" name="param" value="cnts->default_locale" /><% if (!cnts->default_locale) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-default-locale" label="Clear" /></s:form></td>
+        <td>&nbsp;</td>
         <td><s:help topic="Contest.xml:default_locale" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
@@ -803,37 +866,37 @@ function popupAdvancedDialog(e, skipField)
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupRegistrationDialog();">
         <td>Registration deadline:</td>
         <td><% html_date_select_2(out_f, cnts->reg_deadline, "OrigRegDeadline", "param", NULL, 1, 0); %></td>
-        <td><s:form><s:submit ac="cnts-clear-deadline" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupRegistrationDialog(event, 'RegDeadline');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:reg_deadline" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupRegistrationDialog();">Registration email sender (From: field):</td>
         <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterEmail" size="48" name="param" value="cnts->register_email" /><% if (!cnts->register_email) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-register-email" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupRegistrationDialog(event, 'RegisterEmail');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:register_email" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupRegistrationDialog();">URL for registration:</td>
         <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterUrl" size="48" name="param" value="cnts->register_url" /><% if (!cnts->register_url) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-register-url" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupRegistrationDialog(event, 'RegisterUrl');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:register_url" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupRegistrationDialog();">Registration letter subject:</td>
         <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterSubject" size="48" name="param" value="cnts->register_subject" /><% if (!cnts->register_subject) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-register-subject" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupRegistrationDialog(event, 'RegisterSubject');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:register_subject" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupRegistrationDialog();">Registration letter subject (en):</td>
         <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterSubjectEn" size="48" name="param" value="cnts->register_subject_en" /><% if (!cnts->register_subject_en) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-register-subject-en" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupRegistrationDialog(event, 'RegisterSubjectEn');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:register_subject_en" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupRegistrationDialog();">Registration letter template file:</td>
         <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterEmailFile" size="48" name="param" value="cnts->register_email_file" /><% if (!cnts->register_email_file) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-register-email-file" label="Clear" /></s:form>[<s:a ac="cnts-edit-register-email-file-page">Edit</s:a>]</td>
+        <td><input type="button" onclick="popupRegistrationDialog(event, 'RegisterEmailFile');" value="Clear" />[<s:a ac="cnts-edit-register-email-file-page">Edit</s:a>]</td>
         <td><s:help topic="Contest.xml:register_email_file" /></td>
     </s:tr>
 </table>
@@ -847,19 +910,19 @@ function popupAdvancedDialog(e, skipField)
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupTimingDialog();">Contest start date:</td>
         <td onclick="popupTimingDialog();"><% html_date_select_2(out_f, cnts->sched_time, "OrigSchedTime", "param", NULL, 1, 0); %></td>
-        <td><s:form><s:submit ac="cnts-clear-sched-time" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupTimingDialog(event, 'SchedTime');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:sched_time" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupTimingDialog();">Virtual contest open date:</td>
         <td onclick="popupTimingDialog();"><% html_date_select_2(out_f, cnts->open_time, "OrigOpenTime", "param", NULL, 1, 0); %></td>
-        <td><s:form><s:submit ac="cnts-clear-open-time" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupTimingDialog(event, 'OpenTime');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:open_time" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td onclick="popupTimingDialog();">Virtual contest close date:</td>
         <td onclick="popupTimingDialog();"><% html_date_select_2(out_f, cnts->close_time, "OrigCloseTime", "param", NULL, 1, 0); %></td>
-        <td><s:form><s:submit ac="cnts-clear-close-time" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupTimingDialog(event, 'CloseTime');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:close_time" /></td>
     </s:tr>
 </table>
@@ -874,31 +937,31 @@ function popupAdvancedDialog(e, skipField)
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupUrlDialog();">
         <td>URL for participation:</td>
         <td><s:textfield id="OrigTeamUrl" readonly="readonly" size="48" name="param" value="cnts->team_url" /><% if (!cnts->team_url) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-team-url" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupUrlDialog(event, 'TeamUrl');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:team_url" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupUrlDialog();">
         <td>URL for the current standings:</td>
         <td><s:textfield id="OrigStandingsUrl" readonly="readonly" size="48" name="param" value="cnts->standings_url" /><% if (!cnts->standings_url) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-standings-url" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupUrlDialog(event, 'StandingsUrl');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:standings_url" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupUrlDialog();">
         <td>URL for the problemset:</td>
         <td><s:textfield id="OrigProblemsUrl" readonly="readonly" size="48" name="param" value="cnts->problems_url" /><% if (!cnts->problems_url) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-problems-url" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupUrlDialog(event, 'ProblemsUrl');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:problems_url" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupUrlDialog();">
         <td>URL for the contest logo:</td>
         <td><s:textfield id="OrigLogoUrl" readonly="readonly" size="48" name="param" value="cnts->logo_url" /><% if (!cnts->logo_url) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-logo-url" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupUrlDialog(event, 'LogoUrl');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:logo_url" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupUrlDialog();">
         <td>URL for the contest CSS:</td>
         <td><s:textfield id="OrigCssUrl" readonly="readonly" size="48" name="param" value="cnts->css_url" /><% if (!cnts->css_url) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-css-url" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupUrlDialog(event, 'CssUrl');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:css_url" /></td>
     </s:tr>
 </table>
@@ -1308,31 +1371,31 @@ initial count = <s:v value="memb->init_count" />
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupHeadersDialog();">
         <td>HTML header file for 'users' CGI-program:</td>
         <td><s:textfield id="OrigUsersHeaderFile" readonly="readonly" size="48" name="param" value="cnts->users_header_file" /><% if (!cnts->users_header_file) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-users-header" label="Clear" /></s:form>[<s:a ac="cnts-edit-users-header-page">Edit</s:a>]</td>
+        <td><input type="button" onclick="popupHeadersDialog(event, 'UsersHeaderFile');" value="Clear" />[<s:a ac="cnts-edit-users-header-page">Edit</s:a>]</td>
         <td><s:help topic="Contest.xml:users_header_file" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupHeadersDialog();">
         <td>HTML footer file for 'users' CGI-program:</td>
         <td><s:textfield id="OrigUsersFooterFile" readonly="readonly" size="48" name="param" value="cnts->users_footer_file" /><% if (!cnts->users_footer_file) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-users-footer" label="Clear" /></s:form>[<s:a ac="cnts-edit-users-footer-page">Edit</s:a>]</td>
+        <td><input type="button" onclick="popupHeadersDialog(event, 'UsersFooterFile');" value="Clear" />[<s:a ac="cnts-edit-users-footer-page">Edit</s:a>]</td>
         <td><s:help topic="Contest.xml:users_footer_file" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupHeadersDialog();">
         <td>Copyright notice file:</td>
         <td><s:textfield id="OrigCopyrightFile" readonly="readonly" size="48" name="param" value="cnts->copyright_file" /><% if (!cnts->copyright_file) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-copyright" label="Clear" /></s:form>[<s:a ac="cnts-edit-copyright-page">Edit</s:a>]</td>
+        <td><input type="button" onclick="popupHeadersDialog(event, 'CopyrightFile');" value="Clear" />[<s:a ac="cnts-edit-copyright-page">Edit</s:a>]</td>
         <td><s:help topic="Contest.xml:copyright_file" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupHeadersDialog();">
         <td>Participant welcome message file:</td>
         <td><s:textfield id="OrigWelcomeFile" readonly="readonly" size="48" name="param" value="cnts->welcome_file" /><% if (!cnts->welcome_file) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-welcome" label="Clear" /></s:form>[<s:a ac="cnts-edit-welcome-page">Edit</s:a>]</td>
+        <td><input type="button" onclick="popupHeadersDialog(event, 'WelcomeFile');" value="Clear" />[<s:a ac="cnts-edit-welcome-page">Edit</s:a>]</td>
         <td><s:help topic="Contest.xml:welcome_file" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupHeadersDialog();">
         <td>Registration welcome message file:</td>
         <td><s:textfield id="OrigRegWelcomeFile" readonly="readonly" size="48" name="param" value="cnts->reg_welcome_file" /><% if (!cnts->reg_welcome_file) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-reg-welcome" label="Clear" /></s:form>[<s:a ac="cnts-edit-reg-welcome-page">Edit</s:a>]</td>
+        <td><input type="button" onclick="popupHeadersDialog(event, 'RegWelcomeFile');" value="Clear" />[<s:a ac="cnts-edit-reg-welcome-page">Edit</s:a>]</td>
         <td><s:help topic="Contest.xml:reg_welcome_file" /></td>
     </s:tr>
 </table>
@@ -1348,55 +1411,55 @@ initial count = <s:v value="memb->init_count" />
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
         <td>HTML attributes for 'users' headers:</td>
         <td><s:textfield id="OrigUsersHeadStyle" readonly="readonly" size="48" name="param" value="cnts->users_head_style" /><% if (!cnts->users_head_style) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-users-head-style" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersHeadStyle');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:users_head_style" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
         <td>HTML attributes for 'users' paragraphs:</td>
         <td><s:textfield id="OrigUsersParStyle" readonly="readonly" size="48" name="param" value="cnts->users_par_style" /><% if (!cnts->users_par_style) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-users-par-style" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersParStyle');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:users_par_style" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
         <td>HTML attributes for 'users' tables:</td>
         <td><s:textfield id="OrigUsersTableStyle" readonly="readonly" size="48" name="param" value="cnts->users_table_style" /><% if (!cnts->users_table_style) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-users-table-style" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersTableStyle');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:users_table_style" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
         <td>HTML attributes for 'users' verbatim text:</td>
         <td><s:textfield id="OrigUsersVerbStyle" readonly="readonly" size="48" name="param" value="cnts->users_verb_style" /><% if (!cnts->users_verb_style) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-users-verb-style" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersVerbStyle');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:users_verb_style" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
         <td>Format specification for users table:</td>
         <td><s:textfield id="OrigUsersTableFormat" readonly="readonly" size="48" name="param" value="cnts->users_table_format" /><% if (!cnts->users_table_format) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-users-table-format" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersTableFormat');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:users_table_format" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
         <td>Format specification for users table (En):</td>
         <td><s:textfield id="OrigUsersTableFormatEn" readonly="readonly" size="48" name="param" value="cnts->users_table_format_en" /><% if (!cnts->users_table_format_en) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-users-table-format-en" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersTableFormatEn');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:users_table_format_en" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
         <td>Legend specification for users table:</td>
         <td><s:textfield id="OrigUsersTableLegend" readonly="readonly" size="48" name="param" value="cnts->users_table_legend" /><% if (!cnts->users_table_legend) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-users-table-legend" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersTableLegend');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:users_table_legend" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
         <td>Legend specification for users table (En):</td>
         <td><s:textfield id="OrigUsersTableLegendEn" readonly="readonly" size="48" name="param" value="cnts->users_table_legend_en" /><% if (!cnts->users_table_legend_en) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-users-table-legend-en" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersTableLegendEn');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:users_table_legend_en" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
         <td>Additional comment for user name field:</td>
         <td><s:textfield id="OrigUserNameComment" readonly="readonly" size="48" name="param" value="cnts->user_name_comment" /><% if (!cnts->user_name_comment) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-register-name-comment" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAttrsDialog(event, 'UserNameComment');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:user_name_comment" /></td>
     </s:tr>
 </table>
@@ -1412,19 +1475,19 @@ initial count = <s:v value="memb->init_count" />
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupNotificationsDialog();">
         <td>CHECK FAILED e-mail notification address:</td>
         <td><s:textfield id="OrigCfNotifyEmail" readonly="readonly" size="48" name="param" value="cnts->cf_notify_email" /><% if (!cnts->cf_notify_email) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-cf-notify-email" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupNotificationsDialog(event, 'CfNotifyEmail');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:cf_notify_email" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupNotificationsDialog();">
         <td>Clar request e-mail notification address:</td>
         <td><s:textfield id="OrigClarNotifyEmail" readonly="readonly" size="48" name="param" value="cnts->clar_notify_email" /><% if (!cnts->clar_notify_email) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-clar-notify-email" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupNotificationsDialog(event, 'ClarNotifyEmail');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:clar_notify_email" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupNotificationsDialog();">
         <td>Daily statistics email address:</td>
         <td><s:textfield id="OrigDailyStatEmail" readonly="readonly" size="48" name="param" value="cnts->daily_stat_email" /><% if (!cnts->daily_stat_email) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-daily-stat-email" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupNotificationsDialog(event, 'DailyStatEmail');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:daily_stat_email" /></td>
     </s:tr>
 </table>
