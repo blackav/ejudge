@@ -4032,6 +4032,12 @@ handle_textfield_open(
         fprintf(prg_f, "}\n");
     }
     handle_html_string(prg_f, txt_f, log_f, " />");
+    int need_notset = html_attribute_get_bool(html_element_find_attribute(elem, "notset"), 0);
+    if (need_notset) {
+        fprintf(prg_f, "if (!(%s)) { ", expr);
+        handle_html_string(prg_f, txt_f, log_f, "(<i>Not set</i>)");
+        fprintf(prg_f, " }\n");
+    }
     return 0;
 }
 
