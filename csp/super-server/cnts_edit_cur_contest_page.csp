@@ -58,7 +58,7 @@ static const unsigned char * const form_row_attrs[]=
 
 <div id="FlagsDialogDiv" title="Contest Options">
     <s:form id="FlagsDialogForm">
-        <s:hidden name="action" ac="cnts-save-basic-form" />
+        <s:hidden name="action" ac="cnts-save-flags-form" />
         <fieldset>
             <label for="FlagsDialogClosed">Closed for participation?</label>
             <input type="checkbox" name="closed" id="FlagsDialogClosed" value="1" />
@@ -701,17 +701,26 @@ function popupNotificationsDialog()
     $("#NotificationsDialogDiv").dialog('open');
 }
 
-function popupAdvancedDialog()
+function popupAdvancedDialog(e, skipField)
 {
     var fields = [ "DirMode", "DirGroup", "FileMode", "FileGroup", "AllowedLanguages", "AllowedRegions", "LoginTemplate", "LoginTemplateOptions" ];
     for (var i in fields) {
-        var dst = document.getElementById("AdvancedDialog" + fields[i]);
-        var src = document.getElementById("Orig" + fields[i]);
-        if (dst != null && src != null) {
-            dst.value = src.value;
+        if (skipField != fields[i]) {
+            var dst = document.getElementById("AdvancedDialog" + fields[i]);
+            var src = document.getElementById("Orig" + fields[i]);
+            if (dst != null && src != null) {
+                dst.value = src.value;
+            }
+        }
+    }
+    if (typeof skipField !== 'undefined') {
+        var dst = document.getElementById("AdvancedDialog" + skipField);
+        if (dst != null) {
+            dst.value = "";
         }
     }
 
+    if (e) e.stopPropagation();
     $("#AdvancedDialogDiv").dialog('open');
 }
 </script>
@@ -1431,37 +1440,37 @@ initial count = <s:v value="memb->init_count" />
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
         <td>The directory permissions (octal):</td>
         <td><s:textfield id="OrigDirMode" readonly="readonly" size="48" name="param" value="cnts->dir_mode" /><% if (!cnts->dir_mode) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-dir-mode" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAdvancedDialog(event, 'DirMode');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:dir_mode" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
         <td>The directory group:</td>
         <td><s:textfield id="OrigDirGroup" readonly="readonly" size="48" name="param" value="cnts->dir_group" /><% if (!cnts->dir_group) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-dir-group" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAdvancedDialog(event, 'DirGroup');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:dir_group" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
         <td>The file permissions (octal):</td>
         <td><s:textfield id="OrigFileMode" readonly="readonly" size="48" name="param" value="cnts->file_mode" /><% if (!cnts->file_mode) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-file-mode" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAdvancedDialog(event, 'FileMode');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:file_mode" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
         <td>The file group:</td>
         <td><s:textfield id="OrigFileGroup" readonly="readonly" size="48" name="param" value="cnts->file_group" /><% if (!cnts->file_group) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-file-group" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAdvancedDialog(event, 'FileGroup');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:file_group" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
         <td>Allowed programming languages:</td>
         <td><s:textfield id="OrigAllowedLanguages" readonly="readonly" size="48" name="param" value="cnts->allowed_languages" /><% if (!cnts->allowed_languages) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-allowed-languages" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAdvancedDialog(event, 'AllowedLanguages');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:allowed_languages" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
         <td>Allowed regions:</td>
-        <td><s:textfield id="OrigAllowedRegions" readonly="readonly" size="48" name="param" value="cnts->allowed_regions" /><% if (!cnts->allowed_regions) { %>(<i>Not</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-allowed-regions" label="Clear" /></s:form></td>
+        <td><s:textfield id="OrigAllowedRegions" readonly="readonly" size="48" name="param" value="cnts->allowed_regions" /><% if (!cnts->allowed_regions) { %>(<i>Not set</i>)<% } %></td>
+        <td><input type="button" onclick="popupAdvancedDialog(event, 'AllowedRegions');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:allowed_regions" /></td>
     </s:tr>
 <%
@@ -1470,7 +1479,7 @@ initial count = <s:v value="memb->init_count" />
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
         <td>Template for new logins:</td>
         <td><s:textfield id="OrigLoginTemplate" readonly="readonly" size="48" name="param" value="cnts->login_template" /><% if (!cnts->login_template) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-login-template" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAdvancedDialog(event, 'LoginTemplate');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:login_template" /></td>
     </s:tr>
 <%
@@ -1483,7 +1492,7 @@ initial count = <s:v value="memb->init_count" />
     <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
         <td>Login auto-assign options:</td>
         <td><s:textfield id="OrigLoginTemplateOptions" readonly="readonly" size="48" name="param" value="cnts->login_template_options" /><% if (!cnts->login_template_options) { %>(<i>Not set</i>)<% } %></td>
-        <td><s:form><s:submit ac="cnts-clear-login-template-options" label="Clear" /></s:form></td>
+        <td><input type="button" onclick="popupAdvancedDialog(event, 'LoginTemplateOptions');" value="Clear" /></td>
         <td><s:help topic="Contest.xml:login_template_options" /></td>
     </s:tr>
 <%
