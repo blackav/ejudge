@@ -822,11 +822,12 @@ td.a-button-style, td.a-button-style:hover {
 	float: right !important;
 	font-size: 1.1em !important;
 	padding-top: 2px !important;
-	height: 22px !important;
+	padding-left: 3px !important;
+	height: 23px !important;
 }
 
 .ui-widget-content {
-	border-color: #CBCBCB !important;
+	border-color: #B6B6B6 !important;
 }
 
 .ui-widget-content .ui-widget-content {
@@ -836,5 +837,283 @@ td.a-button-style, td.a-button-style:hover {
 
 .ui-search-table {
 	border: none !important;
+}
+
+/************* UI-ACCORDION ***************/
+
+.ui-accordion.ui-widget {
+	padding: 0 5px 3px 5px;
+	margin: 0 -2px;
+	border: none !important;
+}
+
+.ui-accordion-header {
+	padding: 7px 3px;
+	margin: 3px 0 0 0;
+	font-size: 16px;
+	border-radius: 2px 2px 0 0 !important;
+}
+
+.ui-accordion-header .ui-icon {
+	margin-right: 3px;
+}
+
+.ui-accordion-header-active {
+	outline: none;
+}
+
+.ui-accordion-header.ui-state-hover, .ui-accordion-header.ui-state-active {
+	border: 1px solid rgb(117, 147, 176) !important;
+}
+
+.ui-accordion-content.ui-widget-content {
+	background: none;
+	border-top: none !important;
+}
+
+.ui-accordion-content table {
+	min-width: 1000px;
+}
+
+.ui-accordion-content table td {
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+#TimingDialogDiv label{
+	min-width: 180px;
+}
+
+#RegistrationDialogDiv label{
+	width: 220px;
+}
+
+#RegistrationDialogDiv input {
+	max-width: 330px;
+	vertical-align: top;
+}
+
+#UrlDialogDiv label {
+	width: 205px;
+}
+
+ #UrlDialogDiv input, #AdvancedDialogDiv input  {
+	max-width: 345px;
+	vertical-align: top;
+}
+
+#AdvancedDialogDiv label {
+	width: 205px;
+}
+
+#HeadersDialogDiv label, #NotificationsDialogDiv label {
+	width: 300px;
+	margin-top: 6px !important;
+	margin-bottom: 1px !important;
+}
+
+/************* UI-DATEPICKER Changes ***************/
+
+.ui-datepicker-header {
+	border-radius: 2px !important;
+}
+
+.ui-datepicker-calendar .ui-state-default {
+	border-color: rgb(119, 155, 186) !important;
+	background: rgb(212, 228, 240) !important;
+}
+
+.ui-datepicker-calendar .ui-state-hover, .ui-datepicker-calendar .ui-state-active  {
+	background: rgb(234, 242, 249) !important;
+}
+
+.ui-dialog-titlebar-close span.ui-button-text {
+	position: relative;
+	bottom: 2px;
+	left: 2px;
+	display: inline-block;
+}
+
+.ui-datepicker-buttonpane button {
+	border-radius: 2px !important;
+}
+
+.ui-icon {
+  display: inline-block;
+  text-indent: -99999px;
+  overflow: hidden;
+  background-repeat: no-repeat;
+}
+
+/************* UI-DATEPICKER ***************/
+
+input.ui-button::-moz-focus-inner,
+button.ui-button::-moz-focus-inner {
+	border: 0;
+	padding: 0;
+}
+.ui-datepicker {
+	width: 17em;
+	padding: .2em .2em 0;
+	display: none;
+}
+.ui-datepicker .ui-datepicker-header {
+	position: relative;
+	padding: .2em 0;
+}
+.ui-datepicker .ui-datepicker-prev,
+.ui-datepicker .ui-datepicker-next {
+	position: absolute;
+	top: 2px;
+	width: 1.8em;
+	height: 1.8em;
+}
+.ui-datepicker .ui-datepicker-prev-hover,
+.ui-datepicker .ui-datepicker-next-hover {
+	top: 1px;
+}
+.ui-datepicker .ui-datepicker-prev {
+	left: 2px;
+}
+.ui-datepicker .ui-datepicker-next {
+	right: 2px;
+}
+.ui-datepicker .ui-datepicker-prev-hover {
+	left: 1px;
+}
+.ui-datepicker .ui-datepicker-next-hover {
+	right: 1px;
+}
+.ui-datepicker .ui-datepicker-prev span,
+.ui-datepicker .ui-datepicker-next span {
+	display: block;
+	position: absolute;
+	left: 50%;
+	margin-left: -8px;
+	top: 50%;
+	margin-top: -8px;
+}
+.ui-datepicker .ui-datepicker-title {
+	margin: 0 2.3em;
+	line-height: 1.8em;
+	text-align: center;
+}
+.ui-datepicker .ui-datepicker-title select {
+	font-size: 1em;
+	margin: 1px 0;
+}
+.ui-datepicker select.ui-datepicker-month,
+.ui-datepicker select.ui-datepicker-year {
+	width: 45%;
+}
+.ui-datepicker table {
+	width: 100%;
+	font-size: .9em;
+	border-collapse: collapse;
+	margin: 0 0 .4em;
+}
+.ui-datepicker th {
+	padding: .7em .3em;
+	text-align: center;
+	font-weight: bold;
+	border: 0;
+}
+.ui-datepicker td {
+	border: 0;
+	padding: 1px;
+}
+.ui-datepicker td span,
+.ui-datepicker td a {
+	display: block;
+	padding: .2em;
+	text-align: right;
+	text-decoration: none;
+}
+.ui-datepicker .ui-datepicker-buttonpane {
+	background-image: none;
+	margin: .7em 0 0 0;
+	padding: 0 .2em;
+	border-left: 0;
+	border-right: 0;
+	border-bottom: 0;
+}
+.ui-datepicker .ui-datepicker-buttonpane button {
+	float: right;
+	margin: .5em .2em .4em;
+	cursor: pointer;
+	width: auto;
+	overflow: visible;
+}
+.ui-datepicker .ui-datepicker-buttonpane button.ui-datepicker-current {
+	float: left;
+}
+
+/* with multiple calendars */
+.ui-datepicker.ui-datepicker-multi {
+	width: auto;
+}
+.ui-datepicker-multi .ui-datepicker-group {
+	float: left;
+}
+.ui-datepicker-multi .ui-datepicker-group table {
+	width: 95%;
+	margin: 0 auto .4em;
+}
+.ui-datepicker-multi-2 .ui-datepicker-group {
+	width: 50%;
+}
+.ui-datepicker-multi-3 .ui-datepicker-group {
+	width: 33.3%;
+}
+.ui-datepicker-multi-4 .ui-datepicker-group {
+	width: 25%;
+}
+.ui-datepicker-multi .ui-datepicker-group-last .ui-datepicker-header,
+.ui-datepicker-multi .ui-datepicker-group-middle .ui-datepicker-header {
+	border-left-width: 0;
+}
+.ui-datepicker-multi .ui-datepicker-buttonpane {
+	clear: left;
+}
+.ui-datepicker-row-break {
+	clear: both;
+	width: 100%;
+	font-size: 0;
+}
+
+/* RTL support */
+.ui-datepicker-rtl {
+	direction: rtl;
+}
+.ui-datepicker-rtl .ui-datepicker-prev {
+	right: 2px;
+	left: auto;
+}
+.ui-datepicker-rtl .ui-datepicker-next {
+	left: 2px;
+	right: auto;
+}
+.ui-datepicker-rtl .ui-datepicker-prev:hover {
+	right: 1px;
+	left: auto;
+}
+.ui-datepicker-rtl .ui-datepicker-next:hover {
+	left: 1px;
+	right: auto;
+}
+.ui-datepicker-rtl .ui-datepicker-buttonpane {
+	clear: right;
+}
+.ui-datepicker-rtl .ui-datepicker-buttonpane button {
+	float: left;
+}
+.ui-datepicker-rtl .ui-datepicker-buttonpane button.ui-datepicker-current,
+.ui-datepicker-rtl .ui-datepicker-group {
+	float: right;
+}
+.ui-datepicker-rtl .ui-datepicker-group-last .ui-datepicker-header,
+.ui-datepicker-rtl .ui-datepicker-group-middle .ui-datepicker-header {
+	border-right-width: 0;
+	border-left-width: 1px;
 }
 
