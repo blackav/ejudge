@@ -60,50 +60,50 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="FlagsDialogForm">
         <s:hidden name="action" ac="cnts-save-flags-form" />
         <fieldset>
-            <label for="FlagsDialogClosed">Closed for participation?</label>
             <input type="checkbox" name="closed" id="FlagsDialogClosed" value="1" />
+            <label for="FlagsDialogClosed">Closed for participation?</label>
             <br/>
-            <label for="FlagsDialogDisableTeamPassword">Disable separate team password?</label>
             <input type="checkbox" name="disable_team_password" id="FlagsDialogDisableTeamPassword" value="1" />
+            <label for="FlagsDialogDisableTeamPassword">Disable separate team password?</label>
             <br/>
-            <label for="FlagsDialogSimpleRegistration">Enable simple registration (no email)?</label>
             <input type="checkbox" name="simple_registration" id="FlagsDialogSimpleRegistration" value="1" />
+            <label for="FlagsDialogSimpleRegistration">Enable simple registration (no email)?</label>
             <br/>
-            <label for="FlagsDialogSendPasswdEmail">Always send password e-mail?</label>
             <input type="checkbox" name="send_passwd_email" id="FlagsDialogSendPasswdEmail" value="1" />
+            <label for="FlagsDialogSendPasswdEmail">Always send password e-mail?</label>
             <br/>
-            <label for="FlagsDialogInvisible">Invisible in serve-control?</label>
             <input type="checkbox" name="invisible" id="FlagsDialogInvisible" value="1" />
+            <label for="FlagsDialogInvisible">Invisible in serve-control?</label>
             <br/>
-            <label for="FlagsDialogCleanUsers">Allow removal of non-active users?</label>
             <input type="checkbox" name="clean_users" id="FlagsDialogCleanUsers" value="1" />
+            <label for="FlagsDialogCleanUsers">Allow removal of non-active users?</label>
             <br/>
-            <label for="FlagsDialogDisableMemberDelete">Disallow removal of team members?</label>
             <input type="checkbox" name="disable_member_delete" id="FlagsDialogDisableMemberDelete" value="1" />
+            <label for="FlagsDialogDisableMemberDelete">Disallow removal of team members?</label>
             <br/>
-            <label for="FlagsDialogAssignLogins">Auto-assign logins?</label>
             <input type="checkbox" name="assign_logins" id="FlagsDialogAssignLogins" value="1" />
+            <label for="FlagsDialogAssignLogins">Auto-assign logins?</label>
             <br/>
-            <label for="FlagsDialogForceRegistration">Force contest registration?</label>
             <input type="checkbox" name="force_registration" id="FlagsDialogForceRegistration" value="1" />
+            <label for="FlagsDialogForceRegistration">Force contest registration?</label>
             <br/>
-            <label for="FlagsDialogDisableName">Disable user &quot;Name&quot; field?</label>
             <input type="checkbox" name="disable_name" id="FlagsDialogDisableName" value="1" />
+            <label for="FlagsDialogDisableName">Disable user &quot;Name&quot; field?</label>
             <br/>
-            <label for="FlagsDialogEnablePasswordRecovery">Enable password recovery?</label>
             <input type="checkbox" name="enable_password_recovery" id="FlagsDialogEnablePasswordRecovery" value="1" />
+            <label for="FlagsDialogEnablePasswordRecovery">Enable password recovery?</label>
             <br/>
-            <label for="FlagsDialogExamMode">Examination (simplified) mode?</label>
             <input type="checkbox" name="exam_mode" id="FlagsDialogExamMode" value="1" />
+            <label for="FlagsDialogExamMode">Examination (simplified) mode?</label>
             <br/>
-            <label for="FlagsDialogDisablePasswordChange">Disable password change?</label>
             <input type="checkbox" name="disable_password_change" id="FlagsDialogDisablePasswordChange" value="1" />
+            <label for="FlagsDialogDisablePasswordChange">Disable password change?</label>
             <br/>
-            <label for="FlagsDialogDisableLocaleChange">Disable locale change?</label>
             <input type="checkbox" name="disable_locale_change" id="FlagsDialogDisableLocaleChange" value="1" />
+            <label for="FlagsDialogDisableLocaleChange">Disable locale change?</label>
             <br/>
-            <label for="FlagsDialogAllowRegDataEdit">Allow edit registration data during contest?</label>
             <input type="checkbox" name="allow_reg_data_edit" id="FlagsDialogAllowRegDataEdit" value="1" />
+            <label for="FlagsDialogAllowRegDataEdit">Allow edit registration data during contest?</label>
             <br/>
         </fieldset>
     </s:form>
