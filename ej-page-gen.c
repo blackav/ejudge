@@ -4227,15 +4227,6 @@ handle_yesno_open(
         return -1;
     }
     HtmlAttribute *value_attr = html_element_find_attribute(elem, "value");
-    fprintf(prg_f,
-            "{\n"
-            "  unsigned char *s1 = \"\", *s2 = \"\";\n");
-    if (value_attr) {
-        fprintf(prg_f,
-                "if ((%s)) { s2 = \" selected=\\\"selected\\\"\"; } else { s1 = \" selected=\\\"selected\\\"\"; }\n",
-                value_attr->value);
-    }
-
     const unsigned char *no_label = "No";
     HtmlAttribute *no_attr = html_element_find_attribute(elem, "nolabel");
     if (no_attr) {
@@ -4246,16 +4237,49 @@ handle_yesno_open(
     if (yes_attr) {
         yes_label = yes_attr->value;
     }
+    HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
+    HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabled");
 
     char *str_p = 0;
     size_t str_z = 0;
-    FILE *str_f = open_memstream(&str_p, &str_z);
+    FILE *str_f = NULL;
+
+    if (disabled_attr) {
+        str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, "<input type=\"hidden\" name=\"%s\"", name_attr->value);
+        if (id_attr) {
+            fprintf(str_f, " id=\"%s\"", id_attr->value);
+        }
+        fprintf(str_f, " value=\"");
+        fclose(str_f); str_f = NULL;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = NULL; str_z = 0;
+        fprintf(prg_f, "if ((%s)) {\n", value_attr->value);
+        handle_html_string(prg_f, txt_f, log_f, "1\" /><b><font color=\"green\">");
+        fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", yes_label);
+        handle_html_string(prg_f, txt_f, log_f, "</font></b>");
+        fprintf(prg_f, "} else {\n");
+        handle_html_string(prg_f, txt_f, log_f, "0\" /><b>");
+        fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", no_label);
+        handle_html_string(prg_f, txt_f, log_f, "</b>");
+        fprintf(prg_f, "}\n");
+        return 0;
+    }
+
+    fprintf(prg_f,
+            "{\n"
+            "  unsigned char *s1 = \"\", *s2 = \"\";\n");
+    if (value_attr) {
+        fprintf(prg_f,
+                "if ((%s)) { s2 = \" selected=\\\"selected\\\"\"; } else { s1 = \" selected=\\\"selected\\\"\"; }\n",
+                value_attr->value);
+    }
+
+    str_f = open_memstream(&str_p, &str_z);
     fprintf(str_f, "<select");
-    HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
     if (id_attr) {
         fprintf(str_f, " id=\"%s\"", id_attr->value);
     }
-    HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabled");
     if (disabled_attr) {
         fprintf(str_f, " disabled=\"%s\"", disabled_attr->value);
     }
