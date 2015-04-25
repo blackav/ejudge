@@ -1680,12 +1680,6 @@ cmd_set_value(struct client_state *p, int len,
   sstate = sid_state_get(p->cookie, &p->ip, p->user_id, p->login, p->name);
 
   switch (pkt->b.id) {
-  case SSERV_CMD_CNTS_CHANGE_NAME:
-  case SSERV_CMD_CNTS_CHANGE_NAME_EN:
-  case SSERV_CMD_CNTS_CHANGE_MAIN_URL:
-  case SSERV_CMD_CNTS_CHANGE_KEYWORDS:
-  case SSERV_CMD_CNTS_CHANGE_USER_CONTEST:
-  case SSERV_CMD_CNTS_CHANGE_DEFAULT_LOCALE:
   case SSERV_CMD_CNTS_CHANGE_AUTOREGISTER:
   case SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD:
   case SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION:
@@ -2671,12 +2665,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_CLEAR_DIR_GROUP] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_FILE_MODE] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_CLEAR_FILE_GROUP] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CHANGE_NAME] = { cmd_set_value },
-  [SSERV_CMD_CNTS_CHANGE_NAME_EN] = { cmd_set_value },
-  [SSERV_CMD_CNTS_CHANGE_MAIN_URL] = { cmd_set_value },
-  [SSERV_CMD_CNTS_CHANGE_KEYWORDS] = { cmd_set_value },
-  [SSERV_CMD_CNTS_CHANGE_USER_CONTEST] = { cmd_set_value },
-  [SSERV_CMD_CNTS_CHANGE_DEFAULT_LOCALE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_AUTOREGISTER] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION] = { cmd_set_value },

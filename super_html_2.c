@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -246,24 +245,6 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   }
 
   switch (cmd) {
-  case SSERV_CMD_CNTS_CHANGE_NAME:
-    p_str = &cnts->name;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_NAME_EN:
-    p_str = &cnts->name_en;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_MAIN_URL:
-    p_str = &cnts->main_url;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_KEYWORDS:
-    p_str = &cnts->keywords;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_USER_CONTEST:
-    p_str = &cnts->user_contest;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_DEFAULT_LOCALE:
-    p_str = &cnts->default_locale;
-    break;
   case SSERV_CMD_CNTS_CHANGE_AUTOREGISTER:
     p_bool = &cnts->autoregister;
     break;
