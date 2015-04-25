@@ -324,7 +324,7 @@ cmd_edited_cnts_start_new(
   if (new_edit == 1) {
     if (!contest_id) {
       refresh_page(out_f, phr, "action=%d&op=%d",
-                   SSERV_CMD_HTTP_REQUEST, SSERV_CMD_CREATE_NEW_CONTEST_PAGE);
+                   SSERV_CMD_HTTP_REQUEST, 0);
     } else {
       refresh_page(out_f, phr, "action=%d&op=%d&contest_id=%d",
                    SSERV_CMD_HTTP_REQUEST, 0,
@@ -405,160 +405,6 @@ cmd_locked_cnts_continue(
   return 0;
 }
 
-static int
-cmd_op_create_new_contest_page(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  unsigned char buf[1024];
-  int contest_num = 0, recomm_id = 1, j, cnts_id;
-  const int *contests = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  const struct contest_desc *cnts = 0;
-
-  if (phr->ss->edited_cnts) {
-    snprintf(buf, sizeof(buf), "serve-control: %s, another contest is edited",
-             phr->html_name);
-    write_html_header(out_f, phr, buf, 1, 0);
-    fprintf(out_f, "<h1>%s</h1>\n", buf);
-
-    snprintf(buf, sizeof(buf),
-             "<input type=\"hidden\" name=\"SID\" value=\"%016llx\" />",
-             phr->session_id);
-    super_html_edited_cnts_dialog(out_f,
-                                  phr->priv_level, phr->user_id, phr->login,
-                                  phr->session_id, &phr->ip, phr->config,
-                                  phr->ss, phr->self_url, buf,
-                                  "", NULL, 1);
-
-    write_html_footer(out_f);
-    return 0;
-  }
-
-  if (phr->priv_level != PRIV_LEVEL_ADMIN)
-    FAIL(SSERV_ERR_PERM_DENIED);
-  if (ejudge_cfg_opcaps_find(phr->config, phr->login, &phr->caps) < 0)
-    FAIL(SSERV_ERR_PERM_DENIED);
-  if (opcaps_check(phr->caps, OPCAP_EDIT_CONTEST) < 0)
-    FAIL(SSERV_ERR_PERM_DENIED);
-
-  contest_num = contests_get_list(&contests);
-  if (contest_num > 0) recomm_id = contests[contest_num - 1] + 1;
-  j = super_serve_sid_state_get_max_edited_cnts();
-  if (j >= recomm_id) recomm_id = j + 1;
-
-  snprintf(buf, sizeof(buf), "serve-control: %s, create a new contest",
-           phr->html_name);
-  write_html_header(out_f, phr, buf, 1, 0);
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-
-  html_start_form(out_f, 1, phr->self_url, "");
-  html_hidden(out_f, "SID", "%016llx", phr->session_id);
-  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
-  html_hidden(out_f, "op", "%d", SSERV_CMD_CREATE_NEW_CONTEST);
-
-  fprintf(out_f, "<table border=\"0\">");
-  fprintf(out_f, "<tr><td>Contest number:</td><td>%s</td></tr>\n",
-          html_input_text(buf, sizeof(buf), "contest_id", 20, 0, "%d", recomm_id));
-  fprintf(out_f, "<tr><td>Contest template:</td><td>");
-  fprintf(out_f, "<select name=\"templ_id\">"
-          "<option value=\"0\">From scratch</option>");
-  for (j = 0; j < contest_num; j++) {
-    cnts_id = contests[j];
-    if (contests_get(cnts_id, &cnts) < 0) continue;
-    fprintf(out_f, "<option value=\"%d\">%d - %s</option>", cnts_id, cnts_id,
-            ARMOR(cnts->name));
-  }
-  fprintf(out_f, "</select></td></tr>\n");
-  fprintf(out_f, "<tr><td>&nbsp;</td><td>");
-  fprintf(out_f, "<input type=\"submit\" value=\"%s\"/>", "Create contest!");
-  fprintf(out_f, "</td></tr>\n");
-  fprintf(out_f, "</table></form>\n");
-  write_html_footer(out_f);
-
- cleanup:
-  html_armor_free(&ab);
-  return retval;
-}
-
-static int
-cmd_op_create_new_contest(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int contest_id = -1;
-  int templ_id = -1;
-  int contest_num, i;
-  const int *contests = 0;
-  const struct contest_desc *templ_cnts = 0;
-
-  if (phr->ss->edited_cnts)
-    FAIL(SSERV_ERR_CONTEST_EDITED);
-  if (phr->priv_level != PRIV_LEVEL_ADMIN)
-    FAIL(SSERV_ERR_PERM_DENIED);
-  if (ejudge_cfg_opcaps_find(phr->config, phr->login, &phr->caps) < 0)
-    FAIL(SSERV_ERR_PERM_DENIED);
-  if (opcaps_check(phr->caps, OPCAP_EDIT_CONTEST) < 0)
-    FAIL(SSERV_ERR_PERM_DENIED);
-  if (hr_cgi_param_int(phr, "contest_id", &contest_id) < 0
-      || contest_id < 0 || contest_id > EJ_MAX_CONTEST_ID)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if (hr_cgi_param_int(phr, "templ_id", &templ_id) < 0 || templ_id < 0)
-    FAIL(SSERV_ERR_INV_VALUE);
-
-  contest_num = contests_get_list(&contests);
-  if (contest_num < 0 || !contests)
-    FAIL(SSERV_ERR_INTERNAL);
-
-  if (!contest_id) {
-    contest_id = contests[contest_num - 1] + 1;
-    i = super_serve_sid_state_get_max_edited_cnts();
-    if (i >= contest_id) contest_id = i + 1;
-  }
-  for (i = 0; i < contest_num && contests[i] != contest_id; i++);
-  if (i < contest_num)
-    FAIL(SSERV_ERR_CONTEST_ALREADY_EXISTS);
-  if (super_serve_sid_state_get_cnts_editor(contest_id))
-    FAIL(SSERV_ERR_CONTEST_ALREADY_EDITED);
-  if (templ_id > 0) {
-    for (i = 0; i < contest_num && contests[i] != templ_id; i++);
-    if (i >= contest_num)
-      FAIL(SSERV_ERR_INV_CONTEST);
-    if (contests_get(templ_id, &templ_cnts) < 0 || !templ_cnts)
-      FAIL(SSERV_ERR_INV_CONTEST);
-  }
-
-  if (!templ_cnts) {
-    phr->ss->edited_cnts = contest_tmpl_new(contest_id, phr->login, phr->self_url, phr->system_login, &phr->ip, phr->ssl_flag, phr->config);
-    phr->ss->global = prepare_new_global_section(contest_id, phr->ss->edited_cnts->root_dir, phr->config);
-  } else {
-    super_html_load_serve_cfg(templ_cnts, phr->config, phr->ss);
-    super_html_fix_serve(phr->ss, templ_id, contest_id);
-    phr->ss->edited_cnts = contest_tmpl_clone(phr->ss, contest_id, templ_id, phr->login, phr->system_login);
-  }
-
-  refresh_page(out_f, phr, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
-               0);
-
- cleanup:
-  return retval;
-}
-
-static int
-cmd_op_forget_contest(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  phr->json_reply = 1;
-  super_serve_clear_edited_contest(phr->ss);
-  return 1;
-}
-
 static handler_func_t op_handlers[SSERV_CMD_LAST] =
 {
   [SSERV_CMD_VIEW_CNTS_DETAILS] = cmd_cnts_details,
@@ -567,9 +413,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_EDITED_CNTS_START_NEW] = cmd_edited_cnts_start_new,
   [SSERV_CMD_LOCKED_CNTS_FORGET] = cmd_locked_cnts_forget,
   [SSERV_CMD_LOCKED_CNTS_CONTINUE] = cmd_locked_cnts_continue,
-  [SSERV_CMD_CREATE_NEW_CONTEST_PAGE] = cmd_op_create_new_contest_page,
-  [SSERV_CMD_CREATE_NEW_CONTEST] = cmd_op_create_new_contest,
-  [SSERV_CMD_FORGET_CONTEST] = cmd_op_forget_contest,
 
   [SSERV_CMD_BROWSE_PROBLEM_PACKAGES] = super_serve_op_browse_problem_packages,
   [SSERV_CMD_CREATE_PACKAGE] = super_serve_op_package_operation,
