@@ -428,10 +428,6 @@
     <s:param name="contest_id" value="phr->contest_id" />
 </s:url>
             [<s:a url="EditContestXmlUrl">Edit</s:a>]
-<s:url name="NewEditContestXmlUrl" ac="edit-contest-page">
-    <s:param name="contest_id" value="phr->contest_id" />
-</s:url>
-            [<s:a url="NewEditContestXmlUrl">New edit (experimental)</s:a>]
 <% } %>
         </td>
     </tr>
@@ -450,10 +446,6 @@
     <s:param name="contest_id" value="phr->contest_id" />
 </s:url>
             [<s:a url="EditServeCfgUrl">Edit</s:a>]
-<s:url name="NewEditContestXmlUrl" ac="edit-contest-page">
-    <s:param name="contest_id" value="phr->contest_id" />
-</s:url>
-            [<s:a url="NewEditContestXmlUrl">New edit (experimental)</s:a>]
 <% } %>
         </td>
     </tr>

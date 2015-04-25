@@ -387,7 +387,7 @@ cmd_edited_cnts_start_new(
                    SSERV_CMD_HTTP_REQUEST, SSERV_CMD_CREATE_NEW_CONTEST_PAGE);
     } else {
       refresh_page(out_f, phr, "action=%d&op=%d&contest_id=%d",
-                   SSERV_CMD_HTTP_REQUEST, SSERV_CMD_EDIT_CONTEST_PAGE,
+                   SSERV_CMD_HTTP_REQUEST, 0,
                    contest_id);
     }
   } else {
@@ -2853,7 +2853,7 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_EDITED_CNTS_START_NEW] = cmd_edited_cnts_start_new,
   [SSERV_CMD_LOCKED_CNTS_FORGET] = cmd_locked_cnts_forget,
   [SSERV_CMD_LOCKED_CNTS_CONTINUE] = cmd_locked_cnts_continue,
-  [SSERV_CMD_EDIT_CONTEST_PAGE] = cmd_edit_contest_page,
+  [_SSERV_CMD_EDIT_CONTEST_PAGE] = cmd_edit_contest_page,
   [SSERV_CMD_CREATE_NEW_CONTEST_PAGE] = cmd_op_create_new_contest_page,
   [SSERV_CMD_CREATE_NEW_CONTEST] = cmd_op_create_new_contest,
   [SSERV_CMD_FORGET_CONTEST] = cmd_op_forget_contest,
