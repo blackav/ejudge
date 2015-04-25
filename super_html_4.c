@@ -1367,7 +1367,7 @@ print_registration_fields(
   }
   fprintf(out_f, "</pre></font></td><td class=\"cnts_edit_clear\" valign=\"top\">");
   ss_dojo_button(out_f, 0, "edit_page-16x16", "Edit contents",
-              "ssLoad1(%d)", SSERV_CMD_EDIT_GENERAL_FIELDS_PAGE);
+              "ssLoad1(%d)", 0);
   fprintf(out_f, "</td></tr>\n");
 
   for (m = 0; m < CONTEST_LAST_MEMBER; ++m) {
@@ -1392,7 +1392,7 @@ print_registration_fields(
     }
     fprintf(out_f, "</pre></font></td><td class=\"cnts_edit_clear\" valign=\"top\">");
     ss_dojo_button(out_f, 0, "edit_page-16x16", "Edit contents",
-                "ssLoad2(%d, %d)", SSERV_CMD_EDIT_MEMBER_FIELDS_PAGE, m);
+                "ssLoad2(%d, %d)", 0, m);
     fprintf(out_f, "</td></tr>\n");
 
   }
@@ -2905,160 +2905,6 @@ cmd_edit_permissions_page(
 }
 
 static int
-cmd_edit_general_fields_page(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct contest_desc *ecnts;
-  int row = 1, ff, val;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  unsigned char buf[1024];
-
-  if (!(ecnts = phr->ss->edited_cnts)) FAIL(SSERV_ERR_NO_EDITED_CNTS);
-
-  snprintf(buf, sizeof(buf),
-           "serve-control: %s, contest %d, edit general fields",
-           phr->html_name, ecnts->id);
-  write_html_header(out_f, phr, buf, 1, 0);
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-  fprintf(out_f, "<br/>\n");
-  fprintf(out_f, "<form id=\"fieldList\">\n");
-  fprintf(out_f, "<table class=\"cnts_edit\">\n");
-  fprintf(out_f,
-          "<tr%s>"
-          "<th class=\"cnts_edit_legend\">Field</th>"
-          "<th class=\"cnts_edit_legend\">Selection</th>"
-          "<th class=\"cnts_edit_legend\">Legend</th>"
-          "</tr>", head_row_attr);
-  for (ff = 1; ff < CONTEST_LAST_FIELD; ++ff) {
-    fprintf(out_f, "<tr%s><td class=\"cnts_edit_legend\">%s</td>",
-            form_row_attrs[row ^= 1], contests_get_form_field_name(ff));
-    fprintf(out_f, "<td class=\"cnts_edit_legend\">");
-    val = 0;
-    if (ecnts->fields[ff]) {
-      val = 1;
-      if (ecnts->fields[ff]->mandatory) val = 2;
-    }
-    snprintf(buf, sizeof(buf), "field_%d", ff);
-    ss_html_int_select(out_f, 0, 0, buf, 0, val, 3,
-                       (const char *[]) { "Disabled", "Optional", "Mandatory"});
-    fprintf(out_f, "</td>");
-    fprintf(out_f, "<td class=\"cnts_edit_legend\"><input type=\"text\" name=\"legend_%d\"", ff);
-    if (ecnts->fields[ff] && ecnts->fields[ff]->legend)
-      fprintf(out_f, " value=\"%s\"", ARMOR(ecnts->fields[ff]->legend));
-    fprintf(out_f, " /></td></tr>\n");
-  }
-  fprintf(out_f, "</table>\n");
-  fprintf(out_f, "</form>\n");
-  fprintf(out_f, "<br/>\n");
-  ss_dojo_button(out_f, 0, "accept-32x32", "OK", 
-              "ssFormOp1(\"fieldList\", %d, %d)",
-              SSERV_CMD_EDIT_GENERAL_FIELDS, SSERV_CMD_EDIT_CONTEST_PAGE_2);
-  ss_dojo_button(out_f, 0, "cancel-32x32", "Cancel", "ssLoad1(%d)",
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-  fprintf(out_f, "<br/>\n");
-  write_html_footer(out_f);
-
- cleanup:
-  html_armor_free(&ab);
-  return retval;
-}
-
-static int
-cmd_edit_member_fields_page(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct contest_desc *ecnts;
-  unsigned char buf[1024];
-  int memb_id, ff, row = 1, val;
-  struct contest_member *memb;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  const unsigned char *cl = " class=\"cnts_edit_legend\"";
-
-  if (!(ecnts = phr->ss->edited_cnts)) FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &memb_id) < 0
-      || memb_id < 0 || memb_id >= CONTEST_LAST_MEMBER)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  memb = ecnts->members[memb_id];
-
-  snprintf(buf, sizeof(buf),
-           "serve-control: %s, contest %d, edit &quot;%s&quot; fields",
-           phr->html_name, ecnts->id,
-           contests_get_member_name(memb_id));
-  write_html_header(out_f, phr, buf, 1, 0);
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-  fprintf(out_f, "<br/>\n");
-  fprintf(out_f, "<form id=\"fieldList\">\n");
-  fprintf(out_f, "<table class=\"cnts_edit\">\n");
-  val = 0;
-  if (memb) val = memb->min_count;
-  fprintf(out_f, "<tr%s><td%s>Minimal number:</td><td%s>",
-          form_row_attrs[row ^= 1], cl, cl);
-  html_numeric_select(out_f, "min_count", val, 0, 5);
-  fprintf(out_f, "</td></tr>\n");
-  val = 0;
-  if (memb) val = memb->max_count;
-  fprintf(out_f, "<tr%s><td%s>Maximum number:</td><td%s>",
-          form_row_attrs[row ^= 1], cl, cl);
-  html_numeric_select(out_f, "max_count", val, 0, 5);
-  fprintf(out_f, "</td></tr>\n");
-  val = 0;
-  if (memb) val = memb->init_count;
-  fprintf(out_f, "<tr%s><td%s>Initial number:</td><td%s>",
-          form_row_attrs[row ^= 1], cl, cl);
-  html_numeric_select(out_f, "init_count", val, 0, 5);
-  fprintf(out_f, "</td></tr>\n");
-  fprintf(out_f, "</table>\n");
-
-  row = 1;
-  fprintf(out_f, "<br/><table class=\"cnts_edit\">\n");
-  fprintf(out_f,
-          "<tr%s>"
-          "<th class=\"cnts_edit_legend\">Field</th>"
-          "<th class=\"cnts_edit_legend\">Selection</th>"
-          "<th class=\"cnts_edit_legend\">Legend</th>"
-          "</tr>", head_row_attr);
-  for (ff = 1; ff < CONTEST_LAST_MEMBER_FIELD; ++ff) {
-    fprintf(out_f, "<tr%s><td class=\"cnts_edit_legend\">%s</td>",
-            form_row_attrs[row ^= 1], contests_get_member_field_name(ff));
-    fprintf(out_f, "<td class=\"cnts_edit_legend\">");
-    val = 0;
-    if (memb && memb->fields[ff]) {
-      val = 1;
-      if (memb->fields[ff]->mandatory) val = 2;
-    }
-    snprintf(buf, sizeof(buf), "field_%d", ff);
-    ss_html_int_select(out_f, 0, 0, buf, 0, val, 3,
-                       (const char *[]) { "Disabled", "Optional", "Mandatory"});
-    fprintf(out_f, "</td>");
-    fprintf(out_f, "<td class=\"cnts_edit_legend\"><input type=\"text\" name=\"legend_%d\"", ff);
-    if (memb && memb->fields[ff] && memb->fields[ff]->legend)
-      fprintf(out_f, " value=\"%s\"", ARMOR(memb->fields[ff]->legend));
-    fprintf(out_f, " /></td></tr>\n");
-  }
-  fprintf(out_f, "</table>\n");
-  fprintf(out_f, "</form>\n");
-  fprintf(out_f, "<br/>\n");
-  ss_dojo_button(out_f, 0, "accept-32x32", "OK",
-              "ssFormOp2(\"fieldList\", %d, %d, %d)",
-              SSERV_CMD_EDIT_MEMBER_FIELDS, memb_id,
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-  ss_dojo_button(out_f, 0, "cancel-32x32", "Cancel", "ssLoad1(%d)",
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-  fprintf(out_f, "<br/>\n");
-  write_html_footer(out_f);
-
- cleanup:
-  html_armor_free(&ab);
-  return retval;
-}
-
-static int
 cmd_op_delete_priv_user(
         FILE *log_f,
         FILE *out_f,
@@ -4306,8 +4152,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_COPY_ALL_ACCESS_RULES] = cmd_copy_all_access_rules,
   [SSERV_CMD_COPY_ALL_PRIV_USERS_PAGE] = cmd_copy_all_priv_users_page,
   [SSERV_CMD_EDIT_PERMISSIONS_PAGE] = cmd_edit_permissions_page,
-  [SSERV_CMD_EDIT_GENERAL_FIELDS_PAGE] = cmd_edit_general_fields_page,
-  [SSERV_CMD_EDIT_MEMBER_FIELDS_PAGE] = cmd_edit_member_fields_page,
   [SSERV_CMD_DELETE_PRIV_USER] = cmd_op_delete_priv_user,
   [SSERV_CMD_ADD_PRIV_USER] = cmd_op_add_priv_user,
   [SSERV_CMD_COPY_ALL_PRIV_USERS] = cmd_op_copy_all_priv_users,
