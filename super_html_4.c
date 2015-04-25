@@ -2206,7 +2206,7 @@ write_problem_page(
   }
   ss_dojo_button(out_f, 0, "delete-16x16", "Delete Problem",
               "ssFieldRequest2(%d, %d, 0, %d)",
-              SSERV_CMD_DELETE_PROB, item_id,
+              0, item_id,
               SSERV_CMD_EDIT_CONTEST_PAGE_2);
   fprintf(out_f, "</td><td class=\"cnts_edit_head\">&nbsp;</td></tr>\n");
   if (!show_details) goto cleanup;
@@ -2268,7 +2268,7 @@ write_problems_page(
   fprintf(out_f, "</td><td class=\"cnts_edit_clear\">");
   ss_dojo_button(out_f, 0, "add-16x16", "Create",
               "ssFormOp1(\"createAbstrProb\", %d, %d)",
-              SSERV_CMD_CREATE_ABSTR_PROB, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+              0, SSERV_CMD_EDIT_CONTEST_PAGE_2);
   fprintf(out_f, "</td><td class=\"cnts_edit_legend\">&nbsp;</td></tr>\n");
 
   fprintf(out_f,
@@ -2285,7 +2285,7 @@ write_problems_page(
   fprintf(out_f, "</td><td class=\"cnts_edit_clear\">");
   ss_dojo_button(out_f, 0, "add-16x16", "Create",
               "ssFormOp1(\"createAbstrProb\", %d, %d)",
-              SSERV_CMD_CREATE_CONCRETE_PROB, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+              0, SSERV_CMD_EDIT_CONTEST_PAGE_2);
   fprintf(out_f, "</td><td class=\"cnts_edit_legend\">&nbsp;</td></tr>\n");
 
  cleanup:
@@ -3579,7 +3579,7 @@ static const unsigned char editable_sid_state_fields_neg[SSSS_LAST_FIELD] =
   [SSSS_disable_compilation_server] = 1,
 };
 
-const unsigned char lang_editable_fields[CNTSLANG_LAST_FIELD] =
+static const unsigned char lang_editable_fields[CNTSLANG_LAST_FIELD] =
 {
   [CNTSLANG_long_name] = 1,
   [CNTSLANG_disabled] = 1,
@@ -3593,106 +3593,12 @@ const unsigned char lang_editable_fields[CNTSLANG_LAST_FIELD] =
   [CNTSLANG_unhandled_vars] = 1,
 };
 
-const unsigned char lang_editable_details[CNTSLANG_LAST_FIELD] =
+static const unsigned char lang_editable_details[CNTSLANG_LAST_FIELD] =
 {
   [CNTSLANG_compiler_env] = 1,
   [CNTSLANG_style_checker_env] = 1,
   [CNTSLANG_unhandled_vars] = 1,
 };
-
-static int
-cmd_op_create_abstr_prob(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  const unsigned char *prob_name = 0;
-
-  phr->json_reply = 1;
-
-  if (hr_cgi_param(phr, "prob_name", &prob_name) <= 0) FAIL(SSERV_ERR_INV_PROB_ID);
-  if (super_html_add_abstract_problem(phr->ss, prob_name) < 0)
-    FAIL(SSERV_ERR_INV_PROB_ID);
-
-  retval = 1;
-
- cleanup:
-  return retval;
-}
-
-static int
-cmd_op_create_concrete_prob(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  const unsigned char *s = 0, *p = 0;
-  char *eptr = 0;
-  int prob_id = 0;
-
-  phr->json_reply = 1;
-
-  if (hr_cgi_param(phr, "prob_id", &s) < 0) FAIL(SSERV_ERR_INV_PROB_ID);
-  if (s) {
-    p = s;
-    while (*p && isspace(*p)) ++p;
-    if (!*p) s = 0;
-  }
-  if (s) {
-    errno = 0;
-    prob_id = strtol(s, &eptr, 10);
-    if (errno || *eptr || (char*) s == eptr) FAIL(SSERV_ERR_INV_PROB_ID);
-    if (prob_id < 0 || prob_id > EJ_MAX_PROB_ID) FAIL(SSERV_ERR_INV_PROB_ID);
-  }
-
-  if (super_html_add_problem(phr->ss, prob_id) < 0) FAIL(SSERV_ERR_INV_PROB_ID);
-
-  retval = 1;
-
- cleanup:
-  return retval;
-}
-
-static int
-cmd_op_delete_prob(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int prob_id = 0, i;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts || !phr->ss->global)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "item_id", &prob_id) < 0)
-    FAIL(SSERV_ERR_INV_PROB_ID);
-  if (prob_id < 0) {
-    prob_id = -prob_id - 1;
-    if (prob_id >= phr->ss->aprob_u) FAIL(SSERV_ERR_INV_PROB_ID);
-    if (!phr->ss->aprobs[prob_id]) FAIL(SSERV_ERR_INV_PROB_ID);
-    for (i = prob_id + 1; i < phr->ss->aprob_u; i++) {
-      phr->ss->aprobs[i - 1] = phr->ss->aprobs[i];
-      phr->ss->aprob_flags[i - 1] = phr->ss->aprob_flags[i];
-    }
-    phr->ss->aprob_u--;
-    phr->ss->aprobs[phr->ss->aprob_u] = 0;
-    phr->ss->aprob_flags[phr->ss->aprob_u] = 0;
-  } else {
-    if (prob_id <= 0 || prob_id >= phr->ss->prob_a) FAIL(SSERV_ERR_INV_PROB_ID);
-    if (!phr->ss->probs[prob_id]) FAIL(SSERV_ERR_INV_PROB_ID);
-    phr->ss->probs[prob_id] = 0;
-    phr->ss->prob_flags[prob_id] = 0;
-  }
-
-  retval = 1;
-
- cleanup:
-  return retval;
-}
 
 static const unsigned char prob_reloadable_set[CNTSPROB_LAST_FIELD] =
 {
@@ -3902,9 +3808,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CREATE_NEW_CONTEST_PAGE] = cmd_op_create_new_contest_page,
   [SSERV_CMD_CREATE_NEW_CONTEST] = cmd_op_create_new_contest,
   [SSERV_CMD_FORGET_CONTEST] = cmd_op_forget_contest,
-  [SSERV_CMD_CREATE_ABSTR_PROB] = cmd_op_create_abstr_prob,
-  [SSERV_CMD_CREATE_CONCRETE_PROB] = cmd_op_create_concrete_prob,
-  [SSERV_CMD_DELETE_PROB] = cmd_op_delete_prob,
 
   [SSERV_CMD_BROWSE_PROBLEM_PACKAGES] = super_serve_op_browse_problem_packages,
   [SSERV_CMD_CREATE_PACKAGE] = super_serve_op_package_operation,
