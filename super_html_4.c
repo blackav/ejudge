@@ -1321,7 +1321,7 @@ static const struct edit_page_desc edit_page_descs[] =
   { "Global Settings", cnts_global_info, &cntsglob_methods,
     0, 0 },
   { "Language Settings", cnts_language_info, &cntslang_methods,
-    SSERV_CMD_SET_SERVE_LANG_FIELD, SSERV_CMD_CLEAR_SERVE_LANG_FIELD },
+    0, 0 },
   { "Problem Settings", cnts_problem_info, &cntsprob_methods,
     0, 0,
     cntsprob_is_undefined
@@ -4289,141 +4289,6 @@ const unsigned char lang_editable_fields[CNTSLANG_LAST_FIELD] =
   [CNTSLANG_unhandled_vars] = 1,
 };
 
-static int
-cmd_op_set_serve_lang_field(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int lang_id = 0, f_id = 0, f_type;
-  void *f_ptr;
-  size_t f_size;
-  struct html_armor_buffer vb = HTML_ARMOR_INITIALIZER;
-  const unsigned char *valstr;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts || !phr->ss->langs)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "item_id", &lang_id) < 0)
-    FAIL(SSERV_ERR_INV_LANG_ID);
-  if (lang_id <= 0 || lang_id >= phr->ss->lang_a || !phr->ss->langs[lang_id])
-    FAIL(SSERV_ERR_INV_LANG_ID);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!lang_editable_fields[f_id])
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_ptr = cntslang_get_ptr_nc(phr->ss->langs[lang_id], f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  f_type = cntslang_get_type(f_id);
-  f_size = cntslang_get_size(f_id);
-  switch (f_type) {
-  case 'B':
-    {
-      ejintbool_t *p_bool = (ejintbool_t*) f_ptr;
-      ejintbool_t val = -1;
-
-      if (hr_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
-        FAIL(SSERV_ERR_INV_VALUE);
-      *p_bool = val;
-      if (f_id == CNTSLANG_disable_auto_testing) retval = 1;
-    }
-    break;
-  case 's':
-    {
-      unsigned char **p_str = (unsigned char **) f_ptr;
-
-      if (ss_cgi_param_utf8_str(phr, "value", &vb, &valstr) < 0)
-        FAIL(SSERV_ERR_INV_VALUE);
-      xfree(*p_str); *p_str = 0;
-      if (valstr) *p_str = xstrdup(valstr);
-      retval = 1;
-    }
-    break;
-  case 'S':
-    {
-      unsigned char *str = (unsigned char *) f_ptr;
-
-      if (ss_cgi_param_utf8_str(phr, "value", &vb, &valstr) < 0)
-        FAIL(SSERV_ERR_INV_VALUE);
-      str[0] = 0;
-      if (valstr) snprintf(str, f_size, "%s", valstr);
-    }
-    break;
-  case 'X':
-    {
-      char **tmp_args = 0;
-      char ***f_args = (char***) f_ptr;
-
-      if (ss_cgi_param_utf8_str(phr, "value", &vb, &valstr) < 0)
-        FAIL(SSERV_ERR_INV_VALUE);
-      if (sarray_parse(valstr, &tmp_args) < 0) FAIL(SSERV_ERR_INV_VALUE);
-      sarray_free(*f_args);
-      *f_args = tmp_args;
-      retval = 1;
-    }
-    break;
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-
- cleanup:
-  html_armor_free(&vb);
-  return retval;
-}
-
-static int
-cmd_op_clear_serve_lang_field(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int lang_id = 0, f_id = 0, f_type;
-  void *f_ptr;
-  size_t f_size;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts || !phr->ss->langs)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "item_id", &lang_id) < 0)
-    FAIL(SSERV_ERR_INV_LANG_ID);
-  if (lang_id <= 0 || lang_id >= phr->ss->lang_a || !phr->ss->langs[lang_id])
-    FAIL(SSERV_ERR_INV_LANG_ID);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!lang_editable_fields[f_id])
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_ptr = cntslang_get_ptr_nc(phr->ss->langs[lang_id], f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  f_type = cntslang_get_type(f_id);
-  f_size = cntslang_get_size(f_id);
-  switch (f_type) {
-  case 'B':
-    *(ejintbool_t*) f_ptr = 0;
-    break;
-  case 's':
-    xfree(*(char**) f_ptr);
-    *(char**) f_ptr = 0;
-    break;
-  case 'S':
-    memset(f_ptr, 0, f_size);
-    break;
-  case 'X':
-    sarray_free(*(char***) f_ptr);
-    *(char***) f_ptr = 0;
-    break;
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-  retval = 1;
-
- cleanup:
-  return retval;
-}
-
 const unsigned char lang_editable_details[CNTSLANG_LAST_FIELD] =
 {
   [CNTSLANG_compiler_env] = 1,
@@ -4907,8 +4772,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CREATE_NEW_CONTEST_PAGE] = cmd_op_create_new_contest_page,
   [SSERV_CMD_CREATE_NEW_CONTEST] = cmd_op_create_new_contest,
   [SSERV_CMD_FORGET_CONTEST] = cmd_op_forget_contest,
-  [SSERV_CMD_SET_SERVE_LANG_FIELD] = cmd_op_set_serve_lang_field,
-  [SSERV_CMD_CLEAR_SERVE_LANG_FIELD] = cmd_op_clear_serve_lang_field,
   [SSERV_CMD_EDIT_SERVE_LANG_FIELD_DETAIL_PAGE] = cmd_op_edit_serve_lang_field_detail_page,
   [SSERV_CMD_EDIT_SERVE_LANG_FIELD_DETAIL] = cmd_op_edit_serve_lang_field_detail,
   [SSERV_CMD_SERVE_LANG_UPDATE_VERSIONS] = cmd_op_serve_lang_update_versions,
