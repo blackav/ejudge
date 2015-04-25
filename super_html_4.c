@@ -2359,7 +2359,7 @@ contest_xml_page(
   if (page == 2) {
     ss_dojo_button(out_f, "100", "refresh-32x32", "Update versions",
                 "ssFieldRequest(%d, 0, %d)",
-                SSERV_CMD_SERVE_LANG_UPDATE_VERSIONS,
+                0,
                 SSERV_CMD_EDIT_CONTEST_PAGE_2);
   }
 
@@ -3601,26 +3601,6 @@ const unsigned char lang_editable_details[CNTSLANG_LAST_FIELD] =
 };
 
 static int
-cmd_op_serve_lang_update_versions(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts || !phr->ss->langs)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  super_html_update_versions(phr->ss);
-
-  retval = 1;
-
- cleanup:
-  return retval;
-}
-
-static int
 cmd_op_create_abstr_prob(
         FILE *log_f,
         FILE *out_f,
@@ -3922,7 +3902,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CREATE_NEW_CONTEST_PAGE] = cmd_op_create_new_contest_page,
   [SSERV_CMD_CREATE_NEW_CONTEST] = cmd_op_create_new_contest,
   [SSERV_CMD_FORGET_CONTEST] = cmd_op_forget_contest,
-  [SSERV_CMD_SERVE_LANG_UPDATE_VERSIONS] = cmd_op_serve_lang_update_versions,
   [SSERV_CMD_CREATE_ABSTR_PROB] = cmd_op_create_abstr_prob,
   [SSERV_CMD_CREATE_CONCRETE_PROB] = cmd_op_create_concrete_prob,
   [SSERV_CMD_DELETE_PROB] = cmd_op_delete_prob,
