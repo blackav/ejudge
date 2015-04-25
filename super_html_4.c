@@ -2604,104 +2604,6 @@ const int access_field_tag[CNTS_LAST_FIELD] =
 };
 
 static int
-cmd_op_set_predef_priv(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct contest_desc *ecnts;
-  int user_num = -1;
-  int perms_id = -1;
-  opcap_t caps;
-
-  phr->json_reply = 1;
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &user_num) < 0 || user_num < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (hr_cgi_param_int(phr, "value", &perms_id) < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (perms_id < 0 || perms_id >= OPCAP_PREDEF_LAST)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if (perms_id > 0) {
-    caps = opcaps_get_predef_caps(perms_id);
-    if (contests_set_permission(ecnts, user_num, caps) < 0)
-      FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-  retval = 1;
-
- cleanup:
-  return retval;
-}
-
-static int
-cmd_op_set_priv(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int user_num = -1;
-  struct contest_desc *ecnts = 0;
-  int i;
-  opcap_t caps = 0;
-  unsigned char capname[64];
-  const unsigned char *s;
-
-  phr->json_reply = 1;
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &user_num) < 0 || user_num < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-
-  for (i = 0; i < OPCAP_LAST; ++i) {
-    snprintf(capname, sizeof(capname), "cap_%d", i);
-    if (hr_cgi_param(phr, capname, &s) > 0)
-      caps |= 1ULL << i;
-  }
-  if (contests_set_permission(ecnts, user_num, caps) < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  retval = 1;
-
- cleanup:
-  return retval;
-}
-
-static int
-cmd_op_set_default_access(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct contest_desc *ecnts;
-  int f_id = -1;
-  struct contest_access **p_acc;
-  int val = -1;
-
-  phr->json_reply = 1;
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
-      || !(access_field_set[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  p_acc = (struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
-  if (hr_cgi_param_int(phr, "value", &val) < 0
-      || val < 0 || val > 1)
-    FAIL(SSERV_ERR_INV_VALUE);
-  contests_set_default(ecnts, p_acc, access_field_tag[f_id], val);
-  retval = 0;
-
- cleanup:
-  return retval;
-}
-
-static int
 cmd_op_check_ip_mask(
         FILE *log_f,
         FILE *out_f,
@@ -3354,9 +3256,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CLEAR_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_RELOAD_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_SAVE_FILE_CONTEST_XML] = cmd_save_file_contest_xml,
-  [SSERV_CMD_SET_PREDEF_PRIV] = cmd_op_set_predef_priv,
-  [SSERV_CMD_SET_PRIV] = cmd_op_set_priv,
-  [SSERV_CMD_SET_DEFAULT_ACCESS] = cmd_op_set_default_access,
   [SSERV_CMD_CHECK_IP_MASK] = cmd_op_check_ip_mask,
   [SSERV_CMD_ADD_IP] = cmd_op_add_ip,
   [SSERV_CMD_SET_RULE_ACCESS] = cmd_op_set_rule_access,
