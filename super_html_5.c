@@ -268,7 +268,7 @@ super_serve_op_browse_problem_packages(
     fprintf(out_f, "<table class=\"cnts_edit\">\n");
     for (; i < dl_u && dls[i].kind == DIRLIST_PROBLEM; ++i) {
       snprintf(jbuf, sizeof(jbuf), "ssEditProblem(%d, '%s', '%s')",
-               SSERV_CMD_EDIT_PROBLEM, package, dls[i].name);
+               0, package, dls[i].name);
       fprintf(out_f, "<tr><td onClick=\"%s\" class=\"cnts_edit_legend\"><img src=\"%sicons/%s.png\" alt=\"problem\" /></td><td onClick=\"%s\" class=\"cnts_edit_legend\"><tt>%s</tt></td></tr>\n", jbuf, CONF_STYLE_PREFIX, "edit_page-16x16", jbuf, dls[i].name);
     }
     fprintf(out_f, "</table><br/>\n");
@@ -280,7 +280,7 @@ super_serve_op_browse_problem_packages(
            package);
   fprintf(out_f, "<tr><td class=\"cnts_edit_legend\">Create new package:&nbsp;</td><td class=\"cnts_edit_data\" width=\"200px\"><div class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"%s\" autoSave=\"true\"></div></td></tr>\n", jbuf);
   snprintf(jbuf, sizeof(jbuf), "ssEditProblem(%d, '%s', arguments[0])",
-           SSERV_CMD_CREATE_PROBLEM, package);
+           0, package);
   fprintf(out_f, "<tr><td class=\"cnts_edit_legend\">Create new problem:&nbsp;</td><td class=\"cnts_edit_data\" width=\"200px\"><div class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"%s\" autoSave=\"true\"></div></td></tr>\n", jbuf);
   fprintf(out_f, "</table><br/>\n");
 
@@ -350,14 +350,4 @@ super_serve_op_package_operation(
 
  cleanup:
   return retval;
-}
-
-int
-super_serve_op_edit_problem(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  phr->json_reply = 1;
-  return 1;
 }
