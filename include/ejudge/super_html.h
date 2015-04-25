@@ -275,16 +275,6 @@ ss_write_html_header(
 void
 ss_write_html_footer(FILE *out_f);
 
-void
-ss_dojo_button(
-        FILE *out_f,
-        const unsigned char *id,
-        const unsigned char *icon,
-        const unsigned char *alt,
-        const char *onclick,
-        ...)
-  __attribute__((format(printf, 5, 6)));
-
 int
 super_serve_op_browse_problem_packages(
         FILE *log_f,

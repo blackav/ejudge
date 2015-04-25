@@ -413,43 +413,6 @@ static const unsigned char * const form_row_attrs[]=
   " bgcolor=\"#eeeeee\"",
 };
 
-void
-ss_dojo_button(
-        FILE *out_f,
-        const unsigned char *id,
-        const unsigned char *icon,
-        const unsigned char *alt,
-        const char *onclick,
-        ...)
-{
-  unsigned char onclick_buf[1024];
-  va_list args;
-
-  onclick_buf[0] = 0;
-  if (onclick) {
-    va_start(args, onclick);
-    vsnprintf(onclick_buf, sizeof(onclick_buf), onclick, args);
-    va_end(args);
-  }
-
-  fprintf(out_f, "<button dojoType=\"dijit.form.Button\" iconClass=\"plusIcon\"");
-  if (id) {
-    fprintf(out_f, " id=\"%s\"", id);
-  }
-  if (onclick) {
-    fprintf(out_f, " onClick='%s'", onclick_buf);
-  }
-  fprintf(out_f, ">");
-  if (icon) {
-    fprintf(out_f, "<img src=\"%sicons/%s.png\"", CONF_STYLE_PREFIX, icon);
-    if (alt) {
-      fprintf(out_f, " alt=\"%s\"", alt);
-    }
-    fprintf(out_f, "/>");
-  }
-  fprintf(out_f, "</button>\n");
-}
-
 static int
 cmd_op_create_new_contest_page(
         FILE *log_f,
