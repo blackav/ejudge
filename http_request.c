@@ -439,7 +439,7 @@ hr_print_help_url(FILE *f, int action)
     help_url = help_urls[action];
   }
   if (help_url) {
-    fprintf(f, "<a target=\"_blank\" href=\"http://www.ejudge.ru/wiki/index.php/%s\">%s</a>", help_url, "Help");
+    fprintf(f, "<a target=\"_blank\" href=\"http://ejudge.ru/wiki/index.php/%s\">%s</a>", help_url, "Help");
   } else {
     fprintf(f, "&nbsp;");
   }
@@ -449,7 +449,7 @@ void
 hr_print_help_url_2(FILE *f, const unsigned char *topic)
 {
   if (topic) {
-    fprintf(f, "<a target=\"_blank\" href=\"http://www.ejudge.ru/wiki/index.php/%s\">%s</a>", topic, "Help");
+    fprintf(f, "<a target=\"_blank\" href=\"http://ejudge.ru/wiki/index.php/%s\">%s</a>", topic, "Help");
   } else {
     fprintf(f, "&nbsp;");
   }
