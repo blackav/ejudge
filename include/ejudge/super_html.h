@@ -278,11 +278,6 @@ super_serve_op_browse_problem_packages(
         FILE *log_f,
         FILE *out_f,
         struct http_request_info *phr);
-int
-super_serve_op_package_operation(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr);
 
 int
 super_html_add_problem(

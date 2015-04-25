@@ -250,8 +250,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_LOCKED_CNTS_CONTINUE] = cmd_locked_cnts_continue,
 
   [SSERV_CMD_BROWSE_PROBLEM_PACKAGES] = super_serve_op_browse_problem_packages,
-  [SSERV_CMD_CREATE_PACKAGE] = super_serve_op_package_operation,
-  [SSERV_CMD_DELETE_ITEM] = super_serve_op_package_operation,
 
   /* Note: operations SSERV_CMD_USER_*, SSERV_CMD_GROUP_* are loaded using dlsym */
 };

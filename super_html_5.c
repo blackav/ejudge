@@ -276,7 +276,7 @@ super_serve_op_browse_problem_packages(
 
   fprintf(out_f, "<table class=\"cnts_edit\">\n");
   snprintf(jbuf, sizeof(jbuf), "ssPackageOp(%d, %d, '%s', arguments[0])",
-           SSERV_CMD_CREATE_PACKAGE, SSERV_CMD_BROWSE_PROBLEM_PACKAGES,
+           0, SSERV_CMD_BROWSE_PROBLEM_PACKAGES,
            package);
   fprintf(out_f, "<tr><td class=\"cnts_edit_legend\">Create new package:&nbsp;</td><td class=\"cnts_edit_data\" width=\"200px\"><div class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"%s\" autoSave=\"true\"></div></td></tr>\n", jbuf);
   snprintf(jbuf, sizeof(jbuf), "ssEditProblem(%d, '%s', arguments[0])",
@@ -335,7 +335,7 @@ super_serve_op_package_operation(
     FAIL(SSERV_ERR_INV_PACKAGE);
 
   switch (phr->action) {
-  case SSERV_CMD_CREATE_PACKAGE:
+  case 0:
     snprintf(fpath, sizeof(fpath), "%s/%s", pkgpath, item);
     if (stat(fpath, &stb) >= 0)
       FAIL(SSERV_ERR_ITEM_EXISTS);
