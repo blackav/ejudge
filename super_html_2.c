@@ -57,26 +57,6 @@
 #define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
 #endif /* EJUDGE_CHARSET */
 
-int
-super_html_clear_variable(struct sid_state *sstate, int cmd)
-{
-  unsigned char **p_str = 0;
-  struct contest_desc *cnts = sstate->edited_cnts;
-
-  if (!cnts) {
-    return -SSERV_ERR_CONTEST_NOT_EDITED;
-  }
-
-  switch (cmd) {
-  default:
-    abort();
-  }
-
-  xfree(*p_str);
-  *p_str = 0;
-  return 0;
-}
-
 static const int access_tags_map[] =
 {
   CONTEST_REGISTER_ACCESS,

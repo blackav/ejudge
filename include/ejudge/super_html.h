@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __SUPER_HTML_H__
 #define __SUPER_HTML_H__
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -140,8 +139,6 @@ struct contest_desc *contest_tmpl_clone(struct sid_state *sstate,
                                         int contest_id, int orig_id,
                                         const unsigned char *login,
                                         const unsigned char *ss_login);
-
-int super_html_clear_variable(struct sid_state *sstate, int cmd);
 
 int super_html_set_contest_var(struct sid_state *sstate, int cmd,
                                int param1, const unsigned char *param2,
