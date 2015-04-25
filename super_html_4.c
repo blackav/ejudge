@@ -2583,7 +2583,7 @@ cmd_save_file_contest_xml(
   return retval;
 }
 
-const unsigned char access_field_set[CNTS_LAST_FIELD] =
+static const unsigned char access_field_set[CNTS_LAST_FIELD] =
 {
   [CNTS_register_access] = 1,
   [CNTS_users_access] = 1,
@@ -2593,7 +2593,7 @@ const unsigned char access_field_set[CNTS_LAST_FIELD] =
   [CNTS_serve_control_access] = 1,
 };
 
-const int access_field_tag[CNTS_LAST_FIELD] =
+static const int access_field_tag[CNTS_LAST_FIELD] =
 {
   [CNTS_register_access] = CONTEST_REGISTER_ACCESS,
   [CNTS_users_access] = CONTEST_USERS_ACCESS,
@@ -2602,222 +2602,6 @@ const int access_field_tag[CNTS_LAST_FIELD] =
   [CNTS_team_access] = CONTEST_TEAM_ACCESS,
   [CNTS_serve_control_access] = CONTEST_SERVE_CONTROL_ACCESS,
 };
-
-static int
-cmd_op_check_ip_mask(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  const unsigned char *value = 0;
-  ej_ip_t addr, mask;
-
-  phr->json_reply = 1;
-
-  if (hr_cgi_param(phr, "value", &value) <= 0 || !value)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if (xml_parse_ipv6_mask(NULL, 0, 0, 0, value, &addr, &mask) < 0)
-    FAIL(SSERV_ERR_INV_VALUE);
-  retval = 0;
-
- cleanup:
-  return retval;
-}
-
-static int
-cmd_op_add_ip(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct contest_desc *ecnts;
-  const unsigned char *mask_str = 0;
-  int ssl_flag = -2;
-  int default_allow = -1;
-  struct contest_access **p_acc;
-  int f_id;
-  ej_ip_t addr, mask;
-
-  phr->json_reply = 1;
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
-      || !(access_field_set[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  p_acc = (struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
-  if (hr_cgi_param(phr, "ip_mask", &mask_str) <= 0)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if (xml_parse_ipv6_mask(NULL, 0, 0, 0, mask_str, &addr, &mask) < 0)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if (hr_cgi_param_int(phr, "ssl_flag", &ssl_flag) < 0
-      || ssl_flag < -1 || ssl_flag > 1)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if (hr_cgi_param_int(phr, "default_allow", &default_allow) < 0
-      || default_allow < 0 || default_allow > 1)
-    FAIL(SSERV_ERR_INV_VALUE);
-  contests_add_ip(ecnts, p_acc, access_field_tag[f_id],
-                  &addr, &mask, ssl_flag, default_allow);
-  retval = 1;
-
- cleanup:
-  return retval;
-}
-
-static int
-cmd_op_set_rule_access(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct contest_desc *ecnts;
-  int allow = -1;
-  struct contest_access *acc;
-  struct contest_ip *p;
-  int f_id, subf_id;
-
-  phr->json_reply = 1;
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
-      || !(access_field_set[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  acc = *(struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
-  if (hr_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (hr_cgi_param_int(phr, "value", &allow) < 0 || allow < 0 || allow > 1)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if (!(p = contests_get_ip_rule_nc(acc, subf_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  p->allow = allow;
-  retval = 0;
-
- cleanup:
-  return retval;
-}
-
-static int
-cmd_op_set_rule_ssl(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct contest_desc *ecnts;
-  int ssl = -2;
-  struct contest_access *acc;
-  struct contest_ip *p;
-  int f_id, subf_id;
-
-  phr->json_reply = 1;
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
-      || !(access_field_set[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  acc = *(struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
-  if (hr_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (hr_cgi_param_int(phr, "value", &ssl) < 0 || ssl < -1 || ssl > 1)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if (!(p = contests_get_ip_rule_nc(acc, subf_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  p->ssl = ssl;
-  retval = 0;
-
- cleanup:
-  return retval;
-}
-
-static int
-cmd_op_set_rule_ip(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct contest_desc *ecnts;
-  struct contest_access *acc;
-  struct contest_ip *p;
-  int f_id, subf_id;
-  const unsigned char *mask_str = 0;
-  ej_ip_t addr, mask;
-
-  phr->json_reply = 1;
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
-      || !(access_field_set[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  acc = *(struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
-  if (hr_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (hr_cgi_param(phr, "value", &mask_str) <= 0)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if (xml_parse_ipv6_mask(NULL, 0, 0, 0, mask_str, &addr, &mask) < 0)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if (!(p = contests_get_ip_rule_nc(acc, subf_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  p->addr = addr;
-  p->mask = mask;
-  retval = 0;
-
- cleanup:
-  return retval;
-}
-
-static int
-cmd_op_rule_cmd(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int f_id = -1, subf_id = -1;
-  struct contest_desc *ecnts;
-  struct contest_access **p_acc;
-  int (*contest_func)(struct contest_access **, int);
-  static int (*contest_funcs[])(struct contest_access **, int) =
-  {
-    [SSERV_CMD_DELETE_RULE - SSERV_CMD_DELETE_RULE] = contests_delete_ip_rule,
-    [SSERV_CMD_FORWARD_RULE - SSERV_CMD_DELETE_RULE] = contests_forward_ip_rule,
-    [SSERV_CMD_BACKWARD_RULE - SSERV_CMD_DELETE_RULE] = contests_backward_ip_rule,
-  };
-
-  phr->json_reply = 1;
-
-  if (phr->action < SSERV_CMD_DELETE_RULE
-      || phr->action > SSERV_CMD_BACKWARD_RULE)
-    FAIL(SSERV_ERR_INV_OPER);
-  if (!(contest_func = contest_funcs[phr->action - SSERV_CMD_DELETE_RULE]))
-    FAIL(SSERV_ERR_INV_OPER);
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
-      || !(access_field_set[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  p_acc = (struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
-  if (hr_cgi_param_int(phr, "subfield_id", &subf_id) < 0 || subf_id < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (contest_func(p_acc, subf_id) < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  retval = 1;
-
- cleanup:
-  return retval;
-}
 
 static int
 cmd_op_create_new_contest_page(
@@ -3256,14 +3040,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CLEAR_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_RELOAD_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_SAVE_FILE_CONTEST_XML] = cmd_save_file_contest_xml,
-  [SSERV_CMD_CHECK_IP_MASK] = cmd_op_check_ip_mask,
-  [SSERV_CMD_ADD_IP] = cmd_op_add_ip,
-  [SSERV_CMD_SET_RULE_ACCESS] = cmd_op_set_rule_access,
-  [SSERV_CMD_SET_RULE_SSL] = cmd_op_set_rule_ssl,
-  [SSERV_CMD_SET_RULE_IP] = cmd_op_set_rule_ip,
-  [SSERV_CMD_DELETE_RULE] = cmd_op_rule_cmd,
-  [SSERV_CMD_FORWARD_RULE] = cmd_op_rule_cmd,
-  [SSERV_CMD_BACKWARD_RULE] = cmd_op_rule_cmd,
   [SSERV_CMD_CREATE_NEW_CONTEST_PAGE] = cmd_op_create_new_contest_page,
   [SSERV_CMD_CREATE_NEW_CONTEST] = cmd_op_create_new_contest,
   [SSERV_CMD_FORGET_CONTEST] = cmd_op_forget_contest,
