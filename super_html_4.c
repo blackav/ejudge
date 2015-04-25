@@ -1055,7 +1055,7 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_stand_fancy_style, 'Y', 1, 0, 0, 0, 0, "Use fancy decorations", 0, "SidState.show_global_5" },
   { NS_GLOBAL, CNTSGLOB_stand_success_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for \"Last success\"", 0, "SidState.show_global_5" },
   { NS_GLOBAL, CNTSGLOB_stand_table_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for standings table", 0, "SidState.show_global_5" },
-  { NS_GLOBAL, CNTSGLOB_stand_row_attr, 'x', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE, "Standings row attributes", 0, "SidState.show_global_5" },
+  { NS_GLOBAL, CNTSGLOB_stand_row_attr, 'x', 1, 1, 1, 1, 0, "Standings row attributes", 0, "SidState.show_global_5" },
   { NS_GLOBAL, CNTSGLOB_stand_place_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the \"Place\" column", 0, "SidState.show_global_5" },
   { NS_GLOBAL, CNTSGLOB_stand_team_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the \"User name\" column", 0, "SidState.show_global_5" },
   { NS_GLOBAL, CNTSGLOB_stand_prob_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the \"Problem\" columns", 0, "SidState.show_global_5" },
@@ -1085,8 +1085,8 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_stand_warn_number_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the \"Warnings\" column", 0, "SidState.show_global_5 Global.stand_show_warn_number &&" },
   { NS_GLOBAL, CNTSGLOB_stand_page_table_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for the page table", 0, "SidState.show_global_5 Global.users_on_page 0 > &&" },
   { NS_GLOBAL, CNTSGLOB_stand_page_cur_attr, 'S', 1, 1, 1, 1, 0, "HTML attributes for current page message", 0, "SidState.show_global_5 Global.users_on_page 0 > &&" },
-  { NS_GLOBAL, CNTSGLOB_stand_page_row_attr, 'x', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE, "Page table row attributes", 0, "SidState.show_global_5 Global.users_on_page 0 > &&" },
-  { NS_GLOBAL, CNTSGLOB_stand_page_col_attr, 'x', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE, "Page table column attributes", 0, "SidState.show_global_5 Global.users_on_page 0 > &&" },
+  { NS_GLOBAL, CNTSGLOB_stand_page_row_attr, 'x', 1, 1, 1, 1, 0, "Page table row attributes", 0, "SidState.show_global_5 Global.users_on_page 0 > &&" },
+  { NS_GLOBAL, CNTSGLOB_stand_page_col_attr, 'x', 1, 1, 1, 1, 0, "Page table column attributes", 0, "SidState.show_global_5 Global.users_on_page 0 > &&" },
 
   { NS_SID_STATE, SSSS_show_global_6, '-', 1, 0, 0, 0, 0, "Advanced settings", 0, 0 },
   { NS_GLOBAL, CNTSGLOB_appeal_deadline, 't', 1, 1, 0, 0, 0, "Appeal deadline", 0, "SidState.show_global_6" },
@@ -1118,10 +1118,10 @@ static const struct cnts_edit_info cnts_global_info[] =
   { NS_GLOBAL, CNTSGLOB_clardb_plugin, 'S', 1, 1, 1, 1, 0, "ClarDB storage engine", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_rundb_plugin, 'S', 1, 1, 1, 1, 0, "RunDB storage engine", 0, "SidState.show_global_6" },
   { NS_GLOBAL, CNTSGLOB_xuser_plugin, 'S', 1, 1, 1, 1, 0, "XuserDB storage engine", 0, "SidState.show_global_6" },
-  { NS_GLOBAL, CNTSGLOB_load_user_group, 'x', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE, "User groups to load", 0, "SidState.show_global_6" },
+  { NS_GLOBAL, CNTSGLOB_load_user_group, 'x', 1, 1, 1, 1, 0, "User groups to load", 0, "SidState.show_global_6" },
 
   { NS_SID_STATE, SSSS_show_global_7, '-', 1, 0, 0, 0, 0, "Other parameters", 0, 0 },
-  { NS_GLOBAL, CNTSGLOB_unhandled_vars, 137, 0, 0, 0, 0, SSERV_CMD_EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE, 0, 0, "SidState.show_global_7" },
+  { NS_GLOBAL, CNTSGLOB_unhandled_vars, 137, 0, 0, 0, 0, 0, 0, 0, "SidState.show_global_7" },
 
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
@@ -1257,46 +1257,46 @@ static const struct cnts_edit_info cnts_problem_info[] =
   { NS_PROBLEM, CNTSPROB_enable_text_form, 'Y', 1, 0, 0, 0, 0, "Enable text input form", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_stand_attr, 'S', 1, 1, 1, 1, 0, "Standings attributes", 0, 0 },
   { NS_PROBLEM, CNTSPROB_standard_checker, 142, 1, 0, 0, 0, 0, "Standard checker", 0, 0 },
-  { NS_PROBLEM, CNTSPROB_lang_compiler_env, 'X', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Compiler environment", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_lang_compiler_env, 'X', 1, 1, 1, 1, 0, "Compiler environment", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_check_cmd, 'S', 1, 1, 1, 1, 0, "Checker", 0, 0 /*"Problem.standard_checker"*/ },
   { NS_PROBLEM, CNTSPROB_disable_pe, 'Y', 1, 0, 0, 0, 0, "Treat PE as WA", 0, 0 },
   { NS_PROBLEM, CNTSPROB_disable_wtl, 'Y', 1, 0, 0, 0, 0, "Treat WTL as TL", 0, 0 },
-  { NS_PROBLEM, CNTSPROB_checker_env, 'X', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Checker environment", 0, 0 },
+  { NS_PROBLEM, CNTSPROB_checker_env, 'X', 1, 1, 1, 1, 0, "Checker environment", 0, 0 },
   { NS_PROBLEM, CNTSPROB_scoring_checker, 'Y', 1, 0, 0, 0, 0, "Checker calculates score", 0, 0 },
   { NS_PROBLEM, CNTSPROB_valuer_cmd, 'S', 1, 1, 1, 1, 0, "Valuer", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_valuer_sets_marked, 'Y', 1, 0, 0, 0, 0, "Valuer sets _marked_ flag", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_interactive_valuer, 'Y', 1, 0, 0, 0, 0, "Valuer works interactively", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_valuer_env, 'X', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Valuer environment", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_valuer_env, 'X', 1, 1, 1, 1, 0, "Valuer environment", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_interactor_cmd, 'S', 1, 1, 1, 1, 0, "Interactor", 0, "SidState.prob_show_adv"  },
-  { NS_PROBLEM, CNTSPROB_interactor_env, 'X', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Interactor environment", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_interactor_env, 'X', 1, 1, 1, 1, 0, "Interactor environment", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_interactor_time_limit, 'd', 1, 1, 1, 1, 0, "Interactor time limit (s)", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_style_checker_cmd, 'S', 1, 1, 1, 1, 0, "Style checker", 0, "SidState.prob_show_adv"  },
-  { NS_PROBLEM, CNTSPROB_style_checker_env, 'X', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Style checker environment", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_style_checker_env, 'X', 1, 1, 1, 1, 0, "Style checker environment", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_test_checker_cmd, 's', 1, 1, 1, 1, 0, "Test checker", 0, "SidState.prob_show_adv"  },
-  { NS_PROBLEM, CNTSPROB_test_checker_env, 'X', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Test checker environment", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_test_checker_env, 'X', 1, 1, 1, 1, 0, "Test checker environment", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_init_cmd, 's', 1, 1, 1, 1, 0, "Init-style interactor", 0, "SidState.prob_show_adv"  },
-  { NS_PROBLEM, CNTSPROB_init_env, 'X', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Init-style interactor environment", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_start_env, 'X', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Start environment", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_init_env, 'X', 1, 1, 1, 1, 0, "Init-style interactor environment", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_start_env, 'X', 1, 1, 1, 1, 0, "Start environment", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_solution_src, 's', 1, 1, 1, 1, 0, "Solution source", 0, "SidState.prob_show_adv"  },
   { NS_PROBLEM, CNTSPROB_solution_cmd, 's', 1, 1, 1, 1, 0, "Solution command", 0, "SidState.prob_show_adv"  },
-  { NS_PROBLEM, CNTSPROB_score_view, 'x', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Special view for score", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_score_view, 'x', 1, 1, 1, 1, 0, "Special view for score", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_stand_ignore_score, 'Y', 1, 0, 0, 0, 0, "Ignore problem score", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_stand_last_column, 'Y', 1, 0, 0, 0, 0, "Show as the last column", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_lang_time_adj, 'x', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Language time-limit adjustments (s)", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_lang_time_adj_millis, 'x', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Language time-limit adjustments (ms)", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_lang_max_vm_size, 'x', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Language-specific memory limit", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_lang_max_stack_size, 'x', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Language-specific stack limit", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_disable_language, 'x', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Disabled languages", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_enable_language, 'x', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Enabled languages", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_require, 'x', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Required problems", 0, "SidState.prob_show_adv" },
-  { NS_PROBLEM, CNTSPROB_provide_ok, 'x', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, "Provide OK to problems", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_lang_time_adj, 'x', 1, 1, 1, 1, 0, "Language time-limit adjustments (s)", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_lang_time_adj_millis, 'x', 1, 1, 1, 1, 0, "Language time-limit adjustments (ms)", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_lang_max_vm_size, 'x', 1, 1, 1, 1, 0, "Language-specific memory limit", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_lang_max_stack_size, 'x', 1, 1, 1, 1, 0, "Language-specific stack limit", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_disable_language, 'x', 1, 1, 1, 1, 0, "Disabled languages", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_enable_language, 'x', 1, 1, 1, 1, 0, "Enabled languages", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_require, 'x', 1, 1, 1, 1, 0, "Required problems", 0, "SidState.prob_show_adv" },
+  { NS_PROBLEM, CNTSPROB_provide_ok, 'x', 1, 1, 1, 1, 0, "Provide OK to problems", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_variant_num, 'd', 1, 1, 1, 1, 0, "Number of variants", 0, 0 },
   { NS_PROBLEM, CNTSPROB_start_date, 't', 1, 1, 0, 0, 0, "Accept start date", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_deadline, 't', 1, 1, 0, 0, 0, "Accept deadline", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_source_header, 'S', 1, 1, 1, 1, 0, "Source header file", 0, "SidState.prob_show_adv" },
   { NS_PROBLEM, CNTSPROB_source_footer, 'S', 1, 1, 1, 1, 0, "Source footer file", 0, "SidState.prob_show_adv" },
   { 0, 0, '-', 0, 0, 0, 0, 0, "Other parameters", 0, 0 },
-  { NS_PROBLEM, CNTSPROB_unhandled_vars, 137, 0, 0, 0, 0, SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE, 0, 0, 0 },
+  { NS_PROBLEM, CNTSPROB_unhandled_vars, 137, 0, 0, 0, 0, 0, 0, 0, 0 },
 
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
@@ -1317,9 +1317,9 @@ struct edit_page_desc
 static const struct edit_page_desc edit_page_descs[] =
 {
   { "General Settings", cnts_edit_info, &contest_desc_methods,
-    SSERV_CMD_EDIT_CONTEST_XML_FIELD, SSERV_CMD_CLEAR_CONTEST_XML_FIELD },
+    0, SSERV_CMD_CLEAR_CONTEST_XML_FIELD },
   { "Global Settings", cnts_global_info, &cntsglob_methods,
-    SSERV_CMD_EDIT_SERVE_GLOBAL_FIELD, SSERV_CMD_CLEAR_SERVE_GLOBAL_FIELD },
+    0, 0 },
   { "Language Settings", cnts_language_info, &cntslang_methods,
     SSERV_CMD_SET_SERVE_LANG_FIELD, SSERV_CMD_CLEAR_SERVE_LANG_FIELD },
   { "Problem Settings", cnts_problem_info, &cntsprob_methods,
@@ -1346,7 +1346,7 @@ separator_row(
           colspan, text);
   if (p_detail_flag) {
     snprintf(bbuf, sizeof(bbuf), "ssFieldRequest(%d, %d, %d)",
-             SSERV_CMD_TOGGLE_CONTEST_XML_VISIBILITY,
+             0,
              field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2);
     fprintf(out_f, "<td class=\"cnts_edit_head\">");
     if (copy_cmd) {
@@ -1520,8 +1520,8 @@ write_editing_rows(
     }
 
     if (ce->type == 138) {
-      edit_op = SSERV_CMD_SET_SID_STATE_LANG_FIELD;
-      clear_op = SSERV_CMD_CLEAR_SID_STATE_LANG_FIELD;
+      //edit_op = SSERV_CMD_SET_SID_STATE_LANG_FIELD;
+      //clear_op = SSERV_CMD_CLEAR_SID_STATE_LANG_FIELD;
     }
 
     is_empty = 0;
@@ -1789,7 +1789,7 @@ write_editing_rows(
         if (*y_ptr) locale_code = l10n_parse_locale(y_ptr);
         if (locale_code >= 0) is_empty = 0;
 
-        l10n_html_locale_select_2(out_f, 0, 0, 0, eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_CMD_EDIT_CONTEST_XML_FIELD, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2), locale_code);
+        l10n_html_locale_select_2(out_f, 0, 0, 0, eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2), locale_code);
       }
       break;
     case 129:
@@ -1797,7 +1797,7 @@ write_editing_rows(
         int reg_mode = *(unsigned char*) v_ptr;
 
         ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_CMD_EDIT_CONTEST_XML_FIELD, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2),
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2),
                            !!reg_mode,
                            2, (const char *[]) { "Moderated registration", "Free registration" });
       }
@@ -1811,7 +1811,7 @@ write_editing_rows(
         }
 
         ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_CMD_EDIT_SERVE_GLOBAL_FIELD, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2), param,
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2), param,
                            6, (const char *[]) { "ACM", "Kirov", "Olympiad", "Moscow", "Virtual ACM", "Virtual Olympiad" });
       }
       break;
@@ -1823,7 +1823,7 @@ write_editing_rows(
           break;
         }
         ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_CMD_EDIT_SID_STATE_FIELD_NEGATED, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2),
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2),
                            value,
                            2, (const char *[]) { "No", "Yes" });
       }
@@ -1838,7 +1838,7 @@ write_editing_rows(
         if (*y_ptr) locale_code = l10n_parse_locale(y_ptr);
         if (locale_code >= 0) is_empty = 0;
 
-        l10n_html_locale_select_2(out_f, 0, 0, 0, eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_CMD_EDIT_SERVE_GLOBAL_FIELD, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2), locale_code);
+        l10n_html_locale_select_2(out_f, 0, 0, 0, eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2), locale_code);
       }
       break;
     case 135:
@@ -1850,7 +1850,7 @@ write_editing_rows(
           break;
         }
         ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_CMD_EDIT_SID_STATE_FIELD, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2),
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2),
                            !!*y_ptr,
                            2, (const char *[]) { "No", "Yes" });
       }
@@ -1859,7 +1859,7 @@ write_editing_rows(
       {
         int param = global->rounding_mode;
         ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_CMD_EDIT_SERVE_GLOBAL_FIELD, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2), param,
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2), param,
                            3, (const char *[]) { "Truncating up (ceil)", "Truncating down (floor)", "Rounding" });
       }
       break;
@@ -1984,7 +1984,7 @@ write_editing_rows(
           break;
         }
         ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_CMD_EDIT_SID_STATE_FIELD, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2),
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2),
                            value,
                            2, (const char *[]) { "No", "Yes" });
       }
@@ -2132,24 +2132,24 @@ write_languages_page(
       if (!phr->ss->lang_flags[lang->id]) {
         ss_dojo_button(out_f, 0, "zoom_in-16x16", "Show Detail",
                     "ssSetValue3(%d, %d, %d, %d, 1)",
-                    SSERV_CMD_SET_SID_STATE_LANG_FIELD, i,
+                    0, i,
                     SSSS_lang_flags, SSERV_CMD_EDIT_CONTEST_PAGE_2);
       } else {
         ss_dojo_button(out_f, 0, "zoom_out-16x16", "Hide Detail",
                     "ssSetValue3(%d, %d, %d, %d, 0)",
-                    SSERV_CMD_SET_SID_STATE_LANG_FIELD, i,
+                    0, i,
                     SSSS_lang_flags, SSERV_CMD_EDIT_CONTEST_PAGE_2);
       }
       if (!phr->ss->loc_cs_map[lang->id]) {
         ss_dojo_button(out_f, 0, "delete-16x16", "Deactivate",
                     "ssSetValue3(%d, %d, %d, %d, 0)",
-                    SSERV_CMD_SET_SID_STATE_LANG_FIELD, i,
+                    0, i,
                     SSSS_langs, SSERV_CMD_EDIT_CONTEST_PAGE_2);
       }
     } else {
       ss_dojo_button(out_f, 0, "add-16x16", "Activate",
                   "ssSetValue3(%d, %d, %d, %d, 1)",
-                  SSERV_CMD_SET_SID_STATE_LANG_FIELD, i,
+                  0, i,
                   SSSS_langs, SSERV_CMD_EDIT_CONTEST_PAGE_2);
     }
 
@@ -2625,41 +2625,6 @@ cmd_clear_contest_xml_field(
   return retval;
 }
 
-static unsigned char check_path_set[CNTS_LAST_FIELD] =
-{
-  [CNTS_users_header_file] = 1,
-  [CNTS_users_footer_file] = 1,
-  [CNTS_register_header_file] = 1,
-  [CNTS_register_footer_file] = 1,
-  [CNTS_team_header_file] = 1,
-  [CNTS_team_menu_1_file] = 1,
-  [CNTS_team_menu_2_file] = 1,
-  [CNTS_team_menu_3_file] = 1,
-  [CNTS_team_separator_file] = 1,
-  [CNTS_team_footer_file] = 1,
-  [CNTS_priv_header_file] = 1,
-  [CNTS_priv_footer_file] = 1,
-  [CNTS_register_email_file] = 1,
-  [CNTS_copyright_file] = 1,
-  [CNTS_welcome_file] = 1,
-  [CNTS_reg_welcome_file] = 1,
-};
-
-static int
-ends_with(const unsigned char *str, const unsigned char *suffix)
-{
-  int slen, xlen;
-
-  if (!suffix || !*suffix) return 1;
-  if (!str || !*str) return 0;
-
-  slen = strlen(str);
-  xlen = strlen(suffix);
-  if (xlen > slen) return 0;
-  if (!strcmp(str + slen - xlen, suffix)) return 1;
-  return 0;
-}
-
 static int
 handle_time_t_editing(
 	struct http_request_info *phr,
@@ -2748,245 +2713,6 @@ handle_time_t_editing(
   default:
     FAIL(SSERV_ERR_INV_FIELD_ID);
   }
-
- cleanup:
-  return retval;
-}
-
-static unsigned char contest_str_need_space[CNTS_LAST_FIELD] =
-{
-  [CNTS_users_head_style] = 1,
-  [CNTS_users_par_style] = 1,
-  [CNTS_users_table_style] = 1,
-  [CNTS_users_verb_style] = 1,
-  [CNTS_register_head_style] = 1,
-  [CNTS_register_par_style] = 1,
-  [CNTS_register_table_style] = 1,
-  [CNTS_team_head_style] = 1,
-  [CNTS_team_par_style] = 1,
-};
-
-static int
-cmd_edit_contest_xml_field(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int f_id = 0, f_id2 = 0;
-  int f_type = 0;
-  void *f_ptr = 0;
-  const unsigned char *valstr = 0;
-  struct contest_desc *ecnts = 0;
-  int utf8_id = 0, vallen;
-  struct html_armor_buffer vb = HTML_ARMOR_INITIALIZER;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  ecnts = phr->ss->edited_cnts;
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTS_LAST_FIELD)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_ptr = contest_desc_get_ptr_nc(ecnts, f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_type = contest_desc_get_type(f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (f_id == CNTS_user_contest_num || f_id == CNTS_default_locale_num)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (hr_cgi_param(phr, "value", &valstr) <= 0 || !valstr)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if ((vallen = strlen(valstr)) > 16384)
-    FAIL(SSERV_ERR_INV_VALUE);
-
-  // strip off trailing space
-  if (vallen > 0 && isspace(valstr[vallen - 1])) {
-    unsigned char *tmps = (unsigned char*) alloca(vallen + 1);
-    memcpy(tmps, valstr, vallen + 1);
-    while (vallen > 0 && isspace(tmps[vallen - 1])) --vallen;
-    tmps[vallen] = 0;
-    valstr = tmps;
-  }
-  // insert the first space, if needed
-  if (vallen > 0 && contest_str_need_space[f_id] && !isspace(valstr[0])) {
-    unsigned char *tmps = (unsigned char*) alloca(vallen + 2);
-    tmps[0] = ' ';
-    memcpy(tmps + 1, valstr, vallen + 1);
-    valstr = tmps;
-  }
-
-  // value is in utf-8, translate it to the local charset
-  utf8_id = charset_get_id("utf-8");
-  valstr = charset_decode(utf8_id, &vb, valstr);
-
-  if (check_path_set[f_id]) {
-    // must end in '.html' or '.shtml'
-    // must not contain / or start with .
-    if (strchr(valstr, '/')) 
-      FAIL(SSERV_ERR_INV_VALUE);
-    if (valstr[0] == '.')
-      FAIL(SSERV_ERR_INV_VALUE);
-    if (!ends_with(valstr, ".html") && !ends_with(valstr, ".shtml")
-        && !ends_with(valstr, ".txt"))
-      FAIL(SSERV_ERR_INV_VALUE);
-  }
-
-  switch (f_type) {
-  case 'b':
-    {
-      unsigned char *p_bool = (unsigned char *) f_ptr;
-      int newval, n = 0;
-
-      if (sscanf(valstr, "%d%n", &newval, &n) != 1 || valstr[n]
-          || newval < 0 || newval > 1)
-        FAIL(SSERV_ERR_INV_VALUE);
-      if (*p_bool == newval) goto cleanup;
-      *p_bool = newval;
-      switch (f_id) {
-      case CNTS_autoregister:
-      case CNTS_simple_registration:
-      case CNTS_send_passwd_email:
-      case CNTS_assign_logins:
-      case CNTS_personal:
-        retval = 1;
-        break;
-      }
-    }
-    break;
-  case 's':
-    {
-      unsigned char **p_str = (unsigned char**) f_ptr;
-      int newval = -1, n = 0;
-      const struct contest_desc *cnts = 0;
-
-      if (f_id == CNTS_user_contest) {
-        if (sscanf(valstr, "%d%n", &newval, &n) != 1 || valstr[n]
-            || newval < 0)
-          FAIL(SSERV_ERR_INV_VALUE);
-        if (!newval) {
-          xfree(ecnts->user_contest);
-          ecnts->user_contest = 0;
-          ecnts->user_contest_num = 0;
-          retval = 1;
-          goto cleanup;
-        }
-        if (ecnts->id == newval)
-          FAIL(SSERV_ERR_INV_VALUE);
-        if (contests_get(newval, &cnts) < 0 || !cnts)
-          FAIL(SSERV_ERR_INV_VALUE);
-        if (cnts->user_contest_num > 0)
-          FAIL(SSERV_ERR_INV_VALUE);
-      }
-      if (f_id == CNTS_default_locale) {
-        if ((newval = l10n_parse_locale(valstr)) < 0)
-          FAIL(SSERV_ERR_INV_VALUE);
-      }
-      if (f_id == CNTS_register_email
-          || f_id == CNTS_cf_notify_email
-          || f_id == CNTS_clar_notify_email
-          || f_id == CNTS_daily_stat_email) {
-        if (valstr && *valstr && !is_valid_email_address(valstr)) {
-          FAIL(SSERV_ERR_INV_VALUE);
-        }
-      }
-
-      if (!*p_str) {
-        retval = 1;
-      } else {
-        if (!strcmp(*p_str, valstr)) goto cleanup;
-        xfree(*p_str);
-        *p_str = 0;
-      }
-      *p_str = xstrdup(valstr);
-      switch (f_id) {
-      case CNTS_users_header_file:
-      case CNTS_users_footer_file:
-      case CNTS_register_header_file:
-      case CNTS_register_footer_file:
-      case CNTS_team_header_file:
-      case CNTS_team_menu_1_file:
-      case CNTS_team_menu_2_file:
-      case CNTS_team_menu_3_file:
-      case CNTS_team_separator_file:
-      case CNTS_team_footer_file:
-      case CNTS_priv_header_file:
-      case CNTS_priv_footer_file:
-      case CNTS_copyright_file:
-      case CNTS_login_template:
-      case CNTS_register_email_file:
-      case CNTS_users_table_format:
-      case CNTS_users_table_format_en:
-      case CNTS_users_table_legend:
-      case CNTS_users_table_legend_en:
-      case CNTS_default_locale:
-      case CNTS_welcome_file:
-      case CNTS_reg_welcome_file:
-        retval = 1;
-        break;
-      }
-      if (f_id == CNTS_user_contest) {
-        phr->ss->edited_cnts->user_contest_num = newval;
-      }
-      if (f_id == CNTS_default_locale) {
-        phr->ss->edited_cnts->default_locale_num = newval;
-      }
-      if ((f_id2 = cnts_text_edit_map[f_id]) > 0) {
-        char **s_ptr = (char**) ss_sid_state_get_ptr_nc(phr->ss, f_id2);
-        xfree(*s_ptr); *s_ptr = 0;
-      }
-      if ((f_id2 = cnts_text_load_map[f_id]) > 0) {
-        int *i_ptr = (int*) ss_sid_state_get_ptr_nc(phr->ss, f_id2);
-        *i_ptr = 0;
-      }
-    }
-    break;
-  case 't':
-    retval = handle_time_t_editing(phr, valstr, (time_t*) f_ptr);
-    break;
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-
- cleanup:
-  html_armor_free(&vb);
-  return retval;
-}
-
-static unsigned char valid_ss_visibilities[SSSS_LAST_FIELD] =
-{
-  // these are visibilities for global configuration page
-  [SSSS_show_global_1] = 1,
-  [SSSS_show_global_2] = 1,
-  [SSSS_show_global_3] = 1,
-  [SSSS_show_global_4] = 1,
-  [SSSS_show_global_5] = 1,  
-  [SSSS_show_global_6] = 1,  
-  [SSSS_show_global_7] = 1,  
-};
-
-static int
-cmd_toggle_contest_xml_vis(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0, f_id;
-  int *p_int;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= SSSS_LAST_FIELD
-      || !valid_ss_visibilities[f_id])
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  p_int = ss_sid_state_get_ptr_nc(phr->ss, f_id);
-  if (*p_int) *p_int = 0;
-  else *p_int = 1;
-
-  retval = 1;
 
  cleanup:
   return retval;
@@ -4565,65 +4291,6 @@ cmd_op_forget_contest(
   return 1;
 }
 
-// initialized upon first access
-static unsigned char *editable_global_fields = NULL;
-
-static void
-init_editable_global_fields(void)
-{
-  int i, f;
-
-  if (editable_global_fields) return;
-  XCALLOC(editable_global_fields, CNTSGLOB_LAST_FIELD);
-
-  for (i = 0; cnts_global_info[i].nspace; ++i)
-    if (cnts_global_info[i].nspace == NS_GLOBAL) {
-      f = cnts_global_info[i].field_id;
-      ASSERT(f > 0 && f < CNTSGLOB_LAST_FIELD);
-      editable_global_fields[f] = 1;
-    }
-}
-
-static unsigned char
-global_bool_fields_return_val[CNTSGLOB_LAST_FIELD] =
-{
-  [CNTSGLOB_secure_run] = 1,
-  [CNTSGLOB_team_enable_rep_view] = 1,
-  [CNTSGLOB_disable_clars] = 1,
-  [CNTSGLOB_enable_eoln_select] = 1,
-  [CNTSGLOB_problem_navigation] = 1,
-  [CNTSGLOB_stand_fancy_style] = 1,
-  [CNTSGLOB_stand_show_ok_time] = 1,
-  [CNTSGLOB_enable_printing] = 1,
-  [CNTSGLOB_stand_show_contestant_status] = 1,
-  [CNTSGLOB_stand_show_warn_number] = 1,
-};
-
-static unsigned char
-global_str_need_space[CNTSGLOB_LAST_FIELD] =
-{
-  [CNTSGLOB_stand_success_attr] = 1,
-  [CNTSGLOB_stand_table_attr] = 1,
-  [CNTSGLOB_stand_place_attr] = 1,
-  [CNTSGLOB_stand_team_attr] = 1,
-  [CNTSGLOB_stand_prob_attr] = 1,
-  [CNTSGLOB_stand_solved_attr] = 1,
-  [CNTSGLOB_stand_score_attr] = 1,
-  [CNTSGLOB_stand_penalty_attr] = 1,
-  [CNTSGLOB_stand_time_attr] = 1,
-  [CNTSGLOB_stand_fail_attr] = 1,
-  [CNTSGLOB_stand_trans_attr] = 1,
-  [CNTSGLOB_stand_disq_attr] = 1,
-  [CNTSGLOB_stand_self_row_attr] = 1,
-  [CNTSGLOB_stand_v_row_attr] = 1,
-  [CNTSGLOB_stand_r_row_attr] = 1,
-  [CNTSGLOB_stand_u_row_attr] = 1,
-  [CNTSGLOB_stand_extra_attr] = 1,
-  [CNTSGLOB_stand_warn_number_attr] = 1,
-  [CNTSGLOB_stand_page_table_attr] = 1,
-  [CNTSGLOB_stand_page_cur_attr] = 1,
-};
-
 /* TODO list:
   { NS_GLOBAL, CNTSGLOB_unhandled_vars, 137, 0, 0, 0, 0, 0, 0, 0, "Global.unhandled_vars SidState.show_global_7 &&" },
  */
@@ -4672,201 +4339,6 @@ static const int global_int_max_val[CNTSGLOB_LAST_FIELD] =
   [CNTSGLOB_cpu_bogomips] = 1*1024*1024*1024
 };
 
-static int
-cmd_op_edit_serve_global_field(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct section_global_data *global = 0;
-  int f_id = 0;
-  void *f_ptr;
-  int f_type;
-  const unsigned char *valstr = 0;
-  int vallen;
-  int intval, n = 0, h = 0, m = 0, s = 0;
-  char *eptr;
-  struct html_armor_buffer vb = HTML_ARMOR_INITIALIZER;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts || !phr->ss->global)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  global = phr->ss->global;
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTSGLOB_LAST_FIELD)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!editable_global_fields)
-    init_editable_global_fields();
-  if (!editable_global_fields[f_id])
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_ptr = cntsglob_get_ptr_nc(global, f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_type = cntsglob_get_type(f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (ss_cgi_param_utf8_str(phr, "value", &vb, &valstr) <= 0 || !valstr)
-    FAIL(SSERV_ERR_INV_VALUE);
-  vallen = strlen(valstr);
-  if (global_str_need_space[f_id] && vallen > 0 && !isspace(valstr[0])) {
-    unsigned char *tmps = (unsigned char*) alloca(vallen + 2);
-    tmps[0] = ' ';
-    memcpy(tmps + 1, valstr, vallen + 1);
-    valstr = tmps;
-  }
-
-  // individual field editing
-  switch (f_id) {
-  case CNTSGLOB_score_system:
-    if (!vallen) FAIL(SSERV_ERR_INV_VALUE);
-    errno = 0;
-    intval = strtol(valstr, &eptr, 10);
-    if (errno || *eptr) FAIL(SSERV_ERR_INV_VALUE);
-    if (intval < 0 || intval >= 6) FAIL(SSERV_ERR_INV_VALUE);
-    static int score_system_to_int[6] = { SCORE_ACM, SCORE_KIROV, SCORE_OLYMPIAD, SCORE_MOSCOW, SCORE_ACM, SCORE_OLYMPIAD };
-    static int score_system_to_vir[6] = { 0, 0, 0, 0, 1, 1 };
-    global->score_system = score_system_to_int[intval];
-    global->is_virtual = score_system_to_vir[intval];
-    retval = 1;
-    goto cleanup;
-  case CNTSGLOB_contest_time:
-  case CNTSGLOB_board_fog_time:
-  case CNTSGLOB_board_unfog_time:
-    if (!vallen) FAIL(SSERV_ERR_INV_VALUE);
-    if (sscanf(valstr, "%d:%d%n", &h, &m, &n) == 2 && !valstr[n]
-	&& m >= 0 && m < 60 && h >= 0) {
-      *(int*) f_ptr = h * 60 + m;
-    } else if (sscanf(valstr, "%d%n", &h, &n) == 1 && !valstr[n]
-	       && h >= 0) {
-      *(int*) f_ptr = h * 60;
-    } else {
-      FAIL(SSERV_ERR_INV_VALUE);
-    }
-    retval = 1;
-    goto cleanup;
-  case CNTSGLOB_standings_locale:
-    {
-      int locale_code = 0;
-      if (vallen > 0) {
-        locale_code = l10n_parse_locale(valstr);
-      }
-      snprintf(global->standings_locale, sizeof(global->standings_locale),
-               "%s", l10n_unparse_locale(locale_code));
-      global->standings_locale_id = locale_code;
-      retval = 1;
-    }
-    goto cleanup;
-
-  case CNTSGLOB_rounding_mode:
-    {
-      if (!vallen) FAIL(SSERV_ERR_INV_VALUE);
-      errno = 0;
-      intval = strtol(valstr, &eptr, 10);
-      if (errno || *eptr || intval < 0 || intval > 2) FAIL(SSERV_ERR_INV_VALUE);
-      global->rounding_mode = intval;
-    }
-    goto cleanup;
-
-  case CNTSGLOB_team_download_time:
-    if (!vallen) FAIL(SSERV_ERR_INV_VALUE);
-    if (sscanf(valstr, "%d:%d:%d%n", &h, &m, &s, &n) == 3 && !valstr[n]
-        && s >= 0 && s < 60 && m >= 0 && m < 60 && h >= 0) {
-      *(int*) f_ptr = h * 3600 + m * 60 + s;
-    } else if (sscanf(valstr, "%d:%d%n", &h, &m, &n) == 2 && !valstr[n]
-	&& m >= 0 && m < 60 && h >= 0) {
-      *(int*) f_ptr = h * 3600 + m * 60;
-    } else if (sscanf(valstr, "%d%n", &h, &n) == 1 && !valstr[n]
-	       && h >= 0) {
-      *(int*) f_ptr = h * 3600;
-    } else {
-      FAIL(SSERV_ERR_INV_VALUE);
-    }
-    retval = 1;
-    goto cleanup;
-
-  default:
-    // do nothing
-    ;
-  }
-
-  switch (f_type) {
-  case 'B': // ejintbool_t
-    {
-      if (!vallen) FAIL(SSERV_ERR_INV_VALUE);
-      errno = 0;
-      int bval = strtol(valstr, &eptr, 10);
-      if (errno || *eptr) FAIL(SSERV_ERR_INV_VALUE);
-      if (bval < 0 || bval > 1) FAIL(SSERV_ERR_INV_VALUE);
-      *(ejintbool_t*) f_ptr = bval;
-      retval = global_bool_fields_return_val[f_id];
-    }    
-    break;
-
-  case 't':
-    retval = handle_time_t_editing(phr, valstr, (time_t*) f_ptr);
-    break;
-
-  case 'S':
-    {
-      size_t size = cntsglob_get_size(f_id);
-      snprintf((unsigned char*) f_ptr, size, "%s", valstr);
-    }
-    break;
-
-  case 'i':
-    {
-      if (!vallen) FAIL(SSERV_ERR_INV_VALUE);
-      errno = 0;
-      int val = strtol(valstr, &eptr, 10);
-      if (errno || *eptr) FAIL(SSERV_ERR_INV_VALUE);
-      if (val < global_int_min_val[f_id] || val > global_int_max_val[f_id])
-        FAIL(SSERV_ERR_INV_VALUE);
-      *(int*) f_ptr = val;
-    }
-    break;
-
-  case 'z':
-    {
-      size_t val = 0;
-      if (parse_size(valstr, &val) < 0) FAIL(SSERV_ERR_INV_VALUE);
-      if (val < global_int_min_val[f_id] || val > global_int_max_val[f_id])
-        FAIL(SSERV_ERR_INV_VALUE);
-      *(ejintsize_t*) f_ptr = (ejintsize_t) val;
-    }
-    break;
-
-  case 'x':
-    {
-      char **tmp_args = 0;
-      char ***f_args = (char***) f_ptr;
-
-      if (sarray_parse_2(valstr, &tmp_args) < 0) FAIL(SSERV_ERR_INV_VALUE);
-      sarray_free(*f_args);
-      *f_args = tmp_args;
-    }
-    break;
-
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-
- cleanup:
-  html_armor_free(&vb);
-  return retval;
-}
-
-static const unsigned char *global_str_default_val[CNTSGLOB_LAST_FIELD] =
-{
-  [CNTSGLOB_test_dir] = DFLT_G_TEST_DIR,
-  [CNTSGLOB_corr_dir] = DFLT_G_CORR_DIR,
-  [CNTSGLOB_info_dir] = DFLT_G_INFO_DIR,
-  [CNTSGLOB_tgz_dir] = DFLT_G_TGZ_DIR,
-  [CNTSGLOB_checker_dir] = DFLT_G_CHECKER_DIR,
-  [CNTSGLOB_statement_dir] = DFLT_G_STATEMENT_DIR,
-  [CNTSGLOB_plugin_dir] = DFLT_G_PLUGIN_DIR,
-  [CNTSGLOB_standings_file_name] = DFLT_G_STANDINGS_FILE_NAME
-};
-
 static const int global_int_default_val[CNTSGLOB_LAST_FIELD] =
 {
   [CNTSGLOB_max_run_size] = DFLT_G_MAX_RUN_SIZE,
@@ -4883,115 +4355,6 @@ static const int global_int_default_val[CNTSGLOB_LAST_FIELD] =
   [CNTSGLOB_inactivity_timeout] = DFLT_G_INACTIVITY_TIMEOUT,
 };
 
-static int
-cmd_op_clear_serve_global_field(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct section_global_data *global = 0;
-  int f_id = 0, f_type = 0;
-  void *f_ptr = 0;
-  size_t f_size = 0;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts || !phr->ss->global)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  global = phr->ss->global;
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTSGLOB_LAST_FIELD)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!editable_global_fields)
-    init_editable_global_fields();
-  if (!editable_global_fields[f_id])
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_ptr = cntsglob_get_ptr_nc(global, f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_type = cntsglob_get_type(f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_size = cntsglob_get_size(f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-
-  // individual field editing
-  switch (f_id) {
-  case CNTSGLOB_score_system:
-    global->score_system = SCORE_ACM;
-    global->is_virtual = 0;
-    retval = 1;
-    goto cleanup;
-  case CNTSGLOB_contest_time:
-  case CNTSGLOB_board_fog_time:
-  case CNTSGLOB_board_unfog_time:
-  case CNTSGLOB_team_download_time:
-    *(int*) f_ptr = 0;
-    retval = 1;
-    goto cleanup;
-  case CNTSGLOB_standings_locale:
-    global->standings_locale[0] = 0;
-    global->standings_locale_id = 0;
-    retval = 1;
-    goto cleanup;
-  case CNTSGLOB_rounding_mode:
-    global->rounding_mode = 0;
-    retval = 1;
-    goto cleanup;
-  case CNTSGLOB_cpu_bogomips:
-    global->cpu_bogomips = cpu_get_bogomips();
-    retval = 1;
-    goto cleanup;
-  case CNTSGLOB_cr_serialization_key:
-    global->cr_serialization_key = phr->config->serialization_key;
-    retval = 1;
-    goto cleanup;
-  default:
-    ;
-  }
-
-  switch (f_type) {
-  case 'B':
-    *(ejintbool_t*) f_ptr = 0;
-    break;
-
-  case 't':
-    *(time_t*) f_ptr = 0;
-    break;
-
-  case 'i':
-    *(int*) f_ptr = global_int_default_val[f_id];
-    break;
-
-  case 'z':
-    *(ejintsize_t*) f_ptr = global_int_default_val[f_id];
-    break;
-
-  case 's':
-    xfree(*(char**) f_ptr);
-    *(char**) f_ptr = 0;
-    break;
-
-  case 'S':
-    *(char*) f_ptr = 0;
-    if (global_str_default_val[f_id]) {
-      snprintf((char*) f_ptr, f_size, "%s", global_str_default_val[f_id]);
-    }
-    break;
-
-  case 'x':
-    sarray_free(* (char***) f_ptr);
-    *(char***) f_ptr = 0;
-    break;
-
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-  retval = 1;
-
- cleanup:
-  return retval;
-}
-
 static const unsigned char editable_sid_state_fields[SSSS_LAST_FIELD] =
 {
   [SSSS_enable_stand2] = 1,
@@ -5000,372 +4363,10 @@ static const unsigned char editable_sid_state_fields[SSSS_LAST_FIELD] =
   [SSSS_enable_win32_languages] = 1,
 };
 
-static int
-cmd_op_edit_sid_state_field(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int f_id = 0;
-  void *f_ptr;
-  int f_type;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTSGLOB_LAST_FIELD)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!editable_sid_state_fields[f_id])
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_ptr = ss_sid_state_get_ptr_nc(phr->ss, f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_type = ss_sid_state_get_type(f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  switch (f_type) {
-  case 'B':
-    {
-      int val;
-
-      if (hr_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
-        FAIL(SSERV_ERR_INV_VALUE);
-      *(ejintbool_t*) f_ptr = val;
-      retval = 1;
-    }
-    break;
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-
- cleanup:
-  return retval;
-}
-
 static const unsigned char editable_sid_state_fields_neg[SSSS_LAST_FIELD] =
 {
   [SSSS_disable_compilation_server] = 1,
 };
-
-static int
-cmd_op_edit_sid_state_field_neg(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int f_id = 0;
-  int val;
-  void *f_ptr;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTSGLOB_LAST_FIELD)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!editable_sid_state_fields_neg[f_id])
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (hr_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if (!(f_ptr = ss_sid_state_get_ptr_nc(phr->ss, f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (ss_sid_state_get_type(f_id) != 'B')
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  *(ejintbool_t*) f_ptr = !val;
-  retval = 1;
-
- cleanup:
-  return retval;
-}
-
-static unsigned char global_editable_details[CNTSGLOB_LAST_FIELD] =
-{
-  [CNTSGLOB_a2ps_args] = 1,
-  [CNTSGLOB_lpr_args] = 1,
-  [CNTSGLOB_stand_row_attr] = 1,
-  [CNTSGLOB_stand_page_row_attr] = 1,
-  [CNTSGLOB_stand_page_col_attr] = 1,
-  [CNTSGLOB_user_priority_adjustments] = 1,
-  [CNTSGLOB_contestant_status_legend] = 1,
-  [CNTSGLOB_contestant_status_row_attr] = 1,
-  [CNTSGLOB_unhandled_vars] = 1,
-};
-
-static int
-cmd_op_edit_serve_global_field_detail_page(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct section_global_data *global;
-  const struct contest_desc *ecnts;
-  int f_id, f_type;
-  unsigned char buf[1024];
-  FILE *text_f = 0;
-  char *text_t = 0;
-  size_t text_z = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  const void *f_ptr;
-
-  if (!phr->ss->edited_cnts || !phr->ss->global)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  ecnts = phr->ss->edited_cnts;
-  global = phr->ss->global;
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTSGLOB_LAST_FIELD
-      || !(global_editable_details[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_ptr = cntsglob_get_ptr(global, f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_type = cntsglob_get_type(f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-
-  text_f = open_memstream(&text_t, &text_z);
-  switch (f_type) {
-  case 's':
-    {
-      const unsigned char *s = *(const unsigned char**) f_ptr;
-      if (s) fprintf(text_f, "%s", s);
-    }
-    break;
-  case 'x':
-    {
-      const char *const * ss = *(const char *const **) f_ptr;
-      if (ss) {
-        for (int i = 0; ss[i]; ++i)
-          fprintf(text_f, "%s\n", ss[i]);
-      }
-    }
-    break;
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-  close_memstream(text_f); text_f = 0;
-
-  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d, editing %s",
-           phr->html_name, ecnts->id, cntsglob_get_name(f_id));
-  write_html_header(out_f, phr, buf, 1, 0);
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-  fprintf(out_f, "<br/>\n");
-
-  fprintf(out_f, "<form id=\"editBox\"><textarea dojoType=\"dijit.form.Textarea\" name=\"param\" rows=\"20\" cols=\"80\">%s</textarea></form>\n",
-          ARMOR(text_t));
-
-  fprintf(out_f, "<br/>\n");
-
-  ss_dojo_button(out_f, 0, "accept-32x32", "OK",
-              "editFileSave(\"editBox\", %d, %d, %d)",
-              SSERV_CMD_EDIT_SERVE_GLOBAL_FIELD_DETAIL, f_id,
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-  ss_dojo_button(out_f, 0, "cancel-32x32", "Cancel",
-              "ssLoad1(%d)",
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-
-  write_html_footer(out_f);
-
- cleanup:
-  if (text_f) fclose(text_f);
-  xfree(text_t);
-  html_armor_free(&ab);
-  return retval;
-}
-
-static int
-cmd_op_edit_serve_global_field_detail(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int f_id, f_type;
-  void *f_ptr;
-  struct section_global_data *global;
-  const unsigned char *valstr;
-  int vallen;
-  char **lns = 0;
-  unsigned char *filt_txt = 0;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts || !phr->ss->global)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  global = phr->ss->global;
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTSGLOB_LAST_FIELD
-      || !(global_editable_details[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_ptr = cntsglob_get_ptr_nc(global, f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_type = cntsglob_get_type(f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (hr_cgi_param(phr, "param", &valstr) <= 0)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if ((vallen = strlen(valstr)) > 128 * 1024)
-    FAIL(SSERV_ERR_INV_VALUE);
-  filt_txt = text_area_process_string(valstr, 0, 0);
-
-  switch (f_id) {
-  case CNTSGLOB_a2ps_args:
-  case CNTSGLOB_lpr_args:
-  case CNTSGLOB_user_priority_adjustments:
-  case CNTSGLOB_contestant_status_legend:
-    split_to_lines(filt_txt, &lns, 2);
-    sarray_free(*(char***) f_ptr);
-    *(char***) f_ptr = lns;
-    lns = 0;
-    break;
-
-  case CNTSGLOB_stand_row_attr:
-  case CNTSGLOB_stand_page_row_attr:
-  case CNTSGLOB_stand_page_col_attr:
-  case CNTSGLOB_contestant_status_row_attr:
-    split_to_lines(filt_txt, &lns, 1);
-    sarray_free(*(char***) f_ptr);
-    *(char***) f_ptr = lns;
-    lns = 0;
-    break;
-
-  case CNTSGLOB_unhandled_vars:
-    xfree(*(unsigned char**) f_ptr);
-    *(unsigned char**) f_ptr = 0;
-    if (filt_txt && *filt_txt) {
-      *(unsigned char**) f_ptr = filt_txt;
-      filt_txt = 0;
-    }
-    break;
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-  retval = 1;
-
- cleanup:
-  xfree(filt_txt);
-  sarray_free(lns);
-  return retval;
-}
-
-static int
-cmd_op_set_sid_state_lang_field(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int lang_id = 0, cs_lang_id = 0;
-  int f_id = 0;
-  int val = -1;
-  int new_id;
-  struct html_armor_buffer vb = HTML_ARMOR_INITIALIZER;
-  const unsigned char *sval = 0;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts || !phr->ss->global)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-
-  switch (f_id) {
-  case SSSS_lang_flags:         // show/hide
-    // cs_lang_id is the compilation server language ID
-    if (hr_cgi_param_int(phr, "item_id", &cs_lang_id) < 0)
-      FAIL(SSERV_ERR_INV_LANG_ID);
-    if (cs_lang_id <= 0 || cs_lang_id >= phr->ss->cs_lang_total
-        || !phr->ss->cs_langs[cs_lang_id])
-      FAIL(SSERV_ERR_INV_LANG_ID);
-    new_id = phr->ss->cs_loc_map[cs_lang_id];
-    if (hr_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
-      FAIL(SSERV_ERR_INV_VALUE);
-    phr->ss->lang_flags[new_id] = val;
-    break;
-
-  case SSSS_langs:              // activate/deactivate
-    // cs_lang_id is the compilation server language ID
-    if (hr_cgi_param_int(phr, "item_id", &cs_lang_id) < 0)
-      FAIL(SSERV_ERR_INV_LANG_ID);
-    if (cs_lang_id <= 0 || cs_lang_id >= phr->ss->cs_lang_total
-        || !phr->ss->cs_langs[cs_lang_id])
-      FAIL(SSERV_ERR_INV_LANG_ID);
-    if (hr_cgi_param_int(phr, "value", &val) < 0 || val < 0 || val > 1)
-      FAIL(SSERV_ERR_INV_VALUE);
-    (val?super_html_lang_activate:super_html_lang_deactivate)(phr->ss, cs_lang_id);
-    break;
-
-  case SSSS_lang_opts:          // compiler options
-    if (hr_cgi_param_int(phr, "item_id", &lang_id) < 0)
-      FAIL(SSERV_ERR_INV_LANG_ID);
-    if (lang_id <= 0 || lang_id >= phr->ss->lang_a
-        || !phr->ss->langs[lang_id])
-      FAIL(SSERV_ERR_INV_LANG_ID);
-    if (ss_cgi_param_utf8_str(phr, "value", &vb, &sval) <= 0 || !sval)
-      FAIL(SSERV_ERR_INV_VALUE);
-    xfree(phr->ss->lang_opts[lang_id]);
-    phr->ss->lang_opts[lang_id] = xstrdup(sval);
-    break;
-
-  case SSSS_lang_libs:          // compiler options
-    if (hr_cgi_param_int(phr, "item_id", &lang_id) < 0)
-      FAIL(SSERV_ERR_INV_LANG_ID);
-    if (lang_id <= 0 || lang_id >= phr->ss->lang_a
-        || !phr->ss->langs[lang_id])
-      FAIL(SSERV_ERR_INV_LANG_ID);
-    if (ss_cgi_param_utf8_str(phr, "value", &vb, &sval) <= 0 || !sval)
-      FAIL(SSERV_ERR_INV_VALUE);
-    xfree(phr->ss->lang_libs[lang_id]);
-    phr->ss->lang_libs[lang_id] = xstrdup(sval);
-    break;
-
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-  retval = 1;
-
- cleanup:
-  html_armor_free(&vb);
-  return retval;
-}
-
-static int
-cmd_op_clear_sid_state_lang_field(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int lang_id = 0;
-  int f_id = 0;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts || !phr->ss->langs)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "item_id", &lang_id) < 0)
-    FAIL(SSERV_ERR_INV_LANG_ID);
-  if (lang_id <= 0 || lang_id >= phr->ss->lang_a || !phr->ss->langs[lang_id])
-    FAIL(SSERV_ERR_INV_LANG_ID);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  switch (f_id) {
-  case SSSS_lang_opts:
-    xfree(phr->ss->lang_opts[lang_id]);
-    phr->ss->lang_opts[lang_id] = 0;
-    break;
-  case SSSS_lang_libs:
-    xfree(phr->ss->lang_libs[lang_id]);
-    phr->ss->lang_libs[lang_id] = 0;
-    break;
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-  retval = 1;
-
- cleanup:
-  return retval;
-}
 
 const unsigned char lang_editable_fields[CNTSLANG_LAST_FIELD] =
 {
@@ -6246,187 +5247,6 @@ const unsigned char prob_editable_details[CNTSPROB_LAST_FIELD] =
   [CNTSPROB_unhandled_vars] = 1,
 };
 
-static int
-cmd_op_edit_serve_prob_field_detail_page(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  const struct contest_desc *ecnts;
-  int f_id, f_type, prob_id;
-  unsigned char buf[1024];
-  FILE *text_f = 0;
-  char *text_t = 0;
-  size_t text_z = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  const void *f_ptr;
-  const struct section_problem_data *prob = 0;
-
-  if (!phr->ss->edited_cnts || !phr->ss->global)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  ecnts = phr->ss->edited_cnts;
-  if (hr_cgi_param_int(phr, "item_id", &prob_id) < 0)
-    FAIL(SSERV_ERR_INV_PROB_ID);
-  if (prob_id >= 0) {
-    if (prob_id <= 0 || prob_id >= phr->ss->prob_a
-        || !(prob = phr->ss->probs[prob_id]))
-      FAIL(SSERV_ERR_INV_PROB_ID);
-  } else if (prob_id < 0) {
-    prob_id = ~prob_id;
-    if (prob_id >= phr->ss->aprob_u || !(prob = phr->ss->aprobs[prob_id]))
-      FAIL(SSERV_ERR_INV_PROB_ID);
-  }
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTSPROB_LAST_FIELD
-      || !(prob_editable_details[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_ptr = cntsprob_get_ptr(prob, f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_type = cntsprob_get_type(f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-
-  text_f = open_memstream(&text_t, &text_z);
-  switch (f_type) {
-  case 's':
-    {
-      const unsigned char *s = *(const unsigned char**) f_ptr;
-      if (s) fprintf(text_f, "%s", s);
-    }
-    break;
-  case 'X':
-  case 'x':
-    {
-      const char *const * ss = *(const char *const **) f_ptr;
-      if (ss) {
-        for (int i = 0; ss[i]; ++i)
-          fprintf(text_f, "%s\n", ss[i]);
-      }
-    }
-    break;
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-  close_memstream(text_f); text_f = 0;
-
-  snprintf(buf, sizeof(buf),
-           "serve-control: %s, contest %d, problem %s, editing %s",
-           phr->html_name, ecnts->id, prob->short_name,
-           cntsprob_get_name(f_id));
-  write_html_header(out_f, phr, buf, 1, 0);
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-  fprintf(out_f, "<br/>\n");
-
-  fprintf(out_f, "<form id=\"editBox\"><textarea dojoType=\"dijit.form.Textarea\" name=\"param\" rows=\"20\" cols=\"80\">%s</textarea></form>\n",
-          ARMOR(text_t));
-
-  fprintf(out_f, "<br/>\n");
-
-  ss_dojo_button(out_f, 0, "accept-32x32", "OK",
-              "ssEditFileSave2(\"editBox\", %d, %d, %d, %d)",
-              SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL, prob_id, f_id,
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-  ss_dojo_button(out_f, 0, "cancel-32x32", "Cancel",
-              "ssLoad1(%d)",
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-
-  write_html_footer(out_f);
-
- cleanup:
-  if (text_f) fclose(text_f);
-  xfree(text_t);
-  html_armor_free(&ab);
-  return retval;
-}
-
-static int
-cmd_op_edit_serve_prob_field_detail(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int f_id, f_type, prob_id;
-  void *f_ptr;
-  const unsigned char *valstr;
-  int vallen;
-  unsigned char *filt_txt = 0;
-  struct section_problem_data *prob = 0;
-  char **lns = 0;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts || !phr->ss->global)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "item_id", &prob_id) < 0)
-    FAIL(SSERV_ERR_INV_PROB_ID);
-  if (prob_id >= 0) {
-    if (prob_id <= 0 || prob_id >= phr->ss->prob_a
-        || !(prob = phr->ss->probs[prob_id]))
-      FAIL(SSERV_ERR_INV_PROB_ID);
-  } else if (prob_id < 0) {
-    prob_id = ~prob_id;
-    if (prob_id >= phr->ss->aprob_u || !(prob = phr->ss->aprobs[prob_id]))
-      FAIL(SSERV_ERR_INV_PROB_ID);
-  }
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTSPROB_LAST_FIELD
-      || !(prob_editable_details[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_ptr = cntsprob_get_ptr_nc(prob, f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_type = cntsprob_get_type(f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (hr_cgi_param(phr, "param", &valstr) <= 0)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if ((vallen = strlen(valstr)) > 128 * 1024)
-    FAIL(SSERV_ERR_INV_VALUE);
-  filt_txt = text_area_process_string(valstr, 0, 0);
-
-  switch (f_id) {
-  case CNTSPROB_lang_compiler_env:
-  case CNTSPROB_checker_env:
-  case CNTSPROB_valuer_env:
-  case CNTSPROB_interactor_env:
-  case CNTSPROB_style_checker_env:
-  case CNTSPROB_test_checker_env:
-  case CNTSPROB_init_env:
-  case CNTSPROB_start_env:
-  case CNTSPROB_score_view:
-  case CNTSPROB_lang_time_adj:
-  case CNTSPROB_lang_time_adj_millis:
-  case CNTSPROB_lang_max_vm_size:
-  case CNTSPROB_lang_max_stack_size:
-  case CNTSPROB_disable_language:
-  case CNTSPROB_enable_language:
-  case CNTSPROB_require:
-  case CNTSPROB_provide_ok:
-    split_to_lines(filt_txt, &lns, 2);
-    sarray_free(*(char***) f_ptr);
-    *(char***) f_ptr = lns;
-    lns = 0;
-    break;
-
-  case CNTSPROB_unhandled_vars:
-    xfree(*(unsigned char**) f_ptr);
-    *(unsigned char**) f_ptr = 0;
-    if (filt_txt && *filt_txt) {
-      *(unsigned char**) f_ptr = filt_txt;
-      filt_txt = 0;
-    }
-    break;
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-
-  retval = 1;
-
- cleanup:
-  xfree(filt_txt);
-  sarray_free(lns);
-  return retval;
-}
-
 static handler_func_t op_handlers[SSERV_CMD_LAST] =
 {
   [SSERV_CMD_VIEW_CNTS_DETAILS] = cmd_cnts_details,
@@ -6438,8 +5258,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_EDIT_CONTEST_PAGE] = cmd_edit_contest_page,
   [SSERV_CMD_EDIT_CONTEST_PAGE_2] = cmd_edit_contest_page_2,
   [SSERV_CMD_CLEAR_CONTEST_XML_FIELD] = cmd_clear_contest_xml_field,
-  [SSERV_CMD_EDIT_CONTEST_XML_FIELD] = cmd_edit_contest_xml_field,
-  [SSERV_CMD_TOGGLE_CONTEST_XML_VISIBILITY] = cmd_toggle_contest_xml_vis,
   [SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE] = cmd_contest_xml_field_edit_page,
   [SSERV_CMD_CLEAR_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_RELOAD_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
@@ -6471,14 +5289,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CREATE_NEW_CONTEST_PAGE] = cmd_op_create_new_contest_page,
   [SSERV_CMD_CREATE_NEW_CONTEST] = cmd_op_create_new_contest,
   [SSERV_CMD_FORGET_CONTEST] = cmd_op_forget_contest,
-  [SSERV_CMD_EDIT_SERVE_GLOBAL_FIELD] = cmd_op_edit_serve_global_field,
-  [SSERV_CMD_CLEAR_SERVE_GLOBAL_FIELD] = cmd_op_clear_serve_global_field,
-  [SSERV_CMD_EDIT_SID_STATE_FIELD] = cmd_op_edit_sid_state_field,
-  [SSERV_CMD_EDIT_SID_STATE_FIELD_NEGATED] = cmd_op_edit_sid_state_field_neg,
-  [SSERV_CMD_EDIT_SERVE_GLOBAL_FIELD_DETAIL_PAGE] = cmd_op_edit_serve_global_field_detail_page,
-  [SSERV_CMD_EDIT_SERVE_GLOBAL_FIELD_DETAIL] = cmd_op_edit_serve_global_field_detail,
-  [SSERV_CMD_SET_SID_STATE_LANG_FIELD] = cmd_op_set_sid_state_lang_field,
-  [SSERV_CMD_CLEAR_SID_STATE_LANG_FIELD] = cmd_op_clear_sid_state_lang_field,
   [SSERV_CMD_SET_SERVE_LANG_FIELD] = cmd_op_set_serve_lang_field,
   [SSERV_CMD_CLEAR_SERVE_LANG_FIELD] = cmd_op_clear_serve_lang_field,
   [SSERV_CMD_EDIT_SERVE_LANG_FIELD_DETAIL_PAGE] = cmd_op_edit_serve_lang_field_detail_page,
@@ -6490,8 +5300,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_SET_SID_STATE_PROB_FIELD] = cmd_op_set_sid_state_prob_field,
   [SSERV_CMD_SET_SERVE_PROB_FIELD] = cmd_op_set_serve_prob_field,
   [SSERV_CMD_CLEAR_SERVE_PROB_FIELD] = cmd_op_clear_serve_prob_field,
-  [SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL_PAGE] = cmd_op_edit_serve_prob_field_detail_page,
-  [SSERV_CMD_EDIT_SERVE_PROB_FIELD_DETAIL] = cmd_op_edit_serve_prob_field_detail,
 
   [SSERV_CMD_BROWSE_PROBLEM_PACKAGES] = super_serve_op_browse_problem_packages,
   [SSERV_CMD_CREATE_PACKAGE] = super_serve_op_package_operation,
