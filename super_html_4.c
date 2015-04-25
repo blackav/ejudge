@@ -114,36 +114,6 @@ eprintf(unsigned char *buf, size_t size, const char *format, ...)
 }
 
 static void
-ss_html_select(
-        FILE *out_f,
-        const unsigned char *id,
-        const unsigned char *class,
-        const unsigned char *name,
-        const unsigned char *onchange,
-        const unsigned char *value,
-        int n,
-        const char **values,
-        const char **labels)
-{
-  int i;
-  const unsigned char *s = 0;
-
-  fprintf(out_f, "<select");
-  if (id) fprintf(out_f, " id=\"%s\"", id);
-  if (name) fprintf(out_f, " name=\"%s\"", name);
-  /* if (value) fprintf(out_f, " value=\"%s\"", value); */
-  if (onchange) fprintf(out_f, " onChange='%s'", onchange);
-  fprintf(out_f, ">");
-  for (i = 0; i < n; ++i) {
-    s = "";
-    if (!strcmp(value, values[i])) s = " selected=\"1\"";
-    fprintf(out_f, "<option value=\"%s\"%s>%s</option>",
-            values[i], s, labels[i]);
-  }
-  fprintf(out_f, "</select>");
-}
-
-static void
 ss_html_int_select(
         FILE *out_f,
         const unsigned char *id,
@@ -859,7 +829,7 @@ static const struct cnts_edit_info cnts_edit_info[] =
   { NS_CONTEST, CNTS_register_url, 's', 1, 1, 1, 1, 0, "URL to complete registration", "URL to complete registration", 0 },
   { NS_CONTEST, CNTS_register_subject, 's', 1, 1, 1, 1, 0, "Registration letter subject", "Registration letter subject", 0 },
   { NS_CONTEST, CNTS_register_subject_en, 's', 1, 1, 1, 1, 0, "Registration letter subject (En)", "Registration letter subject (En)", 0 },
-  { NS_CONTEST, CNTS_register_email_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "Registration letter template file", "Registration letter template file", 0 },
+  { NS_CONTEST, CNTS_register_email_file, 'e', 1, 1, 1, 1, 0, "Registration letter template file", "Registration letter template file", 0 },
   { 0, 0, '-', 0, 0, 0, 0, 0, "Participation Settings", 0, 0 },
   { NS_CONTEST, CNTS_sched_time, 't', 1, 1, 0, 1, 0, "Scheduled start time", "Scheduled start time", 0 },
   { NS_CONTEST, CNTS_open_time, 't', 1, 1, 0, 1, 0, "Virtual contest open time", "Virtual contest open time", 0 },
@@ -876,31 +846,31 @@ static const struct cnts_edit_info cnts_edit_info[] =
   { NS_CONTEST, CNTS_closed, 'y', 1, 0, 0, 0, 0, "Close the contest for participants", "Close the contest for participants", 0 },
   { NS_CONTEST, CNTS_invisible, 'y', 1, 0, 0, 0, 0, "Hide the contest for administrators", "Hide the contest for administrators", 0 },
 
-  { NS_CONTEST, CNTS_register_access, 'p', 0, 0, 0, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "<tt>register</tt> access rules", "Access rules for the register program", NULL },
-  { NS_CONTEST, CNTS_users_access, 'p', 0, 0, 0, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "<tt>users</tt> access rules", "Access rules for the users program", NULL },
-  { NS_CONTEST, CNTS_team_access, 'p', 0, 0, 0, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "<tt>client</tt> access rules", "Access rules for the client program", NULL },
-  { NS_CONTEST, CNTS_judge_access, 'p', 0, 0, 0, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "<tt>judge</tt> access rules", "Access rules for the judge program", NULL },
-  { NS_CONTEST, CNTS_master_access, 'p', 0, 0, 0, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "<tt>master</tt> access rules", "Access rules for the master program", NULL },
-  { NS_CONTEST, CNTS_serve_control_access, 'p', 0, 0, 0, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "<tt>serve-control</tt> access rules", "Access rules for the serve-control program", NULL },
+  { NS_CONTEST, CNTS_register_access, 'p', 0, 0, 0, 1, 0, "<tt>register</tt> access rules", "Access rules for the register program", NULL },
+  { NS_CONTEST, CNTS_users_access, 'p', 0, 0, 0, 1, 0, "<tt>users</tt> access rules", "Access rules for the users program", NULL },
+  { NS_CONTEST, CNTS_team_access, 'p', 0, 0, 0, 1, 0, "<tt>client</tt> access rules", "Access rules for the client program", NULL },
+  { NS_CONTEST, CNTS_judge_access, 'p', 0, 0, 0, 1, 0, "<tt>judge</tt> access rules", "Access rules for the judge program", NULL },
+  { NS_CONTEST, CNTS_master_access, 'p', 0, 0, 0, 1, 0, "<tt>master</tt> access rules", "Access rules for the master program", NULL },
+  { NS_CONTEST, CNTS_serve_control_access, 'p', 0, 0, 0, 1, 0, "<tt>serve-control</tt> access rules", "Access rules for the serve-control program", NULL },
 
   { 0, 0, 130, 0, 0, 0, 0, 0, 0, 0, 0, },
   { 0, 0, 131, 0, 0, 0, 0, 0, 0, 0, 0, },
 
-  { NS_CONTEST, CNTS_users_header_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML header file for <tt>users</tt>", "HTML header file for the users program", "SidState.show_html_headers" },
-  { NS_CONTEST, CNTS_users_footer_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML footer file for <tt>users</tt>", "HTML footer file for the users program", "SidState.show_html_headers" },
-  { NS_CONTEST, CNTS_register_header_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML header file for <tt>register</tt>", "HTML header file for the register program", "SidState.show_html_headers" },
-  { NS_CONTEST, CNTS_register_footer_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML footer file for <tt>register</tt>", "HTML footer file for the register program", "SidState.show_html_headers" },
-  { NS_CONTEST, CNTS_team_header_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML header file for <tt>client</tt>", "HTML header file for the client program", "SidState.show_html_headers" },
-  { NS_CONTEST, CNTS_team_menu_1_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML menu 1 file for <tt>client</tt>", "HTML menu 1 file for the client program", "SidState.show_html_headers" },
-  { NS_CONTEST, CNTS_team_menu_2_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML menu 2 file for <tt>client</tt>", "HTML menu 2 file for the client program", "SidState.show_html_headers" },
-  { NS_CONTEST, CNTS_team_menu_3_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML menu 3 file for <tt>client</tt>", "HTML menu 3 file for the client program", "SidState.show_html_headers" },
-  { NS_CONTEST, CNTS_team_separator_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML separator file for <tt>client</tt>", "HTML separator file for the client program", "SidState.show_html_headers" },
-  { NS_CONTEST, CNTS_team_footer_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML footer file for <tt>client</tt>", "HTML footer file for the client program", "SidState.show_html_headers" },
-  { NS_CONTEST, CNTS_priv_header_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML header file for <tt>master</tt>", "HTML header file for the master program", "SidState.show_html_headers" },
-  { NS_CONTEST, CNTS_priv_footer_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML footer file for <tt>master</tt>", "HTML footer file for the master program", "SidState.show_html_headers" },
-  { NS_CONTEST, CNTS_copyright_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML copyright notice file", "HTML copyright notice file", "SidState.show_html_headers" },
-  { NS_CONTEST, CNTS_welcome_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML welcome message file", "HTML welcome message file", "SidState.show_html_headers" },
-  { NS_CONTEST, CNTS_reg_welcome_file, 'e', 1, 1, 1, 1, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, "HTML registration welcome message file", "HTML registration welcome message file", "SidState.show_html_headers" },
+  { NS_CONTEST, CNTS_users_header_file, 'e', 1, 1, 1, 1, 0, "HTML header file for <tt>users</tt>", "HTML header file for the users program", "SidState.show_html_headers" },
+  { NS_CONTEST, CNTS_users_footer_file, 'e', 1, 1, 1, 1, 0, "HTML footer file for <tt>users</tt>", "HTML footer file for the users program", "SidState.show_html_headers" },
+  { NS_CONTEST, CNTS_register_header_file, 'e', 1, 1, 1, 1, 0, "HTML header file for <tt>register</tt>", "HTML header file for the register program", "SidState.show_html_headers" },
+  { NS_CONTEST, CNTS_register_footer_file, 'e', 1, 1, 1, 1, 0, "HTML footer file for <tt>register</tt>", "HTML footer file for the register program", "SidState.show_html_headers" },
+  { NS_CONTEST, CNTS_team_header_file, 'e', 1, 1, 1, 1, 0, "HTML header file for <tt>client</tt>", "HTML header file for the client program", "SidState.show_html_headers" },
+  { NS_CONTEST, CNTS_team_menu_1_file, 'e', 1, 1, 1, 1, 0, "HTML menu 1 file for <tt>client</tt>", "HTML menu 1 file for the client program", "SidState.show_html_headers" },
+  { NS_CONTEST, CNTS_team_menu_2_file, 'e', 1, 1, 1, 1, 0, "HTML menu 2 file for <tt>client</tt>", "HTML menu 2 file for the client program", "SidState.show_html_headers" },
+  { NS_CONTEST, CNTS_team_menu_3_file, 'e', 1, 1, 1, 1, 0, "HTML menu 3 file for <tt>client</tt>", "HTML menu 3 file for the client program", "SidState.show_html_headers" },
+  { NS_CONTEST, CNTS_team_separator_file, 'e', 1, 1, 1, 1, 0, "HTML separator file for <tt>client</tt>", "HTML separator file for the client program", "SidState.show_html_headers" },
+  { NS_CONTEST, CNTS_team_footer_file, 'e', 1, 1, 1, 1, 0, "HTML footer file for <tt>client</tt>", "HTML footer file for the client program", "SidState.show_html_headers" },
+  { NS_CONTEST, CNTS_priv_header_file, 'e', 1, 1, 1, 1, 0, "HTML header file for <tt>master</tt>", "HTML header file for the master program", "SidState.show_html_headers" },
+  { NS_CONTEST, CNTS_priv_footer_file, 'e', 1, 1, 1, 1, 0, "HTML footer file for <tt>master</tt>", "HTML footer file for the master program", "SidState.show_html_headers" },
+  { NS_CONTEST, CNTS_copyright_file, 'e', 1, 1, 1, 1, 0, "HTML copyright notice file", "HTML copyright notice file", "SidState.show_html_headers" },
+  { NS_CONTEST, CNTS_welcome_file, 'e', 1, 1, 1, 1, 0, "HTML welcome message file", "HTML welcome message file", "SidState.show_html_headers" },
+  { NS_CONTEST, CNTS_reg_welcome_file, 'e', 1, 1, 1, 1, 0, "HTML registration welcome message file", "HTML registration welcome message file", "SidState.show_html_headers" },
 
   { NS_CONTEST, CNTS_users_head_style, 's', 1, 1, 1, 1, 0, "HTML attributes for <tt>users</tt> headers", "Attributes for users headers", "SidState.show_html_attrs" },
   { NS_CONTEST, CNTS_users_par_style, 's', 1, 1, 1, 1, 0, "HTML attributes for <tt>users</tt> paragraphs", "Attributes for users paragraphs", "SidState.show_html_attrs" },
@@ -2546,136 +2516,6 @@ cnts_text_load_map[CNTS_LAST_FIELD] =
 extern unsigned char super_html_template_help_1[];
 extern unsigned char super_html_template_help_2[];
 
-static const unsigned char *
-cnts_text_help_map[CNTS_LAST_FIELD] =
-{
-  [CNTS_users_header_file] = super_html_template_help_1,
-  [CNTS_users_footer_file] = super_html_template_help_1,
-  [CNTS_register_header_file] = super_html_template_help_1,
-  [CNTS_register_footer_file] = super_html_template_help_1,
-  [CNTS_team_header_file] = super_html_template_help_1,
-  [CNTS_team_menu_1_file] = super_html_template_help_1,
-  [CNTS_team_menu_2_file] = super_html_template_help_1,
-  [CNTS_team_menu_3_file] = super_html_template_help_1,
-  [CNTS_team_separator_file] = super_html_template_help_1,
-  [CNTS_team_footer_file] = super_html_template_help_1,
-  [CNTS_priv_header_file] = super_html_template_help_1,
-  [CNTS_priv_footer_file] = super_html_template_help_1,
-  [CNTS_copyright_file] = 0,
-  [CNTS_register_email_file] = super_html_template_help_2,
-  [CNTS_welcome_file] = 0,
-  [CNTS_reg_welcome_file] = 0,
-};
-
-static int
-cmd_edit_contest_xml_file(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct contest_desc *ecnts = 0;
-  int f_id, ss_id;
-  unsigned char buf[1024];
-  unsigned char **t_ptr;
-  unsigned char **v_ptr;
-  unsigned char fpath[1024];
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  const unsigned char *cl = " class=\"cnts_edit_legend\"";
-  struct stat stb;
-  unsigned char zbuf[1024];
-  int *l_ptr;
-  unsigned char *edit_text = 0;
-  const unsigned char *help_text = 0;
-
-  if (!phr->ss->edited_cnts)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  ecnts = phr->ss->edited_cnts;
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
-      || !(ss_id = cnts_text_edit_map[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-
-  v_ptr = (unsigned char **) contest_desc_get_ptr_nc(ecnts, f_id);
-  t_ptr = (unsigned char **) ss_sid_state_get_ptr_nc(phr->ss, ss_id);
-  l_ptr = (int*) ss_sid_state_get_ptr_nc(phr->ss, cnts_text_load_map[f_id]);
-  contests_get_path_in_conf_dir(fpath, sizeof(fpath), ecnts, *v_ptr);
-  help_text = cnts_text_help_map[f_id];
-  if (!help_text) help_text = "";
-
-  if (stat(fpath, &stb) < 0) {
-    snprintf(zbuf, sizeof(zbuf),
-             "<i><font color=\"red\">nonexistant</font></i>");
-    *l_ptr = 1;
-  } else {
-    snprintf(zbuf, sizeof(zbuf), "<tt>%zu</tt>", (size_t) stb.st_size);
-    if (!*l_ptr) {
-      char *txt = 0;
-      size_t sz = 0;
-
-      if (generic_read_file(&txt, 0, &sz, 0, 0, fpath, 0) >= 0) {
-        xfree(*t_ptr); *t_ptr = txt; txt = 0;
-      }
-    }
-    *l_ptr = 1;
-  }
-
-  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d, editing file %s",
-           phr->html_name, ecnts->id, contest_desc_get_name(f_id));
-  write_html_header(out_f, phr, buf, 1, 0);
-
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-
-  fprintf(out_f, "<table class=\"cnts_edit\">\n");
-  fprintf(out_f, "<tr><td%s>%s:&nbsp;</td><td%s><tt>%s</tt></td></tr>\n",
-          cl, "Parameter value", cl, ARMOR(*v_ptr));
-  fprintf(out_f, "<tr><td%s>%s</td><td%s><tt>%s</tt></td></tr>\n",
-          cl, "Full path", cl, ARMOR(fpath));
-  fprintf(out_f, "<tr><td%s>%s</td><td%s>%s</td></tr>\n",
-          cl, "File size", cl, zbuf);
-  fprintf(out_f, "</table>\n");
-
-  edit_text = *t_ptr;
-  if (!edit_text) edit_text = "";
-
-  fprintf(out_f, "<h2>File contents</h2>\n");
-
-  fprintf(out_f, "<form id=\"editBox\"><textarea dojoType=\"dijit.form.Textarea\" name=\"param\" rows=\"20\" cols=\"80\">%s</textarea></form>\n",
-          ARMOR(edit_text));
-
-  fprintf(out_f, "<br/>\n");
-
-  /*
-  ss_dojo_button(out_f, "1", "home-32x32", "To the top level (postpone editing)",
-              "alert(\"Clicked TopLevel\")");
-  */
-  ss_dojo_button(out_f, 0, "accept-32x32", "OK",
-              "editFileSave(\"editBox\", %d, %d, %d)",
-              SSERV_CMD_SAVE_FILE_CONTEST_XML, f_id,
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-  ss_dojo_button(out_f, 0, "cancel-32x32", "Cancel",
-              "ssLoad1(%d)",
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-  ss_dojo_button(out_f, 0, "delete_page-32x32", "Clear",
-              "editFileClear(%d, %d, %d)",
-              SSERV_CMD_CLEAR_FILE_CONTEST_XML, f_id,
-              SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE);
-  ss_dojo_button(out_f, 0, "refresh-32x32", "Reload",
-              "editFileReload(%d, %d, %d)",
-              SSERV_CMD_RELOAD_FILE_CONTEST_XML, f_id,
-              SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE);
-
-  fprintf(out_f, "<br/><hr/>\n");
-
-  fprintf(out_f, "%s\n", help_text);
-
-  write_html_footer(out_f);
-
- cleanup:
-  html_armor_free(&ab);
-  return retval;
-}
-
 static int
 cmd_clear_file_contest_xml(
         FILE *log_f,
@@ -2764,206 +2604,6 @@ const int access_field_tag[CNTS_LAST_FIELD] =
 };
 
 static int
-cmd_contest_xml_access_edit_page(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0, i, f_id;
-  struct contest_desc *ecnts = 0;
-  unsigned char buf[1024];
-  unsigned char jbuf[1024];
-  unsigned char vbuf[1024];
-  const struct contest_access *acc = 0;
-  const struct contest_ip *p;
-  int row = 0;
-
-  if (!phr->ss->edited_cnts)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  ecnts = phr->ss->edited_cnts;
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
-      || !(access_field_set[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  acc = *(const struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
-
-  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d, editing %s",
-           phr->html_name, ecnts->id, contest_desc_get_name(f_id));
-  write_html_header(out_f, phr, buf, 1, 0);
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-  fprintf(out_f, "<br/>\n");
-
-  fprintf(out_f, "<div id=\"cnts_edit_content\">\n");
-  fprintf(out_f, "<table class=\"cnts_edit\">\n");
-
-  if (acc) {
-    fprintf(out_f,
-            "<tr%s>"
-            "<th class=\"cnts_edit_legend\">Rule N</th>"
-            "<th class=\"cnts_edit_legend\">IP Mask</th>"
-            "<th class=\"cnts_edit_legend\">SSL?</th>"
-            "<th class=\"cnts_edit_legend\">Allow?</th>"
-            "<th class=\"cnts_edit_legend\">Actions</th>"
-            "</tr>\n",
-            head_row_attr);
-
-    for (p = (const struct contest_ip *) acc->b.first_down, i = 0;
-         p; p = (const struct contest_ip *) p->b.right, ++i) {
-      fprintf(out_f, "<tr%s>", form_row_attrs[row ^= 1]);
-      fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">%d</td>", i);
-      fprintf(out_f, "<td class=\"cnts_edit_data\" width=\"200px\">");
-      fprintf(out_f, "<div class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"ssEditField3(%d, %d, %d, %d, arguments[0])\" autoSave=\"true\" title=\"%s\">",
-              SSERV_CMD_SET_RULE_IP, f_id, i,
-              SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE,
-              "IP address");
-      fprintf(out_f, "%s", xml_unparse_ipv6_mask(&p->addr, &p->mask));
-      fprintf(out_f, "</div></td>");
-
-      fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">");
-      ss_html_select(out_f, 0, 0, 0,
-                     eprintf(jbuf, sizeof(jbuf), "ssEditField3(%d, %d, %d, %d, this.options[this.selectedIndex].value)", SSERV_CMD_SET_RULE_SSL, f_id, i, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE),
-                     eprintf(vbuf, sizeof(vbuf), "%d", p->ssl),
-                     3,
-                     (const char*[]) { "-1", "0", "1" },
-                     (const char*[]) { "Any", "No SSL", "SSL" });
-      fprintf(out_f, "</td>");
-
-      fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">");
-      ss_html_int_select(out_f, 0, 0, 0,
-                         eprintf(jbuf, sizeof(jbuf), "ssEditField3(%d, %d, %d, %d, this.options[this.selectedIndex].value)", SSERV_CMD_SET_RULE_ACCESS, f_id, i, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE),
-                         !!p->allow, 2,
-                         (const char*[]) { "Deny", "Allow" });
-      fprintf(out_f, "</td>");
-      fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"150px\">");
-      if (p->b.left) {
-        ss_dojo_button(out_f, 0, "back-16x16", "Move Up",
-                    "ssFieldCmd3(%d, %d, %d, %d)",
-                    SSERV_CMD_FORWARD_RULE, f_id, i,
-                    SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE);
-      }
-      if (p->b.right) {
-        ss_dojo_button(out_f, 0, "next-16x16", "Move Down",
-                    "ssFieldCmd3(%d, %d, %d, %d)",
-                    SSERV_CMD_BACKWARD_RULE, f_id, i,
-                    SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE);
-      }
-      ss_dojo_button(out_f, 0, "delete-16x16", "Delete Rule",
-                  "ssFieldCmd3(%d, %d, %d, %d)",
-                  SSERV_CMD_DELETE_RULE, f_id, i,
-                  SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE);
-      fprintf(out_f, "</td>");
-      fprintf(out_f, "</tr>\n");
-    }
-  }
-
-  fprintf(out_f, "<tr%s><td class=\"cnts_edit_legend\" colspan=\"5\" style=\"text-align: center;\"><b>Add a new rule</b></td></tr>\n", head_row_attr);
-
-  fprintf(out_f, "<tr%s>", form_row_attrs[0]);
-  fprintf(out_f, "<form id=\"NewIPForm\">\n");
-  fprintf(out_f, "<input id=\"HiddenMask\" type=\"hidden\" name=\"ip_mask\" value=\"\" />\n");
-  fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">&nbsp;</td>");
-  fprintf(out_f, "<td class=\"cnts_edit_data\" width=\"200px\">");
-  fprintf(out_f, "<div id=\"NewIPText\" class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"ssSetHiddenMask('HiddenMask', %d, arguments[0])\" autoSave=\"true\" title=\"%s\"></div></td>",
-          SSERV_CMD_CHECK_IP_MASK, "IP address");
-  fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">");
-  ss_html_select(out_f, 0, 0, "ssl_flag", 0,
-                 eprintf(vbuf, sizeof(vbuf), "%d", -1),
-                 3,
-                 (const char*[]) { "-1", "0", "1" },
-                 (const char*[]) { "Any", "No SSL", "SSL" });
-  fprintf(out_f, "</td>");
-
-  fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">");
-  ss_html_int_select(out_f, 0, 0, "default_allow", 0,
-                     1, 2,
-                     (const char*[]) { "Deny", "Allow" });
-  fprintf(out_f, "</td>");
-  fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"150px\">");
-  ss_dojo_button(out_f, 0, "add-16x16", "Add",
-              "ssFormOp3(\"NewIPForm\", %d, %d, %d)",
-              SSERV_CMD_ADD_IP, f_id, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE);
-  fprintf(out_f, "</td>");
-  fprintf(out_f, "</form>");
-  fprintf(out_f, "</tr>\n");
-
-  fprintf(out_f, "<tr%s><td class=\"cnts_edit_legend\" colspan=\"5\" style=\"text-align: center;\"><b>Default access</b></td></tr>\n", head_row_attr);
-
-  fprintf(out_f, "<tr%s>", form_row_attrs[0]);
-  fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">&nbsp;</td>");
-  fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"200px\" style=\"text-align: center;\">&nbsp;</td>");
-  fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">&nbsp;</td>");
-
-  fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"100px\">");
-  ss_html_int_select(out_f, 0, 0, 0,
-                     eprintf(jbuf, sizeof(jbuf), "ssSetValue2(%d, %d, %d, this.options[this.selectedIndex].value)", SSERV_CMD_SET_DEFAULT_ACCESS, f_id, SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE),
-                     1, 2,
-                     (const char*[]) { "Deny", "Allow" });
-  fprintf(out_f, "</td>");
-  fprintf(out_f, "<td class=\"cnts_edit_legend\" width=\"150px\">&nbsp;</td>");
-  fprintf(out_f, "</tr>\n");
-
-  fprintf(out_f, "</table>\n");
-  fprintf(out_f, "</div>\n");
-
-  fprintf(out_f, "<br/>\n");
-
-  ss_dojo_button(out_f, 0, "back-32x32", "Back", "ssLoad1(%d)",
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-  ss_dojo_button(out_f, 0, "promotion-32x32", "Copy",
-              "ssLoad2(%d, %d)", SSERV_CMD_COPY_ACCESS_RULES_PAGE, f_id);
-
-  write_html_footer(out_f);
-
- cleanup:
-  return retval;
-}
-
-static handler_func_t contest_xml_field_edit_cmd[CNTS_LAST_FIELD] =
-{
-  [CNTS_users_header_file] = cmd_edit_contest_xml_file,
-  [CNTS_users_footer_file] = cmd_edit_contest_xml_file,
-  [CNTS_register_header_file] = cmd_edit_contest_xml_file,
-  [CNTS_register_footer_file] = cmd_edit_contest_xml_file,
-  [CNTS_team_header_file] = cmd_edit_contest_xml_file,
-  [CNTS_team_menu_1_file] = cmd_edit_contest_xml_file,
-  [CNTS_team_menu_2_file] = cmd_edit_contest_xml_file,
-  [CNTS_team_menu_3_file] = cmd_edit_contest_xml_file,
-  [CNTS_team_separator_file] = cmd_edit_contest_xml_file,
-  [CNTS_team_footer_file] = cmd_edit_contest_xml_file,
-  [CNTS_priv_header_file] = cmd_edit_contest_xml_file,
-  [CNTS_priv_footer_file] = cmd_edit_contest_xml_file,
-  [CNTS_copyright_file] = cmd_edit_contest_xml_file,
-  [CNTS_register_email_file] = cmd_edit_contest_xml_file,
-  [CNTS_register_access] = cmd_contest_xml_access_edit_page,
-  [CNTS_users_access] = cmd_contest_xml_access_edit_page,
-  [CNTS_master_access] = cmd_contest_xml_access_edit_page,
-  [CNTS_judge_access] = cmd_contest_xml_access_edit_page,
-  [CNTS_team_access] = cmd_contest_xml_access_edit_page,
-  [CNTS_serve_control_access] = cmd_contest_xml_access_edit_page,
-  [CNTS_welcome_file] = cmd_edit_contest_xml_file,
-  [CNTS_reg_welcome_file] = cmd_edit_contest_xml_file,
-};
-
-static int
-cmd_contest_xml_field_edit_page(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int f_id, retval = 0;
-
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTS_LAST_FIELD)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!contest_xml_field_edit_cmd[f_id])
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  return (*contest_xml_field_edit_cmd[f_id])(log_f, out_f, phr);
-
- cleanup:
-  return retval;
-}
-
-static int
 cmd_copy_access_rules_page(
         FILE *log_f,
         FILE *out_f,
@@ -3018,9 +2658,9 @@ cmd_copy_access_rules_page(
   ss_dojo_button(out_f, 0, "accept-32x32", "OK",
               "ssFormOp3(\"copyForm\", %d, %d, %d)",
               SSERV_CMD_COPY_ACCESS_RULES, f_id,
-              SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE);
+              0);
   ss_dojo_button(out_f, 0, "cancel-32x32", "Cancel",
-              "ssLoad2(%d, %d)", SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE, f_id);
+              "ssLoad2(%d, %d)", 0, f_id);
 
   write_html_footer(out_f);
 
@@ -4658,7 +4298,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_LOCKED_CNTS_CONTINUE] = cmd_locked_cnts_continue,
   [SSERV_CMD_EDIT_CONTEST_PAGE] = cmd_edit_contest_page,
   [SSERV_CMD_EDIT_CONTEST_PAGE_2] = cmd_edit_contest_page_2,
-  [SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE] = cmd_contest_xml_field_edit_page,
   [SSERV_CMD_CLEAR_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_RELOAD_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_SAVE_FILE_CONTEST_XML] = cmd_save_file_contest_xml,
