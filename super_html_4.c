@@ -1317,7 +1317,7 @@ struct edit_page_desc
 static const struct edit_page_desc edit_page_descs[] =
 {
   { "General Settings", cnts_edit_info, &contest_desc_methods,
-    0, SSERV_CMD_CLEAR_CONTEST_XML_FIELD },
+    0, 0 },
   { "Global Settings", cnts_global_info, &cntsglob_methods,
     0, 0 },
   { "Language Settings", cnts_language_info, &cntslang_methods,
@@ -2542,88 +2542,6 @@ cnts_text_load_map[CNTS_LAST_FIELD] =
   [CNTS_welcome_file] = SSSS_welcome_loaded,
   [CNTS_reg_welcome_file] = SSSS_reg_welcome_loaded,
 };
-
-static int
-cmd_clear_contest_xml_field(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int f_id = 0;
-  int f_type = 0;
-  void *f_ptr = 0;
-  int f_id2;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTS_LAST_FIELD)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_ptr = contest_desc_get_ptr_nc(phr->ss->edited_cnts, f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_type = contest_desc_get_type(f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (f_id == CNTS_user_contest_num || f_id == CNTS_default_locale_num)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-
-  switch (f_type) {
-  case 'b':
-    {
-      unsigned char *b_ptr = (unsigned char*) f_ptr;
-      *b_ptr = 0;
-    }
-    break;
-  case 's':
-    {
-      unsigned char **s_ptr = (unsigned char **) f_ptr;
-      xfree(*s_ptr);
-      *s_ptr = 0;
-    }
-    break;
-  case 'i':
-    {
-      int *i_ptr = (int*) f_ptr;
-      *i_ptr = 0;
-    }
-    break;
-  case 't':
-    {
-      time_t *t_ptr = (time_t*) f_ptr;
-      *t_ptr = 0;
-    }
-    break;
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-
-  // special cases
-  switch (f_id) {
-  case CNTS_user_contest:
-    phr->ss->edited_cnts->user_contest_num = 0;
-    break;
-  case CNTS_default_locale:
-    phr->ss->edited_cnts->default_locale_num = 0;
-    break;
-  default:;
-  }
-
-  if ((f_id2 = cnts_text_edit_map[f_id]) > 0) {
-    char **s_ptr = (char**) ss_sid_state_get_ptr_nc(phr->ss, f_id2);
-    xfree(*s_ptr); *s_ptr = 0;
-  }
-  if ((f_id2 = cnts_text_load_map[f_id]) > 0) {
-    int *i_ptr = (int*) ss_sid_state_get_ptr_nc(phr->ss, f_id2);
-    *i_ptr = 0;
-  }
-
-  retval = 1;
-
- cleanup:
-  return retval;
-}
 
 extern unsigned char super_html_template_help_1[];
 extern unsigned char super_html_template_help_2[];
@@ -4740,7 +4658,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_LOCKED_CNTS_CONTINUE] = cmd_locked_cnts_continue,
   [SSERV_CMD_EDIT_CONTEST_PAGE] = cmd_edit_contest_page,
   [SSERV_CMD_EDIT_CONTEST_PAGE_2] = cmd_edit_contest_page_2,
-  [SSERV_CMD_CLEAR_CONTEST_XML_FIELD] = cmd_clear_contest_xml_field,
   [SSERV_CMD_CONTEST_XML_FIELD_EDIT_PAGE] = cmd_contest_xml_field_edit_page,
   [SSERV_CMD_CLEAR_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_RELOAD_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
