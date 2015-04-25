@@ -786,6 +786,11 @@ function popupAdvancedDialog(e, skipField)
     if (e) e.stopPropagation();
     $("#AdvancedDialogDiv").dialog('open');
 }
+
+function np(e)
+{
+    if (e) e.stopPropagation();
+}
 </script>
 
 <div id="ContestAccordion">
@@ -793,37 +798,37 @@ function popupAdvancedDialog(e, skipField)
     <h3>Basic contest identification</h3>
     <div>
 
-<table border="0">
+<table border="0" onclick="popupBasicDialog();">
     <s:tr attr="form_row_attrs[row ^= 1]"><td>Contest ID:</td><td><s:v value="cnts->id" /></td><td>&nbsp;</td><td>&nbsp;</td></s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td onclick="popupBasicDialog();">Name:</td>
-        <td onclick="popupBasicDialog();"><s:textfield id="OrigName" readonly="readonly" size="48" name="param" value="cnts->name" notset="yes" /></td>
+        <td>Name:</td>
+        <td><s:textfield id="OrigName" readonly="readonly" size="48" name="param" value="cnts->name" notset="yes" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:name" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:name" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td onclick="popupBasicDialog();">Name (English):</td>
-        <td onclick="popupBasicDialog();"><s:textfield id="OrigNameEn" readonly="readonly" size="48" name="param" value="cnts->name_en" notset="yes" /></td>
+        <td>Name (English):</td>
+        <td><s:textfield id="OrigNameEn" readonly="readonly" size="48" name="param" value="cnts->name_en" notset="yes" /></td>
         <td><input type="button" onclick="popupBasicDialog(event, 'NameEn');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:name_en" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:name_en" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td onclick="popupBasicDialog();">Main URL:</td>
-        <td onclick="popupBasicDialog();"><s:textfield id="OrigMainUrl" readonly="readonly" size="48" name="param" value="cnts->main_url" notset="yes" /></td>
+        <td>Main URL:</td>
+        <td><s:textfield id="OrigMainUrl" readonly="readonly" size="48" name="param" value="cnts->main_url" notset="yes" /></td>
         <td><input type="button" onclick="popupBasicDialog(event, 'MainUrl');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:main_url" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:main_url" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td onclick="popupBasicDialog();">Keywords:</td>
-        <td onclick="popupBasicDialog();"><s:textfield id="OrigKeywords" readonly="readonly" size="48" name="param" value="cnts->keywords" notset="yes" /></td>
+        <td>Keywords:</td>
+        <td><s:textfield id="OrigKeywords" readonly="readonly" size="48" name="param" value="cnts->keywords" notset="yes" /></td>
         <td><input type="button" onclick="popupBasicDialog(event, 'Keywords');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:keywords" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:keywords" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td onclick="popupBasicDialog();">Contest to share users with:</td>
-        <td onclick="popupBasicDialog();"><s:textfield id="OrigUserContest" readonly="readonly" size="48" name="param" value="cnts->user_contest" notset="yes" /></td>
+        <td>Contest to share users with:</td>
+        <td><s:textfield id="OrigUserContest" readonly="readonly" size="48" name="param" value="cnts->user_contest" notset="yes" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:user_contest" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:user_contest" /></td>
     </s:tr>
 <%
   if (cnts->default_locale && *cnts->default_locale) {
@@ -838,14 +843,14 @@ function popupAdvancedDialog(e, skipField)
   }
 %>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td onclick="popupBasicDialog();">Default locale:</td>
-        <td onclick="popupBasicDialog();"><s:textfield id="OrigDefaultLocale" readonly="readonly" size="48" name="param" value="cnts->default_locale" notset="yes" /></td>
+        <td>Default locale:</td>
+        <td><s:textfield id="OrigDefaultLocale" readonly="readonly" size="48" name="param" value="cnts->default_locale" notset="yes" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:default_locale" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:default_locale" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td onclick="popupBasicDialog();">The contest is personal?</td>
-        <td onclick="popupBasicDialog();"><s:yesno id="OrigPersonal" disabled="disabled" name="param" value="cnts->personal" /></td>
+        <td>The contest is personal?</td>
+        <td><s:yesno id="OrigPersonal" disabled="disabled" name="param" value="cnts->personal" /></td>
         <td>&nbsp;</td>
         <td><s:help topic="Contest.xml:personal" /></td>
     </s:tr>
@@ -855,49 +860,49 @@ function popupAdvancedDialog(e, skipField)
     <h3>Registration settings</h3>
 
     <div>
-<table border="0">
+<table border="0" onclick="popupRegistrationDialog();">
 <% row = 1; %>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupRegistrationDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Registration mode:</td>
         <td><s:yesno disabled="disabled" id="OrigAutoregister" name="param" value="cnts->autoregister" noLabel="Moderated registration" yesLabel="Free registration" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:autoregister" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:autoregister" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupRegistrationDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Registration deadline:</td>
         <td><% html_date_select_2(out_f, cnts->reg_deadline, "OrigRegDeadline", "param", NULL, 1, 0); %></td>
         <td><input type="button" onclick="popupRegistrationDialog(event, 'RegDeadline');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:reg_deadline" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:reg_deadline" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td onclick="popupRegistrationDialog();">Registration email sender (From: field):</td>
-        <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterEmail" size="48" name="param" value="cnts->register_email" notset="yes" /></td>
+        <td>Registration email sender (From: field):</td>
+        <td><s:textfield readonly="readonly" id="OrigRegisterEmail" size="48" name="param" value="cnts->register_email" notset="yes" /></td>
         <td><input type="button" onclick="popupRegistrationDialog(event, 'RegisterEmail');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:register_email" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:register_email" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td onclick="popupRegistrationDialog();">URL for registration:</td>
-        <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterUrl" size="48" name="param" value="cnts->register_url" notset="yes" /></td>
+        <td>URL for registration:</td>
+        <td><s:textfield readonly="readonly" id="OrigRegisterUrl" size="48" name="param" value="cnts->register_url" notset="yes" /></td>
         <td><input type="button" onclick="popupRegistrationDialog(event, 'RegisterUrl');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:register_url" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:register_url" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td onclick="popupRegistrationDialog();">Registration letter subject:</td>
-        <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterSubject" size="48" name="param" value="cnts->register_subject" notset="yes" /></td>
+        <td>Registration letter subject:</td>
+        <td><s:textfield readonly="readonly" id="OrigRegisterSubject" size="48" name="param" value="cnts->register_subject" notset="yes" /></td>
         <td><input type="button" onclick="popupRegistrationDialog(event, 'RegisterSubject');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:register_subject" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:register_subject" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td onclick="popupRegistrationDialog();">Registration letter subject (en):</td>
-        <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterSubjectEn" size="48" name="param" value="cnts->register_subject_en" notset="yes" /></td>
+        <td>Registration letter subject (en):</td>
+        <td><s:textfield readonly="readonly" id="OrigRegisterSubjectEn" size="48" name="param" value="cnts->register_subject_en" notset="yes" /></td>
         <td><input type="button" onclick="popupRegistrationDialog(event, 'RegisterSubjectEn');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:register_subject_en" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:register_subject_en" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td onclick="popupRegistrationDialog();">Registration letter template file:</td>
-        <td onclick="popupRegistrationDialog();"><s:textfield readonly="readonly" id="OrigRegisterEmailFile" size="48" name="param" value="cnts->register_email_file" notset="yes" /></td>
+        <td>Registration letter template file:</td>
+        <td><s:textfield readonly="readonly" id="OrigRegisterEmailFile" size="48" name="param" value="cnts->register_email_file" notset="yes" /></td>
         <td><input type="button" onclick="popupRegistrationDialog(event, 'RegisterEmailFile');" value="Clear" />[<s:a ac="cnts-edit-register-email-file-page">Edit</s:a>]</td>
-        <td><s:help topic="Contest.xml:register_email_file" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:register_email_file" /></td>
     </s:tr>
 </table>
     </div>
@@ -905,25 +910,25 @@ function popupAdvancedDialog(e, skipField)
     <h3>Contest timing</h3>
 
     <div>
-<table border="0">
+<table border="0" onclick="popupTimingDialog();">
 <% row = 1; %>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td onclick="popupTimingDialog();">Contest start date:</td>
-        <td onclick="popupTimingDialog();"><% html_date_select_2(out_f, cnts->sched_time, "OrigSchedTime", "param", NULL, 1, 0); %></td>
+        <td>Contest start date:</td>
+        <td><% html_date_select_2(out_f, cnts->sched_time, "OrigSchedTime", "param", NULL, 1, 0); %></td>
         <td><input type="button" onclick="popupTimingDialog(event, 'SchedTime');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:sched_time" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:sched_time" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td onclick="popupTimingDialog();">Virtual contest open date:</td>
-        <td onclick="popupTimingDialog();"><% html_date_select_2(out_f, cnts->open_time, "OrigOpenTime", "param", NULL, 1, 0); %></td>
+        <td>Virtual contest open date:</td>
+        <td><% html_date_select_2(out_f, cnts->open_time, "OrigOpenTime", "param", NULL, 1, 0); %></td>
         <td><input type="button" onclick="popupTimingDialog(event, 'OpenTime');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:open_time" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:open_time" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td onclick="popupTimingDialog();">Virtual contest close date:</td>
-        <td onclick="popupTimingDialog();"><% html_date_select_2(out_f, cnts->close_time, "OrigCloseTime", "param", NULL, 1, 0); %></td>
+        <td>Virtual contest close date:</td>
+        <td><% html_date_select_2(out_f, cnts->close_time, "OrigCloseTime", "param", NULL, 1, 0); %></td>
         <td><input type="button" onclick="popupTimingDialog(event, 'CloseTime');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:close_time" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:close_time" /></td>
     </s:tr>
 </table>
     </div>
@@ -931,38 +936,38 @@ function popupAdvancedDialog(e, skipField)
     <h3>URLs</h3>
 
     <div>
-<table border="0">
+<table border="0" onclick="popupUrlDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupUrlDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>URL for participation:</td>
         <td><s:textfield id="OrigTeamUrl" readonly="readonly" size="48" name="param" value="cnts->team_url" notset="yes" /></td>
         <td><input type="button" onclick="popupUrlDialog(event, 'TeamUrl');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:team_url" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:team_url" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupUrlDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>URL for the current standings:</td>
         <td><s:textfield id="OrigStandingsUrl" readonly="readonly" size="48" name="param" value="cnts->standings_url" notset="yes" /></td>
         <td><input type="button" onclick="popupUrlDialog(event, 'StandingsUrl');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:standings_url" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:standings_url" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupUrlDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>URL for the problemset:</td>
         <td><s:textfield id="OrigProblemsUrl" readonly="readonly" size="48" name="param" value="cnts->problems_url" notset="yes" /></td>
         <td><input type="button" onclick="popupUrlDialog(event, 'ProblemsUrl');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:problems_url" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:problems_url" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupUrlDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>URL for the contest logo:</td>
         <td><s:textfield id="OrigLogoUrl" readonly="readonly" size="48" name="param" value="cnts->logo_url" notset="yes" /></td>
         <td><input type="button" onclick="popupUrlDialog(event, 'LogoUrl');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:logo_url" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:logo_url" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupUrlDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>URL for the contest CSS:</td>
         <td><s:textfield id="OrigCssUrl" readonly="readonly" size="48" name="param" value="cnts->css_url" notset="yes" /></td>
         <td><input type="button" onclick="popupUrlDialog(event, 'CssUrl');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:css_url" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:css_url" /></td>
     </s:tr>
 </table>
     </div>
@@ -970,29 +975,29 @@ function popupAdvancedDialog(e, skipField)
     <h3>Contest flags</h3>
 
     <div>
-<table border="0">
+<table border="0" onclick="popupFlagsDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Disable separate team password?</td>
         <td><s:yesno id="OrigDisableTeamPassword" disabled="disabled" name="param" value="cnts->disable_team_password" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:disable_team_password" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:disable_team_password" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Enable simple registration (no email)?</td>
         <td><s:yesno id="OrigSimpleRegistration" disabled="disabled" name="param" value="cnts->simple_registration" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:simple_registration" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:simple_registration" /></td>
     </s:tr>
 <%
   if (cnts->simple_registration) {
 %>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Send e-mail with password anyway?</td>
         <td><s:yesno id="OrigSendPasswdEmail" disabled="disabled" name="param" value="cnts->send_passwd_email" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:send_passwd_email" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:send_passwd_email" /></td>
     </s:tr>
 <%
   } else {
@@ -1000,88 +1005,88 @@ function popupAdvancedDialog(e, skipField)
   }
 %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Allow pruning users?</td>
         <td><s:yesno id="OrigCleanUsers" disabled="disabled" name="param" value="cnts->clean_users" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:clean_users" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:clean_users" /></td>
     </s:tr>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Closed for participation?</td>
         <td><s:yesno id="OrigClosed" disabled="disabled" name="param" value="cnts->closed" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:closed" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:closed" /></td>
     </s:tr>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Invisible in serve-control?</td>
         <td><s:yesno id="OrigInvisible" disabled="disabled" name="param" value="cnts->invisible" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:invisible" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:invisible" /></td>
     </s:tr>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Disallow team member removal?</td>
         <td><s:yesno id="OrigDisableMemberDelete" disabled="disabled" name="param" value="cnts->disable_member_delete" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:disable_member_delete" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:disable_member_delete" /></td>
     </s:tr>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Auto-assign logins?</td>
         <td><s:yesno id="OrigAssignLogins" disabled="disabled" name="param" value="cnts->assign_logins" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:assign_logins" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:assign_logins" /></td>
     </s:tr>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Force contest registration?</td>
         <td><s:yesno id="OrigForceRegistration" disabled="disabled" name="param" value="cnts->force_registration" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:force_registration" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:force_registration" /></td>
     </s:tr>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Disable &quot;Name&quot; field?</td>
         <td><s:yesno id="OrigDisableName" disabled="disabled" name="param" value="cnts->disable_name" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:disable_name" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:disable_name" /></td>
     </s:tr>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Enable password recovery?</td>
         <td><s:yesno id="OrigEnablePasswordRecovery" disabled="disabled" name="param" value="cnts->enable_password_recovery" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:enable_password_recovery" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:enable_password_recovery" /></td>
     </s:tr>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Examination mode?</td>
         <td><s:yesno id="OrigExamMode" disabled="disabled" name="param" value="cnts->exam_mode" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:exam_mode" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:exam_mode" /></td>
     </s:tr>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Disable password change?</td>
         <td><s:yesno id="OrigDisablePasswordChange" disabled="disabled" name="param" value="cnts->disable_password_change" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:disable_password_change" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:disable_password_change" /></td>
     </s:tr>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Disable locale change?</td>
         <td><s:yesno id="OrigDisableLocaleChange" disabled="disabled" name="param" value="cnts->disable_locale_change" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:disable_locale_change" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:disable_locale_change" /></td>
     </s:tr>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupFlagsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Allow edit registration data during contest?</td>
         <td><s:yesno id="OrigAllowRegDataEdit" disabled="disabled" name="param" value="cnts->allow_reg_data_edit" /></td>
         <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:allow_reg_data_edit" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:allow_reg_data_edit" /></td>
     </s:tr>
 </table>
     </div>
@@ -1365,38 +1370,38 @@ initial count = <s:v value="memb->init_count" />
     <h3>HTML headers and footers</h3>
 
     <div>
-<table border="0">
+<table border="0" onclick="popupHeadersDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupHeadersDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>HTML header file for 'users' CGI-program:</td>
         <td><s:textfield id="OrigUsersHeaderFile" readonly="readonly" size="48" name="param" value="cnts->users_header_file" notset="yes"/></td>
-        <td><input type="button" onclick="popupHeadersDialog(event, 'UsersHeaderFile');" value="Clear" />[<s:a ac="cnts-edit-users-header-page">Edit</s:a>]</td>
-        <td><s:help topic="Contest.xml:users_header_file" /></td>
+        <td onclick="np(event);"><input type="button" onclick="popupHeadersDialog(event, 'UsersHeaderFile');" value="Clear" />[<s:a ac="cnts-edit-users-header-page">Edit</s:a>]</td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:users_header_file" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupHeadersDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>HTML footer file for 'users' CGI-program:</td>
         <td><s:textfield id="OrigUsersFooterFile" readonly="readonly" size="48" name="param" value="cnts->users_footer_file" notset="yes" /></td>
-        <td><input type="button" onclick="popupHeadersDialog(event, 'UsersFooterFile');" value="Clear" />[<s:a ac="cnts-edit-users-footer-page">Edit</s:a>]</td>
-        <td><s:help topic="Contest.xml:users_footer_file" /></td>
+        <td onclick="np(event);"><input type="button" onclick="popupHeadersDialog(event, 'UsersFooterFile');" value="Clear" />[<s:a ac="cnts-edit-users-footer-page">Edit</s:a>]</td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:users_footer_file" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupHeadersDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Copyright notice file:</td>
         <td><s:textfield id="OrigCopyrightFile" readonly="readonly" size="48" name="param" value="cnts->copyright_file" notset="yes" /></td>
-        <td><input type="button" onclick="popupHeadersDialog(event, 'CopyrightFile');" value="Clear" />[<s:a ac="cnts-edit-copyright-page">Edit</s:a>]</td>
-        <td><s:help topic="Contest.xml:copyright_file" /></td>
+        <td onclick="np(event);"><input type="button" onclick="popupHeadersDialog(event, 'CopyrightFile');" value="Clear" />[<s:a ac="cnts-edit-copyright-page">Edit</s:a>]</td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:copyright_file" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupHeadersDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Participant welcome message file:</td>
         <td><s:textfield id="OrigWelcomeFile" readonly="readonly" size="48" name="param" value="cnts->welcome_file" notset="yes" /></td>
-        <td><input type="button" onclick="popupHeadersDialog(event, 'WelcomeFile');" value="Clear" />[<s:a ac="cnts-edit-welcome-page">Edit</s:a>]</td>
-        <td><s:help topic="Contest.xml:welcome_file" /></td>
+        <td onclick="np(event);"><input type="button" onclick="popupHeadersDialog(event, 'WelcomeFile');" value="Clear" />[<s:a ac="cnts-edit-welcome-page">Edit</s:a>]</td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:welcome_file" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupHeadersDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Registration welcome message file:</td>
         <td><s:textfield id="OrigRegWelcomeFile" readonly="readonly" size="48" name="param" value="cnts->reg_welcome_file" notset="yes" /></td>
-        <td><input type="button" onclick="popupHeadersDialog(event, 'RegWelcomeFile');" value="Clear" />[<s:a ac="cnts-edit-reg-welcome-page">Edit</s:a>]</td>
-        <td><s:help topic="Contest.xml:reg_welcome_file" /></td>
+        <td onclick="np(event);"><input type="button" onclick="popupHeadersDialog(event, 'RegWelcomeFile');" value="Clear" />[<s:a ac="cnts-edit-reg-welcome-page">Edit</s:a>]</td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:reg_welcome_file" /></td>
     </s:tr>
 </table>
 
@@ -1405,62 +1410,62 @@ initial count = <s:v value="memb->init_count" />
     <h3>Extra HTML attributes</h3>
 
     <div>
-<table border="0">
+<table border="0" onclick="popupAttrsDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>HTML attributes for 'users' headers:</td>
         <td><s:textfield id="OrigUsersHeadStyle" readonly="readonly" size="48" name="param" value="cnts->users_head_style" notset="yes" /></td>
         <td><input type="button" onclick="popupAttrsDialog(event, 'UsersHeadStyle');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:users_head_style" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:users_head_style" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>HTML attributes for 'users' paragraphs:</td>
         <td><s:textfield id="OrigUsersParStyle" readonly="readonly" size="48" name="param" value="cnts->users_par_style" notset="yes" /></td>
         <td><input type="button" onclick="popupAttrsDialog(event, 'UsersParStyle');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:users_par_style" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:users_par_style" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>HTML attributes for 'users' tables:</td>
         <td><s:textfield id="OrigUsersTableStyle" readonly="readonly" size="48" name="param" value="cnts->users_table_style" notset="yes" /></td>
         <td><input type="button" onclick="popupAttrsDialog(event, 'UsersTableStyle');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:users_table_style" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:users_table_style" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>HTML attributes for 'users' verbatim text:</td>
         <td><s:textfield id="OrigUsersVerbStyle" readonly="readonly" size="48" name="param" value="cnts->users_verb_style" notset="yes" /></td>
         <td><input type="button" onclick="popupAttrsDialog(event, 'UsersVerbStyle');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:users_verb_style" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:users_verb_style" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Format specification for users table:</td>
         <td><s:textfield id="OrigUsersTableFormat" readonly="readonly" size="48" name="param" value="cnts->users_table_format" notset="yes" /></td>
         <td><input type="button" onclick="popupAttrsDialog(event, 'UsersTableFormat');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:users_table_format" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:users_table_format" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Format specification for users table (En):</td>
         <td><s:textfield id="OrigUsersTableFormatEn" readonly="readonly" size="48" name="param" value="cnts->users_table_format_en" notset="yes" /></td>
         <td><input type="button" onclick="popupAttrsDialog(event, 'UsersTableFormatEn');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:users_table_format_en" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:users_table_format_en" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Legend specification for users table:</td>
         <td><s:textfield id="OrigUsersTableLegend" readonly="readonly" size="48" name="param" value="cnts->users_table_legend" notset="yes" /></td>
         <td><input type="button" onclick="popupAttrsDialog(event, 'UsersTableLegend');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:users_table_legend" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:users_table_legend" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Legend specification for users table (En):</td>
         <td><s:textfield id="OrigUsersTableLegendEn" readonly="readonly" size="48" name="param" value="cnts->users_table_legend_en" notset="yes" /></td>
         <td><input type="button" onclick="popupAttrsDialog(event, 'UsersTableLegendEn');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:users_table_legend_en" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:users_table_legend_en" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAttrsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Additional comment for user name field:</td>
         <td><s:textfield id="OrigUserNameComment" readonly="readonly" size="48" name="param" value="cnts->user_name_comment" notset="yes" /></td>
         <td><input type="button" onclick="popupAttrsDialog(event, 'UserNameComment');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:user_name_comment" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:user_name_comment" /></td>
     </s:tr>
 </table>
 
@@ -1469,26 +1474,26 @@ initial count = <s:v value="memb->init_count" />
     <h3>E-mail notifications</h3>
 
     <div>
-<table border="0">
+<table border="0" onclick="popupNotificationsDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupNotificationsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>CHECK FAILED e-mail notification address:</td>
         <td><s:textfield id="OrigCfNotifyEmail" readonly="readonly" size="48" name="param" value="cnts->cf_notify_email" notset="yes" /></td>
         <td><input type="button" onclick="popupNotificationsDialog(event, 'CfNotifyEmail');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:cf_notify_email" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:cf_notify_email" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupNotificationsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Clar request e-mail notification address:</td>
         <td><s:textfield id="OrigClarNotifyEmail" readonly="readonly" size="48" name="param" value="cnts->clar_notify_email" notset="yes" /></td>
         <td><input type="button" onclick="popupNotificationsDialog(event, 'ClarNotifyEmail');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:clar_notify_email" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:clar_notify_email" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupNotificationsDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Daily statistics email address:</td>
         <td><s:textfield id="OrigDailyStatEmail" readonly="readonly" size="48" name="param" value="cnts->daily_stat_email" notset="yes" /></td>
         <td><input type="button" onclick="popupNotificationsDialog(event, 'DailyStatEmail');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:daily_stat_email" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:daily_stat_email" /></td>
     </s:tr>
 </table>
 
@@ -1497,53 +1502,53 @@ initial count = <s:v value="memb->init_count" />
     <h3>Advanced settings</h3>
 
     <div>
-<table border="0">
+<table border="0" onclick="popupAdvancedDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>The directory permissions (octal):</td>
         <td><s:textfield id="OrigDirMode" readonly="readonly" size="48" name="param" value="cnts->dir_mode" notset="yes" /></td>
         <td><input type="button" onclick="popupAdvancedDialog(event, 'DirMode');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:dir_mode" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:dir_mode" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>The directory group:</td>
         <td><s:textfield id="OrigDirGroup" readonly="readonly" size="48" name="param" value="cnts->dir_group" notset="yes" /></td>
         <td><input type="button" onclick="popupAdvancedDialog(event, 'DirGroup');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:dir_group" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:dir_group" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>The file permissions (octal):</td>
         <td><s:textfield id="OrigFileMode" readonly="readonly" size="48" name="param" value="cnts->file_mode" notset="yes" /></td>
         <td><input type="button" onclick="popupAdvancedDialog(event, 'FileMode');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:file_mode" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:file_mode" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>The file group:</td>
         <td><s:textfield id="OrigFileGroup" readonly="readonly" size="48" name="param" value="cnts->file_group" notset="yes" /></td>
         <td><input type="button" onclick="popupAdvancedDialog(event, 'FileGroup');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:file_group" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:file_group" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Allowed programming languages:</td>
         <td><s:textfield id="OrigAllowedLanguages" readonly="readonly" size="48" name="param" value="cnts->allowed_languages" notset="yes" /></td>
         <td><input type="button" onclick="popupAdvancedDialog(event, 'AllowedLanguages');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:allowed_languages" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:allowed_languages" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Allowed regions:</td>
         <td><s:textfield id="OrigAllowedRegions" readonly="readonly" size="48" name="param" value="cnts->allowed_regions" notset="yes" /></td>
         <td><input type="button" onclick="popupAdvancedDialog(event, 'AllowedRegions');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:allowed_regions" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:allowed_regions" /></td>
     </s:tr>
 <%
   if (cnts->assign_logins) {
 %>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Template for new logins:</td>
         <td><s:textfield id="OrigLoginTemplate" readonly="readonly" size="48" name="param" value="cnts->login_template" notset="yes" /></td>
         <td><input type="button" onclick="popupAdvancedDialog(event, 'LoginTemplate');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:login_template" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:login_template" /></td>
     </s:tr>
 <%
   }
@@ -1552,11 +1557,11 @@ initial count = <s:v value="memb->init_count" />
 <%
   if (cnts->assign_logins) {
 %>
-    <s:tr attr="form_row_attrs[row ^= 1]" onclick="popupAdvancedDialog();">
+    <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Login auto-assign options:</td>
         <td><s:textfield id="OrigLoginTemplateOptions" readonly="readonly" size="48" name="param" value="cnts->login_template_options" notset="yes" /></td>
         <td><input type="button" onclick="popupAdvancedDialog(event, 'LoginTemplateOptions');" value="Clear" /></td>
-        <td><s:help topic="Contest.xml:login_template_options" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:login_template_options" /></td>
     </s:tr>
 <%
   }
