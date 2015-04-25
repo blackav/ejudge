@@ -60,39 +60,6 @@
 #define URLARMOR(s)  url_armor_buf(&ab, s)
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
-static int
-ss_cgi_param_utf8_str(
-        const struct http_request_info *phr,
-        const unsigned char *param,
-        struct html_armor_buffer *pab,
-        const unsigned char **p_value)
-{
-  int i, len, utf8_id;
-  const unsigned char *s;
-
-  if (!param) return -1;
-  for (i = 0; i < phr->param_num; i++)
-    if (!strcmp(phr->param_names[i], param))
-      break;
-  if (i >= phr->param_num) return 0;
-  if ((len = strlen(phr->params[i])) != phr->param_sizes[i]) return -1;
-  utf8_id = charset_get_id("utf-8");
-  s = charset_decode(utf8_id, pab, phr->params[i]);
-  len = strlen(s);
-  if (!len || !isspace(s[len - 1])) {
-    *p_value = s;
-    return 1;
-  }
-  if (s != pab->buf) {
-    html_armor_reserve(pab, len + 1);
-    strcpy(pab->buf, s);
-  }
-  while (len > 0 && isspace(pab->buf[len - 1])) --len;
-  pab->buf[len] = 0;
-  *p_value = pab->buf;
-  return 1;
-}
-
 const unsigned char *
 veprintf(unsigned char *buf, size_t size, const char *format, va_list args)
 {
@@ -2471,118 +2438,6 @@ cmd_edit_contest_page_2(
   return retval;
 }
 
-static int
-cnts_text_edit_map[CNTS_LAST_FIELD] =
-{
-  [CNTS_users_header_file] = SSSS_users_header_text,
-  [CNTS_users_footer_file] = SSSS_users_footer_text,
-  [CNTS_register_header_file] = SSSS_register_header_text,
-  [CNTS_register_footer_file] = SSSS_register_footer_text,
-  [CNTS_team_header_file] = SSSS_team_header_text,
-  [CNTS_team_menu_1_file] = SSSS_team_menu_1_text,
-  [CNTS_team_menu_2_file] = SSSS_team_menu_2_text,
-  [CNTS_team_menu_3_file] = SSSS_team_menu_3_text,
-  [CNTS_team_separator_file] = SSSS_team_separator_text,
-  [CNTS_team_footer_file] = SSSS_team_footer_text,
-  [CNTS_priv_header_file] = SSSS_priv_header_text,
-  [CNTS_priv_footer_file] = SSSS_priv_footer_text,
-  [CNTS_copyright_file] = SSSS_copyright_text,
-  [CNTS_register_email_file] = SSSS_register_email_text,
-  [CNTS_welcome_file] = SSSS_welcome_text,
-  [CNTS_reg_welcome_file] = SSSS_reg_welcome_text,
-};
-
-static int
-cnts_text_load_map[CNTS_LAST_FIELD] =
-{
-  [CNTS_users_header_file] = SSSS_users_header_loaded,
-  [CNTS_users_footer_file] = SSSS_users_footer_loaded,
-  [CNTS_register_header_file] = SSSS_register_header_loaded,
-  [CNTS_register_footer_file] = SSSS_register_footer_loaded,
-  [CNTS_team_header_file] = SSSS_team_header_loaded,
-  [CNTS_team_menu_1_file] = SSSS_team_menu_1_loaded,
-  [CNTS_team_menu_2_file] = SSSS_team_menu_2_loaded,
-  [CNTS_team_menu_3_file] = SSSS_team_menu_3_loaded,
-  [CNTS_team_separator_file] = SSSS_team_separator_loaded,
-  [CNTS_team_footer_file] = SSSS_team_footer_loaded,
-  [CNTS_priv_header_file] = SSSS_priv_header_loaded,
-  [CNTS_priv_footer_file] = SSSS_priv_footer_loaded,
-  [CNTS_copyright_file] = SSSS_copyright_loaded,
-  [CNTS_register_email_file] = SSSS_register_email_loaded,
-  [CNTS_welcome_file] = SSSS_welcome_loaded,
-  [CNTS_reg_welcome_file] = SSSS_reg_welcome_loaded,
-};
-
-extern unsigned char super_html_template_help_1[];
-extern unsigned char super_html_template_help_2[];
-
-static int
-cmd_clear_file_contest_xml(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0, f_id, f_id2;
-  int *p_int;
-  unsigned char **p_str;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
-      || !(f_id2 = cnts_text_edit_map[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-
-  p_str = (unsigned char**) ss_sid_state_get_ptr_nc(phr->ss, f_id2);
-  xfree(*p_str); *p_str = 0;
-  p_int = (int*) ss_sid_state_get_ptr_nc(phr->ss, cnts_text_load_map[f_id]);
-  if (phr->action == SSERV_CMD_CLEAR_FILE_CONTEST_XML) {
-    *p_int = 1;
-  } else {
-    *p_int = 0;
-  }
-
-  retval = 1;
-
- cleanup:
-  return retval;
-}
-
-static int
-cmd_save_file_contest_xml(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int f_id = 0, f_id2 = 0;
-  const unsigned char *valstr = 0;
-  struct html_armor_buffer vb = HTML_ARMOR_INITIALIZER;
-  unsigned char **p_str;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTS_LAST_FIELD)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_id2 = cnts_text_edit_map[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (ss_cgi_param_utf8_str(phr, "param", &vb, &valstr) <= 0 || !valstr)
-    FAIL(SSERV_ERR_INV_VALUE);
-  p_str = (unsigned char**) ss_sid_state_get_ptr_nc(phr->ss, f_id2);
-  xfree(*p_str);
-  *p_str = xstrdup(valstr);
-  retval = 1;
-
- cleanup:
-  html_armor_free(&vb);
-  return retval;
-}
-
 static const unsigned char access_field_set[CNTS_LAST_FIELD] =
 {
   [CNTS_register_access] = 1,
@@ -3037,9 +2892,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_LOCKED_CNTS_CONTINUE] = cmd_locked_cnts_continue,
   [SSERV_CMD_EDIT_CONTEST_PAGE] = cmd_edit_contest_page,
   [SSERV_CMD_EDIT_CONTEST_PAGE_2] = cmd_edit_contest_page_2,
-  [SSERV_CMD_CLEAR_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
-  [SSERV_CMD_RELOAD_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
-  [SSERV_CMD_SAVE_FILE_CONTEST_XML] = cmd_save_file_contest_xml,
   [SSERV_CMD_CREATE_NEW_CONTEST_PAGE] = cmd_op_create_new_contest_page,
   [SSERV_CMD_CREATE_NEW_CONTEST] = cmd_op_create_new_contest,
   [SSERV_CMD_FORGET_CONTEST] = cmd_op_forget_contest,
