@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2011-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -207,7 +206,7 @@ check_other_editors(
   if (other_session == phr->ss) {
     snprintf(buf, sizeof(buf), "serve-control: %s, the contest is being edited by you",
              phr->html_name);
-    ss_write_html_header(out_f, phr, buf, 0, NULL);
+    ss_write_html_header(out_f, phr, buf);
     fprintf(out_f, "<h1>%s</h1>\n", buf);
 
     fprintf(out_f, "<ul>");
@@ -226,7 +225,7 @@ check_other_editors(
   if (other_session) {
     snprintf(buf, sizeof(buf), "serve-control: %s, the contest is being edited by someone else",
              phr->html_name);
-    ss_write_html_header(out_f, phr, buf, 0, NULL);
+    ss_write_html_header(out_f, phr, buf);
     fprintf(out_f, "<h1>%s</h1>\n", buf);
 
     fprintf(out_f, "<ul>");
@@ -252,7 +251,7 @@ check_other_editors(
   if (other_session && other_session != phr->ss) {
     snprintf(buf, sizeof(buf), "serve-control: %s, the tests are being edited by someone else",
              phr->html_name);
-    ss_write_html_header(out_f, phr, buf, 0, NULL);
+    ss_write_html_header(out_f, phr, buf);
     fprintf(out_f, "<h1>%s</h1>\n", buf);
 
     fprintf(out_f, "<ul>");
@@ -375,7 +374,7 @@ super_serve_op_TESTS_MAIN_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s)",
            phr->html_name, contest_id, ARMOR(cnts->name));
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -1586,7 +1585,7 @@ super_serve_op_TESTS_TESTS_VIEW_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), tests for problem %s",
            phr->html_name, contest_id, ARMOR(cnts->name), prob->short_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -2623,7 +2622,7 @@ super_serve_op_TESTS_TEST_EDIT_PAGE(
     snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), test %d for problem %s",
              phr->html_name, contest_id, ARMOR(cnts->name), test_num, prob->short_name);
   }
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -3429,7 +3428,7 @@ super_serve_op_TESTS_TEST_DELETE_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), delete test at position %d for problem %s",
              phr->html_name, contest_id, ARMOR(cnts->name), test_num, prob->short_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -3628,7 +3627,7 @@ super_serve_op_TESTS_MAKEFILE_EDIT_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), problem %s, editing Makefile",
              phr->html_name, contest_id, ARMOR(cnts->name), prob->short_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -4047,7 +4046,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), problem %s, editing statement",
              phr->html_name, contest_id, ARMOR(cnts->name), prob->short_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -4776,7 +4775,7 @@ super_serve_op_TESTS_SOURCE_HEADER_EDIT_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), problem %s, editing %s",
            phr->html_name, contest_id, ARMOR(cnts->name), prob->short_name, title);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -5126,7 +5125,7 @@ super_serve_op_TESTS_CHECKER_CREATE_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), problem %s, create %s",
            phr->html_name, contest_id, ARMOR(cnts->name), prob->short_name, title);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -5633,7 +5632,7 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), problem %s, edit %s",
            phr->html_name, contest_id, ARMOR(cnts->name), prob->short_name, title);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -6029,7 +6028,7 @@ super_serve_op_TESTS_CHECKER_DELETE_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), problem %s, delete %s",
            phr->html_name, contest_id, ARMOR(cnts->name), prob->short_name, title);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -6285,7 +6284,7 @@ super_serve_op_TESTS_MAKE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), problem %s, running make",
            phr->html_name, contest_id, ARMOR(cnts->name), prob->short_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -6540,7 +6539,7 @@ cleanup:
 fail_page:
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), test %d for problem %s FAILED",
            phr->html_name, contest_id, ARMOR(cnts->name), test_num, prob->short_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
   fprintf(out_f, "<ul>");
@@ -6646,7 +6645,7 @@ super_serve_op_TESTS_TEST_CHECK_ACTION_continuation(struct background_process *p
 
   snprintf(buf, sizeof(buf), "serve-control: %s, contest %d (%s), test %d for problem %s FAILED",
            phr->html_name, cntx->contest_id, ARMOR(cnts->name), cntx->test_num, prob->short_name);
-  ss_write_html_header(phr->out_f, phr, buf, 0, NULL);
+  ss_write_html_header(phr->out_f, phr, buf);
   fprintf(phr->out_f, "<h1>%s</h1>\n", buf);
 
   fprintf(phr->out_f, "<ul>");

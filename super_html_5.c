@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -243,7 +242,7 @@ super_serve_op_browse_problem_packages(
     snprintf(buf, sizeof(buf), "serve-control: %s, root package",
              phr->html_name);
   }
-  ss_write_html_header(out_f, phr, buf, 1, 0);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 

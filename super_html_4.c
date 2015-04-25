@@ -70,95 +70,26 @@ static const char fancy_priv_header[] =
 "<title>%s</title></head>\n"
 "<body>\n";
 
-static void
-write_html_header(
-        FILE *out_f,
-        struct http_request_info *phr,
-        const unsigned char *title,
-        int use_dojo,
-        const unsigned char *body_class)
-{
-  unsigned char cl[64];
-
-  if (use_dojo && !body_class) body_class = "nihilo";
-
-  fprintf(out_f, fancy_priv_header,
-          "text/html", EJUDGE_CHARSET, EJUDGE_CHARSET, CONF_STYLE_PREFIX,
-          title);
-
-  if (use_dojo) {
-    fprintf(out_f, "<link href=\"%sdijit/themes/%s/%s.css\" rel=\"stylesheet\" type=\"text/css\" />\n", CONF_STYLE_PREFIX, body_class, body_class);
-    fprintf(out_f, "<link href=\"%sdojo/resources/dojo.css\" rel=\"stylesheet\" type=\"text/css\" />\n", CONF_STYLE_PREFIX);
-    fprintf(out_f,
-            "<style type=\"text/css\">\n"
-            "  @import \"%sdojox/highlight/resources/highlight.css\";\n"
-            "  @import \"%sdojox/highlight/resources/pygments/default.css\";\n"
-            "  @import \"%sdojo/resources/dojo.css\";\n"
-            "  @import \"%sdojox/grid/_grid/Grid.css\";\n"
-            "  @import \"%sdojox/grid/_grid/nihiloGrid.css\";\n"
-            "</style>\n",
-            CONF_STYLE_PREFIX, CONF_STYLE_PREFIX, CONF_STYLE_PREFIX,
-            CONF_STYLE_PREFIX, CONF_STYLE_PREFIX);
-    fprintf(out_f, "<style type=\"text/css\" id=\"generatedStyles\"></style>\n");
-  }
-
-  if (use_dojo) {
-    fprintf(out_f, "<script type=\"text/javascript\" src=\"%sdojo/dojo.js\" djConfig=\"isDebug: false, parseOnLoad: true, dojoIframeHistoryUrl:'%sdojo/resources/iframe_history.html'\"></script>\n",
-            CONF_STYLE_PREFIX, CONF_STYLE_PREFIX);
-  }
-
-  if (use_dojo) {
-    fprintf(out_f, "<script type=\"text/javascript\" src=\"" CONF_STYLE_PREFIX "priv.js\"></script>\n");
-
-    fprintf(out_f,
-            "<script type=\"text/javascript\">\n"
-            "  dojo.require(\"dojo.parser\");\n"
-            "  dojo.require(\"dijit.InlineEditBox\");\n"
-            "  dojo.require(\"dijit.form.Button\");\n"
-            "  dojo.require(\"dijit.form.DateTextBox\");\n"
-            "  dojo.require(\"dijit.form.Textarea\");\n");
-    fprintf(out_f,
-            "  var SSERV_CMD_HTTP_REQUEST=%d;\n"
-            "  var SID=\"%016llx\";\n"
-            "  var self_url=\"%s\";\n"
-            "  var script_name=\"%s\";\n",
-            SSERV_CMD_HTTP_REQUEST,
-            phr->session_id,
-            phr->self_url,
-            phr->script_name);
-    fprintf(out_f, "</script>\n");
-  }
-
-  fprintf(out_f, "</head>");
-
-  cl[0] = 0;
-  if (body_class) snprintf(cl, sizeof(cl), " class=\"%s\"", body_class);
-  fprintf(out_f, "<body%s>", cl);
-}
-
 void
 ss_write_html_header(
         FILE *out_f,
         struct http_request_info *phr,
-        const unsigned char *title,
-        int use_dojo,
-        const unsigned char *body_class)
+        const unsigned char *title)
 {
-  write_html_header(out_f, phr, title, use_dojo, body_class);
+  fprintf(out_f, fancy_priv_header,
+          "text/html", EJUDGE_CHARSET, EJUDGE_CHARSET, CONF_STYLE_PREFIX,
+          title);
+
+  fprintf(out_f, "</head>");
+  fprintf(out_f, "<body>");
 }
 
 static const char fancy_priv_footer[] =
 "<hr/>%s</body></html>\n";
-static void
-write_html_footer(FILE *out_f)
-{
-  fprintf(out_f, fancy_priv_footer, get_copyright(0));
-}
-
 void
 ss_write_html_footer(FILE *out_f)
 {
-  write_html_footer(out_f);
+  fprintf(out_f, fancy_priv_footer, get_copyright(0));
 }
 
 static void
@@ -817,7 +748,7 @@ redo_action:
       fprintf(phr->out_f, "{ \"status\": %d, \"text\": \"%s\" }",
               r, super_proto_error_messages[-r]);
     } else {
-      write_html_header(phr->out_f, phr, "Request failed", 0, 0);
+      ss_write_html_header(phr->out_f, phr, "Request failed");
       if (r < -1 && r > -SSERV_ERR_LAST) {
         fprintf(phr->out_f, "<h1>Request failed: error %d</h1>\n", -r);
         fprintf(phr->out_f, "<h2>%s</h2>\n", super_proto_error_messages[-r]);
@@ -826,7 +757,7 @@ redo_action:
       }
       fprintf(phr->out_f, "<pre><font color=\"red\">%s</font></pre>\n",
               ARMOR(phr->log_t));
-      write_html_footer(phr->out_f);
+      ss_write_html_footer(phr->out_f);
     }
     close_memstream(phr->out_f); phr->out_f = 0;
   }
@@ -839,10 +770,10 @@ redo_action:
       write_json_header(phr->out_f);
       fprintf(phr->out_f, "{ \"status\": %d }", r);
     } else {
-      write_html_header(phr->out_f, phr, "Empty output", 0, 0);
+      ss_write_html_header(phr->out_f, phr, "Empty output");
       fprintf(phr->out_f, "<h1>Empty output</h1>\n");
       fprintf(phr->out_f, "<p>The output page is empty!</p>\n");
-      write_html_footer(phr->out_f);
+      ss_write_html_footer(phr->out_f);
     }
     close_memstream(phr->out_f); phr->out_f = 0;
   }

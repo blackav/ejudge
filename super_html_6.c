@@ -1199,7 +1199,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     abort();
   }
 
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<script language=\"javascript\">\n");
   fprintf(out_f,
@@ -2157,7 +2157,7 @@ super_serve_op_USER_DETAIL_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, viewing user %d",
            phr->html_name, other_user_id);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<script language=\"javascript\">\n");
   fprintf(out_f,
@@ -2937,7 +2937,7 @@ super_serve_op_USER_PASSWORD_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, change registration password for user %d",
            phr->html_name, other_user_id);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<script language=\"javascript\">\n");
   fprintf(out_f,
@@ -3091,7 +3091,7 @@ super_serve_op_USER_CNTS_PASSWORD_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, change contest password for user %d in contest %d",
            phr->html_name, other_user_id, contest_id);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<script language=\"javascript\">\n");
   fprintf(out_f,
@@ -3237,7 +3237,7 @@ super_serve_op_USER_CREATE_REG_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, create a contest registration for user %d",
            phr->html_name, other_user_id);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<script language=\"javascript\">\n");
   fprintf(out_f,
@@ -3404,7 +3404,7 @@ super_serve_op_USER_EDIT_REG_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, edit the contest registration for user %d, contest %d",
            phr->html_name, other_user_id, other_contest_id);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
   print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id, NULL);
@@ -3581,7 +3581,7 @@ super_serve_op_USER_DELETE_REG_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, delete the contest registration for user %d, contest %d",
            phr->html_name, other_user_id, other_contest_id);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
   print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id, NULL);
@@ -3720,7 +3720,7 @@ super_serve_op_USER_CREATE_ONE_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, create a new user",
            phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<script language=\"javascript\">\n");
   fprintf(out_f,
@@ -4077,7 +4077,7 @@ super_serve_op_USER_CREATE_MANY_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, create many new users",
            phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<script language=\"javascript\" src=\"%ssprintf.js\" ></script>\n",
           CONF_STYLE_PREFIX);
@@ -4461,7 +4461,7 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, create users from a CSV file",
            phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<script language=\"javascript\">\n");
   fprintf(out_f,
@@ -6164,7 +6164,7 @@ super_serve_op_USER_DELETE_MEMBER_PAGE(
   snprintf(buf, sizeof(buf), "serve-control: %s, delete the member '%s'::%d (%d) of user %d, contest %d",
            phr->html_name, member_string[role], num + 1, serial,
            other_user_id, contest_id);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
   print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id, NULL);
@@ -6685,7 +6685,7 @@ super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
     abort();
   }
 
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<h1>%s</h1>\n", buf);
   if (cnts && cnts->name) {
@@ -6886,7 +6886,7 @@ super_serve_op_USER_IMPORT_CSV_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, import user data from a CSV file",
            phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
 
@@ -7253,7 +7253,7 @@ super_serve_op_GROUP_BROWSE_PAGE(
   }
 
   snprintf(buf, sizeof(buf), "serve-control: %s, browsing groups", phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
   print_top_navigation_links(log_f, out_f, phr, 0, 0, 0, NULL);
@@ -7496,7 +7496,7 @@ super_serve_op_GROUP_CREATE_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, create a new group",
            phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
@@ -7559,7 +7559,7 @@ super_serve_op_GROUP_MODIFY_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, modifying group %d",
            phr->html_name, group_id);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
@@ -7637,7 +7637,7 @@ super_serve_op_GROUP_DELETE_PAGE(
 
   snprintf(buf, sizeof(buf), "serve-control: %s, modifying group %d",
            phr->html_name, group_id);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
@@ -8162,7 +8162,7 @@ migration_page(
   unsigned char hbuf[1024];
 
   snprintf(buf, sizeof(buf), "serve-control: %s, upgrade of ejudge.xml", phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
@@ -8282,7 +8282,7 @@ super_serve_op_USER_MAP_MAIN_PAGE(
   }
 
   snprintf(buf, sizeof(buf), "serve-control: %s, user map", phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
@@ -8387,7 +8387,7 @@ super_serve_op_EJUDGE_XML_MUST_RESTART(
   unsigned char hbuf[1024];
 
   snprintf(buf, sizeof(buf), "serve-control: %s, you must restart ejudge", phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
@@ -8641,7 +8641,7 @@ super_serve_op_CAPS_MAIN_PAGE(
   }
 
   snprintf(buf, sizeof(buf), "serve-control: %s, global user capabilities", phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
@@ -8907,7 +8907,7 @@ super_serve_op_CAPS_EDIT_PAGE(
   unsigned char hbuf[1024];
 
   snprintf(buf, sizeof(buf), "serve-control: %s, global capabilities for %s", phr->html_name, ARMOR(p->login));
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
@@ -9158,7 +9158,7 @@ super_serve_op_IMPORT_FROM_POLYGON_PAGE(
   if (!saved_url) saved_url = xstrdup("");
 
   snprintf(buf, sizeof(buf), "serve-control: %s, importing problem from polygon", phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
@@ -9706,7 +9706,7 @@ super_serve_op_DOWNLOAD_PROGRESS_PAGE(
     }
   }
 
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
@@ -10241,7 +10241,7 @@ super_serve_op_UPDATE_FROM_POLYGON_PAGE(
   if (!saved_url) saved_url = xstrdup("");
 
   snprintf(buf, sizeof(buf), "serve-control: %s, updating problem from polygon", phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 
@@ -10735,7 +10735,7 @@ super_serve_op_IMPORT_CONTEST_FROM_POLYGON_PAGE(
   if (!saved_url) saved_url = xstrdup("");
 
   snprintf(buf, sizeof(buf), "serve-control: %s, importing contest from polygon", phr->html_name);
-  ss_write_html_header(out_f, phr, buf, 0, NULL);
+  ss_write_html_header(out_f, phr, buf);
 
   fprintf(out_f, "<h1>%s</h1>\n", buf);
 

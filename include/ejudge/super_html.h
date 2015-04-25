@@ -269,9 +269,7 @@ void
 ss_write_html_header(
         FILE *out_f,
         struct http_request_info *phr,
-        const unsigned char *title,
-        int use_dojo,
-        const unsigned char *body_class);
+        const unsigned char *title);
 void
 ss_write_html_footer(FILE *out_f);
 
