@@ -57,28 +57,7 @@
 #endif
 
 #define ARMOR(s)  html_armor_buf(&ab, s)
-#define URLARMOR(s)  url_armor_buf(&ab, s)
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
-
-const unsigned char *
-veprintf(unsigned char *buf, size_t size, const char *format, va_list args)
-{
-  vsnprintf(buf, size, format, args);
-  return buf;
-}
-
-const unsigned char *
-eprintf(unsigned char *buf, size_t size, const char *format, ...)
-  __attribute__((format(printf,3,4)));
-const unsigned char *
-eprintf(unsigned char *buf, size_t size, const char *format, ...)
-{
-  va_list args;
-  va_start(args, format);
-  vsnprintf(buf, size, format, args);
-  va_end(args);
-  return buf;
-}
 
 // size must be < 2GiB
 int
@@ -267,21 +246,6 @@ refresh_page(
 typedef int (*handler_func_t)(FILE *log_f, FILE *out_f, struct http_request_info *phr);
 
 static int
-cmd_cnts_details(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct sid_state *ss = phr->ss;
-
-  if (ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_EDITED);
-
- cleanup:
-  return retval;
-}
-
-static int
 cmd_edited_cnts_back(
         FILE *log_f,
         FILE *out_f,
@@ -297,14 +261,7 @@ cmd_edited_cnts_continue(
         FILE *out_f,
         struct http_request_info *phr)
 {
-  int new_edit = -1;
-
-  if (hr_cgi_param_int(phr, "new_edit", &new_edit) >= 0 && new_edit == 1) {
-    refresh_page(out_f, phr, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
-                 0);
-  } else {
-    refresh_page(out_f, phr, "action=%d", SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE);
-  }
+  refresh_page(out_f, phr, "action=%d", SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE);
   return 0;
 }
 
@@ -315,28 +272,14 @@ cmd_edited_cnts_start_new(
         struct http_request_info *phr)
 {
   int contest_id = 0;
-  int new_edit = -1;
 
-  hr_cgi_param_int_opt(phr, "new_edit", &new_edit, 0);
   if (hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0) < 0
       || contest_id < 0) contest_id = 0;
   super_serve_clear_edited_contest(phr->ss);
-  if (new_edit == 1) {
-    if (!contest_id) {
-      refresh_page(out_f, phr, "action=%d&op=%d",
-                   SSERV_CMD_HTTP_REQUEST, 0);
-    } else {
-      refresh_page(out_f, phr, "action=%d&op=%d&contest_id=%d",
-                   SSERV_CMD_HTTP_REQUEST, 0,
-                   contest_id);
-    }
+  if (!contest_id) {
+    refresh_page(out_f, phr, "action=%d", SSERV_CMD_CREATE_CONTEST_PAGE);
   } else {
-    if (!contest_id) {
-      refresh_page(out_f, phr, "action=%d", SSERV_CMD_CREATE_CONTEST_PAGE);
-    } else {
-      refresh_page(out_f, phr, "action=%d&contest_id=%d",
-                   SSERV_CMD_CNTS_START_EDIT_ACTION, contest_id);
-    }
+    refresh_page(out_f, phr, "action=%d&contest_id=%d", SSERV_CMD_CNTS_START_EDIT_ACTION, contest_id);
   }
 
   return 0;
@@ -379,7 +322,6 @@ cmd_locked_cnts_continue(
 {
   struct sid_state *ss;
   int contest_id = 0;
-  int new_edit = -1;
 
   if (phr->ss->edited_cnts)
     goto top_level;
@@ -391,13 +333,7 @@ cmd_locked_cnts_continue(
     goto top_level;
 
   super_serve_move_edited_contest(phr->ss, ss);
-
-  if (hr_cgi_param_int(phr, "new_edit", &new_edit) >= 0 && new_edit == 1) {
-    refresh_page(out_f, phr, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
-                 0);
-  } else {
-    refresh_page(out_f, phr, "action=%d", SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE);
-  }
+  refresh_page(out_f, phr, "action=%d", SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE);
   return 0;
 
  top_level:;
@@ -407,7 +343,6 @@ cmd_locked_cnts_continue(
 
 static handler_func_t op_handlers[SSERV_CMD_LAST] =
 {
-  [SSERV_CMD_VIEW_CNTS_DETAILS] = cmd_cnts_details,
   [SSERV_CMD_EDITED_CNTS_BACK] = cmd_edited_cnts_back,
   [SSERV_CMD_EDITED_CNTS_CONTINUE] = cmd_edited_cnts_continue,
   [SSERV_CMD_EDITED_CNTS_START_NEW] = cmd_edited_cnts_start_new,

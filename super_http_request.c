@@ -688,7 +688,6 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_HTTP_REQUEST] = 0,
 
 /* subcommands for SSERV_CMD_HTTP_REQUEST */
-  [SSERV_CMD_VIEW_CNTS_DETAILS] = 1,
   [SSERV_CMD_EDITED_CNTS_BACK] = 1,
   [SSERV_CMD_EDITED_CNTS_CONTINUE] = 1,
   [SSERV_CMD_EDITED_CNTS_START_NEW] = 1,
