@@ -2604,98 +2604,6 @@ const int access_field_tag[CNTS_LAST_FIELD] =
 };
 
 static int
-cmd_copy_all_access_rules_page(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int i, cnts_num;
-  struct contest_desc *ecnts;
-  unsigned char buf[1024];
-  const int *cnts_list = 0;
-  const struct contest_desc *cnts = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-
-  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d, copy access rules from another contest",
-           phr->html_name, ecnts->id);
-  write_html_header(out_f, phr, buf, 1, 0);
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-  fprintf(out_f, "<br/>\n");
-
-  fprintf(out_f, "<form id=\"copyForm\">\n");
-  fprintf(out_f, "<p><select name=\"contest_id_2\">");
-
-  cnts_num = contests_get_list(&cnts_list);
-  for (i = 0; i < cnts_num; ++i) {
-    if (contests_get(cnts_list[i], &cnts) < 0 || !cnts) continue;
-    fprintf(out_f, "<option value=\"%d\">%d-%s</option>",
-            cnts_list[i], cnts_list[i], ARMOR(cnts->name));
-  }
-
-  fprintf(out_f, "</select></p>");
-  fprintf(out_f, "</form>\n");
-
-  fprintf(out_f, "<br/>\n");
-
-  ss_dojo_button(out_f, 0, "accept-32x32", "OK",
-              "ssFormOp1(\"copyForm\", %d, %d)",
-              SSERV_CMD_COPY_ALL_ACCESS_RULES,
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-  ss_dojo_button(out_f, 0, "cancel-32x32", "Cancel", "ssLoad1(%d)",
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-
-  write_html_footer(out_f);
-
- cleanup:
-  html_armor_free(&ab);
-  return retval;
-}
-
-static int
-cmd_copy_all_access_rules(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 1;
-  int contest_id_2, i;
-  struct contest_desc *ecnts = 0;
-  const struct contest_desc *cnts = 0;
-  const struct contest_access **p_src_access = 0;
-  struct contest_access **p_dst_access = 0;
-
-  phr->json_reply = 1;
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "contest_id_2", &contest_id_2) < 0
-      || contest_id_2 <= 0)
-    FAIL(SSERV_ERR_INV_CONTEST);
-  if (contest_id_2 == ecnts->id) goto cleanup;
-  if (contests_get(contest_id_2, &cnts) < 0 || !cnts)
-    FAIL(SSERV_ERR_INV_CONTEST);
-
-  for (i = 1; i < CNTS_LAST_FIELD; ++i) {
-    if (!access_field_set[i]) continue;
-    p_src_access = (const struct contest_access**)contest_desc_get_ptr(cnts, i);
-    p_dst_access = (struct contest_access**) contest_desc_get_ptr_nc(ecnts, i);
-    if (*p_src_access == *p_dst_access) continue;
-
-    xml_unlink_node(&(*p_dst_access)->b);
-    contests_free_2(&(*p_dst_access)->b);
-    *p_dst_access = super_html_copy_contest_access(*p_src_access);
-    xml_link_node_last(&ecnts->b, &(*p_dst_access)->b);
-  }
-
- cleanup:
-    return retval;
-}
-
-static int
 cmd_copy_all_priv_users_page(
         FILE *log_f,
         FILE *out_f,
@@ -3616,8 +3524,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CLEAR_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_RELOAD_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_SAVE_FILE_CONTEST_XML] = cmd_save_file_contest_xml,
-  [SSERV_CMD_COPY_ALL_ACCESS_RULES_PAGE] = cmd_copy_all_access_rules_page,
-  [SSERV_CMD_COPY_ALL_ACCESS_RULES] = cmd_copy_all_access_rules,
   [SSERV_CMD_COPY_ALL_PRIV_USERS_PAGE] = cmd_copy_all_priv_users_page,
   [SSERV_CMD_DELETE_PRIV_USER] = cmd_op_delete_priv_user,
   [SSERV_CMD_ADD_PRIV_USER] = cmd_op_add_priv_user,
