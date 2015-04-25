@@ -249,8 +249,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_LOCKED_CNTS_FORGET] = cmd_locked_cnts_forget,
   [SSERV_CMD_LOCKED_CNTS_CONTINUE] = cmd_locked_cnts_continue,
 
-  [SSERV_CMD_BROWSE_PROBLEM_PACKAGES] = super_serve_op_browse_problem_packages,
-
   /* Note: operations SSERV_CMD_USER_*, SSERV_CMD_GROUP_* are loaded using dlsym */
 };
 
@@ -438,7 +436,6 @@ static const int external_action_aliases[SSERV_CMD_LAST] =
 };
 static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
 {
-  [SSERV_CMD_BROWSE_PROBLEM_PACKAGES] = "problem_packages_page",
   [SSERV_CMD_LOGIN_PAGE] = "login_page",
   [SSERV_CMD_MAIN_PAGE] = "main_page",
   [SSERV_CMD_CONTEST_PAGE] = "contest_page",

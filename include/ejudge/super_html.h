@@ -274,12 +274,6 @@ void
 ss_write_html_footer(FILE *out_f);
 
 int
-super_serve_op_browse_problem_packages(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr);
-
-int
 super_html_add_problem(
         struct sid_state *sstate,
         int prob_id);
