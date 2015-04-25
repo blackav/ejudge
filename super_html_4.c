@@ -2604,90 +2604,6 @@ const int access_field_tag[CNTS_LAST_FIELD] =
 };
 
 static int
-cmd_copy_all_priv_users_page(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int i, cnts_num;
-  struct contest_desc *ecnts;
-  unsigned char buf[1024];
-  const int *cnts_list = 0;
-  const struct contest_desc *cnts = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-
-  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d, privilege operations",
-           phr->html_name, ecnts->id);
-  write_html_header(out_f, phr, buf, 1, 0);
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-  fprintf(out_f, "<br/>\n");
-
-  fprintf(out_f, "<h2>%s</h2><br/>",
-          "Copy user privileges from another contest");
-
-  fprintf(out_f, "<form id=\"copyForm\">\n");
-  fprintf(out_f, "<p><select name=\"contest_id_2\">");
-
-  cnts_num = contests_get_list(&cnts_list);
-  for (i = 0; i < cnts_num; ++i) {
-    if (contests_get(cnts_list[i], &cnts) < 0 || !cnts) continue;
-    fprintf(out_f, "<option value=\"%d\">%d-%s</option>",
-            cnts_list[i], cnts_list[i], ARMOR(cnts->name));
-  }
-
-  fprintf(out_f, "</select></p>");
-  fprintf(out_f, "</form>\n");
-
-  fprintf(out_f, "<br/>\n");
-
-  ss_dojo_button(out_f, 0, "accept-32x32", "OK",
-              "ssFormOp1(\"copyForm\", %d, %d)",
-              SSERV_CMD_COPY_ALL_PRIV_USERS,
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-  ss_dojo_button(out_f, 0, "cancel-32x32", "Cancel", "ssLoad1(%d)",
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-
-  fprintf(out_f, "<br/><hr/>\n");
-
-  fprintf(out_f, "<h2>%s</h2><br/>",
-          "Add a new privileged user");
-
-  fprintf(out_f, "<br/>\n");
-
-  fprintf(out_f, "<form id=\"addUser\">\n");
-  fprintf(out_f, "<table>\n");
-  fprintf(out_f, "<tr><td>User Login:</td><td><input type=\"text\" name=\"login\" /></td></tr>\n");
-  fprintf(out_f, "<tr><td>Permissions:</td><td>"
-          "<select name=\"perms\">"
-          "<option value=\"1\"></option>"
-          "<option value=\"2\">Observer</option>"
-          "<option value=\"3\">Judge</option>"
-          "<option value=\"4\">Full control</option>"
-          "</select></td></tr>\n");
-  fprintf(out_f, "</table>\n");
-  fprintf(out_f, "</form>\n");
-
-  fprintf(out_f, "<br/>\n");
-
-  ss_dojo_button(out_f, 0, "accept-32x32", "OK",
-              "ssFormOp1(\"addUser\", %d, %d)",
-              SSERV_CMD_ADD_PRIV_USER,
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-  ss_dojo_button(out_f, 0, "cancel-32x32", "Cancel", "ssLoad1(%d)",
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-
-  write_html_footer(out_f);
-
- cleanup:
-  html_armor_free(&ab);
-  return retval;
-}
-
-static int
 cmd_op_delete_priv_user(
         FILE *log_f,
         FILE *out_f,
@@ -2737,36 +2653,6 @@ cmd_op_add_priv_user(
 
   caps = opcaps_get_predef_caps(perms_id);
   contests_add_permission(ecnts, login, caps);
-  retval = 1;
-
- cleanup:
-  return retval;
-}
-
-static int
-cmd_op_copy_all_priv_users(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct contest_desc *ecnts;
-  int contest_id_2 = -1;
-  const struct contest_desc *cnts = 0;
-
-  phr->json_reply = 1;
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "contest_id_2", &contest_id_2) < 0
-      || contest_id_2 < 0)
-    FAIL(SSERV_ERR_INV_CONTEST);
-
-  if (contest_id_2 != ecnts->id) {
-    if (contests_get(contest_id_2, &cnts) < 0 || !cnts)
-      FAIL(SSERV_ERR_INV_CONTEST);
-    contests_copy_permissions(ecnts, cnts);
-  }
   retval = 1;
 
  cleanup:
@@ -3524,10 +3410,8 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CLEAR_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_RELOAD_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_SAVE_FILE_CONTEST_XML] = cmd_save_file_contest_xml,
-  [SSERV_CMD_COPY_ALL_PRIV_USERS_PAGE] = cmd_copy_all_priv_users_page,
   [SSERV_CMD_DELETE_PRIV_USER] = cmd_op_delete_priv_user,
   [SSERV_CMD_ADD_PRIV_USER] = cmd_op_add_priv_user,
-  [SSERV_CMD_COPY_ALL_PRIV_USERS] = cmd_op_copy_all_priv_users,
   [SSERV_CMD_SET_PREDEF_PRIV] = cmd_op_set_predef_priv,
   [SSERV_CMD_SET_PRIV] = cmd_op_set_priv,
   [SSERV_CMD_SET_DEFAULT_ACCESS] = cmd_op_set_default_access,
