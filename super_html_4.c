@@ -1471,7 +1471,7 @@ write_editing_rows(
                     "ssLoad2(%d, %d)", 0, j);
         ss_dojo_button(out_f, 0, "delete-16x16", "Delete permissions",
                     "ssFieldRequest(%d, %d, %d)",
-                    SSERV_CMD_DELETE_PRIV_USER, j,
+                    0, j,
                     SSERV_CMD_EDIT_CONTEST_PAGE_2);
         fprintf(out_f, "</td>");
         fprintf(out_f, "</tr>\n");
@@ -2604,30 +2604,6 @@ const int access_field_tag[CNTS_LAST_FIELD] =
 };
 
 static int
-cmd_op_delete_priv_user(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct contest_desc *ecnts;
-  int user_num = -1;
-
-  phr->json_reply = 1;
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &user_num) < 0 || user_num < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (contests_remove_nth_permission(ecnts, user_num) < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  retval = 1;
-
- cleanup:
-  return retval;
-}
-
-static int
 cmd_op_set_predef_priv(
         FILE *log_f,
         FILE *out_f,
@@ -3378,7 +3354,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CLEAR_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_RELOAD_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_SAVE_FILE_CONTEST_XML] = cmd_save_file_contest_xml,
-  [SSERV_CMD_DELETE_PRIV_USER] = cmd_op_delete_priv_user,
   [SSERV_CMD_SET_PREDEF_PRIV] = cmd_op_set_predef_priv,
   [SSERV_CMD_SET_PRIV] = cmd_op_set_priv,
   [SSERV_CMD_SET_DEFAULT_ACCESS] = cmd_op_set_default_access,
