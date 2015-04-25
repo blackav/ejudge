@@ -3349,106 +3349,6 @@ cmd_op_copy_access_rules(
 }
 
 static int
-cmd_op_edit_general_fields(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int ff, opt_val;
-  struct contest_desc *ecnts;
-  unsigned char vbuf[64];
-  const unsigned char *s;
-  struct html_armor_buffer vb = HTML_ARMOR_INITIALIZER;
-
-  phr->json_reply = 1;
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-
-  for (ff = 1; ff < CONTEST_LAST_FIELD; ++ff) {
-    snprintf(vbuf, sizeof(vbuf), "field_%d", ff);
-    if (hr_cgi_param_int(phr, vbuf, &opt_val) < 0
-        || opt_val < 0 || opt_val > 2)
-      FAIL(SSERV_ERR_INV_VALUE);
-    snprintf(vbuf, sizeof(vbuf), "legend_%d", ff);
-    if (ss_cgi_param_utf8_str(phr, vbuf, &vb, &s) < 0)
-      FAIL(SSERV_ERR_INV_VALUE);
-    contests_set_general_field(ecnts, ff, opt_val, s);
-  }
-  retval = 1;
-
- cleanup:
-  html_armor_free(&vb);
-  return retval;
-}
-
-static int
-cmd_op_edit_member_fields(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int opt_vals[CONTEST_LAST_MEMBER_FIELD];
-  const unsigned char *legends[CONTEST_LAST_MEMBER_FIELD];
-  struct contest_desc *ecnts;
-  int m_id = -1, init_count = -1, max_count = -1, min_count = -1;
-  int ff, opt_val, has_fields = 0;
-  unsigned char vbuf[64];
-  const unsigned char *s = 0;
-  struct html_armor_buffer vb = HTML_ARMOR_INITIALIZER;
-
-  memset(opt_vals, 0, sizeof(opt_vals));
-  memset(legends, 0, sizeof(legends));
-
-  phr->json_reply = 1;
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &m_id) < 0
-      || m_id < 0 || m_id >= CONTEST_LAST_MEMBER)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (hr_cgi_param_int(phr, "init_count", &init_count) < 0
-      || init_count < 0 || init_count > 5)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if (hr_cgi_param_int(phr, "min_count", &min_count) < 0
-      || min_count < 0 || min_count > 5)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if (hr_cgi_param_int(phr, "max_count", &max_count) < 0
-      || max_count < 0 || max_count > 5)
-    FAIL(SSERV_ERR_INV_VALUE);
-  for (ff = 1; ff < CONTEST_LAST_MEMBER_FIELD; ++ff) {
-    snprintf(vbuf, sizeof(vbuf), "field_%d", ff);
-    if (hr_cgi_param_int(phr, vbuf, &opt_val) < 0
-        || opt_val < 0 || opt_val > 2)
-      FAIL(SSERV_ERR_INV_VALUE);
-    opt_vals[ff] = opt_val;
-    if (opt_val) has_fields = 1;
-    snprintf(vbuf, sizeof(vbuf), "legend_%d", ff);
-    if (ss_cgi_param_utf8_str(phr, vbuf, &vb, &s) < 0)
-      FAIL(SSERV_ERR_INV_VALUE);
-    legends[ff] = s;
-  }
-
-  if (!has_fields && !min_count && !max_count && !init_count) {
-    retval = 1;
-    contests_delete_member_fields(ecnts, m_id);
-    goto cleanup;
-  }
-
-  contests_set_member_counts(ecnts, m_id, min_count, max_count, init_count);
-  for (ff = 1; ff < CONTEST_LAST_MEMBER_FIELD; ++ff) {
-    contests_set_member_field(ecnts, m_id, ff, opt_vals[ff], legends[ff]);
-  }
-  retval = 1;
-
- cleanup:
-  html_armor_free(&vb);
-  return retval;
-}
-
-static int
 cmd_op_create_new_contest_page(
         FILE *log_f,
         FILE *out_f,
@@ -4167,8 +4067,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_FORWARD_RULE] = cmd_op_rule_cmd,
   [SSERV_CMD_BACKWARD_RULE] = cmd_op_rule_cmd,
   [SSERV_CMD_COPY_ACCESS_RULES] = cmd_op_copy_access_rules,
-  [SSERV_CMD_EDIT_GENERAL_FIELDS] = cmd_op_edit_general_fields,
-  [SSERV_CMD_EDIT_MEMBER_FIELDS] = cmd_op_edit_member_fields,
   [SSERV_CMD_CREATE_NEW_CONTEST_PAGE] = cmd_op_create_new_contest_page,
   [SSERV_CMD_CREATE_NEW_CONTEST] = cmd_op_create_new_contest,
   [SSERV_CMD_FORGET_CONTEST] = cmd_op_forget_contest,
