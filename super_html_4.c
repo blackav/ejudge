@@ -361,7 +361,7 @@ cmd_edited_cnts_continue(
 
   if (hr_cgi_param_int(phr, "new_edit", &new_edit) >= 0 && new_edit == 1) {
     refresh_page(out_f, phr, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
-                 SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                 0);
   } else {
     refresh_page(out_f, phr, "action=%d", SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE);
   }
@@ -454,7 +454,7 @@ cmd_locked_cnts_continue(
 
   if (hr_cgi_param_int(phr, "new_edit", &new_edit) >= 0 && new_edit == 1) {
     refresh_page(out_f, phr, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
-                 SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                 0);
   } else {
     refresh_page(out_f, phr, "action=%d", SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE);
   }
@@ -1284,7 +1284,7 @@ separator_row(
   if (p_detail_flag) {
     snprintf(bbuf, sizeof(bbuf), "ssFieldRequest(%d, %d, %d)",
              0,
-             field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+             field_id, 0);
     fprintf(out_f, "<td class=\"cnts_edit_head\">");
     if (copy_cmd) {
       ss_dojo_button(out_f, 0, "promotion-16x16", "Copy",
@@ -1439,7 +1439,7 @@ write_editing_rows(
         ss_dojo_button(out_f, 0, "delete-16x16", "Delete permissions",
                     "ssFieldRequest(%d, %d, %d)",
                     0, j,
-                    SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                    0);
         fprintf(out_f, "</td>");
         fprintf(out_f, "</tr>\n");
       }
@@ -1478,10 +1478,10 @@ write_editing_rows(
         snprintf(jbuf, sizeof(jbuf),
                  "ssEditField4(%d, %d, %d, %d, arguments[0])",
                  edit_op, item_id, ce->field_id,
-                 SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                 0);
       } else {
         snprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, arguments[0])",
-                 edit_op, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                 edit_op, ce->field_id, 0);
       }
       fprintf(out_f, "<div class=\"cnts_edit_data\" dojoType=\"dijit.InlineEditBox\" onChange=\"%s\" autoSave=\"true\" title=\"%s\">", jbuf, hint);
     } else if (ce->type != 't') {
@@ -1602,9 +1602,9 @@ write_editing_rows(
           break;
         }
         if (item_id) {
-          snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+          snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, 0);
         } else {
-          snprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", edit_op, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+          snprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", edit_op, ce->field_id, 0);
         }
         if (dflt_ptr) {
           ss_html_int_select_undef(out_f, 0, 0, 0, jbuf, is_undef, *y_ptr,
@@ -1623,9 +1623,9 @@ write_editing_rows(
           break;
         }
         if (item_id) {
-          snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+          snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, 0);
         } else {
-          snprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", edit_op, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+          snprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", edit_op, ce->field_id, 0);
         }
         if (dflt_ptr) {
           ss_html_int_select_undef(out_f, 0, 0, 0, jbuf, is_undef, *y_ptr,
@@ -1663,12 +1663,12 @@ write_editing_rows(
           snprintf(jbuf, sizeof(jbuf),
                    "ssEditField5(%d, %d, %d, %d, %d, arguments[0])",
                    edit_op, item_id, ce->field_id, 1,
-                   SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                   0);
         } else {
           snprintf(jbuf, sizeof(jbuf),
                    "ssEditField2(%d, %d, %d, %d, arguments[0])",
                    edit_op, ce->field_id, 1,
-                   SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                   0);
         }
         fprintf(out_f, "<div class=\"cnts_edit_inlined\">Time: </div><div class=\"cnts_edit_inlined\" dojoType=\"dijit.InlineEditBox\" onChange=\"%s\" autoSave=\"true\" title=\"Time (HH:MM:SS)\">%s</div>", jbuf, time_buf);
 
@@ -1676,12 +1676,12 @@ write_editing_rows(
           snprintf(jbuf, sizeof(jbuf),
                    "ssEditField5(%d, %d, %d, %d, %d,this.getDisplayedValue())",
                    edit_op, item_id, ce->field_id, 2,
-                   SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                   0);
         } else {
           snprintf(jbuf, sizeof(jbuf),
                    "ssEditField2(%d, %d, %d, %d, this.getDisplayedValue())",
                    edit_op, ce->field_id, 2,
-                   SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                   0);
         }
         fprintf(out_f, "<div class=\"cnts_edit_inlined\">&nbsp;Day: </div><div class=\"cnts_edit_inlined\">");
         fprintf(out_f,
@@ -1726,7 +1726,7 @@ write_editing_rows(
         if (*y_ptr) locale_code = l10n_parse_locale(y_ptr);
         if (locale_code >= 0) is_empty = 0;
 
-        l10n_html_locale_select_2(out_f, 0, 0, 0, eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2), locale_code);
+        l10n_html_locale_select_2(out_f, 0, 0, 0, eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, 0), locale_code);
       }
       break;
     case 129:
@@ -1734,7 +1734,7 @@ write_editing_rows(
         int reg_mode = *(unsigned char*) v_ptr;
 
         ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2),
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, 0),
                            !!reg_mode,
                            2, (const char *[]) { "Moderated registration", "Free registration" });
       }
@@ -1748,7 +1748,7 @@ write_editing_rows(
         }
 
         ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2), param,
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, 0), param,
                            6, (const char *[]) { "ACM", "Kirov", "Olympiad", "Moscow", "Virtual ACM", "Virtual Olympiad" });
       }
       break;
@@ -1760,7 +1760,7 @@ write_editing_rows(
           break;
         }
         ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2),
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, 0),
                            value,
                            2, (const char *[]) { "No", "Yes" });
       }
@@ -1775,7 +1775,7 @@ write_editing_rows(
         if (*y_ptr) locale_code = l10n_parse_locale(y_ptr);
         if (locale_code >= 0) is_empty = 0;
 
-        l10n_html_locale_select_2(out_f, 0, 0, 0, eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2), locale_code);
+        l10n_html_locale_select_2(out_f, 0, 0, 0, eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, 0), locale_code);
       }
       break;
     case 135:
@@ -1787,7 +1787,7 @@ write_editing_rows(
           break;
         }
         ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2),
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, 0),
                            !!*y_ptr,
                            2, (const char *[]) { "No", "Yes" });
       }
@@ -1796,7 +1796,7 @@ write_editing_rows(
       {
         int param = global->rounding_mode;
         ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2), param,
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, 0), param,
                            3, (const char *[]) { "Truncating up (ceil)", "Truncating down (floor)", "Rounding" });
       }
       break;
@@ -1823,7 +1823,7 @@ write_editing_rows(
         const unsigned char *s;
         const struct section_problem_data *ap;
 
-        snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+        snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, 0);
         fprintf(out_f, "<select onChange='%s'>", jbuf);
         fprintf(out_f, "<option></option>");
         for (i = 0; i < phr->ss->aprob_u; ++i) {
@@ -1843,7 +1843,7 @@ write_editing_rows(
         const unsigned char *s;
         const struct section_problem_data *p;
 
-        snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+        snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, 0);
         fprintf(out_f, "<select onChange='%s'>", jbuf);
         fprintf(out_f, "<option></option>");
         for (i = 0; i < phr->ss->prob_a; ++i) {
@@ -1868,7 +1868,7 @@ write_editing_rows(
         int prob_type = *(int*) v_ptr;
         const unsigned char *s = "";
 
-        snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+        snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, 0);
         fprintf(out_f, "<select onChange='%s'>", jbuf);
         if (prob_type == -1) s = " selected=\"1\"";
         fprintf(out_f, "<option value=\"-1\"%s>Undefined</option>", s);
@@ -1888,7 +1888,7 @@ write_editing_rows(
         const unsigned char *s = "";
         struct std_checker_info *si;
 
-        snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+        snprintf(jbuf, sizeof(jbuf), "ssEditField4(%d, %d, %d, %d, this.options[this.selectedIndex].value)", edit_op, item_id, ce->field_id, 0);
         fprintf(out_f, "<select onChange='%s'>", jbuf);
         if (is_undef) {
           s = " selected=\"1\"";
@@ -1921,7 +1921,7 @@ write_editing_rows(
           break;
         }
         ss_html_int_select(out_f, 0, 0, 0,
-                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2),
+                           eprintf(jbuf, sizeof(jbuf), "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)", 0, ce->field_id, 0),
                            value,
                            2, (const char *[]) { "No", "Yes" });
       }
@@ -1949,10 +1949,10 @@ write_editing_rows(
         if (item_id) {
           snprintf(jbuf, sizeof(jbuf), "ssFieldRequest2(%d, %d, %d, %d)",
                    clear_op, item_id, ce->field_id,
-                   SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                   0);
         } else {
           snprintf(jbuf, sizeof(jbuf), "ssFieldRequest(%d, %d, %d)",
-                   clear_op, ce->field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                   clear_op, ce->field_id, 0);
 
         }
         ss_dojo_button(out_f, 0, "delete-16x16", "Clear variable", "%s", jbuf);
@@ -2070,24 +2070,24 @@ write_languages_page(
         ss_dojo_button(out_f, 0, "zoom_in-16x16", "Show Detail",
                     "ssSetValue3(%d, %d, %d, %d, 1)",
                     0, i,
-                    SSSS_lang_flags, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                    SSSS_lang_flags, 0);
       } else {
         ss_dojo_button(out_f, 0, "zoom_out-16x16", "Hide Detail",
                     "ssSetValue3(%d, %d, %d, %d, 0)",
                     0, i,
-                    SSSS_lang_flags, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                    SSSS_lang_flags, 0);
       }
       if (!phr->ss->loc_cs_map[lang->id]) {
         ss_dojo_button(out_f, 0, "delete-16x16", "Deactivate",
                     "ssSetValue3(%d, %d, %d, %d, 0)",
                     0, i,
-                    SSSS_langs, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                    SSSS_langs, 0);
       }
     } else {
       ss_dojo_button(out_f, 0, "add-16x16", "Activate",
                   "ssSetValue3(%d, %d, %d, %d, 1)",
                   0, i,
-                  SSSS_langs, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                  SSSS_langs, 0);
     }
 
     fprintf(out_f, "</td>");
@@ -2164,17 +2164,17 @@ write_problem_page(
     ss_dojo_button(out_f, 0, "zoom_in-16x16", "Show Problem",
                 "ssSetValue3(%d, %d, %d, %d, 1)",
                 0, item_id,
-                SSSS_prob_flags, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                SSSS_prob_flags, 0);
   } else {
     ss_dojo_button(out_f, 0, "zoom_out-16x16", "Hide Problem",
                 "ssSetValue3(%d, %d, %d, %d, 0)",
                 0, item_id,
-                SSSS_prob_flags, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                SSSS_prob_flags, 0);
   }
   ss_dojo_button(out_f, 0, "delete-16x16", "Delete Problem",
               "ssFieldRequest2(%d, %d, 0, %d)",
               0, item_id,
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
+              0);
   fprintf(out_f, "</td><td class=\"cnts_edit_head\">&nbsp;</td></tr>\n");
   if (!show_details) goto cleanup;
 
@@ -2184,12 +2184,12 @@ write_problem_page(
     ss_dojo_button(out_f, 0, "zoom_in-16x16", "Show Extra Info",
                 "ssSetValue3(%d, %d, %d, %d, 1)",
                 0, item_id,
-                SSSS_cur_prob, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                SSSS_cur_prob, 0);
   } else {
     ss_dojo_button(out_f, 0, "zoom_out-16x16", "Hide Extra Info",
                 "ssSetValue3(%d, %d, %d, %d, 0)",
                 0, item_id,
-                SSSS_cur_prob, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                SSSS_cur_prob, 0);
   }
   fprintf(out_f, "</td><td class=\"cnts_edit_legend\">&nbsp;</td></tr>\n");
 
@@ -2235,7 +2235,7 @@ write_problems_page(
   fprintf(out_f, "</td><td class=\"cnts_edit_clear\">");
   ss_dojo_button(out_f, 0, "add-16x16", "Create",
               "ssFormOp1(\"createAbstrProb\", %d, %d)",
-              0, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+              0, 0);
   fprintf(out_f, "</td><td class=\"cnts_edit_legend\">&nbsp;</td></tr>\n");
 
   fprintf(out_f,
@@ -2252,7 +2252,7 @@ write_problems_page(
   fprintf(out_f, "</td><td class=\"cnts_edit_clear\">");
   ss_dojo_button(out_f, 0, "add-16x16", "Create",
               "ssFormOp1(\"createAbstrProb\", %d, %d)",
-              0, SSERV_CMD_EDIT_CONTEST_PAGE_2);
+              0, 0);
   fprintf(out_f, "</td><td class=\"cnts_edit_legend\">&nbsp;</td></tr>\n");
 
  cleanup:
@@ -2291,7 +2291,7 @@ contest_xml_page(
     ss = "";
     if (page == i) ss = " id=\"selected\"";
     fprintf(out_f, "<li%s onClick='ssEditPage(%d,%d)'>%s</li>\n", ss,
-            SSERV_CMD_EDIT_CONTEST_PAGE_2, i, edit_page_descs[i].label);
+            0, i, edit_page_descs[i].label);
   }
   fprintf(out_f, "</ul>\n");
   fprintf(out_f, "</div>\n");
@@ -2327,7 +2327,7 @@ contest_xml_page(
     ss_dojo_button(out_f, "100", "refresh-32x32", "Update versions",
                 "ssFieldRequest(%d, 0, %d)",
                 0,
-                SSERV_CMD_EDIT_CONTEST_PAGE_2);
+                0);
   }
 
   ss_dojo_button(out_f, "1", "home-32x32", "To the Top",
@@ -2420,43 +2420,6 @@ cmd_edit_contest_page(
  cleanup:
   return retval;
 }
-
-static int
-cmd_edit_contest_page_2(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-
-  if (!phr->ss->edited_cnts)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-
-  return contest_xml_page(log_f, out_f, phr);
-
- cleanup:
-  return retval;
-}
-
-static const unsigned char access_field_set[CNTS_LAST_FIELD] =
-{
-  [CNTS_register_access] = 1,
-  [CNTS_users_access] = 1,
-  [CNTS_master_access] = 1,
-  [CNTS_judge_access] = 1,
-  [CNTS_team_access] = 1,
-  [CNTS_serve_control_access] = 1,
-};
-
-static const int access_field_tag[CNTS_LAST_FIELD] =
-{
-  [CNTS_register_access] = CONTEST_REGISTER_ACCESS,
-  [CNTS_users_access] = CONTEST_USERS_ACCESS,
-  [CNTS_master_access] = CONTEST_MASTER_ACCESS,
-  [CNTS_judge_access] = CONTEST_JUDGE_ACCESS,
-  [CNTS_team_access] = CONTEST_TEAM_ACCESS,
-  [CNTS_serve_control_access] = CONTEST_SERVE_CONTROL_ACCESS,
-};
 
 static int
 cmd_op_create_new_contest_page(
@@ -2595,7 +2558,7 @@ cmd_op_create_new_contest(
   }
 
   refresh_page(out_f, phr, "action=%d&op=%d", SSERV_CMD_HTTP_REQUEST,
-               SSERV_CMD_EDIT_CONTEST_PAGE_2);
+               0);
 
  cleanup:
   return retval;
@@ -2891,7 +2854,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_LOCKED_CNTS_FORGET] = cmd_locked_cnts_forget,
   [SSERV_CMD_LOCKED_CNTS_CONTINUE] = cmd_locked_cnts_continue,
   [SSERV_CMD_EDIT_CONTEST_PAGE] = cmd_edit_contest_page,
-  [SSERV_CMD_EDIT_CONTEST_PAGE_2] = cmd_edit_contest_page_2,
   [SSERV_CMD_CREATE_NEW_CONTEST_PAGE] = cmd_op_create_new_contest_page,
   [SSERV_CMD_CREATE_NEW_CONTEST] = cmd_op_create_new_contest,
   [SSERV_CMD_FORGET_CONTEST] = cmd_op_forget_contest,
