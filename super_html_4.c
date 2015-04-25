@@ -1124,9 +1124,9 @@ static const struct cnts_edit_info cnts_language_info[] =
   { NS_LANGUAGE, CNTSLANG_style_checker_env, 'X', 1, 1, 1, 1, 0, "Style checker environment", "Style checker environment", 0 },
   { NS_SID_STATE, SSSS_lang_opts, 138, 1, 1, 1, 1, 0, "Compilation options", 0, 0 },
   { NS_SID_STATE, SSSS_lang_libs, 144, 1, 1, 1, 1, 0, "Compilation libraries", 0, 0 },
-  { NS_LANGUAGE, CNTSLANG_compiler_env, 'X', 1, 1, 1, 1, SSERV_CMD_EDIT_SERVE_LANG_FIELD_DETAIL_PAGE, "Additional environment variables", 0, 0 },
+  { NS_LANGUAGE, CNTSLANG_compiler_env, 'X', 1, 1, 1, 1, 0, "Additional environment variables", 0, 0 },
   { 0, 0, '-', 0, 0, 0, 0, 0, "Other parameters", 0, 0 },
-  { NS_LANGUAGE, CNTSLANG_unhandled_vars, 137, 0, 0, 0, 0, SSERV_CMD_EDIT_SERVE_LANG_FIELD_DETAIL_PAGE, 0, 0, 0 },
+  { NS_LANGUAGE, CNTSLANG_unhandled_vars, 137, 0, 0, 0, 0, 0, 0, 0, 0 },
 
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
@@ -3601,154 +3601,6 @@ const unsigned char lang_editable_details[CNTSLANG_LAST_FIELD] =
 };
 
 static int
-cmd_op_edit_serve_lang_field_detail_page(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  const struct contest_desc *ecnts;
-  int f_id, f_type, lang_id;
-  unsigned char buf[1024];
-  FILE *text_f = 0;
-  char *text_t = 0;
-  size_t text_z = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  const void *f_ptr;
-
-  if (!phr->ss->edited_cnts || !phr->ss->langs)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  ecnts = phr->ss->edited_cnts;
-  if (hr_cgi_param_int(phr, "item_id", &lang_id) < 0
-      || lang_id <= 0 || lang_id >= phr->ss->lang_a
-      || !phr->ss->langs[lang_id])
-    FAIL(SSERV_ERR_INV_LANG_ID);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTSLANG_LAST_FIELD
-      || !(lang_editable_details[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_ptr = cntslang_get_ptr(phr->ss->langs[lang_id], f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_type = cntslang_get_type(f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-
-  text_f = open_memstream(&text_t, &text_z);
-  switch (f_type) {
-  case 's':
-    {
-      const unsigned char *s = *(const unsigned char**) f_ptr;
-      if (s) fprintf(text_f, "%s", s);
-    }
-    break;
-  case 'X':
-    {
-      const char *const * ss = *(const char *const **) f_ptr;
-      if (ss) {
-        for (int i = 0; ss[i]; ++i)
-          fprintf(text_f, "%s\n", ss[i]);
-      }
-    }
-    break;
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-  close_memstream(text_f); text_f = 0;
-
-  snprintf(buf, sizeof(buf),
-           "serve-control: %s, contest %d, language %s, editing %s",
-           phr->html_name, ecnts->id, phr->ss->langs[lang_id]->short_name,
-           cntslang_get_name(f_id));
-  write_html_header(out_f, phr, buf, 1, 0);
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-  fprintf(out_f, "<br/>\n");
-
-  fprintf(out_f, "<form id=\"editBox\"><textarea dojoType=\"dijit.form.Textarea\" name=\"param\" rows=\"20\" cols=\"80\">%s</textarea></form>\n",
-          ARMOR(text_t));
-
-  fprintf(out_f, "<br/>\n");
-
-  ss_dojo_button(out_f, 0, "accept-32x32", "OK",
-              "ssEditFileSave2(\"editBox\", %d, %d, %d, %d)",
-              SSERV_CMD_EDIT_SERVE_LANG_FIELD_DETAIL, lang_id, f_id,
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-  ss_dojo_button(out_f, 0, "cancel-32x32", "Cancel",
-              "ssLoad1(%d)",
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-
-  write_html_footer(out_f);
-
- cleanup:
-  if (text_f) fclose(text_f);
-  xfree(text_t);
-  html_armor_free(&ab);
-  return retval;
-}
-
-static int
-cmd_op_edit_serve_lang_field_detail(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int f_id, f_type, lang_id;
-  void *f_ptr;
-  const unsigned char *valstr;
-  int vallen;
-  char **lns = 0;
-  unsigned char *filt_txt = 0;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts || !phr->ss->langs)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "item_id", &lang_id) < 0
-      || lang_id <= 0 || lang_id >= phr->ss->lang_a
-      || !phr->ss->langs[lang_id])
-    FAIL(SSERV_ERR_INV_LANG_ID);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTSLANG_LAST_FIELD
-      || !(lang_editable_details[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_ptr = cntslang_get_ptr_nc(phr->ss->langs[lang_id], f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(f_type = cntslang_get_type(f_id)))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (hr_cgi_param(phr, "param", &valstr) <= 0)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if ((vallen = strlen(valstr)) > 128 * 1024)
-    FAIL(SSERV_ERR_INV_VALUE);
-  filt_txt = text_area_process_string(valstr, 0, 0);
-
-  switch (f_id) {
-  case CNTSLANG_compiler_env:
-  case CNTSLANG_style_checker_env:
-    split_to_lines(filt_txt, &lns, 2);
-    sarray_free(*(char***) f_ptr);
-    *(char***) f_ptr = lns;
-    lns = 0;
-    break;
-
-  case CNTSLANG_unhandled_vars:
-    xfree(*(unsigned char**) f_ptr);
-    *(unsigned char**) f_ptr = 0;
-    if (filt_txt && *filt_txt) {
-      *(unsigned char**) f_ptr = filt_txt;
-      filt_txt = 0;
-    }
-    break;
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-  retval = 1;
-
- cleanup:
-  xfree(filt_txt);
-  sarray_free(lns);
-  return retval;
-}
-
-static int
 cmd_op_serve_lang_update_versions(
         FILE *log_f,
         FILE *out_f,
@@ -4070,8 +3922,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CREATE_NEW_CONTEST_PAGE] = cmd_op_create_new_contest_page,
   [SSERV_CMD_CREATE_NEW_CONTEST] = cmd_op_create_new_contest,
   [SSERV_CMD_FORGET_CONTEST] = cmd_op_forget_contest,
-  [SSERV_CMD_EDIT_SERVE_LANG_FIELD_DETAIL_PAGE] = cmd_op_edit_serve_lang_field_detail_page,
-  [SSERV_CMD_EDIT_SERVE_LANG_FIELD_DETAIL] = cmd_op_edit_serve_lang_field_detail,
   [SSERV_CMD_SERVE_LANG_UPDATE_VERSIONS] = cmd_op_serve_lang_update_versions,
   [SSERV_CMD_CREATE_ABSTR_PROB] = cmd_op_create_abstr_prob,
   [SSERV_CMD_CREATE_CONCRETE_PROB] = cmd_op_create_concrete_prob,
