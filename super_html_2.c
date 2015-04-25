@@ -245,66 +245,6 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
   }
 
   switch (cmd) {
-  case SSERV_CMD_CNTS_CHANGE_AUTOREGISTER:
-    p_bool = &cnts->autoregister;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_TEAM_PASSWD:
-    p_bool = &cnts->disable_team_password;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_SIMPLE_REGISTRATION:
-    p_bool = &cnts->simple_registration;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_ASSIGN_LOGINS:
-    p_bool = &cnts->assign_logins;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_FORCE_REGISTRATION:
-    p_bool = &cnts->force_registration;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_DISABLE_NAME:
-    p_bool = &cnts->disable_name;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_ENABLE_PASSWORD_RECOVERY:
-    p_bool = &cnts->enable_password_recovery;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_EXAM_MODE:
-    p_bool = &cnts->exam_mode;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_DISABLE_PASSWORD_CHANGE:
-    p_bool = &cnts->disable_password_change;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_DISABLE_LOCALE_CHANGE:
-    p_bool = &cnts->disable_locale_change;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_PERSONAL:
-    p_bool = &cnts->personal;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_ALLOW_REG_DATA_EDIT:
-    p_bool = &cnts->allow_reg_data_edit;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_SEND_PASSWD_EMAIL:
-    p_bool = &cnts->send_passwd_email;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_MANAGED:
-    p_bool = &cnts->managed;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_RUN_MANAGED:
-    p_bool = &cnts->run_managed;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_OLD_RUN_MANAGED:
-    p_bool = &cnts->old_run_managed;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_CLEAN_USERS:
-    p_bool = &cnts->clean_users;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_CLOSED:
-    p_bool = &cnts->closed;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_INVISIBLE:
-    p_bool = &cnts->invisible;
-    break;
-  case SSERV_CMD_CNTS_CHANGE_MEMBER_DELETE:
-    p_bool = &cnts->disable_member_delete;
-    break;
   case SSERV_CMD_CNTS_CHANGE_DEADLINE:
     p_date = &cnts->reg_deadline;
     break;
