@@ -59,37 +59,6 @@
 #define ARMOR(s)  html_armor_buf(&ab, s)
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
-// size must be < 2GiB
-int
-parse_size(const unsigned char *valstr, size_t *p_size)
-{
-  unsigned long long val;
-  char *eptr = 0;
-
-  if (!valstr || !*valstr) return -1;
-
-  errno = 0;
-  val = strtoull(valstr, &eptr, 10);
-  if (errno || valstr == (const unsigned char*) eptr) return -1;
-
-  if (*eptr == 'G' || *eptr == 'g') {
-    if (val >= 2) return -1;
-    val *= 1 * 1024 * 1024 * 1024;
-    eptr++;
-  } else if (*eptr == 'M' || *eptr == 'm') {
-    if (val >= 2 * 1024) return -1;
-    val *= 1 * 1024 * 1024;
-    eptr++;
-  } else if (*eptr == 'K' || *eptr == 'k') {
-    if (val >= 2 * 1024 * 1024) return -1;
-    val *= 1 * 1024;
-    eptr++;
-  }
-  if (*eptr) return -1;
-  *p_size = (size_t) val;
-  return 0;
-}
-
 static const char fancy_priv_header[] =
 "Content-Type: %s; charset=%s\n"
 "Cache-Control: no-cache\n"
