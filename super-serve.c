@@ -1575,67 +1575,6 @@ cmd_simple_top_command(struct client_state *p, int len,
     sstate->show_global_7 = 0;
     break;
 
-  case SSERV_CMD_CNTS_CLEAR_NAME:
-  case SSERV_CMD_CNTS_CLEAR_NAME_EN:
-  case SSERV_CMD_CNTS_CLEAR_MAIN_URL:
-  case SSERV_CMD_CNTS_CLEAR_KEYWORDS:
-  case SSERV_CMD_CNTS_CLEAR_USER_CONTEST:
-  case SSERV_CMD_CNTS_CLEAR_DEFAULT_LOCALE:
-  case SSERV_CMD_CNTS_CLEAR_DEADLINE:
-  case SSERV_CMD_CNTS_CLEAR_SCHED_TIME:
-  case SSERV_CMD_CNTS_CLEAR_OPEN_TIME:
-  case SSERV_CMD_CNTS_CLEAR_CLOSE_TIME:
-  case SSERV_CMD_CNTS_CLEAR_USERS_HEADER:
-  case SSERV_CMD_CNTS_CLEAR_USERS_FOOTER:
-  case SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER:
-  case SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER:
-  case SSERV_CMD_CNTS_CLEAR_TEAM_HEADER:
-  case SSERV_CMD_CNTS_CLEAR_TEAM_MENU_1:
-  case SSERV_CMD_CNTS_CLEAR_TEAM_MENU_2:
-  case SSERV_CMD_CNTS_CLEAR_TEAM_MENU_3:
-  case SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR:
-  case SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER:
-  case SSERV_CMD_CNTS_CLEAR_PRIV_HEADER:
-  case SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER:
-  case SSERV_CMD_CNTS_CLEAR_COPYRIGHT:
-  case SSERV_CMD_CNTS_CLEAR_WELCOME:
-  case SSERV_CMD_CNTS_CLEAR_REG_WELCOME:
-  case SSERV_CMD_CNTS_CLEAR_USERS_HEAD_STYLE:
-  case SSERV_CMD_CNTS_CLEAR_USERS_PAR_STYLE:
-  case SSERV_CMD_CNTS_CLEAR_USERS_TABLE_STYLE:
-  case SSERV_CMD_CNTS_CLEAR_USERS_VERB_STYLE:
-  case SSERV_CMD_CNTS_CLEAR_USERS_TABLE_FORMAT:
-  case SSERV_CMD_CNTS_CLEAR_USERS_TABLE_FORMAT_EN:
-  case SSERV_CMD_CNTS_CLEAR_USERS_TABLE_LEGEND:
-  case SSERV_CMD_CNTS_CLEAR_USERS_TABLE_LEGEND_EN:
-  case SSERV_CMD_CNTS_CLEAR_REGISTER_HEAD_STYLE:
-  case SSERV_CMD_CNTS_CLEAR_REGISTER_PAR_STYLE:
-  case SSERV_CMD_CNTS_CLEAR_REGISTER_TABLE_STYLE:
-  case SSERV_CMD_CNTS_CLEAR_REGISTER_NAME_COMMENT:
-  case SSERV_CMD_CNTS_CLEAR_ALLOWED_LANGUAGES:
-  case SSERV_CMD_CNTS_CLEAR_ALLOWED_REGIONS:
-  case SSERV_CMD_CNTS_CLEAR_CF_NOTIFY_EMAIL:
-  case SSERV_CMD_CNTS_CLEAR_CLAR_NOTIFY_EMAIL:
-  case SSERV_CMD_CNTS_CLEAR_DAILY_STAT_EMAIL:
-  case SSERV_CMD_CNTS_CLEAR_TEAM_HEAD_STYLE:
-  case SSERV_CMD_CNTS_CLEAR_TEAM_PAR_STYLE:
-  case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL:
-  case SSERV_CMD_CNTS_CLEAR_REGISTER_URL:
-  case SSERV_CMD_CNTS_CLEAR_LOGIN_TEMPLATE:
-  case SSERV_CMD_CNTS_CLEAR_LOGIN_TEMPLATE_OPTIONS:
-  case SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE:
-  case SSERV_CMD_CNTS_CLEAR_TEAM_URL:
-  case SSERV_CMD_CNTS_CLEAR_STANDINGS_URL:
-  case SSERV_CMD_CNTS_CLEAR_PROBLEMS_URL:
-  case SSERV_CMD_CNTS_CLEAR_LOGO_URL:
-  case SSERV_CMD_CNTS_CLEAR_CSS_URL:
-  case SSERV_CMD_CNTS_CLEAR_REGISTER_SUBJECT:
-  case SSERV_CMD_CNTS_CLEAR_REGISTER_SUBJECT_EN:
-  case SSERV_CMD_CNTS_CLEAR_ROOT_DIR:
-  case SSERV_CMD_CNTS_CLEAR_CONF_DIR:
-    r = super_html_clear_variable(sstate, pkt->b.id);
-    break;
-
   case SSERV_CMD_LANG_UPDATE_VERSIONS:
     r = super_html_update_versions(sstate);
     break;
@@ -2523,64 +2462,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_SHOW_UNMNG] = { cmd_simple_top_command },
   [SSERV_CMD_HIDE_UNMNG] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_FORGET] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_NAME] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_NAME_EN] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_MAIN_URL] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_KEYWORDS] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_USER_CONTEST] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_DEFAULT_LOCALE] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_DEADLINE] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_SCHED_TIME] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_OPEN_TIME] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_CLOSE_TIME] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_USERS_HEADER] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_USERS_FOOTER] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_REGISTER_HEADER] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_REGISTER_FOOTER] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_TEAM_HEADER] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_TEAM_MENU_1] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_TEAM_MENU_2] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_TEAM_MENU_3] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_TEAM_SEPARATOR] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_TEAM_FOOTER] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_PRIV_HEADER] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_PRIV_FOOTER] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_COPYRIGHT] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_WELCOME] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_REG_WELCOME] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_USERS_HEAD_STYLE] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_USERS_PAR_STYLE] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_USERS_TABLE_STYLE] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_USERS_VERB_STYLE] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_USERS_TABLE_FORMAT] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_USERS_TABLE_FORMAT_EN] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_USERS_TABLE_LEGEND] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_USERS_TABLE_LEGEND_EN] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_REGISTER_HEAD_STYLE] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_REGISTER_PAR_STYLE] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_REGISTER_TABLE_STYLE] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_REGISTER_NAME_COMMENT] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_ALLOWED_LANGUAGES] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_ALLOWED_REGIONS] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_CF_NOTIFY_EMAIL] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_CLAR_NOTIFY_EMAIL] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_DAILY_STAT_EMAIL] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_TEAM_HEAD_STYLE] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_TEAM_PAR_STYLE] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_REGISTER_URL] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_LOGIN_TEMPLATE] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_LOGIN_TEMPLATE_OPTIONS] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_REGISTER_EMAIL_FILE] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_TEAM_URL] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_STANDINGS_URL] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_PROBLEMS_URL] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_LOGO_URL] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_CSS_URL] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_REGISTER_SUBJECT] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_REGISTER_SUBJECT_EN] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_ROOT_DIR] = { cmd_simple_top_command },
-  [SSERV_CMD_CNTS_CLEAR_CONF_DIR] = { cmd_simple_top_command },
   [SSERV_CMD_CNTS_DEFAULT_ACCESS] = { cmd_set_value },
   [SSERV_CMD_CNTS_ADD_RULE] = { cmd_set_value },
   [SSERV_CMD_CNTS_CHANGE_RULE] = { cmd_set_value },
