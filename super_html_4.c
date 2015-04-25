@@ -1468,7 +1468,7 @@ write_editing_rows(
         fprintf(out_f, "</td>");
         fprintf(out_f, "<td class=\"cnts_edit_clear\">");
         ss_dojo_button(out_f, 0, "edit_page-16x16", "Edit permissions",
-                    "ssLoad2(%d, %d)", SSERV_CMD_EDIT_PERMISSIONS_PAGE, j);
+                    "ssLoad2(%d, %d)", 0, j);
         ss_dojo_button(out_f, 0, "delete-16x16", "Delete permissions",
                     "ssFieldRequest(%d, %d, %d)",
                     SSERV_CMD_DELETE_PRIV_USER, j,
@@ -2604,72 +2604,6 @@ const int access_field_tag[CNTS_LAST_FIELD] =
 };
 
 static int
-cmd_copy_access_rules_page(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int f_id, i, cnts_num;
-  struct contest_desc *ecnts;
-  unsigned char buf[1024];
-  const unsigned char *s;
-  const int *cnts_list = 0;
-  const struct contest_desc *cnts = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
-      || !access_field_set[f_id])
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-
-  snprintf(buf, sizeof(buf), "serve-control: %s, contest %d, copy %s from another contest",
-           phr->html_name, ecnts->id, contest_desc_get_name(f_id));
-  write_html_header(out_f, phr, buf, 1, 0);
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-  fprintf(out_f, "<br/>\n");
-
-  fprintf(out_f, "<form id=\"copyForm\">\n");
-  fprintf(out_f, "<p><select name=\"contest_id_2\">");
-
-  cnts_num = contests_get_list(&cnts_list);
-  for (i = 0; i < cnts_num; ++i) {
-    if (contests_get(cnts_list[i], &cnts) < 0 || !cnts) continue;
-    fprintf(out_f, "<option value=\"%d\">%d-%s</option>",
-            cnts_list[i], cnts_list[i], ARMOR(cnts->name));
-  }
-
-  fprintf(out_f, "</select></p>");
-  fprintf(out_f, "<p><select name=\"field_id_2\">");
-  for (i = 1; i < CNTS_LAST_FIELD; ++i) {
-    if (!access_field_set[i]) continue;
-    s = "";
-    if (i == f_id) s = " selected=\"1\"";
-    fprintf(out_f, "<option value=\"%d\"%s><tt>&lt;%s&gt;</tt></option>",
-            i, s, contest_desc_get_name(i));
-  }
-  fprintf(out_f, "</select></p>\n");
-  fprintf(out_f, "</form>\n");
-
-  fprintf(out_f, "<br/>\n");
-
-  ss_dojo_button(out_f, 0, "accept-32x32", "OK",
-              "ssFormOp3(\"copyForm\", %d, %d, %d)",
-              SSERV_CMD_COPY_ACCESS_RULES, f_id,
-              0);
-  ss_dojo_button(out_f, 0, "cancel-32x32", "Cancel",
-              "ssLoad2(%d, %d)", 0, f_id);
-
-  write_html_footer(out_f);
-
- cleanup:
-  html_armor_free(&ab);
-  return retval;
-}
-
-static int
 cmd_copy_all_access_rules_page(
         FILE *log_f,
         FILE *out_f,
@@ -2838,65 +2772,6 @@ cmd_copy_all_priv_users_page(
   ss_dojo_button(out_f, 0, "cancel-32x32", "Cancel", "ssLoad1(%d)",
               SSERV_CMD_EDIT_CONTEST_PAGE_2);
 
-  write_html_footer(out_f);
-
- cleanup:
-  html_armor_free(&ab);
-  return retval;
-}
-
-static int
-cmd_edit_permissions_page(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int field_id, j;
-  struct opcap_list_item *perms;
-  struct contest_desc *ecnts;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  unsigned char buf[1024];
-
-  if (!(ecnts = phr->ss->edited_cnts)) FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &field_id) < 0 || field_id < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-
-  for (perms = CNTS_FIRST_PERM(ecnts), j = 0; perms && j != field_id;
-       perms = CNTS_NEXT_PERM_NC(perms), ++j);
-  if (!perms || j != field_id) FAIL(SSERV_ERR_INV_FIELD_ID);
-
-  snprintf(buf, sizeof(buf),
-           "serve-control: %s, contest %d, edit user privileges for user %s",
-           phr->html_name, ecnts->id, ARMOR(perms->login));
-  write_html_header(out_f, phr, buf, 1, 0);
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-
-  fprintf(out_f, "<br/><h2>Typical permissions</h2><br/>\n");
-
-  snprintf(buf, sizeof(buf),
-           "ssEditField(%d, %d, %d, this.options[this.selectedIndex].value)",
-           SSERV_CMD_SET_PREDEF_PRIV, field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2);
-
-  ss_html_int_select(out_f, 0, 0, 0, buf,
-                     opcaps_is_predef_caps(perms->caps),
-                     5, predef_caps_names);
-
-  fprintf(out_f, "<br/><hr/><br/><h2>Capabilities in detail</h2><br/>\n");
-
-  fprintf(out_f, "<form id=\"capsList\">\n");
-  super_html_print_caps_table(out_f, perms->caps, " class=\"cnts_edit\"",
-                              " class=\"cnts_edit_legend\"");
-  fprintf(out_f, "</form>\n");
-  fprintf(out_f, "<br/>\n");
-
-  ss_dojo_button(out_f, 0, "accept-32x32", "OK",
-              "ssFormOp2(\"capsList\", %d, %d, %d)",
-              SSERV_CMD_SET_PRIV, field_id, SSERV_CMD_EDIT_CONTEST_PAGE_2);
-  ss_dojo_button(out_f, 0, "cancel-32x32", "Cancel", "ssLoad1(%d)",
-              SSERV_CMD_EDIT_CONTEST_PAGE_2);
-  
-  fprintf(out_f, "<br/>\n");
   write_html_footer(out_f);
 
  cleanup:
@@ -3298,50 +3173,6 @@ cmd_op_rule_cmd(
     FAIL(SSERV_ERR_INV_FIELD_ID);
   if (contest_func(p_acc, subf_id) < 0)
     FAIL(SSERV_ERR_INV_FIELD_ID);
-  retval = 1;
-
- cleanup:
-  return retval;
-}
-
-static int
-cmd_op_copy_access_rules(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  struct contest_desc *ecnts = 0;
-  const struct contest_desc *cnts = 0;
-  int f_id = -1, f_id_2 = -1, contest_id_2 = -1;
-  struct contest_access **p_acc;
-  const struct contest_access *acc_2;
-
-  phr->json_reply = 1;
-
-  if (!(ecnts = phr->ss->edited_cnts))
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0
-      || f_id <= 0 || f_id >= CNTS_LAST_FIELD
-      || !(access_field_set[f_id]))
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  p_acc = (struct contest_access**) contest_desc_get_ptr(ecnts, f_id);
-  if (hr_cgi_param_int(phr, "contest_id_2", &contest_id_2) < 0
-      || contest_id_2 <= 0)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if (contests_get(contest_id_2, &cnts) < 0 || !cnts)
-    FAIL(SSERV_ERR_INV_VALUE);
-  if (hr_cgi_param_int(phr, "field_id_2", &f_id_2) < 0
-      || f_id_2 <= 0 || f_id_2 >= CNTS_LAST_FIELD
-      || !(access_field_set[f_id_2]))
-    FAIL(SSERV_ERR_INV_VALUE);
-  acc_2 = *(const struct contest_access**) contest_desc_get_ptr(cnts, f_id_2);
-
-  if (*p_acc == acc_2) return 0;
-  xml_unlink_node(&(*p_acc)->b);
-  contests_free_2(&(*p_acc)->b);
-  *p_acc = super_html_copy_contest_access(acc_2);
-  xml_link_node_last(&ecnts->b, &(*p_acc)->b);
   retval = 1;
 
  cleanup:
@@ -3785,11 +3616,9 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CLEAR_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_RELOAD_FILE_CONTEST_XML] = cmd_clear_file_contest_xml,
   [SSERV_CMD_SAVE_FILE_CONTEST_XML] = cmd_save_file_contest_xml,
-  [SSERV_CMD_COPY_ACCESS_RULES_PAGE] = cmd_copy_access_rules_page,
   [SSERV_CMD_COPY_ALL_ACCESS_RULES_PAGE] = cmd_copy_all_access_rules_page,
   [SSERV_CMD_COPY_ALL_ACCESS_RULES] = cmd_copy_all_access_rules,
   [SSERV_CMD_COPY_ALL_PRIV_USERS_PAGE] = cmd_copy_all_priv_users_page,
-  [SSERV_CMD_EDIT_PERMISSIONS_PAGE] = cmd_edit_permissions_page,
   [SSERV_CMD_DELETE_PRIV_USER] = cmd_op_delete_priv_user,
   [SSERV_CMD_ADD_PRIV_USER] = cmd_op_add_priv_user,
   [SSERV_CMD_COPY_ALL_PRIV_USERS] = cmd_op_copy_all_priv_users,
@@ -3804,7 +3633,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_DELETE_RULE] = cmd_op_rule_cmd,
   [SSERV_CMD_FORWARD_RULE] = cmd_op_rule_cmd,
   [SSERV_CMD_BACKWARD_RULE] = cmd_op_rule_cmd,
-  [SSERV_CMD_COPY_ACCESS_RULES] = cmd_op_copy_access_rules,
   [SSERV_CMD_CREATE_NEW_CONTEST_PAGE] = cmd_op_create_new_contest_page,
   [SSERV_CMD_CREATE_NEW_CONTEST] = cmd_op_create_new_contest,
   [SSERV_CMD_FORGET_CONTEST] = cmd_op_forget_contest,
