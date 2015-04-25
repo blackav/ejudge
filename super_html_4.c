@@ -2226,12 +2226,12 @@ write_problem_page(
   if (!show_details) {
     ss_dojo_button(out_f, 0, "zoom_in-16x16", "Show Problem",
                 "ssSetValue3(%d, %d, %d, %d, 1)",
-                SSERV_CMD_SET_SID_STATE_PROB_FIELD, item_id,
+                0, item_id,
                 SSSS_prob_flags, SSERV_CMD_EDIT_CONTEST_PAGE_2);
   } else {
     ss_dojo_button(out_f, 0, "zoom_out-16x16", "Hide Problem",
                 "ssSetValue3(%d, %d, %d, %d, 0)",
-                SSERV_CMD_SET_SID_STATE_PROB_FIELD, item_id,
+                0, item_id,
                 SSSS_prob_flags, SSERV_CMD_EDIT_CONTEST_PAGE_2);
   }
   ss_dojo_button(out_f, 0, "delete-16x16", "Delete Problem",
@@ -2246,12 +2246,12 @@ write_problem_page(
   if (!show_adv) {
     ss_dojo_button(out_f, 0, "zoom_in-16x16", "Show Extra Info",
                 "ssSetValue3(%d, %d, %d, %d, 1)",
-                SSERV_CMD_SET_SID_STATE_PROB_FIELD, item_id,
+                0, item_id,
                 SSSS_cur_prob, SSERV_CMD_EDIT_CONTEST_PAGE_2);
   } else {
     ss_dojo_button(out_f, 0, "zoom_out-16x16", "Hide Extra Info",
                 "ssSetValue3(%d, %d, %d, %d, 0)",
-                SSERV_CMD_SET_SID_STATE_PROB_FIELD, item_id,
+                0, item_id,
                 SSSS_cur_prob, SSERV_CMD_EDIT_CONTEST_PAGE_2);
   }
   fprintf(out_f, "</td><td class=\"cnts_edit_legend\">&nbsp;</td></tr>\n");
@@ -4693,62 +4693,6 @@ cmd_op_delete_prob(
   return retval;
 }
 
-static int
-cmd_op_set_sid_state_prob_field(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int f_id = -1, prob_id = 0, value = -1;
-  int *p_flags = 0;
-
-  phr->json_reply = 1;
-
-  if (!phr->ss->edited_cnts || !phr->ss->global)
-    FAIL(SSERV_ERR_NO_EDITED_CNTS);
-  if (hr_cgi_param_int(phr, "item_id", &prob_id) < 0)
-    FAIL(SSERV_ERR_INV_PROB_ID);
-  if (prob_id < 0) {
-    prob_id = -prob_id - 1;
-    if (prob_id >= phr->ss->aprob_u) FAIL(SSERV_ERR_INV_PROB_ID);
-    if (!phr->ss->aprobs[prob_id]) FAIL(SSERV_ERR_INV_PROB_ID);
-    p_flags = &phr->ss->aprob_flags[prob_id];
-  } else {
-    if (prob_id <= 0 || prob_id >= phr->ss->prob_a) FAIL(SSERV_ERR_INV_PROB_ID);
-    if (!phr->ss->probs[prob_id]) FAIL(SSERV_ERR_INV_PROB_ID);
-    p_flags = &phr->ss->prob_flags[prob_id];
-  }
-  if (hr_cgi_param_int(phr, "field_id", &f_id) < 0)
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  if (hr_cgi_param_int(phr, "value", &value) < 0 || value < 0 || value > 1)
-    FAIL(SSERV_ERR_INV_VALUE);
-
-  switch (f_id) {
-  case SSSS_prob_flags:         /* view details */
-    if (value) {
-      *p_flags |= SID_STATE_SHOW_HIDDEN;
-    } else {
-      *p_flags &= ~SID_STATE_SHOW_HIDDEN;
-    }
-    break;
-  case SSSS_cur_prob:           /* view advanced details */
-    if (value) {
-      *p_flags |= SID_STATE_SHOW_CLOSED;
-    } else {
-      *p_flags &= ~SID_STATE_SHOW_CLOSED;
-    }
-    break;
-  default:
-    FAIL(SSERV_ERR_INV_FIELD_ID);
-  }
-
-  retval = 1;
-
- cleanup:
-  return retval;
-}
-
 static const unsigned char prob_reloadable_set[CNTSPROB_LAST_FIELD] =
 {
   [CNTSPROB_scoring_checker] = 0,
@@ -4971,7 +4915,6 @@ static handler_func_t op_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CREATE_ABSTR_PROB] = cmd_op_create_abstr_prob,
   [SSERV_CMD_CREATE_CONCRETE_PROB] = cmd_op_create_concrete_prob,
   [SSERV_CMD_DELETE_PROB] = cmd_op_delete_prob,
-  [SSERV_CMD_SET_SID_STATE_PROB_FIELD] = cmd_op_set_sid_state_prob_field,
 
   [SSERV_CMD_BROWSE_PROBLEM_PACKAGES] = super_serve_op_browse_problem_packages,
   [SSERV_CMD_CREATE_PACKAGE] = super_serve_op_package_operation,
