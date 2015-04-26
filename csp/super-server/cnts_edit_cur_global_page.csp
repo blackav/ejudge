@@ -1,5 +1,5 @@
 <%
-/* $Id$ */
+
 %><%@include "includes.csp"
 %><%
 %><%@set getter_name = "csp_get_cnts_edit_cur_global_page"
@@ -58,7 +58,7 @@ static const unsigned char * const form_row_attrs[]=
     int score_system;
     int standings_locale;
     unsigned char *xstr = 0;
-%><%@include "header.csp"
+%><%@include "header_jqgrid.csp"
 %>
 
 <%@include "cnts_edit_cur_top_menu.csp"
@@ -83,7 +83,18 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
 
-<table border="0">
+<script type="text/javascript">
+$(function() {
+    $('#GlobalAccordion').accordion({ heightStyle: "content" });
+});
+</script>
+
+<div id="GlobalAccordion">
+
+    <h3>Main properties</h3>
+
+    <div>
+        <table border="0">
     <s:tr attr="head_row_attr">
         <td colspan="4" align="center"><b>Main properties</b></td>
     </s:tr>
@@ -281,6 +292,13 @@ static const unsigned char * const form_row_attrs[]=
 <%
   }
 %>
+        </table>
+    </div>
+
+    <h3>Contestant capabilities</h3>
+
+    <div>
+        <table border="0">
 
     <s:form>
         <s:tr attr="head_row_attr">
@@ -294,7 +312,7 @@ static const unsigned char * const form_row_attrs[]=
         </s:tr>
     </s:form>
 <%
-  if (!phr->ss->show_global_1) goto files_and_directories;
+  //if (!phr->ss->show_global_1) goto files_and_directories;
   row = 1;
 %>
 
@@ -639,9 +657,16 @@ static const unsigned char * const form_row_attrs[]=
             <td><s:help ac="glob-change-disable-auto-refresh" /></td>
         </s:tr>
     </s:form>
+        </table>
+    </div>
+
+    <h3>Files and directories</h3>
+
+    <div>
+        <table border="0">
 
 <%
-files_and_directories: ;
+//files_and_directories: ;
 %>
 
     <s:form>
@@ -656,7 +681,7 @@ files_and_directories: ;
         </s:tr>
     </s:form>
 <%
-  if (!phr->ss->show_global_2) goto contestant_quotas;
+  //if (!phr->ss->show_global_2) goto contestant_quotas;
   row = 1;
 %>
 
@@ -800,9 +825,16 @@ files_and_directories: ;
             <td><s:help ac="glob-change-contest-stop-cmd" /></td>
         </s:tr>
     </s:form>
+        </table>
+    </div>
+
+    <h3>Contestant quotas</h3>
+
+    <div>
+        <table border="0">
 
 <%
-contestant_quotas:;
+//contestant_quotas:;
 %>
 
     <s:form>
@@ -817,7 +849,7 @@ contestant_quotas:;
         </s:tr>
     </s:form>
 <%
-  if (!phr->ss->show_global_3) goto standing_files;
+  //if (!phr->ss->show_global_3) goto standing_files;
   row = 1;
 %>
 
@@ -919,9 +951,16 @@ contestant_quotas:;
 <%
   }
 %>
+        </table>
+    </div>
+
+    <h3>Standings files and URLs</h3>
+
+    <div>
+        <table border="0">
 
 <%
-standing_files:;
+//standing_files:;
 %>
 
     <s:form>
@@ -936,7 +975,7 @@ standing_files:;
         </s:tr>
     </s:form>
 <%
-  if (!phr->ss->show_global_4) goto standing_table_attributes;
+  //if (!phr->ss->show_global_4) goto standing_table_attributes;
   row = 1;
 %>
 
@@ -1182,9 +1221,16 @@ standing_files:;
             <td><s:help ac="glob-change-internal-xml-update-time" /></td>
         </s:tr>
     </s:form>
+        </table>
+    </div>
+
+    <h3>Standings table attributes</h3>
+
+    <div>
+        <table border="0">
 
 <%
-standing_table_attributes:;
+//standing_table_attributes:;
 %>
 
     <s:form>
@@ -1199,7 +1245,7 @@ standing_table_attributes:;
         </s:tr>
     </s:form>
 <%
-  if (!phr->ss->show_global_5) goto advanced_settings;
+  //if (!phr->ss->show_global_5) goto advanced_settings;
   row = 1;
 %>
 
@@ -1697,9 +1743,16 @@ standing_table_attributes:;
 %><%
   }
 %>
+        </table>
+    </div>
+
+    <h3>Advanced settings</h3>
+
+    <div>
+        <table border="0">
 
 <%
-advanced_settings:;
+//advanced_settings:;
 %>
 
     <s:form>
@@ -1714,7 +1767,7 @@ advanced_settings:;
         </s:tr>
     </s:form>
 <%
-  if (!phr->ss->show_global_6) goto uneditable_params;
+  //if (!phr->ss->show_global_6) goto uneditable_params;
   row = 1;
 %>
 
@@ -1964,14 +2017,22 @@ advanced_settings:;
             <td><s:help ac="glob-change-xuser-plugin" /></td>
         </s:tr>
     </s:form>
+        </table>
+    </div>
 
 <%
-uneditable_params:;
+//uneditable_params:;
 %>
 
 <%
   if (global->unhandled_vars) {
 %>
+
+    <h3>Uneditable parameters</h3>
+
+    <div>
+        <table border="0">
+
     <s:form>
         <s:tr attr="head_row_attr">
             <td colspan="4" align="center"><b>Uneditable parameters</b><%
@@ -1984,15 +2045,12 @@ uneditable_params:;
         </s:tr>
     </s:form>
 <%
-  }
-%>
-<%
-  if (!phr->ss->show_global_7) goto done;
+  //if (!phr->ss->show_global_7) goto done;
   row = 1;
 %>
 
 <%
-  if (global->unhandled_vars && phr->ss->show_global_7) {
+  if (global->unhandled_vars) {
 %>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td colspan="4"><pre><s:v value="global->unhandled_vars" /></pre></td>
@@ -2002,10 +2060,15 @@ uneditable_params:;
 %>
 
 <%
-done:;
+//done:;
 %>
 
-</table>
+        </table>
+    </div>
+<%
+  }
+%>
+</div>
 
 <%
 bottom_links: ;

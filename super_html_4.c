@@ -784,5 +784,5 @@ redo_action:
 
 void *super_html_forced_link[] =
 {
-  html_date_select
+  html_date_select, sarray_unparse_2
 };
