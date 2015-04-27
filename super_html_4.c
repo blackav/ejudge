@@ -474,6 +474,13 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SAVE_ATTRS_FORM] = "cnts_save_attrs_form",
   [SSERV_CMD_CNTS_SAVE_NOTIFICATIONS_FORM] = "cnts_save_notifications_form",
   [SSERV_CMD_CNTS_SAVE_ADVANCED_FORM] = "cnts_save_advanced_form",
+  [SSERV_CMD_GLOB_SAVE_MAIN_FORM] = "glob_save_main_form",
+  [SSERV_CMD_GLOB_SAVE_CAPABILITIES_FORM] = "glob_save_capabilities_form",
+  [SSERV_CMD_GLOB_SAVE_FILES_FORM] = "glob_save_files_form",
+  [SSERV_CMD_GLOB_SAVE_QUOTAS_FORM] = "glob_save_quotas_form",
+  [SSERV_CMD_GLOB_SAVE_URLS_FORM] = "glob_save_urls_form",
+  [SSERV_CMD_GLOB_SAVE_ATTRS_FORM] = "glob_save_attrs_form",
+  [SSERV_CMD_GLOB_SAVE_ADVANCED_FORM] = "glob_save_advanced_form",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 
