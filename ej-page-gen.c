@@ -4255,7 +4255,7 @@ handle_yesno_open(
         handle_html_string(prg_f, txt_f, log_f, str_p);
         free(str_p); str_p = NULL; str_z = 0;
         fprintf(prg_f, "if ((%s)) {\n", value_attr->value);
-        handle_html_string(prg_f, txt_f, log_f, "1\" /><b><font color=\"green\">");
+        handle_html_string(prg_f, txt_f, log_f, "1\" /><b><font color=\"lightgreen\">");
         fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", yes_label);
         handle_html_string(prg_f, txt_f, log_f, "</font></b>");
         fprintf(prg_f, "} else {\n");
