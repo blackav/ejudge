@@ -83,10 +83,64 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
 
+<div id="MainDialogDiv" title="Main Properties">
+    <s:form id="MainDialogForm">
+        <s:hidden name="action" ac="glob-save-main-form" />
+        <fieldset>
+
+
+
+
+
+
+
+
+        </fieldset>
+    </s:form>
+</div>
+
 <script type="text/javascript">
 $(function() {
     $('#GlobalAccordion').accordion({ heightStyle: "content" });
+
+    mainDialog = $("#MainDialogDiv").dialog({
+        autoOpen: false,
+        height: 300,
+        width: 600,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#MainDialogForm").serialize();
+                var formURL = $("#MainDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                dialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
 });
+
+function popupMainDialog(e, skipField)
+{
+    // FIXME: copy fields
+
+    if (e) e.stopPropagation();
+    $("#MainDialogDiv").dialog('open');
+}
 </script>
 
 <div id="GlobalAccordion">
