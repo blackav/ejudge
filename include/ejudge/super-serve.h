@@ -165,13 +165,6 @@ struct sid_state
   int tester_total;
   struct section_tester_data **testers;
 
-  ejintbool_t show_global_1;
-  ejintbool_t show_global_2;
-  ejintbool_t show_global_3;
-  ejintbool_t show_global_4;
-  ejintbool_t show_global_5;
-  ejintbool_t show_global_6;
-  ejintbool_t show_global_7;
   ejintbool_t enable_stand2;
   ejintbool_t enable_plog;
   ejintbool_t enable_extra_col;

@@ -303,16 +303,10 @@ $(function() {
     <s:form>
         <s:tr attr="head_row_attr">
             <td colspan="4" align="center"><b>Contestant's capabilities</b><%
-  if (phr->ss->show_global_1) {
-%><s:submit ac="glob-hide-1" label="Hide" /><%
-  } else {
-%><s:submit ac="glob-show-1" label="Show" /><%
-  }
 %></td>
         </s:tr>
     </s:form>
 <%
-  //if (!phr->ss->show_global_1) goto files_and_directories;
   row = 1;
 %>
 
@@ -665,23 +659,13 @@ $(function() {
     <div>
         <table border="0">
 
-<%
-//files_and_directories: ;
-%>
-
     <s:form>
         <s:tr attr="head_row_attr">
             <td colspan="4" align="center"><b>Files and directories</b><%
-  if (phr->ss->show_global_2) {
-%><s:submit ac="glob-hide-2" label="Hide" /><%
-  } else {
-%><s:submit ac="glob-show-2" label="Show" /><%
-  }
 %></td>
         </s:tr>
     </s:form>
 <%
-  //if (!phr->ss->show_global_2) goto contestant_quotas;
   row = 1;
 %>
 
@@ -833,23 +817,13 @@ $(function() {
     <div>
         <table border="0">
 
-<%
-//contestant_quotas:;
-%>
-
     <s:form>
         <s:tr attr="head_row_attr">
             <td colspan="4" align="center"><b>Contestant's quotas</b><%
-  if (phr->ss->show_global_3) {
-%><s:submit ac="glob-hide-3" label="Hide" /><%
-  } else {
-%><s:submit ac="glob-show-3" label="Show" /><%
-  }
 %></td>
         </s:tr>
     </s:form>
 <%
-  //if (!phr->ss->show_global_3) goto standing_files;
   row = 1;
 %>
 
@@ -959,23 +933,13 @@ $(function() {
     <div>
         <table border="0">
 
-<%
-//standing_files:;
-%>
-
     <s:form>
         <s:tr attr="head_row_attr">
             <td colspan="4" align="center"><b>Standings files and URLs</b><%
-  if (phr->ss->show_global_4) {
-%><s:submit ac="glob-hide-4" label="Hide" /><%
-  } else {
-%><s:submit ac="glob-show-4" label="Show" /><%
-  }
 %></td>
         </s:tr>
     </s:form>
 <%
-  //if (!phr->ss->show_global_4) goto standing_table_attributes;
   row = 1;
 %>
 
@@ -1229,23 +1193,13 @@ $(function() {
     <div>
         <table border="0">
 
-<%
-//standing_table_attributes:;
-%>
-
     <s:form>
         <s:tr attr="head_row_attr">
             <td colspan="4" align="center"><b>Standings table attributes</b><%
-  if (phr->ss->show_global_5) {
-%><s:submit ac="glob-hide-5" label="Hide" /><%
-  } else {
-%><s:submit ac="glob-show-5" label="Show" /><%
-  }
 %></td>
         </s:tr>
     </s:form>
 <%
-  //if (!phr->ss->show_global_5) goto advanced_settings;
   row = 1;
 %>
 
@@ -1751,23 +1705,13 @@ $(function() {
     <div>
         <table border="0">
 
-<%
-//advanced_settings:;
-%>
-
     <s:form>
         <s:tr attr="head_row_attr">
             <td colspan="4" align="center"><b>Advanced settings</b><%
-  if (phr->ss->show_global_6) {
-%><s:submit ac="glob-hide-6" label="Hide" /><%
-  } else {
-%><s:submit ac="glob-show-6" label="Show" /><%
-  }
 %></td>
         </s:tr>
     </s:form>
 <%
-  //if (!phr->ss->show_global_6) goto uneditable_params;
   row = 1;
 %>
 
@@ -2021,10 +1965,6 @@ $(function() {
     </div>
 
 <%
-//uneditable_params:;
-%>
-
-<%
   if (global->unhandled_vars) {
 %>
 
@@ -2036,16 +1976,10 @@ $(function() {
     <s:form>
         <s:tr attr="head_row_attr">
             <td colspan="4" align="center"><b>Uneditable parameters</b><%
-    if (phr->ss->show_global_7) {
-%><s:submit ac="glob-hide-7" label="Hide" /><%
-    } else {
-%><s:submit ac="glob-show-7" label="Show" /><%
-    }
 %></td>
         </s:tr>
     </s:form>
 <%
-  //if (!phr->ss->show_global_7) goto done;
   row = 1;
 %>
 
@@ -2058,11 +1992,6 @@ $(function() {
 <%
   }
 %>
-
-<%
-//done:;
-%>
-
         </table>
     </div>
 <%

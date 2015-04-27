@@ -1277,12 +1277,6 @@ super_serve_clear_edited_contest(struct sid_state *p)
   xfree(p->atesters); p->atesters = 0;
   p->tester_total = 0;
   p->atester_total = 0;
-  p->show_global_1 = 0;
-  p->show_global_2 = 0;
-  p->show_global_3 = 0;
-  p->show_global_4 = 0;
-  p->show_global_5 = 0;
-  p->show_global_6 = 0;
   p->enable_stand2 = 0;
   p->enable_plog = 0;
   p->enable_extra_col = 0;
@@ -1338,9 +1332,7 @@ super_serve_move_edited_contest(struct sid_state *dst, struct sid_state *src)
     SSSS_priv_header_loaded, SSSS_priv_footer_loaded,
     SSSS_register_email_loaded, SSSS_copyright_loaded,
     SSSS_welcome_loaded, SSSS_reg_welcome_loaded,
-    SSSS_show_global_1, SSSS_show_global_2, SSSS_show_global_3,
-    SSSS_show_global_4, SSSS_show_global_5, SSSS_show_global_6,
-    SSSS_show_global_7, SSSS_enable_stand2, SSSS_enable_plog,
+    SSSS_enable_stand2, SSSS_enable_plog,
     SSSS_enable_extra_col, SSSS_disable_compilation_server,
     SSSS_enable_win32_languages,
     0,
@@ -1531,48 +1523,6 @@ cmd_simple_top_command(struct client_state *p, int len,
     break;
   case SSERV_CMD_CNTS_FORGET:
     super_serve_clear_edited_contest(sstate);
-    break;
-  case SSERV_CMD_GLOB_SHOW_1:
-    sstate->show_global_1 = 1;
-    break;
-  case SSERV_CMD_GLOB_HIDE_1:
-    sstate->show_global_1 = 0;
-    break;
-  case SSERV_CMD_GLOB_SHOW_2:
-    sstate->show_global_2 = 1;
-    break;
-  case SSERV_CMD_GLOB_HIDE_2:
-    sstate->show_global_2 = 0;
-    break;
-  case SSERV_CMD_GLOB_SHOW_3:
-    sstate->show_global_3 = 1;
-    break;
-  case SSERV_CMD_GLOB_HIDE_3:
-    sstate->show_global_3 = 0;
-    break;
-  case SSERV_CMD_GLOB_SHOW_4:
-    sstate->show_global_4 = 1;
-    break;
-  case SSERV_CMD_GLOB_HIDE_4:
-    sstate->show_global_4 = 0;
-    break;
-  case SSERV_CMD_GLOB_SHOW_5:
-    sstate->show_global_5 = 1;
-    break;
-  case SSERV_CMD_GLOB_HIDE_5:
-    sstate->show_global_5 = 0;
-    break;
-  case SSERV_CMD_GLOB_SHOW_6:
-    sstate->show_global_6 = 1;
-    break;
-  case SSERV_CMD_GLOB_HIDE_6:
-    sstate->show_global_6 = 0;
-    break;
-  case SSERV_CMD_GLOB_SHOW_7:
-    sstate->show_global_7 = 1;
-    break;
-  case SSERV_CMD_GLOB_HIDE_7:
-    sstate->show_global_7 = 0;
     break;
 
   case SSERV_CMD_LANG_UPDATE_VERSIONS:
@@ -2478,20 +2428,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SAVE_COACH_FIELDS] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_ADVISOR_FIELDS] = { cmd_set_value },
   [SSERV_CMD_CNTS_SAVE_GUEST_FIELDS] = { cmd_set_value },
-  [SSERV_CMD_GLOB_SHOW_1] = { cmd_simple_top_command },
-  [SSERV_CMD_GLOB_HIDE_1] = { cmd_simple_top_command },
-  [SSERV_CMD_GLOB_SHOW_2] = { cmd_simple_top_command },
-  [SSERV_CMD_GLOB_HIDE_2] = { cmd_simple_top_command },
-  [SSERV_CMD_GLOB_SHOW_3] = { cmd_simple_top_command },
-  [SSERV_CMD_GLOB_HIDE_3] = { cmd_simple_top_command },
-  [SSERV_CMD_GLOB_SHOW_4] = { cmd_simple_top_command },
-  [SSERV_CMD_GLOB_HIDE_4] = { cmd_simple_top_command },
-  [SSERV_CMD_GLOB_SHOW_5] = { cmd_simple_top_command },
-  [SSERV_CMD_GLOB_HIDE_5] = { cmd_simple_top_command },
-  [SSERV_CMD_GLOB_SHOW_6] = { cmd_simple_top_command },
-  [SSERV_CMD_GLOB_HIDE_6] = { cmd_simple_top_command },
-  [SSERV_CMD_GLOB_SHOW_7] = { cmd_simple_top_command },
-  [SSERV_CMD_GLOB_HIDE_7] = { cmd_simple_top_command },
   [SSERV_CMD_LANG_SHOW_DETAILS] = { cmd_set_value },
   [SSERV_CMD_LANG_HIDE_DETAILS] = { cmd_set_value },
   [SSERV_CMD_LANG_DEACTIVATE] = { cmd_set_value },
