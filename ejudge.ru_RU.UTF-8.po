@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-23 13:06+0300\n"
+"POT-Creation-Date: 2015-04-27 07:56+0300\n"
 "PO-Revision-Date: 2015-04-15 14:08+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -1816,9 +1816,6 @@ msgstr "Помощь"
 msgid "Hidden?"
 msgstr "Скрыт?"
 
-msgid "Hide"
-msgstr "Скрыть"
-
 msgid "Hide advanced"
 msgstr "Скрыть расширенный"
 
@@ -3536,9 +3533,6 @@ msgstr "Параметр shift"
 
 msgid "Short name"
 msgstr "ID Задачи"
-
-msgid "Show"
-msgstr "Показать"
 
 msgid "Show advanced"
 msgstr "Показать расширенные"

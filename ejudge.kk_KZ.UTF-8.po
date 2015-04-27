@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-23 13:06+0300\n"
+"POT-Creation-Date: 2015-04-27 07:56+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -1676,9 +1676,6 @@ msgid "Help"
 msgstr ""
 
 msgid "Hidden?"
-msgstr ""
-
-msgid "Hide"
 msgstr ""
 
 msgid "Hide advanced"
@@ -3365,9 +3362,6 @@ msgid "Shift parameter"
 msgstr ""
 
 msgid "Short name"
-msgstr ""
-
-msgid "Show"
 msgstr ""
 
 msgid "Show advanced"
