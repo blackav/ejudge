@@ -2464,3 +2464,20 @@ parse_date_twopart(
   }
   return 1;
 }
+
+int
+parse_duration(const unsigned char *str, int default_value)
+{
+  if (!str) return default_value;
+  int len = strlen(str);
+  while (len > 0 && isspace(str[len - 1])) --len;
+  if (len <= 0) return default_value;
+  int h, m, n;
+  if (sscanf(str, "%d:%d%n", &h, &m, &n) == 2 && n == len && h >= 0 && h <= 1000000 && m >= 0 && m < 60) {
+    return h * 60 + m;
+  }
+  if (sscanf(str, "%d%n", &m, &n) == 1 && n == len && m >= 0 && m <= 1000000) {
+    return m;
+  }
+  return -1;
+}

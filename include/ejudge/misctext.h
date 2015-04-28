@@ -291,4 +291,7 @@ parse_date_twopart(
         const unsigned char *time_str,
         time_t *p_time);
 
+int
+parse_duration(const unsigned char *str, int default_value);
+
 #endif /* __MISCTEXT_H__ */
