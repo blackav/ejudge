@@ -11,21 +11,110 @@
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
 // declare local variables here
+    const unsigned char *contest_time = NULL;
+    const unsigned char *contest_finish_time_time = NULL;
+    const unsigned char *contest_finish_time_date = NULL;
+    int score_system = -1;
+    const unsigned char *board_fog_time = NULL;
+    const unsigned char *board_unfog_time = NULL;
+    ejintbool_t use_compilation_server = 0;
+    ejintbool_t enable_win32_languages = 0;
+    ejintbool_t separate_user_score = 0;
+    ejintbool_t secure_run = 0;
+    ejintbool_t enable_memory_limit_error = 0;
+    ejintbool_t detect_violations = 0;
+    ejintbool_t enable_max_stack_size = 0;
+    const unsigned char *standings_locale = NULL;
+    const unsigned char *checker_locale = NULL;
+    ejintbool_t enable_32bit_checkers = 0;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 // read the parameters here like <s:read var="name" normalize="yes" />
+%><s:read var="contest_time" /><%
+%><s:read var="contest_finish_time_time" /><%
+%><s:read var="contest_finish_time_date" /><%
+%><s:read var="score_system" required="yes" /><%
+%><s:read var="board_fog_time" /><%
+%><s:read var="board_unfog_time" /><%
+%><s:read var="use_compilation_server" default="0" /><%
+%><s:read var="enable_win32_languages" default="0" /><%
+%><s:read var="separate_user_score" default="0" /><%
+%><s:read var="secure_run" default="0" /><%
+%><s:read var="enable_memory_limit_error" default="0" /><%
+%><s:read var="detect_violations" default="0" /><%
+%><s:read var="enable_max_stack_size" default="0" /><%
+%><s:read var="standings_locale" /><%
+%><s:read var="checker_locale" /><%
+%><s:read var="enable_32bit_checkers" default="0" /><%
 
 // validate parameters here
+    int contest_time_val = parse_duration(contest_time, 0);
+    if (contest_time_val < 0) {
+        fprintf(msg_f, "Invalid duration<br/>");
+        retval = SSERV_ERR_INV_PARAM;
+    }
+    time_t contest_finish_time = 0;
+    if (parse_date_twopart(contest_finish_time_date, contest_finish_time_time, &contest_finish_time) < 0) {
+        fprintf(msg_f, "Invalid finish time<br/>");
+        retval = SSERV_ERR_INV_PARAM;
+    }
+    int is_virtual = 0;
+    if (score_system == 4) {
+        score_system = SCORE_ACM;
+        is_virtual = 1;
+    } else if (score_system == 5) {
+        score_system = SCORE_OLYMPIAD;
+        is_virtual = 1;
+    } else if (score_system < 0 || score_system > 5) {
+        fprintf(msg_f, "Invalid score_system<br/>");
+        retval = SSERV_ERR_INV_PARAM;
+    }
+
+    int board_fog_time_val = parse_duration(board_fog_time, 0);
+    if (board_fog_time_val < 0) {
+        fprintf(msg_f, "Invalid board_fog_time<br/>");
+        retval = SSERV_ERR_INV_PARAM;
+    }
+    if (board_fog_time_val > contest_time_val) board_fog_time_val = contest_time_val;
+    int board_unfog_time_val = parse_duration(board_unfog_time, 0);
+    if (board_unfog_time_val < 0) {
+        fprintf(msg_f, "Invalid board_unfog_time<br/>");
+        retval = SSERV_ERR_INV_PARAM;
+    }
+    if (!board_fog_time_val) board_unfog_time_val = 0;
+
+    standings_locale = l10n_normalize(standings_locale);
+    checker_locale = l10n_normalize(checker_locale);
 
     if (!retval && phr->ss) {
         struct section_global_data *global = phr->ss->global;
         if (global) {
+            global->contest_time = contest_time_val;
+            global->contest_finish_time = contest_finish_time;
+            global->score_system = score_system;
+            global->is_virtual = is_virtual;
+            global->board_fog_time = board_fog_time_val;
+            global->board_unfog_time = board_unfog_time_val;
+            phr->ss->disable_compilation_server = !use_compilation_server;
+            phr->ss->enable_win32_languages = enable_win32_languages;
+            global->separate_user_score = separate_user_score;
+            global->secure_run = secure_run;
+            global->enable_memory_limit_error = enable_memory_limit_error;
+            global->detect_violations = detect_violations;
+            global->enable_max_stack_size = enable_max_stack_size;
+            global->standings_locale[0] = 0;
+            if (standings_locale && *standings_locale) {
+                snprintf(global->standings_locale, sizeof(global->standings_locale), "%s", standings_locale);
+            }
+            xfree(global->checker_locale);
+            global->checker_locale = xstrdup2(checker_locale);
+            global->enable_32bit_checkers = enable_32bit_checkers;
         }
     }
 
-//cleanup:;
+cleanup:;
     fclose(msg_f); msg_f = NULL;
 %>
 {
