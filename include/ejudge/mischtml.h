@@ -56,6 +56,7 @@ html_date_select_2(
         const unsigned char *name_prefix,
         const unsigned char *html_class,
         int is_readonly,
+        int is_hidden,
         int use_gmtime);
 
 void html_hidden(FILE *fout, const unsigned char *var_name,

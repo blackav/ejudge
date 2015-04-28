@@ -70,11 +70,15 @@ html_date_select_2(
         const unsigned char *name_prefix,
         const unsigned char *html_class,
         int is_readonly,
+        int is_hidden,
         int use_gmtime)
 {
   struct tm *tt = NULL;
   unsigned char value_time[64];
   unsigned char value_date[64];
+  const unsigned char *type = "text";
+
+  if (is_hidden) type = "hidden";
   if (t != 0 && t != ~(time_t) 0) {
     if (use_gmtime) {
       tt = gmtime(&t);
@@ -90,8 +94,8 @@ html_date_select_2(
     snprintf(value_date, sizeof(value_date), "%04d-%02d-%02d",
              tt->tm_year + 1900, tt->tm_mon + 1, tt->tm_mday);
   }
-  fprintf(out_f, "<input type=\"text\" id=\"%sTime\" name=\"%s_time\" value=\"%s\"",
-          id_prefix, name_prefix, value_time);
+  fprintf(out_f, "<input type=\"%s\" id=\"%sTime\" name=\"%s_time\" value=\"%s\"",
+          type, id_prefix, name_prefix, value_time);
   if (html_class) {
     fprintf(out_f, " class=\"%s\"", html_class);
   }
@@ -100,8 +104,8 @@ html_date_select_2(
   }
   fprintf(out_f, " />");
 
-  fprintf(out_f, "<input type=\"text\" id=\"%sDate\" name=\"%s_date\" value=\"%s\"",
-          id_prefix, name_prefix, value_date);
+  fprintf(out_f, "<input type=\"%s\" id=\"%sDate\" name=\"%s_date\" value=\"%s\"",
+          type, id_prefix, name_prefix, value_date);
   if (html_class) {
     fprintf(out_f, " class=\"%s\"", html_class);
   }

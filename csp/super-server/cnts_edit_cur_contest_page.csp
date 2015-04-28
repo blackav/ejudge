@@ -870,7 +870,7 @@ function np(e)
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Registration deadline:</td>
-        <td><% html_date_select_2(out_f, cnts->reg_deadline, "OrigRegDeadline", "param", NULL, 1, 0); %></td>
+        <td><% html_date_select_2(out_f, cnts->reg_deadline, "OrigRegDeadline", "param", NULL, 1, 0, 0); %></td>
         <td><input type="button" onclick="popupRegistrationDialog(event, 'RegDeadline');" value="Clear" /></td>
         <td onclick="np(event);"><s:help topic="Contest.xml:reg_deadline" /></td>
     </s:tr>
@@ -914,19 +914,19 @@ function np(e)
 <% row = 1; %>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Contest start date:</td>
-        <td><% html_date_select_2(out_f, cnts->sched_time, "OrigSchedTime", "param", NULL, 1, 0); %></td>
+        <td><% html_date_select_2(out_f, cnts->sched_time, "OrigSchedTime", "param", NULL, 1, 0, 0); %></td>
         <td><input type="button" onclick="popupTimingDialog(event, 'SchedTime');" value="Clear" /></td>
         <td onclick="np(event);"><s:help topic="Contest.xml:sched_time" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Virtual contest open date:</td>
-        <td><% html_date_select_2(out_f, cnts->open_time, "OrigOpenTime", "param", NULL, 1, 0); %></td>
+        <td><% html_date_select_2(out_f, cnts->open_time, "OrigOpenTime", "param", NULL, 1, 0, 0); %></td>
         <td><input type="button" onclick="popupTimingDialog(event, 'OpenTime');" value="Clear" /></td>
         <td onclick="np(event);"><s:help topic="Contest.xml:open_time" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Virtual contest close date:</td>
-        <td><% html_date_select_2(out_f, cnts->close_time, "OrigCloseTime", "param", NULL, 1, 0); %></td>
+        <td><% html_date_select_2(out_f, cnts->close_time, "OrigCloseTime", "param", NULL, 1, 0, 0); %></td>
         <td><input type="button" onclick="popupTimingDialog(event, 'CloseTime');" value="Clear" /></td>
         <td onclick="np(event);"><s:help topic="Contest.xml:close_time" /></td>
     </s:tr>
