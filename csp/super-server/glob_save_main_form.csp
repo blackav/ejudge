@@ -99,6 +99,16 @@
             global->board_unfog_time = board_unfog_time_val;
             phr->ss->disable_compilation_server = !use_compilation_server;
             phr->ss->enable_win32_languages = enable_win32_languages;
+            if (enable_win32_languages) {
+                // check, that win32_compile is already added
+                if (global->extra_compile_dirs) {
+                    for (int i = 0; global->extra_compile_dirs[i]; ++i) {
+                        if (!strcmp(global->extra_compile_dirs[i], "win32_compile"))
+                            return 0;
+                    }
+                }
+                global->extra_compile_dirs = sarray_append(global->extra_compile_dirs, "win32_compile");
+            }
             global->separate_user_score = separate_user_score;
             global->secure_run = secure_run;
             global->enable_memory_limit_error = enable_memory_limit_error;
