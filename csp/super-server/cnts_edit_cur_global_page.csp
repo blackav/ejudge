@@ -15,6 +15,12 @@
     int row = 1;
     int cur_page = 2;
 
+    unsigned char contest_time_str[64];
+    unsigned char board_fog_time_str[64];
+    unsigned char board_unfog_time_str[64];
+    const unsigned char *standings_locale = NULL;
+    const unsigned char *checker_locale = NULL;
+
 static const unsigned char head_row_attr[] =
   " bgcolor=\"#a0a0a0\"";
 static const unsigned char * const form_row_attrs[]=
@@ -22,22 +28,6 @@ static const unsigned char * const form_row_attrs[]=
   " bgcolor=\"#d0d0d0\"",
   " bgcolor=\"#e0e0e0\"",
 };
-  static const unsigned char * const contest_types[] =
-  {
-    "ACM",
-    "Kirov",
-    "Olympiad",
-    "Moscow",
-    "Virtual ACM",
-    "Virtual Olympiad",
-    0,
-  };
-  static const unsigned char * const standings_languages[] =
-  {
-    "English",
-    "Russian",
-    0,
-  };
 
   static const unsigned char * const rounding_modes[] =
   {
@@ -56,7 +46,6 @@ static const unsigned char * const form_row_attrs[]=
     cnts = phr->ss->edited_cnts;
     struct section_global_data *global = phr->ss->global;
     int score_system;
-    int standings_locale;
     unsigned char *xstr = 0;
 %><%@include "header_jqgrid.csp"
 %>
@@ -87,13 +76,79 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="MainDialogForm">
         <s:hidden name="action" ac="glob-save-main-form" />
         <fieldset>
+            <label for="MainDialogContestTime">Contest time (HH:MM):</label>
+            <s:textfield size="10" name="contest_time" id="MainDialogContestTime" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
 
+            <label for="MainDialogContestFinishTimeTime">Contest end time:</label>
+            <input id="MainDialogContestFinishTimeTime" type="text" name="contest_finish_time_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
+            <input id="MainDialogContestFinishTimeDate" type="text" name="contest_finish_time_date" size="10" class="text ui-widget-content ui-corner-all" />
+            <br/>
 
+            <label for="MainDialogScoreSystem">Scoring System:</label>
+            <select id="MainDialogScoreSystem" name="score_system">
+                <option value="0">ACM</option>
+                <option value="1">Kirov</option>
+                <option value="2">Olympiad</option>
+                <option value="3">Moscow</option>
+                <option value="4">Virtual ACM</option>
+                <option value="5">Virtual Olympiad</option>
+            </select>
+            <br/>
 
+            <label for="MainDialogBoardFogTime">Standings freeze time (HH:MM) before finish:</label>
+            <s:textfield size="10" name="board_fog_time" id="MainDialogBoardFogTime" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
 
+            <label for="MainDialogUnfogTime">Standings unfreeze time (HH:MM) after finish:</label>
+            <s:textfield size="10" name="unfog_time" id="MainDialogUnfogTime" value="" class="text ui-widget-content ui-corner-all" />
+            <br/>
 
+            <label for="MainDialogUseCompilationServer">Use the default compilation server:</label>
+            <input type="checkbox" name="use_compilation_server" id="MainDialogUseCompilationServer" value="1" />
+            <br/>
 
+            <label for="MainDialogEnableWin32Languages">Enable Win32 languages:</label>
+            <input type="checkbox" name="enable_win32_languages" id="MainDialogEnableWin32Languages" value="1" />
+            <br/>
 
+            <label for="MainDialogSeparateUserScore">Calculate and store user-visible score separately:</label>
+            <input type="checkbox" name="separate_user_score" id="MainDialogSeparateUserScore" value="1" />
+            <br/>
+
+            <label for="MainDialogSecureRun">Run programs securely:</label>
+            <input type="checkbox" name="secure_run" id="MainDialogSecureRun" value="1" />
+            <br/>
+
+            <label for="MainDialogEnableMemoryLimitError">Enable support for MemoryLimit error:</label>
+            <input type="checkbox" name="enable_memory_limit_error" id="MainDialogEnableMemoryLimitError" value="1" />
+            <br/>
+
+            <label for="MainDialogDetectViolations">Detect security violations:</label>
+            <input type="checkbox" name="detect_violations" id="MainDialogDetectViolations" value="1" />
+            <br/>
+
+            <label for="MainDialogEnableMaxStackSize">Assume max_stack_size == max_vm_size:</label>
+            <input type="checkbox" name="enable_max_stack_size" id="MainDialogEnableMaxStackSize" value="1" />
+            <br/>
+
+            <label for="MainDialogStandingsLocale">Standings language:</label>
+<% l10n_html_locale_select_3(out_f, "MainDialogStandingsLocale", NULL, "standings_locale", NULL, -1); %>
+            <br/>
+
+            <label for="MainDialogCheckerLocale">Checker locale:</label>
+<% l10n_html_locale_select_3(out_f, "MainDialogCheckerLocale", NULL, "checker_locale", NULL, -1); %>
+            <br/>
+
+<%
+  if (sizeof(long) == sizeof(long long)) {
+%>
+            <label for="MainDialogEnable32bitCheckers">Compile 32-bit checkers on 64-bit platforms:</label>
+            <input type="checkbox" name="enable_32bit_checkers" id="MainDialogEnable32bitCheckers" value="1" />
+            <br/>
+<%
+  }
+%>
 
         </fieldset>
     </s:form>
@@ -105,7 +160,7 @@ $(function() {
 
     mainDialog = $("#MainDialogDiv").dialog({
         autoOpen: false,
-        height: 300,
+        height: 450,
         width: 600,
         modal: true,
         buttons: {
@@ -132,7 +187,21 @@ $(function() {
         close : function() {
         }
     });
+    $('#MainDialogContestFinishTimeTime').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
+    $('#MainDialogContestFinishTimeDate').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
 });
+
+function np(e)
+{
+    if (e) e.stopPropagation();
+}
+
+function copyCheckbox(dst, src)
+{
+    if (document.getElementById(src).value == "1") {
+        document.getElementById(dst).checked = true;
+    }
+}
 
 function popupMainDialog(e, skipField)
 {
@@ -148,201 +217,192 @@ function popupMainDialog(e, skipField)
     <h3>Main properties</h3>
 
     <div>
-        <table border="0">
-    <s:tr attr="head_row_attr">
-        <td colspan="4" align="center"><b>Main properties</b></td>
-    </s:tr>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Contest time (HH:MM):</td>
+        <table border="0" onclick="popupMainDialog();">
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td>Contest time (HH:MM):</td>
 <%
-  if (global->contest_time <= 0) {
-%>
-            <td><input type="text" name="param" value="0" size="8"/><i>(Unlimited)</i></td>
-            <td><s:submit ac="glob-change-duration" label="Change" /></td>
-<%
-  } else {
-    unsigned char time_buf[64];
-    snprintf(time_buf, sizeof(time_buf), "%d:%02d", global->contest_time / 60, global->contest_time % 60);
-%>
-            <td><s:textfield check="false" name="param" value="time_buf" size="8" /></td>
-            <td><s:submit ac="glob-change-duration" label="Change" /><s:submit ac="glob-unlimited-duration" label="Set unlimited" /></td>
-<%
+  contest_time_str[0] = 0;
+  if (global->contest_time > 0) {
+    snprintf(contest_time_str, sizeof(contest_time_str), "%d:%02d", global->contest_time / 60, global->contest_time % 60);
   }
 %>
-            <td><s:help ac="glob-change-duration" /></td>
-        </s:tr>
-    </s:form>
+                <td><s:textfield id="OrigContestTime" readonly="readonly" check="false" name="param" value="contest_time_str" size="8" /><%
+  if (global->contest_time <= 0) {
+%><i>(Unlimited)</i><%
+  }
+%></td>
+                <td><input type="button" onclick="" value="Set unlimited" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:contest_time" /></td>
+            </s:tr>
 
 <%
   if (global->contest_time <= 0) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Contest end time:</td>
-            <td><% html_date_select(out_f, global->contest_finish_time); %></td>
-            <td><s:submit ac="glob-change-contest-finish-time" label="Change" /><s:submit ac="glob-clear-contest-finish-time" label="Clear" /></td>
-            <td><s:help ac="glob-change-contest-finish-time" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td>Contest end time:</td>
+                <td><% html_date_select_2(out_f, global->contest_finish_time, "OrigContestFinishTime", "param", NULL, 1, 0); %></td>
+                <td><input type="button" onclick="" value="Clear" /></td>
+                <td><s:help topic="Serve.cfg:global:contest_finish_time" /></td>
+            </s:tr>
 <%
   }
 %>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Scoring system:</td>
-            <td><%
+<%
   score_system = global->score_system;
   if (global->is_virtual) {
     if (global->score_system == SCORE_ACM) score_system = SCORE_TOTAL;
     else score_system = SCORE_TOTAL + 1;
   }
-%><% html_select(out_f, score_system, "param", contest_types); %></td>
-            <td><s:submit ac="glob-change-type" label="Change" /></td>
-            <td><s:help ac="glob-change-type" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Standings freeze time (HH:MM) before finish:</td>
-<%
-  if (!global->board_fog_time) {
 %>
-            <td><input type="text" name="param" value="0" size="8"/><i>(No freeze)</i></td>
-            <td><s:submit ac="glob-change-fog-time" label="Change" /></td>
-<%
-  } else {
-    unsigned char time_buf[64];
-    snprintf(time_buf, sizeof(time_buf), "%d:%02d", global->board_fog_time / 60, global->board_fog_time % 60);
-%>
-            <td><s:textfield check="false" name="param" value="time_buf" size="8" /></td>
-            <td><s:submit ac="glob-change-fog-time" label="Change" /><s:submit ac="glob-disable-fog" label="Disable" /></td>
-<%
-  }
-%>
-            <td><s:help ac="glob-change-fog-time" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td>Scoring system:</td>
+                <td><select id="OrigScoreSystem" disabled="disabled">
+                    <s:option value="0" selectedExpr="score_system == 0">ACM</s:option>
+                    <s:option value="1" selectedExpr="score_system == 1">Kirov</s:option>
+                    <s:option value="2" selectedExpr="score_system == 2">Olympiad</s:option>
+                    <s:option value="3" selectedExpr="score_system == 3">Moscow</s:option>
+                    <s:option value="4" selectedExpr="score_system == 4">Virtual ACM</s:option>
+                    <s:option value="5" selectedExpr="score_system == 5">Virtual Olympiad</s:option>
+                </select></td>
+                <td>&nbsp;</td>
+                <td><s:help topic="Serve.cfg:global:score_system" /></td>
+            </s:tr>
 
 <%
-  if (global->board_fog_time) {
-    unsigned char time_buf[64];
-    snprintf(time_buf, sizeof(time_buf), "%d:%02d", global->board_unfog_time / 60, global->board_unfog_time % 60);
+  if (global->contest_time > 0) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Standings unfreeze time (HH:MM) after finish:</td>
-            <td><s:textfield check="false" name="param" value="time_buf" size="8" /></td>
-            <td><s:submit ac="glob-change-unfog-time" label="Change" /></td>
-            <td><s:help ac="glob-change-unfog-time" /></td>
-        </s:tr>
-    </s:form>
+<%
+    board_fog_time_str[0] = 0;
+    if (global->board_fog_time > 0) {
+      snprintf(board_fog_time_str, sizeof(board_fog_time_str), "%d:%02d", global->board_fog_time / 60, global->board_fog_time % 60);
+    }
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td>Standings freeze time (HH:MM) before finish:</td>
+                <td><s:textfield id="OrigBoardFogTime" readonly="readonly" check="false" name="param" value="board_fog_time_str" size="8" /><%
+    if (global->board_fog_time <= 0) {
+%><i>(No freeze)</i><%
+    }
+%></td>
+                <td><input type="button" onclick="" value="Disable" /></td>
+                <td><s:help topic="Serve.cfg:global:board_fog_time" /></td>
+            </s:tr>
 <%
   }
 %>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Use the default compilation server:</td>
-            <td><s:yesno name="param" value="!phr->ss->disable_compilation_server" /></td>
-            <td><s:submit ac="glob-change-use-compilation-server" label="Change" /></td>
-            <td><s:help ac="glob-change-use-compilation-server" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Enable Win32 languages:</td>
-            <td><s:yesno name="param" value="phr->ss->enable_win32_languages" /></td>
-            <td><s:submit ac="glob-change-enable-win32-languages" label="Change" /></td>
-            <td><s:help ac="glob-change-enable-win32-languages" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Calculate and store user-visible score separately:</td>
-            <td><s:yesno name="param" value="global->separate_user_score" /></td>
-            <td><s:submit ac="glob-change-separate-user-score" label="Change" /></td>
-            <td><s:help ac="glob-change-separate-user-score" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Run programs securely:</td>
-            <td><s:yesno name="param" value="global->secure_run" /></td>
-            <td><s:submit ac="glob-change-secure-run" label="Change" /></td>
-            <td><s:help ac="glob-change-secure-run" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Enable support for MemoryLimit error:</td>
-            <td><s:yesno name="param" value="global->enable_memory_limit_error" /></td>
-            <td><s:submit ac="glob-change-enable-memory-limit-error" label="Change" /></td>
-            <td><s:help ac="glob-change-enable-memory-limit-error" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Detect security violations:</td>
-            <td><s:yesno name="param" value="global->detect_violations" /></td>
-            <td><s:submit ac="glob-change-detect-violations" label="Change" /></td>
-            <td><s:help ac="glob-change-detect-violations" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Assume max_stack_size == max_vm_size:</td>
-            <td><s:yesno name="param" value="global->enable_max_stack_size" /></td>
-            <td><s:submit ac="glob-change-enable-max-stack-size" label="Change" /></td>
-            <td><s:help ac="glob-change-enable-max-stack-size" /></td>
-        </s:tr>
-    </s:form>
-
 <%
-  standings_locale = 0;
-  if (!strcmp(global->standings_locale, "ru_RU.KOI8-R")
-      || !strcmp(global->standings_locale, "ru")) {
-    standings_locale = 1;
+  if (global->contest_time > 0 && global->board_fog_time > 0) {
+%>
+<%
+    board_unfog_time_str[0] = 0;
+    if (global->board_unfog_time > 0) {
+      snprintf(board_unfog_time_str, sizeof(board_unfog_time_str), "%d:%02d", global->board_unfog_time / 60, global->board_unfog_time % 60);
+    }
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td>Standings unfreeze time (HH:MM) after finish:</td>
+                <td><s:textfield check="false" id="OrigBoardUnfogTime" readonly="readonly" name="param" value="board_unfog_time_str" size="8" /><%
+    if (global->board_unfog_time <= 0) {
+%><i>(Not unfreeze)</i><%
+    }
+%></td>
+                <td><input type="button" onclick="" value="Disable" /></td>
+                <td><s:help topic="Serve.cfg:global:board_unfog_time" /></td>
+            </s:tr>
+<%
   }
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Standings language:</td>
-            <td><% html_select(out_f, standings_locale, "param", standings_languages); %></td>
-            <td><s:submit ac="glob-change-stand-locale" label="Change" /></td>
-            <td><s:help ac="glob-change-stand-locale" /></td>
-        </s:tr>
-    </s:form>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Checker locale:</td>
-            <td><s:textfield name="param" value="global->checker_locale" size="48" maxlength="1024" checkExpr="" /><% if (!global->checker_locale) { %><i>Not set</i><% } %></td>
-            <td><s:submit ac="glob-change-checker-locale" label="Change" /><s:submit ac="glob-clear-checker-locale" label="Clear" /></td>
-            <td><s:help ac="glob-change-checker-locale" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td>Use the default compilation server:</td>
+                <td><s:yesno disabled="disabled" id="OrigUseCompilationServer" name="param" value="!phr->ss->disable_compilation_server" /></td>
+                <td>&nbsp;</td>
+                <td><s:help topic="Serve.cfg:global:use_compilation_server" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td>Enable Win32 languages:</td>
+                <td><s:yesno disabled="disabled" id="OrigEnableWin32Languages" name="param" value="phr->ss->enable_win32_languages" /></td>
+                <td>&nbsp;</td>
+                <td><s:help topic="Serve.cfg:global:enable_win32_languages" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td>Calculate and store user-visible score separately:</td>
+                <td><s:yesno disabled="disabled" id="OrigSeparateUserScore" name="param" value="global->separate_user_score" /></td>
+                <td>&nbsp;</td>
+                <td><s:help topic="Serve.cfg:global:separate_user_score" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td>Run programs securely:</td>
+                <td><s:yesno disabled="disabled" id="OrigSecureRun" name="param" value="global->secure_run" /></td>
+                <td>&nbsp;</td>
+                <td><s:help topic="Serve.cfg:global:secure_run" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td>Enable support for MemoryLimit error:</td>
+                <td><s:yesno disabled="disabled" id="OrigEnableMemoryLimitError" name="param" value="global->enable_memory_limit_error" /></td>
+                <td>&nbsp;</td>
+                <td><s:help topic="Serve.cfg:global:enable_memory_limit_error" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td>Detect security violations:</td>
+                <td><s:yesno disabled="disabled" id="OrigDetectViolations" name="param" value="global->detect_violations" /></td>
+                <td>&nbsp;</td>
+                <td><s:help topic="Serve.cfg:global:detect_violations" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td>Assume max_stack_size == max_vm_size:</td>
+                <td><s:yesno disabled="disabled" id="OrigEnableMaxStackSize" name="param" value="global->enable_max_stack_size" /></td>
+                <td>&nbsp;</td>
+                <td><s:help topic="Serve.cfg:global:enable_max_stack_size" /></td>
+            </s:tr>
+
+<%
+  if (global->standings_locale && *global->standings_locale) {
+    int id = l10n_parse_locale(global->standings_locale);
+    if (id >= 0) {
+      standings_locale = l10n_unparse_locale(id);
+    }
+  }
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td>Standings language:</td>
+                <td><s:textfield id="OrigStandingsLocale" readonly="readonly" size="16" name="param" value="standings_locale" check="no" notset="yes" /></td>
+                <td><input type="button" onclick="" value="Clear" /></td>
+                <td><s:help topic="Serve.cfg:global:standings_locale" /></td>
+            </s:tr>
+
+<%
+  if (global->checker_locale && *global->checker_locale) {
+    int id = l10n_parse_locale(global->checker_locale);
+    if (id >= 0) {
+      checker_locale = l10n_unparse_locale(id);
+    }
+  }
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td>Checker locale:</td>
+                <td><s:textfield id="OrigCheckerLocale" readonly="readonly" size="16" name="param" value="checker_locale" check="no" notset="yes" /></td>
+                <td><input type="button" onclick="" value="Clear" /></td>
+                <td><s:help topic="Serve.cfg:global:checker_locale" /></td>
+            </s:tr>
 
 <%
   if (sizeof(long) == sizeof(long long)) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Compile 32-bit checkers on 64-bit platforms:</td>
-            <td><s:yesno name="param" value="global->enable_32bit_checkers" /></td>
-            <td><s:submit ac="glob-change-enable-32bit-checkers" label="Change" /></td>
-            <td><s:help ac="glob-change-enable-32bit-checkers" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td>Compile 32-bit checkers on 64-bit platforms:</td>
+                <td><s:yesno disabled="disabled" id="OrigEnable32bitCheckers" name="param" value="global->enable_32bit_checkers" /></td>
+                <td>&nbsp;</td>
+                <td><s:help topic="Serve.cfg:global:enable_32bit_checkers" /></td>
+            </s:tr>
 <%
   }
 %>

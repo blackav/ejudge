@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-27 07:56+0300\n"
+"POT-Creation-Date: 2015-04-28 03:59+0300\n"
 "PO-Revision-Date: 2015-04-15 14:08+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -1185,9 +1185,6 @@ msgstr "Обнаружить"
 
 msgid "Directory structure"
 msgstr "Структура каталогов"
-
-msgid "Disable"
-msgstr "Запретить"
 
 msgid "Disable &quot;Name&quot; field"
 msgstr "Запретить поле &quot;Имя&quot;"
@@ -3521,9 +3518,6 @@ msgstr "Установить статус регистрации в PENDING, т�
 
 msgid "Set the registration status of the selected users to REJECTED"
 msgstr "Установить статус регистрации в REJECTED, то есть отказать в участии"
-
-msgid "Set unlimited"
-msgstr "Установить неограниченный"
 
 msgid "Settings"
 msgstr "Настройки"

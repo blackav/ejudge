@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-27 07:56+0300\n"
+"POT-Creation-Date: 2015-04-28 03:59+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -1114,9 +1114,6 @@ msgid "Detect"
 msgstr ""
 
 msgid "Directory structure"
-msgstr ""
-
-msgid "Disable"
 msgstr ""
 
 msgid "Disable &quot;Name&quot; field"
@@ -3350,9 +3347,6 @@ msgid "Set the registration status of the selected users to PENDING"
 msgstr ""
 
 msgid "Set the registration status of the selected users to REJECTED"
-msgstr ""
-
-msgid "Set unlimited"
 msgstr ""
 
 msgid "Settings"
