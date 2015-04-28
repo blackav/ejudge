@@ -240,10 +240,14 @@ function popupMainDialog(e, skipField)
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Contest end time:</td>
-                <td><% html_date_select_2(out_f, global->contest_finish_time, "OrigContestFinishTime", "param", NULL, 1, 0); %></td>
+                <td><% html_date_select_2(out_f, global->contest_finish_time, "OrigContestFinishTime", "param", NULL, 1, 0, 0); %></td>
                 <td><input type="button" onclick="" value="Clear" /></td>
-                <td><s:help topic="Serve.cfg:global:contest_finish_time" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:contest_finish_time" /></td>
             </s:tr>
+<%
+  } else {
+%>
+            <% html_date_select_2(out_f, global->contest_finish_time, "OrigContestFinishTime", "param", NULL, 1, 1, 0); %>
 <%
   }
 %>
@@ -266,17 +270,15 @@ function popupMainDialog(e, skipField)
                     <s:option value="5" selectedExpr="score_system == 5">Virtual Olympiad</s:option>
                 </select></td>
                 <td>&nbsp;</td>
-                <td><s:help topic="Serve.cfg:global:score_system" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:score_system" /></td>
             </s:tr>
 
 <%
+  board_fog_time_str[0] = 0;
+  if (global->board_fog_time > 0) {
+    snprintf(board_fog_time_str, sizeof(board_fog_time_str), "%d:%02d", global->board_fog_time / 60, global->board_fog_time % 60);
+  }
   if (global->contest_time > 0) {
-%>
-<%
-    board_fog_time_str[0] = 0;
-    if (global->board_fog_time > 0) {
-      snprintf(board_fog_time_str, sizeof(board_fog_time_str), "%d:%02d", global->board_fog_time / 60, global->board_fog_time % 60);
-    }
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Standings freeze time (HH:MM) before finish:</td>
@@ -286,20 +288,22 @@ function popupMainDialog(e, skipField)
     }
 %></td>
                 <td><input type="button" onclick="" value="Disable" /></td>
-                <td><s:help topic="Serve.cfg:global:board_fog_time" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:board_fog_time" /></td>
             </s:tr>
+<%
+  } else {
+%>
+            <s:hidden id="OrigBoardFogTime" check="false" name="param" value="board_fog_time_str" />
 <%
   }
 %>
 
 <%
+  board_unfog_time_str[0] = 0;
+  if (global->board_unfog_time > 0) {
+    snprintf(board_unfog_time_str, sizeof(board_unfog_time_str), "%d:%02d", global->board_unfog_time / 60, global->board_unfog_time % 60);
+  }
   if (global->contest_time > 0 && global->board_fog_time > 0) {
-%>
-<%
-    board_unfog_time_str[0] = 0;
-    if (global->board_unfog_time > 0) {
-      snprintf(board_unfog_time_str, sizeof(board_unfog_time_str), "%d:%02d", global->board_unfog_time / 60, global->board_unfog_time % 60);
-    }
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Standings unfreeze time (HH:MM) after finish:</td>
@@ -309,8 +313,12 @@ function popupMainDialog(e, skipField)
     }
 %></td>
                 <td><input type="button" onclick="" value="Disable" /></td>
-                <td><s:help topic="Serve.cfg:global:board_unfog_time" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:board_unfog_time" /></td>
             </s:tr>
+<%
+  } else {
+%>
+            <s:hidden check="false" id="OrigBoardUnfogTime" name="param" value="board_unfog_time_str" />
 <%
   }
 %>
@@ -319,79 +327,80 @@ function popupMainDialog(e, skipField)
                 <td>Use the default compilation server:</td>
                 <td><s:yesno disabled="disabled" id="OrigUseCompilationServer" name="param" value="!phr->ss->disable_compilation_server" /></td>
                 <td>&nbsp;</td>
-                <td><s:help topic="Serve.cfg:global:use_compilation_server" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:use_compilation_server" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Enable Win32 languages:</td>
                 <td><s:yesno disabled="disabled" id="OrigEnableWin32Languages" name="param" value="phr->ss->enable_win32_languages" /></td>
                 <td>&nbsp;</td>
-                <td><s:help topic="Serve.cfg:global:enable_win32_languages" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_win32_languages" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Calculate and store user-visible score separately:</td>
                 <td><s:yesno disabled="disabled" id="OrigSeparateUserScore" name="param" value="global->separate_user_score" /></td>
                 <td>&nbsp;</td>
-                <td><s:help topic="Serve.cfg:global:separate_user_score" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:separate_user_score" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Run programs securely:</td>
                 <td><s:yesno disabled="disabled" id="OrigSecureRun" name="param" value="global->secure_run" /></td>
                 <td>&nbsp;</td>
-                <td><s:help topic="Serve.cfg:global:secure_run" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:secure_run" /></td>
             </s:tr>
 
+<%
+  if (global->secure_run > 0) {
+%>
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Enable support for MemoryLimit error:</td>
                 <td><s:yesno disabled="disabled" id="OrigEnableMemoryLimitError" name="param" value="global->enable_memory_limit_error" /></td>
                 <td>&nbsp;</td>
-                <td><s:help topic="Serve.cfg:global:enable_memory_limit_error" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_memory_limit_error" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Detect security violations:</td>
                 <td><s:yesno disabled="disabled" id="OrigDetectViolations" name="param" value="global->detect_violations" /></td>
                 <td>&nbsp;</td>
-                <td><s:help topic="Serve.cfg:global:detect_violations" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:detect_violations" /></td>
             </s:tr>
+<%
+  } else {
+%>
+            <s:hidden id="OrigEnableMemoryLimitError" name="param" value="global->enable_memory_limit_error" />
+            <s:hidden id="OrigDetectViolations" name="param" value="global->detect_violations" />
+<%
+  }
+%>
 
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Assume max_stack_size == max_vm_size:</td>
                 <td><s:yesno disabled="disabled" id="OrigEnableMaxStackSize" name="param" value="global->enable_max_stack_size" /></td>
                 <td>&nbsp;</td>
-                <td><s:help topic="Serve.cfg:global:enable_max_stack_size" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_max_stack_size" /></td>
             </s:tr>
 
 <%
-  if (global->standings_locale && *global->standings_locale) {
-    int id = l10n_parse_locale(global->standings_locale);
-    if (id >= 0) {
-      standings_locale = l10n_unparse_locale(id);
-    }
-  }
+  standings_locale = l10n_normalize(global->standings_locale);
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Standings language:</td>
-                <td><s:textfield id="OrigStandingsLocale" readonly="readonly" size="16" name="param" value="standings_locale" check="no" notset="yes" /></td>
+                <td><s:textfield id="OrigStandingsLocale" readonly="readonly" size="16" name="param" value="standings_locale" notset="yes" /></td>
                 <td><input type="button" onclick="" value="Clear" /></td>
-                <td><s:help topic="Serve.cfg:global:standings_locale" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:standings_locale" /></td>
             </s:tr>
 
 <%
-  if (global->checker_locale && *global->checker_locale) {
-    int id = l10n_parse_locale(global->checker_locale);
-    if (id >= 0) {
-      checker_locale = l10n_unparse_locale(id);
-    }
-  }
+  checker_locale = l10n_normalize(global->checker_locale);
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Checker locale:</td>
-                <td><s:textfield id="OrigCheckerLocale" readonly="readonly" size="16" name="param" value="checker_locale" check="no" notset="yes" /></td>
+                <td><s:textfield id="OrigCheckerLocale" readonly="readonly" size="16" name="param" value="checker_locale" notset="yes" /></td>
                 <td><input type="button" onclick="" value="Clear" /></td>
-                <td><s:help topic="Serve.cfg:global:checker_locale" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:checker_locale" /></td>
             </s:tr>
 
 <%
@@ -401,8 +410,12 @@ function popupMainDialog(e, skipField)
                 <td>Compile 32-bit checkers on 64-bit platforms:</td>
                 <td><s:yesno disabled="disabled" id="OrigEnable32bitCheckers" name="param" value="global->enable_32bit_checkers" /></td>
                 <td>&nbsp;</td>
-                <td><s:help topic="Serve.cfg:global:enable_32bit_checkers" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_32bit_checkers" /></td>
             </s:tr>
+<%
+  } else {
+%>
+            <s:hidden id="OrigEnable32bitCheckers" name="param" value="global->enable_32bit_checkers" />
 <%
   }
 %>
