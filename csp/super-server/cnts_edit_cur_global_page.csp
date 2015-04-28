@@ -75,17 +75,19 @@ static const unsigned char * const form_row_attrs[]=
 <div id="MainDialogDiv" title="Main Properties">
     <s:form id="MainDialogForm">
         <s:hidden name="action" ac="glob-save-main-form" />
-        <fieldset>
-            <label for="MainDialogContestTime">Contest time (HH:MM):</label>
-            <s:textfield size="10" name="contest_time" id="MainDialogContestTime" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
+        <div>
+            <div style="width: 300px; display: inline-block;"><label for="MainDialogContestTime">Contest time (HH:MM):</label></div>
+            <s:textfield size="10" name="contest_time" id="MainDialogContestTime" value="" class="text ui-widget-content ui-corner-all" onchange="mainDialogOnChange()" />
+        </div>
 
-            <label for="MainDialogContestFinishTimeTime">Contest end time:</label>
+        <div id="MainDialogContestFinishTimeDiv">
+            <div style="width: 300px; display: inline-block;"><label for="MainDialogContestFinishTimeTime">Contest end time:</label></div>
             <input id="MainDialogContestFinishTimeTime" type="text" name="contest_finish_time_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
             <input id="MainDialogContestFinishTimeDate" type="text" name="contest_finish_time_date" size="10" class="text ui-widget-content ui-corner-all" />
-            <br/>
+        </div>
 
-            <label for="MainDialogScoreSystem">Scoring System:</label>
+        <div>
+            <div style="width: 300px; display: inline-block;"><label for="MainDialogScoreSystem">Scoring System:</label></div>
             <select id="MainDialogScoreSystem" name="score_system">
                 <option value="0">ACM</option>
                 <option value="1">Kirov</option>
@@ -94,63 +96,78 @@ static const unsigned char * const form_row_attrs[]=
                 <option value="4">Virtual ACM</option>
                 <option value="5">Virtual Olympiad</option>
             </select>
-            <br/>
+        </div>
 
-            <label for="MainDialogBoardFogTime">Standings freeze time (HH:MM) before finish:</label>
-            <s:textfield size="10" name="board_fog_time" id="MainDialogBoardFogTime" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
+        <div id="MainDialogBoardFogTimeDiv">
+            <div style="width: 300px; display: inline-block;"><label for="MainDialogBoardFogTime">Standings freeze time (HH:MM) before finish:</label></div>
+            <s:textfield size="10" name="board_fog_time" id="MainDialogBoardFogTime" value="" class="text ui-widget-content ui-corner-all" onchange="mainDialogOnChange()" />
+        </div>
 
-            <label for="MainDialogUnfogTime">Standings unfreeze time (HH:MM) after finish:</label>
-            <s:textfield size="10" name="unfog_time" id="MainDialogUnfogTime" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
+        <div id="MainDialogBoardUnfogTimeDiv">
+            <div style="width: 300px; display: inline-block;"><label for="MainDialogBoardUnfogTime">Standings unfreeze time (HH:MM) after finish:</label></div>
+            <s:textfield size="10" name="board_unfog_time" id="MainDialogBoardUnfogTime" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
 
-            <label for="MainDialogUseCompilationServer">Use the default compilation server:</label>
+        <div>
+            <div style="width: 300px; display: inline-block;"><label for="MainDialogUseCompilationServer">Use the default compilation server:</label></div>
             <input type="checkbox" name="use_compilation_server" id="MainDialogUseCompilationServer" value="1" />
-            <br/>
+        </div>
 
-            <label for="MainDialogEnableWin32Languages">Enable Win32 languages:</label>
+        <div>
+            <div style="width: 300px; display: inline-block;"><label for="MainDialogEnableWin32Languages">Enable Win32 languages:</label></div>
             <input type="checkbox" name="enable_win32_languages" id="MainDialogEnableWin32Languages" value="1" />
-            <br/>
+        </div>
 
-            <label for="MainDialogSeparateUserScore">Calculate and store user-visible score separately:</label>
+        <div>
+            <div style="width: 300px; display: inline-block;"><label for="MainDialogSeparateUserScore">Calculate and store user-visible score separately:</label></div>
             <input type="checkbox" name="separate_user_score" id="MainDialogSeparateUserScore" value="1" />
-            <br/>
+        </div>
 
-            <label for="MainDialogSecureRun">Run programs securely:</label>
-            <input type="checkbox" name="secure_run" id="MainDialogSecureRun" value="1" />
-            <br/>
+        <div>
+            <div style="width: 300px; display: inline-block;"><label for="MainDialogSecureRun">Run programs securely:</label></div>
+            <input type="checkbox" name="secure_run" id="MainDialogSecureRun" value="1" onchange="mainDialogOnChange()" />
+        </div>
 
-            <label for="MainDialogEnableMemoryLimitError">Enable support for MemoryLimit error:</label>
+        <div id="MainDialogEnableMemoryLimitErrorDiv">
+            <div style="width: 300px; display: inline-block;"><label for="MainDialogEnableMemoryLimitError">Enable support for MemoryLimit error:</label></div>
             <input type="checkbox" name="enable_memory_limit_error" id="MainDialogEnableMemoryLimitError" value="1" />
-            <br/>
+        </div>
 
-            <label for="MainDialogDetectViolations">Detect security violations:</label>
+        <div id="MainDialogDetectViolationsDiv">
+            <div style="width: 300px; display: inline-block;"><label for="MainDialogDetectViolations">Detect security violations:</label></div>
             <input type="checkbox" name="detect_violations" id="MainDialogDetectViolations" value="1" />
-            <br/>
+        </div>
 
-            <label for="MainDialogEnableMaxStackSize">Assume max_stack_size == max_vm_size:</label>
+        <div>
+            <div style="width: 300px; display: inline-block;"><label for="MainDialogEnableMaxStackSize">Assume max_stack_size == max_vm_size:</label></div>
             <input type="checkbox" name="enable_max_stack_size" id="MainDialogEnableMaxStackSize" value="1" />
-            <br/>
+        </div>
 
-            <label for="MainDialogStandingsLocale">Standings language:</label>
+        <div>
+            <div style="width: 300px; display: inline-block;"><label for="MainDialogStandingsLocale">Standings locale:</label></div>
 <% l10n_html_locale_select_3(out_f, "MainDialogStandingsLocale", NULL, "standings_locale", NULL, -1); %>
-            <br/>
+        </div>
 
-            <label for="MainDialogCheckerLocale">Checker locale:</label>
+        <div>
+            <div style="width: 300px; display: inline-block;"><label for="MainDialogCheckerLocale">Checker locale:</label></div>
 <% l10n_html_locale_select_3(out_f, "MainDialogCheckerLocale", NULL, "checker_locale", NULL, -1); %>
-            <br/>
+        </div>
 
 <%
   if (sizeof(long) == sizeof(long long)) {
 %>
-            <label for="MainDialogEnable32bitCheckers">Compile 32-bit checkers on 64-bit platforms:</label>
+        <div>
+            <div style="width: 300px; display: inline-block;"><label for="MainDialogEnable32bitCheckers">Compile 32-bit checkers on 64-bit platforms:</label></div>
             <input type="checkbox" name="enable_32bit_checkers" id="MainDialogEnable32bitCheckers" value="1" />
-            <br/>
+        </div>
+<%
+  } else {
+%>
+        <input type="hidden" name="enable_32bit_checkers" id="MainDialogEnable32bitCheckers" value="" />
 <%
   }
 %>
 
-        </fieldset>
     </s:form>
 </div>
 
@@ -181,7 +198,7 @@ $(function() {
                 });
             },
             Cancel: function() {
-                dialog.dialog("close");
+                mainDialog.dialog("close");
             }
         },
         close : function() {
@@ -205,10 +222,68 @@ function copyCheckbox(dst, src)
 
 function popupMainDialog(e, skipField)
 {
-    // FIXME: copy fields
+    $("#MainDialogContestTime").val($("#OrigContestTime").val());
+    $("#MainDialogContestFinishTimeTime").val($("#OrigContestFinishTimeTime").val());
+    $("#MainDialogContestFinishTimeDate").val($("#OrigContestFinishTimeDate").val());
+    $("#MainDialogScoreSystem").val($("#OrigScoreSystem").val());
+    $("#MainDialogBoardFogTime").val($("#OrigBoardFogTime").val());
+    $("#MainDialogBoardUnfogTime").val($("#OrigBoardUnfogTime").val());
+    copyCheckbox("MainDialogUseCompilationServer", "OrigUseCompilationServer");
+    copyCheckbox("MainDialogEnableWin32Languages", "OrigEnableWin32Languages");
+    copyCheckbox("MainDialogSeparateUserScore", "OrigSeparateUserScore");
+    copyCheckbox("MainDialogSecureRun", "OrigSecureRun");
+    copyCheckbox("MainDialogEnableMemoryLimitError", "OrigEnableMemoryLimitError");
+    copyCheckbox("MainDialogDetectViolations", "OrigDetectViolations");
+    copyCheckbox("MainDialogEnableMaxStackSize", "OrigEnableMaxStackSize");
+    $("#MainDialogStandingsLocale").val($("#OrigStandingsLocale").val());
+    $("#MainDialogCheckerLocale").val($("#OrigCheckerLocale").val());
+    copyCheckbox("MainDialogEnable32bitCheckers", "OrigEnable32bitCheckers");
+
+    if (skipField == "ContestTime") {
+        $("#MainDialogContestTime").val("");
+    } else if (skipField == "ContestFinishTime") {
+        $("#MainDialogContestFinishTimeTime").val("");
+        $("#MainDialogContestFinishTimeDate").val("");
+    } else if (skipField == "BoardFogTime") {
+        $("#MainDialogBoardFogTime").val("");
+    } else if (skipField == "BoardUnfogTime") {
+        $("#MainDialogBoardUnfogTime").val("");
+    } else if (skipField == "StandingsLocale") {
+        $("#MainDialogStandingsLocale").val("");
+    } else if (skipField == "CheckerLocale") {
+        $("#MainDialogCheckerLocale").val("");
+    }
 
     if (e) e.stopPropagation();
+    mainDialogOnChange();
     $("#MainDialogDiv").dialog('open');
+}
+
+function mainDialogOnChange()
+{
+    var contest_time = document.getElementById("MainDialogContestTime").value;
+    if (contest_time != null && contest_time != "") {
+        document.getElementById("MainDialogContestFinishTimeDiv").style.display = "none";
+        document.getElementById("MainDialogBoardFogTimeDiv").style.display = "";
+    } else {
+        document.getElementById("MainDialogContestFinishTimeDiv").style.display = "";
+        document.getElementById("MainDialogBoardFogTimeDiv").style.display = "none";
+    }
+
+    var board_fog_time = document.getElementById("MainDialogBoardFogTime").value;
+    if (contest_time != null && contest_time != "" && board_fog_time != null && board_fog_time != "") {
+        document.getElementById("MainDialogBoardUnfogTimeDiv").style.display = "";
+    } else {
+        document.getElementById("MainDialogBoardUnfogTimeDiv").style.display = "none";
+    }
+
+    if (document.getElementById("MainDialogSecureRun").checked) {
+        document.getElementById("MainDialogEnableMemoryLimitErrorDiv").style.display = "";
+        document.getElementById("MainDialogDetectViolationsDiv").style.display = "";
+    } else {
+        document.getElementById("MainDialogEnableMemoryLimitErrorDiv").style.display = "none";
+        document.getElementById("MainDialogDetectViolationsDiv").style.display = "none";
+    }
 }
 </script>
 
@@ -231,7 +306,7 @@ function popupMainDialog(e, skipField)
 %><i>(Unlimited)</i><%
   }
 %></td>
-                <td><input type="button" onclick="" value="Set unlimited" /></td>
+                <td><input type="button" onclick="popupMainDialog(event, 'ContestTime')" value="Set unlimited" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:contest_time" /></td>
             </s:tr>
 
@@ -241,7 +316,7 @@ function popupMainDialog(e, skipField)
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Contest end time:</td>
                 <td><% html_date_select_2(out_f, global->contest_finish_time, "OrigContestFinishTime", "param", NULL, 1, 0, 0); %></td>
-                <td><input type="button" onclick="" value="Clear" /></td>
+                <td><input type="button" onclick="popupMainDialog(event, 'ContestFinishTime')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:contest_finish_time" /></td>
             </s:tr>
 <%
@@ -287,7 +362,7 @@ function popupMainDialog(e, skipField)
 %><i>(No freeze)</i><%
     }
 %></td>
-                <td><input type="button" onclick="" value="Disable" /></td>
+                <td><input type="button" onclick="popupMainDialog(event, 'BoardFogTime')" value="Disable" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:board_fog_time" /></td>
             </s:tr>
 <%
@@ -312,7 +387,7 @@ function popupMainDialog(e, skipField)
 %><i>(Not unfreeze)</i><%
     }
 %></td>
-                <td><input type="button" onclick="" value="Disable" /></td>
+                <td><input type="button" onclick="popupMainDialog(event, 'BoardUnfogTime')" value="Disable" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:board_unfog_time" /></td>
             </s:tr>
 <%
@@ -387,9 +462,9 @@ function popupMainDialog(e, skipField)
   standings_locale = l10n_normalize(global->standings_locale);
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Standings language:</td>
+                <td>Standings locale:</td>
                 <td><s:textfield id="OrigStandingsLocale" readonly="readonly" size="16" name="param" value="standings_locale" notset="yes" /></td>
-                <td><input type="button" onclick="" value="Clear" /></td>
+                <td><input type="button" onclick="popupMainDialog(event, 'StandingsLocale')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:standings_locale" /></td>
             </s:tr>
 
@@ -399,7 +474,7 @@ function popupMainDialog(e, skipField)
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Checker locale:</td>
                 <td><s:textfield id="OrigCheckerLocale" readonly="readonly" size="16" name="param" value="checker_locale" notset="yes" /></td>
-                <td><input type="button" onclick="" value="Clear" /></td>
+                <td><input type="button" onclick="popupMainDialog(event, 'CheckerLocale')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:checker_locale" /></td>
             </s:tr>
 
