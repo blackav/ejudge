@@ -295,6 +295,15 @@ l10n_unparse_locale(int n)
   return locale_name_strs[n];
 }
 
+const unsigned char *
+l10n_normalize(const unsigned char *str)
+{
+  if (!str || !*str) return NULL;
+  int id = l10n_parse_locale(str);
+  if (id < 0) return NULL;
+  return l10n_unparse_locale(id);
+}
+
 /*
  * Local variables:
  *  compile-command: "make"
