@@ -90,12 +90,6 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SAVE_PERMISSIONS] = "Contest.xml",
   [SSERV_CMD_CNTS_SET_PREDEF_PERMISSIONS] = "Contest.xml",
 
-  [SSERV_CMD_GLOB_CHANGE_DURATION] = "Serve.cfg:global:contest_time",
-  [SSERV_CMD_GLOB_CHANGE_TYPE] = "Serve.cfg:global:score_system",
-  [SSERV_CMD_GLOB_CHANGE_FOG_TIME] = "Serve.cfg:global:board_fog_time",
-  [SSERV_CMD_GLOB_CHANGE_UNFOG_TIME] = "Serve.cfg:global:board_unfog_time",
-  [SSERV_CMD_GLOB_CHANGE_STAND_LOCALE] = "Serve.cfg:global:standings_locale",
-  [SSERV_CMD_GLOB_CHANGE_CHECKER_LOCALE] = "Serve.cfg:global:checker_locale",
   [SSERV_CMD_GLOB_CHANGE_TOKENS] = "Serve.cfg:global:tokens",
   [SSERV_CMD_GLOB_CHANGE_SRC_VIEW] = "Serve.cfg:global:team_enable_src_view",
   [SSERV_CMD_GLOB_CHANGE_REP_VIEW] = "Serve.cfg:global:team_enable_rep_view",
@@ -118,10 +112,8 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_ENABLE_FULL_ARCHIVE] = "Serve.cfg:global:enable_full_archive",
   [SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT] = "Serve.cfg:global:advanced_layout",
   [SSERV_CMD_GLOB_CHANGE_UUID_RUN_STORE] = "Serve.cfg:global:uuid_run_store",
-  [SSERV_CMD_GLOB_CHANGE_ENABLE_32BIT_CHECKERS] = "Serve.cfg:global:enable_32bit_checkers",
   [SSERV_CMD_GLOB_CHANGE_IGNORE_BOM] = "Serve.cfg:global:ignore_bom",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE] = "Serve.cfg:global:disable_user_database",
-  [SSERV_CMD_GLOB_CHANGE_ENABLE_MAX_STACK_SIZE] = "Serve.cfg:global:enable_max_stack_size",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_AUTO_REFRESH] = "Serve.cfg:global:disable_auto_refresh",
   [SSERV_CMD_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS] = "Serve.cfg:global:always_show_problems",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_USER_STANDINGS] = "Serve.cfg:global:disable_user_standings",
@@ -159,7 +151,6 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_STAND_SYMLINK_DIR] = "Serve.cfg:global:stand_symlink_dir",
   [SSERV_CMD_GLOB_CHANGE_STAND_IGNORE_AFTER] = "Serve.cfg:global:stand_ignore_after",
   [SSERV_CMD_GLOB_CHANGE_APPEAL_DEADLINE] = "Serve.cfg:global:appeal_deadline",
-  [SSERV_CMD_GLOB_CHANGE_CONTEST_FINISH_TIME] = "Serve.cfg:global:contest_finish_time",
   [SSERV_CMD_GLOB_CHANGE_ENABLE_STAND2] = "Serve.cfg:global:enable_stand2",
   [SSERV_CMD_GLOB_CHANGE_STAND2_FILE_NAME] = "Serve.cfg:global:stand2_file_name",
   [SSERV_CMD_GLOB_CHANGE_STAND2_HEADER_FILE] = "Serve.cfg:global:stand2_header_file",
@@ -219,8 +210,6 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_ENABLE_CONTINUE] = "Serve.cfg:global:enable_continue",
   [SSERV_CMD_GLOB_CHANGE_ENABLE_REPORT_UPLOAD] = "Serve.cfg:global:enable_report_upload",
   [SSERV_CMD_GLOB_CHANGE_ENABLE_RUNLOG_MERGE] = "Serve.cfg:global:enable_runlog_merge",
-  [SSERV_CMD_GLOB_CHANGE_USE_COMPILATION_SERVER] = "Serve.cfg:global:use_compilation_server",
-  [SSERV_CMD_GLOB_CHANGE_ENABLE_WIN32_LANGUAGES] = "Serve.cfg:global:enable_win32_languages",
   [SSERV_CMD_GLOB_CHANGE_ENABLE_L10N] = "Serve.cfg:global:enable_l10n",
   [SSERV_CMD_GLOB_CHANGE_CHARSET] = "Serve.cfg:global:charset",
   [SSERV_CMD_GLOB_CHANGE_STANDINGS_CHARSET] = "Serve.cfg:global:standings_charset",
@@ -228,10 +217,6 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_PLOG_CHARSET] = "Serve.cfg:global:plog_charset",
   [SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME] = "Serve.cfg:global:team_download_time",
   [SSERV_CMD_GLOB_CHANGE_CPU_BOGOMIPS] = "Serve.cfg:global:cpu_bogomips",
-  [SSERV_CMD_GLOB_CHANGE_SECURE_RUN] = "Serve.cfg:global:secure_run",
-  [SSERV_CMD_GLOB_CHANGE_DETECT_VIOLATIONS] = "Serve.cfg:global:detect_violations",
-  [SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR] = "Serve.cfg:global:enable_memory_limit_error",
-  [SSERV_CMD_GLOB_CHANGE_SEPARATE_USER_SCORE] = "Serve.cfg:global:separate_user_score",
   [SSERV_CMD_GLOB_CHANGE_STAND_ROW_ATTR] = "Serve.cfg:global:stand_row_attr",
   [SSERV_CMD_GLOB_CHANGE_STAND_PAGE_TABLE_ATTR] = "Serve.cfg:global:stand_page_table_attr",
   [SSERV_CMD_GLOB_CHANGE_STAND_PAGE_CUR_ATTR] = "Serve.cfg:global:stand_page_cur_attr",
@@ -439,8 +424,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
                         int param3, int param4)
 {
   struct section_global_data *global = sstate->global;
-  int hh, mm, n, val, default_val;
-  unsigned char *s;
+  int n, val, default_val;
   int *p_int;
   unsigned char *p_str;
   size_t str_size;
@@ -450,96 +434,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   if (!global) return -SSERV_ERR_CONTEST_NOT_EDITED;
 
   switch (cmd) {
-  case SSERV_CMD_GLOB_CHANGE_DURATION:
-    if (sscanf(param2, "%d:%d%n", &hh, &mm, &n) == 2 && !param2[n]) {
-      if (hh < 0 || hh >= 1000000) return -SSERV_ERR_INVALID_PARAMETER;
-      if (mm < 0 || mm >= 60) return -SSERV_ERR_INVALID_PARAMETER;
-      global->contest_time = hh * 60 + mm;
-      return 0;
-    }
-    if (sscanf(param2, "%d%n", &mm, &n) != 1 || param2[n] ||
-        mm < 0 || mm >= 1000000)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    global->contest_time = mm;
-    if (global->contest_time > global->board_fog_time)
-      global->board_fog_time = global->contest_time;
-    if (!global->contest_time) global->board_unfog_time = 0;
-    return 0;
-
-  case SSERV_CMD_GLOB_UNLIMITED_DURATION:
-    global->contest_time = 0;
-    global->board_fog_time = 0;
-    global->board_unfog_time = 0;
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_TYPE:
-    if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n]
-        || val < 0 || val > SCORE_TOTAL + 2)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    if (val < SCORE_TOTAL) {
-      global->score_system = val;
-      global->is_virtual = 0;
-    } else {
-      if (val == SCORE_TOTAL) global->score_system = SCORE_ACM;
-      else global->score_system = SCORE_OLYMPIAD;
-      global->is_virtual = 1;
-    }
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_FOG_TIME:
-    if (sscanf(param2, "%d:%d%n", &hh, &mm, &n) == 2 && !param2[n]) {
-      if (hh < 0 || hh >= 1000000) return -SSERV_ERR_INVALID_PARAMETER;
-      if (mm < 0 || mm >= 60) return -SSERV_ERR_INVALID_PARAMETER;
-      mm = hh * 60 + mm;
-    } else if (sscanf(param2, "%d%n", &mm, &n) != 1 || param2[n] ||
-               mm < 0 || mm >= 1000000) {
-      return -SSERV_ERR_INVALID_PARAMETER;
-    }
-    if (mm > global->contest_time) mm = global->contest_time;
-    global->board_fog_time = mm;
-    if (!global->board_fog_time) global->board_unfog_time = 0;
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_UNFOG_TIME:
-    if (sscanf(param2, "%d:%d%n", &hh, &mm, &n) == 2 && !param2[n]) {
-      if (hh < 0 || hh >= 1000000) return -SSERV_ERR_INVALID_PARAMETER;
-      if (mm < 0 || mm >= 60) return -SSERV_ERR_INVALID_PARAMETER;
-      mm = hh * 60 + mm;
-    } else if (sscanf(param2, "%d%n", &mm, &n) != 1 || param2[n] ||
-               mm < 0 || mm >= 1000000) {
-      return -SSERV_ERR_INVALID_PARAMETER;
-    }
-    if (!global->contest_time) mm = 0;
-    if (!global->board_fog_time) mm = 0;
-    global->board_unfog_time = mm;
-    return 0;
-
-  case SSERV_CMD_GLOB_DISABLE_FOG:
-    global->board_fog_time = 0;
-    global->board_unfog_time = 0;
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_LOCALE:
-    if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n]
-        || val < 0 || val > 1) return -SSERV_ERR_INVALID_PARAMETER;
-    switch (val) {
-    case 0: s = "en"; break;
-    case 1: s = "ru"; break;
-    default:
-      abort();
-    }
-    snprintf(global->standings_locale, sizeof(global->standings_locale), "%s", s);
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_CHECKER_LOCALE:
-    xfree(global->checker_locale);
-    global->checker_locale = xstrdup(param2);
-    return 0;
-
-  case SSERV_CMD_GLOB_CLEAR_CHECKER_LOCALE:
-    xfree(global->checker_locale); global->checker_locale = 0;
-    return 0;
-
   case SSERV_CMD_GLOB_CHANGE_TOKENS:
     xfree(global->tokens);
     global->tokens = xstrdup(param2);
@@ -638,20 +532,12 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     p_int = &global->uuid_run_store;
     goto handle_boolean;
 
-  case SSERV_CMD_GLOB_CHANGE_ENABLE_32BIT_CHECKERS:
-    p_int = &global->enable_32bit_checkers;
-    goto handle_boolean;
-
   case SSERV_CMD_GLOB_CHANGE_IGNORE_BOM:
     p_int = &global->ignore_bom;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE:
     p_int = &global->disable_user_database;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_ENABLE_MAX_STACK_SIZE:
-    p_int = &global->enable_max_stack_size;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_DISABLE_AUTO_REFRESH:
@@ -889,15 +775,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CLEAR_APPEAL_DEADLINE:
     global->appeal_deadline = 0;
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_CONTEST_FINISH_TIME:
-    if (xml_parse_date(NULL, "", 0, 0, param2, &global->contest_finish_time) < 0)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    return 0;
-
-  case SSERV_CMD_GLOB_CLEAR_CONTEST_FINISH_TIME:
-    global->contest_finish_time = 0;
     return 0;
 
   case SSERV_CMD_GLOB_CHANGE_ENABLE_STAND2:
@@ -1214,44 +1091,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_ENABLE_RUNLOG_MERGE:
     p_int = &global->enable_runlog_merge;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_USE_COMPILATION_SERVER:
-    if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n] || val < 0 || val > 1)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    sstate->disable_compilation_server = !val;
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_ENABLE_WIN32_LANGUAGES:
-    if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n] || val < 0 || val > 1)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    sstate->enable_win32_languages = val;
-    if (val) {
-      // check, that win32_compile is already added
-      if (global->extra_compile_dirs) {
-        for (int i = 0; global->extra_compile_dirs[i]; ++i) {
-          if (!strcmp(global->extra_compile_dirs[i], "win32_compile"))
-            return 0;
-        }
-      }
-      global->extra_compile_dirs = sarray_append(global->extra_compile_dirs, "win32_compile");
-    }
-    return 0;    
-
-  case SSERV_CMD_GLOB_CHANGE_SECURE_RUN:
-    p_int = &global->secure_run;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_DETECT_VIOLATIONS:
-    p_int = &global->detect_violations;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_ENABLE_MEMORY_LIMIT_ERROR:
-    p_int = &global->enable_memory_limit_error;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_SEPARATE_USER_SCORE:
-    p_int = &global->separate_user_score;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_ENABLE_L10N:
