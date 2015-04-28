@@ -224,7 +224,7 @@ l10n_html_locale_select_3(
   const unsigned char *ss = 0;
   int i;
 
-  if (locale_id < 0 || locale_id >= sizeof(locales)/sizeof(locales[0])) locale_id = 0;
+  if (locale_id < -1 || locale_id >= (int)(sizeof(locales)/sizeof(locales[0]))) locale_id = 0;
   fprintf(out_f, "<select");
   if (id) fprintf(out_f, " id=\"%s\"", id);
   if (cl) fprintf(out_f, " class=\"%s\"", cl);
