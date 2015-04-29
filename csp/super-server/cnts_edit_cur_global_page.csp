@@ -171,6 +171,60 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
+<div id="CapsDialogDiv">
+    <s:form id="CapsDialogForm">
+        <s:hidden name="action" ac="glob-save-capabilities-form" />
+
+<%
+  static const unsigned char * caps_fields[][2] =
+  {
+    { "team_enable_src_view", "Contestants may view submitted source code" },
+    { "disable_failed_test_view", "Contestants may not view failed test number" },
+    { "team_enable_rep_view", "Contestants may view testing protocol" },
+    { "team_enable_ce_view", "Contestants may view compilation errors" },
+    { "team_show_judge_report", "Contestants may view FULL testing protocol" },
+    { "report_error_code", "Contestants may view process exit code" },
+    { "disable_clars", "Clarification requests are disabled" },
+    { "disable_team_clars", "Contestants may not send clarification requests" },
+    { "enable_eoln_select", "Contestants may select desired EOLN type" },
+    { "disable_submit_after_ok", "Disable submit of already solved problems" },
+    { "ignore_compile_errors", "Compilation errors are not counted as failed runs" },
+    { "ignore_duplicated_runs", "Identical submits of one contestant are ignored" },
+    { "show_deadline", "Show submit deadline in problem selection menu" },
+    { "show_sha1", "Show abbreviated SHA1 in the submit list" },
+    { "enable_printing", "Contestants may print their submits" },
+    { "disable_banner_page", "Disable banner page on print-outs" },
+    { "printout_uses_login", "Show login (not name) on printouts" },
+    { "prune_empty_users", "Hide contestants without submits in standings" },
+    { "enable_full_archive", "Store FULL program output in an archive" },
+    { "always_show_problems", "Contestants may view Problems link before start" },
+    { "disable_user_standings", "Disable build-in standings in new-client" },
+    { "disable_language", "Disable language column in new-client" },
+    { "problem_navigation", "Advanced problem navigation" },
+    { "vertical_navigation", "Place problem navigation vertically" },
+    { "disable_virtual_start", "Disable user Virtual start button" },
+    { "disable_virtual_auto_judge", "Disable auto-judging after virtual olympiad" },
+    { "enable_auto_print_protocol", "Enable automatic protocol printing" },
+    { "notify_clar_reply", "Enable e-mail clar notifications" },
+    { "notify_status_change", "Enable e-mail status change notifications" },
+    { "disable_auto_refresh", "Disable auto-refreshing" },
+
+    { NULL, NULL },
+  };
+  int caps_ind;
+
+  for (caps_ind = 0; caps_fields[caps_ind][0]; ++caps_ind) {
+%>
+        <div id="caps-<s:v value="caps_fields[caps_ind][0]" escape="false" />-div">
+            <div style="width: 300px; display: inline-block;"><label for="caps-<s:v value="caps_fields[caps_ind][0]" escape="false"/>-cb"><s:v value="caps_fields[caps_ind][1]" escape="false"/>:</label></div>
+            <input type="checkbox" name="<s:v value="caps_fields[caps_ind][0]" escape="false"/>" id="caps-<s:v value="caps_fields[caps_ind][0]" escape="false"/>-cb" value="1" onchange="capsDialogOnChange()" />
+        </div>
+<%
+  }
+%>
+    </s:form>
+</div>
+
 <script type="text/javascript">
 $(function() {
     $('#GlobalAccordion').accordion({ heightStyle: "content" });
@@ -206,6 +260,51 @@ $(function() {
     });
     $('#MainDialogContestFinishTimeTime').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
     $('#MainDialogContestFinishTimeDate').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
+
+    capsDialog = $("#CapsDialogDiv").dialog({
+        autoOpen: false,
+        height: 650,
+        width: 600,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#CapsDialogForm").serialize();
+                var formURL = $("#CapsDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                capsDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
+
+    $("#orig-disable_failed_test_view-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_ACM || global->score_system == SCORE_MOSCOW" />);
+    $("#orig-team_enable_ce_view-div").toggle(<s:v type="jsbool" value="global->team_enable_rep_view <= 0" />);
+    //$("#orig-team_show_judge_report-div").toggle($("#caps-team_enable_rep_view-cb").is(':checked'));
+    //$("#orig-report_error_code-div").toggle($("#caps-team_enable_rep_view-cb").is(':checked') && !$("#caps-team_show_judge_report-cb").is(':checked'));
+    //$("#orig-disable_team_clars-div").toggle($("#caps-disable_clars-cb").is(':checked'));
+    //$("#orig-show_deadline-div").toggle(<s:v type="jsbool" value="global->contest_time <= 0" />);
+    //$("#orig-disable_banner_page-div").toggle($("#caps-enable_printing-cb").is(':checked'));
+    //$("#orig-printout_uses_login-div").toggle($("#caps-enable_printing-cb").is(':checked') && $("#caps-disable_banner_page-cb").is(':checked'));
+    //$("#orig-vertical_navigation-div").toggle($("#caps-problem_navigation-cb").is(':checked'));
+    //$("#orig-disable_virtual_start-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" />);
+    //$("#orig-disable_virtual_auto_judge-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
+    //$("#orig-enable_auto_print_protocol-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
+
+
 });
 
 function np(e)
@@ -215,8 +314,14 @@ function np(e)
 
 function copyCheckbox(dst, src)
 {
-    if (document.getElementById(src).value == "1") {
-        document.getElementById(dst).checked = true;
+    var dstobj = document.getElementById(dst);
+    var srcobj = document.getElementById(src);
+    if (dstobj != null) {
+        if (srcobj != null && srcobj.value == "1") {
+            dstobj.checked = true;
+        } else {
+            dstobj.checked = false;
+        }
     }
 }
 
@@ -284,6 +389,36 @@ function mainDialogOnChange()
         document.getElementById("MainDialogEnableMemoryLimitErrorDiv").style.display = "none";
         document.getElementById("MainDialogDetectViolationsDiv").style.display = "none";
     }
+}
+
+function popupCapsDialog(e, skipField)
+{
+<%
+  for (caps_ind = 0; caps_fields[caps_ind][0]; ++caps_ind) {
+%>
+    copyCheckbox("caps-<s:v value="caps_fields[caps_ind][0]" escape="false"/>-cb", "orig-<s:v value="caps_fields[caps_ind][0]" escape="false"/>");
+<%
+  }
+%>
+    if (e) e.stopPropagation();
+    capsDialogOnChange();
+    $("#CapsDialogDiv").dialog('open');
+}
+
+function capsDialogOnChange()
+{
+    $("#caps-disable_failed_test_view-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_ACM || global->score_system == SCORE_MOSCOW" />);
+    $("#caps-team_enable_ce_view-div").toggle(!$("#caps-team_enable_rep_view-cb").is(':checked'));
+    $("#caps-team_show_judge_report-div").toggle($("#caps-team_enable_rep_view-cb").is(':checked'));
+    $("#caps-report_error_code-div").toggle($("#caps-team_enable_rep_view-cb").is(':checked') && !$("#caps-team_show_judge_report-cb").is(':checked'));
+    $("#caps-disable_team_clars-div").toggle($("#caps-disable_clars-cb").is(':checked'));
+    $("#caps-show_deadline-div").toggle(<s:v type="jsbool" value="global->contest_time <= 0" />);
+    $("#caps-disable_banner_page-div").toggle($("#caps-enable_printing-cb").is(':checked'));
+    $("#caps-printout_uses_login-div").toggle($("#caps-enable_printing-cb").is(':checked') && $("#caps-disable_banner_page-cb").is(':checked'));
+    $("#caps-vertical_navigation-div").toggle($("#caps-problem_navigation-cb").is(':checked'));
+    $("#caps-disable_virtual_start-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" />);
+    $("#caps-disable_virtual_auto_judge-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
+    $("#caps-enable_auto_print_protocol-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
 }
 </script>
 
@@ -500,77 +635,44 @@ function mainDialogOnChange()
     <h3>Contestant capabilities</h3>
 
     <div>
-        <table border="0">
-
-    <s:form>
-        <s:tr attr="head_row_attr">
-            <td colspan="4" align="center"><b>Contestant's capabilities</b><%
-%></td>
-        </s:tr>
-    </s:form>
+        <table border="0" onclick="popupCapsDialog()">
 <%
   row = 1;
 %>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Contestant may view submitted source code:</td>
-            <td><s:yesno name="param" value="global->team_enable_src_view" /></td>
-            <td><s:submit ac="glob-change-src-view" label="Change" /></td>
-            <td><s:help ac="glob-change-src-view" /></td>
-        </s:tr>
-    </s:form>
-
-<%
-  if (global->score_system == SCORE_ACM || global->score_system == SCORE_MOSCOW) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Participants cannot view failed test number:</td>
-            <td><s:yesno name="param" value="global->disable_failed_test_view" /></td>
-            <td><s:submit ac="glob-change-disable-failed-test-view" label="Change" /></td>
-            <td><s:help ac="glob-change-disable-failed-test-view" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Contestant may view testing protocol:</td>
-            <td><s:yesno name="param" value="global->team_enable_rep_view" /></td>
-            <td><s:submit ac="glob-change-rep-view" label="Change" /></td>
-            <td><s:help ac="glob-change-rep-view" /></td>
-        </s:tr>
-    </s:form>
-
-<%
-  if (!global->team_enable_rep_view) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Contestant may view compilation errors:</td>
-            <td><s:yesno name="param" value="global->team_enable_ce_view" /></td>
-            <td><s:submit ac="glob-change-ce-view" label="Change" /></td>
-            <td><s:help ac="glob-change-ce-view" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_enable_src_view-div">
+                <td><s:v value="caps_fields[0][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-team_enable_src_view" disabled="disabled" name="param" value="global->team_enable_src_view" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:team_enable_src_view" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_failed_test_view-div">
+                <td><s:v value="caps_fields[1][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-disable_failed_test_view" disabled="disabled" name="param" value="global->disable_failed_test_view" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_failed_test_view" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_enable_rep_view-div">
+                <td><s:v value="caps_fields[2][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-team_enable_rep_view" disabled="disabled" name="param" value="global->team_enable_rep_view" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:team_enable_rep_view" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_enable_ce_view-div">
+                <td><s:v value="caps_fields[3][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-team_enable_ce_view" disabled="disabled" name="param" value="global->team_enable_ce_view" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:team_enable_ce_view" /></td>
+            </s:tr>
 
 <%
   if (global->team_enable_rep_view) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Contestant may view FULL (judge's) testing protocol:</td>
-            <td><s:yesno name="param" value="global->team_show_judge_report" /></td>
-            <td><s:submit ac="glob-change-judge-report" label="Change" /></td>
-            <td><s:help ac="glob-change-judge-report" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_show_judge_report-div">
+                <td><s:v value="caps_fields[4][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-team_show_judge_report" disabled="disabled" name="param" value="global->team_show_judge_report" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:team_show_judge_report" /></td>
+            </s:tr>
 <%
   }
 %>
@@ -578,122 +680,100 @@ function mainDialogOnChange()
 <%
   if (global->team_enable_rep_view && !global->team_show_judge_report) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Process exit code is shown in testing report:</td>
-            <td><s:yesno name="param" value="global->report_error_code" /></td>
-            <td><s:submit ac="glob-change-report-error-code" label="Change" /></td>
-            <td><s:help ac="glob-change-report-error-code" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-report_error_code-div">
+                <td><s:v value="caps_fields[5][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-report_error_code" disabled="disabled" name="param" value="global->report_error_code" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:report_error_code" /></td>
+            </s:tr>
 <%
   }
 %>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Clarification requests are disabled completely:</td>
-            <td><s:yesno name="param" value="global->disable_clars" /></td>
-            <td><s:submit ac="glob-change-disable-clars" label="Change" /></td>
-            <td><s:help ac="glob-change-disable-clars" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_clar-div">
+                <td><s:v value="caps_fields[6][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-disable_clars" disabled="disabled" name="param" value="global->disable_clars" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_clars" /></td>
+            </s:tr>
 
 <%
   if (!global->disable_clars) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Contestant cannot write clarification request:</td>
-            <td><s:yesno name="param" value="global->disable_team_clars" /></td>
-            <td><s:submit ac="glob-change-disable-team-clars" label="Change" /></td>
-            <td><s:help ac="glob-change-disable-team-clars" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_team_clars-div">
+                <td><s:v value="caps_fields[7][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-disable_team_clars" disabled="disabled" name="param" value="global->disable_team_clars" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_team_clars" /></td>
+            </s:tr>
 <%
   }
 %>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Participants may select desired EOLN type:</td>
-            <td><s:yesno name="param" value="global->enable_eoln_select" /></td>
-            <td><s:submit ac="glob-change-enable-eoln-select" label="Change" /></td>
-            <td><s:help ac="glob-change-enable-eoln-select" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_eoln_select-div">
+                <td><s:v value="caps_fields[8][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-enable_eoln_select" disabled="disabled" name="param" value="global->enable_eoln_select" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_eoln_select" /></td>
+            </s:tr>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Disable submit of already solved problems:</td>
-            <td><s:yesno name="param" value="global->disable_submit_after_ok" /></td>
-            <td><s:submit ac="glob-change-disable-submit-after-ok" label="Change" /></td>
-            <td><s:help ac="glob-change-disable-submit-after-ok" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_submit_after_ok-div">
+                <td><s:v value="caps_fields[9][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-disable_submit_after_ok" disabled="disabled" name="param" value="global->disable_submit_after_ok" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_submit_after_ok" /></td>
+            </s:tr>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Compilation errors are not counted as failed runs:</td>
-            <td><s:yesno name="param" value="global->ignore_compile_errors" /></td>
-            <td><s:submit ac="glob-change-ignore-compile-errors" label="Change" /></td>
-            <td><s:help ac="glob-change-ignore-compile-errors" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_compile_errors-div">
+                <td><s:v value="caps_fields[10][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-ignore_compile_errors" disabled="disabled" name="param" value="global->ignore_compile_errors" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:ignore_compile_errors" /></td>
+            </s:tr>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Identical submits of one contestant are ignored:</td>
-            <td><s:yesno name="param" value="global->ignore_duplicated_runs" /></td>
-            <td><s:submit ac="glob-change-ignore-duplicated-runs" label="Change" /></td>
-            <td><s:help ac="glob-change-ignore-duplicated-runs" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_duplicated_runs-div">
+                <td><s:v value="caps_fields[11][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-ignore_duplicated_runs" disabled="disabled" name="param" value="global->ignore_duplicated_runs" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:ignore_duplicated_runs" /></td>
+            </s:tr>
 
 <%
   if (global->contest_time <= 0) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Show submit deadline in problem selection menu:</td>
-            <td><s:yesno name="param" value="global->show_deadline" /></td>
-            <td><s:submit ac="glob-change-show-deadline" label="Change" /></td>
-            <td><s:help ac="glob-change-show-deadline" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-show_deadline-div">
+                <td><s:v value="caps_fields[12][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-show_deadline" disabled="disabled" name="param" value="global->show_deadline" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:show_deadline" /></td>
+            </s:tr>
 <%
   }
 %>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Show abbreviated SHA1 in the submit list:</td>
-            <td><s:yesno name="param" value="global->show_sha1" /></td>
-            <td><s:submit ac="glob-change-show-sha1" label="Change" /></td>
-            <td><s:help ac="glob-change-show-sha1" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-show_sha1-div">
+                <td><s:v value="caps_fields[13][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-show_sha1" disabled="disabled" name="param" value="global->show_sha1" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:show_sha1" /></td>
+            </s:tr>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Contestants may print their submits:</td>
-            <td><s:yesno name="param" value="global->enable_printing" /></td>
-            <td><s:submit ac="glob-change-enable-printing" label="Change" /></td>
-            <td><s:help ac="glob-change-enable-printing" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_printing-div">
+                <td><s:v value="caps_fields[14][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-enable_printing" disabled="disabled" name="param" value="global->enable_printing" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_printing" /></td>
+            </s:tr>
 
 <%
   if (global->enable_printing > 0) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Disable separate banner page:</td>
-            <td><s:yesno name="param" value="global->disable_banner_page" /></td>
-            <td><s:submit ac="glob-change-disable-banner-page" label="Change" /></td>
-            <td><s:help ac="glob-change-disable-banner-page" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_banner_page-div">
+                <td><s:v value="caps_fields[15][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-disable_banner_page" disabled="disabled" name="param" value="global->disable_banner_page" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_banner_page" /></td>
+            </s:tr>
 <%
   }
 %>
@@ -701,83 +781,67 @@ function mainDialogOnChange()
 <%
   if (global->enable_printing > 0 && global->disable_banner_page > 0) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Show login (not name) on printouts:</td>
-            <td><s:yesno name="param" value="global->printout_uses_login" /></td>
-            <td><s:submit ac="glob-change-printout-uses-login" label="Change" /></td>
-            <td><s:help ac="glob-change-printout-uses-login" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-printout_uses_login-div">
+                <td><s:v value="caps_fields[16][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-printout_uses_login" disabled="disabled" name="param" value="global->printout_uses_login" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:printout_uses_login" /></td>
+            </s:tr>
 <%
   }
 %>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Do not show contestants, which did not make any submit in standings:</td>
-            <td><s:yesno name="param" value="global->prune_empty_users" /></td>
-            <td><s:submit ac="glob-change-prune-empty-users" label="Change" /></td>
-            <td><s:help ac="glob-change-prune-empty-users" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-prune_empty_users-div">
+                <td><s:v value="caps_fields[17][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-prune_empty_users" disabled="disabled" name="param" value="global->prune_empty_users" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:prune_empty_users" /></td>
+            </s:tr>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Store full contestant's program output in the archive:</td>
-            <td><s:yesno name="param" value="global->enable_full_archive" /></td>
-            <td><s:submit ac="glob-change-enable-full-archive" label="Change" /></td>
-            <td><s:help ac="glob-change-enable-full-archive" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_full_archive-div">
+                <td><s:v value="caps_fields[18][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-enable_full_archive" disabled="disabled" name="param" value="global->enable_full_archive" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_full_archive" /></td>
+            </s:tr>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Contestant may view Problems link before start:</td>
-            <td><s:yesno name="param" value="global->always_show_problems" /></td>
-            <td><s:submit ac="glob-change-always-show-problems" label="Change" /></td>
-            <td><s:help ac="glob-change-always-show-problems" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-always_show_problems-div">
+                <td><s:v value="caps_fields[19][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-always_show_problems" disabled="disabled" name="param" value="global->always_show_problems" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:always_show_problems" /></td>
+            </s:tr>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Disable build-in standings in new-client:</td>
-            <td><s:yesno name="param" value="global->disable_user_standings" /></td>
-            <td><s:submit ac="glob-change-disable-user-standings" label="Change" /></td>
-            <td><s:help ac="glob-change-disable-user-standings" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_user_standings-div">
+                <td><s:v value="caps_fields[20][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-disable_user_standings" disabled="disabled" name="param" value="global->disable_user_standings" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_user_standings" /></td>
+            </s:tr>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Disable language column in new-client:</td>
-            <td><s:yesno name="param" value="global->disable_language" /></td>
-            <td><s:submit ac="glob-change-disable-language" label="Change" /></td>
-            <td><s:help ac="glob-change-disable-language" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_language-div">
+                <td><s:v value="caps_fields[21][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-disable_language" disabled="disabled" name="param" value="global->disable_language" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_language" /></td>
+            </s:tr>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Advanced problem navigation:</td>
-            <td><s:yesno name="param" value="global->problem_navigation" /></td>
-            <td><s:submit ac="glob-change-problem-navigation" label="Change" /></td>
-            <td><s:help ac="glob-change-problem-navigation" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-problem_navigation-div">
+                <td><s:v value="caps_fields[22][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-problem_navigation" disabled="disabled" name="param" value="global->problem_navigation" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:problem_navigation" /></td>
+            </s:tr>
 
 <%
   if (global->problem_navigation > 0) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Place problem navigation vertically:</td>
-            <td><s:yesno name="param" value="global->vertical_navigation" /></td>
-            <td><s:submit ac="glob-change-vertical-navigation" label="Change" /></td>
-            <td><s:help ac="glob-change-vertical-navigation" /></td>
-        </s:tr>
-    </s:form>
+           <s:tr attr="form_row_attrs[row ^= 1]" id="orig-vertical_navigation-div">
+                <td><s:v value="caps_fields[23][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-vertical_navigation" disabled="disabled" name="param" value="global->vertical_navigation" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:vertical_navigation" /></td>
+            </s:tr>
 <%
   }
 %>
@@ -785,14 +849,12 @@ function mainDialogOnChange()
 <%
   if (global->is_virtual > 0) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Disable user Virtual start button:</td>
-            <td><s:yesno name="param" value="global->disable_virtual_start" /></td>
-            <td><s:submit ac="glob-change-disable-virtual-start" label="Change" /></td>
-            <td><s:help ac="glob-change-disable-virtual-start" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_virtual_start-div">
+                <td><s:v value="caps_fields[24][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-disable_virtual_start" disabled="disabled" name="param" value="global->disable_virtual_start" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_virtual_start" /></td>
+            </s:tr>
 <%
   }
 %>
@@ -800,14 +862,12 @@ function mainDialogOnChange()
 <%
   if (global->score_system == SCORE_OLYMPIAD) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Disable auto-judging after virtual olympiad:</td>
-            <td><s:yesno name="param" value="global->disable_virtual_auto_judge" /></td>
-            <td><s:submit ac="glob-change-disable-virtual-auto-judge" label="Change" /></td>
-            <td><s:help ac="glob-change-disable-virtual-auto-judge" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_virtual_auto_judge-div">
+                <td><s:v value="caps_fields[25][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-disable_virtual_auto_judge" disabled="disabled" name="param" value="global->disable_virtual_auto_judge" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_virtual_auto_judge" /></td>
+            </s:tr>
 <%
   }
 %>
@@ -815,44 +875,36 @@ function mainDialogOnChange()
 <%
   if (global->score_system == SCORE_OLYMPIAD) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Enable automatic protocol printing:</td>
-            <td><s:yesno name="param" value="global->enable_auto_print_protocol" /></td>
-            <td><s:submit ac="glob-change-enable-auto-print-protocol" label="Change" /></td>
-            <td><s:help ac="glob-change-enable-auto-print-protocol" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_auto_print_protocol-div">
+                <td><s:v value="caps_fields[26][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-enable_auto_print_protocol" disabled="disabled" name="param" value="global->enable_auto_print_protocol" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_auto_print_protocol" /></td>
+            </s:tr>
 <%
   }
 %>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Enable e-mail clar notifications:</td>
-            <td><s:yesno name="param" value="global->notify_clar_reply" /></td>
-            <td><s:submit ac="glob-change-notify-clar-reply" label="Change" /></td>
-            <td><s:help ac="glob-change-notify-clar-reply" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-notify_clar_reply-div">
+                <td><s:v value="caps_fields[27][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-notify_clar_reply" disabled="disabled" name="param" value="global->notify_clar_reply" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:notify_clar_reply" /></td>
+            </s:tr>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Enable e-mail status change notifications:</td>
-            <td><s:yesno name="param" value="global->notify_status_change" /></td>
-            <td><s:submit ac="glob-change-notify-status-change" label="Change" /></td>
-            <td><s:help ac="glob-change-notify-status-change" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-notify_status_change-div">
+                <td><s:v value="caps_fields[28][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-notify_status_change" disabled="disabled" name="param" value="global->notify_status_change" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:notify_status_change" /></td>
+            </s:tr>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Disable auto-refreshing:</td>
-            <td><s:yesno name="param" value="global->disable_auto_refresh" /></td>
-            <td><s:submit ac="glob-change-disable-auto-refresh" label="Change" /></td>
-            <td><s:help ac="glob-change-disable-auto-refresh" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_auto_refresh-div">
+                <td><s:v value="caps_fields[29][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-disable_auto_refresh" disabled="disabled" name="param" value="global->disable_auto_refresh" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_auto_refresh" /></td>
+            </s:tr>
         </table>
     </div>
 
