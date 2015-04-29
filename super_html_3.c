@@ -91,40 +91,10 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SET_PREDEF_PERMISSIONS] = "Contest.xml",
 
   [SSERV_CMD_GLOB_CHANGE_TOKENS] = "Serve.cfg:global:tokens",
-  [SSERV_CMD_GLOB_CHANGE_SRC_VIEW] = "Serve.cfg:global:team_enable_src_view",
-  [SSERV_CMD_GLOB_CHANGE_REP_VIEW] = "Serve.cfg:global:team_enable_rep_view",
-  [SSERV_CMD_GLOB_CHANGE_CE_VIEW] = "Serve.cfg:global:team_enable_ce_view",
-  [SSERV_CMD_GLOB_CHANGE_JUDGE_REPORT] = "Serve.cfg:global:team_show_judge_report",
-  [SSERV_CMD_GLOB_CHANGE_DISABLE_CLARS] = "Serve.cfg:global:disable_clars",
-  [SSERV_CMD_GLOB_CHANGE_DISABLE_TEAM_CLARS] = "Serve.cfg:global:disable_team_clars",
-  [SSERV_CMD_GLOB_CHANGE_ENABLE_EOLN_SELECT] = "Serve.cfg:global:enable_eoln_select",
-  [SSERV_CMD_GLOB_CHANGE_DISABLE_SUBMIT_AFTER_OK] = "Serve.cfg:global:disable_submit_after_ok",
-  [SSERV_CMD_GLOB_CHANGE_IGNORE_COMPILE_ERRORS] = "Serve.cfg:global:ignore_compile_errors",
-  [SSERV_CMD_GLOB_CHANGE_DISABLE_FAILED_TEST_VIEW] = "Serve.cfg:global:disable_failed_test_view",
-  [SSERV_CMD_GLOB_CHANGE_IGNORE_DUPLICATED_RUNS] = "Serve.cfg:global:ignore_duplicated_runs",
-  [SSERV_CMD_GLOB_CHANGE_REPORT_ERROR_CODE] = "Serve.cfg:global:report_error_code",
-  [SSERV_CMD_GLOB_CHANGE_SHOW_DEADLINE] = "Serve.cfg:global:show_deadline",
-  [SSERV_CMD_GLOB_CHANGE_SHOW_SHA1] = "Serve.cfg:global:show_sha1",
-  [SSERV_CMD_GLOB_CHANGE_ENABLE_PRINTING] = "Serve.cfg:global:enable_printing",
-  [SSERV_CMD_GLOB_CHANGE_DISABLE_BANNER_PAGE] = "Serve.cfg:global:disable_banner_page",
-  [SSERV_CMD_GLOB_CHANGE_PRINTOUT_USES_LOGIN] = "Serve.cfg:global:printout_uses_login",
-  [SSERV_CMD_GLOB_CHANGE_PRUNE_EMPTY_USERS] = "Serve.cfg:global:prune_empty_users",
-  [SSERV_CMD_GLOB_CHANGE_ENABLE_FULL_ARCHIVE] = "Serve.cfg:global:enable_full_archive",
   [SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT] = "Serve.cfg:global:advanced_layout",
   [SSERV_CMD_GLOB_CHANGE_UUID_RUN_STORE] = "Serve.cfg:global:uuid_run_store",
   [SSERV_CMD_GLOB_CHANGE_IGNORE_BOM] = "Serve.cfg:global:ignore_bom",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE] = "Serve.cfg:global:disable_user_database",
-  [SSERV_CMD_GLOB_CHANGE_DISABLE_AUTO_REFRESH] = "Serve.cfg:global:disable_auto_refresh",
-  [SSERV_CMD_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS] = "Serve.cfg:global:always_show_problems",
-  [SSERV_CMD_GLOB_CHANGE_DISABLE_USER_STANDINGS] = "Serve.cfg:global:disable_user_standings",
-  [SSERV_CMD_GLOB_CHANGE_DISABLE_LANGUAGE] = "Serve.cfg:global:disable_language",
-  [SSERV_CMD_GLOB_CHANGE_PROBLEM_NAVIGATION] = "Serve.cfg:global:problem_navigation",
-  [SSERV_CMD_GLOB_CHANGE_VERTICAL_NAVIGATION] = "Serve.cfg:global:vertical_navigation",
-  [SSERV_CMD_GLOB_CHANGE_DISABLE_VIRTUAL_START] = "Serve.cfg:global:disable_virtual_start",
-  [SSERV_CMD_GLOB_CHANGE_DISABLE_VIRTUAL_AUTO_JUDGE] = "Serve.cfg:global:disable_virtual_auto_judge",
-  [SSERV_CMD_GLOB_CHANGE_ENABLE_AUTO_PRINT_PROTOCOL] = "Serve.cfg:global:enable_auto_print_protocol",
-  [SSERV_CMD_GLOB_CHANGE_NOTIFY_CLAR_REPLY] = "Serve.cfg:global:notify_clar_reply",
-  [SSERV_CMD_GLOB_CHANGE_NOTIFY_STATUS_CHANGE] = "Serve.cfg:global:notify_status_change",
   [SSERV_CMD_GLOB_CHANGE_TEST_DIR] = "Serve.cfg:global:test_dir",
   [SSERV_CMD_GLOB_CHANGE_CORR_DIR] = "Serve.cfg:global:corr_dir",
   [SSERV_CMD_GLOB_CHANGE_INFO_DIR] = "Serve.cfg:global:info_dir",
@@ -443,86 +413,11 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     xfree(global->tokens); global->tokens = 0;
     return 0;
 
-  case SSERV_CMD_GLOB_CHANGE_SRC_VIEW:
-    p_int = &global->team_enable_src_view;
-
   handle_boolean:
     if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n] || val < 0 || val > 1)
       return -SSERV_ERR_INVALID_PARAMETER;
     *p_int = val;
     return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_REP_VIEW:
-    p_int = &global->team_enable_rep_view;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_CE_VIEW:
-    p_int = &global->team_enable_ce_view;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_JUDGE_REPORT:
-    p_int = &global->team_show_judge_report;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_DISABLE_CLARS:
-    p_int = &global->disable_clars;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_DISABLE_TEAM_CLARS:
-    p_int = &global->disable_team_clars;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_ENABLE_EOLN_SELECT:
-    p_int = &global->enable_eoln_select;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_DISABLE_SUBMIT_AFTER_OK:
-    p_int = &global->disable_submit_after_ok;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_IGNORE_COMPILE_ERRORS:
-    p_int = &global->ignore_compile_errors;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_DISABLE_FAILED_TEST_VIEW:
-    p_int = &global->disable_failed_test_view;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_IGNORE_DUPLICATED_RUNS:
-    p_int = &global->ignore_duplicated_runs;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_REPORT_ERROR_CODE:
-    p_int = &global->report_error_code;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_SHOW_DEADLINE:
-    p_int = &global->show_deadline;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_SHOW_SHA1:
-    p_int = &global->show_sha1;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_ENABLE_PRINTING:
-    p_int = &global->enable_printing;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_DISABLE_BANNER_PAGE:
-    p_int = &global->disable_banner_page;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_PRINTOUT_USES_LOGIN:
-    p_int = &global->printout_uses_login;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_PRUNE_EMPTY_USERS:
-    p_int = &global->prune_empty_users;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_ENABLE_FULL_ARCHIVE:
-    p_int = &global->enable_full_archive;
-    goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT:
     p_int = &global->advanced_layout;
@@ -538,50 +433,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE:
     p_int = &global->disable_user_database;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_DISABLE_AUTO_REFRESH:
-    p_int = &global->disable_auto_refresh;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_ALWAYS_SHOW_PROBLEMS:
-    p_int = &global->always_show_problems;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_DISABLE_USER_STANDINGS:
-    p_int = &global->disable_user_standings;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_DISABLE_LANGUAGE:
-    p_int = &global->disable_language;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_PROBLEM_NAVIGATION:
-    p_int = &global->problem_navigation;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_VERTICAL_NAVIGATION:
-    p_int = &global->vertical_navigation;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_DISABLE_VIRTUAL_START:
-    p_int = &global->disable_virtual_start;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_DISABLE_VIRTUAL_AUTO_JUDGE:
-    p_int = &global->disable_virtual_auto_judge;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_ENABLE_AUTO_PRINT_PROTOCOL:
-    p_int = &global->enable_auto_print_protocol;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_NOTIFY_CLAR_REPLY:
-    p_int = &global->notify_clar_reply;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_NOTIFY_STATUS_CHANGE:
-    p_int = &global->notify_status_change;
     goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_TEST_DIR:
