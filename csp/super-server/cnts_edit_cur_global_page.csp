@@ -293,18 +293,16 @@ $(function() {
 
     $("#orig-disable_failed_test_view-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_ACM || global->score_system == SCORE_MOSCOW" />);
     $("#orig-team_enable_ce_view-div").toggle(<s:v type="jsbool" value="global->team_enable_rep_view <= 0" />);
-    //$("#orig-team_show_judge_report-div").toggle($("#caps-team_enable_rep_view-cb").is(':checked'));
-    //$("#orig-report_error_code-div").toggle($("#caps-team_enable_rep_view-cb").is(':checked') && !$("#caps-team_show_judge_report-cb").is(':checked'));
-    //$("#orig-disable_team_clars-div").toggle($("#caps-disable_clars-cb").is(':checked'));
-    //$("#orig-show_deadline-div").toggle(<s:v type="jsbool" value="global->contest_time <= 0" />);
-    //$("#orig-disable_banner_page-div").toggle($("#caps-enable_printing-cb").is(':checked'));
-    //$("#orig-printout_uses_login-div").toggle($("#caps-enable_printing-cb").is(':checked') && $("#caps-disable_banner_page-cb").is(':checked'));
-    //$("#orig-vertical_navigation-div").toggle($("#caps-problem_navigation-cb").is(':checked'));
-    //$("#orig-disable_virtual_start-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" />);
-    //$("#orig-disable_virtual_auto_judge-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
-    //$("#orig-enable_auto_print_protocol-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
-
-
+    $("#orig-team_show_judge_report-div").toggle(<s:v type="jsbool" value="global->team_enable_rep_view > 0" />);
+    $("#orig-report_error_code-div").toggle(<s:v type="jsbool" value="global->team_enable_rep_view > 0 && global->team_show_judge_report <= 0" />);
+    $("#orig-disable_team_clars-div").toggle(<s:v type="jsbool" value="global->disable_clars > 0" />);
+    $("#orig-show_deadline-div").toggle(<s:v type="jsbool" value="global->contest_time <= 0" />);
+    $("#orig-disable_banner_page-div").toggle(<s:v type="jsbool" value="global->enable_printing > 0" />);
+    $("#orig-printout_uses_login-div").toggle(<s:v type="jsbool" value="global->enable_printing > 0 && global->disable_banner_page > 0" />);
+    $("#orig-vertical_navigation-div").toggle(<s:v type="jsbool" value="global->problem_navigation > 0" />);
+    $("#orig-disable_virtual_start-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" />);
+    $("#orig-disable_virtual_auto_judge-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
+    $("#orig-enable_auto_print_protocol-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
 });
 
 function np(e)
@@ -663,242 +661,156 @@ function capsDialogOnChange()
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:team_enable_ce_view" /></td>
             </s:tr>
-
-<%
-  if (global->team_enable_rep_view) {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_show_judge_report-div">
                 <td><s:v value="caps_fields[4][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-team_show_judge_report" disabled="disabled" name="param" value="global->team_show_judge_report" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:team_show_judge_report" /></td>
             </s:tr>
-<%
-  }
-%>
-
-<%
-  if (global->team_enable_rep_view && !global->team_show_judge_report) {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-report_error_code-div">
                 <td><s:v value="caps_fields[5][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-report_error_code" disabled="disabled" name="param" value="global->report_error_code" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:report_error_code" /></td>
             </s:tr>
-<%
-  }
-%>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_clar-div">
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_clars-div">
                 <td><s:v value="caps_fields[6][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-disable_clars" disabled="disabled" name="param" value="global->disable_clars" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_clars" /></td>
             </s:tr>
-
-<%
-  if (!global->disable_clars) {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_team_clars-div">
                 <td><s:v value="caps_fields[7][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-disable_team_clars" disabled="disabled" name="param" value="global->disable_team_clars" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_team_clars" /></td>
             </s:tr>
-<%
-  }
-%>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_eoln_select-div">
                 <td><s:v value="caps_fields[8][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-enable_eoln_select" disabled="disabled" name="param" value="global->enable_eoln_select" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_eoln_select" /></td>
             </s:tr>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_submit_after_ok-div">
                 <td><s:v value="caps_fields[9][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-disable_submit_after_ok" disabled="disabled" name="param" value="global->disable_submit_after_ok" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_submit_after_ok" /></td>
             </s:tr>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_compile_errors-div">
                 <td><s:v value="caps_fields[10][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-ignore_compile_errors" disabled="disabled" name="param" value="global->ignore_compile_errors" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:ignore_compile_errors" /></td>
             </s:tr>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_duplicated_runs-div">
                 <td><s:v value="caps_fields[11][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-ignore_duplicated_runs" disabled="disabled" name="param" value="global->ignore_duplicated_runs" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:ignore_duplicated_runs" /></td>
             </s:tr>
-
-<%
-  if (global->contest_time <= 0) {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-show_deadline-div">
                 <td><s:v value="caps_fields[12][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-show_deadline" disabled="disabled" name="param" value="global->show_deadline" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:show_deadline" /></td>
             </s:tr>
-<%
-  }
-%>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-show_sha1-div">
                 <td><s:v value="caps_fields[13][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-show_sha1" disabled="disabled" name="param" value="global->show_sha1" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:show_sha1" /></td>
             </s:tr>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_printing-div">
                 <td><s:v value="caps_fields[14][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-enable_printing" disabled="disabled" name="param" value="global->enable_printing" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_printing" /></td>
             </s:tr>
-
-<%
-  if (global->enable_printing > 0) {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_banner_page-div">
                 <td><s:v value="caps_fields[15][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-disable_banner_page" disabled="disabled" name="param" value="global->disable_banner_page" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_banner_page" /></td>
             </s:tr>
-<%
-  }
-%>
-
-<%
-  if (global->enable_printing > 0 && global->disable_banner_page > 0) {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-printout_uses_login-div">
                 <td><s:v value="caps_fields[16][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-printout_uses_login" disabled="disabled" name="param" value="global->printout_uses_login" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:printout_uses_login" /></td>
             </s:tr>
-<%
-  }
-%>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-prune_empty_users-div">
                 <td><s:v value="caps_fields[17][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-prune_empty_users" disabled="disabled" name="param" value="global->prune_empty_users" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:prune_empty_users" /></td>
             </s:tr>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_full_archive-div">
                 <td><s:v value="caps_fields[18][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-enable_full_archive" disabled="disabled" name="param" value="global->enable_full_archive" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_full_archive" /></td>
             </s:tr>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-always_show_problems-div">
                 <td><s:v value="caps_fields[19][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-always_show_problems" disabled="disabled" name="param" value="global->always_show_problems" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:always_show_problems" /></td>
             </s:tr>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_user_standings-div">
                 <td><s:v value="caps_fields[20][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-disable_user_standings" disabled="disabled" name="param" value="global->disable_user_standings" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_user_standings" /></td>
             </s:tr>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_language-div">
                 <td><s:v value="caps_fields[21][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-disable_language" disabled="disabled" name="param" value="global->disable_language" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_language" /></td>
             </s:tr>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-problem_navigation-div">
                 <td><s:v value="caps_fields[22][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-problem_navigation" disabled="disabled" name="param" value="global->problem_navigation" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:problem_navigation" /></td>
             </s:tr>
-
-<%
-  if (global->problem_navigation > 0) {
-%>
-           <s:tr attr="form_row_attrs[row ^= 1]" id="orig-vertical_navigation-div">
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-vertical_navigation-div">
                 <td><s:v value="caps_fields[23][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-vertical_navigation" disabled="disabled" name="param" value="global->vertical_navigation" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:vertical_navigation" /></td>
             </s:tr>
-<%
-  }
-%>
-
-<%
-  if (global->is_virtual > 0) {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_virtual_start-div">
                 <td><s:v value="caps_fields[24][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-disable_virtual_start" disabled="disabled" name="param" value="global->disable_virtual_start" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_virtual_start" /></td>
             </s:tr>
-<%
-  }
-%>
-
-<%
-  if (global->score_system == SCORE_OLYMPIAD) {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_virtual_auto_judge-div">
                 <td><s:v value="caps_fields[25][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-disable_virtual_auto_judge" disabled="disabled" name="param" value="global->disable_virtual_auto_judge" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_virtual_auto_judge" /></td>
             </s:tr>
-<%
-  }
-%>
-
-<%
-  if (global->score_system == SCORE_OLYMPIAD) {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_auto_print_protocol-div">
                 <td><s:v value="caps_fields[26][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-enable_auto_print_protocol" disabled="disabled" name="param" value="global->enable_auto_print_protocol" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_auto_print_protocol" /></td>
             </s:tr>
-<%
-  }
-%>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-notify_clar_reply-div">
                 <td><s:v value="caps_fields[27][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-notify_clar_reply" disabled="disabled" name="param" value="global->notify_clar_reply" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:notify_clar_reply" /></td>
             </s:tr>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-notify_status_change-div">
                 <td><s:v value="caps_fields[28][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-notify_status_change" disabled="disabled" name="param" value="global->notify_status_change" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:notify_status_change" /></td>
             </s:tr>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_auto_refresh-div">
                 <td><s:v value="caps_fields[29][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-disable_auto_refresh" disabled="disabled" name="param" value="global->disable_auto_refresh" /></td>

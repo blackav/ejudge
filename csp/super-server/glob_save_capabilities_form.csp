@@ -10,22 +10,108 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-// declare local variables here
+    ejintbool_t team_enable_src_view = 0;
+    ejintbool_t disable_failed_test_view = 0;
+    ejintbool_t team_enable_rep_view = 0;
+    ejintbool_t team_enable_ce_view = 0;
+    ejintbool_t team_show_judge_report = 0;
+    ejintbool_t report_error_code = 0;
+    ejintbool_t disable_clars = 0;
+    ejintbool_t disable_team_clars = 0;
+    ejintbool_t enable_eoln_select = 0;
+    ejintbool_t disable_submit_after_ok = 0;
+    ejintbool_t ignore_compile_errors = 0;
+    ejintbool_t ignore_duplicated_runs = 0;
+    ejintbool_t show_deadline = 0;
+    ejintbool_t show_sha1 = 0;
+    ejintbool_t enable_printing = 0;
+    ejintbool_t disable_banner_page = 0;
+    ejintbool_t printout_uses_login = 0;
+    ejintbool_t prune_empty_users = 0;
+    ejintbool_t enable_full_archive = 0;
+    ejintbool_t always_show_problems = 0;
+    ejintbool_t disable_user_standings = 0;
+    ejintbool_t disable_language = 0;
+    ejintbool_t problem_navigation = 0;
+    ejintbool_t vertical_navigation = 0;
+    ejintbool_t disable_virtual_start = 0;
+    ejintbool_t disable_virtual_auto_judge = 0;
+    ejintbool_t enable_auto_print_protocol = 0;
+    ejintbool_t notify_clar_reply = 0;
+    ejintbool_t notify_status_change = 0;
+    ejintbool_t disable_auto_refresh = 0;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
-// read the parameters here like <s:read var="name" normalize="yes" />
-
-// validate parameters here
+%><s:read var="team_enable_src_view" default="0" /><%
+%><s:read var="disable_failed_test_view" default="0" /><%
+%><s:read var="team_enable_rep_view" default="0" /><%
+%><s:read var="team_enable_ce_view" default="0" /><%
+%><s:read var="team_show_judge_report" default="0" /><%
+%><s:read var="report_error_code" default="0" /><%
+%><s:read var="disable_clars" default="0" /><%
+%><s:read var="disable_team_clars" default="0" /><%
+%><s:read var="enable_eoln_select" default="0" /><%
+%><s:read var="disable_submit_after_ok" default="0" /><%
+%><s:read var="ignore_compile_errors" default="0" /><%
+%><s:read var="ignore_duplicated_runs" default="0" /><%
+%><s:read var="show_deadline" default="0" /><%
+%><s:read var="show_sha1" default="0" /><%
+%><s:read var="enable_printing" default="0" /><%
+%><s:read var="disable_banner_page" default="0" /><%
+%><s:read var="printout_uses_login" default="0" /><%
+%><s:read var="prune_empty_users" default="0" /><%
+%><s:read var="enable_full_archive" default="0" /><%
+%><s:read var="always_show_problems" default="0" /><%
+%><s:read var="disable_user_standings" default="0" /><%
+%><s:read var="disable_language" default="0" /><%
+%><s:read var="problem_navigation" default="0" /><%
+%><s:read var="vertical_navigation" default="0" /><%
+%><s:read var="disable_virtual_start" default="0" /><%
+%><s:read var="disable_virtual_auto_judge" default="0" /><%
+%><s:read var="enable_auto_print_protocol" default="0" /><%
+%><s:read var="notify_clar_reply" default="0" /><%
+%><s:read var="notify_status_change" default="0" /><%
+%><s:read var="disable_auto_refresh" default="0" /><%
 
     if (!retval && phr->ss) {
         struct section_global_data *global = phr->ss->global;
         if (global) {
+            global->team_enable_src_view = team_enable_src_view;
+            global->disable_failed_test_view = disable_failed_test_view;
+            global->team_enable_rep_view = team_enable_rep_view;
+            global->team_enable_ce_view = team_enable_ce_view;
+            global->team_show_judge_report = team_show_judge_report;
+            global->report_error_code = report_error_code;
+            global->disable_clars = disable_clars;
+            global->disable_team_clars = disable_team_clars;
+            global->enable_eoln_select = enable_eoln_select;
+            global->disable_submit_after_ok = disable_submit_after_ok;
+            global->ignore_compile_errors = ignore_compile_errors;
+            global->ignore_duplicated_runs = ignore_duplicated_runs;
+            global->show_deadline = show_deadline;
+            global->show_sha1 = show_sha1;
+            global->enable_printing = enable_printing;
+            global->disable_banner_page = disable_banner_page;
+            global->printout_uses_login = printout_uses_login;
+            global->prune_empty_users = prune_empty_users;
+            global->enable_full_archive = enable_full_archive;
+            global->always_show_problems = always_show_problems;
+            global->disable_user_standings = disable_user_standings;
+            global->disable_language = disable_language;
+            global->problem_navigation = problem_navigation;
+            global->vertical_navigation = vertical_navigation;
+            global->disable_virtual_start = disable_virtual_start;
+            global->disable_virtual_auto_judge = disable_virtual_auto_judge;
+            global->enable_auto_print_protocol = enable_auto_print_protocol;
+            global->notify_clar_reply = notify_clar_reply;
+            global->notify_status_change = notify_status_change;
+            global->disable_auto_refresh = disable_auto_refresh;
         }
     }
 
-//cleanup:;
+cleanup:;
     fclose(msg_f); msg_f = NULL;
 %>
 {
