@@ -3501,6 +3501,10 @@ handle_tr_open(
     if (onclick_attr) {
         fprintf(str_f, " onclick=\"%s\"", onclick_attr->value);
     }
+    HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
+    if (id_attr) {
+        fprintf(str_f, " id=\"%s\"", id_attr->value);
+    }
 
     HtmlAttribute *attr_attr = html_element_find_attribute(elem, "attr");
     if (attr_attr) {
