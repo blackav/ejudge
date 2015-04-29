@@ -225,6 +225,53 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
+<div id="FilesDialogDiv">
+    <s:form id="FilesDialogForm">
+        <s:hidden name="action" ac="glob-save-files-form" />
+
+        <div id="files-advanced_layout-div">
+            <div style="width: 300px; display: inline-block;"><label for="files-advanced_layout">Advanced problem files layout:</label></div>
+            <input type="checkbox" name="advanced_layout" id="files-advanced_layout" value="1" onchange="filesDialogOnChange()" />
+        </div>
+        <div id="files-uuid_run_store-div">
+            <div style="width: 300px; display: inline-block;"><label for="files-uuid_run_store">Use UUID instead of run_id to store runs:</label></div>
+            <input type="checkbox" name="uuid_run_store" id="files-uuid_run_store" value="1" onchange="filesDialogOnChange()" />
+        </div>
+        <div id="files-test_dir-div">
+            <div style="width: 300px; display: inline-block;"><label for="files-test_dir">Directory for tests:</label></div>
+            <s:textfield size="48" name="test_dir" id="files-test_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
+        </div>
+        <div id="files-corr_dir-div">
+            <div style="width: 300px; display: inline-block;"><label for="files-corr_dir">Directory for correct answers:</label></div>
+            <s:textfield size="48" name="corr_dir" id="files-corr_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
+        </div>
+        <div id="files-info_dir-div">
+            <div style="width: 300px; display: inline-block;"><label for="files-info_dir">Directory for test info files:</label></div>
+            <s:textfield size="48" name="info_dir" id="files-info_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
+        </div>
+        <div id="files-tgz_dir-div">
+            <div style="width: 300px; display: inline-block;"><label for="files-tgz_dir">Directory for test tgz files:</label></div>
+            <s:textfield size="48" name="tgz_dir" id="files-tgz_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
+        </div>
+        <div id="files-checker_dir-div">
+            <div style="width: 300px; display: inline-block;"><label for="files-checker_dir">Directory for checkers:</label></div>
+            <s:textfield size="48" name="checker_dir" id="files-checker_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
+        </div>
+        <div id="files-statement_dir-div">
+            <div style="width: 300px; display: inline-block;"><label for="files-statement_dir">Directory for problem statements:</label></div>
+            <s:textfield size="48" name="statement_dir" id="files-statement_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
+        </div>
+        <div id="files-contest_start_cmd-div">
+            <div style="width: 300px; display: inline-block;"><label for="files-contest_start_cmd">Contest start script:</label></div>
+            <s:textfield size="48" name="contest_start_cmd" id="files-contest_start_cmd" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
+        </div>
+        <div id="files-contest_stop_cmd-div">
+            <div style="width: 300px; display: inline-block;"><label for="files-contest_stop_cmd">Contest stop script:</label></div>
+            <s:textfield size="48" name="contest_stop_cmd" id="files-contest_stop_cmd" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
+        </div>
+    </s:form>
+</div>
+
 <script type="text/javascript">
 $(function() {
     $('#GlobalAccordion').accordion({ heightStyle: "content" });
@@ -303,6 +350,43 @@ $(function() {
     $("#orig-disable_virtual_start-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" />);
     $("#orig-disable_virtual_auto_judge-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
     $("#orig-enable_auto_print_protocol-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
+
+    filesDialog = $("#FilesDialogDiv").dialog({
+        autoOpen: false,
+        height: 500,
+        width: 600,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#FilesDialogForm").serialize();
+                var formURL = $("#FilesDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                filesDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
+
+    $("#orig-test_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" />);
+    $("#orig-corr_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" />);
+    $("#orig-info_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" />);
+    $("#orig-tgz_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" />);
+    $("#orig-checker_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" />);
+    $("#orig-statement_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" />);
 });
 
 function np(e)
@@ -417,6 +501,41 @@ function capsDialogOnChange()
     $("#caps-disable_virtual_start-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" />);
     $("#caps-disable_virtual_auto_judge-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
     $("#caps-enable_auto_print_protocol-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
+}
+
+function popupFilesDialog(e, skipField)
+{
+    copyCheckbox("files-advanced_layout", "orig-advanced_layout");
+    copyCheckbox("files-uuid_run_store", "orig-uuid_run_store");
+    $("#files-test_dir").val($("#orig-test_dir").val());
+    $("#files-corr_dir").val($("#orig-corr_dir").val());
+    $("#files-info_dir").val($("#orig-info_dir").val());
+    $("#files-tgz_dir").val($("#orig-tgz_dir").val());
+    $("#files-checker_dir").val($("#orig-checker_dir").val());
+    $("#files-statement_dir").val($("#orig-statement_dir").val());
+    $("#files-contest_start_cmd").val($("#orig-contest_start_cmd").val());
+    $("#files-contest_stop_cmd").val($("#orig-contest_stop_cmd").val());
+
+    if (skipField != null) {
+        obj = document.getElementById("files-" + skipField);
+        if (obj != null) {
+            obj.value = "";
+        }
+    }
+
+    if (e) e.stopPropagation();
+    filesDialogOnChange();
+    $("#FilesDialogDiv").dialog('open');
+}
+
+function filesDialogOnChange()
+{
+    $("#files-test_dir-div").toggle(!$("#files-advanced_layout").is(':checked'));
+    $("#files-corr_dir-div").toggle(!$("#files-advanced_layout").is(':checked'));
+    $("#files-info_dir-div").toggle(!$("#files-advanced_layout").is(':checked'));
+    $("#files-tgz_dir-div").toggle(!$("#files-advanced_layout").is(':checked'));
+    $("#files-checker_dir-div").toggle(!$("#files-advanced_layout").is(':checked'));
+    $("#files-statement_dir-div").toggle(!$("#files-advanced_layout").is(':checked'));
 }
 </script>
 
@@ -823,158 +942,71 @@ function capsDialogOnChange()
     <h3>Files and directories</h3>
 
     <div>
-        <table border="0">
+        <table border="0" onclick="popupFilesDialog()">
 
-    <s:form>
-        <s:tr attr="head_row_attr">
-            <td colspan="4" align="center"><b>Files and directories</b><%
-%></td>
-        </s:tr>
-    </s:form>
 <%
   row = 1;
 %>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Advanced problem files layout:</td>
-            <td><s:yesno name="param" value="global->advanced_layout" /></td>
-            <td><s:submit ac="glob-change-advanced-layout" label="Change" /></td>
-            <td><s:help ac="glob-change-advanced-layout" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Use UUID instead of run_id to store runs:</td>
-            <td><s:yesno name="param" value="global->uuid_run_store" /></td>
-            <td><s:submit ac="glob-change-uuid-run-store" label="Change" /></td>
-            <td><s:help ac="glob-change-uuid-run-store" /></td>
-        </s:tr>
-    </s:form>
-
-<%
-  if (global->advanced_layout <= 0) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Directory for tests (relative to contest configuration dir):</td>
-            <td><s:textfield name="param" value="global->test_dir" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-test-dir" label="Change" /><s:submit ac="glob-clear-test-dir" label="Clear" /></td>
-            <td><s:help ac="glob-change-test-dir" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (global->advanced_layout <= 0) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Directory for correct answers (relative to contest configuration dir):</td>
-            <td><s:textfield name="param" value="global->corr_dir" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-corr-dir" label="Change" /><s:submit ac="glob-clear-corr-dir" label="Clear" /></td>
-            <td><s:help ac="glob-change-corr-dir" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (global->advanced_layout <= 0) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Directory for test info files (relative to contest configuration dir):</td>
-            <td><s:textfield name="param" value="global->info_dir" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-info-dir" label="Change" /><s:submit ac="glob-clear-info-dir" label="Clear" /></td>
-            <td><s:help ac="glob-change-info-dir" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (global->advanced_layout <= 0) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Directory for test tgz files (relative to contest configuration dir):</td>
-            <td><s:textfield name="param" value="global->tgz_dir" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-tgz-dir" label="Change" /><s:submit ac="glob-clear-tgz-dir" label="Clear" /></td>
-            <td><s:help ac="glob-change-tgz-dir" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (global->advanced_layout <= 0) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Directory for checkers (relative to contest configuration dir):</td>
-            <td><s:textfield name="param" value="global->checker_dir" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-checker-dir" label="Change" /><s:submit ac="glob-clear-checker-dir" label="Clear" /></td>
-            <td><s:help ac="glob-change-checker-dir" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (global->advanced_layout <= 0) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Directory for problem statements (relative to contest configuration dir):</td>
-            <td><s:textfield name="param" value="global->statement_dir" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-statement-dir" label="Change" /><s:submit ac="glob-clear-statement-dir" label="Clear" /></td>
-            <td><s:help ac="glob-change-statement-dir" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (global->advanced_layout <= 0) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Directory for problem plugins (relative to contest configuration dir):</td>
-            <td><s:textfield name="param" value="global->plugin_dir" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-plugin-dir" label="Change" /><s:submit ac="glob-clear-plugin-dir" label="Clear" /></td>
-            <td><s:help ac="glob-change-plugin-dir" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Contest start script:</td>
-            <td><s:textfield name="param" value="global->contest_start_cmd" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-contest-start-cmd" label="Change" /><s:submit ac="glob-clear-contest-start-cmd" label="Clear" />[<s:a ac="glob-edit-contest-start-cmd-page">Edit</s:a>]</td>
-            <td><s:help ac="glob-change-contest-start-cmd" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Contest stop script:</td>
-            <td><s:textfield name="param" value="global->contest_stop_cmd" size="48" maxlength="1024" checkExpr="" /></td>
-            <td><s:submit ac="glob-change-contest-stop-cmd" label="Change" /><s:submit ac="glob-clear-contest-stop-cmd" label="Clear" />[<s:a ac="glob-edit-contest-stop-cmd-page">Edit</s:a>]</td>
-            <td><s:help ac="glob-change-contest-stop-cmd" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-advanced_layout-div">
+                <td>Advanced problem files layout:</td>
+                <td><s:yesno id="orig-advanced_layout" disabled="disabled" name="param" value="global->advanced_layout" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:advanced_layout" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-uuid_run_store-div">
+                <td>Use UUID instead of run_id to store runs:</td>
+                <td><s:yesno id="orig-uuid_run_store" disabled="disabled" name="param" value="global->uuid_run_store" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:uuid_run_store" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_dir-div">
+                <td>Directory for tests (relative to contest configuration dir):</td>
+                <td><s:textfield id="orig-test_dir" readonly="readonly" name="param" value="global->test_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupFilesDialog(event, 'test_dir')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:test_dir" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-corr_dir-div">
+                <td>Directory for correct answers (relative to contest configuration dir):</td>
+                <td><s:textfield id="orig-corr_dir" readonly="readonly" name="param" value="global->corr_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupFilesDialog(event, 'corr_dir')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:corr_dir" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-info_dir-div">
+                <td>Directory for test info files (relative to contest configuration dir):</td>
+                <td><s:textfield id="orig-info_dir" readonly="readonly" name="param" value="global->info_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupFilesDialog(event, 'info_dir')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:info_dir" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-tgz_dir-div">
+                <td>Directory for test tgz files (relative to contest configuration dir):</td>
+                <td><s:textfield id="orig-tgz_dir" readonly="readonly" name="param" value="global->tgz_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupFilesDialog(event, 'tgz_dir')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:tgz_dir" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-checker_dir-div">
+                <td>Directory for checkers (relative to contest configuration dir):</td>
+                <td><s:textfield id="orig-checker_dir" readonly="readonly" name="param" value="global->checker_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupFilesDialog(event, 'checker_dir')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:checker_dir" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-statement_dir-div">
+                <td>Directory for problem statements (relative to contest configuration dir):</td>
+                <td><s:textfield id="orig-statement_dir" readonly="readonly" name="param" value="global->statement_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupFilesDialog(event, 'statement_dir')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:statement_dir" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-contest_start_cmd-div">
+                <td>Contest start script:</td>
+                <td><s:textfield id="orig-contest_start_cmd" readonly="readonly" name="param" value="global->contest_start_cmd" size="48" maxlength="1024" /></td>
+                <td onclick="np(event);"><input type="button" onclick="popupFilesDialog(event, 'contest_start_cmd')" value="Clear" />[<s:a ac="glob-edit-contest-start-cmd-page">Edit</s:a>]</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:contest_start_cmd" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-contest_stop_cmd-div">
+                <td>Contest stop script:</td>
+                <td><s:textfield id="orig-contest_stop_cmd" readonly="readonly" name="param" value="global->contest_stop_cmd" size="48" maxlength="1024" /></td>
+                <td onclick="np(event);"><input type="button" onclick="popupFilesDialog(event, 'contest_stop_cmd')" value="Clear" />[<s:a ac="glob-edit-contest-stop-cmd-page">Edit</s:a>]</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:contest_stop_cmd" /></td>
+            </s:tr>
         </table>
     </div>
 

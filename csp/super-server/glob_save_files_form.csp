@@ -10,22 +10,58 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-// declare local variables here
+    ejintbool_t advanced_layout = 0;
+    ejintbool_t uuid_run_store = 0;
+    unsigned char *test_dir = NULL;
+    unsigned char *corr_dir = NULL;
+    unsigned char *info_dir = NULL;
+    unsigned char *tgz_dir = NULL;
+    unsigned char *checker_dir = NULL;
+    unsigned char *statement_dir = NULL;
+    unsigned char *contest_start_cmd = NULL;
+    unsigned char *contest_stop_cmd = NULL;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
-// read the parameters here like <s:read var="name" normalize="yes" />
+%><s:read var="advanced_layout" default="0" /><%
+%><s:read var="uuid_run_store" default="0" /><%
+%><s:read var="test_dir" normalize="yes" /><%
+%><s:read var="corr_dir" normalize="yes" /><%
+%><s:read var="info_dir" normalize="yes" /><%
+%><s:read var="tgz_dir" normalize="yes" /><%
+%><s:read var="checker_dir" normalize="yes" /><%
+%><s:read var="statement_dir" normalize="yes" /><%
+%><s:read var="contest_start_cmd" normalize="yes" /><%
+%><s:read var="contest_stop_cmd" normalize="yes" /><%
 
 // validate parameters here
 
     if (!retval && phr->ss) {
         struct section_global_data *global = phr->ss->global;
         if (global) {
+            global->advanced_layout = advanced_layout;
+            global->uuid_run_store = uuid_run_store;
+            global->test_dir[0] = 0;
+            if (test_dir) snprintf(global->test_dir, sizeof(global->test_dir), "%s", test_dir);
+            global->corr_dir[0] = 0;
+            if (corr_dir) snprintf(global->corr_dir, sizeof(global->corr_dir), "%s", corr_dir);
+            global->info_dir[0] = 0;
+            if (info_dir) snprintf(global->info_dir, sizeof(global->info_dir), "%s", info_dir);
+            global->tgz_dir[0] = 0;
+            if (tgz_dir) snprintf(global->tgz_dir, sizeof(global->tgz_dir), "%s", tgz_dir);
+            global->checker_dir[0] = 0;
+            if (checker_dir) snprintf(global->checker_dir, sizeof(global->checker_dir), "%s", checker_dir);
+            global->statement_dir[0] = 0;
+            if (statement_dir) snprintf(global->statement_dir, sizeof(global->statement_dir), "%s", statement_dir);
+            global->contest_start_cmd[0] = 0;
+            if (contest_start_cmd) snprintf(global->contest_start_cmd, sizeof(global->contest_start_cmd), "%s", contest_start_cmd);
+            global->contest_stop_cmd = NULL;
+            global->contest_stop_cmd = xstrdup2(contest_stop_cmd);
         }
     }
 
-//cleanup:;
+cleanup:;
     fclose(msg_f); msg_f = NULL;
 %>
 {
@@ -35,6 +71,14 @@
     "messages" : "<s:v value="msg_s" json="yes" checkExpr="" />"
 }
 <%
+    xfree(test_dir);
+    xfree(corr_dir);
+    xfree(info_dir);
+    xfree(tgz_dir);
+    xfree(checker_dir);
+    xfree(statement_dir);
+    xfree(contest_start_cmd);
+    xfree(contest_stop_cmd);
     html_armor_free(&ab);
     xfree(msg_s);
 %>
