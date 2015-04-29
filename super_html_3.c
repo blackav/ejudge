@@ -91,20 +91,9 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SET_PREDEF_PERMISSIONS] = "Contest.xml",
 
   [SSERV_CMD_GLOB_CHANGE_TOKENS] = "Serve.cfg:global:tokens",
-  [SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT] = "Serve.cfg:global:advanced_layout",
-  [SSERV_CMD_GLOB_CHANGE_UUID_RUN_STORE] = "Serve.cfg:global:uuid_run_store",
   [SSERV_CMD_GLOB_CHANGE_IGNORE_BOM] = "Serve.cfg:global:ignore_bom",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE] = "Serve.cfg:global:disable_user_database",
-  [SSERV_CMD_GLOB_CHANGE_TEST_DIR] = "Serve.cfg:global:test_dir",
-  [SSERV_CMD_GLOB_CHANGE_CORR_DIR] = "Serve.cfg:global:corr_dir",
-  [SSERV_CMD_GLOB_CHANGE_INFO_DIR] = "Serve.cfg:global:info_dir",
-  [SSERV_CMD_GLOB_CHANGE_TGZ_DIR] = "Serve.cfg:global:tgz_dir",
-  [SSERV_CMD_GLOB_CHANGE_CHECKER_DIR] = "Serve.cfg:global:checker_dir",
-  [SSERV_CMD_GLOB_CHANGE_STATEMENT_DIR] = "Serve.cfg:global:statement_dir",
-  [SSERV_CMD_GLOB_CHANGE_PLUGIN_DIR] = "Serve.cfg:global:plugin_dir",
   [SSERV_CMD_GLOB_CHANGE_DESCRIPTION_FILE] = "Serve.cfg:global:description_file",
-  [SSERV_CMD_GLOB_CHANGE_CONTEST_START_CMD] = "Serve.cfg:global:contest_start_cmd",
-  [SSERV_CMD_GLOB_CHANGE_CONTEST_STOP_CMD] = "Serve.cfg:global:contest_stop_cmd",
   [SSERV_CMD_GLOB_CHANGE_MAX_RUN_SIZE] = "Serve.cfg:global:max_run_size",
   [SSERV_CMD_GLOB_CHANGE_MAX_RUN_TOTAL] = "Serve.cfg:global:max_run_total",
   [SSERV_CMD_GLOB_CHANGE_MAX_RUN_NUM] = "Serve.cfg:global:max_run_num",
@@ -419,14 +408,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     *p_int = val;
     return 0;
 
-  case SSERV_CMD_GLOB_CHANGE_ADVANCED_LAYOUT:
-    p_int = &global->advanced_layout;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_UUID_RUN_STORE:
-    p_int = &global->uuid_run_store;
-    goto handle_boolean;
-
   case SSERV_CMD_GLOB_CHANGE_IGNORE_BOM:
     p_int = &global->ignore_bom;
     goto handle_boolean;
@@ -435,73 +416,15 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     p_int = &global->disable_user_database;
     goto handle_boolean;
 
-  case SSERV_CMD_GLOB_CHANGE_TEST_DIR:
-    GLOB_SET_STRING(test_dir);
-
   handle_string:
     snprintf(p_str, str_size, "%s", param2);
     return 0;
     
-  case SSERV_CMD_GLOB_CLEAR_TEST_DIR:
-    GLOB_CLEAR_STRING(test_dir);
-
-  case SSERV_CMD_GLOB_CHANGE_CORR_DIR:
-    GLOB_SET_STRING(corr_dir);
-
-  case SSERV_CMD_GLOB_CLEAR_CORR_DIR:
-    GLOB_CLEAR_STRING(corr_dir);
-
-  case SSERV_CMD_GLOB_CHANGE_INFO_DIR:
-    GLOB_SET_STRING(info_dir);
-
-  case SSERV_CMD_GLOB_CLEAR_INFO_DIR: 
-    GLOB_CLEAR_STRING(info_dir);
-
-  case SSERV_CMD_GLOB_CHANGE_TGZ_DIR:
-    GLOB_SET_STRING(tgz_dir);
-
-  case SSERV_CMD_GLOB_CLEAR_TGZ_DIR: 
-    GLOB_CLEAR_STRING(tgz_dir);
-
-  case SSERV_CMD_GLOB_CHANGE_CHECKER_DIR:
-    GLOB_SET_STRING(checker_dir);
-
-  case SSERV_CMD_GLOB_CLEAR_CHECKER_DIR:
-    GLOB_CLEAR_STRING(checker_dir);
-
-  case SSERV_CMD_GLOB_CHANGE_STATEMENT_DIR:
-    GLOB_SET_STRING(statement_dir);
-
-  case SSERV_CMD_GLOB_CLEAR_STATEMENT_DIR:
-    GLOB_CLEAR_STRING(statement_dir);
-
-  case SSERV_CMD_GLOB_CHANGE_PLUGIN_DIR:
-    GLOB_SET_STRING(plugin_dir);
-
-  case SSERV_CMD_GLOB_CLEAR_PLUGIN_DIR:
-    GLOB_CLEAR_STRING(plugin_dir);
-
   case SSERV_CMD_GLOB_CHANGE_DESCRIPTION_FILE:
     GLOB_SET_STRING(description_file);
 
   case SSERV_CMD_GLOB_CLEAR_DESCRIPTION_FILE:
     GLOB_CLEAR_STRING(description_file);
-
-  case SSERV_CMD_GLOB_CHANGE_CONTEST_START_CMD:
-    GLOB_SET_STRING(contest_start_cmd);
-
-  case SSERV_CMD_GLOB_CLEAR_CONTEST_START_CMD:
-    GLOB_CLEAR_STRING(contest_start_cmd);
-
-  case SSERV_CMD_GLOB_CHANGE_CONTEST_STOP_CMD:
-    xfree(global->contest_stop_cmd);
-    global->contest_stop_cmd = xstrdup(param2);
-    break;
-
-  case SSERV_CMD_GLOB_CLEAR_CONTEST_STOP_CMD:
-    xfree(global->contest_stop_cmd);
-    global->contest_stop_cmd = 0;
-    break;
 
   case SSERV_CMD_GLOB_CHANGE_MAX_RUN_SIZE:
     p_int = &global->max_run_size;
