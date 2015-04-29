@@ -3733,6 +3733,8 @@ handle_v_open(
             t = tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_duration_t"));
         } else if (!strcmp(type_attr->value, "brief_time")) {
             t = tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_brief_time_t"));
+        } else if (!strcmp(type_attr->value, "jsbool")) {
+            t = tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_jsbool_t"));
         }
     } else {
         int r = parse_c_expression(ps, cntx, log_f, at->value, &t, ps->pos);
@@ -4834,6 +4836,20 @@ int_type_handler(
 }
 
 static void
+ej_jsbool_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    fprintf(prg_f, "fputs((%s)?(\"true\"):(\"false\"), out_f);\n", text);
+}
+
+static void
 unsigned_type_handler(
         FILE *log_f,
         TypeContext *cntx,
@@ -5558,6 +5574,8 @@ process_unit(
                                      ej_duration_type_handler);
     processor_state_set_type_handler(ps, tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_brief_time_t")),
                                      ej_brief_time_type_handler);
+    processor_state_set_type_handler(ps, tc_get_typedef_type(cntx, tc_get_i0_type(cntx), tc_get_ident(cntx, "__ej_jsbool_t")),
+                                     ej_jsbool_type_handler);
 
     processor_state_set_array_type_handler(ps, tc_get_u8_type(cntx), string_type_handler);
     processor_state_set_array_type_handler(ps, tc_get_i8_type(cntx), string_type_handler);
