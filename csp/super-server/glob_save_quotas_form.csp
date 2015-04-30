@@ -10,12 +10,24 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-// declare local variables here
+    ej_size64_t max_run_size = 0;
+    ej_size64_t max_run_total = 0;
+    int max_run_num = 0;
+    ej_size64_t max_clar_size = 0;
+    ej_size64_t max_clar_total = 0;
+    int max_clar_num = 0;
+    int team_page_quota = 0;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
-// read the parameters here like <s:read var="name" normalize="yes" />
+%><s:read var="max_run_size" default="-1" /><%
+%><s:read var="max_run_total" default="-1" /><%
+%><s:read var="max_run_num" default="-1" /><%
+%><s:read var="max_clar_size" default="-1" /><%
+%><s:read var="max_clar_total" default="-1" /><%
+%><s:read var="max_clar_num" default="-1" /><%
+%><s:read var="team_page_quota" default="-1" /><%
 
 // validate parameters here
 
@@ -25,7 +37,7 @@
         }
     }
 
-//cleanup:;
+cleanup:;
     fclose(msg_f); msg_f = NULL;
 %>
 {

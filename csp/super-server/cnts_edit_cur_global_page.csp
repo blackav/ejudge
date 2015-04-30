@@ -272,6 +272,41 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
+<div id="QuotasDialogDiv">
+    <s:form id="QuotasDialogForm">
+        <s:hidden name="action" ac="glob-save-quotas-form" />
+
+        <div id="quotas-max_run_size-div">
+            <div style="width: 300px; display: inline-block;"><label for="quotas-max_run_size">Maximum size of one submitted program:</label></div>
+            <s:textfield size="48" name="max_run_size" id="quotas-max_run_size" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="quotas-max_run_total-div">
+            <div style="width: 300px; display: inline-block;"><label for="quotas-max_run_total">Maximum total size of all submitted programs:</label></div>
+            <s:textfield size="48" name="max_run_total" id="quotas-max_run_total" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="quotas-max_run_num-div">
+            <div style="width: 300px; display: inline-block;"><label for="quotas-max_run_num">Maximum number of submits:</label></div>
+            <s:textfield size="48" name="max_run_num" id="quotas-max_run_num" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="quotas-max_clar_size-div">
+            <div style="width: 300px; display: inline-block;"><label for="quotas-max_clar_size">Maximum size of one clarification request:</label></div>
+            <s:textfield size="48" name="max_clar_size" id="quotas-max_clar_size" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="quotas-max_clar_total-div">
+            <div style="width: 300px; display: inline-block;"><label for="quotas-max_clar_total">Maximum size of all clarification requests:</label></div>
+            <s:textfield size="48" name="max_clar_total" id="quotas-max_clar_total" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="quotas-max_clar_num-div">
+            <div style="width: 300px; display: inline-block;"><label for="quotas-max_clar_num">Maximum number of clarification requests:</label></div>
+            <s:textfield size="48" name="max_clar_num" id="quotas-max_clar_num" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="quotas-team_page_quota-div">
+            <div style="width: 300px; display: inline-block;"><label for="quotas-team_page_quota">Maximum number of printed pages:</label></div>
+            <s:textfield size="48" name="team_page_quota" id="quotas-team_page_quota" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+    </s:form>
+</div>
+
 <script type="text/javascript">
 $(function() {
     $('#GlobalAccordion').accordion({ heightStyle: "content" });
@@ -387,6 +422,45 @@ $(function() {
     $("#orig-tgz_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" />);
     $("#orig-checker_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" />);
     $("#orig-statement_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" />);
+
+    quotasDialog = $("#QuotasDialogDiv").dialog({
+        autoOpen: false,
+        height: 500,
+        width: 600,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#QuotasDialogForm").serialize();
+                var formURL = $("#QuotasDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                quotasDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
+
+    $("#orig-max_clar_size-div").toggle(<s:v type="jsbool" value="global->disable_clars <= 0 && global->disable_team_clars <= 0" />);
+    $("#orig-max_clar_total-div").toggle(<s:v type="jsbool" value="global->disable_clars <= 0 && global->disable_team_clars <= 0" />);
+    $("#orig-max_clar_num-div").toggle(<s:v type="jsbool" value="global->disable_clars <= 0 && global->disable_team_clars <= 0" />);
+    $("#orig-team_page_quota-div").toggle(<s:v type="jsbool" value="global->enable_printing > 0" />);
+    $("#quotas-max_clar_size-div").toggle(<s:v type="jsbool" value="global->disable_clars <= 0 && global->disable_team_clars <= 0" />);
+    $("#quotas-max_clar_total-div").toggle(<s:v type="jsbool" value="global->disable_clars <= 0 && global->disable_team_clars <= 0" />);
+    $("#quotas-max_clar_num-div").toggle(<s:v type="jsbool" value="global->disable_clars <= 0 && global->disable_team_clars <= 0" />);
+    $("#quotas-team_page_quota-div").toggle(<s:v type="jsbool" value="global->enable_printing > 0" />);
 });
 
 function np(e)
@@ -536,6 +610,27 @@ function filesDialogOnChange()
     $("#files-tgz_dir-div").toggle(!$("#files-advanced_layout").is(':checked'));
     $("#files-checker_dir-div").toggle(!$("#files-advanced_layout").is(':checked'));
     $("#files-statement_dir-div").toggle(!$("#files-advanced_layout").is(':checked'));
+}
+
+function popupQuotasDialog(e, skipField)
+{
+    $("#quotas-max_run_size").val($("#orig-max_run_size").val());
+    $("#quotas-max_run_total").val($("#orig-max_run_total").val());
+    $("#quotas-max_run_num").val($("#orig-max_run_num").val());
+    $("#quotas-max_clar_size").val($("#orig-max_clar_size").val());
+    $("#quotas-max_clar_total").val($("#orig-max_clar_total").val());
+    $("#quotas-max_clar_num").val($("#orig-max_clar_num").val());
+    $("#quotas-team_page_quota").val($("#orig-team_page_quota").val());
+
+    if (skipField != null) {
+        obj = document.getElementById("quotas-" + skipField);
+        if (obj != null) {
+            obj.value = "";
+        }
+    }
+
+    if (e) e.stopPropagation();
+    $("#QuotasDialogDiv").dialog('open');
 }
 </script>
 
@@ -1013,116 +1108,64 @@ function filesDialogOnChange()
     <h3>Contestant quotas</h3>
 
     <div>
-        <table border="0">
-
-    <s:form>
-        <s:tr attr="head_row_attr">
-            <td colspan="4" align="center"><b>Contestant's quotas</b><%
-%></td>
-        </s:tr>
-    </s:form>
+        <table border="0" onclick="popupQuotasDialog()">
 <%
   row = 1;
 %>
-
 <%
-  num_to_size_str(hbuf, sizeof(hbuf), global->max_run_size);
+  ll_to_size_str(hbuf, sizeof(hbuf), global->max_run_size);
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Maximum size of one submitted program:</td>
-            <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-max-run-size" label="Change" /></td>
-            <td><s:help ac="glob-change-max-run-size" /></td>
-        </s:tr>
-    </s:form>
-
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_run_size-div" >
+                <td>Maximum size of one submitted program:</td>
+                <td><s:textfield id="orig-max_run_size" readonly="readonly" name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_run_size" /></td>
+            </s:tr>
 <%
-  num_to_size_str(hbuf, sizeof(hbuf), global->max_run_total);
+  ll_to_size_str(hbuf, sizeof(hbuf), global->max_run_total);
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Maximum total size of all submitted programs:</td>
-            <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-max-run-total" label="Change" /></td>
-            <td><s:help ac="glob-change-max-run-total" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Maximum number of submits:</td>
-            <td><s:textfield name="param" value="global->max_run_num" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-max-run-num" label="Change" /></td>
-            <td><s:help ac="glob-change-max-run-num" /></td>
-        </s:tr>
-    </s:form>
-
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_run_total-div">
+                <td>Maximum total size of all submitted programs:</td>
+                <td><s:textfield id="orig-max_run_total" readonly="readonly" name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_run_total" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_run_num-div">
+                <td>Maximum number of submits:</td>
+                <td><s:textfield id="orig-max_run_num" readonly="readonly" name="param" value="global->max_run_num" size="48" maxlength="1024" check="false" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_run_num" /></td>
+            </s:tr>
 <%
-  if (global->disable_clars <= 0 && global->disable_team_clars <= 0) {
+  ll_to_size_str(hbuf, sizeof(hbuf), global->max_clar_size);
 %>
-<%
-  num_to_size_str(hbuf, sizeof(hbuf), global->max_clar_size);
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Maximum size of one clarification request:</td>
-            <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-max-clar-size" label="Change" /></td>
-            <td><s:help ac="glob-change-max-clar-size" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (global->disable_clars <= 0 && global->disable_team_clars <= 0) {
-%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_clar_size-div">
+                <td>Maximum size of one clarification request:</td>
+                <td><s:textfield id="orig-max_clar_size" readonly="readonly" name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_clar_size" /></td>
+            </s:tr>
 <%
   num_to_size_str(hbuf, sizeof(hbuf), global->max_clar_total);
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Maximum size of all clarification requests:</td>
-            <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-max-clar-total" label="Change" /></td>
-            <td><s:help ac="glob-change-max-clar-total" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (global->disable_clars <= 0 && global->disable_team_clars <= 0) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Maximum number of clarification requests:</td>
-            <td><s:textfield name="param" value="global->max_clar_num" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-max-clar-num" label="Change" /></td>
-            <td><s:help ac="glob-change-max-clar-num" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (global->enable_printing > 0) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Maximum number of printed pages:</td>
-            <td><s:textfield name="param" value="global->team_page_quota" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-team-page-quota" label="Change" /></td>
-            <td><s:help ac="glob-change-team-page-quota" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_clar_total-div">
+                <td>Maximum size of all clarification requests:</td>
+                <td><s:textfield id="orig-max_clar_total" readonly="readonly" name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_clar_total" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_clar_num-div">
+                <td>Maximum number of clarification requests:</td>
+                <td><s:textfield id="orig-max_clar_num" readonly="readonly" name="param" value="global->max_clar_num" size="48" maxlength="1024" check="false" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_clar_num" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_page_quota-div">
+                <td>Maximum number of printed pages:</td>
+                <td><s:textfield id="orig-team_page_quota" readonly="readonly" name="param" value="global->team_page_quota" size="48" maxlength="1024" check="false" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:team_page_quota" /></td>
+            </s:tr>
         </table>
     </div>
 
