@@ -1546,6 +1546,28 @@ size_t_to_size_str(
   return buf;
 }
 
+unsigned char *
+ll_to_size_str(
+        unsigned char *buf,
+        size_t buf_size,
+        long long value)
+{
+  if (value < 0) {
+    *buf = 0;
+  } else if (!value) {
+    snprintf(buf, buf_size, "0");
+  } else if (!(value % SIZE_G)) {
+    snprintf(buf, buf_size, "%lldG", value / SIZE_G);
+  } else if (!(value % SIZE_M)) {
+    snprintf(buf, buf_size, "%lldM", value / SIZE_M);
+  } else if (!(value % SIZE_K)) {
+    snprintf(buf, buf_size, "%lldK", value / SIZE_K);
+  } else {
+    snprintf(buf, buf_size, "%lld", value);
+  }
+  return buf;
+}
+
 void
 size_t_to_size_str_f(
         FILE *f,

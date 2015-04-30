@@ -181,6 +181,11 @@ size_t_to_size_str(
         unsigned char *buf,
         size_t buf_size,
         size_t num);
+unsigned char *
+ll_to_size_str(
+        unsigned char *buf,
+        size_t buf_size,
+        long long value);
 void
 size_t_to_size_str_f(
         FILE *f,
