@@ -76,19 +76,19 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="MainDialogForm">
         <s:hidden name="action" ac="glob-save-main-form" />
         <div>
-            <div style="width: 300px; display: inline-block;"><label for="MainDialogContestTime">Contest time (HH:MM):</label></div>
-            <s:textfield size="10" name="contest_time" id="MainDialogContestTime" value="" class="text ui-widget-content ui-corner-all" onchange="mainDialogOnChange()" />
+            <div style="width: 300px; display: inline-block;"><label for="main-contest_time">Contest time (HH:MM):</label></div>
+            <s:textfield size="10" name="contest_time" id="main-contest_time" value="" class="text ui-widget-content ui-corner-all" onchange="mainDialogOnChange()" />
         </div>
 
-        <div id="MainDialogContestFinishTimeDiv">
-            <div style="width: 300px; display: inline-block;"><label for="MainDialogContestFinishTimeTime">Contest end time:</label></div>
-            <input id="MainDialogContestFinishTimeTime" type="text" name="contest_finish_time_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
-            <input id="MainDialogContestFinishTimeDate" type="text" name="contest_finish_time_date" size="10" class="text ui-widget-content ui-corner-all" />
+        <div id="main-contest_finish_time-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-contest_finish_time_time">Contest end time:</label></div>
+            <input id="main-contest_finish_time_time" type="text" name="contest_finish_time_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
+            <input id="main-contest_finish_time_date" type="text" name="contest_finish_time_date" size="10" class="text ui-widget-content ui-corner-all" />
         </div>
 
         <div>
-            <div style="width: 300px; display: inline-block;"><label for="MainDialogScoreSystem">Scoring System:</label></div>
-            <select id="MainDialogScoreSystem" name="score_system">
+            <div style="width: 300px; display: inline-block;"><label for="main-score_system">Scoring System:</label></div>
+            <select id="main-score_system" name="score_system">
                 <option value="0">ACM</option>
                 <option value="1">Kirov</option>
                 <option value="2">Olympiad</option>
@@ -98,72 +98,72 @@ static const unsigned char * const form_row_attrs[]=
             </select>
         </div>
 
-        <div id="MainDialogBoardFogTimeDiv">
-            <div style="width: 300px; display: inline-block;"><label for="MainDialogBoardFogTime">Standings freeze time (HH:MM) before finish:</label></div>
-            <s:textfield size="10" name="board_fog_time" id="MainDialogBoardFogTime" value="" class="text ui-widget-content ui-corner-all" onchange="mainDialogOnChange()" />
+        <div id="main-board_fog_time-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-board_fog_time">Standings freeze time (HH:MM) before finish:</label></div>
+            <s:textfield size="10" name="board_fog_time" id="main-board_fog_time" value="" class="text ui-widget-content ui-corner-all" onchange="mainDialogOnChange()" />
         </div>
 
-        <div id="MainDialogBoardUnfogTimeDiv">
-            <div style="width: 300px; display: inline-block;"><label for="MainDialogBoardUnfogTime">Standings unfreeze time (HH:MM) after finish:</label></div>
-            <s:textfield size="10" name="board_unfog_time" id="MainDialogBoardUnfogTime" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-
-        <div>
-            <div style="width: 300px; display: inline-block;"><label for="MainDialogUseCompilationServer">Use the default compilation server:</label></div>
-            <input type="checkbox" name="use_compilation_server" id="MainDialogUseCompilationServer" value="1" />
+        <div id="main-board_unfog_time-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-board_unfog_time">Standings unfreeze time (HH:MM) after finish:</label></div>
+            <s:textfield size="10" name="board_unfog_time" id="main-board_unfog_time" value="" class="text ui-widget-content ui-corner-all" />
         </div>
 
         <div>
-            <div style="width: 300px; display: inline-block;"><label for="MainDialogEnableWin32Languages">Enable Win32 languages:</label></div>
-            <input type="checkbox" name="enable_win32_languages" id="MainDialogEnableWin32Languages" value="1" />
+            <div style="width: 300px; display: inline-block;"><label for="main-use_compilation_server">Use the default compilation server:</label></div>
+            <input type="checkbox" name="use_compilation_server" id="main-use_compilation_server" value="1" />
         </div>
 
         <div>
-            <div style="width: 300px; display: inline-block;"><label for="MainDialogSeparateUserScore">Calculate and store user-visible score separately:</label></div>
-            <input type="checkbox" name="separate_user_score" id="MainDialogSeparateUserScore" value="1" />
+            <div style="width: 300px; display: inline-block;"><label for="main-enable_win32_languages">Enable Win32 languages:</label></div>
+            <input type="checkbox" name="enable_win32_languages" id="main-enable_win32_languages" value="1" />
         </div>
 
         <div>
-            <div style="width: 300px; display: inline-block;"><label for="MainDialogSecureRun">Run programs securely:</label></div>
-            <input type="checkbox" name="secure_run" id="MainDialogSecureRun" value="1" onchange="mainDialogOnChange()" />
-        </div>
-
-        <div id="MainDialogEnableMemoryLimitErrorDiv">
-            <div style="width: 300px; display: inline-block;"><label for="MainDialogEnableMemoryLimitError">Enable support for MemoryLimit error:</label></div>
-            <input type="checkbox" name="enable_memory_limit_error" id="MainDialogEnableMemoryLimitError" value="1" />
-        </div>
-
-        <div id="MainDialogDetectViolationsDiv">
-            <div style="width: 300px; display: inline-block;"><label for="MainDialogDetectViolations">Detect security violations:</label></div>
-            <input type="checkbox" name="detect_violations" id="MainDialogDetectViolations" value="1" />
+            <div style="width: 300px; display: inline-block;"><label for="main-separate_user_score">Calculate and store user-visible score separately:</label></div>
+            <input type="checkbox" name="separate_user_score" id="main-separate_user_score" value="1" />
         </div>
 
         <div>
-            <div style="width: 300px; display: inline-block;"><label for="MainDialogEnableMaxStackSize">Assume max_stack_size == max_vm_size:</label></div>
-            <input type="checkbox" name="enable_max_stack_size" id="MainDialogEnableMaxStackSize" value="1" />
+            <div style="width: 300px; display: inline-block;"><label for="main-secure_run">Run programs securely:</label></div>
+            <input type="checkbox" name="secure_run" id="main-secure_run" value="1" onchange="mainDialogOnChange()" />
+        </div>
+
+        <div id="main-enable_memory_limit_error-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-enable_memory_limit_error">Enable support for MemoryLimit error:</label></div>
+            <input type="checkbox" name="enable_memory_limit_error" id="main-enable_memory_limit_error" value="1" />
+        </div>
+
+        <div id="main-detect_violations-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-detect_violations">Detect security violations:</label></div>
+            <input type="checkbox" name="detect_violations" id="main-detect_violations" value="1" />
         </div>
 
         <div>
-            <div style="width: 300px; display: inline-block;"><label for="MainDialogStandingsLocale">Standings locale:</label></div>
-<% l10n_html_locale_select_3(out_f, "MainDialogStandingsLocale", NULL, "standings_locale", NULL, -1); %>
+            <div style="width: 300px; display: inline-block;"><label for="main-enable_max_stack_size">Assume max_stack_size == max_vm_size:</label></div>
+            <input type="checkbox" name="enable_max_stack_size" id="main-enable_max_stack_size" value="1" />
         </div>
 
         <div>
-            <div style="width: 300px; display: inline-block;"><label for="MainDialogCheckerLocale">Checker locale:</label></div>
-<% l10n_html_locale_select_3(out_f, "MainDialogCheckerLocale", NULL, "checker_locale", NULL, -1); %>
+            <div style="width: 300px; display: inline-block;"><label for="main-standings_locale">Standings locale:</label></div>
+<% l10n_html_locale_select_3(out_f, "main-standings_locale", NULL, "standings_locale", NULL, -1); %>
+        </div>
+
+        <div>
+            <div style="width: 300px; display: inline-block;"><label for="main-checker_locale">Checker locale:</label></div>
+<% l10n_html_locale_select_3(out_f, "main-checker_locale", NULL, "checker_locale", NULL, -1); %>
         </div>
 
 <%
   if (sizeof(long) == sizeof(long long)) {
 %>
         <div>
-            <div style="width: 300px; display: inline-block;"><label for="MainDialogEnable32bitCheckers">Compile 32-bit checkers on 64-bit platforms:</label></div>
-            <input type="checkbox" name="enable_32bit_checkers" id="MainDialogEnable32bitCheckers" value="1" />
+            <div style="width: 300px; display: inline-block;"><label for="main-enable_32bit_checkers">Compile 32-bit checkers on 64-bit platforms:</label></div>
+            <input type="checkbox" name="enable_32bit_checkers" id="main-enable_32bit_checkers" value="1" />
         </div>
 <%
   } else {
 %>
-        <input type="hidden" name="enable_32bit_checkers" id="MainDialogEnable32bitCheckers" value="" />
+        <input type="hidden" name="enable_32bit_checkers" id="main-enable_32bit_checkers" value="" />
 <%
   }
 %>
@@ -305,8 +305,8 @@ $(function() {
         close : function() {
         }
     });
-    $('#MainDialogContestFinishTimeTime').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
-    $('#MainDialogContestFinishTimeDate').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
+    $('#main-contest_finish_time_time').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
+    $('#main-contest_finish_time_date').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
 
     capsDialog = $("#CapsDialogDiv").dialog({
         autoOpen: false,
@@ -409,36 +409,36 @@ function copyCheckbox(dst, src)
 
 function popupMainDialog(e, skipField)
 {
-    $("#MainDialogContestTime").val($("#OrigContestTime").val());
-    $("#MainDialogContestFinishTimeTime").val($("#OrigContestFinishTimeTime").val());
-    $("#MainDialogContestFinishTimeDate").val($("#OrigContestFinishTimeDate").val());
-    $("#MainDialogScoreSystem").val($("#OrigScoreSystem").val());
-    $("#MainDialogBoardFogTime").val($("#OrigBoardFogTime").val());
-    $("#MainDialogBoardUnfogTime").val($("#OrigBoardUnfogTime").val());
-    copyCheckbox("MainDialogUseCompilationServer", "OrigUseCompilationServer");
-    copyCheckbox("MainDialogEnableWin32Languages", "OrigEnableWin32Languages");
-    copyCheckbox("MainDialogSeparateUserScore", "OrigSeparateUserScore");
-    copyCheckbox("MainDialogSecureRun", "OrigSecureRun");
-    copyCheckbox("MainDialogEnableMemoryLimitError", "OrigEnableMemoryLimitError");
-    copyCheckbox("MainDialogDetectViolations", "OrigDetectViolations");
-    copyCheckbox("MainDialogEnableMaxStackSize", "OrigEnableMaxStackSize");
-    $("#MainDialogStandingsLocale").val($("#OrigStandingsLocale").val());
-    $("#MainDialogCheckerLocale").val($("#OrigCheckerLocale").val());
-    copyCheckbox("MainDialogEnable32bitCheckers", "OrigEnable32bitCheckers");
+    $("#main-contest_time").val($("#orig-contest_time").val());
+    $("#main-contest_finish_time_time").val($("#orig_contest_finish_time_time").val());
+    $("#main-contest_finish_time_date").val($("#orig-contest_finish_time_date").val());
+    $("#main-score_system").val($("#orig-score_system").val());
+    $("#main-board_fog_time").val($("#orig-board_fog_time").val());
+    $("#main-board_unfog_time").val($("#orig-board_unfog_time").val());
+    copyCheckbox("main-use_compilation_server", "orig-use_compilation_server");
+    copyCheckbox("main-enable_win32_languages", "orig-enable_win32_languages");
+    copyCheckbox("main-separate_user_score", "orig-separate_user_score");
+    copyCheckbox("main-secure_run", "orig-secure_run");
+    copyCheckbox("main-enable_memory_limit_error", "orig-enable_memory_limit_error");
+    copyCheckbox("main-detect_violations", "orig-detect_violations");
+    copyCheckbox("main-enable_max_stack_size", "orig-enable_max_stack_size");
+    $("#main-standings_locale").val($("#orig-standings_locale").val());
+    $("#main-checker_locale").val($("#orig-checker_locale").val());
+    copyCheckbox("main-enable_32bit_checkers", "orig-enable_32bit_checkers");
 
-    if (skipField == "ContestTime") {
-        $("#MainDialogContestTime").val("");
-    } else if (skipField == "ContestFinishTime") {
-        $("#MainDialogContestFinishTimeTime").val("");
-        $("#MainDialogContestFinishTimeDate").val("");
-    } else if (skipField == "BoardFogTime") {
-        $("#MainDialogBoardFogTime").val("");
-    } else if (skipField == "BoardUnfogTime") {
-        $("#MainDialogBoardUnfogTime").val("");
-    } else if (skipField == "StandingsLocale") {
-        $("#MainDialogStandingsLocale").val("");
-    } else if (skipField == "CheckerLocale") {
-        $("#MainDialogCheckerLocale").val("");
+    if (skipField == "contest_time") {
+        $("#main-contest_time").val("");
+    } else if (skipField == "contest_finish_time") {
+        $("#main-contest_finish_time_time").val("");
+        $("#main-contest_finish_time_date").val("");
+    } else if (skipField == "board_fog_time") {
+        $("#main-board_fog_time").val("");
+    } else if (skipField == "board_unfog_time") {
+        $("#main-board_unfog_time").val("");
+    } else if (skipField == "standings_locale") {
+        $("#main-standings_locale").val("");
+    } else if (skipField == "checker_locale") {
+        $("#main-checker_locale").val("");
     }
 
     if (e) e.stopPropagation();
@@ -448,28 +448,28 @@ function popupMainDialog(e, skipField)
 
 function mainDialogOnChange()
 {
-    var contest_time = document.getElementById("MainDialogContestTime").value;
+    var contest_time = document.getElementById("main-contest_time").value;
     if (contest_time != null && contest_time != "") {
-        document.getElementById("MainDialogContestFinishTimeDiv").style.display = "none";
-        document.getElementById("MainDialogBoardFogTimeDiv").style.display = "";
+        document.getElementById("main-contest_finish_time-div").style.display = "none";
+        document.getElementById("main-board_fog_time-div").style.display = "";
     } else {
-        document.getElementById("MainDialogContestFinishTimeDiv").style.display = "";
-        document.getElementById("MainDialogBoardFogTimeDiv").style.display = "none";
+        document.getElementById("main-contest_finish_time-div").style.display = "";
+        document.getElementById("main-board_fog_time-div").style.display = "none";
     }
 
-    var board_fog_time = document.getElementById("MainDialogBoardFogTime").value;
+    var board_fog_time = document.getElementById("main-board_fog_time").value;
     if (contest_time != null && contest_time != "" && board_fog_time != null && board_fog_time != "") {
-        document.getElementById("MainDialogBoardUnfogTimeDiv").style.display = "";
+        document.getElementById("main-board_unfog_time-div").style.display = "";
     } else {
-        document.getElementById("MainDialogBoardUnfogTimeDiv").style.display = "none";
+        document.getElementById("main-board_unfog_time-div").style.display = "none";
     }
 
-    if (document.getElementById("MainDialogSecureRun").checked) {
-        document.getElementById("MainDialogEnableMemoryLimitErrorDiv").style.display = "";
-        document.getElementById("MainDialogDetectViolationsDiv").style.display = "";
+    if (document.getElementById("main-secure_run").checked) {
+        document.getElementById("main-enable_memory_limit_error-div").style.display = "";
+        document.getElementById("main-detect_violations-div").style.display = "";
     } else {
-        document.getElementById("MainDialogEnableMemoryLimitErrorDiv").style.display = "none";
-        document.getElementById("MainDialogDetectViolationsDiv").style.display = "none";
+        document.getElementById("main-enable_memory_limit_error-div").style.display = "none";
+        document.getElementById("main-detect_violations-div").style.display = "none";
     }
 }
 
@@ -553,12 +553,12 @@ function filesDialogOnChange()
     snprintf(contest_time_str, sizeof(contest_time_str), "%d:%02d", global->contest_time / 60, global->contest_time % 60);
   }
 %>
-                <td><s:textfield id="OrigContestTime" readonly="readonly" check="false" name="param" value="contest_time_str" size="8" /><%
+                <td><s:textfield id="orig-contest_time" readonly="readonly" check="false" name="param" value="contest_time_str" size="8" /><%
   if (global->contest_time <= 0) {
 %><i>(Unlimited)</i><%
   }
 %></td>
-                <td><input type="button" onclick="popupMainDialog(event, 'ContestTime')" value="Set unlimited" /></td>
+                <td><input type="button" onclick="popupMainDialog(event, 'contest_time')" value="Set unlimited" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:contest_time" /></td>
             </s:tr>
 
@@ -567,14 +567,14 @@ function filesDialogOnChange()
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Contest end time:</td>
-                <td><% html_date_select_2(out_f, global->contest_finish_time, "OrigContestFinishTime", "param", NULL, 1, 0, 0); %></td>
-                <td><input type="button" onclick="popupMainDialog(event, 'ContestFinishTime')" value="Clear" /></td>
+                <td><% html_date_select_2(out_f, global->contest_finish_time, "orig-contest_finish_time", "param", NULL, 1, 0, 0); %></td>
+                <td><input type="button" onclick="popupMainDialog(event, 'contest_finish_time')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:contest_finish_time" /></td>
             </s:tr>
 <%
   } else {
 %>
-            <% html_date_select_2(out_f, global->contest_finish_time, "OrigContestFinishTime", "param", NULL, 1, 1, 0); %>
+            <% html_date_select_2(out_f, global->contest_finish_time, "orig-contest_finish_time", "param", NULL, 1, 1, 0); %>
 <%
   }
 %>
@@ -588,7 +588,7 @@ function filesDialogOnChange()
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Scoring system:</td>
-                <td><select id="OrigScoreSystem" disabled="disabled">
+                <td><select id="orig-score_system" disabled="disabled">
                     <s:option value="0" selectedExpr="score_system == 0">ACM</s:option>
                     <s:option value="1" selectedExpr="score_system == 1">Kirov</s:option>
                     <s:option value="2" selectedExpr="score_system == 2">Olympiad</s:option>
@@ -609,18 +609,18 @@ function filesDialogOnChange()
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Standings freeze time (HH:MM) before finish:</td>
-                <td><s:textfield id="OrigBoardFogTime" readonly="readonly" check="false" name="param" value="board_fog_time_str" size="8" /><%
+                <td><s:textfield id="orig-board_fog_time" readonly="readonly" check="false" name="param" value="board_fog_time_str" size="8" /><%
     if (global->board_fog_time <= 0) {
 %><i>(No freeze)</i><%
     }
 %></td>
-                <td><input type="button" onclick="popupMainDialog(event, 'BoardFogTime')" value="Disable" /></td>
+                <td><input type="button" onclick="popupMainDialog(event, 'board_fog_time')" value="Disable" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:board_fog_time" /></td>
             </s:tr>
 <%
   } else {
 %>
-            <s:hidden id="OrigBoardFogTime" check="false" name="param" value="board_fog_time_str" />
+            <s:hidden id="orig-board_fog_time" check="false" name="param" value="board_fog_time_str" />
 <%
   }
 %>
@@ -634,46 +634,46 @@ function filesDialogOnChange()
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Standings unfreeze time (HH:MM) after finish:</td>
-                <td><s:textfield check="false" id="OrigBoardUnfogTime" readonly="readonly" name="param" value="board_unfog_time_str" size="8" /><%
+                <td><s:textfield check="false" id="orig-board_unfog_time" readonly="readonly" name="param" value="board_unfog_time_str" size="8" /><%
     if (global->board_unfog_time <= 0) {
 %><i>(Not unfreeze)</i><%
     }
 %></td>
-                <td><input type="button" onclick="popupMainDialog(event, 'BoardUnfogTime')" value="Disable" /></td>
+                <td><input type="button" onclick="popupMainDialog(event, 'board_unfog_time')" value="Disable" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:board_unfog_time" /></td>
             </s:tr>
 <%
   } else {
 %>
-            <s:hidden check="false" id="OrigBoardUnfogTime" name="param" value="board_unfog_time_str" />
+            <s:hidden check="false" id="orig-board_unfog_time" name="param" value="board_unfog_time_str" />
 <%
   }
 %>
 
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Use the default compilation server:</td>
-                <td><s:yesno disabled="disabled" id="OrigUseCompilationServer" name="param" value="!phr->ss->disable_compilation_server" /></td>
+                <td><s:yesno disabled="disabled" id="orig-use_compilation_server" name="param" value="!phr->ss->disable_compilation_server" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:use_compilation_server" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Enable Win32 languages:</td>
-                <td><s:yesno disabled="disabled" id="OrigEnableWin32Languages" name="param" value="phr->ss->enable_win32_languages" /></td>
+                <td><s:yesno disabled="disabled" id="orig-enable_win32_languages" name="param" value="phr->ss->enable_win32_languages" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_win32_languages" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Calculate and store user-visible score separately:</td>
-                <td><s:yesno disabled="disabled" id="OrigSeparateUserScore" name="param" value="global->separate_user_score" /></td>
+                <td><s:yesno disabled="disabled" id="orig-separate_user_score" name="param" value="global->separate_user_score" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:separate_user_score" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Run programs securely:</td>
-                <td><s:yesno disabled="disabled" id="OrigSecureRun" name="param" value="global->secure_run" /></td>
+                <td><s:yesno disabled="disabled" id="orig-secure_run" name="param" value="global->secure_run" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:secure_run" /></td>
             </s:tr>
@@ -683,29 +683,29 @@ function filesDialogOnChange()
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Enable support for MemoryLimit error:</td>
-                <td><s:yesno disabled="disabled" id="OrigEnableMemoryLimitError" name="param" value="global->enable_memory_limit_error" /></td>
+                <td><s:yesno disabled="disabled" id="orig-enable_memory_limit_error" name="param" value="global->enable_memory_limit_error" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_memory_limit_error" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Detect security violations:</td>
-                <td><s:yesno disabled="disabled" id="OrigDetectViolations" name="param" value="global->detect_violations" /></td>
+                <td><s:yesno disabled="disabled" id="orig-detect_violations" name="param" value="global->detect_violations" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:detect_violations" /></td>
             </s:tr>
 <%
   } else {
 %>
-            <s:hidden id="OrigEnableMemoryLimitError" name="param" value="global->enable_memory_limit_error" />
-            <s:hidden id="OrigDetectViolations" name="param" value="global->detect_violations" />
+            <s:hidden id="orig-enable_memory_limit_error" name="param" value="global->enable_memory_limit_error" />
+            <s:hidden id="orig-detect_violations" name="param" value="global->detect_violations" />
 <%
   }
 %>
 
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Assume max_stack_size == max_vm_size:</td>
-                <td><s:yesno disabled="disabled" id="OrigEnableMaxStackSize" name="param" value="global->enable_max_stack_size" /></td>
+                <td><s:yesno disabled="disabled" id="orig-enable_max_stack_size" name="param" value="global->enable_max_stack_size" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_max_stack_size" /></td>
             </s:tr>
@@ -715,8 +715,8 @@ function filesDialogOnChange()
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Standings locale:</td>
-                <td><s:textfield id="OrigStandingsLocale" readonly="readonly" size="16" name="param" value="standings_locale" notset="yes" /></td>
-                <td><input type="button" onclick="popupMainDialog(event, 'StandingsLocale')" value="Clear" /></td>
+                <td><s:textfield id="orig-standings_locale" readonly="readonly" size="16" name="param" value="standings_locale" notset="yes" /></td>
+                <td><input type="button" onclick="popupMainDialog(event, 'standings_locale')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:standings_locale" /></td>
             </s:tr>
 
@@ -725,8 +725,8 @@ function filesDialogOnChange()
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Checker locale:</td>
-                <td><s:textfield id="OrigCheckerLocale" readonly="readonly" size="16" name="param" value="checker_locale" notset="yes" /></td>
-                <td><input type="button" onclick="popupMainDialog(event, 'CheckerLocale')" value="Clear" /></td>
+                <td><s:textfield id="orig-checker_locale" readonly="readonly" size="16" name="param" value="checker_locale" notset="yes" /></td>
+                <td><input type="button" onclick="popupMainDialog(event, 'checker_locale')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:checker_locale" /></td>
             </s:tr>
 
@@ -735,14 +735,14 @@ function filesDialogOnChange()
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
                 <td>Compile 32-bit checkers on 64-bit platforms:</td>
-                <td><s:yesno disabled="disabled" id="OrigEnable32bitCheckers" name="param" value="global->enable_32bit_checkers" /></td>
+                <td><s:yesno disabled="disabled" id="orig-enable_32bit_checkers" name="param" value="global->enable_32bit_checkers" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_32bit_checkers" /></td>
             </s:tr>
 <%
   } else {
 %>
-            <s:hidden id="OrigEnable32bitCheckers" name="param" value="global->enable_32bit_checkers" />
+            <s:hidden id="orig-enable_32bit_checkers" name="param" value="global->enable_32bit_checkers" />
 <%
   }
 %>

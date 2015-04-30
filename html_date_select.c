@@ -94,7 +94,7 @@ html_date_select_2(
     snprintf(value_date, sizeof(value_date), "%04d-%02d-%02d",
              tt->tm_year + 1900, tt->tm_mon + 1, tt->tm_mday);
   }
-  fprintf(out_f, "<input type=\"%s\" id=\"%sTime\" name=\"%s_time\" value=\"%s\"",
+  fprintf(out_f, "<input type=\"%s\" id=\"%s_time\" name=\"%s_time\" value=\"%s\"",
           type, id_prefix, name_prefix, value_time);
   if (html_class) {
     fprintf(out_f, " class=\"%s\"", html_class);
@@ -104,7 +104,7 @@ html_date_select_2(
   }
   fprintf(out_f, " />");
 
-  fprintf(out_f, "<input type=\"%s\" id=\"%sDate\" name=\"%s_date\" value=\"%s\"",
+  fprintf(out_f, "<input type=\"%s\" id=\"%s_date\" name=\"%s_date\" value=\"%s\"",
           type, id_prefix, name_prefix, value_date);
   if (html_class) {
     fprintf(out_f, " class=\"%s\"", html_class);
