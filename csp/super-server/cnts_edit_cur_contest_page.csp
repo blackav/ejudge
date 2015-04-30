@@ -645,8 +645,8 @@ function popupFlagsDialog()
 function popupRegistrationDialog(e, skipField)
 {
     $("#RegistrationDialogAutoregister").val(document.getElementById("OrigAutoregister").value);
-    document.getElementById("RegistrationDialogRegDeadlineTime").value = document.getElementById("OrigRegDeadlineTime").value;
-    document.getElementById("RegistrationDialogRegDeadlineDate").value = document.getElementById("OrigRegDeadlineDate").value;
+    document.getElementById("RegistrationDialogRegDeadlineTime").value = document.getElementById("OrigRegDeadline_time").value;
+    document.getElementById("RegistrationDialogRegDeadlineDate").value = document.getElementById("OrigRegDeadline_date").value;
     document.getElementById("RegistrationDialogRegisterEmail").value = document.getElementById("OrigRegisterEmail").value;
     document.getElementById("RegistrationDialogRegisterUrl").value = document.getElementById("OrigRegisterUrl").value;
     document.getElementById("RegistrationDialogRegisterSubject").value = document.getElementById("OrigRegisterSubject").value;
@@ -672,12 +672,12 @@ function popupTimingDialog(e, skipField)
     var fields = [ "SchedTime", "OpenTime", "CloseTime" ];
     for (var i in fields) {
         var dst = document.getElementById("TimingDialog" + fields[i] + "Time");
-        var src = document.getElementById("Orig" + fields[i] + "Time");
+        var src = document.getElementById("Orig" + fields[i] + "_time");
         if (dst != null && src != null) {
             dst.value = src.value;
         }
         dst = document.getElementById("TimingDialog" + fields[i] + "Date");
-        src = document.getElementById("Orig" + fields[i] + "Date");
+        src = document.getElementById("Orig" + fields[i] + "_date");
         if (dst != null && src != null) {
             dst.value = src.value;
         }
