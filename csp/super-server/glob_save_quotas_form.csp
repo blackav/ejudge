@@ -29,11 +29,37 @@
 %><s:read var="max_clar_num" default="-1" /><%
 %><s:read var="team_page_quota" default="-1" /><%
 
-// validate parameters here
+    if (max_run_size >= 0) {
+        if (max_run_size != (ejintsize_t) max_run_size) {
+            retval = SSERV_ERR_INV_PARAM;
+        }
+    }
+    if (max_run_total >= 0) {
+        if (max_run_total != (ejintsize_t) max_run_total) {
+            retval = SSERV_ERR_INV_PARAM;
+        }
+    }
+    if (max_clar_size >= 0) {
+        if (max_clar_size != (ejintsize_t) max_clar_size) {
+            retval = SSERV_ERR_INV_PARAM;
+        }
+    }
+    if (max_clar_total >= 0) {
+        if (max_clar_total != (ejintsize_t) max_clar_total) {
+            retval = SSERV_ERR_INV_PARAM;
+        }
+    }
 
     if (!retval && phr->ss) {
         struct section_global_data *global = phr->ss->global;
         if (global) {
+            if (max_run_size >= 0) global->max_run_size = max_run_size;
+            if (max_run_total >= 0) global->max_run_total = max_run_total;
+            if (max_run_num >= 0) global->max_run_num = max_run_num;
+            if (max_clar_size >= 0) global->max_clar_size = max_clar_size;
+            if (max_clar_total >= 0) global->max_clar_total = max_clar_total;
+            if (max_clar_num >= 0) global->max_clar_num = max_clar_num;
+            if (team_page_quota >= 0) global->team_page_quota = team_page_quota;
         }
     }
 
