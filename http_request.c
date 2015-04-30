@@ -222,6 +222,11 @@ hr_cgi_param_int_opt_2(
   return 0;
 }
 
+#define SIZE_T (1024LL * 1024L * 1024L * 1024L)
+#define SIZE_G (1024LL * 1024 * 1024)
+#define SIZE_M (1024LL * 1024)
+#define SIZE_K (1024LL)
+
 int
 hr_cgi_param_size64_opt(
         struct http_request_info *phr,
@@ -229,7 +234,7 @@ hr_cgi_param_size64_opt(
         ej_size64_t *p_val,
         ej_size64_t default_value)
 {
-    const unsigned char *s = 0;
+    const unsigned char *s = 0, *e;
     char *eptr = 0;
     long long x;
     int len;
@@ -245,16 +250,36 @@ hr_cgi_param_size64_opt(
         if (p_val) *p_val = default_value;
         return 0;
     }
+    e = s + len;
 
     errno = 0;
     x = strtoll(s, &eptr, 10);
     if (errno) return -1;
-  
-
-
-  if (errno || *eptr) return -1;
-  if (p_val) *p_val = x;
-  return 0;
+    s = (const unsigned char *) eptr;
+    if (s == e) {
+        if (p_val) *p_val = x;
+        return 0;
+    }
+    while (isspace(*s)) ++s;
+    if (*s == 't' || *s == 'T') {
+        if (x < -8388608LL || x > 8388607LL) return -1;
+        x *= SIZE_T;
+    } else if (*s == 'g' || *s == 'G') {
+        if (x < -8589934592LL || x > 8589934591LL) return -1;
+        x *= SIZE_G;
+    } else if (*s == 'm' || *s == 'M') {
+        if (x < -8796093022208LL || x > 8796093022207LL) return -1;
+        x *= SIZE_M;
+    } else if (*s == 'k' || *s == 'K') {
+        if (x < -9007199254740992LL || x > 9007199254740991LL) return -1;
+        x *= SIZE_K;
+    } else {
+        return -1;
+    }
+    ++s;
+    if (s != e) return -1;
+    if (p_val) *p_val = x;
+    return 0;
 }
 
 void
