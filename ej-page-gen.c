@@ -5081,6 +5081,8 @@ int_read_type_handler(
 
     if (type_info == tc_find_typedef_type(cntx, tc_get_ident(cntx, "ejintbool_t"))) {
         type_str = "bool";
+    } else if (type_info == tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_size64_t"))) {
+        type_str = "size64";
     }
 
     int required = html_attribute_get_bool(html_element_find_attribute(elem, "required"), 0);
@@ -5582,6 +5584,7 @@ process_unit(
 
     processor_state_set_read_type_handler(ps, tc_get_i32_type(cntx), int_read_type_handler);
     processor_state_set_read_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ejintbool_t")), int_read_type_handler);
+    processor_state_set_read_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_size64_t")), int_read_type_handler);
     processor_state_set_read_type_handler(ps, tc_get_ptr_type(cntx, tc_get_const_type(cntx, tc_get_u8_type(cntx))),
                                           string_read_type_handler);
     processor_state_set_read_type_handler(ps, tc_get_ptr_type(cntx, tc_get_const_type(cntx, tc_get_i8_type(cntx))),
