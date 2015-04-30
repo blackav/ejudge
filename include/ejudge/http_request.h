@@ -189,6 +189,13 @@ hr_cgi_param_int_opt_2(
         int *p_val,
         int *p_set_flag);
 
+int
+hr_cgi_param_size64_opt(
+        struct http_request_info *phr,
+        const unsigned char *name,
+        ej_size64_t *p_val,
+        ej_size64_t default_value);
+
 void
 hr_master_url(
         FILE *out_f,

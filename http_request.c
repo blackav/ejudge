@@ -222,6 +222,41 @@ hr_cgi_param_int_opt_2(
   return 0;
 }
 
+int
+hr_cgi_param_size64_opt(
+        struct http_request_info *phr,
+        const unsigned char *name,
+        ej_size64_t *p_val,
+        ej_size64_t default_value)
+{
+    const unsigned char *s = 0;
+    char *eptr = 0;
+    long long x;
+    int len;
+
+    if (!(x = hr_cgi_param(phr, name, &s)) || !s) {
+        if (p_val) *p_val = default_value;
+        return 0;
+    } else if (x < 0) return -1;
+
+    len = strlen(s);
+    while (len > 0 && isspace(s[len - 1])) --len;
+    if (!len) {
+        if (p_val) *p_val = default_value;
+        return 0;
+    }
+
+    errno = 0;
+    x = strtoll(s, &eptr, 10);
+    if (errno) return -1;
+  
+
+
+  if (errno || *eptr) return -1;
+  if (p_val) *p_val = x;
+  return 0;
+}
+
 void
 hr_master_url(
         FILE *out_f,
