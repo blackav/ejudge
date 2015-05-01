@@ -101,28 +101,7 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_MAX_CLAR_TOTAL] = "Serve.cfg:global:max_clar_total",
   [SSERV_CMD_GLOB_CHANGE_MAX_CLAR_NUM] = "Serve.cfg:global:max_clar_num",
   [SSERV_CMD_GLOB_CHANGE_TEAM_PAGE_QUOTA] = "Serve.cfg:global:team_page_quota",
-  [SSERV_CMD_GLOB_CHANGE_TEAM_INFO_URL] = "Serve.cfg:global:team_info_url",
-  [SSERV_CMD_GLOB_CHANGE_PROB_INFO_URL] = "Serve.cfg:global:prob_info_url",
-  [SSERV_CMD_GLOB_CHANGE_STAND_FILE_NAME] = "Serve.cfg:global:stand_file_name",
-  [SSERV_CMD_GLOB_CHANGE_USERS_ON_PAGE] = "Serve.cfg:global:users_on_page",
-  [SSERV_CMD_GLOB_CHANGE_STAND_HEADER_FILE] = "Serve.cfg:global:stand_header_file",
-  [SSERV_CMD_GLOB_CHANGE_STAND_FOOTER_FILE] = "Serve.cfg:global:stand_footer_file",
-  [SSERV_CMD_GLOB_CHANGE_STAND_SYMLINK_DIR] = "Serve.cfg:global:stand_symlink_dir",
-  [SSERV_CMD_GLOB_CHANGE_STAND_IGNORE_AFTER] = "Serve.cfg:global:stand_ignore_after",
   [SSERV_CMD_GLOB_CHANGE_APPEAL_DEADLINE] = "Serve.cfg:global:appeal_deadline",
-  [SSERV_CMD_GLOB_CHANGE_ENABLE_STAND2] = "Serve.cfg:global:enable_stand2",
-  [SSERV_CMD_GLOB_CHANGE_STAND2_FILE_NAME] = "Serve.cfg:global:stand2_file_name",
-  [SSERV_CMD_GLOB_CHANGE_STAND2_HEADER_FILE] = "Serve.cfg:global:stand2_header_file",
-  [SSERV_CMD_GLOB_CHANGE_STAND2_FOOTER_FILE] = "Serve.cfg:global:stand2_footer_file",
-  [SSERV_CMD_GLOB_CHANGE_STAND2_SYMLINK_DIR] = "Serve.cfg:global:stand2_symlink_dir",
-  [SSERV_CMD_GLOB_CHANGE_ENABLE_PLOG] = "Serve.cfg:global:enable_plog",
-  [SSERV_CMD_GLOB_CHANGE_PLOG_FILE_NAME] = "Serve.cfg:global:plog_file_name",
-  [SSERV_CMD_GLOB_CHANGE_PLOG_HEADER_FILE] = "Serve.cfg:global:plog_header_file",
-  [SSERV_CMD_GLOB_CHANGE_PLOG_FOOTER_FILE] = "Serve.cfg:global:plog_footer_file",
-  [SSERV_CMD_GLOB_CHANGE_PLOG_SYMLINK_DIR] = "Serve.cfg:global:plog_symlink_dir",
-  [SSERV_CMD_GLOB_CHANGE_PLOG_UPDATE_TIME] = "Serve.cfg:global:plog_update_time",
-  [SSERV_CMD_GLOB_CHANGE_EXTERNAL_XML_UPDATE_TIME] = "Serve.cfg:global:external_xml_update_time",
-  [SSERV_CMD_GLOB_CHANGE_INTERNAL_XML_UPDATE_TIME] = "Serve.cfg:global:internal_xml_update_time",
   [SSERV_CMD_GLOB_CHANGE_STAND_FANCY_STYLE] = "Serve.cfg:global:stand_fancy_style",
   [SSERV_CMD_GLOB_CHANGE_STAND_TABLE_ATTR] = "Serve.cfg:global:stand_table_attr",
   [SSERV_CMD_GLOB_CHANGE_STAND_PLACE_ATTR] = "Serve.cfg:global:stand_place_attr",
@@ -490,58 +469,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     p_size = &global->compile_max_file_size;
     goto handle_size_t;
 
-  case SSERV_CMD_GLOB_CHANGE_TEAM_INFO_URL:
-    GLOB_SET_STRING(team_info_url);
-
-  case SSERV_CMD_GLOB_CLEAR_TEAM_INFO_URL:
-    GLOB_CLEAR_STRING(team_info_url);
-
-  case SSERV_CMD_GLOB_CHANGE_PROB_INFO_URL:
-    GLOB_SET_STRING(prob_info_url);
-
-  case SSERV_CMD_GLOB_CLEAR_PROB_INFO_URL:
-    GLOB_CLEAR_STRING(prob_info_url);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_FILE_NAME:
-    GLOB_SET_STRING(standings_file_name);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_FILE_NAME:
-    GLOB_CLEAR_STRING(standings_file_name);
-
-  case SSERV_CMD_GLOB_CHANGE_USERS_ON_PAGE:
-    if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n])
-      return -SSERV_ERR_INVALID_PARAMETER;
-    if (val <= 0) val = 0;
-    global->users_on_page = val;
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_HEADER_FILE:
-    GLOB_SET_STRING(stand_header_file);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_HEADER_FILE:
-    GLOB_CLEAR_STRING(stand_header_file);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_FOOTER_FILE:
-    GLOB_SET_STRING(stand_footer_file);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_FOOTER_FILE:
-    GLOB_CLEAR_STRING(stand_footer_file);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_SYMLINK_DIR:
-    GLOB_SET_STRING(stand_symlink_dir);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_SYMLINK_DIR:
-    GLOB_CLEAR_STRING(stand_symlink_dir);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_IGNORE_AFTER:
-    if (xml_parse_date(NULL, "", 0, 0, param2, &global->stand_ignore_after) < 0)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    return 0;
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_IGNORE_AFTER:
-    global->stand_ignore_after = 0;
-    return 0;
-
   case SSERV_CMD_GLOB_CHANGE_APPEAL_DEADLINE:
     if (xml_parse_date(NULL, "", 0, 0, param2, &global->appeal_deadline) < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
@@ -550,83 +477,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_GLOB_CLEAR_APPEAL_DEADLINE:
     global->appeal_deadline = 0;
     return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_ENABLE_STAND2:
-    p_int = &sstate->enable_stand2;
-    if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n] || val < 0 || val > 1)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    *p_int = val;
-    if (val && !global->stand2_file_name[0])
-      strcpy(global->stand2_file_name, "standings2.html");
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_STAND2_FILE_NAME:
-    GLOB_SET_STRING(stand2_file_name);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND2_FILE_NAME:
-    GLOB_CLEAR_STRING(stand2_file_name);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND2_HEADER_FILE:
-    GLOB_SET_STRING(stand2_header_file);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND2_HEADER_FILE:
-    GLOB_CLEAR_STRING(stand2_header_file);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND2_FOOTER_FILE:
-    GLOB_SET_STRING(stand2_footer_file);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND2_FOOTER_FILE:
-    GLOB_CLEAR_STRING(stand2_footer_file);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND2_SYMLINK_DIR:
-    GLOB_SET_STRING(stand2_symlink_dir);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND2_SYMLINK_DIR:
-    GLOB_CLEAR_STRING(stand2_symlink_dir);
-
-  case SSERV_CMD_GLOB_CHANGE_ENABLE_PLOG:
-    p_int = &sstate->enable_plog;
-    if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n] || val < 0 || val > 1)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    *p_int = val;
-    if (val && !global->plog_file_name[0])
-      strcpy(global->plog_file_name, "plog.html");
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_PLOG_FILE_NAME:
-    GLOB_SET_STRING(plog_file_name);
-
-  case SSERV_CMD_GLOB_CLEAR_PLOG_FILE_NAME:
-    GLOB_CLEAR_STRING(plog_file_name);
-
-  case SSERV_CMD_GLOB_CHANGE_PLOG_HEADER_FILE:
-    GLOB_SET_STRING(plog_header_file);
-
-  case SSERV_CMD_GLOB_CLEAR_PLOG_HEADER_FILE:
-    GLOB_CLEAR_STRING(plog_header_file);
-
-  case SSERV_CMD_GLOB_CHANGE_PLOG_FOOTER_FILE:
-    GLOB_SET_STRING(plog_footer_file);
-
-  case SSERV_CMD_GLOB_CLEAR_PLOG_FOOTER_FILE:
-    GLOB_CLEAR_STRING(plog_footer_file);
-
-  case SSERV_CMD_GLOB_CHANGE_PLOG_SYMLINK_DIR:
-    GLOB_SET_STRING(plog_symlink_dir);
-
-  case SSERV_CMD_GLOB_CLEAR_PLOG_SYMLINK_DIR:
-    GLOB_CLEAR_STRING(plog_symlink_dir);
-
-  case SSERV_CMD_GLOB_CHANGE_PLOG_UPDATE_TIME:
-    p_int = &global->plog_update_time;
-    goto handle_int;
-
-  case SSERV_CMD_GLOB_CHANGE_EXTERNAL_XML_UPDATE_TIME:
-    p_int = &global->external_xml_update_time;
-    goto handle_int;
-  case SSERV_CMD_GLOB_CHANGE_INTERNAL_XML_UPDATE_TIME:
-    p_int = &global->internal_xml_update_time;
-    goto handle_int;
 
   case SSERV_CMD_GLOB_CHANGE_STAND_FANCY_STYLE:
     p_int = &global->stand_fancy_style;
