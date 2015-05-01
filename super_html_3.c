@@ -94,13 +94,6 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_IGNORE_BOM] = "Serve.cfg:global:ignore_bom",
   [SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE] = "Serve.cfg:global:disable_user_database",
   [SSERV_CMD_GLOB_CHANGE_DESCRIPTION_FILE] = "Serve.cfg:global:description_file",
-  [SSERV_CMD_GLOB_CHANGE_MAX_RUN_SIZE] = "Serve.cfg:global:max_run_size",
-  [SSERV_CMD_GLOB_CHANGE_MAX_RUN_TOTAL] = "Serve.cfg:global:max_run_total",
-  [SSERV_CMD_GLOB_CHANGE_MAX_RUN_NUM] = "Serve.cfg:global:max_run_num",
-  [SSERV_CMD_GLOB_CHANGE_MAX_CLAR_SIZE] = "Serve.cfg:global:max_clar_size",
-  [SSERV_CMD_GLOB_CHANGE_MAX_CLAR_TOTAL] = "Serve.cfg:global:max_clar_total",
-  [SSERV_CMD_GLOB_CHANGE_MAX_CLAR_NUM] = "Serve.cfg:global:max_clar_num",
-  [SSERV_CMD_GLOB_CHANGE_TEAM_PAGE_QUOTA] = "Serve.cfg:global:team_page_quota",
   [SSERV_CMD_GLOB_CHANGE_APPEAL_DEADLINE] = "Serve.cfg:global:appeal_deadline",
   [SSERV_CMD_GLOB_CHANGE_STAND_FANCY_STYLE] = "Serve.cfg:global:stand_fancy_style",
   [SSERV_CMD_GLOB_CHANGE_STAND_TABLE_ATTR] = "Serve.cfg:global:stand_table_attr",
@@ -405,10 +398,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_GLOB_CLEAR_DESCRIPTION_FILE:
     GLOB_CLEAR_STRING(description_file);
 
-  case SSERV_CMD_GLOB_CHANGE_MAX_RUN_SIZE:
-    p_int = &global->max_run_size;
-    goto handle_size;
-
   handle_size:
     if (sscanf(param2, "%d%n", &val, &n) != 1 || val < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
@@ -423,34 +412,11 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     *p_int = val;
     return 0;
 
-  case SSERV_CMD_GLOB_CHANGE_MAX_RUN_TOTAL:
-    p_int = &global->max_run_total;
-    goto handle_size;
-
-  case SSERV_CMD_GLOB_CHANGE_MAX_RUN_NUM:
-    p_int = &global->max_run_num;
-
   handle_int:
     if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n] || val < 0)
       return -SSERV_ERR_INVALID_PARAMETER;
     *p_int = val;
     return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_MAX_CLAR_SIZE:
-    p_int = &global->max_clar_size;
-    goto handle_size;
-
-  case SSERV_CMD_GLOB_CHANGE_MAX_CLAR_TOTAL:
-    p_int = &global->max_clar_total;
-    goto handle_size;
-
-  case SSERV_CMD_GLOB_CHANGE_MAX_CLAR_NUM:
-    p_int = &global->max_clar_num;
-    goto handle_int;
-
-  case SSERV_CMD_GLOB_CHANGE_TEAM_PAGE_QUOTA:
-    p_int = &global->team_page_quota;
-    goto handle_int;
 
   case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE:
     p_size = &global->compile_max_vm_size;
