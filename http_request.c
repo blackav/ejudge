@@ -557,6 +557,48 @@ hr_cgi_param_string(
     return 1;
 }
 
+int
+hr_cgi_param_string_2(
+        const struct http_request_info *phr,
+        const unsigned char *param,
+        unsigned char **p_value)
+{
+    const unsigned char *str = NULL;
+    int r = hr_cgi_param(phr, param, &str);
+    if (r <= 0) {
+        *p_value = strdup("");
+        return r;
+    }
+    if (!str) {
+        *p_value = strdup("");
+        return 0;
+    }
+    int i = 0;
+    while (str[i] && (str[i] <= ' ' || str[i] == 0x7f)) ++i;
+    if (!str[i]) {
+        *p_value = strdup("");
+        return 0;
+    }
+    int len = strlen(str);
+    while (len > 0 && (str[len - 1] <= ' ' || str[len - 1] == 0x7f)) --len;
+    if (len <= 0) {
+        *p_value = strdup("");
+        return 0;
+    }
+    unsigned char *out = malloc(len + 1);
+    unsigned char *p = out;
+    for (; i < len; ++i) {
+        if (str[i] <= ' ' || str[i] == 0x7f) {
+            *p++ = ' ';
+        } else {
+            *p++ = str[i];
+        }
+    }
+    *p = 0;
+    *p_value = out;
+    return 1;
+}
+
 /*
  * Local variables:
  *  c-basic-offset: 4
