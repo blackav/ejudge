@@ -5214,7 +5214,13 @@ string_read_type_handler(
     unsigned char errcode_buf[1024];
     const unsigned char *getter_name = "hr_cgi_param";
     int normalize = html_attribute_get_bool(html_element_find_attribute(elem, "normalize"), 0);
-    if (normalize) getter_name = "hr_cgi_param_string";
+    if (normalize) {
+        if (html_attribute_get_bool(html_element_find_attribute(elem, "nonnull"), 0)) {
+            getter_name = "hr_cgi_param_string_2";
+        } else {
+            getter_name = "hr_cgi_param_string";
+        }
+    }
     int required = html_attribute_get_bool(html_element_find_attribute(elem, "required"), 0);
     if (required) {
         // <s:read var="VAR" name="NAME" required="yes" [ignoreerrors="BOOL"] [gotoerrors="BOOL"] [error="CODE"] [missing="CODE"] [invalid="CODE"] />
