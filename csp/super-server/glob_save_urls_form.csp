@@ -10,22 +10,108 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-// declare local variables here
+    unsigned char *team_info_url = NULL;
+    unsigned char *prob_info_url = NULL;
+    unsigned char *standings_file_name = NULL;
+    int users_on_page = 0;
+    unsigned char *stand_header_file = NULL;
+    unsigned char *stand_footer_file = NULL;
+    unsigned char *stand_symlink_dir = NULL;
+    const unsigned char *stand_ignore_after_time = NULL;
+    const unsigned char *stand_ignore_after_date = NULL;
+    ejintbool_t enable_stand2 = 0;
+    unsigned char *stand2_file_name = NULL;
+    unsigned char *stand2_header_file = NULL;
+    unsigned char *stand2_footer_file = NULL;
+    unsigned char *stand2_symlink_dir = NULL;
+    ejintbool_t enable_plog = 0;
+    unsigned char *plog_file_name = NULL;
+    unsigned char *plog_header_file = NULL;
+    unsigned char *plog_footer_file = NULL;
+    unsigned char *plog_symlink_dir = NULL;
+    int plog_update_time = 0;
+    int external_xml_update_time = 0;
+    int internal_xml_update_time = 0;
+
+    time_t stand_ignore_after = 0;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
-// read the parameters here like <s:read var="name" normalize="yes" />
+%><s:read var="team_info_url" normalize="yes" nonnull="yes" /><%
+%><s:read var="prob_info_url" normalize="yes" nonnull="yes" /><%
+%><s:read var="standings_file_name" normalize="yes" nonnull="yes" /><%
+%><s:read var="users_on_page" default="0" /><%
+%><s:read var="stand_header_file" normalize="yes" nonnull="yes" /><%
+%><s:read var="stand_footer_file" normalize="yes" nonnull="yes" /><%
+%><s:read var="stand_symlink_dir" normalize="yes" nonnull="yes" /><%
+%><s:read var="stand_ignore_after_time" /><%
+%><s:read var="stand_ignore_after_date" /><%
+%><s:read var="enable_stand2" default="0" /><%
+%><s:read var="stand2_file_name" normalize="yes" nonnull="yes" /><%
+%><s:read var="stand2_header_file" normalize="yes" nonnull="yes" /><%
+%><s:read var="stand2_footer_file" normalize="yes" nonnull="yes" /><%
+%><s:read var="stand2_symlink_dir" normalize="yes" nonnull="yes" /><%
+%><s:read var="enable_plog" default="0" /><%
+%><s:read var="plog_file_name" normalize="yes" nonnull="yes" /><%
+%><s:read var="plog_header_file" normalize="yes" nonnull="yes" /><%
+%><s:read var="plog_footer_file" normalize="yes" nonnull="yes" /><%
+%><s:read var="plog_symlink_dir" normalize="yes" nonnull="yes" /><%
+%><s:read var="plog_update_time" default="0" /><%
+%><s:read var="external_xml_update_time" default="0" /><%
+%><s:read var="internal_xml_update_time" default="0" /><%
 
-// validate parameters here
+    if (users_on_page < 0) users_on_page = 0;
+    if (parse_date_twopart(stand_ignore_after_date, stand_ignore_after_time, &stand_ignore_after) < 0) {
+        fprintf(msg_f, "Invalid finish time<br/>");
+        retval = SSERV_ERR_INV_PARAM;
+    }
+    if (plog_update_time < 0) plog_update_time = 0;
+    if (external_xml_update_time < 0) external_xml_update_time = 0;
+    if (internal_xml_update_time < 0) internal_xml_update_time = 0;
 
     if (!retval && phr->ss) {
         struct section_global_data *global = phr->ss->global;
         if (global) {
+            snprintf(global->team_info_url, sizeof(global->team_info_url), "%s", team_info_url);
+            snprintf(global->prob_info_url, sizeof(global->team_info_url), "%s", prob_info_url);
+            snprintf(global->standings_file_name, sizeof(global->standings_file_name), "%s", standings_file_name);
+            global->users_on_page = users_on_page;
+            snprintf(global->stand_header_file, sizeof(global->stand_header_file), "%s", stand_header_file);
+            snprintf(global->stand_footer_file, sizeof(global->stand_footer_file), "%s", stand_footer_file);
+            snprintf(global->stand_symlink_dir, sizeof(global->stand_symlink_dir), "%s", stand_symlink_dir);
+            global->stand_ignore_after = stand_ignore_after;
+            phr->ss->enable_stand2 = enable_stand2;
+            snprintf(global->stand2_file_name, sizeof(global->stand2_file_name), "%s", stand2_file_name);
+            if (enable_stand2) {
+                if (!global->stand2_file_name[0]) {
+                    snprintf(global->stand2_file_name, sizeof(global->stand2_file_name), "%s", "standings2.html");
+                }
+            } else {
+                global->stand2_file_name[0] = 0;
+            }
+            snprintf(global->stand2_header_file, sizeof(global->stand2_header_file), "%s", stand2_header_file);
+            snprintf(global->stand2_footer_file, sizeof(global->stand2_footer_file), "%s", stand2_footer_file);
+            snprintf(global->stand2_symlink_dir, sizeof(global->stand2_symlink_dir), "%s", stand2_symlink_dir);
+            phr->ss->enable_plog = enable_plog;
+            snprintf(global->plog_file_name, sizeof(global->plog_file_name), "%s", plog_file_name);
+            if (enable_plog) {
+                if (!global->plog_file_name[0]) {
+                    snprintf(global->plog_file_name, sizeof(global->plog_file_name), "%s", "plog.html");
+                }
+            } else {
+                global->plog_file_name[0] = 0;
+            }
+            snprintf(global->plog_header_file, sizeof(global->plog_header_file), "%s", plog_header_file);
+            snprintf(global->plog_footer_file, sizeof(global->plog_footer_file), "%s", plog_footer_file);
+            snprintf(global->plog_symlink_dir, sizeof(global->plog_symlink_dir), "%s", plog_symlink_dir);
+            global->plog_update_time = plog_update_time;
+            global->external_xml_update_time = external_xml_update_time;
+            global->internal_xml_update_time = internal_xml_update_time;
         }
     }
 
-//cleanup:;
+cleanup:;
     fclose(msg_f); msg_f = NULL;
 %>
 {
@@ -35,6 +121,20 @@
     "messages" : "<s:v value="msg_s" json="yes" checkExpr="" />"
 }
 <%
+    xfree(team_info_url);
+    xfree(prob_info_url);
+    xfree(standings_file_name);
+    xfree(stand_header_file);
+    xfree(stand_footer_file);
+    xfree(stand_symlink_dir);
+    xfree(stand2_file_name);
+    xfree(stand2_header_file);
+    xfree(stand2_footer_file);
+    xfree(stand2_symlink_dir);
+    xfree(plog_file_name);
+    xfree(plog_header_file);
+    xfree(plog_footer_file);
+    xfree(plog_symlink_dir);
     html_armor_free(&ab);
     xfree(msg_s);
 %>

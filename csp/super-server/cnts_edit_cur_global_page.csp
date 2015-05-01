@@ -171,7 +171,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="CapsDialogDiv">
+<div id="CapsDialogDiv" title="Contestant Capabilities">
     <s:form id="CapsDialogForm">
         <s:hidden name="action" ac="glob-save-capabilities-form" />
 
@@ -225,7 +225,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="FilesDialogDiv">
+<div id="FilesDialogDiv" title="Files and Directories">
     <s:form id="FilesDialogForm">
         <s:hidden name="action" ac="glob-save-files-form" />
 
@@ -272,7 +272,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="QuotasDialogDiv">
+<div id="QuotasDialogDiv" title="Contestant Quotas">
     <s:form id="QuotasDialogForm">
         <s:hidden name="action" ac="glob-save-quotas-form" />
 
@@ -303,6 +303,98 @@ static const unsigned char * const form_row_attrs[]=
         <div id="quotas-team_page_quota-div">
             <div style="width: 300px; display: inline-block;"><label for="quotas-team_page_quota">Maximum number of printed pages:</label></div>
             <s:textfield size="48" name="team_page_quota" id="quotas-team_page_quota" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+    </s:form>
+</div>
+
+<div id="UrlsDialogDiv" title="Standing Files and URLs">
+    <s:form id="UrlsDialogForm">
+        <s:hidden name="action" ac="glob-save-urls-form" />
+
+        <div id="urls-team_info_url-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-team_info_url">URL to view detailed contestant information:</label></div>
+            <s:textfield size="48" name="team_info_url" id="urls-team_info_url" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-prob_info_url-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-prob_info_url">URL to view problem statement:</label></div>
+            <s:textfield size="48" name="prob_info_url" id="urls-prob_info_url" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-standings_file_name-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-standings_file_name">Name of the current standings file:</label></div>
+            <s:textfield size="48" name="standings_file_name" id="urls-standings_file_name" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-users_on_page-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-users_on_page">Number of users on standings page:</label></div>
+            <s:textfield size="48" name="users_on_page" id="urls-users_on_page" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-stand_header_file-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-stand_header_file">HTML header file for the standings:</label></div>
+            <s:textfield size="48" name="stand_header_file" id="urls-stand_header_file" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-stand_footer_file-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-stand_footer_file">HTML footer file for the standings:</label></div>
+            <s:textfield size="48" name="stand_footer_file" id="urls-stand_footer_file" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-stand_symlink_dir-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-stand_symlink_dir">Directory to make standings symlink:</label></div>
+            <s:textfield size="48" name="stand_symlink_dir" id="urls-stand_symlink_dir" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-stand_ignore_after-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-stand_ignore_after">Ignore submissions after:</label></div>
+            <input id="urls-stand_ignore_after_time" type="text" name="stand_ignore_after_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
+            <input id="urls-stand_ignore_after_date" type="text" name="stand_ignore_after_date" size="10" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-enable_stand2-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-enable_stand2">Enable supplementary standings table:</label></div>
+            <input type="checkbox" name="enable_stand2" id="urls-enable_stand2" value="1" onchange="urlsDialogOnChange()" />
+        </div>
+        <div id="urls-stand2_file_name-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-stand2_file_name">Name of the supplementary standings file:</label></div>
+            <s:textfield size="48" name="stand2_file_name" id="urls-stand2_file_name" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-stand2_header_file-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-stand2_header_file">HTML header file for the supplementary standings:</label></div>
+            <s:textfield size="48" name="stand2_header_file" id="urls-stand2_header_file" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-stand2_footer_file-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-stand2_footer_file">HTML footer file for the supplementary standings:</label></div>
+            <s:textfield size="48" name="stand2_footer_file" id="urls-stand2_footer_file" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-stand2_symlink_dir-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-stand2_symlink_dir">Directory to make suppl. standings symlink:</label></div>
+            <s:textfield size="48" name="stand2_symlink_dir" id="urls-stand2_symlink_dir" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-enable_plog-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-enable_plog">Enable public submission log:</label></div>
+            <input type="checkbox" name="enable_plog" id="urls-enable_plog" value="1" onchange="urlsDialogOnChange()" />
+        </div>
+        <div id="urls-plog_file_name-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-plog_file_name">Name of the public submission log file:</label></div>
+            <s:textfield size="48" name="plog_file_name" id="urls-plog_file_name" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-plog_header_file-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-plog_header_file">HTML header file for the public submission log:</label></div>
+            <s:textfield size="48" name="plog_header_file" id="urls-plog_header_file" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-plog_footer_file-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-plog_footer_file">HTML footer file for the public submission log:</label></div>
+            <s:textfield size="48" name="plog_footer_file" id="urls-plog_footer_file" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-plog_symlink_dir-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-plog_symlink_dir">Directory to make symlink to public submission log:</label></div>
+            <s:textfield size="48" name="plog_symlink_dir" id="urls-plog_symlink_dir" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-plog_update_time-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-plog_update_time">Public submission log update interval (sec):</label></div>
+            <s:textfield size="48" name="plog_update_time" id="urls-plog_update_time" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-external_xml_update_time-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-external_xml_update_time-div">External XML log update interval (sec):</label></div>
+            <s:textfield size="48" name="external_xml_update_time" id="urls-external_xml_update_time-div" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="urls-internal_xml_update_time-div">
+            <div style="width: 300px; display: inline-block;"><label for="urls-internal_xml_update_time-div">Internal XML log update interval (sec):</label></div>
+            <s:textfield size="48" name="internal_xml_update_time" id="urls-internal_xml_update_time-div" value="" class="text ui-widget-content ui-corner-all" />
         </div>
     </s:form>
 </div>
@@ -461,6 +553,48 @@ $(function() {
     $("#quotas-max_clar_total-div").toggle(<s:v type="jsbool" value="global->disable_clars <= 0 && global->disable_team_clars <= 0" />);
     $("#quotas-max_clar_num-div").toggle(<s:v type="jsbool" value="global->disable_clars <= 0 && global->disable_team_clars <= 0" />);
     $("#quotas-team_page_quota-div").toggle(<s:v type="jsbool" value="global->enable_printing > 0" />);
+
+    urlsDialog = $("#UrlsDialogDiv").dialog({
+        autoOpen: false,
+        height: 600,
+        width: 850,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#UrlsDialogForm").serialize();
+                var formURL = $("#UrlsDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                urlsDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
+    $('#urls-stand_ignore_after_time').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
+    $('#urls-stand_ignore_after_date').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
+
+    $("#orig-stand2_file_name-div").toggle(<s:v type="jsbool" value="phr->ss->enable_stand2" />);
+    $("#orig-stand2_header_file-div").toggle(<s:v type="jsbool" value="phr->ss->enable_stand2" />);
+    $("#orig-stand2_footer_file-div").toggle(<s:v type="jsbool" value="phr->ss->enable_stand2" />);
+    $("#orig-stand2_symlink_dir-div").toggle(<s:v type="jsbool" value="phr->ss->enable_stand2" />);
+    $("#orig-plog_file_name-div").toggle(<s:v type="jsbool" value="phr->ss->enable_plog" />);
+    $("#orig-plog_header_file-div").toggle(<s:v type="jsbool" value="phr->ss->enable_plog" />);
+    $("#orig-plog_footer_file-div").toggle(<s:v type="jsbool" value="phr->ss->enable_plog" />);
+    $("#orig-plog_symlink_dir-div").toggle(<s:v type="jsbool" value="phr->ss->enable_plog" />);
+    $("#orig-plog_update_time-div").toggle(<s:v type="jsbool" value="phr->ss->enable_plog" />);
 });
 
 function np(e)
@@ -631,6 +765,61 @@ function popupQuotasDialog(e, skipField)
 
     if (e) e.stopPropagation();
     $("#QuotasDialogDiv").dialog('open');
+}
+
+function popupUrlsDialog(e, skipField)
+{
+    $("#urls-team_info_url").val($("#orig-team_info_url").val());
+    $("#urls-prob_info_url").val($("#orig-prob_info_url").val());
+    $("#urls-standings_file_name").val($("#orig-standings_file_name").val());
+    $("#urls-users_on_page").val($("#orig-users_on_page").val());
+    $("#urls-stand_header_file").val($("#orig-stand_header_file").val());
+    $("#urls-stand_footer_file").val($("#orig-stand_footer_file").val());
+    $("#urls-stand_symlink_dir").val($("#orig-stand_symlink_dir").val());
+    $("#urls-stand_ignore_after_time").val($("#orig-stand_ignore_after_time").val());
+    $("#urls-stand_ignore_after_date").val($("#orig-stand_ignore_after_date").val());
+    copyCheckbox("urls-enable_stand2", "orig-enable_stand2");
+    $("#urls-stand2_file_name").val($("#orig-stand2_file_name").val());
+    $("#urls-stand2_header_file").val($("#orig-stand2_header_file").val());
+    $("#urls-stand2_footer_file").val($("#orig-stand2_footer_file").val());
+    $("#urls-stand2_symlink_dir").val($("#orig-stand2_symlink_dir").val());
+    copyCheckbox("urls-enable_plog", "orig-enable_plog");
+    $("#urls-plog_file_name").val($("#orig-plog_file_name").val());
+    $("#urls-plog_header_file").val($("#orig-plog_header_file").val());
+    $("#urls-plog_footer_file").val($("#orig-plog_footer_file").val());
+    $("#urls-plog_symlink_dir").val($("#orig-plog_symlink_dir").val());
+    $("#urls-plog_update_time").val($("#orig-plog_update_time").val());
+    $("#urls-external_xml_update_time").val($("#orig-external_xml_update_time").val());
+    $("#urls-internal_xml_update_time").val($("#orig-internal_xml_update_time").val());
+
+    if (skipField != null) {
+        if (skipField == "stand_ignore_after") {
+            obj = document.getElementById("urls-" + skipField + "_time");
+            if (obj != null) obj.value = "";
+            obj = document.getElementById("urls-" + skipField + "_date");
+            if (obj != null) obj.value = "";
+        } else {
+            obj = document.getElementById("urls-" + skipField);
+            if (obj != null) obj.value = "";
+        }
+    }
+
+    if (e) e.stopPropagation();
+    urlsDialogOnChange();
+    $("#UrlsDialogDiv").dialog('open');
+}
+
+function urlsDialogOnChange()
+{
+    $("#urls-stand2_file_name-div").toggle($("#urls-enable_stand2").is(':checked'));
+    $("#urls-stand2_header_file-div").toggle($("#urls-enable_stand2").is(':checked'));
+    $("#urls-stand2_footer_file-div").toggle($("#urls-enable_stand2").is(':checked'));
+    $("#urls-stand2_symlink_dir-div").toggle($("#urls-enable_stand2").is(':checked'));
+    $("#urls-plog_file_name-div").toggle($("#urls-enable_plog").is(':checked'));
+    $("#urls-plog_header_file-div").toggle($("#urls-enable_plog").is(':checked'));
+    $("#urls-plog_footer_file-div").toggle($("#urls-enable_plog").is(':checked'));
+    $("#urls-plog_symlink_dir-div").toggle($("#urls-enable_plog").is(':checked'));
+    $("#urls-plog_update_time-div").toggle($("#urls-enable_plog").is(':checked'));
 }
 </script>
 
@@ -1172,260 +1361,133 @@ function popupQuotasDialog(e, skipField)
     <h3>Standings files and URLs</h3>
 
     <div>
-        <table border="0">
-
-    <s:form>
-        <s:tr attr="head_row_attr">
-            <td colspan="4" align="center"><b>Standings files and URLs</b><%
-%></td>
-        </s:tr>
-    </s:form>
-<%
-  row = 1;
-%>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>URL to view detailed contestant information:</td>
-            <td><s:textfield name="param" value="global->team_info_url" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-team-info-url" label="Change" /><s:submit ac="glob-clear-team-info-url" label="Clear" /></td>
-            <td><s:help ac="glob-change-team-info-url" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>URL to view problem statement:</td>
-            <td><s:textfield name="param" value="global->prob_info_url" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-prob-info-url" label="Change" /><s:submit ac="glob-clear-prob-info-url" label="Clear" /></td>
-            <td><s:help ac="glob-change-prob-info-url" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Name of the current standings file:</td>
-            <td><s:textfield name="param" value="global->standings_file_name" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-stand-file-name" label="Change" /><s:submit ac="glob-clear-stand-file-name" label="Clear" /></td>
-            <td><s:help ac="glob-change-stand-file-name" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Number of users on standings page:</td>
-            <td><s:textfield name="param" value="global->users_on_page" size="48" maxlength="1024" checkExpr="> 0" /></td>
-            <td><s:submit ac="glob-change-users-on-page" label="Change" /></td>
-            <td><s:help ac="glob-change-users-on-page" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>HTML header file for the standings:</td>
-            <td><s:textfield name="param" value="global->stand_header_file" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-stand-header-file" label="Change" /><s:submit ac="glob-clear-stand-header-file" label="Clear" />[<s:a ac="glob-edit-stand-header-file-page">Edit</s:a>]</td>
-            <td><s:help ac="glob-change-stand-header-file" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>HTML footer file for the standings:</td>
-            <td><s:textfield name="param" value="global->stand_footer_file" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-stand-footer-file" label="Change" /><s:submit ac="glob-clear-stand-footer-file" label="Clear" />[<s:a ac="glob-edit-stand-footer-file-page">Edit</s:a>]</td>
-            <td><s:help ac="glob-change-stand-footer-file" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Directory to make standings symlink (rel. to DocumentRoot):</td>
-            <td><s:textfield name="param" value="global->stand_symlink_dir" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-stand-symlink-dir" label="Change" /><s:submit ac="glob-clear-stand-symlink-dir" label="Clear" /></td>
-            <td><s:help ac="glob-change-stand-symlink-dir" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Ignore submissions after:</td>
-            <td><% html_date_select(out_f, global->stand_ignore_after); %></td>
-            <td><s:submit ac="glob-change-stand-ignore-after" label="Change" /><s:submit ac="glob-clear-stand-ignore-after" label="Clear" /></td>
-            <td><s:help ac="glob-change-stand-ignore-after" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Enable supplementary standings table:</td>
-            <td><s:yesno name="param" value="phr->ss->enable_stand2" /></td>
-            <td><s:submit ac="glob-change-enable-stand2" label="Change" /></td>
-            <td><s:help ac="glob-change-enable-stand2" /></td>
-        </s:tr>
-    </s:form>
-
-<%
-  if (phr->ss->enable_stand2) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Name of the supplementary standings file:</td>
-            <td><s:textfield name="param" value="global->stand2_file_name" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-stand2-file-name" label="Change" /><s:submit ac="glob-clear-stand2-file-name" label="Clear" /></td>
-            <td><s:help ac="glob-change-stand2-file-name" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (phr->ss->enable_stand2) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>HTML header file for the supplementary standings:</td>
-            <td><s:textfield name="param" value="global->stand2_header_file" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-stand2-header-file" label="Change" /><s:submit ac="glob-clear-stand2-header-file" label="Clear" />[<s:a ac="glob-edit-stand2-header-file-page">Edit</s:a>]</td>
-            <td><s:help ac="glob-change-stand2-header-file" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (phr->ss->enable_stand2) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>HTML footer file for the supplementary standings:</td>
-            <td><s:textfield name="param" value="global->stand2_footer_file" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-stand2-footer-file" label="Change" /><s:submit ac="glob-clear-stand2-footer-file" label="Clear" />[<s:a ac="glob-edit-stand2-footer-file-page">Edit</s:a>]</td>
-            <td><s:help ac="glob-change-stand2-footer-file" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (phr->ss->enable_stand2) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Directory to make suppl. standings symlink (rel. to DocumentRoot):</td>
-            <td><s:textfield name="param" value="global->stand2_symlink_dir" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-stand2-symlink-dir" label="Change" /><s:submit ac="glob-clear-stand2-symlink-dir" label="Clear" /></td>
-            <td><s:help ac="glob-change-stand2-symlink-dir" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Enable public submission log:</td>
-            <td><s:yesno name="param" value="phr->ss->enable_plog" /></td>
-            <td><s:submit ac="glob-change-enable-plog" label="Change" /></td>
-            <td><s:help ac="glob-change-enable-plog" /></td>
-        </s:tr>
-    </s:form>
-
-<%
-  if (phr->ss->enable_plog) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Name of the public submission log file:</td>
-            <td><s:textfield name="param" value="global->plog_file_name" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-plog-file-name" label="Change" /><s:submit ac="glob-clear-plog-file-name" label="Clear" /></td>
-            <td><s:help ac="glob-change-plog-file-name" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (phr->ss->enable_plog) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>HTML header file for the public submission log:</td>
-            <td><s:textfield name="param" value="global->plog_header_file" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-plog-header-file" label="Change" /><s:submit ac="glob-clear-plog-header-file" label="Clear" />[<s:a ac="glob-edit-plog-header-file-page">Edit</s:a>]</td>
-            <td><s:help ac="glob-change-plog-header-file" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (phr->ss->enable_plog) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>HTML footer file for the public submission log:</td>
-            <td><s:textfield name="param" value="global->plog_footer_file" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-plog-footer-file" label="Change" /><s:submit ac="glob-clear-plog-footer-file" label="Clear" />[<s:a ac="glob-edit-plog-footer-file-page">Edit</s:a>]</td>
-            <td><s:help ac="glob-change-plog-footer-file" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (phr->ss->enable_plog) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Directory to make symlink to public submission log (rel. to DocumentRoot):</td>
-            <td><s:textfield name="param" value="global->plog_symlink_dir" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-plog-symlink-dir" label="Change" /><s:submit ac="glob-clear-plog-symlink-dir" label="Clear" /></td>
-            <td><s:help ac="glob-change-plog-symlink-dir" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-<%
-  if (phr->ss->enable_plog) {
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Public submission log update interval (sec):</td>
-            <td><s:textfield name="param" value="global->plog_update_time" size="48" maxlength="1024" check="> 0" /></td>
-            <td><s:submit ac="glob-change-plog-update-time" label="Change" /></td>
-            <td><s:help ac="glob-change-plog-update-time" /></td>
-        </s:tr>
-    </s:form>
-<%
-  }
-%>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>External XML log update interval (sec):</td>
-            <td><s:textfield name="param" value="global->external_xml_update_time" size="48" maxlength="1024" check="> 0" /></td>
-            <td><s:submit ac="glob-change-external-xml-update-time" label="Change" /></td>
-            <td><s:help ac="glob-change-external-xml-update-time" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Internal XML log update interval (sec):</td>
-            <td><s:textfield name="param" value="global->internal_xml_update_time" size="48" maxlength="1024" check="> 0" /></td>
-            <td><s:submit ac="glob-change-internal-xml-update-time" label="Change" /></td>
-            <td><s:help ac="glob-change-internal-xml-update-time" /></td>
-        </s:tr>
-    </s:form>
+        <table border="0" onclick="popupUrlsDialog()">
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_info_url-div">
+                <td>URL to view detailed contestant information:</td>
+                <td><s:textfield readonly="readonly" id="orig-team_info_url" name="param" value="global->team_info_url" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupUrlsDialog(event, 'team_info_url')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:team_info_url" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-prob_info_url-div">
+                <td>URL to view problem statement:</td>
+                <td><s:textfield readonly="readonly" id="orig-prob_info_url" name="param" value="global->prob_info_url" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupUrlsDialog(event, 'prob_info_url')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:prob_info_url" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-standings_file_name-div">
+                <td>Name of the current standings file:</td>
+                <td><s:textfield readonly="readonly" id="orig-standings_file_name" name="param" value="global->standings_file_name" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupUrlsDialog(event, 'standings_file_name')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:standings_file_name" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-users_on_page-div">
+                <td>Number of users on standings page:</td>
+                <td><s:textfield readonly="readonly" id="orig-users_on_page" name="param" value="global->users_on_page" size="48" maxlength="1024" checkExpr="> 0" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:users_on_page" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_header_file-div">
+                <td>HTML header file for the standings:</td>
+                <td><s:textfield readonly="readonly" id="orig-stand_header_file" name="param" value="global->stand_header_file" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupUrlsDialog(event, 'stand_header_file')" value="Clear" />[<s:a ac="glob-edit-stand-header-file-page">Edit</s:a>]</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_header_file" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_footer_file-div">
+                <td>HTML footer file for the standings:</td>
+                <td><s:textfield readonly="readonly" id="orig-stand_footer_file" name="param" value="global->stand_footer_file" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupUrlsDialog(event, 'stand_footer_file')" value="Clear" />[<s:a ac="glob-edit-stand-footer-file-page">Edit</s:a>]</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_footer_file" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_symlink_dir-div">
+                <td>Directory to make standings symlink (rel. to DocumentRoot):</td>
+                <td><s:textfield readonly="readonly" id="orig-stand_symlink_dir" name="param" value="global->stand_symlink_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupUrlsDialog(event, 'stand_symlink_dir')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_symlink_dir" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_ignore_after-div">
+                <td>Ignore submissions after:</td>
+                <td><% html_date_select_2(out_f, global->stand_ignore_after, "orig-stand_ignore_after", "param", NULL, 1, 0, 0); %></td>
+                <td><input type="button" onclick="popupUrlsDialog(event, 'stand_ignore_after')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_ignore_after" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_stand2-div">
+                <td>Enable supplementary standings table:</td>
+                <td><s:yesno disabled="disabled" id="orig-enable_stand2" name="param" value="phr->ss->enable_stand2" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_stand2" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand2_file_name-div">
+                <td>Name of the supplementary standings file:</td>
+                <td><s:textfield readonly="readonly" id="orig-stand2_file_name" name="param" value="global->stand2_file_name" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupUrlsDialog(event, 'stand2_file_name')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand2_file_name" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand2_header_file-div">
+                <td>HTML header file for the supplementary standings:</td>
+                <td><s:textfield readonly="readonly" id="orig-stand2_header_file" name="param" value="global->stand2_header_file" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupUrlsDialog(event, 'stand2_header_file')" value="Clear" />[<s:a ac="glob-edit-stand2-header-file-page">Edit</s:a>]</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand2_header_file" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand2_footer_file-div">
+                <td>HTML footer file for the supplementary standings:</td>
+                <td><s:textfield readonly="readonly" id="orig-stand2_footer_file" name="param" value="global->stand2_footer_file" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupUrlsDialog(event, 'stand2_footer_file')" value="Clear" />[<s:a ac="glob-edit-stand2-footer-file-page">Edit</s:a>]</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand2_footer_file" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand2_symlink_dir-div">
+                <td>Directory to make suppl. standings symlink (rel. to DocumentRoot):</td>
+                <td><s:textfield readonly="readonly" id="orig-stand2_symlink_dir" name="param" value="global->stand2_symlink_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupUrlsDialog(event, 'stand2_symlink_dir')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand2_symlink_dir" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_plog-div">
+                <td>Enable public submission log:</td>
+                <td><s:yesno disabled="disabled" id="orig-enable_plog" name="param" value="phr->ss->enable_plog" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_plog" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_file_name-div">
+                <td>Name of the public submission log file:</td>
+                <td><s:textfield readonly="readonly" id="orig-plog_file_name" name="param" value="global->plog_file_name" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupUrlsDialog(event, 'plog_file_name')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_file_name" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_header_file-div">
+                <td>HTML header file for the public submission log:</td>
+                <td><s:textfield readonly="readonly" id="orig-plog_header_file" name="param" value="global->plog_header_file" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupUrlsDialog(event, 'plog_header_file')" value="Clear" />[<s:a ac="glob-edit-plog-header-file-page">Edit</s:a>]</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_header_file" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_footer_file-div">
+                <td>HTML footer file for the public submission log:</td>
+                <td><s:textfield readonly="readonly" id="orig-plog_footer_file" name="param" value="global->plog_footer_file" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupUrlsDialog(event, 'plog_footer_file')" value="Clear" />[<s:a ac="glob-edit-plog-footer-file-page">Edit</s:a>]</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_footer_file" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_symlink_dir-div">
+                <td>Directory to make symlink to public submission log (rel. to DocumentRoot):</td>
+                <td><s:textfield readonly="readonly" id="orig-plog_symlink_dir" name="param" value="global->plog_symlink_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupUrlsDialog(event, 'plog_symlink_dir')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_symlink_dir" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_update_time-div">
+                <td>Public submission log update interval (sec):</td>
+                <td><s:textfield readonly="readonly" id="orig-plog_update_time" name="param" value="global->plog_update_time" size="48" maxlength="1024" check="> 0" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_update_time" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-external_xml_update_time-div">
+                <td>External XML log update interval (sec):</td>
+                <td><s:textfield readonly="readonly" id="orig-external_xml_update_time" name="param" value="global->external_xml_update_time" size="48" maxlength="1024" check="> 0" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:external_xml_update_time" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-internal_xml_update_time-div">
+                <td>Internal XML log update interval (sec):</td>
+                <td><s:textfield readonly="readonly" id="orig-internal_xml_update_time" name="param" value="global->internal_xml_update_time" size="48" maxlength="1024" check="> 0" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:internal_xml_update_time" /></td>
+            </s:tr>
         </table>
     </div>
 
@@ -2213,26 +2275,12 @@ function popupQuotasDialog(e, skipField)
 
     <div>
         <table border="0">
-
-    <s:form>
-        <s:tr attr="head_row_attr">
-            <td colspan="4" align="center"><b>Uneditable parameters</b><%
-%></td>
-        </s:tr>
-    </s:form>
 <%
   row = 1;
 %>
-
-<%
-  if (global->unhandled_vars) {
-%>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td colspan="4"><pre><s:v value="global->unhandled_vars" /></pre></td>
-    </s:tr>
-<%
-  }
-%>
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td colspan="4"><pre><s:v value="global->unhandled_vars" /></pre></td>
+            </s:tr>
         </table>
     </div>
 <%
