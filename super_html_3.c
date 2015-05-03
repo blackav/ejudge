@@ -94,7 +94,6 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME] = "Serve.cfg:global:stand_collate_name",
   [SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS] = "Serve.cfg:global:memoize_user_results",
   [SSERV_CMD_GLOB_CHANGE_ENABLE_CONTINUE] = "Serve.cfg:global:enable_continue",
-  [SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME] = "Serve.cfg:global:team_download_time",
   [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE] = "Serve.cfg:global:compile_max_vm_size",
   [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_STACK_SIZE] = "Serve.cfg:global:compile_max_stack_size",
   [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_FILE_SIZE] = "Serve.cfg:global:compile_max_file_size",
@@ -315,12 +314,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     *p_int = val;
     return 0;
 
-  handle_int:
-    if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n] || val < 0)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    *p_int = val;
-    return 0;
-
   case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE:
     p_size = &global->compile_max_vm_size;
 
@@ -362,14 +355,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_GLOB_CHANGE_ENABLE_CONTINUE:
     p_int = &global->enable_continue;
     goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME:
-    p_int = &global->team_download_time;
-    goto handle_int;
-
-  case SSERV_CMD_GLOB_DISABLE_TEAM_DOWNLOAD_TIME:
-    global->team_download_time = 0;
-    return 0;
 
   default:
     abort();
