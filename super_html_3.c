@@ -92,8 +92,6 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
 
   [SSERV_CMD_GLOB_CHANGE_TOKENS] = "Serve.cfg:global:tokens",
   [SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME] = "Serve.cfg:global:stand_collate_name",
-  [SSERV_CMD_GLOB_CHANGE_SLEEP_TIME] = "Serve.cfg:global:sleep_time",
-  [SSERV_CMD_GLOB_CHANGE_SERVE_SLEEP_TIME] = "Serve.cfg:global:serve_sleep_time",
   [SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS] = "Serve.cfg:global:memoize_user_results",
   [SSERV_CMD_GLOB_CHANGE_ENABLE_CONTINUE] = "Serve.cfg:global:enable_continue",
   [SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME] = "Serve.cfg:global:team_download_time",
@@ -295,7 +293,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
                         int param3, int param4)
 {
   struct section_global_data *global = sstate->global;
-  int n, val, default_val;
+  int n, val;
   int *p_int;
   size_t *p_size, zval;
 
@@ -356,20 +354,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     }
     return 0;
     */
-
-  case SSERV_CMD_GLOB_CHANGE_SLEEP_TIME:
-    p_int = &global->sleep_time; default_val = 1000;
-
-  handle_int_def:
-    if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n] || val < 0)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    if (!val) val = default_val;
-    *p_int = val;
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_SERVE_SLEEP_TIME:
-    p_int = &global->serve_sleep_time; default_val = 500;
-    goto handle_int_def;
 
   case SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS:
     p_int = &global->memoize_user_results;
