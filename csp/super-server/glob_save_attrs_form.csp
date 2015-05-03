@@ -2,6 +2,8 @@
 %><%@include "includes.csp"
 %><%
 
+#define COPYSTR(f) snprintf(global->f, sizeof(global->f), "%s", (f))
+
 %><%@set getter_name = "csp_get_glob_save_attrs_form"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -10,22 +12,134 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-// declare local variables here
+    ejintbool_t stand_fancy_style = 0;
+    unsigned char *stand_success_attr = NULL;
+    unsigned char *stand_table_attr = NULL;
+    const unsigned char *stand_row_attr = NULL;
+    unsigned char *stand_place_attr = NULL;
+    unsigned char *stand_team_attr = NULL;
+    unsigned char *stand_prob_attr = NULL;
+    unsigned char *stand_solved_attr = NULL;
+    unsigned char *stand_score_attr = NULL;
+    unsigned char *stand_penalty_attr = NULL;
+    ejintbool_t stand_use_login = 0;
+    ejintbool_t stand_show_ok_time = 0;
+    ejintbool_t stand_show_att_num = 0;
+    ejintbool_t stand_sort_by_solved = 0;
+    ejintbool_t stand_enable_penalty = 0;
+    ejintbool_t ignore_success_time = 0;
+    unsigned char *stand_time_attr = NULL;
+    unsigned char *stand_fail_attr = NULL;
+    unsigned char *stand_trans_attr = NULL;
+    unsigned char *stand_disq_attr = NULL;
+    unsigned char *stand_self_row_attr = NULL;
+    unsigned char *stand_v_row_attr = NULL;
+    unsigned char *stand_r_row_attr = NULL;
+    unsigned char *stand_u_row_attr = NULL;
+    ejintbool_t enable_extra_col = 0;
+    unsigned char *stand_extra_format = NULL;
+    unsigned char *stand_extra_legend = NULL;
+    unsigned char *stand_extra_attr = NULL;
+    ejintbool_t stand_show_warn_number = 0;
+    unsigned char *stand_warn_number_attr = NULL;
+    unsigned char *stand_page_table_attr = NULL;
+    unsigned char *stand_page_cur_attr = NULL;
+    const unsigned char *stand_page_row_attr = NULL;
+    const unsigned char *stand_page_col_attr = NULL;
+    char **parsed_stand_row_attr = NULL;
+    char **parsed_stand_page_row_attr = NULL;
+    char **parsed_stand_page_col_attr = NULL;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
-// read the parameters here like <s:read var="name" normalize="yes" />
+%><s:read var="stand_fancy_style" default="0" /><%
+%><s:read var="stand_success_attr" normalize="yes" nonnull="yes" prepend=" " /><%
+%><s:read var="stand_table_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_row_attr" /><%
+%><s:read var="stand_place_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_team_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_prob_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_solved_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_score_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_penalty_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_use_login" default="0" /><%
+%><s:read var="stand_show_ok_time" default="0" /><%
+%><s:read var="stand_show_att_num" default="0" /><%
+%><s:read var="stand_sort_by_solved" default="0" /><%
+%><s:read var="stand_enable_penalty" default="0" /><%
+%><s:read var="ignore_success_time" default="0" /><%
+%><s:read var="stand_time_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_fail_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_trans_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_disq_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_self_row_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_v_row_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_r_row_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_u_row_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="enable_extra_col" default="0" /><%
+%><s:read var="stand_extra_format" normalize="yes" nonnull="yes" /><%
+%><s:read var="stand_extra_legend" normalize="yes" nonnull="yes" /><%
+%><s:read var="stand_extra_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_show_warn_number" default="0" /><%
+%><s:read var="stand_warn_number_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_page_table_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_page_cur_attr" normalize="yes" nonnull="yes" prepend="" /><%
+%><s:read var="stand_page_row_attr" /><%
+%><s:read var="stand_page_col_attr" /><%
 
 // validate parameters here
+    if (sarray_parse_2(stand_row_attr, &parsed_stand_row_attr) < 0) {
+        retval = -SSERV_ERR_INVALID_PARAMETER;
+    }
+    if (sarray_parse_2(stand_page_row_attr, &parsed_stand_page_row_attr) < 0) {
+        retval = -SSERV_ERR_INVALID_PARAMETER;
+    }
+    if (sarray_parse_2(stand_page_col_attr, &parsed_stand_page_col_attr) < 0) {
+        retval = -SSERV_ERR_INVALID_PARAMETER;
+    }
 
     if (!retval && phr->ss) {
         struct section_global_data *global = phr->ss->global;
         if (global) {
+            global->stand_fancy_style = stand_fancy_style;
+            COPYSTR(stand_success_attr);
+            COPYSTR(stand_table_attr);
+            sarray_free(global->stand_row_attr); global->stand_row_attr = parsed_stand_row_attr; parsed_stand_row_attr = NULL;
+            COPYSTR(stand_place_attr);
+            COPYSTR(stand_team_attr);
+            COPYSTR(stand_prob_attr);
+            COPYSTR(stand_solved_attr);
+            COPYSTR(stand_score_attr);
+            COPYSTR(stand_penalty_attr);
+            global->stand_use_login = stand_use_login;
+            global->stand_show_ok_time = stand_show_ok_time;
+            global->stand_show_att_num = stand_show_att_num;
+            global->stand_sort_by_solved = stand_sort_by_solved;
+            global->stand_enable_penalty = stand_enable_penalty;
+            global->ignore_success_time = ignore_success_time;
+            COPYSTR(stand_time_attr);
+            COPYSTR(stand_fail_attr);
+            COPYSTR(stand_trans_attr);
+            COPYSTR(stand_disq_attr);
+            COPYSTR(stand_self_row_attr);
+            COPYSTR(stand_v_row_attr);
+            COPYSTR(stand_r_row_attr);
+            COPYSTR(stand_u_row_attr);
+            phr->ss->enable_extra_col = enable_extra_col;
+            COPYSTR(stand_extra_format);
+            COPYSTR(stand_extra_legend);
+            COPYSTR(stand_extra_attr);
+            global->stand_show_warn_number = stand_show_warn_number;
+            COPYSTR(stand_warn_number_attr);
+            COPYSTR(stand_page_table_attr);
+            COPYSTR(stand_page_cur_attr);
+            sarray_free(global->stand_page_row_attr); global->stand_page_row_attr = parsed_stand_page_row_attr; parsed_stand_page_row_attr = NULL;
+            sarray_free(global->stand_page_col_attr); global->stand_page_col_attr = parsed_stand_page_col_attr; parsed_stand_page_col_attr = NULL;
         }
     }
 
-//cleanup:;
+cleanup:;
     fclose(msg_f); msg_f = NULL;
 %>
 {
@@ -35,6 +149,31 @@
     "messages" : "<s:v value="msg_s" json="yes" checkExpr="" />"
 }
 <%
+    xfree(stand_success_attr);
+    xfree(stand_table_attr);
+    xfree(stand_place_attr);
+    xfree(stand_team_attr);
+    xfree(stand_prob_attr);
+    xfree(stand_solved_attr);
+    xfree(stand_score_attr);
+    xfree(stand_penalty_attr);
+    xfree(stand_time_attr);
+    xfree(stand_fail_attr);
+    xfree(stand_trans_attr);
+    xfree(stand_disq_attr);
+    xfree(stand_self_row_attr);
+    xfree(stand_v_row_attr);
+    xfree(stand_r_row_attr);
+    xfree(stand_u_row_attr);
+    xfree(stand_extra_format);
+    xfree(stand_extra_legend);
+    xfree(stand_extra_attr);
+    xfree(stand_warn_number_attr);
+    xfree(stand_page_table_attr);
+    xfree(stand_page_cur_attr);
+    sarray_free(parsed_stand_row_attr);
+    sarray_free(parsed_stand_page_row_attr);
+    sarray_free(parsed_stand_page_col_attr);
     html_armor_free(&ab);
     xfree(msg_s);
 %>
