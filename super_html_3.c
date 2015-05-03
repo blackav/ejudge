@@ -91,7 +91,6 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SET_PREDEF_PERMISSIONS] = "Contest.xml",
 
   [SSERV_CMD_GLOB_CHANGE_TOKENS] = "Serve.cfg:global:tokens",
-  [SSERV_CMD_GLOB_CHANGE_DESCRIPTION_FILE] = "Serve.cfg:global:description_file",
   [SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME] = "Serve.cfg:global:stand_collate_name",
   [SSERV_CMD_GLOB_CHANGE_SLEEP_TIME] = "Serve.cfg:global:sleep_time",
   [SSERV_CMD_GLOB_CHANGE_SERVE_SLEEP_TIME] = "Serve.cfg:global:serve_sleep_time",
@@ -299,8 +298,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   struct section_global_data *global = sstate->global;
   int n, val, default_val;
   int *p_int;
-  unsigned char *p_str;
-  size_t str_size;
   size_t *p_size, zval;
 
   if (!global) return -SSERV_ERR_CONTEST_NOT_EDITED;
@@ -320,16 +317,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
       return -SSERV_ERR_INVALID_PARAMETER;
     *p_int = val;
     return 0;
-
-  handle_string:
-    snprintf(p_str, str_size, "%s", param2);
-    return 0;
-    
-  case SSERV_CMD_GLOB_CHANGE_DESCRIPTION_FILE:
-    GLOB_SET_STRING(description_file);
-
-  case SSERV_CMD_GLOB_CLEAR_DESCRIPTION_FILE:
-    GLOB_CLEAR_STRING(description_file);
 
   handle_int:
     if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n] || val < 0)

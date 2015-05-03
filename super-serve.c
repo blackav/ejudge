@@ -1849,8 +1849,6 @@ cmd_set_value(struct client_state *p, int len,
 
   case SSERV_CMD_GLOB_CHANGE_TOKENS:
   case SSERV_CMD_GLOB_CLEAR_TOKENS:
-  case SSERV_CMD_GLOB_CHANGE_DESCRIPTION_FILE:
-  case SSERV_CMD_GLOB_CLEAR_DESCRIPTION_FILE:
   case SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME:
   case SSERV_CMD_GLOB_CHANGE_SLEEP_TIME:
   case SSERV_CMD_GLOB_CHANGE_SERVE_SLEEP_TIME:
@@ -2475,8 +2473,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
 
   [SSERV_CMD_GLOB_CHANGE_TOKENS] = { cmd_set_value },
   [SSERV_CMD_GLOB_CLEAR_TOKENS] = { cmd_set_value },
-  [SSERV_CMD_GLOB_CHANGE_DESCRIPTION_FILE] = { cmd_set_value },
-  [SSERV_CMD_GLOB_CLEAR_DESCRIPTION_FILE] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_SLEEP_TIME] = { cmd_set_value },
   [SSERV_CMD_GLOB_CHANGE_SERVE_SLEEP_TIME] = { cmd_set_value },
