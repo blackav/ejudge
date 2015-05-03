@@ -278,6 +278,8 @@ int
 size_str_to_num(const unsigned char *str, int *p_num);
 int
 size_str_to_size_t(const unsigned char *str, size_t *p_size);
+int
+size_str_to_size64_t(const unsigned char *str, long long *p_size);
 
 int
 is_valid_email_address(const unsigned char *email_address);
