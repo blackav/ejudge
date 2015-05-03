@@ -89,8 +89,8 @@ static const unsigned char * const form_row_attrs[]=
 
 <%
   num_buf[0] = 0;
-  if (((ssize_t) global->compile_max_vm_size) > 0) {
-    num_to_size_str(num_buf, sizeof(num_buf), global->compile_max_vm_size);
+  if (global->compile_max_vm_size > 0) {
+    ll_to_size_str(num_buf, sizeof(num_buf), global->compile_max_vm_size);
   }
 %>
     <s:form>
@@ -104,8 +104,8 @@ static const unsigned char * const form_row_attrs[]=
 
 <%
   num_buf[0] = 0;
-  if (((ssize_t) global->compile_max_stack_size) > 0) {
-    num_to_size_str(num_buf, sizeof(num_buf), global->compile_max_stack_size);
+  if (global->compile_max_stack_size > 0) {
+    ll_to_size_str(num_buf, sizeof(num_buf), global->compile_max_stack_size);
   }
 %>
     <s:form>
@@ -119,8 +119,8 @@ static const unsigned char * const form_row_attrs[]=
 
 <%
   num_buf[0] = 0;
-  if (((ssize_t) global->compile_max_file_size) > 0) {
-    num_to_size_str(num_buf, sizeof(num_buf), global->compile_max_file_size);
+  if (global->compile_max_file_size > 0) {
+    ll_to_size_str(num_buf, sizeof(num_buf), global->compile_max_file_size);
   }
 %>
     <s:form>

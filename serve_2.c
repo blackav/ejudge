@@ -1163,17 +1163,17 @@ serve_compile_request(
   if (lang) {
     if (((ssize_t) lang->max_vm_size) > 0) {
       cp.max_vm_size = lang->max_vm_size;
-    } else if (((ssize_t) global->compile_max_vm_size) > 0) {
+    } else if (global->compile_max_vm_size > 0) {
       cp.max_vm_size = global->compile_max_vm_size;
     }
     if (((ssize_t) lang->max_stack_size) > 0) {
       cp.max_stack_size = lang->max_stack_size;
-    } else if (((ssize_t) global->compile_max_stack_size) > 0) {
+    } else if (global->compile_max_stack_size > 0) {
       cp.max_stack_size = global->compile_max_stack_size;
     }
     if (((ssize_t) lang->max_file_size) > 0) {
       cp.max_file_size = lang->max_file_size;
-    } else if (((ssize_t) global->compile_max_file_size) > 0) {
+    } else if (global->compile_max_file_size > 0) {
       cp.max_file_size = global->compile_max_file_size;
     }
   }

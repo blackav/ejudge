@@ -700,11 +700,11 @@ struct section_global_data
   int team_page_quota;
 
   /* common compilation virtual address space size limit */
-  size_t compile_max_vm_size;
+  ej_size64_t compile_max_vm_size;
   /* common compilation stack size limit */
-  size_t compile_max_stack_size;
+  ej_size64_t compile_max_stack_size;
   /* common file size limit */
-  size_t compile_max_file_size;
+  ej_size64_t compile_max_file_size;
 
   /** per participant testing priority adjustment */
   char **user_priority_adjustments;

@@ -334,9 +334,9 @@ static const struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(tokens, "S"),
 
-  GLOBAL_PARAM(compile_max_vm_size, "z"),
-  GLOBAL_PARAM(compile_max_stack_size, "z"),
-  GLOBAL_PARAM(compile_max_file_size, "z"),
+  GLOBAL_PARAM(compile_max_vm_size, "E"),
+  GLOBAL_PARAM(compile_max_stack_size, "E"),
+  GLOBAL_PARAM(compile_max_file_size, "E"),
 
   { 0, 0, 0, 0 }
 };
@@ -839,9 +839,9 @@ global_init_func(struct generic_section_config *gp)
   p->disable_user_database = -1;
   p->enable_max_stack_size = -1;
 
-  p->compile_max_vm_size = -1L;
-  p->compile_max_stack_size = -1L;
-  p->compile_max_file_size = -1L;
+  p->compile_max_vm_size = ~(ej_size64_t) 0;
+  p->compile_max_stack_size = ~(ej_size64_t) 0;
+  p->compile_max_file_size = ~(ej_size64_t) 0;
 
   p->enable_tokens = -1;
 }
@@ -5136,9 +5136,9 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   strcpy(global->standings_file_name, DFLT_G_STANDINGS_FILE_NAME);
   global->plog_update_time = DFLT_G_PLOG_UPDATE_TIME;
 
-  global->compile_max_vm_size = -1L;
-  global->compile_max_stack_size = -1L;
-  global->compile_max_file_size = -1L;
+  global->compile_max_vm_size = ~(ej_size64_t) 0;
+  global->compile_max_stack_size = ~(ej_size64_t) 0;
+  global->compile_max_file_size = ~(ej_size64_t) 0;
 
   /*
   GLOBAL_PARAM(test_sfx, "s"),

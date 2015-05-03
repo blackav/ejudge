@@ -285,7 +285,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
                         int param3, int param4)
 {
   struct section_global_data *global = sstate->global;
-  size_t *p_size, zval;
+  ej_size64_t *p_size, zval;
 
   if (!global) return -SSERV_ERR_CONTEST_NOT_EDITED;
 
@@ -295,7 +295,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   handle_size_t:
     zval = 0;
-    if (size_str_to_size_t(param2, &zval) < 0) return -SSERV_ERR_INVALID_PARAMETER;
+    if (size_str_to_size64_t(param2, &zval) < 0) return -SSERV_ERR_INVALID_PARAMETER;
     *p_size = zval;
     return 0;
 

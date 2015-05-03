@@ -319,20 +319,14 @@ prepare_unparse_global(
   if (global->team_page_quota != DFLT_G_TEAM_PAGE_QUOTA)
     fprintf(f, "team_page_quota = %d\n", global->team_page_quota);
 
-  if (((ssize_t) global->compile_max_vm_size) > 0) {
-    fprintf(f, "compile_max_vm_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf),
-                           global->compile_max_vm_size));
+  if (global->compile_max_vm_size > 0) {
+    fprintf(f, "compile_max_vm_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), global->compile_max_vm_size));
   }
-  if (((ssize_t) global->compile_max_stack_size) > 0) {
-    fprintf(f, "compile_max_stack_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf),
-                           global->compile_max_stack_size));
+  if (global->compile_max_stack_size > 0) {
+    fprintf(f, "compile_max_stack_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), global->compile_max_stack_size));
   }
-  if (((ssize_t) global->compile_max_file_size) > 0) {
-    fprintf(f, "compile_max_file_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf),
-                           global->compile_max_file_size));
+  if (global->compile_max_file_size > 0) {
+    fprintf(f, "compile_max_file_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), global->compile_max_file_size));
   }
 
   fprintf(f, "\n");
