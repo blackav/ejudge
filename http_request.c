@@ -519,7 +519,8 @@ int
 hr_cgi_param_string(
         const struct http_request_info *phr,
         const unsigned char *param,
-        unsigned char **p_value)
+        unsigned char **p_value,
+        const unsigned char *prepend_str)
 {
     const unsigned char *str = NULL;
     int r = hr_cgi_param(phr, param, &str);
@@ -543,8 +544,11 @@ hr_cgi_param_string(
         *p_value = NULL;
         return 0;
     }
-    unsigned char *out = malloc(len + 1);
-    unsigned char *p = out;
+    if (!prepend_str) prepend_str = "";
+    int prepend_len = strlen(prepend_str);
+    unsigned char *out = malloc(prepend_len + len + 1);
+    memcpy(out, prepend_str, prepend_len);
+    unsigned char *p = out + prepend_len;
     for (; i < len; ++i) {
         if (str[i] <= ' ' || str[i] == 0x7f) {
             *p++ = ' ';
@@ -561,7 +565,8 @@ int
 hr_cgi_param_string_2(
         const struct http_request_info *phr,
         const unsigned char *param,
-        unsigned char **p_value)
+        unsigned char **p_value,
+        const unsigned char *prepend_str)
 {
     const unsigned char *str = NULL;
     int r = hr_cgi_param(phr, param, &str);
@@ -585,8 +590,11 @@ hr_cgi_param_string_2(
         *p_value = strdup("");
         return 0;
     }
-    unsigned char *out = malloc(len + 1);
-    unsigned char *p = out;
+    if (!prepend_str) prepend_str = "";
+    int prepend_len = strlen(prepend_str);
+    unsigned char *out = malloc(prepend_len + len + 1);
+    memcpy(out, prepend_str, prepend_len);
+    unsigned char *p = out + prepend_len;
     for (; i < len; ++i) {
         if (str[i] <= ' ' || str[i] == 0x7f) {
             *p++ = ' ';
