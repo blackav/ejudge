@@ -94,7 +94,6 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME] = "Serve.cfg:global:stand_collate_name",
   [SSERV_CMD_GLOB_CHANGE_SLEEP_TIME] = "Serve.cfg:global:sleep_time",
   [SSERV_CMD_GLOB_CHANGE_SERVE_SLEEP_TIME] = "Serve.cfg:global:serve_sleep_time",
-  [SSERV_CMD_GLOB_CHANGE_CR_SERIALIZATION_KEY] = "Serve.cfg:global:cr_serialization_key",
   [SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS] = "Serve.cfg:global:memoize_user_results",
   [SSERV_CMD_GLOB_CHANGE_ENABLE_CONTINUE] = "Serve.cfg:global:enable_continue",
   [SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME] = "Serve.cfg:global:team_download_time",
@@ -370,10 +369,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CHANGE_SERVE_SLEEP_TIME:
     p_int = &global->serve_sleep_time; default_val = 500;
-    goto handle_int_def;
-
-  case SSERV_CMD_GLOB_CHANGE_CR_SERIALIZATION_KEY:
-    p_int = &global->cr_serialization_key; default_val = config->serialization_key;
     goto handle_int_def;
 
   case SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS:
