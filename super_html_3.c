@@ -91,9 +91,6 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SET_PREDEF_PERMISSIONS] = "Contest.xml",
 
   [SSERV_CMD_GLOB_CHANGE_TOKENS] = "Serve.cfg:global:tokens",
-  [SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME] = "Serve.cfg:global:stand_collate_name",
-  [SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS] = "Serve.cfg:global:memoize_user_results",
-  [SSERV_CMD_GLOB_CHANGE_ENABLE_CONTINUE] = "Serve.cfg:global:enable_continue",
   [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE] = "Serve.cfg:global:compile_max_vm_size",
   [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_STACK_SIZE] = "Serve.cfg:global:compile_max_stack_size",
   [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_FILE_SIZE] = "Serve.cfg:global:compile_max_file_size",
@@ -278,9 +275,6 @@ print_help_url(FILE *f, int action)
   }
 }
 
-#define GLOB_SET_STRING(f) p_str = global->f; str_size = sizeof(global->f); goto handle_string
-#define GLOB_CLEAR_STRING(f) global->f[0] = 0; return 0
-
 #define SIZE_G (1024 * 1024 * 1024)
 #define SIZE_M (1024 * 1024)
 #define SIZE_K (1024)
@@ -292,8 +286,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
                         int param3, int param4)
 {
   struct section_global_data *global = sstate->global;
-  int n, val;
-  int *p_int;
   size_t *p_size, zval;
 
   if (!global) return -SSERV_ERR_CONTEST_NOT_EDITED;
@@ -306,12 +298,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CLEAR_TOKENS:
     xfree(global->tokens); global->tokens = 0;
-    return 0;
-
-  handle_boolean:
-    if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n] || val < 0 || val > 1)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    *p_int = val;
     return 0;
 
   case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE:
@@ -331,10 +317,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     p_size = &global->compile_max_file_size;
     goto handle_size_t;
 
-  case SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME:
-    p_int = &global->stand_collate_name;
-    goto handle_boolean;
-
     /*
   case SSERV_CMD_GLOB_CHANGE_ENABLE_EXTRA_COL:
     p_int = &sstate->enable_extra_col;
@@ -347,14 +329,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     }
     return 0;
     */
-
-  case SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS:
-    p_int = &global->memoize_user_results;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_ENABLE_CONTINUE:
-    p_int = &global->enable_continue;
-    goto handle_boolean;
 
   default:
     abort();
