@@ -95,36 +95,7 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE] = "Serve.cfg:global:disable_user_database",
   [SSERV_CMD_GLOB_CHANGE_DESCRIPTION_FILE] = "Serve.cfg:global:description_file",
   [SSERV_CMD_GLOB_CHANGE_APPEAL_DEADLINE] = "Serve.cfg:global:appeal_deadline",
-  [SSERV_CMD_GLOB_CHANGE_STAND_FANCY_STYLE] = "Serve.cfg:global:stand_fancy_style",
-  [SSERV_CMD_GLOB_CHANGE_STAND_TABLE_ATTR] = "Serve.cfg:global:stand_table_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_PLACE_ATTR] = "Serve.cfg:global:stand_place_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_TEAM_ATTR] = "Serve.cfg:global:stand_team_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_PROB_ATTR] = "Serve.cfg:global:stand_prob_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_SOLVED_ATTR] = "Serve.cfg:global:stand_solved_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_SCORE_ATTR] = "Serve.cfg:global:stand_score_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_PENALTY_ATTR] = "Serve.cfg:global:stand_penalty_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_USE_LOGIN] = "Serve.cfg:global:stand_use_login",
-  [SSERV_CMD_GLOB_CHANGE_STAND_SHOW_OK_TIME] = "Serve.cfg:global:stand_show_ok_time",
-  [SSERV_CMD_GLOB_CHANGE_STAND_SHOW_ATT_NUM] = "Serve.cfg:global:stand_show_att_num",
-  [SSERV_CMD_GLOB_CHANGE_STAND_SORT_BY_SOLVED] = "Serve.cfg:global:stand_sort_by_solved",
-  [SSERV_CMD_GLOB_CHANGE_IGNORE_SUCCESS_TIME] = "Serve.cfg:global:ignore_success_time",
   [SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME] = "Serve.cfg:global:stand_collate_name",
-  [SSERV_CMD_GLOB_CHANGE_STAND_ENABLE_PENALTY] = "Serve.cfg:global:stand_enable_penalty",
-  [SSERV_CMD_GLOB_CHANGE_STAND_TIME_ATTR] = "Serve.cfg:global:stand_time_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_SUCCESS_ATTR] = "Serve.cfg:global:stand_success_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_FAIL_ATTR] = "Serve.cfg:global:stand_fail_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_TRANS_ATTR] = "Serve.cfg:global:stand_trans_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_DISQ_ATTR] = "Serve.cfg:global:stand_disq_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_SELF_ROW_ATTR] = "Serve.cfg:global:stand_self_row_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_V_ROW_ATTR] = "Serve.cfg:global:stand_v_row_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_R_ROW_ATTR] = "Serve.cfg:global:stand_r_row_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_U_ROW_ATTR] = "Serve.cfg:global:stand_u_row_attr",
-  [SSERV_CMD_GLOB_CHANGE_ENABLE_EXTRA_COL] = "Serve.cfg:global:enable_extra_col",
-  [SSERV_CMD_GLOB_CHANGE_STAND_EXTRA_FORMAT] = "Serve.cfg:global:stand_extra_format",
-  [SSERV_CMD_GLOB_CHANGE_STAND_EXTRA_LEGEND] = "Serve.cfg:global:stand_extra_legend",
-  [SSERV_CMD_GLOB_CHANGE_STAND_EXTRA_ATTR] = "Serve.cfg:global:stand_extra_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_SHOW_WARN_NUMBER] = "Serve.cfg:global:stand_show_warn_number",
-  [SSERV_CMD_GLOB_CHANGE_STAND_WARN_NUMBER_ATTR] = "Serve.cfg:global:stand_warn_number_attr",
   [SSERV_CMD_GLOB_CHANGE_SLEEP_TIME] = "Serve.cfg:global:sleep_time",
   [SSERV_CMD_GLOB_CHANGE_SERVE_SLEEP_TIME] = "Serve.cfg:global:serve_sleep_time",
   [SSERV_CMD_GLOB_CHANGE_AUTOUPDATE_STANDINGS] = "Serve.cfg:global:autoupdate_standings",
@@ -148,11 +119,6 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_CHANGE_PLOG_CHARSET] = "Serve.cfg:global:plog_charset",
   [SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME] = "Serve.cfg:global:team_download_time",
   [SSERV_CMD_GLOB_CHANGE_CPU_BOGOMIPS] = "Serve.cfg:global:cpu_bogomips",
-  [SSERV_CMD_GLOB_CHANGE_STAND_ROW_ATTR] = "Serve.cfg:global:stand_row_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_PAGE_TABLE_ATTR] = "Serve.cfg:global:stand_page_table_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_PAGE_CUR_ATTR] = "Serve.cfg:global:stand_page_cur_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_PAGE_ROW_ATTR] = "Serve.cfg:global:stand_page_row_attr",
-  [SSERV_CMD_GLOB_CHANGE_STAND_PAGE_COL_ATTR] = "Serve.cfg:global:stand_page_col_attr",
   [SSERV_CMD_GLOB_CHANGE_LOAD_USER_GROUP] = "Serve.cfg:global:load_user_group",
   [SSERV_CMD_GLOB_CHANGE_CLARDB_PLUGIN] = "Serve.cfg:global:clardb_plugin",
   [SSERV_CMD_GLOB_CHANGE_RUNDB_PLUGIN] = "Serve.cfg:global:rundb_plugin",
@@ -444,134 +410,11 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     global->appeal_deadline = 0;
     return 0;
 
-  case SSERV_CMD_GLOB_CHANGE_STAND_FANCY_STYLE:
-    p_int = &global->stand_fancy_style;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_TABLE_ATTR:
-    GLOB_SET_STRING(stand_table_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_TABLE_ATTR:
-    GLOB_CLEAR_STRING(stand_table_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_PLACE_ATTR:
-    GLOB_SET_STRING(stand_place_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_PLACE_ATTR:
-    GLOB_CLEAR_STRING(stand_place_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_TEAM_ATTR:
-    GLOB_SET_STRING(stand_team_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_TEAM_ATTR:
-    GLOB_CLEAR_STRING(stand_team_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_PROB_ATTR:
-    GLOB_SET_STRING(stand_prob_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_PROB_ATTR:
-    GLOB_CLEAR_STRING(stand_prob_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_SOLVED_ATTR:
-    GLOB_SET_STRING(stand_solved_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_SOLVED_ATTR:
-    GLOB_CLEAR_STRING(stand_solved_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_SCORE_ATTR:
-    GLOB_SET_STRING(stand_score_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_SCORE_ATTR:
-    GLOB_CLEAR_STRING(stand_score_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_PENALTY_ATTR:
-    GLOB_SET_STRING(stand_penalty_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_PENALTY_ATTR:
-    GLOB_CLEAR_STRING(stand_penalty_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_USE_LOGIN:
-    p_int = &global->stand_use_login;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_SHOW_OK_TIME:
-    p_int = &global->stand_show_ok_time;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_SHOW_ATT_NUM:
-    p_int = &global->stand_show_att_num;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_SORT_BY_SOLVED:
-    p_int = &global->stand_sort_by_solved;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_IGNORE_SUCCESS_TIME:
-    p_int = &global->ignore_success_time;
-    goto handle_boolean;    
-
   case SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME:
     p_int = &global->stand_collate_name;
     goto handle_boolean;
 
-  case SSERV_CMD_GLOB_CHANGE_STAND_ENABLE_PENALTY:
-    p_int = &global->stand_enable_penalty;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_TIME_ATTR:
-    GLOB_SET_STRING(stand_time_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_TIME_ATTR:
-    GLOB_CLEAR_STRING(stand_time_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_SUCCESS_ATTR:
-    GLOB_SET_STRING(stand_success_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_SUCCESS_ATTR:
-    GLOB_CLEAR_STRING(stand_success_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_FAIL_ATTR:
-    GLOB_SET_STRING(stand_fail_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_FAIL_ATTR:
-    GLOB_CLEAR_STRING(stand_fail_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_TRANS_ATTR:
-    GLOB_SET_STRING(stand_trans_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_TRANS_ATTR:
-    GLOB_CLEAR_STRING(stand_trans_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_DISQ_ATTR:
-    GLOB_SET_STRING(stand_disq_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_DISQ_ATTR:
-    GLOB_CLEAR_STRING(stand_disq_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_SELF_ROW_ATTR:
-    GLOB_SET_STRING(stand_self_row_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_SELF_ROW_ATTR:
-    GLOB_CLEAR_STRING(stand_self_row_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_V_ROW_ATTR:
-    GLOB_SET_STRING(stand_v_row_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_V_ROW_ATTR:
-    GLOB_CLEAR_STRING(stand_v_row_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_R_ROW_ATTR:
-    GLOB_SET_STRING(stand_r_row_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_R_ROW_ATTR:
-    GLOB_CLEAR_STRING(stand_r_row_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_U_ROW_ATTR:
-    GLOB_SET_STRING(stand_u_row_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_U_ROW_ATTR:
-    GLOB_CLEAR_STRING(stand_u_row_attr);
-
+    /*
   case SSERV_CMD_GLOB_CHANGE_ENABLE_EXTRA_COL:
     p_int = &sstate->enable_extra_col;
     if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n] || val < 0 || val > 1)
@@ -582,34 +425,7 @@ super_html_global_param(struct sid_state *sstate, int cmd,
       strcpy(global->stand_extra_legend, "City");
     }
     return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_EXTRA_FORMAT:
-    GLOB_SET_STRING(stand_extra_format);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_EXTRA_FORMAT:
-    GLOB_CLEAR_STRING(stand_extra_format);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_EXTRA_LEGEND:
-    GLOB_SET_STRING(stand_extra_legend);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_EXTRA_LEGEND:
-    GLOB_CLEAR_STRING(stand_extra_legend);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_EXTRA_ATTR:
-    GLOB_SET_STRING(stand_extra_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_EXTRA_ATTR:
-    GLOB_CLEAR_STRING(stand_extra_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_SHOW_WARN_NUMBER:
-    p_int = &global->stand_show_warn_number;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_WARN_NUMBER_ATTR:
-    GLOB_SET_STRING(stand_warn_number_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_WARN_NUMBER_ATTR:
-    GLOB_CLEAR_STRING(stand_warn_number_attr);
+    */
 
   case SSERV_CMD_GLOB_CHANGE_SLEEP_TIME:
     p_int = &global->sleep_time; default_val = 1000;
@@ -725,54 +541,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_DETECT_CPU_BOGOMIPS:
     global->cpu_bogomips = cpu_get_bogomips();
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_ROW_ATTR:
-    if (sarray_parse_2(param2, &tmp_env) < 0)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    sarray_free(global->stand_row_attr);
-    global->stand_row_attr = tmp_env;
-    return 0;
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_ROW_ATTR:
-    sarray_free(global->stand_row_attr);
-    global->stand_row_attr = 0;
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_PAGE_TABLE_ATTR:
-    GLOB_SET_STRING(stand_page_table_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_PAGE_TABLE_ATTR:
-    GLOB_CLEAR_STRING(stand_page_table_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_PAGE_CUR_ATTR:
-    GLOB_SET_STRING(stand_page_cur_attr);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_PAGE_CUR_ATTR:
-    GLOB_CLEAR_STRING(stand_page_cur_attr);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_PAGE_ROW_ATTR:
-    if (sarray_parse_2(param2, &tmp_env) < 0)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    sarray_free(global->stand_page_row_attr);
-    global->stand_page_row_attr = tmp_env;
-    return 0;
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_PAGE_ROW_ATTR:
-    sarray_free(global->stand_page_row_attr);
-    global->stand_page_row_attr = 0;
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_STAND_PAGE_COL_ATTR:
-    if (sarray_parse_2(param2, &tmp_env) < 0)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    sarray_free(global->stand_page_col_attr);
-    global->stand_page_col_attr = tmp_env;
-    return 0;
-
-  case SSERV_CMD_GLOB_CLEAR_STAND_PAGE_COL_ATTR:
-    sarray_free(global->stand_page_col_attr);
-    global->stand_page_col_attr = 0;
     return 0;
 
   case SSERV_CMD_GLOB_CHANGE_LOAD_USER_GROUP:
