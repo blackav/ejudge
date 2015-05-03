@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -176,6 +175,7 @@ meta_destroy_fields(const struct meta_methods *mth, void *ptr)
     case 'z':                   /* ejintsize_t */
     case 'i':                   /* int type */
     case 'Z':                   /* size_t */
+    case 'E':                   /* ej_size64_t */
       break;
 
     default:
@@ -290,6 +290,13 @@ meta_unparse_cfg(FILE *out_f, const struct meta_methods *mth, const void *ptr, c
         fprintf(out_f, "%s = %s\n", fn, buf);
       }
       break;
+    case 'E':
+      ASSERT(fz == sizeof(ej_size64_t));
+      if (!dfp || *(const ej_size64_t *) dfp != *(const ej_size64_t*) fp) {
+        ll_to_size_str(buf, sizeof(buf), *(const ej_size64_t *) fp);
+        fprintf(out_f, "%s = %s\n", fn, buf);
+      }
+      break;
     case '0':                   /* ej_int_opt_0_t */
     case '1':                   /* ej_textbox_t */
     case '2':                   /* ej_textbox_opt_t */
@@ -364,6 +371,17 @@ meta_parse_string(
         }
       }
       break;
+    case 'E':
+      {
+        ej_size64_t v = 0;
+        if (size_str_to_size64_t(value, &v) < 0) {
+          fprintf(log_f, "%d: invalid value of size64 parameter for '%s'\n", lineno, name);
+          return -1;
+        }
+        *(ej_size64_t*) fp = v;
+      }
+      break;
+
     case 'Z':                   /* size_t */
       {
         size_t v = 0;
