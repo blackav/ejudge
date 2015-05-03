@@ -5213,12 +5213,20 @@ string_read_type_handler(
 {
     unsigned char errcode_buf[1024];
     const unsigned char *getter_name = "hr_cgi_param";
+    unsigned char calltail[1024];
+    calltail[0] = 0;
     int normalize = html_attribute_get_bool(html_element_find_attribute(elem, "normalize"), 0);
     if (normalize) {
         if (html_attribute_get_bool(html_element_find_attribute(elem, "nonnull"), 0)) {
             getter_name = "hr_cgi_param_string_2";
         } else {
             getter_name = "hr_cgi_param_string";
+        }
+        const unsigned char *prepend_value = html_element_find_attribute_value(elem, "prepend");
+        if (prepend_value) {
+            snprintf(calltail, sizeof(calltail), ", \"%s\"", prepend_value);
+        } else {
+            snprintf(calltail, sizeof(calltail), ", NULL");
         }
     }
     int required = html_attribute_get_bool(html_element_find_attribute(elem, "required"), 0);
@@ -5236,19 +5244,19 @@ string_read_type_handler(
         if (!missing_msg) missing_msg = error_msg;
         if (!invalid_msg) invalid_msg = error_msg;
         if (ignoreerrors) {
-            fprintf(prg_f, "%s(phr, \"%s\", &(%s));\n", getter_name, param_name, var_name);
+            fprintf(prg_f, "%s(phr, \"%s\", &(%s)%s);\n", getter_name, param_name, var_name, calltail);
         } else {
             int gotoerrors = html_attribute_get_bool(html_element_find_attribute(elem, "gotoerrors"), 0);
             if (!missing_code) missing_code = "inv-param";
             if (!invalid_code) invalid_code = "inv-param";
             if (!strcmp(missing_code, invalid_code)) {
                 if (gotoerrors) {
-                    fprintf(prg_f, "if (%s(phr, \"%s\", &(%s)) <= 0) {\n"
+                    fprintf(prg_f, "if (%s(phr, \"%s\", &(%s)%s) <= 0) {\n"
                             "  goto %s;\n"
                             "}\n",
-                            getter_name, param_name, var_name, invalid_code);
+                            getter_name, param_name, var_name, calltail, invalid_code);
                 } else {
-                    fprintf(prg_f, "if (%s(phr, \"%s\", &(%s)) <= 0) {\n", getter_name, param_name, var_name);
+                    fprintf(prg_f, "if (%s(phr, \"%s\", &(%s)%s) <= 0) {\n", getter_name, param_name, var_name, calltail);
                     if (error_msg) {
                         fprintf(prg_f, "  fputs(\"%s\", log_f);\n", error_msg);
                     }
@@ -5259,8 +5267,8 @@ string_read_type_handler(
             } else {
                 fprintf(prg_f,
                         "{\n"
-                        "  int tmp_err = %s(phr, \"%s\", &(%s));\n",
-                        getter_name, param_name, var_name);
+                        "  int tmp_err = %s(phr, \"%s\", &(%s)%s);\n",
+                        getter_name, param_name, var_name, calltail);
                 if (gotoerrors) {
                     fprintf(prg_f,
                             "  if (!tmp_err) {\n"
@@ -5294,7 +5302,7 @@ string_read_type_handler(
         // <s:read var="VAR" name="NAME" [ignoreerrors="BOOL"] [error="CODE"] [invalid="CODE"] />
         int ignoreerrors = html_attribute_get_bool(html_element_find_attribute(elem, "ignoreerrors"), 0);
         if (ignoreerrors) {
-            fprintf(prg_f, "%s(phr, \"%s\", &(%s));\n", getter_name, param_name, var_name);
+            fprintf(prg_f, "%s(phr, \"%s\", &(%s)%s);\n", getter_name, param_name, var_name, calltail);
         } else {
             const unsigned char *error_code = html_element_find_attribute_value(elem, "error");
             const unsigned char *invalid_code = html_element_find_attribute_value(elem, "invalid");
@@ -5305,12 +5313,12 @@ string_read_type_handler(
             if (!invalid_code) invalid_code = "inv-param";
             if (!invalid_msg) invalid_msg = error_msg;
             if (gotoerrors) {
-                fprintf(prg_f, "if (%s(phr, \"%s\", &(%s)) < 0) {\n"
+                fprintf(prg_f, "if (%s(phr, \"%s\", &(%s)%s) < 0) {\n"
                         "  goto %s;\n"
                         "}\n",
-                        getter_name, param_name, var_name, invalid_code);
+                        getter_name, param_name, var_name, calltail, invalid_code);
             } else {
-                fprintf(prg_f, "if (%s(phr, \"%s\", &(%s)) < 0) {\n", getter_name, param_name, var_name);
+                fprintf(prg_f, "if (%s(phr, \"%s\", &(%s)%s) < 0) {\n", getter_name, param_name, var_name, calltail);
                 if (invalid_msg) {
                     fprintf(prg_f, "  fputs(\"%s\", log_f);\n", invalid_msg);
                 }
