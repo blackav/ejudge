@@ -90,7 +90,6 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SAVE_PERMISSIONS] = "Contest.xml",
   [SSERV_CMD_CNTS_SET_PREDEF_PERMISSIONS] = "Contest.xml",
 
-  [SSERV_CMD_GLOB_CHANGE_TOKENS] = "Serve.cfg:global:tokens",
   [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE] = "Serve.cfg:global:compile_max_vm_size",
   [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_STACK_SIZE] = "Serve.cfg:global:compile_max_stack_size",
   [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_FILE_SIZE] = "Serve.cfg:global:compile_max_file_size",
@@ -291,15 +290,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   if (!global) return -SSERV_ERR_CONTEST_NOT_EDITED;
 
   switch (cmd) {
-  case SSERV_CMD_GLOB_CHANGE_TOKENS:
-    xfree(global->tokens);
-    global->tokens = xstrdup(param2);
-    return 0;
-
-  case SSERV_CMD_GLOB_CLEAR_TOKENS:
-    xfree(global->tokens); global->tokens = 0;
-    return 0;
-
   case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE:
     p_size = &global->compile_max_vm_size;
 
