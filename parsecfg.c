@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1053,6 +1052,14 @@ copy_param(
     }
     if (v < 0) v = 0;
     ptr = (time_t*) ((char*) cfg + params[i].offset);
+    *ptr = v;
+  } else if (!strcmp(params[i].type, "E")) {
+    ej_size64_t v = 0, *ptr = 0;
+    if (size_str_to_size64_t(varvalue, &v) < 0) {
+      fprintf(stderr, "%d: invalid value of size64 parameter for '%s'\n", parsecfg_state.lineno - 1, varname);
+      return -1;              
+    }
+    ptr = (ej_size64_t *) ((char*) cfg + params[i].offset);
     *ptr = v;
   } else if (!strcmp(params[i].type, "z")) {
     size_t v = 0, *ptr = 0;
