@@ -1153,9 +1153,9 @@ serve_compile_request(
   cp.env_num = -1;
   cp.env_vars = (unsigned char**) compiler_env;
   cp.style_check_only = !!style_check_only;
-  cp.max_vm_size = -1L;
-  cp.max_stack_size = -1L;
-  cp.max_file_size = -1L;
+  cp.max_vm_size = ~(ej_size64_t) 0;
+  cp.max_stack_size = ~(ej_size64_t) 0;
+  cp.max_file_size = ~(ej_size64_t) 0;
   if (puuid && (puuid->v[0] || puuid->v[1] || puuid->v[2] || puuid->v[3])) {
     cp.use_uuid = 1;
     cp.uuid = *puuid;

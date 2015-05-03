@@ -33,9 +33,9 @@ struct compile_request_packet
   int ts1_us;
   int use_uuid;
   ej_uuid_t uuid;
-  size_t max_vm_size;
-  size_t max_stack_size;
-  size_t max_file_size;
+  ej_size64_t max_vm_size;
+  ej_size64_t max_stack_size;
+  ej_size64_t max_file_size;
   unsigned char *style_checker;
   unsigned char *src_sfx;
   int run_block_len;
