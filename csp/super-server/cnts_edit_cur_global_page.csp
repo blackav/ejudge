@@ -1,7 +1,7 @@
 <%
-
 %><%@include "includes.csp"
 %><%
+#include "ejudge/cpu.h"
 %><%@set getter_name = "csp_get_cnts_edit_cur_global_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -20,22 +20,13 @@
     unsigned char board_unfog_time_str[64];
     const unsigned char *standings_locale = NULL;
     const unsigned char *checker_locale = NULL;
+    int cpu_bogomips = cpu_get_bogomips();
 
-static const unsigned char head_row_attr[] =
-  " bgcolor=\"#a0a0a0\"";
 static const unsigned char * const form_row_attrs[]=
 {
   " bgcolor=\"#d0d0d0\"",
   " bgcolor=\"#e0e0e0\"",
 };
-
-  static const unsigned char * const rounding_modes[] =
-  {
-    "Truncating up (ceil)",
-    "Truncating down (floor)",
-    "Rounding",
-    0,
-  };
 
     if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
     if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
@@ -541,6 +532,114 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
+<div id="AdvancedDialogDiv" title="Advanced Properties" style="overflow: auto;">
+    <s:form id="AdvancedDialogForm">
+        <s:hidden name="action" ac="glob-save-advanced-form" />
+
+        <div id="adv-appeal_deadline-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-appeal_deadline_time">Appeal deadline:</label></div>
+            <input id="adv-appeal_deadline_time" type="text" name="appeal_deadline_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
+            <input id="adv-appeal_deadline_date" type="text" name="appeal_deadline_date" size="10" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="adv-autoupdate_standings-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-autoupdate_standings">Update standings automatically:</label></div>
+            <input type="checkbox" name="autoupdate_standings" id="adv-autoupdate_standings" value="1" onchange="advancedDialogOnChange()" />
+        </div>
+        <div id="adv-use_ac_not_ok-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-use_ac_not_ok">Use PR status instead of OK:</label></div>
+            <input type="checkbox" name="use_ac_not_ok" id="adv-use_ac_not_ok" value="1" onchange="advancedDialogOnChange()" />
+        </div>
+        <div id="adv-rounding_mode-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-rounding_mode">Seconds to minutes rounding mode:</label></div>
+            <select id="adv-rounding_mode" name="rounding_mode">
+                <option value="0">Truncating up (ceil)</option>
+                <option value="1">Truncating down (floor)</option>
+                <option value="2">Rounding</option>
+            </select>
+        </div>
+        <div id="adv-max_file_length-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-max_file_length">Maximal file size to be included into testing protocol:</label></div>
+            <s:textfield size="48" name="max_file_length" id="adv-max_file_length" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="adv-max_line_length-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-max_line_length">Maximal line length to be included into testing protocol:</label></div>
+            <s:textfield size="48" name="max_line_length" id="adv-max_line_length" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="adv-inactivity_timeout-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-inactivity_timeout">Inactivity timeout:</label></div>
+            <s:textfield size="48" name="inactivity_timeout" id="adv-inactivity_timeout" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="adv-ignore_bom-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-ignore_bom">Ignore BOM in text submits:</label></div>
+            <input type="checkbox" name="ignore_bom" id="adv-ignore_bom" value="1" onchange="advancedDialogOnChange()" />
+        </div>
+        <div id="adv-disable_testing-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-disable_testing">Disable any testing of submissions:</label></div>
+            <input type="checkbox" name="disable_testing" id="adv-disable_testing" value="1" onchange="advancedDialogOnChange()" />
+        </div>
+        <div id="adv-disable_auto_testing-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-disable_auto_testing">Disable automatic testing of submissions:</label></div>
+            <input type="checkbox" name="disable_auto_testing" id="adv-disable_auto_testing" value="1" onchange="advancedDialogOnChange()" />
+        </div>
+        <div id="adv-show_astr_time-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-show_astr_time">Show astronomic time instead of relative time:</label></div>
+            <input type="checkbox" name="show_astr_time" id="adv-show_astr_time" value="1" onchange="advancedDialogOnChange()" />
+        </div>
+        <div id="adv-enable_report_upload-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-enable_report_upload">Enable testing protocol upload:</label></div>
+            <input type="checkbox" name="enable_report_upload" id="adv-enable_report_upload" value="1" onchange="advancedDialogOnChange()" />
+        </div>
+        <div id="adv-enable_runlog_merge-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-enable_runlog_merge">Enable run database importing and merging:</label></div>
+            <input type="checkbox" name="enable_runlog_merge" id="adv-enable_runlog_merge" value="1" onchange="advancedDialogOnChange()" />
+        </div>
+        <div id="adv-disable_user_database-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-disable_user_database">Disable user database loading:</label></div>
+            <input type="checkbox" name="disable_user_database" id="adv-disable_user_database" value="1" onchange="advancedDialogOnChange()" />
+        </div>
+        <div id="adv-enable_l10n-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-enable_l10n">Enable message translation:</label></div>
+            <input type="checkbox" name="enable_l10n" id="adv-enable_l10n" value="1" onchange="advancedDialogOnChange()" />
+        </div>
+        <div id="adv-charset-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-charset">Character set:</label></div>
+            <s:textfield size="48" name="charset" id="adv-charset" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="adv-standings_charset-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-standings_charset">Standings character set:</label></div>
+            <s:textfield size="48" name="standings_charset" id="adv-standings_charset" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="adv-stand2_charset-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-stand2_charset">Aux. standings character set:</label></div>
+            <s:textfield size="48" name="stand2_charset" id="adv-stand2_charset" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="adv-plog_charset-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-plog_charset">Submission log character set:</label></div>
+            <s:textfield size="48" name="plog_charset" id="adv-plog_charset" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="adv-cpu_bogomips-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-cpu_bogomips">CPU speed (BogoMIPS):</label></div>
+            <s:textfield size="48" name="cpu_bogomips" id="adv-cpu_bogomips" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="adv-load_user_group-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-load_user_group">User groups to load:</label></div>
+            <s:textfield size="48" name="load_user_group" id="adv-load_user_group" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="adv-clardb_plugin-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-clardb_plugin">ClarDB storage engine:</label></div>
+            <s:textfield size="48" name="clardb_plugin" id="adv-clardb_plugin" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="adv-rundb_plugin-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-rundb_plugin">RunDB storage engine:</label></div>
+            <s:textfield size="48" name="rundb_plugin" id="adv-rundb_plugin" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="adv-xuser_plugin-div">
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-xuser_plugin">XuserDB storage engine:</label></div>
+            <s:textfield size="48" name="xuser_plugin" id="adv-xuser_plugin" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+    </s:form>
+</div>
+
 <script type="text/javascript">
 $(function() {
     $('#GlobalAccordion').accordion({ heightStyle: "content" });
@@ -797,6 +896,42 @@ $(function() {
     $("#orig-stand_page_cur_attr-div").toggle(<s:v type="jsbool" value="global->stand_fancy_style <= 0 && global->users_on_page > 0" />);
     $("#orig-stand_page_row_attr-div").toggle(<s:v type="jsbool" value="global->stand_fancy_style <= 0 && global->users_on_page > 0" />);
     $("#orig-stand_page_col_attr-div").toggle(<s:v type="jsbool" value="global->stand_fancy_style <= 0 && global->users_on_page > 0" />);
+
+    advancedDialog = $("#AdvancedDialogDiv").dialog({
+        autoOpen: false,
+        height: 600,
+        width: 850,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#AdvancedDialogForm").serialize();
+                var formURL = $("#AdvancedDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                advancedDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
+    $('#adv-appeal_deadline_time').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
+    $('#adv-appeal_deadline_date').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
+
+    $("#orig-disable_auto_testing-div").toggle(<s:v type="jsbool" value="global->disable_testing <= 0" />);
+    $("#orig-stand2_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_stand2 && global->stand2_file_name[0]" />);
+    $("#orig-plog_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_plog && global->plog_file_name[0]" />);
 });
 
 function np(e)
@@ -1102,6 +1237,58 @@ function attrsDialogOnChange()
     $("#attrs-stand_page_cur_attr-div").toggle(!$("#attrs-stand_fancy_style").is(':checked') && <s:v type="jsbool" value="global->users_on_page > 0" />);
     $("#attrs-stand_page_row_attr-div").toggle(!$("#attrs-stand_fancy_style").is(':checked') && <s:v type="jsbool" value="global->users_on_page > 0" />);
     $("#attrs-stand_page_col_attr-div").toggle(!$("#attrs-stand_fancy_style").is(':checked') && <s:v type="jsbool" value="global->users_on_page > 0" />);
+}
+
+function popupAdvancedDialog(e, skipField)
+{
+    $("#adv-appeal_deadline_time").val($("#orig-appeal_deadline_time").val());
+    $("#adv-appeal_deadline_date").val($("#orig-appeal_deadline_date").val());
+    copyCheckbox("adv-autoupdate_standings", "orig-autoupdate_standings");
+    copyCheckbox("adv-use_ac_not_ok", "orig-use_ac_not_ok");
+    $("#adv-rounding_mode").val($("#orig-rounding_mode").val());
+    $("#adv-max_file_length").val($("#orig-max_file_length").val());
+    $("#adv-max_line_length").val($("#orig-max_line_length").val());
+    $("#adv-inactivity_timeout").val($("#orig-inactivity_timeout").val());
+    copyCheckbox("adv-ignore_bom", "orig-ignore_bom");
+    copyCheckbox("adv-disable_testing", "orig-disable_testing");
+    copyCheckbox("adv-disable_auto_testing", "orig-disable_auto_testing");
+    copyCheckbox("adv-show_astr_time", "orig-show_astr_time");
+    copyCheckbox("adv-enable_report_upload", "orig-enable_report_upload");
+    copyCheckbox("adv-enable_runlog_merge", "orig-enable_runlog_merge");
+    copyCheckbox("adv-disable_user_database", "orig-disable_user_database");
+    copyCheckbox("adv-enable_l10n", "orig-enable_l10n");
+    $("#adv-charset").val($("#orig-charset").val());
+    $("#adv-standings_charset").val($("#orig-standings_charset").val());
+    $("#adv-stand2_charset").val($("#orig-stand2_charset").val());
+    $("#adv-plog_charset").val($("#orig-plog_charset").val());
+    $("#adv-cpu_bogomips").val($("#orig-cpu_bogomips").val());
+    $("#adv-load_user_group").val($("#orig-load_user_group").val());
+    $("#adv-clardb_plugin").val($("#orig-clardb_plugin").val());
+    $("#adv-rundb_plugin").val($("#orig-rundb_plugin").val());
+    $("#adv-xuser_plugin").val($("#orig-xuser_plugin").val());
+
+    if (skipField != null) {
+        if (skipField == "appeal_deadline") {
+            $("#adv-appeal_deadline_time").val("");
+            $("#adv-appeal_deadline_date").val("");
+        } else if (skipField == "cpu_bogomips_detect") {
+            $("#adv-cpu_bogomips").val(<s:v value="cpu_bogomips" />);
+        } else {
+            obj = document.getElementById("adv-" + skipField);
+            if (obj != null) obj.value = "";
+        }
+    }
+
+    if (e) e.stopPropagation();
+    advancedDialogOnChange();
+    $("#AdvancedDialogDiv").dialog('open');
+}
+
+function advancedDialogOnChange()
+{
+    $("#adv-disable_auto_testing-div").toggle(!$("#adv-disable_testing").is(':checked'));
+    $("#adv-stand2_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_stand2 && global->stand2_file_name[0]" />);
+    $("#adv-plog_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_plog && global->plog_file_name[0]" />);
 }
 </script>
 
@@ -2011,194 +2198,137 @@ function attrsDialogOnChange()
     <h3>Advanced settings</h3>
 
     <div>
-        <table border="0">
-
-    <s:form>
-        <s:tr attr="head_row_attr">
-            <td colspan="4" align="center"><b>Advanced settings</b><%
-%></td>
-        </s:tr>
-    </s:form>
+        <table border="0" onclick="popupAdvancedDialog()">
 <%
   row = 1;
 %>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Appeal deadline:</td>
-            <td><% html_date_select(out_f, global->appeal_deadline); %></td>
-            <td><s:submit ac="glob-change-appeal-deadline" label="Change" /><s:submit ac="glob-clear-appeal-deadline" label="Clear" /></td>
-            <td><s:help ac="glob-change-appeal-deadline" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Update standings automatically (except freeze time):</td>
-            <td><s:yesno name="param" value="global->autoupdate_standings" /></td>
-            <td><s:submit ac="glob-change-autoupdate-standings" label="Change" /></td>
-            <td><s:help ac="glob-change-autoupdate-standings" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Use PR (Pending Review) status instead of OK:</td>
-            <td><s:yesno name="param" value="global->use_ac_not_ok" /></td>
-            <td><s:submit ac="glob-change-use-ac-not-ok" label="Change" /></td>
-            <td><s:help ac="glob-change-use-ac-not-ok" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Seconds to minutes rounding mode:</td>
-            <td><% html_select(out_f, global->rounding_mode, "param", rounding_modes); %></td>
-            <td><s:submit ac="glob-change-rounding-mode" label="Change" /></td>
-            <td><s:help ac="glob-change-rounding-mode" /></td>
-        </s:tr>
-    </s:form>
-
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-appeal_deadline-div">
+                <td>Appeal deadline:</td>
+                <td><% html_date_select_2(out_f, global->appeal_deadline, "orig-appeal_deadline", "param", NULL, 1, 0, 0); %></td>
+                <td><input type="button" onclick="popupAdvancedDialog(event, 'appeal_deadline')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:appeal_deadline" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-autoupdate_standings-div">
+                <td>Update standings automatically (except freeze time):</td>
+                <td><s:yesno disabled="disabled" id="orig-autoupdate_standings" name="param" value="global->autoupdate_standings" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:autoupdate_standings" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-use_ac_not_ok-div">
+                <td>Use PR (Pending Review) status instead of OK:</td>
+                <td><s:yesno disabled="disabled" id="orig-use_ac_not_ok" name="param" value="global->use_ac_not_ok" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:use_ac_not_ok" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-rounding_mode-div">
+                <td>Seconds to minutes rounding mode:</td>
+                <td><select id="orig-rounding_mode" name="param" disabled="disabled">
+                    <s:option value="0" selectedExpr="global->rounding_mode == 0">Truncating up (ceil)</s:option>
+                    <s:option value="1" selectedExpr="global->rounding_mode == 1">Truncating down (floor)</s:option>
+                    <s:option value="2" selectedExpr="global->rounding_mode == 2">Rounding</s:option>
+                </select></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:rounding_mode" /></td>
+            </s:tr>
 <%
   num_to_size_str(hbuf, sizeof(hbuf), global->max_file_length);
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Maximal file size to be included into testing protocol:</td>
-            <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-max-file-length" label="Change" /></td>
-            <td><s:help ac="glob-change-max-file-length" /></td>
-        </s:tr>
-    </s:form>
-
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_file_length-div">
+                <td>Maximal file size to be included into testing protocol:</td>
+                <td><s:textfield readonly="readonly" id="orig-max_file_length" name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_file_length" /></td>
+            </s:tr>
 <%
   num_to_size_str(hbuf, sizeof(hbuf), global->max_line_length);
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Maximal line length to be included into testing protocol:</td>
-            <td><s:textfield name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-max-line-length" label="Change" /></td>
-            <td><s:help ac="glob-change-max-line-length" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Inactivity timeout:</td>
-            <td><s:textfield name="param" value="global->inactivity_timeout" size="48" maxlength="1024" check="> 0" /></td>
-            <td><s:submit ac="glob-change-inactivity-timeout" label="Change" /></td>
-            <td><s:help ac="glob-change-inactivity-timeout" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Ignore BOM in text submits:</td>
-            <td><s:yesno name="param" value="global->ignore_bom" /></td>
-            <td><s:submit ac="glob-change-ignore-bom" label="Change" /></td>
-            <td><s:help ac="glob-change-ignore-bom" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Disable any testing of submissions:</td>
-            <td><s:yesno name="param" value="global->disable_testing" /></td>
-            <td><s:submit ac="glob-change-disable-testing" label="Change" /></td>
-            <td><s:help ac="glob-change-disable-testing" /></td>
-        </s:tr>
-    </s:form>
-
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_line_length-div">
+                <td>Maximal line length to be included into testing protocol:</td>
+                <td><s:textfield readonly="readonly" id="orig-max_line_length" name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_line_length" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-inactivity_timeout-div">
+                <td>Inactivity timeout:</td>
+                <td><s:textfield readonly="readonly" id="orig-inactivity_timeout" name="param" value="global->inactivity_timeout" size="48" maxlength="1024" check="> 0" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:inactivity_timeout" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_bom-div">
+                <td>Ignore BOM in text submits:</td>
+                <td><s:yesno disabled="disabled" id="orig-ignore_bom" name="param" value="global->ignore_bom" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:ignore_bom" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_testing-div">
+                <td>Disable any testing of submissions:</td>
+                <td><s:yesno disabled="disabled" id="orig-disable_testing" name="param" value="global->disable_testing" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_testing" /></td>
+            </s:tr>
 <%
   if (global->disable_testing <= 0) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Disable automatic testing of submissions:</td>
-            <td><s:yesno name="param" value="global->disable_auto_testing" /></td>
-            <td><s:submit ac="glob-change-disable-auto-testing" label="Change" /></td>
-            <td><s:help ac="glob-change-disable-auto-testing" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_auto_testing-div">
+                <td>Disable automatic testing of submissions:</td>
+                <td><s:yesno disabled="disabled" id="orig-disable_auto_testing" name="param" value="global->disable_auto_testing" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_auto_testing" /></td>
+            </s:tr>
 <%
   }
 %>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Show astronomic time instead of relative time:</td>
-            <td><s:yesno name="param" value="global->show_astr_time" /></td>
-            <td><s:submit ac="glob-change-show-astr-time" label="Change" /></td>
-            <td><s:help ac="glob-change-show-astr-time" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Enable testing protocol upload:</td>
-            <td><s:yesno name="param" value="global->enable_report_upload" /></td>
-            <td><s:submit ac="glob-change-enable-report-upload" label="Change" /></td>
-            <td><s:help ac="glob-change-enable-report-upload" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Enable run database importing and merging:</td>
-            <td><s:yesno name="param" value="global->enable_runlog_merge" /></td>
-            <td><s:submit ac="glob-change-enable-runlog-merge" label="Change" /></td>
-            <td><s:help ac="glob-change-enable-runlog-merge" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Disable user database loading:</td>
-            <td><s:yesno name="param" value="global->disable_user_database" /></td>
-            <td><s:submit ac="glob-change-disable-user-database" label="Change" /></td>
-            <td><s:help ac="glob-change-disable-user-database" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Enable message translation:</td>
-            <td><s:yesno name="param" value="global->enable_l10n" /></td>
-            <td><s:submit ac="glob-change-enable-l10n" label="Change" /></td>
-            <td><s:help ac="glob-change-enable-l10n" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Character set:</td>
-            <td><s:textfield name="param" value="global->charset" size="48" maxlength="1024" checkExpr="" /></td>
-            <td><s:submit ac="glob-change-charset" label="Change" /><s:submit ac="glob-clear-charset" label="Clear" /></td>
-            <td><s:help ac="glob-change-charset" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Standings character set:</td>
-            <td><s:textfield name="param" value="global->standings_charset" size="48" maxlength="1024" checkExpr="" /></td>
-            <td><s:submit ac="glob-change-standings-charset" label="Change" /><s:submit ac="glob-clear-standings-charset" label="Clear" /></td>
-            <td><s:help ac="glob-change-standings-charset" /></td>
-        </s:tr>
-    </s:form>
-
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-show_astr_time-div">
+                <td>Show astronomic time instead of relative time:</td>
+                <td><s:yesno disabled="disabled" id="orig-show_astr_time" name="param" value="global->show_astr_time" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:show_astr_time" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_report_upload-div">
+                <td>Enable testing protocol upload:</td>
+                <td><s:yesno disabled="disabled" id="orig-enable_report_upload" name="param" value="global->enable_report_upload" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_report_upload" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_runlog_merge-div">
+                <td>Enable run database importing and merging:</td>
+                <td><s:yesno disabled="disabled" id="orig-enable_runlog_merge" name="param" value="global->enable_runlog_merge" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_runlog_merge" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_user_database-div">
+                <td>Disable user database loading:</td>
+                <td><s:yesno disabled="disabled" id="orig-disable_user_database" name="param" value="global->disable_user_database" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_user_database" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_l10n-div">
+                <td>Enable message translation:</td>
+                <td><s:yesno disabled="disabled" id="orig-enable_l10n" name="param" value="global->enable_l10n" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_l10n" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-charset-div">
+                <td>Character set:</td>
+                <td><s:textfield readonly="readonly" id="orig-charset" name="param" value="global->charset" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupAdvancedDialog(event, 'charset')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:charset" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-standings_charset-div">
+                <td>Standings character set:</td>
+                <td><s:textfield readonly="readonly" id="orig-standings_charset" name="param" value="global->standings_charset" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupAdvancedDialog(event, 'standings_charset')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:standings_charset" /></td>
+            </s:tr>
 <%
   if (phr->ss->enable_stand2 && global->stand2_file_name[0]) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Aux. standings character set:</td>
-            <td><s:textfield name="param" value="global->stand2_charset" size="48" maxlength="1024" checkExpr="" /></td>
-            <td><s:submit ac="glob-change-stand2-charset" label="Change" /><s:submit ac="glob-clear-stand2-charset" label="Clear" /></td>
-            <td><s:help ac="glob-change-stand2-charset" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand2_charset-div">
+                <td>Aux. standings character set:</td>
+                <td><s:textfield readonly="readonly" id="orig-stand2_charset" name="param" value="global->stand2_charset" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupAdvancedDialog(event, 'stand2_charset')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand2_charset" /></td>
+            </s:tr>
 <%
   }
 %>
@@ -2206,69 +2336,53 @@ function attrsDialogOnChange()
 <%
   if (phr->ss->enable_plog && global->plog_file_name[0]) {
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Submission log character set:</td>
-            <td><s:textfield name="param" value="global->plog_charset" size="48" maxlength="1024" checkExpr="" /></td>
-            <td><s:submit ac="glob-change-plog-charset" label="Change" /><s:submit ac="glob-clear-plog-charset" label="Clear" /></td>
-            <td><s:help ac="glob-change-plog-charset" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_charset-div">
+                <td>Submission log character set:</td>
+                <td><s:textfield readonly="readonly" id="orig-plog_charset" name="param" value="global->plog_charset" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupAdvancedDialog(event, 'plog_charset')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_charset" /></td>
+            </s:tr>
 <%
   }
 %>
 
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>CPU speed (BogoMIPS):</td>
-            <td><s:textfield name="param" value="global->cpu_bogomips" size="48" maxlength="1024" checkExpr=" > 0" /></td>
-            <td><s:submit ac="glob-change-cpu-bogomips" label="Change" /><s:submit ac="glob-detect-cpu-bogomips" label="Detect" /></td>
-            <td><s:help ac="glob-change-cpu-bogomips" /></td>
-        </s:tr>
-    </s:form>
-
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-cpu_bogomips-div">
+                <td>CPU speed (BogoMIPS):</td>
+                <td><s:textfield readonly="readonly" id="orig-cpu_bogomips" name="param" value="global->cpu_bogomips" size="48" maxlength="1024" checkExpr=" > 0" /></td>
+                <td><input type="button" onclick="popupAdvancedDialog(event, 'cpu_bogomips')" value="Clear" /><input type="button" onclick="popupAdvancedDialog(event, 'cpu_bogomips_detect')" value="Detect" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:cpu_bogomips" /></td>
+            </s:tr>
 <%
   xstr = 0;
   if (global->load_user_group && global->load_user_group[0]) xstr = sarray_unparse_2(global->load_user_group);
 %>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>User groups to load:</td>
-            <td><s:textfield name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
-            <td><s:submit ac="glob-change-load-user-group" label="Change" /><s:submit ac="glob-clear-load-user-group" label="Detect" /></td>
-            <td><s:help ac="glob-change-load-user-group" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-load_user_group-div">
+                <td>User groups to load:</td>
+                <td><s:textfield readonly="readonly" id="orig-load_user_group" name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupAdvancedDialog(event, 'load_user_group')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:load_user_group" /></td>
+            </s:tr>
 <%
   xfree(xstr); xstr = 0;
 %>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>ClarDB storage engine:</td>
-            <td><s:textfield name="param" value="global->clardb_plugin" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-clardb-plugin" label="Change" /><s:submit ac="glob-clear-clardb-plugin" label="Clear" /></td>
-            <td><s:help ac="glob-change-clardb-plugin" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>RunDB storage engine:</td>
-            <td><s:textfield name="param" value="global->rundb_plugin" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-rundb-plugin" label="Change" /><s:submit ac="glob-clear-clardb-plugin" label="Clear" /></td>
-            <td><s:help ac="glob-change-rundb-plugin" /></td>
-        </s:tr>
-    </s:form>
-
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>XuserDB storage engine:</td>
-            <td><s:textfield name="param" value="global->xuser_plugin" size="48" maxlength="1024" check="false" /></td>
-            <td><s:submit ac="glob-change-xuser-plugin" label="Change" /><s:submit ac="glob-clear-xuser-plugin" label="Clear" /></td>
-            <td><s:help ac="glob-change-xuser-plugin" /></td>
-        </s:tr>
-    </s:form>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-clardb_plugin-div">
+                <td>ClarDB storage engine:</td>
+                <td><s:textfield readonly="readonly" id="orig-clardb_plugin" name="param" value="global->clardb_plugin" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupAdvancedDialog(event, 'clardb_plugin')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:clardb_plugin" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-rundb_plugin-div">
+                <td>RunDB storage engine:</td>
+                <td><s:textfield readonly="readonly" id="orig-rundb_plugin" name="param" value="global->rundb_plugin" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupAdvancedDialog(event, 'rundb_plugin')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:rundb_plugin" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-xuser_plugin-div">
+                <td>XuserDB storage engine:</td>
+                <td><s:textfield readonly="readonly" id="orig-xuser_plugin" name="param" value="global->xuser_plugin" size="48" maxlength="1024" check="false" /></td>
+                <td><input type="button" onclick="popupAdvancedDialog(event, 'xuser_plugin')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:xuser_plugin" /></td>
+            </s:tr>
         </table>
     </div>
 

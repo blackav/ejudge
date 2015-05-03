@@ -2,6 +2,8 @@
 %><%@include "includes.csp"
 %><%
 
+#define COPYSTR(f) snprintf(global->f, sizeof(global->f), "%s", (f))
+
 %><%@set getter_name = "csp_get_glob_save_advanced_form"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -10,22 +12,117 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-// declare local variables here
+    const unsigned char *appeal_deadline_time = NULL;
+    const unsigned char *appeal_deadline_date = NULL;
+    ejintbool_t autoupdate_standings = 0;
+    ejintbool_t use_ac_not_ok = 0;
+    int rounding_mode = 0;
+    ej_size64_t max_file_length = 0;
+    ej_size64_t max_line_length = 0;
+    int inactivity_timeout = 0;
+    ejintbool_t ignore_bom = 0;
+    ejintbool_t disable_testing = 0;
+    ejintbool_t disable_auto_testing = 0;
+    ejintbool_t show_astr_time = 0;
+    ejintbool_t enable_report_upload = 0;
+    ejintbool_t enable_runlog_merge = 0;
+    ejintbool_t disable_user_database = 0;
+    ejintbool_t enable_l10n = 0;
+    unsigned char *charset = NULL;
+    unsigned char *standings_charset = NULL;
+    unsigned char *stand2_charset = NULL;
+    unsigned char *plog_charset = NULL;
+    int cpu_bogomips = 0;
+    const unsigned char *load_user_group = NULL;
+    unsigned char *clardb_plugin = NULL;
+    unsigned char *rundb_plugin = NULL;
+    unsigned char *xuser_plugin = NULL;
+
+    time_t appeal_deadline = NULL;
+    char **parsed_load_user_group = NULL;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 // read the parameters here like <s:read var="name" normalize="yes" />
+%><s:read var="appeal_deadline_time" /><%
+%><s:read var="appeal_deadline_date" /><%
+%><s:read var="autoupdate_standings" default="0" /><%
+%><s:read var="use_ac_not_ok" default="0" /><%
+%><s:read var="rounding_mode" default="0" /><%
+%><s:read var="max_file_length" default="0" /><%
+%><s:read var="max_line_length" default="0" /><%
+%><s:read var="inactivity_timeout" default="0" /><%
+%><s:read var="ignore_bom" default="0" /><%
+%><s:read var="disable_testing" default="0" /><%
+%><s:read var="disable_auto_testing" default="0" /><%
+%><s:read var="show_astr_time" default="0" /><%
+%><s:read var="enable_report_upload" default="0" /><%
+%><s:read var="enable_runlog_merge" default="0" /><%
+%><s:read var="disable_user_database" default="0" /><%
+%><s:read var="enable_l10n" default="0" /><%
+%><s:read var="charset" normalize="yes" nonnull="yes" /><%
+%><s:read var="standings_charset" normalize="yes" nonnull="yes" /><%
+%><s:read var="stand2_charset" normalize="yes" nonnull="yes" /><%
+%><s:read var="plog_charset" normalize="yes" nonnull="yes" /><%
+%><s:read var="cpu_bogomips" default="0" /><%
+%><s:read var="load_user_group" /><%
+%><s:read var="clardb_plugin" normalize="yes" nonnull="yes" /><%
+%><s:read var="rundb_plugin" normalize="yes" nonnull="yes" /><%
+%><s:read var="xuser_plugin" normalize="yes" nonnull="yes" /><%
 
-// validate parameters here
+{
+    if (parse_date_twopart(appeal_deadline_date, appeal_deadline_time, &appeal_deadline) < 0) {
+        fprintf(msg_f, "Invalid finish time<br/>");
+        retval = SSERV_ERR_INV_PARAM;
+    }
+    if (rounding_mode < SEC_CEIL || rounding_mode > SEC_ROUND) rounding_mode = SEC_FLOOR;
+    if (max_file_length < 0) max_file_length = 0;
+    if (max_file_length != (ejintsize_t) max_file_length) {
+        retval = SSERV_ERR_INV_PARAM;
+    }
+    if (max_line_length < 0) max_line_length = 0;
+    if (max_line_length != (ejintsize_t) max_line_length) {
+        retval = SSERV_ERR_INV_PARAM;
+    }
+    if (inactivity_timeout < 0) inactivity_timeout = 0;
+    if (cpu_bogomips < 0) cpu_bogomips = 0;
+    if (sarray_parse_2(load_user_group, &parsed_load_user_group) < 0) {
+        retval = -SSERV_ERR_INVALID_PARAMETER;
+    }
+}
 
     if (!retval && phr->ss) {
         struct section_global_data *global = phr->ss->global;
         if (global) {
+            global->appeal_deadline = appeal_deadline;
+            global->autoupdate_standings = autoupdate_standings;
+            global->use_ac_not_ok = use_ac_not_ok;
+            global->rounding_mode = rounding_mode;
+            global->max_file_length = max_file_length;
+            global->max_line_length = max_line_length;
+            global->inactivity_timeout = inactivity_timeout;
+            global->ignore_bom = ignore_bom;
+            global->disable_testing = disable_testing;
+            global->disable_auto_testing = disable_auto_testing;
+            global->show_astr_time = show_astr_time;
+            global->enable_report_upload = enable_report_upload;
+            global->enable_runlog_merge = enable_runlog_merge;
+            global->disable_user_database = disable_user_database;
+            global->enable_l10n = enable_l10n;
+            COPYSTR(charset);
+            COPYSTR(standings_charset);
+            COPYSTR(stand2_charset);
+            COPYSTR(plog_charset);
+            global->cpu_bogomips = cpu_bogomips;
+            sarray_free(global->load_user_group); global->load_user_group = parsed_load_user_group; parsed_load_user_group = NULL;
+            COPYSTR(clardb_plugin);
+            COPYSTR(rundb_plugin);
+            COPYSTR(xuser_plugin);
         }
     }
 
-//cleanup:;
+cleanup:;
     fclose(msg_f); msg_f = NULL;
 %>
 {
@@ -35,6 +132,14 @@
     "messages" : "<s:v value="msg_s" json="yes" checkExpr="" />"
 }
 <%
+    xfree(charset);
+    xfree(standings_charset);
+    xfree(stand2_charset);
+    xfree(plog_charset);
+    xfree(clardb_plugin);
+    xfree(rundb_plugin);
+    xfree(xuser_plugin);
+    sarray_free(parsed_load_user_group);
     html_armor_free(&ab);
     xfree(msg_s);
 %>

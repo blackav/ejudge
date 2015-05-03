@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-04-28 03:59+0300\n"
+"POT-Creation-Date: 2015-05-03 10:36+0300\n"
 "PO-Revision-Date: 2015-04-15 14:08+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -1179,9 +1179,6 @@ msgstr "Детали"
 
 msgid "Details for user "
 msgstr "Подробная информация о пользователе "
-
-msgid "Detect"
-msgstr "Обнаружить"
 
 msgid "Directory structure"
 msgstr "Структура каталогов"
