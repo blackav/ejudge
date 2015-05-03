@@ -91,38 +91,14 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SET_PREDEF_PERMISSIONS] = "Contest.xml",
 
   [SSERV_CMD_GLOB_CHANGE_TOKENS] = "Serve.cfg:global:tokens",
-  [SSERV_CMD_GLOB_CHANGE_IGNORE_BOM] = "Serve.cfg:global:ignore_bom",
-  [SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE] = "Serve.cfg:global:disable_user_database",
   [SSERV_CMD_GLOB_CHANGE_DESCRIPTION_FILE] = "Serve.cfg:global:description_file",
-  [SSERV_CMD_GLOB_CHANGE_APPEAL_DEADLINE] = "Serve.cfg:global:appeal_deadline",
   [SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME] = "Serve.cfg:global:stand_collate_name",
   [SSERV_CMD_GLOB_CHANGE_SLEEP_TIME] = "Serve.cfg:global:sleep_time",
   [SSERV_CMD_GLOB_CHANGE_SERVE_SLEEP_TIME] = "Serve.cfg:global:serve_sleep_time",
-  [SSERV_CMD_GLOB_CHANGE_AUTOUPDATE_STANDINGS] = "Serve.cfg:global:autoupdate_standings",
-  [SSERV_CMD_GLOB_CHANGE_USE_AC_NOT_OK] = "Serve.cfg:global:use_ac_not_ok",
-  [SSERV_CMD_GLOB_CHANGE_ROUNDING_MODE] = "Serve.cfg:global:rounding_mode",
-  [SSERV_CMD_GLOB_CHANGE_MAX_FILE_LENGTH] = "Serve.cfg:global:max_file_length",
-  [SSERV_CMD_GLOB_CHANGE_MAX_LINE_LENGTH] = "Serve.cfg:global:max_line_length",
-  [SSERV_CMD_GLOB_CHANGE_INACTIVITY_TIMEOUT] = "Serve.cfg:global:inactivity_timeout",
-  [SSERV_CMD_GLOB_CHANGE_DISABLE_AUTO_TESTING] = "Serve.cfg:global:disable_auto_testing",
-  [SSERV_CMD_GLOB_CHANGE_DISABLE_TESTING] = "Serve.cfg:global:disable_testing",
   [SSERV_CMD_GLOB_CHANGE_CR_SERIALIZATION_KEY] = "Serve.cfg:global:cr_serialization_key",
-  [SSERV_CMD_GLOB_CHANGE_SHOW_ASTR_TIME] = "Serve.cfg:global:show_astr_time",
   [SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS] = "Serve.cfg:global:memoize_user_results",
   [SSERV_CMD_GLOB_CHANGE_ENABLE_CONTINUE] = "Serve.cfg:global:enable_continue",
-  [SSERV_CMD_GLOB_CHANGE_ENABLE_REPORT_UPLOAD] = "Serve.cfg:global:enable_report_upload",
-  [SSERV_CMD_GLOB_CHANGE_ENABLE_RUNLOG_MERGE] = "Serve.cfg:global:enable_runlog_merge",
-  [SSERV_CMD_GLOB_CHANGE_ENABLE_L10N] = "Serve.cfg:global:enable_l10n",
-  [SSERV_CMD_GLOB_CHANGE_CHARSET] = "Serve.cfg:global:charset",
-  [SSERV_CMD_GLOB_CHANGE_STANDINGS_CHARSET] = "Serve.cfg:global:standings_charset",
-  [SSERV_CMD_GLOB_CHANGE_STAND2_CHARSET] = "Serve.cfg:global:stand2_charset",
-  [SSERV_CMD_GLOB_CHANGE_PLOG_CHARSET] = "Serve.cfg:global:plog_charset",
   [SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME] = "Serve.cfg:global:team_download_time",
-  [SSERV_CMD_GLOB_CHANGE_CPU_BOGOMIPS] = "Serve.cfg:global:cpu_bogomips",
-  [SSERV_CMD_GLOB_CHANGE_LOAD_USER_GROUP] = "Serve.cfg:global:load_user_group",
-  [SSERV_CMD_GLOB_CHANGE_CLARDB_PLUGIN] = "Serve.cfg:global:clardb_plugin",
-  [SSERV_CMD_GLOB_CHANGE_RUNDB_PLUGIN] = "Serve.cfg:global:rundb_plugin",
-  [SSERV_CMD_GLOB_CHANGE_XUSER_PLUGIN] = "Serve.cfg:global:xuser_plugin",
   [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE] = "Serve.cfg:global:compile_max_vm_size",
   [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_STACK_SIZE] = "Serve.cfg:global:compile_max_stack_size",
   [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_FILE_SIZE] = "Serve.cfg:global:compile_max_file_size",
@@ -325,7 +301,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   int *p_int;
   unsigned char *p_str;
   size_t str_size;
-  char **tmp_env = 0;
   size_t *p_size, zval;
 
   if (!global) return -SSERV_ERR_CONTEST_NOT_EDITED;
@@ -346,14 +321,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     *p_int = val;
     return 0;
 
-  case SSERV_CMD_GLOB_CHANGE_IGNORE_BOM:
-    p_int = &global->ignore_bom;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_DISABLE_USER_DATABASE:
-    p_int = &global->disable_user_database;
-    goto handle_boolean;
-
   handle_string:
     snprintf(p_str, str_size, "%s", param2);
     return 0;
@@ -363,20 +330,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_GLOB_CLEAR_DESCRIPTION_FILE:
     GLOB_CLEAR_STRING(description_file);
-
-  handle_size:
-    if (sscanf(param2, "%d%n", &val, &n) != 1 || val < 0)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    if (param2[n] == 'k' || param2[n] == 'K') {
-      val *= SIZE_K;
-      n++;
-    } else if (param2[n] == 'm' || param2[n] == 'M') {
-      val *= SIZE_M;
-      n++;
-    }
-    if (param2[n]) return -SSERV_ERR_INVALID_PARAMETER;
-    *p_int = val;
-    return 0;
 
   handle_int:
     if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n] || val < 0)
@@ -400,15 +353,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_FILE_SIZE:
     p_size = &global->compile_max_file_size;
     goto handle_size_t;
-
-  case SSERV_CMD_GLOB_CHANGE_APPEAL_DEADLINE:
-    if (xml_parse_date(NULL, "", 0, 0, param2, &global->appeal_deadline) < 0)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    return 0;
-
-  case SSERV_CMD_GLOB_CLEAR_APPEAL_DEADLINE:
-    global->appeal_deadline = 0;
-    return 0;
 
   case SSERV_CMD_GLOB_CHANGE_STAND_COLLATE_NAME:
     p_int = &global->stand_collate_name;
@@ -441,47 +385,9 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     p_int = &global->serve_sleep_time; default_val = 500;
     goto handle_int_def;
 
-  case SSERV_CMD_GLOB_CHANGE_AUTOUPDATE_STANDINGS:
-    p_int = &global->autoupdate_standings;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_USE_AC_NOT_OK:
-    p_int = &global->use_ac_not_ok;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_ROUNDING_MODE:
-    if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n]
-        || val < 0 || val > 2) return -SSERV_ERR_INVALID_PARAMETER;
-    global->rounding_mode = val;
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_MAX_FILE_LENGTH:
-    p_int = &global->max_file_length;
-    goto handle_size;
-
-  case SSERV_CMD_GLOB_CHANGE_MAX_LINE_LENGTH:
-    p_int = &global->max_line_length;
-    goto handle_size;
-
-  case SSERV_CMD_GLOB_CHANGE_INACTIVITY_TIMEOUT:
-    p_int = &global->inactivity_timeout; default_val = 120;
-    goto handle_int_def;
-
-  case SSERV_CMD_GLOB_CHANGE_DISABLE_AUTO_TESTING:
-    p_int = &global->disable_auto_testing;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_DISABLE_TESTING:
-    p_int = &global->disable_testing;
-    goto handle_boolean;
-
   case SSERV_CMD_GLOB_CHANGE_CR_SERIALIZATION_KEY:
     p_int = &global->cr_serialization_key; default_val = config->serialization_key;
     goto handle_int_def;
-
-  case SSERV_CMD_GLOB_CHANGE_SHOW_ASTR_TIME:
-    p_int = &global->show_astr_time;
-    goto handle_boolean;
 
   case SSERV_CMD_GLOB_CHANGE_MEMOIZE_USER_RESULTS:
     p_int = &global->memoize_user_results;
@@ -491,42 +397,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
     p_int = &global->enable_continue;
     goto handle_boolean;
 
-  case SSERV_CMD_GLOB_CHANGE_ENABLE_REPORT_UPLOAD:
-    p_int = &global->enable_report_upload;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_ENABLE_RUNLOG_MERGE:
-    p_int = &global->enable_runlog_merge;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_ENABLE_L10N:
-    p_int = &global->enable_l10n;
-    goto handle_boolean;
-
-  case SSERV_CMD_GLOB_CHANGE_CHARSET:
-    GLOB_SET_STRING(charset);
-
-  case SSERV_CMD_GLOB_CLEAR_CHARSET:
-    GLOB_CLEAR_STRING(charset);
-
-  case SSERV_CMD_GLOB_CHANGE_STANDINGS_CHARSET:
-    GLOB_SET_STRING(standings_charset);
-
-  case SSERV_CMD_GLOB_CLEAR_STANDINGS_CHARSET:
-    GLOB_CLEAR_STRING(standings_charset);
-
-  case SSERV_CMD_GLOB_CHANGE_STAND2_CHARSET:
-    GLOB_SET_STRING(stand2_charset);
-
-  case SSERV_CMD_GLOB_CLEAR_STAND2_CHARSET:
-    GLOB_CLEAR_STRING(stand2_charset);
-
-  case SSERV_CMD_GLOB_CHANGE_PLOG_CHARSET:
-    GLOB_SET_STRING(plog_charset);
-
-  case SSERV_CMD_GLOB_CLEAR_PLOG_CHARSET:
-    GLOB_CLEAR_STRING(plog_charset);
-
   case SSERV_CMD_GLOB_CHANGE_TEAM_DOWNLOAD_TIME:
     p_int = &global->team_download_time;
     goto handle_int;
@@ -534,44 +404,6 @@ super_html_global_param(struct sid_state *sstate, int cmd,
   case SSERV_CMD_GLOB_DISABLE_TEAM_DOWNLOAD_TIME:
     global->team_download_time = 0;
     return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_CPU_BOGOMIPS:
-    p_int = &global->cpu_bogomips;
-    goto handle_int;
-
-  case SSERV_CMD_GLOB_DETECT_CPU_BOGOMIPS:
-    global->cpu_bogomips = cpu_get_bogomips();
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_LOAD_USER_GROUP:
-    if (sarray_parse_2(param2, &tmp_env) < 0)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    sarray_free(global->load_user_group);
-    global->load_user_group = tmp_env;
-    return 0;
-
-  case SSERV_CMD_GLOB_CLEAR_LOAD_USER_GROUP:
-    sarray_free(global->load_user_group);
-    global->load_user_group = 0;
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_CLARDB_PLUGIN:
-    GLOB_SET_STRING(clardb_plugin);
-
-  case SSERV_CMD_GLOB_CLEAR_CLARDB_PLUGIN:
-    GLOB_CLEAR_STRING(clardb_plugin);
-
-  case SSERV_CMD_GLOB_CHANGE_RUNDB_PLUGIN:
-    GLOB_SET_STRING(rundb_plugin);
-
-  case SSERV_CMD_GLOB_CLEAR_RUNDB_PLUGIN:
-    GLOB_CLEAR_STRING(rundb_plugin);
-
-  case SSERV_CMD_GLOB_CHANGE_XUSER_PLUGIN:
-    GLOB_SET_STRING(xuser_plugin);
-
-  case SSERV_CMD_GLOB_CLEAR_XUSER_PLUGIN:
-    GLOB_CLEAR_STRING(xuser_plugin);
 
   default:
     abort();
