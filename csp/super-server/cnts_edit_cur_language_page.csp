@@ -34,7 +34,7 @@ static const unsigned char * const form_row_attrs[]=
     snprintf(subtitle_buf, sizeof(subtitle_buf), "editing serve.cfg, programming languages");
     cnts = phr->ss->edited_cnts;
     struct section_global_data *global = phr->ss->global;
-%><%@include "header.csp"
+%><%@include "header_jqgrid.csp"
 %>
 
 <%@include "cnts_edit_cur_top_menu.csp"
@@ -82,8 +82,93 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
 
+<div id="LimitsDialogDiv" title="Compilation Limits">
+    <s:form id="LimitsDialogForm">
+        <s:hidden name="action" ac="glob-save-limits-form" />
+        <div id="limits-compile_max_vm_size-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="limits-compile_max_vm_size">Maximum VM size for compilers:</label></div>
+            <input type="text" size="20" name="compile_max_vm_size" id="limits-compile_max_vm_size" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="limits-compile_max_stack_size-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="limits-compile_max_stack_size">Maximum Stack size for compilers:</label></div>
+            <input type="text" size="20" name="compile_max_stack_size" id="limits-compile_max_stack_size" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="limits-compile_max_file_size-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="limits-compile_max_file_size">Maximum File size for compilers:</label></div>
+            <input type="text" size="20" name="compile_max_file_size" id="limits-compile_max_file_size" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+    </s:form>
+</div>
+
+<script type="text/javascript">
+$(function() {
+    limitsDialog = $("#LimitsDialogDiv").dialog({
+        autoOpen: false,
+        height: 350,
+        width: 650,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#LimitsDialogForm").serialize();
+                var formURL = $("#LimitsDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                limitsDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
+});
+
+function np(e)
+{
+    if (e) e.stopPropagation();
+}
+
+function copyCheckbox(dst, src)
+{
+    var dstobj = document.getElementById(dst);
+    var srcobj = document.getElementById(src);
+    if (dstobj != null) {
+        if (srcobj != null && srcobj.value == "1") {
+            dstobj.checked = true;
+        } else {
+            dstobj.checked = false;
+        }
+    }
+}
+
+function popupLimitsDialog(e, skipField)
+{
+    $("#limits-compile_max_vm_size").val($("#orig-compile_max_vm_size").val());
+    $("#limits-compile_max_stack_size").val($("#orig-compile_max_stack_size").val());
+    $("#limits-compile_max_file_size").val($("#orig-compile_max_file_size").val());
+
+    if (e) e.stopPropagation();
+    limitsDialogOnChange();
+    $("#LimitsDialogDiv").dialog('open');
+}
+
+function limitsDialogOnChange()
+{
+}
+</script>
+
 <table border="0">
-    <s:tr attr="head_row_attr">
+    <s:tr attr="head_row_attr" onclick="popupLimitsDialog()">
         <td colspan="5" align="center"><b>Compilation limitations</b></td>
     </s:tr>
 
@@ -94,11 +179,11 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
     <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
+        <s:tr id="orig-compile_max_vm_size-div" attr="form_row_attrs[row ^= 1]" onclick="popupLimitsDialog()">
             <td colspan="2">Maximum VM size for compilers:</td>
-            <td><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
-            <td><s:submit ac="glob-change-compile-max-vm-size" label="Change" /></td>
-            <td><s:help ac="glob-change-compile-max-vm-size" /></td>
+            <td><s:textfield id="orig-compile_max_vm_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
+            <td>&nbsp;</td>
+            <td onclick="np(event);"><s:help topic="Serve.cfg:global:compile_max_vm_size" /></td>
         </s:tr>
     </s:form>
 
@@ -109,11 +194,11 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
     <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
+        <s:tr id="orig-compile_max_stack_size-div" attr="form_row_attrs[row ^= 1]" onclick="popupLimitsDialog()">
             <td colspan="2">Maximum stack size for compilers:</td>
-            <td><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
-            <td><s:submit ac="glob-change-compile-max-stack-size" label="Change" /></td>
-            <td><s:help ac="glob-change-compile-max-stack-size" /></td>
+            <td><s:textfield id="orig-compile_max_stack_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
+            <td>&nbsp;</td>
+            <td onclick="np(event);"><s:help topic="Serve.cfg:global:compile_max_stack_size" /></td>
         </s:tr>
     </s:form>
 
@@ -124,11 +209,11 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
     <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
+        <s:tr id="orig-compile_max_file_size-div" attr="form_row_attrs[row ^= 1]" onclick="popupLimitsDialog()">
             <td colspan="2">Maximum file size for compilers:</td>
-            <td><s:textfield name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
-            <td><s:submit ac="glob-change-compile-max-file-size" label="Change" /></td>
-            <td><s:help ac="glob-change-compile-max-file-size" /></td>
+            <td><s:textfield id="orig-compile_max_file_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /></td>
+            <td>&nbsp;</td>
+            <td onclick="np(event);"><s:help topic="Serve.cfg:global:compile_max_file_size" /></td>
         </s:tr>
     </s:form>
 
