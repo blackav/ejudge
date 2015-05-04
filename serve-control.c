@@ -885,22 +885,6 @@ static void action_simple_edit_command(int cmd, int next_state)
   }
 }
 
-static void action_set_param(int, int) __attribute__((noreturn));
-static void
-action_set_param(int cmd, int next_state)
-{
-  int r;
-  unsigned char *param = cgi_param("param");
-
-  open_super_server();
-  r = super_clnt_set_param(super_serve_fd, cmd, 0, param, 0, 0, 0);
-  if (next_state) {
-    operation_status_page(-1, r, "action=%d", next_state);
-  } else {
-    operation_status_page(-1, r, "");
-  }
-}
-
 static const int ip_param_next_state[] =
 {
   SSERV_CMD_CNTS_EDIT_REGISTER_ACCESS_PAGE,
@@ -1574,9 +1558,6 @@ static const int next_action_map[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_NORMALIZATION] = SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE,
 
   [SSERV_CMD_LANG_UPDATE_VERSIONS] = SSERV_CMD_CNTS_EDIT_CUR_LANGUAGE_PAGE,
-  [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE] = SSERV_CMD_CNTS_EDIT_CUR_LANGUAGE_PAGE,
-  [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_STACK_SIZE] = SSERV_CMD_CNTS_EDIT_CUR_LANGUAGE_PAGE,
-  [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_FILE_SIZE] = SSERV_CMD_CNTS_EDIT_CUR_LANGUAGE_PAGE,
 };
 
 int
@@ -1927,12 +1908,6 @@ main(int argc, char *argv[])
   case SSERV_CMD_PROB_CHANGE_START_DATE:
   case SSERV_CMD_PROB_CHANGE_DEADLINE:
     action_prob_date_param(client_action, next_action_map[client_action]);
-    break;
-
-  case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE:
-  case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_STACK_SIZE:
-  case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_FILE_SIZE:
-    action_set_param(client_action, next_action_map[client_action]);
     break;
 
   case SSERV_CMD_PROB_CHANGE_VARIANTS:

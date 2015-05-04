@@ -1847,13 +1847,6 @@ cmd_set_value(struct client_state *p, int len,
     r = super_html_variant_prob_op(sstate, pkt->b.id, pkt->param1);
     break;
 
-  case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE:
-  case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_STACK_SIZE:
-  case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_FILE_SIZE:
-    r = super_html_global_param(sstate, pkt->b.id, config,
-                                pkt->param1, param2_ptr, pkt->param3, pkt->param4);
-    break;
-
   case SSERV_CMD_PROB_CHANGE_VARIANTS:
   case SSERV_CMD_PROB_DELETE_VARIANTS:
     r = super_html_variant_param(sstate, pkt->b.id,
@@ -2462,9 +2455,6 @@ static const struct packet_handler packet_handlers[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_CLEAR_NORMALIZATION] = { cmd_set_value },
 
   [SSERV_CMD_LANG_UPDATE_VERSIONS] = { cmd_simple_top_command },
-  [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE] = { cmd_set_value },
-  [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_STACK_SIZE] = { cmd_set_value },
-  [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_FILE_SIZE] = { cmd_set_value },
 
   [SSERV_CMD_PROB_CLEAR_VARIANTS] = { cmd_set_value },
   [SSERV_CMD_PROB_RANDOM_VARIANTS] = { cmd_set_value },

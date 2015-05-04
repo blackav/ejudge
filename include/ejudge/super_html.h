@@ -156,11 +156,6 @@ int super_html_prob_param(struct sid_state *sstate, int cmd,
                           int param1, const unsigned char *param2,
                           int param3, int param4);
 
-int super_html_global_param(struct sid_state *sstate, int cmd,
-                            const struct ejudge_cfg *config,
-                            int param1, const unsigned char *param2,
-                            int param3, int param4);
-
 int super_html_report_error(FILE *f,
                             ej_cookie_t session_id,
                             const unsigned char *self_url,

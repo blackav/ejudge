@@ -90,10 +90,6 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SAVE_PERMISSIONS] = "Contest.xml",
   [SSERV_CMD_CNTS_SET_PREDEF_PERMISSIONS] = "Contest.xml",
 
-  [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE] = "Serve.cfg:global:compile_max_vm_size",
-  [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_STACK_SIZE] = "Serve.cfg:global:compile_max_stack_size",
-  [SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_FILE_SIZE] = "Serve.cfg:global:compile_max_file_size",
-
   [SSERV_CMD_LANG_CHANGE_DISABLED] = "Serve.cfg:language:disabled",
   [SSERV_CMD_LANG_CHANGE_INSECURE] = "Serve.cfg:language:insecure",
   [SSERV_CMD_LANG_CHANGE_LONG_NAME] = "Serve.cfg:language:long_name",
@@ -277,54 +273,6 @@ print_help_url(FILE *f, int action)
 #define SIZE_G (1024 * 1024 * 1024)
 #define SIZE_M (1024 * 1024)
 #define SIZE_K (1024)
-
-int
-super_html_global_param(struct sid_state *sstate, int cmd,
-                        const struct ejudge_cfg *config,
-                        int param1, const unsigned char *param2,
-                        int param3, int param4)
-{
-  struct section_global_data *global = sstate->global;
-  ej_size64_t *p_size, zval;
-
-  if (!global) return -SSERV_ERR_CONTEST_NOT_EDITED;
-
-  switch (cmd) {
-  case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_VM_SIZE:
-    p_size = &global->compile_max_vm_size;
-
-  handle_size_t:
-    zval = 0;
-    if (size_str_to_size64_t(param2, &zval) < 0) return -SSERV_ERR_INVALID_PARAMETER;
-    *p_size = zval;
-    return 0;
-
-  case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_STACK_SIZE:
-    p_size = &global->compile_max_stack_size;
-    goto handle_size_t;
-
-  case SSERV_CMD_GLOB_CHANGE_COMPILE_MAX_FILE_SIZE:
-    p_size = &global->compile_max_file_size;
-    goto handle_size_t;
-
-    /*
-  case SSERV_CMD_GLOB_CHANGE_ENABLE_EXTRA_COL:
-    p_int = &sstate->enable_extra_col;
-    if (sscanf(param2, "%d%n", &val, &n) != 1 || param2[n] || val < 0 || val > 1)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    *p_int = val;
-    if (val && !global->stand_extra_format[0]) {
-      strcpy(global->stand_extra_format, "%Mc");
-      strcpy(global->stand_extra_legend, "City");
-    }
-    return 0;
-    */
-
-  default:
-    abort();
-  }
-  return 0;
-}
 
 static int
 super_html_find_lang_id(
