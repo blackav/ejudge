@@ -79,6 +79,7 @@ CFILES = \
  csp_glob_save_urls_form.c\
  csp_glob_save_attrs_form.c\
  csp_glob_save_advanced_form.c\
+ csp_glob_save_limits_form.c\
  csp_error_unknown_page.c
 
 SOFILES = $(CFILES:.c=.so)
@@ -148,6 +149,7 @@ csp_glob_save_quotas_form.c : glob_save_quotas_form.csp includes.csp stdvars.csp
 csp_glob_save_urls_form.c : glob_save_urls_form.csp includes.csp stdvars.csp
 csp_glob_save_attrs_form.c : glob_save_attrs_form.csp includes.csp stdvars.csp
 csp_glob_save_advanced_form.c : glob_save_advanced_form.csp includes.csp stdvars.csp
+csp_glob_save_limits_form.c : glob_save_limits_form.csp includes.csp stdvars.csp
 
 csp_error_unknown_page.c : error_unknown_page.csp includes.csp stdvars.csp header.csp footer.csp
 

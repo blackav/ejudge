@@ -1,0 +1,45 @@
+<% //-*- c -*-
+%><%@include "includes.csp"
+%><%
+
+%><%@set getter_name = "csp_get_glob_save_limits_form"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_glob_save_limits_form(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
+
+    ej_size64_t compile_max_vm_size = -1LL;
+    ej_size64_t compile_max_stack_size = -1LL;
+    ej_size64_t compile_max_file_size = -1LL;
+
+    char *msg_s = NULL;
+    size_t msg_z = 0;
+    FILE *msg_f = open_memstream(&msg_s, &msg_z);
+%><s:read var="compile_max_vm_size" default="-1LL" /><%
+%><s:read var="compile_max_stack_size" default="-1LL" /><%
+%><s:read var="compile_max_file_size" default="-1LL" /><%
+
+    if (!retval && phr->ss) {
+        struct section_global_data *global = phr->ss->global;
+        if (global) {
+            if (compile_max_vm_size >= 0) global->compile_max_vm_size = compile_max_vm_size;
+            if (compile_max_stack_size >= 0) global->compile_max_stack_size = compile_max_stack_size;
+            if (compile_max_file_size >= 0) global->compile_max_file_size = compile_max_file_size;
+        }
+    }
+
+cleanup:;
+    fclose(msg_f); msg_f = NULL;
+%>
+{
+    "input" : {
+    },
+    "retval" : <s:v value="retval" />,
+    "messages" : "<s:v value="msg_s" json="yes" checkExpr="" />"
+}
+<%
+    html_armor_free(&ab);
+    xfree(msg_s);
+%>
