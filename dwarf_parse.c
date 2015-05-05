@@ -1558,7 +1558,7 @@ static const struct TopDieParseTable top_die_table[] =
     { DW_TAG_array_type, NODE_ARRAY_TYPE, "array", parse_array_type_die },
     { DW_TAG_const_type, NODE_CONST_TYPE, "const", parse_const_type_die },
     { DW_TAG_volatile_type, NODE_VOLATILE_TYPE, "volatile", parse_volatile_type_die },
-    { DW_TAG_restrict_type, NULL, "restrict", parse_restrict_type_die },
+    { DW_TAG_restrict_type, 0, "restrict", parse_restrict_type_die },
     { DW_TAG_typedef, NODE_TYPEDEF_TYPE, "typedef", parse_typedef_type_die },
     { DW_TAG_enumeration_type, NODE_ENUM_TYPE, "enum", parse_enum_type_die },
     { DW_TAG_structure_type, NODE_STRUCT_TYPE, "struct", parse_struct_type_die },
