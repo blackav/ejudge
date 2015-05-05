@@ -341,18 +341,23 @@ s_dwarf_formudata(
     if (form_num != DW_FORM_data1 && form_num != DW_FORM_data2 && form_num != DW_FORM_data4 && form_num != DW_FORM_data8) {
         const char *s = NULL;
         dwarf_get_FORM_name(form_num, &s);
-        fprintf(log_f, "%s: DW_FORM_data* expected, but %s obtained\n",
-                path, s);
+        fprintf(log_f, "%s: DW_FORM_data* expected, but %s obtained\n", path, s);
         return -1;
     }
     if (dwarf_formudata(attr, pvalue, &dwe) != DW_DLV_OK) {
-        fprintf(log_f, "%s: dwarf_formudata failed: %s\n",
-                path, dwarf_errmsg(dwe));
+        fprintf(log_f, "%s: dwarf_formudata failed: %s\n", path, dwarf_errmsg(dwe));
         return -1;
     }
     return 0;
 }
 
+static int
+s_dwarf_formsdata(
+        FILE *log_f,
+        const unsigned char *path,
+        Dwarf_Attribute attr,
+        Dwarf_Signed *pvalue)
+    __attribute__((unused));
 static int
 s_dwarf_formsdata(
         FILE *log_f,
@@ -380,6 +385,70 @@ s_dwarf_formsdata(
                 path, dwarf_errmsg(dwe));
         return -1;
     }
+    return 0;
+}
+
+static int
+s_dwarf_formdata(
+        FILE *log_f,
+        const unsigned char *path,
+        Dwarf_Attribute attr,
+        Dwarf_Signed *pvalue)
+{
+    Dwarf_Error dwe = NULL;
+    Dwarf_Half form_num = 0;
+
+    if (dwarf_whatform(attr, &form_num, &dwe) != DW_DLV_OK) {
+        fprintf(log_f, "%s: dwarf_whatform failed: %s\n", path, dwarf_errmsg(dwe));
+        return -1;
+    }
+    if (form_num == DW_FORM_sdata) {
+        if (dwarf_formsdata(attr, pvalue, &dwe) != DW_DLV_OK) {
+            fprintf(log_f, "%s: dwarf_formsdata failed: %s\n", path, dwarf_errmsg(dwe));
+            return -1;
+        }
+        return 0;
+    }
+    if (form_num == DW_FORM_block1 || form_num == DW_FORM_block2 || form_num == DW_FORM_block4) {
+        Dwarf_Block *dwb = NULL;
+        if (dwarf_formblock(attr, &dwb, &dwe) != DW_DLV_OK) {
+            fprintf(log_f, "%s: dwarf_formblock failed: %s\n", path, dwarf_errmsg(dwe));
+            return -1;
+        }
+        if (dwb->bl_len == 1) {
+            const unsigned char *pp = (const unsigned char*) dwb->bl_data;
+            *pvalue = *pp;
+            return 0;
+        } else if (dwb->bl_len == 2) {
+            const unsigned short *pp = (const unsigned short*) dwb->bl_data;
+            *pvalue = *pp;
+            return 0;
+        } else if (dwb->bl_len == 3) {
+            const unsigned char *pp = (const unsigned char *) dwb->bl_data;
+            // little-endian assumed
+            *pvalue = pp[0] | (pp[1] << 8) | (pp[2] << 16);
+            return 0;
+        } else if (dwb->bl_len == 4) {
+            const unsigned *pp = (const unsigned*) dwb->bl_data;
+            *pvalue = *pp;
+            return 0;
+        } else {
+            fprintf(log_f, "%s: invalid block length %d\n", path, (int) dwb->bl_len);
+            return -1;
+        }
+    }
+    if (form_num != DW_FORM_data1 && form_num != DW_FORM_data2 && form_num != DW_FORM_data4 && form_num != DW_FORM_data8) {
+        const char *s = NULL;
+        dwarf_get_FORM_name(form_num, &s);
+        fprintf(log_f, "%s: DW_FORM_data* expected, but %s obtained\n", path, s);
+        return -1;
+    }
+    Dwarf_Unsigned tmp = 0;
+    if (dwarf_formudata(attr, &tmp, &dwe) != DW_DLV_OK) {
+        fprintf(log_f, "%s: dwarf_formudata failed: %s\n", path, dwarf_errmsg(dwe));
+        return -1;
+    }
+    *pvalue = tmp;
     return 0;
 }
 
@@ -777,8 +846,8 @@ parse_index_range_die(
     if (ub_attr == NULL) {
         *p_info = tc_get_open_array_type(cntx, base_info);
     } else {
-        Dwarf_Unsigned ub = 0;
-        if (s_dwarf_formudata(log_f, path, ub_attr, &ub) < 0) goto done;
+        Dwarf_Signed ub = 0;
+        if (s_dwarf_formdata(log_f, path, ub_attr, &ub) < 0) goto done;
         if (ub == INT_MAX) {
             ub = 0;
         } else if (ub > INT_MAX) {
@@ -913,6 +982,47 @@ done:
 }
 
 static int
+parse_restrict_type_die(
+        FILE *log_f,
+        const unsigned char *path,
+        Dwarf_Debug dbg,
+        Dwarf_Die die,
+        TypeContext *cntx,
+        DieMap *dm,
+        int tag,
+        TypeInfo **p_info,
+        ParseDieStack *cur,
+        IdScope *global_scope)
+{
+    int retval = -1;
+    TypeInfo *ti = NULL;
+    Dwarf_Attribute type_attr = NULL;
+    if (s_dwarf_attr(log_f, path, die, DW_AT_type, &type_attr) < 0)
+        goto done;
+    if (type_attr == NULL) {
+        //fprintf(log_f, "DW_TAG_const_type: DW_AT_type missing\n");
+        //dump_die(log_f, dbg, die);
+    } else {
+        Dwarf_Off to = 0;
+        if (s_dwarf_global_formref(log_f, path, type_attr, &to) < 0) goto done;
+        Dwarf_Die die2 = NULL;
+        if (s_dwarf_offdie(log_f, path, dbg, to, &die2) < 0) goto done;
+        if (parse_die(log_f, path, dbg, die2, cntx, dm, cur, global_scope) < 0) goto done;
+        if (die_map_get_2(log_f, path, dm, die2, &ti, NULL) < 0) goto done;
+        // temp fix
+    }
+    if (!ti) ti = tc_get_i0_type(cntx);
+
+    // FIXME: add support for 'restrict'?
+    // *p_info = tc_get_volatile_type(cntx, ti);
+    *p_info = ti;
+    retval = 0;
+
+done:
+    return retval;
+}
+
+static int
 parse_typedef_type_die(
         FILE *log_f,
         const unsigned char *path,
@@ -1036,7 +1146,7 @@ parse_enum_type_die(
         Dwarf_Signed const_value_value = 0;
         TypeInfo *const_value_info = NULL;
         if (s_dwarf_attr_2(log_f, path, die2, DW_AT_const_value, &const_value_attr) <= 0) goto done;
-        if (s_dwarf_formsdata(log_f, path, const_value_attr, &const_value_value) < 0) goto done;
+        if (s_dwarf_formdata(log_f, path, const_value_attr, &const_value_value) < 0) goto done;
         const_value_info = tc_get_it(cntx, base_type, const_value_value);
 
         info[idx++] = tc_get_enum_const(cntx, size_info, const_name_info, const_value_info);
@@ -1448,6 +1558,7 @@ static const struct TopDieParseTable top_die_table[] =
     { DW_TAG_array_type, NODE_ARRAY_TYPE, "array", parse_array_type_die },
     { DW_TAG_const_type, NODE_CONST_TYPE, "const", parse_const_type_die },
     { DW_TAG_volatile_type, NODE_VOLATILE_TYPE, "volatile", parse_volatile_type_die },
+    { DW_TAG_restrict_type, NULL, "restrict", parse_restrict_type_die },
     { DW_TAG_typedef, NODE_TYPEDEF_TYPE, "typedef", parse_typedef_type_die },
     { DW_TAG_enumeration_type, NODE_ENUM_TYPE, "enum", parse_enum_type_die },
     { DW_TAG_structure_type, NODE_STRUCT_TYPE, "struct", parse_struct_type_die },
