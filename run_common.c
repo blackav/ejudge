@@ -145,7 +145,8 @@ make_file_content(
         struct testing_report_file_content *fc,
         const struct super_run_in_global_packet *srgp,
         unsigned char *data,
-        long long size)
+        long long size,
+        int utf8_mode)
 {
   if (size < 0) {
     fc->size = -1;
@@ -173,6 +174,9 @@ make_file_content(
     fc->size = size;
     fc->orig_size = -1;
     fc->data = xmemdup(data, size);
+    if (utf8_mode) {
+      utf8_fix_string(fc->data, NULL);
+    }
   }
 }
 
@@ -371,11 +375,11 @@ generate_xml_report(
         trt->args = xstrdup(tests[i].args);
       }
       if (srgp->enable_full_archive <= 0) {
-        make_file_content(&trt->input, srgp, tests[i].input, tests[i].input_size);
-        make_file_content(&trt->output, srgp, tests[i].output, tests[i].output_size);
-        make_file_content(&trt->correct, srgp, tests[i].correct, tests[i].correct_size);
-        make_file_content(&trt->error, srgp, tests[i].error, tests[i].error_size);
-        make_file_content(&trt->checker, srgp, tests[i].chk_out, tests[i].chk_out_size);
+        make_file_content(&trt->input, srgp, tests[i].input, tests[i].input_size, utf8_mode);
+        make_file_content(&trt->output, srgp, tests[i].output, tests[i].output_size, utf8_mode);
+        make_file_content(&trt->correct, srgp, tests[i].correct, tests[i].correct_size, utf8_mode);
+        make_file_content(&trt->error, srgp, tests[i].error, tests[i].error_size, utf8_mode);
+        make_file_content(&trt->checker, srgp, tests[i].chk_out, tests[i].chk_out_size, utf8_mode);
       }
     }
   }
