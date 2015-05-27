@@ -1,0 +1,37 @@
+<% //-*- c -*-
+%><%@include "includes.csp"
+%><%
+
+%><%@set getter_name = "csp_get_lang_save_main_form"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_lang_save_main_form(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
+
+// declare local variables here
+
+    char *msg_s = NULL;
+    size_t msg_z = 0;
+    FILE *msg_f = open_memstream(&msg_s, &msg_z);
+// read the parameters here like <s:read var="name" normalize="yes" />
+
+// validate parameters here
+
+    if (!retval && phr->ss) {
+    }
+
+cleanup:;
+    fclose(msg_f); msg_f = NULL;
+%>
+{
+    "input" : {
+    },
+    "retval" : <s:v value="retval" />,
+    "messages" : "<s:v value="msg_s" json="yes" checkExpr="" />"
+}
+<%
+    html_armor_free(&ab);
+    xfree(msg_s);
+%>
