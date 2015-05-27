@@ -482,6 +482,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_SAVE_ATTRS_FORM] = "glob_save_attrs_form",
   [SSERV_CMD_GLOB_SAVE_ADVANCED_FORM] = "glob_save_advanced_form",
   [SSERV_CMD_GLOB_SAVE_LIMITS_FORM] = "glob_save_limits_form",
+  [SSERV_CMD_LANG_SAVE_MAIN_FORM] = "lang_save_main_form",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 

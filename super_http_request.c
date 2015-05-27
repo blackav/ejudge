@@ -577,4 +577,5 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_GLOB_SAVE_ATTRS_FORM] = 1,
   [SSERV_CMD_GLOB_SAVE_ADVANCED_FORM] = 1,
   [SSERV_CMD_GLOB_SAVE_LIMITS_FORM] = 1,
+  [SSERV_CMD_LANG_SAVE_MAIN_FORM] = 1,
 };
