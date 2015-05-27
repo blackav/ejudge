@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "includes.csp"
 %><%
 %><%@set getter_name = "csp_get_cnts_edit_cur_language_page"
@@ -100,6 +99,105 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
+<div id="LangDialogDiv" title="Translator Properties">
+    <s:form id="LangDialogForm">
+        <s:hidden name="action" ac="lang-save-main-form" />
+
+        <div id="main-lang_id-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-lang_id">Language ID:</label></div>
+            <input readonly="readonly" type="text" size="20" name="lang_id" id="main-lang_id" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-compile_id-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-compile_id">Language compile ID:</label></div>
+            <input readonly="readonly" type="text" size="20" name="compile_id" id="main-compile_id" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-short_name-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-short_name">Language short name:</label></div>
+            <input type="text" size="20" name="short_name" id="main-short_name" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-arch-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-arch">Language architecture:</label></div>
+            <input type="text" size="20" name="arch" id="main-arch" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-src_sfx-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-src_sfx">Suffix of the source files:</label></div>
+            <input type="text" size="20" name="src_sfx" id="main-src_sfx" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-exe_sfx-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-exe_sfx">Suffix of the executable files:</label></div>
+            <input type="text" size="20" name="exe_sfx" id="main-exe_sfx" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-long_name-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-long_name">Language long name:</label></div>
+            <input type="text" size="20" name="long_name" id="main-long_name" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-extid-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-extid">Language external name:</label></div>
+            <input type="text" size="20" name="extid" id="main-extid" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-disabled-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-disabled">Disable this language for participants:</label></div>
+            <input type="checkbox" name="disabled" id="main-disabled" value="1" />
+        </div>
+        <div id="main-insecure-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-insecure">This language is insecure:</label></div>
+            <input type="checkbox" name="insecure" id="main-insecure" value="1" />
+        </div>
+        <div id="main-disable_security-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-disable_security">Disable security restrictions:</label></div>
+            <input type="checkbox" name="disable_security" id="main-disable_security" value="1" />
+        </div>
+        <div id="main-disable_testing-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-disable_testing">Disable any testing of submissions:</label></div>
+            <input type="checkbox" name="disable_testing" id="main-disable_testing" value="1" />
+        </div>
+        <div id="main-disable_auto_testing-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-disable_auto_testing">Disable automatic testing of submissions:</label></div>
+            <input type="checkbox" name="disable_auto_testing" id="main-disable_auto_testing" value="1" />
+        </div>
+        <div id="main-binary-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-binary">Language source files are binary:</label></div>
+            <input type="checkbox" name="binary" id="main-binary" value="1" />
+        </div>
+        <div id="main-is_dos-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-is_dos">Perform UNIX-&gt;DOS conversion:</label></div>
+            <input type="checkbox" name="is_dos" id="main-is_dos" value="1" />
+        </div>
+        <div id="main-max_vm_size-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-max_vm_size">Maximum VM size:</label></div>
+            <input type="text" size="20" name="max_vm_size" id="main-max_vm_size" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-max_stack_size-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-max_stack_size">Maximum stack size:</label></div>
+            <input type="text" size="20" name="max_stack_size" id="main-max_stack_size" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-max_file_size-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-max_file_size">Maximum file size:</label></div>
+            <input type="text" size="20" name="max_file_size" id="main-max_file_size" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-content_type-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-content_type">Content type for files:</label></div>
+            <input type="text" size="20" name="content_type" id="main-content_type" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-style_checker_cmd-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-style_checker_cmd">Style checker command:</label></div>
+            <input type="text" size="20" name="style_checker_cmd" id="main-style_checker_cmd" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-opts-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-opts">Additional compilation options:</label></div>
+            <input type="text" size="20" name="opts" id="main-opts" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-libs-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-libs">Additional libraries:</label></div>
+            <input type="text" size="20" name="libs" id="main-libs" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-style_checker_env-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-style_checker_env">Style checker environment:</label></div>
+            <input type="text" size="20" name="style_checker_env" id="main-style_checker_env" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+    </s:form>
+</div>
+
 <script type="text/javascript">
 $(function() {
     limitsDialog = $("#LimitsDialogDiv").dialog({
@@ -126,6 +224,36 @@ $(function() {
             },
             Cancel: function() {
                 limitsDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
+
+    mainDialog = $("#MainDialogDiv").dialog({
+        autoOpen: false,
+        height: 350,
+        width: 650,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#MainDialogForm").serialize();
+                var formURL = $("#MainDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                mainDialog.dialog("close");
             }
         },
         close : function() {
@@ -163,6 +291,17 @@ function popupLimitsDialog(e, skipField)
 }
 
 function limitsDialogOnChange()
+{
+}
+
+function popupMainDialog(e, skipField)
+{
+    if (e) e.stopPropagation();
+    mainDialogOnChange();
+    $("#MainDialogDiv").dialog('open');
+}
+
+function mainDialogOnChange()
 {
 }
 </script>
@@ -563,7 +702,7 @@ function limitsDialogOnChange()
 %>
     <s:tr attr="head_row_attr">
         <td width="50">&nbsp;</td>
-        <td colspan="4" align="center"><b>Compilation limitations</b></td>
+        <td colspan="4" align="center"><b>Uneditable variables</b></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td width="50">&nbsp;</td>

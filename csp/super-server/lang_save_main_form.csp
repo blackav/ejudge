@@ -22,7 +22,7 @@
     if (!retval && phr->ss) {
     }
 
-cleanup:;
+//cleanup:;
     fclose(msg_f); msg_f = NULL;
 %>
 {
