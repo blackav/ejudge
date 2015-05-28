@@ -3502,7 +3502,20 @@ handle_tr_open(
         fprintf(str_f, " onclick=\"%s\"", onclick_attr->value);
     }
     HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
-    if (id_attr) {
+    HtmlAttribute *idsuffix_attr = html_element_find_attribute(elem, "idsuffix");
+    if (id_attr && idsuffix_attr) {
+        fprintf(str_f, " id=\"%s", id_attr->value);
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
+        TypeInfo *t = NULL;
+        int r = parse_c_expression(ps, cntx, log_f, idsuffix_attr->value, &t, ps->pos);
+        if (r >= 0) {
+            processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, idsuffix_attr->value, elem, t);
+        }
+        str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, "\"");
+    } else if (id_attr) {
         fprintf(str_f, " id=\"%s\"", id_attr->value);
     }
 
