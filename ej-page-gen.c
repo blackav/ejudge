@@ -3497,6 +3497,20 @@ handle_tr_open(
     if (valign_attr) {
         fprintf(str_f, " valign=\"%s\"", valign_attr->value);
     }
+    HtmlAttribute *onclickexpr_attr = html_element_find_attribute(elem, "onclickexpr");
+    if (onclickexpr_attr) {
+        fprintf(str_f, " onclick=\"");
+        fclose(str_f); str_f = NULL;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = NULL; str_z = 0;
+        TypeInfo *t = NULL;
+        int r = parse_c_expression(ps, cntx, log_f, onclickexpr_attr->value, &t, ps->pos);
+        if (r >= 0) {
+            processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, onclickexpr_attr->value, elem, t);
+        }
+        str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, "\"");
+    }
     HtmlAttribute *onclick_attr = html_element_find_attribute(elem, "onclick");
     if (onclick_attr) {
         fprintf(str_f, " onclick=\"%s\"", onclick_attr->value);
