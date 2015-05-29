@@ -3533,6 +3533,17 @@ handle_tr_open(
         fprintf(str_f, " id=\"%s\"", id_attr->value);
     }
 
+    HtmlAttribute *hiddenexpr_attr = html_element_find_attribute(elem, "hiddenexpr");
+    if (hiddenexpr_attr) {
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
+        fprintf(prg_f, "if (%s) {\n", hiddenexpr_attr->value);
+        handle_html_string(prg_f, txt_f, log_f, " style=\"display: none;\"");
+        fprintf(prg_f, "}\n");
+        str_f = open_memstream(&str_p, &str_z);
+    }
+
     HtmlAttribute *attr_attr = html_element_find_attribute(elem, "attr");
     if (attr_attr) {
         fprintf(str_f, " ");
