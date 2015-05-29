@@ -16,6 +16,7 @@
     unsigned char cs_conf_file[PATH_MAX];
     unsigned char num_buf[1024];
     unsigned char *env = 0;
+    unsigned char onclickstr_buf[128];
 
 static const unsigned char head_row_attr[] =
   " bgcolor=\"#a0a0a0\"";
@@ -113,19 +114,19 @@ static const unsigned char * const form_row_attrs[]=
         </div>
         <div id="main-short_name-div">
             <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-short_name">Language short name:</label></div>
-            <input type="text" size="20" name="short_name" id="main-short_name" value="" class="text ui-widget-content ui-corner-all" />
+            <input readonly="readonly" type="text" size="20" name="short_name" id="main-short_name" value="" class="text ui-widget-content ui-corner-all" />
         </div>
         <div id="main-arch-div">
             <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-arch">Language architecture:</label></div>
-            <input type="text" size="20" name="arch" id="main-arch" value="" class="text ui-widget-content ui-corner-all" />
+            <input readonly="readonly" type="text" size="20" name="arch" id="main-arch" value="" class="text ui-widget-content ui-corner-all" />
         </div>
         <div id="main-src_sfx-div">
             <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-src_sfx">Suffix of the source files:</label></div>
-            <input type="text" size="20" name="src_sfx" id="main-src_sfx" value="" class="text ui-widget-content ui-corner-all" />
+            <input readonly="readonly" type="text" size="20" name="src_sfx" id="main-src_sfx" value="" class="text ui-widget-content ui-corner-all" />
         </div>
         <div id="main-exe_sfx-div">
             <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-exe_sfx">Suffix of the executable files:</label></div>
-            <input type="text" size="20" name="exe_sfx" id="main-exe_sfx" value="" class="text ui-widget-content ui-corner-all" />
+            <input readonly="readonly" type="text" size="20" name="exe_sfx" id="main-exe_sfx" value="" class="text ui-widget-content ui-corner-all" />
         </div>
         <div id="main-long_name-div">
             <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-long_name">Language long name:</label></div>
@@ -149,7 +150,7 @@ static const unsigned char * const form_row_attrs[]=
         </div>
         <div id="main-disable_testing-div">
             <div style="width: 300px; display: inline-block;"><label for="main-disable_testing">Disable any testing of submissions:</label></div>
-            <input type="checkbox" name="disable_testing" id="main-disable_testing" value="1" />
+            <input type="checkbox" name="disable_testing" id="main-disable_testing" value="1" onchange="mainDialogOnChange()" />
         </div>
         <div id="main-disable_auto_testing-div">
             <div style="width: 300px; display: inline-block;"><label for="main-disable_auto_testing">Disable automatic testing of submissions:</label></div>
@@ -157,7 +158,7 @@ static const unsigned char * const form_row_attrs[]=
         </div>
         <div id="main-binary-div">
             <div style="width: 300px; display: inline-block;"><label for="main-binary">Language source files are binary:</label></div>
-            <input type="checkbox" name="binary" id="main-binary" value="1" />
+            <input type="checkbox" name="binary" id="main-binary" value="1" onchange="mainDialogOnChange()" />
         </div>
         <div id="main-is_dos-div">
             <div style="width: 300px; display: inline-block;"><label for="main-is_dos">Perform UNIX-&gt;DOS conversion:</label></div>
@@ -296,6 +297,37 @@ function limitsDialogOnChange()
 
 function popupMainDialog(compile_id, e, skipField)
 {
+    $("#main-lang_id").val($("#orig-lang_id-" + compile_id).val());
+    $("#main-compile_id").val($("#orig-compile_id-" + compile_id).val());
+    $("#main-short_name").val($("#orig-short_name-" + compile_id).val());
+    $("#main-arch").val($("#orig-arch-" + compile_id).val());
+    $("#main-src_sfx").val($("#orig-src_sfx-" + compile_id).val());
+    $("#main-exe_sfx").val($("#orig-exe_sfx-" + compile_id).val());
+    $("#main-long_name").val($("#orig-long_name-" + compile_id).val());
+    $("#main-extid").val($("#orig-extid-" + compile_id).val());
+    copyCheckbox("main-disabled", "orig-disabled-" + compile_id);
+    copyCheckbox("main-insecure", "orig-insecure-" + compile_id);
+    copyCheckbox("main-disable_security", "orig-disable_security-" + compile_id);
+    copyCheckbox("main-disable_testing", "orig-disable_testing-" + compile_id);
+    copyCheckbox("main-disable_auto_testing", "orig-disable_auto_testing-" + compile_id);
+    copyCheckbox("main-binary", "orig-binary-" + compile_id);
+    copyCheckbox("main-is_dos", "orig-is_dos-" + compile_id);
+    $("#main-max_vm_size").val($("#orig-max_vm_size-" + compile_id).val());
+    $("#main-max_stack_size").val($("#orig-max_stack_size-" + compile_id).val());
+    $("#main-max_file_size").val($("#orig-max_file_size-" + compile_id).val());
+    $("#main-content_type").val($("#orig-content_type-" + compile_id).val());
+    $("#main-style_checker_cmd").val($("#orig-style_checker_cmd-" + compile_id).val());
+    $("#main-opts").val($("#orig-opts-" + compile_id).val());
+    $("#main-libs").val($("#orig-libs-" + compile_id).val());
+    $("#main-style_checker_env").val($("#orig-style_checker_env-" + compile_id).val());
+
+    if (skipField != null) {
+        obj = document.getElementById("main-" + skipField);
+        if (obj != null) {
+            obj.value = "";
+        }
+    }
+
     if (e) e.stopPropagation();
     mainDialogOnChange();
     $("#MainDialogDiv").dialog('open');
@@ -303,6 +335,8 @@ function popupMainDialog(compile_id, e, skipField)
 
 function mainDialogOnChange()
 {
+    $("#main-disable_auto_testing-div").toggle(!$("#main-disable_testing").is(':checked'));
+    $("#main-content_type-div").toggle($("#main-binary").is(':checked'));
 }
 </script>
 
@@ -413,9 +447,10 @@ function mainDialogOnChange()
     int idsuffix = -lang->compile_id;
     int compile_id = lang->compile_id;
     row = 1;
+    snprintf(onclickstr_buf, sizeof(onclickstr_buf), "popupMainDialog(%d)", compile_id);
 %>
 
-    <s:tr id="orig-lang_id-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-lang_id-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Language ID:</td>
         <td><s:textfield id="orig-lang_id" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->id" size="48" maxlength="1024" /></td>
@@ -423,7 +458,7 @@ function mainDialogOnChange()
         <td>&nbsp;</td>
     </s:tr>
 
-    <s:tr id="orig-compile_id-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-compile_id-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Compilation server ID:</td>
         <td><s:textfield id="orig-compile_id" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->compile_id" size="48" maxlength="1024" /></td>
@@ -431,7 +466,7 @@ function mainDialogOnChange()
         <td>&nbsp;</td>
     </s:tr>
 
-    <s:tr id="orig-short_name-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-short_name-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Language short name:</td>
         <td><s:textfield id="orig-short_name" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->short_name" size="48" maxlength="1024" /></td>
@@ -439,7 +474,7 @@ function mainDialogOnChange()
         <td>&nbsp;</td>
     </s:tr>
 
-    <s:tr id="orig-arch-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-arch-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Language architecture:</td>
         <td><s:textfield id="orig-arch" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->arch" size="48" maxlength="1024" /><% if (!lang->arch || !lang->arch[0]) { %><i>(Default)</i><% } %></td>
@@ -447,7 +482,7 @@ function mainDialogOnChange()
         <td>&nbsp;</td>
     </s:tr>
 
-    <s:tr id="orig-src_sfx-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-src_sfx-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Suffix of the source files:</td>
         <td><s:textfield id="orig-src_sfx" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->src_sfx" size="48" maxlength="1024" /></td>
@@ -455,7 +490,7 @@ function mainDialogOnChange()
         <td>&nbsp;</td>
     </s:tr>
 
-    <s:tr id="orig-exe_sfx-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-exe_sfx-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Suffix of the executable files:</td>
         <td><s:textfield id="orig-exe_sfx" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->exe_sfx" size="48" maxlength="1024" /><% if (!lang->exe_sfx || !*lang->exe_sfx) { %><i>(Empty)</i><% } %></td>
@@ -463,7 +498,7 @@ function mainDialogOnChange()
         <td>&nbsp;</td>
     </s:tr>
 
-    <s:tr id="orig-long_name-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-long_name-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Language long name:</td>
         <td><s:textfield id="orig-long_name" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->long_name" size="48" maxlength="1024" check="false" /></td>
@@ -471,7 +506,7 @@ function mainDialogOnChange()
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:long_name" /></td>
     </s:tr>
 
-    <s:tr id="orig-extid-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-extid-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Language external name:</td>
         <td><s:textfield id="orig-extid" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->extid" size="48" maxlength="1024" checkExpr="" /></td>
@@ -479,7 +514,7 @@ function mainDialogOnChange()
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:extid" /></td>
     </s:tr>
 
-    <s:tr id="orig-disabled-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-disabled-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Disable this language for participants:</td>
         <td><s:yesno id="orig-disabled" idSuffix="idsuffix" disabled="disabled" name="param" value="lang->disabled" /></td>
@@ -487,7 +522,7 @@ function mainDialogOnChange()
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:disabled" /></td>
     </s:tr>
 
-    <s:tr id="orig-insecure-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-insecure-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>This language is insecure:</td>
         <td><s:yesno id="orig-insecure" idSuffix="idsuffix" disabled="disabled"  name="param" value="lang->insecure" /></td>
@@ -495,7 +530,7 @@ function mainDialogOnChange()
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:insecure" /></td>
     </s:tr>
 
-    <s:tr id="orig-disable_security-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-disable_security-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Disable security restrictions:</td>
         <td><s:yesno id="orig-disable_security" idSuffix="idsuffix" disabled="disabled" name="param" value="lang->disable_security" /></td>
@@ -503,7 +538,7 @@ function mainDialogOnChange()
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:disable_security" /></td>
     </s:tr>
 
-    <s:tr id="orig-disable_testing-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-disable_testing-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Disable any testing of submissions:</td>
         <td><s:yesno id="orig-disable_testing" idSuffix="idsuffix" disabled="disabled" name="param" value="lang->disable_testing" /></td>
@@ -511,21 +546,15 @@ function mainDialogOnChange()
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:disable_testing" /></td>
     </s:tr>
 
-<%
-    if (!lang->disable_testing) {
-%>
-    <s:tr id="orig-disable_auto_testing-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-disable_auto_testing-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf" hiddenExpr="lang->disable_testing > 0" >
         <td width="50">&nbsp;</td>
         <td>Disable automatic testing of submissions:</td>
         <td><s:yesno id="orig-disable_auto_testing" idSuffix="idsuffix" disabled="disabled" name="param" value="lang->disable_auto_testing" /></td>
         <td>&nbsp;</td>
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:disable_auto_testing" /></td>
     </s:tr>
-<%
-    }
-%>
 
-    <s:tr id="orig-binary-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-binary-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Language source files are binary:</td>
         <td><s:yesno id="orig-binary" idSuffix="idsuffix" disabled="disabled" name="param" value="lang->binary" /></td>
@@ -533,7 +562,7 @@ function mainDialogOnChange()
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:binary" /></td>
     </s:tr>
 
-    <s:tr id="orig-is_dos-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-is_dos-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Perform UNIX->DOS conversion:</td>
         <td><s:yesno id="orig-is_dos" idSuffix="idsuffix" disabled="disabled" name="param" value="lang->is_dos" /></td>
@@ -547,7 +576,7 @@ function mainDialogOnChange()
       num_to_size_str(num_buf, sizeof(num_buf), lang->max_vm_size);
     }
 %>
-    <s:tr id="orig-max_vm_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-max_vm_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Maximum VM size:</td>
         <td><s:textfield id="orig-max_vm_size" idSuffix="idsuffix" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="false" /></td>
@@ -561,7 +590,7 @@ function mainDialogOnChange()
       num_to_size_str(num_buf, sizeof(num_buf), lang->max_stack_size);
     }
 %>
-    <s:tr id="orig-max_stack_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-max_stack_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Maximum stack size:</td>
         <td><s:textfield id="orig-max_stack_size" idSuffix="idsuffix" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="false" /></td>
@@ -575,7 +604,7 @@ function mainDialogOnChange()
       num_to_size_str(num_buf, sizeof(num_buf), lang->max_file_size);
     }
 %>
-    <s:tr id="orig-max_file_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-max_file_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Maximum file size:</td>
         <td><s:textfield id="orig-max_file_size" idSuffix="idsuffix" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="false" /></td>
@@ -583,21 +612,15 @@ function mainDialogOnChange()
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:max_file_size" /></td>
     </s:tr>
 
-<%
-    if (lang->binary) {
-%>
-    <s:tr id="orig-content_type-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-content_type-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf" hiddenExpr="lang->binary <= 0">
         <td width="50">&nbsp;</td>
         <td>Content type for files:</td>
         <td><s:textfield id="orig-content_type" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->content_type" size="48" maxlength="1024" check="false" /></td>
         <td><input type="button" onclick="popupMainDialog(<s:v value="compile_id" />, event, 'content_type')" value="Clear" /></td>
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:content_type" /></td>
     </s:tr>
-<%
-    }
-%>
 
-    <s:tr id="orig-style_checker_cmd-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-style_checker_cmd-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Style checker command:</td>
         <td><s:textfield id="orig-style_checker_cmd" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->style_checker_cmd" size="48" maxlength="1024" check="false" /></td>
@@ -605,7 +628,7 @@ function mainDialogOnChange()
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:style_checker_cmd" /></td>
     </s:tr>
 
-    <s:tr id="orig-opts-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-opts-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Additional compilation options:</td>
         <td><s:textfield id="orig-opts" idSuffix="idsuffix" readonly="readonly" name="param" value="phr->ss->lang_opts[lang->id]" size="48" maxlength="1024" checkExpr="" /></td>
@@ -613,7 +636,7 @@ function mainDialogOnChange()
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:opts" /></td>
     </s:tr>
 
-    <s:tr id="orig-libs-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-libs-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Additional libraries:</td>
         <td><s:textfield id="orig-libs" idSuffix="idsuffix" readonly="readonly" name="param" value="phr->ss->lang_libs[lang->id]" size="48" maxlength="1024" checkExpr="" /></td>
@@ -627,7 +650,7 @@ function mainDialogOnChange()
       env = sarray_unparse(lang->style_checker_env);
     }
 %>
-    <s:tr id="orig-style_checker_env-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclick="popupMainDialog()">
+    <s:tr id="orig-style_checker_env-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Style checker environment:</td>
         <td><s:textfield id="orig-style_checker_env" idSuffix="idsuffix" readonly="readonly" name="param" value="env" size="48" maxlength="1024" checkExpr="" /></td>
