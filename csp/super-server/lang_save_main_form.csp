@@ -10,19 +10,352 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-// declare local variables here
+    int lang_id = 0;
+    int compile_id = 0;
+    unsigned char *long_name = NULL;
+    unsigned char *extid = NULL;
+    ejintbool_t disabled = 0;
+    ejintbool_t insecure = 0;
+    ejintbool_t disable_security = 0;
+    ejintbool_t disable_testing = 0;
+    ejintbool_t disable_auto_testing = 0;
+    ejintbool_t binary = 0;
+    ejintbool_t is_dos = 0;
+    ej_size64_t max_vm_size = -1LL;
+    ej_size64_t max_stack_size = -1LL;
+    ej_size64_t max_file_size = -1LL;
+    unsigned char *content_type = NULL;
+    unsigned char *style_checker_cmd = NULL;
+    unsigned char *opts = NULL;
+    unsigned char *libs = NULL;
+    unsigned char *style_checker_env = NULL;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
-// read the parameters here like <s:read var="name" normalize="yes" />
+
+    struct section_language_data *lang = NULL;
+
+%><s:read var="lang_id" required="yes" /><%
+%><s:read var="compile_id" required="yes" /><%
+%><s:read var="long_name" normalize="yes" nonnull="yes" /><%
+%><s:read var="extid" normalize="yes" nonnull="yes" /><%
+%><s:read var="disabled" default="0" /><%
+%><s:read var="insecure" default="0" /><%
+%><s:read var="disable_security" default="0" /><%
+%><s:read var="disable_testing" default="0" /><%
+%><s:read var="disable_auto_testing" default="0" /><%
+%><s:read var="binary" default="0" /><%
+%><s:read var="is_dos" default="0" /><%
+%><s:read var="max_vm_size" default="-1LL" /><%
+%><s:read var="max_stack_size" default="-1LL" /><%
+%><s:read var="max_file_size" default="-1LL" /><%
+%><s:read var="content_type" normalize="yes" nonnull="yes" /><%
+%><s:read var="style_checker_cmd" normalize="yes" nonnull="yes" /><%
+%><s:read var="opts" normalize="yes" nonnull="yes" /><%
+%><s:read var="libs" normalize="yes" nonnull="yes" /><%
+%><s:read var="style_checker_env" normalize="yes" nonnull="yes" /><%
+    if (retval || !phr->ss) goto cleanup;
+    if (!phr->ss->cs_langs) {
+        fprintf(msg_f, "Contest is not edited<br/>");
+        retval = SSERV_ERR_CONTEST_NOT_EDITED;
+        goto cleanup;
+    }
+    if (compile_id <= 0 || compile_id >= phr->ss->cs_lang_total || !phr->ss->cs_langs[compile_id]) {
+        fprintf(msg_f, "compile_id is invalid<br/>");
+        retval = SSERV_ERR_INVALID_PARAMETER;
+        goto cleanup;
+    }
+    if (phr->ss->cs_loc_map[compile_id] > 0) {
+        lang = phr->ss->langs[phr->ss->cs_loc_map[compile_id]];
+    }
+    if (!lang) {
+        fprintf(msg_f, "lang == null<br/>");
+        retval = SSERV_ERR_INVALID_PARAMETER;
+        goto cleanup;
+    }
+
+       /*
+  struct section_language_data *pl_new;
+  int val, n;
+  int *p_int;
+  size_t *p_size, zval;
+  char **tmp_env = 0;
+
+  pl_new = 0;
+  if (sstate->cs_loc_map[lang_id] > 0)
+    pl_new = sstate->langs[sstate->cs_loc_map[lang_id]];
+
+  switch (cmd) {
+  case SSERV_CMD_LANG_SHOW_DETAILS:
+    if (!pl_new) return 0;
+    sstate->lang_flags[pl_new->id] = 1;
+    break;
+
+  case SSERV_CMD_LANG_HIDE_DETAILS:
+    if (!pl_new) return 0;
+    sstate->lang_flags[pl_new->id] = 0;
+    break;
+
+  case SSERV_CMD_LANG_DEACTIVATE:
+    super_html_lang_deactivate(sstate, lang_id);
+    break;
+
+  case SSERV_CMD_LANG_ACTIVATE:
+    super_html_lang_activate(sstate, lang_id);
+    break;
+
+  case SSERV_CMD_LANG_CHANGE_DISABLED:
+    if (!pl_new) return 0;
+    p_int = &pl_new->disabled;
+
+  handle_boolean:
+    if (!param2 || sscanf(param2, "%d%n", &val, &n) != 1 || param2[n]
+        || val < 0 || val > 1) return -SSERV_ERR_INVALID_PARAMETER;
+    *p_int = val;
+    break;
+
+  case SSERV_CMD_LANG_CHANGE_INSECURE:
+    if (!pl_new) return 0;
+    p_int = &pl_new->insecure;
+    goto handle_boolean;
+
+  case SSERV_CMD_LANG_CHANGE_LONG_NAME:
+    if (!pl_new) return 0;
+    snprintf(pl_new->long_name, sizeof(pl_new->long_name), "%s", param2);
+    break;
+
+  case SSERV_CMD_LANG_CHANGE_EXTID:
+    if (!pl_new) return 0;
+    xfree(pl_new->extid); pl_new->extid = NULL;
+    if (param2 && param2[0]) {
+      pl_new->extid = xstrdup(param2);
+    }
+    break;
+
+  case SSERV_CMD_LANG_CHANGE_CONTENT_TYPE:
+    if (!pl_new) return 0;
+    snprintf(pl_new->content_type, sizeof(pl_new->content_type), "%s", param2);
+    break;
+
+  case SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_CMD:
+    if (!pl_new) return 0;
+    snprintf(pl_new->style_checker_cmd, sizeof(pl_new->style_checker_cmd), "%s", param2);
+    break;
+
+  case SSERV_CMD_LANG_CLEAR_LONG_NAME:
+    if (!pl_new) return 0;
+    pl_new->long_name[0] = 0;
+    break;
+
+  case SSERV_CMD_LANG_CLEAR_EXTID:
+    if (!pl_new) return 0;
+    xfree(pl_new->extid); pl_new->extid = NULL;
+    break;
+
+  case SSERV_CMD_LANG_CLEAR_CONTENT_TYPE:
+    if (!pl_new) return 0;
+    pl_new->content_type[0] = 0;
+    break;
+
+  case SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_CMD:
+    if (!pl_new) return 0;
+    pl_new->style_checker_cmd[0] = 0;
+    break;
+
+  case SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_ENV:
+    if (sarray_parse(param2, &tmp_env) < 0)
+      return -SSERV_ERR_INVALID_PARAMETER;
+    sarray_free(pl_new->style_checker_env);
+    pl_new->style_checker_env = tmp_env; tmp_env = 0;
+    break;
+
+  case SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_ENV:
+    pl_new->style_checker_env = sarray_free(pl_new->style_checker_env);
+    break;
+
+  case SSERV_CMD_LANG_CHANGE_DISABLE_SECURITY:
+    if (!pl_new) return 0;
+    p_int = &pl_new->disable_security;
+    goto handle_boolean;
+
+  case SSERV_CMD_LANG_CHANGE_DISABLE_AUTO_TESTING:
+    if (!pl_new) return 0;
+    p_int = &pl_new->disable_auto_testing;
+    goto handle_boolean;
+
+  case SSERV_CMD_LANG_CHANGE_DISABLE_TESTING:
+    if (!pl_new) return 0;
+    p_int = &pl_new->disable_testing;
+    goto handle_boolean;
+
+  case SSERV_CMD_LANG_CHANGE_BINARY:
+    if (!pl_new) return 0;
+    p_int = &pl_new->binary;
+    goto handle_boolean;
+
+  case SSERV_CMD_LANG_CHANGE_IS_DOS:
+    if (!pl_new) return 0;
+    p_int = &pl_new->is_dos;
+    goto handle_boolean;
+
+  case SSERV_CMD_LANG_CHANGE_MAX_VM_SIZE:
+    p_size = &pl_new->max_vm_size;
+
+  handle_size_t:
+    zval = 0;
+    if (size_str_to_size_t(param2, &zval) < 0) return -SSERV_ERR_INVALID_PARAMETER;
+    *p_size = zval;
+    return 0;
+
+  case SSERV_CMD_LANG_CHANGE_MAX_STACK_SIZE:
+    p_size = &pl_new->max_stack_size;
+    goto handle_size_t;
+
+  case SSERV_CMD_LANG_CHANGE_MAX_FILE_SIZE:
+    p_size = &pl_new->max_file_size;
+    goto handle_size_t;
+
+  case SSERV_CMD_LANG_CHANGE_OPTS:
+    if (!pl_new) return 0;
+    xfree(sstate->lang_opts[lang_id]);
+    sstate->lang_opts[lang_id] = xstrdup(param2);
+    break;
+
+  case SSERV_CMD_LANG_CLEAR_OPTS:
+    if (!pl_new) return 0;
+    xfree(sstate->lang_opts[lang_id]);
+    sstate->lang_opts[lang_id] = 0;
+    break;
+
+  case SSERV_CMD_LANG_CHANGE_LIBS:
+    if (!pl_new) return 0;
+    xfree(sstate->lang_libs[lang_id]);
+    sstate->lang_libs[lang_id] = xstrdup(param2);
+    break;
+
+  case SSERV_CMD_LANG_CLEAR_LIBS:
+    if (!pl_new) return 0;
+    xfree(sstate->lang_libs[lang_id]);
+    sstate->lang_libs[lang_id] = 0;
+    break;
+
+  default:
+    abort();
+  }
+
+  return 0;
+        */
+
+/*
+<div id="MainDialogDiv" title="Translator Properties">
+    <s:form id="MainDialogForm">
+        <s:hidden name="action" ac="lang-save-main-form" />
+
+        <div id="main-lang_id-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-lang_id">Language ID:</label></div>
+            <input readonly="readonly" type="text" size="20" name="lang_id" id="main-lang_id" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-compile_id-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-compile_id">Language compile ID:</label></div>
+            <input readonly="readonly" type="text" size="20" name="compile_id" id="main-compile_id" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-short_name-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-short_name">Language short name:</label></div>
+            <input readonly="readonly" type="text" size="20" name="short_name" id="main-short_name" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-arch-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-arch">Language architecture:</label></div>
+            <input readonly="readonly" type="text" size="20" name="arch" id="main-arch" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-src_sfx-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-src_sfx">Suffix of the source files:</label></div>
+            <input readonly="readonly" type="text" size="20" name="src_sfx" id="main-src_sfx" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-exe_sfx-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-exe_sfx">Suffix of the executable files:</label></div>
+            <input readonly="readonly" type="text" size="20" name="exe_sfx" id="main-exe_sfx" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-long_name-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-long_name">Language long name:</label></div>
+            <input type="text" size="20" name="long_name" id="main-long_name" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-extid-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-extid">Language external name:</label></div>
+            <input type="text" size="20" name="extid" id="main-extid" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-disabled-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-disabled">Disable this language for participants:</label></div>
+            <input type="checkbox" name="disabled" id="main-disabled" value="1" />
+        </div>
+        <div id="main-insecure-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-insecure">This language is insecure:</label></div>
+            <input type="checkbox" name="insecure" id="main-insecure" value="1" />
+        </div>
+        <div id="main-disable_security-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-disable_security">Disable security restrictions:</label></div>
+            <input type="checkbox" name="disable_security" id="main-disable_security" value="1" />
+        </div>
+        <div id="main-disable_testing-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-disable_testing">Disable any testing of submissions:</label></div>
+            <input type="checkbox" name="disable_testing" id="main-disable_testing" value="1" onchange="mainDialogOnChange()" />
+        </div>
+        <div id="main-disable_auto_testing-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-disable_auto_testing">Disable automatic testing of submissions:</label></div>
+            <input type="checkbox" name="disable_auto_testing" id="main-disable_auto_testing" value="1" />
+        </div>
+        <div id="main-binary-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-binary">Language source files are binary:</label></div>
+            <input type="checkbox" name="binary" id="main-binary" value="1" onchange="mainDialogOnChange()" />
+        </div>
+        <div id="main-is_dos-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-is_dos">Perform UNIX-&gt;DOS conversion:</label></div>
+            <input type="checkbox" name="is_dos" id="main-is_dos" value="1" />
+        </div>
+        <div id="main-max_vm_size-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-max_vm_size">Maximum VM size:</label></div>
+            <input type="text" size="20" name="max_vm_size" id="main-max_vm_size" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-max_stack_size-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-max_stack_size">Maximum stack size:</label></div>
+            <input type="text" size="20" name="max_stack_size" id="main-max_stack_size" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-max_file_size-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-max_file_size">Maximum file size:</label></div>
+            <input type="text" size="20" name="max_file_size" id="main-max_file_size" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-content_type-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-content_type">Content type for files:</label></div>
+            <input type="text" size="20" name="content_type" id="main-content_type" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-style_checker_cmd-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-style_checker_cmd">Style checker command:</label></div>
+            <input type="text" size="20" name="style_checker_cmd" id="main-style_checker_cmd" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-opts-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-opts">Additional compilation options:</label></div>
+            <input type="text" size="20" name="opts" id="main-opts" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-libs-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-libs">Additional libraries:</label></div>
+            <input type="text" size="20" name="libs" id="main-libs" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+        <div id="main-style_checker_env-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-style_checker_env">Style checker environment:</label></div>
+            <input type="text" size="20" name="style_checker_env" id="main-style_checker_env" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+    </s:form>
+</div>
+*/
+
+
 
 // validate parameters here
 
     if (!retval && phr->ss) {
     }
 
-//cleanup:;
+cleanup:;
     fclose(msg_f); msg_f = NULL;
 %>
 {
@@ -34,4 +367,11 @@
 <%
     html_armor_free(&ab);
     xfree(msg_s);
+    xfree(long_name);
+    xfree(extid);
+    xfree(content_type);
+    xfree(style_checker_cmd);
+    xfree(opts);
+    xfree(libs);
+    xfree(style_checker_env);
 %>
