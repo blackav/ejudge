@@ -184,6 +184,10 @@ static const unsigned char * const form_row_attrs[]=
             <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-style_checker_cmd">Style checker command:</label></div>
             <input type="text" size="20" name="style_checker_cmd" id="main-style_checker_cmd" value="" class="text ui-widget-content ui-corner-all" />
         </div>
+        <div id="main-style_checker_env-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-style_checker_env">Style checker environment:</label></div>
+            <input type="text" size="20" name="style_checker_env" id="main-style_checker_env" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
         <div id="main-opts-div">
             <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-opts">Additional compilation options:</label></div>
             <input type="text" size="20" name="opts" id="main-opts" value="" class="text ui-widget-content ui-corner-all" />
@@ -191,10 +195,6 @@ static const unsigned char * const form_row_attrs[]=
         <div id="main-libs-div">
             <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-libs">Additional libraries:</label></div>
             <input type="text" size="20" name="libs" id="main-libs" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="main-style_checker_env-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="main-style_checker_env">Style checker environment:</label></div>
-            <input type="text" size="20" name="style_checker_env" id="main-style_checker_env" value="" class="text ui-widget-content ui-corner-all" />
         </div>
     </s:form>
 </div>
@@ -317,9 +317,9 @@ function popupMainDialog(compile_id, e, skipField)
     $("#main-max_file_size").val($("#orig-max_file_size-" + compile_id).val());
     $("#main-content_type").val($("#orig-content_type-" + compile_id).val());
     $("#main-style_checker_cmd").val($("#orig-style_checker_cmd-" + compile_id).val());
+    $("#main-style_checker_env").val($("#orig-style_checker_env-" + compile_id).val());
     $("#main-opts").val($("#orig-opts-" + compile_id).val());
     $("#main-libs").val($("#orig-libs-" + compile_id).val());
-    $("#main-style_checker_env").val($("#orig-style_checker_env-" + compile_id).val());
 
     if (skipField != null) {
         obj = document.getElementById("main-" + skipField);
@@ -628,22 +628,6 @@ function mainDialogOnChange()
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:style_checker_cmd" /></td>
     </s:tr>
 
-    <s:tr id="orig-opts-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
-        <td width="50">&nbsp;</td>
-        <td>Additional compilation options:</td>
-        <td><s:textfield id="orig-opts" idSuffix="idsuffix" readonly="readonly" name="param" value="phr->ss->lang_opts[lang->id]" size="48" maxlength="1024" checkExpr="" /></td>
-        <td><input type="button" onclick="popupMainDialog(<s:v value="compile_id" />, event, 'opts')" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Serve.cfg:language:opts" /></td>
-    </s:tr>
-
-    <s:tr id="orig-libs-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
-        <td width="50">&nbsp;</td>
-        <td>Additional libraries:</td>
-        <td><s:textfield id="orig-libs" idSuffix="idsuffix" readonly="readonly" name="param" value="phr->ss->lang_libs[lang->id]" size="48" maxlength="1024" checkExpr="" /></td>
-        <td><input type="button" onclick="popupMainDialog(<s:v value="compile_id" />, event, 'libs')" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Serve.cfg:language:libs" /></td>
-    </s:tr>
-
 <%
     env = 0;
     if (lang->style_checker_env && lang->style_checker_env[0]) {
@@ -660,6 +644,22 @@ function mainDialogOnChange()
 <%
     xfree(env); env = 0;
 %>
+
+    <s:tr id="orig-opts-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
+        <td width="50">&nbsp;</td>
+        <td>Additional compilation options:</td>
+        <td><s:textfield id="orig-opts" idSuffix="idsuffix" readonly="readonly" name="param" value="phr->ss->lang_opts[lang->id]" size="48" maxlength="1024" checkExpr="" /></td>
+        <td><input type="button" onclick="popupMainDialog(<s:v value="compile_id" />, event, 'opts')" value="Clear" /></td>
+        <td onclick="np(event);"><s:help topic="Serve.cfg:language:opts" /></td>
+    </s:tr>
+
+    <s:tr id="orig-libs-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
+        <td width="50">&nbsp;</td>
+        <td>Additional libraries:</td>
+        <td><s:textfield id="orig-libs" idSuffix="idsuffix" readonly="readonly" name="param" value="phr->ss->lang_libs[lang->id]" size="48" maxlength="1024" checkExpr="" /></td>
+        <td><input type="button" onclick="popupMainDialog(<s:v value="compile_id" />, event, 'libs')" value="Clear" /></td>
+        <td onclick="np(event);"><s:help topic="Serve.cfg:language:libs" /></td>
+    </s:tr>
 
 <%
     if (lang->unhandled_vars) {
