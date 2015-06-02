@@ -3,10 +3,10 @@
 %><%@include "includes.csp"
 %><%
 #include "ejudge/meta/prepare_meta.h"
-%><%@set getter_name = "csp_get_cnts_edit_cur_problem_page"
+%><%@set getter_name = "csp_get_cnts_edit_cur_problems_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
-%><%@page csp_view_cnts_edit_cur_problem_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@page csp_view_cnts_edit_cur_problems_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "stdvars.csp"
 %><%
     unsigned char subtitle_buf[1024];
