@@ -17,7 +17,7 @@
 
     if (phr->ss->edited_cnts && phr->ss->edited_cnts->id == phr->contest_id) {
         super_html_activate_problem(phr->ss, prob_id);
-        retval = SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE;
+        retval = SSERV_CMD_CNTS_EDIT_CUR_PROBLEMS_PAGE;
         goto cleanup;
     }
     if (phr->ss->edited_cnts) {
@@ -37,7 +37,7 @@
     phr->ss->edited_cnts = rw_cnts;
     super_html_load_serve_cfg(rw_cnts, phr->config, phr->ss);
     super_html_activate_problem(phr->ss, prob_id);
-    retval = SSERV_CMD_CNTS_EDIT_CUR_PROBLEM_PAGE;
+    retval = SSERV_CMD_CNTS_EDIT_CUR_PROBLEMS_PAGE;
     goto cleanup;
 cleanup: ;
 %>

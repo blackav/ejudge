@@ -30,7 +30,7 @@
 %>
     <%
   if (cur_page != 3) {
-%><td><s:a class="a-button-style" ac="cnts-edit-cur-language-page"><%
+%><td><s:a class="a-button-style" ac="cnts-edit-cur-languages-page"><%
   } else {
 %><td class="a-button-style"><%
   }
@@ -43,7 +43,7 @@
 %>
     <%
   if (cur_page != 4) {
-%><td><s:a class="a-button-style" ac="cnts-edit-cur-problem-page"><%
+%><td><s:a class="a-button-style" ac="cnts-edit-cur-problems-page"><%
   } else {
 %><td class="a-button-style"><%
   }
