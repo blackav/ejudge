@@ -90,23 +90,6 @@ const unsigned char * const super_serve_help_urls[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_SAVE_PERMISSIONS] = "Contest.xml",
   [SSERV_CMD_CNTS_SET_PREDEF_PERMISSIONS] = "Contest.xml",
 
-  [SSERV_CMD_LANG_CHANGE_DISABLED] = "Serve.cfg:language:disabled",
-  [SSERV_CMD_LANG_CHANGE_INSECURE] = "Serve.cfg:language:insecure",
-  [SSERV_CMD_LANG_CHANGE_LONG_NAME] = "Serve.cfg:language:long_name",
-  [SSERV_CMD_LANG_CHANGE_EXTID] = "Serve.cfg:language:extid",
-  [SSERV_CMD_LANG_CHANGE_DISABLE_SECURITY] = "Serve.cfg:language:disable_security",
-  [SSERV_CMD_LANG_CHANGE_DISABLE_AUTO_TESTING] = "Serve.cfg:language:disable_auto_testing",
-  [SSERV_CMD_LANG_CHANGE_DISABLE_TESTING] = "Serve.cfg:language:disable_testing",
-  [SSERV_CMD_LANG_CHANGE_BINARY] = "Serve.cfg:language:binary",
-  [SSERV_CMD_LANG_CHANGE_IS_DOS] = "Serve.cfg:language:is_dos",
-  [SSERV_CMD_LANG_CHANGE_MAX_VM_SIZE] = "Serve.cfg:language:max_vm_size",
-  [SSERV_CMD_LANG_CHANGE_MAX_STACK_SIZE] = "Serve.cfg:language:max_stack_size",
-  [SSERV_CMD_LANG_CHANGE_MAX_FILE_SIZE] = "Serve.cfg:language:max_file_size",
-  [SSERV_CMD_LANG_CHANGE_CONTENT_TYPE] = "Serve.cfg:language:content_type",
-  [SSERV_CMD_LANG_CHANGE_OPTS] = "Serve.cfg:language:compiler_options",
-  [SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_CMD] = "Serve.cfg:language:style_checker_cmd",
-  [SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_ENV] = "Serve.cfg:language:style_checker_env",
-
   [SSERV_CMD_PROB_CHANGE_SHORT_NAME] = "Serve.cfg:problem:short_name",
   [SSERV_CMD_PROB_CHANGE_LONG_NAME] = "Serve.cfg:problem:long_name",
   [SSERV_CMD_PROB_CHANGE_STAND_NAME] = "Serve.cfg:problem:stand_name",
@@ -451,10 +434,6 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
                     int param3, int param4)
 {
   struct section_language_data *pl_new;
-  int val, n;
-  int *p_int;
-  size_t *p_size, zval;
-  char **tmp_env = 0;
 
   if (!sstate->cs_langs) {
     return -SSERV_ERR_CONTEST_NOT_EDITED;
@@ -485,141 +464,6 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_LANG_ACTIVATE:
     super_html_lang_activate(sstate, lang_id);
-    break;
-
-  case SSERV_CMD_LANG_CHANGE_DISABLED:
-    if (!pl_new) return 0;
-    p_int = &pl_new->disabled;
-
-  handle_boolean:
-    if (!param2 || sscanf(param2, "%d%n", &val, &n) != 1 || param2[n]
-        || val < 0 || val > 1) return -SSERV_ERR_INVALID_PARAMETER;
-    *p_int = val;
-    break;
-
-  case SSERV_CMD_LANG_CHANGE_INSECURE:
-    if (!pl_new) return 0;
-    p_int = &pl_new->insecure;
-    goto handle_boolean;
-
-  case SSERV_CMD_LANG_CHANGE_LONG_NAME:
-    if (!pl_new) return 0;
-    snprintf(pl_new->long_name, sizeof(pl_new->long_name), "%s", param2);
-    break;
-
-  case SSERV_CMD_LANG_CHANGE_EXTID:
-    if (!pl_new) return 0;
-    xfree(pl_new->extid); pl_new->extid = NULL;
-    if (param2 && param2[0]) {
-      pl_new->extid = xstrdup(param2);
-    }
-    break;
-
-  case SSERV_CMD_LANG_CHANGE_CONTENT_TYPE:
-    if (!pl_new) return 0;
-    snprintf(pl_new->content_type, sizeof(pl_new->content_type), "%s", param2);
-    break;
-
-  case SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_CMD:
-    if (!pl_new) return 0;
-    snprintf(pl_new->style_checker_cmd, sizeof(pl_new->style_checker_cmd), "%s", param2);
-    break;
-
-  case SSERV_CMD_LANG_CLEAR_LONG_NAME:
-    if (!pl_new) return 0;
-    pl_new->long_name[0] = 0;
-    break;
-
-  case SSERV_CMD_LANG_CLEAR_EXTID:
-    if (!pl_new) return 0;
-    xfree(pl_new->extid); pl_new->extid = NULL;
-    break;
-
-  case SSERV_CMD_LANG_CLEAR_CONTENT_TYPE:
-    if (!pl_new) return 0;
-    pl_new->content_type[0] = 0;
-    break;
-
-  case SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_CMD:
-    if (!pl_new) return 0;
-    pl_new->style_checker_cmd[0] = 0;
-    break;
-
-  case SSERV_CMD_LANG_CHANGE_STYLE_CHECKER_ENV:
-    if (sarray_parse(param2, &tmp_env) < 0)
-      return -SSERV_ERR_INVALID_PARAMETER;
-    sarray_free(pl_new->style_checker_env);
-    pl_new->style_checker_env = tmp_env; tmp_env = 0;
-    break;
-
-  case SSERV_CMD_LANG_CLEAR_STYLE_CHECKER_ENV:
-    pl_new->style_checker_env = sarray_free(pl_new->style_checker_env);
-    break;
-
-  case SSERV_CMD_LANG_CHANGE_DISABLE_SECURITY:
-    if (!pl_new) return 0;
-    p_int = &pl_new->disable_security;
-    goto handle_boolean;
-
-  case SSERV_CMD_LANG_CHANGE_DISABLE_AUTO_TESTING:
-    if (!pl_new) return 0;
-    p_int = &pl_new->disable_auto_testing;
-    goto handle_boolean;
-
-  case SSERV_CMD_LANG_CHANGE_DISABLE_TESTING:
-    if (!pl_new) return 0;
-    p_int = &pl_new->disable_testing;
-    goto handle_boolean;
-
-  case SSERV_CMD_LANG_CHANGE_BINARY:
-    if (!pl_new) return 0;
-    p_int = &pl_new->binary;
-    goto handle_boolean;
-
-  case SSERV_CMD_LANG_CHANGE_IS_DOS:
-    if (!pl_new) return 0;
-    p_int = &pl_new->is_dos;
-    goto handle_boolean;
-
-  case SSERV_CMD_LANG_CHANGE_MAX_VM_SIZE:
-    p_size = (size_t*) &pl_new->max_vm_size;
-
-  handle_size_t:
-    zval = 0;
-    if (size_str_to_size_t(param2, &zval) < 0) return -SSERV_ERR_INVALID_PARAMETER;
-    *p_size = zval;
-    return 0;
-
-  case SSERV_CMD_LANG_CHANGE_MAX_STACK_SIZE:
-    p_size = (size_t*) &pl_new->max_stack_size;
-    goto handle_size_t;
-
-  case SSERV_CMD_LANG_CHANGE_MAX_FILE_SIZE:
-    p_size = (size_t*) &pl_new->max_file_size;
-    goto handle_size_t;
-
-  case SSERV_CMD_LANG_CHANGE_OPTS:
-    if (!pl_new) return 0;
-    xfree(sstate->lang_opts[lang_id]);
-    sstate->lang_opts[lang_id] = xstrdup(param2);
-    break;
-
-  case SSERV_CMD_LANG_CLEAR_OPTS:
-    if (!pl_new) return 0;
-    xfree(sstate->lang_opts[lang_id]);
-    sstate->lang_opts[lang_id] = 0;
-    break;
-
-  case SSERV_CMD_LANG_CHANGE_LIBS:
-    if (!pl_new) return 0;
-    xfree(sstate->lang_libs[lang_id]);
-    sstate->lang_libs[lang_id] = xstrdup(param2);
-    break;
-
-  case SSERV_CMD_LANG_CLEAR_LIBS:
-    if (!pl_new) return 0;
-    xfree(sstate->lang_libs[lang_id]);
-    sstate->lang_libs[lang_id] = 0;
     break;
 
   default:
