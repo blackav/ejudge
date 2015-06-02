@@ -1,0 +1,147 @@
+<% /* -*- html -*- */
+/* $Id$ */
+%><%@include "includes.csp"
+%><%
+#include "ejudge/meta/prepare_meta.h"
+%><%@set getter_name = "csp_get_cnts_edit_cur_problem_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_cnts_edit_cur_problem_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    unsigned char subtitle_buf[1024];
+    const unsigned char *title = 0;
+    const unsigned char *subtitle = subtitle_buf;
+    opcap_t caps = 0;
+    int row = 1;
+    int cur_page = 4;
+    int i;
+
+static const unsigned char head_row_attr[] =
+  " bgcolor=\"#a0a0a0\"";
+static const unsigned char * const form_row_attrs[]=
+{
+  " bgcolor=\"#d0d0d0\"",
+  " bgcolor=\"#e0e0e0\"",
+};
+
+    if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
+    if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
+
+    snprintf(subtitle_buf, sizeof(subtitle_buf), "editing serve.cfg, problems");
+    cnts = phr->ss->edited_cnts;
+    struct section_global_data *global = phr->ss->global;
+
+    (void) row;
+    (void) head_row_attr;
+    (void) form_row_attrs;
+%><%@include "header.csp"
+%>
+
+<%@include "cnts_edit_cur_top_menu.csp"
+%>
+
+<%
+  if (phr->ss->serve_parse_errors) {
+%>
+<h2><tt>serve.cfg</tt> cannot be edited</h2>
+<font color="red"><pre><s:v value="phr->ss->serve_parse_errors" /></pre></font>
+<%
+    goto bottom_links;
+  }
+%>
+
+<%
+  if (!global) {
+%>
+<h2>No current global settings!</h2>
+<%
+    goto bottom_links;
+  }
+%>
+
+<table border="0">
+    <s:tr attr="head_row_attr">
+        <td colspan="4" align="center"><b>Abstract problems</b></td>
+    </s:tr>
+<%
+  for (i = 0; i < phr->ss->aprob_u; ++i) {
+#define is_abstract 1
+    ;
+    const struct section_problem_data *prob = phr->ss->aprobs[i];
+    int flags = phr->ss->aprob_flags[i];
+    int prob_id = -i;
+%><%@include "cnts_edit_cur_one_problem.csp"
+%><%
+#undef is_abstract
+  }
+%>
+    <s:tr attr="head_row_attr">
+        <td colspan="4" align="center"><b>Add new abstract problem</b></td>
+    </s:tr>
+<%
+  row = 1;
+%>
+    <s:form>
+        <s:tr attr="form_row_attrs[row ^= 1]">
+            <td>Name:</td>
+            <td><s:textfield name="prob_name" value="" size="48" maxlength="1024" /></td>
+            <td><s:submit ac="prob-add-abstract" label="Add" /></td>
+            <td><s:help ac="prob-add-abstract" /></td>
+        </s:tr>
+    </s:form>
+
+    <s:tr attr="head_row_attr">
+        <td colspan="4" align="center"><b>Concrete problems</b></td>
+    </s:tr>
+<%
+  for (i = 1; i < phr->ss->prob_a; ++i) {
+#define is_abstract 0
+    ;
+    const struct section_problem_data *prob = phr->ss->probs[i];
+    int flags = phr->ss->prob_flags[i];
+    int prob_id = i;
+    if (!prob) continue;
+%><%@include "cnts_edit_cur_one_problem.csp"
+%><%
+#undef is_abstract
+  }
+%>
+    <s:tr attr="head_row_attr">
+        <td colspan="4" align="center"><b>Add new problem</b><%
+  if (phr->ss->update_state) {
+%> [<s:a ac="download-progress-page">Download is in progress</s:a>]<%
+  } else {
+%> [<s:a ac="import-from-polygon-page">Import from Polygon</s:a>] [<s:a ac="import-contest-from-polygon-page">Import contest from Polygon</s:a>]<%
+  }
+%></td>
+    </s:tr>
+
+<%
+  row = 1;
+%>
+    <s:form>
+        <s:tr attr="form_row_attrs[row ^= 1]">
+            <td>Id (optional):</td>
+            <td><s:textfield name="prob_id" value="" size="48" maxlength="1024" /></td>
+            <td><s:submit ac="prob-add" label="Add" /></td>
+            <td><s:help ac="prob-add" /></td>
+        </s:tr>
+    </s:form>
+</table>
+
+<%
+bottom_links: ;
+%>
+
+<%@include "cnts_edit_cur_bottom_menu.csp"
+%>
+
+<%@include "footer.csp"
+%><%
+cleanup:
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>
