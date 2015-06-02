@@ -582,7 +582,7 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
     goto handle_boolean;
 
   case SSERV_CMD_LANG_CHANGE_MAX_VM_SIZE:
-    p_size = &pl_new->max_vm_size;
+    p_size = (size_t*) &pl_new->max_vm_size;
 
   handle_size_t:
     zval = 0;
@@ -591,11 +591,11 @@ super_html_lang_cmd(struct sid_state *sstate, int cmd,
     return 0;
 
   case SSERV_CMD_LANG_CHANGE_MAX_STACK_SIZE:
-    p_size = &pl_new->max_stack_size;
+    p_size = (size_t*) &pl_new->max_stack_size;
     goto handle_size_t;
 
   case SSERV_CMD_LANG_CHANGE_MAX_FILE_SIZE:
-    p_size = &pl_new->max_file_size;
+    p_size = (size_t*) &pl_new->max_file_size;
     goto handle_size_t;
 
   case SSERV_CMD_LANG_CHANGE_OPTS:

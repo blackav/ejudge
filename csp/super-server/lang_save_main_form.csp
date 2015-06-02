@@ -75,21 +75,6 @@
         retval = SSERV_ERR_INVALID_PARAMETER;
         goto cleanup;
     }
-    if (max_vm_size >= 0 && (typeof(lang->max_vm_size)) max_vm_size != max_vm_size) {
-        fprintf(msg_f, "max_vm_size is too large<br/>");
-        retval = SSERV_ERR_INVALID_PARAMETER;
-        goto cleanup;
-    }
-    if (max_stack_size >= 0 && (typeof(lang->max_stack_size)) max_stack_size != max_stack_size) {
-        fprintf(msg_f, "max_stack_size is too large<br/>");
-        retval = SSERV_ERR_INVALID_PARAMETER;
-        goto cleanup;
-    }
-    if (max_file_size >= 0 && (typeof(lang->max_file_size)) max_file_size != max_file_size) {
-        fprintf(msg_f, "max_file_size is too large<br/>");
-        retval = SSERV_ERR_INVALID_PARAMETER;
-        goto cleanup;
-    }
     if (sarray_parse(style_checker_env, &style_checker_env_parsed) < 0) {
         fprintf(msg_f, "invalid value of style_checker_env<br/>");
         retval = SSERV_ERR_INVALID_PARAMETER;

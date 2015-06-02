@@ -572,8 +572,8 @@ function mainDialogOnChange()
 
 <%
     num_buf[0] = 0;
-    if (lang->max_vm_size != ~((size_t) 0) && lang->max_vm_size != 0) {
-      num_to_size_str(num_buf, sizeof(num_buf), lang->max_vm_size);
+    if (lang->max_vm_size > 0) {
+      ll_to_size_str(num_buf, sizeof(num_buf), lang->max_vm_size);
     }
 %>
     <s:tr id="orig-max_vm_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
@@ -586,8 +586,8 @@ function mainDialogOnChange()
 
 <%
     num_buf[0] = 0;
-    if (lang->max_stack_size != ~((size_t) 0) && lang->max_stack_size != 0) {
-      num_to_size_str(num_buf, sizeof(num_buf), lang->max_stack_size);
+    if (lang->max_stack_size > 0) {
+      ll_to_size_str(num_buf, sizeof(num_buf), lang->max_stack_size);
     }
 %>
     <s:tr id="orig-max_stack_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
@@ -600,8 +600,8 @@ function mainDialogOnChange()
 
 <%
     num_buf[0] = 0;
-    if (lang->max_file_size != ~((size_t) 0) && lang->max_file_size != 0) {
-      num_to_size_str(num_buf, sizeof(num_buf), lang->max_file_size);
+    if (lang->max_file_size > 0) {
+      ll_to_size_str(num_buf, sizeof(num_buf), lang->max_file_size);
     }
 %>
     <s:tr id="orig-max_file_size-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">

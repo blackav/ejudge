@@ -892,17 +892,14 @@ prepare_unparse_lang(
     fprintf(f, "style_checker_cmd = \"%s\"\n",CARMOR(lang->style_checker_cmd));
   }
 
-  if (lang->max_vm_size != -1L && lang->max_vm_size != 0) {
-    fprintf(f, "max_vm_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf), lang->max_vm_size));
+  if (lang->max_vm_size > 0) {
+    fprintf(f, "max_vm_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), lang->max_vm_size));
   }
-  if (lang->max_stack_size != -1L && lang->max_stack_size != 0) {
-    fprintf(f, "max_stack_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf), lang->max_stack_size));
+  if (lang->max_stack_size > 0) {
+    fprintf(f, "max_stack_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), lang->max_stack_size));
   }
-  if (lang->max_file_size != -1L && lang->max_file_size != 0) {
-    fprintf(f, "max_file_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf), lang->max_file_size));
+  if (lang->max_file_size > 0) {
+    fprintf(f, "max_file_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), lang->max_file_size));
   }
 
   if (lang->compiler_env) {

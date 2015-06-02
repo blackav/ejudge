@@ -454,21 +454,21 @@ do_loop(void)
         task_EnableProcessGroup(tsk);
         if (VALID_SIZE(req->max_vm_size)) {
           task_SetVMSize(tsk, req->max_vm_size);
-        } else if (((ssize_t) lang->max_vm_size) > 0) {
+        } else if (VALID_SIZE(lang->max_vm_size)) {
           task_SetVMSize(tsk, lang->max_vm_size);
         } else if (VALID_SIZE(global->compile_max_vm_size)) {
           task_SetVMSize(tsk, global->compile_max_vm_size);
         }
         if (VALID_SIZE(req->max_stack_size)) {
           task_SetStackSize(tsk, req->max_stack_size);
-        } else if (((ssize_t) lang->max_stack_size) > 0) {
+        } else if (VALID_SIZE(lang->max_stack_size)) {
           task_SetStackSize(tsk, lang->max_stack_size);
         } else if (VALID_SIZE(global->compile_max_stack_size)) {
           task_SetStackSize(tsk, global->compile_max_stack_size);
         }
         if (VALID_SIZE(req->max_file_size)) {
           task_SetMaxFileSize(tsk, req->max_file_size);
-        } else if (((ssize_t) lang->max_file_size) > 0) {
+        } else if (VALID_SIZE(lang->max_file_size)) {
           task_SetMaxFileSize(tsk, lang->max_file_size);
         } else if (VALID_SIZE(global->compile_max_file_size)) {
           task_SetMaxFileSize(tsk, global->compile_max_file_size);

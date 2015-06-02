@@ -546,9 +546,9 @@ static const struct config_parse_info section_language_params[] =
 
   LANGUAGE_PARAM(disable_auto_testing, "d"),
   LANGUAGE_PARAM(disable_testing, "d"),
-  LANGUAGE_PARAM(max_vm_size, "z"),
-  LANGUAGE_PARAM(max_stack_size, "z"),
-  LANGUAGE_PARAM(max_file_size, "z"),
+  LANGUAGE_PARAM(max_vm_size, "E"),
+  LANGUAGE_PARAM(max_stack_size, "E"),
+  LANGUAGE_PARAM(max_file_size, "E"),
 
   LANGUAGE_PARAM(compile_dir, "s"),
   LANGUAGE_PARAM(compile_dir_index, "d"),

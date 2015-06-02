@@ -1212,11 +1212,11 @@ struct section_language_data
   ejintbool_t disable_testing;
 
   /** max virtual size limit  */
-  size_t max_vm_size;
+  ej_size64_t max_vm_size;
   /** max stack size limit */
-  size_t max_stack_size;
+  ej_size64_t max_stack_size;
   /** max file size limit */
-  size_t max_file_size;
+  ej_size64_t max_file_size;
 
   /** index of the compile directory in the list of compile servers */
   int compile_dir_index;
