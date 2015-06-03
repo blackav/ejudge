@@ -1,5 +1,4 @@
 <% /* -*- html -*- */
-/* $Id$ */
 %><%@include "includes.csp"
 %><%
 #include "ejudge/meta/prepare_meta.h"
@@ -77,6 +76,18 @@ static const unsigned char * const form_row_attrs[]=
 %><%
 #undef is_abstract
   }
+%><%
+  for (i = 0; i < phr->ss->aprob_u; ++i) {
+    const struct section_problem_data *prob = phr->ss->aprobs[i];
+    int prob_id = -i;
+%><s:form>
+    <s:hidden name="prob_id" check="false" />
+    <tr bgcolor="#b0b0b0">
+        <td colspan="2" align="center"><s:v value="prob->short_name" /></td>
+        <td colspan="2"><s:url name="ProblemPageUrl" ac="cnts-edit-cur-problem-page"><s:param name="prob_id" value="prob_id" /></s:url><s:a class="a-button-style" url="ProblemPageUrl">Show details</s:a><s:submit ac="prob-delete" label="Delete!" /></td>
+    </tr>
+</s:form><%
+  }
 %>
     <s:tr attr="head_row_attr">
         <td colspan="4" align="center"><b>Add new abstract problem</b></td>
@@ -107,6 +118,20 @@ static const unsigned char * const form_row_attrs[]=
 %><%@include "cnts_edit_cur_one_problem.csp"
 %><%
 #undef is_abstract
+  }
+%>
+<%
+  for (i = 1; i < phr->ss->prob_a; ++i) {
+    const struct section_problem_data *prob = phr->ss->probs[i];
+    int prob_id = i;
+    if (!prob) continue;
+%><s:form>
+    <s:hidden name="prob_id" check="false" />
+    <tr bgcolor="#b0b0b0">
+        <td colspan="2" align="center"><s:v value="prob->short_name" />: <s:v value="prob->long_name" /></td>
+        <td colspan="2"><s:url name="ProblemPageUrl" ac="cnts-edit-cur-problem-page"><s:param name="prob_id" value="prob_id" /></s:url><s:a class="a-button-style" url="ProblemPageUrl">Show details</s:a><s:submit ac="prob-delete" label="Delete!" /></td>
+    </tr>
+</s:form><%
   }
 %>
     <s:tr attr="head_row_attr">
