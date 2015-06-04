@@ -4301,6 +4301,7 @@ handle_yesno_open(
     HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
     HtmlAttribute *idsuffix_attr = html_element_find_attribute(elem, "idsuffix");
     HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabled");
+    if (!disabled_attr) disabled_attr = html_element_find_attribute(elem, "readonly");
 
     char *str_p = 0;
     size_t str_z = 0;
