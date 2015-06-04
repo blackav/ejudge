@@ -1,5 +1,4 @@
 <% /* -*- html -*- */
-/* $Id$ */
 %><%@include "includes.csp"
 %><%
 #include "ejudge/meta/prepare_meta.h"
@@ -16,6 +15,12 @@
     int row = 1;
     int cur_page = 4;
     int i;
+    int prob_id = 0;
+    const struct section_problem_data *prob = NULL;
+    struct section_problem_data *tmp_prob = NULL;
+    const struct section_problem_data *sup_prob = 0;
+    int sup_id = 0, prob_type = 0;
+    const unsigned char *str_ptr = NULL;
 
 static const unsigned char head_row_attr[] =
   " bgcolor=\"#a0a0a0\"";
@@ -30,14 +35,44 @@ static const unsigned char * const form_row_attrs[]=
     if (opcaps_check(caps, OPCAP_EDIT_CONTEST) < 0) FAIL(SSERV_ERR_PERMISSION_DENIED);
     if (!phr->ss->edited_cnts) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
 
-    snprintf(subtitle_buf, sizeof(subtitle_buf), "editing serve.cfg, problems");
+%><s:read var="prob_id" required="yes" /><%
+
+    if (prob_id <= 0) {
+        i = -prob_id;
+        if (i >= phr->ss->aprob_u) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        prob = phr->ss->aprobs[i];
+        if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        snprintf(subtitle_buf, sizeof(subtitle_buf), "editing serve.cfg, problem %s", prob->short_name);
+    } else {
+        i = prob_id;
+        if (i >= phr->ss->prob_a) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        prob = phr->ss->probs[i];
+        if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        snprintf(subtitle_buf, sizeof(subtitle_buf), "editing serve.cfg, problem %d", i);
+
+        int j;
+        if (prob->super && prob->super[0]) {
+            for (j = 0; j < phr->ss->aprob_u; ++j) {
+                if (!strcmp(prob->super, phr->ss->aprobs[j]->short_name)) {
+                    sup_prob = phr->ss->aprobs[j];
+                    sup_id = j + 1;
+                    break;
+                }
+            }
+        }
+    }
+    tmp_prob = prepare_copy_problem(prob);
+
     cnts = phr->ss->edited_cnts;
     struct section_global_data *global = phr->ss->global;
 
     (void) row;
     (void) head_row_attr;
     (void) form_row_attrs;
-%><%@include "header.csp"
+
+    (void) sup_id;
+    (void) sup_prob;
+%><%@include "header_jqgrid.csp"
 %>
 
 <%@include "cnts_edit_cur_top_menu.csp"
@@ -62,75 +97,320 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
 
-<table border="0">
-    <s:tr attr="head_row_attr">
-        <td colspan="4" align="center"><b>Abstract problems</b></td>
-    </s:tr>
-<%
-  for (i = 0; i < phr->ss->aprob_u; ++i) {
-#define is_abstract 1
-    ;
-    const struct section_problem_data *prob = phr->ss->aprobs[i];
-    int flags = phr->ss->aprob_flags[i];
-    int prob_id = -i;
-%><%@include "cnts_edit_cur_one_problem.csp"
+<h2><%
+    if (prob_id <= 0) {
+%>Abstract problem <%
+    } else {
+%>Problem <%
+    }
+%><s:v value="i" /><%
+    if (prob->short_name && prob->short_name[0]) {
+%>, <s:v value="prob->short_name" /><%
+    }
 %><%
-#undef is_abstract
-  }
-%>
-    <s:tr attr="head_row_attr">
-        <td colspan="4" align="center"><b>Add new abstract problem</b></td>
-    </s:tr>
-<%
-  row = 1;
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Name:</td>
-            <td><s:textfield name="prob_name" value="" size="48" maxlength="1024" /></td>
-            <td><s:submit ac="prob-add-abstract" label="Add" /></td>
-            <td><s:help ac="prob-add-abstract" /></td>
-        </s:tr>
-    </s:form>
+    if (prob->internal_name && prob->internal_name[0]) {
+%>, <s:v value="prob->internal_name" /><%
+    }
+%><%
+    if (prob->long_name && prob->long_name[0]) {
+%>, <s:v value="prob->long_name" /><%
+    }
+%></h2>
 
-    <s:tr attr="head_row_attr">
-        <td colspan="4" align="center"><b>Concrete problems</b></td>
-    </s:tr>
+<script type="text/javascript">
+$(function() {
+    $('#ProblemAccordion').accordion({ heightStyle: "content" });
+});
+</script>
+
+<div id="ProblemAccordion">
+    <h3>Problem identification</h3>
+    <div>
+        <table border="0" onclick="popupMainDialog()">
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-id-div">
+                <td>ID:</td>
+                <td><s:textfield id="orig-id" readonly="readonly" name="param" value="prob->id" size="48" maxlength="1024" check="false" /></td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-short_name-div">
+                <td>Short name:</td>
+                <td><s:textfield id="orig-short_name" readonly="readonly" name="param" value="prob->short_name" size="48" maxlength="1024" check="no" /><% if (!prob->short_name) { %>(<i>Not set</i>)<% } %></td>
+                <td><input type="button" onclick="popupMainDialog(event, 'short_name')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:short_name" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-internal_name-div">
+                <td>Internal name:</td>
+                <td><s:textfield id="orig-internal_name" readonly="readonly" name="param" value="prob->internal_name" size="48" maxlength="1024" check="no" /><% if (!prob->internal_name) { %>(<i>Not set</i>)<% } %></td>
+                <td><input type="button" onclick="popupMainDialog(event, 'internal_name')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:internal_name" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-long_name-div">
+                <td>Long name:</td>
+                <td><s:textfield id="orig-long_name" readonly="readonly" name="param" value="prob->long_name" size="48" maxlength="1024" check="no" /><% if (!prob->long_name) { %>(<i>Not set</i>)<% } %></td>
+                <td><input type="button" onclick="popupMainDialog(event, 'long_name')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:long_name" /></td>
+            </s:tr>
+
 <%
-  for (i = 1; i < phr->ss->prob_a; ++i) {
-#define is_abstract 0
-    ;
-    const struct section_problem_data *prob = phr->ss->probs[i];
-    int flags = phr->ss->prob_flags[i];
-    int prob_id = i;
-    if (!prob) continue;
-%><%@include "cnts_edit_cur_one_problem.csp"
-%><%
-#undef is_abstract
-  }
+    str_ptr = NULL;
+    if (sup_prob && sup_prob->short_name && sup_prob->short_name[0]) {
+        str_ptr = sup_prob->short_name;
+    }
 %>
-    <s:tr attr="head_row_attr">
-        <td colspan="4" align="center"><b>Add new problem</b><%
-  if (phr->ss->update_state) {
-%> [<s:a ac="download-progress-page">Download is in progress</s:a>]<%
-  } else {
-%> [<s:a ac="import-from-polygon-page">Import from Polygon</s:a>] [<s:a ac="import-contest-from-polygon-page">Import contest from Polygon</s:a>]<%
-  }
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-super-div">
+                <td>Base abstract problem:</td>
+                <td><s:textfield id="orig-super" readonly="readonly" name="param" value="str_ptr" size="48" maxlength="1024" checkExpr="" /><% if (!str_ptr) { %>(<i>Not set</i>)<% } %></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:super" /></td>
+            </s:tr>
+
+<%
+    prob_type = prob->type;
+    if (prob_type < 0 || prob_type >= PROB_TYPE_LAST) prob_type = 0;
+    str_ptr = problem_unparse_type(prob_type);
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-type-div">
+                <td>Type:</td>
+                <td><s:textfield id="orig-type" readonly="readonly" name="param" value="str_ptr" size="48" maxlength="1024" checkExpr="" /><% if (!str_ptr) { %>(<i>Not set</i>)<% } %></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:type" /></td>
+            </s:tr>
+
+        </table>
+    </div>
+
+    <h3>Files and directories</h3>
+
+    <div>
+        <table border="0" onclick="popupFilesDialog()">
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-binary_input-div">
+                <td>Input data is binary?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = prob->binary_input == 1;
+%><s:yesno id="orig-binary_input" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_binary_input, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-binary_input" readonly="readonly" name="param" value="prob->binary_input" default="tmp_prob->binary_input" /><%
+    }
 %></td>
-    </s:tr>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:binary_input" /></td>
+            </s:tr>
 
-<%
-  row = 1;
-%>
-    <s:form>
-        <s:tr attr="form_row_attrs[row ^= 1]">
-            <td>Id (optional):</td>
-            <td><s:textfield name="prob_id" value="" size="48" maxlength="1024" /></td>
-            <td><s:submit ac="prob-add" label="Add" /></td>
-            <td><s:help ac="prob-add" /></td>
-        </s:tr>
-    </s:form>
-</table>
+
+        </table>
+    </div>
+
+    <h3>Submission</h3>
+
+    <div>
+        <table border="0" onclick="popupSubmissionDialog()">
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-binary-div">
+                <td>Submit is binary?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = prob->binary == 1;
+%><s:yesno id="orig-binary" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_binary, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-binary" readonly="readonly" name="param" value="prob->binary" default="tmp_prob->binary" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:binary" /></td>
+            </s:tr>
+
+
+        </table>
+    </div>
+
+    <h3>Checking</h3>
+
+    <div>
+        <table border="0" onclick="popupCheckingDialog()">
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-manual_checking-div">
+                <td>Problem is checked manually?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->manual_checking > 0);
+%><s:yesno id="orig-manual_checking" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_manual_checking, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-manual_checking" readonly="readonly" name="param" value="prob->manual_checking" default="tmp_prob->manual_checking" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:manual_checking" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-check_presentation-div">
+                <td>Check output presentation anyway?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->check_presentation > 0);
+%><s:yesno id="orig-check_presentation" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_check_presentation, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-check_presentation" readonly="readonly" name="param" value="prob->check_presentation" default="tmp_prob->check_presentation" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:check_presentation" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-use_stdin-div">
+                <td>Use standard input?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = prob->use_stdin;
+%><s:yesno id="orig-use_stdin" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_use_stdin, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-use_stdin" readonly="readonly" name="param" value="prob->use_stdin" default="tmp_prob->use_stdin" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:use_stdin" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-combined_stdin-div">
+                <td>Combined standard/file input?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = prob->combined_stdin;
+%><s:yesno id="orig-combined_stdin" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_combined_stdin, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-combined_stdin" readonly="readonly" name="param" value="prob->combined_stdin" default="tmp_prob->combined_stdin" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:combined_stdin" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-input_file-div">
+                <td>Input file name:</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      const unsigned char *value = prob->input_file;
+      if (value && value[0] < ' ') value = 0;
+%><s:textfield id="orig-input_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Not set</i>)<% } %><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_input_file, tmp_prob, sup_prob, global);
+      const unsigned char *value = prob->input_file;
+      if (value && value[0] < ' ') value = 0;
+%><s:textfield id="orig-input_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->input_file" /></i>)<% } %><%
+    }
+%></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'input_file')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:input_file" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-use_stdout-div">
+                <td>Use standard output?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = prob->use_stdout;
+%><s:yesno id="orig-use_stdout" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_use_stdout, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-use_stdout" readonly="readonly" name="param" value="prob->use_stdout" default="tmp_prob->use_stdout" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:use_stdout" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-combined_stdout-div">
+                <td>Combined standard/file output?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = prob->combined_stdout;
+%><s:yesno id="orig-combined_stdout" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_combined_stdout, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-combined_stdout" readonly="readonly" name="param" value="prob->combined_stdout" default="tmp_prob->combined_stdout" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:combined_stdout" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-output_file-div">
+                <td>Output file name:</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      const unsigned char *value = prob->output_file;
+      if (value && value[0] < ' ') value = 0;
+%><s:textfield id="orig-output_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Not set</i>)<% } %><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_output_file, tmp_prob, sup_prob, global);
+      const unsigned char *value = prob->output_file;
+      if (value && value[0] < ' ') value = 0;
+%><s:textfield id="orig-output_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->output_file" /></i>)<% } %><%
+    }
+%></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'output_file')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:output_file" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_stderr-div">
+                <td>Consider output to stderr as PE?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = prob->disable_stderr == 1;
+%><s:yesno id="orig-disable_stderr" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_stderr, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-disable_stderr" readonly="readonly" name="param" value="prob->disable_stderr" default="tmp_prob->disable_stderr" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_stderr" /></td>
+            </s:tr>
+
+
+
+        </table>
+    </div>
+
+    <h3>Limits</h3>
+
+    <div>
+        <table border="0" onclick="popupLimitsDialog()">
+        </table>
+    </div>
+
+    <h3>Standings</h3>
+
+    <div>
+        <table border="0" onclick="popupStandingsDialog()">
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_name-div">
+                <td>Title for the standings column:</td>
+                <td><s:textfield id="orig-stand_name" readonly="readonly" name="param" value="prob->stand_name" size="48" maxlength="1024" check="no" /><% if (!prob->stand_name) { %>(<i>Not set</i>)<% } %></td>
+                <td><input type="button" onclick="popupStandingsDialog(event, 'stand_name')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_name" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_column-div">
+                <td>Collate this problem with the specified one:</td>
+                <td><s:textfield id="orig-stand_column" readonly="readonly" name="param" value="prob->stand_column" size="48" maxlength="1024" check="no" /><% if (!prob->stand_column) { %>(<i>Not set</i>)<% } %></td>
+                <td><input type="button" onclick="popupStandingsDialog(event, 'stand_column')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_column" /></td>
+            </s:tr>
+        </table>
+    </div>
+
+</div>
 
 <%
 bottom_links: ;
@@ -142,6 +422,7 @@ bottom_links: ;
 <%@include "footer.csp"
 %><%
 cleanup:
+  tmp_prob = prepare_problem_free(tmp_prob);
   l10n_resetlocale();
   html_armor_free(&ab);
 %>
