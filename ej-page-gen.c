@@ -4419,10 +4419,69 @@ handle_yesno3_open(
         default_label = default_label_attr->value;
     }
 
+    HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
+    HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabled");
+    if (!disabled_attr) disabled_attr = html_element_find_attribute(elem, "readonly");
+
     char *str_p = 0;
     size_t str_z = 0;
-    FILE *str_f = open_memstream(&str_p, &str_z);
-    fprintf(str_f, "<select name=\"%s\"><option value=\"-1\"", name_attr->value);
+    FILE *str_f = NULL;
+
+    if (disabled_attr) {
+        str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, "<input type=\"hidden\" name=\"%s\"", name_attr->value);
+        if (id_attr) {
+            fprintf(str_f, " id=\"%s\"", id_attr->value);
+        }
+        fprintf(str_f, " value=\"");
+        fclose(str_f); str_f = NULL;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = NULL; str_z = 0;
+        fprintf(prg_f, "fprintf(out_f, \"%%d\", yesno3_value);\n");
+        handle_html_string(prg_f, txt_f, log_f, "\" />");
+
+        fprintf(prg_f, "  if (yesno3_value < 0) {\n");
+
+        fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", default_label);
+        handle_html_string(prg_f, txt_f, log_f, " (");
+        if (!defaultdefault_value) {
+            fprintf(prg_f, "  if ((%s) <= 0) {\n", default_attr->value);
+        } else {
+            fprintf(prg_f, "  if (!(%s)) {\n", default_attr->value);
+        }
+        fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", no_label);
+        fprintf(prg_f, "} else {\n");
+        fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", yes_label);
+        fprintf(prg_f, "}\n");
+        handle_html_string(prg_f, txt_f, log_f, ")");
+
+        fprintf(prg_f, "  } else if (!yesno3_value) {\n");
+
+        handle_html_string(prg_f, txt_f, log_f, "<b>");
+        fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", no_label);
+        handle_html_string(prg_f, txt_f, log_f, "</b>");
+
+
+        fprintf(prg_f, "  } else {\n");
+
+        handle_html_string(prg_f, txt_f, log_f, "<b><font color=\"lightgreen\">");
+        fprintf(prg_f, "fputs(_(\"%s\"), out_f);\n", yes_label);
+        handle_html_string(prg_f, txt_f, log_f, "</font></b>");
+
+        fprintf(prg_f, "  }\n");
+
+        fprintf(prg_f,
+                "}\n");
+        return 0;
+    }
+
+
+    str_f = open_memstream(&str_p, &str_z);
+    fprintf(str_f, "<select");
+    if (id_attr) {
+        fprintf(str_f, " id=\"%s\"", id_attr->value);
+    }
+    fprintf(str_f, " name=\"%s\"><option value=\"-1\"", name_attr->value);
     fclose(str_f); str_f = 0;
     handle_html_string(prg_f, txt_f, log_f, str_p);
     free(str_p); str_p = 0; str_z = 0;
