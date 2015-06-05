@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2007-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -111,6 +110,17 @@ const unsigned char * const test_normalization_str[] =
   [TEST_NORM_LAST] = 0,
 };
 
+const unsigned char * const test_normalization_full_str[] =
+{
+  [TEST_NORM_NONE]    = "none - No normalization",
+  [TEST_NORM_DEFAULT] = "",
+  [TEST_NORM_NL]      = "nl - End-of-line normalization",
+  [TEST_NORM_NLWS]    = "nlws - End-of-line and trailing space normalization",
+  [TEST_NORM_NLWSNP]  = "nlwsnp - End-of-line, trailing space, and trailing lines normalization",
+  [TEST_NORM_NLNP]    = "nlnp - End-of-line and trailing lines normalization",
+  [TEST_NORM_LAST] = 0,
+};
+
 int
 test_normalization_parse(const unsigned char *str)
 {
@@ -129,6 +139,13 @@ test_normalization_unparse(int value)
 {
   if (value < TEST_NORM_FIRST || value >= TEST_NORM_LAST) return "";
   return test_normalization_str[value];
+}
+
+const unsigned char *
+test_normalization_unparse_full(int value)
+{
+  if (value < TEST_NORM_FIRST || value >= TEST_NORM_LAST) return "";
+  return test_normalization_full_str[value];
 }
 
 const unsigned char *

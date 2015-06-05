@@ -143,6 +143,7 @@ enum
 
 int test_normalization_parse(const unsigned char *);
 const unsigned char *test_normalization_unparse(int normalization);
+const unsigned char *test_normalization_unparse_full(int value);
 
 /* valid end-of-line types for input files */
 enum
