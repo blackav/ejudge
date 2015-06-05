@@ -20,7 +20,8 @@
     struct section_problem_data *tmp_prob = NULL;
     const struct section_problem_data *sup_prob = 0;
     int sup_id = 0, prob_type = 0;
-    const unsigned char *str_ptr = NULL;
+    const unsigned char *str_value = NULL;
+    int value;
 
 static const unsigned char head_row_attr[] =
   " bgcolor=\"#a0a0a0\"";
@@ -157,14 +158,14 @@ $(function() {
             </s:tr>
 
 <%
-    str_ptr = NULL;
+    str_value = NULL;
     if (sup_prob && sup_prob->short_name && sup_prob->short_name[0]) {
-        str_ptr = sup_prob->short_name;
+        str_value = sup_prob->short_name;
     }
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-super-div">
                 <td>Base abstract problem:</td>
-                <td><s:textfield id="orig-super" readonly="readonly" name="param" value="str_ptr" size="48" maxlength="1024" checkExpr="" /><% if (!str_ptr) { %>(<i>Not set</i>)<% } %></td>
+                <td><s:textfield id="orig-super" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><% if (!str_value) { %>(<i>Not set</i>)<% } %></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:super" /></td>
             </s:tr>
@@ -172,11 +173,11 @@ $(function() {
 <%
     prob_type = prob->type;
     if (prob_type < 0 || prob_type >= PROB_TYPE_LAST) prob_type = 0;
-    str_ptr = problem_unparse_type(prob_type);
+    str_value = problem_unparse_type(prob_type);
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-type-div">
                 <td>Type:</td>
-                <td><s:textfield id="orig-type" readonly="readonly" name="param" value="str_ptr" size="48" maxlength="1024" checkExpr="" /><% if (!str_ptr) { %>(<i>Not set</i>)<% } %></td>
+                <td><s:textfield id="orig-type" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><% if (!str_value) { %>(<i>Not set</i>)<% } %></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:type" /></td>
             </s:tr>
@@ -203,6 +204,180 @@ $(function() {
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:binary_input" /></td>
             </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-normalization-div">
+                <td>Test normalization mode:</td>
+                <td><s:hidden id="orig-normalization" name="param" value="prob->normalization" /><%
+    value = test_normalization_parse(prob->normalization);
+    if (value < 0) value = TEST_NORM_DEFAULT;
+    if (prob_id <= 0 || !sup_prob) {
+      if (value == TEST_NORM_DEFAULT) value = TEST_NORM_NL;
+%><s:v value="test_normalization_unparse_full(value)" escape="false" /><%
+    } else if (value == TEST_NORM_DEFAULT) {
+      value = test_normalization_parse(sup_prob->normalization);
+      if (value < 0) value = TEST_NORM_NL;
+      if (value == TEST_NORM_DEFAULT) value = TEST_NORM_NL;
+%>Default (<s:v value="test_normalization_unparse_full(value)" escape="false" />)<%
+    } else {
+%><s:v value="test_normalization_unparse_full(value)" escape="false" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:normalization" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-xml_file-div">
+                <td>XML File with problem statement:</td>
+                <td><%
+  str_value = prob->xml_file;
+  if (str_value && str_value[0] < ' ') str_value = 0;
+%><s:textfield id="orig-xml_file" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+  if (prob_id <= 0) {
+%><% if (!str_value) { %>(<i>Not set</i>)<% } %><%
+  } else if (!sup_prob) {
+    prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, sup_prob, global);
+    if (!str_value) {
+%>(<i>Not set</i>)<%
+    } else {
+%>(<i><s:v value="tmp_prob->xml_file" /></i>)<%
+    }
+  } else {
+    prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, sup_prob, global);
+    if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->xml_file" /></i>)<%
+    } else {
+%>(<i><s:v value="tmp_prob->xml_file" /></i>)<%
+    }
+  }
+%></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'xml_file')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:xml_file" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_dir-div">
+                <td>Directory with tests:</td>
+                <td><%
+    str_value = prob->test_dir;
+    if (str_value && str_value[0] < ' ') str_value = 0;
+%><s:textfield id="orig-test_dir" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0) {
+      if (!str_value || !sup_prob) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_test_dir, tmp_prob, sup_prob, global);
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->test_dir" /></i>)<%
+      } else {
+%>(<i><s:v value="tmp_prob->test_dir" /></i>)<%
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'test_dir')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:test_dir" /></td>
+            </s:tr>
+
+<%
+  if (prob_id > 0) {
+    prepare_set_prob_value(CNTSPROB_test_sfx, tmp_prob, sup_prob, global);
+    prepare_set_prob_value(CNTSPROB_test_pat, tmp_prob, sup_prob, global);
+  }
+%>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_pat-div">
+                <td>Pattern for test file names:</td>
+                <td><%
+    str_value = prob->test_pat;
+    if (str_value[0] == 1) str_value = 0;
+%><s:textfield id="orig-test_pat" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->test_pat" /></i>)<%
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'test_pat')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:test_pat" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_sfx-div">
+              <td>Suffix of test files:</td>
+              <td><%
+    str_value = prob->test_sfx;
+    if (str_value[0] == 1) str_value = 0;
+%><s:textfield id="orig-test_sfx" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->test_sfx" /></i>)<%
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'test_sfx')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:test_sfx" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-use_corr-div">
+                <td>Use &quot;correct answer&quot; files for check?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->use_corr > 0);
+%><s:yesno id="orig-use_corr" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_use_corr, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-use_corr" readonly="readonly" name="param" value="prob->use_corr" default="tmp_prob->use_corr" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:use_corr" /></td>
+            </s:tr>
+
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-corr_dir-div">
+                <td>Directory with &quot;correct answer&quot; files:</td>
+                <td><%
+    str_value = prob->corr_dir;
+    if (str_value && str_value[0] < ' ') str_value = 0;
+%><s:textfield id="orig-corr_dir" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0 || !sup_prob) {
+      if (!str_value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_corr_dir, tmp_prob, sup_prob, global);
+      if (!sup_prob && !str_value) {
+%>(<i>Not set</i>)<%
+      } else if (!str_value) {
+%>(<i>Default: <s:v value="tmp_prob->corr_dir" /></i>)<%
+      } else {
+%>(<i><s:v value="tmp_prob->corr_dir" /></i>)<%
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'corr_dir')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:corr_dir" /></td>
+            </s:tr>
+
+<%
+  if (prob_id > 0) {
+    prepare_set_prob_value(CNTSPROB_corr_sfx, tmp_prob, sup_prob, global);
+    prepare_set_prob_value(CNTSPROB_corr_pat, tmp_prob, sup_prob, global);
+  }
+%>
+
 
 
         </table>
