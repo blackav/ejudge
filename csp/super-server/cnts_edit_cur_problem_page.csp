@@ -22,6 +22,7 @@
     int sup_id = 0, prob_type = 0;
     const unsigned char *str_value = NULL;
     int value;
+    unsigned char num_buf[128];
 
 static const unsigned char head_row_attr[] =
   " bgcolor=\"#a0a0a0\"";
@@ -627,10 +628,111 @@ $(function() {
         </table>
     </div>
 
+    <h3>Statement view</h3>
+
+    <div>
+        <table border="0" onclick="popupStatementDialog()">
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_tab-div">
+                <td>Disable problem tab?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->disable_tab == 1);
+%><s:yesno id="orig-disable_tab" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_tab, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-disable_tab" readonly="readonly" name="param" value="prob->disable_tab" default="tmp_prob->disable_tab" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_tab" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-unrestricted_statement-div">
+                <td>Unrestricted problem statement?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->unrestricted_statement == 1);
+%><s:yesno id="orig-unrestricted_statement" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_unrestricted_statement, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-unrestricted_statement" readonly="readonly" name="param" value="prob->unrestricted_statement" default="tmp_prob->unrestricted_statement" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:unrestricted_statement" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-hide_file_names-div">
+                <td>Hide input/output file names from problem statement?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->hide_file_names == 1);
+%><s:yesno id="orig-hide_file_names" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_hide_file_names, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-hide_file_names" readonly="readonly" name="param" value="prob->hide_file_names" default="tmp_prob->hide_file_names" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:hide_file_names" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-hide_real_time_limit-div">
+                <td>Hide real-time limit from problem statement?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->hide_real_time_limit == 1);
+%><s:yesno id="orig-hide_real_time_limit" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_hide_real_time_limit, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-hide_real_time_limit" readonly="readonly" name="param" value="prob->hide_real_time_limit" default="tmp_prob->hide_real_time_limit" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:hide_real_time_limit" /></td>
+            </s:tr>
+
+
+
+
+
+
+        </table>
+    </div>
+
     <h3>Submission</h3>
 
     <div>
         <table border="0" onclick="popupSubmissionDialog()">
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_user_submit-div">
+                <td>Disable user submissions?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->disable_user_submit == 1);
+%><s:yesno id="orig-disable_user_submit" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_user_submit, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-disable_user_submit" readonly="readonly" name="param" value="prob->disable_user_submit" default="tmp_prob->disable_user_submit" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_user_submit" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_submit_after_ok-div">
+                <td>Disable submissions after OK?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->disable_submit_after_ok == 1);
+%><s:yesno id="orig-disable_submit_after_ok" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_submit_after_ok, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-disable_submit_after_ok" readonly="readonly" name="param" value="prob->disable_submit_after_ok" default="tmp_prob->disable_submit_after_ok" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_submit_after_ok" /></td>
+            </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-binary-div">
                 <td>Submit is binary?</td>
@@ -647,6 +749,74 @@ $(function() {
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:binary" /></td>
             </s:tr>
 
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_user_run_count-div">
+                <td>Max submissions for the problem:</td>
+                <td><s:textfield id="orig-max_user_run_count" readonly="readonly" name="param" value="prob->max_user_run_count" size="48" maxlength="1024" checkExpr=">= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->max_user_run_count < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_max_user_run_count, tmp_prob, sup_prob, global);
+      if (prob->max_user_run_count < 0 && tmp_prob->max_user_run_count < 0) {
+%>(<i>Not set</i>)<%
+      } else {
+%>(<i>Default: <s:v value="tmp_prob->max_user_run_count" /></i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:max_user_run_count" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-advance_to_next-div">
+                <td>Automatically advance to the next problem?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->advance_to_next == 1);
+%><s:yesno id="orig-advance_to_next" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_advance_to_next, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-advance_to_next" readonly="readonly" name="param" value="prob->advance_to_next" default="tmp_prob->advance_to_next" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:advance_to_next" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_ctrl_chars-div">
+                <td>Disable any control characters in the source code?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->disable_ctrl_chars == 1);
+%><s:yesno id="orig-disable_ctrl_chars" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_ctrl_chars, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-disable_ctrl_chars" readonly="readonly" name="param" value="prob->disable_ctrl_chars" default="tmp_prob->disable_ctrl_chars" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_ctrl_chars" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_text_form-div">
+                <td>Enable textarea input form?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->enable_text_form == 1);
+%><s:yesno id="orig-disable_ctrl_chars" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_enable_text_form, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-disable_ctrl_chars" readonly="readonly" name="param" value="prob->enable_text_form" default="tmp_prob->enable_text_form" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:enable_text_form" /></td>
+            </s:tr>
+
+
+
+
 
         </table>
     </div>
@@ -655,6 +825,50 @@ $(function() {
 
     <div>
         <table border="0" onclick="popupCheckingDialog()">
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_testing-div">
+                <td>Disable any testing of submissions?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->disable_testing == 1);
+%><s:yesno id="orig-disable_testing" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_testing, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-disable_testing" readonly="readonly" name="param" value="prob->disable_testing" default="tmp_prob->disable_testing" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_testing" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_auto_testing-div">
+                <td>Disable automatic testing of submissions?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->disable_auto_testing == 1);
+%><s:yesno id="orig-disable_auto_testing" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_auto_testing, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-disable_auto_testing" readonly="readonly" name="param" value="prob->disable_auto_testing" default="tmp_prob->disable_auto_testing" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_auto_testing" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_compilation-div">
+                <td>Still compile runs to mark as ACCEPTED?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->enable_compilation == 1);
+%><s:yesno id="orig-enable_compilation" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_enable_compilation, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-enable_compilation" readonly="readonly" name="param" value="prob->enable_compilation" default="tmp_prob->enable_compilation" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:enable_compilation" /></td>
+            </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-manual_checking-div">
                 <td>Problem is checked manually?</td>
@@ -797,6 +1011,23 @@ $(function() {
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_stderr" /></td>
             </s:tr>
 
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_exit_code-div">
+                <td>Ignore exit code?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->ignore_exit_code == 1);
+%><s:yesno id="orig-ignore_exit_code" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_ignore_exit_code, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-ignore_exit_code" readonly="readonly" name="param" value="prob->ignore_exit_code" default="tmp_prob->ignore_exit_code" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:ignore_exit_code" /></td>
+            </s:tr>
+
+
+
         </table>
     </div>
 
@@ -880,10 +1111,853 @@ $(function() {
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:real_time_limit" /></td>
             </s:tr>
 
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_vm_size-div">
+                <td>Maximum virtual memory size:</td>
+                <td><%
+    num_buf[0] = 0;
+    if (prob->max_vm_size == ~(size_t) 0 && prob_id <= 0) {
+      snprintf(num_buf, sizeof(num_buf), "%d", -1);
+    } else if (prob->max_vm_size != ~(size_t) 0) {
+      size_t_to_size_str(num_buf, sizeof(num_buf), prob->max_vm_size);
+    }
+%><s:textfield id="orig-max_vm_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /><%
+    if (prob_id <= 0) {
+      if (prob->max_vm_size == ~(size_t) 0 || prob->max_vm_size == 0) {
+%>(<i>OS Limit</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_max_vm_size, tmp_prob, sup_prob, global);
+      if (prob->max_vm_size == ~(size_t) 0) {
+        if (tmp_prob->max_vm_size == ~(size_t) 0) {
+%>(<i>Default: unlimited</i>)<%
+        } else if (tmp_prob->max_vm_size == 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else {
+          size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_vm_size);
+%>(<i>Default: <s:v value="num_buf" escape="false"/></i>)<%
+        }
+      } else if (prob->max_vm_size == 0) {
+%>(<i>OS Limit</i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:max_vm_size" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_stack_size-div">
+                <td>Maximum stack size:</td>
+                <td><%
+    num_buf[0] = 0;
+    if (prob->max_stack_size == ~(size_t) 0 && prob_id <= 0) {
+      snprintf(num_buf, sizeof(num_buf), "%d", -1);
+    } else if (prob->max_stack_size != ~(size_t) 0) {
+      size_t_to_size_str(num_buf, sizeof(num_buf), prob->max_stack_size);
+    }
+%><s:textfield id="orig-max_stack_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /><%
+    if (prob_id <= 0) {
+      if (prob->max_stack_size == ~(size_t) 0 || prob->max_stack_size == 0) {
+%>(<i>OS Limit</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_max_stack_size, tmp_prob, sup_prob, global);
+      if (prob->max_stack_size == ~(size_t) 0) {
+        if (tmp_prob->max_stack_size == ~(size_t) 0) {
+%>(<i>Default: unlimited</i>)<%
+        } else if (tmp_prob->max_stack_size == 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else {
+          size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_stack_size);
+%>(<i>Default: <s:v value="num_buf" escape="false"/></i>)<%
+        }
+      } else if (prob->max_stack_size == 0) {
+%>(<i>OS Limit</i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:max_stack_size" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_file_size-div">
+                <td>Maximum output file size:</td>
+                <td><%
+    num_buf[0] = 0;
+    if (prob->max_file_size == ~(size_t) 0 && prob_id <= 0) {
+      snprintf(num_buf, sizeof(num_buf), "%d", -1);
+    } else if (prob->max_file_size != ~(size_t) 0) {
+      size_t_to_size_str(num_buf, sizeof(num_buf), prob->max_file_size);
+    }
+%><s:textfield id="orig-max_file_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /><%
+    if (prob_id <= 0) {
+      if (prob->max_file_size == ~(size_t) 0 || prob->max_file_size == 0) {
+%>(<i>OS Limit</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_max_file_size, tmp_prob, sup_prob, global);
+      if (prob->max_file_size == ~(size_t) 0) {
+        if (tmp_prob->max_file_size == ~(size_t) 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else if (tmp_prob->max_file_size == 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else {
+          size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_file_size);
+%>(<i>Default: <s:v value="num_buf" escape="false"/></i>)<%
+        }
+      } else if (prob->max_file_size == 0) {
+%>(<i>OS Limit</i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:max_file_size" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_open_file_count-div">
+                <td>Maximum open file count:</td>
+                <td><s:textfield id="orig-max_open_file_count" readonly="readonly" name="param" value="prob->max_open_file_count" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->max_open_file_count < 0) {
+%>(<i>OS Limit</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_max_open_file_count, tmp_prob, sup_prob, global);
+      if (prob->max_open_file_count < 0) {
+        if (tmp_prob->max_open_file_count < 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->max_open_file_count" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:max_open_file_count" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_process_count-div">
+                <td>Maximum process count:</td>
+                <td><s:textfield id="orig-max_process_count" readonly="readonly" name="param" value="prob->max_process_count" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->max_process_count < 0) {
+%>(<i>OS Limit</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_max_process_count, tmp_prob, sup_prob, global);
+      if (prob->max_process_count < 0) {
+        if (tmp_prob->max_process_count < 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->max_process_count" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:max_process_count" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-umask-div">
+                <td>Umask value:</td>
+                <td><s:textfield id="orig-umask" readonly="readonly" name="param" value="prob->umask" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupLimitsDialog(event, 'umask')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:umask" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_process_group-div">
+                <td>Use separate process group?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->enable_process_group == 1);
+%><s:yesno id="orig-enable_process_group" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_enable_process_group, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-enable_process_group" readonly="readonly" name="param" value="prob->enable_process_group" default="tmp_prob->enable_process_group" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:enable_process_group" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_security-div">
+                <td>Disable security restrictions?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->disable_security == 1);
+%><s:yesno id="orig-disable_security" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_security, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-disable_security" readonly="readonly" name="param" value="prob->disable_security" default="tmp_prob->disable_security" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_security" /></td>
+            </s:tr>
+
+        </table>
+    </div>
+
+    <h3>Checker, interactor, etc</h3>
+
+    <div>
+        <table border="0" onclick="popupCheckerDialog()">
+<%
+  {
+    const struct std_checker_info *std_checkers = super_html_std_checkers;
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-standard_checker-div">
+                <td>Standard checker:</td>
+                <td><s:hidden id="orig-checker_real_time_limit" name="param" value="prob->standard_checker" checkExpr="" /><%
+    int j;
+    for (j = 0; std_checkers[j].name; ++j) {
+      if (!strcmp(prob->standard_checker, std_checkers[j].name)) {
+%><s:v value="std_checkers[j].desc" /> - <%
+      }
+    }
+%><tt><s:v value="prob->standard_checker" /></tt></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:standard_checker" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-check_cmd-div">
+                <td>Checker name:</td>
+                <td><%
+    const unsigned char *value = prob->check_cmd;
+    if (value && (!value[0] || value[0] == 1)) value = 0;
+%><s:textfield id="orig-check_cmd" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0) {
+      if (!value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_check_cmd, tmp_prob, sup_prob, global);
+      if (!value) {
+        if (!tmp_prob->check_cmd[0] || tmp_prob->check_cmd[0] == 1) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->check_cmd" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupCheckerDialog(event, 'check_cmd')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:check_cmd" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-checker_real_time_limit-div">
+              <td>Real time limit for checker(s):</td>
+              <td><s:textfield id="orig-checker_real_time_limit" readonly="readonly" name="param" value="prob->checker_real_time_limit" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->checker_real_time_limit < 0) {
+%>(<i>Not set</i>)<%
+      } else if (!prob->checker_real_time_limit) {
+%>(<i>Unlimited</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_checker_real_time_limit, tmp_prob, sup_prob, global);
+      if (prob->checker_real_time_limit < 0 && tmp_prob->checker_real_time_limit < 0) {
+%>(<i>Not set</i>)<%
+      } else if (prob->checker_real_time_limit < 0 && !tmp_prob->checker_real_time_limit) {
+%>(<i>Default: Unlimited</i>)<%
+      } else if (prob->checker_real_time_limit < 0) {
+%>(<i>Default: <s:v value="tmp_prob->checker_real_time_limit" /></i>)<%
+      } else if (!prob->checker_real_time_limit) {
+%>(<i>Unlimited</i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:checker_real_time_limit" /></td>
+            </s:tr>
+        </table>
+    </div>
+
+    <h3>Scoring</h3>
+
+    <div>
+        <table border="0" onclick="popupScoringDialog()">
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_compile_errors-div">
+                <td>Ignore compilation errors?</td>
+        <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->ignore_compile_errors == 1);
+%><s:yesno id="orig-ignore_compile_errors" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_ignore_compile_errors, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-ignore_compile_errors" readonly="readonly" name="param" value="prob->ignore_compile_errors" default="tmp_prob->ignore_compile_errors" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:ignore_compile_errors" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-use_ac_not_ok-div">
+                <td>Use PR (pending review) status instead of OK?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->use_ac_not_ok == 1);
+%><s:yesno id="orig-use_ac_not_ok" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_use_ac_not_ok, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-use_ac_not_ok" readonly="readonly" name="param" value="prob->use_ac_not_ok" default="tmp_prob->use_ac_not_ok" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:use_ac_not_ok" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ok_status-div">
+                <td>Success status:</td>
+                <td><s:textfield id="orig-ok_status" readonly="readonly" name="param" value="prob->ok_status" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupScoringDialog(event, 'ok_status')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:ok_status" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_prev_ac-div">
+                <td>Mark previous PR as IG (ignored)?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->ignore_prev_ac == 1);
+%><s:yesno id="orig-ignore_prev_ac" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_ignore_prev_ac, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-ignore_prev_ac" readonly="readonly" name="param" value="prob->ignore_prev_ac" default="tmp_prob->ignore_prev_ac" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:ignore_prev_ac" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-olympiad_mode-div">
+                <td>Use Olympiad mode?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->olympiad_mode == 1);
+%><s:yesno id="orig-olympiad_mode" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_olympiad_mode, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-olympiad_mode" readonly="readonly" name="param" value="prob->olympiad_mode" default="tmp_prob->olympiad_mode" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:olympiad_mode" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-score_latest-div">
+                <td>Score the latest submit?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->score_latest == 1);
+%><s:yesno id="orig-score_latest" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_score_latest, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-score_latest" readonly="readonly" name="param" value="prob->score_latest" default="tmp_prob->score_latest" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:score_latest" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-score_latest_or_unmarked-div">
+                <td>Score the latest or the best unmarked?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->score_latest_or_unmarked == 1);
+%><s:yesno id="orig-score_latest_or_unmarked" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_score_latest_or_unmarked, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-score_latest_or_unmarked" readonly="readonly" name="param" value="prob->score_latest_or_unmarked" default="tmp_prob->score_latest_or_unmarked" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:score_latest_or_unmarked" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-score_latest_marked-div">
+                <td>Score the latest marked submit?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->score_latest_marked == 1);
+%><s:yesno id="orig-score_latest_marked" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_score_latest_marked, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-score_latest_marked" readonly="readonly" name="param" value="prob->score_latest_marked" default="tmp_prob->score_latest_marked" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:score_latest_marked" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_unmarked-div">
+                <td>Ignore unmarked runs in scoring?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->ignore_unmarked == 1);
+%><s:yesno id="orig-ignore_unmarked" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_ignore_unmarked, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-ignore_unmarked" readonly="readonly" name="param" value="prob->ignore_unmarked" default="tmp_prob->ignore_unmarked" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:ignore_unmarked" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-score_tokenized-div">
+                <td>Score only tokenized submits?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->score_tokenized == 1);
+%><s:yesno id="orig-score_tokenized" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_score_tokenized, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-score_tokenized" readonly="readonly" name="param" value="prob->score_tokenized" default="tmp_prob->score_tokenized" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:score_tokenized" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-full_score-div">
+                <td>Score for full solution:</td>
+                <td><s:textfield id="orig-full_score" readonly="readonly" name="param" value="prob->full_score" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->full_score < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_full_score, tmp_prob, sup_prob, global);
+      if (prob->full_score < 0) {
+        if (tmp_prob->full_score < 0) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->full_score" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:full_score" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-full_user_score-div">
+                <td>Score for user-visible full solution:</td>
+                <td><s:textfield id="orig-full_user_score" readonly="readonly" name="param" value="prob->full_user_score" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->full_user_score < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_full_user_score, tmp_prob, sup_prob, global);
+      if (prob->full_user_score < 0) {
+        if (tmp_prob->full_user_score < 0) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->full_user_score" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:full_user_score" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-variable_full_score-div">
+                <td>Allow variable score for full solution?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->variable_full_score == 1);
+%><s:yesno id="orig-variable_full_score" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_variable_full_score, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-variable_full_score" readonly="readonly" name="param" value="prob->variable_full_score" default="tmp_prob->variable_full_score" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:variable_full_score" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_score-div">
+                <td>Default score for 1 passed test:</td>
+                <td><s:textfield id="orig-test_score" readonly="readonly" name="param" value="prob->test_score" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->test_score < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_test_score, tmp_prob, sup_prob, global);
+      if (prob->test_score < 0) {
+        if (tmp_prob->test_score < 0) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->test_score" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:test_score" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-run_penalty-div">
+                <td>Penalty for a submission:</td>
+                <td><s:textfield id="orig-run_penalty" readonly="readonly" name="param" value="prob->run_penalty" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->run_penalty < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_run_penalty, tmp_prob, sup_prob, global);
+      if (prob->run_penalty < 0) {
+        if (tmp_prob->run_penalty < 0) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->run_penalty" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:run_penalty" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disqualified_penalty-div">
+                <td>Penalty for a disqualified submission:</td>
+                <td><s:textfield id="orig-disqualified_penalty" readonly="readonly" name="param" value="prob->disqualified_penalty" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->disqualified_penalty < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_disqualified_penalty, tmp_prob, sup_prob, global);
+      if (prob->disqualified_penalty < 0) {
+        if (tmp_prob->disqualified_penalty < 0) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->disqualified_penalty" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disqualified_penalty" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_score_list-div">
+                <td>Test scores for tests:</td>
+                <td><s:textfield id="orig-test_score_list-div" readonly="readonly" name="param" value="prob->test_score_list" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupScoringDialog(event, 'test_score_list')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:test_score_list" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-acm_run_penalty-div">
+                <td>Penalty for a submission (minutes):</td>
+                <td><s:textfield id="orig-acm_run_penalty" readonly="readonly" name="param" value="prob->acm_run_penalty" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->acm_run_penalty < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_acm_run_penalty, tmp_prob, sup_prob, global);
+      if (prob->acm_run_penalty < 0 && tmp_prob->acm_run_penalty < 0) {
+%>(<i>Not set</i>)<%
+      } else if (prob->acm_run_penalty < 0) {
+%>(<i>Default: <s:v value="tmp_prob->acm_run_penalty" /></i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:acm_run_penalty" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-score_tests-div">
+                <td>Tests for problem scores:</td>
+                <td><s:textfield id="orig-acm_run_penalty" readonly="readonly" name="param" value="prob->score_tests" size="48" maxlength="1024" check="no" /></td>
+                <td><input type="button" onclick="popupScoringDialog(event, 'score_tests')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:score_tests" /></td>
+            </s:tr>
+
+<%
+  {
+    unsigned char *strs = 0;
+    if (prob->test_sets && prob->test_sets[0]) strs = sarray_unparse_2(prob->test_sets);
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_sets-div">
+                <td>Specially scored test sets:</td>
+                <td><s:textfield id="orig-test_sets" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /><%
+    if (!strs) {
+%>(<i>Not set</i>)<%
+}
+%></td>
+                <td><input type="button" onclick="popupScoringDialog(event, 'test_sets')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:test_sets" /></td>
+            </s:tr>
+<%
+    xfree(strs);
+  }
+%>
+
+<%
+  {
+    const unsigned char *value = prob->score_bonus;
+    if (value && value[0] == 1) value = 0;
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-score_bonus-div">
+                <td>Additional score bonus:</td>
+                <td><s:textfield id="orig-score_bonus" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0) {
+      if (!value) {
+%>(<i>Not set</i>)<%
+      } else if (!*value) {
+%>(<i>Empty</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_score_bonus, tmp_prob, sup_prob, global);
+      if (!value) {
+        if (!tmp_prob->score_bonus[0] || tmp_prob->score_bonus[0] == 1) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->score_bonus" /></i>)<%
+        }
+      } else if (!*value) {
+%>(<i>Empty</i>)<%
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupScoringDialog(event, 'score_bonus')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:score_bonus" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+
 
 
         </table>
     </div>
+
+    <h3>Feedback</h3>
+
+    <div>
+        <table border="0" onclick="popupFeedbackDialog()">
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_enable_rep_view-div">
+                <td>Contestant may view testing protocol?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->team_enable_rep_view == 1);
+%><s:yesno id="orig-team_enable_rep_view" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_team_enable_rep_view, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-team_enable_rep_view" readonly="readonly" name="param" value="prob->team_enable_rep_view" default="tmp_prob->team_enable_rep_view" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:team_enable_rep_view" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_enable_ce_view-div">
+                <td>Contestant may view compilation errors?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->team_enable_ce_view == 1);
+%><s:yesno id="orig-team_enable_ce_view" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_team_enable_ce_view, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-team_enable_ce_view" readonly="readonly" name="param" value="prob->team_enable_ce_view" default="tmp_prob->team_enable_ce_view" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:team_enable_ce_view" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_show_judge_report-div">
+                <td>Contestant may view FULL testing protocol?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->team_show_judge_report == 1);
+%><s:yesno id="orig-team_show_judge_report" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_team_show_judge_report, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-team_show_judge_report" readonly="readonly" name="param" value="prob->team_show_judge_report" default="tmp_prob->team_show_judge_report" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:team_show_judge_report" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-show_checker_comment-div">
+                <td>Contestant may view checker comment?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->show_checker_comment == 1);
+%><s:yesno id="orig-show_checker_comment" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_show_checker_comment, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-show_checker_comment" readonly="readonly" name="param" value="prob->show_checker_comment" default="tmp_prob->show_checker_comment" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:show_checker_comment" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-open_tests-div">
+                <td>Tests open for participants:</td>
+                <td><s:textfield id="orig-open_tests" readonly="readonly" name="param" value="prob->open_tests" size="48" maxlength="1024" check="no" /></td>
+                <td><input type="button" onclick="popupFeedbackDialog(event, 'open_tests')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:open_tests" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-final_open_tests-div">
+                <td>Tests open for participants finally:</td>
+                <td><s:textfield id="orig-final_open_tests" readonly="readonly" name="param" value="prob->final_open_tests" size="48" maxlength="1024" check="no" /></td>
+                <td><input type="button" onclick="popupFeedbackDialog(event, 'final_open_tests')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:final_open_tests" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_tokens-div">
+                <td>Enable tokens?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = prob->enable_tokens == 1;
+%><s:yesno id="orig-enable_tokens" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_enable_tokens, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-enable_tokens" readonly="readonly" name="param" value="prob->enable_tokens" default="tmp_prob->enable_tokens" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:enable_tokens" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-tokens_for_user_ac-div">
+                <td>Tokens only for user AC submits?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = prob->tokens_for_user_ac == 1;
+%><s:yesno id="orig-tokens_for_user_ac" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_tokens_for_user_ac, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-tokens_for_user_ac" readonly="readonly" name="param" value="prob->tokens_for_user_ac" default="tmp_prob->tokens_for_user_ac" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:tokens_for_user_ac" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-tokens-div">
+                <td>Token specification:</td>
+                <td><s:textfield id="orig-tokens" readonly="readonly" name="param" value="prob->tokens" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupFeedbackDialog(event, 'tokens')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="serve.cfg:problem:tokens" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-token_open_tests-div">
+                <td>Tests open for tokens:</td>
+                <td><s:textfield id="orig-token_open_tests" readonly="readonly" name="param" value="prob->token_open_tests" size="48" maxlength="1024" check="" /></td>
+                <td><input type="button" onclick="popupFeedbackDialog(event, 'token_open_tests')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="serve.cfg:problem:token_open_tests" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-tests_to_accept-div">
+                <td>Number of accept tests:</td>
+                <td><s:textfield id="orig-tests_to_accept" readonly="readonly" name="param" value="prob->tests_to_accept" size="48" maxlength="1024" checkExpr=">= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->tests_to_accept < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_tests_to_accept, tmp_prob, sup_prob, global);
+      if (prob->tests_to_accept < 0 && tmp_prob->tests_to_accept < 0) {
+%>(<i>Not set</i>)<%
+      } else {
+%>(<i>Default: <s:v value="tmp_prob->tests_to_accept" /></i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:tests_to_accept" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-accept_partial-div">
+                <td>Accept for testing solutions that do not pass all accept tests?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->accept_partial == 1);
+%><s:yesno id="orig-accept_partial" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_accept_partial, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-accept_partial" readonly="readonly" name="param" value="prob->accept_partial" default="tmp_prob->accept_partial" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:accept_partial" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-min_tests_to_accept-div">
+                <td>Min. number of accept tests:</td>
+                <td><s:textfield id="orig-min_tests_to_accept" readonly="readonly" name="param" value="prob->min_tests_to_accept" size="48" maxlength="1024" checkExpr=">= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->min_tests_to_accept < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_min_tests_to_accept, tmp_prob, sup_prob, global);
+      if (prob->min_tests_to_accept < 0 && tmp_prob->min_tests_to_accept < 0) {
+%>(<i>Not set</i>)<%
+      } else {
+%>(<i>Default: <s:v value="tmp_prob->min_tests_to_accept" /></i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:min_tests_to_accept" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_pe-div">
+                <td>Report Presentation Error as Wrong Answer?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->disable_pe == 1);
+%><s:yesno id="orig-disable_pe" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_pe, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-disable_pe" readonly="readonly" name="param" value="prob->disable_pe" default="tmp_prob->disable_pe" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_pe" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_wtl-div">
+                <td>Report Wall Time Limit Exceeded as Time Limit Exceeded?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->disable_wtl == 1);
+%><s:yesno id="orig-disable_wtl" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_disable_wtl, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-disable_wtl" readonly="readonly" name="param" value="prob->disable_wtl" default="tmp_prob->disable_wtl" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_wtl" /></td>
+            </s:tr>
+
+
+
+        </table>
+    </div>
+
 
     <h3>Standings</h3>
 
@@ -902,6 +1976,71 @@ $(function() {
                 <td><input type="button" onclick="popupStandingsDialog(event, 'stand_column')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_column" /></td>
             </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-hidden-div">
+                <td>Do not show this problem in standings?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->hidden == 1);
+%><s:yesno id="orig-hidden" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_hidden, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-hidden" readonly="readonly" name="param" value="prob->hidden" default="tmp_prob->hidden" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:hidden" /></td>
+            </s:tr>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_hide_time-div">
+                <td>Do not show accept time for this problem?</td>
+                <td><%
+    int value = (prob->stand_hide_time > 0);
+%><s:yesno id="orig-stand_hide_time" readonly="readonly" name="param" value="value" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_hide_time" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_attr-div">
+                <td>Standings attributes:</td>
+                <td><%
+    const unsigned char *value = prob->stand_attr;
+    if (value && (!value[0] || value[0] == 1)) value = 0;
+%><s:textfield id="orig-stand_attr" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0 || !sup_prob) {
+      if (!value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_stand_attr, tmp_prob, sup_prob, global);
+      if (!value) {
+        if (tmp_prob->stand_attr[0] == 1) {
+%>(<i>Not set</i>)<%
+        } else if (!tmp_prob->stand_attr[0]) {
+%>(<i>Default: empty</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->stand_attr" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupStandingsDialog(event, 'stand_attr')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_attr" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+
         </table>
     </div>
 
