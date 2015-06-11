@@ -76,6 +76,7 @@ static const unsigned char * const form_row_attrs[]=
     (void) sup_prob;
 %><%@include "header_jqgrid.csp"
 %>
+<script src='<s:config name="style-prefix" />priv_prob_dlg.js' type="text/javascript"></script>
 
 <%@include "cnts_edit_cur_top_menu.csp"
 %>
@@ -98,6 +99,71 @@ static const unsigned char * const form_row_attrs[]=
     goto bottom_links;
   }
 %>
+
+<div id="IdDialogDiv" title="Problem Identification">
+    <s:form id="IdDialogForm">
+        <s:hidden name="action" ac="glob-save-main-form" />
+        <input type="hidden" id="IdDialogProbId" name="prob_id" value="" />
+
+        <div>
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-prob_id_xxx">ID:</label></div>
+            <input readonly="readonly" type="text" size="20" name="prob_id_xxx" id="edit-prob_id_xxx" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+
+        <div id="edit-short_name-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-short_name">Short name:</label></div>
+            <input type="text" size="20" name="short_name" id="edit-short_name" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+
+        <div id="edit-internal_name-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-internal_name">Internal name:</label></div>
+            <input type="text" size="20" name="internal_name" id="edit-internal_name" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+
+        <div id="edit-long_name-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-long_name">Long name:</label></div>
+            <input type="text" size="20" name="long_name" id="edit-long_name" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+
+        <div id="edit-super-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-super">Base abstract problem:</label></div>
+            <select id="edit-super" name="super">
+                <option></option>
+<%
+  for (i = 0; i < phr->ss->aprob_u; ++i) {
+%><option><s:v value="phr->ss->aprobs[i]->short_name" /></option>
+<%
+  }
+%>
+            </select>
+        </div>
+
+        <div id="edit-type-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-type">Type:</label></div>
+            <select id="edit-type" name="type">
+                <option>standard</option>
+                <option>output-only</option>
+                <option>short-answer</option>
+                <option>text-answer</option>
+                <option>select-one</option>
+                <option>select-many</option>
+                <option>custom</option>
+                <option>tests</option>
+            </select>
+        </div>
+
+        <div id="edit-variant_num-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-variant_num">Number of variants:</label></div>
+            <input type="text" size="20" name="variant_num" id="edit-variant_num" value="" class="text ui-widget-content ui-corner-all" />
+        </div>
+
+        <div id="edit-autoassign_variants-div">
+            <div style="width: 300px; display: inline-block;"><label for="edit-enable_win32_languages">Assign variants automatically?</label></div>
+            <input type="checkbox" name="autoassign_variants" id="edit-autoassign_variants" value="1" />
+        </div>
+
+    </s:form>
+</div>
 
 <h2><%
     if (prob_id <= 0) {
