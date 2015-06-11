@@ -183,6 +183,51 @@ $(function() {
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:type" /></td>
             </s:tr>
 
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-variant_num-div">
+                <td>Number of variants:</td>
+                <td><s:textfield id="orig-variant_num" readonly="readonly" name="param" value="prob->variant_num" size="48" maxlength="1024" checkExpr="> 0" /><%
+    if (prob->variant_num <= 0) {
+%>(<i>No variants</i>)<%
+    }
+%></td>
+                <td><%
+    if (prob->variant_num > 0) {
+%>[<s:a ac="cnts-start-edit-variant-action">Edit variants</s:a>]<%
+    }
+%></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:variant_num" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-autoassign_variants-div">
+                <td>Assign variants automatically?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->autoassign_variants == 1);
+%><s:yesno id="orig-autoassign_variants" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_autoassign_variants, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-autoassign_variants" readonly="readonly" name="param" value="prob->autoassign_variants" default="tmp_prob->autoassign_variants" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:autoassign_variants" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+
+
         </table>
     </div>
 
@@ -310,8 +355,8 @@ $(function() {
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_sfx-div">
-              <td>Suffix of test files:</td>
-              <td><%
+                <td>Suffix of test files:</td>
+                <td><%
     str_value = prob->test_sfx;
     if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-test_sfx" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
@@ -628,6 +673,121 @@ $(function() {
         </table>
     </div>
 
+    <h3>Validation</h3>
+
+    <div>
+        <table border="0" onclick="popupValidationDialog()">
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_checker_cmd-div">
+                <td>Test checker name:</td>
+                <td><%
+%><s:textfield id="orig-test_checker_cmd" readonly="readonly" name="param" value="prob->test_checker_cmd" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0) {
+      if (!prob->test_checker_cmd) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_test_checker_cmd, tmp_prob, sup_prob, global);
+      if (!prob->test_checker_cmd) {
+        if (!tmp_prob->test_checker_cmd || !tmp_prob->test_checker_cmd[0]) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->test_checker_cmd" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupValidationDialog(event, 'test_checker_cmd')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:test_checker_cmd" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_checker_env-div">
+                <td>Test checker environment:</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->test_checker_env && prob->test_checker_env[0]) strs = sarray_unparse(prob->test_checker_env);
+%><s:textfield id="orig-test_checker_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupValidationDialog(event, 'test_checker_env')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:test_checker_env" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-solution_src-div">
+                <td>Solution source name:</td>
+                <td><%
+%><s:textfield id="orig-solution_src" readonly="readonly" name="param" value="prob->solution_src" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0) {
+      if (!prob->solution_src) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_solution_src, tmp_prob, sup_prob, global);
+      if (!prob->solution_src) {
+        if (!tmp_prob->solution_src || !tmp_prob->solution_src[0]) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->solution_src" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupValidationDialog(event, 'solution_src')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:solution_src" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-solution_cmd-div">
+                <td>Solution command:</td>
+                <td><%
+%><s:textfield id="orig-solution_cmd" readonly="readonly" name="param" value="prob->solution_cmd" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0) {
+      if (!prob->solution_cmd) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_solution_cmd, tmp_prob, sup_prob, global);
+      if (!prob->solution_cmd) {
+        if (!tmp_prob->solution_cmd || !tmp_prob->solution_cmd[0]) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->solution_cmd" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupValidationDialog(event, 'solution_cmd')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:solution_cmd" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+
+
+
+        </table>
+    </div>
+
     <h3>Statement view</h3>
 
     <div>
@@ -691,6 +851,27 @@ $(function() {
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:hide_real_time_limit" /></td>
             </s:tr>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-hide_variant-div">
+                <td>Hide variant from user?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->hide_variant == 1);
+%><s:yesno id="orig-hide_variant" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_hide_variant, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-hide_variant" readonly="readonly" name="param" value="prob->hide_variant" default="tmp_prob->hide_variant" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:hide_variant" /></td>
+            </s:tr>
+<%
+  }
+%>
 
 
 
@@ -804,16 +985,235 @@ $(function() {
                 <td><%
     if (prob_id <= 0 || !sup_prob) {
       int value = (prob->enable_text_form == 1);
-%><s:yesno id="orig-disable_ctrl_chars" readonly="readonly" name="param" value="value" /><%
+%><s:yesno id="orig-enable_text_form" readonly="readonly" name="param" value="value" /><%
     } else {
       prepare_set_prob_value(CNTSPROB_enable_text_form, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-disable_ctrl_chars" readonly="readonly" name="param" value="prob->enable_text_form" default="tmp_prob->enable_text_form" /><%
+%><s:yesno3 id="orig-enable_text_form" readonly="readonly" name="param" value="prob->enable_text_form" default="tmp_prob->enable_text_form" /><%
     }
 %></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:enable_text_form" /></td>
             </s:tr>
 
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_language-div">
+                <td>Disabled languages:</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->disable_language && prob->disable_language[0]) strs = sarray_unparse(prob->disable_language);
+%><s:textfield id="orig-disable_language" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupSubmissionDialog(event, 'disable_language')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_language" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_language-div">
+                <td>Enabled languages:</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->enable_language && prob->enable_language[0]) strs = sarray_unparse(prob->enable_language);
+%><s:textfield id="orig-enable_language" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupSubmissionDialog(event, 'enable_language')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:enable_language" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-require-div">
+                <td>Required problems:</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->require && prob->require[0]) strs = sarray_unparse(prob->require);
+%><s:textfield id="orig-require" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupSubmissionDialog(event, 'require')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:require" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-start_date-div">
+                <td>Accept start date:</td>
+                <td><% html_date_select(out_f, prob->start_date); %></td>
+                <td><s:submit ac="prob-change-start-date" label="Change" /><s:submit ac="prob-clear-start-date" label="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:start_date" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-deadline-div">
+                <td>Accept deadline:</td>
+                <td><% html_date_select(out_f, prob->deadline); %></td>
+                <td><s:submit ac="prob-change-deadline" label="Change" /><s:submit ac="prob-clear-deadline" label="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:deadline" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+        </table>
+    </div>
+
+    <h3>Compiling</h3>
+
+    <div>
+        <table border="0" onclick="popupCompilingDialog()">
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-style_checker_cmd-div">
+                <td>Style checker name:</td>
+                <td><%
+    const unsigned char *value = prob->style_checker_cmd;
+    if (value && (!value[0] || value[0] == 1)) value = 0;
+%><s:textfield id="orig-style_checker_cmd" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0) {
+      if (!value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_style_checker_cmd, tmp_prob, sup_prob, global);
+      if (!value) {
+        if (!tmp_prob->style_checker_cmd[0] || tmp_prob->style_checker_cmd[0] == 1) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->style_checker_cmd" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupCompilingDialog(event, 'style_checker_cmd')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:style_checker_cmd" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-style_checker_env-div">
+                <td>Style checker environment:</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->style_checker_env && prob->style_checker_env[0]) strs = sarray_unparse(prob->style_checker_env);
+%><s:textfield id="orig-style_checker_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupCompilingDialog(event, 'style_checker_env')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:style_checker_env" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-lang_compiler_env-div">
+                <td>Compiler environment:</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->lang_compiler_env && prob->lang_compiler_env[0]) strs = sarray_unparse(prob->lang_compiler_env);
+%><s:textfield id="orig-lang_compiler_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupCompilingDialog(event, 'lang_compiler_env')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:lang_compiler_env" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-source_header-div">
+                <td>Source header file:</td>
+                <td><%
+    const unsigned char *value = prob->source_header;
+    if (value && value[0] == 1) value = 0;
+%><s:textfield id="orig-source_header" readonly="readonly" name="param" value="prob->source_header" size="48" maxlength="1024" checkExpr="> 0" /><%
+    if (prob_id <= 0) {
+      if (!value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_source_header, tmp_prob, sup_prob, global);
+      if (!value) {
+        if (tmp_prob->source_header[0] == 1) {
+%>(<i>Not set</i>)<%
+        } else if (!tmp_prob->source_header[0]) {
+%>(<i>Default: none</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->source_header" /></i>)<%
+        }
+      } else if (!value[0]) {
+%>(<i>None</i>)<%
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupCompilingDialog(event, 'source_header')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:source_header" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-source_footer-div">
+                <td>Source footer file:</td>
+                <td><%
+    const unsigned char *value = prob->source_footer;
+    if (value && value[0] == 1) value = 0;
+%><s:textfield id="orig-source_footer" readonly="readonly" name="param" value="prob->source_footer" size="48" maxlength="1024" checkExpr="> 0" /><%
+    if (prob_id <= 0) {
+      if (!value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_source_footer, tmp_prob, sup_prob, global);
+      if (!value) {
+        if (tmp_prob->source_footer[0] == 1) {
+%>(<i>Not set</i>)<%
+        } else if (!tmp_prob->source_footer[0]) {
+%>(<i>Default: none</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->source_footer" /></i>)<%
+        }
+      } else if (!value[0]) {
+%>(<i>None</i>)<%
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupCompilingDialog(event, 'source_footer')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:source_footer" /></td>
+            </s:tr>
+<%
+  }
+%>
 
 
 
@@ -821,7 +1221,8 @@ $(function() {
         </table>
     </div>
 
-    <h3>Checking</h3>
+
+    <h3>Running</h3>
 
     <div>
         <table border="0" onclick="popupCheckingDialog()">
@@ -1025,6 +1426,52 @@ $(function() {
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:ignore_exit_code" /></td>
             </s:tr>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-start_cmd-div">
+                <td>Start proxy program:</td>
+                <td><%
+%><s:textfield id="orig-start_cmd" readonly="readonly" name="param" value="prob->start_cmd" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0) {
+      if (!prob->start_cmd) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_start_cmd, tmp_prob, sup_prob, global);
+      if (!prob->start_cmd) {
+        if (!tmp_prob->start_cmd || !tmp_prob->start_cmd[0]) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->start_cmd" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'start_cmd')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:start_cmd" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-start_env-div">
+                <td>Start environment:</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->start_env && prob->start_env[0]) strs = sarray_unparse(prob->start_env);
+%><s:textfield id="orig-start_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'start_env')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:start_env" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
 
 
 
@@ -1294,6 +1741,77 @@ $(function() {
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_security" /></td>
             </s:tr>
 
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-lang_time_adj-div">
+                <td>Language-specific time-limit adjustment (s):</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->lang_time_adj && prob->lang_time_adj[0]) strs = sarray_unparse(prob->lang_time_adj);
+%><s:textfield id="orig-lang_time_adj" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupLimitsDialog(event, 'lang_time_adj')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:lang_time_adj" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-lang_time_adj_millis-div">
+                <td>Language-specific time-limit adjustment (ms):</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->lang_time_adj_millis && prob->lang_time_adj_millis[0]) strs = sarray_unparse(prob->lang_time_adj_millis);
+%><s:textfield id="orig-lang_time_adj_millis" name="param" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupLimitsDialog(event, 'lang_time_adj_millis')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:lang_time_adj_millis" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-lang_max_vm_size-div">
+                <td>Language-specific memory limit:</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->lang_max_vm_size && prob->lang_max_vm_size[0]) strs = sarray_unparse(prob->lang_max_vm_size);
+%><s:textfield id="orig-lang_max_vm_size" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupLimitsDialog(event, 'lang_max_vm_size')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:lang_max_vm_size" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-lang_max_stack_size-div">
+                <td>Language-specific stack limit:</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->lang_max_stack_size && prob->lang_max_stack_size[0]) strs = sarray_unparse(prob->lang_max_stack_size);
+%><s:textfield id="orig-lang_max_stack_size" name="param" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupLimitsDialog(event, 'lang_max_stack_size')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:lang_max_stack_size" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
+
+
+
+
         </table>
     </div>
 
@@ -1307,7 +1825,7 @@ $(function() {
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-standard_checker-div">
                 <td>Standard checker:</td>
-                <td><s:hidden id="orig-checker_real_time_limit" name="param" value="prob->standard_checker" checkExpr="" /><%
+                <td><s:hidden id="orig-standard_checker" name="param" value="prob->standard_checker" checkExpr="" /><%
     int j;
     for (j = 0; std_checkers[j].name; ++j) {
       if (!strcmp(prob->standard_checker, std_checkers[j].name)) {
@@ -1354,8 +1872,8 @@ $(function() {
 %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-checker_real_time_limit-div">
-              <td>Real time limit for checker(s):</td>
-              <td><s:textfield id="orig-checker_real_time_limit" readonly="readonly" name="param" value="prob->checker_real_time_limit" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+                <td>Real time limit for checker(s):</td>
+                <td><s:textfield id="orig-checker_real_time_limit" readonly="readonly" name="param" value="prob->checker_real_time_limit" size="48" maxlength="1024" checkExpr=" >= 0" /><%
     if (prob_id <= 0) {
       if (prob->checker_real_time_limit < 0) {
 %>(<i>Not set</i>)<%
@@ -1378,6 +1896,259 @@ $(function() {
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:checker_real_time_limit" /></td>
             </s:tr>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-checker_env-div">
+                <td>Checker environment:</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->checker_env && prob->checker_env[0]) strs = sarray_unparse(prob->checker_env);
+%><s:textfield id="orig-checker_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupCheckerDialog(event, 'checker_env')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:checker_env" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-scoring_checker-div">
+                <td>Checker calculates score?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->scoring_checker == 1);
+%><s:yesno id="orig-scoring_checker" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_scoring_checker, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-scoring_checker" readonly="readonly" name="param" value="prob->scoring_checker" default="tmp_prob->scoring_checker" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:scoring_checker" /></td>
+            </s:tr>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-valuer_cmd-div">
+                <td>Score valuer name:</td>
+                <td><%
+    const unsigned char *value = prob->valuer_cmd;
+    if (value && (!value[0] || value[0] == 1)) value = 0;
+%><s:textfield id="orig-valuer_cmd" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0) {
+      if (!value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_valuer_cmd, tmp_prob, sup_prob, global);
+      if (!value) {
+        if (!tmp_prob->valuer_cmd[0] || tmp_prob->valuer_cmd[0] == 1) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->valuer_cmd" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupCheckerDialog(event, 'valuer_cmd')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:valuer_cmd" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-valuer_sets_marked-div">
+                <td>Valuer sets <i>marked</i> flag?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->valuer_sets_marked == 1);
+%><s:yesno id="orig-valuer_sets_marked" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_valuer_sets_marked, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-valuer_sets_marked" readonly="readonly" name="param" value="prob->valuer_sets_marked" default="tmp_prob->valuer_sets_marked" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:valuer_sets_marked" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-interactive_valuer-div">
+                <td>Valuer works interactively?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->interactive_valuer == 1);
+%><s:yesno id="orig-interactive_valuer" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_interactive_valuer, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-interactive_valuer" readonly="readonly" name="param" value="prob->interactive_valuer" default="tmp_prob->interactive_valuer" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:interactive_valuer" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-valuer_env-div">
+                <td>Valuer environment:</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->valuer_env && prob->valuer_env[0]) strs = sarray_unparse(prob->valuer_env);
+%><s:textfield id="orig-valuer_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupCheckerDialog(event, 'valuer_env')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:valuer_env" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-interactor_cmd-div">
+                <td>Interactor name:</td>
+                <td><%
+    const unsigned char *value = prob->interactor_cmd;
+    if (value && (!value[0] || value[0] == 1)) value = 0;
+%><s:textfield id="orig-interactor_cmd" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0) {
+      if (!value) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_interactor_cmd, tmp_prob, sup_prob, global);
+      if (!value) {
+        if (!tmp_prob->interactor_cmd[0] || tmp_prob->interactor_cmd[0] == 1) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->interactor_cmd" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupCheckerDialog(event, 'interactor_cmd')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:interactor_cmd" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-interactor_env-div">
+                <td>Interactor environment:</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->interactor_env && prob->interactor_env[0]) strs = sarray_unparse(prob->interactor_env);
+%><s:textfield id="orig-interactor_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupCheckerDialog(event, 'interactor_env')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:interactor_env" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-interactor_time_limit-div">
+                <td>Time limit for interactor (s):</td>
+                <td><s:textfield id="orig-interactor_time_limit" readonly="readonly" name="param" value="prob->interactor_time_limit" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0 || !sup_prob) {
+      if (prob->interactor_time_limit < 0) {
+%>(<i>Not set</i>)<%
+      } else if (!prob->interactor_time_limit) {
+%>(<i>Unlimited</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_interactor_time_limit, tmp_prob, sup_prob, global);
+      if (prob->interactor_time_limit < 0) {
+        if (tmp_prob->interactor_time_limit < 0) {
+%>(<i>Not set</i>)<%
+        } else if (!tmp_prob->interactor_time_limit) {
+%>(<i>Default: unlimited</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->interactor_time_limit" /></i>)<%
+        }
+      } else if (!prob->interactor_time_limit) {
+%>(<i>Unlimited</i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:interactor_time_limit" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-init_cmd-div">
+                <td>Init-style interactor name:</td>
+                <td><%
+%><s:textfield id="orig-init_cmd" readonly="readonly" name="param" value="prob->init_cmd" size="48" maxlength="1024" checkExpr="" /><%
+    if (prob_id <= 0) {
+      if (!prob->init_cmd) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      prepare_set_prob_value(CNTSPROB_init_cmd, tmp_prob, sup_prob, global);
+      if (!prob->init_cmd) {
+        if (!tmp_prob->init_cmd || !tmp_prob->init_cmd[0]) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->init_cmd" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td><input type="button" onclick="popupCheckerDialog(event, 'init_cmd')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:init_cmd" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-init_env-div">
+                <td>Init-style interactor environment:</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->init_env && prob->init_env[0]) strs = sarray_unparse(prob->init_env);
+%><s:textfield id="orig-init_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupCheckerDialog(event, 'init_env')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:init_env" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
+
+
+
+
         </table>
     </div>
 
@@ -1387,7 +2158,7 @@ $(function() {
         <table border="0" onclick="popupScoringDialog()">
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_compile_errors-div">
                 <td>Ignore compilation errors?</td>
-        <td><%
+                <td><%
     if (prob_id <= 0 || !sup_prob) {
       int value = (prob->ignore_compile_errors == 1);
 %><s:yesno id="orig-ignore_compile_errors" readonly="readonly" name="param" value="value" /><%
@@ -1681,7 +2452,7 @@ $(function() {
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-score_tests-div">
                 <td>Tests for problem scores:</td>
-                <td><s:textfield id="orig-acm_run_penalty" readonly="readonly" name="param" value="prob->score_tests" size="48" maxlength="1024" check="no" /></td>
+                <td><s:textfield id="orig-score_tests" readonly="readonly" name="param" value="prob->score_tests" size="48" maxlength="1024" check="no" /></td>
                 <td><input type="button" onclick="popupScoringDialog(event, 'score_tests')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:score_tests" /></td>
             </s:tr>
@@ -2040,9 +2811,102 @@ $(function() {
   }
 %>
 
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-score_view-div">
+                <td>Special view for scores:</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->score_view && prob->score_view[0]) strs = sarray_unparse(prob->score_view);
+%><s:textfield id="orig-score_view" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupStandingsDialog(event, 'score_view')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:score_view" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_ignore_score-div">
+                <td>Ignore problem score in standings?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->stand_ignore_score == 1);
+%><s:yesno id="orig-stand_ignore_score" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_stand_ignore_score, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-stand_ignore_score" readonly="readonly" name="param" value="prob->stand_ignore_score" default="tmp_prob->stand_ignore_score" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_ignore_score" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_last_column-div">
+                <td>Show the problem after all results?</td>
+                <td><%
+    if (prob_id <= 0 || !sup_prob) {
+      int value = (prob->stand_last_column == 1);
+%><s:yesno id="orig-stand_last_column" readonly="readonly" name="param" value="value" /><%
+    } else {
+      prepare_set_prob_value(CNTSPROB_stand_last_column, tmp_prob, sup_prob, global);
+%><s:yesno3 id="orig-stand_last_column" readonly="readonly" name="param" value="prob->stand_last_column" default="tmp_prob->stand_last_column" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_last_column" /></td>
+            </s:tr>
+<%
+  }
+%>
+
+<%
+  {
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-provide_ok-div">
+                <td>Provide OK to problems:</td>
+                <td><%
+    unsigned char *strs = 0;
+    if (prob->provide_ok && prob->provide_ok[0]) strs = sarray_unparse(prob->provide_ok);
+%><s:textfield id="orig-provide_ok" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popupStandingsDialog(event, 'provide_ok')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:provide_ok" /></td>
+            </s:tr>
+<%
+    xfree(strs); strs = 0;
+  }
+%>
+
 
         </table>
     </div>
+
+
+<%
+  if (prob->unhandled_vars) {
+%>
+    <h3>Uneditable parameters</h3>
+
+    <div>
+        <table border="0">
+            <s:tr attr="form_row_attrs[row ^= 1]">
+                <td colspan="4"><pre><s:v value="prob->unhandled_vars" /></pre></td>
+            </s:tr>
+        </table>
+    </div>
+<%
+  }
+%>
 
 </div>
 
