@@ -484,6 +484,18 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_GLOB_SAVE_ADVANCED_FORM] = "glob_save_advanced_form",
   [SSERV_CMD_GLOB_SAVE_LIMITS_FORM] = "glob_save_limits_form",
   [SSERV_CMD_LANG_SAVE_MAIN_FORM] = "lang_save_main_form",
+  [SSERV_CMD_PROB_SAVE_ID_FORM] = "prob_save_id_form",
+  [SSERV_CMD_PROB_SAVE_FILES_FORM] = "prob_save_files_form",
+  [SSERV_CMD_PROB_SAVE_VALIDATION_FORM] = "prob_save_validation_form",
+  [SSERV_CMD_PROB_SAVE_VIEW_FORM] = "prob_save_view_form",
+  [SSERV_CMD_PROB_SAVE_SUBMISSION_FORM] = "prob_save_submission_form",
+  [SSERV_CMD_PROB_SAVE_COMPILING_FORM] = "prob_save_compiling_form",
+  [SSERV_CMD_PROB_SAVE_RUNNING_FORM] = "prob_save_running_form",
+  [SSERV_CMD_PROB_SAVE_LIMITS_FORM] = "prob_save_limits_form",
+  [SSERV_CMD_PROB_SAVE_CHECKING_FORM] = "prob_save_checking_form",
+  [SSERV_CMD_PROB_SAVE_SCORING_FORM] = "prob_save_scoring_form",
+  [SSERV_CMD_PROB_SAVE_FEEDBACK_FORM] = "prob_save_feedback_form",
+  [SSERV_CMD_PROB_SAVE_STANDING_FORM] = "prob_save_standing_form",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 
