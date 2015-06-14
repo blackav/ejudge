@@ -1391,6 +1391,11 @@ prepare_copy_problem(const struct section_problem_data *in);
 void prepare_set_prob_value(int field, struct section_problem_data *out,
                             const struct section_problem_data *abstr,
                             const struct section_global_data *global);
+void
+prepare_set_all_prob_values(
+        struct section_problem_data *out,
+        const struct section_problem_data *abstr,
+        const struct section_global_data *global);
 
 void
 prepare_unparse_global(
