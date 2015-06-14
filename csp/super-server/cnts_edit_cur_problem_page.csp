@@ -68,6 +68,8 @@ static const unsigned char * const form_row_attrs[]=
     cnts = phr->ss->edited_cnts;
     struct section_global_data *global = phr->ss->global;
 
+    prepare_set_all_prob_values(tmp_prob, sup_prob, global);
+
     (void) row;
     (void) head_row_attr;
     (void) form_row_attrs;
@@ -107,7 +109,7 @@ static const unsigned char * const form_row_attrs[]=
 
         <div>
             <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-prob_id_xxx">ID:</label></div>
-            <input readonly="readonly" type="text" size="20" name="prob_id_xxx" id="edit-prob_id_xxx" value="" class="text ui-widget-content ui-corner-all" />
+            <input readonly="readonly" type="text" size="20" name="prob_id_xxx" id="edit-prob_id" value="" class="text ui-widget-content ui-corner-all" />
         </div>
 
         <div id="edit-short_name-div">
@@ -154,12 +156,234 @@ static const unsigned char * const form_row_attrs[]=
 
         <div id="edit-variant_num-div">
             <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-variant_num">Number of variants:</label></div>
-            <input type="text" size="20" name="variant_num" id="edit-variant_num" value="" class="text ui-widget-content ui-corner-all" />
+            <input type="text" size="20" name="variant_num" id="edit-variant_num" value="" class="text ui-widget-content ui-corner-all" onchange="idDialogOnChange()" />
         </div>
 
         <div id="edit-autoassign_variants-div">
-            <div style="width: 300px; display: inline-block;"><label for="edit-enable_win32_languages">Assign variants automatically?</label></div>
-            <input type="checkbox" name="autoassign_variants" id="edit-autoassign_variants" value="1" />
+            <div style="width: 250px; display: inline-block;"><label for="edit-autoassign_variants">Assign variants automatically?</label></div>
+            <select id="edit-autoassign_variants" name="autoassign_variants">
+<%
+  if (sup_prob) {
+%>
+                <option value="-1">Default</option>
+<%
+  }
+%>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+
+    </s:form>
+</div>
+
+<div id="FilesDialogDiv" title="Files and directories">
+    <s:form id="FilesDialogForm">
+        <s:hidden name="action" ac="glob-save-main-form" />
+        <input type="hidden" id="FilesDialogProbId" name="prob_id" value="" />
+
+        <div id="edit-binary_input-div">
+            <div style="width: 250px; display: inline-block;"><label for="edit-binary_input">Input data is binary?</label></div>
+            <select id="edit-binary_input" name="binary_input" onchange="filesDialogOnChange()">
+<%
+  if (sup_prob) {
+%>
+                <option value="-1">Default</option>
+<%
+  }
+%>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+
+        <div id="edit-normalization-div">
+            <div style="width: 250px; display: inline-block;"><label for="edit-normalization">Test normalization mode:</label></div>
+            <select id="edit-normalization" name="normalization">
+                <option value="0">none - No normalization</option>
+<%
+  if (sup_prob) {
+%>
+                <option value="1">Default</option>
+<%
+  }
+%>
+                <option value="2">nl - End-of-line</option>
+                <option value="3">nlws - End-of-line and trailing space</option>
+                <option value="4">nlwsnp - End-of-line, trailing space and lines</option>
+                <option value="5">nlnp - End-of-line and trailing lines</option>
+            </select>
+        </div>
+
+        <div id="edit-xml_file-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-xml_file">XML File with problem statement:</label></div>
+            <input type="text" size="20" name="xml_file" id="edit-xml_file" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('xml_file')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="xml_file-dflt" id="edit-xml_file-dflt" value="1" onchange="filesDialogOnChange('xml_file-dflt')" />)<%
+  }
+%>
+        </div>
+
+        <div id="edit-test_dir-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-test_dir">Directory with tests:</label></div>
+            <input type="text" size="20" name="test_dir" id="edit-test_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('test_dir')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="test_dir-dflt" id="edit-test_dir-dflt" value="1" onchange="filesDialogOnChange('test_dir-dflt')" />)<%
+  }
+%>
+        </div>
+
+        <div id="edit-test_pat-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-test_pat">Pattern for test file names:</label></div>
+            <input type="text" size="20" name="test_pat" id="edit-test_pat" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('test_pat')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="test_pat-dflt" id="edit-test_pat-dflt" value="1" onchange="filesDialogOnChange('test_pat-dflt')" />)<%
+  }
+%>
+        </div>
+
+        <div id="edit-test_sfx-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-test_sfx">Suffix of test files:</label></div>
+            <input type="text" size="20" name="test_sfx" id="edit-test_sfx" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('test_sfx')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="test_sfx-dflt" id="edit-test_sfx-dflt" value="1" onchange="filesDialogOnChange('test_sfx-dflt')" />)<%
+  }
+%>
+        </div>
+
+        <div id="edit-use_corr-div">
+            <div style="width: 250px; display: inline-block;"><label for="edit-use_corr">Use &quot;correct answer&quot; files for check?</label></div>
+            <select id="edit-use_corr" name="use_corr" onchange="filesDialogOnChange()">
+<%
+  if (sup_prob) {
+%>
+                <option value="-1">Default</option>
+<%
+  }
+%>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+
+        <div id="edit-corr_dir-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-corr_dir">Directory with &quot;correct answer&quot; files:</label></div>
+            <input type="text" size="20" name="corr_dir" id="edit-corr_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('corr_dir')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="corr_dir-dflt" id="edit-corr_dir-dflt" value="1" onchange="filesDialogOnChange('corr_dir-dflt')" />)<%
+  }
+%>
+        </div>
+
+        <div id="edit-corr_pat-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-corr_pat">Pattern for &quot;correct answer&quot; file names:</label></div>
+            <input type="text" size="20" name="corr_pat" id="edit-corr_pat" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('corr_pat')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="corr_pat-dflt" id="edit-corr_pat-dflt" value="1" onchange="filesDialogOnChange('corr_pat-dflt')" />)<%
+  }
+%>
+        </div>
+
+        <div id="edit-corr_sfx-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-corr_sfx">Suffix of &quot;correct answer&quot; files:</label></div>
+            <input type="text" size="20" name="corr_sfx" id="edit-corr_sfx" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('corr_sfx')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="corr_sfx-dflt" id="edit-corr_sfx-dflt" value="1" onchange="filesDialogOnChange('corr_sfx-dflt')" />)<%
+  }
+%>
+        </div>
+
+        <div id="edit-use_info-div">
+            <div style="width: 250px; display: inline-block;"><label for="edit-use_info">Use test info files for check?</label></div>
+            <select id="edit-use_info" name="use_info" onchange="filesDialogOnChange()">
+<%
+  if (sup_prob) {
+%>
+                <option value="-1">Default</option>
+<%
+  }
+%>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+
+        <div id="edit-info_dir-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-info_dir">Directory with test info files:</label></div>
+            <input type="text" size="20" name="info_dir" id="edit-info_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('info_dir')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="info_dir-dflt" id="edit-info_dir-dflt" value="1" onchange="filesDialogOnChange(info_dir-dflt')" />)<%
+  }
+%>
+        </div>
+
+        <div id="edit-info_pat-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-info_pat">Pattern for test info file names:</label></div>
+            <input type="text" size="20" name="info_pat" id="edit-info_pat" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('info_pat')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="info_pat-dflt" id="edit-info_pat-dflt" value="1" onchange="filesDialogOnChange('info_pat-dflt')" />)<%
+  }
+%>
+        </div>
+
+        <div id="edit-info_sfx-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-info_sfx">Suffix of test info:</label></div>
+            <input type="text" size="20" name="info_sfx" id="edit-info_sfx" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('info_sfx')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="info_sfx-dflt" id="edit-info_sfx-dflt" value="1" onchange="filesDialogOnChange('info_sfx-dflt')" />)<%
+  }
+%>
+        </div>
+
+        <div id="edit-use_tgz-div">
+            <div style="width: 250px; display: inline-block;"><label for="edit-use_tgz">Use special working directory for check?</label></div>
+            <select id="edit-use_tgz" name="use_tgz" onchange="filesDialogOnChange()">
+<%
+  if (sup_prob) {
+%>
+                <option value="-1">Default</option>
+<%
+  }
+%>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+
+        <div id="edit-tgz_pat-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-tgz_pat">Pattern for working dir archives:</label></div>
+            <input type="text" size="20" name="tgz_pat" id="edit-tgz_pat" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('tgz_pat')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="tgz_pat-dflt" id="edit-tgz_pat-dflt" value="1" onchange="filesDialogOnChange('tgz_pat-dflt')" />)<%
+  }
+%>
+        </div>
+
+        <div id="edit-tgzdir_pat-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-tgzdir_pat">Pattern for master working dirs:</label></div>
+            <input type="text" size="20" name="tgzdir_pat" id="edit-tgzdir_pat" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('tgzdir_pat')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="tgzdir_pat-dflt" id="edit-tgzdir_pat-dflt" value="1" onchange="filesDialogOnChange('tgzdir_pat-dflt')" />)<%
+  }
+%>
+        </div>
+
+        <div id="edit-tgz_sfx-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-tgz_sfx">Suffix of working dir archives:</label></div>
+            <input type="text" size="20" name="tgz_sfx" id="edit-tgz_sfx" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('tgz_sfx')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="tgz_sfx-dflt" id="edit-tgz_sfx-dflt" value="1" onchange="filesDialogOnChange('tgz_sfx-dflt')" />)<%
+  }
+%>
+        </div>
+
+        <div id="edit-tgzdir_sfx-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-tgzdir_sfx">Suffix of master working dirs:</label></div>
+            <input type="text" size="20" name="tgzdir_sfx" id="edit-tgzdir_sfx" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('tgzdir_sfx')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="tgzdir_sfx-dflt" id="edit-tgzdir_sfx-dflt" value="1" onchange="filesDialogOnChange('tgzdir_sfx-dflt')" />)<%
+  }
+%>
         </div>
 
     </s:form>
@@ -186,15 +410,432 @@ static const unsigned char * const form_row_attrs[]=
 %></h2>
 
 <script type="text/javascript">
+var prob_id = <s:v value="prob_id" />;
+</script>
+
+<script type="text/javascript">
 $(function() {
     $('#ProblemAccordion').accordion({ heightStyle: "content" });
+
+    idDialog = $("#IdDialogDiv").dialog({
+        autoOpen: false,
+        height: 350,
+        width: 650,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#IdDialogForm").serialize();
+                var formURL = $("#IdDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                idDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
+
+    $("#orig-autoassign_variants-div").toggle(<s:v type="jsbool" value="prob->variant_num > 0" />);
+
+    filesDialog = $("#FilesDialogDiv").dialog({
+        autoOpen: false,
+        height: 500,
+        width: 700,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#FilesDialogForm").serialize();
+                var formURL = $("#FilesDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                filesDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
+
+    $("#orig-normalization-div").toggle(<s:v type="jsbool" value="tmp_prob->binary_input <= 0" />);
+    $("#orig-test_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" />);
+
+    $("#orig-corr_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0 && tmp_prob->use_corr > 0" />);
+    $("#orig-corr_sfx-div").toggle(<s:v type="jsbool" value="tmp_prob->use_corr > 0" />);
+    $("#orig-corr_pat-div").toggle(<s:v type="jsbool" value="tmp_prob->use_corr > 0" />);
+
+    $("#orig-info_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0 && tmp_prob->use_info > 0" />);
+    $("#orig-info_sfx-div").toggle(<s:v type="jsbool" value="tmp_prob->use_info > 0" />);
+    $("#orig-info_pat-div").toggle(<s:v type="jsbool" value="tmp_prob->use_info > 0" />);
+
+    $("#orig-tgz_sfx-div").toggle(<s:v type="jsbool" value="tmp_prob->use_tgz > 0" />);
+    $("#orig-tgz_pat-div").toggle(<s:v type="jsbool" value="tmp_prob->use_tgz > 0" />);
+    $("#orig-tgzdir_sfx-div").toggle(<s:v type="jsbool" value="tmp_prob->use_tgz > 0" />);
+    $("#orig-tgzdir_pat-div").toggle(<s:v type="jsbool" value="tmp_prob->use_tgz > 0" />);
 });
+
+function np(e)
+{
+    if (e) e.stopPropagation();
+}
+
+function copyCheckbox(dst, src)
+{
+    var dstobj = document.getElementById(dst);
+    var srcobj = document.getElementById(src);
+    if (dstobj != null) {
+        if (srcobj != null && srcobj.value == "1") {
+            dstobj.checked = true;
+        } else {
+            dstobj.checked = false;
+        }
+    }
+}
+
+function toBool(str, def)
+{
+    if (str == "-1") {
+        return def;
+    } else if (str == "1") {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+function popupIdDialog(e, skipField)
+{
+    $("#IdDialogProbId").val(prob_id);
+    $("#edit-prob_id").val(prob_id);
+    $("#edit-short_name").val($("#orig-short_name").val());
+    $("#edit-internal_name").val($("#orig-internal_name").val());
+    $("#edit-long_name").val($("#orig-long_name").val());
+    $("#edit-super").val($("#orig-super").val());
+    $("#edit-type").val($("#orig-type").val());
+    $("#edit-variant_num").val($("#orig-variant_num").val());
+    $("#edit-autoassign_variants").val($("#orig-autoassign_variants").val());
+
+    if (e) e.stopPropagation();
+    idDialogOnChange();
+    $("#IdDialogDiv").dialog('open');
+}
+
+function idDialogOnChange()
+{
+    var num = parseInt($("#edit-variant_num").val());
+    $("#edit-autoassign_variants-div").toggle(num > 0);
+}
+
+function popupFilesDialog(e, skipField)
+{
+    $("#FilesDialogProbId").val(prob_id);
+    $("#edit-binary_input").val($("#orig-binary_input").val());
+    $("#edit-normalization").val($("#orig-normalization").val());
+
+    $("#edit-xml_file").val($("#orig-xml_file").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-xml_file-dflt").prop('checked', <s:v type="jsbool" value="!prob->xml_file[0]" />);
+<%
+  }
+%>
+
+    $("#edit-test_dir").val($("#orig-test_dir").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-test_dir-dflt").prop('checked', <s:v type="jsbool" value="!prob->test_dir[0]" />);
+<%
+  }
+%>
+
+    $("#edit-test_pat").val($("#orig-test_pat").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-test_pat-dflt").prop('checked', <s:v type="jsbool" value="prob->test_pat[0] == 1" />);
+<%
+  }
+%>
+
+    $("#edit-test_sfx").val($("#orig-test_sfx").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-test_sfx-dflt").prop('checked', <s:v type="jsbool" value="prob->test_sfx[0] == 1" />);
+<%
+  }
+%>
+
+    $("#edit-use_corr").val($("#orig-use_corr").val());
+    $("#edit-corr_dir").val($("#orig-corr_dir").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-corr_dir-dflt").prop('checked', <s:v type="jsbool" value="!prob->corr_dir[0]" />);
+<%
+  }
+%>
+    $("#edit-corr_pat").val($("#orig-corr_pat").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-corr_pat-dflt").prop('checked', <s:v type="jsbool" value="prob->corr_pat[0] == 1" />);
+<%
+  }
+%>
+    $("#edit-corr_sfx").val($("#orig-corr_sfx").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-corr_sfx-dflt").prop('checked', <s:v type="jsbool" value="prob->corr_sfx[0] == 1" />);
+<%
+  }
+%>
+
+    $("#edit-use_info").val($("#orig-use_info").val());
+    $("#edit-info_dir").val($("#orig-info_dir").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-info_dir-dflt").prop('checked', <s:v type="jsbool" value="!prob->info_dir[0]" />);
+<%
+  }
+%>
+    $("#edit-info_pat").val($("#orig-info_pat").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-info_pat-dflt").prop('checked', <s:v type="jsbool" value="prob->info_pat[0] == 1" />);
+<%
+  }
+%>
+    $("#edit-info_sfx").val($("#orig-info_sfx").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-info_sfx-dflt").prop('checked', <s:v type="jsbool" value="prob->info_sfx[0] == 1" />);
+<%
+  }
+%>
+
+    $("#edit-use_tgz").val($("#orig-use_tgz").val());
+    $("#edit-tgz_pat").val($("#orig-tgz_pat").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-tgz_pat-dflt").prop('checked', <s:v type="jsbool" value="prob->tgz_pat[0] == 1" />);
+<%
+  }
+%>
+    $("#edit-tgz_sfx").val($("#orig-tgz_sfx").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-tgz_sfx-dflt").prop('checked', <s:v type="jsbool" value="prob->tgz_sfx[0] == 1" />);
+<%
+  }
+%>
+    $("#edit-tgzdir_pat").val($("#orig-tgzdir_pat").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-tgzdir_pat-dflt").prop('checked', <s:v type="jsbool" value="prob->tgzdir_pat[0] == 1" />);
+<%
+  }
+%>
+    $("#edit-tgzdir_sfx").val($("#orig-tgzdir_sfx").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-tgzdir_sfx-dflt").prop('checked', <s:v type="jsbool" value="prob->tgzdir_sfx[0] == 1" />);
+<%
+  }
+%>
+
+    if (e) e.stopPropagation();
+    filesDialogOnChange();
+    $("#FilesDialogDiv").dialog('open');
+}
+
+function filesDialogOnChange(field)
+{
+    $("#edit-normalization-div").toggle(!toBool($("#edit-binary_input").val(), <s:v type="jsbool" value="sup_prob && sup_prob->binary_input > 0" />));
+    if (field == "xml_file-dflt") {
+        if ($("#edit-xml_file-dflt").is(':checked')) {
+            $("#edit-xml_file").val("");
+        }
+    } else if (field == "xml_file") {
+        if ($("#edit-xml_file").val() != "") {
+            $("#edit-xml_file-dflt").prop('checked', false);
+        }
+    }
+
+    $("#edit-test_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" />);
+    if (field == "test_dir-dflt") {
+        if ($("#edit-test_dir-dflt").is(':checked')) {
+            $("#edit-test_dir").val("");
+        }
+    } else if (field == "test_dir") {
+        if ($("#edit-test_dir").val() != "") {
+            $("#edit-test_dir-dflt").prop('checked', false);
+        }
+    }
+    if (field == "test_pat-dflt") {
+        if ($("#edit-test_pat-dflt").is(':checked')) {
+            $("#edit-test_pat").val("");
+        }
+    } else if (field == "test_pat") {
+        if ($("#edit-test_pat").val() != "") {
+            $("#edit-test_pat-dflt").prop('checked', false);
+        }
+    }
+    if (field == "test_sfx-dflt") {
+        if ($("#edit-test_sfx-dflt").is(':checked')) {
+            $("#edit-test_sfx").val("");
+        }
+    } else if (field == "test_sfx") {
+        if ($("#edit-test_sfx").val() != "") {
+            $("#edit-test_sfx-dflt").prop('checked', false);
+        }
+    }
+
+    $("#edit-corr_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" /> && toBool($("#edit-use_corr").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_corr > 0" />));
+    $("#edit-corr_sfx-div").toggle(toBool($("#edit-use_corr").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_corr > 0" />));
+    $("#edit-corr_pat-div").toggle(toBool($("#edit-use_corr").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_corr > 0" />));
+
+    if (field == "corr_dir-dflt") {
+        if ($("#edit-corr_dir-dflt").is(':checked')) {
+            $("#edit-corr_dir").val("");
+        }
+    } else if (field == "corr_dir") {
+        if ($("#edit-corr_dir").val() != "") {
+            $("#edit-corr_dir-dflt").prop('checked', false);
+        }
+    }
+    if (field == "corr_pat-dflt") {
+        if ($("#edit-corr_pat-dflt").is(':checked')) {
+            $("#edit-corr_pat").val("");
+        }
+    } else if (field == "corr_pat") {
+        if ($("#edit-corr_pat").val() != "") {
+            $("#edit-corr_pat-dflt").prop('checked', false);
+        }
+    }
+    if (field == "corr_sfx-dflt") {
+        if ($("#edit-corr_sfx-dflt").is(':checked')) {
+            $("#edit-corr_sfx").val("");
+        }
+    } else if (field == "corr_sfx") {
+        if ($("#edit-corr_sfx").val() != "") {
+            $("#edit-corr_sfx-dflt").prop('checked', false);
+        }
+    }
+
+    $("#edit-info_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" /> && toBool($("#edit-use_info").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_info > 0" />));
+    $("#edit-info_sfx-div").toggle(toBool($("#edit-use_info").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_info > 0" />));
+    $("#edit-info_pat-div").toggle(toBool($("#edit-use_info").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_info > 0" />));
+
+    if (field == "info_dir-dflt") {
+        if ($("#edit-info_dir-dflt").is(':checked')) {
+            $("#edit-info_dir").val("");
+        }
+    } else if (field == "info_dir") {
+        if ($("#edit-info_dir").val() != "") {
+            $("#edit-info_dir-dflt").prop('checked', false);
+        }
+    }
+    if (field == "info_pat-dflt") {
+        if ($("#edit-info_pat-dflt").is(':checked')) {
+            $("#edit-info_pat").val("");
+        }
+    } else if (field == "info_pat") {
+        if ($("#edit-info_pat").val() != "") {
+            $("#edit-info_pat-dflt").prop('checked', false);
+        }
+    }
+    if (field == "info_sfx-dflt") {
+        if ($("#edit-info_sfx-dflt").is(':checked')) {
+            $("#edit-info_sfx").val("");
+        }
+    } else if (field == "info_sfx") {
+        if ($("#edit-info_sfx").val() != "") {
+            $("#edit-info_sfx-dflt").prop('checked', false);
+        }
+    }
+
+    $("#edit-tgz_sfx-div").toggle(toBool($("#edit-use_tgz").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_tgz > 0" />));
+    $("#edit-tgz_pat-div").toggle(toBool($("#edit-use_tgz").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_tgz > 0" />));
+    $("#edit-tgzdir_sfx-div").toggle(toBool($("#edit-use_tgz").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_tgz > 0" />));
+    $("#edit-tgzdir_pat-div").toggle(toBool($("#edit-use_tgz").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_tgz > 0" />));
+
+    if (field == "tgz_pat-dflt") {
+        if ($("#edit-tgz_pat-dflt").is(':checked')) {
+            $("#edit-tgz_pat").val("");
+        }
+    } else if (field == "tgz_pat") {
+        if ($("#edit-tgz_pat").val() != "") {
+            $("#edit-tgz_pat-dflt").prop('checked', false);
+        }
+    }
+    if (field == "tgz_sfx-dflt") {
+        if ($("#edit-tgz_sfx-dflt").is(':checked')) {
+            $("#edit-tgz_sfx").val("");
+        }
+    } else if (field == "tgz_sfx") {
+        if ($("#edit-tgz_sfx").val() != "") {
+            $("#edit-tgz_sfx-dflt").prop('checked', false);
+        }
+    }
+    if (field == "tgzdir_pat-dflt") {
+        if ($("#edit-tgzdir_pat-dflt").is(':checked')) {
+            $("#edit-tgzdir_pat").val("");
+        }
+    } else if (field == "tgzdir_pat") {
+        if ($("#edit-tgzdir_pat").val() != "") {
+            $("#edit-tgzdir_pat-dflt").prop('checked', false);
+        }
+    }
+    if (field == "tgzdir_sfx-dflt") {
+        if ($("#edit-tgzdir_sfx-dflt").is(':checked')) {
+            $("#edit-tgzdir_sfx").val("");
+        }
+    } else if (field == "tgzdir_sfx") {
+        if ($("#edit-tgzdir_sfx").val() != "") {
+            $("#edit-tgzdir_sfx-dflt").prop('checked', false);
+        }
+    }
+}
+
 </script>
 
 <div id="ProblemAccordion">
     <h3>Problem identification</h3>
     <div>
-        <table border="0" onclick="popupMainDialog()">
+        <table border="0" onclick="popupIdDialog()">
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-id-div">
                 <td>ID:</td>
@@ -206,21 +847,21 @@ $(function() {
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-short_name-div">
                 <td>Short name:</td>
                 <td><s:textfield id="orig-short_name" readonly="readonly" name="param" value="prob->short_name" size="48" maxlength="1024" check="no" /><% if (!prob->short_name) { %>(<i>Not set</i>)<% } %></td>
-                <td><input type="button" onclick="popupMainDialog(event, 'short_name')" value="Clear" /></td>
+                <td><input type="button" onclick="popupIdDialog(event, 'short_name')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:short_name" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-internal_name-div">
                 <td>Internal name:</td>
                 <td><s:textfield id="orig-internal_name" readonly="readonly" name="param" value="prob->internal_name" size="48" maxlength="1024" check="no" /><% if (!prob->internal_name) { %>(<i>Not set</i>)<% } %></td>
-                <td><input type="button" onclick="popupMainDialog(event, 'internal_name')" value="Clear" /></td>
+                <td><input type="button" onclick="popupIdDialog(event, 'internal_name')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:internal_name" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-long_name-div">
                 <td>Long name:</td>
                 <td><s:textfield id="orig-long_name" readonly="readonly" name="param" value="prob->long_name" size="48" maxlength="1024" check="no" /><% if (!prob->long_name) { %>(<i>Not set</i>)<% } %></td>
-                <td><input type="button" onclick="popupMainDialog(event, 'long_name')" value="Clear" /></td>
+                <td><input type="button" onclick="popupIdDialog(event, 'long_name')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:long_name" /></td>
             </s:tr>
 
@@ -249,10 +890,6 @@ $(function() {
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:type" /></td>
             </s:tr>
 
-
-<%
-  {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-variant_num-div">
                 <td>Number of variants:</td>
                 <td><s:textfield id="orig-variant_num" readonly="readonly" name="param" value="prob->variant_num" size="48" maxlength="1024" checkExpr="> 0" /><%
@@ -267,32 +904,19 @@ $(function() {
 %></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:variant_num" /></td>
             </s:tr>
-<%
-  }
-%>
 
-<%
-  {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-autoassign_variants-div">
                 <td>Assign variants automatically?</td>
                 <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->autoassign_variants == 1);
-%><s:yesno id="orig-autoassign_variants" readonly="readonly" name="param" value="value" /><%
+    if (!sup_prob) {
+%><s:yesno id="orig-autoassign_variants" readonly="readonly" name="param" value="tmp_prob->autoassign_variants" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_autoassign_variants, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-autoassign_variants" readonly="readonly" name="param" value="prob->autoassign_variants" default="tmp_prob->autoassign_variants" /><%
     }
 %></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:autoassign_variants" /></td>
             </s:tr>
-<%
-  }
-%>
-
-
 
         </table>
     </div>
@@ -306,10 +930,8 @@ $(function() {
                 <td>Input data is binary?</td>
                 <td><%
     if (prob_id <= 0 || !sup_prob) {
-      int value = prob->binary_input == 1;
-%><s:yesno id="orig-binary_input" readonly="readonly" name="param" value="value" /><%
+%><s:yesno id="orig-binary_input" readonly="readonly" name="param" value="tmp_prob->binary_input" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_binary_input, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-binary_input" readonly="readonly" name="param" value="prob->binary_input" default="tmp_prob->binary_input" /><%
     }
 %></td>
@@ -319,19 +941,20 @@ $(function() {
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-normalization-div">
                 <td>Test normalization mode:</td>
-                <td><s:hidden id="orig-normalization" name="param" value="prob->normalization" /><%
+                <td><%
     value = test_normalization_parse(prob->normalization);
     if (value < 0) value = TEST_NORM_DEFAULT;
-    if (prob_id <= 0 || !sup_prob) {
+    if (!sup_prob) {
       if (value == TEST_NORM_DEFAULT) value = TEST_NORM_NL;
-%><s:v value="test_normalization_unparse_full(value)" escape="false" /><%
+%><s:hidden id="orig-normalization" name="param" value="value" /><s:v value="test_normalization_unparse_full(value)" escape="false" /><%
     } else if (value == TEST_NORM_DEFAULT) {
       value = test_normalization_parse(sup_prob->normalization);
       if (value < 0) value = TEST_NORM_NL;
+%><s:hidden id="orig-normalization" name="param" value="value" /><%
       if (value == TEST_NORM_DEFAULT) value = TEST_NORM_NL;
 %>Default (<s:v value="test_normalization_unparse_full(value)" escape="false" />)<%
     } else {
-%><s:v value="test_normalization_unparse_full(value)" escape="false" /><%
+%><s:hidden id="orig-normalization" name="param" value="value" /><s:v value="test_normalization_unparse_full(value)" escape="false" /><%
     }
 %></td>
                 <td>&nbsp;</td>
@@ -347,14 +970,12 @@ $(function() {
   if (prob_id <= 0) {
 %><% if (!str_value) { %>(<i>Not set</i>)<% } %><%
   } else if (!sup_prob) {
-    prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, sup_prob, global);
     if (!str_value) {
 %>(<i>Not set</i>)<%
     } else {
 %>(<i><s:v value="tmp_prob->xml_file" /></i>)<%
     }
   } else {
-    prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, sup_prob, global);
     if (!str_value) {
 %>(<i>Default: <s:v value="tmp_prob->xml_file" /></i>)<%
     } else {
@@ -377,7 +998,6 @@ $(function() {
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_test_dir, tmp_prob, sup_prob, global);
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
@@ -390,13 +1010,6 @@ $(function() {
                 <td><input type="button" onclick="popupFilesDialog(event, 'test_dir')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:test_dir" /></td>
             </s:tr>
-
-<%
-  if (prob_id > 0) {
-    prepare_set_prob_value(CNTSPROB_test_sfx, tmp_prob, sup_prob, global);
-    prepare_set_prob_value(CNTSPROB_test_pat, tmp_prob, sup_prob, global);
-  }
-%>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_pat-div">
                 <td>Pattern for test file names:</td>
@@ -445,11 +1058,9 @@ $(function() {
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-use_corr-div">
                 <td>Use &quot;correct answer&quot; files for check?</td>
                 <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->use_corr > 0);
+    if (!sup_prob) {
 %><s:yesno id="orig-use_corr" readonly="readonly" name="param" value="value" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_use_corr, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-use_corr" readonly="readonly" name="param" value="prob->use_corr" default="tmp_prob->use_corr" /><%
     }
 %></td>
@@ -537,10 +1148,8 @@ $(function() {
                 <td>Use test info files for check?</td>
                 <td><%
     if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->use_info > 0);
 %><s:yesno id="orig-use_info" readonly="readonly" name="param" value="value" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_use_info, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-use_info" readonly="readonly" name="param" value="prob->use_info" default="tmp_prob->use_info" /><%
     }
 %></td>
@@ -572,13 +1181,6 @@ $(function() {
                 <td><input type="button" onclick="popupFilesDialog(event, 'info_dir')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:info_dir" /></td>
             </s:tr>
-
-<%
-  if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_info_sfx, tmp_prob, sup_prob, global);
-    prepare_set_prob_value(CNTSPROB_info_pat, tmp_prob, sup_prob, global);
-  }
-%>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-info_pat-div">
                 <td>Pattern for test info file names:</td>
@@ -628,25 +1230,14 @@ $(function() {
                 <td>Use special working directory for check?</td>
                 <td><%
     if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->use_tgz > 0);
 %><s:yesno id="orig-use_tgz" readonly="readonly" name="param" value="value" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_use_tgz, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-use_tgz" readonly="readonly" name="param" value="prob->use_tgz" default="tmp_prob->use_tgz" /><%
     }
 %></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:use_tgz" /></td>
             </s:tr>
-
-<%
-  if (!prob->abstract) {
-    prepare_set_prob_value(CNTSPROB_tgz_sfx, tmp_prob, sup_prob, global);
-    prepare_set_prob_value(CNTSPROB_tgz_pat, tmp_prob, sup_prob, global);
-    prepare_set_prob_value(CNTSPROB_tgzdir_sfx, tmp_prob, sup_prob, global);
-    prepare_set_prob_value(CNTSPROB_tgzdir_pat, tmp_prob, sup_prob, global);
-  }
-%>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-tgz_pat-div">
                 <td>Pattern for working dir archives:</td>
@@ -988,7 +1579,7 @@ $(function() {
       int value = prob->binary == 1;
 %><s:yesno id="orig-binary" readonly="readonly" name="param" value="value" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_binary, tmp_prob, sup_prob, global);
+      //prepare_set_prob_value(CNTSPROB_binary, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-binary" readonly="readonly" name="param" value="prob->binary" default="tmp_prob->binary" /><%
     }
 %></td>
