@@ -23,6 +23,7 @@
     const unsigned char *str_value = NULL;
     int value;
     unsigned char num_buf[128];
+    unsigned char *alloc_value = NULL;
 
 static const unsigned char head_row_attr[] =
   " bgcolor=\"#a0a0a0\"";
@@ -104,7 +105,7 @@ static const unsigned char * const form_row_attrs[]=
 
 <div id="IdDialogDiv" title="Problem Identification">
     <s:form id="IdDialogForm">
-        <s:hidden name="action" ac="glob-save-main-form" />
+        <s:hidden name="action" ac="prob-save-id-form" />
         <input type="hidden" id="IdDialogProbId" name="prob_id" value="" />
 
         <div>
@@ -179,7 +180,7 @@ static const unsigned char * const form_row_attrs[]=
 
 <div id="FilesDialogDiv" title="Files and directories">
     <s:form id="FilesDialogForm">
-        <s:hidden name="action" ac="glob-save-main-form" />
+        <s:hidden name="action" ac="prob-save-files-form" />
         <input type="hidden" id="FilesDialogProbId" name="prob_id" value="" />
 
         <div id="edit-binary_input-div">
@@ -389,6 +390,128 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
+<div id="ValidationDialogDiv" title="Validation">
+    <s:form id="ValidationDialogForm">
+        <s:hidden name="action" ac="prob-save-validation-form" />
+        <input type="hidden" id="ValidationDialogProbId" name="prob_id" value="" />
+
+        <div id="edit-test_checker_cmd-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-test_checker_cmd">Test checker (validator) name:</label></div>
+            <input type="text" size="20" name="test_checker_cmd" id="edit-test_checker_cmd" value="" class="text ui-widget-content ui-corner-all" onchange="validationDialogOnChange('test_checker_cmd')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="test_checker_cmd-dflt" id="edit-test_checker_cmd-dflt" value="1" onchange="validationDialogOnChange('test_checker_cmd-dflt')" />)<%
+  }
+%>
+        </div>
+
+        <div id="edit-test_checker_env-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-test_checker_env">Test checker environment:</label></div>
+            <input type="text" size="20" name="test_checker_env" id="edit-test_checker_env" value="" class="text ui-widget-content ui-corner-all" onchange="validationDialogOnChange('test_checker_env')" />
+        </div>
+
+        <div id="edit-solution_src-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-solution_src">Solution source name:</label></div>
+            <input type="text" size="20" name="solution_src" id="edit-solution_src" value="" class="text ui-widget-content ui-corner-all" onchange="validationDialogOnChange('solution_src')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="solution_src-dflt" id="edit-solution_src-dflt" value="1" onchange="validationDialogOnChange('solution_src-dflt')" />)<%
+  }
+%>
+        </div>
+
+        <div id="edit-solution_cmd-div">
+            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-solution_cmd">Solution command:</label></div>
+            <input type="text" size="20" name="solution_cmd" id="edit-solution_cmd" value="" class="text ui-widget-content ui-corner-all" onchange="validationDialogOnChange('solution_cmd')" /><%
+  if (sup_prob) {
+%>(Default: <input type="checkbox" name="solution_cmd-dflt" id="edit-solution_cmd-dflt" value="1" onchange="validationDialogOnChange('solution_cmd-dflt')" />)<%
+  }
+%>
+        </div>
+    </s:form>
+</div>
+
+<div id="ViewDialogDiv" title="Statement View">
+    <s:form id="ViewDialogForm">
+        <s:hidden name="action" ac="prob-save-view-form" />
+        <input type="hidden" id="ViewDialogProbId" name="prob_id" value="" />
+
+        <div id="edit-disable_tab-div">
+            <div style="width: 250px; display: inline-block;"><label for="edit-disable_tab">Disable problem tab?</label></div>
+            <select id="edit-disable_tab" name="disable_tab" onchange="viewDialogOnChange()">
+<%
+  if (sup_prob) {
+%>
+                <option value="-1">Default</option>
+<%
+  }
+%>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+
+        <div id="edit-unrestricted_statement-div">
+            <div style="width: 250px; display: inline-block;"><label for="edit-unrestricted_statement">Unrestricted problem statement?</label></div>
+            <select id="edit-unrestricted_statement" name="unrestricted_statement" onchange="viewDialogOnChange()">
+<%
+  if (sup_prob) {
+%>
+                <option value="-1">Default</option>
+<%
+  }
+%>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+
+        <div id="edit-hide_file_names-div">
+            <div style="width: 250px; display: inline-block;"><label for="edit-hide_file_names">Hide input/output file names?</label></div>
+            <select id="edit-hide_file_names" name="hide_file_names" onchange="viewDialogOnChange()">
+<%
+  if (sup_prob) {
+%>
+                <option value="-1">Default</option>
+<%
+  }
+%>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+
+        <div id="edit-hide_real_time_limit-div">
+            <div style="width: 250px; display: inline-block;"><label for="edit-hide_real_time_limit">Hide real-time limit?</label></div>
+            <select id="edit-hide_real_time_limit" name="hide_real_time_limit" onchange="viewDialogOnChange()">
+<%
+  if (sup_prob) {
+%>
+                <option value="-1">Default</option>
+<%
+  }
+%>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+
+        <div id="edit-hide_variant-div">
+            <div style="width: 250px; display: inline-block;"><label for="edit-hide_variant">Hide variant?</label></div>
+            <select id="edit-hide_variant" name="hide_variant" onchange="viewDialogOnChange()">
+<%
+  if (sup_prob) {
+%>
+                <option value="-1">Default</option>
+<%
+  }
+%>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+
+    </s:form>
+</div>
+
 <h2><%
     if (prob_id <= 0) {
 %>Abstract problem <%
@@ -494,6 +617,72 @@ $(function() {
     $("#orig-tgz_pat-div").toggle(<s:v type="jsbool" value="tmp_prob->use_tgz > 0" />);
     $("#orig-tgzdir_sfx-div").toggle(<s:v type="jsbool" value="tmp_prob->use_tgz > 0" />);
     $("#orig-tgzdir_pat-div").toggle(<s:v type="jsbool" value="tmp_prob->use_tgz > 0" />);
+
+    validationDialog = $("#ValidationDialogDiv").dialog({
+        autoOpen: false,
+        height: 300,
+        width: 600,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#ValidationDialogForm").serialize();
+                var formURL = $("#ValidationDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                validationDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
+
+    $("#orig-test_checker_env-div").toggle(<s:v type="jsbool" value="tmp_prob->test_checker_cmd" />);
+
+    viewDialog = $("#ViewDialogDiv").dialog({
+        autoOpen: false,
+        height: 300,
+        width: 600,
+        modal: true,
+        buttons: {
+            "Save": function() {
+                var postData = $("#ViewDialogForm").serialize();
+                var formURL = $("#ViewDialogForm").attr("action");
+                $.ajax({
+                    url : formURL,
+                    type: "POST",
+                    data : postData,
+                    success:function(data, textStatus, jqXHR) {
+                        //data: return data from server
+                        document.location.reload(true);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        //if fails     
+                    }
+                });
+            },
+            Cancel: function() {
+                viewDialog.dialog("close");
+            }
+        },
+        close : function() {
+        }
+    });
+
+    $("#orig-disable_tab-div").toggle(<s:v type="jsbool" value="global->problem_navigation > 0" />);
+    $("#orig-hide_variant-div").toggle(<s:v type="jsbool" value="prob->variant_num > 0" />);
+
 });
 
 function np(e)
@@ -830,6 +1019,94 @@ function filesDialogOnChange(field)
     }
 }
 
+function popupValidationDialog(e, skipField)
+{
+    $("#ValidationDialogProbId").val(prob_id);
+
+    $("#edit-test_checker_cmd").val($("#orig-test_checker_cmd").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-test_checker_cmd-dflt").prop('checked', <s:v type="jsbool" value="!prob->test_checker_cmd" />);
+<%
+  }
+%>
+    $("#edit-test_checker_env").val($("#orig-test_checker_env").val());
+    $("#edit-solution_src").val($("#orig-solution_src").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-solution_src-dflt").prop('checked', <s:v type="jsbool" value="!prob->solution_src" />);
+<%
+  }
+%>
+    $("#edit-solution_cmd").val($("#orig-solution_cmd").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-solution_cmd-dflt").prop('checked', <s:v type="jsbool" value="!prob->solution_cmd" />);
+<%
+  }
+%>
+
+    if (e) e.stopPropagation();
+    validationDialogOnChange();
+    $("#ValidationDialogDiv").dialog('open');
+}
+
+function validationDialogOnChange(field)
+{
+    if (field == "test_checker_cmd-dflt") {
+        if ($("#edit-test_checker_cmd-dflt").is(':checked')) {
+            $("#edit-test_checker_cmd").val("");
+        }
+    } else if (field == "test_checker_cmd") {
+        if ($("#edit-test_checker_cmd").val() != "") {
+            $("#edit-test_checker_cmd-dflt").prop('checked', false);
+        }
+    }
+    $("#edit-test_checker_env-div").toggle($("#edit-test_checker_cmd").val() != "" || (<s:v type="jsbool" value="sup_prob && sup_prob->test_checker_cmd" /> && $("#edit-test_checker_cmd-dflt").is(':checked')));
+    if (field == "solution_src-dflt") {
+        if ($("#edit-solution_src-dflt").is(':checked')) {
+            $("#edit-solution_src").val("");
+        }
+    } else if (field == "solution_src") {
+        if ($("#edit-solution_src").val() != "") {
+            $("#edit-solution_src-dflt").prop('checked', false);
+        }
+    }
+    if (field == "solution_cmd-dflt") {
+        if ($("#edit-solution_cmd-dflt").is(':checked')) {
+            $("#edit-solution_cmd").val("");
+        }
+    } else if (field == "solution_cmd") {
+        if ($("#edit-solution_cmd").val() != "") {
+            $("#edit-solution_cmd-dflt").prop('checked', false);
+        }
+    }
+}
+
+function popupViewDialog(e, skipField)
+{
+    $("#ViewDialogProbId").val(prob_id);
+
+    $("#edit-disable_tab").val($("#orig-disable_tab").val());
+    $("#edit-unrestricted_statement").val($("#orig-unrestricted_statement").val());
+    $("#edit-hide_file_names").val($("#orig-hide_file_names").val());
+    $("#edit-hide_real_time_limit").val($("#orig-hide_real_time_limit").val());
+    $("#edit-hide_variant").val($("#orig-hide_variant").val());
+
+    if (e) e.stopPropagation();
+    viewDialogOnChange();
+    $("#ViewDialogDiv").dialog('open');
+}
+
+function viewDialogOnChange(field)
+{
+    $("#edit-disable_tab-div").toggle(<s:v type="jsbool" value="global->problem_navigation > 0" />);
+    $("#edit-hide_variant-div").toggle(<s:v type="jsbool" value="prob->variant_num > 0" />);
+}
+
 </script>
 
 <div id="ProblemAccordion">
@@ -1093,13 +1370,6 @@ function filesDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:corr_dir" /></td>
             </s:tr>
 
-<%
-  if (prob_id > 0) {
-    prepare_set_prob_value(CNTSPROB_corr_sfx, tmp_prob, sup_prob, global);
-    prepare_set_prob_value(CNTSPROB_corr_pat, tmp_prob, sup_prob, global);
-  }
-%>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-corr_pat-div">
                 <td>Pattern for &quot;correct answer&quot; file names:</td>
                 <td><%
@@ -1335,11 +1605,8 @@ function filesDialogOnChange(field)
     <div>
         <table border="0" onclick="popupValidationDialog()">
 
-<%
-  {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_checker_cmd-div">
-                <td>Test checker name:</td>
+                <td>Test checker (validator) name:</td>
                 <td><%
 %><s:textfield id="orig-test_checker_cmd" readonly="readonly" name="param" value="prob->test_checker_cmd" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
@@ -1347,9 +1614,8 @@ function filesDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_test_checker_cmd, tmp_prob, sup_prob, global);
       if (!prob->test_checker_cmd) {
-        if (!tmp_prob->test_checker_cmd || !tmp_prob->test_checker_cmd[0]) {
+        if (!tmp_prob->test_checker_cmd) {
 %>(<i>Not set</i>)<%
         } else {
 %>(<i>Default: <s:v value="tmp_prob->test_checker_cmd" /></i>)<%
@@ -1360,30 +1626,17 @@ function filesDialogOnChange(field)
                 <td><input type="button" onclick="popupValidationDialog(event, 'test_checker_cmd')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:test_checker_cmd" /></td>
             </s:tr>
-<%
-  }
-%>
 
-<%
-  {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_checker_env-div">
                 <td>Test checker environment:</td>
                 <td><%
-    unsigned char *strs = 0;
-    if (prob->test_checker_env && prob->test_checker_env[0]) strs = sarray_unparse(prob->test_checker_env);
-%><s:textfield id="orig-test_checker_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+    xfree(alloc_value);
+    alloc_value = sarray_unparse(prob->test_checker_env);
+%><s:textfield id="orig-test_checker_env" readonly="readonly" name="param" value="alloc_value" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupValidationDialog(event, 'test_checker_env')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:test_checker_env" /></td>
             </s:tr>
-<%
-    xfree(strs); strs = 0;
-  }
-%>
 
-<%
-  {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-solution_src-div">
                 <td>Solution source name:</td>
                 <td><%
@@ -1393,9 +1646,8 @@ function filesDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_solution_src, tmp_prob, sup_prob, global);
       if (!prob->solution_src) {
-        if (!tmp_prob->solution_src || !tmp_prob->solution_src[0]) {
+        if (!tmp_prob->solution_src) {
 %>(<i>Not set</i>)<%
         } else {
 %>(<i>Default: <s:v value="tmp_prob->solution_src" /></i>)<%
@@ -1406,13 +1658,7 @@ function filesDialogOnChange(field)
                 <td><input type="button" onclick="popupValidationDialog(event, 'solution_src')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:solution_src" /></td>
             </s:tr>
-<%
-  }
-%>
 
-<%
-  {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-solution_cmd-div">
                 <td>Solution command:</td>
                 <td><%
@@ -1422,9 +1668,8 @@ function filesDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_solution_cmd, tmp_prob, sup_prob, global);
       if (!prob->solution_cmd) {
-        if (!tmp_prob->solution_cmd || !tmp_prob->solution_cmd[0]) {
+        if (!tmp_prob->solution_cmd) {
 %>(<i>Not set</i>)<%
         } else {
 %>(<i>Default: <s:v value="tmp_prob->solution_cmd" /></i>)<%
@@ -1435,12 +1680,6 @@ function filesDialogOnChange(field)
                 <td><input type="button" onclick="popupValidationDialog(event, 'solution_cmd')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:solution_cmd" /></td>
             </s:tr>
-<%
-  }
-%>
-
-
-
 
         </table>
     </div>
@@ -1448,15 +1687,13 @@ function filesDialogOnChange(field)
     <h3>Statement view</h3>
 
     <div>
-        <table border="0" onclick="popupStatementDialog()">
+        <table border="0" onclick="popupViewDialog()">
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_tab-div">
                 <td>Disable problem tab?</td>
                 <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->disable_tab == 1);
-%><s:yesno id="orig-disable_tab" readonly="readonly" name="param" value="value" /><%
+    if (!sup_prob) {
+%><s:yesno id="orig-disable_tab" readonly="readonly" name="param" value="tmp_prob->disable_tab" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_disable_tab, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-disable_tab" readonly="readonly" name="param" value="prob->disable_tab" default="tmp_prob->disable_tab" /><%
     }
 %></td>
@@ -1467,11 +1704,9 @@ function filesDialogOnChange(field)
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-unrestricted_statement-div">
                 <td>Unrestricted problem statement?</td>
                 <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->unrestricted_statement == 1);
-%><s:yesno id="orig-unrestricted_statement" readonly="readonly" name="param" value="value" /><%
+    if (!sup_prob) {
+%><s:yesno id="orig-unrestricted_statement" readonly="readonly" name="param" value="tmp_prob->unrestricted_statement" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_unrestricted_statement, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-unrestricted_statement" readonly="readonly" name="param" value="prob->unrestricted_statement" default="tmp_prob->unrestricted_statement" /><%
     }
 %></td>
@@ -1482,11 +1717,9 @@ function filesDialogOnChange(field)
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-hide_file_names-div">
                 <td>Hide input/output file names from problem statement?</td>
                 <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->hide_file_names == 1);
-%><s:yesno id="orig-hide_file_names" readonly="readonly" name="param" value="value" /><%
+    if (!sup_prob) {
+%><s:yesno id="orig-hide_file_names" readonly="readonly" name="param" value="tmp_prob->hide_file_names" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_hide_file_names, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-hide_file_names" readonly="readonly" name="param" value="prob->hide_file_names" default="tmp_prob->hide_file_names" /><%
     }
 %></td>
@@ -1497,11 +1730,9 @@ function filesDialogOnChange(field)
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-hide_real_time_limit-div">
                 <td>Hide real-time limit from problem statement?</td>
                 <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->hide_real_time_limit == 1);
-%><s:yesno id="orig-hide_real_time_limit" readonly="readonly" name="param" value="value" /><%
+    if (!sup_prob) {
+%><s:yesno id="orig-hide_real_time_limit" readonly="readonly" name="param" value="tmp_prob->hide_real_time_limit" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_hide_real_time_limit, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-hide_real_time_limit" readonly="readonly" name="param" value="prob->hide_real_time_limit" default="tmp_prob->hide_real_time_limit" /><%
     }
 %></td>
@@ -1509,31 +1740,18 @@ function filesDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:hide_real_time_limit" /></td>
             </s:tr>
 
-<%
-  {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-hide_variant-div">
                 <td>Hide variant from user?</td>
                 <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->hide_variant == 1);
-%><s:yesno id="orig-hide_variant" readonly="readonly" name="param" value="value" /><%
+    if (!sup_prob) {
+%><s:yesno id="orig-hide_variant" readonly="readonly" name="param" value="tmp_prob->hide_variant" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_hide_variant, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-hide_variant" readonly="readonly" name="param" value="prob->hide_variant" default="tmp_prob->hide_variant" /><%
     }
 %></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:hide_variant" /></td>
             </s:tr>
-<%
-  }
-%>
-
-
-
-
-
 
         </table>
     </div>
@@ -2472,7 +2690,7 @@ function filesDialogOnChange(field)
         </table>
     </div>
 
-    <h3>Checker, interactor, etc</h3>
+    <h3>Checking, interacting, evaluating</h3>
 
     <div>
         <table border="0" onclick="popupCheckerDialog()">
@@ -3577,6 +3795,7 @@ bottom_links: ;
 <%@include "footer.csp"
 %><%
 cleanup:
+  xfree(alloc_value);
   tmp_prob = prepare_problem_free(tmp_prob);
   l10n_resetlocale();
   html_armor_free(&ab);
