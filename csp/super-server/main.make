@@ -82,6 +82,18 @@ CFILES = \
  csp_glob_save_advanced_form.c\
  csp_glob_save_limits_form.c\
  csp_lang_save_main_form.c\
+ csp_prob_save_id_form.c\
+ csp_prob_save_files_form.c\
+ csp_prob_save_validation_form.c\
+ csp_prob_save_view_form.c\
+ csp_prob_save_submission_form.c\
+ csp_prob_save_compiling_form.c\
+ csp_prob_save_running_form.c\
+ csp_prob_save_limits_form.c\
+ csp_prob_save_checking_form.c\
+ csp_prob_save_scoring_form.c\
+ csp_prob_save_feedback_form.c\
+ csp_prob_save_standing_form.c\
  csp_error_unknown_page.c
 
 SOFILES = $(CFILES:.c=.so)
@@ -154,6 +166,18 @@ csp_glob_save_attrs_form.c : glob_save_attrs_form.csp includes.csp stdvars.csp
 csp_glob_save_advanced_form.c : glob_save_advanced_form.csp includes.csp stdvars.csp
 csp_glob_save_limits_form.c : glob_save_limits_form.csp includes.csp stdvars.csp
 csp_lang_save_main_form.c : lang_save_main_form.csp includes.csp stdvars.csp
+csp_prob_save_id_form.c : prob_save_id_form.csp includes.csp stdvars.csp
+csp_prob_save_files_form.c : prob_save_files_form.csp includes.csp stdvars.csp
+csp_prob_save_validation_form.c : prob_save_validation_form.csp includes.csp stdvars.csp
+csp_prob_save_view_form.c : prob_save_view_form.csp includes.csp stdvars.csp
+csp_prob_save_submission_form.c : prob_save_submission_form.csp includes.csp stdvars.csp
+csp_prob_save_compiling_form.c : prob_save_compiling_form.csp includes.csp stdvars.csp
+csp_prob_save_running_form.c : prob_save_running_form.csp includes.csp stdvars.csp
+csp_prob_save_limits_form.c : prob_save_limits_form.csp includes.csp stdvars.csp
+csp_prob_save_checking_form.c : prob_save_checking_form.csp includes.csp stdvars.csp
+csp_prob_save_scoring_form.c : prob_save_scoring_form.csp includes.csp stdvars.csp
+csp_prob_save_feedback_form.c : prob_save_feedback_form.csp includes.csp stdvars.csp
+csp_prob_save_standing_form.c : prob_save_standing_form.csp includes.csp stdvars.csp
 
 csp_error_unknown_page.c : error_unknown_page.csp includes.csp stdvars.csp header.csp footer.csp
 
