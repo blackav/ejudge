@@ -5515,7 +5515,11 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN_2(disable_auto_testing);
   INHERIT_BOOLEAN(enable_compilation);
   INHERIT_BOOLEAN(skip_testing);
-  INHERIT_BOOLEAN(max_user_run_count);
+
+  case CNTSPROB_max_user_run_count:
+    if (out->max_user_run_count < 0 && abstr) out->max_user_run_count = abstr->max_user_run_count;
+    if (out->max_user_run_count < 0) out->max_user_run_count = 0;
+    break;
 
   case CNTSPROB_full_score:
     if (out->full_score < 0 && abstr) out->full_score = abstr->full_score;
