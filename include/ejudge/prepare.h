@@ -1488,29 +1488,6 @@ lang_config_configure(
         int max_lang,
         struct section_language_data **langs);
 
-int
-cntsprob_is_undefined(
-        const void *prob,
-        int f_id);
-
-void
-cntsprob_copy_and_set_default(
-        struct section_problem_data *dp,
-        const struct section_problem_data *sp,
-        const struct section_problem_data *ap,
-        const struct section_global_data *gp);
-
-void
-cntsprob_clear_field(
-        struct section_problem_data *dp,
-        int f_id);
-
-int
-cntsprob_is_settable_field(int f_id);
-
-int
-cntsprob_is_inheritable_field(int f_id);
-
 const unsigned char*
 get_advanced_layout_path(
         unsigned char *buf,
