@@ -536,6 +536,9 @@ static const unsigned char * const form_row_attrs[]=
 var prob_id = <s:v value="prob_id" />;
 </script>
 
+<%@include "cnts_edit_cur_problem_submission.csp"
+%>
+
 <script type="text/javascript">
 $(function() {
     $('#ProblemAccordion').accordion({ heightStyle: "content" });
