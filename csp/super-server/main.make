@@ -125,7 +125,7 @@ csp_cnts_edit_cur_contest_page.c : cnts_edit_cur_contest_page.csp includes.csp s
 csp_cnts_edit_cur_global_page.c : cnts_edit_cur_global_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp cnts_edit_cur_bottom_menu.csp
 csp_cnts_edit_cur_languages_page.c : cnts_edit_cur_languages_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp cnts_edit_cur_bottom_menu.csp
 csp_cnts_edit_cur_problems_page.c : cnts_edit_cur_problems_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp cnts_edit_cur_one_problem.csp cnts_edit_cur_bottom_menu.csp
-csp_cnts_edit_cur_problem_page.c : cnts_edit_cur_problem_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp cnts_edit_cur_one_problem.csp cnts_edit_cur_bottom_menu.csp cnts_edit_cur_problem_submission.csp
+csp_cnts_edit_cur_problem_page.c : cnts_edit_cur_problem_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp cnts_edit_cur_one_problem.csp cnts_edit_cur_bottom_menu.csp cnts_edit_cur_problem_submission.csp cnts_edit_cur_problem_compiling.csp cnts_edit_cur_problem_running.csp cnts_edit_cur_problem_limits.csp cnts_edit_cur_problem_checking.csp cnts_edit_cur_problem_scoring.csp cnts_edit_cur_problem_feedback.csp cnts_edit_cur_problem_standing.csp
 csp_cnts_edit_cur_variant_page.c : cnts_edit_cur_variant_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp cnts_edit_cur_bottom_menu.csp
 csp_cnts_edit_file_page.c : cnts_edit_file_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_cnts_edit_member_fields_page.c : cnts_edit_member_fields_page.csp includes.csp stdvars.csp header.csp footer.csp

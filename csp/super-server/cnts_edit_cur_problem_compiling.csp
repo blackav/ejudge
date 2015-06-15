@@ -1,24 +1,24 @@
 <% // -*- html -*-
 %>
-<div id="SubmissionDialogDiv" title="Submission">
-    <s:form id="SubmissionDialogForm">
-        <s:hidden name="action" ac="prob-save-submission-form" />
-        <input type="hidden" id="SubmissionDialogProbId" name="prob_id" value="" />
+<div id="CompilingDialogDiv" title="Compiling">
+    <s:form id="CompilingDialogForm">
+        <s:hidden name="action" ac="prob-save-compiling-form" />
+        <input type="hidden" id="CompilingDialogProbId" name="prob_id" value="" />
 
     </s:form>
 </div>
 
 <script type="text/javascript">
 $(function() {
-    submissionDialog = $("#SubmissionDialogDiv").dialog({
+    compilingDialog = $("#CompilingDialogDiv").dialog({
         autoOpen: false,
         height: 350,
         width: 650,
         modal: true,
         buttons: {
             "Save": function() {
-                var postData = $("#SubmissionDialogForm").serialize();
-                var formURL = $("#SubmissionDialogForm").attr("action");
+                var postData = $("#CompilingDialogForm").serialize();
+                var formURL = $("#CompilingDialogForm").attr("action");
                 $.ajax({
                     url : formURL,
                     type: "POST",
@@ -33,7 +33,7 @@ $(function() {
                 });
             },
             Cancel: function() {
-                submissionDialog.dialog("close");
+                compilingDialog.dialog("close");
             }
         },
         close : function() {
@@ -41,16 +41,16 @@ $(function() {
     });
 });
 
-function popupSubmissionDialog(e, skipField)
+function popupCompilingDialog(e, skipField)
 {
-    $("#SubmissionDialogProbId").val(prob_id);
+    $("#CompilingDialogProbId").val(prob_id);
 
     if (e) e.stopPropagation();
-    submissionDialogOnChange();
-    $("#SubmissionDialogDiv").dialog('open');
+    compilingDialogOnChange();
+    $("#CompilingDialogDiv").dialog('open');
 }
 
-function submissionDialogOnChange(field)
+function compilingDialogOnChange(field)
 {
 }
 

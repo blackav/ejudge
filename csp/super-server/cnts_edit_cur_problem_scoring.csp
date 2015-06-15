@@ -1,24 +1,24 @@
 <% // -*- html -*-
 %>
-<div id="SubmissionDialogDiv" title="Submission">
-    <s:form id="SubmissionDialogForm">
-        <s:hidden name="action" ac="prob-save-submission-form" />
-        <input type="hidden" id="SubmissionDialogProbId" name="prob_id" value="" />
+<div id="ScoringDialogDiv" title="Scoring">
+    <s:form id="ScoringDialogForm">
+        <s:hidden name="action" ac="prob-save-scoring-form" />
+        <input type="hidden" id="ScoringDialogProbId" name="prob_id" value="" />
 
     </s:form>
 </div>
 
 <script type="text/javascript">
 $(function() {
-    submissionDialog = $("#SubmissionDialogDiv").dialog({
+    scoringDialog = $("#ScoringDialogDiv").dialog({
         autoOpen: false,
         height: 350,
         width: 650,
         modal: true,
         buttons: {
             "Save": function() {
-                var postData = $("#SubmissionDialogForm").serialize();
-                var formURL = $("#SubmissionDialogForm").attr("action");
+                var postData = $("#ScoringDialogForm").serialize();
+                var formURL = $("#ScoringDialogForm").attr("action");
                 $.ajax({
                     url : formURL,
                     type: "POST",
@@ -33,7 +33,7 @@ $(function() {
                 });
             },
             Cancel: function() {
-                submissionDialog.dialog("close");
+                scoringDialog.dialog("close");
             }
         },
         close : function() {
@@ -41,16 +41,16 @@ $(function() {
     });
 });
 
-function popupSubmissionDialog(e, skipField)
+function popupScoringDialog(e, skipField)
 {
-    $("#SubmissionDialogProbId").val(prob_id);
+    $("#ScoringDialogProbId").val(prob_id);
 
     if (e) e.stopPropagation();
-    submissionDialogOnChange();
-    $("#SubmissionDialogDiv").dialog('open');
+    scoringDialogOnChange();
+    $("#ScoringDialogDiv").dialog('open');
 }
 
-function submissionDialogOnChange(field)
+function scoringDialogOnChange(field)
 {
 }
 

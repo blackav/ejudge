@@ -538,6 +538,20 @@ var prob_id = <s:v value="prob_id" />;
 
 <%@include "cnts_edit_cur_problem_submission.csp"
 %>
+<%@include "cnts_edit_cur_problem_compiling.csp"
+%>
+<%@include "cnts_edit_cur_problem_running.csp"
+%>
+<%@include "cnts_edit_cur_problem_limits.csp"
+%>
+<%@include "cnts_edit_cur_problem_checking.csp"
+%>
+<%@include "cnts_edit_cur_problem_scoring.csp"
+%>
+<%@include "cnts_edit_cur_problem_feedback.csp"
+%>
+<%@include "cnts_edit_cur_problem_standing.csp"
+%>
 
 <script type="text/javascript">
 $(function() {
@@ -2103,7 +2117,7 @@ function viewDialogOnChange(field)
     <h3>Running</h3>
 
     <div>
-        <table border="0" onclick="popupCheckingDialog()">
+        <table border="0" onclick="popupRunningDialog()">
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_testing-div">
                 <td>Disable any testing of submissions?</td>
                 <td><%
@@ -2223,7 +2237,7 @@ function viewDialogOnChange(field)
 %><s:textfield id="orig-input_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->input_file" /></i>)<% } %><%
     }
 %></td>
-                <td><input type="button" onclick="popupCheckingDialog(event, 'input_file')" value="Clear" /></td>
+                <td><input type="button" onclick="popupRunningDialog(event, 'input_file')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:input_file" /></td>
             </s:tr>
 
@@ -2271,7 +2285,7 @@ function viewDialogOnChange(field)
 %><s:textfield id="orig-output_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->output_file" /></i>)<% } %><%
     }
 %></td>
-                <td><input type="button" onclick="popupCheckingDialog(event, 'output_file')" value="Clear" /></td>
+                <td><input type="button" onclick="popupRunningDialog(event, 'output_file')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:output_file" /></td>
             </s:tr>
 
@@ -2327,7 +2341,7 @@ function viewDialogOnChange(field)
       }
     }
 %></td>
-                <td><input type="button" onclick="popupCheckingDialog(event, 'start_cmd')" value="Clear" /></td>
+                <td><input type="button" onclick="popupRunningDialog(event, 'start_cmd')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:start_cmd" /></td>
             </s:tr>
 <%
@@ -2343,7 +2357,7 @@ function viewDialogOnChange(field)
     unsigned char *strs = 0;
     if (prob->start_env && prob->start_env[0]) strs = sarray_unparse(prob->start_env);
 %><s:textfield id="orig-start_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupCheckingDialog(event, 'start_env')" value="Clear" /></td>
+                <td><input type="button" onclick="popupRunningDialog(event, 'start_env')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:start_env" /></td>
             </s:tr>
 <%
@@ -2696,7 +2710,7 @@ function viewDialogOnChange(field)
     <h3>Checking, interacting, evaluating</h3>
 
     <div>
-        <table border="0" onclick="popupCheckerDialog()">
+        <table border="0" onclick="popupCheckingDialog()">
 <%
   {
     const struct std_checker_info *std_checkers = super_html_std_checkers;
@@ -2742,7 +2756,7 @@ function viewDialogOnChange(field)
       }
     }
 %></td>
-                <td><input type="button" onclick="popupCheckerDialog(event, 'check_cmd')" value="Clear" /></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'check_cmd')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:check_cmd" /></td>
             </s:tr>
 <%
@@ -2784,7 +2798,7 @@ function viewDialogOnChange(field)
     unsigned char *strs = 0;
     if (prob->checker_env && prob->checker_env[0]) strs = sarray_unparse(prob->checker_env);
 %><s:textfield id="orig-checker_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupCheckerDialog(event, 'checker_env')" value="Clear" /></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'checker_env')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:checker_env" /></td>
             </s:tr>
 <%
@@ -2830,7 +2844,7 @@ function viewDialogOnChange(field)
       }
     }
 %></td>
-                <td><input type="button" onclick="popupCheckerDialog(event, 'valuer_cmd')" value="Clear" /></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'valuer_cmd')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:valuer_cmd" /></td>
             </s:tr>
 <%
@@ -2888,7 +2902,7 @@ function viewDialogOnChange(field)
     unsigned char *strs = 0;
     if (prob->valuer_env && prob->valuer_env[0]) strs = sarray_unparse(prob->valuer_env);
 %><s:textfield id="orig-valuer_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupCheckerDialog(event, 'valuer_env')" value="Clear" /></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'valuer_env')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:valuer_env" /></td>
             </s:tr>
 <%
@@ -2920,7 +2934,7 @@ function viewDialogOnChange(field)
       }
     }
 %></td>
-                <td><input type="button" onclick="popupCheckerDialog(event, 'interactor_cmd')" value="Clear" /></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'interactor_cmd')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:interactor_cmd" /></td>
             </s:tr>
 <%
@@ -2936,7 +2950,7 @@ function viewDialogOnChange(field)
     unsigned char *strs = 0;
     if (prob->interactor_env && prob->interactor_env[0]) strs = sarray_unparse(prob->interactor_env);
 %><s:textfield id="orig-interactor_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupCheckerDialog(event, 'interactor_env')" value="Clear" /></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'interactor_env')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:interactor_env" /></td>
             </s:tr>
 <%
@@ -3000,7 +3014,7 @@ function viewDialogOnChange(field)
       }
     }
 %></td>
-                <td><input type="button" onclick="popupCheckerDialog(event, 'init_cmd')" value="Clear" /></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'init_cmd')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:init_cmd" /></td>
             </s:tr>
 <%
@@ -3016,7 +3030,7 @@ function viewDialogOnChange(field)
     unsigned char *strs = 0;
     if (prob->init_env && prob->init_env[0]) strs = sarray_unparse(prob->init_env);
 %><s:textfield id="orig-init_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupCheckerDialog(event, 'init_env')" value="Clear" /></td>
+                <td><input type="button" onclick="popupCheckingDialog(event, 'init_env')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:init_env" /></td>
             </s:tr>
 <%
@@ -3611,18 +3625,18 @@ function viewDialogOnChange(field)
     <h3>Standings</h3>
 
     <div>
-        <table border="0" onclick="popupStandingsDialog()">
+        <table border="0" onclick="popupStandingDialog()">
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_name-div">
                 <td>Title for the standings column:</td>
                 <td><s:textfield id="orig-stand_name" readonly="readonly" name="param" value="prob->stand_name" size="48" maxlength="1024" check="no" /><% if (!prob->stand_name) { %>(<i>Not set</i>)<% } %></td>
-                <td><input type="button" onclick="popupStandingsDialog(event, 'stand_name')" value="Clear" /></td>
+                <td><input type="button" onclick="popupStandingDialog(event, 'stand_name')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_name" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_column-div">
                 <td>Collate this problem with the specified one:</td>
                 <td><s:textfield id="orig-stand_column" readonly="readonly" name="param" value="prob->stand_column" size="48" maxlength="1024" check="no" /><% if (!prob->stand_column) { %>(<i>Not set</i>)<% } %></td>
-                <td><input type="button" onclick="popupStandingsDialog(event, 'stand_column')" value="Clear" /></td>
+                <td><input type="button" onclick="popupStandingDialog(event, 'stand_column')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_column" /></td>
             </s:tr>
 
@@ -3682,7 +3696,7 @@ function viewDialogOnChange(field)
       }
     }
 %></td>
-                <td><input type="button" onclick="popupStandingsDialog(event, 'stand_attr')" value="Clear" /></td>
+                <td><input type="button" onclick="popupStandingDialog(event, 'stand_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_attr" /></td>
             </s:tr>
 <%
@@ -3698,7 +3712,7 @@ function viewDialogOnChange(field)
     unsigned char *strs = 0;
     if (prob->score_view && prob->score_view[0]) strs = sarray_unparse(prob->score_view);
 %><s:textfield id="orig-score_view" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupStandingsDialog(event, 'score_view')" value="Clear" /></td>
+                <td><input type="button" onclick="popupStandingDialog(event, 'score_view')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:score_view" /></td>
             </s:tr>
 <%
@@ -3757,7 +3771,7 @@ function viewDialogOnChange(field)
     unsigned char *strs = 0;
     if (prob->provide_ok && prob->provide_ok[0]) strs = sarray_unparse(prob->provide_ok);
 %><s:textfield id="orig-provide_ok" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupStandingsDialog(event, 'provide_ok')" value="Clear" /></td>
+                <td><input type="button" onclick="popupStandingDialog(event, 'provide_ok')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:provide_ok" /></td>
             </s:tr>
 <%
