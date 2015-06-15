@@ -3116,7 +3116,8 @@ process_file(
         ProcessorState *ps,
         const unsigned char *path,
         TypeContext *cntx,
-        IdScope *global_scope);
+        IdScope *global_scope,
+        const unsigned char *file_text);
 
 static int
 handle_directive_include(
@@ -3148,10 +3149,102 @@ handle_directive_include(
     }
 
     Position saved_pos = ps->pos;
-    process_file(log_f, prg_f, txt_f, dep_f, ss->ps, path, cntx, global_scope);
+    process_file(log_f, prg_f, txt_f, dep_f, ss->ps, path, cntx, global_scope, NULL);
     ps->pos = saved_pos;
 
 cleanup:
+    retval = 0;
+    return retval;
+}
+
+static int
+handle_directive_expand(
+        ScannerState *ss,
+        FILE *log_f,
+        FILE *prg_f,
+        FILE *txt_f,
+        FILE *dep_f,
+        TypeContext *cntx,
+        IdScope *global_scope)
+{
+    int retval = -1;
+    ProcessorState *ps = ss->ps;
+    TypeInfo *name = NULL;
+    int arg_a = 0, arg_u = 0;
+    unsigned char **args = NULL;
+    int i;
+    char *exp_s = NULL;
+    size_t exp_z = 0;
+    FILE *exp_f = NULL;
+    const unsigned char *body = NULL;
+    unsigned char path[1024];
+
+    next_token(ss);
+    if (ss->token != TOK_IDENT) {
+        parser_error(ss, "identifier expected");
+        goto cleanup;
+    }
+    snprintf(path, sizeof(path), "%s", ss->raw);
+    if (!(name = tc_get_ident(cntx, ss->raw))) {
+        parser_error(ss, "identifier expected");
+        goto cleanup;
+    }
+    for (i = 0; i < ss->ps->macros.u; ++i) {
+        if (ss->ps->macros.v[i].name == name)
+            break;
+    }
+    if (i >= ss->ps->macros.u) {
+        parser_error(ss, "macro undefined");
+        goto cleanup;
+    }
+    while (1) {
+        next_token(ss);
+        if (ss->token == TOK_EOF) break;
+        if (ss->token != TOK_STRING) {
+            parser_error(ss, "identifier expected");
+            goto cleanup;
+        }
+        if (arg_u == arg_a) {
+            if (!(arg_a *= 2)) arg_a = 32;
+            XREALLOC(args, arg_a);
+        }
+        args[arg_u] = ss->value;
+        ss->value = NULL; ss->value_len = 0;
+        ++arg_u;
+    }
+    if (arg_u > 9) {
+        parser_error(ss, "too many args");
+        goto cleanup;
+    }
+
+    exp_f = open_memstream(&exp_s, &exp_z);
+    body = ss->ps->macros.v[i].body;
+    if (body) {
+        while (*body) {
+            int n;
+            if (*body == '@' && (body[1] >= '1' && body[1] <= '9') && (n = body[1] - '1') < arg_u) {
+                fputs(args[n], exp_f);
+                body += 2;
+            } else {
+                putc(*body++, exp_f);
+            }
+        }
+    }
+    fclose(exp_f); exp_f = NULL;
+
+    if (exp_z > 0) {
+        Position saved_pos = ps->pos;
+        process_file(log_f, prg_f, txt_f, dep_f, ss->ps, path, cntx, global_scope, exp_s);
+        ps->pos = saved_pos;
+    }
+
+cleanup:
+    for (i = 0; i < arg_u; ++i) {
+        xfree(args[i]);
+    }
+    xfree(args);
+    if (exp_f) fclose(exp_f);
+    xfree(exp_s);
     retval = 0;
     return retval;
 }
@@ -3184,6 +3277,8 @@ handle_directive(
         handle_directive_include(ss, log_f, out_f, txt_f, dep_f, cntx, global_scope);
     } else if (!strcmp(ss->value, "define")) {
         handle_directive_define(ss, cntx, out_f);
+    } else if (!strcmp(ss->value, "expand")) {
+        handle_directive_expand(ss, log_f, out_f, txt_f, dep_f, cntx, global_scope);
     } else {
         parser_error(ss, "invalid directive '%s'", ss->value);
     }
@@ -5590,7 +5685,8 @@ process_file(
         ProcessorState *ps,
         const unsigned char *path,
         TypeContext *cntx,
-        IdScope *global_scope)
+        IdScope *global_scope,
+        const unsigned char *file_text)
 {
     FILE *in_f = NULL;
     int result = 0;
@@ -5598,29 +5694,36 @@ process_file(
     unsigned char *mem = NULL;
     int mem_a = 0, mem_u = 0, mem_i = 0, html_i = 0;
 
-    if (!strcmp(path, "-")) {
-        in_f = stdin;
+    if (file_text) {
+        mem_u = strlen(file_text);
+        mem_a = mem_u + 1;
+        mem = xstrdup(file_text);
+        processor_state_init_file(ps, path);
     } else {
-        in_f = fopen(path, "r");
-        if (!in_f) {
+        if (!strcmp(path, "-")) {
+            in_f = stdin;
+        } else {
+            in_f = fopen(path, "r");
+            if (!in_f) {
             fprintf(log_f, "%s: cannot open file '%s': %s\n", progname, path, os_ErrorMsg());
             goto fail;
+            }
         }
-    }
-    processor_state_init_file(ps, path);
-
-    // read the whole file to memory
-    mem_a = 1024;
-    mem = xmalloc(mem_a * sizeof(mem[0]));
-    while ((cc = getc(in_f)) != EOF) {
-        if (mem_u + 1 >= mem_a) {
-            mem = xrealloc(mem, (mem_a *= 2) * sizeof(mem[0]));
+        processor_state_init_file(ps, path);
+        
+        // read the whole file to memory
+        mem_a = 1024;
+        mem = xmalloc(mem_a * sizeof(mem[0]));
+        while ((cc = getc(in_f)) != EOF) {
+            if (mem_u + 1 >= mem_a) {
+                mem = xrealloc(mem, (mem_a *= 2) * sizeof(mem[0]));
+            }
+            mem[mem_u++] = cc;
         }
-        mem[mem_u++] = cc;
+        mem[mem_u] = 0;
+        if (in_f != stdin) fclose(in_f);
+        in_f = NULL;
     }
-    mem[mem_u] = 0;
-    if (in_f != stdin) fclose(in_f);
-    in_f = NULL;
 
     mem_i = 0;
     html_i = 0;
@@ -5872,7 +5975,7 @@ process_unit(
 
     processor_state_push_scope(ps, global_scope);
 
-    result = process_file(log_f, prg_f, txt_f, dep_f, ps, path, cntx, global_scope);
+    result = process_file(log_f, prg_f, txt_f, dep_f, ps, path, cntx, global_scope, NULL);
 
     fprintf(out_f, "/* === string pool === */\n\n");
     fclose(txt_f); txt_f = NULL;
