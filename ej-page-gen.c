@@ -135,6 +135,7 @@ enum
     TOK_NUMBER,
     TOK_FPNUMBER,
     TOK_OPER,
+    TOK_MACROBODY
 };
 
 typedef struct Position
@@ -172,6 +173,18 @@ typedef struct GlobalSettingArray
     int a, u;
     GlobalSetting *v;
 } GlobalSettingArray;
+
+typedef struct Macro
+{
+    TypeInfo *name;
+    unsigned char *body;
+    int body_len;
+} Macro;
+typedef struct MacroArray
+{
+    int a, u;
+    Macro *v;
+} MacroArray;
 
 typedef struct HtmlElementStack
 {
@@ -256,6 +269,7 @@ typedef struct ProcessorState
     NamedUrlArray urls;
     ReadTypeHandlerArray read_type_handlers;
     ReadTypeHandlerArray read_array_type_handlers;
+    MacroArray macros;
 } ProcessorState;
 
 static ProcessorState *
@@ -1548,6 +1562,52 @@ next_token(ScannerState *ss)
         pos_next(&ss->pos, ss->buf[ss->idx]);
         ++ss->idx;
     }
+}
+
+static void
+next_macro_body(ScannerState *ss)
+{
+    xfree(ss->value); ss->value = NULL; ss->value_len = 0;
+    xfree(ss->raw); ss->raw = NULL; ss->raw_len = 0;
+    int c;
+
+    while (isspace((c = ss->buf[ss->idx]))) {
+        pos_next(&ss->pos, c);
+        ++ss->idx;
+    }
+    if (ss->idx >= ss->len) {
+        ss->token = TOK_EOF;
+        return;
+    }
+    ss->token_pos = ss->pos;
+    int saved_idx = ss->idx;
+    int end_idx = ss->idx;
+    while (1) {
+        if (ss->idx + 2 < ss->len && ss->buf[ss->idx] == '@' && ss->buf[ss->idx + 1] == '%' && ss->buf[ss->idx + 2] == '>') {
+            end_idx = ss->idx;
+            ss->idx += 3;
+            pos_next_n(&ss->pos, 3);
+            break;
+        }
+        if (ss->idx == ss->len) {
+            end_idx = ss->idx;
+            break;
+        }
+        pos_next(&ss->pos, ss->buf[ss->idx]);
+        ++ss->idx;
+    }
+
+    //while (end_idx > saved_idx && isspace(ss->buf[end_idx - 1])) --end_idx;
+
+    ss->value_len = end_idx - saved_idx;
+    ss->raw_len = ss->value_len;
+    ss->value = xmalloc(ss->value_len + 1);
+    ss->raw = xmalloc(ss->value_len + 1);
+    memcpy(ss->value, ss->buf + saved_idx, ss->value_len);
+    memcpy(ss->raw, ss->buf + saved_idx, ss->value_len);
+    ss->value[ss->value_len] = 0;
+    ss->raw[ss->value_len] = 0;
+    ss->token = TOK_MACROBODY;
 }
 
 static void
@@ -3002,6 +3062,52 @@ cleanup:
 }
 
 static int
+handle_directive_define(ScannerState *ss, TypeContext *cntx, FILE *out_f)
+{
+    int retval = -1;
+    TypeInfo *name = NULL;
+
+    next_token(ss);
+    if (ss->token != TOK_IDENT) {
+        parser_error(ss, "identifier expected");
+        goto cleanup;
+    }
+    if (!(name = tc_get_ident(cntx, ss->raw))) {
+        parser_error(ss, "identifier expected");
+        goto cleanup;
+    }
+    next_macro_body(ss);
+    if (ss->token != TOK_MACROBODY) {
+        parser_error(ss, "macro body expected");
+        goto cleanup;
+    }
+
+    int i;
+    for (i = 0; i < ss->ps->macros.u; ++i) {
+        if (ss->ps->macros.v[i].name == name)
+            break;
+    }
+    if (i >= ss->ps->macros.u) {
+        if (ss->ps->macros.u >= ss->ps->macros.a) {
+            if (!(ss->ps->macros.a *= 2)) ss->ps->macros.a = 32;
+            XREALLOC(ss->ps->macros.v, ss->ps->macros.a);
+        }
+        memset(&ss->ps->macros.v[i], 0, sizeof(ss->ps->macros.v[i]));
+        ss->ps->macros.v[i].name = name;
+        ++ss->ps->macros.u;
+    }
+    xfree(ss->ps->macros.v[i].body);
+    ss->ps->macros.v[i].body = ss->value;
+    ss->ps->macros.v[i].body_len = ss->value_len;
+    ss->value = NULL;
+    ss->value_len = 0;
+    retval = 0;
+
+cleanup:
+    return retval;
+}
+
+static int
 process_file(
         FILE *log_f,
         FILE *prg_f,
@@ -3076,6 +3182,8 @@ handle_directive(
         handle_directive_set(ss, cntx, out_f);
     } else if (!strcmp(ss->value, "include")) {
         handle_directive_include(ss, log_f, out_f, txt_f, dep_f, cntx, global_scope);
+    } else if (!strcmp(ss->value, "define")) {
+        handle_directive_define(ss, cntx, out_f);
     } else {
         parser_error(ss, "invalid directive '%s'", ss->value);
     }
@@ -5517,7 +5625,31 @@ process_file(
     mem_i = 0;
     html_i = 0;
     while (mem_i < mem_u) {
-        if (mem[mem_i] == '<' && mem[mem_i + 1] == '%') {
+        if (mem[mem_i] == '<' && mem[mem_i + 1] == '%' && mem[mem_i + 2] == '#') {
+            handle_html_text(prg_f, txt_f, log_f, mem, html_i, mem_i);
+            pos_next(&ps->pos, '<');
+            pos_next(&ps->pos, '%');
+            pos_next(&ps->pos, '#');
+            Position start_pos = ps->pos;
+            mem_i += 3;
+            html_i = mem_i;
+            while (mem_i < mem_u && (mem[mem_i] != '#' || mem[mem_i + 1] != '%' || mem[mem_i + 2] != '>')) {
+                pos_next(&ps->pos, mem[mem_i]);
+                ++mem_i;
+            }
+            int end_i = mem_i;
+            if (mem_i < mem_u) {
+                pos_next(&ps->pos, '#');
+                pos_next(&ps->pos, '%');
+                pos_next(&ps->pos, '>');
+                mem_i += 3;
+            }
+            mem[end_i] = 0;
+            while (end_i > html_i && isspace(mem[end_i - 1])) --end_i;
+            mem[end_i] = 0;
+            handle_directive(cntx, ps, prg_f, txt_f, log_f, dep_f, mem + html_i, end_i - html_i, start_pos, global_scope);
+            html_i = mem_i;
+        } else if (mem[mem_i] == '<' && mem[mem_i + 1] == '%') {
             handle_html_text(prg_f, txt_f, log_f, mem, html_i, mem_i);
             pos_next(&ps->pos, '<');
             pos_next(&ps->pos, '%');
