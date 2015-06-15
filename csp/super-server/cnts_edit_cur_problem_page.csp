@@ -1780,11 +1780,9 @@ function viewDialogOnChange(field)
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_user_submit-div">
                 <td>Disable user submissions?</td>
                 <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->disable_user_submit == 1);
-%><s:yesno id="orig-disable_user_submit" readonly="readonly" name="param" value="value" /><%
+    if (!sup_prob) {
+%><s:yesno id="orig-disable_user_submit" readonly="readonly" name="param" value="tmp_prob->disable_user_submit" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_disable_user_submit, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-disable_user_submit" readonly="readonly" name="param" value="prob->disable_user_submit" default="tmp_prob->disable_user_submit" /><%
     }
 %></td>
@@ -1795,11 +1793,9 @@ function viewDialogOnChange(field)
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_submit_after_ok-div">
                 <td>Disable submissions after OK?</td>
                 <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->disable_submit_after_ok == 1);
-%><s:yesno id="orig-disable_submit_after_ok" readonly="readonly" name="param" value="value" /><%
+    if (!sup_prob) {
+%><s:yesno id="orig-disable_submit_after_ok" readonly="readonly" name="param" value="tmp_prob->disable_submit_after_ok" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_disable_submit_after_ok, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-disable_submit_after_ok" readonly="readonly" name="param" value="prob->disable_submit_after_ok" default="tmp_prob->disable_submit_after_ok" /><%
     }
 %></td>
@@ -1810,11 +1806,9 @@ function viewDialogOnChange(field)
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-binary-div">
                 <td>Submit is binary?</td>
                 <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = prob->binary == 1;
-%><s:yesno id="orig-binary" readonly="readonly" name="param" value="value" /><%
+    if (!sup_prob) {
+%><s:yesno id="orig-binary" readonly="readonly" name="param" value="tmp_prob->binary" /><%
     } else {
-      //prepare_set_prob_value(CNTSPROB_binary, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-binary" readonly="readonly" name="param" value="prob->binary" default="tmp_prob->binary" /><%
     }
 %></td>
@@ -1825,16 +1819,17 @@ function viewDialogOnChange(field)
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_user_run_count-div">
                 <td>Max submissions for the problem:</td>
                 <td><s:textfield id="orig-max_user_run_count" readonly="readonly" name="param" value="prob->max_user_run_count" size="48" maxlength="1024" checkExpr=">= 0" /><%
-    if (prob_id <= 0) {
+    if (!sup_prob) {
       if (prob->max_user_run_count < 0) {
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_max_user_run_count, tmp_prob, sup_prob, global);
       if (prob->max_user_run_count < 0 && tmp_prob->max_user_run_count < 0) {
 %>(<i>Not set</i>)<%
-      } else {
+      } else if (tmp_prob->max_user_run_count > 0) {
 %>(<i>Default: <s:v value="tmp_prob->max_user_run_count" /></i>)<%
+      } else {
+%>(<i>Default: unlimited</i>)<%
       }
     }
 %></td>
@@ -1845,11 +1840,9 @@ function viewDialogOnChange(field)
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-advance_to_next-div">
                 <td>Automatically advance to the next problem?</td>
                 <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->advance_to_next == 1);
-%><s:yesno id="orig-advance_to_next" readonly="readonly" name="param" value="value" /><%
+    if (!sup_prob) {
+%><s:yesno id="orig-advance_to_next" readonly="readonly" name="param" value="tmp_prob->advance_to_next" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_advance_to_next, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-advance_to_next" readonly="readonly" name="param" value="prob->advance_to_next" default="tmp_prob->advance_to_next" /><%
     }
 %></td>
@@ -1858,13 +1851,11 @@ function viewDialogOnChange(field)
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_ctrl_chars-div">
-                <td>Disable any control characters in the source code?</td>
+                <td>Disable control characters in the source code?</td>
                 <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->disable_ctrl_chars == 1);
-%><s:yesno id="orig-disable_ctrl_chars" readonly="readonly" name="param" value="value" /><%
+    if (!sup_prob) {
+%><s:yesno id="orig-disable_ctrl_chars" readonly="readonly" name="param" value="tmp_prob->disable_ctrl_chars" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_disable_ctrl_chars, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-disable_ctrl_chars" readonly="readonly" name="param" value="prob->disable_ctrl_chars" default="tmp_prob->disable_ctrl_chars" /><%
     }
 %></td>
@@ -1875,11 +1866,9 @@ function viewDialogOnChange(field)
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_text_form-div">
                 <td>Enable textarea input form?</td>
                 <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->enable_text_form == 1);
-%><s:yesno id="orig-enable_text_form" readonly="readonly" name="param" value="value" /><%
+    if (!sup_prob) {
+%><s:yesno id="orig-enable_text_form" readonly="readonly" name="param" value="prob->enable_text_form" /><%
     } else {
-      prepare_set_prob_value(CNTSPROB_enable_text_form, tmp_prob, sup_prob, global);
 %><s:yesno3 id="orig-enable_text_form" readonly="readonly" name="param" value="prob->enable_text_form" default="tmp_prob->enable_text_form" /><%
     }
 %></td>
@@ -1887,82 +1876,49 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:enable_text_form" /></td>
             </s:tr>
 
-<%
-  {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_language-div">
                 <td>Disabled languages:</td>
                 <td><%
-    unsigned char *strs = 0;
-    if (prob->disable_language && prob->disable_language[0]) strs = sarray_unparse(prob->disable_language);
-%><s:textfield id="orig-disable_language" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+    xfree(alloc_value);
+    alloc_value = sarray_unparse(prob->disable_language);
+%><s:textfield id="orig-disable_language" readonly="readonly" name="param" value="alloc_value" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupSubmissionDialog(event, 'disable_language')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_language" /></td>
             </s:tr>
-<%
-    xfree(strs); strs = 0;
-  }
-%>
 
-<%
-  {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_language-div">
                 <td>Enabled languages:</td>
                 <td><%
-    unsigned char *strs = 0;
-    if (prob->enable_language && prob->enable_language[0]) strs = sarray_unparse(prob->enable_language);
-%><s:textfield id="orig-enable_language" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+    xfree(alloc_value);
+    alloc_value = sarray_unparse(prob->enable_language);
+%><s:textfield id="orig-enable_language" readonly="readonly" name="param" value="alloc_value" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupSubmissionDialog(event, 'enable_language')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:enable_language" /></td>
             </s:tr>
-<%
-    xfree(strs); strs = 0;
-  }
-%>
 
-<%
-  {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-require-div">
                 <td>Required problems:</td>
                 <td><%
-    unsigned char *strs = 0;
-    if (prob->require && prob->require[0]) strs = sarray_unparse(prob->require);
-%><s:textfield id="orig-require" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
+    xfree(alloc_value);
+    alloc_value = sarray_unparse(prob->require);
+%><s:textfield id="orig-require" readonly="readonly" name="param" value="alloc_value" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupSubmissionDialog(event, 'require')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:require" /></td>
             </s:tr>
-<%
-    xfree(strs); strs = 0;
-  }
-%>
 
-<%
-  {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-start_date-div">
                 <td>Accept start date:</td>
-                <td><% html_date_select(out_f, prob->start_date); %></td>
-                <td><s:submit ac="prob-change-start-date" label="Change" /><s:submit ac="prob-clear-start-date" label="Clear" /></td>
+                <td><% html_date_select_2(out_f, prob->start_date, "orig-start_date", "param", NULL, 1, 0, 0); %></td>
+                <td><input type="button" onclick="popupSubmissionDialog(event, 'start_date')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:start_date" /></td>
             </s:tr>
-<%
-  }
-%>
 
-<%
-  {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-deadline-div">
                 <td>Accept deadline:</td>
-                <td><% html_date_select(out_f, prob->deadline); %></td>
-                <td><s:submit ac="prob-change-deadline" label="Change" /><s:submit ac="prob-clear-deadline" label="Clear" /></td>
+                <td><% html_date_select_2(out_f, prob->deadline, "orig-deadline", "param", NULL, 1, 0, 0); %></td>
+                <td><input type="button" onclick="popupSubmissionDialog(event, 'deadline')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:deadline" /></td>
             </s:tr>
-<%
-  }
-%>
 
         </table>
     </div>
