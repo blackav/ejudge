@@ -116,20 +116,10 @@ static const unsigned char * const form_row_attrs[]=
             <input readonly="readonly" type="text" size="20" name="prob_id_xxx" id="edit-prob_id" value="" class="text ui-widget-content ui-corner-all" />
         </div>
 
-        <div id="edit-short_name-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-short_name">Short name:</label></div>
-            <input type="text" size="20" name="short_name" id="edit-short_name" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand MENU_TEXTFIELD "short_name" "id" "Short name" "250" %>
+        <%@expand MENU_TEXTFIELD "internal_name" "id" "Internal name" "250" %>
+        <%@expand MENU_TEXTFIELD "long_name" "id" "Long name" "250" %>
 
-        <div id="edit-internal_name-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-internal_name">Internal name:</label></div>
-            <input type="text" size="20" name="internal_name" id="edit-internal_name" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-
-        <div id="edit-long_name-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-long_name">Long name:</label></div>
-            <input type="text" size="20" name="long_name" id="edit-long_name" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
 
         <div id="edit-super-div">
             <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-super">Base abstract problem:</label></div>
@@ -158,25 +148,8 @@ static const unsigned char * const form_row_attrs[]=
             </select>
         </div>
 
-        <div id="edit-variant_num-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-variant_num">Number of variants:</label></div>
-            <input type="text" size="20" name="variant_num" id="edit-variant_num" value="" class="text ui-widget-content ui-corner-all" onchange="idDialogOnChange()" />
-        </div>
-
-        <div id="edit-autoassign_variants-div">
-            <div style="width: 250px; display: inline-block;"><label for="edit-autoassign_variants">Assign variants automatically?</label></div>
-            <select id="edit-autoassign_variants" name="autoassign_variants">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
+        <%@expand MENU_TEXTFIELD "variant_num" "id" "Number of variants" "250" %>
+        <%@expand MENU_YESNO3 "autoassign_variants" "id" "Assign variants automatically" "250" %>
 
     </s:form>
 </div>
@@ -437,80 +410,11 @@ static const unsigned char * const form_row_attrs[]=
         <s:hidden name="action" ac="prob-save-view-form" />
         <input type="hidden" id="ViewDialogProbId" name="prob_id" value="" />
 
-        <div id="edit-disable_tab-div">
-            <div style="width: 250px; display: inline-block;"><label for="edit-disable_tab">Disable problem tab?</label></div>
-            <select id="edit-disable_tab" name="disable_tab" onchange="viewDialogOnChange()">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
-
-        <div id="edit-unrestricted_statement-div">
-            <div style="width: 250px; display: inline-block;"><label for="edit-unrestricted_statement">Unrestricted problem statement?</label></div>
-            <select id="edit-unrestricted_statement" name="unrestricted_statement" onchange="viewDialogOnChange()">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
-
-        <div id="edit-hide_file_names-div">
-            <div style="width: 250px; display: inline-block;"><label for="edit-hide_file_names">Hide input/output file names?</label></div>
-            <select id="edit-hide_file_names" name="hide_file_names" onchange="viewDialogOnChange()">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
-
-        <div id="edit-hide_real_time_limit-div">
-            <div style="width: 250px; display: inline-block;"><label for="edit-hide_real_time_limit">Hide real-time limit?</label></div>
-            <select id="edit-hide_real_time_limit" name="hide_real_time_limit" onchange="viewDialogOnChange()">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
-
-        <div id="edit-hide_variant-div">
-            <div style="width: 250px; display: inline-block;"><label for="edit-hide_variant">Hide variant?</label></div>
-            <select id="edit-hide_variant" name="hide_variant" onchange="viewDialogOnChange()">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
+        <%@expand MENU_YESNO3 "disable_tab" "view" "Disable problem tab" "250" %>
+        <%@expand MENU_YESNO3 "unrestricted_statement" "view" "Unrestricted problem statement" "250" %>
+        <%@expand MENU_YESNO3 "hide_file_names" "view" "Hide input/output file names" "250" %>
+        <%@expand MENU_YESNO3 "hide_real_time_limit" "view" "Hide real-time limit" "250" %>
+        <%@expand MENU_YESNO3 "hide_variant" "view" "Hide variant" "250" %>
 
     </s:form>
 </div>
