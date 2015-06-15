@@ -1,7 +1,6 @@
 #!/bin/sh
 # -*- coding: utf-8 -*-
-# $Id$
-# Copyright (c) 2014 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2014-2015 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
@@ -53,6 +52,7 @@ then
 кон
 __END__
   chmod +x ./conftest.kum || failure
+  unset DISPLAY
   "${KUMIRPATH}" -e=UTF-8 ./conftest.kum >/dev/null 2>&1 || failure
   [ -x ./conftest.kod ] || failure
   ./conftest.kod >/dev/null 2>&1 || failure
@@ -94,6 +94,7 @@ then
     exit 0
 fi
 
+unset DISPLAY
 "${KUMIRPATH}" --help 2>/dev/null >/dev/null || exit 1
     
 [ x"$1" = x-f ] && echo -n "Kumir2 "
