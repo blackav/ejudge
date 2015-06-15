@@ -103,6 +103,9 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
 
+<%@include "cnts_edit_cur_problem_macros.csp"
+%>
+
 <div id="IdDialogDiv" title="Problem Identification">
     <s:form id="IdDialogForm">
         <s:hidden name="action" ac="prob-save-id-form" />
