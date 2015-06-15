@@ -5,42 +5,11 @@
         <s:hidden name="action" ac="prob-save-compiling-form" />
         <input type="hidden" id="CompilingDialogProbId" name="prob_id" value="" />
 
-        <div id="edit-style_checker_cmd-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-style_checker_cmd">Style checker name:</label></div>
-            <input type="text" size="20" name="style_checker_cmd" id="edit-style_checker_cmd" value="" class="text ui-widget-content ui-corner-all" onchange="compilingDialogOnChange('style_checker_cmd')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="style_checker_cmd-dflt" id="edit-style_checker_cmd-dflt" value="1" onchange="compilingDialogOnChange('style_checker_cmd-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-style_checker_env-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-style_checker_env">Style checker environment:</label></div>
-            <input type="text" size="20" name="style_checker_env" id="edit-style_checker_env" value="" class="text ui-widget-content ui-corner-all" onchange="compilingDialogOnChange('style_checker_env')" />
-        </div>
-
-        <div id="edit-lang_compiler_env-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-lang_compiler_env">Compiler environment:</label></div>
-            <input type="text" size="20" name="lang_compiler_env" id="edit-lang_compiler_env" value="" class="text ui-widget-content ui-corner-all" onchange="compilingDialogOnChange('lang_compiler_env')" />
-        </div>
-
-        <div id="edit-source_header-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-source_header">Source header file:</label></div>
-            <input type="text" size="20" name="source_header" id="edit-source_header" value="" class="text ui-widget-content ui-corner-all" onchange="compilingDialogOnChange('source_header')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="source_header-dflt" id="edit-source_header-dflt" value="1" onchange="compilingDialogOnChange('source_header-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-source_footer-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-source_footer">Source footer file:</label></div>
-            <input type="text" size="20" name="source_footer" id="edit-source_footer" value="" class="text ui-widget-content ui-corner-all" onchange="compilingDialogOnChange('source_footer')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="source_footer-dflt" id="edit-source_footer-dflt" value="1" onchange="compilingDialogOnChange('source_footer-dflt')" />)<%
-  }
-%>
-        </div>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "style_checker_cmd" "compiling" "Style checker name" "250" %>
+        <%@expand MENU_TEXTFIELD "style_checker_env" "compiling" "Style checker environment" "250" %>
+        <%@expand MENU_TEXTFIELD "lang_compiler_env" "compiling" "Compiler environment" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "source_header" "compiling" "Source header file" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "source_footer" "compiling" "Source footer file" "250" %>
 
     </s:form>
 </div>
