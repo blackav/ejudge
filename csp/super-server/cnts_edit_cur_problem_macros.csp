@@ -17,3 +17,28 @@
             <input type="text" size="20" name="@1" id="edit-@1" value="" class="text ui-widget-content ui-corner-all" onchange="@2DialogOnChange('@1')" />
         </div>
 #%>
+
+<%#define MENU_YESNO3
+        <div id="edit-@1-div">
+            <div style="width: @4px; display: inline-block;"><label for="edit-@1">@3?</label></div>
+            <select id="edit-@1" name="@1" onchange="@2DialogOnChange()">
+<%
+  if (sup_prob) {
+%>
+                <option value="-1">Default</option>
+<%
+  }
+%>
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+#%>
+
+<%#define MENU_DATETIME
+        <div id="edit-@1-div">
+            <div style="width: @4px; display: inline-block;"><label style="display:block; width: @4px" for="edit-@1_time">@3:</label></div>
+            <input id="edit-@1_time" type="text" name="@1_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
+            <input id="edit-@1_date" type="text" name="@1_date" size="10" class="text ui-widget-content ui-corner-all" />
+        </div>
+#%>
