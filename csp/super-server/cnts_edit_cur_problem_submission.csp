@@ -5,131 +5,18 @@
         <s:hidden name="action" ac="prob-save-submission-form" />
         <input type="hidden" id="SubmissionDialogProbId" name="prob_id" value="" />
 
-        <div id="edit-disable_user_submit-div">
-            <div style="width: 300px; display: inline-block;"><label for="edit-disable_user_submit">Disable user submissions?</label></div>
-            <select id="edit-disable_user_submit" name="disable_user_submit" onchange="submissionDialogOnChange()">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
-
-        <div id="edit-disable_submit_after_ok-div">
-            <div style="width: 300px; display: inline-block;"><label for="edit-disable_submit_after_ok">Disable submissions after OK?</label></div>
-            <select id="edit-disable_submit_after_ok" name="disable_submit_after_ok" onchange="submissionDialogOnChange()">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
-
-        <div id="edit-advance_to_next-div">
-            <div style="width: 300px; display: inline-block;"><label for="edit-advance_to_next">Automatically advance to the next problem?</label></div>
-            <select id="edit-advance_to_next" name="advance_to_next" onchange="submissionDialogOnChange()">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
-
-        <div id="edit-disable_ctrl_chars-div">
-            <div style="width: 300px; display: inline-block;"><label for="edit-disable_ctrl_chars">Disable control characters in the source code?</label></div>
-            <select id="edit-disable_ctrl_chars" name="disable_ctrl_chars" onchange="submissionDialogOnChange()">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
-
-        <div id="edit-enable_text_form-div">
-            <div style="width: 300px; display: inline-block;"><label for="edit-enable_text_form">Enable textarea input form?</label></div>
-            <select id="edit-enable_text_form" name="enable_text_form" onchange="submissionDialogOnChange()">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
-
-        <div id="edit-binary-div">
-            <div style="width: 300px; display: inline-block;"><label for="edit-binary">Submit is binary?</label></div>
-            <select id="edit-binary" name="binary" onchange="submissionDialogOnChange()">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
-
-        <div id="edit-max_user_run_count-div">
-            <div style="width: 300px; display: inline-block;"><label style="display:block; width: 300px" for="edit-max_user_run_count">Max submissions for the problem:</label></div>
-            <input type="text" size="20" name="max_user_run_count" id="edit-max_user_run_count" value="" class="text ui-widget-content ui-corner-all" onchange="submissionDialogOnChange('max_user_run_count')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="max_user_run_count-dflt" id="edit-max_user_run_count-dflt" value="1" onchange="submissionDialogOnChange('max_user_run_count-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-disable_language-div">
-            <div style="width: 300px; display: inline-block;"><label style="display:block; width: 300px" for="edit-disable_language">Disabled languages:</label></div>
-            <input type="text" size="20" name="disable_language" id="edit-disable_language" value="" class="text ui-widget-content ui-corner-all" onchange="submissionDialogOnChange('disable_language')" />
-        </div>
-
-        <div id="edit-enable_language-div">
-            <div style="width: 300px; display: inline-block;"><label style="display:block; width: 300px" for="edit-enable_language">Enabled languages:</label></div>
-            <input type="text" size="20" name="enable_language" id="edit-enable_language" value="" class="text ui-widget-content ui-corner-all" onchange="submissionDialogOnChange('enable_language')" />
-        </div>
-
-        <div id="edit-require-div">
-            <div style="width: 300px; display: inline-block;"><label style="display:block; width: 300px" for="edit-require">Required problems:</label></div>
-            <input type="text" size="20" name="require" id="edit-require" value="" class="text ui-widget-content ui-corner-all" onchange="submissionDialogOnChange('require')" />
-        </div>
-
-        <div id="edit-start_date-div">
-            <div style="width: 300px; display: inline-block;"><label style="display:block; width: 400px" for="edit-start_date_time">Accept start date:</label></div>
-            <input id="edit-start_date_time" type="text" name="start_date_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
-            <input id="edit-start_date_date" type="text" name="start_date_date" size="10" class="text ui-widget-content ui-corner-all" />
-        </div>
-
-        <div id="edit-deadline-div">
-            <div style="width: 300px; display: inline-block;"><label style="display:block; width: 400px" for="edit-deadline_time">Accept deadline:</label></div>
-            <input id="edit-deadline_time" type="text" name="deadline_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
-            <input id="edit-deadline_date" type="text" name="deadline_date" size="10" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand MENU_YESNO3 "disable_user_submit" "submission" "Disable user submissions" "300" %>
+        <%@expand MENU_YESNO3 "disable_submit_after_ok" "submission" "Disable submissions after OK" "300" %>
+        <%@expand MENU_YESNO3 "advance_to_next" "submission" "Automatically advance to the next problem" "300" %>
+        <%@expand MENU_YESNO3 "disable_ctrl_chars" "submission" "Disable control characters in the source code" "300" %>
+        <%@expand MENU_YESNO3 "enable_text_form" "submission" "Enable textarea input form" "300" %>
+        <%@expand MENU_YESNO3 "binary" "submission" "Submit is binary" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_user_run_count" "submission" "Max submissions for the problem" "300" %>
+        <%@expand MENU_TEXTFIELD "disable_language" "submission" "Disabled languages" "300" %>
+        <%@expand MENU_TEXTFIELD "enable_language" "submission" "Enabled languages" "300" %>
+        <%@expand MENU_TEXTFIELD "require" "submission" "Required problems" "300" %>
+        <%@expand MENU_DATETIME "start_date" "submission" "Accept start date" "300" %>
+        <%@expand MENU_DATETIME "deadline" "submission" "Accept deadline" "300" %>
 
     </s:form>
 </div>
