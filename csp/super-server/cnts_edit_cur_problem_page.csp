@@ -1106,18 +1106,7 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:variant_num" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-autoassign_variants-div">
-                <td>Assign variants automatically?</td>
-                <td><%
-    if (!sup_prob) {
-%><s:yesno id="orig-autoassign_variants" readonly="readonly" name="param" value="tmp_prob->autoassign_variants" /><%
-    } else {
-%><s:yesno3 id="orig-autoassign_variants" readonly="readonly" name="param" value="prob->autoassign_variants" default="tmp_prob->autoassign_variants" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:autoassign_variants" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "autoassign_variants" "Id" "Assign variants automatically" %>
 
         </table>
     </div>
@@ -1127,18 +1116,7 @@ function viewDialogOnChange(field)
     <div>
         <table border="0" onclick="popupFilesDialog()">
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-binary_input-div">
-                <td>Input data is binary?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-%><s:yesno id="orig-binary_input" readonly="readonly" name="param" value="tmp_prob->binary_input" /><%
-    } else {
-%><s:yesno3 id="orig-binary_input" readonly="readonly" name="param" value="prob->binary_input" default="tmp_prob->binary_input" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:binary_input" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "binary_input" "Files" "Input data is binary" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-normalization-div">
                 <td>Test normalization mode:</td>
@@ -1256,18 +1234,7 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:test_sfx" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-use_corr-div">
-                <td>Use &quot;correct answer&quot; files for check?</td>
-                <td><%
-    if (!sup_prob) {
-%><s:yesno id="orig-use_corr" readonly="readonly" name="param" value="value" /><%
-    } else {
-%><s:yesno3 id="orig-use_corr" readonly="readonly" name="param" value="prob->use_corr" default="tmp_prob->use_corr" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:use_corr" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "use_corr" "Files" "Use &quot;correct answer&quot; files for check" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-corr_dir-div">
                 <td>Directory with &quot;correct answer&quot; files:</td>
@@ -1338,18 +1305,7 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:corr_sfx" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-use_info-div">
-                <td>Use test info files for check?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-%><s:yesno id="orig-use_info" readonly="readonly" name="param" value="value" /><%
-    } else {
-%><s:yesno3 id="orig-use_info" readonly="readonly" name="param" value="prob->use_info" default="tmp_prob->use_info" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:use_info" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "use_info" "Files" "Use test info files for check" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-info_dir-div">
                 <td>Directory with test info files:</td>
@@ -1420,18 +1376,7 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:info_sfx" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-use_tgz-div">
-                <td>Use special working directory for check?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-%><s:yesno id="orig-use_tgz" readonly="readonly" name="param" value="value" /><%
-    } else {
-%><s:yesno3 id="orig-use_tgz" readonly="readonly" name="param" value="prob->use_tgz" default="tmp_prob->use_tgz" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:use_tgz" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "use_tgz" "Files" "Use special working directory for check" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-tgz_pat-div">
                 <td>Pattern for working dir archives:</td>
@@ -1551,15 +1496,7 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:test_checker_cmd" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_checker_env-div">
-                <td>Test checker environment:</td>
-                <td><%
-    xfree(alloc_value);
-    alloc_value = sarray_unparse(prob->test_checker_env);
-%><s:textfield id="orig-test_checker_env" readonly="readonly" name="param" value="alloc_value" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupValidationDialog(event, 'test_checker_env')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:test_checker_env" /></td>
-            </s:tr>
+            <%@expand ORIG_ENV "test_checker_env" "Validation" "Test checker environment" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-solution_src-div">
                 <td>Solution source name:</td>
@@ -1612,70 +1549,12 @@ function viewDialogOnChange(field)
 
     <div>
         <table border="0" onclick="popupViewDialog()">
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_tab-div">
-                <td>Disable problem tab?</td>
-                <td><%
-    if (!sup_prob) {
-%><s:yesno id="orig-disable_tab" readonly="readonly" name="param" value="tmp_prob->disable_tab" /><%
-    } else {
-%><s:yesno3 id="orig-disable_tab" readonly="readonly" name="param" value="prob->disable_tab" default="tmp_prob->disable_tab" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_tab" /></td>
-            </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-unrestricted_statement-div">
-                <td>Unrestricted problem statement?</td>
-                <td><%
-    if (!sup_prob) {
-%><s:yesno id="orig-unrestricted_statement" readonly="readonly" name="param" value="tmp_prob->unrestricted_statement" /><%
-    } else {
-%><s:yesno3 id="orig-unrestricted_statement" readonly="readonly" name="param" value="prob->unrestricted_statement" default="tmp_prob->unrestricted_statement" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:unrestricted_statement" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-hide_file_names-div">
-                <td>Hide input/output file names from problem statement?</td>
-                <td><%
-    if (!sup_prob) {
-%><s:yesno id="orig-hide_file_names" readonly="readonly" name="param" value="tmp_prob->hide_file_names" /><%
-    } else {
-%><s:yesno3 id="orig-hide_file_names" readonly="readonly" name="param" value="prob->hide_file_names" default="tmp_prob->hide_file_names" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:hide_file_names" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-hide_real_time_limit-div">
-                <td>Hide real-time limit from problem statement?</td>
-                <td><%
-    if (!sup_prob) {
-%><s:yesno id="orig-hide_real_time_limit" readonly="readonly" name="param" value="tmp_prob->hide_real_time_limit" /><%
-    } else {
-%><s:yesno3 id="orig-hide_real_time_limit" readonly="readonly" name="param" value="prob->hide_real_time_limit" default="tmp_prob->hide_real_time_limit" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:hide_real_time_limit" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-hide_variant-div">
-                <td>Hide variant from user?</td>
-                <td><%
-    if (!sup_prob) {
-%><s:yesno id="orig-hide_variant" readonly="readonly" name="param" value="tmp_prob->hide_variant" /><%
-    } else {
-%><s:yesno3 id="orig-hide_variant" readonly="readonly" name="param" value="prob->hide_variant" default="tmp_prob->hide_variant" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:hide_variant" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "disable_tab" "View" "Disable problem tab" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "unrestricted_statement" "View" "Unrestricted problem statement" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "hide_file_names" "View" "Hide input/output file names from problem statement" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "hide_real_time_limit" "View" "Hide real-time limit from problem statement" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "hide_variant" "View" "Hide variant from user" %>
 
         </table>
     </div>
@@ -1684,44 +1563,10 @@ function viewDialogOnChange(field)
 
     <div>
         <table border="0" onclick="popupSubmissionDialog()">
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_user_submit-div">
-                <td>Disable user submissions?</td>
-                <td><%
-    if (!sup_prob) {
-%><s:yesno id="orig-disable_user_submit" readonly="readonly" name="param" value="tmp_prob->disable_user_submit" /><%
-    } else {
-%><s:yesno3 id="orig-disable_user_submit" readonly="readonly" name="param" value="prob->disable_user_submit" default="tmp_prob->disable_user_submit" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_user_submit" /></td>
-            </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_submit_after_ok-div">
-                <td>Disable submissions after OK?</td>
-                <td><%
-    if (!sup_prob) {
-%><s:yesno id="orig-disable_submit_after_ok" readonly="readonly" name="param" value="tmp_prob->disable_submit_after_ok" /><%
-    } else {
-%><s:yesno3 id="orig-disable_submit_after_ok" readonly="readonly" name="param" value="prob->disable_submit_after_ok" default="tmp_prob->disable_submit_after_ok" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_submit_after_ok" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-binary-div">
-                <td>Submit is binary?</td>
-                <td><%
-    if (!sup_prob) {
-%><s:yesno id="orig-binary" readonly="readonly" name="param" value="tmp_prob->binary" /><%
-    } else {
-%><s:yesno3 id="orig-binary" readonly="readonly" name="param" value="prob->binary" default="tmp_prob->binary" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:binary" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "disable_user_submit" "Submission" "Disable user submissions" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "disable_submit_after_ok" "Submission" "Disable submissions after OK" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "binary" "Submission" "Submit is binary" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_user_run_count-div">
                 <td>Max submissions for the problem:</td>
@@ -1744,74 +1589,12 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:max_user_run_count" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-advance_to_next-div">
-                <td>Automatically advance to the next problem?</td>
-                <td><%
-    if (!sup_prob) {
-%><s:yesno id="orig-advance_to_next" readonly="readonly" name="param" value="tmp_prob->advance_to_next" /><%
-    } else {
-%><s:yesno3 id="orig-advance_to_next" readonly="readonly" name="param" value="prob->advance_to_next" default="tmp_prob->advance_to_next" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:advance_to_next" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_ctrl_chars-div">
-                <td>Disable control characters in the source code?</td>
-                <td><%
-    if (!sup_prob) {
-%><s:yesno id="orig-disable_ctrl_chars" readonly="readonly" name="param" value="tmp_prob->disable_ctrl_chars" /><%
-    } else {
-%><s:yesno3 id="orig-disable_ctrl_chars" readonly="readonly" name="param" value="prob->disable_ctrl_chars" default="tmp_prob->disable_ctrl_chars" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_ctrl_chars" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_text_form-div">
-                <td>Enable textarea input form?</td>
-                <td><%
-    if (!sup_prob) {
-%><s:yesno id="orig-enable_text_form" readonly="readonly" name="param" value="prob->enable_text_form" /><%
-    } else {
-%><s:yesno3 id="orig-enable_text_form" readonly="readonly" name="param" value="prob->enable_text_form" default="tmp_prob->enable_text_form" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:enable_text_form" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_language-div">
-                <td>Disabled languages:</td>
-                <td><%
-    xfree(alloc_value);
-    alloc_value = sarray_unparse(prob->disable_language);
-%><s:textfield id="orig-disable_language" readonly="readonly" name="param" value="alloc_value" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupSubmissionDialog(event, 'disable_language')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_language" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_language-div">
-                <td>Enabled languages:</td>
-                <td><%
-    xfree(alloc_value);
-    alloc_value = sarray_unparse(prob->enable_language);
-%><s:textfield id="orig-enable_language" readonly="readonly" name="param" value="alloc_value" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupSubmissionDialog(event, 'enable_language')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:enable_language" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-require-div">
-                <td>Required problems:</td>
-                <td><%
-    xfree(alloc_value);
-    alloc_value = sarray_unparse(prob->require);
-%><s:textfield id="orig-require" readonly="readonly" name="param" value="alloc_value" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupSubmissionDialog(event, 'require')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:require" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "advance_to_next" "Submission" "Automatically advance to the next problem" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "disable_ctrl_chars" "Submission" "Disable control characters in the source code" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "enable_text_form" "Submission" "Enable textarea input form" %>
+            <%@expand ORIG_ENV "disable_language" "Submission" "Disabled languages" %>
+            <%@expand ORIG_ENV "enable_language" "Submission" "Enabled languages" %>
+            <%@expand ORIG_ENV "require" "Submission" "Required problems" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-start_date-div">
                 <td>Accept start date:</td>
@@ -1859,25 +1642,8 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:style_checker_cmd" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-style_checker_env-div">
-                <td>Style checker environment:</td>
-                <td><%
-    xfree(alloc_value);
-    alloc_value = sarray_unparse(prob->style_checker_env);
-%><s:textfield id="orig-style_checker_env" readonly="readonly" name="param" value="alloc_value" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupCompilingDialog(event, 'style_checker_env')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:style_checker_env" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-lang_compiler_env-div">
-                <td>Compiler environment:</td>
-                <td><%
-    xfree(alloc_value);
-    alloc_value = sarray_unparse(prob->lang_compiler_env);
-%><s:textfield id="orig-lang_compiler_env" readonly="readonly" name="param" value="alloc_value" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupCompilingDialog(event, 'lang_compiler_env')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:lang_compiler_env" /></td>
-            </s:tr>
+            <%@expand ORIG_ENV "style_checker_env" "Compiling" "Style checker environment" %>
+            <%@expand ORIG_ENV "lang_compiler_env" "Compiling" "Compiler environment" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-source_header-div">
                 <td>Source header file:</td>
@@ -2243,35 +2009,8 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:umask" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_process_group-div">
-                <td>Use separate process group?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->enable_process_group == 1);
-%><s:yesno id="orig-enable_process_group" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_enable_process_group, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-enable_process_group" readonly="readonly" name="param" value="prob->enable_process_group" default="tmp_prob->enable_process_group" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:enable_process_group" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_security-div">
-                <td>Disable security restrictions?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->disable_security == 1);
-%><s:yesno id="orig-disable_security" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_disable_security, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-disable_security" readonly="readonly" name="param" value="prob->disable_security" default="tmp_prob->disable_security" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_security" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "enable_process_group" "Limits" "Use separate process group" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "disable_security" "Limits" "Disable security restrictions" %>
 
 <%
   {
@@ -2429,36 +2168,8 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:checker_real_time_limit" /></td>
             </s:tr>
 
-<%
-  {
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-checker_env-div">
-                <td>Checker environment:</td>
-                <td><%
-    unsigned char *strs = 0;
-    if (prob->checker_env && prob->checker_env[0]) strs = sarray_unparse(prob->checker_env);
-%><s:textfield id="orig-checker_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupCheckingDialog(event, 'checker_env')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:checker_env" /></td>
-            </s:tr>
-<%
-  }
-%>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-scoring_checker-div">
-                <td>Checker calculates score?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->scoring_checker == 1);
-%><s:yesno id="orig-scoring_checker" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_scoring_checker, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-scoring_checker" readonly="readonly" name="param" value="prob->scoring_checker" default="tmp_prob->scoring_checker" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:scoring_checker" /></td>
-            </s:tr>
+            <%@expand ORIG_ENV "checker_env" "Checking" "Checker environment" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "scoring_checker" "Checking" "Checker calculates score" %>
 
 <%
   {
@@ -2491,64 +2202,9 @@ function viewDialogOnChange(field)
   }
 %>
 
-<%
-  {
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-valuer_sets_marked-div">
-                <td>Valuer sets <i>marked</i> flag?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->valuer_sets_marked == 1);
-%><s:yesno id="orig-valuer_sets_marked" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_valuer_sets_marked, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-valuer_sets_marked" readonly="readonly" name="param" value="prob->valuer_sets_marked" default="tmp_prob->valuer_sets_marked" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:valuer_sets_marked" /></td>
-            </s:tr>
-<%
-  }
-%>
-
-<%
-  {
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-interactive_valuer-div">
-                <td>Valuer works interactively?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->interactive_valuer == 1);
-%><s:yesno id="orig-interactive_valuer" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_interactive_valuer, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-interactive_valuer" readonly="readonly" name="param" value="prob->interactive_valuer" default="tmp_prob->interactive_valuer" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:interactive_valuer" /></td>
-            </s:tr>
-<%
-  }
-%>
-
-<%
-  {
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-valuer_env-div">
-                <td>Valuer environment:</td>
-                <td><%
-    unsigned char *strs = 0;
-    if (prob->valuer_env && prob->valuer_env[0]) strs = sarray_unparse(prob->valuer_env);
-%><s:textfield id="orig-valuer_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupCheckingDialog(event, 'valuer_env')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:valuer_env" /></td>
-            </s:tr>
-<%
-    xfree(strs); strs = 0;
-  }
-%>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "valuer_sets_marked" "Checking" "Valuer sets <i>marked</i> flag" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "interactive_valuer" "Checking" "Valuer works interactively" %>
+            <%@expand ORIG_ENV "valuer_env" "Checking" "Valuer environment" %>
 
 <%
   {
@@ -2581,22 +2237,7 @@ function viewDialogOnChange(field)
   }
 %>
 
-<%
-  {
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-interactor_env-div">
-                <td>Interactor environment:</td>
-                <td><%
-    unsigned char *strs = 0;
-    if (prob->interactor_env && prob->interactor_env[0]) strs = sarray_unparse(prob->interactor_env);
-%><s:textfield id="orig-interactor_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupCheckingDialog(event, 'interactor_env')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:interactor_env" /></td>
-            </s:tr>
-<%
-    xfree(strs); strs = 0;
-  }
-%>
+            <%@expand ORIG_ENV "interactor_env" "Checking" "Interactor environment" %>
 
 <%
   {
@@ -2661,25 +2302,7 @@ function viewDialogOnChange(field)
   }
 %>
 
-<%
-  {
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-init_env-div">
-                <td>Init-style interactor environment:</td>
-                <td><%
-    unsigned char *strs = 0;
-    if (prob->init_env && prob->init_env[0]) strs = sarray_unparse(prob->init_env);
-%><s:textfield id="orig-init_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupCheckingDialog(event, 'init_env')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:init_env" /></td>
-            </s:tr>
-<%
-    xfree(strs); strs = 0;
-  }
-%>
-
-
-
+            <%@expand ORIG_ENV "init_env" "Checking" "Init-style interactor environment" %>
 
         </table>
     </div>
@@ -2688,35 +2311,9 @@ function viewDialogOnChange(field)
 
     <div>
         <table border="0" onclick="popupScoringDialog()">
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_compile_errors-div">
-                <td>Ignore compilation errors?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->ignore_compile_errors == 1);
-%><s:yesno id="orig-ignore_compile_errors" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_ignore_compile_errors, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-ignore_compile_errors" readonly="readonly" name="param" value="prob->ignore_compile_errors" default="tmp_prob->ignore_compile_errors" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:ignore_compile_errors" /></td>
-            </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-use_ac_not_ok-div">
-                <td>Use PR (pending review) status instead of OK?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->use_ac_not_ok == 1);
-%><s:yesno id="orig-use_ac_not_ok" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_use_ac_not_ok, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-use_ac_not_ok" readonly="readonly" name="param" value="prob->use_ac_not_ok" default="tmp_prob->use_ac_not_ok" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:use_ac_not_ok" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "ignore_compile_errors" "Scoring" "Ignore compilation errors" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "use_ac_not_ok" "Scoring" "Use PR (pending review) status instead of OK" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ok_status-div">
                 <td>Success status:</td>
@@ -2725,110 +2322,13 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:ok_status" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_prev_ac-div">
-                <td>Mark previous PR as IG (ignored)?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->ignore_prev_ac == 1);
-%><s:yesno id="orig-ignore_prev_ac" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_ignore_prev_ac, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-ignore_prev_ac" readonly="readonly" name="param" value="prob->ignore_prev_ac" default="tmp_prob->ignore_prev_ac" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:ignore_prev_ac" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-olympiad_mode-div">
-                <td>Use Olympiad mode?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->olympiad_mode == 1);
-%><s:yesno id="orig-olympiad_mode" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_olympiad_mode, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-olympiad_mode" readonly="readonly" name="param" value="prob->olympiad_mode" default="tmp_prob->olympiad_mode" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:olympiad_mode" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-score_latest-div">
-                <td>Score the latest submit?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->score_latest == 1);
-%><s:yesno id="orig-score_latest" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_score_latest, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-score_latest" readonly="readonly" name="param" value="prob->score_latest" default="tmp_prob->score_latest" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:score_latest" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-score_latest_or_unmarked-div">
-                <td>Score the latest or the best unmarked?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->score_latest_or_unmarked == 1);
-%><s:yesno id="orig-score_latest_or_unmarked" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_score_latest_or_unmarked, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-score_latest_or_unmarked" readonly="readonly" name="param" value="prob->score_latest_or_unmarked" default="tmp_prob->score_latest_or_unmarked" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:score_latest_or_unmarked" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-score_latest_marked-div">
-                <td>Score the latest marked submit?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->score_latest_marked == 1);
-%><s:yesno id="orig-score_latest_marked" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_score_latest_marked, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-score_latest_marked" readonly="readonly" name="param" value="prob->score_latest_marked" default="tmp_prob->score_latest_marked" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:score_latest_marked" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_unmarked-div">
-                <td>Ignore unmarked runs in scoring?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->ignore_unmarked == 1);
-%><s:yesno id="orig-ignore_unmarked" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_ignore_unmarked, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-ignore_unmarked" readonly="readonly" name="param" value="prob->ignore_unmarked" default="tmp_prob->ignore_unmarked" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:ignore_unmarked" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-score_tokenized-div">
-                <td>Score only tokenized submits?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->score_tokenized == 1);
-%><s:yesno id="orig-score_tokenized" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_score_tokenized, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-score_tokenized" readonly="readonly" name="param" value="prob->score_tokenized" default="tmp_prob->score_tokenized" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:score_tokenized" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "ignore_prev_ac" "Scoring" "Mark previous PR as IG (ignored)" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "olympiad_mode" "Scoring" "Use Olympiad mode" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "score_latest" "Scoring" "Score the latest submit" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "score_latest_or_unmarked" "Scoring" "Score the latest or the best unmarked" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "score_latest_marked" "Scoring" "Score the latest marked submit" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "ignore_unmarked" "Scoring" "Ignore unmarked runs in scoring" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "score_tokenized" "Scoring" "Score only tokenized submits" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-full_score-div">
                 <td>Score for full solution:</td>
@@ -2874,20 +2374,7 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:full_user_score" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-variable_full_score-div">
-                <td>Allow variable score for full solution?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->variable_full_score == 1);
-%><s:yesno id="orig-variable_full_score" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_variable_full_score, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-variable_full_score" readonly="readonly" name="param" value="prob->variable_full_score" default="tmp_prob->variable_full_score" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:variable_full_score" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "variable_full_score" "Scoring" "Allow variable score for full solution" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_score-div">
                 <td>Default score for 1 passed test:</td>
@@ -3043,9 +2530,6 @@ function viewDialogOnChange(field)
   }
 %>
 
-
-
-
         </table>
     </div>
 
@@ -3053,65 +2537,11 @@ function viewDialogOnChange(field)
 
     <div>
         <table border="0" onclick="popupFeedbackDialog()">
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_enable_rep_view-div">
-                <td>Contestant may view testing protocol?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->team_enable_rep_view == 1);
-%><s:yesno id="orig-team_enable_rep_view" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_team_enable_rep_view, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-team_enable_rep_view" readonly="readonly" name="param" value="prob->team_enable_rep_view" default="tmp_prob->team_enable_rep_view" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:team_enable_rep_view" /></td>
-            </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_enable_ce_view-div">
-                <td>Contestant may view compilation errors?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->team_enable_ce_view == 1);
-%><s:yesno id="orig-team_enable_ce_view" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_team_enable_ce_view, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-team_enable_ce_view" readonly="readonly" name="param" value="prob->team_enable_ce_view" default="tmp_prob->team_enable_ce_view" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:team_enable_ce_view" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_show_judge_report-div">
-                <td>Contestant may view FULL testing protocol?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->team_show_judge_report == 1);
-%><s:yesno id="orig-team_show_judge_report" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_team_show_judge_report, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-team_show_judge_report" readonly="readonly" name="param" value="prob->team_show_judge_report" default="tmp_prob->team_show_judge_report" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:team_show_judge_report" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-show_checker_comment-div">
-                <td>Contestant may view checker comment?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->show_checker_comment == 1);
-%><s:yesno id="orig-show_checker_comment" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_show_checker_comment, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-show_checker_comment" readonly="readonly" name="param" value="prob->show_checker_comment" default="tmp_prob->show_checker_comment" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:show_checker_comment" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "team_enable_rep_view" "Feedback" "Contestant may view testing protocol" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "team_enable_ce_view" "Feedback" "Contestant may view compilation errors" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "team_show_judge_report" "Feedback" "Contestant may view FULL testing protocol" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "show_checker_comment" "Feedback" "Contestant may view checker comment" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-open_tests-div">
                 <td>Tests open for participants:</td>
@@ -3127,35 +2557,8 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:final_open_tests" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_tokens-div">
-                <td>Enable tokens?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = prob->enable_tokens == 1;
-%><s:yesno id="orig-enable_tokens" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_enable_tokens, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-enable_tokens" readonly="readonly" name="param" value="prob->enable_tokens" default="tmp_prob->enable_tokens" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:enable_tokens" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-tokens_for_user_ac-div">
-                <td>Tokens only for user AC submits?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = prob->tokens_for_user_ac == 1;
-%><s:yesno id="orig-tokens_for_user_ac" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_tokens_for_user_ac, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-tokens_for_user_ac" readonly="readonly" name="param" value="prob->tokens_for_user_ac" default="tmp_prob->tokens_for_user_ac" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:tokens_for_user_ac" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "enable_tokens" "Feedback" "Enable tokens" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "tokens_for_user_ac" "Feedback" "Tokens only for user AC submits" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-tokens-div">
                 <td>Token specification:</td>
@@ -3191,20 +2594,7 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:tests_to_accept" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-accept_partial-div">
-                <td>Accept for testing solutions that do not pass all accept tests?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->accept_partial == 1);
-%><s:yesno id="orig-accept_partial" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_accept_partial, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-accept_partial" readonly="readonly" name="param" value="prob->accept_partial" default="tmp_prob->accept_partial" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:accept_partial" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "accept_partial" "Feedback" "Accept for testing solutions that do not pass all accept tests" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-min_tests_to_accept-div">
                 <td>Min. number of accept tests:</td>
@@ -3226,37 +2616,8 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:min_tests_to_accept" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_pe-div">
-                <td>Report Presentation Error as Wrong Answer?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->disable_pe == 1);
-%><s:yesno id="orig-disable_pe" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_disable_pe, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-disable_pe" readonly="readonly" name="param" value="prob->disable_pe" default="tmp_prob->disable_pe" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_pe" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_wtl-div">
-                <td>Report Wall Time Limit Exceeded as Time Limit Exceeded?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->disable_wtl == 1);
-%><s:yesno id="orig-disable_wtl" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_disable_wtl, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-disable_wtl" readonly="readonly" name="param" value="prob->disable_wtl" default="tmp_prob->disable_wtl" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_wtl" /></td>
-            </s:tr>
-
-
+            <%@expand ORIG_INHERITABLE_BOOLEAN "disable_pe" "Feedback" "Report Presentation Error as Wrong Answer" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "disable_wtl" "Feedback" "Report Wall Time Limit Exceeded as Time Limit Exceeded" %>
 
         </table>
     </div>
@@ -3280,20 +2641,7 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_column" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-hidden-div">
-                <td>Do not show this problem in standings?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->hidden == 1);
-%><s:yesno id="orig-hidden" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_hidden, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-hidden" readonly="readonly" name="param" value="prob->hidden" default="tmp_prob->hidden" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:hidden" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "hidden" "Standing" "Do not show this problem in standings" %>
 
 <%
   {
@@ -3360,47 +2708,8 @@ function viewDialogOnChange(field)
   }
 %>
 
-<%
-  {
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_ignore_score-div">
-                <td>Ignore problem score in standings?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->stand_ignore_score == 1);
-%><s:yesno id="orig-stand_ignore_score" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_stand_ignore_score, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-stand_ignore_score" readonly="readonly" name="param" value="prob->stand_ignore_score" default="tmp_prob->stand_ignore_score" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_ignore_score" /></td>
-            </s:tr>
-<%
-  }
-%>
-
-<%
-  {
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_last_column-div">
-                <td>Show the problem after all results?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->stand_last_column == 1);
-%><s:yesno id="orig-stand_last_column" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_stand_last_column, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-stand_last_column" readonly="readonly" name="param" value="prob->stand_last_column" default="tmp_prob->stand_last_column" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_last_column" /></td>
-            </s:tr>
-<%
-  }
-%>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "stand_ignore_score" "Standing" "Ignore problem score in standings" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "stand_last_column" "Standing" "Show the problem after all results" %>
 
 <%
   {
