@@ -1935,120 +1935,22 @@ function viewDialogOnChange(field)
 
     <div>
         <table border="0" onclick="popupRunningDialog()">
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_testing-div">
-                <td>Disable any testing of submissions?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->disable_testing == 1);
-%><s:yesno id="orig-disable_testing" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_disable_testing, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-disable_testing" readonly="readonly" name="param" value="prob->disable_testing" default="tmp_prob->disable_testing" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_testing" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_auto_testing-div">
-                <td>Disable automatic testing of submissions?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->disable_auto_testing == 1);
-%><s:yesno id="orig-disable_auto_testing" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_disable_auto_testing, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-disable_auto_testing" readonly="readonly" name="param" value="prob->disable_auto_testing" default="tmp_prob->disable_auto_testing" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_auto_testing" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_compilation-div">
-                <td>Still compile runs to mark as ACCEPTED?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->enable_compilation == 1);
-%><s:yesno id="orig-enable_compilation" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_enable_compilation, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-enable_compilation" readonly="readonly" name="param" value="prob->enable_compilation" default="tmp_prob->enable_compilation" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:enable_compilation" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-manual_checking-div">
-                <td>Problem is checked manually?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->manual_checking > 0);
-%><s:yesno id="orig-manual_checking" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_manual_checking, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-manual_checking" readonly="readonly" name="param" value="prob->manual_checking" default="tmp_prob->manual_checking" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:manual_checking" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-check_presentation-div">
-                <td>Check output presentation anyway?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->check_presentation > 0);
-%><s:yesno id="orig-check_presentation" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_check_presentation, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-check_presentation" readonly="readonly" name="param" value="prob->check_presentation" default="tmp_prob->check_presentation" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:check_presentation" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-use_stdin-div">
-                <td>Use standard input?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = prob->use_stdin;
-%><s:yesno id="orig-use_stdin" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_use_stdin, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-use_stdin" readonly="readonly" name="param" value="prob->use_stdin" default="tmp_prob->use_stdin" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:use_stdin" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-combined_stdin-div">
-                <td>Combined standard/file input?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = prob->combined_stdin;
-%><s:yesno id="orig-combined_stdin" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_combined_stdin, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-combined_stdin" readonly="readonly" name="param" value="prob->combined_stdin" default="tmp_prob->combined_stdin" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:combined_stdin" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "disable_testing" "Running" "Disable any testing of submissions" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "disable_auto_testing" "Running" "Disable automatic testing of submissions" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "enable_compilation" "Running" "Still compile runs to mark as ACCEPTED" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "manual_checking" "Running" "Problem is checked manually" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "check_presentation" "Running" "Check output presentation anyway" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "use_stdin" "Running" "Use standard input" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "combined_stdin" "Running" "Combined standard/file input" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-input_file-div">
                 <td>Input file name:</td>
                 <td><%
-    if (prob_id <= 0 || !sup_prob) {
+    if (!sup_prob) {
       const unsigned char *value = prob->input_file;
       if (value && value[0] < ' ') value = 0;
 %><s:textfield id="orig-input_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Not set</i>)<% } %><%
     } else {
-      prepare_set_prob_value(CNTSPROB_input_file, tmp_prob, sup_prob, global);
       const unsigned char *value = prob->input_file;
       if (value && value[0] < ' ') value = 0;
 %><s:textfield id="orig-input_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->input_file" /></i>)<% } %><%
@@ -2058,45 +1960,17 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:input_file" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-use_stdout-div">
-                <td>Use standard output?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = prob->use_stdout;
-%><s:yesno id="orig-use_stdout" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_use_stdout, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-use_stdout" readonly="readonly" name="param" value="prob->use_stdout" default="tmp_prob->use_stdout" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:use_stdout" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-combined_stdout-div">
-                <td>Combined standard/file output?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = prob->combined_stdout;
-%><s:yesno id="orig-combined_stdout" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_combined_stdout, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-combined_stdout" readonly="readonly" name="param" value="prob->combined_stdout" default="tmp_prob->combined_stdout" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:combined_stdout" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "use_stdout" "Running" "Use standard output" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "combined_stdout" "Running" "Combined standard/file output" %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-output_file-div">
                 <td>Output file name:</td>
                 <td><%
-    if (prob_id <= 0 || !sup_prob) {
+    if (!sup_prob) {
       const unsigned char *value = prob->output_file;
       if (value && value[0] < ' ') value = 0;
 %><s:textfield id="orig-output_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Not set</i>)<% } %><%
     } else {
-      prepare_set_prob_value(CNTSPROB_output_file, tmp_prob, sup_prob, global);
       const unsigned char *value = prob->output_file;
       if (value && value[0] < ' ') value = 0;
 %><s:textfield id="orig-output_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->output_file" /></i>)<% } %><%
@@ -2106,39 +1980,9 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:output_file" /></td>
             </s:tr>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_stderr-div">
-                <td>Consider output to stderr as PE?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = prob->disable_stderr == 1;
-%><s:yesno id="orig-disable_stderr" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_disable_stderr, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-disable_stderr" readonly="readonly" name="param" value="prob->disable_stderr" default="tmp_prob->disable_stderr" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:disable_stderr" /></td>
-            </s:tr>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "disable_stderr" "Running" "Consider output to stderr as PE" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "ignore_exit_code" "Running" "Ignore exit code" %>
 
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_exit_code-div">
-                <td>Ignore exit code?</td>
-                <td><%
-    if (prob_id <= 0 || !sup_prob) {
-      int value = (prob->ignore_exit_code == 1);
-%><s:yesno id="orig-ignore_exit_code" readonly="readonly" name="param" value="value" /><%
-    } else {
-      prepare_set_prob_value(CNTSPROB_ignore_exit_code, tmp_prob, sup_prob, global);
-%><s:yesno3 id="orig-ignore_exit_code" readonly="readonly" name="param" value="prob->ignore_exit_code" default="tmp_prob->ignore_exit_code" /><%
-    }
-%></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:ignore_exit_code" /></td>
-            </s:tr>
-
-<%
-  {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-start_cmd-div">
                 <td>Start proxy program:</td>
                 <td><%
@@ -2148,7 +1992,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_start_cmd, tmp_prob, sup_prob, global);
       if (!prob->start_cmd) {
         if (!tmp_prob->start_cmd || !tmp_prob->start_cmd[0]) {
 %>(<i>Not set</i>)<%
@@ -2161,28 +2004,8 @@ function viewDialogOnChange(field)
                 <td><input type="button" onclick="popupRunningDialog(event, 'start_cmd')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:start_cmd" /></td>
             </s:tr>
-<%
-  }
-%>
 
-<%
-  {
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-start_env-div">
-                <td>Start environment:</td>
-                <td><%
-    unsigned char *strs = 0;
-    if (prob->start_env && prob->start_env[0]) strs = sarray_unparse(prob->start_env);
-%><s:textfield id="orig-start_env" readonly="readonly" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupRunningDialog(event, 'start_env')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:start_env" /></td>
-            </s:tr>
-<%
-    xfree(strs); strs = 0;
-  }
-%>
-
-
+            <%@expand ORIG_ENV "start_env" "Running" "Start environment" %>
 
         </table>
     </div>

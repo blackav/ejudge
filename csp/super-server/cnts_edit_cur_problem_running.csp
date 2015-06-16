@@ -5,6 +5,22 @@
         <s:hidden name="action" ac="prob-save-running-form" />
         <input type="hidden" id="RunningDialogProbId" name="prob_id" value="" />
 
+        <%@expand MENU_YESNO3 "disable_testing" "running" "Disable any testing of submissions" "250" %>
+        <%@expand MENU_YESNO3 "disable_auto_testing" "running" "Disable automatic testing of submissions" "250" %>
+        <%@expand MENU_YESNO3 "enable_compilation" "running" "Still compile runs to mark as ACCEPTED" "250" %>
+        <%@expand MENU_YESNO3 "manual_checking" "running" "Problem is checked manually" "250" %>
+        <%@expand MENU_YESNO3 "check_presentation" "running" "Check output presentation anyway" "250" %>
+        <%@expand MENU_YESNO3 "use_stdin" "running" "Use standard input" "250" %>
+        <%@expand MENU_YESNO3 "combined_stdin" "running" "Combined standard/file input" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "input_file" "running" "Input file name" "250" %>
+        <%@expand MENU_YESNO3 "use_stdout" "running" "Use standard output" "250" %>
+        <%@expand MENU_YESNO3 "combined_stdout" "running" "Combined standard/file output" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "output_file" "running" "Output file name" "250" %>
+        <%@expand MENU_YESNO3 "disable_stderr" "running" "Consider output to stderr as PE" "250" %>
+        <%@expand MENU_YESNO3 "ignore_exit_code" "running" "Ignore exit code" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "start_cmd" "running" "Start proxy program" "250" %>
+        <%@expand MENU_TEXTFIELD "start_env" "running" "Start environment" "250" %>
+
     </s:form>
 </div>
 
@@ -12,7 +28,7 @@
 $(function() {
     runningDialog = $("#RunningDialogDiv").dialog({
         autoOpen: false,
-        height: 350,
+        height: 450,
         width: 650,
         modal: true,
         buttons: {
@@ -39,11 +55,34 @@ $(function() {
         close : function() {
         }
     });
+
+    $("#orig-disable_auto_testing-div").toggle(<s:v type="jsbool" value="tmp_prob->disable_testing <= 0" />);
+    $("#orig-enable_compilation-div").toggle(<s:v type="jsbool" value="tmp_prob->disable_testing <= 0 && tmp_prob->disable_auto_testing > 0" />);
+    $("#orig-check_presentation-div").toggle(<s:v type="jsbool" value="tmp_prob->manual_checking > 0" />);
+    $("#orig-input_file-div").toggle(<s:v type="jsbool" value="tmp_prob->use_stdin <= 0 || tmp_prob->combined_stdin > 0" />);
+    $("#orig-output_file-div").toggle(<s:v type="jsbool" value="tmp_prob->use_stdout <= 0 || tmp_prob->combined_stdout > 0" />);
+    $("#orig-start_env-div").toggle(<s:v type="jsbool" value="tmp_prob->start_cmd && tmp_prob->start_cmd[0]" />);
 });
 
 function popupRunningDialog(e, skipField)
 {
     $("#RunningDialogProbId").val(prob_id);
+
+    $("#edit-disable_testing").val($("#orig-disable_testing").val());
+    $("#edit-disable_auto_testing").val($("#orig-disable_auto_testing").val());
+    $("#edit-enable_compilation").val($("#orig-enable_compilation").val());
+    $("#edit-manual_checking").val($("#orig-manual_checking").val());
+    $("#edit-check_presentation").val($("#orig-check_presentation").val());
+    $("#edit-use_stdin").val($("#orig-use_stdin").val());
+    $("#edit-combined_stdin").val($("#orig-combined_stdin").val());
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "input_file" "!prob->input_file[0]" %>
+    $("#edit-use_stdout").val($("#orig-use_stdout").val());
+    $("#edit-combined_stdout").val($("#orig-combined_stdout").val());
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "output_file" "!prob->output_file[0]" %>
+    $("#edit-disable_stderr").val($("#orig-disable_stderr").val());
+    $("#edit-ignore_exit_code").val($("#orig-ignore_exit_code").val());
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "start_cmd" "!prob->start_cmd" %>
+    $("#edit-start_env").val($("#orig-start_env").val());
 
     if (e) e.stopPropagation();
     runningDialogOnChange();
@@ -52,6 +91,24 @@ function popupRunningDialog(e, skipField)
 
 function runningDialogOnChange(field)
 {
+    var disable_testing = toBool($("#edit-disable_testing").val(), <s:v type="jsbool" value="sup_prob && sup_prob->disable_testing > 0" />);
+    $("#edit-disable_auto_testing-div").toggle(!disable_testing);
+    $("#edit-enable_compilation-div").toggle(!disable_testing && toBool($("#edit-disable_auto_testing").val(), <s:v type="jsbool" value="sup_prob && sup_prob->disable_auto_testing > 0" />));
+    $("#edit-check_presentation-div").toggle(toBool($("#edit-manual_checking").val(), <s:v type="jsbool" value="sup_prob && sup_prob->manual_checking > 0" />));
+
+    var use_stdin = toBool($("#edit-use_stdin").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_stdin > 0" />);
+    var combined_stdin = toBool($("#edit-combined_stdin").val(), <s:v type="jsbool" value="sup_prob && sup_prob->combined_stdin > 0" />);
+    var use_stdout = toBool($("#edit-use_stdout").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_stdout > 0" />);
+    var combined_stdout = toBool($("#edit-combined_stdout").val(), <s:v type="jsbool" value="sup_prob && sup_prob->combined_stdout > 0" />);
+
+    $("#edit-input_file-div").toggle(!use_stdin || combined_stdin);
+    $("#edit-output_file-div").toggle(!use_stdout || combined_stdout);
+
+    <%@expand ONCHANGE_WITH_DEFAULT "input_file" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "output_file" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "start_cmd" %>
+
+    $("#edit-start_env-div").toggle($("#edit-start_cmd").val() != "" || <s:v type="jsbool" value="sup_prob && sup_prob->start_cmd" />);
 }
 
 

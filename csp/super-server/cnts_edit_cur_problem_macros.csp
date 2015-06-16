@@ -42,3 +42,53 @@
             <input id="edit-@1_date" type="text" name="@1_date" size="10" class="text ui-widget-content ui-corner-all" />
         </div>
 #%>
+
+<%#define ONCHANGE_WITH_DEFAULT
+    if (field == "@1-dflt") {
+        if ($("#edit-@1-dflt").is(':checked')) {
+            $("#edit-@1").val("");
+        }
+    } else if (field == "@1") {
+        if ($("#edit-@1").val() != "") {
+            $("#edit-@1-dflt").prop('checked', false);
+        }
+    }
+#%>
+
+<%#define COPY_TEXTFIELD_WITH_DEFAULT
+    $("#edit-@1").val($("#orig-@1").val());
+<%
+  if (sup_prob) {
+%>
+    $("#edit-@1-dflt").prop('checked', <s:v type="jsbool" value="@2" />);
+<%
+  }
+%>
+#%>
+
+<%#define ORIG_INHERITABLE_BOOLEAN
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-@1-div">
+                <td>@3?</td>
+                <td><%
+    if (!sup_prob) {
+%><s:yesno id="orig-@1" readonly="readonly" name="param" value="tmp_prob->@1" /><%
+    } else {
+%><s:yesno3 id="orig-@1" readonly="readonly" name="param" value="prob->@1" default="tmp_prob->@1" /><%
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:@1" /></td>
+            </s:tr>
+#%>
+
+<%#define ORIG_ENV
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-@1-div">
+                <td>@3:</td>
+                <td><%
+    xfree(alloc_value);
+    alloc_value = sarray_unparse(prob->@1);
+%><s:textfield id="orig-@1" readonly="readonly" name="param" value="alloc_value" size="48" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popup@2Dialog(event, '@1')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:@1" /></td>
+            </s:tr>
+#%>
