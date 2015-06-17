@@ -5,6 +5,22 @@
         <s:hidden name="action" ac="prob-save-limits-form" />
         <input type="hidden" id="LimitsDialogProbId" name="prob_id" value="" />
 
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "time_limit" "limits" "Processor time limit (s)" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "time_limit_millis" "limits" "Processor time limit (ms)" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "real_time_limit" "limits" "Real time limit (s)" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_vm_size" "limits" "Maximum virtual memory size" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_stack_size" "limits" "Maximum stack size" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_file_size" "limits" "Maximum output file size" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_open_file_count" "limits" "Maximum open file count" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_process_count" "limits" "Maximum process count" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "umask" "limits" "Umask value" "300" %>
+        <%@expand MENU_YESNO3 "enable_process_group" "limits" "Use separate process group" "300" %>
+        <%@expand MENU_YESNO3 "disable_security" "limits" "Disable security restrictions" "300" %>
+        <%@expand MENU_TEXTFIELD "lang_time_adj" "limits" "Language-specific time-limit adjustment (s)" "300" %>
+        <%@expand MENU_TEXTFIELD "lang_time_adj_millis" "limits" "Language-specific time-limit adjustment (ms)" "300" %>
+        <%@expand MENU_TEXTFIELD "lang_max_vm_size" "limits" "Language-specific memory limit" "300" %>
+        <%@expand MENU_TEXTFIELD "lang_max_stack_size" "limits" "Language-specific stack limit" "300" %>
+
     </s:form>
 </div>
 
@@ -12,7 +28,7 @@
 $(function() {
     limitsDialog = $("#LimitsDialogDiv").dialog({
         autoOpen: false,
-        height: 350,
+        height: 500,
         width: 650,
         modal: true,
         buttons: {
@@ -45,6 +61,22 @@ function popupLimitsDialog(e, skipField)
 {
     $("#LimitsDialogProbId").val(prob_id);
 
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "time_limit" "prob->time_limit < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "time_limit_millis" "prob->time_limit_millis < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "real_time_limit" "prob->real_time_limit < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_vm_size" "prob->max_vm_size == ~(size_t) 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_stack_size" "prob->max_stack_size == ~(size_t) 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_file_size" "prob->max_file_size == ~(size_t) 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_open_file_count" "prob->max_open_file_count < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_process_count" "prob->max_process_count < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "umask" "!prob->umask" %>
+    <%@expand COPY_YESNO3 "enable_process_group"  %>
+    <%@expand COPY_YESNO3 "disable_security"  %>
+    <%@expand COPY_TEXTFIELD "lang_time_adj"  %>
+    <%@expand COPY_TEXTFIELD "lang_time_adj_millis"  %>
+    <%@expand COPY_TEXTFIELD "lang_max_vm_size"  %>
+    <%@expand COPY_TEXTFIELD "lang_max_stack_size"  %>
+
     if (e) e.stopPropagation();
     limitsDialogOnChange();
     $("#LimitsDialogDiv").dialog('open');
@@ -52,6 +84,15 @@ function popupLimitsDialog(e, skipField)
 
 function limitsDialogOnChange(field)
 {
+    <%@expand ONCHANGE_WITH_DEFAULT "time_limit" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "time_limit_millis" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "real_time_limit" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "max_vm_size" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "max_stack_size" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "max_file_size" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "max_open_file_count" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "max_process_count" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "umask" %>
 }
 
 

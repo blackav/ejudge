@@ -1247,7 +1247,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_corr_dir, tmp_prob, sup_prob, global);
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
@@ -1318,7 +1317,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_info_dir, tmp_prob, sup_prob, global);
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
@@ -1781,22 +1779,17 @@ function viewDialogOnChange(field)
     <div>
         <table border="0" onclick="popupLimitsDialog()">
 
-<%
-  prepare_set_prob_value(CNTSPROB_time_limit, tmp_prob, sup_prob, global);
-  prepare_set_prob_value(CNTSPROB_time_limit_millis, tmp_prob, sup_prob, global);
-%>
-
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-time_limit_millis-div">
                 <td>Processor time limit (ms):</td>
-                <td><s:textfield id="orig-time_limit_millis" readonly="readonly" name="param" value="prob->time_limit_millis" size="48" maxlength="1024" checkExpr=" > 0" /><%
-    if (prob_id <= 0) {
+                <td><s:textfield id="orig-time_limit_millis" readonly="readonly" name="param" value="prob->time_limit_millis" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (!sup_prob) {
       if (prob->time_limit_millis <= 0) {
 %>(<i>Not set</i>)<%
       }
     } else {
-      if (prob->time_limit_millis <= 0 && tmp_prob->time_limit_millis <= 0) {
+      if (tmp_prob->time_limit_millis <= 0) {
 %>(<i>Not set</i>)<%
-      } else if (prob->time_limit_millis <= 0) {
+      } else if (prob->time_limit_millis < 0) {
 %>(<i>Default: <s:v value="tmp_prob->time_limit_millis" /></i>)<%
       }
     }
@@ -1808,7 +1801,7 @@ function viewDialogOnChange(field)
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-time_limit-div">
                 <td>Processor time limit (s):</td>
                 <td><s:textfield id="orig-time_limit" readonly="readonly" name="param" value="prob->time_limit" size="48" maxlength="1024" checkExpr=" >= 0" /><%
-    if (prob_id <= 0) {
+    if (!sup_prob) {
       if (prob->time_limit < 0) {
 %>(<i>Not set</i>)<%
       } else if (!prob->time_limit) {
@@ -1840,7 +1833,6 @@ function viewDialogOnChange(field)
 %>(<i>Unlimited</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_real_time_limit, tmp_prob, sup_prob, global);
       if (prob->real_time_limit < 0 && tmp_prob->real_time_limit < 0) {
 %>(<i>Not set</i>)<%
       } else if (prob->real_time_limit < 0 && !tmp_prob->real_time_limit) {
@@ -1871,7 +1863,6 @@ function viewDialogOnChange(field)
 %>(<i>OS Limit</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_max_vm_size, tmp_prob, sup_prob, global);
       if (prob->max_vm_size == ~(size_t) 0) {
         if (tmp_prob->max_vm_size == ~(size_t) 0) {
 %>(<i>Default: unlimited</i>)<%
@@ -1905,7 +1896,6 @@ function viewDialogOnChange(field)
 %>(<i>OS Limit</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_max_stack_size, tmp_prob, sup_prob, global);
       if (prob->max_stack_size == ~(size_t) 0) {
         if (tmp_prob->max_stack_size == ~(size_t) 0) {
 %>(<i>Default: unlimited</i>)<%
@@ -1939,7 +1929,6 @@ function viewDialogOnChange(field)
 %>(<i>OS Limit</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_max_file_size, tmp_prob, sup_prob, global);
       if (prob->max_file_size == ~(size_t) 0) {
         if (tmp_prob->max_file_size == ~(size_t) 0) {
 %>(<i>Default: OS Limit</i>)<%
@@ -1966,7 +1955,6 @@ function viewDialogOnChange(field)
 %>(<i>OS Limit</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_max_open_file_count, tmp_prob, sup_prob, global);
       if (prob->max_open_file_count < 0) {
         if (tmp_prob->max_open_file_count < 0) {
 %>(<i>Default: OS Limit</i>)<%
@@ -1988,7 +1976,6 @@ function viewDialogOnChange(field)
 %>(<i>OS Limit</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_max_process_count, tmp_prob, sup_prob, global);
       if (prob->max_process_count < 0) {
         if (tmp_prob->max_process_count < 0) {
 %>(<i>Default: OS Limit</i>)<%
@@ -2011,77 +1998,10 @@ function viewDialogOnChange(field)
 
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_process_group" "Limits" "Use separate process group" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "disable_security" "Limits" "Disable security restrictions" %>
-
-<%
-  {
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-lang_time_adj-div">
-                <td>Language-specific time-limit adjustment (s):</td>
-                <td><%
-    unsigned char *strs = 0;
-    if (prob->lang_time_adj && prob->lang_time_adj[0]) strs = sarray_unparse(prob->lang_time_adj);
-%><s:textfield id="orig-lang_time_adj" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupLimitsDialog(event, 'lang_time_adj')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:lang_time_adj" /></td>
-            </s:tr>
-<%
-    xfree(strs); strs = 0;
-  }
-%>
-
-<%
-  {
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-lang_time_adj_millis-div">
-                <td>Language-specific time-limit adjustment (ms):</td>
-                <td><%
-    unsigned char *strs = 0;
-    if (prob->lang_time_adj_millis && prob->lang_time_adj_millis[0]) strs = sarray_unparse(prob->lang_time_adj_millis);
-%><s:textfield id="orig-lang_time_adj_millis" name="param" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupLimitsDialog(event, 'lang_time_adj_millis')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:lang_time_adj_millis" /></td>
-            </s:tr>
-<%
-    xfree(strs); strs = 0;
-  }
-%>
-
-<%
-  {
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-lang_max_vm_size-div">
-                <td>Language-specific memory limit:</td>
-                <td><%
-    unsigned char *strs = 0;
-    if (prob->lang_max_vm_size && prob->lang_max_vm_size[0]) strs = sarray_unparse(prob->lang_max_vm_size);
-%><s:textfield id="orig-lang_max_vm_size" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupLimitsDialog(event, 'lang_max_vm_size')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:lang_max_vm_size" /></td>
-            </s:tr>
-<%
-    xfree(strs); strs = 0;
-  }
-%>
-
-<%
-  {
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-lang_max_stack_size-div">
-                <td>Language-specific stack limit:</td>
-                <td><%
-    unsigned char *strs = 0;
-    if (prob->lang_max_stack_size && prob->lang_max_stack_size[0]) strs = sarray_unparse(prob->lang_max_stack_size);
-%><s:textfield id="orig-lang_max_stack_size" name="param" name="param" value="strs" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupLimitsDialog(event, 'lang_max_stack_size')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:lang_max_stack_size" /></td>
-            </s:tr>
-<%
-    xfree(strs); strs = 0;
-  }
-%>
-
-
-
+            <%@expand ORIG_ENV "lang_time_adj" "Limits" "Language-specific time-limit adjustment (s)" %>
+            <%@expand ORIG_ENV "lang_time_adj_millis" "Limits" "Language-specific time-limit adjustment (ms)" %>
+            <%@expand ORIG_ENV "lang_max_vm_size" "Limits" "Language-specific memory limit" %>
+            <%@expand ORIG_ENV "lang_max_stack_size" "Limits" "Language-specific stack limit" %>
 
         </table>
     </div>
@@ -2125,7 +2045,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_check_cmd, tmp_prob, sup_prob, global);
       if (!value) {
         if (!tmp_prob->check_cmd[0] || tmp_prob->check_cmd[0] == 1) {
 %>(<i>Not set</i>)<%
@@ -2152,7 +2071,6 @@ function viewDialogOnChange(field)
 %>(<i>Unlimited</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_checker_real_time_limit, tmp_prob, sup_prob, global);
       if (prob->checker_real_time_limit < 0 && tmp_prob->checker_real_time_limit < 0) {
 %>(<i>Not set</i>)<%
       } else if (prob->checker_real_time_limit < 0 && !tmp_prob->checker_real_time_limit) {
@@ -2185,7 +2103,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_valuer_cmd, tmp_prob, sup_prob, global);
       if (!value) {
         if (!tmp_prob->valuer_cmd[0] || tmp_prob->valuer_cmd[0] == 1) {
 %>(<i>Not set</i>)<%
@@ -2220,7 +2137,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_interactor_cmd, tmp_prob, sup_prob, global);
       if (!value) {
         if (!tmp_prob->interactor_cmd[0] || tmp_prob->interactor_cmd[0] == 1) {
 %>(<i>Not set</i>)<%
@@ -2252,7 +2168,6 @@ function viewDialogOnChange(field)
 %>(<i>Unlimited</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_interactor_time_limit, tmp_prob, sup_prob, global);
       if (prob->interactor_time_limit < 0) {
         if (tmp_prob->interactor_time_limit < 0) {
 %>(<i>Not set</i>)<%
@@ -2285,7 +2200,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_init_cmd, tmp_prob, sup_prob, global);
       if (!prob->init_cmd) {
         if (!tmp_prob->init_cmd || !tmp_prob->init_cmd[0]) {
 %>(<i>Not set</i>)<%
@@ -2338,7 +2252,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_full_score, tmp_prob, sup_prob, global);
       if (prob->full_score < 0) {
         if (tmp_prob->full_score < 0) {
 %>(<i>Not set</i>)<%
@@ -2360,7 +2273,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_full_user_score, tmp_prob, sup_prob, global);
       if (prob->full_user_score < 0) {
         if (tmp_prob->full_user_score < 0) {
 %>(<i>Not set</i>)<%
@@ -2384,7 +2296,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_test_score, tmp_prob, sup_prob, global);
       if (prob->test_score < 0) {
         if (tmp_prob->test_score < 0) {
 %>(<i>Not set</i>)<%
@@ -2406,7 +2317,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_run_penalty, tmp_prob, sup_prob, global);
       if (prob->run_penalty < 0) {
         if (tmp_prob->run_penalty < 0) {
 %>(<i>Not set</i>)<%
@@ -2428,7 +2338,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_disqualified_penalty, tmp_prob, sup_prob, global);
       if (prob->disqualified_penalty < 0) {
         if (tmp_prob->disqualified_penalty < 0) {
 %>(<i>Not set</i>)<%
@@ -2457,7 +2366,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_acm_run_penalty, tmp_prob, sup_prob, global);
       if (prob->acm_run_penalty < 0 && tmp_prob->acm_run_penalty < 0) {
 %>(<i>Not set</i>)<%
       } else if (prob->acm_run_penalty < 0) {
@@ -2511,7 +2419,6 @@ function viewDialogOnChange(field)
 %>(<i>Empty</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_score_bonus, tmp_prob, sup_prob, global);
       if (!value) {
         if (!tmp_prob->score_bonus[0] || tmp_prob->score_bonus[0] == 1) {
 %>(<i>Not set</i>)<%
@@ -2582,7 +2489,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_tests_to_accept, tmp_prob, sup_prob, global);
       if (prob->tests_to_accept < 0 && tmp_prob->tests_to_accept < 0) {
 %>(<i>Not set</i>)<%
       } else {
@@ -2604,7 +2510,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_min_tests_to_accept, tmp_prob, sup_prob, global);
       if (prob->min_tests_to_accept < 0 && tmp_prob->min_tests_to_accept < 0) {
 %>(<i>Not set</i>)<%
       } else {
@@ -2672,7 +2577,6 @@ function viewDialogOnChange(field)
 %>(<i>Not set</i>)<%
       }
     } else {
-      prepare_set_prob_value(CNTSPROB_stand_attr, tmp_prob, sup_prob, global);
       if (!value) {
         if (tmp_prob->stand_attr[0] == 1) {
 %>(<i>Not set</i>)<%

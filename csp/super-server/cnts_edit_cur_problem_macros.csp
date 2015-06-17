@@ -55,6 +55,14 @@
     }
 #%>
 
+<%#define COPY_YESNO3
+    $("#edit-@1").val($("#orig-@1").val());
+#%>
+
+<%#define COPY_TEXTFIELD
+    $("#edit-@1").val($("#orig-@1").val());
+#%>
+
 <%#define COPY_TEXTFIELD_WITH_DEFAULT
     $("#edit-@1").val($("#orig-@1").val());
 <%
@@ -64,6 +72,11 @@
 <%
   }
 %>
+#%>
+
+<%#define COPY_DATETIME
+    $("#edit-@1_time").val($("#orig-@1_time").val());
+    $("#edit-@1_date").val($("#orig-@1_date").val());
 #%>
 
 <%#define ORIG_INHERITABLE_BOOLEAN

@@ -68,21 +68,21 @@ function popupRunningDialog(e, skipField)
 {
     $("#RunningDialogProbId").val(prob_id);
 
-    $("#edit-disable_testing").val($("#orig-disable_testing").val());
-    $("#edit-disable_auto_testing").val($("#orig-disable_auto_testing").val());
-    $("#edit-enable_compilation").val($("#orig-enable_compilation").val());
-    $("#edit-manual_checking").val($("#orig-manual_checking").val());
-    $("#edit-check_presentation").val($("#orig-check_presentation").val());
-    $("#edit-use_stdin").val($("#orig-use_stdin").val());
-    $("#edit-combined_stdin").val($("#orig-combined_stdin").val());
+    <%@expand COPY_YESNO3 "disable_testing"  %>
+    <%@expand COPY_YESNO3 "disable_auto_testing"  %>
+    <%@expand COPY_YESNO3 "enable_compilation"  %>
+    <%@expand COPY_YESNO3 "manual_checking"  %>
+    <%@expand COPY_YESNO3 "check_presentation"  %>
+    <%@expand COPY_YESNO3 "use_stdin"  %>
+    <%@expand COPY_YESNO3 "combined_stdin"  %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "input_file" "!prob->input_file[0]" %>
-    $("#edit-use_stdout").val($("#orig-use_stdout").val());
-    $("#edit-combined_stdout").val($("#orig-combined_stdout").val());
+    <%@expand COPY_YESNO3 "use_stdout"  %>
+    <%@expand COPY_YESNO3 "combined_stdout"  %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "output_file" "!prob->output_file[0]" %>
-    $("#edit-disable_stderr").val($("#orig-disable_stderr").val());
-    $("#edit-ignore_exit_code").val($("#orig-ignore_exit_code").val());
+    <%@expand COPY_YESNO3 "disable_stderr"  %>
+    <%@expand COPY_YESNO3 "ignore_exit_code"  %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "start_cmd" "!prob->start_cmd" %>
-    $("#edit-start_env").val($("#orig-start_env").val());
+    <%@expand COPY_TEXTFIELD "start_env"  %>
 
     if (e) e.stopPropagation();
     runningDialogOnChange();

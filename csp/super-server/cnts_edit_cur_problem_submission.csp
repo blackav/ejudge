@@ -64,27 +64,18 @@ function popupSubmissionDialog(e, skipField)
 {
     $("#SubmissionDialogProbId").val(prob_id);
 
-    $("#edit-disable_user_submit").val($("#orig-disable_user_submit").val());
-    $("#edit-disable_submit_after_ok").val($("#orig-disable_submit_after_ok").val());
-    $("#edit-advance_to_next").val($("#orig-advance_to_next").val());
-    $("#edit-disable_ctrl_chars").val($("#orig-disable_ctrl_chars").val());
-    $("#edit-enable_text_form").val($("#orig-enable_text_form").val());
-    $("#edit-binary").val($("#orig-binary").val());
-    $("#edit-max_user_run_count").val($("#orig-max_user_run_count").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-max_user_run_count-dflt").prop('checked', <s:v type="jsbool" value="prob->max_user_run_count < 0" />);
-<%
-  }
-%>
-    $("#edit-disable_language").val($("#orig-disable_language").val());
-    $("#edit-enable_language").val($("#orig-enable_language").val());
-    $("#edit-require").val($("#orig-require").val());
-    $("#edit-start_date_time").val($("#orig-start_date_time").val());
-    $("#edit-start_date_date").val($("#orig-start_date_date").val());
-    $("#edit-deadline_time").val($("#orig-deadline_time").val());
-    $("#edit-deadline_date").val($("#orig-deadline_date").val());
+    <%@expand COPY_YESNO3 "disable_user_submit"  %>
+    <%@expand COPY_YESNO3 "disable_submit_after_ok"  %>
+    <%@expand COPY_YESNO3 "advance_to_next"  %>
+    <%@expand COPY_YESNO3 "disable_ctrl_chars"  %>
+    <%@expand COPY_YESNO3 "enable_text_form"  %>
+    <%@expand COPY_YESNO3 "binary"  %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_user_run_count" "prob->max_user_run_count < 0" %>
+    <%@expand COPY_TEXTFIELD "disable_language"  %>
+    <%@expand COPY_TEXTFIELD "enable_language"  %>
+    <%@expand COPY_TEXTFIELD "require"  %>
+    <%@expand COPY_DATETIME "start_date"  %>
+    <%@expand COPY_DATETIME "deadline"  %>
 
     if (e) e.stopPropagation();
     submissionDialogOnChange();

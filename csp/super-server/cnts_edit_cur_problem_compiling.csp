@@ -53,32 +53,11 @@ function popupCompilingDialog(e, skipField)
 {
     $("#CompilingDialogProbId").val(prob_id);
 
-    $("#edit-style_checker_cmd").val($("#orig-style_checker_cmd").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-style_checker_cmd-dflt").prop('checked', <s:v type="jsbool" value="!prob->style_checker_cmd[0]" />);
-<%
-  }
-%>
-    $("#edit-style_checker_env").val($("#orig-style_checker_env").val());
-    $("#edit-lang_compiler_env").val($("#orig-lang_compiler_env").val());
-    $("#edit-source_header").val($("#orig-source_header").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-source_header-dflt").prop('checked', <s:v type="jsbool" value="!prob->source_header[0]" />);
-<%
-  }
-%>
-    $("#edit-source_footer").val($("#orig-source_footer").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-source_footer-dflt").prop('checked', <s:v type="jsbool" value="!prob->source_footer[0]" />);
-<%
-  }
-%>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "style_checker_cmd" "!prob->style_checker_cmd[0]" %>
+    <%@expand COPY_TEXTFIELD "style_checker_env"  %>
+    <%@expand COPY_TEXTFIELD "lang_compiler_env"  %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "source_header" "!prob->source_header[0]" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "source_footer" "!prob->source_footer[0]" %>
 
     if (e) e.stopPropagation();
     compilingDialogOnChange();
@@ -87,36 +66,12 @@ function popupCompilingDialog(e, skipField)
 
 function compilingDialogOnChange(field)
 {
-    if (field == "style_checker_cmd-dflt") {
-        if ($("#edit-style_checker_cmd-dflt").is(':checked')) {
-            $("#edit-style_checker_cmd").val("");
-        }
-    } else if (field == "style_checker_cmd") {
-        if ($("#edit-style_checker_cmd").val() != "") {
-            $("#edit-style_checker_cmd-dflt").prop('checked', false);
-        }
-    }
+    <%@expand ONCHANGE_WITH_DEFAULT "style_checker_cmd" %>
 
     $("#edit-style_checker_env-div").toggle($("#edit-style_checker_cmd").val() != "" || <s:v type="jsbool" value="sup_prob && sup_prob->style_checker_cmd[0]" />);
 
-    if (field == "source_header-dflt") {
-        if ($("#edit-source_header-dflt").is(':checked')) {
-            $("#edit-source_header").val("");
-        }
-    } else if (field == "source_header") {
-        if ($("#edit-source_header").val() != "") {
-            $("#edit-source_header-dflt").prop('checked', false);
-        }
-    }
-    if (field == "source_footer-dflt") {
-        if ($("#edit-source_footer-dflt").is(':checked')) {
-            $("#edit-source_footer").val("");
-        }
-    } else if (field == "source_footer") {
-        if ($("#edit-source_footer").val() != "") {
-            $("#edit-source_footer-dflt").prop('checked', false);
-        }
-    }
+    <%@expand ONCHANGE_WITH_DEFAULT "source_header" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "source_footer" %>
 }
 
 
