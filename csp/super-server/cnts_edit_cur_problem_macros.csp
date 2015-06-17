@@ -55,6 +55,10 @@
     }
 #%>
 
+<%#define COPY_SIMPLE
+    $("#edit-@1").val($("#orig-@1").val());
+#%>
+
 <%#define COPY_YESNO3
     $("#edit-@1").val($("#orig-@1").val());
 #%>

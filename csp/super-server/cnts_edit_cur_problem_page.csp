@@ -159,20 +159,7 @@ static const unsigned char * const form_row_attrs[]=
         <s:hidden name="action" ac="prob-save-files-form" />
         <input type="hidden" id="FilesDialogProbId" name="prob_id" value="" />
 
-        <div id="edit-binary_input-div">
-            <div style="width: 250px; display: inline-block;"><label for="edit-binary_input">Input data is binary?</label></div>
-            <select id="edit-binary_input" name="binary_input" onchange="filesDialogOnChange()">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
+        <%@expand MENU_YESNO3 "binary_input" "files" "Input data is binary" "250" %>
 
         <div id="edit-normalization-div">
             <div style="width: 250px; display: inline-block;"><label for="edit-normalization">Test normalization mode:</label></div>
@@ -192,176 +179,23 @@ static const unsigned char * const form_row_attrs[]=
             </select>
         </div>
 
-        <div id="edit-xml_file-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-xml_file">XML File with problem statement:</label></div>
-            <input type="text" size="20" name="xml_file" id="edit-xml_file" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('xml_file')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="xml_file-dflt" id="edit-xml_file-dflt" value="1" onchange="filesDialogOnChange('xml_file-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-test_dir-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-test_dir">Directory with tests:</label></div>
-            <input type="text" size="20" name="test_dir" id="edit-test_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('test_dir')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="test_dir-dflt" id="edit-test_dir-dflt" value="1" onchange="filesDialogOnChange('test_dir-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-test_pat-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-test_pat">Pattern for test file names:</label></div>
-            <input type="text" size="20" name="test_pat" id="edit-test_pat" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('test_pat')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="test_pat-dflt" id="edit-test_pat-dflt" value="1" onchange="filesDialogOnChange('test_pat-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-test_sfx-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-test_sfx">Suffix of test files:</label></div>
-            <input type="text" size="20" name="test_sfx" id="edit-test_sfx" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('test_sfx')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="test_sfx-dflt" id="edit-test_sfx-dflt" value="1" onchange="filesDialogOnChange('test_sfx-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-use_corr-div">
-            <div style="width: 250px; display: inline-block;"><label for="edit-use_corr">Use &quot;correct answer&quot; files for check?</label></div>
-            <select id="edit-use_corr" name="use_corr" onchange="filesDialogOnChange()">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
-
-        <div id="edit-corr_dir-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-corr_dir">Directory with &quot;correct answer&quot; files:</label></div>
-            <input type="text" size="20" name="corr_dir" id="edit-corr_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('corr_dir')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="corr_dir-dflt" id="edit-corr_dir-dflt" value="1" onchange="filesDialogOnChange('corr_dir-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-corr_pat-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-corr_pat">Pattern for &quot;correct answer&quot; file names:</label></div>
-            <input type="text" size="20" name="corr_pat" id="edit-corr_pat" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('corr_pat')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="corr_pat-dflt" id="edit-corr_pat-dflt" value="1" onchange="filesDialogOnChange('corr_pat-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-corr_sfx-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-corr_sfx">Suffix of &quot;correct answer&quot; files:</label></div>
-            <input type="text" size="20" name="corr_sfx" id="edit-corr_sfx" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('corr_sfx')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="corr_sfx-dflt" id="edit-corr_sfx-dflt" value="1" onchange="filesDialogOnChange('corr_sfx-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-use_info-div">
-            <div style="width: 250px; display: inline-block;"><label for="edit-use_info">Use test info files for check?</label></div>
-            <select id="edit-use_info" name="use_info" onchange="filesDialogOnChange()">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
-
-        <div id="edit-info_dir-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-info_dir">Directory with test info files:</label></div>
-            <input type="text" size="20" name="info_dir" id="edit-info_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('info_dir')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="info_dir-dflt" id="edit-info_dir-dflt" value="1" onchange="filesDialogOnChange(info_dir-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-info_pat-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-info_pat">Pattern for test info file names:</label></div>
-            <input type="text" size="20" name="info_pat" id="edit-info_pat" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('info_pat')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="info_pat-dflt" id="edit-info_pat-dflt" value="1" onchange="filesDialogOnChange('info_pat-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-info_sfx-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-info_sfx">Suffix of test info:</label></div>
-            <input type="text" size="20" name="info_sfx" id="edit-info_sfx" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('info_sfx')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="info_sfx-dflt" id="edit-info_sfx-dflt" value="1" onchange="filesDialogOnChange('info_sfx-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-use_tgz-div">
-            <div style="width: 250px; display: inline-block;"><label for="edit-use_tgz">Use special working directory for check?</label></div>
-            <select id="edit-use_tgz" name="use_tgz" onchange="filesDialogOnChange()">
-<%
-  if (sup_prob) {
-%>
-                <option value="-1">Default</option>
-<%
-  }
-%>
-                <option value="0">No</option>
-                <option value="1">Yes</option>
-            </select>
-        </div>
-
-        <div id="edit-tgz_pat-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-tgz_pat">Pattern for working dir archives:</label></div>
-            <input type="text" size="20" name="tgz_pat" id="edit-tgz_pat" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('tgz_pat')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="tgz_pat-dflt" id="edit-tgz_pat-dflt" value="1" onchange="filesDialogOnChange('tgz_pat-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-tgzdir_pat-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-tgzdir_pat">Pattern for master working dirs:</label></div>
-            <input type="text" size="20" name="tgzdir_pat" id="edit-tgzdir_pat" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('tgzdir_pat')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="tgzdir_pat-dflt" id="edit-tgzdir_pat-dflt" value="1" onchange="filesDialogOnChange('tgzdir_pat-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-tgz_sfx-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-tgz_sfx">Suffix of working dir archives:</label></div>
-            <input type="text" size="20" name="tgz_sfx" id="edit-tgz_sfx" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('tgz_sfx')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="tgz_sfx-dflt" id="edit-tgz_sfx-dflt" value="1" onchange="filesDialogOnChange('tgz_sfx-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-tgzdir_sfx-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-tgzdir_sfx">Suffix of master working dirs:</label></div>
-            <input type="text" size="20" name="tgzdir_sfx" id="edit-tgzdir_sfx" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange('tgzdir_sfx')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="tgzdir_sfx-dflt" id="edit-tgzdir_sfx-dflt" value="1" onchange="filesDialogOnChange('tgzdir_sfx-dflt')" />)<%
-  }
-%>
-        </div>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "xml_file" "files" "XML File with problem statement" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "test_dir" "files" "Directory with tests" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "test_pat" "files" "Pattern for test file names" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "test_sfx" "files" "Suffix of test files" "250" %>
+        <%@expand MENU_YESNO3 "use_corr" "files" "Use &quot;correct answer&quot; files for check" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "corr_dir" "files" "Directory with &quot;correct answer&quot; files" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "corr_pat" "files" "Pattern for &quot;correct answer&quot; file names" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "corr_sfx" "files" "Suffix of &quot;correct answer&quot; files" "250" %>
+        <%@expand MENU_YESNO3 "use_info" "files" "Use test info files for check" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "info_dir" "files" "Directory with test info files" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "info_pat" "files" "Pattern for test info file names" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "info_sfx" "files" "Suffix of test info file names" "250" %>
+        <%@expand MENU_YESNO3 "use_tgz" "files" "Use special working directory for check" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "tgz_pat" "files" "Pattern for working dir archives" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "tgzdir_pat" "files" "Pattern for master working dirs" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "tgz_sfx" "files" "Suffix of working dir archives" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "tgzdir_sfx" "files" "Suffix of master working dirs" "250" %>
 
     </s:form>
 </div>
@@ -371,37 +205,11 @@ static const unsigned char * const form_row_attrs[]=
         <s:hidden name="action" ac="prob-save-validation-form" />
         <input type="hidden" id="ValidationDialogProbId" name="prob_id" value="" />
 
-        <div id="edit-test_checker_cmd-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-test_checker_cmd">Test checker (validator) name:</label></div>
-            <input type="text" size="20" name="test_checker_cmd" id="edit-test_checker_cmd" value="" class="text ui-widget-content ui-corner-all" onchange="validationDialogOnChange('test_checker_cmd')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="test_checker_cmd-dflt" id="edit-test_checker_cmd-dflt" value="1" onchange="validationDialogOnChange('test_checker_cmd-dflt')" />)<%
-  }
-%>
-        </div>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "test_checker_cmd" "validation" "Test checker (validator) name" "250" %>
+        <%@expand MENU_TEXTFIELD "test_checker_env" "validation" "Test checker environment" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "solution_src" "validation" "Solution source name" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "solution_cmd" "validation" "Solution command" "250" %>
 
-        <div id="edit-test_checker_env-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-test_checker_env">Test checker environment:</label></div>
-            <input type="text" size="20" name="test_checker_env" id="edit-test_checker_env" value="" class="text ui-widget-content ui-corner-all" onchange="validationDialogOnChange('test_checker_env')" />
-        </div>
-
-        <div id="edit-solution_src-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-solution_src">Solution source name:</label></div>
-            <input type="text" size="20" name="solution_src" id="edit-solution_src" value="" class="text ui-widget-content ui-corner-all" onchange="validationDialogOnChange('solution_src')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="solution_src-dflt" id="edit-solution_src-dflt" value="1" onchange="validationDialogOnChange('solution_src-dflt')" />)<%
-  }
-%>
-        </div>
-
-        <div id="edit-solution_cmd-div">
-            <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-solution_cmd">Solution command:</label></div>
-            <input type="text" size="20" name="solution_cmd" id="edit-solution_cmd" value="" class="text ui-widget-content ui-corner-all" onchange="validationDialogOnChange('solution_cmd')" /><%
-  if (sup_prob) {
-%>(Default: <input type="checkbox" name="solution_cmd-dflt" id="edit-solution_cmd-dflt" value="1" onchange="validationDialogOnChange('solution_cmd-dflt')" />)<%
-  }
-%>
-        </div>
     </s:form>
 </div>
 
@@ -642,13 +450,13 @@ function popupIdDialog(e, skipField)
 {
     $("#IdDialogProbId").val(prob_id);
     $("#edit-prob_id").val(prob_id);
-    $("#edit-short_name").val($("#orig-short_name").val());
-    $("#edit-internal_name").val($("#orig-internal_name").val());
-    $("#edit-long_name").val($("#orig-long_name").val());
-    $("#edit-super").val($("#orig-super").val());
-    $("#edit-type").val($("#orig-type").val());
-    $("#edit-variant_num").val($("#orig-variant_num").val());
-    $("#edit-autoassign_variants").val($("#orig-autoassign_variants").val());
+    <%@expand COPY_SIMPLE "short_name" %>
+    <%@expand COPY_SIMPLE "internal_name" %>
+    <%@expand COPY_SIMPLE "long_name" %>
+    <%@expand COPY_SIMPLE "super" %>
+    <%@expand COPY_SIMPLE "type" %>
+    <%@expand COPY_SIMPLE "variant_num" %>
+    <%@expand COPY_SIMPLE "autoassign_variants" %>
 
     if (e) e.stopPropagation();
     idDialogOnChange();
@@ -664,130 +472,26 @@ function idDialogOnChange()
 function popupFilesDialog(e, skipField)
 {
     $("#FilesDialogProbId").val(prob_id);
-    $("#edit-binary_input").val($("#orig-binary_input").val());
-    $("#edit-normalization").val($("#orig-normalization").val());
 
-    $("#edit-xml_file").val($("#orig-xml_file").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-xml_file-dflt").prop('checked', <s:v type="jsbool" value="!prob->xml_file[0]" />);
-<%
-  }
-%>
-
-    $("#edit-test_dir").val($("#orig-test_dir").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-test_dir-dflt").prop('checked', <s:v type="jsbool" value="!prob->test_dir[0]" />);
-<%
-  }
-%>
-
-    $("#edit-test_pat").val($("#orig-test_pat").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-test_pat-dflt").prop('checked', <s:v type="jsbool" value="prob->test_pat[0] == 1" />);
-<%
-  }
-%>
-
-    $("#edit-test_sfx").val($("#orig-test_sfx").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-test_sfx-dflt").prop('checked', <s:v type="jsbool" value="prob->test_sfx[0] == 1" />);
-<%
-  }
-%>
-
-    $("#edit-use_corr").val($("#orig-use_corr").val());
-    $("#edit-corr_dir").val($("#orig-corr_dir").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-corr_dir-dflt").prop('checked', <s:v type="jsbool" value="!prob->corr_dir[0]" />);
-<%
-  }
-%>
-    $("#edit-corr_pat").val($("#orig-corr_pat").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-corr_pat-dflt").prop('checked', <s:v type="jsbool" value="prob->corr_pat[0] == 1" />);
-<%
-  }
-%>
-    $("#edit-corr_sfx").val($("#orig-corr_sfx").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-corr_sfx-dflt").prop('checked', <s:v type="jsbool" value="prob->corr_sfx[0] == 1" />);
-<%
-  }
-%>
-
-    $("#edit-use_info").val($("#orig-use_info").val());
-    $("#edit-info_dir").val($("#orig-info_dir").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-info_dir-dflt").prop('checked', <s:v type="jsbool" value="!prob->info_dir[0]" />);
-<%
-  }
-%>
-    $("#edit-info_pat").val($("#orig-info_pat").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-info_pat-dflt").prop('checked', <s:v type="jsbool" value="prob->info_pat[0] == 1" />);
-<%
-  }
-%>
-    $("#edit-info_sfx").val($("#orig-info_sfx").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-info_sfx-dflt").prop('checked', <s:v type="jsbool" value="prob->info_sfx[0] == 1" />);
-<%
-  }
-%>
-
-    $("#edit-use_tgz").val($("#orig-use_tgz").val());
-    $("#edit-tgz_pat").val($("#orig-tgz_pat").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-tgz_pat-dflt").prop('checked', <s:v type="jsbool" value="prob->tgz_pat[0] == 1" />);
-<%
-  }
-%>
-    $("#edit-tgz_sfx").val($("#orig-tgz_sfx").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-tgz_sfx-dflt").prop('checked', <s:v type="jsbool" value="prob->tgz_sfx[0] == 1" />);
-<%
-  }
-%>
-    $("#edit-tgzdir_pat").val($("#orig-tgzdir_pat").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-tgzdir_pat-dflt").prop('checked', <s:v type="jsbool" value="prob->tgzdir_pat[0] == 1" />);
-<%
-  }
-%>
-    $("#edit-tgzdir_sfx").val($("#orig-tgzdir_sfx").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-tgzdir_sfx-dflt").prop('checked', <s:v type="jsbool" value="prob->tgzdir_sfx[0] == 1" />);
-<%
-  }
-%>
+    <%@expand COPY_YESNO3 "binary_input" %>
+    <%@expand COPY_SIMPLE "normalization" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "xml_file" "!prob->xml_file[0]" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_dir" "!prob->test_dir[0]" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_pat" "prob->test_pat[0] == 1" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_sfx" "prob->test_sfx[0] == 1" %>
+    <%@expand COPY_YESNO3 "use_corr" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_dir" "!prob->corr_dir[0]" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_pat" "prob->corr_pat[0] == 1" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_sfx" "prob->corr_sfx[0] == 1" %>
+    <%@expand COPY_YESNO3 "use_info" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_dir" "!prob->info_dir[0]" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_pat" "prob->info_pat[0] == 1" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_sfx" "prob->info_sfx[0] == 1" %>
+    <%@expand COPY_YESNO3 "use_tgz" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgz_pat" "prob->tgz_pat[0] == 1" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgz_sfx" "prob->tgz_sfx[0] == 1" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgzdir_pat" "prob->tgzdir_pat[0] == 1" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgzdir_sfx" "prob->tgzdir_sfx[0] == 1" %>
 
     if (e) e.stopPropagation();
     filesDialogOnChange();
@@ -796,182 +500,56 @@ function popupFilesDialog(e, skipField)
 
 function filesDialogOnChange(field)
 {
-    $("#edit-normalization-div").toggle(!toBool($("#edit-binary_input").val(), <s:v type="jsbool" value="sup_prob && sup_prob->binary_input > 0" />));
-    if (field == "xml_file-dflt") {
-        if ($("#edit-xml_file-dflt").is(':checked')) {
-            $("#edit-xml_file").val("");
-        }
-    } else if (field == "xml_file") {
-        if ($("#edit-xml_file").val() != "") {
-            $("#edit-xml_file-dflt").prop('checked', false);
-        }
-    }
+    var binary_input = toBool($("#edit-binary_input").val(), <s:v type="jsbool" value="sup_prob && sup_prob->binary_input > 0" />);
+    $("#edit-normalization-div").toggle(!binary_input);
 
-    $("#edit-test_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" />);
-    if (field == "test_dir-dflt") {
-        if ($("#edit-test_dir-dflt").is(':checked')) {
-            $("#edit-test_dir").val("");
-        }
-    } else if (field == "test_dir") {
-        if ($("#edit-test_dir").val() != "") {
-            $("#edit-test_dir-dflt").prop('checked', false);
-        }
-    }
-    if (field == "test_pat-dflt") {
-        if ($("#edit-test_pat-dflt").is(':checked')) {
-            $("#edit-test_pat").val("");
-        }
-    } else if (field == "test_pat") {
-        if ($("#edit-test_pat").val() != "") {
-            $("#edit-test_pat-dflt").prop('checked', false);
-        }
-    }
-    if (field == "test_sfx-dflt") {
-        if ($("#edit-test_sfx-dflt").is(':checked')) {
-            $("#edit-test_sfx").val("");
-        }
-    } else if (field == "test_sfx") {
-        if ($("#edit-test_sfx").val() != "") {
-            $("#edit-test_sfx-dflt").prop('checked', false);
-        }
-    }
+    <%@expand ONCHANGE_WITH_DEFAULT "xml_file" %>
 
-    $("#edit-corr_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" /> && toBool($("#edit-use_corr").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_corr > 0" />));
-    $("#edit-corr_sfx-div").toggle(toBool($("#edit-use_corr").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_corr > 0" />));
-    $("#edit-corr_pat-div").toggle(toBool($("#edit-use_corr").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_corr > 0" />));
+    var advanced_layout = <s:v type="jsbool" value="global->advanced_layout <= 0" />;
+    $("#edit-test_dir-div").toggle(advanced_layout);
 
-    if (field == "corr_dir-dflt") {
-        if ($("#edit-corr_dir-dflt").is(':checked')) {
-            $("#edit-corr_dir").val("");
-        }
-    } else if (field == "corr_dir") {
-        if ($("#edit-corr_dir").val() != "") {
-            $("#edit-corr_dir-dflt").prop('checked', false);
-        }
-    }
-    if (field == "corr_pat-dflt") {
-        if ($("#edit-corr_pat-dflt").is(':checked')) {
-            $("#edit-corr_pat").val("");
-        }
-    } else if (field == "corr_pat") {
-        if ($("#edit-corr_pat").val() != "") {
-            $("#edit-corr_pat-dflt").prop('checked', false);
-        }
-    }
-    if (field == "corr_sfx-dflt") {
-        if ($("#edit-corr_sfx-dflt").is(':checked')) {
-            $("#edit-corr_sfx").val("");
-        }
-    } else if (field == "corr_sfx") {
-        if ($("#edit-corr_sfx").val() != "") {
-            $("#edit-corr_sfx-dflt").prop('checked', false);
-        }
-    }
+    <%@expand ONCHANGE_WITH_DEFAULT "test_dir" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "test_pat" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "test_sfx" %>
 
-    $("#edit-info_dir-div").toggle(<s:v type="jsbool" value="global->advanced_layout <= 0" /> && toBool($("#edit-use_info").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_info > 0" />));
-    $("#edit-info_sfx-div").toggle(toBool($("#edit-use_info").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_info > 0" />));
-    $("#edit-info_pat-div").toggle(toBool($("#edit-use_info").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_info > 0" />));
+    var use_corr = toBool($("#edit-use_corr").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_corr > 0" />);
+    $("#edit-corr_dir-div").toggle(advanced_layout && use_corr);
+    $("#edit-corr_sfx-div").toggle(use_corr);
+    $("#edit-corr_pat-div").toggle(use_corr);
 
-    if (field == "info_dir-dflt") {
-        if ($("#edit-info_dir-dflt").is(':checked')) {
-            $("#edit-info_dir").val("");
-        }
-    } else if (field == "info_dir") {
-        if ($("#edit-info_dir").val() != "") {
-            $("#edit-info_dir-dflt").prop('checked', false);
-        }
-    }
-    if (field == "info_pat-dflt") {
-        if ($("#edit-info_pat-dflt").is(':checked')) {
-            $("#edit-info_pat").val("");
-        }
-    } else if (field == "info_pat") {
-        if ($("#edit-info_pat").val() != "") {
-            $("#edit-info_pat-dflt").prop('checked', false);
-        }
-    }
-    if (field == "info_sfx-dflt") {
-        if ($("#edit-info_sfx-dflt").is(':checked')) {
-            $("#edit-info_sfx").val("");
-        }
-    } else if (field == "info_sfx") {
-        if ($("#edit-info_sfx").val() != "") {
-            $("#edit-info_sfx-dflt").prop('checked', false);
-        }
-    }
+    <%@expand ONCHANGE_WITH_DEFAULT "corr_dir" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "corr_pat" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "corr_sfx" %>
 
-    $("#edit-tgz_sfx-div").toggle(toBool($("#edit-use_tgz").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_tgz > 0" />));
-    $("#edit-tgz_pat-div").toggle(toBool($("#edit-use_tgz").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_tgz > 0" />));
-    $("#edit-tgzdir_sfx-div").toggle(toBool($("#edit-use_tgz").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_tgz > 0" />));
-    $("#edit-tgzdir_pat-div").toggle(toBool($("#edit-use_tgz").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_tgz > 0" />));
+    var use_info = toBool($("#edit-use_info").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_info > 0" />);
+    $("#edit-info_dir-div").toggle(advanced_layout && use_info);
+    $("#edit-info_sfx-div").toggle(use_info);
+    $("#edit-info_pat-div").toggle(use_info);
 
-    if (field == "tgz_pat-dflt") {
-        if ($("#edit-tgz_pat-dflt").is(':checked')) {
-            $("#edit-tgz_pat").val("");
-        }
-    } else if (field == "tgz_pat") {
-        if ($("#edit-tgz_pat").val() != "") {
-            $("#edit-tgz_pat-dflt").prop('checked', false);
-        }
-    }
-    if (field == "tgz_sfx-dflt") {
-        if ($("#edit-tgz_sfx-dflt").is(':checked')) {
-            $("#edit-tgz_sfx").val("");
-        }
-    } else if (field == "tgz_sfx") {
-        if ($("#edit-tgz_sfx").val() != "") {
-            $("#edit-tgz_sfx-dflt").prop('checked', false);
-        }
-    }
-    if (field == "tgzdir_pat-dflt") {
-        if ($("#edit-tgzdir_pat-dflt").is(':checked')) {
-            $("#edit-tgzdir_pat").val("");
-        }
-    } else if (field == "tgzdir_pat") {
-        if ($("#edit-tgzdir_pat").val() != "") {
-            $("#edit-tgzdir_pat-dflt").prop('checked', false);
-        }
-    }
-    if (field == "tgzdir_sfx-dflt") {
-        if ($("#edit-tgzdir_sfx-dflt").is(':checked')) {
-            $("#edit-tgzdir_sfx").val("");
-        }
-    } else if (field == "tgzdir_sfx") {
-        if ($("#edit-tgzdir_sfx").val() != "") {
-            $("#edit-tgzdir_sfx-dflt").prop('checked', false);
-        }
-    }
+    <%@expand ONCHANGE_WITH_DEFAULT "info_dir" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "info_pat" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "info_sfx" %>
+
+    var use_tgz = toBool($("#edit-use_tgz").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_tgz > 0" />);
+    $("#edit-tgz_sfx-div").toggle(use_tgz);
+    $("#edit-tgz_pat-div").toggle(use_tgz);
+    $("#edit-tgzdir_sfx-div").toggle(use_tgz);
+    $("#edit-tgzdir_pat-div").toggle(use_tgz);
+
+    <%@expand ONCHANGE_WITH_DEFAULT "tgz_pat" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "tgz_sfx" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "tgzdir_pat" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "tgzdir_sfx" %>
 }
 
 function popupValidationDialog(e, skipField)
 {
     $("#ValidationDialogProbId").val(prob_id);
 
-    $("#edit-test_checker_cmd").val($("#orig-test_checker_cmd").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-test_checker_cmd-dflt").prop('checked', <s:v type="jsbool" value="!prob->test_checker_cmd" />);
-<%
-  }
-%>
-    $("#edit-test_checker_env").val($("#orig-test_checker_env").val());
-    $("#edit-solution_src").val($("#orig-solution_src").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-solution_src-dflt").prop('checked', <s:v type="jsbool" value="!prob->solution_src" />);
-<%
-  }
-%>
-    $("#edit-solution_cmd").val($("#orig-solution_cmd").val());
-<%
-  if (sup_prob) {
-%>
-    $("#edit-solution_cmd-dflt").prop('checked', <s:v type="jsbool" value="!prob->solution_cmd" />);
-<%
-  }
-%>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_checker_cmd" "!prob->test_checker_cmd" %>
+    <%@expand COPY_TEXTFIELD "test_checker_env" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "solution_src" "!prob->solution_src" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "solution_cmd" "!prob->solution_cmd" %>
 
     if (e) e.stopPropagation();
     validationDialogOnChange();
@@ -980,45 +558,22 @@ function popupValidationDialog(e, skipField)
 
 function validationDialogOnChange(field)
 {
-    if (field == "test_checker_cmd-dflt") {
-        if ($("#edit-test_checker_cmd-dflt").is(':checked')) {
-            $("#edit-test_checker_cmd").val("");
-        }
-    } else if (field == "test_checker_cmd") {
-        if ($("#edit-test_checker_cmd").val() != "") {
-            $("#edit-test_checker_cmd-dflt").prop('checked', false);
-        }
-    }
+    <%@expand ONCHANGE_WITH_DEFAULT "test_checker_cmd" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "solution_src" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "solution_cmd" %>
+
     $("#edit-test_checker_env-div").toggle($("#edit-test_checker_cmd").val() != "" || (<s:v type="jsbool" value="sup_prob && sup_prob->test_checker_cmd" /> && $("#edit-test_checker_cmd-dflt").is(':checked')));
-    if (field == "solution_src-dflt") {
-        if ($("#edit-solution_src-dflt").is(':checked')) {
-            $("#edit-solution_src").val("");
-        }
-    } else if (field == "solution_src") {
-        if ($("#edit-solution_src").val() != "") {
-            $("#edit-solution_src-dflt").prop('checked', false);
-        }
-    }
-    if (field == "solution_cmd-dflt") {
-        if ($("#edit-solution_cmd-dflt").is(':checked')) {
-            $("#edit-solution_cmd").val("");
-        }
-    } else if (field == "solution_cmd") {
-        if ($("#edit-solution_cmd").val() != "") {
-            $("#edit-solution_cmd-dflt").prop('checked', false);
-        }
-    }
 }
 
 function popupViewDialog(e, skipField)
 {
     $("#ViewDialogProbId").val(prob_id);
 
-    $("#edit-disable_tab").val($("#orig-disable_tab").val());
-    $("#edit-unrestricted_statement").val($("#orig-unrestricted_statement").val());
-    $("#edit-hide_file_names").val($("#orig-hide_file_names").val());
-    $("#edit-hide_real_time_limit").val($("#orig-hide_real_time_limit").val());
-    $("#edit-hide_variant").val($("#orig-hide_variant").val());
+    <%@expand COPY_YESNO3 "disable_tab" %>
+    <%@expand COPY_YESNO3 "unrestricted_statement" %>
+    <%@expand COPY_YESNO3 "hide_file_names" %>
+    <%@expand COPY_YESNO3 "hide_real_time_limit" %>
+    <%@expand COPY_YESNO3 "hide_variant" %>
 
     if (e) e.stopPropagation();
     viewDialogOnChange();
