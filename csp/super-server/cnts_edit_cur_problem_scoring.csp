@@ -5,6 +5,28 @@
         <s:hidden name="action" ac="prob-save-scoring-form" />
         <input type="hidden" id="ScoringDialogProbId" name="prob_id" value="" />
 
+        <%@expand MENU_YESNO3 "ignore_compile_errors" "scoring" "Ignore compilation errors" "300" %>
+        <%@expand MENU_YESNO3 "use_ac_not_ok" "scoring" "Use PR (pending review) status instead of OK" "300" %>
+        <%@expand MENU_TEXTFIELD "ok_status" "scoring" "Success status" "300" %>
+        <%@expand MENU_YESNO3 "ignore_prev_ac" "scoring" "Mark previous PR as IG (ignored)" "300" %>
+        <%@expand MENU_YESNO3 "olympiad_mode" "scoring" "Use Olympiad mode" "300" %>
+        <%@expand MENU_YESNO3 "score_latest" "scoring" "Score the latest submit" "300" %>
+        <%@expand MENU_YESNO3 "score_latest_or_unmarked" "scoring" "Score the latest or the best unmarked" "300" %>
+        <%@expand MENU_YESNO3 "score_latest_marked" "scoring" "Score the latest marked submit" "300" %>
+        <%@expand MENU_YESNO3 "ignore_unmarked" "scoring" "Ignore unmarked runs in scoring" "300" %>
+        <%@expand MENU_YESNO3 "score_tokenized" "scoring" "Score only tokenized submits" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "full_score" "scoring" "Score for full solution" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "full_user_score" "scoring" "Score for user-visible full solution" "300" %>
+        <%@expand MENU_YESNO3 "variable_full_score" "scoring" "Allow variable score for full solution" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "test_score" "scoring" "Default score for 1 passed test" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "run_penalty" "scoring" "Penalty for a submission" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "disqualified_penalty" "scoring" "Penalty for a disqualified submission" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "acm_run_penalty" "scoring" "Penalty for a submission (minutes)" "300" %>
+        <%@expand MENU_TEXTFIELD "test_score_list" "scoring" "Test scores for tests" "300" %>
+        <%@expand MENU_TEXTFIELD "score_tests" "scoring" "Tests for problem scores" "300" %>
+        <%@expand MENU_TEXTFIELD "test_sets" "scoring" "Specially scored test sets" "300" %>
+        <%@expand MENU_TEXTFIELD "score_bonus" "scoring" "Additional score bonus" "300" %>
+
     </s:form>
 </div>
 
@@ -12,7 +34,7 @@
 $(function() {
     scoringDialog = $("#ScoringDialogDiv").dialog({
         autoOpen: false,
-        height: 350,
+        height: 500,
         width: 650,
         modal: true,
         buttons: {
@@ -44,6 +66,28 @@ $(function() {
 function popupScoringDialog(e, skipField)
 {
     $("#ScoringDialogProbId").val(prob_id);
+
+    <%@expand COPY_YESNO3 "ignore_compile_errors" %>
+    <%@expand COPY_YESNO3 "use_ac_not_ok" %>
+    <%@expand COPY_TEXTFIELD "ok_status" %>
+    <%@expand COPY_YESNO3 "ignore_prev_ac" %>
+    <%@expand COPY_YESNO3 "olympiad_mode" %>
+    <%@expand COPY_YESNO3 "score_latest" %>
+    <%@expand COPY_YESNO3 "score_latest_or_unmarked" %>
+    <%@expand COPY_YESNO3 "score_latest_marked" %>
+    <%@expand COPY_YESNO3 "ignore_unmarked" %>
+    <%@expand COPY_YESNO3 "score_tokenized" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "full_score" "prob->full_score < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "full_user_score" "prob->full_user_score < 0" %>
+    <%@expand COPY_YESNO3 "variable_full_score" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_score" "prob->test_score < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "run_penalty" "prob->run_penalty < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "disqualified_penalty" "prob->disqualified_penalty < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "acm_run_penalty" "prob->acm_run_penalty < 0" %>
+    <%@expand COPY_TEXTFIELD "test_score_list" %>
+    <%@expand COPY_TEXTFIELD "score_tests" %>
+    <%@expand COPY_TEXTFIELD "test_sets" %>
+    <%@expand COPY_TEXTFIELD "score_bonus" %>
 
     if (e) e.stopPropagation();
     scoringDialogOnChange();

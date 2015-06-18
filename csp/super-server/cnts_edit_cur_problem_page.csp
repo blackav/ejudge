@@ -249,6 +249,7 @@ static const unsigned char * const form_row_attrs[]=
 
 <script type="text/javascript">
 var prob_id = <s:v value="prob_id" />;
+var global_score_acm = <s:v type="jsbool" value="global->score_system == SCORE_ACM" />;
 </script>
 
 <%@include "cnts_edit_cur_problem_submission.csp"
