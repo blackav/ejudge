@@ -41,19 +41,7 @@
 %></td><%
   }
 %>
-    <%
-  if (cur_page != 4) {
-%><td><s:a class="a-button-style" ac="cnts-edit-cur-problems-page"><%
-  } else {
-%><td class="a-button-style"><%
-  }
-%><s:_>Problems (serve.cfg)</s:_><%
-  if (cur_page != 4) {
-%></s:a></td><%
-  } else {
-%></td><%
-  }
-%>
+    <td><s:a class="a-button-style" ac="cnts-edit-cur-problems-page"><s:_>Problems (serve.cfg)</s:_></s:a></td>
     <%
   if (cur_page != 5) {
 %><td><s:a class="a-button-style" ac="cnts-start-edit-variant-action"><%
