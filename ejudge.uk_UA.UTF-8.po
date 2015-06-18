@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-05-03 10:36+0300\n"
+"POT-Creation-Date: 2015-06-19 02:31+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -1670,9 +1670,6 @@ msgid "Help"
 msgstr ""
 
 msgid "Hidden?"
-msgstr ""
-
-msgid "Hide advanced"
 msgstr ""
 
 msgid "Hide closed contests"
@@ -3355,13 +3352,7 @@ msgstr ""
 msgid "Short name"
 msgstr ""
 
-msgid "Show advanced"
-msgstr ""
-
 msgid "Show closed contests"
-msgstr ""
-
-msgid "Show details"
 msgstr ""
 
 msgid "Show hidden contests"
