@@ -5,6 +5,16 @@
         <s:hidden name="action" ac="prob-save-standing-form" />
         <input type="hidden" id="StandingDialogProbId" name="prob_id" value="" />
 
+        <%@expand MENU_TEXTFIELD "stand_name" "standing" "Title for the standings column" "250" %>
+        <%@expand MENU_TEXTFIELD "stand_column" "standing" "Collate this problem with the specified one" "250" %>
+        <%@expand MENU_YESNO3 "hidden" "standing" "Do not show this problem in standings" "250" %>
+        <%@expand MENU_YESNO "stand_hide_time" "standing" "Do not show accept time for this problem" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "stand_attr" "standing" "Standings attributes" "250" %>
+        <%@expand MENU_TEXTFIELD "score_view" "standing" "Special view for scores" "250" %>
+        <%@expand MENU_YESNO3 "stand_ignore_score" "standing" "Ignore problem score in standings" "250" %>
+        <%@expand MENU_YESNO3 "stand_last_column" "standing" "Show the problem after all results" "250" %>
+        <%@expand MENU_TEXTFIELD "provide_ok" "standing" "Provide OK to problems" "250" %>
+
     </s:form>
 </div>
 
@@ -45,6 +55,16 @@ function popupStandingDialog(e, skipField)
 {
     $("#StandingDialogProbId").val(prob_id);
 
+    <%@expand COPY_TEXTFIELD "stand_name" %>
+    <%@expand COPY_TEXTFIELD "stand_column" %>
+    <%@expand COPY_YESNO3 "hidden" %>
+    <%@expand COPY_YESNO3 "stand_hide_time" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "stand_attr" "!prob->stand_attr[0]" %>
+    <%@expand COPY_TEXTFIELD "score_view" %>
+    <%@expand COPY_YESNO3 "stand_ignore_score" %>
+    <%@expand COPY_YESNO3 "stand_last_column" %>
+    <%@expand COPY_TEXTFIELD "provide_ok" %>
+
     if (e) e.stopPropagation();
     standingDialogOnChange();
     $("#StandingDialogDiv").dialog('open');
@@ -52,6 +72,7 @@ function popupStandingDialog(e, skipField)
 
 function standingDialogOnChange(field)
 {
+    <%@expand ONCHANGE_WITH_DEFAULT "stand_attr" %>
 }
 
 

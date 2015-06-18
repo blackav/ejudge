@@ -18,6 +18,16 @@
         </div>
 #%>
 
+<%#define MENU_YESNO
+        <div id="edit-@1-div">
+            <div style="width: @4px; display: inline-block;"><label for="edit-@1">@3?</label></div>
+            <select id="edit-@1" name="@1" onchange="@2DialogOnChange()">
+                <option value="0">No</option>
+                <option value="1">Yes</option>
+            </select>
+        </div>
+#%>
+
 <%#define MENU_YESNO3
         <div id="edit-@1-div">
             <div style="width: @4px; display: inline-block;"><label for="edit-@1">@3?</label></div>
