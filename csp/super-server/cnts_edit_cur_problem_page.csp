@@ -250,6 +250,11 @@ static const unsigned char * const form_row_attrs[]=
 <script type="text/javascript">
 var prob_id = <s:v value="prob_id" />;
 var global_score_acm = <s:v type="jsbool" value="global->score_system == SCORE_ACM" />;
+var global_score_moscow = <s:v type="jsbool" value="global->score_system == SCORE_MOSCOW" />;
+var global_score_kirov = <s:v type="jsbool" value="global->score_system == SCORE_KIROV" />;
+var global_score_olympiad = <s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />;
+var global_score_acm_moscow = <s:v type="jsbool" value="global->score_system == SCORE_ACM || global->score_system == SCORE_MOSCOW" />;
+var global_score_kirov_olympiad = <s:v type="jsbool" value="global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD" />;
 </script>
 
 <%@include "cnts_edit_cur_problem_submission.csp"

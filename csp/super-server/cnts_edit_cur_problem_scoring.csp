@@ -34,7 +34,7 @@
 $(function() {
     scoringDialog = $("#ScoringDialogDiv").dialog({
         autoOpen: false,
-        height: 500,
+        height: 600,
         width: 650,
         modal: true,
         buttons: {
@@ -61,6 +61,27 @@ $(function() {
         close : function() {
         }
     });
+
+    $("#orig-use_ac_not_ok-div").toggle(<s:v type="jsbool" value="!tmp_prob->ok_status" />);
+    $("#orig-ok_status-div").toggle(<s:v type="jsbool" value="tmp_prob->use_ac_not_ok <= 0" />);
+    $("#orig-ignore_prev_ac-div").toggle(<s:v type="jsbool" value="tmp_prob->use_ac_not_ok > 0" />);
+    $("#orig-olympiad_mode-div").toggle(global_score_kirov);
+    $("#orig-score_latest-div").toggle(global_score_kirov);
+    $("#orig-score_latest_or_unmarked-div").toggle(global_score_kirov);
+    $("#orig-score_latest_marked-div").toggle(global_score_kirov);
+    $("#orig-ignore_unmarked-div").toggle(global_score_kirov);
+    $("#orig-score_tokenized-div").toggle(global_score_kirov);
+    $("#orig-full_score-div").toggle(global_score_kirov_olympiad);
+    $("#orig-full_user_score-div").toggle(global_score_kirov_olympiad && <s:v type="jsbool" value="global->separate_user_score > 0" />);
+    $("#orig-variable_full_score-div").toggle(global_score_kirov_olympiad);
+    $("#orig-test_score-div").toggle(global_score_kirov_olympiad);
+    $("#orig-run_penalty-div").toggle(global_score_kirov_olympiad);
+    $("#orig-disqualified_penalty-div").toggle(global_score_kirov_olympiad);
+    $("#orig-acm_run_penalty-div").toggle(global_score_acm_moscow);
+    $("#orig-test_score_list-div").toggle(global_score_kirov_olympiad);
+    $("#orig-score_tests-div").toggle(global_score_moscow);
+    $("#orig-test_sets-div").toggle(global_score_kirov_olympiad);
+    $("#orig-score_bonus-div").toggle(global_score_kirov_olympiad);
 });
 
 function popupScoringDialog(e, skipField)
@@ -96,6 +117,27 @@ function popupScoringDialog(e, skipField)
 
 function scoringDialogOnChange(field)
 {
+    var use_ac_not_ok = toBool($("#edit-use_ac_not_ok").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_ac_not_ok > 0" />);
+    $("#edit-use_ac_not_ok-div").toggle($("#edit-ok_status").val() == "");
+    $("#edit-ok_status-div").toggle(!use_ac_not_ok);
+    $("#edit-ignore_prev_ac-div").toggle(use_ac_not_ok);
+    $("#edit-olympiad_mode-div").toggle(global_score_kirov);
+    $("#edit-score_latest-div").toggle(global_score_kirov);
+    $("#edit-score_latest_or_unmarked-div").toggle(global_score_kirov);
+    $("#edit-score_latest_marked-div").toggle(global_score_kirov);
+    $("#edit-ignore_unmarked-div").toggle(global_score_kirov);
+    $("#edit-score_tokenized-div").toggle(global_score_kirov);
+    $("#edit-full_score-div").toggle(global_score_kirov_olympiad);
+    $("#edit-full_user_score-div").toggle(global_score_kirov_olympiad && <s:v type="jsbool" value="global->separate_user_score > 0" />);
+    $("#edit-variable_full_score-div").toggle(global_score_kirov_olympiad);
+    $("#edit-test_score-div").toggle(global_score_kirov_olympiad);
+    $("#edit-run_penalty-div").toggle(global_score_kirov_olympiad);
+    $("#edit-disqualified_penalty-div").toggle(global_score_kirov_olympiad);
+    $("#edit-acm_run_penalty-div").toggle(global_score_acm_moscow);
+    $("#edit-test_score_list-div").toggle(global_score_kirov_olympiad);
+    $("#edit-score_tests-div").toggle(global_score_moscow);
+    $("#edit-test_sets-div").toggle(global_score_kirov_olympiad);
+    $("#edit-score_bonus-div").toggle(global_score_kirov_olympiad);
 }
 
 
