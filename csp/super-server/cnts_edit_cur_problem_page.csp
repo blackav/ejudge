@@ -1710,9 +1710,6 @@ function viewDialogOnChange(field)
 
             <%@expand ORIG_ENV "interactor_env" "Checking" "Interactor environment" %>
 
-<%
-  {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-interactor_time_limit-div">
                 <td>Time limit for interactor (s):</td>
                 <td><s:textfield id="orig-interactor_time_limit" readonly="readonly" name="param" value="prob->interactor_time_limit" size="48" maxlength="1024" checkExpr=" >= 0" /><%
@@ -1739,13 +1736,7 @@ function viewDialogOnChange(field)
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:interactor_time_limit" /></td>
             </s:tr>
-<%
-  }
-%>
 
-<%
-  {
-%>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-init_cmd-div">
                 <td>Init-style interactor name:</td>
                 <td><%
@@ -1767,9 +1758,6 @@ function viewDialogOnChange(field)
                 <td><input type="button" onclick="popupCheckingDialog(event, 'init_cmd')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:init_cmd" /></td>
             </s:tr>
-<%
-  }
-%>
 
             <%@expand ORIG_ENV "init_env" "Checking" "Init-style interactor environment" %>
 
