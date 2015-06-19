@@ -13,6 +13,9 @@
     // variables go here
     int prob_id = 0;
 
+    int i;
+    struct section_problem_data *prob = NULL;
+
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
@@ -21,6 +24,17 @@
 
     if (retval || !phr->ss) goto cleanup;
 
+    if (prob_id <= 0) {
+        i = -prob_id;
+        if (i >= phr->ss->aprob_u) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        prob = phr->ss->aprobs[i];
+        if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+    } else {
+        i = prob_id;
+        if (i >= phr->ss->prob_a) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        prob = phr->ss->probs[i];
+        if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+    }
     // extra validation is here
 
     if (!retval && phr->ss) {
