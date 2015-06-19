@@ -12,19 +12,151 @@
 
     // variables go here
     int prob_id = 0;
+    unsigned char *short_name = NULL;
+    unsigned char *internal_name = NULL;
+    unsigned char *long_name = NULL;
+    unsigned char *super = NULL;
+    const unsigned char *type = NULL;
+    int variant_num = -1;
+    int autoassign_variants = -1;
+
+    int i, j;
+    struct section_problem_data *prob = NULL;
+    int type_val;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
 %><s:read var="prob_id" required="yes" /><%
+%><s:read var="short_name" normalize="yes" nonnull="yes" /><%
+%><s:read var="internal_name" normalize="yes" nonnull="yes" /><%
+%><s:read var="long_name" normalize="yes" nonnull="yes" /><%
+%><s:read var="super" normalize="yes" nonnull="yes" /><%
+%><s:read var="type" /><%
+%><s:read var="variant_num" default="-1" /><%
+%><s:read var="autoassign_variants" default="-1" /><%
 
     if (retval || !phr->ss) goto cleanup;
 
-    // extra validation is here
+    if (type != NULL) {
+        type_val = problem_parse_type(type);
+        if (type_val < 0 || type_val >= PROB_TYPE_LAST) type_val = PROB_TYPE_STANDARD;
+    } else {
+        type_val = PROB_TYPE_STANDARD;
+    }
+    if (prob_id <= 0) {
+        i = -prob_id;
+        if (i >= phr->ss->aprob_u) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        prob = phr->ss->aprobs[i];
+        if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        if (!*short_name) {
+            fprintf(msg_f, "short_name is not set<br/>");
+            FAIL(SSERV_ERR_INVALID_PARAMETER);
+        }
+        for (j = 0; j < phr->ss->aprob_u; ++j) {
+            if (i == j) continue;
+            if (!phr->ss->aprobs[j]) continue;
+            if (!strcmp(short_name, phr->ss->aprobs[j]->short_name)) {
+                fprintf(msg_f, "short_name is not unique<br/>");
+                FAIL(SSERV_ERR_INVALID_PARAMETER);
+            }
+        }
+        for (j = 0; j < phr->ss->prob_a; ++j) {
+            if (!phr->ss->probs[j]) continue;
+            if (!strcmp(short_name, phr->ss->probs[j]->short_name)) {
+                fprintf(msg_f, "short_name is not unique<br/>");
+                FAIL(SSERV_ERR_INVALID_PARAMETER);
+            }
+            if (!strcmp(short_name, phr->ss->probs[j]->internal_name)) {
+                fprintf(msg_f, "short_name is not unique<br/>");
+                FAIL(SSERV_ERR_INVALID_PARAMETER);
+            }
+        }
+        if (*internal_name) {
+            xfree(internal_name);
+            internal_name = xstrdup("");
+        }
+        if (*super) {
+            xfree(super);
+            super = xstrdup("");
+        }
+        variant_num = -1;
+        autoassign_variants = -1;
+    } else {
+        i = prob_id;
+        if (i >= phr->ss->prob_a) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        prob = phr->ss->probs[i];
+        if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+
+        // short_name must be unique
+        if (*short_name) {
+            for (j = 0; j < phr->ss->aprob_u; ++j) {
+                if (!phr->ss->aprobs[j]) continue;
+                if (!strcmp(short_name, phr->ss->aprobs[j]->short_name)) {
+                    fprintf(msg_f, "short_name is not unique<br/>");
+                    FAIL(SSERV_ERR_INVALID_PARAMETER);
+                }
+            }
+            for (j = 0; j < phr->ss->prob_a; ++j) {
+                if (i == j) continue;
+                if (!phr->ss->probs[j]) continue;
+                if (!strcmp(short_name, phr->ss->probs[j]->short_name)) {
+                    fprintf(msg_f, "short_name is not unique<br/>");
+                    FAIL(SSERV_ERR_INVALID_PARAMETER);
+                }
+                if (!strcmp(short_name, phr->ss->probs[j]->internal_name)) {
+                    fprintf(msg_f, "short_name is not unique<br/>");
+                    FAIL(SSERV_ERR_INVALID_PARAMETER);
+                }
+            }
+        }
+        // internal_name must be unique
+        if (*internal_name) {
+            for (j = 0; j < phr->ss->aprob_u; ++j) {
+                if (!phr->ss->aprobs[j]) continue;
+                if (!strcmp(internal_name, phr->ss->aprobs[j]->short_name)) {
+                    fprintf(msg_f, "internal_name is not unique<br/>");
+                    FAIL(SSERV_ERR_INVALID_PARAMETER);
+                }
+            }
+            for (j = 0; j < phr->ss->prob_a; ++j) {
+                if (i == j) continue;
+                if (!phr->ss->probs[j]) continue;
+                if (!strcmp(internal_name, phr->ss->probs[j]->short_name)) {
+                    fprintf(msg_f, "internal_name is not unique<br/>");
+                    FAIL(SSERV_ERR_INVALID_PARAMETER);
+                }
+                if (!strcmp(internal_name, phr->ss->probs[j]->internal_name)) {
+                    fprintf(msg_f, "internal_name is not unique<br/>");
+                    FAIL(SSERV_ERR_INVALID_PARAMETER);
+                }
+            }
+        }
+        if (*super) {
+            for (j = 0; j < phr->ss->aprob_u; ++j) {
+                if (!phr->ss->aprobs[j]) continue;
+                if (!strcmp(super, phr->ss->aprobs[j]->short_name))
+                    break;
+            }
+            if (j >= phr->ss->aprob_u) {
+                fprintf(msg_f, "super problem does not exist<br/>");
+                FAIL(SSERV_ERR_INVALID_PARAMETER);
+            }
+        }
+        if (variant_num < 0) variant_num = -1;
+        if (autoassign_variants < 0) autoassign_variants = -1;
+        if (autoassign_variants > 0) autoassign_variants = 1;
+    }
 
     if (!retval && phr->ss) {
-        // argument setting is here
+        snprintf(prob->short_name, sizeof(prob->short_name), "%s", short_name);
+        snprintf(prob->internal_name, sizeof(prob->internal_name), "%s", internal_name);
+        snprintf(prob->long_name, sizeof(prob->long_name), "%s", long_name);
+        snprintf(prob->super, sizeof(prob->super), "%s", super);
+        prob->type = type_val;
+        prob->variant_num = variant_num;
+        prob->autoassign_variants = autoassign_variants;
     }
 
 cleanup:;
@@ -39,5 +171,8 @@ cleanup:;
 <%
     html_armor_free(&ab);
     xfree(msg_s);
-    // freeing is here 
+    xfree(short_name);
+    xfree(internal_name);
+    xfree(long_name);
+    xfree(super);
 %>
