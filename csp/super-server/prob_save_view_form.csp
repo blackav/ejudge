@@ -12,19 +12,61 @@
 
     // variables go here
     int prob_id = 0;
+    int disable_tab = -1;
+    int unrestricted_statement = -1;
+    int hide_file_names = -1;
+    int hide_real_time_limit = -1;
+    int hide_variant = -1;
+
+    int i;
+    struct section_problem_data *prob = NULL;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
 %><s:read var="prob_id" required="yes" /><%
+%><s:read var="disable_tab" default="-1" /><%
+%><s:read var="unrestricted_statement" default="-1" /><%
+%><s:read var="hide_file_names" default="-1" /><%
+%><s:read var="hide_real_time_limit" default="-1" /><%
+%><s:read var="hide_variant" default="-1" /><%
 
     if (retval || !phr->ss) goto cleanup;
 
-    // extra validation is here
+    if (disable_tab > 0) disable_tab = 1;
+    if (unrestricted_statement > 0) unrestricted_statement = 1;
+    if (hide_file_names > 0) hide_file_names = 1;
+    if (hide_real_time_limit > 0) hide_real_time_limit = 1;
+    if (hide_variant > 0) hide_variant = 1;
+    if (prob_id <= 0) {
+        i = -prob_id;
+        if (i >= phr->ss->aprob_u) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        prob = phr->ss->aprobs[i];
+        if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        if (disable_tab < 0) disable_tab = 0;
+        if (unrestricted_statement < 0) unrestricted_statement = 0;
+        if (hide_file_names < 0) hide_file_names = 0;
+        if (hide_real_time_limit < 0) hide_real_time_limit = 0;
+        if (hide_variant < 0) hide_variant = 0;
+    } else {
+        i = prob_id;
+        if (i >= phr->ss->prob_a) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        prob = phr->ss->probs[i];
+        if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        if (disable_tab < 0) disable_tab = -1;
+        if (unrestricted_statement < 0) unrestricted_statement = -1;
+        if (hide_file_names < 0) hide_file_names = -1;
+        if (hide_real_time_limit < 0) hide_real_time_limit = -1;
+        if (hide_variant < 0) hide_variant = -1;
+    }
 
     if (!retval && phr->ss) {
-        // argument setting is here
+        prob->disable_tab = disable_tab;
+        prob->unrestricted_statement = unrestricted_statement;
+        prob->hide_file_names = hide_file_names;
+        prob->hide_real_time_limit = hide_real_time_limit;
+        prob->hide_variant = hide_variant;
     }
 
 cleanup:;
@@ -39,5 +81,4 @@ cleanup:;
 <%
     html_armor_free(&ab);
     xfree(msg_s);
-    // freeing is here 
 %>
