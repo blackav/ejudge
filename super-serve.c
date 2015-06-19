@@ -1235,6 +1235,23 @@ super_serve_sid_state_get_test_editor_nc(int contest_id)
   return 0;
 }
 
+struct section_problem_data *
+super_serve_find_problem(struct sid_state *ss, const unsigned char *name)
+{
+  struct section_problem_data *prob;
+
+  for (int i = 0; i < ss->aprob_u; ++i) {
+    if (!(prob = ss->aprobs[i])) continue;
+    if (!strcmp(name, prob->short_name)) return prob;
+  }
+  for (int i = 0; i < ss->prob_a; ++i) {
+    if (!(prob = ss->probs[i])) continue;
+    if (!strcmp(name, prob->short_name)) return prob;
+    if (!strcmp(name, prob->internal_name)) return prob;
+  }
+  return NULL;
+}
+
 void
 super_serve_clear_edited_contest(struct sid_state *p)
 {

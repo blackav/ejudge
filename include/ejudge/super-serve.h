@@ -248,4 +248,7 @@ update_state_create(void);
 struct update_state *
 update_state_free(struct update_state *us);
 
+struct section_problem_data *
+super_serve_find_problem(struct sid_state *ss, const unsigned char *name);
+
 #endif /* __SUPER_SERVE_H__ */

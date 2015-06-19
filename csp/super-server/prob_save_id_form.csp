@@ -21,7 +21,7 @@
     int autoassign_variants = -1;
 
     int i, j;
-    struct section_problem_data *prob = NULL;
+    struct section_problem_data *prob = NULL, *other_prob = NULL;
     int type_val;
 
     char *msg_s = NULL;
@@ -54,24 +54,10 @@
             fprintf(msg_f, "short_name is not set<br/>");
             FAIL(SSERV_ERR_INVALID_PARAMETER);
         }
-        for (j = 0; j < phr->ss->aprob_u; ++j) {
-            if (i == j) continue;
-            if (!phr->ss->aprobs[j]) continue;
-            if (!strcmp(short_name, phr->ss->aprobs[j]->short_name)) {
-                fprintf(msg_f, "short_name is not unique<br/>");
-                FAIL(SSERV_ERR_INVALID_PARAMETER);
-            }
-        }
-        for (j = 0; j < phr->ss->prob_a; ++j) {
-            if (!phr->ss->probs[j]) continue;
-            if (!strcmp(short_name, phr->ss->probs[j]->short_name)) {
-                fprintf(msg_f, "short_name is not unique<br/>");
-                FAIL(SSERV_ERR_INVALID_PARAMETER);
-            }
-            if (!strcmp(short_name, phr->ss->probs[j]->internal_name)) {
-                fprintf(msg_f, "short_name is not unique<br/>");
-                FAIL(SSERV_ERR_INVALID_PARAMETER);
-            }
+        other_prob = super_serve_find_problem(phr->ss, short_name);
+        if (other_prob && other_prob != prob) {
+            fprintf(msg_f, "short_name is not unique<br/>");
+            FAIL(SSERV_ERR_INVALID_PARAMETER);
         }
         if (*internal_name) {
             xfree(internal_name);
@@ -91,46 +77,18 @@
 
         // short_name must be unique
         if (*short_name) {
-            for (j = 0; j < phr->ss->aprob_u; ++j) {
-                if (!phr->ss->aprobs[j]) continue;
-                if (!strcmp(short_name, phr->ss->aprobs[j]->short_name)) {
-                    fprintf(msg_f, "short_name is not unique<br/>");
-                    FAIL(SSERV_ERR_INVALID_PARAMETER);
-                }
-            }
-            for (j = 0; j < phr->ss->prob_a; ++j) {
-                if (i == j) continue;
-                if (!phr->ss->probs[j]) continue;
-                if (!strcmp(short_name, phr->ss->probs[j]->short_name)) {
-                    fprintf(msg_f, "short_name is not unique<br/>");
-                    FAIL(SSERV_ERR_INVALID_PARAMETER);
-                }
-                if (!strcmp(short_name, phr->ss->probs[j]->internal_name)) {
-                    fprintf(msg_f, "short_name is not unique<br/>");
-                    FAIL(SSERV_ERR_INVALID_PARAMETER);
-                }
+            other_prob = super_serve_find_problem(phr->ss, short_name);
+            if (other_prob && other_prob != prob) {
+                fprintf(msg_f, "short_name is not unique<br/>");
+                FAIL(SSERV_ERR_INVALID_PARAMETER);
             }
         }
         // internal_name must be unique
         if (*internal_name) {
-            for (j = 0; j < phr->ss->aprob_u; ++j) {
-                if (!phr->ss->aprobs[j]) continue;
-                if (!strcmp(internal_name, phr->ss->aprobs[j]->short_name)) {
-                    fprintf(msg_f, "internal_name is not unique<br/>");
-                    FAIL(SSERV_ERR_INVALID_PARAMETER);
-                }
-            }
-            for (j = 0; j < phr->ss->prob_a; ++j) {
-                if (i == j) continue;
-                if (!phr->ss->probs[j]) continue;
-                if (!strcmp(internal_name, phr->ss->probs[j]->short_name)) {
-                    fprintf(msg_f, "internal_name is not unique<br/>");
-                    FAIL(SSERV_ERR_INVALID_PARAMETER);
-                }
-                if (!strcmp(internal_name, phr->ss->probs[j]->internal_name)) {
-                    fprintf(msg_f, "internal_name is not unique<br/>");
-                    FAIL(SSERV_ERR_INVALID_PARAMETER);
-                }
+            other_prob = super_serve_find_problem(phr->ss, internal_name);
+            if (other_prob && other_prob != prob) {
+                fprintf(msg_f, "internal_name is not unique<br/>");
+                FAIL(SSERV_ERR_INVALID_PARAMETER);
             }
         }
         if (*super) {
