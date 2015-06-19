@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -309,6 +308,15 @@ s_dwarf_formudata(
         fprintf(log_f, "%s: dwarf_whatform failed: %s\n",
                 path, dwarf_errmsg(dwe));
         return -1;
+    }
+    if (form_num == DW_FORM_sdata) {
+        Dwarf_Signed tmp = 0;
+        if (dwarf_formsdata(attr, pvalue, &dwe) != DW_DLV_OK) {
+            fprintf(log_f, "%s: dwarf_formsdata failed: %s\n", path, dwarf_errmsg(dwe));
+            return -1;
+        }
+        *pvalue = tmp;
+        return 0;
     }
     if (form_num == DW_FORM_block1 || form_num == DW_FORM_block2 || form_num == DW_FORM_block4) {
         Dwarf_Block *dwb = NULL;
