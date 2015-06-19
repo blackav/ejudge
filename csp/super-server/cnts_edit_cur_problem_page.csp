@@ -111,7 +111,7 @@ static const unsigned char * const form_row_attrs[]=
         <s:hidden name="action" ac="prob-save-id-form" />
         <input type="hidden" id="IdDialogProbId" name="prob_id" value="" />
 
-        <div>
+        <div id="edit-prob_id-div">
             <div style="width: 250px; display: inline-block;"><label style="display:block; width: 250px" for="edit-prob_id_xxx">ID:</label></div>
             <input readonly="readonly" type="text" size="20" name="prob_id_xxx" id="edit-prob_id" value="" class="text ui-widget-content ui-corner-all" />
         </div>
@@ -308,6 +308,10 @@ $(function() {
         }
     });
 
+    $("#orig-id-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-internal_name-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-super-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-variant_num-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#orig-autoassign_variants-div").toggle(<s:v type="jsbool" value="prob->variant_num > 0" />);
 
     filesDialog = $("#FilesDialogDiv").dialog({
@@ -471,6 +475,10 @@ function popupIdDialog(e, skipField)
 
 function idDialogOnChange()
 {
+    $("#edit-prob_id-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-internal_name-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-super-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-variant_num-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     var num = parseInt($("#edit-variant_num").val());
     $("#edit-autoassign_variants-div").toggle(num > 0);
 }
