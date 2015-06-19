@@ -5,7 +5,7 @@
             <div style="width: @4px; display: inline-block;"><label style="display:block; width: @4px" for="edit-@1">@3:</label></div>
             <input type="text" size="20" name="@1" id="edit-@1" value="" class="text ui-widget-content ui-corner-all" onchange="@2DialogOnChange('@1')" /><%
   if (sup_prob) {
-%>(Default: <input type="checkbox" name="@1-dflt" id="edit-@1-dflt" value="1" onchange="@2DialogOnChange('@1-dflt')" />)<%
+%>(Default: <input type="checkbox" name="@1_dflt" id="edit-@1_dflt" value="1" onchange="@2DialogOnChange('@1_dflt')" />)<%
   }
 %>
         </div>
@@ -54,13 +54,13 @@
 #%>
 
 <%#define ONCHANGE_WITH_DEFAULT
-    if (field == "@1-dflt") {
-        if ($("#edit-@1-dflt").is(':checked')) {
+    if (field == "@1_dflt") {
+        if ($("#edit-@1_dflt").is(':checked')) {
             $("#edit-@1").val("");
         }
     } else if (field == "@1") {
         if ($("#edit-@1").val() != "") {
-            $("#edit-@1-dflt").prop('checked', false);
+            $("#edit-@1_dflt").prop('checked', false);
         }
     }
 #%>
@@ -82,7 +82,7 @@
 <%
   if (sup_prob) {
 %>
-    $("#edit-@1-dflt").prop('checked', <s:v type="jsbool" value="@2" />);
+    $("#edit-@1_dflt").prop('checked', <s:v type="jsbool" value="@2" />);
 <%
   }
 %>

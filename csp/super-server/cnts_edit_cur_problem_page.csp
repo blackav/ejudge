@@ -568,7 +568,7 @@ function validationDialogOnChange(field)
     <%@expand ONCHANGE_WITH_DEFAULT "solution_src" %>
     <%@expand ONCHANGE_WITH_DEFAULT "solution_cmd" %>
 
-    $("#edit-test_checker_env-div").toggle($("#edit-test_checker_cmd").val() != "" || (<s:v type="jsbool" value="sup_prob && sup_prob->test_checker_cmd" /> && $("#edit-test_checker_cmd-dflt").is(':checked')));
+    $("#edit-test_checker_env-div").toggle($("#edit-test_checker_cmd").val() != "" || (<s:v type="jsbool" value="sup_prob && sup_prob->test_checker_cmd" /> && $("#edit-test_checker_cmd_dflt").is(':checked')));
 }
 
 function popupViewDialog(e, skipField)

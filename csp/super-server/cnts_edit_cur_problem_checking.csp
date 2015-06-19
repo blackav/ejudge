@@ -123,18 +123,18 @@ function checkingDialogOnChange(field)
     $("#edit-check_cmd-div").toggle(!has_standard_checker);
 
     var valuer_cmd = $("#edit-valuer_cmd").val();
-    if ($("#edit-valuer_cmd-dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->valuer_cmd[0]" />) valuer_cmd = "X";
+    if ($("#edit-valuer_cmd_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->valuer_cmd[0]" />) valuer_cmd = "X";
     $("#edit-valuer_sets_marked-div").toggle(valuer_cmd != "");
     $("#edit-interactive_valuer-div").toggle(valuer_cmd != "");
     $("#edit-valuer_env-div").toggle(valuer_cmd != "");
 
     var interactor_cmd = $("#edit-interactor_cmd").val();
-    if ($("#edit-interactor_cmd-dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->interactor_cmd[0]" />) interactor_cmd = "X";
+    if ($("#edit-interactor_cmd_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->interactor_cmd[0]" />) interactor_cmd = "X";
     $("#edit-interactor_time_limit-div").toggle(interactor_cmd != "");
     $("#edit-interactor_env-div").toggle(interactor_cmd != "");
 
     var init_cmd = $("#edit-init_cmd").val();
-    if ($("#edit-init_cmd-dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->init_cmd && sup_prob->init_cmd[0]" />) init_cmd = "X";
+    if ($("#edit-init_cmd_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->init_cmd && sup_prob->init_cmd[0]" />) init_cmd = "X";
     $("#edit-init_env-div").toggle(init_cmd != "");
 }
 
