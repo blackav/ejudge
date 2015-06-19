@@ -390,7 +390,7 @@ $(function() {
         }
     });
 
-    $("#orig-test_checker_env-div").toggle(<s:v type="jsbool" value="tmp_prob->test_checker_cmd" />);
+    $("#orig-test_checker_env-div").toggle(<s:v type="jsbool" value="tmp_prob->test_checker_cmd && prob_id > 0" />);
 
     viewDialog = $("#ViewDialogDiv").dialog({
         autoOpen: false,
@@ -576,7 +576,7 @@ function validationDialogOnChange(field)
     <%@expand ONCHANGE_WITH_DEFAULT "solution_src" %>
     <%@expand ONCHANGE_WITH_DEFAULT "solution_cmd" %>
 
-    $("#edit-test_checker_env-div").toggle($("#edit-test_checker_cmd").val() != "" || (<s:v type="jsbool" value="sup_prob && sup_prob->test_checker_cmd" /> && $("#edit-test_checker_cmd_dflt").is(':checked')));
+    $("#edit-test_checker_env-div").toggle($("#edit-test_checker_cmd").val() != "" || (<s:v type="jsbool" value="sup_prob && sup_prob->test_checker_cmd && prob_id > 0" /> && $("#edit-test_checker_cmd_dflt").is(':checked')));
 }
 
 function popupViewDialog(e, skipField)

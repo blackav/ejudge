@@ -10,21 +10,68 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-    // variables go here
     int prob_id = 0;
+    unsigned char *test_checker_cmd = NULL;
+    ejintbool_t test_checker_cmd_dflt = 0;
+    const unsigned char *test_checker_env = NULL;
+    unsigned char *solution_src = NULL;
+    ejintbool_t solution_src_dflt = NULL;
+    unsigned char *solution_cmd = NULL;
+    ejintbool_t solution_cmd_dflt = NULL;
+
+    int i;
+    struct section_problem_data *prob = NULL;
+    char **test_checker_env_parsed = NULL;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
 %><s:read var="prob_id" required="yes" /><%
+%><s:read var="test_checker_cmd" normalize="yes" nonnull="yes" /><%
+%><s:read var="test_checker_cmd_dflt" default="0" /><%
+%><s:read var="test_checker_env" /><%
+%><s:read var="solution_src" normalize="yes" nonnull="yes" /><%
+%><s:read var="solution_src_dflt" default="0" /><%
+%><s:read var="solution_cmd" normalize="yes" nonnull="yes" /><%
+%><s:read var="solution_cmd_dflt" default="0" /><%
 
     if (retval || !phr->ss) goto cleanup;
 
-    // extra validation is here
+    if (prob_id <= 0) {
+        i = -prob_id;
+        if (i >= phr->ss->aprob_u) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        prob = phr->ss->aprobs[i];
+        if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+    } else {
+        i = prob_id;
+        if (i >= phr->ss->prob_a) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        prob = phr->ss->probs[i];
+        if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+    }
+    if (test_checker_cmd_dflt) {
+        xfree(test_checker_cmd);
+        test_checker_cmd = NULL;
+    }
+    if (sarray_parse(test_checker_env, &test_checker_env_parsed) < 0) {
+        fprintf(msg_f, "invalid value of test_checker_env<br/>");
+        retval = SSERV_ERR_INVALID_PARAMETER;
+        goto cleanup;
+    }
+    if (solution_src_dflt) {
+        xfree(solution_src);
+        solution_src = NULL;
+    }
+    if (solution_cmd_dflt) {
+        xfree(solution_cmd);
+        solution_cmd = NULL;
+    }
 
     if (!retval && phr->ss) {
-        // argument setting is here
+        xfree(prob->test_checker_cmd); prob->test_checker_cmd = test_checker_cmd; test_checker_cmd = NULL;
+        sarray_free(prob->test_checker_env); prob->test_checker_env = test_checker_env_parsed; test_checker_env_parsed = NULL;
+        xfree(prob->solution_src); prob->solution_src = solution_src; solution_src = NULL;
+        xfree(prob->solution_cmd); prob->solution_cmd = solution_cmd; solution_cmd = NULL;
     }
 
 cleanup:;
@@ -39,5 +86,8 @@ cleanup:;
 <%
     html_armor_free(&ab);
     xfree(msg_s);
-    // freeing is here 
+    xfree(test_checker_cmd);
+    xfree(solution_src);
+    xfree(solution_cmd);
+    sarray_free(test_checker_env_parsed);
 %>
