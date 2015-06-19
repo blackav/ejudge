@@ -10,21 +10,183 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-    // variables go here
     int prob_id = 0;
+    int binary_input = -1;
+    int normalization = -1;
+    unsigned char *xml_file = NULL;
+    ejintbool_t xml_file_dflt = 0;
+    unsigned char *test_dir = NULL;
+    ejintbool_t test_dir_dflt = 0;
+    unsigned char *test_pat = NULL;
+    ejintbool_t test_pat_dflt = 0;
+    unsigned char *test_sfx = NULL;
+    ejintbool_t test_sfx_dflt = 0;
+    int use_corr = -1;
+    unsigned char *corr_dir = NULL;
+    ejintbool_t corr_dir_dflt = 0;
+    unsigned char *corr_pat = NULL;
+    ejintbool_t corr_pat_dflt = 0;
+    unsigned char *corr_sfx = NULL;
+    ejintbool_t corr_sfx_dflt = 0;
+    int use_info = -1;
+    unsigned char *info_dir = NULL;
+    ejintbool_t info_dir_dflt = 0;
+    unsigned char *info_pat = NULL;
+    ejintbool_t info_pat_dflt = 0;
+    unsigned char *info_sfx = NULL;
+    ejintbool_t info_sfx_dflt = 0;
+    int use_tgz = -1;
+    unsigned char *tgz_pat = NULL;
+    ejintbool_t tgz_pat_dflt = 0;
+    unsigned char *tgzdir_pat = NULL;
+    ejintbool_t tgzdir_pat_dflt = 0;
+    unsigned char *tgz_sfx = NULL;
+    ejintbool_t tgz_sfx_dflt = 0;
+    unsigned char *tgzdir_sfx = NULL;
+    ejintbool_t tgzdir_sfx_dflt = 0;
+
+    int i;
+    struct section_problem_data *prob = NULL;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
 %><s:read var="prob_id" required="yes" /><%
-
+%><s:read var="binary_input" default="-1" /><%
+%><s:read var="normalization" default="-1" /><%
+%><s:read var="xml_file" normalize="yes" nonnull="yes" /><%
+%><s:read var="xml_file_dflt" default="0" /><%
+%><s:read var="test_dir" normalize="yes" nonnull="yes" /><%
+%><s:read var="test_dir_dflt" default="0" /><%
+%><s:read var="test_pat" normalize="yes" nonnull="yes" /><%
+%><s:read var="test_pat_dflt" default="0" /><%
+%><s:read var="test_sfx" normalize="yes" nonnull="yes" /><%
+%><s:read var="test_sfx_dflt" default="0" /><%
+%><s:read var="use_corr" default="-1" /><%
+%><s:read var="corr_dir" normalize="yes" nonnull="yes" /><%
+%><s:read var="corr_dir_dflt" default="0" /><%
+%><s:read var="corr_pat" normalize="yes" nonnull="yes" /><%
+%><s:read var="corr_pat_dflt" default="0" /><%
+%><s:read var="corr_sfx" normalize="yes" nonnull="yes" /><%
+%><s:read var="corr_sfx_dflt" default="0" /><%
+%><s:read var="use_info" default="-1" /><%
+%><s:read var="info_dir" normalize="yes" nonnull="yes" /><%
+%><s:read var="info_dir_dflt" default="0" /><%
+%><s:read var="info_pat" normalize="yes" nonnull="yes" /><%
+%><s:read var="info_pat_dflt" default="0" /><%
+%><s:read var="info_sfx" normalize="yes" nonnull="yes" /><%
+%><s:read var="info_sfx_dflt" default="0" /><%
+%><s:read var="use_tgz" default="-1" /><%
+%><s:read var="tgz_pat" normalize="yes" nonnull="yes" /><%
+%><s:read var="tgz_pat_dflt" default="0" /><%
+%><s:read var="tgzdir_pat" normalize="yes" nonnull="yes" /><%
+%><s:read var="tgzdir_pat_dflt" default="0" /><%
+%><s:read var="tgz_sfx" normalize="yes" nonnull="yes" /><%
+%><s:read var="tgz_sfx_dflt" default="0" /><%
+%><s:read var="tgzdir_sfx" normalize="yes" nonnull="yes" /><%
+%><s:read var="tgzdir_sfx_dflt" default="0" /><%
     if (retval || !phr->ss) goto cleanup;
 
-    // extra validation is here
+    if (binary_input > 0) binary_input = 1;
+    if (normalization < 0 || normalization >= TEST_NORM_LAST) normalization = TEST_NORM_DEFAULT;
+    if (xml_file_dflt) xml_file[0] = 0;
+    if (test_dir_dflt) test_dir[0] = 0;
+    if (use_corr > 0) use_corr = 1;
+    if (corr_dir_dflt) corr_dir[0] = 0;
+    if (use_info > 0) use_info = 1;
+    if (info_dir_dflt) info_dir[0] = 0;
+    if (use_tgz > 0) use_tgz = 1;
+    if (prob_id <= 0) {
+        i = -prob_id;
+        if (i >= phr->ss->aprob_u) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        prob = phr->ss->aprobs[i];
+        if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        if (binary_input < 0) binary_input = 0;
+        if (use_corr < 0) use_corr = 0;
+        if (use_info < 0) use_info = 0;
+        if (use_tgz < 0) use_tgz = 0;
+    } else {
+        i = prob_id;
+        if (i >= phr->ss->prob_a) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        prob = phr->ss->probs[i];
+        if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        if (binary_input < 0) binary_input = -1;
+        if (use_corr < 0) use_corr = -1;
+        if (use_info < 0) use_info = -1;
+        if (use_tgz < 0) use_tgz = -1;
+    }
 
     if (!retval && phr->ss) {
-        // argument setting is here
+        prob->binary_input = binary_input;
+        snprintf(prob->normalization, sizeof(prob->normalization), "%s", test_normalization_unparse(normalization));
+        snprintf(prob->xml_file, sizeof(prob->xml_file), "%s", xml_file);
+        snprintf(prob->test_dir, sizeof(prob->test_dir), "%s", test_dir);
+        if (!test_pat_dflt) {
+            snprintf(prob->test_pat, sizeof(prob->test_pat), "%s", test_pat);
+        } else {
+            prob->test_pat[0] = 1;
+            prob->test_pat[1] = 0;
+        }
+        if (!test_sfx_dflt) {
+            snprintf(prob->test_sfx, sizeof(prob->test_sfx), "%s", test_sfx);
+        } else {
+            prob->test_sfx[0] = 1;
+            prob->test_sfx[1] = 0;
+        }
+        prob->use_corr = use_corr;
+        snprintf(prob->corr_dir, sizeof(prob->corr_dir), "%s", corr_dir);
+        if (!corr_pat_dflt) {
+            snprintf(prob->corr_pat, sizeof(prob->corr_pat), "%s", corr_pat);
+        } else {
+            prob->corr_pat[0] = 1;
+            prob->corr_pat[1] = 0;
+        }
+        if (!corr_sfx_dflt) {
+            snprintf(prob->corr_sfx, sizeof(prob->corr_sfx), "%s", corr_sfx);
+        } else {
+            prob->corr_sfx[0] = 1;
+            prob->corr_sfx[1] = 0;
+        }
+        prob->use_info = use_info;
+        snprintf(prob->info_dir, sizeof(prob->info_dir), "%s", info_dir);
+        if (!info_pat_dflt) {
+            snprintf(prob->info_pat, sizeof(prob->info_pat), "%s", info_pat);
+        } else {
+            prob->info_pat[0] = 1;
+            prob->info_pat[1] = 0;
+        }
+        if (!info_sfx_dflt) {
+            snprintf(prob->info_sfx, sizeof(prob->info_sfx), "%s", info_sfx);
+        } else {
+            prob->info_sfx[0] = 1;
+            prob->info_sfx[1] = 0;
+        }
+        prob->use_tgz = use_tgz;
+        if (!tgz_pat_dflt) {
+            snprintf(prob->tgz_pat, sizeof(prob->tgz_pat), "%s", tgz_pat);
+        } else {
+            prob->tgz_pat[0] = 1;
+            prob->tgz_pat[1] = 0;
+        }
+        if (!tgzdir_pat_dflt) {
+            snprintf(prob->tgzdir_pat, sizeof(prob->tgzdir_pat), "%s", tgzdir_pat);
+        } else {
+            prob->tgzdir_pat[0] = 1;
+            prob->tgzdir_pat[1] = 0;
+        }
+        if (!tgz_sfx_dflt) {
+            snprintf(prob->tgz_sfx, sizeof(prob->tgz_sfx), "%s", tgz_sfx);
+        } else {
+            prob->tgz_sfx[0] = 1;
+            prob->tgz_sfx[1] = 0;
+        }
+        if (!tgzdir_sfx_dflt) {
+            snprintf(prob->tgzdir_sfx, sizeof(prob->tgzdir_sfx), "%s", tgzdir_sfx);
+        } else {
+            prob->tgzdir_sfx[0] = 1;
+            prob->tgzdir_sfx[1] = 0;
+        }
     }
 
 cleanup:;
@@ -39,5 +201,17 @@ cleanup:;
 <%
     html_armor_free(&ab);
     xfree(msg_s);
-    // freeing is here 
+    xfree(xml_file);
+    xfree(test_dir);
+    xfree(test_pat);
+    xfree(test_sfx);
+    xfree(corr_dir);
+    xfree(corr_pat);
+    xfree(corr_sfx);
+    xfree(info_dir);
+    xfree(info_pat);
+    xfree(info_sfx);
+    xfree(tgz_pat);
+    xfree(tgzdir_pat);
+    xfree(tgzdir_sfx);
 %>
