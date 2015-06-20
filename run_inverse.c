@@ -552,13 +552,13 @@ invoke_test_program(
   if (srpp->real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk, srpp->real_time_limit_ms);
   }
-  if (srpp->max_stack_size && srpp->max_stack_size != (size_t) -1L) {
+  if (srpp->max_stack_size > 0) {
     task_SetStackSize(tsk, srpp->max_stack_size);
   }
-  if (srpp->max_data_size && srpp->max_data_size != (size_t) -1L) {
+  if (srpp->max_data_size > 0) {
     task_SetDataSize(tsk, srpp->max_data_size);
   }
-  if (srpp->max_vm_size && srpp->max_vm_size != (size_t) -1L) {
+  if (srpp->max_vm_size > 0) {
     task_SetVMSize(tsk, srpp->max_vm_size);
   }
   /* no security restrictions and memory limits */

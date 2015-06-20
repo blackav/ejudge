@@ -68,13 +68,13 @@
 #define SIZE_K (1024)
 
 static unsigned char*
-size_t_to_size(unsigned char *buf, size_t buf_size, size_t num)
+ej_size64_t_to_size(unsigned char *buf, size_t buf_size, ej_size64_t num)
 {
   if (!num) snprintf(buf, buf_size, "0");
-  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%" EJ_PRINTF_ZSPEC "uG", EJ_PRINTF_ZCAST(num / SIZE_G));
-  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%" EJ_PRINTF_ZSPEC "uM", EJ_PRINTF_ZCAST(num / SIZE_M));
-  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%" EJ_PRINTF_ZSPEC "uK", EJ_PRINTF_ZCAST(num / SIZE_K));
-  else snprintf(buf, buf_size, "%" EJ_PRINTF_ZSPEC "u", EJ_PRINTF_ZCAST(num));
+  else if (!(num % SIZE_G)) snprintf(buf, buf_size, "%lldG", num / SIZE_G);
+  else if (!(num % SIZE_M)) snprintf(buf, buf_size, "%lldM", num / SIZE_M);
+  else if (!(num % SIZE_K)) snprintf(buf, buf_size, "%lldK", num / SIZE_K);
+  else snprintf(buf, buf_size, "%lld", num);
   return buf;
 }
 
@@ -1296,17 +1296,14 @@ invoke_nwrun(
   if (srpp->real_time_limit_ms > 0) {
     fprintf(f, "real_time_limit_millis = %d\n", srpp->real_time_limit_ms);
   }
-  if (srpp->max_stack_size != 0) {
-    fprintf(f, "max_stack_size = %" EJ_PRINTF_ZSPEC "u\n",
-            EJ_PRINTF_ZCAST(srpp->max_stack_size));
+  if (srpp->max_stack_size > 0) {
+    fprintf(f, "max_stack_size = %lld\n", srpp->max_stack_size);
   }
   if (srpp->max_data_size != 0) {
-    fprintf(f, "max_data_size = %" EJ_PRINTF_ZSPEC "u\n",
-            EJ_PRINTF_ZCAST(srpp->max_data_size));
+    fprintf(f, "max_data_size = %lld\n", srpp->max_data_size);
   }
   if (srpp->max_vm_size != 0) {
-    fprintf(f, "max_vm_size = %" EJ_PRINTF_ZSPEC "u\n",
-            EJ_PRINTF_ZCAST(srpp->max_vm_size));
+    fprintf(f, "max_vm_size = %lld\n", srpp->max_vm_size);
   }
   fprintf(f, "max_output_file_size = 60M\n");
   fprintf(f, "max_error_file_size = 16M\n");
@@ -1751,34 +1748,34 @@ touch_file(const unsigned char *path)
 }
 
 static void
-make_java_limits(unsigned char *buf, int blen, size_t max_vm_size, size_t max_stack_size)
+make_java_limits(unsigned char *buf, int blen, ej_size64_t max_vm_size, ej_size64_t max_stack_size)
 {
   unsigned char bv[1024], bs[1024];
 
   buf[0] = 0;
   if (max_vm_size && max_stack_size) {
     snprintf(buf, blen, "EJUDGE_JAVA_FLAGS=-Xmx%s -Xss%s",
-             size_t_to_size(bv, sizeof(bv), max_vm_size),
-             size_t_to_size(bs, sizeof(bs), max_stack_size));
+             ej_size64_t_to_size(bv, sizeof(bv), max_vm_size),
+             ej_size64_t_to_size(bs, sizeof(bs), max_stack_size));
   } else if (max_vm_size) {
     snprintf(buf, blen, "EJUDGE_JAVA_FLAGS=-Xmx%s",
-             size_t_to_size(bv, sizeof(bv), max_vm_size));
+             ej_size64_t_to_size(bv, sizeof(bv), max_vm_size));
   } else if (max_stack_size) {
     snprintf(buf, blen, "EJUDGE_JAVA_FLAGS=-Xss%s",
-             size_t_to_size(bs, sizeof(bs), max_stack_size));
+             ej_size64_t_to_size(bs, sizeof(bs), max_stack_size));
   } else {
   }
 }
 
 static void
-make_mono_limits(unsigned char *buf, int blen, size_t max_vm_size, size_t max_stack_size)
+make_mono_limits(unsigned char *buf, int blen, ej_size64_t max_vm_size, ej_size64_t max_stack_size)
 {
   unsigned char bv[1024];
   // stack limit is not supported
   buf[0] = 0;
   if (max_vm_size) {
     snprintf(buf, blen, "MONO_GC_PARAMS=max-heap-size=%s",
-             size_t_to_size(bv, sizeof(bv), max_vm_size));
+             ej_size64_t_to_size(bv, sizeof(bv), max_vm_size));
   }
 }
 
@@ -2407,26 +2404,26 @@ run_one_test(
   if (tst && tst->no_core_dump > 0) task_DisableCoreDump(tsk);
 
   if (!tst || tst->memory_limit_type_val < 0) {
-    if (srpp->max_stack_size) {
+    if (srpp->max_stack_size > 0) {
       task_SetStackSize(tsk, srpp->max_stack_size);
-    } else if (srgp->enable_max_stack_size > 0 && srpp->max_vm_size) {
+    } else if (srgp->enable_max_stack_size > 0 && srpp->max_vm_size > 0) {
       task_SetStackSize(tsk, srpp->max_vm_size);
     }
-    if (srpp->max_data_size)
+    if (srpp->max_data_size > 0)
       task_SetDataSize(tsk, srpp->max_data_size);
-    if (srpp->max_vm_size)
+    if (srpp->max_vm_size > 0)
       task_SetVMSize(tsk, srpp->max_vm_size);
   } else {
     switch (tst->memory_limit_type_val) {
     case MEMLIMIT_TYPE_DEFAULT:
-      if (srpp->max_stack_size) {
+      if (srpp->max_stack_size > 0) {
         task_SetStackSize(tsk, srpp->max_stack_size);
-      } else if (srgp->enable_max_stack_size > 0 && srpp->max_vm_size) {
+      } else if (srgp->enable_max_stack_size > 0 && srpp->max_vm_size > 0) {
         task_SetStackSize(tsk, srpp->max_vm_size);
       }
-      if (srpp->max_data_size)
+      if (srpp->max_data_size > 0)
         task_SetDataSize(tsk, srpp->max_data_size);
-      if (srpp->max_vm_size)
+      if (srpp->max_vm_size > 0)
         task_SetVMSize(tsk, srpp->max_vm_size);
       if (tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error > 0 && srgp->secure_run > 0) {
         task_EnableMemoryLimitError(tsk);
@@ -2512,10 +2509,10 @@ run_one_test(
 
   task_EnableAllSignals(tsk);
 
-  if (srpp->max_core_size && srpp->max_core_size != (ssize_t) -1L) {
+  if (srpp->max_core_size > 0) {
     task_SetMaxCoreSize(tsk, srpp->max_core_size);
   }
-  if (srpp->max_file_size && srpp->max_file_size != (ssize_t) -1L) {
+  if (srpp->max_file_size > 0) {
     task_SetMaxFileSize(tsk, srpp->max_file_size);
   }
   if (srpp->max_open_file_count > 0) {
@@ -3403,9 +3400,11 @@ run_tests(
   init_testinfo_vector(&tests);
   messages_path[0] = 0;
 
+  /*
   if (srpp->max_vm_size == (size_t) -1L) srpp->max_vm_size = 0;
   if (srpp->max_data_size == (size_t) -1L) srpp->max_data_size = 0;
   if (srpp->max_stack_size == (size_t) -1L) srpp->max_stack_size = 0;
+  */
 
   snprintf(messages_path, sizeof(messages_path), "%s/%s", global->run_work_dir, "messages");
 
@@ -3499,6 +3498,25 @@ run_tests(
       append_msg_to_log(messages_path, "failed to parse score_tests = '%s'", srpp->score_tests);
       goto check_failed;
     }
+  }
+
+  if (srpp->max_vm_size > 0 && srpp->max_vm_size != (size_t) srpp->max_vm_size) {
+    unsigned char sz_buf[64];
+    append_msg_to_log(messages_path, "max_vm_size = %s is too big for this platform",
+                      ej_size64_t_to_size(sz_buf, sizeof(sz_buf), srpp->max_vm_size));
+    goto check_failed;
+  }
+  if (srpp->max_stack_size > 0 && srpp->max_stack_size != (size_t) srpp->max_stack_size) {
+    unsigned char sz_buf[64];
+    append_msg_to_log(messages_path, "max_stack_size = %s is too big for this platform",
+                      ej_size64_t_to_size(sz_buf, sizeof(sz_buf), srpp->max_stack_size));
+    goto check_failed;
+  }
+  if (srpp->max_file_size > 0 && srpp->max_file_size != (size_t) srpp->max_file_size) {
+    unsigned char sz_buf[64];
+    append_msg_to_log(messages_path, "max_file_size = %s is too big for this platform",
+                      ej_size64_t_to_size(sz_buf, sizeof(sz_buf), srpp->max_file_size));
+    goto check_failed;
   }
 
   if (!srpp->type_val && tst && tst->prepare_cmd && tst->prepare_cmd[0]) {

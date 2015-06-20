@@ -1349,7 +1349,7 @@ static int
 find_lang_specific_size(
         char **values,
         const struct section_language_data *lang,
-        size_t *p_size)
+        ej_size64_t *p_size)
 {
   if (!values || !values[0] || !lang) return 0;
   if (lang->short_name[0] <= ' ') return 0;
@@ -1359,7 +1359,7 @@ find_lang_specific_size(
   for (int i = 0; (sn = values[i]); ++i) {
     int vl = strlen(sn);
     if (vl > lsn + 1 && !strncmp(sn, lang->short_name, lsn) && sn[lsn] == '=') {
-      return size_str_to_size_t(sn + lsn + 1, p_size) >= 0;
+      return size_str_to_size64_t(sn + lsn + 1, p_size) >= 0;
     }
   }
 
@@ -1422,7 +1422,7 @@ serve_run_request(
   FILE *srp_f = NULL;
   char *srp_t = NULL;
   size_t srp_z = 0;
-  size_t lang_specific_size;
+  ej_size64_t lang_specific_size = 0;
 
   get_current_time(&current_time, &current_time_us);
 
@@ -1919,12 +1919,10 @@ serve_run_request(
     srpp->umask = xstrdup(prob->umask);
   }
 
-  if (find_lang_specific_size(prob->lang_max_vm_size, lang,
-                              &lang_specific_size) > 0) {
+  if (find_lang_specific_size(prob->lang_max_vm_size, lang, &lang_specific_size) > 0) {
     srpp->max_vm_size = lang_specific_size;
   }
-  if (find_lang_specific_size(prob->lang_max_stack_size, lang,
-                              &lang_specific_size) > 0) {
+  if (find_lang_specific_size(prob->lang_max_stack_size, lang, &lang_specific_size) > 0) {
     srpp->max_stack_size = lang_specific_size;
   }
 

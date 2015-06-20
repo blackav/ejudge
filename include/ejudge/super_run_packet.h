@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __SUPER_RUN_PACKET_H__
 #define __SUPER_RUN_PACKET_H__
 
-/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -152,11 +151,11 @@ struct super_run_in_problem_packet
   unsigned char *init_cmd;
   unsigned char *start_cmd;
   unsigned char *solution_cmd;
-  size_t max_vm_size;
-  size_t max_data_size;
-  size_t max_stack_size;
-  size_t max_core_size;
-  size_t max_file_size;
+  ej_size64_t max_vm_size;
+  ej_size64_t max_data_size;
+  ej_size64_t max_stack_size;
+  ej_size64_t max_core_size;
+  ej_size64_t max_file_size;
   int max_open_file_count;
   int max_process_count;
   unsigned char *spelling;
