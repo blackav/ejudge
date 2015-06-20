@@ -26,7 +26,7 @@
     ej_size64_t max_file_size = -1LL;
     unsigned char *content_type = NULL;
     unsigned char *style_checker_cmd = NULL;
-    unsigned char *style_checker_env = NULL;
+    char **style_checker_env = NULL;
     unsigned char *opts = NULL;
     unsigned char *libs = NULL;
 
@@ -35,7 +35,6 @@
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
     struct section_language_data *lang = NULL;
-    char **style_checker_env_parsed = NULL;
 
 %><s:read var="lang_id" required="yes" /><%
 %><s:read var="compile_id" required="yes" /><%
@@ -53,7 +52,7 @@
 %><s:read var="max_file_size" default="-1LL" /><%
 %><s:read var="content_type" normalize="yes" nonnull="yes" /><%
 %><s:read var="style_checker_cmd" normalize="yes" nonnull="yes" /><%
-%><s:read var="style_checker_env" normalize="yes" /><%
+%><s:read var="style_checker_env" /><%
 %><s:read var="opts" normalize="yes" /><%
 %><s:read var="libs" normalize="yes" /><%
     if (retval || !phr->ss) goto cleanup;
@@ -75,11 +74,6 @@
         retval = SSERV_ERR_INVALID_PARAMETER;
         goto cleanup;
     }
-    if (sarray_parse(style_checker_env, &style_checker_env_parsed) < 0) {
-        fprintf(msg_f, "invalid value of style_checker_env<br/>");
-        retval = SSERV_ERR_INVALID_PARAMETER;
-        goto cleanup;
-    }
 
     if (!retval && phr->ss) {
         snprintf(lang->long_name, sizeof(lang->long_name), "%s", long_name);
@@ -96,7 +90,7 @@
         if (max_file_size >= 0) lang->max_file_size = max_file_size;
         snprintf(lang->content_type, sizeof(lang->content_type), "%s", content_type);
         snprintf(lang->style_checker_cmd, sizeof(lang->style_checker_cmd), "%s", style_checker_cmd);
-        sarray_free(lang->style_checker_env); lang->style_checker_env = style_checker_env_parsed; style_checker_env_parsed = NULL;
+        sarray_free(lang->style_checker_env); lang->style_checker_env = style_checker_env; style_checker_env = NULL;
         xfree(phr->ss->lang_opts[compile_id]); phr->ss->lang_opts[compile_id] = opts; opts = NULL;
         xfree(phr->ss->lang_libs[compile_id]); phr->ss->lang_libs[compile_id] = libs; libs = NULL;
     }
@@ -120,5 +114,5 @@ cleanup:;
     xfree(style_checker_env);
     xfree(opts);
     xfree(libs);
-    sarray_free(style_checker_env_parsed);
+    sarray_free(style_checker_env);
 %>

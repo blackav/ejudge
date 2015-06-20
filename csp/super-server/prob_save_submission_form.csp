@@ -19,9 +19,9 @@
     int binary = -1;
     int max_user_run_count = -1;
     ejintbool_t max_user_run_count_dflt = -1;
-    const unsigned char *disable_language = NULL;
-    const unsigned char *enable_language = NULL;
-    const unsigned char *require = NULL;
+    char **disable_language = NULL;
+    char **enable_language = NULL;
+    char **require = NULL;
     const unsigned char *start_date_date = NULL;
     const unsigned char *start_date_time = NULL;
     const unsigned char *deadline_date = NULL;
@@ -29,9 +29,6 @@
 
     int i;
     struct section_problem_data *prob = NULL;
-    char **disable_language_parsed = NULL;
-    char **enable_language_parsed = NULL;
-    char **require_parsed = NULL;
     time_t start_date = 0;
     time_t deadline = 0;
 
@@ -66,21 +63,6 @@
     if (binary > 0) binary = 1;
     if (max_user_run_count < 0) max_user_run_count = -1;
     if (max_user_run_count_dflt) max_user_run_count = -1;
-    if (sarray_parse(disable_language, &disable_language_parsed) < 0) {
-        fprintf(msg_f, "invalid value of disable_language<br/>");
-        retval = SSERV_ERR_INVALID_PARAMETER;
-        goto cleanup;
-    }
-    if (sarray_parse(enable_language, &enable_language_parsed) < 0) {
-        fprintf(msg_f, "invalid value of enable_language<br/>");
-        retval = SSERV_ERR_INVALID_PARAMETER;
-        goto cleanup;
-    }
-    if (sarray_parse(require, &require_parsed) < 0) {
-        fprintf(msg_f, "invalid value of require<br/>");
-        retval = SSERV_ERR_INVALID_PARAMETER;
-        goto cleanup;
-    }
     if (parse_date_twopart(start_date_date, start_date_time, &start_date) < 0) {
         fprintf(msg_f, "Invalid start_date<br/>");
         retval = SSERV_ERR_INV_PARAM;
@@ -127,14 +109,14 @@
         prob->binary = binary;
         prob->max_user_run_count = max_user_run_count;
         sarray_free(prob->disable_language);
-        prob->disable_language = disable_language_parsed;
-        disable_language_parsed = NULL;
+        prob->disable_language = disable_language;
+        disable_language = NULL;
         sarray_free(prob->enable_language);
-        prob->enable_language = enable_language_parsed;
-        enable_language_parsed = NULL;
+        prob->enable_language = enable_language;
+        enable_language = NULL;
         sarray_free(prob->require);
-        prob->require = require_parsed;
-        require_parsed = NULL;
+        prob->require = require;
+        require = NULL;
         prob->start_date = start_date;
         prob->deadline = deadline;
     }
@@ -151,7 +133,7 @@ cleanup:;
 <%
     html_armor_free(&ab);
     xfree(msg_s);
-    sarray_free(disable_language_parsed);
-    sarray_free(enable_language_parsed);
-    sarray_free(require_parsed);
+    sarray_free(disable_language);
+    sarray_free(enable_language);
+    sarray_free(require);
 %>

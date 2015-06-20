@@ -33,13 +33,12 @@
     unsigned char *stand2_charset = NULL;
     unsigned char *plog_charset = NULL;
     int cpu_bogomips = 0;
-    const unsigned char *load_user_group = NULL;
+    char **load_user_group = NULL;
     unsigned char *clardb_plugin = NULL;
     unsigned char *rundb_plugin = NULL;
     unsigned char *xuser_plugin = NULL;
 
     time_t appeal_deadline = NULL;
-    char **parsed_load_user_group = NULL;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
@@ -71,7 +70,6 @@
 %><s:read var="rundb_plugin" normalize="yes" nonnull="yes" /><%
 %><s:read var="xuser_plugin" normalize="yes" nonnull="yes" /><%
 
-{
     if (parse_date_twopart(appeal_deadline_date, appeal_deadline_time, &appeal_deadline) < 0) {
         fprintf(msg_f, "Invalid finish time<br/>");
         retval = SSERV_ERR_INV_PARAM;
@@ -87,10 +85,6 @@
     }
     if (inactivity_timeout < 0) inactivity_timeout = 0;
     if (cpu_bogomips < 0) cpu_bogomips = 0;
-    if (sarray_parse_2(load_user_group, &parsed_load_user_group) < 0) {
-        retval = -SSERV_ERR_INVALID_PARAMETER;
-    }
-}
 
     if (!retval && phr->ss) {
         struct section_global_data *global = phr->ss->global;
@@ -115,7 +109,7 @@
             COPYSTR(stand2_charset);
             COPYSTR(plog_charset);
             global->cpu_bogomips = cpu_bogomips;
-            sarray_free(global->load_user_group); global->load_user_group = parsed_load_user_group; parsed_load_user_group = NULL;
+            sarray_free(global->load_user_group); global->load_user_group = load_user_group; load_user_group = NULL;
             COPYSTR(clardb_plugin);
             COPYSTR(rundb_plugin);
             COPYSTR(xuser_plugin);
@@ -139,7 +133,7 @@ cleanup:;
     xfree(clardb_plugin);
     xfree(rundb_plugin);
     xfree(xuser_plugin);
-    sarray_free(parsed_load_user_group);
+    sarray_free(load_user_group);
     html_armor_free(&ab);
     xfree(msg_s);
 %>

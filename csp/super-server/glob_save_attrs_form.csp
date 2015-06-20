@@ -15,7 +15,7 @@
     ejintbool_t stand_fancy_style = 0;
     unsigned char *stand_success_attr = NULL;
     unsigned char *stand_table_attr = NULL;
-    const unsigned char *stand_row_attr = NULL;
+    char **stand_row_attr = NULL;
     unsigned char *stand_place_attr = NULL;
     unsigned char *stand_team_attr = NULL;
     unsigned char *stand_prob_attr = NULL;
@@ -44,11 +44,8 @@
     unsigned char *stand_warn_number_attr = NULL;
     unsigned char *stand_page_table_attr = NULL;
     unsigned char *stand_page_cur_attr = NULL;
-    const unsigned char *stand_page_row_attr = NULL;
-    const unsigned char *stand_page_col_attr = NULL;
-    char **parsed_stand_row_attr = NULL;
-    char **parsed_stand_page_row_attr = NULL;
-    char **parsed_stand_page_col_attr = NULL;
+    char **stand_page_row_attr = NULL;
+    char **stand_page_col_attr = NULL;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
@@ -88,24 +85,13 @@
 %><s:read var="stand_page_row_attr" /><%
 %><s:read var="stand_page_col_attr" /><%
 
-// validate parameters here
-    if (sarray_parse_2(stand_row_attr, &parsed_stand_row_attr) < 0) {
-        retval = -SSERV_ERR_INVALID_PARAMETER;
-    }
-    if (sarray_parse_2(stand_page_row_attr, &parsed_stand_page_row_attr) < 0) {
-        retval = -SSERV_ERR_INVALID_PARAMETER;
-    }
-    if (sarray_parse_2(stand_page_col_attr, &parsed_stand_page_col_attr) < 0) {
-        retval = -SSERV_ERR_INVALID_PARAMETER;
-    }
-
     if (!retval && phr->ss) {
         struct section_global_data *global = phr->ss->global;
         if (global) {
             global->stand_fancy_style = stand_fancy_style;
             COPYSTR(stand_success_attr);
             COPYSTR(stand_table_attr);
-            sarray_free(global->stand_row_attr); global->stand_row_attr = parsed_stand_row_attr; parsed_stand_row_attr = NULL;
+            sarray_free(global->stand_row_attr); global->stand_row_attr = stand_row_attr; stand_row_attr = NULL;
             COPYSTR(stand_place_attr);
             COPYSTR(stand_team_attr);
             COPYSTR(stand_prob_attr);
@@ -134,8 +120,8 @@
             COPYSTR(stand_warn_number_attr);
             COPYSTR(stand_page_table_attr);
             COPYSTR(stand_page_cur_attr);
-            sarray_free(global->stand_page_row_attr); global->stand_page_row_attr = parsed_stand_page_row_attr; parsed_stand_page_row_attr = NULL;
-            sarray_free(global->stand_page_col_attr); global->stand_page_col_attr = parsed_stand_page_col_attr; parsed_stand_page_col_attr = NULL;
+            sarray_free(global->stand_page_row_attr); global->stand_page_row_attr = stand_page_row_attr; stand_page_row_attr = NULL;
+            sarray_free(global->stand_page_col_attr); global->stand_page_col_attr = stand_page_col_attr; stand_page_col_attr = NULL;
         }
     }
 
@@ -171,9 +157,9 @@ cleanup:;
     xfree(stand_warn_number_attr);
     xfree(stand_page_table_attr);
     xfree(stand_page_cur_attr);
-    sarray_free(parsed_stand_row_attr);
-    sarray_free(parsed_stand_page_row_attr);
-    sarray_free(parsed_stand_page_col_attr);
+    sarray_free(stand_row_attr);
+    sarray_free(stand_page_row_attr);
+    sarray_free(stand_page_col_attr);
     html_armor_free(&ab);
     xfree(msg_s);
 %>

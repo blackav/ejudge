@@ -13,7 +13,7 @@
     int prob_id = 0;
     unsigned char *test_checker_cmd = NULL;
     ejintbool_t test_checker_cmd_dflt = 0;
-    const unsigned char *test_checker_env = NULL;
+    char **test_checker_env = NULL;
     unsigned char *solution_src = NULL;
     ejintbool_t solution_src_dflt = NULL;
     unsigned char *solution_cmd = NULL;
@@ -21,7 +21,6 @@
 
     int i;
     struct section_problem_data *prob = NULL;
-    char **test_checker_env_parsed = NULL;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
@@ -53,11 +52,6 @@
         xfree(test_checker_cmd);
         test_checker_cmd = NULL;
     }
-    if (sarray_parse(test_checker_env, &test_checker_env_parsed) < 0) {
-        fprintf(msg_f, "invalid value of test_checker_env<br/>");
-        retval = SSERV_ERR_INVALID_PARAMETER;
-        goto cleanup;
-    }
     if (solution_src_dflt) {
         xfree(solution_src);
         solution_src = NULL;
@@ -69,7 +63,7 @@
 
     if (!retval && phr->ss) {
         xfree(prob->test_checker_cmd); prob->test_checker_cmd = test_checker_cmd; test_checker_cmd = NULL;
-        sarray_free(prob->test_checker_env); prob->test_checker_env = test_checker_env_parsed; test_checker_env_parsed = NULL;
+        sarray_free(prob->test_checker_env); prob->test_checker_env = test_checker_env; test_checker_env = NULL;
         xfree(prob->solution_src); prob->solution_src = solution_src; solution_src = NULL;
         xfree(prob->solution_cmd); prob->solution_cmd = solution_cmd; solution_cmd = NULL;
     }
@@ -89,5 +83,5 @@ cleanup:;
     xfree(test_checker_cmd);
     xfree(solution_src);
     xfree(solution_cmd);
-    sarray_free(test_checker_env_parsed);
+    sarray_free(test_checker_env);
 %>
