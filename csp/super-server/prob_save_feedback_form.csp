@@ -2,6 +2,10 @@
 %><%@include "includes.csp"
 %><%
 
+#define COPYSTR(f) snprintf(prob->f, sizeof(prob->f), "%s", (f))
+#define MOVEENV(f) sarray_free(prob->f); prob->f = f; f = NULL
+#define MOVESTR(f) xfree(prob->f); prob->f = f; f = NULL
+
 %><%@set getter_name = "csp_get_prob_save_feedback_form"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -10,8 +14,25 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-    // variables go here
     int prob_id = 0;
+
+    int team_enable_rep_view = -1;
+    int team_enable_ce_view = -1;
+    int team_show_judge_report = -1;
+    int show_checker_comment = -1;
+    unsigned char *open_tests = NULL;
+    unsigned char *final_open_tests = NULL;
+    int enable_tokens = -1;
+    int tokens_for_user_ac = -1;
+    unsigned char *tokens = NULL;
+    unsigned char *token_open_tests = NULL;
+    int tests_to_accept = -1;
+    ejintbool_t tests_to_accept_dflt = 0;
+    int accept_partial = -1;
+    int min_tests_to_accept = -1;
+    ejintbool_t min_tests_to_accept_dflt = 0;
+    int disable_pe = -1;
+    int disable_wtl = -1;
 
     int i;
     struct section_problem_data *prob = NULL;
@@ -21,24 +42,88 @@
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
 %><s:read var="prob_id" required="yes" /><%
+%><s:read var="team_enable_rep_view" default="-1" /><%
+%><s:read var="team_enable_ce_view" default="-1" /><%
+%><s:read var="team_show_judge_report" default="-1" /><%
+%><s:read var="show_checker_comment" default="-1" /><%
+%><s:read var="open_tests" normalize="yes" nonnull="yes" /><%
+%><s:read var="final_open_tests" normalize="yes" nonnull="yes" /><%
+%><s:read var="enable_tokens" default="-1" /><%
+%><s:read var="tokens_for_user_ac" default="-1" /><%
+%><s:read var="tokens" normalize="yes" /><%
+%><s:read var="token_open_tests" normalize="yes" /><%
+%><s:read var="tests_to_accept" default="-1" /><%
+%><s:read var="tests_to_accept_dflt" default="0" /><%
+%><s:read var="accept_partial" default="-1" /><%
+%><s:read var="min_tests_to_accept" default="-1" /><%
+%><s:read var="min_tests_to_accept_dflt" default="0" /><%
+%><s:read var="disable_pe" default="-1" /><%
+%><s:read var="disable_wtl" default="-1" /><%
 
     if (retval || !phr->ss) goto cleanup;
+
+    if (team_enable_rep_view > 0) team_enable_rep_view = 1;
+    if (team_enable_ce_view > 0) team_enable_ce_view = 1;
+    if (team_show_judge_report > 0) team_show_judge_report = 1;
+    if (show_checker_comment > 0) show_checker_comment = 1;
+    if (enable_tokens > 0) enable_tokens = 1;
+    if (tokens_for_user_ac > 0) tokens_for_user_ac = 1;
+    if (tests_to_accept < 0) tests_to_accept = -1;
+    if (tests_to_accept_dflt) tests_to_accept = -1;
+    if (accept_partial > 0) accept_partial = 1;
+    if (min_tests_to_accept < 0) tests_to_accept = -1;
+    if (min_tests_to_accept_dflt) tests_to_accept = -1;
+    if (disable_pe > 0) disable_pe = 1;
+    if (disable_wtl > 0) disable_wtl = 1;
 
     if (prob_id <= 0) {
         i = -prob_id;
         if (i >= phr->ss->aprob_u) FAIL(SSERV_ERR_INVALID_PARAMETER);
         prob = phr->ss->aprobs[i];
         if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+
+        if (team_enable_rep_view < 0) team_enable_rep_view = 0;
+        if (team_enable_ce_view < 0) team_enable_ce_view = 0;
+        if (team_show_judge_report < 0) team_show_judge_report = 0;
+        if (show_checker_comment < 0) show_checker_comment = 0;
+        if (enable_tokens < 0) enable_tokens = 0;
+        if (tokens_for_user_ac < 0) tokens_for_user_ac = 0;
+        if (accept_partial < 0) accept_partial = 0;
+        if (disable_pe < 0) disable_pe = 0;
+        if (disable_wtl < 0) disable_wtl = 0;
     } else {
         i = prob_id;
         if (i >= phr->ss->prob_a) FAIL(SSERV_ERR_INVALID_PARAMETER);
         prob = phr->ss->probs[i];
         if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+
+        if (team_enable_rep_view < 0) team_enable_rep_view = -1;
+        if (team_enable_ce_view < 0) team_enable_ce_view = -1;
+        if (team_show_judge_report < 0) team_show_judge_report = -1;
+        if (show_checker_comment < 0) show_checker_comment = -1;
+        if (enable_tokens < 0) enable_tokens = -1;
+        if (tokens_for_user_ac < 0) tokens_for_user_ac = -1;
+        if (accept_partial < 0) accept_partial = -1;
+        if (disable_pe < 0) disable_pe = -1;
+        if (disable_wtl < 0) disable_wtl = -1;
     }
-    // extra validation is here
 
     if (!retval && phr->ss) {
-        // argument setting is here
+        prob->team_enable_rep_view = team_enable_rep_view;
+        prob->team_enable_ce_view = team_enable_ce_view;
+        prob->team_show_judge_report = team_show_judge_report;
+        prob->show_checker_comment = show_checker_comment;
+        COPYSTR(open_tests);
+        COPYSTR(final_open_tests);
+        prob->enable_tokens = enable_tokens;
+        prob->tokens_for_user_ac = tokens_for_user_ac;
+        MOVESTR(tokens);
+        MOVESTR(token_open_tests);
+        prob->tests_to_accept = tests_to_accept;
+        prob->accept_partial = accept_partial;
+        prob->min_tests_to_accept = min_tests_to_accept;
+        prob->disable_pe = disable_pe;
+        prob->disable_wtl = disable_wtl;
     }
 
 cleanup:;
@@ -53,5 +138,8 @@ cleanup:;
 <%
     html_armor_free(&ab);
     xfree(msg_s);
-    // freeing is here 
+    xfree(open_tests);
+    xfree(final_open_tests);
+    xfree(tokens);
+    xfree(token_open_tests);
 %>
