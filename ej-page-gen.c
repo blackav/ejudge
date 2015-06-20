@@ -5679,7 +5679,7 @@ string_array_read_type_handler(
     int ignoreerrors = html_attribute_get_bool(html_element_find_attribute(elem, "ignoreerrors"), 0);
     if (ignoreerrors) {
         fprintf(prg_f, "  hr_cgi_param(phr, \"%s\", &(tmp_str));\n", param_name);
-        fprintf(prg_f, "  sarray_parse(tmp_str, &(%s));\n", var_name);
+        fprintf(prg_f, "  sarray_parse_2(tmp_str, &(%s));\n", var_name);
     } else {
         unsigned char errcode_buf[1024];
         const unsigned char *error_code = html_element_find_attribute_value(elem, "error");
@@ -5694,9 +5694,9 @@ string_array_read_type_handler(
         if (!stream) stream = "log_f";
         if (gotoerrors) {
             fprintf(prg_f, "  if (hr_cgi_param(phr, \"%s\", &(tmp_str)) < 0) goto %s;\n", param_name, invalid_code);
-            fprintf(prg_f, "  if (sarray_parse(tmp_str, &(%s)) < 0) goto %s;\n", var_name, invalid_code);
+            fprintf(prg_f, "  if (sarray_parse_2(tmp_str, &(%s)) < 0) goto %s;\n", var_name, invalid_code);
         } else {
-            fprintf(prg_f, "  if (hr_cgi_param(phr, \"%s\", &(tmp_str)) < 0 || sarray_parse(tmp_str, &(%s)) < 0) {\n",
+            fprintf(prg_f, "  if (hr_cgi_param(phr, \"%s\", &(tmp_str)) < 0 || sarray_parse_2(tmp_str, &(%s)) < 0) {\n",
                     param_name, var_name);
             if (invalid_msg) {
                 fprintf(prg_f, "    fputs(\"%s\", %s);\n", invalid_msg, stream);
