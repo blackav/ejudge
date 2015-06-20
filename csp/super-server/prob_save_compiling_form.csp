@@ -2,6 +2,9 @@
 %><%@include "includes.csp"
 %><%
 
+#define COPYSTR(f) snprintf(prob->f, sizeof(prob->f), "%s", (f))
+#define MOVEENV(f) sarray_free(prob->f); prob->f = f; f = NULL
+
 %><%@set getter_name = "csp_get_prob_save_compiling_form"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -10,9 +13,16 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-    // variables go here
     int prob_id = 0;
-
+    unsigned char *style_checker_cmd = NULL;
+    ejintbool_t style_checker_cmd_dflt = 0;
+    char **style_checker_env = NULL;
+    char **lang_compiler_env = NULL;
+    unsigned char *source_header = NULL;
+    ejintbool_t source_header_dflt = 0;
+    unsigned char *source_footer = NULL;
+    ejintbool_t source_footer_dflt = 0;
+    
     int i;
     struct section_problem_data *prob = NULL;
 
@@ -21,8 +31,20 @@
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
 %><s:read var="prob_id" required="yes" /><%
+%><s:read var="style_checker_cmd" normalize="yes" nonnull="yes" /><%
+%><s:read var="style_checker_cmd_dflt" default="0" /><%
+%><s:read var="style_checker_env" /><%
+%><s:read var="lang_compiler_env" /><%
+%><s:read var="source_header" normalize="yes" nonnull="yes" /><%
+%><s:read var="source_header_dflt" default="0" /><%
+%><s:read var="source_footer" normalize="yes" nonnull="yes" /><%
+%><s:read var="source_footer_dflt" default="0" /><%
 
     if (retval || !phr->ss) goto cleanup;
+
+    if (style_checker_cmd_dflt) *style_checker_cmd = 0;
+    if (source_header_dflt) *source_header = 0;
+    if (source_footer_dflt) *source_footer = 0;
 
     if (prob_id <= 0) {
         i = -prob_id;
@@ -35,10 +57,13 @@
         prob = phr->ss->probs[i];
         if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
     }
-    // extra validation is here
 
     if (!retval && phr->ss) {
-        // argument setting is here
+        COPYSTR(style_checker_cmd);
+        MOVEENV(style_checker_env);
+        MOVEENV(lang_compiler_env);
+        COPYSTR(source_header);
+        COPYSTR(source_footer);
     }
 
 cleanup:;
@@ -53,5 +78,9 @@ cleanup:;
 <%
     html_armor_free(&ab);
     xfree(msg_s);
-    // freeing is here 
+    xfree(style_checker_cmd);
+    sarray_free(style_checker_env);
+    sarray_free(lang_compiler_env);
+    xfree(source_header);
+    xfree(source_footer);
 %>

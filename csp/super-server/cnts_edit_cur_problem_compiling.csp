@@ -46,7 +46,8 @@ $(function() {
         }
     });
 
-    $("#orig-style_checker_env-div").toggle(<s:v type="jsbool" value="tmp_prob->style_checker_cmd[0]" />);
+    $("#orig-lang_compiler_env-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-style_checker_env-div").toggle(<s:v type="jsbool" value="tmp_prob->style_checker_cmd[0] && prob_id > 0" />);
 });
 
 function popupCompilingDialog(e, skipField)
@@ -68,7 +69,8 @@ function compilingDialogOnChange(field)
 {
     <%@expand ONCHANGE_WITH_DEFAULT "style_checker_cmd" %>
 
-    $("#edit-style_checker_env-div").toggle($("#edit-style_checker_cmd").val() != "" || <s:v type="jsbool" value="sup_prob && sup_prob->style_checker_cmd[0]" />);
+    $("#edit-lang_compiler_env-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-style_checker_env-div").toggle(($("#edit-style_checker_cmd").val() != "" || <s:v type="jsbool" value="sup_prob && sup_prob->style_checker_cmd[0]" />) && <s:v type="jsbool" value="prob_id > 0" />);
 
     <%@expand ONCHANGE_WITH_DEFAULT "source_header" %>
     <%@expand ONCHANGE_WITH_DEFAULT "source_footer" %>
