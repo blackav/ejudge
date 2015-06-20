@@ -2,6 +2,10 @@
 %><%@include "includes.csp"
 %><%
 
+#define COPYSTR(f) snprintf(prob->f, sizeof(prob->f), "%s", (f))
+#define MOVEENV(f) sarray_free(prob->f); prob->f = f; f = NULL
+#define MOVESTR(f) xfree(prob->f); prob->f = f; f = NULL
+
 %><%@set getter_name = "csp_get_prob_save_limits_form"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -10,8 +14,32 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-    // variables go here
     int prob_id = 0;
+
+    int time_limit = -1;
+    ejintbool_t time_limit_dflt = 0;
+    int time_limit_millis = -1;
+    ejintbool_t time_limit_millis_dflt = 0;
+    int real_time_limit = -1;
+    ejintbool_t real_time_limit_dflt = 0;
+    ej_size64_t max_vm_size = -1LL;
+    ejintbool_t max_vm_size_dflt = 0;
+    ej_size64_t max_stack_size = -1LL;
+    ejintbool_t max_stack_size_dflt = 0;
+    ej_size64_t max_file_size = -1LL;
+    ejintbool_t max_file_size_dflt = 0;
+    int max_open_file_count = -1;
+    ejintbool_t max_open_file_count_dflt = 0;
+    int max_process_count = -1;
+    ejintbool_t max_process_count_dflt = 0;
+    unsigned char *umask = NULL;
+    ejintbool_t umask_dflt = 0;
+    int enable_process_group = -1;
+    int disable_security = -1;
+    char **lang_time_adj = NULL;
+    char **lang_time_adj_millis = NULL;
+    char **lang_max_vm_size = NULL;
+    char **lang_max_stack_size = NULL;
 
     int i;
     struct section_problem_data *prob = NULL;
@@ -21,24 +49,111 @@
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
 %><s:read var="prob_id" required="yes" /><%
+%><s:read var="time_limit" default="-1" /><%
+%><s:read var="time_limit_dflt" default="0" /><%
+%><s:read var="time_limit_millis" default="-1" /><%
+%><s:read var="time_limit_millis_dflt" default="0" /><%
+%><s:read var="real_time_limit" default="-1" /><%
+%><s:read var="real_time_limit_dflt" default="0" /><%
+%><s:read var="max_vm_size" default="-1LL" /><%
+%><s:read var="max_vm_size_dflt" default="0" /><%
+%><s:read var="max_stack_size" default="-1LL" /><%
+%><s:read var="max_stack_size_dflt" default="0" /><%
+%><s:read var="max_file_size" default="-1LL" /><%
+%><s:read var="max_file_size_dflt" default="0" /><%
+%><s:read var="max_open_file_count" default="-1" /><%
+%><s:read var="max_open_file_count_dflt" default="0" /><%
+%><s:read var="max_process_count" default="-1" /><%
+%><s:read var="max_process_count_dflt" default="0" /><%
+%><s:read var="umask" normalize="yes" nonnull="yes" /><%
+%><s:read var="umask_dflt" default="0" /><%
+%><s:read var="enable_process_group" default="-1" /><%
+%><s:read var="disable_security" default="-1" /><%
+%><s:read var="lang_time_adj" /><%
+%><s:read var="lang_time_adj_millis" /><%
+%><s:read var="lang_max_vm_size" /><%
+%><s:read var="lang_max_stack_size" /><%
 
     if (retval || !phr->ss) goto cleanup;
+
+    if (time_limit < 0) time_limit = -1;
+    if (time_limit_dflt) time_limit = -1;
+    if (time_limit_millis < 0) time_limit_millis = -1;
+    if (time_limit_millis_dflt) time_limit_millis = -1;
+    if (real_time_limit < 0) real_time_limit = -1;
+    if (real_time_limit_dflt) real_time_limit = -1;
+    if (max_vm_size < 0) max_vm_size = -1LL;
+    if (max_vm_size_dflt) max_vm_size = -1LL;
+    if (max_vm_size > 0 && max_vm_size != (size_t) max_vm_size) {
+        fprintf(msg_f, "max_vm_size is too large<br/>");
+        FAIL(SSERV_ERR_INVALID_PARAMETER);
+    }
+    if (max_stack_size < 0) max_stack_size = -1LL;
+    if (max_stack_size_dflt) max_stack_size = -1LL;
+    if (max_stack_size > 0 && max_stack_size != (size_t) max_stack_size) {
+        fprintf(msg_f, "max_stack_size is too large<br/>");
+        FAIL(SSERV_ERR_INVALID_PARAMETER);
+    }
+    if (max_file_size < 0) max_file_size = -1LL;
+    if (max_file_size_dflt) max_file_size = -1LL;
+    if (max_file_size > 0 && max_file_size != (size_t) max_file_size) {
+        fprintf(msg_f, "max_file_size is too large<br/>");
+        FAIL(SSERV_ERR_INVALID_PARAMETER);
+    }
+    if (max_open_file_count < 0) max_open_file_count = -1;
+    if (max_open_file_count_dflt) max_open_file_count = -1;
+    if (max_process_count < 0) max_process_count = -1;
+    if (max_process_count_dflt) max_process_count = -1;
+    if (umask_dflt) {
+        xfree(umask); umask = NULL;
+    }
+    if (enable_process_group > 0) enable_process_group = 1;
+    if (disable_security > 0) disable_security = 1;
 
     if (prob_id <= 0) {
         i = -prob_id;
         if (i >= phr->ss->aprob_u) FAIL(SSERV_ERR_INVALID_PARAMETER);
         prob = phr->ss->aprobs[i];
         if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        if (enable_process_group < 0) enable_process_group = 0;
+        if (disable_security < 0) disable_security = 0;
     } else {
         i = prob_id;
         if (i >= phr->ss->prob_a) FAIL(SSERV_ERR_INVALID_PARAMETER);
         prob = phr->ss->probs[i];
         if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        if (enable_process_group < 0) enable_process_group = -1;
+        if (disable_security < 0) disable_security = -1;
     }
-    // extra validation is here
 
     if (!retval && phr->ss) {
-        // argument setting is here
+        prob->time_limit = time_limit;
+        prob->time_limit_millis = time_limit_millis;
+        prob->real_time_limit = real_time_limit;
+        if (max_vm_size >= 0) {
+            prob->max_vm_size = (size_t) max_vm_size;
+        } else {
+            prob->max_vm_size = ~(size_t) 0;
+        }
+        if (max_stack_size >= 0) {
+            prob->max_stack_size = (size_t) max_stack_size;
+        } else {
+            prob->max_stack_size = ~(size_t) 0;
+        }
+        if (max_file_size >= 0) {
+            prob->max_file_size = (size_t) max_file_size;
+        } else {
+            prob->max_file_size = ~(size_t) 0;
+        }
+        prob->max_open_file_count = max_open_file_count;
+        prob->max_process_count = max_process_count;
+        MOVESTR(umask);
+        prob->enable_process_group = enable_process_group;
+        prob->disable_security = disable_security;
+        MOVEENV(lang_time_adj);
+        MOVEENV(lang_time_adj_millis);
+        MOVEENV(lang_max_vm_size);
+        MOVEENV(lang_max_stack_size);
     }
 
 cleanup:;
@@ -53,5 +168,9 @@ cleanup:;
 <%
     html_armor_free(&ab);
     xfree(msg_s);
-    // freeing is here 
+    xfree(umask);
+    sarray_free(lang_time_adj);
+    sarray_free(lang_time_adj_millis);
+    sarray_free(lang_max_vm_size);
+    sarray_free(lang_max_stack_size);
 %>

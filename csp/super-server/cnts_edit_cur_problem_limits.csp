@@ -55,6 +55,11 @@ $(function() {
         close : function() {
         }
     });
+
+    $("#orig-lang_time_adj-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-lang_time_adj_millis-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-lang_max_vm_size-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-lang_max_stack_size-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
 });
 
 function popupLimitsDialog(e, skipField)
@@ -93,6 +98,11 @@ function limitsDialogOnChange(field)
     <%@expand ONCHANGE_WITH_DEFAULT "max_open_file_count" %>
     <%@expand ONCHANGE_WITH_DEFAULT "max_process_count" %>
     <%@expand ONCHANGE_WITH_DEFAULT "umask" %>
+
+    $("#edit-lang_time_adj-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-lang_time_adj_millis-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-lang_max_vm_size-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-lang_max_stack_size-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
 }
 
 
