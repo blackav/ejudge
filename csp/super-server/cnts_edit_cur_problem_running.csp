@@ -61,7 +61,7 @@ $(function() {
     $("#orig-check_presentation-div").toggle(<s:v type="jsbool" value="tmp_prob->manual_checking > 0" />);
     $("#orig-input_file-div").toggle(<s:v type="jsbool" value="tmp_prob->use_stdin <= 0 || tmp_prob->combined_stdin > 0" />);
     $("#orig-output_file-div").toggle(<s:v type="jsbool" value="tmp_prob->use_stdout <= 0 || tmp_prob->combined_stdout > 0" />);
-    $("#orig-start_env-div").toggle(<s:v type="jsbool" value="tmp_prob->start_cmd && tmp_prob->start_cmd[0]" />);
+    $("#orig-start_env-div").toggle(<s:v type="jsbool" value="tmp_prob->start_cmd && tmp_prob->start_cmd[0] && prob_id > 0" />);
 });
 
 function popupRunningDialog(e, skipField)
@@ -108,7 +108,7 @@ function runningDialogOnChange(field)
     <%@expand ONCHANGE_WITH_DEFAULT "output_file" %>
     <%@expand ONCHANGE_WITH_DEFAULT "start_cmd" %>
 
-    $("#edit-start_env-div").toggle($("#edit-start_cmd").val() != "" || <s:v type="jsbool" value="sup_prob && sup_prob->start_cmd" />);
+    $("#edit-start_env-div").toggle($("#edit-start_cmd").val() != "" || <s:v type="jsbool" value="sup_prob && sup_prob->start_cmd && prob_id > 0" />);
 }
 
 

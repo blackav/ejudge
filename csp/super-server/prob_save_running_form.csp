@@ -2,6 +2,10 @@
 %><%@include "includes.csp"
 %><%
 
+#define COPYSTR(f) snprintf(prob->f, sizeof(prob->f), "%s", (f))
+#define MOVEENV(f) sarray_free(prob->f); prob->f = f; f = NULL
+#define MOVESTR(f) xfree(prob->f); prob->f = f; f = NULL
+
 %><%@set getter_name = "csp_get_prob_save_running_form"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -10,8 +14,25 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-    // variables go here
     int prob_id = 0;
+    int disable_testing = -1;
+    int disable_auto_testing = -1;
+    int enable_compilation = -1;
+    int manual_checking = -1;
+    int check_presentation = -1;
+    int use_stdin = -1;
+    int combined_stdin = -1;
+    unsigned char *input_file = NULL;
+    ejintbool_t input_file_dflt = 0;
+    int use_stdout = -1;
+    int combined_stdout = -1;
+    unsigned char *output_file = NULL;
+    ejintbool_t output_file_dflt = 0;
+    int disable_stderr = -1;
+    int ignore_exit_code = -1;
+    unsigned char *start_cmd = NULL;
+    ejintbool_t start_cmd_dflt = 0;
+    char **start_env = NULL;
 
     int i;
     struct section_problem_data *prob = NULL;
@@ -21,24 +42,95 @@
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
 %><s:read var="prob_id" required="yes" /><%
+%><s:read var="disable_testing" default="-1" /><%
+%><s:read var="disable_auto_testing" default="-1" /><%
+%><s:read var="enable_compilation" default="-1" /><%
+%><s:read var="manual_checking" default="-1" /><%
+%><s:read var="check_presentation" default="-1" /><%
+%><s:read var="use_stdin" default="-1" /><%
+%><s:read var="combined_stdin" default="-1" /><%
+%><s:read var="input_file" normalize="yes" nonnull="yes" /><%
+%><s:read var="input_file_dflt" default="0" /><%
+%><s:read var="use_stdout" default="-1" /><%
+%><s:read var="combined_stdout" default="-1" /><%
+%><s:read var="output_file" normalize="yes" nonnull="yes" /><%
+%><s:read var="output_file_dflt" default="0" /><%
+%><s:read var="disable_stderr" default="-1" /><%
+%><s:read var="ignore_exit_code" default="-1" /><%
+%><s:read var="start_cmd" normalize="yes" nonnull="yes" /><%
+%><s:read var="start_cmd_dflt" default="0" /><%
+%><s:read var="start_env" /><%
 
     if (retval || !phr->ss) goto cleanup;
+
+    if (disable_testing > 0) disable_testing = 1;
+    if (disable_auto_testing > 0) disable_auto_testing = 1;
+    if (enable_compilation > 0) enable_compilation = 1;
+    if (manual_checking > 0) manual_checking = 1;
+    if (check_presentation > 0) check_presentation = 1;
+    if (use_stdin > 0) use_stdin = 1;
+    if (combined_stdin > 0) combined_stdin = 1;
+    if (input_file_dflt) *input_file = 0;
+    if (use_stdout > 0) use_stdout = 1;
+    if (combined_stdout > 0) combined_stdout = 1;
+    if (output_file_dflt) *output_file = 0;
+    if (disable_stderr > 0) disable_stderr = 1;
+    if (ignore_exit_code > 0) ignore_exit_code = 1;
+    if (start_cmd_dflt) {
+        xfree(start_cmd);
+        start_cmd = NULL;
+    }
 
     if (prob_id <= 0) {
         i = -prob_id;
         if (i >= phr->ss->aprob_u) FAIL(SSERV_ERR_INVALID_PARAMETER);
         prob = phr->ss->aprobs[i];
         if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        if (disable_testing < 0) disable_testing = 0;
+        if (disable_auto_testing < 0) disable_auto_testing = 0;
+        if (enable_compilation < 0) enable_compilation = 0;
+        if (manual_checking < 0) manual_checking = 0;
+        if (check_presentation < 0) check_presentation = 0;
+        if (use_stdin < 0) use_stdin = 0;
+        if (combined_stdin < 0) combined_stdin = 0;
+        if (use_stdout < 0) use_stdout = 0;
+        if (combined_stdout < 0) combined_stdout = 0;
+        if (disable_stderr < 0) disable_stderr = 0;
+        if (ignore_exit_code < 0) ignore_exit_code = 0;
     } else {
         i = prob_id;
         if (i >= phr->ss->prob_a) FAIL(SSERV_ERR_INVALID_PARAMETER);
         prob = phr->ss->probs[i];
         if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+        if (disable_testing < 0) disable_testing = -1;
+        if (disable_auto_testing < 0) disable_auto_testing = -1;
+        if (enable_compilation < 0) enable_compilation = -1;
+        if (manual_checking < 0) manual_checking = -1;
+        if (check_presentation < 0) check_presentation = -1;
+        if (use_stdin < 0) use_stdin = -1;
+        if (combined_stdin < 0) combined_stdin = -1;
+        if (use_stdout < 0) use_stdout = -1;
+        if (combined_stdout < 0) combined_stdout = -1;
+        if (disable_stderr < 0) disable_stderr = -1;
+        if (ignore_exit_code < 0) ignore_exit_code = -1;
     }
-    // extra validation is here
 
     if (!retval && phr->ss) {
-        // argument setting is here
+        prob->disable_testing = disable_testing;
+        prob->disable_auto_testing = disable_auto_testing;
+        prob->enable_compilation = enable_compilation;
+        prob->manual_checking = manual_checking;
+        prob->check_presentation = check_presentation;
+        prob->use_stdin = use_stdin;
+        prob->combined_stdin = combined_stdin;
+        COPYSTR(input_file);
+        prob->use_stdout = use_stdout;
+        prob->combined_stdout = combined_stdout;
+        COPYSTR(output_file);
+        prob->disable_stderr = disable_stderr;
+        prob->ignore_exit_code = ignore_exit_code;
+        MOVESTR(start_cmd);
+        MOVEENV(start_env);
     }
 
 cleanup:;
@@ -53,5 +145,8 @@ cleanup:;
 <%
     html_armor_free(&ab);
     xfree(msg_s);
-    // freeing is here 
+    xfree(input_file);
+    xfree(output_file);
+    xfree(start_cmd);
+    sarray_free(start_env);
 %>
