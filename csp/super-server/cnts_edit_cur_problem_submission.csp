@@ -58,6 +58,11 @@ $(function() {
     $('#edit-deadline_time').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
     $('#edit-deadline_date').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
 
+    $("#orig-disable_language-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-enable_language-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-require-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-start_date-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-deadline-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
 });
 
 function popupSubmissionDialog(e, skipField)
@@ -84,6 +89,11 @@ function popupSubmissionDialog(e, skipField)
 
 function submissionDialogOnChange(field)
 {
+    $("#edit-disable_language-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-enable_language-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-require-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-start_date-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-deadline-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
 }
 
 
