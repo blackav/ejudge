@@ -8,7 +8,7 @@
         <%@expand MENU_TEXTFIELD "stand_name" "standing" "Title for the standings column" "250" %>
         <%@expand MENU_TEXTFIELD "stand_column" "standing" "Collate this problem with the specified one" "250" %>
         <%@expand MENU_YESNO3 "hidden" "standing" "Do not show this problem in standings" "250" %>
-        <%@expand MENU_YESNO "stand_hide_time" "standing" "Do not show accept time for this problem" "250" %>
+        <%@expand MENU_YESNO3 "stand_hide_time" "standing" "Do not show accept time" "250" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "stand_attr" "standing" "Standings attributes" "250" %>
         <%@expand MENU_TEXTFIELD "score_view" "standing" "Special view for scores" "250" %>
         <%@expand MENU_YESNO3 "stand_ignore_score" "standing" "Ignore problem score in standings" "250" %>

@@ -2128,21 +2128,7 @@ function viewDialogOnChange(field)
             </s:tr>
 
             <%@expand ORIG_INHERITABLE_BOOLEAN "hidden" "Standing" "Do not show this problem in standings" %>
-
-<%
-  {
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_hide_time-div">
-                <td>Do not show accept time for this problem?</td>
-                <td><%
-    int value = (prob->stand_hide_time > 0);
-%><s:yesno id="orig-stand_hide_time" readonly="readonly" name="param" value="value" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_hide_time" /></td>
-            </s:tr>
-<%
-  }
-%>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "stand_hide_time" "Standing" "Do not show accept time" %>
 
 <%
   {

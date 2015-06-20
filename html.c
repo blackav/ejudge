@@ -1496,13 +1496,13 @@ do_write_kirov_standings(
             // latest
             marked_flag[up_ind] = 1;
             prob_score[up_ind] = score;
-            if (!prob->stand_hide_time) sol_time[up_ind] = pe->time;
+            if (prob->stand_hide_time <= 0) sol_time[up_ind] = pe->time;
           } else if (marked_flag[up_ind]) {
             // do nothing
           } else if (score > prob_score[up_ind]) {
             // best score
             prob_score[up_ind] = score;
-            if (!prob->stand_hide_time) sol_time[up_ind] = pe->time;
+            if (prob->stand_hide_time <= 0) sol_time[up_ind] = pe->time;
           }
           sol_att[up_ind]++;
           succ_att[pind]++;
@@ -1520,13 +1520,13 @@ do_write_kirov_standings(
             // latest
             marked_flag[up_ind] = 1;
             prob_score[up_ind] = score;
-            if (!prob->stand_hide_time) sol_time[up_ind] = pe->time;
+            if (prob->stand_hide_time <= 0) sol_time[up_ind] = pe->time;
           } else if (marked_flag[up_ind]) {
             // do nothing
           } else if (score > prob_score[up_ind]) {
             // best score
             prob_score[up_ind] = score;
-            if (!prob->stand_hide_time) sol_time[up_ind] = pe->time;
+            if (prob->stand_hide_time <= 0) sol_time[up_ind] = pe->time;
           }
           if (!full_sol[up_ind]) sol_att[up_ind]++;
           att_num[up_ind]++;
@@ -1578,9 +1578,9 @@ do_write_kirov_standings(
                                      0, 0);
             if (prob->score_latest > 0 || score > prob_score[up_ind]) {
               prob_score[up_ind] = score;
-              if (!prob->stand_hide_time) sol_time[up_ind] = pe->time;
+              if (prob->stand_hide_time <= 0) sol_time[up_ind] = pe->time;
             }
-            if (!sol_time[up_ind] && !prob->stand_hide_time)
+            if (!sol_time[up_ind] && prob->stand_hide_time <= 0)
               sol_time[up_ind] = pe->time;
             if (!full_sol[up_ind]) {
               succ_att[pind]++;
@@ -1615,9 +1615,9 @@ do_write_kirov_standings(
                 */
                 if (dst_prob->score_latest > 0 || score > prob_score[dst_up_ind]) {
                   prob_score[dst_up_ind] = score;
-                  if (!dst_prob->stand_hide_time) sol_time[dst_up_ind] = pe->time;
+                  if (dst_prob->stand_hide_time <= 0) sol_time[dst_up_ind] = pe->time;
                 }
-                if (!sol_time[dst_up_ind] && !dst_prob->stand_hide_time) {
+                if (!sol_time[dst_up_ind] && dst_prob->stand_hide_time <= 0) {
                   sol_time[dst_up_ind] = pe->time;
                 }
                 if (!full_sol[dst_up_ind]) {

@@ -980,6 +980,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->variable_full_score = -1;
   p->hidden = -1;
   p->advance_to_next = -1;
+  p->stand_hide_time = -1;
   p->disable_ctrl_chars = -1;
   p->valuer_sets_marked = -1;
   p->ignore_unmarked = -1;
@@ -3191,6 +3192,7 @@ set_defaults(
 
     prepare_set_prob_value(CNTSPROB_hidden, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_advance_to_next, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_stand_hide_time, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_ctrl_chars, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_valuer_sets_marked, prob, aprob, g);    
     prepare_set_prob_value(CNTSPROB_ignore_unmarked, prob, aprob, g);    
@@ -4953,6 +4955,7 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (prob->accept_partial < 0) prob->accept_partial = 0;
   if (prob->hidden < 0) prob->hidden = 0;
   if (prob->advance_to_next < 0) prob->advance_to_next = 0;
+  if (prob->stand_hide_time < 0) prob->stand_hide_time = 0;
   if (prob->disable_ctrl_chars < 0) prob->disable_ctrl_chars = 0;
   if (prob->valuer_sets_marked < 0) prob->valuer_sets_marked = 0;
   if (prob->ignore_unmarked < 0) prob->ignore_unmarked = 0;
@@ -5566,6 +5569,7 @@ prepare_set_prob_value(
 
   INHERIT_BOOLEAN(hidden);
   INHERIT_BOOLEAN(advance_to_next);
+  INHERIT_BOOLEAN(stand_hide_time);
   INHERIT_BOOLEAN(disable_ctrl_chars);
   INHERIT_BOOLEAN(valuer_sets_marked);
   INHERIT_BOOLEAN(ignore_unmarked);
@@ -6100,7 +6104,7 @@ prepare_set_all_prob_values(
     CNTSPROB_skip_testing,
     CNTSPROB_hidden,
     //CNTSPROB_priority_adjustment,
-    //CNTSPROB_stand_hide_time,
+    CNTSPROB_stand_hide_time,
     //CNTSPROB_score_multiplier,
     //CNTSPROB_prev_runs_to_show,
     CNTSPROB_max_user_run_count,

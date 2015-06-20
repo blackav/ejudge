@@ -19,7 +19,7 @@
     unsigned char *stand_name = NULL;
     unsigned char *stand_column = NULL;
     int hidden = -1;
-    ejintbool_t stand_hide_time = 0;
+    int stand_hide_time = 0;
     unsigned char *stand_attr = NULL;
     ejintbool_t stand_attr_dflt = 0;
     char **score_view = NULL;
@@ -38,7 +38,7 @@
 %><s:read var="stand_name" normalize="yes" nonnull="yes" /><%
 %><s:read var="stand_column" normalize="yes" nonnull="yes" /><%
 %><s:read var="hidden" default="-1" /><%
-%><s:read var="stand_hide_time" default="0" /><%
+%><s:read var="stand_hide_time" default="-1" /><%
 %><s:read var="stand_attr" normalize="yes" nonnull="yes" /><%
 %><s:read var="stand_attr_dflt" default="0" /><%
 %><s:read var="score_view" /><%
