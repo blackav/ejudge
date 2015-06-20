@@ -49,6 +49,12 @@ $(function() {
         close : function() {
         }
     });
+
+
+    $("#orig-stand_name-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-stand_column-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-score_view-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-provide_ok-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
 });
 
 function popupStandingDialog(e, skipField)
@@ -73,6 +79,11 @@ function popupStandingDialog(e, skipField)
 function standingDialogOnChange(field)
 {
     <%@expand ONCHANGE_WITH_DEFAULT "stand_attr" %>
+
+    $("#edit-stand_name-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-stand_column-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-score_view-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-provide_ok-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
 }
 
 
