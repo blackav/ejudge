@@ -2,6 +2,10 @@
 %><%@include "includes.csp"
 %><%
 
+#define COPYSTR(f) snprintf(prob->f, sizeof(prob->f), "%s", (f))
+#define MOVEENV(f) sarray_free(prob->f); prob->f = f; f = NULL
+#define MOVESTR(f) xfree(prob->f); prob->f = f; f = NULL
+
 %><%@set getter_name = "csp_get_prob_save_scoring_form"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -10,8 +14,35 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-    // variables go here
     int prob_id = 0;
+
+    int ignore_compile_errors = -1;
+    int use_ac_not_ok = -1;
+    unsigned char *ok_status = NULL;
+    int ignore_prev_ac = -1;
+    int olympiad_mode = -1;
+    int score_latest = -1;
+    int score_latest_or_unmarked = -1;
+    int score_latest_marked = -1;
+    int ignore_unmarked = -1;
+    int score_tokenized = -1;
+    int full_score = -1;
+    ejintbool_t full_score_dflt = 0;
+    int full_user_score = -1;
+    ejintbool_t full_user_score_dflt = 0;
+    int variable_full_score = -1;
+    int test_score = -1;
+    ejintbool_t test_score_dflt = 0;
+    int run_penalty = -1;
+    ejintbool_t run_penalty_dflt = 0;
+    int disqualified_penalty = -1;
+    ejintbool_t disqualified_penalty_dflt = 0;
+    int acm_run_penalty = -1;
+    ejintbool_t acm_run_penalty_dflt = 0;
+    unsigned char *test_score_list = NULL;
+    unsigned char *score_tests = NULL;
+    char **test_sets = NULL;
+    unsigned char *score_bonus = NULL;
 
     int i;
     struct section_problem_data *prob = NULL;
@@ -21,24 +52,115 @@
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
 %><s:read var="prob_id" required="yes" /><%
+%><s:read var="ignore_compile_errors" default="-1" /><%
+%><s:read var="use_ac_not_ok" default="-1" /><%
+%><s:read var="ok_status" normalize="yes" /><%
+%><s:read var="ignore_prev_ac" default="-1" /><%
+%><s:read var="olympiad_mode" default="-1" /><%
+%><s:read var="score_latest" default="-1" /><%
+%><s:read var="score_latest_or_unmarked" default="-1" /><%
+%><s:read var="score_latest_marked" default="-1" /><%
+%><s:read var="ignore_unmarked" default="-1" /><%
+%><s:read var="score_tokenized" default="-1" /><%
+%><s:read var="full_score" default="-1" /><%
+%><s:read var="full_score_dflt" default="0" /><%
+%><s:read var="full_user_score" default="-1" /><%
+%><s:read var="full_user_score_dflt" default="0" /><%
+%><s:read var="variable_full_score" default="-1" /><%
+%><s:read var="test_score" default="-1" /><%
+%><s:read var="test_score_dflt" default="0" /><%
+%><s:read var="run_penalty" default="-1" /><%
+%><s:read var="run_penalty_dflt" default="0" /><%
+%><s:read var="disqualified_penalty" default="-1" /><%
+%><s:read var="disqualified_penalty_dflt" default="0" /><%
+%><s:read var="acm_run_penalty" default="-1" /><%
+%><s:read var="acm_run_penalty_dflt" default="0" /><%
+%><s:read var="test_score_list" normalize="yes" /><%
+%><s:read var="score_tests" normalize="yes" nonnull="yes" /><%
+%><s:read var="test_sets" /><%
+%><s:read var="score_bonus" normalize="yes" nonnull="yes" /><%
 
     if (retval || !phr->ss) goto cleanup;
+
+    if (ignore_compile_errors > 0) ignore_compile_errors = 1;
+    if (use_ac_not_ok > 0) use_ac_not_ok = 1;
+    if (ignore_prev_ac > 0) ignore_prev_ac = 1;
+    if (olympiad_mode > 0) olympiad_mode = 1;
+    if (score_latest > 0) score_latest = 1;
+    if (score_latest_or_unmarked > 0) score_latest_or_unmarked = 1;
+    if (score_latest_marked > 0) score_latest_marked = 1;
+    if (ignore_unmarked > 0) ignore_unmarked = 1;
+    if (score_tokenized > 0) score_tokenized = 1;
+    if (full_score < 0) full_score = -1;
+    if (full_score_dflt) full_score = -1;
+    if (full_user_score < 0) full_user_score = -1;
+    if (full_user_score_dflt) full_user_score = -1;
+    if (variable_full_score > 0) score_tokenized = 1;
+    if (test_score < 0) test_score = -1;
+    if (test_score_dflt) test_score = -1;
+    if (run_penalty < 0) run_penalty = -1;
+    if (run_penalty_dflt) run_penalty = -1;
+    if (disqualified_penalty < 0) disqualified_penalty = -1;
+    if (disqualified_penalty_dflt) disqualified_penalty = -1;
+    if (acm_run_penalty < 0) acm_run_penalty = -1;
+    if (acm_run_penalty_dflt) acm_run_penalty = -1;
 
     if (prob_id <= 0) {
         i = -prob_id;
         if (i >= phr->ss->aprob_u) FAIL(SSERV_ERR_INVALID_PARAMETER);
         prob = phr->ss->aprobs[i];
         if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+
+        if (ignore_compile_errors < 0) ignore_compile_errors = 0;
+        if (use_ac_not_ok < 0) use_ac_not_ok = 0;
+        if (ignore_prev_ac < 0) ignore_prev_ac = 0;
+        if (olympiad_mode < 0) olympiad_mode = 0;
+        if (score_latest < 0) score_latest = 0;
+        if (score_latest_or_unmarked < 0) score_latest_or_unmarked = 0;
+        if (score_latest_marked < 0) score_latest_marked = 0;
+        if (ignore_unmarked < 0) ignore_unmarked = 0;
+        if (score_tokenized < 0) score_tokenized = 0;
+        if (variable_full_score < 0) variable_full_score = 0;
     } else {
         i = prob_id;
         if (i >= phr->ss->prob_a) FAIL(SSERV_ERR_INVALID_PARAMETER);
         prob = phr->ss->probs[i];
         if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
+
+        if (ignore_compile_errors < 0) ignore_compile_errors = -1;
+        if (use_ac_not_ok < 0) use_ac_not_ok = -1;
+        if (ignore_prev_ac < 0) ignore_prev_ac = -1;
+        if (olympiad_mode < 0) olympiad_mode = -1;
+        if (score_latest < 0) score_latest = -1;
+        if (score_latest_or_unmarked < 0) score_latest_or_unmarked = -1;
+        if (score_latest_marked < 0) score_latest_marked = -1;
+        if (ignore_unmarked < 0) ignore_unmarked = -1;
+        if (score_tokenized < 0) score_tokenized = -1;
+        if (variable_full_score < 0) variable_full_score = -1;
     }
-    // extra validation is here
 
     if (!retval && phr->ss) {
-        // argument setting is here
+        prob->ignore_compile_errors = ignore_compile_errors;
+        prob->use_ac_not_ok = use_ac_not_ok;
+        MOVESTR(ok_status);
+        prob->ignore_prev_ac = ignore_prev_ac;
+        prob->olympiad_mode = olympiad_mode;
+        prob->score_latest = score_latest;
+        prob->score_latest_or_unmarked = score_latest_or_unmarked;
+        prob->score_latest_marked = score_latest_marked;
+        prob->ignore_unmarked = ignore_unmarked;
+        prob->score_tokenized = score_tokenized;
+        prob->full_score = full_score;
+        prob->full_user_score = full_user_score;
+        prob->variable_full_score = variable_full_score;
+        prob->test_score = test_score;
+        prob->run_penalty = run_penalty;
+        prob->disqualified_penalty = disqualified_penalty;
+        prob->acm_run_penalty = acm_run_penalty;
+        MOVESTR(test_score_list);
+        COPYSTR(score_tests);
+        MOVEENV(test_sets);
+        COPYSTR(score_bonus);
     }
 
 cleanup:;
@@ -53,5 +175,9 @@ cleanup:;
 <%
     html_armor_free(&ab);
     xfree(msg_s);
-    // freeing is here 
+    xfree(ok_status);
+    xfree(test_score_list);
+    xfree(score_tests);
+    sarray_free(test_sets);
+    xfree(score_bonus);
 %>
