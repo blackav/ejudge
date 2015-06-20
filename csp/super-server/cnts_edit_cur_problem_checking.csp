@@ -72,18 +72,19 @@ $(function() {
 
     var has_standard_checker = <s:v type="jsbool" value="tmp_prob->standard_checker[0]" />;
     $("#orig-check_cmd-div").toggle(!has_standard_checker);
+    $("#orig-checker_env-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
 
     var has_valuer = <s:v type="jsbool" value="tmp_prob->valuer_cmd[0]" />;
     $("#orig-valuer_sets_marked-div").toggle(has_valuer);
     $("#orig-interactive_valuer-div").toggle(has_valuer);
-    $("#orig-valuer_env-div").toggle(has_valuer);
+    $("#orig-valuer_env-div").toggle(has_valuer && <s:v type="jsbool" value="prob_id > 0" />);
 
     var has_interactor = <s:v type="jsbool" value="tmp_prob->interactor_cmd[0]" />;
     $("#orig-interactor_time_limit-div").toggle(has_interactor);
-    $("#orig-interactor_env-div").toggle(has_interactor);
+    $("#orig-interactor_env-div").toggle(has_interactor && <s:v type="jsbool" value="prob_id > 0" />);
 
     var has_init = <s:v type="jsbool" value="tmp_prob->init_cmd && tmp_prob->init_cmd[0]" />;
-    $("#orig-init_env-div").toggle(has_init);
+    $("#orig-init_env-div").toggle(has_init && <s:v type="jsbool" value="prob_id > 0" />);
 });
 
 function popupCheckingDialog(e, skipField)
@@ -121,21 +122,22 @@ function checkingDialogOnChange(field)
 
     var has_standard_checker = $("#edit-standard_checker").val();
     $("#edit-check_cmd-div").toggle(!has_standard_checker);
+    $("#edit-checker_env-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
 
     var valuer_cmd = $("#edit-valuer_cmd").val();
     if ($("#edit-valuer_cmd_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->valuer_cmd[0]" />) valuer_cmd = "X";
     $("#edit-valuer_sets_marked-div").toggle(valuer_cmd != "");
     $("#edit-interactive_valuer-div").toggle(valuer_cmd != "");
-    $("#edit-valuer_env-div").toggle(valuer_cmd != "");
+    $("#edit-valuer_env-div").toggle(valuer_cmd != "" && <s:v type="jsbool" value="prob_id > 0" />);
 
     var interactor_cmd = $("#edit-interactor_cmd").val();
     if ($("#edit-interactor_cmd_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->interactor_cmd[0]" />) interactor_cmd = "X";
     $("#edit-interactor_time_limit-div").toggle(interactor_cmd != "");
-    $("#edit-interactor_env-div").toggle(interactor_cmd != "");
+    $("#edit-interactor_env-div").toggle(interactor_cmd != "" && <s:v type="jsbool" value="prob_id > 0" />);
 
     var init_cmd = $("#edit-init_cmd").val();
     if ($("#edit-init_cmd_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->init_cmd && sup_prob->init_cmd[0]" />) init_cmd = "X";
-    $("#edit-init_env-div").toggle(init_cmd != "");
+    $("#edit-init_env-div").toggle(init_cmd != "" && <s:v type="jsbool" value="prob_id > 0" />);
 }
 
 
