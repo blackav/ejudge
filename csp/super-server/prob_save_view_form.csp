@@ -10,7 +10,6 @@
 %><%
     snprintf(phr->content_type, sizeof(phr->content_type), "application/json; charset=%s", EJUDGE_CHARSET);
 
-    // variables go here
     int prob_id = 0;
     int disable_tab = -1;
     int unrestricted_statement = -1;

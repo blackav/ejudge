@@ -2,6 +2,10 @@
 %><%@include "includes.csp"
 %><%
 
+#define COPYSTR(f) snprintf(prob->f, sizeof(prob->f), "%s", (f))
+#define MOVEENV(f) sarray_free(prob->f); prob->f = f; f = NULL
+#define MOVESTR(f) xfree(prob->f); prob->f = f; f = NULL
+
 %><%@set getter_name = "csp_get_prob_save_validation_form"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -62,10 +66,10 @@
     }
 
     if (!retval && phr->ss) {
-        xfree(prob->test_checker_cmd); prob->test_checker_cmd = test_checker_cmd; test_checker_cmd = NULL;
-        sarray_free(prob->test_checker_env); prob->test_checker_env = test_checker_env; test_checker_env = NULL;
-        xfree(prob->solution_src); prob->solution_src = solution_src; solution_src = NULL;
-        xfree(prob->solution_cmd); prob->solution_cmd = solution_cmd; solution_cmd = NULL;
+        MOVESTR(test_checker_cmd);
+        MOVEENV(test_checker_env);
+        MOVESTR(solution_src);
+        MOVESTR(solution_cmd);
     }
 
 cleanup:;

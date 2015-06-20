@@ -1,6 +1,7 @@
 <% //-*- c -*-
 %><%@include "includes.csp"
 %><%
+#define COPYSTR(f) snprintf(prob->f, sizeof(prob->f), "%s", (f))
 
 %><%@set getter_name = "csp_get_prob_save_id_form"
 %><%@set ac_prefix = "SSERV_CMD_"
@@ -108,10 +109,10 @@
     }
 
     if (!retval && phr->ss) {
-        snprintf(prob->short_name, sizeof(prob->short_name), "%s", short_name);
-        snprintf(prob->internal_name, sizeof(prob->internal_name), "%s", internal_name);
-        snprintf(prob->long_name, sizeof(prob->long_name), "%s", long_name);
-        snprintf(prob->super, sizeof(prob->super), "%s", super);
+        COPYSTR(short_name);
+        COPYSTR(internal_name);
+        COPYSTR(long_name);
+        COPYSTR(super);
         prob->type = type_val;
         prob->variant_num = variant_num;
         prob->autoassign_variants = autoassign_variants;

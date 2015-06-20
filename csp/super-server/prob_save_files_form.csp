@@ -1,6 +1,7 @@
 <% //-*- c -*-
 %><%@include "includes.csp"
 %><%
+#define COPYSTR(f) snprintf(prob->f, sizeof(prob->f), "%s", (f))
 
 %><%@set getter_name = "csp_get_prob_save_files_form"
 %><%@set ac_prefix = "SSERV_CMD_"
@@ -120,69 +121,69 @@
     if (!retval && phr->ss) {
         prob->binary_input = binary_input;
         snprintf(prob->normalization, sizeof(prob->normalization), "%s", test_normalization_unparse(normalization));
-        snprintf(prob->xml_file, sizeof(prob->xml_file), "%s", xml_file);
-        snprintf(prob->test_dir, sizeof(prob->test_dir), "%s", test_dir);
+        COPYSTR(xml_file);
+        COPYSTR(test_dir);
         if (!test_pat_dflt) {
-            snprintf(prob->test_pat, sizeof(prob->test_pat), "%s", test_pat);
+            COPYSTR(test_pat);
         } else {
             prob->test_pat[0] = 1;
             prob->test_pat[1] = 0;
         }
         if (!test_sfx_dflt) {
-            snprintf(prob->test_sfx, sizeof(prob->test_sfx), "%s", test_sfx);
+            COPYSTR(test_sfx);
         } else {
             prob->test_sfx[0] = 1;
             prob->test_sfx[1] = 0;
         }
         prob->use_corr = use_corr;
-        snprintf(prob->corr_dir, sizeof(prob->corr_dir), "%s", corr_dir);
+        COPYSTR(corr_dir);
         if (!corr_pat_dflt) {
-            snprintf(prob->corr_pat, sizeof(prob->corr_pat), "%s", corr_pat);
+            COPYSTR(corr_pat);
         } else {
             prob->corr_pat[0] = 1;
             prob->corr_pat[1] = 0;
         }
         if (!corr_sfx_dflt) {
-            snprintf(prob->corr_sfx, sizeof(prob->corr_sfx), "%s", corr_sfx);
+            COPYSTR(corr_sfx);
         } else {
             prob->corr_sfx[0] = 1;
             prob->corr_sfx[1] = 0;
         }
         prob->use_info = use_info;
-        snprintf(prob->info_dir, sizeof(prob->info_dir), "%s", info_dir);
+        COPYSTR(info_dir);
         if (!info_pat_dflt) {
-            snprintf(prob->info_pat, sizeof(prob->info_pat), "%s", info_pat);
+            COPYSTR(info_pat);
         } else {
             prob->info_pat[0] = 1;
             prob->info_pat[1] = 0;
         }
         if (!info_sfx_dflt) {
-            snprintf(prob->info_sfx, sizeof(prob->info_sfx), "%s", info_sfx);
+            COPYSTR(info_sfx);
         } else {
             prob->info_sfx[0] = 1;
             prob->info_sfx[1] = 0;
         }
         prob->use_tgz = use_tgz;
         if (!tgz_pat_dflt) {
-            snprintf(prob->tgz_pat, sizeof(prob->tgz_pat), "%s", tgz_pat);
+            COPYSTR(tgz_pat);
         } else {
             prob->tgz_pat[0] = 1;
             prob->tgz_pat[1] = 0;
         }
         if (!tgzdir_pat_dflt) {
-            snprintf(prob->tgzdir_pat, sizeof(prob->tgzdir_pat), "%s", tgzdir_pat);
+            COPYSTR(tgzdir_pat);
         } else {
             prob->tgzdir_pat[0] = 1;
             prob->tgzdir_pat[1] = 0;
         }
         if (!tgz_sfx_dflt) {
-            snprintf(prob->tgz_sfx, sizeof(prob->tgz_sfx), "%s", tgz_sfx);
+            COPYSTR(tgz_sfx);
         } else {
             prob->tgz_sfx[0] = 1;
             prob->tgz_sfx[1] = 0;
         }
         if (!tgzdir_sfx_dflt) {
-            snprintf(prob->tgzdir_sfx, sizeof(prob->tgzdir_sfx), "%s", tgzdir_sfx);
+            COPYSTR(tgzdir_sfx);
         } else {
             prob->tgzdir_sfx[0] = 1;
             prob->tgzdir_sfx[1] = 0;
