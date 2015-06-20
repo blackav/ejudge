@@ -71,6 +71,12 @@ function popupStandingDialog(e, skipField)
     <%@expand COPY_YESNO3 "stand_last_column" %>
     <%@expand COPY_TEXTFIELD "provide_ok" %>
 
+    <%@expand CLEAR_TEXTFIELD "stand_name" %>
+    <%@expand CLEAR_TEXTFIELD "stand_column" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "stand_attr" %>
+    <%@expand CLEAR_TEXTFIELD "score_view" %>
+    <%@expand CLEAR_TEXTFIELD "provide_ok" %>
+
     if (e) e.stopPropagation();
     standingDialogOnChange();
     $("#StandingDialogDiv").dialog('open');

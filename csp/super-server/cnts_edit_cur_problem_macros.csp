@@ -119,3 +119,29 @@
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:@1" /></td>
             </s:tr>
 #%>
+
+<%#define CLEAR_TEXTFIELD
+    if (skipField == "@1") {
+        $("#edit-@1").val("");
+    }
+#%>
+
+<%#define CLEAR_TEXTFIELD_WITH_DEFAULT
+    if (skipField == "@1") {
+        $("#edit-@1").val("");
+<%
+        if (sup_prob) {
+%>
+            $("#edit-@1_dflt").prop('checked', true);
+<%
+        }
+%>
+    }
+#%>
+
+<%#define CLEAR_DATETIME
+    if (skipField == "@1") {
+        $("#edit-@1_date").val("");
+        $("#edit-@1_time").val("");
+    }
+#%>

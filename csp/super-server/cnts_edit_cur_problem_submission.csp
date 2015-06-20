@@ -82,6 +82,13 @@ function popupSubmissionDialog(e, skipField)
     <%@expand COPY_DATETIME "start_date"  %>
     <%@expand COPY_DATETIME "deadline"  %>
 
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "max_user_run_count" %>
+    <%@expand CLEAR_TEXTFIELD "disable_language" %>
+    <%@expand CLEAR_TEXTFIELD "enable_language" %>
+    <%@expand CLEAR_TEXTFIELD "require" %>
+    <%@expand CLEAR_TEXTFIELD "start_date" %>
+    <%@expand CLEAR_TEXTFIELD "deadline" %>
+
     if (e) e.stopPropagation();
     submissionDialogOnChange();
     $("#SubmissionDialogDiv").dialog('open');

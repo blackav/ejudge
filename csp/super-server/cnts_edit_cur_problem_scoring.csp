@@ -110,6 +110,18 @@ function popupScoringDialog(e, skipField)
     <%@expand COPY_TEXTFIELD "test_sets" %>
     <%@expand COPY_TEXTFIELD "score_bonus" %>
 
+    <%@expand CLEAR_TEXTFIELD "ok_status" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "full_score" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "full_user_score" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "test_score" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "run_penalty" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "disqualified_penalty" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "acm_run_penalty" %>
+    <%@expand CLEAR_TEXTFIELD "test_score_list" %>
+    <%@expand CLEAR_TEXTFIELD "score_tests" %>
+    <%@expand CLEAR_TEXTFIELD "test_sets" %>
+    <%@expand CLEAR_TEXTFIELD "score_bonus" %>
+
     if (e) e.stopPropagation();
     scoringDialogOnChange();
     $("#ScoringDialogDiv").dialog('open');

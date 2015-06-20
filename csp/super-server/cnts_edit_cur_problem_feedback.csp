@@ -89,6 +89,13 @@ function popupFeedbackDialog(e, skipField)
     <%@expand COPY_YESNO3 "disable_pe"  %>
     <%@expand COPY_YESNO3 "disable_wtl"  %>
 
+    <%@expand CLEAR_TEXTFIELD "open_tests" %>
+    <%@expand CLEAR_TEXTFIELD "final_open_tests" %>
+    <%@expand CLEAR_TEXTFIELD "tokens" %>
+    <%@expand CLEAR_TEXTFIELD "token_open_tests" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "tests_to_accept" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "min_tests_to_accept" %>
+
     if (e) e.stopPropagation();
     feedbackDialogOnChange();
     $("#FeedbackDialogDiv").dialog('open');

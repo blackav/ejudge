@@ -82,6 +82,20 @@ function popupLimitsDialog(e, skipField)
     <%@expand COPY_TEXTFIELD "lang_max_vm_size"  %>
     <%@expand COPY_TEXTFIELD "lang_max_stack_size"  %>
 
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "time_limit" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "time_limit_millis" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "real_time_limit" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "max_vm_size" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "max_stack_size" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "max_file_size" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "max_open_file_count" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "max_process_count" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "umask" %>
+    <%@expand CLEAR_TEXTFIELD "lang_time_adj" %>
+    <%@expand CLEAR_TEXTFIELD "lang_time_adj_millis" %>
+    <%@expand CLEAR_TEXTFIELD "lang_max_vm_size" %>
+    <%@expand CLEAR_TEXTFIELD "lang_max_stack_size" %>
+
     if (e) e.stopPropagation();
     limitsDialogOnChange();
     $("#LimitsDialogDiv").dialog('open');

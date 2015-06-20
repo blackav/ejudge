@@ -468,6 +468,10 @@ function popupIdDialog(e, skipField)
     <%@expand COPY_SIMPLE "variant_num" %>
     <%@expand COPY_SIMPLE "autoassign_variants" %>
 
+    <%@expand CLEAR_TEXTFIELD "short_name" %>
+    <%@expand CLEAR_TEXTFIELD "internal_name" %>
+    <%@expand CLEAR_TEXTFIELD "long_name" %>
+
     if (e) e.stopPropagation();
     idDialogOnChange();
     $("#IdDialogDiv").dialog('open');
@@ -507,6 +511,21 @@ function popupFilesDialog(e, skipField)
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgzdir_pat" "prob->tgzdir_pat[0] == 1" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgzdir_sfx" "prob->tgzdir_sfx[0] == 1" %>
 
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "xml_file" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "test_dir" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "test_pat" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "test_sfx" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "corr_dir" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "corr_pat" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "corr_sfx" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "info_dir" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "info_pat" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "info_sfx" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "tgz_pat" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "tgz_sfx" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "tgzdir_pat" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "tgzdir_sfx" %>
+    
     if (e) e.stopPropagation();
     filesDialogOnChange();
     $("#FilesDialogDiv").dialog('open');
@@ -564,6 +583,11 @@ function popupValidationDialog(e, skipField)
     <%@expand COPY_TEXTFIELD "test_checker_env" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "solution_src" "!prob->solution_src" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "solution_cmd" "!prob->solution_cmd" %>
+
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "test_checker_cmd" %>
+    <%@expand CLEAR_TEXTFIELD "test_checker_env" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "solution_src" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "solution_cmd" %>
 
     if (e) e.stopPropagation();
     validationDialogOnChange();

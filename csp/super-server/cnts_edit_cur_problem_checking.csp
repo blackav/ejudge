@@ -94,17 +94,28 @@ function popupCheckingDialog(e, skipField)
     <%@expand COPY_SIMPLE "standard_checker" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "check_cmd" "!prob->check_cmd[0]" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "checker_real_time_limit" "prob->checker_real_time_limit < 0" %>
-    <%@expand COPY_SIMPLE "checker_env" %>
+    <%@expand COPY_TEXTFIELD "checker_env" %>
     <%@expand COPY_YESNO3 "scoring_checker" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "valuer_cmd" "!prob->valuer_cmd[0]" %>
     <%@expand COPY_YESNO3 "valuer_sets_marked" %>
     <%@expand COPY_YESNO3 "interactive_valuer" %>
-    <%@expand COPY_SIMPLE "valuer_env" %>
+    <%@expand COPY_TEXTFIELD "valuer_env" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "interactor_cmd" "!prob->interactor_cmd[0]" %>
-    <%@expand COPY_SIMPLE "interactor_env" %>
+    <%@expand COPY_TEXTFIELD "interactor_env" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "interactor_time_limit" "prob->interactor_time_limit < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "init_cmd" "!prob->init_cmd" %>
-    <%@expand COPY_SIMPLE "init_env" %>
+    <%@expand COPY_TEXTFIELD "init_env" %>
+
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "check_cmd" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "checker_real_time_limit" %>
+    <%@expand CLEAR_TEXTFIELD "checker_env" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "valuer_cmd" %>
+    <%@expand CLEAR_TEXTFIELD "valuer_env" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "interactor_cmd" %>
+    <%@expand CLEAR_TEXTFIELD "interactor_env" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "interactor_time_limit" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "init_cmd" %>
+    <%@expand CLEAR_TEXTFIELD "init_env" %>
 
     if (e) e.stopPropagation();
     checkingDialogOnChange();

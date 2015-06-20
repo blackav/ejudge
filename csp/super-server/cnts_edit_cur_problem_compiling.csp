@@ -60,6 +60,12 @@ function popupCompilingDialog(e, skipField)
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "source_header" "!prob->source_header[0]" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "source_footer" "!prob->source_footer[0]" %>
 
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "style_checker_cmd" %>
+    <%@expand CLEAR_TEXTFIELD "style_checker_env" %>
+    <%@expand CLEAR_TEXTFIELD "lang_compiler_env" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "source_header" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "source_footer" %>
+
     if (e) e.stopPropagation();
     compilingDialogOnChange();
     $("#CompilingDialogDiv").dialog('open');

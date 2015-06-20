@@ -84,6 +84,11 @@ function popupRunningDialog(e, skipField)
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "start_cmd" "!prob->start_cmd" %>
     <%@expand COPY_TEXTFIELD "start_env"  %>
 
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "input_file" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "output_file" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "start_cmd" %>
+    <%@expand CLEAR_TEXTFIELD "start_env" %>
+
     if (e) e.stopPropagation();
     runningDialogOnChange();
     $("#RunningDialogDiv").dialog('open');
