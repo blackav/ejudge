@@ -428,11 +428,11 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(prev_runs_to_show, "d"),
   PROBLEM_PARAM(max_user_run_count, "d"),
   PROBLEM_ALIAS(output_only, type, "d"),
-  PROBLEM_PARAM(max_vm_size, "z"),
-  PROBLEM_PARAM(max_stack_size, "z"),
-  PROBLEM_PARAM(max_data_size, "z"),
-  PROBLEM_PARAM(max_core_size, "z"),
-  PROBLEM_PARAM(max_file_size, "z"),
+  PROBLEM_PARAM(max_vm_size, "E"),
+  PROBLEM_PARAM(max_stack_size, "E"),
+  PROBLEM_PARAM(max_data_size, "E"),
+  PROBLEM_PARAM(max_core_size, "E"),
+  PROBLEM_PARAM(max_file_size, "E"),
   PROBLEM_PARAM(max_open_file_count, "d"),
   PROBLEM_PARAM(max_process_count, "d"),
   PROBLEM_PARAM_2(type, do_problem_parse_type),
@@ -997,11 +997,11 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->info_pat[0] = 1;
   p->tgz_pat[0] = 1;
   p->tgzdir_pat[0] = 1;
-  p->max_vm_size = -1L;
-  p->max_stack_size = -1L;
-  p->max_data_size = -1L;
-  p->max_core_size = -1L;
-  p->max_file_size = -1L;
+  p->max_vm_size = -1LL;
+  p->max_stack_size = -1LL;
+  p->max_data_size = -1LL;
+  p->max_core_size = -1LL;
+  p->max_file_size = -1LL;
   p->max_open_file_count = -1;
   p->max_process_count = -1;
   p->interactor_time_limit = -1;
@@ -5588,26 +5588,23 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_max_vm_size:
-    if (out->max_vm_size == -1L && abstr) out->max_vm_size = abstr->max_vm_size;
-    if (out->max_vm_size == -1L) out->max_vm_size = 0;
+    if (out->max_vm_size < 0 && abstr) out->max_vm_size = abstr->max_vm_size;
     break;
 
   case CNTSPROB_max_stack_size:
-    if (out->max_stack_size == -1L && abstr) out->max_stack_size = abstr->max_stack_size;
-    if (out->max_stack_size == -1L) out->max_stack_size = 0;
+    if (out->max_stack_size < 0 && abstr) out->max_stack_size = abstr->max_stack_size;
     break;
 
   case CNTSPROB_max_data_size:
-    if (out->max_data_size == -1L && abstr) out->max_data_size = abstr->max_data_size;
-    if (out->max_data_size == -1L) out->max_data_size = 0;
+    if (out->max_data_size < 0 && abstr) out->max_data_size = abstr->max_data_size;
     break;
 
   case CNTSPROB_max_core_size:
-    if (out->max_core_size == -1L && abstr) out->max_core_size = abstr->max_core_size;
+    if (out->max_core_size < 0 && abstr) out->max_core_size = abstr->max_core_size;
     break;
 
   case CNTSPROB_max_file_size:
-    if (out->max_file_size == -1L && abstr) out->max_file_size = abstr->max_file_size;
+    if (out->max_file_size < 0 && abstr) out->max_file_size = abstr->max_file_size;
     break;
 
   case CNTSPROB_max_open_file_count:

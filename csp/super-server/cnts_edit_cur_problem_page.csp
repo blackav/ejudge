@@ -22,7 +22,6 @@
     int sup_id = 0, prob_type = 0;
     const unsigned char *str_value = NULL;
     int value;
-    unsigned char num_buf[128];
     unsigned char *alloc_value = NULL;
 
 static const unsigned char head_row_attr[] =
@@ -1443,27 +1442,19 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_vm_size-div">
                 <td>Maximum virtual memory size:</td>
-                <td><%
-    num_buf[0] = 0;
-    if (prob->max_vm_size == ~(size_t) 0 && prob_id <= 0) {
-      snprintf(num_buf, sizeof(num_buf), "%d", -1);
-    } else if (prob->max_vm_size != ~(size_t) 0) {
-      size_t_to_size_str(num_buf, sizeof(num_buf), prob->max_vm_size);
-    }
-%><s:textfield id="orig-max_vm_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /><%
+                <td><s:textfield id="orig-max_vm_size" readonly="readonly" name="param" value="prob->max_vm_size" size="48" maxlength="1024" check="no" /><%
     if (prob_id <= 0) {
-      if (prob->max_vm_size == ~(size_t) 0 || prob->max_vm_size == 0) {
+      if (prob->max_vm_size <= 0) {
 %>(<i>OS Limit</i>)<%
       }
     } else {
-      if (prob->max_vm_size == ~(size_t) 0) {
-        if (tmp_prob->max_vm_size == ~(size_t) 0) {
-%>(<i>Default: unlimited</i>)<%
+      if (prob->max_vm_size < 0) {
+        if (tmp_prob->max_vm_size < 0) {
+%>(<i>Default: OS Limit</i>)<%
         } else if (tmp_prob->max_vm_size == 0) {
 %>(<i>Default: OS Limit</i>)<%
         } else {
-          size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_vm_size);
-%>(<i>Default: <s:v value="num_buf" escape="false"/></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->max_vm_size" escape="false"/></i>)<%
         }
       } else if (prob->max_vm_size == 0) {
 %>(<i>OS Limit</i>)<%
@@ -1476,27 +1467,19 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_stack_size-div">
                 <td>Maximum stack size:</td>
-                <td><%
-    num_buf[0] = 0;
-    if (prob->max_stack_size == ~(size_t) 0 && prob_id <= 0) {
-      snprintf(num_buf, sizeof(num_buf), "%d", -1);
-    } else if (prob->max_stack_size != ~(size_t) 0) {
-      size_t_to_size_str(num_buf, sizeof(num_buf), prob->max_stack_size);
-    }
-%><s:textfield id="orig-max_stack_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /><%
+                <td><s:textfield id="orig-max_stack_size" readonly="readonly" name="param" value="prob->max_stack_size" size="48" maxlength="1024" check="no" /><%
     if (prob_id <= 0) {
-      if (prob->max_stack_size == ~(size_t) 0 || prob->max_stack_size == 0) {
+      if (prob->max_stack_size <= 0) {
 %>(<i>OS Limit</i>)<%
       }
     } else {
-      if (prob->max_stack_size == ~(size_t) 0) {
-        if (tmp_prob->max_stack_size == ~(size_t) 0) {
-%>(<i>Default: unlimited</i>)<%
+      if (prob->max_stack_size < 0) {
+        if (tmp_prob->max_stack_size < 0) {
+%>(<i>Default: OS Limit</i>)<%
         } else if (tmp_prob->max_stack_size == 0) {
 %>(<i>Default: OS Limit</i>)<%
         } else {
-          size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_stack_size);
-%>(<i>Default: <s:v value="num_buf" escape="false"/></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->max_stack_size" escape="false"/></i>)<%
         }
       } else if (prob->max_stack_size == 0) {
 %>(<i>OS Limit</i>)<%
@@ -1509,27 +1492,19 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_file_size-div">
                 <td>Maximum output file size:</td>
-                <td><%
-    num_buf[0] = 0;
-    if (prob->max_file_size == ~(size_t) 0 && prob_id <= 0) {
-      snprintf(num_buf, sizeof(num_buf), "%d", -1);
-    } else if (prob->max_file_size != ~(size_t) 0) {
-      size_t_to_size_str(num_buf, sizeof(num_buf), prob->max_file_size);
-    }
-%><s:textfield id="orig-max_file_size" readonly="readonly" name="param" value="num_buf" size="48" maxlength="1024" check="no" /><%
+                <td><s:textfield id="orig-max_file_size" readonly="readonly" name="param" value="prob->max_file_size" size="48" maxlength="1024" check="no" /><%
     if (prob_id <= 0) {
-      if (prob->max_file_size == ~(size_t) 0 || prob->max_file_size == 0) {
+      if (prob->max_file_size <= 0) {
 %>(<i>OS Limit</i>)<%
       }
     } else {
-      if (prob->max_file_size == ~(size_t) 0) {
-        if (tmp_prob->max_file_size == ~(size_t) 0) {
+      if (prob->max_file_size < 0) {
+        if (tmp_prob->max_file_size < 0) {
 %>(<i>Default: OS Limit</i>)<%
         } else if (tmp_prob->max_file_size == 0) {
 %>(<i>Default: OS Limit</i>)<%
         } else {
-          size_t_to_size_str(num_buf, sizeof(num_buf), tmp_prob->max_file_size);
-%>(<i>Default: <s:v value="num_buf" escape="false"/></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->max_file_size" escape="false"/></i>)<%
         }
       } else if (prob->max_file_size == 0) {
 %>(<i>OS Limit</i>)<%

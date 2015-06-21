@@ -589,18 +589,16 @@ super_html_read_serve(
     st_size = tst->max_stack_size;
     if (st_size == -1L && atst) st_size = atst->max_stack_size;
     if (vm_size != -1L) {
-      if (prob->max_vm_size == -1L) prob->max_vm_size = vm_size;
+      if (prob->max_vm_size < 0) prob->max_vm_size = vm_size;
       if (prob->max_vm_size != vm_size) {
-        fprintf(flog, "Conflicting max_vm_size specifications for problem `%s'\n",
-                prob->short_name);
+        fprintf(flog, "Conflicting max_vm_size specifications for problem `%s'\n", prob->short_name);
         return -1;
       }
     }
     if (st_size != -1L) {
-      if (prob->max_stack_size == -1L) prob->max_stack_size = st_size;
+      if (prob->max_stack_size < 0) prob->max_stack_size = st_size;
       if (prob->max_stack_size != st_size) {
-        fprintf(flog, "Conflicting max_stack_size specifications for problem `%s'\n",
-                prob->short_name);
+        fprintf(flog, "Conflicting max_stack_size specifications for problem `%s'\n", prob->short_name);
         return -1;
       }
     }
@@ -632,18 +630,16 @@ super_html_read_serve(
       st_size = tst->max_stack_size;
       if (st_size == -1L && atst) st_size = atst->max_stack_size;
       if (vm_size != -1L) {
-        if (prob->max_vm_size == -1L) prob->max_vm_size = vm_size;
+        if (prob->max_vm_size < 0) prob->max_vm_size = vm_size;
         if (prob->max_vm_size != vm_size) {
-          fprintf(flog, "Conflicting max_vm_size specifications for problem `%s'\n",
-                  prob->short_name);
+          fprintf(flog, "Conflicting max_vm_size specifications for problem `%s'\n", prob->short_name);
           return -1;
         }
       }
       if (st_size != -1L) {
-        if (prob->max_stack_size == -1L) prob->max_stack_size = st_size;
+        if (prob->max_stack_size < 0) prob->max_stack_size = st_size;
         if (prob->max_stack_size != st_size) {
-          fprintf(flog, "Conflicting max_stack_size specifications for problem `%s'\n",
-                  prob->short_name);
+          fprintf(flog, "Conflicting max_stack_size specifications for problem `%s'\n", prob->short_name);
           return -1;
         }
       }

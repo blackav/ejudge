@@ -1179,21 +1179,16 @@ prepare_unparse_prob(
   if (prob->checker_real_time_limit >= 0)
     fprintf(f, "checker_real_time_limit = %d\n", prob->checker_real_time_limit);
 
-  if (prob->max_vm_size != -1L)
-    fprintf(f, "max_vm_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_vm_size));
-  if (prob->max_stack_size != -1L)
-    fprintf(f, "max_stack_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_stack_size));
-  if (prob->max_data_size != -1L)
-    fprintf(f, "max_data_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_data_size));
-  if (prob->max_core_size != -1L)
-    fprintf(f, "max_core_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_core_size));
-  if (prob->max_file_size != -1L)
-    fprintf(f, "max_file_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_file_size));
+  if (prob->max_vm_size >= 0)
+    fprintf(f, "max_vm_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_vm_size));
+  if (prob->max_stack_size >= 0)
+    fprintf(f, "max_stack_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_stack_size));
+  if (prob->max_data_size >= 0)
+    fprintf(f, "max_data_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_data_size));
+  if (prob->max_core_size >= 0)
+    fprintf(f, "max_core_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_core_size));
+  if (prob->max_file_size >= 0)
+    fprintf(f, "max_file_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_file_size));
   if (prob->max_open_file_count >= 0) {
     fprintf(f, "max_open_file_count = %d\n", prob->max_open_file_count);
   }
@@ -1580,21 +1575,16 @@ prepare_unparse_actual_prob(
   if (prob->checker_real_time_limit > 0)
     fprintf(f, "checker_real_time_limit = %d\n", prob->checker_real_time_limit);
 
-  if (prob->max_vm_size != -1L)
-    fprintf(f, "max_vm_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_vm_size));
-  if (prob->max_stack_size != -1L)
-    fprintf(f, "max_stack_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_stack_size));
-  if (prob->max_data_size != -1L && prob->max_data_size != 0L)
-    fprintf(f, "max_data_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_data_size));
-  if (prob->max_core_size != -1L)
-    fprintf(f, "max_core_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_core_size));
-  if (prob->max_file_size != -1L)
-    fprintf(f, "max_file_size = %s\n",
-            size_t_to_size_str(size_buf, sizeof(size_buf), prob->max_file_size));
+  if (prob->max_vm_size >= 0)
+    fprintf(f, "max_vm_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_vm_size));
+  if (prob->max_stack_size >= 0)
+    fprintf(f, "max_stack_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_stack_size));
+  if (prob->max_data_size >= 0)
+    fprintf(f, "max_data_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_data_size));
+  if (prob->max_core_size >= 0)
+    fprintf(f, "max_core_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_core_size));
+  if (prob->max_file_size >= 0)
+    fprintf(f, "max_file_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_file_size));
   if (prob->max_open_file_count > 0) {
     fprintf(f, "max_open_file_count = %d\n", prob->max_open_file_count);
   }

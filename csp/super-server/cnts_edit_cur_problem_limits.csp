@@ -69,9 +69,9 @@ function popupLimitsDialog(e, skipField)
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "time_limit" "prob->time_limit < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "time_limit_millis" "prob->time_limit_millis < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "real_time_limit" "prob->real_time_limit < 0" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_vm_size" "prob->max_vm_size == ~(size_t) 0" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_stack_size" "prob->max_stack_size == ~(size_t) 0" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_file_size" "prob->max_file_size == ~(size_t) 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_vm_size" "prob->max_vm_size < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_stack_size" "prob->max_stack_size < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_file_size" "prob->max_file_size < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_open_file_count" "prob->max_open_file_count < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_process_count" "prob->max_process_count < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "umask" "!prob->umask" %>

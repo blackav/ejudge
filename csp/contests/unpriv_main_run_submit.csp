@@ -111,14 +111,14 @@
           }
 %>
 <%
-          if (prob->max_vm_size != 0 && prob->max_vm_size != ~(size_t) 0) {
+          if (prob->max_vm_size >= 0) {
 %>
     <tr><td><b><s:_>Memory limit</s:_>:</b></td><td><tt><s:v format="V" value="prob->max_vm_size" /></tt></td></tr>
 <%
           }
 %>
 <%
-          if (prob->max_stack_size != 0 && prob->max_stack_size != ~(size_t) 0 && prob->max_stack_size != prob->max_vm_size) {
+          if (prob->max_stack_size >= 0 && prob->max_stack_size != prob->max_vm_size) {
 %>
     <tr><td><b><s:_>Stack limit</s:_>:</b></td><td><tt><s:v format="V" value="prob->max_stack_size" /></tt></td></tr>
 <%

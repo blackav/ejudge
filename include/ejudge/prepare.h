@@ -1124,15 +1124,15 @@ struct section_problem_data
   int *token_open_tests_val META_ATTRIB((meta_private));
 
   /** max virtual size limit  */
-  size_t max_vm_size;
+  ej_size64_t max_vm_size;
   /** max size of the data (NOT USED) */
-  size_t max_data_size;
+  ej_size64_t max_data_size;
   /** max stack size limit */
-  size_t max_stack_size;
+  ej_size64_t max_stack_size;
   /** max allowed size of the core file */
-  size_t max_core_size;
+  ej_size64_t max_core_size;
   /** max file size */
-  size_t max_file_size;
+  ej_size64_t max_file_size;
   /** max number of opened files per process */
   int max_open_file_count;
   /** max number of processes per user */
