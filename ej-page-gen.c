@@ -5245,6 +5245,30 @@ size_t_type_handler(
 }
 
 static void
+ej_size64_t_type_handler(
+        FILE *log_f,
+        TypeContext *cntx,
+        struct ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        const unsigned char *text,
+        const HtmlElement *elem,
+        TypeInfo *type_info)
+{
+    HtmlAttribute *at = NULL;
+    if (elem) {
+        at = html_element_find_attribute(elem, "format");
+    }
+    if (at && !strcmp(at->value, "V")) {
+        fprintf(prg_f, "ll_to_size_str_f(out_f, (ej_size64_t)(%s));\n", text);
+    } else if (at) {
+        fprintf(prg_f, "fprintf(out_f, \"%%%slld\", (ej_size64_t)(%s));\n", at->value, text);
+    } else {
+        fprintf(prg_f, "fprintf(out_f, \"%%lld\", (ej_size64_t)(%s));\n", text);
+    }
+}
+
+static void
 ej_size_t_type_handler(
         FILE *log_f,
         TypeContext *cntx,
@@ -5976,6 +6000,8 @@ process_unit(
                                      size_t_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_size_t")),
                                      ej_size_t_type_handler);
+    processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_size64_t")),
+                                     ej_size64_t_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_ip_t")),
                                      ej_ip_t_type_handler);
     processor_state_set_type_handler(ps, tc_find_typedef_type(cntx, tc_get_ident(cntx, "ej_ip4_t")),
