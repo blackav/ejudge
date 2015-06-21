@@ -187,6 +187,10 @@ ll_to_size_str(
         size_t buf_size,
         long long value);
 void
+ll_to_size_str_f(
+        FILE *f,
+        long long value);
+void
 size_t_to_size_str_f(
         FILE *f,
         size_t num);

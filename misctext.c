@@ -1569,6 +1569,26 @@ ll_to_size_str(
 }
 
 void
+ll_to_size_str_f(
+        FILE *f,
+        long long value)
+{
+  if (value < 0) {
+    // ...
+  } else if (!value) {
+    fprintf(f, "0");
+  } else if (!(value % SIZE_G)) {
+    fprintf(f, "%lldG", value / SIZE_G);
+  } else if (!(value % SIZE_M)) {
+    fprintf(f, "%lldM", value / SIZE_M);
+  } else if (!(value % SIZE_K)) {
+    fprintf(f, "%lldK", value / SIZE_K);
+  } else {
+    fprintf(f, "%lld", value);
+  }
+}
+
+void
 size_t_to_size_str_f(
         FILE *f,
         size_t num)
