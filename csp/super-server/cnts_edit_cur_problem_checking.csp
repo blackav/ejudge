@@ -1,6 +1,6 @@
 <% // -*- html -*-
 %>
-<div id="CheckingDialogDiv" title="Checking">
+<div id="CheckingDialogDiv" title="Checking" style="overflow: auto;">
     <s:form id="CheckingDialogForm">
         <s:hidden name="action" ac="prob-save-checking-form" />
         <input type="hidden" id="CheckingDialogProbId" name="prob_id" value="" />

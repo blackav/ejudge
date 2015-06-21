@@ -1,6 +1,6 @@
 <% // -*- html -*-
 %>
-<div id="CompilingDialogDiv" title="Compiling">
+<div id="CompilingDialogDiv" title="Compiling" style="overflow: auto;">
     <s:form id="CompilingDialogForm">
         <s:hidden name="action" ac="prob-save-compiling-form" />
         <input type="hidden" id="CompilingDialogProbId" name="prob_id" value="" />

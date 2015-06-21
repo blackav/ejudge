@@ -63,7 +63,7 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
 
-<div id="MainDialogDiv" title="Main Properties">
+<div id="MainDialogDiv" title="Main Properties" style="overflow: auto;">
     <s:form id="MainDialogForm">
         <s:hidden name="action" ac="glob-save-main-form" />
         <div>
@@ -162,7 +162,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="CapsDialogDiv" title="Contestant Capabilities">
+<div id="CapsDialogDiv" title="Contestant Capabilities" style="overflow: auto;">
     <s:form id="CapsDialogForm">
         <s:hidden name="action" ac="glob-save-capabilities-form" />
 
@@ -216,7 +216,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="FilesDialogDiv" title="Files and Directories">
+<div id="FilesDialogDiv" title="Files and Directories" style="overflow: auto;">
     <s:form id="FilesDialogForm">
         <s:hidden name="action" ac="glob-save-files-form" />
 
@@ -263,7 +263,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="QuotasDialogDiv" title="Contestant Quotas">
+<div id="QuotasDialogDiv" title="Contestant Quotas" style="overflow: auto;">
     <s:form id="QuotasDialogForm">
         <s:hidden name="action" ac="glob-save-quotas-form" />
 
@@ -298,7 +298,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="UrlsDialogDiv" title="Standing Files and URLs">
+<div id="UrlsDialogDiv" title="Standing Files and URLs" style="overflow: auto;">
     <s:form id="UrlsDialogForm">
         <s:hidden name="action" ac="glob-save-urls-form" />
 

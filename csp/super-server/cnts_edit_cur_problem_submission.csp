@@ -1,6 +1,6 @@
 <% // -*- html -*-
 %>
-<div id="SubmissionDialogDiv" title="Submission">
+<div id="SubmissionDialogDiv" title="Submission" style="overflow: auto;">
     <s:form id="SubmissionDialogForm">
         <s:hidden name="action" ac="prob-save-submission-form" />
         <input type="hidden" id="SubmissionDialogProbId" name="prob_id" value="" />

@@ -105,7 +105,7 @@ static const unsigned char * const form_row_attrs[]=
 <%@include "cnts_edit_cur_problem_macros.csp"
 %>
 
-<div id="IdDialogDiv" title="Problem Identification">
+<div id="IdDialogDiv" title="Problem Identification" style="overflow: auto;">
     <s:form id="IdDialogForm">
         <s:hidden name="action" ac="prob-save-id-form" />
         <input type="hidden" id="IdDialogProbId" name="prob_id" value="" />
@@ -153,7 +153,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="FilesDialogDiv" title="Files and directories">
+<div id="FilesDialogDiv" title="Files and directories" style="overflow: auto;">
     <s:form id="FilesDialogForm">
         <s:hidden name="action" ac="prob-save-files-form" />
         <input type="hidden" id="FilesDialogProbId" name="prob_id" value="" />
@@ -199,7 +199,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="ValidationDialogDiv" title="Validation">
+<div id="ValidationDialogDiv" title="Validation" style="overflow: auto;">
     <s:form id="ValidationDialogForm">
         <s:hidden name="action" ac="prob-save-validation-form" />
         <input type="hidden" id="ValidationDialogProbId" name="prob_id" value="" />
@@ -212,7 +212,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="ViewDialogDiv" title="Statement View">
+<div id="ViewDialogDiv" title="Statement View" style="overflow: auto;">
     <s:form id="ViewDialogForm">
         <s:hidden name="action" ac="prob-save-view-form" />
         <input type="hidden" id="ViewDialogProbId" name="prob_id" value="" />

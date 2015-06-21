@@ -1,6 +1,6 @@
 <% // -*- html -*-
 %>
-<div id="StandingDialogDiv" title="Standings">
+<div id="StandingDialogDiv" title="Standings" style="overflow: auto;">
     <s:form id="StandingDialogForm">
         <s:hidden name="action" ac="prob-save-standing-form" />
         <input type="hidden" id="StandingDialogProbId" name="prob_id" value="" />

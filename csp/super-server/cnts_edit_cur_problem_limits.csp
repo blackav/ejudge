@@ -1,6 +1,6 @@
 <% // -*- html -*-
 %>
-<div id="LimitsDialogDiv" title="Limits">
+<div id="LimitsDialogDiv" title="Limits" style="overflow: auto;">
     <s:form id="LimitsDialogForm">
         <s:hidden name="action" ac="prob-save-limits-form" />
         <input type="hidden" id="LimitsDialogProbId" name="prob_id" value="" />

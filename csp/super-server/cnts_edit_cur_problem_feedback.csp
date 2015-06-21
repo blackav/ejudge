@@ -1,6 +1,6 @@
 <% // -*- html -*-
 %>
-<div id="FeedbackDialogDiv" title="Feedback">
+<div id="FeedbackDialogDiv" title="Feedback" style="overflow: auto;">
     <s:form id="FeedbackDialogForm">
         <s:hidden name="action" ac="prob-save-feedback-form" />
         <input type="hidden" id="FeedbackDialogProbId" name="prob_id" value="" />

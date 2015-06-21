@@ -82,7 +82,7 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
 
-<div id="LimitsDialogDiv" title="Compilation Limits">
+<div id="LimitsDialogDiv" title="Compilation Limits" style="overflow: auto;">
     <s:form id="LimitsDialogForm">
         <s:hidden name="action" ac="glob-save-limits-form" />
         <div id="limits-compile_max_vm_size-div">
@@ -100,7 +100,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="MainDialogDiv" title="Translator Properties">
+<div id="MainDialogDiv" title="Translator Properties" style="overflow: auto;">
     <s:form id="MainDialogForm">
         <s:hidden name="action" ac="lang-save-main-form" />
 

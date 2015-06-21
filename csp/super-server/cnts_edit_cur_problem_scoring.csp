@@ -1,6 +1,6 @@
 <% // -*- html -*-
 %>
-<div id="ScoringDialogDiv" title="Scoring">
+<div id="ScoringDialogDiv" title="Scoring" style="overflow: auto;">
     <s:form id="ScoringDialogForm">
         <s:hidden name="action" ac="prob-save-scoring-form" />
         <input type="hidden" id="ScoringDialogProbId" name="prob_id" value="" />

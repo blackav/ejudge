@@ -33,7 +33,7 @@ static const unsigned char * const form_row_attrs[]=
 <%@include "cnts_edit_cur_top_menu.csp"
 %>
 
-<div id="BasicDialogDiv" title="Basic Contest Settings">
+<div id="BasicDialogDiv" title="Basic Contest Settings" style="overflow: auto;">
     <s:form id="BasicDialogForm">
         <s:hidden name="action" ac="cnts-save-basic-form" />
         <fieldset>
@@ -56,7 +56,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="FlagsDialogDiv" title="Contest Options">
+<div id="FlagsDialogDiv" title="Contest Options" style="overflow: auto;">
     <s:form id="FlagsDialogForm">
         <s:hidden name="action" ac="cnts-save-flags-form" />
         <fieldset>
@@ -109,7 +109,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="RegistrationDialogDiv" title="Registration Options">
+<div id="RegistrationDialogDiv" title="Registration Options" style="overflow: auto;">
     <s:form id="RegistrationDialogForm">
         <s:hidden name="action" ac="cnts-save-registration-form" />
         <fieldset>
@@ -140,7 +140,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="TimingDialogDiv" title="Contest Timing">
+<div id="TimingDialogDiv" title="Contest Timing" style="overflow: auto;">
     <s:form id="TimingDialogForm">
         <s:hidden name="action" ac="cnts-save-timing-form" />
         <fieldset>
@@ -161,7 +161,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="UrlDialogDiv" title="Contest URLs">
+<div id="UrlDialogDiv" title="Contest URLs" style="overflow: auto;">
     <s:form id="UrlDialogForm">
         <s:hidden name="action" ac="cnts-save-urls-form" />
         <fieldset>
@@ -187,7 +187,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="HeadersDialogDiv" title="Header/Footer Files">
+<div id="HeadersDialogDiv" title="Header/Footer Files" style="overflow: auto;">
     <s:form id="HeadersDialogForm">
         <s:hidden name="action" ac="cnts-save-headers-form" />
         <fieldset>
@@ -209,7 +209,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="AttrsDialogDiv" title="HTML Attributes">
+<div id="AttrsDialogDiv" title="HTML Attributes" style="overflow: auto;">
     <s:form id="AttrsDialogForm">
         <s:hidden name="action" ac="cnts-save-attrs-form" />
         <fieldset>
@@ -244,7 +244,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="NotificationsDialogDiv" title="Notifications">
+<div id="NotificationsDialogDiv" title="Notifications" style="overflow: auto;">
     <s:form id="NotificationsDialogForm">
         <s:hidden name="action" ac="cnts-save-notifications-form" />
         <fieldset>
@@ -261,7 +261,7 @@ static const unsigned char * const form_row_attrs[]=
     </s:form>
 </div>
 
-<div id="AdvancedDialogDiv" title="Advanced">
+<div id="AdvancedDialogDiv" title="Advanced" style="overflow: auto;">
     <s:form id="AdvancedDialogForm">
         <s:hidden name="action" ac="cnts-save-advanced-form" />
         <fieldset>
