@@ -1442,7 +1442,7 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_vm_size-div">
                 <td>Maximum virtual memory size:</td>
-                <td><s:textfield id="orig-max_vm_size" readonly="readonly" name="param" value="prob->max_vm_size" size="48" maxlength="1024" check="no" /><%
+                <td><s:textfield id="orig-max_vm_size" readonly="readonly" name="param" value="prob->max_vm_size" size="48" maxlength="1024" checkExpr=">= 0" format="V" /><%
     if (prob_id <= 0) {
       if (prob->max_vm_size <= 0) {
 %>(<i>OS Limit</i>)<%
@@ -1454,7 +1454,7 @@ function viewDialogOnChange(field)
         } else if (tmp_prob->max_vm_size == 0) {
 %>(<i>Default: OS Limit</i>)<%
         } else {
-%>(<i>Default: <s:v value="tmp_prob->max_vm_size" escape="false"/></i>)<%
+%>(<i>Default: <s:v format="V" value="tmp_prob->max_vm_size" escape="false"/></i>)<%
         }
       } else if (prob->max_vm_size == 0) {
 %>(<i>OS Limit</i>)<%
@@ -1467,7 +1467,7 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_stack_size-div">
                 <td>Maximum stack size:</td>
-                <td><s:textfield id="orig-max_stack_size" readonly="readonly" name="param" value="prob->max_stack_size" size="48" maxlength="1024" check="no" /><%
+                <td><s:textfield id="orig-max_stack_size" readonly="readonly" name="param" value="prob->max_stack_size" size="48" maxlength="1024" checkExpr=">= 0" format="V" /><%
     if (prob_id <= 0) {
       if (prob->max_stack_size <= 0) {
 %>(<i>OS Limit</i>)<%
@@ -1479,7 +1479,7 @@ function viewDialogOnChange(field)
         } else if (tmp_prob->max_stack_size == 0) {
 %>(<i>Default: OS Limit</i>)<%
         } else {
-%>(<i>Default: <s:v value="tmp_prob->max_stack_size" escape="false"/></i>)<%
+%>(<i>Default: <s:v format="V" value="tmp_prob->max_stack_size" escape="false"/></i>)<%
         }
       } else if (prob->max_stack_size == 0) {
 %>(<i>OS Limit</i>)<%
@@ -1492,7 +1492,7 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_file_size-div">
                 <td>Maximum output file size:</td>
-                <td><s:textfield id="orig-max_file_size" readonly="readonly" name="param" value="prob->max_file_size" size="48" maxlength="1024" check="no" /><%
+                <td><s:textfield id="orig-max_file_size" readonly="readonly" name="param" value="prob->max_file_size" size="48" maxlength="1024" checkExpr=">= 0" format="V" /><%
     if (prob_id <= 0) {
       if (prob->max_file_size <= 0) {
 %>(<i>OS Limit</i>)<%
@@ -1504,7 +1504,7 @@ function viewDialogOnChange(field)
         } else if (tmp_prob->max_file_size == 0) {
 %>(<i>Default: OS Limit</i>)<%
         } else {
-%>(<i>Default: <s:v value="tmp_prob->max_file_size" escape="false"/></i>)<%
+%>(<i>Default: <s:v format="V" value="tmp_prob->max_file_size" escape="false"/></i>)<%
         }
       } else if (prob->max_file_size == 0) {
 %>(<i>OS Limit</i>)<%

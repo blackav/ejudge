@@ -1553,7 +1553,7 @@ ll_to_size_str(
         long long value)
 {
   if (value < 0) {
-    *buf = 0;
+    snprintf(buf, buf_size, "%lld", value);
   } else if (!value) {
     snprintf(buf, buf_size, "0");
   } else if (!(value % SIZE_G)) {
@@ -1737,19 +1737,20 @@ size_str_to_size64_t(const unsigned char *str, ej_size64_t *p_size)
   if (*s == 't' || *s == 'T') {
     if (x < -8388608LL || x > 8388607LL) return -1;
     x *= SIZE_T;
+    ++s;
   } else if (*s == 'g' || *s == 'G') {
     if (x < -8589934592LL || x > 8589934591LL) return -1;
     x *= SIZE_G;
+    ++s;
   } else if (*s == 'm' || *s == 'M') {
     if (x < -8796093022208LL || x > 8796093022207LL) return -1;
     x *= SIZE_M;
+    ++s;
   } else if (*s == 'k' || *s == 'K') {
     if (x < -9007199254740992LL || x > 9007199254740991LL) return -1;
     x *= SIZE_K;
-  } else {
-    return -1;
+    ++s;
   }
-  ++s;
   if (s != e) return -1;
   if (p_size) *p_size = x;
   return 0;
