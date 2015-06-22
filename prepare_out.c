@@ -241,6 +241,8 @@ prepare_unparse_global(
     unparse_bool(f, "show_deadline", global->show_deadline);
   if (global->show_sha1 > 0)
     unparse_bool(f, "show_sha1", global->show_sha1);
+  if (global->show_judge_identity > 0)
+    unparse_bool(f, "show_judge_identity", global->show_judge_identity);
   if (global->enable_printing != DFLT_G_ENABLE_PRINTING)
     unparse_bool(f, "enable_printing", global->enable_printing);
   if (global->disable_banner_page != DFLT_G_DISABLE_BANNER_PAGE)

@@ -24,6 +24,7 @@
     ejintbool_t ignore_duplicated_runs = 0;
     ejintbool_t show_deadline = 0;
     ejintbool_t show_sha1 = 0;
+    ejintbool_t show_judge_identity = 0;
     ejintbool_t enable_printing = 0;
     ejintbool_t disable_banner_page = 0;
     ejintbool_t printout_uses_login = 0;
@@ -58,6 +59,7 @@
 %><s:read var="ignore_duplicated_runs" default="0" /><%
 %><s:read var="show_deadline" default="0" /><%
 %><s:read var="show_sha1" default="0" /><%
+%><s:read var="show_judge_identity" default="0" /><%
 %><s:read var="enable_printing" default="0" /><%
 %><s:read var="disable_banner_page" default="0" /><%
 %><s:read var="printout_uses_login" default="0" /><%
@@ -92,6 +94,7 @@
             global->ignore_duplicated_runs = ignore_duplicated_runs;
             global->show_deadline = show_deadline;
             global->show_sha1 = show_sha1;
+            global->show_judge_identity = show_judge_identity;
             global->enable_printing = enable_printing;
             global->disable_banner_page = disable_banner_page;
             global->printout_uses_login = printout_uses_login;

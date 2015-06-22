@@ -210,7 +210,11 @@ ns_unpriv_parse_run_id(
        <td class="profile">
 <%
         if (!fcev.v[i].e.from) {
+            if (global->show_judge_identity > 0 && fcev.v[i].e.j_from > 0) {
+%><b>Judge</b> (<s:v value="teamdb_get_name_2(cs->teamdb_state, fcev.v[i].e.j_from)" />)<%
+            } else {
 %><b>Judge</b><%
+            }
         } else {
 %><s:v value="teamdb_get_name_2(cs->teamdb_state, fcev.v[i].e.from)" /><%
         }

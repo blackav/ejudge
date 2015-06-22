@@ -183,6 +183,7 @@ static const unsigned char * const form_row_attrs[]=
     { "ignore_duplicated_runs", "Identical submits of one contestant are ignored" },
     { "show_deadline", "Show submit deadline in problem selection menu" },
     { "show_sha1", "Show abbreviated SHA1 in the submit list" },
+    { "show_judge_identity", "Disclose judge identity in clar replies" },
     { "enable_printing", "Contestants may print their submits" },
     { "disable_banner_page", "Disable banner page on print-outs" },
     { "printout_uses_login", "Show login (not name) on printouts" },
@@ -1593,98 +1594,104 @@ function advancedDialogOnChange()
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:show_sha1" /></td>
             </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_printing-div">
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-show_judge_identity-div">
                 <td><s:v value="caps_fields[14][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-show_judge_identity" disabled="disabled" name="param" value="global->show_judge_identity" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:show_judge_identity" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_printing-div">
+                <td><s:v value="caps_fields[15][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-enable_printing" disabled="disabled" name="param" value="global->enable_printing" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_printing" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_banner_page-div">
-                <td><s:v value="caps_fields[15][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[16][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-disable_banner_page" disabled="disabled" name="param" value="global->disable_banner_page" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_banner_page" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-printout_uses_login-div">
-                <td><s:v value="caps_fields[16][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[17][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-printout_uses_login" disabled="disabled" name="param" value="global->printout_uses_login" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:printout_uses_login" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-prune_empty_users-div">
-                <td><s:v value="caps_fields[17][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[18][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-prune_empty_users" disabled="disabled" name="param" value="global->prune_empty_users" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:prune_empty_users" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_full_archive-div">
-                <td><s:v value="caps_fields[18][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[19][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-enable_full_archive" disabled="disabled" name="param" value="global->enable_full_archive" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_full_archive" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-always_show_problems-div">
-                <td><s:v value="caps_fields[19][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[20][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-always_show_problems" disabled="disabled" name="param" value="global->always_show_problems" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:always_show_problems" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_user_standings-div">
-                <td><s:v value="caps_fields[20][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[21][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-disable_user_standings" disabled="disabled" name="param" value="global->disable_user_standings" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_user_standings" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_language-div">
-                <td><s:v value="caps_fields[21][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[22][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-disable_language" disabled="disabled" name="param" value="global->disable_language" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_language" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-problem_navigation-div">
-                <td><s:v value="caps_fields[22][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[23][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-problem_navigation" disabled="disabled" name="param" value="global->problem_navigation" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:problem_navigation" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-vertical_navigation-div">
-                <td><s:v value="caps_fields[23][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[24][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-vertical_navigation" disabled="disabled" name="param" value="global->vertical_navigation" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:vertical_navigation" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_virtual_start-div">
-                <td><s:v value="caps_fields[24][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[25][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-disable_virtual_start" disabled="disabled" name="param" value="global->disable_virtual_start" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_virtual_start" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_virtual_auto_judge-div">
-                <td><s:v value="caps_fields[25][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[26][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-disable_virtual_auto_judge" disabled="disabled" name="param" value="global->disable_virtual_auto_judge" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_virtual_auto_judge" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_auto_print_protocol-div">
-                <td><s:v value="caps_fields[26][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[27][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-enable_auto_print_protocol" disabled="disabled" name="param" value="global->enable_auto_print_protocol" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_auto_print_protocol" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-notify_clar_reply-div">
-                <td><s:v value="caps_fields[27][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[28][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-notify_clar_reply" disabled="disabled" name="param" value="global->notify_clar_reply" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:notify_clar_reply" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-notify_status_change-div">
-                <td><s:v value="caps_fields[28][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[29][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-notify_status_change" disabled="disabled" name="param" value="global->notify_status_change" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:notify_status_change" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_auto_refresh-div">
-                <td><s:v value="caps_fields[29][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[30][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-disable_auto_refresh" disabled="disabled" name="param" value="global->disable_auto_refresh" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_auto_refresh" /></td>

@@ -82,7 +82,11 @@
 <tr><td><s:_>Size</s:_>:</td><td><s:v value="ce.size" /></td></tr>
 <tr><td><s:_>Sender</s:_>:</td><td><%
   if (!ce.from) {
+    if (global->show_judge_identity > 0 && ce.j_from > 0) {
+%><b><s:_>judges</s:_></b> (<s:v value="teamdb_get_name_2(cs->teamdb_state, ce.j_from)" />)<%
+    } else {
 %><b><s:_>judges</s:_></b><%
+    }
   } else {
 %><s:v value="teamdb_get_name(cs->teamdb_state, ce.from)" /><%
   }
