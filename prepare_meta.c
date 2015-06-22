@@ -256,6 +256,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_show_deadline] = { CNTSGLOB_show_deadline, 'B', XSIZE(struct section_global_data, show_deadline), "show_deadline", XOFFSET(struct section_global_data, show_deadline) },
   [CNTSGLOB_separate_user_score] = { CNTSGLOB_separate_user_score, 'B', XSIZE(struct section_global_data, separate_user_score), "separate_user_score", XOFFSET(struct section_global_data, separate_user_score) },
   [CNTSGLOB_show_sha1] = { CNTSGLOB_show_sha1, 'B', XSIZE(struct section_global_data, show_sha1), "show_sha1", XOFFSET(struct section_global_data, show_sha1) },
+  [CNTSGLOB_show_judge_identity] = { CNTSGLOB_show_judge_identity, 'B', XSIZE(struct section_global_data, show_judge_identity), "show_judge_identity", XOFFSET(struct section_global_data, show_judge_identity) },
   [CNTSGLOB_use_gzip] = { CNTSGLOB_use_gzip, 'B', XSIZE(struct section_global_data, use_gzip), "use_gzip", XOFFSET(struct section_global_data, use_gzip) },
   [CNTSGLOB_min_gzip_size] = { CNTSGLOB_min_gzip_size, 'z', XSIZE(struct section_global_data, min_gzip_size), "min_gzip_size", XOFFSET(struct section_global_data, min_gzip_size) },
   [CNTSGLOB_use_dir_hierarchy] = { CNTSGLOB_use_dir_hierarchy, 'B', XSIZE(struct section_global_data, use_dir_hierarchy), "use_dir_hierarchy", XOFFSET(struct section_global_data, use_dir_hierarchy) },
