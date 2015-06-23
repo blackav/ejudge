@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-06-19 02:31+0300\n"
+"POT-Creation-Date: 2015-06-23 13:33+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -556,6 +556,9 @@ msgid "Audit log is empty"
 msgstr ""
 
 msgid "Aug"
+msgstr ""
+
+msgid "Author"
 msgstr ""
 
 msgid "Auto-assign logins"
@@ -3107,6 +3110,9 @@ msgid "Run"
 msgstr ""
 
 msgid "Run ID"
+msgstr ""
+
+msgid "Run comment"
 msgstr ""
 
 msgid "Run comments"

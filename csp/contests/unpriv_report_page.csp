@@ -200,8 +200,8 @@ ns_unpriv_parse_run_id(
 <div class="width-100">
 <table class="message-table">
     <tr class="mes-top">
-        <td>Author</td>
-        <td>Run comment</td>
+        <td><s:_>Author</s:_></td>
+        <td><s:_>Run comment</s:_></td>
     </tr>
 <%
       for (i = 0; i < fcev.u; ++i) {
@@ -211,9 +211,9 @@ ns_unpriv_parse_run_id(
 <%
         if (!fcev.v[i].e.from) {
             if (global->show_judge_identity > 0 && fcev.v[i].e.j_from > 0) {
-%><b>Judge</b> (<s:v value="teamdb_get_name_2(cs->teamdb_state, fcev.v[i].e.j_from)" />)<%
+%><b><s:_>Judge</s:_></b> (<s:v value="teamdb_get_name_2(cs->teamdb_state, fcev.v[i].e.j_from)" />)<%
             } else {
-%><b>Judge</b><%
+%><b><s:_>Judge</s:_></b><%
             }
         } else {
 %><s:v value="teamdb_get_name_2(cs->teamdb_state, fcev.v[i].e.from)" /><%
