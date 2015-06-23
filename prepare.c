@@ -2343,6 +2343,8 @@ set_defaults(
     g->ignore_duplicated_runs = DFLT_G_IGNORE_DUPLICATED_RUNS;
   if (g->show_deadline == -1)
     g->show_deadline = DFLT_G_SHOW_DEADLINE;
+  if (g->show_sha1 < 0) g->show_sha1 = 0;
+  if (g->show_judge_identity) g->show_judge_identity = 0;
   if (g->enable_printing == -1)
     g->enable_printing = DFLT_G_ENABLE_PRINTING;
   if (g->disable_banner_page == -1)
@@ -4868,6 +4870,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     g->ignore_duplicated_runs = DFLT_G_IGNORE_DUPLICATED_RUNS;
   if (g->show_deadline < 0)
     g->show_deadline = DFLT_G_SHOW_DEADLINE;
+  if (g->show_sha1 < 0) g->show_sha1 = 0;
+  if (g->show_judge_identity < 0) g->show_judge_identity = 0;
   if (g->report_error_code < 0)
     g->report_error_code = DFLT_G_REPORT_ERROR_CODE;
   if (g->enable_continue < 0)
@@ -5092,7 +5096,8 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->cr_serialization_key = config->serialization_key;
   global->show_astr_time = DFLT_G_SHOW_ASTR_TIME;
   global->ignore_duplicated_runs = DFLT_G_IGNORE_DUPLICATED_RUNS;
-  global->show_deadline = DFLT_G_SHOW_DEADLINE;
+  global->show_sha1 = 0;
+  global->show_judge_identity = 0;
   global->report_error_code = DFLT_G_REPORT_ERROR_CODE;
   global->auto_short_problem_name = 0;
   global->enable_continue = DFLT_G_ENABLE_CONTINUE;
