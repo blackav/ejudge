@@ -806,5 +806,5 @@ redo_action:
 
 void *super_html_forced_link[] =
 {
-  html_date_select, sarray_unparse_2
+  html_date_select, sarray_unparse_2, contest_tmpl_new
 };
