@@ -2344,7 +2344,7 @@ set_defaults(
   if (g->show_deadline == -1)
     g->show_deadline = DFLT_G_SHOW_DEADLINE;
   if (g->show_sha1 < 0) g->show_sha1 = 0;
-  if (g->show_judge_identity) g->show_judge_identity = 0;
+  if (g->show_judge_identity < 0) g->show_judge_identity = 0;
   if (g->enable_printing == -1)
     g->enable_printing = DFLT_G_ENABLE_PRINTING;
   if (g->disable_banner_page == -1)
