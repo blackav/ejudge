@@ -1299,10 +1299,10 @@ invoke_nwrun(
   if (srpp->max_stack_size > 0) {
     fprintf(f, "max_stack_size = %lld\n", srpp->max_stack_size);
   }
-  if (srpp->max_data_size != 0) {
+  if (srpp->max_data_size > 0) {
     fprintf(f, "max_data_size = %lld\n", srpp->max_data_size);
   }
-  if (srpp->max_vm_size != 0) {
+  if (srpp->max_vm_size > 0) {
     fprintf(f, "max_vm_size = %lld\n", srpp->max_vm_size);
   }
   fprintf(f, "max_output_file_size = 60M\n");
@@ -1753,14 +1753,14 @@ make_java_limits(unsigned char *buf, int blen, ej_size64_t max_vm_size, ej_size6
   unsigned char bv[1024], bs[1024];
 
   buf[0] = 0;
-  if (max_vm_size && max_stack_size) {
+  if (max_vm_size > 0 && max_stack_size > 0) {
     snprintf(buf, blen, "EJUDGE_JAVA_FLAGS=-Xmx%s -Xss%s",
              ej_size64_t_to_size(bv, sizeof(bv), max_vm_size),
              ej_size64_t_to_size(bs, sizeof(bs), max_stack_size));
-  } else if (max_vm_size) {
+  } else if (max_vm_size > 0) {
     snprintf(buf, blen, "EJUDGE_JAVA_FLAGS=-Xmx%s",
              ej_size64_t_to_size(bv, sizeof(bv), max_vm_size));
-  } else if (max_stack_size) {
+  } else if (max_stack_size > 0) {
     snprintf(buf, blen, "EJUDGE_JAVA_FLAGS=-Xss%s",
              ej_size64_t_to_size(bs, sizeof(bs), max_stack_size));
   } else {
@@ -1773,7 +1773,7 @@ make_mono_limits(unsigned char *buf, int blen, ej_size64_t max_vm_size, ej_size6
   unsigned char bv[1024];
   // stack limit is not supported
   buf[0] = 0;
-  if (max_vm_size) {
+  if (max_vm_size > 0) {
     snprintf(buf, blen, "MONO_GC_PARAMS=max-heap-size=%s",
              ej_size64_t_to_size(bv, sizeof(bv), max_vm_size));
   }
