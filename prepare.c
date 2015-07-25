@@ -2409,6 +2409,8 @@ set_defaults(
     g->ignore_bom = 0;
   if (g->disable_auto_refresh < 0)
     g->disable_auto_refresh = 0;
+  if (g->disable_user_database < 0)
+    g->disable_user_database = 0;
 
 #if defined EJUDGE_HTTPD_HTDOCS_DIR
   if (!g->htdocs_dir[0]) {
@@ -4916,6 +4918,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     g->ignore_bom = 0;
   if (g->disable_auto_refresh < 0)
     g->disable_auto_refresh = 0;
+  if (g->disable_user_database < 0)
+    g->disable_user_database = 0;
 }
 
 void
