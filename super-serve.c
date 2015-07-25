@@ -1280,7 +1280,6 @@ super_serve_clear_edited_contest(struct sid_state *p)
   xfree(p->serve_parse_errors); p->serve_parse_errors = 0;
   prepare_free_config(p->cfg); p->cfg = 0;
   p->global = 0;
-  p->lang_a = 0;
   xfree(p->langs); p->langs = 0;
   xfree(p->loc_cs_map); p->loc_cs_map = 0;
   xfree(p->cs_loc_map); p->cs_loc_map = 0;
@@ -1331,6 +1330,8 @@ super_serve_clear_edited_contest(struct sid_state *p)
   xfree(p->plog_header_text); p->plog_header_text = 0;
   xfree(p->plog_footer_text); p->plog_footer_text = 0;
   xfree(p->compile_home_dir); p->compile_home_dir = 0;
+
+  p->lang_a = 0;
 }
 
 void
