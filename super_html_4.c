@@ -705,6 +705,8 @@ redo_action:
           pg = NULL;
           fclose(phr->out_f); phr->out_f = NULL;
           xfree(phr->out_t); phr->out_t = NULL;
+          fclose(phr->log_f); phr->log_f = NULL;
+          xfree(phr->log_t); phr->log_t = NULL;
           goto redo_action;
         }
       }
