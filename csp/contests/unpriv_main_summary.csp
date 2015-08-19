@@ -356,6 +356,7 @@
         <td class="b1">&nbsp;</td>
 <%
                 } else {
+                  if (re.passed_mode > 0) ++test;
 %>
         <td class="b1"><s:v value="test" /></td>
 <%
