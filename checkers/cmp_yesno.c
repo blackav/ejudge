@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -44,6 +43,9 @@ int checker_main(int argc, char **argv)
   if (!getenv("CASE_INSENSITIVE"))
     if (strcmp(user_buf, corr_buf))
       fatal_PE(_("Letter case mismatch"));
+
+  checker_corr_eof();
+  checker_out_eof();
 
   checker_OK();
 }
