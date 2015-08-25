@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -428,9 +427,9 @@ teamdb_get_name(teamdb_state_t state, int teamid)
 {
   unsigned char *name = 0;
   const struct userlist_user_info *ui = 0;
+  static unsigned char login_buf[64];
 
   if (state->disabled) {
-    static unsigned char login_buf[64];
     snprintf(login_buf, sizeof(login_buf), "User #%d", teamid);
     return login_buf;
   }
@@ -438,7 +437,8 @@ teamdb_get_name(teamdb_state_t state, int teamid)
   if (teamdb_refresh(state) < 0) return 0;
   if (!teamdb_lookup_client(state, teamid)) {
     err("teamdb_get_login: bad id: %d", teamid);
-    return 0;
+    snprintf(login_buf, sizeof(login_buf), "User #%d", teamid);
+    return login_buf;
   }
   ui = state->users->user_map[teamid]->cnts0;
   if (ui) name = ui->name;
@@ -451,9 +451,9 @@ teamdb_get_name_2(teamdb_state_t state, int teamid)
 {
   unsigned char *name = 0;
   const struct userlist_user_info *ui = 0;
+  static unsigned char login_buf[64];
 
   if (state->disabled) {
-    static unsigned char login_buf[64];
     snprintf(login_buf, sizeof(login_buf), "User #%d", teamid);
     return login_buf;
   }
@@ -461,7 +461,8 @@ teamdb_get_name_2(teamdb_state_t state, int teamid)
   if (teamdb_refresh(state) < 0) return 0;
   if (!teamdb_lookup_client(state, teamid)) {
     err("teamdb_get_login: bad id: %d", teamid);
-    return 0;
+    snprintf(login_buf, sizeof(login_buf), "User #%d", teamid);
+    return login_buf;
   }
   ui = state->users->user_map[teamid]->cnts0;
   if (ui) name = ui->name;
