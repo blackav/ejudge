@@ -711,7 +711,7 @@ $(function() {
     $("#orig-team_enable_ce_view-div").toggle(<s:v type="jsbool" value="global->team_enable_rep_view <= 0" />);
     $("#orig-team_show_judge_report-div").toggle(<s:v type="jsbool" value="global->team_enable_rep_view > 0" />);
     $("#orig-report_error_code-div").toggle(<s:v type="jsbool" value="global->team_enable_rep_view > 0 && global->team_show_judge_report <= 0" />);
-    $("#orig-disable_team_clars-div").toggle(<s:v type="jsbool" value="global->disable_clars > 0" />);
+    $("#orig-disable_team_clars-div").toggle(<s:v type="jsbool" value="global->disable_clars <= 0" />);
     $("#orig-show_deadline-div").toggle(<s:v type="jsbool" value="global->contest_time <= 0" />);
     $("#orig-disable_banner_page-div").toggle(<s:v type="jsbool" value="global->enable_printing > 0" />);
     $("#orig-printout_uses_login-div").toggle(<s:v type="jsbool" value="global->enable_printing > 0 && global->disable_banner_page > 0" />);
@@ -1039,7 +1039,7 @@ function capsDialogOnChange()
     $("#caps-team_enable_ce_view-div").toggle(!$("#caps-team_enable_rep_view-cb").is(':checked'));
     $("#caps-team_show_judge_report-div").toggle($("#caps-team_enable_rep_view-cb").is(':checked'));
     $("#caps-report_error_code-div").toggle($("#caps-team_enable_rep_view-cb").is(':checked') && !$("#caps-team_show_judge_report-cb").is(':checked'));
-    $("#caps-disable_team_clars-div").toggle($("#caps-disable_clars-cb").is(':checked'));
+    $("#caps-disable_team_clars-div").toggle(!$("#caps-disable_clars-cb").is(':checked'));
     $("#caps-show_deadline-div").toggle(<s:v type="jsbool" value="global->contest_time <= 0" />);
     $("#caps-disable_banner_page-div").toggle($("#caps-enable_printing-cb").is(':checked'));
     $("#caps-printout_uses_login-div").toggle($("#caps-enable_printing-cb").is(':checked') && $("#caps-disable_banner_page-cb").is(':checked'));
