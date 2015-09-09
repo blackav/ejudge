@@ -1,0 +1,116 @@
+#!/bin/sh
+# Copyright (c) 2013-2015 Alexander Chernov <cher@ejudge.ru>
+
+# compiler script interface is as follows
+# <comp>-version [OPTION]
+# OPTION is:
+#  -r P fully check the availability of the compiler (like configure
+#       script does). P is a proposed path to the compiler (like in
+#       --with-<comp> configure option).
+#       returns failure (exit code 1), if the compiler is not available
+#       or is not functional.
+#       in case of success exit code is 0, and the necessary configuration
+#       variables are written to stdout.
+#  -v   verbose operation (configure mode)
+#  -l   output the compiler name to the stdout (list mode)
+#  -p   write to the stdout the command line of the compiler
+#  -f   write the compiler full name and the compiler version
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+common_config() {
+  echo 'long_name="GNU AS (32 bit)"'
+  echo 'src_sfx=".S"'
+  echo 'arch="linux-shared-32"'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'GCCRUN=false'
+  echo 'GCCDIR='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && GCCRUN="$2"
+  [ "${GCCRUN}" = "" ] && GCCRUN="gcc"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether GNU AS (32 bit) is available... " >&2
+  "${GCCRUN}" -v >/dev/null 2>&1 || failure
+  version=`"${GCCRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'`|| failure
+  cat > conftest.c <<EOF
+#include <stdio.h>
+int main(void) { printf("ok\n"); return 0; }
+EOF
+  "${GCCRUN}" -m32 conftest.c -o conftest >/dev/null 2>&1 || failure
+  [ -x conftest ] || failure
+  ./conftest >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  GCCDIR=`dirname "${GCCRUN}"`
+  [ "${GCCDIR}" = . ] && GCCDIR=""
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'GCCRUN="'"${GCCRUN}"'"'
+  echo 'GCCDIR="'"${GCCDIR}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${GCCRUN}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "GNU AS (32 bit) compiler [http://gcc.gnu.org]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/gas-32.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  GCCRUN="gcc"
+  GCCDIR=
+fi
+
+if [ x"${GCCRUN}" = x -o x"${GCCRUN}" = xfalse ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${GCCDIR}" != x ]
+then
+    PATH="${GCCDIR}:${PATH}"
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${GCCRUN}"
+    exit 0
+fi
+    
+"${GCCRUN}" -v >/dev/null 2>&1 || exit 1
+
+[ x"$1" = x-f ] && echo -n "GNU AS (32 bit) "
+
+"${GCCRUN}" -v 2>&1 | grep "gcc version" | gawk '{ print $3; }'

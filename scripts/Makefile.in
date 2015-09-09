@@ -1,8 +1,7 @@
 # -*- Makefile -*-
-# $Id$
 # @configure_input@
 
-# Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -84,6 +83,8 @@ SCRIPTS_IN = \
  gcc-vg-version.in\
  gcc-32.in\
  gcc-32-version.in\
+ gas-32.in\
+ gas-32-version.in\
  gcj.in\
  gcj-version.in\
  gpc.in\
