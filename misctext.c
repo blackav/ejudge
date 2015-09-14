@@ -2053,6 +2053,7 @@ text_normalize_buf(
       out_text[j++] = ' ';
       done_mask |= TEXT_FIX_NP;
       ++count;
+      ++i;
     } else {
       out_text[j++] = in_text[i++];
     }
