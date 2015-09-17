@@ -9419,7 +9419,7 @@ fail:
 }
 
 static void
-unpriv_view_source(
+unpriv_download_run(
         FILE *fout,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -10337,7 +10337,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SUBMIT_RUN] = unpriv_submit_run,
   [NEW_SRV_ACTION_SUBMIT_CLAR] = unpriv_submit_clar,
   [NEW_SRV_ACTION_LOGOUT] = unpriv_logout,
-  [NEW_SRV_ACTION_VIEW_SOURCE] = unpriv_view_source,
+  [NEW_SRV_ACTION_DOWNLOAD_RUN] = unpriv_download_run,
   [NEW_SRV_ACTION_PRINT_RUN] = unpriv_print_run,
   [NEW_SRV_ACTION_VIEW_TEST_INPUT] = unpriv_view_test,
   [NEW_SRV_ACTION_VIEW_TEST_ANSWER] = unpriv_view_test,
