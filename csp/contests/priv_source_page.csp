@@ -376,7 +376,7 @@ function setDivVisibility(oper, value)
 </div>
 
  <div id="brief-actions">
-<s:url name="DownloadRunUrl" ac="priv-download-run">
+<s:url name="DownloadRunUrl" ac="download-run">
     <s:param name="run_id" value="run_id" />
 </s:url>
 <p style="display: inline-block;"><s:a url="DownloadRunUrl"><s:_>Download run</s:_></s:a></p>
@@ -432,7 +432,7 @@ function setDivVisibility(oper, value)
     if(info.mime_type >= MIME_TYPE_IMAGE_FIRST
        && info.mime_type <= MIME_TYPE_IMAGE_LAST) {
 %>
-<s:url name="PrivDownloadRunUrl" ac="priv-download-run">
+<s:url name="PrivDownloadRunUrl" ac="download-run">
     <s:param name="run_id" value="run_id" />
     <s:param name="no_disp" value="1" />
 </s:url>

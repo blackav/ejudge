@@ -6379,7 +6379,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = ns_priv_edit_run_action,
 
   /* for priv_generic_page */
-  [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_download_source,
+  [NEW_SRV_ACTION_DOWNLOAD_RUN] = priv_download_source,
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1] = priv_confirmation_page,
   [NEW_SRV_ACTION_REJUDGE_PROBLEM_1] = priv_confirmation_page,
@@ -6659,7 +6659,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SQUEEZE_RUNS] = priv_generic_operation,
   [NEW_SRV_ACTION_RESET_FILTER] = priv_generic_operation,
   [NEW_SRV_ACTION_RESET_CLAR_FILTER] = priv_generic_operation,
-  [NEW_SRV_ACTION_PRIV_DOWNLOAD_RUN] = priv_generic_page,
+  [NEW_SRV_ACTION_DOWNLOAD_RUN] = priv_generic_page,
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = priv_generic_operation,
   [NEW_SRV_ACTION_SUBMIT_RUN] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_CLAR] = priv_generic_operation,
