@@ -74,6 +74,7 @@ SOFILES = \
  csp_unpriv_recover_2_page.so\
  csp_unpriv_recover_3_page.so\
  csp_unpriv_report_page.so\
+ csp_unpriv_source_page.so\
  csp_unpriv_standings_page.so\
  csp_unpriv_error_unknown.so
 
@@ -140,6 +141,7 @@ csp_unpriv_recover_1_page.c : unpriv_recover_1_page.csp $(UNPRIV_DEPS)
 csp_unpriv_recover_2_page.c : unpriv_recover_2_page.csp $(UNPRIV_DEPS)
 csp_unpriv_recover_3_page.c : unpriv_recover_3_page.csp $(UNPRIV_DEPS)
 csp_unpriv_report_page.c : unpriv_report_page.csp $(UNPRIV_DEPS)
+csp_unpriv_source_page.c : unpriv_source_page.csp $(UNPRIV_DEPS)
 csp_unpriv_standings_page.c : unpriv_standings_page.csp $(UNPRIV_DEPS)
 
 csp_unpriv_error_unknown.c : unpriv_error_unknown.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
