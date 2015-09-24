@@ -22,35 +22,26 @@ ns_unpriv_parse_run_id(
 %><%@include "unpriv_stdvars.csp"
 %><%
   const struct section_problem_data *prob;
-  int run_id, flags, content_type;
-  const unsigned char *rep_start = 0;
+  const struct section_language_data *lang = NULL;
+  int run_id;
   char *rep_text = 0;
-  size_t rep_size = 0;
   struct run_entry re;
-  path_t rep_path;
-  int accepting_mode = 0;
-  int enable_rep_view = 0;
-  int status = -1;
   unsigned char title[1024];
   int clar_id = -1;
   struct full_clar_entry_vector fcev = {};
   int i;
+  int src_flags;
+  char *run_text = 0;
+  size_t run_size = 0;
+  path_t src_path;
+  int view_enabled = 1;
+  const unsigned char *language_type = "unknown";
 
   start_time = run_get_start_time(cs->runlog_state);
   stop_time = run_get_stop_time(cs->runlog_state);
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
-    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
-                                          cs->current_time);
-    if (global->score_system == SCORE_OLYMPIAD) {
-      if (global->disable_virtual_auto_judge <= 0 && stop_time <= 0)
-        accepting_mode = 1;
-      else if (global->disable_virtual_auto_judge > 0
-               && cs->testing_finished <= 0)
-        accepting_mode = 1;
-    }
-  } else {
-    accepting_mode = cs->accepting_mode;
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
   }
 
   if (ns_unpriv_parse_run_id(out_f, phr, cnts, extra, &run_id, &re) < 0)
@@ -66,95 +57,50 @@ ns_unpriv_parse_run_id(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
-  enable_rep_view = (cs->online_view_report > 0 || prob->team_enable_rep_view > 0);
-
-  status = re.status;
-  if (global->separate_user_score > 0 && re.is_saved) {
-    status = re.saved_status;
+  if (cs->online_view_source < 0 || (!cs->online_view_source && global->team_enable_src_view <= 0)) {
+    FAIL(NEW_SRV_ERR_SOURCE_VIEW_DISABLED);
   }
-  if (re.token_count > 0 && (re.token_flags & TOKEN_FINALSCORE_BIT)) {
-    status = re.status;
-  }
-  
-  // check viewable statuses
-  switch (status) {
-  case RUN_OK:
-  case RUN_COMPILE_ERR:
-  case RUN_RUN_TIME_ERR:
-  case RUN_TIME_LIMIT_ERR:
-  case RUN_WALL_TIME_LIMIT_ERR:
-  case RUN_PRESENTATION_ERR:
-  case RUN_WRONG_ANSWER_ERR:
-  case RUN_PARTIAL:
-  case RUN_ACCEPTED:
-  case RUN_PENDING_REVIEW:
-  case RUN_MEM_LIMIT_ERR:
-  case RUN_SECURITY_ERR:
-  case RUN_STYLE_ERR:
-  case RUN_REJECTED:
-  case RUN_IGNORED:
-  case RUN_DISQUALIFIED:
-    // these statuses have viewable reports
-    break;
-  default:
-    FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
+  if (re.status > RUN_LAST || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST)) {
+    FAIL(NEW_SRV_ERR_SOURCE_UNAVAILABLE);
   }
 
-  if (accepting_mode && prob->type != PROB_TYPE_STANDARD) {
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
+    FAIL(NEW_SRV_ERR_SOURCE_NONEXISTANT);
+  }
+  if (generic_read_file(&run_text, 0, &run_size, src_flags, 0, src_path, 0) < 0) {
+    FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
   }
 
-  if (!enable_rep_view && (status == RUN_COMPILE_ERR || status == RUN_STYLE_ERR) && prob->team_enable_ce_view > 0) {
-    enable_rep_view = 1;
-  }
-
-  if (!enable_rep_view && re.token_count > 0
-      && (re.token_flags & TOKEN_TESTS_MASK) != 0) {
-    enable_rep_view = 1;
-  }
-
-  if (!enable_rep_view) {
-    FAIL(NEW_SRV_ERR_REPORT_VIEW_DISABLED);
-  }
-
-  flags = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re);
-  if (flags >= 0) {
-    if (generic_read_file(&rep_text, 0, &rep_size, flags, 0, rep_path, 0) < 0) {
-      FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
+  if (re.lang_id > 0 && re.lang_id <= cs->max_lang) lang = cs->langs[re.lang_id];
+  if (lang && lang->binary) view_enabled = 0;
+  if (prob && prob->binary) view_enabled = 0;
+  if (view_enabled && run_text && run_size != strlen(run_text)) view_enabled = 0;
+  if (lang) {
+    if (!strcmp(lang->src_sfx, ".pas")) {
+      language_type = "pascal";
+    } else if (!strcmp(lang->src_sfx, ".c")) {
+      language_type = "c";
+    } else if (!strcmp(lang->src_sfx, ".cpp")) {
+      language_type = "cpp";
+    } else if (!strcmp(lang->src_sfx, ".for")) {
+      language_type = "fortran";
+    } else if (!strcmp(lang->src_sfx, ".py")) {
+      language_type = "python";
+    } else if (!strcmp(lang->src_sfx, ".pl")) {
+      language_type = "perl";
+    } else if (!strcmp(lang->src_sfx, ".pro")) {
+      language_type = "prolog";
+    } else if (!strcmp(lang->src_sfx, ".java")) {
+      language_type = "java";
+    } else if (!strcmp(lang->src_sfx, ".cs")) {
+      language_type = "csharp";
+    } else if (!strcmp(lang->src_sfx, ".vb")) {
+      language_type = "basic";
+    } else if (!strcmp(lang->src_sfx, ".rb")) {
+      language_type = "ruby";
+    } else if (!strcmp(lang->src_sfx, ".php")) {
+      language_type = "php";
     }
-    content_type = get_content_type(rep_text, &rep_start);
-    if (content_type != CONTENT_TYPE_XML
-        && status != RUN_COMPILE_ERR
-        && status != RUN_STYLE_ERR
-        && status != RUN_REJECTED) {
-      FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
-    }
-  } else {
-    int user_mode = 0;
-    if (prob->team_enable_ce_view
-        && (status == RUN_COMPILE_ERR
-            || status == RUN_STYLE_ERR
-            || status == RUN_REJECTED)) {
-    } else if (prob->team_show_judge_report) {
-    } else {
-      user_mode = 1;
-    }
-
-    if (user_mode) {
-      flags = archive_make_read_path(cs, rep_path, sizeof(rep_path),
-                                     global->team_report_archive_dir, run_id, 0, 1);
-    } else {
-      flags = serve_make_report_read_path(cs, rep_path, sizeof(rep_path), &re);
-      
-    }
-    if (flags < 0) {
-      FAIL(NEW_SRV_ERR_REPORT_NONEXISTANT);
-    }
-
-    if (generic_read_file(&rep_text,0,&rep_size,flags,0,rep_path, 0) < 0) {
-      FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
-    }
-    content_type = get_content_type(rep_text, &rep_start);
   }
 
 %><s:read var="clar_id" ignoreerrors="yes" default="-1" /><%
@@ -176,21 +122,33 @@ ns_unpriv_parse_run_id(
 
   unpriv_load_html_style(phr, cnts, 0, 0);
   l10n_setlocale(phr->locale_id);
-  snprintf(title, sizeof(title), "%s %d", _("Report for run"), run_id);
+  snprintf(title, sizeof(title), "%s %d", _("Source for run"), run_id);
+#define INCLUDE_PRISM 1
 %><%@include "unpriv_header.csp" 
 %><%@include "unpriv_menu.csp"
 %><%@include "unpriv_status.csp"
 %>
+
+<script src="<s:config name="style-prefix" />prism.js"></script>
+
 <div class="l14">
+    <div class="h2-long" style="margin-top: 13px; margin-bottom: 10px;">
+    <h2><s:_>Source code</s:_></h2>
+    </div>
 <%
-  switch (content_type) {
-  case CONTENT_TYPE_TEXT:
-%><pre><s:v value="rep_text" /></pre><%
-    break;
-  case CONTENT_TYPE_HTML:
-%><s:v value="rep_start" escape="false" /><%
-    break;
-  case CONTENT_TYPE_XML:
+  if (view_enabled) {
+%>
+    <pre class="line-numbers language-<s:v value="language_type" escape="no" />"><code><s:v value="run_text" /></code></pre>
+<%
+  }
+%>
+
+<s:url name="DownloadRunUrl" ac="download-run">
+    <s:param name="run_id" value="run_id" />
+</s:url>
+<p style="display: inline-block;"><s:a url="DownloadRunUrl"><s:_>Download run</s:_></s:a></p>
+
+<%
     if (fcev.u > 0) {
 %>
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 10px;">
@@ -235,30 +193,6 @@ ns_unpriv_parse_run_id(
     }
 
 
-    if (prob->type == PROB_TYPE_TESTS) {
-      if (prob->team_show_judge_report) {
-        write_xml_tests_report(out_f, 1, rep_start, phr->session_id,
-                                 phr->self_url, "", "b1", "b0"); 
-      } else {
-        write_xml_team_tests_report(cs, prob, out_f, rep_start, "b1");
-      }
-    } else {
-      if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
-        write_xml_team_accepting_report(out_f, phr, rep_start, run_id, &re, prob,
-                                        cnts->exam_mode, "b1");
-      } else if (prob->team_show_judge_report) {
-        write_xml_testing_report(out_f, phr, 1, rep_start, "b1", "b0");
-      } else {
-        write_xml_team_testing_report(cs, prob, out_f, phr,
-                                      prob->type != PROB_TYPE_STANDARD,
-                                      re.is_marked, re.token_flags, 
-                                      rep_start, "b1");
-      }
-    }
-    break;
-  default:
-    abort();
-  }
 %>
 </div>
 <%@include "unpriv_footer.csp"
