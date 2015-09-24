@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-06-23 13:33+0300\n"
+"POT-Creation-Date: 2015-09-24 19:49+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -3404,6 +3404,9 @@ msgid "Source code is open"
 msgstr ""
 
 msgid "Source file does not exist"
+msgstr ""
+
+msgid "Source for run"
 msgstr ""
 
 msgid "Source for this run is not available"
