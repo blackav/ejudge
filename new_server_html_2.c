@@ -5998,9 +5998,9 @@ new_write_user_clars(
     fprintf(f, "<td%s>%s</td>", cl, asubj);
     fprintf(f, "<td%s>", cl);
     if (clar.run_id > 0 && clar_flags && clar_flags[0] == 'N') {
-      fprintf(f, "%s", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_VIEW_REPORT, "run_id=%d&clar_id=%d", clar.run_id - 1, i));
+      fprintf(f, "%s", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_VIEW_SOURCE, "run_id=%d&clar_id=%d", clar.run_id - 1, i));
     } else if (clar.run_id > 0) {
-      fprintf(f, "%s", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_VIEW_REPORT, "run_id=%d", clar.run_id - 1));
+      fprintf(f, "%s", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_VIEW_SOURCE, "run_id=%d", clar.run_id - 1));
     } else {
       fprintf(f, "%s", ns_aref(href, sizeof(href), phr, NEW_SRV_ACTION_VIEW_CLAR, "clar_id=%d", i));
     }
