@@ -4335,13 +4335,13 @@ handle_checkbox_open(
     handle_html_string(prg_f, txt_f, log_f, str_p);
     free(str_p); str_p = 0; str_z = 0;
 
-    HtmlAttribute *checked_attr = html_element_find_attribute(elem, "checkedExpr");
+    HtmlAttribute *checked_attr = html_element_find_attribute(elem, "checkedexpr");
     if (checked_attr) {
         fprintf(prg_f, "if (%s) {\n", checked_attr->value);
         handle_html_string(prg_f, txt_f, log_f, " checked=\"checked\"");
         fprintf(prg_f, "}\n");
     }
-    HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabledExpr");
+    HtmlAttribute *disabled_attr = html_element_find_attribute(elem, "disabledexpr");
     if (disabled_attr) {
         fprintf(prg_f, "if (%s) {\n", disabled_attr->value);
         handle_html_string(prg_f, txt_f, log_f, " disabled=\"disabled\"");
