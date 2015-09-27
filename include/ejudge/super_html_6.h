@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __SUPER_HTML_6_H__
 #define __SUPER_HTML_6_H__
 
-/* Copyright (C) 2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -129,6 +128,7 @@ struct ss_op_param_USER_CREATE_FROM_CSV_ACTION
   ej_int_opt_0_t   other_group_id;
   ej_textbox_opt_t separator;
   ej_textbox_opt_t charset;
+  ej_checkbox_t    register_existing;
 };
 
 struct ss_op_param_USER_CREATE_REG_ACTION

@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -90,6 +89,7 @@ userlist_clnt_create_user_2(
   out->cnts_use_sha1_flag = params->cnts_use_sha1_flag;
   out->cnts_name_len = cnts_name_len;
   out->group_id = params->group_id;
+  out->register_existing_flag = params->register_existing_flag;
 
   memcpy(login_ptr, login_str, login_len + 1);
   memcpy(email_ptr, email_str, email_len + 1);

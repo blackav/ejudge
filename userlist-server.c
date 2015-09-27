@@ -9952,23 +9952,31 @@ cmd_create_user_2(
     reg_password_len = strlen(reg_password_str);
   }
 
-  user_id = default_new_user(login_str,
-                             email_str,
-                             reg_password_method,
-                             reg_password_str,
-                             data->is_privileged_flag,
-                             data->is_invisible_flag,
-                             data->is_banned_flag,
-                             data->is_locked_flag,
-                             data->show_login_flag,
-                             data->show_email_flag,
-                             data->read_only_flag,
-                             data->never_clean_flag,
-                             data->simple_registration_flag);
-  if (user_id <= 0) {
-    err("%s -> cannot create user", logbuf);
-    send_reply(p, -ULS_ERR_DB_ERROR);
-    return;
+  user_id = -1;
+  if (data->register_existing_flag > 0) {
+    user_id = default_get_user_by_login(login_str);
+    if (user_id <= 0) user_id = -1;
+  }
+
+  if (user_id < 0) {
+    user_id = default_new_user(login_str,
+                               email_str,
+                               reg_password_method,
+                               reg_password_str,
+                               data->is_privileged_flag,
+                               data->is_invisible_flag,
+                               data->is_banned_flag,
+                               data->is_locked_flag,
+                               data->show_login_flag,
+                               data->show_email_flag,
+                               data->read_only_flag,
+                               data->never_clean_flag,
+                               data->simple_registration_flag);
+    if (user_id <= 0) {
+      err("%s -> cannot create user", logbuf);
+      send_reply(p, -ULS_ERR_DB_ERROR);
+      return;
+    }
   }
 
   if (data->contest_id) {

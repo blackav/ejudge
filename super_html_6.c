@@ -4747,6 +4747,9 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
   fprintf(out_f, "<tr><td%s colspan=\"3\" align=\"center\"><b>%s</b></td></tr>\n",
           cl, "File");
 
+  fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"register_existing\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
+          cl, "Register existing users", cl, cl);
+
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"text\" name=\"separator\" size=\"20\" value=\";\"/></td><td%s>&nbsp;</td></tr>\n",
           cl, "Field separator", cl, cl);
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>", cl, "Charset", cl);
@@ -5438,7 +5441,7 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
       xfree(txt); txt = 0;
       FAIL(SSERV_ERR_DB_ERROR);
     }
-    if (r >= 0 && user_id > 0) {
+    if (params.register_existing <= 0 && r >= 0 && user_id > 0) {
       fprintf(log_f, "row %d: login '%s' already exists\n", row + 1, txt);
       failed = 1;
     }
@@ -5514,6 +5517,7 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
     up.cnts_random_password_flag = params.cnts_random_passwd;
     up.cnts_use_sha1_flag = params.cnts_sha1;
     up.group_id = params.other_group_id;
+    up.register_existing_flag = params.register_existing;
     r = userlist_clnt_create_user_2(phr->userlist_clnt, ULS_CREATE_USER_2, &up,
                                     login_str, email_str,
                                     reg_password_str, cnts_password_str,
