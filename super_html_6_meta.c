@@ -219,6 +219,7 @@ static struct meta_info_item meta_info_ss_op_param_USER_CREATE_FROM_CSV_ACTION_d
   [META_SS_OP_PARAM_USER_CREATE_FROM_CSV_ACTION_other_group_id] = { META_SS_OP_PARAM_USER_CREATE_FROM_CSV_ACTION_other_group_id, '0', XSIZE(struct ss_op_param_USER_CREATE_FROM_CSV_ACTION, other_group_id), "other_group_id", XOFFSET(struct ss_op_param_USER_CREATE_FROM_CSV_ACTION, other_group_id) },
   [META_SS_OP_PARAM_USER_CREATE_FROM_CSV_ACTION_separator] = { META_SS_OP_PARAM_USER_CREATE_FROM_CSV_ACTION_separator, '2', XSIZE(struct ss_op_param_USER_CREATE_FROM_CSV_ACTION, separator), "separator", XOFFSET(struct ss_op_param_USER_CREATE_FROM_CSV_ACTION, separator) },
   [META_SS_OP_PARAM_USER_CREATE_FROM_CSV_ACTION_charset] = { META_SS_OP_PARAM_USER_CREATE_FROM_CSV_ACTION_charset, '2', XSIZE(struct ss_op_param_USER_CREATE_FROM_CSV_ACTION, charset), "charset", XOFFSET(struct ss_op_param_USER_CREATE_FROM_CSV_ACTION, charset) },
+  [META_SS_OP_PARAM_USER_CREATE_FROM_CSV_ACTION_register_existing] = { META_SS_OP_PARAM_USER_CREATE_FROM_CSV_ACTION_register_existing, '3', XSIZE(struct ss_op_param_USER_CREATE_FROM_CSV_ACTION, register_existing), "register_existing", XOFFSET(struct ss_op_param_USER_CREATE_FROM_CSV_ACTION, register_existing) },
 };
 
 int meta_ss_op_param_USER_CREATE_FROM_CSV_ACTION_get_type(int tag)
