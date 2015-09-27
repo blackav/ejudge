@@ -9929,11 +9929,14 @@ cmd_create_user_2(
     send_reply(p, -ULS_ERR_INVALID_LOGIN);
     return;
   }
-  if (default_get_user_by_login(login_str) >= 0) {
-    err("%s -> login already exists", logbuf);
+
+  user_id = default_get_user_by_login(login_str);
+  if (data->register_existing_flag <= 0 && user_id >= 0) {
+    err("%s: %s -> login already exists", login_str, logbuf);
     send_reply(p, -ULS_ERR_LOGIN_USED);
     return;
   }
+  if (user_id <= 0) user_id = -1;
 
   if (data->random_password_flag) {
     generate_random_password(8, random_reg_password_buf);
@@ -9950,12 +9953,6 @@ cmd_create_user_2(
     reg_password_method = USERLIST_PWD_SHA1;
     reg_password_str = sha1_reg_password_buf;
     reg_password_len = strlen(reg_password_str);
-  }
-
-  user_id = -1;
-  if (data->register_existing_flag > 0) {
-    user_id = default_get_user_by_login(login_str);
-    if (user_id <= 0) user_id = -1;
   }
 
   if (user_id < 0) {
