@@ -2435,11 +2435,12 @@ priv_reset_filter(FILE *fout,
 }
 
 static int
-priv_submit_run(FILE *fout,
-                FILE *log_f,
-                struct http_request_info *phr,
-                const struct contest_desc *cnts,
-                struct contest_extra *extra)
+priv_submit_run(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
 {
   const serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
@@ -2447,7 +2448,6 @@ priv_submit_run(FILE *fout,
   const struct section_language_data *lang = 0;
   const unsigned char *s;
   int prob_id = 0, variant = 0, lang_id = 0, n, max_ans, ans, i, mime_type = 0, r;
-  const unsigned char *errmsg = 0;
   const unsigned char *run_text;
   size_t run_size, ans_size;
   unsigned char *ans_map = 0, *ans_buf = 0, *ans_tmp = 0;
@@ -2466,30 +2466,27 @@ priv_submit_run(FILE *fout,
   int eoln_type = 0;
 
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
   if (hr_cgi_param_int(phr, "problem", &prob_id) < 0) {
-    errmsg = "problem is not set or binary";
-    goto invalid_param;
+    fprintf(phr->log_f, "'problem' parameter is not set or invalid\n");
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
-  if (prob_id <= 0 || prob_id > cs->max_prob
-      || !(prob = cs->probs[prob_id])) {
-    errmsg = "invalid prob_id";
-    goto invalid_param;
+  if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id])) {
+    fprintf(phr->log_f, "invalid problem id\n");
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
   if (hr_cgi_param_int_opt(phr, "variant", &variant, 0) < 0) {
-    errmsg = "variant is invalid";
-    goto invalid_param;
+    fprintf(phr->log_f, "'variant' parameter is invalid\n");
+    FAIL(NEW_SRV_ERR_INV_VARIANT);
   }
   if (prob->variant_num <= 0 && variant != 0) {
-    errmsg = "variant is invalid";
-    goto invalid_param;
-  } else if (prob->variant_num > 0
-             && (variant <= 0 || variant > prob->variant_num)) {
-    errmsg = "variant is invalid";
-    goto invalid_param;
+    fprintf(phr->log_f, "variant is not allowed\n");
+    FAIL(NEW_SRV_ERR_INV_VARIANT);
+  } else if (prob->variant_num > 0 && (variant <= 0 || variant > prob->variant_num)) {
+    fprintf(phr->log_f, "variant is invalid\n");
+    FAIL(NEW_SRV_ERR_INV_VARIANT);
   }
 
   /*
@@ -2525,16 +2522,16 @@ priv_submit_run(FILE *fout,
 
   if (prob->type == PROB_TYPE_STANDARD) {
     if (hr_cgi_param(phr, "lang_id", &s) <= 0) {
-      errmsg = "lang_id is not set or binary";
-      goto invalid_param;
+      fprintf(phr->log_f, "'lang_id' is not set or binary\n");
+      FAIL(NEW_SRV_ERR_INV_LANG_ID);
     }
     if (sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n]) {
-      errmsg = "cannot parse lang_id";
-      goto invalid_param;
+      fprintf(phr->log_f, "'lang_id' is invalid\n");
+      FAIL(NEW_SRV_ERR_INV_LANG_ID);
     }
     if (lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])){
-      errmsg = "lang_id is invalid";
-      goto invalid_param;
+      fprintf(phr->log_f, "'lang_id' is invalid\n");
+      FAIL(NEW_SRV_ERR_INV_LANG_ID);
     }
     if (cs->global->enable_eoln_select > 0) {
       hr_cgi_param_int_opt(phr, "eoln_type", &eoln_type, 0);
@@ -2560,13 +2557,13 @@ priv_submit_run(FILE *fout,
       int r2 = hr_cgi_param_bin(phr, "text_form", &text_form_text,
                                 &text_form_size);
       if (!r1 && !r2) {
-        errmsg = "neither \"file\" nor \"text\" parameters are set";
-        goto invalid_param;
+        fprintf(phr->log_f, "neither 'file' nor 'text' parameters are set\n");
+        FAIL(NEW_SRV_ERR_INV_PARAM);
       }
     } else {
       if (!hr_cgi_param_bin(phr, "file", &run_text, &run_size)) {
-        errmsg = "\"file\" parameter is not set";
-        goto invalid_param;
+        fprintf(phr->log_f, "'file' parameter is not set\n");
+        FAIL(NEW_SRV_ERR_INV_PARAM);
       }
     }
     break;
@@ -2574,21 +2571,20 @@ priv_submit_run(FILE *fout,
   case PROB_TYPE_SHORT_ANSWER:
   case PROB_TYPE_SELECT_ONE:
     if (!hr_cgi_param_bin(phr, "file", &run_text, &run_size)) {
-      errmsg = "\"file\" parameter is not set";
-      goto invalid_param;
+      fprintf(phr->log_f, "'file' parameter is not set\n");
+      FAIL(NEW_SRV_ERR_INV_PARAM);
     }
     break;
   case PROB_TYPE_SELECT_MANY:   // "ans_*"
     for (i = 0, max_ans = -1, ans_size = 0; i < phr->param_num; i++)
       if (!strncmp(phr->param_names[i], "ans_", 4)) {
-        if (sscanf(phr->param_names[i] + 4, "%d%n", &ans, &n) != 1
-            || phr->param_names[i][4 + n]) {
-          errmsg = "\"ans_*\" parameter is invalid";
-          goto invalid_param;
+        if (sscanf(phr->param_names[i] + 4, "%d%n", &ans, &n) != 1 || phr->param_names[i][4 + n]) {
+          fprintf(phr->log_f, "'ans_*' parameter is invalid\n");
+          FAIL(NEW_SRV_ERR_INV_PARAM);
         }
         if (ans < 0 || ans > 65535) {
-          errmsg = "\"ans_*\" parameter is out of range";
-          goto invalid_param;
+          fprintf(phr->log_f, "'ans_*' parameter is out of range");
+          FAIL(NEW_SRV_ERR_INV_PARAM);
         }
         if (ans > max_ans) max_ans = ans;
         ans_size += 7;
@@ -2617,8 +2613,8 @@ priv_submit_run(FILE *fout,
   case PROB_TYPE_CUSTOM:   // use problem plugin
     load_problem_plugin(cs, prob_id);
     if (!(plg = cs->prob_extras[prob_id].plugin) || !plg->parse_form) {
-      errmsg = "problem plugin is not available";
-      goto invalid_param;
+      fprintf(phr->log_f, "problem plugin is not available\n");
+      FAIL(NEW_SRV_ERR_INV_PARAM);
     }
     ans_tmp = (*plg->parse_form)(cs->prob_extras[prob_id].plugin_data,
                                  log_f, phr, cnts, extra);
@@ -2689,12 +2685,12 @@ priv_submit_run(FILE *fout,
     break;
 
   binary_submission:
-    errmsg = "binary submission";
-    goto invalid_param;
+    fprintf(phr->log_f, "binary submission\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);
 
   invalid_characters:
-    errmsg = "invalid characters";
-    goto invalid_param;
+    fprintf(phr->log_f, "binary submission\n");
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
 
   // ignore BOM
@@ -2708,8 +2704,8 @@ priv_submit_run(FILE *fout,
   /* check for disabled languages */
   if (lang_id > 0) {
     if (lang->disabled) {
-      ns_error(log_f, NEW_SRV_ERR_LANG_DISABLED);
-      goto cleanup;
+      fprintf(log_f, "Language '%s' is disabled\n", lang->short_name);
+      FAIL(NEW_SRV_ERR_LANG_DISABLED);
     }
 
     if (prob->enable_language) {
@@ -2718,8 +2714,8 @@ priv_submit_run(FILE *fout,
         if (!strcmp(lang_list[i], lang->short_name))
           break;
       if (!lang_list[i]) {
-        ns_error(log_f, NEW_SRV_ERR_LANG_NOT_AVAIL_FOR_PROBLEM);
-        goto cleanup;
+        fprintf(log_f, "Language '%s' is not enabled for problem '%s'\n", lang->short_name, prob->short_name);
+        FAIL(NEW_SRV_ERR_LANG_NOT_AVAIL_FOR_PROBLEM);
       }
     } else if (prob->disable_language) {
       lang_list = prob->disable_language;
@@ -2727,8 +2723,8 @@ priv_submit_run(FILE *fout,
         if (!strcmp(lang_list[i], lang->short_name))
           break;
       if (lang_list[i]) {
-        ns_error(log_f, NEW_SRV_ERR_LANG_DISABLED_FOR_PROBLEM);
-        goto cleanup;
+        fprintf(log_f, "Language '%s' is disabled for problem '%s'\n", lang->short_name, prob->short_name);
+        FAIL(NEW_SRV_ERR_LANG_DISABLED_FOR_PROBLEM);
       }
     }
   } else if (skip_mime_type_test) {
@@ -2736,10 +2732,8 @@ priv_submit_run(FILE *fout,
     mime_type_str = mime_type_get_type(mime_type);
   } else {
     // guess the content-type and check it against the list
-    if ((mime_type = mime_type_guess(global->diff_work_dir,
-                                     run_text, run_size)) < 0) {
-      ns_error(log_f, NEW_SRV_ERR_CANNOT_DETECT_CONTENT_TYPE);
-      goto cleanup;
+    if ((mime_type = mime_type_guess(global->diff_work_dir, run_text, run_size)) < 0) {
+      FAIL(NEW_SRV_ERR_CANNOT_DETECT_CONTENT_TYPE);
     }
     mime_type_str = mime_type_get_type(mime_type);
     if (prob->enable_language) {
@@ -2748,8 +2742,8 @@ priv_submit_run(FILE *fout,
         if (!strcmp(lang_list[i], mime_type_str))
           break;
       if (!lang_list[i]) {
-        ns_error(log_f, NEW_SRV_ERR_CONTENT_TYPE_NOT_AVAILABLE, mime_type_str);
-        goto cleanup;
+        fprintf(log_f, "Content type '%s' is not enabled for problem '%s'\n", mime_type_str, prob->short_name);
+        FAIL(NEW_SRV_ERR_CONTENT_TYPE_NOT_AVAILABLE);
       }
     } else if (prob->disable_language) {
       lang_list = prob->disable_language;
@@ -2757,7 +2751,8 @@ priv_submit_run(FILE *fout,
         if (!strcmp(lang_list[i], mime_type_str))
           break;
       if (lang_list[i]) {
-        ns_error(log_f, NEW_SRV_ERR_CONTENT_TYPE_DISABLED, mime_type_str);
+        fprintf(log_f, "Content type '%s' is disabled for problem '%s'\n", mime_type_str, prob->short_name);
+        FAIL(NEW_SRV_ERR_CONTENT_TYPE_DISABLED);
         goto cleanup;
       }
     }
@@ -2781,8 +2776,7 @@ priv_submit_run(FILE *fout,
                           prob_id, lang_id, eoln_type,
                           variant, 1, mime_type, store_flags);
   if (run_id < 0) {
-    ns_error(log_f, NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
   serve_move_files_to_insert_run(cs, run_id);
 
@@ -2796,14 +2790,12 @@ priv_submit_run(FILE *fout,
   }
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
-    ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
   }
 
   if (generic_write_file(run_text, run_size, arch_flags, 0, run_path, "") < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
-    ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-    goto cleanup;
+    FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
   }
 
   if (prob->type == PROB_TYPE_STANDARD) {
@@ -2867,8 +2859,7 @@ priv_submit_run(FILE *fout,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                               0 /* rejudge_flag */) < 0) {
-          ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-          goto cleanup;
+          FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
         }
       }
     }
@@ -2910,8 +2901,7 @@ priv_submit_run(FILE *fout,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                               0 /* rejudge_flag */) < 0) {
-          ns_error(log_f, NEW_SRV_ERR_DISK_WRITE_ERROR);
-          goto cleanup;
+          FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
         }
       }
     }
@@ -2920,11 +2910,6 @@ priv_submit_run(FILE *fout,
  cleanup:
   xfree(utf8_str);
   return retval;
-
- invalid_param:
-  ns_html_err_inv_param(fout, phr, 0, errmsg);
-  xfree(utf8_str);
-  return -1;
 }
 
 static int
