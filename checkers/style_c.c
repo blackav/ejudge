@@ -177,8 +177,8 @@ try_line_directive(const unsigned char *buf)
   new_file_path[new_len] = 0;
   ++p;
 
-  while (isspace(*p)) ++p;
-  if (*p) goto done;
+  while (isspace(*p) && *p != '\n') ++p;
+  if (*p && *p != '\n') goto done;
 
   current_file_path = new_file_path; new_file_path = NULL;
   lineno = num - 1;
@@ -295,11 +295,16 @@ process_file(const unsigned char *path)
     }
   }
 
+  if (current_file_path) {
+    free(current_file_path);
+  }
+  current_file_path = get_last_name(path);
   lineno = 1;
   is_first = 1;
   col = 0;
   state = STATE_NORMAL;
   for (i = 0; i < file_buf_u; ++i) {
+    if (!col) try_line_directive(file_buf + i);
     if (file_buf[i] == '\n') {
       ++lineno;
       is_first = 1;
