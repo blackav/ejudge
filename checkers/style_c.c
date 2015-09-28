@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2011 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -134,6 +133,60 @@ valid_space(int c)
   return 0;
 }
 
+static void
+try_line_directive(const unsigned char *buf)
+{
+  const unsigned char *p = buf;
+  unsigned char *new_file_path = NULL;
+
+  while (isspace(*p)) ++p;
+  if (!*p) return;
+
+  if (*p != '#') return;
+  ++p;
+
+  while (isspace(*p)) ++p;
+  if (!*p) return;
+
+  if (p[0] != 'l' || p[1] != 'i' || p[2] != 'n' || p[3] != 'e') return;
+  p += 4;
+
+  while (isspace(*p)) ++p;
+  if (!*p) return;
+
+  if (!isdigit(*p)) return;
+  int num = 0;
+  char *eptr = NULL;
+  errno = 0;
+  num = strtol(p, &eptr, 10);
+  if (errno || num <= 0) return;
+  p = (const unsigned char *) eptr;
+  if (*p && !isspace(*p)) return;
+
+  while (isspace(*p)) ++p;
+  if (!*p) return;
+
+  if (*p != '"') return;
+  ++p;
+  const unsigned char *q = p;
+  while (*p && *p != '"') ++p;
+  if (!*p) return;
+  int new_len = (int)(p - q);
+  new_file_path = malloc(new_len + 1);
+  memcpy(new_file_path, q, new_len);
+  new_file_path[new_len] = 0;
+  ++p;
+
+  while (isspace(*p)) ++p;
+  if (*p) goto done;
+
+  current_file_path = new_file_path; new_file_path = NULL;
+  lineno = num - 1;
+
+done:
+  free(new_file_path);
+}
+
 static int
 process_file(const unsigned char *path)
 {
@@ -179,6 +232,9 @@ process_file(const unsigned char *path)
       err("line length exceeds %d characters", max_line_length);
       ++err_count;
     }
+
+    try_line_directive(line_buf);
+
     for (i = 0; i < line_buf_u; ++i) {
       if (disable_tabs && line_buf[i] == '\t') {
         err("invalid TAB character");
