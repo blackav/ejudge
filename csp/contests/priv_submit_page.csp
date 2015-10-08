@@ -36,6 +36,7 @@ ns_unparse_answers(
 %><%@include "priv_stdvars.csp"
 %><%
   const struct section_problem_data *prob = 0;
+  const struct section_global_data *global = 0;
   int prob_id = 0, variant = 0, i;
   problem_xml_t px = 0;
   struct watched_file *pw = 0;
@@ -43,6 +44,8 @@ ns_unparse_answers(
   path_t variant_stmt_file;
   unsigned char title[1024];
   int enable_main_menu = 0;
+
+  if (cs) global = cs->global;
 
 %><s:read var="prob_id" name="problem" default="0" error="inv-run-id" /><%
   if (prob_id < 0 || prob_id > cs->max_prob) {
@@ -97,6 +100,107 @@ ns_unparse_answers(
 </tr>
 <% } %>
 </table>
+
+
+
+
+<table>
+    <tr><td><b>Prob Id:</b></td><td><tt><s:v value="prob_id" /></tt></td></tr>
+<%
+        if (prob && prob->type == PROB_TYPE_STANDARD) {
+%>
+<%
+          if (global->score_system == SCORE_KIROV) {
+%>
+    <tr><td><b><s:_>Full score</s:_>:</b></td><td><tt><s:v value="prob->full_score" /></tt></td></tr>
+<%
+            if (prob->run_penalty > 0) {
+%>
+    <tr><td><b><s:_>Run penalty</s:_>:</b></td><td><tt><s:v value="prob->run_penalty" /></tt></td></tr>
+<%
+            }
+%>
+<%
+            if (prob->score_bonus && prob->score_bonus[0]) {
+%>
+    <tr><td><b><s:_>Score bonus</s:_>:</b></td><td><tt><s:v value="prob->score_bonus" /></tt></td></tr>
+<%
+            }
+%>
+<%
+          }
+%>
+<%
+          if (prob->combined_stdin > 0 && prob->input_file[0] && prob->hide_file_names <= 0) {
+%>
+    <tr><td><b><s:_>Input file name</s:_>:</b></td><td><tt><s:v value="prob->input_file" /></tt><s:_> or standard input</s:_></td></tr>
+<%
+          } else if (prob->use_stdin <= 0 && prob->input_file[0] && prob->hide_file_names <= 0) {
+%>
+    <tr><td><b><s:_>Input file name</s:_>:</b></td><td><tt><s:v value="prob->input_file" /></tt></td></tr>
+<%
+          }
+%>
+<%
+          if (prob->combined_stdout > 0 && prob->output_file[0] && prob->hide_file_names <= 0) {
+%>
+    <tr><td><b><s:_>Output file name</s:_>:</b></td><td><tt><s:v value="prob->output_file" /></tt><s:_> or standard output</s:_></td></tr>
+<%
+          } else if (prob->use_stdout <= 0 && prob->output_file[0] && prob->hide_file_names <= 0) {
+%>
+    <tr><td><b><s:_>Output file name</s:_>:</b></td><td><tt><s:v value="prob->output_file" /></tt></td></tr>
+<%
+          }
+%>
+<%
+          if (prob->time_limit_millis > 0) {
+%>
+    <tr><td><b><s:_>Time limit</s:_>:</b></td><td><tt><s:v value="prob->time_limit_millis" /> <s:_>ms</s:_></tt></td></tr>
+<%
+          } else if (prob->time_limit > 0) {
+%>
+    <tr><td><b><s:_>Time limit</s:_>:</b></td><td><tt><s:v value="prob->time_limit" /> <s:_>s</s:_></tt></td></tr>
+<%
+          }
+%>
+<%
+          if (prob->real_time_limit > 0 && prob->hide_real_time_limit <= 0) {
+%>
+    <tr><td><b><s:_>Real time limit</s:_>:</b></td><td><tt><s:v value="prob->real_time_limit" /> <s:_>s</s:_></tt></td></tr>
+<%
+          }
+%>
+<%
+          if (prob->max_vm_size >= 0) {
+%>
+    <tr><td><b><s:_>Memory limit</s:_>:</b></td><td><tt><s:v format="V" value="prob->max_vm_size" /></tt></td></tr>
+<%
+          }
+%>
+<%
+          if (prob->max_stack_size >= 0 && prob->max_stack_size != prob->max_vm_size) {
+%>
+    <tr><td><b><s:_>Stack limit</s:_>:</b></td><td><tt><s:v format="V" value="prob->max_stack_size" /></tt></td></tr>
+<%
+          }
+%>
+<%
+        }
+%>
+
+<%
+        if (prob && prob->start_date > 0) {
+%>
+    <tr><td><b><s:_>Open date</s:_>:</b></td><td><tt><s:v value="prob->start_date" /></tt></td></tr>
+<%
+        }
+%>
+
+</table>
+
+
+
+
 <%
   /* output the problem statement */
   px = 0; pw = 0; pw_path = 0;
