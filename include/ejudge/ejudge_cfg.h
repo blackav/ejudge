@@ -118,7 +118,7 @@ struct ejudge_cfg
   unsigned char *ejudge_xml_path;
 };
 
-struct ejudge_cfg *ejudge_cfg_parse(char const *);
+struct ejudge_cfg *ejudge_cfg_parse(char const *, int no_system_lookup);
 struct ejudge_cfg *ejudge_cfg_free(struct ejudge_cfg *);
 struct xml_tree   *ejudge_cfg_free_subtree(struct xml_tree *p);
 void ejudge_cfg_unparse(struct ejudge_cfg *, FILE *);

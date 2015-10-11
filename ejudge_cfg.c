@@ -325,7 +325,7 @@ ejudge_cfg_get_spec(void)
 }
 
 static struct xml_tree *
-parse_user_map(char const *path, struct xml_tree *p)
+parse_user_map(char const *path, struct xml_tree *p, int no_system_lookup)
 {
   struct xml_tree *q;
   struct xml_attr *a;
@@ -353,7 +353,7 @@ parse_user_map(char const *path, struct xml_tree *p)
       switch (a->tag) {
       case AT_SYSTEM_USER:
 #if HAVE_PWD_H
-        {
+        if (!no_system_lookup) {
           struct passwd *pwd;
 
           if (!(pwd = getpwnam(a->text))) {
@@ -364,8 +364,8 @@ parse_user_map(char const *path, struct xml_tree *p)
           m->system_uid = pwd->pw_uid;
           //info("user %s uid is %d", a->text, pwd->pw_uid);
         }
-        m->system_user_str = a->text; a->text = 0;
 #endif
+        m->system_user_str = a->text; a->text = 0;
         break;
       case AT_LOCAL_USER:
       case AT_EJUDGE_USER:
@@ -540,7 +540,7 @@ static const size_t cfg_final_offsets[TG_LAST_TAG] =
 };
 
 static struct ejudge_cfg *
-ejudge_cfg_do_parse(char const *path)
+ejudge_cfg_do_parse(char const *path, int no_system_lookup)
 {
   struct xml_tree *tree = 0, *p;
   struct ejudge_cfg *cfg = 0;
@@ -596,7 +596,7 @@ ejudge_cfg_do_parse(char const *path)
     }
     switch (p->tag) {
     case TG_USER_MAP:
-      if (!(cfg->user_map = parse_user_map(path, p))) goto failed;
+      if (!(cfg->user_map = parse_user_map(path, p, 0))) goto failed;
       break;
     case TG_CAPS:
       if (parse_capabilities(cfg, p) < 0) goto failed;
@@ -651,12 +651,12 @@ ejudge_cfg_do_parse(char const *path)
 }
 
 struct ejudge_cfg *
-ejudge_cfg_parse(char const *path)
+ejudge_cfg_parse(char const *path, int no_system_lookup)
 {
   struct ejudge_cfg *cfg = 0;
   unsigned char pathbuf[PATH_MAX];
 
-  cfg = ejudge_cfg_do_parse(path);
+  cfg = ejudge_cfg_do_parse(path, no_system_lookup);
   if (!cfg) return NULL;
 
   if (!cfg->db_path) {
@@ -1045,7 +1045,7 @@ ejudge_cfg_refresh_caps_file(const struct ejudge_cfg *cfg, int force_flag)
 
   info("reloading %s", inf->path);
 
-  struct ejudge_cfg *new_cfg = ejudge_cfg_do_parse(inf->path);
+  struct ejudge_cfg *new_cfg = ejudge_cfg_do_parse(inf->path, 0);
   if (!new_cfg) {
     err("%s: %s parsing failed", __FUNCTION__, inf->path);
     return;
