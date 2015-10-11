@@ -331,10 +331,10 @@ generate_xml_report(
         trt->comment = xstrdup(tests[i].comment);
       }
       if (tests[i].team_comment && tests[i].team_comment[0]) {
-        trt->team_comment = tests[i].team_comment;
+        trt->team_comment = xstrdup(tests[i].team_comment);
       }
       if (tests[i].exit_comment && tests[i].exit_comment[0]) {
-        trt->exit_comment = tests[i].exit_comment;
+        trt->exit_comment = xstrdup(tests[i].exit_comment);
       }
       if ((tests[i].status == RUN_WRONG_ANSWER_ERR || tests[i].status == RUN_PRESENTATION_ERR || tests[i].status == RUN_OK)
           && tests[i].chk_out_size > 0 && tests[i].chk_out && tests[i].chk_out[0]) {
