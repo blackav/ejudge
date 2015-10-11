@@ -1101,7 +1101,7 @@ do_import_contest(
         goto cleanup;
     }
 
-    ejudge_config = ejudge_cfg_parse(ejudge_xml_path);
+    ejudge_config = ejudge_cfg_parse(ejudge_xml_path, 1);
     if (!ejudge_config) {
         fatal2("'ejudge.xml' parsing failed");
         goto cleanup;

@@ -160,7 +160,7 @@ main(int argc, char *argv[])
     if (!ejudge_xml_path) ejudge_xml_path = EJUDGE_XML_PATH;
 #endif /* EJUDGE_XML_PATH */
     if (!ejudge_xml_path) startup_error("ejudge.xml path is not specified");
-    if (!(config = ejudge_cfg_parse(ejudge_xml_path))) return 1;
+    if (!(config = ejudge_cfg_parse(ejudge_xml_path, 1))) return 1;
     compile_home_dir = config->compile_home_dir;
 #if defined EJUDGE_CONTESTS_HOME_DIR
     if (!compile_home_dir) {

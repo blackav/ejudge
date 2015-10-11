@@ -2851,7 +2851,7 @@ main(int argc, char **argv)
   info("ej-super-server %s, compiled %s", compile_version, compile_date);
   if (slave_mode) info("slave mode enabled");
 
-  config = ejudge_cfg_parse(ejudge_xml_path);
+  config = ejudge_cfg_parse(ejudge_xml_path, 1);
   if (!config) return 1;
   if (!config->contests_dir) {
     err("<contests_dir> tag is not set!");

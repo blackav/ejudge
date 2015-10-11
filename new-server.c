@@ -785,7 +785,7 @@ main(int argc, char *argv[])
 #endif /* EJUDGE_XML_PATH */
   if (!ejudge_xml_path) startup_error("configuration file is not specified");
 
-  ejudge_config = ejudge_cfg_parse(ejudge_xml_path);
+  ejudge_config = ejudge_cfg_parse(ejudge_xml_path, 0);
   if (!ejudge_config) return 1;
   if (contests_set_directory(ejudge_config->contests_dir) < 0) return 1;
   l10n_prepare(ejudge_config->l10n, ejudge_config->l10n_dir);

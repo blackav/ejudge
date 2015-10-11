@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1510,7 +1510,7 @@ main(int argc, char *argv[])
   if (!ejudge_xml_path) {
     die("path to ejudge.xml configuration file is not specified");
   }
-  ejudge_config = ejudge_cfg_parse(ejudge_xml_path);
+  ejudge_config = ejudge_cfg_parse(ejudge_xml_path, 0);
   if (!ejudge_config) {
     die("configuration file '%s' is invalid", ejudge_xml_path);
   }

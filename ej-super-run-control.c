@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -130,7 +129,7 @@ main(int argc, char *argv[])
 
   if (!ejudge_xml_path) startup_error("ejudge.xml path is not specified");
 
-  if (!(config = ejudge_cfg_parse(ejudge_xml_path))) return 1;
+  if (!(config = ejudge_cfg_parse(ejudge_xml_path, 1))) return 1;
 
   if (!strcmp(command, "stop")) {
     signum = START_STOP;

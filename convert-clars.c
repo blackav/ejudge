@@ -183,7 +183,7 @@ main(int argc, char *argv[])
   if (!ejudge_xml_path) ejudge_xml_path = EJUDGE_XML_PATH;
 #endif /* EJUDGE_XML_PATH */
   if (!ejudge_xml_path) die("ejudge.xml path is not specified");
-  if (!(config = ejudge_cfg_parse(ejudge_xml_path))) return 1;
+  if (!(config = ejudge_cfg_parse(ejudge_xml_path, 1))) return 1;
   if (!config->contests_dir) die("<contests_dir> tag is not set!");
   if (contests_set_directory(config->contests_dir) < 0)
     die("contests directory is invalid");

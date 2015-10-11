@@ -138,7 +138,7 @@ main(int argc, char *argv[])
     return 1;
   }
 
-  config = ejudge_cfg_parse(ejudge_xml_path);
+  config = ejudge_cfg_parse(ejudge_xml_path, 1);
   if (!config) return 1;
   if (contests_set_directory(config->contests_dir) < 0) return 1;
 

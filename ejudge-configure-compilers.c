@@ -685,7 +685,7 @@ main(int argc, char **argv)
 #endif /* EJUDGE_CONTESTS_HOME_DIR */
 
   if (!ejudge_xml[0]) die("path to configuration file is not specified");
-  config = ejudge_cfg_parse(ejudge_xml);
+  config = ejudge_cfg_parse(ejudge_xml, 0);
   if (!config) return 1;
 
   create_tmp_dir();

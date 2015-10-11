@@ -8015,7 +8015,7 @@ migration_page(
     FAIL(SSERV_ERR_INV_OPER);
   }
 
-  file_config = ejudge_cfg_parse(phr->config->ejudge_xml_path);
+  file_config = ejudge_cfg_parse(phr->config->ejudge_xml_path, 0);
   if (!file_config) {
     fprintf(log_f, "cannot parse ejudge.xml\n");
     FAIL(SSERV_ERR_INV_OPER);

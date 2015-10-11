@@ -974,7 +974,7 @@ main(int argc, char *argv[])
     }
   }
 
-  ejudge_config = ejudge_cfg_parse(ejudge_xml_path);
+  ejudge_config = ejudge_cfg_parse(ejudge_xml_path, 1);
   if (!ejudge_config) return 1;
 
   int parallelism = ejudge_cfg_get_host_option_int(ejudge_config, host_names, "parallelism", 1, 0);

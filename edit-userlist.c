@@ -5296,7 +5296,7 @@ main(int argc, char **argv)
   ejudge_xml_path = argv[1];
 #endif
 
-  if (!(config = ejudge_cfg_parse(ejudge_xml_path))) {
+  if (!(config = ejudge_cfg_parse(ejudge_xml_path, 0))) {
     fprintf(stderr, "%s: cannot parse configuration file\n", argv[0]);
     return 1;
   }

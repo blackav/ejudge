@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -487,7 +486,7 @@ main(int argc, char *argv[])
 
   if (!ejudge_xml_path) startup_error("ejudge.xml path is not specified");
 
-  if (!(config = ejudge_cfg_parse(ejudge_xml_path))) return 1;
+  if (!(config = ejudge_cfg_parse(ejudge_xml_path, 0))) return 1;
 
   parallelism = ejudge_cfg_get_host_option_int(config, host_names, "parallelism", 1, 0);
   if (parallelism <= 0 || parallelism > 128) {
