@@ -1253,7 +1253,7 @@ testing_report_test_free(struct testing_report_test *p)
   if (!p) return 0;
 
   xfree(p->comment); p->comment = 0;
-  xfree(p->team_comment); p->comment = 0;
+  xfree(p->team_comment); p->team_comment = 0;
   xfree(p->checker_comment); p->checker_comment = 0;
   xfree(p->exit_comment); p->exit_comment = 0;
 
