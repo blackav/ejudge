@@ -539,7 +539,7 @@ static const size_t cfg_final_offsets[TG_LAST_TAG] =
   [TG_CAPS_FILE] = CONFIG_OFFSET(caps_file),
 };
 
-struct ejudge_cfg *
+static struct ejudge_cfg *
 ejudge_cfg_do_parse(char const *path)
 {
   struct xml_tree *tree = 0, *p;
