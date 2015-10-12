@@ -60,7 +60,7 @@ have time to provide unpaid support for everyone who uses this code.
 
 #define N               16
 
-static const unsigned long ORIG_P[16 + 2] = {
+static const uint32_t ORIG_P[16 + 2] = {
         0x243F6A88L, 0x85A308D3L, 0x13198A2EL, 0x03707344L,
         0xA4093822L, 0x299F31D0L, 0x082EFA98L, 0xEC4E6C89L,
         0x452821E6L, 0x38D01377L, 0xBE5466CFL, 0x34E90C6CL,
@@ -68,7 +68,7 @@ static const unsigned long ORIG_P[16 + 2] = {
         0x9216D5D9L, 0x8979FB1BL
 };
 
-static const unsigned long ORIG_S[4][256] = {
+static const uint32_t ORIG_S[4][256] = {
     {   0xD1310BA6L, 0x98DFB5ACL, 0x2FFD72DBL, 0xD01ADFB7L,
         0xB8E1AFEDL, 0x6A267E96L, 0xBA7C9045L, 0xF12C7F99L,
         0x24A19947L, 0xB3916CF7L, 0x0801F2E2L, 0x858EFC16L,
@@ -328,9 +328,9 @@ static const unsigned long ORIG_S[4][256] = {
 };
 
 
-static unsigned long F(BLOWFISH_CTX *ctx, unsigned long x) {
+static uint32_t F(BLOWFISH_CTX *ctx, uint32_t x) {
    unsigned short a, b, c, d;
-   unsigned long  y;
+   uint32_t  y;
 
    d = (unsigned short)(x & 0xFF);
    x >>= 8;
@@ -347,10 +347,10 @@ static unsigned long F(BLOWFISH_CTX *ctx, unsigned long x) {
 }
 
 
-void Blowfish_Encrypt(BLOWFISH_CTX *ctx, unsigned long *xl, unsigned long *xr){
-  unsigned long  Xl;
-  unsigned long  Xr;
-  unsigned long  temp;
+void Blowfish_Encrypt(BLOWFISH_CTX *ctx, uint32_t *xl, uint32_t *xr){
+  uint32_t  Xl;
+  uint32_t  Xr;
+  uint32_t  temp;
   short       i;
 
   Xl = *xl;
@@ -377,10 +377,10 @@ void Blowfish_Encrypt(BLOWFISH_CTX *ctx, unsigned long *xl, unsigned long *xr){
 }
 
 
-void Blowfish_Decrypt(BLOWFISH_CTX *ctx, unsigned long *xl, unsigned long *xr){
-  unsigned long  Xl;
-  unsigned long  Xr;
-  unsigned long  temp;
+void Blowfish_Decrypt(BLOWFISH_CTX *ctx, uint32_t *xl, uint32_t *xr){
+  uint32_t  Xl;
+  uint32_t  Xr;
+  uint32_t  temp;
   short       i;
 
   Xl = *xl;
@@ -411,7 +411,7 @@ void Blowfish_Decrypt(BLOWFISH_CTX *ctx, unsigned long *xl, unsigned long *xr){
 
 void Blowfish_Init(BLOWFISH_CTX *ctx, unsigned char *key, int keyLen) {
   int i, j, k;
-  unsigned long data, datal, datar;
+  uint32_t data, datal, datar;
 
   for (i = 0; i < 4; i++) {
     for (j = 0; j < 256; j++)
