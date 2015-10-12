@@ -56,7 +56,7 @@ have time to provide unpaid support for everyone who uses this code.
 */
 
 
-#include "blowfish.h"
+#include "ejudge/blowfish.h"
 
 #define N               16
 
