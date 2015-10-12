@@ -234,6 +234,7 @@ COMMON_CFILES=\
  super_run_packet.c\
  super_serve_pi.c\
  sha.c\
+ blowfish.c\
  t3m_dir_listener.c\
  t3m_submits.c\
  t3m_zip_packet_class.c\
@@ -366,6 +367,7 @@ CFILES=\
  ej-import-contest.c\
  ej-normalize.c\
  ej-page-gen.c\
+ ej-parblock.c\
  ej-polygon.c\
  ej-super-run.c\
  ejudge-configure-compilers.c\
@@ -586,6 +588,7 @@ HFILES=\
  ./include/ejudge/super_run_packet.h\
  ./include/ejudge/super-serve.h\
  ./include/ejudge/sha.h\
+ ./include/ejudge/blowfish.h\
  ./include/ejudge/t3m_dir_listener.h\
  ./include/ejudge/t3m_packet_class.h\
  ./include/ejudge/t3m_submits.h\

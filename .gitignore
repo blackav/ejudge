@@ -58,3 +58,4 @@ genmatcher
 /Makefile.in
 autom4te.cache
 struct-sizes
+ej-parblock
