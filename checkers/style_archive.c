@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -391,7 +390,8 @@ get_tar_listing(const unsigned char *path, struct archive_file *arch)
   cmds[1] = "tvf";
   cmds[2] = (char*) path;
   cmds[3] = "--quoting-style=c";
-  cmds[4] = 0;
+  cmds[4] = "--numeric-owner";
+  cmds[5] = 0;
 
   r = ejudge_invoke_process(cmds, NULL, NULL, NULL, NULL, 0, &out, &err);
   if (r != 0) {
