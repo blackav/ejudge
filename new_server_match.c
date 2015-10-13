@@ -1597,6 +1597,33 @@ int ns_match_action(const unsigned char *str)
                             return 0;
                           }
                           return 0;
+                        } else if (c < 's') {
+                          if (c == '-') {
+                            c = str[8];
+                            if (c == 'b') {
+                              c = str[9];
+                              if (c == 'a') {
+                                c = str[10];
+                                if (c == 't') {
+                                  c = str[11];
+                                  if (c == 'c') {
+                                    c = str[12];
+                                    if (c == 'h') {
+                                      c = str[13];
+                                      if (!c) return NEW_SRV_ACTION_CONTEST_BATCH;
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                        } else {
                         }
                         return 0;
                       }
