@@ -266,4 +266,5 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PING] = "ping",
   [NEW_SRV_ACTION_SUBMIT_RUN_BATCH] = "submit-run-batch",
   [NEW_SRV_ACTION_CONTESTS_PAGE] = "contests-page",
+  [NEW_SRV_ACTION_CONTEST_BATCH] = "contest-batch",
 };
