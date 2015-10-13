@@ -7346,7 +7346,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
   if ((r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
                                &phr->ip, phr->client_key,
                                phr->ssl_flag, phr->contest_id,
-                               phr->locale_id, login, password,
+                               phr->locale_id, 0, login, password,
                                &phr->user_id,
                                &phr->session_id, &phr->client_key,
                                &phr->name)) < 0) {
@@ -10764,7 +10764,138 @@ batch_register(
   fprintf(fout, "ok\n");
   fprintf(fout, "%d\n", user_id);
 
+  // FIXME: mark that the user database is updated
+
   goto cleanup;
+
+database_error:
+  fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
+  fprintf(fout, "fail\n");
+  goto cleanup;
+
+invalid_parameter:
+  fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
+  fprintf(fout, "invalid\n");
+  goto cleanup;
+
+cleanup:
+  return;
+}
+
+static void
+batch_login(
+        FILE *fout,
+        struct http_request_info *phr)
+{
+  // l=login
+  // c=contest_id
+  // p=prob_name
+  // x=expire_time
+  // s=ssl_flag
+  // i=ip
+  // o=locale_id
+
+  const unsigned char *login_str = NULL;
+  if (hr_cgi_param(phr, "l", &login_str) <= 0) {
+    err("batch_login: login is undefined");
+    goto invalid_parameter;
+  }
+
+  int contest_id = 0;
+  if (hr_cgi_param_int(phr, "c", &contest_id) < 0) {
+    err("batch_login: contest_id is undefined");
+    goto invalid_parameter;
+  }
+  if (contest_id <= 0) {
+    err("batch_login: contest_id %d is invalid", contest_id);
+    goto invalid_parameter;
+  }
+  const struct contest_desc *cnts = NULL;
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) {
+    err("batch_login: contest_id %d is invalid", contest_id);
+    goto invalid_parameter;
+  }
+
+  const unsigned char *prob_name = NULL;
+  hr_cgi_param(phr, "p", &prob_name);
+
+  int expire_time = 0;
+  hr_cgi_param_int_opt(phr, "x", &expire_time, 0);
+  if (expire_time > 0) {
+    time_t current_time = time(NULL);
+    if (current_time >= expire_time) {
+      err("batch_login: operation expired");
+      goto invalid_parameter;
+    }
+  }
+
+  int locale_id = -1;
+  hr_cgi_param_int_opt(phr, "o", &locale_id, -1);
+  if (locale_id < 0) locale_id = 0;
+
+  int ssl_flag = -1;
+  hr_cgi_param_int_opt(phr, "s", &ssl_flag, -1);
+  if (ssl_flag >= 0 && ssl_flag != phr->ssl_flag) {
+    err("batch_login: ssl flag mismatch");
+    goto invalid_parameter;
+  }
+
+  const unsigned char *ip = NULL;
+  hr_cgi_param(phr, "i", &ip);
+  if (ip) {
+    const unsigned char *this_ip = xml_unparse_ipv6(&phr->ip);
+    if (strcmp(ip, this_ip) != 0) {
+      err("batch_login: IP mismatch: required: %s, actual: %s", ip, this_ip);
+      goto invalid_parameter;
+    }
+  }
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    err("batch_login: failed to open userlist connection");
+    goto database_error;
+  }
+
+  /*
+  if ((r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
+                               &phr->ip, phr->client_key,
+                               phr->ssl_flag, phr->contest_id,
+                               phr->locale_id, login, password,
+                               &phr->user_id,
+                               &phr->session_id, &phr->client_key,
+                               &phr->name)) < 0) {
+    switch (-r) {
+    case ULS_ERR_INVALID_LOGIN:
+    case ULS_ERR_INVALID_PASSWORD:
+    case ULS_ERR_BAD_CONTEST_ID:
+    case ULS_ERR_IP_NOT_ALLOWED:
+    case ULS_ERR_NO_PERMS:
+    case ULS_ERR_NOT_REGISTERED:
+    case ULS_ERR_CANNOT_PARTICIPATE:
+      return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
+                                 userlist_strerror(-r));
+    case ULS_ERR_DISCONNECT:
+      return ns_html_err_ul_server_down(fout, phr, 0, 0);
+    case ULS_ERR_INCOMPLETE_REG:
+      return ns_html_err_registration_incomplete(fout, phr);
+    default:
+      return ns_html_err_internal_error(fout, phr, 0, "user_login failed: %s",
+                                        userlist_strerror(-r));
+    }
+  }
+
+  hr_cgi_param(phr, "prob_name", &prob_name);
+  prob_name_3[0] = 0;
+  if (prob_name && prob_name[0]) {
+    url_armor_string(prob_name_2, sizeof(prob_name_2), prob_name);
+    action = NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT;
+    snprintf(prob_name_3, sizeof(prob_name_3), "lt=1&prob_name=%s", prob_name_2);
+  } else {
+    snprintf(prob_name_3, sizeof(prob_name_3), "lt=1");
+  }
+
+  ns_get_session(phr->session_id, phr->client_key, 0);
+  ns_refresh_page(fout, phr, action, prob_name_3);
+  */
 
 database_error:
   fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
@@ -10979,6 +11110,7 @@ batch_entry_point(
     goto cleanup;
   } else if (!strcmp(action_str, "l")) {
     // login action
+    batch_login(fout, phr);
   } else {
     err("batch_entry_point: invalid action '%s'", action_str);
     goto invalid_parameter;

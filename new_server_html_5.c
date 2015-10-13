@@ -313,7 +313,7 @@ cmd_login(
   if ((r = userlist_clnt_login(ul_conn, ULS_CHECK_USER,
                                &phr->ip, phr->client_key,
                                phr->ssl_flag, phr->contest_id,
-                               phr->locale_id, phr->login, password,
+                               phr->locale_id, 0, phr->login, password,
                                &phr->user_id,
                                &phr->session_id,
                                &phr->client_key,

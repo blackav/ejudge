@@ -127,7 +127,7 @@ cmd_login(
     r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
                             &phr->ip, phr->client_key,
                             phr->ssl_flag, phr->contest_id,
-                            phr->locale_id, login, password,
+                            phr->locale_id, 0, login, password,
                             &phr->user_id,
                             &phr->session_id,
                             &phr->client_key,
