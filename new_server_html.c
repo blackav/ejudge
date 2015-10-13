@@ -57,6 +57,8 @@
 #include "ejudge/external_action.h"
 #include "ejudge/new_server_pi.h"
 #include "ejudge/xuser_plugin.h"
+#include "ejudge/blowfish.h"
+#include "ejudge/base64.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -10669,6 +10671,342 @@ ns_get_register_url(
   return buf;
 }
 
+static void
+batch_register(
+        FILE *fout,
+        struct http_request_info *phr)
+{
+  // l=login
+  // c=contest_id
+  // p=password
+  // e=email
+  // n=name
+  const unsigned char *login_str = NULL;
+  if (hr_cgi_param(phr, "l", &login_str) <= 0) {
+    err("batch_register: login is undefined");
+    goto invalid_parameter;
+  }
+
+  const unsigned char *password = NULL;
+  hr_cgi_param(phr, "p", &password);
+
+  const unsigned char *email = NULL;
+  hr_cgi_param(phr, "e", &email);
+
+  const unsigned char *name = NULL;
+  hr_cgi_param(phr, "n", &name);
+  if (!name) name = login_str;
+
+  int contest_id = 0;
+  if (hr_cgi_param_int(phr, "c", &contest_id) < 0) {
+    err("batch_register: contest_id is undefined");
+    goto invalid_parameter;
+  }
+  if (contest_id <= 0) {
+    err("batch_register: contest_id %d is invalid", contest_id);
+    goto invalid_parameter;
+  }
+  const struct contest_desc *cnts = NULL;
+  if (contests_get(contest_id, &cnts) < 0 || !cnts) {
+    err("batch_register: contest_id %d is invalid", contest_id);
+    goto invalid_parameter;
+  }
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    err("batch_register: failed to open userlist connection");
+    goto database_error;
+  }
+  int user_id = 0;
+  int r = userlist_clnt_lookup_user(ul_conn, login_str, 0, &user_id, 0);
+  if (r < 0 && r != -ULS_ERR_INVALID_LOGIN) {
+    err("batch_register: userlist error %d", r);
+    goto database_error;
+  }
+  if (r < 0) {
+    // create new user
+    struct userlist_pk_create_user_2 up;
+    memset(&up, 0, sizeof(up));
+
+    up.never_clean_flag = 1;
+    up.simple_registration_flag = 1;
+    up.contest_id = contest_id;
+    up.cnts_status = USERLIST_REG_OK;
+    up.random_password_flag = (password == NULL);
+
+    r = userlist_clnt_create_user_2(ul_conn, ULS_CREATE_USER_2, &up,
+                                    login_str, email, password, NULL,
+                                    name, &user_id);
+    if (r < 0 && r == -ULS_ERR_LOGIN_USED) {
+      err("batch_register: user '%s' already exists", login_str);
+      goto database_error;
+    }
+    if (r < 0) {
+      err("batch_register: userlist error %d", r);
+      goto database_error;
+    }
+    if (user_id <= 0) {
+      err("batch_register: registration returned invalid user_id %d", user_id);
+      goto database_error;
+    }
+  } else {
+    if (user_id <= 0) {
+      err("batch_register: lookup returned invalid user_id %d", user_id);
+      goto database_error;
+    }
+    r = userlist_clnt_register_contest(ul_conn, ULS_PRIV_REGISTER_CONTEST, user_id, contest_id, 0, 0);
+    if (r < 0) {
+      err("batch_register: userlist error %d", r);
+      goto database_error;
+    }
+  }
+
+  fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
+  fprintf(fout, "ok\n");
+  fprintf(fout, "%d\n", user_id);
+
+  goto cleanup;
+
+database_error:
+  fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
+  fprintf(fout, "fail\n");
+  goto cleanup;
+
+invalid_parameter:
+  fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
+  fprintf(fout, "invalid\n");
+  goto cleanup;
+
+cleanup:
+  return;
+}
+
+static void
+ulltobe(unsigned char *out, unsigned long long value)
+{
+    out[0] = value >> 56;
+    out[1] = value >> 48;
+    out[2] = value >> 40;
+    out[3] = value >> 32;
+    out[4] = value >> 24;
+    out[5] = value >> 16;
+    out[6] = value >> 8;
+    out[7] = value;
+}
+
+static void
+swb(unsigned char *buf)
+{
+    unsigned char t;
+    t = buf[0]; buf[0] = buf[3]; buf[3] = t;
+    t = buf[1]; buf[1] = buf[2]; buf[2] = t;
+}
+
+static void
+batch_entry_point(
+        FILE *fout,
+        struct http_request_info *phr)
+{
+  int keyno = 0;
+  const unsigned char *s = NULL;
+  unsigned char *in_b64 = NULL;
+  FILE *kf = NULL;
+  unsigned char *in_cbc = NULL;
+  BLOWFISH_CTX *ctx = NULL;
+
+  if (hr_cgi_param_int(phr, "k", &keyno) < 0 || keyno <= 0) {
+    err("batch_entry_point: 'k' parameter is unset or invalid");
+    goto invalid_parameter;
+  }
+  if (hr_cgi_param(phr, "s", &s) < 0) {
+    err("batch_entry_point: 's' parameter is unset or invalid");
+    goto invalid_parameter;
+  }
+  if (!s) {
+    err("batch_entry_point: 's' parameter is unset or invalid");
+    goto invalid_parameter;
+  }
+  int in_len = strlen(s);
+  if (in_len <= 0 || in_len > 16384) {
+    err("batch_entry_point: 's' parameter is too short or too long");
+    goto invalid_parameter;
+  }
+
+  in_b64 = xstrdup(s);
+  while (in_len > 0 && isspace(in_b64[in_len - 1])) --in_len;
+  in_b64[in_len] = 0;
+  if (in_len <= 0) {
+    err("batch_entry_point: 's' parameter is empty");
+    goto invalid_parameter;
+  }
+  for (int i = 0; i < in_len; ++i) {
+    if (in_b64[i] == '.') {
+      in_b64[i] = '/';
+    } else if (in_b64[i] == '-') {
+      in_b64[i] = '=';
+    } else if (in_b64[i] == '_') {
+      in_b64[i] = '+';
+    }
+  }
+
+  unsigned long long key = 0, iv = 0;
+  unsigned char keyfile[PATH_MAX];
+  snprintf(keyfile, sizeof(keyfile), "%s/keys/%d.key", EJUDGE_CONF_DIR, keyno);
+  kf = fopen(keyfile, "r");
+  if (!kf) {
+    err("batch_entry_point: key %d is not available", keyno);
+    goto invalid_parameter;
+  }
+  if (fscanf(kf, "%llx%llx", &key, &iv) != 2) {
+    err("batch_entry_point: key %d parse error", keyno);
+    goto invalid_parameter;
+  }
+  fclose(kf); kf = NULL;
+
+  int errflg = 0;
+  in_cbc = malloc(in_len);
+  memset(in_cbc, 0, in_len);
+  int cbc_len = base64_decode(in_b64, in_len, in_cbc, &errflg);
+  if (errflg) {
+    err("batch_entry_point: invalid base64");
+    goto invalid_parameter;
+  }
+  if ((cbc_len % 8) != 0) {
+    err("batch_entry_point: invalid data length %d", cbc_len);
+    goto invalid_parameter;
+  }
+  xfree(in_b64); in_b64 = NULL;
+
+  ctx = calloc(1, sizeof(*ctx));
+  unsigned char kb[8];
+  ulltobe(kb, key);
+  Blowfish_Init(ctx, kb, sizeof(key));
+
+  unsigned char ivb[8];
+  ulltobe(ivb, iv);
+  swb(ivb);
+  swb(ivb + 4);
+
+  for (int i = 0; i < cbc_len; i += 8) {
+    unsigned char saved[8];
+    swb(in_cbc + i);
+    swb(in_cbc + i + 4);
+
+    memcpy(saved, in_cbc + i, 8);
+
+    Blowfish_Decrypt(ctx, (uint32_t *) (in_cbc + i), (uint32_t *) (in_cbc + i + 4));
+
+    in_cbc[i] ^= ivb[0];
+    in_cbc[i + 1] ^= ivb[1];
+    in_cbc[i + 2] ^= ivb[2];
+    in_cbc[i + 3] ^= ivb[3];
+    in_cbc[i + 4] ^= ivb[4];
+    in_cbc[i + 5] ^= ivb[5];
+    in_cbc[i + 6] ^= ivb[6];
+    in_cbc[i + 7] ^= ivb[7];
+
+    swb(in_cbc + i);
+    swb(in_cbc + i + 4);
+
+    memcpy(ivb, saved, 8);
+  }
+  xfree(ctx); ctx = NULL;
+
+  // check and count parameters
+  int param_num = 0;
+  unsigned char *curp = (unsigned char*) in_cbc;
+  unsigned char *endp = curp + cbc_len;
+  while (1) {
+    int curl = strlen(curp);
+    if (!curl) break;
+    if (curp + curl >= endp) {
+      err("batch_entry_point: invalid data block");
+      goto invalid_parameter;
+    }
+    if (!strchr(curp, '=')) {
+      err("batch_entry_point: '=' missing");
+      goto invalid_parameter;
+    }
+    ++param_num;
+    curp += curl + 1;
+  }
+  if (param_num > 256) {
+    err("batch_entry_point: too many parameters (%d)", param_num);
+    goto invalid_parameter;
+  }
+
+  phr->param_num = param_num;
+  phr->param_names = NULL;
+  phr->param_sizes = NULL;
+  phr->params = NULL;
+  if (param_num > 0) {
+    unsigned char **param_names = NULL;
+    size_t *param_sizes = NULL;
+    unsigned char **params = NULL;
+    XALLOCAZ(param_names, param_num);
+    XALLOCAZ(param_sizes, param_num);
+    XALLOCAZ(params, param_num);
+
+    unsigned char *curp = (unsigned char*) in_cbc;
+    int count = 0;
+    while (1) {
+      int curl = strlen(curp);
+      if (!curl) break;
+
+      unsigned char *zp = strchr(curp, '=');
+      *zp = 0;
+      param_names[count] = curp;
+      params[count] = zp + 1;
+      param_sizes[count] = strlen(zp + 1);
+
+      ++count;
+      curp += curl + 1;
+    }
+
+    phr->param_names = (const unsigned char **) param_names;
+    phr->param_sizes = param_sizes;
+    phr->params = (const unsigned char **) params;
+  }
+
+  const unsigned char *action_str = NULL;
+  if (hr_cgi_param(phr, "a", &action_str) <= 0) {
+    err("batch_entry_point: no action");
+    goto invalid_parameter;
+  }
+
+  if (!strcmp(action_str, "r")) {
+    // register action
+    batch_register(fout, phr);
+    goto cleanup;
+  } else if (!strcmp(action_str, "l")) {
+    // login action
+  } else {
+    err("batch_entry_point: invalid action '%s'", action_str);
+    goto invalid_parameter;
+  }
+
+  //success:
+  fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
+  fprintf(fout, "ok\n");
+
+  for (int i = 0; i < phr->param_num; ++i) {
+    fprintf(fout, "<%s>=<%s>\n", phr->param_names[i], phr->params[i]);
+  }
+
+  goto cleanup;
+
+invalid_parameter:
+  fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
+  fprintf(fout, "invalid\n");
+  goto cleanup;
+
+cleanup:
+  xfree(ctx);
+  xfree(in_cbc);
+  xfree(in_b64);
+  if (kf) fclose(kf);
+  return;
+}
+
 #include "new_server_at.c"
 
 static void
@@ -10920,7 +11258,9 @@ ns_handle_http_request(
   }
 #endif /* CGI_PROG_SUFFIX */
 
-  if (!strcmp(last_name, "priv-client")) {
+  if (phr->action == NEW_SRV_ACTION_CONTEST_BATCH) {
+    batch_entry_point(fout, phr);
+  } else if (!strcmp(last_name, "priv-client")) {
     strcpy(phr->role_name, "priv");
     privileged_entry_point(fout, phr);
   } else if (!strcmp(last_name, "new-master") || !strcmp(last_name, "master")) {
