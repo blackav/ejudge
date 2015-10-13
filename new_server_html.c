@@ -10855,35 +10855,23 @@ batch_login(
     goto database_error;
   }
 
-  /*
-  if ((r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
-                               &phr->ip, phr->client_key,
-                               phr->ssl_flag, phr->contest_id,
-                               phr->locale_id, login, password,
-                               &phr->user_id,
-                               &phr->session_id, &phr->client_key,
-                               &phr->name)) < 0) {
-    switch (-r) {
-    case ULS_ERR_INVALID_LOGIN:
-    case ULS_ERR_INVALID_PASSWORD:
-    case ULS_ERR_BAD_CONTEST_ID:
-    case ULS_ERR_IP_NOT_ALLOWED:
-    case ULS_ERR_NO_PERMS:
-    case ULS_ERR_NOT_REGISTERED:
-    case ULS_ERR_CANNOT_PARTICIPATE:
-      return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
-                                 userlist_strerror(-r));
-    case ULS_ERR_DISCONNECT:
-      return ns_html_err_ul_server_down(fout, phr, 0, 0);
-    case ULS_ERR_INCOMPLETE_REG:
-      return ns_html_err_registration_incomplete(fout, phr);
-    default:
-      return ns_html_err_internal_error(fout, phr, 0, "user_login failed: %s",
-                                        userlist_strerror(-r));
-    }
+  int action = NEW_SRV_ACTION_MAIN_PAGE;
+  int r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
+                              &phr->ip, phr->client_key,
+                              phr->ssl_flag, contest_id,
+                              locale_id, 0x73629ae8,
+                              login_str, "xxx",
+                              &phr->user_id,
+                              &phr->session_id, &phr->client_key,
+                              &phr->name);
+  if (r < 0) {
+    err("batch_login: login failed: %d", r);
+    goto database_error;
   }
 
-  hr_cgi_param(phr, "prob_name", &prob_name);
+  unsigned char prob_name_2[1024];
+  unsigned char prob_name_3[1024];
+
   prob_name_3[0] = 0;
   if (prob_name && prob_name[0]) {
     url_armor_string(prob_name_2, sizeof(prob_name_2), prob_name);
@@ -10895,7 +10883,7 @@ batch_login(
 
   ns_get_session(phr->session_id, phr->client_key, 0);
   ns_refresh_page(fout, phr, action, prob_name_3);
-  */
+  goto cleanup;
 
 database_error:
   fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
