@@ -73,6 +73,7 @@ userlist_clnt_login(
         int ssl,
         int contest_id,
         int locale_id,
+        int pwd_special,
         unsigned char const *login,
         unsigned char const *passwd,
         int *p_user_id,

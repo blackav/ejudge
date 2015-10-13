@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +25,7 @@ userlist_clnt_login(
         int ssl,
         int contest_id,
         int locale_id,
+        int pwd_special,
         unsigned char const *login,
         unsigned char const *passwd,
         int *p_user_id,
@@ -57,6 +57,7 @@ userlist_clnt_login(
   out->ssl = ssl;
   out->contest_id = contest_id;
   out->locale_id = locale_id;
+  out->pwd_special = pwd_special;
   out->login_length = login_len;
   out->password_length = passwd_len;
   strcpy(login_ptr, login);
