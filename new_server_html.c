@@ -11334,6 +11334,7 @@ ns_handle_http_request(
   if (*phr->role_name) {
     if (phr->action == NEW_SRV_ACTION_CONTEST_BATCH) {
       batch_entry_point(fout, phr);
+      return;
     } else if (!strcmp(phr->role_name, "master")) {
       phr->role = USER_ROLE_ADMIN;
       privileged_entry_point(fout, phr);
