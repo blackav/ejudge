@@ -1698,7 +1698,7 @@ function advancedDialogOnChange()
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_auto_refresh" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-start_on_first_login-div">
-                <td><s:v value="caps_fields[8][1]" escape="false" />:</td>
+                <td><s:v value="caps_fields[31][1]" escape="false" />:</td>
                 <td><s:yesno id="orig-start_on_first_login" disabled="disabled" name="param" value="global->start_on_first_login" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:start_on_first_login" /></td>
