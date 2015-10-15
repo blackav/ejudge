@@ -68,6 +68,7 @@ enum
   CNTSGLOB_memoize_user_results,
   CNTSGLOB_disable_auto_refresh,
   CNTSGLOB_enable_eoln_select,
+  CNTSGLOB_start_on_first_login,
   CNTSGLOB_name,
   CNTSGLOB_root_dir,
   CNTSGLOB_serve_socket,
