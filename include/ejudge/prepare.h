@@ -259,6 +259,8 @@ struct section_global_data
   ejintbool_t disable_auto_refresh;
   /** participants may select wanted EOLN type for tests */
   ejintbool_t enable_eoln_select;
+  /** start virtual contest on first login */
+  ejintbool_t start_on_first_login;
 
   /** @deprecated the name of the contest */
   unsigned char name[256];
