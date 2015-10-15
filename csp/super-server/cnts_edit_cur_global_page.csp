@@ -200,6 +200,7 @@ static const unsigned char * const form_row_attrs[]=
     { "notify_clar_reply", "Enable e-mail clar notifications" },
     { "notify_status_change", "Enable e-mail status change notifications" },
     { "disable_auto_refresh", "Disable auto-refreshing" },
+    { "start_on_first_login", "Start virtual contest on first login" },
 
     { NULL, NULL },
   };
@@ -1695,6 +1696,12 @@ function advancedDialogOnChange()
                 <td><s:yesno id="orig-disable_auto_refresh" disabled="disabled" name="param" value="global->disable_auto_refresh" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_auto_refresh" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-start_on_first_login-div">
+                <td><s:v value="caps_fields[8][1]" escape="false" />:</td>
+                <td><s:yesno id="orig-start_on_first_login" disabled="disabled" name="param" value="global->start_on_first_login" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:start_on_first_login" /></td>
             </s:tr>
         </table>
     </div>

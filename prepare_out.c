@@ -277,6 +277,8 @@ prepare_unparse_global(
     fprintf(f, "appeal_deadline = \"%s\"\n",
             xml_unparse_date(global->appeal_deadline));
   }
+  if (global->start_on_first_login > 0)
+    unparse_bool(f, "start_on_first_login", global->start_on_first_login);
   fprintf(f, "\n");
 
   if (global->test_dir[0] && strcmp(global->test_dir, DFLT_G_TEST_DIR))
