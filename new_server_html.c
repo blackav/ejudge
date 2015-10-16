@@ -10783,6 +10783,44 @@ cleanup:
 }
 
 static void
+do_load_contest(struct http_request_info *phr, const struct contest_desc *cnts)
+{
+  struct contest_extra *extra = ns_get_contest_extra(phr->contest_id);
+  if (!extra) return;
+
+  phr->extra = extra;
+
+  if (!extra->header_txt || !extra->footer_txt) {
+    extra->header_txt = ns_fancy_priv_header;
+    extra->footer_txt = ns_fancy_priv_footer;
+    extra->separator_txt = ns_fancy_priv_separator;
+  }
+
+  if (extra->contest_arm) xfree(extra->contest_arm);
+  if (phr->locale_id == 0 && cnts->name_en) {
+    extra->contest_arm = html_armor_string_dup(cnts->name_en);
+  } else {
+    extra->contest_arm = html_armor_string_dup(cnts->name);
+  }
+
+  struct teamdb_db_callbacks callbacks;
+  memset(&callbacks, 0, sizeof(callbacks));
+  callbacks.user_data = (void*) phr->fw_state;
+  callbacks.list_all_users = ns_list_all_users_callback;
+
+  // invoke the contest
+  if (serve_state_load_contest(ejudge_config, phr->contest_id,
+                               ul_conn,
+                               &callbacks,
+                               &extra->serve_state, 0, 0) < 0) {
+    return;
+  }
+
+  extra->serve_state->current_time = time(0);
+  ns_check_contest_events(extra->serve_state, cnts);
+}
+
+static void
 batch_login(
         FILE *fout,
         struct http_request_info *phr)
@@ -10815,6 +10853,8 @@ batch_login(
     err("batch_login: contest_id %d is invalid", contest_id);
     goto invalid_parameter;
   }
+  phr->contest_id = contest_id;
+  phr->cnts = cnts;
 
   const unsigned char *prob_name = NULL;
   hr_cgi_param(phr, "p", &prob_name);
@@ -10832,6 +10872,7 @@ batch_login(
   int locale_id = -1;
   hr_cgi_param_int_opt(phr, "o", &locale_id, -1);
   if (locale_id < 0) locale_id = 0;
+  phr->locale_id = locale_id;
 
   int ssl_flag = -1;
   hr_cgi_param_int_opt(phr, "s", &ssl_flag, -1);
@@ -10867,6 +10908,47 @@ batch_login(
   if (r < 0) {
     err("batch_login: login failed: %d", r);
     goto database_error;
+  }
+
+  do_load_contest(phr, cnts);
+  if (phr->extra && phr->extra->serve_state && phr->extra->serve_state->global && phr->extra->serve_state->global->start_on_first_login > 0) {
+    serve_state_t cs = phr->extra->serve_state;
+    const struct section_global_data *global = cs->global;
+    if (global->disable_virtual_start > 0) {
+      err("batch_login: virtual start disabled");
+      goto database_error;
+    }
+    if (cnts->open_time > 0 && cs->current_time < cnts->open_time) {
+      err("batch_login: contest is not opened yet");
+      goto database_error;
+    }
+    if (cnts->close_time > 0 && cs->current_time >= cnts->close_time) {
+      err("batch_login: contest already closed");
+      goto database_error;
+    }
+    time_t start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    if (start_time <= 0) {
+      struct timeval precise_time;
+      gettimeofday(&precise_time, 0);
+      int run_id = run_virtual_start(cs->runlog_state, phr->user_id,
+                                     precise_time.tv_sec, &phr->ip, phr->ssl_flag,
+                                     precise_time.tv_usec * 1000);
+      if (run_id >= 0) {
+        serve_move_files_to_insert_run(cs, run_id);
+        serve_event_add(cs,
+                        precise_time.tv_sec + run_get_duration(cs->runlog_state),
+                        SERVE_EVENT_VIRTUAL_STOP, phr->user_id,
+                        virtual_stop_callback);
+      }
+      if (!prob_name) {
+        for (int i = 1; i <= cs->max_prob; ++i) {
+          if (cs->probs && cs->probs[i]) {
+            prob_name = cs->probs[i]->short_name;
+            break;
+          }
+        }
+      }
+    }
   }
 
   unsigned char prob_name_2[1024];
