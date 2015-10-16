@@ -2487,7 +2487,7 @@ run_one_test(
   }
 
   if (tst && tst->secure_exec_type_val == SEXEC_TYPE_JAVA && srgp->lang_short_name) {
-    task_FormatEnv(tsk, "EJUDGE_JAVA_COMPILER=%s", srgp->lang_short_name);
+    task_FormatEnv(tsk, "EJUDGE_JAVA_COMPILER", "%s", srgp->lang_short_name);
   }
 
   if (tst && tst->enable_memory_limit_error > 0 && srgp->secure_run > 0 && srgp->detect_violations > 0) {
