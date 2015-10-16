@@ -1,16 +1,19 @@
 #!/bin/bash
-# $Id$
-# Copyright (c) 2004-2008 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2004-2015 Alexander Chernov <cher@ejudge.ru>
 
 # assume that we have single argument
 # EJUDGE_JAVA_FLAGS may be used to pass additional flags
 # EJUDGE_JAVA_POLICY is the policy name
 # EJUDGE_PREFIX_DIR is used to create the full path
+# EJUDGE_JAVA_COMPILER is the compiler version (javac or javac7)
 
 runfile="$1"
 
+CONFIG_FILE=javac
+[ "${EJUDGE_JAVA_COMPILER}" = "javac7" ] && CONFIG_FILE=javac7
+
 LANG_CONFIG_DIR="@lang_config_dir@"
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/javac.cfg"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/${CONFIG_FILE}.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
