@@ -10,7 +10,11 @@
 runfile="$1"
 
 CONFIG_FILE=javac
-[ "${EJUDGE_JAVA_COMPILER}" = "javac7" ] && CONFIG_FILE=javac7
+if [ "${EJUDGE_JAVA_COMPILER}" = "javac7" ]
+then
+  CONFIG_FILE=javac7
+  EJUDGE_JAVA_FLAGS="-client ${EJUDGE_JAVA_FLAGS}"
+fi
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 [ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/${CONFIG_FILE}.cfg"
