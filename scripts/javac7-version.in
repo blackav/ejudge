@@ -4,7 +4,7 @@
 LANG_CONFIG_DIR="@lang_config_dir@"
 
 common_config() {
-  echo 'long_name="Java JDK 7"'
+  echo 'long_name="Java JDK 7 "'
   echo 'src_sfx=".java"'
   echo 'exe_sfx=".jar"'
   echo 'arch="java"'
@@ -137,6 +137,6 @@ fi
     
 "${JAVARUN}" -version 2>/dev/null >/dev/null || exit 1
 
-[ x"$1" = x-f ] && echo -n "Java JDK 7"
+[ x"$1" = x-f ] && echo -n "Java JDK 7 "
 
 "${JAVARUN}" -version 2>&1 | grep " version" | sed 's/^.*"\(.*\)"$/\1/g'
