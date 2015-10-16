@@ -121,6 +121,8 @@ SCRIPTS_IN = \
  yabasic-version.in\
  javac.in\
  javac-version.in\
+ javac7.in\
+ javac7-version.in\
  mcs.in\
  mcs-version.in\
  vbnc.in\
