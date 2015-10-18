@@ -1048,6 +1048,9 @@ serve_compile_request(
   const unsigned char *compile_src_dir = 0;
   const unsigned char *compile_queue_dir = 0;
   int errcode = -SERVE_ERR_GENERIC;
+  struct sformat_extra_data sformat_extra;
+
+  memset(&sformat_extra, 0, sizeof(sformat_extra));
 
   if (prob->variant_num <= 0 && variant > 0) {
     goto failed;
@@ -1059,9 +1062,12 @@ serve_compile_request(
     }
   }
 
+  sformat_extra.locale_id = locale_id;
+  sformat_extra.variant = variant;
+
   if (prob->source_header[0]) {
     sformat_message(tmp_path, sizeof(tmp_path), 0, prob->source_header,
-                    global, prob, lang, 0, 0, 0, 0, 0);
+                    global, prob, lang, 0, 0, 0, 0, &sformat_extra);
     if (os_IsAbsolutePath(tmp_path)) {
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s", tmp_path);
     } else if (global->advanced_layout > 0) {
@@ -1079,7 +1085,7 @@ serve_compile_request(
   }
   if (prob->source_footer[0]) {
     sformat_message(tmp_path, sizeof(tmp_path), 0, prob->source_footer,
-                    global, prob, lang, 0, 0, 0, 0, 0);
+                    global, prob, lang, 0, 0, 0, 0, &sformat_extra);
     if (os_IsAbsolutePath(tmp_path)) {
       snprintf(tmp_path_2, sizeof(tmp_path_2), "%s", tmp_path);
     } else if (global->advanced_layout > 0) {
