@@ -33,6 +33,7 @@
 #include <dirent.h>
 #include <time.h>
 #include <errno.h>
+#include <ctype.h>
 
 #ifndef XALLOCAZ
 #define XALLOCAZ(p,s) ((p) = (typeof(p)) alloca((s) * sizeof((p)[0])), memset((p), 0, ((s) * sizeof((p)[0]))))
@@ -769,6 +770,28 @@ ncurses_edit_password(int line, int scr_wid,
   return retval;
 }
 
+static void
+swap_words(unsigned char *buf)
+{
+  int len = strlen(buf);
+  while (len > 0 && isspace(buf[len - 1])) --len;
+  buf[len] = 0;
+  
+  unsigned char *pos = strchr(buf, ' ');
+  if (!pos) return;
+  int len2 = (int) (pos - buf);
+
+  unsigned char *buf1 = alloca(len + 1);
+  memcpy(buf1, buf, len2);
+  buf1[len2] = 0;
+  
+  while (isspace(*pos)) ++pos;
+  int len3 = strlen(pos);
+  memmove(buf, pos, len3);
+  buf[len3] = ' ';
+  memcpy(buf + len3 + 1, buf1, len2 + 1);
+}
+
 int
 ncurses_edit_string(
         int line,
@@ -983,6 +1006,11 @@ ncurses_edit_string(
     case 'K' & 31:
       curlen = curpos;
       mybuf[curlen] = 0;
+      break;
+    case 'B' & 31:
+      swap_words(mybuf);
+      curlen = strlen(mybuf);
+      curpos = 0;
       break;
     case 'U' & 31:
       if (curpos <= 0) break;
