@@ -342,6 +342,8 @@ enum
   CNTSPROB_ignore_compile_errors,
   CNTSPROB_full_score,
   CNTSPROB_full_user_score,
+  CNTSPROB_min_score_1,
+  CNTSPROB_min_score_2,
   CNTSPROB_variable_full_score,
   CNTSPROB_test_score,
   CNTSPROB_run_penalty,
