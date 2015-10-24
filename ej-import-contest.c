@@ -695,6 +695,8 @@ merge_problem_section(
         { CNTSPROB_real_time_limit, META_PROBLEM_CONFIG_SECTION_real_time_limit, 0 },
         { CNTSPROB_full_score, META_PROBLEM_CONFIG_SECTION_full_score, 0 },
         { CNTSPROB_full_user_score, META_PROBLEM_CONFIG_SECTION_full_user_score, 0 },
+        { CNTSPROB_min_score_1, META_PROBLEM_CONFIG_SECTION_min_score_1, 0 },
+        { CNTSPROB_min_score_2, META_PROBLEM_CONFIG_SECTION_min_score_2, 0 },
         { CNTSPROB_test_score, META_PROBLEM_CONFIG_SECTION_test_score, 0 },
         { CNTSPROB_run_penalty, META_PROBLEM_CONFIG_SECTION_run_penalty, 0 },
         { CNTSPROB_acm_run_penalty, META_PROBLEM_CONFIG_SECTION_acm_run_penalty, DFLT_P_ACM_RUN_PENALTY },
@@ -958,6 +960,8 @@ generate_makefile(struct sid_state *ss,
     prepare_set_prob_value(CNTSPROB_test_score, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_full_score, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_full_user_score, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_min_score_1, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_min_score_2, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_solution_cmd, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_solution_src, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_source_header, tmp_prob, abstr, global);

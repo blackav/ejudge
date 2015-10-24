@@ -845,6 +845,10 @@ struct section_problem_data
   int full_score;
   /** score for successful user-visible solution (separate_user_score mode) */
   int full_user_score;
+  /** min score after run penalty */
+  int min_score_1;
+  /** min score after all subtractions */
+  int min_score_2;
   /** allow changing the score for successful solutions */
   ejintbool_t variable_full_score;
   /** score for one test */

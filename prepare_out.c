@@ -1211,6 +1211,12 @@ prepare_unparse_prob(
     if (prob->full_user_score >= 0 && global) {
       fprintf(f, "full_user_score = %d\n", prob->full_user_score);
     }
+    if (prob->min_score_1 >= 0) {
+      fprintf(f, "min_score_1 = %d\n", prob->min_score_1);
+    }
+    if (prob->min_score_2 >= 0) {
+      fprintf(f, "min_score_2 = %d\n", prob->min_score_2);
+    }
     if (prob->test_score >= 0) {
       if ((prob->abstract && prob->test_score != DFLT_P_TEST_SCORE)
           || !prob->abstract)
@@ -1603,6 +1609,12 @@ prepare_unparse_actual_prob(
       fprintf(f, "full_score = %d\n", prob->full_score);
     if (prob->full_user_score >= 0)
       fprintf(f, "full_user_score = %d\n", prob->full_user_score);
+    if (prob->min_score_1 >= 0) {
+      fprintf(f, "min_score_1 = %d\n", prob->min_score_1);
+    }
+    if (prob->min_score_2 >= 0) {
+      fprintf(f, "min_score_2 = %d\n", prob->min_score_2);
+    }
     if (prob->test_score >= 0)
       fprintf(f, "test_score = %d\n", prob->test_score);
     if (prob->variable_full_score > 0)

@@ -98,6 +98,8 @@ struct problem_config_section
   int time_limit_millis;
   int full_score;
   int full_user_score;
+  int min_score_1;
+  int min_score_2;
   int test_score;
   int run_penalty;
   int acm_run_penalty;

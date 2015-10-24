@@ -384,6 +384,8 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(ignore_compile_errors, "d"),
   PROBLEM_PARAM(full_score, "d"),
   PROBLEM_PARAM(full_user_score, "d"),
+  PROBLEM_PARAM(min_score_1, "d"),
+  PROBLEM_PARAM(min_score_2, "d"),
   PROBLEM_PARAM(test_score, "d"),
   PROBLEM_PARAM(run_penalty, "d"),
   PROBLEM_PARAM(acm_run_penalty, "d"),
@@ -981,6 +983,8 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->test_score = -1;
   p->full_score = -1;
   p->full_user_score = -1;
+  p->min_score_1 = -1;
+  p->min_score_2 = -1;
   p->variable_full_score = -1;
   p->hidden = -1;
   p->advance_to_next = -1;
@@ -3194,6 +3198,8 @@ set_defaults(
 
     prepare_set_prob_value(CNTSPROB_full_score, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_full_user_score, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_min_score_1, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_min_score_2, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_variable_full_score, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_test_score, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_run_penalty, prob, aprob, g);
@@ -5551,6 +5557,14 @@ prepare_set_prob_value(
     if (out->full_user_score < 0 && abstr) out->full_user_score = abstr->full_user_score;
     break;
 
+  case CNTSPROB_min_score_1:
+    if (out->min_score_1 < 0 && abstr) out->min_score_1 = abstr->min_score_1;
+    break;
+
+  case CNTSPROB_min_score_2:
+    if (out->min_score_2 < 0 && abstr) out->min_score_2 = abstr->min_score_2;
+    break;
+
   case CNTSPROB_test_score:
     if (out->test_score < 0 && abstr) out->test_score = abstr->test_score;
     if (out->test_score < 0) out->test_score = DFLT_P_TEST_SCORE;
@@ -6092,6 +6106,8 @@ prepare_set_all_prob_values(
     CNTSPROB_ignore_compile_errors,
     CNTSPROB_full_score,
     CNTSPROB_full_user_score,
+    CNTSPROB_min_score_1,
+    CNTSPROB_min_score_2,
     CNTSPROB_variable_full_score,
     CNTSPROB_test_score,
     CNTSPROB_run_penalty,
