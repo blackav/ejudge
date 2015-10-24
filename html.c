@@ -156,9 +156,9 @@ calc_kirov_score(
   //if (score > pr->full_score) score = pr->full_score;
   // solution score is the initial score minus all score penalties plus score_bonus
   score = init_score * score_mult - attempts * pr->run_penalty + pe->score_adj + score_bonus;
-  if (pr->min_score_1 > 0 && score < pr->min_score_1) score = pr->min_score_1;
+  if (status == RUN_OK && pr->min_score_1 > 0 && score < pr->min_score_1) score = pr->min_score_1;
   score += dp;
-  if (pr->min_score_2 > 0 && score < pr->min_score_2) score = pr->min_score_2;
+  if (status == RUN_OK && pr->min_score_2 > 0 && score < pr->min_score_2) score = pr->min_score_2;
   score -= disq_attempts * pr->disqualified_penalty;
   if (score < 0) score = 0;
   if (!outbuf) return score;
