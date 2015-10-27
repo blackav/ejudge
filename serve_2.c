@@ -1583,10 +1583,11 @@ serve_run_request(
   time_limit_adj_millis = find_lang_specific_value(prob->lang_time_adj_millis, lang, 0);
   time_limit_adj = find_lang_specific_value(prob->lang_time_adj, lang, 0);
 
+  ui = 0;
   if (!no_db_flag) {
-    teamdb_export_team(state->teamdb_state, user_id, &te);
-    ui = 0;
-    if (te.user) ui = te.user->cnts0;
+    if (teamdb_export_team(state->teamdb_state, user_id, &te) >= 0 && te.user) {
+      ui = te.user->cnts0;
+    }
   }
 
   // new run packet creation
