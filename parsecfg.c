@@ -713,7 +713,42 @@ handle_conditional(struct parsecfg_state *ps)
   while (isalnum(ps->raw.s[ps->raw_i]) || ps->raw.s[ps->raw_i] == '_') *p++ = ps->raw.s[ps->raw_i++];
   *p = 0;
 
-  if (!strcmp(cmd, "if")) {
+  if (!strcmp(cmd, "include")) {
+    unsigned char file_path[PATH_MAX];
+    while (ps->raw_i < ps->raw.u && isspace(ps->raw.s[ps->raw_i])) ++ps->raw_i;
+    if (ps->raw_i == ps->raw.u) {
+      fprintf(stderr, "%d: no file specified\n", ps->f_stack->lineno);
+      goto failure;
+    }
+    if (ps->raw.s[ps->raw_i] == '/') {
+      // absolute path
+      snprintf(file_path, sizeof(file_path), "%s", ps->raw.s + ps->raw_i);
+    } else if (!ps->f_stack->path || !*ps->f_stack->path) {
+      // relative to the current working dir, that's no good
+      snprintf(file_path, sizeof(file_path), "%s", ps->raw.s + ps->raw_i);
+    } else {
+      unsigned char *rs = strrchr(ps->f_stack->path, '/');
+      if (!rs || rs == ps->f_stack->path) {
+        // no good
+        snprintf(file_path, sizeof(file_path), "%s", ps->raw.s + ps->raw_i);
+      } else {
+        snprintf(file_path, sizeof(file_path), "%.*s%s", (int) (rs - ps->f_stack->path + 1), ps->f_stack->path, ps->raw.s + ps->raw_i);
+      }
+    }
+    //fprintf(stderr, "include file: %s\n", file_path);
+    FILE *inc_f = fopen(file_path, "r");
+    if (!inc_f) {
+      fprintf(stderr, "%d: cannot open file '%s'\n", ps->f_stack->lineno, file_path);
+      goto failure;
+    }
+    struct parsecfg_file *inc = NULL;
+    XCALLOC(inc, 1);
+    inc->next = ps->f_stack;
+    inc->f = inc_f;
+    inc->path = xstrdup(file_path);
+    inc->lineno = 0;
+    ps->f_stack = inc;
+  } else if (!strcmp(cmd, "if")) {
     XCALLOC(new_item, 1);
     new_item->next = ps->cond_stack;
     ps->cond_stack = new_item;
@@ -1394,6 +1429,9 @@ struct parsecfg_file
     xfree(ps->f_stack->path);
     xfree(ps->f_stack);
   }
+  if (ps) {
+    xfree(ps->raw.s);
+  }
   return cfg;
 
  cleanup:
@@ -1408,6 +1446,9 @@ struct parsecfg_file
     if (ps->f_stack) fclose(ps->f_stack->f);
     xfree(ps->f_stack->path);
     xfree(ps->f_stack);
+  }
+  if (ps) {
+    xfree(ps->raw.s);
   }
   return NULL;
 }
