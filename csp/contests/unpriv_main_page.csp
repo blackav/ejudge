@@ -183,6 +183,11 @@ ns_unparse_answers(
     } else {
 %><tr><td class="b0" id="probNavTaskArea" valign="top"><div id="probNavTaskArea"><%
     }
+  } else {
+%>
+<br/>
+<table class="probNav">
+<tr><td id="probNavTaskArea" valign="top"><div id="probNavTaskArea-ins"><%
   }
 %>
 <%
@@ -311,6 +316,10 @@ ns_unparse_answers(
 %></div></li><%
     }
 %></ul></td></tr></table>
+<%
+  } else {
+%>
+</div></td></tr></table>
 <%
   }
 %><%@include "unpriv_footer.csp"
