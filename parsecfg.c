@@ -454,7 +454,8 @@ parse_unary_expr(
 static int
 parse_string(
         struct parsecfg_state *ps,
-int need_eval, cfg_cond_value_t *prv)
+        int need_eval,
+        cfg_cond_value_t *prv)
 {
   int j;
   unsigned char *p, *q;
@@ -541,7 +542,8 @@ int need_eval, cfg_cond_value_t *prv)
 static int
 parse_number(
         struct parsecfg_state *ps,
-int need_eval, cfg_cond_value_t *prv)
+        int need_eval,
+        cfg_cond_value_t *prv)
 {
   int j;
   unsigned char *buf;
@@ -570,7 +572,8 @@ int need_eval, cfg_cond_value_t *prv)
 static int
 parse_ident(
         struct parsecfg_state *ps,
-int need_eval, cfg_cond_value_t *prv)
+        int need_eval,
+        cfg_cond_value_t *prv)
 {
   int j = ps->raw_i, i;
   unsigned char *idbuf = 0;
@@ -1198,8 +1201,8 @@ parse_param(char const *path,
             FILE *f,
             const struct config_section_info *params,
             int quiet_flag,
-            int _ncond_var,
-            cfg_cond_var_t *_cond_vars,
+            int ncond_var,
+            cfg_cond_var_t *cond_vars,
             int *p_cond_count)
 {
   struct generic_section_config  *cfg = NULL;
@@ -1215,8 +1218,8 @@ parse_param(char const *path,
   memset(&cfgstate, 0, sizeof(cfgstate));
   struct parsecfg_state *ps = &cfgstate;
 
-  ps->ncond_var = _ncond_var;
-  ps->cond_vars = _cond_vars;
+  ps->ncond_var = ncond_var;
+  ps->cond_vars = cond_vars;
   ps->cond_stack = 0;
   ps->output_enabled = 1;
   ps->lineno = 1;
