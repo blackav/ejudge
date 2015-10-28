@@ -106,6 +106,12 @@ finish_func(struct common_plugin_data *data)
 {
     if (data) {
         struct common_mongo_state *state = (struct common_mongo_state *) data;
+        xfree(state->host);
+        xfree(state->database);
+        xfree(state->table_prefix);
+        xfree(state->password_file);
+        xfree(state->user);
+        xfree(state->password);
         memset(state, 0, sizeof(*state));
         xfree(state);
     }
