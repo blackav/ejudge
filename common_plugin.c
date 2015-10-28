@@ -133,6 +133,7 @@ plugin_load_external(
   }
   if (common_iface->prepare(data, config, pcfg) < 0) {
     err("%s: prepare failed for %s, %s", fname, type, name);
+    common_iface->finish(data);
     return NULL;
   }
 

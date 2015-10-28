@@ -104,7 +104,12 @@ init_func(void)
 static int
 finish_func(struct common_plugin_data *data)
 {
-  return 0;
+    if (data) {
+        struct common_mongo_state *state = (struct common_mongo_state *) data;
+        memset(state, 0, sizeof(*state));
+        xfree(state);
+    }
+    return 0;
 }
 
 static int
