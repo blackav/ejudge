@@ -75,6 +75,46 @@ struct parsecfg_state
 };
 
 static int
+ps_getc(struct parsecfg_state *ps)
+{
+  if (!ps || !ps->f_stack || !ps->f_stack->f) return EOF;
+  while (1) {
+    int c = getc(ps->f_stack->f);
+    if (c != EOF) return c;
+    if (!ps->f_stack->next) return c;
+    struct parsecfg_file *pf = ps->f_stack;
+    ps->f_stack = pf->next;
+    fclose(pf->f);
+    xfree(pf->path);
+    memset(pf, 0, sizeof(*pf));
+    xfree(pf);
+  }
+}
+
+static void
+ps_ungetc(int c, struct parsecfg_state *ps)
+{
+  ungetc(c, ps->f_stack->f);
+}
+
+static char *
+ps_gets(char *buf, size_t size, struct parsecfg_state *ps)
+{
+  if (!ps || !ps->f_stack || !ps->f_stack->f) return NULL;
+  while (1) {
+    char *s = fgets(buf, size, ps->f_stack->f);
+    if (s) return s;
+    if (!ps->f_stack->next) return s;
+    struct parsecfg_file *pf = ps->f_stack;
+    ps->f_stack = pf->next;
+    fclose(pf->f);
+    xfree(pf->path);
+    memset(pf, 0, sizeof(*pf));
+    xfree(pf);
+  }
+}
+
+static int
 convert_to_bool(cfg_cond_value_t *pv)
 {
   switch (pv->tag) {
@@ -642,7 +682,7 @@ handle_conditional(struct parsecfg_state *ps)
   ps->raw.s[ps->raw.u] = 0;
 
   // read the line into the buffer
-  while ((c = fgetc(ps->f_stack->f)) != EOF && c != '\n') {
+  while ((c = ps_getc(ps)) != EOF && c != '\n') {
     if (!c) continue;
     if (ps->raw.u >= ps->raw.a) {
       ps->raw.a *= 2;
@@ -760,12 +800,12 @@ read_first_char(struct parsecfg_state *ps)
 {
   int c;
 
-  c = getc(ps->f_stack->f);
+  c = ps_getc(ps);
   while (c >= 0 && c <= ' ') {
     if (c == '\n') ps->f_stack->lineno++;
-    c = getc(ps->f_stack->f);
+    c = ps_getc(ps);
   }
-  if (c != EOF) ungetc(c, ps->f_stack->f);
+  if (c != EOF) ps_ungetc(c, ps);
   return c;
 }
 
@@ -774,18 +814,18 @@ read_section_name(struct parsecfg_state *ps, char *name, int nlen)
 {
   int c, i;
 
-  c = getc(ps->f_stack->f);
+  c = ps_getc(ps);
   while (c >= 0 && c <= ' ') {
     if (c == '\n') ps->f_stack->lineno++;
-    c = getc(ps->f_stack->f);
+    c = ps_getc(ps);
   }
   if (c != '[') {
     fprintf(stderr, "%d: [ expected\n", ps->f_stack->lineno);
     return -1;
   }
 
-  c = getc(ps->f_stack->f);
-  for (i = 0; i < nlen - 1 && (isalnum(c) || c == '_'); i++, c = getc(ps->f_stack->f))
+  c = ps_getc(ps);
+  for (i = 0; i < nlen - 1 && (isalnum(c) || c == '_'); i++, c = ps_getc(ps))
     name[i] = c;
   name[i] = 0;
   if (i >= nlen - 1 && (isalnum(c) || c == '_')) {
@@ -797,13 +837,13 @@ read_section_name(struct parsecfg_state *ps, char *name, int nlen)
     return -1;
   }
 
-  c = getc(ps->f_stack->f);
+  c = ps_getc(ps);
   while (c != EOF && c != '\n') {
     if (c > ' ') {
       fprintf(stderr, "%d: garbage after variable value\n", ps->f_stack->lineno);
       return -1;
     }
-    c = getc(ps->f_stack->f);
+    c = ps_getc(ps);
   }
   ps->f_stack->lineno++;
   return 0;
@@ -820,12 +860,12 @@ read_variable(struct parsecfg_state *ps, char *name, int nlen, char *val, int vl
   int quot_char = 0;
   unsigned char nb[4];
 
-  c = getc(ps->f_stack->f);
+  c = ps_getc(ps);
   while (c >= 0 && c <= ' ') {
     if (c == '\n') ps->f_stack->lineno++;
-    c = getc(ps->f_stack->f);
+    c = ps_getc(ps);
   }
-  for (i = 0; i < nlen - 1 && (isalnum(c) || c == '_'); i++, c = getc(ps->f_stack->f))
+  for (i = 0; i < nlen - 1 && (isalnum(c) || c == '_'); i++, c = ps_getc(ps))
     name[i] = c;
   name[i] = 0;
   if (i >= nlen - 1 && (isalnum(c) || c == '_')) {
@@ -833,7 +873,7 @@ read_variable(struct parsecfg_state *ps, char *name, int nlen, char *val, int vl
     return -1;
   }
 
-  while (c >= 0 && c <= ' ' && c != '\n') c = getc(ps->f_stack->f);
+  while (c >= 0 && c <= ' ' && c != '\n') c = ps_getc(ps);
   if (c == '\n') {
     // FIXME: may we assumpt, that vlen >= 2?
     strcpy(val, "1");
@@ -849,7 +889,7 @@ read_variable(struct parsecfg_state *ps, char *name, int nlen, char *val, int vl
   lbuf = alloca(128);
   lbuf_used = 0;
   while (1) {
-    c = getc(ps->f_stack->f);
+    c = ps_getc(ps);
     if (c == EOF) break;
     if (lbuf_used + 1 == lbuf_size) {
       tmp = alloca(lbuf_size *= 2);
@@ -1009,7 +1049,7 @@ read_first_line(struct parsecfg_state *ps)
   size_t buflen;
   int n;
 
-  if (!fgets(buf, sizeof(buf), ps->f_stack->f)) return 0;
+  if (!ps_gets(buf, sizeof(buf), ps)) return 0;
   if ((buflen = strlen(buf)) == sizeof(buf) - 1) {
     ps->f_stack->lineno++;
     return 0;
@@ -1052,8 +1092,8 @@ read_comment(struct parsecfg_state *ps)
   int c;
 
   if (ps->f_stack->lineno == 1) return read_first_line(ps);
-  c = getc(ps->f_stack->f);
-  while (c != EOF && c != '\n') c = getc(ps->f_stack->f);
+  c = ps_getc(ps);
+  while (c != EOF && c != '\n') c = ps_getc(ps);
   ps->f_stack->lineno++;
   return 0;
 }
