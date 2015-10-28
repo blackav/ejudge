@@ -64,7 +64,6 @@ struct parsecfg_file
 
 struct parsecfg_state
 {
-  int lineno;
   bufstring_t raw;
   int raw_i;
   int ncond_var;
@@ -150,7 +149,7 @@ parse_expr(
   if (parse_conditional_expr(ps, need_eval, prv) < 0) return -1;
   while (ps->raw.s[ps->raw_i] > 0 && ps->raw.s[ps->raw_i] <= ' ') ps->raw_i++;
   if (ps->raw.s[ps->raw_i]) {
-    fprintf(stderr, "%d: syntax error\n", ps->lineno);
+    fprintf(stderr, "%d: syntax error\n", ps->f_stack->lineno);
     if (need_eval) free_value(prv);
     return -1;
   }
@@ -306,7 +305,7 @@ parse_equality_expr(
     }
     if (need_eval) {
       if (prv->tag != v2.tag) {
-        fprintf(stderr, "%d: type mismatch in expression\n", ps->lineno);
+        fprintf(stderr, "%d: type mismatch in expression\n", ps->f_stack->lineno);
         free_value(prv);
         free_value(&v2);
         return -1;
@@ -328,7 +327,7 @@ parse_equality_expr(
           abort();
         }
       } else {
-        fprintf(stderr, "%d: invalid type in expression\n", ps->lineno);
+        fprintf(stderr, "%d: invalid type in expression\n", ps->f_stack->lineno);
         free_value(prv);
         free_value(&v2);
         return -1;
@@ -376,7 +375,7 @@ parse_relational_expr(
     }
     if (need_eval) {
       if (prv->tag != v2.tag) {
-        fprintf(stderr, "%d: type mismatch in expression\n", ps->lineno);
+        fprintf(stderr, "%d: type mismatch in expression\n", ps->f_stack->lineno);
         free_value(prv);
         free_value(&v2);
         return -1;
@@ -402,7 +401,7 @@ parse_relational_expr(
           abort();
         }
       } else {
-        fprintf(stderr, "%d: invalid type in expression\n", ps->lineno);
+        fprintf(stderr, "%d: invalid type in expression\n", ps->f_stack->lineno);
         free_value(prv);
         free_value(&v2);
         return -1;
@@ -464,14 +463,14 @@ parse_string(
   j = ps->raw_i + 1;
   while (ps->raw.s[j] && ps->raw.s[j] != '\"') {
     if (ps->raw.s[j] == '\\' && !ps->raw.s[j + 1]) {
-      fprintf(stderr, "%d: '\\' at the end of line\n", ps->lineno);
+      fprintf(stderr, "%d: '\\' at the end of line\n", ps->f_stack->lineno);
       return -1;
     }
     if (ps->raw.s[j] == '\\') j += 2;
     else j++;
   }
   if (!ps->raw.s[j]) {
-    fprintf(stderr, "%d: unterminated string\n", ps->lineno);
+    fprintf(stderr, "%d: unterminated string\n", ps->f_stack->lineno);
     return -1;
   }
   j++;
@@ -497,7 +496,7 @@ parse_string(
       break;
     case 'x': case 'X':
       if (!isxdigit(p[2])) {
-        fprintf(stderr, "%d: invalid escape sequence\n", ps->lineno);
+        fprintf(stderr, "%d: invalid escape sequence\n", ps->f_stack->lineno);
         return -1;
       }
       p += 2;
@@ -563,7 +562,7 @@ parse_number(
   errno = 0;
   prv->l.val = strtoll(buf, 0, 10);
   if (errno) {
-    fprintf(stderr, "%d: value is too large\n", ps->lineno);
+    fprintf(stderr, "%d: value is too large\n", ps->f_stack->lineno);
     return -1;
   }
   return 0;
@@ -588,7 +587,7 @@ parse_ident(
     if (!strcmp(idbuf, ps->cond_vars[i].name)) break;
   }
   if (i >= ps->ncond_var) {
-    fprintf(stderr, "%d: variable `%s' does not exist\n", ps->lineno, idbuf);
+    fprintf(stderr, "%d: variable `%s' does not exist\n", ps->f_stack->lineno, idbuf);
     return -1;
   }
   copy_value(prv, &ps->cond_vars[i].val);
@@ -609,7 +608,7 @@ parse_primary_expr(
     if ((r = parse_conditional_expr(ps, need_eval, prv)) < 0) return -1;
     while (ps->raw.s[ps->raw_i] > 0 && ps->raw.s[ps->raw_i] <= ' ') ps->raw_i++;
     if (ps->raw.s[ps->raw_i] != ')') {
-      fprintf(stderr, "%d: ')' expected\n", ps->lineno);
+      fprintf(stderr, "%d: ')' expected\n", ps->f_stack->lineno);
       if (need_eval) free_value(prv);
       return -1;
     }
@@ -622,12 +621,12 @@ parse_primary_expr(
   } else if (isdigit(ps->raw.s[ps->raw_i])) {
     return parse_number(ps, need_eval, prv);
   }
-  fprintf(stderr, "%d: primary expression expected\n", ps->lineno);
+  fprintf(stderr, "%d: primary expression expected\n", ps->f_stack->lineno);
   return -1;
 }
 
 static int
-handle_conditional(FILE *f, struct parsecfg_state *ps)
+handle_conditional(struct parsecfg_state *ps)
 {
   int c;
   unsigned char *cmd, *p;
@@ -643,7 +642,7 @@ handle_conditional(FILE *f, struct parsecfg_state *ps)
   ps->raw.s[ps->raw.u] = 0;
 
   // read the line into the buffer
-  while ((c = fgetc(f)) != EOF && c != '\n') {
+  while ((c = fgetc(ps->f_stack->f)) != EOF && c != '\n') {
     if (!c) continue;
     if (ps->raw.u >= ps->raw.a) {
       ps->raw.a *= 2;
@@ -663,7 +662,7 @@ handle_conditional(FILE *f, struct parsecfg_state *ps)
 
   //fprintf(stderr, ">>%s\n", ps->raw.s + ps->raw_i);
   if (ps->raw.s[ps->raw_i] != '@') {
-    fprintf(stderr, "%d: invalid conditional directive\n", ps->lineno);
+    fprintf(stderr, "%d: invalid conditional directive\n", ps->f_stack->lineno);
     goto failure;
   }
   ps->raw_i++;
@@ -692,11 +691,11 @@ handle_conditional(FILE *f, struct parsecfg_state *ps)
     free_value(&val);
   } else if (!strcmp(cmd, "elif")) {
     if (!ps->cond_stack) {
-      fprintf(stderr, "%d: dangling elif\n", ps->lineno);
+      fprintf(stderr, "%d: dangling elif\n", ps->f_stack->lineno);
       goto failure;
     }
     if (ps->cond_stack->was_else) {
-      fprintf(stderr, "%d: elif after else\n", ps->lineno);
+      fprintf(stderr, "%d: elif after else\n", ps->f_stack->lineno);
       goto failure;
     }
     if (parse_expr(ps, 1, &val) < 0) goto failure;
@@ -709,16 +708,16 @@ handle_conditional(FILE *f, struct parsecfg_state *ps)
     free_value(&val);
   } else if (!strcmp(cmd, "else")) {
     if (!ps->cond_stack) {
-      fprintf(stderr, "%d: dangling else\n", ps->lineno);
+      fprintf(stderr, "%d: dangling else\n", ps->f_stack->lineno);
       goto failure;
     }
     if (ps->cond_stack->was_else) {
-      fprintf(stderr, "%d: else after else\n", ps->lineno);
+      fprintf(stderr, "%d: else after else\n", ps->f_stack->lineno);
       goto failure;
     }
     while (ps->raw.s[ps->raw_i] > 0 && ps->raw.s[ps->raw_i] <= ' ') ps->raw_i++;
     if (ps->raw.s[ps->raw_i]) {
-      fprintf(stderr, "%d: garbage after else\n", ps->lineno);
+      fprintf(stderr, "%d: garbage after else\n", ps->f_stack->lineno);
       goto failure;
     }
     ps->cond_stack->was_else = 1;
@@ -730,12 +729,12 @@ handle_conditional(FILE *f, struct parsecfg_state *ps)
     }
   } else if (!strcmp(cmd, "endif")) {
     if (!ps->cond_stack) {
-      fprintf(stderr, "%d: dangling endif\n", ps->lineno);
+      fprintf(stderr, "%d: dangling endif\n", ps->f_stack->lineno);
       goto failure;
     }
     while (ps->raw.s[ps->raw_i] > 0 && ps->raw.s[ps->raw_i] <= ' ') ps->raw_i++;
     if (ps->raw.s[ps->raw_i]) {
-      fprintf(stderr, "%d: garbage after endif\n", ps->lineno);
+      fprintf(stderr, "%d: garbage after endif\n", ps->f_stack->lineno);
       goto failure;
     }
     new_item = ps->cond_stack;
@@ -744,74 +743,74 @@ handle_conditional(FILE *f, struct parsecfg_state *ps)
     else ps->output_enabled = ps->cond_stack->output_enabled;
     xfree(new_item);
   } else {
-    fprintf(stderr, "%d: invalid conditional compilation directive\n", ps->lineno);
+    fprintf(stderr, "%d: invalid conditional compilation directive\n", ps->f_stack->lineno);
     goto failure;
   }
 
-  ps->lineno++;
+  ps->f_stack->lineno++;
   return 0;
 
  failure:
-  ps->lineno++;
+  ps->f_stack->lineno++;
   return -1;
 }
 
 static int
-read_first_char(FILE *f, struct parsecfg_state *ps)
+read_first_char(struct parsecfg_state *ps)
 {
   int c;
 
-  c = getc(f);
+  c = getc(ps->f_stack->f);
   while (c >= 0 && c <= ' ') {
-    if (c == '\n') ps->lineno++;
-    c = getc(f);
+    if (c == '\n') ps->f_stack->lineno++;
+    c = getc(ps->f_stack->f);
   }
-  if (c != EOF) ungetc(c, f);
+  if (c != EOF) ungetc(c, ps->f_stack->f);
   return c;
 }
 
 static int
-read_section_name(FILE *f, char *name, int nlen, struct parsecfg_state *ps)
+read_section_name(struct parsecfg_state *ps, char *name, int nlen)
 {
   int c, i;
 
-  c = getc(f);
+  c = getc(ps->f_stack->f);
   while (c >= 0 && c <= ' ') {
-    if (c == '\n') ps->lineno++;
-    c = getc(f);
+    if (c == '\n') ps->f_stack->lineno++;
+    c = getc(ps->f_stack->f);
   }
   if (c != '[') {
-    fprintf(stderr, "%d: [ expected\n", ps->lineno);
+    fprintf(stderr, "%d: [ expected\n", ps->f_stack->lineno);
     return -1;
   }
 
-  c = getc(f);
-  for (i = 0; i < nlen - 1 && (isalnum(c) || c == '_'); i++, c = getc(f))
+  c = getc(ps->f_stack->f);
+  for (i = 0; i < nlen - 1 && (isalnum(c) || c == '_'); i++, c = getc(ps->f_stack->f))
     name[i] = c;
   name[i] = 0;
   if (i >= nlen - 1 && (isalnum(c) || c == '_')) {
-    fprintf(stderr, "%d: section name is too long\n", ps->lineno);
+    fprintf(stderr, "%d: section name is too long\n", ps->f_stack->lineno);
     return -1;
   }
   if (c != ']') {
-    fprintf(stderr, "%d: ] expected\n", ps->lineno);
+    fprintf(stderr, "%d: ] expected\n", ps->f_stack->lineno);
     return -1;
   }
 
-  c = getc(f);
+  c = getc(ps->f_stack->f);
   while (c != EOF && c != '\n') {
     if (c > ' ') {
-      fprintf(stderr, "%d: garbage after variable value\n", ps->lineno);
+      fprintf(stderr, "%d: garbage after variable value\n", ps->f_stack->lineno);
       return -1;
     }
-    c = getc(f);
+    c = getc(ps->f_stack->f);
   }
-  ps->lineno++;
+  ps->f_stack->lineno++;
   return 0;
 }
 
 static int
-read_variable(FILE *f, char *name, int nlen, char *val, int vlen, struct parsecfg_state *ps)
+read_variable(struct parsecfg_state *ps, char *name, int nlen, char *val, int vlen)
 {
   int   c;
   int  i;
@@ -821,28 +820,28 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen, struct parsecf
   int quot_char = 0;
   unsigned char nb[4];
 
-  c = getc(f);
+  c = getc(ps->f_stack->f);
   while (c >= 0 && c <= ' ') {
-    if (c == '\n') ps->lineno++;
-    c = getc(f);
+    if (c == '\n') ps->f_stack->lineno++;
+    c = getc(ps->f_stack->f);
   }
-  for (i = 0; i < nlen - 1 && (isalnum(c) || c == '_'); i++, c = getc(f))
+  for (i = 0; i < nlen - 1 && (isalnum(c) || c == '_'); i++, c = getc(ps->f_stack->f))
     name[i] = c;
   name[i] = 0;
   if (i >= nlen - 1 && (isalnum(c) || c == '_')) {
-    fprintf(stderr, "%d: variable name is too long\n", ps->lineno);
+    fprintf(stderr, "%d: variable name is too long\n", ps->f_stack->lineno);
     return -1;
   }
 
-  while (c >= 0 && c <= ' ' && c != '\n') c = getc(f);
+  while (c >= 0 && c <= ' ' && c != '\n') c = getc(ps->f_stack->f);
   if (c == '\n') {
     // FIXME: may we assumpt, that vlen >= 2?
     strcpy(val, "1");
-    ps->lineno++;
+    ps->f_stack->lineno++;
     return 0;
   }
   if (c != '=') {
-    fprintf(stderr, "%d: '=' expected after variable name\n", ps->lineno);
+    fprintf(stderr, "%d: '=' expected after variable name\n", ps->f_stack->lineno);
     return -1;
   }
 
@@ -850,7 +849,7 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen, struct parsecf
   lbuf = alloca(128);
   lbuf_used = 0;
   while (1) {
-    c = getc(f);
+    c = getc(ps->f_stack->f);
     if (c == EOF) break;
     if (lbuf_used + 1 == lbuf_size) {
       tmp = alloca(lbuf_size *= 2);
@@ -871,7 +870,7 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen, struct parsecf
     if (!quot_char && (*p == '#' || *p == ';')) break;
     if (!quot_char && isspace(*p)) break;
     if (*p < ' ') {
-      fprintf(stderr, "%d: invalid control code %d\n", ps->lineno, *p);
+      fprintf(stderr, "%d: invalid control code %d\n", ps->f_stack->lineno, *p);
       return -1;
     }
     if (*p == '\"' || *p == '\'') {
@@ -897,7 +896,7 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen, struct parsecf
         break;
       case 'x': case 'X':
         if (!isxdigit(p[2])) {
-          fprintf(stderr, "%d: invalid escape sequence\n", ps->lineno);
+          fprintf(stderr, "%d: invalid escape sequence\n", ps->f_stack->lineno);
           return -1;
         }
         p += 2;
@@ -940,21 +939,21 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen, struct parsecf
 
   while (*p && isspace(*p)) p++;
   if (quot_char) {
-    fprintf(stderr, "%d: unclosed quote character <%c>\n", ps->lineno, quot_char);
+    fprintf(stderr, "%d: unclosed quote character <%c>\n", ps->f_stack->lineno, quot_char);
     return -1;
   }
   if (*p && *p != '#' && *p != ';') {
-    fprintf(stderr, "%d: garbage after variable value\n", ps->lineno);
+    fprintf(stderr, "%d: garbage after variable value\n", ps->f_stack->lineno);
     return -1;
   }
   *q = 0;
   tmp_len = strlen(tmp);
   if (tmp_len >= vlen) {
-    fprintf(stderr, "%d: variable value is too long\n", ps->lineno);
+    fprintf(stderr, "%d: variable value is too long\n", ps->f_stack->lineno);
     return -1;
   }
   strcpy(val, tmp);
-  ps->lineno++;
+  ps->f_stack->lineno++;
   return 0;
 
   /*
@@ -1002,7 +1001,7 @@ read_variable(FILE *f, char *name, int nlen, char *val, int vlen, struct parsecf
 
 /* check for "-*- coding: CHARSET -*-" stuff */
 static int
-read_first_line(FILE *f, struct parsecfg_state *ps)
+read_first_line(struct parsecfg_state *ps)
 {
   unsigned char buf[1024];
   unsigned char buf2[1024];
@@ -1010,12 +1009,12 @@ read_first_line(FILE *f, struct parsecfg_state *ps)
   size_t buflen;
   int n;
 
-  if (!fgets(buf, sizeof(buf), f)) return 0;
+  if (!fgets(buf, sizeof(buf), ps->f_stack->f)) return 0;
   if ((buflen = strlen(buf)) == sizeof(buf) - 1) {
-    ps->lineno++;
+    ps->f_stack->lineno++;
     return 0;
   }
-  ps->lineno++;
+  ps->f_stack->lineno++;
   while (buflen > 0 && isspace(buf[buflen - 1])) buflen--;
   buf[buflen] = 0;
   if (buflen <= 3) return 0;
@@ -1048,14 +1047,14 @@ read_first_line(FILE *f, struct parsecfg_state *ps)
 }
 
 static int
-read_comment(FILE *f, struct parsecfg_state *ps)
+read_comment(struct parsecfg_state *ps)
 {
   int c;
 
-  if (ps->lineno == 1) return read_first_line(f, ps);
-  c = getc(f);
-  while (c != EOF && c != '\n') c =getc(f);
-  ps->lineno++;
+  if (ps->f_stack->lineno == 1) return read_first_line(ps);
+  c = getc(ps->f_stack->f);
+  while (c != EOF && c != '\n') c = getc(ps->f_stack->f);
+  ps->f_stack->lineno++;
   return 0;
 }
 
@@ -1075,10 +1074,10 @@ copy_param(
     // new metainfo handling code
     int field_id = sinfo->mm->lookup_field(varname);
     if (field_id <= 0) {
-      fprintf(stderr, "%d: unknown parameter '%s'\n", ps->lineno - 1, varname);
+      fprintf(stderr, "%d: unknown parameter '%s'\n", ps->f_stack->lineno - 1, varname);
       return -1;
     }
-    if (meta_parse_string(stderr, ps->lineno - 1, cfg, field_id, sinfo->mm,
+    if (meta_parse_string(stderr, ps->f_stack->lineno - 1, cfg, field_id, sinfo->mm,
                           varname, varvalue, ps->charset_id) < 0) {
       return -1;
     }
@@ -1090,23 +1089,20 @@ copy_param(
   for (i = 0; params[i].name; i++)
     if (!strcmp(params[i].name, varname)) break;
   if (!params[i].name) {
-    fprintf(stderr, "%d: unknown parameter '%s'\n",
-            ps->lineno - 1, varname);
+    fprintf(stderr, "%d: unknown parameter '%s'\n", ps->f_stack->lineno - 1, varname);
     return -1;
   }
 
   if (!strcmp(params[i].type, "f")) {
     void *ptr = (void*) ((char*) cfg + params[i].offset);
     if (params[i].parse_func(varvalue, ptr, params[i].size) < 0) {
-      fprintf(stderr, "%d: invalid parameter value for '%s'\n",
-              ps->lineno - 1, varname);
+      fprintf(stderr, "%d: invalid parameter value for '%s'\n", ps->f_stack->lineno - 1, varname);
       return -1;
     }
   } else if (!strcmp(params[i].type, "t")) {
     time_t v = -1, *ptr;
     if (xml_parse_date(NULL, 0, 0, 0, varvalue, &v) < 0) {
-      fprintf(stderr, "%d: date parameter expected for '%s'\n",
-              ps->lineno - 1, varname);
+      fprintf(stderr, "%d: date parameter expected for '%s'\n", ps->f_stack->lineno - 1, varname);
       return -1;
     }
     if (v < 0) v = 0;
@@ -1115,7 +1111,7 @@ copy_param(
   } else if (!strcmp(params[i].type, "E")) {
     ej_size64_t v = 0, *ptr = 0;
     if (size_str_to_size64_t(varvalue, &v) < 0) {
-      fprintf(stderr, "%d: invalid value of size64 parameter for '%s'\n", ps->lineno - 1, varname);
+      fprintf(stderr, "%d: invalid value of size64 parameter for '%s'\n", ps->f_stack->lineno - 1, varname);
       return -1;              
     }
     ptr = (ej_size64_t *) ((char*) cfg + params[i].offset);
@@ -1124,8 +1120,7 @@ copy_param(
     size_t v = 0, *ptr = 0;
 
     if (size_str_to_size_t(varvalue, &v) < 0) {
-      fprintf(stderr, "%d: invalid value of size parameter for '%s'\n",
-              ps->lineno - 1, varname);
+      fprintf(stderr, "%d: invalid value of size parameter for '%s'\n", ps->f_stack->lineno - 1, varname);
       return -1;              
     }
     ptr = (size_t*) ((char*) cfg + params[i].offset);
@@ -1133,8 +1128,7 @@ copy_param(
   } else if (!strcmp(params[i].type, "d")) {
     int v = 0, *ptr = 0;
     if (size_str_to_num(varvalue, &v) < 0) {
-      fprintf(stderr, "%d: invalid value of numeric parameter for '%s'\n",
-              ps->lineno - 1, varname);
+      fprintf(stderr, "%d: invalid value of numeric parameter for '%s'\n", ps->f_stack->lineno - 1, varname);
       return -1;
     }
     ptr = (int *) ((char*) cfg + params[i].offset);
@@ -1145,8 +1139,7 @@ copy_param(
     param_size = params[i].size;
     if (!param_size) param_size = PATH_MAX;
     if (strlen(varvalue) > param_size - 1) {
-      fprintf(stderr, "%d: parameter '%s' is too long\n", ps->lineno - 1,
-              varname);
+      fprintf(stderr, "%d: parameter '%s' is too long\n", ps->f_stack->lineno - 1, varname);
       return -1;
     }
     ptr = (char*) cfg + params[i].offset;
@@ -1208,6 +1201,7 @@ parse_param(char const *path,
   struct generic_section_config  *cfg = NULL;
   struct generic_section_config **psect = &cfg, *sect = NULL;
   const struct config_section_info *cur_info = NULL;
+  struct parsecfg_file *ff = NULL;
 
   char           sectname[32];
   char           varname[32];
@@ -1222,8 +1216,17 @@ parse_param(char const *path,
   ps->cond_vars = cond_vars;
   ps->cond_stack = 0;
   ps->output_enabled = 1;
-  ps->lineno = 1;
   if (p_cond_count) *p_cond_count = 0;
+
+  /*
+struct parsecfg_file
+{
+  struct parsecfg_file *next;
+  FILE *f;
+  unsigned char *path;
+  int lineno;
+};
+   */
 
   /* found the global section description */
   for (sindex = 0; params[sindex].name; sindex++) {
@@ -1244,6 +1247,14 @@ parse_param(char const *path,
     goto cleanup;
   }
 
+  XCALLOC(ff, 1);
+  ps->f_stack = ff;
+  ff->lineno = 1;
+  ff->path = xstrdup(path);
+  ff->f = f;
+  ff = NULL;
+  f = NULL;
+
   if (cur_info) {
     cfg = (struct generic_section_config*) xcalloc(1, cur_info->size);
     if (cur_info->init_func) cur_info->init_func(cfg);
@@ -1252,25 +1263,24 @@ parse_param(char const *path,
   }
 
   while (1) {
-    c = read_first_char(f, ps);
+    c = read_first_char(ps);
     if (c == EOF || c == '[') break;
     if (c == '#' || c== '%' || c == ';') {
-      read_comment(f, ps);
+      read_comment(ps);
       continue;
     }
     if (c == '@') {
-      if (handle_conditional(f, ps) < 0) goto cleanup;
+      if (handle_conditional(ps) < 0) goto cleanup;
       if (p_cond_count) (*p_cond_count)++;
       continue;
     }
     if (!ps->output_enabled) {
-      read_comment(f, ps);
+      read_comment(ps);
       continue;
     }
-    if (read_variable(f, varname, sizeof(varname),
-                      varvalue, sizeof(varvalue), ps) < 0) goto cleanup;
+    if (read_variable(ps, varname, sizeof(varname), varvalue, sizeof(varvalue)) < 0) goto cleanup;
     if (!quiet_flag) {
-      printf("%d: Value: %s = %s\n", ps->lineno - 1, varname, varvalue);
+      printf("%d: Value: %s = %s\n", ps->f_stack->lineno - 1, varname, varvalue);
     }
     if (!cur_info) {
       fprintf(stderr, "Cannot find description of section [global]\n");
@@ -1280,9 +1290,9 @@ parse_param(char const *path,
   }
 
   while (c != EOF) {
-    if (read_section_name(f, sectname, sizeof(sectname), ps) < 0) goto cleanup;
+    if (read_section_name(ps, sectname, sizeof(sectname)) < 0) goto cleanup;
     if (!quiet_flag) {
-      printf("%d: New section %s\n", ps->lineno - 1, sectname);
+      printf("%d: New section %s\n", ps->f_stack->lineno - 1, sectname);
     }
     if (!strcmp(sectname, "global")) {
       fprintf(stderr, "Section global cannot be specified explicitly\n");
@@ -1308,43 +1318,57 @@ parse_param(char const *path,
     psect = &sect->next;
 
     while (1) {
-      c = read_first_char(f, ps);
+      c = read_first_char(ps);
       if (c == EOF || c == '[') break;
       if (c == '#' || c == '%' || c == ';') {
-        read_comment(f, ps);
+        read_comment(ps);
         continue;
       }
       if (c == '@') {
-        if (handle_conditional(f, ps) < 0) goto cleanup;
+        if (handle_conditional(ps) < 0) goto cleanup;
         if (p_cond_count) (*p_cond_count)++;
         continue;
       }
       if (!ps->output_enabled) {
-        read_comment(f, ps);
+        read_comment(ps);
         continue;
       }
-      if (read_variable(f, varname, sizeof(varname),
-                        varvalue, sizeof(varvalue), ps) < 0) goto cleanup;
+      if (read_variable(ps, varname, sizeof(varname), varvalue, sizeof(varvalue)) < 0) goto cleanup;
       if (!quiet_flag) {
-        printf("%d: Value: %s = %s\n", ps->lineno - 1, varname, varvalue);
+        printf("%d: Value: %s = %s\n", ps->f_stack->lineno - 1, varname, varvalue);
       }
       if (copy_param(ps, sect, cur_info, varname, varvalue) < 0) goto cleanup;
     }
   }
 
   if (ps->cond_stack) {
-    fprintf(stderr, "%d: unclosed conditional compilation\n", ps->lineno);
+    fprintf(stderr, "%d: unclosed conditional compilation\n", ps->f_stack->lineno);
     goto cleanup;
   }
 
   fflush(stdout);
 
   if (f) fclose(f);
+  if (ps && ps->f_stack) {
+    if (ps->f_stack) fclose(ps->f_stack->f);
+    xfree(ps->f_stack->path);
+    xfree(ps->f_stack);
+  }
   return cfg;
 
  cleanup:
   xfree(cfg);
   if (f) fclose(f);
+  if (ff) {
+    if (ff->f) fclose(ff->f);
+    xfree(ff->path);
+    xfree(ff);
+  }
+  if (ps && ps->f_stack) {
+    if (ps->f_stack) fclose(ps->f_stack->f);
+    xfree(ps->f_stack->path);
+    xfree(ps->f_stack);
+  }
   return NULL;
 }
 
