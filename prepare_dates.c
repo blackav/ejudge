@@ -59,7 +59,7 @@ prepare_copy_dates(struct section_problem_data *prob, struct dates_config *dcfg)
         }
     }
 
-    if (prob->date_penalty) {
+    if (!prob->date_penalty) {
         if (dprob && dprob->date_penalty) {
             prob->date_penalty = sarray_copy(dprob->date_penalty);
         } else if (aprob && aprob->date_penalty) {
@@ -69,7 +69,7 @@ prepare_copy_dates(struct section_problem_data *prob, struct dates_config *dcfg)
         }
     }
 
-    if (prob->personal_deadline) {
+    if (!prob->personal_deadline) {
         if (dprob && dprob->personal_deadline) {
             prob->personal_deadline = sarray_copy(dprob->personal_deadline);
         } else if (aprob && aprob->personal_deadline) {
@@ -79,7 +79,7 @@ prepare_copy_dates(struct section_problem_data *prob, struct dates_config *dcfg)
         }
     }
 
-    if (prob->group_start_date) {
+    if (!prob->group_start_date) {
         if (dprob && dprob->group_start_date) {
             prob->group_start_date = sarray_copy(dprob->group_start_date);
         } else if (aprob && aprob->group_start_date) {
@@ -89,7 +89,7 @@ prepare_copy_dates(struct section_problem_data *prob, struct dates_config *dcfg)
         }
     }
 
-    if (prob->group_deadline) {
+    if (!prob->group_deadline) {
         if (dprob && dprob->group_deadline) {
             prob->group_deadline = sarray_copy(dprob->group_deadline);
         } else if (aprob && aprob->group_deadline) {
