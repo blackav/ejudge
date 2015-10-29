@@ -126,6 +126,8 @@ struct token_info
   int open_flags;     // what opens by paying
 };
 
+struct dates_config;
+
 /* sizeof(struct section_global_data) == 350132/350296 */
 struct section_global_data
 {
@@ -740,6 +742,11 @@ struct section_global_data
 
   // set to 1 if there exist a tokenized problem
   int enable_tokens META_ATTRIB((meta_private));
+
+  /** a separate dates configuration file */
+  unsigned char *dates_config_file;
+
+  struct dates_config *dates_config META_ATTRIB((meta_private));
 
   /** INTERNAL: text with unhandled variables */
   unsigned char *unhandled_vars;
