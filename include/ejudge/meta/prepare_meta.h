@@ -285,6 +285,8 @@ enum
   CNTSGLOB_tokens,
   CNTSGLOB_token_info,
   CNTSGLOB_enable_tokens,
+  CNTSGLOB_dates_config_file,
+  CNTSGLOB_dates_config,
   CNTSGLOB_unhandled_vars,
   CNTSGLOB_disable_prob_long_name,
   CNTSGLOB_disable_passed_tests,
