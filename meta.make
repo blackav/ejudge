@@ -1,7 +1,6 @@
 # -*- Makefile -*-
-# $Id$
 
-# Copyright (C) 2011-2014 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2011-2015 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -13,8 +12,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # Lesser General Public License for more details.
 
-META_C_FILES = contests_meta.c super-serve_meta.c prepare_meta.c super_html_6_meta.c super_run_packet_meta.c problem_config_meta.c polygon_packet_meta.c ej_import_packet_meta.c new_server_match.c
-META_H_FILES = ./include/ejudge/meta/contests_meta.h ./include/ejudge/meta/super-serve_meta.h ./include/ejudge/meta/prepare_meta.h ./include/ejudge/meta/super_html_6_meta.h ./include/ejudge/meta/super_run_packet_meta.h ./include/ejudge/meta/problem_config_meta.h ./include/ejudge/meta/polygon_packet_meta.h ./include/ejudge/meta/ej_import_packet_meta.h
+META_C_FILES = contests_meta.c super-serve_meta.c prepare_meta.c super_html_6_meta.c super_run_packet_meta.c problem_config_meta.c polygon_packet_meta.c ej_import_packet_meta.c new_server_match.c dates_config_meta.c
+META_H_FILES = ./include/ejudge/meta/contests_meta.h ./include/ejudge/meta/super-serve_meta.h ./include/ejudge/meta/prepare_meta.h ./include/ejudge/meta/super_html_6_meta.h ./include/ejudge/meta/super_run_packet_meta.h ./include/ejudge/meta/problem_config_meta.h ./include/ejudge/meta/polygon_packet_meta.h ./include/ejudge/meta/ej_import_packet_meta.h ./include/ejudge/meta/dates_config_meta.h
 META_O_FILES = $(META_C_FILES:.c=.o)
 
 CSP_C_FILES = csp/contests/priv_main_page.c
@@ -46,6 +45,9 @@ polygon_packet_meta.c ./include/ejudge/meta/polygon_packet_meta.h : $(META_CC) .
 
 ej_import_packet_meta.c ./include/ejudge/meta/ej_import_packet_meta.h : $(META_CC) ./include/ejudge/ej_import_packet.h
 	$(META_CC) $(META_CC_FLAGS) ./include/ejudge/ej_import_packet.h -o ej_import_packet.out --force-h --meta --meta-struct ej_import_packet
+
+dates_config_meta.c ./include/ejudge/meta/dates_config_meta.h : $(META_CC) ./include/ejudge/dates_config.h
+	$(META_CC) $(META_CC_FLAGS) ./include/ejudge/dates_config.h -o dates_config.out --force-h --meta --meta-struct dates_global_data --meta-struct dates_problem_data
 
 new_server_match.c : genmatcher new_server_at.c
 	./genmatcher > new_server_match.c

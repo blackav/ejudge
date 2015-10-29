@@ -139,6 +139,7 @@ COMMON_CFILES=\
  contest_tmpl.c\
  copyright.c\
  csv.c\
+ dates_config.c\
  diff.c\
  digest_1.c\
  digest_2.c\
@@ -516,6 +517,7 @@ HFILES=\
  ./include/ejudge/cr_serialize.h\
  ./include/ejudge/csv.h\
  ./include/ejudge/curtime.h\
+ ./include/ejudge/dates_config.h\
  ./include/ejudge/diff.h\
  ./include/ejudge/digest_io.h\
  ./include/ejudge/dwarf_parse.h\
