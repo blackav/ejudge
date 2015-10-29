@@ -56,17 +56,27 @@ struct dates_problem_data
     char **group_start_date;
     char **group_deadline;
     char **personal_deadline;
+
+    struct dates_problem_data *use_dates_of_ref META_ATTRIB((meta_hidden));
+    struct dates_problem_data *super_ref META_ATTRIB((meta_hidden));
 };
 
 struct dates_config
 {
     struct generic_section_config *list;
     struct dates_global_data *global;
-    struct dates_problem_data *aprobs;
-    struct dates_problem_data *probs;
-    int aprobs_count;
-    int probs_count;
+    struct dates_problem_data **aprobs;
+    struct dates_problem_data **probs;
+    int aprob_count;
+    int prob_count;
 };
+
+struct dates_config *
+dates_config_parse_cfg(
+        const unsigned char *path,
+        const unsigned char *main_path);
+struct dates_config *
+dates_config_free(struct dates_config *cfg);
 
 #endif /* __DATES_CONFIG_H__ */
 
