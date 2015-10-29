@@ -2250,6 +2250,7 @@ prepare_insert_variant_num(
 static int
 set_defaults(
         const struct contest_desc *cnts,
+        const unsigned char *config_file,
         serve_state_t state,
         int mode,
         const unsigned char **subst_src,
@@ -2956,6 +2957,11 @@ set_defaults(
       return -1;
   }
 
+  if (mode == PREPARE_SERVE && g->dates_config_file && g->dates_config_file[0]) {
+    if (!(g->dates_config = dates_config_parse_cfg(g->dates_config_file, config_file)))
+      return -1;
+  }
+
   for (i = 1; i <= state->max_lang && mode != PREPARE_RUN; i++) {
     if (!(lang = state->langs[i])) continue;
     if (!lang->short_name[0]) {
@@ -3141,6 +3147,10 @@ set_defaults(
       return -1;
     }
     ish = prob->short_name;
+
+    if (g->dates_config) {
+      prepare_copy_dates(prob, g->dates_config);
+    }
 
     /* parse XML here */
     if (!prob->xml_file[0] && si != -1 && aprob->xml_file[0]) {
@@ -4425,7 +4435,7 @@ prepare(
     return -1;
   }
   */
-  if (set_defaults(cnts, state, mode, subst_src, subst_dst) < 0) return -1;
+  if (set_defaults(cnts, config_file, state, mode, subst_src, subst_dst) < 0) return -1;
   return 0;
 }
 
