@@ -196,6 +196,7 @@ COMMON_CFILES=\
  prepare.c\
  prepare_out.c\
  prepare_serve.c\
+ prepare_dates.c\
  printing.c\
  problem_common.c\
  problem_config.c\
