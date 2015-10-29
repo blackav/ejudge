@@ -544,6 +544,11 @@ prepare_unparse_global(
     fprintf(f, "\n");
   }
 
+  if (global->dates_config_file && global->dates_config_file[0]) {
+    do_str(f, &ab, "dates_config_file", global->dates_config_file);
+    fprintf(f, "\n");
+  }
+
   if (global->unhandled_vars) fprintf(f, "%s\n", global->unhandled_vars);
 
   html_armor_free(&ab);

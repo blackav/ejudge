@@ -31,6 +31,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/compat.h"
 #include "ejudge/variant_map.h"
+#include "ejudge/dates_config.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -335,6 +336,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(load_user_group, "x"),
 
   GLOBAL_PARAM(tokens, "S"),
+  GLOBAL_PARAM(dates_config_file, "S"),
 
   GLOBAL_PARAM(compile_max_vm_size, "E"),
   GLOBAL_PARAM(compile_max_stack_size, "E"),
@@ -890,6 +892,8 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->super_run_dir);
   xfree(p->tokens);
   xfree(p->token_info);
+  xfree(p->dates_config_file);
+  dates_config_free(p->dates_config);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
