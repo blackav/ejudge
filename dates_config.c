@@ -251,9 +251,9 @@ dates_config_free(struct dates_config *cfg)
         struct generic_section_config *q = p;
         p = p->next;
 
-        if (!*p->name || !strcmp(p->name, "global")) {
+        if (!*q->name || !strcmp(q->name, "global")) {
             dates_global_free_func(q);
-        } else if (!strcmp(p->name, "problem")) {
+        } else if (!strcmp(q->name, "problem")) {
             dates_problem_free_func(q);
         } else {
             abort();
