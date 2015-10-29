@@ -1541,4 +1541,9 @@ prepare_parse_testsets(
 void
 prepare_free_testsets(int t, struct testset_info *p);
 
+void
+prepare_copy_dates(
+        struct section_problem_data *prob,
+        struct dates_config *dcfg);
+
 #endif /* __PREPARE_H__ */
