@@ -2320,6 +2320,7 @@ serve_read_compile_packet(
     testing_report->status = RUN_RUNNING;
     if (txt_text) {
       testing_report->compiler_output = xstrdup(txt_text);
+      utf8_fix_string(testing_report->compiler_output, NULL);
     }
     testing_report->scoring_system = global->score_system;
     testing_report->compile_error = 1;
