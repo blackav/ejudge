@@ -2248,6 +2248,7 @@ serve_read_compile_packet(
     testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.judge_id);
     testing_report->status = comp_pkt->status;
     testing_report->compiler_output = xstrdup(txt_text);
+    utf8_fix_string(testing_report->compiler_output, NULL);
     testing_report->scoring_system = global->score_system;
     testing_report->compile_error = 1;
     memcpy(&testing_report->uuid, &re.run_uuid, sizeof(testing_report->uuid));
