@@ -487,5 +487,100 @@ meta_get_variable_str(
         const void *ptr,
         const unsigned char *name)
 {
+  int field_id = mth->lookup_field(name);
+  if (field_id <= 0) return NULL;
+
+  int ft = mth->get_type(field_id);
+  int fz = mth->get_size(field_id);
+  const void *fp = mth->get_ptr(ptr, field_id);
+  if (!fp) return NULL;
+
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  unsigned char buf[256];
+
+  switch (ft) {
+  case 't':                   /* time_t */
+    return xstrdup(xml_unparse_date(*(const time_t*) fp));
+
+  case 'b':                   /* ejbytebool_t */
+  case 'B':                   /* ejintbool_t */
+    {
+      int b = 0;
+      switch (fz) {
+      case 1:
+        b = *(const char*) fp;
+        break;
+      case 2:
+        b = *(const short*) fp;
+        break;
+      case 4:
+        b = *(const int*) fp;
+        break;
+      case 8:
+        if (*(const long long*) fp > 0) b = 1;
+        break;
+      default:
+        abort();
+      }
+      if (b > 0) b = 1;
+      if (b < 0) b = 0;
+      sprintf(buf, "%d", b);
+      return xstrdup(buf);
+    }
+  case 'z':                   /* ejintsize_t */
+    ASSERT(fz == sizeof(int));
+    num_to_size_str(buf, sizeof(buf), *(const int*) fp);
+    return xstrdup(buf);
+  case 'i':                   /* int type */
+    ASSERT(fz == sizeof(int));
+    snprintf(buf, sizeof(buf), "%d", *(const int*) fp);
+    return xstrdup(buf);
+  case 'S':                   /* path_t */
+    {
+      const unsigned char *sv = (const unsigned char *) fp;
+      if (!sv) return NULL;
+      const unsigned char *sv2 = c_armor_buf(&ab, sv);
+      if (sv2 == sv) return xstrdup(sv);
+      return ab.buf;
+    }
+  case 's':                   /* char * type */
+    {
+      const unsigned char *sv = *(const unsigned char **) fp;
+      if (!sv) return NULL;
+      const unsigned char *sv2 = c_armor_buf(&ab, sv);
+      if (sv2 == sv) return xstrdup(sv);
+      return ab.buf;
+    }
+
+#if 0
+  case 'x':                   /* ejstrlist_t */
+  case 'X':                   /* ejenvlist_t */
+    {
+      const unsigned char **p = *(const unsigned char ***) fp;
+      if (p) {
+        for (int i = 0; p[i]; ++i) {
+          fprintf(out_f, "%s = \"%s\"\n", fn, CARMOR(p[i]));
+        }
+      }
+    }
+    break;
+#endif
+
+  case 'Z':                   /* size_t */
+    ASSERT(fz == sizeof(size_t));
+    {
+      size_t vz = *(const size_t*) fp;
+      if (vz == (size_t) -1UL) return xstrdup("-1");
+      size_t_to_size_str(buf, sizeof(buf), vz);
+      return xstrdup(buf);
+    }
+  case 'E':
+    ASSERT(fz == sizeof(ej_size64_t));
+    {
+      ll_to_size_str(buf, sizeof(buf), *(const ej_size64_t *) fp);
+      return xstrdup(buf);
+    }
+  }
+
   return NULL;
 }
