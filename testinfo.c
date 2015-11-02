@@ -388,8 +388,9 @@ is_ident_char(int c)
 #define FAIL(code) do { retval = -code; goto fail; } while (0)
 
 static int
-parse_line(const unsigned char *str, size_t len, testinfo_t *pt)
+parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo_subst_handler *sh)
 {
+  unsigned char *subst_str = NULL;
   const unsigned char *s = str;
   unsigned char *name_buf = 0, *p;
   unsigned char *val_buf = 0;
@@ -397,6 +398,11 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt)
   size_t len2;
   struct cmdline_buf cmd;
   int retval = 0, x, n;
+
+  if (sh && pt->enable_subst > 0) {
+    subst_str = sh->substitute(sh, str);
+    str = subst_str;
+  }
 
   memset(&cmd, 0, sizeof(cmd));
   if (!(name_buf = (unsigned char *) alloca(len + 1))) FAIL(TINF_E_NO_MEMORY);
@@ -422,6 +428,7 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt)
   }
   if ((retval = parse_cmdline(val_buf, &cmd)) < 0) {
     free_cmdline(&cmd);
+    free(subst_str);
     return retval;
   }
 
@@ -474,19 +481,31 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt)
         FAIL(TINF_E_INVALID_VALUE);
     }
     pt->disable_stderr = x;
+  } else if (!strcmp(name_buf, "enable_subst")) {
+    if (cmd.u < 1) {
+      x = 1;
+    } else {
+      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
+      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
+          || x < 0 || x > 1)
+        FAIL(TINF_E_INVALID_VALUE);
+    }
+    pt->enable_subst = x;
   } else {
     FAIL(TINF_E_INVALID_VAR_NAME);
   }
   free_cmdline(&cmd);
+  free(subst_str);
   return 0;
 
  fail:
   free_cmdline(&cmd);
+  free(subst_str);
   return retval;
 }
 
 static int
-parse_file(FILE *fin, testinfo_t *pt)
+parse_file(FILE *fin, testinfo_t *pt, struct testinfo_subst_handler *sh)
 {
   struct line_buf buf;
   int retval;
@@ -503,7 +522,7 @@ parse_file(FILE *fin, testinfo_t *pt)
       buf.v[--buf.u] = 0;
     if (!buf.u) continue;
 
-    if ((retval = parse_line(buf.v, buf.u, pt))) {
+    if ((retval = parse_line(buf.v, buf.u, pt, sh))) {
       if (buf.v) free(buf.v);
       return retval;
     }
@@ -513,7 +532,7 @@ parse_file(FILE *fin, testinfo_t *pt)
 }
 
 int
-testinfo_parse(const char *path, testinfo_t *pt)
+testinfo_parse(const char *path, testinfo_t *pt, struct testinfo_subst_handler *sh)
 {
   FILE *fin = 0;
   int retval;
@@ -525,7 +544,7 @@ testinfo_parse(const char *path, testinfo_t *pt)
     memset(pt, 0, sizeof(*pt));
     return -TINF_E_CANNOT_OPEN;
   }
-  if ((retval = parse_file(fin, pt)) < 0) {
+  if ((retval = parse_file(fin, pt, sh)) < 0) {
     fclose(fin);
     memset(pt, 0, sizeof(*pt));
     return retval;
