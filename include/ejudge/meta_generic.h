@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __META_GENERIC_H__
 #define __META_GENERIC_H__
 
-/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -81,5 +80,11 @@ meta_unparse_cfg(
         const struct meta_methods *mth,
         const void *ptr,
         const void *default_ptr);
+
+unsigned char *
+meta_get_variable_str(
+        const struct meta_methods *mth,
+        const void *ptr,
+        const unsigned char *name);
 
 #endif /* __META_GENERIC_H__ */

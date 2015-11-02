@@ -480,3 +480,12 @@ meta_parse_string(
 
     return 0;
 }
+
+unsigned char *
+meta_get_variable_str(
+        const struct meta_methods *mth,
+        const void *ptr,
+        const unsigned char *name)
+{
+  return NULL;
+}
