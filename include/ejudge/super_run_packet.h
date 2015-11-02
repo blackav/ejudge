@@ -213,4 +213,9 @@ super_run_in_packet_unparse_cfg(FILE *out_f, struct super_run_in_packet *p);
 struct super_run_in_packet *
 super_run_in_packet_parse_cfg_str(const unsigned char *path, char *buf, size_t size);
 
+unsigned char *
+super_run_in_packet_substitute(
+        const struct super_run_in_packet *p,
+        const unsigned char *str);
+
 #endif /* __SUPER_RUN_PACKET_H__ */
