@@ -417,6 +417,12 @@ super_run_in_packet_substitute(
       } else {
         i = j;
       }
+    } else if (str[i] == '$' && str[i + 1] == '$') {
+      if (out_u + 1 == out_z) {
+        out_s = xrealloc(out_s, out_z *= 2);
+      }
+      out_s[out_u++] = str[i++];
+      ++i;
     } else {
       if (out_u + 1 == out_z) {
         out_s = xrealloc(out_s, out_z *= 2);
