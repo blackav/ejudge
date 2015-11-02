@@ -1979,6 +1979,18 @@ is_java_memory_limit(const unsigned char *text, ssize_t size)
   return 0;
 }
 
+struct testinfo_subst_handler_super_run
+{
+  struct testinfo_subst_handler b;
+  const struct super_run_in_packet *srp;
+};
+
+static unsigned char *testinfo_subst_handler_substitute(struct testinfo_subst_handler *bp, const unsigned char *str)
+{
+  struct testinfo_subst_handler_super_run *srh = (struct testinfo_subst_handler_super_run *) bp;
+  return super_run_in_packet_substitute(srh->srp, str);
+}
+
 static int
 run_one_test(
         const struct ejudge_cfg *config,
@@ -2177,7 +2189,10 @@ run_one_test(
 
   /* Load test information file */
   if (srpp->use_info > 0) {
-    if ((errcode = testinfo_parse(info_src, &tstinfo)) < 0) {
+    struct testinfo_subst_handler_super_run sr;
+    sr.b.substitute = testinfo_subst_handler_substitute;
+    sr.srp = srp;
+    if ((errcode = testinfo_parse(info_src, &tstinfo, &sr.b)) < 0) {
       err("Cannot parse test info file '%s': %s", info_src, testinfo_strerror(-errcode));
       append_msg_to_log(check_out_path, "failed to parse testinfo file '%s': %s\n",
                         info_src, testinfo_strerror(-errcode));

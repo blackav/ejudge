@@ -2468,7 +2468,7 @@ report_file_info(
 
     if (retval != -2 && binary_input <= 0) {
       if (pti) {
-        retval = testinfo_parse(path, pti);
+        retval = testinfo_parse(path, pti, NULL);
         if (retval < 0) {
           fprintf(out_f, "<tr><td%s colspan=\"2\" align=\"center\"><font color=\"red\">%s: %s</font></td></tr>\n",
                   cl, "Testinfo error", testinfo_strerror(retval));
@@ -3179,7 +3179,7 @@ super_serve_op_TESTS_TEST_EDIT_ACTION(
     }
     xfree(text); text = NULL;
     fclose(tmp_f); tmp_f = NULL;
-    if (testinfo_parse(info_tmp_path, &tinfo) < 0) {
+    if (testinfo_parse(info_tmp_path, &tinfo, NULL) < 0) {
       FAIL(SSERV_ERR_INV_TESTINFO);
     }
     testinfo_free(&tinfo);
