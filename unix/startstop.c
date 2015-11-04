@@ -269,6 +269,14 @@ start_open_log(const unsigned char *log_path)
   return 0;
 }
 
+void
+start_shutdown(const unsigned char *command)
+{
+  execlp(command, command, NULL);
+  err("cannot execute shutdown command '%s'", command);
+  exit(1);
+}
+
 /*
  * Local variables:
  *  compile-command: "make -C .."

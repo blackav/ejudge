@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __STARTSTOP_H__
 #define __STARTSTOP_H__
 
-/* Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -40,5 +39,7 @@ start_find_all_processes(const unsigned char *name, int **p_pids);
 int start_kill(int pid, int op);
 int start_daemon(const unsigned char *log_path);
 int start_open_log(const unsigned char *log_path);
+
+void start_shutdown(const unsigned char *cmd) __attribute__((noreturn));
 
 #endif /* __STARTSTOP_H__ */
