@@ -320,6 +320,7 @@ enum
   CNTSPROB_interactive_valuer,
   CNTSPROB_disable_pe,
   CNTSPROB_disable_wtl,
+  CNTSPROB_wtl_is_cf,
   CNTSPROB_use_stdin,
   CNTSPROB_use_stdout,
   CNTSPROB_combined_stdin,
