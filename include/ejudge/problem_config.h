@@ -41,6 +41,7 @@ struct problem_config_section
   ejintbool_t interactive_valuer;
   ejintbool_t disable_pe;
   ejintbool_t disable_wtl;
+  ejintbool_t wtl_is_cf;
   ejintbool_t use_stdin;
   ejintbool_t use_stdout;
   ejintbool_t combined_stdin;
