@@ -57,7 +57,7 @@
     <tr>
         <td class="b1"><s:v value="i + 1" /></td>
         <td class="b1"><s:v value="srgp->contest_id" /></td>
-        <td class="b1"><s:v escape="false" value="vec.v[i].queue_is" /></td>
+        <td class="b1"><s:v escape="false" value="vec.v[i].queue_id" /></td>
         <td class="b1"><s:v escape="false" value="vec.v[i].entry_name" /></td>
         <td class="b1"><s:v value="vec.v[i].priority" /></td>
         <td class="b1"><s:v value="srgp->run_id" /></td>
