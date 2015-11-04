@@ -674,12 +674,14 @@ int
 serve_testing_queue_delete(
         const struct contest_desc *cnts, 
         serve_state_t state,
+        const unsigned char *queue_id,
         const unsigned char *packet,
         const unsigned char *user_login);
 int
 serve_testing_queue_change_priority(
         const struct contest_desc *cnts,
         const serve_state_t state,
+        const unsigned char *queue_id,
         const unsigned char *packet_name,
         int adjustment,
         const unsigned char *user_login);

@@ -5805,7 +5805,7 @@ priv_testing_queue_operation(
         struct contest_extra *extra)
 {
   int retval = 0;
-  const unsigned char *packet_name = 0, *s;
+  const unsigned char *packet_name = 0, *s, *queue_id = NULL;
   const serve_state_t cs = extra->serve_state;
 
   if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
@@ -5817,16 +5817,24 @@ priv_testing_queue_operation(
       FAIL(NEW_SRV_ERR_INV_PARAM);
     }
   }
+  hr_cgi_param(phr, "queue", &queue_id);
+  if (queue_id) {
+    for (s = queue_id; *s; ++s) {
+      if (!isalnum(*s)) {
+        FAIL(NEW_SRV_ERR_INV_PARAM);
+      }
+    }
+  }
 
   switch (phr->action) {
   case NEW_SRV_ACTION_TESTING_DELETE:
-    serve_testing_queue_delete(cnts, cs, packet_name, phr->login);
+    serve_testing_queue_delete(cnts, cs, queue_id, packet_name, phr->login);
     break;
   case NEW_SRV_ACTION_TESTING_UP:
-    serve_testing_queue_change_priority(cnts, cs, packet_name, -1, phr->login);
+    serve_testing_queue_change_priority(cnts, cs, queue_id, packet_name, -1, phr->login);
     break;
   case NEW_SRV_ACTION_TESTING_DOWN:
-    serve_testing_queue_change_priority(cnts, cs, packet_name, 1, phr->login);
+    serve_testing_queue_change_priority(cnts, cs, queue_id, packet_name, 1, phr->login);
     break;
   default:
     FAIL(NEW_SRV_ERR_INV_PARAM);
