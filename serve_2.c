@@ -517,6 +517,8 @@ do_build_run_dirs(
   struct run_dir_item *cur = &state->run_dirs[state->run_dirs_u];
   memset(cur, 0, sizeof(*cur));
 
+  fprintf(stderr, "Adding run dir: '%s', '%s'\n", id, status_dir);
+
   cur->id = xstrdup(id);
   cur->status_dir = xstrdup(status_dir);
   cur->report_dir = xstrdup(report_dir);
@@ -533,7 +535,7 @@ serve_build_run_dirs(
   const struct section_global_data *global = state->global;
   int i;
 
-  if (cnts && cnts->run_managed) {
+  if (0 /*cnts && cnts->run_managed*/) {
     unsigned char status_dir[PATH_MAX];
     unsigned char report_dir[PATH_MAX];
     unsigned char team_report_dir[PATH_MAX];
