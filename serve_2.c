@@ -491,11 +491,13 @@ serve_build_compile_dirs(serve_state_t state)
 }
 
 static int
-do_build_run_dirs(serve_state_t state,
-                  const unsigned char *status_dir,
-                  const unsigned char *report_dir,
-                  const unsigned char *team_report_dir,
-                  const unsigned char *full_report_dir)
+do_build_run_dirs(
+        serve_state_t state,
+        const unsigned char *id,
+        const unsigned char *status_dir,
+        const unsigned char *report_dir,
+        const unsigned char *team_report_dir,
+        const unsigned char *full_report_dir)
 {
   int i;
 
@@ -512,10 +514,14 @@ do_build_run_dirs(serve_state_t state,
     XREALLOC(state->run_dirs, state->run_dirs_a);
   }
 
-  state->run_dirs[state->run_dirs_u].status_dir = xstrdup(status_dir);
-  state->run_dirs[state->run_dirs_u].report_dir = xstrdup(report_dir);
-  state->run_dirs[state->run_dirs_u].team_report_dir = xstrdup(team_report_dir);
-  state->run_dirs[state->run_dirs_u].full_report_dir = xstrdup(full_report_dir);
+  struct run_dir_item *cur = &state->run_dirs[state->run_dirs_u];
+  memset(cur, 0, sizeof(*cur));
+
+  cur->id = xstrdup(id);
+  cur->status_dir = xstrdup(status_dir);
+  cur->report_dir = xstrdup(report_dir);
+  cur->team_report_dir = xstrdup(team_report_dir);
+  cur->full_report_dir = xstrdup(full_report_dir);
   return state->run_dirs_u++;
 }
 
@@ -539,7 +545,7 @@ serve_build_run_dirs(serve_state_t state, int contest_id)
              "%s/var/%06d/output", global->super_run_dir, contest_id);
     snprintf(team_report_dir, sizeof(team_report_dir),
              "%s/var/%06d/teamreports", global->super_run_dir, contest_id);
-    do_build_run_dirs(state, status_dir, report_dir, team_report_dir, full_report_dir);
+    do_build_run_dirs(state, "", status_dir, report_dir, team_report_dir, full_report_dir);
 
     for (i = 1; i <= state->max_lang; ++i) {
       struct section_language_data *lang = state->langs[i];
@@ -552,7 +558,7 @@ serve_build_run_dirs(serve_state_t state, int contest_id)
                  "%s/var/%06d/output", lang->super_run_dir, contest_id);
         snprintf(team_report_dir, sizeof(team_report_dir),
                  "%s/var/%06d/teamreports", lang->super_run_dir, contest_id);
-        do_build_run_dirs(state, status_dir, report_dir, team_report_dir, full_report_dir);
+        do_build_run_dirs(state, lang->super_run_dir, status_dir, report_dir, team_report_dir, full_report_dir);
       }
     }
 
@@ -567,14 +573,14 @@ serve_build_run_dirs(serve_state_t state, int contest_id)
                  "%s/var/%06d/output", prob->super_run_dir, contest_id);
         snprintf(team_report_dir, sizeof(team_report_dir),
                  "%s/var/%06d/teamreports", prob->super_run_dir, contest_id);
-        do_build_run_dirs(state, status_dir, report_dir, team_report_dir, full_report_dir);
+        do_build_run_dirs(state, prob->super_run_dir, status_dir, report_dir, team_report_dir, full_report_dir);
       }
     }
   } else {
     for (i = 1; i <= state->max_tester; i++) {
       if (!state->testers[i]) continue;
       //if (state->testers[i]->any) continue;
-      do_build_run_dirs(state, state->testers[i]->run_status_dir,
+      do_build_run_dirs(state, state->testers[i]->name, state->testers[i]->run_status_dir,
                         state->testers[i]->run_report_dir,
                         state->testers[i]->run_team_report_dir,
                         state->testers[i]->run_full_archive_dir);

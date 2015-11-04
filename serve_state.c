@@ -195,10 +195,12 @@ serve_state_destroy(
   }
   xfree(state->compile_dirs);
   for (i = 0; i < state->run_dirs_u; i++) {
-    xfree(state->run_dirs[i].status_dir);
-    xfree(state->run_dirs[i].report_dir);
-    xfree(state->run_dirs[i].team_report_dir);
-    xfree(state->run_dirs[i].full_report_dir);
+    struct run_dir_item *rdi = &state->run_dirs[i];
+    xfree(rdi->id);
+    xfree(rdi->status_dir);
+    xfree(rdi->report_dir);
+    xfree(rdi->team_report_dir);
+    xfree(rdi->full_report_dir);
   }
   xfree(state->run_dirs);
 

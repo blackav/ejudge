@@ -96,6 +96,7 @@ struct compile_dir_item
 };
 struct run_dir_item
 {
+  unsigned char *id;
   unsigned char *status_dir;
   unsigned char *report_dir;
   unsigned char *team_report_dir;
