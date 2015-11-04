@@ -5541,6 +5541,8 @@ ns_scan_run_queue_one(
   struct super_run_in_packet *srp = NULL;
   int priority = 0;
 
+  fprintf(stderr, "Scan directory '%s'\n", qpath);
+
   snprintf(qpath, sizeof(qpath), "%s/dir", dpath);
   if (!(d = opendir(qpath))) {
     return;
