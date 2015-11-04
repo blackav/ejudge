@@ -4982,7 +4982,7 @@ get_priority_code(int priority)
   if (priority < 0) priority = 0;
   if (priority > 31) priority = 31;
   if (priority < 10) return '0' + priority;
-  return 'A' + priority;
+  return 'A' - 10 + priority;
 }
 
 static struct run_queue_item *
