@@ -1038,6 +1038,9 @@ prepare_unparse_prob(
   if ((prob->abstract && prob->disable_wtl == 1)
       || (!prob->abstract && prob->disable_wtl >= 0))
     unparse_bool(f, "disable_wtl", prob->disable_wtl);
+  if ((prob->abstract && prob->wtl_is_cf == 1)
+      || (!prob->abstract && prob->wtl_is_cf >= 0))
+    unparse_bool(f, "wtl_is_cf", prob->wtl_is_cf);
   if ((prob->abstract && prob->manual_checking == 1)
       || (!prob->abstract && prob->manual_checking >= 0))
     unparse_bool(f, "manual_checking", prob->manual_checking);
@@ -1491,6 +1494,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "disable_pe", prob->disable_pe);
   if (prob->disable_wtl > 0)
     unparse_bool(f, "disable_wtl", prob->disable_wtl);
+  if (prob->wtl_is_cf > 0)
+    unparse_bool(f, "wtl_is_cf", prob->wtl_is_cf);
   if (prob->manual_checking > 0)
     unparse_bool(f, "manual_checking", prob->manual_checking);
   if (prob->examinator_num > 0)
@@ -2440,6 +2445,7 @@ prepare_unparse_testers(
     prepare_set_prob_value(CNTSPROB_interactive_valuer, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_disable_pe, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_disable_wtl, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_wtl_is_cf, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_manual_checking, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_examinator_num, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_check_presentation,tmp_prob, abstr, global);

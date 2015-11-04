@@ -632,6 +632,7 @@ merge_problem_section(
         { CNTSPROB_interactive_valuer, META_PROBLEM_CONFIG_SECTION_interactive_valuer },
         { CNTSPROB_disable_pe, META_PROBLEM_CONFIG_SECTION_disable_pe },
         { CNTSPROB_disable_wtl, META_PROBLEM_CONFIG_SECTION_disable_wtl },
+        { CNTSPROB_wtl_is_cf, META_PROBLEM_CONFIG_SECTION_wtl_is_cf },
         { CNTSPROB_use_stdin, META_PROBLEM_CONFIG_SECTION_use_stdin },
         { CNTSPROB_use_stdout, META_PROBLEM_CONFIG_SECTION_use_stdout },
         { CNTSPROB_combined_stdin, META_PROBLEM_CONFIG_SECTION_combined_stdin },
@@ -942,6 +943,7 @@ generate_makefile(struct sid_state *ss,
     prepare_set_prob_value(CNTSPROB_interactive_valuer, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_disable_pe, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_disable_wtl, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_wtl_is_cf, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_manual_checking, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_examinator_num, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_check_presentation, tmp_prob, abstr, global);

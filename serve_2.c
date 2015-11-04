@@ -1707,6 +1707,7 @@ serve_run_request(
   srpp->interactive_valuer = prob->interactive_valuer;
   srpp->disable_pe = prob->disable_pe;
   srpp->disable_wtl = prob->disable_wtl;
+  srpp->wtl_is_cf = prob->wtl_is_cf;
   srpp->use_stdin = prob->use_stdin;
   srpp->use_stdout = prob->use_stdout;
   srpp->combined_stdin = prob->combined_stdin;

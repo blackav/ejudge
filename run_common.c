@@ -2710,13 +2710,14 @@ run_one_test(
 
   // debug
   if (cur_info->times > 1000000 || cur_info->times < 0) {
-    append_msg_to_log(check_out_path, "bogus running time %ld",
-                      cur_info->times);
+    append_msg_to_log(check_out_path, "bogus running time %ld", cur_info->times);
     goto check_failed;
   }
 
   if (task_IsRealTimeout(tsk)) {
-    if (srpp->disable_wtl > 0) {
+    if (srpp->wtl_is_cf > 0) {
+      goto check_failed;
+    } else if (srpp->disable_wtl > 0) {
       status = RUN_TIME_LIMIT_ERR;
     } else {
       status = RUN_WALL_TIME_LIMIT_ERR;

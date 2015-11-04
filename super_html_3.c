@@ -480,6 +480,7 @@ super_html_add_abstract_problem(
   prob->interactive_valuer = 0;
   prob->disable_pe = 0;
   prob->disable_wtl = 0;
+  prob->wtl_is_cf = 0;
   prob->use_stdin = 1;
   prob->use_stdout = 1;
   prob->combined_stdin = 0;

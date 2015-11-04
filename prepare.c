@@ -359,6 +359,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(interactive_valuer, "d"),  
   PROBLEM_PARAM(disable_pe, "d"),  
   PROBLEM_PARAM(disable_wtl, "d"),  
+  PROBLEM_PARAM(wtl_is_cf, "d"),  
   PROBLEM_PARAM(manual_checking, "d"),  
   PROBLEM_PARAM(examinator_num, "d"),  
   PROBLEM_PARAM(check_presentation, "d"),  
@@ -931,6 +932,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->interactive_valuer = -1;
   p->disable_pe = -1;
   p->disable_wtl = -1;
+  p->wtl_is_cf = -1;
   p->manual_checking = -1;
   p->check_presentation = -1;
   p->use_stdin = -1;
@@ -3237,6 +3239,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_interactive_valuer, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_pe, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_wtl, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_wtl_is_cf, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_manual_checking, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_examinator_num, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_check_presentation, prob, aprob, g);
@@ -4959,6 +4962,7 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (prob->interactive_valuer < 0) prob->interactive_valuer = 0;
   if (prob->disable_pe < 0) prob->disable_pe = 0;
   if (prob->disable_wtl < 0) prob->disable_wtl = 0;
+  if (prob->wtl_is_cf < 0) prob->wtl_is_cf = 0;
   if (prob->manual_checking < 0) prob->manual_checking = 0;
   if (prob->examinator_num < 0) prob->examinator_num = 0;
   if (prob->check_presentation < 0) prob->check_presentation = 0;
@@ -5486,6 +5490,7 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN(interactive_valuer);
   INHERIT_BOOLEAN(disable_pe);
   INHERIT_BOOLEAN(disable_wtl);
+  INHERIT_BOOLEAN(wtl_is_cf);
   INHERIT_BOOLEAN(manual_checking);
 
   case CNTSPROB_examinator_num:
@@ -6096,6 +6101,7 @@ prepare_set_all_prob_values(
     CNTSPROB_interactive_valuer,
     CNTSPROB_disable_pe,
     CNTSPROB_disable_wtl,
+    CNTSPROB_wtl_is_cf,
     CNTSPROB_use_stdin,
     CNTSPROB_use_stdout,
     CNTSPROB_combined_stdin,
