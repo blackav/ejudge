@@ -47,7 +47,7 @@ CC_CFILES=compile-control.c version.c
 CC_OBJECTS=$(CC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 SERVE_CFILES=serve.c version.c
-SERVE_OBJECTS=$(SERVE_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a
+SERVE_OBJECTS=$(SERVE_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
 RUN_CFILES=run.c version.c
 RUN_OBJECTS=$(RUN_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
@@ -316,7 +316,7 @@ ej-convert-runs: ${CR_OBJECTS}
 	${LD} ${LDFLAGS} -rdynamic $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID}
 
 ej-fix-db: ${FIX_DB_OBJECTS}
-	${LD} ${LDFLAGS} -rdynamic $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID}
+	${LD} ${LDFLAGS} -rdynamic ${FIX_DB_OBJECTS} -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID}
 
 ej-parblock: ${PB_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID}
