@@ -103,6 +103,13 @@ struct run_dir_item
   unsigned char *full_report_dir;
 };
 
+struct run_queue_item
+{
+  unsigned char *id;
+  unsigned char *queue_dir;
+  unsigned char *exe_dir;
+};
+
 struct problem_extra_info
 {
   struct watched_file stmt;
@@ -279,6 +286,9 @@ struct serve_state
 
   struct run_dir_item *run_dirs;
   int run_dirs_u, run_dirs_a;
+
+  struct run_queue_item *run_queues;
+  int run_queues_u, run_queues_a;
 
   struct problem_extra_info *prob_extras;
   unsigned short compile_request_id;

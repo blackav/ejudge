@@ -194,6 +194,7 @@ serve_state_destroy(
     xfree(state->compile_dirs[i].report_dir);
   }
   xfree(state->compile_dirs);
+
   for (i = 0; i < state->run_dirs_u; i++) {
     struct run_dir_item *rdi = &state->run_dirs[i];
     xfree(rdi->id);
@@ -203,6 +204,14 @@ serve_state_destroy(
     xfree(rdi->full_report_dir);
   }
   xfree(state->run_dirs);
+
+  for (i = 0; i < state->run_queues_u; ++i) {
+    struct run_queue_item *rqi = &state->run_queues[i];
+    xfree(rqi->id);
+    xfree(rqi->queue_dir);
+    xfree(rqi->exe_dir);
+  }
+  xfree(state->run_queues);
 
   xfree(state->abstr_probs);
   xfree(state->abstr_testers);
