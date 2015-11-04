@@ -2079,6 +2079,7 @@ function viewDialogOnChange(field)
 
             <%@expand ORIG_INHERITABLE_BOOLEAN "disable_pe" "Feedback" "Report Presentation Error as Wrong Answer" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "disable_wtl" "Feedback" "Report Wall Time Limit Exceeded as Time Limit Exceeded" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "wtl_is_cf" "Feedback" "Report Wall Time Limit Exceeded as Check Failed" %>
 
         </table>
     </div>

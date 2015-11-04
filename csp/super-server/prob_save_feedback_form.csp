@@ -33,6 +33,7 @@
     ejintbool_t min_tests_to_accept_dflt = 0;
     int disable_pe = -1;
     int disable_wtl = -1;
+    int wtl_is_cf = -1;
 
     int i;
     struct section_problem_data *prob = NULL;
@@ -59,6 +60,7 @@
 %><s:read var="min_tests_to_accept_dflt" default="0" /><%
 %><s:read var="disable_pe" default="-1" /><%
 %><s:read var="disable_wtl" default="-1" /><%
+%><s:read var="wtl_is_cf" default="-1" /><%
 
     if (retval || !phr->ss) goto cleanup;
 
@@ -75,6 +77,7 @@
     if (min_tests_to_accept_dflt) tests_to_accept = -1;
     if (disable_pe > 0) disable_pe = 1;
     if (disable_wtl > 0) disable_wtl = 1;
+    if (wtl_is_cf > 0) wtl_is_cf = 1;
 
     if (prob_id <= 0) {
         i = -prob_id;
@@ -91,6 +94,7 @@
         if (accept_partial < 0) accept_partial = 0;
         if (disable_pe < 0) disable_pe = 0;
         if (disable_wtl < 0) disable_wtl = 0;
+        if (wtl_is_cf < 0) wtl_is_cf = 0;
     } else {
         i = prob_id;
         if (i >= phr->ss->prob_a) FAIL(SSERV_ERR_INVALID_PARAMETER);
@@ -106,6 +110,7 @@
         if (accept_partial < 0) accept_partial = -1;
         if (disable_pe < 0) disable_pe = -1;
         if (disable_wtl < 0) disable_wtl = -1;
+        if (wtl_is_cf < 0) wtl_is_cf = -1;
     }
 
     if (!retval && phr->ss) {
@@ -124,6 +129,7 @@
         prob->min_tests_to_accept = min_tests_to_accept;
         prob->disable_pe = disable_pe;
         prob->disable_wtl = disable_wtl;
+        prob->wtl_is_cf = wtl_is_cf;
     }
 
 cleanup:;

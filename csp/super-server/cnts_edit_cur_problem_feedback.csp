@@ -20,6 +20,7 @@
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "min_tests_to_accept" "running" "Min. number of accept tests" "350" %>
         <%@expand MENU_YESNO3 "disable_pe" "feedback" "Report Presentation Error as Wrong Answer" "350" %>
         <%@expand MENU_YESNO3 "disable_wtl" "feedback" "Report Wall Time Limit Exceeded as Time Limit Exceeded" "350" %>
+        <%@expand MENU_YESNO3 "wtl_is_cf" "feedback" "Report Wall Time Limit Exceeded as Check Failed" "350" %>
 
     </s:form>
 </div>
@@ -88,6 +89,7 @@ function popupFeedbackDialog(e, skipField)
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "min_tests_to_accept" "prob->min_tests_to_accept < 0" %>
     <%@expand COPY_YESNO3 "disable_pe"  %>
     <%@expand COPY_YESNO3 "disable_wtl"  %>
+    <%@expand COPY_YESNO3 "wtl_is_cf"  %>
 
     <%@expand CLEAR_TEXTFIELD "open_tests" %>
     <%@expand CLEAR_TEXTFIELD "final_open_tests" %>
