@@ -517,8 +517,6 @@ do_build_run_dirs(
   struct run_dir_item *cur = &state->run_dirs[state->run_dirs_u];
   memset(cur, 0, sizeof(*cur));
 
-  fprintf(stderr, "Adding run dir: '%s', '%s'\n", id, status_dir);
-
   cur->id = xstrdup(id);
   cur->status_dir = xstrdup(status_dir);
   cur->report_dir = xstrdup(report_dir);
@@ -565,81 +563,78 @@ serve_build_run_dirs(
 {
   const struct section_global_data *global = state->global;
   int i;
+  unsigned char status_dir[PATH_MAX];
+  unsigned char report_dir[PATH_MAX];
+  unsigned char team_report_dir[PATH_MAX];
+  unsigned char full_report_dir[PATH_MAX];
+  unsigned char queue_dir[PATH_MAX];
+  unsigned char exe_dir[PATH_MAX];
 
-  if (0 /*cnts && cnts->run_managed*/) {
-    unsigned char status_dir[PATH_MAX];
-    unsigned char report_dir[PATH_MAX];
-    unsigned char team_report_dir[PATH_MAX];
-    unsigned char full_report_dir[PATH_MAX];
-    unsigned char queue_dir[PATH_MAX];
-    unsigned char exe_dir[PATH_MAX];
+  if (global->super_run_dir && global->super_run_dir[0]) {
+    snprintf(status_dir, sizeof(status_dir),
+             "%s/var/%06d/status", global->super_run_dir, cnts->id);
+    snprintf(report_dir, sizeof(report_dir),
+             "%s/var/%06d/report", global->super_run_dir, cnts->id);
+    snprintf(full_report_dir, sizeof(full_report_dir),
+             "%s/var/%06d/output", global->super_run_dir, cnts->id);
+    snprintf(team_report_dir, sizeof(team_report_dir),
+             "%s/var/%06d/teamreports", global->super_run_dir, cnts->id);
+    do_build_run_dirs(state, "", status_dir, report_dir, team_report_dir, full_report_dir);
 
-    if (global->super_run_dir && global->super_run_dir[0]) {
+    snprintf(queue_dir, sizeof(queue_dir), "%s/var/queue", global->super_run_dir);
+    snprintf(exe_dir, sizeof(exe_dir), "%s/var/exe", global->super_run_dir);
+    do_build_queue_dirs(state, "", queue_dir, exe_dir);
+  }
+
+  for (i = 1; i <= state->max_lang; ++i) {
+    struct section_language_data *lang = state->langs[i];
+    if (lang && lang->super_run_dir && lang->super_run_dir[0]) {
       snprintf(status_dir, sizeof(status_dir),
-               "%s/var/%06d/status", global->super_run_dir, cnts->id);
+               "%s/var/%06d/status", lang->super_run_dir, cnts->id);
       snprintf(report_dir, sizeof(report_dir),
-               "%s/var/%06d/report", global->super_run_dir, cnts->id);
+               "%s/var/%06d/report", lang->super_run_dir, cnts->id);
       snprintf(full_report_dir, sizeof(full_report_dir),
-               "%s/var/%06d/output", global->super_run_dir, cnts->id);
+               "%s/var/%06d/output", lang->super_run_dir, cnts->id);
       snprintf(team_report_dir, sizeof(team_report_dir),
-               "%s/var/%06d/teamreports", global->super_run_dir, cnts->id);
-      do_build_run_dirs(state, "", status_dir, report_dir, team_report_dir, full_report_dir);
+               "%s/var/%06d/teamreports", lang->super_run_dir, cnts->id);
+      do_build_run_dirs(state, lang->super_run_dir, status_dir, report_dir, team_report_dir, full_report_dir);
 
-      snprintf(queue_dir, sizeof(queue_dir), "%s/var/queue", global->super_run_dir);
-      snprintf(exe_dir, sizeof(exe_dir), "%s/var/exe", global->super_run_dir);
-      do_build_queue_dirs(state, "", queue_dir, exe_dir);
+      snprintf(queue_dir, sizeof(queue_dir), "%s/var/queue", lang->super_run_dir);
+      snprintf(exe_dir, sizeof(exe_dir), "%s/var/exe", lang->super_run_dir);
+      do_build_queue_dirs(state, lang->super_run_dir, queue_dir, exe_dir);
     }
+  }
 
-    for (i = 1; i <= state->max_lang; ++i) {
-      struct section_language_data *lang = state->langs[i];
-      if (lang && lang->super_run_dir && lang->super_run_dir[0]) {
-        snprintf(status_dir, sizeof(status_dir),
-                 "%s/var/%06d/status", lang->super_run_dir, cnts->id);
-        snprintf(report_dir, sizeof(report_dir),
-                 "%s/var/%06d/report", lang->super_run_dir, cnts->id);
-        snprintf(full_report_dir, sizeof(full_report_dir),
-                 "%s/var/%06d/output", lang->super_run_dir, cnts->id);
-        snprintf(team_report_dir, sizeof(team_report_dir),
-                 "%s/var/%06d/teamreports", lang->super_run_dir, cnts->id);
-        do_build_run_dirs(state, lang->super_run_dir, status_dir, report_dir, team_report_dir, full_report_dir);
+  for (i = 1; i <= state->max_prob; ++i) {
+    struct section_problem_data *prob = state->probs[i];
+    if (prob && prob->super_run_dir && prob->super_run_dir[0]) {
+      snprintf(status_dir, sizeof(status_dir),
+               "%s/var/%06d/status", prob->super_run_dir, cnts->id);
+      snprintf(report_dir, sizeof(report_dir),
+               "%s/var/%06d/report", prob->super_run_dir, cnts->id);
+      snprintf(full_report_dir, sizeof(full_report_dir),
+               "%s/var/%06d/output", prob->super_run_dir, cnts->id);
+      snprintf(team_report_dir, sizeof(team_report_dir),
+               "%s/var/%06d/teamreports", prob->super_run_dir, cnts->id);
+      do_build_run_dirs(state, prob->super_run_dir, status_dir, report_dir, team_report_dir, full_report_dir);
 
-        snprintf(queue_dir, sizeof(queue_dir), "%s/var/queue", lang->super_run_dir);
-        snprintf(exe_dir, sizeof(exe_dir), "%s/var/exe", lang->super_run_dir);
-        do_build_queue_dirs(state, lang->super_run_dir, queue_dir, exe_dir);
-      }
+      snprintf(queue_dir, sizeof(queue_dir), "%s/var/queue", prob->super_run_dir);
+      snprintf(exe_dir, sizeof(exe_dir), "%s/var/exe", prob->super_run_dir);
+      do_build_queue_dirs(state, prob->super_run_dir, queue_dir, exe_dir);
     }
+  }
 
-    for (i = 1; i <= state->max_prob; ++i) {
-      struct section_problem_data *prob = state->probs[i];
-      if (prob && prob->super_run_dir && prob->super_run_dir[0]) {
-        snprintf(status_dir, sizeof(status_dir),
-                 "%s/var/%06d/status", prob->super_run_dir, cnts->id);
-        snprintf(report_dir, sizeof(report_dir),
-                 "%s/var/%06d/report", prob->super_run_dir, cnts->id);
-        snprintf(full_report_dir, sizeof(full_report_dir),
-                 "%s/var/%06d/output", prob->super_run_dir, cnts->id);
-        snprintf(team_report_dir, sizeof(team_report_dir),
-                 "%s/var/%06d/teamreports", prob->super_run_dir, cnts->id);
-        do_build_run_dirs(state, prob->super_run_dir, status_dir, report_dir, team_report_dir, full_report_dir);
+  for (i = 1; i <= state->max_tester; i++) {
+    if (!state->testers[i]) continue;
+    //if (state->testers[i]->any) continue;
+    do_build_run_dirs(state, state->testers[i]->name, state->testers[i]->run_status_dir,
+                      state->testers[i]->run_report_dir,
+                      state->testers[i]->run_team_report_dir,
+                      state->testers[i]->run_full_archive_dir);
 
-        snprintf(queue_dir, sizeof(queue_dir), "%s/var/queue", prob->super_run_dir);
-        snprintf(exe_dir, sizeof(exe_dir), "%s/var/exe", prob->super_run_dir);
-        do_build_queue_dirs(state, prob->super_run_dir, queue_dir, exe_dir);
-      }
-    }
-  } else {
-    for (i = 1; i <= state->max_tester; i++) {
-      if (!state->testers[i]) continue;
-      //if (state->testers[i]->any) continue;
-      do_build_run_dirs(state, state->testers[i]->name, state->testers[i]->run_status_dir,
-                        state->testers[i]->run_report_dir,
-                        state->testers[i]->run_team_report_dir,
-                        state->testers[i]->run_full_archive_dir);
-
-      do_build_queue_dirs(state, state->testers[i]->name,
-                          state->testers[i]->run_queue_dir,
-                          state->testers[i]->run_exe_dir);
-    }
+    do_build_queue_dirs(state, state->testers[i]->name,
+                        state->testers[i]->run_queue_dir,
+                        state->testers[i]->run_exe_dir);
   }
 }
 
