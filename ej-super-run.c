@@ -780,7 +780,8 @@ create_configs(
           "start_cmd = \"runmono\"\n"
           "start_env = \"LANG=C\"\n"
           "start_env = \"LC_CTYPE=C\"\n"
-          "start_env = \"EJUDGE_PREFIX_DIR\"\n\n");
+          "start_env = \"EJUDGE_PREFIX_DIR\"\n"
+          "start_env = \"MONO_DEBUG=no-gdb-backtrace\"\n\n");
 
   fprintf(f, "[tester]\n"
           "name = DOSTester\n"
@@ -828,6 +829,7 @@ upgrade_times[] =
   "2012/05/26 00:00:00",
   "2012/06/21 00:00:00",
   "2012/11/05 00:00:00",
+  "2015/11/01 00:00:00",
 
   NULL
 };
