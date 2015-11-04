@@ -5619,8 +5619,8 @@ ns_scan_run_queue(
 {
   memset(vec, 0, sizeof(*vec));
 
-  for (int i = 0; i < cs->run_dirs_u; ++i) {
-    ns_scan_run_queue_one(cs, cs->run_dirs[i].id, cs->run_dirs[i].status_dir, vec);
+  for (int i = 0; i < cs->run_queues_u; ++i) {
+    ns_scan_run_queue_one(cs, cs->run_queues[i].id, cs->run_queues[i].queue_dir, vec);
   }
 
   qsort(vec->v, vec->u, sizeof(vec->v[0]), scan_run_sort_func);
