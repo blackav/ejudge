@@ -5492,32 +5492,54 @@ ns_examiners_page(
   return 0;
 }
 
+TestingQueueArray *
+testing_queue_array_free(TestingQueueArray *parr, int free_struct_flag)
+{
+  if (parr) {
+    for (int i = 0; i < parr->u; ++i) {
+      xfree(parr->v[i].queue_id);
+      xfree(parr->v[i].entry_name);
+      super_run_in_packet_free(parr->v[i].packet);
+    }
+    xfree(parr->v);
+    memset(parr, 0, sizeof(*parr));
+    if (free_struct_flag) xfree(parr);
+  }
+  return NULL;
+}
+
 static int
 scan_run_sort_func(const void *v1, const void *v2)
 {
   const TestingQueueEntry *p1 = (const TestingQueueEntry*)v1;
   const TestingQueueEntry *p2 = (const TestingQueueEntry*)v2;
 
+  const unsigned char *qid1 = p1->queue_id;
+  const unsigned char *qid2 = p2->queue_id;
+  if (!qid1) qid1 = "";
+  if (!qid2) qid2 = "";
+  int v = strcmp(qid1, qid2);
+  if (v) return v;
+
   return strcmp(p1->entry_name, p2->entry_name);
 }
 
-void
-ns_scan_run_queue(
+static void
+ns_scan_run_queue_one(
+        serve_state_t cs,
+        const unsigned char *did,
         const unsigned char *dpath,
-        int contest_id,
         struct TestingQueueArray *vec)
 {
-  DIR *d = 0;
-  struct dirent *dd;
-  struct stat sb;
   path_t qpath;
   path_t path;
+  DIR *d = NULL;
+  struct dirent *dd;
+  struct stat sb;
   char *pkt_buf = 0;
   size_t pkt_size = 0;
   struct super_run_in_packet *srp = NULL;
   int priority = 0;
-
-  memset(vec, 0, sizeof(*vec));
 
   snprintf(qpath, sizeof(qpath), "%s/dir", dpath);
   if (!(d = opendir(qpath))) {
@@ -5576,14 +5598,30 @@ ns_scan_run_queue(
       }
     }
 
-    vec->v[vec->u].entry_name = xstrdup(dd->d_name);
-    vec->v[vec->u].priority = priority;
-    vec->v[vec->u].mtime = sb.st_mtime;
-    vec->v[vec->u].packet = srp; srp = 0;
+    TestingQueueEntry *cur = &vec->v[vec->u];
+    memset(cur, 0, sizeof(*cur));
+
+    cur->queue_id = xstrdup(did);
+    cur->entry_name = xstrdup(dd->d_name);
+    cur->priority = priority;
+    cur->mtime = sb.st_mtime;
+    cur->packet = srp; srp = 0;
     vec->u++;
   }
 
   if (d) closedir(d);
+}
+
+void
+ns_scan_run_queue(
+        serve_state_t cs,
+        struct TestingQueueArray *vec)
+{
+  memset(vec, 0, sizeof(*vec));
+
+  for (int i = 0; i < cs->run_dirs_u; ++i) {
+    ns_scan_run_queue_one(cs, cs->run_dirs[i].id, cs->run_dirs[i].status_dir, vec);
+  }
 
   qsort(vec->v, vec->u, sizeof(vec->v[0]), scan_run_sort_func);
 }

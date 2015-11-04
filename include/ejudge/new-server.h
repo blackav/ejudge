@@ -996,8 +996,7 @@ write_xml_testing_report(
 struct TestingQueueArray;
 void
 ns_scan_run_queue(
-        const unsigned char *dpath,
-        int contest_id,
+        serve_state_t cs,
         struct TestingQueueArray *vec);
 
 int

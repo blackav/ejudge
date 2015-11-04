@@ -91,6 +91,7 @@ typedef struct PrivViewIPUsersPage
 struct super_run_in_packet;
 typedef struct TestingQueueEntry
 {
+  unsigned char *queue_id;
   unsigned char *entry_name;
   int priority;
   time_t mtime;
@@ -105,6 +106,8 @@ typedef struct TestingQueueArray
 } TestingQueueArray;
 
 #define ej_fix_prio(x) (((x) < -16)?-16:(((x) > 15)?15:(x)))
+
+TestingQueueArray *testing_queue_array_free(TestingQueueArray *parr, int free_struct_flag);
 
 /* === For unprivileged main page === */
 
