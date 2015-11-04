@@ -94,9 +94,9 @@
         <td class="b1"><s:v value="srgp->judge_id" /></td>
         <td class="b1"><s:v value="vec.v[i].mtime" /></td>
         <td class="b1"><%
-%><s:url name="DeleteUrl" ac="testing-delete"><s:param name="packet" value="vec.v[i].entry_name" /></s:url><%
-%><s:url name="UpUrl" ac="testing-up"><s:param name="packet" value="vec.v[i].entry_name" /></s:url><%
-%><s:url name="DownUrl" ac="testing-down"><s:param name="packet" value="vec.v[i].entry_name" /></s:url><%
+%><s:url name="DeleteUrl" ac="testing-delete"><s:param name="queue" value="vec.v[i].queue_id" /><s:param name="packet" value="vec.v[i].entry_name" /></s:url><%
+%><s:url name="UpUrl" ac="testing-up"><s:param name="queue" value="vec.v[i].queue_id" /><s:param name="packet" value="vec.v[i].entry_name" /></s:url><%
+%><s:url name="DownUrl" ac="testing-down"><s:param name="queue" value="vec.v[i].queue_id" /><s:param name="packet" value="vec.v[i].entry_name" /></s:url><%
 %><s:a url="DeleteUrl">X</s:a><%
 %>&nbsp;&nbsp;<s:a url="UpUrl">Up</s:a><%
 %>&nbsp;&nbsp;<s:a url="DownUrl">Down</s:a><%
