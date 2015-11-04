@@ -526,38 +526,42 @@ do_build_run_dirs(
 }
 
 void
-serve_build_run_dirs(serve_state_t state, int contest_id)
+serve_build_run_dirs(
+        serve_state_t state,
+        const struct contest_desc *cnts)
 {
   const struct section_global_data *global = state->global;
   int i;
 
-  if (global->super_run_dir && global->super_run_dir[0]) {
+  if (cnts && cnts->run_managed) {
     unsigned char status_dir[PATH_MAX];
     unsigned char report_dir[PATH_MAX];
     unsigned char team_report_dir[PATH_MAX];
     unsigned char full_report_dir[PATH_MAX];
 
-    snprintf(status_dir, sizeof(status_dir),
-             "%s/var/%06d/status", global->super_run_dir, contest_id);
-    snprintf(report_dir, sizeof(report_dir),
-             "%s/var/%06d/report", global->super_run_dir, contest_id);
-    snprintf(full_report_dir, sizeof(full_report_dir),
-             "%s/var/%06d/output", global->super_run_dir, contest_id);
-    snprintf(team_report_dir, sizeof(team_report_dir),
-             "%s/var/%06d/teamreports", global->super_run_dir, contest_id);
-    do_build_run_dirs(state, "", status_dir, report_dir, team_report_dir, full_report_dir);
+    if (global->super_run_dir && global->super_run_dir[0]) {
+      snprintf(status_dir, sizeof(status_dir),
+               "%s/var/%06d/status", global->super_run_dir, cnts->id);
+      snprintf(report_dir, sizeof(report_dir),
+               "%s/var/%06d/report", global->super_run_dir, cnts->id);
+      snprintf(full_report_dir, sizeof(full_report_dir),
+               "%s/var/%06d/output", global->super_run_dir, cnts->id);
+      snprintf(team_report_dir, sizeof(team_report_dir),
+               "%s/var/%06d/teamreports", global->super_run_dir, cnts->id);
+      do_build_run_dirs(state, "", status_dir, report_dir, team_report_dir, full_report_dir);
+    }
 
     for (i = 1; i <= state->max_lang; ++i) {
       struct section_language_data *lang = state->langs[i];
       if (lang && lang->super_run_dir && lang->super_run_dir[0]) {
         snprintf(status_dir, sizeof(status_dir),
-                 "%s/var/%06d/status", lang->super_run_dir, contest_id);
+                 "%s/var/%06d/status", lang->super_run_dir, cnts->id);
         snprintf(report_dir, sizeof(report_dir),
-                 "%s/var/%06d/report", lang->super_run_dir, contest_id);
+                 "%s/var/%06d/report", lang->super_run_dir, cnts->id);
         snprintf(full_report_dir, sizeof(full_report_dir),
-                 "%s/var/%06d/output", lang->super_run_dir, contest_id);
+                 "%s/var/%06d/output", lang->super_run_dir, cnts->id);
         snprintf(team_report_dir, sizeof(team_report_dir),
-                 "%s/var/%06d/teamreports", lang->super_run_dir, contest_id);
+                 "%s/var/%06d/teamreports", lang->super_run_dir, cnts->id);
         do_build_run_dirs(state, lang->super_run_dir, status_dir, report_dir, team_report_dir, full_report_dir);
       }
     }
@@ -566,13 +570,13 @@ serve_build_run_dirs(serve_state_t state, int contest_id)
       struct section_problem_data *prob = state->probs[i];
       if (prob && prob->super_run_dir && prob->super_run_dir[0]) {
         snprintf(status_dir, sizeof(status_dir),
-                 "%s/var/%06d/status", prob->super_run_dir, contest_id);
+                 "%s/var/%06d/status", prob->super_run_dir, cnts->id);
         snprintf(report_dir, sizeof(report_dir),
-                 "%s/var/%06d/report", prob->super_run_dir, contest_id);
+                 "%s/var/%06d/report", prob->super_run_dir, cnts->id);
         snprintf(full_report_dir, sizeof(full_report_dir),
-                 "%s/var/%06d/output", prob->super_run_dir, contest_id);
+                 "%s/var/%06d/output", prob->super_run_dir, cnts->id);
         snprintf(team_report_dir, sizeof(team_report_dir),
-                 "%s/var/%06d/teamreports", prob->super_run_dir, contest_id);
+                 "%s/var/%06d/teamreports", prob->super_run_dir, cnts->id);
         do_build_run_dirs(state, prob->super_run_dir, status_dir, report_dir, team_report_dir, full_report_dir);
       }
     }
