@@ -44,6 +44,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <errno.h>
 
 struct ignored_problem_info
 {
@@ -383,11 +384,14 @@ cleanup:
 
 int
 do_loop(
-        serve_state_t state)
+        serve_state_t state,
+        int halt_timeout,
+        int *p_halt_requested)
 {
   struct section_global_data *global = state->global;
   unsigned char pkt_name[PATH_MAX];
   int r;
+  time_t last_handled = time(NULL);
 
   if (global->sleep_time <= 0) global->sleep_time = 1000;
 
@@ -414,6 +418,12 @@ do_loop(
     }
     if (restart_flag) break;
 
+    time_t current_time = time(NULL);
+    if (halt_timeout > 0 && last_handled + halt_timeout <= current_time) {
+      if (p_halt_requested) *p_halt_requested = 1;
+      break;
+    }
+
     pkt_name[0] = 0;
     r = scan_dir(super_run_spool_path, pkt_name, sizeof(pkt_name));
     if (r < 0) {
@@ -436,6 +446,7 @@ do_loop(
     if (!r) {
       scan_dir_add_ignored(super_run_spool_path, pkt_name);
     }
+    last_handled = time(NULL);
   }
 
   return 0;
@@ -459,7 +470,9 @@ write_help(void)
          "    -r           ignore rejudging\n"
          "    -p DIR       specify alternate name for super-run directory\n"
          "    -a           write log file to an alternate location\n"
-         "    -m DIR       specify a directory for file mirroring",
+         "    -m DIR       specify a directory for file mirroring\n"
+         "    -ht TIMEOUT  machine halt timeout (in minutes)\n"
+         "    -hc CMD      machine halt command\n",
          program_name, program_name);
   exit(0);
 }
@@ -870,6 +883,8 @@ main(int argc, char *argv[])
   int retval = 0;
   int daemon_mode = 0, restart_mode = 0, alternate_log_mode = 0;
   const unsigned char *user = NULL, *group = NULL, *workdir = NULL;
+  int halt_timeout = 0, halt_requested = 0;
+  unsigned char *halt_command = NULL;
 
   signal(SIGPIPE, SIG_IGN);
 
@@ -938,6 +953,26 @@ main(int argc, char *argv[])
       if (parse_ignored_problem(argv[cur_arg + 1], &ignored_problems[ignored_problems_count++]) < 0) {
         fatal("invalid argument for -i: '%s'", argv[cur_arg + 1]);
       }
+      argv_restart[argc_restart++] = argv[cur_arg];
+      argv_restart[argc_restart++] = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-ht")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for -ht");
+      errno = 0;
+      char *eptr = NULL;
+      int val = strtol(argv[cur_arg + 1], &eptr, 10);
+      if (*eptr || errno || val <= 0) {
+        fatal("invalid argument for -ht: %s", argv[cur_arg + 1]);
+      }
+      if (val >= 100000) val = 0; // infinity
+      halt_timeout = val * 60;
+      argv_restart[argc_restart++] = argv[cur_arg];
+      argv_restart[argc_restart++] = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-hc")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for -hc");
+      xfree(halt_command); halt_command = NULL;
+      halt_command = xstrdup(argv[cur_arg + 1]);
       argv_restart[argc_restart++] = argv[cur_arg];
       argv_restart[argc_restart++] = argv[cur_arg + 1];
       cur_arg += 2;
@@ -1066,8 +1101,13 @@ main(int argc, char *argv[])
 
   fprintf(stderr, "%s %s, compiled %s\n", program_name, compile_version, compile_date);
 
-  if (do_loop(state) < 0) {
+  if (do_loop(state, halt_timeout, &halt_requested) < 0) {
     retval = 1;
+  }
+
+  if (halt_requested) {
+    info("halt timeout");
+    start_shutdown(halt_command);
   }
 
   if (interrupt_restart_requested()) start_restart();
