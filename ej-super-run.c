@@ -425,7 +425,7 @@ do_loop(
     }
 
     pkt_name[0] = 0;
-    r = scan_dir(super_run_spool_path, pkt_name, sizeof(pkt_name));
+    r = scan_dir(super_run_spool_path, pkt_name, sizeof(pkt_name), 1);
     if (r < 0) {
       err("scan_dir failed for %s, waiting...", super_run_spool_path);
 

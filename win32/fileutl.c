@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -86,7 +85,7 @@ struct q_dir_entry
 
 /* scans 'dir' directory and returns the filename found */
 int
-scan_dir(char const *partial_path, char *found_item, size_t fi_size)
+scan_dir(char const *partial_path, char *found_item, size_t fi_size, int random_mode)
 {
   // TODO(GM) : implement size control
   path_t          full_path;

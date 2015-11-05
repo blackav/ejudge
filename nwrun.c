@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -721,7 +720,7 @@ do_loop(void)
   int serial = 0;
 
   while (1) {
-    r = scan_dir(global->queue_dir, new_entry_name, sizeof(new_entry_name));
+    r = scan_dir(global->queue_dir, new_entry_name, sizeof(new_entry_name), 0);
     if (r < 0) {
       die("scan_dir failed on %s", global->queue_dir);
       /* FIXME: recover and continue */

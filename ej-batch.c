@@ -1281,7 +1281,7 @@ server_loop(struct dir_listener_state *dl_state)
     }
 
     for (dlp = dl_state->first; dlp; dlp = dlp->next) {
-      r = scan_dir(dlp->spool_dir, pkt_name, sizeof(pkt_name));
+      r = scan_dir(dlp->spool_dir, pkt_name, sizeof(pkt_name), 0);
       if (r < 0) {
         if (r == -ENOMEM || r == -ENOENT || r == -ENFILE) {
           err("trying to recover, sleep for 5 seconds");

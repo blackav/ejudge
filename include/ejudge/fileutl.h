@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __FILEUTL_H__
 #define __FILEUTL_H__
 
-/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -22,7 +21,7 @@
 
 #include "ejudge/xalloc.h"
 
-int   scan_dir(char const *dir, char *result, size_t res_size);
+int   scan_dir(char const *dir, char *result, size_t res_size, int random_mode);
 void  scan_dir_add_ignored(const unsigned char *dir,
                            const unsigned char *filename);
 

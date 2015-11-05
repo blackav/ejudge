@@ -150,7 +150,7 @@ do_loop(void)
     }
     if (restart_flag) break;
 
-    r = scan_dir(global->run_queue_dir, pkt_name, sizeof(pkt_name));
+    r = scan_dir(global->run_queue_dir, pkt_name, sizeof(pkt_name), 0);
     if (r < 0) return -1;
     if (!r) {
       if (got_quit_packet && managed_mode_flag) {

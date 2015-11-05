@@ -557,7 +557,7 @@ do_work(void)
   struct stat stbuf;
 
   while (!term_signal_flag) {
-    if ((r = scan_dir(job_server_spool_path, pkt_name, sizeof(pkt_name))) < 0) {
+    if ((r = scan_dir(job_server_spool_path, pkt_name, sizeof(pkt_name), 0)) < 0) {
       // error
       break;
     }

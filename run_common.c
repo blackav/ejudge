@@ -1357,7 +1357,7 @@ invoke_nwrun(
   //fprintf(stderr, "end time: %lld\n", wait_end_time);
 
   while (1) {
-    r = scan_dir(result_path, result_pkt_name, sizeof(result_pkt_name));
+    r = scan_dir(result_path, result_pkt_name, sizeof(result_pkt_name), 0);
     if (r < 0) {
       chk_printf(result, "scan_dir(%s) failed\n", result_path);
       goto fail;
