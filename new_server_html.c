@@ -5819,11 +5819,13 @@ priv_testing_queue_operation(
   }
   hr_cgi_param(phr, "queue", &queue_id);
   if (queue_id) {
+    /*
     for (s = queue_id; *s; ++s) {
       if (!isalnum(*s)) {
         FAIL(NEW_SRV_ERR_INV_PARAM);
       }
     }
+    */
   }
 
   switch (phr->action) {
