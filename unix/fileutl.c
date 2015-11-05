@@ -20,6 +20,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
 #include "ejudge/ej_limits.h"
+#include "ejudge/random.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -206,6 +207,7 @@ scan_dir(char const *partial_path, char *found_item, size_t fi_size, int random_
   unsigned char *items[32];
   unsigned char *del_map = 0;
   struct ignored_items *cur_ign = 0;
+  int low_prio = 32, high_prio = -1;
 
   for (i = 0; i < ign_u; i++)
     if (!strcmp(partial_path, ign[i].dir))
@@ -257,6 +259,9 @@ scan_dir(char const *partial_path, char *found_item, size_t fi_size, int random_
     if (prio > 15) prio = 15;
     prio += 16;
 
+    if (prio < low_prio) low_prio = prio;
+    if (prio > high_prio) high_prio = prio;
+
     if (items[prio]) {
       if (strcmp(items[prio], de->d_name) <= 0) continue;
       items[prio] = (unsigned char*) alloca(strlen(de->d_name) + 1);
@@ -291,15 +296,42 @@ scan_dir(char const *partial_path, char *found_item, size_t fi_size, int random_
 
   if (!found) return 0;
 
-  for (i = 0; i < 32; i++) {
-    if (items[i]) {
-      snprintf(found_item, fi_size, "%s", items[i]);
-      info("scan_dir: found '%s' (priority %d)", found_item, i - 16);
-      return 1;
+  if (low_prio >= 32 || high_prio < 0) {
+    err("scan_dir: found == %d, but no items found!!!", found);
+    return 0;
+  }
+
+  if (random_mode && low_prio != high_prio) {
+    int range = high_prio - low_prio + 1;
+    unsigned long long mask = (1ULL << range) - 1;
+    unsigned long long value = 0;
+    if (range < 16) {
+      value = random_u16() & mask;
+    } else if (range == 16) {
+      value = random_u16();
+    } else if (range < 32) {
+      value = random_u32() & mask;
+    } else if (range == 32) {
+      value = random_u32();
+    } else {
+      value = random_u64() & mask;
+    }
+    for (i = high_prio; i > low_prio; --i) {
+      if (items[i]) {
+        if (!value) {
+          low_prio = i;
+          break;
+        }
+        --value;
+      }
+      value >>= 1;
     }
   }
-  err("scan_dir: found == %d, but no items found!!!", found);
-  return 0;
+
+  ASSERT(items[low_prio]);
+  snprintf(found_item, fi_size, "%s", items[low_prio]);
+  info("scan_dir: found '%s' (priority %d)", found_item, low_prio - 16);
+  return 1;
 }
 
 int
