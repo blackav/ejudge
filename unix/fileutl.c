@@ -305,6 +305,9 @@ scan_dir(char const *partial_path, char *found_item, size_t fi_size, int random_
     int range = high_prio - low_prio + 1;
     unsigned long long mask = (1ULL << range) - 1;
     unsigned long long value = 0;
+
+    random_init();
+
     if (range < 16) {
       value = random_u16() & mask;
     } else if (range == 16) {
