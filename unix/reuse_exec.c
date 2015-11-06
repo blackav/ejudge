@@ -1,6 +1,4 @@
-/* $Id$ */
-
-/* Copyright (C) 1998-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2015 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:33:28 cher> */
 
 /*
@@ -2147,10 +2145,12 @@ task_NewWait(tTask *tsk)
       wt.tv_nsec = 100000000;
     } else if (cur_utime >= 10) {
       // if running time >= 0.01 s poll each 0.01 s
-      wt.tv_nsec = 10000000;
+      //wt.tv_nsec = 10000000;
+      wt.tv_nsec = 100000000;
     } else {
       // poll each 0.002 s
-      wt.tv_nsec = 2000000;
+      //wt.tv_nsec = 2000000;
+      wt.tv_nsec = 100000000;
     }
     sigtimedwait(&bs, 0, &wt);
   }
