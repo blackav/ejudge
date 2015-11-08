@@ -24,6 +24,7 @@
 #include "ejudge/compile_packet_priv.h"
 #include "ejudge/problem_config.h"
 #include "ejudge/userlist.h"
+#include "ejudge/super_run_status.h"
 
 #include <stdio.h>
 
@@ -32,7 +33,7 @@ int main(void)
   printf("prot_serve_status_v2:  %zu\n", sizeof(struct prot_serve_status_v2));
   printf("run_header:            %zu\n", sizeof(struct run_header));
   printf("run_entry:             %zu\n", sizeof(struct run_entry));
-  printf("clar_entry_v1:         %zu\n", sizeof(struct clar_entry_v1));
+  //printf("clar_entry_v1:         %zu\n", sizeof(struct clar_entry_v1));
   printf("clar_entry_v2:         %zu\n", sizeof(struct clar_entry_v2));
   printf("section_global_data:   %zu\n", sizeof(struct section_global_data));
   printf("section_problem_data:  %zu\n", sizeof(struct section_problem_data));
@@ -42,5 +43,6 @@ int main(void)
   printf("compile_packet:        %zu\n", sizeof(struct compile_request_bin_packet));
   printf("problem_config_section:%zu\n", sizeof(struct problem_config_section));
   printf("userlist_cookie:       %zu\n", sizeof(struct userlist_cookie));
+  printf("super_run_status:      %zu\n", sizeof(struct super_run_status));
   return 0;
 }

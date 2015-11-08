@@ -234,6 +234,7 @@ COMMON_CFILES=\
  super_http_request.c\
  super_proto.c\
  super_run_packet.c\
+ super_run_status.c\
  super_serve_pi.c\
  sha.c\
  blowfish.c\
@@ -589,6 +590,7 @@ HFILES=\
  ./include/ejudge/super_html.h\
  ./include/ejudge/super_proto.h\
  ./include/ejudge/super_run_packet.h\
+ ./include/ejudge/super_run_status.h\
  ./include/ejudge/super-serve.h\
  ./include/ejudge/sha.h\
  ./include/ejudge/blowfish.h\
