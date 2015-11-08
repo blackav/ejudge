@@ -18,15 +18,20 @@
 
 #include "ejudge/ej_types.h"
 
+enum
+{
+    SRS_UNKNOWN, SRS_WAITING, SRS_TESTING, SRS_OFF
+};
+
 struct super_run_status
 {
     unsigned char  signature[4]; // 0: signature magic
-    unsigned char  endiannes;    // 4: 1 - LE, 1 - BE
+    unsigned char  endianness;   // 4: 1 - LE, 1 - BE
     unsigned char  pad1;
     unsigned short version;      // 6: packet version number (1, ...)
     unsigned short size;         // 8: packet size
     unsigned short strings_off;  // 10: offset of the string pool
-    unsigned short str_end_off;  // 12: end of the strings
+    unsigned short str_lens;     // 12: length of all strings
     unsigned char  pad2[2];
     long long      timestamp;    // 16: status timestamp, milliseconds from the epoch
     long long      last_run_ts;  // 24: time of the last testing performed
@@ -37,18 +42,31 @@ struct super_run_status
     unsigned short ext_ip_idx;   // 38: external IP address index
     unsigned short ext_host_idx; // 40: external host name index
     unsigned short queue_idx;    // 42: testing queue name
+    unsigned short ej_ver_idx;   // 44: ejudge version string
+    unsigned char  pad3[2];
 
-    int            contest_id;   // 44: contest_id being tested
-    int            run_id;       // 48: run_id being tested
-    int            test_num;     // 52: test being tested
-    short          status;       // 56: status
-    unsigned short pkt_name_idx; // 58: packet name index
-    unsigned char  pad3[4];
+    int            contest_id;   // 48: contest_id being tested
+    int            run_id;       // 52: run_id being tested
+    int            test_num;     // 56: test being tested
+    short          status;       // 58: status
+    unsigned short pkt_name_idx; // 62: packet name index
 
-    unsigned char  pad4[192];
+    unsigned char  pad4[128];
 
-    unsigned char  strings[256]; // string pool
+    unsigned char  strings[320]; // string pool
 };
+
+void
+super_run_status_init(
+        struct super_run_status *psrs);
+int
+super_run_status_add_str(
+        struct super_run_status *psrs,
+        const unsigned char *str);
+int
+super_run_status_check(
+        const void *data,
+        size_t size);
 
 #endif /* __SUPER_RUN_STATUS_H__ */
 
