@@ -475,13 +475,6 @@ report_waiting_state(long long current_time_ms, long long last_check_time_ms)
   rs.status = SRS_WAITING;
   super_run_save_status(super_run_heartbeat_path, status_file_name, &rs,
                         current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS);
-
-  /*
-    int            contest_id;   // 48: contest_id being tested
-    int            run_id;       // 52: run_id being tested
-    int            test_num;     // 56: test being tested
-    unsigned short pkt_name_idx; // 62: packet name index
-   */
 }
 
 static int
@@ -569,6 +562,7 @@ do_loop(
     last_handled_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
   }
 
+  super_run_remove_status(super_run_heartbeat_path, status_file_name);  
   return 0;
 }
 

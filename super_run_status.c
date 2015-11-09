@@ -134,6 +134,16 @@ super_run_save_status(
     }
 }
 
+void
+super_run_remove_status(
+        const unsigned char *heartbeat_dir,
+        const unsigned char *file_name)
+{
+    unsigned char dir_path[PATH_MAX];
+    snprintf(dir_path, sizeof(dir_path), "%s/dir/%s", heartbeat_dir, file_name);
+    unlink(dir_path);
+}
+
 /*
  * Local variables:
  *  c-basic-offset: 4

@@ -77,6 +77,11 @@ super_run_save_status(
         long long *p_last_saved_time,
         long long timeout_ms);
 
+void
+super_run_remove_status(
+        const unsigned char *heartbeat_dir,
+        const unsigned char *file_name);
+
 #endif /* __SUPER_RUN_STATUS_H__ */
 
 /*
