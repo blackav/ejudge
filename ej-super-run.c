@@ -74,6 +74,7 @@ static unsigned char *local_ip = NULL;
 static unsigned char *local_hostname = NULL;
 static unsigned char *public_ip = NULL;
 static unsigned char *public_hostname = NULL;
+static unsigned char *super_run_name = NULL;
 
 static int ignored_archs_count = 0;
 static int ignored_problems_count = 0;
@@ -322,7 +323,7 @@ handle_packet(
               report_path, full_report_path,
               srgp->user_spelling,
               srpp->spelling, mirror_dir, utf8_mode,
-              &run_listener.b, NULL);
+              &run_listener.b, super_run_name);
     //if (cr_serialize_unlock(state) < 0) return -1;
   }
 
@@ -930,6 +931,35 @@ check_environment(void)
   }
 }
 
+static void
+make_super_run_name(void)
+{
+  char *text = NULL;
+  size_t size = 0;
+  FILE *f = open_memstream(&text, &size);
+  if (super_run_id) {
+    fprintf(f, "%s", super_run_id);
+    if (instance_id && public_hostname) {
+      fprintf(f, " (%s, %s)", instance_id, public_hostname);
+    } else if (instance_id) {
+      fprintf(f, " (%s)", instance_id);
+    } else if (public_hostname) {
+      fprintf(f, " (%s)", public_hostname);
+    }
+  } else if (instance_id) {
+    fprintf(f, "%s", instance_id);
+    if (public_hostname) {
+      fprintf(f, " (%s)", public_hostname);
+    }
+  } else if (public_hostname) {
+    fprintf(f, "%s", public_hostname);
+  }
+  fclose(f); f = NULL;
+  if (text && *text) {
+    super_run_name = text; text = NULL;
+  }
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1171,6 +1201,8 @@ main(int argc, char *argv[])
     retval = 1;
     goto cleanup;
   }
+
+  make_super_run_name();
 
   fprintf(stderr, "%s %s, compiled %s\n", program_name, compile_version, compile_date);
 
