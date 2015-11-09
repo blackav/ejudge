@@ -909,20 +909,24 @@ check_environment(void)
 {
   const unsigned char *s;
   // AWS_INSTANCE_ID AWS_LOCAL_HOSTNAME AWS_LOCAL_IP AWS_PUBLIC_HOSTNAME AWS_PUBLIC_IP
-  if ((s = getenv("AWS_INSTANCE_ID"))) {
+  if ((s = getenv("AWS_INSTANCE_ID")) && *s) {
     instance_id = xstrdup(s);
   }
-  if ((s = getenv("AWS_LOCAL_HOSTNAME"))) {
+  if ((s = getenv("AWS_LOCAL_HOSTNAME")) && *s) {
     local_hostname = xstrdup(s);
   }
-  if ((s = getenv("AWS_LOCAL_IP"))) {
+  if ((s = getenv("AWS_LOCAL_IP")) && *s) {
     local_ip = xstrdup(s);
   }
-  if ((s = getenv("AWS_PUBLIC_HOSTNAME"))) {
+  if ((s = getenv("AWS_PUBLIC_HOSTNAME")) && *s) {
     public_hostname = xstrdup(s);
   }
-  if ((s = getenv("AWS_PUBLIC_IP"))) {
+  if ((s = getenv("AWS_PUBLIC_IP")) && *s) {
     public_ip = xstrdup(s);
+  }
+  if ((s = getenv("EJ_SUPER_RUN_ID")) && *s) {
+    xfree(ej_super_run_id);
+    ej_super_run_id = xstrdup(s);
   }
 }
 
