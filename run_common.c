@@ -3339,7 +3339,8 @@ run_tests(
         const unsigned char *user_spelling,
         const unsigned char *problem_spelling,
         const unsigned char *mirror_dir,
-        int utf8_mode)
+        int utf8_mode,
+        struct run_listener *listener)
 {
   const struct section_global_data *global = state->global;
   const struct super_run_in_global_packet *srgp = srp->global;
@@ -3591,6 +3592,10 @@ run_tests(
     int tl_retry = 0;
     int tl_retry_count = srgp->time_limit_retry_count;
     if (tl_retry_count <= 0) tl_retry_count = 1;
+
+    if (listener && listener->ops && listener->ops->before_test) {
+      listener->ops->before_test(listener, cur_test);
+    }
 
     while (1) {
       status = run_one_test(config, state, srp, tst, cur_test, &tests,

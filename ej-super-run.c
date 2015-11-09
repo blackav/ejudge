@@ -293,7 +293,7 @@ handle_packet(
               exe_name, run_base,
               report_path, full_report_path,
               srgp->user_spelling,
-              srpp->spelling, mirror_dir, utf8_mode);
+              srpp->spelling, mirror_dir, utf8_mode, NULL);
     //if (cr_serialize_unlock(state) < 0) return -1;
   }
 
