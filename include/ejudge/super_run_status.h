@@ -37,10 +37,10 @@ struct super_run_status
     long long      last_run_ts;  // 24: time of the last testing performed
 
     unsigned short inst_id_idx;  // 32: instance id index
-    unsigned short int_ip_idx;   // 34: internal IP address index
-    unsigned short int_host_idx; // 36: internal host name index
-    unsigned short ext_ip_idx;   // 38: external IP address index
-    unsigned short ext_host_idx; // 40: external host name index
+    unsigned short local_ip_idx; // 34: internal IP address index
+    unsigned short local_host_idx;// 36: internal host name index
+    unsigned short public_ip_idx; // 38: external IP address index
+    unsigned short public_host_idx;// 40: external host name index
     unsigned short queue_idx;    // 42: testing queue name
     unsigned short ej_ver_idx;   // 44: ejudge version string
     unsigned short super_run_idx;// 46: super_run_id index
@@ -67,6 +67,12 @@ int
 super_run_status_check(
         const void *data,
         size_t size);
+
+void
+super_run_save_status(
+        const unsigned char *heartbeat_dir,
+        const unsigned char *file_name,
+        const struct super_run_status *psrs);
 
 #endif /* __SUPER_RUN_STATUS_H__ */
 

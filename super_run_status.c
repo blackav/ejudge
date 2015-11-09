@@ -19,11 +19,15 @@
 #include "ejudge/super_run_status.h"
 
 #include <string.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <unistd.h>
 
 void
 super_run_status_init(struct super_run_status *psrs)
 {
-    if (psrs) return;
+    if (!psrs) return;
 
     memset(psrs, 0, sizeof (*psrs));
     psrs->signature[0] = 'S';
@@ -78,6 +82,44 @@ super_run_status_check(const void *data, size_t size)
     if (psrs->strings_off + psrs->str_lens > sizeof(*psrs)) CHECK_FAIL();
 
     return 0;
+}
+
+void
+super_run_save_status(
+        const unsigned char *heartbeat_dir,
+        const unsigned char *file_name,
+        const struct super_run_status *psrs)
+{
+    unsigned char in_path[PATH_MAX];
+    unsigned char dir_path[PATH_MAX];
+    int fd = -1;
+
+    snprintf(in_path, sizeof(in_path), "%s/in/%s", heartbeat_dir, file_name);
+    fd = open(in_path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+    if (fd < 0) return;
+
+    const unsigned char *pp = (const unsigned char *) psrs;
+    size_t zz = sizeof(*psrs);
+    int w = 1;
+    while (zz > 0 && (w = write(fd, pp, zz)) > 0) {
+        pp += w;
+        zz -= w;
+    }
+    if (w <= 0) {
+        close(fd); fd = -1;
+        unlink(in_path);
+        return;
+    }
+    if (close(fd) < 0) {
+        unlink(in_path);
+        return;
+    }
+    fd = -1;
+
+    snprintf(dir_path, sizeof(dir_path), "%s/dir/%s", heartbeat_dir, file_name);
+    if (rename(in_path, dir_path) < 0) {
+        unlink(in_path);
+    }
 }
 
 /*

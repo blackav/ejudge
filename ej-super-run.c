@@ -30,6 +30,7 @@
 #include "ejudge/ej_process.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/ej_uuid.h"
+#include "ejudge/super_run_status.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -45,6 +46,7 @@
 #include <sys/stat.h>
 #include <signal.h>
 #include <errno.h>
+#include <sys/time.h>
 
 struct ignored_problem_info
 {
@@ -75,6 +77,8 @@ static unsigned char *local_hostname = NULL;
 static unsigned char *public_ip = NULL;
 static unsigned char *public_hostname = NULL;
 static unsigned char *super_run_name = NULL;
+static unsigned char *queue_name = NULL;
+static unsigned char *status_file_name = NULL;
 
 static int ignored_archs_count = 0;
 static int ignored_problems_count = 0;
@@ -412,7 +416,43 @@ cleanup:
   return retval;
 }
 
-int
+static void
+do_super_run_status_init(struct super_run_status *prs)
+{
+  super_run_status_init(prs);
+
+  if (instance_id) prs->inst_id_idx = super_run_status_add_str(prs, instance_id);
+  if (local_ip) prs->local_ip_idx = super_run_status_add_str(prs, local_ip);
+  if (local_hostname) prs->local_host_idx = super_run_status_add_str(prs, local_hostname);
+  if (public_ip) prs->public_ip_idx = super_run_status_add_str(prs, public_ip);
+  if (public_hostname) prs->public_host_idx = super_run_status_add_str(prs, public_hostname);
+  if (queue_name) prs->queue_idx = super_run_status_add_str(prs, queue_name);
+  prs->ej_ver_idx = super_run_status_add_str(prs, compile_version);
+  if (super_run_id) prs->super_run_idx = super_run_status_add_str(prs, super_run_id);
+}
+
+static void
+report_waiting_state(long long current_time_ms, long long last_check_time_ms)
+{
+  struct super_run_status rs;
+
+  if (!heartbeat_mode) return;
+
+  do_super_run_status_init(&rs);
+  rs.timestamp = current_time_ms;
+  rs.last_run_ts = last_check_time_ms;
+  rs.status = SRS_WAITING;
+  super_run_save_status(super_run_heartbeat_path, status_file_name, &rs);
+
+  /*
+    int            contest_id;   // 48: contest_id being tested
+    int            run_id;       // 52: run_id being tested
+    int            test_num;     // 56: test being tested
+    unsigned short pkt_name_idx; // 62: packet name index
+   */
+}
+
+static int
 do_loop(
         serve_state_t state,
         int halt_timeout,
@@ -421,7 +461,14 @@ do_loop(
   struct section_global_data *global = state->global;
   unsigned char pkt_name[PATH_MAX];
   int r;
-  time_t last_handled = time(NULL);
+  struct timeval ctv;
+  time_t last_handled = 0;
+  long long last_handled_ms = 0;
+  long long current_time_ms = 0;
+
+  gettimeofday(&ctv, NULL);
+  last_handled = ctv.tv_sec;
+  last_handled_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
 
   if (global->sleep_time <= 0) global->sleep_time = 1000;
 
@@ -459,6 +506,10 @@ do_loop(
     if (r < 0) {
       err("scan_dir failed for %s, waiting...", super_run_spool_path);
 
+      gettimeofday(&ctv, NULL);
+      current_time_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
+      report_waiting_state(current_time_ms, last_handled_ms);
+
       interrupt_enable();
       os_Sleep(global->sleep_time);
       interrupt_disable();
@@ -466,6 +517,10 @@ do_loop(
     }
 
     if (!r) {
+      gettimeofday(&ctv, NULL);
+      current_time_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
+      report_waiting_state(current_time_ms, last_handled_ms);
+
       interrupt_enable();
       os_Sleep(global->sleep_time);
       interrupt_disable();
@@ -476,7 +531,10 @@ do_loop(
     if (!r) {
       scan_dir_add_ignored(super_run_spool_path, pkt_name);
     }
-    last_handled = time(NULL);
+
+    gettimeofday(&ctv, NULL);
+    last_handled = ctv.tv_sec;
+    last_handled_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
   }
 
   return 0;
@@ -958,6 +1016,18 @@ make_super_run_name(void)
   if (text && *text) {
     super_run_name = text; text = NULL;
   }
+
+  if (super_run_id) {
+    status_file_name = xstrdup(super_run_id);
+  } else if (instance_id) {
+    status_file_name = xstrdup(instance_id);
+  } else if (public_hostname) {
+    status_file_name = xstrdup(public_hostname);
+  } else if (local_hostname) {
+    status_file_name = xstrdup(local_hostname);
+  } else {
+    status_file_name = xstrdup(os_NodeName());
+  }
 }
 
 int
@@ -1032,6 +1102,7 @@ main(int argc, char *argv[])
       if (cur_arg + 1 >= argc) fatal("argument expected for -p");
       xfree(super_run_dir); super_run_dir = NULL;
       super_run_dir = xstrdup(argv[cur_arg + 1]);
+      xfree(queue_name); queue_name = xstrdup(argv[cur_arg + 1]);
       argv_restart[argc_restart++] = argv[cur_arg];
       argv_restart[argc_restart++] = argv[cur_arg + 1];
       cur_arg += 2;
