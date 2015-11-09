@@ -108,6 +108,7 @@ struct run_queue_item
   unsigned char *id;
   unsigned char *queue_dir;
   unsigned char *exe_dir;
+  unsigned char *heartbeat_dir;
 };
 
 struct problem_extra_info

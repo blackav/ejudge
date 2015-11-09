@@ -210,6 +210,7 @@ serve_state_destroy(
     xfree(rqi->id);
     xfree(rqi->queue_dir);
     xfree(rqi->exe_dir);
+    xfree(rqi->heartbeat_dir);
   }
   xfree(state->run_queues);
 

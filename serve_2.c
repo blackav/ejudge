@@ -530,7 +530,8 @@ do_build_queue_dirs(
         serve_state_t state,
         const unsigned char *id,
         const unsigned char *queue_dir,
-        const unsigned char *exe_dir)
+        const unsigned char *exe_dir,
+        const unsigned char *heartbeat_dir)
 {
   int i;
 
@@ -552,6 +553,9 @@ do_build_queue_dirs(
   cur->id = xstrdup(id);
   cur->queue_dir = xstrdup(queue_dir);
   cur->exe_dir = xstrdup(exe_dir);
+  if (heartbeat_dir) {
+    cur->heartbeat_dir = xstrdup(heartbeat_dir);
+  }
 
   return state->run_queues_u++;
 }
@@ -569,11 +573,13 @@ serve_build_run_dirs(
   unsigned char full_report_dir[PATH_MAX];
   unsigned char queue_dir[PATH_MAX];
   unsigned char exe_dir[PATH_MAX];
+  unsigned char heartbeat_dir[PATH_MAX];
 
   if (cnts && cnts->run_managed) {
     snprintf(queue_dir, sizeof(queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
     snprintf(exe_dir, sizeof(exe_dir), "%s/super-run/var/exe", EJUDGE_CONTESTS_HOME_DIR);
-    do_build_queue_dirs(state, "", queue_dir, exe_dir);
+    snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/super-run/var/heartbeat", EJUDGE_CONTESTS_HOME_DIR);
+    do_build_queue_dirs(state, "", queue_dir, exe_dir, heartbeat_dir);
   }
 
   if (global->super_run_dir && global->super_run_dir[0]) {
@@ -589,7 +595,8 @@ serve_build_run_dirs(
 
     snprintf(queue_dir, sizeof(queue_dir), "%s/var/queue", global->super_run_dir);
     snprintf(exe_dir, sizeof(exe_dir), "%s/var/exe", global->super_run_dir);
-    do_build_queue_dirs(state, global->super_run_dir, queue_dir, exe_dir);
+    snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/var/heartbeat", global->super_run_dir);
+    do_build_queue_dirs(state, global->super_run_dir, queue_dir, exe_dir, heartbeat_dir);
   }
 
   for (i = 1; i <= state->max_lang; ++i) {
@@ -607,7 +614,8 @@ serve_build_run_dirs(
 
       snprintf(queue_dir, sizeof(queue_dir), "%s/var/queue", lang->super_run_dir);
       snprintf(exe_dir, sizeof(exe_dir), "%s/var/exe", lang->super_run_dir);
-      do_build_queue_dirs(state, lang->super_run_dir, queue_dir, exe_dir);
+      snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/var/heartbeat", lang->super_run_dir);
+      do_build_queue_dirs(state, lang->super_run_dir, queue_dir, exe_dir, heartbeat_dir);
     }
   }
 
@@ -626,7 +634,8 @@ serve_build_run_dirs(
 
       snprintf(queue_dir, sizeof(queue_dir), "%s/var/queue", prob->super_run_dir);
       snprintf(exe_dir, sizeof(exe_dir), "%s/var/exe", prob->super_run_dir);
-      do_build_queue_dirs(state, prob->super_run_dir, queue_dir, exe_dir);
+      snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/var/heartbeat", prob->super_run_dir);
+      do_build_queue_dirs(state, prob->super_run_dir, queue_dir, exe_dir, heartbeat_dir);
     }
   }
 
@@ -640,7 +649,7 @@ serve_build_run_dirs(
 
     do_build_queue_dirs(state, state->testers[i]->name,
                         state->testers[i]->run_queue_dir,
-                        state->testers[i]->run_exe_dir);
+                        state->testers[i]->run_exe_dir, NULL);
   }
 }
 
