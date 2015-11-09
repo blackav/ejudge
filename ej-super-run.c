@@ -69,6 +69,11 @@ static int restart_flag = 0;
 static unsigned char *contests_home_dir = NULL;
 static int heartbeat_mode = 0;
 static unsigned char *super_run_id = NULL;
+static unsigned char *instance_id = NULL;
+static unsigned char *local_ip = NULL;
+static unsigned char *local_hostname = NULL;
+static unsigned char *public_ip = NULL;
+static unsigned char *public_hostname = NULL;
 
 static int ignored_archs_count = 0;
 static int ignored_problems_count = 0;
@@ -899,6 +904,28 @@ remove_if_upgrade_needed(const unsigned char *path)
   }
 }
 
+static void
+check_environment(void)
+{
+  const unsigned char *s;
+  // AWS_INSTANCE_ID AWS_LOCAL_HOSTNAME AWS_LOCAL_IP AWS_PUBLIC_HOSTNAME AWS_PUBLIC_IP
+  if ((s = getenv("AWS_INSTANCE_ID"))) {
+    instance_id = xstrdup(s);
+  }
+  if ((s = getenv("AWS_LOCAL_HOSTNAME"))) {
+    local_hostname = xstrdup(s);
+  }
+  if ((s = getenv("AWS_LOCAL_IP"))) {
+    local_ip = xstrdup(s);
+  }
+  if ((s = getenv("AWS_PUBLIC_HOSTNAME"))) {
+    public_hostname = xstrdup(s);
+  }
+  if ((s = getenv("AWS_PUBLIC_IP"))) {
+    public_ip = xstrdup(s);
+  }
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1025,6 +1052,8 @@ main(int argc, char *argv[])
 
   argv_restart[argc_restart] = NULL;
   start_set_args(argv_restart);
+
+  check_environment();
 
   if (!(host_names = ejudge_get_host_names())) {
     fatal("cannot obtain the list of host names");
