@@ -62,10 +62,12 @@ static unsigned char super_run_spool_path[PATH_MAX];
 static unsigned char super_run_exe_path[PATH_MAX];
 static unsigned char super_run_conf_path[PATH_MAX];
 static unsigned char super_run_log_path[PATH_MAX];
+static unsigned char super_run_heartbeat_path[PATH_MAX];
 static int utf8_mode = 0;
 static struct serve_state serve_state;
 static int restart_flag = 0;
 static unsigned char *contests_home_dir = NULL;
+static int heartbeat_mode = 0;
 
 static int ignored_archs_count = 0;
 static int ignored_problems_count = 0;
@@ -509,13 +511,16 @@ write_version(void)
 static void
 create_directories(void)
 {
-  snprintf(super_run_spool_path, sizeof(super_run_spool_path), "%s/var/%s",
-           super_run_path, "queue");
-  snprintf(super_run_exe_path, sizeof(super_run_exe_path), "%s/var/%s",
-           super_run_path, "exe");
+  snprintf(super_run_spool_path, sizeof(super_run_spool_path), "%s/var/%s", super_run_path, "queue");
+  snprintf(super_run_exe_path, sizeof(super_run_exe_path), "%s/var/%s", super_run_path, "exe");
   os_MakeDirPath(super_run_spool_path, 0777);
   os_MakeDirPath(super_run_exe_path, 0777);
   make_all_dir(super_run_spool_path, 0777);
+  if (heartbeat_mode) {
+    snprintf(super_run_heartbeat_path, sizeof(super_run_heartbeat_path), "%s/var/%s", super_run_path, "heartbeat");
+    os_MakeDirPath(super_run_heartbeat_path, 0777);
+    make_all_dir(super_run_heartbeat_path, 0777);
+  }
 }
 
 static int
@@ -950,6 +955,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[cur_arg], "-a")) {
       argv_restart[argc_restart++] = argv[cur_arg];
       alternate_log_mode = 1;
+      ++cur_arg;
+    } else if (!strcmp(argv[cur_arg], "-hb")) {
+      argv_restart[argc_restart++] = argv[cur_arg];
+      heartbeat_mode = 1;
       ++cur_arg;
     } else if (!strcmp(argv[cur_arg], "-r")) {
       argv_restart[argc_restart++] = argv[cur_arg];
