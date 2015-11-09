@@ -69,7 +69,7 @@ super_run_status_check(
         size_t size);
 
 void
-super_run_save_status(
+super_run_status_save(
         const unsigned char *heartbeat_dir,
         const unsigned char *file_name,
         const struct super_run_status *psrs,
@@ -78,7 +78,7 @@ super_run_save_status(
         long long timeout_ms);
 
 void
-super_run_remove_status(
+super_run_status_remove(
         const unsigned char *heartbeat_dir,
         const unsigned char *file_name);
 

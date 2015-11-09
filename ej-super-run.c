@@ -198,7 +198,7 @@ super_run_before_tests(struct run_listener *gself, int test_no)
   rs.pkt_name_idx = super_run_status_add_str(&rs, self->packet_name);
   rs.test_num = test_no;
 
-  super_run_save_status(super_run_heartbeat_path, status_file_name, &rs,
+  super_run_status_save(super_run_heartbeat_path, status_file_name, &rs,
                         current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS);
 }
 
@@ -473,7 +473,7 @@ report_waiting_state(long long current_time_ms, long long last_check_time_ms)
   rs.timestamp = current_time_ms;
   rs.last_run_ts = last_check_time_ms;
   rs.status = SRS_WAITING;
-  super_run_save_status(super_run_heartbeat_path, status_file_name, &rs,
+  super_run_status_save(super_run_heartbeat_path, status_file_name, &rs,
                         current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS);
 }
 
@@ -562,7 +562,7 @@ do_loop(
     last_handled_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
   }
 
-  super_run_remove_status(super_run_heartbeat_path, status_file_name);  
+  super_run_status_remove(super_run_heartbeat_path, status_file_name);  
   return 0;
 }
 
