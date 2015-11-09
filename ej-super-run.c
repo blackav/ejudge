@@ -322,7 +322,7 @@ handle_packet(
               report_path, full_report_path,
               srgp->user_spelling,
               srpp->spelling, mirror_dir, utf8_mode,
-              &run_listener.b);
+              &run_listener.b, NULL);
     //if (cr_serialize_unlock(state) < 0) return -1;
   }
 

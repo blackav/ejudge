@@ -108,7 +108,8 @@ run_tests(
         const unsigned char *problem_spelling,
         const unsigned char *mirror_dir,
         int utf8_mode,
-        struct run_listener *listener);
+        struct run_listener *listener,
+        const unsigned char *hostname);
 
 #endif /* __RUN_H__ */
 

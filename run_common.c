@@ -205,7 +205,8 @@ generate_xml_report(
         const unsigned char *valuer_judge_comment,
         const unsigned char *valuer_errors,
         const unsigned char *cpu_model,
-        const unsigned char *cpu_mhz)
+        const unsigned char *cpu_mhz,
+        const unsigned char *hostname)
 {
   int i;
   unsigned char *msg = 0;
@@ -288,7 +289,9 @@ generate_xml_report(
   if (valuer_errors) {
     tr->valuer_errors = xstrdup(valuer_errors);
   }
-  if ((msg = os_NodeName())) {
+  if (hostname) {
+    tr->host = xstrdup(hostname);
+  } else if ((msg = os_NodeName())) {
     tr->host = xstrdup(msg);
   }
   if (cpu_model) {
@@ -3340,7 +3343,8 @@ run_tests(
         const unsigned char *problem_spelling,
         const unsigned char *mirror_dir,
         int utf8_mode,
-        struct run_listener *listener)
+        struct run_listener *listener,
+        const unsigned char *hostname)
 {
   const struct section_global_data *global = state->global;
   const struct super_run_in_global_packet *srgp = srp->global;
@@ -3957,7 +3961,7 @@ done:;
                       user_run_tests,
                       additional_comment, valuer_comment,
                       valuer_judge_comment, valuer_errors,
-                      cpu_model, cpu_mhz);
+                      cpu_model, cpu_mhz, hostname);
 
   get_current_time(&reply_pkt->ts7, &reply_pkt->ts7_us);
 
