@@ -43,7 +43,7 @@ struct super_run_status
     unsigned short ext_host_idx; // 40: external host name index
     unsigned short queue_idx;    // 42: testing queue name
     unsigned short ej_ver_idx;   // 44: ejudge version string
-    unsigned char  pad3[2];
+    unsigned short super_run_idx;// 46: super_run_id index
 
     int            contest_id;   // 48: contest_id being tested
     int            run_id;       // 52: run_id being tested
