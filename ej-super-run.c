@@ -925,8 +925,8 @@ check_environment(void)
     public_ip = xstrdup(s);
   }
   if ((s = getenv("EJ_SUPER_RUN_ID")) && *s) {
-    xfree(ej_super_run_id);
-    ej_super_run_id = xstrdup(s);
+    xfree(super_run_id);
+    super_run_id = xstrdup(s);
   }
 }
 
