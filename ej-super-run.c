@@ -169,13 +169,37 @@ find_abstract_tester(serve_state_t state, const unsigned char *arch)
 struct super_run_listener
 {
   struct run_listener b;
+  int contest_id;
+  int run_id;
+  const unsigned char *packet_name;
 };
+
+static void
+do_super_run_status_init(struct super_run_status *prs);
 
 static void
 super_run_before_tests(struct run_listener *gself, int test_no)
 {
   struct super_run_listener *self = (struct super_run_listener *) gself;
-  (void) self;
+  if (!heartbeat_mode) return;
+
+  struct super_run_status rs;
+  do_super_run_status_init(&rs);
+
+  struct timeval ctv;
+  gettimeofday(&ctv, NULL);
+  long long current_time_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
+
+  rs.timestamp = current_time_ms;
+  rs.last_run_ts = current_time_ms;
+  rs.status = SRS_TESTING;
+  rs.contest_id = self->contest_id;
+  rs.run_id = self->run_id;
+  rs.pkt_name_idx = super_run_status_add_str(&rs, self->packet_name);
+  rs.test_num = test_no;
+
+  super_run_save_status(super_run_heartbeat_path, status_file_name, &rs,
+                        current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS);
 }
 
 static const struct run_listener_ops super_run_listener_ops =
@@ -321,6 +345,10 @@ handle_packet(
     if (srgp->run_uuid && srgp->run_uuid[0]) {
       ej_uuid_parse(srgp->run_uuid, &reply_pkt.uuid);
     }
+
+    run_listener.contest_id = srgp->contest_id;
+    run_listener.run_id = srgp->run_id;
+    run_listener.packet_name = pkt_name;
 
     //if (cr_serialize_lock(state) < 0) return -1;
     run_tests(ejudge_config, state, tst, srp, &reply_pkt,
