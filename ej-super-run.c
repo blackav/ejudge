@@ -150,6 +150,23 @@ find_abstract_tester(serve_state_t state, const unsigned char *arch)
   return NULL;
 }
 
+struct super_run_listener
+{
+  struct run_listener b;
+};
+
+static void
+super_run_before_tests(struct run_listener *gself, int test_no)
+{
+  struct super_run_listener *self = (struct super_run_listener *) gself;
+  (void) self;
+}
+
+static const struct run_listener_ops super_run_listener_ops =
+{
+  super_run_before_tests,
+};
+
 static int
 handle_packet(
         serve_state_t state,
@@ -182,8 +199,11 @@ handle_packet(
   unsigned char *arch = NULL;
   unsigned char *short_name = NULL;
   const struct section_tester_data *tst = NULL;
+  struct super_run_listener run_listener;
 
   memset(&reply_pkt, 0, sizeof(reply_pkt));
+  memset(&run_listener, 0, sizeof(run_listener));
+  run_listener.b.ops = &super_run_listener_ops;
 
   r = generic_read_file(&srp_b, 0, &srp_z, SAFE | REMOVE, super_run_spool_path, pkt_name, "");
   if (r == 0) {
@@ -293,7 +313,8 @@ handle_packet(
               exe_name, run_base,
               report_path, full_report_path,
               srgp->user_spelling,
-              srpp->spelling, mirror_dir, utf8_mode, NULL);
+              srpp->spelling, mirror_dir, utf8_mode,
+              &run_listener.b);
     //if (cr_serialize_unlock(state) < 0) return -1;
   }
 
