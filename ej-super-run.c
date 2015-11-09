@@ -68,6 +68,7 @@ static struct serve_state serve_state;
 static int restart_flag = 0;
 static unsigned char *contests_home_dir = NULL;
 static int heartbeat_mode = 0;
+static unsigned char *super_run_id = NULL;
 
 static int ignored_archs_count = 0;
 static int ignored_problems_count = 0;
@@ -495,7 +496,9 @@ write_help(void)
          "    -a           write log file to an alternate location\n"
          "    -m DIR       specify a directory for file mirroring\n"
          "    -ht TIMEOUT  machine halt timeout (in minutes)\n"
-         "    -hc CMD      machine halt command\n",
+         "    -hc CMD      machine halt command\n"
+         "    -hb          enable heartbeat mode\n"
+         "    -hi          set super_run id",
          program_name, program_name);
   exit(0);
 }
@@ -1003,6 +1006,13 @@ main(int argc, char *argv[])
       if (cur_arg + 1 >= argc) fatal("argument expected for -hc");
       xfree(halt_command); halt_command = NULL;
       halt_command = xstrdup(argv[cur_arg + 1]);
+      argv_restart[argc_restart++] = argv[cur_arg];
+      argv_restart[argc_restart++] = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-hi")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for -hi");
+      xfree(super_run_id); super_run_id = NULL;
+      super_run_id = xstrdup(argv[cur_arg + 1]);
       argv_restart[argc_restart++] = argv[cur_arg];
       argv_restart[argc_restart++] = argv[cur_arg + 1];
       cur_arg += 2;
