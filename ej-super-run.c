@@ -89,6 +89,9 @@ static int ignore_rejudge = 0;
 static unsigned char **host_names = NULL;
 static unsigned char *mirror_dir = NULL;
 
+#define HEARTBEAT_SAVE_INTERVAL_MS 5000
+static long long last_heartbear_save_time = 0;
+
 static void
 fatal(const char *format, ...)
   __attribute__((noreturn, format(printf, 1, 2)));
@@ -442,7 +445,8 @@ report_waiting_state(long long current_time_ms, long long last_check_time_ms)
   rs.timestamp = current_time_ms;
   rs.last_run_ts = last_check_time_ms;
   rs.status = SRS_WAITING;
-  super_run_save_status(super_run_heartbeat_path, status_file_name, &rs);
+  super_run_save_status(super_run_heartbeat_path, status_file_name, &rs,
+                        current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS);
 
   /*
     int            contest_id;   // 48: contest_id being tested

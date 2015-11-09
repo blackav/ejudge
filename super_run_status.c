@@ -88,11 +88,20 @@ void
 super_run_save_status(
         const unsigned char *heartbeat_dir,
         const unsigned char *file_name,
-        const struct super_run_status *psrs)
+        const struct super_run_status *psrs,
+        long long current_time_ms,
+        long long *p_last_saved_time_ms,
+        long long timeout_ms)
 {
     unsigned char in_path[PATH_MAX];
     unsigned char dir_path[PATH_MAX];
     int fd = -1;
+
+    if (p_last_saved_time_ms) {
+        if (timeout_ms > 0 && *p_last_saved_time_ms > 0 && *p_last_saved_time_ms + timeout_ms > current_time_ms) {
+            return;
+        }
+    }
 
     snprintf(in_path, sizeof(in_path), "%s/in/%s", heartbeat_dir, file_name);
     fd = open(in_path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
@@ -119,6 +128,9 @@ super_run_save_status(
     snprintf(dir_path, sizeof(dir_path), "%s/dir/%s", heartbeat_dir, file_name);
     if (rename(in_path, dir_path) < 0) {
         unlink(in_path);
+    }
+    if (p_last_saved_time_ms) {
+        *p_last_saved_time_ms = current_time_ms;
     }
 }
 

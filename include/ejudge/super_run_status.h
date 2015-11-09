@@ -72,7 +72,10 @@ void
 super_run_save_status(
         const unsigned char *heartbeat_dir,
         const unsigned char *file_name,
-        const struct super_run_status *psrs);
+        const struct super_run_status *psrs,
+        long long current_time_ms,
+        long long *p_last_saved_time,
+        long long timeout_ms);
 
 #endif /* __SUPER_RUN_STATUS_H__ */
 
