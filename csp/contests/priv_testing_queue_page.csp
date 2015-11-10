@@ -125,13 +125,13 @@
 <table class="b1">
     <tr>
         <th class="b1">NN</th>
-        <th class="b1">Invoker ID</th>
-        <th class="b1">Queue</th>
-        <th class="b1">Status updated</th>
+        <th class="b1">InvokerID</th>
+        <th class="b1">Run Queue</th>
+        <th class="b1">Status Updated</th>
         <th class="b1">Status</th>
-        <th class="b1">Contest ID</th>
-        <th class="b1">Run ID</th>
-        <th class="b1">User Login</th>
+        <th class="b1">ContestID</th>
+        <th class="b1">RunID</th>
+        <th class="b1">User</th>
         <th class="b1">Problem</th>
         <th class="b1">Language</th>
         <th class="b1">Test</th>
