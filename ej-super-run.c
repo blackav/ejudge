@@ -588,7 +588,7 @@ write_help(void)
          "    -ht TIMEOUT  machine halt timeout (in minutes)\n"
          "    -hc CMD      machine halt command\n"
          "    -hb          enable heartbeat mode (default)\n"
-         "    -nhb         enable heartbeat mode\n"
+         "    -nhb         disable heartbeat mode\n"
          "    -hi          set super_run id\n",
          program_name, program_name);
   exit(0);
