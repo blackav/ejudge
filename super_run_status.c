@@ -156,8 +156,8 @@ super_run_status_vector_free(
     if (v) {
         for (int i = 0; i < v->u; ++i) {
             xfree(v->v[i]);
-            xfree(v->v);
         }
+        xfree(v->v);
         memset(v, 0, sizeof(*v));
         if (free_v_flag) {
             xfree(v);
