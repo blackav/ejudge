@@ -56,6 +56,8 @@ struct super_run_status
     unsigned char  strings[320]; // string pool
 };
 
+#define super_run_status_get_str(psrs,field) (((const unsigned char*) (psrs)) + (psrs)->strings_off + (psrs)->field)
+
 void
 super_run_status_init(
         struct super_run_status *psrs);

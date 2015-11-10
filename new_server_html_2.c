@@ -50,6 +50,7 @@
 #include "ejudge/ej_uuid.h"
 #include "ejudge/new_server_pi.h"
 #include "ejudge/xuser_plugin.h"
+#include "ejudge/super_run_status.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -5624,6 +5625,28 @@ ns_scan_run_queue(
   }
 
   qsort(vec->v, vec->u, sizeof(vec->v[0]), scan_run_sort_func);
+}
+
+static int
+heartbeat_status_sort_func(const void *v1, const void *v2)
+{
+  const struct super_run_status *p1 = *(const struct super_run_status**) v1;
+  const struct super_run_status *p2 = *(const struct super_run_status**) v2;
+  const unsigned char *s1 = super_run_status_get_str(p1, super_run_idx);
+  const unsigned char *s2 = super_run_status_get_str(p2, super_run_idx);
+  return strcmp(s1, s2);
+}
+
+void
+ns_scan_heartbeat_dirs(
+        serve_state_t cs,
+        struct super_run_status_vector *vec)
+{
+  memset(vec, 0, sizeof(*vec));
+  for (int i = 0; i < cs->run_queues_u; ++i) {
+    super_run_status_scan(cs->run_queues[i].heartbeat_dir, vec);
+  }
+  qsort(vec->v, vec->u, sizeof(vec->v[0]), heartbeat_status_sort_func);
 }
 
 void

@@ -998,6 +998,11 @@ void
 ns_scan_run_queue(
         serve_state_t cs,
         struct TestingQueueArray *vec);
+struct super_run_status_vector;
+void
+ns_scan_heartbeat_dirs(
+        serve_state_t cs,
+        struct super_run_status_vector *vec);
 
 int
 ns_parse_run_id(
