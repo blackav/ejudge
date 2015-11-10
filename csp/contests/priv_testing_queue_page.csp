@@ -131,6 +131,9 @@
         <th class="b1">Status</th>
         <th class="b1">Contest ID</th>
         <th class="b1">Run ID</th>
+        <th class="b1">User Login</th>
+        <th class="b1">Problem</th>
+        <th class="b1">Language</th>
         <th class="b1">Test</th>
     </tr>
 <%
@@ -138,6 +141,9 @@
     const struct super_run_status *srs = srsv.v[i];
     const unsigned char *super_run_id = super_run_status_get_str(srs, super_run_idx);
     const unsigned char *queue_name = super_run_status_get_str(srs, queue_idx);
+    const unsigned char *login = super_run_status_get_str(srs, login_idx);
+    const unsigned char *prob_short_name = super_run_status_get_str(srs, prob_idx);
+    const unsigned char *lang_short_name = super_run_status_get_str(srs, lang_idx);
     unsigned char status_update_buf[128];
     unsigned char status_buf[128];
     status_update_buf[0] = 0;
@@ -191,10 +197,13 @@
         <td class="b1"><s:v value="srs->contest_id" /></td>
         <td class="b1"><s:v value="srs->run_id" /></td>
         <td class="b1"><s:v value="srs->test_num" /></td>
+        <td class="b1"><s:v value="login" /></td>
+        <td class="b1"><s:v value="prob_short_name" /></td>
+        <td class="b1"><s:v value="lang_short_name" /></td>
 <%
     } else {
 %>
-        <td class="b1" colspan="3">&nbsp;</td>
+        <td class="b1" colspan="6">&nbsp;</td>
 <%
     }
 %>
