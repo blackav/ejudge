@@ -50,8 +50,11 @@ struct super_run_status
     int            test_num;     // 56: test being tested
     short          status;       // 58: status
     unsigned short pkt_name_idx; // 62: packet name index
+    unsigned short login_idx;    // 64: user login
+    unsigned short prob_idx;     // 66: problem short name
+    unsigned short lang_idx;     // 68: language short name
 
-    unsigned char  pad4[128];
+    unsigned char  pad4[122];
 
     unsigned char  strings[320]; // string pool
 };

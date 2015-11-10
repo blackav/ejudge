@@ -172,6 +172,9 @@ struct super_run_listener
   int contest_id;
   int run_id;
   const unsigned char *packet_name;
+  const unsigned char *login;
+  const unsigned char *prob_short_name;
+  const unsigned char *lang_short_name;
 };
 
 static void
@@ -197,6 +200,9 @@ super_run_before_tests(struct run_listener *gself, int test_no)
   rs.run_id = self->run_id;
   rs.pkt_name_idx = super_run_status_add_str(&rs, self->packet_name);
   rs.test_num = test_no;
+  if (self->login) rs.login_idx = super_run_status_add_str(&rs, self->login);
+  if (self->prob_short_name) rs.prob_idx = super_run_status_add_str(&rs, self->prob_short_name);
+  if (self->lang_short_name) rs.lang_idx = super_run_status_add_str(&rs, self->lang_short_name);
 
   super_run_status_save(super_run_heartbeat_path, status_file_name, &rs,
                         current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS);
@@ -349,6 +355,9 @@ handle_packet(
     run_listener.contest_id = srgp->contest_id;
     run_listener.run_id = srgp->run_id;
     run_listener.packet_name = pkt_name;
+    run_listener.login = srgp->user_login;
+    run_listener.prob_short_name = srpp->short_name;
+    run_listener.lang_short_name = srgp->lang_short_name;
 
     //if (cr_serialize_lock(state) < 0) return -1;
     run_tests(ejudge_config, state, tst, srp, &reply_pkt,
