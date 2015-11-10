@@ -196,10 +196,10 @@
 %>
         <td class="b1"><s:v value="srs->contest_id" /></td>
         <td class="b1"><s:v value="srs->run_id" /></td>
-        <td class="b1"><s:v value="srs->test_num" /></td>
         <td class="b1"><s:v value="login" /></td>
         <td class="b1"><s:v value="prob_short_name" /></td>
         <td class="b1"><s:v value="lang_short_name" /></td>
+        <td class="b1"><s:v value="srs->test_num" /></td>
 <%
     } else {
 %>
