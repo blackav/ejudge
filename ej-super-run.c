@@ -69,7 +69,7 @@ static int utf8_mode = 0;
 static struct serve_state serve_state;
 static int restart_flag = 0;
 static unsigned char *contests_home_dir = NULL;
-static int heartbeat_mode = 0;
+static int heartbeat_mode = 1;
 static unsigned char *super_run_id = NULL;
 static unsigned char *instance_id = NULL;
 static unsigned char *local_ip = NULL;
@@ -587,7 +587,8 @@ write_help(void)
          "    -m DIR       specify a directory for file mirroring\n"
          "    -ht TIMEOUT  machine halt timeout (in minutes)\n"
          "    -hc CMD      machine halt command\n"
-         "    -hb          enable heartbeat mode\n"
+         "    -hb          enable heartbeat mode (default)\n"
+         "    -nhb         enable heartbeat mode\n"
          "    -hi          set super_run id\n",
          program_name, program_name);
   exit(0);
@@ -1119,6 +1120,10 @@ main(int argc, char *argv[])
     } else if (!strcmp(argv[cur_arg], "-hb")) {
       argv_restart[argc_restart++] = argv[cur_arg];
       heartbeat_mode = 1;
+      ++cur_arg;
+    } else if (!strcmp(argv[cur_arg], "-nhb")) {
+      argv_restart[argc_restart++] = argv[cur_arg];
+      heartbeat_mode = 0;
       ++cur_arg;
     } else if (!strcmp(argv[cur_arg], "-r")) {
       argv_restart[argc_restart++] = argv[cur_arg];
