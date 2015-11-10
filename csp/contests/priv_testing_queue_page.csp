@@ -126,6 +126,7 @@
     <tr>
         <th class="b1">NN</th>
         <th class="b1">Invoker ID</th>
+        <th class="b1">Queue</th>
         <th class="b1">Status updated</th>
         <th class="b1">Status</th>
     </tr>
@@ -133,12 +134,13 @@
   for (i = 0; i < srsv.u; ++i) {
     const struct super_run_status *srs = srsv.v[i];
     const unsigned char *super_run_id = super_run_status_get_str(srs, super_run_idx);
+    const unsigned char *queue_name = super_run_status_get_str(srs, queue_idx);
     unsigned char status_update_buf[128];
     unsigned char status_buf[128];
     status_update_buf[0] = 0;
-    if (current_time_ms + 5000 < srs->timestamp) {
+    if (current_time_ms + 10000 < srs->timestamp) {
       snprintf(status_update_buf, sizeof(status_update_buf), "<i>future</i>");
-    } else if (srs->timestamp + 5000 >= current_time_ms) {
+    } else if (srs->timestamp + 10000 >= current_time_ms) {
       snprintf(status_update_buf, sizeof(status_update_buf), "<b>now</b>");
     } else {
       long long diff = current_time_ms - srs->timestamp;
@@ -162,9 +164,9 @@
       } else if (diff < 120000) {
         snprintf(status_buf, sizeof(status_buf), "WAITING (%d secs)", (int)(diff / 1000));
       } else if (diff < 3600000) {
-        snprintf(status_buf, sizeof(status_buf), "WAITING (%d mins)", (int)(diff / 60 * 1000));
+        snprintf(status_buf, sizeof(status_buf), "WAITING (%d mins)", (int)(diff / (60 * 1000)));
       } else if (diff < 24 * 60 * 60 * 1000) {
-        snprintf(status_buf, sizeof(status_buf), "WAITING (%d hours)", (int)(diff / 60 * 60 * 1000));
+        snprintf(status_buf, sizeof(status_buf), "WAITING (%d hours)", (int)(diff / (60 * 60 * 1000)));
       } else {
         snprintf(status_buf, sizeof(status_buf), "WAITING (long time)");
       }
@@ -175,6 +177,7 @@
     <tr>
         <td class="b1"><s:v value="i + 1" /></td>
         <td class="b1"><s:v value="super_run_id" /></td>
+        <td class="b1"><s:v value="queue_name" /></td>
         <td class="b1"><s:v value="status_update_buf" escape="no" /></td>
         <td class="b1"><s:v value="status_buf" escape="no" /></td>
     </tr>
