@@ -129,6 +129,9 @@
         <th class="b1">Queue</th>
         <th class="b1">Status updated</th>
         <th class="b1">Status</th>
+        <th class="b1">Contest ID</th>
+        <th class="b1">Run ID</th>
+        <th class="b1">Test</th>
     </tr>
 <%
   for (i = 0; i < srsv.u; ++i) {
@@ -171,7 +174,9 @@
         snprintf(status_buf, sizeof(status_buf), "WAITING (long time)");
       }
     } else if (srs->status == SRS_TESTING) {
+        snprintf(status_buf, sizeof(status_buf), "<b>TESTING</b>");
     } else {
+        snprintf(status_buf, sizeof(status_buf), "Unknown status %d", srs->status);
     }
 %>
     <tr>
@@ -180,6 +185,19 @@
         <td class="b1"><s:v value="queue_name" /></td>
         <td class="b1"><s:v value="status_update_buf" escape="no" /></td>
         <td class="b1"><s:v value="status_buf" escape="no" /></td>
+<%
+    if (srs->status == SRS_TESTING) {
+%>
+        <td class="b1"><s:v value="srs->contest_id" /></td>
+        <td class="b1"><s:v value="srs->run_id" /></td>
+        <td class="b1"><s:v value="srs->test_num" /></td>
+<%
+    } else {
+%>
+        <td class="b1" colspan="3">&nbsp;</td>
+<%
+    }
+%>
     </tr>
 <%
   }
