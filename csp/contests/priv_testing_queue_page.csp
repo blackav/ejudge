@@ -1,8 +1,8 @@
 <%
-/* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
 #include "ejudge/super_run_packet.h"
+#include "ejudge/super_run_status.h"
 %><%@set getter_name = "csp_get_priv_testing_queue_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_testing_queue_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -10,6 +10,7 @@
 %><%
   const unsigned char *title = NULL;
   struct TestingQueueArray vec;
+  struct super_run_status_vector srsv;
   int i, prob_id, user_id;
   const unsigned char *arch;
   int enable_main_menu = 0;
@@ -19,6 +20,7 @@
   if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   ns_scan_run_queue(cs, &vec);
+  ns_scan_heartbeat_dirs(cs, &srsv);
 
   l10n_setlocale(phr->locale_id);
   title = _("Testing queue");
@@ -113,10 +115,33 @@
 <td class="b0"><s:a ac="testing-down-all"><s:_>Down all</s:_></s:a></td>
 </tr></table>
 
+<h2>Invokers</h2>
+
+<table class="b1">
+    <tr>
+        <th class="b1">NN</th>
+        <th class="b1">Invoker ID</th>
+    </tr>
+<%
+  for (i = 0; i < srsv.u; ++i) {
+    const struct super_run_status *srs = srsv.v[i];
+    const unsigned char *super_run_id = super_run_status_get_str(srs, super_run_idx);
+%>
+    <tr>
+        <td class="b1"><s:v value="i + 1" /></td>
+        <td class="b1"><s:v value="super_run_id" /></td>
+    </tr>
+<%
+  }
+%>
+</table>
+
+
 <%@include "priv_footer.csp"
 %><%
 cleanup:
   l10n_resetlocale();
   testing_queue_array_free(&vec, 0);
+  super_run_status_vector_free(&srsv, 0);
   html_armor_free(&ab);
 %>
