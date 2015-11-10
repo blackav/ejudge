@@ -211,14 +211,19 @@ super_run_status_scan(
         const unsigned char *heartbeat_dir,
         struct super_run_status_vector *v)
 {
-    DIR *d = opendir(heartbeat_dir);
+    if (!heartbeat_dir) return;
+
+    unsigned char dpath[PATH_MAX];
+    snprintf(dpath, sizeof(dpath), "%s/dir", heartbeat_dir);
+
+    DIR *d = opendir(dpath);
     if (!d) return;
 
     struct dirent *dd;
     while ((dd = readdir(d))) {
         if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
         unsigned char path[PATH_MAX];
-        snprintf(path, sizeof(path), "%s/%s", heartbeat_dir, dd->d_name);
+        snprintf(path, sizeof(path), "%s/%s", dpath, dd->d_name);
         struct stat stb;
         if (stat(path, &stb) < 0) continue;
         if (!S_ISREG(stb.st_mode)) continue;
