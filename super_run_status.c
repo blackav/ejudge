@@ -18,11 +18,15 @@
 #include "ejudge/ej_limits.h"
 #include "ejudge/super_run_status.h"
 
+#include "ejudge/xalloc.h"
+
 #include <string.h>
 #include <sys/types.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <unistd.h>
+#include <dirent.h>
+#include <sys/stat.h>
 
 void
 super_run_status_init(struct super_run_status *psrs)
@@ -142,6 +146,89 @@ super_run_status_remove(
     unsigned char dir_path[PATH_MAX];
     snprintf(dir_path, sizeof(dir_path), "%s/dir/%s", heartbeat_dir, file_name);
     unlink(dir_path);
+}
+
+struct super_run_status_vector *
+super_run_status_vector_free(
+        struct super_run_status_vector *v,
+        int free_v_flag)
+{
+    if (v) {
+        for (int i = 0; i < v->u; ++i) {
+            xfree(v->v[i]);
+            xfree(v->v);
+        }
+        memset(v, 0, sizeof(*v));
+        if (free_v_flag) {
+            xfree(v);
+        }
+    }
+    return NULL;
+}
+
+void
+super_run_status_vector_add(
+        struct super_run_status_vector *v,
+        const struct super_run_status *s)
+{
+    if (v->u == v->a) {
+        if (!(v->a *= 2)) v->a = 16;
+        v->v = xrealloc(v->v, v->a * sizeof(v->v[0]));
+    }
+    struct super_run_status *ns = malloc(sizeof(*ns));
+    memcpy(ns, s, sizeof(*ns));
+    v->v[v->u++] = ns;
+}
+
+int
+super_run_status_read(
+        const unsigned char *path,
+        struct super_run_status *ps)
+{
+    int fd = open(path, O_RDONLY, 0);
+    if (fd < 0) return -1;
+    unsigned char *pp = (unsigned char*) ps;
+    size_t zz = sizeof(*ps);
+    while (zz) {
+        int r = read(fd, pp, zz);
+        if (r < 0) {
+            close(fd);
+            return -1;
+        }
+        if (!r) {
+            close(fd);
+            return -1;
+        }
+        pp += r;
+        zz -= r;
+    }
+    close(fd);
+    return 0;
+}
+
+void
+super_run_status_scan(
+        const unsigned char *heartbeat_dir,
+        struct super_run_status_vector *v)
+{
+    DIR *d = opendir(heartbeat_dir);
+    if (!d) return;
+
+    struct dirent *dd;
+    while ((dd = readdir(d))) {
+        if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
+        unsigned char path[PATH_MAX];
+        snprintf(path, sizeof(path), "%s/%s", heartbeat_dir, dd->d_name);
+        struct stat stb;
+        if (stat(path, &stb) < 0) continue;
+        if (!S_ISREG(stb.st_mode)) continue;
+        if (stb.st_size != sizeof(struct super_run_status)) continue;
+        struct super_run_status srs;
+        if (super_run_status_read(path, &srs) < 0) continue;
+        if (super_run_status_check(&srs, sizeof(srs)) < 0) continue;
+        super_run_status_vector_add(v, &srs);
+    }
+    closedir(d);
 }
 
 /*

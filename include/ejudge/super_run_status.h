@@ -82,6 +82,27 @@ super_run_status_remove(
         const unsigned char *heartbeat_dir,
         const unsigned char *file_name);
 
+struct super_run_status_vector
+{
+    int a, u;
+    struct super_run_status **v;
+};
+
+struct super_run_status_vector *
+super_run_status_vector_free(
+        struct super_run_status_vector *v,
+        int free_v_flag);
+
+void
+super_run_status_vector_add(
+        struct super_run_status_vector *v,
+        const struct super_run_status *s);
+
+void
+super_run_status_scan(
+        const unsigned char *heartbeat_dir,
+        struct super_run_status_vector *v);
+
 #endif /* __SUPER_RUN_STATUS_H__ */
 
 /*
