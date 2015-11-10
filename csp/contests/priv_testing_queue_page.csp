@@ -14,10 +14,15 @@
   int i, prob_id, user_id;
   const unsigned char *arch;
   int enable_main_menu = 0;
+  struct timeval td;
+  long long current_time_ms;
 
   memset(&vec, 0, sizeof(vec));
 
   if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  gettimeofday(&td, NULL);
+  current_time_ms = ((long long) td.tv_sec) * 1000 + td.tv_usec / 1000;
 
   ns_scan_run_queue(cs, &vec);
   ns_scan_heartbeat_dirs(cs, &srsv);
@@ -121,15 +126,57 @@
     <tr>
         <th class="b1">NN</th>
         <th class="b1">Invoker ID</th>
+        <th class="b1">Status updated</th>
+        <th class="b1">Status</th>
     </tr>
 <%
   for (i = 0; i < srsv.u; ++i) {
     const struct super_run_status *srs = srsv.v[i];
     const unsigned char *super_run_id = super_run_status_get_str(srs, super_run_idx);
+    unsigned char status_update_buf[128];
+    unsigned char status_buf[128];
+    status_update_buf[0] = 0;
+    if (current_time_ms + 5000 < srs->timestamp) {
+      snprintf(status_update_buf, sizeof(status_update_buf), "<i>future</i>");
+    } else if (srs->timestamp + 5000 >= current_time_ms) {
+      snprintf(status_update_buf, sizeof(status_update_buf), "<b>now</b>");
+    } else {
+      long long diff = current_time_ms - srs->timestamp;
+      if (diff < 120000) {
+        snprintf(status_update_buf, sizeof(status_update_buf), "%d sec ago", (int)(diff / 1000));
+      } else if (diff < 3600000) {
+        snprintf(status_update_buf, sizeof(status_update_buf), "%d min ago", (int)(diff / 60000));
+      } else {
+        time_t tt = (int)(srs->timestamp / 1000);
+        struct tm *ptm = localtime(&tt);
+        snprintf(status_update_buf, sizeof(status_update_buf), "%04d-%02d-%02d %02d:%02d:%02d",
+                 ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
+                 ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+      }
+    }
+    status_buf[0] = 0;
+    if (srs->status == SRS_WAITING) {
+      long long diff = srs->timestamp - srs->last_run_ts;
+      if (diff < 5000) {
+        snprintf(status_buf, sizeof(status_buf), "WAITING");
+      } else if (diff < 120000) {
+        snprintf(status_buf, sizeof(status_buf), "WAITING (%d secs)", (int)(diff / 1000));
+      } else if (diff < 3600000) {
+        snprintf(status_buf, sizeof(status_buf), "WAITING (%d mins)", (int)(diff / 60 * 1000));
+      } else if (diff < 24 * 60 * 60 * 1000) {
+        snprintf(status_buf, sizeof(status_buf), "WAITING (%d hours)", (int)(diff / 60 * 60 * 1000));
+      } else {
+        snprintf(status_buf, sizeof(status_buf), "WAITING (long time)");
+      }
+    } else if (srs->status == SRS_TESTING) {
+    } else {
+    }
 %>
     <tr>
         <td class="b1"><s:v value="i + 1" /></td>
         <td class="b1"><s:v value="super_run_id" /></td>
+        <td class="b1"><s:v value="status_update_buf" escape="no" /></td>
+        <td class="b1"><s:v value="status_buf" escape="no" /></td>
     </tr>
 <%
   }
