@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2003-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +20,8 @@
 
 #include "l10n_impl.h"
 
-extern int (*testinfo_parse_func)(const char*,testinfo_t*);
+struct testinfo_subst_handler;
+extern int (*testinfo_parse_func)(const char*,testinfo_t*,struct testinfo_subst_handler*);
 extern const char *(*testinfo_strerror_func)(int);
 testinfo_t test_info;
 
@@ -58,7 +58,7 @@ checker_do_init(int argc, char **argv, int corr_flag, int info_flag,
   if (info_flag) {
     if (!testinfo_parse_func)
       fatal_CF(_("Test info is requested, but no code compiled in"));
-    errcode = (*testinfo_parse_func)(argv[arg_ind++], &test_info);
+    errcode = (*testinfo_parse_func)(argv[arg_ind++], &test_info, NULL);
     if (errcode < 0)
       fatal_CF(_("Test info parsing failed: %s"),
                (*testinfo_strerror_func)(errcode));
