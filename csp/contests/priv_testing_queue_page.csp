@@ -51,7 +51,7 @@
         <th class="b1"><s:_>Problem</s:_></th>
         <th class="b1"><s:_>Language</s:_></th>
         <th class="b1">JudgeId</th>
-        <th class="b1"><s:_>Create time</s:_></th>
+        <th class="b1"><s:_>Enqueue Time</s:_></th>
         <th class="b1"><s:_>Actions</s:_></th>
     </tr>
 <%  for (i = 0; i < vec.u; ++i) {
@@ -127,7 +127,7 @@
         <th class="b1">NN</th>
         <th class="b1">InvokerID</th>
         <th class="b1">Run Queue</th>
-        <th class="b1">Status Updated</th>
+        <th class="b1">Status<br/> Updated</th>
         <th class="b1">Status</th>
         <th class="b1">ContestID</th>
         <th class="b1">RunID</th>
@@ -135,8 +135,8 @@
         <th class="b1">Problem</th>
         <th class="b1">Language</th>
         <th class="b1">Test</th>
-        <th class="b1">Run Queue Time</th>
-        <th class="b1">Testing Start Time</th>
+        <th class="b1">Enqueue Time</th>
+        <th class="b1">Testing Start<br/>Time</th>
     </tr>
 <%
   for (i = 0; i < srsv.u; ++i) {
