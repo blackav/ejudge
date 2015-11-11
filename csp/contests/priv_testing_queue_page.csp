@@ -135,6 +135,8 @@
         <th class="b1">Problem</th>
         <th class="b1">Language</th>
         <th class="b1">Test</th>
+        <th class="b1">Run Queue Time</th>
+        <th class="b1">Testing Start Time</th>
     </tr>
 <%
   for (i = 0; i < srsv.u; ++i) {
@@ -193,6 +195,8 @@
         <td class="b1"><s:v value="status_buf" escape="no" /></td>
 <%
     if (srs->status == SRS_TESTING) {
+      time_t run_queue_time = srs->queue_ts / 1000;
+      time_t testing_start_time = srs->testing_start_ts / 1000;
 %>
         <td class="b1"><s:v value="srs->contest_id" /></td>
         <td class="b1"><s:v value="srs->run_id" /></td>
@@ -200,10 +204,12 @@
         <td class="b1"><s:v value="prob_short_name" /></td>
         <td class="b1"><s:v value="lang_short_name" /></td>
         <td class="b1"><s:v value="srs->test_num" /></td>
+        <td class="b1"><% if (run_queue_time <= 0) { %>&nbsp;<% } else { %><s:v value="run_queue_time" /><% } %></td>
+        <td class="b1"><% if (testing_start_time <= 0) { %>&nbsp;<% } else { %><s:v value="testing_start_time" /><% } %></td>
 <%
     } else {
 %>
-        <td class="b1" colspan="6">&nbsp;</td>
+        <td class="b1" colspan="8">&nbsp;</td>
 <%
     }
 %>
