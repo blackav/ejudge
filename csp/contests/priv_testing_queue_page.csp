@@ -47,8 +47,8 @@
         <th class="b1"><s:_>Packet name</s:_></th>
         <th class="b1"><s:_>Priority</s:_></th>
         <th class="b1">RunId</th>
-        <th class="b1"><s:_>Problem</s:_></th>
         <th class="b1"><s:_>User</s:_></th>
+        <th class="b1"><s:_>Problem</s:_></th>
         <th class="b1"><s:_>Language</s:_></th>
         <th class="b1">JudgeId</th>
         <th class="b1"><s:_>Create time</s:_></th>
@@ -69,6 +69,8 @@
         <td class="b1"><s:v value="vec.v[i].priority" /></td>
         <td class="b1"><s:v value="srgp->run_id" /></td>
 <%    if (srgp->contest_id == cnts->id) { %>
+<%      user_id = srgp->user_id; %>
+        <td class="b1"><s:v value="teamdb_get_name_2(cs->teamdb_state, user_id)" /></td>
         <td class="b1"><%
       prob_id = srpp->id;
       if (prob_id > 0 && prob_id <= cs->max_prob && cs->probs[prob_id]) {
@@ -77,16 +79,7 @@
 %>Problem <s:v value="prob_id" /><%
       }
 %></td>
-<%      user_id = srgp->user_id; %>
-        <td class="b1"><s:v value="teamdb_get_name_2(cs->teamdb_state, user_id)" /></td>
 <%    } else { %>
-        <td class="b1"><%
-      if (srpp->short_name && srpp->short_name[0]) {
-%><s:v value="srpp->short_name" /><%
-      } else {
-%>Problem <s:v value="srpp->id" /><%
-      }
-%></td>
         <td class="b1"><%
       if (srgp->user_name && srgp->user_name[0]) {
 %><s:v value="srgp->user_name" /><%
@@ -94,6 +87,13 @@
 %><s:v value="srgp->user_login" /><%
       } else {
 %>User <s:v value="srgp->user_id" /><%
+      }
+%></td>
+        <td class="b1"><%
+      if (srpp->short_name && srpp->short_name[0]) {
+%><s:v value="srpp->short_name" /><%
+      } else {
+%>Problem <s:v value="srpp->id" /><%
       }
 %></td>
 <%    } %>
