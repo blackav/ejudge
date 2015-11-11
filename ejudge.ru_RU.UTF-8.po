@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-11 16:30+0300\n"
-"PO-Revision-Date: 2015-09-24 20:31+0300\n"
+"POT-Creation-Date: 2015-11-11 22:54+0300\n"
+"PO-Revision-Date: 2015-11-11 22:56+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -1079,9 +1079,6 @@ msgstr "Создать ещё одну учётную запись"
 msgid "Create contest!"
 msgstr "Создать турнир!"
 
-msgid "Create time"
-msgstr "Время создания"
-
 msgid "Create user account"
 msgstr "Создать новую учётную запись"
 
@@ -1338,6 +1335,9 @@ msgstr "Разрешить упрощенную регистрацию (без e
 
 msgid "End time"
 msgstr "Время окончания"
+
+msgid "Enqueue Time"
+msgstr "Время постановки"
 
 msgid "Error"
 msgstr "Ошибка"

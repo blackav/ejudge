@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-11 16:30+0300\n"
+"POT-Creation-Date: 2015-11-11 22:54+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -1009,9 +1009,6 @@ msgstr ""
 msgid "Create contest!"
 msgstr ""
 
-msgid "Create time"
-msgstr ""
-
 msgid "Create user account"
 msgstr ""
 
@@ -1267,6 +1264,9 @@ msgid "Enable simple registration (no email)"
 msgstr ""
 
 msgid "End time"
+msgstr ""
+
+msgid "Enqueue Time"
 msgstr ""
 
 msgid "Error"
