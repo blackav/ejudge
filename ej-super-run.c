@@ -175,6 +175,8 @@ struct super_run_listener
   const unsigned char *user;
   const unsigned char *prob_short_name;
   const unsigned char *lang_short_name;
+  long long queue_ts;
+  long long testing_start_ts;
 };
 
 static void
@@ -203,6 +205,8 @@ super_run_before_tests(struct run_listener *gself, int test_no)
   if (self->user) rs.user_idx = super_run_status_add_str(&rs, self->user);
   if (self->prob_short_name) rs.prob_idx = super_run_status_add_str(&rs, self->prob_short_name);
   if (self->lang_short_name) rs.lang_idx = super_run_status_add_str(&rs, self->lang_short_name);
+  rs.queue_ts = self->queue_ts;
+  rs.testing_start_ts = self->testing_start_ts;
 
   super_run_status_save(super_run_heartbeat_path, status_file_name, &rs,
                         current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS);
@@ -357,6 +361,8 @@ handle_packet(
     run_listener.packet_name = pkt_name;
     run_listener.prob_short_name = srpp->short_name;
     run_listener.lang_short_name = srgp->lang_short_name;
+    run_listener.queue_ts = ((long long) srgp->ts1) * 1000 + srgp->ts1_us / 1000;
+    run_listener.testing_start_ts = ((long long) reply_pkt.ts5) * 1000 + reply_pkt.ts5_us / 1000;
     if (srgp->user_name) {
       run_listener.user = srgp->user_name;
     } else {
