@@ -2074,6 +2074,11 @@ run_one_test(
   unsigned char start_cmd_arg[PATH_MAX];
   unsigned char start_cmd_path[PATH_MAX];
 
+  FILE *start_msg_f = NULL;
+  char *start_msg_s = NULL;
+  size_t start_msg_z = 0;
+  int start_msg_need_env = 0;
+
 #ifdef HAVE_TERMIOS_H
   struct termios term_attrs;
 #endif
@@ -2326,6 +2331,32 @@ run_one_test(
 #endif
 
   tsk = task_New();
+  start_msg_f = open_memstream(&start_msg_s, &start_msg_z);
+  fprintf(start_msg_f, "starting:");
+  if (start_cmd_arg[0]) {
+    fprintf(start_msg_f, " %s", start_cmd_arg);
+    start_msg_need_env = 1;
+    task_AddArg(tsk, start_cmd_arg);
+  }
+  if (tst && tst->start_cmd && tst->start_cmd[0]) {
+    fprintf(start_msg_f, " %s", tst->start_cmd);
+    start_msg_need_env = 1;
+    task_AddArg(tsk, tst->start_cmd);
+  }
+  fprintf(start_msg_f, " %s", arg0_path);
+  fclose(start_msg_f); start_msg_f = NULL;
+  info("%s", start_msg_s);
+  xfree(start_msg_s); start_msg_s = NULL; start_msg_z = 0;
+  if (start_msg_need_env) {
+    if (srpp->input_file && srpp->input_file[0]) {
+      task_SetEnv(tsk, "INPUT_FILE", srpp->input_file);
+    }
+    if (srpp->output_file && srpp->output_file[0]) {
+      task_SetEnv(tsk, "OUTPUT_FILE", srpp->output_file);
+    }
+  }
+
+  /*  
   if (tst && tst->start_cmd && tst->start_cmd[0]) {
     info("starting: %s %s", tst->start_cmd, arg0_path);
     task_AddArg(tsk, tst->start_cmd);
@@ -2347,6 +2378,7 @@ run_one_test(
   } else {
     info("starting: %s", arg0_path);
   }
+  */
 
   task_AddArg(tsk, arg0_path);
   if (srpp->use_info > 0 && tstinfo.cmd_argc >= 1) {
