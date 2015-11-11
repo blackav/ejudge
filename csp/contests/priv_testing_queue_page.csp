@@ -12,7 +12,7 @@
   struct TestingQueueArray vec;
   struct super_run_status_vector srsv;
   int i, prob_id, user_id;
-  const unsigned char *arch;
+  const unsigned char *lang_short_name;
   int enable_main_menu = 0;
   struct timeval td;
   long long current_time_ms;
@@ -49,7 +49,7 @@
         <th class="b1">RunId</th>
         <th class="b1"><s:_>Problem</s:_></th>
         <th class="b1"><s:_>User</s:_></th>
-        <th class="b1"><s:_>Architecture</s:_></th>
+        <th class="b1"><s:_>Language</s:_></th>
         <th class="b1">JudgeId</th>
         <th class="b1"><s:_>Create time</s:_></th>
         <th class="b1"><s:_>Actions</s:_></th>
@@ -58,8 +58,8 @@
     const struct super_run_in_global_packet *srgp = vec.v[i].packet->global;
     const struct super_run_in_problem_packet *srpp = vec.v[i].packet->problem;
 
-    arch = srgp->arch;
-    if (!arch) arch = "";
+    lang_short_name = srgp->lang_short_name;
+    if (!lang_short_name) lang_short_name = "";
 %>
     <tr>
         <td class="b1"><s:v value="i + 1" /></td>
@@ -97,7 +97,7 @@
       }
 %></td>
 <%    } %>
-        <td class="b1"><s:v value="arch" /></td>
+        <td class="b1"><s:v value="lang_short_name" /></td>
         <td class="b1"><s:v value="srgp->judge_id" /></td>
         <td class="b1"><s:v value="vec.v[i].mtime" /></td>
         <td class="b1"><%
@@ -141,7 +141,7 @@
     const struct super_run_status *srs = srsv.v[i];
     const unsigned char *super_run_id = super_run_status_get_str(srs, super_run_idx);
     const unsigned char *queue_name = super_run_status_get_str(srs, queue_idx);
-    const unsigned char *login = super_run_status_get_str(srs, login_idx);
+    const unsigned char *user = super_run_status_get_str(srs, user_idx);
     const unsigned char *prob_short_name = super_run_status_get_str(srs, prob_idx);
     const unsigned char *lang_short_name = super_run_status_get_str(srs, lang_idx);
     unsigned char status_update_buf[128];
@@ -196,7 +196,7 @@
 %>
         <td class="b1"><s:v value="srs->contest_id" /></td>
         <td class="b1"><s:v value="srs->run_id" /></td>
-        <td class="b1"><s:v value="login" /></td>
+        <td class="b1"><s:v value="user" /></td>
         <td class="b1"><s:v value="prob_short_name" /></td>
         <td class="b1"><s:v value="lang_short_name" /></td>
         <td class="b1"><s:v value="srs->test_num" /></td>
