@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-09-24 19:49+0300\n"
+"POT-Creation-Date: 2015-11-11 16:30+0300\n"
 "PO-Revision-Date: 2015-09-24 20:31+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -577,9 +577,6 @@ msgstr "Приём апелляций прекращён"
 
 msgid "Apr"
 msgstr "Апр"
-
-msgid "Architecture"
-msgstr "Архитектура"
 
 msgid "Archive creation with tar failed"
 msgstr "При создании архива программой tar произошла ошибка"

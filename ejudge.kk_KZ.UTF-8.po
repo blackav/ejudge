@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-09-24 19:49+0300\n"
+"POT-Creation-Date: 2015-11-11 16:30+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -511,9 +511,6 @@ msgid "Appeals deadline is exceeded"
 msgstr ""
 
 msgid "Apr"
-msgstr ""
-
-msgid "Architecture"
 msgstr ""
 
 msgid "Archive creation with tar failed"
