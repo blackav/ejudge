@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +35,7 @@ static const unsigned char tree_result_strs[RUN_LAST + 1][4] =
   [RUN_PENDING] =          "PD",
   [RUN_MEM_LIMIT_ERR] =    "ML",
   [RUN_SECURITY_ERR] =     "SE",
+  [RUN_SYNC_ERR] =         "SY",
   [RUN_STYLE_ERR] =        "SV",
   [RUN_WALL_TIME_LIMIT_ERR] = "WT",
   [RUN_PENDING_REVIEW] =   "PR",
