@@ -1703,6 +1703,7 @@ ncurses_init(void)
   intrflush(stdscr, FALSE);
   keypad(stdscr, TRUE);
 
+  /*
   if (has_colors()) {
     start_color();
     init_pair(1, COLOR_WHITE, COLOR_BLUE);
@@ -1711,6 +1712,7 @@ ncurses_init(void)
     init_pair(4, COLOR_YELLOW, COLOR_RED);
     init_pair(5, COLOR_RED, COLOR_BLUE);
   }
+  */
   attrset(COLOR_PAIR(1));
   bkgdset(COLOR_PAIR(1));
 
