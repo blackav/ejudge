@@ -5506,6 +5506,7 @@ priv_download_runs(
   // file_pattern_prob
   // file_pattern_lang
   // file_pattern_suffix
+  // file_pattern_contest
   if (hr_cgi_param(phr, "run_selection", &s) <= 0)
     FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
   errno = 0;
@@ -5534,6 +5535,8 @@ priv_download_runs(
     file_name_mask |= NS_FILE_PATTERN_LANG;
   if (hr_cgi_param(phr, "file_pattern_suffix", &s) > 0)
     file_name_mask |= NS_FILE_PATTERN_SUFFIX;
+  if (hr_cgi_param(phr, "file_pattern_contest", &s) > 0)
+    file_name_mask |= NS_FILE_PATTERN_CONTEST;
   if (!file_name_mask) file_name_mask = NS_FILE_PATTERN_RUN;
 
   if (ns_parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0)

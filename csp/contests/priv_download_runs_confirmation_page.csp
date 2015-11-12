@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "priv_includes.csp"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set getter_name = "csp_get_priv_download_runs_confirmation_page"
@@ -44,6 +43,7 @@
 
 <h2><s:_>File name pattern</s:_></h2>
 <table>
+<tr><td><input type="checkbox" name="file_pattern_contest"/></td><td><s:_>Use Contest Id</s:_></td></tr>
 <tr><td><input type="checkbox" name="file_pattern_run" checked="yes"/></td><td><s:_>Use run number</s:_></td></tr>
 <tr><td><input type="checkbox" name="file_pattern_uid"/></td><td><s:_>Use user Id</s:_></td></tr>
 <tr><td><input type="checkbox" name="file_pattern_login"/></td><td><s:_>Use user Login</s:_></td></tr>

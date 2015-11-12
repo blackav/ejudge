@@ -2783,9 +2783,8 @@ ns_download_runs(
       snprintf(name_buf, sizeof(name_buf), "!user_%d", info.user_id);
       name_ptr = name_buf;
     } else {
-      filename_armor_bytes(name_buf, sizeof(name_buf), name_ptr,
-                           strlen(name_ptr));
-      name_ptr = name_buf;
+      //filename_armor_bytes(name_buf, sizeof(name_buf), name_ptr, strlen(name_ptr));
+      //name_ptr = name_buf;
     }
     if (info.prob_id > 0 && info.prob_id <= cs->max_prob
         && cs->probs[info.prob_id]) {
@@ -2882,6 +2881,10 @@ ns_download_runs(
 
     sep = "";
     ptr = file_name_str;
+    if ((file_name_mask & NS_FILE_PATTERN_CONTEST)) {
+      ptr += sprintf(ptr, "%s%d", sep, cnts->id);
+      sep = "-";
+    }
     if ((file_name_mask & NS_FILE_PATTERN_RUN)) {
       ptr += sprintf(ptr, "%s%06d", sep, run_id);
       sep = "-";
