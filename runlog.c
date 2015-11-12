@@ -1509,6 +1509,7 @@ static const unsigned char valid_user_run_statuses[256] =
   [RUN_PENDING]             = 1,
   [RUN_MEM_LIMIT_ERR]       = 1,
   [RUN_SECURITY_ERR]        = 1,
+  [RUN_SYNC_ERR]            = 1,
   [RUN_STYLE_ERR]           = 1,
   [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PENDING_REVIEW]      = 1,

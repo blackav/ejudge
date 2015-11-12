@@ -7671,6 +7671,7 @@ unpriv_use_token(
   case RUN_DISQUALIFIED:
   case RUN_MEM_LIMIT_ERR:
   case RUN_SECURITY_ERR:
+  case RUN_SYNC_ERR:
   case RUN_WALL_TIME_LIMIT_ERR:
   case RUN_PENDING_REVIEW:
   case RUN_REJECTED:
@@ -9563,6 +9564,7 @@ unpriv_view_test(
   case RUN_PENDING_REVIEW:
   case RUN_MEM_LIMIT_ERR:
   case RUN_SECURITY_ERR:
+  case RUN_SYNC_ERR:
     break;
   default:
     FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);

@@ -411,6 +411,7 @@ write_html_run_status(
             || status == RUN_WRONG_ANSWER_ERR
             || status == RUN_MEM_LIMIT_ERR
             || status == RUN_SECURITY_ERR
+            || status == RUN_SYNC_ERR
             || status == RUN_WALL_TIME_LIMIT_ERR) {
           // do like ACM
           if (test <= 0) {
@@ -1394,6 +1395,7 @@ do_write_kirov_standings(
       case RUN_PRESENTATION_ERR:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_SYNC_ERR:
       case RUN_STYLE_ERR:
       case RUN_REJECTED:
         if (!full_sol[up_ind]) sol_att[up_ind]++;
@@ -1467,6 +1469,7 @@ do_write_kirov_standings(
       case RUN_PRESENTATION_ERR:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_SYNC_ERR:
       case RUN_STYLE_ERR:
       case RUN_REJECTED:
         att_num[up_ind]++;

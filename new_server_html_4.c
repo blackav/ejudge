@@ -1294,6 +1294,7 @@ static const unsigned char has_failed_test_num[RUN_LAST + 1] =
   [RUN_CHECK_FAILED]     = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
+  [RUN_SYNC_ERR]         = 1,
   [RUN_WALL_TIME_LIMIT_ERR] = 1,
 };
 static const unsigned char has_passed_tests[RUN_LAST + 1] =

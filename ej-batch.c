@@ -717,6 +717,8 @@ get_status_str_rus(int status)
     return "Превышение_ограничения_по_памяти";
   case RUN_SECURITY_ERR:
     return "Недопустимая_системная_операция";
+  case RUN_SYNC_ERR:
+    return "Ошибка синхронизации";
   case RUN_WALL_TIME_LIMIT_ERR:
     return "Превышение_времени";
   default:

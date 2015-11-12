@@ -222,6 +222,7 @@
                 case RUN_WRONG_ANSWER_ERR:
                 case RUN_MEM_LIMIT_ERR:
                 case RUN_SECURITY_ERR:
+                case RUN_SYNC_ERR:
 %>
         <td class="b1"><s:v value="test" /></td>
 <%
@@ -321,6 +322,7 @@
               case RUN_WRONG_ANSWER_ERR:
               case RUN_MEM_LIMIT_ERR:
               case RUN_SECURITY_ERR:
+              case RUN_SYNC_ERR:
                 if (global->disable_failed_test_view > 0) {
 %>
         <td class="b1">&nbsp;</td>
@@ -351,6 +353,7 @@
               case RUN_WRONG_ANSWER_ERR:
               case RUN_MEM_LIMIT_ERR:
               case RUN_SECURITY_ERR:
+              case RUN_SYNC_ERR:
                 if (global->disable_failed_test_view > 0) {
 %>
         <td class="b1">&nbsp;</td>

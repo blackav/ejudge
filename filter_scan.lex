@@ -1,7 +1,6 @@
 /* -*- mode: fundamental -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -215,6 +214,7 @@ lett    [A-Za-z_]
 [Pp][Dd] { TR(RUN_PENDING); }
 [Mm][Ll] { TR(RUN_MEM_LIMIT_ERR); }
 [Ss][Ee] { TR(RUN_SECURITY_ERR); }
+[Ss][Yy] { TR(RUN_SYNC_ERR); }
 [Ss][Vv] { TR(RUN_STYLE_ERR); }
 [Ww][Tt] { TR(RUN_WALL_TIME_LIMIT_ERR); }
 [Rr][Jj] { TR(RUN_REJECTED); }

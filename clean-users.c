@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -217,6 +216,7 @@ main(int argc, char **argv)
         case RUN_PENDING:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_SYNC_ERR:
           reg_events++;
           if (cur_entry->user_id <= 0 || cur_entry->user_id > max_user_id
               || !userlist->user_map[cur_entry->user_id]) {

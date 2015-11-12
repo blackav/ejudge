@@ -44,7 +44,8 @@ enum
   RUN_PENDING_REVIEW   = 16,
   RUN_REJECTED         = 17,
   RUN_SKIPPED          = 18,
-  RUN_MAX_STATUS       = 18,
+  RUN_SYNC_ERR         = 19,
+  RUN_MAX_STATUS       = 19,
 
   RUN_PSEUDO_FIRST     = 20,
   RUN_VIRTUAL_START    = 20,

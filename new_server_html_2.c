@@ -1864,6 +1864,7 @@ ns_priv_edit_run_action(
     case RUN_PARTIAL:
     case RUN_MEM_LIMIT_ERR:
     case RUN_SECURITY_ERR:
+    case RUN_SYNC_ERR:
       if (!value) {
         fprintf(log_f, "invalid 'test' field value\n");
         FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -1923,6 +1924,7 @@ ns_priv_edit_run_action(
       case RUN_PARTIAL:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_SYNC_ERR:
         if (value < 0 || value > prob->full_score) {
           fprintf(log_f, "invalid 'score' field value\n");
           FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -2040,6 +2042,7 @@ ns_priv_edit_run_action(
         case RUN_PARTIAL:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_SYNC_ERR:
           if (!value) {
             fprintf(log_f, "invalid 'saved_test' field value\n");
             FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -2098,6 +2101,7 @@ ns_priv_edit_run_action(
           case RUN_PARTIAL:
           case RUN_MEM_LIMIT_ERR:
           case RUN_SECURITY_ERR:
+          case RUN_SYNC_ERR:
             if (value < 0 || value > prob->full_user_score) {
               fprintf(log_f, "invalid 'saved_score' field value\n");
               FAIL(NEW_SRV_ERR_INV_PARAM);
@@ -3937,6 +3941,7 @@ static int get_accepting_passed_tests(
   case RUN_WRONG_ANSWER_ERR:
   case RUN_MEM_LIMIT_ERR:
   case RUN_SECURITY_ERR:
+  case RUN_SYNC_ERR:
     r = re->test;
     if (re->passed_mode > 0) {
     } else {
@@ -4137,6 +4142,7 @@ ns_write_olympiads_user_runs(
       case RUN_WALL_TIME_LIMIT_ERR:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_SYNC_ERR:
       case RUN_STYLE_ERR:
         re.status = RUN_CHECK_FAILED;
         break;
@@ -4180,6 +4186,7 @@ ns_write_olympiads_user_runs(
       case RUN_WALL_TIME_LIMIT_ERR:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_SYNC_ERR:
         if (prob && prob->type != PROB_TYPE_STANDARD) {
           // This is presentation error
           report_comment = ns_get_checker_comment(cs, i, 1);
@@ -4271,6 +4278,7 @@ ns_write_olympiads_user_runs(
       case RUN_CHECK_FAILED:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_SYNC_ERR:
         if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
         } else {
@@ -4435,6 +4443,7 @@ kirov_score_latest_or_unmarked(
   case RUN_CHECK_FAILED:
   case RUN_MEM_LIMIT_ERR:
   case RUN_SECURITY_ERR:
+  case RUN_SYNC_ERR:
     break;
 
   case RUN_PARTIAL:
@@ -4583,6 +4592,7 @@ kirov_score_latest(
   case RUN_PARTIAL:
   case RUN_MEM_LIMIT_ERR:
   case RUN_SECURITY_ERR:
+  case RUN_SYNC_ERR:
   case RUN_WALL_TIME_LIMIT_ERR:
     pinfo->marked_flag = re->is_marked;
     pinfo->solved_flag = 0;
@@ -4653,6 +4663,7 @@ kirov_score_tokenized(
   case RUN_WRONG_ANSWER_ERR:
   case RUN_MEM_LIMIT_ERR:
   case RUN_SECURITY_ERR:
+  case RUN_SYNC_ERR:
   case RUN_PARTIAL:
     break;
 
@@ -4751,6 +4762,7 @@ kirov_score_default(
   case RUN_WRONG_ANSWER_ERR:
   case RUN_MEM_LIMIT_ERR:
   case RUN_SECURITY_ERR:
+  case RUN_SYNC_ERR:
   case RUN_PARTIAL:
     ++pinfo->attempts;
     if (cur_score >= pinfo->best_score) {
@@ -4922,6 +4934,7 @@ ns_get_user_problems_summary(
         case RUN_CHECK_FAILED:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_SYNC_ERR:
         case RUN_STYLE_ERR:
         case RUN_REJECTED:
           status = RUN_CHECK_FAILED;
@@ -4974,6 +4987,7 @@ ns_get_user_problems_summary(
         case RUN_CHECK_FAILED:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_SYNC_ERR:
         case RUN_STYLE_ERR:
           if (!pinfo[re.prob_id].accepted_flag) {
             pinfo[re.prob_id].best_run = run_id;
@@ -5019,6 +5033,7 @@ ns_get_user_problems_summary(
       case RUN_CHECK_FAILED:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_SYNC_ERR:
       case RUN_STYLE_ERR:
       case RUN_REJECTED:
         break;
@@ -5102,6 +5117,7 @@ ns_get_user_problems_summary(
       case RUN_CHECK_FAILED:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_SYNC_ERR:
         pinfo[re.prob_id].attempts++;
         cur_score = score;
         if (cur_score >= pinfo[re.prob_id].best_score
@@ -5153,6 +5169,7 @@ ns_get_user_problems_summary(
       case RUN_CHECK_FAILED:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_SYNC_ERR:
         pinfo[re.prob_id].attempts++;
         pinfo[re.prob_id].best_run = run_id;
         break;
@@ -5849,6 +5866,7 @@ new_write_user_runs(
       case RUN_DISQUALIFIED:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_SYNC_ERR:
       case RUN_WALL_TIME_LIMIT_ERR:
       case RUN_PENDING_REVIEW:
       case RUN_REJECTED:
@@ -6572,6 +6590,7 @@ write_xml_team_output_only_acc_report(
 
     case RUN_MEM_LIMIT_ERR:
     case RUN_SECURITY_ERR:
+    case RUN_SYNC_ERR:
       fprintf(f, "&nbsp;");
       break;
 
@@ -6743,6 +6762,7 @@ write_xml_team_accepting_report(
 
     case RUN_MEM_LIMIT_ERR:
     case RUN_SECURITY_ERR:
+    case RUN_SYNC_ERR:
       fprintf(f, "&nbsp;");
       break;
 
@@ -7150,6 +7170,7 @@ write_xml_testing_report(
     case RUN_WRONG_ANSWER_ERR:
     case RUN_MEM_LIMIT_ERR:
     case RUN_SECURITY_ERR:
+    case RUN_SYNC_ERR:
       if (max_cpu_time_tl > 0) break;
       max_cpu_time_tl = 0;
       if (max_cpu_time < 0 || max_cpu_time < r->tests[i]->time) {
@@ -7302,6 +7323,7 @@ write_xml_testing_report(
 
     case RUN_MEM_LIMIT_ERR:
     case RUN_SECURITY_ERR:
+    case RUN_SYNC_ERR:
       fprintf(f, "&nbsp;");
       break;
 

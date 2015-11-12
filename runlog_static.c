@@ -61,6 +61,7 @@ run_status_str(
   case RUN_PENDING:          s = _("Pending check");       break;
   case RUN_MEM_LIMIT_ERR:    s = _("Memory limit exceeded"); break;
   case RUN_SECURITY_ERR:     s = _("Security violation");  break;
+  case RUN_SYNC_ERR:         s = _("Synchronization error");  break;
   case RUN_STYLE_ERR:        s = _("Coding style violation"); break;
   case RUN_REJECTED:         s = _("Rejected"); break;
   case RUN_WALL_TIME_LIMIT_ERR: s = _("Wall time-limit exceeded"); break;
@@ -93,6 +94,7 @@ static const unsigned char is_failed_attempt_table[RUN_LAST + 1] =
   [RUN_WRONG_ANSWER_ERR] = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
+  [RUN_SYNC_ERR]         = 1,
 };
 int
 run_is_failed_attempt(int status)
@@ -111,6 +113,7 @@ static const unsigned char is_valid_test_status_table[RUN_LAST + 1] =
   [RUN_WRONG_ANSWER_ERR] = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
+  [RUN_SYNC_ERR]         = 1,
   [RUN_CHECK_FAILED]     = 1,
   [RUN_SKIPPED]          = 1,
 };
@@ -135,6 +138,7 @@ static const unsigned char is_team_report_available_table[RUN_LAST + 1] =
   [RUN_PENDING_REVIEW]   = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
+  [RUN_SYNC_ERR]         = 1,
   [RUN_STYLE_ERR]        = 1,
   [RUN_REJECTED]         = 1,
 };
@@ -160,6 +164,7 @@ static const unsigned char is_report_available_table[RUN_LAST + 1] =
   [RUN_PENDING_REVIEW]   = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
+  [RUN_SYNC_ERR]         = 1,
   [RUN_STYLE_ERR]        = 1,
   [RUN_REJECTED]         = 1,
 };
@@ -196,6 +201,7 @@ static const struct str_to_status_data str_to_status_table[] =
   { "PD", RUN_PENDING },
   { "ML", RUN_MEM_LIMIT_ERR },
   { "SE", RUN_SECURITY_ERR },
+  { "SY", RUN_SYNC_ERR },
   { "SV", RUN_STYLE_ERR },
   { "WT", RUN_WALL_TIME_LIMIT_ERR },
   { "PR", RUN_PENDING_REVIEW },
@@ -240,6 +246,7 @@ static const unsigned char run_valid_statuses[RUN_LAST + 1] =
   [RUN_PENDING]          = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
+  [RUN_SYNC_ERR]         = 1,
   [RUN_STYLE_ERR]        = 1,
   [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PENDING_REVIEW]   = 1,
@@ -275,6 +282,7 @@ static const unsigned char run_valid_user_statuses[RUN_LAST + 1] =
   [RUN_PENDING]          = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
+  [RUN_SYNC_ERR]         = 1,
   [RUN_STYLE_ERR]        = 1,
   [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PENDING_REVIEW]   = 1,
@@ -307,6 +315,7 @@ static const unsigned char run_source_available_statuses[RUN_LAST + 1] =
   [RUN_PENDING]          = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
+  [RUN_SYNC_ERR]         = 1,
   [RUN_STYLE_ERR]        = 1,
   [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PENDING_REVIEW]   = 1,
@@ -457,6 +466,7 @@ static const unsigned char * const status_short_str[] =
   [RUN_PENDING] = "PD",
   [RUN_MEM_LIMIT_ERR] = "ML",
   [RUN_SECURITY_ERR] = "SE",
+  [RUN_SYNC_ERR] = "SY",
   [RUN_STYLE_ERR] = "SV",
   [RUN_WALL_TIME_LIMIT_ERR] = "WT",
   [RUN_PENDING_REVIEW] = "PR",

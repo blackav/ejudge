@@ -1507,6 +1507,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
       case RUN_PENDING:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_SYNC_ERR:
       case RUN_STYLE_ERR:
       case RUN_FULL_REJUDGE:
       case RUN_RUNNING:

@@ -59,6 +59,7 @@ enum
   RUN_STYLE_ERR        = 14,
   RUN_WALL_TIME_LIMIT_ERR = 15,
   RUN_PENDING_REVIEW   = 16,
+  RUN_SYNC_ERR         = 19,
 };
 
 static const unsigned char *progname;
@@ -209,6 +210,7 @@ static const unsigned char * const run_status_str[] =
   [RUN_STYLE_ERR] = "SV",
   [RUN_WALL_TIME_LIMIT_ERR] = "WT",
   [RUN_PENDING_REVIEW] = "PR",
+  [RUN_SYNC_ERR] = "SY",
 };
 
 static const unsigned char * const

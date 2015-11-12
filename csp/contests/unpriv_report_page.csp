@@ -90,6 +90,7 @@ ns_unpriv_parse_run_id(
   case RUN_PENDING_REVIEW:
   case RUN_MEM_LIMIT_ERR:
   case RUN_SECURITY_ERR:
+  case RUN_SYNC_ERR:
   case RUN_STYLE_ERR:
   case RUN_REJECTED:
   case RUN_IGNORED:

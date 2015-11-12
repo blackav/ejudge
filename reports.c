@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -429,6 +429,7 @@ user_report_generate(
         case RUN_DISQUALIFIED:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_SYNC_ERR:
         case RUN_STYLE_ERR:
         case RUN_REJECTED:
           break;
@@ -473,6 +474,7 @@ user_report_generate(
         case RUN_WRONG_ANSWER_ERR:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_SYNC_ERR:
         case RUN_STYLE_ERR:
         case RUN_REJECTED:
           run_ids[re.prob_id] = run_id;
@@ -1037,6 +1039,7 @@ full_user_report_generate(
         case RUN_DISQUALIFIED:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_SYNC_ERR:
         case RUN_STYLE_ERR:
         case RUN_REJECTED:
           break;
@@ -1081,6 +1084,7 @@ full_user_report_generate(
         case RUN_WRONG_ANSWER_ERR:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_SYNC_ERR:
         case RUN_STYLE_ERR:
         case RUN_REJECTED:
           run_ids[re.prob_id] = run_id;
@@ -2250,6 +2254,7 @@ ns_olympiad_final_user_report(
         case RUN_DISQUALIFIED:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_SYNC_ERR:
         case RUN_STYLE_ERR:
         case RUN_REJECTED:
           break;
@@ -2294,6 +2299,7 @@ ns_olympiad_final_user_report(
         case RUN_WRONG_ANSWER_ERR:
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
+        case RUN_SYNC_ERR:
         case RUN_STYLE_ERR:
         case RUN_REJECTED:
           run_ids[re.prob_id] = run_id;
@@ -2818,6 +2824,7 @@ write_xml_tex_testing_report(
     case RUN_WRONG_ANSWER_ERR:
     case RUN_MEM_LIMIT_ERR:
     case RUN_SECURITY_ERR:
+    case RUN_SYNC_ERR:
       if (max_cpu_time_tl > 0) break;
       max_cpu_time_tl = 0;
       if (max_cpu_time < 0 || max_cpu_time < r->tests[i]->time) {
@@ -2926,6 +2933,7 @@ write_xml_tex_testing_report(
 
     case RUN_MEM_LIMIT_ERR:
     case RUN_SECURITY_ERR:
+    case RUN_SYNC_ERR:
       fprintf(fout, " &");
       break;
 
@@ -3126,6 +3134,7 @@ problem_report_generate(
       case RUN_DISQUALIFIED:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_SYNC_ERR:
       case RUN_STYLE_ERR:
       case RUN_REJECTED:
         break;
@@ -3178,6 +3187,7 @@ problem_report_generate(
       case RUN_WRONG_ANSWER_ERR:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
+      case RUN_SYNC_ERR:
       case RUN_STYLE_ERR:
       case RUN_REJECTED:
         run_ids[user_id] = run_id;

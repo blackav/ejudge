@@ -1439,7 +1439,8 @@ invoke_nwrun(
       && result->status != RUN_WALL_TIME_LIMIT_ERR
       && result->status != RUN_CHECK_FAILED
       && result->status != RUN_MEM_LIMIT_ERR
-      && result->status != RUN_SECURITY_ERR) {
+      && result->status != RUN_SECURITY_ERR
+      && result->status != RUN_SYNC_ERR) {
     chk_printf(result, "invalid status %d\n", result->status);
     goto fail;
   }
@@ -2809,7 +2810,7 @@ run_one_test(
   }
 
   if (pg_not_empty) {
-    status = RUN_SECURITY_ERR;
+    status = RUN_SYNC_ERR;
     goto read_checker_output;
   }
 
