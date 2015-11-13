@@ -2421,10 +2421,13 @@ run_one_test(
     } else {
       if (srpp->use_stdout > 0) {
         task_SetRedir(tsk, 1, TSR_FILE, output_path, TSK_REWRITE, TSK_FULL_RW);
+        touch_file(output_path);
       } else {
         task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
+        if (srgp->secure_run > 0) {
+          touch_file(output_path);
+        }
       }
-      touch_file(output_path);
       if (tst && tst->ignore_stderr > 0 && disable_stderr <= 0) {
         task_SetRedir(tsk, 2, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
       } else {
