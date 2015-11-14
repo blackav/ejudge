@@ -402,6 +402,7 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
   if (sh && pt->enable_subst > 0) {
     subst_str = sh->substitute(sh, str);
     str = subst_str;
+    s = str;
   }
 
   memset(&cmd, 0, sizeof(cmd));
