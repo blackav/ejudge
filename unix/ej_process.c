@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1032,8 +1031,8 @@ ejudge_get_host_names(void)
   unsigned char buf[1024], *s, nbuf[1024];
   struct utsname uname_buf;
 
-  static const unsigned char pat1[] = "inet addr:";
-  static const unsigned char pat2[] = "inet6 addr:";
+  static const unsigned char pat1[] = "inet ";
+  static const unsigned char pat2[] = "inet6 ";
 
   XCALLOC(names, names_z);
   if (!(f = popen("/sbin/ifconfig", "r"))) goto fail;
