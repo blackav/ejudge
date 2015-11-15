@@ -126,6 +126,7 @@
     <tr>
         <th class="b1">NN</th>
         <th class="b1">InvokerID</th>
+        <th class="b1">PID</th>
         <th class="b1">Run Queue</th>
         <th class="b1">Status<br/> Updated</th>
         <th class="b1">Status</th>
@@ -190,6 +191,7 @@
     <tr>
         <td class="b1"><s:v value="i + 1" /></td>
         <td class="b1"><s:v value="super_run_id" /></td>
+        <td class="b1"><s:v value="srs->super_run_pid" /></td>
         <td class="b1"><s:v value="queue_name" /></td>
         <td class="b1"><s:v value="status_update_buf" escape="no" /></td>
         <td class="b1"><s:v value="status_buf" escape="no" /></td>

@@ -54,8 +54,7 @@ struct super_run_status
     unsigned short prob_idx;     // 66: problem short name
     unsigned short lang_idx;     // 68: language short name
 
-    unsigned char  pad4[2];
-
+    short          super_run_pid;// 70: pid of ej-super-run
     long long      queue_ts;     // 72: time of creating a testing request
     long long      testing_start_ts; // 80: time when testing started
     int            max_test_num; // 88: number of tests for the problem

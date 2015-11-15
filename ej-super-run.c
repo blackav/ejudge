@@ -479,6 +479,7 @@ do_super_run_status_init(struct super_run_status *prs)
   if (queue_name) prs->queue_idx = super_run_status_add_str(prs, queue_name);
   prs->ej_ver_idx = super_run_status_add_str(prs, compile_version);
   if (super_run_id) prs->super_run_idx = super_run_status_add_str(prs, super_run_id);
+  prs->super_run_pid = getpid();
 }
 
 static void
@@ -1063,17 +1064,22 @@ make_super_run_name(void)
     super_run_name = text; text = NULL;
   }
 
+  const unsigned char *basename = NULL;
   if (super_run_id) {
-    status_file_name = xstrdup(super_run_id);
+    basename = super_run_id;
   } else if (instance_id) {
-    status_file_name = xstrdup(instance_id);
+    basename = instance_id;
   } else if (public_hostname) {
-    status_file_name = xstrdup(public_hostname);
+    basename = public_hostname;
   } else if (local_hostname) {
-    status_file_name = xstrdup(local_hostname);
+    basename = local_hostname;
   } else {
-    status_file_name = xstrdup(os_NodeName());
+    basename = os_NodeName();
   }
+
+  unsigned char status_buf[1024];
+  snprintf(status_buf, sizeof(status_buf), "%s.%d", basename, getpid());
+  status_file_name = xstrdup(status_buf);
 }
 
 int
