@@ -1987,12 +1987,19 @@ struct testinfo_subst_handler_super_run
 {
   struct testinfo_subst_handler b;
   const struct super_run_in_packet *srp;
+  char *eff_s; // effective .inf file text
+  size_t eff_z;
+  FILE *eff_f;
 };
 
 static unsigned char *testinfo_subst_handler_substitute(struct testinfo_subst_handler *bp, const unsigned char *str)
 {
   struct testinfo_subst_handler_super_run *srh = (struct testinfo_subst_handler_super_run *) bp;
-  return super_run_in_packet_substitute(srh->srp, str);
+  unsigned char *s = super_run_in_packet_substitute(srh->srp, str);
+  if (srh->eff_f) {
+    fprintf(srh->eff_f, "%s\n", s);
+  }
+  return s;
 }
 
 static int
@@ -2079,6 +2086,8 @@ run_one_test(
   char *start_msg_s = NULL;
   size_t start_msg_z = 0;
   int start_msg_need_env = 0;
+
+  char *eff_inf_text = NULL;
 
 #ifdef HAVE_TERMIOS_H
   struct termios term_attrs;
@@ -2199,14 +2208,19 @@ run_one_test(
   /* Load test information file */
   if (srpp->use_info > 0) {
     struct testinfo_subst_handler_super_run sr;
+    memset(&sr, 0, sizeof(sr));
     sr.b.substitute = testinfo_subst_handler_substitute;
     sr.srp = srp;
+    sr.eff_f = open_memstream(&sr.eff_s, &sr.eff_z);
     if ((errcode = testinfo_parse(info_src, &tstinfo, &sr.b)) < 0) {
+      fclose(sr.eff_f); xfree(sr.eff_s);
       err("Cannot parse test info file '%s': %s", info_src, testinfo_strerror(-errcode));
       append_msg_to_log(check_out_path, "failed to parse testinfo file '%s': %s\n",
                         info_src, testinfo_strerror(-errcode));
       goto check_failed;
     }
+    fclose(sr.eff_f);
+    eff_inf_text = sr.eff_s;
   }
 
   if (srpp->use_info > 0 && tstinfo.disable_stderr >= 0) {
@@ -2922,6 +2936,7 @@ cleanup:;
   if (score_out_path[0]) unlink(score_out_path);
 
   testinfo_free(&tstinfo);
+  xfree(eff_inf_text);
   task_Delete(tsk_int);
   task_Delete(tsk);
   if (check_dir[0]) {
