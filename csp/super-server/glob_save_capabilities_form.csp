@@ -42,6 +42,7 @@
     ejintbool_t notify_status_change = 0;
     ejintbool_t disable_auto_refresh = 0;
     ejintbool_t start_on_first_login = 0;
+    ejintbool_t enable_virtual_restart = 0;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
@@ -78,6 +79,7 @@
 %><s:read var="notify_status_change" default="0" /><%
 %><s:read var="disable_auto_refresh" default="0" /><%
 %><s:read var="start_on_first_login" default="0" /><%
+%><s:read var="enable_virtual_restart" default="0" /><%
 
     if (!retval && phr->ss) {
         struct section_global_data *global = phr->ss->global;
@@ -114,6 +116,7 @@
             global->notify_status_change = notify_status_change;
             global->disable_auto_refresh = disable_auto_refresh;
             global->start_on_first_login = start_on_first_login;
+            global->enable_virtual_restart = enable_virtual_restart;
         }
     }
 

@@ -279,6 +279,8 @@ prepare_unparse_global(
   }
   if (global->start_on_first_login > 0)
     unparse_bool(f, "start_on_first_login", global->start_on_first_login);
+  if (global->enable_virtual_restart > 0)
+    unparse_bool(f, "enable_virtual_restart", global->enable_virtual_restart);
   fprintf(f, "\n");
 
   if (global->test_dir[0] && strcmp(global->test_dir, DFLT_G_TEST_DIR))

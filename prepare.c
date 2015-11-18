@@ -123,6 +123,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(time_limit_retry_count, "d"),
   GLOBAL_PARAM(score_n_best_problems, "d"),
   GLOBAL_PARAM(start_on_first_login, "d"),
+  GLOBAL_PARAM(enable_virtual_restart, "d"),
 
   GLOBAL_PARAM(stand_ignore_after, "t"),
   GLOBAL_PARAM(appeal_deadline, "t"),
@@ -789,6 +790,7 @@ global_init_func(struct generic_section_config *gp)
   p->disable_team_clars = -1;
   p->enable_eoln_select = -1;
   p->start_on_first_login = -1;
+  p->enable_virtual_restart = -1;
   p->ignore_compile_errors = -1;
   p->disable_failed_test_view = -1;
   p->enable_printing = -1;
@@ -2349,6 +2351,7 @@ set_defaults(
   if (g->enable_eoln_select < 0)
     g->enable_eoln_select = 0;
   if (g->start_on_first_login < 0) g->start_on_first_login = 0;
+  if (g->enable_virtual_restart < 0) g->enable_virtual_restart = 0;
   if (g->ignore_compile_errors == -1)
     g->ignore_compile_errors = DFLT_G_IGNORE_COMPILE_ERRORS;
   if (g->disable_failed_test_view == -1)
@@ -4854,6 +4857,7 @@ prepare_set_global_defaults(struct section_global_data *g)
   if (g->disable_team_clars < 0) g->disable_team_clars = DFLT_G_DISABLE_TEAM_CLARS;
   if (g->enable_eoln_select < 0) g->enable_eoln_select = 0;
   if (g->start_on_first_login < 0) g->start_on_first_login = 0;
+  if (g->enable_virtual_restart < 0) g->enable_virtual_restart = 0;
   if (!g->max_file_length) g->max_file_length = DFLT_G_MAX_FILE_LENGTH;
   if (!g->max_line_length) g->max_line_length = DFLT_G_MAX_LINE_LENGTH;
   if (g->ignore_compile_errors < 0)
@@ -5111,6 +5115,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->disable_team_clars = DFLT_G_DISABLE_TEAM_CLARS;
   global->enable_eoln_select = 0;
   global->start_on_first_login = 0;
+  global->enable_virtual_restart = 0;
   global->max_file_length = DFLT_G_MAX_FILE_LENGTH;
   global->max_line_length = DFLT_G_MAX_LINE_LENGTH;
   global->tests_to_accept = DFLT_G_TESTS_TO_ACCEPT;
