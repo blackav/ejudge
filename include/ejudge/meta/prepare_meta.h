@@ -69,6 +69,7 @@ enum
   CNTSGLOB_disable_auto_refresh,
   CNTSGLOB_enable_eoln_select,
   CNTSGLOB_start_on_first_login,
+  CNTSGLOB_enable_virtual_restart,
   CNTSGLOB_name,
   CNTSGLOB_root_dir,
   CNTSGLOB_serve_socket,
