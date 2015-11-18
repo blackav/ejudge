@@ -7403,6 +7403,37 @@ int ns_match_action(const unsigned char *str)
                           return 0;
                         }
                         return 0;
+                      } else if (c < 's') {
+                        if (c == 'r') {
+                          c = str[9];
+                          if (c == 'e') {
+                            c = str[10];
+                            if (c == 's') {
+                              c = str[11];
+                              if (c == 't') {
+                                c = str[12];
+                                if (c == 'a') {
+                                  c = str[13];
+                                  if (c == 'r') {
+                                    c = str[14];
+                                    if (c == 't') {
+                                      c = str[15];
+                                      if (!c) return NEW_SRV_ACTION_VIRTUAL_RESTART;
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                      } else {
                       }
                       return 0;
                     }

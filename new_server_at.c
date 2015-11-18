@@ -146,6 +146,7 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_SETTINGS] = "view-settings",
   [NEW_SRV_ACTION_VIRTUAL_START] = "virtual-start",
   [NEW_SRV_ACTION_VIRTUAL_STOP] = "virtual-stop",
+  [NEW_SRV_ACTION_VIRTUAL_RESTART] = "virtual-restart",
   [NEW_SRV_ACTION_VIEW_USER_REPORT] = "view-user-report",
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1] = "download-archive-1",
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2] = "download-archive-2",

@@ -138,6 +138,7 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_SUBMIT_APPEAL] = __("Submit appeal"),
   [NEW_SRV_ACTION_VIRTUAL_START] = __("Start virtual contest"),
   [NEW_SRV_ACTION_VIRTUAL_STOP] = __("Stop virtual contest"),
+  [NEW_SRV_ACTION_VIRTUAL_RESTART] = __("Restart virtual contest"),
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1] = __("Download archive of runs"),
   [NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2] = __("Download archive of runs"),
   [NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1] = __("Add runs in CSV format"),
