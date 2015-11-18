@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -64,6 +63,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_DUR_TOO_SMALL] = __("New duration is too small"),
   [NEW_SRV_ERR_PERMISSION_DENIED] = __("Permission denied"),
   [NEW_SRV_ERR_CONTEST_NOT_STARTED] = __("Contest is not started"),
+  [NEW_SRV_ERR_CONTEST_NOT_STOPPED] = __("Contest is not stopped"),
   [NEW_SRV_ERR_CANNOT_CONTINUE_CONTEST] = __("This contest cannot be continued"),
   [NEW_SRV_ERR_CONTEST_NOT_FINISHED] = __("Contest is not finished"),
   [NEW_SRV_ERR_INSUFFICIENT_DURATION] = __("Insufficient duration to continue the contest"),
@@ -216,6 +216,7 @@ static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_DUR_TOO_SMALL] = __("New duration is too small"),
   [NEW_SRV_ERR_PERMISSION_DENIED] = __("Permission denied"),
   [NEW_SRV_ERR_CONTEST_NOT_STARTED] = __("Contest is not started"),
+  [NEW_SRV_ERR_CONTEST_NOT_STOPPED] = __("Contest is not stopped"),
   [NEW_SRV_ERR_CANNOT_CONTINUE_CONTEST] = __("This contest cannot be continued"),
   [NEW_SRV_ERR_CONTEST_NOT_FINISHED] = __("Contest is not finished"),
   [NEW_SRV_ERR_INSUFFICIENT_DURATION] = __("Insufficient duration to continue the contest"),
