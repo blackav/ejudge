@@ -94,6 +94,7 @@ static int update_user_flags(runlog_state_t state);
 static void build_indices(runlog_state_t state, int flags);
 static struct user_entry *get_user_entry(runlog_state_t state, int user_id);
 static struct user_entry *try_user_entry(runlog_state_t state, int user_id);
+static void drop_user_entry(runlog_state_t state, int user_id);
 static void extend_run_extras(runlog_state_t state);
 static void run_drop_uuid_hash(runlog_state_t state);
 static int find_free_uuid_hash_index(runlog_state_t state, const ej_uuid_t *puuid);
@@ -1595,6 +1596,17 @@ try_user_entry(runlog_state_t state, int user_id)
   return state->ut_table[user_id];
 }
 
+static void
+drop_user_entry(runlog_state_t state, int user_id)
+{
+  if (user_id <= 0 || user_id >= state->ut_size) return;
+  if (state->ut_table[user_id]) {
+    // ...
+    xfree(state->ut_table[user_id]);
+    state->ut_table[user_id] = NULL;
+  }
+}
+
 time_t
 run_get_virtual_start_time(runlog_state_t state, int user_id)
 {
@@ -1795,6 +1807,24 @@ run_clear_entry(runlog_state_t state, int run_id)
   state->user_count = -1;
 
   return state->iface->clear_entry(state->cnts, run_id);
+}
+
+int
+run_clear_user_entries(
+        runlog_state_t state,
+        int user_id)
+{
+  int run_id;
+  if (user_id <= 0) return 0;
+
+  for (run_id = state->run_u - 1; run_id >= 0; --run_id) {
+    if (state->runs[run_id].user_id == user_id) {
+      state->iface->clear_entry(state->cnts, run_id);
+    }
+  }
+
+  drop_user_entry(state, user_id);
+  return 0;
 }
 
 int
