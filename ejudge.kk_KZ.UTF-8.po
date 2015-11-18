@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-18 16:17+0300\n"
+"POT-Creation-Date: 2015-11-18 16:40+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -331,6 +331,9 @@ msgid "<u>--- Stderr: size %lld ---</u>\n"
 msgstr ""
 
 msgid "A request parameter is invalid. Please, contact the site administrator."
+msgstr ""
+
+msgid "ALL PREVIOUS SUBMITS WILL BE LOST!"
 msgstr ""
 
 msgid "Accepted for testing"

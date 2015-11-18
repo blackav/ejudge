@@ -184,6 +184,9 @@
 %><p><s:submit ac="virtual-stop" /></p><%
     }
 %></s:form><%
+  } else if (!cnts->exam_mode && global->is_virtual && start_time > 0 && stop_time > 0 && global->enable_virtual_restart > 0) {
+%><p><s:submit ac="virtual-restart" /></p>
+<p><b><s:_>ALL PREVIOUS SUBMITS WILL BE LOST!</s:_></b></p><%
   }
 %>
 
