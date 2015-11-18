@@ -2438,7 +2438,7 @@ run_one_test(
         touch_file(output_path);
       } else {
         task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE, TSK_FULL_RW);
-        if (srgp->secure_run > 0) {
+        if (srgp->secure_run > 0 || srpp->use_tgz > 0) {
           touch_file(output_path);
         }
       }
