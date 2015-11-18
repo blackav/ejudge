@@ -9285,10 +9285,11 @@ virtual_stop_callback(
 }
 
 static void
-unpriv_command(FILE *fout,
-               struct http_request_info *phr,
-               const struct contest_desc *cnts,
-               struct contest_extra *extra)
+unpriv_command(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
 {
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
@@ -9304,6 +9305,7 @@ unpriv_command(FILE *fout,
   switch (phr->action) {
   case NEW_SRV_ACTION_VIRTUAL_START:
   case NEW_SRV_ACTION_VIRTUAL_STOP:
+  case NEW_SRV_ACTION_VIRTUAL_RESTART:
     if (global->is_virtual <= 0) {
       FAIL2(NEW_SRV_ERR_NOT_VIRTUAL);
     }
@@ -9316,6 +9318,26 @@ unpriv_command(FILE *fout,
   }
 
   switch (phr->action) {
+  case NEW_SRV_ACTION_VIRTUAL_RESTART:
+    if (global->enable_virtual_restart <= 0) {
+      FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+    if (cnts->open_time > 0 && cs->current_time < cnts->open_time) {
+      FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+    if (cnts->close_time > 0 && cs->current_time >= cnts->close_time) {
+      FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    if (start_time <= 0) {
+      FAIL2(NEW_SRV_ERR_CONTEST_NOT_STARTED);
+    }
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+    if (stop_time <= 0) {
+      FAIL2(NEW_SRV_ERR_CONTEST_NOT_STOPPED);
+    }
+    run_clear_user_entries(cs->runlog_state, phr->user_id);
+    // FALLTHROUGH!
   case NEW_SRV_ACTION_VIRTUAL_START:
     if (global->disable_virtual_start) {
       FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -9390,7 +9412,7 @@ unpriv_command(FILE *fout,
   }
 
   i = 0;
-  if (phr->action == NEW_SRV_ACTION_VIRTUAL_START
+  if ((phr->action == NEW_SRV_ACTION_VIRTUAL_START || phr->action == NEW_SRV_ACTION_VIRTUAL_RESTART)
       && global->problem_navigation) {
     for (i = 1; i <= cs->max_prob; i++) {
       if (!(prob = cs->probs[i])) continue;
@@ -10350,6 +10372,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SUBMIT_APPEAL] = unpriv_submit_appeal,
   [NEW_SRV_ACTION_VIRTUAL_START] = unpriv_command,
   [NEW_SRV_ACTION_VIRTUAL_STOP] = unpriv_command,
+  [NEW_SRV_ACTION_VIRTUAL_RESTART] = unpriv_command,
   [NEW_SRV_ACTION_JSON_USER_STATE] = unpriv_json_user_state,
   [NEW_SRV_ACTION_UPDATE_ANSWER] = unpriv_xml_update_answer,
   [NEW_SRV_ACTION_GET_FILE] = unpriv_get_file,
