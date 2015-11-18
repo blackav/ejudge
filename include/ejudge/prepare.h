@@ -263,6 +263,8 @@ struct section_global_data
   ejintbool_t enable_eoln_select;
   /** start virtual contest on first login */
   ejintbool_t start_on_first_login;
+  /** enable restarting of virtual contest */
+  ejintbool_t enable_virtual_restart;
 
   /** @deprecated the name of the contest */
   unsigned char name[256];
