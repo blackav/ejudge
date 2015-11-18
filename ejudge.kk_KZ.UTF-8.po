@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-13 01:49+0300\n"
+"POT-Creation-Date: 2015-11-18 15:52+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -3080,6 +3080,9 @@ msgid "Reset the contest!"
 msgstr ""
 
 msgid "Reset the contest!!!"
+msgstr ""
+
+msgid "Restart virtual contest"
 msgstr ""
 
 msgid "Result"
