@@ -936,6 +936,8 @@ struct section_problem_data
   ejintbool_t stand_last_column;
   /** disable security restrictions for this problem */
   ejintbool_t disable_security;
+  /** enable suid helpers for this problem */
+  ejintbool_t enable_suid_run;
   /** base abstract problem */
   unsigned char super[32];
   /** short name of the problem */
@@ -1196,6 +1198,8 @@ struct section_language_data
   ejintbool_t insecure;
   /** disable security restrictions for this language */
   ejintbool_t disable_security;
+  /** enable suid helpers for this problem */
+  ejintbool_t enable_suid_run;
   /** perform unix->dos conversion */
   ejintbool_t is_dos;
   /** language short name */

@@ -888,6 +888,8 @@ prepare_unparse_lang(
     unparse_bool(f, "insecure", lang->insecure);
   if (lang->disable_security)
     unparse_bool(f, "disable_security", lang->disable_security);
+  if (lang->enable_suid_run)
+    unparse_bool(f, "enable_suid_run", lang->enable_suid_run);
   if (lang->is_dos > 0)
     unparse_bool(f, "is_dos", lang->is_dos);
   if (lang->binary)
@@ -1397,6 +1399,8 @@ prepare_unparse_prob(
     unparse_bool(f, "disable_submit_after_ok", prob->disable_submit_after_ok);
   if (prob->disable_security >= 0)
     unparse_bool(f, "disable_security", prob->disable_security);
+  if (prob->enable_suid_run >= 0)
+    unparse_bool(f, "enable_suid_run", prob->enable_suid_run);
   if (prob->disable_testing >= 0)
     unparse_bool(f, "disable_testing", prob->disable_testing);
   if (prob->enable_compilation >= 0)
@@ -1767,6 +1771,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "disable_submit_after_ok", prob->disable_submit_after_ok);
   if (prob->disable_security > 0)
     unparse_bool(f, "disable_security", prob->disable_security);
+  if (prob->enable_suid_run > 0)
+    unparse_bool(f, "enable_suid_run", prob->enable_suid_run);
   if (prob->disable_testing > 0)
     unparse_bool(f, "disable_testing", prob->disable_testing);
   if (prob->skip_testing  > 0)
