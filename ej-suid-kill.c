@@ -51,7 +51,7 @@ main(int argc, char **argv)
         abort();
     }
     int kill_sig = strtol(argv[2], &eptr, 10);
-    if (errno || *eptr || kill_sig < 1 || kill_sig > 64) {
+    if (errno || *eptr || kill_sig < 0 || kill_sig > 64) {
         fprintf(stderr, "%s: invalid signal '%s'\n", argv[0], argv[1]);
         abort();
     }
