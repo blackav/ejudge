@@ -59,6 +59,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_stand_ignore_score,
   META_PROBLEM_CONFIG_SECTION_stand_last_column,
   META_PROBLEM_CONFIG_SECTION_disable_security,
+  META_PROBLEM_CONFIG_SECTION_enable_suid_run,
   META_PROBLEM_CONFIG_SECTION_valuer_sets_marked,
   META_PROBLEM_CONFIG_SECTION_ignore_unmarked,
   META_PROBLEM_CONFIG_SECTION_disable_stderr,

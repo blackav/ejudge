@@ -678,6 +678,7 @@ merge_problem_section(
         { CNTSPROB_stand_ignore_score, META_PROBLEM_CONFIG_SECTION_stand_ignore_score },
         { CNTSPROB_stand_last_column, META_PROBLEM_CONFIG_SECTION_stand_last_column },
         { CNTSPROB_disable_security, META_PROBLEM_CONFIG_SECTION_disable_security },
+        { CNTSPROB_enable_suid_run, META_PROBLEM_CONFIG_SECTION_enable_suid_run },
         { CNTSPROB_valuer_sets_marked, META_PROBLEM_CONFIG_SECTION_valuer_sets_marked },
         { CNTSPROB_ignore_unmarked, META_PROBLEM_CONFIG_SECTION_ignore_unmarked },
         { CNTSPROB_disable_stderr, META_PROBLEM_CONFIG_SECTION_disable_stderr },

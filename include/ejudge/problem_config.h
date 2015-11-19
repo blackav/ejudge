@@ -87,6 +87,7 @@ struct problem_config_section
   ejintbool_t stand_ignore_score;
   ejintbool_t stand_last_column;
   ejintbool_t disable_security;
+  ejintbool_t enable_suid_run;
   ejintbool_t valuer_sets_marked;
   ejintbool_t ignore_unmarked;
   ejintbool_t disable_stderr;
