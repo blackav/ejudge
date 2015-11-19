@@ -2519,6 +2519,16 @@ run_one_test(
     }
   }
 
+  if (tst && srgp->suid_run > 0) {
+    task_SetSuidHelperDir(tsk, EJUDGE_SERVER_BIN_PATH);
+    task_EnableSuidExec(tsk);
+    switch (tst->secure_exec_type_val) {
+    case SEXEC_TYPE_JAVA:
+      task_PutEnv(tsk, "EJUDGE_JAVA_POLICY=fileio.policy");
+      break;
+    }
+  }
+
   if (tst && tst->secure_exec_type_val > 0 && srgp->secure_run > 0) {
     switch (tst->secure_exec_type_val) {
     case SEXEC_TYPE_STATIC:
