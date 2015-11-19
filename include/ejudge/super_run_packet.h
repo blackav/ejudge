@@ -47,6 +47,7 @@ struct super_run_in_global_packet
   ejintbool_t secure_run;
   ejintbool_t detect_violations;
   ejintbool_t enable_memory_limit_error;
+  ejintbool_t suid_run;
   ejintbool_t enable_max_stack_size;
   int user_id;
   unsigned char *user_login;
