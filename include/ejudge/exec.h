@@ -98,6 +98,8 @@ int      task_EnableSecurityViolationError(tpTask);
 int      task_EnableProcessGroup(tpTask);
 int      task_IgnoreSIGPIPE(tpTask);
 
+int      task_SetSuidHelperDir(tpTask, const char *);
+
 int      task_PrintArgs(tpTask);
 void     task_fPrintArgs(tpTask, FILE *);
 int      task_SetQuietFlag(tpTask);

@@ -647,6 +647,12 @@ task_EnableMemoryLimitError(tTask *tsk)
 }
 
 int
+task_SetSuidHelperDir(tTask *tsk, const char *path)
+{
+  return 0;
+}
+
+int
 task_EnableSecureExec(tTask *tsk)
 {
   return 0;

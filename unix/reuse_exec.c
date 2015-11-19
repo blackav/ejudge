@@ -73,6 +73,7 @@ typedef struct tRedir
 struct tTask
 {
   int  (*main)(int, char **);   /* task start function */
+  char  *suid_helper_dir;       /* directory with suid helpers */
   char  *path;                  /* task invocation path */
   int    state;                 /* current task state */
   int    code;                  /* process termination code */
@@ -453,6 +454,7 @@ task_Delete(tTask *tsk)
   xfree(tsk->redirs.v);
   xfree(tsk->working_dir);
   xfree(tsk->last_error_msg);
+  xfree(tsk->suid_helper_dir);
   xfree(tsk);
 }
 
@@ -1037,6 +1039,16 @@ task_EnableSecureExec(tTask *tsk)
 #else
   return -1;
 #endif /* __linux__ */
+}
+
+int
+task_SetSuidHelperDir(tTask *tsk, const char *path)
+{
+  task_init_module();
+  ASSERT(tsk);
+  xfree(tsk->suid_helper_dir);
+  tsk->suid_helper_dir = xstrdup(path);
+  return 0;
 }
 
 int
