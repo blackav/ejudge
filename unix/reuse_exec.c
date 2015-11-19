@@ -94,6 +94,7 @@ struct tTask
   int    disable_core;          /* disable core dumps? */
   int    enable_memory_limit_error; /* enable memory limit error detection? */
   int    enable_secure_exec;    /* drop capabilities before exec'ing */
+  int    enable_suid_exec;      /* change user_id through suid helper binaries */
   int    enable_security_violation_error;/*enable security violation detection*/
   int    clear_env;             /* clear the environment? */
   int    quiet_flag;            /* be quiet */
@@ -1036,6 +1037,15 @@ task_EnableSecureExec(tTask *tsk)
 #else
   return -1;
 #endif /* __linux__ */
+}
+
+int
+task_EnableSuidExec(tTask *tsk)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->enable_suid_exec = 1;
+  return 0;
 }
 
 int

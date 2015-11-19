@@ -1,6 +1,4 @@
-/* $Id$ */
-
-/* Copyright (C) 1999-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1999-2015 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1999-07-20 11:05:09 cher> */
 
 /*
@@ -650,6 +648,12 @@ task_EnableMemoryLimitError(tTask *tsk)
 
 int
 task_EnableSecureExec(tTask *tsk)
+{
+  return 0;
+}
+
+int
+task_EnableSuidExec(tTask *tsk)
 {
   return 0;
 }
