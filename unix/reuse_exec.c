@@ -158,6 +158,8 @@ static int linux_secure_exec_new_interface = 0;
 static void linux_set_secure_exec_supported_flag(void);
 #endif
 
+static int do_kill(tTask *tsk, int pid, int signal);
+
 /**
  * NAME:    sigchld_handler
  * PURPOSE: handler for SIGCHLD signal (child termination)
@@ -2121,9 +2123,9 @@ task_NewWait(tTask *tsk)
       if (cur_time.tv_sec > rt_timeout.tv_sec
           || (cur_time.tv_sec == rt_timeout.tv_sec && cur_time.tv_usec >= rt_timeout.tv_usec)) {
         if (tsk->enable_process_group > 0) {
-          kill(-tsk->pid, tsk->termsig);
+          do_kill(tsk, -tsk->pid, tsk->termsig);
         } else {
-          kill(tsk->pid, tsk->termsig);
+          do_kill(tsk, tsk->pid, tsk->termsig);
         }
         tsk->was_timeout = 1;
         tsk->was_real_timeout = 1;
@@ -2145,9 +2147,9 @@ task_NewWait(tTask *tsk)
         //fprintf(stderr, "CPUTime: %lld\n", cur_utime);
         if (cur_utime >= max_time_ms) {
           if (tsk->enable_process_group > 0) {
-            kill(-tsk->pid, tsk->termsig);
+            do_kill(tsk, -tsk->pid, tsk->termsig);
           } else {
-            kill(tsk->pid, tsk->termsig);
+            do_kill(tsk, tsk->pid, tsk->termsig);
           }
           tsk->was_timeout = 1;
           tsk->used_vm_size = used_vm_size;
@@ -2425,7 +2427,7 @@ task_Kill(tTask *tsk)
   task_init_module();
   ASSERT(tsk);
   if (tsk->pid > 0) {
-    kill(tsk->pid, tsk->termsig);
+    do_kill(tsk, tsk->pid, tsk->termsig);
   }
   return 0;
 }
@@ -2434,7 +2436,7 @@ int
 task_TryProcessGroup(tTask *tsk)
 {
   task_init_module();
-  return kill(-tsk->pid, 0);
+  return do_kill(tsk, -tsk->pid, 0);
 }
 
 int
@@ -2442,7 +2444,7 @@ task_KillProcessGroup(tTask *tsk)
 {
   task_init_module();
   if (tsk->pid > 0) {
-    kill(-tsk->pid, SIGKILL);
+    do_kill(tsk, -tsk->pid, SIGKILL);
   }
   return 0;
 }
@@ -2599,6 +2601,50 @@ linux_set_secure_exec_supported_flag(void)
   }
 }
 #endif
+
+static void
+invoke_kill_helper(tTask *tsk, int pid, int signal)
+  __attribute__((noreturn));
+static void
+invoke_kill_helper(tTask *tsk, int pid, int signal)
+{
+  char helper_path[PATH_MAX];
+  char pid_buf[64];
+  char signal_buf[64];
+  char *helper_args[] = { helper_path, pid_buf, signal_buf, NULL };
+  sigset_t empty;
+
+  sigemptyset(&empty);
+  sigprocmask(SIG_SETMASK, &empty, NULL);
+  snprintf(helper_path, sizeof(helper_path), "%s/%s", tsk->suid_helper_dir, "ej-suid-kill");
+  snprintf(pid_buf, sizeof(pid_buf), "%d", pid);
+  snprintf(signal_buf, sizeof(signal_buf), "%d", signal);
+  execve(helper_path, helper_args, NULL);
+  _exit(1);
+}
+
+static int
+do_kill(tTask *tsk, int pid, int signal)
+{
+  if (!tsk->enable_suid_exec) return kill(pid, signal);
+
+  // hold off everything while killing
+  sigset_t cur, temp;
+  sigfillset(&temp);
+  sigprocmask(SIG_SETMASK, &temp, &cur);
+  int helper_pid = fork();
+  if (helper_pid < 0) {
+    sigprocmask(SIG_SETMASK, &cur, NULL);
+    return -1;
+  }
+  if (!helper_pid) {
+    invoke_kill_helper(tsk, pid, signal);
+    // noreturn
+  }
+  int status = 0;
+  waitpid(helper_pid, &status, 0);
+  return !(WIFEXITED(status) && !WEXITSTATUS(status));
+}
 
 /*
  * Local variables:
