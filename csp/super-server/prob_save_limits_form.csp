@@ -36,6 +36,7 @@
     ejintbool_t umask_dflt = 0;
     int enable_process_group = -1;
     int disable_security = -1;
+    int enable_suid_run = -1;
     char **lang_time_adj = NULL;
     char **lang_time_adj_millis = NULL;
     char **lang_max_vm_size = NULL;
@@ -69,6 +70,7 @@
 %><s:read var="umask_dflt" default="0" /><%
 %><s:read var="enable_process_group" default="-1" /><%
 %><s:read var="disable_security" default="-1" /><%
+%><s:read var="enable_suid_run" default="-1" /><%
 %><s:read var="lang_time_adj" /><%
 %><s:read var="lang_time_adj_millis" /><%
 %><s:read var="lang_max_vm_size" /><%
@@ -109,6 +111,7 @@
     }
     if (enable_process_group > 0) enable_process_group = 1;
     if (disable_security > 0) disable_security = 1;
+    if (enable_suid_run > 0) enable_suid_run = 1;
 
     if (prob_id <= 0) {
         i = -prob_id;
@@ -117,6 +120,7 @@
         if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
         if (enable_process_group < 0) enable_process_group = 0;
         if (disable_security < 0) disable_security = 0;
+        if (enable_suid_run < 0) enable_suid_run = 0;
     } else {
         i = prob_id;
         if (i >= phr->ss->prob_a) FAIL(SSERV_ERR_INVALID_PARAMETER);
@@ -124,6 +128,7 @@
         if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
         if (enable_process_group < 0) enable_process_group = -1;
         if (disable_security < 0) disable_security = -1;
+        if (enable_suid_run < 0) enable_suid_run = -1;
     }
 
     if (!retval && phr->ss) {
@@ -150,6 +155,7 @@
         MOVESTR(umask);
         prob->enable_process_group = enable_process_group;
         prob->disable_security = disable_security;
+        prob->enable_suid_run = enable_suid_run;
         MOVEENV(lang_time_adj);
         MOVEENV(lang_time_adj_millis);
         MOVEENV(lang_max_vm_size);

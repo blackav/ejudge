@@ -17,6 +17,7 @@
     ejintbool_t disabled = 0;
     ejintbool_t insecure = 0;
     ejintbool_t disable_security = 0;
+    ejintbool_t enable_suid_run = 0;
     ejintbool_t disable_testing = 0;
     ejintbool_t disable_auto_testing = 0;
     ejintbool_t binary = 0;
@@ -43,6 +44,7 @@
 %><s:read var="disabled" default="0" /><%
 %><s:read var="insecure" default="0" /><%
 %><s:read var="disable_security" default="0" /><%
+%><s:read var="enable_suid_run" default="0" /><%
 %><s:read var="disable_testing" default="0" /><%
 %><s:read var="disable_auto_testing" default="0" /><%
 %><s:read var="binary" default="0" /><%
@@ -81,6 +83,7 @@
         lang->disabled = disabled;
         lang->insecure = insecure;
         lang->disable_security = disable_security;
+        lang->enable_suid_run = enable_suid_run;
         lang->disable_testing = disable_testing;
         lang->disable_auto_testing = disable_auto_testing;
         lang->binary = binary;

@@ -148,6 +148,10 @@ static const unsigned char * const form_row_attrs[]=
             <div style="width: 300px; display: inline-block;"><label for="main-disable_security">Disable security restrictions:</label></div>
             <input type="checkbox" name="disable_security" id="main-disable_security" value="1" />
         </div>
+        <div id="main-enable_suid_run-div">
+            <div style="width: 300px; display: inline-block;"><label for="main-enable_suid_run">Enable SUID helper:</label></div>
+            <input type="checkbox" name="enable_suid_run" id="main-enable_suid_run" value="1" />
+        </div>
         <div id="main-disable_testing-div">
             <div style="width: 300px; display: inline-block;"><label for="main-disable_testing">Disable any testing of submissions:</label></div>
             <input type="checkbox" name="disable_testing" id="main-disable_testing" value="1" onchange="mainDialogOnChange()" />
@@ -308,6 +312,7 @@ function popupMainDialog(compile_id, e, skipField)
     copyCheckbox("main-disabled", "orig-disabled-" + compile_id);
     copyCheckbox("main-insecure", "orig-insecure-" + compile_id);
     copyCheckbox("main-disable_security", "orig-disable_security-" + compile_id);
+    copyCheckbox("main-enable_suid_run", "orig-enable_suid_run-" + compile_id);
     copyCheckbox("main-disable_testing", "orig-disable_testing-" + compile_id);
     copyCheckbox("main-disable_auto_testing", "orig-disable_auto_testing-" + compile_id);
     copyCheckbox("main-binary", "orig-binary-" + compile_id);
@@ -536,6 +541,14 @@ function mainDialogOnChange()
         <td><s:yesno id="orig-disable_security" idSuffix="idsuffix" disabled="disabled" name="param" value="lang->disable_security" /></td>
         <td>&nbsp;</td>
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:disable_security" /></td>
+    </s:tr>
+
+    <s:tr id="orig-enable_suid_run-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
+        <td width="50">&nbsp;</td>
+        <td>Enable SUID helper:</td>
+        <td><s:yesno id="orig-enable_suid_run" idSuffix="idsuffix" disabled="disabled" name="param" value="lang->enable_suid_run" /></td>
+        <td>&nbsp;</td>
+        <td onclick="np(event);"><s:help topic="Serve.cfg:language:enable_suid_run" /></td>
     </s:tr>
 
     <s:tr id="orig-disable_testing-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
