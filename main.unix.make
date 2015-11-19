@@ -327,6 +327,9 @@ ej-suid-exec : ej-suid-exec.c
 ej-suid-chown : ej-suid-chown.c
 	${CC} ${CFLAGS} ${LDFLAGS} $^ -o $@
 
+ej-suid-kill : ej-suid-kill.c
+	${CC} ${CFLAGS} ${LDFLAGS} $^ -o $@
+
 collect-emails: ${CE_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 

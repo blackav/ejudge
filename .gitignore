@@ -61,3 +61,4 @@ struct-sizes
 ej-parblock
 ej-suid-exec
 ej-suid-chown
+ej-suid-kill
