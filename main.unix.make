@@ -148,7 +148,7 @@ IC_OBJECTS = $(IC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 G_CFILES = ej-page-gen.c 
 G_OBJECTS = $(G_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
-PB_CFILES = ej-parblock.c 
+PB_CFILES = ej-parblock.c
 PB_OBJECTS = $(PB_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 INSTALLSCRIPT = ejudge-install.sh
@@ -320,6 +320,12 @@ ej-fix-db: ${FIX_DB_OBJECTS}
 
 ej-parblock: ${PB_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID}
+
+ej-suid-exec : ej-suid-exec.c
+	${CC} ${CFLAGS} ${LDFLAGS} $^ -o $@
+
+ej-suid-chown : ej-suid-chown.c
+	${CC} ${CFLAGS} ${LDFLAGS} $^ -o $@
 
 collect-emails: ${CE_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}

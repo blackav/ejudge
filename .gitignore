@@ -59,3 +59,5 @@ genmatcher
 autom4te.cache
 struct-sizes
 ej-parblock
+ej-suid-exec
+ej-suid-chown
