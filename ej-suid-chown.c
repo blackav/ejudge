@@ -17,7 +17,7 @@
 extern char **environ;
 
 static void
-safe_chown(const char *full, int to_user_id, int to_group_id, int from_user_id, int from_group_id)
+safe_chown(const char *full, int to_user_id, int to_group_id, int from_user_id)
 {
     int fd = open(full, O_RDONLY | O_NOFOLLOW, 0);
     if (fd < 0) return;
@@ -40,7 +40,7 @@ safe_chown(const char *full, int to_user_id, int to_group_id, int from_user_id, 
 }
 
 static void
-chown_rec(const char *path, int to_user_id, int to_group_id, int from_user_id, int from_group_id)
+chown_rec(const char *path, int to_user_id, int to_group_id, int from_user_id)
 {
     DIR *d = opendir(path);
     if (!d) return;
@@ -61,24 +61,9 @@ chown_rec(const char *path, int to_user_id, int to_group_id, int from_user_id, i
         struct stat stb;
         if (lstat(full, &stb) < 0) continue;
         if (S_ISDIR(stb.st_mode)) {
-            chown_rec(full, to_user_id, to_group_id, from_user_id, from_group_id);
+            chown_rec(full, to_user_id, to_group_id, from_user_id);
         }
-        int fd = open(full, O_RDONLY | O_NOFOLLOW, 0);
-        if (fd < 0) continue;
-        if (fstat(fd, &stb) < 0) {
-            close(fd); continue;
-        }
-        if (S_ISDIR(stb.st_mode)) {
-            if (stb.st_uid == from_user_id) {
-                fchown(fd, to_user_id, to_group_id);
-                fchmod(fd, (stb.st_mode & 0777) | 0700);
-            }
-        } else {
-            if (stb.st_uid == from_user_id) {
-                fchown(fd, to_user_id, to_group_id);
-            }
-        }
-        close(fd);
+        safe_chown(full, to_user_id, to_group_id, from_user_id);
     }
     for (int i = 0; i < names_u; ++i)
         free(names_s[i]);
@@ -112,8 +97,10 @@ main(int argc, char **argv)
         fprintf(stderr, "%s: group '%s' has gid %d\n", argv[0], EXEC_GROUP, grp->gr_gid);
         abort();
     }
-    safe_chown(argv[1], getuid(), getgid(), pwd->pw_uid, grp->gr_gid);
-    chown_rec(argv[1], getuid(), getgid(), pwd->pw_uid, grp->gr_gid);
+    int my_uid = getuid();
+    int my_gid = getgid();
+    safe_chown(argv[1], my_uid, my_gid, pwd->pw_uid);
+    chown_rec(argv[1], my_uid, my_gid, pwd->pw_uid);
 }
 
 /*

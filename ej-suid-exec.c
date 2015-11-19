@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <limits.h>
 #include <errno.h>
+#include <fcntl.h>
 
 #define EXEC_USER "ejexec"
 #define EXEC_GROUP "ejexec"
@@ -16,7 +17,30 @@
 extern char **environ;
 
 static void
-chown_rec(const char *path, int user_id, int group_id)
+safe_chown(const char *full, int to_user_id, int to_group_id, int from_user_id)
+{
+    int fd = open(full, O_RDONLY | O_NOFOLLOW, 0);
+    if (fd < 0) return;
+    struct stat stb;
+    if (fstat(fd, &stb) < 0) {
+        close(fd);
+        return;
+    }
+    if (S_ISDIR(stb.st_mode)) {
+        if (stb.st_uid == from_user_id) {
+            fchown(fd, to_user_id, to_group_id);
+            //fchmod(fd, (stb.st_mode & 0777) | 0700);
+        }
+    } else {
+        if (stb.st_uid == from_user_id) {
+            fchown(fd, to_user_id, to_group_id);
+        }
+    }
+    close(fd);
+}
+
+static void
+chown_rec(const char *path, int user_id, int group_id, int from_user_id)
 {
     DIR *d = opendir(path);
     if (!d) return;
@@ -37,9 +61,9 @@ chown_rec(const char *path, int user_id, int group_id)
         struct stat stb;
         if (lstat(full, &stb) < 0) continue;
         if (S_ISDIR(stb.st_mode)) {
-            chown_rec(full, user_id, group_id);
+            chown_rec(full, user_id, group_id, from_user_id);
         }
-        lchown(full, user_id, group_id);
+        safe_chown(full, user_id, group_id, from_user_id);
     }
     for (int i = 0; i < names_u; ++i)
         free(names_s[i]);
@@ -90,9 +114,10 @@ main(int argc, char **argv)
         fprintf(stderr, "%s: group '%s' has gid %d\n", argv[0], EXEC_GROUP, grp->gr_gid);
         abort();
     }
+    int my_uid = getuid();
     if (chown_flag) {
-        chown(".", pwd->pw_uid, grp->gr_gid);
-        chown_rec(".", pwd->pw_uid, grp->gr_gid);
+        safe_chown(".", pwd->pw_uid, grp->gr_gid, my_uid);
+        chown_rec(".", pwd->pw_uid, grp->gr_gid, my_uid);
     }
     if (setgid(grp->gr_gid) < 0) {
         fprintf(stderr, "%s: setgid failed\n", argv[0]);
