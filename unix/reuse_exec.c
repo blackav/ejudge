@@ -1447,6 +1447,24 @@ set_limit(int fd, int resource, rlim_t value)
   }
 }
 
+static void
+invoke_execv_helper(tTask *tsk, const char *path, char **args)
+{
+  char helper_path[PATH_MAX];
+  int count;
+  for (count = 0; args[count]; ++count) {}
+  snprintf(helper_path, sizeof(helper_path), "%s/%s", tsk->suid_helper_dir, "ej-suid-exec");
+  char **new_args = alloca((count + 3) * sizeof(new_args[0]));
+  new_args[0] = helper_path;
+  new_args[1] = "-d";
+  for (count = 0; args[count]; ++count) {
+    new_args[count + 2] = args[count];
+  }
+  new_args[count + 2] = NULL;
+  errno = 0;
+  execv(helper_path, new_args);
+}
+
 /**
  * NAME:    task_Start
  * PURPOSE: start a task
@@ -1925,8 +1943,12 @@ task_Start(tTask *tsk)
       signal(SIGPIPE, SIG_IGN);
     }
 
-    errno = 0;
-    execv(tsk->path, tsk->args.v);
+    if (tsk->enable_suid_exec) {
+      invoke_execv_helper(tsk, tsk->path, tsk->args.v);
+    } else {
+      errno = 0;
+      execv(tsk->path, tsk->args.v);
+    }
     /*
     write_log(LOG_REUSE, LOG_CRIT,
               "task_Start: execv failed: %s",
@@ -2619,7 +2641,7 @@ invoke_kill_helper(tTask *tsk, int pid, int signal)
   snprintf(helper_path, sizeof(helper_path), "%s/%s", tsk->suid_helper_dir, "ej-suid-kill");
   snprintf(pid_buf, sizeof(pid_buf), "%d", pid);
   snprintf(signal_buf, sizeof(signal_buf), "%d", signal);
-  execve(helper_path, helper_args, NULL);
+  execv(helper_path, helper_args);
   _exit(1);
 }
 
