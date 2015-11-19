@@ -1490,6 +1490,7 @@ serve_run_request(
   unsigned char buf[1024];
   unsigned char pathbuf[PATH_MAX];
   int secure_run = 0;
+  int suid_run = 0;
   int current_time = 0;
   int current_time_us = 0;
   int time_limit_adj = 0;
@@ -1621,6 +1622,11 @@ serve_run_request(
   if (secure_run && prob->disable_security) secure_run = 0;
   if (secure_run && lang && lang->disable_security) secure_run = 0;
 
+  if (!secure_run) {
+    if (prob->enable_suid_run > 0) suid_run = 1;
+    if (lang && lang->enable_suid_run > 0) suid_run = 1;
+  }
+
   /* generate a packet name */
   serve_packet_name(contest_id, run_id, prio, pkt_base, sizeof(pkt_base));
   snprintf(exe_out_name, sizeof(exe_out_name), "%s%s", pkt_base, exe_sfx);
@@ -1679,6 +1685,7 @@ serve_run_request(
   srgp->advanced_layout = global->advanced_layout;
   srgp->enable_full_archive = global->enable_full_archive;
   srgp->secure_run = secure_run;
+  srgp->suid_run = suid_run;
   srgp->enable_memory_limit_error = global->enable_memory_limit_error;
   srgp->detect_violations = global->detect_violations;
   srgp->time_limit_retry_count = global->time_limit_retry_count;
