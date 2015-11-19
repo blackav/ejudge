@@ -2643,6 +2643,7 @@ do_kill(tTask *tsk, int pid, int signal)
   }
   int status = 0;
   waitpid(helper_pid, &status, 0);
+  sigprocmask(SIG_SETMASK, &cur, NULL);
   return !(WIFEXITED(status) && !WEXITSTATUS(status));
 }
 
