@@ -131,6 +131,7 @@ struct tTask
 
   char *last_error_msg;         /* last error text */
   unsigned long used_vm_size;   /* maximum used VM size (if available) */
+  int cleanup_invoked;          /* not to invoke cleanup handler several times */
 };
 
 #define PIDARR_SIZE 32
@@ -1972,6 +1973,41 @@ task_Wait(tTask *tsk)
   return task_NewWait(tsk);
 }
 
+static void
+invoke_cleanup_helper(tTask *tsk)
+{
+  char helper_path[PATH_MAX];
+  char *args[3];
+
+  if (tsk->state != TSK_SIGNALED && tsk->state != TSK_EXITED) return;
+
+  snprintf(helper_path, sizeof(helper_path), "%s/%s", tsk->suid_helper_dir, "ej-suid-chown");
+  args[0] = helper_path;
+  if (tsk->working_dir) {
+    args[1] = tsk->working_dir;
+  } else {
+    args[1] = ".";
+  }
+  args[2] = NULL;
+
+  sigset_t cur, temp, empty;
+  sigfillset(&temp);
+  sigemptyset(&empty);
+  sigprocmask(SIG_SETMASK, &temp, &cur);
+  int helper_pid = fork();
+  if (helper_pid < 0) {
+    sigprocmask(SIG_SETMASK, &cur, NULL);
+    return;
+  }
+  if (!helper_pid) {
+    sigprocmask(SIG_SETMASK, &empty, NULL);
+    execv(helper_path, args);
+    _exit(1);
+  }
+  waitpid(helper_pid, NULL, 0);
+  sigprocmask(SIG_SETMASK, &cur, NULL);
+}
+
 struct process_info
 {
   char state;
@@ -2094,8 +2130,12 @@ task_NewWait(tTask *tsk)
 
   if (tsk->state == TSK_ERROR || tsk->state == TSK_STOPPED)
     return NULL;
-  if (tsk->state == TSK_SIGNALED || tsk->state == TSK_EXITED)
+  if (tsk->state == TSK_SIGNALED || tsk->state == TSK_EXITED) {
+    if (tsk->enable_suid_exec && !tsk->cleanup_invoked) {
+      invoke_cleanup_helper(tsk);
+    }
     return tsk;
+  }
   ASSERT(tsk->state == TSK_RUNNING);
 
   sigset_t bs;
@@ -2137,6 +2177,9 @@ task_NewWait(tTask *tsk)
     if (pid > 0) {
       find_prc_in_list(pid, stat, &usage);
       tsk->used_vm_size = used_vm_size;
+      if (tsk->enable_suid_exec && !tsk->cleanup_invoked) {
+        invoke_cleanup_helper(tsk);
+      }
       return tsk;
     }
 
@@ -2215,10 +2258,14 @@ task_NewWait(tTask *tsk)
     }
     if (pid > 0) {
       find_prc_in_list(pid, stat, &usage);
+      if (tsk->enable_suid_exec && !tsk->cleanup_invoked) {
+        invoke_cleanup_helper(tsk);
+      }
       return tsk;
     }
   }
 
+  abort();
   return tsk;
 }
 
