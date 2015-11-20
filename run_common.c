@@ -1007,7 +1007,7 @@ start_interactive_valuer(
   if (srgp->rejudge_flag > 0) {
     task_SetEnv(tsk, "EJUDGE_REJUDGE", "1");
   }
-  task_EnableAllSignals(tsk);
+  //task_EnableAllSignals(tsk);
 
   task_PrintArgs(tsk);
 
