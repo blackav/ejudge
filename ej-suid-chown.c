@@ -19,7 +19,7 @@ extern char **environ;
 static void
 safe_chown(const char *full, int to_user_id, int to_group_id, int from_user_id)
 {
-    int fd = open(full, O_RDONLY | O_NOFOLLOW, 0);
+    int fd = open(full, O_RDONLY | O_NOFOLLOW | O_NONBLOCK, 0);
     if (fd < 0) return;
     struct stat stb;
     if (fstat(fd, &stb) < 0) {
