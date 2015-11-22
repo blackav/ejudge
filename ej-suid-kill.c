@@ -46,7 +46,7 @@ main(int argc, char **argv)
     errno = 0;
     char *eptr = NULL;
     int dst_pid = strtol(argv[1], &eptr, 10);
-    if (errno || *eptr || dst_pid < -32767 || dst_pid > 32767 || dst_pid == 0) {
+    if (errno || *eptr || dst_pid < -1000000 || dst_pid > 1000000 || dst_pid == 0) {
         fprintf(stderr, "%s: invalid pid '%s'\n", argv[0], argv[1]);
         abort();
     }
