@@ -2771,33 +2771,29 @@ int ns_match_action(const unsigned char *str)
     } else {
       if (c == 'i') {
         c = str[1];
-        if (c == 's') {
+        if (c == 'n') {
           c = str[2];
-          if (c == 's') {
+          if (c == 'v') {
             c = str[3];
-            if (c == 'u') {
+            if (c == 'o') {
               c = str[4];
-              if (c == 'e') {
+              if (c == 'k') {
                 c = str[5];
-                if (c == '-') {
+                if (c == 'e') {
                   c = str[6];
-                  if (c == 'w') {
+                  if (c == 'r') {
                     c = str[7];
-                    if (c == 'a') {
+                    if (c == '-') {
                       c = str[8];
-                      if (c == 'r') {
+                      if (c == 's') {
                         c = str[9];
-                        if (c == 'n') {
+                        if (c == 't') {
                           c = str[10];
-                          if (c == 'i') {
+                          if (c == 'o') {
                             c = str[11];
-                            if (c == 'n') {
+                            if (c == 'p') {
                               c = str[12];
-                              if (c == 'g') {
-                                c = str[13];
-                                if (!c) return NEW_SRV_ACTION_ISSUE_WARNING;
-                                return 0;
-                              }
+                              if (!c) return NEW_SRV_ACTION_INVOKER_STOP;
                               return 0;
                             }
                             return 0;
@@ -2805,6 +2801,48 @@ int ns_match_action(const unsigned char *str)
                           return 0;
                         }
                         return 0;
+                      } else if (c < 's') {
+                        if (c == 'd') {
+                          c = str[9];
+                          if (c == 'o') {
+                            c = str[10];
+                            if (c == 'w') {
+                              c = str[11];
+                              if (c == 'n') {
+                                c = str[12];
+                                if (!c) return NEW_SRV_ACTION_INVOKER_DOWN;
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          } else if (c < 'o') {
+                            if (c == 'e') {
+                              c = str[10];
+                              if (c == 'l') {
+                                c = str[11];
+                                if (c == 'e') {
+                                  c = str[12];
+                                  if (c == 't') {
+                                    c = str[13];
+                                    if (c == 'e') {
+                                      c = str[14];
+                                      if (!c) return NEW_SRV_ACTION_INVOKER_DELETE;
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                          } else {
+                          }
+                          return 0;
+                        }
+                      } else {
                       }
                       return 0;
                     }
@@ -2819,7 +2857,7 @@ int ns_match_action(const unsigned char *str)
             return 0;
           }
           return 0;
-        } else if (c < 's') {
+        } else if (c < 'n') {
           if (c == 'g') {
             c = str[2];
             if (c == 'n') {
@@ -2897,6 +2935,55 @@ int ns_match_action(const unsigned char *str)
             return 0;
           }
         } else {
+          if (c == 's') {
+            c = str[2];
+            if (c == 's') {
+              c = str[3];
+              if (c == 'u') {
+                c = str[4];
+                if (c == 'e') {
+                  c = str[5];
+                  if (c == '-') {
+                    c = str[6];
+                    if (c == 'w') {
+                      c = str[7];
+                      if (c == 'a') {
+                        c = str[8];
+                        if (c == 'r') {
+                          c = str[9];
+                          if (c == 'n') {
+                            c = str[10];
+                            if (c == 'i') {
+                              c = str[11];
+                              if (c == 'n') {
+                                c = str[12];
+                                if (c == 'g') {
+                                  c = str[13];
+                                  if (!c) return NEW_SRV_ACTION_ISSUE_WARNING;
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  }
+                  return 0;
+                }
+                return 0;
+              }
+              return 0;
+            }
+            return 0;
+          }
         }
         return 0;
       } else if (c < 'i') {

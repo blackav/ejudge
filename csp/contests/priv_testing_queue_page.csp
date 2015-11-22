@@ -138,6 +138,7 @@
         <th class="b1">Test</th>
         <th class="b1">Enqueue Time</th>
         <th class="b1">Testing Start<br/>Time</th>
+        <th class="b1">Ops</th>
     </tr>
 <%
   for (i = 0; i < srsv.u; ++i) {
@@ -215,6 +216,10 @@
 <%
     }
 %>
+<s:url name="DeleteInvoker" ac="invoker-delete"><s:param name="file" value="srsv.v[i]->file" /></s:url>
+<s:url name="StopInvoker" ac="invoker-stop"><s:param name="file" value="srsv.v[i]->file" /></s:url>
+<s:url name="DownInvoker" ac="invoker-down"><s:param name="file" value="srsv.v[i]->file" /></s:url>
+        <td><s:a> url="DeleteInvoker"[X]</s:a> <s:a> url="StopInvoker"[S]</s:a> <s:a> url="DownInvoker"[D]</s:a></td>
     </tr>
 <%
   }
