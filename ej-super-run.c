@@ -92,6 +92,11 @@ static unsigned char *mirror_dir = NULL;
 #define HEARTBEAT_SAVE_INTERVAL_MS 5000
 static long long last_heartbear_save_time = 0;
 
+static unsigned char master_stop_enabled = 0;
+static unsigned char master_down_enabled = 0;
+static unsigned char pending_stop_flag = 0;
+static unsigned char pending_down_flag = 0;
+
 static void
 fatal(const char *format, ...)
   __attribute__((noreturn, format(printf, 1, 2)));
@@ -209,7 +214,10 @@ super_run_before_tests(struct run_listener *gself, int test_no)
   rs.testing_start_ts = self->testing_start_ts;
 
   super_run_status_save(super_run_heartbeat_path, status_file_name, &rs,
-                        current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS);
+                        current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS,
+                        &pending_stop_flag, &pending_down_flag);
+  if (!master_stop_enabled) pending_stop_flag = 0;
+  if (!master_down_enabled) pending_down_flag = 0;
 }
 
 static const struct run_listener_ops super_run_listener_ops =
@@ -480,6 +488,8 @@ do_super_run_status_init(struct super_run_status *prs)
   prs->ej_ver_idx = super_run_status_add_str(prs, compile_version);
   if (super_run_id) prs->super_run_idx = super_run_status_add_str(prs, super_run_id);
   prs->super_run_pid = getpid();
+  prs->stop_pending = pending_stop_flag;
+  prs->down_pending = pending_down_flag;
 }
 
 static void
@@ -494,7 +504,10 @@ report_waiting_state(long long current_time_ms, long long last_check_time_ms)
   rs.last_run_ts = last_check_time_ms;
   rs.status = SRS_WAITING;
   super_run_status_save(super_run_heartbeat_path, status_file_name, &rs,
-                        current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS);
+                        current_time_ms, &last_heartbear_save_time, HEARTBEAT_SAVE_INTERVAL_MS,
+                        &pending_stop_flag, &pending_down_flag);
+  if (!master_stop_enabled) pending_stop_flag = 0;
+  if (!master_down_enabled) pending_down_flag = 0;
 }
 
 static int
@@ -539,6 +552,9 @@ do_loop(
       restart_flag = 1;
     }
     if (restart_flag) break;
+
+    if (pending_stop_flag) break;
+    if (pending_down_flag) break;
 
     time_t current_time = time(NULL);
     if (halt_timeout > 0 && last_handled + halt_timeout <= current_time) {
@@ -1214,6 +1230,11 @@ main(int argc, char *argv[])
   argv_restart[argc_restart] = NULL;
   start_set_args(argv_restart);
 
+  if (halt_command) {
+    master_down_enabled = 1;
+  }
+  master_stop_enabled = 1;
+
   check_environment();
 
   if (!(host_names = ejudge_get_host_names())) {
@@ -1337,7 +1358,7 @@ main(int argc, char *argv[])
     retval = 1;
   }
 
-  if (halt_requested) {
+  if (halt_requested || pending_down_flag) {
     info("halt timeout");
     start_shutdown(halt_command);
   }

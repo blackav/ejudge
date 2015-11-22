@@ -184,7 +184,11 @@
         snprintf(status_buf, sizeof(status_buf), "WAITING (long time)");
       }
     } else if (srs->status == SRS_TESTING) {
-        snprintf(status_buf, sizeof(status_buf), "<b>TESTING</b>");
+        const unsigned char *down = "";
+        const unsigned char *stop = "";
+        if (srs->down_pending) down = "(D)";
+        if (srs->stop_pending) stop = "(S)";
+        snprintf(status_buf, sizeof(status_buf), "<b>TESTING</b>%s%s", stop, down);
     } else {
         snprintf(status_buf, sizeof(status_buf), "Unknown status %d", srs->status);
     }
