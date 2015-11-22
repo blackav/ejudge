@@ -58,8 +58,10 @@ struct super_run_status
     long long      queue_ts;     // 72: time of creating a testing request
     long long      testing_start_ts; // 80: time when testing started
     int            max_test_num; // 88: number of tests for the problem
+    unsigned char  stop_pending; // 92: pending stop
+    unsigned char  down_pending; // 93: pending shutdown
 
-    unsigned char  pad5[100];
+    unsigned char  pad5[98];
 
     unsigned char  strings[320]; // string pool
 };
@@ -85,7 +87,9 @@ super_run_status_save(
         const struct super_run_status *psrs,
         long long current_time_ms,
         long long *p_last_saved_time,
-        long long timeout_ms);
+        long long timeout_ms,
+        unsigned char *p_stop_flag,
+        unsigned char *p_down_flag);
 
 void
 super_run_status_remove(
