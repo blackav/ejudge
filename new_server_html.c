@@ -5892,9 +5892,14 @@ priv_invoker_operation(
   int retval = 0;
   const serve_state_t cs = extra->serve_state;
   const unsigned char *file = NULL, *s, *queue = NULL;
+  opcap_t caps = NULL;
 
-  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+  if (opcaps_find(&phr->config->capabilities, phr->login, &caps) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+  if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
   if (hr_cgi_param(phr, "file", &file) <= 0 || !file)
     FAIL(NEW_SRV_ERR_INV_PARAM);
   for (s = file; *s; ++s) {
