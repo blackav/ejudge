@@ -330,6 +330,9 @@ ej-suid-chown : ej-suid-chown.c
 ej-suid-kill : ej-suid-kill.c
 	${CC} ${CFLAGS} ${LDFLAGS} $^ -o $@
 
+ej-suid-ipcrm : ej-suid-ipcrm.c
+	${CC} ${CFLAGS} ${LDFLAGS} $^ -o $@
+
 collect-emails: ${CE_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
