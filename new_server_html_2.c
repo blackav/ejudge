@@ -5650,8 +5650,10 @@ ns_scan_run_queue(
 static int
 heartbeat_status_sort_func(const void *v1, const void *v2)
 {
-  const struct super_run_status *p1 = *(const struct super_run_status**) v1;
-  const struct super_run_status *p2 = *(const struct super_run_status**) v2;
+  const struct super_run_status_vector_item *i1 = *(const struct super_run_status_vector_item**) v1;
+  const struct super_run_status_vector_item *i2 = *(const struct super_run_status_vector_item**) v2;
+  const struct super_run_status *p1 = &i1->status;
+  const struct super_run_status *p2 = &i2->status;
   const unsigned char *s1 = super_run_status_get_str(p1, super_run_idx);
   const unsigned char *s2 = super_run_status_get_str(p2, super_run_idx);
   return strcmp(s1, s2);

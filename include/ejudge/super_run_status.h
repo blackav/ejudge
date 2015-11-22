@@ -92,10 +92,16 @@ super_run_status_remove(
         const unsigned char *heartbeat_dir,
         const unsigned char *file_name);
 
+struct super_run_status_vector_item
+{
+    struct super_run_status status;
+    unsigned char *file;
+};
+
 struct super_run_status_vector
 {
     int a, u;
-    struct super_run_status **v;
+    struct super_run_status_vector_item **v;
 };
 
 struct super_run_status_vector *
@@ -106,7 +112,8 @@ super_run_status_vector_free(
 void
 super_run_status_vector_add(
         struct super_run_status_vector *v,
-        const struct super_run_status *s);
+        const struct super_run_status *s,
+        const unsigned char *file);
 
 void
 super_run_status_scan(

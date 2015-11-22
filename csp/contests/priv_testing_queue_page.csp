@@ -141,7 +141,7 @@
     </tr>
 <%
   for (i = 0; i < srsv.u; ++i) {
-    const struct super_run_status *srs = srsv.v[i];
+    const struct super_run_status *srs = &srsv.v[i]->status;
     const unsigned char *super_run_id = super_run_status_get_str(srs, super_run_idx);
     const unsigned char *queue_name = super_run_status_get_str(srs, queue_idx);
     const unsigned char *user = super_run_status_get_str(srs, user_idx);

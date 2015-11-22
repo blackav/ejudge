@@ -155,6 +155,7 @@ super_run_status_vector_free(
 {
     if (v) {
         for (int i = 0; i < v->u; ++i) {
+            xfree(v->v[i]->file);
             xfree(v->v[i]);
         }
         xfree(v->v);
@@ -169,15 +170,20 @@ super_run_status_vector_free(
 void
 super_run_status_vector_add(
         struct super_run_status_vector *v,
-        const struct super_run_status *s)
+        const struct super_run_status *s,
+        const unsigned char *file)
 {
     if (v->u == v->a) {
         if (!(v->a *= 2)) v->a = 16;
         v->v = xrealloc(v->v, v->a * sizeof(v->v[0]));
     }
-    struct super_run_status *ns = malloc(sizeof(*ns));
-    memcpy(ns, s, sizeof(*ns));
-    v->v[v->u++] = ns;
+    struct super_run_status_vector_item *vi = NULL;
+    XCALLOC(vi, 1);
+    memcpy(&vi->status, s, sizeof(*s));
+    if (file) {
+        vi->file = xstrdup(file);
+    }
+    v->v[v->u++] = vi;
 }
 
 int
@@ -222,6 +228,8 @@ super_run_status_scan(
     struct dirent *dd;
     while ((dd = readdir(d))) {
         if (!strcmp(dd->d_name, ".") || !strcmp(dd->d_name, "..")) continue;
+        int len = strlen(dd->d_name);
+        if (len > 2 && dd->d_name[len - 2] == '@') continue;
         unsigned char path[PATH_MAX];
         snprintf(path, sizeof(path), "%s/%s", dpath, dd->d_name);
         struct stat stb;
@@ -231,7 +239,7 @@ super_run_status_scan(
         struct super_run_status srs;
         if (super_run_status_read(path, &srs) < 0) continue;
         if (super_run_status_check(&srs, sizeof(srs)) < 0) continue;
-        super_run_status_vector_add(v, &srs);
+        super_run_status_vector_add(v, &srs, dd->d_name);
     }
     closedir(d);
 }
