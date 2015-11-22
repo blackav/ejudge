@@ -5904,14 +5904,15 @@ priv_invoker_operation(
   }
   hr_cgi_param(phr, "queue", &queue);
 
-  (void) cs;
-
   switch (phr->action) {
   case NEW_SRV_ACTION_INVOKER_DELETE:
+    serve_invoker_delete(cs, queue, file);
     break;
   case NEW_SRV_ACTION_INVOKER_STOP:
+    serve_invoker_stop(cs, queue, file);
     break;
   case NEW_SRV_ACTION_INVOKER_DOWN:
+    serve_invoker_down(cs, queue, file);
     break;
   default:
     FAIL(NEW_SRV_ERR_INV_PARAM);

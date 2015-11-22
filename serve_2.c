@@ -62,6 +62,7 @@
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <fcntl.h>
 
 #if CONF_HAS_LIBINTL - 0 == 1
 #include <libintl.h>
@@ -5673,4 +5674,82 @@ serve_get_compiler_options(
   s = state->compiler_options[lang_id];
   if (!s) s = "";
   return s;
+}
+
+void
+serve_invoker_delete(
+        const serve_state_t state,
+        const unsigned char *queue,
+        const unsigned char *file)
+{
+  unsigned char file2[PATH_MAX];
+  unsigned char path[PATH_MAX];
+
+  const struct run_queue_item *rqi = lookup_run_queue_item(state, queue);
+  if (!rqi) return;
+  if (!rqi->heartbeat_dir || !*rqi->heartbeat_dir) return;
+
+  snprintf(file2, sizeof(file2), "%s", file);
+  for (int i = 0; file2[i]; ++i) {
+    if (file2[i] <= ' ' || file2[i] >= 0x7f || file2[i] == '/') {
+      file2[i] = '_';
+    }
+  }
+
+  snprintf(path, sizeof(path), "%s/%s", rqi->heartbeat_dir, file2);
+  unlink(path);
+  snprintf(path, sizeof(path), "%s/%s@D", rqi->heartbeat_dir, file2);
+  unlink(path);
+  snprintf(path, sizeof(path), "%s/%s@S", rqi->heartbeat_dir, file2);
+  unlink(path);
+}
+
+void
+serve_invoker_stop(
+        const serve_state_t state,
+        const unsigned char *queue,
+        const unsigned char *file)
+{
+  unsigned char file2[PATH_MAX];
+  unsigned char path[PATH_MAX];
+
+  const struct run_queue_item *rqi = lookup_run_queue_item(state, queue);
+  if (!rqi) return;
+  if (!rqi->heartbeat_dir || !*rqi->heartbeat_dir) return;
+
+  snprintf(file2, sizeof(file2), "%s", file);
+  for (int i = 0; file2[i]; ++i) {
+    if (file2[i] <= ' ' || file2[i] >= 0x7f || file2[i] == '/') {
+      file2[i] = '_';
+    }
+  }
+
+  snprintf(path, sizeof(path), "%s/%s@S", rqi->heartbeat_dir, file2);
+  int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+  close(fd);
+}
+
+void
+serve_invoker_down(
+        const serve_state_t state,
+        const unsigned char *queue,
+        const unsigned char *file)
+{
+  unsigned char file2[PATH_MAX];
+  unsigned char path[PATH_MAX];
+
+  const struct run_queue_item *rqi = lookup_run_queue_item(state, queue);
+  if (!rqi) return;
+  if (!rqi->heartbeat_dir || !*rqi->heartbeat_dir) return;
+
+  snprintf(file2, sizeof(file2), "%s", file);
+  for (int i = 0; file2[i]; ++i) {
+    if (file2[i] <= ' ' || file2[i] >= 0x7f || file2[i] == '/') {
+      file2[i] = '_';
+    }
+  }
+
+  snprintf(path, sizeof(path), "%s/%s@D", rqi->heartbeat_dir, file2);
+  int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+  close(fd);
 }

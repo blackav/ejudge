@@ -781,4 +781,20 @@ serve_get_compiler_options(
         const serve_state_t state,
         int lang_id);
 
+void
+serve_invoker_delete(
+        const serve_state_t state,
+        const unsigned char *queue,
+        const unsigned char *file);
+void
+serve_invoker_stop(
+        const serve_state_t state,
+        const unsigned char *queue,
+        const unsigned char *file);
+void
+serve_invoker_down(
+        const serve_state_t state,
+        const unsigned char *queue,
+        const unsigned char *file);
+
 #endif /* __SERVE_STATE_H__ */
