@@ -3439,6 +3439,7 @@ handle_a_open(
     HtmlAttribute *class_attr = html_element_find_attribute(elem, "class");
     int nosid_flag = html_attribute_get_bool(html_element_find_attribute(elem, "nosid"), 0);
     HtmlAttribute *target_attr = html_element_find_attribute(elem, "target");
+    HtmlAttribute *title_attr = html_element_find_attribute(elem, "title");
 
     HtmlAttribute *attr = html_element_find_attribute(elem, "url");
     if (attr) {
@@ -3464,6 +3465,9 @@ handle_a_open(
         }
         if (target_attr) {
             fprintf(str_f, " target=\"%s\"", target_attr->value);
+        }
+        if (title_attr) {
+            fprintf(str_f, " title=\"%s\"", title_attr->value);
         }
         fprintf(str_f, " href=\"");
         fclose(str_f); str_f = 0; 
@@ -3531,6 +3535,9 @@ handle_a_open(
         }
         if (target_attr) {
             fprintf(str_f, " target=\"%s\"", target_attr->value);
+        }
+        if (title_attr) {
+            fprintf(str_f, " title=\"%s\"", title_attr->value);
         }
         fprintf(str_f, " href=\"");
         fclose(str_f); str_f = 0;
