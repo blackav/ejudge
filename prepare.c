@@ -32,6 +32,7 @@
 #include "ejudge/compat.h"
 #include "ejudge/variant_map.h"
 #include "ejudge/dates_config.h"
+#include "ejudge/l10n.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -2886,12 +2887,8 @@ set_defaults(
 #if CONF_HAS_LIBINTL - 0 == 1
   if (mode == PREPARE_SERVE && g->enable_l10n) {
     /* convert locale string into locale id */
-    if (!strcmp(g->standings_locale, "ru_RU.KOI8-R")
-        || !strcmp(g->standings_locale, "ru")) {
-      g->standings_locale_id = 1;
-    } else {
-      g->standings_locale_id = 0;
-    }
+    g->standings_locale_id = l10n_parse_locale(g->standings_locale);
+    if (g->standings_locale_id < 0) g->standings_locale_id = 0;
     vinfo("standings_locale_id is %d", g->standings_locale_id);
   }
 #endif /* CONF_HAS_LIBINTL */
