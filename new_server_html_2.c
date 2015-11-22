@@ -5667,7 +5667,7 @@ ns_scan_heartbeat_dirs(
   memset(vec, 0, sizeof(*vec));
   for (int i = 0; i < cs->run_queues_u; ++i) {
     if (cs->run_queues[i].heartbeat_dir) {
-      super_run_status_scan(cs->run_queues[i].heartbeat_dir, vec);
+      super_run_status_scan(cs->run_queues[i].id, cs->run_queues[i].heartbeat_dir, vec);
     }
   }
   qsort(vec->v, vec->u, sizeof(vec->v[0]), heartbeat_status_sort_func);

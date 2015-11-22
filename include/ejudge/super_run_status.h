@@ -95,6 +95,7 @@ super_run_status_remove(
 struct super_run_status_vector_item
 {
     struct super_run_status status;
+    unsigned char *queue;
     unsigned char *file;
 };
 
@@ -113,10 +114,12 @@ void
 super_run_status_vector_add(
         struct super_run_status_vector *v,
         const struct super_run_status *s,
+        const unsigned char *queue,
         const unsigned char *file);
 
 void
 super_run_status_scan(
+        const unsigned char *queue,
         const unsigned char *heartbeat_dir,
         struct super_run_status_vector *v);
 

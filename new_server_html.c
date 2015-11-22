@@ -5882,6 +5882,46 @@ priv_whole_testing_queue_operation(
 }
 
 static int
+priv_invoker_operation(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+  const serve_state_t cs = extra->serve_state;
+  const unsigned char *file = NULL, *s, *queue = NULL;
+
+  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (hr_cgi_param(phr, "file", &file) <= 0 || !file)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  for (s = file; *s; ++s) {
+    if (*s <= ' ' || *s >= 0x7f || *s == '/') {
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+    }
+  }
+  hr_cgi_param(phr, "queue", &queue);
+
+  (void) cs;
+
+  switch (phr->action) {
+  case NEW_SRV_ACTION_INVOKER_DELETE:
+    break;
+  case NEW_SRV_ACTION_INVOKER_STOP:
+    break;
+  case NEW_SRV_ACTION_INVOKER_DOWN:
+    break;
+  default:
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+
+ cleanup:
+  return retval;
+}
+
+static int
 priv_stand_filter_operation(
         FILE *fout,
         FILE *log_f,
@@ -6368,6 +6408,9 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TESTING_DELETE_ALL] = priv_whole_testing_queue_operation,
   [NEW_SRV_ACTION_TESTING_UP_ALL] = priv_whole_testing_queue_operation,
   [NEW_SRV_ACTION_TESTING_DOWN_ALL] = priv_whole_testing_queue_operation,
+  [NEW_SRV_ACTION_INVOKER_DELETE] = priv_invoker_operation,
+  [NEW_SRV_ACTION_INVOKER_STOP] = priv_invoker_operation,
+  [NEW_SRV_ACTION_INVOKER_DOWN] = priv_invoker_operation,
   [NEW_SRV_ACTION_SET_STAND_FILTER] = priv_stand_filter_operation,
   [NEW_SRV_ACTION_RESET_STAND_FILTER] = priv_stand_filter_operation,
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_SOURCE] = priv_contest_operation,

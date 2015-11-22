@@ -156,6 +156,7 @@ super_run_status_vector_free(
     if (v) {
         for (int i = 0; i < v->u; ++i) {
             xfree(v->v[i]->file);
+            xfree(v->v[i]->queue);
             xfree(v->v[i]);
         }
         xfree(v->v);
@@ -171,6 +172,7 @@ void
 super_run_status_vector_add(
         struct super_run_status_vector *v,
         const struct super_run_status *s,
+        const unsigned char *queue,
         const unsigned char *file)
 {
     if (v->u == v->a) {
@@ -182,6 +184,9 @@ super_run_status_vector_add(
     memcpy(&vi->status, s, sizeof(*s));
     if (file) {
         vi->file = xstrdup(file);
+    }
+    if (queue) {
+        vi->queue = xstrdup(queue);
     }
     v->v[v->u++] = vi;
 }
@@ -214,6 +219,7 @@ super_run_status_read(
 
 void
 super_run_status_scan(
+        const unsigned char *queue,
         const unsigned char *heartbeat_dir,
         struct super_run_status_vector *v)
 {
@@ -239,7 +245,7 @@ super_run_status_scan(
         struct super_run_status srs;
         if (super_run_status_read(path, &srs) < 0) continue;
         if (super_run_status_check(&srs, sizeof(srs)) < 0) continue;
-        super_run_status_vector_add(v, &srs, dd->d_name);
+        super_run_status_vector_add(v, &srs, queue, dd->d_name);
     }
     closedir(d);
 }

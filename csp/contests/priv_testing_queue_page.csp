@@ -215,11 +215,11 @@
         <td class="b1" colspan="8">&nbsp;</td>
 <%
     }
-%>
-<s:url name="DeleteInvoker" ac="invoker-delete"><s:param name="file" value="srsv.v[i]->file" /></s:url>
-<s:url name="StopInvoker" ac="invoker-stop"><s:param name="file" value="srsv.v[i]->file" /></s:url>
-<s:url name="DownInvoker" ac="invoker-down"><s:param name="file" value="srsv.v[i]->file" /></s:url>
-        <td><s:a url="DeleteInvoker">[X]</s:a> <s:a url="StopInvoker">[S]</s:a> <s:a url="DownInvoker">[D]</s:a></td>
+%><%
+%><s:url name="DeleteInvoker" ac="invoker-delete"><s:param name="queue" value="srsv.v[i]->queue" /><s:param name="file" value="srsv.v[i]->file" /></s:url><%
+%><s:url name="StopInvoker" ac="invoker-stop"><s:param name="queue" value="srsv.v[i]->queue" /><s:param name="file" value="srsv.v[i]->file" /></s:url><%
+%><s:url name="DownInvoker" ac="invoker-down"><s:param name="queue" value="srsv.v[i]->queue" /><s:param name="file" value="srsv.v[i]->file" /></s:url><%
+%>        <td class="b1"><s:a url="DeleteInvoker">[X]</s:a> <s:a url="StopInvoker">[S]</s:a> <s:a url="DownInvoker">[D]</s:a></td>
     </tr>
 <%
   }
