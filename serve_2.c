@@ -5696,11 +5696,11 @@ serve_invoker_delete(
     }
   }
 
-  snprintf(path, sizeof(path), "%s/%s", rqi->heartbeat_dir, file2);
+  snprintf(path, sizeof(path), "%s/dir/%s", rqi->heartbeat_dir, file2);
   unlink(path);
-  snprintf(path, sizeof(path), "%s/%s@D", rqi->heartbeat_dir, file2);
+  snprintf(path, sizeof(path), "%s/dir/%s@D", rqi->heartbeat_dir, file2);
   unlink(path);
-  snprintf(path, sizeof(path), "%s/%s@S", rqi->heartbeat_dir, file2);
+  snprintf(path, sizeof(path), "%s/dir/%s@S", rqi->heartbeat_dir, file2);
   unlink(path);
 }
 
@@ -5724,7 +5724,7 @@ serve_invoker_stop(
     }
   }
 
-  snprintf(path, sizeof(path), "%s/%s@S", rqi->heartbeat_dir, file2);
+  snprintf(path, sizeof(path), "%s/dir/%s@S", rqi->heartbeat_dir, file2);
   int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
   close(fd);
 }
@@ -5749,7 +5749,7 @@ serve_invoker_down(
     }
   }
 
-  snprintf(path, sizeof(path), "%s/%s@D", rqi->heartbeat_dir, file2);
+  snprintf(path, sizeof(path), "%s/dir/%s@D", rqi->heartbeat_dir, file2);
   int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
   close(fd);
 }
