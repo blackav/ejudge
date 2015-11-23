@@ -2221,6 +2221,18 @@ run_one_test(
     }
     fclose(sr.eff_f);
     eff_inf_text = sr.eff_s;
+
+    // if 'enable_subst' is enabled, save the effective .inf file into the working directory
+    // and further use it instead of the original file
+    if (tstinfo.enable_subst > 0) {
+      snprintf(info_src, sizeof(info_src), "%s/eff_%s", global->run_work_dir, info_base);
+      if (generic_write_file(sr.eff_s, sr.eff_z, 0, NULL, info_src, NULL) < 0) {
+        append_msg_to_log(check_out_path, "failed to save effective testinfo file '%s': %s\n",
+                          info_src, testinfo_strerror(-errcode));
+        goto check_failed;
+      }
+    }
+    xfree(eff_inf_text); eff_inf_text = NULL;
   }
 
   if (srpp->use_info > 0 && tstinfo.disable_stderr >= 0) {
