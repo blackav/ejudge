@@ -18,6 +18,7 @@
   long long current_time_ms;
 
   memset(&vec, 0, sizeof(vec));
+  memset(&srsv, 0, sizeof(srsv));
 
   if (phr->role != USER_ROLE_ADMIN) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
