@@ -35,7 +35,7 @@ getl(char *buf, size_t size, FILE *f)
 }
 
 static int
-scan_msg(int search_uid)
+scan_msg(int search_uid, int *p_count, FILE *rep_f)
 {
     int retval = 0;
     char buf[1024];
@@ -55,11 +55,12 @@ scan_msg(int search_uid)
             return 1;
         }
         if (uid == search_uid) {
-            printf("message queue: key = 0x%08x, msgid = %d, perms = %03o\n", key, msgid, perms);
+            fprintf(rep_f, "message queue: key = 0x%08x, msgid = %d, perms = %03o\n", key, msgid, perms);
             if (msgctl(msgid, IPC_RMID, NULL) < 0) {
                 fprintf(stderr, "msgctl failed: %s\n", strerror(errno));
             }
             retval = 1;
+            ++*p_count;
         }
     }
 
@@ -68,7 +69,7 @@ scan_msg(int search_uid)
 }
 
 static int
-scan_sem(int search_uid)
+scan_sem(int search_uid, int *p_count, FILE *rep_f)
 {
     int retval = 0;
     char buf[1024];
@@ -88,11 +89,12 @@ scan_sem(int search_uid)
             return 1;
         }
         if (uid == search_uid) {
-            printf("semaphore array: key = 0x%08x, msgid = %d, perms = %03o\n", key, semid, perms);
+            fprintf(rep_f, "semaphore array: key = 0x%08x, semid = %d, perms = %03o\n", key, semid, perms);
             if (semctl(semid, 0, IPC_RMID, NULL) < 0) {
                 fprintf(stderr, "semctl failed: %s\n", strerror(errno));
             }
             retval = 1;
+            ++*p_count;
         }
     }
 
@@ -101,7 +103,7 @@ scan_sem(int search_uid)
 }
 
 static int
-scan_shm(int search_uid)
+scan_shm(int search_uid, int *p_count, FILE *rep_f)
 {
     int retval = 0;
     char buf[1024];
@@ -121,11 +123,12 @@ scan_shm(int search_uid)
             return 1;
         }
         if (uid == search_uid) {
-            printf("shared memory: key = 0x%08x, msgid = %d, perms = %03o\n", key, shmid, perms);
+            fprintf(rep_f, "shared memory: key = 0x%08x, shmid = %d, perms = %03o\n", key, shmid, perms);
             if (shmctl(shmid, IPC_RMID, NULL) < 0) {
                 fprintf(stderr, "shmctl failed: %s\n", strerror(errno));
             }
             retval = 1;
+            ++*p_count;
         }
     }
 
@@ -147,7 +150,18 @@ main(int argc, char **argv)
         abort();
     }
 
-    return scan_msg(pwd->pw_uid) | scan_sem(pwd->pw_uid) | scan_shm(pwd->pw_uid);
+    char *rep_s = NULL;
+    size_t rep_z = 0;
+    FILE *rep_f = open_memstream(&rep_s, &rep_z);
+    int count = 0;
+    int retval = scan_msg(pwd->pw_uid, &count, rep_f) | scan_sem(pwd->pw_uid, &count, rep_f) | scan_shm(pwd->pw_uid, &count, rep_f);
+    fclose(rep_f); rep_f = NULL;
+    if (count > 0) {
+        printf("System V IPC scan found the following objects:\n");
+        printf("%s", rep_s);
+        printf("Total %d objects found\n", count);
+    }
+    return retval;
 }
 
 /*
