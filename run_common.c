@@ -1654,17 +1654,30 @@ invoke_init_cmd(
   }
 
   int exitcode = task_ExitCode(tsk);
-  if (exitcode == 1) exitcode = RUN_WRONG_ANSWER_ERR;
-  if (exitcode == 2) exitcode = RUN_PRESENTATION_ERR;
-  if (exitcode == RUN_PRESENTATION_ERR && disable_pe > 0) {
-    exitcode = RUN_WRONG_ANSWER_ERR;
-  }
-  if (exitcode != RUN_OK && exitcode != RUN_PRESENTATION_ERR
-      && exitcode != RUN_WRONG_ANSWER_ERR && exitcode != RUN_CHECK_FAILED) {
+  switch (exitcode) {
+  case RUN_OK:
+  case RUN_RUN_TIME_ERR:
+  case RUN_WRONG_ANSWER_ERR:
+  case RUN_MEM_LIMIT_ERR:
+  case RUN_TIME_LIMIT_ERR:
+  case RUN_SECURITY_ERR:
+  case RUN_WALL_TIME_LIMIT_ERR:
+  case RUN_SYNC_ERR:
+    break;
+
+  case RUN_PRESENTATION_ERR:
+    if (disable_pe > 0) {
+      exitcode = RUN_WRONG_ANSWER_ERR;
+    }
+    break;
+
+  case RUN_CHECK_FAILED:
+  default:
     append_msg_to_log(check_out_path, "init_cmd exited with code %d", exitcode);
     status = RUN_CHECK_FAILED;
     goto cleanup;
   }
+
   status = exitcode;
 
 cleanup:
