@@ -469,10 +469,10 @@ function setDivVisibility(oper, value)
     px = prob->xml.p;
   }
 
-  if (px && px->stmts) {
+  if (px && px->stmts && px->stmts->review_notes) {
 %>
 <h2><s:_>Review notes</s:_></h2>
-<% problem_xml_unparse_node(out_f, px->stmts->output_format, NULL, NULL); %>
+<% problem_xml_unparse_node(out_f, px->stmts->review_notes, NULL, NULL); %>
 <%
   }
 %>
