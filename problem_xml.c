@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2007-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -47,6 +46,7 @@ static char const * const elem_map[] =
   "translation",
   "tr",
   "notes",
+  "review_notes",
   0,
   "_default",
   "_text",
@@ -87,6 +87,7 @@ static const unsigned char verbatim_flags[PROB_LAST_TAG] =
   [PROB_T_TRANSLATION] = 1,
   [PROB_T_TR] = 1,
   [PROB_T_NOTES] = 1,
+  [PROB_T_REVIEW_NOTES] = 1,
 };
 
 static void node_free(struct xml_tree *t);
@@ -243,6 +244,10 @@ parse_statement(problem_xml_t prb, struct xml_tree *pstmt)
     case PROB_T_NOTES:
       if (stmt->notes) return xml_err_elem_redefined(p1);
       stmt->notes = p1;
+      break;
+    case PROB_T_REVIEW_NOTES:
+      if (stmt->review_notes) return xml_err_elem_redefined(p1);
+      stmt->review_notes = p1;
       break;
     default:
      return xml_err_elem_not_allowed(p1);
@@ -623,6 +628,7 @@ problem_xml_unparse_elem(
   case PROB_T_INPUT_FORMAT:  t = stmt->input_format;  break; 
   case PROB_T_OUTPUT_FORMAT: t = stmt->output_format; break;
   case PROB_T_NOTES:         t = stmt->notes;         break;
+  case PROB_T_REVIEW_NOTES:  t = stmt->review_notes;  break;
   default:
     return stmt;
   }

@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __PROBLEM_XML_H__
 #define __PROBLEM_XML_H__
 
-/* Copyright (C) 2007-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2015 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,6 +44,7 @@ enum
   PROB_T_TRANSLATION,
   PROB_T_TR,
   PROB_T_NOTES,
+  PROB_T_REVIEW_NOTES,
 
   PROB_T__BARRIER,
   PROB_T__DEFAULT,
@@ -87,6 +87,7 @@ struct problem_stmt
   struct xml_tree *input_format;
   struct xml_tree *output_format;
   struct xml_tree *notes;
+  struct xml_tree *review_notes;
 };
 
 struct problem_time_limit
