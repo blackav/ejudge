@@ -34,6 +34,35 @@ getl(char *buf, size_t size, FILE *f)
     return len;
 }
 
+#define MQUEUE_MOUNT_DIR "/dev/mqueue"
+
+static int
+scan_posix_mqueue(int search_uid, int *p_count, FILE *rep_f)
+{
+    int retval = 0;
+    DIR *d = NULL;
+    struct dirent *dd;
+
+    if (!(d = opendir(MQUEUE_MOUNT_DIR))) {
+        fprintf(stderr, "failed to open /dev/mqueue\n");
+        return 0;
+    }
+    while ((dd = readdir(d))) {
+        char buf[PATH_MAX];
+        snprintf(buf, sizeof(buf), "%s/%s", MQUEUE_MOUNT_DIR, dd->d_name);
+        // FIXME: correctly handle possible races?
+        struct stat stb;
+        if (lstat(buf, &stb) < 0) continue;
+        if (!S_ISREG(stb.st_mode)) continue;
+        if (stb.st_uid != search_uid) continue;
+        fprintf(rep_f, "POSIX message queue: name = /%s, perms = %03o\n", dd->d_name, (stb.st_mode & 0777));
+        unlink(buf); // is that correct?
+    }
+    closedir(d); d = NULL;
+
+    return retval;
+}
+
 static int
 scan_msg(int search_uid, int *p_count, FILE *rep_f)
 {
@@ -154,7 +183,10 @@ main(int argc, char **argv)
     size_t rep_z = 0;
     FILE *rep_f = open_memstream(&rep_s, &rep_z);
     int count = 0;
-    int retval = scan_msg(pwd->pw_uid, &count, rep_f) | scan_sem(pwd->pw_uid, &count, rep_f) | scan_shm(pwd->pw_uid, &count, rep_f);
+    int retval = scan_msg(pwd->pw_uid, &count, rep_f)
+        | scan_sem(pwd->pw_uid, &count, rep_f)
+        | scan_shm(pwd->pw_uid, &count, rep_f)
+        | scan_posix_mqueue(pwd->pw_uid, &count, rep_f);
     fclose(rep_f); rep_f = NULL;
     if (count > 0) {
         printf("System V IPC scan found the following objects:\n");
