@@ -2774,6 +2774,7 @@ ns_download_runs(
     if (info.status > RUN_LAST) continue;
     if (info.status > RUN_MAX_STATUS && info.status < RUN_TRANSIENT_FIRST)
       continue;
+    if (info.is_hidden) continue;
 
     if (!(login_ptr = teamdb_get_login(cs->teamdb_state, info.user_id))) {
       snprintf(login_buf, sizeof(login_buf), "!user_%d", info.user_id);
