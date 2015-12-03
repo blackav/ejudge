@@ -2913,6 +2913,9 @@ ns_download_runs(
     if ((file_name_mask & NS_FILE_PATTERN_SUFFIX)) {
       ptr += sprintf(ptr, "%s", suff_ptr);
     }
+    for (ptr = file_name_str; *ptr; ++ptr) {
+      if (*ptr <= ' ') *ptr = '_';
+    }
     snprintf(dstpath, sizeof(dstpath), "%s/%s", dir5, file_name_str);
 
     srcflags = serve_make_source_read_path(cs, srcpath, sizeof(srcpath), &info);
