@@ -752,6 +752,7 @@ ns_download_runs(
         int run_selection,
         int dir_struct,
         int file_name_mask,
+        int use_problem_extid,
         size_t run_mask_size,
         unsigned long *run_mask);
 

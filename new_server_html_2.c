@@ -2686,6 +2686,7 @@ ns_download_runs(
         int run_selection,
         int dir_struct,
         int file_name_mask,
+        int use_problem_extid,
         size_t run_mask_size,
         unsigned long *run_mask)
 {
@@ -2789,7 +2790,11 @@ ns_download_runs(
     }
     if (info.prob_id > 0 && info.prob_id <= cs->max_prob
         && cs->probs[info.prob_id]) {
-      prob_ptr = cs->probs[info.prob_id]->short_name;
+      if (use_problem_extid && cs->probs[info.prob_id]->extid && cs->probs[info.prob_id]->extid[0]) {
+        prob_ptr = cs->probs[info.prob_id]->extid;
+      } else {
+        prob_ptr = cs->probs[info.prob_id]->short_name;
+      }
     } else {
       snprintf(prob_buf, sizeof(prob_buf), "!prob_%d", info.prob_id);
       prob_ptr = prob_buf;
