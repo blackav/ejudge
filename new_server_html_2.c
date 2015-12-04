@@ -2772,6 +2772,7 @@ ns_download_runs(
       goto cleanup;
     }
     if (run_selection == NS_RUNSEL_OK && info.status != RUN_OK) continue;
+    if (run_selection == NS_RUNSEL_OKPR && info.status != RUN_OK && info.status != RUN_PENDING_REVIEW) continue;
     if (info.status > RUN_LAST) continue;
     if (info.status > RUN_MAX_STATUS && info.status < RUN_TRANSIENT_FIRST)
       continue;

@@ -39,6 +39,7 @@
 <tr><td><input type="radio" name="run_selection" value="0" checked="yes"/></td><td><s:_>Download all runs</s:_></td></tr>
 <tr><td><input type="radio" name="run_selection" value="1"/></td><td><s:_>Download selected runs</s:_> (<s:v value="mask_count" />)</td></tr>
 <tr><td><input type="radio" name="run_selection" value="2"/></td><td><s:_>Download OK runs</s:_></td></tr>
+<tr><td><input type="radio" name="run_selection" value="3"/></td><td><s:_>Download OK and PR runs</s:_></td></tr>
 </table>
 
 <h2><s:_>File name pattern</s:_></h2>

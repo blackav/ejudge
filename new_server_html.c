@@ -5512,7 +5512,7 @@ priv_download_runs(
     FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
   errno = 0;
   x = strtol(s, &ss, 10);
-  if (errno || *ss || x < 0 || x > 2) FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
+  if (errno || *ss || x < 0 || x > 3) FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
   run_selection = x;
 
   if (hr_cgi_param(phr, "dir_struct", &s) <= 0)
