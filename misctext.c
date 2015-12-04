@@ -1094,10 +1094,21 @@ utf8_fix_string(unsigned char *str, int *gl_ind)
               gl_ind[j++] = i++;
             }
           } else {
-            s += 3;
-            if (gl_ind) {
-              gl_ind[j++] = i;
-              i += 3;
+            if (w == 0xffff || w == 0xfffe) {
+              *s++ = '?';
+              *s++ = '?';
+              *s++ = '?';
+              if (gl_ind) {
+                gl_ind[j++] = i++;
+                gl_ind[j++] = i++;
+                gl_ind[j++] = i++;
+              }
+            } else {
+              s += 3;
+              if (gl_ind) {
+                gl_ind[j++] = i;
+                i += 3;
+              }
             }
           }
         } else {
