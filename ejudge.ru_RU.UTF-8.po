@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-04 03:07+0300\n"
-"PO-Revision-Date: 2015-12-04 03:08+0300\n"
+"POT-Creation-Date: 2015-12-04 14:25+0300\n"
+"PO-Revision-Date: 2015-12-04 14:26+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -1257,6 +1257,9 @@ msgstr "Загрузить только посылки в статусе OK и P
 
 msgid "Download OK runs"
 msgstr "Загрузить только успешные посылки"
+
+msgid "Download OK, PR, RJ, IG, PD, DQ runs"
+msgstr "Загрузить только посылки в статусах OK, PR, RJ, IG, PD, DQ"
 
 msgid "Download all runs"
 msgstr "Загрузить все посылки"

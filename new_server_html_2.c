@@ -2773,6 +2773,11 @@ ns_download_runs(
     }
     if (run_selection == NS_RUNSEL_OK && info.status != RUN_OK) continue;
     if (run_selection == NS_RUNSEL_OKPR && info.status != RUN_OK && info.status != RUN_PENDING_REVIEW) continue;
+    if (run_selection == NS_RUNSEL_OKPRRJ
+        && info.status != RUN_OK && info.status != RUN_PENDING_REVIEW
+        && info.status != RUN_IGNORED && info.status != RUN_REJECTED
+        && info.status != RUN_PENDING && info.status != RUN_DISQUALIFIED)
+      continue;
     if (info.status > RUN_LAST) continue;
     if (info.status > RUN_MAX_STATUS && info.status < RUN_TRANSIENT_FIRST)
       continue;

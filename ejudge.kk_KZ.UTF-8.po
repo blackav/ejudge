@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-12-04 03:07+0300\n"
+"POT-Creation-Date: 2015-12-04 14:25+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -1186,6 +1186,9 @@ msgid "Download OK and PR runs"
 msgstr ""
 
 msgid "Download OK runs"
+msgstr ""
+
+msgid "Download OK, PR, RJ, IG, PD, DQ runs"
 msgstr ""
 
 msgid "Download all runs"
