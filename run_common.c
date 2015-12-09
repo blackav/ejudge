@@ -2015,6 +2015,20 @@ static unsigned char *testinfo_subst_handler_substitute(struct testinfo_subst_ha
   return s;
 }
 
+static unsigned char *
+remap_command(const unsigned char *cmd, const struct remap_spec *specs)
+{
+  if (!specs) return xstrdup(cmd);
+  for (const struct remap_spec *spec = specs; spec->src_dir; ++spec) {
+    if (!strncmp(cmd, spec->src_dir, spec->src_len)) {
+      unsigned char *out = malloc(spec->dst_len + strlen(cmd + spec->src_len) + 1);
+      sprintf(out, "%s%s", spec->dst_dir, cmd + spec->src_len);
+      return out;
+    }
+  }
+  return xstrdup(cmd);
+}
+
 static int
 run_one_test(
         const struct ejudge_cfg *config,
@@ -2038,7 +2052,8 @@ run_one_test(
         int *p_has_max_memory_used,
         long *p_report_time_limit_ms,
         long *p_report_real_time_limit_ms,
-        const unsigned char *mirror_dir)
+        const unsigned char *mirror_dir,
+        const struct remap_spec *remaps)
 {
   const struct section_global_data *global = state->global;
 
@@ -2379,9 +2394,16 @@ run_one_test(
     task_AddArg(tsk, start_cmd_arg);
   }
   if (tst && tst->start_cmd && tst->start_cmd[0]) {
-    fprintf(start_msg_f, " %s", tst->start_cmd);
+    if (remaps) {
+      unsigned char *new_cmd = remap_command(tst->start_cmd, remaps);
+      fprintf(start_msg_f, " %s", new_cmd);
+      task_AddArg(tsk, new_cmd);
+      free(new_cmd);
+    } else {
+      fprintf(start_msg_f, " %s", tst->start_cmd);
+      task_AddArg(tsk, tst->start_cmd);
+    }
     start_msg_need_env = 1;
-    task_AddArg(tsk, tst->start_cmd);
   }
   fprintf(start_msg_f, " %s", arg0_path);
   fclose(start_msg_f); start_msg_f = NULL;
@@ -3697,7 +3719,7 @@ run_tests(
                             expected_free_space,
                             &has_real_time, &has_max_memory_used,
                             &report_time_limit_ms, &report_real_time_limit_ms,
-                            mirror_dir);
+                            mirror_dir, remaps);
       if (status != RUN_TIME_LIMIT_ERR && status != RUN_WALL_TIME_LIMIT_ERR)
         break;
       if (++tl_retry >= tl_retry_count) break;

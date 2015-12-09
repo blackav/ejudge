@@ -78,6 +78,8 @@ struct remap_spec
 {
   unsigned char *src_dir; // must begin and end with /, NULL terminate the list
   unsigned char *dst_dir;
+  int src_len;
+  int dst_len;
 };
 
 void

@@ -879,8 +879,11 @@ parse_remap_spec(const unsigned char *arg)
     if (!(remap_spec_a *= 2)) remap_spec_a = 8;
     remap_specs = xrealloc(remap_specs, remap_spec_a * sizeof(remap_specs[0]));
   }
-  remap_specs[remap_spec_u].src_dir = src_dir;
-  remap_specs[remap_spec_u].dst_dir = dst_dir;
+  struct remap_spec *rs = &remap_specs[remap_spec_u++];
+  rs->src_dir = src_dir;
+  rs->dst_dir = dst_dir;
+  rs->src_len = len1;
+  rs->dst_len = len2;
   ++remap_spec_u;
   memset(&remap_specs[remap_spec_u], 0, sizeof(remap_specs[0]));
 }
