@@ -3430,7 +3430,8 @@ run_tests(
         const unsigned char *mirror_dir,
         int utf8_mode,
         struct run_listener *listener,
-        const unsigned char *hostname)
+        const unsigned char *hostname,
+        const struct remap_spec *remaps)
 {
   const struct section_global_data *global = state->global;
   const struct super_run_in_global_packet *srgp = srp->global;

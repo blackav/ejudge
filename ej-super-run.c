@@ -97,6 +97,10 @@ static unsigned char master_down_enabled = 0;
 static unsigned char pending_stop_flag = 0;
 static unsigned char pending_down_flag = 0;
 
+static int remap_spec_a = 0;
+static int remap_spec_u = 0;
+static struct remap_spec *remap_specs = 0;
+
 static void
 fatal(const char *format, ...)
   __attribute__((noreturn, format(printf, 1, 2)));
@@ -385,7 +389,8 @@ handle_packet(
               report_path, full_report_path,
               srgp->user_spelling,
               srpp->spelling, mirror_dir, utf8_mode,
-              &run_listener.b, super_run_name);
+              &run_listener.b, super_run_name,
+              remap_specs);
     //if (cr_serialize_unlock(state) < 0) return -1;
   }
 
@@ -621,6 +626,7 @@ write_help(void)
          "    -p DIR       specify alternate name for super-run directory\n"
          "    -a           write log file to an alternate location\n"
          "    -m DIR       specify a directory for file mirroring\n"
+         "    -e DIR1=DIR2 remap directory DIR1 to directory DIR2\n"
          "    -ht TIMEOUT  machine halt timeout (in minutes)\n"
          "    -hc CMD      machine halt command\n"
          "    -hb          enable heartbeat mode (default)\n"
@@ -852,6 +858,31 @@ parse_ignored_problem(
   while (isspace(*c)) ++c;
   if (*c) return -1;
   return 0;
+}
+
+static void
+parse_remap_spec(const unsigned char *arg)
+{
+  const unsigned char *sep = strchr(arg, '=');
+  if (!sep) fatal("'=' expected in remap specification");
+  unsigned char *src_dir = xmemdup(arg, (sep - arg));
+  unsigned char *dst_dir = xstrdup(sep + 1);
+  int len1 = strlen(src_dir);
+  int len2 = strlen(dst_dir);
+  if (len1 <= 0) fatal("remap source dir cannot be empty");
+  if (len2 <= 0) fatal("remap dest dir cannot be empty");
+  if (!strcmp(src_dir, "/")) fatal("remap source dir cannot be '/'");
+  if (!strcmp(dst_dir, "/")) fatal("remap dest dir cannot be '/'");
+  if (src_dir[0] != '/' || src_dir[len1 - 1] != '/') fatal("remap source dir must begin and end with '/'");
+  if (dst_dir[0] != '/' || dst_dir[len2 - 1] != '/') fatal("remap dest dir must begin and end with '/'");
+  if (remap_spec_u + 1 >= remap_spec_a) {
+    if (!(remap_spec_a *= 2)) remap_spec_a = 8;
+    remap_specs = xrealloc(remap_specs, remap_spec_a * sizeof(remap_specs[0]));
+  }
+  remap_specs[remap_spec_u].src_dir = src_dir;
+  remap_specs[remap_spec_u].dst_dir = dst_dir;
+  ++remap_spec_u;
+  memset(&remap_specs[remap_spec_u], 0, sizeof(remap_specs[0]));
 }
 
 static void
@@ -1217,6 +1248,12 @@ main(int argc, char *argv[])
       if (cur_arg + 1 >= argc) fatal("argument expected for -hi");
       xfree(super_run_id); super_run_id = NULL;
       super_run_id = xstrdup(argv[cur_arg + 1]);
+      argv_restart[argc_restart++] = argv[cur_arg];
+      argv_restart[argc_restart++] = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-e")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for -e");
+      parse_remap_spec(argv[cur_arg + 1]);
       argv_restart[argc_restart++] = argv[cur_arg];
       argv_restart[argc_restart++] = argv[cur_arg + 1];
       cur_arg += 2;

@@ -74,6 +74,12 @@ struct run_listener
   const struct run_listener_ops *ops;
 };
 
+struct remap_spec
+{
+  unsigned char *src_dir; // must begin and end with /, NULL terminate the list
+  unsigned char *dst_dir;
+};
+
 void
 run_inverse_testing(
         struct serve_state *state,
@@ -109,7 +115,8 @@ run_tests(
         const unsigned char *mirror_dir,
         int utf8_mode,
         struct run_listener *listener,
-        const unsigned char *hostname);
+        const unsigned char *hostname,
+        const struct remap_spec *remaps);
 
 #endif /* __RUN_H__ */
 

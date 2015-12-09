@@ -348,7 +348,7 @@ do_loop(void)
                 exe_name, run_base,
                 report_path, full_report_path,
                 srgp->user_spelling,
-                srpp->spelling, NULL /* mirror_dir */, utf8_mode, NULL, NULL);
+                srpp->spelling, NULL /* mirror_dir */, utf8_mode, NULL, NULL, NULL /* remaps */);
       //if (cr_serialize_unlock(&serve_state) < 0) return -1;
 
       if (tst == &tn) {
