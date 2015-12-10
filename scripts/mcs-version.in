@@ -1,6 +1,5 @@
 #!/bin/sh
-# $Id$
-# Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2005-2015 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
@@ -42,7 +41,7 @@ if [ x"$1" = x-r ]
 then
   arg="$2"
   [ x"$2" != x ] && MCSRUN="$2"
-  [ "${MCSRUN}" = "" ] && MCSRUN="gmcs"
+  [ "${MCSRUN}" = "" ] && MCSRUN="mcs"
 
   [ "${verbose}" = 1 ] && echo -n "checking whether Mono C# is available..." >&2
   MCSDIR=`dirname "${MCSRUN}"` || failure
@@ -99,7 +98,7 @@ if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
   . "${EJUDGE_LANG_CONFIG}"
 else
-  MCSRUN="gmcs"
+  MCSRUN="mcs"
   MCSDIR=""
 fi
 
