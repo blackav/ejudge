@@ -19,9 +19,9 @@
     ejintbool_t test_checker_cmd_dflt = 0;
     char **test_checker_env = NULL;
     unsigned char *solution_src = NULL;
-    ejintbool_t solution_src_dflt = NULL;
+    ejintbool_t solution_src_dflt = 0;
     unsigned char *solution_cmd = NULL;
-    ejintbool_t solution_cmd_dflt = NULL;
+    ejintbool_t solution_cmd_dflt = 0;
 
     int i;
     struct section_problem_data *prob = NULL;

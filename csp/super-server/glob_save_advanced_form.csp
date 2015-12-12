@@ -38,7 +38,7 @@
     unsigned char *rundb_plugin = NULL;
     unsigned char *xuser_plugin = NULL;
 
-    time_t appeal_deadline = NULL;
+    time_t appeal_deadline = 0;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
