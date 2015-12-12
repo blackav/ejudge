@@ -371,7 +371,7 @@ check_file_name(
 static int
 get_tar_listing(const unsigned char *path, struct archive_file *arch)
 {
-  char *cmds[5];
+  char *cmds[6];
   int r, n;
   unsigned char *out = 0, *err = 0;
   int len, len1, len2;
