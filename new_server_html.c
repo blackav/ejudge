@@ -10315,7 +10315,7 @@ unpriv_get_file(
   int retval = 0, prob_id, n, variant = 0, mime_type = 0;
   const unsigned char *s = 0;
   time_t user_deadline = 0, start_time, stop_time;
-  path_t fpath, sfx;
+  path_t fname, fpath, sfx;
   char *file_bytes = 0;
   size_t file_size = 0;
   const unsigned char *content_type = 0;
@@ -10374,19 +10374,18 @@ unpriv_get_file(
       && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
       FAIL(NEW_SRV_ERR_VARIANT_UNASSIGNED);
 
-  if (hr_cgi_param(phr, "file", &s) <= 0 || strchr(s, '/'))
-    FAIL(NEW_SRV_ERR_INV_FILE_NAME);
+  if (hr_cgi_param(phr, "file", &s) <= 0 || strchr(s, '/')) FAIL(NEW_SRV_ERR_INV_FILE_NAME);
+  if (strstr(s, "..")) FAIL(NEW_SRV_ERR_INV_FILE_NAME);
+  snprintf(fname, sizeof(fname), "attachments/%s", s);
 
   os_rGetSuffix(s, sfx, sizeof(sfx));
   if (global->advanced_layout) {
-    get_advanced_layout_path(fpath, sizeof(fpath), global, prob, s, variant);
+    get_advanced_layout_path(fpath, sizeof(fpath), global, prob, fname, variant);
   } else {
     if (variant > 0) {
-      snprintf(fpath, sizeof(fpath), "%s/%s-%d/%s",
-               global->statement_dir, prob->short_name, variant, s);
+      snprintf(fpath, sizeof(fpath), "%s/%s-%d/%s", global->statement_dir, prob->short_name, variant, fname);
     } else {
-      snprintf(fpath, sizeof(fpath), "%s/%s/%s",
-               global->statement_dir, prob->short_name, s);
+      snprintf(fpath, sizeof(fpath), "%s/%s/%s", global->statement_dir, prob->short_name, fname);
     }
   }
   mime_type = mime_type_parse_suffix(sfx);
