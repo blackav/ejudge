@@ -15,8 +15,8 @@
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_process_count" "limits" "Maximum process count" "300" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "umask" "limits" "Umask value" "300" %>
         <%@expand MENU_YESNO3 "enable_process_group" "limits" "Use separate process group" "300" %>
-        <%@expand MENU_YESNO3 "disable_security" "limits" "Enable SUID helper" "300" %>
-        <%@expand MENU_YESNO3 "enable_suid_run" "limits" "Disable security restrictions" "300" %>
+        <%@expand MENU_YESNO3 "disable_security" "limits" "Disable security restrictions" "300" %>
+        <%@expand MENU_YESNO3 "enable_suid_run" "limits" "Enable SUID helper" "300" %>
         <%@expand MENU_TEXTFIELD "lang_time_adj" "limits" "Language-specific time-limit adjustment (s)" "300" %>
         <%@expand MENU_TEXTFIELD "lang_time_adj_millis" "limits" "Language-specific time-limit adjustment (ms)" "300" %>
         <%@expand MENU_TEXTFIELD "lang_max_vm_size" "limits" "Language-specific memory limit" "300" %>
