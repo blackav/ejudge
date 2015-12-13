@@ -4299,15 +4299,18 @@ ns_write_olympiads_user_runs(
       case RUN_SYNC_ERR:
         if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
+          score = re.score;
+          if (score < 0) score = 0;
+          score_view_display(score_buf, sizeof(score_buf), prob, score);
         } else {
           if (re.passed_mode > 0) {
             snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
           } else {
             snprintf(tests_buf, sizeof(tests_buf), "%d", re.test);
           }
+          snprintf(score_buf, sizeof(score_buf), "&nbsp;");
         }
         report_allowed = 1;
-        snprintf(score_buf, sizeof(score_buf), "&nbsp;");
         break;
 
       default:
@@ -5046,8 +5049,6 @@ ns_get_user_problems_summary(
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
       case RUN_WALL_TIME_LIMIT_ERR:
-      case RUN_PRESENTATION_ERR:
-      case RUN_WRONG_ANSWER_ERR:
       case RUN_CHECK_FAILED:
       case RUN_MEM_LIMIT_ERR:
       case RUN_SECURITY_ERR:
@@ -5057,6 +5058,8 @@ ns_get_user_problems_summary(
         break;
 
       case RUN_PARTIAL:
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
         pinfo[re.prob_id].solved_flag = 0;
         pinfo[re.prob_id].best_run = run_id;
         pinfo[re.prob_id].attempts++;

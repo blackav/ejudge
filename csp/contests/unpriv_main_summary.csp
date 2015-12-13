@@ -239,6 +239,8 @@
               switch (status) {
               case RUN_OK:
               case RUN_PARTIAL:
+              case RUN_WRONG_ANSWER_ERR:
+              case RUN_PRESENTATION_ERR:
                 if (prob->type != PROB_TYPE_STANDARD) {
                   if (global->disable_passed_tests <= 0) {
 %>
