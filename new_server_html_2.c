@@ -120,7 +120,7 @@ ns_write_priv_all_runs(
   unsigned char *fe_html;
   int fe_html_len;
   unsigned char first_run_str[32] = { 0 }, last_run_str[32] = { 0 };
-  unsigned char hbuf[128];
+  unsigned char hbuf[512];
   const unsigned char *imported_str;
   const unsigned char *examinable_str;
   const unsigned char *marked_str;
@@ -5709,7 +5709,7 @@ new_write_user_runs(
   unsigned char stat_str[128];
   unsigned char *prob_str;
   unsigned char *lang_str;
-  unsigned char href[128];
+  unsigned char href[512];
   struct run_entry re;
   const unsigned char *run_kind_str = 0;
   struct section_problem_data *cur_prob;
@@ -6028,7 +6028,7 @@ new_write_user_clars(
   const unsigned char *psubj = 0;
   char *asubj = 0; /* html armored subj */
   int   asubj_len = 0; /* html armored subj len */
-  unsigned char href[128];
+  unsigned char href[512];
   unsigned char *cl = "";
   struct clar_entry_v2 clar;
   const unsigned char *clar_flags = 0;
