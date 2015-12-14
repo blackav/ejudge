@@ -5049,6 +5049,8 @@ ns_get_user_problems_summary(
         pinfo[re.prob_id].best_score = cur_score;
         break;
 
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
       case RUN_COMPILE_ERR:
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
