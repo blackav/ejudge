@@ -5033,6 +5033,10 @@ ns_get_user_problems_summary(
     } else if (global->score_system == SCORE_OLYMPIAD) {
       // OLYMPIAD contest in judging mode
       //if (solved_flag[re.prob_id]) continue;
+      if (cur_prob->type != PROB_TYPE_STANDARD) {
+        if (status == RUN_PRESENTATION_ERR || status == RUN_WRONG_ANSWER_ERR)
+          status = RUN_PARTIAL;
+      }
 
       switch (status) {
       case RUN_OK:
@@ -5058,8 +5062,6 @@ ns_get_user_problems_summary(
         break;
 
       case RUN_PARTIAL:
-      case RUN_PRESENTATION_ERR:
-      case RUN_WRONG_ANSWER_ERR:
         pinfo[re.prob_id].solved_flag = 0;
         pinfo[re.prob_id].best_run = run_id;
         pinfo[re.prob_id].attempts++;
