@@ -42,6 +42,7 @@ enum
   META_DATES_PROBLEM_DATA_group_start_date,
   META_DATES_PROBLEM_DATA_group_deadline,
   META_DATES_PROBLEM_DATA_personal_deadline,
+  META_DATES_PROBLEM_DATA_extid,
 
   META_DATES_PROBLEM_DATA_LAST_FIELD,
 };

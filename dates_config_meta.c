@@ -82,6 +82,7 @@ static struct meta_info_item meta_info_dates_problem_data_data[] =
   [META_DATES_PROBLEM_DATA_group_start_date] = { META_DATES_PROBLEM_DATA_group_start_date, 'x', XSIZE(struct dates_problem_data, group_start_date), "group_start_date", XOFFSET(struct dates_problem_data, group_start_date) },
   [META_DATES_PROBLEM_DATA_group_deadline] = { META_DATES_PROBLEM_DATA_group_deadline, 'x', XSIZE(struct dates_problem_data, group_deadline), "group_deadline", XOFFSET(struct dates_problem_data, group_deadline) },
   [META_DATES_PROBLEM_DATA_personal_deadline] = { META_DATES_PROBLEM_DATA_personal_deadline, 'x', XSIZE(struct dates_problem_data, personal_deadline), "personal_deadline", XOFFSET(struct dates_problem_data, personal_deadline) },
+  [META_DATES_PROBLEM_DATA_extid] = { META_DATES_PROBLEM_DATA_extid, 's', XSIZE(struct dates_problem_data, extid), "extid", XOFFSET(struct dates_problem_data, extid) },
 };
 
 int meta_dates_problem_data_get_type(int tag)

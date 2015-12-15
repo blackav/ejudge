@@ -16,6 +16,7 @@
 
 #include "ejudge/prepare.h"
 #include "ejudge/dates_config.h"
+#include "ejudge/xalloc.h"
 
 #include <string.h>
 
@@ -32,6 +33,12 @@ prepare_copy_dates(struct section_problem_data *prob, struct dates_config *dcfg)
             break;
         }
     }
+
+    if ((!prob->extid || !prob->extid[0]) && (dprob->extid && dprob->extid[0])) {
+        xfree(prob->extid);
+        prob->extid = xstrdup(dprob->extid);
+    }
+
     if (dprob && dprob->use_dates_of_ref) {
         dprob = dprob->use_dates_of_ref;
     }

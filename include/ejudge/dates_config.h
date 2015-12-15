@@ -56,6 +56,7 @@ struct dates_problem_data
     char **group_start_date;
     char **group_deadline;
     char **personal_deadline;
+    char *extid;
 
     struct dates_problem_data *use_dates_of_ref META_ATTRIB((meta_hidden));
     struct dates_problem_data *super_ref META_ATTRIB((meta_hidden));
