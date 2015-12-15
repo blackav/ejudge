@@ -34,7 +34,7 @@ prepare_copy_dates(struct section_problem_data *prob, struct dates_config *dcfg)
         }
     }
 
-    if ((!prob->extid || !prob->extid[0]) && (dprob->extid && dprob->extid[0])) {
+    if ((!prob->extid || !prob->extid[0]) && (dprob && dprob->extid && dprob->extid[0])) {
         xfree(prob->extid);
         prob->extid = xstrdup(dprob->extid);
     }
