@@ -1494,7 +1494,12 @@ do_write_kirov_standings(
 
       /////
       if (prob->score_latest_or_unmarked > 0) {
-        if (run_status == RUN_OK) {
+        if (run_status == RUN_OK || run_status == RUN_PENDING_REVIEW) {
+          if (run_status == RUN_PENDING_REVIEW) {
+            pr_flag[up_ind] = 1;
+            ++total_prs;
+          }
+
           score = calc_kirov_score(0, 0, start_time,
                                    separate_user_score, user_mode, token_flags,
                                    pe, prob, att_num[up_ind],
@@ -1574,9 +1579,13 @@ do_write_kirov_standings(
           /* something strange... */
         }
       } else {
-        if (run_status == RUN_OK) {
-          if (!marked_flag[up_ind] || prob->ignore_unmarked <= 0
-              || pe->is_marked) {
+        if (run_status == RUN_OK || run_status == RUN_PENDING_REVIEW) {
+          if (run_status == RUN_PENDING_REVIEW) {
+            pr_flag[up_ind] = 1;
+            ++total_prs;
+          }
+
+          if (!marked_flag[up_ind] || prob->ignore_unmarked <= 0 || pe->is_marked) {
             marked_flag[up_ind] = pe->is_marked;
             if (!full_sol[up_ind]) sol_att[up_ind]++;
             score = calc_kirov_score(0, 0, start_time,
@@ -1681,9 +1690,6 @@ do_write_kirov_standings(
           if (!full_sol[up_ind]) sol_att[up_ind]++;
           disq_num[up_ind]++;
           ++total_disqualified;
-        } else if (run_status == RUN_PENDING_REVIEW) {
-          pr_flag[up_ind] = 1;
-          ++total_prs;
         } else if (run_status == RUN_PENDING) {
           ++trans_num[up_ind];
           ++total_pending;
