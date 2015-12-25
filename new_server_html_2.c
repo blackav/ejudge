@@ -2883,7 +2883,7 @@ ns_download_runs(
       snprintf(dir5, sizeof(dir5), "%s", dir3);
     }
 
-    file_name_exp_len = 64 + strlen(login_ptr) + strlen(name_ptr)
+    file_name_exp_len = 128 + strlen(login_ptr) + strlen(name_ptr)
       + strlen(prob_ptr) + strlen(lang_ptr) + strlen(suff_ptr);
     if (file_name_exp_len > file_name_size) {
       while (file_name_exp_len > file_name_size) file_name_size *= 2;
@@ -2919,6 +2919,12 @@ ns_download_runs(
     }
     if ((file_name_mask & NS_FILE_PATTERN_LANG)) {
       ptr += sprintf(ptr, "%s%s", sep, lang_ptr);
+      sep = "-";
+    }
+    if ((file_name_mask & NS_FILE_PATTERN_TIME)) {
+      time_t ttm = info.time;
+      struct tm *rtm = localtime(&ttm);
+      ptr += sprintf(ptr, "%s%04d%02d%02d%02d%02d%02d", sep, rtm->tm_year + 1900, rtm->tm_mon + 1, rtm->tm_mday, rtm->tm_hour, rtm->tm_min, rtm->tm_sec);
       sep = "-";
     }
     if ((file_name_mask & NS_FILE_PATTERN_SUFFIX)) {

@@ -5541,6 +5541,8 @@ priv_download_runs(
     file_name_mask |= NS_FILE_PATTERN_SUFFIX;
   if (hr_cgi_param(phr, "file_pattern_contest", &s) > 0)
     file_name_mask |= NS_FILE_PATTERN_CONTEST;
+  if (hr_cgi_param(phr, "file_pattern_time", &s) > 0)
+    file_name_mask |= NS_FILE_PATTERN_TIME;
   if (!file_name_mask) file_name_mask = NS_FILE_PATTERN_RUN;
 
   if (ns_parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0)

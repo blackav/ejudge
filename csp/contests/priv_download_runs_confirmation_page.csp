@@ -36,29 +36,30 @@
 <s:hidden name="run_mask" escape="false" value="mask_str" />
 <h2><s:_>Run selection</s:_></h2>
 <table>
-<tr><td><input type="radio" name="run_selection" value="0" checked="yes"/></td><td><s:_>Download all runs</s:_></td></tr>
+<tr><td><input type="radio" name="run_selection" value="0"/></td><td><s:_>Download all runs</s:_></td></tr>
 <tr><td><input type="radio" name="run_selection" value="1"/></td><td><s:_>Download selected runs</s:_> (<s:v value="mask_count" />)</td></tr>
 <tr><td><input type="radio" name="run_selection" value="2"/></td><td><s:_>Download OK runs</s:_></td></tr>
 <tr><td><input type="radio" name="run_selection" value="3"/></td><td><s:_>Download OK and PR runs</s:_></td></tr>
-<tr><td><input type="radio" name="run_selection" value="4"/></td><td><s:_>Download OK, PR, RJ, IG, PD, DQ runs</s:_></td></tr>
+<tr><td><input type="radio" name="run_selection" value="4" checked="checked"/></td><td><s:_>Download OK, PR, RJ, IG, PD, DQ runs</s:_></td></tr>
 </table>
 
 <h2><s:_>File name pattern</s:_></h2>
 <table>
-<tr><td><input type="checkbox" name="file_pattern_contest"/></td><td><s:_>Use Contest Id</s:_></td></tr>
-<tr><td><input type="checkbox" name="file_pattern_run" checked="yes"/></td><td><s:_>Use run number</s:_></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_contest" checked="checked"/></td><td><s:_>Use Contest Id</s:_></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_run" checked="checked"/></td><td><s:_>Use run number</s:_></td></tr>
 <tr><td><input type="checkbox" name="file_pattern_uid"/></td><td><s:_>Use user Id</s:_></td></tr>
 <tr><td><input type="checkbox" name="file_pattern_login"/></td><td><s:_>Use user Login</s:_></td></tr>
-<tr><td><input type="checkbox" name="file_pattern_name"/></td><td><s:_>Use user Name</s:_></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_name" checked="checked"/></td><td><s:_>Use user Name</s:_></td></tr>
 <tr><td><input type="checkbox" name="file_pattern_prob"/></td><td><s:_>Use problem short name</s:_></td></tr>
 <tr><td><input type="checkbox" name="file_pattern_lang"/></td><td><s:_>Use programming language short name</s:_></td></tr>
-<tr><td><input type="checkbox" name="file_pattern_suffix" checked="yes"/></td><td><s:_>Use source language or content type suffix</s:_></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_time" checked="checked"/></td><td><s:_>Use submit time</s:_></td></tr>
+<tr><td><input type="checkbox" name="file_pattern_suffix" checked="checked"/></td><td><s:_>Use source language or content type suffix</s:_></td></tr>
 </table>
 
 <h2><s:_>Directory structure</s:_></h2>
 <table>
-<tr><td><input type="radio" name="dir_struct" value="0" checked="yes"/></td><td><s:_>No directory structure</s:_></td></tr>
-<tr><td><input type="radio" name="dir_struct" value="1"/></td><td><s:_>/&lt;Problem&gt;/&lt;File&gt;</s:_></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="0"/></td><td><s:_>No directory structure</s:_></td></tr>
+<tr><td><input type="radio" name="dir_struct" value="1" checked="checked"/></td><td><s:_>/&lt;Problem&gt;/&lt;File&gt;</s:_></td></tr>
 <tr><td><input type="radio" name="dir_struct" value="2"/></td><td><s:_>/&lt;User_Id&gt;/&lt;File&gt;</s:_></td></tr>
 <tr><td><input type="radio" name="dir_struct" value="3"/></td><td><s:_>/&lt;User_Login&gt;/&lt;File&gt;</s:_></td></tr>
 <tr><td><input type="radio" name="dir_struct" value="8"/></td><td><s:_>/&lt;User_Name&gt;/&lt;File&gt;</s:_></td></tr>
@@ -69,7 +70,7 @@
 <tr><td><input type="radio" name="dir_struct" value="7"/></td><td><s:_>/&lt;User_Login&gt;/&lt;Problem&gt;/&lt;File&gt;</s:_></td></tr>
 <tr><td><input type="radio" name="dir_struct" value="10"/></td><td><s:_>/&lt;User_Name&gt;/&lt;Problem&gt;/&lt;File&gt;</s:_></td></tr>
 
-<tr><td><input type="checkbox" name="use_problem_extid" /></td><td><s:_>Use 'extid' as problem name</s:_></td></tr>
+<tr><td><input type="checkbox" name="use_problem_extid" checked="checked" /></td><td><s:_>Use 'extid' as problem name</s:_></td></tr>
 </table>
 
 <h2><s:_>Download runs</s:_></h2>
