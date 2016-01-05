@@ -9922,6 +9922,13 @@ ns_unparse_statement(
     fprintf(fout, "<h3>");
     problem_xml_unparse_node(fout, pp->title, vars, vals);
     fprintf(fout, "</h3>");
+  } else {
+    fprintf(fout, "<h3>");
+    fprintf(fout, "%s %s", _("Problem"), ARMOR(prob->short_name));
+    if (prob->long_name && prob->long_name[0]) {
+      fprintf(fout, ": %s", ARMOR(prob->long_name));
+    }
+    fprintf(fout, "</h3>");
   }
 
   if (pp->desc) {
