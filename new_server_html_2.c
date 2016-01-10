@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2636,6 +2636,7 @@ ns_set_stand_filter(
 
   if (!IS_EQUAL(stand_run_expr)) {
     if (!*stand_run_expr) {
+      xfree(u->stand_run_expr);
       u->stand_run_expr = 0;
       u->stand_run_tree = 0;
     } else {
