@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -772,6 +772,7 @@ get_raw_text_func(
   if (md->row_count <= 0) {
     *p_text = xstrdup("");
     *p_size = 0;
+    mi->free_res(md);
     return 0;
   }
   if (mi->next_row(md) < 0) goto fail;
@@ -1026,6 +1027,7 @@ fetch_run_messages_func(
     db_error_fail(md);
 
   if (md->row_count <= 0) {
+    state->mi->free_res(state->md);
     return 0;
   }
 
@@ -1058,6 +1060,7 @@ fail:
     }
     xfree(fce);
   }
+  state->mi->free_res(state->md);
   return -1;
 }
 
