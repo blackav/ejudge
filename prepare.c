@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -900,6 +900,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->token_info);
   xfree(p->dates_config_file);
   dates_config_free(p->dates_config);
+  xfree(p->checker_locale);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
