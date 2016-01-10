@@ -202,4 +202,5 @@ cleanup:;
   l10n_resetlocale();
   html_armor_free(&ab);
   xfree(rep_text);
+  xfree(run_text);
 %>
