@@ -248,7 +248,7 @@ close_func(
         // FIXME: close connection?
 
         for (int i = 0; i < state->u; ++i) {
-            xfree(state->v[i]);
+            team_extra_free(state->v[i]);
         }
         xfree(state->v);
         xfree(state);
