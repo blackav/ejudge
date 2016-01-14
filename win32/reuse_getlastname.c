@@ -1,7 +1,6 @@
 /* -*- mode:c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -34,9 +33,3 @@ os_GetLastname(char const *path)
   }
   return xstrdup(path + i);
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

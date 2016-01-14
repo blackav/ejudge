@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1999-2016 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1999-07-20 11:05:09 cher> */
 
 /*
@@ -1633,11 +1633,3 @@ envvar_put(envvar_table_t *t, const char *str)
     }
   }
 }
-
-/* === Do not add stuff after this line === */
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

@@ -1,6 +1,4 @@
-/* $Id$ */
-
-/* Copyright (C) 1999-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1999-2016 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1999-07-20 23:50:19 cher> */
 
 /*
@@ -361,11 +359,3 @@ swwarn(char *format, ...)
   _swwarn(swerr_file, swerr_line, format, args);
   va_end(args);
 }
-
-/* === Do not add stuff after this line === */
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

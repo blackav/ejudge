@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -998,10 +998,3 @@ write_tmp_file(
   abort();
   return -1;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "HANDLE" "STARTUPINFO" "PROCESS_INFORMATION" "SECURITY_ATTRIBUTES" "WIN32_FIND_DATA" "FILETIME" "DWORD")
- * End:
- */

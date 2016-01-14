@@ -1,7 +1,6 @@
 /* -*- mode:c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -29,9 +28,3 @@ os_Sleep(int millis)
 {
   Sleep(millis);
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

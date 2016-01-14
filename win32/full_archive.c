@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -222,9 +221,3 @@ full_archive_find_file(full_archive_t af,
 {
         SWERR(("not implemented"));
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */
