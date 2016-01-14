@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -132,9 +131,3 @@ new_server_clnt_control(new_server_conn_t conn, int cmd)
   xfree(void_in);
   return errcode;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

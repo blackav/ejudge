@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -305,9 +305,3 @@ new_server_clnt_http_request(
   if (data_fd[1] >= 0) close(data_fd[1]);
   return errcode;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

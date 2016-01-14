@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -77,9 +76,3 @@ new_server_clnt_send_packet(new_server_conn_t conn, size_t size, void const *buf
   err("new_server_clnt_send_packet: write() failed: %s", os_ErrorMsg());
   return -NEW_SRV_ERR_WRITE_ERROR;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

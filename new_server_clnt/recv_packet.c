@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -101,9 +100,3 @@ new_server_clnt_recv_packet(new_server_conn_t conn, size_t *p_size, void **p_dat
   if (bb) xfree(bb);
   return code;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

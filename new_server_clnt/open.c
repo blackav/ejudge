@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -84,9 +83,3 @@ new_server_clnt_open(const unsigned char *socketpath, new_server_conn_t *p_conn)
   if (fd >= 0) close(fd);
   return code;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */
