@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -95,9 +94,3 @@ userlist_clnt_get_uid_by_pid_2(
   xfree(in);
   return ULS_UID_2;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

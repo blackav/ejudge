@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -96,9 +95,3 @@ userlist_clnt_register_new_2(
   xfree(v_ans);
   return -ULS_ERR_PROTOCOL;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

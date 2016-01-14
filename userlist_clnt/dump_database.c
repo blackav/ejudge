@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -66,10 +65,3 @@ userlist_clnt_dump_database(struct userlist_clnt *clnt, int cmd,
   if (pp[1] > 0) close(pp[1]);
   return r;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

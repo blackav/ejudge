@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -66,9 +65,3 @@ cleanup:
   xfree(in_void);
   return r;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

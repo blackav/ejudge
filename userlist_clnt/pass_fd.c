@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,10 +29,3 @@ userlist_clnt_pass_fd(struct userlist_clnt *clnt, int nfd, int *fds)
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   return userlist_clnt_do_pass_fd(clnt, nfd, fds);
 }
-
-/**
- * Local variables:
- *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */
