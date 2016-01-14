@@ -2,7 +2,7 @@
 #ifndef __TESTINFO_H__
 #define __TESTINFO_H__
 
-/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -74,9 +74,3 @@ unsigned char *testinfo_unparse_environ(const struct testinfo_struct *ti);
 #endif /* __cplusplus */
 
 #endif /* __TESTINFO_H__ */
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

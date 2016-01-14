@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __TSC_H__
 #define __TSC_H__
 
-/* Copyright (C) 2003,2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,10 +44,3 @@ extern ej_tsc_t cpu_frequency;
 int tsc_init(void);
 
 #endif /* __TSC_H__ */
-
-/**
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE")
- * End:
- */

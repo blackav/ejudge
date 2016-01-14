@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __TEX_DOM_H__
 #define __TEX_DOM_H__
 
-/* Copyright (C) 2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -148,9 +147,3 @@ int (*(*tex_dom_get_render_func_ptr)(int))(tex_par_t,tex_buffer_t,int);
 
 
 #endif /* __TEX_DOM_H__ */
-
-/**
- * Local variables:
- *  compile-command: "make"
- * End:
- */

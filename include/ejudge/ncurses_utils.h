@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __NCURSES_UTILS_H__
 #define __NCURSES_UTILS_H__
 
-/* Copyright (C) 2004-2007 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -59,10 +58,3 @@ int ncurses_getch(int utf8_mode, int *p_code);
 int ncurses_getkey(int utf8_mode, int *p_code);
 
 #endif /* __NCURSES_UTILS_H__ */
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "WINDOW" "ITEM" "PANEL" "MENU")
- * End:
- */

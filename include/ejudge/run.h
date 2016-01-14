@@ -2,7 +2,7 @@
 #ifndef __RUN_H__
 #define __RUN_H__
 
-/* Copyright (C) 2010-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -121,9 +121,3 @@ run_tests(
         const struct remap_spec *remaps);
 
 #endif /* __RUN_H__ */
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

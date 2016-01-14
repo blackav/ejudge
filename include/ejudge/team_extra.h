@@ -3,7 +3,7 @@
 #ifndef __TEAM_EXTRA_H__
 #define __TEAM_EXTRA_H__
 
-/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -93,9 +93,3 @@ team_extra_open(
         int flags);
 
 #endif /* __TEAM_EXTRA_H__ */
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */
