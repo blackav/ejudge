@@ -1,7 +1,6 @@
 /* -*- mode:c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1910,10 +1909,3 @@ parser_parse(tree_t *presult)
   *presult = tree;
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */
-
