@@ -1,6 +1,4 @@
-/* $Id$ */
-
-/* Copyright (C) 1996-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1996-2016 Alexander Chernov <cher@ejudge.ru> */
 /* Created: Fri Nov  1 19:01:06 1996 by cher (Alexander Chernov) */
 
 /*
@@ -47,9 +45,3 @@ reuse_null_size(void)
   fputs("Null size allocation requested!\n", stderr);
   abort();
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

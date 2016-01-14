@@ -1,7 +1,6 @@
 /* -*- mode:c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -52,9 +51,3 @@ xstrdup2(const char *str)
   if (ptr == NULL) reuse_out_of_mem();
   return ptr;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

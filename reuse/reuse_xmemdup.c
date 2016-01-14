@@ -1,7 +1,6 @@
 /* -*- mode:c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -40,9 +39,3 @@ xmemdup(char const *str, size_t size)
   ptr[size] = 0;
   return ptr;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

@@ -1,6 +1,4 @@
-/* $Id$ */
-
-/* Copyright (C) 1995-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1995-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -190,9 +188,3 @@ void
 pgStatistics(FILE *f)
 {
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

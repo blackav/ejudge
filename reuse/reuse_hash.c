@@ -1,6 +1,4 @@
-/* $Id$ */
-
-/* Copyright (C) 1996-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1996-2016 Alexander Chernov <cher@ejudge.ru> */
 /* Created: Fri Nov  1 18:46:25 1996 by cher (Alexander Chernov) */
 
 /*
@@ -222,9 +220,3 @@ ident_get(ident_t id)
   assert(/*id >= 0 && */id < (ident_t) ident_state.total_idents);
   return ident_state.table[ident_state.map[id]].string;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

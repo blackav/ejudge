@@ -1,7 +1,6 @@
 /* -*- mode:c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -47,9 +46,3 @@ xexpand4(arr, elsize, newsize)
   memset((char*) arr->v + arr->a * elsize, 0, (newsz - arr->a) * elsize);
   arr->a = newsz;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */
