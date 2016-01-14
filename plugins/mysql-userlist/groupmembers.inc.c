@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,10 +31,3 @@ parse_groupmember(
 }
 
 #undef FAIL
-
-/*
- * Local variables:
- *  compile-command: "make -C ../.."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "MYSQL")
- * End:
- */

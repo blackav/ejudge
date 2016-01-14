@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -216,6 +216,5 @@ team_extra_bson_unparse(const struct team_extra *extra)
 /*
  * Local variables:
  *  c-basic-offset: 4
- *  compile-command: "make"
  * End:
  */

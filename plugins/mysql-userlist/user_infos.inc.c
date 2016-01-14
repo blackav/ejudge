@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -328,10 +327,3 @@ drop_user_info_cache(struct uldb_mysql_state *state)
     do_remove_user_info_from_pool(&state->user_infos, p);
   }
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C ../.."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "MYSQL")
- * End:
- */

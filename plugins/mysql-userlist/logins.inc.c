@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -215,10 +214,3 @@ drop_login_cache(struct uldb_mysql_state *state)
   for (i = 1; i < state->users.size; i++)
     do_remove_login_from_pool(&state->users, state->users.user_map[i]);
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C ../.."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "MYSQL")
- * End:
- */

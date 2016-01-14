@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -388,9 +387,3 @@ fetch_client_key(
   mi->free_res(md);
   return -1;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C ../.."
- * End:
- */

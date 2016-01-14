@@ -1066,6 +1066,5 @@ fail:
 
 /*
  * Local variables:
- *  compile-command: "make -C ../.."
  * End:
  */

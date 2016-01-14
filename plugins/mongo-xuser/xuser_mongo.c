@@ -793,6 +793,5 @@ done:
 /*
  * Local variables:
  *  c-basic-offset: 4
- *  compile-command: "make"
  * End:
  */

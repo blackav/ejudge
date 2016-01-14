@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -158,9 +157,3 @@ static void
 remove_member_from_pool_by_uid(
         struct uldb_mysql_state *state,
         int user_id);
-
-/*
- * Local variables:
- *  compile-command: "make -C ../.."
- * End:
- */

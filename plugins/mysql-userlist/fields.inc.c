@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -116,10 +115,3 @@ static struct field_description fields[USERLIST_NM_LAST] =
   [USERLIST_NM_ENTRY_DATE] = { "entry_date", USERLIST_NM_BIRTH_DATE },
   [USERLIST_NM_GRADUATION_DATE] = { "graduation_date", USERLIST_NM_BIRTH_DATE},
 };
-
-/*
- * Local variables:
- *  compile-command: "make -C ../.."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "MYSQL")
- * End:
- */

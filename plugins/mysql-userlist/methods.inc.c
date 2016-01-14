@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -516,9 +516,3 @@ get_client_key_func(
         void *data,
         ej_cookie_t client_key,
         const struct userlist_cookie **p_cookie);
-
-/*
- * Local variables:
- *  compile-command: "make -C ../.."
- * End:
- */

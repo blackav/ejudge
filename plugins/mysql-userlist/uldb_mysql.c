@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -5843,9 +5843,3 @@ get_client_key_func(
   if (p_cookie) *p_cookie = c;
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

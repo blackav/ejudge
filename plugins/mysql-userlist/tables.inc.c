@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -320,9 +319,3 @@ static struct common_mysql_parse_spec usergroupmember_spec[] =
   //[2] rights VARCHAR(512) DEFAULT NULL,
   { 1, 's', "rights", USERGROUPMEMBER_OFFSET(rights), 0 },
 };
-
-/*
- * Local variables:
- *  compile-command: "make -C ../.."
- * End:
- */
