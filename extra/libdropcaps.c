@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -75,9 +74,3 @@ init(void)
   }
 #endif
 }
-
-/*
- * Local variables:
- *  compile-command: "gcc -Wl,--rpath,/usr/local/pkg/libcap-1.10/lib -D_GNU_SOURCE -s -O2 -Wall -I/usr/local/pkg/libcap-1.10/include -L/usr/local/pkg/libcap-1.10/lib capexec.c -o capexec -lcap"
- * End:
- */

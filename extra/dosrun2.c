@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2001 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2001-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -159,9 +158,3 @@ int main(int argc, char *argv[])
   execl(dospath, dospath, "-I", "video { none }", NULL);
   msg_errno("execl(\"%s\",...) failed", dospath);
 }
-
-/**
- * Local variables:
- *  compile-command: "gcc -s -O2 -Wall dosrun2.c -o dosrun2"
- * End:
- */
