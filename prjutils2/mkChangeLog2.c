@@ -1,6 +1,4 @@
-/* $Id$ */
-
-/* Copyright (C) 2006 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  *  This program is free software; you can redistribute it and/or
@@ -544,9 +542,3 @@ main(int argc, char *argv[])
 
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

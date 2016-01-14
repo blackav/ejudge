@@ -1,6 +1,4 @@
-/* $Id$ */
-
-/* Copyright (C) 1996-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 1996-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -385,9 +383,3 @@ xstrmerge3(char const *str1, char *str2)
   xfree(str2);
   return res;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

@@ -1,9 +1,7 @@
-/* $Id$ */
-
 #ifndef __REUSE_XALLOC_H__
 #define __REUSE_XALLOC_H__
 
-/* Copyright (C) 1996-2004 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 1996-2016 Alexander Chernov <cher@ejudge.ru> */
 /* Created: Fri Nov  1 18:58:50 1996 by cher (Alexander Chernov) */
 
 /*
@@ -94,10 +92,3 @@ void  xstrarrayfree(strarray_t *);
 #endif /* __cplusplus */
 
 #endif /* __REUSE_XALLOC_H__ */
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "R_DLL")
- * End:
- */

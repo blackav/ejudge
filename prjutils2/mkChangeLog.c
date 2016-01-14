@@ -1,6 +1,4 @@
-/* $Id$ */
-
-/* Copyright (C) 1999-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 1999-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  *  This program is free software; you can redistribute it and/or
@@ -1122,9 +1120,3 @@ xstrarrayfree(strarray_t *a)
   a->u = a->a = 0;
   a->v = 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */
