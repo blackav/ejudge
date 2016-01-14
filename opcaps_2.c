@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -89,9 +88,3 @@ opcaps_unparse(int left_margin, int max_width, opcap_t cap)
   close_memstream(f);
   return out_str;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

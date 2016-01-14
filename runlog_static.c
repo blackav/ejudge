@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -484,9 +484,3 @@ run_status_short_str(int status)
   }
   return status_short_str[status];
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

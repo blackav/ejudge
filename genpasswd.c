@@ -1,5 +1,4 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -164,10 +163,3 @@ main(int argc, char *argv[])
 
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "gcc -Wall -O2 -s genpasswd.c -o genpasswd"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "XML_Parser" "XML_Char" "XML_Encoding" "va_list" "gzFile")
- * End:
- */

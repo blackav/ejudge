@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -612,9 +612,3 @@ testinfo_strerror(int err)
   }
   return error_codes[err];
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

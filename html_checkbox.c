@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2007-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,9 +38,3 @@ html_checkbox(
   snprintf(buf, size, "<input type=\"checkbox\" name=\"%s\"%s%s%s/>", var_name, valbuf, ch, dis);
   return buf;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -86,9 +85,3 @@ html_hyperref_attr(
 
   return buf;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

@@ -1,5 +1,3 @@
-/* $Id$ */
-
 extern "C" {
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
@@ -268,9 +266,10 @@ main(int argc, char *argv[])
     return 0;
 }
 
+// g++ -Wall -g -std=gnu++11 -rdynamic -L. fix-kumir.cpp -ofix-kumir -lcommon -luserlist_clnt -lplatform -lcommon -lexpat -lz -lzip -luuid -ldl
+
 /*
  * Local variables:
- *  compile-command: "g++ -Wall -g -std=gnu++11 -rdynamic -L. fix-kumir.cpp -ofix-kumir -lcommon -luserlist_clnt -lplatform -lcommon -lexpat -lz -lzip -luuid -ldl"
  *  c-basic-offset: 4
  * End:
  */

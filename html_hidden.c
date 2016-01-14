@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,9 +35,3 @@ html_hidden(FILE *fout, const unsigned char *var_name,
   fprintf(fout, "<input type=\"hidden\" name=\"%s\" value=\"%s\"/>",
           var_name, buf);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -303,9 +302,3 @@ l10n_normalize(const unsigned char *str)
   if (id < 0) return NULL;
   return l10n_unparse_locale(id);
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

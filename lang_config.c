@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -115,10 +114,3 @@ lang_config_configure(
   if (d) closedir(d);
   return retcode;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list" "fd_set" "DIR")
- * End:
- */

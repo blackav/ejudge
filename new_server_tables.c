@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -284,10 +284,3 @@ const int ns_priv_prev_state[NEW_SRV_ACTION_LAST] =
 const int ns_unpriv_prev_state[NEW_SRV_ACTION_LAST] =
 {
 };
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
- * End:
- */

@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -85,9 +84,3 @@ html_input_text_js(
            bsize, bname, bonchange, bformat);
   return buf;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

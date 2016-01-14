@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 #include "ejudge/config.h"
 
@@ -136,10 +135,3 @@ main(int argc, char *argv[])
 
   return 0;
 }
-
-/**
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "va_list")
- * End:
- */

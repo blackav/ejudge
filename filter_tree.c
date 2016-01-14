@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1611,9 +1611,3 @@ filter_tree_is_value_node(struct filter_tree *p)
   }
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "make"
- * End:
- */

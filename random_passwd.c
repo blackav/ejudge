@@ -1,5 +1,3 @@
-/* $Id$ */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -116,9 +114,3 @@ int main(int argc, char *argv[])
   printf("%s\n", obuf);
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "LANG= gcc -Wall -g random_passwd.c -o random_passwd"
- * End:
- */

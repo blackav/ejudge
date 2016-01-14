@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -363,6 +363,5 @@ int ej_bson_force_link_dummy = 0;
 /*
  * Local variables:
  *  c-basic-offset: 4
- *  compile-command: "make"
  * End:
  */
