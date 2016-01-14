@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
 #include "ejudge/ej_uuid.h"
