@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -112,9 +111,3 @@ super_clnt_recv_packet(
   xfree(alloc_mem);
   return code;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

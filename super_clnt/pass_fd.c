@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,9 +38,3 @@ super_clnt_pass_fd(int sock_fd, int nfd, int *fds)
   if ((r = super_clnt_send_packet(sock_fd, out_size, out)) < 0) return r;
   return super_clnt_do_pass_fd(sock_fd, nfd, fds);
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

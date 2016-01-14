@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -79,9 +78,3 @@ super_clnt_send_packet(int sock_fd, size_t size, const void *buf)
   err("super_clnt_send_packet: write() failed: %s", os_ErrorMsg());
   return -SSERV_ERR_WRITE_TO_SERVER;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */
