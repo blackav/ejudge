@@ -1,9 +1,7 @@
 #ifndef __CHECKER_INTERNAL_H__
 #define __CHECKER_INTERNAL_H__
 
-/* $Id$ */
-
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -390,10 +388,3 @@ void checker_l10n_prepare(void);
 #endif /* __cplusplus */
 
 #endif /* __CHECKER_INTERNAL_H__ */
-
-/*
- * Local variables:
- *  compile-command: "make"
- *  c-font-lock-extra-types: ("\\sw+_t" "FILE" "DIR")
- * End:
- */
