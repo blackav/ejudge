@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,9 +28,3 @@ xml_unparse_date(time_t d)
            ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
   return buf;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

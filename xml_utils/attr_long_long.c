@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -44,9 +44,3 @@ xml_attr_long_long(struct xml_attr *a, long long *pval)
   *pval = x;
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

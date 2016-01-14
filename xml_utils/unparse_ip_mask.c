@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -97,9 +96,3 @@ xml_unparse_ipv6_mask(const ej_ip_t *p_addr, const ej_ip_t *p_mask)
   snprintf(buf, sizeof(buf), "%s/%d", xml_unparse_ipv6(p_addr), m);
   return buf;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

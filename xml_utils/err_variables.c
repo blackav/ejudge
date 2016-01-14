@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,9 +20,3 @@
 const unsigned char *xml_err_path;
 const struct xml_parse_spec *xml_err_spec;
 FILE *xml_err_file;
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

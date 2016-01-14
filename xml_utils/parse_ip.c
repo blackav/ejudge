@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -338,9 +337,3 @@ ipv6_is_empty(const ej_ip_t *p_ip)
   }
   return !p_ip->u.v4.addr;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

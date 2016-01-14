@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -47,9 +46,3 @@ xml_leaf_elem(struct xml_tree *tree, unsigned char **value_addr, int move_flag,
   if (move_flag) tree->text = 0;
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */
