@@ -1,7 +1,6 @@
 /* -*- mode:c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -56,9 +55,3 @@ os_rDirName(char const *str, char *out, int size)
   out[l] = 0;
   return l;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

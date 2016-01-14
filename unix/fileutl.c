@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -1891,9 +1891,3 @@ failed:
   if (path[0]) unlink(path);
   return -1;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

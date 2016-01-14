@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2005-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -97,9 +96,3 @@ cpu_get_performance_info(unsigned char **p_model, unsigned char **p_mhz)
  failure:
   if (f) fclose(f);
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

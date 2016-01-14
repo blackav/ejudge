@@ -1,4 +1,4 @@
-/* Copyright (C) 1997-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1997-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -432,9 +432,3 @@ swwarn(char *format, ...)
   va_start(args, format);
   _swwarn(swerr_file, swerr_line, format, args);
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

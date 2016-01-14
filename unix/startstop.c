@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -276,9 +276,3 @@ start_shutdown(const unsigned char *command)
   err("cannot execute shutdown command '%s'", command);
   exit(1);
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

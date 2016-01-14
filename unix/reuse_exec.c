@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2016 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:33:28 cher> */
 
 /*
@@ -2715,9 +2715,3 @@ do_kill(tTask *tsk, int pid, int signal)
   sigprocmask(SIG_SETMASK, &cur, NULL);
   return (WIFEXITED(status) && !WEXITSTATUS(status))?0:-1;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

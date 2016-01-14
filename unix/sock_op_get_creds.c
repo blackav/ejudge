@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -93,9 +92,3 @@ sock_op_get_creds(
 #endif
   return 0;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

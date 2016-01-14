@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1365,9 +1365,3 @@ ejudge_timed_fdgets(
 fail:
   return -1;
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */

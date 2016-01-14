@@ -1,7 +1,6 @@
 /* -*- mode:c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -49,9 +48,3 @@ os_SubstSuffix(char const *path, char const *suffix)
   r[dp - path] = 0;
   return xstrmerge1(r, suffix);
 }
-
-/*
- * Local variables:
- *  compile-command: "make -C .."
- * End:
- */
