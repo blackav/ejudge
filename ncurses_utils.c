@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1703,7 +1703,6 @@ ncurses_init(void)
   intrflush(stdscr, FALSE);
   keypad(stdscr, TRUE);
 
-  /*
   if (has_colors()) {
     start_color();
     init_pair(1, COLOR_WHITE, COLOR_BLUE);
@@ -1712,7 +1711,7 @@ ncurses_init(void)
     init_pair(4, COLOR_YELLOW, COLOR_RED);
     init_pair(5, COLOR_RED, COLOR_BLUE);
   }
-  */
+
   attrset(COLOR_PAIR(1));
   bkgdset(COLOR_PAIR(1));
 
