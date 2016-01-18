@@ -921,8 +921,8 @@ create_configs(
           "secure_exec_type = \"static\"\n"
           "clear_env\n"
           "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
-          "start_env = \"LANG=C\"\n"
-          "start_env = \"LC_CTYPE=C\"\n"
+          "start_env = \"LANG=en_US.UTF-8\"\n"
+          "start_env = \"LC_CTYPE=en_US.UTF-8\"\n"
           "start_env = \"HOME\"\n\n");
 
   fprintf(f,
@@ -937,8 +937,8 @@ create_configs(
           "secure_exec_type = \"dll\"\n"
           "clear_env\n"
           "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
-          "start_env = \"LANG=C\"\n"
-          "start_env = \"LC_CTYPE=C\"\n"
+          "start_env = \"LANG=en_US.UTF-8\"\n"
+          "start_env = \"LC_CTYPE=en_US.UTF-8\"\n"
           "start_env = \"HOME\"\n\n");
 
   fprintf(f,
@@ -953,8 +953,8 @@ create_configs(
           "secure_exec_type = \"dll32\"\n"
           "clear_env\n"
           "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
-          "start_env = \"LANG=C\"\n"
-          "start_env = \"LC_CTYPE=C\"\n"
+          "start_env = \"LANG=en_US.UTF-8\"\n"
+          "start_env = \"LC_CTYPE=en_US.UTF-8\"\n"
           "start_env = \"HOME\"\n\n");
 
   fprintf(f,
@@ -967,8 +967,8 @@ create_configs(
           "memory_limit_type = \"java\"\n"
           "secure_exec_type = \"java\"\n"
           "start_cmd = \"runjava\"\n"
-          "start_env = \"LANG=C\"\n"
-          "start_env = \"LC_CTYPE=C\"\n"
+          "start_env = \"LANG=en_US.UTF-8\"\n"
+          "start_env = \"LC_CTYPE=en_US.UTF-8\"\n"
           "start_env = \"EJUDGE_PREFIX_DIR\"\n\n");
 
   fprintf(f,
@@ -981,8 +981,8 @@ create_configs(
           "memory_limit_type = \"mono\"\n"
           "secure_exec_type = \"mono\"\n"
           "start_cmd = \"runmono\"\n"
-          "start_env = \"LANG=C\"\n"
-          "start_env = \"LC_CTYPE=C\"\n"
+          "start_env = \"LANG=en_US.UTF-8\"\n"
+          "start_env = \"LC_CTYPE=en_US.UTF-8\"\n"
           "start_env = \"EJUDGE_PREFIX_DIR\"\n"
           "start_env = \"MONO_DEBUG=no-gdb-backtrace\"\n\n");
 
@@ -1018,8 +1018,8 @@ create_configs(
           "clear_env\n"
           "start_cmd = \"runvg\"\n"
           "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
-          "start_env = \"LANG=C\"\n"
-          "start_env = \"LC_CTYPE=C\"\n"
+          "start_env = \"LANG=en_US.UTF-8\"\n"
+          "start_env = \"LC_CTYPE=en_US.UTF-8\"\n"
           "start_env = \"HOME\"\n\n");
 
   fclose(f); f = NULL;
@@ -1033,6 +1033,7 @@ upgrade_times[] =
   "2012/06/21 00:00:00",
   "2012/11/05 00:00:00",
   "2015/11/01 00:00:00",
+  "2016/01/19 00:00:00",
 
   NULL
 };
