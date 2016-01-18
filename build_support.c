@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -786,6 +785,11 @@ extract_makefile_header_footer(
   if (end_idx >= 0) {
     *p_footer = merge_lines(lines, end_idx + 1, i);
   }
+
+  for (i = 0; lines[i]; ++i) {
+    xfree(lines[i]);
+  }
+  xfree(lines);
 }
 
 static int
