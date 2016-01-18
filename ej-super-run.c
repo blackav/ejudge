@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1112,6 +1112,8 @@ make_super_run_name(void)
   fclose(f); f = NULL;
   if (text && *text) {
     super_run_name = text; text = NULL;
+  } else if (text) {
+    xfree(text); text = NULL;
   }
 
   const unsigned char *basename = NULL;
