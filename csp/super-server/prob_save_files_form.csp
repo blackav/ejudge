@@ -213,6 +213,7 @@ cleanup:;
     xfree(info_pat);
     xfree(info_sfx);
     xfree(tgz_pat);
+    xfree(tgz_sfx);
     xfree(tgzdir_pat);
     xfree(tgzdir_sfx);
 %>
