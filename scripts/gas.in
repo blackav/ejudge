@@ -1,0 +1,37 @@
+#!/bin/sh
+# Copyright (c) 2016 Alexander Chernov <cher@ejudge.ru>
+
+# using EJUDGE_FLAGS we may pass additional flags
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/gas.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  version="unknown"
+  GCCRUN="gcc"
+  GCCDIR=
+fi
+
+if [ x"${version}" = x ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${GCCDIR}" != x ]
+then
+    PATH="${GCCDIR}:${PATH}"
+fi
+
+[ x"${EJUDGE_FLAGS}" = x ] && EJUDGE_FLAGS=""
+[ x"${EJUDGE_LIBS}" = x ] && EJUDGE_LIBS="-lm"
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+exec "${GCCRUN}" ${EJUDGE_FLAGS} "$1" -o "$2" ${EJUDGE_LIBS}
