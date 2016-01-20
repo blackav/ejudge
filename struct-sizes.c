@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -41,6 +41,7 @@ int main(void)
   printf("section_tester_data:   %zu\n", sizeof(struct section_tester_data));
   printf("sid_state:             %zu\n", sizeof(struct sid_state));
   printf("compile_packet:        %zu\n", sizeof(struct compile_request_bin_packet));
+  printf("compile_reply_packet:  %zu\n", sizeof(struct compile_reply_bin_packet));
   printf("problem_config_section:%zu\n", sizeof(struct problem_config_section));
   printf("userlist_cookie:       %zu\n", sizeof(struct userlist_cookie));
   printf("super_run_status:      %zu\n", sizeof(struct super_run_status));
