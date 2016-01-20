@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -34,8 +34,10 @@
 #define FAIL_IF(c) if (c)do { errcode = __LINE__; goto failed; } while (0)
 
 int
-compile_reply_packet_read(size_t in_size, const void *in_data,
-                          struct compile_reply_packet **p_out_data)
+compile_reply_packet_read(
+        size_t in_size,
+        const void *in_data,
+        struct compile_reply_packet **p_out_data)
 {
   struct compile_reply_packet *pout = 0;
   const struct compile_reply_bin_packet *pin = in_data;
@@ -74,6 +76,8 @@ compile_reply_packet_read(size_t in_size, const void *in_data,
   pout->uuid.v[1] = cvt_bin_to_host_32(pin->uuid.v[1]);
   pout->uuid.v[2] = cvt_bin_to_host_32(pin->uuid.v[2]);
   pout->uuid.v[3] = cvt_bin_to_host_32(pin->uuid.v[3]);
+
+  pout->zip_mode = cvt_bin_to_host_32(pin->zip_mode);
 
   in_ptr = (const unsigned char*) pin + sizeof(*pin);
   end_ptr = (const unsigned char*) pin + pkt_size;

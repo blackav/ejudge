@@ -71,6 +71,7 @@ struct compile_reply_packet
   void *run_block;
   int use_uuid;
   ej_uuid_t uuid;
+  int zip_mode;       // reply file is an archive of executables
 };
 
 int
@@ -89,12 +90,16 @@ struct compile_request_packet *
 compile_request_packet_free(struct compile_request_packet *in_data);
 
 int
-compile_reply_packet_read(size_t in_size, const void *in_data,
-                          struct compile_reply_packet **p_out_data);
+compile_reply_packet_read(
+        size_t in_size,
+        const void *in_data,
+        struct compile_reply_packet **p_out_data);
 
 int
-compile_reply_packet_write(const struct compile_reply_packet *in_data,
-                           size_t *p_out_size, void **p_out_data);
+compile_reply_packet_write(
+        const struct compile_reply_packet *in_data,
+        size_t *p_out_size,
+        void **p_out_data);
 
 struct compile_reply_packet *
 compile_reply_packet_free(struct compile_reply_packet *in_data);

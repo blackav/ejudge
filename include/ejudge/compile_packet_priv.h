@@ -84,7 +84,8 @@ struct compile_reply_bin_packet
   rint32_t run_block_len;       /* the length of the run block */
   rint32_t use_uuid;
   ej_uuid_t uuid;              /* UUID */
-  unsigned char pad[8];        /* padding to 64-byte boundary */
+  rint32_t zip_mode;
+  unsigned char pad[4];        /* padding to 64-byte boundary */
   /* run block (aligned to 16 byte boundary) */
 };
 
