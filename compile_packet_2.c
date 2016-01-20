@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -54,6 +54,23 @@ compile_request_packet_write(
     src_sfx_len = strlen(in_data->src_sfx);
   }
 
+  int lang_short_name_len = 0;
+  if (in_data->lang_short_name) {
+    lang_short_name_len = strlen(in_data->lang_short_name);
+  }
+  int header_pat_len = 0;
+  if (in_data->header_pat) {
+    header_pat_len = strlen(in_data->header_pat);
+  }
+  int footer_pat_len = 0;
+  if (in_data->footer_pat) {
+    footer_pat_len = strlen(in_data->footer_pat);
+  }
+  int header_dir_len = 0;
+  if (in_data->header_dir) {
+    header_dir_len = strlen(in_data->header_dir);
+  }
+
   FAIL_IF(in_data->judge_id < 0 || in_data->judge_id > EJ_MAX_JUDGE_ID);
   FAIL_IF(in_data->contest_id < 0 || in_data->contest_id > EJ_MAX_CONTEST_ID);
   FAIL_IF(in_data->run_id < 0 || in_data->run_id > EJ_MAX_RUN_ID);
@@ -61,9 +78,15 @@ compile_request_packet_write(
   FAIL_IF(in_data->locale_id < 0 || in_data->locale_id > EJ_MAX_LOCALE_ID);
   FAIL_IF(in_data->output_only < 0 || in_data->output_only > 1);
   FAIL_IF(in_data->style_check_only < 0 || in_data->style_check_only > 1);
+  FAIL_IF(in_data->multi_header < 0 || in_data->multi_header > 1);
+  FAIL_IF(in_data->lang_header < 0 || in_data->lang_header > 1);
   FAIL_IF(in_data->ts1_us < 0 || in_data->ts1_us > USEC_MAX);
   FAIL_IF(style_checker_len < 0 || style_checker_len > PATH_MAX);
   FAIL_IF(src_sfx_len < 0 || src_sfx_len > PATH_MAX);
+  FAIL_IF(lang_short_name_len < 0 || lang_short_name_len > PATH_MAX);
+  FAIL_IF(header_pat_len < 0 || header_pat_len > PATH_MAX);
+  FAIL_IF(footer_pat_len < 0 || footer_pat_len > PATH_MAX);
+  FAIL_IF(header_dir_len < 0 || header_dir_len > PATH_MAX);
   FAIL_IF(in_data->run_block_len < 0 || in_data->run_block_len > EJ_MAX_COMPILE_RUN_BLOCK_LEN);
   env_num = in_data->env_num;
   if (env_num == -1) {
@@ -106,6 +129,18 @@ compile_request_packet_write(
   if (src_sfx_len > 0) {
     out_size += pkt_bin_align(src_sfx_len);
   }
+  if (lang_short_name_len > 0) {
+    out_size += pkt_bin_align(lang_short_name_len);
+  }
+  if (header_pat_len > 0) {
+    out_size += pkt_bin_align(header_pat_len);
+  }
+  if (footer_pat_len > 0) {
+    out_size += pkt_bin_align(footer_pat_len);
+  }
+  if (header_dir_len > 0) {
+    out_size += pkt_bin_align(header_dir_len);
+  }
   out_size += pkt_bin_align(in_data->run_block_len);
   out_size += pkt_bin_align(env_num * sizeof(rint32_t));
   for (i = 0; i < env_num; i++) {
@@ -141,9 +176,15 @@ compile_request_packet_write(
   out_data->uuid.v[1] = cvt_host_to_bin_32(in_data->uuid.v[1]);
   out_data->uuid.v[2] = cvt_host_to_bin_32(in_data->uuid.v[2]);
   out_data->uuid.v[3] = cvt_host_to_bin_32(in_data->uuid.v[3]);
+  out_data->multi_header = cvt_host_to_bin_32(in_data->multi_header);
+  out_data->lang_header = cvt_host_to_bin_32(in_data->lang_header);
   out_data->style_checker_len = cvt_host_to_bin_32(style_checker_len);
   out_data->src_sfx_len = cvt_host_to_bin_32(src_sfx_len);
   out_data->run_block_len = cvt_host_to_bin_32(in_data->run_block_len);
+  out_data->lang_short_name_len = cvt_host_to_bin_32(lang_short_name_len);
+  out_data->header_pat_len = cvt_host_to_bin_32(header_pat_len);
+  out_data->footer_pat_len = cvt_host_to_bin_32(footer_pat_len);
+  out_data->header_dir_len = cvt_host_to_bin_32(header_dir_len);
   out_data->env_num = cvt_host_to_bin_32(env_num);
   out_data->sc_env_num = cvt_host_to_bin_32(sc_env_num);
   if (style_checker_len > 0) {
@@ -159,6 +200,26 @@ compile_request_packet_write(
   if (in_data->run_block_len) {
     memcpy(out_ptr, in_data->run_block, in_data->run_block_len);
     out_ptr += in_data->run_block_len;
+    pkt_bin_align_addr(out_ptr, out_data);
+  }
+  if (lang_short_name_len > 0) {
+    memcpy(out_ptr, in_data->lang_short_name, lang_short_name_len);
+    out_ptr += lang_short_name_len;
+    pkt_bin_align_addr(out_ptr, out_data);
+  }
+  if (header_pat_len > 0) {
+    memcpy(out_ptr, in_data->header_pat, header_pat_len);
+    out_ptr += header_pat_len;
+    pkt_bin_align_addr(out_ptr, out_data);
+  }
+  if (footer_pat_len > 0) {
+    memcpy(out_ptr, in_data->footer_pat, footer_pat_len);
+    out_ptr += footer_pat_len;
+    pkt_bin_align_addr(out_ptr, out_data);
+  }
+  if (header_dir_len > 0) {
+    memcpy(out_ptr, in_data->header_dir, header_dir_len);
+    out_ptr += header_dir_len;
     pkt_bin_align_addr(out_ptr, out_data);
   }
   if (env_num) {

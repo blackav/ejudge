@@ -2,7 +2,7 @@
 #ifndef __COMPILE_PACKET_PRIV_H__
 #define __COMPILE_PACKET_PRIV_H__
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 
 #include "ejudge/integral.h"
 
-#define EJ_COMPILE_PACKET_VERSION 5
+#define EJ_COMPILE_PACKET_VERSION 6
 
 /* various private data structures and constants for compile packets */
 
@@ -47,7 +47,13 @@ struct compile_request_bin_packet
   rint32_t sc_env_num;          /* the number of style checker env. vars */
   rint32_t use_uuid;            /* use UUID instead of run_id */
   ej_uuid_t uuid;               /* UUID */
-  unsigned char pad[4];         /* padding to 16-byte boundary */
+  rint32_t multi_header;        /* multi-header mode */
+  rint32_t lang_header;         /* lang-specific multi-header mode */
+  rint32_t lang_short_name_len; /* the length of the language short name */
+  rint32_t header_pat_len;      /* the length of the headers pattern */
+  rint32_t footer_pat_len;      /* the length of the footers pattern */
+  rint32_t header_dir_len;      /* the length of the headers and footers directory */
+  unsigned char pad[12];        /* padding to 16-byte boundary */
   /* style checker command (aligned to 16 byte boundary) */
   /* run_block (aligned to 16 byte boundary) */
   /* env variable length array (aligned to 16-byte address boundary) */

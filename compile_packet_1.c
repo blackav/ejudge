@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -40,7 +40,8 @@
 
 int
 compile_request_packet_read(
-        size_t in_size, const void *in_data,
+        size_t in_size,
+        const void *in_data,
         struct compile_request_packet **p_out_data)
 {
   const struct compile_request_bin_packet *pin = in_data;
@@ -92,6 +93,11 @@ compile_request_packet_read(
   pout->uuid.v[2] = cvt_bin_to_host_32(pin->uuid.v[2]);
   pout->uuid.v[3] = cvt_bin_to_host_32(pin->uuid.v[3]);
 
+  pout->multi_header = cvt_bin_to_host_32(pin->multi_header);
+  FAIL_IF(pout->multi_header < 0 || pout->multi_header > 1);
+  pout->lang_header = cvt_bin_to_host_32(pin->lang_header);
+  FAIL_IF(pout->lang_header < 0 || pout->lang_header > 1);
+
   /* extract the additional data */
   // set up the additional data pointer
   pin_ptr = (const unsigned char*) in_data + sizeof(*pin);
@@ -127,6 +133,54 @@ compile_request_packet_read(
     pout->run_block = xmalloc(pout->run_block_len);
     memcpy(pout->run_block, pin_ptr, pout->run_block_len);
     pin_ptr += pkt_bin_align(pout->run_block_len);
+  }
+
+  //unsigned char *lang_short_name; // additional suffix for multi-header/footer
+  pout->lang_short_name = NULL;
+  int lang_short_name_len = cvt_bin_to_host_32(pin->lang_short_name_len);
+  FAIL_IF(lang_short_name_len < 0 || lang_short_name_len > PATH_MAX);
+  FAIL_IF(pin_ptr + lang_short_name_len > end_ptr);
+  if (lang_short_name_len > 0) {
+    pout->lang_short_name = xmalloc(lang_short_name_len + 1);
+    memcpy(pout->lang_short_name, pin_ptr, lang_short_name_len);
+    pout->lang_short_name[lang_short_name_len] = 0;
+    pin_ptr += pkt_bin_align(lang_short_name_len);
+  }
+
+  //unsigned char *header_pat;      // header number pattern
+  pout->header_pat = NULL;
+  int header_pat_len = cvt_bin_to_host_32(pin->header_pat_len);
+  FAIL_IF(header_pat_len < 0 || header_pat_len > PATH_MAX);
+  FAIL_IF(pin_ptr + header_pat_len > end_ptr);
+  if (header_pat_len > 0) {
+    pout->header_pat = xmalloc(header_pat_len + 1);
+    memcpy(pout->header_pat, pin_ptr, header_pat_len);
+    pout->header_pat[header_pat_len] = 0;
+    pin_ptr += pkt_bin_align(header_pat_len);
+  }
+
+  //unsigned char *footer_pat;      // footer number pattern
+  pout->footer_pat = NULL;
+  int footer_pat_len = cvt_bin_to_host_32(pin->footer_pat_len);
+  FAIL_IF(footer_pat_len < 0 || footer_pat_len > PATH_MAX);
+  FAIL_IF(pin_ptr + footer_pat_len > end_ptr);
+  if (footer_pat_len > 0) {
+    pout->footer_pat = xmalloc(footer_pat_len + 1);
+    memcpy(pout->footer_pat, pin_ptr, footer_pat_len);
+    pout->footer_pat[footer_pat_len] = 0;
+    pin_ptr += pkt_bin_align(footer_pat_len);
+  }
+
+  //unsigned char *header_dir;      // directory with multiple headers and footers
+  pout->header_dir = NULL;
+  int header_dir_len = cvt_bin_to_host_32(pin->header_dir_len);
+  FAIL_IF(header_dir_len < 0 || header_dir_len > PATH_MAX);
+  FAIL_IF(pin_ptr + header_dir_len > end_ptr);
+  if (header_dir_len > 0) {
+    pout->header_dir = xmalloc(header_dir_len + 1);
+    memcpy(pout->header_dir, pin_ptr, header_dir_len);
+    pout->header_dir[header_dir_len] = 0;
+    pin_ptr += pkt_bin_align(header_dir_len);
   }
 
   pout->env_num = cvt_bin_to_host_32(pin->env_num);

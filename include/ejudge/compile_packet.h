@@ -2,7 +2,7 @@
 #ifndef __COMPILE_PACKET_H__
 #define __COMPILE_PACKET_H__
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,12 +32,18 @@ struct compile_request_packet
   int ts1;
   int ts1_us;
   int use_uuid;
+  int multi_header;                // 1, if multi-header/footer mode requested
+  int lang_header;                 // 1, if header/footer lang-specific
   ej_uuid_t uuid;
   ej_size64_t max_vm_size;
   ej_size64_t max_stack_size;
   ej_size64_t max_file_size;
   unsigned char *style_checker;
   unsigned char *src_sfx;
+  unsigned char *lang_short_name; // additional suffix for multi-header/footer
+  unsigned char *header_pat;      // header number pattern
+  unsigned char *footer_pat;      // footer number pattern
+  unsigned char *header_dir;      // directory with multiple headers and footers
   int run_block_len;
   void *run_block;
   int env_num;
@@ -68,12 +74,16 @@ struct compile_reply_packet
 };
 
 int
-compile_request_packet_read(size_t in_size, const void *in_data,
-                            struct compile_request_packet **p_out_data);
+compile_request_packet_read(
+        size_t in_size,
+        const void *in_data,
+        struct compile_request_packet **p_out_data);
 
 int
-compile_request_packet_write(const struct compile_request_packet *in_data,
-                             size_t *p_out_size, void **p_out_data);
+compile_request_packet_write(
+        const struct compile_request_packet *in_data,
+        size_t *p_out_size,
+        void **p_out_data);
 
 struct compile_request_packet *
 compile_request_packet_free(struct compile_request_packet *in_data);
