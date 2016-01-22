@@ -210,6 +210,334 @@ internal_error:
 #define VALID_SIZE(z) ((z) > 0 && (z) == (size_t) (z))
 
 static int
+invoke_style_checker(
+        FILE *log_f,
+        const struct serve_state *cs,
+        const struct section_language_data *lang,
+        const struct compile_request_packet *req,
+        const unsigned char *input_file,
+        const unsigned char *working_dir,
+        const unsigned char *log_path)
+{
+  tpTask tsk = 0;
+  int retval = RUN_CHECK_FAILED;
+
+  tsk = task_New();
+  task_AddArg(tsk, req->style_checker);
+  task_AddArg(tsk, input_file);
+  task_SetPathAsArg0(tsk);
+  task_SetWorkingDir(tsk, working_dir);
+  task_EnableProcessGroup(tsk);
+  task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
+  task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, 0777);
+  task_SetRedir(tsk, 2, TSR_DUP, 1);
+  if (req->sc_env_num > 0) {
+    for (int i = 0; i < req->sc_env_num; i++)
+      task_PutEnv(tsk, req->sc_env_vars[i]);
+  }
+  if (lang && lang->compile_real_time_limit > 0) {
+    task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
+  }
+  task_EnableAllSignals(tsk);
+
+  task_PrintArgs(tsk);
+  if (task_Start(tsk) < 0) {
+    err("Failed to start style checker process");
+    fprintf(log_f, "\nFailed to start style checker %s\n", req->style_checker);
+    goto cleanup;
+  }
+  task_Wait(tsk);
+  if (task_IsTimeout(tsk)) {
+    err("Style checker process is timed out");
+    fprintf(log_f, "\nStyle checker %s process is timed out\n", req->style_checker);
+    goto cleanup;
+  }
+
+  int r = task_Status(tsk);
+  if (r != TSK_EXITED && r != TSK_SIGNALED) {
+    err("Style checker invalid task status");
+    fprintf(log_f, "\nStyle checker %s invalid task status %d\n", req->style_checker, r);
+    goto cleanup;
+  }
+  if (r == TSK_SIGNALED) {
+    err("Style checker terminated by signal");
+    fprintf(log_f, "\nStyle checker %s terminated by signal %d\n", req->style_checker, task_TermSignal(tsk));
+    goto cleanup;
+  }
+  r = task_ExitCode(tsk);
+  if (r != 0 && r != RUN_COMPILE_ERR && r != RUN_PRESENTATION_ERR && r != RUN_WRONG_ANSWER_ERR && r != RUN_STYLE_ERR) {
+    err("Invalid style checker exit code");
+    fprintf(log_f, "\nStyle checker %s invalid exit code %d\n", req->style_checker, r);
+    goto cleanup;
+  }
+  fprintf(log_f, "\n");
+  if (!r) {
+    retval = RUN_OK;
+  } else {
+    retval = RUN_STYLE_ERR;
+    fprintf(log_f, "\nStyle checker detected errors\n");
+  }
+
+cleanup:
+  task_Delete(tsk);
+  return retval;
+}
+
+static void
+handle_packet(
+        FILE *log_f,
+        const struct serve_state *cs,
+        const unsigned char *pkt_name,
+        const struct compile_request_packet *req,
+        struct compile_reply_packet *rpl,
+        const unsigned char *run_name,
+        const unsigned char *exe_path,
+        const unsigned char *log_path)
+{
+  const struct section_global_data *global = serve_state.global;
+  const struct section_language_data *lang = NULL;
+  unsigned char src_path[PATH_MAX];
+
+  if (req->lang_id <= 0 || req->lang_id > serve_state.max_lang || !(lang = serve_state.langs[req->lang_id])) {
+    fprintf(log_f, "invalid language id %d passed from ej-contest\n", req->lang_id);
+    rpl->status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+
+  snprintf(src_path, sizeof(src_path), "%s/%s%s", global->compile_src_dir, pkt_name, lang->src_sfx);
+
+  if (req->output_only) {
+    if (rename(src_path, exe_path) >= 0) {
+      rpl->status = RUN_OK;
+      goto cleanup;
+    }
+    if (errno != EXDEV) {
+      fprintf(log_f, "cannot move '%s' -> '%s': %s\n", src_path, exe_path, strerror(errno));
+      rpl->status = RUN_CHECK_FAILED;
+      goto cleanup;
+    }
+    if (generic_copy_file(REMOVE, global->compile_src_dir, pkt_name, lang->src_sfx, 0, NULL, exe_path, "") < 0) {
+      fprintf(log_f, "cannot copy '%s' -> '%s'\n", src_path, exe_path);
+      rpl->status = RUN_CHECK_FAILED;
+      goto cleanup;
+    }
+
+    rpl->status = RUN_OK;
+    goto cleanup;
+  }
+
+  unsigned char src_work_name[PATH_MAX];
+  snprintf(src_work_name, sizeof(src_work_name), "%06d%s", req->run_id, lang->src_sfx);
+  unsigned char src_work_path[PATH_MAX];
+  snprintf(src_work_path, sizeof(src_work_path), "%s/%s", global->compile_work_dir, src_work_name);
+
+  if (generic_copy_file(REMOVE, global->compile_src_dir, pkt_name, lang->src_sfx, 0, NULL, src_work_path, "") < 0) {
+    fprintf(log_f, "cannot copy '%s' -> '%s'\n", src_path, exe_path);
+    rpl->status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+
+  if (!req->multi_header) {
+    unsigned char exe_work_name[PATH_MAX];
+    snprintf(exe_work_name, sizeof(exe_work_name), "%06d%s", req->run_id, lang->exe_sfx);
+    unsigned char exe_work_path[PATH_MAX];
+    snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", global->compile_work_dir, exe_work_name);
+
+    if (req->style_checker && req->style_checker[0]) {
+      int r = invoke_style_checker(log_f, cs, lang, req, src_work_name, global->compile_work_dir, log_path);
+      if (r != RUN_OK) {
+        rpl->status = r;
+        goto cleanup;
+      }
+      if (req->style_check_only) {
+        rpl->status = RUN_OK;
+        goto cleanup;
+      }
+    }
+  }
+  
+cleanup:
+  return;
+}
+
+static int new_loop(void) __attribute__((unused));
+
+static int
+new_loop(void)
+{
+  int retval = 0;
+  const struct section_global_data *global = serve_state.global;
+
+  interrupt_init();
+  interrupt_disable();
+
+  while (1) {
+    // terminate if signaled
+    if (interrupt_get_status() || interrupt_restart_requested()) break;
+
+    unsigned char pkt_name[PATH_MAX];
+    pkt_name[0] = 0;
+    int r = scan_dir(global->compile_queue_dir, pkt_name, sizeof(pkt_name), 0);
+
+    if (r < 0) {
+      switch (-r) {
+      case ENOMEM:
+      case ENOENT:
+      case ENFILE:
+        err("trying to recover, sleep for 5 seconds");
+        interrupt_enable();
+        os_Sleep(5000);
+        interrupt_disable();
+        continue;
+      default:
+        err("unrecoverable error, exiting");
+        return -1;
+      }
+    }
+
+    if (!r) {
+      interrupt_enable();
+      os_Sleep(global->sleep_time);
+      interrupt_disable();
+      continue;
+    }
+
+    char *pkt_ptr = NULL;
+    size_t pkt_len = 0;
+    r = generic_read_file(&pkt_ptr, 0, &pkt_len, SAFE | REMOVE, global->compile_queue_dir, pkt_name, "");
+    if (r == 0) continue;
+    if (r < 0 || !pkt_ptr) {
+      // it looks like there's no reasonable recovery strategy
+      // so, just ignore the error
+      continue;
+    }
+
+    struct compile_request_packet *req = NULL;
+    r = compile_request_packet_read(pkt_len, pkt_ptr, &req);
+    xfree(pkt_ptr); pkt_ptr = NULL;
+    if (r < 0) {
+      continue;
+    }
+
+    if (!req->contest_id) {
+      // special packets
+      r = req->lang_id;
+      req = compile_request_packet_free(req);
+      switch (r) {
+      case 1:
+        interrupt_flag_interrupt();
+        break;
+      case 2:
+        interrupt_flag_sighup();
+        break;
+      }
+      continue;
+    }
+
+    struct compile_reply_packet rpl;
+    memset(&rpl, 0, sizeof(rpl));
+    rpl.judge_id = req->judge_id;
+    rpl.contest_id = req->contest_id;
+    rpl.run_id = req->run_id;
+    rpl.ts1 = req->ts1;
+    rpl.ts1_us = req->ts1_us;
+    rpl.use_uuid = req->use_uuid;
+    rpl.uuid = req->uuid;
+    get_current_time(&rpl.ts2, &rpl.ts2_us);
+    rpl.run_block_len = req->run_block_len;
+    rpl.run_block = req->run_block; /* !!! shares memory with req */
+
+    unsigned char status_dir[PATH_MAX];
+    snprintf(status_dir, sizeof(status_dir), "%s/%06d/status", global->compile_dir, rpl.contest_id);
+    if (make_all_dir(status_dir, 0777) < 0) {
+      rpl.run_block = NULL;
+      compile_request_packet_free(req);
+      continue;
+    }
+
+    unsigned char run_name[PATH_MAX];
+    if (req->use_uuid > 0) {
+      snprintf(run_name, sizeof(run_name), "%s", ej_uuid_unparse(&req->uuid, NULL));
+    } else {
+      snprintf(run_name, sizeof(run_name), "%06d", rpl.run_id);
+    }
+
+    unsigned char report_dir[PATH_MAX];
+    snprintf(report_dir, sizeof(report_dir), "%s/%06d/report", global->compile_dir, rpl.contest_id);
+    if (make_dir(report_dir, 0777) < 0) {
+      rpl.run_block = NULL;
+      compile_request_packet_free(req);
+      continue;
+    }
+
+    unsigned char exe_path[PATH_MAX];
+    snprintf(exe_path, sizeof(exe_path), "%s/%s", report_dir, run_name);
+    unlink(exe_path);
+    unsigned char log_path[PATH_MAX];
+    snprintf(log_path, sizeof(log_path), "%s/%s.txt", report_dir, run_name);
+    unlink(log_path);
+
+    unsigned char log_work_name[PATH_MAX];
+    snprintf(log_work_name, sizeof(log_work_name), "log_%06d.txt", req->run_id);
+    unsigned char log_work_path[PATH_MAX];
+    snprintf(log_work_path, sizeof(log_work_path), "%s/%s", global->compile_work_dir, log_work_name);
+    unlink(log_work_path);
+    FILE *log_f = fopen(log_work_path, "a");
+    if (!log_f) {
+      err("cannot open log file '%s': %s", log_work_path, strerror(errno));
+      rpl.run_block = NULL;
+      compile_request_packet_free(req);
+      continue;
+    }
+
+    handle_packet(log_f, &serve_state, pkt_name, req, &rpl, run_name, exe_path, log_path);
+
+    fclose(log_f); log_f = NULL;
+
+    get_current_time(&rpl.ts3, &rpl.ts3_us);
+
+    r = generic_copy_file(0, global->compile_work_dir, log_work_name, "",
+                          0, report_dir, run_name, "");
+    if (r < 0) {
+      rpl.run_block = NULL;
+      compile_request_packet_free(req);
+      clear_directory(global->compile_work_dir);
+      unlink(exe_path);
+      unlink(log_path);
+      continue;
+    }
+
+    void *rpl_pkt = NULL;
+    size_t rpl_size = 0;
+    if (compile_reply_packet_write(&rpl, &rpl_size, &rpl_pkt) < 0) {
+      rpl.run_block = NULL;
+      compile_request_packet_free(req);
+      clear_directory(global->compile_work_dir);
+      unlink(exe_path);
+      unlink(log_path);
+      continue;
+    }
+    if (generic_write_file(rpl_pkt, rpl_size, SAFE, status_dir, run_name, 0) < 0) {
+      rpl.run_block = NULL;
+      compile_request_packet_free(req);
+      xfree(rpl_pkt);
+      clear_directory(global->compile_work_dir);
+      unlink(exe_path);
+      unlink(log_path);
+      continue;
+    }
+
+    // all good
+    rpl.run_block = NULL;
+    compile_request_packet_free(req);
+    xfree(rpl_pkt);
+    clear_directory(global->compile_work_dir);
+  }
+
+  return retval;
+}
+
+static int
 do_loop(void)
 {
   path_t src_name;
