@@ -55,7 +55,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-enum { MAX_LOG_SIZE = 1024 * 1024 };
+enum { MAX_LOG_SIZE = 1024 * 1024, MAX_EXE_SIZE = 128 * 1024 * 1024 };
 
 struct serve_state serve_state;
 static int initialize_mode = 0;
@@ -283,6 +283,88 @@ cleanup:
   return retval;
 }
 
+static int
+invoke_compiler(
+        FILE *log_f,
+        const struct serve_state *cs,
+        const struct section_language_data *lang,
+        const struct compile_request_packet *req,
+        const unsigned char *input_file,
+        const unsigned char *output_file,
+        const unsigned char *working_dir,
+        const unsigned char *log_path)
+{
+  const struct section_global_data *global = serve_state.global;
+  tpTask tsk = 0;
+
+  tsk = task_New();
+  task_AddArg(tsk, lang->cmd);
+  task_AddArg(tsk, input_file);
+  task_AddArg(tsk, output_file);
+  task_SetPathAsArg0(tsk);
+  task_EnableProcessGroup(tsk);
+  if (VALID_SIZE(req->max_vm_size)) {
+    task_SetVMSize(tsk, req->max_vm_size);
+  } else if (VALID_SIZE(lang->max_vm_size)) {
+    task_SetVMSize(tsk, lang->max_vm_size);
+  } else if (VALID_SIZE(global->compile_max_vm_size)) {
+    task_SetVMSize(tsk, global->compile_max_vm_size);
+  }
+  if (VALID_SIZE(req->max_stack_size)) {
+    task_SetStackSize(tsk, req->max_stack_size);
+  } else if (VALID_SIZE(lang->max_stack_size)) {
+    task_SetStackSize(tsk, lang->max_stack_size);
+  } else if (VALID_SIZE(global->compile_max_stack_size)) {
+    task_SetStackSize(tsk, global->compile_max_stack_size);
+  }
+  if (VALID_SIZE(req->max_file_size)) {
+    task_SetMaxFileSize(tsk, req->max_file_size);
+  } else if (VALID_SIZE(lang->max_file_size)) {
+    task_SetMaxFileSize(tsk, lang->max_file_size);
+  } else if (VALID_SIZE(global->compile_max_file_size)) {
+    task_SetMaxFileSize(tsk, global->compile_max_file_size);
+  }
+
+  if (req->env_num > 0) {
+    for (int i = 0; i < req->env_num; i++)
+      task_PutEnv(tsk, req->env_vars[i]);
+  }
+  task_SetWorkingDir(tsk, working_dir);
+  task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
+  task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, 0777);
+  task_SetRedir(tsk, 2, TSR_DUP, 1);
+  if (lang->compile_real_time_limit > 0) {
+    task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
+  }
+  task_EnableAllSignals(tsk);
+
+  task_PrintArgs(tsk);
+
+  if (task_Start(tsk) < 0) {
+    err("failed to start compiler '%s'", lang->cmd);
+    fprintf(log_f, "\nFailed to start compiler '%s'\n", lang->cmd);
+    task_Delete(tsk);
+    return RUN_CHECK_FAILED;
+  }
+
+  task_Wait(tsk);
+
+  if (task_IsTimeout(tsk)) {
+    err("Compilation process timed out");
+    fprintf(log_f, "\nCompilation process timed out\n");
+    task_Delete(tsk);
+    return RUN_COMPILE_ERR;
+  } else if (task_IsAbnormal(tsk)) {
+    info("Compilation failed");
+    task_Delete(tsk);
+    return RUN_COMPILE_ERR;
+  } else {
+    info("Compilation sucessful");
+    task_Delete(tsk);
+    return RUN_OK;
+  }
+}
+
 static void
 handle_packet(
         FILE *log_f,
@@ -290,22 +372,16 @@ handle_packet(
         const unsigned char *pkt_name,
         const struct compile_request_packet *req,
         struct compile_reply_packet *rpl,
-        const unsigned char *run_name,
-        const unsigned char *exe_path,
-        const unsigned char *log_path)
+        const struct section_language_data *lang,
+        const unsigned char *run_name,            // the incoming packet name
+        const unsigned char *src_path,            // path to the source file in the spool directory
+        const unsigned char *exe_path,            // path to the resulting exe file in the spool directory
+        const unsigned char *working_dir,         // the working directory
+        const unsigned char *log_work_path,       // the path to the log file (open in APPEND mode)
+        unsigned char *exe_work_name,             // OUTPUT: the name of the executable
+        int *p_override_exe,
+        int *p_exe_copied)
 {
-  const struct section_global_data *global = serve_state.global;
-  const struct section_language_data *lang = NULL;
-  unsigned char src_path[PATH_MAX];
-
-  if (req->lang_id <= 0 || req->lang_id > serve_state.max_lang || !(lang = serve_state.langs[req->lang_id])) {
-    fprintf(log_f, "invalid language id %d passed from ej-contest\n", req->lang_id);
-    rpl->status = RUN_CHECK_FAILED;
-    goto cleanup;
-  }
-
-  snprintf(src_path, sizeof(src_path), "%s/%s%s", global->compile_src_dir, pkt_name, lang->src_sfx);
-
   if (req->output_only) {
     if (rename(src_path, exe_path) >= 0) {
       rpl->status = RUN_OK;
@@ -316,44 +392,62 @@ handle_packet(
       rpl->status = RUN_CHECK_FAILED;
       goto cleanup;
     }
-    if (generic_copy_file(REMOVE, global->compile_src_dir, pkt_name, lang->src_sfx, 0, NULL, exe_path, "") < 0) {
+    if (generic_copy_file(REMOVE, NULL, src_path, "", 0, NULL, exe_path, "") < 0) {
       fprintf(log_f, "cannot copy '%s' -> '%s'\n", src_path, exe_path);
       rpl->status = RUN_CHECK_FAILED;
       goto cleanup;
     }
 
+    *p_exe_copied = 1;
     rpl->status = RUN_OK;
+    goto cleanup;
+  }
+
+  if (!lang) {
+    fprintf(log_f, "invalid language %d\n", req->lang_id);
+    rpl->status = RUN_CHECK_FAILED;
     goto cleanup;
   }
 
   unsigned char src_work_name[PATH_MAX];
   snprintf(src_work_name, sizeof(src_work_name), "%06d%s", req->run_id, lang->src_sfx);
   unsigned char src_work_path[PATH_MAX];
-  snprintf(src_work_path, sizeof(src_work_path), "%s/%s", global->compile_work_dir, src_work_name);
+  snprintf(src_work_path, sizeof(src_work_path), "%s/%s", working_dir, src_work_name);
 
-  if (generic_copy_file(REMOVE, global->compile_src_dir, pkt_name, lang->src_sfx, 0, NULL, src_work_path, "") < 0) {
-    fprintf(log_f, "cannot copy '%s' -> '%s'\n", src_path, exe_path);
+  if (rename(src_path, src_work_path) >= 0) {
+  } else if (errno != EXDEV) {
+    fprintf(stderr, "cannot move '%s' -> '%s': %s\n", src_path, src_work_path, strerror(errno));
     rpl->status = RUN_CHECK_FAILED;
     goto cleanup;
+  } else {
+    if (generic_copy_file(REMOVE, NULL, src_path, "", 0, NULL, src_work_path, "") < 0) {
+      fprintf(log_f, "cannot copy '%s' -> '%s'\n", src_path, exe_path);
+      rpl->status = RUN_CHECK_FAILED;
+      goto cleanup;
+    }
   }
 
   if (!req->multi_header) {
-    unsigned char exe_work_name[PATH_MAX];
-    snprintf(exe_work_name, sizeof(exe_work_name), "%06d%s", req->run_id, lang->exe_sfx);
+    snprintf(exe_work_name, PATH_MAX, "%06d%s", req->run_id, lang->exe_sfx);
     unsigned char exe_work_path[PATH_MAX];
-    snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", global->compile_work_dir, exe_work_name);
+    snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", working_dir, exe_work_name);
 
     if (req->style_checker && req->style_checker[0]) {
-      int r = invoke_style_checker(log_f, cs, lang, req, src_work_name, global->compile_work_dir, log_path);
+      int r = invoke_style_checker(log_f, cs, lang, req, src_work_name, working_dir, log_work_path);
       if (r != RUN_OK) {
         rpl->status = r;
         goto cleanup;
       }
       if (req->style_check_only) {
         rpl->status = RUN_OK;
+        *p_override_exe = 1;
         goto cleanup;
       }
     }
+
+    int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path);
+    rpl->status = r;
+    goto cleanup;
   }
   
 cleanup:
@@ -367,6 +461,8 @@ new_loop(void)
 {
   int retval = 0;
   const struct section_global_data *global = serve_state.global;
+  int override_exe = 0;
+  int exe_copied = 0;
 
   interrupt_init();
   interrupt_disable();
@@ -477,6 +573,9 @@ new_loop(void)
     snprintf(log_path, sizeof(log_path), "%s/%s.txt", report_dir, run_name);
     unlink(log_path);
 
+    unsigned char exe_work_name[PATH_MAX];
+    exe_work_name[0] = 0;
+
     unsigned char log_work_name[PATH_MAX];
     snprintf(log_work_name, sizeof(log_work_name), "log_%06d.txt", req->run_id);
     unsigned char log_work_path[PATH_MAX];
@@ -490,14 +589,76 @@ new_loop(void)
       continue;
     }
 
-    handle_packet(log_f, &serve_state, pkt_name, req, &rpl, run_name, exe_path, log_path);
+    const struct section_language_data *lang = NULL;
+    if (req->lang_id) {
+      if (req->lang_id <= 0 || req->lang_id > serve_state.max_lang || !(lang = serve_state.langs[req->lang_id])) {
+        fprintf(log_f, "invalid language id %d passed from ej-contest\n", req->lang_id);
+      }
+    }
 
-    fclose(log_f); log_f = NULL;
+    unsigned char src_path[PATH_MAX];
+    snprintf(src_path, sizeof(src_path), "%s/%s%s", global->compile_src_dir, pkt_name, req->src_sfx);
+
+    override_exe = 0;
+    exe_copied = 0;
+    handle_packet(log_f, &serve_state, pkt_name, req, &rpl,
+                  lang,
+                  run_name,
+                  src_path,
+                  exe_path,
+                  global->compile_work_dir,
+                  log_work_path,
+                  exe_work_name,
+                  &override_exe,
+                  &exe_copied);
 
     get_current_time(&rpl.ts3, &rpl.ts3_us);
 
-    r = generic_copy_file(0, global->compile_work_dir, log_work_name, "",
-                          0, report_dir, run_name, "");
+    if (rpl.status == RUN_OK && !override_exe && !exe_copied) {
+      if (!exe_work_name[0]) {
+        err("the resulting executable name is empty");
+        fprintf(log_f, "\ncompiler output file is empty\n");
+        rpl.status = RUN_CHECK_FAILED;
+      } else {
+        unsigned char exe_work_path[PATH_MAX];
+        snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", global->compile_work_dir, exe_work_name);
+        struct stat stb;
+
+        if (lstat(exe_work_path, &stb) < 0) {
+          err("the resulting executable '%s' does not exist", exe_work_path);
+          fprintf(log_f, "\ncompiler output file '%s' does not exist\n", exe_work_path);
+          rpl.status = RUN_COMPILE_ERR;
+        } else {
+          if (!S_ISREG(stb.st_mode)) {
+            err("the resulting executable '%s' is not a regular file", exe_work_path);
+            fprintf(log_f, "\ncompiler output file '%s' is not a regular file\n", exe_work_path);
+            rpl.status = RUN_CHECK_FAILED;
+          } else if (stb.st_size > MAX_EXE_SIZE) {
+            err("the resulting executable '%s' is too large (size = %lld)", exe_work_path, (long long) stb.st_size);
+            fprintf(log_f, "\ncompiler output file '%s' is too large\n (size = %lld)", exe_work_path, (long long) stb.st_size);
+            rpl.status = RUN_COMPILE_ERR;
+          } else {
+            if (rename(exe_work_path, exe_path) >= 0) {
+              // good!
+            } else if (errno != EXDEV) {
+              int e = errno;
+              err("rename %s -> %s failed: %s", exe_work_path, exe_path, strerror(e));
+              fprintf(log_f, "\nrename %s -> %s failed: %s\n", exe_work_path, exe_path, strerror(e));
+              rpl.status = RUN_CHECK_FAILED;
+            } else {
+              if (generic_copy_file(0, NULL, exe_work_path, "", 0, NULL, exe_path, "") < 0) {
+                fprintf(log_f, "\ncopy %s -> %s failed\n", exe_work_path, exe_path);
+                rpl.status = RUN_CHECK_FAILED;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    fclose(log_f); log_f = NULL;
+
+    r = generic_copy_file(0, NULL, log_work_path, "", 0, NULL, log_path, "");
     if (r < 0) {
       rpl.run_block = NULL;
       compile_request_packet_free(req);
@@ -505,6 +666,10 @@ new_loop(void)
       unlink(exe_path);
       unlink(log_path);
       continue;
+    }
+
+    if (override_exe || (rpl.status == RUN_STYLE_ERR || rpl.status == RUN_COMPILE_ERR || rpl.status == RUN_CHECK_FAILED)) {
+      generic_copy_file(0, NULL, log_work_path, "", 0, NULL, exe_path, "");
     }
 
     void *rpl_pkt = NULL;
