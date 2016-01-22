@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -701,6 +701,8 @@ new_loop(void)
 
   return retval;
 }
+
+static int do_loop(void) __attribute__((unused));
 
 static int
 do_loop(void)
@@ -1429,7 +1431,8 @@ main(int argc, char *argv[])
   xfree(lang_log_t); lang_log_t = 0; lang_log_z = 0;
 #endif /* HAVE_OPEN_MEMSTREAM */
 
-  if (do_loop() < 0) return 1;
+  //if (do_loop() < 0) return 1;
+  if (new_loop() < 0) return 1;
 
   if (interrupt_restart_requested()) start_restart();
 
