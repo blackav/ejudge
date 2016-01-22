@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1347,7 +1347,7 @@ user_menu_string(struct userlist_user *u, int f, unsigned char *out)
   } else {
     get_user_field(buf, sizeof(buf), u, f, 1);
     if (utf8_mode) w = utf8_cnt(buf, w, &y);
-    sprintf(out, "%-16.16s:%-*.*s", user_descs[f].name, w + y, w, buf);
+    sprintf(out, "%-15.15s: %-*.*s", user_descs[f].name, w + y, w, buf);
   }
 }
 static void
@@ -1361,7 +1361,7 @@ member_menu_string(const struct userlist_member *m, int f, unsigned char *out)
   } else {
     userlist_get_member_field_str(buf, sizeof(buf), m, f, 1, 0);
     if (utf8_mode) w = utf8_cnt(buf, w, &y);
-    sprintf(out, "%-16.16s:%-*.*s", member_descs[f].name, w + y, w, buf);
+    sprintf(out, "%-15.15s: %-*.*s", member_descs[f].name, w + y, w, buf);
   }
 }
 
