@@ -150,6 +150,7 @@ COMMON_CFILES=\
  dwarf_parse.c\
  ej_import_packet.c\
  ejudge_cfg.c\
+ ej_libzip.c\
  ej_uuid.c\
  errlog.c\
  expat_iface.c\
@@ -530,6 +531,7 @@ HFILES=\
  ./include/ejudge/ej_limits.h\
  ./include/ejudge/ej_process.h\
  ./include/ejudge/ej_types.h\
+ ./include/ejudge/ej_libzip.h\
  ./include/ejudge/ej_uuid.h\
  ./include/ejudge/errlog.h\
  ./include/ejudge/expat_iface.h\
