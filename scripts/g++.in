@@ -1,6 +1,5 @@
 #!/bin/sh
-# $Id$
-# Copyright (c) 2001-2014 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2001-2016 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -35,4 +34,4 @@ unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
 
-exec "${GPPRUN}" ${EJUDGE_FLAGS} -static "$1" -o "$2" -lm ${EJUDGE_LIBS}
+exec "${GPPRUN}" ${EJUDGE_FLAGS} "$1" -o "$2" -lm ${EJUDGE_LIBS}

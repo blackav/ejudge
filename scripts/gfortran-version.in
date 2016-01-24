@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2008-2015 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2008-2016 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
@@ -43,7 +43,7 @@ then
   version=`"${GFORTRANRUN}" --version | head -1 | gawk '{ print $4; }'` || failure
   [ "${version}" != x ] || failure
   echo "        END" > conftest.for
-  "${GFORTRANRUN}" -static conftest.for -o conftest 2>/dev/null >/dev/null || failure
+  "${GFORTRANRUN}" conftest.for -o conftest 2>/dev/null >/dev/null || failure
   [ -x conftest ] || failure
   ./conftest > /dev/null 2>/dev/null || failure
 

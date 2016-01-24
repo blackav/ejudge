@@ -1,6 +1,5 @@
 #!/bin/sh
-# $Id$
-# Copyright (c) 2005-2008 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2005-2016 Alexander Chernov <cher@ejudge.ru>
 
 # compiler script interface is as follows
 # <comp>-version [OPTION]
@@ -60,7 +59,7 @@ then
 #include <stdio.h>
 int main(void) { printf("ok\n"); return 0; }
 EOF
-  "${GCCRUN}" -static conftest.c -o conftest >/dev/null 2>&1 || failure
+  "${GCCRUN}" conftest.c -o conftest >/dev/null 2>&1 || failure
   [ -x conftest ] || failure
   ./conftest >/dev/null 2>&1 || failure
 

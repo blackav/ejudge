@@ -1,6 +1,5 @@
 #!/bin/sh
-# $Id$
-# Copyright (c) 2008-2010 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2008-2016 Alexander Chernov <cher@ejudge.ru>
 
 # using EJUDGE_FLAGS we may pass additional flags
 
@@ -34,4 +33,4 @@ unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
 
-exec "${GFORTRANRUN}" ${EJUDGE_FLAGS} -static "$1" -o "$2"
+exec "${GFORTRANRUN}" ${EJUDGE_FLAGS} "$1" -o "$2"

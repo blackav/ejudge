@@ -1,6 +1,5 @@
 #!/bin/sh
-# $Id$
-# Copyright (c) 2005-2010 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2005-2016 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
@@ -43,7 +42,7 @@ then
   version=`"${G77RUN}" --version | grep "GNU Fortran (GCC)" | gawk '{ print $4; }'` || failure
   [ "${version}" != x ] || failure
   echo "        END" > conftest.for
-  "${G77RUN}" -static conftest.for -o conftest 2>/dev/null >/dev/null || failure
+  "${G77RUN}" conftest.for -o conftest 2>/dev/null >/dev/null || failure
   [ -x conftest ] || failure
   ./conftest > /dev/null 2>/dev/null || failure
 
