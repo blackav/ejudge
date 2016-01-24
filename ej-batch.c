@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2010-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -691,7 +691,8 @@ process_compile_packet(
                         0 /* comp_pkt */,
                         1 /* no_db_flag */,
                         NULL /* uuid */,
-                        0 /* rejudge_flag */);
+                        0 /* rejudge_flag */,
+                        0 /* zip_mode */);
   if (r < 0) abort();
 
   return 0;

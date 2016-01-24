@@ -2,7 +2,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -473,7 +473,8 @@ serve_run_request(
         const struct compile_reply_packet *comp_pkt,
         int no_db_flag,
         ej_uuid_t *puuid,
-        int rejudge_flag);
+        int rejudge_flag,
+        int zip_mode);
 
 int serve_is_valid_status(serve_state_t state, int status, int mode);
 

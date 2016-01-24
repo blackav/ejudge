@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1486,7 +1486,8 @@ serve_run_request(
         const struct compile_reply_packet *comp_pkt,
         int no_db_flag,
         ej_uuid_t *puuid,
-        int rejudge_flag)
+        int rejudge_flag,
+        int zip_mode)
 {
   int cn;
   struct section_global_data *global = state->global;
@@ -2620,7 +2621,7 @@ prepare_run_request:
                         comp_pkt->judge_id, comp_extra->accepting_mode,
                         comp_extra->notify_flag, re.mime_type, re.eoln_type,
                         re.locale_id, compile_report_dir, comp_pkt, 0, &re.run_uuid,
-                        comp_extra->rejudge_flag) < 0) {
+                        comp_extra->rejudge_flag, comp_pkt->zip_mode) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
@@ -3444,7 +3445,7 @@ serve_rejudge_run(
                       re.variant, priority_adjustment,
                       -1, accepting_mode, 1, re.mime_type, re.eoln_type,
                       re.locale_id, 0, 0, 0, &re.run_uuid,
-                      1 /* rejudge_flag */);
+                      1 /* rejudge_flag */, 0 /* zip_mode */);
     xfree(run_text);
     return;
   }
