@@ -1262,6 +1262,24 @@ serve_compile_request(
   cp.sc_env_num = -1;
   cp.sc_env_vars = (unsigned char**) style_checker_env;
 
+  if (prob->enable_multi_header > 0) {
+    unsigned char test_dir[PATH_MAX];
+    test_dir[0] = 0;
+    if (global->advanced_layout > 0) {
+      get_advanced_layout_path(test_dir, sizeof(test_dir), global, prob, DFLT_P_TEST_DIR, variant);
+    } else if (variant > 0) {
+      snprintf(test_dir, sizeof(test_dir), "%s-%d", prob->test_dir, variant);
+    } else {
+      snprintf(test_dir, sizeof(test_dir), "%s", prob->test_dir);
+    }
+
+    cp.multi_header = 1;
+    cp.lang_header = (prob->use_lang_multi_header > 0);
+    cp.header_pat = prob->header_pat;
+    cp.footer_pat = prob->footer_pat;
+    cp.header_dir = test_dir;
+  }
+
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;
   rx.priority_adjustment = priority_adjustment;
