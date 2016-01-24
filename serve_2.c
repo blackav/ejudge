@@ -1796,6 +1796,7 @@ serve_run_request(
     }
   }
   srgp->rejudge_flag = rejudge_flag;
+  srgp->zip_mode = zip_mode;
 
   struct super_run_in_problem_packet *srpp = srp->problem;
   srpp->type = xstrdup(problem_unparse_type(prob->type));
