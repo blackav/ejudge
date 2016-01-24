@@ -1403,6 +1403,8 @@ prepare_unparse_prob(
     unparse_bool(f, "enable_suid_run", prob->enable_suid_run);
   if (prob->enable_multi_header >= 0)
     unparse_bool(f, "enable_multi_header", prob->enable_multi_header);
+  if (prob->use_lang_multi_header >= 0)
+    unparse_bool(f, "use_lang_multi_header", prob->use_lang_multi_header);
   if (prob->disable_testing >= 0)
     unparse_bool(f, "disable_testing", prob->disable_testing);
   if (prob->enable_compilation >= 0)
@@ -1777,6 +1779,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "enable_suid_run", prob->enable_suid_run);
   if (prob->enable_multi_header > 0)
     unparse_bool(f, "enable_multi_header", prob->enable_multi_header);
+  if (prob->use_lang_multi_header > 0)
+    unparse_bool(f, "use_lang_multi_header", prob->use_lang_multi_header);
   if (prob->disable_testing > 0)
     unparse_bool(f, "disable_testing", prob->disable_testing);
   if (prob->skip_testing  > 0)

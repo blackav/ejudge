@@ -940,6 +940,8 @@ struct section_problem_data
   ejintbool_t enable_suid_run;
   /** enable headers/footers specific for each test */
   ejintbool_t enable_multi_header;
+  /** use lang short name in multi headers */
+  ejintbool_t use_lang_multi_header;
   /** base abstract problem */
   unsigned char super[32];
   /** short name of the problem */
