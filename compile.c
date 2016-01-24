@@ -36,6 +36,7 @@
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/compat.h"
 #include "ejudge/ej_uuid.h"
+#include "ejudge/ej_libzip.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -382,6 +383,8 @@ handle_packet(
         int *p_override_exe,
         int *p_exe_copied)
 {
+  struct ZipData *zf = NULL;
+
   if (req->output_only) {
     if (rename(src_path, exe_path) >= 0) {
       rpl->status = RUN_OK;
@@ -449,8 +452,190 @@ handle_packet(
     rpl->status = r;
     goto cleanup;
   }
-  
+
+  // multi-header mode
+  snprintf(exe_work_name, PATH_MAX, "%06d%s", req->run_id, lang->exe_sfx);
+  unsigned char exe_work_path[PATH_MAX];
+  snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", working_dir, exe_work_name);
+  zf = ej_libzip_open(log_f, exe_work_path, O_CREAT | O_TRUNC | O_WRONLY);
+  if (!zf) {
+    fprintf(log_f, "cannot create zip archive '%s'\n", exe_work_path);
+    rpl->status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+
+  if (!req->header_dir || !req->header_dir[0]) {
+    fprintf(log_f, "'header_dir' parameter is not specified\n");
+    rpl->status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+  struct stat stb;
+  if (stat(req->header_dir, &stb) < 0) {
+    fprintf(log_f, "header_dir directory '%s' does not exist\n", req->header_dir);
+    rpl->status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+  if (!S_ISDIR(stb.st_mode)) {
+    fprintf(log_f, "header_dir '%s' is not directory\n", req->header_dir);
+    rpl->status = RUN_CHECK_FAILED;
+    goto cleanup;
+  }
+
+  int serial = 0;
+  int status = RUN_OK;
+  while (1) {
+    unsigned char header_base[PATH_MAX];
+    unsigned char footer_base[PATH_MAX];
+
+    ++serial;
+    header_base[0] = 0;
+    footer_base[0] = 0;
+    if (req->header_pat && req->header_pat[0]) {
+      snprintf(header_base, sizeof(header_base), req->header_pat, serial);
+    }
+    if (req->footer_pat && req->footer_pat[0]) {
+      snprintf(footer_base, sizeof(footer_base), req->footer_pat, serial);
+    }
+
+    unsigned char header_path[PATH_MAX];
+    unsigned char footer_path[PATH_MAX];
+    header_path[0] = 0;
+    footer_path[0] = 0;
+
+    if (header_base[0]) {
+      if (req->lang_header) {
+        snprintf(header_path, sizeof(header_path), "%s/%s.%s%s", req->header_dir, header_base, lang->short_name, lang->src_sfx);
+      } else {
+        snprintf(header_path, sizeof(header_path), "%s/%s%s", req->header_dir, header_base, lang->src_sfx);
+      }
+    }
+    if (footer_base[0]) {
+      if (req->lang_header) {
+        snprintf(footer_path, sizeof(footer_path), "%s/%s.%s%s", req->header_dir, footer_base, lang->short_name, lang->src_sfx);
+      } else {
+        snprintf(footer_path, sizeof(footer_path), "%s/%s%s", req->header_dir, footer_base, lang->src_sfx);
+      }
+    }
+
+    int header_exists = (header_path[0] && access(header_path, F_OK) >= 0);
+    int footer_exists = (footer_path[0] && access(footer_path, F_OK) >= 0);
+    if (!header_exists && !footer_exists) break;
+
+    int file_check_failed = 0;
+    char *header_s = NULL, *footer_s = NULL;
+    size_t header_z = 0, footer_z = 0;
+    if (header_path[0]) {
+      if (stat(header_path, &stb) < 0) {
+        fprintf(log_f, "header file '%s' does not exist: %s\n", header_path, strerror(errno));
+        file_check_failed = 1;
+      } else if (!S_ISREG(stb.st_mode)) {
+        fprintf(log_f, "header file '%s' is not regular\n", header_path);
+        file_check_failed = 1;
+      } else if (access(header_path, R_OK) < 0) {
+        fprintf(log_f, "header file '%s' is not readable: %s\n", header_path, strerror(errno));
+        file_check_failed = 1;
+      } else if (generic_read_file(&header_s, 0, &header_z, 0, NULL, header_path, "") < 0) {
+        fprintf(log_f, "failed to read file '%s'\n", header_path);
+        file_check_failed = 1;
+      }
+    }
+    if (footer_path[0]) {
+      if (stat(footer_path, &stb) < 0) {
+        fprintf(log_f, "footer file '%s' does not exist: %s\n", footer_path, strerror(errno));
+        file_check_failed = 1;
+      } else if (!S_ISREG(stb.st_mode)) {
+        fprintf(log_f, "footer file '%s' is not regular\n", footer_path);
+        file_check_failed = 1;
+      } else if (access(footer_path, R_OK) < 0) {
+        fprintf(log_f, "footer file '%s' is not readable: %s\n", footer_path, strerror(errno));
+        file_check_failed = 1;
+      } else if (generic_read_file(&footer_s, 0, &footer_z, 0, NULL, footer_path, "") < 0) {
+        fprintf(log_f, "failed to read file '%s'\n", footer_path);
+        file_check_failed = 1;
+      }
+    }
+    if (file_check_failed) {
+      xfree(header_s);
+      xfree(footer_s);
+      status = RUN_CHECK_FAILED;
+      continue;
+    }
+
+    char *src_s = NULL;
+    size_t src_z = 0;
+    if (generic_read_file(&src_s, 0, &src_z, 0, NULL, src_work_path, "") < 0) {
+      fprintf(log_f, "failed to read source file '%s'\n", src_work_path);
+      xfree(header_s);
+      xfree(footer_s);
+      status = RUN_CHECK_FAILED;
+      continue;
+    }
+
+    size_t full_z = header_z + src_z + footer_z;
+    char *full_s = xmalloc(full_z + 1);
+    if (header_s && header_z > 0) {
+      memcpy(full_s, header_s, header_z);
+    }
+    memcpy(full_s + header_z, src_s, src_z);
+    if (footer_s && footer_z > 0) {
+      memcpy(full_s + header_z + src_z, footer_s, footer_z);
+    }
+    full_s[full_z] = 0;
+    xfree(header_s); header_s = NULL; header_z = 0;
+    xfree(footer_s); footer_s = NULL; footer_z = 0;
+
+    unsigned char test_src_name[PATH_MAX];
+    snprintf(test_src_name, sizeof(test_src_name), "%06d_%03d%s", req->run_id, serial, lang->src_sfx);
+    unsigned char test_src_path[PATH_MAX];
+    snprintf(test_src_path, sizeof(test_src_path), "%s/%s", working_dir, test_src_name);
+    if (generic_write_file(full_s, full_z, 0, NULL, test_src_path, NULL) < 0) {
+      fprintf(log_f, "failed to write full source file '%s'\n", test_src_path);
+      xfree(full_s);
+      status = RUN_CHECK_FAILED;
+      continue;
+    }
+    xfree(full_s); full_s = NULL; full_z = 0;
+
+    unsigned char test_exe_name[PATH_MAX];
+    snprintf(test_exe_name, sizeof(test_exe_name), "%06d_%03d%s", req->run_id, serial, lang->exe_sfx);
+    unsigned char test_exe_path[PATH_MAX];
+    snprintf(test_exe_path, sizeof(test_exe_path), "%s/%s", working_dir, test_exe_name);
+
+    int cur_status = RUN_OK;
+    if (req->style_checker && req->style_checker[0]) {
+      cur_status = invoke_style_checker(log_f, cs, lang, req, test_src_name, working_dir, log_work_path);
+      // valid statuses: RUN_OK, RUN_STYLE_ERR, RUN_CHECK_FAILED
+      if (cur_status == RUN_CHECK_FAILED) {
+        status = RUN_CHECK_FAILED;
+      } else if (cur_status == RUN_STYLE_ERR) {
+        if (status == RUN_OK) {
+          status = RUN_STYLE_ERR;
+        }
+      } else if (cur_status != RUN_OK) {
+        fprintf(log_f, "invalid status %d returned from invoke_style_checker\n", cur_status);
+        status = RUN_CHECK_FAILED;
+      }
+    }
+    if (cur_status == RUN_OK) {
+      cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path);
+      // valid statuses: RUN_OK, RUN_COMPILE_ERR, RUN_CHECK_FAILED
+      if (cur_status == RUN_CHECK_FAILED) {
+        status = RUN_CHECK_FAILED;
+      } else if (cur_status == RUN_COMPILE_ERR) {
+        if (status == RUN_OK || status == RUN_STYLE_ERR) { 
+          status = RUN_COMPILE_ERR;
+        }
+      } else if (cur_status != RUN_OK) {
+        fprintf(log_f, "invalid status %d returned from invoke_compiler\n", cur_status);
+        status = RUN_CHECK_FAILED;
+      }
+    }
+  }
+
+  rpl->status = status;
+
 cleanup:
+  if (zf) zf->ops->close(zf);
   return;
 }
 

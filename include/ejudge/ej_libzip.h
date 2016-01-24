@@ -21,13 +21,16 @@
 struct ZipData;
 struct ZipInterface
 {
-    struct ZipData *(*open)(FILE *log_f, const unsigned char *path, int flags);
     struct ZipData *(*close)(struct ZipData *zdata);
     int (*read_file)(
         struct ZipData *zdata,
         const unsigned char *name,
         unsigned char **p_data,
         ssize_t *p_size);
+    int (*add_file)(
+        struct ZipData *zdata,
+        const unsigned char *name,
+        const unsigned char *path);
 };
 
 struct ZipData
