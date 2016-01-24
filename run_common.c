@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +38,7 @@
 #include "ejudge/testing_report_xml.h"
 #include "ejudge/ej_uuid.h"
 #include "ejudge/base64.h"
+#include "ejudge/ej_libzip.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -2277,10 +2278,49 @@ run_one_test(
   clear_directory(check_dir);
   check_free_space(check_dir, expected_free_space);
 
-  if (generic_copy_file(0, global->run_work_dir, exe_name, "", 0, check_dir, exe_name, "") < 0) {
-    append_msg_to_log(check_out_path, "failed to copy %s/%s -> %s/%s", global->run_work_dir, exe_name,
-                      check_dir, exe_name);
-    goto check_failed;
+  if (srgp->zip_mode > 0) {
+    unsigned char zip_path[PATH_MAX];
+    snprintf(zip_path, sizeof(zip_path), "%s/%s", global->run_work_dir, exe_name);
+    FILE *log_f = fopen(check_out_path, "a");
+    struct ZipData *zf = ej_libzip_open(log_f, zip_path, O_RDONLY);
+    if (!zf) {
+      if (log_f) {
+        fprintf(log_f, "cannot open zip '%s' file for reading\n", check_out_path);
+        fclose(log_f);
+      }
+      goto check_failed;
+    }
+    unsigned char entry_name[PATH_MAX];
+    snprintf(entry_name, sizeof(entry_name), "%06d_%03d", srgp->run_id, cur_test);
+    unsigned char *bytes_s = NULL;
+    ssize_t bytes_z = 0;
+    if (zf->ops->read_file(zf, entry_name, &bytes_s, &bytes_z) < 0) {
+      if (log_f) {
+        fprintf(log_f, "cannot extract entry '%s' from zip archive\n", entry_name);
+        fclose(log_f);
+      }
+      zf->ops->close(zf);
+      goto check_failed;
+    }
+    zf->ops->close(zf); zf = NULL;
+    unsigned char target_path[PATH_MAX];
+    snprintf(target_path, sizeof(target_path), "%s/%s", check_dir, exe_name);
+    if (generic_write_file(bytes_s, bytes_z, 0, NULL, target_path, NULL) < 0) {
+      if (log_f) {
+        fprintf(log_f, "cannot save file '%s'\n", target_path);
+        fclose(log_f);
+      }
+      xfree(bytes_s);
+      goto check_failed;
+    }
+    xfree(bytes_s);
+    if (log_f) fclose(log_f);
+  } else {
+    if (generic_copy_file(0, global->run_work_dir, exe_name, "", 0, check_dir, exe_name, "") < 0) {
+      append_msg_to_log(check_out_path, "failed to copy %s/%s -> %s/%s", global->run_work_dir, exe_name,
+                        check_dir, exe_name);
+      goto check_failed;
+    }
   }
 
   snprintf(exe_path, sizeof(exe_path), "%s/%s", check_dir, exe_name);
