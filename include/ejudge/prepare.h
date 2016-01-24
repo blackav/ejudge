@@ -2,7 +2,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -938,6 +938,8 @@ struct section_problem_data
   ejintbool_t disable_security;
   /** enable suid helpers for this problem */
   ejintbool_t enable_suid_run;
+  /** enable headers/footers specific for each test */
+  ejintbool_t enable_multi_header;
   /** base abstract problem */
   unsigned char super[32];
   /** short name of the problem */

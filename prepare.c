@@ -416,6 +416,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(disable_submit_after_ok, "d"),
   PROBLEM_PARAM(disable_security, "d"),
   PROBLEM_PARAM(enable_suid_run, "d"),
+  PROBLEM_PARAM(enable_multi_header, "d"),
   PROBLEM_PARAM(enable_compilation, "d"),
   PROBLEM_PARAM(skip_testing, "d"),
   PROBLEM_PARAM(variable_full_score, "d"),
@@ -991,6 +992,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->disable_submit_after_ok = -1;
   p->disable_security = -1;
   p->enable_suid_run = -1;
+  p->enable_multi_header = -1;
   p->enable_compilation = -1;
   p->skip_testing = -1;
   p->test_score = -1;
@@ -3216,6 +3218,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_skip_testing, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_security, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_suid_run, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_enable_multi_header, prob, aprob, g);
 
     prepare_set_prob_value(CNTSPROB_full_score, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_full_user_score, prob, aprob, g);
@@ -5565,6 +5568,7 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN_2(disable_submit_after_ok);
   INHERIT_BOOLEAN(disable_security);
   INHERIT_BOOLEAN(enable_suid_run);
+  INHERIT_BOOLEAN(enable_multi_header);
   INHERIT_BOOLEAN_2(disable_testing);
   INHERIT_BOOLEAN_2(disable_auto_testing);
   INHERIT_BOOLEAN(enable_compilation);
@@ -6174,6 +6178,7 @@ prepare_set_all_prob_values(
     CNTSPROB_stand_last_column,
     CNTSPROB_disable_security,
     CNTSPROB_enable_suid_run,
+    CNTSPROB_enable_multi_header,
     //CNTSPROB_super,
     //CNTSPROB_short_name,
     //CNTSPROB_long_name,
