@@ -1367,6 +1367,10 @@ prepare_unparse_prob(
     unparse_bool(f, "use_ac_not_ok", prob->use_ac_not_ok);
   if (prob->ok_status && prob->ok_status[0])
     fprintf(f, "ok_status = \"%s\"\n", CARMOR(prob->ok_status));
+  if (prob->header_pat && prob->header_pat[0])
+    fprintf(f, "header_pat = \"%s\"\n", CARMOR(prob->header_pat));
+  if (prob->footer_pat && prob->footer_pat[0])
+    fprintf(f, "footer_pat = \"%s\"\n", CARMOR(prob->footer_pat));
   if (prob->ignore_prev_ac >= 0)
     unparse_bool(f, "ignore_prev_ac", prob->ignore_prev_ac);
   if (prob->team_enable_rep_view >= 0)
@@ -1743,6 +1747,10 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "use_ac_not_ok", prob->use_ac_not_ok);
   if (prob->ok_status && prob->ok_status[0])
     fprintf(f, "ok_status = \"%s\"\n", CARMOR(prob->ok_status));
+  if (prob->header_pat && prob->header_pat[0])
+    fprintf(f, "header_pat = \"%s\"\n", CARMOR(prob->header_pat));
+  if (prob->footer_pat && prob->footer_pat[0])
+    fprintf(f, "footer_pat = \"%s\"\n", CARMOR(prob->footer_pat));
   if (prob->ignore_prev_ac > 0)
     unparse_bool(f, "ignore_prev_ac", prob->ignore_prev_ac);
   if (prob->team_enable_rep_view > 0)

@@ -175,6 +175,8 @@ struct problem_config_section
   unsigned char *tokens;
   unsigned char *umask;
   unsigned char *ok_status;
+  unsigned char *header_pat;
+  unsigned char *footer_pat;
 
   char **test_sets;
   char **date_penalty;
