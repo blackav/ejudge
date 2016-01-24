@@ -628,11 +628,29 @@ handle_packet(
       } else if (cur_status != RUN_OK) {
         fprintf(log_f, "invalid status %d returned from invoke_compiler\n", cur_status);
         status = RUN_CHECK_FAILED;
+      } else {
+        // OK
+        if (lstat(test_exe_path, &stb) < 0) {
+          fprintf(log_f, "output file '%s' does not exist: %s\n", test_exe_path, strerror(errno));
+          status = RUN_CHECK_FAILED;
+        } else if (!S_ISREG(stb.st_mode)) {
+          fprintf(log_f, "output file '%s' is not regular\n", test_exe_path);
+          status = RUN_CHECK_FAILED;
+        } else if (access(test_exe_path, X_OK) < 0) {
+          fprintf(log_f, "output file '%s' is not executable: %s\n", test_exe_path, strerror(errno));
+          status = RUN_CHECK_FAILED;
+        } else {
+          if (zf->ops->add_file(zf, test_exe_name, test_exe_path) < 0) {
+            fprintf(log_f, "cannot add file '%s' to zip archive\n", test_exe_path);
+            status = RUN_CHECK_FAILED;
+          }
+        }
       }
     }
   }
 
   rpl->status = status;
+  rpl->zip_mode = 1;
 
 cleanup:
   if (zf) zf->ops->close(zf);
