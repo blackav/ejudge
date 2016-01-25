@@ -207,10 +207,14 @@ ej_libzip_open(FILE *log_f, const unsigned char *path, int flags)
     rz->path = xstrdup(path);
 
     int zf = 0;
+#ifdef ZIP_RDONLY
     if ((flags & O_ACCMODE) == O_RDONLY) zf |= ZIP_RDONLY;
+#endif
     if ((flags & O_CREAT)) zf |= ZIP_CREATE;
     if ((flags & O_EXCL)) zf |= ZIP_EXCL;
+#ifdef ZIP_TRUNCATE
     if ((flags & O_TRUNC)) zf |= ZIP_TRUNCATE;
+#endif
 
     int zip_err = 0;
     struct zip *zz = zip_open(path, zf, &zip_err);
