@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,9 @@
 struct testinfo_subst_handler;
 extern int (*testinfo_parse_func)(const char*,testinfo_t*,struct testinfo_subst_handler*);
 extern const char *(*testinfo_strerror_func)(int);
-extern testinfo_t test_info;
+//extern testinfo_t test_info;
+extern testinfo_t *get_test_info_ptr(void);
+#define test_info (get_test_info_ptr())
 #else
 struct testinfo_struct;
 struct testinfo_subst_handler;
