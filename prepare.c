@@ -530,6 +530,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(ok_status, "S"),
   PROBLEM_PARAM(header_pat, "S"),
   PROBLEM_PARAM(footer_pat, "S"),
+  PROBLEM_PARAM(compiler_env_pat, "S"),
 
   { 0, 0, 0, 0 }
 };
@@ -1063,6 +1064,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->ok_status);
   xfree(p->header_pat);
   xfree(p->footer_pat);
+  xfree(p->compiler_env_pat);
   sarray_free(p->test_sets);
   sarray_free(p->date_penalty);
   sarray_free(p->group_start_date);
@@ -3201,6 +3203,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_ok_status, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_header_pat, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_footer_pat, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_compiler_env_pat, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_ignore_prev_ac, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_team_enable_rep_view, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_team_enable_ce_view, prob, aprob, g);
@@ -5489,6 +5492,9 @@ prepare_copy_problem(const struct section_problem_data *in)
   if (in->footer_pat) {
     out->footer_pat = xstrdup(in->footer_pat);
   }
+  if (in->compiler_env_pat) {
+    out->compiler_env_pat = xstrdup(in->compiler_env_pat);
+  }
 
   return out;
 }
@@ -5574,6 +5580,11 @@ prepare_set_prob_value(
   case CNTSPROB_footer_pat:
     if (!out->footer_pat && abstr && abstr->footer_pat) {
       out->footer_pat = xstrdup(abstr->footer_pat);
+    }
+    break;
+  case CNTSPROB_compiler_env_pat:
+    if (!out->compiler_env_pat && abstr && abstr->compiler_env_pat) {
+      out->compiler_env_pat = xstrdup(abstr->compiler_env_pat);
     }
     break;
 
@@ -6230,6 +6241,7 @@ prepare_set_all_prob_values(
     CNTSPROB_ok_status,
     CNTSPROB_header_pat,
     CNTSPROB_footer_pat,
+    CNTSPROB_compiler_env_pat,
     //CNTSPROB_token_info,
     //CNTSPROB_score_tests,
     //CNTSPROB_standard_checker,

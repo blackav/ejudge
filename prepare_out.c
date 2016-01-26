@@ -1371,6 +1371,8 @@ prepare_unparse_prob(
     fprintf(f, "header_pat = \"%s\"\n", CARMOR(prob->header_pat));
   if (prob->footer_pat && prob->footer_pat[0])
     fprintf(f, "footer_pat = \"%s\"\n", CARMOR(prob->footer_pat));
+  if (prob->compiler_env_pat && prob->compiler_env_pat[0])
+    fprintf(f, "compiler_env_pat = \"%s\"\n", CARMOR(prob->compiler_env_pat));
   if (prob->ignore_prev_ac >= 0)
     unparse_bool(f, "ignore_prev_ac", prob->ignore_prev_ac);
   if (prob->team_enable_rep_view >= 0)
@@ -1751,6 +1753,8 @@ prepare_unparse_actual_prob(
     fprintf(f, "header_pat = \"%s\"\n", CARMOR(prob->header_pat));
   if (prob->footer_pat && prob->footer_pat[0])
     fprintf(f, "footer_pat = \"%s\"\n", CARMOR(prob->footer_pat));
+  if (prob->compiler_env_pat && prob->compiler_env_pat[0])
+    fprintf(f, "compiler_env_pat = \"%s\"\n", CARMOR(prob->compiler_env_pat));
   if (prob->ignore_prev_ac > 0)
     unparse_bool(f, "ignore_prev_ac", prob->ignore_prev_ac);
   if (prob->team_enable_rep_view > 0)

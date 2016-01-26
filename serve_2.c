@@ -1278,6 +1278,7 @@ serve_compile_request(
     cp.header_pat = prob->header_pat;
     cp.footer_pat = prob->footer_pat;
     cp.header_dir = test_dir;
+    cp.compiler_env_pat = prob->compiler_env_pat;
   }
 
   memset(&rx, 0, sizeof(rx));

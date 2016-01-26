@@ -177,6 +177,7 @@ struct problem_config_section
   unsigned char *ok_status;
   unsigned char *header_pat;
   unsigned char *footer_pat;
+  unsigned char *compiler_env_pat;
 
   char **test_sets;
   char **date_penalty;

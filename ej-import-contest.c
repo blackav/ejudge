@@ -837,6 +837,7 @@ merge_problem_section(
         { CNTSPROB_ok_status, META_PROBLEM_CONFIG_SECTION_ok_status },
         { CNTSPROB_header_pat, META_PROBLEM_CONFIG_SECTION_header_pat },
         { CNTSPROB_footer_pat, META_PROBLEM_CONFIG_SECTION_footer_pat },
+        { CNTSPROB_compiler_env_pat, META_PROBLEM_CONFIG_SECTION_compiler_env_pat },
 
         { 0, 0 },
     };
