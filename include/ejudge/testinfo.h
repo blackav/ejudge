@@ -55,6 +55,12 @@ struct testinfo_struct
   char *team_comment;
   int env_u;
   char **env_v;
+
+  int compiler_env_u;
+  char **compiler_env_v;
+
+  int style_checker_env_u;
+  char **style_checker_env_v;
 };
 typedef struct testinfo_struct testinfo_t;
 
