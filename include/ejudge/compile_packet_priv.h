@@ -53,7 +53,8 @@ struct compile_request_bin_packet
   rint32_t header_pat_len;      /* the length of the headers pattern */
   rint32_t footer_pat_len;      /* the length of the footers pattern */
   rint32_t header_dir_len;      /* the length of the headers and footers directory */
-  unsigned char pad[12];        /* padding to 16-byte boundary */
+  rint32_t compiler_env_pat_len;/* the length of the compiler environment pattern */
+  unsigned char pad[8];        /* padding to 16-byte boundary */
   /* style checker command (aligned to 16 byte boundary) */
   /* run_block (aligned to 16 byte boundary) */
   /* env variable length array (aligned to 16-byte address boundary) */

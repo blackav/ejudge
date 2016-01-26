@@ -70,6 +70,10 @@ compile_request_packet_write(
   if (in_data->header_dir) {
     header_dir_len = strlen(in_data->header_dir);
   }
+  int compiler_env_pat_len = 0;
+  if (in_data->compiler_env_pat) {
+    compiler_env_pat_len = strlen(in_data->compiler_env_pat);
+  }
 
   FAIL_IF(in_data->judge_id < 0 || in_data->judge_id > EJ_MAX_JUDGE_ID);
   FAIL_IF(in_data->contest_id < 0 || in_data->contest_id > EJ_MAX_CONTEST_ID);
@@ -87,6 +91,7 @@ compile_request_packet_write(
   FAIL_IF(header_pat_len < 0 || header_pat_len > PATH_MAX);
   FAIL_IF(footer_pat_len < 0 || footer_pat_len > PATH_MAX);
   FAIL_IF(header_dir_len < 0 || header_dir_len > PATH_MAX);
+  FAIL_IF(compiler_env_pat_len < 0 || compiler_env_pat_len > PATH_MAX);
   FAIL_IF(in_data->run_block_len < 0 || in_data->run_block_len > EJ_MAX_COMPILE_RUN_BLOCK_LEN);
   env_num = in_data->env_num;
   if (env_num == -1) {
@@ -141,6 +146,9 @@ compile_request_packet_write(
   if (header_dir_len > 0) {
     out_size += pkt_bin_align(header_dir_len);
   }
+  if (compiler_env_pat_len > 0) {
+    out_size += pkt_bin_align(compiler_env_pat_len);
+  }
   out_size += pkt_bin_align(in_data->run_block_len);
   out_size += pkt_bin_align(env_num * sizeof(rint32_t));
   for (i = 0; i < env_num; i++) {
@@ -185,6 +193,7 @@ compile_request_packet_write(
   out_data->header_pat_len = cvt_host_to_bin_32(header_pat_len);
   out_data->footer_pat_len = cvt_host_to_bin_32(footer_pat_len);
   out_data->header_dir_len = cvt_host_to_bin_32(header_dir_len);
+  out_data->compiler_env_pat_len = cvt_host_to_bin_32(compiler_env_pat_len);
   out_data->env_num = cvt_host_to_bin_32(env_num);
   out_data->sc_env_num = cvt_host_to_bin_32(sc_env_num);
   if (style_checker_len > 0) {
@@ -220,6 +229,11 @@ compile_request_packet_write(
   if (header_dir_len > 0) {
     memcpy(out_ptr, in_data->header_dir, header_dir_len);
     out_ptr += header_dir_len;
+    pkt_bin_align_addr(out_ptr, out_data);
+  }
+  if (compiler_env_pat_len > 0) {
+    memcpy(out_ptr, in_data->compiler_env_pat, compiler_env_pat_len);
+    out_ptr += compiler_env_pat_len;
     pkt_bin_align_addr(out_ptr, out_data);
   }
   if (env_num) {

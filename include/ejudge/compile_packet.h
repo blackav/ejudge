@@ -44,6 +44,7 @@ struct compile_request_packet
   unsigned char *header_pat;      // header number pattern
   unsigned char *footer_pat;      // footer number pattern
   unsigned char *header_dir;      // directory with multiple headers and footers
+  unsigned char *compiler_env_pat;// pattern for compiler environment files
   int run_block_len;
   void *run_block;
   int env_num;

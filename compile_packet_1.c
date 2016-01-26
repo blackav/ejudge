@@ -183,6 +183,18 @@ compile_request_packet_read(
     pin_ptr += pkt_bin_align(header_dir_len);
   }
 
+  //unsigned char *compiler_env_pat;      // compiler environment pattern
+  pout->compiler_env_pat = NULL;
+  int compiler_env_pat_len = cvt_bin_to_host_32(pin->compiler_env_pat_len);
+  FAIL_IF(compiler_env_pat_len < 0 || compiler_env_pat_len > PATH_MAX);
+  FAIL_IF(pin_ptr + compiler_env_pat_len > end_ptr);
+  if (compiler_env_pat_len > 0) {
+    pout->compiler_env_pat = xmalloc(compiler_env_pat_len + 1);
+    memcpy(pout->compiler_env_pat, pin_ptr, compiler_env_pat_len);
+    pout->compiler_env_pat[compiler_env_pat_len] = 0;
+    pin_ptr += pkt_bin_align(compiler_env_pat_len);
+  }
+
   pout->env_num = cvt_bin_to_host_32(pin->env_num);
   FAIL_IF(pout->env_num < 0 || pout->env_num > EJ_MAX_COMPILE_ENV_NUM);
   FAIL_IF(pin_ptr + pout->env_num * sizeof(rint32_t) > end_ptr);

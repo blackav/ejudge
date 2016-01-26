@@ -40,6 +40,7 @@ compile_request_packet_free(struct compile_request_packet *in_data)
   xfree(in_data->header_pat);
   xfree(in_data->footer_pat);
   xfree(in_data->header_dir);
+  xfree(in_data->compiler_env_pat);
   if (in_data->env_num > 0 && in_data->env_vars) {
     for (i = 0; i < in_data->env_num; i++) {
       xfree(in_data->env_vars[i]);
