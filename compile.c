@@ -37,6 +37,7 @@
 #include "ejudge/compat.h"
 #include "ejudge/ej_uuid.h"
 #include "ejudge/ej_libzip.h"
+#include "ejudge/testinfo.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -218,7 +219,8 @@ invoke_style_checker(
         const struct compile_request_packet *req,
         const unsigned char *input_file,
         const unsigned char *working_dir,
-        const unsigned char *log_path)
+        const unsigned char *log_path,
+        const testinfo_t *tinf)
 {
   tpTask tsk = 0;
   int retval = RUN_CHECK_FAILED;
@@ -235,6 +237,10 @@ invoke_style_checker(
   if (req->sc_env_num > 0) {
     for (int i = 0; i < req->sc_env_num; i++)
       task_PutEnv(tsk, req->sc_env_vars[i]);
+  }
+  if (tinf && tinf->style_checker_env_u > 0) {
+    for (int i = 0; i < tinf->style_checker_env_u; ++i)
+      task_PutEnv(tsk, tinf->style_checker_env_v[i]);
   }
   if (lang && lang->compile_real_time_limit > 0) {
     task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
@@ -293,7 +299,8 @@ invoke_compiler(
         const unsigned char *input_file,
         const unsigned char *output_file,
         const unsigned char *working_dir,
-        const unsigned char *log_path)
+        const unsigned char *log_path,
+        const testinfo_t *tinf)
 {
   const struct section_global_data *global = serve_state.global;
   tpTask tsk = 0;
@@ -329,6 +336,10 @@ invoke_compiler(
   if (req->env_num > 0) {
     for (int i = 0; i < req->env_num; i++)
       task_PutEnv(tsk, req->env_vars[i]);
+  }
+  if (tinf && tinf->compiler_env_u > 0) {
+    for (int i = 0; i < tinf->compiler_env_u; ++i)
+      task_PutEnv(tsk, tinf->compiler_env_v[i]);
   }
   task_SetWorkingDir(tsk, working_dir);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
@@ -436,7 +447,7 @@ handle_packet(
     snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", working_dir, exe_work_name);
 
     if (req->style_checker && req->style_checker[0]) {
-      int r = invoke_style_checker(log_f, cs, lang, req, src_work_name, working_dir, log_work_path);
+      int r = invoke_style_checker(log_f, cs, lang, req, src_work_name, working_dir, log_work_path, NULL);
       if (r != RUN_OK) {
         rpl->status = r;
         goto cleanup;
@@ -448,7 +459,7 @@ handle_packet(
       }
     }
 
-    int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path);
+    int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path, NULL);
     rpl->status = r;
     goto cleanup;
   }
@@ -486,21 +497,28 @@ handle_packet(
   while (1) {
     unsigned char header_base[PATH_MAX];
     unsigned char footer_base[PATH_MAX];
+    unsigned char compiler_env_base[PATH_MAX];
 
     ++serial;
     header_base[0] = 0;
     footer_base[0] = 0;
+    compiler_env_base[0] = 0;
     if (req->header_pat && req->header_pat[0]) {
       snprintf(header_base, sizeof(header_base), req->header_pat, serial);
     }
     if (req->footer_pat && req->footer_pat[0]) {
       snprintf(footer_base, sizeof(footer_base), req->footer_pat, serial);
     }
+    if (req->compiler_env_pat && req->compiler_env_pat[0]) {
+      snprintf(compiler_env_base, sizeof(compiler_env_base), req->compiler_env_pat, serial);
+    }
 
     unsigned char header_path[PATH_MAX];
     unsigned char footer_path[PATH_MAX];
+    unsigned char compiler_env_path[PATH_MAX];
     header_path[0] = 0;
     footer_path[0] = 0;
+    compiler_env_path[0] = 0;
 
     if (header_base[0]) {
       if (req->lang_header) {
@@ -516,10 +534,43 @@ handle_packet(
         snprintf(footer_path, sizeof(footer_path), "%s/%s%s", req->header_dir, footer_base, lang->src_sfx);
       }
     }
+    if (compiler_env_base[0]) {
+      if (req->lang_header) {
+        snprintf(compiler_env_path, sizeof(compiler_env_path), "%s/%s.%s%s", req->header_dir, compiler_env_base, lang->short_name, lang->src_sfx);
+      } else {
+        snprintf(compiler_env_path, sizeof(compiler_env_path), "%s/%s%s", req->header_dir, compiler_env_base, lang->src_sfx);
+      }
+    }
 
     int header_exists = (header_path[0] && access(header_path, F_OK) >= 0);
     int footer_exists = (footer_path[0] && access(footer_path, F_OK) >= 0);
     if (!header_exists && !footer_exists) break;
+
+    testinfo_t test_info;
+    memset(&test_info, 0, sizeof(test_info));
+    testinfo_t *tinf = NULL;
+
+    if (compiler_env_path[0]) {
+      if (stat(compiler_env_path, &stb) < 0) {
+        fprintf(log_f, "compiler env file '%s' does not exist: %s\n", compiler_env_path, strerror(errno));
+        status = RUN_CHECK_FAILED;
+        continue;
+      } else if (!S_ISREG(stb.st_mode)) {
+        fprintf(log_f, "compiler env file '%s' is not regular\n", compiler_env_path);
+        status = RUN_CHECK_FAILED;
+        continue;
+      } else if (access(compiler_env_path, R_OK) < 0) {
+        fprintf(log_f, "compiler env file '%s' is not readable: %s\n", compiler_env_path, strerror(errno));
+        status = RUN_CHECK_FAILED;
+        continue;
+      } else if (testinfo_parse(compiler_env_path, &test_info, NULL) < 0) {
+        fprintf(log_f, "invalid env file '%s'\n", compiler_env_path);
+        status = RUN_CHECK_FAILED;
+        continue;
+      } else {
+        tinf = &test_info;
+      }
+    }
 
     int file_check_failed = 0;
     char *header_s = NULL, *footer_s = NULL;
@@ -555,6 +606,7 @@ handle_packet(
       }
     }
     if (file_check_failed) {
+      testinfo_free(tinf);
       xfree(header_s);
       xfree(footer_s);
       status = RUN_CHECK_FAILED;
@@ -565,6 +617,7 @@ handle_packet(
     size_t src_z = 0;
     if (generic_read_file(&src_s, 0, &src_z, 0, NULL, src_work_path, "") < 0) {
       fprintf(log_f, "failed to read source file '%s'\n", src_work_path);
+      testinfo_free(tinf);
       xfree(header_s);
       xfree(footer_s);
       status = RUN_CHECK_FAILED;
@@ -590,6 +643,7 @@ handle_packet(
     snprintf(test_src_path, sizeof(test_src_path), "%s/%s", working_dir, test_src_name);
     if (generic_write_file(full_s, full_z, 0, NULL, test_src_path, NULL) < 0) {
       fprintf(log_f, "failed to write full source file '%s'\n", test_src_path);
+      testinfo_free(tinf);
       xfree(full_s);
       status = RUN_CHECK_FAILED;
       continue;
@@ -603,7 +657,7 @@ handle_packet(
 
     int cur_status = RUN_OK;
     if (req->style_checker && req->style_checker[0]) {
-      cur_status = invoke_style_checker(log_f, cs, lang, req, test_src_name, working_dir, log_work_path);
+      cur_status = invoke_style_checker(log_f, cs, lang, req, test_src_name, working_dir, log_work_path, tinf);
       // valid statuses: RUN_OK, RUN_STYLE_ERR, RUN_CHECK_FAILED
       if (cur_status == RUN_CHECK_FAILED) {
         status = RUN_CHECK_FAILED;
@@ -617,7 +671,7 @@ handle_packet(
       }
     }
     if (cur_status == RUN_OK) {
-      cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path);
+      cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf);
       // valid statuses: RUN_OK, RUN_COMPILE_ERR, RUN_CHECK_FAILED
       if (cur_status == RUN_CHECK_FAILED) {
         status = RUN_CHECK_FAILED;
