@@ -2341,9 +2341,8 @@ serve_read_compile_packet(
   snprintf(pkt_name, sizeof(pkt_name), "%06d", comp_pkt->run_id);
 
   if ((comp_pkt->status == RUN_CHECK_FAILED || comp_pkt->status == RUN_COMPILE_ERR || comp_pkt->status == RUN_STYLE_ERR)) {
-    if (generic_read_file(&txt_text, 0, &txt_size, REMOVE, compile_report_dir, pname, NULL) < 0) {
-      snprintf(errmsg, sizeof(errmsg),
-               "generic_read_file: %s, %s failed\n", compile_report_dir, pname);
+    if (generic_read_file(&txt_text, 0, &txt_size, REMOVE, compile_report_dir, pname, ".txt") < 0) {
+      snprintf(errmsg, sizeof(errmsg), "generic_read_file: %s/%s.txt failed\n", compile_report_dir, pname);
       goto report_check_failed;
     }
     testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.judge_id);
@@ -2459,10 +2458,9 @@ serve_read_compile_packet(
   if (comp_pkt->status == RUN_CHECK_FAILED
       || comp_pkt->status == RUN_COMPILE_ERR
       || comp_pkt->status == RUN_STYLE_ERR) {
-    if ((report_size = generic_file_size(compile_report_dir, pname, "")) < 0) {
+    if ((report_size = generic_file_size(compile_report_dir, pname, ".txt")) < 0) {
       err("read_compile_packet: cannot get report file size");
-      snprintf(errmsg, sizeof(errmsg), "cannot get size of %s/%s\n",
-               compile_report_dir, pname);
+      snprintf(errmsg, sizeof(errmsg), "cannot get size of %s/%s.txt\n", compile_report_dir, pname);
       goto report_check_failed;
     }
 
@@ -2511,14 +2509,12 @@ serve_read_compile_packet(
       if (uuid_archive_dir_prepare(state, &re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0)
         goto non_fatal_error;
     } else {
-      if (archive_dir_prepare(state, global->xml_report_archive_dir,
-                              comp_pkt->run_id, 0, 0) < 0)
+      if (archive_dir_prepare(state, global->xml_report_archive_dir, comp_pkt->run_id, 0, 0) < 0)
         goto non_fatal_error;
     }
-    if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
-                          rep_flags, 0, rep_path, "") < 0) {
+    if (generic_copy_file(REMOVE, compile_report_dir, pname, ".txt", rep_flags, 0, rep_path, "") < 0) {
       snprintf(errmsg, sizeof(errmsg),
-               "generic_copy_file: %s, %s, %d, %s failed\n",
+               "generic_copy_file: %s/%s.txt, %d, %s failed\n",
                compile_report_dir, pname, rep_flags, rep_path);
       goto report_check_failed;
     }
@@ -2547,9 +2543,8 @@ serve_read_compile_packet(
         goto report_check_failed;
       }
     }
-    if (generic_copy_file(REMOVE, compile_report_dir, pname, "",
-                          rep_flags, 0, rep_path, "") < 0) {
-      snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s, %s, %d, %s failed\n",
+    if (generic_copy_file(REMOVE, compile_report_dir, pname, ".txt", rep_flags, 0, rep_path, "") < 0) {
+      snprintf(errmsg, sizeof(errmsg), "generic_copy_file: %s/%s.txt, %d, %s failed\n",
                compile_report_dir, pname, rep_flags, rep_path);
       goto report_check_failed;
     }
