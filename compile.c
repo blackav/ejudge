@@ -769,9 +769,6 @@ new_loop(void)
       continue;
     }
 
-    unsigned char exe_path[PATH_MAX];
-    snprintf(exe_path, sizeof(exe_path), "%s/%s", report_dir, run_name);
-    unlink(exe_path);
     unsigned char log_path[PATH_MAX];
     snprintf(log_path, sizeof(log_path), "%s/%s.txt", report_dir, run_name);
     unlink(log_path);
@@ -798,6 +795,12 @@ new_loop(void)
         fprintf(log_f, "invalid language id %d passed from ej-contest\n", req->lang_id);
       }
     }
+
+    unsigned char exe_path[PATH_MAX];
+    const unsigned char *exe_sfx = "";
+    if (lang && lang->exe_sfx) exe_sfx = lang->exe_sfx;
+    snprintf(exe_path, sizeof(exe_path), "%s/%s%s", report_dir, run_name, exe_sfx);
+    unlink(exe_path);
 
     unsigned char src_path[PATH_MAX];
     snprintf(src_path, sizeof(src_path), "%s/%s%s", global->compile_src_dir, pkt_name, req->src_sfx);
