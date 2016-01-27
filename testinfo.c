@@ -581,6 +581,8 @@ testinfo_free(testinfo_t *pt)
 {
   int i;
 
+  if (!pt) return;
+
   if (pt->cmd_argc > 0 && pt->cmd_argv) {
     for (i = 0; i < pt->cmd_argc; i++)
       if (pt->cmd_argv[i]) free(pt->cmd_argv[i]);
