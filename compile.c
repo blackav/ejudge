@@ -542,9 +542,16 @@ handle_packet(
       }
     }
 
-    int header_exists = (header_path[0] && access(header_path, F_OK) >= 0);
-    int footer_exists = (footer_path[0] && access(footer_path, F_OK) >= 0);
-    if (!header_exists && !footer_exists) break;
+    int header_exists = (header_path[0] && access(header_path, R_OK) >= 0);
+    int footer_exists = (footer_path[0] && access(footer_path, R_OK) >= 0);
+    int env_exists = (compiler_env_path[0] && access(compiler_env_path, R_OK) >= 0);
+    if (!header_exists && !footer_exists && !env_exists) {
+      if (serial == 1) {
+        fprintf(log_f, "no test-specific header, footer, or compiler_env file found\n");
+        status = RUN_CHECK_FAILED;
+      }
+      break;
+    }
 
     testinfo_t test_info;
     memset(&test_info, 0, sizeof(test_info));
