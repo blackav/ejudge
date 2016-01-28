@@ -536,9 +536,9 @@ handle_packet(
     }
     if (compiler_env_base[0]) {
       if (req->lang_header) {
-        snprintf(compiler_env_path, sizeof(compiler_env_path), "%s/%s.%s%s", req->header_dir, compiler_env_base, lang->short_name, lang->src_sfx);
+        snprintf(compiler_env_path, sizeof(compiler_env_path), "%s/%s.%s", req->header_dir, compiler_env_base, lang->short_name);
       } else {
-        snprintf(compiler_env_path, sizeof(compiler_env_path), "%s/%s%s", req->header_dir, compiler_env_base, lang->src_sfx);
+        snprintf(compiler_env_path, sizeof(compiler_env_path), "%s/%s", req->header_dir, compiler_env_base);
       }
     }
 
