@@ -40,6 +40,10 @@
 #include "ejudge/testinfo.h"
 #include "ejudge/misctext.h"
 
+#include "ejudge/meta_generic.h"
+#include "ejudge/meta/compile_packet_meta.h"
+#include "ejudge/meta/prepare_meta.h"
+
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
@@ -210,18 +214,27 @@ internal_error:
   goto cleanup;
 }
 
+struct testinfo_subst_handler_compile
+{
+  struct testinfo_subst_handler b;
+  const struct compile_request_packet *request;
+  const struct section_language_data *lang;
+};
+
 static unsigned char *
 subst_get_variable(
         const void *vp,
         const unsigned char *name)
 {
-  return xstrdup("");
+  const struct testinfo_subst_handler_compile *phc = (const struct testinfo_subst_handler_compile *) vp;
+  if (!strncmp(name, "request.", 8)) {
+    return meta_get_variable_str(&meta_compile_request_packet_methods, phc->request, name + 8);
+  } else if (!strncmp(name, "lang.", 5)) {
+    return meta_get_variable_str(&cntslang_methods, phc->lang, name + 5);
+  } else {
+    return xstrdup("");
+  }
 }
-
-struct testinfo_subst_handler_compile
-{
-  struct testinfo_subst_handler b;
-};
 
 static unsigned char *
 testinfo_subst_handler_substitute(struct testinfo_subst_handler *bp, const unsigned char *str)
@@ -581,6 +594,8 @@ handle_packet(
       struct testinfo_subst_handler_compile hc;
       memset(&hc, 0, sizeof(hc));
       hc.b.substitute = testinfo_subst_handler_substitute;
+      hc.request = req;
+      hc.lang = lang;
 
       if (stat(compiler_env_path, &stb) < 0) {
         fprintf(log_f, "compiler env file '%s' does not exist: %s\n", compiler_env_path, strerror(errno));
