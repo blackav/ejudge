@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2576,4 +2576,58 @@ parse_duration(const unsigned char *str, int default_value)
     return m;
   }
   return -1;
+}
+
+unsigned char *
+text_substitute(
+        const void *p,
+        const unsigned char *str,
+        unsigned char *(*getvar_func)(const void *, const unsigned char *))
+{
+  int out_z = 0;
+  int out_u = 0;
+  unsigned char *out_s = NULL;
+  int i = 0;
+
+  if (!str) return NULL;
+  out_s = xmalloc(out_z = 16);
+
+  while (str[i]) {
+    if (str[i] == '$' && str[i + 1] == '{') {
+      int j = i + 2;
+      while (str[j] && str[j] != '}') ++j;
+      if (str[j] == '}') {
+        unsigned char *name = xmemdup(str + i + 2, j - i - 2);
+        unsigned char *value = getvar_func(p, name);
+        if (value) {
+          int len = strlen(value);
+          if (out_u + len >= out_z) {
+            while (out_u + len >= out_z) out_z *= 2;
+            out_s = xrealloc(out_s, out_z);
+          }
+          memcpy(out_s + out_u, value, len);
+          out_u += len;
+          xfree(value);
+        }
+        xfree(name);
+        i = j + 1;
+      } else {
+        i = j;
+      }
+    } else if (str[i] == '$' && str[i + 1] == '$') {
+      if (out_u + 1 == out_z) {
+        out_s = xrealloc(out_s, out_z *= 2);
+      }
+      out_s[out_u++] = str[i++];
+      ++i;
+    } else {
+      if (out_u + 1 == out_z) {
+        out_s = xrealloc(out_s, out_z *= 2);
+      }
+      out_s[out_u++] = str[i++];
+    }
+  }
+
+  out_s[out_u] = 0;
+  return out_s;
 }
