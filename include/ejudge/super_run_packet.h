@@ -217,8 +217,8 @@ struct super_run_in_packet *
 super_run_in_packet_parse_cfg_str(const unsigned char *path, char *buf, size_t size);
 
 unsigned char *
-super_run_in_packet_substitute(
-        const struct super_run_in_packet *p,
-        const unsigned char *str);
+super_run_in_packet_get_variable(
+        const void *vp,
+        const unsigned char *name);
 
 #endif /* __SUPER_RUN_PACKET_H__ */

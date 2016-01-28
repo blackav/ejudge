@@ -2009,7 +2009,7 @@ struct testinfo_subst_handler_super_run
 static unsigned char *testinfo_subst_handler_substitute(struct testinfo_subst_handler *bp, const unsigned char *str)
 {
   struct testinfo_subst_handler_super_run *srh = (struct testinfo_subst_handler_super_run *) bp;
-  unsigned char *s = super_run_in_packet_substitute(srh->srp, str);
+  unsigned char *s = text_substitute(srh->srp, str, super_run_in_packet_get_variable);
   if (srh->eff_f) {
     fprintf(srh->eff_f, "%s\n", s);
   }

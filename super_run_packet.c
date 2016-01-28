@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@
 #include "ejudge/meta/super_run_packet_meta.h"
 #include "ejudge/prepare.h"
 #include "ejudge/errlog.h"
+#include "ejudge/misctext.h"
 
 #include "ejudge/xalloc.h"
 
@@ -372,9 +373,10 @@ super_run_in_packet_parse_cfg_str(const unsigned char *path, char *buf, size_t s
 
 unsigned char *
 super_run_in_packet_get_variable(
-        const struct super_run_in_packet *p,
+        const void *vp,
         const unsigned char *name)
 {
+  const struct super_run_in_packet *p = (const struct super_run_in_packet *) vp;
   if (!strncmp(name, "global.", 7)) {
     return meta_get_variable_str(&meta_super_run_in_global_packet_methods, p->global, name + 7);
   } else if (!strncmp(name, "problem.", 8)) {
@@ -386,55 +388,3 @@ super_run_in_packet_get_variable(
   }
 }
 
-unsigned char *
-super_run_in_packet_substitute(
-        const struct super_run_in_packet *p,
-        const unsigned char *str)
-{
-  int out_z = 0;
-  int out_u = 0;
-  unsigned char *out_s = NULL;
-  int i = 0;
-
-  if (!str) return NULL;
-  out_s = xmalloc(out_z = 16);
-
-  while (str[i]) {
-    if (str[i] == '$' && str[i + 1] == '{') {
-      int j = i + 2;
-      while (str[j] && str[j] != '}') ++j;
-      if (str[j] == '}') {
-        unsigned char *name = xmemdup(str + i + 2, j - i - 2);
-        unsigned char *value = super_run_in_packet_get_variable(p, name);
-        if (value) {
-          int len = strlen(value);
-          if (out_u + len >= out_z) {
-            while (out_u + len >= out_z) out_z *= 2;
-            out_s = xrealloc(out_s, out_z);
-          }
-          memcpy(out_s + out_u, value, len);
-          out_u += len;
-          xfree(value);
-        }
-        xfree(name);
-        i = j + 1;
-      } else {
-        i = j;
-      }
-    } else if (str[i] == '$' && str[i + 1] == '$') {
-      if (out_u + 1 == out_z) {
-        out_s = xrealloc(out_s, out_z *= 2);
-      }
-      out_s[out_u++] = str[i++];
-      ++i;
-    } else {
-      if (out_u + 1 == out_z) {
-        out_s = xrealloc(out_s, out_z *= 2);
-      }
-      out_s[out_u++] = str[i++];
-    }
-  }
-
-  out_s[out_u] = 0;
-  return out_s;
-}
