@@ -38,6 +38,7 @@
 #include "ejudge/ej_uuid.h"
 #include "ejudge/ej_libzip.h"
 #include "ejudge/testinfo.h"
+#include "ejudge/misctext.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -207,6 +208,25 @@ internal_error:
     unlink(log_path);
   }
   goto cleanup;
+}
+
+static unsigned char *
+subst_get_variable(
+        const void *vp,
+        const unsigned char *name)
+{
+  return xstrdup("");
+}
+
+struct testinfo_subst_handler_compile
+{
+  struct testinfo_subst_handler b;
+};
+
+static unsigned char *
+testinfo_subst_handler_substitute(struct testinfo_subst_handler *bp, const unsigned char *str)
+{
+  return text_substitute(bp, str, subst_get_variable);
 }
 
 #define VALID_SIZE(z) ((z) > 0 && (z) == (size_t) (z))
@@ -558,6 +578,10 @@ handle_packet(
     testinfo_t *tinf = NULL;
 
     if (compiler_env_path[0]) {
+      struct testinfo_subst_handler_compile hc;
+      memset(&hc, 0, sizeof(hc));
+      hc.b.substitute = testinfo_subst_handler_substitute;
+
       if (stat(compiler_env_path, &stb) < 0) {
         fprintf(log_f, "compiler env file '%s' does not exist: %s\n", compiler_env_path, strerror(errno));
         status = RUN_CHECK_FAILED;
@@ -570,7 +594,7 @@ handle_packet(
         fprintf(log_f, "compiler env file '%s' is not readable: %s\n", compiler_env_path, strerror(errno));
         status = RUN_CHECK_FAILED;
         continue;
-      } else if (testinfo_parse(compiler_env_path, &test_info, NULL) < 0) {
+      } else if (testinfo_parse(compiler_env_path, &test_info, &hc.b) < 0) {
         fprintf(log_f, "invalid env file '%s'\n", compiler_env_path);
         status = RUN_CHECK_FAILED;
         continue;
