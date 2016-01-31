@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "unpriv_includes.csp"
 %><%
 #include "ejudge/compat.h"
