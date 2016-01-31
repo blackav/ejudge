@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -620,7 +620,7 @@ count_read_clars_func(
     struct team_extra *te;
 
     if (user_id <= 0) return 0;
-    if (user_id >= state->team_map_size) return 0;
+    if (user_id >= state->team_map_size) extend_team_map(state, user_id);
     if (!(te = get_entry(state, user_id, 0))) return 0;
     if (te == (struct team_extra*) ~(size_t) 0) return 0;
     int count = te->clar_uuids_size;
