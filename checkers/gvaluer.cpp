@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -68,6 +68,7 @@ static bool marked_flag;
 static bool user_score_flag;
 static bool interactive_flag;
 static bool rejudge_flag;
+static int locale_id = 0;
 
 static int parse_status(const string &str)
 {
@@ -621,6 +622,16 @@ main(int argc, char *argv[])
     if (getenv("EJUDGE_MARKED")) marked_flag = true;
     if (getenv("EJUDGE_INTERACTIVE")) interactive_flag = true;
     if (getenv("EJUDGE_REJUDGE")) rejudge_flag = true;
+    {
+        char *ls = getenv("EJUDGE_LOCALE");
+        if (ls) {
+            try {
+                locale_id = stoi(ls);
+            } catch (...) {
+            }
+            if (locale_id < 0) locale_id = 0;
+        }
+    }
 
     string configpath = selfdir + "/valuer.cfg";
     ConfigParser parser;
@@ -646,9 +657,15 @@ main(int argc, char *argv[])
         } else {
             if (test_num < g->get_last() && !g->get_offline()) {
                 char buf[1024];
-                snprintf(buf, sizeof(buf), "Тестирование на тестах %d-%d не выполнялось, "
-                         "так как тест %d не пройден, и оценка за группу тестов %s - 0 баллов.\n",
-                         test_num + 1, g->get_last(), test_num, g->get_group_id().c_str());
+                if (locale_id == 1) {
+                    snprintf(buf, sizeof(buf), "Тестирование на тестах %d-%d не выполнялось, "
+                             "так как тест %d не пройден, и оценка за группу тестов %s - 0 баллов.\n",
+                             test_num + 1, g->get_last(), test_num, g->get_group_id().c_str());
+                } else {
+                    snprintf(buf, sizeof(buf), "Testing on tests %d-%d has not been performed, "
+                             "as test %d has not passed, and test group '%s' score is 0.\n",
+                             test_num + 1, g->get_last(), test_num, g->get_group_id().c_str());
+                }
                 g->set_comment(string(buf));
             }
             test_num = g->get_last() + 1;
@@ -662,15 +679,27 @@ main(int argc, char *argv[])
         while ((g = parser.find_group(test_num)) && !g->meet_requirements(parser, gg)) {
             if (!g->get_offline()) {
                 char buf[1024];
-                snprintf(buf, sizeof(buf), "Тестирование на тестах %d-%d не выполнялось, "
-                         "так как не пройдена одна из требуемых групп %s.\n",
-                         g->get_first(), g->get_last(), gg->get_group_id().c_str());
+                if (locale_id == 1) {
+                    snprintf(buf, sizeof(buf), "Тестирование на тестах %d-%d не выполнялось, "
+                             "так как не пройдена одна из требуемых групп %s.\n",
+                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
+                } else {
+                    snprintf(buf, sizeof(buf), "Testing on tests %d-%d has not been performed, "
+                             "as one of the required groups '%s' has not passed.\n",
+                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
+                }
                 g->set_comment(string(buf));
             } else if (g->get_offline() && !gg->get_offline()) {
                 char buf[1024];
-                snprintf(buf, sizeof(buf), "Тестирование на тестах %d-%d не будет выполняться после окончания тура, "
-                         "так как не пройдена одна из требуемых групп %s.\n",
-                         g->get_first(), g->get_last(), gg->get_group_id().c_str());
+                if (locale_id == 1) {
+                    snprintf(buf, sizeof(buf), "Тестирование на тестах %d-%d не будет выполняться после окончания тура, "
+                             "так как не пройдена одна из требуемых групп %s.\n",
+                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
+                } else {
+                    snprintf(buf, sizeof(buf), "Testing on tests %d-%d will not be performed after the tour finish, "
+                             "as one of the required groups '%s' has not passed.\n",
+                             g->get_first(), g->get_last(), gg->get_group_id().c_str());
+                }
                 g->set_comment(string(buf));
             }
             test_num = g->get_last() + 1;
@@ -710,8 +739,13 @@ main(int argc, char *argv[])
         }
         int group_score = g.calc_score();
         if (g.get_stat_to_judges()) {
-            fprintf(fjcmt, "Группа тестов %s: тесты %d-%d: балл %d\n",
-                    g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
+            if (locale_id == 1) {
+                fprintf(fjcmt, "Группа тестов %s: тесты %d-%d: балл %d\n",
+                        g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
+            } else {
+                fprintf(fjcmt, "Test group '%s': tests %d-%d: score %d\n",
+                        g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
+            }
 
         }
         if (g.get_offline()) {
