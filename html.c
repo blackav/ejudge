@@ -1453,7 +1453,7 @@ do_write_kirov_standings(
         if (prob->score_latest > 0) {
           // score best, actually
           if (run_score > prob_score[up_ind]) {
-            full_sol[up_ind] = 1;
+            full_sol[up_ind] = 0;
             prob_score[up_ind] = run_score;
           }
         } else {
