@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1430,9 +1430,19 @@ do_write_kirov_standings(
       if (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0) run_status = RUN_PARTIAL;
       switch (run_status) {
       case RUN_OK:
-        full_sol[up_ind] = 1;
+        if (prob->score_latest > 0) {
+          // score best, actually
+          if (run_score > prob_score[up_ind]) {
+            full_sol[up_ind] = 1;
+            prob_score[up_ind] = run_score;
+          } else if (run_score == prob_score[up_ind]) {
+            full_sol[up_ind] = 1;
+          }
+        } else {
+          full_sol[up_ind] = 1;
+          prob_score[up_ind] = run_score;
+        }
         trans_num[up_ind] = 0;
-        prob_score[up_ind] = run_score;
         att_num[up_ind]++;
         if (global->stand_enable_penalty && prob->ignore_penalty <= 0) {
           penalty[up_ind] += sec_to_min(global->rounding_mode, pe->time - start_time);
@@ -1440,8 +1450,16 @@ do_write_kirov_standings(
         //if (run_score > prob->full_score) run_score = prob->full_score;
         break;
       case RUN_PARTIAL:
-        prob_score[up_ind] = run_score;
-        full_sol[up_ind] = 0;
+        if (prob->score_latest > 0) {
+          // score best, actually
+          if (run_score > prob_score[up_ind]) {
+            full_sol[up_ind] = 1;
+            prob_score[up_ind] = run_score;
+          }
+        } else {
+          prob_score[up_ind] = run_score;
+          full_sol[up_ind] = 0;
+        }
         trans_num[up_ind] = 0;
         att_num[up_ind]++;
         if (global->stand_enable_penalty && prob->ignore_penalty <= 0) {
