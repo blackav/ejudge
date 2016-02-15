@@ -110,6 +110,8 @@ SCRIPTS_IN = \
  gccgo-version.in\
  pasabc-linux.in\
  pasabc-linux-version.in\
+ mars.in\
+ mars-version.in\
  runvg.in\
  runjava.in\
  runmono.in\

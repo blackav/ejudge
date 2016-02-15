@@ -1,0 +1,89 @@
+#!/bin/sh
+# Copyright (c) 2016 Alexander Chernov <cher@ejudge.ru>
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+common_config() {
+  echo 'long_name="MARS MIPS Simulator"'
+  echo 'src_sfx=".asm"'
+  echo 'arch="linux-shared"'
+  echo 'insecure=1'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'MARSPATH=/bin/false'
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && mars="$2"
+  [ "${mars}" = "" ] && mars="mars-simulator"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether MARS is available..." >&2
+  export MARS_HELP=1
+  "${mars}" >/dev/null 2>&1 || failure
+  version=`"${mars}" | head -1 | gawk '{ print $2; }'` || failure
+  [ "${version}" != "" ] || failure
+  MARSPATH=`which "${mars}"` || failure
+  [ "${MARSPATH}" != "" ] || failure
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'MARSPATH="'"${MARSPATH}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${MARSPATH}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "MARS MIPS Simulator [http://courses.missouristate.edu/KenVollmar/MARS]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/mars.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  MARSPATH="mars-simulator"
+fi
+
+if [ x"${MARSPATH}" = x -o x"${MARSPATH}" = x/bin/false ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${MARSPATH}"
+    exit 0
+fi
+
+export MARS_HELP=1
+
+"${MARSPATH}" 2>/dev/null >/dev/null || exit 1
+    
+[ x"$1" = x-f ] && echo -n "MARS "
+
+"${MARSPATH}" | head -1 | gawk '{ print $2 }'
