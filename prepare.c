@@ -457,6 +457,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(stand_name, "s"),
   PROBLEM_PARAM(stand_column, "s"),
   PROBLEM_PARAM(internal_name, "s"),
+  PROBLEM_PARAM(problem_dir, "S"),
   PROBLEM_PARAM(test_dir, "s"),
   PROBLEM_PARAM(test_sfx, "s"),
   PROBLEM_PARAM(corr_dir, "s"),
@@ -1049,6 +1050,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
 
   prepare_free_group_dates(&p->gsd);
   prepare_free_group_dates(&p->gdl);
+  xfree(p->problem_dir);
   xfree(p->tscores);
   xfree(p->x_score_tests);
   xfree(p->test_checker_cmd);
@@ -5408,7 +5410,9 @@ prepare_copy_problem(const struct section_problem_data *in)
 
   memmove(out, in, sizeof(*out));
 
-  // clear the pointers
+  if (in->problem_dir) {
+    out->problem_dir = xstrdup(in->problem_dir);
+  }
   out->ntests = 0;
   out->tscores = 0;
   out->x_score_tests = 0;
@@ -6331,6 +6335,23 @@ get_advanced_layout_path(
   path_t path1;
   const unsigned char *prob_name;
 
+  if (prob && prob->problem_dir && prob->problem_dir[0] == '/') {
+    if (!entry) {
+      if (variant < 0 || prob->variant_num <= 0) {
+        snprintf(buf, bufsize, "%s", prob->problem_dir);
+      } else {
+        snprintf(buf, bufsize, "%s-%d", prob->problem_dir, variant);
+      }
+    } else {
+      if (variant < 0 || prob->variant_num <= 0) {
+        snprintf(buf, bufsize, "%s/%s", prob->problem_dir, entry);
+      } else {
+        snprintf(buf, bufsize, "%s-%d/%s", prob->problem_dir, variant, entry);
+      }
+    }
+    return buf;
+  }
+
   if (global->problems_dir[0] && os_IsAbsolutePath(global->problems_dir)) {
     snprintf(path1, sizeof(path1), "%s", global->problems_dir);
   } else if (global->problems_dir[0]) {
@@ -6345,7 +6366,9 @@ get_advanced_layout_path(
   }
 
   prob_name = prob->short_name;
-  if (prob->internal_name[0]) {
+  if (prob->problem_dir && prob->problem_dir[0]) {
+    prob_name = prob->problem_dir;
+  } else if (prob->internal_name[0]) {
     prob_name = prob->internal_name;
   }
 

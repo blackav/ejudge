@@ -956,6 +956,8 @@ struct section_problem_data
   unsigned char group_name[64];
   /** internal problem name */
   unsigned char internal_name[32];
+  /** problem directory (relative to problems or absolute) */
+  unsigned char *problem_dir;
   /** directory with tests */
   path_t test_dir;
   /** test files suffix */
