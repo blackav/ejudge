@@ -436,6 +436,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_stand_column] = { CNTSPROB_stand_column, 'S', XSIZE(struct section_problem_data, stand_column), "stand_column", XOFFSET(struct section_problem_data, stand_column) },
   [CNTSPROB_group_name] = { CNTSPROB_group_name, 'S', XSIZE(struct section_problem_data, group_name), "group_name", XOFFSET(struct section_problem_data, group_name) },
   [CNTSPROB_internal_name] = { CNTSPROB_internal_name, 'S', XSIZE(struct section_problem_data, internal_name), "internal_name", XOFFSET(struct section_problem_data, internal_name) },
+  [CNTSPROB_problem_dir] = { CNTSPROB_problem_dir, 's', XSIZE(struct section_problem_data, problem_dir), "problem_dir", XOFFSET(struct section_problem_data, problem_dir) },
   [CNTSPROB_test_dir] = { CNTSPROB_test_dir, 'S', XSIZE(struct section_problem_data, test_dir), "test_dir", XOFFSET(struct section_problem_data, test_dir) },
   [CNTSPROB_test_sfx] = { CNTSPROB_test_sfx, 'S', XSIZE(struct section_problem_data, test_sfx), "test_sfx", XOFFSET(struct section_problem_data, test_sfx) },
   [CNTSPROB_corr_dir] = { CNTSPROB_corr_dir, 'S', XSIZE(struct section_problem_data, corr_dir), "corr_dir", XOFFSET(struct section_problem_data, corr_dir) },

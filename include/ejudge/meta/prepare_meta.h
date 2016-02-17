@@ -396,6 +396,7 @@ enum
   CNTSPROB_stand_column,
   CNTSPROB_group_name,
   CNTSPROB_internal_name,
+  CNTSPROB_problem_dir,
   CNTSPROB_test_dir,
   CNTSPROB_test_sfx,
   CNTSPROB_corr_dir,
