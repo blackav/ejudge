@@ -2263,6 +2263,7 @@ runlog_check(
           nerr++;
           continue;
         }
+        /*
         if (stop_time && e->time > stop_time) {
           check_msg(1, ferr,
                     "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is greater than contest stop %ld",
@@ -2270,6 +2271,7 @@ runlog_check(
           nerr++;
           continue;
         }
+        */
         v->status = V_REAL_USER;
       }
       break;
