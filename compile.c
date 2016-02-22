@@ -680,8 +680,6 @@ handle_packet(
       memcpy(full_s + header_z + src_z, footer_s, footer_z);
     }
     full_s[full_z] = 0;
-    xfree(header_s); header_s = NULL; header_z = 0;
-    xfree(footer_s); footer_s = NULL; footer_z = 0;
 
     unsigned char test_src_name[PATH_MAX];
     snprintf(test_src_name, sizeof(test_src_name), "%06d_%03d%s", req->run_id, serial, lang->src_sfx);
@@ -692,6 +690,8 @@ handle_packet(
       testinfo_free(tinf);
       xfree(full_s);
       status = RUN_CHECK_FAILED;
+      xfree(header_s); header_s = NULL; header_z = 0;
+      xfree(footer_s); footer_s = NULL; footer_z = 0;
       continue;
     }
     xfree(full_s); full_s = NULL; full_z = 0;
@@ -722,8 +722,83 @@ handle_packet(
       if (cur_status == RUN_CHECK_FAILED) {
         status = RUN_CHECK_FAILED;
       } else if (cur_status == RUN_COMPILE_ERR) {
-        if (status == RUN_OK || status == RUN_STYLE_ERR) { 
-          status = RUN_COMPILE_ERR;
+        if (tinf && tinf->compiler_must_fail > 0 && tinf->source_stub) {
+          unsigned char source_stub_path[PATH_MAX];
+          if (req->lang_header) {
+            snprintf(source_stub_path, sizeof(source_stub_path), "%s/%s.%s%s",
+                     req->header_dir, tinf->source_stub, lang->short_name, lang->src_sfx);
+          } else {
+            snprintf(source_stub_path, sizeof(source_stub_path), "%s/%s%s", req->header_dir, tinf->source_stub, lang->src_sfx);
+          }
+          if (stat(source_stub_path, &stb) < 0) {
+            fprintf(log_f, "source stub file '%s' does not exist: %s\n", source_stub_path, strerror(errno));
+            status = RUN_CHECK_FAILED;
+          } else if (!S_ISREG(stb.st_mode)) {
+            fprintf(log_f, "source stub file '%s' is not regular\n", source_stub_path);
+            status = RUN_CHECK_FAILED;
+          } else if (access(source_stub_path, R_OK) < 0) {
+            fprintf(log_f, "source stub file '%s' is not readable: %s\n", source_stub_path, strerror(errno));
+            status = RUN_CHECK_FAILED;
+          } else {
+            char *source_stub_s = NULL;
+            size_t source_stub_z = 0;
+            if (generic_read_file(&source_stub_s, 0, &source_stub_z, 0, NULL, source_stub_path, "") < 0) {
+              fprintf(log_f, "failed to read file '%s'\n", source_stub_path);
+              status = RUN_CHECK_FAILED;
+            } else {
+              xfree(source_stub_s); source_stub_s = NULL; source_stub_z = 0;
+
+              full_z = header_z + source_stub_z + footer_z;
+              full_s = xmalloc(full_z + 1);
+              if (header_s && header_z > 0) {
+                memcpy(full_s, header_s, header_z);
+              }
+              memcpy(full_s + header_z, source_stub_s, source_stub_z);
+              if (footer_s && footer_z > 0) {
+                memcpy(full_s + header_z + source_stub_z, footer_s, footer_z);
+              }
+              full_s[full_z] = 0;
+
+              if (generic_write_file(full_s, full_z, 0, NULL, test_src_path, NULL) < 0) {
+                fprintf(log_f, "failed to write full source file '%s'\n", test_src_path);
+                status = RUN_CHECK_FAILED;
+              } else {
+                cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf);
+
+                if (cur_status == RUN_CHECK_FAILED) {
+                  status = RUN_CHECK_FAILED;
+                } else if (cur_status == RUN_COMPILE_ERR) {
+                  if (status == RUN_OK || status == RUN_STYLE_ERR) { 
+                    status = RUN_COMPILE_ERR;
+                  }
+                } else if (cur_status != RUN_OK) {
+                  fprintf(log_f, "invalid status %d returned from invoke_compiler\n", cur_status);
+                  status = RUN_CHECK_FAILED;
+                } else {
+                  if (lstat(test_exe_path, &stb) < 0) {
+                    fprintf(log_f, "output file '%s' does not exist: %s\n", test_exe_path, strerror(errno));
+                    status = RUN_CHECK_FAILED;
+                  } else if (!S_ISREG(stb.st_mode)) {
+                    fprintf(log_f, "output file '%s' is not regular\n", test_exe_path);
+                    status = RUN_CHECK_FAILED;
+                  } else if (access(test_exe_path, X_OK) < 0) {
+                    fprintf(log_f, "output file '%s' is not executable: %s\n", test_exe_path, strerror(errno));
+                    status = RUN_CHECK_FAILED;
+                  } else {
+                    if (zf->ops->add_file(zf, test_exe_name, test_exe_path) < 0) {
+                      fprintf(log_f, "cannot add file '%s' to zip archive\n", test_exe_path);
+                      status = RUN_CHECK_FAILED;
+                    }
+                  }
+                }
+              }
+              xfree(full_s); full_s = NULL; full_z = 0;
+            }
+          }
+        } else {
+          if (status == RUN_OK || status == RUN_STYLE_ERR) { 
+            status = RUN_COMPILE_ERR;
+          }
         }
       } else if (cur_status != RUN_OK) {
         fprintf(log_f, "invalid status %d returned from invoke_compiler\n", cur_status);
@@ -739,6 +814,11 @@ handle_packet(
         } else if (access(test_exe_path, X_OK) < 0) {
           fprintf(log_f, "output file '%s' is not executable: %s\n", test_exe_path, strerror(errno));
           status = RUN_CHECK_FAILED;
+        } else if (tinf && tinf->compiler_must_fail > 0) {
+          if (status == RUN_OK || status == RUN_STYLE_ERR) { 
+            status = RUN_COMPILE_ERR;
+          }
+          fprintf(log_f, "compiler must fail on test %d, but compilation was successful\n", serial);
         } else {
           if (zf->ops->add_file(zf, test_exe_name, test_exe_path) < 0) {
             fprintf(log_f, "cannot add file '%s' to zip archive\n", test_exe_path);
@@ -747,6 +827,8 @@ handle_packet(
         }
       }
     }
+    xfree(header_s); header_s = NULL; header_z = 0;
+    xfree(footer_s); footer_s = NULL; footer_z = 0;
   }
 
   rpl->status = status;
