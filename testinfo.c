@@ -466,9 +466,12 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
     pt->style_checker_env_v = (char**) cmd.v;
     memset(&cmd, 0, sizeof(cmd));    
   } else if (!strcmp(name_buf, "comment")
-             || !strcmp(name_buf, "team_comment")) {
+             || !strcmp(name_buf, "team_comment")
+             || !strcmp(name_buf, "source_stub")) {
     if (!strcmp(name_buf, "comment")) {
       ppval = (unsigned char**) ((void*) &pt->comment);
+    } else if (!strcmp(name_buf, "source_stub")) {
+      ppval = (unsigned char**) ((void*) &pt->source_stub);
     } else {
       ppval = (unsigned char**) ((void*)&pt->team_comment);
     }
@@ -514,6 +517,16 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
         FAIL(TINF_E_INVALID_VALUE);
     }
     pt->enable_subst = x;
+  } else if (!strcmp(name_buf, "compiler_must_fail")) {
+    if (cmd.u < 1) {
+      x = 1;
+    } else {
+      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
+      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
+          || x < 0 || x > 1)
+        FAIL(TINF_E_INVALID_VALUE);
+    }
+    pt->compiler_must_fail = x;
   } else {
     FAIL(TINF_E_INVALID_VAR_NAME);
   }
@@ -608,6 +621,7 @@ testinfo_free(testinfo_t *pt)
   }
   if (pt->comment) free(pt->comment);
   if (pt->team_comment) free(pt->team_comment);
+  if (pt->source_stub) free(pt->source_stub);
   memset(pt, 0, sizeof(*pt));
 }
 

@@ -49,10 +49,12 @@ struct testinfo_struct
   int check_stderr;
   int disable_stderr;
   int enable_subst;
+  int compiler_must_fail;
   int cmd_argc;
   char **cmd_argv;
   char *comment;
   char *team_comment;
+  char *source_stub;
   int env_u;
   char **env_v;
 
