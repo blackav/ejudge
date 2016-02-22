@@ -33,7 +33,7 @@ extern int (*testinfo_parse_func)(const char*,testinfo_t*,struct testinfo_subst_
 extern const char *(*testinfo_strerror_func)(int);
 //extern testinfo_t test_info;
 extern testinfo_t *get_test_info_ptr(void);
-#define test_info (get_test_info_ptr())
+#define test_info (*get_test_info_ptr())
 #else
 struct testinfo_struct;
 struct testinfo_subst_handler;
