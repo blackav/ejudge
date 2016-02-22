@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1388,10 +1388,13 @@ run_set_entry(
         err("run_set_entry: %d: timestamp < virtual start_time", run_id);
         return -1;
       }
+      // allow runs after official stop time
+      /*
       if (stop_time && te.time > stop_time) {
         err("run_set_entry: %d: timestamp > virtual stop_time", run_id);
         return -1;
       }
+      */
     } else {
       stop_time = state->head.stop_time;
       if (!stop_time && state->head.duration > 0)
@@ -1400,10 +1403,13 @@ run_set_entry(
         err("run_set_entry: %d: timestamp < start_time", run_id);
         return -1;
       }
+      // allow runs after official stop time
+      /*
       if (stop_time && te.time > stop_time) {
         err("run_set_entry: %d: timestamp > stop_time", run_id);
         return -1;
       }
+      */
     }
   }
 
