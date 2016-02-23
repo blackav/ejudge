@@ -3,7 +3,7 @@
 #ifndef __NEW_SERVER_H__
 #define __NEW_SERVER_H__
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -660,9 +660,14 @@ void ns_footer(
 
 const unsigned char *ns_unparse_role(int role);
 
-void
-ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
-               int action, int run_id, int test_num);
+int
+ns_write_tests(
+        const serve_state_t cs,
+        FILE *fout,
+        FILE *log_f,
+        int action,
+        int run_id,
+        int test_num);
 
 int
 ns_write_passwords(FILE *fout, FILE *log_f,

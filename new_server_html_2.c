@@ -2408,9 +2408,14 @@ write_from_archive(
   xfree(text);
 }
 
-void
-ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
-               int action, int run_id, int test_num)
+int
+ns_write_tests(
+        const serve_state_t cs,
+        FILE *fout,
+        FILE *log_f,
+        int action,
+        int run_id,
+        int test_num)
 {
   int rep_flag;
   path_t rep_path;
@@ -2421,46 +2426,40 @@ ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
   struct run_entry re;
   const struct section_problem_data *prb = 0;
   const struct testing_report_test *t = 0;
+  int retval = 0;
 
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)
       || run_get_entry(cs->runlog_state, run_id, &re) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
-    goto done;
+    FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
 
   if ((rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re)) < 0
       && (rep_flag = serve_make_report_read_path(cs, rep_path, sizeof(rep_path), &re)) < 0) {
-    ns_error(log_f, NEW_SRV_ERR_REPORT_NONEXISTANT);
-    goto done;
+    FAIL(NEW_SRV_ERR_REPORT_NONEXISTANT);
   }
 
   if (generic_read_file(&rep_text, 0, &rep_len, rep_flag,0,rep_path, "") < 0) {
-    ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
-    goto done;
+    FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
   }
   if (get_content_type(rep_text, &start_ptr) != CONTENT_TYPE_XML) {
     // we expect the master log in XML format
-    ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
-    goto done;
+    FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
   }
 
   if (!(r = testing_report_parse_xml(start_ptr))) {
-    ns_error(log_f, NEW_SRV_ERR_REPORT_UNAVAILABLE);
-    goto done;
+    FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
   }
   xfree(rep_text); rep_text = 0;
 
   if (test_num <= 0 || test_num > r->run_tests) { 
-    ns_error(log_f, NEW_SRV_ERR_INV_TEST);
-    goto done;
+    FAIL(NEW_SRV_ERR_INV_TEST);
   }
 
   t = r->tests[test_num - 1];
 
   if (re.prob_id <= 0 || re.prob_id > cs->max_prob
       || !(prb = cs->probs[re.prob_id])) {
-    ns_error(log_f, NEW_SRV_ERR_INV_PROB_ID);
-    goto done;
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
 
   /*
@@ -2470,15 +2469,13 @@ ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
   }
   */
   if (prb->type != PROB_TYPE_STANDARD && prb->type != PROB_TYPE_OUTPUT_ONLY) {
-    ns_error(log_f, NEW_SRV_ERR_TEST_UNAVAILABLE);
-    goto done;
+    FAIL(NEW_SRV_ERR_TEST_UNAVAILABLE);
   }
 
   if ((prb->variant_num > 0
        && (r->variant <= 0 || r->variant > prb->variant_num))
       || (prb->variant_num <= 0 && r->variant > 0)) { 
-    ns_error(log_f, NEW_SRV_ERR_INV_VARIANT);
-    goto done;
+    FAIL(NEW_SRV_ERR_INV_VARIANT);
   }
 
   switch (action) {
@@ -2489,6 +2486,9 @@ ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
                            t->has_input_digest, t->input_digest);
     goto done;
   case NEW_SRV_ACTION_VIEW_TEST_ANSWER:
+    if (prb->use_corr <= 0) {
+      FAIL(NEW_SRV_ERR_TEST_UNAVAILABLE);
+    }
     write_from_contest_dir(log_f, fout, prb->use_corr, r->correct_available,
                            test_num, r->variant,
                            cs->global, prb, DFLT_P_CORR_DIR,
@@ -2496,6 +2496,9 @@ ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
                            t->has_correct_digest, t->correct_digest);
     goto done;
   case NEW_SRV_ACTION_VIEW_TEST_INFO:
+    if (prb->use_info <= 0) {
+      FAIL(NEW_SRV_ERR_TEST_UNAVAILABLE);
+    }
     write_from_contest_dir(log_f, fout, prb->use_info, r->info_available,
                            test_num, r->variant,
                            cs->global, prb, DFLT_P_INFO_DIR,
@@ -2516,9 +2519,11 @@ ns_write_tests(const serve_state_t cs, FILE *fout, FILE *log_f,
     goto done;
   }
 
- done:
+cleanup:
+done:
   xfree(rep_text);
   testing_report_free(r);
+  return retval;
 }
 
 static void

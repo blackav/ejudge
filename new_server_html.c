@@ -9657,8 +9657,8 @@ unpriv_view_test(
     FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
   }    
 
-  // FIXME: report errors...
-  ns_write_tests(cs, fout, phr->log_f, phr->action, run_id, test_num);
+  retval = ns_write_tests(cs, fout, phr->log_f, phr->action, run_id, test_num);
+  if (retval < 0) goto fail;
 
 cleanup:
   return;
