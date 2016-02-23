@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
 #include "ejudge/archive_paths.h"
@@ -21,6 +20,7 @@
   int user_mode = 0;
   unsigned char title[1024];
   int enable_main_menu = 0;
+  int accepting_mode = 0;
 
   if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0)
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
@@ -74,6 +74,10 @@
       FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
     }
     content_type = get_content_type(rep_text, &start_ptr);
+  }
+
+  if (user_mode && global->score_system == SCORE_OLYMPIAD) {
+    accepting_mode = cs->accepting_mode;
   }
 
   if (user_mode) {
@@ -146,7 +150,9 @@
                                "", "b1", 0);
       }
     } else {
-      if (user_mode) {
+      if (user_mode && global->score_system == SCORE_OLYMPIAD && accepting_mode) {
+        write_xml_team_accepting_report(out_f, phr, start_ptr, run_id, &re, prob, cnts->exam_mode, "b1");
+      } else if (user_mode) {
         write_xml_team_testing_report(cs, prob, out_f, phr, 0, re.is_marked, re.token_flags, start_ptr, "b1");
       } else {
         write_xml_testing_report(out_f, phr, 0, start_ptr, "b1", 0);
