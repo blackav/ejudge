@@ -746,18 +746,26 @@ handle_packet(
               fprintf(log_f, "failed to read file '%s'\n", source_stub_path);
               status = RUN_CHECK_FAILED;
             } else {
-              xfree(source_stub_s); source_stub_s = NULL; source_stub_z = 0;
+              // ignore header and footer for now
+              if (1) {
+                full_z = source_stub_z;
+                full_s = xmalloc(full_z + 1);
+                memcpy(full_s, source_stub_s, source_stub_z);
+                full_s[full_z] = 0;
+              } else {
+                full_z = header_z + source_stub_z + footer_z;
+                full_s = xmalloc(full_z + 1);
+                if (header_s && header_z > 0) {
+                  memcpy(full_s, header_s, header_z);
+                }
+                memcpy(full_s + header_z, source_stub_s, source_stub_z);
+                if (footer_s && footer_z > 0) {
+                  memcpy(full_s + header_z + source_stub_z, footer_s, footer_z);
+                }
+                full_s[full_z] = 0;
+              }
 
-              full_z = header_z + source_stub_z + footer_z;
-              full_s = xmalloc(full_z + 1);
-              if (header_s && header_z > 0) {
-                memcpy(full_s, header_s, header_z);
-              }
-              memcpy(full_s + header_z, source_stub_s, source_stub_z);
-              if (footer_s && footer_z > 0) {
-                memcpy(full_s + header_z + source_stub_z, footer_s, footer_z);
-              }
-              full_s[full_z] = 0;
+              xfree(source_stub_s); source_stub_s = NULL; source_stub_z = 0;
 
               if (generic_write_file(full_s, full_z, 0, NULL, test_src_path, NULL) < 0) {
                 fprintf(log_f, "failed to write full source file '%s'\n", test_src_path);
