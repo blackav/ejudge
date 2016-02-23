@@ -115,9 +115,9 @@
     }
 %>
 <%
-    if (start_time > 0 && stop_time <= 0 && fog_start_time > 0) {
+    if (start_time > 0 && stop_time <= 0 && fog_start_time > 0 && global->score_system != SCORE_OLYMPIAD) {
 %><tr><td class="b0"><s:_>Standings freeze time</s:_>:</td><td class="b0"><s:v value="fog_start_time" /></td></tr><%
-    } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0
+    } else if (stop_time > 0 && duration > 0 && global->board_fog_time > 0 && global->score_system != SCORE_OLYMPIAD
                && global->board_unfog_time > 0 && !cs->standings_updated
                && cs->current_time < stop_time + global->board_unfog_time) {
 %><tr><td class="b0"><s:_>Standings unfreeze time</s:_>:</td><td class="b0"><s:v value="(time_t)(stop_time + global->board_unfog_time)" /></td></tr><%
