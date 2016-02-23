@@ -9589,6 +9589,7 @@ unpriv_view_test(
 {
   const serve_state_t cs = extra->serve_state;
   const struct section_problem_data *prob = 0;
+  const struct section_global_data *global = cs->global;
   int run_id, test_num, n;
   const unsigned char *s = 0;
   struct run_entry re;
@@ -9604,6 +9605,10 @@ unpriv_view_test(
   }
   if (re.prob_id <= 0 || re.prob_id > cs->max_prob || !(prob = cs->probs[re.prob_id])) {
     FAIL2(NEW_SRV_ERR_INV_PROB_ID);
+  }
+
+  if (global->score_system == SCORE_OLYMPIAD && prob->tests_to_accept > 0 && test_num <= prob->tests_to_accept && prob->team_enable_rep_view > 0) {
+    enable_rep_view = 1;
   }
 
   // report view is explicitly disabled by the current contest setting
