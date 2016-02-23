@@ -3006,9 +3006,7 @@ read_checker_output:;
   file_size = generic_file_size(0, check_out_path, 0);
   if (file_size >= 0) {
     cur_info->chk_out_size = file_size;
-    if (srgp->enable_full_archive <= 0) {
-      generic_read_file(&cur_info->chk_out, 0, 0, 0, 0, check_out_path, "");
-    }
+    generic_read_file(&cur_info->chk_out, 0, 0, 0, 0, check_out_path, "");
     if (far) {
       snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.c", cur_test);
       full_archive_append_file(far, arch_entry_name, 0, check_out_path);
@@ -3361,9 +3359,7 @@ check_output_only(
   file_size = generic_file_size(0, check_out_path, 0);
   if (file_size >= 0) {
     cur_info->chk_out_size = file_size;
-    if (srgp->enable_full_archive <= 0) {
-      generic_read_file(&cur_info->chk_out, 0, 0, 0, 0, check_out_path, "");
-    }
+    generic_read_file(&cur_info->chk_out, 0, 0, 0, 0, check_out_path, "");
     if (far) {
       snprintf(arch_entry_name, sizeof(arch_entry_name), "%06d.c", cur_test);
       full_archive_append_file(far, arch_entry_name, 0, check_out_path);
