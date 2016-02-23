@@ -5238,7 +5238,7 @@ priv_view_test(FILE *fout,
 
   if (test_num <= 0) FAIL(NEW_SRV_ERR_INV_TEST);
 
-  ns_write_tests(cs, fout, log_f, phr->action, run_id, test_num);
+  retval = ns_write_tests(cs, fout, log_f, phr->action, run_id, test_num);
 
  cleanup:
   return retval;
