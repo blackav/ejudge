@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -309,7 +309,9 @@ super_html_read_serve(
       }
     }
     if (lang->compile_id <= 0) {
-      fprintf(flog, "Invalid compile_id\n");
+      fprintf(flog, "contest configuration file '%s' specifies language short name '%s' with id %d\n"
+              "but such language is not specified in compilation configuration file '%s'\n",
+              path, lang->short_name, lang->id, cs_conf_file);
       return -1;
     }
 
