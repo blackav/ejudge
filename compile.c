@@ -827,6 +827,10 @@ handle_packet(
             status = RUN_COMPILE_ERR;
           }
           fprintf(log_f, "compiler must fail on test %d, but compilation was successful\n", serial);
+          if (tinf->comment) {
+            fprintf(log_f, "possible reason:\n");
+            fprintf(log_f, "%s\n", tinf->comment);
+          }
         } else {
           if (zf->ops->add_file(zf, test_exe_name, test_exe_path) < 0) {
             fprintf(log_f, "cannot add file '%s' to zip archive\n", test_exe_path);
