@@ -376,7 +376,11 @@ invoke_compiler(
   }
   task_SetWorkingDir(tsk, working_dir);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
-  task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, 0777);
+  if (tinf && tinf->compiler_must_fail > 0) {
+    task_SetRedir(tsk, 1, TSR_FILE, "/dev/null", TSK_WRITE, 0777);
+  } else {
+    task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, 0777);
+  }
   task_SetRedir(tsk, 2, TSR_DUP, 1);
   if (lang->compile_real_time_limit > 0) {
     task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
@@ -717,6 +721,8 @@ handle_packet(
       }
     }
     if (cur_status == RUN_OK) {
+      fprintf(log_f, "=== compilation for test %d ===\n", serial);
+      fflush(log_f);
       cur_status = invoke_compiler(log_f, cs, lang, req, test_src_name, test_exe_name, working_dir, log_work_path, tinf);
       // valid statuses: RUN_OK, RUN_COMPILE_ERR, RUN_CHECK_FAILED
       if (cur_status == RUN_CHECK_FAILED) {
