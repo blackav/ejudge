@@ -698,12 +698,10 @@ setup_log_file(void)
 }
 
 extern int ej_bson_force_link_dummy;
-extern void ej_bson_parse_utc_datetime();
 
-static void *forced_symbols[] __attribute__((unused)) =
+static void *forced_symbols[] __attribute__((unused,used)) =
 {
   &ej_bson_force_link_dummy,
-  &ej_bson_parse_utc_datetime
 };
 
 int
