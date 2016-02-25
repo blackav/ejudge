@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -698,10 +698,12 @@ setup_log_file(void)
 }
 
 extern int ej_bson_force_link_dummy;
+extern void ej_bson_parse_utc_datetime();
 
 static void *forced_symbols[] __attribute__((unused)) =
 {
-  &ej_bson_force_link_dummy
+  &ej_bson_force_link_dummy,
+  &ej_bson_parse_utc_datetime
 };
 
 int
