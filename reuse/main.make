@@ -1,7 +1,6 @@
 # -*- mode: Makefile -*-
-# $Id$
 
-# Copyright (C) 2014 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2016 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,7 +13,11 @@
 # Lesser General Public License for more details.
 
 ifeq ($(ARCH), unix)
+ifdef RELEASE
+CFLAGS = -O2 -DNDEBUG -DRELEASE -Wall ${WERROR}
+else
 CFLAGS = -Wall $(WERROR)
+endif
 CFLAGSINT = -D_GNU_SOURCE -I../include -I.. -std=gnu99 $(NO_POINTER_SIGN) -g
 LDFLAGS = -Wall
 LDFLAGSINT = -std=gnu99 -g
