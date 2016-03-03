@@ -9720,7 +9720,7 @@ html_problem_selection(serve_state_t cs,
           // no such problem :(
           if (k > cs->max_prob) break;
           // this problem is not yet accepted or solved
-          if (!pinfo[k].solved_flag && !pinfo[k].accepted_flag) break;
+          if (!pinfo[k].solved_flag && !pinfo[k].accepted_flag && !pinfo[k].pr_flag) break;
         }
         if (prob->require[j]) continue;
       }
