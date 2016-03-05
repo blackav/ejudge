@@ -2,7 +2,7 @@
 #ifndef __TESTING_REPORT_XML_H__
 #define __TESTING_REPORT_XML_H__
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -44,7 +44,10 @@ struct testing_report_test
   int num;
   int status;
   int time;
+  int interactor_time;
   int real_time;
+  int checker_time;
+  int checker_real_time;
   int exit_code;
   int term_signal;
   int nominal_score;

@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -113,7 +113,10 @@ enum
   TR_A_EXIT_CODE,
   TR_A_TERM_SIGNAL,
   TR_A_TIME,
+  TR_A_INTERACTOR_TIME,
   TR_A_REAL_TIME,
+  TR_A_CHECKER_TIME,
+  TR_A_CHECKER_REAL_TIME,
   TR_A_NOMINAL_SCORE,
   TR_A_COMMENT,
   TR_A_TEAM_COMMENT,
@@ -203,7 +206,10 @@ static const char * const attr_map[] =
   [TR_A_EXIT_CODE] = "exit-code",
   [TR_A_TERM_SIGNAL] = "term-signal",
   [TR_A_TIME] = "time",
+  [TR_A_INTERACTOR_TIME] = "interactor-time",
   [TR_A_REAL_TIME] = "real-time",
+  [TR_A_CHECKER_TIME] = "checker-time",
+  [TR_A_CHECKER_REAL_TIME] = "checker-real-time",
   [TR_A_NOMINAL_SCORE] = "nominal-score",
   [TR_A_COMMENT] = "comment",
   [TR_A_TEAM_COMMENT] = "team-comment",
@@ -378,7 +384,10 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
   p->num = -1;
   p->status = -1;
   p->time = -1;
+  p->interactor_time = -1;
   p->real_time = -1;
+  p->checker_time = -1;
+  p->checker_real_time = -1;
   p->exit_code = -1;
   p->term_signal = -1;
   p->nominal_score = -1;
@@ -410,6 +419,14 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       }
       p->time = x;
       break;
+    case TR_A_INTERACTOR_TIME:
+      if (xml_attr_int(a, &x) < 0) goto failure;
+      if (x < 0) {
+        xml_err_attr_invalid(a);
+        goto failure;
+      }
+      p->interactor_time = x;
+      break;
     case TR_A_REAL_TIME:
       if (xml_attr_int(a, &x) < 0) goto failure;
       if (x < 0) {
@@ -417,6 +434,22 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
         goto failure;
       }
       p->real_time = x;
+      break;
+    case TR_A_CHECKER_TIME:
+      if (xml_attr_int(a, &x) < 0) goto failure;
+      if (x < 0) {
+        xml_err_attr_invalid(a);
+        goto failure;
+      }
+      p->checker_time = x;
+      break;
+    case TR_A_CHECKER_REAL_TIME:
+      if (xml_attr_int(a, &x) < 0) goto failure;
+      if (x < 0) {
+        xml_err_attr_invalid(a);
+        goto failure;
+      }
+      p->checker_real_time = x;
       break;
     case TR_A_MAX_MEMORY_USED:
       ulx = 0;
@@ -1593,8 +1626,17 @@ testing_report_unparse_xml(
       if (t->time >= 0) {
         fprintf(out, " %s=\"%d\"", attr_map[TR_A_TIME], t->time);
       }
+      if (t->interactor_time >= 0) {
+        fprintf(out, " %s=\"%d\"", attr_map[TR_A_INTERACTOR_TIME], t->interactor_time);
+      }
       if (r->real_time_available > 0 && t->real_time >= 0) {
         fprintf(out, " %s=\"%d\"", attr_map[TR_A_REAL_TIME], t->real_time);
+      }
+      if (t->checker_time >= 0) {
+        fprintf(out, " %s=\"%d\"", attr_map[TR_A_CHECKER_TIME], t->checker_time);
+      }
+      if (t->checker_real_time >= 0) {
+        fprintf(out, " %s=\"%d\"", attr_map[TR_A_CHECKER_REAL_TIME], t->checker_real_time);
       }
       if (r->max_memory_used_available > 0 && t->max_memory_used > 0) {
         fprintf(out, " %s=\"%lu\"", attr_map[TR_A_MAX_MEMORY_USED],
