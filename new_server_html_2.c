@@ -7538,15 +7538,21 @@ write_xml_testing_report(
     }
     if (t->interactor_time >= 0 || t->checker_time >= 0 || t->checker_real_time >= 0) {
       fprintf(f, "<u>--- Resource usage ---</u>\n");
-    }
-    if (t->interactor_time >= 0) {
-      fprintf(f, "Interactor CPU time (ms): %d\n", t->interactor_time);
-    }
-    if (t->checker_time >= 0) {
-      fprintf(f, "Checker CPU time (ms): %d\n", t->checker_time);
-    }
-    if (t->checker_real_time >= 0) {
-      fprintf(f, "Checker real time (ms): %d\n", t->checker_real_time);
+      if (t->time >= 0) {
+        fprintf(f, "CPU time (ms): %d\n", t->time);
+      }
+      if (t->real_time >= 0) {
+        fprintf(f, "Real time (ms): %d\n", t->real_time);
+      }
+      if (t->interactor_time >= 0) {
+        fprintf(f, "Interactor CPU time (ms): %d\n", t->interactor_time);
+      }
+      if (t->checker_time >= 0) {
+        fprintf(f, "Checker CPU time (ms): %d\n", t->checker_time);
+      }
+      if (t->checker_real_time >= 0) {
+        fprintf(f, "Checker real time (ms): %d\n", t->checker_real_time);
+      }
     }
   }
   fprintf(f, "</pre>");
