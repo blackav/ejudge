@@ -7536,6 +7536,18 @@ write_xml_testing_report(
       fprintf(f, "<a name=\"%dC\"></a>", t->num);
       html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
     }
+    if (t->interactor_time >= 0 || t->checker_time >= 0 || t->checker_real_time >= 0) {
+      fprintf(f, "<u>--- Resource usage ---</u>\n");
+    }
+    if (t->interactor_time >= 0) {
+      fprintf(f, "Interactor CPU time (ms): %d\n", t->interactor_time);
+    }
+    if (t->checker_time >= 0) {
+      fprintf(f, "Checker CPU time (ms): %d\n", t->checker_time);
+    }
+    if (t->checker_real_time >= 0) {
+      fprintf(f, "Checker real time (ms): %d\n", t->checker_real_time);
+    }
   }
   fprintf(f, "</pre>");
 
