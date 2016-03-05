@@ -33,7 +33,10 @@ struct testinfo
   int            score;         /* score gained for this test */
   int            max_score;     /* maximal score for this test */
   long           times;         /* execution time */
+  long           interactor_time; /* interactor CPU time */
   long           real_time;     /* execution real time */
+  long           checker_time;
+  long           checker_real_time;
   unsigned long  max_memory_used;
   char          *input;         /* the input */
   long           input_size;

@@ -318,8 +318,17 @@ generate_xml_report(
         }
       }
       trt->time = tests[i].times;
+      if (tests[i].interactor_time >= 0) {
+        trt->interactor_time = tests[i].interactor_time;
+      }
       if (tests[i].real_time >= 0 && has_real_time) {
         trt->real_time = tests[i].real_time;
+      }
+      if (tests[i].checker_time >= 0) {
+        trt->checker_time = tests[i].checker_time;
+      }
+      if (tests[i].checker_real_time >= 0) {
+        trt->checker_real_time = tests[i].checker_real_time;
       }
       if (tests[i].max_memory_used > 0) {
         trt->max_memory_used = tests[i].max_memory_used;
@@ -1900,6 +1909,9 @@ invoke_checker(
   task_Wait(tsk);
   task_Log(tsk, 0, LOG_INFO);
 
+  cur_info->checker_time = task_GetRunningTime(tsk);
+  cur_info->checker_real_time = task_GetRealTime(tsk);
+  
   if (task_IsTimeout(tsk)) {
     append_msg_to_log(check_out_path, "checker timeout (%ld ms)", task_GetRunningTime(tsk));
     err("checker timeout (%ld ms)", task_GetRunningTime(tsk));
@@ -2184,6 +2196,9 @@ run_one_test(
   cur_info = &tests->data[cur_test];
   ++tests->size;
 
+  cur_info->interactor_time = -1;
+  cur_info->checker_time = -1;
+  cur_info->checker_real_time = -1;
   cur_info->input_size = -1;
   cur_info->output_size = -1;
   cur_info->error_size = -1;
@@ -2835,6 +2850,7 @@ run_one_test(
     info("interactor CPU time = %ld, real time = %ld, used_vm_size = %ld",
          (long) task_GetRunningTime(tsk_int), (long) task_GetRealTime(tsk_int),
          (long) task_GetMemoryUsed(tsk_int));
+    cur_info->interactor_time = task_GetRunningTime(tsk_int);
     if (task_IsTimeout(tsk_int)) {
       append_msg_to_log(check_out_path, "interactor timeout");
       err("interactor timeout");
