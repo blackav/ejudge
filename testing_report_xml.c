@@ -1370,6 +1370,9 @@ testing_report_test_alloc(int num, int status)
   trt->error.orig_size = -1;
   trt->checker.size = -1;
   trt->checker.orig_size = -1;
+  trt->interactor_time = -1;
+  trt->checker_time = -1;
+  trt->checker_real_time = -1;
   return trt;
 }
 
