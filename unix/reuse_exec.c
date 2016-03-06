@@ -22,6 +22,7 @@
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
 #include "ejudge/exec.h"
+#include "ejudge/process_stats.h"
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -2430,6 +2431,33 @@ task_GetRealTime(tTask *tsk)
   millis = tsk->stop_time.tv_sec * 1000LL + (tsk->stop_time.tv_usec + 500)/ 1000;
   millis -= tsk->start_time.tv_sec * 1000LL + tsk->start_time.tv_usec / 1000;
   return (long) millis;
+}
+
+int
+task_GetProcessStats(tTask *tsk, struct ej_process_stats *pstats)
+{
+  task_init_module();
+  ASSERT(tsk);
+  if (tsk->state != TSK_SIGNALED && tsk->state != TSK_EXITED) return -1;
+
+  pstats->utime = (tsk->usage.ru_utime.tv_usec + 500) / 1000;
+  pstats->utime += tsk->usage.ru_utime.tv_sec * 1000;
+  pstats->stime = (tsk->usage.ru_stime.tv_usec + 500) / 1000;
+  pstats->stime += tsk->usage.ru_stime.tv_sec * 1000;
+
+  pstats->ptime = (tsk->usage.ru_utime.tv_usec + tsk->usage.ru_stime.tv_usec + 500) / 1000;
+  pstats->ptime += tsk->usage.ru_utime.tv_sec * 1000;
+  pstats->ptime += tsk->usage.ru_stime.tv_sec * 1000;
+
+  pstats->rtime = tsk->stop_time.tv_sec * 1000LL + (tsk->stop_time.tv_usec + 500)/ 1000;
+  pstats->rtime -= tsk->start_time.tv_sec * 1000LL + tsk->start_time.tv_usec / 1000;
+
+  pstats->maxvsz = tsk->used_vm_size;
+  pstats->maxrss = tsk->usage.ru_maxrss;
+  pstats->nvcsw = tsk->usage.ru_nvcsw;
+  pstats->nivcsw = tsk->usage.ru_nivcsw;
+
+  return 0;
 }
 
 /**

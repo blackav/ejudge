@@ -1,7 +1,7 @@
 #ifndef __REUSE_EXEC_H__
 #define __REUSE_EXEC_H__
 
-/* Copyright (C) 1998-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2016 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:26:50 cher> */
 
 /*
@@ -56,6 +56,8 @@ enum
 {
   TSK_FULL_RW = 0666
 };
+
+struct ej_process_stats;
 
 /* task descriptor structure, not exported */
 struct tTask;
@@ -117,6 +119,7 @@ int      task_ExitCode(tpTask);
 int      task_ErrorCode(tpTask, int *, int *);
 long     task_GetRunningTime(tpTask);
 long     task_GetRealTime(tpTask);
+int      task_GetProcessStats(tTask *tsk, struct ej_process_stats *pstats);
 void     task_Log(tpTask, int fac, int sev);
 int      task_IsAbnormal(tpTask);
 int      task_IsTimeout(tpTask);

@@ -1445,6 +1445,13 @@ task_GetMemoryUsed(tTask *tsk)
 }
 
 int
+task_GetProcessStats(tTask *tsk, struct ej_process_stats *pstats)
+{
+  memset(pstats, 0, sizeof(*pstats));
+  return -1;
+}
+
+int
 task_IsAbnormal(tTask *tsk)
 {
   ASSERT(tsk);
