@@ -7536,23 +7536,18 @@ write_xml_testing_report(
       fprintf(f, "<a name=\"%dC\"></a>", t->num);
       html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
     }
-    if (t->interactor_time >= 0 || t->checker_time >= 0 || t->checker_real_time >= 0) {
+    if (t->program_stats_str || t->interactor_stats_str || t->checker_stats_str) {
       fprintf(f, "<u>--- Resource usage ---</u>\n");
-      if (t->time >= 0) {
-        fprintf(f, "CPU time (ms): %d\n", t->time);
+      if (t->program_stats_str) {
+        fprintf(f, "program: %s\n", t->program_stats_str);
       }
-      if (t->real_time >= 0) {
-        fprintf(f, "Real time (ms): %d\n", t->real_time);
+      if (t->interactor_stats_str) {
+        fprintf(f, "interactor: %s\n", t->interactor_stats_str);
       }
-      if (t->interactor_time >= 0) {
-        fprintf(f, "Interactor CPU time (ms): %d\n", t->interactor_time);
+      if (t->checker_stats_str) {
+        fprintf(f, "checker: %s\n", t->checker_stats_str);
       }
-      if (t->checker_time >= 0) {
-        fprintf(f, "Checker CPU time (ms): %d\n", t->checker_time);
-      }
-      if (t->checker_real_time >= 0) {
-        fprintf(f, "Checker real time (ms): %d\n", t->checker_real_time);
-      }
+      fprintf(f, "\n");
     }
   }
   fprintf(f, "</pre>");
