@@ -5900,7 +5900,7 @@ priv_invoker_operation(
   const unsigned char *file = NULL, *s, *queue = NULL;
   opcap_t caps = 0;
 
-  if (opcaps_find(&phr->config->capabilities, phr->login, &caps) < 0) {
+  if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
   if (opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0)
