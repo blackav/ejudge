@@ -44,6 +44,7 @@
 #include "ejudge/osdeps.h"
 #include "ejudge/exec.h"
 #include "ejudge/logger.h"
+#include "ejudge/process_stats.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -333,6 +334,15 @@ generate_xml_report(
       if (tests[i].max_memory_used > 0) {
         trt->max_memory_used = tests[i].max_memory_used;
       }
+      if (tests[i].program_stats_str) {
+        trt->program_stats_str = xstrdup(tests[i].program_stats_str);
+      }
+      if (tests[i].interactor_stats_str) {
+        trt->interactor_stats_str = xstrdup(tests[i].interactor_stats_str);
+      }
+      if (tests[i].checker_stats_str) {
+        trt->checker_stats_str = xstrdup(tests[i].checker_stats_str);
+      }
       if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0) {
         trt->nominal_score = tests[i].max_score;
         trt->score = tests[i].score;
@@ -403,6 +413,25 @@ generate_xml_report(
   }
   testing_report_free(tr);
   return 0;
+}
+
+static unsigned char *
+get_process_stats_str(tpTask tsk)
+{
+  char *str_s = NULL;
+  size_t str_z = 0;
+  FILE *str_f = open_memstream(&str_s, &str_z);
+  struct ej_process_stats stats;
+  process_stats_init(&stats);
+  if (task_GetProcessStats(tsk, &stats) >= 0) {
+    process_stats_serialize(str_f, &stats);
+    fclose(str_f);
+    return str_s;
+  } else {
+    fclose(str_f);
+    free(str_s);
+    return NULL;
+  }
 }
 
 static int
@@ -1909,8 +1938,9 @@ invoke_checker(
   task_Wait(tsk);
   task_Log(tsk, 0, LOG_INFO);
 
-  cur_info->checker_time = task_GetRunningTime(tsk);
-  cur_info->checker_real_time = task_GetRealTime(tsk);
+  //cur_info->checker_time = task_GetRunningTime(tsk);
+  //cur_info->checker_real_time = task_GetRealTime(tsk);
+  cur_info->checker_stats_str = get_process_stats_str(tsk);
   
   if (task_IsTimeout(tsk)) {
     append_msg_to_log(check_out_path, "checker timeout (%ld ms)", task_GetRunningTime(tsk));
@@ -2781,6 +2811,7 @@ run_one_test(
   cur_info->real_time = task_GetRealTime(tsk);
   cur_info->max_memory_used = task_GetMemoryUsed(tsk);
   if (cur_info->max_memory_used > 0) *p_has_max_memory_used = 1;
+  cur_info->program_stats_str = get_process_stats_str(tsk);
 
   // input file
   file_size = -1;
@@ -2850,7 +2881,8 @@ run_one_test(
     info("interactor CPU time = %ld, real time = %ld, used_vm_size = %ld",
          (long) task_GetRunningTime(tsk_int), (long) task_GetRealTime(tsk_int),
          (long) task_GetMemoryUsed(tsk_int));
-    cur_info->interactor_time = task_GetRunningTime(tsk_int);
+    //cur_info->interactor_time = task_GetRunningTime(tsk_int);
+    cur_info->interactor_stats_str = get_process_stats_str(tsk_int);
     if (task_IsTimeout(tsk_int)) {
       append_msg_to_log(check_out_path, "interactor timeout");
       err("interactor timeout");
@@ -3088,6 +3120,9 @@ free_testinfo_vector(struct testinfo_vector *tv)
     xfree(ti->comment);
     xfree(ti->team_comment);
     xfree(ti->exit_comment);
+    xfree(ti->program_stats_str);
+    xfree(ti->interactor_stats_str);
+    xfree(ti->checker_stats_str);
   }
   memset(tv->data, 0, sizeof(tv->data[0]) * tv->size);
   xfree(tv->data);

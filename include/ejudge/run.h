@@ -59,6 +59,9 @@ struct testinfo
   unsigned char *team_comment;  /* team's comment */
   unsigned char *exit_comment;  /* comment on exit status */
   int            visibility;    /* test visibility */
+  unsigned char *program_stats_str;
+  unsigned char *interactor_stats_str;
+  unsigned char *checker_stats_str;
 };
 
 struct testinfo_vector
