@@ -72,6 +72,10 @@ struct testing_report_test
   unsigned char *checker_comment;
   unsigned char *exit_comment;
 
+  unsigned char *program_stats_str;
+  unsigned char *interactor_stats_str;
+  unsigned char *checker_stats_str;
+
   unsigned char *args;
 
   /* input data for the program */

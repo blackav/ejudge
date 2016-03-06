@@ -90,6 +90,9 @@ enum
   TR_T_TTCELL,
   TR_T_COMPILER_OUTPUT,
   TR_T_UUID,
+  TR_T_PROGRAM_STATS_STR,
+  TR_T_INTERACTOR_STATS_STR,
+  TR_T_CHECKER_STATS_STR,
 
   TR_T_LAST_TAG,
 };
@@ -183,6 +186,9 @@ static const char * const elem_map[] =
   [TR_T_TTCELL] = "ttcell",
   [TR_T_COMPILER_OUTPUT] = "compiler_output",
   [TR_T_UUID] = "uuid",
+  [TR_T_PROGRAM_STATS_STR] = "program-stats-str",
+  [TR_T_INTERACTOR_STATS_STR] = "interactor-stats-str",
+  [TR_T_CHECKER_STATS_STR] = "checker-stats-str",
 
   [TR_T_LAST_TAG] = 0,
 };
@@ -580,6 +586,15 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
     switch (t2->tag) {
     case TR_T_ARGS:
       if (xml_leaf_elem(t2, &q->args, 1, 1) < 0) goto failure;
+      break;
+    case TR_T_PROGRAM_STATS_STR:
+      if (xml_leaf_elem(t2, &q->program_stats_str, 1, 1) < 0) goto failure;
+      break;
+    case TR_T_INTERACTOR_STATS_STR:
+      if (xml_leaf_elem(t2, &q->interactor_stats_str, 1, 1) < 0) goto failure;
+      break;
+    case TR_T_CHECKER_STATS_STR:
+      if (xml_leaf_elem(t2, &q->checker_stats_str, 1, 1) < 0) goto failure;
       break;
     case TR_T_INPUT:
       if (parse_file(t2, &q->input) < 0) goto failure;
@@ -1291,6 +1306,9 @@ testing_report_test_free(struct testing_report_test *p)
   xfree(p->exit_comment); p->exit_comment = 0;
 
   xfree(p->args); p->args = 0;
+  xfree(p->program_stats_str); p->program_stats_str = 0;
+  xfree(p->interactor_stats_str); p->interactor_stats_str = 0;
+  xfree(p->checker_stats_str); p->checker_stats_str = 0;
   xfree(p->input.data); p->input.data = 0;
   xfree(p->output.data); p->output.data = 0;
   xfree(p->correct.data); p->correct.data = 0;
@@ -1672,6 +1690,9 @@ testing_report_unparse_xml(
       fprintf(out, " >\n");
 
       unparse_string_elem(out, &ab, TR_T_ARGS, t->args);
+      unparse_string_elem(out, &ab, TR_T_PROGRAM_STATS_STR, t->program_stats_str);
+      unparse_string_elem(out, &ab, TR_T_INTERACTOR_STATS_STR, t->interactor_stats_str);
+      unparse_string_elem(out, &ab, TR_T_CHECKER_STATS_STR, t->checker_stats_str);
 
       unparse_file_content(out, &ab, TR_T_INPUT, &t->input);
       unparse_file_content(out, &ab, TR_T_OUTPUT, &t->output);
