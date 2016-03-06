@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -203,6 +203,7 @@ COMMON_CFILES=\
  problem_config.c\
  problem_xml.c\
  problem_xml_2.c\
+ process_stats.c\
  protocol.c\
  random.c\
  reports.c\
@@ -573,6 +574,7 @@ HFILES=\
  ./include/ejudge/problem_common.h\
  ./include/ejudge/problem_config.h\
  ./include/ejudge/problem_xml.h\
+ ./include/ejudge/process_stats.h\
  ./include/ejudge/protocol.h\
  ./include/ejudge/random.h\
  ./include/ejudge/rldb_plugin.h\
