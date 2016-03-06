@@ -2453,7 +2453,7 @@ task_GetProcessStats(tTask *tsk, struct ej_process_stats *pstats)
   pstats->rtime -= tsk->start_time.tv_sec * 1000LL + tsk->start_time.tv_usec / 1000;
 
   pstats->maxvsz = tsk->used_vm_size;
-  pstats->maxrss = tsk->usage.ru_maxrss;
+  pstats->maxrss = tsk->usage.ru_maxrss * 1024LL;
   pstats->nvcsw = tsk->usage.ru_nvcsw;
   pstats->nivcsw = tsk->usage.ru_nivcsw;
 
