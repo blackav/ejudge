@@ -3820,7 +3820,7 @@ run_tests(
         append_msg_to_log(messages_path, "interactive valuer write failed");
         goto check_failed;
       }
-      buflen = ejudge_timed_fdgets(messages_path, vefds[0], buf, sizeof(buf), 100);
+      buflen = ejudge_timed_fdgets(messages_path, vefds[0], buf, sizeof(buf), 500);
       if (buflen < 0) {
         append_msg_to_log(messages_path, "interactive valuer read failed");
         goto check_failed;
@@ -3876,7 +3876,7 @@ run_tests(
   if (valuer_tsk) {
     unsigned char buf[1024];
     close(evfds[1]); evfds[1] = -1;
-    ssize_t buflen = ejudge_timed_fdgets(messages_path, vefds[0], buf, sizeof(buf), 100);
+    ssize_t buflen = ejudge_timed_fdgets(messages_path, vefds[0], buf, sizeof(buf), 500);
     if (buflen < 0) {
       append_msg_to_log(messages_path, "interactive valuer read failed");
       goto check_failed;
