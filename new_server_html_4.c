@@ -1281,7 +1281,7 @@ parse_error_func(void *data, unsigned char const *format, ...)
   filter_expr_nerrs++;
 }
 
-static const unsigned char has_failed_test_num[RUN_LAST + 1] =
+static const unsigned char has_failed_test_num[RUN_STATUS_SIZE] =
 {
   [RUN_RUN_TIME_ERR]     = 1,
   [RUN_TIME_LIMIT_ERR]   = 1,
@@ -1293,18 +1293,18 @@ static const unsigned char has_failed_test_num[RUN_LAST + 1] =
   [RUN_SYNC_ERR]         = 1,
   [RUN_WALL_TIME_LIMIT_ERR] = 1,
 };
-static const unsigned char has_passed_tests[RUN_LAST + 1] =
+static const unsigned char has_passed_tests[RUN_STATUS_SIZE] =
 {
   [RUN_OK]               = 1,
   [RUN_PARTIAL]          = 1,
   [RUN_ACCEPTED]         = 1,
 };
-static const unsigned char has_olympiad_score[RUN_LAST + 1] =
+static const unsigned char has_olympiad_score[RUN_STATUS_SIZE] =
 {
   [RUN_OK]               = 1,
   [RUN_PARTIAL]          = 1,
 };
-static const unsigned char has_kirov_score[RUN_LAST + 1] =
+static const unsigned char has_kirov_score[RUN_STATUS_SIZE] =
 {
   [RUN_OK]               = 1,
   [RUN_COMPILE_ERR]      = 1,

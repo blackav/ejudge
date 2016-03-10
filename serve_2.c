@@ -3509,7 +3509,7 @@ serve_invoke_stop_script(serve_state_t state)
   task_Delete(tsk);
 }
 
-static unsigned char olympiad_rejudgeable_runs[RUN_LAST + 1] =
+static unsigned char olympiad_rejudgeable_runs[RUN_STATUS_SIZE] =
 {
   [RUN_OK]               = 1,
   [RUN_COMPILE_ERR]      = 0,
@@ -3539,7 +3539,7 @@ static unsigned char olympiad_rejudgeable_runs[RUN_LAST + 1] =
   [RUN_AVAILABLE]        = 1,
 };
 
-static unsigned char olympiad_output_only_rejudgeable_runs[RUN_LAST + 1] =
+static unsigned char olympiad_output_only_rejudgeable_runs[RUN_STATUS_SIZE] =
 {
   [RUN_OK]               = 1,
   [RUN_COMPILE_ERR]      = 0,
@@ -3569,7 +3569,7 @@ static unsigned char olympiad_output_only_rejudgeable_runs[RUN_LAST + 1] =
   [RUN_AVAILABLE]        = 1,
 };
 
-static unsigned char generally_rejudgable_runs[RUN_LAST + 1] =
+static unsigned char generally_rejudgable_runs[RUN_STATUS_SIZE] =
 {
   [RUN_OK]               = 1,
   [RUN_COMPILE_ERR]      = 1,
@@ -3607,7 +3607,7 @@ is_generally_rejudgable(const serve_state_t state,
   const struct section_problem_data *prob = 0;
   const struct section_language_data *lang = 0;
 
-  if (pe->status > RUN_LAST) return 0;
+  if (((unsigned) pe->status) >= RUN_STATUS_SIZE) return 0;
   if (!generally_rejudgable_runs[pe->status]) return 0;
   if (pe->is_imported) return 0;
   if (pe->is_readonly) return 0;

@@ -64,7 +64,8 @@ enum
   RUN_AVAILABLE        = 99,
   RUN_REJUDGE          = 99,
   RUN_TRANSIENT_LAST   = 99,
-  RUN_LAST             = 99,
+
+  RUN_STATUS_SIZE      = 100
 };
 
 enum { RUN_LOG_CREATE = 1, RUN_LOG_READONLY = 2, RUN_LOG_NOINDEX = 4, RUN_LOG_UUID_INDEX = 8 };

@@ -122,8 +122,6 @@ is_missing_source(
   if (!env || !(cs = env->serve_state) || !(g = cs->global)) return 0;
 
   if (!run_is_normal_or_transient_status(re->status)) return 0;
-  if (re->status > RUN_LAST)
-    return 0;
 
   if (re->store_flags == 1) {
     if ((src_flags = uuid_archive_make_read_path(cs, src_path, sizeof(src_path),

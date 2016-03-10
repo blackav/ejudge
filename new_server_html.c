@@ -3957,7 +3957,7 @@ priv_change_status(
   snprintf(phr->next_extra, sizeof(phr->next_extra), "run_id=%d", run_id);
   if (hr_cgi_param(phr, "status", &s) <= 0
       || sscanf(s, "%d%n", &status, &n) != 1 || s[n]
-      || status < 0 || status > RUN_LAST) {
+      || (!run_is_normal_status(status) && status != RUN_REJUDGE && status != RUN_FULL_REJUDGE)) {
     errmsg = "invalid status";
     goto invalid_param;
   }

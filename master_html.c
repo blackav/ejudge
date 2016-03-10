@@ -63,7 +63,7 @@
 #define ARMOR(s)  html_armor_buf(&ab, s)
 
 // FIXME: currently no localization for these strings
-static const unsigned char * const change_status_strings[RUN_LAST + 1] =
+static const unsigned char * const change_status_strings[RUN_STATUS_SIZE] =
 {
   [RUN_OK]               = "OK",
   [RUN_COMPILE_ERR]      = "Compilation error",

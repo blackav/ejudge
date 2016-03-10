@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 
 #include <string.h>
 
-static const unsigned char tree_result_strs[RUN_LAST + 1][4] =
+static const unsigned char tree_result_strs[RUN_STATUS_SIZE][4] =
 {
   [RUN_OK] =               "OK",
   [RUN_COMPILE_ERR] =      "CE",
@@ -53,7 +53,7 @@ static const unsigned char tree_result_strs[RUN_LAST + 1][4] =
 int
 run_status_to_str_short(unsigned char *buf, size_t size, int val)
 {
-  if (val >= 0 && val <= RUN_LAST && tree_result_strs[val]) {
+  if (((unsigned) val) < RUN_STATUS_SIZE && tree_result_strs[val]) {
     return snprintf(buf, size, "%s", tree_result_strs[val]);
   }
   return snprintf(buf, size, "result_%d", val);

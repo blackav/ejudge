@@ -85,7 +85,7 @@ run_status_str(
   return out;
 }
 
-static const unsigned char is_failed_attempt_table[RUN_LAST + 1] =
+static const unsigned char is_failed_attempt_table[RUN_STATUS_SIZE] =
 {
   [RUN_RUN_TIME_ERR]     = 1,
   [RUN_TIME_LIMIT_ERR]   = 1,
@@ -99,11 +99,11 @@ static const unsigned char is_failed_attempt_table[RUN_LAST + 1] =
 int
 run_is_failed_attempt(int status)
 {
-  if (status < 0 || status > RUN_LAST) return 0;
+  if (((unsigned) status) >= RUN_STATUS_SIZE) return 0;
   return is_failed_attempt_table[status];
 }
 
-static const unsigned char is_valid_test_status_table[RUN_LAST + 1] =
+static const unsigned char is_valid_test_status_table[RUN_STATUS_SIZE] =
 {
   [RUN_OK]               = 1,
   [RUN_RUN_TIME_ERR]     = 1,
@@ -120,11 +120,11 @@ static const unsigned char is_valid_test_status_table[RUN_LAST + 1] =
 int
 run_is_valid_test_status(int status)
 {
-  if (status < 0 || status > RUN_LAST) return 0;
+  if (((unsigned) status)  >= RUN_STATUS_SIZE) return 0;
   return is_valid_test_status_table[status];
 }
 
-static const unsigned char is_team_report_available_table[RUN_LAST + 1] =
+static const unsigned char is_team_report_available_table[RUN_STATUS_SIZE] =
 {
   [RUN_OK]               = 1,
   [RUN_COMPILE_ERR]      = 1,
@@ -145,11 +145,11 @@ static const unsigned char is_team_report_available_table[RUN_LAST + 1] =
 int
 run_is_team_report_available(int status)
 {
-  if (status < 0 || status > RUN_LAST) return 0;
+  if (((unsigned) status) >= RUN_STATUS_SIZE) return 0;
   return is_team_report_available_table[status];
 }
 
-static const unsigned char is_report_available_table[RUN_LAST + 1] =
+static const unsigned char is_report_available_table[RUN_STATUS_SIZE] =
 {
   [RUN_OK]               = 1,
   [RUN_COMPILE_ERR]      = 1,
@@ -171,7 +171,7 @@ static const unsigned char is_report_available_table[RUN_LAST + 1] =
 int
 run_is_report_available(int status)
 {
-  if (status < 0 || status > RUN_LAST) return 0;
+  if (((unsigned) status) >= RUN_STATUS_SIZE) return 0;
   return is_report_available_table[status];
 }
 
@@ -230,7 +230,7 @@ run_str_short_to_status(const unsigned char *str, int *pr)
   return -1;
 }
 
-static const unsigned char run_valid_statuses[RUN_LAST + 1] = 
+static const unsigned char run_valid_statuses[RUN_STATUS_SIZE] = 
 {
   [RUN_OK]               = 1,
   [RUN_COMPILE_ERR]      = 1,
@@ -262,11 +262,11 @@ static const unsigned char run_valid_statuses[RUN_LAST + 1] =
 int
 run_is_valid_status(int status)
 {
-  if (status < 0 || status > RUN_LAST) return 0;
+  if (((unsigned) status) >= RUN_STATUS_SIZE) return 0;
   return run_valid_statuses[status];
 }
 
-static const unsigned char run_valid_user_statuses[RUN_LAST + 1] = 
+static const unsigned char run_valid_user_statuses[RUN_STATUS_SIZE] = 
 {
   [RUN_OK]               = 1,
   [RUN_COMPILE_ERR]      = 1,
@@ -295,11 +295,11 @@ static const unsigned char run_valid_user_statuses[RUN_LAST + 1] =
 int
 run_is_valid_user_status(int status)
 {
-  if (status < 0 || status > RUN_LAST) return 0;
+  if (((unsigned) status) >= RUN_STATUS_SIZE) return 0;
   return run_valid_user_statuses[status];
 }
 
-static const unsigned char run_source_available_statuses[RUN_LAST + 1] = 
+static const unsigned char run_source_available_statuses[RUN_STATUS_SIZE] = 
 {
   [RUN_OK]               = 1,
   [RUN_COMPILE_ERR]      = 1,
@@ -328,7 +328,7 @@ static const unsigned char run_source_available_statuses[RUN_LAST + 1] =
 int
 run_is_source_available(int status)
 {
-  if (status < 0 || status > RUN_LAST) return 0;
+  if (((unsigned) status) >= RUN_STATUS_SIZE) return 0;
   return run_source_available_statuses[status];
 }
 
