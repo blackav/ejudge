@@ -4458,7 +4458,6 @@ kirov_score_latest_or_unmarked(
     break;
 
   case RUN_COMPILE_ERR:
-  case RUN_STYLE_ERR:
     if (cur_prob->ignore_compile_errors > 0) return;
     pinfo->attempts++;
     if (re->is_marked || cur_score > pinfo->best_score) {
@@ -4468,6 +4467,9 @@ kirov_score_latest_or_unmarked(
     }
     break;
 
+  case RUN_STYLE_ERR:
+    break;
+    
   case RUN_RUN_TIME_ERR:
   case RUN_TIME_LIMIT_ERR:
   case RUN_WALL_TIME_LIMIT_ERR:
@@ -4571,7 +4573,6 @@ kirov_score_latest(
     break;
 
   case RUN_COMPILE_ERR:
-  case RUN_STYLE_ERR:
     if (cur_prob->ignore_compile_errors > 0) break;
     pinfo->marked_flag = re->is_marked;
     pinfo->solved_flag = 0;
@@ -4583,6 +4584,7 @@ kirov_score_latest(
     ++pinfo->attempts;
     break;
 
+  case RUN_STYLE_ERR:
   case RUN_CHECK_FAILED:
   case RUN_IGNORED:
     break;
@@ -4684,11 +4686,11 @@ kirov_score_tokenized(
     break;
 
   case RUN_COMPILE_ERR:
-  case RUN_STYLE_ERR:
     if (cur_prob->ignore_compile_errors > 0) return;
     cur_score = 0;
     break;
 
+  case RUN_STYLE_ERR:
   case RUN_RUN_TIME_ERR:
   case RUN_TIME_LIMIT_ERR:
   case RUN_WALL_TIME_LIMIT_ERR:
@@ -4777,7 +4779,6 @@ kirov_score_default(
     break;
 
   case RUN_COMPILE_ERR:
-  case RUN_STYLE_ERR:
     if (cur_prob->ignore_compile_errors > 0) break;
 
     ++pinfo->attempts;
@@ -4788,6 +4789,7 @@ kirov_score_default(
     }
     break;
 
+  case RUN_STYLE_ERR:
   case RUN_RUN_TIME_ERR:
   case RUN_TIME_LIMIT_ERR:
   case RUN_WALL_TIME_LIMIT_ERR:
@@ -5134,8 +5136,6 @@ ns_get_user_problems_summary(
         break;
 
       case RUN_COMPILE_ERR:
-      case RUN_STYLE_ERR:
-      case RUN_REJECTED:
         if (!cur_prob->ignore_compile_errors) {
           pinfo[re.prob_id].attempts++;
           cur_score = 0;
@@ -5146,6 +5146,10 @@ ns_get_user_problems_summary(
           }
         }
         break;
+      case RUN_STYLE_ERR:
+      case RUN_REJECTED:
+        break;
+
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:
       case RUN_WALL_TIME_LIMIT_ERR:
@@ -5191,12 +5195,14 @@ ns_get_user_problems_summary(
         break;
 
       case RUN_COMPILE_ERR:
-      case RUN_STYLE_ERR:
-      case RUN_REJECTED:
         if (!cur_prob->ignore_compile_errors) {
           pinfo[re.prob_id].attempts++;
           pinfo[re.prob_id].best_run = run_id;
         }
+        break;
+
+      case RUN_STYLE_ERR:
+      case RUN_REJECTED:
         break;
       case RUN_RUN_TIME_ERR:
       case RUN_TIME_LIMIT_ERR:

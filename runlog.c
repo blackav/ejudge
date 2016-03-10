@@ -834,8 +834,9 @@ run_get_attempts(
 
     if (re->status == RUN_VIRTUAL_START || re->status == RUN_VIRTUAL_STOP) continue;
     if (re->prob_id != sample_re->prob_id) continue;
-    if ((re->status == RUN_COMPILE_ERR || re->status == RUN_STYLE_ERR || re->status == RUN_REJECTED)
-        && skip_ce_flag) continue;
+    if ((re->status == RUN_COMPILE_ERR) && skip_ce_flag) continue;
+    if (re->status == RUN_STYLE_ERR) continue;
+    if (re->status == RUN_REJECTED) continue;
     if (re->status == RUN_IGNORED) continue;
     if (re->is_hidden) continue;
     if (re->status == RUN_DISQUALIFIED) {

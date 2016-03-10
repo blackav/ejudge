@@ -1565,9 +1565,7 @@ do_write_kirov_standings(
           if (!full_sol[up_ind]) tot_att[pind]++;
           full_sol[up_ind] = 0;
           last_submit_run = k;
-        } else if ((run_status == RUN_COMPILE_ERR
-                    || run_status == RUN_STYLE_ERR
-                    || run_status == RUN_REJECTED)
+        } else if ((run_status == RUN_COMPILE_ERR)
                    && !prob->ignore_compile_errors) {
           if (!full_sol[up_ind]) sol_att[up_ind]++;
           att_num[up_ind]++;
@@ -1593,6 +1591,7 @@ do_write_kirov_standings(
         } else if (run_status == RUN_CHECK_FAILED) {
           cf_num[up_ind]++;
           ++total_check_failed;
+        } else if (run_status == RUN_STYLE_ERR || run_status == RUN_REJECTED) {
         } else {
           /* something strange... */
         }
@@ -1696,9 +1695,7 @@ do_write_kirov_standings(
           att_num[up_ind]++;
           if (!full_sol[up_ind]) tot_att[pind]++;
           last_submit_run = k;
-        } else if ((run_status == RUN_COMPILE_ERR 
-                    || run_status == RUN_STYLE_ERR
-                    || run_status == RUN_REJECTED)
+        } else if ((run_status == RUN_COMPILE_ERR)
                    && !prob->ignore_compile_errors) {
           if (!full_sol[up_ind]) sol_att[up_ind]++;
           att_num[up_ind]++;
@@ -1721,6 +1718,7 @@ do_write_kirov_standings(
         } else if (run_status == RUN_CHECK_FAILED) {
           cf_num[up_ind]++;
           ++total_check_failed;
+        } else if (run_status == RUN_STYLE_ERR || run_status == RUN_REJECTED) {
         } else {
           /* something strange... */
         }
@@ -2982,9 +2980,7 @@ do_write_moscow_standings(
         last_submit_time = pe->time;
         last_submit_start = ustart;
       }
-    } else if ((pe->status == RUN_COMPILE_ERR
-                || pe->status == RUN_STYLE_ERR
-                || pe->status == RUN_REJECTED)
+    } else if ((pe->status == RUN_COMPILE_ERR)
                && !prob->ignore_compile_errors) {
       up_totatt[up_ind]++;
       p_att[p]++;
@@ -2999,6 +2995,7 @@ do_write_moscow_standings(
       // silently ignore compilation error
     } else if (pe->status == RUN_CHECK_FAILED) {
       up_cf[up_ind] = 1;
+    } else if (pe->status == RUN_STYLE_ERR || pe->status == RUN_REJECTED) {
     } else {
       // FIXME: do some checking
       // silently ignore such run
@@ -3879,9 +3876,7 @@ do_write_standings(
         last_success_time = run_time;
         last_success_start = start_time;
       }
-    } else if ((pe->status == RUN_COMPILE_ERR
-                || pe->status == RUN_STYLE_ERR
-                || pe->status == RUN_REJECTED)
+    } else if ((pe->status == RUN_COMPILE_ERR)
                && !prob->ignore_compile_errors) {
       if (calc[up_ind] <= 0) {
         calc[up_ind]--;
@@ -3904,6 +3899,7 @@ do_write_standings(
       trans_flag[up_ind] = 1;
     } else if (pe->status == RUN_CHECK_FAILED) {
       cf_flag[up_ind] = 1;
+    } else if (pe->status == RUN_STYLE_ERR || pe->status == RUN_REJECTED) {
     }
   }
 
