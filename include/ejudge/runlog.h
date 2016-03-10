@@ -2,7 +2,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,13 +45,16 @@ enum
   RUN_REJECTED         = 17,
   RUN_SKIPPED          = 18,
   RUN_SYNC_ERR         = 19,
-  RUN_MAX_STATUS       = 19,
-
+  OLD_RUN_MAX_STATUS   = 19, // obsoleted
+  RUN_NORMAL_LAST      = 19, // may safely overlap pseudo statuses
+  
   RUN_PSEUDO_FIRST     = 20,
   RUN_VIRTUAL_START    = 20,
   RUN_VIRTUAL_STOP     = 21,
   RUN_EMPTY            = 22,
   RUN_PSEUDO_LAST      = 22,
+
+  RUN_LOW_LAST         = 22, // will be == RUN_NORMAL_LAST later
 
   RUN_TRANSIENT_FIRST  = 95,
   RUN_FULL_REJUDGE     = 95,    /* cannot appear in runlog */
@@ -424,5 +427,23 @@ int run_get_uuid_hash_state(runlog_state_t state);
 int run_find_run_id_by_uuid(runlog_state_t state, const ej_uuid_t *puuid);
 
 int run_count_tokens(runlog_state_t state, int user_id, int prob_id);
+
+static inline _Bool __attribute__((always_inline)) run_is_normal_status(unsigned char status)
+{
+  return status <= RUN_NORMAL_LAST && (status < RUN_PSEUDO_FIRST || status > RUN_PSEUDO_LAST);
+}
+static inline _Bool __attribute__((always_inline)) run_is_normal_or_transient_status(unsigned char status)
+{
+  return (status <= RUN_NORMAL_LAST && (status < RUN_PSEUDO_FIRST || status > RUN_PSEUDO_LAST))
+    || (status > RUN_TRANSIENT_FIRST && status <= RUN_TRANSIENT_LAST);
+}
+static inline _Bool __attribute__((always_inline)) run_is_invalid_status(unsigned char status)
+{
+  return status > RUN_TRANSIENT_LAST || (status > RUN_LOW_LAST && status <= RUN_TRANSIENT_FIRST);
+}
+static inline _Bool __attribute__((always_inline)) run_is_pseudo_status(unsigned char status)
+{
+  return status >= RUN_PSEUDO_FIRST && status <= RUN_PSEUDO_LAST;
+}
 
 #endif /* __RUNLOG_H__ */

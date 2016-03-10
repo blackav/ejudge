@@ -4583,7 +4583,7 @@ priv_new_run(FILE *fout,
   }
   if (hr_cgi_param(phr, "status", &s) > 0 && *s) {
     if (sscanf(s, "%d%n", &status, &n) != 1 || s[n]
-        || status < 0 || status > RUN_MAX_STATUS
+        || !run_is_normal_status(status)
         || !serve_is_valid_status(cs, status, 1))
       FAIL(NEW_SRV_ERR_INV_STATUS);
     re.status = status;
@@ -5141,8 +5141,7 @@ priv_download_source(
   if (re.prob_id <= 0 || re.prob_id > cs->max_prob ||
       !(prob = cs->probs[re.prob_id]))
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
-  if (re.status > RUN_LAST
-      || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST))
+  if (!run_is_normal_or_transient_status(re.status))
     FAIL(NEW_SRV_ERR_SOURCE_UNAVAILABLE);
 
   if ((src_flags = serve_make_source_read_path(cs, src_path, sizeof(src_path), &re)) < 0) {
@@ -7585,9 +7584,7 @@ unpriv_print_run(FILE *fout,
     goto cleanup;
   }
 
-  if (re.status > RUN_LAST
-      || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST)
-      || re.user_id != phr->user_id) {
+  if (!run_is_normal_or_transient_status(re.status) || re.user_id != phr->user_id) {
     error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;
   }
@@ -9532,8 +9529,7 @@ unpriv_download_run(
       !(prob = cs->probs[re.prob_id])) {
     FAIL2(NEW_SRV_ERR_INV_PROB_ID);
   }
-  if (re.status > RUN_LAST
-      || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST)) {
+  if (!run_is_normal_or_transient_status(re.status)) {
     FAIL2(NEW_SRV_ERR_SOURCE_UNAVAILABLE);
   }
 

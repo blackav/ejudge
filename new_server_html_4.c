@@ -633,11 +633,7 @@ cmd_run_operation(
     abort();
   }
 
-  if (re.status > RUN_LAST)
-    FAIL(NEW_SRV_ERR_INV_RUN_ID);
-  if (re.status > RUN_PSEUDO_LAST && re.status < RUN_TRANSIENT_FIRST)
-    FAIL(NEW_SRV_ERR_INV_RUN_ID);
-  if (re.status > RUN_MAX_STATUS && re.status < RUN_PSEUDO_FIRST)
+  if (run_is_invalid_status(re.status))
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
 
   switch (phr->action) {

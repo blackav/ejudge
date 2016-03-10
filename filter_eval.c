@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -58,7 +58,7 @@ is_latest(struct filter_env *env, int rid)
     return 0;
   }
   for (r = rid + 1; r < env->rtotal; r++) {
-    if (env->rentries[r].status > RUN_MAX_STATUS) continue;
+    if (!run_is_normal_status(env->rentries[r].status)) continue;
     if (env->rentries[rid].user_id != env->rentries[r].user_id
         || env->rentries[rid].prob_id != env->rentries[r].prob_id)
       continue;
@@ -121,8 +121,7 @@ is_missing_source(
 
   if (!env || !(cs = env->serve_state) || !(g = cs->global)) return 0;
 
-  if (re->status > RUN_MAX_STATUS && re->status < RUN_TRANSIENT_FIRST)
-    return 0;
+  if (!run_is_normal_or_transient_status(re->status)) return 0;
   if (re->status > RUN_LAST)
     return 0;
 

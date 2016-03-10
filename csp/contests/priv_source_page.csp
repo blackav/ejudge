@@ -59,8 +59,7 @@
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
   run_get_entry(cs->runlog_state, run_id, &info);
-  if (info.status > RUN_LAST
-      || (info.status > RUN_MAX_STATUS && info.status < RUN_TRANSIENT_FIRST)) {
+  if (!run_is_normal_or_transient_status(info.status)) {
     FAIL(NEW_SRV_ERR_SOURCE_UNAVAILABLE);
   }
 

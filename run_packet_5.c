@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -57,7 +57,7 @@ run_reply_packet_write(
   out_data->contest_id = cvt_host_to_bin_32(in_data->contest_id);
   FAIL_IF(in_data->run_id < 0 || in_data->run_id > EJ_MAX_RUN_ID);
   out_data->run_id = cvt_host_to_bin_32(in_data->run_id);
-  FAIL_IF(in_data->status < 0 || in_data->status > RUN_MAX_STATUS);
+  FAIL_IF(!run_is_normal_status(in_data->status));
   out_data->status = cvt_host_to_bin_32(in_data->status);
   FAIL_IF(in_data->failed_test < -1 || in_data->failed_test > EJ_MAX_TEST_NUM);
   out_data->failed_test = cvt_host_to_bin_32(in_data->failed_test);

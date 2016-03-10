@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -221,9 +221,7 @@ parse_status(const unsigned char *str)
   if (!str) return -1;
   n = 0;
   if (sscanf(str, "%d %n", &x, &n) == 1 && !str[n]) {
-    if (x < 0 || x > RUN_LAST) return -1;
-    if (x > RUN_MAX_STATUS && x < RUN_PSEUDO_FIRST) return -1;
-    if (x > RUN_PSEUDO_LAST && x < RUN_TRANSIENT_FIRST) return -1;
+    if (run_is_invalid_status(x)) return -1;
     return x;
   }
 
@@ -652,7 +650,7 @@ collect_runlog(struct xml_tree *xt, size_t *psize,
       memset(&ee[j], 0, sizeof(ee[0]));
       ee[j].status = RUN_EMPTY;
     }
-    if (ee[j].status < RUN_MAX_STATUS && pd) {
+    if (run_is_normal_status(ee[j].status) && pd) {
       pd[j].source.data = xr->source_text;
       pd[j].source.size = xr->source_size;
       pd[j].audit.data = xr->audit_text;
@@ -1024,7 +1022,7 @@ unparse_runlog_xml(
     if (pp->token_count > 0) {
       fprintf(f, " %s=\"%d\"", attr_map[RUNLOG_A_TOKEN_COUNT], pp->token_count);
     }
-    if (!source_mode || pp->status >= RUN_MAX_STATUS) {
+    if (!source_mode || !run_is_normal_status(pp->status)) {
       fprintf(f, "/>\n");
       continue;
     }

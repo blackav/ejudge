@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -194,7 +193,7 @@ runlog_import_xml(
   for (i = 0; i < cur_entries_num; i++) {
     st = cur_entries[i].status;
     ASSERT(st >= RUN_OK && st <= RUN_TRANSIENT_LAST);
-    if (st <= RUN_MAX_STATUS) continue;
+    if (run_is_normal_status(st)) continue;
     ASSERT(st >= RUN_PSEUDO_FIRST);
     if (st == RUN_VIRTUAL_START || st == RUN_VIRTUAL_STOP) {
       fprintf(flog, "Run %d is a virtual contest control record\n", i);
@@ -263,7 +262,7 @@ runlog_import_xml(
       fprintf(flog, "Run %d status %d is invalid\n", i, st);
       goto done;
     }
-    if (st <= RUN_MAX_STATUS) continue;
+    if (run_is_normal_status(st)) continue;
     if (st < RUN_PSEUDO_FIRST) {
       fprintf(flog, "Run %d status %d is invalid\n", i, st);
       goto done;
@@ -289,7 +288,7 @@ runlog_import_xml(
   prev_i = -1;
   for (i = 0; i < in_entries_num; i++) {
     if (in_entries[i].status == RUN_EMPTY) continue;
-    ASSERT(in_entries[i].status <= RUN_MAX_STATUS);
+    ASSERT(run_is_normal_status(in_entries[i].status));
     if (in_entries[i].time < 0) {
       fprintf(flog, "Run %d time is negative\n", i);
       goto done;

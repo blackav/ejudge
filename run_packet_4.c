@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -59,7 +59,7 @@ run_reply_packet_read(
   pout->run_id = cvt_bin_to_host_32(pin->run_id);
   FAIL_IF(pout->run_id < 0 || pout->run_id > EJ_MAX_RUN_ID);
   pout->status = cvt_bin_to_host_32(pin->status);
-  FAIL_IF(pout->status < 0 || pout->status > RUN_MAX_STATUS);
+  FAIL_IF(!run_is_normal_status(pout->status));
   pout->failed_test = cvt_bin_to_host_32(pin->failed_test);
   FAIL_IF(pout->failed_test < -1 || pout->failed_test > EJ_MAX_TEST_NUM);
   pout->tests_passed = cvt_bin_to_host_32(pin->tests_passed);
@@ -68,7 +68,7 @@ run_reply_packet_read(
   FAIL_IF(pout->score < -1 || pout->score > EJ_MAX_SCORE);
 
   pout->user_status = cvt_bin_to_host_32(pin->user_status);
-  FAIL_IF(pout->user_status < -1 || pout->user_status > RUN_MAX_STATUS);
+  FAIL_IF(!run_is_normal_status(pout->user_status) && pout->user_status != -1);
   pout->user_tests_passed = cvt_bin_to_host_32(pin->user_tests_passed);
   FAIL_IF(pout->user_tests_passed < -1 || pout->user_tests_passed > EJ_MAX_TEST_NUM);
   pout->user_score = cvt_bin_to_host_32(pin->user_score);

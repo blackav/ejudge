@@ -312,7 +312,7 @@ write_html_run_status(
       fprintf(f, "<td%s>&nbsp;</td>", cl);
     }
     return;
-  } else if (status < 0 || status > RUN_MAX_STATUS) {
+  } else if (!run_is_normal_status(status)) {
     if (run_fields & (1 << RUN_VIEW_TEST)) {
       fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
     }
@@ -493,7 +493,7 @@ write_text_run_status(
 
   if (status >= RUN_PSEUDO_FIRST && status <= RUN_PSEUDO_LAST) {
     return;
-  } else if (status > RUN_MAX_STATUS) {
+  } else if (!run_is_normal_status(status)) {
     return;
   }
 
@@ -2905,8 +2905,7 @@ do_write_moscow_standings(
     int up_ind;
 
     if (pe->is_hidden) continue;
-    if (pe->status > RUN_MAX_STATUS && pe->status < RUN_TRANSIENT_FIRST) continue;
-    if (pe->status > RUN_TRANSIENT_LAST) continue;
+    if (!run_is_normal_or_transient_status(pe->status)) continue;
     if (pe->user_id <= 0 || pe->user_id >= u_max || (u = u_rev[pe->user_id]) < 0) continue;
     if (pe->prob_id <= 0 || pe->prob_id > state->max_prob) continue;
     if ((p = p_rev[pe->prob_id]) < 0) continue;

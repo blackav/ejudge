@@ -4794,8 +4794,7 @@ serve_ignore_by_mask(serve_state_t state,
     if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
     if (!run_is_valid_status(re.status)) continue;
     // do not change EMPTY, VIRTUAL_START, VIRTUAL_STOP runs
-    if (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST)
-      continue;
+    if (!run_is_normal_or_transient_status(re.status)) continue;
     if (re.status == new_status) continue;
 
     re.status = new_status;
@@ -4847,8 +4846,8 @@ serve_mark_by_mask(
         || run_is_readonly(state->runlog_state, r))
       continue;
     if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
+    if (!run_is_normal_status(re.status)) continue;
     if (!run_is_valid_status(re.status)) continue;
-    if (re.status > RUN_MAX_STATUS) continue;
     if (re.is_marked == mark_value) continue;
 
     re.is_marked = mark_value;
@@ -4885,8 +4884,8 @@ serve_tokenize_by_mask(
         || run_is_readonly(state->runlog_state, r))
       continue;
     if (run_get_entry(state->runlog_state, r, &re) < 0) continue;
+    if (!run_is_normal_status(re.status)) continue;
     if (!run_is_valid_status(re.status)) continue;
-    if (re.status > RUN_MAX_STATUS) continue;
 
     if (re.token_count != token_count || re.token_flags != token_flags) {
       re.token_count = token_count;

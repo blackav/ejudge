@@ -649,7 +649,7 @@ parse_valuer_score(
       lineno = __LINE__;
       goto invalid_reply;
     }
-    if (v_user_status < -1 || v_user_status > RUN_MAX_STATUS) {
+    if (!run_is_normal_status(v_user_status) && v_user_status != -1) {
       lineno = __LINE__;
       goto invalid_reply;
     }

@@ -1671,7 +1671,7 @@ ns_priv_edit_run_action(
   if (run_get_entry(cs->runlog_state, run_id, &info) < 0) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
-  if (info.status < 0 || info.status > RUN_MAX_STATUS) {
+  if (!run_is_normal_status(info.status)) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
 
@@ -1808,7 +1808,7 @@ ns_priv_edit_run_action(
   }
   if (info.status != value) {
     // FIXME: handle rejudge request
-    if (value > RUN_MAX_STATUS) {
+    if (!run_is_normal_status(value)) {
       fprintf(log_f, "invalid 'status' field value\n");
       FAIL(NEW_SRV_ERR_INV_PARAM);    
     }
@@ -1997,7 +1997,7 @@ ns_priv_edit_run_action(
         FAIL(NEW_SRV_ERR_INV_PARAM);    
       }
       if (info.saved_status != value || !info.is_saved) {
-        if (value > RUN_MAX_STATUS) {
+        if (!run_is_normal_status(value)) {
           fprintf(log_f, "invalid 'saved_status' field value\n");
           FAIL(NEW_SRV_ERR_INV_PARAM);
         }
@@ -2784,9 +2784,7 @@ ns_download_runs(
         && info.status != RUN_IGNORED && info.status != RUN_REJECTED
         && info.status != RUN_PENDING && info.status != RUN_DISQUALIFIED)
       continue;
-    if (info.status > RUN_LAST) continue;
-    if (info.status > RUN_MAX_STATUS && info.status < RUN_TRANSIENT_FIRST)
-      continue;
+    if (!run_is_normal_or_transient_status(info.status)) continue;
     if (info.is_hidden) continue;
 
     if (!(login_ptr = teamdb_get_login(cs->teamdb_state, info.user_id))) {
@@ -3344,7 +3342,7 @@ ns_upload_csv_runs(
         fprintf(log_f, _("Invalid status `%s' in row %d\n"), s, row);
         goto cleanup;
       }
-      if (x < 0 || x > RUN_MAX_STATUS) {
+      if (!run_is_normal_status(x)) {
         fprintf(log_f, _("Invalid status `%s' (%d) in row %d\n"),
                 rr->v[col_ind[CSV_STATUS]], x, row);
         goto cleanup;
@@ -3670,7 +3668,7 @@ ns_upload_csv_results(
         fprintf(log_f, _("Invalid status `%s' in row %d\n"), s, row);
         goto cleanup;
       }
-      if (x < 0 || x > RUN_MAX_STATUS) {
+      if (!run_is_normal_status(x)) {
         fprintf(log_f, _("Invalid status `%s' (%d) in row %d\n"),
                 rr->v[col_ind[CSV_STATUS]], x, row);
         goto cleanup;
@@ -4113,9 +4111,7 @@ ns_write_olympiads_user_runs(
        i >= 0 && shown < runs_to_show;
        i = run_get_user_prev_run_id(cs->runlog_state, i)) {
     if (run_get_entry(cs->runlog_state, i, &re) < 0) continue;
-    if (re.status > RUN_LAST) continue;
-    if (re.status > RUN_MAX_STATUS && re.status <= RUN_TRANSIENT_FIRST)
-      continue;
+    if (!run_is_normal_or_transient_status(re.status)) continue;
     if (re.user_id != phr->user_id) continue;
     if (prob_id > 0 && re.prob_id != prob_id) continue;
 
@@ -4947,7 +4943,7 @@ ns_get_user_problems_summary(
       pinfo[re.prob_id].trans_flag = 1;
       pinfo[re.prob_id].all_attempts++;
     }
-    if (status > RUN_MAX_STATUS) continue;
+    if (!run_is_normal_status(status)) continue;
 
     pinfo[re.prob_id].all_attempts++;
     if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
@@ -5979,7 +5975,7 @@ new_write_user_runs(
     } else if (enable_rep_view) {
       fprintf(f, "<td%s>", cl);
       if (status == RUN_CHECK_FAILED || status == RUN_IGNORED
-          || status == RUN_PENDING || status > RUN_MAX_STATUS
+          || status == RUN_PENDING || !run_is_normal_status(status)
           || (cur_prob && !cur_prob->team_enable_rep_view)) {
         fprintf(f, "N/A");
       } else {

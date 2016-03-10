@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -731,9 +731,7 @@ generate_daily_statistics(
     }
 
     // ok, collect statistics
-    if ((rcur->status > RUN_MAX_STATUS && rcur->status < RUN_PSEUDO_FIRST)
-        || (rcur->status>RUN_PSEUDO_LAST && rcur->status<RUN_TRANSIENT_FIRST)
-        || (rcur->status > RUN_TRANSIENT_LAST)) {
+    if (run_is_invalid_status(rcur->status)) {
       fprintf(f, "error: run %d has invalid status %d\n", i, rcur->status);
       total_errors++;
       continue;

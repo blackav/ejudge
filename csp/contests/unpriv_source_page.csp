@@ -60,7 +60,7 @@ ns_unpriv_parse_run_id(
   if (cs->online_view_source < 0 || (!cs->online_view_source && global->team_enable_src_view <= 0)) {
     FAIL(NEW_SRV_ERR_SOURCE_VIEW_DISABLED);
   }
-  if (re.status > RUN_LAST || (re.status > RUN_MAX_STATUS && re.status < RUN_TRANSIENT_FIRST)) {
+  if (!run_is_normal_or_transient_status(re.status)) {
     FAIL(NEW_SRV_ERR_SOURCE_UNAVAILABLE);
   }
 

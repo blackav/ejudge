@@ -31,7 +31,7 @@
   if (run_get_entry(cs->runlog_state, run_id, &info) < 0) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
-  if (info.status < 0 || info.status > RUN_MAX_STATUS) {
+  if (!run_is_normal_status(info.status)) {
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
   }
 

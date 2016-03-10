@@ -866,7 +866,7 @@ run_count_all_attempts(runlog_state_t state, int user_id, int prob_id)
     ASSERT(i < state->run_u);
     const struct run_entry *re = &state->runs[i];
     ASSERT(re->user_id == user_id);
-    if (re->status > RUN_MAX_STATUS && re->status < RUN_TRANSIENT_FIRST) continue;
+    if (!run_is_normal_or_transient_status(re->status)) continue;
     if (prob_id <= 0 || re->prob_id == prob_id) {
       ++count;
     }
@@ -889,8 +889,8 @@ run_count_all_attempts_2(runlog_state_t state, int user_id, int prob_id, int ign
     ASSERT(i < state->run_u);
     const struct run_entry *re = &state->runs[i];
     ASSERT(re->user_id == user_id);
-    if (re->status > RUN_MAX_STATUS && re->status < RUN_TRANSIENT_FIRST) continue;
-    if (re->status <= RUN_MAX_STATUS && ((1 << re->status) & ignored_set)) continue;
+    if (!run_is_normal_or_transient_status(re->status)) continue;
+    if (run_is_normal_status(re->status) && ((1 << re->status) & ignored_set)) continue;
     if (prob_id <= 0 || re->prob_id == prob_id) {
       ++count;
     }
@@ -1367,9 +1367,7 @@ run_set_entry(
       err("run_set_entry: %d: special status cannot be set this way", run_id);
       return -1;
   }
-  if (te.status > RUN_TRANSIENT_LAST
-      || (te.status > RUN_PSEUDO_LAST && te.status < RUN_TRANSIENT_FIRST)
-      || (te.status > RUN_MAX_STATUS && te.status < RUN_PSEUDO_FIRST)) {
+  if (run_is_invalid_status(te.status)) {
     err("run_set_entry: %d: invalid status %d", run_id, te.status);
     return -1;
   }
@@ -1995,9 +1993,7 @@ runlog_check(
   /* check local consistency of fields */
   for (i = 0; i < nentries; i++) {
     e = &pentries[i];
-    if (e->status > RUN_TRANSIENT_LAST
-        || (e->status > RUN_PSEUDO_LAST && e->status < RUN_TRANSIENT_FIRST)
-        || (e->status > RUN_MAX_STATUS && e->status < RUN_PSEUDO_FIRST)) {
+    if (run_is_invalid_status(e->status)) {
       check_msg(1,ferr, "Run %d invalid status %d", i, e->status);
       nerr++;
       continue;
@@ -2354,7 +2350,7 @@ build_uuid_hash(runlog_state_t state, int incr)
   int run_count = 0;
   for (int run_id = 0; run_id < state->run_u; ++run_id) {
     const struct run_entry *re = &state->runs[run_id];
-    if (re->status < 0 || (re->status > RUN_MAX_STATUS && re->status < RUN_TRANSIENT_FIRST) || re->status > RUN_LAST) continue;
+    if (!run_is_normal_or_transient_status(re->status)) continue;
     if (!re->run_uuid.v[0] && !re->run_uuid.v[1] && !re->run_uuid.v[2] && !re->run_uuid.v[3]) {
       err("run_id %d has NULL UUID, uuid indexing is not possible", run_id);
       return;
@@ -2377,7 +2373,7 @@ build_uuid_hash(runlog_state_t state, int incr)
   int conflicts = 0;
   for (int run_id = 0; run_id < state->run_u; ++run_id) {
     const struct run_entry *re = &state->runs[run_id];
-    if (re->status < 0 || (re->status > RUN_MAX_STATUS && re->status < RUN_TRANSIENT_FIRST) || re->status > RUN_LAST) continue;
+    if (!run_is_normal_or_transient_status(re->status)) continue;
     int index = re->run_uuid.v[0] % hash_size;
     while (hash[index].run_id >= 0) {
       if (!memcmp(&re->run_uuid, &hash[index].uuid, sizeof(re->run_uuid))) {
