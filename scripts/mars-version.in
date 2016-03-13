@@ -6,6 +6,7 @@ LANG_CONFIG_DIR="@lang_config_dir@"
 common_config() {
   echo 'long_name="MARS MIPS Simulator"'
   echo 'src_sfx=".asm"'
+  echo 'exe_sfx=".s"'
   echo 'arch="linux-shared"'
   echo 'insecure=1'
 }
