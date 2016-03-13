@@ -1,0 +1,6 @@
+# This file goes to /etc/sysconfig
+
+PATH=/opt/ejudge/bin:/usr/local/java/bin:/usr/local/bin:/usr/bin:/usr/sbin
+HOME=/home/ejudge
+LANG=en_US.UTF-8
+USER=ejudge

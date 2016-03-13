@@ -1,0 +1,16 @@
+# This file goes to /usr/lib/systemd/system/
+
+[Unit]
+Description=Programming contest management system
+After=syslog.target network.target mongod.service mariadb.service
+
+[Service]
+Type=forking
+User=ejudge
+EnvironmentFile=/etc/sysconfig/ejudge
+ExecStart=/opt/ejudge/bin/ejudge-control start
+ExecStop=/opt/ejudge/bin/ejudge-control stop
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
