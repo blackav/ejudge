@@ -1,6 +1,5 @@
 #!/bin/sh
-# $Id$
-# Copyright (c) 2012 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2012-2016 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
@@ -41,7 +40,7 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether clang C++ is available..." >&2
   "${CLANGRUN}" -v >/dev/null 2>/dev/null || failure
-  version=`"${CLANGRUN}" -v 2>&1 | grep "clang version" | gawk '{ print $3; }'` || failure
+  version=`"${CLANGRUN}" -v 2>&1 | grep "clang version" | gawk '{ if ($1 != "clang") { print $4; } else { print $3; } }'` || failure
   [ "${version}" != "" ] || failure
   cat > conftest.cpp <<EOF
 #include <iostream>
@@ -101,4 +100,4 @@ fi
 
 [ x"$1" = x-f ] && echo -n "clang C++ "
 
-"${CLANGRUN}" -v 2>&1 | grep "clang version" | gawk '{ print $3; }'
+"${CLANGRUN}" -v 2>&1 | grep "clang version" | gawk '{ if ($1 != "clang") { print $4; } else { print $3; } }'

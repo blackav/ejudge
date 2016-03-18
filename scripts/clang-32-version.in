@@ -1,6 +1,5 @@
 #!/bin/sh
-# $Id$
-# Copyright (c) 2013 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2013-2016 Alexander Chernov <cher@ejudge.ru>
 
 # compiler script interface is as follows
 # <comp>-version [OPTION]
@@ -56,7 +55,7 @@ then
 
   [ "${verbose}" = 1 ] && echo -n "checking whether clang C (32 bit) is available... " >&2
   "${CLANGRUN}" -v >/dev/null 2>&1 || failure
-  version=`"${CLANGRUN}" -v 2>&1 | grep "clang version" | gawk '{ print $3; }'`|| failure
+  version=`"${CLANGRUN}" -v 2>&1 | grep "clang version" | gawk '{ if ($1 != "clang") { print $4; } else { print $3; } }'`|| failure
   cat > conftest.c <<EOF
 #include <stdio.h>
 int main(void) { printf("ok\n"); return 0; }
@@ -114,4 +113,4 @@ fi
 
 [ x"$1" = x-f ] && echo -n "clang C (32 bit) "
 
-"${CLANGRUN}" -v 2>&1 | grep "clang version" | gawk '{ print $3; }'
+"${CLANGRUN}" -v 2>&1 | grep "clang version" | gawk '{ if ($1 != "clang") { print $4; } else { print $3; } }'
