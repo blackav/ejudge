@@ -7584,6 +7584,9 @@ fi
 if [ x"${libexecdir}" = x'${exec_prefix}/libexec' ]
 then
   actual_libexecdir="${actual_exec_prefix}/libexec"
+elif [ x"${libexecdir}" = x'${exec_prefix}/lib' ]
+then
+  actual_libexecdir="${actual_exec_prefix}/lib"
 else
   actual_libexecdir="${libexecdir}"
 fi
