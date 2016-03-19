@@ -319,6 +319,7 @@ generic_menu(int min_width, int max_width, /* incl. frame */
   txt_pan = new_panel(txt_win);
   in_pan = new_panel(in_win);
   set_menu_win(curs_menu, in_win);
+  set_menu_sub(curs_menu, in_win);
   mvwaddstr(txt_win, 0, (act_width - head_width) / 2, buf);
 
   if (first_item >= nitems) first_item = nitems - 1;
@@ -457,6 +458,7 @@ okcancel(unsigned char const *fmt, ...)
   txt_pan = new_panel(txt_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   waddstr(txt_win, buf);
 
   post_menu(menu);
@@ -581,6 +583,7 @@ yesno(int init_val, unsigned char const *fmt, ...)
   txt_pan = new_panel(txt_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   waddstr(txt_win, buf);
 
   post_menu(menu);
@@ -688,6 +691,7 @@ display_reg_status_menu(int line, int init_val)
   out_pan = new_panel(out_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
 
   if (init_val < 0) init_val = 0;
   if (init_val >= USERLIST_REG_LAST) init_val = USERLIST_REG_LAST - 1;
@@ -792,6 +796,7 @@ display_role_menu(int line, int init_val)
   out_pan = new_panel(out_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
 
   if (init_val < 0) init_val = 0;
   if (init_val >= USERLIST_REG_LAST) init_val = CONTEST_LAST_MEMBER - 1;
@@ -898,6 +903,7 @@ display_member_status_menu(int line, int init_val)
   out_pan = new_panel(out_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
 
   if (init_val < 0) init_val = 0;
   if (init_val >= USERLIST_ST_LAST) init_val = USERLIST_ST_LAST - 1;
@@ -1004,6 +1010,7 @@ display_member_gender_menu(int line, int init_val)
   out_pan = new_panel(out_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
 
   if (init_val < 0) init_val = 0;
   if (init_val >= USERLIST_SX_LAST) init_val = USERLIST_SX_LAST - 1;
@@ -1596,6 +1603,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
   out_pan = new_panel(out_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   mvwprintw(stdscr, 0, 0, "%s", current_level);
   wclrtoeol(stdscr);
   set_menu_format(menu, LINES - 4, 0);
@@ -2745,6 +2753,7 @@ do_display_registered_users(
   out_pan = new_panel(out_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   set_menu_format(menu, LINES - 4, 0);
 
   if (*p_cur_val >= nuser) *p_cur_val = nuser - 1;
@@ -3584,6 +3593,7 @@ display_contests_menu(unsigned char *upper, int only_choose)
   out_pan = new_panel(out_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   set_menu_format(menu, LINES - 4, 0);
 
   if (cur_item < 0) cur_item = 0;
@@ -3836,6 +3846,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
   out_pan = new_panel(out_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   set_menu_format(menu, LINES - 4, 0);
 
   for (i = 0; i < nusers; i++)
@@ -4425,6 +4436,7 @@ do_display_group_members_menu(
   out_pan = new_panel(out_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   set_menu_format(menu, height, 0);
 
   for (cur_pos = 0; cur_pos < member_count; ++cur_pos)
@@ -4895,6 +4907,7 @@ do_display_group_menu(
   out_pan = new_panel(out_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   set_menu_format(menu, height, 0);
 
   for (cur_pos = 0; cur_pos < group_count; ++cur_pos)
@@ -5177,6 +5190,7 @@ display_main_menu(void)
   in_win = newwin(req_rows, req_cols, 6, start_col + 1);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
 
   while (1) {
     mvwprintw(stdscr, 0, 0, "%s", current_level);

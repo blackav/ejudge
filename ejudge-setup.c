@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -861,6 +861,7 @@ do_paths_menu(int *p_cur_item)
   out_pan = new_panel(out_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   set_menu_format(menu, LINES - 4, 0);
 
   if (cur_item < 0) cur_item = 0;
@@ -1203,6 +1204,7 @@ do_identity_menu(int *p_cur_item)
   out_pan = new_panel(out_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   set_menu_format(menu, LINES - 4, 0);
 
   if (cur_item < 0) cur_item = 0;
@@ -1520,6 +1522,7 @@ do_mysql_menu(int *p_cur_item)
   PANEL *out_pan = new_panel(out_win);
   PANEL *in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   set_menu_format(menu, LINES - 4, 0);
 
   int cur_item = *p_cur_item;
@@ -1970,6 +1973,7 @@ do_settings_menu(int *p_cur_item)
   out_pan = new_panel(out_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   set_menu_format(menu, LINES - 4, 0);
 
   if (cur_item < 0) cur_item = 0;

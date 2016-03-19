@@ -141,6 +141,7 @@ ncurses_yesno(int init_val, unsigned char const *fmt, ...)
   txt_pan = new_panel(txt_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   ncurses_render_tex_buffer(txt_win, tex_buf);
   tex_buf = tex_dom_free_buffer(tex_buf);
 
@@ -275,6 +276,7 @@ ncurses_msgbox(unsigned char const *fmt, ...)
   txt_pan = new_panel(txt_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   ncurses_render_tex_buffer(txt_win, tex_buf);
   tex_buf = tex_dom_free_buffer(tex_buf);
 
@@ -372,6 +374,7 @@ ncurses_errbox(unsigned char const *fmt, ...)
   txt_pan = new_panel(txt_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   ncurses_render_tex_buffer(txt_win, tex_buf);
   tex_buf = tex_dom_free_buffer(tex_buf);
 
@@ -539,6 +542,7 @@ ncurses_generic_menu(int min_width, int max_width, /* incl. frame */
   txt_pan = new_panel(txt_win);
   in_pan = new_panel(in_win);
   set_menu_win(curs_menu, in_win);
+  set_menu_sub(curs_menu, in_win);
   mvwaddstr(txt_win, 0, (act_width - head_width) / 2, buf);
 
   if (first_item >= nitems) first_item = nitems - 1;
@@ -1282,6 +1286,7 @@ do_choose_file(
   in_pan = new_panel(in_win);
   path_pan = new_panel(path_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   set_menu_format(menu, LINES - 5, 0);
 
   if (file_ind < 0) file_ind = 0;

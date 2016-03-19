@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1002,6 +1002,7 @@ lang_config_menu(
   out_pan = new_panel(out_win);
   in_pan = new_panel(in_win);
   set_menu_win(menu, in_win);
+  set_menu_sub(menu, in_win);
   set_menu_format(menu, LINES - 4, 0);
 
   if (cur_item < 0) cur_item = 0;
