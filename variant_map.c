@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -529,8 +528,10 @@ variant_map_parse(
     for (i = 0; i < pmap->u; i++) {
       if (pmap->v[i].var_num < var_prob_num) {
         XCALLOC(newvar, var_prob_num + 1);
-        memcpy(newvar, pmap->v[i].variants, (pmap->v[i].var_num + 1) * sizeof(newvar[0]));
-        xfree(pmap->v[i].variants);
+        if (pmap->v[i].variants) {
+          memcpy(newvar, pmap->v[i].variants, (pmap->v[i].var_num + 1) * sizeof(newvar[0]));
+          xfree(pmap->v[i].variants);
+        }
         pmap->v[i].variants = newvar;
         pmap->v[i].var_num = var_prob_num;
       }
