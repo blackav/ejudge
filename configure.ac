@@ -1,4 +1,4 @@
-dnl Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru>
+dnl Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru>
 
 AC_INIT(ejudge,3)
 AC_PREREQ(2.59)
@@ -954,6 +954,9 @@ fi
 if [[ x"${libexecdir}" = x'${exec_prefix}/libexec' ]]
 then
   actual_libexecdir="${actual_exec_prefix}/libexec"
+elif [[ x"${libexecdir}" = x'${exec_prefix}/lib' ]]
+then
+  actual_libexecdir="${actual_exec_prefix}/lib"
 else
   actual_libexecdir="${libexecdir}"
 fi
