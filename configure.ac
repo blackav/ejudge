@@ -394,6 +394,17 @@ AC_CHECK_HEADER([ncurses.h],[ac_cv_has_ncurses=1],[ac_cv_has_ncurses=0])
 #  AC_MSG_FAILURE([ncurses.h is missing, please install ncurses development package])
 #fi
 
+dnl check for menu.h
+AC_CHECK_HEADER([menu.h],[ac_cv_ncurses_menu=1],[ac_cv_ncurses_menu=0])
+
+dnl check for ncurses/menu.h
+AC_CHECK_HEADER([ncurses/menu.h],[ac_cv_ncurses_ncurses_menu=1],[ac_cv_ncurses_ncurses_menu=0])
+
+if [[ "$ac_cv_ncurses_menu" = "0" -a "$ac_cv_ncurses_ncurses_menu" = "1" ]]
+then
+  ac_cv_ncurses_include=" -I/usr/include/ncurses"
+fi
+
 dnl check zlib library
 AC_CHECK_HEADER([zip.h],[ac_cv_has_libzip=1],[ac_cv_has_libzip=0])
 AC_CHECK_LIB([zip],[zip_open],[ac_cv_has_lib_libzip=-lzip],[ac_cv_has_lib_libzip=])
@@ -1102,6 +1113,7 @@ AC_SUBST(MSGFMT)
 AC_SUBST(ac_cv_style_prefix)
 AC_SUBST(CHARSET_UPPERCASE)
 AC_SUBST(ac_cv_ncurses_suffix)
+AC_SUBST(ac_cv_ncurses_include)
 AC_SUBST(ac_cv_local_dir)
 AC_SUBST(ac_cv_werror_flag)
 AC_SUBST(ac_cv_preserve_scripts)
