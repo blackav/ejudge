@@ -647,6 +647,7 @@ ac_cv_httpd_cgi_bin_dir
 ac_cv_preserve_scripts
 ac_cv_werror_flag
 ac_cv_local_dir
+ac_cv_ncurses_include
 ac_cv_ncurses_suffix
 CHARSET_UPPERCASE
 ac_cv_style_prefix
@@ -6450,6 +6451,29 @@ fi
 #  AC_MSG_FAILURE([ncurses.h is missing, please install ncurses development package])
 #fi
 
+ac_fn_c_check_header_mongrel "$LINENO" "menu.h" "ac_cv_header_menu_h" "$ac_includes_default"
+if test "x$ac_cv_header_menu_h" = xyes; then :
+  ac_cv_ncurses_menu=1
+else
+  ac_cv_ncurses_menu=0
+fi
+
+
+
+ac_fn_c_check_header_mongrel "$LINENO" "ncurses/menu.h" "ac_cv_header_ncurses_menu_h" "$ac_includes_default"
+if test "x$ac_cv_header_ncurses_menu_h" = xyes; then :
+  ac_cv_ncurses_ncurses_menu=1
+else
+  ac_cv_ncurses_ncurses_menu=0
+fi
+
+
+
+if [ "$ac_cv_ncurses_menu" = "0" -a "$ac_cv_ncurses_ncurses_menu" = "1" ]
+then
+  ac_cv_ncurses_include=" -I/usr/include/ncurses"
+fi
+
 ac_fn_c_check_header_mongrel "$LINENO" "zip.h" "ac_cv_header_zip_h" "$ac_includes_default"
 if test "x$ac_cv_header_zip_h" = xyes; then :
   ac_cv_has_libzip=1
@@ -7704,6 +7728,7 @@ if [ x"${ac_cv_rest}" = x ]
 then
   ac_cv_rest="/ej/"
 fi
+
 
 
 
