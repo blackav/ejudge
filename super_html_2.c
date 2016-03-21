@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -575,7 +575,7 @@ super_html_commit_contest_2(
           need_variant_map = 1;
     }
 
-    if (need_variant_map && !sstate->global->variant_map_file)
+    if (need_variant_map && !sstate->global->variant_map_file[0])
       snprintf(sstate->global->variant_map_file,
                sizeof(sstate->global->variant_map_file), "variant.map");
     if (need_variant_map && !sstate->global->variant_map) {

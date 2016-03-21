@@ -2865,19 +2865,19 @@ prob_instr(
   }
 
   prepare_set_prob_value(CNTSPROB_valuer_cmd, tmp_prob, abstr, global);
-  if (tmp_prob->valuer_cmd && tmp_prob->valuer_cmd[0]) {
+  if (/*tmp_prob->valuer_cmd &&*/ tmp_prob->valuer_cmd[0]) {
     fprintf(f, "<p><b>Score evaluator:</b></p>\n");
     handle_file(f, global, tmp_prob, tmp_prob->valuer_cmd, 1);
   }
   
   prepare_set_prob_value(CNTSPROB_interactor_cmd, tmp_prob, abstr, global);
-  if (tmp_prob->interactor_cmd && tmp_prob->interactor_cmd[0]) {
+  if (/*tmp_prob->interactor_cmd &&*/ tmp_prob->interactor_cmd[0]) {
     fprintf(f, "<p><b>Interactor:</b></p>\n");
     handle_file(f, global, tmp_prob, tmp_prob->interactor_cmd, 1);
   }
 
   prepare_set_prob_value(CNTSPROB_style_checker_cmd, tmp_prob, abstr, global);
-  if (tmp_prob->style_checker_cmd && tmp_prob->style_checker_cmd[0]) {
+  if (/*tmp_prob->style_checker_cmd &&*/ tmp_prob->style_checker_cmd[0]) {
     fprintf(f, "<p><b>Style checker:</b></p>\n");
 
     sformat_message(prob_path, sizeof(prob_path), 0,

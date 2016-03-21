@@ -670,20 +670,20 @@ create_working_directories(serve_state_t state)
   int retval = 0;
 
 #if defined EJUDGE_LOCAL_DIR
-  if (!global->run_work_dir || !global->run_work_dir[0]) {
+  if (/*!global->run_work_dir ||*/ !global->run_work_dir[0]) {
     snprintf(global->run_work_dir, sizeof(global->run_work_dir),
              "%s/%s/work", EJUDGE_LOCAL_DIR, super_run_dir);
   }
-  if (!global->run_check_dir || !global->run_check_dir[0]) {
+  if (/*!global->run_check_dir ||*/ !global->run_check_dir[0]) {
     snprintf(global->run_check_dir, sizeof(global->run_check_dir),
              "%s/%s/check", EJUDGE_LOCAL_DIR, super_run_dir);
   }
 #endif
-  if (!global->run_work_dir || !global->run_work_dir[0]) {
+  if (/*!global->run_work_dir ||*/ !global->run_work_dir[0]) {
     snprintf(global->run_work_dir, sizeof(global->run_work_dir), 
              "%s/var/work", super_run_path);
   }
-  if (!global->run_check_dir || !global->run_check_dir[0]) {
+  if (/*!global->run_check_dir ||*/ !global->run_check_dir[0]) {
     snprintf(global->run_check_dir, sizeof(global->run_check_dir),
              "%s/var/check", super_run_path);
   }
@@ -711,10 +711,10 @@ remove_working_directory(serve_state_t state)
   struct section_global_data *global = state->global;
 
   if (!global) return;
-  if (global->run_work_dir && global->run_work_dir[0]) {
+  if (/*global->run_work_dir &&*/ global->run_work_dir[0]) {
     remove_directory_recursively(global->run_work_dir, 0);
   }
-  if (global->run_check_dir && global->run_check_dir[0]) {
+  if (/*global->run_check_dir &&*/ global->run_check_dir[0]) {
     remove_directory_recursively(global->run_check_dir, 0);
   }
 }
@@ -799,7 +799,7 @@ collect_sections(serve_state_t state)
       }
     }
 
-    if (t->start_cmd && t->start_cmd[0]) {
+    if (/*t->start_cmd &&*/ t->start_cmd[0]) {
       if (!os_IsAbsolutePath(t->start_cmd)) {
         snprintf(start_path, sizeof(start_path), "%s", t->start_cmd);
         if (ejudge_config && ejudge_config->compile_home_dir) {

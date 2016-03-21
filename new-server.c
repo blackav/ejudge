@@ -406,7 +406,7 @@ cmd_http_request(
   }
   pbuf = stpcpy(pbuf, xml_unparse_ipv6(&hr.ip));
   *pbuf++ = ':';
-  if (hr.role_name) {
+  if (/*hr.role_name*/ 1) {
     pbuf = stpcpy(pbuf, hr.role_name);
   }
   if (hr.action > 0 && hr.action < NEW_SRV_ACTION_LAST && ns_symbolic_action_table[hr.action]) {
@@ -445,7 +445,7 @@ cmd_http_request(
   }
 
   //
-  if (hr.content_type && hr.content_type[0]) {
+  if (/*hr.content_type &&*/ hr.content_type[0]) {
     // generate header
     char *hdr_t = NULL;
     size_t hdr_z = 0;

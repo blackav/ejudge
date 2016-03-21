@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@
 #define GLOBAL_SIZE(x)     XFSIZE(struct dates_global_data, x)
 #define GLOBAL_PARAM(x, t) { #x, t, GLOBAL_OFFSET(x), GLOBAL_SIZE(x) }
 
-static const struct config_parse_info dates_global_params[] =
+static const __attribute__((unused)) struct config_parse_info dates_global_params[] =
 {
     { 0, 0, 0, 0 }
 };
@@ -40,7 +40,7 @@ static const struct config_parse_info dates_global_params[] =
 #define PROBLEM_SIZE(x)     XFSIZE(struct dates_problem_data, x)
 #define PROBLEM_PARAM(x, t) { #x, t, PROBLEM_OFFSET(x), PROBLEM_SIZE(x) }
 
-static const struct config_parse_info dates_problem_params[] =
+static const __attribute__((unused)) struct config_parse_info dates_problem_params[] =
 {
     { 0, 0, 0, 0 }
 };

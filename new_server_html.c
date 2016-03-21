@@ -2835,7 +2835,7 @@ priv_submit_run(
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_COMPILING, NULL);
-      if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+      if (/*prob->style_checker_cmd &&*/ prob->style_checker_cmd[0]) {
         r = serve_compile_request(cs, run_text, run_size, cnts->id, 
                                   run_id, phr->user_id, 0 /* lang_id */, variant,
                                   0 /* locale_id */, 1 /* output_only*/,
@@ -2877,7 +2877,7 @@ priv_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_COMPILING, NULL);
       /* FIXME: check for XML problem */
-      if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+      if (/*prob->style_checker_cmd &&*/ prob->style_checker_cmd[0]) {
         r = serve_compile_request(cs, run_text, run_size, cnts->id,
                                   run_id, phr->user_id, 0 /* lang_id */, variant,
                                   0 /* locale_id */, 1 /* output_only*/,
@@ -5160,7 +5160,7 @@ priv_download_source(
     src_sfx = lang->src_sfx;
     if (!src_sfx) src_sfx = "";
 
-    if (lang->content_type && lang->content_type[0]) {
+    if (/*lang->content_type &&*/ lang->content_type[0]) {
       content_type = lang->content_type;
     } else if (lang->binary) {
       if (re.mime_type <= 0 && !strcmp(src_sfx, ".tar")) {
@@ -7828,7 +7828,7 @@ ns_submit_run(
     FAIL(NEW_SRV_ERR_INV_PROB_ID);
   }
   for (prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
-    if ((prob = cs->probs[prob_id]) && prob->short_name && !strcmp(s, prob->short_name))
+    if ((prob = cs->probs[prob_id]) /*&& prob->short_name*/ && !strcmp(s, prob->short_name))
       break;
   }
   if (prob_id > cs->max_prob) {
@@ -7847,7 +7847,7 @@ ns_submit_run(
       FAIL(NEW_SRV_ERR_INV_LANG_ID);
     }
     for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
-      if ((lang = cs->langs[lang_id]) && lang->short_name && !strcmp(lang->short_name, s))
+      if ((lang = cs->langs[lang_id]) /*&& lang->short_name*/ && !strcmp(lang->short_name, s))
         break;
     }
     if (lang_id > cs->max_lang) {
@@ -8343,7 +8343,7 @@ ns_submit_run(
       goto done;
     }
 
-    if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+    if (/*prob->style_checker_cmd &&*/ prob->style_checker_cmd[0]) {
       serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_COMPILING, NULL);
       r = serve_compile_request(cs, run_text, run_size, cnts->id,
@@ -8400,7 +8400,7 @@ ns_submit_run(
     goto done;
   }
 
-  if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+  if (/*prob->style_checker_cmd &&*/ prob->style_checker_cmd[0]) {
     r = serve_compile_request(cs, run_text, run_size, cnts->id,
                               run_id, user_id, 0 /* lang_id */, variant,
                               0 /* locale_id */, 1 /* output_only */,
@@ -8917,7 +8917,7 @@ unpriv_submit_run(
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_COMPILING, NULL);
-      if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+      if (/*prob->style_checker_cmd &&*/ prob->style_checker_cmd[0]) {
         r = serve_compile_request(cs, run_text, run_size, cnts->id,
                                   run_id, phr->user_id, 0 /* lang_id */, variant,
                                   0 /* locale_id */, 1 /* output_only*/,
@@ -8973,7 +8973,7 @@ unpriv_submit_run(
         goto done;
       }
 
-      if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+      if (/*prob->style_checker_cmd &&*/ prob->style_checker_cmd[0]) {
         serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
 
@@ -9553,7 +9553,7 @@ unpriv_download_run(
       FAIL2(NEW_SRV_ERR_INV_LANG_ID);
     }
 
-    if (lang->content_type) {
+    if (/*lang->content_type && */ lang->content_type[0]) {
       fprintf(fout, "Content-type: %s\n", lang->content_type);
       fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
               run_id, lang->src_sfx);
@@ -9926,7 +9926,7 @@ ns_unparse_statement(
   } else {
     fprintf(fout, "<h3>");
     fprintf(fout, "%s %s", _("Problem"), ARMOR(prob->short_name));
-    if (prob->long_name && prob->long_name[0]) {
+    if (/*prob->long_name &&*/ prob->long_name[0]) {
       fprintf(fout, ": %s", ARMOR(prob->long_name));
     }
     fprintf(fout, "</h3>");

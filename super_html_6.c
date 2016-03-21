@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -9968,11 +9968,11 @@ do_import_problem(
   }
   for (int prob_id = 1; prob_id < ss->prob_a; ++prob_id) {
     struct section_problem_data *prob = ss->probs[prob_id];
-    if (prob && prob->internal_name && !strcmp(prob->internal_name, internal_name)) {
+    if (prob /*&& prob->internal_name*/ && !strcmp(prob->internal_name, internal_name)) {
       fprintf(log_f, "internal name '%s' is not unique in this contest\n", internal_name);
       FAIL(SSERV_ERR_OPERATION_FAILED);
     }
-    if (prob && prob->short_name && !strcmp(prob->short_name, internal_name)) {
+    if (prob /*&& prob->short_name*/ && !strcmp(prob->short_name, internal_name)) {
       fprintf(log_f, "internal name '%s' matches short name in this contest\n", internal_name);
       FAIL(SSERV_ERR_OPERATION_FAILED);
     }
@@ -10016,11 +10016,11 @@ do_import_problem(
   if (cfg->short_name && *cfg->short_name) {
     for (int prob_id = 1; prob_id < ss->prob_a; ++prob_id) {
       struct section_problem_data *prob = ss->probs[prob_id];
-      if (prob && prob->short_name && !strcmp(prob->short_name, cfg->short_name)) {
+      if (prob /*&& prob->short_name*/ && !strcmp(prob->short_name, cfg->short_name)) {
         fprintf(log_f, "short name '%s' is not unique in this contest\n", cfg->short_name);
         FAIL(SSERV_ERR_OPERATION_FAILED);
       }
-      if (prob && prob->internal_name && !strcmp(prob->internal_name, cfg->short_name)) {
+      if (prob /*&& prob->internal_name*/ && !strcmp(prob->internal_name, cfg->short_name)) {
         fprintf(log_f, "short name '%s' matches internal name in this contest\n", cfg->short_name);
         FAIL(SSERV_ERR_OPERATION_FAILED);
       }
@@ -10032,11 +10032,11 @@ do_import_problem(
     problem_id_to_short_name(cfg->id - 1, name_buf);
     for (int prob_id = 1; prob_id < ss->prob_a; ++prob_id) {
       struct section_problem_data *prob = ss->probs[prob_id];
-      if (prob && prob->short_name && !strcmp(prob->short_name, name_buf)) {
+      if (prob /*&& prob->short_name*/ && !strcmp(prob->short_name, name_buf)) {
         fprintf(log_f, "failed to auto-assign short_name\n");
         FAIL(SSERV_ERR_OPERATION_FAILED);
       }
-      if (prob && prob->internal_name && !strcmp(prob->internal_name, name_buf)) {
+      if (prob /*&& prob->internal_name*/ && !strcmp(prob->internal_name, name_buf)) {
         fprintf(log_f, "failed to auto-assign short_name\n");
         FAIL(SSERV_ERR_OPERATION_FAILED);
       }

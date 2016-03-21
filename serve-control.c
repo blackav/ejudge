@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1163,46 +1163,6 @@ action_variant_param(int cmd, int next_state)
   open_super_server();
   r = super_clnt_set_param(super_serve_fd, cmd, row, param_txt, 0, 0, 0);
   xfree(param_txt);
-  if (next_state) {
-    operation_status_page(-1, r, "action=%d", next_state);
-  } else {
-    operation_status_page(-1, r, "");
-  }
-
- invalid_parameter:
-  operation_status_page(-1, -1, "Invalid parameter");
-}
-
-static void
-action_prob_date_param(int cmd, int next_state) __attribute__((noreturn));
-static void
-action_prob_date_param(int cmd, int next_state)
-{
-  int prob_id, n, r;
-  unsigned char *s;
-  unsigned char *d_hour = cgi_param("d_hour");
-  unsigned char *d_min = cgi_param("d_min");
-  unsigned char *d_sec = cgi_param("d_sec");
-  unsigned char *d_mday = cgi_param("d_mday");
-  unsigned char *d_mon = cgi_param("d_mon");
-  unsigned char *d_year = cgi_param("d_year");
-  unsigned char buf[256];
-
-  if (!(s = cgi_param("prob_id")) || sscanf(s, "%d%n", &prob_id, &n) != 1
-      || s[n] || prob_id < -EJ_MAX_PROB_ID || prob_id > EJ_MAX_PROB_ID)
-    goto invalid_parameter;
-
-  if (!d_hour) d_hour = "0";
-  if (!d_min) d_min = "0";
-  if (!d_sec) d_sec = "0";
-  if (!d_mday) d_mday = "1";
-  if (!d_mon) d_mon = "1";
-  if (!d_year) d_year = "2001";
-  snprintf(buf, sizeof(buf), "%s/%s/%s %s:%s:%s",
-           d_year, d_mon, d_mday, d_hour, d_min, d_sec);
-
-  open_super_server();
-  r = super_clnt_set_param(super_serve_fd, cmd, prob_id, buf, 0, 0, 0);
   if (next_state) {
     operation_status_page(-1, r, "action=%d", next_state);
   } else {

@@ -2609,7 +2609,7 @@ set_defaults(
 
     GLOBAL_INIT_FIELD(status_dir, DFLT_G_STATUS_DIR, var_dir);
     GLOBAL_INIT_FIELD(serve_socket, DFLT_G_SERVE_SOCKET, var_dir);
-    if (g->variant_map_file) {
+    if (g->variant_map_file[0]) {
       GLOBAL_INIT_FIELD(variant_map_file, "", conf_dir);
     }
     if (g->contest_plugin_file[0]) {
@@ -3929,7 +3929,7 @@ set_defaults(
       if (tp->ignore_stderr == -1) {
         tp->ignore_stderr = 0;
       }
-      if (!tp->errorcode_file[0] && atp && atp->errorcode_file) {
+      if (!tp->errorcode_file[0] && atp && atp->errorcode_file[0]) {
         sformat_message(tp->errorcode_file, PATH_MAX, 0, atp->errorcode_file,
                         g, tp_prob, NULL,
                         tp, NULL, 0, 0, 0);

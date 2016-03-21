@@ -914,7 +914,7 @@ generate_makefile(struct sid_state *ss,
     struct section_problem_data *abstr = NULL;
     struct section_global_data *global = ss->global;
 
-    if (prob->super && prob->super[0] && prob->super[0] != 1) {
+    if (/*prob->super &&*/ prob->super[0] && prob->super[0] != 1) {
         for (int i = 0; i < ss->aprob_u; ++i) {
             if (!strcmp(prob->super, ss->aprobs[i]->short_name)) {
                 abstr = ss->aprobs[i];
@@ -1727,7 +1727,7 @@ do_import_contest(
                       p->cfg->short_name, serve_cfg_path);
                 p->is_bad = 1;
             }
-            if (prob->internal_name && !strcmp(p->cfg->short_name, prob->internal_name)) {
+            if (/*prob->internal_name &&*/ !strcmp(p->cfg->short_name, prob->internal_name)) {
                 error("'short_name' attribute value ('%s') matches an abstract problem in '%s'",
                       p->cfg->short_name, serve_cfg_path);
                 p->is_bad = 1;
@@ -1738,7 +1738,7 @@ do_import_contest(
                           p->cfg->internal_name, serve_cfg_path);
                     p->is_bad = 1;
                 }
-                if (prob->internal_name && !strcmp(p->cfg->internal_name, prob->internal_name)) {
+                if (/*prob->internal_name &&*/ !strcmp(p->cfg->internal_name, prob->internal_name)) {
                     error("'internal_name' attribute value ('%s') matches an abstract problem in '%s'",
                           p->cfg->internal_name, serve_cfg_path);
                     p->is_bad = 1;
@@ -1753,7 +1753,7 @@ do_import_contest(
         }
         if (j < ss->prob_a) {
             const struct section_problem_data *prob = ss->probs[j];
-            if (p->cfg->internal_name && prob->internal_name
+            if (p->cfg->internal_name /*&& prob->internal_name*/
                 && strcmp(p->cfg->internal_name, prob->internal_name) != 0) {
                 error("'internal_name' attribute values ('%s' and '%s') mismatch in '%s' and '%s'",
                       p->cfg->internal_name, prob->internal_name,
@@ -1810,10 +1810,10 @@ do_import_contest(
         }
 
         const struct section_problem_data *aprob = NULL;
-        if (prob->super && prob->super[0]) {
+        if (/*prob->super &&*/ prob->super[0]) {
             for (int j = 0; j < ss->aprob_u; ++j) {
                 const struct section_problem_data *aa = ss->aprobs[j];
-                if (aa && aa->short_name && !strcmp(prob->super, aa->short_name)) {
+                if (aa && /*aa->short_name &&*/ !strcmp(prob->super, aa->short_name)) {
                     aprob = aa;
                     break;
                 }

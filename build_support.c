@@ -964,10 +964,10 @@ do_generate_makefile(
     fail_exe_names = build_make_exe_suitable_names(fail_names);
   } else if (prob->type == PROB_TYPE_STANDARD) {
     /* detect which languages we'll need */
-    if (prob->source_header && prob->source_header[0]) {
+    if (/*prob->source_header &&*/ prob->source_header[0]) {
       languages |= build_guess_language_by_src(prob->source_header);
     }
-    if (prob->source_footer && prob->source_footer[0]) {
+    if (/*prob->source_footer &&*/ prob->source_footer[0]) {
       languages |= build_guess_language_by_src(prob->source_footer);
     }
     if (prob->solution_src && prob->solution_src[0]) {
@@ -1186,14 +1186,14 @@ do_generate_makefile(
   if (cnts->file_group && cnts->file_group[0]) fprintf(mk_f, " --group=%s", cnts->file_group);
   if (cnts->file_mode && cnts->file_mode[0]) fprintf(mk_f, " --mode=%s", cnts->file_mode);
   if (prob->binary_input > 0) fprintf(mk_f, " --binary-input");
-  if (prob->normalization && prob->normalization[0]) fprintf(mk_f, " --type=%s", prob->normalization);
+  if (/*prob->normalization &&*/ prob->normalization[0]) fprintf(mk_f, " --type=%s", prob->normalization);
   fprintf(mk_f, "\n\n");
 
   fprintf(mk_f, "all :");
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     fprintf(mk_f, " %s", prob->solution_cmd);
   }
-  if ((!prob->standard_checker || !prob->standard_checker[0])
+  if ((/*!prob->standard_checker ||*/ !prob->standard_checker[0])
       && is_makefile_rule_needed(prob->check_cmd)) {
     fprintf(mk_f, " %s", prob->check_cmd);
   }
@@ -1230,18 +1230,18 @@ do_generate_makefile(
 
   /* solution compilation part  */
   if (prob->solution_cmd && prob->solution_cmd[0]) {
-    if (prob->source_header && prob->source_header[0]) has_header = 1;
-    if (prob->source_footer && prob->source_footer[0]) has_header = 1;
+    if (/*prob->source_header &&*/ prob->source_header[0]) has_header = 1;
+    if (/*prob->source_footer &&*/ prob->source_footer[0]) has_header = 1;
     if (prob->solution_src && prob->solution_src[0]) {
       languages = build_guess_language_by_src(prob->solution_src);
       source_suffix = build_get_source_suffix(languages);
       if (has_header) {
         fprintf(mk_f, "%s%s :", prob->solution_cmd, source_suffix);
-        if (prob->source_header && prob->source_header[0]) {
+        if (/*prob->source_header &&*/ prob->source_header[0]) {
           fprintf(mk_f, " %s", prob->source_header);
         }
         fprintf(mk_f, " %s", prob->solution_src);
-        if (prob->source_footer && prob->source_footer[0]) {
+        if (/*prob->source_footer &&*/ prob->source_footer[0]) {
           fprintf(mk_f, " %s", prob->source_footer);
         }
         fprintf(mk_f, "\n");
@@ -1265,7 +1265,7 @@ do_generate_makefile(
   fprintf(mk_f, "\n");
 
   /* checker compilation part */
-  if (!prob->standard_checker || !prob->standard_checker[0]) {
+  if (/*!prob->standard_checker ||*/ !prob->standard_checker[0]) {
     build_generate_checker_compilation_rule(mk_f, "check", global, prob, variant, prob->check_cmd);
   }
 
@@ -1347,7 +1347,7 @@ do_generate_makefile(
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     fprintf(mk_f, " %s", prob->solution_cmd);
   }
-  if ((!prob->standard_checker || !prob->standard_checker[0])
+  if ((/*!prob->standard_checker ||*/ !prob->standard_checker[0])
       && is_makefile_rule_needed(prob->check_cmd)) {
     fprintf(mk_f, " %s", prob->check_cmd);
   }  

@@ -998,7 +998,7 @@ new_loop(void)
 
     unsigned char exe_path[PATH_MAX];
     const unsigned char *exe_sfx = "";
-    if (lang && lang->exe_sfx) exe_sfx = lang->exe_sfx;
+    if (lang /*&& lang->exe_sfx*/) exe_sfx = lang->exe_sfx;
     snprintf(exe_path, sizeof(exe_path), "%s/%s%s", report_dir, run_name, exe_sfx);
     unlink(exe_path);
 

@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -207,7 +206,7 @@ initialize(int argc, char *argv[])
              "%s", EJUDGE_CHARSET);
   }
 #endif
-  if (global->charset) client_charset = global->charset;
+  if (global->charset[0]) client_charset = global->charset;
   if (global->connect_attempts <= 0)
     global->connect_attempts = MAX_ATTEMPT;
 

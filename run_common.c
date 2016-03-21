@@ -1283,7 +1283,7 @@ invoke_nwrun(
   }
 
   error_file_name[0] = 0;
-  if (tst && tst->error_file && tst->error_file[0] >= ' ') {
+  if (tst && /*tst->error_file &&*/ tst->error_file[0] >= ' ') {
     snprintf(error_file_name, sizeof(error_file_name), "%s", tst->error_file);
   } else {
     snprintf(error_file_name, sizeof(error_file_name), "%s", "errors.txt");
@@ -2198,7 +2198,7 @@ run_one_test(
     return -1;
   }
 
-  if (tst && tst->check_dir && tst->check_dir[0]) {
+  if (tst && /*tst->check_dir &&*/ tst->check_dir[0]) {
     snprintf(check_dir, sizeof(check_dir), "%s", tst->check_dir);
   } else {
     snprintf(check_dir, sizeof(check_dir), "%s", global->run_check_dir);
@@ -2249,7 +2249,7 @@ run_one_test(
     snprintf(error_code, sizeof(error_code), "%s/%s", check_dir, tst->errorcode_file);
   }
 
-  if (tst && tst->nwrun_spool_dir && tst->nwrun_spool_dir[0]) {
+  if (tst && /*tst->nwrun_spool_dir &&*/ tst->nwrun_spool_dir[0]) {
     status = invoke_nwrun(config, state,
                           tst, srp, far,
                           cur_test, 0, p_has_real_time,
@@ -2413,7 +2413,7 @@ run_one_test(
     goto check_failed;
   }
 
-  if (tst && tst->error_file && tst->error_file[0]) {
+  if (tst && /*tst->error_file &&*/ tst->error_file[0]) {
     snprintf(error_file, sizeof(error_file), "%s", tst->error_file);
   } else {
     snprintf(error_file, sizeof(error_file), "%s", "error");
@@ -2464,7 +2464,7 @@ run_one_test(
     start_msg_need_env = 1;
     task_AddArg(tsk, start_cmd_arg);
   }
-  if (tst && tst->start_cmd && tst->start_cmd[0]) {
+  if (tst && /*tst->start_cmd &&*/ tst->start_cmd[0]) {
     if (remaps) {
       unsigned char *new_cmd = remap_command(tst->start_cmd, remaps);
       fprintf(start_msg_f, " %s", new_cmd);
@@ -2586,7 +2586,7 @@ run_one_test(
     *p_report_real_time_limit_ms = srpp->real_time_limit_ms;
   }
 
-  if (tst && tst->kill_signal && tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
+  if (tst && /*tst->kill_signal &&*/ tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
   if (tst && tst->no_core_dump > 0) task_DisableCoreDump(tsk);
 
   if (!tst || tst->memory_limit_type_val < 0) {
@@ -3215,7 +3215,7 @@ play_sound(
   unsigned char b1[64], b2[64], b3[64];
   tpTask tsk = NULL;
 
-  if (!global->sound_player || !global->sound_player[0] || disable_sound > 0) return;
+  if (/*!global->sound_player ||*/ !global->sound_player[0] || disable_sound > 0) return;
 
   if (global->extended_sound > 0) {
     tsk = task_New();
@@ -3646,7 +3646,7 @@ run_tests(
     far = full_archive_open_write(full_report_path);
   }
 
-  if (tst && tst->check_dir && tst->check_dir[0]) {
+  if (tst && /*tst->check_dir &&*/ tst->check_dir[0]) {
     snprintf(check_dir, sizeof(check_dir), "%s", tst->check_dir);
   } else {
     snprintf(check_dir, sizeof(check_dir), "%s", global->run_check_dir);
@@ -3725,7 +3725,7 @@ run_tests(
     goto check_failed;
   }
 
-  if (!srpp->type_val && tst && tst->prepare_cmd && tst->prepare_cmd[0]) {
+  if (!srpp->type_val && tst && /*tst->prepare_cmd &&*/ tst->prepare_cmd[0]) {
     if (invoke_prepare_cmd(tst->prepare_cmd, global->run_work_dir, exe_name, messages_path) < 0) {
       goto check_failed;
     }

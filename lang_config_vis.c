@@ -242,7 +242,7 @@ process_compile_cfg(
   for (p = cfg; p; p = p->next) {
     if (!strcmp(p->name, "language")) {
       struct section_language_data *lang = (struct section_language_data*) p;
-      if (!lang->short_name || !lang->short_name[0]) continue;
+      if (/*!lang->short_name ||*/ !lang->short_name[0]) continue;
       if (lang->id <= 0) continue;
       int i;
       for (i = 0; i < lang_id_total; ++i) {

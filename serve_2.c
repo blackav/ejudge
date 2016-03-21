@@ -1305,11 +1305,11 @@ serve_compile_request(
     prio += state->prob_prio[prob->id];
 
   compile_src_dir = global->compile_src_dir;
-  if (lang && lang->compile_src_dir && lang->compile_src_dir[0]) {
+  if (lang /*&& lang->compile_src_dir*/ && lang->compile_src_dir[0]) {
     compile_src_dir = lang->compile_src_dir;
   }
   compile_queue_dir = global->compile_queue_dir;
-  if (lang && lang->compile_queue_dir && lang->compile_queue_dir[0]) {
+  if (lang /*&& lang->compile_queue_dir*/ && lang->compile_queue_dir[0]) {
     compile_queue_dir = lang->compile_queue_dir;
   }
 
@@ -1423,7 +1423,7 @@ find_lang_specific_value(
         const struct section_language_data *lang,
         int default_value)
 {
-  if (!values || !values[0] || !lang || !lang->short_name || !lang->short_name[0]) return default_value;
+  if (!values || !values[0] || !lang /*|| !lang->short_name*/ || !lang->short_name[0]) return default_value;
 
   size_t lsn = strlen(lang->short_name);
   size_t vl;
@@ -1596,7 +1596,7 @@ serve_run_request(
       snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/super-run/var/exe", EJUDGE_CONTESTS_HOME_DIR);
       snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
     }
-  } else if (tester && tester->run_dir && tester->run_dir[0]) {
+  } else if (tester /*&& tester->run_dir*/ && tester->run_dir[0]) {
     snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", tester->run_dir);
     snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", tester->run_dir);
   } else {
@@ -1737,13 +1737,13 @@ serve_run_request(
   if (eoln_type == EOLN_CRLF) srgp->is_dos = 1;
   if (lang) {
     srgp->lang_short_name = xstrdup(lang->short_name);
-    if (lang->key && lang->key[0]) {
+    if (/*lang->key &&*/ lang->key[0]) {
       srgp->lang_key = xstrdup(lang->key);
     }
     if (eoln_type <= 0) srgp->is_dos = lang->is_dos;
   }
   if (!no_db_flag) {
-    if (te.login && te.login[0]) {
+    if (/*te.login &&*/ te.login[0]) {
       srgp->user_login = xstrdup(te.login);
     }
     if (ui && ui->name && ui->name[0]) {
@@ -1896,31 +1896,31 @@ serve_run_request(
     srpp->interactor_time_limit_ms = prob->interactor_time_limit * 1000;
   }
   srpp->disable_stderr = prob->disable_stderr;
-  if (prob->test_pat && prob->test_pat[0]) {
+  if (/*prob->test_pat &&*/ prob->test_pat[0]) {
     srpp->test_pat = xstrdup(prob->test_pat);
   } else {
     snprintf(buf, sizeof(buf), "%%03d%s", prob->test_sfx);
     srpp->test_pat = xstrdup(buf);
   }
-  if (prob->corr_pat && prob->corr_pat[0]) {
+  if (/*prob->corr_pat &&*/ prob->corr_pat[0]) {
     srpp->corr_pat = xstrdup(prob->corr_pat);
   } else {
     snprintf(buf, sizeof(buf), "%%03d%s", prob->corr_sfx);
     srpp->corr_pat = xstrdup(buf);
   }
-  if (prob->info_pat && prob->info_pat[0]) {
+  if (/*prob->info_pat &&*/ prob->info_pat[0]) {
     srpp->info_pat = xstrdup(prob->info_pat);
   } else {
     snprintf(buf, sizeof(buf), "%%03d%s", prob->info_sfx);
     srpp->info_pat = xstrdup(buf);
   }
-  if (prob->tgz_pat && prob->tgz_pat[0]) {
+  if (/*prob->tgz_pat &&*/ prob->tgz_pat[0]) {
     srpp->tgz_pat = xstrdup(prob->tgz_pat);
   } else {
     snprintf(buf, sizeof(buf), "%%03d%s", prob->tgz_sfx);
     srpp->tgz_pat = xstrdup(buf);
   }
-  if (prob->tgzdir_pat && prob->tgzdir_pat[0]) {
+  if (/*prob->tgzdir_pat &&*/ prob->tgzdir_pat[0]) {
     srpp->tgzdir_pat = xstrdup(prob->tgzdir_pat);
   } else {
     snprintf(buf, sizeof(buf), "%%03d%s", prob->tgzdir_sfx);
@@ -1933,7 +1933,7 @@ serve_run_request(
   srpp->test_checker_env = sarray_copy(prob->test_checker_env);
   srpp->init_env = sarray_copy(prob->init_env);
   srpp->start_env = sarray_copy(prob->start_env);
-  if (prob->check_cmd && prob->check_cmd[0]) {
+  if (/*prob->check_cmd &&*/ prob->check_cmd[0]) {
     if (os_IsAbsolutePath(prob->check_cmd)) {
       srpp->check_cmd = xstrdup(prob->check_cmd);
     } else {
@@ -1949,7 +1949,7 @@ serve_run_request(
       }
     }
   }
-  if (prob->valuer_cmd && prob->valuer_cmd[0]) {
+  if (/*prob->valuer_cmd &&*/ prob->valuer_cmd[0]) {
     if (srgp->advanced_layout > 0) {
       get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, prob->valuer_cmd, variant);
       srpp->valuer_cmd = xstrdup(pathbuf);
@@ -1960,7 +1960,7 @@ serve_run_request(
       srpp->valuer_cmd = xstrdup(prob->valuer_cmd);
     }
   }
-  if (prob->interactor_cmd && prob->interactor_cmd[0]) {
+  if (/*prob->interactor_cmd &&*/ prob->interactor_cmd[0]) {
     if (srgp->advanced_layout > 0) {
       get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, prob->interactor_cmd, variant);
       srpp->interactor_cmd = xstrdup(pathbuf);
@@ -2481,8 +2481,8 @@ serve_read_compile_packet(
     }
   }
 
-  if ((prob && prob->style_checker_cmd && prob->style_checker_cmd[0])
-      || (lang && lang->style_checker_cmd && lang->style_checker_cmd[0])) {
+  if ((prob && /*prob->style_checker_cmd &&*/ prob->style_checker_cmd[0])
+      || (lang && /*lang->style_checker_cmd &&*/ lang->style_checker_cmd[0])) {
     min_txt_size = 0;
   }
   snprintf(txt_packet_path, sizeof(txt_packet_path), "%s/%s.txt", compile_report_dir, pname);
@@ -2603,7 +2603,7 @@ prepare_run_request:
    * so far compilation is successful, and now we prepare a run packet
    */
 
-  if (prob && prob->type > 0 && prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+  if (prob && prob->type > 0 && /*prob->style_checker_cmd &&*/ prob->style_checker_cmd[0]) {
     arch_flags = serve_make_source_read_path(state, run_arch_path, sizeof(run_arch_path), &re);
     if (arch_flags < 0) goto report_check_failed;
     if (generic_read_file(&run_text, 0, &run_size, arch_flags,
@@ -3407,7 +3407,7 @@ serve_rejudge_run(
       return;
     }
 
-    if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
+    if (/*prob->style_checker_cmd &&*/ prob->style_checker_cmd[0]) {
       r = serve_compile_request(state, 0 /* str*/, -1 /* len*/, cnts->id,
                                 run_id, re.user_id, 0 /* lang_id */, re.variant,
                                 0 /* locale_id */, 1 /* output_only*/,
