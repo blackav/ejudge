@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2014-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -532,6 +532,19 @@ s_dwarf_dieoffset(Dwarf_Die die)
     return offset;
 }
 
+static __attribute__((unused)) int
+die_get_attrcount(Dwarf_Die die)
+{
+    Dwarf_Attribute *attrs = NULL;
+    Dwarf_Signed count = 0;
+    Dwarf_Error err = 0;
+
+    if (dwarf_attrlist(die, &attrs, &count, &err) != DW_DLV_OK)
+        return -1;
+    // FIXME: should we free attrs?
+    return count;
+}
+
 static void
 dump_die(FILE *out, Dwarf_Debug dbg, Dwarf_Die die)
 {
@@ -541,7 +554,7 @@ dump_die(FILE *out, Dwarf_Debug dbg, Dwarf_Die die)
 
     if (dwarf_die_CU_offset(die, &cu_offset, &dwe) != DW_DLV_OK) goto fail;
     if (dwarf_dieoffset(die, &offset, &dwe) != DW_DLV_OK) goto fail;
-    fprintf(out, "DIE information: CU_offset = %llu, offset = %llu\n", cu_offset, offset);
+    fprintf(out, "DIE information: CU_offset = %llu (0x%llx), offset = %llu (0x%llx)\n", cu_offset, cu_offset, offset, offset);
 
     Dwarf_Half tag = 0;
     const char *tag_name = NULL;
@@ -788,17 +801,20 @@ parse_pointer_type_die(
     int retval = -1;
     TypeInfo *ti = NULL;
 
+    // clang does not generate DW_AT_byte_size, which is not used anyway...
     // DW_AT_byte_size,DW_FORM_data1
     // DW_AT_type,DW_FORM_ref4
     Dwarf_Attribute bs_attr = NULL;
     Dwarf_Attribute type_attr = NULL;
-    if (s_dwarf_attr_2(log_f, path, die, DW_AT_byte_size, &bs_attr) <= 0)
+    if (s_dwarf_attr(log_f, path, die, DW_AT_byte_size, &bs_attr) < 0)
         goto done;
     if (s_dwarf_attr(log_f, path, die, DW_AT_type, &type_attr) < 0)
         goto done;
 
     Dwarf_Unsigned bs = 0;
-    if (s_dwarf_formudata(log_f, path, bs_attr, &bs) < 0) goto done;
+    if (bs_attr) {
+        if (s_dwarf_formudata(log_f, path, bs_attr, &bs) < 0) goto done;
+    }
 
     if (!type_attr) {
         // void*
