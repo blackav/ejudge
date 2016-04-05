@@ -434,6 +434,25 @@ handle_packet(
   struct ZipData *zf = NULL;
 
   if (req->output_only) {
+    if (req->style_checker && req->style_checker[0]) {
+      unsigned char src_work_name[PATH_MAX];
+      snprintf(src_work_name, sizeof(src_work_name), "%06d%s", req->run_id, "" /*lang->src_sfx*/);
+      unsigned char src_work_path[PATH_MAX];
+      snprintf(src_work_path, sizeof(src_work_path), "%s/%s", working_dir, src_work_name);
+
+      if (generic_copy_file(0, NULL, src_path, "", 0, NULL, src_work_path, "") < 0) {
+        fprintf(log_f, "cannot copy '%s' -> '%s'\n", src_path, exe_path);
+        rpl->status = RUN_CHECK_FAILED;
+        goto cleanup;
+      }
+
+      int r = invoke_style_checker(log_f, cs, lang, req, src_work_name, working_dir, log_work_path, NULL);
+      if (r != RUN_OK) {
+        rpl->status = r;
+        goto cleanup;
+      }
+    }
+
     if (rename(src_path, exe_path) >= 0) {
       *p_exe_copied = 1;
       rpl->status = RUN_OK;
