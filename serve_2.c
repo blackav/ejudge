@@ -2702,6 +2702,7 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
     case RUN_CHECK_FAILED:
     case RUN_ACCEPTED:
     case RUN_PENDING_REVIEW:
+    case RUN_PRESENTATION_ERR:
       return 1;
     case RUN_COMPILE_ERR:
     case RUN_STYLE_ERR:

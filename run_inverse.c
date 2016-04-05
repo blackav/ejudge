@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2010-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -332,10 +332,8 @@ invoke_test_checker(
 
   tsk = task_New();
   task_AddArg(tsk, test_checker_cmd);
-  /*
   task_AddArg(tsk, input_file);
   task_AddArg(tsk, output_file);
-  */
   task_SetPathAsArg0(tsk);
   task_EnableAllSignals(tsk);
   if (work_dir) task_SetWorkingDir(tsk, work_dir);
