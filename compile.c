@@ -435,6 +435,7 @@ handle_packet(
 
   if (req->output_only) {
     if (rename(src_path, exe_path) >= 0) {
+      *p_exe_copied = 1;
       rpl->status = RUN_OK;
       goto cleanup;
     }
