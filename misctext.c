@@ -1992,6 +1992,7 @@ text_read_file(
     fclose(f);
     return -1;
   }
+  fclose(f); f = NULL;
   if (!buf_len) {
     buf = (unsigned char*) xmalloc(reserve);
     buf[0] = 0;
