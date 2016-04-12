@@ -231,13 +231,13 @@ is_duplicated_row(testing_report_xml_t r, int row)
     int j;
     for (j = 0; j < r->tt_column_count; ++j) {
       struct testing_report_cell *trc = r->tt_cells[row][j];
-      struct testing_report_cell *trc2 = r->tt_cells[row][j];
+      struct testing_report_cell *trc2 = r->tt_cells[i][j];
       if (trc->status != trc2->status)
         break;
     }
-    if (j < r->tt_column_count) continue;
+    if (j >= r->tt_column_count) break;
   }
-  return i >= row;
+  return i < row;
 }
 
 int
