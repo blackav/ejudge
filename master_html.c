@@ -210,6 +210,36 @@ write_change_status_dialog(
 #define BGCOLOR_FAIL         " bgcolor=\"#FF8080\""
 #define BGCOLOR_PASS         " bgcolor=\"#80FF80\""
 
+static int
+is_duplicated_row(testing_report_xml_t r, int row)
+{
+  if (!r || !r->tests_mode) return 0;
+
+  if (row <= 0 || row >= r->tt_row_count) return 0;
+  struct testing_report_row *trr = r->tt_rows[row];
+  if (!trr->must_fail) return 0;
+
+  for (int j = 0; j < r->tt_column_count; ++j) {
+    if (r->tt_cells[row][j]->status == RUN_CHECK_FAILED) return 0;
+  }
+
+  int i;
+  for (i = 0; i < row; ++i) {
+    struct testing_report_row *trr2 = r->tt_rows[i];
+    if (!trr2->must_fail) continue;
+
+    int j;
+    for (j = 0; j < r->tt_column_count; ++j) {
+      struct testing_report_cell *trc = r->tt_cells[row][j];
+      struct testing_report_cell *trc2 = r->tt_cells[row][j];
+      if (trc->status != trc2->status)
+        break;
+    }
+    if (j < r->tt_column_count) continue;
+  }
+  return i >= row;
+}
+
 int
 write_xml_tests_report(
         FILE *f,
@@ -281,11 +311,6 @@ write_xml_tests_report(
     fprintf(f, "<pre>%s</pre>\n", ARMOR(r->comment));
   }
 
-  if (r->errors) {
-    fprintf(f, "<h3>%s</h3>\n", _("Testing messages"));
-    fprintf(f, "<pre>%s</pre>\n", ARMOR(r->errors));
-  }
-
   if (r->valuer_comment || r->valuer_judge_comment || r->valuer_errors) {
     fprintf(f, "<h3>%s</h3>\n", _("Valuer information"));
     if (r->valuer_comment) {
@@ -335,6 +360,13 @@ write_xml_tests_report(
   }
   fprintf(f, "</tr>\n");
   for (i = 0; i < r->tt_row_count; ++i) {
+    const unsigned char *stb = "";
+    const unsigned char *ste = "";
+    if (is_duplicated_row(r, i)) {
+      stb = "<strike>";
+      ste = "</strike>";
+    }
+    
     fprintf(f, "<tr>");
     trr = r->tt_rows[i];
     if (trr->status == RUN_CHECK_FAILED) {
@@ -358,9 +390,9 @@ write_xml_tests_report(
       fail_str = "FAIL";
       font_color = " color=\"red\"";
     }
-    fprintf(f, "<td%s%s>%d</td>", cl1, bgcolor, i + 1);
-    fprintf(f, "<td%s%s><tt>%s</tt></td>", cl1, bgcolor, ARMOR(trr->name));
-    fprintf(f, "<td%s%s align=\"center\"><font%s><b>%s</b></font></td>", cl1, bgcolor, font_color, fail_str);
+    fprintf(f, "<td%s%s>%s%d%s</td>", cl1, bgcolor, stb, i + 1, ste);
+    fprintf(f, "<td%s%s>%s<tt>%s</tt>%s</td>", cl1, bgcolor, stb, ARMOR(trr->name), ste);
+    fprintf(f, "<td%s%s align=\"center\">%s<font%s><b>%s</b></font>%s</td>", cl1, bgcolor, stb, font_color, fail_str, ste);
     for (j = 0; j < r->tt_column_count; ++j) {
       trc = r->tt_cells[i][j];
       if (trc->status == RUN_CHECK_FAILED) {
@@ -376,6 +408,11 @@ write_xml_tests_report(
     fprintf(f, "</tr>\n");
   }
   fprintf(f, "</table>\n");
+
+  if (r->errors) {
+    fprintf(f, "<h3>%s</h3>\n", _("Testing messages"));
+    fprintf(f, "<pre>%s</pre>\n", ARMOR(r->errors));
+  }
 
 done:
   testing_report_free(r);
