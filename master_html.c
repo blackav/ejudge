@@ -249,13 +249,14 @@ is_duplicated_column(testing_report_xml_t r, int col)
   for (int i = 0; i < r->tt_row_count; ++i) {
     if (r->tt_cells[i][col]->status == RUN_CHECK_FAILED) return 0;
   }
-  for (int i = 0; i < r->tt_row_count; ++i) {
-    if (r->tt_cells[i][col]->status == RUN_OK) return 1;
+  int i;
+  for (i = 0; i < r->tt_row_count; ++i) {
+    if (r->tt_cells[i][col]->status != RUN_OK) break;
   }
+  if (i >= r->tt_row_count) return 1;
 
   int j;
   for (j = 0; j < col; ++j) {
-    int i;
     for (i = 0; i < r->tt_row_count; ++i) {
       struct testing_report_cell *trc = r->tt_cells[i][col];
       struct testing_report_cell *trc2 = r->tt_cells[i][j];
