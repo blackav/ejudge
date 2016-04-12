@@ -240,6 +240,33 @@ is_duplicated_row(testing_report_xml_t r, int row)
   return i < row;
 }
 
+static int
+is_duplicated_column(testing_report_xml_t r, int col)
+{
+  if (!r || !r->tests_mode) return 0;
+  if (col <= 0 || col >= r->tt_column_count) return 0;
+
+  for (int i = 0; i < r->tt_row_count; ++i) {
+    if (r->tt_cells[i][col]->status == RUN_CHECK_FAILED) return 0;
+  }
+  for (int i = 0; i < r->tt_row_count; ++i) {
+    if (r->tt_cells[i][col]->status == RUN_OK) return 1;
+  }
+
+  int j;
+  for (j = 0; j < col; ++j) {
+    int i;
+    for (i = 0; i < r->tt_row_count; ++i) {
+      struct testing_report_cell *trc = r->tt_cells[i][col];
+      struct testing_report_cell *trc2 = r->tt_cells[i][j];
+      if (trc->status != trc2->status)
+        break;
+    }
+    if (i >= r->tt_row_count) break;
+  }
+  return j < col;
+}
+
 int
 write_xml_tests_report(
         FILE *f,
@@ -356,7 +383,13 @@ write_xml_tests_report(
   fprintf(f, "<th%s width=\"120px\">Prog. name</td>", cl1);
   fprintf(f, "<th%s width=\"50px\" align=\"center\">Goodness</td>", cl1);
   for (j = 0; j < r->tt_column_count; ++j) {
-    fprintf(f, "<th%s width=\"40px\" align=\"center\">%d</td>", cl1, j + 1);
+    const unsigned char *stb = "";
+    const unsigned char *ste = "";
+    if (is_duplicated_column(r, j)) {
+      stb = "<strike>";
+      ste = "</strike>";
+    }
+    fprintf(f, "<th%s width=\"40px\" align=\"center\">%s%d%s</td>", cl1, stb, j + 1, ste);
   }
   fprintf(f, "</tr>\n");
   for (i = 0; i < r->tt_row_count; ++i) {
