@@ -3348,7 +3348,7 @@ handle_html_text(FILE *out_f, FILE *txt_f, FILE *log_f, const unsigned char *mem
             strs.v[i].str = xmemdup(mem + start_idx, len);
             ++strs.u;
 
-            fprintf(txt_f, "static const unsigned char csp_str%d[%d] = ", i, len + 1);
+            fprintf(txt_f, "static const __attribute__((unused)) unsigned char csp_str%d[%d] = ", i, len + 1);
             emit_str_literal(txt_f, mem + start_idx, len);
             fprintf(txt_f, ";\n");
         }
