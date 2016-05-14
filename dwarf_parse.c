@@ -1210,6 +1210,9 @@ parse_struct_type_die(
         retval = 0;
         goto done;
     }
+    if (stk) {
+        dump_die(log_f, dbg, die);
+    }
     ASSERT(!stk);
 
     /*
@@ -1282,6 +1285,22 @@ parse_struct_type_die(
         // named structure
         ti = tc_find_struct_type(cntx, tag, name_info);
         ASSERT(ti);
+        cur->type_info = ti;
+    }
+
+    // process nested struct/unions
+    if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
+    while (r > 0) {
+        Dwarf_Half tag2 = 0;
+        if (s_dwarf_tag(log_f, path, die2, &tag2) < 0) goto done;
+        if (tag2 == DW_TAG_structure_type || tag2 == DW_TAG_union_type) {
+            r = parse_struct_type_die(log_f, path, dbg, die2, cntx, dm, tag2, p_info, cur, global_scope);
+            if (r < 0) goto done;
+        }        
+        if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
+    }
+
+    if (name_info->s.len > 0) {
         *p_info = ti;
         retval = 0;
         goto done;
@@ -1291,10 +1310,13 @@ parse_struct_type_die(
     die2 = NULL;
     if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
     while (r > 0) {
-        ++count;
         Dwarf_Half tag2 = 0;
         if (s_dwarf_tag(log_f, path, die2, &tag2) < 0) goto done;
-        if (tag2 != DW_TAG_member) {
+        if (tag2 == DW_TAG_structure_type || tag2 == DW_TAG_union_type) {
+            // nothing
+        } else if (tag2 == DW_TAG_member) {
+            ++count;
+        } else {
             fprintf(log_f, "%s: DW_TAG_member expected\n", path);
             goto done;
         }
@@ -1316,40 +1338,44 @@ parse_struct_type_die(
 
     if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
     while (r > 0) {
-        Dwarf_Attribute field_name_attr = NULL;
-        char *field_name_str = NULL;
-        if ((r = s_dwarf_attr(log_f, path, die2, DW_AT_name, &field_name_attr)) < 0) goto done;
-        if (r > 0) {
-            if (s_dwarf_formstring(log_f, path, field_name_attr, &field_name_str) < 0) goto done;
-        } else {
-            field_name_str = "";
+        Dwarf_Half tag2 = 0;
+        if (s_dwarf_tag(log_f, path, die2, &tag2) < 0) goto done;
+        if (tag2 == DW_TAG_member) {
+            Dwarf_Attribute field_name_attr = NULL;
+            char *field_name_str = NULL;
+            if ((r = s_dwarf_attr(log_f, path, die2, DW_AT_name, &field_name_attr)) < 0) goto done;
+            if (r > 0) {
+                if (s_dwarf_formstring(log_f, path, field_name_attr, &field_name_str) < 0) goto done;
+            } else {
+                field_name_str = "";
+            }
+            TypeInfo *field_name_info = tc_get_ident(cntx, field_name_str);
+
+            Dwarf_Attribute field_type_attr = NULL;
+            Dwarf_Off field_type_off = 0;
+            Dwarf_Die field_type_die = NULL;
+            TypeInfo *field_type_info = NULL;
+            if (s_dwarf_attr_2(log_f, path, die2, DW_AT_type, &field_type_attr) <= 0) goto done;
+            if (s_dwarf_global_formref(log_f, path, field_type_attr, &field_type_off) < 0) goto done;
+            if (s_dwarf_offdie(log_f, path, dbg, field_type_off, &field_type_die) < 0) goto done;
+            if (parse_die(log_f, path, dbg, field_type_die, cntx, dm, cur, global_scope) < 0) goto done;
+            if (die_map_get_2(log_f, path, dm, field_type_die, &field_type_info, NULL) < 0) goto done;
+            if (!field_type_info) field_type_info = tc_get_i0_type(cntx);
+
+            Dwarf_Attribute location_attr = NULL;
+            Dwarf_Unsigned location_value = 0;
+            TypeInfo *location_info = NULL;
+            if ((r = s_dwarf_attr(log_f, path, die2, DW_AT_data_member_location, &location_attr)) < 0) goto done;
+            if (location_attr != NULL) {
+                if (s_dwarf_attr_2(log_f, path, die2, DW_AT_data_member_location, &location_attr) <= 0) goto done;
+                if (s_dwarf_formudata(log_f, path, location_attr, &location_value) < 0) goto done;
+                location_info = tc_get_u32(cntx, (unsigned) location_value);
+            } else {
+                location_info = tc_get_u32(cntx, 0);
+            }
+
+            info[idx++] = tc_get_field(cntx, location_info, field_type_info, field_name_info);
         }
-        TypeInfo *field_name_info = tc_get_ident(cntx, field_name_str);
-
-        Dwarf_Attribute field_type_attr = NULL;
-        Dwarf_Off field_type_off = 0;
-        Dwarf_Die field_type_die = NULL;
-        TypeInfo *field_type_info = NULL;
-        if (s_dwarf_attr_2(log_f, path, die2, DW_AT_type, &field_type_attr) <= 0) goto done;
-        if (s_dwarf_global_formref(log_f, path, field_type_attr, &field_type_off) < 0) goto done;
-        if (s_dwarf_offdie(log_f, path, dbg, field_type_off, &field_type_die) < 0) goto done;
-        if (parse_die(log_f, path, dbg, field_type_die, cntx, dm, cur, global_scope) < 0) goto done;
-        if (die_map_get_2(log_f, path, dm, field_type_die, &field_type_info, NULL) < 0) goto done;
-        if (!field_type_info) field_type_info = tc_get_i0_type(cntx);
-
-        Dwarf_Attribute location_attr = NULL;
-        Dwarf_Unsigned location_value = 0;
-        TypeInfo *location_info = NULL;
-        if ((r = s_dwarf_attr(log_f, path, die2, DW_AT_data_member_location, &location_attr)) < 0) goto done;
-        if (location_attr != NULL) {
-            if (s_dwarf_attr_2(log_f, path, die2, DW_AT_data_member_location, &location_attr) <= 0) goto done;
-            if (s_dwarf_formudata(log_f, path, location_attr, &location_value) < 0) goto done;
-            location_info = tc_get_u32(cntx, (unsigned) location_value);
-        } else {
-            location_info = tc_get_u32(cntx, 0);
-        }
-
-        info[idx++] = tc_get_field(cntx, location_info, field_type_info, field_name_info);
 
         if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
     }
@@ -1640,6 +1666,7 @@ parse_die_pass_0(
     Dwarf_Half tag = 0;
     int kind;
     int r;
+    Dwarf_Die die2 = NULL;
 
     if (s_dwarf_tag(log_f, path, die, &tag) < 0) goto done;
     if (tag == DW_TAG_structure_type) {
@@ -1656,6 +1683,18 @@ parse_die_pass_0(
     if ((r = s_dwarf_attr(log_f, path, die, DW_AT_name, &name_attr)) < 0) goto done;
     if (!r) {
         // anonymous structure/union
+        // still traverse nested structs/unions
+        if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
+        while (r > 0) {
+            Dwarf_Half tag2 = 0;
+            if (s_dwarf_tag(log_f, path, die2, &tag2) < 0) goto done;
+            if (tag2 == DW_TAG_structure_type || tag2 == DW_TAG_union_type) {
+                //fprintf(stderr, "DEBUG: parse_die_pass_0: struct/union nested in anonymous struct/union\n");
+                if ((r = parse_die_pass_0(log_f, path, dbg, die2, cntx, dm)) < 0) goto done;
+            }
+            if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
+        }
+
         retval = 0;
         goto done;
     }
@@ -1680,11 +1719,26 @@ parse_die_pass_0(
         if (!ti->n.info[0]->v.value.v.ct_uint && size_info->v.value.v.ct_uint > 0) {
             ti->n.info[0] = size_info;
         }
+
+        // need to traverse childrens here?
+
         retval = 0;
         goto done;
     }
 
     ti = tc_create_struct_type(cntx, kind, size_info, name_info, tc_get_i1(cntx, 0));
+
+    if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
+    while (r > 0) {
+        Dwarf_Half tag2 = 0;
+        if (s_dwarf_tag(log_f, path, die2, &tag2) < 0) goto done;
+        if (tag2 == DW_TAG_structure_type || tag2 == DW_TAG_union_type) {
+            //fprintf(stderr, "DEBUG: parse_die_pass_0: struct/union nested in named struct/union\n");
+            if ((r = parse_die_pass_0(log_f, path, dbg, die2, cntx, dm)) < 0) goto done;
+        }
+        if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
+    }
+
     retval = 0;
 
 done:
@@ -1705,6 +1759,7 @@ parse_die_pass_2(
     int kind;
     Dwarf_Half tag = 0;
     int r;
+    Dwarf_Die die2 = NULL;
 
     if (s_dwarf_tag(log_f, path, die, &tag) < 0) goto done;
     if (tag == DW_TAG_structure_type) {
@@ -1714,6 +1769,17 @@ parse_die_pass_2(
     } else {
         retval = 0;
         goto done;
+    }
+
+    // handle nested structs/unions
+    if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
+    while (r > 0) {
+        Dwarf_Half tag2 = 0;
+        if (s_dwarf_tag(log_f, path, die2, &tag2) < 0) goto done;
+        if (tag2 == DW_TAG_structure_type || tag2 == DW_TAG_union_type) {
+            if ((r = parse_die_pass_2(log_f, path, dbg, die2, cntx, dm, global_scope)) < 0) goto done;
+        }
+        if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
     }
 
     Dwarf_Attribute name_attr = NULL;
@@ -1757,13 +1823,16 @@ parse_die_pass_2(
     ti->n.info[2] = tc_get_i1(cntx, 1);
 
     int count = 0;
-    Dwarf_Die die2 = NULL;
+    die2 = NULL;
     if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
     while (r > 0) {
-        ++count;
         Dwarf_Half tag2 = 0;
         if (s_dwarf_tag(log_f, path, die2, &tag2) < 0) goto done;
-        if (tag2 != DW_TAG_member) {
+        if (tag2 == DW_TAG_structure_type || tag2 == DW_TAG_union_type) {
+            // nothing
+        } else if (tag2 == DW_TAG_member) {
+            ++count;
+        } else {
             fprintf(log_f, "%s: DW_TAG_member expected\n", path);
             goto done;
         }
@@ -1784,40 +1853,44 @@ parse_die_pass_2(
 
     if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
     while (r > 0) {
-        Dwarf_Attribute field_name_attr = NULL;
-        char *field_name_str = NULL;
-        if ((r = s_dwarf_attr(log_f, path, die2, DW_AT_name, &field_name_attr)) < 0) goto done;
-        if (r > 0) {
-            if (s_dwarf_formstring(log_f, path, field_name_attr, &field_name_str) < 0) goto done;
-        } else {
-            field_name_str = "";
+        Dwarf_Half tag2 = 0;
+        if (s_dwarf_tag(log_f, path, die2, &tag2) < 0) goto done;
+        if (tag2 == DW_TAG_member) {
+            Dwarf_Attribute field_name_attr = NULL;
+            char *field_name_str = NULL;
+            if ((r = s_dwarf_attr(log_f, path, die2, DW_AT_name, &field_name_attr)) < 0) goto done;
+            if (r > 0) {
+                if (s_dwarf_formstring(log_f, path, field_name_attr, &field_name_str) < 0) goto done;
+            } else {
+                field_name_str = "";
+            }
+            TypeInfo *field_name_info = tc_get_ident(cntx, field_name_str);
+
+            Dwarf_Attribute field_type_attr = NULL;
+            Dwarf_Off field_type_off = 0;
+            Dwarf_Die field_type_die = NULL;
+            TypeInfo *field_type_info = NULL;
+            if (s_dwarf_attr_2(log_f, path, die2, DW_AT_type, &field_type_attr) <= 0) goto done;
+            if (s_dwarf_global_formref(log_f, path, field_type_attr, &field_type_off) < 0) goto done;
+            if (s_dwarf_offdie(log_f, path, dbg, field_type_off, &field_type_die) < 0) goto done;
+            if (parse_die(log_f, path, dbg, field_type_die, cntx, dm, NULL, global_scope) < 0) goto done;
+            if (die_map_get_2(log_f, path, dm, field_type_die, &field_type_info, NULL) < 0) goto done;
+            if (!field_type_info) field_type_info = tc_get_i0_type(cntx);
+
+            Dwarf_Attribute location_attr = NULL;
+            Dwarf_Unsigned location_value = 0;
+            TypeInfo *location_info = NULL;
+            if ((r = s_dwarf_attr(log_f, path, die2, DW_AT_data_member_location, &location_attr)) < 0) goto done;
+            if (location_attr != NULL) {
+                if (s_dwarf_attr_2(log_f, path, die2, DW_AT_data_member_location, &location_attr) <= 0) goto done;
+                if (s_dwarf_formudata(log_f, path, location_attr, &location_value) < 0) goto done;
+                location_info = tc_get_u32(cntx, (unsigned) location_value);
+            } else {
+                location_info = tc_get_u32(cntx, 0);
+            }
+
+            info[idx++] = tc_get_field(cntx, location_info, field_type_info, field_name_info);
         }
-        TypeInfo *field_name_info = tc_get_ident(cntx, field_name_str);
-
-        Dwarf_Attribute field_type_attr = NULL;
-        Dwarf_Off field_type_off = 0;
-        Dwarf_Die field_type_die = NULL;
-        TypeInfo *field_type_info = NULL;
-        if (s_dwarf_attr_2(log_f, path, die2, DW_AT_type, &field_type_attr) <= 0) goto done;
-        if (s_dwarf_global_formref(log_f, path, field_type_attr, &field_type_off) < 0) goto done;
-        if (s_dwarf_offdie(log_f, path, dbg, field_type_off, &field_type_die) < 0) goto done;
-        if (parse_die(log_f, path, dbg, field_type_die, cntx, dm, NULL, global_scope) < 0) goto done;
-        if (die_map_get_2(log_f, path, dm, field_type_die, &field_type_info, NULL) < 0) goto done;
-        if (!field_type_info) field_type_info = tc_get_i0_type(cntx);
-
-        Dwarf_Attribute location_attr = NULL;
-        Dwarf_Unsigned location_value = 0;
-        TypeInfo *location_info = NULL;
-        if ((r = s_dwarf_attr(log_f, path, die2, DW_AT_data_member_location, &location_attr)) < 0) goto done;
-        if (location_attr != NULL) {
-            if (s_dwarf_attr_2(log_f, path, die2, DW_AT_data_member_location, &location_attr) <= 0) goto done;
-            if (s_dwarf_formudata(log_f, path, location_attr, &location_value) < 0) goto done;
-            location_info = tc_get_u32(cntx, (unsigned) location_value);
-        } else {
-            location_info = tc_get_u32(cntx, 0);
-        }
-
-        info[idx++] = tc_get_field(cntx, location_info, field_type_info, field_name_info);
 
         if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
     }
