@@ -981,8 +981,7 @@ create_configs(
           "memory_limit_type = \"mono\"\n"
           "secure_exec_type = \"mono\"\n"
           "start_cmd = \"runmono\"\n"
-          "start_env = \"LANG=en_US.UTF-8\"\n"
-          "start_env = \"LC_CTYPE=en_US.UTF-8\"\n"
+          "start_env = \"LANG=C\"\n"
           "start_env = \"EJUDGE_PREFIX_DIR\"\n"
           "start_env = \"MONO_DEBUG=no-gdb-backtrace\"\n\n");
 
@@ -1034,6 +1033,7 @@ upgrade_times[] =
   "2012/11/05 00:00:00",
   "2015/11/01 00:00:00",
   "2016/01/18 18:00:00",
+  "2016/05/15 00:00:00",
 
   NULL
 };
