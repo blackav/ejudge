@@ -6061,6 +6061,8 @@ process_unit(
 
     result = process_file(log_f, prg_f, txt_f, dep_f, ps, path, cntx, global_scope, NULL);
 
+    fprintf(out_f, "#pragma GCC diagnostic ignored \"-Wpointer-bool-conversion\"\n\n");
+    fprintf(out_f, "#pragma GCC diagnostic ignored \"-Wformat-security\"\n\n");
     fprintf(out_f, "/* === string pool === */\n\n");
     fclose(txt_f); txt_f = NULL;
     fwrite(txt_t, 1, txt_z, out_f);
