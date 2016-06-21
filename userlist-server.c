@@ -41,6 +41,7 @@
 #include "ejudge/sock_op.h"
 #include "ejudge/compat.h"
 #include "ejudge/bitset.h"
+#include "ejudge/sha256utils.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -1438,7 +1439,9 @@ is_privileged_cnts2_user(
 
 struct passwd_internal
 {
-  unsigned char pwds[3][64];
+  unsigned char pwd[128];
+  unsigned char pwd_nows[128];
+  unsigned char encoded[128];
 };
 static void
 make_sha1_ascii(void const *data, size_t size, unsigned char *out)
@@ -1455,35 +1458,96 @@ static int
 passwd_convert_to_internal(unsigned char const *pwd_plain,
                            struct passwd_internal *p)
 {
-  int len;
-
+  int i = 0, j = 0;
   if (!pwd_plain) return -1;
-  ASSERT(p);
-  len = strlen(pwd_plain);
-  if (len > 32) return -1;
-  memset(p, 0, sizeof(*p));
-  strcpy(p->pwds[0], pwd_plain);
-  base64_encode(pwd_plain, len, p->pwds[1]);
-  make_sha1_ascii(pwd_plain, len, p->pwds[2]);
+  snprintf(p->pwd, sizeof(p->pwd), "%s", pwd_plain);
+  while (i + 1 < sizeof(p->pwd_nows) && pwd_plain[j]) {
+    if (pwd_plain[j] > ' ') {
+      p->pwd_nows[i++] = pwd_plain[j];
+    }
+    ++j;
+  }
+  p->pwd_nows[i] = 0;
   return 0;
 }
+static void
+passwd_convert(
+        struct passwd_internal *u,
+        const unsigned char *raw,
+        const unsigned char *passwd,
+        int method)
+{
+  unsigned char saltbuf[16];
+
+  if (method == USERLIST_PWD_PLAIN) {
+    snprintf(u->encoded, sizeof(u->encoded), "%s", raw);
+  } else if (method == USERLIST_PWD_SHA256) {
+    int len = strlen(raw);
+    ASSERT(len < sizeof(u->encoded));
+    // first 4 chars (24 random bits uuencoded) is salt
+    if (!passwd) {
+      // make random new salt
+      unsigned r = random_u32();
+      char rr[4];
+      rr[0] = r & 0xff;
+      rr[1] = (r >> 8) & 0xff;
+      rr[2] = (r >> 16) & 0xff;
+      int i = base64_encode(rr, 3, saltbuf);
+      saltbuf[i] = 0;
+      passwd = saltbuf;
+    }
+    int plen = strlen(passwd);
+    unsigned char buf[sizeof(u->encoded) * 2];
+    if (plen >= 4) {
+      buf[0] = passwd[0];
+      buf[1] = passwd[1];
+      buf[2] = passwd[2];
+      buf[3] = passwd[3];
+      u->encoded[0] = passwd[0];
+      u->encoded[1] = passwd[1];
+      u->encoded[2] = passwd[2];
+      u->encoded[3] = passwd[3];
+    } else {
+      buf[0] = '$';
+      buf[1] = '$';
+      buf[2] = '$';
+      buf[3] = '$';
+      u->encoded[0] = '$';
+      u->encoded[1] = '$';
+      u->encoded[2] = '$';
+      u->encoded[3] = '$';
+    }
+    strcpy(buf + 4, raw);
+    sha256b64buf(u->encoded + 4, sizeof(u->encoded) - 4, buf, len + 4);
+  } else if (method == USERLIST_PWD_SHA1) {
+    int len = strlen(raw);
+    make_sha1_ascii(raw, len, u->encoded);
+  } else if (method == USERLIST_PWD_BASE64) {
+    int len = strlen(raw);
+    if (len > sizeof(u->encoded) / 2) {
+      ASSERT(len < sizeof(u->encoded));
+      unsigned char buf[sizeof(u->encoded) * 2];
+      int outlen = base64_encode(raw, len, buf);
+      buf[outlen] = 0;
+      snprintf(u->encoded, sizeof(u->encoded), "%s", buf);
+    } else {
+      int outlen = base64_encode(raw, len, u->encoded);
+      u->encoded[outlen] = 0;
+    }
+  } else {
+    abort();
+  }
+}
+
 static int
 passwd_check(struct passwd_internal *u, const unsigned char *passwd, int method)
 {
-  int len, i, j;
+  if (!passwd) return -1;
 
-  ASSERT(method >= USERLIST_PWD_PLAIN && method <= USERLIST_PWD_SHA256);
-  if (!strcmp(u->pwds[method], passwd)) return 0;
-  // try to remove all whitespace chars and compare again
-  len = strlen(u->pwds[0]);
-  for (i = 0, j = 0; i < len; i++) {
-    if (u->pwds[0][i] > ' ') u->pwds[0][j++] = u->pwds[0][i];
-  }
-  u->pwds[0][j] = u->pwds[0][i];
-  len = strlen(u->pwds[0]);
-  base64_encode(u->pwds[0], len, u->pwds[1]);
-  make_sha1_ascii(u->pwds[0], len, u->pwds[2]);
-  if (!strcmp(u->pwds[method], passwd)) return 0;
+  passwd_convert(u, u->pwd_nows, passwd, method);
+  if (!strcmp(u->encoded, passwd)) return 0;
+  passwd_convert(u, u->pwd, passwd, method);
+  if (!strcmp(u->encoded, passwd)) return 0;
   return -1;
 }
 
@@ -5031,8 +5095,8 @@ cmd_set_passwd(
     return;
   }
 
-  default_set_reg_passwd(u->id, USERLIST_PWD_SHA1,
-                         newint.pwds[USERLIST_PWD_SHA1], cur_time);
+  passwd_convert(&newint, newint.pwd_nows, NULL, USERLIST_PWD_SHA256);
+  default_set_reg_passwd(u->id, USERLIST_PWD_SHA256, newint.encoded, cur_time);
   default_remove_user_cookies(u->id);
   send_reply(p, ULS_OK);
   info("%s -> OK", logbuf);
@@ -5127,8 +5191,9 @@ cmd_team_set_passwd(
   }
 
   // if team passwd entry does not exist, create it
-  default_set_team_passwd(u->id, data->contest_id, USERLIST_PWD_SHA1,
-                          newint.pwds[USERLIST_PWD_SHA1], cur_time,
+  passwd_convert(&newint, newint.pwd_nows, NULL, USERLIST_PWD_SHA256);
+  default_set_team_passwd(u->id, data->contest_id, USERLIST_PWD_SHA256,
+                          newint.encoded, cur_time,
                           &cloned_flag);
   if (cloned_flag) reply_code = ULS_CLONED;
   default_remove_user_cookies(u->id);
@@ -8215,8 +8280,8 @@ cmd_priv_set_passwd(
       send_reply(p, -ULS_ERR_NO_PERMS);
       return;
     }
-    default_set_reg_passwd(u->id, USERLIST_PWD_SHA1,
-                           newint.pwds[USERLIST_PWD_SHA1], cur_time);
+    passwd_convert(&newint, newint.pwd_nows, NULL, USERLIST_PWD_SHA256);
+    default_set_reg_passwd(u->id, USERLIST_PWD_SHA256, newint.encoded, cur_time);
     break;
 
   case ULS_PRIV_SET_TEAM_PASSWD:
@@ -8262,8 +8327,9 @@ cmd_priv_set_passwd(
       return;
     }
 
-    default_set_team_passwd(data->user_id, contest_id, USERLIST_PWD_SHA1,
-                            newint.pwds[USERLIST_PWD_SHA1], cur_time,
+    passwd_convert(&newint, newint.pwd_nows, NULL, USERLIST_PWD_SHA256);
+    default_set_team_passwd(data->user_id, contest_id, USERLIST_PWD_SHA256,
+                            newint.encoded, cur_time,
                             &cloned_flag);
     if (cloned_flag) reply_code = ULS_CLONED;
     break;
@@ -8330,10 +8396,10 @@ cmd_priv_set_passwd_2(
 
     if (data->request_id == ULS_PRIV_SET_REG_PASSWD_PLAIN) {
       default_set_reg_passwd(u->id, USERLIST_PWD_PLAIN,
-                             newint.pwds[USERLIST_PWD_PLAIN], cur_time);
+                             newint.pwd_nows, cur_time);
     } else if (data->request_id == ULS_PRIV_SET_REG_PASSWD_SHA1) {
-      default_set_reg_passwd(u->id, USERLIST_PWD_SHA1,
-                             newint.pwds[USERLIST_PWD_SHA1], cur_time);
+      passwd_convert(&newint, newint.pwd_nows, NULL, USERLIST_PWD_SHA256);
+      default_set_reg_passwd(u->id, USERLIST_PWD_SHA256, newint.encoded, cur_time);
     } else {
       abort();
     }
@@ -8373,11 +8439,12 @@ cmd_priv_set_passwd_2(
 
     if (data->request_id == ULS_PRIV_SET_CNTS_PASSWD_PLAIN) {
       default_set_team_passwd(data->user_id, contest_id, USERLIST_PWD_PLAIN,
-                              newint.pwds[USERLIST_PWD_PLAIN], cur_time,
+                              newint.pwd_nows, cur_time,
                               &cloned_flag);
     } else if (data->request_id == ULS_PRIV_SET_CNTS_PASSWD_SHA1) {
-      default_set_team_passwd(data->user_id, contest_id, USERLIST_PWD_SHA1,
-                              newint.pwds[USERLIST_PWD_SHA1], cur_time,
+      passwd_convert(&newint, newint.pwd_nows, NULL, USERLIST_PWD_SHA256);
+      default_set_team_passwd(data->user_id, contest_id, USERLIST_PWD_SHA256,
+                              newint.encoded, cur_time,
                               &cloned_flag);
     }
     if (cloned_flag) reply_code = ULS_CLONED;
@@ -9855,19 +9922,18 @@ cmd_create_user_2(
   int user_id = 0;
   unsigned char random_reg_password_buf[64];
   int reg_password_len = data->reg_password_len;
-  unsigned char sha1_reg_password_buf[128];
   int reg_password_method = USERLIST_PWD_PLAIN;
   const struct contest_desc *cnts = 0;
   int login_len = data->login_len;
   unsigned char auto_login_buf[64];
   const struct userlist_contest *cnts_reg = 0;
   const struct userlist_group *ul_group = 0;
-  int cnts_password_len = data->cnts_password_len;
   int cnts_password_method = USERLIST_PWD_PLAIN;
   unsigned char random_cnts_password_buf[64];
-  unsigned char sha1_cnts_password_buf[64];
   int cloned_flag = 0;
   int send_email_flag = data->send_email_flag;
+  struct passwd_internal pwdnew;
+  struct passwd_internal cpwdnew;
 
   snprintf(logbuf, sizeof(logbuf), "CREATE_USER_2: %d", p->user_id);
 
@@ -9951,10 +10017,11 @@ cmd_create_user_2(
     return;
   }
   if (data->use_sha1_flag) {
-    make_sha1_ascii(reg_password_str, reg_password_len, sha1_reg_password_buf);
-    reg_password_method = USERLIST_PWD_SHA1;
-    reg_password_str = sha1_reg_password_buf;
-    reg_password_len = strlen(reg_password_str);
+    passwd_convert_to_internal(reg_password_str, &pwdnew);
+    passwd_convert(&pwdnew, pwdnew.pwd_nows, NULL, USERLIST_PWD_SHA256);
+    reg_password_method = USERLIST_PWD_SHA256;
+    reg_password_str = pwdnew.encoded;
+    reg_password_len = strlen(pwdnew.encoded);
   }
 
   if (user_id < 0) {
@@ -10003,13 +10070,12 @@ cmd_create_user_2(
       if (data->cnts_random_password_flag) {
         generate_random_password(8, random_cnts_password_buf);
         cnts_password_str = random_cnts_password_buf;
-        cnts_password_len = strlen(cnts_password_str);
       }
       if (data->cnts_use_sha1_flag) {
-        make_sha1_ascii(cnts_password_str, cnts_password_len, sha1_cnts_password_buf);
-        cnts_password_method = USERLIST_PWD_SHA1;
-        cnts_password_str = sha1_cnts_password_buf;
-        cnts_password_len = strlen(cnts_password_str);
+        passwd_convert_to_internal(cnts_password_str, &cpwdnew);
+        passwd_convert(&cpwdnew, cpwdnew.pwd_nows, NULL, USERLIST_PWD_SHA256);
+        cnts_password_method = USERLIST_PWD_SHA256;
+        cnts_password_str = cpwdnew.encoded;
       }
       default_set_team_passwd(user_id, data->contest_id, cnts_password_method, cnts_password_str,
                               cur_time, &cloned_flag);
