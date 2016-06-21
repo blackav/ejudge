@@ -1,5 +1,7 @@
 #include "./include/ejudge/sha256.h"
+#include "./include/ejudge/sha256utils.h"
 #include <stdio.h>
+#include <string.h>
 
 struct sha256hash
 {
@@ -48,6 +50,14 @@ process_stdin(void)
 }
 
 static void
+process_stdin_b64(void)
+{
+    char result[64];
+    sha256b64file(result, sizeof(result), stdin);
+    printf("%s  %s\n", result, "-");
+}
+
+static void
 process_file(const char *path)
 {
     struct sha256hash hash;
@@ -66,7 +76,9 @@ process_file(const char *path)
 int
 main(int argc, char **argv)
 {
-    if (argc == 1) {
+    if (argc == 2 && !strcmp(argv[1], "-b")) {
+        process_stdin_b64();
+    } else if (argc == 1) {
         process_stdin();
     } else {
         for (int i = 1; i < argc; ++i) {

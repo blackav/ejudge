@@ -240,6 +240,7 @@ COMMON_CFILES=\
  super_serve_pi.c\
  sha.c\
  sha256.c\
+ sha256utils.c\
  blowfish.c\
  t3m_dir_listener.c\
  t3m_submits.c\
@@ -599,6 +600,7 @@ HFILES=\
  ./include/ejudge/super-serve.h\
  ./include/ejudge/sha.h\
  ./include/ejudge/sha256.h\
+ ./include/ejudge/sha256utils.h\
  ./include/ejudge/blowfish.h\
  ./include/ejudge/t3m_dir_listener.h\
  ./include/ejudge/t3m_packet_class.h\
