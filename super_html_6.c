@@ -2324,6 +2324,8 @@ super_serve_op_USER_DETAIL_PAGE(
     fprintf(out_f, "<tt>%s</tt>", ARMOR(u->passwd));
   } else if (u->passwd_method == USERLIST_PWD_SHA1) {
     fprintf(out_f, "<i>Hashed with SHA1</i>");
+  } else if (u->passwd_method == USERLIST_PWD_SHA256) {
+    fprintf(out_f, "<i>Hashed with SHA256</i>");
   } else {
     fprintf(out_f, "<i>Unsupported method</i>");
   }
@@ -2405,6 +2407,8 @@ super_serve_op_USER_DETAIL_PAGE(
       fprintf(out_f, "<tt>%s</tt>", ARMOR(ui->team_passwd));
     } else if (ui->team_passwd_method == USERLIST_PWD_SHA1) {
       fprintf(out_f, "<i>Hashed with SHA1</i>");
+    } else if (ui->team_passwd_method == USERLIST_PWD_SHA256) {
+      fprintf(out_f, "<i>Hashed with SHA256</i>");
     } else {
       fprintf(out_f, "<i>Unsupported method</i>");
     }
@@ -3014,6 +3018,8 @@ super_serve_op_USER_PASSWORD_PAGE(
     fprintf(out_f, "<tt>%s</tt>", ARMOR(u->passwd));
   } else if (u->passwd_method == USERLIST_PWD_SHA1) {
     fprintf(out_f, "Sha1 hash: <i>%s</i>", ARMOR(u->passwd));
+  } else if (u->passwd_method == USERLIST_PWD_SHA256) {
+    fprintf(out_f, "Sha256 hash: <i>%s</i>", ARMOR(u->passwd));
   }
   fprintf(out_f, "</td></tr>\n");
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"password\" name=\"reg_password1\" size=\"20\" /></td><td%s>&nbsp;</td></tr>\n",
@@ -3175,6 +3181,8 @@ super_serve_op_USER_CNTS_PASSWORD_PAGE(
       fprintf(out_f, "<tt>%s</tt>", ARMOR(u->passwd));
     } else if (u->passwd_method == USERLIST_PWD_SHA1) {
       fprintf(out_f, "Sha1 hash: <i>%s</i>", ARMOR(u->passwd));
+    } else if (u->passwd_method == USERLIST_PWD_SHA256) {
+      fprintf(out_f, "Sha256 hash: <i>%s</i>", ARMOR(u->passwd));
     }
     fprintf(out_f, "</td></tr>\n");
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"useregpasswd\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
@@ -6764,7 +6772,7 @@ super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
       fprintf(out_f, "<i>hidden</i>");
     } else if (passwd_method < 0 || !passwd) {
       fprintf(out_f, "<i>null</i>");
-    } else if (passwd_method == USERLIST_PWD_SHA1) {
+    } else if (passwd_method == USERLIST_PWD_SHA1 || passwd_method == USERLIST_PWD_SHA256) {
       fprintf(out_f, "<i>changed</i>");
     } else if (passwd_method == USERLIST_PWD_PLAIN) {
       fprintf(out_f, "<tt>%s</tt>", ARMOR(passwd));

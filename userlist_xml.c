@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -399,6 +399,7 @@ parse_password_method_attr(struct xml_attr *a, int *p_val)
     { "plain", USERLIST_PWD_PLAIN },
     { "base64", USERLIST_PWD_BASE64 },
     { "sha1", USERLIST_PWD_SHA1 },
+    { "sha256", USERLIST_PWD_SHA256 },
 
     { 0, 0 },
   };
@@ -1577,9 +1578,9 @@ unparse_passwd_method(int m)
 {
   static char const * const pwd_method_map[] =
   {
-    "plain", "base64", "sha1"
+    "plain", "base64", "sha1", "sha256",
   };
-  ASSERT(m >= USERLIST_PWD_PLAIN && m <= USERLIST_PWD_SHA1);
+  ASSERT(m >= USERLIST_PWD_PLAIN && m <= USERLIST_PWD_SHA256);
   return pwd_method_map[m];
 }
 static unsigned char const *

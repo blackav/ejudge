@@ -3,7 +3,7 @@
 #ifndef __USERLIST_H__
 #define __USERLIST_H__
 
-/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@ enum
     USERLIST_PWD_PLAIN,
     USERLIST_PWD_BASE64,
     USERLIST_PWD_SHA1,
+    USERLIST_PWD_SHA256,
 
     USERLIST_PWD_LAST,
   };

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1472,7 +1472,7 @@ passwd_check(struct passwd_internal *u, const unsigned char *passwd, int method)
 {
   int len, i, j;
 
-  ASSERT(method >= USERLIST_PWD_PLAIN && method <= USERLIST_PWD_SHA1);
+  ASSERT(method >= USERLIST_PWD_PLAIN && method <= USERLIST_PWD_SHA256);
   if (!strcmp(u->pwds[method], passwd)) return 0;
   // try to remove all whitespace chars and compare again
   len = strlen(u->pwds[0]);
