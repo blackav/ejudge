@@ -29,6 +29,7 @@ enum
   CNTS_disable_member_delete,
   CNTS_old_run_managed,
   CNTS_ready,
+  CNTS_force_password_change,
   CNTS_reg_deadline,
   CNTS_sched_time,
   CNTS_open_time,
