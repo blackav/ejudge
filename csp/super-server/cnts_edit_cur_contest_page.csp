@@ -66,6 +66,9 @@ static const unsigned char * const form_row_attrs[]=
             <input type="checkbox" name="disable_team_password" id="FlagsDialogDisableTeamPassword" value="1" />
             <label for="FlagsDialogDisableTeamPassword">Disable separate team password?</label>
             <br/>
+            <input type="checkbox" name="force_password_change" id="FlagsDialogForcePasswordChange" value="1" />
+            <label for="FlagsDialogForcePasswordChange">Force user password change?</label>
+            <br/>
             <input type="checkbox" name="simple_registration" id="FlagsDialogSimpleRegistration" value="1" />
             <label for="FlagsDialogSimpleRegistration">Enable simple registration (no email)?</label>
             <br/>
@@ -625,6 +628,7 @@ function popupFlagsDialog()
 {
     copyCheckbox("FlagsDialogClosed", "OrigClosed");
     copyCheckbox("FlagsDialogDisableTeamPassword", "OrigDisableTeamPassword");
+    copyCheckbox("FlagsDialogForcePasswordChange", "OrigForcePasswordChange");
     copyCheckbox("FlagsDialogSimpleRegistration", "OrigSimpleRegistration");
     copyCheckbox("FlagsDialogSendPasswdEmail", "OrigSendPasswdEmail");
     copyCheckbox("FlagsDialogInvisible", "OrigInvisible");
@@ -983,6 +987,12 @@ function np(e)
         <td><s:yesno id="OrigDisableTeamPassword" disabled="disabled" name="param" value="cnts->disable_team_password" /></td>
         <td>&nbsp;</td>
         <td onclick="np(event);"><s:help topic="Contest.xml:disable_team_password" /></td>
+    </s:tr>
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>Force user password change?</td>
+        <td><s:yesno id="OrigForcePasswordChange" disabled="disabled" name="param" value="cnts->force_password_change" /></td>
+        <td>&nbsp;</td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:force_password_change" /></td>
     </s:tr>
     <s:tr attr="form_row_attrs[row ^= 1]">
         <td>Enable simple registration (no email)?</td>

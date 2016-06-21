@@ -12,6 +12,7 @@
 
     ejintbool_t closed = 0;
     ejintbool_t disable_team_password = 0;
+    ejintbool_t force_password_change = 0;
     ejintbool_t simple_registration = 0;
     ejintbool_t send_passwd_email = 0;
     ejintbool_t invisible = 0;
@@ -31,6 +32,7 @@
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 %><s:read var="closed" default="0" /><%
 %><s:read var="disable_team_password" default="0" /><%
+%><s:read var="force_password_change" default="0" /><%
 %><s:read var="simple_registration" default="0" /><%
 %><s:read var="send_passwd_email" default="0" /><%
 %><s:read var="invisible" default="0" /><%
@@ -50,6 +52,7 @@
         if (edited_cnts) {
             edited_cnts->closed = closed;
             edited_cnts->disable_team_password = disable_team_password;
+            edited_cnts->force_password_change = force_password_change;
             edited_cnts->simple_registration = simple_registration;
             edited_cnts->send_passwd_email = send_passwd_email;
             edited_cnts->invisible = invisible;

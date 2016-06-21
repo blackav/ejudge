@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -158,6 +158,7 @@ const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
   [CONTEST_A_DISABLE_MEMBER_DELETE] = CNTS_disable_member_delete,
   [CONTEST_A_OLD_RUN_MANAGED] = CNTS_old_run_managed,
   [CONTEST_A_READY] = CNTS_ready,
+  [CONTEST_A_FORCE_PASSWORD_CHANGE] = CNTS_force_password_change,
 };
 
 char const * const contests_elem_map[] =
@@ -295,6 +296,7 @@ char const * const contests_attr_map[] =
   "checkbox",
   "old_run_managed",
   "ready",
+  "force_password_change",
 
   0
 };
@@ -818,6 +820,7 @@ static const unsigned char contest_bool_attr_set[CONTEST_LAST_ATTR] =
   [CONTEST_A_DISABLE_MEMBER_DELETE] = 1,
   [CONTEST_A_OLD_RUN_MANAGED] = 1,
   [CONTEST_A_READY] = 1,
+  [CONTEST_A_FORCE_PASSWORD_CHANGE] = 1,
 };
 
 static void
