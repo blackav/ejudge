@@ -2804,6 +2804,7 @@ cmd_login(
   answer->client_key = cookie->client_key;
   answer->user_id = u->id;
   answer->contest_id = orig_contest_id;
+  answer->passwd_method = u->passwd_method;
   answer->login_len = strlen(u->login);
   name_ptr = answer->data + answer->login_len + 1;
   answer->name_len = strlen(name);
@@ -2945,6 +2946,7 @@ cmd_check_user(
   answer->client_key = cookie->client_key;
   answer->user_id = u->id;
   answer->contest_id = orig_contest_id;
+  answer->passwd_method = u->passwd_method;
   answer->login_len = strlen(u->login);
   name_ptr = answer->data + answer->login_len + 1;
   answer->name_len = strlen(name);
@@ -3113,6 +3115,11 @@ cmd_team_login(
   out->user_id = u->id;
   out->contest_id = orig_contest_id;
   out->locale_id = data->locale_id;
+  if (cnts->disable_team_password || !ui) {
+    out->passwd_method = u->passwd_method;
+  } else {
+    out->passwd_method = ui->team_passwd_method;
+  }
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
@@ -3295,6 +3302,11 @@ cmd_team_check_user(
   out->user_id = u->id;
   out->contest_id = orig_contest_id;
   out->locale_id = data->locale_id;
+  if (cnts->disable_team_password || !ui) {
+    out->passwd_method = u->passwd_method;
+  } else {
+    out->passwd_method = ui->team_passwd_method;
+  }
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
@@ -3517,6 +3529,7 @@ cmd_priv_login(
   out->contest_id = orig_contest_id;
   out->locale_id = data->locale_id;
   out->priv_level = priv_level;
+  out->passwd_method = u->passwd_method;
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
@@ -3705,6 +3718,7 @@ cmd_priv_check_user(
   out->user_id = u->id;
   out->contest_id = orig_contest_id;
   out->locale_id = data->locale_id;
+  out->passwd_method = u->passwd_method;
   out->priv_level = priv_level;
   out->login_len = login_len;
   out->name_len = name_len;
@@ -3829,6 +3843,7 @@ cmd_priv_check_password(
   out->contest_id = 0;
   out->locale_id = 0;
   out->priv_level = 0;
+  out->passwd_method = u->passwd_method;
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
@@ -3953,6 +3968,7 @@ cmd_check_cookie(
   answer->reply_id = ULS_LOGIN_COOKIE;
   answer->user_id = u->id;
   answer->contest_id = cookie->contest_id;
+  answer->passwd_method = u->passwd_method;
   answer->login_len = strlen(u->login);
   name_beg = answer->data + answer->login_len + 1;
   answer->name_len = strlen(name);
@@ -4125,6 +4141,11 @@ cmd_team_check_cookie(
   out->user_id = user_id;
   out->contest_id = orig_contest_id;
   out->locale_id = locale_id;
+  if (cnts->disable_team_password || !ui) {
+    out->passwd_method = u->passwd_method;
+  } else {
+    out->passwd_method = ui->team_passwd_method;
+  }
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, user_login);
@@ -4312,6 +4333,7 @@ cmd_priv_check_cookie(
   out->user_id = u->id;
   out->contest_id = orig_contest_id;
   out->locale_id = cookie->locale_id;
+  out->passwd_method = u->passwd_method;
   out->login_len = login_len;
   out->name_len = name_len;
   out->priv_level = data->priv_level;
@@ -4512,6 +4534,7 @@ cmd_priv_cookie_login(
   out->contest_id = orig_contest_id;
   out->locale_id = data->locale_id;
   out->priv_level = priv_level;
+  out->passwd_method = u->passwd_method;
   out->login_len = login_len;
   out->name_len = name_len;
   strcpy(login_ptr, u->login);

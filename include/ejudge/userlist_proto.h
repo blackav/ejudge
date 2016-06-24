@@ -3,7 +3,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -462,6 +462,7 @@ struct userlist_pk_login_ok
   int                team_login;
   int                reg_status;
   int                reg_flags;
+  int                passwd_method;
   unsigned char      login_len;
   unsigned char      name_len;
   char               data[2];
