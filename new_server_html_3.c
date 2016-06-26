@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -273,10 +273,11 @@ ns_footer(
 }
 
 void
-ns_html_err_no_perm(FILE *fout,
-                    struct http_request_info *phr,
-                    int priv_mode,
-                    const char *format, ...)
+ns_html_err_no_perm(
+        FILE *fout,
+        struct http_request_info *phr,
+        int priv_mode,
+        const char *format, ...)
 {
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
@@ -300,25 +301,19 @@ ns_html_err_no_perm(FILE *fout,
   } else if (extra && priv_mode) {
   }
   if (!priv_mode) {
-    if (!header || !footer) {
-      header = ns_fancy_header;
-      separator = ns_fancy_separator;
-      if (copyright) footer = ns_fancy_footer_2;
-      else footer = ns_fancy_footer;
-    }
+    header = ns_fancy_header;
+    separator = ns_fancy_separator;
+    if (copyright) footer = ns_fancy_footer_2;
+    else footer = ns_fancy_footer;
   } else {
-    if (!header || !footer) {
-      header = ns_fancy_priv_header;
-      separator = ns_fancy_priv_separator;
-      footer = ns_fancy_priv_footer;
-    }    
+    header = ns_fancy_priv_header;
+    separator = ns_fancy_priv_separator;
+    footer = ns_fancy_priv_footer;
   }
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Permission denied"));
-  if (separator && *separator) {
-    fprintf(fout, "%s", ns_fancy_empty_status);
-    ns_separator(fout, separator, cnts);
-  }
+  fprintf(fout, "%s", ns_fancy_empty_status);
+  ns_separator(fout, separator, cnts);
   fprintf(fout, "<p>%s</p>\n",
           _("Permission denied. The possible reasons are as follows."));
   fprintf(fout, "<ul>\n");
@@ -385,25 +380,19 @@ ns_html_err_simple_registered(
   } else if (extra && priv_mode) {
   }
   if (!priv_mode) {
-    if (!header || !footer) {
-      header = ns_fancy_header;
-      separator = ns_fancy_separator;
-      if (copyright) footer = ns_fancy_footer_2;
-      else footer = ns_fancy_footer;
-    }
+    header = ns_fancy_header;
+    separator = ns_fancy_separator;
+    if (copyright) footer = ns_fancy_footer_2;
+    else footer = ns_fancy_footer;
   } else {
-    if (!header || !footer) {
-      header = ns_fancy_priv_header;
-      separator = ns_fancy_priv_separator;
-      footer = ns_fancy_priv_footer;
-    }    
+    header = ns_fancy_priv_header;
+    separator = ns_fancy_priv_separator;
+    footer = ns_fancy_priv_footer;
   }
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Cannot participate"));
-  if (separator && *separator) {
-    fprintf(fout, "%s", ns_fancy_empty_status);
-    ns_separator(fout, separator, cnts);
-  }
+  fprintf(fout, "%s", ns_fancy_empty_status);
+  ns_separator(fout, separator, cnts);
   fprintf(fout, "<p>%s</p>\n",
           _("You cannot participate in this contest. Your account was created using the simple registration procedure, i.e. your e-mail address was not verified. This contest requires e-mail verification, so your account cannot be accepted."));
 
@@ -462,25 +451,19 @@ ns_html_err_inv_param(FILE *fout,
   } else if (extra && priv_mode) {
   }
   if (!priv_mode) {
-    if (!header || !footer) {
-      header = ns_fancy_header;
-      separator = ns_fancy_separator;
-      if (copyright) footer = ns_fancy_footer_2;
-      else footer = ns_fancy_footer;
-    }
+    header = ns_fancy_header;
+    separator = ns_fancy_separator;
+    if (copyright) footer = ns_fancy_footer_2;
+    else footer = ns_fancy_footer;
   } else {
-    if (!header || !footer) {
-      header = ns_fancy_priv_header;
-      separator = ns_fancy_priv_separator;
-      footer = ns_fancy_priv_footer;
-    }    
+    header = ns_fancy_priv_header;
+    separator = ns_fancy_priv_separator;
+    footer = ns_fancy_priv_footer;
   }
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Invalid parameter"));
-  if (separator && *separator) {
-    fprintf(fout, "%s", ns_fancy_empty_status);
-    ns_separator(fout, separator, cnts);
-  }
+  fprintf(fout, "%s", ns_fancy_empty_status);
+  ns_separator(fout, separator, cnts);
   fprintf(fout, "<p>%s</p>\n",
           _("A request parameter is invalid. Please, contact the site administrator."));
   ns_footer(fout, footer, copyright, phr->locale_id);
@@ -518,24 +501,20 @@ ns_html_err_service_not_available(FILE *fout,
   }
 
   // try fancy headers
-  if (!header || !footer) {
+  if (!priv_mode) {
     header = ns_fancy_header;
     separator = ns_fancy_separator;
     if (copyright) footer = ns_fancy_footer_2;
     else footer = ns_fancy_footer;
   } else {
-    if (!header || !footer) {
-      header = ns_fancy_priv_header;
-      separator = ns_fancy_priv_separator;
-      footer = ns_fancy_priv_footer;
-    }    
+    header = ns_fancy_priv_header;
+    separator = ns_fancy_priv_separator;
+    footer = ns_fancy_priv_footer;
   }
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Service not available"));
-  if (separator && *separator) {
-    fprintf(fout, "%s", ns_fancy_empty_status);
-    ns_separator(fout, separator, cnts);
-  }
+  fprintf(fout, "%s", ns_fancy_empty_status);
+  ns_separator(fout, separator, cnts);
   fprintf(fout, "<p>%s</p>\n",
           _("Service that you requested is not available."));
   ns_footer(fout, footer, copyright, phr->locale_id);
@@ -574,24 +553,20 @@ ns_html_err_cnts_unavailable(FILE *fout,
   }
 
   // try fancy headers
-  if (!header || !footer) {
+  if (!priv_mode) {
     header = ns_fancy_header;
     separator = ns_fancy_separator;
     if (copyright) footer = ns_fancy_footer_2;
     else footer = ns_fancy_footer;
   } else {
-    if (!header || !footer) {
-      header = ns_fancy_priv_header;
-      separator = ns_fancy_priv_separator;
-      footer = ns_fancy_priv_footer;
-    }    
+    header = ns_fancy_priv_header;
+    separator = ns_fancy_priv_separator;
+    footer = ns_fancy_priv_footer;
   }
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Contest not available"));
-  if (separator && *separator) {
-    fprintf(fout, "%s", ns_fancy_empty_status);
-    ns_separator(fout, separator, cnts);
-  }
+  fprintf(fout, "%s", ns_fancy_empty_status);
+  ns_separator(fout, separator, cnts);
   fprintf(fout, "<p>%s</p>\n",
           _("The contest is temporarily not available. Please, retry the request a bit later."));
 
@@ -636,27 +611,21 @@ ns_html_err_ul_server_down(FILE *fout,
   } else if (extra && priv_mode) {
   }
   if (!priv_mode) {
-    if (!header || !footer) {
-      header = ns_fancy_header;
-      separator = ns_fancy_separator;
-      if (copyright) footer = ns_fancy_footer_2;
-      else footer = ns_fancy_footer;
-    }
+    header = ns_fancy_header;
+    separator = ns_fancy_separator;
+    if (copyright) footer = ns_fancy_footer_2;
+    else footer = ns_fancy_footer;
   } else {
-    if (!header || !footer) {
-      header = ns_fancy_priv_header;
-      separator = ns_fancy_priv_separator;
-      footer = ns_fancy_priv_footer;
-    }    
+    header = ns_fancy_priv_header;
+    separator = ns_fancy_priv_separator;
+    footer = ns_fancy_priv_footer;
   }
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts,
             NULL_CLIENT_KEY, 
             _("User database server is down"));
-  if (separator && *separator) {
-    fprintf(fout, "%s", ns_fancy_empty_status);
-    ns_separator(fout, separator, cnts);
-  }
+  fprintf(fout, "%s", ns_fancy_empty_status);
+  ns_separator(fout, separator, cnts);
   fprintf(fout, "<p>%s</p>\n",
           _("The user database server is currently not available. Please, retry the request later."));
   ns_footer(fout, footer, copyright, phr->locale_id);
@@ -694,25 +663,19 @@ ns_html_err_internal_error(FILE *fout,
   } else if (extra && priv_mode) {
   }
   if (!priv_mode) {
-    if (!header || !footer) {
-      header = ns_fancy_header;
-      separator = ns_fancy_separator;
-      if (copyright) footer = ns_fancy_footer_2;
-      else footer = ns_fancy_footer;
-    }
+    header = ns_fancy_header;
+    separator = ns_fancy_separator;
+    if (copyright) footer = ns_fancy_footer_2;
+    else footer = ns_fancy_footer;
   } else {
-    if (!header || !footer) {
-      header = ns_fancy_priv_header;
-      separator = ns_fancy_priv_separator;
-      footer = ns_fancy_priv_footer;
-    }    
+    header = ns_fancy_priv_header;
+    separator = ns_fancy_priv_separator;
+    footer = ns_fancy_priv_footer;
   }
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY,  _("Internal error"));
-  if (separator && *separator) {
-    fprintf(fout, "%s", ns_fancy_empty_status);
-    ns_separator(fout, separator, cnts);
-  }
+  fprintf(fout, "%s", ns_fancy_empty_status);
+  ns_separator(fout, separator, cnts);
   fprintf(fout, "<p>%s</p>\n",
           _("Your request has caused an internal server error. Please, report it as a bug."));
   ns_footer(fout, footer, copyright, phr->locale_id);
@@ -744,31 +707,24 @@ ns_html_err_inv_session(FILE *fout,
 
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = ns_get_contest_extra(phr->contest_id);
-  if (extra && !priv_mode) {
+  if (extra) {
     watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
     copyright = extra->copyright.text;
-  } else if (extra && priv_mode) {
   }
   if (!priv_mode) {
-    if (!header || !footer) {
-      header = ns_fancy_header;
-      separator = ns_fancy_separator;
-      if (copyright) footer = ns_fancy_footer_2;
-      else footer = ns_fancy_footer;
-    }
+    header = ns_fancy_header;
+    separator = ns_fancy_separator;
+    if (copyright) footer = ns_fancy_footer_2;
+    else footer = ns_fancy_footer;
   } else {
-    if (!header || !footer) {
-      header = ns_fancy_priv_header;
-      separator = ns_fancy_priv_separator;
-      footer = ns_fancy_priv_footer;
-    }    
+    header = ns_fancy_priv_header;
+    separator = ns_fancy_priv_separator;
+    footer = ns_fancy_priv_footer;
   }
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Invalid session"));
-  if (separator && *separator) {
-    fprintf(fout, "%s", ns_fancy_empty_status);
-    ns_separator(fout, separator, cnts);
-  }
+  fprintf(fout, "%s", ns_fancy_empty_status);
+  ns_separator(fout, separator, cnts);
   fprintf(fout, "<p>%s</p>\n",
           _("Invalid session identifier. The possible reasons are as follows."));
   fprintf(fout, "<ul>\n");
@@ -828,18 +784,14 @@ ns_html_err_registration_incomplete(
     watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
     copyright = extra->copyright.text;
   }
-  if (!header || !footer) {
-    header = ns_fancy_header;
-    separator = ns_fancy_separator;
-    if (copyright) footer = ns_fancy_footer_2;
-    else footer = ns_fancy_footer;
-  }
+  header = ns_fancy_header;
+  separator = ns_fancy_separator;
+  if (copyright) footer = ns_fancy_footer_2;
+  else footer = ns_fancy_footer;
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Registration incomplete"));
-  if (separator && *separator) {
-    fprintf(fout, "%s", ns_fancy_empty_status);
-    ns_separator(fout, separator, cnts);
-  }
+  fprintf(fout, "%s", ns_fancy_empty_status);
+  ns_separator(fout, separator, cnts);
 
   if (cnts && cnts->allow_reg_data_edit
       && contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag) > 0
@@ -882,18 +834,14 @@ ns_html_err_disqualified(
   watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
   copyright = extra->copyright.text;
 
-  if (!header || !footer) {
-    header = ns_fancy_header;
-    separator = ns_fancy_separator;
-    if (copyright) footer = ns_fancy_footer_2;
-    else footer = ns_fancy_footer;
-  }
+  header = ns_fancy_header;
+  separator = ns_fancy_separator;
+  if (copyright) footer = ns_fancy_footer_2;
+  else footer = ns_fancy_footer;
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("You are disqualified"));
-  if (separator && *separator) {
-    fprintf(fout, "%s", ns_fancy_empty_status);
-    ns_separator(fout, separator, cnts);
-  }
+  fprintf(fout, "%s", ns_fancy_empty_status);
+  ns_separator(fout, separator, cnts);
   fprintf(fout, "<p>%s</p>\n",
           _("You are disqualified by the contest administration."));
   if (cs->xuser_state && (t_extra = cs->xuser_state->vt->get_entry(cs->xuser_state, phr->user_id))
@@ -932,18 +880,14 @@ ns_html_error(
   } else if (extra && priv_mode) {
   }
   if (!priv_mode) {
-    if (!header || !footer) {
-      header = ns_fancy_header;
-      separator = ns_fancy_separator;
-      if (copyright) footer = ns_fancy_footer_2;
-      else footer = ns_fancy_footer;
-    }
+    header = ns_fancy_header;
+    separator = ns_fancy_separator;
+    if (copyright) footer = ns_fancy_footer_2;
+    else footer = ns_fancy_footer;
   } else {
-    if (!header || !footer) {
-      header = ns_fancy_priv_header;
-      separator = ns_fancy_priv_separator;
-      footer = ns_fancy_priv_footer;
-    }    
+    header = ns_fancy_priv_header;
+    separator = ns_fancy_priv_separator;
+    footer = ns_fancy_priv_footer;
   }
 
   if (phr->log_f) {
@@ -953,10 +897,8 @@ ns_html_error(
   l10n_setlocale(phr->locale_id);
   title = ns_error_title(error_code);
   ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, title);
-  if (separator && *separator) {
-    fprintf(fout, "%s", ns_fancy_empty_status);
-    ns_separator(fout, separator, cnts);
-  }
+  fprintf(fout, "%s", ns_fancy_empty_status);
+  ns_separator(fout, separator, cnts);
   if (phr->log_t && *phr->log_t) {
     fprintf(fout, "<p>%s</p>\n", _("Error details follow"));
     fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(phr->log_t));
