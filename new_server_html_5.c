@@ -2571,7 +2571,6 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   unsigned char *user_info_xml = 0;
   unsigned char hid_buf[1024];
   int cookie_locale_id = -1;
-  int passwd_method = 0;
 
   phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
 
@@ -2593,7 +2592,7 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
                                     phr->client_key,
                                     &phr->user_id, &phr->contest_id,
                                     &cookie_locale_id, 0, &phr->role, &is_team,
-                                    &phr->reg_status, &phr->reg_flags, &passwd_method,
+                                    &phr->reg_status, &phr->reg_flags, &phr->passwd_method,
                                     &phr->login, &phr->name)) < 0) {
     if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;
     if (phr->locale_id < 0) phr->locale_id = 0;

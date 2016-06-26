@@ -10534,7 +10534,6 @@ unprivileged_entry_point(
   serve_state_t cs = 0;
   const unsigned char *s = 0;
   int cookie_locale_id = -1;
-  int passwd_method = 0;
 
   phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
 
@@ -10574,7 +10573,7 @@ unprivileged_entry_point(
                                     phr->client_key,
                                     &phr->user_id, &phr->contest_id,
                                     &cookie_locale_id, 0, &phr->role, 0, 0, 0,
-                                    &passwd_method,
+                                    &phr->passwd_method,
                                     &phr->login, &phr->name)) < 0) {
     if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;
     if (phr->locale_id < 0 && cnts && cnts->default_locale_num >= 0) {

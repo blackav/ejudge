@@ -2,7 +2,7 @@
 #ifndef __HTTP_REQUEST_H__
 #define __HTTP_REQUEST_H__
 
-/* Copyright (C) 2014-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -71,6 +71,7 @@ struct http_request_info
   int reg_status;
   int reg_flags;
   int rest_mode;
+  int passwd_method;
   unsigned char *login;
   unsigned char *html_login; // not used by ej-contests
   unsigned char *name;
