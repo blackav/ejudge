@@ -8009,6 +8009,7 @@ cmd_get_cookie(
   int cookie_team_login;
   int user_id = 0;
   int need_touch_login_time = 0;
+  int passwd_method = 0;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -8071,6 +8072,7 @@ cmd_get_cookie(
       FAIL(ULS_ERR_NO_COOKIE, "invalid role");
     default_set_cookie_team_login(cookie, 0);
     cookie_team_login = 0;
+    passwd_method = u->passwd_method;
     break;
   case ULS_TEAM_GET_COOKIE:
     if (!cnts)
@@ -8090,6 +8092,11 @@ cmd_get_cookie(
     }
     default_set_cookie_team_login(cookie, 1);
     cookie_team_login = 1;
+    if (cnts->disable_team_password || !ui) {
+      passwd_method = u->passwd_method;
+    } else {
+      passwd_method = ui->team_passwd_method;
+    }
     break;
   case ULS_PRIV_GET_COOKIE:
     if (cookie->priv_level <= 0 && cookie->role <= 0)
@@ -8126,6 +8133,7 @@ cmd_get_cookie(
   out->role = cookie_role;
   out->team_login = cookie_team_login;
   out->reg_status = -1;
+  out->passwd_method = passwd_method;
   if (c) {
     out->reg_status = c->status;
     out->reg_flags = c->flags;
