@@ -10728,6 +10728,10 @@ unprivileged_entry_point(
     // contest finished, not olympiad, standings enabled -> standings
   }
 
+  if (cnts->force_password_change > 0 && !cnts->disable_password_change && phr->passwd_method == USERLIST_PWD_PLAIN
+      && phr->action != NEW_SRV_ACTION_CHANGE_PASSWORD && phr->action != NEW_SRV_ACTION_JSON_USER_STATE) {
+    phr->action = NEW_SRV_ACTION_VIEW_SETTINGS;
+  }
   if (phr->action <= 0 || phr->action >= NEW_SRV_ACTION_LAST) {
     phr->action = NEW_SRV_ACTION_MAIN_PAGE;
   }

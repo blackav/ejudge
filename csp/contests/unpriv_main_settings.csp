@@ -1,6 +1,13 @@
 <%
     if (!cs->clients_suspended && !cnts->disable_password_change) {
 %>
+<%
+    if (cnts->force_password_change > 0 && phr->passwd_method == USERLIST_PWD_PLAIN) {
+%>
+<p><big><b><s:_>You must set up new password!</s:_></b></big></p><br/>
+<%
+    }
+%>
 <div class="h2-long"><h2><s:_>Change password</s:_></h2></div>
 <s:form>
 <table class="b0">
