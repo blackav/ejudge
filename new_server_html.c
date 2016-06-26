@@ -1000,55 +1000,6 @@ privileged_page_login_page(FILE *fout, struct http_request_info *phr)
 }
 
 static void
-html_error_status_page(FILE *fout,
-                       struct http_request_info *phr,
-                       const struct contest_desc *cnts,
-                       struct contest_extra *extra,
-                       const unsigned char *log_txt,
-                       int back_action,
-                       const char *format,
-                       ...)
-  __attribute__((format(printf,7,8)));
-static void
-html_error_status_page(FILE *fout,
-                       struct http_request_info *phr,
-                       const struct contest_desc *cnts,
-                       struct contest_extra *extra,
-                       const unsigned char *log_txt,
-                       int back_action,
-                       const char *format,
-                       ...)
-{
-  unsigned char url[1024];
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  unsigned char urlextra[1024];
-  va_list args;
-
-  urlextra[0] = 0;
-  if (format && *format) {
-    va_start(args, format);
-    vsnprintf(urlextra, sizeof(urlextra), format, args);
-    va_end(args);
-  }
-
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, NULL,
-            NULL_CLIENT_KEY,
-            _("Operation completed with errors"));
-  if (extra->separator_txt && *extra->separator_txt) {
-    fprintf(fout, "%s", ns_fancy_empty_status);
-    ns_separator(fout, extra->separator_txt, cnts);
-  }
-  fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(log_txt));
-  fprintf(fout, "<hr>%s%s</a>\n",
-          ns_aref(url, sizeof(url), phr, back_action, "%s", urlextra),
-          _("Back"));
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
-  l10n_resetlocale();
-  html_armor_free(&ab);
-}
-                       
-static void
 privileged_page_cookie_login(FILE *fout,
                              struct http_request_info *phr)
 {
@@ -3600,8 +3551,8 @@ parse_run_id(FILE *fout, struct http_request_info *phr,
   return 0;
 
  failure:
-  html_error_status_page(fout, phr, cnts, extra, errmsg,
-                         ns_priv_prev_state[phr->action], 0);
+  ns_html_err_status_page(fout, phr, cnts, extra, errmsg,
+                          ns_priv_prev_state[phr->action], 0);
   return -1;
 }
 
@@ -6636,8 +6587,8 @@ priv_get_file(
  cleanup:
   if (retval) {
     snprintf(fpath, sizeof(fpath), "Error %d", -retval);
-    html_error_status_page(fout, phr, cnts, extra, fpath,
-                           NEW_SRV_ACTION_MAIN_PAGE, 0);
+    ns_html_err_status_page(fout, phr, cnts, extra, fpath,
+                            NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
   xfree(file_bytes);
 }
@@ -7225,7 +7176,7 @@ privileged_entry_point(
       && actions_table[phr->action]) {
     actions_table[phr->action](fout, phr, cnts, extra);
   } else {
-    html_error_status_page(fout, phr, cnts, extra, "action is undefined", 0, 0);
+    ns_html_err_status_page(fout, phr, cnts, extra, "action is undefined", 0, 0);
   }
 
 cleanup:
@@ -7347,8 +7298,8 @@ unpriv_parse_run_id(FILE *fout, struct http_request_info *phr,
   return 0;
 
  failure:
-  html_error_status_page(fout, phr, cnts, extra, errmsg,
-                         ns_unpriv_prev_state[phr->action], 0);
+  ns_html_err_status_page(fout, phr, cnts, extra, errmsg,
+                          ns_unpriv_prev_state[phr->action], 0);
   return -1;
 }
 
@@ -10413,8 +10364,8 @@ unpriv_get_file(
  cleanup:
   if (retval) {
     snprintf(fpath, sizeof(fpath), "Error %d", -retval);
-    html_error_status_page(fout, phr, cnts, extra, fpath,
-                           NEW_SRV_ACTION_MAIN_PAGE, 0);
+    ns_html_err_status_page(fout, phr, cnts, extra, fpath,
+                            NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
   xfree(file_bytes);
 }
