@@ -3,7 +3,7 @@
 #ifndef __USERLIST_CLNT_H__
 #define __USERLIST_CLNT_H__
 
-/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -110,6 +110,7 @@ userlist_clnt_get_cookie(
         int *p_team_login,
         int *p_reg_status,
         int *p_reg_flags,
+        int *p_passwd_method,
         unsigned char **p_login,
         unsigned char **p_name);
 
