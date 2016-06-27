@@ -1038,8 +1038,9 @@ privileged_page_cookie_login(FILE *fout,
                                  xml_unparse_ipv6(&phr->ip), phr->contest_id);
   }
 
-  if (ns_open_ul_connection(phr->fw_state) < 0)
-    return ns_html_err_ul_server_down(fout, phr, 1, 0);
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    return error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+  }
 
   xfree(phr->login); phr->login = 0;
   xfree(phr->name); phr->name = 0;
@@ -1061,7 +1062,7 @@ privileged_page_cookie_login(FILE *fout,
       return ns_html_err_no_perm(fout, phr, 1, "priv_login failed: %s",
                                  userlist_strerror(-r));
     case ULS_ERR_DISCONNECT:
-      return ns_html_err_ul_server_down(fout, phr, 1, 0);
+      return error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     default:
       return ns_html_err_internal_error(fout, phr, 1,
                                         "priv_login failed: %s",
@@ -1137,7 +1138,7 @@ privileged_page_login(FILE *fout,
   }
 
   if (ns_open_ul_connection(phr->fw_state) < 0)
-    return ns_html_err_ul_server_down(fout, phr, 1, 0);
+    return error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
   if ((r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
                                     &phr->ip, phr->client_key,
                                     phr->ssl_flag, phr->contest_id,
@@ -1157,7 +1158,7 @@ privileged_page_login(FILE *fout,
       return ns_html_err_no_perm(fout, phr, 1, "priv_login failed: %s",
                                  userlist_strerror(-r));
     case ULS_ERR_DISCONNECT:
-      return ns_html_err_ul_server_down(fout, phr, 1, 0);
+      return error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     default:
       return ns_html_err_internal_error(fout, phr, 1,
                                         "priv_login failed: %s",
@@ -1257,7 +1258,7 @@ priv_registration_operation(FILE *fout,
   // FIXME: probably we need to sort user_ids and remove duplicates
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
-    ns_html_err_ul_server_down(fout, phr, 1, 0);
+    error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     retcode = -1;
     goto cleanup;
   }
@@ -1398,7 +1399,7 @@ priv_add_user_by_user_id(FILE *fout,
     FAIL(NEW_SRV_ERR_INV_USER_ID);
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
-    ns_html_err_ul_server_down(fout, phr, 1, 0);
+    error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     retval = -1;
     goto cleanup;
   }
@@ -1432,7 +1433,7 @@ priv_add_user_by_login(FILE *fout,
     goto cleanup;
   }
   if (ns_open_ul_connection(phr->fw_state) < 0) {
-    ns_html_err_ul_server_down(fout, phr, 1, 0);
+    error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     retval = -1;
     goto cleanup;
   }
@@ -1607,7 +1608,7 @@ priv_add_priv_user_by_login(FILE *fout,
     goto cleanup;
   }
   if (ns_open_ul_connection(phr->fw_state) < 0) {
-    ns_html_err_ul_server_down(fout, phr, 1, 0);
+    error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     retval = -1;
     goto cleanup;
   }
@@ -1755,7 +1756,7 @@ priv_user_toggle_flags(
   }
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
-    ns_html_err_ul_server_down(fout, phr, 1, 0);
+    error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     retval = -1;
     goto cleanup;
   }
@@ -1869,7 +1870,7 @@ priv_user_disqualify(
   warn_txt = text_area_process_string(s, 0, 0);
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
-    ns_html_err_ul_server_down(fout, phr, 1, 0);
+    error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     retval = -1;
     goto cleanup;
   }
@@ -2219,7 +2220,7 @@ priv_password_operation(FILE *fout,
   int retval = 0, r = 0;
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
-    ns_html_err_ul_server_down(fout, phr, 0, 0);
+    error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     FAIL(1);
   }
 
@@ -2277,7 +2278,7 @@ priv_change_language(FILE *fout,
   }
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
-    ns_html_err_ul_server_down(fout, phr, 0, 0);
+    error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     return -1;
   }
   if ((r = userlist_clnt_set_cookie(ul_conn, ULS_SET_COOKIE_LOCALE,
@@ -4801,7 +4802,7 @@ priv_view_user_dump(FILE *fout,
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
-    ns_html_err_ul_server_down(fout, phr, 1, 0);
+    error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     return -1;
   }
   if ((r = userlist_clnt_get_database(ul_conn, ULS_GET_DATABASE,
@@ -4818,7 +4819,7 @@ priv_view_user_dump(FILE *fout,
                           userlist_strerror(-r));
       return -1;
     case ULS_ERR_DISCONNECT:
-      ns_html_err_ul_server_down(fout, phr, 1, 0);
+      error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
       return -1;
     default:
       ns_html_err_internal_error(fout, phr, 1, "operation failed: %s",
@@ -6485,7 +6486,7 @@ priv_logout(FILE *fout,
   unsigned char urlbuf[1024];
 
   if (ns_open_ul_connection(phr->fw_state) < 0)
-    return ns_html_err_ul_server_down(fout, phr, 0, 0);
+    return error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
   userlist_clnt_delete_cookie(ul_conn, phr->user_id,
                               phr->contest_id,
                               phr->client_key,
@@ -6841,6 +6842,7 @@ static const int external_priv_action_aliases[NEW_SRV_ACTION_LAST] =
 static const unsigned char * const external_priv_error_names[NEW_SRV_ERR_LAST] =
 {
   [NEW_SRV_ERR_UNKNOWN_ERROR] = "priv_error_unknown",
+  [NEW_SRV_ERR_USERLIST_SERVER_DOWN] = "priv_error_userlist_server_down",
 };
 
 static ExternalActionState *external_priv_action_states[NEW_SRV_ACTION_LAST];
@@ -6849,6 +6851,7 @@ static ExternalActionState *external_priv_error_states[NEW_SRV_ERR_LAST];
 static const unsigned char * const external_unpriv_error_names[NEW_SRV_ERR_LAST] =
 {
   [NEW_SRV_ERR_UNKNOWN_ERROR] = "unpriv_error_unknown",
+  [NEW_SRV_ERR_USERLIST_SERVER_DOWN] = "unpriv_error_userlist_server_down",
 };
 static ExternalActionState *external_unpriv_action_states[NEW_SRV_ACTION_LAST];
 static ExternalActionState *external_unpriv_error_states[NEW_SRV_ERR_LAST];
@@ -7362,7 +7365,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
                                              cnts->id);
 
   if (ns_open_ul_connection(phr->fw_state) < 0)
-    return ns_html_err_ul_server_down(fout, phr, 0, 0);
+    return error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
 
   if ((r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
                                &phr->ip, phr->client_key,
@@ -7382,7 +7385,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
       return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
                                  userlist_strerror(-r));
     case ULS_ERR_DISCONNECT:
-      return ns_html_err_ul_server_down(fout, phr, 0, 0);
+      return error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     case ULS_ERR_INCOMPLETE_REG:
       return ns_html_err_registration_incomplete(fout, phr);
     default:
@@ -10017,7 +10020,7 @@ unpriv_logout(FILE *fout,
   unsigned char urlbuf[1024];
 
   if (ns_open_ul_connection(phr->fw_state) < 0)
-    return ns_html_err_ul_server_down(fout, phr, 0, 0);
+    return error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
   userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
                               phr->session_id,
                               phr->client_key);

@@ -581,58 +581,6 @@ ns_html_err_cnts_unavailable(FILE *fout,
 }
 
 void
-ns_html_err_ul_server_down(FILE *fout,
-                           struct http_request_info *phr,
-                           int priv_mode,
-                           const char *format, ...)
-{
-  const struct contest_desc *cnts = 0;
-  struct contest_extra *extra = 0;
-  const unsigned char *header = 0, *footer = 0, *separator = 0;
-  const unsigned char *copyright = 0;
-  time_t cur_time = time(0);
-  unsigned char buf[1024];
-  va_list args;
-
-  if (format && *format) {
-    va_start(args, format);
-    vsnprintf(buf, sizeof(buf), format, args);
-    va_end(args);
-    err("%d: userlist server is down: %s", phr->id, buf);
-  } else {
-    err("%d: userlist server is down", phr->id);
-  }
-
-  if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
-  if (cnts) extra = ns_get_contest_extra(phr->contest_id);
-  if (extra && !priv_mode) {
-    watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-    copyright = extra->copyright.text;
-  } else if (extra && priv_mode) {
-  }
-  if (!priv_mode) {
-    header = ns_fancy_header;
-    separator = ns_fancy_separator;
-    if (copyright) footer = ns_fancy_footer_2;
-    else footer = ns_fancy_footer;
-  } else {
-    header = ns_fancy_priv_header;
-    separator = ns_fancy_priv_separator;
-    footer = ns_fancy_priv_footer;
-  }
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts,
-            NULL_CLIENT_KEY, 
-            _("User database server is down"));
-  fprintf(fout, "%s", ns_fancy_empty_status);
-  ns_separator(fout, separator, cnts);
-  fprintf(fout, "<p>%s</p>\n",
-          _("The user database server is currently not available. Please, retry the request later."));
-  ns_footer(fout, footer, copyright, phr->locale_id);
-  l10n_resetlocale();
-}
-
-void
 ns_html_err_internal_error(FILE *fout,
                            struct http_request_info *phr,
                            int priv_mode,

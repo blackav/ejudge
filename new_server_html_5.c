@@ -308,7 +308,7 @@ cmd_login(
 
   /* check password action is here */
   if (ns_open_ul_connection(phr->fw_state) < 0)
-    return ns_html_err_ul_server_down(fout, phr, 0, 0);
+    return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
 
   if ((r = userlist_clnt_login(ul_conn, ULS_CHECK_USER,
                                &phr->ip, phr->client_key,
@@ -329,7 +329,7 @@ cmd_login(
       return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
                                  userlist_strerror(-r));
     case ULS_ERR_DISCONNECT:
-      return ns_html_err_ul_server_down(fout, phr, 0, 0);
+      return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     case ULS_ERR_SIMPLE_REGISTERED:
       return ns_html_err_simple_registered(fout, phr, 0, "simple registered");
     default:
@@ -2306,7 +2306,7 @@ logout(
   unsigned char urlbuf[1024];
 
   if (ns_open_ul_connection(phr->fw_state) < 0)
-    return ns_html_err_ul_server_down(fout, phr, 0, 0);
+    return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
   userlist_clnt_delete_cookie(ul_conn, phr->user_id, phr->contest_id,
                               phr->session_id,
                               phr->client_key);
@@ -2468,6 +2468,7 @@ static const int external_reg_action_aliases[NEW_SRV_ACTION_LAST] =
 static const unsigned char * const external_reg_error_names[NEW_SRV_ERR_LAST] =
 {
   [NEW_SRV_ERR_UNKNOWN_ERROR] = "reg_error_unknown",
+  [NEW_SRV_ERR_USERLIST_SERVER_DOWN] = "reg_error_userlist_server_down",
 };
 static ExternalActionState *external_reg_action_states[NEW_SRV_ACTION_LAST];
 static ExternalActionState *external_reg_error_states[NEW_SRV_ERR_LAST];
@@ -2585,7 +2586,7 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   phr->hidden_vars = hid_buf;
 
   if (ns_open_ul_connection(phr->fw_state) < 0)
-    return ns_html_err_ul_server_down(fout, phr, 0, 0);
+    return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
   if ((r = userlist_clnt_get_cookie(ul_conn, ULS_GET_COOKIE,
                                     &phr->ip, phr->ssl_flag,
                                     phr->session_id,
@@ -2604,7 +2605,7 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
                                      "get_cookie failed: %s",
                                      userlist_strerror(-r));
     case ULS_ERR_DISCONNECT:
-      return ns_html_err_ul_server_down(fout, phr, 0, 0);
+      return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     default:
       return ns_html_err_internal_error(fout, phr, 0, "get_cookie failed: %s",
                                         userlist_strerror(-r));
@@ -2640,12 +2641,12 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
                                phr->user_id, phr->contest_id,
                                &user_info_xml) < 0) {
       // FIXME: need better error reporting
-      return ns_html_err_ul_server_down(fout, phr, 0, 0);
+      return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     }
     phr->session_extra->user_info = userlist_parse_user_str(user_info_xml);
     if (!phr->session_extra->user_info) {
       // FIXME: need better error reporting
-      return ns_html_err_ul_server_down(fout, phr, 0, 0);
+      return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     }
     xfree(user_info_xml); user_info_xml = 0;
   }

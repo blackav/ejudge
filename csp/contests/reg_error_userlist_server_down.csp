@@ -1,0 +1,25 @@
+<%
+%><%@include "reg_includes.csp"
+%><%@set getter_name = "csp_get_reg_error_unknown"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_reg_error_unknown(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "reg_stdvars.csp"
+%><%
+  unsigned char title[1024];
+
+  if (phr->locale_id < 0) phr->locale_id = 0;
+  l10n_setlocale(phr->locale_id);
+  snprintf(title, sizeof(title), "%s: %s", _("Error"), _("User database server is down"));
+%><%@include "reg_header.csp"
+%>
+<h2><font color="red"><s:v value="title" escape="false" /></font></h2>
+<p><s:_>The user database server is currently not available. Please, retry the request later.</s:_></p>
+<% if (phr->log_t && *phr->log_t) { %>
+<p><s:_>Additional information about this error:</s:_></p>
+<font color="red"><pre><s:v value="phr->log_t" /></pre></font>
+<% } %>
+<%@include "reg_footer.csp"
+%><%
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>

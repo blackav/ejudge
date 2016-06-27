@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2015 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2016 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -60,12 +60,14 @@ SOFILES = \
  csp_priv_user_info_page.so\
  csp_priv_users_page.so\
  csp_priv_error_unknown.so\
+ csp_priv_error_userlist_server_down.so\
  csp_reg_contests_page.so\
  csp_reg_create_page.so\
  csp_reg_edit_page.so\
  csp_reg_login_page.so\
  csp_reg_main_page.so\
  csp_reg_error_unknown.so\
+ csp_reg_error_userlist_server_down.so\
  csp_unpriv_clar_page.so\
  csp_unpriv_contests_page.so\
  csp_unpriv_login_page.so\
@@ -76,7 +78,8 @@ SOFILES = \
  csp_unpriv_report_page.so\
  csp_unpriv_source_page.so\
  csp_unpriv_standings_page.so\
- csp_unpriv_error_unknown.so
+ csp_unpriv_error_unknown.so\
+ csp_unpriv_error_userlist_server_down.so
 
 CFILES = $(SOFILES:.so=.c) I_priv_ip_users_page.c  I_priv_priv_users_page.c  I_priv_user_ips_page.c
 
@@ -130,6 +133,7 @@ csp_priv_users_page.c : priv_users_page.csp priv_includes.csp priv_stdvars.csp p
 csp_priv_tokenize_displayed_1_page.c : priv_tokenize_displayed_1_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 
 csp_priv_error_unknown.c : priv_error_unknown.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_error_userlist_server_down.c : priv_error_userlist_server_down.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 
 UNPRIV_DEPS = unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_simple_header.csp unpriv_menu.csp unpriv_status.csp unpriv_separator.csp unpriv_footer.csp
 
@@ -145,6 +149,7 @@ csp_unpriv_source_page.c : unpriv_source_page.csp $(UNPRIV_DEPS)
 csp_unpriv_standings_page.c : unpriv_standings_page.csp $(UNPRIV_DEPS)
 
 csp_unpriv_error_unknown.c : unpriv_error_unknown.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
+csp_unpriv_error_userlist_server_down.c : unpriv_error_userlist_server_down.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 
 csp_reg_contests_page.c : reg_contests_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_footer.csp
 csp_reg_create_page.c : reg_create_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_footer.csp
@@ -153,6 +158,7 @@ csp_reg_login_page.c : reg_login_page.csp reg_includes.csp reg_stdvars.csp reg_h
 csp_reg_main_page.c : reg_main_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_main_settings.csp reg_footer.csp
 
 csp_reg_csp_error_unknown.c : reg_error_unknown.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp
+csp_reg_csp_error_userlist_server_down.c : reg_error_userlist_server_down.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp
 
 csp_%.c : %.csp
 	../../ej-page-gen -x none -o $@ -d $*.ds $<
