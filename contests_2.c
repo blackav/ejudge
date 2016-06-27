@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -67,7 +66,7 @@ contests_write_header(
   }
 
   flist = (const int[]) {
-    CONTEST_A_AUTOREGISTER, CONTEST_A_DISABLE_TEAM_PASSWORD,
+    CONTEST_A_AUTOREGISTER, CONTEST_A_DISABLE_TEAM_PASSWORD, CONTEST_A_FORCE_PASSWORD_CHANGE,
     CONTEST_A_SIMPLE_REGISTRATION,
     CONTEST_A_SEND_PASSWD_EMAIL, CONTEST_A_ASSIGN_LOGINS,
     CONTEST_A_FORCE_REGISTRATION, CONTEST_A_DISABLE_NAME,
