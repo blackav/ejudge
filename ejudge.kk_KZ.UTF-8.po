@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-06-26 09:51+0300\n"
+"POT-Creation-Date: 2016-06-27 18:07+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -249,13 +249,6 @@ msgstr ""
 msgid ""
 "<p>To validate your e-mail and enable your participation in this contest you "
 "may use the <a href=\"%s\">password restoration</a> service.</p>\n"
-msgstr ""
-
-#, c-format
-msgid ""
-"<p>You cannot participate in the contest because your registration is "
-"incomplete. Please, %sgo back to the registration forms%s and fill up them "
-"correctly.</p>\n"
 msgstr ""
 
 #, c-format
@@ -1240,6 +1233,9 @@ msgid "EXAM IS RUNNING (frozen)"
 msgstr ""
 
 msgid "Edit"
+msgstr ""
+
+msgid "Edit Registration Form"
 msgstr ""
 
 msgid "Edit comment"
@@ -2675,6 +2671,9 @@ msgstr ""
 msgid ""
 "Please, enter your valid e-mail address and press the \"Create account\" "
 "button."
+msgstr ""
+
+msgid "Please, follow the following link."
 msgstr ""
 
 msgid "Presentation error"
@@ -4248,6 +4247,11 @@ msgid "You are disqualified"
 msgstr ""
 
 msgid "You are disqualified by the contest administration."
+msgstr ""
+
+msgid ""
+"You cannot participate in the contest because your registration is "
+"incomplete."
 msgstr ""
 
 msgid ""

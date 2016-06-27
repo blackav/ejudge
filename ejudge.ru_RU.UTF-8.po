@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-06-26 09:51+0300\n"
-"PO-Revision-Date: 2016-06-26 09:53+0300\n"
+"POT-Creation-Date: 2016-06-27 18:07+0300\n"
+"PO-Revision-Date: 2016-06-27 18:07+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -301,16 +301,6 @@ msgstr ""
 "<p>Для проверки Вашего адреса e-mail и допуска Вашей регистрационной записи "
 "к участию в этом турнире Вы можете воспользоваться сервисом <a href=\"%s"
 "\">восстановления паролей</a>.</p>\n"
-
-#, c-format
-msgid ""
-"<p>You cannot participate in the contest because your registration is "
-"incomplete. Please, %sgo back to the registration forms%s and fill up them "
-"correctly.</p>\n"
-msgstr ""
-"<p>Вы не можете участвовать в данном турнире потому что Вы не заполнили до "
-"конца поля регистрационной анкеты. Пожалуйста, %sвернитесь к заполнению%s "
-"регистрационной анкеты.</p>\n"
 
 #, c-format
 msgid "<p>You may define up to %d members.</p>"
@@ -1311,6 +1301,9 @@ msgstr "ЭКЗАМЕН ИДЁТ (заморозка)"
 
 msgid "Edit"
 msgstr "Редактировать"
+
+msgid "Edit Registration Form"
+msgstr "Редактировать регистрационную форму"
 
 msgid "Edit comment"
 msgstr "Изменить комментарий"
@@ -2834,6 +2827,9 @@ msgid ""
 msgstr ""
 "Пожалуйста, введите Ваш работающий адрес e-mail и нажмите кнопку \"Создать "
 "учётную запись\"."
+
+msgid "Please, follow the following link."
+msgstr "Пожалуйста, перейдите по следующей ссылке"
 
 msgid "Presentation error"
 msgstr "Неправильный формат вывода"
@@ -4458,6 +4454,13 @@ msgid "You are disqualified by the contest administration."
 msgstr "Вы дисквалифицированы администрацией турнира."
 
 msgid ""
+"You cannot participate in the contest because your registration is "
+"incomplete."
+msgstr ""
+"Вы не можете участвовать в данном турнире потому что вы не заполнили до "
+"конца поля регистрационной анкеты."
+
+msgid ""
 "You cannot participate in this contest. Your account was created using the "
 "simple registration procedure, i.e. your e-mail address was not verified. "
 "This contest requires e-mail verification, so your account cannot be "
@@ -4926,3 +4929,4 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
+
