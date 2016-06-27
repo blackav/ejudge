@@ -6843,6 +6843,7 @@ static const unsigned char * const external_priv_error_names[NEW_SRV_ERR_LAST] =
 {
   [NEW_SRV_ERR_UNKNOWN_ERROR] = "priv_error_unknown",
   [NEW_SRV_ERR_USERLIST_SERVER_DOWN] = "priv_error_userlist_server_down",
+  [NEW_SRV_ERR_DISQUALIFIED] = "priv_error_disqualified",
 };
 
 static ExternalActionState *external_priv_action_states[NEW_SRV_ACTION_LAST];
@@ -10674,7 +10675,7 @@ unprivileged_entry_point(
   phr->online_users = online_users;
 
   if ((teamdb_get_flags(cs->teamdb_state, phr->user_id) & TEAM_DISQUALIFIED))
-    return ns_html_err_disqualified(fout, phr, cnts, extra);
+    return error_page(fout, phr, 0, NEW_SRV_ERR_DISQUALIFIED);
 
   /* FIXME: redirect just logged in user to an appropriate page */
   if (hr_cgi_param(phr, "lt", &s) > 0) {

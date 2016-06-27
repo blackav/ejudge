@@ -763,45 +763,6 @@ ns_html_err_registration_incomplete(
   html_armor_free(&ab);
 }
 
-void
-ns_html_err_disqualified(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra)
-{
-  const unsigned char *header = 0, *footer = 0, *separator = 0;
-  const unsigned char *copyright = 0;
-  time_t cur_time = time(0);
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  const serve_state_t cs = extra->serve_state;
-  const struct team_extra *t_extra = 0;
-
-  err("%d: user disqualified", phr->id);
-
-  watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-  copyright = extra->copyright.text;
-
-  header = ns_fancy_header;
-  separator = ns_fancy_separator;
-  if (copyright) footer = ns_fancy_footer_2;
-  else footer = ns_fancy_footer;
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("You are disqualified"));
-  fprintf(fout, "%s", ns_fancy_empty_status);
-  ns_separator(fout, separator, cnts);
-  fprintf(fout, "<p>%s</p>\n",
-          _("You are disqualified by the contest administration."));
-  if (cs->xuser_state && (t_extra = cs->xuser_state->vt->get_entry(cs->xuser_state, phr->user_id))
-      && t_extra->disq_comment) {
-    fprintf(fout, "%s", t_extra->disq_comment);
-  }
-
-  ns_footer(fout, footer, copyright, phr->locale_id);
-  l10n_resetlocale();
-  html_armor_free(&ab);
-}
-
 // very basic error messaging
 void
 ns_html_error(

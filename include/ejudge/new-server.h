@@ -472,13 +472,6 @@ ns_html_err_registration_incomplete(
         FILE *fout,
         struct http_request_info *phr);
 void
-ns_html_err_disqualified(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra);
-
-void
 ns_html_err_status_page(
         FILE *fout,
         struct http_request_info *phr,

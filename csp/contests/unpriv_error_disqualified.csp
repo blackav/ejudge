@@ -1,0 +1,32 @@
+<%
+%><%@include "unpriv_includes.csp"
+%><%
+#include "ejudge/xuser_plugin.h"
+#include "ejudge/team_extra.h"
+%><%@set getter_name = "csp_get_unpriv_error_unknown"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_unpriv_error_userlist_server_down(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+  unsigned char title[1024];
+  const struct team_extra *t_extra = 0;
+
+  if (phr->locale_id < 0) phr->locale_id = 0;
+  l10n_setlocale(phr->locale_id);
+  snprintf(title, sizeof(title), "%s", _("You are disqualified"));
+%><%@include "unpriv_header.csp"
+%><%@include "unpriv_menu.csp"
+%>
+<h2><font color="red"><s:v value="title" escape="false" /></font></h2>
+<p><s:_>You are disqualified by the contest administration.</s:_></p>
+<%
+  if (cs->xuser_state && (t_extra = cs->xuser_state->vt->get_entry(cs->xuser_state, phr->user_id))
+      && t_extra->disq_comment) {
+    fprintf(out_f, "%s", t_extra->disq_comment);
+  }
+%>
+<%@include "unpriv_footer.csp"
+%><%
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>

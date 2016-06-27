@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __NEW_SERVER_PROTO_H__
 #define __NEW_SERVER_PROTO_H__
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -204,6 +203,7 @@ enum
   NEW_SRV_ERR_INV_SESSION,
   NEW_SRV_ERR_REGISTRATION_INCOMPLETE,
   NEW_SRV_ERR_SERVICE_NOT_AVAILABLE,
+  NEW_SRV_ERR_DISQUALIFIED,
 
   NEW_SRV_ERR_LAST,
 };
