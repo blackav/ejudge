@@ -1,0 +1,52 @@
+<%
+%><%@include "unpriv_includes.csp"
+%><%@set getter_name = "csp_get_unpriv_error_registration_incomplete"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_unpriv_error_registration_incomplete(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+  unsigned char title[1024];
+
+  if (phr->locale_id < 0) phr->locale_id = 0;
+  l10n_setlocale(phr->locale_id);
+  snprintf(title, sizeof(title), "%s", _("Registration incomplete"));
+%><%@include "unpriv_header.csp"
+%><%@include "unpriv_menu.csp"
+%>
+<h2><font color="red"><s:v value="title" escape="false" /></font></h2>
+
+<p><s:_>You cannot participate in the contest because your registration is incomplete.</s:_></p>
+
+<%
+  if (cnts /*&& cnts->allow_reg_data_edit*/
+      && contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag) > 0
+      && (cnts->reg_deadline <= 0 || phr->current_time < cnts->reg_deadline)) {
+%>
+<p><s:_>Please, follow the following link.</s:_></p>
+<%
+    if (phr->session_id) {
+%>
+<s:url name="RegisterUrl" script="register" ac="main-page">
+  <s:param name="contest_id" value="cnts->id" />
+  <s:param name="SID" value="phr->session_id" />
+</s:url>
+<p><s:a url="RegisterUrl"><s:_>Edit Registration Form</s:_></s:a></p>
+<%
+    } else {
+%>
+<s:url name="RegisterUrl" script="register" ac="reg-login-page">
+  <s:param name="contest_id" value="cnts->id" />
+</s:url>
+<p><s:a url="RegisterUrl"><s:_>Edit Registration Form</s:_></s:a></p>
+<%
+    }
+%>
+<%
+  }
+%>
+
+<%@include "unpriv_footer.csp"
+%><%
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>

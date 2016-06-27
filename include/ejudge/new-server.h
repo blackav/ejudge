@@ -468,10 +468,6 @@ ns_html_err_inv_session(FILE *fout,
                         const char *format, ...)
   __attribute__((format(printf, 4, 5)));
 void
-ns_html_err_registration_incomplete(
-        FILE *fout,
-        struct http_request_info *phr);
-void
 ns_html_err_status_page(
         FILE *fout,
         struct http_request_info *phr,

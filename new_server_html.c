@@ -6853,6 +6853,8 @@ static const unsigned char * const external_unpriv_error_names[NEW_SRV_ERR_LAST]
 {
   [NEW_SRV_ERR_UNKNOWN_ERROR] = "unpriv_error_unknown",
   [NEW_SRV_ERR_USERLIST_SERVER_DOWN] = "unpriv_error_userlist_server_down",
+  [NEW_SRV_ERR_DISQUALIFIED] = "unpriv_error_disqualified",
+  [NEW_SRV_ERR_REGISTRATION_INCOMPLETE] = "unpriv_error_registration_incomplete",
 };
 static ExternalActionState *external_unpriv_action_states[NEW_SRV_ACTION_LAST];
 static ExternalActionState *external_unpriv_error_states[NEW_SRV_ERR_LAST];
@@ -7388,7 +7390,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
     case ULS_ERR_DISCONNECT:
       return error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     case ULS_ERR_INCOMPLETE_REG:
-      return ns_html_err_registration_incomplete(fout, phr);
+      return error_page(fout, phr, 0, NEW_SRV_ERR_REGISTRATION_INCOMPLETE);
     default:
       return ns_html_err_internal_error(fout, phr, 0, "user_login failed: %s",
                                         userlist_strerror(-r));
