@@ -3,9 +3,9 @@
 %><%
 #include "ejudge/xuser_plugin.h"
 #include "ejudge/team_extra.h"
-%><%@set getter_name = "csp_get_unpriv_error_unknown"
+%><%@set getter_name = "csp_get_unpriv_error_disqualified"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
-%><%@page csp_view_unpriv_error_userlist_server_down(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@page csp_view_unpriv_error_disqualified(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "unpriv_stdvars.csp"
 %><%
   unsigned char title[1024];
