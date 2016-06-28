@@ -438,10 +438,7 @@ ns_html_err_no_perm(FILE *fout,
 void
 ns_html_err_simple_registered(
         FILE *fout,
-        struct http_request_info *phr,
-        int priv_mode,
-        const char *format, ...)
-  __attribute__((format(printf, 4, 5)));
+        struct http_request_info *phr);
 void
 ns_html_err_inv_param(FILE *fout,
                       struct http_request_info *phr,

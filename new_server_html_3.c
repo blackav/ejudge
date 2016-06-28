@@ -352,9 +352,7 @@ ns_html_err_no_perm(
 void
 ns_html_err_simple_registered(
         FILE *fout,
-        struct http_request_info *phr,
-        int priv_mode,
-        const char *format, ...)
+        struct http_request_info *phr)
 {
   const struct contest_desc *cnts = 0;
   struct contest_extra *extra = 0;
@@ -364,31 +362,18 @@ ns_html_err_simple_registered(
   unsigned char buf[1024];
   unsigned char hbuf[1024];
   int blen;
-  va_list args;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-
-  va_start(args, format);
-  vsnprintf(buf, sizeof(buf), format, args);
-  va_end(args);
-  err("%d: simple_registered user: %s", phr->id, buf);
 
   if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
   if (cnts) extra = ns_get_contest_extra(phr->contest_id);
-  if (extra && !priv_mode) {
+  if (extra) {
     watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
     copyright = extra->copyright.text;
-  } else if (extra && priv_mode) {
   }
-  if (!priv_mode) {
-    header = ns_fancy_header;
-    separator = ns_fancy_separator;
-    if (copyright) footer = ns_fancy_footer_2;
-    else footer = ns_fancy_footer;
-  } else {
-    header = ns_fancy_priv_header;
-    separator = ns_fancy_priv_separator;
-    footer = ns_fancy_priv_footer;
-  }
+  header = ns_fancy_header;
+  separator = ns_fancy_separator;
+  if (copyright) footer = ns_fancy_footer_2;
+  else footer = ns_fancy_footer;
   l10n_setlocale(phr->locale_id);
   ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Cannot participate"));
   fprintf(fout, "%s", ns_fancy_empty_status);
