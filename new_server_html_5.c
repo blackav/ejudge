@@ -331,7 +331,7 @@ cmd_login(
     case ULS_ERR_DISCONNECT:
       return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     case ULS_ERR_SIMPLE_REGISTERED:
-      return ns_html_err_simple_registered(fout, phr);
+      return error_page(fout, phr, NEW_SRV_ERR_SIMPLE_REGISTERED);
     default:
       return ns_html_err_internal_error(fout, phr, 0, "user_login failed: %s",
                                         userlist_strerror(-r));
@@ -2468,6 +2468,7 @@ static const int external_reg_action_aliases[NEW_SRV_ACTION_LAST] =
 static const unsigned char * const external_reg_error_names[NEW_SRV_ERR_LAST] =
 {
   [NEW_SRV_ERR_UNKNOWN_ERROR] = "reg_error_unknown",
+  [NEW_SRV_ERR_SIMPLE_REGISTERED] = "reg_error_simple_registered",
   [NEW_SRV_ERR_USERLIST_SERVER_DOWN] = "reg_error_userlist_server_down",
 };
 static ExternalActionState *external_reg_action_states[NEW_SRV_ACTION_LAST];

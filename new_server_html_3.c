@@ -350,62 +350,6 @@ ns_html_err_no_perm(
 }
 
 void
-ns_html_err_simple_registered(
-        FILE *fout,
-        struct http_request_info *phr)
-{
-  const struct contest_desc *cnts = 0;
-  struct contest_extra *extra = 0;
-  const unsigned char *header = 0, *footer = 0, *separator = 0;
-  const unsigned char *copyright = 0;
-  time_t cur_time = time(0);
-  unsigned char buf[1024];
-  unsigned char hbuf[1024];
-  int blen;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-
-  if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
-  if (cnts) extra = ns_get_contest_extra(phr->contest_id);
-  if (extra) {
-    watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-    copyright = extra->copyright.text;
-  }
-  header = ns_fancy_header;
-  separator = ns_fancy_separator;
-  if (copyright) footer = ns_fancy_footer_2;
-  else footer = ns_fancy_footer;
-  l10n_setlocale(phr->locale_id);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, _("Cannot participate"));
-  fprintf(fout, "%s", ns_fancy_empty_status);
-  ns_separator(fout, separator, cnts);
-  fprintf(fout, "<p>%s</p>\n",
-          _("You cannot participate in this contest. Your account was created using the simple registration procedure, i.e. your e-mail address was not verified. This contest requires e-mail verification, so your account cannot be accepted."));
-
-  if (cnts->enable_password_recovery) {
-    if (cnts->team_url) {
-      snprintf(buf, sizeof(buf), "%s", cnts->team_url);
-    } else {
-      snprintf(hbuf, sizeof(hbuf), "%s", phr->self_url);
-      blen = strlen(hbuf);
-      while (blen > 0 && hbuf[blen - 1] != '/') blen--;
-      hbuf[blen] = 0;
-      snprintf(buf, sizeof(buf), "%snew-client", hbuf);
-    }
-    snprintf(hbuf, sizeof(hbuf),
-             "%s?contest_id=%d&amp;locale_id=%d&amp;action=%d",
-             buf, phr->contest_id, phr->locale_id,
-             NEW_SRV_ACTION_FORGOT_PASSWORD_1);
-
-    fprintf(fout,
-            _("<p>To validate your e-mail and enable your participation in this contest you may use the <a href=\"%s\">password restoration</a> service.</p>\n"), hbuf);
-  }
-
-  ns_footer(fout, footer, copyright, phr->locale_id);
-  l10n_resetlocale();
-  html_armor_free(&ab);
-}
-
-void
 ns_html_err_inv_param(FILE *fout,
                       struct http_request_info *phr,
                       int priv_mode,
