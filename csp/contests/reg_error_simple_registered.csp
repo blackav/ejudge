@@ -23,8 +23,8 @@
   <s:param name="contest_id" value="phr->contest_id" />
   <s:param name="locale_id" value="phr->locale_id" />
 </s:url>
-<p>To validate your e-mail and enable your participation in this contest you may use the password recovery link below.</p>
-<p><s:a url="RecoverUrl">Recover password</s:a></p>
+<p><s:_>To validate your e-mail and enable your participation in this contest you may use the password recovery link below.</s:_></p>
+<p><s:a url="RecoverUrl"><s:_>Recover password</s:_></s:a></p>
 <%
   }
 %>

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-06-27 18:07+0300\n"
+"POT-Creation-Date: 2016-06-28 13:10+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -243,12 +243,6 @@ msgstr ""
 #, c-format
 msgid ""
 "<p>Note, that the exact reason is not reported due to security reasons.</p>"
-msgstr ""
-
-#, c-format
-msgid ""
-"<p>To validate your e-mail and enable your participation in this contest you "
-"may use the <a href=\"%s\">password restoration</a> service.</p>\n"
 msgstr ""
 
 #, c-format
@@ -2891,6 +2885,9 @@ msgstr ""
 msgid "Recover forgot password"
 msgstr ""
 
+msgid "Recover password"
+msgstr ""
+
 msgid "Refresh"
 msgstr ""
 
@@ -3829,6 +3826,11 @@ msgid "To user id"
 msgstr ""
 
 msgid "To user login"
+msgstr ""
+
+msgid ""
+"To validate your e-mail and enable your participation in this contest you "
+"may use the password recovery link below."
 msgstr ""
 
 msgid "Token counter"

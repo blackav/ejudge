@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-06-27 18:07+0300\n"
-"PO-Revision-Date: 2016-06-27 18:07+0300\n"
+"POT-Creation-Date: 2016-06-28 13:10+0300\n"
+"PO-Revision-Date: 2016-06-28 13:11+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -292,15 +292,6 @@ msgid ""
 msgstr ""
 "<p>Обратите внимание, что точная причина ошибки не сообщается по "
 "соображениям безопасности.</p>"
-
-#, c-format
-msgid ""
-"<p>To validate your e-mail and enable your participation in this contest you "
-"may use the <a href=\"%s\">password restoration</a> service.</p>\n"
-msgstr ""
-"<p>Для проверки Вашего адреса e-mail и допуска Вашей регистрационной записи "
-"к участию в этом турнире Вы можете воспользоваться сервисом <a href=\"%s"
-"\">восстановления паролей</a>.</p>\n"
 
 #, c-format
 msgid "<p>You may define up to %d members.</p>"
@@ -3052,6 +3043,9 @@ msgstr "Ограничение реального времени"
 msgid "Recover forgot password"
 msgstr "Восстановить забытый пароль"
 
+msgid "Recover password"
+msgstr "Восстановить пароль"
+
 msgid "Refresh"
 msgstr "Обновить"
 
@@ -4027,6 +4021,11 @@ msgstr "Кому (рег. номер)"
 msgid "To user login"
 msgstr "Кому (рег. имя)"
 
+msgid ""
+"To validate your e-mail and enable your participation in this contest you "
+"may use the password recovery link below."
+msgstr "Для проверки Вашего адреса e-mail и допуска Вашей регистрационной записи к участию в этом турнире Вы можете воспользоваться сервисом восстановления паролей по ссылке ниже.\n"
+
 msgid "Token counter"
 msgstr "Число использованных токенов"
 
@@ -4929,4 +4928,3 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
-
