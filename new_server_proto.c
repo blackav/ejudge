@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -181,6 +181,9 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_SESSION] = __("Invalid session"),
   [NEW_SRV_ERR_REGISTRATION_INCOMPLETE] = __("Registration is incomplete"),
   [NEW_SRV_ERR_SERVICE_NOT_AVAILABLE] = __("Service is not available"),
+  [NEW_SRV_ERR_DISQUALIFIED] = __("Disqualified"),
+  [NEW_SRV_ERR_SIMPLE_REGISTERED] = __("User is simple registered"),
+  [NEW_SRV_ERR_CNTS_UNAVAILABLE] = __("Contest is not available"),
 };
 
 static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
@@ -334,6 +337,9 @@ static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_INV_SESSION] = __("Invalid session"),
   [NEW_SRV_ERR_REGISTRATION_INCOMPLETE] = __("Registration is incomplete"),
   [NEW_SRV_ERR_SERVICE_NOT_AVAILABLE] = __("Service is not available"),
+  [NEW_SRV_ERR_DISQUALIFIED] = __("Disqualified"),
+  [NEW_SRV_ERR_SIMPLE_REGISTERED] = __("User is simple registered"),
+  [NEW_SRV_ERR_CNTS_UNAVAILABLE] = __("Contest is not available"),
 };
 
 const unsigned char *

@@ -80,6 +80,7 @@ SOFILES = \
  csp_unpriv_report_page.so\
  csp_unpriv_source_page.so\
  csp_unpriv_standings_page.so\
+ csp_unpriv_error_cnts_unavailable.so\
  csp_unpriv_error_disqualified.so\
  csp_unpriv_error_registration_incomplete.so\
  csp_unpriv_error_unknown.so\
@@ -152,6 +153,7 @@ csp_unpriv_report_page.c : unpriv_report_page.csp $(UNPRIV_DEPS)
 csp_unpriv_source_page.c : unpriv_source_page.csp $(UNPRIV_DEPS)
 csp_unpriv_standings_page.c : unpriv_standings_page.csp $(UNPRIV_DEPS)
 
+csp_unpriv_error_cnts_unavailable.c : unpriv_error_cnts_unavailable.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 csp_unpriv_error_disqualified.c : unpriv_error_disqualified.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 csp_unpriv_error_registration_incomplete.c : unpriv_error_registration_incomplete.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 csp_unpriv_error_unknown.c : unpriv_error_unknown.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp

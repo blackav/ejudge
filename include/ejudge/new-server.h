@@ -448,13 +448,6 @@ ns_html_err_service_not_available(FILE *fout,
                                   const char *format, ...)
   __attribute__((format(printf, 4, 5)));
 void
-ns_html_err_cnts_unavailable(FILE *fout,
-                             struct http_request_info *phr,
-                             int priv_mode,
-                             const unsigned char *messages,
-                             const char *format, ...)
-  __attribute__((format(printf, 5, 6)));
-void
 ns_html_err_status_page(
         FILE *fout,
         struct http_request_info *phr,

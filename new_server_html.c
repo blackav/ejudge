@@ -6855,6 +6855,7 @@ static const unsigned char * const external_unpriv_error_names[NEW_SRV_ERR_LAST]
   [NEW_SRV_ERR_USERLIST_SERVER_DOWN] = "unpriv_error_userlist_server_down",
   [NEW_SRV_ERR_DISQUALIFIED] = "unpriv_error_disqualified",
   [NEW_SRV_ERR_REGISTRATION_INCOMPLETE] = "unpriv_error_registration_incomplete",
+  [NEW_SRV_ERR_CNTS_UNAVAILABLE] = "unpriv_error_cnts_unavailable",
 };
 static ExternalActionState *external_unpriv_action_states[NEW_SRV_ACTION_LAST];
 static ExternalActionState *external_unpriv_error_states[NEW_SRV_ERR_LAST];
@@ -7161,8 +7162,9 @@ privileged_entry_point(
     if (log_file_pos_1 >= 0 && log_file_pos_2 >= 0) {
       msg = read_file_range(ejudge_config->new_server_log, log_file_pos_1, log_file_pos_2);
     }
-    ns_html_err_cnts_unavailable(fout, phr, 0, msg, 0);
+    fprintf(phr->log_f, "%s", msg);
     xfree(msg);
+    error_page(fout, phr, 0, NEW_SRV_ERR_CNTS_UNAVAILABLE);
     goto cleanup;
   }
 
@@ -10621,7 +10623,8 @@ unprivileged_entry_point(
                                ul_conn,
                                &callbacks,
                                &extra->serve_state, 0, 0) < 0) {
-    return ns_html_err_cnts_unavailable(fout, phr, 0, NULL, 0);
+    error_page(fout, phr, 0, NEW_SRV_ERR_CNTS_UNAVAILABLE);
+    goto cleanup;
   }
 
   cs = extra->serve_state;

@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-07-03 02:14+0300\n"
-"PO-Revision-Date: 2016-07-03 02:10+0300\n"
+"POT-Creation-Date: 2016-07-03 09:26+0300\n"
+"PO-Revision-Date: 2016-07-03 19:34+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -937,6 +937,9 @@ msgstr "Каталог с конфигурацией турнира"
 msgid "Contest directory"
 msgstr "Каталог турнира"
 
+msgid "Contest is not available"
+msgstr "Турнир недоступен"
+
 msgid "Contest is not finished"
 msgstr "Турнир ещё не закончился"
 
@@ -960,9 +963,6 @@ msgstr "Управление турниром"
 
 msgid "Contest name"
 msgstr "Название турнира"
-
-msgid "Contest not available"
-msgstr "Турнир недоступен"
 
 msgid "Contest password"
 msgstr "Турнирный пароль"
@@ -4235,6 +4235,9 @@ msgstr "Условие отбора участников"
 msgid "User info"
 msgstr "Информация о пользователе"
 
+msgid "User is simple registered"
+msgstr "Пользователь создан по упрощенной процедуре регистрации"
+
 msgid "User login"
 msgstr "Рег. имя команды"
 
@@ -4932,3 +4935,5 @@ msgstr "ошибка записи"
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
 
+#~ msgid "Contest not available"
+#~ msgstr "Турнир недоступен"
