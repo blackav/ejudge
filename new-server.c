@@ -476,7 +476,7 @@ cmd_http_request(
       goto cleanup;
     }
     out_f = open_memstream(&out_txt, &out_size);
-    ns_html_err_internal_error(out_f, &hr, 0, "empty output generated");
+    fprintf(out_f, "Content-type: text/plain\n\n");
     close_memstream(out_f); out_f = 0;
     xfree(out_txt); out_txt = 0;
   }

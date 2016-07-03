@@ -1064,9 +1064,8 @@ privileged_page_cookie_login(FILE *fout,
     case ULS_ERR_DISCONNECT:
       return error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     default:
-      return ns_html_err_internal_error(fout, phr, 1,
-                                        "priv_login failed: %s",
-                                        userlist_strerror(-r));
+      fprintf(phr->log_f, "priv_login failed: %s", userlist_strerror(-r));
+      return error_page(fout, phr, 1, NEW_SRV_ERR_INTERNAL);
     }
   }
 
@@ -1160,9 +1159,8 @@ privileged_page_login(FILE *fout,
     case ULS_ERR_DISCONNECT:
       return error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     default:
-      return ns_html_err_internal_error(fout, phr, 1,
-                                        "priv_login failed: %s",
-                                        userlist_strerror(-r));
+      fprintf(phr->log_f, "priv_login failed: %s", userlist_strerror(-r));
+      return error_page(fout, phr, 1, NEW_SRV_ERR_INTERNAL);
     }
   }
 
@@ -4822,8 +4820,8 @@ priv_view_user_dump(FILE *fout,
       error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
       return -1;
     default:
-      ns_html_err_internal_error(fout, phr, 1, "operation failed: %s",
-                                 userlist_strerror(-r));
+      fprintf(phr->log_f, "operation failed: %s", userlist_strerror(-r));
+      error_page(fout, phr, 1, NEW_SRV_ERR_INTERNAL);
       return -1;
     }
   }
@@ -6844,6 +6842,7 @@ static const unsigned char * const external_priv_error_names[NEW_SRV_ERR_LAST] =
   [NEW_SRV_ERR_UNKNOWN_ERROR] = "priv_error_unknown",
   [NEW_SRV_ERR_USERLIST_SERVER_DOWN] = "priv_error_userlist_server_down",
   [NEW_SRV_ERR_DISQUALIFIED] = "priv_error_disqualified",
+  [NEW_SRV_ERR_INTERNAL] = "priv_error_internal",
 };
 
 static ExternalActionState *external_priv_action_states[NEW_SRV_ACTION_LAST];
@@ -6856,6 +6855,7 @@ static const unsigned char * const external_unpriv_error_names[NEW_SRV_ERR_LAST]
   [NEW_SRV_ERR_DISQUALIFIED] = "unpriv_error_disqualified",
   [NEW_SRV_ERR_REGISTRATION_INCOMPLETE] = "unpriv_error_registration_incomplete",
   [NEW_SRV_ERR_CNTS_UNAVAILABLE] = "unpriv_error_cnts_unavailable",
+  [NEW_SRV_ERR_INTERNAL] = "unpriv_error_internal",
 };
 static ExternalActionState *external_unpriv_action_states[NEW_SRV_ACTION_LAST];
 static ExternalActionState *external_unpriv_error_states[NEW_SRV_ERR_LAST];
@@ -7394,8 +7394,8 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
     case ULS_ERR_INCOMPLETE_REG:
       return error_page(fout, phr, 0, NEW_SRV_ERR_REGISTRATION_INCOMPLETE);
     default:
-      return ns_html_err_internal_error(fout, phr, 0, "user_login failed: %s",
-                                        userlist_strerror(-r));
+      fprintf(phr->log_f, "user_login failed: %s", userlist_strerror(-r));
+      return error_page(fout, phr, 0, NEW_SRV_ERR_INTERNAL);
     }
   }
 

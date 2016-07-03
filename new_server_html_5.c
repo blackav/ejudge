@@ -333,8 +333,8 @@ cmd_login(
     case ULS_ERR_SIMPLE_REGISTERED:
       return error_page(fout, phr, NEW_SRV_ERR_SIMPLE_REGISTERED);
     default:
-      return ns_html_err_internal_error(fout, phr, 0, "user_login failed: %s",
-                                        userlist_strerror(-r));
+      fprintf(phr->log_f, "user_login failed: %s", userlist_strerror(-r));
+      return error_page(fout, phr, NEW_SRV_ERR_INTERNAL);
     }
   }
 
@@ -2471,6 +2471,7 @@ static const unsigned char * const external_reg_error_names[NEW_SRV_ERR_LAST] =
   [NEW_SRV_ERR_SIMPLE_REGISTERED] = "reg_error_simple_registered",
   [NEW_SRV_ERR_USERLIST_SERVER_DOWN] = "reg_error_userlist_server_down",
   [NEW_SRV_ERR_INV_SESSION] = "reg_error_inv_session",
+  [NEW_SRV_ERR_INTERNAL] = "reg_error_internal",
 };
 static ExternalActionState *external_reg_action_states[NEW_SRV_ACTION_LAST];
 static ExternalActionState *external_reg_error_states[NEW_SRV_ERR_LAST];
@@ -2607,8 +2608,8 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
     case ULS_ERR_DISCONNECT:
       return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     default:
-      return ns_html_err_internal_error(fout, phr, 0, "get_cookie failed: %s",
-                                        userlist_strerror(-r));
+      fprintf(phr->log_f, "get_cookie failed: %s", userlist_strerror(-r));
+      return error_page(fout, phr, NEW_SRV_ERR_INTERNAL);
     }
   }
   if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;

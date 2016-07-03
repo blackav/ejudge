@@ -424,12 +424,6 @@ ns_html_error(
         int priv_mode,
         int error_code);
 void
-ns_html_err_internal_error(FILE *fout,
-                           struct http_request_info *phr,
-                           int priv_mode,
-                           const char *format, ...)
-  __attribute__((format(printf, 4, 5)));
-void
 ns_html_err_no_perm(FILE *fout,
                     struct http_request_info *phr,
                     int priv_mode,
