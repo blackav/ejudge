@@ -86,6 +86,7 @@ SOFILES = \
  csp_unpriv_error_disqualified.so\
  csp_unpriv_error_internal.so\
  csp_unpriv_error_registration_incomplete.so\
+ csp_unpriv_error_service_not_available.so\
  csp_unpriv_error_unknown.so\
  csp_unpriv_error_userlist_server_down.so
 
@@ -161,6 +162,7 @@ csp_unpriv_error_cnts_unavailable.c : unpriv_error_cnts_unavailable.csp unpriv_i
 csp_unpriv_error_disqualified.c : unpriv_error_disqualified.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 csp_unpriv_error_internal.c : unpriv_error_internal.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 csp_unpriv_error_registration_incomplete.c : unpriv_error_registration_incomplete.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
+csp_unpriv_error_service_not_available.c : unpriv_error_service_not_available.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 csp_unpriv_error_unknown.c : unpriv_error_unknown.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 csp_unpriv_error_userlist_server_down.c : unpriv_error_userlist_server_down.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 

@@ -6856,6 +6856,7 @@ static const unsigned char * const external_unpriv_error_names[NEW_SRV_ERR_LAST]
   [NEW_SRV_ERR_REGISTRATION_INCOMPLETE] = "unpriv_error_registration_incomplete",
   [NEW_SRV_ERR_CNTS_UNAVAILABLE] = "unpriv_error_cnts_unavailable",
   [NEW_SRV_ERR_INTERNAL] = "unpriv_error_internal",
+  [NEW_SRV_ERR_SERVICE_NOT_AVAILABLE] = "unpriv_error_service_not_available",
 };
 static ExternalActionState *external_unpriv_action_states[NEW_SRV_ACTION_LAST];
 static ExternalActionState *external_unpriv_error_states[NEW_SRV_ERR_LAST];
@@ -7361,13 +7362,14 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
     return ns_html_err_inv_param(fout, phr, 0, "cannot parse password");
   if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
     return ns_html_err_no_perm(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
-  if (cnts->closed)
-    return ns_html_err_service_not_available(fout, phr, 0,
-                                             "contest %d is closed", cnts->id);
-  if (!cnts->managed)
-    return ns_html_err_service_not_available(fout, phr, 0,
-                                             "contest %d is not managed",
-                                             cnts->id);
+  if (cnts->closed) {
+    fprintf(phr->log_f, "contest %d is closed", cnts->id);
+    return error_page(fout, phr, 0, NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+  }
+  if (!cnts->managed) {
+    fprintf(phr->log_f, "contest %d is not managed", cnts->id);
+    return error_page(fout, phr, 0, NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+  }
 
   if (ns_open_ul_connection(phr->fw_state) < 0)
     return error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
