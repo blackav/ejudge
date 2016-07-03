@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-06-28 13:10+0300\n"
-"PO-Revision-Date: 2016-06-28 13:11+0300\n"
+"POT-Creation-Date: 2016-07-03 02:14+0300\n"
+"PO-Revision-Date: 2016-07-03 02:10+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -140,26 +140,6 @@ msgstr "<i>Не установлено</i>"
 #, c-format
 msgid "<li>The contest is closed for participation.</li>\n"
 msgstr "<li>Турнир закрыт для участия.</li>\n"
-
-#, c-format
-msgid ""
-"<li>The session was created from a different IP-address or protocol, that "
-"yours (%s,%s).</li>\n"
-msgstr ""
-"<li>Сессия была создана с другого адреса или по другому протоколу, чем те, "
-"которые Вы используете в данный момент (%s,%s).</li>\n"
-
-#, c-format
-msgid "<li>The session was removed by an administrator.</li>"
-msgstr "<li>Сессия была удалена администратором системы.</li>"
-
-#, c-format
-msgid "<li>The specified session does not exist.</li>\n"
-msgstr "<li>Указанная сессия не существует.</li>\n"
-
-#, c-format
-msgid "<li>The specified session has expired.</li>\n"
-msgstr "<li>Время действия сессии истекло.</li>\n"
 
 #, c-format
 msgid "<li>You are not registered for contest %d.</li>\n"
@@ -2579,6 +2559,11 @@ msgstr ""
 "это письмо.\n"
 "\n"
 
+msgid "Note, that the exact reason is not reported due to security reasons."
+msgstr ""
+"Обратите внимание, что точная причина ошибки не сообщается по соображениям "
+"безопасности."
+
 msgid "Notes"
 msgstr "Примечания"
 
@@ -3883,6 +3868,21 @@ msgstr ""
 "слишком высокой загрузки сервера, а не из-за неправильного\n"
 "адреса e-mail. Повторите попытку регистрации позже.\n"
 
+msgid ""
+"The session was created from a different IP-address or protocol, that yours."
+msgstr ""
+"Сессия была создана с другого адреса или по другому протоколу, чем те, "
+"которые Вы используете в данный момент."
+
+msgid "The session was removed by an administrator."
+msgstr "Сессия была удалена администратором системы."
+
+msgid "The specified session does not exist."
+msgstr "Указанная сессия не существует."
+
+msgid "The specified session has expired."
+msgstr "Время действия сессии истекло."
+
 msgid "The submission is binary and thus is not shown."
 msgstr "Посылка не является текстовым файлом и поэтому не показана."
 
@@ -4024,7 +4024,10 @@ msgstr "Кому (рег. имя)"
 msgid ""
 "To validate your e-mail and enable your participation in this contest you "
 "may use the password recovery link below."
-msgstr "Для проверки Вашего адреса e-mail и допуска Вашей регистрационной записи к участию в этом турнире Вы можете воспользоваться сервисом восстановления паролей по ссылке ниже.\n"
+msgstr ""
+"Для проверки Вашего адреса e-mail и допуска Вашей регистрационной записи к "
+"участию в этом турнире Вы можете воспользоваться сервисом восстановления "
+"паролей по ссылке ниже."
 
 msgid "Token counter"
 msgstr "Число использованных токенов"
@@ -4928,3 +4931,4 @@ msgstr "ошибка записи"
 
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
+
