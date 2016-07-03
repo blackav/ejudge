@@ -66,6 +66,7 @@ SOFILES = \
  csp_reg_edit_page.so\
  csp_reg_login_page.so\
  csp_reg_main_page.so\
+ csp_reg_error_inv_session.so\
  csp_reg_error_simple_registered.so\
  csp_reg_error_unknown.so\
  csp_reg_error_userlist_server_down.so\
@@ -162,6 +163,7 @@ csp_reg_edit_page.c : reg_edit_page.csp reg_includes.csp reg_stdvars.csp reg_hea
 csp_reg_login_page.c : reg_login_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_footer.csp
 csp_reg_main_page.c : reg_main_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_main_settings.csp reg_footer.csp
 
+csp_reg_csp_error_inv_session.c : reg_error_inv_session.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp
 csp_reg_csp_error_simple_registered.c : reg_error_simple_registered.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp
 csp_reg_csp_error_unknown.c : reg_error_unknown.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp
 csp_reg_csp_error_userlist_server_down.c : reg_error_userlist_server_down.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp

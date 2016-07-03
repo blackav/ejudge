@@ -2470,6 +2470,7 @@ static const unsigned char * const external_reg_error_names[NEW_SRV_ERR_LAST] =
   [NEW_SRV_ERR_UNKNOWN_ERROR] = "reg_error_unknown",
   [NEW_SRV_ERR_SIMPLE_REGISTERED] = "reg_error_simple_registered",
   [NEW_SRV_ERR_USERLIST_SERVER_DOWN] = "reg_error_userlist_server_down",
+  [NEW_SRV_ERR_INV_SESSION] = "reg_error_inv_session",
 };
 static ExternalActionState *external_reg_action_states[NEW_SRV_ACTION_LAST];
 static ExternalActionState *external_reg_error_states[NEW_SRV_ERR_LAST];
@@ -2602,9 +2603,7 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
     case ULS_ERR_NO_COOKIE:
     case ULS_ERR_CANNOT_PARTICIPATE:
     case ULS_ERR_NOT_REGISTERED:
-      return ns_html_err_inv_session(fout, phr, 0,
-                                     "get_cookie failed: %s",
-                                     userlist_strerror(-r));
+      return error_page(fout, phr, NEW_SRV_ERR_INV_SESSION);
     case ULS_ERR_DISCONNECT:
       return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     default:

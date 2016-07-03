@@ -1,0 +1,33 @@
+<%
+%><%@include "reg_includes.csp"
+%><%@set getter_name = "csp_get_reg_error_inv_session"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_reg_error_inv_session(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "reg_stdvars.csp"
+%><%
+  unsigned char title[1024];
+
+  if (phr->locale_id < 0) phr->locale_id = 0;
+  l10n_setlocale(phr->locale_id);
+  snprintf(title, sizeof(title), "%s", _("Invalid session"));
+%><%@include "reg_header.csp"
+%>
+<h2><font color="red"><s:v value="title" escape="false" /></font></h2>
+
+<p><s:_>Invalid session identifier. The possible reasons are as follows.</s:_></p>
+
+<ul>
+  <li><s:_>The specified session does not exist.</s:_></li>
+  <li><s:_>The specified session has expired.</s:_></li>
+  <li><s:_>The session was created from a different IP-address or protocol, that yours.</s:_> (<s:v value="phr->ip"/>,<s:v value="phr->ssl_flag" />)</li>
+  <li><s:_>The session was removed by an administrator.</s:_></li>
+</ul>
+
+<p><s:_>Note, that the exact reason is not reported due to security reasons.</s:_></p>
+
+
+<%@include "reg_footer.csp"
+%><%
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>
