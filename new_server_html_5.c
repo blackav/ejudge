@@ -291,11 +291,15 @@ cmd_login(
   unsigned char urlbuf[1024];
   int need_regform = 0;
 
-  if (hr_cgi_param(phr, "login", &login) <= 0)
-    return ns_html_err_inv_param(fout, phr, 0, "login is invalid");
+  if (hr_cgi_param(phr, "login", &login) <= 0) {
+    fprintf(phr->log_f, "login is invalid");
+    return error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+  }
   phr->login = xstrdup(login);
-  if (hr_cgi_param(phr, "password", &password) <= 0)
-    return ns_html_err_inv_param(fout, phr, 0, "password is invalid");
+  if (hr_cgi_param(phr, "password", &password) <= 0) {
+    fprintf(phr->log_f, "password is invalid");
+    return error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+  }
 
   // if neither login, nor password is not specified, just change the locale
   if ((!login || !*login) && (!password || !*password)) {

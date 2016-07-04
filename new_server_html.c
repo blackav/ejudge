@@ -1008,10 +1008,14 @@ privileged_page_cookie_login(FILE *fout,
   int r, n;
   const unsigned char *s = 0;
 
-  if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts)
-    return ns_html_err_inv_param(fout, phr, 1, "invalid contest_id");
-  if (!cnts->managed)
-    return ns_html_err_inv_param(fout, phr, 1, "contest is not managed");
+  if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts) {
+    fprintf(phr->log_f, "invalid contest_id: %d", phr->contest_id);
+    return error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
+  }
+  if (!cnts->managed) {
+    fprintf(phr->log_f, "contest is not managed");
+    return error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
+  }
   if (!phr->role) {
     phr->role = USER_ROLE_OBSERVER;
     if (hr_cgi_param(phr, "role", &s) > 0) {
@@ -1099,18 +1103,26 @@ privileged_page_login(FILE *fout,
   const struct contest_desc *cnts = 0;
   opcap_t caps;
 
-  if ((r = hr_cgi_param(phr, "login", &login)) < 0)
-    return ns_html_err_inv_param(fout, phr, 1, "cannot parse login");
+  if ((r = hr_cgi_param(phr, "login", &login)) < 0) {
+    fprintf(phr->log_f, "cannot parse login");
+    return error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
+  }
   if (!r || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return privileged_page_login_page(fout, phr);
 
   phr->login = xstrdup(login);
-  if ((r = hr_cgi_param(phr, "password", &password)) <= 0)
-    return ns_html_err_inv_param(fout, phr, 1, "cannot parse password");
-  if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts)
-    return ns_html_err_inv_param(fout, phr, 1, "invalid contest_id");
-  if (!cnts->managed)
-    return ns_html_err_inv_param(fout, phr, 1, "contest is not managed");
+  if ((r = hr_cgi_param(phr, "password", &password)) <= 0) {
+    fprintf(phr->log_f, "cannot parse password");
+    return error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
+  }
+  if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts) {
+    fprintf(phr->log_f, "invalid contest_id");
+    return error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
+  }
+  if (!cnts->managed) {
+    fprintf(phr->log_f, "contest is not managed");
+    return error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
+  }
 
   if (!phr->role) {
     phr->role = USER_ROLE_OBSERVER;
@@ -1227,8 +1239,8 @@ priv_registration_operation(FILE *fout,
     if (strncmp(phr->param_names[i], "user_", 5) != 0) continue;
     if (sscanf((s = phr->param_names[i] + 5), "%d%n", &x, &n) != 1
         || s[n] || x <= 0) {
-      ns_html_err_inv_param(fout, phr, 1, "invalid parameter name %s",
-                            ARMOR(phr->param_names[i]));
+      fprintf(phr->log_f, "invalid parameter name %s", ARMOR(phr->param_names[i]));
+      error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
       retcode = -1;
       goto cleanup;
     }
@@ -1246,7 +1258,8 @@ priv_registration_operation(FILE *fout,
 
   if (phr->action == NEW_SRV_ACTION_USERS_SET_DISQUALIFIED) {
     if (hr_cgi_param(phr, "disq_comment", &s) < 0) {
-      ns_html_err_inv_param(fout, phr, 1, "invalid parameter disq_comment");
+      fprintf(phr->log_f, "invalid parameter disq_comment");
+      error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
       retcode = -1;
       goto cleanup;
     }
@@ -1362,7 +1375,8 @@ priv_registration_operation(FILE *fout,
       break;
 
     default:
-      ns_html_err_inv_param(fout, phr, 1, "invalid action %d", phr->action);
+      fprintf(phr->log_f, "invalid action %d", phr->action);
+      error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
       retcode = -1;
       goto cleanup;
     }
@@ -1471,8 +1485,8 @@ priv_priv_user_operation(FILE *fout,
     if (strncmp(phr->param_names[i], "user_", 5) != 0) continue;
     if (sscanf((s = phr->param_names[i] + 5), "%d%n", &x, &n) != 1
         || s[n] || x <= 0) {
-      ns_html_err_inv_param(fout, phr, 1, "invalid parameter name %s",
-                            ARMOR(phr->param_names[i]));
+      fprintf(phr->log_f, "invalid parameter name %s", ARMOR(phr->param_names[i]));
+      error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
       retval = -1;
       goto cleanup;
     }
@@ -1539,7 +1553,8 @@ priv_priv_user_operation(FILE *fout,
       break;
 
     default:
-      ns_html_err_inv_param(fout, phr, 1, "invalid action %d", phr->action);
+      fprintf(phr->log_f, "invalid action %d", phr->action);
+      error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
       retval = -1;
       goto cleanup;
     }
@@ -1805,8 +1820,8 @@ priv_force_start_virtual(
     if (strncmp(phr->param_names[i], "user_", 5) != 0) continue;
     if (sscanf((s = phr->param_names[i] + 5), "%d%n", &x, &n) != 1
         || s[n] || x <= 0) {
-      ns_html_err_inv_param(fout, phr, 1, "invalid parameter name %s",
-                            ARMOR(phr->param_names[i]));
+      fprintf(phr->log_f, "invalid parameter name %s", ARMOR(phr->param_names[i]));
+      error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
       retval = -1;
       goto cleanup;
     }
@@ -3052,7 +3067,8 @@ priv_submit_clar(
   return 0;
 
  invalid_param:
-  ns_html_err_inv_param(fout, phr, 0, errmsg);
+  fprintf(phr->log_f, "%s", errmsg);
+  error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
   return -1;
 }
 
@@ -3145,7 +3161,8 @@ priv_set_run_style_error_status(
 
  invalid_param:
   xfree(text2);
-  ns_html_err_inv_param(fout, phr, 0, errmsg);
+  fprintf(phr->log_f, "%s", errmsg);
+  error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
   return -1;
 }
 
@@ -3324,7 +3341,8 @@ priv_submit_run_comment(
   return 0;
 
  invalid_param:
-  ns_html_err_inv_param(fout, phr, 0, errmsg);
+  fprintf(phr->log_f, "%s", errmsg);
+  error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
   return -1;
 }
 
@@ -3498,7 +3516,8 @@ priv_clar_reply(
   return 0;
 
  invalid_param:
-  ns_html_err_inv_param(fout, phr, 0, errmsg);
+  fprintf(phr->log_f, "%s", errmsg);
+  error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
   return -1;
 }
 
@@ -3672,7 +3691,8 @@ priv_edit_run(FILE *fout, FILE *log_f,
 
   if (parse_run_id(fout, phr, cnts, extra, &run_id, &re) < 0) return -1;
   if (hr_cgi_param(phr, "param", &s) <= 0) {
-    ns_html_err_inv_param(fout, phr, 1, "param is not set");
+    fprintf(phr->log_f, "param is not set");
+    error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
     return -1;
   }
   snprintf(phr->next_extra, sizeof(phr->next_extra), "run_id=%d", run_id);
@@ -3693,7 +3713,8 @@ priv_edit_run(FILE *fout, FILE *log_f,
   case NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ:
   case NEW_SRV_ACTION_CHANGE_RUN_PAGES:
     if (sscanf(s, "%d%n", &param_int, &n) != 1 || s[n]) {
-      ns_html_err_inv_param(fout, phr, 1, "invalid integer param");
+      fprintf(phr->log_f, "invalid integer param");
+      error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
       return -1;
     }
     break;
@@ -3705,7 +3726,8 @@ priv_edit_run(FILE *fout, FILE *log_f,
   case NEW_SRV_ACTION_CHANGE_RUN_IS_SAVED:
     if (sscanf(s, "%d%n", &param_bool, &n) != 1 || s[n]
         || param_bool < 0 || param_bool > 1) {
-      ns_html_err_inv_param(fout, phr, 1, "invalid boolean param");
+      fprintf(phr->log_f, "invalid boolean param");
+      error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
       return -1;
     }
     break;
@@ -3980,7 +4002,8 @@ priv_change_status(
   return 0;
 
  invalid_param:
-  ns_html_err_inv_param(fout, phr, 0, errmsg);
+  fprintf(phr->log_f, "%s", errmsg);
+  error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
  failure:
   return -1;
 }
@@ -4057,7 +4080,8 @@ priv_simple_change_status(
   return 0;
 
  invalid_param:
-  ns_html_err_inv_param(fout, phr, 0, errmsg);
+  fprintf(phr->log_f, "%s", errmsg);
+  error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
  failure:
   return -1;
 }
@@ -4182,7 +4206,7 @@ priv_clear_displayed(FILE *fout,
   return retval;
 
  invalid_param:
-  ns_html_err_inv_param(fout, phr, 0, 0);
+  error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
   xfree(mask);
   return -1;
 }
@@ -4236,7 +4260,7 @@ priv_tokenize_displayed(
   return retval;
 
  invalid_param:
-  ns_html_err_inv_param(fout, phr, 0, 0);
+  error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
   xfree(mask);
   return -1;
 }
@@ -4282,7 +4306,7 @@ priv_rejudge_displayed(FILE *fout,
   return retval;
 
  invalid_param:
-  ns_html_err_inv_param(fout, phr, 0, 0);
+  error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
   xfree(mask);
   return -1;
 }
@@ -4323,7 +4347,7 @@ priv_rejudge_problem(FILE *fout,
   return 0;
 
  invalid_param:
-  ns_html_err_inv_param(fout, phr, 0, 0);
+  error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
   return -1;
 }
 
@@ -4780,7 +4804,8 @@ priv_confirmation_page(FILE *fout,
   return 0;
 
  invalid_param:
-  ns_html_err_inv_param(fout, phr, 0, errmsg);
+  fprintf(phr->log_f, "%s", errmsg);
+  error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
   html_armor_free(&ab);
   xfree(run_mask);
   return -1;
@@ -5178,7 +5203,8 @@ priv_view_test(FILE *fout,
   if (parse_run_id(fout, phr, cnts, extra, &run_id, 0) < 0) goto failure;
   if (hr_cgi_param(phr, "test_num", &s) <= 0
       || sscanf(s, "%d%n", &test_num, &n) != 1 || s[n]) {
-    ns_html_err_inv_param(fout, phr, 1, "cannot parse test_num");
+    fprintf(phr->log_f, "cannot parse test_num");
+    error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
     return -1;
   }
 
@@ -5503,7 +5529,7 @@ priv_download_runs(
   return retval;
 
  invalid_param:
-  ns_html_err_inv_param(fout, phr, 0, 0);
+  error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
   xfree(mask);
   return -1;
 }
@@ -7348,20 +7374,26 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
   unsigned char prob_name_3[1024];
   int action = NEW_SRV_ACTION_MAIN_PAGE;
 
-  if ((r = hr_cgi_param(phr, "login", &login)) < 0)
-    return ns_html_err_inv_param(fout, phr, 0, "cannot parse login");
+  if ((r = hr_cgi_param(phr, "login", &login)) < 0) {
+    fprintf(phr->log_f, "cannot parse login");
+    return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+  }
   if (!r || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return unprivileged_page_login_page(fout, phr);
 
-  if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts)
-    return ns_html_err_inv_param(fout, phr, 0, "invalid contest_id");
+  if (phr->contest_id<=0 || contests_get(phr->contest_id, &cnts)<0 || !cnts) {
+    fprintf(phr->log_f, "invalid contest_id");
+    return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+  }
   if (phr->locale_id < 0 && cnts->default_locale_num >= 0)
     phr->locale_id = cnts->default_locale_num;
   if (phr->locale_id < 0) phr->locale_id = 0;
 
   phr->login = xstrdup(login);
-  if ((r = hr_cgi_param(phr, "password", &password)) <= 0)
-    return ns_html_err_inv_param(fout, phr, 0, "cannot parse password");
+  if ((r = hr_cgi_param(phr, "password", &password)) <= 0) {
+    fprintf(phr->log_f, "cannot parse password");
+    return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+  }
   if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
     return ns_html_err_no_perm(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
   if (cnts->closed) {
@@ -11420,23 +11452,30 @@ ns_handle_http_request(
   }
 
   // parse the client IP address
-  if (!(remote_addr = hr_getenv(phr, "REMOTE_ADDR")))
-    return ns_html_err_inv_param(fout, phr, 0, "REMOTE_ADDR does not exist");
+  if (!(remote_addr = hr_getenv(phr, "REMOTE_ADDR"))) {
+    fprintf(phr->log_f, "REMOTE_ADDR does not exist");
+    return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+  }
   if (!strcmp(remote_addr, "::1")) remote_addr = "127.0.0.1";
-  if (xml_parse_ipv6(NULL, 0, 0, 0, remote_addr, &phr->ip) < 0)
-    return ns_html_err_inv_param(fout, phr, 0, "cannot parse REMOTE_ADDR");
+  if (xml_parse_ipv6(NULL, 0, 0, 0, remote_addr, &phr->ip) < 0) {
+    fprintf(phr->log_f, "cannot parse REMOTE_ADDR");
+    return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+  }
 
   if (!phr->client_key) {
     parse_cookie(phr);
   }
 
   // parse the contest_id
-  if ((r = hr_cgi_param(phr, "contest_id", &s)) < 0)
-    return ns_html_err_inv_param(fout, phr, 0, "cannot parse contest_id");
+  if ((r = hr_cgi_param(phr, "contest_id", &s)) < 0) {
+    fprintf(phr->log_f, "cannot parse contest_id");
+    return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+  }
   if (r > 0) {
-    if (sscanf(s, "%d%n", &phr->contest_id, &n) != 1
-        || s[n] || phr->contest_id <= 0)
-      return ns_html_err_inv_param(fout, phr, 0, "cannot parse contest_id");
+    if (sscanf(s, "%d%n", &phr->contest_id, &n) != 1 || s[n] || phr->contest_id <= 0) {
+      fprintf(phr->log_f, "cannot parse contest_id");
+      return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+    }
   }
 
   if (hr_cgi_param(phr, "plain_text", &s) > 0) {
@@ -11445,42 +11484,55 @@ ns_handle_http_request(
 
   // parse the session_id
   if (!phr->session_id) {
-    if ((r = hr_cgi_param(phr, "SID", &s)) < 0)
-      return ns_html_err_inv_param(fout, phr, 0, "cannot parse SID");
+    if ((r = hr_cgi_param(phr, "SID", &s)) < 0) {
+      fprintf(phr->log_f, "cannot parse SID");
+      return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+    }
     if (r > 0) {
-      if (sscanf(s, "%llx%n", &phr->session_id, &n) != 1
-          || s[n] || !phr->session_id)
-        return ns_html_err_inv_param(fout, phr, 0, "cannot parse SID");
+      if (sscanf(s, "%llx%n", &phr->session_id, &n) != 1 || s[n] || !phr->session_id) {
+        fprintf(phr->log_f, "cannot parse SID");
+        return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+      }
     }
   }
 
   // parse the locale_id
-  if ((r = hr_cgi_param(phr, "locale_id", &s)) < 0)
-    return ns_html_err_inv_param(fout, phr, 0, "cannot parse locale_id");
+  if ((r = hr_cgi_param(phr, "locale_id", &s)) < 0) {
+    fprintf(phr->log_f, "cannot parse locale_id");
+    return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+  }
   if (r > 0) {
-    if (sscanf(s, "%d%n", &phr->locale_id, &n) != 1 || s[n]
-        || phr->locale_id < 0)
-      return ns_html_err_inv_param(fout, phr, 0, "cannot parse locale_id");
+    if (sscanf(s, "%d%n", &phr->locale_id, &n) != 1 || s[n] || phr->locale_id < 0) {
+      fprintf(phr->log_f, "cannot parse locale_id");
+      return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+    }
   }
 
   // parse the action
   if (rest_action && *rest_action) {
     phr->action = ns_match_action(rest_action);
-    if (phr->action < 0) return ns_html_err_inv_param(fout, phr, 0, "invalid action");
+    if (phr->action < 0) {
+      fprintf(phr->log_f, "invalid action");
+      return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+    }
   } else if ((s = hr_cgi_nname(phr, "action_", 7))) {
-    if (sscanf(s, "action_%d%n", &phr->action, &n) != 1 || s[n]
-        || phr->action <= 0)
-      return ns_html_err_inv_param(fout, phr, 0, "cannot parse action");
+    if (sscanf(s, "action_%d%n", &phr->action, &n) != 1 || s[n] || phr->action <= 0) {
+      fprintf(phr->log_f, "cannot parse action");
+      return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+    }
   } else if ((r = hr_cgi_param(phr, "action", &s)) < 0) {
-    return ns_html_err_inv_param(fout, phr, 0, "cannot parse action");
+    fprintf(phr->log_f, "cannot parse action");
+    return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   } else if (r > 0) {
     if (sscanf(s, "%d%n", &phr->action, &n) != 1 || s[n] || phr->action <= 0) {
       for (r = 0; r < NEW_SRV_ACTION_LAST; ++r)
         if (ns_symbolic_action_table[r]
             && !strcasecmp(ns_symbolic_action_table[r], s))
           break;
-      if (r == NEW_SRV_ACTION_LAST)
-        return ns_html_err_inv_param(fout, phr, 0, "cannot parse action");
+      if (r == NEW_SRV_ACTION_LAST) {
+        fprintf(phr->log_f, "cannot parse action");
+        return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+      }
       phr->action = r;
     }
   }
@@ -11516,8 +11568,10 @@ ns_handle_http_request(
   // check how we've been called
   script_filename = hr_getenv(phr, "SCRIPT_FILENAME");
   if (!script_filename && phr->arg_num > 0) script_filename = phr->args[0];
-  if (!script_filename)
-    return ns_html_err_inv_param(fout, phr, 0, "cannot get script filename");
+  if (!script_filename) {
+    fprintf(phr->log_f, "cannot get script filename");
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+  }
 
   os_rGetLastname(script_filename, last_name, sizeof(last_name));
 

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-07-03 09:26+0300\n"
+"POT-Creation-Date: 2016-07-04 13:36+0300\n"
 "PO-Revision-Date: 2016-07-03 19:34+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -346,10 +346,6 @@ msgstr "<u>--- Поток ошибок: файл слишком велик, ра
 #, c-format
 msgid "<u>--- Stderr: size %lld ---</u>\n"
 msgstr "<u>--- Поток ошибок: размер %lld ---</u>\n"
-
-msgid "A request parameter is invalid. Please, contact the site administrator."
-msgstr ""
-"Неверный параметр запроса. Пожалуйста, обратитесь к администратору сайта."
 
 msgid "ALL PREVIOUS SUBMITS WILL BE LOST!"
 msgstr "ВСЕ СДЕЛАННЫЕ ПОСЫЛКИ БУДУТ ОБНУЛЕНЫ!"
@@ -4935,5 +4931,3 @@ msgstr "ошибка записи"
 msgid "write error to server"
 msgstr "ошибка записи данных на сервер"
 
-#~ msgid "Contest not available"
-#~ msgstr "Турнир недоступен"
