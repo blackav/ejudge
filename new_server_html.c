@@ -6843,6 +6843,7 @@ static const unsigned char * const external_priv_error_names[NEW_SRV_ERR_LAST] =
   [NEW_SRV_ERR_USERLIST_SERVER_DOWN] = "priv_error_userlist_server_down",
   [NEW_SRV_ERR_DISQUALIFIED] = "priv_error_disqualified",
   [NEW_SRV_ERR_INTERNAL] = "priv_error_internal",
+  [NEW_SRV_ERR_INV_PARAM] = "priv_error_inv_param",
 };
 
 static ExternalActionState *external_priv_action_states[NEW_SRV_ACTION_LAST];
@@ -6857,6 +6858,7 @@ static const unsigned char * const external_unpriv_error_names[NEW_SRV_ERR_LAST]
   [NEW_SRV_ERR_CNTS_UNAVAILABLE] = "unpriv_error_cnts_unavailable",
   [NEW_SRV_ERR_INTERNAL] = "unpriv_error_internal",
   [NEW_SRV_ERR_SERVICE_NOT_AVAILABLE] = "unpriv_error_service_not_available",
+  [NEW_SRV_ERR_INV_PARAM] = "unpriv_error_inv_param",
 };
 static ExternalActionState *external_unpriv_action_states[NEW_SRV_ACTION_LAST];
 static ExternalActionState *external_unpriv_error_states[NEW_SRV_ERR_LAST];

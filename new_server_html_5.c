@@ -2472,6 +2472,7 @@ static const unsigned char * const external_reg_error_names[NEW_SRV_ERR_LAST] =
   [NEW_SRV_ERR_USERLIST_SERVER_DOWN] = "reg_error_userlist_server_down",
   [NEW_SRV_ERR_INV_SESSION] = "reg_error_inv_session",
   [NEW_SRV_ERR_INTERNAL] = "reg_error_internal",
+  [NEW_SRV_ERR_INV_PARAM] = "reg_error_inv_param",
 };
 static ExternalActionState *external_reg_action_states[NEW_SRV_ACTION_LAST];
 static ExternalActionState *external_reg_error_states[NEW_SRV_ERR_LAST];

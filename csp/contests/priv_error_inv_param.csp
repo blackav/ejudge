@@ -1,0 +1,27 @@
+<%
+%><%@include "priv_includes.csp"
+%><%@set getter_name = "csp_get_priv_error_inv_param"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_error_inv_param(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+  unsigned char title[1024];
+  int enable_main_menu = 0;
+
+  l10n_setlocale(phr->locale_id);
+  snprintf(title, sizeof(title), "%s", _("Invalid parameter"));
+%><%@include "priv_header.csp"
+%>
+</div>
+
+<h2><s:v value="title" escape="false" /></h2>
+
+<% if (phr->log_t && *phr->log_t) { %>
+<p><s:_>Additional information about this error:</s:_></p>
+<font color="red"><pre><s:v value="phr->log_t" /></pre></font>
+<% } %>
+<%@include "priv_footer.csp"
+%><%
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>
