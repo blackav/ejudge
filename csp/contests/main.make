@@ -61,6 +61,7 @@ SOFILES = \
  csp_priv_users_page.so\
  csp_priv_error_internal.so\
  csp_priv_error_inv_param.so\
+ csp_priv_error_no_perm.so\
  csp_priv_error_unknown.so\
  csp_priv_error_userlist_server_down.so\
  csp_reg_contests_page.so\
@@ -71,6 +72,7 @@ SOFILES = \
  csp_reg_error_internal.so\
  csp_reg_error_inv_param.so\
  csp_reg_error_inv_session.so\
+ csp_reg_error_no_perm.so\
  csp_reg_error_simple_registered.so\
  csp_reg_error_unknown.so\
  csp_reg_error_userlist_server_down.so\
@@ -88,6 +90,7 @@ SOFILES = \
  csp_unpriv_error_disqualified.so\
  csp_unpriv_error_internal.so\
  csp_unpriv_error_inv_param.so\
+ csp_unpriv_error_no_perm.so\
  csp_unpriv_error_registration_incomplete.so\
  csp_unpriv_error_service_not_available.so\
  csp_unpriv_error_unknown.so\
@@ -146,6 +149,7 @@ csp_priv_tokenize_displayed_1_page.c : priv_tokenize_displayed_1_page.csp priv_i
 
 csp_priv_error_internal.c : priv_error_internal.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_error_inv_param.c : priv_error_inv_param.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_error_no_perm.c : priv_error_no_perm.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_error_unknown.c : priv_error_unknown.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_error_userlist_server_down.c : priv_error_userlist_server_down.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 
@@ -166,6 +170,7 @@ csp_unpriv_error_cnts_unavailable.c : unpriv_error_cnts_unavailable.csp unpriv_i
 csp_unpriv_error_disqualified.c : unpriv_error_disqualified.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 csp_unpriv_error_internal.c : unpriv_error_internal.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 csp_unpriv_error_inv_param.c : unpriv_error_inv_param.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
+csp_unpriv_error_no_perm.c : unpriv_error_no_perm.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 csp_unpriv_error_registration_incomplete.c : unpriv_error_registration_incomplete.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 csp_unpriv_error_service_not_available.c : unpriv_error_service_not_available.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
 csp_unpriv_error_unknown.c : unpriv_error_unknown.csp unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_menu.csp unpriv_footer.csp
@@ -180,6 +185,7 @@ csp_reg_main_page.c : reg_main_page.csp reg_includes.csp reg_stdvars.csp reg_hea
 csp_reg_csp_error_internal.c : reg_error_internal.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp
 csp_reg_csp_error_inv_param.c : reg_error_inv_param.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp
 csp_reg_csp_error_inv_session.c : reg_error_inv_session.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp
+csp_reg_csp_error_no_perm.c : reg_error_no_perm.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp
 csp_reg_csp_error_simple_registered.c : reg_error_simple_registered.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp
 csp_reg_csp_error_unknown.c : reg_error_unknown.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp
 csp_reg_csp_error_userlist_server_down.c : reg_error_userlist_server_down.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp

@@ -1,0 +1,39 @@
+<%
+%><%@include "priv_includes.csp"
+%><%
+#include "ejudge/errlog.h"
+#include "ejudge/random.h"
+%><%@set getter_name = "csp_get_priv_error_no_perm"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_error_no_perm(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+  unsigned char title[1024];
+  int enable_main_menu = 0;
+
+  l10n_setlocale(phr->locale_id);
+  snprintf(title, sizeof(title), "%s", _("Permission denied"));
+
+  unsigned int random_id = random_u32();
+  char random_id_str[64];
+  snprintf(random_id_str, sizeof(random_id_str), "%08x", random_id);
+
+  if (phr->log_t && *phr->log_t) {
+    err("%d: permission denied: error_id = %s: %s", phr->id, random_id_str, phr->log_t);
+  } else {
+    err("%d: permission denied", phr->id);
+  }
+
+%><%@include "priv_header.csp"
+%>
+</div>
+
+<h2><s:v value="title" escape="false" /></h2>
+
+<p>Error ID: <s:v value="random_id_str" /></p>
+
+<%@include "priv_footer.csp"
+%><%
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>

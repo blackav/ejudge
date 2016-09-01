@@ -2477,6 +2477,7 @@ static const unsigned char * const external_reg_error_names[NEW_SRV_ERR_LAST] =
   [NEW_SRV_ERR_INV_SESSION] = "reg_error_inv_session",
   [NEW_SRV_ERR_INTERNAL] = "reg_error_internal",
   [NEW_SRV_ERR_INV_PARAM] = "reg_error_inv_param",
+  [NEW_SRV_ERR_PERMISSION_DENIED] = "reg_error_no_perm",
 };
 static ExternalActionState *external_reg_action_states[NEW_SRV_ACTION_LAST];
 static ExternalActionState *external_reg_error_states[NEW_SRV_ERR_LAST];
