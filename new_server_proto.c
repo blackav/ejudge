@@ -184,6 +184,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_DISQUALIFIED] = __("Disqualified"),
   [NEW_SRV_ERR_SIMPLE_REGISTERED] = __("User is simple registered"),
   [NEW_SRV_ERR_CNTS_UNAVAILABLE] = __("Contest is not available"),
+  [NEW_SRV_ERR_OPERATION_FAILED] = __("Operation failed"),
 };
 
 static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
@@ -340,6 +341,7 @@ static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_DISQUALIFIED] = __("Disqualified"),
   [NEW_SRV_ERR_SIMPLE_REGISTERED] = __("User is simple registered"),
   [NEW_SRV_ERR_CNTS_UNAVAILABLE] = __("Contest is not available"),
+  [NEW_SRV_ERR_OPERATION_FAILED] = __("Operation failed"),
 };
 
 const unsigned char *
