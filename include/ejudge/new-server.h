@@ -424,18 +424,6 @@ ns_html_error(
         int priv_mode,
         int error_code);
 
-void
-ns_html_err_status_page(
-        FILE *fout,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        struct contest_extra *extra,
-        const unsigned char *log_txt,
-        int back_action,
-        const char *format,
-        ...)
-  __attribute__((format(printf,7,8)));
-
 struct session_info *
 ns_get_session(
         ej_cookie_t session_id,

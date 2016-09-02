@@ -3588,8 +3588,8 @@ parse_run_id(FILE *fout, struct http_request_info *phr,
 
  failure:
   phr->back_action = ns_priv_prev_state[phr->action];
-  ns_html_err_status_page(fout, phr, cnts, extra, errmsg,
-                          ns_priv_prev_state[phr->action], 0);
+  fprintf(phr->log_f, "%s", errmsg);
+  error_page(fout, phr, 1, NEW_SRV_ERR_OPERATION_FAILED);
   return -1;
 }
 
@@ -6630,10 +6630,9 @@ priv_get_file(
 
  cleanup:
   if (retval) {
-    snprintf(fpath, sizeof(fpath), "Error %d", -retval);
     phr->back_action = NEW_SRV_ACTION_MAIN_PAGE;
-    ns_html_err_status_page(fout, phr, cnts, extra, fpath,
-                            NEW_SRV_ACTION_MAIN_PAGE, 0);
+    fprintf(phr->log_f, "Error %d", -retval);
+    error_page(fout, phr, 1, NEW_SRV_ERR_OPERATION_FAILED);
   }
   xfree(file_bytes);
 }
@@ -7236,7 +7235,8 @@ privileged_entry_point(
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST && actions_table[phr->action]) {
     actions_table[phr->action](fout, phr, cnts, extra);
   } else {
-    ns_html_err_status_page(fout, phr, cnts, extra, "action is undefined", 0, 0);
+    fprintf(phr->log_f, "action is undefined");
+    error_page(fout, phr, 0, NEW_SRV_ERR_OPERATION_FAILED);
   }
 
 cleanup:
@@ -7359,8 +7359,8 @@ unpriv_parse_run_id(FILE *fout, struct http_request_info *phr,
 
  failure:
   phr->back_action = ns_unpriv_prev_state[phr->action];
-  ns_html_err_status_page(fout, phr, cnts, extra, errmsg,
-                          ns_unpriv_prev_state[phr->action], 0);
+  fprintf(phr->log_f, "%s", errmsg);
+  error_page(fout, phr, 0, NEW_SRV_ERR_OPERATION_FAILED);
   return -1;
 }
 
@@ -10434,9 +10434,8 @@ unpriv_get_file(
  cleanup:
   if (retval) {
     phr->back_action = NEW_SRV_ACTION_MAIN_PAGE;
-    snprintf(fpath, sizeof(fpath), "Error %d", -retval);
-    ns_html_err_status_page(fout, phr, cnts, extra, fpath,
-                            NEW_SRV_ACTION_MAIN_PAGE, 0);
+    fprintf(phr->log_f, "Error %d", -retval);
+    error_page(fout, phr, 0, -NEW_SRV_ERR_OPERATION_FAILED);
   }
   xfree(file_bytes);
 }
