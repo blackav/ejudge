@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-07-04 13:36+0300\n"
-"PO-Revision-Date: 2016-07-03 19:34+0300\n"
+"POT-Creation-Date: 2016-09-02 07:44+0300\n"
+"PO-Revision-Date: 2016-09-02 07:49+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -138,46 +138,6 @@ msgid "<i>Not set</i>"
 msgstr "<i>Не установлено</i>"
 
 #, c-format
-msgid "<li>The contest is closed for participation.</li>\n"
-msgstr "<li>Турнир закрыт для участия.</li>\n"
-
-#, c-format
-msgid "<li>You are not registered for contest %d.</li>\n"
-msgstr "<li>Вы не зарегистрированы на турнир %d.</li>\n"
-
-#, c-format
-msgid "<li>You are not registered for contest %s.</li>\n"
-msgstr "<li>Вы не зарегистрированы на турнир %s.</li>\n"
-
-#, c-format
-msgid "<li>You do not have permissions to login using the specified role.</li>"
-msgstr "<li>У Вас нет прав работать в указанной роли.</li>"
-
-#, c-format
-msgid "<li>You have typed an invalid login (<tt>%s</tt>).</li>\n"
-msgstr "<li>Вы ввели неправильное регистрационное имя (<tt>%s</tt>).</li>\n"
-
-#, c-format
-msgid "<li>You have typed an invalid password.</li>\n"
-msgstr "<li>Вы неправильно набрали пароль.</li>\n"
-
-#, c-format
-msgid "<li>You were banned by the administrator.</li>\n"
-msgstr "<li>Ваше участие заблокировано администратором системы.</li>\n"
-
-#, c-format
-msgid ""
-"<li>Your IP-address (<tt>%s</tt>) or protocol (<tt>%s</tt>) is banned for "
-"participation.</li>"
-msgstr ""
-"<li>Ваш IP-адрес (<tt>%s</tt>) или протокол (<tt>%s</tt>) закрыт для участия."
-"</li>"
-
-#, c-format
-msgid "<li>Your registration was not confirmed.</li>\n"
-msgstr "<li>Ваша регистрация на турнир не подтверждена.</li>\n"
-
-#, c-format
 msgid ""
 "<p class=\"ejudge_copyright\">This is <a href=\"%s\"><b>ejudge</b></a> "
 "contest administration system, version %s, compiled %s.</p>\n"
@@ -265,13 +225,6 @@ msgid ""
 msgstr ""
 "<p><font color=\"red\">Минимальное число членов команды в этом турнире %d, "
 "но определено только %d.</font></p>\n"
-
-#, c-format
-msgid ""
-"<p>Note, that the exact reason is not reported due to security reasons.</p>"
-msgstr ""
-"<p>Обратите внимание, что точная причина ошибки не сообщается по "
-"соображениям безопасности.</p>"
 
 #, c-format
 msgid "<p>You may define up to %d members.</p>"
@@ -3800,6 +3753,9 @@ msgstr "Значение тестов `%s' недопустимо в строк�
 msgid "The account parameters are as follows:"
 msgstr "Ваша регистрационная запись имеет следующие параметры:"
 
+msgid "The contest is closed for participation."
+msgstr "Турнир закрыт для участия."
+
 msgid "The contest is in progress"
 msgstr "Турнир идёт"
 
@@ -4063,9 +4019,6 @@ msgstr "Суммарный размер попыток"
 
 msgid "Total submissions"
 msgstr "Всего посылок"
-
-msgid "Try again"
-msgstr "Попробовать еще раз"
 
 msgid "Try again this operation later"
 msgstr "Повторите операцию позже"
@@ -4454,6 +4407,9 @@ msgstr "Вы дисквалифицированы"
 msgid "You are disqualified by the contest administration."
 msgstr "Вы дисквалифицированы администрацией турнира."
 
+msgid "You are not registered for this contest."
+msgstr "Вы не зарегистрированы на этот турнир."
+
 msgid ""
 "You cannot participate in the contest because your registration is "
 "incomplete."
@@ -4500,6 +4456,12 @@ msgstr "Вы получили ответ от судей\n"
 msgid "You have received a reply from judges in contest %d"
 msgstr "Вы получили ответ от судей в турнире %d"
 
+msgid "You have typed an invalid or non-existing login."
+msgstr "Вы неправильно набрали регистрационное имя."
+
+msgid "You have typed an invalid or wrong password."
+msgstr "Вы неправильно набрали пароль."
+
 msgid "You must set up new password!"
 msgstr "Вы должны задать новый пароль!"
 
@@ -4522,11 +4484,23 @@ msgstr ""
 "пароль для входа в систему. Этот пароль необходимо использовать для первого "
 "входа в систему, после чего его можно будет поменять."
 
+msgid "Your IP-address or protocol is banned."
+msgstr "Запрещено участие с данного IP-адреса или по данному протоколу."
+
+msgid "Your have been banned by the administrator."
+msgstr "Ваше участие заблокировано администратором системы."
+
+msgid "Your registration has not been confirmed."
+msgstr "Ваша регистрация на турнир не подтверждена."
+
 msgid ""
 "Your request has caused an internal server error. Please, report it as a bug."
 msgstr ""
 "Ваш запрос вызвал внутреннюю ошибку сервера. Пожалуйста, сообщите об этом "
 "как об ошибке."
+
+msgid "Your session has expired."
+msgstr "Время действия сессии истекло."
 
 #, c-format
 msgid "Your submit has been commented\n"
