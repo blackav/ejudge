@@ -9,7 +9,7 @@
   int enable_main_menu = 0;
 
   l10n_setlocale(phr->locale_id);
-  snprintf(title, sizeof(title), "%s", _("Operation completed with error"));
+  snprintf(title, sizeof(title), "%s", _("Operation completed with errors"));
 %><%@include "priv_header.csp"
 %>
 </div>
