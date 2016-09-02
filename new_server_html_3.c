@@ -280,33 +280,10 @@ ns_html_error(
         int priv_mode,
         int error_code)
 {
-  const struct contest_desc *cnts = 0;
-  struct contest_extra *extra = 0;
-  const unsigned char *header = 0, *footer = 0, *separator = 0;
-  const unsigned char *copyright = 0;
-  time_t cur_time = time(0);
   const unsigned char *title = ns_error_title(error_code);
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   err("%d: html error: %d, %d (%s)", phr->id, priv_mode, error_code, title);
-
-  if (phr->contest_id > 0) contests_get(phr->contest_id, &cnts);
-  if (cnts) extra = ns_get_contest_extra(phr->contest_id);
-  if (extra && !priv_mode) {
-    watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
-    copyright = extra->copyright.text;
-  } else if (extra && priv_mode) {
-  }
-  if (!priv_mode) {
-    header = ns_fancy_header;
-    separator = ns_fancy_separator;
-    if (copyright) footer = ns_fancy_footer_2;
-    else footer = ns_fancy_footer;
-  } else {
-    header = ns_fancy_priv_header;
-    separator = ns_fancy_priv_separator;
-    footer = ns_fancy_priv_footer;
-  }
 
   if (phr->log_f) {
     fclose(phr->log_f); phr->log_f = NULL;
@@ -314,15 +291,18 @@ ns_html_error(
 
   l10n_setlocale(phr->locale_id);
   title = ns_error_title(error_code);
-  ns_header(fout, header, 0, 0, 0, 0, phr->locale_id, cnts, NULL_CLIENT_KEY, title);
-  fprintf(fout, "%s", ns_fancy_empty_status);
-  ns_separator(fout, separator, cnts);
+  fprintf(fout, "<html><head>\n"
+          "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\">\n"
+          "<title>%s</title>\n"
+          "</head>\n"
+          "<body><h1>%s</h1>\n",
+          EJUDGE_CHARSET, title, title);
   if (phr->log_t && *phr->log_t) {
     fprintf(fout, "<p>%s</p>\n", _("Error details follow"));
     fprintf(fout, "<font color=\"red\"><pre>%s</pre></font>\n", ARMOR(phr->log_t));
   }
+  fprintf(fout, "</body></html>\n");
   xfree(phr->log_t); phr->log_t = NULL;
   phr->log_z = 0;
-  ns_footer(fout, footer, copyright, phr->locale_id);
   l10n_resetlocale();
 }
