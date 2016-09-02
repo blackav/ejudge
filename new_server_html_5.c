@@ -190,7 +190,8 @@ create_account(
   int regular_flag = 0;
 
   if (ejudge_config->disable_new_users > 0) {
-    return ns_html_err_no_perm(fout, phr, 0, "registration is not available");
+    fprintf(phr->log_f, "registration is not available");
+    return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
   if (!cnts->assign_logins) {
@@ -330,8 +331,8 @@ cmd_login(
     case ULS_ERR_NO_PERMS:
     case ULS_ERR_NOT_REGISTERED:
     case ULS_ERR_CANNOT_PARTICIPATE:
-      return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
-                                 userlist_strerror(-r));
+      fprintf(phr->log_f, "user_login failed: %s", userlist_strerror(-r));
+      return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
     case ULS_ERR_DISCONNECT:
       return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     case ULS_ERR_SIMPLE_REGISTERED:
@@ -357,9 +358,10 @@ cmd_login(
     r = userlist_clnt_register_contest(ul_conn, ULS_REGISTER_CONTEST_2,
                                        phr->user_id, phr->contest_id,
                                        &phr->ip, phr->ssl_flag);
-    if (r < 0)
-      return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
-                                 userlist_strerror(-r));
+    if (r < 0) {
+      fprintf(phr->log_f, "register_contest failed: %s", userlist_strerror(-r));
+      return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
 
     curl(urlbuf, sizeof(urlbuf), cnts, phr, 1, "&", 0, NULL);
     ns_get_session(phr->session_id, phr->client_key, 0);
@@ -371,9 +373,10 @@ cmd_login(
     r = userlist_clnt_register_contest(ul_conn, ULS_REGISTER_CONTEST_2,
                                        phr->user_id, phr->contest_id,
                                        &phr->ip, phr->ssl_flag);
-    if (r < 0)
-      return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
-                                 userlist_strerror(-r));
+    if (r < 0) {
+      fprintf(phr->log_f, "register_contest failed: %s", userlist_strerror(-r));
+      return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
   }
 
   snprintf(urlbuf, sizeof(urlbuf), "%s?SID=%llx", phr->self_url,
@@ -2622,21 +2625,23 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   if (phr->locale_id < 0) phr->locale_id = 0;
 
   if (phr->role > 0) {
-    return ns_html_err_no_perm(fout, phr, 0, "role %d > 0", phr->role);
+    fprintf(phr->log_f, "role %d > 0", phr->role);
+    return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
   }
   if (contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
-    return ns_html_err_no_perm(fout, phr, 0, "invalid contest_id %d",
-                               phr->contest_id);
+    fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
+    return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
   }
   phr->cnts = cnts;
-  if (!cnts->disable_team_password && is_team) { 
-    return ns_html_err_no_perm(fout, phr, 0, "participation cookie");
+  if (!cnts->disable_team_password && is_team) {
+    fprintf(phr->log_f, "participation cookie");
+    return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
   // check permissions
-  if (cnts->closed ||
-      !contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
-    return ns_html_err_no_perm(fout, phr, 0, "registration is not available");
+  if (cnts->closed || !contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
+    fprintf(phr->log_f, "registration is not available");
+    return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
   // check for local userlist_user structure and fetch it from the

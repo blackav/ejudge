@@ -1024,22 +1024,30 @@ privileged_page_cookie_login(FILE *fout,
         phr->role = r;
     }
   }
-  if (phr->role <= USER_ROLE_CONTESTANT || phr->role >= USER_ROLE_LAST)
-      return ns_html_err_no_perm(fout, phr, 1, "invalid role");
-  if (!phr->session_id)
-      return ns_html_err_no_perm(fout, phr, 1, "SID is undefined");    
+  if (phr->role <= USER_ROLE_CONTESTANT || phr->role >= USER_ROLE_LAST) {
+    fprintf(phr->log_f, "invalid role: %d", phr->role);
+    return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+  if (!phr->session_id) {
+    fprintf(phr->log_f, "SID is undefined");
+    return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+  }
 
   // analyze IP limitations
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
-    if (!contests_check_master_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
-      return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag],
-                                 xml_unparse_ipv6(&phr->ip), phr->contest_id);
+    if (!contests_check_master_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+      fprintf(phr->log_f, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag],
+              xml_unparse_ipv6(&phr->ip), phr->contest_id);
+      return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
   } else {
     // as for judge program
-    if (!contests_check_judge_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
-      return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for JUDGE for contest %d", ns_ssl_flag_str[phr->ssl_flag],
-                                 xml_unparse_ipv6(&phr->ip), phr->contest_id);
+    if (!contests_check_judge_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+      fprintf(phr->log_f, "%s://%s is not allowed for JUDGE for contest %d", ns_ssl_flag_str[phr->ssl_flag],
+              xml_unparse_ipv6(&phr->ip), phr->contest_id);
+      return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
   }
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
@@ -1063,8 +1071,8 @@ privileged_page_cookie_login(FILE *fout,
     case ULS_ERR_NOT_REGISTERED:
     case ULS_ERR_CANNOT_PARTICIPATE:
     case ULS_ERR_NO_COOKIE:
-      return ns_html_err_no_perm(fout, phr, 1, "priv_login failed: %s",
-                                 userlist_strerror(-r));
+      fprintf(phr->log_f, "priv_login failed: %s", userlist_strerror(-r));
+      return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
     case ULS_ERR_DISCONNECT:
       return error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     default:
@@ -1076,18 +1084,22 @@ privileged_page_cookie_login(FILE *fout,
   // analyze permissions
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
-    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
-        || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0)
-      return ns_html_err_no_perm(fout, phr, 1, "user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0 || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0) {
+      fprintf(phr->log_f, "user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
+      return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
   } else if (phr->role == USER_ROLE_JUDGE) {
     // as for the judge program
-    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
-        || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0)
-      return ns_html_err_no_perm(fout, phr, 1, "user %s does not have JUDGE_LOGIN bit for contest %d", phr->login, phr->contest_id);
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0 || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0) {
+      fprintf(phr->log_f, "user %s does not have JUDGE_LOGIN bit for contest %d", phr->login, phr->contest_id);
+      return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
   } else {
     // user privileges checked locally
-    if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0)
-      return ns_html_err_no_perm(fout, phr, 1, "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
+    if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0) {
+      fprintf(phr->log_f, "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
+      return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
   }
 
   ns_get_session(phr->session_id, phr->client_key, 0);
@@ -1138,14 +1150,16 @@ privileged_page_login(FILE *fout,
   // analyze IP limitations
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
-    if (!contests_check_master_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
-      return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag],
-                                 xml_unparse_ipv6(&phr->ip), phr->contest_id);
+    if (!contests_check_master_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+      fprintf(phr->log_f, "%s://%s is not allowed for MASTER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
+      return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
   } else {
     // as for judge program
-    if (!contests_check_judge_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
-      return ns_html_err_no_perm(fout, phr, 1, "%s://%s is not allowed for JUDGE for contest %d", ns_ssl_flag_str[phr->ssl_flag],
-                                 xml_unparse_ipv6(&phr->ip), phr->contest_id);
+    if (!contests_check_judge_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+      fprintf(phr->log_f, "%s://%s is not allowed for JUDGE for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
+      return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
   }
 
   if (ns_open_ul_connection(phr->fw_state) < 0)
@@ -1166,8 +1180,8 @@ privileged_page_login(FILE *fout,
     case ULS_ERR_NOT_REGISTERED:
     case ULS_ERR_CANNOT_PARTICIPATE:
     case ULS_ERR_NO_COOKIE:
-      return ns_html_err_no_perm(fout, phr, 1, "priv_login failed: %s",
-                                 userlist_strerror(-r));
+      fprintf(phr->log_f, "priv_login failed: %s", userlist_strerror(-r));
+      return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
     case ULS_ERR_DISCONNECT:
       return error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     default:
@@ -1179,18 +1193,22 @@ privileged_page_login(FILE *fout,
   // analyze permissions
   if (phr->role == USER_ROLE_ADMIN) {
     // as for the master program
-    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
-        || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0)
-      return ns_html_err_no_perm(fout, phr, 1, "user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0 || opcaps_check(caps, OPCAP_MASTER_LOGIN) < 0) {
+      fprintf(phr->log_f, "user %s does not have MASTER_LOGIN bit for contest %d", phr->login, phr->contest_id);
+      return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
   } else if (phr->role == USER_ROLE_JUDGE) {
     // as for the judge program
-    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
-        || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0)
-      return ns_html_err_no_perm(fout, phr, 1, "user %s does not have JUDGE_LOGIN bit for contest %d", phr->login, phr->contest_id);
+    if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0 || opcaps_check(caps, OPCAP_JUDGE_LOGIN) < 0) {
+      fprintf(phr->log_f, "user %s does not have JUDGE_LOGIN bit for contest %d", phr->login, phr->contest_id);
+      return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
   } else {
     // user privileges checked locally
-    if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0)
-      return ns_html_err_no_perm(fout, phr, 1, "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
+    if (nsdb_check_role(phr->user_id, phr->contest_id, phr->role) < 0) {
+      fprintf(phr->log_f, "user %s has no permission to login as role %d for contest %d", phr->login, phr->role, phr->contest_id);
+      return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
   }
 
   ns_get_session(phr->session_id, phr->client_key, 0);
@@ -4838,8 +4856,8 @@ priv_view_user_dump(FILE *fout,
     case ULS_ERR_NO_PERMS:
     case ULS_ERR_NOT_REGISTERED:
     case ULS_ERR_CANNOT_PARTICIPATE:
-      ns_html_err_no_perm(fout, phr, 1, "operation failed: %s",
-                          userlist_strerror(-r));
+      fprintf(phr->log_f, "operation failed: %s", userlist_strerror(-r));
+      error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
       return -1;
     case ULS_ERR_DISCONNECT:
       error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
@@ -7396,8 +7414,10 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
     fprintf(phr->log_f, "cannot parse password");
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
-  if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
-    return ns_html_err_no_perm(fout, phr, 0, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
+  if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+    fprintf(phr->log_f, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
+    return error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
+  }
   if (cnts->closed) {
     fprintf(phr->log_f, "contest %d is closed", cnts->id);
     return error_page(fout, phr, 0, NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
@@ -7425,8 +7445,8 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
     case ULS_ERR_NO_PERMS:
     case ULS_ERR_NOT_REGISTERED:
     case ULS_ERR_CANNOT_PARTICIPATE:
-      return ns_html_err_no_perm(fout, phr, 0, "user_login failed: %s",
-                                 userlist_strerror(-r));
+      fprintf(phr->log_f, "user_login failed: %s", userlist_strerror(-r));
+      return error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
     case ULS_ERR_DISCONNECT:
       return error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     case ULS_ERR_INCOMPLETE_REG:
