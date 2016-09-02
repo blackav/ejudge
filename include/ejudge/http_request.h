@@ -86,6 +86,8 @@ struct http_request_info
   unsigned char *body_attr;
   int online_users;
 
+  int back_action; // action for "Back" link, used in error pages
+
   // for the next state
   unsigned char next_extra[128];
   int protocol_reply;

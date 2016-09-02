@@ -3587,6 +3587,7 @@ parse_run_id(FILE *fout, struct http_request_info *phr,
   return 0;
 
  failure:
+  phr->back_action = ns_priv_prev_state[phr->action];
   ns_html_err_status_page(fout, phr, cnts, extra, errmsg,
                           ns_priv_prev_state[phr->action], 0);
   return -1;
@@ -6630,6 +6631,7 @@ priv_get_file(
  cleanup:
   if (retval) {
     snprintf(fpath, sizeof(fpath), "Error %d", -retval);
+    phr->back_action = NEW_SRV_ACTION_MAIN_PAGE;
     ns_html_err_status_page(fout, phr, cnts, extra, fpath,
                             NEW_SRV_ACTION_MAIN_PAGE, 0);
   }
@@ -7229,8 +7231,7 @@ privileged_entry_point(
 
   if (priv_external_action(fout, phr) > 0) goto cleanup;
 
-  if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
-      && actions_table[phr->action]) {
+  if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST && actions_table[phr->action]) {
     actions_table[phr->action](fout, phr, cnts, extra);
   } else {
     ns_html_err_status_page(fout, phr, cnts, extra, "action is undefined", 0, 0);
@@ -7355,6 +7356,7 @@ unpriv_parse_run_id(FILE *fout, struct http_request_info *phr,
   return 0;
 
  failure:
+  phr->back_action = ns_unpriv_prev_state[phr->action];
   ns_html_err_status_page(fout, phr, cnts, extra, errmsg,
                           ns_unpriv_prev_state[phr->action], 0);
   return -1;
@@ -10429,6 +10431,7 @@ unpriv_get_file(
 
  cleanup:
   if (retval) {
+    phr->back_action = NEW_SRV_ACTION_MAIN_PAGE;
     snprintf(fpath, sizeof(fpath), "Error %d", -retval);
     ns_html_err_status_page(fout, phr, cnts, extra, fpath,
                             NEW_SRV_ACTION_MAIN_PAGE, 0);
