@@ -21,6 +21,7 @@
 #include <cctype>
 #include <vector>
 #include <algorithm>
+#include <set>
 
 using namespace std;
 
@@ -133,6 +134,9 @@ class Group
     int total_score = 0;
     string comment;
 
+    vector<set<int> > zero_sets;
+    set<int> passed_set;
+
 public:
     Group() {}
 
@@ -185,6 +189,20 @@ public:
         return passed_count == (last - first + 1);
     }
 
+    void add_passed_test(int test_num)
+    {
+        passed_set.insert(test_num);
+    }
+
+    bool is_zero_set() const
+    {
+        for (int i = 0; i < int(zero_sets.size()); ++i) {
+            if (passed_set == zero_sets[i])
+                return true;
+        }
+        return false;
+    }
+
     void set_comment(const string &comment_) { comment = comment_; }
     const string &get_comment() const { return comment; }
     bool has_comment() const { return comment.length() > 0; }
@@ -195,11 +213,20 @@ public:
     void set_user_status(int user_status) { this->user_status = user_status; }
     int get_user_status() const { return user_status; }
 
+    void add_zero_set(set<int> &&zs)
+    {
+        zero_sets.emplace_back(zs);
+    }
+
     bool meet_requirements(const ConfigParser &cfg, const Group *& grp) const;
 
     void add_total_score()
     {
         if (test_score > 0) total_score += test_score;
+    }
+    void set_total_score(int total_score)
+    {
+        this->total_score = total_score;
     }
     int get_total_score() const { return total_score; }
 
@@ -370,6 +397,27 @@ public:
                     next_token();
                 }
                 if (t_type != ';') parse_error("';' expected");
+                next_token();
+            } else if (token == "0_if") {
+                set<int> zs;
+                try {
+                    next_token();
+                    int tn = stoi(token);
+                    if (tn < g.get_first() || tn > g.get_last()) parse_error("invalid test number");
+                    zs.insert(tn);
+                    next_token();
+                    while (t_type == ',') {
+                        next_token();
+                        tn = stoi(token);
+                        if (tn < g.get_first() || tn > g.get_last()) parse_error("invalid test number");
+                        zs.insert(tn);
+                        next_token();
+                    }
+                } catch (...) {
+                    parse_error("NUM expected");
+                }
+                if (t_type != ';') parse_error("';' expected");
+                g.add_zero_set(move(zs));
                 next_token();
             } else if (token == "offline") {
                 next_token();
@@ -650,9 +698,29 @@ main(int argc, char *argv[])
             // just go to the next test...
             g->inc_passed_count();
             g->add_total_score();
+            g->add_passed_test(test_num);
             ++test_num;
-        } else if (g->get_test_score() >= 0 || g->get_test_all()) {
+        } else if (g->get_test_score() >= 0) {
             // by-test score, just go on
+            if (test_num == g->get_last()) {
+                if (g->is_zero_set()) {
+                    char buf[1024];
+                    if (locale_id == 1) {
+                        snprintf(buf, sizeof(buf), "Группа тестов %s (%d-%d) оценена в 0 баллов, "
+                                 "так как были пройдены только специальные тесты.\n",
+                                 g->get_group_id().c_str(), g->get_first(), g->get_last());
+                    } else {
+                        snprintf(buf, sizeof(buf), "Test group %s (%d-%d) is scored 0 points "
+                                 "because only specific tests were passed.\n",
+                                 g->get_group_id().c_str(), g->get_first(), g->get_last());
+                    }
+                    g->set_total_score(0);
+                    g->set_comment(string(buf));
+                }
+            }
+            ++test_num;
+        } else if (g->get_test_all()) {
+            // test everything even if fail
             ++test_num;
         } else {
             if (test_num < g->get_last() && !g->get_offline()) {
