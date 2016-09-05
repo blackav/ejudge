@@ -1191,11 +1191,11 @@ process_problem_row(
     pi->problem_name = strdup(buf);
 
     const unsigned char *s = text;
-    if (!(s = strstr(s, "<td>"))) {
+    if (!(s = strstr(s, "<td"))) {
         fprintf(log_f, "expected column 1 (favorite), but got nothing in row %s\n", text);
         goto cleanup;
     }
-    if (!(s = strstr(s + 4, "<td>"))) {
+    if (!(s = strstr(s + 4, "<td"))) {
         fprintf(log_f, "expected column 2 (problemId), but got nothing in row %s\n", text);
         goto cleanup;
     }
@@ -1212,7 +1212,7 @@ process_problem_row(
         fprintf(log_f, "problemId mismatch: <tr>: %d, <td>: %d\n", pi->problem_id, id);
         goto cleanup;
     }
-    if (!(s = strstr(s, "<td>"))) {
+    if (!(s = strstr(s, "<td"))) {
         fprintf(log_f, "expected column 3 (problemName), but got nothing in row %s\n", text);
         goto cleanup;
     }
@@ -1224,7 +1224,7 @@ process_problem_row(
         fprintf(log_f, "problemName mismatch: <tr>: %s, <td>: %s\n", pi->problem_name, buf);
         goto cleanup;
     }
-    if (!(s = strstr(s, "<td>"))) {
+    if (!(s = strstr(s, "<td"))) {
         fprintf(log_f, "expected column 4 (author), but got nothing in row %s\n", text);
         goto cleanup;
     }
@@ -1233,7 +1233,7 @@ process_problem_row(
         goto cleanup;
     }
     pi->author = strdup(buf);
-    if (!(s = strstr(s, "<td>"))) {
+    if (!(s = strstr(s, "<td"))) {
         fprintf(log_f, "expected column 5 (revision), but got nothing in row %s\n", text);
         goto cleanup;
     }
@@ -1265,7 +1265,7 @@ process_problem_row(
     }
     pi->latest_rev = lr;
     pi->package_rev = pr;
-    if (!(s = strstr(s, "<td>"))) {
+    if (!(s = strstr(s, "<td"))) {
         fprintf(log_f, "expected column 6 (modification time), but got nothing in row %s\n", text);
         goto cleanup;
     }
@@ -1279,7 +1279,7 @@ process_problem_row(
 
     pi->mtime = lt;
 
-    if (!(s = strstr(s, "<td>"))) {
+    if (!(s = strstr(s, "<td"))) {
         fprintf(log_f, "expected column 7, but got nothing in row %s\n", text);
         goto cleanup;
     }
@@ -1288,7 +1288,7 @@ process_problem_row(
         goto cleanup;
     }
 
-    if (!(s = strstr(s, "<td>"))) {
+    if (!(s = strstr(s, "<td"))) {
         fprintf(log_f, "expected column 8 (links), but got nothing in row %s\n", text);
         goto cleanup;
     }
@@ -1554,7 +1554,7 @@ find_revision(FILE *log_f, const unsigned char *text, int revision, struct Revis
         p = q + 5;
         buf = (typeof(tr)) xmalloc((trl + 1) * sizeof(buf[0]));
 
-        if (!(s = strstr(s, "<td>"))) {
+        if (!(s = strstr(s, "<td"))) {
             fprintf(log_f, "expected column 1 (packageId), but nothing found\n");
             goto cleanup;
         }
@@ -1571,7 +1571,7 @@ find_revision(FILE *log_f, const unsigned char *text, int revision, struct Revis
         }
         ri->package_id = val;
 
-        if (!(s = strstr(s, "<td>"))) {
+        if (!(s = strstr(s, "<td"))) {
             fprintf(log_f, "expected column 2 (revision), but nothing found\n");
             goto cleanup;
         }
@@ -1589,7 +1589,7 @@ find_revision(FILE *log_f, const unsigned char *text, int revision, struct Revis
         if (val != revision) continue;
         ri->revision = val;
 
-        if (!(s = strstr(s, "<td>"))) {
+        if (!(s = strstr(s, "<td"))) {
             fprintf(log_f, "expected column 3 (creation time), but nothing found\n");
             goto cleanup;
         }
@@ -1602,7 +1602,7 @@ find_revision(FILE *log_f, const unsigned char *text, int revision, struct Revis
         if (lt < 0) goto cleanup;
         ri->creation_time = lt;
 
-        if (!(s = strstr(s, "<td>"))) {
+        if (!(s = strstr(s, "<td"))) {
             fprintf(log_f, "expected column 4 (state), but nothing found\n");
             goto cleanup;
         }
@@ -1612,7 +1612,7 @@ find_revision(FILE *log_f, const unsigned char *text, int revision, struct Revis
         }
         ri->state = strdup(buf);
 
-        if (!(s = strstr(s, "<td>"))) {
+        if (!(s = strstr(s, "<td"))) {
             fprintf(log_f, "expected column 5 (comment), but nothing found\n");
             goto cleanup;
         }
