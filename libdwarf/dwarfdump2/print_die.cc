@@ -2161,7 +2161,7 @@ print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr,
                                 "for low_pc/high_pc");
                             if (check_verbose_mode) {
                                 cout << "Low = " <<
-                                    IToHex0N(lowAddr,10) <<
+                                    IToHex0N(lowAddr,10) << endl;
                                 cout << "High = " <<
                                     IToHex0N(highAddr,10) << endl;
                             }
