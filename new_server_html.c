@@ -9584,7 +9584,7 @@ unpriv_download_run(
       fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
               run_id, lang->src_sfx);
     } else {
-      fprintf(fout, "Content-type: text/plain\n");
+      fprintf(fout, "Content-type: text/plain\n\n");
     }
   }
   fwrite(run_text, 1, run_size, fout);
