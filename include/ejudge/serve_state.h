@@ -486,6 +486,13 @@ void serve_send_clar_notify_email(
         const unsigned char *user_name,
         const unsigned char *subject,
         const unsigned char *text);
+void serve_send_clar_notify_telegram(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        const struct contest_desc *cnts,
+        int user_id,
+        const unsigned char *user_name,
+        const unsigned char *subject);
 void
 serve_send_check_failed_email(
         const struct ejudge_cfg *config,

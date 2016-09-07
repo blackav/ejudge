@@ -2107,6 +2107,38 @@ fail:
 }
 
 void
+serve_send_clar_notify_telegram(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        const struct contest_desc *cnts,
+        int user_id,
+        const unsigned char *user_name,
+        const unsigned char *subject)
+{
+  const unsigned char *args[10];
+  char *text_s = NULL;
+  size_t text_z = 0;
+  FILE *text_f = NULL;
+
+  text_f = open_memstream(&text_s, &text_z);
+  fprintf(text_f, "New clar\n"
+          "Contest: %d (%s)\n"
+          "User: %d (%s)\n"
+          "Subject: %s\n",
+          cnts->id, cnts->name, user_id, user_name, subject);
+  fclose(text_f); text_f = NULL;
+
+  args[0] = "telegram";
+  args[1] = "252341991:AAE12Nv_PhT86VCVjmu6qVPZTmAS4x627GE";
+  args[2] = "-153978245";
+  args[3] = text_s;
+  args[4] = NULL;
+  send_job_packet(NULL, (unsigned char**) args, 0);
+
+  free(text_s); text_s = NULL;
+}
+
+void
 serve_send_clar_notify_email(
         const struct ejudge_cfg *config,
         serve_state_t state,
