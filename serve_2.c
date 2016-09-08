@@ -2120,6 +2120,9 @@ serve_send_clar_notify_telegram(
   size_t text_z = 0;
   FILE *text_f = NULL;
 
+  if (!cnts->telegram_bot_id || !cnts->telegram_bot_id[0] || !cnts->telegram_admin_chat_id || !cnts->telegram_admin_chat_id[0])
+    return;
+
   text_f = open_memstream(&text_s, &text_z);
   fprintf(text_f, "New clar\n"
           "Contest: %d (%s)\n"
@@ -2129,8 +2132,8 @@ serve_send_clar_notify_telegram(
   fclose(text_f); text_f = NULL;
 
   args[0] = "telegram";
-  args[1] = "252341991:AAE12Nv_PhT86VCVjmu6qVPZTmAS4x627GE";
-  args[2] = "-153978245";
+  args[1] = cnts->telegram_bot_id;
+  args[2] = cnts->telegram_admin_chat_id;
   args[3] = text_s;
   args[4] = NULL;
   send_job_packet(NULL, (unsigned char**) args, 0);
