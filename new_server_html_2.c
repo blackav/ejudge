@@ -4785,7 +4785,6 @@ kirov_score_default(
     }
     break;
 
-  case RUN_STYLE_ERR:
   case RUN_RUN_TIME_ERR:
   case RUN_TIME_LIMIT_ERR:
   case RUN_WALL_TIME_LIMIT_ERR:
@@ -4820,6 +4819,7 @@ kirov_score_default(
 
   case RUN_CHECK_FAILED:
   case RUN_IGNORED:
+  case RUN_STYLE_ERR:
     break;
 
   case RUN_DISQUALIFIED:
