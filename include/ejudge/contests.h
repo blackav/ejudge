@@ -124,6 +124,9 @@ enum
     CONTEST_EXT_ID,
     CONTEST_UPDATE_TIME,
     CONTEST_PROBLEM_COUNT,
+    CONTEST_TELEGRAM_BOT_ID,
+    CONTEST_TELEGRAM_ADMIN_CHAT_ID,
+    CONTEST_TELEGRAM_USER_CHAT_ID,
 
     CONTEST_LAST_TAG
   };
@@ -393,6 +396,9 @@ struct contest_desc
   unsigned char *css_url;
   unsigned char *ext_id;
   unsigned char *problem_count;
+  unsigned char *telegram_bot_id;
+  unsigned char *telegram_admin_chat_id;
+  unsigned char *telegram_user_chat_id;
 
   struct xml_tree *slave_rules;
 
