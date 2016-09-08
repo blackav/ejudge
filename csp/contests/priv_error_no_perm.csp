@@ -14,6 +14,7 @@
   l10n_setlocale(phr->locale_id);
   snprintf(title, sizeof(title), "%s", _("Permission denied"));
 
+  random_init();
   unsigned int random_id = random_u32();
   char random_id_str[64];
   snprintf(random_id_str, sizeof(random_id_str), "%08x", random_id);
