@@ -171,6 +171,7 @@ prepare_signals(void)
   signal(SIGALRM, alarm_signal_handler);
   signal(SIGPIPE, SIG_IGN);
   alarm(PERIODIC_INTERVAL);
+  raise(SIGALRM);
 }
 
 static int
