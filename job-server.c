@@ -142,7 +142,7 @@ child_signal_handler(int sig)
 }
 
 static void
-prepare_sinals(void)
+prepare_signals(void)
 {
 
   sigemptyset(&waitmask);
@@ -764,7 +764,7 @@ main(int argc, char *argv[])
   config = ejudge_cfg_parse(ejudge_xml_path, 0);
   if (!config) return 1;
   if (prepare_config_vars() < 0) return 1;
-  prepare_sinals();
+  prepare_signals();
   notify_signal_flag = 1;
   if (chdir(job_server_work_path) < 0) {
     err("cannot change directory to %s", job_server_work_path);
