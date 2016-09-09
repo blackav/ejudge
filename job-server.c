@@ -24,6 +24,8 @@
 #include "ejudge/startstop.h"
 #include "ejudge/compat.h"
 #include "ejudge/misctext.h"
+#include "ejudge/common_plugin.h"
+#include "ejudge/telegram.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -54,6 +56,9 @@ static volatile int notify_signal_flag;
 static volatile int child_signal_flag;
 static sigset_t blkmask, waitmask;
 static int job_server_dir_fd = -1;
+
+static const struct telegram_plugin_iface *telegram_iface = NULL;
+static struct telegram_plugin_data *telegram_data = NULL;
 
 static int
 make_path_in_var_dir(unsigned char *buf, const unsigned char *file)
@@ -688,6 +693,32 @@ do_work(void)
   }
 }
 
+static int
+load_plugins(struct ejudge_cfg *config)
+{
+  struct xml_tree *telegram_cfg = ejudge_cfg_get_plugin_config(config, "sn", "telegram");
+  if (!telegram_cfg) return 0;
+
+  const struct common_loaded_plugin *telegram_plugin = plugin_load_external(NULL, "sn", "telegram", config);
+  if (!telegram_plugin) {
+    err("failed to load Telegram plugin");
+    return -1;
+  }
+
+  if (telegram_plugin->iface->b.size != sizeof(struct telegram_plugin_iface)) {
+    err("Telegram plugin interface size mismatch");
+    return -1;
+  }
+  telegram_iface = (const struct telegram_plugin_iface *) telegram_plugin->iface;
+  if (telegram_iface->telegram_plugin_iface_version != TELEGRAM_PLUGIN_IFACE_VERSION) {
+    err("Telegram plugin interface version mismatch\n");
+    return -1;
+  }
+  telegram_data = (struct telegram_plugin_data *) telegram_plugin->data;
+
+  return 0;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -786,6 +817,7 @@ main(int argc, char *argv[])
       return 1;
   }
 
+  if (load_plugins(config) < 0) return 1;
   if (prepare_directory_notify() < 0) return 1;
   do_work();
   if (job_server_dir_fd >= 0) close(job_server_dir_fd);
