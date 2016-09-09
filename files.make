@@ -124,6 +124,7 @@ COMMON_CFILES=\
  build_support.c\
  cgi.c\
  charsets.c\
+ cJSON.c\
  clarlog.c\
  cldb_plugin_file.c\
  clntutil.c\
@@ -509,6 +510,7 @@ HFILES=\
  ./include/ejudge/build_support.h\
  ./include/ejudge/cgi.h\
  ./include/ejudge/charsets.h\
+ ./include/ejudge/cJSON.h\
  ./include/ejudge/clarlog.h\
  ./include/ejudge/clarlog_state.h\
  ./include/ejudge/cldb_plugin.h\
