@@ -447,7 +447,7 @@ run_process(char * const *args, const char *stdin_buf)
  * [5] - text
  */
 static void
-handle_mail_packet(int uid, int argc, char **argv)
+handle_mail_packet(int uid, int argc, char **argv, void *user)
 {
   FILE *f = 0;
   char *full_txt = 0;
@@ -522,7 +522,7 @@ handle_mail_packet(int uid, int argc, char **argv)
 }
 
 static void
-handle_stop_packet(int uid, int argc, char **argv)
+handle_stop_packet(int uid, int argc, char **argv, void *user)
 {
   if (uid != 0 && uid != getuid()) {
     // no feedback :(
@@ -533,7 +533,7 @@ handle_stop_packet(int uid, int argc, char **argv)
 }
 
 static void
-handle_restart_packet(int uid, int argc, char **argv)
+handle_restart_packet(int uid, int argc, char **argv, void *user)
 {
   if (uid != 0 && uid != getuid()) {
     // no feedback :(
@@ -544,21 +544,22 @@ handle_restart_packet(int uid, int argc, char **argv)
 }
 
 static void
-handle_nop_packet(int uid, int argc, char **argv)
+handle_nop_packet(int uid, int argc, char **argv, void *user)
 {
 }
 
 struct cmd_handler_info
 {
   char *cmd;
-  void (*handler)(int, int, char**);
+  void (*handler)(int, int, char**, void *);
+  void *user;
 };
 static const struct cmd_handler_info builtin_handlers[] =
 {
-  { "mail", handle_mail_packet },
-  { "stop", handle_stop_packet },
-  { "restart", handle_restart_packet },
-  { "nop", handle_nop_packet },
+  { "mail", handle_mail_packet, NULL },
+  { "stop", handle_stop_packet, NULL },
+  { "restart", handle_restart_packet, NULL },
+  { "nop", handle_nop_packet, NULL },
 
   { NULL, NULL },
 };
@@ -566,7 +567,7 @@ static struct cmd_handler_info *current_handlers = NULL;
 static int current_handlers_a = 0;
 
 void
-ej_jobs_add_handler(const char *cmd, void (*handler)(int, int, char **))
+ej_jobs_add_handler(const char *cmd, void (*handler)(int, int, char **, void *), void *user)
 {
   if (!cmd) return;
   if (!strcmp(cmd, "stop") || !strcmp(cmd, "restart") || !strcmp(cmd, "nop"))
@@ -589,6 +590,7 @@ ej_jobs_add_handler(const char *cmd, void (*handler)(int, int, char **))
   }
   current_handlers[total].cmd = xstrdup(cmd);
   current_handlers[total].handler = handler;
+  current_handlers[total].user = user;
   ++total;
   memset(&current_handlers[total], 0, sizeof(current_handlers[0]));
 }
@@ -697,7 +699,7 @@ do_work(void)
       err("invalid command `%s'", argv[0]);
       continue;
     }
-    (*hnd[i].handler)(stbuf.st_uid, argc, argv);
+    (*hnd[i].handler)(stbuf.st_uid, argc, argv, hnd[i].user);
   }
 }
 

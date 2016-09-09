@@ -17,7 +17,10 @@
  */
 
 void
-ej_jobs_add_handler(const char *cmd, void (*handler)(int, int, char **));
+ej_jobs_add_handler(
+        const char *cmd,
+        void (*handler)(int, int, char **, void *),
+        void *user);
 void
 ej_jobs_remove_handler(const char *cmd);
 void

@@ -37,7 +37,7 @@ prepare_func(
         struct xml_tree *tree);
 
 static void
-packet_handler_telegram(int uid, int argc, char **argv);
+packet_handler_telegram(int uid, int argc, char **argv, void *user);
 
 static void
 periodic_handler(void *user);
@@ -90,7 +90,7 @@ prepare_func(
 {
   struct telegram_plugin_data *state = (struct telegram_plugin_data*) data;
 
-  ej_jobs_add_handler("telegram", packet_handler_telegram);
+  ej_jobs_add_handler("telegram", packet_handler_telegram, state);
   ej_jobs_add_periodic_handler(periodic_handler, state);
   return 0;
 }
@@ -103,7 +103,7 @@ prepare_func(
  * [4] - parse_mode
  */
 static void
-packet_handler_telegram(int uid, int argc, char **argv)
+packet_handler_telegram(int uid, int argc, char **argv, void *user)
 {
     CURL *curl = NULL;
     char *url_s = NULL, *post_s = NULL, *s = NULL, *resp_s = NULL;
