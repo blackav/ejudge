@@ -180,6 +180,7 @@ subdirs_all:
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" all
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" all
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" all
 
@@ -240,6 +241,7 @@ install: local_install
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" install
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" install
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" install
 	#if [ ! -f "${INSTALLSCRIPT}" ]; then ./ejudge-setup -b; fi
@@ -282,7 +284,7 @@ ej-users-control: ${ULC_OBJECTS}
 	${LD} ${LDFLAGS} $^  libcommon.a -rdynamic -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 ej-jobs: ${JS_OBJECTS}
-	${LD} ${LDFLAGS} $^ libcommon.a libplatform.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBCURL}
+	${LD} ${LDFLAGS} $^ libcommon.a libplatform.a -rdynamic -o $@ ${LDLIBS} -ldl ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS)
 
 ej-jobs-control: ${JSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a libplatform.a -o $@ ${LDLIBS} ${EXPAT_LIB}
@@ -399,6 +401,7 @@ subdir_clean:
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C cfront clean
@@ -421,6 +424,7 @@ subdir_distclean :
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C cfront distclean
