@@ -20,6 +20,10 @@ void
 ej_jobs_add_handler(const char *cmd, void (*handler)(int, int, char **));
 void
 ej_jobs_remove_handler(const char *cmd);
+void
+ej_jobs_add_periodic_handler(
+        void (*handler)(void *user),
+        void *user);
 
 #endif
 

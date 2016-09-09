@@ -39,6 +39,9 @@ prepare_func(
 static void
 packet_handler_telegram(int uid, int argc, char **argv);
 
+static void
+periodic_handler(void *user);
+
 struct telegram_plugin_iface plugin_sn_telegram =
 {
     { /* struct common_plugin_iface */
@@ -86,9 +89,9 @@ prepare_func(
         struct xml_tree *tree)
 {
   struct telegram_plugin_data *state = (struct telegram_plugin_data*) data;
-  (void) state;
 
   ej_jobs_add_handler("telegram", packet_handler_telegram);
+  ej_jobs_add_periodic_handler(periodic_handler, state);
   return 0;
 }
 
@@ -169,6 +172,12 @@ packet_handler_telegram(int uid, int argc, char **argv)
     if (curl) {
         curl_easy_cleanup(curl);
     }
+}
+
+static void
+periodic_handler(void *user)
+{
+    err("TIMEOUT");
 }
 
 /*

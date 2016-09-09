@@ -42,6 +42,8 @@
 #include <time.h>
 #include <sys/stat.h>
 
+#define PERIODIC_INTERVAL 60
+
 static struct ejudge_cfg *config;
 static path_t job_server_log_path;
 static path_t job_server_spool_path;
@@ -51,6 +53,7 @@ static volatile int term_signal_flag;
 static volatile int hup_signal_flag;
 static volatile int notify_signal_flag;
 static volatile int child_signal_flag;
+static volatile sig_atomic_t alarm_signal_flag;
 static sigset_t blkmask, waitmask;
 static int job_server_dir_fd = -1;
 
@@ -140,6 +143,12 @@ child_signal_handler(int sig)
 {
   child_signal_flag = 1;
 }
+static void
+alarm_signal_handler(int sig)
+{
+  alarm_signal_flag = 1;
+  alarm(PERIODIC_INTERVAL);
+}
 
 static void
 prepare_signals(void)
@@ -152,13 +161,16 @@ prepare_signals(void)
   sigaddset(&blkmask, SIGHUP);
   sigaddset(&blkmask, SIGRTMIN);
   sigaddset(&blkmask, SIGCHLD);
+  sigaddset(&blkmask, SIGALRM);
   sigprocmask(SIG_BLOCK, &blkmask, 0);
   signal(SIGINT, term_signal_handler);
   signal(SIGTERM, term_signal_handler);
   signal(SIGHUP, hup_signal_handler);
   signal(SIGRTMIN, notify_signal_handler);
   signal(SIGCHLD, child_signal_handler);
+  signal(SIGALRM, alarm_signal_handler);
   signal(SIGPIPE, SIG_IGN);
+  alarm(PERIODIC_INTERVAL);
 }
 
 static int
@@ -597,6 +609,30 @@ ej_jobs_remove_handler(const char *cmd)
   memmove(current_handlers + pos, current_handlers + pos + 1, (total - pos) * sizeof(current_handlers[0]));
 }
 
+struct periodic_handler_info
+{
+  void (*handler)(void *user);
+  void *user;
+};
+
+static struct periodic_handler_info *periodics = NULL;
+static int periodics_a = 0;
+static int periodics_u = 0;
+
+void
+ej_jobs_add_periodic_handler(
+        void (*handler)(void *user),
+        void *user)
+{
+  if (periodics_u == periodics_a) {
+    if (!(periodics_a *= 2)) periodics_a = 16;
+    XREALLOC(periodics, periodics_a);
+  }
+  periodics[periodics_u].handler = handler;
+  periodics[periodics_u].user = user;
+  ++periodics_u;
+}
+
 static void
 do_work(void)
 {
@@ -609,13 +645,19 @@ do_work(void)
   struct stat stbuf;
 
   while (!term_signal_flag) {
+    if (alarm_signal_flag) {
+      alarm_signal_flag = 0;
+      for (int i = 0; i < periodics_u; ++i) {
+        periodics[i].handler(periodics[i].user);
+      }
+    }
     if ((r = scan_dir(job_server_spool_path, pkt_name, sizeof(pkt_name), 0)) < 0) {
       // error
       break;
     }
     if (!r) {
       notify_signal_flag = 0;
-      while (!term_signal_flag && !notify_signal_flag)
+      while (!term_signal_flag && !notify_signal_flag && !alarm_signal_flag)
         sigsuspend(&waitmask);
       continue;
     }
