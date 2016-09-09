@@ -27,6 +27,7 @@
 #include "ejudge/common_plugin.h"
 #include "ejudge/telegram.h"
 #include "ejudge/ej_jobs.h"
+#include "ejudge/cJSON.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -170,8 +171,6 @@ prepare_signals(void)
   signal(SIGCHLD, child_signal_handler);
   signal(SIGALRM, alarm_signal_handler);
   signal(SIGPIPE, SIG_IGN);
-  alarm(PERIODIC_INTERVAL);
-  raise(SIGALRM);
 }
 
 static int
@@ -830,6 +829,10 @@ main(int argc, char *argv[])
 
   if (load_plugins(config) < 0) return 1;
   if (prepare_directory_notify() < 0) return 1;
+
+  alarm(PERIODIC_INTERVAL);
+  raise(SIGALRM);
+
   do_work();
   if (job_server_dir_fd >= 0) close(job_server_dir_fd);
 
@@ -837,3 +840,9 @@ main(int argc, char *argv[])
 
   return 0;
 }
+
+void *
+job_server_force_link[] =
+{
+  cJSON_Delete,
+};
