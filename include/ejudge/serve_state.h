@@ -498,6 +498,15 @@ serve_send_check_failed_email(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         int run_id);
+void
+serve_send_telegram_token(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        const struct contest_desc *cnts,
+        int user_id,
+        const unsigned char *user_login,
+        const unsigned char *user_name,
+        const unsigned char *telegram_token);
 
 void
 serve_rejudge_run(

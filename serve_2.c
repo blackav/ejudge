@@ -2142,6 +2142,39 @@ serve_send_clar_notify_telegram(
 }
 
 void
+serve_send_telegram_token(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        const struct contest_desc *cnts,
+        int user_id,
+        const unsigned char *user_login,
+        const unsigned char *user_name,
+        const unsigned char *telegram_token)
+{
+  const unsigned char *args[10];
+  char user_id_buf[64];
+  char contest_id_buf[64];
+
+  if (!cnts->telegram_bot_id || !cnts->telegram_bot_id[0]) return;
+  if (!user_login) return;
+  if (!user_name) user_name = user_login;
+  if (!telegram_token) return;
+
+  snprintf(user_id_buf, sizeof(user_id_buf), "%d", user_id);
+  snprintf(contest_id_buf, sizeof(contest_id_buf), "%d", cnts->id);
+
+  args[0] = "telegram_token";
+  args[1] = cnts->telegram_bot_id;
+  args[2] = user_id_buf;
+  args[3] = user_login;
+  args[4] = user_name;
+  args[5] = telegram_token;
+  args[6] = contest_id_buf;
+  args[7] = NULL;
+  send_job_packet(NULL, (unsigned char**) args, 0);
+}
+
+void
 serve_send_clar_notify_email(
         const struct ejudge_cfg *config,
         serve_state_t state,
