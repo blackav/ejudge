@@ -167,6 +167,25 @@ ej_bson_parse_int(
 }
 
 int
+ej_bson_parse_int64(
+        struct _bson_cursor *bc,
+        const unsigned char *field_name,
+        long long *p_value)
+{
+    if (bson_cursor_type(bc) != BSON_TYPE_INT64) {
+        err("parse_bson_int: int64 field type expected for '%s'", field_name);
+        return -1;
+    }
+    long long value = 0;
+    if (!bson_cursor_get_int64(bc, &value)) {
+        err("parse_bson_int: failed to fetch int64 value of '%s'", field_name);
+        return -1;
+    }
+    *p_value = value;
+    return 1;
+}
+
+int
 ej_bson_parse_utc_datetime(
         struct _bson_cursor *bc,
         const unsigned char *field_name,

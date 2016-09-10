@@ -41,6 +41,11 @@ ej_bson_parse_int(
         int check_high,
         int high_value);
 int
+ej_bson_parse_int64(
+        struct _bson_cursor *bc,
+        const unsigned char *field_name,
+        long long *p_value);
+int
 ej_bson_parse_utc_datetime(
         struct _bson_cursor *bc,
         const unsigned char *field_name,
