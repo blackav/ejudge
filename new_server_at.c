@@ -208,6 +208,7 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_VIEW_EXAM_INFO] = "view-exam-info",
   [NEW_SRV_ACTION_PRIV_SUBMIT_PAGE] = "priv-submit-page",
   [NEW_SRV_ACTION_USE_TOKEN] = "use-token",
+  [NEW_SRV_ACTION_GENERATE_TELEGRAM_TOKEN] = "generate-telegram-token",
 
   [NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE] = "reg-create-account-page",
   [NEW_SRV_ACTION_REG_CREATE_ACCOUNT] = "reg-create-account",

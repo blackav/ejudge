@@ -59,6 +59,7 @@
 #include "ejudge/xuser_plugin.h"
 #include "ejudge/blowfish.h"
 #include "ejudge/base64.h"
+#include "ejudge/random.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -7807,6 +7808,28 @@ back_action:
   goto cleanup;
 }
 
+static void
+unpriv_generate_telegram_token(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  unsigned char param_buf[1024];
+  unsigned char token_buf[64];
+  int telegram_token;
+
+  random_init();
+  telegram_token = random_u32() & 0x7fffffff;
+  snprintf(token_buf, sizeof(token_buf), "%d", telegram_token);
+  snprintf(param_buf, sizeof(param_buf), "telegram_token=%d", telegram_token);
+
+  serve_send_telegram_token(ejudge_config, cs, cnts, phr->user_id, phr->login, phr->name, token_buf);
+
+  ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_SETTINGS, param_buf);
+}
+
 int
 ns_submit_run(
         FILE *log_f,
@@ -10465,6 +10488,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_UPDATE_ANSWER] = unpriv_xml_update_answer,
   [NEW_SRV_ACTION_GET_FILE] = unpriv_get_file,
   [NEW_SRV_ACTION_USE_TOKEN] = unpriv_use_token,
+  [NEW_SRV_ACTION_GENERATE_TELEGRAM_TOKEN] = unpriv_generate_telegram_token,
 };
 
 static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_LAST] =
