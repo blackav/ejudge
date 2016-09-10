@@ -217,14 +217,24 @@ save_persistent_bot_state(struct telegram_plugin_data *state, const struct teleg
     mongo_sync_connection *conn = get_mongo_connection(state);
     if (!conn) return -1;
     char ns[1024];
+    int retval = -1;
+
+    bson *s = bson_new();
+    bson_append_string(s, "_id", pbs->_id, strlen(pbs->_id));
+    bson_finish(s);
 
     bson *b = telegram_pbs_unparse_bson(pbs);
     snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, TELEGRAM_BOTS_TABLE_NAME);
-    if (!mongo_sync_cmd_insert(conn, ns, b, NULL)) {
+    if (!mongo_sync_cmd_update(conn, ns, MONGO_WIRE_FLAG_UPDATE_UPSERT, s, b)) {
         err("save_persistent_bot_state: failed: %s", os_ErrorMsg());
-        return -1;
+        goto done;
     }
-    return 0;
+    retval = 0;
+
+done:
+    bson_free(s);
+    bson_free(b);
+    return retval;
 }
 
 struct telegram_pbs *
@@ -365,7 +375,10 @@ packet_handler_telegram(int uid, int argc, char **argv, void *user)
 }
 
 static void
-handle_reply(struct telegram_plugin_data *state, struct bot_state *bs, const unsigned char *reply)
+handle_reply(struct telegram_plugin_data *state,
+             struct bot_state *bs,
+             struct telegram_pbs *pbs,
+             const unsigned char *reply)
 {
     cJSON *root = NULL;
     TeGetUpdatesResult *updates = NULL;
@@ -379,11 +392,20 @@ handle_reply(struct telegram_plugin_data *state, struct bot_state *bs, const uns
             goto cleanup;
         }
         if (updates->ok) {
+            int need_update = 0;
             for (int i = 0; i < updates->result.length; ++i) {
-                info("{ update_id: %lld }", updates->result.v[i]->update_id);
-                if (updates->result.v[i]->message && updates->result.v[i]->message->text) {
-                    info("{ text: %s }", updates->result.v[i]->message->text);
+                const TeUpdate *tu = updates->result.v[i];
+                info("{ update_id: %lld }", tu->update_id);
+                if (tu->message && tu->message->text) {
+                    info("{ text: %s }", tu->message->text);
                 }
+                if (!pbs->update_id || tu->update_id > pbs->update_id) {
+                    pbs->update_id = tu->update_id;
+                    need_update = 1;
+                }
+            }
+            if (need_update) {
+                save_persistent_bot_state(state, pbs);
             }
         }
     }
@@ -402,6 +424,12 @@ get_updates(struct telegram_plugin_data *state, struct bot_state *bs)
     char *url_s = NULL, *resp_s = NULL;
     size_t url_z = 0, resp_z = 0;
 
+    struct telegram_pbs *pbs = get_persistent_bot_state(state, bs);
+    if (!pbs) {
+        err("cannot get persistent bot state for bot %s", bs->bot_id);
+        return;
+    }
+
     curl = curl_easy_init();
     if (!curl) {
         err("cannot initialize curl");
@@ -411,6 +439,9 @@ get_updates(struct telegram_plugin_data *state, struct bot_state *bs)
     {
         FILE *url_f = open_memstream(&url_s, &url_z);
         fprintf(url_f, "https://api.telegram.org/bot%s/%s", bs->bot_id, "getUpdates");
+        if (pbs->update_id) {
+            fprintf(url_f, "?offset=%lld", pbs->update_id + 1);
+        }
         fclose(url_f);
     }
 
@@ -433,8 +464,8 @@ get_updates(struct telegram_plugin_data *state, struct bot_state *bs)
 
     xfree(url_s); url_s = NULL;
 
-    fprintf(stderr, "reply body: %s\n", resp_s);
-    handle_reply(state, bs, resp_s);
+    //fprintf(stderr, "reply body: %s\n", resp_s);
+    handle_reply(state, bs, pbs, resp_s);
     
 cleanup:
     xfree(resp_s);
