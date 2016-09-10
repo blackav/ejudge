@@ -59,7 +59,9 @@ ns_unparse_answers(
   int tab_counter;
   const unsigned char *prob_name = 0;
   UserProblemInfo *pinfo = 0;
+  const unsigned char *telegram_token = NULL;
 
+%><s:read var="telegram_token" ignoreerrors="yes" /><%
 %><s:read var="all_runs" ignoreerrors="yes" default="0" /><%
   if (all_runs != 1) all_runs = 0;
   phr->session_extra->user_view_all_runs = all_runs;

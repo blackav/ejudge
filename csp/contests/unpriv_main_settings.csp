@@ -1,4 +1,13 @@
 <%
+    if (telegram_token && *telegram_token) {
+%>
+<div class="h2-long"><h2><s:_>Telegram Token</s:_></h2></div>
+<p><s:_>Your Telegram token:</s:_> <b><s:v value="telegram_token" /></b></p>
+<p><s:_>You will need to specify this token when interacting with Ejudge Telegram Bot. This token is valid for 300 seconds. The token is good for one Ejudge Bot interaction.</s:_></p>
+<%
+    }
+%>
+<%
     if (!cs->clients_suspended && !cnts->disable_password_change) {
 %>
 <%
@@ -17,6 +26,14 @@
 <tr><td class="b0" colspan="2"><s:submit ac="change-password" label="Change!" /></td></tr>
 </table></s:form>
 <%    }
+    if (cnts->telegram_user_chat_id && *cnts->telegram_user_chat_id && (!telegram_token || !*telegram_token)) {
+%>
+<div class="h2-long"><h2><s:_>Generate Token for Telegram</s:_></h2></div>
+<s:form>
+<s:submit ac="generate-telegram-token" label="Generate!" />
+</s:form>
+<%
+    }
 #if CONF_HAS_LIBINTL - 0 == 1
     if (global->enable_l10n && !cs->clients_suspended && !cnts->disable_locale_change) {
 %><div class="h2-long"><h2><s:_>Change language</s:_></h2></div>
