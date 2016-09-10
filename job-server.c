@@ -28,6 +28,7 @@
 #include "ejudge/telegram.h"
 #include "ejudge/ej_jobs.h"
 #include "ejudge/cJSON.h"
+#include "ejudge/bson_utils.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -845,4 +846,5 @@ void *
 job_server_force_link[] =
 {
   cJSON_Delete,
+  ej_bson_parse_string,
 };
