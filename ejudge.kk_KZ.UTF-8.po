@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-09-02 14:27+0300\n"
+"POT-Creation-Date: 2016-09-11 00:16+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -1465,6 +1465,9 @@ msgstr ""
 msgid "General settings (contest.xml)"
 msgstr ""
 
+msgid "Generate Token for Telegram"
+msgstr ""
+
 msgid "Generate contest passwords"
 msgstr ""
 
@@ -1481,6 +1484,9 @@ msgid "Generate random registration passwords!"
 msgstr ""
 
 msgid "Generate registration passwords"
+msgstr ""
+
+msgid "Generate!"
 msgstr ""
 
 msgid "Global settings (serve.cfg)"
@@ -3538,6 +3544,9 @@ msgstr ""
 msgid "Team name"
 msgstr ""
 
+msgid "Telegram Token"
+msgstr ""
+
 msgid "Test file does not exist"
 msgstr ""
 
@@ -4270,7 +4279,16 @@ msgid ""
 "change the password."
 msgstr ""
 
+msgid ""
+"You will need to specify this token when interacting with Ejudge Telegram "
+"Bot. This token is valid for 300 seconds. The token is good for one Ejudge "
+"Bot interaction."
+msgstr ""
+
 msgid "Your IP-address or protocol is banned."
+msgstr ""
+
+msgid "Your Telegram token:"
 msgstr ""
 
 msgid "Your have been banned by the administrator."

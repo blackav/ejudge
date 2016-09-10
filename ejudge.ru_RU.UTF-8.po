@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-09-02 14:27+0300\n"
-"PO-Revision-Date: 2016-09-02 14:27+0300\n"
+"POT-Creation-Date: 2016-09-11 00:16+0300\n"
+"PO-Revision-Date: 2016-09-11 00:24+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -1522,6 +1522,9 @@ msgstr "Общие поля регистрационной анкеты"
 msgid "General settings (contest.xml)"
 msgstr "Общие настройки (contest.xml)"
 
+msgid "Generate Token for Telegram"
+msgstr "Сгенерировать Токен для Telegram"
+
 msgid "Generate contest passwords"
 msgstr "Перегенерировать турнирные пароли"
 
@@ -1539,6 +1542,9 @@ msgstr "Сгенерировать случайные регистрационн
 
 msgid "Generate registration passwords"
 msgstr "Перегенерировать регистрационные пароли"
+
+msgid "Generate!"
+msgstr "Сгенерировать!"
 
 msgid "Global settings (serve.cfg)"
 msgstr "Глобальные настройки (serve.cfg)"
@@ -3697,6 +3703,9 @@ msgstr "ИДЕТ ТЕСТИРОВАНИЕ..."
 msgid "Team name"
 msgstr "Название команды"
 
+msgid "Telegram Token"
+msgstr "Токен для Telegram"
+
 msgid "Test file does not exist"
 msgstr "Запрошенный файл не существует"
 
@@ -4484,8 +4493,17 @@ msgstr ""
 "пароль для входа в систему. Этот пароль необходимо использовать для первого "
 "входа в систему, после чего его можно будет поменять."
 
+msgid ""
+"You will need to specify this token when interacting with Ejudge Telegram "
+"Bot. This token is valid for 300 seconds. The token is good for one Ejudge "
+"Bot interaction."
+msgstr "Вам потребуется указать этот токен при взаимодействии с ботом Ejudge для Telegram. Токен действует 300 секунд и одну операцию."
+
 msgid "Your IP-address or protocol is banned."
 msgstr "Запрещено участие с данного IP-адреса или по данному протоколу."
+
+msgid "Your Telegram token:"
+msgstr "Ваш токен для Telegram:"
 
 msgid "Your have been banned by the administrator."
 msgstr "Ваше участие заблокировано администратором системы."
