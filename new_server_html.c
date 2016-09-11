@@ -7821,7 +7821,7 @@ unpriv_generate_telegram_token(
   int telegram_token;
 
   random_init();
-  telegram_token = random_u32() & 0x7fffffff;
+  telegram_token = (random_u32() & 0x7fffffff) % 1000000;
   snprintf(token_buf, sizeof(token_buf), "%d", telegram_token);
   snprintf(param_buf, sizeof(param_buf), "telegram_token=%d", telegram_token);
 
