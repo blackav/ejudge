@@ -34,6 +34,13 @@ telegram_pbs_create(const unsigned char *_id);
 struct _bson *
 telegram_pbs_unparse_bson(const struct telegram_pbs *pbs);
 
+struct mongo_conn;
+
+int
+telegram_pbs_save(struct mongo_conn *conn, const struct telegram_pbs *pbs);
+struct telegram_pbs *
+telegram_pbs_fetch(struct mongo_conn *conn, const unsigned char *bot_id);
+
 #endif
 
 /*

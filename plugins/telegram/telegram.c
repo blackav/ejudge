@@ -21,8 +21,6 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
 #include "ejudge/logger.h"
-#include "ejudge/osdeps.h"
-#include "ejudge/bson_utils.h"
 
 #include "telegram_data.h"
 #include "telegram_pbs.h"
@@ -35,13 +33,7 @@
 #include <curl/curl.h>
 #endif
 
-#include <mongo.h>
-
 #include <string.h>
-#include <errno.h>
-
-#define TELEGRAM_BOTS_TABLE_NAME "telegram_bots"
-#define TELEGRAM_TOKENS_TABLE_NAME "telegram_tokens"
 
 static struct common_plugin_data *
 init_func(void);
@@ -184,77 +176,12 @@ prepare_func(
     return 0;
 }
 
-static int
-save_persistent_bot_state(struct mongo_conn *conn, const struct telegram_pbs *pbs)
-{
-    if (!mongo_conn_open(conn)) return -1;
-    int retval = -1;
-
-    bson *s = bson_new();
-    bson_append_string(s, "_id", pbs->_id, strlen(pbs->_id));
-    bson_finish(s);
-
-    bson *b = telegram_pbs_unparse_bson(pbs);
-    if (!mongo_sync_cmd_update(conn->conn, mongo_conn_ns(conn, TELEGRAM_BOTS_TABLE_NAME), MONGO_WIRE_FLAG_UPDATE_UPSERT, s, b)) {
-        err("save_persistent_bot_state: failed: %s", os_ErrorMsg());
-        goto done;
-    }
-    retval = 0;
-
-done:
-    bson_free(s);
-    bson_free(b);
-    return retval;
-}
-
 struct telegram_pbs *
 get_persistent_bot_state(struct mongo_conn *conn, struct bot_state *bs)
 {
     if (bs->pbs) return bs->pbs;
 
-    if (!mongo_conn_open(conn)) return NULL;
-
-    mongo_packet *pkt = NULL;
-    bson *query = NULL;
-    mongo_sync_cursor *cursor = NULL;
-    bson *result = NULL;
-
-    query = bson_new();
-    bson_append_string(query, "_id", bs->bot_id, strlen(bs->bot_id));
-    bson_finish(query);
-    pkt = mongo_sync_cmd_query(conn->conn, mongo_conn_ns(conn, TELEGRAM_BOTS_TABLE_NAME), 0, 0, 1, query, NULL);
-    if (!pkt && errno == ENOENT) {
-        bson_free(query); query = NULL;
-        bs->pbs = telegram_pbs_create(bs->bot_id);
-        save_persistent_bot_state(conn, bs->pbs);
-        goto cleanup;
-    }
-    if (!pkt) {
-        err("mongo query failed: %s", os_ErrorMsg());
-        goto cleanup;
-    }
-    bson_free(query); query = NULL;
-    cursor = mongo_sync_cursor_new(conn->conn, conn->ns, pkt);
-    if (!cursor) {
-        err("mongo query failed: cannot create cursor: %s", os_ErrorMsg());
-        goto cleanup;
-    }
-    pkt = NULL;
-    if (mongo_sync_cursor_next(cursor)) {
-        result = mongo_sync_cursor_get_data(cursor);
-        struct telegram_pbs *pbs = telegram_pbs_parse_bson(result);
-        bs->pbs = pbs;
-    } else {
-        mongo_sync_cursor_free(cursor); cursor = NULL;
-        bs->pbs = telegram_pbs_create(bs->bot_id);
-        save_persistent_bot_state(conn, bs->pbs);
-    }
-
-cleanup:
-    if (result) bson_free(result);
-    if (cursor) mongo_sync_cursor_free(cursor);
-    if (pkt) mongo_wire_packet_free(pkt);
-    if (query) bson_free(query);
+    bs->pbs = telegram_pbs_fetch(conn, bs->bot_id);
     return bs->pbs;
 }
 
@@ -436,7 +363,7 @@ handle_reply(struct telegram_plugin_data *state,
                 }
             }
             if (need_update) {
-                save_persistent_bot_state(state->conn, pbs);
+                telegram_pbs_save(state->conn, pbs);
             }
         }
     }
