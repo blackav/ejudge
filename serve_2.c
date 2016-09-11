@@ -2146,14 +2146,18 @@ serve_send_telegram_token(
         const struct ejudge_cfg *config,
         serve_state_t state,
         const struct contest_desc *cnts,
+        int locale_id,
         int user_id,
         const unsigned char *user_login,
         const unsigned char *user_name,
-        const unsigned char *telegram_token)
+        const unsigned char *telegram_token,
+        time_t expiry_time)
 {
   const unsigned char *args[10];
   char user_id_buf[64];
   char contest_id_buf[64];
+  char locale_id_buf[64];
+  char expiry_buf[64];
 
   if (!cnts->telegram_bot_id || !cnts->telegram_bot_id[0]) return;
   if (!user_login) return;
@@ -2162,15 +2166,20 @@ serve_send_telegram_token(
 
   snprintf(user_id_buf, sizeof(user_id_buf), "%d", user_id);
   snprintf(contest_id_buf, sizeof(contest_id_buf), "%d", cnts->id);
+  if (expiry_time <= 0) expiry_time = time(NULL) + 300;
+  snprintf(expiry_buf, sizeof(expiry_buf), "%s", xml_unparse_date(expiry_time));
+  snprintf(locale_id_buf, sizeof(locale_id_buf), "%d", locale_id);
 
   args[0] = "telegram_token";
   args[1] = cnts->telegram_bot_id;
-  args[2] = user_id_buf;
-  args[3] = user_login;
-  args[4] = user_name;
-  args[5] = telegram_token;
-  args[6] = contest_id_buf;
-  args[7] = NULL;
+  args[2] = locale_id_buf;
+  args[3] = user_id_buf;
+  args[4] = user_login;
+  args[5] = user_name;
+  args[6] = telegram_token;
+  args[7] = contest_id_buf;
+  args[8] = expiry_buf;
+  args[9] = NULL;
   send_job_packet(NULL, (unsigned char**) args, 0);
 }
 

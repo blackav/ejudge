@@ -503,10 +503,12 @@ serve_send_telegram_token(
         const struct ejudge_cfg *config,
         serve_state_t state,
         const struct contest_desc *cnts,
+        int locale_id,
         int user_id,
         const unsigned char *user_login,
         const unsigned char *user_name,
-        const unsigned char *telegram_token);
+        const unsigned char *telegram_token,
+        time_t expiry_time);
 
 void
 serve_rejudge_run(

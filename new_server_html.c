@@ -7825,7 +7825,7 @@ unpriv_generate_telegram_token(
   snprintf(token_buf, sizeof(token_buf), "%d", telegram_token);
   snprintf(param_buf, sizeof(param_buf), "telegram_token=%d", telegram_token);
 
-  serve_send_telegram_token(ejudge_config, cs, cnts, phr->user_id, phr->login, phr->name, token_buf);
+  serve_send_telegram_token(ejudge_config, cs, cnts, phr->locale_id, phr->user_id, phr->login, phr->name, token_buf, 0);
 
   ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_SETTINGS, param_buf);
 }
