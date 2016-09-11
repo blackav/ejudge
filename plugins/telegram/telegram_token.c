@@ -16,10 +16,17 @@
 
 #include "ejudge/bson_utils.h"
 #include "ejudge/xalloc.h"
+#include "ejudge/osdeps.h"
+#include "ejudge/errlog.h"
 
 #include "telegram_token.h"
+#include "mongo_conn.h"
 
 #include <mongo.h>
+
+#include <errno.h>
+
+#define TELEGRAM_TOKENS_TABLE_NAME "telegram_tokens"
 
 struct telegram_token *
 telegram_token_free(struct telegram_token *token)
@@ -117,6 +124,122 @@ telegram_token_unparse_bson(const struct telegram_token *token)
     bson_finish(b);
     return b;
 }
+
+void
+telegram_token_remove_expired(struct mongo_conn *conn, time_t current_time)
+{
+    if (current_time <= 0) current_time = time(NULL);
+
+    if (!mongo_conn_open(conn)) return;
+    
+    bson *qq = bson_new();
+    bson_append_utc_datetime(qq, "$lt", 1000LL * current_time);
+    bson_finish(qq);
+    bson *q = bson_new();
+    bson_append_document(q, "expiry_time", qq); qq = NULL;
+    bson_finish(q);
+
+    mongo_sync_cmd_delete(conn->conn, mongo_conn_ns(conn, TELEGRAM_TOKENS_TABLE_NAME), 0, q);
+
+    bson_free(q);
+}
+
+void
+telegram_token_remove(struct mongo_conn *conn, const unsigned char *token)
+{
+    if (!mongo_conn_open(conn)) return;
+    
+    bson *q = bson_new();
+    bson_append_string(q, "token", token, strlen(token));
+    bson_finish(q);
+
+    mongo_sync_cmd_delete(conn->conn, mongo_conn_ns(conn, TELEGRAM_TOKENS_TABLE_NAME), 0, q);
+
+    bson_free(q);
+}
+
+int
+telegram_token_fetch(struct mongo_conn *conn, const unsigned char *token_str, struct telegram_token **p_token)
+{
+    int retval = -1;
+
+    if (!mongo_conn_open(conn)) return -1;
+
+    bson *query = NULL;
+    mongo_packet *pkt = NULL;
+    mongo_sync_cursor *cursor = NULL;
+    bson *result = NULL;
+
+    query = bson_new();
+    bson_append_string(query, "token", token_str, strlen(token_str));
+    bson_finish(query);
+    
+    pkt = mongo_sync_cmd_query(conn->conn, mongo_conn_ns(conn, TELEGRAM_TOKENS_TABLE_NAME), 0, 0, 1, query, NULL);
+    if (!pkt && errno == ENOENT) {
+        retval = 0;
+        goto cleanup;
+    }
+    if (!pkt) {
+        err("mongo query failed: %s", os_ErrorMsg());
+        goto cleanup;
+    }
+    bson_free(query); query = NULL;
+
+    cursor = mongo_sync_cursor_new(conn->conn, conn->ns, pkt);
+    if (!cursor) {
+        err("mongo query failed: cannot create cursor: %s", os_ErrorMsg());
+        goto cleanup;
+    }
+    pkt = NULL;
+    if (mongo_sync_cursor_next(cursor)) {
+        result = mongo_sync_cursor_get_data(cursor);
+        if (result) {
+            struct telegram_token *t = telegram_token_parse_bson(result);
+            if (t) {
+                *p_token = t;
+                retval = 1;
+            }
+        } else {
+            retval = 0;
+        }
+    } else {
+        retval = 0;
+    }
+
+cleanup:
+    if (result) bson_free(result);
+    if (cursor) mongo_sync_cursor_free(cursor);
+    if (pkt) mongo_wire_packet_free(pkt);
+    if (query) bson_free(query);
+    return retval;
+}
+
+int
+telegram_token_save(struct mongo_conn *conn, const struct telegram_token *token)
+{
+    if (!mongo_conn_open(conn)) return -1;
+    int retval = -1;
+
+    bson *b = telegram_token_unparse_bson(token);
+    bson *ind = NULL;
+
+    if (!mongo_sync_cmd_insert(conn->conn, mongo_conn_ns(conn, TELEGRAM_TOKENS_TABLE_NAME), b, NULL)) {
+        err("save_token: failed: %s", os_ErrorMsg());
+        goto cleanup;
+    }
+
+    ind = bson_new();
+    bson_append_int32(ind, "token", 1);
+    bson_finish(ind);
+    mongo_sync_cmd_index_create(conn->conn, conn->ns, ind, 0);
+    
+    retval = 0;
+cleanup:
+    if (ind) bson_free(ind);
+    bson_free(b);
+    return retval;
+}
+
 
 /*
  * Local variables:

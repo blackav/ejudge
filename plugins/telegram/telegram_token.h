@@ -16,6 +16,8 @@
  * GNU General Public License for more details.
  */
 
+#include <time.h>
+
 struct _bson;
 
 /* tokens for bot interaction */
@@ -40,6 +42,17 @@ struct telegram_token *
 telegram_token_create(void);
 struct _bson *
 telegram_token_unparse_bson(const struct telegram_token *token);
+
+struct mongo_conn;
+
+void
+telegram_token_remove_expired(struct mongo_conn *conn, time_t current_time);
+void
+telegram_token_remove(struct mongo_conn *conn, const unsigned char *token);
+int
+telegram_token_fetch(struct mongo_conn *conn, const unsigned char *token_str, struct telegram_token **p_token);
+int
+telegram_token_save(struct mongo_conn *conn, const struct telegram_token *token);
 
 #endif
 
