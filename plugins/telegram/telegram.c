@@ -26,6 +26,7 @@
 
 #include "telegram_data.h"
 #include "telegram_pbs.h"
+#include "telegram_token.h"
 
 #include "ejudge/cJSON.h"
 
@@ -40,6 +41,7 @@
 
 #define MONGO_RETRY_TIMEOUT 60
 #define TELEGRAM_BOTS_TABLE_NAME "telegram_bots"
+#define TELEGRAM_TOKENS_TABLE_NAME "telegram_tokens"
 
 static struct common_plugin_data *
 init_func(void);
@@ -53,6 +55,8 @@ prepare_func(
 
 static void
 packet_handler_telegram(int uid, int argc, char **argv, void *user);
+static void
+packet_handler_telegram_token(int uid, int argc, char **argv, void *user);
 
 static void
 periodic_handler(void *user);
@@ -170,6 +174,7 @@ prepare_func(
     }
   
     ej_jobs_add_handler("telegram", packet_handler_telegram, state);
+    ej_jobs_add_handler("telegram_token", packet_handler_telegram_token, state);
     ej_jobs_add_periodic_handler(periodic_handler, state);
     return 0;
 }
@@ -372,6 +377,200 @@ packet_handler_telegram(int uid, int argc, char **argv, void *user)
     if (curl) {
         curl_easy_cleanup(curl);
     }
+}
+
+static void
+remove_expired_tokens(struct telegram_plugin_data *state, time_t current_time)
+{
+    if (current_time <= 0) current_time = time(NULL);
+
+    mongo_sync_connection *conn = get_mongo_connection(state);
+    if (!conn) return;
+    
+    char ns[1024];
+    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, TELEGRAM_TOKENS_TABLE_NAME);
+
+    bson *qq = bson_new();
+    bson_append_utc_datetime(qq, "$lt", 1000LL * current_time);
+    bson_finish(qq);
+    bson *q = bson_new();
+    bson_append_document(q, "expiry_time", qq); qq = NULL;
+    bson_finish(q);
+
+    mongo_sync_cmd_delete(conn, ns, 0, q);
+
+    bson_free(q);
+}
+
+static void
+remove_token(struct telegram_plugin_data *state, const unsigned char *token)
+{
+    mongo_sync_connection *conn = get_mongo_connection(state);
+    if (!conn) return;
+    
+    char ns[1024];
+    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, TELEGRAM_TOKENS_TABLE_NAME);
+
+    bson *q = bson_new();
+    bson_append_string(q, "token", token, strlen(token));
+    bson_finish(q);
+
+    mongo_sync_cmd_delete(conn, ns, 0, q);
+
+    bson_free(q);
+}
+
+static int
+get_token(struct telegram_plugin_data *state, const unsigned char *token_str, struct telegram_token **p_token)
+{
+    int retval = -1;
+
+    mongo_sync_connection *conn = get_mongo_connection(state);
+    if (!conn) return -1;
+
+    char ns[1024];
+    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, TELEGRAM_TOKENS_TABLE_NAME);
+
+    bson *query = NULL;
+    mongo_packet *pkt = NULL;
+    mongo_sync_cursor *cursor = NULL;
+    bson *result = NULL;
+
+    query = bson_new();
+    bson_append_string(query, "token", token_str, strlen(token_str));
+    bson_finish(query);
+    
+    pkt = mongo_sync_cmd_query(conn, ns, 0, 0, 1, query, NULL);
+    if (!pkt && errno == ENOENT) {
+        retval = 0;
+        goto cleanup;
+    }
+    if (!pkt) {
+        err("mongo query failed: %s", os_ErrorMsg());
+        goto cleanup;
+    }
+    bson_free(query); query = NULL;
+
+    cursor = mongo_sync_cursor_new(conn, ns, pkt);
+    if (!cursor) {
+        err("mongo query failed: cannot create cursor: %s", os_ErrorMsg());
+        goto cleanup;
+    }
+    pkt = NULL;
+    if (mongo_sync_cursor_next(cursor)) {
+        result = mongo_sync_cursor_get_data(cursor);
+        if (result) {
+            struct telegram_token *t = telegram_token_parse_bson(result);
+            if (t) {
+                *p_token = t;
+                retval = 1;
+            }
+        } else {
+            retval = 0;
+        }
+    } else {
+        retval = 0;
+    }
+
+cleanup:
+    if (result) bson_free(result);
+    if (cursor) mongo_sync_cursor_free(cursor);
+    if (pkt) mongo_wire_packet_free(pkt);
+    if (query) bson_free(query);
+    return retval;
+}
+
+static int
+save_token(struct telegram_plugin_data *state, const struct telegram_token *token)
+{
+    mongo_sync_connection *conn = get_mongo_connection(state);
+    if (!conn) return -1;
+    char ns[1024];
+    int retval = -1;
+
+    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, TELEGRAM_TOKENS_TABLE_NAME);
+    bson *b = telegram_token_unparse_bson(token);
+    bson *ind = NULL;
+
+    if (!mongo_sync_cmd_insert(conn, ns, b, NULL)) {
+        err("save_token: failed: %s", os_ErrorMsg());
+        goto cleanup;
+    }
+
+    ind = bson_new();
+    bson_append_int32(ind, "token", 1);
+    bson_finish(ind);
+    mongo_sync_cmd_index_create(conn, ns, ind, 0);
+    
+    retval = 0;
+cleanup:
+    if (ind) bson_free(ind);
+    bson_free(b);
+    return retval;
+}
+
+/*
+  args[0] = "telegram_token";
+  args[1] = cnts->telegram_bot_id;
+  args[2] = locale_id_buf;
+  args[3] = user_id_buf;
+  args[4] = user_login;
+  args[5] = user_name;
+  args[6] = telegram_token;
+  args[7] = contest_id_buf;
+  args[8] = expiry_buf;
+  args[9] = NULL;
+ */
+static void
+packet_handler_telegram_token(int uid, int argc, char **argv, void *user)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
+    struct telegram_token *token = NULL;
+    struct telegram_token *other_token = NULL;
+
+    if (argc != 9) {
+        err("wrong number of arguments for telegram_token: %d", argc);
+        goto cleanup;
+    }
+
+    err("expiry: %s", argv[8]);
+
+    XCALLOC(token, 1);
+    token->bot_id = xstrdup(argv[1]);
+    sscanf(argv[2], "%d", &token->locale_id);
+    if (token->locale_id < 0) token->locale_id = 0;
+    sscanf(argv[3], "%d", &token->user_id);
+    if (token->user_id < 0) token->user_id = 0;
+    token->user_login = xstrdup(argv[4]);
+    token->user_name = xstrdup(argv[5]);
+    token->token = xstrdup(argv[6]);
+    if (!*token->token) {
+        err("telegram_token: empty_token");
+        goto cleanup;
+    }
+    sscanf(argv[7], "%d", &token->contest_id);
+    if (token->contest_id < 0) token->contest_id = 0;
+    if (xml_parse_date(NULL, NULL, 0, 0, argv[8], &token->expiry_time) < 0 || token->expiry_time <= 0) {
+        err("telegram_token: invalid expiry_time: %s", argv[8]);
+        goto cleanup;
+    }
+
+    time_t current_time = time(NULL);
+    remove_expired_tokens(state, current_time);
+
+    int res = get_token(state, token->token, &other_token);
+    if (res < 0) {
+        err("telegram_token: get_token failed");
+    } else if (res > 0) {
+        err("duplicated token, removing all");
+        remove_token(state, token->token);
+    } else {
+        save_token(state, token);
+    }
+
+cleanup:
+    telegram_token_free(token);
+    telegram_token_free(other_token);
 }
 
 static void

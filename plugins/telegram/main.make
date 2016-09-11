@@ -21,7 +21,7 @@ CFLAGS = -I../../include $(MYSQL_INCL_OPT) $(MONGO_CFLAGS) $(CDEBUGFLAGS) $(CCOM
 LDFLAGS = $(MYSQL_LIB_OPT) $(EXPAT_LIB_OPT) $(CDEBUGFLAGS) $(LDCOMPFLAGS) $(LDEXTRAFLAGS)
 LDLIBS = $(EXTRALIBS) $(MYSQL_LIBS) $(MONGO_LIBS) -lexpat -lm
 
-CFILES = telegram.c telegram_data.c telegram_pbs.c
+CFILES = telegram.c telegram_data.c telegram_pbs.c telegram_token.c
 
 PLUGINS = sn_telegram.so
 
