@@ -19,100 +19,88 @@
 #include "ejudge/errlog.h"
 #include "ejudge/osdeps.h"
 
-#include "telegram_chat.h"
+#include "telegram_user.h"
 #include "mongo_conn.h"
 
 #include <mongo.h>
 
 #include <errno.h>
 
-#define TELEGRAM_CHATS_TABLE_NAME "telegram_chats"
+#define TELEGRAM_USERS_TABLE_NAME "telegram_users"
 
-struct telegram_chat *
-telegram_chat_free(struct telegram_chat *tc)
+struct telegram_user *
+telegram_user_free(struct telegram_user *tu)
 {
-    if (tc) {
-        xfree(tc->type);
-        xfree(tc->title);
-        xfree(tc->username);
-        xfree(tc->first_name);
-        xfree(tc->last_name);
-        memset(tc, 0xff, sizeof(*tc));
-        xfree(tc);
+    if (tu) {
+        xfree(tu->username);
+        xfree(tu->first_name);
+        xfree(tu->last_name);
+        memset(tu, 0xff, sizeof(*tu));
+        xfree(tu);
     }
     return NULL;
 }
 
-struct telegram_chat *
-telegram_chat_create(void)
+struct telegram_user *
+telegram_user_create(void)
 {
-    struct telegram_chat *tc = NULL;
-    XCALLOC(tc, 1);
-    return tc;
+    struct telegram_user *tu = NULL;
+    XCALLOC(tu, 1);
+    return tu;
 }
 
-struct telegram_chat *
-telegram_chat_parse_bson(struct _bson *bson)
+struct telegram_user *
+telegram_user_parse_bson(struct _bson *bson)
 {
     bson_cursor *bc = NULL;
-    struct telegram_chat *tc = NULL;
+    struct telegram_user *tu = NULL;
 
-    XCALLOC(tc, 1);
+    XCALLOC(tu, 1);
     bc = bson_cursor_new(bson);
     while (bson_cursor_next(bc)) {
         const unsigned char *key = bson_cursor_key(bc);
         if (!strcmp(key, "_id")) {
-            if (ej_bson_parse_int64(bc, "_id", &tc->_id) < 0) goto cleanup;
-        } else if (!strcmp(key, "type")) {
-            if (ej_bson_parse_string(bc, "type", &tc->type) < 0) goto cleanup;
-        } else if (!strcmp(key, "title")) {
-            if (ej_bson_parse_string(bc, "title", &tc->title) < 0) goto cleanup;
+            if (ej_bson_parse_int64(bc, "_id", &tu->_id) < 0) goto cleanup;
         } else if (!strcmp(key, "username")) {
-            if (ej_bson_parse_string(bc, "username", &tc->username) < 0) goto cleanup;
+            if (ej_bson_parse_string(bc, "username", &tu->username) < 0) goto cleanup;
         } else if (!strcmp(key, "first_name")) {
-            if (ej_bson_parse_string(bc, "first_name", &tc->first_name) < 0) goto cleanup;
+            if (ej_bson_parse_string(bc, "first_name", &tu->first_name) < 0) goto cleanup;
         } else if (!strcmp(key, "last_name")) {
-            if (ej_bson_parse_string(bc, "last_name", &tc->last_name) < 0) goto cleanup;
+            if (ej_bson_parse_string(bc, "last_name", &tu->last_name) < 0) goto cleanup;
         }
     }
     bson_cursor_free(bc);
-    return tc;
+    return tu;
 
 cleanup:
-    telegram_chat_free(tc);
+    telegram_user_free(tu);
     return NULL;
 }
 
 bson *
-telegram_chat_unparse_bson(const struct telegram_chat *tc)
+telegram_user_unparse_bson(const struct telegram_user *tu)
 {
-    if (!tc) return NULL;
+    if (!tu) return NULL;
 
     bson *bson = bson_new();
-    if (tc->_id) {
-        bson_append_int64(bson, "_id", tc->_id);
+    if (tu->_id) {
+        bson_append_int64(bson, "_id", tu->_id);
     }
-    if (tc->type && *tc->type) {
-        bson_append_string(bson, "type", tc->type, strlen(tc->type));
+    if (tu->username && *tu->username) {
+        bson_append_string(bson, "username", tu->username, strlen(tu->username));
     }
-    if (tc->title && *tc->title) {
-        bson_append_string(bson, "title", tc->title, strlen(tc->title));
+    if (tu->first_name && *tu->first_name) {
+        bson_append_string(bson, "first_name", tu->first_name, strlen(tu->first_name));
     }
-    if (tc->username && *tc->username) {
-        bson_append_string(bson, "username", tc->username, strlen(tc->username));
-    }
-    if (tc->first_name && *tc->first_name) {
-        bson_append_string(bson, "first_name", tc->first_name, strlen(tc->first_name));
-    }
-    if (tc->last_name && *tc->last_name) {
-        bson_append_string(bson, "last_name", tc->last_name, strlen(tc->last_name));
+    if (tu->last_name && *tu->last_name) {
+        bson_append_string(bson, "last_name", tu->last_name, strlen(tu->last_name));
     }
     bson_finish(bson);
     return bson;
 }
 
-struct telegram_chat *
-telegram_chat_fetch(struct mongo_conn *conn, long long _id)
+struct telegram_user *
+telegram_user_fetch(struct mongo_conn *conn, long long _id)
 {
     if (!mongo_conn_open(conn)) return NULL;
 
@@ -120,13 +108,13 @@ telegram_chat_fetch(struct mongo_conn *conn, long long _id)
     mongo_packet *pkt = NULL;
     mongo_sync_cursor *cursor = NULL;
     bson *result = NULL;
-    struct telegram_chat *retval = NULL;
+    struct telegram_user *retval = NULL;
 
     query = bson_new();
     bson_append_int64(query, "_id", _id);
     bson_finish(query);
 
-    pkt = mongo_sync_cmd_query(conn->conn, mongo_conn_ns(conn, TELEGRAM_CHATS_TABLE_NAME), 0, 0, 1, query, NULL);
+    pkt = mongo_sync_cmd_query(conn->conn, mongo_conn_ns(conn, TELEGRAM_USERS_TABLE_NAME), 0, 0, 1, query, NULL);
     if (!pkt && errno == ENOENT) {
         goto cleanup;
     }
@@ -145,7 +133,7 @@ telegram_chat_fetch(struct mongo_conn *conn, long long _id)
     if (mongo_sync_cursor_next(cursor)) {
         result = mongo_sync_cursor_get_data(cursor);
         if (result) {
-            retval = telegram_chat_parse_bson(result);
+            retval = telegram_user_parse_bson(result);
         }
     }
 
@@ -158,14 +146,14 @@ cleanup:
 }
 
 int
-telegram_chat_save(struct mongo_conn *conn, const struct telegram_chat *tc)
+telegram_user_save(struct mongo_conn *conn, const struct telegram_user *tu)
 {
     if (!mongo_conn_open(conn)) return -1;
     int retval = -1;
 
-    bson *b = telegram_chat_unparse_bson(tc);
+    bson *b = telegram_user_unparse_bson(tu);
 
-    if (!mongo_sync_cmd_insert(conn->conn, mongo_conn_ns(conn, TELEGRAM_CHATS_TABLE_NAME), b, NULL)) {
+    if (!mongo_sync_cmd_insert(conn->conn, mongo_conn_ns(conn, TELEGRAM_USERS_TABLE_NAME), b, NULL)) {
         err("save_token: failed: %s", os_ErrorMsg());
         goto cleanup;
     }
