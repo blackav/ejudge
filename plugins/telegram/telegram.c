@@ -25,6 +25,8 @@
 #include "telegram_data.h"
 #include "telegram_pbs.h"
 #include "telegram_token.h"
+#include "telegram_user.h"
+#include "telegram_chat.h"
 #include "mongo_conn.h"
 
 #include "ejudge/cJSON.h"
@@ -332,6 +334,94 @@ cleanup:
     telegram_token_free(other_token);
 }
 
+static int
+safe_strcmp(const unsigned char *s1, const unsigned char *s2)
+{
+    if (!s1 && !s2) return 0;
+    if (!s1) return -1;
+    if (!s2) return 1;
+    return strcmp(s1, s2);
+}
+
+static unsigned char *
+safe_strdup(const unsigned char *s)
+{
+    if (!s) return NULL;
+    return xstrdup(s);
+}
+
+static int
+need_update_user(const struct telegram_user *mu, const TeUser *teu)
+{
+    if (!mu && !teu) return 0;
+    if (!mu) return 1;
+    if (!teu) return 0;
+    return safe_strcmp(mu->username, teu->username) != 0
+        || safe_strcmp(mu->first_name, teu->first_name) != 0
+        || safe_strcmp(mu->last_name, teu->last_name) != 0;
+}
+
+static int
+need_update_chat(const struct telegram_chat *mc, const TeChat *tc)
+{
+    if (!mc && !tc) return 0;
+    if (!mc) return 1;
+    if (!tc) return 0;
+    return safe_strcmp(mc->type, tc->type) != 0
+        || safe_strcmp(mc->title, tc->title) != 0
+        || safe_strcmp(mc->username, tc->username) != 0
+        || safe_strcmp(mc->first_name, tc->first_name) != 0
+        || safe_strcmp(mc->last_name, tc->last_name) != 0;
+}
+
+static int
+handle_incoming_message(
+        struct telegram_plugin_data *state,
+        struct bot_state *bs,
+        struct telegram_pbs *pbs,
+        TeMessage *tem)
+{
+    struct telegram_user *mu = NULL; // mongo user
+    struct telegram_chat *mc = NULL; // mongo chat
+
+    if (!tem) return 0;
+
+    if (tem->from) {
+        TeUser *teu = tem->from;
+        mu = telegram_user_fetch(state->conn, teu->id);
+        if (need_update_user(mu, teu)) {
+            info("updating user info for %lld", teu->id);
+            telegram_user_free(mu);
+            mu = telegram_user_create();
+            mu->_id = teu->id;
+            mu->username = safe_strdup(teu->username);
+            mu->first_name = safe_strdup(teu->first_name);
+            mu->last_name = safe_strdup(teu->last_name);
+            telegram_user_save(state->conn, mu);
+        }
+    }
+    if (tem->chat) {
+        TeChat *tc = tem->chat;
+        mc = telegram_chat_fetch(state->conn, tc->id);
+        if (need_update_chat(mc, tc)) {
+            info("updating chat info for %lld", tc->id);
+            telegram_chat_free(mc);
+            mc = telegram_chat_create();
+            mc->_id = tc->id;
+            mc->type = safe_strdup(tc->type);
+            mc->title = safe_strdup(tc->title);
+            mc->username = safe_strdup(tc->username);
+            mc->first_name = safe_strdup(tc->first_name);
+            mc->last_name = safe_strdup(tc->last_name);
+            telegram_chat_save(state->conn, mc);
+        }
+    }
+
+    telegram_chat_free(mc);
+    telegram_user_free(mu);
+    return 0;
+}
+    
 static void
 handle_reply(struct telegram_plugin_data *state,
              struct bot_state *bs,
@@ -354,9 +444,8 @@ handle_reply(struct telegram_plugin_data *state,
             for (int i = 0; i < updates->result.length; ++i) {
                 const TeUpdate *tu = updates->result.v[i];
                 info("{ update_id: %lld }", tu->update_id);
-                if (tu->message && tu->message->text) {
-                    info("{ text: %s }", tu->message->text);
-                }
+                if (handle_incoming_message(state, bs, pbs, tu->message))
+                    need_update = 1;
                 if (!pbs->update_id || tu->update_id > pbs->update_id) {
                     pbs->update_id = tu->update_id;
                     need_update = 1;

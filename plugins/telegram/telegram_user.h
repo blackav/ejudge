@@ -35,6 +35,13 @@ telegram_user_parse_bson(struct _bson *bson);
 struct _bson *
 telegram_user_unparse_bson(const struct telegram_user *tu);
 
+struct mongo_conn;
+
+struct telegram_user *
+telegram_user_fetch(struct mongo_conn *conn, long long _id);
+int
+telegram_user_save(struct mongo_conn *conn, const struct telegram_user *tu);
+
 #endif
 
 /*

@@ -152,8 +152,11 @@ telegram_user_save(struct mongo_conn *conn, const struct telegram_user *tu)
     int retval = -1;
 
     bson *b = telegram_user_unparse_bson(tu);
+    bson *q = bson_new();
+    bson_append_int64(q, "_id", tu->_id);
+    bson_finish(q);
 
-    if (!mongo_sync_cmd_insert(conn->conn, mongo_conn_ns(conn, TELEGRAM_USERS_TABLE_NAME), b, NULL)) {
+    if (!mongo_sync_cmd_update(conn->conn, mongo_conn_ns(conn, TELEGRAM_USERS_TABLE_NAME), MONGO_WIRE_FLAG_UPDATE_UPSERT, q, b)) {
         err("save_token: failed: %s", os_ErrorMsg());
         goto cleanup;
     }
@@ -162,6 +165,7 @@ telegram_user_save(struct mongo_conn *conn, const struct telegram_user *tu)
 
 cleanup:
     bson_free(b);
+    bson_free(q);
     return retval;
 }
 
