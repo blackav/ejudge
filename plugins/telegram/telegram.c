@@ -27,6 +27,7 @@
 #include "telegram_token.h"
 #include "telegram_user.h"
 #include "telegram_chat.h"
+#include "telegram_chat_state.h"
 #include "mongo_conn.h"
 
 #include "ejudge/cJSON.h"
@@ -469,6 +470,7 @@ handle_incoming_message(
     struct telegram_user *mu = NULL; // mongo user
     struct telegram_chat *mc = NULL; // mongo chat
     struct TeSendMessageResult *send_result = NULL;
+    struct telegram_chat_state *tcs = NULL;
 
     if (!tem) return 0;
 
@@ -504,8 +506,17 @@ handle_incoming_message(
     }
 
     if (!tem->chat || !tem->chat->type || strcmp(tem->chat->type, "private")) goto cleanup;
+    if (!mc) goto cleanup;
     // only want private chats
     if (!tem->text) goto cleanup;
+
+    // chat state machine is here
+    tcs = telegram_chat_state_fetch(state->conn, mc->_id);
+    if (!tcs) {
+        tcs = telegram_chat_state_create();
+        tcs->_id = mc->_id;
+    }
+
     if (!strcmp(tem->text, "/subscribe")) {
         send_result = send_message(state, bs, mc, "Not implemented yet!", NULL);
     } else if (!strcmp(tem->text, "/unsubscribe")) {
@@ -515,6 +526,7 @@ handle_incoming_message(
                                    "List of commands:\n"
                                    "/subscribe - subscribe for event\n"
                                    "/unsubscribe - unsubscribe from event\n"
+                                   "/cancel - cancel the current command\n"
                                    "/help - get this help\n",
                                    NULL);
     } else {
@@ -523,6 +535,7 @@ handle_incoming_message(
 
 cleanup:
     if (send_result) send_result->b.destroy(&send_result->b);
+    telegram_chat_state_free(tcs);
     telegram_chat_free(mc);
     telegram_user_free(mu);
     return 0;

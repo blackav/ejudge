@@ -32,6 +32,13 @@ telegram_chat_state_parse_bson(struct _bson *bson);
 struct _bson *
 telegram_chat_state_unparse_bson(const struct telegram_chat_state *tcs);
 
+struct mongo_conn;
+
+struct telegram_chat_state *
+telegram_chat_state_fetch(struct mongo_conn *conn, long long _id);
+int
+telegram_chat_state_save(struct mongo_conn *conn, const struct telegram_chat_state *tcs);
+
 #endif
 
 /*

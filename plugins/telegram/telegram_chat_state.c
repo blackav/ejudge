@@ -128,14 +128,17 @@ cleanup:
 }
 
 int
-telegram_chat_state_state_save(struct mongo_conn *conn, const struct telegram_chat_state *tcs)
+telegram_chat_state_save(struct mongo_conn *conn, const struct telegram_chat_state *tcs)
 {
     if (!mongo_conn_open(conn)) return -1;
     int retval = -1;
 
     bson *b = telegram_chat_state_unparse_bson(tcs);
+    bson *q = bson_new();
+    bson_append_int64(q, "_id", tcs->_id);
+    bson_finish(q);
 
-    if (!mongo_sync_cmd_insert(conn->conn, mongo_conn_ns(conn, TELEGRAM_CHAT_STATES_TABLE_NAME), b, NULL)) {
+    if (!mongo_sync_cmd_update(conn->conn, mongo_conn_ns(conn, TELEGRAM_CHAT_STATES_TABLE_NAME), MONGO_WIRE_FLAG_UPDATE_UPSERT, q, b)) {
         err("save_token: failed: %s", os_ErrorMsg());
         goto cleanup;
     }
@@ -143,6 +146,7 @@ telegram_chat_state_state_save(struct mongo_conn *conn, const struct telegram_ch
     retval = 0;
 
 cleanup:
+    bson_free(q);
     bson_free(b);
     return retval;
 }
