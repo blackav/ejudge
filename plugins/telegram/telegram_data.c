@@ -392,6 +392,37 @@ cleanup:
     return NULL;
 }
 
+void TeSendMessageResult_destroy(TeBase *b)
+{
+    TeSendMessageResult *p = (TeSendMessageResult*) p;
+    if (p) {
+        if (p->result) p->result->b.destroy(&p->result->b);
+        xfree(p);
+    }
+}
+
+TeSendMessageResult *TeSendMessageResult_parse(cJSON *j)
+{
+    TeSendMessageResult *p = NULL;
+    cJSON *jj;
+
+    if (!j || j->type != cJSON_Object) goto cleanup;
+    XCALLOC(p, 1);
+    p->b.destroy = TeSendMessageResult_destroy;
+    if ((jj = cJSON_GetObjectItem(j, "ok")) && jj->type == cJSON_True) {
+        p->ok = 1;
+    }
+    if (JSON_IFOBJECT(jj, j, "result")) {
+        if (!(p->result = TeMessage_parse(jj))) goto cleanup;
+    }
+
+    return p;
+
+cleanup:
+    TeSendMessageResult_destroy(&p->b);
+    return NULL;
+}
+
 /*
  * Local variables:
  *  c-basic-offset: 4

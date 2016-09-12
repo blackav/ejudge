@@ -184,6 +184,16 @@ typedef struct TeGetUpdatesResult
 void TeGetUpdatesResult_destroy(TeBase *b);
 TeGetUpdatesResult *TeGetUpdatesResult_parse(cJSON *j);
 
+typedef struct TeSendMessageResult
+{
+    TeBase b;
+    int ok;
+    TeMessage *result;
+} TeSendMessageResult;
+
+void TeSendMessageResult_destroy(TeBase *b);
+TeSendMessageResult *TeSendMessageResult_parse(cJSON *j);
+
 #endif
 
 /*
