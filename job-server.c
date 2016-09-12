@@ -44,7 +44,7 @@
 #include <time.h>
 #include <sys/stat.h>
 
-#define PERIODIC_INTERVAL 60
+#define PERIODIC_INTERVAL 10
 
 static struct ejudge_cfg *config;
 static path_t job_server_log_path;
