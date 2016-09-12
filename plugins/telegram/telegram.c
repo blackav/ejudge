@@ -187,6 +187,91 @@ get_persistent_bot_state(struct mongo_conn *conn, struct bot_state *bs)
     return bs->pbs;
 }
 
+static TeSendMessageResult *
+send_message(
+        struct telegram_plugin_data *state,
+        struct bot_state *bs,
+        struct telegram_chat *tc,
+        const unsigned char *text,
+        const unsigned char *parse_mode)
+{
+    CURL *curl = NULL;
+    char *url_s = NULL, *post_s = NULL, *resp_s = NULL;
+    cJSON *root = NULL;
+    TeSendMessageResult *result = NULL;
+
+    curl = curl_easy_init();
+    if (!curl) {
+        err("cannot initialize curl");
+        goto cleanup;
+    }
+
+    {
+        size_t url_z = 0;
+        FILE *url_f = open_memstream(&url_s, &url_z);
+        fprintf(url_f, "https://api.telegram.org/bot%s/%s", bs->bot_id, "sendMessage");
+        fclose(url_f);
+    }
+
+    {
+        size_t post_z = 0;
+        FILE *post_f = open_memstream(&post_s, &post_z);
+        fprintf(post_f, "chat_id=%lld", tc->_id);
+        fprintf(post_f, "&text=");
+        unsigned char *s = curl_easy_escape(curl, text, 0);
+        fprintf(post_f, "%s", s);
+        xfree(s);
+        if (parse_mode && *parse_mode) {
+            fprintf(post_f, "&parse_mode=");
+            s = curl_easy_escape(curl, parse_mode, 0);
+            fprintf(post_f, "%s", s);
+            free(s);
+        }
+        fclose(post_f);
+    }
+
+    {
+        size_t resp_z = 0;
+        FILE *resp_f = open_memstream(&resp_s, &resp_z);
+        curl_easy_setopt(curl, CURLOPT_AUTOREFERER, 1);
+        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+        curl_easy_setopt(curl, CURLOPT_URL, url_s);
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, resp_f);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, (char*) post_s);
+        curl_easy_setopt(curl, CURLOPT_POST, 1);
+        CURLcode res = curl_easy_perform(curl);
+        fclose(resp_f);
+        if (res != CURLE_OK) {
+            err("curl request failed");
+            goto cleanup;
+        }
+    }
+
+    fprintf(stderr, ">%s<\n", resp_s);
+
+    root = cJSON_Parse(resp_s);
+    if (!root) {
+        err("JSON parsing failed");
+        goto cleanup;
+    } else {
+        if (!(result = TeSendMessageResult_parse(root))) {
+            err("TeSendMessageResult_parse failed");
+            goto cleanup;
+        }
+    }
+    
+ cleanup:
+    if (root) cJSON_Delete(root);
+    xfree(resp_s);
+    xfree(post_s);
+    xfree(url_s);
+    if (curl) {
+        curl_easy_cleanup(curl);
+    }
+    return result;
+}
+
 /*
  * [0] - "telegram"
  * [1] - auth
@@ -383,6 +468,7 @@ handle_incoming_message(
 {
     struct telegram_user *mu = NULL; // mongo user
     struct telegram_chat *mc = NULL; // mongo chat
+    struct TeSendMessageResult *send_result = NULL;
 
     if (!tem) return 0;
 
@@ -417,6 +503,26 @@ handle_incoming_message(
         }
     }
 
+    if (!tem->chat || !tem->chat->type || strcmp(tem->chat->type, "private")) goto cleanup;
+    // only want private chats
+    if (!tem->text) goto cleanup;
+    if (!strcmp(tem->text, "/subscribe")) {
+        send_result = send_message(state, bs, mc, "Not implemented yet!", NULL);
+    } else if (!strcmp(tem->text, "/unsubscribe")) {
+        send_result = send_message(state, bs, mc, "Not implemented yet!", NULL);
+    } else if (!strcmp(tem->text, "/help")) {
+        send_result = send_message(state, bs, mc,
+                                   "List of commands:\n"
+                                   "/subscribe - subscribe for event\n"
+                                   "/unsubscribe - unsubscribe from event\n"
+                                   "/help - get this help\n",
+                                   NULL);
+    } else {
+        send_result = send_message(state, bs, mc, "Sorry, cannot understand you!", NULL);
+    }
+
+cleanup:
+    if (send_result) send_result->b.destroy(&send_result->b);
     telegram_chat_free(mc);
     telegram_user_free(mu);
     return 0;

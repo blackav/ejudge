@@ -394,7 +394,7 @@ cleanup:
 
 void TeSendMessageResult_destroy(TeBase *b)
 {
-    TeSendMessageResult *p = (TeSendMessageResult*) p;
+    TeSendMessageResult *p = (TeSendMessageResult*) b;
     if (p) {
         if (p->result) p->result->b.destroy(&p->result->b);
         xfree(p);
