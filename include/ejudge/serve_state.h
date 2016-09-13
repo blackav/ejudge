@@ -517,6 +517,13 @@ serve_telegram_user_run_reviewed(
         int user_id,
         int run_id,
         int new_status);
+void
+serve_telegram_user_clar_replied(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        int user_id,
+        int clar_id);
 
 void
 serve_rejudge_run(

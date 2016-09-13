@@ -2328,6 +2328,36 @@ serve_telegram_user_run_reviewed(
 }
 
 void
+serve_telegram_user_clar_replied(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        int user_id,
+        int clar_id)
+{
+  if (!cnts || !cnts->telegram_bot_id || !*cnts->telegram_bot_id) return;
+  const unsigned char *args[10];
+  unsigned char buf1[64];
+  unsigned char buf2[64];
+  unsigned char buf3[64];
+
+  args[0] = "telegram_replied";
+  args[1] = cnts->telegram_bot_id;
+  snprintf(buf1, sizeof(buf1), "%d", cnts->id);
+  args[2] = buf1;
+  args[3] = cnts->name;
+  if (!args[3]) args[3] = "";
+  snprintf(buf2, sizeof(buf2), "%d", user_id);
+  args[4] = buf2;
+  args[5] = teamdb_get_login(cs->teamdb_state, user_id);
+  args[6] = teamdb_get_name_2(cs->teamdb_state, user_id);
+  snprintf(buf3, sizeof(buf3), "%d", clar_id);
+  args[7] = buf3;
+  args[8] = NULL;
+  send_job_packet(NULL, (unsigned char **) args, 0);
+}
+
+void
 serve_notify_user_run_status_change(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,

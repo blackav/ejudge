@@ -3537,6 +3537,10 @@ priv_clar_reply(
     xfree(msg_t); msg_t = 0; msg_z = 0;
   }
 
+  if (cnts->telegram_bot_id) {
+    serve_telegram_user_clar_replied(ejudge_config, cnts, cs, from_id, in_reply_to);
+  }
+
  cleanup:
   xfree(orig_txt);
   return 0;
