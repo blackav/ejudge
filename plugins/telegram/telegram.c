@@ -28,6 +28,7 @@
 #include "telegram_user.h"
 #include "telegram_chat.h"
 #include "telegram_chat_state.h"
+#include "telegram_subscription.h"
 #include "mongo_conn.h"
 
 #include "ejudge/cJSON.h"
@@ -194,7 +195,8 @@ send_message(
         struct bot_state *bs,
         struct telegram_chat *tc,
         const unsigned char *text,
-        const unsigned char *parse_mode)
+        const unsigned char *parse_mode,
+        const unsigned char *reply_markup)
 {
     CURL *curl = NULL;
     char *url_s = NULL, *post_s = NULL, *resp_s = NULL;
@@ -225,6 +227,12 @@ send_message(
         if (parse_mode && *parse_mode) {
             fprintf(post_f, "&parse_mode=");
             s = curl_easy_escape(curl, parse_mode, 0);
+            fprintf(post_f, "%s", s);
+            free(s);
+        }
+        if (reply_markup && *reply_markup) {
+            fprintf(post_f, "&reply_markup=");
+            s = curl_easy_escape(curl, reply_markup, 0);
             fprintf(post_f, "%s", s);
             free(s);
         }
@@ -471,6 +479,9 @@ handle_incoming_message(
     struct telegram_chat *mc = NULL; // mongo chat
     struct TeSendMessageResult *send_result = NULL;
     struct telegram_chat_state *tcs = NULL;
+    struct telegram_token *token = NULL;
+    struct telegram_subscription *sub = NULL;
+    int update_state = 0;
 
     if (!tem) return 0;
 
@@ -517,24 +528,154 @@ handle_incoming_message(
         tcs->_id = mc->_id;
     }
 
-    if (!strcmp(tem->text, "/subscribe")) {
-        send_result = send_message(state, bs, mc, "Not implemented yet!", NULL);
-    } else if (!strcmp(tem->text, "/unsubscribe")) {
-        send_result = send_message(state, bs, mc, "Not implemented yet!", NULL);
-    } else if (!strcmp(tem->text, "/help")) {
-        send_result = send_message(state, bs, mc,
-                                   "List of commands:\n"
-                                   "/subscribe - subscribe for event\n"
-                                   "/unsubscribe - unsubscribe from event\n"
-                                   "/cancel - cancel the current command\n"
-                                   "/help - get this help\n",
-                                   NULL);
-    } else {
-        send_result = send_message(state, bs, mc, "Sorry, cannot understand you!", NULL);
+    if (!tcs->state) {
+        if (!strcmp(tem->text, "/subscribe")) {
+            tcs->command = xstrdup(tem->text);
+            tcs->state = 1;
+            update_state = 1;
+            send_result = send_message(state, bs, mc, "Enter Ejudge Telegram Token. You may obtain a token on Settings tab in the ejudge user interface.", NULL, NULL);
+        } else if (!strcmp(tem->text, "/unsubscribe")) {
+            tcs->command = xstrdup(tem->text);
+            tcs->state = 1;
+            update_state = 1;
+            send_result = send_message(state, bs, mc, "Enter Ejudge Telegram Token. You may obtain a token on Settings tab in the ejudge user interface.", NULL, NULL);
+        } else if (!strcmp(tem->text, "/cancel")) {
+            send_result = send_message(state, bs, mc, "Operation canceled.", NULL, NULL);
+            telegram_chat_state_reset(tcs);
+            update_state = 1;
+        } else if (!strcmp(tem->text, "/help")) {
+            send_result = send_message(state, bs, mc,
+                                       "List of commands:\n"
+                                       "/subscribe - subscribe for event\n"
+                                       "/unsubscribe - unsubscribe from event\n"
+                                       "/cancel - cancel the current command\n"
+                                       "/help - get this help\n",
+                                       NULL, NULL);
+        } else {
+            send_result = send_message(state, bs, mc, "Sorry, cannot understand you! Type /help for help.", NULL, NULL);
+        }
+    } else if (tcs->state == 1) {
+        if (!strcmp(tem->text, "/cancel")) {
+            send_result = send_message(state, bs, mc, "Ok", NULL, NULL);
+            telegram_chat_state_reset(tcs);
+            update_state = 1;
+        } else {
+            int token_val, n;
+            if (sscanf(tem->text, "%d%n", &token_val, &n) != 1 || tem->text[n] || token_val < 0 || token_val >= 1000000) {
+                send_result = send_message(state, bs, mc, "Token is invalid. Try again, or /cancel.", NULL, NULL);
+            } else {
+                unsigned char buf[64];
+                snprintf(buf, sizeof(buf), "%d", token_val);
+                telegram_token_remove_expired(state->conn, 0);
+
+                int r = telegram_token_fetch(state->conn, buf, &token);
+                if (r < 0) {
+                    send_result = send_message(state, bs, mc, "Internal error. Operation canceled.", NULL, NULL);
+                    telegram_chat_state_reset(tcs);
+                    update_state = 1;
+                } else if (!r || !token) {
+                    send_result = send_message(state, bs, mc, "No such token. Try again, or /cancel.", NULL, NULL);
+                } else {
+                    {
+                        char *msg_s = NULL;
+                        size_t msg_z = 0;
+                        FILE *msg_f = open_memstream(&msg_s, &msg_z);
+                        fprintf(msg_f, "Contest ID: %d", token->contest_id);
+                        if (token->contest_name && *token->contest_name) {
+                            fprintf(msg_f, " (%s)", token->contest_name);
+                        }
+                        fprintf(msg_f, "\n");
+                        fprintf(msg_f, "User:");
+                        if (token->user_login && *token->user_login) {
+                            fprintf(msg_f, "%s", token->user_login);
+                        } else {
+                            fprintf(msg_f, "%d", token->user_id);
+                        }
+                        if (token->user_name && *token->user_name) {
+                            fprintf(msg_f, " (%s)", token->user_name);
+                        }
+                        fprintf(msg_f, "\n");
+                        fprintf(msg_f, "Please, select options. Press /done when done.\n");
+                        fclose(msg_f);
+                        send_result = send_message(state, bs, mc, msg_s, NULL, "{ \"keyboard\": [[{\"text\": \"review\"}, {\"text\": \"reply\"},{\"text\": \"/done\"}, {\"text\":\"/cancel\"}]]}");
+                        free(msg_s);
+                    }
+                    if (send_result && send_result->ok) {
+                        tcs->token = xstrdup(buf);
+                        tcs->state = 2;
+                        update_state = 1;
+                    } else {
+                        tcs->state = 0;
+                        xfree(tcs->command); tcs->command = NULL;
+                        xfree(tcs->token); tcs->token = NULL;
+                        update_state = 1;
+                    }
+                }
+            }
+        }
+    } else if (tcs->state == 2) {
+        if (!strcmp(tem->text, "/cancel")) {
+            send_result = send_message(state, bs, mc, "Operation canceled.", NULL, "{ \"hide_keyboard\": true}");
+            telegram_chat_state_reset(tcs);
+            update_state = 1;
+        } else if (!strcmp(tem->text, "/done")) {
+            int r = telegram_token_fetch(state->conn, tcs->token, &token);
+            if (r < 0) {
+                send_result = send_message(state, bs, mc, "Internal error. Operation canceled.", NULL, NULL);
+            } else if (!r) {
+                send_result = send_message(state, bs, mc, "Token expired. Operation failed.", NULL, NULL);
+            } else {
+                sub = telegram_subscription_fetch(state->conn, bs->bot_id, token->contest_id, token->user_id);
+                if (!sub && !strcmp(tcs->command, "/unsubscribe")) {
+                    send_result = send_message(state, bs, mc, "You have no subscriptions. Nothing to unsubscribe.", NULL, "{ \"hide_keyboard\": true}");
+                } else {
+                    if (!sub) sub = telegram_subscription_create(bs->bot_id, token->contest_id, token->user_id);
+                    if (!strcmp(tcs->command, "/subscribe")) {
+                        if (tcs->review_flag) sub->review_flag = 1;
+                        if (tcs->reply_flag) sub->reply_flag = 1;
+                    } else if (!strcmp(tcs->command, "/unsubscribe")) {
+                        if (tcs->review_flag) sub->review_flag = 0;
+                        if (tcs->reply_flag) sub->reply_flag = 0;
+                    }
+                    {
+                        char *msg_s = NULL;
+                        size_t msg_z = 0;
+                        FILE *msg_f = open_memstream(&msg_s, &msg_z);
+                        fprintf(msg_f, "Current subscriptions:\n");
+                        if (sub->review_flag) {
+                            fprintf(msg_f, "    notify when my PENDING REVIEW run has been reviewed\n");
+                        }
+                        if (sub->reply_flag) {
+                            fprintf(msg_f, "    notify when my message has been answered\n");
+                        }
+                        fclose(msg_f);
+                        send_result = send_message(state, bs, mc, msg_s, NULL, "{ \"hide_keyboard\": true}");
+                        free(msg_s);
+                    }
+                    telegram_subscription_save(state->conn, sub);
+                }
+                telegram_token_remove(state->conn, tcs->token);
+            }
+            telegram_chat_state_reset(tcs);
+            update_state = 1;
+        } else if (!strcmp(tem->text, "review")) {
+            send_result = send_message(state, bs, mc, "Review Complete notification chosen", NULL, NULL);
+            tcs->review_flag = 1;
+            update_state = 1;
+        } else if (!strcmp(tem->text, "reply")) {
+            send_result = send_message(state, bs, mc, "Message Replied notification chosen", NULL, NULL);
+            tcs->reply_flag = 1;
+            update_state = 1;
+        }
+    }
+
+    if (update_state) {
+        telegram_chat_state_save(state->conn, tcs);
     }
 
 cleanup:
     if (send_result) send_result->b.destroy(&send_result->b);
+    telegram_subscription_free(sub);
     telegram_chat_state_free(tcs);
     telegram_chat_free(mc);
     telegram_user_free(mu);
@@ -611,7 +752,7 @@ get_updates(struct telegram_plugin_data *state, struct bot_state *bs)
         fclose(url_f);
     }
 
-    fprintf(stderr, "request: %s\n", url_s);
+    //fprintf(stderr, "request: %s\n", url_s);
 
     {
         FILE *resp_f = open_memstream(&resp_s, &resp_z);
