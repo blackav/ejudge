@@ -57,6 +57,8 @@ static void
 packet_handler_telegram_reviewed(int uid, int argc, char **argv, void *user);
 static void
 packet_handler_telegram_replied(int uid, int argc, char **argv, void *user);
+static void
+packet_handler_telegram_cf(int uid, int argc, char **argv, void *user);
 
 static void
 periodic_handler(void *user);
@@ -171,6 +173,7 @@ prepare_func(
     ej_jobs_add_handler("telegram_token", packet_handler_telegram_token, state);
     ej_jobs_add_handler("telegram_reviewed", packet_handler_telegram_reviewed, state);
     ej_jobs_add_handler("telegram_replied", packet_handler_telegram_replied, state);
+    ej_jobs_add_handler("telegram_cf", packet_handler_telegram_cf, state);
     ej_jobs_add_periodic_handler(periodic_handler, state);
     return 0;
 }
@@ -557,6 +560,68 @@ packet_handler_telegram_replied(int uid, int argc, char **argv, void *user)
         fprintf(msg_f, "    Contest: %d (%s)\n", contest_id, argv[3]);
         fprintf(msg_f, "    Clar Id: %s\n", argv[7]);
         fprintf(msg_f, "%s\n", argv[8]);
+        fclose(msg_f);
+    }
+
+    send_result = send_message(state, bs, tc, msg_s, NULL, NULL);
+
+cleanup:
+    xfree(msg_s);
+    telegram_subscription_free(sub);
+    telegram_chat_free(tc);
+    if (send_result) send_result->b.destroy(&send_result->b);
+}
+
+/*
+  args[0] = "telegram_cf"
+  args[1] = telegram_bot_id
+  args[2] = telegram_chat_id
+  args[3] = contest_id
+  args[4] = contest_name
+  args[5] = run_id
+  args[6] = NULL
+ */
+static void
+packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
+    struct telegram_subscription *sub = NULL;
+    char *msg_s = NULL;
+    struct TeSendMessageResult *send_result = NULL;
+    struct bot_state *bs = NULL;
+    struct telegram_chat *tc = NULL;
+
+    if (argc != 6) {
+        err("wrong number of arguments for telegram_cf: %d", argc);
+        goto cleanup;
+    }
+
+    bs = add_bot_id(state, argv[1]);
+
+    int contest_id, n;
+    if (sscanf(argv[3], "%d%n", &contest_id, &n) != 1 || argv[3][n] || contest_id <= 0) {
+        err("invalid contest_id: %s", argv[3]);
+        goto cleanup;
+    }
+    long long chat_id;
+    if (sscanf(argv[2], "%lld%n", &chat_id, &n) != 1 || argv[2][n]) {
+        err("invalid chat_id: %s", argv[2]);
+        goto cleanup;
+    }
+
+    tc = telegram_chat_fetch(state->conn, chat_id);
+    if (!tc) {
+        tc = telegram_chat_create();
+        tc->_id = chat_id;
+        telegram_chat_save(state->conn, tc);
+    }
+    
+    {
+        size_t msg_z = 0;
+        FILE *msg_f = open_memstream(&msg_s, &msg_z);
+        fprintf(msg_f, "Check failed.\n");
+        fprintf(msg_f, "    Contest: %d (%s)\n", contest_id, argv[4]);
+        fprintf(msg_f, "    Run Id: %s\n", argv[5]);
         fclose(msg_f);
     }
 
