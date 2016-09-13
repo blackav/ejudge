@@ -3358,6 +3358,10 @@ priv_submit_run_comment(
     xfree(msg_t); msg_t = 0; msg_z = 0;
   }
 
+  if (cnts->telegram_bot_id && !re.is_hidden) {
+    serve_telegram_user_run_reviewed(ejudge_config, cnts, cs, re.user_id, run_id, status);
+  }
+
  cleanup:
   html_armor_free(&ab);
   return 0;
