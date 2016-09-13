@@ -25,12 +25,16 @@ struct telegram_chat_state
     unsigned char *command;
     unsigned char *token;
     int state;
+    int review_flag;
+    int reply_flag;
 };
 
 struct telegram_chat_state *
 telegram_chat_state_free(struct telegram_chat_state *tcs);
 struct telegram_chat_state *
 telegram_chat_state_create(void);
+void
+telegram_chat_state_reset(struct telegram_chat_state *tcs);
 struct telegram_chat_state *
 telegram_chat_state_parse_bson(struct _bson *bson);
 struct _bson *

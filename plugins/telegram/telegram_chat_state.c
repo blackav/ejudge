@@ -46,6 +46,16 @@ telegram_chat_state_create(void)
     return tcs;
 }
 
+void
+telegram_chat_state_reset(struct telegram_chat_state *tcs)
+{
+    xfree(tcs->command); tcs->command = NULL;
+    xfree(tcs->token); tcs->token = NULL;
+    tcs->state = 0;
+    tcs->review_flag = 0;
+    tcs->reply_flag = 0;
+}
+
 struct telegram_chat_state *
 telegram_chat_state_parse_bson(struct _bson *bson)
 {
@@ -64,6 +74,10 @@ telegram_chat_state_parse_bson(struct _bson *bson)
             if (ej_bson_parse_string(bc, "token", &tcs->token) < 0) goto cleanup;
         } else if (!strcmp(key, "state")) {
             if (ej_bson_parse_int(bc, "state", &tcs->state, 0, 0, 0, 0) < 0) goto cleanup;
+        } else if (!strcmp(key, "review_flag")) {
+            if (ej_bson_parse_int(bc, "review_flag", &tcs->review_flag, 0, 0, 0, 0) < 0) goto cleanup;
+        } else if (!strcmp(key, "reply_flag")) {
+            if (ej_bson_parse_int(bc, "reply_flag", &tcs->reply_flag, 0, 0, 0, 0) < 0) goto cleanup;
         }
     }
     bson_cursor_free(bc);
@@ -91,6 +105,12 @@ telegram_chat_state_unparse_bson(const struct telegram_chat_state *tcs)
     }
     if (tcs->state > 0) {
         bson_append_int32(bson, "state", tcs->state);
+    }
+    if (tcs->review_flag > 0) {
+        bson_append_int32(bson, "review_flag", tcs->review_flag);
+    }
+    if (tcs->reply_flag > 0) {
+        bson_append_int32(bson, "reply_flag", tcs->reply_flag);
     }
     bson_finish(bson);
     return bson;
