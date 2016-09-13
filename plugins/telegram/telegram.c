@@ -53,6 +53,8 @@ static void
 packet_handler_telegram(int uid, int argc, char **argv, void *user);
 static void
 packet_handler_telegram_token(int uid, int argc, char **argv, void *user);
+static void
+packet_handler_telegram_reviewed(int uid, int argc, char **argv, void *user);
 
 static void
 periodic_handler(void *user);
@@ -95,27 +97,15 @@ struct telegram_plugin_data
     } bots;
 
     struct mongo_conn *conn;
-    /*
-    // mongo connectivity
-    unsigned char *database;
-    unsigned char *host;
-    unsigned char *table_prefix;
-    unsigned char *user;
-    unsigned char *password;
-    int port;
-    int show_queries;
-    struct _mongo_sync_connection *conn;
-    time_t last_check_time;
-    */
 };
 
-static void
+static struct bot_state *
 add_bot_id(struct telegram_plugin_data *state, const unsigned char *id)
 {
-    if (!id) return;
+    if (!id) return NULL;
     for (int i = 0; i < state->bots.u; ++i) {
         if (!strcmp(state->bots.v[i]->bot_id, id))
-            return;
+            return state->bots.v[i];
     }
     if (state->bots.u == state->bots.a) {
         if (!(state->bots.a *= 2)) state->bots.a = 16;
@@ -125,6 +115,7 @@ add_bot_id(struct telegram_plugin_data *state, const unsigned char *id)
     XCALLOC(bs, 1);
     bs->bot_id = xstrdup(id);
     state->bots.v[state->bots.u++] = bs;
+    return bs;
 }
 
 static struct common_plugin_data *
@@ -176,6 +167,7 @@ prepare_func(
   
     ej_jobs_add_handler("telegram", packet_handler_telegram, state);
     ej_jobs_add_handler("telegram_token", packet_handler_telegram_token, state);
+    ej_jobs_add_handler("telegram_reviewed", packet_handler_telegram_reviewed, state);
     ej_jobs_add_periodic_handler(periodic_handler, state);
     return 0;
 }
@@ -428,6 +420,79 @@ cleanup:
     telegram_token_free(other_token);
 }
 
+/*
+  args[0] = "telegram_reviewed"
+  args[1] = telegram_bot_id
+  args[2] = contest_id
+  args[3] = contest_name
+  args[4] = user_id
+  args[5] = user_login
+  args[6] = user_name
+  args[7] = run_id
+  args[8] = new_status
+  args[9] = NULL;
+ */
+static void
+packet_handler_telegram_reviewed(int uid, int argc, char **argv, void *user)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
+    struct telegram_subscription *sub = NULL;
+    char *msg_s = NULL;
+    struct TeSendMessageResult *send_result = NULL;
+    struct bot_state *bs = NULL;
+    struct telegram_chat *tc = NULL;
+
+    if (argc != 9) {
+        err("wrong number of arguments for telegram_reviewed: %d", argc);
+        goto cleanup;
+    }
+
+    bs = add_bot_id(state, argv[1]);
+
+    int contest_id, n;
+    if (sscanf(argv[2], "%d%n", &contest_id, &n) != 1 || argv[2][n] || contest_id <= 0) {
+        err("invalid contest_id: %s", argv[2]);
+        goto cleanup;
+    }
+    int user_id;
+    if (sscanf(argv[4], "%d%n", &user_id, &n) != 1 || argv[4][n] || user_id <= 0) {
+        err("invalid user_id: %s", argv[4]);
+        goto cleanup;
+    }
+
+    sub = telegram_subscription_fetch(state->conn, argv[1], contest_id, user_id);
+    if (!sub) goto cleanup;
+    if (!sub->review_flag) goto cleanup;
+    if (!sub->chat_id) {
+        err("chat_id is NULL for subscription");
+        goto cleanup;
+    }
+
+    tc = telegram_chat_fetch(state->conn, sub->chat_id);
+    if (!tc) {
+        err("chat_id %lld is not registered", sub->chat_id);
+    }
+
+    {
+        size_t msg_z = 0;
+        FILE *msg_f = open_memstream(&msg_s, &msg_z);
+        fprintf(msg_f, "Your run has been reviewed.\n");
+        fprintf(msg_f, "    User: %s\n", argv[5]);
+        fprintf(msg_f, "    Contest: %d (%s)\n", contest_id, argv[3]);
+        fprintf(msg_f, "    Run Id: %s\n", argv[7]);
+        fprintf(msg_f, "    Status: %s\n", argv[8]);
+        fclose(msg_f);
+    }
+
+    send_result = send_message(state, bs, tc, msg_s, NULL, NULL);
+
+cleanup:
+    xfree(msg_s);
+    telegram_subscription_free(sub);
+    telegram_chat_free(tc);
+    if (send_result) send_result->b.destroy(&send_result->b);
+}
+
 static int
 safe_strcmp(const unsigned char *s1, const unsigned char *s2)
 {
@@ -637,6 +702,7 @@ handle_incoming_message(
                         if (tcs->review_flag) sub->review_flag = 0;
                         if (tcs->reply_flag) sub->reply_flag = 0;
                     }
+                    sub->chat_id = mc->_id;
                     {
                         char *msg_s = NULL;
                         size_t msg_z = 0;
