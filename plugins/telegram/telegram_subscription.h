@@ -30,7 +30,7 @@ struct telegram_subscription
 
     int review_flag;
     int reply_flag;
-    unsigned char *chat_id;
+    long long chat_id;
 };
 
 struct telegram_subscription *
