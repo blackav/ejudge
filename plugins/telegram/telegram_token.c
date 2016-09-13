@@ -36,6 +36,7 @@ telegram_token_free(struct telegram_token *token)
         xfree(token->bot_id);
         xfree(token->user_login);
         xfree(token->user_name);
+        xfree(token->contest_name);
         xfree(token->token);
         xfree(token);
     }
@@ -66,6 +67,8 @@ telegram_token_parse_bson(struct _bson *bson)
             if (ej_bson_parse_string(bc, "token", &token->token) < 0) goto cleanup;
         } else if (!strcmp(key, "contest_id")) {
             if (ej_bson_parse_int(bc, "contest_id", &token->contest_id, 1, 0, 0, 0) < 0) goto cleanup;
+        } else if (!strcmp(key, "contest_name")) {
+            if (ej_bson_parse_string(bc, "contest_name", &token->contest_name) < 0) goto cleanup;
         } else if (!strcmp(key, "locale_id")) {
             if (ej_bson_parse_int(bc, "locale_id", &token->locale_id, 1, 0, 0, 0) < 0) goto cleanup;
         } else if (!strcmp(key, "expiry_time")) {
@@ -114,6 +117,9 @@ telegram_token_unparse_bson(const struct telegram_token *token)
     }
     if (token->contest_id > 0) {
         bson_append_int32(b, "contest_id", token->contest_id);
+    }
+    if (token->contest_name && *token->contest_name) {
+        bson_append_string(b, "contest_name", token->contest_name, strlen(token->contest_name));
     }
     if (token->locale_id > 0) {
         bson_append_int32(b, "locale_id", token->locale_id);

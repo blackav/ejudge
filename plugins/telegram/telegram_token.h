@@ -30,6 +30,7 @@ struct telegram_token
     unsigned char *user_name;
     unsigned char *token;
     int contest_id;
+    unsigned char *contest_name;
     int locale_id;
     time_t expiry_time;
 };
