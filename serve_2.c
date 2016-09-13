@@ -2318,7 +2318,11 @@ serve_telegram_user_run_reviewed(
   args[6] = teamdb_get_name_2(cs->teamdb_state, user_id);
   snprintf(buf3, sizeof(buf3), "%d", run_id);
   args[7] = buf3;
-  args[8] = run_status_str(new_status, buf4, sizeof(buf4), 0, 0);
+  if (new_status < 0) {
+    args[8] = "unchanged";
+  } else {
+    args[8] = run_status_str(new_status, buf4, sizeof(buf4), 0, 0);
+  }
   args[9] = NULL;
   send_job_packet(NULL, (unsigned char **) args, 0);
 }
