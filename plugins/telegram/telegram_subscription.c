@@ -35,6 +35,7 @@ telegram_subscription_free(struct telegram_subscription *sub)
     if (sub) {
         xfree(sub->_id);
         xfree(sub->bot_id);
+        xfree(sub->chat_id);
         memset(sub, 0xff, sizeof(*sub));
         xfree(sub);
     }
@@ -80,6 +81,8 @@ telegram_subscription_parse_bson(struct _bson *bson)
             if (ej_bson_parse_int(bc, "review_flag", &sub->review_flag, 1, 0, 0, 0) < 0) goto cleanup;
         } else if (!strcmp(key, "reply_flag")) {
             if (ej_bson_parse_int(bc, "reply_flag", &sub->reply_flag, 1, 0, 0, 0) < 0) goto cleanup;
+        } else if (!strcmp(key, "chat_id")) {
+            if (ej_bson_parse_string(bc, "chat_id", &sub->chat_id) < 0) goto cleanup;
         }
     }
     bson_cursor_free(bc);
@@ -113,6 +116,9 @@ telegram_subscription_unparse_bson(const struct telegram_subscription *sub)
     }
     if (sub->reply_flag > 0) {
         bson_append_int32(b, "reply_flag", sub->reply_flag);
+    }
+    if (sub->chat_id && *sub->chat_id) {
+        bson_append_string(b, "chat_id", sub->chat_id, strlen(sub->chat_id));
     }
     bson_finish(b);
     return b;
