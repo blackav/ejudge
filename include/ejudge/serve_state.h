@@ -525,6 +525,11 @@ serve_telegram_user_clar_replied(
         int user_id,
         int clar_id,
         const unsigned char *reply);
+void
+serve_telegram_check_failed(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        int run_id);
 
 void
 serve_rejudge_run(

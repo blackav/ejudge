@@ -2226,6 +2226,33 @@ serve_send_clar_notify_email(
 }
 
 void
+serve_telegram_check_failed(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        int run_id)
+{
+  if (!cnts) return;
+  if (!cnts->telegram_bot_id || !*cnts->telegram_bot_id) return;
+  if (!cnts->telegram_admin_chat_id || !*cnts->telegram_admin_chat_id) return;
+
+  const unsigned char *args[10];
+  unsigned char buf1[64];
+  unsigned char buf2[64];
+
+  args[0] = "telegram_cf";
+  args[1] = cnts->telegram_bot_id;
+  args[2] = cnts->telegram_admin_chat_id;
+  snprintf(buf1, sizeof(buf1), "%d", cnts->id);
+  args[3] = buf1;
+  args[4] = cnts->name;
+  if (!args[4]) args[4] = "";
+  snprintf(buf2, sizeof(buf2), "%d", run_id);
+  args[5] = buf2;
+  args[6] = NULL;
+  send_job_packet(NULL, (unsigned char **) args, 0);
+}
+
+void
 serve_send_check_failed_email(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
@@ -2540,6 +2567,7 @@ serve_read_compile_packet(
       if (run_change_status_4(state->runlog_state, comp_pkt->run_id, RUN_CHECK_FAILED) < 0)
         goto non_fatal_error;
       serve_send_check_failed_email(config, cnts, comp_pkt->run_id);
+      serve_telegram_check_failed(config, cnts, comp_pkt->run_id);
       goto success;
     }
 
@@ -2665,6 +2693,7 @@ serve_read_compile_packet(
       goto report_check_failed;
     }
     serve_send_check_failed_email(config, cnts, comp_pkt->run_id);
+    serve_telegram_check_failed(config, cnts, comp_pkt->run_id);
     goto success;
   }
 
@@ -2780,6 +2809,7 @@ prepare_run_request:
  report_check_failed:
   xfree(run_text); run_text = 0; run_size = 0;
   serve_send_check_failed_email(config, cnts, comp_pkt->run_id);
+  serve_telegram_check_failed(config, cnts, comp_pkt->run_id);
 
   /* this is error recover, so if error happens again, we cannot do anything */
   if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
@@ -3063,8 +3093,10 @@ serve_read_run_packet(
     reply_pkt->status = RUN_PENDING_REVIEW;
     if (prob->ignore_prev_ac > 0) ignore_prev_ac = 1;
   }
-  if (reply_pkt->status == RUN_CHECK_FAILED)
+  if (reply_pkt->status == RUN_CHECK_FAILED) {
     serve_send_check_failed_email(config, cnts, reply_pkt->run_id);
+    serve_telegram_check_failed(config, cnts, reply_pkt->run_id);
+  }
   if (reply_pkt->marked_flag < 0) reply_pkt->marked_flag = 0;
   if (reply_pkt->status == RUN_CHECK_FAILED) {
     if (run_change_status_4(state->runlog_state, reply_pkt->run_id,
@@ -3410,8 +3442,10 @@ serve_judge_built_in_problem(
   serve_audit_log(state, run_id, NULL, user_id, ip, ssl_flag,
                   "submit", "ok", status, NULL);
 
-  if (status == RUN_CHECK_FAILED)
+  if (status == RUN_CHECK_FAILED) {
     serve_send_check_failed_email(config, cnts, run_id);
+    serve_telegram_check_failed(config, cnts, run_id);
+  }
 
   /* FIXME: handle database update error */
   (void) failed_test;
