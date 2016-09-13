@@ -1,6 +1,6 @@
 /* -*- c -*- */
-#ifndef __TELEGRAM_TOKEN_H__
-#define __TELEGRAM_TOKEN_H__
+#ifndef __TELEGRAM_SUBSCRIPTION_H__
+#define __TELEGRAM_SUBSCRIPTION_H__
 
 /* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
 
@@ -27,6 +27,9 @@ struct telegram_subscription
     unsigned char *bot_id;
     int user_id;
     int contest_id;
+
+    int review_flag;
+    int reply_flag;
 };
 
 struct telegram_subscription *
