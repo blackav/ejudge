@@ -26,7 +26,7 @@
 <tr><td class="b0" colspan="2"><s:submit ac="change-password" label="Change!" /></td></tr>
 </table></s:form>
 <%    }
-    if (cnts->telegram_user_chat_id && *cnts->telegram_user_chat_id && (!telegram_token || !*telegram_token)) {
+    if (cnts->telegram_bot_id && *cnts->telegram_bot_id && (!telegram_token || !*telegram_token)) {
 %>
 <div class="h2-long"><h2><s:_>Generate Token for Telegram</s:_></h2></div>
 <s:form>
