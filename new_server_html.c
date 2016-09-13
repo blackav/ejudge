@@ -3173,6 +3173,9 @@ priv_set_run_style_error_status(
     serve_notify_user_run_status_change(ejudge_config, cnts, cs, re.user_id,
                                         run_id, RUN_REJECTED);
   }
+  if (cnts->telegram_bot_id && !re.is_hidden) {
+    serve_telegram_user_run_reviewed(ejudge_config, cnts, cs, re.user_id, run_id, RUN_REJECTED);
+  }
 
  cleanup:
   xfree(text2);
@@ -4017,6 +4020,9 @@ priv_change_status(
       serve_notify_user_run_status_change(ejudge_config, cnts, cs, re.user_id, run_id,
                                           status);
   }
+  if (cnts->telegram_bot_id && !re.is_hidden) {
+    serve_telegram_user_run_reviewed(ejudge_config, cnts, cs, re.user_id, run_id, status);
+  }
 
  cleanup:
   return 0;
@@ -4094,6 +4100,9 @@ priv_simple_change_status(
     if (!re.is_hidden)
       serve_notify_user_run_status_change(ejudge_config, cnts, cs, re.user_id, run_id,
                                           status);
+  }
+  if (cnts->telegram_bot_id && !re.is_hidden) {
+    serve_telegram_user_run_reviewed(ejudge_config, cnts, cs, re.user_id, run_id, status);
   }
 
  cleanup:

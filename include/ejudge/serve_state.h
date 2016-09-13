@@ -509,6 +509,14 @@ serve_send_telegram_token(
         const unsigned char *user_name,
         const unsigned char *telegram_token,
         time_t expiry_time);
+void
+serve_telegram_user_run_reviewed(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        int user_id,
+        int run_id,
+        int new_status);
 
 void
 serve_rejudge_run(
