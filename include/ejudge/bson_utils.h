@@ -56,6 +56,11 @@ ej_bson_parse_uuid(
         const unsigned char *field_name,
         ej_uuid_t *p_value);
 int
+ej_bson_parse_oid(
+        struct _bson_cursor *bc,
+        const unsigned char *field_name,
+        unsigned char *p_value);
+int
 ej_bson_parse_ip(
         struct _bson_cursor *bc,
         const unsigned char *field_name,

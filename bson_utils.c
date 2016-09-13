@@ -235,6 +235,26 @@ ej_bson_parse_uuid(
 }
 
 int
+ej_bson_parse_oid(
+        struct _bson_cursor *bc,
+        const unsigned char *field_name,
+        unsigned char *p_value)
+{
+    if (bson_cursor_type(bc) != BSON_TYPE_OID) {
+        err("parse_bson_oid: oid field type expected for '%s'", field_name);
+        return -1;
+    }
+
+    const unsigned char *p = NULL;
+    if (!bson_cursor_get_oid(bc, &p) || !p) {
+        err("parse_bson_oid: failed to fetch oid for '%s'", field_name);
+        return -1;
+    }
+    memcpy(p_value, p, 12);
+    return 1;
+}
+
+int
 ej_bson_parse_ip(
         struct _bson_cursor *bc,
         const unsigned char *field_name,
