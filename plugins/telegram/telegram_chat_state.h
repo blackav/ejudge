@@ -21,6 +21,10 @@ struct _bson;
 struct telegram_chat_state
 {
     long long _id;
+
+    unsigned char *command;
+    unsigned char *token;
+    int state;
 };
 
 struct telegram_chat_state *

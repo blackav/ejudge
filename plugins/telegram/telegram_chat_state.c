@@ -58,6 +58,12 @@ telegram_chat_state_parse_bson(struct _bson *bson)
         const unsigned char *key = bson_cursor_key(bc);
         if (!strcmp(key, "_id")) {
             if (ej_bson_parse_int64(bc, "_id", &tcs->_id) < 0) goto cleanup;
+        } else if (!strcmp(key, "command")) {
+            if (ej_bson_parse_string(bc, "command", &tcs->command) < 0) goto cleanup;
+        } else if (!strcmp(key, "token")) {
+            if (ej_bson_parse_string(bc, "token", &tcs->token) < 0) goto cleanup;
+        } else if (!strcmp(key, "state")) {
+            if (ej_bson_parse_int(bc, "state", &tcs->state, 0, 0, 0, 0) < 0) goto cleanup;
         }
     }
     bson_cursor_free(bc);
@@ -76,6 +82,15 @@ telegram_chat_state_unparse_bson(const struct telegram_chat_state *tcs)
     bson *bson = bson_new();
     if (tcs->_id) {
         bson_append_int64(bson, "_id", tcs->_id);
+    }
+    if (tcs->command && *tcs->command) {
+        bson_append_string(bson, "command", tcs->command, strlen(tcs->command));
+    }
+    if (tcs->token && *tcs->token) {
+        bson_append_string(bson, "token", tcs->token, strlen(tcs->token));
+    }
+    if (tcs->state > 0) {
+        bson_append_int32(bson, "state", tcs->state);
     }
     bson_finish(bson);
     return bson;
