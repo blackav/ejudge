@@ -32,7 +32,6 @@ struct telegram_token *
 telegram_token_free(struct telegram_token *token)
 {
     if (token) {
-        xfree(token->_id);
         xfree(token->bot_id);
         xfree(token->user_login);
         xfree(token->user_name);
@@ -54,7 +53,7 @@ telegram_token_parse_bson(struct _bson *bson)
     while (bson_cursor_next(bc)) {
         const unsigned char *key = bson_cursor_key(bc);
         if (!strcmp(key, "_id")) {
-            if (ej_bson_parse_string(bc, "_id", &token->_id) < 0) goto cleanup;
+            if (ej_bson_parse_oid(bc, "_id", token->_id) < 0) goto cleanup;
         } else if (!strcmp(key, "bot_id")) {
             if (ej_bson_parse_string(bc, "bot_id", &token->bot_id) < 0) goto cleanup;
         } else if (!strcmp(key, "user_id")) {
@@ -97,8 +96,15 @@ telegram_token_unparse_bson(const struct telegram_token *token)
     if (!token) return NULL;
 
     bson *b = bson_new();
-    if (token->_id && *token->_id) {
-        bson_append_string(b, "_id", token->_id, strlen(token->_id));
+    int empty_id = 1;
+    for (int i = 0; i < 12; ++i) {
+        if (token->_id[i]) {
+            empty_id = 0;
+            break;
+        }
+    }
+    if (!empty_id) {
+        bson_append_oid(b, "_id", token->_id);
     }
     if (token->bot_id && *token->bot_id) {
         bson_append_string(b, "bot_id", token->bot_id, strlen(token->bot_id));

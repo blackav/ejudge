@@ -23,7 +23,8 @@ struct _bson;
 /* tokens for bot interaction */
 struct telegram_token
 {
-    unsigned char *_id;
+    unsigned char _id[12]; // ObjectId
+
     unsigned char *bot_id;
     int user_id;
     unsigned char *user_login;
