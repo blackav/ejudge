@@ -523,7 +523,8 @@ serve_telegram_user_clar_replied(
         const struct contest_desc *cnts,
         const serve_state_t cs,
         int user_id,
-        int clar_id);
+        int clar_id,
+        const unsigned char *reply);
 
 void
 serve_rejudge_run(

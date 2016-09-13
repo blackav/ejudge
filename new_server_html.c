@@ -3538,7 +3538,7 @@ priv_clar_reply(
   }
 
   if (cnts->telegram_bot_id) {
-    serve_telegram_user_clar_replied(ejudge_config, cnts, cs, from_id, in_reply_to);
+    serve_telegram_user_clar_replied(ejudge_config, cnts, cs, clar.from, in_reply_to, msg);
   }
 
  cleanup:

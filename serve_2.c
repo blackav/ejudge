@@ -2333,7 +2333,8 @@ serve_telegram_user_clar_replied(
         const struct contest_desc *cnts,
         const serve_state_t cs,
         int user_id,
-        int clar_id)
+        int clar_id,
+        const unsigned char *reply)
 {
   if (!cnts || !cnts->telegram_bot_id || !*cnts->telegram_bot_id) return;
   const unsigned char *args[10];
@@ -2353,7 +2354,8 @@ serve_telegram_user_clar_replied(
   args[6] = teamdb_get_name_2(cs->teamdb_state, user_id);
   snprintf(buf3, sizeof(buf3), "%d", clar_id);
   args[7] = buf3;
-  args[8] = NULL;
+  args[8] = reply;
+  args[9] = NULL;
   send_job_packet(NULL, (unsigned char **) args, 0);
 }
 
