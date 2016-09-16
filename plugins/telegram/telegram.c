@@ -722,8 +722,13 @@ handle_incoming_message(
         }
     }
 
-    if (!tem->chat || !tem->chat->type || strcmp(tem->chat->type, "private")) goto cleanup;
+    if (!tem->chat || !tem->chat->type) goto cleanup;
     if (!mc) goto cleanup;
+    if (strcmp(tem->chat->type, "private") != 0) {
+        send_result = send_message(state, bs, mc, "Won't speak in public. Let's use a private chat.", NULL, NULL);
+        goto cleanup;
+    }
+
     // only want private chats
     if (!tem->text) goto cleanup;
 
