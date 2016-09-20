@@ -176,7 +176,7 @@ ej_bson_parse_int64(
         err("parse_bson_int: int64 field type expected for '%s'", field_name);
         return -1;
     }
-    long long value = 0;
+    gint64 value = 0;
     if (!bson_cursor_get_int64(bc, &value)) {
         err("parse_bson_int: failed to fetch int64 value of '%s'", field_name);
         return -1;
