@@ -842,9 +842,13 @@ main(int argc, char *argv[])
   return 0;
 }
 
+#if HAVE_LIBMONGO_CLIENT - 0 == 1
+
 void *
 job_server_force_link[] =
 {
   cJSON_Delete,
   ej_bson_parse_string,
 };
+
+#endif
