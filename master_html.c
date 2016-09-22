@@ -663,6 +663,28 @@ is_registered_today(
 }
 
 void
+collect_telegram_reminder(
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        struct telegram_reminder_data *pdata)
+{
+  memset(pdata, 0, sizeof(*pdata));
+
+  int r_tot = run_get_total(cs->runlog_state);
+  const struct run_entry *runs = run_get_entries_ptr(cs->runlog_state);
+  time_t old_time = cs->current_time - 2 * 24 * 60 * 60;
+
+  for (int run_id = 0; run_id < r_tot; ++run_id) {
+    const struct run_entry *run = runs + run_id;
+    if (run->status == RUN_PENDING_REVIEW) {
+      ++pdata->pr_total;
+      if (run->time < old_time)
+        ++pdata->pr_too_old;
+    }
+  }
+}
+
+void
 generate_daily_statistics(
         const struct contest_desc *cnts,
         const serve_state_t state,

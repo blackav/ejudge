@@ -2,7 +2,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -167,6 +167,18 @@ generate_daily_statistics(
         time_t from_time,
         time_t to_time,
         int utf8_mode);
+
+struct telegram_reminder_data
+{
+  int pr_total; // total number of pending review runs
+  int pr_too_old; // total number of pending review runs older than 48h
+};
+
+void
+collect_telegram_reminder(
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        struct telegram_reminder_data *pdata);
 
 void
 write_change_status_dialog(const serve_state_t state,
