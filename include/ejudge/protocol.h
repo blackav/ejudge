@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __PROTOCOL_H__
 #define __PROTOCOL_H__
 
-/* Copyright (C) 2002-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -99,7 +98,8 @@ struct prot_serve_status_v2
   unsigned char online_view_judge_score;
   unsigned char online_final_visibility;
 
-  unsigned char _pad[12];
+  unsigned char _pad[4];
+  ej_time64_t last_daily_reminder;
 };
 
 #define PROT_SERVE_PACKET_MAGIC (0xe342)
