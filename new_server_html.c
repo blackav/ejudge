@@ -10011,6 +10011,7 @@ ns_unparse_statement(
 
   if (px->examples) {
     fprintf(fout, "<h3>%s</h3>", _("Examples"));
+    /*
     fprintf(fout, "<table class=\"b1\">");
     fprintf(fout, "<tr><td class=\"b1\" align=\"center\"><b>");
     if (prob->use_stdin) {
@@ -10025,17 +10026,40 @@ ns_unparse_statement(
       fprintf(fout, "%s <tt>%s</tt>", _("Output in"), prob->output_file);
     }
     fprintf(fout, "</b></td></tr>");
+    */
     for (p = px->examples->first_down; p; p = p->right) {
       if (p->tag != PROB_T_EXAMPLE) continue;
-      fprintf(fout, "<tr><td class=\"b1\" valign=\"top\"><pre>");
+      //fprintf(fout, "<tr><td class=\"b1\" valign=\"top\"><pre>");
       for (q = p->first_down; q && q->tag != PROB_T_INPUT; q = q->right);
-      if (q && q->tag == PROB_T_INPUT) problem_xml_unparse_node(fout, q, 0, 0);
-      fprintf(fout, "</pre></td><td class=\"b1\" valign=\"top\"><pre>");
+      if (q && q->tag == PROB_T_INPUT) {
+        fprintf(fout, "<h4>");
+        if (prob->use_stdin) {
+          fprintf(fout, "%s", _("Input"));
+        } else {
+          fprintf(fout, "%s <tt>%s</tt>", _("Input in"), prob->input_file);
+        }
+        fprintf(fout, "</h4>\n<pre>");
+        problem_xml_unparse_node(fout, q, 0, 0);
+        fprintf(fout, "</pre>\n");
+      }
+      //fprintf(fout, "</pre></td><td class=\"b1\" valign=\"top\"><pre>");
       for (q = p->first_down; q && q->tag != PROB_T_OUTPUT; q = q->right);
-      if (q && q->tag == PROB_T_OUTPUT) problem_xml_unparse_node(fout, q, 0, 0);
-      fprintf(fout, "</pre></td></tr>");
+      if (q && q->tag == PROB_T_OUTPUT) {
+        fprintf(fout, "<h4>");
+        if (prob->use_stdout) {
+          fprintf(fout, "%s", _("Output"));
+        } else {
+          fprintf(fout, "%s <tt>%s</tt>", _("Output in"), prob->output_file);
+        }
+        fprintf(fout, "</h4>\n<pre>");
+        problem_xml_unparse_node(fout, q, 0, 0);
+        fprintf(fout, "</pre>\n");
+      }
+      //fprintf(fout, "</pre></td></tr>");
     }
+    /*
     fprintf(fout, "</table>");
+    */
   }
 
   if (pp->notes) {

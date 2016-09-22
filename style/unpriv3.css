@@ -31,6 +31,10 @@ input[type=file] {
 	padding-left: 0;
 }
 
+h4 {
+	color: #555555;
+}
+
 #l13 table {
 	margin-bottom: 20px;
 }
@@ -366,9 +370,9 @@ div.contest_actions_item {
 td#probNavTaskArea {
 	border: none;
 	background: none;
-	border-top: 1px solid rgb(216, 216, 216);
 	border-bottom: 1px solid rgb(194, 194, 194);
-	box-shadow: inset rgb(236, 236, 236) 2px 3px 5px;
+	box-shadow: none;
+	border-top: none;
 }
 
 .nTopNavList li, .nBottomNavList li  {
@@ -488,7 +492,7 @@ div.nProbOk {
 
 table.probNav {
 	width: 100%;
-	margin-top: 3px;
+	margin-top: -39px;
 }
 
 #nTopNavSelected div.nProbCurrent {
@@ -583,6 +587,10 @@ li .nProbOk:hover {
 	border-radius: 0 0 5px 0 !important;
 }
 
+#probNavTaskArea pre {
+	color: #555555;
+}
+
 #l13 {
 	padding-left: 0px;
 	padding-right: 0px;
@@ -591,6 +599,7 @@ li .nProbOk:hover {
 div.server_status_error, div.server_status_alarm, div.server_status_off, div.server_status_on {
 	margin-left: 0px;
 	margin-right: 0px;
+	position: relative;
 }
 
 /**************** TABLES ******************/
@@ -778,4 +787,6 @@ div.probEmpty {
 #probNavRightList {
 	border-bottom: 1px solid rgb(194, 194, 194);
 	border-left: 1px solid rgb(199, 199, 199);
+	box-shadow: inset #dfdfdf 0 30px 0 0;
+	padding-top: 30px;
 }
