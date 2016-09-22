@@ -282,6 +282,9 @@ struct serve_state
   time_t last_update_internal_xml_log;
   time_t last_update_status_file;
 
+  time_t last_periodic_check;
+  time_t last_daily_reminder;
+
   struct compile_dir_item *compile_dirs;
   int compile_dirs_u, compile_dirs_a;
 
