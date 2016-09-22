@@ -309,6 +309,7 @@ serve_update_status_file(serve_state_t state, int force_flag)
 
   status.max_online_time = state->max_online_time;
   status.max_online_count = state->max_online_count;
+  status.last_daily_reminder = state->last_daily_reminder;
 
   memcpy(status.prob_prio, state->prob_prio, sizeof(status.prob_prio));
 
@@ -382,6 +383,7 @@ serve_load_status_file(serve_state_t state)
 
   state->max_online_time = status.max_online_time;
   state->max_online_count = status.max_online_count;
+  state->last_daily_reminder = status.last_daily_reminder;
 
   memcpy(state->prob_prio, status.prob_prio, sizeof(state->prob_prio));
 }
