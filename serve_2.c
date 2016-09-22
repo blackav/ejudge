@@ -767,6 +767,47 @@ serve_get_email_sender(const struct ejudge_cfg *config, const struct contest_des
   return ppwd->pw_name;
 }
 
+void
+serve_check_telegram_reminder(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        const struct contest_desc *cnts)
+{
+  // if current time hour >= 10 and time from the last reminder > 24h, try hard
+  struct tm *ptm = localtime(&state->current_time);
+  if (ptm->tm_hour >= 10 && (state->last_daily_reminder <= 0 || state->last_daily_reminder + 24 * 60 * 60 <= state->current_time)) {
+  } else {
+    return;
+  }
+
+  if (!cnts->telegram_bot_id || !cnts->telegram_bot_id[0] || !cnts->telegram_admin_chat_id || !cnts->telegram_admin_chat_id[0])
+    return;
+
+  struct telegram_reminder_data trdata;
+  collect_telegram_reminder(cnts, state, &trdata);
+  if (trdata.pr_total >= 20 || trdata.pr_too_old > 0) {
+    const unsigned char *args[10];
+    char contest_id_buf[32];
+    char pr_total_buf[32];
+    char pr_too_old_buf[32];
+
+    args[0] = "telegram_reminder";
+    args[1] = cnts->telegram_bot_id;
+    args[2] = cnts->telegram_admin_chat_id;
+    snprintf(contest_id_buf, sizeof(contest_id_buf), "%d", cnts->id);
+    args[3] = contest_id_buf;
+    args[4] = cnts->name;
+    snprintf(pr_total_buf, sizeof(pr_total_buf), "%d", trdata.pr_total);
+    args[5] = pr_total_buf;
+    snprintf(pr_too_old_buf, sizeof(pr_too_old_buf), "%d", trdata.pr_too_old);
+    args[6] = pr_too_old_buf;
+    args[7] = NULL;
+    send_job_packet(NULL, (unsigned char**) args, 0);
+  }
+  
+  state->last_daily_reminder = state->current_time;
+}
+
 static void
 generate_statistics_email(
         const struct ejudge_cfg *config,

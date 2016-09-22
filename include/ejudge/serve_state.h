@@ -840,4 +840,10 @@ serve_invoker_down(
         const unsigned char *queue,
         const unsigned char *file);
 
+void
+serve_check_telegram_reminder(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        const struct contest_desc *cnts);
+
 #endif /* __SERVE_STATE_H__ */

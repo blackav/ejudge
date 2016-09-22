@@ -956,6 +956,13 @@ ns_check_contest_events(serve_state_t cs, const struct contest_desc *cnts)
   const struct section_global_data *global = cs->global;
   time_t start_time, stop_time, sched_time, duration, finish_time;
 
+  // check once per 10m
+  if (cs->last_periodic_check <= 0 || cs->current_time >= cs->last_periodic_check + 600) {
+    cs->last_periodic_check = cs->current_time;
+
+    serve_check_telegram_reminder(ejudge_config, cs, cnts);
+  }
+
   run_get_times(cs->runlog_state, &start_time, &sched_time,
                 &duration, &stop_time, &finish_time);
 
