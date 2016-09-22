@@ -694,7 +694,7 @@ packet_handler_telegram_reminder(int uid, int argc, char **argv, void *user)
         FILE *msg_f = open_memstream(&msg_s, &msg_z);
         fprintf(msg_f, "Reminder.\n");
         fprintf(msg_f, "    Contest: %d (%s)\n", contest_id, argv[4]);
-        if (pr_total >= 0) {
+        if (pr_total >= 20) {
             fprintf(msg_f, "    Pending Review runs: %d\n", pr_total);
         }
         if (pr_too_old > 0) {

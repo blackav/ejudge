@@ -804,8 +804,19 @@ serve_check_telegram_reminder(
     args[7] = NULL;
     send_job_packet(NULL, (unsigned char**) args, 0);
   }
-  
-  state->last_daily_reminder = state->current_time;
+
+  struct tm stm;
+  memset(&stm, 0, sizeof(stm));
+  stm.tm_year = ptm->tm_year;
+  stm.tm_mon = ptm->tm_mon;
+  stm.tm_mday = ptm->tm_mday;
+  stm.tm_hour = 10;
+  stm.tm_min = 0;
+  stm.tm_sec = 0;
+  stm.tm_isdst = -1;
+  time_t st = mktime(&stm);
+
+  state->last_daily_reminder = st;
 }
 
 static void
