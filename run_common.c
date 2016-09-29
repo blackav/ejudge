@@ -742,7 +742,9 @@ static void
 setup_environment(
         tpTask tsk,
         char **envs,
-        const struct testinfo_struct *pt,
+        //const struct testinfo_struct *pt,
+        int ti_env_u,
+        char **ti_env_v,
         int force_ejudge_env)
 {
   int jj;
@@ -794,6 +796,14 @@ setup_environment(
     }
   }
 
+  if (ti_env_v && ti_env_u) {
+    for (jj = 0; jj < ti_env_u; ++jj) {
+      if (ti_env_v[jj]) {
+        task_PutEnv(tsk, ti_env_v[jj]);
+      }
+    }
+  }
+  /*
   if (pt && pt->env_u && pt->env_v) {
     for (jj = 0; jj < pt->env_u; ++jj) {
       if (pt->env_v[jj]) {
@@ -801,6 +811,7 @@ setup_environment(
       }
     }
   }
+  */
 }
 
 static void
@@ -916,7 +927,7 @@ invoke_valuer(
   if (srpp->checker_real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
   }
-  setup_environment(tsk, srpp->valuer_env, NULL, 1);
+  setup_environment(tsk, srpp->valuer_env, 0, NULL, 1);
   if (srgp->separate_user_score > 0) {
     task_SetEnv(tsk, "EJUDGE_USER_SCORE", "1");
   }
@@ -1020,7 +1031,7 @@ start_interactive_valuer(
   if (srpp->checker_real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
   }
-  setup_environment(tsk, srpp->valuer_env, NULL, 1);
+  setup_environment(tsk, srpp->valuer_env, 0, NULL, 1);
   if (srgp->separate_user_score > 0) {
     task_SetEnv(tsk, "EJUDGE_USER_SCORE", "1");
   }
@@ -1627,11 +1638,19 @@ invoke_init_cmd(
         const unsigned char *working_dir,
         const unsigned char *check_out_path,
         char **init_env,
+        testinfo_t *ti,
         long real_time_limit_ms,
         int disable_pe)
 {
   tpTask tsk = NULL;
   int status = 0;
+  int env_u = 0;
+  char **env_v = NULL;
+
+  if (ti) {
+    env_u = ti->init_env_u;
+    env_v = ti->init_env_v;
+  }
 
   tsk = task_New();
   task_AddArg(tsk, init_cmd);
@@ -1651,7 +1670,7 @@ invoke_init_cmd(
   if (working_dir && *working_dir) {
     task_SetWorkingDir(tsk, working_dir);
   }
-  setup_environment(tsk, init_env, NULL, 1);
+  setup_environment(tsk, init_env, env_u, env_v, 1);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
   task_SetRedir(tsk, 1, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
   task_SetRedir(tsk, 2, TSR_DUP, 1);
@@ -1725,6 +1744,7 @@ invoke_interactor(
         const unsigned char *check_out_path,
         char **interactor_env,
         const unsigned char *checker_locale,
+        struct testinfo_struct *ti,
         int stdin_fd,
         int stdout_fd,
         long time_limit_ms,
@@ -1740,12 +1760,20 @@ invoke_interactor(
         const unsigned char *check_out_path,
         char **interactor_env,
         const unsigned char *checker_locale,
+        struct testinfo_struct *ti,
         int stdin_fd,
         int stdout_fd,
         long time_limit_ms,
         int program_pid)
 {
   tpTask tsk_int = NULL;
+  int env_u = 0;
+  char **env_v = NULL;
+
+  if (ti) {
+    env_u = ti->interactor_env_u;
+    env_v = ti->interactor_env_v;
+  }
 
   tsk_int = task_New();
   task_AddArg(tsk_int, interactor_cmd);
@@ -1761,7 +1789,7 @@ invoke_interactor(
   }
   task_SetPathAsArg0(tsk_int);
   task_SetWorkingDir(tsk_int, working_dir);
-  setup_environment(tsk_int, interactor_env, NULL, 1);
+  setup_environment(tsk_int, interactor_env, env_u, env_v, 1);
   task_SetEnv(tsk_int, "EJUDGE", "1");
   task_SetRedir(tsk_int, 0, TSR_DUP, stdin_fd);
   task_SetRedir(tsk_int, 1, TSR_DUP, stdout_fd);
@@ -1870,6 +1898,7 @@ invoke_checker(
         const unsigned char *score_out_path,
         const unsigned char *check_out_path,
         const unsigned char *check_dir,
+        testinfo_t *ti,
         int test_score_count,
         const int *test_score_val)
 {
@@ -1877,6 +1906,13 @@ invoke_checker(
   int status = RUN_CHECK_FAILED;
   int test_max_score = -1;
   int default_score = -1;
+  int env_u = 0;
+  char **env_v = 0;
+
+  if (ti) {
+    env_u = ti->checker_env_u;
+    env_v = ti->checker_env_v;
+  }
 
   tsk = task_New();
   task_AddArg(tsk, check_cmd);
@@ -1908,7 +1944,7 @@ invoke_checker(
   if (srpp->checker_real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk, srpp->checker_real_time_limit_ms);
   }
-  setup_environment(tsk, srpp->checker_env, NULL, 1);
+  setup_environment(tsk, srpp->checker_env, env_u, env_v, 1);
   if (srpp->scoring_checker > 0) {
     task_SetEnv(tsk, "EJUDGE_SCORING_CHECKER", "1");
   }
@@ -2430,7 +2466,7 @@ run_one_test(
   if (srpp->init_cmd && srpp->init_cmd[0]) {
     status = invoke_init_cmd(srpp->init_cmd, "start", test_src, corr_src,
                              info_src, working_dir, check_out_path,
-                             srpp->init_env, srpp->checker_real_time_limit_ms, srpp->disable_pe);
+                             srpp->init_env, &tstinfo, srpp->checker_real_time_limit_ms, srpp->disable_pe);
     if (status != 0) {
       append_msg_to_log(check_out_path, "init_cmd failed to start with code 0");
       status = RUN_CHECK_FAILED;
@@ -2570,7 +2606,7 @@ run_one_test(
   }
 
   if (tst && tst->clear_env > 0) task_ClearEnv(tsk);
-  setup_environment(tsk, start_env, &tstinfo, 0);
+  setup_environment(tsk, start_env, tstinfo.env_u, tstinfo.env_v, 0);
 
   if (time_limit_value_ms > 0) {
     if ((time_limit_value_ms % 1000)) {
@@ -2742,6 +2778,7 @@ run_one_test(
   if (interactor_cmd) {
     tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src,
                                 working_dir, check_out_path, srpp->interactor_env, srgp->checker_locale,
+                                &tstinfo,
                                 pfd1[0], pfd2[1], srpp->interactor_time_limit_ms, task_GetPid(tsk));
     if (!tsk_int) {
       append_msg_to_log(check_out_path, "interactor failed to start");
@@ -3024,14 +3061,14 @@ run_checker:;
                           check_cmd, test_src, output_path_to_check,
                           corr_src, info_src, tgzdir_src,
                           working_dir, score_out_path, check_out_path,
-                          check_dir, test_score_count, test_score_val);
+                          check_dir, &tstinfo, test_score_count, test_score_val);
 
   // read the checker output
 read_checker_output:;
   if (init_cmd_started) {
     int new_status = invoke_init_cmd(srpp->init_cmd, "stop", test_src,
                                      corr_src, info_src, working_dir, check_out_path,
-                                     srpp->init_env, srpp->checker_real_time_limit_ms, srpp->disable_pe);
+                                     srpp->init_env, &tstinfo, srpp->checker_real_time_limit_ms, srpp->disable_pe);
     if (!status) status = new_status;
     init_cmd_started = 0;
   }
@@ -3049,7 +3086,7 @@ read_checker_output:;
 cleanup:;
   if (init_cmd_started) {
     int new_status = invoke_init_cmd(srpp->init_cmd, "stop", test_src, corr_src,  info_src, working_dir, check_out_path,
-                                     srpp->init_env, srpp->checker_real_time_limit_ms, srpp->disable_pe);
+                                     srpp->init_env, &tstinfo, srpp->checker_real_time_limit_ms, srpp->disable_pe);
     if (!status) status = new_status;
     init_cmd_started = 0;
   }
@@ -3333,7 +3370,7 @@ check_output_only(
                           check_cmd, test_src, output_path,
                           corr_src, NULL, NULL,
                           global->run_work_dir, score_out_path, check_out_path,
-                          global->run_work_dir, 0, NULL);
+                          global->run_work_dir, NULL, 0, NULL);
 
   cur_info->status = status;
 
