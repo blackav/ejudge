@@ -367,6 +367,24 @@ testinfo_unparse_environ(const struct testinfo_struct *ti)
 }
 
 unsigned char *
+testinfo_unparse_checker_env(const struct testinfo_struct *ti)
+{
+  return unparse_str_array(ti->checker_env_u, ti->checker_env_v);
+}
+
+unsigned char *
+testinfo_unparse_interactor_env(const struct testinfo_struct *ti)
+{
+  return unparse_str_array(ti->interactor_env_u, ti->interactor_env_v);
+}
+
+unsigned char *
+testinfo_unparse_init_env(const struct testinfo_struct *ti)
+{
+  return unparse_str_array(ti->init_env_u, ti->init_env_v);
+}
+
+unsigned char *
 testinfo_unparse_compiler_env(const struct testinfo_struct *ti)
 {
   return unparse_str_array(ti->compiler_env_u, ti->compiler_env_v);
@@ -454,7 +472,22 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
     if (pt->env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->env_u = cmd.u;
     pt->env_v = (char**) cmd.v;
-    memset(&cmd, 0, sizeof(cmd));    
+    memset(&cmd, 0, sizeof(cmd));
+  } else if (!strcmp(name_buf, "checker_env")) {
+    if (pt->checker_env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
+    pt->checker_env_u = cmd.u;
+    pt->checker_env_v = (char**) cmd.v;
+    memset(&cmd, 0, sizeof(cmd));
+  } else if (!strcmp(name_buf, "interactor_env")) {
+    if (pt->interactor_env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
+    pt->interactor_env_u = cmd.u;
+    pt->interactor_env_v = (char**) cmd.v;
+    memset(&cmd, 0, sizeof(cmd));
+  } else if (!strcmp(name_buf, "init_env")) {
+    if (pt->init_env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
+    pt->init_env_u = cmd.u;
+    pt->init_env_v = (char**) cmd.v;
+    memset(&cmd, 0, sizeof(cmd));
   } else if (!strcmp(name_buf, "compiler_env")) {
     if (pt->compiler_env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->compiler_env_u = cmd.u;
@@ -606,6 +639,24 @@ testinfo_free(testinfo_t *pt)
       if (pt->env_v[i]) free(pt->env_v[i]);
     }
     free(pt->env_v);
+  }
+  if (pt->checker_env_u > 0 && pt->checker_env_v) {
+    for (i = 0; i < pt->checker_env_u; ++i) {
+      if (pt->checker_env_v[i]) free(pt->checker_env_v[i]);
+    }
+    free(pt->checker_env_v);
+  }
+  if (pt->interactor_env_u > 0 && pt->interactor_env_v) {
+    for (i = 0; i < pt->interactor_env_u; ++i) {
+      if (pt->interactor_env_v[i]) free(pt->interactor_env_v[i]);
+    }
+    free(pt->interactor_env_v);
+  }
+  if (pt->init_env_u > 0 && pt->init_env_v) {
+    for (i = 0; i < pt->init_env_u; ++i) {
+      if (pt->init_env_v[i]) free(pt->init_env_v[i]);
+    }
+    free(pt->init_env_v);
   }
   if (pt->compiler_env_u > 0 && pt->compiler_env_v) {
     for (i = 0; i < pt->compiler_env_u; ++i) {

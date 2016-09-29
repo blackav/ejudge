@@ -58,6 +58,15 @@ struct testinfo_struct
   int env_u;
   char **env_v;
 
+  int checker_env_u;
+  char **checker_env_v;
+
+  int interactor_env_u;
+  char **interactor_env_v;
+
+  int init_env_u;
+  char **init_env_v;
+
   int compiler_env_u;
   char **compiler_env_v;
 
