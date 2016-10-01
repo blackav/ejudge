@@ -533,7 +533,9 @@ void
 serve_telegram_check_failed(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
-        int run_id);
+        const serve_state_t cs,
+        int run_id,
+        const struct run_entry *re);
 
 void
 serve_rejudge_run(

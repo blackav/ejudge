@@ -2285,7 +2285,9 @@ void
 serve_telegram_check_failed(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
-        int run_id)
+        const serve_state_t cs,
+        int run_id,
+        const struct run_entry *re)
 {
   if (!cnts) return;
   if (!cnts->telegram_bot_id || !*cnts->telegram_bot_id) return;
@@ -2294,6 +2296,9 @@ serve_telegram_check_failed(
   const unsigned char *args[10];
   unsigned char buf1[64];
   unsigned char buf2[64];
+  unsigned char buf3[64];
+  const unsigned char *name = "";
+  const unsigned char *probname = "";
 
   args[0] = "telegram_cf";
   args[1] = cnts->telegram_bot_id;
@@ -2304,7 +2309,21 @@ serve_telegram_check_failed(
   if (!args[4]) args[4] = "";
   snprintf(buf2, sizeof(buf2), "%d", run_id);
   args[5] = buf2;
-  args[6] = NULL;
+  buf3[0] = 0;
+  if (re) {
+    snprintf(buf3, sizeof(buf3), "%d", re->user_id);
+  }
+  args[6] = buf3;
+  if (re) {
+    name = teamdb_get_name_2(cs->teamdb_state, re->user_id);
+    if (!name) name = "";
+  }
+  args[7] = name;
+  if (re && re->prob_id > 0 && re->prob_id <= cs->max_prob && cs->probs[re->prob_id]) {
+    probname = cs->probs[re->prob_id]->short_name;
+  }
+  args[8] = probname;
+  args[9] = NULL;
   send_job_packet(NULL, (unsigned char **) args, 0);
 }
 
@@ -2623,7 +2642,7 @@ serve_read_compile_packet(
       if (run_change_status_4(state->runlog_state, comp_pkt->run_id, RUN_CHECK_FAILED) < 0)
         goto non_fatal_error;
       serve_send_check_failed_email(config, cnts, comp_pkt->run_id);
-      serve_telegram_check_failed(config, cnts, comp_pkt->run_id);
+      serve_telegram_check_failed(config, cnts, state, comp_pkt->run_id, &re);
       goto success;
     }
 
@@ -2749,7 +2768,7 @@ serve_read_compile_packet(
       goto report_check_failed;
     }
     serve_send_check_failed_email(config, cnts, comp_pkt->run_id);
-    serve_telegram_check_failed(config, cnts, comp_pkt->run_id);
+    serve_telegram_check_failed(config, cnts, state, comp_pkt->run_id, &re);
     goto success;
   }
 
@@ -2865,7 +2884,7 @@ prepare_run_request:
  report_check_failed:
   xfree(run_text); run_text = 0; run_size = 0;
   serve_send_check_failed_email(config, cnts, comp_pkt->run_id);
-  serve_telegram_check_failed(config, cnts, comp_pkt->run_id);
+  serve_telegram_check_failed(config, cnts, state, comp_pkt->run_id, &re);
 
   /* this is error recover, so if error happens again, we cannot do anything */
   if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
@@ -3151,7 +3170,7 @@ serve_read_run_packet(
   }
   if (reply_pkt->status == RUN_CHECK_FAILED) {
     serve_send_check_failed_email(config, cnts, reply_pkt->run_id);
-    serve_telegram_check_failed(config, cnts, reply_pkt->run_id);
+    serve_telegram_check_failed(config, cnts, state, reply_pkt->run_id, &re);
   }
   if (reply_pkt->marked_flag < 0) reply_pkt->marked_flag = 0;
   if (reply_pkt->status == RUN_CHECK_FAILED) {
@@ -3500,7 +3519,7 @@ serve_judge_built_in_problem(
 
   if (status == RUN_CHECK_FAILED) {
     serve_send_check_failed_email(config, cnts, run_id);
-    serve_telegram_check_failed(config, cnts, run_id);
+    serve_telegram_check_failed(config, cnts, state, run_id, re);
   }
 
   /* FIXME: handle database update error */

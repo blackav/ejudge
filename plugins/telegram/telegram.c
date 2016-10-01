@@ -582,7 +582,10 @@ cleanup:
   args[3] = contest_id
   args[4] = contest_name
   args[5] = run_id
-  args[6] = NULL
+  args[6] = user_id
+  args[7] = user_name
+  args[8] = prob_name
+  args[9] = NULL
  */
 static void
 packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
@@ -594,7 +597,7 @@ packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
     struct bot_state *bs = NULL;
     struct telegram_chat *tc = NULL;
 
-    if (argc != 6) {
+    if (argc != 9) {
         err("wrong number of arguments for telegram_cf: %d", argc);
         goto cleanup;
     }
@@ -611,6 +614,11 @@ packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
         err("invalid chat_id: %s", argv[2]);
         goto cleanup;
     }
+    int user_id;
+    if (sscanf(argv[6], "%d%n", &user_id, &n) != 1 || argv[6][n] || user_id <= 0) {
+        err("invalid user_id: %s", argv[6]);
+        goto cleanup;
+    }
 
     tc = telegram_chat_fetch(state->conn, chat_id);
     if (!tc) {
@@ -625,6 +633,8 @@ packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
         fprintf(msg_f, "Check failed.\n");
         fprintf(msg_f, "    Contest: %d (%s)\n", contest_id, argv[4]);
         fprintf(msg_f, "    Run Id: %s\n", argv[5]);
+        fprintf(msg_f, "    User: %d (%s)\n", user_id, argv[7]);
+        fprintf(msg_f, "    Problem: %s\n", argv[8]);
         fclose(msg_f);
     }
 
