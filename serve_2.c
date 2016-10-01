@@ -2167,7 +2167,8 @@ serve_send_clar_notify_telegram(
         const struct contest_desc *cnts,
         int user_id,
         const unsigned char *user_name,
-        const unsigned char *subject)
+        const unsigned char *subject,
+        const unsigned char *text)
 {
   const unsigned char *args[10];
   char *text_s = NULL;
@@ -2181,8 +2182,9 @@ serve_send_clar_notify_telegram(
   fprintf(text_f, "New clar\n"
           "Contest: %d (%s)\n"
           "User: %d (%s)\n"
-          "Subject: %s\n",
-          cnts->id, cnts->name, user_id, user_name, subject);
+          "Subject: %s\n"
+          "%s\n",
+          cnts->id, cnts->name, user_id, user_name, subject, text);
   fclose(text_f); text_f = NULL;
 
   args[0] = "telegram";

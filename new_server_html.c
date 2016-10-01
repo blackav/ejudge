@@ -9238,7 +9238,7 @@ unpriv_submit_clar(FILE *fout,
   }
 
   serve_send_clar_notify_email(ejudge_config, cs, cnts, phr->user_id, phr->name, subj3, text2);
-  serve_send_clar_notify_telegram(ejudge_config, cs, cnts, phr->user_id, phr->name, subj3);
+  serve_send_clar_notify_telegram(ejudge_config, cs, cnts, phr->user_id, phr->name, subj3, text2);
   ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_CLARS, 0);
 
 cleanup:;
@@ -9373,7 +9373,7 @@ unpriv_submit_appeal(FILE *fout,
   }
 
   serve_send_clar_notify_email(ejudge_config, cs, cnts, phr->user_id, phr->name, subj3, text2);
-  serve_send_clar_notify_telegram(ejudge_config, cs, cnts, phr->user_id, phr->name, subj3);
+  serve_send_clar_notify_telegram(ejudge_config, cs, cnts, phr->user_id, phr->name, subj3, text2);
   ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_CLARS, 0);
 
 cleanup:;
