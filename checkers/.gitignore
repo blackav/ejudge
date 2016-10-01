@@ -20,6 +20,7 @@ cmp_yesno
 ejudgecheckers.po
 style_archive
 style_c
+new_style_c
 testinfo.c
 testinfo.h
 gvaluer
