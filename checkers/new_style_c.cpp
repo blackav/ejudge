@@ -999,12 +999,21 @@ public:
         const string &str = id.get_text();
         if (!str.size()) {
             fprintf(stderr, "%s: invalid type name\n", id.get_begpos().to_string().c_str());
+            ++error_count;
             return false;
         }
         if (!isupper(str[0])) {
             fprintf(stderr, "%s: type name or type tag must start from a capital letter\n",
                     id.get_begpos().to_string().c_str());
+            ++error_count;
             return false;
+        }
+        for (int i = 0; i < int(str.size()); ++i) {
+            if (str[i] == '_') {
+                fprintf(stderr, "%s: type name must not contain '_'\n", id.get_begpos().to_string().c_str());
+                ++error_count;
+                return false;
+            }
         }
         return true;
     }
@@ -1014,12 +1023,14 @@ public:
         const string &str = id.get_text();
         if (!str.size()) {
             fprintf(stderr, "%s: invalid constant name\n", id.get_begpos().to_string().c_str());
+            ++error_count;
             return false;
         }
         for (int i = 0; i < int(str.size()); ++i) {
             if (!isupper(str[i]) && str[i] != '_') {
                 fprintf(stderr, "%s: constant name must contain only uppercase letters\n",
                         id.get_begpos().to_string().c_str());
+                ++error_count;
                 return false;
             }
         }
@@ -1090,6 +1101,39 @@ public:
         if (t != Token::ENUM) return Range();
         ++pos;
         if (tokens[pos].get_token() == Token::CLASS) ++pos;
+        if (tokens[pos].get_token() == Token::IDENT) ++pos;
+        if (tokens[pos].get_token() != Token::LBRACE) return Range();
+        if ((pos = skip_to_pairing_bracket(pos)) < 0) return Range();
+        ++pos;
+        if (is_typedef && tokens[pos].get_token() == Token::IDENT) ++pos;
+        if (tokens[pos].get_token() != Token::SEMICOLON) {
+            fprintf(stderr, "%s: do not mix type and variable declaration (see 4.1 of coding style rules)\n",
+                    tokens[orig_pos].get_begpos().to_string().c_str());
+            ++error_count;
+            return Range();
+        }
+        return Range(orig_pos, pos + 1);
+    }
+
+    Range is_struct_definition(int pos)
+    {
+        Token t;
+        int orig_pos = pos;
+        bool is_typedef = false;
+        while ((t = tokens[pos].get_token()) != Token::LPAREN
+               && t != Token::SEMICOLON
+               && t != Token::LBRACE
+               && t != Token::EOF_TOKEN
+               && t != Token::LBRACKET
+               && t != Token::LESS
+               && t != Token::CLASS
+               && t != Token::STRUCT
+               && t != Token::UNION) {
+            if (t == Token::TYPEDEF) is_typedef = true;
+            ++pos;
+        }
+        if (t != Token::CLASS && t!= Token::STRUCT && t != Token::UNION) return Range();
+        ++pos;
         if (tokens[pos].get_token() == Token::IDENT) ++pos;
         if (tokens[pos].get_token() != Token::LBRACE) return Range();
         if ((pos = skip_to_pairing_bracket(pos)) < 0) return Range();
@@ -1344,6 +1388,63 @@ public:
         }
     }
 
+    void handle_struct(Range range, int indent)
+    {
+        const Position &p1 = tokens[range.get_low()].get_begpos();
+        check_same_file(range);
+
+        bool is_typedef = false;
+        int pos = range.get_low();
+        if (p1.get_column() != indent) {
+            fprintf(stderr, "%s: invalid indentation: %d expected, but %d actual\n",
+                    p1.to_string().c_str(), indent, p1.get_column());
+            ++error_count;
+        }
+
+        while (1) {
+            if (pos >= range.get_high()) abort();
+            if (pos > range.get_low()) {
+                check_one_space(pos);
+            }
+            if (tokens[pos].get_token() == Token::STRUCT || tokens[pos].get_token() == Token::UNION || tokens[pos].get_token() == Token::CLASS) break;
+            if (tokens[pos].get_token() == Token::TYPEDEF) is_typedef = true;
+            ++pos;
+        }
+        (void) is_typedef;
+
+        ++pos;
+        if (tokens[pos].get_token() == Token::IDENT) {
+            check_one_space(pos);
+            is_good_type_name(tokens[pos]);
+            ++pos;
+        }
+        if (tokens[pos].get_token() != Token::LBRACE) abort();
+            // { must be on the next line with initial column
+        const Position &lbp = tokens[pos].get_begpos();
+        if (lbp.get_line() != p1.get_line() + 1 || lbp.get_column() != indent) {
+            fprintf(stderr, "%s: invalid location of '{' in struct/union/class\n", lbp.to_string().c_str());
+            ++error_count;
+        }
+
+        //++pos;
+        // seek for the pairing }
+        // handle struct def
+        pos = skip_to_pairing_bracket(pos);
+        if (pos < 0) return;
+        const Position &rbp = tokens[pos].get_begpos();
+        if (rbp.get_column() != indent) {
+            fprintf(stderr, "%s: invalid location of '}' in struct/class/enum\n", lbp.to_string().c_str());
+            ++error_count;
+        }
+        ++pos;
+        if (tokens[pos].get_token() == Token::IDENT) {
+            check_one_space(pos);
+            is_good_type_name(tokens[pos]);
+            ++pos;
+        }
+        check_no_space(pos);
+    }
+
     void parse()
     {
         Range r;
@@ -1352,6 +1453,9 @@ public:
             if (tokens[cur].get_token() == Token::EOF_TOKEN) break;
             if ((r = is_enum_definition(cur))) {
                 handle_enum(r, 0);
+                cur = r.get_high();
+            } else if ((r = is_struct_definition(cur))) {
+                handle_struct(r, 0);
                 cur = r.get_high();
             } else {
                 cur = top_level_recovery(cur);
