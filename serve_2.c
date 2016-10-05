@@ -2928,6 +2928,7 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
     case RUN_WRONG_ANSWER_ERR:
     case RUN_ACCEPTED:
     case RUN_PENDING_REVIEW:
+    case RUN_SUMMONED:
     case RUN_CHECK_FAILED:
     case RUN_MEM_LIMIT_ERR:
     case RUN_SECURITY_ERR:
@@ -2953,6 +2954,7 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
     case RUN_CHECK_FAILED:
     case RUN_ACCEPTED:
     case RUN_PENDING_REVIEW:
+    case RUN_SUMMONED:
     case RUN_PRESENTATION_ERR:
       return 1;
     case RUN_COMPILE_ERR:
@@ -2972,6 +2974,7 @@ serve_is_valid_status(serve_state_t state, int status, int mode)
     case RUN_OK:
     case RUN_ACCEPTED:
     case RUN_PENDING_REVIEW:
+    case RUN_SUMMONED:
     case RUN_RUN_TIME_ERR:
     case RUN_TIME_LIMIT_ERR:
     case RUN_WALL_TIME_LIMIT_ERR:
@@ -3778,6 +3781,7 @@ static unsigned char olympiad_rejudgeable_runs[RUN_STATUS_SIZE] =
   [RUN_PARTIAL]          = 1,
   [RUN_ACCEPTED]         = 1,
   [RUN_PENDING_REVIEW]   = 1,
+  [RUN_SUMMONED]         = 1,
   [RUN_IGNORED]          = 0,
   [RUN_DISQUALIFIED]     = 0,
   [RUN_PENDING]          = 0,
@@ -3808,6 +3812,7 @@ static unsigned char olympiad_output_only_rejudgeable_runs[RUN_STATUS_SIZE] =
   [RUN_PARTIAL]          = 1,
   [RUN_ACCEPTED]         = 1,
   [RUN_PENDING_REVIEW]   = 1,
+  [RUN_SUMMONED]         = 1,
   [RUN_IGNORED]          = 0,
   [RUN_DISQUALIFIED]     = 0,
   [RUN_PENDING]          = 0,
@@ -3838,6 +3843,7 @@ static unsigned char generally_rejudgable_runs[RUN_STATUS_SIZE] =
   [RUN_PARTIAL]          = 1,
   [RUN_ACCEPTED]         = 1,
   [RUN_PENDING_REVIEW]   = 1,
+  [RUN_SUMMONED]         = 1,
   [RUN_IGNORED]          = 1,
   [RUN_DISQUALIFIED]     = 1,
   [RUN_PENDING]          = 1,
@@ -4961,7 +4967,7 @@ serve_judge_virtual_olympiad(
       prob = cs->probs[re.prob_id];
     if (!prob) continue;
     if (prob->disable_testing || prob->disable_auto_testing) continue;
-    if (s != RUN_OK && s != RUN_PARTIAL && s != RUN_ACCEPTED && s != RUN_PENDING_REVIEW
+    if (s != RUN_OK && s != RUN_PARTIAL && s != RUN_ACCEPTED && s != RUN_PENDING_REVIEW && s != RUN_SUMMONED
         && (s != RUN_WRONG_ANSWER_ERR || prob->type == PROB_TYPE_STANDARD))
         continue;
     if (latest_runs[re.prob_id] < 0) latest_runs[re.prob_id] = run_id;

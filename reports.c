@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -396,6 +396,7 @@ user_report_generate(
         case RUN_PARTIAL:
         case RUN_ACCEPTED:
         case RUN_PENDING_REVIEW:
+        case RUN_SUMMONED:
           run_ids[re.prob_id] = run_id;
           break;
 
@@ -416,6 +417,7 @@ user_report_generate(
         case RUN_PARTIAL:
         case RUN_ACCEPTED:
         case RUN_PENDING_REVIEW:
+        case RUN_SUMMONED:
           run_ids[re.prob_id] = run_id;
           break;
 
@@ -1006,6 +1008,7 @@ full_user_report_generate(
         case RUN_PARTIAL:
         case RUN_ACCEPTED:
         case RUN_PENDING_REVIEW:
+        case RUN_SUMMONED:
           run_ids[re.prob_id] = run_id;
           break;
 
@@ -1026,6 +1029,7 @@ full_user_report_generate(
         case RUN_PARTIAL:
         case RUN_ACCEPTED:
         case RUN_PENDING_REVIEW:
+        case RUN_SUMMONED:
           run_ids[re.prob_id] = run_id;
           break;
 
@@ -2221,6 +2225,7 @@ ns_olympiad_final_user_report(
         case RUN_PARTIAL:
         case RUN_ACCEPTED:
         case RUN_PENDING_REVIEW:
+        case RUN_SUMMONED:
           run_ids[re.prob_id] = run_id;
           break;
 
@@ -2241,6 +2246,7 @@ ns_olympiad_final_user_report(
         case RUN_PARTIAL:
         case RUN_ACCEPTED:
         case RUN_PENDING_REVIEW:
+        case RUN_SUMMONED:
           run_ids[re.prob_id] = run_id;
           break;
 
@@ -2895,6 +2901,7 @@ write_xml_tex_testing_report(
     case RUN_OK:
     case RUN_ACCEPTED:
     case RUN_PENDING_REVIEW:
+    case RUN_SUMMONED:
       if (t->checker_comment) {
         fprintf(fout, " & %s", TARMOR(t->checker_comment));
       } else {
@@ -3101,6 +3108,7 @@ problem_report_generate(
       case RUN_PARTIAL:
       case RUN_ACCEPTED:
       case RUN_PENDING_REVIEW:
+      case RUN_SUMMONED:
         run_ids[user_id] = run_id;
         break;
 
@@ -3121,6 +3129,7 @@ problem_report_generate(
       case RUN_PARTIAL:
       case RUN_ACCEPTED:
       case RUN_PENDING_REVIEW:
+      case RUN_SUMMONED:
         run_ids[user_id] = run_id;
         break;
 

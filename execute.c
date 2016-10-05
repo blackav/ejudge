@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -60,6 +60,7 @@ enum
   RUN_WALL_TIME_LIMIT_ERR = 15,
   RUN_PENDING_REVIEW   = 16,
   RUN_SYNC_ERR         = 19,
+  RUN_SUMMONED         = 23,
 };
 
 static const unsigned char *progname;
@@ -211,6 +212,7 @@ static const unsigned char * const run_status_str[] =
   [RUN_WALL_TIME_LIMIT_ERR] = "WT",
   [RUN_PENDING_REVIEW] = "PR",
   [RUN_SYNC_ERR] = "SY",
+  [RUN_SUMMONED] = "SM",
 };
 
 static const unsigned char * const

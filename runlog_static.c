@@ -67,6 +67,7 @@ run_status_str(
   case RUN_WALL_TIME_LIMIT_ERR: s = _("Wall time-limit exceeded"); break;
   case RUN_SKIPPED:          s = _("Skipped"); break;
   case RUN_PENDING_REVIEW:   s = _("Pending review");      break;
+  case RUN_SUMMONED:         s = _("Summoned for defence");break;
   case RUN_RUNNING:          s = _("Running...");          break;
   case RUN_COMPILED:         s = _("Compiled");            break;
   case RUN_COMPILING:        s = _("Compiling...");        break;
@@ -136,6 +137,7 @@ static const unsigned char is_team_report_available_table[RUN_STATUS_SIZE] =
   [RUN_PARTIAL]          = 1,
   [RUN_ACCEPTED]         = 1,
   [RUN_PENDING_REVIEW]   = 1,
+  [RUN_SUMMONED]         = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
   [RUN_SYNC_ERR]         = 1,
@@ -162,6 +164,7 @@ static const unsigned char is_report_available_table[RUN_STATUS_SIZE] =
   [RUN_PARTIAL]          = 1,
   [RUN_ACCEPTED]         = 1,
   [RUN_PENDING_REVIEW]   = 1,
+  [RUN_SUMMONED]         = 1,
   [RUN_MEM_LIMIT_ERR]    = 1,
   [RUN_SECURITY_ERR]     = 1,
   [RUN_SYNC_ERR]         = 1,
@@ -205,6 +208,7 @@ static const struct str_to_status_data str_to_status_table[] =
   { "SV", RUN_STYLE_ERR },
   { "WT", RUN_WALL_TIME_LIMIT_ERR },
   { "PR", RUN_PENDING_REVIEW },
+  { "SM", RUN_SUMMONED },
   { "RJ", RUN_REJECTED },
   { "SK", RUN_SKIPPED },
   { "RU", RUN_RUNNING },
@@ -250,6 +254,7 @@ static const unsigned char run_valid_statuses[RUN_STATUS_SIZE] =
   [RUN_STYLE_ERR]        = 1,
   [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PENDING_REVIEW]   = 1,
+  [RUN_SUMMONED]         = 1,
   [RUN_REJECTED]         = 1,
   [RUN_VIRTUAL_START]    = 1,
   [RUN_VIRTUAL_STOP]     = 1,
@@ -286,6 +291,7 @@ static const unsigned char run_valid_user_statuses[RUN_STATUS_SIZE] =
   [RUN_STYLE_ERR]        = 1,
   [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PENDING_REVIEW]   = 1,
+  [RUN_SUMMONED]         = 1,
   [RUN_REJECTED]         = 1,
   [RUN_RUNNING]          = 1,
   [RUN_COMPILED]         = 1,
@@ -319,6 +325,7 @@ static const unsigned char run_source_available_statuses[RUN_STATUS_SIZE] =
   [RUN_STYLE_ERR]        = 1,
   [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PENDING_REVIEW]   = 1,
+  [RUN_SUMMONED]         = 1,
   [RUN_REJECTED]         = 1,
   [RUN_RUNNING]          = 1,
   [RUN_COMPILED]         = 1,
@@ -470,6 +477,7 @@ static const unsigned char * const status_short_str[] =
   [RUN_STYLE_ERR] = "SV",
   [RUN_WALL_TIME_LIMIT_ERR] = "WT",
   [RUN_PENDING_REVIEW] = "PR",
+  [RUN_SUMMONED] = "SM",
   [RUN_REJECTED] = "RJ",
   [RUN_SKIPPED] = "SK",
 };

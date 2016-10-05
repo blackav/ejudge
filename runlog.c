@@ -1142,11 +1142,11 @@ run_get_accepted_set(
     ASSERT(q->user_id == user_id);
 
     if (accepting_mode) {
-      if ((q->status == RUN_OK || q->status == RUN_ACCEPTED || q->status == RUN_PARTIAL || q->status == RUN_PENDING_REVIEW)
+      if ((q->status == RUN_OK || q->status == RUN_ACCEPTED || q->status == RUN_PARTIAL || q->status == RUN_PENDING_REVIEW || q->status == RUN_SUMMONED)
           && q->prob_id > 0 && q->prob_id <= max_prob)
         acc_set[q->prob_id] = 1;
     } else {
-      if ((q->status == RUN_OK || q->status == RUN_PENDING_REVIEW) && q->prob_id > 0 && q->prob_id <= max_prob)
+      if ((q->status == RUN_OK || q->status == RUN_PENDING_REVIEW || q->status == RUN_SUMMONED) && q->prob_id > 0 && q->prob_id <= max_prob)
         acc_set[q->prob_id] = 1;
     }
   }
@@ -1519,6 +1519,7 @@ static const unsigned char valid_user_run_statuses[256] =
   [RUN_STYLE_ERR]           = 1,
   [RUN_WALL_TIME_LIMIT_ERR] = 1,
   [RUN_PENDING_REVIEW]      = 1,
+  [RUN_SUMMONED]            = 1,
   [RUN_REJECTED]            = 1,
   [RUN_SKIPPED]             = 0,
 

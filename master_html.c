@@ -83,6 +83,7 @@ static const unsigned char * const change_status_strings[RUN_STATUS_SIZE] =
   [RUN_REJECTED]         = "Rejected",
   [RUN_WALL_TIME_LIMIT_ERR] = "Wall time-limit exceeded",
   [RUN_PENDING_REVIEW]   = "Pending review",
+  [RUN_SUMMONED]         = "Summoned for defence",
   [RUN_PENDING]          = "Mark as PENDING",
   [RUN_FULL_REJUDGE]     = "FULL Rejudge",
   [RUN_REJUDGE]          = "Rejudge",
@@ -91,14 +92,14 @@ static const int kirov_no_rejudge_status_list[] =
 {
   RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL, RUN_ACCEPTED, RUN_STYLE_ERR,
-  RUN_PENDING_REVIEW, RUN_REJECTED,
+  RUN_PENDING_REVIEW, RUN_REJECTED, RUN_SUMMONED,
   -1,
 };
 static const int kirov_status_list[] =
 {
   RUN_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_OK, RUN_COMPILE_ERR, RUN_PARTIAL, RUN_ACCEPTED, RUN_STYLE_ERR,
-  RUN_PENDING_REVIEW, RUN_REJECTED,
+  RUN_PENDING_REVIEW, RUN_REJECTED, RUN_SUMMONED,
   -1,
 };
 static const int olymp_accepting_no_rejudge_status_list[] =
@@ -106,7 +107,7 @@ static const int olymp_accepting_no_rejudge_status_list[] =
   RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING, RUN_ACCEPTED,
   RUN_OK, RUN_PARTIAL, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR, RUN_TIME_LIMIT_ERR,
   RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_SYNC_ERR,
-  RUN_STYLE_ERR, RUN_WALL_TIME_LIMIT_ERR, RUN_PENDING_REVIEW, RUN_REJECTED,
+  RUN_STYLE_ERR, RUN_WALL_TIME_LIMIT_ERR, RUN_PENDING_REVIEW, RUN_REJECTED, RUN_SUMMONED,
   -1,
 };
 static const int olymp_accepting_status_list[] =
@@ -115,7 +116,7 @@ static const int olymp_accepting_status_list[] =
   RUN_ACCEPTED, RUN_OK, RUN_PARTIAL, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR,
   RUN_TIME_LIMIT_ERR, RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR,
   RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_SYNC_ERR, RUN_STYLE_ERR, RUN_WALL_TIME_LIMIT_ERR,
-  RUN_PENDING_REVIEW, RUN_REJECTED,
+  RUN_PENDING_REVIEW, RUN_REJECTED, RUN_SUMMONED,
   -1,
 };
 static const int olymp_judging_no_rejudge_status_list[] =
@@ -124,7 +125,7 @@ static const int olymp_judging_no_rejudge_status_list[] =
   RUN_OK, RUN_PARTIAL,  RUN_ACCEPTED, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR,
   RUN_TIME_LIMIT_ERR, RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR,
   RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_SYNC_ERR, RUN_STYLE_ERR, RUN_WALL_TIME_LIMIT_ERR,
-  RUN_PENDING_REVIEW, RUN_REJECTED,
+  RUN_PENDING_REVIEW, RUN_REJECTED, RUN_SUMMONED,
   -1,
 };
 static const int olymp_judging_status_list[] =
@@ -133,7 +134,7 @@ static const int olymp_judging_status_list[] =
   RUN_OK,  RUN_PARTIAL, RUN_ACCEPTED, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR,
   RUN_TIME_LIMIT_ERR, RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR,
   RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_SYNC_ERR, RUN_STYLE_ERR, RUN_WALL_TIME_LIMIT_ERR,
-  RUN_PENDING_REVIEW, RUN_REJECTED,
+  RUN_PENDING_REVIEW, RUN_REJECTED, RUN_SUMMONED,
   -1,
 };
 static const int acm_no_rejudge_status_list[] =
@@ -141,7 +142,7 @@ static const int acm_no_rejudge_status_list[] =
   RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_OK, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR, RUN_TIME_LIMIT_ERR,
   RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_SYNC_ERR, RUN_ACCEPTED,
-  RUN_STYLE_ERR, RUN_WALL_TIME_LIMIT_ERR, RUN_PENDING_REVIEW, RUN_REJECTED,
+  RUN_STYLE_ERR, RUN_WALL_TIME_LIMIT_ERR, RUN_PENDING_REVIEW, RUN_REJECTED, RUN_SUMMONED,
   -1,
 };
 static const int acm_status_list[] =
@@ -149,7 +150,7 @@ static const int acm_status_list[] =
   RUN_REJUDGE, RUN_IGNORED, RUN_DISQUALIFIED, RUN_PENDING,
   RUN_OK, RUN_COMPILE_ERR, RUN_RUN_TIME_ERR, RUN_TIME_LIMIT_ERR,
   RUN_PRESENTATION_ERR, RUN_WRONG_ANSWER_ERR, RUN_MEM_LIMIT_ERR, RUN_SECURITY_ERR, RUN_SYNC_ERR, RUN_ACCEPTED,
-  RUN_STYLE_ERR, RUN_WALL_TIME_LIMIT_ERR, RUN_PENDING_REVIEW, RUN_REJECTED,
+  RUN_STYLE_ERR, RUN_WALL_TIME_LIMIT_ERR, RUN_PENDING_REVIEW, RUN_REJECTED, RUN_SUMMONED,
   -1,
 };
 
@@ -322,7 +323,7 @@ write_xml_tests_report(
 
   if (r->status == RUN_CHECK_FAILED) {
     font_color = " color=\"magenta\"";
-  } else if (r->status == RUN_OK || r->status == RUN_ACCEPTED || r->status == RUN_PENDING_REVIEW) {
+  } else if (r->status == RUN_OK || r->status == RUN_ACCEPTED || r->status == RUN_PENDING_REVIEW || r->status == RUN_SUMMONED) {
     font_color = " color=\"green\"";
   } else {
     font_color = " color=\"red\"";
@@ -928,6 +929,7 @@ generate_daily_statistics(
 
     case RUN_ACCEPTED:
     case RUN_PENDING_REVIEW:
+    case RUN_SUMMONED:
       total_ac++;
       u_ac[u]++;
       u_total[u]++;

@@ -3132,7 +3132,7 @@ priv_set_run_style_error_status(
     ns_error(log_f, NEW_SRV_ERR_USER_ID_NONEXISTANT, re.user_id);
     goto cleanup;
   }
-  if ((re.status != RUN_ACCEPTED && re.status != RUN_PENDING_REVIEW) && opcaps_check(phr->caps, OPCAP_EDIT_RUN)<0){
+  if ((re.status != RUN_ACCEPTED && re.status != RUN_PENDING_REVIEW && re.status != RUN_SUMMONED) && opcaps_check(phr->caps, OPCAP_EDIT_RUN)<0){
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;    
   }
@@ -4091,7 +4091,7 @@ priv_simple_change_status(
     ns_error(log_f, NEW_SRV_ERR_INV_RUN_ID);
     goto cleanup;
   }
-  if ((re.status != RUN_ACCEPTED && re.status != RUN_PENDING_REVIEW) && opcaps_check(phr->caps, OPCAP_EDIT_RUN)<0){
+  if ((re.status != RUN_ACCEPTED && re.status != RUN_PENDING_REVIEW && re.status != RUN_SUMMONED) && opcaps_check(phr->caps, OPCAP_EDIT_RUN)<0){
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
     goto cleanup;    
   }
@@ -7778,6 +7778,7 @@ unpriv_use_token(
   case RUN_SYNC_ERR:
   case RUN_WALL_TIME_LIMIT_ERR:
   case RUN_PENDING_REVIEW:
+  case RUN_SUMMONED:
   case RUN_REJECTED:
     /*
     if (prob->team_enable_rep_view > 0) {
@@ -9716,6 +9717,7 @@ unpriv_view_test(
   case RUN_PARTIAL:
   case RUN_ACCEPTED:
   case RUN_PENDING_REVIEW:
+  case RUN_SUMMONED:
   case RUN_MEM_LIMIT_ERR:
   case RUN_SECURITY_ERR:
   case RUN_SYNC_ERR:

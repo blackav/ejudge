@@ -101,7 +101,7 @@ calc_kirov_score(
 
   if (separate_user_score > 0 && user_mode > 0 && pe->is_saved && !(token_flags & TOKEN_FINALSCORE_BIT)) {
     status = pe->saved_status;
-    if (status == RUN_PENDING_REVIEW) status = RUN_OK;
+    if (status == RUN_PENDING_REVIEW || status == RUN_SUMMONED) status = RUN_OK;
     init_score = pe->saved_score;
     if (status == RUN_OK && !pr->variable_full_score) {
       if (pr->full_user_score >= 0) init_score = pr->full_user_score;
@@ -109,7 +109,7 @@ calc_kirov_score(
     }
   } else {
     status = pe->status;
-    if (status == RUN_PENDING_REVIEW) status = RUN_OK;
+    if (status == RUN_PENDING_REVIEW || status == RUN_SUMMONED) status = RUN_OK;
     init_score = pe->score;
     if (status == RUN_OK && !pr->variable_full_score)
       init_score = pr->full_score;
@@ -332,6 +332,7 @@ write_html_run_status(
     goto dona;
     //case RUN_ACCEPTED:
     //case RUN_PENDING_REVIEW:
+    //case RUN_SUMMONED:
   case RUN_IGNORED:
   case RUN_DISQUALIFIED:
   case RUN_PENDING:
@@ -356,7 +357,7 @@ write_html_run_status(
         ++test;
       }
       if (!disable_failed) {
-        if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || test <= 0
+        if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || status == RUN_SUMMONED || test <= 0
             || global->disable_failed_test_view > 0) {
           fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
         } else {
@@ -376,7 +377,7 @@ write_html_run_status(
         // add +1 for compatibility, until the legend is updated
         ++test;
       }
-      if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || test <= 0
+      if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || status == RUN_SUMMONED || test <= 0
           || global->disable_failed_test_view > 0) {
         fprintf(f, "<td%s>%s</td>", cl, _("N/A"));
       } else {
@@ -502,6 +503,7 @@ write_text_run_status(
     if (priv_level > 0) break;
   case RUN_ACCEPTED:
   case RUN_PENDING_REVIEW:
+  case RUN_SUMMONED:
   case RUN_IGNORED:
   case RUN_DISQUALIFIED:
   case RUN_PENDING:
@@ -515,7 +517,7 @@ write_text_run_status(
     if (pe->passed_mode > 0) {
       ++test;
     }
-    if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || test <= 0
+    if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || status == RUN_SUMMONED || test <= 0
         || global->disable_failed_test_view > 0) {
       fprintf(f, ";");
     } else {
@@ -528,7 +530,7 @@ write_text_run_status(
     if (pe->passed_mode > 0) {
       ++test;
     }
-    if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || test <= 0
+    if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || status == RUN_SUMMONED || test <= 0
         || global->disable_failed_test_view > 0) {
       fprintf(f, ";");
     } else {
@@ -1371,11 +1373,12 @@ do_write_kirov_standings(
       case RUN_OK:
       case RUN_ACCEPTED:
       case RUN_PENDING_REVIEW:
+      case RUN_SUMMONED:
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         full_sol[up_ind] = 1;
         prob_score[up_ind] = prob->tests_to_accept;
         att_num[up_ind]++;  /* hmm, it is not used... */
-        if (run_status == RUN_PENDING_REVIEW)
+        if (run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED)
           pr_flag[up_ind] = 1;
         break;
       case RUN_PARTIAL:
@@ -1471,6 +1474,7 @@ do_write_kirov_standings(
         trans_num[up_ind]++;
         break;
       case RUN_PENDING_REVIEW:
+      case RUN_SUMMONED:
         att_num[up_ind]++;
         trans_num[up_ind]++;
         pr_flag[up_ind] = 1;
@@ -1512,8 +1516,8 @@ do_write_kirov_standings(
 
       /////
       if (prob->score_latest_or_unmarked > 0) {
-        if (run_status == RUN_OK || run_status == RUN_PENDING_REVIEW) {
-          if (run_status == RUN_PENDING_REVIEW) {
+        if (run_status == RUN_OK || run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED) {
+          if (run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED) {
             pr_flag[up_ind] = 1;
             ++total_prs;
           }
@@ -1575,7 +1579,7 @@ do_write_kirov_standings(
           if (!full_sol[up_ind]) sol_att[up_ind]++;
           disq_num[up_ind]++;
           ++total_disqualified;
-        } else if (run_status == RUN_PENDING_REVIEW) {
+        } else if (run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED) {
           pr_flag[up_ind] = 1;
           ++total_prs;
         } else if (run_status == RUN_PENDING) {
@@ -1596,8 +1600,8 @@ do_write_kirov_standings(
           /* something strange... */
         }
       } else {
-        if (run_status == RUN_OK || run_status == RUN_PENDING_REVIEW) {
-          if (run_status == RUN_PENDING_REVIEW) {
+        if (run_status == RUN_OK || run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED) {
+          if (run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED) {
             pr_flag[up_ind] = 1;
             ++total_prs;
           }
@@ -3889,7 +3893,7 @@ do_write_standings(
       }
     } else if (pe->status == RUN_DISQUALIFIED) {
       disq_flag[up_ind] = 1;
-    } else if (pe->status == RUN_PENDING_REVIEW) {
+    } else if (pe->status == RUN_PENDING_REVIEW || pe->status == RUN_SUMMONED) {
       pr_flag[up_ind] = 1;
     } else if (pe->status == RUN_PENDING || pe->status == RUN_ACCEPTED) {
       trans_flag[up_ind] = 1;

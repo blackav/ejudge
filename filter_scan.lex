@@ -1,6 +1,6 @@
 /* -*- mode: fundamental -*- */
 
-/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -226,6 +226,7 @@ lett    [A-Za-z_]
 [Ee][Mm] { TR(RUN_EMPTY); }
 [Vv][Ss] { TR(RUN_VIRTUAL_START); }
 [Vv][Tt] { TR(RUN_VIRTUAL_STOP); }
+[Ss][Mm] { TR(RUN_SUMMONED); }
 
 0[xX]{hexd}+ { handle_int(); return TOK_INT_L; }
 0{octd}* { handle_int(); return TOK_INT_L; }

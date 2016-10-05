@@ -1848,6 +1848,7 @@ ns_priv_edit_run_action(
     case RUN_CHECK_FAILED:
     case RUN_ACCEPTED:
     case RUN_PENDING_REVIEW:
+    case RUN_SUMMONED:
     case RUN_IGNORED:
     case RUN_DISQUALIFIED:
     case RUN_PENDING:
@@ -1908,6 +1909,7 @@ ns_priv_edit_run_action(
       case RUN_CHECK_FAILED:
       case RUN_ACCEPTED:
       case RUN_PENDING_REVIEW:
+      case RUN_SUMMONED:
       case RUN_IGNORED:
       case RUN_DISQUALIFIED:
       case RUN_PENDING:
@@ -2026,6 +2028,7 @@ ns_priv_edit_run_action(
         case RUN_CHECK_FAILED:
         case RUN_ACCEPTED:
         case RUN_PENDING_REVIEW:
+        case RUN_SUMMONED:
         case RUN_IGNORED:
         case RUN_DISQUALIFIED:
         case RUN_PENDING:
@@ -2085,6 +2088,7 @@ ns_priv_edit_run_action(
           case RUN_CHECK_FAILED:
           case RUN_ACCEPTED:
           case RUN_PENDING_REVIEW:
+          case RUN_SUMMONED:
           case RUN_IGNORED:
           case RUN_DISQUALIFIED:
           case RUN_PENDING:
@@ -2778,9 +2782,9 @@ ns_download_runs(
       goto cleanup;
     }
     if (run_selection == NS_RUNSEL_OK && info.status != RUN_OK) continue;
-    if (run_selection == NS_RUNSEL_OKPR && info.status != RUN_OK && info.status != RUN_PENDING_REVIEW) continue;
+    if (run_selection == NS_RUNSEL_OKPR && info.status != RUN_OK && info.status != RUN_PENDING_REVIEW && info.status != RUN_SUMMONED) continue;
     if (run_selection == NS_RUNSEL_OKPRRJ
-        && info.status != RUN_OK && info.status != RUN_PENDING_REVIEW
+        && info.status != RUN_OK && info.status != RUN_PENDING_REVIEW && info.status != RUN_SUMMONED
         && info.status != RUN_IGNORED && info.status != RUN_REJECTED
         && info.status != RUN_PENDING && info.status != RUN_DISQUALIFIED)
       continue;
@@ -3957,6 +3961,7 @@ static int get_accepting_passed_tests(
   case RUN_OK:
   case RUN_ACCEPTED:
   case RUN_PENDING_REVIEW:
+  case RUN_SUMMONED:
   case RUN_PARTIAL:
     if (prob->accept_partial <= 0 && prob->min_tests_to_accept < 0)
       return prob->tests_to_accept;
@@ -4186,6 +4191,7 @@ ns_write_olympiads_user_runs(
       case RUN_PARTIAL:
       case RUN_ACCEPTED:
       case RUN_PENDING_REVIEW:
+      case RUN_SUMMONED:
         re.status = RUN_ACCEPTED;
         if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
@@ -4282,6 +4288,7 @@ ns_write_olympiads_user_runs(
 
       case RUN_ACCEPTED:
       case RUN_PENDING_REVIEW:
+      case RUN_SUMMONED:
         if (prob && !latest_flag[prob->id]) run_latest = 1;
         if (prob && prob->type != PROB_TYPE_STANDARD) {
           snprintf(tests_buf, sizeof(tests_buf), "&nbsp;");
@@ -4440,6 +4447,7 @@ kirov_score_latest_or_unmarked(
     break;
 
   case RUN_PENDING_REVIEW:
+  case RUN_SUMMONED:
     // this is OK solution without manual confirmation
     pinfo->pr_flag = 1;
     cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
@@ -4547,6 +4555,7 @@ kirov_score_latest(
     break;
 
   case RUN_PENDING_REVIEW:
+  case RUN_SUMMONED:
     pinfo->marked_flag = re->is_marked;
     pinfo->solved_flag = 0;
     pinfo->accepted_flag = 0;
@@ -4678,6 +4687,7 @@ kirov_score_tokenized(
     break;
 
   case RUN_PENDING_REVIEW:
+  case RUN_SUMMONED:
     pinfo->pr_flag = 1;
     break;
 
@@ -4767,6 +4777,7 @@ kirov_score_default(
     break;
 
   case RUN_PENDING_REVIEW:
+  case RUN_SUMMONED:
     pinfo->pr_flag = 1;
     if (cur_score >= pinfo->best_score) {
       pinfo->best_score = cur_score;
@@ -4954,6 +4965,7 @@ ns_get_user_problems_summary(
         case RUN_PARTIAL:
         case RUN_ACCEPTED:
         case RUN_PENDING_REVIEW:
+        case RUN_SUMMONED:
         case RUN_WRONG_ANSWER_ERR:
           status = RUN_ACCEPTED;
           break;
@@ -4974,6 +4986,7 @@ ns_get_user_problems_summary(
         switch (status) {
         case RUN_ACCEPTED:
         case RUN_PENDING_REVIEW:
+        case RUN_SUMMONED:
           pinfo[re.prob_id].accepted_flag = 1;
           pinfo[re.prob_id].best_run = run_id;
           break;
@@ -5005,6 +5018,7 @@ ns_get_user_problems_summary(
         case RUN_PARTIAL:
         case RUN_ACCEPTED:
         case RUN_PENDING_REVIEW:
+        case RUN_SUMMONED:
           pinfo[re.prob_id].accepted_flag = 1;
           pinfo[re.prob_id].best_run = run_id;
           break;
@@ -5086,6 +5100,7 @@ ns_get_user_problems_summary(
 
       case RUN_ACCEPTED:
       case RUN_PENDING_REVIEW:
+      case RUN_SUMMONED:
         break;
 
       case RUN_IGNORED:
@@ -5171,6 +5186,7 @@ ns_get_user_problems_summary(
 
       case RUN_ACCEPTED:
       case RUN_PENDING_REVIEW:
+      case RUN_SUMMONED:
       case RUN_PENDING:
         pinfo[re.prob_id].pending_flag = 1;
         pinfo[re.prob_id].attempts++;
@@ -5220,6 +5236,7 @@ ns_get_user_problems_summary(
  
       case RUN_ACCEPTED:
       case RUN_PENDING_REVIEW:
+      case RUN_SUMMONED:
       case RUN_PENDING:
         pinfo[re.prob_id].pending_flag = 1;
         pinfo[re.prob_id].attempts++;
@@ -5910,6 +5927,7 @@ new_write_user_runs(
       case RUN_SYNC_ERR:
       case RUN_WALL_TIME_LIMIT_ERR:
       case RUN_PENDING_REVIEW:
+      case RUN_SUMMONED:
       case RUN_REJECTED:
         if (cur_prob->team_enable_rep_view > 0) {
           enable_report_link = 1;
@@ -6198,7 +6216,7 @@ write_xml_team_testing_report(
     if (r->user_tests_passed >= 0) tests_passed = r->user_tests_passed;
   }
 
-  if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW) {
+  if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || status == RUN_SUMMONED) {
     style = "color: green; margin-bottom: 7px;";
   } else {
     style = "color: #A32C2C; margin-bottom: 7px;";
@@ -6224,7 +6242,7 @@ write_xml_team_testing_report(
 
     fprintf(f, "<tr>");
     fprintf(f, "<td%s>%d</td>", cl, t->num);
-    if (t->status == RUN_OK || t->status == RUN_ACCEPTED || t->status == RUN_PENDING_REVIEW) {
+    if (t->status == RUN_OK || t->status == RUN_ACCEPTED || t->status == RUN_PENDING_REVIEW || t->status == RUN_SUMMONED) {
       font_color = "green";
     } else {
       font_color = "red";
@@ -6254,7 +6272,7 @@ write_xml_team_testing_report(
     fprintf(f, _("Score gained: %d (out of %d).<br/><br/></big>\n"),
             score, max_score);
   } else {
-    if (status != RUN_OK && status != RUN_ACCEPTED && status != RUN_PENDING_REVIEW) {
+    if (status != RUN_OK && status != RUN_ACCEPTED && status != RUN_PENDING_REVIEW && status != RUN_SUMMONED) {
       fprintf(f, _("<big>Failed test: %d.<br/><br/></big>\n"), r->failed_test);
     }
   }
@@ -6351,7 +6369,7 @@ write_xml_team_testing_report(
 
     fprintf(f, "<tr>");
     fprintf(f, "<td%s>%d</td>", cl, serial);
-    if (t->status == RUN_OK || t->status == RUN_ACCEPTED || t->status == RUN_PENDING_REVIEW) {
+    if (t->status == RUN_OK || t->status == RUN_ACCEPTED || t->status == RUN_PENDING_REVIEW || t->status == RUN_SUMMONED) {
       font_color = "green";
     } else {
       font_color = "red";
@@ -6580,7 +6598,7 @@ write_xml_team_output_only_acc_report(
     fprintf(f, "<tr>");
     fprintf(f, "<td%s>%d</td>", cl, t->num);
     act_status = t->status;
-    if (act_status == RUN_OK || act_status == RUN_ACCEPTED || act_status == RUN_PENDING_REVIEW
+    if (act_status == RUN_OK || act_status == RUN_ACCEPTED || act_status == RUN_PENDING_REVIEW || act_status == RUN_SUMMONED
         || act_status == RUN_WRONG_ANSWER_ERR) {
       act_status = RUN_OK;
       font_color = "green";
@@ -6595,6 +6613,7 @@ write_xml_team_output_only_acc_report(
     case RUN_OK:
     case RUN_ACCEPTED:
     case RUN_PENDING_REVIEW:
+    case RUN_SUMMONED:
     case RUN_WRONG_ANSWER_ERR:
       fprintf(f, "&nbsp;");
       break;
@@ -6701,7 +6720,7 @@ write_xml_team_accepting_report(
   fprintf(f, "<h2><font color=\"%s\">%s</font></h2>\n",
           font_color, run_status_str(act_status, 0, 0, 0, 0));
 
-  if (act_status != RUN_ACCEPTED && act_status != RUN_PENDING_REVIEW) {
+  if (act_status != RUN_ACCEPTED && act_status != RUN_PENDING_REVIEW && act_status != RUN_SUMMONED) {
     fprintf(f, _("<big>Failed test: %d.<br/><br/></big>\n"), r->failed_test);
   }
 
@@ -6732,7 +6751,7 @@ write_xml_team_accepting_report(
     if (!(t = r->tests[i])) continue;
     fprintf(f, "<tr>");
     fprintf(f, "<td%s>%d</td>", cl, t->num);
-    if (t->status == RUN_OK || t->status == RUN_ACCEPTED || t->status == RUN_PENDING_REVIEW) {
+    if (t->status == RUN_OK || t->status == RUN_ACCEPTED || t->status == RUN_PENDING_REVIEW || t->status == RUN_SUMMONED) {
       font_color = "green";
     } else {
       font_color = "red";
@@ -6761,6 +6780,7 @@ write_xml_team_accepting_report(
     case RUN_OK:
     case RUN_ACCEPTED:
     case RUN_PENDING_REVIEW:
+    case RUN_SUMMONED:
       if (t->checker_comment) {
         s = html_armor_string_dup(t->checker_comment);
         fprintf(f, "%s", s);
@@ -7034,7 +7054,7 @@ write_xml_team_tests_report(
 
   if (r->status == RUN_CHECK_FAILED) {
     font_color = " color=\"magenta\"";
-  } else if (r->status == RUN_OK || r->status == RUN_ACCEPTED || r->status == RUN_PENDING_REVIEW) {
+  } else if (r->status == RUN_OK || r->status == RUN_ACCEPTED || r->status == RUN_PENDING_REVIEW || r->status == RUN_SUMMONED) {
     font_color = " color=\"green\"";
   } else {
     font_color = " color=\"red\"";
@@ -7156,7 +7176,7 @@ write_xml_testing_report(
   }
 
   // report the testing status
-  if (r->status == RUN_OK || r->status == RUN_ACCEPTED || r->status == RUN_PENDING_REVIEW) {
+  if (r->status == RUN_OK || r->status == RUN_ACCEPTED || r->status == RUN_PENDING_REVIEW || r->status == RUN_SUMMONED) {
     font_color = "green";
   } else {
     font_color = "red";
@@ -7175,7 +7195,7 @@ write_xml_testing_report(
     fprintf(f, _("Score gained: %d (out of %d).<br><br></big>\n"),
             r->score, r->max_score);
   } else {
-    if (r->status != RUN_OK && r->status != RUN_ACCEPTED && r->status != RUN_PENDING_REVIEW) {
+    if (r->status != RUN_OK && r->status != RUN_ACCEPTED && r->status != RUN_PENDING_REVIEW && r->status != RUN_SUMMONED) {
       fprintf(f, _("<big>Failed test: %d.<br><br></big>\n"), r->failed_test);
     }
   }
@@ -7287,7 +7307,7 @@ write_xml_testing_report(
     if (!(t = r->tests[i])) continue;
     fprintf(f, "<tr>");
     fprintf(f, "<td%s>%d</td>", cl1, t->num);
-    if (t->status == RUN_OK || t->status == RUN_ACCEPTED || t->status == RUN_PENDING_REVIEW) {
+    if (t->status == RUN_OK || t->status == RUN_ACCEPTED || t->status == RUN_PENDING_REVIEW || t->status == RUN_SUMMONED) {
       font_color = "green";
     } else {
       font_color = "red";
@@ -7322,6 +7342,7 @@ write_xml_testing_report(
     case RUN_OK:
     case RUN_ACCEPTED:
     case RUN_PENDING_REVIEW:
+    case RUN_SUMMONED:
       if (t->checker_comment) {
         s = html_armor_string_dup(t->checker_comment);
         fprintf(f, "%s", s);

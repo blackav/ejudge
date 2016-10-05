@@ -1502,6 +1502,7 @@ filter_tree_eval_node(struct filter_tree_mem *mem,
       case RUN_PARTIAL:
       case RUN_ACCEPTED:
       case RUN_PENDING_REVIEW:
+      case RUN_SUMMONED:
       case RUN_IGNORED:
       case RUN_DISQUALIFIED:
       case RUN_PENDING:

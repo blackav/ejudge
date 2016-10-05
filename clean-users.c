@@ -217,6 +217,7 @@ main(int argc, char **argv)
         case RUN_MEM_LIMIT_ERR:
         case RUN_SECURITY_ERR:
         case RUN_SYNC_ERR:
+        case RUN_SUMMONED:
           reg_events++;
           if (cur_entry->user_id <= 0 || cur_entry->user_id > max_user_id
               || !userlist->user_map[cur_entry->user_id]) {

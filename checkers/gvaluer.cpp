@@ -45,7 +45,9 @@ enum
   RUN_WALL_TIME_LIMIT_ERR = 15,
   RUN_PENDING_REVIEW   = 16,
   RUN_REJECTED         = 17,
-  RUN_SKIPPED          = 18
+  RUN_SKIPPED          = 18,
+  RUN_SYNC_ERR         = 19,
+  RUN_SUMMONED         = 23,
 };
 
 static void
@@ -97,7 +99,9 @@ static int parse_status(const string &str)
     } else if (c1 == 'S') {
         if (c2 == 'E') return RUN_SECURITY_ERR;
         if (c2 == 'K') return RUN_SKIPPED;
+        if (c2 == 'M') return RUN_SUMMONED;
         if (c2 == 'V') return RUN_STYLE_ERR;
+        if (c2 == 'Y') return RUN_SYNC_ERR;
     } else if (c1 == 'R') {
         if (c2 == 'J') return RUN_REJECTED;
         if (c2 == 'T') return RUN_RUN_TIME_ERR;

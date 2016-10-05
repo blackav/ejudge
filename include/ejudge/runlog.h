@@ -54,7 +54,8 @@ enum
   RUN_EMPTY            = 22,
   RUN_PSEUDO_LAST      = 22,
 
-  RUN_LOW_LAST         = 22, // will be == RUN_NORMAL_LAST later
+  RUN_SUMMONED         = 23, // summoned for oral defence
+  RUN_LOW_LAST         = 23, // will be == RUN_NORMAL_LAST later
 
   RUN_TRANSIENT_FIRST  = 95,
   RUN_FULL_REJUDGE     = 95,    /* cannot appear in runlog */
