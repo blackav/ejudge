@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-05 14:30+0300\n"
+"POT-Creation-Date: 2016-10-05 15:53+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -3111,6 +3111,9 @@ msgid "Runs pending review"
 msgstr ""
 
 msgid "Runs pending testing"
+msgstr ""
+
+msgid "Runs summoned for defence"
 msgstr ""
 
 msgid "Runs to change token info:"
