@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-05 14:15+0300\n"
+"POT-Creation-Date: 2016-10-05 14:30+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -1944,6 +1944,9 @@ msgstr ""
 msgid "Just OK the run"
 msgstr ""
 
+msgid "Just SUMMON the run"
+msgstr ""
+
 msgid "Just ignore the run"
 msgstr ""
 
@@ -3211,6 +3214,9 @@ msgstr ""
 msgid "Send run comment and REJECT run"
 msgstr ""
 
+msgid "Send run comment and SUMMON run"
+msgstr ""
+
 msgid "Send run comment and ignore run"
 msgstr ""
 
@@ -4321,6 +4327,10 @@ msgstr ""
 
 #, c-format
 msgid "Your submit has been commented and rejected\n"
+msgstr ""
+
+#, c-format
+msgid "Your submit has been commented and summoned for defence\n"
 msgstr ""
 
 #, c-format

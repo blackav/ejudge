@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-05 14:15+0300\n"
-"PO-Revision-Date: 2016-10-05 14:16+0300\n"
+"POT-Creation-Date: 2016-10-05 14:30+0300\n"
+"PO-Revision-Date: 2016-10-05 14:32+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -2075,6 +2075,9 @@ msgstr "Июнь"
 msgid "Just OK the run"
 msgstr "Просто пометить посылку OK"
 
+msgid "Just SUMMON the run"
+msgstr "Просто пометить посылку SUMMONED"
+
 msgid "Just ignore the run"
 msgstr "Просто проигнорировать посылку"
 
@@ -3370,6 +3373,9 @@ msgstr "Отправить комментарий к программе и пр�
 msgid "Send run comment and REJECT run"
 msgstr "Отправить комментарий к программе и отклонить посылку"
 
+msgid "Send run comment and SUMMON run"
+msgstr "Отправить комментарий к программе и пометить посылку SUMMONED"
+
 msgid "Send run comment and ignore run"
 msgstr "Отправить комментарий к программе и игнорировать посылку"
 
@@ -4540,6 +4546,10 @@ msgstr "Ваша посылка была прокомментирована и �
 #, c-format
 msgid "Your submit has been commented and rejected\n"
 msgstr "Ваша посылка была прокомментирована и отклонена\n"
+
+#, c-format
+msgid "Your submit has been commented and summoned for defence\n"
+msgstr "Ваша посылка была прокомментирована и Вы приглашены на защиту\n"
 
 #, c-format
 msgid "Your submit has been commented in contest %d"
