@@ -3253,6 +3253,9 @@ priv_submit_run_comment(
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT) {
     old_status = re.status + 1;
     new_status = RUN_REJECTED + 1;
+  } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_SUMMON) {
+    old_status = re.status + 1;
+    new_status = RUN_SUMMONED + 1;
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK) {
     old_status = re.status + 1;
     new_status = RUN_OK + 1;
@@ -3291,6 +3294,8 @@ priv_submit_run_comment(
     run_change_status_4(cs->runlog_state, run_id, RUN_IGNORED);
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT) {
     run_change_status_4(cs->runlog_state, run_id, RUN_REJECTED);
+  } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_SUMMON) {
+    run_change_status_4(cs->runlog_state, run_id, RUN_SUMMONED);    
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK) {
     struct section_problem_data *prob = 0;
     int full_score = 0;
@@ -3323,6 +3328,9 @@ priv_submit_run_comment(
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT) {
     audit_cmd = "comment-run-rejuect";
     status = RUN_REJECTED;
+  } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_SUMMON) {
+    audit_cmd = "comment-run-summon";
+    status = RUN_SUMMONED;
   } else {
     abort();
   }
@@ -3346,6 +3354,8 @@ priv_submit_run_comment(
       fprintf(msg_f, _("Your submit has been commented and ignored\n"));
     } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT) {
       fprintf(msg_f, _("Your submit has been commented and rejected\n"));
+    } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_SUMMON) {
+      fprintf(msg_f, _("Your submit has been commented and summoned for defence\n"));
     } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK) {
       fprintf(msg_f, _("Your submit has been commented and accepted\n"));
     } else {
@@ -4072,6 +4082,9 @@ priv_simple_change_status(
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK) {
     status = RUN_OK;
     audit_cmd = "set-ok";
+  } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_SUMMON) {
+    status = RUN_SUMMONED;
+    audit_cmd = "set-summoned";
   } else {
     errmsg = "invalid status";
     goto invalid_param;
@@ -6430,8 +6443,10 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = priv_submit_run_comment,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = priv_submit_run_comment,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT] = priv_submit_run_comment,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_SUMMON] = priv_submit_run_comment,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_simple_change_status,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_simple_change_status,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_SUMMON] = priv_simple_change_status,
   [NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED] = priv_set_run_style_error_status,
   [NEW_SRV_ACTION_TESTING_DELETE] = priv_testing_queue_operation,
   [NEW_SRV_ACTION_TESTING_UP] = priv_testing_queue_operation,
@@ -6843,8 +6858,10 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_SUMMON] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_SUMMON] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED] = priv_generic_operation,
   [NEW_SRV_ACTION_TESTING_DELETE] = priv_generic_operation,
   [NEW_SRV_ACTION_TESTING_UP] = priv_generic_operation,

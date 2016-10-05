@@ -499,6 +499,7 @@ function setDivVisibility(oper, value)
 <s:hidden name="run_id" checkExpr=">=0" />
 <s:submit ac="priv-submit-run-just-ignore" />
 <s:submit ac="priv-submit-run-just-ok" />
+<s:submit ac="priv-submit-run-just-summon" />
 </s:form>
 </div>
 
@@ -577,6 +578,7 @@ New status: <s:v value="run_status_short_str(fcev.v[i].e.new_run_status - 1)" es
 <s:submit ac="priv-submit-run-comment-and-ignore" />
 <s:submit ac="priv-submit-run-comment-and-ok" />
 <s:submit ac="priv-submit-run-comment-and-reject" />
+<s:submit ac="priv-submit-run-comment-and-summon" />
 </div></s:form>
 
 <br />
