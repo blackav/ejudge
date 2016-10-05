@@ -599,6 +599,7 @@ struct standings_style
   const unsigned char *trans_attr;
   const unsigned char *disq_attr;
   const unsigned char *pr_attr;   // for pending reviews
+  const unsigned char *sm_attr;   // for summoned for defence
 
   // for page table
   const unsigned char *page_table_attr;
@@ -646,6 +647,7 @@ setup_standings_style(struct standings_style *ps,
   ps->trans_attr = global->stand_trans_attr;
   ps->disq_attr = global->stand_disq_attr;
   ps->pr_attr = NULL;
+  ps->sm_attr = NULL;
 
   ps->page_table_attr = global->stand_page_table_attr;
   ps->page_cur_attr = global->stand_page_cur_attr;
@@ -687,6 +689,9 @@ setup_standings_style(struct standings_style *ps,
       ps->disq_attr = " class=\"st_prob\" bgcolor=\"#ffcccc\"";
     if (!ps->pr_attr || !*ps->pr_attr) {
       ps->pr_attr = " class=\"st_prob\" bgcolor=\"#99cc99\"";
+    }
+    if (!ps->sm_attr || !*ps->sm_attr) {
+      ps->sm_attr = " class=\"st_prob\" bgcolor=\"#cccc99\"";
     }
 
     //ps->page_table_attr = global->stand_page_table_attr;
@@ -1039,6 +1044,7 @@ do_write_kirov_standings(
   time_t *sol_time = 0;
   int *trans_num = 0;
   unsigned char *pr_flag = NULL;
+  unsigned char *sm_flag = NULL;
   int *penalty = 0;
   int *cf_num = 0;
   int *marked_flag = 0;
@@ -1070,6 +1076,7 @@ do_write_kirov_standings(
   int prev_prob = -1, row_ind = 0, group_ind = 1;
   int total_trans = 0;
   int total_prs = 0;
+  int total_summoned = 0;
   int total_pending = 0;
   int total_accepted = 0;
   int total_disqualified = 0;
@@ -1264,6 +1271,7 @@ do_write_kirov_standings(
     XCALLOC(sol_att, up_ind);
     XCALLOC(trans_num, up_ind);
     XCALLOC(pr_flag, up_ind);
+    XCALLOC(sm_flag, up_ind);
     XCALLOC(penalty, up_ind);
     XCALLOC(cf_num, up_ind);
     XCALLOC(marked_flag, up_ind);
@@ -1378,8 +1386,10 @@ do_write_kirov_standings(
         full_sol[up_ind] = 1;
         prob_score[up_ind] = prob->tests_to_accept;
         att_num[up_ind]++;  /* hmm, it is not used... */
-        if (run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED)
+        if (run_status == RUN_PENDING_REVIEW)
           pr_flag[up_ind] = 1;
+        if (run_status == RUN_SUMMONED)
+          sm_flag[up_ind] = 1;
         break;
       case RUN_PARTIAL:
         if (!full_sol[up_ind]) sol_att[up_ind]++;
@@ -1474,10 +1484,14 @@ do_write_kirov_standings(
         trans_num[up_ind]++;
         break;
       case RUN_PENDING_REVIEW:
-      case RUN_SUMMONED:
         att_num[up_ind]++;
         trans_num[up_ind]++;
         pr_flag[up_ind] = 1;
+        break;
+      case RUN_SUMMONED:
+        att_num[up_ind]++;
+        trans_num[up_ind]++;
+        sm_flag[up_ind] = 1;
         break;
       case RUN_PENDING:
         att_num[up_ind]++;
@@ -1517,9 +1531,13 @@ do_write_kirov_standings(
       /////
       if (prob->score_latest_or_unmarked > 0) {
         if (run_status == RUN_OK || run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED) {
-          if (run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED) {
+          if (run_status == RUN_PENDING_REVIEW) {
             pr_flag[up_ind] = 1;
             ++total_prs;
+          }
+          if (run_status == RUN_SUMMONED) {
+            sm_flag[up_ind] = 1;
+            ++total_summoned;
           }
 
           score = calc_kirov_score(0, 0, start_time,
@@ -1579,9 +1597,12 @@ do_write_kirov_standings(
           if (!full_sol[up_ind]) sol_att[up_ind]++;
           disq_num[up_ind]++;
           ++total_disqualified;
-        } else if (run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED) {
+        } else if (run_status == RUN_PENDING_REVIEW) {
           pr_flag[up_ind] = 1;
           ++total_prs;
+        } else if (run_status == RUN_SUMMONED) {
+          sm_flag[up_ind] = 1;
+          ++total_summoned;
         } else if (run_status == RUN_PENDING) {
           ++trans_num[up_ind];
           ++total_pending;
@@ -1601,9 +1622,13 @@ do_write_kirov_standings(
         }
       } else {
         if (run_status == RUN_OK || run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED) {
-          if (run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED) {
+          if (run_status == RUN_PENDING_REVIEW) {
             pr_flag[up_ind] = 1;
             ++total_prs;
+          }
+          if (run_status == RUN_SUMMONED) {
+            sm_flag[up_ind] = 1;
+            ++total_summoned;
           }
 
           if (!marked_flag[up_ind] || prob->ignore_unmarked <= 0 || pe->is_marked) {
@@ -2089,6 +2114,11 @@ do_write_kirov_standings(
         fprintf(f, "<tr%s><td%s>%s:</td><td%s>%d</td></tr>",
                 ss.success_attr, row_attr, _("Runs pending review"), row_attr, total_prs);
       }
+      if (total_summoned > 0) {
+        if (ss.sm_attr && ss.sm_attr[0]) row_attr = ss.sm_attr;
+        fprintf(f, "<tr%s><td%s>%s:</td><td%s>%d</td></tr>",
+                ss.success_attr, row_attr, _("Runs summoned for defence"), row_attr, total_summoned);
+      }
       if (total_pending > 0) {
         if (ss.trans_attr && ss.trans_attr[0]) row_attr = ss.trans_attr;
         fprintf(f, "<tr%s><td%s>%s:</td><td%s>%d</td></tr>",
@@ -2262,6 +2292,8 @@ do_write_kirov_standings(
       up_ind = (t << row_sh) + j;
       row_attr = state->probs[p_ind[j]]->stand_attr;
       if (!*row_attr) row_attr = ss.prob_attr;
+      if (sm_flag[up_ind] && ss.sm_attr && ss.sm_attr[0])
+        row_attr = ss.sm_attr;
       if (pr_flag[up_ind] && ss.pr_attr && ss.pr_attr[0])
         row_attr = ss.pr_attr;
       if (trans_num[up_ind] && ss.trans_attr && ss.trans_attr[0])
@@ -2321,6 +2353,8 @@ do_write_kirov_standings(
         if (!*row_attr) row_attr = ss.prob_attr;
         if (pr_flag[up_ind] && ss.pr_attr && ss.pr_attr[0])
           row_attr = ss.pr_attr;
+        if (sm_flag[up_ind] && ss.sm_attr && ss.sm_attr[0])
+          row_attr = ss.sm_attr;
         if (trans_num[up_ind] && ss.trans_attr && ss.trans_attr[0])
           row_attr = ss.trans_attr;
         if (disq_num[up_ind] > 0 && ss.disq_attr && ss.disq_attr[0])
@@ -2547,6 +2581,7 @@ do_write_kirov_standings(
   xfree(sol_time);
   xfree(trans_num);
   xfree(pr_flag);
+  xfree(sm_flag);
   xfree(cf_num);
   xfree(penalty);
   xfree(marked_flag);
