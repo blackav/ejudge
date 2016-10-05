@@ -432,11 +432,11 @@ int run_count_tokens(runlog_state_t state, int user_id, int prob_id);
 
 static inline _Bool __attribute__((always_inline)) run_is_normal_status(unsigned char status)
 {
-  return status <= RUN_NORMAL_LAST && (status < RUN_PSEUDO_FIRST || status > RUN_PSEUDO_LAST);
+  return status <= RUN_LOW_LAST && (status < RUN_PSEUDO_FIRST || status > RUN_PSEUDO_LAST);
 }
 static inline _Bool __attribute__((always_inline)) run_is_normal_or_transient_status(unsigned char status)
 {
-  return (status <= RUN_NORMAL_LAST && (status < RUN_PSEUDO_FIRST || status > RUN_PSEUDO_LAST))
+  return (status <= RUN_LOW_LAST && (status < RUN_PSEUDO_FIRST || status > RUN_PSEUDO_LAST))
     || (status > RUN_TRANSIENT_FIRST && status <= RUN_TRANSIENT_LAST);
 }
 static inline _Bool __attribute__((always_inline)) run_is_invalid_status(unsigned char status)
