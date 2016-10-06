@@ -3170,6 +3170,8 @@ set_defaults(
       prepare_copy_dates(prob, g->dates_config);
     }
 
+    prepare_set_prob_value(CNTSPROB_problem_dir, prob, aprob, g);
+
     /* parse XML here */
     if (!prob->xml_file[0] && si != -1 && aprob->xml_file[0]) {
       sformat_message(prob->xml_file, sizeof(prob->xml_file), 0,
@@ -3201,7 +3203,6 @@ set_defaults(
     }
 
     prepare_set_prob_value(CNTSPROB_type, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_problem_dir, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_use_ac_not_ok, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_ok_status, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_header_pat, prob, aprob, g);
