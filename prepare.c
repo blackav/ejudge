@@ -3201,6 +3201,7 @@ set_defaults(
     }
 
     prepare_set_prob_value(CNTSPROB_type, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_problem_dir, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_use_ac_not_ok, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_ok_status, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_header_pat, prob, aprob, g);
@@ -5528,6 +5529,14 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN(wtl_is_cf);
   INHERIT_BOOLEAN(manual_checking);
 
+  case CNTSPROB_problem_dir:
+    if (abstr && abstr->problem_dir && abstr->problem_dir[0] == '/' && out->problem_dir && *out->problem_dir && *out->problem_dir != '/') {
+      snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", abstr->problem_dir, out->problem_dir);
+      xfree(out->problem_dir);
+      out->problem_dir = xstrdup(tmp_buf);
+    }
+    break;
+
   case CNTSPROB_examinator_num:
     if (out->examinator_num < 0 && abstr) out->examinator_num = abstr->examinator_num;
     if (out->manual_checking < 0) out->manual_checking = 0;
@@ -6286,6 +6295,7 @@ prepare_set_all_prob_values(
     //CNTSPROB_test_checker_env,
     //CNTSPROB_init_env,
     //CNTSPROB_start_env,
+    CNTSPROB_problem_dir,
     CNTSPROB_check_cmd,
     CNTSPROB_valuer_cmd,
     CNTSPROB_interactor_cmd,

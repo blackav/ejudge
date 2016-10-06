@@ -1018,7 +1018,7 @@ prepare_unparse_prob(
   if (!prob->abstract && prob->internal_name[0]) {
     fprintf(f, "internal_name = \"%s\"\n", CARMOR(prob->internal_name));
   }
-  if (!prob->abstract && prob->problem_dir && prob->problem_dir[0]) {
+  if (prob->problem_dir && prob->problem_dir[0]) {
     fprintf(f, "problem_dir = \"%s\"\n", CARMOR(prob->problem_dir));
   }
 
