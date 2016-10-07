@@ -5531,7 +5531,8 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN(manual_checking);
 
   case CNTSPROB_problem_dir:
-    if (abstr && abstr->problem_dir && abstr->problem_dir[0] == '/' && out->problem_dir && *out->problem_dir && *out->problem_dir != '/') {
+    if (abstr && abstr->problem_dir && abstr->problem_dir[0] == '/'
+        && out->problem_dir && *out->problem_dir && *out->problem_dir != '/' && *out->problem_dir != '.') {
       snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", abstr->problem_dir, out->problem_dir);
       xfree(out->problem_dir);
       out->problem_dir = xstrdup(tmp_buf);
