@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -283,11 +282,20 @@ convert_utf8_to_local_heap(iconv_t hnd, const unsigned char *str)
   inlen = strlen(str);
   // be very pessimistic about the string size :-(
   buflen = 4 * inlen + 16;
-  buf = alloca(buflen);
-  convlen = convert_utf8_to_local(hnd, str, inlen, buf, buflen);
-  ASSERT(convlen < buflen);
-  buf[convlen] = 0;
-  return xstrdup(buf);
+  if (buflen >= 1 * 1024 * 1024) {
+    // do not allocate big buffers on stack
+    buf = malloc(buflen);
+    convlen = convert_utf8_to_local(hnd, str, inlen, buf, buflen);
+    ASSERT(convlen < buflen);
+    buf[convlen] = 0;
+    return buf;
+  } else {
+    buf = alloca(buflen);
+    convlen = convert_utf8_to_local(hnd, str, inlen, buf, buflen);
+    ASSERT(convlen < buflen);
+    buf[convlen] = 0;
+    return xstrdup(buf);
+  }
 }
 
 static int
