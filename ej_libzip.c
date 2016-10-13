@@ -71,9 +71,11 @@ close_func(
     if (rz) {
         if (rz->z) {
             if (zip_close(rz->z) < 0) {
+                /*
                 if (rz->log_f) {
                     fprintf(rz->log_f, "'%s': zip file close failed: %s\n", rz->path, zip_strerror(rz->z));
                 }
+                */
             }
             rz->z = NULL;
         }
