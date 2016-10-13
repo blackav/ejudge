@@ -561,6 +561,7 @@ handle_packet(
     goto cleanup;
   }
 
+  int style_already_checked = 0;
   int serial = 0;
   int status = RUN_OK;
   while (1) {
@@ -738,6 +739,7 @@ handle_packet(
     snprintf(test_exe_path, sizeof(test_exe_path), "%s/%s", working_dir, test_exe_name);
 
     int cur_status = RUN_OK;
+    /*
     if (req->style_checker && req->style_checker[0]) {
       cur_status = invoke_style_checker(log_f, cs, lang, req, test_src_name, working_dir, log_work_path, tinf);
       // valid statuses: RUN_OK, RUN_STYLE_ERR, RUN_CHECK_FAILED
@@ -752,6 +754,7 @@ handle_packet(
         status = RUN_CHECK_FAILED;
       }
     }
+    */
     if (cur_status == RUN_OK) {
       fprintf(log_f, "=== compilation for test %d ===\n", serial);
       fflush(log_f);
@@ -877,6 +880,24 @@ handle_packet(
         }
       }
     }
+
+    if (status == RUN_OK && !style_already_checked && req->style_checker && req->style_checker[0]) {
+      fprintf(log_f, "=== style checking ===\n");
+      fflush(log_f);
+
+      style_already_checked = 1;
+      cur_status = invoke_style_checker(log_f, cs, lang, req, test_src_name, working_dir, log_work_path, tinf);
+      // valid statuses: RUN_OK, RUN_STYLE_ERR, RUN_CHECK_FAILED
+      if (cur_status == RUN_CHECK_FAILED) {
+        status = RUN_CHECK_FAILED;
+      } else if (cur_status == RUN_STYLE_ERR) {
+        status = RUN_STYLE_ERR;
+      } else if (cur_status != RUN_OK) {
+        fprintf(log_f, "invalid status %d returned from invoke_style_checker\n", cur_status);
+        status = RUN_CHECK_FAILED;
+      }
+    }
+
     xfree(header_s); header_s = NULL; header_z = 0;
     xfree(footer_s); footer_s = NULL; footer_z = 0;
   }
