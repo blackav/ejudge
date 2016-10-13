@@ -503,6 +503,7 @@ handle_packet(
     unsigned char exe_work_path[PATH_MAX];
     snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", working_dir, exe_work_name);
 
+    /*
     if (req->style_checker && req->style_checker[0]) {
       int r = invoke_style_checker(log_f, cs, lang, req, src_work_name, working_dir, log_work_path, NULL);
       if (r != RUN_OK) {
@@ -515,9 +516,20 @@ handle_packet(
         goto cleanup;
       }
     }
+    */
 
-    int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path, NULL);
-    rpl->status = r;
+    if (req->style_check_only <= 0) {
+      int r = invoke_compiler(log_f, cs, lang, req, src_work_name, exe_work_name, working_dir, log_work_path, NULL);
+      rpl->status = r;
+      if (r != RUN_OK) goto cleanup;
+    }
+
+    if (req->style_checker && req->style_checker[0]) {
+      int r = invoke_style_checker(log_f, cs, lang, req, src_work_name, working_dir, log_work_path, NULL);
+      rpl->status = r;
+      if (r == RUN_OK && req->style_check_only > 0) *p_override_exe = 1;
+    }
+
     goto cleanup;
   }
 
