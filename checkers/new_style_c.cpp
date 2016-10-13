@@ -437,7 +437,7 @@ public:
         ++i;
         for (; i < int(lines.size()); ++i) {
             lines[i].set_file(sbuf);
-            lines[i].set_lineno(++newlineno);
+            lines[i].set_lineno(newlineno++);
         }
         line.clear();
         return;
