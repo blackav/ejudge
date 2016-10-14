@@ -2341,6 +2341,20 @@ run_one_test(
     disable_stderr = 0;
   }
 
+  if (tstinfo.disable_valgrind && tst && !strcmp(tst->arch, "valgrind")) {
+    struct section_tester_data *newtst = NULL;
+    for (int i = 1; i <= state->max_tester; ++i) {
+      if (state->testers[i] && !state->testers[i]->arch && state->testers[i]->abstract) {
+        newtst = state->testers[i];
+      }
+    }
+    if (!newtst) {
+      err("failed to find replacement testing settings for disable_valgrind mode");
+    } else {
+      tst = newtst;
+    }
+  }
+
   make_writable(check_dir);
   clear_directory(check_dir);
   check_free_space(check_dir, expected_free_space);
