@@ -50,7 +50,6 @@ struct testinfo_struct
   int disable_stderr;
   int enable_subst;
   int compiler_must_fail;
-  int disable_valgrind;
   int cmd_argc;
   char **cmd_argv;
   char *comment;
@@ -73,6 +72,8 @@ struct testinfo_struct
 
   int style_checker_env_u;
   char **style_checker_env_v;
+
+  int disable_valgrind;
 };
 typedef struct testinfo_struct testinfo_t;
 
