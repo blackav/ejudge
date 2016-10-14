@@ -50,6 +50,7 @@ struct testinfo_struct
   int disable_stderr;
   int enable_subst;
   int compiler_must_fail;
+  int disable_valgrind;
   int cmd_argc;
   char **cmd_argv;
   char *comment;
