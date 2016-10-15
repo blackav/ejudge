@@ -1,0 +1,7 @@
+#! /bin/bash
+
+echo "Executing rc.local"
+if [ "$1" = "start" ]
+then
+  su --login --command="./0autostart.sh" ejudge
+fi
