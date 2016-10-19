@@ -168,7 +168,7 @@ do_create(struct rldb_mysql_state *state)
   if (mi->simple_fquery(md, create_runs_query, md->table_prefix) < 0)
     db_error_fail(md);
   if (mi->simple_fquery(md,
-                        "INSERT INTO %sconfig VALUES ('run_version', '7') ;",
+                        "INSERT INTO %sconfig VALUES ('run_version', '8') ;",
                         md->table_prefix) < 0)
     db_error_fail(md);
   return 0;
@@ -256,7 +256,14 @@ do_open(struct rldb_mysql_state *state)
       return -1;
     run_version = 7;
   }
-  if (run_version != 7) {
+  if (run_version == 7) {
+    if (mi->simple_fquery(md, "ALTER TABLE %srunheaders ADD COLUMN next_run_id INT NOT NULL DEFAULT 0 AFTER last_change_nsec", md->table_prefix) < 0)
+      return -1;
+    if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '8' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
+      return -1;
+    run_version = 8;
+  }
+  if (run_version != 8) {
     err("run_version == %d is not supported", run_version);
     return -1;
   }
@@ -338,6 +345,7 @@ load_header(
   rls->head.saved_duration = rh.saved_duration;
   rls->head.saved_stop_time = rh.saved_stop_time;
   rls->head.saved_finish_time = rh.saved_finish_time;
+  rls->head.next_run_id = rh.next_run_id;
   return 1;
 
  fail:
@@ -1242,6 +1250,10 @@ generate_update_header_clause(
     state->mi->write_timestamp(state->md, f, 0, rh->saved_finish_time);
     sep = comma;
   }
+  if ((flags & RH_NEXT_RUN_ID)) {
+    fprintf(f, "%snext_run_id = %d", sep, rh->next_run_id);
+    sep = comma;
+  }
 
   gettimeofday(&curtime, 0);
   fprintf(f, "%slast_change_time = ", sep);
@@ -1279,6 +1291,9 @@ update_header(
   }
   if ((flags & RH_SAVED_FINISH_TIME)) {
     dst->saved_finish_time = src->saved_finish_time;
+  }
+  if ((flags & RH_NEXT_RUN_ID)) {
+    dst->next_run_id = src->next_run_id;
   }
 }
 

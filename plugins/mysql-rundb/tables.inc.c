@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -173,7 +172,8 @@ enum
   RH_SAVED_DURATION    = 0x00000020,
   RH_SAVED_STOP_TIME   = 0x00000040,
   RH_SAVED_FINISH_TIME = 0x00000080,
-  RH_ALL               = 0x000000FF,
+  RH_NEXT_RUN_ID       = 0x00000100,
+  RH_ALL               = 0x000001FF,
 };
 
 static const char create_runheaders_query[] =
@@ -189,6 +189,7 @@ static const char create_runheaders_query[] =
 "        saved_finish_time TIMESTAMP DEFAULT 0, "
 "        last_change_time TIMESTAMP DEFAULT 0, "
 "        last_change_nsec INT UNSIGNED NOT NULL, "
+"        next_run_id INT NOT NULL DEFAULT 0, "
 "        PRIMARY KEY (contest_id)"
 "        );";
 
@@ -205,9 +206,10 @@ struct run_header_internal
   time_t saved_finish_time;
   time_t last_change_time;
   int last_change_nsec;
+  int next_run_id;
 };
 
-enum { HEADERS_ROW_WIDTH = 11 };
+enum { HEADERS_ROW_WIDTH = 12 };
 
 #define HEADERS_OFFSET(f) XOFFSET(struct run_header_internal, f)
 static const struct common_mysql_parse_spec headers_spec[RUNS_ROW_WIDTH] =
@@ -223,4 +225,5 @@ static const struct common_mysql_parse_spec headers_spec[RUNS_ROW_WIDTH] =
   { 0, 't', "saved_finish_time", HEADERS_OFFSET(saved_finish_time), 0 },
   { 0, 't', "last_change_time", HEADERS_OFFSET(last_change_time), 0 },
   { 0, 'd', "last_change_nsec", HEADERS_OFFSET(last_change_nsec), 0 },
+  { 0, 'd', "next_run_id", HEADERS_OFFSET(next_run_id), 0 },
 };
