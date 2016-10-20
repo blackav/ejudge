@@ -127,7 +127,7 @@
 %>
 <tr>
   <td><s:_>Problem</s:_>:</td>
-<% snprintf(b1, sizeof(b1), "uid == %d && prob_id == %d", clar.to, prob->id); %>
+<% snprintf(b1, sizeof(b1), "uid == %d && prob == \"%s\"", clar.to, prob->short_name); %>
   <s:url name="UserFilterUrl" ac="main-page" >
     <s:param name="filter_expr" value="b1" />
   </s:url>
