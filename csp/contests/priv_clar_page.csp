@@ -2,6 +2,7 @@
 %><%@include "priv_includes.csp"
 %><%
 #include "ejudge/ej_uuid.h"
+#include <ctype.h>
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@set getter_name = "csp_get_priv_clar_page"
@@ -16,6 +17,8 @@
   const unsigned char *clar_subj = 0;
   int clar_id;
   int enable_main_menu = 0;
+  unsigned char *prob_name = NULL;
+  const struct section_problem_data *prob = NULL;
 
 %><s:read var="clar_id" required="yes" errors="inv-clar-id" /><%
 
@@ -31,6 +34,34 @@
 
   start_time = run_get_start_time(cs->runlog_state);
   clar_subj = clar_get_subject(cs->clarlog_state, clar_id);
+
+  // try to extract problem name and lookup it
+  const unsigned char *p = strchr(clar_subj, ':');
+  if (p) {
+    prob_name = malloc((p - clar_subj) + 1);
+    const unsigned char *q = clar_subj;
+    while (*q != ':' && isspace(*q)) ++q;
+    if (*q == ':') {
+      xfree(prob_name);
+      prob_name = NULL;
+    } else {
+      unsigned char *s = prob_name;
+      while (*q != ':') {
+        *s++ = *q++;
+      }
+      while (isspace(*--s)) {}
+      *++s = 0;
+    }
+  }
+  for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
+    if (cs->probs[prob_id] && !strcmp(cs->probs[prob_id]->short_name, prob_name)) {
+      prob = cs->probs[prob_id];
+      break;
+    }
+  }
+  if (!prob) {
+    xfree(prob_name); prob_name = NULL;
+  }
 
   l10n_setlocale(phr->locale_id);
 
@@ -91,6 +122,21 @@
 <td><s:a url="UserFilterUrl"><s:v value="teamdb_get_name_2(cs->teamdb_state, clar.to)" /> (<s:v value="clar.to" />)</s:a></td>
 <%  } %>
 </tr>
+<%
+  if (prob != NULL) {
+%>
+<tr>
+  <td><s:_>Problem</s:_>:</td>
+<% snprintf(b1, sizeof(b1), "uid == %d && prob_id == %d", clar.to, prob->id); %>
+  <s:url name="UserFilterUrl" ac="main-page" >
+    <s:param name="filter_expr" value="b1" />
+  </s:url>
+  <s:url name="SubmitPageUrl" ac="priv-submit-page"><s:param name="problem" value="prob->id" /></s:url>
+  <td><s:a url="UserFilterUrl"><s:v value="prob->short_name" /> (<s:v value="prob->long_name" />)</s:a> <s:a url="SubmitPageUrl">[<s:_>Statement</s:_>]</s:a></td>
+</tr>
+<%
+  }
+%>
 <%  if (clar.in_reply_to > 0) { %>
 <s:url name="ViewOtherClarUrl" ac="view-clar">
   <s:param name="clar_id" value="clar.in_reply_to - 1" />
@@ -132,4 +178,5 @@ cleanup:;
   l10n_resetlocale();
   html_armor_free(&ab);
   xfree(msg_txt);
+  xfree(prob_name);
 %>
