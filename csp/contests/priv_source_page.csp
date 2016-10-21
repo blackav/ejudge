@@ -78,7 +78,7 @@
   if (info.lang_id > 0 && info.lang_id <= cs->max_lang)
     lang = cs->langs[info.lang_id];
 
-  run_fetch_user_runs(cs->runlog_state, -1, -1, info.user_id, info.prob_id, &other_runs_count, &other_runs);
+  run_fetch_user_runs(cs->runlog_state, 0, run_id, info.user_id, info.prob_id, &other_runs_count, &other_runs);
   for (int i = 0; i < other_runs_count; ++i) {
     if (ej_uuid_is_nonempty(other_runs[i].run_uuid)) {
       ++uuid_count;
@@ -255,7 +255,7 @@
     <td><s:v value="teamdb_get_login(cs->teamdb_state, info.user_id)" /></td>
     <td><s:v value="teamdb_get_name(cs->teamdb_state, info.user_id)" /></td>
 <% if (prob) { %>
-<% snprintf(filtbuf1, sizeof(filtbuf1), "prob == \"%s\"",  prob->short_name); %>
+<% snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d && prob == \"%s\"",  info.user_id, prob->short_name); %>
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
 </s:url>
@@ -610,7 +610,7 @@ New status: <s:v value="run_status_short_str(fcev.v[i].e.new_run_status - 1)" es
   if (fcev2.u > 0) {
 %>
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
-    <h2><s:_>Run comments for previous rejects</s:_></h2>
+    <h2><s:_>Run comments for previous runs</s:_></h2>
 </div>
 
 <div class="width-100">
@@ -653,8 +653,17 @@ New status: <s:v value="run_status_short_str(fcev2.v[i].e.new_run_status - 1)" e
 <%
       }
 %>
+<%
+  if (fcev2.v[i].e.run_id > 0) {
+%>
+<s:url name="ViewOtherSourceUrl" ac="view-source">
+    <s:param name="run_id" value="fcev2.v[i].e.run_id" />
+</s:url>
 <br/>
-<s:v value="fcev2.v[i].e.run_id" />
+Run Id: <s:a url="ViewOtherSourceUrl"><s:v value="fcev2.v[i].e.run_id" /></s:a>
+<%
+  }
+%>
        </td>
        <td>
 <pre><s:v value="skip_message_headers(fcev2.v[i].text)" /></pre>
