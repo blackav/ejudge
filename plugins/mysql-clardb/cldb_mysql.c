@@ -93,6 +93,12 @@ fetch_run_messages_func(
         struct cldb_plugin_cnts *cdata,
         const ej_uuid_t *p_run_uuid,
         struct full_clar_entry **pp);
+static int
+fetch_run_messages_2_func(
+        struct cldb_plugin_cnts *cdata,
+        int uuid_count,
+        const ej_uuid_t *p_run_uuid,
+        struct full_clar_entry **pp);
 
 /* plugin entry point */
 struct cldb_plugin_iface plugin_cldb_mysql =
@@ -122,6 +128,7 @@ struct cldb_plugin_iface plugin_cldb_mysql =
   modify_text_func,
   modify_record_func,
   fetch_run_messages_func,
+  fetch_run_messages_2_func,
 };
 
 static struct common_plugin_data *
@@ -1061,6 +1068,81 @@ fail:
     xfree(fce);
   }
   state->mi->free_res(state->md);
+  return -1;
+}
+
+static int
+fetch_run_messages_2_func(
+        struct cldb_plugin_cnts *cdata,
+        int uuid_count,
+        const ej_uuid_t *p_run_uuid,
+        struct full_clar_entry **pp)
+{
+  char *uuid_s = NULL;
+  size_t uuid_z = 0;
+  FILE *uuid_f = NULL;
+  struct cldb_mysql_cnts *cs = (struct cldb_mysql_cnts*) cdata;
+  struct cldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+  int count = 0;
+  struct full_clar_entry *fce = NULL;
+  int i;
+
+  if (uuid_count <= 0) {
+    return 0;
+  }
+
+  uuid_f = open_memstream(&uuid_s, &uuid_z);
+  fprintf(uuid_f, "'%s'", ej_uuid_unparse(&p_run_uuid[0], ""));
+  for (int j = 1; j < uuid_count; ++j) {
+    fprintf(uuid_f, ", '%s'", ej_uuid_unparse(&p_run_uuid[j], ""));
+  }
+  fclose(uuid_f); uuid_f = NULL;
+
+  if (mi->fquery(md, CLARS_ROW_WIDTH + 1,
+                 "SELECT t1.*, t2.clar_text FROM %sclars AS t1, %sclartexts AS t2 WHERE t1.contest_id=%d AND t1.run_uuid IN (%s) AND t1.uuid = t2.uuid ORDER BY t1.clar_id;",
+                 md->table_prefix, md->table_prefix,
+                 cs->contest_id, uuid_s) < 0)
+    db_error_fail(md);
+  xfree(uuid_s); uuid_s = NULL;
+
+  if (md->row_count <= 0) {
+    state->mi->free_res(state->md);
+    return 0;
+  }
+
+  count = md->row_count;
+  XCALLOC(fce, count);
+
+  for (i = 0; i < md->row_count; i++) {
+    if (mi->next_row(md) < 0) goto fail;
+    if (make_clarlog_entry(state, cs->contest_id, 1, &fce[i].e) < 0)
+      goto fail;
+    if (!md->row[CLARS_ROW_WIDTH]) {
+      fce[i].text = NULL;
+      fce[i].size = 0;
+    } else {
+      fce[i].size = md->lengths[CLARS_ROW_WIDTH];
+      fce[i].text = xmalloc(fce[i].size + 1);
+      memcpy(fce[i].text, md->row[CLARS_ROW_WIDTH], md->lengths[CLARS_ROW_WIDTH]);
+      fce[i].text[fce[i].size] = 0;
+    }
+  }
+  state->mi->free_res(state->md);
+
+  *pp = fce;
+  return count;
+
+fail:
+  if (fce) {
+    for (i = 0; i < count; ++i) {
+      xfree(fce[i].text);
+    }
+    xfree(fce);
+  }
+  state->mi->free_res(state->md);
+  xfree(uuid_s);
   return -1;
 }
 

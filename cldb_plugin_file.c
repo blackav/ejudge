@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -148,6 +148,12 @@ fetch_run_messages_func(
         struct cldb_plugin_cnts *cdata,
         const ej_uuid_t *p_run_uuid,
         struct full_clar_entry **pp);
+static int
+fetch_run_messages_2_func(
+        struct cldb_plugin_cnts *cdata,
+        int uuid_count,
+        const ej_uuid_t *p_run_uuid,
+        struct full_clar_entry **pp);
 
 struct cldb_plugin_iface cldb_plugin_file =
 {
@@ -176,6 +182,7 @@ struct cldb_plugin_iface cldb_plugin_file =
   modify_text_func,
   modify_record_func,
   fetch_run_messages_func,
+  fetch_run_messages_2_func,
 };
 
 static struct common_plugin_data *
@@ -849,6 +856,63 @@ fetch_run_messages_func(
       generic_read_file(&p, 0, &fce[j].size, 0, cs->clar_archive_dir, name_buf, NULL);
       fce[j].text = p; p = NULL;
       ++j;
+    }
+  }
+
+  *pp = fce;
+  return count;
+}
+
+static int
+fetch_run_messages_2_func(
+        struct cldb_plugin_cnts *cdata,
+        int uuid_count,
+        const ej_uuid_t *p_run_uuid,
+        struct full_clar_entry **pp)
+{
+  struct cldb_file_cnts *cs = (struct cldb_file_cnts*) cdata;
+  struct clarlog_state *cl_state = cs->cl_state;
+  int i, j, count = 0;
+  struct full_clar_entry *fce = NULL;
+  unsigned char name_buf[PATH_MAX];
+
+  if (uuid_count <= 0) {
+    return 0;
+  }
+
+  for (i = 0; i < cl_state->clars.u; ++i) {
+    const struct clar_entry_v2 *pe = &cl_state->clars.v[i];
+    if (pe->id >= 0) {
+      for (int k = 0; k < uuid_count; ++k) {
+        if (pe->run_uuid.v[0] == p_run_uuid[k].v[0]
+            && pe->run_uuid.v[1] == p_run_uuid[k].v[1]
+            && pe->run_uuid.v[2] == p_run_uuid[k].v[2]
+            && pe->run_uuid.v[3] == p_run_uuid[k].v[3]) {
+          ++count;
+        }
+      }
+    }
+  }
+  if (count <= 0) return 0;
+
+  XCALLOC(fce, count);
+
+  for (i = 0, j = 0; i < cl_state->clars.u; ++i) {
+    const struct clar_entry_v2 *pe = &cl_state->clars.v[i];
+    if (pe->id >= 0) {
+      for (int k = 0; k < uuid_count; ++k) {
+        if (pe->run_uuid.v[0] == p_run_uuid[k].v[0]
+            && pe->run_uuid.v[1] == p_run_uuid[k].v[1]
+            && pe->run_uuid.v[2] == p_run_uuid[k].v[2]
+            && pe->run_uuid.v[3] == p_run_uuid[k].v[3]) {
+          char *p = 0;
+          fce[j].e = *pe;
+          snprintf(name_buf, sizeof(name_buf), "%06d", pe->id);
+          generic_read_file(&p, 0, &fce[j].size, 0, cs->clar_archive_dir, name_buf, NULL);
+          fce[j].text = p; p = NULL;
+          ++j;
+        }
+      }
     }
   }
 

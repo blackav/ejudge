@@ -684,3 +684,32 @@ clar_free_fcev(struct full_clar_entry_vector *pfcev)
     memset(pfcev, 0, sizeof(*pfcev));
   }
 }
+
+int
+clar_fetch_run_messages_2(
+        clarlog_state_t state,
+        int uuid_count,
+        const ej_uuid_t *p_run_uuid,
+        struct full_clar_entry_vector *pfcev)
+{
+  if (state->iface->fetch_run_messages_2) {
+    struct full_clar_entry *pp = NULL;
+    int count = (*state->iface->fetch_run_messages_2)(state->cnts, uuid_count, p_run_uuid, &pp);
+    if (count <= 0) return count;
+
+    if (pfcev->u + count > pfcev->a) {
+      int new_sz = pfcev->a * 2;
+      if (!new_sz) new_sz = 8;
+      while (pfcev->u + count > new_sz) new_sz *= 2;
+      XREALLOC(pfcev->v, new_sz);
+      pfcev->a = new_sz;
+    }
+    memcpy(&pfcev->v[pfcev->u], pp, count * sizeof(pp[0]));
+    pfcev->u += count;
+    xfree(pp);
+    return count;
+  } else {
+    ERR_R("not supported");
+  }
+  return -1;
+}
