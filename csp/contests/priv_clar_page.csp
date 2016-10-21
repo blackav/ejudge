@@ -19,6 +19,7 @@
   int enable_main_menu = 0;
   unsigned char *prob_name = NULL;
   const struct section_problem_data *prob = NULL;
+  int user_id = 0;   
 
 %><s:read var="clar_id" required="yes" errors="inv-clar-id" /><%
 
@@ -26,6 +27,12 @@
       || clar_get_record(cs->clarlog_state, clar_id, &clar) < 0
       || clar.id < 0) {
     FAIL(NEW_SRV_ERR_INV_CLAR_ID);
+  }
+
+  if (clar.from > 0) {
+    user_id = clar.from;
+  } else if (clar.to > 0) {
+    user_id = clar.to;
   }
 
   if (opcaps_check(phr->caps, OPCAP_VIEW_CLAR) < 0) {
@@ -127,7 +134,13 @@
 %>
 <tr>
   <td><s:_>Problem</s:_>:</td>
-<% snprintf(b1, sizeof(b1), "uid == %d && prob == \"%s\"", clar.to, prob->short_name); %>
+<%
+  if (user_id > 0) {
+    snprintf(b1, sizeof(b1), "uid == %d && prob == \"%s\"", user_id, prob->short_name);
+  } else {
+    snprintf(b1, sizeof(b1), "prob == \"%s\"", prob->short_name);
+  }
+%>
   <s:url name="UserFilterUrl" ac="main-page" >
     <s:param name="filter_expr" value="b1" />
   </s:url>
