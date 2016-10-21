@@ -3,7 +3,7 @@
 #ifndef __CLDB_PLUGIN_H__
 #define __CLDB_PLUGIN_H__
 
-/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,7 @@ struct contest_desc;
 struct section_global_data;
 
 /* version of the plugin interface structure */
-#define CLDB_PLUGIN_IFACE_VERSION 1
+#define CLDB_PLUGIN_IFACE_VERSION 2
 
 struct clarlog_state;
 struct cldb_plugin_data;
@@ -77,6 +77,12 @@ struct cldb_plugin_iface
   // fetch the messages related to the specified run UUID
   int (*fetch_run_messages)(
         struct cldb_plugin_cnts *,
+        const ej_uuid_t *p_run_uuid,
+        struct full_clar_entry **pfce);
+  // fetch the messages related to the given set of run UUIDs
+  int (*fetch_run_messages_2)(
+        struct cldb_plugin_cnts *,
+        int uuid_count,
         const ej_uuid_t *p_run_uuid,
         struct full_clar_entry **pfce);
 };
