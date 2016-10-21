@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __RLDB_PLUGIN_H__
 #define __RLDB_PLUGIN_H__
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +31,7 @@ struct run_header;
 struct run_entry;
 
 /* version of the plugin interface structure */
-#define RLDB_PLUGIN_IFACE_VERSION 1
+#define RLDB_PLUGIN_IFACE_VERSION 2
 
 struct rldb_plugin_data;
 struct rldb_plugin_cnts;
@@ -157,6 +156,15 @@ struct rldb_plugin_iface
   int (*change_status_4)(struct rldb_plugin_cnts *,
                          int run_id,
                          int new_status);
+  // fetch the list of runs for given user and problem
+  int (*fetch_user_runs)(
+        struct rldb_plugin_cnts *,
+        int low_run_id,
+        int high_run_id,
+        int user_id,
+        int prob_id,
+        int *p_count,
+        struct run_entry **p_entries);
 };
 
 /* default plugin: compiled into new-server */
