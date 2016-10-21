@@ -2,7 +2,7 @@
 #ifndef __CLARLOG_H__
 #define __CLARLOG_H__
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -222,5 +222,12 @@ clar_fetch_run_messages(
 
 void
 clar_free_fcev(struct full_clar_entry_vector *pfcev);
+
+int
+clar_fetch_run_messages_2(
+        clarlog_state_t state,
+        int uuid_count,
+        const ej_uuid_t *p_run_uuid,
+        struct full_clar_entry_vector *pfcev);
 
 #endif /* __CLARLOG_H__ */
