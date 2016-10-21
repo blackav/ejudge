@@ -431,6 +431,16 @@ int run_find_run_id_by_uuid(runlog_state_t state, const ej_uuid_t *puuid);
 
 int run_count_tokens(runlog_state_t state, int user_id, int prob_id);
 
+int
+run_fetch_user_runs(
+        runlog_state_t state,
+        int low_run_id,
+        int high_run_id,
+        int user_id,
+        int prob_id,
+        int *p_count,
+        struct run_entry **p_entries);
+
 static inline _Bool __attribute__((always_inline)) run_is_normal_status(unsigned char status)
 {
   return status <= RUN_LOW_LAST && (status < RUN_PSEUDO_FIRST || status > RUN_PSEUDO_LAST);
