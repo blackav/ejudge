@@ -2876,3 +2876,72 @@ run_drop_uuid_hash(runlog_state_t state)
   state->uuid_hash_used = 0;
   xfree(state->uuid_hash); state->uuid_hash = NULL;
 }
+
+int
+run_fetch_user_runs(
+        runlog_state_t state,
+        int low_run_id,
+        int high_run_id,
+        int user_id,
+        int prob_id,
+        int *p_count,
+        struct run_entry **p_entries)
+{
+  if (low_run_id == -1 && high_run_id == -1) {
+    low_run_id = 0;
+    high_run_id = state->run_a;
+  }
+  if (high_run_id > state->run_a) {
+    high_run_id = state->run_a;
+  }
+  if (low_run_id > state->run_a) {
+    low_run_id = state->run_a;
+  }
+  if (high_run_id < 0) {
+    high_run_id = 0;
+  }
+  if (low_run_id < 0) {
+    low_run_id = 0;
+  }
+  if (low_run_id >= high_run_id) {
+    *p_count = 0;
+    *p_entries = NULL;
+    return 0;
+  }
+  if (state->iface->fetch_user_runs) {
+    return state->iface->fetch_user_runs(state->cnts, low_run_id, high_run_id, user_id, prob_id, p_count, p_entries);
+  }
+
+  int count = 0;
+  struct user_entry *ue = get_user_entry(state, user_id);
+  ASSERT(ue);
+  ASSERT(ue->run_id_valid > 0); // run index is ok
+
+  for (int run_id = ue->run_id_first; run_id >= 0; run_id = state->run_extras[run_id].next_user_id) {
+    ASSERT(run_id < state->run_u);
+    ASSERT(state->runs[run_id].user_id == user_id);
+    if (state->runs[run_id].prob_id == prob_id && run_id >= low_run_id && run_id < high_run_id)
+      ++count;
+  }
+
+  if (count <= 0) {
+    *p_count = 0;
+    *p_entries = NULL;
+    return 0;
+  }
+
+  struct run_entry *out;
+  XCALLOC(out, count);
+  int out_ind = 0;
+  for (int run_id = ue->run_id_first; run_id >= 0; run_id = state->run_extras[run_id].next_user_id) {
+    ASSERT(run_id < state->run_u);
+    ASSERT(state->runs[run_id].user_id == user_id);
+    if (state->runs[run_id].prob_id == prob_id && run_id >= low_run_id && run_id < high_run_id) {
+      out[out_ind++] = state->runs[run_id];
+    }
+  }
+
+  *p_count = count;
+  *p_entries = out;
+  return count;
+}
