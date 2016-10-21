@@ -42,8 +42,13 @@
   testing_report_xml_t tr = NULL;
   unsigned char *compiler_output = NULL;
   struct full_clar_entry_vector fcev = {};
+  struct full_clar_entry_vector fcev2 = {};
   int i;
   problem_xml_t px = 0;
+  int other_runs_count = 0;
+  struct run_entry *other_runs = NULL;
+  int uuid_count = 0;
+  ej_uuid_t *other_uuids = NULL;
 
   if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0)
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
@@ -72,6 +77,22 @@
     prob = cs->probs[info.prob_id];
   if (info.lang_id > 0 && info.lang_id <= cs->max_lang)
     lang = cs->langs[info.lang_id];
+
+  run_fetch_user_runs(cs->runlog_state, -1, -1, info.user_id, info.prob_id, &other_runs_count, &other_runs);
+  for (int i = 0; i < other_runs_count; ++i) {
+    if (ej_uuid_is_nonempty(other_runs[i].run_uuid)) {
+      ++uuid_count;
+    }
+  }
+  if (uuid_count > 0) {
+    int out_ind = 0;
+    XCALLOC(other_uuids, uuid_count);
+    for (int i = 0; i < other_runs_count; ++i) {
+      if (ej_uuid_is_nonempty(other_runs[i].run_uuid)) {
+        memcpy(&other_uuids[out_ind++], &other_runs[i].run_uuid, sizeof(ej_uuid_t));
+      }
+    }
+  }
 
   run_time = info.time;
   if (run_time < 0) run_time = 0;
@@ -106,6 +127,26 @@
 
   if (ej_uuid_is_nonempty(info.run_uuid)) {
     clar_fetch_run_messages(cs->clarlog_state, &info.run_uuid, &fcev);
+  }
+  if (uuid_count > 0) {
+    clar_fetch_run_messages_2(cs->clarlog_state, uuid_count, other_uuids, &fcev2);
+  }
+  if (fcev2.u > 0) {
+    // fix run_id for fetched clars
+    for (int i = 0; i < fcev2.u; ++i) {
+      if (ej_uuid_is_nonempty(fcev2.v[i].e.run_uuid)) {
+        const ej_uuid_t *uuid1 = &fcev2.v[i].e.run_uuid;
+        for (int j = 0; j < other_runs_count; ++j) {
+          if (ej_uuid_is_nonempty(other_runs[j].run_uuid) &&
+              other_runs[j].run_uuid.v[0] == uuid1->v[0] &&
+              other_runs[j].run_uuid.v[1] == uuid1->v[1] &&
+              other_runs[j].run_uuid.v[2] == uuid1->v[2] &&
+              other_runs[j].run_uuid.v[3] == uuid1->v[3]) {
+            fcev2.v[i].e.run_id = other_runs[j].run_id;
+          }
+        }
+      }
+    }
   }
 
   snprintf(title, sizeof(title), "%s %d", _("Viewing run"), run_id);
@@ -565,6 +606,69 @@ New status: <s:v value="run_status_short_str(fcev.v[i].e.new_run_status - 1)" es
   }
 %>
 
+<%
+  if (fcev2.u > 0) {
+%>
+<div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
+    <h2><s:_>Run comments for previous rejects</s:_></h2>
+</div>
+
+<div class="width-100">
+<table class="message-table">
+    <tr class="mes-top">
+        <td>Author</td>
+        <td>Run comment</td>
+    </tr>
+<%
+    for (i = 0; i < fcev2.u; ++i) {
+%>
+   <tr>
+       <td class="profile">
+<%
+      if (!fcev2.v[i].e.from) {
+        if (!fcev2.v[i].e.j_from) {
+%><b>Judge</b><%
+        } else {
+%><b><s:v value="teamdb_get_name_2(cs->teamdb_state, fcev2.v[i].e.j_from)" /></b><%
+        }
+      } else {
+%><s:v value="teamdb_get_name_2(cs->teamdb_state, fcev2.v[i].e.from)" /><%
+      }
+%>
+<br/>
+<s:v value="fcev2.v[i].e.time" />
+<%    if (fcev2.v[i].e.old_run_status > 0) { %>
+<br/>
+Old status: <s:v value="run_status_short_str(fcev2.v[i].e.old_run_status - 1)" escape="false" />
+<%    } %>
+<%    if (fcev2.v[i].e.new_run_status > 0) { %>
+<br/>
+New status: <s:v value="run_status_short_str(fcev2.v[i].e.new_run_status - 1)" escape="false" />
+<%    } %>
+<%
+      if (phr->role == USER_ROLE_ADMIN) {
+%>
+<br/>
+<s:v value="fcev2.v[i].e.a.ip" />
+<%
+      }
+%>
+<br/>
+<s:v value="fcev2.v[i].e.run_id" />
+       </td>
+       <td>
+<pre><s:v value="skip_message_headers(fcev2.v[i].text)" /></pre>
+       </td>
+   </tr>
+<%
+    }
+%>
+</table>
+</div>
+<%
+  }
+%>
+
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
 <h2><s:_>Add a new run comment</s:_></h2></div>
 
@@ -589,10 +693,13 @@ New status: <s:v value="run_status_short_str(fcev.v[i].e.new_run_status - 1)" es
 %><%
 cleanup:
   clar_free_fcev(&fcev);
+  clar_free_fcev(&fcev2);
   l10n_resetlocale();
   html_armor_free(&ab);
   xfree(rep_text);
   testing_report_free(tr);
   xfree(compiler_output);
   xfree(txt_text);
+  xfree(other_runs);
+  xfree(other_uuids);
 %>
