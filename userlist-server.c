@@ -1856,8 +1856,12 @@ cmd_register_new_2(struct client_state *p,
 
   generate_random_password(8, passwd_buf);
   passwd_len = strlen(passwd_buf);
-  user_id = default_new_user(login, email, USERLIST_PWD_PLAIN, passwd_buf,
-                             0, 0, 0, 0, 0, 0, 0, 0, 0);
+  user_id = default_new_user(login, email, USERLIST_PWD_PLAIN, passwd_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+  if (user_id <= 0) {
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    err("%s -> database error", logbuf);
+    return;
+  }
 
   login_len = strlen(login);
   out_size = sizeof(*out) + login_len + passwd_len;
@@ -2156,6 +2160,11 @@ cmd_register_new(struct client_state *p,
 
   generate_random_password(8, passwd_buf);
   user_id = default_new_user(login, email, USERLIST_PWD_PLAIN, passwd_buf, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+  if (user_id <= 0) {
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    err("%s -> database error", logbuf);
+    return;
+  }
   if (default_get_user_info_1(user_id, &u) < 0 || !u) {
     send_reply(p, -ULS_ERR_DB_ERROR);
     err("%s -> database error", logbuf);
