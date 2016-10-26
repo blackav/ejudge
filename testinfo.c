@@ -433,6 +433,7 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
     subst_str = sh->substitute(sh, str);
     str = subst_str;
     s = str;
+    len = strlen(str);
   }
 
   memset(&cmd, 0, sizeof(cmd));
