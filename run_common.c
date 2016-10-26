@@ -2344,9 +2344,6 @@ run_one_test(
   if (tstinfo.disable_valgrind && tst && !strcmp(tst->arch, "valgrind")) {
     struct section_tester_data *newtst = NULL;
     for (int i = 0; i < state->max_abstr_tester; ++i) {
-      if (state->abstr_testers[i]) {
-          fprintf(stderr, "tester: <%s><%s>\n", state->abstr_testers[i]->name, state->abstr_testers[i]->arch);
-      }
       if (state->abstr_testers[i] && !state->abstr_testers[i]->arch[0]) {
         newtst = state->abstr_testers[i];
       }
