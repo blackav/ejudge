@@ -60,10 +60,12 @@
       *++s = 0;
     }
   }
-  for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
-    if (cs->probs[prob_id] && !strcmp(cs->probs[prob_id]->short_name, prob_name)) {
-      prob = cs->probs[prob_id];
-      break;
+  if (prob_name) {
+    for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
+      if (cs->probs[prob_id] && !strcmp(cs->probs[prob_id]->short_name, prob_name)) {
+        prob = cs->probs[prob_id];
+        break;
+      }
     }
   }
   if (!prob) {
