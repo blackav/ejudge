@@ -70,12 +70,16 @@ get_var_value(
     err("configuration variable `%s' does not exist", orig_varname);
     return 0;
   }
-  if (strcmp(actual_parse_info[i].type, "s") != 0) {
+  if (!strcmp(actual_parse_info[i].type, "s")) {
+    valstr = XPDEREF(unsigned char, actual_data, actual_parse_info[i].offset);
+    return valstr;
+  } else if (!strcmp(actual_parse_info[i].type, "S")) {
+    valstr = *(XPDEREF(unsigned char *, actual_data, actual_parse_info[i].offset));
+    return valstr;
+  } else {
     err("configuration variable `%s' has invalid type `%s'", varname, actual_parse_info[i].type);
     return 0;
   }
-  valstr = XPDEREF(unsigned char, actual_data, actual_parse_info[i].offset);
-  return valstr;
 }
 
 unsigned char *
