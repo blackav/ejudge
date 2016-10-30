@@ -2931,7 +2931,7 @@ set_defaults(
 
       tmps = varsubst_heap(state, g->sound_player, 0,
                            section_global_params, section_problem_params,
-                           section_language_params, section_tester_params);
+                           section_language_params, section_tester_params, NULL, NULL, NULL);
       if (tmps != g->sound_player) {
         snprintf(g->sound_player, sizeof(g->sound_player),"%s",tmps);
         xfree(tmps);
@@ -3100,7 +3100,7 @@ set_defaults(
                                               section_global_params,
                                               section_problem_params,
                                               section_language_params,
-                                              section_tester_params);
+                                              section_tester_params, NULL, lang, NULL);
         if (!lang->compiler_env[j]) return -1;
       }
     }
@@ -3112,7 +3112,7 @@ set_defaults(
                                                    section_global_params,
                                                    section_problem_params,
                                                    section_language_params,
-                                                   section_tester_params);
+                                                   section_tester_params, NULL, lang, NULL);
         if (!lang->style_checker_env[j]) return -1;
       }
     }
@@ -3378,7 +3378,7 @@ set_defaults(
                                                section_global_params,
                                                section_problem_params,
                                                section_language_params,
-                                               section_tester_params);
+                                               section_tester_params, prob, NULL, NULL);
           if (!prob->checker_env[j]) return -1;
         }
       }
@@ -3392,7 +3392,7 @@ set_defaults(
                                               section_global_params,
                                               section_problem_params,
                                               section_language_params,
-                                              section_tester_params);
+                                              section_tester_params, prob, NULL, NULL);
           if (!prob->valuer_env[j]) return -1;
         }
       }
@@ -3408,7 +3408,7 @@ set_defaults(
                                                   section_global_params,
                                                   section_problem_params,
                                                   section_language_params,
-                                                  section_tester_params);
+                                                  section_tester_params, prob, NULL, NULL);
           if (!prob->interactor_env[j]) return -1;
         }
       }
@@ -3424,7 +3424,7 @@ set_defaults(
                                                      1, section_global_params,
                                                      section_problem_params,
                                                      section_language_params,
-                                                     section_tester_params);
+                                                     section_tester_params, prob, NULL, NULL);
           if (!prob->lang_compiler_env[j]) return -1;
         }
       }
@@ -3440,7 +3440,7 @@ set_defaults(
                                                      1, section_global_params,
                                                      section_problem_params,
                                                      section_language_params,
-                                                     section_tester_params);
+                                                     section_tester_params, prob, NULL, NULL);
           if (!prob->style_checker_env[j]) return -1;
         }
       }
@@ -3456,7 +3456,7 @@ set_defaults(
                                                     1, section_global_params,
                                                     section_problem_params,
                                                     section_language_params,
-                                                    section_tester_params);
+                                                    section_tester_params, prob, NULL, NULL);
           if (!prob->test_checker_env[j]) return -1;
         }
       }
@@ -3472,7 +3472,7 @@ set_defaults(
                                             1, section_global_params,
                                             section_problem_params,
                                             section_language_params,
-                                            section_tester_params);
+                                            section_tester_params, prob, NULL, NULL);
           if (!prob->init_env[j]) return -1;
         }
       }
@@ -3488,7 +3488,7 @@ set_defaults(
                                              1, section_global_params,
                                              section_problem_params,
                                              section_language_params,
-                                             section_tester_params);
+                                             section_tester_params, prob, NULL, NULL);
           if (!prob->start_env[j]) return -1;
         }
       }
@@ -3948,7 +3948,7 @@ set_defaults(
                                            section_global_params,
                                            section_problem_params,
                                            section_language_params,
-                                           section_tester_params);
+                                           section_tester_params, NULL, NULL, tp);
           if (!tp->start_env[j]) return -1;
         }
       }
@@ -4707,7 +4707,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
                                         section_global_params,
                                         section_problem_params,
                                         section_language_params,
-                                        section_tester_params);
+                                        section_tester_params, NULL, NULL, out);
       if (!out->start_env[j]) return -1;
     }
   }

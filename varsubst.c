@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -54,13 +53,17 @@ get_var_value(const serve_state_t state,
 }
 
 unsigned char *
-varsubst_heap(const serve_state_t state,
-              unsigned char *in_str,
-              int free_flag,
-              const struct config_parse_info *global_vars,
-              const struct config_parse_info *problem_vars,
-              const struct config_parse_info *language_vars,
-              const struct config_parse_info *tester_vars)
+varsubst_heap(
+        const serve_state_t state,
+        unsigned char *in_str,
+        int free_flag,
+        const struct config_parse_info *global_vars,
+        const struct config_parse_info *problem_vars,
+        const struct config_parse_info *language_vars,
+        const struct config_parse_info *tester_vars,
+        const struct section_problem_data *prob,
+        const struct section_language_data *lang,
+        const struct section_tester_data *tester)
 {
   unsigned char *out_str = 0, *p1, *p2;
   unsigned char *var_name = 0;
