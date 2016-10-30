@@ -24,31 +24,57 @@
 
 #include <string.h>
 
-const unsigned char *
-get_var_value(const serve_state_t state,
-              const unsigned char *varname,
-              const struct config_parse_info *global_vars,
-              const struct config_parse_info *problem_vars,
-              const struct config_parse_info *language_vars,
-              const struct config_parse_info *tester_vars)
+static const unsigned char *
+get_var_value(
+        const serve_state_t state,
+        const unsigned char *varname,
+        const struct config_parse_info *global_vars,
+        const struct config_parse_info *problem_vars,
+        const struct config_parse_info *language_vars,
+        const struct config_parse_info *tester_vars,
+        const struct section_problem_data *prob,
+        const struct section_language_data *lang,
+        const struct section_tester_data *tester)
 {
   int i;
   const unsigned char *valstr = 0;
+  const struct config_parse_info *actual_parse_info = NULL;
+  const void *actual_data = NULL;
+  const unsigned char *orig_varname = varname;
 
+  if (!strncmp(varname, "problem.", 8)) {
+    actual_parse_info = problem_vars;
+    actual_data = prob;
+    varname += 8;
+  } else if (!strncmp(varname, "language.", 9)) {
+    actual_parse_info = language_vars;
+    actual_data = lang;
+    varname += 9;
+  } else if (!strncmp(varname, "tester.", 7)) {
+    actual_parse_info = tester_vars;
+    actual_data = tester;
+    varname += 7;
+  } else if (!strncmp(varname, "global.", 7)) {
+    actual_parse_info = global_vars;
+    actual_data = state->global;
+    varname += 7;
+  } else {
+    actual_parse_info = global_vars;
+    actual_data = state->global;
+  }
   // search in global variables
-  for (i = 0; global_vars[i].name; i++) {
-    if (!strcmp(global_vars[i].name, varname)) break;
+  for (i = 0; actual_parse_info[i].name; i++) {
+    if (!strcmp(actual_parse_info[i].name, varname)) break;
   }
-  if (!global_vars[i].name) {
-    err("configuration variable `%s' does not exist", varname);
+  if (!actual_parse_info[i].name) {
+    err("configuration variable `%s' does not exist", orig_varname);
     return 0;
   }
-  if (strcmp(global_vars[i].type, "s") != 0) {
-    err("configuration variable `%s' has invalid type `%s'",
-        varname, global_vars[i].type);
+  if (strcmp(actual_parse_info[i].type, "s") != 0) {
+    err("configuration variable `%s' has invalid type `%s'", varname, actual_parse_info[i].type);
     return 0;
   }
-  valstr = XPDEREF(unsigned char, state->global, global_vars[i].offset);
+  valstr = XPDEREF(unsigned char, actual_data, actual_parse_info[i].offset);
   return valstr;
 }
 
@@ -96,7 +122,7 @@ varsubst_heap(
     memcpy(var_name, p1 + 2, p2 - p1 - 2);
     var_name[p2 - p1 - 2] = 0;
     var_value = get_var_value(state, var_name, global_vars, problem_vars,
-                              language_vars, tester_vars);
+                              language_vars, tester_vars, prob, lang, tester);
     if (!var_value) {
       if (free_flag) xfree(in_str);
       xfree(var_name);
