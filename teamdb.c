@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -423,6 +423,29 @@ teamdb_get_login(teamdb_state_t state, int teamid)
 }
 
 char *
+teamdb_get_login_2(teamdb_state_t state, int teamid)
+{
+  unsigned char *login = 0;
+
+  if (state->disabled) {
+    static unsigned char login_buf[64];
+    snprintf(login_buf, sizeof(login_buf), "User #%d", teamid);
+    return login_buf;
+  }
+
+  if (teamdb_refresh(state) < 0) return 0;
+  if (!teamdb_lookup_client(state, teamid)) {
+    err("teamdb_get_login_2: bad id: %d", teamid);
+    static unsigned char login_buf[64];
+    snprintf(login_buf, sizeof(login_buf), "User #%d", teamid);
+    return login_buf;
+  }
+  login = state->users->user_map[teamid]->login;
+  ASSERT(login);
+  return login;
+}
+
+char *
 teamdb_get_name(teamdb_state_t state, int teamid)
 {
   unsigned char *name = 0;
@@ -436,7 +459,7 @@ teamdb_get_name(teamdb_state_t state, int teamid)
 
   if (teamdb_refresh(state) < 0) return 0;
   if (!teamdb_lookup_client(state, teamid)) {
-    err("teamdb_get_login: bad id: %d", teamid);
+    err("teamdb_get_name: bad id: %d", teamid);
     snprintf(login_buf, sizeof(login_buf), "User #%d", teamid);
     return login_buf;
   }
@@ -460,7 +483,7 @@ teamdb_get_name_2(teamdb_state_t state, int teamid)
 
   if (teamdb_refresh(state) < 0) return 0;
   if (!teamdb_lookup_client(state, teamid)) {
-    err("teamdb_get_login: bad id: %d", teamid);
+    err("teamdb_get_name_2: bad id: %d", teamid);
     snprintf(login_buf, sizeof(login_buf), "User #%d", teamid);
     return login_buf;
   }
@@ -483,7 +506,7 @@ teamdb_get_cypher(teamdb_state_t state, int user_id)
 
   if (teamdb_refresh(state) < 0) return 0;
   if (!teamdb_lookup_client(state, user_id)) {
-    err("teamdb_get_login: bad id: %d", user_id);
+    err("teamdb_get_cypher: bad id: %d", user_id);
     return 0;
   }
   if (!(ui = state->users->user_map[user_id]->cnts0)) return 0;
@@ -536,7 +559,7 @@ teamdb_get_userlist(teamdb_state_t state, int user_id)
 
   if (teamdb_refresh(state) < 0) return 0;
   if (!teamdb_lookup_client(state, user_id)) {
-    err("teamdb_get_login: bad id: %d", user_id);
+    err("teamdb_get_userlist: bad id: %d", user_id);
     return 0;
   }
   return state->users->user_map[user_id];

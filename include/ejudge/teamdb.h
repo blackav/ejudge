@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __TEAMDB_H__
 #define __TEAMDB_H__
 
-/* Copyright (C) 2000-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -60,6 +59,7 @@ int teamdb_lookup_name(teamdb_state_t, char const *);
 int teamdb_lookup_cypher(teamdb_state_t, char const *);
 
 char *teamdb_get_login(teamdb_state_t, int);
+char *teamdb_get_login_2(teamdb_state_t, int);
 char *teamdb_get_name(teamdb_state_t, int);
 const unsigned char *teamdb_get_name_2(teamdb_state_t, int);
 const unsigned char *teamdb_get_cypher(teamdb_state_t, int);
