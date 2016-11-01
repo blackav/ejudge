@@ -252,8 +252,8 @@
     <s:param name="filter_expr" value="filtbuf1" />
 </s:url>
     <td><s:a url="FilteredMainUrl"><s:v value="info.user_id" /></s:a></td>
-    <td><s:v value="teamdb_get_login(cs->teamdb_state, info.user_id)" /></td>
-    <td><s:v value="teamdb_get_name(cs->teamdb_state, info.user_id)" /></td>
+    <td><s:v value="teamdb_get_login_2(cs->teamdb_state, info.user_id)" /></td>
+    <td><s:v value="teamdb_get_name_2(cs->teamdb_state, info.user_id)" /></td>
 <% if (prob) { %>
 <% snprintf(filtbuf1, sizeof(filtbuf1), "uid == %d && prob == \"%s\"",  info.user_id, prob->short_name); %>
 <s:url name="FilteredMainUrl" ac="main-page">
