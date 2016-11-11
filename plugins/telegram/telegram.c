@@ -841,6 +841,10 @@ handle_incoming_message(
             send_result = send_message(state, bs, mc, "Operation canceled.", NULL, NULL);
             telegram_chat_state_reset(tcs);
             update_state = 1;
+        } else if (!strcmp(tem->text, "/start")) {
+            send_result = send_message(state, bs, mc, "Hi there! This is Eddie, your shipboard computer, and I'm feeling just great, guys, and I know I'm just going to get a bundle of kicks out of any program you care to run through me.", NULL, NULL);
+            telegram_chat_state_reset(tcs);
+            update_state = 1;
         } else if (!strcmp(tem->text, "/help")) {
             send_result = send_message(state, bs, mc,
                                        "List of commands:\n"
