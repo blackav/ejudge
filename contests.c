@@ -260,6 +260,7 @@ char const * const contests_elem_map[] =
   "telegram_bot_id",
   "telegram_admin_chat_id",
   "telegram_user_chat_id",
+  "comment",
 
   0
 };
