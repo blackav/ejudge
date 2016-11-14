@@ -44,6 +44,7 @@ static struct meta_info_item meta_info_contest_desc_data[] =
   [CNTS_name_en] = { CNTS_name_en, 's', XSIZE(struct contest_desc, name_en), "name_en", XOFFSET(struct contest_desc, name_en) },
   [CNTS_main_url] = { CNTS_main_url, 's', XSIZE(struct contest_desc, main_url), "main_url", XOFFSET(struct contest_desc, main_url) },
   [CNTS_keywords] = { CNTS_keywords, 's', XSIZE(struct contest_desc, keywords), "keywords", XOFFSET(struct contest_desc, keywords) },
+  [CNTS_comment] = { CNTS_comment, 's', XSIZE(struct contest_desc, comment), "comment", XOFFSET(struct contest_desc, comment) },
   [CNTS_users_header_file] = { CNTS_users_header_file, 's', XSIZE(struct contest_desc, users_header_file), "users_header_file", XOFFSET(struct contest_desc, users_header_file) },
   [CNTS_users_footer_file] = { CNTS_users_footer_file, 's', XSIZE(struct contest_desc, users_footer_file), "users_footer_file", XOFFSET(struct contest_desc, users_footer_file) },
   [CNTS_register_header_file] = { CNTS_register_header_file, 's', XSIZE(struct contest_desc, register_header_file), "register_header_file", XOFFSET(struct contest_desc, register_header_file) },

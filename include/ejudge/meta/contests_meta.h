@@ -39,6 +39,7 @@ enum
   CNTS_name_en,
   CNTS_main_url,
   CNTS_keywords,
+  CNTS_comment,
   CNTS_users_header_file,
   CNTS_users_footer_file,
   CNTS_register_header_file,
