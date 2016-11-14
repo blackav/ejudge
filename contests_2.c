@@ -220,7 +220,7 @@ contests_unparse(
 
   unparse_texts(f, cnts, (const int[]) {
     CONTEST_NAME, CONTEST_NAME_EN, CONTEST_DEFAULT_LOCALE, CONTEST_MAIN_URL,
-    CONTEST_KEYWORDS,
+    CONTEST_KEYWORDS, CONTEST_COMMENT,
     0
   });
 

@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -131,6 +130,9 @@ execute_func(
         char *addi_t = 0;
         size_t addi_z = 0;
         FILE *addi_f = open_memstream(&addi_t, &addi_z);
+        if (cnts->comment) {
+            fprintf(addi_f, "%s", cnts->comment);
+        }
     /*
 
     // report "closed" flag

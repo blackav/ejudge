@@ -127,6 +127,7 @@ enum
     CONTEST_TELEGRAM_BOT_ID,
     CONTEST_TELEGRAM_ADMIN_CHAT_ID,
     CONTEST_TELEGRAM_USER_CHAT_ID,
+    CONTEST_COMMENT,
 
     CONTEST_LAST_TAG
   };
@@ -324,6 +325,7 @@ struct contest_desc
   unsigned char *name_en;
   unsigned char *main_url;
   unsigned char *keywords;
+  unsigned char *comment;
   unsigned char *users_header_file;
   unsigned char *users_footer_file;
   unsigned char *register_header_file;
