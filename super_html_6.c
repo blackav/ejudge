@@ -4937,7 +4937,7 @@ super_serve_op_USER_CHANGE_CNTS_PASSWORD_ACTION(
     r = ULS_PRIV_SET_CNTS_PASSWD_PLAIN;
     if (usesha1) r = ULS_PRIV_SET_CNTS_PASSWD_SHA1;
 
-    r = userlist_clnt_set_passwd(phr->userlist_clnt, r, other_user_id, 0, "", cnts_password1);
+    r = userlist_clnt_set_passwd(phr->userlist_clnt, r, other_user_id, contest_id, "", cnts_password1);
   }
   if (r < 0) FAIL(SSERV_ERR_DB_ERROR);
 
