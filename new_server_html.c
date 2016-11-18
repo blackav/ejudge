@@ -10982,6 +10982,11 @@ batch_register(
       err("batch_register: userlist error %d", r);
       goto database_error;
     }
+    r = userlist_clnt_change_registration(ul_conn, user_id, contest_id, USERLIST_REG_OK, 0, 0);
+    if (r < 0) {
+      err("batch_register: userlist error %d", r);
+      goto database_error;
+    }
   }
 
   fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
