@@ -4767,6 +4767,7 @@ priv_confirmation_page(FILE *fout,
       goto invalid_param;
     break;
   case NEW_SRV_ACTION_REJUDGE_PROBLEM_1:
+    errmsg = "invalid problem";
     if (hr_cgi_param(phr, "prob_id", &s) <= 0
         || sscanf(s, "%d%n", &prob_id, &n) != 1 || s[n]
         || prob_id <= 0 || prob_id > cs->max_prob
