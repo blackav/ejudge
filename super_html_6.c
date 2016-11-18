@@ -4873,7 +4873,7 @@ super_serve_op_USER_CHANGE_CNTS_PASSWORD_ACTION(
   struct userlist_user *u = 0;
   unsigned char *xml_text = 0;
 
-  if (hr_cgi_param_int(phr, "contest_id", &contest_id) <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+  if (hr_cgi_param_int(phr, "contest_id", &contest_id) < 0) FAIL(SSERV_ERR_INV_CONTEST);
   if (contest_id <= 0 || contests_get(contest_id, &cnts) < 0 || !cnts)
     FAIL(SSERV_ERR_INV_CONTEST);
 
