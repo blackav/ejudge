@@ -1087,7 +1087,7 @@ fetch_run_messages_2_func(
   struct common_mysql_state *md = state->md;
   int count = 0;
   struct full_clar_entry *fce = NULL;
-  int i;
+  int i, j;
 
   if (uuid_count <= 0) {
     return 0;
@@ -1095,7 +1095,7 @@ fetch_run_messages_2_func(
 
   uuid_f = open_memstream(&uuid_s, &uuid_z);
   fprintf(uuid_f, "'%s'", ej_uuid_unparse(&p_run_uuid[0], ""));
-  for (int j = 1; j < uuid_count; ++j) {
+  for (j = 1; j < uuid_count; ++j) {
     fprintf(uuid_f, ", '%s'", ej_uuid_unparse(&p_run_uuid[j], ""));
   }
   fclose(uuid_f); uuid_f = NULL;
