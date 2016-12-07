@@ -9648,7 +9648,7 @@ unpriv_download_run(
       fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
               run_id, lang->src_sfx);
     } else if (lang->binary) {
-      fprintf(fout, "Content-type: application/octet-stream\n\n");
+      fprintf(fout, "Content-type: application/octet-stream\n");
       fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
               run_id, lang->src_sfx);
     } else {
