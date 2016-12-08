@@ -4862,7 +4862,9 @@ priv_confirmation_page(FILE *fout,
   return 0;
 
  invalid_param:
-  fprintf(phr->log_f, "%s", errmsg);
+  if (errmsg) {
+    fprintf(phr->log_f, "%s", errmsg);
+  }
   error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
   html_armor_free(&ab);
   xfree(run_mask);
