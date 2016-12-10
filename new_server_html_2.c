@@ -5058,7 +5058,7 @@ ns_get_user_problems_summary(
       // OLYMPIAD contest in judging mode
       //if (solved_flag[re.prob_id]) continue;
       if (cur_prob->type != PROB_TYPE_STANDARD) {
-        if (status == RUN_PRESENTATION_ERR || status == RUN_WRONG_ANSWER_ERR)
+        if (/*status == RUN_PRESENTATION_ERR ||*/ status == RUN_WRONG_ANSWER_ERR)
           status = RUN_PARTIAL;
       }
 
