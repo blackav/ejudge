@@ -44,6 +44,14 @@ userlist_clnt_login(
   if (!passwd) passwd = "";
   login_len = strlen(login);
   passwd_len = strlen(passwd);
+  if (login_len > 254) {
+    r = -ULS_ERR_INVALID_LOGIN;
+    goto cleanup;
+  }
+  if (passwd_len > 254) {
+    r = -ULS_ERR_INVALID_PASSWORD;
+    goto cleanup;
+  }
   out_size = sizeof(*out) + login_len + passwd_len;
   out = alloca(out_size);
   memset(out, 0, out_size);
