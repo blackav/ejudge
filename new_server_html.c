@@ -11115,11 +11115,13 @@ batch_login(
   const unsigned char *ip = NULL;
   hr_cgi_param(phr, "i", &ip);
   if (ip) {
+    /*
     const unsigned char *this_ip = xml_unparse_ipv6(&phr->ip);
     if (strcmp(ip, this_ip) != 0) {
       err("batch_login: IP mismatch: required: %s, actual: %s", ip, this_ip);
       goto invalid_parameter;
     }
+    */
   }
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
