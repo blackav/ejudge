@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-21 22:39+0300\n"
+"POT-Creation-Date: 2016-12-13 11:48+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -3937,6 +3937,9 @@ msgid "Upsolving mode"
 msgstr ""
 
 msgid "Use 'extid' as problem name"
+msgstr ""
+
+msgid "Use 'problem_dir' as problem name"
 msgstr ""
 
 msgid "Use Contest Id"
