@@ -2814,6 +2814,7 @@ ns_download_runs(
           }
         }
         prob_ptr = prob_dir_buf;
+        while (*prob_ptr == '.') ++prob_ptr;
       } else if (use_problem_extid && cs->probs[info.prob_id]->extid && cs->probs[info.prob_id]->extid[0]) {
         prob_ptr = cs->probs[info.prob_id]->extid;
       } else {
