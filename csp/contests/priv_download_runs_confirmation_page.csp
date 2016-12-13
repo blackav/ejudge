@@ -70,7 +70,8 @@
 <tr><td><input type="radio" name="dir_struct" value="7"/></td><td><s:_>/&lt;User_Login&gt;/&lt;Problem&gt;/&lt;File&gt;</s:_></td></tr>
 <tr><td><input type="radio" name="dir_struct" value="10"/></td><td><s:_>/&lt;User_Name&gt;/&lt;Problem&gt;/&lt;File&gt;</s:_></td></tr>
 
-<tr><td><input type="checkbox" name="use_problem_extid" checked="checked" /></td><td><s:_>Use 'extid' as problem name</s:_></td></tr>
+<tr><td><input type="checkbox" name="use_problem_extid" /></td><td><s:_>Use 'extid' as problem name</s:_></td></tr>
+<tr><td><input type="checkbox" name="use_problem_dir" checked="checked" /></td><td><s:_>Use 'problem_dir' as problem name</s:_></td></tr>
 </table>
 
 <h2><s:_>Download runs</s:_></h2>

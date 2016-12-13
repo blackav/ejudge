@@ -5527,6 +5527,7 @@ priv_download_runs(
   int run_selection = 0;
   int file_name_mask = 0;
   int use_problem_extid = 0;
+  int use_problem_dir = 0;
   const unsigned char *s;
   char *ss = 0;
 
@@ -5559,6 +5560,8 @@ priv_download_runs(
 
   if (hr_cgi_param(phr, "use_problem_extid", &s) > 0)
     use_problem_extid = 1;
+  if (hr_cgi_param(phr, "use_problem_dir", &s) > 0)
+    use_problem_dir = 1;
 
   if (hr_cgi_param(phr, "file_pattern_run", &s) > 0)
     file_name_mask |= NS_FILE_PATTERN_RUN;
@@ -5583,7 +5586,7 @@ priv_download_runs(
   if (ns_parse_run_mask(phr, 0, 0, &mask_size, &mask) < 0)
     goto invalid_param;
 
-  ns_download_runs(cnts, cs, fout, log_f, run_selection, dir_struct, file_name_mask, use_problem_extid, mask_size, mask);
+  ns_download_runs(cnts, cs, fout, log_f, run_selection, dir_struct, file_name_mask, use_problem_extid, use_problem_dir, mask_size, mask);
 
  cleanup:
   return retval;

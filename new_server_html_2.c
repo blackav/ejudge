@@ -2697,6 +2697,7 @@ ns_download_runs(
         int dir_struct,
         int file_name_mask,
         int use_problem_extid,
+        int use_problem_dir,
         size_t run_mask_size,
         unsigned long *run_mask)
 {
@@ -2720,6 +2721,7 @@ ns_download_runs(
   unsigned char login_buf[1024], *login_ptr;
   unsigned char name_buf[1024];
   unsigned char lang_buf[1024], *lang_ptr;
+  unsigned char prob_dir_buf[1024];
   const unsigned char *name_ptr;
   const unsigned char *suff_ptr;
   unsigned char *file_name_str = 0;
@@ -2804,7 +2806,15 @@ ns_download_runs(
     }
     if (info.prob_id > 0 && info.prob_id <= cs->max_prob
         && cs->probs[info.prob_id]) {
-      if (use_problem_extid && cs->probs[info.prob_id]->extid && cs->probs[info.prob_id]->extid[0]) {
+      if (use_problem_dir && cs->probs[info.prob_id]->problem_dir && cs->probs[info.prob_id]->problem_dir[0]) {
+        snprintf(prob_dir_buf, sizeof(prob_dir_buf), "%s", cs->probs[info.prob_id]->problem_dir);
+        for (int i = 0; prob_dir_buf[i]; ++i) {
+          if (prob_dir_buf[i] == '/') {
+            prob_dir_buf[i] = '.';
+          }
+        }
+        prob_ptr = prob_dir_buf;
+      } else if (use_problem_extid && cs->probs[info.prob_id]->extid && cs->probs[info.prob_id]->extid[0]) {
         prob_ptr = cs->probs[info.prob_id]->extid;
       } else {
         prob_ptr = cs->probs[info.prob_id]->short_name;
