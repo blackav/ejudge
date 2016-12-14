@@ -2698,6 +2698,7 @@ ns_download_runs(
         int file_name_mask,
         int use_problem_extid,
         int use_problem_dir,
+        const unsigned char *problem_dir_prefix,
         size_t run_mask_size,
         unsigned long *run_mask)
 {
@@ -2729,6 +2730,7 @@ ns_download_runs(
   unsigned char *sep, *ptr;
   path_t dstpath, srcpath;
   int srcflags;
+  int problem_dir_prefix_len = 0;
 
   file_name_size = 1024;
   file_name_str = (unsigned char*) xmalloc(file_name_size);
@@ -2743,6 +2745,10 @@ ns_download_runs(
 #endif
   if (!tmpdir[0]) {
     snprintf(tmpdir, sizeof(tmpdir), "%s", "/tmp");
+  }
+
+  if (problem_dir_prefix) {
+    problem_dir_prefix_len = strlen(problem_dir_prefix);
   }
 
   ptm = localtime(&cur_time);
@@ -2807,7 +2813,11 @@ ns_download_runs(
     if (info.prob_id > 0 && info.prob_id <= cs->max_prob
         && cs->probs[info.prob_id]) {
       if (use_problem_dir && cs->probs[info.prob_id]->problem_dir && cs->probs[info.prob_id]->problem_dir[0]) {
-        snprintf(prob_dir_buf, sizeof(prob_dir_buf), "%s", cs->probs[info.prob_id]->problem_dir);
+        prob_ptr = cs->probs[info.prob_id]->problem_dir;
+        if (problem_dir_prefix_len > 0 && !strncmp(prob_ptr, problem_dir_prefix, problem_dir_prefix_len)) {
+          prob_ptr += problem_dir_prefix_len;
+        }
+        snprintf(prob_dir_buf, sizeof(prob_dir_buf), "%s", prob_ptr);
         for (int i = 0; prob_dir_buf[i]; ++i) {
           if (prob_dir_buf[i] == '/') {
             prob_dir_buf[i] = '.';

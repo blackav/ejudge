@@ -72,6 +72,7 @@
 
 <tr><td><input type="checkbox" name="use_problem_extid" /></td><td><s:_>Use 'extid' as problem name</s:_></td></tr>
 <tr><td><input type="checkbox" name="use_problem_dir" checked="checked" /></td><td><s:_>Use 'problem_dir' as problem name</s:_></td></tr>
+<tr><td><s:textfield name="problem_dir_prefix" size="32" value="" /></td><td><s:_>Common prefix to remove</s:_></td></tr>
 </table>
 
 <h2><s:_>Download runs</s:_></h2>
