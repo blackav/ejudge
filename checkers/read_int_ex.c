@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2010-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -34,7 +33,7 @@ checker_read_int_ex(
   size_t dsize = 0;
   char *vbuf = 0;
   char *eptr = 0;
-  int val;
+  long val;
 
   if (!name) name = "";
 
@@ -45,7 +44,7 @@ checker_read_int_ex(
   errno = 0;
   val = strtol(vbuf, &eptr, 10);
   if (*eptr) error_func(_("%s: cannot parse int32 value"), name);
-  if (errno) error_func(_("%s: int32 value is out of range"), name);
+  if (errno || (int) val != val) error_func(_("%s: int32 value is out of range"), name);
   free(dbuf); dbuf = 0;
   *p_val = val;
   return 1;

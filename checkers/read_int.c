@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +27,7 @@ checker_read_int(
         int eof_error_flag,
         int *p_val)
 {
-  int x;
+  long x;
   char sb[128], *db = 0, *vb = 0, *ep = 0;
   size_t ds = 0;
 
@@ -43,7 +42,7 @@ checker_read_int(
   if (*ep) {
     fatal_read(ind, _("%s: cannot parse int32 value"), name);
   }
-  if (errno) {
+  if (errno || (int) x != x) {
     fatal_read(ind, _("%s: int32 value is out of range"), name);
   }
   *p_val = x;
