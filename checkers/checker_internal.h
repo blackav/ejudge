@@ -181,10 +181,13 @@ void checker_out_eof(void);
 void checker_out_eoln(int);
 
 int  checker_read_int(int, const char *, int, int *);
-int  checker_read_unsigned_int(int, const char *, int,
-                               unsigned int *);
+int  checker_read_int_2(int, const char *, int, int, int *);
+int  checker_read_unsigned_int(int, const char *, int, unsigned int *);
+int  checker_read_unsigned_int_2(int, const char *, int, int, unsigned int *);
 int  checker_read_long_long(int, const char *, int, libchecker_i64_t *);
+int  checker_read_long_long_2(int, const char *, int, int, libchecker_i64_t *);
 int  checker_read_unsigned_long_long(int, const char *, int, libchecker_u64_t*);
+int  checker_read_unsigned_long_long_2(int, const char *, int, int, libchecker_u64_t*);
 int  checker_read_double(int, const char *, int, double *);
 int  checker_read_long_double(int, const char *, int, long double *);
 

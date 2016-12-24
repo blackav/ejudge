@@ -1,7 +1,6 @@
 # -*- Makefile -*-
-# $Id$
 
-# Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru>
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -50,12 +49,16 @@ CFILES=\
  read_line.c\
  read_line_ex.c\
  read_int.c\
+ read_int_2.c\
  read_int_ex.c\
  read_unsigned_int.c\
+ read_unsigned_int_2.c\
  read_unsigned_int_ex.c\
  read_long_long.c\
+ read_long_long_2.c\
  read_long_long_ex.c\
  read_unsigned_long_long.c\
+ read_unsigned_long_long_2.c\
  read_unsigned_long_long_ex.c\
  read_double.c\
  read_double_ex.c\
