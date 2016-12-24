@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2004-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,9 +21,13 @@
 
 #include "l10n_impl.h"
 
+#include <errno.h>
+
 int checker_main(int argc, char **argv)
 {
   unsigned long long out_ans, corr_ans;
+  int base = 10;
+  char *s;
 
   checker_l10n_prepare();
 
@@ -34,10 +37,18 @@ int checker_main(int argc, char **argv)
       fseek(f_out, 0L, SEEK_SET);
     }
   }
+  if ((s = getenv("EJ_BASE")) && *s) {
+    errno = 0;
+    char *eptr;
+    base = strtol(s, &eptr, 10);
+    if (errno || *eptr || base <= 1 || base > 36) {
+      fatal_CF("invalid conversion base");
+    }
+  }
 
-  checker_read_corr_unsigned_long_long(_("correct"), 1, &corr_ans);
+  checker_read_unsigned_long_long_2(2, _("correct"), 1, base, &corr_ans);
   checker_corr_eof();
-  checker_read_out_unsigned_long_long(_("output"), 1, &out_ans);
+  checker_read_unsigned_long_long_2(1, _("output"), 1, base, &out_ans);
   checker_out_eof();
   if (out_ans != corr_ans)
     fatal_WA(_("Answers do not match: output: %llu, correct: %llu"),

@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,11 +21,15 @@
 
 #include "l10n_impl.h"
 
+#include <errno.h>
+
 int checker_main(int argc, char **argv)
 {
   long long out_ans, corr_ans;
   int i = 0;
   unsigned char buf[32];
+  int base = 10;
+  char *s;
 
   checker_l10n_prepare();
 
@@ -36,12 +39,20 @@ int checker_main(int argc, char **argv)
       fseek(f_out, 0L, SEEK_SET);
     }
   }
+  if ((s = getenv("EJ_BASE")) && *s) {
+    errno = 0;
+    char *eptr;
+    base = strtol(s, &eptr, 10);
+    if (errno || *eptr || base <= 1 || base > 36) {
+      fatal_CF("invalid conversion base");
+    }
+  }
 
   while (1) {
     i++;
     snprintf(buf, sizeof(buf), "[%d]", i);
-    if (checker_read_corr_long_long(buf, 0, &corr_ans) < 0) break;
-    if (checker_read_out_long_long(buf, 0, &out_ans) < 0) {
+    if (checker_read_long_long_2(2, buf, 0, base, &corr_ans) < 0) break;
+    if (checker_read_long_long_2(1, buf, 0, base, &out_ans) < 0) {
       fatal_WA(_("Too few numbers in the output"));
     }
     if (corr_ans != out_ans)
