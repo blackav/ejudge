@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -842,7 +842,8 @@ serve_state_load_contest(
 
   if (global->is_virtual) {
     if (global->score_system != SCORE_ACM
-        && global->score_system != SCORE_OLYMPIAD) {
+        && global->score_system != SCORE_OLYMPIAD
+        && global->score_system != SCORE_KIROV) {
       err("invalid score system for virtual contest");
       goto failure;
     }

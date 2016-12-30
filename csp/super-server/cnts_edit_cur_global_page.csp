@@ -1339,6 +1339,7 @@ function advancedDialogOnChange()
   score_system = global->score_system;
   if (global->is_virtual) {
     if (global->score_system == SCORE_ACM) score_system = SCORE_TOTAL;
+    else if (global->score_system == SCORE_KIROV) score_system = SCORE_TOTAL + 2;
     else score_system = SCORE_TOTAL + 1;
   }
 %>
@@ -1351,6 +1352,7 @@ function advancedDialogOnChange()
                     <s:option value="3" selectedExpr="score_system == 3">Moscow</s:option>
                     <s:option value="4" selectedExpr="score_system == 4">Virtual ACM</s:option>
                     <s:option value="5" selectedExpr="score_system == 5">Virtual Olympiad</s:option>
+                    <s:option value="6" selectedExpr="score_system == 6">Virtual Kirov</s:option>
                 </select></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:score_system" /></td>

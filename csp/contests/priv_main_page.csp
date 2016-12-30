@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "priv_includes.csp"
 %><%@set getter_name = "csp_get_priv_main_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"

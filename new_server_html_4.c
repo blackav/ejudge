@@ -442,7 +442,7 @@ get_contest_type(FILE *fout, const struct section_global_data *global)
   static const unsigned char * const virtual_contest_types[SCORE_TOTAL] =
   {
     [SCORE_ACM] = "acm-virtual",
-    [SCORE_KIROV] = 0,
+    [SCORE_KIROV] = "kirov-virtual",
     [SCORE_OLYMPIAD] = "olympiad-virtual",
     [SCORE_MOSCOW] = 0,
   };

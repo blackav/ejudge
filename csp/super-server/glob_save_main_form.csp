@@ -67,7 +67,10 @@
     } else if (score_system == 5) {
         score_system = SCORE_OLYMPIAD;
         is_virtual = 1;
-    } else if (score_system < 0 || score_system > 5) {
+    } else if (score_system == 6) {
+        score_system = SCORE_KIROV;
+        is_virtual = 1;
+    } else if (score_system < 0 || score_system > 6) {
         fprintf(msg_f, "Invalid score_system<br/>");
         retval = SSERV_ERR_INV_PARAM;
     }
