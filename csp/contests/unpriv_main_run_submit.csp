@@ -17,6 +17,11 @@
         && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
       prob_id = 0;
 
+    int is_viewable = 0;
+    if (prob_id > 0) {
+      is_viewable = (pinfo[prob_id].status & PROB_STATUS_VIEWABLE) != 0;
+    }
+
     if (start_time > 0 && stop_time <= 0 && !prob_id) {
 %><div class="h2-long"><h2><s:_>View the problem statement and send a submission</s:_></h2></div>
 <s:form>
@@ -50,18 +55,18 @@
         if (prob->type == PROB_TYPE_STANDARD) {
 %>
 <%
-          if (global->score_system == SCORE_KIROV) {
+          if (global->score_system == SCORE_KIROV && is_viewable) {
 %>
     <tr><td><b><s:_>Full score</s:_>:</b></td><td><tt><s:v value="prob->full_score" /></tt></td></tr>
 <%
-            if (prob->run_penalty > 0) {
+            if (prob->run_penalty > 0 && is_viewable) {
 %>
     <tr><td><b><s:_>Run penalty</s:_>:</b></td><td><tt><s:v value="prob->run_penalty" /></tt></td></tr>
 <%
             }
 %>
 <%
-            if (prob->score_bonus && prob->score_bonus[0]) {
+            if (prob->score_bonus && prob->score_bonus[0] && is_viewable) {
 %>
     <tr><td><b><s:_>Score bonus</s:_>:</b></td><td><tt><s:v value="prob->score_bonus" /></tt></td></tr>
 <%
@@ -71,54 +76,54 @@
           }
 %>
 <%
-          if (prob->combined_stdin > 0 && prob->input_file[0] && prob->hide_file_names <= 0) {
+          if (prob->combined_stdin > 0 && prob->input_file[0] && prob->hide_file_names <= 0 && is_viewable) {
 %>
     <tr><td><b><s:_>Input file name</s:_>:</b></td><td><tt><s:v value="prob->input_file" /></tt><s:_> or standard input</s:_></td></tr>
 <%
-          } else if (prob->use_stdin <= 0 && prob->input_file[0] && prob->hide_file_names <= 0) {
+          } else if (prob->use_stdin <= 0 && prob->input_file[0] && prob->hide_file_names <= 0 && is_viewable) {
 %>
     <tr><td><b><s:_>Input file name</s:_>:</b></td><td><tt><s:v value="prob->input_file" /></tt></td></tr>
 <%
           }
 %>
 <%
-          if (prob->combined_stdout > 0 && prob->output_file[0] && prob->hide_file_names <= 0) {
+          if (prob->combined_stdout > 0 && prob->output_file[0] && prob->hide_file_names <= 0 && is_viewable) {
 %>
     <tr><td><b><s:_>Output file name</s:_>:</b></td><td><tt><s:v value="prob->output_file" /></tt><s:_> or standard output</s:_></td></tr>
 <%
-          } else if (prob->use_stdout <= 0 && prob->output_file[0] && prob->hide_file_names <= 0) {
+          } else if (prob->use_stdout <= 0 && prob->output_file[0] && prob->hide_file_names <= 0 && is_viewable) {
 %>
     <tr><td><b><s:_>Output file name</s:_>:</b></td><td><tt><s:v value="prob->output_file" /></tt></td></tr>
 <%
           }
 %>
 <%
-          if (prob->time_limit_millis > 0) {
+          if (prob->time_limit_millis > 0 && is_viewable) {
 %>
     <tr><td><b><s:_>Time limit</s:_>:</b></td><td><tt><s:v value="prob->time_limit_millis" /> <s:_>ms</s:_></tt></td></tr>
 <%
-          } else if (prob->time_limit > 0) {
+          } else if (prob->time_limit > 0 && is_viewable) {
 %>
     <tr><td><b><s:_>Time limit</s:_>:</b></td><td><tt><s:v value="prob->time_limit" /> <s:_>s</s:_></tt></td></tr>
 <%
           }
 %>
 <%
-          if (prob->real_time_limit > 0 && prob->hide_real_time_limit <= 0) {
+          if (prob->real_time_limit > 0 && prob->hide_real_time_limit <= 0 && is_viewable) {
 %>
     <tr><td><b><s:_>Real time limit</s:_>:</b></td><td><tt><s:v value="prob->real_time_limit" /> <s:_>s</s:_></tt></td></tr>
 <%
           }
 %>
 <%
-          if (prob->max_vm_size >= 0) {
+          if (prob->max_vm_size >= 0 && is_viewable) {
 %>
     <tr><td><b><s:_>Memory limit</s:_>:</b></td><td><tt><s:v format="V" value="prob->max_vm_size" /></tt></td></tr>
 <%
           }
 %>
 <%
-          if (prob->max_stack_size >= 0 && prob->max_stack_size != prob->max_vm_size) {
+          if (prob->max_stack_size >= 0 && prob->max_stack_size != prob->max_vm_size && is_viewable) {
 %>
     <tr><td><b><s:_>Stack limit</s:_>:</b></td><td><tt><s:v format="V" value="prob->max_stack_size" /></tt></td></tr>
 <%
@@ -185,34 +190,35 @@
       }
 
       /* put problem statement */
-      if (px && px->stmts) {
-        ns_unparse_statement(out_f, phr, cnts, extra, prob, 0, px, NULL,
-                          pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE);
-      } else if (prob->statement_file[0]
-          && (pinfo[prob_id].status & PROB_STATUS_VIEWABLE)) {
-        if (variant > 0) {
-          prepare_insert_variant_num(variant_stmt_file,
-                                     sizeof(variant_stmt_file),
-                                     prob->statement_file, variant);
-          pw = &cs->prob_extras[prob_id].v_stmts[variant];
-          pw_path = variant_stmt_file;
-        } else {
-          pw = &cs->prob_extras[prob_id].stmt;
-          pw_path = prob->statement_file;
-        }
-        watched_file_update(pw, pw_path, cs->current_time);
-        if (!pw->text) {
+      if (is_viewable) {
+        if (px && px->stmts) {
+          ns_unparse_statement(out_f, phr, cnts, extra, prob, 0, px, NULL,
+                               pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE);
+        } else if (prob->statement_file[0] && is_viewable) {
+          if (variant > 0) {
+            prepare_insert_variant_num(variant_stmt_file,
+                                       sizeof(variant_stmt_file),
+                                       prob->statement_file, variant);
+            pw = &cs->prob_extras[prob_id].v_stmts[variant];
+            pw_path = variant_stmt_file;
+          } else {
+            pw = &cs->prob_extras[prob_id].stmt;
+            pw_path = prob->statement_file;
+          }
+          watched_file_update(pw, pw_path, cs->current_time);
+          if (!pw->text) {
 %><big><font color="red"><p><s:_>The problem statement is not available</s:_></p></font></big>
 <%
-        } else {
-          if ((pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE)
-              && prob->type == PROB_TYPE_CUSTOM) {
-            html_start_form(out_f, 2, phr->self_url, phr->hidden_vars);
-            skip_start_form = 1;
+          } else {
+            if ((pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE)
+                && prob->type == PROB_TYPE_CUSTOM) {
+              html_start_form(out_f, 2, phr->self_url, phr->hidden_vars);
+              skip_start_form = 1;
+            }
+            fprintf(out_f, "%s", pw->text);
           }
-          fprintf(out_f, "%s", pw->text);
+        } else {
         }
-      } else {
       }
 
       if ((pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE)) {

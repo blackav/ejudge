@@ -137,12 +137,15 @@
 <%
             if (global->disable_prob_long_name <= 0) {
 %>
-        <td class="b1"><s:v value="prob->long_name" /></td>
+<s:url name="ProblemPageUrl" ac="view-problem-submit">
+    <s:param name="prob_id" value="prob->id" />
+</s:url>
+        <td class="b1"><s:a class="tab" url="ProblemPageUrl"><s:v value="prob->long_name" /></s:a></td>
 <%
             }
           }
 
-          if (pinfo[prob_id].best_run < 0) {
+          if (pinfo[prob_id].best_run < 0 && !pinfo[prob_id].autook_flag) {
             if (pinfo[prob_id].last_untokenized) {
               total_score_uncertain = 1;
               if (global->score_system == SCORE_KIROV || (global->score_system == SCORE_OLYMPIAD && !accepting_mode) || global->score_system == SCORE_MOSCOW) {
@@ -184,6 +187,14 @@
         <td class="b1">&nbsp;</td>
 <%
             }
+          } else if (pinfo[prob_id].autook_flag) {
+              total_score += pinfo[prob_id].best_score;
+%>
+        <td class="b1">OK (auto)</td>
+        <td class="b1">&nbsp;</td>
+        <td class="b1"><s:v value="pinfo[prob_id].best_score" /></td>
+        <td class="b1">&nbsp;</td>
+<%
           } else {
             int status, test;
             struct run_entry re;
@@ -376,7 +387,10 @@
             }
             if (!cnts->exam_mode) {
 %>
-        <td class="b1"><s:v value="pinfo[prob_id].best_run" /></td>
+<s:url name="ProtocolUrl" ac="view-report">
+    <s:param name="run_id" value="pinfo[prob_id].best_run" />
+</s:url>
+        <td class="b1"><s:a class="tab" url="ProtocolUrl"><s:v value="pinfo[prob_id].best_run" /></s:a></td>
 <%
             }
           }

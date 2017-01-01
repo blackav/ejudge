@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -5152,6 +5152,20 @@ ns_get_user_problems_summary(
       } else {
         kirov_score_default(cur_prob, &re, &pinfo[re.prob_id],
                             start_time, run_id, separate_user_score, status, score);
+      }
+      if (re.status == RUN_OK && cur_prob->provide_ok) {
+        for (int oki = 0; cur_prob->provide_ok[oki]; ++oki) {
+          for (int p2i = 1; p2i <= cs->max_prob; ++p2i) {
+            const struct section_problem_data *prob2 = cs->probs[p2i];
+            if (prob2 && !strcmp(prob2->short_name, cur_prob->provide_ok[oki])) {
+              pinfo[p2i].best_score = prob2->full_score;
+              pinfo[p2i].solved_flag = 1;
+              pinfo[p2i].status = RUN_OK;
+              pinfo[p2i].autook_flag = 1;
+              break;
+            }
+          }
+        }
       }
     } else if (global->score_system == SCORE_MOSCOW) {
       if (pinfo[re.prob_id].solved_flag) continue;

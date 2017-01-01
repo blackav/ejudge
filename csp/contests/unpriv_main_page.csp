@@ -91,7 +91,8 @@ ns_unparse_answers(
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
-    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                          cs->current_time);
     if (stop_time <= 0) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
@@ -138,7 +139,7 @@ ns_unparse_answers(
   if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
     if (prob_id > cs->max_prob) prob_id = 0;
     if (prob_id > 0 && !(prob = cs->probs[prob_id])) prob_id = 0;
-    if (prob_id > 0 && !(pinfo[prob_id].status & PROB_STATUS_VIEWABLE))
+    if (prob_id > 0 && !(pinfo[prob_id].status & PROB_STATUS_TABABLE))
       prob_id = 0;
     if (prob_id > 0 && prob->variant_num > 0
         && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
@@ -164,7 +165,7 @@ ns_unparse_answers(
         ++tab_counter;
         if (i == prob_id) {
 %><div class="nProbCurrent"><%
-        } else if (!pinfo[i].all_attempts) {
+        } else if (!pinfo[i].all_attempts && !pinfo[i].autook_flag) {
 %><div class="nProbEmpty"><%
         } else if (pinfo[i].pending_flag || pinfo[i].trans_flag) {
 %><div class="nProbTrans"><%
@@ -263,7 +264,7 @@ ns_unparse_answers(
 %><%
       if (i == prob_id) {
 %><div class="probCurrent"><%
-      } else if (!pinfo[i].all_attempts) {
+      } else if (!pinfo[i].all_attempts && !pinfo[i].autook_flag) {
 %><div class="probEmpty"><%
       } else if (pinfo[i].pending_flag || pinfo[i].trans_flag) {
 %><div class="probTrans"><%
@@ -300,7 +301,7 @@ ns_unparse_answers(
       ++tab_counter;
       if (i == upper_tab_id) {
 %><div class="nProbCurrent"><%
-      } else if (!pinfo[i].all_attempts) {
+      } else if (!pinfo[i].all_attempts && !pinfo[i].autook_flag) {
 %><div class="nProbEmpty"><%
       } else if (pinfo[i].pending_flag || pinfo[i].trans_flag) {
 %><div class="nProbTrans"><%

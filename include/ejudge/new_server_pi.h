@@ -2,7 +2,7 @@
 #ifndef __NEW_SERVER_PI_H__
 #define __NEW_SERVER_PI_H__
 
-/* Copyright (C) 2014-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -130,6 +130,7 @@ typedef struct UserProblemInfo
     unsigned char status;
     unsigned char last_untokenized;
     unsigned char marked_flag;
+    unsigned char autook_flag;    // if "OK" is result of "provide_ok" setting
 } UserProblemInfo;
 
 #endif /* __NEW_SERVER_PI_H__ */
