@@ -365,6 +365,7 @@ enum
   CNTSPROB_disable_tab,
   CNTSPROB_unrestricted_statement,
   CNTSPROB_restricted_statement,
+  CNTSPROB_enable_submit_after_reject,
   CNTSPROB_hide_file_names,
   CNTSPROB_hide_real_time_limit,
   CNTSPROB_enable_tokens,

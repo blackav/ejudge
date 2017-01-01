@@ -42,6 +42,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_disable_user_submit,
   META_PROBLEM_CONFIG_SECTION_disable_tab,
   META_PROBLEM_CONFIG_SECTION_unrestricted_statement,
+  META_PROBLEM_CONFIG_SECTION_enable_submit_after_reject,
   META_PROBLEM_CONFIG_SECTION_hide_file_names,
   META_PROBLEM_CONFIG_SECTION_hide_real_time_limit,
   META_PROBLEM_CONFIG_SECTION_enable_tokens,
