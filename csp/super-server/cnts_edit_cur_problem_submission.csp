@@ -10,6 +10,7 @@
         <%@expand MENU_YESNO3 "advance_to_next" "submission" "Automatically advance to the next problem" "300" %>
         <%@expand MENU_YESNO3 "disable_ctrl_chars" "submission" "Disable control characters in the source code" "300" %>
         <%@expand MENU_YESNO3 "enable_text_form" "submission" "Enable textarea input form" "300" %>
+        <%@expand MENU_YESNO3 "enable_submit_after_reject" "submission" "Enable submission after deadline for rejected runs" "300" %>
         <%@expand MENU_YESNO3 "binary" "submission" "Submit is binary" "300" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_user_run_count" "submission" "Max submissions for the problem" "300" %>
         <%@expand MENU_TEXTFIELD "disable_language" "submission" "Disabled languages" "300" %>
@@ -74,6 +75,7 @@ function popupSubmissionDialog(e, skipField)
     <%@expand COPY_YESNO3 "advance_to_next"  %>
     <%@expand COPY_YESNO3 "disable_ctrl_chars"  %>
     <%@expand COPY_YESNO3 "enable_text_form"  %>
+    <%@expand COPY_YESNO3 "enable_submit_after_reject"  %>
     <%@expand COPY_YESNO3 "binary"  %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_user_run_count" "prob->max_user_run_count < 0" %>
     <%@expand COPY_TEXTFIELD "disable_language"  %>

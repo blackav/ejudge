@@ -2,7 +2,7 @@
 #ifndef __PROBLEM_CONFIG_H__
 #define __PROBLEM_CONFIG_H__
 
-/* Copyright (C) 2012-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -70,6 +70,7 @@ struct problem_config_section
   ejintbool_t disable_user_submit;
   ejintbool_t disable_tab;
   ejintbool_t unrestricted_statement;
+  ejintbool_t enable_submit_after_reject;
   ejintbool_t hide_file_names;
   ejintbool_t hide_real_time_limit;
   ejintbool_t enable_tokens;

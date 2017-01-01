@@ -131,6 +131,7 @@ typedef struct UserProblemInfo
     unsigned char last_untokenized;
     unsigned char marked_flag;
     unsigned char autook_flag;    // if "OK" is result of "provide_ok" setting
+    unsigned char rejected_flag;  // if there are "Rejected" runs
 } UserProblemInfo;
 
 #endif /* __NEW_SERVER_PI_H__ */

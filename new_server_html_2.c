@@ -4977,6 +4977,9 @@ ns_get_user_problems_summary(
     }
     if (!run_is_normal_status(status)) continue;
 
+    if (status == RUN_REJECTED) {
+      pinfo[re.prob_id].rejected_flag = 1;
+    }
     pinfo[re.prob_id].all_attempts++;
     if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
       // OLYMPIAD contest in accepting mode

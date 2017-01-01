@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1396,6 +1396,8 @@ prepare_unparse_prob(
     unparse_bool(f, "disable_tab", prob->disable_tab);
   if (prob->unrestricted_statement >= 0)
     unparse_bool(f, "unrestricted_statement", prob->unrestricted_statement);
+  if (prob->enable_submit_after_reject >= 0)
+    unparse_bool(f, "enable_submit_after_reject", prob->enable_submit_after_reject);
   if (prob->hide_file_names >= 0)
     unparse_bool(f, "hide_file_names", prob->hide_file_names);
   if (prob->hide_real_time_limit >= 0)
@@ -1779,6 +1781,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "disable_tab", prob->disable_tab);
   if (prob->unrestricted_statement > 0)
     unparse_bool(f, "unrestricted_statement", prob->unrestricted_statement);
+  if (prob->enable_submit_after_reject > 0)
+    unparse_bool(f, "enable_submit_after_reject", prob->enable_submit_after_reject);
   if (prob->hide_file_names > 0)
     unparse_bool(f, "hide_file_names", prob->hide_file_names);
   if (prob->hide_real_time_limit > 0)

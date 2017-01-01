@@ -19,6 +19,7 @@
     int advance_to_next = -1;
     int disable_ctrl_chars = -1;
     int enable_text_form = -1;
+    int enable_submit_after_reject = -1;
     int binary = -1;
     int max_user_run_count = -1;
     ejintbool_t max_user_run_count_dflt = -1;
@@ -45,6 +46,7 @@
 %><s:read var="advance_to_next" default="-1" /><%
 %><s:read var="disable_ctrl_chars" default="-1" /><%
 %><s:read var="enable_text_form" default="-1" /><%
+%><s:read var="enable_submit_after_reject" default="-1" /><%
 %><s:read var="binary" default="-1" /><%
 %><s:read var="max_user_run_count" default="-1" /><%
 %><s:read var="max_user_run_count_dflt" default="0" /><%
@@ -63,6 +65,7 @@
     if (advance_to_next > 0) advance_to_next = 1;
     if (disable_ctrl_chars > 0) disable_user_submit = 1;
     if (enable_text_form > 0) enable_text_form = 1;
+    if (enable_submit_after_reject > 0) enable_submit_after_reject = 1;
     if (binary > 0) binary = 1;
     if (max_user_run_count < 0) max_user_run_count = -1;
     if (max_user_run_count_dflt) max_user_run_count = -1;
@@ -88,6 +91,7 @@
         if (advance_to_next < 0) advance_to_next = 0;
         if (disable_ctrl_chars < 0) disable_ctrl_chars = 0;
         if (enable_text_form < 0) enable_text_form = 0;
+        if (enable_submit_after_reject < 0) enable_submit_after_reject = 0;
         if (binary < 0) binary = 0;
     } else {
         i = prob_id;
@@ -100,6 +104,7 @@
         if (advance_to_next < 0) advance_to_next = -1;
         if (disable_ctrl_chars < 0) disable_ctrl_chars = -1;
         if (enable_text_form < 0) enable_text_form = -1;
+        if (enable_submit_after_reject < 0) enable_submit_after_reject = -1;
         if (binary < 0) binary = -1;
     }
 
@@ -109,6 +114,7 @@
         prob->advance_to_next = advance_to_next;
         prob->disable_ctrl_chars = disable_ctrl_chars;
         prob->enable_text_form = enable_text_form;
+        prob->enable_submit_after_reject = enable_submit_after_reject;
         prob->binary = binary;
         prob->max_user_run_count = max_user_run_count;
         MOVEENV(disable_language);

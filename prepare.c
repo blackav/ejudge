@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -408,6 +408,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(disable_user_submit, "d"),
   PROBLEM_PARAM(disable_tab, "d"),
   PROBLEM_PARAM(unrestricted_statement, "d"),
+  PROBLEM_PARAM(enable_submit_after_reject, "d"),
   PROBLEM_PARAM(restricted_statement, "d"),
   PROBLEM_PARAM(hide_file_names, "d"),
   PROBLEM_PARAM(hide_real_time_limit, "d"),
@@ -990,6 +991,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->disable_user_submit = -1;
   p->disable_tab = -1;
   p->unrestricted_statement = -1;
+  p->enable_submit_after_reject = -1;
   p->hide_file_names = -1;
   p->hide_real_time_limit = -1;
   p->enable_tokens = -1;
@@ -3222,6 +3224,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_disable_user_submit, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_tab, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_unrestricted_statement, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_enable_submit_after_reject, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_hide_file_names, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_hide_real_time_limit, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_tokens, prob, aprob, g);
@@ -5612,6 +5615,7 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN(disable_user_submit);
   INHERIT_BOOLEAN(disable_tab);
   INHERIT_BOOLEAN(unrestricted_statement);
+  INHERIT_BOOLEAN(enable_submit_after_reject);
   INHERIT_BOOLEAN(hide_file_names);
   INHERIT_BOOLEAN(hide_real_time_limit);
   INHERIT_BOOLEAN(enable_tokens);
@@ -6208,6 +6212,7 @@ prepare_set_all_prob_values(
     CNTSPROB_disable_user_submit,
     CNTSPROB_disable_tab,
     CNTSPROB_unrestricted_statement,
+    CNTSPROB_enable_submit_after_reject,
     CNTSPROB_hide_file_names,
     CNTSPROB_hide_real_time_limit,
     CNTSPROB_enable_tokens,

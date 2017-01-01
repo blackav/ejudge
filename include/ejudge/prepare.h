@@ -2,7 +2,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -894,6 +894,8 @@ struct section_problem_data
   ejintbool_t unrestricted_statement;
   /** for compatibility with old configs */
   ejintbool_t restricted_statement;
+  /** enable submit for rejected problems even after deadline */
+  ejintbool_t enable_submit_after_reject;
   /** hide input/output file names from problem submit page */
   ejintbool_t hide_file_names;
   /** hide information about real time limit */
