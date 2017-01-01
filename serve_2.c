@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -5814,17 +5814,17 @@ get_compiler_option(
   } else if (!strcmp(lang->short_name, "fpc")) {
     mandatory = "-XS";
   } else if (!strcmp(lang->short_name, "gcc")) {
-    mandatory = "-static";
+    mandatory = "";
   } else if (!strcmp(lang->short_name, "gcc-32")) {
     mandatory = "-m32";
   } else if (!strcmp(lang->short_name, "g++")) {
-    mandatory = "-static";
+    mandatory = "";
   } else if (!strcmp(lang->short_name, "g++-32")) {
     mandatory = "-m32";
   } else if (!strcmp(lang->short_name, "g77")) {
     mandatory = "-static";
   } else if (!strcmp(lang->short_name, "gfortran")) {
-    mandatory = "-static";
+    mandatory = "";
   } else if (!strcmp(lang->short_name, "gccgo")) {
     mandatory = "-g";
   } else if (!strcmp(lang->short_name, "gcj")) {
