@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1151,6 +1151,33 @@ run_get_accepted_set(
     }
   }
   ASSERT(i == -1);
+}
+
+void
+run_get_ok_and_reject_count(
+        runlog_state_t state,
+        int user_id,
+        int prob_id,
+        int *p_ok_count,
+        int *p_rejected_count)
+{
+  int i;
+  const struct run_entry *q;
+
+  struct user_entry *ue = get_user_entry(state, user_id);
+  ASSERT(ue);
+  ASSERT(ue->run_id_valid > 0); // run index is ok
+
+  for (i = ue->run_id_first; i >= 0; i = state->run_extras[i].next_user_id) {
+    ASSERT(i < state->run_u);
+    q = &state->runs[i];
+    ASSERT(q->user_id == user_id);
+    if (q->status == RUN_OK && q->prob_id == prob_id) {
+      ++*p_ok_count;
+    } else if (q->status == RUN_REJECTED && q->prob_id == prob_id) {
+      ++*p_rejected_count;
+    }
+  }
 }
 
 void

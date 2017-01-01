@@ -2,7 +2,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -191,6 +191,13 @@ int run_find_duplicate(runlog_state_t state,
                        ruint32_t sha1[]);
 void run_get_accepted_set(runlog_state_t state, int user_id, int accepting_mode,
                           int max_prob, unsigned char *acc_set);
+void
+run_get_ok_and_reject_count(
+        runlog_state_t state,
+        int user_id,
+        int prob_id,
+        int *p_ok_count,
+        int *p_rejected_count);
 
 /* structure size is 128 bytes */
 struct run_header

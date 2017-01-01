@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -8812,8 +8812,16 @@ unpriv_submit_run(
   if (!serve_is_problem_started(cs, phr->user_id, prob)) {
     FAIL2(NEW_SRV_ERR_PROB_UNAVAILABLE);
   }
-  if (serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob,
-                                 &user_deadline)) {
+  int is_deadlined = serve_is_problem_deadlined(cs, phr->user_id, phr->login, prob, &user_deadline);
+  if (is_deadlined && prob->enable_submit_after_reject > 0) {
+    int ok_count = 0;
+    int rejected_count = 0;
+    run_get_ok_and_reject_count(cs->runlog_state, phr->user_id, prob_id, &ok_count, &rejected_count);
+    if (rejected_count > 0 && ok_count <= 0) is_deadlined = 0;
+    user_deadline = 0;
+  }
+
+  if (is_deadlined) {
     FAIL2(NEW_SRV_ERR_PROB_DEADLINE_EXPIRED);
   }
 
