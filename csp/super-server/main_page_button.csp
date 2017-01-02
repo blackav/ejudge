@@ -1,0 +1,70 @@
+<%
+%><%@include "includes.csp"
+%><%
+#include "ejudge/ej_process.h"
+%><%@set getter_name = "csp_get_main_page_button"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_main_page_button(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = 0;
+    const unsigned char *subtitle = 0;
+    unsigned char *stdout_text = NULL;
+    char *args[2];
+    int exit_code = 0;
+
+    if (phr->priv_level != PRIV_LEVEL_ADMIN) FAIL(SSERV_ERR_PERM_DENIED);
+%><%@include "header.csp"
+%><%
+    const char *script = NULL;
+    if (phr->config && phr->config->buttons) {
+        for (struct xml_tree *p = phr->config->buttons->first_down; p; p = p->right) {
+            if (!strcmp(ejudge_cfg_get_elem_name(p->tag), "button")) {
+                const char *value = NULL;
+                const char *par_script = NULL;
+                const char *page = NULL;
+                for (struct xml_tree *q = p->first_down; q; q = q->right) {
+                    const char *elem = ejudge_cfg_get_elem_name(q->tag);
+                    if (!strcmp(elem, "value")) {
+                        value = q->text;
+                    } else if (!strcmp(elem, "script")) {
+                        par_script = q->text;
+                    } else if (!strcmp(elem, "page")) {
+                        page = q->text;
+                    }
+                }
+                if (page && !strcmp(page, "main") && par_script && value) {
+                    const unsigned char *vv = NULL;
+                    if (hr_cgi_param(phr, value, &vv) > 0 && vv) {
+                        script = par_script;
+                    }
+                }
+            }
+        }
+    }
+    if (script) {
+        args[0] = (char*) script;
+        args[1] = NULL;
+        exit_code = ejudge_invoke_process(args, NULL, NULL, NULL, "", 1, &stdout_text, NULL);
+    }
+%>
+<%
+    if (!script) {
+%>
+<p>Button is not set</p>
+<%
+    } else {
+%>
+<p>Script: <s:v value="script" /></p>
+<p>Exit code: <s:v value="exit_code" /></p>
+<pre><s:v checkexpr="" value="stdout_text" /></pre>
+<%
+    }
+%>
+<%@include "footer.csp"
+%><%
+cleanup:
+    l10n_resetlocale();
+    html_armor_free(&ab);
+    free(stdout_text);
+%>

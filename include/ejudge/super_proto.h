@@ -3,7 +3,7 @@
 #ifndef __SUPER_PROTO_H__
 #define __SUPER_PROTO_H__
 
-/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -388,6 +388,8 @@ enum
   SSERV_CMD_PROB_SAVE_SCORING_FORM,
   SSERV_CMD_PROB_SAVE_FEEDBACK_FORM,
   SSERV_CMD_PROB_SAVE_STANDING_FORM,
+
+  SSERV_CMD_MAIN_PAGE_BUTTON,
 
   SSERV_CMD_LAST,
 };

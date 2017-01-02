@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2015 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -60,6 +60,7 @@ CFILES = \
  csp_create_contest_2_action.c\
  csp_login_page.c\
  csp_main_page.c\
+ csp_main_page_button.c\
  csp_problem_packages_page.c\
  csp_user_browse_page.c\
  csp_user_browse_data.c\
@@ -142,8 +143,9 @@ csp_contest_page.c : contest_page.csp includes.csp stdvars.csp header.csp footer
 csp_contest_xml_page.c : contest_xml_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_create_contest_page.c : create_contest_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_create_contest_2_action.c : create_contest_2_action.csp includes.csp stdvars.csp header.csp footer.csp
-csp_login_page.c : main_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_login_page.c : login_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_main_page.c : main_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_main_page_button.c : main_page_button.csp includes.csp stdvars.csp header.csp footer.csp
 csp_problem_packages_page.c : problem_packages_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_user_browse_page.c : user_browse_page.csp includes.csp stdvars.csp header_jqgrid.csp footer.csp
 csp_user_browse_data.c : user_browse_data.csp includes.csp stdvars.csp

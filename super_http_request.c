@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2014-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -357,4 +357,6 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_PROB_SAVE_SCORING_FORM] = 1,
   [SSERV_CMD_PROB_SAVE_FEEDBACK_FORM] = 1,
   [SSERV_CMD_PROB_SAVE_STANDING_FORM] = 1,
+
+  [SSERV_CMD_MAIN_PAGE_BUTTON] = 1,
 };

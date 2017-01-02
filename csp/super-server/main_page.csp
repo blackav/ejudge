@@ -161,6 +161,37 @@
 %>
 </table>
 
+<%
+  if (phr->config && phr->config->buttons) {
+    for (struct xml_tree *p = phr->config->buttons->first_down; p; p = p->right) {
+      if (!strcmp(ejudge_cfg_get_elem_name(p->tag), "button")) {
+        const char *value = NULL;
+        const char *label = NULL;
+        const char *page = NULL;
+        for (struct xml_tree *q = p->first_down; q; q = q->right) {
+          const char *elem = ejudge_cfg_get_elem_name(q->tag);
+          if (!strcmp(elem, "value")) {
+            value = q->text;
+          } else if (!strcmp(elem, "label")) {
+            label = q->text;
+          } else if (!strcmp(elem, "page")) {
+            page = q->text;
+          }
+        }
+        if (page && !strcmp(page, "main") && label && value) {
+%>
+<br/>
+<s:form>
+  <s:hidden name="action" ac="main-page-button" />
+  <input type="submit" name="<s:v value='value' />" value="<s:v value='label' />" />
+</s:form>
+<%
+        }
+      }
+    }
+  }
+%>
+
 <%@include "footer.csp"
 %><%
 cleanup:

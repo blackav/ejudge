@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -97,6 +97,12 @@ enum
     TG_DEFAULT_XUSER_PLUGIN,
     TG_HOSTS_OPTIONS,
     TG_CAPS_FILE,
+    TG_BUTTONS,
+    TG_BUTTON,
+    TG_LABEL,
+    TG_VALUE,
+    TG_SCRIPT,
+    TG_PAGE,
 
     TG__BARRIER,
     TG__DEFAULT,
@@ -180,6 +186,12 @@ static char const * const elem_map[] =
   "default_xuser_plugin",
   "hosts_options",
   "caps_file",
+  "buttons",
+  "button",
+  "label",
+  "value",
+  "script",
+  "page",
   0,
   "_default",
 
@@ -317,6 +329,13 @@ static struct xml_parse_spec ejudge_config_parse_spec =
   .attr_free = NULL,
   .verbatim_flags = verbatim_flags,
 };
+
+const char *
+ejudge_cfg_get_elem_name(int tag)
+{
+  if (tag <= 0 || tag >= TG__BARRIER) return "";
+  return elem_map[tag];
+}
 
 const struct xml_parse_spec *
 ejudge_cfg_get_spec(void)
@@ -628,6 +647,9 @@ ejudge_cfg_do_parse(char const *path, int no_system_lookup)
       break;
     case TG_HOSTS_OPTIONS:
       cfg->hosts_options = p;
+      break;
+    case TG_BUTTONS:
+      cfg->buttons = p;
       break;
     default:
       xml_err_elem_not_allowed(p);

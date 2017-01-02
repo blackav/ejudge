@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -496,6 +496,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_SAVE_SCORING_FORM] = "prob_save_scoring_form",
   [SSERV_CMD_PROB_SAVE_FEEDBACK_FORM] = "prob_save_feedback_form",
   [SSERV_CMD_PROB_SAVE_STANDING_FORM] = "prob_save_standing_form",
+  [SSERV_CMD_MAIN_PAGE_BUTTON] = "main_page_button",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 

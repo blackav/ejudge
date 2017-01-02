@@ -3,7 +3,7 @@
 #ifndef __EJUDGE_CFG_H__
 #define __EJUDGE_CFG_H__ 1
 
-/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -113,6 +113,7 @@ struct ejudge_cfg
 
   struct xml_tree *plugin_list;
   struct xml_tree *hosts_options;
+  struct xml_tree *buttons;
 
   struct ejudge_cfg_caps_file *caps_file_info;
   unsigned char *ejudge_xml_path;
@@ -178,5 +179,8 @@ ejudge_cfg_caps_add(
         struct ejudge_cfg *cfg,
         const unsigned char *login,
         opcap_t caps);
+
+const char *
+ejudge_cfg_get_elem_name(int tag);
 
 #endif /* __EJUDGE_CFG_H__ */
