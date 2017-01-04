@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -42,7 +42,7 @@ TeUser *TeUser_parse(cJSON *j)
     p->b.destroy = TeUser_destroy;
     jj = cJSON_GetObjectItem(j, "id");
     if (!jj || jj->type != cJSON_Number) goto cleanup;
-    p->id = jj->valueint;
+    p->id = jj->valuedouble;
     jj = cJSON_GetObjectItem(j, "first_name");
     if (!jj || jj->type != cJSON_String) goto cleanup;
     p->first_name = xstrdup(jj->valuestring);
@@ -84,7 +84,7 @@ TeChat *TeChat_parse(cJSON *j)
     p->b.destroy = TeChat_destroy;
     jj = cJSON_GetObjectItem(j, "id");
     if (!jj || jj->type != cJSON_Number) goto cleanup;
-    p->id = jj->valueint;
+    p->id = jj->valuedouble;
     jj = cJSON_GetObjectItem(j, "type");
     if (!jj || jj->type != cJSON_String) goto cleanup;
     p->type = xstrdup(jj->valuestring);
@@ -227,7 +227,7 @@ TeMessage *TeMessage_parse(cJSON *j)
     XCALLOC(p, 1);
     p->b.destroy = TeMessage_destroy;
     if (!(jj = cJSON_GetObjectItem(j, "message_id")) || jj->type != cJSON_Number) goto cleanup;
-    p->message_id = jj->valueint;
+    p->message_id = jj->valuedouble;
     if (JSON_IFOBJECT(jj, j, "from")) {
         if (!(p->from = TeUser_parse(jj))) goto cleanup;
     }
@@ -291,10 +291,10 @@ TeMessage *TeMessage_parse(cJSON *j)
         p->channel_chat_created = 1;
     }
     if ((jj = cJSON_GetObjectItem(j, "migrate_to_chat_id")) && jj->type == cJSON_Number) {
-        p->migrate_to_chat_id = jj->valueint;
+        p->migrate_to_chat_id = jj->valuedouble;
     }
     if ((jj = cJSON_GetObjectItem(j, "migrate_from_chat_id")) && jj->type == cJSON_Number) {
-        p->migrate_from_chat_id = jj->valueint;
+        p->migrate_from_chat_id = jj->valuedouble;
     }
     if ((jj = cJSON_GetObjectItem(j, "pinned_message")) && jj->type == cJSON_Object) {
         if (!(p->pinned_message = TeMessage_parse(jj))) goto cleanup;
@@ -325,7 +325,7 @@ TeUpdate *TeUpdate_parse(cJSON *j)
     XCALLOC(p, 1);
     p->b.destroy = TeUpdate_destroy;
     if ((jj = cJSON_GetObjectItem(j, "update_id")) && jj->type == cJSON_Number) {
-        p->update_id = jj->valueint;
+        p->update_id = jj->valuedouble;
     }
     if ((jj = cJSON_GetObjectItem(j, "message")) && jj->type == cJSON_Object) {
         if (!(p->message = TeMessage_parse(jj))) {
