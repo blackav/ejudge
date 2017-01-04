@@ -1215,3 +1215,48 @@ ejudge_cfg_caps_add(
   cap_node->caps = caps;
   xml_link_node_last(cfg->caps_node, &cap_node->b);
 }
+
+const unsigned char *
+ejudge_cfg_get_telegram_bot_id(
+        const struct ejudge_cfg *cfg,
+        const unsigned char *bot_user_id)
+{
+  struct xml_tree *tree = ejudge_cfg_get_plugin_config(cfg, "sn", "telegram");
+  if (!tree) return NULL;
+
+  if (tree->tag != TG__DEFAULT || strcmp(tree->name[0], "config")) {
+    return NULL;
+  }
+
+  int bot_user_id_len = 0;
+  if (bot_user_id) bot_user_id_len = strlen(bot_user_id);
+
+  int bot_count = 0;
+  const unsigned char *bot_token = NULL;
+  for (struct xml_tree *p = tree->first_down; p; p = p->right) {
+    ASSERT(p->tag == TG__DEFAULT);
+    if (!strcmp(p->name[0], "bots")) {
+      for (struct xml_tree *q = p->first_down; q; q = q->right) {
+        ASSERT(q->tag == TG__DEFAULT);
+        if (!strcmp(q->name[0], "bot")) {
+          const unsigned char *cur_id = q->text;
+          if (!cur_id || !*cur_id) continue;
+          if (bot_user_id_len <= 0) {
+            ++bot_count;
+            if (!bot_token) bot_token = cur_id;
+          } else {
+            int cur_id_len = strlen(cur_id);
+            if (cur_id_len > bot_user_id_len + 1
+                && !strncmp(cur_id, bot_user_id, bot_user_id_len)
+                && cur_id[bot_user_id_len] == ':') {
+              ++bot_count;
+              if (!bot_token) bot_token = cur_id;
+            }
+          }
+        }
+      }
+    }
+  }
+  if (bot_count > 0) bot_token = NULL;
+  return bot_token;
+}

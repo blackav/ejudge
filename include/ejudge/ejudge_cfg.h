@@ -183,4 +183,9 @@ ejudge_cfg_caps_add(
 const char *
 ejudge_cfg_get_elem_name(int tag);
 
+const unsigned char *
+ejudge_cfg_get_telegram_bot_id(
+        const struct ejudge_cfg *cfg,
+        const unsigned char *bot_user_id);
+
 #endif /* __EJUDGE_CFG_H__ */
