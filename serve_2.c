@@ -780,8 +780,13 @@ serve_check_telegram_reminder(
     return;
   }
 
-  if (!cnts->telegram_bot_id || !cnts->telegram_bot_id[0] || !cnts->telegram_admin_chat_id || !cnts->telegram_admin_chat_id[0])
+  if (!cnts->telegram_admin_chat_id || !cnts->telegram_admin_chat_id[0])
     return;
+  
+  const unsigned char *telegram_bot_id = cnts->telegram_bot_id;
+  if (telegram_bot_id && !*telegram_bot_id) telegram_bot_id = NULL;
+  if (!telegram_bot_id) telegram_bot_id = ejudge_cfg_get_telegram_bot_id(config, NULL);
+  if (!telegram_bot_id) return;
 
   struct telegram_reminder_data trdata;
   collect_telegram_reminder(cnts, state, &trdata);
@@ -792,7 +797,7 @@ serve_check_telegram_reminder(
     char pr_too_old_buf[32];
 
     args[0] = "telegram_reminder";
-    args[1] = cnts->telegram_bot_id;
+    args[1] = telegram_bot_id;
     args[2] = cnts->telegram_admin_chat_id;
     snprintf(contest_id_buf, sizeof(contest_id_buf), "%d", cnts->id);
     args[3] = contest_id_buf;
@@ -2175,8 +2180,13 @@ serve_send_clar_notify_telegram(
   size_t text_z = 0;
   FILE *text_f = NULL;
 
-  if (!cnts->telegram_bot_id || !cnts->telegram_bot_id[0] || !cnts->telegram_admin_chat_id || !cnts->telegram_admin_chat_id[0])
+  if (!cnts->telegram_admin_chat_id || !cnts->telegram_admin_chat_id[0])
     return;
+
+  const unsigned char *telegram_bot_id = cnts->telegram_bot_id;
+  if (telegram_bot_id && !*telegram_bot_id) telegram_bot_id = NULL;
+  if (!telegram_bot_id) telegram_bot_id = ejudge_cfg_get_telegram_bot_id(config, NULL);
+  if (!telegram_bot_id) return;
 
   text_f = open_memstream(&text_s, &text_z);
   fprintf(text_f, "New clar\n"
@@ -2188,7 +2198,7 @@ serve_send_clar_notify_telegram(
   fclose(text_f); text_f = NULL;
 
   args[0] = "telegram";
-  args[1] = cnts->telegram_bot_id;
+  args[1] = telegram_bot_id;
   args[2] = cnts->telegram_admin_chat_id;
   args[3] = text_s;
   args[4] = NULL;
@@ -2215,7 +2225,11 @@ serve_send_telegram_token(
   char locale_id_buf[64];
   char expiry_buf[64];
 
-  if (!cnts->telegram_bot_id || !cnts->telegram_bot_id[0]) return;
+  const unsigned char *telegram_bot_id = cnts->telegram_bot_id;
+  if (telegram_bot_id && !*telegram_bot_id) telegram_bot_id = NULL;
+  if (!telegram_bot_id) telegram_bot_id = ejudge_cfg_get_telegram_bot_id(config, NULL);
+  if (!telegram_bot_id) return;
+
   if (!user_login) return;
   if (!user_name) user_name = user_login;
   if (!telegram_token) return;
@@ -2227,7 +2241,7 @@ serve_send_telegram_token(
   snprintf(locale_id_buf, sizeof(locale_id_buf), "%d", locale_id);
 
   args[0] = "telegram_token";
-  args[1] = cnts->telegram_bot_id;
+  args[1] = telegram_bot_id;
   args[2] = locale_id_buf;
   args[3] = user_id_buf;
   args[4] = user_login;
@@ -2290,8 +2304,12 @@ serve_telegram_check_failed(
         const struct run_entry *re)
 {
   if (!cnts) return;
-  if (!cnts->telegram_bot_id || !*cnts->telegram_bot_id) return;
   if (!cnts->telegram_admin_chat_id || !*cnts->telegram_admin_chat_id) return;
+
+  const unsigned char *telegram_bot_id = cnts->telegram_bot_id;
+  if (telegram_bot_id && !*telegram_bot_id) telegram_bot_id = NULL;
+  if (!telegram_bot_id) telegram_bot_id = ejudge_cfg_get_telegram_bot_id(config, NULL);
+  if (!telegram_bot_id) return;
 
   const unsigned char *args[10];
   unsigned char buf1[64];
@@ -2301,7 +2319,7 @@ serve_telegram_check_failed(
   const unsigned char *probname = "";
 
   args[0] = "telegram_cf";
-  args[1] = cnts->telegram_bot_id;
+  args[1] = telegram_bot_id;
   args[2] = cnts->telegram_admin_chat_id;
   snprintf(buf1, sizeof(buf1), "%d", cnts->id);
   args[3] = buf1;
@@ -2401,7 +2419,11 @@ serve_telegram_user_run_reviewed(
         int run_id,
         int new_status)
 {
-  if (!cnts || !cnts->telegram_bot_id || !*cnts->telegram_bot_id) return;
+  const unsigned char *telegram_bot_id = cnts->telegram_bot_id;
+  if (telegram_bot_id && !*telegram_bot_id) telegram_bot_id = NULL;
+  if (!telegram_bot_id) telegram_bot_id = ejudge_cfg_get_telegram_bot_id(config, NULL);
+  if (!telegram_bot_id) return;
+
   const unsigned char *args[10];
   unsigned char buf1[64];
   unsigned char buf2[64];
@@ -2409,7 +2431,7 @@ serve_telegram_user_run_reviewed(
   unsigned char buf4[128];
 
   args[0] = "telegram_reviewed";
-  args[1] = cnts->telegram_bot_id;
+  args[1] = telegram_bot_id;
   snprintf(buf1, sizeof(buf1), "%d", cnts->id);
   args[2] = buf1;
   args[3] = cnts->name;
@@ -2438,14 +2460,18 @@ serve_telegram_user_clar_replied(
         int clar_id,
         const unsigned char *reply)
 {
-  if (!cnts || !cnts->telegram_bot_id || !*cnts->telegram_bot_id) return;
+  const unsigned char *telegram_bot_id = cnts->telegram_bot_id;
+  if (telegram_bot_id && !*telegram_bot_id) telegram_bot_id = NULL;
+  if (!telegram_bot_id) telegram_bot_id = ejudge_cfg_get_telegram_bot_id(config, NULL);
+  if (!telegram_bot_id) return;
+
   const unsigned char *args[10];
   unsigned char buf1[64];
   unsigned char buf2[64];
   unsigned char buf3[64];
 
   args[0] = "telegram_replied";
-  args[1] = cnts->telegram_bot_id;
+  args[1] = telegram_bot_id;
   snprintf(buf1, sizeof(buf1), "%d", cnts->id);
   args[2] = buf1;
   args[3] = cnts->name;
