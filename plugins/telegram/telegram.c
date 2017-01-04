@@ -814,7 +814,7 @@ handle_incoming_message(
     if (!tem->chat || !tem->chat->type) goto cleanup;
     if (!mc) goto cleanup;
     if (strcmp(tem->chat->type, "private") != 0) {
-        if (!strcmp(tem->text, "/chatid")) {
+        if (!strncmp(tem->text, "/chatid@", 8)) {
             char *reply_s = NULL;
             size_t reply_z = 0;
             FILE *reply_f = open_memstream(&reply_s, &reply_z);
