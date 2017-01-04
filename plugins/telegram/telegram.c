@@ -814,16 +814,27 @@ handle_incoming_message(
     if (!tem->chat || !tem->chat->type) goto cleanup;
     if (!mc) goto cleanup;
     if (strcmp(tem->chat->type, "private") != 0) {
-        char *reply_s = NULL;
-        size_t reply_z = 0;
-        FILE *reply_f = open_memstream(&reply_s, &reply_z);
-        fprintf(reply_f,
-                "Won't speak in public. Let's use a private chat.\n"
-                "This chat id is %lld\n", tem->chat->id);
-        fclose(reply_f); reply_f = NULL;
-        send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
-        free(reply_s);
-        goto cleanup;
+        if (!strcmp(tem->text, "/chatid")) {
+            char *reply_s = NULL;
+            size_t reply_z = 0;
+            FILE *reply_f = open_memstream(&reply_s, &reply_z);
+            fprintf(reply_f, "This chat id is %lld\n", tem->chat->id);
+            fclose(reply_f); reply_f = NULL;
+            send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
+            free(reply_s);
+            goto cleanup;
+        } else {
+            char *reply_s = NULL;
+            size_t reply_z = 0;
+            FILE *reply_f = open_memstream(&reply_s, &reply_z);
+            fprintf(reply_f,
+                    "Won't speak in public. Let's use a private chat.\n"
+                    "This chat id is %lld\n", tem->chat->id);
+            fclose(reply_f); reply_f = NULL;
+            send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
+            free(reply_s);
+            goto cleanup;
+        }
     }
 
     // only want private chats
@@ -855,6 +866,16 @@ handle_incoming_message(
             send_result = send_message(state, bs, mc, "Hi there! This is Eddie, your shipboard computer, and I'm feeling just great, guys, and I know I'm just going to get a bundle of kicks out of any program you care to run through me.", NULL, NULL);
             telegram_chat_state_reset(tcs);
             update_state = 1;
+        } else if (!strcmp(tem->text, "/chatid")) {
+            char *reply_s = NULL;
+            size_t reply_z = 0;
+            FILE *reply_f = open_memstream(&reply_s, &reply_z);
+            fprintf(reply_f, "This chat id is %lld\n", tem->chat->id);
+            fclose(reply_f); reply_f = NULL;
+            send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
+            free(reply_s);
+            telegram_chat_state_reset(tcs);
+            update_state = 1;            
         } else if (!strcmp(tem->text, "/help")) {
             send_result = send_message(state, bs, mc,
                                        "List of commands:\n"
