@@ -3180,7 +3180,7 @@ priv_set_run_style_error_status(
     serve_notify_user_run_status_change(ejudge_config, cnts, cs, re.user_id,
                                         run_id, RUN_REJECTED);
   }
-  if (cnts->telegram_bot_id && !re.is_hidden) {
+  if (cnts->telegram_user_chat_id && *cnts->telegram_user_chat_id && !re.is_hidden) {
     serve_telegram_user_run_reviewed(ejudge_config, cnts, cs, re.user_id, run_id, RUN_REJECTED);
   }
 
@@ -3375,7 +3375,7 @@ priv_submit_run_comment(
     xfree(msg_t); msg_t = 0; msg_z = 0;
   }
 
-  if (cnts->telegram_bot_id && !re.is_hidden) {
+  if (cnts->telegram_user_chat_id && *cnts->telegram_user_chat_id && !re.is_hidden) {
     serve_telegram_user_run_reviewed(ejudge_config, cnts, cs, re.user_id, run_id, status);
   }
 
@@ -3554,7 +3554,7 @@ priv_clar_reply(
     xfree(msg_t); msg_t = 0; msg_z = 0;
   }
 
-  if (cnts->telegram_bot_id) {
+  if (cnts->telegram_user_chat_id && *cnts->telegram_user_chat_id) {
     serve_telegram_user_clar_replied(ejudge_config, cnts, cs, clar.from, in_reply_to, msg);
   }
 
@@ -4045,7 +4045,7 @@ priv_change_status(
       serve_notify_user_run_status_change(ejudge_config, cnts, cs, re.user_id, run_id,
                                           status);
   }
-  if (cnts->telegram_bot_id && !re.is_hidden) {
+  if (cnts->telegram_user_chat_id && *cnts->telegram_user_chat_id && !re.is_hidden) {
     serve_telegram_user_run_reviewed(ejudge_config, cnts, cs, re.user_id, run_id, status);
   }
 
@@ -4129,7 +4129,7 @@ priv_simple_change_status(
       serve_notify_user_run_status_change(ejudge_config, cnts, cs, re.user_id, run_id,
                                           status);
   }
-  if (cnts->telegram_bot_id && !re.is_hidden) {
+  if (cnts->telegram_user_chat_id && *cnts->telegram_user_chat_id && !re.is_hidden) {
     serve_telegram_user_run_reviewed(ejudge_config, cnts, cs, re.user_id, run_id, status);
   }
 
