@@ -1257,6 +1257,6 @@ ejudge_cfg_get_telegram_bot_id(
       }
     }
   }
-  if (bot_count > 0) bot_token = NULL;
+  if (bot_count > 1) bot_token = NULL;
   return bot_token;
 }
