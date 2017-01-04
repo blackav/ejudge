@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -239,6 +239,8 @@ send_message(
         }
         fclose(post_f);
     }
+
+    //fprintf(stderr, ">%s<\n", post_s);
 
     {
         size_t resp_z = 0;
@@ -812,7 +814,15 @@ handle_incoming_message(
     if (!tem->chat || !tem->chat->type) goto cleanup;
     if (!mc) goto cleanup;
     if (strcmp(tem->chat->type, "private") != 0) {
-        send_result = send_message(state, bs, mc, "Won't speak in public. Let's use a private chat.", NULL, NULL);
+        char *reply_s = NULL;
+        size_t reply_z = 0;
+        FILE *reply_f = open_memstream(&reply_s, &reply_z);
+        fprintf(reply_f,
+                "Won't speak in public. Let's use a private chat.\n"
+                "This chat id is %lld\n", tem->chat->id);
+        fclose(reply_f); reply_f = NULL;
+        send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
+        free(reply_s);
         goto cleanup;
     }
 
