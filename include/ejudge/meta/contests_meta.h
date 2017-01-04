@@ -30,6 +30,7 @@ enum
   CNTS_old_run_managed,
   CNTS_ready,
   CNTS_force_password_change,
+  CNTS_enable_user_telegram,
   CNTS_reg_deadline,
   CNTS_sched_time,
   CNTS_open_time,

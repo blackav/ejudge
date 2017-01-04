@@ -35,6 +35,7 @@ static struct meta_info_item meta_info_contest_desc_data[] =
   [CNTS_old_run_managed] = { CNTS_old_run_managed, 'b', XSIZE(struct contest_desc, old_run_managed), "old_run_managed", XOFFSET(struct contest_desc, old_run_managed) },
   [CNTS_ready] = { CNTS_ready, 'b', XSIZE(struct contest_desc, ready), "ready", XOFFSET(struct contest_desc, ready) },
   [CNTS_force_password_change] = { CNTS_force_password_change, 'b', XSIZE(struct contest_desc, force_password_change), "force_password_change", XOFFSET(struct contest_desc, force_password_change) },
+  [CNTS_enable_user_telegram] = { CNTS_enable_user_telegram, 'b', XSIZE(struct contest_desc, enable_user_telegram), "enable_user_telegram", XOFFSET(struct contest_desc, enable_user_telegram) },
   [CNTS_reg_deadline] = { CNTS_reg_deadline, 't', XSIZE(struct contest_desc, reg_deadline), "reg_deadline", XOFFSET(struct contest_desc, reg_deadline) },
   [CNTS_sched_time] = { CNTS_sched_time, 't', XSIZE(struct contest_desc, sched_time), "sched_time", XOFFSET(struct contest_desc, sched_time) },
   [CNTS_open_time] = { CNTS_open_time, 't', XSIZE(struct contest_desc, open_time), "open_time", XOFFSET(struct contest_desc, open_time) },
