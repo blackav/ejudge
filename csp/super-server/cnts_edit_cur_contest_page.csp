@@ -108,6 +108,9 @@ static const unsigned char * const form_row_attrs[]=
             <input type="checkbox" name="allow_reg_data_edit" id="FlagsDialogAllowRegDataEdit" value="1" />
             <label for="FlagsDialogAllowRegDataEdit">Allow edit registration data during contest?</label>
             <br/>
+            <input type="checkbox" name="enable_user_telegram" id="FlagsDialogEnableUserTelegram" value="1" />
+            <label for="FlagsDialogEnableUserTelegram">Enable telegram interaction for users?</label>
+            <br/>
         </fieldset>
     </s:form>
 </div>
@@ -1097,6 +1100,13 @@ function np(e)
         <td><s:yesno id="OrigAllowRegDataEdit" disabled="disabled" name="param" value="cnts->allow_reg_data_edit" /></td>
         <td>&nbsp;</td>
         <td onclick="np(event);"><s:help topic="Contest.xml:allow_reg_data_edit" /></td>
+    </s:tr>
+
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>Enable telegram interaction for users?</td>
+        <td><s:yesno id="OrigEnableUserTelegram" disabled="disabled" name="param" value="cnts->enable_user_telegram" /></td>
+        <td>&nbsp;</td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:enable_user_telegram" /></td>
     </s:tr>
 </table>
     </div>

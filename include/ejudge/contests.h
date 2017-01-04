@@ -3,7 +3,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -171,6 +171,7 @@ enum
     CONTEST_A_OLD_RUN_MANAGED,
     CONTEST_A_READY,
     CONTEST_A_FORCE_PASSWORD_CHANGE,
+    CONTEST_A_ENABLE_USER_TELEGRAM,
 
     CONTEST_LAST_ATTR
   };
@@ -314,6 +315,7 @@ struct contest_desc
   ejbytebool_t old_run_managed;
   ejbytebool_t ready;
   ejbytebool_t force_password_change;
+  ejbytebool_t enable_user_telegram;
 
   time_t         reg_deadline;
   time_t         sched_time;
