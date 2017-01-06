@@ -790,7 +790,7 @@ serve_check_telegram_reminder(
 
   struct telegram_reminder_data trdata;
   collect_telegram_reminder(cnts, state, &trdata);
-  if (trdata.pr_total >= 20 || trdata.pr_too_old > 0) {
+  if (trdata.pr_total >= 20 || trdata.pr_too_old > 0 || trdata.unans_clars > 0) {
     const unsigned char *args[10];
     char contest_id_buf[32];
     char pr_total_buf[32];
