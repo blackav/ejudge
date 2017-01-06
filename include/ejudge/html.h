@@ -2,7 +2,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -172,6 +172,7 @@ struct telegram_reminder_data
 {
   int pr_total; // total number of pending review runs
   int pr_too_old; // total number of pending review runs older than 48h
+  int unans_clars; // the unanswered clars count
 };
 
 void

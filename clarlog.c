@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -428,6 +428,23 @@ clar_get_user_usage(
     }
   if (pn) *pn = n;
   if (ps) *ps = total;
+}
+
+int
+clar_get_unanswered_count(
+        clarlog_state_t state,
+        time_t thr_time)
+{
+  int count = 0;
+
+  for (int i = 0; i < state->clars.u; i++) {
+    if (state->clars.v[i].from != 0 && state->clars.v[i].flags != 2) {
+      if (thr_time <= 0 || state->clars.v[i].time < thr_time) {
+        ++count;
+      }
+    }
+  }
+  return count;
 }
 
 char *

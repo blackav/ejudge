@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -683,6 +683,7 @@ collect_telegram_reminder(
         ++pdata->pr_too_old;
     }
   }
+  pdata->unans_clars = clar_get_unanswered_count(cs->clarlog_state, old_time);
 }
 
 void

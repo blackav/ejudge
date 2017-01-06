@@ -795,6 +795,7 @@ serve_check_telegram_reminder(
     char contest_id_buf[32];
     char pr_total_buf[32];
     char pr_too_old_buf[32];
+    char unans_clar_buf[32];
 
     args[0] = "telegram_reminder";
     args[1] = telegram_bot_id;
@@ -806,7 +807,9 @@ serve_check_telegram_reminder(
     args[5] = pr_total_buf;
     snprintf(pr_too_old_buf, sizeof(pr_too_old_buf), "%d", trdata.pr_too_old);
     args[6] = pr_too_old_buf;
-    args[7] = NULL;
+    snprintf(unans_clar_buf, sizeof(unans_clar_buf), "%d", trdata.unans_clars);
+    args[7] = unans_clar_buf;
+    args[8] = NULL;
     send_job_packet(NULL, (unsigned char**) args, 0);
   }
 
