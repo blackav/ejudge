@@ -3104,7 +3104,7 @@ parse_run_id(FILE *fout, struct http_request_info *phr,
              struct contest_extra *extra, int *p_run_id, struct run_entry *pe);
 
 static int
-priv_set_run_style_error_status(
+priv_set_run_rejected_status(
         FILE *fout,
         FILE *log_f,
         struct http_request_info *phr,
@@ -6457,7 +6457,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_simple_change_status,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_simple_change_status,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_SUMMON] = priv_simple_change_status,
-  [NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED] = priv_set_run_style_error_status,
+  [NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED] = priv_set_run_rejected_status,
   [NEW_SRV_ACTION_TESTING_DELETE] = priv_testing_queue_operation,
   [NEW_SRV_ACTION_TESTING_UP] = priv_testing_queue_operation,
   [NEW_SRV_ACTION_TESTING_DOWN] = priv_testing_queue_operation,
