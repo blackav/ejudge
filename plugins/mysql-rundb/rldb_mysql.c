@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1709,20 +1709,20 @@ change_status_4_func(
 
   memset(&te, 0, sizeof(te));
   te.status = new_status;
-  te.test = 0;
+  // te.test = 0;
   te.score = -1;
   te.judge_id = 0;
   te.is_marked = 0;
   te.is_saved = 0;
   te.saved_status = 0;
-  te.saved_test = 0;
+  // te.saved_test = 0;
   te.saved_score = 0;
   te.passed_mode = 1;
 
   return do_update_entry(cs, run_id, &te,
-                         RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID
+                         RE_STATUS /* | RE_TEST */ | RE_SCORE | RE_JUDGE_ID
                          | RE_IS_MARKED | RE_IS_SAVED | RE_SAVED_STATUS
-                         | RE_SAVED_TEST | RE_SAVED_SCORE | RE_PASSED_MODE);
+                         /* | RE_SAVED_TEST */ | RE_SAVED_SCORE | RE_PASSED_MODE);
 }
 
 /*
