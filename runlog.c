@@ -839,6 +839,7 @@ run_get_attempts(
     if (re->status == RUN_REJECTED) continue;
     if (re->status == RUN_IGNORED) continue;
     if (re->is_hidden) continue;
+    if (re->status == RUN_OK || re->status == RUN_PENDING || re->status == RUN_SUMMONED) continue;
     if (re->status == RUN_DISQUALIFIED) {
       m++;
     } else {
