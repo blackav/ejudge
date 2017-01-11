@@ -411,7 +411,7 @@ exprA :
 | "token_count" { $1->kind = TOK_CURTOKEN_COUNT; $$ = $1; }
 | "curtoken_count" { $$ = $1; }
 | "has_test_result" '(' expr0 ',' expr1 ')' { $1->v.t[0] = check_int($3); $1->v.t[1] = check_result($5); $$ = $1; }
-| "has_test_result" '(' expr0 ')' { $1->kind = TOK_CURHAS_TEST_RESULT; $1->v.t[01] = check_result($3); $$ = $1; }
+| "has_test_result" '(' expr0 ')' { $1->kind = TOK_CURHAS_TEST_RESULT; $1->v.t[0] = check_result($3); $$ = $1; }
 | "curhas_test_result" '(' expr0 ')' { $1->v.t[01] = check_result($3); $$ = $1; }
 | "total_score" { $1->kind = TOK_CURTOTAL_SCORE; $$ = $1; }
 | "cypher" { $1->kind = TOK_CURCYPHER; $$ = $1; }
