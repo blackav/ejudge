@@ -1,6 +1,6 @@
 /* -*- mode: fundamental -*- */
 
-/* Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,12 +39,14 @@ typedef struct filter_tree *tree_t;
 #define MKHASH(h) filter_tree_new_hash(filter_expr_tree_mem, h)
 #define MKIP(p) filter_tree_new_ip(filter_expr_tree_mem, p)
 #define MKCOPY(c) filter_tree_dup(filter_expr_tree_mem, c)
+#define MKRESULT(r) filter_tree_new_result(filter_expr_tree_mem, r)
 
 static ej_ip_t empty_ipv6;
 
 static tree_t check_int(tree_t p);
 static tree_t check_bool(tree_t p);
 static tree_t check_string(tree_t p);
+static tree_t check_result(tree_t p);
 
 static tree_t do_int_cast(tree_t q, tree_t p);
 static tree_t do_string_cast(tree_t, tree_t);
@@ -185,6 +187,8 @@ static void *filter_expr_user_data;
 %token TOK_CURTOKEN_FLAGS "curtoken_flags"
 %token TOK_TOKEN_COUNT "token_count"
 %token TOK_CURTOKEN_COUNT "curtoken_count"
+%token TOK_HAS_TEST_RESULT "has_test_result"
+%token TOK_CURHAS_TEST_RESULT "curhas_test_result"
 %token TOK_INUSERGROUPINT
 %token TOK_INT       "int"
 %token TOK_STRING    "string"
@@ -406,6 +410,9 @@ exprA :
 | "token_count" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "token_count" { $1->kind = TOK_CURTOKEN_COUNT; $$ = $1; }
 | "curtoken_count" { $$ = $1; }
+| "has_test_result" '(' expr0 ',' expr1 ')' { $1->v.t[0] = check_int($3); $1->v.t[1] = check_result($5); $$ = $1; }
+| "has_test_result" '(' expr0 ')' { $1->kind = TOK_CURHAS_TEST_RESULT; $1->v.t[01] = check_result($3); $$ = $1; }
+| "curhas_test_result" '(' expr0 ')' { $1->v.t[01] = check_result($3); $$ = $1; }
 | "total_score" { $1->kind = TOK_CURTOTAL_SCORE; $$ = $1; }
 | "cypher" { $1->kind = TOK_CURCYPHER; $$ = $1; }
 | "cypher" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
@@ -466,6 +473,17 @@ check_string(tree_t p)
     (*filter_expr_parse_err)(filter_expr_user_data, "'string' expression expected");
     yynerrs++;
     return MKSTRING("");
+  }
+  return p;
+}
+static tree_t
+check_result(tree_t p)
+{
+  ASSERT(p);
+  if (p->type != FILTER_TYPE_RESULT) {
+    (*filter_expr_parse_err)(filter_expr_user_data, "'result' expression expected");
+    yynerrs++;
+    return MKRESULT(0);
   }
   return p;
 }

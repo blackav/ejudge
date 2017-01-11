@@ -1,6 +1,6 @@
 /* -*- mode: fundamental -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -73,6 +73,7 @@ lett    [A-Za-z_]
 ">>" { T(TOK_ASR); }
 "~=" { T(TOK_REGEXP); }
 
+"," |
 "^" |
 "|" |
 "&" |
@@ -186,6 +187,8 @@ lett    [A-Za-z_]
 "curtoken_flags" { TT(TOK_CURTOKEN_FLAGS, FILTER_TYPE_INT); }
 "token_count" { TT(TOK_TOKEN_COUNT, FILTER_TYPE_INT); }
 "curtoken_count" { TT(TOK_CURTOKEN_COUNT, FILTER_TYPE_INT); }
+"has_test_result" { TT(TOK_HAS_TEST_RESULT, FILTER_TYPE_BOOL); }
+"curhas_test_result" { TT(TOK_CURHAS_TEST_RESULT, FILTER_TYPE_BOOL); }
 
 "int" { TT(TOK_INT, FILTER_TYPE_INT); }
 "string" { TT(TOK_STRING, FILTER_TYPE_STRING); }

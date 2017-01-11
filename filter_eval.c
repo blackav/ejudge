@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,9 @@
 #include "ejudge/archive_paths.h"
 #include "ejudge/ej_uuid.h"
 #include "ejudge/prepare_dflt.h"
+#include "ejudge/testing_report_xml.h"
+#include "ejudge/fileutl.h"
+#include "ejudge/misctext.h"
 
 #include "ejudge/logger.h"
 #include "ejudge/mempage.h"
@@ -136,6 +139,45 @@ is_missing_source(
       return 1;
   }
   return 0;
+}
+
+static int
+has_test_result(
+        struct filter_env *env,
+        const struct run_entry *re,
+        int result)
+{
+  int retval = 0;
+  serve_state_t cs = 0;
+  struct section_global_data *g = 0;
+  int rep_flag;
+  path_t rep_path;
+  char *rep_txt = 0;
+  size_t rep_len = 0;
+  const unsigned char *start_ptr = 0;
+  testing_report_xml_t rep_xml = 0;
+
+  if (!env || !(cs = env->serve_state) || !(g = cs->global)) goto cleanup;
+  if (!run_is_normal_or_transient_status(re->status)) goto cleanup;
+
+  rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), re);
+  if (rep_flag < 0) goto cleanup;
+  if (generic_read_file(&rep_txt, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0) goto cleanup;
+  if (get_content_type(rep_txt, &start_ptr) != CONTENT_TYPE_XML) goto cleanup;
+  if (!(rep_xml = testing_report_parse_xml(start_ptr))) goto cleanup;
+  if (rep_xml->run_tests <= 0) goto cleanup;
+  for (int i = 0; i < rep_xml->run_tests; ++i) {
+    const struct testing_report_test *rep_tst = rep_xml->tests[i];
+    if (rep_tst && rep_tst->status == result) {
+      retval = 1;
+      break;
+    }
+  }
+
+cleanup:;
+  testing_report_free(rep_xml);
+  xfree(rep_txt);
+  return retval;
 }
 
 static int
@@ -952,6 +994,14 @@ do_eval(struct filter_env *env,
       }
     }
     */
+    break;
+
+  case TOK_CURHAS_TEST_RESULT:
+    if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
+    ASSERT(r1.kind == TOK_RESULT_L);
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    res->v.b = has_test_result(env, env->cur, r1.v.r);
     break;
 
   case TOK_INUSERGROUP:
