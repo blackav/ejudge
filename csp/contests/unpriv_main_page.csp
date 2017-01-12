@@ -104,6 +104,8 @@ ns_unparse_answers(
     fog_start_time = start_time + duration - global->board_fog_time;
   if (fog_start_time < 0) fog_start_time = 0;
 
+  l10n_setlocale(phr->locale_id);
+
   if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
     title = _("Problem summary");
   } else if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS) {
@@ -127,7 +129,6 @@ ns_unparse_answers(
     }
   }
 
-  l10n_setlocale(phr->locale_id);
   unpriv_load_html_style(phr, cnts, 0, 0);
 %><%@include "unpriv_header.csp" 
 %><%@include "unpriv_menu.csp"
