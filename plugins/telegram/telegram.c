@@ -822,7 +822,7 @@ handle_incoming_message(
 
     if (!tem->chat || !tem->chat->type) goto cleanup;
     if (!mc) goto cleanup;
-    if (strcmp(tem->chat->type, "private") != 0) {
+    if (strcmp(tem->chat->type, "private") != 0 && tem->text) {
         if (!strncmp(tem->text, "/chatid@", 8)) {
             char *reply_s = NULL;
             size_t reply_z = 0;
