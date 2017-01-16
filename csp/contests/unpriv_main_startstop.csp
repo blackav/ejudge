@@ -1,5 +1,14 @@
-<%    if (global->is_virtual && start_time <= 0) {
-      if (global->disable_virtual_start <= 0) {
+<%
+    if (global->is_virtual && start_time <= 0) {
+      int allow_start = 1;
+      if (global->disable_virtual_start > 0) {
+        allow_start = 0;
+      } else if (cnts && cnts->open_time > 0 && cnts->open_time > cs->current_time) {
+        allow_start = 0;
+      } else if (cnts && cnts->close_time > 0 && cnts->close_time <= cs->current_time) {
+        allow_start = 0;
+      }
+      if (allow_start) {
 %><s:form><%
         if (cnts->exam_mode) {
 %><p><s:submit ac="virtual-start" label="Start exam" /></p><%
