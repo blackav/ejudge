@@ -1416,6 +1416,8 @@ prepare_unparse_prob(
     unparse_bool(f, "enable_multi_header", prob->enable_multi_header);
   if (prob->use_lang_multi_header >= 0)
     unparse_bool(f, "use_lang_multi_header", prob->use_lang_multi_header);
+  if (prob->require_any >= 0)
+    unparse_bool(f, "require_any", prob->require_any);
   if (prob->disable_testing >= 0)
     unparse_bool(f, "disable_testing", prob->disable_testing);
   if (prob->enable_compilation >= 0)
@@ -1801,6 +1803,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "enable_multi_header", prob->enable_multi_header);
   if (prob->use_lang_multi_header > 0)
     unparse_bool(f, "use_lang_multi_header", prob->use_lang_multi_header);
+  if (prob->require_any > 0)
+    unparse_bool(f, "require_any", prob->require_any);
   if (prob->disable_testing > 0)
     unparse_bool(f, "disable_testing", prob->disable_testing);
   if (prob->skip_testing  > 0)

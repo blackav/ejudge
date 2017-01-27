@@ -91,6 +91,7 @@ struct problem_config_section
   ejintbool_t enable_suid_run;
   ejintbool_t enable_multi_header;
   ejintbool_t use_lang_multi_header;
+  ejintbool_t require_any;
   ejintbool_t valuer_sets_marked;
   ejintbool_t ignore_unmarked;
   ejintbool_t disable_stderr;

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1045,15 +1045,27 @@ cmd_submit_run(
         run_get_accepted_set(cs->runlog_state, phr->user_id,
                              cs->accepting_mode, cs->max_prob, acc_probs);
       }
-      for (i = 0; prob->require[i]; i++) {
-        for (j = 1; j <= cs->max_prob; j++)
-          if (cs->probs[j] && !strcmp(cs->probs[j]->short_name,
-                                      prob->require[i]))
-            break;
-        if (j > cs->max_prob || !acc_probs[j]) break;
+      if (prob->require_any > 0) {
+        for (i = 0; prob->require[i]; i++) {
+          for (j = 1; j <= cs->max_prob; j++)
+            if (cs->probs[j] && !strcmp(cs->probs[j]->short_name,
+                                        prob->require[i]))
+              break;
+          if (j <= cs->max_prob && acc_probs[j]) break;
+        }
+        if (!prob->require[i])
+          FAIL(NEW_SRV_ERR_NOT_ALL_REQ_SOLVED);
+      } else {
+        for (i = 0; prob->require[i]; i++) {
+          for (j = 1; j <= cs->max_prob; j++)
+            if (cs->probs[j] && !strcmp(cs->probs[j]->short_name,
+                                        prob->require[i]))
+              break;
+          if (j > cs->max_prob || !acc_probs[j]) break;
+        }
+        if (prob->require[i])
+          FAIL(NEW_SRV_ERR_NOT_ALL_REQ_SOLVED);
       }
-      if (prob->require[i])
-        FAIL(NEW_SRV_ERR_NOT_ALL_REQ_SOLVED);
     }
   }
 

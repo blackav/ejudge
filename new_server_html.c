@@ -8306,16 +8306,30 @@ ns_submit_run(
       run_get_accepted_set(cs->runlog_state, user_id,
                            cs->accepting_mode, cs->max_prob, acc_probs);
     }
-    int i;
-    for (i = 0; prob->require[i]; ++i) {
-      int j;
-      for (j = 1; j <= cs->max_prob; ++j)
-        if (cs->probs[j] && !strcmp(cs->probs[j]->short_name, prob->require[i]))
-          break;
-      if (j > cs->max_prob || !acc_probs[j]) break;
-    }
-    if (prob->require[i]) {
-      FAIL(NEW_SRV_ERR_NOT_ALL_REQ_SOLVED);
+    if (prob->require_any > 0) {
+      int i;
+      for (i = 0; prob->require[i]; ++i) {
+        int j;
+        for (j = 1; j <= cs->max_prob; ++j)
+          if (cs->probs[j] && !strcmp(cs->probs[j]->short_name, prob->require[i]))
+            break;
+        if (j <= cs->max_prob && cs->probs[j] && acc_probs[j]) break;
+      }
+      if (!prob->require[i]) {
+        FAIL(NEW_SRV_ERR_NOT_ALL_REQ_SOLVED);
+      }
+    } else {
+      int i;
+      for (i = 0; prob->require[i]; ++i) {
+        int j;
+        for (j = 1; j <= cs->max_prob; ++j)
+          if (cs->probs[j] && !strcmp(cs->probs[j]->short_name, prob->require[i]))
+            break;
+        if (j > cs->max_prob || !acc_probs[j]) break;
+      }
+      if (prob->require[i]) {
+        FAIL(NEW_SRV_ERR_NOT_ALL_REQ_SOLVED);
+      }
     }
   }
 
@@ -8916,14 +8930,26 @@ unpriv_submit_run(
       run_get_accepted_set(cs->runlog_state, phr->user_id,
                            cs->accepting_mode, cs->max_prob, acc_probs);
     }
-    for (i = 0; prob->require[i]; i++) {
-      for (j = 1; j <= cs->max_prob; j++)
-        if (cs->probs[j] && !strcmp(cs->probs[j]->short_name, prob->require[i]))
-          break;
-      if (j > cs->max_prob || !acc_probs[j]) break;
-    }
-    if (prob->require[i]) {
-      FAIL2(NEW_SRV_ERR_NOT_ALL_REQ_SOLVED);
+    if (prob->require_any > 0) {
+      for (i = 0; prob->require[i]; ++i) {
+        for (j = 1; j <= cs->max_prob; ++j)
+          if (cs->probs[j] && !strcmp(cs->probs[j]->short_name, prob->require[i]))
+            break;
+        if (j <= cs->max_prob && cs->probs[j] && acc_probs[j]) break;
+      }
+      if (!prob->require[i]) {
+        FAIL(NEW_SRV_ERR_NOT_ALL_REQ_SOLVED);
+      }
+    } else {
+      for (i = 0; prob->require[i]; i++) {
+        for (j = 1; j <= cs->max_prob; j++)
+          if (cs->probs[j] && !strcmp(cs->probs[j]->short_name, prob->require[i]))
+            break;
+        if (j > cs->max_prob || !acc_probs[j]) break;
+      }
+      if (prob->require[i]) {
+        FAIL2(NEW_SRV_ERR_NOT_ALL_REQ_SOLVED);
+      }
     }
   }
 
@@ -9815,18 +9841,31 @@ html_problem_selection(serve_state_t cs,
 
       // check `require' variable
       if (prob->require) {
-        for (j = 0; prob->require[j]; j++) {
-          for (k = 1; k <= cs->max_prob; k++) {
-            if (cs->probs[k]
-                && !strcmp(cs->probs[k]->short_name, prob->require[j]))
-              break;
+        if (prob->require_any > 0) {
+          for (j = 0; prob->require[j]; ++j) {
+            for (k = 1; k <= cs->max_prob; ++k) {
+              if (cs->probs[k] && !strcmp(cs->probs[k]->short_name, prob->require[j]))
+                break;
+            }
+            if (k <= cs->max_prob) {
+              if (pinfo[k].solved_flag || pinfo[k].accepted_flag || pinfo[k].pr_flag) break;
+            }
           }
-          // no such problem :(
-          if (k > cs->max_prob) break;
-          // this problem is not yet accepted or solved
-          if (!pinfo[k].solved_flag && !pinfo[k].accepted_flag && !pinfo[k].pr_flag) break;
+          if (!prob->require[j]) continue;
+        } else {
+          for (j = 0; prob->require[j]; j++) {
+            for (k = 1; k <= cs->max_prob; k++) {
+              if (cs->probs[k]
+                  && !strcmp(cs->probs[k]->short_name, prob->require[j]))
+                break;
+            }
+            // no such problem :(
+            if (k > cs->max_prob) break;
+            // this problem is not yet accepted or solved
+            if (!pinfo[k].solved_flag && !pinfo[k].accepted_flag && !pinfo[k].pr_flag) break;
+          }
+          if (prob->require[j]) continue;
         }
-        if (prob->require[j]) continue;
       }
 
       // find date penalty
@@ -10369,13 +10408,23 @@ unpriv_xml_update_answer(
       run_get_accepted_set(cs->runlog_state, phr->user_id,
                            cs->accepting_mode, cs->max_prob, acc_probs);
     }
-    for (i = 0; prob->require[i]; i++) {
-      for (j = 1; j <= cs->max_prob; j++)
-        if (cs->probs[j] && !strcmp(cs->probs[j]->short_name, prob->require[i]))
-          break;
-      if (j > cs->max_prob || !acc_probs[j]) break;
+    if (prob->require_any > 0) {
+      for (i = 0; prob->require[i]; ++i) {
+        for (j = 1; j <= cs->max_prob; j++)
+          if (cs->probs[j] && !strcmp(cs->probs[j]->short_name, prob->require[i]))
+            break;
+        if (j <= cs->max_prob && acc_probs[j]) break;
+      }
+      if (!prob->require[i]) FAIL(NEW_SRV_ERR_NOT_ALL_REQ_SOLVED);
+    } else {
+      for (i = 0; prob->require[i]; i++) {
+        for (j = 1; j <= cs->max_prob; j++)
+          if (cs->probs[j] && !strcmp(cs->probs[j]->short_name, prob->require[i]))
+            break;
+        if (j > cs->max_prob || !acc_probs[j]) break;
+      }
+      if (prob->require[i]) FAIL(NEW_SRV_ERR_NOT_ALL_REQ_SOLVED);
     }
-    if (prob->require[i]) FAIL(NEW_SRV_ERR_NOT_ALL_REQ_SOLVED);
   }
 
   ej_uuid_t run_uuid;

@@ -682,6 +682,7 @@ merge_problem_section(
         { CNTSPROB_enable_suid_run, META_PROBLEM_CONFIG_SECTION_enable_suid_run },
         { CNTSPROB_enable_multi_header, META_PROBLEM_CONFIG_SECTION_enable_multi_header },
         { CNTSPROB_use_lang_multi_header, META_PROBLEM_CONFIG_SECTION_use_lang_multi_header },
+        { CNTSPROB_require_any, META_PROBLEM_CONFIG_SECTION_require_any },
         { CNTSPROB_valuer_sets_marked, META_PROBLEM_CONFIG_SECTION_valuer_sets_marked },
         { CNTSPROB_ignore_unmarked, META_PROBLEM_CONFIG_SECTION_ignore_unmarked },
         { CNTSPROB_disable_stderr, META_PROBLEM_CONFIG_SECTION_disable_stderr },

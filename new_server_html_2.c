@@ -5302,21 +5302,38 @@ ns_get_user_problems_summary(
     // the problem is completely disabled before requirements are met
     // check requirements
     if (cur_prob->require) {
-      int j;
-      for (j = 0; cur_prob->require[j]; j++) {
-        int k;
-        for (k = 1; k <= cs->max_prob; k++) {
-          if (cs->probs[k]
-              && !strcmp(cs->probs[k]->short_name, cur_prob->require[j]))
-            break;
+      if (cur_prob->require_any > 0) {
+        int j;
+        for (j = 0; cur_prob->require[j]; j++) {
+          int k;
+          for (k = 1; k <= cs->max_prob; k++) {
+            if (cs->probs[k]
+                && !strcmp(cs->probs[k]->short_name, cur_prob->require[j]))
+              break;
+          }
+          if (k <= cs->max_prob) {
+            if (pinfo[k].solved_flag || pinfo[k].accepted_flag || pinfo[k].pr_flag) break;
+          }
         }
-        // no such problem :(
-        if (k > cs->max_prob) break;
-        // this problem is not yet accepted or solved
-        if (!pinfo[k].solved_flag && !pinfo[k].accepted_flag && !pinfo[k].pr_flag) break;
+        // if the requirements are not met, skip this problem
+        if (!cur_prob->require[j]) continue;
+      } else {
+        int j;
+        for (j = 0; cur_prob->require[j]; j++) {
+          int k;
+          for (k = 1; k <= cs->max_prob; k++) {
+            if (cs->probs[k]
+                && !strcmp(cs->probs[k]->short_name, cur_prob->require[j]))
+              break;
+          }
+          // no such problem :(
+          if (k > cs->max_prob) break;
+          // this problem is not yet accepted or solved
+          if (!pinfo[k].solved_flag && !pinfo[k].accepted_flag && !pinfo[k].pr_flag) break;
+        }
+        // if the requirements are not met, skip this problem
+        if (cur_prob->require[j]) continue;
       }
-      // if the requirements are not met, skip this problem
-      if (cur_prob->require[j]) continue;
     }
 
     // check problem deadline
