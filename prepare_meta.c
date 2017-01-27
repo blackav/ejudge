@@ -430,6 +430,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_enable_suid_run] = { CNTSPROB_enable_suid_run, 'B', XSIZE(struct section_problem_data, enable_suid_run), "enable_suid_run", XOFFSET(struct section_problem_data, enable_suid_run) },
   [CNTSPROB_enable_multi_header] = { CNTSPROB_enable_multi_header, 'B', XSIZE(struct section_problem_data, enable_multi_header), "enable_multi_header", XOFFSET(struct section_problem_data, enable_multi_header) },
   [CNTSPROB_use_lang_multi_header] = { CNTSPROB_use_lang_multi_header, 'B', XSIZE(struct section_problem_data, use_lang_multi_header), "use_lang_multi_header", XOFFSET(struct section_problem_data, use_lang_multi_header) },
+  [CNTSPROB_require_any] = { CNTSPROB_require_any, 'B', XSIZE(struct section_problem_data, require_any), "require_any", XOFFSET(struct section_problem_data, require_any) },
   [CNTSPROB_super] = { CNTSPROB_super, 'S', XSIZE(struct section_problem_data, super), "super", XOFFSET(struct section_problem_data, super) },
   [CNTSPROB_short_name] = { CNTSPROB_short_name, 'S', XSIZE(struct section_problem_data, short_name), "short_name", XOFFSET(struct section_problem_data, short_name) },
   [CNTSPROB_long_name] = { CNTSPROB_long_name, 'S', XSIZE(struct section_problem_data, long_name), "long_name", XOFFSET(struct section_problem_data, long_name) },

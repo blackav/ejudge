@@ -390,6 +390,7 @@ enum
   CNTSPROB_enable_suid_run,
   CNTSPROB_enable_multi_header,
   CNTSPROB_use_lang_multi_header,
+  CNTSPROB_require_any,
   CNTSPROB_super,
   CNTSPROB_short_name,
   CNTSPROB_long_name,
