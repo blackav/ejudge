@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1351,6 +1351,8 @@ do_write_kirov_standings(
     if (user_mode && user_id > 0 && user_id == pe->user_id) {
       token_flags = pe->token_flags;
     }
+
+    if (prob->score_tokenized > 0 && !pe->token_flags) continue;
 
     if (separate_user_score > 0 && user_mode && pe->is_saved && !(pe->token_flags & TOKEN_FINALSCORE_BIT)) {
       run_status = pe->saved_status;
