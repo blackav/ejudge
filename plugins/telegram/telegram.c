@@ -1049,10 +1049,14 @@ handle_reply(struct telegram_plugin_data *state,
                 info("{ update_id: %lld }", tu->update_id);
                 if (handle_incoming_message(state, bs, pbs, tu->message))
                     need_update = 1;
+                pbs->update_id = tu->update_id;
+                need_update = 1;
+                /*
                 if (!pbs->update_id || tu->update_id > pbs->update_id) {
                     pbs->update_id = tu->update_id;
                     need_update = 1;
                 }
+                */
             }
             if (need_update) {
                 telegram_pbs_save(state->conn, pbs);
