@@ -205,6 +205,10 @@
     if (srs->status == SRS_TESTING) {
       time_t run_queue_time = srs->queue_ts / 1000;
       time_t testing_start_time = srs->testing_start_ts / 1000;
+      int wait_time = -1;
+      if (run_queue_time > 0 && testing_start_time > 0) {
+          wait_time = testing_start_time - run_queue_time;
+      }
 %>
         <td class="b1"><s:v value="srs->contest_id" /></td>
         <td class="b1"><s:v value="srs->run_id" /></td>
@@ -213,7 +217,7 @@
         <td class="b1"><s:v value="lang_short_name" /></td>
         <td class="b1"><s:v value="srs->test_num" /></td>
         <td class="b1"><% if (run_queue_time <= 0) { %>&nbsp;<% } else { %><s:v value="run_queue_time" /><% } %></td>
-        <td class="b1"><% if (testing_start_time <= 0) { %>&nbsp;<% } else { %><s:v value="testing_start_time" /><% } %></td>
+        <td class="b1"><% if (testing_start_time <= 0) { %>&nbsp;<% } else { %><s:v value="testing_start_time" /><% } %><% if (wait_time >= 0) { %> (<s:v value="wait_time" /> s)<% } %></td>
 <%
     } else {
 %>
