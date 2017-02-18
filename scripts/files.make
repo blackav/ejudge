@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2017 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -88,6 +88,8 @@ SCRIPTS_IN = \
  javac-version.in\
  javac7.in\
  javac7-version.in\
+ scala.in\
+ scala-version.in\
  mcs.in\
  mcs-version.in\
  vbnc.in\
