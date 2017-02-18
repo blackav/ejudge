@@ -833,6 +833,7 @@ handle_incoming_message(
             free(reply_s);
             goto cleanup;
         } else {
+            /*
             char *reply_s = NULL;
             size_t reply_z = 0;
             FILE *reply_f = open_memstream(&reply_s, &reply_z);
@@ -842,6 +843,7 @@ handle_incoming_message(
             fclose(reply_f); reply_f = NULL;
             send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
             free(reply_s);
+            */
             goto cleanup;
         }
     }
