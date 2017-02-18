@@ -118,6 +118,11 @@ ns_unpriv_parse_run_id(
 
   if (ej_uuid_is_nonempty(re.run_uuid)) {
     clar_fetch_run_messages(cs->clarlog_state, &re.run_uuid, &fcev);
+    if (fcev.u > 0 && cs->xuser_state) {
+      for (i = 0; i < fcev.u; ++i) {
+        cs->xuser_state->vt->set_clar_status(cs->xuser_state, phr->user_id, fcev.v[i].e.id, &fcev.v[i].e.uuid);
+      }
+    }
   }
 
   unpriv_load_html_style(phr, cnts, 0, 0);
