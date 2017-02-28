@@ -10050,9 +10050,46 @@ ns_unparse_statement(
   unsigned char b5[1024];
   unsigned char b6[1024];
   unsigned char b7[1024];
-  const unsigned char *vars[8] = { "self", "prob", "get", "getfile", "input_file", "output_file", "variant", 0 };
-  const unsigned char *vals[8] = { b1, b2, b3, b4, b5, b6, b7, 0 };
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  //const unsigned char *vars[8] = { "self", "prob", "get", "getfile", "input_file", "output_file", "variant", 0 };
+  //const unsigned char *vals[8] = { b1, b2, b3, b4, b5, b6, b7, 0 };
+
+  const unsigned char **vars = NULL;
+  const unsigned char **vals = NULL;
+  int varcount = 7;
+  if (prob->statement_env) {
+    for (int i = 0; prob->statement_env[i]; ++i)
+      ++varcount;
+  }
+  vars = alloca((varcount + 1) * sizeof(vars[0]));
+  vals = alloca((varcount + 1) * sizeof(vals[0]));
+  int curvar = 0;
+  vars[curvar] = "self"; vals[curvar] = b1; ++curvar;
+  vars[curvar] = "prob"; vals[curvar] = b2; ++curvar;
+  vars[curvar] = "get"; vals[curvar] = b3; ++curvar;
+  vars[curvar] = "getfile"; vals[curvar] = b4; ++curvar;
+  vars[curvar] = "input_file"; vals[curvar] = b5; ++curvar;
+  vars[curvar] = "output_file"; vals[curvar] = b6; ++curvar;
+  vars[curvar] = "variant"; vals[curvar] = b7; ++curvar;
+  if (prob->statement_env) {
+    for (int i = 0; prob->statement_env[i]; ++i) {
+      const unsigned char *envvar = prob->statement_env[i];
+      const unsigned char *sep = strchr(envvar, '=');
+      if (!sep) {
+        vars[curvar] = envvar; vals[curvar] = "1"; ++curvar;
+      } else {
+        int ll = sep - envvar;
+        unsigned char *dst = alloca(ll + 1);
+        vars[curvar] = dst;
+        memcpy(dst, envvar, ll);
+        dst[ll] = 0;
+        vals[curvar] = sep + 1;
+        ++curvar;
+      }
+    }
+  }
+  vars[curvar] = NULL; vals[curvar] = NULL;
 
   snprintf(b1, sizeof(b1), "%s?SID=%016llx", phr->self_url, phr->session_id);
   snprintf(b2, sizeof(b2), "&prob_id=%d", prob->id);

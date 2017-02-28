@@ -1353,6 +1353,7 @@ prepare_unparse_prob(
   do_xstr(f, &ab, "require", prob->require);
   do_xstr(f, &ab, "provide_ok", prob->provide_ok);
   do_xstr(f, &ab, "score_view", prob->score_view);
+  do_xstr(f, &ab, "statement_env", prob->statement_env);
 
   if (!prob->abstract && prob->variant_num > 0) {
     fprintf(f, "variant_num = %d\n", prob->variant_num);
@@ -1747,6 +1748,7 @@ prepare_unparse_actual_prob(
   do_xstr(f, &ab, "personal_deadline", prob->personal_deadline);
   do_xstr(f, &ab, "score_view", prob->score_view);
   do_xstr(f, &ab, "score_view_text", prob->score_view_text);
+  do_xstr(f, &ab, "statement_env", prob->statement_env);
 
   if (prob->variant_num > 0)
     fprintf(f, "variant_num = %d\n", prob->variant_num);

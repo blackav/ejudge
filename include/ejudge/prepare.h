@@ -1131,6 +1131,9 @@ struct section_problem_data
   char **lang_max_vm_size;
   char **lang_max_stack_size;
 
+  /** environment variables for the statement */
+  ejenvlist_t statement_env;
+
   /** alternatives for test-like problems */
   char **alternative;
   /** personal deadline extensions */

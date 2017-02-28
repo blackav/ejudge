@@ -899,6 +899,7 @@ merge_problem_section(
         { CNTSPROB_test_checker_env, META_PROBLEM_CONFIG_SECTION_test_checker_env },
         { CNTSPROB_init_env, META_PROBLEM_CONFIG_SECTION_init_env },
         { CNTSPROB_start_env, META_PROBLEM_CONFIG_SECTION_start_env },
+        { CNTSPROB_statement_env, META_PROBLEM_CONFIG_SECTION_statement_env },
 
         { 0,  0 },
     };

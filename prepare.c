@@ -534,6 +534,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(header_pat, "S"),
   PROBLEM_PARAM(footer_pat, "S"),
   PROBLEM_PARAM(compiler_env_pat, "S"),
+  PROBLEM_PARAM(statement_env, "x"),
 
   { 0, 0, 0, 0 }
 };
@@ -1093,6 +1094,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->lang_max_stack_size);
   sarray_free(p->personal_deadline);
   sarray_free(p->alternative);
+  sarray_free(p->statement_env);
   xfree(p->score_bonus_val);
   xfree(p->open_tests_val);
   xfree(p->final_open_tests_val);
@@ -3419,6 +3421,22 @@ set_defaults(
         }
       }
 
+      if (si != -1 && aprob->statement_env) {
+        prob->statement_env = sarray_merge_pf(aprob->statement_env,
+                                              prob->statement_env);
+      }
+      if (prob->statement_env) {
+        for (j = 0; prob->statement_env[j]; j++) {
+          prob->statement_env[j] = varsubst_heap(state,
+                                                 prob->statement_env[j], 1,
+                                                 section_global_params,
+                                                 section_problem_params,
+                                                 section_language_params,
+                                                 section_tester_params, prob, NULL, NULL);
+          if (!prob->statement_env[j]) return -1;
+        }
+      }
+
       if (si != -1 && aprob->lang_compiler_env) {
         prob->lang_compiler_env = sarray_merge_pf(aprob->lang_compiler_env,
                                                   prob->lang_compiler_env);
@@ -5444,6 +5462,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->style_checker_env = 0;
   out->lang_compiler_env = 0;
   out->test_checker_env = 0;
+  out->statement_env = 0;
   if (in->test_score_list) {
     out->test_score_list = xstrdup(in->test_score_list);
   }
