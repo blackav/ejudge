@@ -484,6 +484,7 @@ enum
   CNTSPROB_super_run_dir,
   CNTSPROB_lang_max_vm_size,
   CNTSPROB_lang_max_stack_size,
+  CNTSPROB_statement_env,
   CNTSPROB_alternative,
   CNTSPROB_personal_deadline,
   CNTSPROB_pd_total,

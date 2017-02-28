@@ -176,6 +176,7 @@ static struct meta_info_item meta_info_problem_config_section_data[] =
   [META_PROBLEM_CONFIG_SECTION_test_checker_env] = { META_PROBLEM_CONFIG_SECTION_test_checker_env, 'X', XSIZE(struct problem_config_section, test_checker_env), "test_checker_env", XOFFSET(struct problem_config_section, test_checker_env) },
   [META_PROBLEM_CONFIG_SECTION_init_env] = { META_PROBLEM_CONFIG_SECTION_init_env, 'X', XSIZE(struct problem_config_section, init_env), "init_env", XOFFSET(struct problem_config_section, init_env) },
   [META_PROBLEM_CONFIG_SECTION_start_env] = { META_PROBLEM_CONFIG_SECTION_start_env, 'X', XSIZE(struct problem_config_section, start_env), "start_env", XOFFSET(struct problem_config_section, start_env) },
+  [META_PROBLEM_CONFIG_SECTION_statement_env] = { META_PROBLEM_CONFIG_SECTION_statement_env, 'X', XSIZE(struct problem_config_section, statement_env), "statement_env", XOFFSET(struct problem_config_section, statement_env) },
 };
 
 int meta_problem_config_section_get_type(int tag)
