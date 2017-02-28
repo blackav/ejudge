@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -993,8 +993,8 @@ do_subst(
         const unsigned char **vars,
         const unsigned char **vals)
 {
-  const unsigned char *s, *q;
-  int len, newsz, i, l;
+  const unsigned char *s, *q, *qq, *value;
+  int len, newsz, i, l, subst_kind, value_len;
 
   if (!vars || !vars[0] || !str) return str;
   for (s = str; *s && *s != '$'; s++);
@@ -1025,24 +1025,49 @@ do_subst(
       pb->buf[len++] = *s++;
       continue;
     }
-    // ${abc}: [s + 2, q - 1]: q - s - 2
-    for (i = 0; vars[i]; i++) {
-      if ((l = strlen(vars[i])) == q - s - 2
-          && !memcmp(vars[i], s + 2, q - s - 2)) break;
+    // check for special substitutes
+    subst_kind = 0;
+    for (qq = s + 2; qq < q; ++qq) {
+      if (*qq == ':' && qq[1] == '-') {
+        subst_kind = 1;
+        break;
+      }
     }
-    if (!vars[i] || !vals[i]) {
-      s = q + 1;
-      continue;
+    value = NULL;
+    if (subst_kind == 1) {
+      for (i = 0; vars[i]; ++i) {
+        if ((l = strlen(vars[i])) == qq - s - 2
+            && !memcmp(vars[i], s + 2, qq - s - 2)) break;
+      }
+      if (vars[i] && *vars[i] && vals[i] && *vals[i]) {
+        value = vals[i];
+        value_len = strlen(value);
+      } else {
+        // [qq + 2, q - 1]
+        value = qq + 2;
+        value_len = q - qq - 2;
+      }
+    } else {
+      // ${abc}: [s + 2, q - 1]: q - s - 2
+      for (i = 0; vars[i]; i++) {
+        if ((l = strlen(vars[i])) == q - s - 2
+            && !memcmp(vars[i], s + 2, q - s - 2)) break;
+      }
+      if (!vars[i] || !vals[i]) {
+        s = q + 1;
+        continue;
+      }
+      value = vals[i];
+      value_len = strlen(value);
     }
-    l = strlen(vals[i]);
-    if (len + l > pb->size) {
+    if (len + value_len > pb->size) {
       newsz = pb->size;
       if (!newsz) newsz = 128;
-      while (len + l > newsz) newsz *= 2;
+      while (len + value_len > newsz) newsz *= 2;
       pb->buf = (unsigned char*) xrealloc(pb->buf, (pb->size = newsz));
     }
-    memcpy(pb->buf + len, vals[i], l);
-    len += l;
+    memcpy(pb->buf + len, value, value_len);
+    len += value_len;
     s = q + 1;
   }
 
