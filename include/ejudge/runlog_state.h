@@ -1,9 +1,8 @@
 /* -*- c -*- */
-
 #ifndef __RUNLOG_STATE_H__
 #define __RUNLOG_STATE_H__
 
-/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +16,7 @@
  * GNU General Public License for more details.
  */
 
-#define RUNLOG_MAX_SIZE    (2 * 1024 * 1024)
+#define RUNLOG_MAX_SIZE    10485760
 
 enum
   {

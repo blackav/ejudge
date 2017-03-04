@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __EJ_LIMITS_H__
 #define __EJ_LIMITS_H__
 
-/* Copyright (C) 2005-2008 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -77,7 +76,7 @@
 //#define EJ_SERVE_PACKET_NAME_SIZE 13
 
 /* maximal length of a CGI parameter value */
-#define EJ_MAX_CGI_VALUE_LEN 2097152
+#define EJ_MAX_CGI_VALUE_LEN 10485760
 
 /* maximal length of a `serve' command packet */
 #define EJ_MAX_SERVE_PACKET_LEN 1048576
