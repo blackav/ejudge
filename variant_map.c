@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2014-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -51,7 +51,7 @@ variant_map_free(struct variant_map *p)
   xfree(p->prob_map);
   xfree(p->prob_rev_map);
   xfree(p->v);
-  xfree(p->user_map);
+  xfree(p->user_inds);
   xfree(p->header_txt);
   xfree(p->footer_txt);
   memset(p, 0xab, sizeof(*p));
@@ -573,7 +573,7 @@ variant_map_parse(
       xfree(pmap->v[i].name);
       xfree(pmap->v[i].variants);
     }
-    xfree(pmap->user_map);
+    xfree(pmap->user_inds);
     xfree(pmap->v);
     xfree(pmap->prob_map);
     xfree(pmap->prob_rev_map);
@@ -603,8 +603,10 @@ variant_map_set_variant(
     if (variant <= 0) {
         return -1;
     }
+    int ui;
     struct variant_map_item *vi = NULL;
-    if (user_id < vmap->user_map_size && (vi = vmap->user_map[user_id])) {
+    if (user_id < vmap->user_ind_size && (ui = vmap->user_inds[user_id]) >= 0) {
+        vi = vmap->v + ui;
         if (vi->variants[pind] == variant) {
             // no change
             return 0;
@@ -612,19 +614,19 @@ variant_map_set_variant(
         vi->variants[pind] = variant;
         return 1;
     }
-    if (user_id >= vmap->user_map_size) {
+    if (user_id >= vmap->user_ind_size) {
         int newsz = 32;
         while (user_id >= newsz) {
             newsz *= 2;
         }
-        struct variant_map_item **newvm = NULL;
-        XCALLOC(newvm, newsz);
-        if (vmap->user_map_size > 0) {
-            memcpy(newvm, vmap->user_map, vmap->user_map_size * sizeof(vmap->user_map[0]));
+        int *newvm = xmalloc(newsz * sizeof(newvm[0]));
+        memset(newvm, -1, newsz * sizeof(newvm[0]));
+        if (vmap->user_ind_size > 0) {
+            memcpy(newvm, vmap->user_inds, vmap->user_ind_size * sizeof(vmap->user_inds[0]));
         }
-        xfree(vmap->user_map);
-        vmap->user_map = newvm;
-        vmap->user_map_size = newsz;
+        xfree(vmap->user_inds);
+        vmap->user_inds = newvm;
+        vmap->user_ind_size = newsz;
     }
     if (vmap->u >= vmap->a) {
         if (!vmap->a) vmap->a = 16;
@@ -633,7 +635,7 @@ variant_map_set_variant(
     }
     vi = &vmap->v[vmap->u++];
     memset(vi, 0, sizeof(*vi));
-    vmap->user_map[user_id] = vi;
+    vmap->user_inds[user_id] = vmap->u - 1;
     vi->user_id = user_id;
     if (user_login) {
         vi->login = xstrdup(user_login);

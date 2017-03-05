@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,7 +35,7 @@ find_variant(
         int prob_id,
         int *p_virtual_variant)
 {
-  int i, new_vint;
+  int i, new_vint, ui;
   struct variant_map *pmap = state->global->variant_map;
   struct variant_map_item *vi;
   const struct section_problem_data *prob = NULL;
@@ -47,32 +47,33 @@ find_variant(
 
   teamdb_refresh(state->teamdb_state);
   new_vint = teamdb_get_vintage(state->teamdb_state);
-  if (new_vint != pmap->vintage || !pmap->user_map_size || !pmap->user_map) {
-    info("find_variant: new vintage: %d, old: %d, updating variant map",
-         new_vint, pmap->vintage);
-    xfree(pmap->user_map);
-    pmap->user_map_size = 0;
-    pmap->user_map = 0;
+  if (new_vint != pmap->vintage || !pmap->user_ind_size || !pmap->user_inds) {
+    info("find_variant: new vintage: %d, old: %d, updating variant map", new_vint, pmap->vintage);
+    xfree(pmap->user_inds);
+    pmap->user_ind_size = 0;
+    pmap->user_inds = NULL;
 
     if (state->global->disable_user_database > 0) {
-      pmap->user_map_size = run_get_max_user_id(state->runlog_state) + 1;
+      pmap->user_ind_size = run_get_max_user_id(state->runlog_state) + 1;
     } else {
-      pmap->user_map_size = teamdb_get_max_team_id(state->teamdb_state) + 1;
+      pmap->user_ind_size = teamdb_get_max_team_id(state->teamdb_state) + 1;
     }
-    XCALLOC(pmap->user_map, pmap->user_map_size);
+    pmap->user_inds = malloc(pmap->user_ind_size * sizeof(pmap->user_inds[0]));
+    memset(pmap->user_inds, -1, pmap->user_ind_size * sizeof(pmap->user_inds[0]));
 
     for (i = 0; i < pmap->u; i++) {
       pmap->v[i].user_id = teamdb_lookup_login(state->teamdb_state, pmap->v[i].login);
       if (pmap->v[i].user_id < 0) pmap->v[i].user_id = 0;
       if (!pmap->v[i].user_id) continue;
-      if (pmap->v[i].user_id >= pmap->user_map_size) continue;
-      pmap->user_map[pmap->v[i].user_id] = &pmap->v[i];
+      if (pmap->v[i].user_id >= pmap->user_ind_size) continue;
+      pmap->user_inds[pmap->v[i].user_id] = i;
     }
     pmap->vintage = new_vint;
   }
 
-  if (user_id <= 0 || user_id >= pmap->user_map_size) return 0;
-  if ((vi = pmap->user_map[user_id])) {
+  if (user_id <= 0 || user_id >= pmap->user_ind_size) return 0;
+  if ((ui = pmap->user_inds[user_id]) >= 0) {
+    vi = pmap->v + ui;
     if (vi->real_variant) {
       if (p_virtual_variant) {
         if (vi->virtual_variant) *p_virtual_variant = vi->virtual_variant;
@@ -119,7 +120,7 @@ find_user_variant(
         int user_id,
         int *p_virtual_variant)
 {
-  int i, new_vint;
+  int i, new_vint, ui;
   struct variant_map *pmap = state->global->variant_map;
   struct variant_map_item *vi;
 
@@ -127,32 +128,34 @@ find_user_variant(
 
   teamdb_refresh(state->teamdb_state);
   new_vint = teamdb_get_vintage(state->teamdb_state);
-  if (new_vint != pmap->vintage || !pmap->user_map_size || !pmap->user_map) {
-    info("find_variant: new vintage: %d, old: %d, updating variant map",
-         new_vint, pmap->vintage);
-    xfree(pmap->user_map);
-    pmap->user_map_size = 0;
-    pmap->user_map = 0;
+  if (new_vint != pmap->vintage || !pmap->user_ind_size || !pmap->user_inds) {
+    info("find_variant: new vintage: %d, old: %d, updating variant map", new_vint, pmap->vintage);
+    xfree(pmap->user_inds);
+    pmap->user_ind_size = 0;
+    pmap->user_inds = NULL;
 
     if (state->global->disable_user_database > 0) {
-      pmap->user_map_size = run_get_max_user_id(state->runlog_state) + 1;
+      pmap->user_ind_size = run_get_max_user_id(state->runlog_state) + 1;
     } else {
-      pmap->user_map_size = teamdb_get_max_team_id(state->teamdb_state) + 1;
+      pmap->user_ind_size = teamdb_get_max_team_id(state->teamdb_state) + 1;
     }
-    XCALLOC(pmap->user_map, pmap->user_map_size);
+    pmap->user_inds = malloc(pmap->user_ind_size * sizeof(pmap->user_inds[0]));
+    memset(pmap->user_inds, -1, pmap->user_ind_size * sizeof(pmap->user_inds[0]));
 
     for (i = 0; i < pmap->u; i++) {
       pmap->v[i].user_id = teamdb_lookup_login(state->teamdb_state, pmap->v[i].login);
       if (pmap->v[i].user_id < 0) pmap->v[i].user_id = 0;
       if (!pmap->v[i].user_id) continue;
-      if (pmap->v[i].user_id >= pmap->user_map_size) continue;
-      pmap->user_map[pmap->v[i].user_id] = &pmap->v[i];
+      if (pmap->v[i].user_id >= pmap->user_ind_size) continue;
+      pmap->user_inds[pmap->v[i].user_id] = i;
     }
     pmap->vintage = new_vint;
   }
 
-  if (user_id <= 0 || user_id >= pmap->user_map_size) return 0;
-  if ((vi = pmap->user_map[user_id])) {
+  if (user_id <= 0 || user_id >= pmap->user_ind_size) return 0;
+  ui = pmap->user_inds[user_id];
+  if (ui >= 0) {
+    vi = pmap->v + ui;
     if (vi->real_variant) {
       if (p_virtual_variant) {
         if (vi->virtual_variant) *p_virtual_variant = vi->virtual_variant;
