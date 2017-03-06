@@ -130,6 +130,7 @@ calc_kirov_score(
         const struct section_problem_data *pr,
         int attempts,
         int disq_attempts,
+        int ce_attempts,
         int prev_successes,
         int *p_date_penalty,
         int format);
@@ -143,6 +144,7 @@ write_html_run_status(
         int priv_level,
         int attempts,
         int disq_attempts,
+        int ce_attempts,
         int prev_successes,
         const unsigned char *td_class,
         int disable_failed,
@@ -198,6 +200,7 @@ write_text_run_status(
         int priv_level,
         int attempts,
         int disq_attempts,
+        int ce_attempts,
         int prev_successes);
 
 unsigned char*

@@ -396,6 +396,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(acm_run_penalty, "d"),
   PROBLEM_PARAM(disqualified_penalty, "d"),
   PROBLEM_PARAM(ignore_penalty, "d"),
+  PROBLEM_PARAM(compile_error_penalty, "d"),
   PROBLEM_PARAM(use_corr, "d"),
   PROBLEM_PARAM(use_info, "d"),
   PROBLEM_PARAM(use_tgz, "d"),
@@ -986,6 +987,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->run_penalty = -1;
   p->acm_run_penalty = -1;
   p->disqualified_penalty = -1;
+  p->compile_error_penalty = -1;
   p->checker_real_time_limit = -1;
   p->variant_num = -1;
   p->disable_auto_testing = -1;
@@ -3253,6 +3255,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_run_penalty, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_acm_run_penalty, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disqualified_penalty, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_compile_error_penalty, prob, aprob, g);
 
     prepare_set_prob_value(CNTSPROB_hidden, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_advance_to_next, prob, aprob, g);
@@ -5695,6 +5698,10 @@ prepare_set_prob_value(
     if (out->disqualified_penalty < 0) out->disqualified_penalty = DFLT_P_RUN_PENALTY;;
     break;
 
+  case CNTSPROB_compile_error_penalty:
+    if (out->compile_error_penalty < 0 && abstr) out->compile_error_penalty = abstr->compile_error_penalty;
+    break;
+
   INHERIT_BOOLEAN(variable_full_score);
 
   case CNTSPROB_tests_to_accept:
@@ -6224,6 +6231,7 @@ prepare_set_all_prob_values(
     CNTSPROB_run_penalty,
     CNTSPROB_acm_run_penalty,
     CNTSPROB_disqualified_penalty,
+    CNTSPROB_compile_error_penalty,
     //CNTSPROB_ignore_penalty,
     CNTSPROB_use_corr,
     CNTSPROB_use_info,

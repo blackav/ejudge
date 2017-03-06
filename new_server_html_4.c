@@ -1414,7 +1414,7 @@ do_dump_master_runs(
   int *list_idx = 0;
   int list_tot = 0;
   unsigned char statstr[64];
-  int rid, attempts, disq_attempts, prev_successes;
+  int rid, attempts, disq_attempts, ce_attempts, prev_successes;
   time_t run_time, start_time;
   const struct run_entry *pe;
   unsigned char dur_str[128];
@@ -1756,10 +1756,10 @@ do_dump_master_runs(
         csv_rec[F_SUCCESS_BONUS] = score_bonus_buf;
       }
 
-      attempts = 0; disq_attempts = 0;
+      attempts = 0; disq_attempts = 0; ce_attempts = 0;
       if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
-        run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts,
-                         global->ignore_compile_errors);
+        run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts,
+                         prob->ignore_compile_errors, prob->compile_error_penalty);
       }
 
       orig_score = pe->score;
@@ -1767,7 +1767,7 @@ do_dump_master_runs(
         orig_score = prob->full_score;
       snprintf(base_score_buf, sizeof(base_score_buf), "%d", orig_score);
       csv_rec[F_BASE_SCORE] = base_score_buf;
-      score = calc_kirov_score(0, 0, start_time, 0, 0, 0, pe, prob, attempts, disq_attempts,
+      score = calc_kirov_score(0, 0, start_time, 0, 0, 0, pe, prob, attempts, disq_attempts, ce_attempts,
                                prev_successes, &date_penalty, 0);
       snprintf(score_buf, sizeof(score_buf), "%d", score);
       csv_rec[F_TOTAL_SCORE] = score_buf;

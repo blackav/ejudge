@@ -110,6 +110,7 @@ struct problem_config_section
   int run_penalty;
   int acm_run_penalty;
   int disqualified_penalty;
+  int compile_error_penalty;
   int min_tests_to_accept;
   int checker_real_time_limit;
   int priority_adjustment;

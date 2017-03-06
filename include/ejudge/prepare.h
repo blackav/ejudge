@@ -870,6 +870,8 @@ struct section_problem_data
   int acm_run_penalty;
   /** penalty for one disqualified run */
   int disqualified_penalty;
+  /** penalty for a compilation error */
+  int compile_error_penalty;
   /** ignore penalty for this problem in overall penalty calculation */
   ejintbool_t ignore_penalty;
   /** pass a file with the correct answer to the checker */

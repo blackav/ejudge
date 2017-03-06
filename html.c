@@ -86,6 +86,7 @@ calc_kirov_score(
         const struct section_problem_data *pr,
         int attempts,
         int disq_attempts,
+        int ce_attempts,
         int prev_successes,
         int *p_date_penalty,
         int format)
@@ -156,6 +157,9 @@ calc_kirov_score(
   //if (score > pr->full_score) score = pr->full_score;
   // solution score is the initial score minus all score penalties plus score_bonus
   score = init_score * score_mult - attempts * pr->run_penalty + pe->score_adj + score_bonus;
+  if (pr->compile_error_penalty > 0) {
+    score -= ce_attempts * pr->compile_error_penalty;
+  }
   if (status == RUN_OK && pr->min_score_1 > 0 && score < pr->min_score_1) score = pr->min_score_1;
   score += dp;
   if (status == RUN_OK && pr->min_score_2 > 0 && score < pr->min_score_2) score = pr->min_score_2;
@@ -171,6 +175,7 @@ calc_kirov_score(
   {
     unsigned char init_score_str[64];
     unsigned char run_penalty_str[64];
+    unsigned char ce_penalty_str[64];
     unsigned char date_penalty_str[64];
     unsigned char final_score_str[64];
     unsigned char score_adj_str[64];
@@ -189,6 +194,13 @@ calc_kirov_score(
                "-%d*%d", attempts, pr->run_penalty);
     } else {
       run_penalty_str[0] = 0;
+    }
+
+    if (ce_attempts > 0 && pr->compile_error_penalty > 0) {
+      snprintf(ce_penalty_str, sizeof(ce_penalty_str),
+               "-%d*%d", ce_attempts, pr->compile_error_penalty);
+    } else {
+      ce_penalty_str[0] = 0;
     }
 
     if (dp != 0) {
@@ -216,7 +228,7 @@ calc_kirov_score(
       score_bonus_str[0] = 0;
     }
 
-    if (score_mult > 1 || run_penalty_str[0] || date_penalty_str[0]
+    if (score_mult > 1 || run_penalty_str[0] || ce_penalty_str[0] || date_penalty_str[0]
         || score_adj_str[0] || disq_penalty_str[0] || score_bonus_str[0]) {
       if (format == 0) {
         snprintf(final_score_str, sizeof(final_score_str),
@@ -234,9 +246,9 @@ calc_kirov_score(
       }
     }
 
-    snprintf(outbuf, outsize, "%s%s%s%s%s%s%s",
+    snprintf(outbuf, outsize, "%s%s%s%s%s%s%s%s",
              final_score_str,
-             init_score_str, run_penalty_str, date_penalty_str, score_adj_str,
+             init_score_str, run_penalty_str, ce_penalty_str, date_penalty_str, score_adj_str,
              disq_penalty_str, score_bonus_str);
     return score;
   }
@@ -252,6 +264,7 @@ write_html_run_status(
         int priv_level,
         int attempts,
         int disq_attempts,
+        int ce_attempts,
         int prev_successes,
         const unsigned char *td_class,
         int disable_failed,
@@ -452,7 +465,7 @@ write_html_run_status(
       calc_kirov_score(score_str, sizeof(score_str),
                        start_time, separate_user_score, user_mode, pe->token_flags,
                        pe, pr, attempts,
-                       disq_attempts, prev_successes, 0, 0);
+                       disq_attempts, ce_attempts, prev_successes, 0, 0);
       fprintf(f, "<td%s>%s</td>", cl, score_str);
     }
   }
@@ -468,6 +481,7 @@ write_text_run_status(
         int priv_level,
         int attempts,
         int disq_attempts,
+        int ce_attempts,
         int prev_successes)
 {
   const struct section_global_data *global = state->global;
@@ -564,7 +578,7 @@ write_text_run_status(
     calc_kirov_score(score_str, sizeof(score_str),
                      start_time, separate_user_score, user_mode, pe->token_flags,
                      pe, pr, attempts,
-                     disq_attempts, prev_successes, 0, 1);
+                     disq_attempts, ce_attempts, prev_successes, 0, 1);
     fprintf(f, "%s;", score_str);
   }
 }
@@ -1039,6 +1053,7 @@ do_write_kirov_standings(
   int *prob_score = 0;
   int *att_num = 0;
   int *disq_num = 0;
+  int *ce_num = 0;
   int *sol_att = 0;
   int *full_sol = 0;
   time_t *sol_time = 0;
@@ -1259,6 +1274,7 @@ do_write_kirov_standings(
    * succ_att[0..p_tot-1]               - successfull attempts
    * tot_att[0..p_tot-1]                - total attempt
    * disq_num[0..t_tot-1][0..p_tot-1]   - number of disqualified attempts
+   * ce_num[0..t_tot-1][0..p_tot-1]     - number of compilation error attempts
    * sol_att[0..t_tot-1][0..p_tot-1]    - number of attempts before the problem solved
    */
   if (t_tot > 0) {
@@ -1266,6 +1282,7 @@ do_write_kirov_standings(
     XCALLOC(prob_score, up_ind);
     XCALLOC(att_num, up_ind);
     XCALLOC(disq_num, up_ind);
+    XCALLOC(ce_num, up_ind);
     XCALLOC(full_sol, up_ind);
     XCALLOC(sol_time, up_ind);
     XCALLOC(sol_att, up_ind);
@@ -1545,7 +1562,7 @@ do_write_kirov_standings(
           score = calc_kirov_score(0, 0, start_time,
                                    separate_user_score, user_mode, token_flags,
                                    pe, prob, att_num[up_ind],
-                                   disq_num[up_ind],
+                                   disq_num[up_ind], ce_num[up_ind],
                                    full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
                                    0, 0);
           if (pe->is_marked) {
@@ -1571,7 +1588,7 @@ do_write_kirov_standings(
           score = calc_kirov_score(0, 0, start_time,
                                    separate_user_score, user_mode, token_flags,
                                    pe, prob, att_num[up_ind],
-                                   disq_num[up_ind], RUN_TOO_MANY, 0, 0);
+                                   disq_num[up_ind], ce_num[up_ind], RUN_TOO_MANY, 0, 0);
           if (pe->is_marked) {
             // latest
             marked_flag[up_ind] = 1;
@@ -1639,7 +1656,7 @@ do_write_kirov_standings(
             score = calc_kirov_score(0, 0, start_time,
                                      separate_user_score, user_mode, token_flags,
                                      pe, prob, att_num[up_ind],
-                                     disq_num[up_ind],
+                                     disq_num[up_ind], ce_num[up_ind],
                                      full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
                                      0, 0);
             if (prob->score_latest > 0 || score > prob_score[up_ind]) {
@@ -1703,7 +1720,7 @@ do_write_kirov_standings(
             score = calc_kirov_score(0, 0, start_time,
                                      separate_user_score, user_mode, token_flags,
                                      pe, prob, att_num[up_ind],
-                                     disq_num[up_ind], RUN_TOO_MANY, 0, 0);
+                                     disq_num[up_ind], ce_num[up_ind], RUN_TOO_MANY, 0, 0);
             if (prob->score_latest > 0 || score > prob_score[up_ind]) {
               prob_score[up_ind] = score;
             }
@@ -1719,7 +1736,7 @@ do_write_kirov_standings(
           score = calc_kirov_score(0, 0, start_time,
                                    separate_user_score, user_mode, token_flags,
                                    pe, prob, att_num[up_ind],
-                                   disq_num[up_ind], RUN_TOO_MANY, 0, 0);
+                                   disq_num[up_ind], ce_num[up_ind], RUN_TOO_MANY, 0, 0);
           if (prob->score_latest > 0 || score > prob_score[up_ind]) {
             prob_score[up_ind] = score;
           }
@@ -2577,6 +2594,7 @@ do_write_kirov_standings(
 
   xfree(prob_score);
   xfree(att_num);
+  xfree(ce_num);
   xfree(disq_num);
   xfree(sol_att);
   xfree(full_sol);
@@ -4396,7 +4414,7 @@ do_write_public_log(
   int i;
 
   time_t run_time, start_time, cur_time, stop_time;
-  int attempts, disq_attempts, prev_successes;
+  int attempts, disq_attempts, ce_attempts, prev_successes;
 
   char durstr[64], statstr[128];
   char *str1 = 0, *str2 = 0;
@@ -4500,12 +4518,13 @@ do_write_public_log(
 
     attempts = 0;
     disq_attempts = 0;
+    ce_attempts = 0;
     prev_successes = RUN_TOO_MANY;
 
     run_time = pe->time;
     if (global->score_system == SCORE_KIROV) {
-      run_get_attempts(state->runlog_state, i, &attempts, &disq_attempts,
-                       cur_prob->ignore_compile_errors);
+      run_get_attempts(state->runlog_state, i, &attempts, &disq_attempts, &ce_attempts,
+                       cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty);
       if (status == RUN_OK && cur_prob && cur_prob->score_bonus_total > 0){
         prev_successes = run_get_prev_successes(state->runlog_state, i);
         if (prev_successes < 0) prev_successes = RUN_TOO_MANY;
@@ -4541,7 +4560,7 @@ do_write_public_log(
     else fprintf(f, "<td>??? - %d</td>", pe->lang_id);
 
     write_html_run_status(state, f, start_time, pe, user_mode,
-                          0, attempts, disq_attempts,
+                          0, attempts, disq_attempts, ce_attempts,
                           prev_successes, 0, 1, 0, RUN_VIEW_DEFAULT);
 
     fputs("</tr>\n", f);

@@ -117,6 +117,7 @@ typedef struct UserProblemInfo
     int best_run;
     int attempts;
     int disqualified;
+    int ce_attempts;
     int best_score;
     int prev_successes; // previous successes of other users on this problem
     int all_attempts;
