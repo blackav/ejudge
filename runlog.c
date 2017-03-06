@@ -807,12 +807,15 @@ run_get_attempts(
         int runid,
         int *pattempts,
         int *pdisqattempts,
-        int skip_ce_flag)
+        int *pce_attempts,
+        int skip_ce_flag,
+        int ce_penalty)
 {
-  int i, n = 0, m = 0;
+  int i, n = 0, m = 0, cen = 0;
 
   *pattempts = 0;
   if (pdisqattempts) *pdisqattempts = 0;
+  if (pce_attempts) *pce_attempts = 0;
 
   if (runid < 0 || runid >= state->run_u) ERR_R("bad runid: %d", runid);
   const struct run_entry *sample_re = &state->runs[runid];
@@ -835,6 +838,10 @@ run_get_attempts(
     if (re->status == RUN_VIRTUAL_START || re->status == RUN_VIRTUAL_STOP) continue;
     if (re->prob_id != sample_re->prob_id) continue;
     if ((re->status == RUN_COMPILE_ERR) && skip_ce_flag) continue;
+    if (re->status == RUN_COMPILE_ERR && ce_penalty > 0) {
+      ++cen;
+      continue;
+    }
     if (re->status == RUN_STYLE_ERR) continue;
     if (re->status == RUN_REJECTED) continue;
     if (re->status == RUN_IGNORED) continue;
@@ -849,6 +856,7 @@ run_get_attempts(
 
   if (pattempts) *pattempts = n;
   if (pdisqattempts) *pdisqattempts = m;
+  if (pce_attempts) *pce_attempts = cen;
   return 0;
 }
 
