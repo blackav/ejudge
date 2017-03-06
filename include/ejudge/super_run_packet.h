@@ -2,7 +2,7 @@
 #ifndef __SUPER_RUN_PACKET_H__
 #define __SUPER_RUN_PACKET_H__
 
-/* Copyright (C) 2012-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -82,6 +82,7 @@ struct super_run_in_global_packet
   unsigned char *checker_locale;
   unsigned char *run_uuid;
   ejintbool_t zip_mode;
+  ejintbool_t testlib_mode;
 
   int scoring_system_val META_ATTRIB((meta_hidden));
 };

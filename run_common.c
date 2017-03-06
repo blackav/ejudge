@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1748,7 +1748,8 @@ invoke_interactor(
         int stdin_fd,
         int stdout_fd,
         long time_limit_ms,
-        int program_pid)
+        int program_pid,
+        int testlib_mode)
 	__attribute__((unused)); // on Windows
 static tpTask
 invoke_interactor(
@@ -1764,7 +1765,8 @@ invoke_interactor(
         int stdin_fd,
         int stdout_fd,
         long time_limit_ms,
-        int program_pid)
+        int program_pid,
+        int testlib_mode)
 {
   tpTask tsk_int = NULL;
   int env_u = 0;
@@ -1782,7 +1784,7 @@ invoke_interactor(
   if (corr_src_path && corr_src_path[0]) {
     task_AddArg(tsk_int, corr_src_path);
   }
-  if (program_pid > 0) {
+  if (program_pid > 0 && testlib_mode <= 0) {
     char buf[64];
     snprintf(buf, sizeof(buf), "%d", program_pid);
     task_AddArg(tsk_int, buf);
@@ -2793,7 +2795,7 @@ run_one_test(
     tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src,
                                 working_dir, check_out_path, srpp->interactor_env, srgp->checker_locale,
                                 &tstinfo,
-                                pfd1[0], pfd2[1], srpp->interactor_time_limit_ms, task_GetPid(tsk));
+                                pfd1[0], pfd2[1], srpp->interactor_time_limit_ms, task_GetPid(tsk), srgp->testlib_mode);
     if (!tsk_int) {
       append_msg_to_log(check_out_path, "interactor failed to start");
       goto check_failed;
