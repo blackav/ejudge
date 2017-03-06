@@ -353,6 +353,7 @@ enum
   CNTSPROB_run_penalty,
   CNTSPROB_acm_run_penalty,
   CNTSPROB_disqualified_penalty,
+  CNTSPROB_compile_error_penalty,
   CNTSPROB_ignore_penalty,
   CNTSPROB_use_corr,
   CNTSPROB_use_info,

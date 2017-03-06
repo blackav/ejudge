@@ -81,6 +81,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_run_penalty,
   META_PROBLEM_CONFIG_SECTION_acm_run_penalty,
   META_PROBLEM_CONFIG_SECTION_disqualified_penalty,
+  META_PROBLEM_CONFIG_SECTION_compile_error_penalty,
   META_PROBLEM_CONFIG_SECTION_min_tests_to_accept,
   META_PROBLEM_CONFIG_SECTION_checker_real_time_limit,
   META_PROBLEM_CONFIG_SECTION_priority_adjustment,

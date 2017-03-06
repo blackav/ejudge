@@ -393,6 +393,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_run_penalty] = { CNTSPROB_run_penalty, 'i', XSIZE(struct section_problem_data, run_penalty), "run_penalty", XOFFSET(struct section_problem_data, run_penalty) },
   [CNTSPROB_acm_run_penalty] = { CNTSPROB_acm_run_penalty, 'i', XSIZE(struct section_problem_data, acm_run_penalty), "acm_run_penalty", XOFFSET(struct section_problem_data, acm_run_penalty) },
   [CNTSPROB_disqualified_penalty] = { CNTSPROB_disqualified_penalty, 'i', XSIZE(struct section_problem_data, disqualified_penalty), "disqualified_penalty", XOFFSET(struct section_problem_data, disqualified_penalty) },
+  [CNTSPROB_compile_error_penalty] = { CNTSPROB_compile_error_penalty, 'i', XSIZE(struct section_problem_data, compile_error_penalty), "compile_error_penalty", XOFFSET(struct section_problem_data, compile_error_penalty) },
   [CNTSPROB_ignore_penalty] = { CNTSPROB_ignore_penalty, 'B', XSIZE(struct section_problem_data, ignore_penalty), "ignore_penalty", XOFFSET(struct section_problem_data, ignore_penalty) },
   [CNTSPROB_use_corr] = { CNTSPROB_use_corr, 'B', XSIZE(struct section_problem_data, use_corr), "use_corr", XOFFSET(struct section_problem_data, use_corr) },
   [CNTSPROB_use_info] = { CNTSPROB_use_info, 'B', XSIZE(struct section_problem_data, use_info), "use_info", XOFFSET(struct section_problem_data, use_info) },
