@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1243,8 +1243,9 @@ process_problem_row(
     }
     int lr = -1, pr = -1;
     n = -1;
-    if (sscanf(buf, "%d / %d%n", &lr, &pr, &n) != 2 || buf[n]) {
-        if (sscanf(buf, "%d%n", &lr, &n) != 1 || buf[n]) {
+    // Well, ignore garbage after revision number
+    if (sscanf(buf, "%d / %d", &lr, &pr) != 2) {
+        if (sscanf(buf, "%d", &lr) != 1) {
             fprintf(log_f, "failed to parse revision column: %s\n", buf);
             goto cleanup;
         } else {
