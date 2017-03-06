@@ -1606,12 +1606,17 @@ do_write_kirov_standings(
           if (!full_sol[up_ind]) tot_att[pind]++;
           full_sol[up_ind] = 0;
           last_submit_run = k;
-        } else if ((run_status == RUN_COMPILE_ERR)
-                   && !prob->ignore_compile_errors) {
-          if (!full_sol[up_ind]) sol_att[up_ind]++;
-          att_num[up_ind]++;
-          if (!full_sol[up_ind]) tot_att[pind]++;
-          last_submit_run = k;
+        } else if (run_status == RUN_COMPILE_ERR) {
+          if (prob->ignore_compile_errors <= 0) {
+            if (prob->compile_error_penalty >= 0) {
+              ++ce_num[up_ind];
+            } else {
+              ++att_num[up_ind];
+            }
+            if (!full_sol[up_ind]) sol_att[up_ind]++;
+            if (!full_sol[up_ind]) tot_att[pind]++;
+            last_submit_run = k;
+          }
         } else if (run_status == RUN_DISQUALIFIED) {
           if (!full_sol[up_ind]) sol_att[up_ind]++;
           disq_num[up_ind]++;
@@ -1743,12 +1748,17 @@ do_write_kirov_standings(
           att_num[up_ind]++;
           if (!full_sol[up_ind]) tot_att[pind]++;
           last_submit_run = k;
-        } else if ((run_status == RUN_COMPILE_ERR)
-                   && !prob->ignore_compile_errors) {
-          if (!full_sol[up_ind]) sol_att[up_ind]++;
-          att_num[up_ind]++;
-          if (!full_sol[up_ind]) tot_att[pind]++;
-          last_submit_run = k;
+        } else if (run_status == RUN_COMPILE_ERR) {
+          if (prob->ignore_compile_errors <= 0) {
+            if (prob->compile_error_penalty >= 0) {
+              ++ce_num[up_ind];
+            } else {
+              att_num[up_ind]++;
+            }
+            if (!full_sol[up_ind]) sol_att[up_ind]++;
+            if (!full_sol[up_ind]) tot_att[pind]++;
+            last_submit_run = k;
+          }
         } else if (run_status == RUN_DISQUALIFIED) {
           if (!full_sol[up_ind]) sol_att[up_ind]++;
           disq_num[up_ind]++;

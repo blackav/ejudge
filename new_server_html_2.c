@@ -4487,7 +4487,11 @@ kirov_score_latest_or_unmarked(
 
   case RUN_COMPILE_ERR:
     if (cur_prob->ignore_compile_errors > 0) return;
-    pinfo->attempts++;
+    if (cur_prob->compile_error_penalty >= 0) {
+      ++pinfo->ce_attempts;
+    } else {
+      pinfo->attempts++;
+    }
     if (re->is_marked || cur_score > pinfo->best_score) {
       cur_score = 0;
       pinfo->best_score = cur_score;
@@ -4603,6 +4607,11 @@ kirov_score_latest(
 
   case RUN_COMPILE_ERR:
     if (cur_prob->ignore_compile_errors > 0) break;
+    if (cur_prob->compile_error_penalty >= 0) {
+      ++pinfo->ce_attempts;
+    } else {
+      ++pinfo->attempts;
+    }
     pinfo->marked_flag = re->is_marked;
     pinfo->solved_flag = 0;
     pinfo->accepted_flag = 0;
@@ -4610,7 +4619,6 @@ kirov_score_latest(
     pinfo->pending_flag = 0;
     pinfo->best_score = 0;
     pinfo->best_run = run_id;
-    ++pinfo->attempts;
     break;
 
   case RUN_STYLE_ERR:
@@ -4811,8 +4819,11 @@ kirov_score_default(
 
   case RUN_COMPILE_ERR:
     if (cur_prob->ignore_compile_errors > 0) break;
-
-    ++pinfo->attempts;
+    if (cur_prob->compile_error_penalty >= 0) {
+      ++pinfo->ce_attempts;
+    } else {
+      ++pinfo->attempts;
+    }
     cur_score = 0;
     if (cur_score >= pinfo->best_score) {
       pinfo->best_score = cur_score;
