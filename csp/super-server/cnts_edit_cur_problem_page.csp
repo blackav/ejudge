@@ -1888,6 +1888,27 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:run_penalty" /></td>
             </s:tr>
 
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-compile_error_penalty-div">
+                <td>Penalty for a submission:</td>
+                <td><s:textfield id="orig-compile_error_penalty" readonly="readonly" name="param" value="prob->compile_error_penalty" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->compile_error_penalty < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (prob->compile_error_penalty < 0) {
+        if (tmp_prob->compile_error_penalty < 0) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->compile_error_penalty" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:compile_error_penalty" /></td>
+            </s:tr>
+
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disqualified_penalty-div">
                 <td>Penalty for a disqualified submission:</td>
                 <td><s:textfield id="orig-disqualified_penalty" readonly="readonly" name="param" value="prob->disqualified_penalty" size="48" maxlength="1024" checkExpr=" >= 0" /><%
