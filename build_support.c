@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -871,6 +871,7 @@ do_generate_makefile(
   unsigned char *compiler_path = NULL;
   const unsigned char *compiler_flags = NULL;
   int has_header = 0, need_c_libchecker = 0, need_cpp_libchecker = 0, has_solutions = 0;
+  int enable_testlib_mode = 0;
   const unsigned char *source_suffix = NULL;
   int count = 0;
   unsigned char **good_names = NULL;
@@ -954,6 +955,7 @@ do_generate_makefile(
   }
   if ((languages & LANG_C)) need_c_libchecker = 1;
   if ((languages & LANG_CPP)) need_cpp_libchecker = 1;
+  if (prob->enable_testlib_mode > 0) enable_testlib_mode = 1;
 
   if (prob->type == PROB_TYPE_TESTS) {
     get_advanced_layout_path(tmp_path, sizeof(tmp_path), global, prob, "tests/good", variant);
@@ -1038,9 +1040,13 @@ do_generate_makefile(
     }
     compiler_flags = NULL;
     if (need_cpp_libchecker) {
-      fprintf(mk_f, "CXXLIBCHECKERFLAGS =%s -Wall -g -O2 -I${EJUDGE_PREFIX_DIR}/include/ejudge -L%s -Wl,--rpath,%s\n",
-              m32_opt, libdir, libdir);
-      fprintf(mk_f, "CXXLIBCHECKERLIBS = -lchecker -lm\n");
+      if (enable_testlib_mode) {
+        fprintf(mk_f, "CXXLIBCHECKERFLAGS =%s -Wall -g -O2 -std=gnu++11\n", m32_opt);
+      } else {
+        fprintf(mk_f, "CXXLIBCHECKERFLAGS =%s -Wall -g -O2 -I${EJUDGE_PREFIX_DIR}/include/ejudge -L%s -Wl,--rpath,%s\n",
+                m32_opt, libdir, libdir);
+        fprintf(mk_f, "CXXLIBCHECKERLIBS = -lchecker -lm\n");
+      }
     }
     fprintf(mk_f, "\n");
   }
