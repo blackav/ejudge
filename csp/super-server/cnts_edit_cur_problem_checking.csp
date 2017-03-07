@@ -25,6 +25,7 @@
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "checker_real_time_limit" "checking" "Real time limit for checker(s)" "250" %>
         <%@expand MENU_TEXTFIELD "checker_env" "checking" "Checker environment" "250" %>
         <%@expand MENU_YESNO3 "scoring_checker" "checking" "Checker calculates score" "250" %>
+        <%@expand MENU_YESNO3 "enable_testlib_mode" "checking" "Enable testlib.h compatibility mode" "250" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "valuer_cmd" "checking" "Score valuer name" "250" %>
         <%@expand MENU_YESNO3 "valuer_sets_marked" "checking" "Valuer sets <i>marked</i> flag" "250" %>
         <%@expand MENU_YESNO3 "interactive_valuer" "checking" "Valuer works interactively" "250" %>
@@ -96,6 +97,7 @@ function popupCheckingDialog(e, skipField)
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "checker_real_time_limit" "prob->checker_real_time_limit < 0" %>
     <%@expand COPY_TEXTFIELD "checker_env" %>
     <%@expand COPY_YESNO3 "scoring_checker" %>
+    <%@expand COPY_YESNO3 "enable_testlib_mode" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "valuer_cmd" "!prob->valuer_cmd[0]" %>
     <%@expand COPY_YESNO3 "valuer_sets_marked" %>
     <%@expand COPY_YESNO3 "interactive_valuer" %>
