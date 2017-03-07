@@ -475,6 +475,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_disable_stderr] = { CNTSPROB_disable_stderr, 'B', XSIZE(struct section_problem_data, disable_stderr), "disable_stderr", XOFFSET(struct section_problem_data, disable_stderr) },
   [CNTSPROB_enable_process_group] = { CNTSPROB_enable_process_group, 'B', XSIZE(struct section_problem_data, enable_process_group), "enable_process_group", XOFFSET(struct section_problem_data, enable_process_group) },
   [CNTSPROB_hide_variant] = { CNTSPROB_hide_variant, 'B', XSIZE(struct section_problem_data, hide_variant), "hide_variant", XOFFSET(struct section_problem_data, hide_variant) },
+  [CNTSPROB_enable_testlib_mode] = { CNTSPROB_enable_testlib_mode, 'B', XSIZE(struct section_problem_data, enable_testlib_mode), "enable_testlib_mode", XOFFSET(struct section_problem_data, enable_testlib_mode) },
   [CNTSPROB_test_pat] = { CNTSPROB_test_pat, 'S', XSIZE(struct section_problem_data, test_pat), "test_pat", XOFFSET(struct section_problem_data, test_pat) },
   [CNTSPROB_corr_pat] = { CNTSPROB_corr_pat, 'S', XSIZE(struct section_problem_data, corr_pat), "corr_pat", XOFFSET(struct section_problem_data, corr_pat) },
   [CNTSPROB_info_pat] = { CNTSPROB_info_pat, 'S', XSIZE(struct section_problem_data, info_pat), "info_pat", XOFFSET(struct section_problem_data, info_pat) },

@@ -435,6 +435,7 @@ enum
   CNTSPROB_disable_stderr,
   CNTSPROB_enable_process_group,
   CNTSPROB_hide_variant,
+  CNTSPROB_enable_testlib_mode,
   CNTSPROB_test_pat,
   CNTSPROB_corr_pat,
   CNTSPROB_info_pat,
