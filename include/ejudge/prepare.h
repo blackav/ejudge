@@ -1035,6 +1035,8 @@ struct section_problem_data
   ejintbool_t enable_process_group;
   /** hide variant number from user */
   ejintbool_t hide_variant;
+  /** enable testlib-compatibility mode */
+  ejintbool_t enable_testlib_mode;
 
   /** printf pattern for the test files */
   unsigned char test_pat[32];

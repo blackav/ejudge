@@ -96,6 +96,7 @@ struct problem_config_section
   ejintbool_t ignore_unmarked;
   ejintbool_t disable_stderr;
   ejintbool_t enable_process_group;
+  ejintbool_t enable_testlib_mode;
   ejintbool_t hide_variant;
 
   int id;

@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -52,6 +52,7 @@ super_run_in_global_packet_init(struct generic_section_config *gp)
   p->disable_sound = -1;
   p->is_dos = -1;
   p->time_limit_retry_count = -1;
+  p->testlib_mode = -1;
 
   p->scoring_system_val = -1;
 }

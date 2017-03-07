@@ -434,6 +434,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(ignore_unmarked, "d"),
   PROBLEM_PARAM(disable_stderr, "d"),
   PROBLEM_PARAM(enable_process_group, "d"),
+  PROBLEM_PARAM(enable_testlib_mode, "d"),
   PROBLEM_PARAM(hide_variant, "d"),
   PROBLEM_PARAM(autoassign_variants, "d"),
   PROBLEM_PARAM(enable_text_form, "d"),
@@ -1022,6 +1023,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->ignore_unmarked = -1;
   p->disable_stderr = -1;
   p->enable_process_group = -1;
+  p->enable_testlib_mode = -1;
   p->hide_variant = -1;
   p->autoassign_variants = -1;
   p->enable_text_form = -1;
@@ -3265,6 +3267,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_ignore_unmarked, prob, aprob, g);    
     prepare_set_prob_value(CNTSPROB_disable_stderr, prob, aprob, g);    
     prepare_set_prob_value(CNTSPROB_enable_process_group, prob, aprob, g);    
+    prepare_set_prob_value(CNTSPROB_enable_testlib_mode, prob, aprob, g);    
     prepare_set_prob_value(CNTSPROB_hide_variant, prob, aprob, g);    
     prepare_set_prob_value(CNTSPROB_autoassign_variants, prob, aprob, g);    
     prepare_set_prob_value(CNTSPROB_enable_text_form, prob, aprob, g);
@@ -5724,6 +5727,7 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN(ignore_unmarked);
   INHERIT_BOOLEAN(disable_stderr);
   INHERIT_BOOLEAN(enable_process_group);
+  INHERIT_BOOLEAN(enable_testlib_mode);
   INHERIT_BOOLEAN(hide_variant);
   INHERIT_BOOLEAN(autoassign_variants);
   INHERIT_BOOLEAN(enable_text_form);
@@ -6307,6 +6311,7 @@ prepare_set_all_prob_values(
     CNTSPROB_interactor_time_limit,
     CNTSPROB_disable_stderr,
     CNTSPROB_enable_process_group,
+    CNTSPROB_enable_testlib_mode,
     CNTSPROB_hide_variant,
     CNTSPROB_test_pat,
     CNTSPROB_corr_pat,

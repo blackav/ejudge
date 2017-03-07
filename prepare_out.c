@@ -1453,6 +1453,10 @@ prepare_unparse_prob(
       || (!prob->abstract && prob->enable_process_group >= 0)) {
     unparse_bool(f, "enable_process_group", prob->enable_process_group);
   }
+  if ((prob->abstract > 0 && prob->enable_testlib_mode > 0)
+      || (!prob->abstract && prob->enable_testlib_mode >= 0)) {
+    unparse_bool(f, "enable_testlib_mode", prob->enable_testlib_mode);
+  }
   if ((prob->abstract > 0 && prob->hide_variant > 0)
       || (!prob->abstract && prob->hide_variant >= 0)) {
     unparse_bool(f, "hide_variant", prob->hide_variant);
@@ -1840,6 +1844,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "disable_stderr", prob->disable_stderr);
   if (prob->enable_process_group > 0)
     unparse_bool(f, "enable_process_group", prob->enable_process_group);
+  if (prob->enable_testlib_mode > 0)
+    unparse_bool(f, "enable_testlib_mode", prob->enable_testlib_mode);
   if (prob->hide_variant > 0)
     unparse_bool(f, "hide_variant", prob->hide_variant);
   if (prob->enable_text_form > 0)

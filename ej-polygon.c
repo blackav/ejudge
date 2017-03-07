@@ -2381,6 +2381,7 @@ process_polygon_zip(
     if (pi->solution_cmd) {
         prob_cfg->solution_cmd = xstrdup(pi->solution_cmd);
     }
+    prob_cfg->enable_testlib_mode = 1;
 
     cfg_file = open_memstream(&cfg_text, &cfg_size);
     problem_config_section_unparse_cfg(cfg_file, prob_cfg);

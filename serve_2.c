@@ -2085,6 +2085,7 @@ serve_run_request(
   srpp->max_open_file_count = prob->max_open_file_count;
   srpp->max_process_count = prob->max_process_count;
   srpp->enable_process_group = prob->enable_process_group;
+  srgp->testlib_mode = prob->enable_testlib_mode;
   if (prob->umask && prob->umask[0]) {
     srpp->umask = xstrdup(prob->umask);
   }
