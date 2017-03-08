@@ -919,7 +919,7 @@ main(int argc, char *argv[])
             }
 
         }
-        if (g.get_stat_to_users()) {
+        if (g.get_stat_to_users() && !g.get_offline()) {
             if (locale_id == 1) {
                 fprintf(fcmt, "Группа тестов %s: тесты %d-%d: балл %d\n",
                         g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
