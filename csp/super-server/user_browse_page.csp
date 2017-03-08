@@ -141,7 +141,7 @@ jQuery(document).ready(function()
             { name: 'flags', index: 'flags', sortable: false, search: false },
         ],
         rowNum : 10,
-        rowList : [10,20,30,50,100],
+        rowList : [10,20,30,50,100,500],
         pager : '#pager',
         sortname: 'id',
         sortorder : 'asc',
