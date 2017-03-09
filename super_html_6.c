@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -10091,6 +10091,9 @@ do_import_problem(
   } else if (!cfg->use_stdout) {
     prob->use_stdout = 0;
     snprintf(prob->output_file, sizeof(prob->output_file), "%s", cfg->output_file);
+  }
+  if (cfg->enable_testlib_mode > 0) {
+    prob->enable_testlib_mode = 1;
   }
   if (cfg->max_vm_size != (size_t) -1L && cfg->max_vm_size) {
     prob->max_vm_size = cfg->max_vm_size;
