@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,6 +39,7 @@
 #include "ejudge/ej_libzip.h"
 #include "ejudge/testinfo.h"
 #include "ejudge/misctext.h"
+#include "ejudge/random.h"
 
 #include "ejudge/meta_generic.h"
 #include "ejudge/meta/compile_packet_meta.h"
@@ -79,7 +80,8 @@ check_style_only(
         const unsigned char *run_name,
         const unsigned char *work_run_name,
         const unsigned char *report_dir,
-        const unsigned char *status_dir)
+        const unsigned char *status_dir,
+        const unsigned char *full_working_dir)
 {
   void *reply_bin = 0;
   size_t reply_bin_size = 0;
@@ -101,12 +103,12 @@ check_style_only(
   snprintf(txt_path, sizeof(txt_path), "%s/%s.txt", report_dir, run_name);
   if (req->src_sfx) src_sfx = req->src_sfx;
   snprintf(work_src_path, sizeof(work_src_path), "%s/%s%s",
-           global->compile_work_dir, work_run_name, src_sfx);
+           full_working_dir, work_run_name, src_sfx);
   snprintf(work_log_path, sizeof(work_log_path), "%s/%s.log",
-           global->compile_work_dir, work_run_name);
+           full_working_dir, work_run_name);
 
   r = generic_copy_file(REMOVE, global->compile_src_dir, pkt_name, src_sfx,
-                        0, global->compile_work_dir, work_run_name, src_sfx);
+                        0, full_working_dir, work_run_name, src_sfx);
   if (!r) {
     snprintf(msgbuf, sizeof(msgbuf), "The source file %s/%s%s is missing.\n",
              global->compile_src_dir, pkt_name, src_sfx);
@@ -124,7 +126,7 @@ check_style_only(
   task_AddArg(tsk, req->style_checker);
   task_AddArg(tsk, work_src_path);
   task_SetPathAsArg0(tsk);
-  task_SetWorkingDir(tsk, global->compile_work_dir);
+  task_SetWorkingDir(tsk, full_working_dir);
   task_EnableProcessGroup(tsk);
   task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
   task_SetRedir(tsk, 1, TSR_FILE, work_log_path, TSK_REWRITE, 0777);
@@ -197,7 +199,7 @@ cleanup:
   task_Delete(tsk); tsk = 0;
   xfree(reply_bin); reply_bin = 0;
   req = compile_request_packet_free(req);
-  clear_directory(global->compile_work_dir);
+  clear_directory(full_working_dir);
   return 0;
 
 internal_error:
@@ -910,15 +912,26 @@ cleanup:
   return;
 }
 
-static int new_loop(void) __attribute__((unused));
-
 static int
-new_loop(void)
+new_loop(int parallel_mode)
 {
   int retval = 0;
   const struct section_global_data *global = serve_state.global;
   int override_exe = 0;
   int exe_copied = 0;
+  path_t full_working_dir = { 0 };
+
+  if (parallel_mode) {
+    random_init();
+    unsigned long long u64 = random_u64();
+    snprintf(full_working_dir, sizeof(full_working_dir), "%s/%016llx", global->compile_work_dir, u64);
+    if (make_dir(full_working_dir, 0) < 0) {
+      err("cannot create '%s': %s", full_working_dir, os_ErrorMsg());
+      return -1;
+    }
+  } else {
+    snprintf(full_working_dir, sizeof(full_working_dir), "%s", global->compile_work_dir);
+  }
 
   interrupt_init();
   interrupt_disable();
@@ -1032,7 +1045,7 @@ new_loop(void)
     unsigned char log_work_name[PATH_MAX];
     snprintf(log_work_name, sizeof(log_work_name), "log_%06d.txt", req->run_id);
     unsigned char log_work_path[PATH_MAX];
-    snprintf(log_work_path, sizeof(log_work_path), "%s/%s", global->compile_work_dir, log_work_name);
+    snprintf(log_work_path, sizeof(log_work_path), "%s/%s", full_working_dir, log_work_name);
     unlink(log_work_path);
     FILE *log_f = fopen(log_work_path, "a");
     if (!log_f) {
@@ -1065,7 +1078,7 @@ new_loop(void)
                   run_name,
                   src_path,
                   exe_path,
-                  global->compile_work_dir,
+                  full_working_dir,
                   log_work_path,
                   exe_work_name,
                   &override_exe,
@@ -1080,7 +1093,7 @@ new_loop(void)
         rpl.status = RUN_CHECK_FAILED;
       } else {
         unsigned char exe_work_path[PATH_MAX];
-        snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", global->compile_work_dir, exe_work_name);
+        snprintf(exe_work_path, sizeof(exe_work_path), "%s/%s", full_working_dir, exe_work_name);
         struct stat stb;
 
         if (lstat(exe_work_path, &stb) < 0) {
@@ -1121,7 +1134,7 @@ new_loop(void)
     if (r < 0) {
       rpl.run_block = NULL;
       compile_request_packet_free(req);
-      clear_directory(global->compile_work_dir);
+      clear_directory(full_working_dir);
       unlink(exe_path);
       unlink(log_path);
       continue;
@@ -1136,7 +1149,7 @@ new_loop(void)
     if (compile_reply_packet_write(&rpl, &rpl_size, &rpl_pkt) < 0) {
       rpl.run_block = NULL;
       compile_request_packet_free(req);
-      clear_directory(global->compile_work_dir);
+      clear_directory(full_working_dir);
       unlink(exe_path);
       unlink(log_path);
       continue;
@@ -1145,7 +1158,7 @@ new_loop(void)
       rpl.run_block = NULL;
       compile_request_packet_free(req);
       xfree(rpl_pkt);
-      clear_directory(global->compile_work_dir);
+      clear_directory(full_working_dir);
       unlink(exe_path);
       unlink(log_path);
       continue;
@@ -1155,7 +1168,7 @@ new_loop(void)
     rpl.run_block = NULL;
     compile_request_packet_free(req);
     xfree(rpl_pkt);
-    clear_directory(global->compile_work_dir);
+    clear_directory(full_working_dir);
   }
 
   return retval;
@@ -1196,6 +1209,9 @@ do_loop(void)
   FILE *log_f = 0;
   struct section_language_data *lang = 0;
   const struct section_global_data *global = serve_state.global;
+  path_t full_working_dir;
+
+  snprintf(full_working_dir, sizeof(full_working_dir), "%s", global->compile_work_dir);
 
   // if (cr_serialize_init(&serve_state) < 0) return -1;
   interrupt_init();
@@ -1307,7 +1323,7 @@ do_loop(void)
 
     if (req->style_check_only && req->style_checker && req->style_checker[0]) {
       check_style_only(global, req, &rpl, pkt_name, run_name, work_run_name,
-                       report_dir, status_dir);
+                       report_dir, status_dir, full_working_dir);
       req = 0;
       continue;
     }
@@ -1320,16 +1336,16 @@ do_loop(void)
     pathmake(src_name, work_run_name, lang->src_sfx, NULL);
     pathmake(exe_name, work_run_name, lang->exe_sfx, NULL);
 
-    pathmake(src_path, global->compile_work_dir, "/", src_name, NULL);
-    pathmake(exe_path, global->compile_work_dir, "/", exe_name, NULL);
-    pathmake(log_path, global->compile_work_dir, "/", "log", NULL);
+    pathmake(src_path, full_working_dir, "/", src_name, NULL);
+    pathmake(exe_path, full_working_dir, "/", exe_name, NULL);
+    pathmake(log_path, full_working_dir, "/", "log", NULL);
     /* the resulting executable file */
     snprintf(exe_out, sizeof(exe_out), "%s/%s%s", report_dir, run_name, lang->exe_sfx);
 
     /* move the source file into the working dir */
     r = generic_copy_file(REMOVE, global->compile_src_dir, pkt_name,
                           lang->src_sfx,
-                          0, global->compile_work_dir, src_name, "");
+                          0, full_working_dir, src_name, "");
     if (!r) {
       snprintf(msgbuf, sizeof(msgbuf), "the source file is missing\n");
       err("the source file is missing");
@@ -1357,7 +1373,7 @@ do_loop(void)
         task_AddArg(tsk, req->style_checker);
         task_AddArg(tsk, src_path);
         task_SetPathAsArg0(tsk);
-        task_SetWorkingDir(tsk, global->compile_work_dir);
+        task_SetWorkingDir(tsk, full_working_dir);
         task_EnableProcessGroup(tsk);
         task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
         task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_REWRITE, 0777);
@@ -1432,7 +1448,7 @@ do_loop(void)
           for (i = 0; i < req->env_num; i++)
             task_PutEnv(tsk, req->env_vars[i]);
         }
-        task_SetWorkingDir(tsk, global->compile_work_dir);
+        task_SetWorkingDir(tsk, full_working_dir);
         task_SetRedir(tsk, 0, TSR_FILE, "/dev/null", TSK_READ);
         task_SetRedir(tsk, 1, TSR_FILE, log_path, TSK_APPEND, 0777);
         task_SetRedir(tsk, 2, TSR_DUP, 1);
@@ -1526,7 +1542,7 @@ do_loop(void)
 
   cleanup_and_continue:;
     task_Delete(tsk); tsk = 0;
-    clear_directory(global->compile_work_dir);
+    clear_directory(full_working_dir);
     xfree(rpl_pkt); rpl_pkt = 0;
     req = compile_request_packet_free(req);
   } /* while (1) */
@@ -1595,6 +1611,7 @@ main(int argc, char *argv[])
   int     code = 0;
   int     prepare_flags = 0;
   unsigned char *user = 0, *group = 0, *workdir = 0;
+  int     parallel_mode = 0;
 
 #if HAVE_SETSID - 0
   path_t  log_path;
@@ -1676,6 +1693,10 @@ main(int argc, char *argv[])
       ejudge_xml_path = argv[i++];
       argv_restart[j++] = "-x";
       argv_restart[j++] = ejudge_xml_path;
+    } else if (!strcmp(argv[i], "-p")) {
+      parallel_mode = 1;
+      ++i;
+      argv_restart[j++] = "-p";
     } else if (!strcmp(argv[i], "--help")) {
       code = 0;
       goto print_usage;
@@ -1690,9 +1711,11 @@ main(int argc, char *argv[])
   argv_restart[j] = 0;
   start_set_args(argv_restart);
 
-  if ((pid = start_find_process("ej-compile", 0)) > 0) {
-    fprintf(stderr, "%s: is already running as pid %d\n", argv[0], pid);
-    return 1;
+  if (!parallel_mode) {
+    if ((pid = start_find_process("ej-compile", 0)) > 0) {
+      fprintf(stderr, "%s: is already running as pid %d\n", argv[0], pid);
+      return 1;
+    }
   }
 
 #if defined EJUDGE_XML_PATH
@@ -1891,7 +1914,7 @@ main(int argc, char *argv[])
 #endif /* HAVE_OPEN_MEMSTREAM */
 
   //if (do_loop() < 0) return 1;
-  if (new_loop() < 0) return 1;
+  if (new_loop(parallel_mode) < 0) return 1;
 
   if (interrupt_restart_requested()) start_restart();
 
@@ -1903,6 +1926,7 @@ main(int argc, char *argv[])
   printf("  -DDEF  - define a symbol for preprocessor\n");
   printf("  -D     - start in daemon mode\n");
   printf("  -i     - initialize mode: create all dirs and exit\n");
+  printf("  -p     - parallel mode: support multiple instances\n");
   printf("  -k KEY - specify a language filter key\n");
   printf("  -u U   - start as user U (only as root)\n");
   printf("  -g G   - start as group G (only as root)\n");
