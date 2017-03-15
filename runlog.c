@@ -2279,13 +2279,14 @@ runlog_check(
           nerr++;
           continue;
         }
+        /* not needed, because it brokes upsolving
         if (v_stop_time && e->time > v_stop_time) {
           check_msg(1, ferr,
                     "Run %d timestamp %" EJ_PRINTF_LLSPEC "d is greater than virtual stop %ld",
                     i, e->time, (long) v_stop_time);
           nerr++;
           continue;
-        }
+        }*/
       } else {
         ASSERT(!v->start_time);
         ASSERT(!v->stop_time);
