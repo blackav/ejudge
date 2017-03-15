@@ -8176,7 +8176,7 @@ ns_submit_run(
   if (!admin_mode && start_time <= 0) {
     FAIL(NEW_SRV_ERR_CONTEST_NOT_STARTED);
   }
-  if (!admin_mode && stop_time > 0) {
+  if (!admin_mode && stop_time > 0 && !cs->upsolving_mode) {
     FAIL(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
   }
   if (!admin_mode && serve_check_user_quota(cs, user_id, run_size) < 0) {
@@ -8816,7 +8816,7 @@ unpriv_submit_run(
   if (!start_time) {
     FAIL2(NEW_SRV_ERR_CONTEST_NOT_STARTED);
   }
-  if (stop_time) {
+  if (stop_time && !cs->upsolving_mode) {
     FAIL2(NEW_SRV_ERR_CONTEST_ALREADY_FINISHED);
   }
   if (serve_check_user_quota(cs, phr->user_id, run_size) < 0) {
@@ -9506,6 +9506,9 @@ unpriv_command(
 
   switch (phr->action) {
   case NEW_SRV_ACTION_VIRTUAL_RESTART:
+    if (cs->upsolving_mode) {
+      FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
     if (global->enable_virtual_restart <= 0) {
       FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
     }
@@ -9553,6 +9556,9 @@ unpriv_command(
                     virtual_stop_callback);
     break;
   case NEW_SRV_ACTION_VIRTUAL_STOP:
+    if (cs->upsolving_mode) {
+      FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     if (start_time <= 0) {
       FAIL2(NEW_SRV_ERR_CONTEST_NOT_STARTED);
@@ -10411,8 +10417,11 @@ unpriv_xml_update_answer(
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
-    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
-                                          cs->current_time);
+    if (cs->upsolving_mode)
+      stop_time = run_get_stop_time(cs->runlog_state);
+    else
+      stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                            cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state);
@@ -10556,8 +10565,11 @@ unpriv_get_file(
   // check, that this problem may be viewed
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
-    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
-                                          cs->current_time);
+    if (cs->upsolving_mode)
+      stop_time = run_get_stop_time(cs->runlog_state);
+    else
+      stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                            cs->current_time);
   } else {
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state);
