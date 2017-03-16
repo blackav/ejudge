@@ -1371,4 +1371,3 @@ ejudge_timed_fdgets(
 fail:
   return -1;
 }
-`
