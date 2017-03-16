@@ -128,7 +128,7 @@ jQuery(document).ready(function()
 {
     jQuery("#usertable").jqGrid({
         url: self_url,
-        postData: { 'SID' : SID, 'contest_id' : contest_id, 'action' : user_browse_data }, 
+        postData: { 'SID' : SID, 'contest_id' : contest_id, 'group_id' : group_id, 'action' : user_browse_data }, 
         datatype: 'json',
         colNames: [ 'NN', 'UId', 'User Login', 'E-mail', 'Name', 'Status', 'Flags' ],
         colModel: [
