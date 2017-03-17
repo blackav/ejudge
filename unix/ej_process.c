@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1033,8 +1033,8 @@ ejudge_get_host_names(void)
 
   static const unsigned char pat1[] = "inet addr:";
   static const unsigned char pat2[] = "inet6 addr:";
-  static const unsigned char pat3[] = "inet";
-  static const unsigned char pat4[] = "inet6";
+  static const unsigned char pat3[] = "inet ";
+  static const unsigned char pat4[] = "inet6 ";
 
   XCALLOC(names, names_z);
   if (!(f = popen("/sbin/ifconfig", "r"))) goto fail;
