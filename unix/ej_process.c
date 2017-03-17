@@ -1031,8 +1031,10 @@ ejudge_get_host_names(void)
   unsigned char buf[1024], *s, nbuf[1024];
   struct utsname uname_buf;
 
-  static const unsigned char pat1[] = "inet ";
-  static const unsigned char pat2[] = "inet6 ";
+  static const unsigned char pat1[] = "inet addr:";
+  static const unsigned char pat2[] = "inet6 addr:";
+  static const unsigned char pat3[] = "inet";
+  static const unsigned char pat4[] = "inet6";
 
   XCALLOC(names, names_z);
   if (!(f = popen("/sbin/ifconfig", "r"))) goto fail;
@@ -1050,6 +1052,10 @@ ejudge_get_host_names(void)
       sscanf(s + sizeof(pat1) - 1, "%s", nbuf);
     } else if ((s = strstr(buf, pat2))) {
       sscanf(s + sizeof(pat2) - 1, "%s", nbuf);
+    } else if ((s = strstr(buf, pat3))) {
+      sscanf(s + sizeof(pat3) - 1, "%s", nbuf);
+    } else if ((s = strstr(buf, pat4))) {
+      sscanf(s + sizeof(pat4) - 1, "%s", nbuf);
     }
 
     if (nbuf[0]) {
