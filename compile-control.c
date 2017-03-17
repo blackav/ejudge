@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -119,13 +119,15 @@ main(int argc, char *argv[])
   const unsigned char *compile_home_dir = 0;
   path_t config_path_buf;
   path_t  cpp_opts = {0};
-  int cmd = 0, signum = 0, pid;
+  int cmd = 0, signum = 0;
   struct compile_request_packet cp;
   void *pkt_buf = 0;
   size_t pkt_len = 0;
   unsigned char pkt_name[64];
   const unsigned char *signame = 0;
   unsigned char cmdstr[1024];
+  int pid_count = 0;
+  int *pids = NULL;
 
   logger_set_level(-1, LOG_WARNING);
   program_name = os_GetBasename(argv[0]);
@@ -190,6 +192,7 @@ main(int argc, char *argv[])
   }
   (void) cmd;
 
+  /*
   if (!(pid = start_find_process("ej-compile", 0))) {
     op_error("ej-compile is not running");
   } else if (pid > 0) {
@@ -197,6 +200,24 @@ main(int argc, char *argv[])
     fprintf(stderr, "%s: ej-compile is running as pid %d\n", program_name, pid);
     fprintf(stderr, "%s: sending it the %s signal\n", program_name, signame);
     if (start_kill(pid, signum) < 0) op_error("failed: %s", os_ErrorMsg());
+    return 0;
+  }
+  */
+
+  if ((pid_count = start_find_all_processes("ej-compile", &pids)) < 0) {
+    op_error("cannot get the list of processes from /proc");
+  } else if (!pid_count) {
+    op_error("ej-compile is not running");
+  } else {
+    fprintf(stderr, "%s: ej-compile is running as pids", program_name);
+    for (i = 0; i < pid_count; ++i) {
+      fprintf(stderr, " %d", pids[i]);
+    }
+    fprintf(stderr, "\n");
+    fprintf(stderr, "%s: sending them the %s signal\n", program_name, signame);
+    for (i = 0; i < pid_count; ++i) {
+      if (start_kill(pids[i], signum) < 0) op_error("failed: %s", os_ErrorMsg());
+    }
     return 0;
   }
 
