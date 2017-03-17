@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -139,6 +139,7 @@ command_start(
         int all_run_serve,
         int master_mode,
         int super_run_parallelism,
+        int compile_parallelism,
         int skip_mask)
 {
   tTask *tsk = 0;
@@ -227,29 +228,34 @@ command_start(
 
   // start ej-compile
   if (!master_mode && !(skip_mask & EJ_COMPILE_MASK)) {
-    snprintf(path, sizeof(path), "%s/ej-compile", EJUDGE_SERVER_BIN_PATH);
-    tsk = task_New();
-    task_AddArg(tsk, path);
-    task_AddArg(tsk, "-D");
-    if (user) {
-      task_AddArg(tsk, "-u");
-      task_AddArg(tsk, user);
-    }
-    if (group) {
-      task_AddArg(tsk, "-g");
-      task_AddArg(tsk, group);
-    }
-    if (workdir) {
-      snprintf(path, sizeof(path), "%s/compile", workdir);
-      task_AddArg(tsk, "-C");
+    for (int i = 0; i < compile_parallelism; ++i) {
+      snprintf(path, sizeof(path), "%s/ej-compile", EJUDGE_SERVER_BIN_PATH);
+      tsk = task_New();
       task_AddArg(tsk, path);
+      if (compile_parallelism > 1) {
+        task_AddArg(tsk, "-p");
+      }
+      task_AddArg(tsk, "-D");
+      if (user) {
+        task_AddArg(tsk, "-u");
+        task_AddArg(tsk, user);
+      }
+      if (group) {
+        task_AddArg(tsk, "-g");
+        task_AddArg(tsk, group);
+      }
+      if (workdir) {
+        snprintf(path, sizeof(path), "%s/compile", workdir);
+        task_AddArg(tsk, "-C");
+        task_AddArg(tsk, path);
+      }
+      task_AddArg(tsk, "conf/compile.cfg");
+      task_SetPathAsArg0(tsk);
+      task_Start(tsk);
+      task_Wait(tsk);
+      if (task_IsAbnormal(tsk)) goto failed;
+      task_Delete(tsk); tsk = 0;
     }
-    task_AddArg(tsk, "conf/compile.cfg");
-    task_SetPathAsArg0(tsk);
-    task_Start(tsk);
-    task_Wait(tsk);
-    if (task_IsAbnormal(tsk)) goto failed;
-    task_Delete(tsk); tsk = 0;
     compile_started = 1;
   }
 
@@ -403,6 +409,7 @@ main(int argc, char *argv[])
   int all_run_serve = 0;
   int master_mode = 0;
   int parallelism = 1;
+  int compile_parallelism = 1;
   int skip_mask = 0;
   unsigned char **host_names = NULL;
 
@@ -493,10 +500,15 @@ main(int argc, char *argv[])
     startup_error("invalid value of parallelism host option");
   }
 
+  compile_parallelism = ejudge_cfg_get_host_option_int(config, host_names, "compile_parallelism", 1, 0);
+  if (compile_parallelism <= 0 || compile_parallelism > 128) {
+    startup_error("invalid value of compile_parallelism host option");
+  }
+
   if (!strcmp(command, "start")) {
     if (command_start(config, user, group, ejudge_xml_path, force_mode,
                       slave_mode, all_run_serve, master_mode, parallelism,
-                      skip_mask) < 0) 
+                      compile_parallelism, skip_mask) < 0) 
       r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)

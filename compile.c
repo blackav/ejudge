@@ -40,6 +40,7 @@
 #include "ejudge/testinfo.h"
 #include "ejudge/misctext.h"
 #include "ejudge/random.h"
+#include "ejudge/ej_process.h"
 
 #include "ejudge/meta_generic.h"
 #include "ejudge/meta/compile_packet_meta.h"
@@ -1711,13 +1712,6 @@ main(int argc, char *argv[])
   argv_restart[j] = 0;
   start_set_args(argv_restart);
 
-  if (!parallel_mode) {
-    if ((pid = start_find_process("ej-compile", 0)) > 0) {
-      fprintf(stderr, "%s: is already running as pid %d\n", argv[0], pid);
-      return 1;
-    }
-  }
-
 #if defined EJUDGE_XML_PATH
   if (!ejudge_xml_path) ejudge_xml_path = EJUDGE_XML_PATH;
 #endif /* EJUDGE_XML_PATH */
@@ -1743,6 +1737,40 @@ main(int argc, char *argv[])
     fprintf(stderr, "%s: ejudge.xml is invalid\n", argv[0]);
     return 1;
   }
+
+  unsigned char **host_names = NULL;
+  if (!(host_names = ejudge_get_host_names())) {
+    fprintf(stderr, "%s: cannot obtain the list of host names\n", argv[0]);
+    return 1;
+  }
+  if (!host_names[0]) {
+    fprintf(stderr, "%s: cannot determine the name of the host\n", argv[0]);
+    return 1;
+  }
+
+  int parallelism = ejudge_cfg_get_host_option_int(ejudge_config, host_names, "compile_parallelism", 1, 0);
+  if (parallelism <= 0 || parallelism > 128) {
+    fprintf(stderr, "%s: invalid value of compile_parallelism host option\n", argv[0]);
+    return 1;
+  }
+  if (parallelism > 1) parallel_mode = 1;
+
+  int *pids = NULL;
+  int pid_count;
+  if ((pid_count = start_find_all_processes("ej-compile", &pids)) < 0) {
+    fprintf(stderr, "%s: cannot get the list of processes\n", argv[0]);
+    return 1;
+  }
+  if (pid_count >= parallelism) {
+    fprintf(stderr, "%d", pids[0]);
+    for (int i = 1; i < pid_count; ++i) {
+      fprintf(stderr, " %d", pids[i]);
+    }
+    fprintf(stderr, "\n");
+    fprintf(stderr, "%s: %d processes are already running\n", argv[0], pid_count);
+    return 1;
+  }
+  xfree(pids); pids = NULL;
 #endif
 
 #ifdef __WIN32__
