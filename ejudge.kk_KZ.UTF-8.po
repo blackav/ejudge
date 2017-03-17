@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-14 13:03+0300\n"
+"POT-Creation-Date: 2017-03-17 02:54+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -3060,6 +3060,9 @@ msgid "Return to the main page"
 msgstr ""
 
 msgid "Retype new password"
+msgstr ""
+
+msgid "Review comments"
 msgstr ""
 
 msgid "Review notes"
