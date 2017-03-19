@@ -75,8 +75,6 @@
 %><p><s:_>Information is not available.</s:_></p><%
   } else if (global->score_system == SCORE_ACM) {
     do_write_standings(cs, cnts, out_f, 1, 1, phr->user_id, 0, 0, 0, 0, 1, cur_time, NULL);
-  } else if (global->is_virtual) {
-%><p><s:_>Information is not available.</s:_></p><%
   } else if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
 %><p><s:_>Information is not available.</s:_></p><%
   } else if (global->score_system == SCORE_OLYMPIAD) {

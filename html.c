@@ -1041,6 +1041,8 @@ do_write_kirov_standings(
   time_t stop_time;
   time_t cur_duration;
   time_t run_time;
+  time_t tdur = 0;
+  time_t contest_dur;
 
   int  t_max, t_tot, p_max, p_tot, r_tot;
   int *t_ind = 0, *t_rev = 0, *p_ind = 0, *p_rev = 0;
@@ -1141,8 +1143,21 @@ do_write_kirov_standings(
   /* Check that the contest is started */
   start_time = run_get_start_time(state->runlog_state);
   stop_time = run_get_stop_time(state->runlog_state);
+  contest_dur = run_get_duration(state->runlog_state);
+  if (start_time && global->is_virtual && user_id > 0) {
+    start_time = run_get_virtual_start_time(state->runlog_state, user_id);
+    if (!state->upsolving_mode)
+      stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
+  }
   if (cur_time <= 0) cur_time = time(0);
-
+  if (start_time > 0 && contest_dur > 0) {
+    if (stop_time <= 0 && cur_time >= start_time + contest_dur) {
+      stop_time = start_time + contest_dur;
+    }
+    if (stop_time > 0 && cur_time > stop_time) {
+      cur_time = stop_time;
+    }
+  }
   if (!start_time || cur_time < start_time) {
     if (raw_flag) goto cleanup;
     if (!client_flag && !only_table_flag) 
@@ -1337,6 +1352,7 @@ do_write_kirov_standings(
       if (filter_tree_bool_eval(&env, user_filter->stand_run_tree) <= 0)
         continue;
     }
+    
     tind = t_rev[pe->user_id];
     pind = p_rev[pe->prob_id];
     up_ind = (tind << row_sh) + pind;
@@ -1352,10 +1368,14 @@ do_write_kirov_standings(
           continue;
       }
      */
-
+    
+    run_time = pe->time;
+    if (global->is_virtual && !state->upsolving_mode) {
+      // filter future runs in unprivileged mode (not upsolving)
+      tdur = run_time - team_start_time;
+      if (user_id > 0 && tdur > cur_duration) continue;
+    } else if (!client_flag || user_id > 0) {
     // ignore future runs when not in privileged mode
-    if (!client_flag || user_id > 0) {
-      run_time = pe->time;
       if (run_time < start_time) run_time = start_time;
       if (stop_time && run_time > stop_time) run_time = stop_time;
       if (run_time - start_time > cur_duration) continue;

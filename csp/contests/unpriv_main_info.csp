@@ -176,7 +176,7 @@
       }
 %></s:form><%
     }
-  } else if (!cnts->exam_mode && global->is_virtual && stop_time <= 0) {
+  } else if (!cnts->exam_mode && global->is_virtual && stop_time <= 0 && !cs->upsolving_mode) {
 %><s:form><%
     if (cnts->exam_mode) {
 %><p><s:submit ac="virtual-stop" label="Stop exam" /></p><%
@@ -184,7 +184,7 @@
 %><p><s:submit ac="virtual-stop" /></p><%
     }
 %></s:form><%
-  } else if (!cnts->exam_mode && global->is_virtual && start_time > 0 && stop_time > 0 && global->enable_virtual_restart > 0) {
+  } else if (!cnts->exam_mode && global->is_virtual && start_time > 0 && stop_time > 0 && global->enable_virtual_restart > 0 && !cs->upsolving_mode) {
 %><p><s:form><s:submit ac="virtual-restart" /></s:form></p>
 <p><b><s:_>ALL PREVIOUS SUBMITS WILL BE LOST!</s:_></b></p><%
   }
