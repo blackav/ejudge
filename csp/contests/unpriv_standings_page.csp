@@ -78,7 +78,8 @@
   } else if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
 %><p><s:_>Information is not available.</s:_></p><%
   } else if (global->score_system == SCORE_OLYMPIAD) {
-%><p><s:_>Information is not available.</s:_></p><%
+    do_write_kirov_standings(cs, cnts, out_f, 0, 1, 1, phr->user_id, 0, 0, 0, 0, 1, cur_time,
+                             0, NULL, 1 /* user_mode */);
   } else if (global->score_system == SCORE_KIROV) {
     do_write_kirov_standings(cs, cnts, out_f, 0, 1, 1, phr->user_id, 0, 0, 0, 0, 1, cur_time,
                              0, NULL, 1 /* user_mode */);
