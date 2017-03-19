@@ -1041,7 +1041,6 @@ do_write_kirov_standings(
   time_t stop_time;
   time_t cur_duration;
   time_t run_time;
-  time_t tdur = 0;
   time_t contest_dur;
 
   int  t_max, t_tot, p_max, p_tot, r_tot;
@@ -1370,11 +1369,7 @@ do_write_kirov_standings(
      */
     
     run_time = pe->time;
-    if (global->is_virtual && !state->upsolving_mode) {
-      // filter future runs in unprivileged mode (not upsolving)
-      tdur = run_time - team_start_time;
-      if (user_id > 0 && tdur > cur_duration) continue;
-    } else if (!client_flag || user_id > 0) {
+    if (!client_flag || user_id > 0) {
     // ignore future runs when not in privileged mode
       if (run_time < start_time) run_time = start_time;
       if (stop_time && run_time > stop_time) run_time = stop_time;
