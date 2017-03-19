@@ -91,8 +91,11 @@ ns_unparse_answers(
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
-    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
-                                          cs->current_time);
+    if (cs->upsolving_mode)
+      stop_time = run_get_stop_time(cs->runlog_state);
+    else
+      stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+                                            cs->current_time);
     if (stop_time <= 0) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
