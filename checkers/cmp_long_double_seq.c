@@ -44,6 +44,9 @@ int checker_main(int argc, char **argv)
     fatal_CF("EPS >= 1");
   abs_flag = getenv("ABSOLUTE");
 
+  checker_skip_bom(f_corr);
+  checker_skip_bom(f_out);
+
   while (1) {
     i++;
     snprintf(buf, sizeof(buf), "[%d]", i);

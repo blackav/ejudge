@@ -45,6 +45,9 @@ int checker_main(int argc, char **argv)
     }
   }
 
+  checker_skip_bom(f_corr);
+  checker_skip_bom(f_out);
+
   while (1) {
     i++;
     snprintf(buf, sizeof(buf), "[%d]", i);

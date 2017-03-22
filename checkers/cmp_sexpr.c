@@ -29,8 +29,10 @@ int checker_main(int argc, char **argv)
     checker_require_nl(f_out, 1);
   }
 
+  checker_skip_bom(f_corr);
   corr_ans = checker_read_sexpr(2);
   checker_corr_eof();
+  checker_skip_bom(f_out);
   user_ans = checker_read_sexpr(1);
   checker_out_eof();
   if (!checker_eq_sexpr(user_ans, corr_ans))

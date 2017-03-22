@@ -27,6 +27,9 @@ int checker_main(int argc, char **argv)
     checker_require_nl(f_out, 1);
   }
 
+  checker_skip_bom(f_corr);
+  checker_skip_bom(f_out);
+
   checker_read_buf_2(1, _("output"), 1, user_buf, sizeof(user_buf), 0, 0);
   checker_read_buf_2(2, _("correct"), 1, corr_buf, sizeof(corr_buf), 0, 0);
   if (strcasecmp(corr_buf, "yes") && strcasecmp(corr_buf, "no"))

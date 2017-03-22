@@ -33,6 +33,9 @@ int checker_main(int argc, char **argv)
     checker_require_nl(f_out, 1);
   }
 
+  checker_skip_bom(f_corr);
+  checker_skip_bom(f_out);
+
   // считываем файл результата работы программы
   checker_read_file_by_line(1, &out_lines, &out_lines_num);
   // считываем эталонный файл

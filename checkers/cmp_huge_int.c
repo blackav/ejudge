@@ -71,11 +71,13 @@ checker_main(int argc, char *argv[])
     checker_require_nl(f_out, 1);
   }
 
+  checker_skip_bom(f_corr);
   corrval = checker_read_buf_2(2,_("correct"),1,corrsbuf,BUFSIZE,&corrdbuf,&corrdsz);
   checker_corr_eof();
   if (!is_number(corrval)) fatal_CF(_("correct: not a number"));
   normalize_number(corrval);
 
+  checker_skip_bom(f_out);
   outval = checker_read_buf_2(1, _("output"), 1, outsbuf, BUFSIZE, &outdbuf, &outdsz);
   checker_out_eof();
   if (!is_number(outval)) fatal_PE(_("output: not a number"));

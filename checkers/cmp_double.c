@@ -43,9 +43,11 @@ int checker_main(int argc, char **argv)
     fatal_CF("EPS >= 1");
   abs_flag = getenv("ABSOLUTE");
 
+  checker_skip_bom(f_corr);
   checker_read_corr_double(_("correct"), 1, &corr_ans);
   checker_corr_eof();
 
+  checker_skip_bom(f_out);
   checker_read_out_double(_("output"), 1, &out_ans);
   checker_out_eof();
 
