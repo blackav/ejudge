@@ -19,21 +19,21 @@
 #include "l10n_impl.h"
 
 int
-checker_require_nl(int allow_fail)
+checker_require_nl(FILE *f, int allow_fail)
 {
-  if (fseek(f_out, -1L, SEEK_END) < 0) return 1; // non-seekable file
-  if (getc_unlocked(f_out) == '\n') {
-    fseek(f_out, 0L, SEEK_SET);
+  if (fseek(f, -1L, SEEK_END) < 0) return 1; // non-seekable file
+  if (getc_unlocked(f) == '\n') {
+    fseek(f, 0L, SEEK_SET);
     return 1;
   }
 
   // check that the only content is BOM 0xEF, 0xBB, 0xBF
-  if (fseek(f_out, 0L, SEEK_SET) < 0) return 1;
-  if (getc_unlocked(f_out) == 0xEF
-      && getc_unlocked(f_out) == 0xBB
-      && getc_unlocked(f_out) == 0xBF
-      && getc_unlocked(f_out) == EOF) {
-    fseek(f_out, 0L, SEEK_SET);
+  if (fseek(f, 0L, SEEK_SET) < 0) return 1;
+  if (getc_unlocked(f) == 0xEF
+      && getc_unlocked(f) == 0xBB
+      && getc_unlocked(f) == 0xBF
+      && getc_unlocked(f) == EOF) {
+    fseek(f, 0L, SEEK_SET);
     return 1;
   }
 

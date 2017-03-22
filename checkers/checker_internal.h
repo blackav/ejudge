@@ -387,7 +387,7 @@ valuer_parse_input(
 void checker_l10n_prepare(void);
 
 int
-checker_require_nl(int allow_fail);
+checker_require_nl(FILE *f, int allow_fail);
 
 #ifdef __cplusplus
 }
