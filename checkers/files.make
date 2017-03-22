@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru>
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -83,6 +83,7 @@ CFILES=\
  read_corr_double.c\
  read_corr_long_double.c\
  read_sexpr.c\
+ require_nl.c\
  ok.c\
  fatal.c\
  fatal_cf.c\

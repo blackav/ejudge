@@ -1,7 +1,7 @@
 #ifndef __CHECKER_INTERNAL_H__
 #define __CHECKER_INTERNAL_H__
 
-/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -385,6 +385,9 @@ valuer_parse_input(
         struct valuer_test_info **p_infos);
 
 void checker_l10n_prepare(void);
+
+int
+checker_require_nl(int allow_fail);
 
 #ifdef __cplusplus
 }
