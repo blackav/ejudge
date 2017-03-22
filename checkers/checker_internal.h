@@ -388,6 +388,8 @@ void checker_l10n_prepare(void);
 
 int
 checker_require_nl(FILE *f, int allow_fail);
+void
+checker_skip_bom(FILE *f);
 
 #ifdef __cplusplus
 }

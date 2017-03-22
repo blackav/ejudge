@@ -84,6 +84,7 @@ CFILES=\
  read_corr_long_double.c\
  read_sexpr.c\
  require_nl.c\
+ skip_bom.c\
  ok.c\
  fatal.c\
  fatal_cf.c\
