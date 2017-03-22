@@ -28,12 +28,15 @@ checker_skip_bom(FILE *f)
       if ((c = getc_unlocked(f)) == 0xBF) {
         // nothing
       } else {
-        ungetc(c, f);
+        if (fseek(f, -3L, SEEK_CUR) < 0)
+          ungetc(c, f);
       }
     } else {
-      ungetc(c, f);
+      if (fseek(f, -2L, SEEK_CUR) < 0)
+        ungetc(c, f);
     }
   } else {
-    ungetc(c, f);
+    if (fseek(f, -1L, SEEK_CUR) < 0)
+      ungetc(c, f);
   }
 }
