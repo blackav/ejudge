@@ -1232,7 +1232,7 @@ struct section_language_data
   /** configuration key */
   unsigned char key[32];
   /** language architecture */
-  unsigned char arch[32];
+  unsigned char *arch;
   /** source file suffix */
   unsigned char src_sfx[32];
   /** executable file suffix */

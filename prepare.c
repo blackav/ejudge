@@ -558,7 +558,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(short_name, "s"),
   LANGUAGE_PARAM(long_name, "S"),
   LANGUAGE_PARAM(key, "s"),
-  LANGUAGE_PARAM(arch, "s"),
+  LANGUAGE_PARAM(arch, "S"),
   LANGUAGE_PARAM(src_sfx, "s"),
   LANGUAGE_PARAM(exe_sfx, "s"),
   LANGUAGE_PARAM(cmd, "S"),

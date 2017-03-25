@@ -243,7 +243,7 @@ super_html_lang_activate(
   } else {
     usprintf(&lang->long_name, "%s", cs_lang->long_name);
   }
-  strcpy(lang->arch, cs_lang->arch);
+  xstrdup3(&lang->arch, cs_lang->arch);
   strcpy(lang->src_sfx, cs_lang->src_sfx);
   strcpy(lang->exe_sfx, cs_lang->exe_sfx);
   lang->binary = cs_lang->binary;

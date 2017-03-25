@@ -418,7 +418,7 @@ do_eval(struct filter_env *env,
       res->kind = TOK_STRING_L;
       res->type = FILTER_TYPE_STRING;
       lang_id = env->rentries[r1.v.i].lang_id;
-      if (lang_id <= 0 || lang_id > env->maxlang || !env->langs[lang_id]) {
+      if (lang_id <= 0 || lang_id > env->maxlang || !env->langs[lang_id] || !env->langs[lang_id]->arch) {
         res->v.s = envdup(env, "");
       } else {
         res->v.s = envdup(env, env->langs[lang_id]->arch);
@@ -725,7 +725,7 @@ do_eval(struct filter_env *env,
   case TOK_CURARCH:
     res->kind = TOK_STRING_L;
     res->type = FILTER_TYPE_STRING;
-    if (env->cur->lang_id <= 0 || env->cur->lang_id > env->maxlang || !env->langs[env->cur->lang_id]) {
+    if (env->cur->lang_id <= 0 || env->cur->lang_id > env->maxlang || !env->langs[env->cur->lang_id] || !env->langs[env->cur->lang_id]->arch) {
       res->v.s = envdup(env, "");
     } else {
       res->v.s = envdup(env, env->langs[env->cur->lang_id]->arch);

@@ -871,7 +871,7 @@ prepare_unparse_lang(
   if (lang->super_run_dir && lang->super_run_dir[0]) {
     fprintf(f, "super_run_dir = \"%s\"\n", CARMOR(lang->super_run_dir));
   }
-  if (lang->arch[0])
+  if (lang->arch && lang->arch[0])
     fprintf(f, "arch = \"%s\"\n", CARMOR(lang->arch));
   fprintf(f, "src_sfx = \"%s\"\n", CARMOR(lang->src_sfx));
   if (lang->exe_sfx[0])
@@ -2447,11 +2447,14 @@ prepare_unparse_testers(
   XCALLOC(arch_codes, total_langs);
   for (i = 1; i < total_langs; i++) {
     if (!langs[i]) continue;
-    for (j = 0; j < total_archs; j++)
-      if (!strcmp(archs[j], langs[i]->arch))
+    const unsigned char *arch = langs[i]->arch;
+    if (!arch) arch = "";
+    for (j = 0; j < total_archs; j++) {
+      if (!strcmp(archs[j], arch))
         break;
+    }
     if (j == total_archs)
-      archs[total_archs++] = xstrdup(langs[i]->arch);
+      archs[total_archs++] = xstrdup(arch);
   }
 
   // check for unsupported archs
