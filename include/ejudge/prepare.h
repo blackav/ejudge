@@ -1365,7 +1365,7 @@ struct section_tester_data
   unsigned char error_file[256];
 
   /** helper to prepare the executable */
-  path_t prepare_cmd;
+  unsigned char *prepare_cmd;
   /** helper to start testing */
   unsigned char *start_cmd;
   /** nwrun spool directory */

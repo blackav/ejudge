@@ -552,7 +552,7 @@ process_default_testers(void)
       /* check working dirs */
       if (make_writable(tn.check_dir) < 0) return -1;
       if (check_writable_dir(tn.check_dir) < 0) return -1;
-      if (tn.prepare_cmd[0] && check_executable(tn.prepare_cmd) < 0) return -1;
+      if (tn.prepare_cmd && tn.prepare_cmd[0] && check_executable(tn.prepare_cmd) < 0) return -1;
       if (tn.start_cmd && tn.start_cmd[0] && check_executable(tn.start_cmd) < 0) return -1;
       total++;
 
@@ -1070,7 +1070,7 @@ check_config(void)
     /* check working dirs */
     if (make_writable(serve_state.testers[i]->check_dir) < 0) return -1;
     if (check_writable_dir(serve_state.testers[i]->check_dir) < 0) return -1;
-    if (serve_state.testers[i]->prepare_cmd[0]
+    if (serve_state.testers[i]->prepare_cmd && serve_state.testers[i]->prepare_cmd[0]
         && check_executable(serve_state.testers[i]->prepare_cmd) < 0) return -1;
     if (serve_state.testers[i]->start_cmd && serve_state.testers[i]->start_cmd[0]
         && check_executable(serve_state.testers[i]->start_cmd) < 0) return -1;

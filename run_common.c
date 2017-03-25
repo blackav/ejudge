@@ -3775,7 +3775,7 @@ run_tests(
     goto check_failed;
   }
 
-  if (!srpp->type_val && tst && /*tst->prepare_cmd &&*/ tst->prepare_cmd[0]) {
+  if (!srpp->type_val && tst && tst->prepare_cmd && tst->prepare_cmd[0]) {
     if (invoke_prepare_cmd(tst->prepare_cmd, global->run_work_dir, exe_name, messages_path) < 0) {
       goto check_failed;
     }

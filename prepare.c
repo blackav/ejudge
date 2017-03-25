@@ -620,7 +620,7 @@ static const struct config_parse_info section_tester_params[] =
   TESTER_PARAM(errorcode_file, "s"),
   TESTER_PARAM(error_file, "s"),
 
-  TESTER_PARAM(prepare_cmd, "s"),
+  TESTER_PARAM(prepare_cmd, "S"),
   TESTER_PARAM(start_cmd, "S"),
   TESTER_PARAM(nwrun_spool_dir, "S"),
 
@@ -1192,6 +1192,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
   sarray_free(p->start_env);
   xfree(p->nwrun_spool_dir);
   xfree(p->start_cmd);
+  xfree(p->prepare_cmd);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -1332,7 +1333,7 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(errorcode_file, path, path),
   TESTER_INH(error_file, path, path),
   TESTER_INH(start_cmd, string, string),
-  TESTER_INH(prepare_cmd, path, path),
+  TESTER_INH(prepare_cmd, string, string),
   TESTER_INH(memory_limit_type, path2, path),
   TESTER_INH(secure_exec_type, path2, path),
   TESTER_INH(nwrun_spool_dir, string, string),
@@ -4031,16 +4032,13 @@ set_defaults(
           }
         }
 
-        if (!tp->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
-          sformat_message(tp->prepare_cmd, PATH_MAX, 0, atp->prepare_cmd,
-                          g, tp_prob, NULL,
-                          tp, NULL, 0, 0, 0);
-          vinfo("tester.%d.prepare_cmd inherited from tester.%s ('%s')",
-                i, sish, tp->prepare_cmd);        
+        if ((!tp->prepare_cmd || !tp->prepare_cmd[0]) && atp && atp->prepare_cmd && atp->prepare_cmd[0]) {
+          sformat_message_2(&tp->prepare_cmd, 0, atp->prepare_cmd,
+                          g, tp_prob, NULL, tp, NULL, 0, 0, 0);
+          vinfo("tester.%d.prepare_cmd inherited from tester.%s ('%s')", i, sish, tp->prepare_cmd);
         }
-        if (tp->prepare_cmd[0]) {
-          pathmake2(tp->prepare_cmd, g->script_dir, "/", "lang", "/",
-                    tp->prepare_cmd, NULL);
+        if (tp->prepare_cmd && tp->prepare_cmd[0]) {
+          usprintf(&tp->prepare_cmd, "%s/lang/%s", g->script_dir, tp->prepare_cmd);
         }
 
         if ((!tp->nwrun_spool_dir || !tp->nwrun_spool_dir[0]) && atp && atp->nwrun_spool_dir && atp->nwrun_spool_dir[0]) {
@@ -4816,15 +4814,14 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   }
 
   /* copy prepare_cmd */
-  strcpy(out->prepare_cmd, tp->prepare_cmd);
-  if (!out->prepare_cmd[0] && atp && atp->prepare_cmd[0]) {
-    sformat_message(out->prepare_cmd, sizeof(out->prepare_cmd), 0,
+  xstrdup3(&out->prepare_cmd, tp->prepare_cmd);
+  if ((!out->prepare_cmd || !out->prepare_cmd[0]) && atp && atp->prepare_cmd && atp->prepare_cmd[0]) {
+    sformat_message_2(&out->prepare_cmd, 0,
                     atp->prepare_cmd, state->global, prb, NULL, out,
                     NULL, 0, 0, 0);
   }
-  if (out->prepare_cmd[0]) {
-    pathmake2(out->prepare_cmd, state->global->script_dir, "/", "lang", "/",
-              out->prepare_cmd, NULL);
+  if (out->prepare_cmd && out->prepare_cmd[0]) {
+    usprintf(&out->prepare_cmd, "%s/lang/%s", state->global->script_dir, out->prepare_cmd);
   }
 
   /* copy nwrun_spool_dir */
