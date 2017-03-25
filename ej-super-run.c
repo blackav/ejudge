@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -799,7 +799,7 @@ collect_sections(serve_state_t state)
       }
     }
 
-    if (/*t->start_cmd &&*/ t->start_cmd[0]) {
+    if (t->start_cmd && t->start_cmd[0]) {
       if (!os_IsAbsolutePath(t->start_cmd)) {
         snprintf(start_path, sizeof(start_path), "%s", t->start_cmd);
         if (ejudge_config && ejudge_config->compile_home_dir) {
@@ -816,9 +816,9 @@ collect_sections(serve_state_t state)
         }
 #endif
         if (access(start_path, X_OK) >= 0) {
-          snprintf(t->start_cmd, sizeof(t->start_cmd), "%s", start_path);
+          xstrdup3(&t->start_cmd, start_path);
         } else {
-          pathmake2(t->start_cmd, global->script_dir, "/", "lang", "/", t->start_cmd, NULL);
+          usprintf(&t->start_cmd, "%s/lang/%s", global->script_dir, t->start_cmd);
         }
       }
     }

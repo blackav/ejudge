@@ -621,7 +621,7 @@ static const struct config_parse_info section_tester_params[] =
   TESTER_PARAM(error_file, "s"),
 
   TESTER_PARAM(prepare_cmd, "s"),
-  TESTER_PARAM(start_cmd, "s"),
+  TESTER_PARAM(start_cmd, "S"),
   TESTER_PARAM(nwrun_spool_dir, "S"),
 
   TESTER_PARAM(start_env, "x"),
@@ -1191,6 +1191,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
   sarray_free(p->super);
   sarray_free(p->start_env);
   xfree(p->nwrun_spool_dir);
+  xfree(p->start_cmd);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -1330,7 +1331,7 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(check_dir, path, path),
   TESTER_INH(errorcode_file, path, path),
   TESTER_INH(error_file, path, path),
-  TESTER_INH(start_cmd, path, path),
+  TESTER_INH(start_cmd, string, string),
   TESTER_INH(prepare_cmd, path, path),
   TESTER_INH(memory_limit_type, path2, path),
   TESTER_INH(secure_exec_type, path2, path),
@@ -4003,15 +4004,12 @@ set_defaults(
           snprintf(state->testers[i]->error_file, sizeof(state->testers[i]->error_file),
                    "%s", DFLT_T_ERROR_FILE);
         }
-        if (!tp->start_cmd[0] && atp && atp->start_cmd[0]) {
-          sformat_message(tp->start_cmd, PATH_MAX, 0, atp->start_cmd,
-                          g, tp_prob, NULL,
-                          tp, NULL, 0, 0, 0);
-          vinfo("tester.%d.start_cmd inherited from tester.%s ('%s')",
-                i, sish, tp->start_cmd);        
+        if ((!tp->start_cmd || !tp->start_cmd[0]) && atp && atp->start_cmd && atp->start_cmd[0]) {
+          sformat_message_2(&tp->start_cmd, 0, atp->start_cmd, g, tp_prob, NULL, tp, NULL, 0, 0, 0);
+          vinfo("tester.%d.start_cmd inherited from tester.%s ('%s')", i, sish, tp->start_cmd);
         }
 
-        if (tp->start_cmd[0] && !os_IsAbsolutePath(tp->start_cmd)) {
+        if (tp->start_cmd && tp->start_cmd[0] && !os_IsAbsolutePath(tp->start_cmd)) {
           snprintf(start_path, sizeof(start_path), "%s", tp->start_cmd);
           if (ejudge_config && ejudge_config->compile_home_dir) {
             pathmake2(start_path, ejudge_config->compile_home_dir,
@@ -4027,10 +4025,9 @@ set_defaults(
           }
 #endif
           if (access(start_path, X_OK) >= 0) {
-            snprintf(tp->start_cmd, sizeof(tp->start_cmd), "%s", start_path);
+            xstrdup3(&tp->start_cmd, start_path);
           } else {
-            pathmake2(tp->start_cmd, g->script_dir, "/", "lang", "/",
-                      tp->start_cmd, NULL);
+            usprintf(&tp->start_cmd, "%s/lang/%s", g->script_dir, tp->start_cmd);
           }
         }
 
@@ -4789,14 +4786,14 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   */
 
   /* copy start_cmd */
-  strcpy(out->start_cmd, tp->start_cmd);
-  if (!out->start_cmd[0] && atp && atp->start_cmd[0]) {
-    sformat_message(out->start_cmd, sizeof(out->start_cmd), 0,
-                    atp->start_cmd, state->global, prb, NULL, out, NULL,
-                    0, 0, 0);
+  xstrdup3(&out->start_cmd, tp->start_cmd);
+  if ((!out->start_cmd || !out->start_cmd[0]) && atp && atp->start_cmd && atp->start_cmd[0]) {
+    sformat_message_2(&out->start_cmd, 0,
+                      atp->start_cmd, state->global, prb, NULL, out, NULL,
+                      0, 0, 0);
   }
 
-  if (out->start_cmd[0] && !os_IsAbsolutePath(out->start_cmd)) {
+  if (out->start_cmd && out->start_cmd[0] && !os_IsAbsolutePath(out->start_cmd)) {
     snprintf(start_path, sizeof(start_path), "%s", out->start_cmd);
     if (ejudge_config && ejudge_config->compile_home_dir) {
       pathmake2(start_path, ejudge_config->compile_home_dir,
@@ -4812,10 +4809,9 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
     }
 #endif /* EJUDGE_CONTESTS_HOME_DIR */
     if (access(start_path, X_OK) >= 0) {
-      snprintf(out->start_cmd, sizeof(out->start_cmd), "%s", start_path);
+      xstrdup3(&out->start_cmd, start_path);
     } else {
-      pathmake2(out->start_cmd, state->global->script_dir, "/", "lang", "/",
-                out->start_cmd, NULL);
+      usprintf(&out->start_cmd, "%s/lang/%s", state->global->script_dir, out->start_cmd);
     }
   }
 

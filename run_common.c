@@ -2513,7 +2513,7 @@ run_one_test(
     start_msg_need_env = 1;
     task_AddArg(tsk, start_cmd_arg);
   }
-  if (tst && /*tst->start_cmd &&*/ tst->start_cmd[0]) {
+  if (tst && tst->start_cmd && tst->start_cmd[0]) {
     if (remaps) {
       unsigned char *new_cmd = remap_command(tst->start_cmd, remaps);
       fprintf(start_msg_f, " %s", new_cmd);
