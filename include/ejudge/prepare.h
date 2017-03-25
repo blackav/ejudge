@@ -1201,7 +1201,7 @@ struct section_problem_data
   } xml META_ATTRIB((meta_hidden));
 };
 
-/* sizeof(struct section_language_data) == 280/33736 */
+/* sizeof(struct section_language_data) == 280/360 */
 struct section_language_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
