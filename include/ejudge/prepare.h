@@ -1275,7 +1275,7 @@ struct section_language_data
   /** base directory for compile results */
   unsigned char *compile_out_dir;
   /** directory for compile->serve packets */
-  path_t compile_status_dir;
+  unsigned char *compile_status_dir;
   /** directory for executables/error logs */
   path_t compile_report_dir;
   /** environment to pass to the compiler */

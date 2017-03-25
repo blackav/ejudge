@@ -941,6 +941,7 @@ prepare_language_free_func(struct generic_section_config *gp)
   xfree(p->compile_queue_dir);
   xfree(p->compile_src_dir);
   xfree(p->compile_out_dir);
+  xfree(p->compile_status_dir);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -3042,7 +3043,8 @@ set_defaults(
         snprintf(tmp_buf, sizeof(tmp_buf), "%s/%06d", lang->compile_dir, contest_id);
         xfree(lang->compile_out_dir);
         lang->compile_out_dir = xstrdup(tmp_buf);
-        pathmake(lang->compile_status_dir, lang->compile_out_dir, "/", DFLT_G_COMPILE_STATUS_DIR, 0);
+        snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", lang->compile_out_dir, DFLT_G_COMPILE_STATUS_DIR);
+        xfree(lang->compile_status_dir); lang->compile_status_dir = xstrdup(tmp_buf);
         pathmake(lang->compile_report_dir, lang->compile_out_dir, "/", DFLT_G_COMPILE_REPORT_DIR, 0);
       } else if (!lang->compile_dir || !lang->compile_dir[0]) {
         // use the global compile queue settings
@@ -3050,7 +3052,7 @@ set_defaults(
         xfree(lang->compile_queue_dir); lang->compile_queue_dir = xstrdup(g->compile_queue_dir);
         xfree(lang->compile_src_dir); lang->compile_src_dir = xstrdup(g->compile_src_dir);
         xfree(lang->compile_out_dir); lang->compile_out_dir = xstrdup(g->compile_out_dir);
-        pathcpy(lang->compile_status_dir, g->compile_status_dir);
+        xfree(lang->compile_status_dir); lang->compile_status_dir = xstrdup(g->compile_status_dir);
         pathcpy(lang->compile_report_dir, g->compile_report_dir);
       } else {
         // prepare language-specific compile queue settings
@@ -3063,7 +3065,8 @@ set_defaults(
         snprintf(tmp_buf, sizeof(tmp_buf), "%s/%06d", lang->compile_dir, contest_id);
         xfree(lang->compile_out_dir); lang->compile_out_dir = xstrdup(tmp_buf);
         vinfo("language.%d.compile_out_dir is %s", i, lang->compile_out_dir);
-        pathmake(lang->compile_status_dir, lang->compile_out_dir, "/", DFLT_G_COMPILE_STATUS_DIR, 0);
+        snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", lang->compile_out_dir, DFLT_G_COMPILE_STATUS_DIR);
+        xfree(lang->compile_status_dir); lang->compile_status_dir = xstrdup(tmp_buf);
         vinfo("language.%d.compile_status_dir is %s", i, lang->compile_status_dir);
         pathmake(lang->compile_report_dir, lang->compile_out_dir, "/", DFLT_G_COMPILE_REPORT_DIR, 0);
         vinfo("language.%d.compile_report_dir is %s", i, lang->compile_report_dir);
