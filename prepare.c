@@ -758,14 +758,13 @@ usprintf(unsigned char **pbuf, const char *format, ...)
 {
   va_list args;
   char **psbuf = (char**) pbuf;
+  unsigned char *saved = *pbuf;
 
-  if (*pbuf) {
-    xfree(*pbuf);
-    *pbuf = NULL;
-  }
+  *pbuf = NULL;
   va_start(args, format);
   int ret = vasprintf(psbuf, format, args);
   va_end(args);
+  xfree(saved);
   return ret;
 }
 

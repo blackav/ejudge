@@ -237,11 +237,12 @@ super_html_lang_activate(
   sstate->cs_loc_map[lang->compile_id] = lang_id;
 
   strcpy(lang->short_name, cs_lang->short_name);
-  if (sstate->cs_lang_names[cs_lang_id]
-      && *sstate->cs_lang_names[cs_lang_id]) {
+  if (sstate->cs_lang_names[cs_lang_id] && *sstate->cs_lang_names[cs_lang_id]) {
     usprintf(&lang->long_name, "%s", sstate->cs_lang_names[cs_lang_id]);
-  } else {
+  } else if (cs_lang->long_name) {
     usprintf(&lang->long_name, "%s", cs_lang->long_name);
+  } else {
+    xstrdup3(&lang->long_name, "");
   }
   xstrdup3(&lang->arch, cs_lang->arch);
   strcpy(lang->src_sfx, cs_lang->src_sfx);
