@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2001-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2001-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1103,4 +1102,26 @@ sformat_message(
   }
   html_armor_free(&ab);
   return used;
+}
+
+int
+sformat_message_2(
+        unsigned char **pstr,
+        int html_escape_flag,
+        char const *format,
+        const struct section_global_data *glob_data,
+        const struct section_problem_data *prob_data,
+        const struct section_language_data *lang_data,
+        const struct section_tester_data *tester_data,
+        const struct teamdb_export *team_data,
+        const struct userlist_user *user_data,
+        const struct contest_desc *cnts_data,
+        const struct sformat_extra_data *extra_data)
+{
+  unsigned char tmp_buf[PATH_MAX];
+  int ret = sformat_message(tmp_buf, sizeof(tmp_buf), html_escape_flag, format,
+                            glob_data, prob_data, lang_data, tester_data,
+                            team_data, user_data, cnts_data, extra_data);
+  xstrdup3(pstr, tmp_buf);
+  return ret;
 }
