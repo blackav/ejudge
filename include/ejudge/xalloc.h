@@ -89,6 +89,10 @@ void  xexpand4(/* array, elsize, newsize */);
 
 void  xstrarrayfree(strarray_t *);
 
+int
+usprintf(unsigned char **buf, const char *format, ...)
+  __attribute__((format(printf, 2, 3)));
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
