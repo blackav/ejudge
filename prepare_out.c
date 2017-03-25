@@ -976,7 +976,7 @@ prepare_unparse_unhandled_lang(FILE *f, const struct section_language_data *lang
 int
 prepare_check_forbidden_lang(FILE *f, const struct section_language_data *lang)
 {
-  if (lang->cmd[0]) {
+  if (lang->cmd && lang->cmd[0]) {
     fprintf(f, "Cannot handle contests with `cmd' language variable set\n");
     return -1;
   }

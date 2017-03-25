@@ -1591,6 +1591,7 @@ check_config(void)
 
     /* script must exist and be executable */
     total++;
+    if (!serve_state.langs[i]->cmd) return -1;
     if (check_executable(serve_state.langs[i]->cmd) < 0) return -1;
   }
 

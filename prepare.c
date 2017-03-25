@@ -561,7 +561,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(arch, "s"),
   LANGUAGE_PARAM(src_sfx, "s"),
   LANGUAGE_PARAM(exe_sfx, "s"),
-  LANGUAGE_PARAM(cmd, "s"),
+  LANGUAGE_PARAM(cmd, "S"),
   LANGUAGE_PARAM(content_type, "s"),
   LANGUAGE_PARAM(style_checker_cmd, "s"),
   LANGUAGE_PARAM(style_checker_env, "x"),
@@ -935,6 +935,7 @@ prepare_language_free_func(struct generic_section_config *gp)
   xfree(p->unhandled_vars);
   xfree(p->extid);
   xfree(p->super_run_dir);
+  xfree(p->cmd);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -3075,7 +3076,7 @@ set_defaults(
     }
 
     if (mode == PREPARE_COMPILE) {
-      if (!lang->cmd[0]) {
+      if (!lang->cmd && !lang->cmd[0]) {
         err("language.%d.cmd must be set", i);
         return -1;
       }

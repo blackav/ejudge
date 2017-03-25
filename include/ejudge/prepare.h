@@ -1240,7 +1240,7 @@ struct section_language_data
   /** Content-type: header for downloads */
   unsigned char content_type[256];
   /** compile command */
-  path_t cmd;
+  unsigned char *cmd;
   /** style checker */
   path_t style_checker_cmd;
   /** environment to pass to the style checker */

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2012-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -888,6 +888,7 @@ super_load_cs_languages(
         sstate->cs_lang_names[cur_lang] = xstrdup(lp->long_name);
         continue;
       }
+      if (!lp->cmd) continue;
       snprintf(cmdpath, sizeof(cmdpath), "%s/%s-version", script_dir, lp->cmd);
 
       if (access(cmdpath, X_OK) >= 0) {
