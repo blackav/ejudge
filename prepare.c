@@ -617,7 +617,7 @@ static const struct config_parse_info section_tester_params[] =
 
   TESTER_PARAM(run_dir, "s"),
   TESTER_PARAM(check_dir, "s"),
-  TESTER_PARAM(errorcode_file, "s"),
+  TESTER_PARAM(errorcode_file, "S"),
   TESTER_PARAM(error_file, "S"),
 
   TESTER_PARAM(prepare_cmd, "S"),
@@ -1194,6 +1194,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
   xfree(p->start_cmd);
   xfree(p->prepare_cmd);
   xfree(p->error_file);
+  xfree(p->errorcode_file);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -1331,7 +1332,7 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(ignore_stderr, int, int),
   TESTER_INH(priority_adjustment, int3, int),
   TESTER_INH(check_dir, path, path),
-  TESTER_INH(errorcode_file, path, path),
+  TESTER_INH(errorcode_file, string, string),
   TESTER_INH(error_file, string, string),
   TESTER_INH(start_cmd, string, string),
   TESTER_INH(prepare_cmd, string, string),
@@ -3971,10 +3972,9 @@ set_defaults(
       if (tp->ignore_stderr == -1) {
         tp->ignore_stderr = 0;
       }
-      if (!tp->errorcode_file[0] && atp && atp->errorcode_file[0]) {
-        sformat_message(tp->errorcode_file, PATH_MAX, 0, atp->errorcode_file,
-                        g, tp_prob, NULL,
-                        tp, NULL, 0, 0, 0);
+      if ((!tp->errorcode_file || !tp->errorcode_file[0]) && atp && atp->errorcode_file && atp->errorcode_file[0]) {
+        sformat_message_2(&tp->errorcode_file, 0, atp->errorcode_file,
+                        g, tp_prob, NULL, tp, NULL, 0, 0, 0);
         vinfo("tester.%d.errorcode_file inherited from tester.%s ('%s')",
               i, sish, tp->errorcode_file);        
       }
@@ -4754,9 +4754,9 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   */
 
   /* copy errorcode_file */
-  strcpy(out->errorcode_file, tp->errorcode_file);
-  if (!out->errorcode_file[0] && atp && atp->errorcode_file[0]) {
-    sformat_message(out->errorcode_file, sizeof(out->errorcode_file), 0,
+  xstrdup3(&out->errorcode_file, tp->errorcode_file);
+  if ((!out->errorcode_file || !out->errorcode_file[0]) && atp && atp->errorcode_file && atp->errorcode_file[0]) {
+    sformat_message_2(&out->errorcode_file, 0,
                     atp->errorcode_file, state->global, prb, NULL,
                     out, NULL, 0, 0, 0);
   }

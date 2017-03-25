@@ -2280,7 +2280,7 @@ run_one_test(
            global->run_work_dir, cur_test);
 
   error_code[0] = 0;
-  if (tst && tst->errorcode_file[0]) {
+  if (tst && tst->errorcode_file && tst->errorcode_file[0]) {
     snprintf(error_code, sizeof(error_code), "%s/%s", check_dir, tst->errorcode_file);
   }
 

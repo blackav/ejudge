@@ -1360,7 +1360,7 @@ struct section_tester_data
 
   path_t check_dir;
   /** file that contains completion status */
-  unsigned char errorcode_file[256];
+  unsigned char *errorcode_file;
   /** stderr output of the checked program */
   unsigned char *error_file;
 
