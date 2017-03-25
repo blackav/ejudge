@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -50,4 +50,18 @@ xstrdup2(const char *str)
   ptr = strdup(str);
   if (ptr == NULL) reuse_out_of_mem();
   return ptr;
+}
+
+void
+xstrdup3(unsigned char **pdst, const char *str)
+{
+  if (*pdst) {
+    xfree(*pdst);
+    *pdst = NULL;
+  }
+  if (str) {
+    if (!(*pdst = strdup(str))) {
+      reuse_out_of_mem();
+    }
+  }
 }
