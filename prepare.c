@@ -3048,7 +3048,7 @@ set_defaults(
         usprintf(&lang->compile_src_dir, "%s/%s", lang->compile_dir, DFLT_G_COMPILE_QUEUE_DIR);
         usprintf(&lang->compile_out_dir, "%s/%06d", lang->compile_dir, contest_id);
         usprintf(&lang->compile_status_dir, "%s/%s", lang->compile_out_dir, DFLT_G_COMPILE_STATUS_DIR);
-        pathmake(lang->compile_report_dir, lang->compile_out_dir, "/", DFLT_G_COMPILE_REPORT_DIR, 0);
+        usprintf(&lang->compile_report_dir, "%s/%s", lang->compile_out_dir, DFLT_G_COMPILE_REPORT_DIR);
       } else if (!lang->compile_dir || !lang->compile_dir[0]) {
         // use the global compile queue settings
         xfree(lang->compile_dir); lang->compile_dir = xstrdup(g->compile_dir);
@@ -3056,19 +3056,14 @@ set_defaults(
         xfree(lang->compile_src_dir); lang->compile_src_dir = xstrdup(g->compile_src_dir);
         xfree(lang->compile_out_dir); lang->compile_out_dir = xstrdup(g->compile_out_dir);
         xfree(lang->compile_status_dir); lang->compile_status_dir = xstrdup(g->compile_status_dir);
-        pathcpy(lang->compile_report_dir, g->compile_report_dir);
+        xfree(lang->compile_report_dir); lang->compile_report_dir = xstrdup(g->compile_report_dir);
       } else {
         // prepare language-specific compile queue settings
         usprintf(&lang->compile_queue_dir, "%s/%s", lang->compile_dir, DFLT_G_COMPILE_QUEUE_DIR);
-        vinfo("language.%d.compile_queue_dir is %s",i, lang->compile_queue_dir);
         usprintf(&lang->compile_src_dir, "%s/%s", lang->compile_dir, DFLT_G_COMPILE_SRC_DIR);
-        vinfo("language.%d.compile_src_dir is %s", i, lang->compile_src_dir);
         usprintf(&lang->compile_out_dir, "%s/%06d", lang->compile_dir, contest_id);
-        vinfo("language.%d.compile_out_dir is %s", i, lang->compile_out_dir);
         usprintf(&lang->compile_status_dir, "%s/%s", lang->compile_out_dir, DFLT_G_COMPILE_STATUS_DIR);
-        vinfo("language.%d.compile_status_dir is %s", i, lang->compile_status_dir);
-        pathmake(lang->compile_report_dir, lang->compile_out_dir, "/", DFLT_G_COMPILE_REPORT_DIR, 0);
-        vinfo("language.%d.compile_report_dir is %s", i, lang->compile_report_dir);
+        usprintf(&lang->compile_report_dir, "%s/%s", lang->compile_out_dir, DFLT_G_COMPILE_REPORT_DIR);
       }
     }
 
