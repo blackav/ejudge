@@ -1799,7 +1799,7 @@ serve_run_request(
   if (eoln_type == EOLN_CRLF) srgp->is_dos = 1;
   if (lang) {
     srgp->lang_short_name = xstrdup(lang->short_name);
-    if (/*lang->key &&*/ lang->key[0]) {
+    if (lang->key && lang->key[0]) {
       srgp->lang_key = xstrdup(lang->key);
     }
     if (eoln_type <= 0) srgp->is_dos = lang->is_dos;

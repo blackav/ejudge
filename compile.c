@@ -1554,12 +1554,15 @@ do_loop(void)
 static int
 filter_languages(char *key)
 {
+  // key is not NULL
   int i, total = 0;
   const struct section_language_data *lang = 0;
 
   for (i = 1; i <= serve_state.max_lang; i++) {
     if (!(lang = serve_state.langs[i])) continue;
     if (lang->disabled_by_config > 0) {
+      serve_state.langs[i] = 0;
+    } else if (!lang->key) {
       serve_state.langs[i] = 0;
     } else if (strcmp(lang->key, key)) {
       serve_state.langs[i] = 0;

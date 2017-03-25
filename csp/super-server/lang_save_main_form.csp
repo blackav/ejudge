@@ -78,7 +78,7 @@
     }
 
     if (!retval && phr->ss) {
-        snprintf(lang->long_name, sizeof(lang->long_name), "%s", long_name);
+        usprintf(&lang->long_name, "%s", long_name);
         xfree(lang->extid); lang->extid = extid; extid = NULL;
         lang->disabled = disabled;
         lang->insecure = insecure;
