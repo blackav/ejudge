@@ -3053,12 +3053,12 @@ set_defaults(
         usprintf(&lang->compile_report_dir, "%s/%s", lang->compile_out_dir, DFLT_G_COMPILE_REPORT_DIR);
       } else if (!lang->compile_dir || !lang->compile_dir[0]) {
         // use the global compile queue settings
-        xfree(lang->compile_dir); lang->compile_dir = xstrdup(g->compile_dir);
-        xfree(lang->compile_queue_dir); lang->compile_queue_dir = xstrdup(g->compile_queue_dir);
-        xfree(lang->compile_src_dir); lang->compile_src_dir = xstrdup(g->compile_src_dir);
-        xfree(lang->compile_out_dir); lang->compile_out_dir = xstrdup(g->compile_out_dir);
-        xfree(lang->compile_status_dir); lang->compile_status_dir = xstrdup(g->compile_status_dir);
-        xfree(lang->compile_report_dir); lang->compile_report_dir = xstrdup(g->compile_report_dir);
+        xstrdup3(&lang->compile_dir, g->compile_dir);
+        xstrdup3(&lang->compile_queue_dir, g->compile_queue_dir);
+        xstrdup3(&lang->compile_src_dir, g->compile_src_dir);
+        xstrdup3(&lang->compile_out_dir, g->compile_out_dir);
+        xstrdup3(&lang->compile_status_dir, g->compile_status_dir);
+        xstrdup3(&lang->compile_report_dir, g->compile_report_dir);
       } else {
         // prepare language-specific compile queue settings
         usprintf(&lang->compile_queue_dir, "%s/%s", lang->compile_dir, DFLT_G_COMPILE_QUEUE_DIR);
