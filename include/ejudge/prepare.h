@@ -1271,7 +1271,7 @@ struct section_language_data
   /** directory for serve->compile packets */
   unsigned char *compile_queue_dir;
   /** directory for source files */
-  path_t compile_src_dir;
+  unsigned char *compile_src_dir;
   /** base directory for compile results */
   path_t compile_out_dir;
   /** directory for compile->serve packets */

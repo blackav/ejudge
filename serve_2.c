@@ -1367,7 +1367,7 @@ serve_compile_request(
     prio += state->prob_prio[prob->id];
 
   compile_src_dir = global->compile_src_dir;
-  if (lang /*&& lang->compile_src_dir*/ && lang->compile_src_dir[0]) {
+  if (lang && lang->compile_src_dir && lang->compile_src_dir[0]) {
     compile_src_dir = lang->compile_src_dir;
   }
   compile_queue_dir = global->compile_queue_dir;

@@ -939,6 +939,7 @@ prepare_language_free_func(struct generic_section_config *gp)
   xfree(p->style_checker_cmd);
   xfree(p->compile_dir);
   xfree(p->compile_queue_dir);
+  xfree(p->compile_src_dir);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -3034,7 +3035,9 @@ set_defaults(
         snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", lang->compile_dir, DFLT_G_COMPILE_QUEUE_DIR);
         xfree(lang->compile_queue_dir);
         lang->compile_queue_dir = xstrdup(tmp_buf);
-        pathmake(lang->compile_src_dir, lang->compile_dir, "/", DFLT_G_COMPILE_SRC_DIR, 0);
+        snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", lang->compile_dir, DFLT_G_COMPILE_SRC_DIR);
+        xfree(lang->compile_src_dir);
+        lang->compile_src_dir = xstrdup(tmp_buf);
         snprintf(lang->compile_out_dir, sizeof(lang->compile_out_dir), "%s/%06d", lang->compile_dir, contest_id);
         pathmake(lang->compile_status_dir, lang->compile_out_dir, "/",
                  DFLT_G_COMPILE_STATUS_DIR, 0);
@@ -3044,7 +3047,7 @@ set_defaults(
         // use the global compile queue settings
         xfree(lang->compile_dir); lang->compile_dir = xstrdup(g->compile_dir);
         xfree(lang->compile_queue_dir); lang->compile_queue_dir = xstrdup(g->compile_queue_dir);
-        pathcpy(lang->compile_src_dir, g->compile_src_dir);
+        xfree(lang->compile_src_dir); lang->compile_src_dir = xstrdup(g->compile_src_dir);
         pathcpy(lang->compile_out_dir, g->compile_out_dir);
         pathcpy(lang->compile_status_dir, g->compile_status_dir);
         pathcpy(lang->compile_report_dir, g->compile_report_dir);
@@ -3053,7 +3056,8 @@ set_defaults(
         snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", lang->compile_dir, DFLT_G_COMPILE_QUEUE_DIR);
         xfree(lang->compile_queue_dir); lang->compile_queue_dir = xstrdup(tmp_buf);
         vinfo("language.%d.compile_queue_dir is %s",i, lang->compile_queue_dir);
-        pathmake(lang->compile_src_dir, lang->compile_dir, "/", DFLT_G_COMPILE_SRC_DIR, 0);
+        snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", lang->compile_dir, DFLT_G_COMPILE_SRC_DIR);
+        xfree(lang->compile_src_dir); lang->compile_src_dir = xstrdup(tmp_buf);
         vinfo("language.%d.compile_src_dir is %s", i, lang->compile_src_dir);
         snprintf(lang->compile_out_dir, sizeof(lang->compile_out_dir), "%s/%06d", lang->compile_dir, contest_id);
         vinfo("language.%d.compile_out_dir is %s", i, lang->compile_out_dir);
