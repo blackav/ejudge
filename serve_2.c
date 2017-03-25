@@ -1371,7 +1371,7 @@ serve_compile_request(
     compile_src_dir = lang->compile_src_dir;
   }
   compile_queue_dir = global->compile_queue_dir;
-  if (lang /*&& lang->compile_queue_dir*/ && lang->compile_queue_dir[0]) {
+  if (lang && lang->compile_queue_dir && lang->compile_queue_dir[0]) {
     compile_queue_dir = lang->compile_queue_dir;
   }
 

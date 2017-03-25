@@ -937,6 +937,8 @@ prepare_language_free_func(struct generic_section_config *gp)
   xfree(p->super_run_dir);
   xfree(p->cmd);
   xfree(p->style_checker_cmd);
+  xfree(p->compile_dir);
+  xfree(p->compile_queue_dir);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -3029,7 +3031,9 @@ set_defaults(
           return -1;
 #endif
         }
-        pathmake(lang->compile_queue_dir, lang->compile_dir, "/", DFLT_G_COMPILE_QUEUE_DIR, 0);
+        snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", lang->compile_dir, DFLT_G_COMPILE_QUEUE_DIR);
+        xfree(lang->compile_queue_dir);
+        lang->compile_queue_dir = xstrdup(tmp_buf);
         pathmake(lang->compile_src_dir, lang->compile_dir, "/", DFLT_G_COMPILE_SRC_DIR, 0);
         snprintf(lang->compile_out_dir, sizeof(lang->compile_out_dir), "%s/%06d", lang->compile_dir, contest_id);
         pathmake(lang->compile_status_dir, lang->compile_out_dir, "/",
@@ -3039,14 +3043,15 @@ set_defaults(
       } else if (!lang->compile_dir || !lang->compile_dir[0]) {
         // use the global compile queue settings
         xfree(lang->compile_dir); lang->compile_dir = xstrdup(g->compile_dir);
-        pathcpy(lang->compile_queue_dir, g->compile_queue_dir);
+        xfree(lang->compile_queue_dir); lang->compile_queue_dir = xstrdup(g->compile_queue_dir);
         pathcpy(lang->compile_src_dir, g->compile_src_dir);
         pathcpy(lang->compile_out_dir, g->compile_out_dir);
         pathcpy(lang->compile_status_dir, g->compile_status_dir);
         pathcpy(lang->compile_report_dir, g->compile_report_dir);
       } else {
         // prepare language-specific compile queue settings
-        pathmake(lang->compile_queue_dir, lang->compile_dir, "/", DFLT_G_COMPILE_QUEUE_DIR, 0);
+        snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", lang->compile_dir, DFLT_G_COMPILE_QUEUE_DIR);
+        xfree(lang->compile_queue_dir); lang->compile_queue_dir = xstrdup(tmp_buf);
         vinfo("language.%d.compile_queue_dir is %s",i, lang->compile_queue_dir);
         pathmake(lang->compile_src_dir, lang->compile_dir, "/", DFLT_G_COMPILE_SRC_DIR, 0);
         vinfo("language.%d.compile_src_dir is %s", i, lang->compile_src_dir);
