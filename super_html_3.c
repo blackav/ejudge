@@ -250,7 +250,7 @@ super_html_lang_activate(
   strcpy(lang->exe_sfx, cs_lang->exe_sfx);
   lang->binary = cs_lang->binary;
   lang->insecure = cs_lang->insecure;
-  strcpy(lang->content_type, cs_lang->content_type);
+  xstrdup3(&lang->content_type, cs_lang->content_type);
   lang->compile_dir_index = cs_lang->compile_dir_index;
   lang->max_vm_size = cs_lang->max_vm_size;
   lang->max_stack_size = cs_lang->max_stack_size;

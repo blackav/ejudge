@@ -5195,7 +5195,7 @@ priv_download_source(
     src_sfx = lang->src_sfx;
     if (!src_sfx) src_sfx = "";
 
-    if (/*lang->content_type &&*/ lang->content_type[0]) {
+    if (lang->content_type && lang->content_type[0]) {
       content_type = lang->content_type;
     } else if (lang->binary) {
       if (re.mime_type <= 0 && !strcmp(src_sfx, ".tar")) {
@@ -9692,7 +9692,7 @@ unpriv_download_run(
       FAIL2(NEW_SRV_ERR_INV_LANG_ID);
     }
 
-    if (/*lang->content_type && */ lang->content_type[0]) {
+    if (lang->content_type && lang->content_type[0]) {
       fprintf(fout, "Content-type: %s\n", lang->content_type);
       fprintf(fout, "Content-Disposition: attachment; filename=\"%06d%s\"\n\n",
               run_id, lang->src_sfx);

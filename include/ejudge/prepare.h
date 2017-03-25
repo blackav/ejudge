@@ -1238,7 +1238,7 @@ struct section_language_data
   /** executable file suffix */
   unsigned char exe_sfx[32];
   /** Content-type: header for downloads */
-  unsigned char content_type[256];
+  unsigned char *content_type;
   /** compile command */
   unsigned char *cmd;
   /** style checker */

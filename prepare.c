@@ -562,7 +562,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(src_sfx, "s"),
   LANGUAGE_PARAM(exe_sfx, "s"),
   LANGUAGE_PARAM(cmd, "S"),
-  LANGUAGE_PARAM(content_type, "s"),
+  LANGUAGE_PARAM(content_type, "S"),
   LANGUAGE_PARAM(style_checker_cmd, "S"),
   LANGUAGE_PARAM(style_checker_env, "x"),
 
@@ -961,6 +961,8 @@ prepare_language_free_func(struct generic_section_config *gp)
   xfree(p->compile_src_dir);
   xfree(p->compile_out_dir);
   xfree(p->compile_status_dir);
+  xfree(p->compile_report_dir);
+  xfree(p->content_type);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }

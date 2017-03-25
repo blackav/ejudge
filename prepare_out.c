@@ -898,7 +898,7 @@ prepare_unparse_lang(
     unparse_bool(f, "disable_auto_testing", lang->disable_auto_testing);
   if (lang->disable_testing)
     unparse_bool(f, "disable_testing", lang->disable_testing);
-  if (lang->content_type[0]) {
+  if (lang->content_type && lang->content_type[0]) {
     fprintf(f, "content_type = \"%s\"\n", CARMOR(lang->content_type));
   }
   if (lang->style_checker_cmd && lang->style_checker_cmd[0]) {
