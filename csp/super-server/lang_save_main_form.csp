@@ -92,7 +92,7 @@
         if (max_stack_size >= 0) lang->max_stack_size = max_stack_size;
         if (max_file_size >= 0) lang->max_file_size = max_file_size;
         snprintf(lang->content_type, sizeof(lang->content_type), "%s", content_type);
-        snprintf(lang->style_checker_cmd, sizeof(lang->style_checker_cmd), "%s", style_checker_cmd);
+        xfree(lang->style_checker_cmd); lang->style_checker_cmd = xstrdup(style_checker_cmd);
         sarray_free(lang->style_checker_env); lang->style_checker_env = style_checker_env; style_checker_env = NULL;
         xfree(phr->ss->lang_opts[compile_id]); phr->ss->lang_opts[compile_id] = opts; opts = NULL;
         xfree(phr->ss->lang_libs[compile_id]); phr->ss->lang_libs[compile_id] = libs; libs = NULL;

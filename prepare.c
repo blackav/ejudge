@@ -563,7 +563,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(exe_sfx, "s"),
   LANGUAGE_PARAM(cmd, "S"),
   LANGUAGE_PARAM(content_type, "s"),
-  LANGUAGE_PARAM(style_checker_cmd, "s"),
+  LANGUAGE_PARAM(style_checker_cmd, "S"),
   LANGUAGE_PARAM(style_checker_env, "x"),
 
   LANGUAGE_PARAM(disable_auto_testing, "d"),
@@ -936,6 +936,7 @@ prepare_language_free_func(struct generic_section_config *gp)
   xfree(p->extid);
   xfree(p->super_run_dir);
   xfree(p->cmd);
+  xfree(p->style_checker_cmd);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -3065,9 +3066,10 @@ set_defaults(
       }
     }
 
-    if (lang->style_checker_cmd[0] && lang->style_checker_cmd[0] != '@' && lang->style_checker_cmd[0] != '%') {
-      pathmake2(lang->style_checker_cmd, g->ejudge_checkers_dir,
-                "/", lang->style_checker_cmd, NULL);
+    if (lang->style_checker_cmd && lang->style_checker_cmd[0] && lang->style_checker_cmd[0] != '@' && lang->style_checker_cmd[0] != '%') {
+      pathmake2(tmp_buf, g->ejudge_checkers_dir, "/", lang->style_checker_cmd, NULL);
+      xfree(lang->style_checker_cmd);
+      lang->style_checker_cmd = xstrdup(tmp_buf);
     }
 
     if (!lang->src_sfx[0]) {
@@ -3080,23 +3082,25 @@ set_defaults(
         err("language.%d.cmd must be set", i);
         return -1;
       }
-      if (!os_IsAbsolutePath(lang->cmd) && ejudge_config
-          && ejudge_config->compile_home_dir) {
-        pathmake2(lang->cmd, ejudge_config->compile_home_dir,
-                  "/", "scripts", "/", lang->cmd, NULL);
+      if (!os_IsAbsolutePath(lang->cmd) && ejudge_config && ejudge_config->compile_home_dir) {
+        pathmake2(tmp_buf, ejudge_config->compile_home_dir, "/", "scripts", "/", lang->cmd, NULL);
+        xfree(lang->cmd);
+        lang->cmd = xstrdup(tmp_buf);
       }
-      if (!os_IsAbsolutePath(lang->cmd) && ejudge_config
-                 && ejudge_config->contests_home_dir) {
-        pathmake2(lang->cmd, ejudge_config->contests_home_dir,
-                  "/", "compile", "/", "scripts", "/", lang->cmd, NULL);
+      if (!os_IsAbsolutePath(lang->cmd) && ejudge_config && ejudge_config->contests_home_dir) {
+        pathmake2(tmp_buf, ejudge_config->contests_home_dir, "/", "compile", "/", "scripts", "/", lang->cmd, NULL);
+        xfree(lang->cmd);
+        lang->cmd = xstrdup(tmp_buf);
       }
 #if defined EJUDGE_CONTESTS_HOME_DIR
       if (!os_IsAbsolutePath(lang->cmd)) {
-        pathmake2(lang->cmd, EJUDGE_CONTESTS_HOME_DIR, "/", "compile",
-                  "/", "scripts", "/", lang->cmd, NULL);
+        pathmake2(tmp_buf, EJUDGE_CONTESTS_HOME_DIR, "/", "compile", "/", "scripts", "/", lang->cmd, NULL);
+        xfree(lang->cmd);
+        lang->cmd = xstrdup(tmp_buf);
       }
 #endif /* EJUDGE_CONTESTS_HOME_DIR */
-      param_subst(lang->cmd, sizeof(lang->cmd), subst_src, subst_dst);
+      param_subst_2(&lang->cmd, subst_src, subst_dst);
+
       vinfo("language.%d.cmd is %s", i, lang->cmd);      
       if (lang->compile_real_time_limit == -1) {
         lang->compile_real_time_limit = g->compile_real_time_limit;

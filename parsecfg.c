@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1917,6 +1917,28 @@ param_subst(
     if ((len = is_prefix(subst_src[i], buf)) >= 0) {
       snprintf(tmp_buf, sizeof(tmp_buf), "%s%s", subst_dst[i], buf + len);
       snprintf(buf, size, "%s", tmp_buf);
+      return;
+    }
+  }
+}
+
+void
+param_subst_2(
+        unsigned char **pbuf,
+        const unsigned char **subst_src,
+        const unsigned char **subst_dst)
+{
+  int i, len;
+  unsigned char tmp_buf[4096];
+
+  if (!*pbuf) return;
+  if (!subst_src || !subst_dst) return;
+
+  for (i = 0; subst_src[i]; ++i) {
+    if ((len = is_prefix(subst_src[i], *pbuf)) >= 0) {
+      snprintf(tmp_buf, sizeof(tmp_buf), "%s%s", subst_dst[i], *pbuf + len);
+      xfree(*pbuf);
+      *pbuf = xstrdup(*pbuf);
       return;
     }
   }

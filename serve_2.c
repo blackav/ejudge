@@ -1240,7 +1240,7 @@ serve_compile_request(
 
   if (!state->compile_request_id) state->compile_request_id++;
 
-  if ((!style_checker_cmd || !style_checker_cmd[0]) && lang) {
+  if ((!style_checker_cmd || !style_checker_cmd[0]) && lang && lang->style_checker_cmd) {
     style_checker_cmd = lang->style_checker_cmd;
   }
 
@@ -2760,8 +2760,8 @@ serve_read_compile_packet(
     }
   }
 
-  if ((prob && /*prob->style_checker_cmd &&*/ prob->style_checker_cmd[0])
-      || (lang && /*lang->style_checker_cmd &&*/ lang->style_checker_cmd[0])) {
+  if ((prob && prob->style_checker_cmd && prob->style_checker_cmd[0])
+      || (lang && lang->style_checker_cmd && lang->style_checker_cmd[0])) {
     min_txt_size = 0;
   }
   snprintf(txt_packet_path, sizeof(txt_packet_path), "%s/%s.txt", compile_report_dir, pname);

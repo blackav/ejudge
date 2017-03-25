@@ -1242,7 +1242,7 @@ struct section_language_data
   /** compile command */
   unsigned char *cmd;
   /** style checker */
-  path_t style_checker_cmd;
+  unsigned char *style_checker_cmd;
   /** environment to pass to the style checker */
   ejenvlist_t style_checker_env;
 
