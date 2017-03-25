@@ -762,7 +762,10 @@ usprintf(unsigned char **pbuf, const char *format, ...)
   va_list args;
   char **psbuf = (char**) pbuf;
 
-  if (*pbuf) xfree(*pbuf);
+  if (*pbuf) {
+    xfree(*pbuf);
+    *pbuf = NULL;
+  }
   va_start(args, format);
   int ret = vasprintf(psbuf, format, args);
   va_end(args);
@@ -2326,7 +2329,6 @@ set_defaults(
   path_t fpath;
   path_t start_path;
   path_t xml_path;
-  path_t tmp_buf;
 
   int contest_id = 0;
   /* find global section */
@@ -2799,14 +2801,12 @@ set_defaults(
     }
 
     if (g->contest_stop_cmd && g->contest_stop_cmd[0]) {
-      pathmake2(tmp_buf, g->conf_dir, "/", g->contest_stop_cmd, NULL);
-      if (check_executable(tmp_buf) < 0) {
+      usprintf(&g->contest_stop_cmd, "%s/%s", g->conf_dir, g->contest_stop_cmd);
+      if (check_executable(g->contest_stop_cmd) < 0) {
         err("contest stop command %s is not executable or does not exist",
-            tmp_buf);
+            g->contest_stop_cmd);
         return -1;
       }
-      xfree(g->contest_stop_cmd);
-      g->contest_stop_cmd = xstrdup(tmp_buf);
     }
 
     if (g->stand_header_file[0]) {
@@ -3033,34 +3033,21 @@ set_defaults(
         }
         const unsigned char *ecd = g->extra_compile_dirs[lang->compile_dir_index - 1];
         if (os_IsAbsolutePath(ecd)) {
-          snprintf(tmp_buf, sizeof(tmp_buf), "%s/var/compile", ecd);
-          xfree(lang->compile_dir);
-          lang->compile_dir = xstrdup(tmp_buf);
+          usprintf(&lang->compile_dir, "%s/var/compile", ecd);
         } else if (ejudge_config && ejudge_config->contests_home_dir) {
-          snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s/var/compile", ejudge_config->contests_home_dir, ecd);
-          xfree(lang->compile_dir);
-          lang->compile_dir = xstrdup(tmp_buf);
+          usprintf(&lang->compile_dir, "%s/%s/var/compile", ejudge_config->contests_home_dir, ecd);
         } else {
 #if defined EJUDGE_CONTESTS_HOME_DIR
-          snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s/var/compile", EJUDGE_CONTESTS_HOME_DIR, ecd);
-          xfree(lang->compile_dir);
-          lang->compile_dir = xstrdup(tmp_buf);
+          usprintf(&lang->compile_dir, "%s/%s/var/compile", EJUDGE_CONTESTS_HOME_DIR, ecd);
 #else
           err("language.d: invalid extra_compile_dirs");
           return -1;
 #endif
         }
-        snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", lang->compile_dir, DFLT_G_COMPILE_QUEUE_DIR);
-        xfree(lang->compile_queue_dir);
-        lang->compile_queue_dir = xstrdup(tmp_buf);
-        snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", lang->compile_dir, DFLT_G_COMPILE_SRC_DIR);
-        xfree(lang->compile_src_dir);
-        lang->compile_src_dir = xstrdup(tmp_buf);
-        snprintf(tmp_buf, sizeof(tmp_buf), "%s/%06d", lang->compile_dir, contest_id);
-        xfree(lang->compile_out_dir);
-        lang->compile_out_dir = xstrdup(tmp_buf);
-        snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", lang->compile_out_dir, DFLT_G_COMPILE_STATUS_DIR);
-        xfree(lang->compile_status_dir); lang->compile_status_dir = xstrdup(tmp_buf);
+        usprintf(&lang->compile_queue_dir, "%s/%s", lang->compile_dir, DFLT_G_COMPILE_QUEUE_DIR);
+        usprintf(&lang->compile_src_dir, "%s/%s", lang->compile_dir, DFLT_G_COMPILE_QUEUE_DIR);
+        usprintf(&lang->compile_out_dir, "%s/%06d", lang->compile_dir, contest_id);
+        usprintf(&lang->compile_status_dir, "%s/%s", lang->compile_out_dir, DFLT_G_COMPILE_STATUS_DIR);
         pathmake(lang->compile_report_dir, lang->compile_out_dir, "/", DFLT_G_COMPILE_REPORT_DIR, 0);
       } else if (!lang->compile_dir || !lang->compile_dir[0]) {
         // use the global compile queue settings
@@ -3072,17 +3059,13 @@ set_defaults(
         pathcpy(lang->compile_report_dir, g->compile_report_dir);
       } else {
         // prepare language-specific compile queue settings
-        snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", lang->compile_dir, DFLT_G_COMPILE_QUEUE_DIR);
-        xfree(lang->compile_queue_dir); lang->compile_queue_dir = xstrdup(tmp_buf);
+        usprintf(&lang->compile_queue_dir, "%s/%s", lang->compile_dir, DFLT_G_COMPILE_QUEUE_DIR);
         vinfo("language.%d.compile_queue_dir is %s",i, lang->compile_queue_dir);
-        snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", lang->compile_dir, DFLT_G_COMPILE_SRC_DIR);
-        xfree(lang->compile_src_dir); lang->compile_src_dir = xstrdup(tmp_buf);
+        usprintf(&lang->compile_src_dir, "%s/%s", lang->compile_dir, DFLT_G_COMPILE_SRC_DIR);
         vinfo("language.%d.compile_src_dir is %s", i, lang->compile_src_dir);
-        snprintf(tmp_buf, sizeof(tmp_buf), "%s/%06d", lang->compile_dir, contest_id);
-        xfree(lang->compile_out_dir); lang->compile_out_dir = xstrdup(tmp_buf);
+        usprintf(&lang->compile_out_dir, "%s/%06d", lang->compile_dir, contest_id);
         vinfo("language.%d.compile_out_dir is %s", i, lang->compile_out_dir);
-        snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", lang->compile_out_dir, DFLT_G_COMPILE_STATUS_DIR);
-        xfree(lang->compile_status_dir); lang->compile_status_dir = xstrdup(tmp_buf);
+        usprintf(&lang->compile_status_dir, "%s/%s", lang->compile_out_dir, DFLT_G_COMPILE_STATUS_DIR);
         vinfo("language.%d.compile_status_dir is %s", i, lang->compile_status_dir);
         pathmake(lang->compile_report_dir, lang->compile_out_dir, "/", DFLT_G_COMPILE_REPORT_DIR, 0);
         vinfo("language.%d.compile_report_dir is %s", i, lang->compile_report_dir);
@@ -3090,9 +3073,7 @@ set_defaults(
     }
 
     if (lang->style_checker_cmd && lang->style_checker_cmd[0] && lang->style_checker_cmd[0] != '@' && lang->style_checker_cmd[0] != '%') {
-      pathmake2(tmp_buf, g->ejudge_checkers_dir, "/", lang->style_checker_cmd, NULL);
-      xfree(lang->style_checker_cmd);
-      lang->style_checker_cmd = xstrdup(tmp_buf);
+      usprintf(&lang->style_checker_cmd, "%s/%s", g->ejudge_checkers_dir, lang->style_checker_cmd);
     }
 
     if (!lang->src_sfx[0]) {
@@ -3106,20 +3087,14 @@ set_defaults(
         return -1;
       }
       if (!os_IsAbsolutePath(lang->cmd) && ejudge_config && ejudge_config->compile_home_dir) {
-        pathmake2(tmp_buf, ejudge_config->compile_home_dir, "/", "scripts", "/", lang->cmd, NULL);
-        xfree(lang->cmd);
-        lang->cmd = xstrdup(tmp_buf);
+        usprintf(&lang->cmd, "%s/scripts/%s", ejudge_config->compile_home_dir, lang->cmd);
       }
       if (!os_IsAbsolutePath(lang->cmd) && ejudge_config && ejudge_config->contests_home_dir) {
-        pathmake2(tmp_buf, ejudge_config->contests_home_dir, "/", "compile", "/", "scripts", "/", lang->cmd, NULL);
-        xfree(lang->cmd);
-        lang->cmd = xstrdup(tmp_buf);
+        usprintf(&lang->cmd, "%s/compile/scripts/%s", ejudge_config->contests_home_dir, lang->cmd);
       }
 #if defined EJUDGE_CONTESTS_HOME_DIR
       if (!os_IsAbsolutePath(lang->cmd)) {
-        pathmake2(tmp_buf, EJUDGE_CONTESTS_HOME_DIR, "/", "compile", "/", "scripts", "/", lang->cmd, NULL);
-        xfree(lang->cmd);
-        lang->cmd = xstrdup(tmp_buf);
+        usprintf(&lang->cmd, "%s/compile/scripts/%s", EJUDGE_CONTESTS_HOME_DIR, lang->cmd);
       }
 #endif /* EJUDGE_CONTESTS_HOME_DIR */
       param_subst_2(&lang->cmd, subst_src, subst_dst);
@@ -5592,9 +5567,7 @@ prepare_set_prob_value(
   case CNTSPROB_problem_dir:
     if (abstr && abstr->problem_dir && abstr->problem_dir[0] == '/'
         && out->problem_dir && *out->problem_dir && *out->problem_dir != '/' && *out->problem_dir != '.') {
-      snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", abstr->problem_dir, out->problem_dir);
-      xfree(out->problem_dir);
-      out->problem_dir = xstrdup(tmp_buf);
+      usprintf(&out->problem_dir, "%s/%s", abstr->problem_dir, out->problem_dir);
     }
     break;
 
@@ -6058,9 +6031,7 @@ prepare_set_prob_value(
     if (out->test_checker_cmd && out->test_checker_cmd[0]
         && global && global->advanced_layout <= 0
         && !os_IsAbsolutePath(out->test_checker_cmd)) {
-      snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", global->checker_dir, out->test_checker_cmd);
-      xfree(out->test_checker_cmd);
-      out->test_checker_cmd = xstrdup(tmp_buf);
+      usprintf(&out->test_checker_cmd, "%s/%s", global->checker_dir, out->test_checker_cmd);
     }
     break;
 
@@ -6073,10 +6044,7 @@ prepare_set_prob_value(
     if (out->init_cmd && out->init_cmd[0]
         && global && global->advanced_layout <= 0
         && !os_IsAbsolutePath(out->init_cmd)) {
-      snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", global->checker_dir,
-               out->init_cmd);
-      xfree(out->init_cmd);
-      out->init_cmd = xstrdup(tmp_buf);
+      usprintf(&out->init_cmd, "%s/%s", global->checker_dir, out->init_cmd);
     }
     break;
 
@@ -6089,10 +6057,7 @@ prepare_set_prob_value(
     if (out->start_cmd && out->start_cmd[0]
         && global && global->advanced_layout <= 0
         && !os_IsAbsolutePath(out->start_cmd)) {
-      snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", global->checker_dir,
-               out->start_cmd);
-      xfree(out->start_cmd);
-      out->start_cmd = xstrdup(tmp_buf);
+      usprintf(&out->start_cmd, "%s/%s", global->checker_dir, out->start_cmd);
     }
     break;
 
@@ -6105,10 +6070,7 @@ prepare_set_prob_value(
     if (out->solution_src && out->solution_src[0]
         && global && global->advanced_layout <= 0
         && !os_IsAbsolutePath(out->solution_src)) {
-      snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", global->checker_dir,
-               out->solution_src);
-      xfree(out->solution_src);
-      out->solution_src = xstrdup(tmp_buf);
+      usprintf(&out->solution_src, "%s/%s", global->checker_dir, out->solution_src);
     }
     break;
 
@@ -6121,10 +6083,7 @@ prepare_set_prob_value(
     if (out->solution_cmd && out->solution_cmd[0]
         && global && global->advanced_layout <= 0
         && !os_IsAbsolutePath(out->solution_cmd)) {
-      snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s", global->checker_dir,
-               out->solution_cmd);
-      xfree(out->solution_cmd);
-      out->solution_cmd = xstrdup(tmp_buf);
+      usprintf(&out->solution_cmd, "%s/%s", global->checker_dir, out->solution_cmd);
     }
     break;
 
