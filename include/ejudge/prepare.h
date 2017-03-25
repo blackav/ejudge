@@ -1228,7 +1228,7 @@ struct section_language_data
   /** language short name */
   unsigned char short_name[32];
   /** language long name */
-  unsigned char long_name[256];
+  unsigned char *long_name;
   /** configuration key */
   unsigned char key[32];
   /** language architecture */

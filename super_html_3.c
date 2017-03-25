@@ -239,11 +239,9 @@ super_html_lang_activate(
   strcpy(lang->short_name, cs_lang->short_name);
   if (sstate->cs_lang_names[cs_lang_id]
       && *sstate->cs_lang_names[cs_lang_id]) {
-    snprintf(lang->long_name, sizeof(lang->long_name),
-             "%s", sstate->cs_lang_names[cs_lang_id]);
+    usprintf(&lang->long_name, "%s", sstate->cs_lang_names[cs_lang_id]);
   } else {
-    snprintf(lang->long_name, sizeof(lang->long_name),
-             "%s", cs_lang->long_name);
+    usprintf(&lang->long_name, "%s", cs_lang->long_name);
   }
   strcpy(lang->arch, cs_lang->arch);
   strcpy(lang->src_sfx, cs_lang->src_sfx);
@@ -345,8 +343,7 @@ super_html_update_versions(struct sid_state *sstate)
         j = 0;
     }
     if (j > 0) {
-      snprintf(sstate->langs[i]->long_name,sizeof(sstate->langs[i]->long_name),
-               "%s", sstate->cs_lang_names[j]);
+      usprintf(&sstate->langs[i]->long_name, "%s", sstate->cs_lang_names[j]);
     }
   }
   return 0;

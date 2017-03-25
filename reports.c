@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -603,7 +603,7 @@ user_report_generate(
         fprintf(log_f, "Invalid language %d in run %d\n", re.lang_id, run_id);
         goto cleanup;
       }
-      if (!lang->long_name[0] || !strcmp(lang->long_name, lang->short_name)) {
+      if (!lang->long_name || !lang->long_name[0] || !strcmp(lang->long_name, lang->short_name)) {
         fprintf(fout, " %s & ", TARMOR(lang->short_name));
       } else {
         fprintf(fout, " %s-", TARMOR(lang->short_name));
@@ -1251,7 +1251,7 @@ full_user_report_generate(
       lang = 0;
       if (re.lang_id > 0 && re.lang_id <= cs->max_lang)
         lang = cs->langs[re.lang_id];
-      if (!lang->long_name[0] || !strcmp(lang->long_name, lang->short_name)) {
+      if (!lang->long_name || !lang->long_name[0] || !strcmp(lang->long_name, lang->short_name)) {
         fprintf(fout, "& %s", TARMOR(lang->short_name));
       } else {
         fprintf(fout, "& %s ---", TARMOR(lang->short_name));
@@ -2433,7 +2433,7 @@ ns_olympiad_final_user_report(
         fprintf(log_f, "Invalid language %d in run %d\n", re.lang_id, run_id);
         goto cleanup;
       }
-      if (!lang->long_name[0] || !strcmp(lang->long_name, lang->short_name)) {
+      if (!lang->long_name || !lang->long_name[0] || !strcmp(lang->long_name, lang->short_name)) {
         fprintf(fout, "%s%s</td>", td1, ARMOR(lang->short_name));
       } else {
         fprintf(fout, "%s%s-", td1, ARMOR(lang->short_name));

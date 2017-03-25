@@ -556,7 +556,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(enable_suid_run, "d"),
   LANGUAGE_PARAM(is_dos, "d"),
   LANGUAGE_PARAM(short_name, "s"),
-  LANGUAGE_PARAM(long_name, "s"),
+  LANGUAGE_PARAM(long_name, "S"),
   LANGUAGE_PARAM(key, "s"),
   LANGUAGE_PARAM(arch, "s"),
   LANGUAGE_PARAM(src_sfx, "s"),
@@ -753,9 +753,6 @@ vinfo(const char *format, ...)
   }
 }
 
-int
-usprintf(unsigned char **buf, const char *format, ...)
-  __attribute__((format(printf, 2, 3)));
 int
 usprintf(unsigned char **pbuf, const char *format, ...)
 {
@@ -963,6 +960,7 @@ prepare_language_free_func(struct generic_section_config *gp)
   xfree(p->compile_status_dir);
   xfree(p->compile_report_dir);
   xfree(p->content_type);
+  xfree(p->long_name);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -3021,9 +3019,9 @@ set_defaults(
       vinfo("language.%d.short_name set to \"lang%d\"", i, i);
       sprintf(lang->short_name, "lang%d", i);
     }
-    if (!lang->long_name[0]) {
+    if (!lang->long_name || !lang->long_name[0]) {
       vinfo("language.%d.long_name set to \"Language %d\"", i, i);
-      sprintf(lang->long_name, "Language %d", i);
+      usprintf(&lang->long_name, "Language %d", i);
     }
     
     if (mode == PREPARE_SERVE) {
