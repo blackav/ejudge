@@ -622,7 +622,7 @@ static const struct config_parse_info section_tester_params[] =
 
   TESTER_PARAM(prepare_cmd, "s"),
   TESTER_PARAM(start_cmd, "s"),
-  TESTER_PARAM(nwrun_spool_dir, "s"),
+  TESTER_PARAM(nwrun_spool_dir, "S"),
 
   TESTER_PARAM(start_env, "x"),
 
@@ -1190,6 +1190,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
 
   sarray_free(p->super);
   sarray_free(p->start_env);
+  xfree(p->nwrun_spool_dir);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -1297,6 +1298,15 @@ static void inh_copy_path(void *dst, void *src)
   memcpy(dst, src, sizeof(path_t));
 }
 
+static int inh_isdef_string(void *vps)
+{
+  return (*(char **) vps) != NULL;
+}
+static void inh_copy_string(void *dst, void *src)
+{
+  xstrdup3((unsigned char **) dst, *(char**) src);
+}
+
 #define TESTER_INH(f,d,c) {TESTER_OFFSET(f),#f,inh_isdef_##d,inh_copy_##c }
 static const struct inheritance_info tester_inheritance_info[] =
 {
@@ -1324,7 +1334,7 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(prepare_cmd, path, path),
   TESTER_INH(memory_limit_type, path2, path),
   TESTER_INH(secure_exec_type, path2, path),
-  TESTER_INH(nwrun_spool_dir, path, path),
+  TESTER_INH(nwrun_spool_dir, string, string),
 
   { 0, 0, 0, 0 }
 };
@@ -4036,24 +4046,17 @@ set_defaults(
                     tp->prepare_cmd, NULL);
         }
 
-        if (!tp->nwrun_spool_dir[0] && atp && atp->nwrun_spool_dir[0]) {
-          sformat_message(tp->nwrun_spool_dir, PATH_MAX, 0,atp->nwrun_spool_dir,
-                          g, tp_prob, NULL,
-                          tp, NULL, 0, 0, 0);
+        if ((!tp->nwrun_spool_dir || !tp->nwrun_spool_dir[0]) && atp && atp->nwrun_spool_dir && atp->nwrun_spool_dir[0]) {
+          sformat_message_2(&tp->nwrun_spool_dir, 0,atp->nwrun_spool_dir,
+                          g, tp_prob, NULL, tp, NULL, 0, 0, 0);
         }
-        if (tp->nwrun_spool_dir[0]) {
-          path_t tmp;
-          tmp[0] = 0;
+        if (tp->nwrun_spool_dir && tp->nwrun_spool_dir[0]) {
           if (!os_IsAbsolutePath(tp->nwrun_spool_dir)) {
             if (ejudge_config && ejudge_config->contests_home_dir) {
-              snprintf(tmp, sizeof(tmp), "%s/%s",
-                       ejudge_config->contests_home_dir, tp->nwrun_spool_dir);
-              strcpy(tp->nwrun_spool_dir, tmp);
+              usprintf(&tp->nwrun_spool_dir, "%s/%s", ejudge_config->contests_home_dir, tp->nwrun_spool_dir);
             } else {
 #if defined EJUDGE_CONTESTS_HOME_DIR
-              snprintf(tmp, sizeof(tmp), "%s/%s",
-                       EJUDGE_CONTESTS_HOME_DIR, tp->nwrun_spool_dir);
-              strcpy(tp->nwrun_spool_dir, tmp);
+              usprintf(&tp->nwrun_spool_dir, "%s/%s", EJUDGE_CONTESTS_HOME_DIR, tp->nwrun_spool_dir);
 #endif
             }
           }
@@ -4829,24 +4832,19 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   }
 
   /* copy nwrun_spool_dir */
-  strcpy(out->nwrun_spool_dir, tp->nwrun_spool_dir);
-  if (!out->nwrun_spool_dir[0] && atp && atp->nwrun_spool_dir[0]) {
-    sformat_message(out->nwrun_spool_dir, sizeof(out->nwrun_spool_dir), 0,
-                    atp->nwrun_spool_dir, state->global, prb, NULL, out,
-                    NULL, 0, 0, 0);
+  xstrdup3(&out->nwrun_spool_dir, tp->nwrun_spool_dir);
+  if ((!out->nwrun_spool_dir || !out->nwrun_spool_dir[0]) && atp && atp->nwrun_spool_dir && atp->nwrun_spool_dir[0]) {
+    sformat_message_2(&out->nwrun_spool_dir, 0,
+                      atp->nwrun_spool_dir, state->global, prb, NULL, out,
+                      NULL, 0, 0, 0);
   }
-  if (out->nwrun_spool_dir[0]) {
+  if (out->nwrun_spool_dir && out->nwrun_spool_dir[0]) {
     if (!os_IsAbsolutePath(out->nwrun_spool_dir)) {
-      path_t tmp;
       if (ejudge_config && ejudge_config->contests_home_dir) {
-        snprintf(tmp, sizeof(tmp), "%s/%s", ejudge_config->contests_home_dir,
-                 out->nwrun_spool_dir);
-        strcpy(out->nwrun_spool_dir, tmp);
+        usprintf(&out->nwrun_spool_dir, "%s/%s", ejudge_config->contests_home_dir, out->nwrun_spool_dir);
       } else {
 #if defined EJUDGE_CONTESTS_HOME_DIR
-        snprintf(tmp, sizeof(tmp), "%s/%s", EJUDGE_CONTESTS_HOME_DIR,
-                 out->nwrun_spool_dir);
-        strcpy(out->nwrun_spool_dir, tmp);
+        usprintf(&out->nwrun_spool_dir, "%s/%s", EJUDGE_CONTESTS_HOME_DIR, out->nwrun_spool_dir);
 #endif
       }
     }

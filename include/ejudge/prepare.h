@@ -1369,7 +1369,7 @@ struct section_tester_data
   /** helper to start testing */
   path_t start_cmd;
   /** nwrun spool directory */
-  path_t nwrun_spool_dir;
+  unsigned char *nwrun_spool_dir;
 
   /** environment variables for start_cmd */
   ejenvlist_t start_env;

@@ -1227,7 +1227,7 @@ invoke_nwrun(
   const struct super_run_in_global_packet *srgp = srp->global;
   const struct super_run_in_problem_packet *srpp = srp->problem;
 
-  if (!tst->nwrun_spool_dir[0]) abort();
+  if (!tst->nwrun_spool_dir || !tst->nwrun_spool_dir[0]) abort();
 
   priority += 16;
   if (priority < 0) priority = 0;
@@ -1236,16 +1236,13 @@ invoke_nwrun(
   result->status = RUN_CHECK_FAILED;
 
   if (os_IsAbsolutePath(tst->nwrun_spool_dir)) {
-    snprintf(full_spool_dir, sizeof(full_spool_dir), "%s",
-             tst->nwrun_spool_dir);
+    snprintf(full_spool_dir, sizeof(full_spool_dir), "%s", tst->nwrun_spool_dir);
   } else {
     if (config && config->contests_home_dir) {
-      snprintf(full_spool_dir, sizeof(full_spool_dir), "%s/%s",
-               config->contests_home_dir, tst->nwrun_spool_dir);
+      snprintf(full_spool_dir, sizeof(full_spool_dir), "%s/%s", config->contests_home_dir, tst->nwrun_spool_dir);
     } else {
 #if defined EJUDGE_CONTESTS_HOME_DIR
-      snprintf(full_spool_dir, sizeof(full_spool_dir), "%s/%s",
-               EJUDGE_CONTESTS_HOME_DIR, tst->nwrun_spool_dir);
+      snprintf(full_spool_dir, sizeof(full_spool_dir), "%s/%s", EJUDGE_CONTESTS_HOME_DIR, tst->nwrun_spool_dir);
 #else
       err("cannot initialize full_spool_dir");
       chk_printf(result, "full_spool_dir is invalid\n");
@@ -2287,7 +2284,7 @@ run_one_test(
     snprintf(error_code, sizeof(error_code), "%s/%s", check_dir, tst->errorcode_file);
   }
 
-  if (tst && /*tst->nwrun_spool_dir &&*/ tst->nwrun_spool_dir[0]) {
+  if (tst && tst->nwrun_spool_dir && tst->nwrun_spool_dir[0]) {
     status = invoke_nwrun(config, state,
                           tst, srp, far,
                           cur_test, 0, p_has_real_time,
