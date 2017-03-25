@@ -572,7 +572,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(max_stack_size, "E"),
   LANGUAGE_PARAM(max_file_size, "E"),
 
-  LANGUAGE_PARAM(compile_dir, "s"),
+  LANGUAGE_PARAM(compile_dir, "S"),
   LANGUAGE_PARAM(compile_dir_index, "d"),
   LANGUAGE_PARAM(compile_real_time_limit, "d"),
   LANGUAGE_PARAM(compiler_env, "x"),
@@ -3012,33 +3012,33 @@ set_defaults(
         }
         const unsigned char *ecd = g->extra_compile_dirs[lang->compile_dir_index - 1];
         if (os_IsAbsolutePath(ecd)) {
-          snprintf(lang->compile_dir, sizeof(lang->compile_dir),
-                   "%s/var/compile", ecd);
+          snprintf(tmp_buf, sizeof(tmp_buf), "%s/var/compile", ecd);
+          xfree(lang->compile_dir);
+          lang->compile_dir = xstrdup(tmp_buf);
         } else if (ejudge_config && ejudge_config->contests_home_dir) {
-          snprintf(lang->compile_dir, sizeof(lang->compile_dir),
-                   "%s/%s/var/compile", ejudge_config->contests_home_dir, ecd);
+          snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s/var/compile", ejudge_config->contests_home_dir, ecd);
+          xfree(lang->compile_dir);
+          lang->compile_dir = xstrdup(tmp_buf);
         } else {
 #if defined EJUDGE_CONTESTS_HOME_DIR
-          snprintf(lang->compile_dir, sizeof(lang->compile_dir),
-                   "%s/%s/var/compile", EJUDGE_CONTESTS_HOME_DIR, ecd);
+          snprintf(tmp_buf, sizeof(tmp_buf), "%s/%s/var/compile", EJUDGE_CONTESTS_HOME_DIR, ecd);
+          xfree(lang->compile_dir);
+          lang->compile_dir = xstrdup(tmp_buf);
 #else
           err("language.d: invalid extra_compile_dirs");
           return -1;
 #endif
         }
-        pathmake(lang->compile_queue_dir, lang->compile_dir, "/",
-                 DFLT_G_COMPILE_QUEUE_DIR, 0);
-        pathmake(lang->compile_src_dir, lang->compile_dir, "/",
-                 DFLT_G_COMPILE_SRC_DIR, 0);
-        snprintf(lang->compile_out_dir, sizeof(lang->compile_out_dir),
-                 "%s/%06d", lang->compile_dir, contest_id);
+        pathmake(lang->compile_queue_dir, lang->compile_dir, "/", DFLT_G_COMPILE_QUEUE_DIR, 0);
+        pathmake(lang->compile_src_dir, lang->compile_dir, "/", DFLT_G_COMPILE_SRC_DIR, 0);
+        snprintf(lang->compile_out_dir, sizeof(lang->compile_out_dir), "%s/%06d", lang->compile_dir, contest_id);
         pathmake(lang->compile_status_dir, lang->compile_out_dir, "/",
                  DFLT_G_COMPILE_STATUS_DIR, 0);
         pathmake(lang->compile_report_dir, lang->compile_out_dir, "/",
                  DFLT_G_COMPILE_REPORT_DIR, 0);
-      } else if (!lang->compile_dir[0]) {
+      } else if (!lang->compile_dir || !lang->compile_dir[0]) {
         // use the global compile queue settings
-        pathcpy(lang->compile_dir, g->compile_dir);
+        xfree(lang->compile_dir); lang->compile_dir = xstrdup(g->compile_dir);
         pathcpy(lang->compile_queue_dir, g->compile_queue_dir);
         pathcpy(lang->compile_src_dir, g->compile_src_dir);
         pathcpy(lang->compile_out_dir, g->compile_out_dir);
@@ -3046,14 +3046,11 @@ set_defaults(
         pathcpy(lang->compile_report_dir, g->compile_report_dir);
       } else {
         // prepare language-specific compile queue settings
-        pathmake(lang->compile_queue_dir, lang->compile_dir, "/",
-                 DFLT_G_COMPILE_QUEUE_DIR, 0);
+        pathmake(lang->compile_queue_dir, lang->compile_dir, "/", DFLT_G_COMPILE_QUEUE_DIR, 0);
         vinfo("language.%d.compile_queue_dir is %s",i, lang->compile_queue_dir);
-        pathmake(lang->compile_src_dir, lang->compile_dir, "/",
-                 DFLT_G_COMPILE_SRC_DIR, 0);
+        pathmake(lang->compile_src_dir, lang->compile_dir, "/", DFLT_G_COMPILE_SRC_DIR, 0);
         vinfo("language.%d.compile_src_dir is %s", i, lang->compile_src_dir);
-        snprintf(lang->compile_out_dir, sizeof(lang->compile_out_dir),
-                 "%s/%06d", lang->compile_dir, contest_id);
+        snprintf(lang->compile_out_dir, sizeof(lang->compile_out_dir), "%s/%06d", lang->compile_dir, contest_id);
         vinfo("language.%d.compile_out_dir is %s", i, lang->compile_out_dir);
         pathmake(lang->compile_status_dir, lang->compile_out_dir, "/",
                  DFLT_G_COMPILE_STATUS_DIR, 0);

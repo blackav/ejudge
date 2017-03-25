@@ -1267,7 +1267,7 @@ struct section_language_data
   /** index of the compile directory in the list of compile servers */
   int compile_dir_index;
   /** common subdirectory */
-  path_t compile_dir;
+  unsigned char *compile_dir;
   /** directory for serve->compile packets */
   path_t compile_queue_dir;
   /** directory for source files */

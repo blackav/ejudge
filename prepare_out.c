@@ -980,7 +980,7 @@ prepare_check_forbidden_lang(FILE *f, const struct section_language_data *lang)
     fprintf(f, "Cannot handle contests with `cmd' language variable set\n");
     return -1;
   }
-  if (lang->compile_dir[0]) {
+  if (lang->compile_dir && lang->compile_dir[0]) {
     fprintf(f, "Cannot handle contests with `compile_dir' language variable set\n");
     return -1;
   }
