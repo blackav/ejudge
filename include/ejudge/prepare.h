@@ -1362,7 +1362,7 @@ struct section_tester_data
   /** file that contains completion status */
   unsigned char errorcode_file[256];
   /** stderr output of the checked program */
-  unsigned char error_file[256];
+  unsigned char *error_file;
 
   /** helper to prepare the executable */
   unsigned char *prepare_cmd;

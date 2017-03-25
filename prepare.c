@@ -618,7 +618,7 @@ static const struct config_parse_info section_tester_params[] =
   TESTER_PARAM(run_dir, "s"),
   TESTER_PARAM(check_dir, "s"),
   TESTER_PARAM(errorcode_file, "s"),
-  TESTER_PARAM(error_file, "s"),
+  TESTER_PARAM(error_file, "S"),
 
   TESTER_PARAM(prepare_cmd, "S"),
   TESTER_PARAM(start_cmd, "S"),
@@ -1193,6 +1193,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
   xfree(p->nwrun_spool_dir);
   xfree(p->start_cmd);
   xfree(p->prepare_cmd);
+  xfree(p->error_file);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -1331,7 +1332,7 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(priority_adjustment, int3, int),
   TESTER_INH(check_dir, path, path),
   TESTER_INH(errorcode_file, path, path),
-  TESTER_INH(error_file, path, path),
+  TESTER_INH(error_file, string, string),
   TESTER_INH(start_cmd, string, string),
   TESTER_INH(prepare_cmd, string, string),
   TESTER_INH(memory_limit_type, path2, path),
@@ -3993,17 +3994,14 @@ set_defaults(
       }
 
       if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
-        if (!tp->error_file[0] && atp && atp->error_file[0]) {
-          sformat_message(tp->error_file, PATH_MAX, 0, atp->error_file,
-                          g, tp_prob, NULL,
-                          tp, NULL, 0, 0, 0);
-          vinfo("tester.%d.error_file inherited from tester.%s ('%s')",
-                i, sish, tp->error_file);        
+        if ((!tp->error_file || !tp->error_file[0]) && atp && atp->error_file && atp->error_file[0]) {
+          sformat_message_2(&tp->error_file, 0, atp->error_file,
+                          g, tp_prob, NULL, tp, NULL, 0, 0, 0);
+          vinfo("tester.%d.error_file inherited from tester.%s ('%s')", i, sish, tp->error_file);
         }
-        if (!state->testers[i]->error_file[0]) {
+        if (!state->testers[i]->error_file || !state->testers[i]->error_file[0]) {
           vinfo("tester.%d.error_file set to %s", i, DFLT_T_ERROR_FILE);
-          snprintf(state->testers[i]->error_file, sizeof(state->testers[i]->error_file),
-                   "%s", DFLT_T_ERROR_FILE);
+          xstrdup3(&state->testers[i]->error_file, DFLT_T_ERROR_FILE);
         }
         if ((!tp->start_cmd || !tp->start_cmd[0]) && atp && atp->start_cmd && atp->start_cmd[0]) {
           sformat_message_2(&tp->start_cmd, 0, atp->start_cmd, g, tp_prob, NULL, tp, NULL, 0, 0, 0);
@@ -4764,15 +4762,14 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   }
 
   /* copy error_file */
-  strcpy(out->error_file, tp->error_file);
-  if (!out->error_file[0] && atp && atp->error_file[0]) {
-    sformat_message(out->error_file, sizeof(out->error_file), 0,
-                    atp->error_file, state-> global, prb, NULL, out,
+  xstrdup3(&out->error_file, tp->error_file);
+  if ((!out->error_file || !out->error_file[0]) && atp && atp->error_file && atp->error_file[0]) {
+    sformat_message_2(&out->error_file, 0,
+                    atp->error_file, state->global, prb, NULL, out,
                     NULL, 0, 0, 0);
   }
-  if (!out->error_file[0]) {
-    snprintf(out->error_file, sizeof(out->error_file),
-             "%s",  DFLT_T_ERROR_FILE);
+  if (!out->error_file || !out->error_file[0]) {
+    xstrdup3(&out->error_file, DFLT_T_ERROR_FILE);
   }
 
   /* copy valuer_cmd */

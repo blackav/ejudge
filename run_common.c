@@ -1291,7 +1291,7 @@ invoke_nwrun(
   }
 
   error_file_name[0] = 0;
-  if (tst && /*tst->error_file &&*/ tst->error_file[0] >= ' ') {
+  if (tst && tst->error_file && tst->error_file[0]) {
     snprintf(error_file_name, sizeof(error_file_name), "%s", tst->error_file);
   } else {
     snprintf(error_file_name, sizeof(error_file_name), "%s", "errors.txt");
@@ -2462,7 +2462,7 @@ run_one_test(
     goto check_failed;
   }
 
-  if (tst && /*tst->error_file &&*/ tst->error_file[0]) {
+  if (tst && tst->error_file && tst->error_file[0]) {
     snprintf(error_file, sizeof(error_file), "%s", tst->error_file);
   } else {
     snprintf(error_file, sizeof(error_file), "%s", "error");
