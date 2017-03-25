@@ -754,6 +754,22 @@ vinfo(const char *format, ...)
 }
 
 int
+usprintf(unsigned char **buf, const char *format, ...)
+  __attribute__((format(printf, 2, 3)));
+int
+usprintf(unsigned char **pbuf, const char *format, ...)
+{
+  va_list args;
+  char **psbuf = (char**) pbuf;
+
+  if (*pbuf) xfree(*pbuf);
+  va_start(args, format);
+  int ret = vasprintf(psbuf, format, args);
+  va_end(args);
+  return ret;
+}
+
+int
 find_tester(const serve_state_t state,int problem, char const *arch)
 {
   int i;
