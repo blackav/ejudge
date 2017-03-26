@@ -1356,7 +1356,7 @@ struct section_tester_data
   /** run->serve team report dir */
   path_t run_team_report_dir;
   /** run->serve full output archive dir */
-  path_t run_full_archive_dir;
+  unsigned char *run_full_archive_dir;
 
   unsigned char *check_dir;
   /** file that contains completion status */

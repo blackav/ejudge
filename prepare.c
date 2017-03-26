@@ -1196,6 +1196,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
   xfree(p->error_file);
   xfree(p->errorcode_file);
   xfree(p->check_dir);
+  xfree(p->run_full_archive_dir);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -3825,7 +3826,7 @@ set_defaults(
             pathcpy(tp->run_team_report_dir, g->run_team_report_dir);
           }
           if (g->enable_full_archive) {
-            pathcpy(tp->run_full_archive_dir, g->run_full_archive_dir);
+            xstrdup3(&tp->run_full_archive_dir, g->run_full_archive_dir);
           }
         } else {
           pathmake(tp->run_queue_dir, tp->run_dir, "/",
@@ -3850,10 +3851,8 @@ set_defaults(
                   tp->run_team_report_dir);
           }
           if (g->enable_full_archive) {
-            pathmake(tp->run_full_archive_dir, tp->run_out_dir, "/",
-                     DFLT_G_RUN_FULL_ARCHIVE_DIR, 0);
-            vinfo("tester.%d.run_full_archive_dir is %s", i,
-                  tp->run_full_archive_dir);
+            usprintf(&tp->run_full_archive_dir, "%s/%s", tp->run_out_dir, DFLT_G_RUN_FULL_ARCHIVE_DIR);
+            vinfo("tester.%d.run_full_archive_dir is %s", i, tp->run_full_archive_dir);
           }
         }
 
