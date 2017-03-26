@@ -645,7 +645,8 @@ serve_build_run_dirs(
   for (i = 1; i <= state->max_tester; i++) {
     if (!state->testers[i]) continue;
     //if (state->testers[i]->any) continue;
-    do_build_run_dirs(state, state->testers[i]->name, state->testers[i]->run_status_dir,
+    do_build_run_dirs(state, state->testers[i]->name,
+                      state->testers[i]->run_status_dir,
                       state->testers[i]->run_report_dir,
                       state->testers[i]->run_team_report_dir,
                       state->testers[i]->run_full_archive_dir);

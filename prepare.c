@@ -3821,8 +3821,8 @@ set_defaults(
           pathcpy(tp->run_queue_dir, g->run_queue_dir);
           pathcpy(tp->run_exe_dir, g->run_exe_dir);
           pathcpy(tp->run_out_dir, g->run_out_dir);
-          pathcpy(tp->run_status_dir, g->run_status_dir);
-          pathcpy(tp->run_report_dir, g->run_report_dir);
+          xstrdup3(&tp->run_status_dir, g->run_status_dir);
+          xstrdup3(&tp->run_report_dir, g->run_report_dir);
           if (g->team_enable_rep_view) {
             xstrdup3(&tp->run_team_report_dir, g->run_team_report_dir);
           }
@@ -3839,11 +3839,9 @@ set_defaults(
           snprintf(tp->run_out_dir, sizeof(tp->run_out_dir), "%s/%06d",
                    tp->run_dir, cnts->id);
           vinfo("tester.%d.run_out_dir is %s", i, tp->run_out_dir);
-          pathmake(tp->run_status_dir, tp->run_out_dir, "/",
-                   DFLT_G_RUN_STATUS_DIR, 0);
+          usprintf(&tp->run_status_dir, "%s/%s", tp->run_out_dir, DFLT_G_RUN_STATUS_DIR);
           vinfo("tester.%d.run_status_dir is %s", i, tp->run_status_dir);
-          pathmake(tp->run_report_dir, tp->run_out_dir, "/",
-                   DFLT_G_RUN_REPORT_DIR, 0);
+          usprintf(&tp->run_report_dir, "%s/%s", tp->run_out_dir, DFLT_G_RUN_REPORT_DIR);
           vinfo("tester.%d.run_report_dir is %s", i, tp->run_report_dir);
           if (g->team_enable_rep_view) {
             usprintf(&tp->run_team_report_dir, "%s/%s", tp->run_out_dir, DFLT_G_RUN_TEAM_REPORT_DIR);

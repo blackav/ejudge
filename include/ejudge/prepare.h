@@ -1350,9 +1350,9 @@ struct section_tester_data
   path_t run_exe_dir;
   path_t run_out_dir;
   /** run->serve status dir */
-  path_t run_status_dir;
+  unsigned char *run_status_dir;
   /** run->serve report dir */
-  path_t run_report_dir;
+  unsigned char *run_report_dir;
   /** run->serve team report dir */
   unsigned char *run_team_report_dir;
   /** run->serve full output archive dir */
