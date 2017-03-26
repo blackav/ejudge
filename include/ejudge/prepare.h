@@ -1153,7 +1153,7 @@ struct section_problem_data
   int *score_bonus_val META_ATTRIB((meta_private));
 
   /** number of tests, open for unprivileged users */
-  unsigned char open_tests[256];
+  unsigned char *open_tests;
   int open_tests_count META_ATTRIB((meta_private));
   int *open_tests_val META_ATTRIB((meta_private));
 

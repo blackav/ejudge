@@ -515,7 +515,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(tgzdir_pat, "s"),
   PROBLEM_PARAM(personal_deadline, "x"),
   PROBLEM_PARAM(score_bonus, "s"),
-  PROBLEM_PARAM(open_tests, "s"),
+  PROBLEM_PARAM(open_tests, "S"),
   PROBLEM_PARAM(final_open_tests, "S"),
   PROBLEM_PARAM(token_open_tests, "S"),
   PROBLEM_PARAM(statement_file, "s"),
@@ -1125,6 +1125,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->alternative);
   sarray_free(p->statement_env);
   xfree(p->score_bonus_val);
+  xfree(p->open_tests);
   xfree(p->open_tests_val);
   xfree(p->final_open_tests);
   xfree(p->final_open_tests_val);
@@ -3645,7 +3646,7 @@ set_defaults(
         path_add_dir(prob->tgz_dir, g->tgz_dir);
         vinfo("problem.%s.tgz_dir is '%s'", ish, prob->tgz_dir);
       }
-      if (prob->open_tests[0]) {
+      if (prob->open_tests && prob->open_tests[0]) {
         if (prepare_parse_open_tests(stderr, prob->open_tests,
                                      &prob->open_tests_val, &prob->open_tests_count) < 0)
           return -1;
