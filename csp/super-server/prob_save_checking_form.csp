@@ -125,7 +125,7 @@
         prob->valuer_sets_marked = valuer_sets_marked;
         prob->interactive_valuer = interactive_valuer;
         MOVEENV(valuer_env);
-        COPYSTR(interactor_cmd);
+        MOVESTR(interactor_cmd);
         MOVEENV(interactor_env);
         prob->interactor_time_limit = interactor_time_limit;
         MOVESTR(init_cmd);

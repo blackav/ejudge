@@ -80,7 +80,7 @@ $(function() {
     $("#orig-interactive_valuer-div").toggle(has_valuer);
     $("#orig-valuer_env-div").toggle(has_valuer && <s:v type="jsbool" value="prob_id > 0" />);
 
-    var has_interactor = <s:v type="jsbool" value="tmp_prob->interactor_cmd[0]" />;
+    var has_interactor = <s:v type="jsbool" value="tmp_prob->interactor_cmd" />;
     $("#orig-interactor_time_limit-div").toggle(has_interactor);
     $("#orig-interactor_env-div").toggle(has_interactor && <s:v type="jsbool" value="prob_id > 0" />);
 
@@ -102,7 +102,7 @@ function popupCheckingDialog(e, skipField)
     <%@expand COPY_YESNO3 "valuer_sets_marked" %>
     <%@expand COPY_YESNO3 "interactive_valuer" %>
     <%@expand COPY_TEXTFIELD "valuer_env" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "interactor_cmd" "!prob->interactor_cmd[0]" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "interactor_cmd" "!prob->interactor_cmd" %>
     <%@expand COPY_TEXTFIELD "interactor_env" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "interactor_time_limit" "prob->interactor_time_limit < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "init_cmd" "!prob->init_cmd" %>
@@ -144,7 +144,7 @@ function checkingDialogOnChange(field)
     $("#edit-valuer_env-div").toggle(valuer_cmd != "" && <s:v type="jsbool" value="prob_id > 0" />);
 
     var interactor_cmd = $("#edit-interactor_cmd").val();
-    if ($("#edit-interactor_cmd_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->interactor_cmd[0]" />) interactor_cmd = "X";
+    if ($("#edit-interactor_cmd_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->interactor_cmd" />) interactor_cmd = "X";
     $("#edit-interactor_time_limit-div").toggle(interactor_cmd != "");
     $("#edit-interactor_env-div").toggle(interactor_cmd != "" && <s:v type="jsbool" value="prob_id > 0" />);
 

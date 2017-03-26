@@ -10127,7 +10127,7 @@ do_import_problem(
     prob->solution_cmd = xstrdup(cfg->solution_cmd);
   }
   if (cfg->interactor_cmd && cfg->interactor_cmd[0]) {
-    snprintf(prob->interactor_cmd, sizeof(prob->interactor_cmd), "%s", cfg->interactor_cmd);
+    xstrdup3(&prob->interactor_cmd, cfg->interactor_cmd);
   }
 
 cleanup:

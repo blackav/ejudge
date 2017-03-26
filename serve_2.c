@@ -2022,7 +2022,7 @@ serve_run_request(
       srpp->valuer_cmd = xstrdup(prob->valuer_cmd);
     }
   }
-  if (/*prob->interactor_cmd &&*/ prob->interactor_cmd[0]) {
+  if (prob->interactor_cmd && prob->interactor_cmd[0]) {
     if (srgp->advanced_layout > 0) {
       get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, prob->interactor_cmd, variant);
       srpp->interactor_cmd = xstrdup(pathbuf);

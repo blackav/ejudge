@@ -501,7 +501,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(lang_max_stack_size, "x"),
   PROBLEM_PARAM(check_cmd, "s"),
   PROBLEM_PARAM(valuer_cmd, "s"),
-  PROBLEM_PARAM(interactor_cmd, "s"),
+  PROBLEM_PARAM(interactor_cmd, "S"),
   PROBLEM_PARAM(style_checker_cmd, "S"),
   PROBLEM_PARAM(test_checker_cmd, "S"),
   PROBLEM_PARAM(init_cmd, "S"),
@@ -1087,6 +1087,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->problem_dir);
   xfree(p->tscores);
   xfree(p->x_score_tests);
+  xfree(p->interactor_cmd);
   xfree(p->style_checker_cmd);
   xfree(p->test_checker_cmd);
   xfree(p->init_cmd);
@@ -5985,11 +5986,13 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_interactor_cmd:
-    if (!out->interactor_cmd[0] && abstr && abstr->interactor_cmd[0] && abstr->interactor_cmd[0] != 1) {
-      sformat_message(out->interactor_cmd, PATH_MAX, 0, abstr->interactor_cmd, NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    if ((!out->interactor_cmd || !out->interactor_cmd[0]) && abstr && abstr->interactor_cmd && abstr->interactor_cmd[0]) {
+      sformat_message_2(&out->interactor_cmd, 0, abstr->interactor_cmd, NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
-    if (global && out->interactor_cmd[0] && global->advanced_layout <= 0) {
-      pathmake2(out->interactor_cmd, global->checker_dir, "/", out->interactor_cmd, NULL);
+    if (global && out->interactor_cmd && out->interactor_cmd[0] && global->advanced_layout <= 0) {
+      if (!os_IsAbsolutePath(out->interactor_cmd)) {
+        usprintf(&out->interactor_cmd, "%s/%s", global->checker_dir, out->interactor_cmd);
+      }
     }
     break;
 

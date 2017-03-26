@@ -1184,7 +1184,7 @@ invoke_make(
     }
   }
   // check for interactor
-  if (prob->interactor_cmd[0]) {
+  if (prob->interactor_cmd && prob->interactor_cmd[0]) {
     // FIXME: complete
   }
   // check for style checker

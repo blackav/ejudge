@@ -1701,7 +1701,6 @@ function viewDialogOnChange(field)
                 <td>Interactor name:</td>
                 <td><%
     const unsigned char *value = prob->interactor_cmd;
-    if (value && (!value[0] || value[0] == 1)) value = 0;
 %><s:textfield id="orig-interactor_cmd" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!value) {
@@ -1709,7 +1708,7 @@ function viewDialogOnChange(field)
       }
     } else {
       if (!value) {
-        if (!tmp_prob->interactor_cmd[0] || tmp_prob->interactor_cmd[0] == 1) {
+        if (!tmp_prob->interactor_cmd) {
 %>(<i>Not set</i>)<%
         } else {
 %>(<i>Default: <s:v value="tmp_prob->interactor_cmd" /></i>)<%
