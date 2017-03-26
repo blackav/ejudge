@@ -785,7 +785,7 @@ collect_sections(serve_state_t state)
   for (i = 0; i < state->max_abstr_tester; ++i) {
     if (!(t = state->abstr_testers[i])) continue;
 
-    if (t->memory_limit_type[0] >= ' ') {
+    if (t->memory_limit_type) {
       t->memory_limit_type_val = prepare_parse_memory_limit_type(t->memory_limit_type);
       if (t->memory_limit_type_val < 0) {
         fatal("invalid memory_limit_type `%s'", t->memory_limit_type);

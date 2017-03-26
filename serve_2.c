@@ -1580,7 +1580,6 @@ serve_run_request(
   int time_limit_adj = 0;
   int time_limit_adj_millis = 0;
   struct section_tester_data *refined_tester = NULL;
-  const unsigned char *s;
   FILE *srp_f = NULL;
   char *srp_t = NULL;
   size_t srp_z = 0;
@@ -2113,10 +2112,7 @@ serve_run_request(
     srtp->priority_adjustment = tester->priority_adjustment;
     srtp->arch = xstrdup(tester->arch);
     srtp->key = xstrdup2(tester->key);
-    s = tester->memory_limit_type;
-    if (s && s[0] && s[0] != 1) {
-      srtp->memory_limit_type = xstrdup(s);
-    }
+    srtp->memory_limit_type = xstrdup2(tester->memory_limit_type);
     srtp->secure_exec_type = xstrdup2(tester->secure_exec_type);
     srtp->no_core_dump = tester->no_core_dump;
     srtp->enable_memory_limit_error = tester->enable_memory_limit_error;

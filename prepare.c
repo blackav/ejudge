@@ -599,7 +599,7 @@ static const struct config_parse_info section_tester_params[] =
   TESTER_PARAM(key, "s"),
   TESTER_PARAM(any, "d"),
   TESTER_PARAM(priority_adjustment, "d"),
-  TESTER_PARAM(memory_limit_type, "s"),
+  TESTER_PARAM(memory_limit_type, "S"),
   TESTER_PARAM(secure_exec_type, "S"),
 
   TESTER_PARAM(abstract, "d"),
@@ -1177,7 +1177,6 @@ tester_init_func(struct generic_section_config *gp)
   p->max_vm_size = -1L;
   p->max_stack_size = -1L;
   p->max_data_size = -1L;
-  p->memory_limit_type[0] = 1;
   p->memory_limit_type_val = -1;
   p->secure_exec_type_val = -1;
 }
@@ -1205,6 +1204,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
   xfree(p->run_dir);
   xfree(p->kill_signal);
   xfree(p->secure_exec_type);
+  xfree(p->memory_limit_type);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -1300,13 +1300,6 @@ static int inh_isdef_path(void *vppath)
   if (*pc) return 1;
   return 0;
 }
-static int inh_isdef_path2(void *vppath)
-{
-  char *pc = (char *) vppath;
-
-  if (*pc == 1) return 0;
-  return 1;
-}
 static void inh_copy_path(void *dst, void *src)
 {
   memcpy(dst, src, sizeof(path_t));
@@ -1346,7 +1339,7 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(error_file, string, string),
   TESTER_INH(start_cmd, string, string),
   TESTER_INH(prepare_cmd, string, string),
-  TESTER_INH(memory_limit_type, path2, path),
+  TESTER_INH(memory_limit_type, string, string),
   TESTER_INH(secure_exec_type, string, string),
   TESTER_INH(nwrun_spool_dir, string, string),
 
@@ -1424,7 +1417,7 @@ process_abstract_tester(serve_state_t state, int i)
   sarray_free(atp->start_env);
   atp->start_env = nenv;
 
-  if (atp->memory_limit_type[0] != 1) {
+  if (atp->memory_limit_type) {
     atp->memory_limit_type_val = prepare_parse_memory_limit_type(atp->memory_limit_type);
     if (atp->memory_limit_type_val < 0) {
       err("invalid memory_limit_type `%s'", atp->memory_limit_type);
@@ -3920,14 +3913,14 @@ set_defaults(
         vinfo("tester.%d.max_vm_size inherited from tester.%s (%" EJ_PRINTF_ZSPEC "u)",
               i, sish, EJ_PRINTF_ZCAST(tp->max_vm_size));
       }
-      if (tp->memory_limit_type[0] != 1) {
+      if (tp->memory_limit_type) {
         tp->memory_limit_type_val = prepare_parse_memory_limit_type(tp->memory_limit_type);
         if (tp->memory_limit_type_val < 0) {
           err("invalid memory limit type `%s'", tp->memory_limit_type);
           return -1;
         }
       }
-      if (tp->memory_limit_type_val<0 && atp && atp->memory_limit_type_val>=0) {
+      if (tp->memory_limit_type_val < 0 && atp && atp->memory_limit_type_val >= 0) {
         tp->memory_limit_type_val = atp->memory_limit_type_val;
       }
       if (tp->secure_exec_type) {
@@ -4632,7 +4625,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   }
   if (out->max_vm_size == -1L) out->max_vm_size = 0;
 
-  if (tp->memory_limit_type[0] != 1) {
+  if (tp->memory_limit_type) {
     out->memory_limit_type_val = prepare_parse_memory_limit_type(tp->memory_limit_type);
     if (out->memory_limit_type_val < 0) {
       err("invalid memory limit type `%s'", tp->memory_limit_type);
@@ -4640,7 +4633,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
     }
   }
   if (out->memory_limit_type_val < 0 && atp) {
-    if (atp->memory_limit_type_val < 0 && atp->memory_limit_type[0] != 1) {
+    if (atp->memory_limit_type_val < 0 && atp->memory_limit_type) {
       atp->memory_limit_type_val = prepare_parse_memory_limit_type(atp->memory_limit_type);
       if (atp->memory_limit_type_val < 0) {
         err("invalid memory limit type `%s'", atp->memory_limit_type);
@@ -4649,8 +4642,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
     }
     out->memory_limit_type_val = atp->memory_limit_type_val;
   }
-  snprintf(out->memory_limit_type, sizeof(out->memory_limit_type), 
-           "%s", prepare_unparse_memory_limit_type(out->memory_limit_type_val));
+  xstrdup3(&out->memory_limit_type, prepare_unparse_memory_limit_type(out->memory_limit_type_val));
   
   if (tp->secure_exec_type) {
     out->secure_exec_type_val = prepare_parse_secure_exec_type(tp->secure_exec_type);

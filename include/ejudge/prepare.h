@@ -1315,7 +1315,7 @@ struct section_tester_data
   /** configuration key */
   unsigned char key[32];
   /** type of memory limit handling */
-  unsigned char memory_limit_type[32];
+  unsigned char *memory_limit_type;
   /** type of secure execution handling */
   unsigned char *secure_exec_type;
 
