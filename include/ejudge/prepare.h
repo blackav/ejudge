@@ -1332,7 +1332,7 @@ struct section_tester_data
   /** enable memory limit detection */
   ejintbool_t enable_memory_limit_error;
   /** the signal to kill processes */
-  unsigned char kill_signal[32];
+  unsigned char *kill_signal;
   /** max size of the stack */
   size_t max_stack_size;
   /** max size of the data */

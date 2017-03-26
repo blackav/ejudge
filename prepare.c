@@ -607,7 +607,7 @@ static const struct config_parse_info section_tester_params[] =
 
   TESTER_PARAM(no_core_dump, "d"),
   TESTER_PARAM(enable_memory_limit_error, "d"),
-  TESTER_PARAM(kill_signal, "s"),
+  TESTER_PARAM(kill_signal, "S"),
   TESTER_PARAM(max_stack_size, "z"),
   TESTER_PARAM(max_data_size, "z"),
   TESTER_PARAM(max_vm_size, "z"),
@@ -1204,6 +1204,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
   xfree(p->run_exe_dir);
   xfree(p->run_queue_dir);
   xfree(p->run_dir);
+  xfree(p->kill_signal);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -1331,7 +1332,7 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(clear_env, int, int),
   TESTER_INH(time_limit_adjustment, int, int),
   TESTER_INH(time_limit_adj_millis, int, int),
-  TESTER_INH(kill_signal, path, path),
+  TESTER_INH(kill_signal, string, string),
   TESTER_INH(max_stack_size, size, size),
   TESTER_INH(max_data_size, size, size),
   TESTER_INH(max_vm_size, size, size),
@@ -3900,10 +3901,9 @@ set_defaults(
       if (tp->time_limit_adj_millis == -1) {
         tp->time_limit_adj_millis = 0;
       }
-      if (!tp->kill_signal[0] && atp && atp->kill_signal[0]) {
-        strcpy(tp->kill_signal, atp->kill_signal);
-        vinfo("tester.%d.kill_signal inherited from tester.%s ('%s')",
-              i, sish, tp->kill_signal);
+      if ((!tp->kill_signal || !tp->kill_signal[0]) && atp && atp->kill_signal && atp->kill_signal[0]) {
+        xstrdup3(&tp->kill_signal, atp->kill_signal);
+        vinfo("tester.%d.kill_signal inherited from tester.%s ('%s')", i, sish, tp->kill_signal);
       }
       if (tp->max_stack_size == -1L && atp && atp->max_stack_size != -1L) {
         tp->max_stack_size = atp->max_stack_size;
@@ -4715,9 +4715,9 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   }
 
   /* copy kill_signal */
-  strcpy(out->kill_signal, tp->kill_signal);
-  if (!out->kill_signal[0] && atp) {
-    strcpy(out->kill_signal, atp->kill_signal);
+  xstrdup3(&out->kill_signal, tp->kill_signal);
+  if ((!out->kill_signal || !out->kill_signal[0]) && atp) {
+    xstrdup3(&out->kill_signal, atp->kill_signal);
   }
 
   /* copy start_env */

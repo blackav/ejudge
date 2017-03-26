@@ -2635,7 +2635,7 @@ run_one_test(
     *p_report_real_time_limit_ms = srpp->real_time_limit_ms;
   }
 
-  if (tst && /*tst->kill_signal &&*/ tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
+  if (tst && tst->kill_signal && tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
   if (tst && tst->no_core_dump > 0) task_DisableCoreDump(tsk);
 
   if (!tst || tst->memory_limit_type_val < 0) {

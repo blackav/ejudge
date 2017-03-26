@@ -2123,7 +2123,7 @@ serve_run_request(
     }
     srtp->no_core_dump = tester->no_core_dump;
     srtp->enable_memory_limit_error = tester->enable_memory_limit_error;
-    srtp->kill_signal = xstrdup(tester->kill_signal);
+    srtp->kill_signal = xstrdup2(tester->kill_signal);
     srtp->clear_env = tester->clear_env;
     if (tester->time_limit_adj_millis > 0) {
       srtp->time_limit_adjustment_ms = tester->time_limit_adj_millis;
