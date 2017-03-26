@@ -89,6 +89,10 @@ filter_testers(char *key)
   int i, total = 0;
 
   for (i = 1; i <= serve_state.max_tester; i++) {
+    if (key && !serve_state.testers[i]->key) {
+      serve_state.testers[i] = 0;
+      continue;
+    }
     if (key && strcmp(serve_state.testers[i]->key, key)) {
       serve_state.testers[i] = 0;
       continue;

@@ -596,7 +596,7 @@ static const struct config_parse_info section_tester_params[] =
   TESTER_PARAM(is_dos, "d"),
   TESTER_PARAM(skip_testing, "d"),
   TESTER_PARAM(arch, "s"),
-  TESTER_PARAM(key, "s"),
+  TESTER_PARAM(key, "S"),
   TESTER_PARAM(any, "d"),
   TESTER_PARAM(priority_adjustment, "d"),
   TESTER_PARAM(memory_limit_type, "S"),
@@ -1205,6 +1205,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
   xfree(p->kill_signal);
   xfree(p->secure_exec_type);
   xfree(p->memory_limit_type);
+  xfree(p->key);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -1318,7 +1319,7 @@ static void inh_copy_string(void *dst, void *src)
 static const struct inheritance_info tester_inheritance_info[] =
 {
   TESTER_INH(arch, path, path),
-  TESTER_INH(key, path, path),
+  TESTER_INH(key, string, string),
   TESTER_INH(run_dir, string, string),
   TESTER_INH(no_core_dump, int, int),
   TESTER_INH(enable_memory_limit_error, int, int),
@@ -3775,10 +3776,9 @@ set_defaults(
         vinfo("tester.%d.arch inherited from tester.%s ('%s')",
              i, sish, tp->arch);
       }
-      if (!tp->key[0] && atp && atp->key[0]) {
-        strcpy(tp->key, atp->key);
-        vinfo("tester.%d.key inherited from tester.%s ('%s')",
-             i, sish, tp->key);
+      if ((!tp->key || !tp->key[0]) && atp && atp->key && atp->key[0]) {
+        xstrdup3(&tp->key, atp->key);
+        vinfo("tester.%d.key inherited from tester.%s ('%s')", i, sish, tp->key);
       }
 
       if (!state->testers[i]->name[0]) {
@@ -4529,9 +4529,9 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
 
   /* copy key */
   /* FIXME: key currently is not handled properly :-( */
-  strcpy(out->key, tp->key);
-  if (!out->key[0] && atp && atp->key[0]) {
-    strcpy(out->key, atp->key);
+  xstrdup3(&out->key, tp->key);
+  if ((!out->key || !out->key[0]) && atp && atp->key && atp->key[0]) {
+    xstrdup3(&out->key, atp->key);
   }
 
   /* generate tester name */

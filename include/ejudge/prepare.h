@@ -1313,7 +1313,7 @@ struct section_tester_data
   /** checker architecture */
   unsigned char arch[32];
   /** configuration key */
-  unsigned char key[32];
+  unsigned char *key;
   /** type of memory limit handling */
   unsigned char *memory_limit_type;
   /** type of secure execution handling */
