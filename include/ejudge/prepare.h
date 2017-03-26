@@ -1345,7 +1345,7 @@ struct section_tester_data
   /** have priority over `time_limit_adjustment' */
   int time_limit_adj_millis;
 
-  path_t run_dir;
+  unsigned char *run_dir;
   unsigned char *run_queue_dir;
   unsigned char *run_exe_dir;
   unsigned char *run_out_dir;

@@ -615,7 +615,7 @@ static const struct config_parse_info section_tester_params[] =
   TESTER_PARAM(time_limit_adjustment, "d"),
   TESTER_PARAM(time_limit_adj_millis, "d"),
 
-  TESTER_PARAM(run_dir, "s"),
+  TESTER_PARAM(run_dir, "S"),
   TESTER_PARAM(check_dir, "S"),
   TESTER_PARAM(errorcode_file, "S"),
   TESTER_PARAM(error_file, "S"),
@@ -1203,6 +1203,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
   xfree(p->run_out_dir);
   xfree(p->run_exe_dir);
   xfree(p->run_queue_dir);
+  xfree(p->run_dir);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -1324,7 +1325,7 @@ static const struct inheritance_info tester_inheritance_info[] =
 {
   TESTER_INH(arch, path, path),
   TESTER_INH(key, path, path),
-  TESTER_INH(run_dir, path, path),
+  TESTER_INH(run_dir, string, string),
   TESTER_INH(no_core_dump, int, int),
   TESTER_INH(enable_memory_limit_error, int, int),
   TESTER_INH(clear_env, int, int),
@@ -3813,16 +3814,13 @@ set_defaults(
       }
 
       if (mode == PREPARE_SERVE) {
-        if (!tp->run_dir[0] && atp && atp->run_dir[0]) {
-          sformat_message(tp->run_dir, PATH_MAX, 0, atp->run_dir,
-                          g, tp_prob, NULL,
-                          tp, NULL, 0, 0, 0);
-          vinfo("tester.%d.run_dir inherited from tester.%s ('%s')",
-               i, sish, tp->run_dir);
+        if ((!tp->run_dir || !tp->run_dir[0]) && atp && atp->run_dir && atp->run_dir[0]) {
+          sformat_message_2(&tp->run_dir, 0, atp->run_dir, g, tp_prob, NULL, tp, NULL, 0, 0, 0);
+          vinfo("tester.%d.run_dir inherited from tester.%s ('%s')", i, sish, tp->run_dir);
         }
-        if (!tp->run_dir[0]) {
+        if (!tp->run_dir || !tp->run_dir[0]) {
           vinfo("tester.%d.run_dir inherited from global ('%s')",i, g->run_dir);
-          pathcpy(tp->run_dir, g->run_dir);
+          xstrdup3(&tp->run_dir, g->run_dir);
           xstrdup3(&tp->run_queue_dir, g->run_queue_dir);
           xstrdup3(&tp->run_exe_dir, g->run_exe_dir);
           xstrdup3(&tp->run_out_dir, g->run_out_dir);

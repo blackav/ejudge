@@ -1659,7 +1659,7 @@ serve_run_request(
       snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/super-run/var/exe", EJUDGE_CONTESTS_HOME_DIR);
       snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
     }
-  } else if (tester /*&& tester->run_dir*/ && tester->run_dir[0]) {
+  } else if (tester && tester->run_dir && tester->run_dir[0]) {
     snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", tester->run_dir);
     snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", tester->run_dir);
   } else {
