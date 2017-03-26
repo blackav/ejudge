@@ -1198,6 +1198,9 @@ prepare_tester_free_func(struct generic_section_config *gp)
   xfree(p->check_dir);
   xfree(p->run_full_archive_dir);
   xfree(p->run_team_report_dir);
+  xfree(p->run_report_dir);
+  xfree(p->run_status_dir);
+  xfree(p->run_out_dir);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -3820,7 +3823,7 @@ set_defaults(
           pathcpy(tp->run_dir, g->run_dir);
           pathcpy(tp->run_queue_dir, g->run_queue_dir);
           pathcpy(tp->run_exe_dir, g->run_exe_dir);
-          pathcpy(tp->run_out_dir, g->run_out_dir);
+          xstrdup3(&tp->run_out_dir, g->run_out_dir);
           xstrdup3(&tp->run_status_dir, g->run_status_dir);
           xstrdup3(&tp->run_report_dir, g->run_report_dir);
           if (g->team_enable_rep_view) {
@@ -3836,8 +3839,7 @@ set_defaults(
           pathmake(tp->run_exe_dir, tp->run_dir, "/",
                    DFLT_G_RUN_EXE_DIR, 0);
           vinfo("tester.%d.run_exe_dir is %s", i, tp->run_exe_dir);
-          snprintf(tp->run_out_dir, sizeof(tp->run_out_dir), "%s/%06d",
-                   tp->run_dir, cnts->id);
+          usprintf(&tp->run_out_dir, "%s/%06d", tp->run_dir, cnts->id);
           vinfo("tester.%d.run_out_dir is %s", i, tp->run_out_dir);
           usprintf(&tp->run_status_dir, "%s/%s", tp->run_out_dir, DFLT_G_RUN_STATUS_DIR);
           vinfo("tester.%d.run_status_dir is %s", i, tp->run_status_dir);
