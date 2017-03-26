@@ -1358,7 +1358,7 @@ struct section_tester_data
   /** run->serve full output archive dir */
   path_t run_full_archive_dir;
 
-  path_t check_dir;
+  unsigned char *check_dir;
   /** file that contains completion status */
   unsigned char *errorcode_file;
   /** stderr output of the checked program */

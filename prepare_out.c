@@ -2293,9 +2293,8 @@ generate_abstract_tester(
     do_xstr(f, &ab, "start_env", atst->start_env);
   }
 
-  if (atst && atst->check_dir[0]) {
-    fprintf(f, "check_dir = \"%s\"\n",
-            c_armor_2(&ab, atst->check_dir, contests_home_dir));
+  if (atst && atst->check_dir && atst->check_dir[0]) {
+    fprintf(f, "check_dir = \"%s\"\n", c_armor_2(&ab, atst->check_dir, contests_home_dir));
   } else if (arch == ARCH_DOS) {
     fprintf(f, "check_dir = \"%s\"\n",
             c_armor_2(&ab, "/home/judges/dosemu/run", contests_home_dir));

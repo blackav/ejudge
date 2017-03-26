@@ -2233,7 +2233,7 @@ run_one_test(
     return -1;
   }
 
-  if (tst && /*tst->check_dir &&*/ tst->check_dir[0]) {
+  if (tst && tst->check_dir && tst->check_dir[0]) {
     snprintf(check_dir, sizeof(check_dir), "%s", tst->check_dir);
   } else {
     snprintf(check_dir, sizeof(check_dir), "%s", global->run_check_dir);
@@ -3696,7 +3696,7 @@ run_tests(
     far = full_archive_open_write(full_report_path);
   }
 
-  if (tst && /*tst->check_dir &&*/ tst->check_dir[0]) {
+  if (tst && tst->check_dir && tst->check_dir[0]) {
     snprintf(check_dir, sizeof(check_dir), "%s", tst->check_dir);
   } else {
     snprintf(check_dir, sizeof(check_dir), "%s", global->run_check_dir);

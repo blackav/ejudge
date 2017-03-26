@@ -616,7 +616,7 @@ static const struct config_parse_info section_tester_params[] =
   TESTER_PARAM(time_limit_adj_millis, "d"),
 
   TESTER_PARAM(run_dir, "s"),
-  TESTER_PARAM(check_dir, "s"),
+  TESTER_PARAM(check_dir, "S"),
   TESTER_PARAM(errorcode_file, "S"),
   TESTER_PARAM(error_file, "S"),
 
@@ -1195,6 +1195,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
   xfree(p->prepare_cmd);
   xfree(p->error_file);
   xfree(p->errorcode_file);
+  xfree(p->check_dir);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -1331,7 +1332,7 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(no_redirect, int, int),
   TESTER_INH(ignore_stderr, int, int),
   TESTER_INH(priority_adjustment, int3, int),
-  TESTER_INH(check_dir, path, path),
+  TESTER_INH(check_dir, string, string),
   TESTER_INH(errorcode_file, string, string),
   TESTER_INH(error_file, string, string),
   TESTER_INH(start_cmd, string, string),
@@ -3788,20 +3789,20 @@ set_defaults(
       }
 
       if (mode == PREPARE_RUN) {
-        if (!tp->check_dir[0] && atp && atp->check_dir[0]) {
-          sformat_message(tp->check_dir, PATH_MAX, 0, atp->check_dir,
-                          g, tp_prob, NULL,
-                          tp, NULL, 0, 0, 0);
+        if ((!tp->check_dir || !tp->check_dir[0]) && atp && atp->check_dir && atp->check_dir[0]) {
+          sformat_message_2(&tp->check_dir, 0, atp->check_dir, g, tp_prob, NULL, tp, NULL, 0, 0, 0);
         }
-        if (!tp->check_dir[0]) {
-          pathcpy(tp->check_dir, g->run_check_dir);
+        if (!tp->check_dir || !tp->check_dir[0]) {
+          xstrdup3(&tp->check_dir, g->run_check_dir);
         }
 #if defined EJUDGE_LOCAL_DIR
-        pathmake2(tp->check_dir, EJUDGE_LOCAL_DIR, "/",
-                  tp->check_dir, NULL);
+        if (!os_IsAbsolutePath(tp->check_dir)) {
+          usprintf(&tp->check_dir, "%s/%s", EJUDGE_LOCAL_DIR, tp->check_dir);
+        }
 #endif
-        pathmake2(tp->check_dir, EJUDGE_CONTESTS_HOME_DIR, "/",
-                  tp->check_dir, NULL);
+        if (!os_IsAbsolutePath(tp->check_dir)) {
+          usprintf(&tp->check_dir, "%s/%s", EJUDGE_CONTESTS_HOME_DIR, tp->check_dir);
+        }
       }
 
       if (mode == PREPARE_SERVE) {
@@ -4552,19 +4553,21 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   }
 
   /* copy check_dir */
-  strcpy(out->check_dir, tp->check_dir);
-  if (!out->check_dir[0] && atp && atp->check_dir[0]) {
-    sformat_message(out->check_dir, sizeof(out->check_dir), 0,
-                    atp->check_dir, state->global,
-                    prb, NULL, out, NULL, 0, 0, 0);
+  xstrdup3(&out->check_dir, tp->check_dir);
+  if ((!out->check_dir || !out->check_dir[0]) && atp && atp->check_dir && atp->check_dir[0]) {
+    sformat_message_2(&out->check_dir, 0, atp->check_dir, state->global, prb, NULL, out, NULL, 0, 0, 0);
   }
-  if (!out->check_dir[0]) {
-    pathcpy(out->check_dir, state->global->run_check_dir);
+  if (!out->check_dir || !out->check_dir[0]) {
+    xstrdup3(&out->check_dir, state->global->run_check_dir);
   }
 #if defined EJUDGE_LOCAL_DIR
-  pathmake2(out->check_dir, EJUDGE_LOCAL_DIR, "/", out->check_dir, NULL);
+  if (!os_IsAbsolutePath(out->check_dir)) {
+    usprintf(&out->check_dir, "%s/%s", EJUDGE_LOCAL_DIR, out->check_dir);
+  }
 #endif
-  pathmake2(out->check_dir, EJUDGE_CONTESTS_HOME_DIR, "/", out->check_dir, NULL);
+  if (!os_IsAbsolutePath(out->check_dir)) {
+    usprintf(&out->check_dir, "%s/%s", EJUDGE_CONTESTS_HOME_DIR, out->check_dir);
+  }
 
   /* copy no_core_dump */
   out->no_core_dump = tp->no_core_dump;
