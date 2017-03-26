@@ -1158,7 +1158,7 @@ struct section_problem_data
   int *open_tests_val META_ATTRIB((meta_private));
 
   /** test visibility in the final final mode */
-  unsigned char final_open_tests[256];
+  unsigned char *final_open_tests;
   int final_open_tests_count META_ATTRIB((meta_private));
   int *final_open_tests_val META_ATTRIB((meta_private));
 

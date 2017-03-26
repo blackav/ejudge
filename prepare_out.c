@@ -1264,7 +1264,7 @@ prepare_unparse_prob(
   if (prob->open_tests[0]) {
     fprintf(f, "open_tests = \"%s\"\n", CARMOR(prob->open_tests));
   }
-  if (prob->final_open_tests[0]) {
+  if (prob->final_open_tests && prob->final_open_tests[0]) {
     fprintf(f, "final_open_tests = \"%s\"\n", CARMOR(prob->final_open_tests));
   }
   if (prob->token_open_tests && prob->token_open_tests[0]) {
@@ -1699,7 +1699,7 @@ prepare_unparse_actual_prob(
 
   if (prob->open_tests[0])
     fprintf(f, "open_tests = \"%s\"\n", CARMOR(prob->open_tests));
-  if (prob->final_open_tests[0])
+  if (prob->final_open_tests && prob->final_open_tests[0])
     fprintf(f, "final_open_tests = \"%s\"\n", CARMOR(prob->final_open_tests));
   if (prob->token_open_tests && prob->token_open_tests[0])
     fprintf(f, "token_open_tests = \"%s\"\n", CARMOR(prob->token_open_tests));
