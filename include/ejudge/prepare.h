@@ -1354,7 +1354,7 @@ struct section_tester_data
   /** run->serve report dir */
   path_t run_report_dir;
   /** run->serve team report dir */
-  path_t run_team_report_dir;
+  unsigned char *run_team_report_dir;
   /** run->serve full output archive dir */
   unsigned char *run_full_archive_dir;
 

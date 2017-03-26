@@ -1197,6 +1197,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
   xfree(p->errorcode_file);
   xfree(p->check_dir);
   xfree(p->run_full_archive_dir);
+  xfree(p->run_team_report_dir);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -3823,7 +3824,7 @@ set_defaults(
           pathcpy(tp->run_status_dir, g->run_status_dir);
           pathcpy(tp->run_report_dir, g->run_report_dir);
           if (g->team_enable_rep_view) {
-            pathcpy(tp->run_team_report_dir, g->run_team_report_dir);
+            xstrdup3(&tp->run_team_report_dir, g->run_team_report_dir);
           }
           if (g->enable_full_archive) {
             xstrdup3(&tp->run_full_archive_dir, g->run_full_archive_dir);
@@ -3845,10 +3846,8 @@ set_defaults(
                    DFLT_G_RUN_REPORT_DIR, 0);
           vinfo("tester.%d.run_report_dir is %s", i, tp->run_report_dir);
           if (g->team_enable_rep_view) {
-            pathmake(tp->run_team_report_dir, tp->run_out_dir, "/",
-                     DFLT_G_RUN_TEAM_REPORT_DIR, 0);
-            vinfo("tester.%d.run_team_report_dir is %s", i,
-                  tp->run_team_report_dir);
+            usprintf(&tp->run_team_report_dir, "%s/%s", tp->run_out_dir, DFLT_G_RUN_TEAM_REPORT_DIR);
+            vinfo("tester.%d.run_team_report_dir is %s", i, tp->run_team_report_dir);
           }
           if (g->enable_full_archive) {
             usprintf(&tp->run_full_archive_dir, "%s/%s", tp->run_out_dir, DFLT_G_RUN_FULL_ARCHIVE_DIR);
