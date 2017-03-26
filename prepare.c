@@ -600,7 +600,7 @@ static const struct config_parse_info section_tester_params[] =
   TESTER_PARAM(any, "d"),
   TESTER_PARAM(priority_adjustment, "d"),
   TESTER_PARAM(memory_limit_type, "s"),
-  TESTER_PARAM(secure_exec_type, "s"),
+  TESTER_PARAM(secure_exec_type, "S"),
 
   TESTER_PARAM(abstract, "d"),
   TESTER_PARAM(super, "x"),
@@ -1179,7 +1179,6 @@ tester_init_func(struct generic_section_config *gp)
   p->max_data_size = -1L;
   p->memory_limit_type[0] = 1;
   p->memory_limit_type_val = -1;
-  p->secure_exec_type[0] = 1;
   p->secure_exec_type_val = -1;
 }
 
@@ -1205,6 +1204,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
   xfree(p->run_queue_dir);
   xfree(p->run_dir);
   xfree(p->kill_signal);
+  xfree(p->secure_exec_type);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -1347,7 +1347,7 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(start_cmd, string, string),
   TESTER_INH(prepare_cmd, string, string),
   TESTER_INH(memory_limit_type, path2, path),
-  TESTER_INH(secure_exec_type, path2, path),
+  TESTER_INH(secure_exec_type, string, string),
   TESTER_INH(nwrun_spool_dir, string, string),
 
   { 0, 0, 0, 0 }
@@ -1432,7 +1432,7 @@ process_abstract_tester(serve_state_t state, int i)
     }
   }
 
-  if (atp->secure_exec_type[0] != 1) {
+  if (atp->secure_exec_type) {
     atp->secure_exec_type_val = prepare_parse_secure_exec_type(atp->secure_exec_type);
     if (atp->secure_exec_type_val < 0) {
       err("invalid secure_exec_type `%s'", atp->secure_exec_type);
@@ -3930,7 +3930,7 @@ set_defaults(
       if (tp->memory_limit_type_val<0 && atp && atp->memory_limit_type_val>=0) {
         tp->memory_limit_type_val = atp->memory_limit_type_val;
       }
-      if (tp->secure_exec_type[0] != 1) {
+      if (tp->secure_exec_type) {
         tp->secure_exec_type_val = prepare_parse_secure_exec_type(tp->secure_exec_type);
         if (tp->secure_exec_type_val < 0) {
           err("invalid secure exec type `%s'", tp->secure_exec_type);
@@ -4652,7 +4652,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   snprintf(out->memory_limit_type, sizeof(out->memory_limit_type), 
            "%s", prepare_unparse_memory_limit_type(out->memory_limit_type_val));
   
-  if (tp->secure_exec_type[0] != 1) {
+  if (tp->secure_exec_type) {
     out->secure_exec_type_val = prepare_parse_secure_exec_type(tp->secure_exec_type);
     if (out->secure_exec_type_val < 0) {
       err("invalid secure exec type `%s'", tp->secure_exec_type);
@@ -4660,7 +4660,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
     }
   }
   if (out->secure_exec_type_val < 0 && atp) {
-    if (atp->secure_exec_type_val < 0 && atp->secure_exec_type[0] != 1) {
+    if (atp->secure_exec_type_val < 0 && atp->secure_exec_type) {
       atp->secure_exec_type_val = prepare_parse_secure_exec_type(atp->secure_exec_type);
       if (atp->secure_exec_type_val < 0) {
         err("invalid secure exec type `%s'", atp->secure_exec_type);
@@ -4669,8 +4669,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
     }
     out->secure_exec_type_val = atp->secure_exec_type_val;
   }
-  snprintf(out->secure_exec_type, sizeof(out->secure_exec_type),
-           "%s", prepare_unparse_secure_exec_type(out->secure_exec_type_val));
+  xstrdup3(&out->secure_exec_type, prepare_unparse_secure_exec_type(out->secure_exec_type_val));
 
   out->skip_testing = tp->skip_testing;
   if (out->skip_testing == -1 && atp)

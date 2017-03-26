@@ -792,7 +792,7 @@ collect_sections(serve_state_t state)
       }
     }
 
-    if (t->secure_exec_type[0] >= ' ') {
+    if (t->secure_exec_type) {
       t->secure_exec_type_val = prepare_parse_secure_exec_type(t->secure_exec_type);
       if (t->secure_exec_type_val < 0) {
         fatal("invalid secure_exec_type `%s'", t->secure_exec_type);

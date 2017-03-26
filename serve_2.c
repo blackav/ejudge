@@ -2117,10 +2117,7 @@ serve_run_request(
     if (s && s[0] && s[0] != 1) {
       srtp->memory_limit_type = xstrdup(s);
     }
-    s = tester->secure_exec_type;
-    if (s && s[0] && s[0] != 1) {
-      srtp->secure_exec_type = xstrdup(s);
-    }
+    srtp->secure_exec_type = xstrdup2(tester->secure_exec_type);
     srtp->no_core_dump = tester->no_core_dump;
     srtp->enable_memory_limit_error = tester->enable_memory_limit_error;
     srtp->kill_signal = xstrdup2(tester->kill_signal);

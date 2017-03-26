@@ -1317,7 +1317,7 @@ struct section_tester_data
   /** type of memory limit handling */
   unsigned char memory_limit_type[32];
   /** type of secure execution handling */
-  unsigned char secure_exec_type[32];
+  unsigned char *secure_exec_type;
 
   /** is this tester abstract */
   ejintbool_t abstract;
