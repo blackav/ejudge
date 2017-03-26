@@ -2877,7 +2877,7 @@ prepare_run_request:
    * so far compilation is successful, and now we prepare a run packet
    */
 
-  if (prob && prob->type > 0 && /*prob->style_checker_cmd &&*/ prob->style_checker_cmd[0]) {
+  if (prob && prob->type > 0 && prob->style_checker_cmd && prob->style_checker_cmd[0]) {
     arch_flags = serve_make_source_read_path(state, run_arch_path, sizeof(run_arch_path), &re);
     if (arch_flags < 0) goto report_check_failed;
     if (generic_read_file(&run_text, 0, &run_size, arch_flags,
@@ -3690,7 +3690,7 @@ serve_rejudge_run(
       return;
     }
 
-    if (/*prob->style_checker_cmd &&*/ prob->style_checker_cmd[0]) {
+    if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
       r = serve_compile_request(state, 0 /* str*/, -1 /* len*/, cnts->id,
                                 run_id, re.user_id, 0 /* lang_id */, re.variant,
                                 0 /* locale_id */, 1 /* output_only*/,

@@ -1213,7 +1213,7 @@ function viewDialogOnChange(field)
                 <td>Style checker name:</td>
                 <td><%
     str_value = prob->style_checker_cmd;
-    if (!str_value[0]) str_value = NULL;
+    //if (!str_value[0]) str_value = NULL;
 %><s:textfield id="orig-style_checker_cmd" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -1221,7 +1221,7 @@ function viewDialogOnChange(field)
       }
     } else {
       if (!str_value) {
-        if (!tmp_prob->style_checker_cmd[0]) {
+        if (!tmp_prob->style_checker_cmd) {
 %>(<i>Not set</i>)<%
         } else {
 %>(<i>Default: <s:v value="tmp_prob->style_checker_cmd" /></i>)<%

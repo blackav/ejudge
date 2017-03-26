@@ -59,7 +59,7 @@
     }
 
     if (!retval && phr->ss) {
-        COPYSTR(style_checker_cmd);
+        xstrdup3(&prob->style_checker_cmd, style_checker_cmd);
         MOVEENV(style_checker_env);
         MOVEENV(lang_compiler_env);
         COPYSTR(source_header);

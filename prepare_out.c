@@ -1324,7 +1324,7 @@ prepare_unparse_prob(
   if (prob->interactor_time_limit > 0) {
     fprintf(f, "interactor_time_limit = %d\n", prob->interactor_time_limit);
   }
-  if (prob->style_checker_cmd[0] && prob->style_checker_cmd[0] != 1)
+  if (prob->style_checker_cmd && prob->style_checker_cmd[0])
     fprintf(f,"style_checker_cmd = \"%s\"\n",CARMOR(prob->style_checker_cmd));
   do_xstr(f, &ab, "style_checker_env", prob->style_checker_env);
   do_xstr(f, &ab, "lang_compiler_env", prob->lang_compiler_env);
@@ -1719,7 +1719,7 @@ prepare_unparse_actual_prob(
   do_xstr(f, &ab, "interactor_env", prob->interactor_env);
   if (prob->interactor_time_limit > 0)
     fprintf(f, "interactor_time_limit = %d\n", prob->interactor_time_limit);
-  if ((show_paths || (global && global->advanced_layout > 0)) && prob->style_checker_cmd[0])
+  if ((show_paths || (global && global->advanced_layout > 0)) && prob->style_checker_cmd && prob->style_checker_cmd[0])
     fprintf(f,"style_checker_cmd = \"%s\"\n",CARMOR(prob->style_checker_cmd));
   do_xstr(f, &ab, "style_checker_env", prob->style_checker_env);
   do_xstr(f, &ab, "lang_compiler_env", prob->lang_compiler_env);
@@ -2900,7 +2900,7 @@ prob_instr(
   }
 
   prepare_set_prob_value(CNTSPROB_style_checker_cmd, tmp_prob, abstr, global);
-  if (/*tmp_prob->style_checker_cmd &&*/ tmp_prob->style_checker_cmd[0]) {
+  if (tmp_prob->style_checker_cmd && tmp_prob->style_checker_cmd[0]) {
     fprintf(f, "<p><b>Style checker:</b></p>\n");
 
     sformat_message(prob_path, sizeof(prob_path), 0,

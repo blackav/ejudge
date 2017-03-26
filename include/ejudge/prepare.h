@@ -1114,7 +1114,7 @@ struct section_problem_data
   /** interactor program */
   path_t interactor_cmd;
   /** style checker program */
-  path_t style_checker_cmd;
+  unsigned char *style_checker_cmd;
   /** test checker program */
   unsigned char *test_checker_cmd;
   /** start/stop init-style interactor */

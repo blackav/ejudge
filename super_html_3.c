@@ -1188,7 +1188,7 @@ invoke_make(
     // FIXME: complete
   }
   // check for style checker
-  if (prob->style_checker_cmd[0]) {
+  if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
     // FIXME: complete
   }
   // check for test checker
