@@ -1346,7 +1346,7 @@ struct section_tester_data
   int time_limit_adj_millis;
 
   path_t run_dir;
-  path_t run_queue_dir;
+  unsigned char *run_queue_dir;
   unsigned char *run_exe_dir;
   unsigned char *run_out_dir;
   /** run->serve status dir */

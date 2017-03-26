@@ -1202,6 +1202,7 @@ prepare_tester_free_func(struct generic_section_config *gp)
   xfree(p->run_status_dir);
   xfree(p->run_out_dir);
   xfree(p->run_exe_dir);
+  xfree(p->run_queue_dir);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
@@ -3822,7 +3823,7 @@ set_defaults(
         if (!tp->run_dir[0]) {
           vinfo("tester.%d.run_dir inherited from global ('%s')",i, g->run_dir);
           pathcpy(tp->run_dir, g->run_dir);
-          pathcpy(tp->run_queue_dir, g->run_queue_dir);
+          xstrdup3(&tp->run_queue_dir, g->run_queue_dir);
           xstrdup3(&tp->run_exe_dir, g->run_exe_dir);
           xstrdup3(&tp->run_out_dir, g->run_out_dir);
           xstrdup3(&tp->run_status_dir, g->run_status_dir);
@@ -3834,8 +3835,7 @@ set_defaults(
             xstrdup3(&tp->run_full_archive_dir, g->run_full_archive_dir);
           }
         } else {
-          pathmake(tp->run_queue_dir, tp->run_dir, "/",
-                   DFLT_G_RUN_QUEUE_DIR, 0);
+          usprintf(&tp->run_queue_dir, "%s/%s", tp->run_dir, DFLT_G_RUN_QUEUE_DIR);
           vinfo("tester.%d.run_queue_dir is %s", i, tp->run_queue_dir);
           usprintf(&tp->run_exe_dir, "%s/%s", tp->run_dir, DFLT_G_RUN_EXE_DIR);
           vinfo("tester.%d.run_exe_dir is %s", i, tp->run_exe_dir);
