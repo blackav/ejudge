@@ -818,7 +818,9 @@ collect_sections(serve_state_t state)
         if (access(start_path, X_OK) >= 0) {
           xstrdup3(&t->start_cmd, start_path);
         } else {
-          usprintf(&t->start_cmd, "%s/lang/%s", global->script_dir, t->start_cmd);
+          if (!os_IsAbsolutePath(t->start_cmd)) {
+            usprintf(&t->start_cmd, "%s/lang/%s", global->script_dir, t->start_cmd);
+          }
         }
       }
     }

@@ -4027,7 +4027,9 @@ set_defaults(
           if (access(start_path, X_OK) >= 0) {
             xstrdup3(&tp->start_cmd, start_path);
           } else {
-            usprintf(&tp->start_cmd, "%s/lang/%s", g->script_dir, tp->start_cmd);
+            if (!os_IsAbsolutePath(tp->start_cmd)) {
+              usprintf(&tp->start_cmd, "%s/lang/%s", g->script_dir, tp->start_cmd);
+            }
           }
         }
 
@@ -4036,7 +4038,7 @@ set_defaults(
                           g, tp_prob, NULL, tp, NULL, 0, 0, 0);
           vinfo("tester.%d.prepare_cmd inherited from tester.%s ('%s')", i, sish, tp->prepare_cmd);
         }
-        if (tp->prepare_cmd && tp->prepare_cmd[0]) {
+        if (tp->prepare_cmd && tp->prepare_cmd[0] && !os_IsAbsolutePath(tp->prepare_cmd)) {
           usprintf(&tp->prepare_cmd, "%s/lang/%s", g->script_dir, tp->prepare_cmd);
         }
 
@@ -4809,7 +4811,9 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
     if (access(start_path, X_OK) >= 0) {
       xstrdup3(&out->start_cmd, start_path);
     } else {
-      usprintf(&out->start_cmd, "%s/lang/%s", state->global->script_dir, out->start_cmd);
+      if (!os_IsAbsolutePath(out->start_cmd)) {
+        usprintf(&out->start_cmd, "%s/lang/%s", state->global->script_dir, out->start_cmd);
+      }
     }
   }
 
@@ -4820,7 +4824,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
                     atp->prepare_cmd, state->global, prb, NULL, out,
                     NULL, 0, 0, 0);
   }
-  if (out->prepare_cmd && out->prepare_cmd[0]) {
+  if (out->prepare_cmd && out->prepare_cmd[0] && !os_IsAbsolutePath(out->prepare_cmd)) {
     usprintf(&out->prepare_cmd, "%s/lang/%s", state->global->script_dir, out->prepare_cmd);
   }
 
