@@ -128,7 +128,7 @@ struct token_info
 
 struct dates_config;
 
-/* sizeof(struct section_global_data) == 350132/350296 */
+/* sizeof(struct section_global_data) == 354296/354464 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -780,7 +780,7 @@ struct section_global_data
   +unsigned char *solution_cmd;
  */
 
-/* sizeof(struct section_problem_data) == 65140/65392 */
+/* sizeof(struct section_problem_data) == 65284/65560 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -1286,7 +1286,7 @@ struct section_language_data
   int disabled_by_config META_ATTRIB((meta_private));
 };
 
-/* sizeof(struct section_tester_data) == 50204/50232 */
+/* sizeof(struct section_tester_data) == 292/400 */
 struct section_tester_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
