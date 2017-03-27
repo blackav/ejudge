@@ -528,7 +528,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(source_footer, "s"),
   PROBLEM_PARAM(score_view, "x"),
   PROBLEM_PARAM(extid, "S"),
-  PROBLEM_PARAM(normalization, "s"),
+  PROBLEM_PARAM(normalization, "S"),
   PROBLEM_PARAM(super_run_dir, "S"),
   PROBLEM_PARAM(tokens, "S"),
   PROBLEM_PARAM(umask, "S"),
@@ -1085,6 +1085,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   prepare_free_group_dates(&p->gsd);
   prepare_free_group_dates(&p->gdl);
   xfree(p->problem_dir);
+  xfree(p->normalization);
   xfree(p->score_bonus);
   xfree(p->tscores);
   xfree(p->x_score_tests);
@@ -6136,8 +6137,8 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_normalization:
-    if (!out->normalization[0] && abstr && abstr->normalization[0]) {
-      strcpy(out->normalization, abstr->normalization);
+    if (!out->normalization && abstr && abstr->normalization) {
+      xstrdup3(&out->normalization, abstr->normalization);
     }
     break;
 

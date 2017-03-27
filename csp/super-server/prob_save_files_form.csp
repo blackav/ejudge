@@ -120,7 +120,7 @@
 
     if (!retval && phr->ss) {
         prob->binary_input = binary_input;
-        snprintf(prob->normalization, sizeof(prob->normalization), "%s", test_normalization_unparse(normalization));
+        xstrdup3(&prob->normalization, test_normalization_unparse(normalization));
         COPYSTR(xml_file);
         COPYSTR(test_dir);
         if (!test_pat_dflt) {

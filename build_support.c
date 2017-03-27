@@ -1192,7 +1192,7 @@ do_generate_makefile(
   if (cnts->file_group && cnts->file_group[0]) fprintf(mk_f, " --group=%s", cnts->file_group);
   if (cnts->file_mode && cnts->file_mode[0]) fprintf(mk_f, " --mode=%s", cnts->file_mode);
   if (prob->binary_input > 0) fprintf(mk_f, " --binary-input");
-  if (/*prob->normalization &&*/ prob->normalization[0]) fprintf(mk_f, " --type=%s", prob->normalization);
+  if (prob->normalization && prob->normalization[0]) fprintf(mk_f, " --type=%s", prob->normalization);
   fprintf(mk_f, "\n\n");
 
   fprintf(mk_f, "all :");

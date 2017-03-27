@@ -1062,7 +1062,7 @@ struct section_problem_data
   struct testset_info *ts_infos META_ATTRIB((meta_private));
 
   /** test normalization type */
-  unsigned char normalization[32];
+  unsigned char *normalization;
   int normalization_val META_ATTRIB((meta_private));
 
   /** deadline for sending this problem */
