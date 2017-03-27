@@ -1315,7 +1315,7 @@ prepare_unparse_prob(
   if (prob->check_cmd[0] && prob->check_cmd[0] != 1)
     fprintf(f, "check_cmd = \"%s\"\n", CARMOR(prob->check_cmd));
   do_xstr(f, &ab, "checker_env", prob->checker_env);
-  if (prob->valuer_cmd[0] && prob->valuer_cmd[0] != 1)
+  if (prob->valuer_cmd)
     fprintf(f, "valuer_cmd = \"%s\"\n", CARMOR(prob->valuer_cmd));
   do_xstr(f, &ab, "valuer_env", prob->valuer_env);
   if (prob->interactor_cmd && prob->interactor_cmd[0])
@@ -1711,7 +1711,7 @@ prepare_unparse_actual_prob(
   if (!prob->standard_checker[0] && (show_paths || (global && global->advanced_layout > 0)) && prob->check_cmd[0])
     fprintf(f, "check_cmd = \"%s\"\n", CARMOR(prob->check_cmd));
   do_xstr(f, &ab, "checker_env", prob->checker_env);
-  if ((show_paths || (global && global->advanced_layout > 0)) && prob->valuer_cmd[0])
+  if ((show_paths || (global && global->advanced_layout > 0)) && prob->valuer_cmd)
     fprintf(f, "valuer_cmd = \"%s\"\n", CARMOR(prob->valuer_cmd));
   do_xstr(f, &ab, "valuer_env", prob->valuer_env);
   if ((show_paths || (global && global->advanced_layout > 0)) && prob->interactor_cmd && prob->interactor_cmd[0])
@@ -2888,7 +2888,7 @@ prob_instr(
   }
 
   prepare_set_prob_value(CNTSPROB_valuer_cmd, tmp_prob, abstr, global);
-  if (/*tmp_prob->valuer_cmd &&*/ tmp_prob->valuer_cmd[0]) {
+  if (tmp_prob->valuer_cmd && tmp_prob->valuer_cmd[0]) {
     fprintf(f, "<p><b>Score evaluator:</b></p>\n");
     handle_file(f, global, tmp_prob, tmp_prob->valuer_cmd, 1);
   }

@@ -500,7 +500,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(lang_max_vm_size, "x"),
   PROBLEM_PARAM(lang_max_stack_size, "x"),
   PROBLEM_PARAM(check_cmd, "s"),
-  PROBLEM_PARAM(valuer_cmd, "s"),
+  PROBLEM_PARAM(valuer_cmd, "S"),
   PROBLEM_PARAM(interactor_cmd, "S"),
   PROBLEM_PARAM(style_checker_cmd, "S"),
   PROBLEM_PARAM(test_checker_cmd, "S"),
@@ -1087,6 +1087,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->problem_dir);
   xfree(p->tscores);
   xfree(p->x_score_tests);
+  xfree(p->valuer_cmd);
   xfree(p->interactor_cmd);
   xfree(p->style_checker_cmd);
   xfree(p->test_checker_cmd);
@@ -5977,11 +5978,13 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_valuer_cmd:
-    if (!out->valuer_cmd[0] && abstr && abstr->valuer_cmd[0] && abstr->valuer_cmd[0] != 1) {
-      sformat_message(out->valuer_cmd, PATH_MAX, 0, abstr->valuer_cmd, NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    if (!out->valuer_cmd && abstr && abstr->valuer_cmd) {
+      sformat_message_2(&out->valuer_cmd, 0, abstr->valuer_cmd, NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
-    if (global && out->valuer_cmd[0] && global->advanced_layout <= 0) {
-      pathmake2(out->valuer_cmd, global->checker_dir, "/", out->valuer_cmd, NULL);
+    if (global && out->valuer_cmd && out->valuer_cmd[0] && global->advanced_layout <= 0) {
+      if (!os_IsAbsolutePath(out->valuer_cmd)) {
+        usprintf(&out->valuer_cmd, "%s/%s", global->checker_dir, out->valuer_cmd);
+      }
     }
     break;
 

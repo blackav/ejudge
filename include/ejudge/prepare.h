@@ -1110,7 +1110,7 @@ struct section_problem_data
   /** checker program */
   path_t check_cmd;
   /** valuer program */
-  path_t valuer_cmd;
+  unsigned char *valuer_cmd;
   /** interactor program */
   unsigned char *interactor_cmd;
   /** style checker program */

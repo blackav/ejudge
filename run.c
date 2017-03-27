@@ -1057,7 +1057,7 @@ check_config(void)
       }
 
       for (j = 1; j <= prb->ntests; j++) score_summ += prb->tscores[j];
-      if (score_summ > prb->full_score && !prb->valuer_cmd[0]) {
+      if (score_summ > prb->full_score && (!prb->valuer_cmd || !prb->valuer_cmd[0])) {
         err("total score (%d) > full score (%d) for problem %s",
             score_summ, prb->full_score, prb->short_name);
         return -1;

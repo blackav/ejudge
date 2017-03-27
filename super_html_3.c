@@ -1175,9 +1175,8 @@ invoke_make(
     }
   }
   // check for valuer
-  if (prob->valuer_cmd[0]) {
-    get_advanced_layout_path(cmd, sizeof(cmd), global, prob,
-                             prob->valuer_cmd, variant);
+  if (prob->valuer_cmd && prob->valuer_cmd[0]) {
+    get_advanced_layout_path(cmd, sizeof(cmd), global, prob, prob->valuer_cmd, variant);
     if (access(cmd, X_OK) < 0) {
       fprintf(flog, "Error: valuer executable %s is not created\n", cmd);
       return -1;

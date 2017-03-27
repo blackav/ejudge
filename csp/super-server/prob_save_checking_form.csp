@@ -121,7 +121,7 @@
         MOVEENV(checker_env);
         prob->scoring_checker = scoring_checker;
         prob->enable_testlib_mode = enable_testlib_mode;
-        COPYSTR(valuer_cmd);
+        MOVESTR(valuer_cmd);
         prob->valuer_sets_marked = valuer_sets_marked;
         prob->interactive_valuer = interactive_valuer;
         MOVEENV(valuer_env);

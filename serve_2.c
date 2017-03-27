@@ -2011,7 +2011,7 @@ serve_run_request(
       }
     }
   }
-  if (/*prob->valuer_cmd &&*/ prob->valuer_cmd[0]) {
+  if (prob->valuer_cmd && prob->valuer_cmd[0]) {
     if (srgp->advanced_layout > 0) {
       get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, prob->valuer_cmd, variant);
       srpp->valuer_cmd = xstrdup(pathbuf);

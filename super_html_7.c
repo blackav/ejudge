@@ -361,7 +361,7 @@ super_serve_op_TESTS_MAIN_PAGE(
     if (prob->variant_num > 0) need_variant = 1;
     if (/*prob->xml_file &&*/ prob->xml_file[0]) need_statement = 1;
     if (prob->style_checker_cmd && prob->style_checker_cmd[0]) need_style_checker = 1;
-    if (/*prob->valuer_cmd &&*/ prob->valuer_cmd[0]) need_valuer = 1;
+    if (prob->valuer_cmd && prob->valuer_cmd[0]) need_valuer = 1;
     if (prob->interactor_cmd && prob->interactor_cmd[0]) need_interactor = 1;
     if (prob->test_checker_cmd && prob->test_checker_cmd[0]) need_test_checker = 1;
     if (prob->init_cmd && prob->init_cmd[0]) need_init = 1;
@@ -612,7 +612,7 @@ super_serve_op_TESTS_MAIN_PAGE(
       }
       // valuer
       if (need_valuer) {
-        if (/*prob->valuer_cmd &&*/ prob->valuer_cmd[0]) {
+        if (prob->valuer_cmd && prob->valuer_cmd[0]) {
           fprintf(out_f, "<td%s>%s%s</a></td>",
                   cl, 
                   html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
@@ -769,7 +769,7 @@ write_problem_editing_links(
                           contest_id, variant, prob_id),
             "Edit checker");
   }
-  if (/*prob->valuer_cmd &&*/ prob->valuer_cmd[0]) {
+  if (prob->valuer_cmd && prob->valuer_cmd[0]) {
     fprintf(out_f, "<li>%s%s</a><li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
@@ -5086,7 +5086,7 @@ super_serve_op_TESTS_CHECKER_CREATE_PAGE(
     action = SSERV_CMD_TESTS_CHECKER_CREATE_ACTION;
     break;
   case SSERV_CMD_TESTS_VALUER_CREATE_PAGE:
-    if (/*!prob->valuer_cmd ||*/ !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Valuer";
     file_name = prob->valuer_cmd;
     action = SSERV_CMD_TESTS_VALUER_CREATE_ACTION;
@@ -5435,7 +5435,7 @@ super_serve_op_TESTS_CHECKER_CREATE_ACTION(
     action = SSERV_CMD_TESTS_CHECKER_EDIT_PAGE;
     break;
   case SSERV_CMD_TESTS_VALUER_CREATE_ACTION:
-    if (/*!prob->valuer_cmd ||*/ !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->valuer_cmd;
     action = SSERV_CMD_TESTS_VALUER_EDIT_PAGE;
     break;
@@ -5577,7 +5577,7 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
     delete_page = SSERV_CMD_TESTS_CHECKER_DELETE_PAGE;
     break;
   case SSERV_CMD_TESTS_VALUER_EDIT_PAGE:
-    if (/*!prob->valuer_cmd ||*/ !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Valuer";
     file_name = prob->valuer_cmd;
     create_page = SSERV_CMD_TESTS_VALUER_CREATE_PAGE;
@@ -5778,7 +5778,7 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
     file_name = prob->check_cmd;
     break;
   case SSERV_CMD_TESTS_VALUER_EDIT_ACTION:
-    if (/*!prob->valuer_cmd ||*/ !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->valuer_cmd;
     break;
   case SSERV_CMD_TESTS_INTERACTOR_EDIT_ACTION:
@@ -5963,7 +5963,7 @@ super_serve_op_TESTS_CHECKER_DELETE_PAGE(
     title = "Checker";
     break;
   case SSERV_CMD_TESTS_VALUER_DELETE_PAGE:
-    if (/*!prob->valuer_cmd ||*/ !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->valuer_cmd;
     action = SSERV_CMD_TESTS_VALUER_DELETE_ACTION;
     title = "Valuer";
@@ -6129,7 +6129,7 @@ super_serve_op_TESTS_CHECKER_DELETE_ACTION(
     file_name = prob->check_cmd;
     break;
   case SSERV_CMD_TESTS_VALUER_DELETE_ACTION:
-    if (/*!prob->valuer_cmd ||*/ !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->valuer_cmd || !prob->valuer_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->valuer_cmd;
     break;
   case SSERV_CMD_TESTS_INTERACTOR_DELETE_ACTION:
