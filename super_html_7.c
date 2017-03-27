@@ -599,7 +599,7 @@ super_serve_op_TESTS_MAIN_PAGE(
         if (!s) s = "???";
         fprintf(out_f, "<td title=\"%s\"%s>", ARMOR(s), cl);
         fprintf(out_f, "<tt>%s</tt></td>", ARMOR(prob->standard_checker));
-      } else if (/*prob->check_cmd &&*/ prob->check_cmd[0]) {
+      } else if (prob->check_cmd && prob->check_cmd[0]) {
         fprintf(out_f, "<td%s>%s%s</a></td>",
                 cl, 
                 html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
@@ -761,7 +761,7 @@ write_problem_editing_links(
                         SSERV_CMD_TESTS_TESTS_VIEW_PAGE, contest_id, prob_id, variant),
           "View tests");
   if (!(/*prob->standard_checker &&*/ prob->standard_checker[0])
-      && (/*prob->check_cmd &&*/ prob->check_cmd[0])) {
+      && (prob->check_cmd && prob->check_cmd[0])) {
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
@@ -5080,7 +5080,7 @@ super_serve_op_TESTS_CHECKER_CREATE_PAGE(
     break;
   case SSERV_CMD_TESTS_CHECKER_CREATE_PAGE:
     if (/*prob->standard_checker &&*/ prob->standard_checker[0]) FAIL(SSERV_ERR_INV_OPER);
-    if (/*!prob->check_cmd ||*/ !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Checker";
     file_name = prob->check_cmd;
     action = SSERV_CMD_TESTS_CHECKER_CREATE_ACTION;
@@ -5430,7 +5430,7 @@ super_serve_op_TESTS_CHECKER_CREATE_ACTION(
     break;
   case SSERV_CMD_TESTS_CHECKER_CREATE_ACTION:
     if (/*prob->standard_checker &&*/ prob->standard_checker[0]) FAIL(SSERV_ERR_INV_OPER);
-    if (/*!prob->check_cmd ||*/ !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->check_cmd;
     action = SSERV_CMD_TESTS_CHECKER_EDIT_PAGE;
     break;
@@ -5569,7 +5569,7 @@ super_serve_op_TESTS_CHECKER_EDIT_PAGE(
     break;
   case SSERV_CMD_TESTS_CHECKER_EDIT_PAGE:
     if (/*prob->standard_checker &&*/ prob->standard_checker[0]) FAIL(SSERV_ERR_INV_OPER);
-    if (/*!prob->check_cmd ||*/ !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     title = "Checker";
     file_name = prob->check_cmd;
     create_page = SSERV_CMD_TESTS_CHECKER_CREATE_PAGE;
@@ -5774,7 +5774,7 @@ super_serve_op_TESTS_CHECKER_EDIT_ACTION(
     break;
   case SSERV_CMD_TESTS_CHECKER_EDIT_ACTION:
     if (/*prob->standard_checker &&*/ prob->standard_checker[0]) FAIL(SSERV_ERR_INV_OPER);
-    if (/*!prob->check_cmd ||*/ !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->check_cmd;
     break;
   case SSERV_CMD_TESTS_VALUER_EDIT_ACTION:
@@ -5957,7 +5957,7 @@ super_serve_op_TESTS_CHECKER_DELETE_PAGE(
     break;
   case SSERV_CMD_TESTS_CHECKER_DELETE_PAGE:
     if (/*prob->standard_checker &&*/ prob->standard_checker[0]) FAIL(SSERV_ERR_INV_OPER);
-    if (/*!prob->check_cmd ||*/ !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->check_cmd;
     action = SSERV_CMD_TESTS_CHECKER_DELETE_ACTION;
     title = "Checker";
@@ -6125,7 +6125,7 @@ super_serve_op_TESTS_CHECKER_DELETE_ACTION(
     break;
   case SSERV_CMD_TESTS_CHECKER_DELETE_ACTION:
     if (/*prob->standard_checker &&*/ prob->standard_checker[0]) FAIL(SSERV_ERR_INV_OPER);
-    if (/*!prob->check_cmd ||*/ !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
+    if (!prob->check_cmd || !prob->check_cmd[0]) FAIL(SSERV_ERR_INV_OPER);
     file_name = prob->check_cmd;
     break;
   case SSERV_CMD_TESTS_VALUER_DELETE_ACTION:

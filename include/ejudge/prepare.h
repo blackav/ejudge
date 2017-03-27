@@ -1108,7 +1108,7 @@ struct section_problem_data
   /** environment variables for the program itself */
   ejenvlist_t start_env;
   /** checker program */
-  path_t check_cmd;
+  unsigned char *check_cmd;
   /** valuer program */
   unsigned char *valuer_cmd;
   /** interactor program */

@@ -499,7 +499,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(lang_time_adj_millis, "x"),
   PROBLEM_PARAM(lang_max_vm_size, "x"),
   PROBLEM_PARAM(lang_max_stack_size, "x"),
-  PROBLEM_PARAM(check_cmd, "s"),
+  PROBLEM_PARAM(check_cmd, "S"),
   PROBLEM_PARAM(valuer_cmd, "S"),
   PROBLEM_PARAM(interactor_cmd, "S"),
   PROBLEM_PARAM(style_checker_cmd, "S"),
@@ -1087,6 +1087,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->problem_dir);
   xfree(p->tscores);
   xfree(p->x_score_tests);
+  xfree(p->check_cmd);
   xfree(p->valuer_cmd);
   xfree(p->interactor_cmd);
   xfree(p->style_checker_cmd);
@@ -5967,8 +5968,8 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_check_cmd:
-    if (!out->check_cmd[0] && abstr && abstr->check_cmd[0] && abstr->check_cmd[0] != 1) {
-      sformat_message(out->check_cmd, PATH_MAX, 0, abstr->check_cmd, NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    if (!out->check_cmd && abstr && abstr->check_cmd) {
+      sformat_message_2(&out->check_cmd, 0, abstr->check_cmd, NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
     /*
     if (global) {

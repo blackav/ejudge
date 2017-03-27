@@ -1312,7 +1312,7 @@ prepare_unparse_prob(
   }
   if (prob->standard_checker[0] && prob->standard_checker[0] != 1)
     fprintf(f, "standard_checker = \"%s\"\n", CARMOR(prob->standard_checker));
-  if (prob->check_cmd[0] && prob->check_cmd[0] != 1)
+  if (prob->check_cmd)
     fprintf(f, "check_cmd = \"%s\"\n", CARMOR(prob->check_cmd));
   do_xstr(f, &ab, "checker_env", prob->checker_env);
   if (prob->valuer_cmd)
@@ -1708,7 +1708,7 @@ prepare_unparse_actual_prob(
 
   if (prob->standard_checker[0])
     fprintf(f, "standard_checker = \"%s\"\n", CARMOR(prob->standard_checker));
-  if (!prob->standard_checker[0] && (show_paths || (global && global->advanced_layout > 0)) && prob->check_cmd[0])
+  if (!prob->standard_checker[0] && (show_paths || (global && global->advanced_layout > 0)) && prob->check_cmd)
     fprintf(f, "check_cmd = \"%s\"\n", CARMOR(prob->check_cmd));
   do_xstr(f, &ab, "checker_env", prob->checker_env);
   if ((show_paths || (global && global->advanced_layout > 0)) && prob->valuer_cmd)
@@ -2848,7 +2848,7 @@ prob_instr(
   }
 
   if (!tmp_prob->standard_checker[0]) {
-    if (!tmp_prob->check_cmd[0]) {
+    if (!tmp_prob->check_cmd) {
       fprintf(f, "<p><b><font color=\"red\">Neither standard, nor custom checker is defined!</font></b></p>\n");
     } else {
       prepare_set_prob_value(CNTSPROB_check_cmd, tmp_prob, abstr, global);

@@ -10115,7 +10115,7 @@ do_import_problem(
   if (cfg->standard_checker && cfg->standard_checker[0]) {
     snprintf(prob->standard_checker, sizeof(prob->standard_checker), "%s", cfg->standard_checker);
   } else if (cfg->check_cmd && cfg->check_cmd[0]) {
-    snprintf(prob->check_cmd, sizeof(prob->check_cmd), "%s", cfg->check_cmd);
+    xstrdup3(&prob->check_cmd, cfg->check_cmd);
   }
   if (cfg->checker_env && cfg->checker_env[0]) {
     prob->checker_env = sarray_copy(cfg->checker_env);

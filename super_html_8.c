@@ -718,8 +718,9 @@ super_html_read_serve(
 
   // assign this check_cmd to all abstract problems without check_cmd
   for (i = 0; i < sstate->aprob_u; i++)
-    if (!(aprob = sstate->aprobs[i])->check_cmd[0])
-      snprintf(aprob->check_cmd, sizeof(aprob->check_cmd), "%s", check_cmd);
+    if (!(aprob = sstate->aprobs[i])->check_cmd) {
+      usprintf(&aprob->check_cmd, "%s", check_cmd);
+    }
 
   sstate->contest_start_cmd_text = do_load_file(conf_dir, global->contest_start_cmd);
   sstate->contest_stop_cmd_text = do_load_file(conf_dir, global->contest_stop_cmd);

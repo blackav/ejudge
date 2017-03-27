@@ -116,7 +116,7 @@
 
     if (!retval && phr->ss) {
         COPYSTR(standard_checker);
-        COPYSTR(check_cmd);
+        MOVESTR(check_cmd);
         prob->checker_real_time_limit = checker_real_time_limit;
         MOVEENV(checker_env);
         prob->scoring_checker = scoring_checker;

@@ -507,9 +507,9 @@ super_html_add_abstract_problem(
   snprintf(prob->tgz_sfx, sizeof(prob->tgz_sfx), "%s", ".tgz");
   snprintf(prob->tgzdir_sfx, sizeof(prob->tgzdir_sfx), "%s", ".dir");
   if (sstate->global && sstate->global->advanced_layout > 0) {
-    snprintf(prob->check_cmd, sizeof(prob->check_cmd), "%s", DFLT_P_CHECK_CMD);
+    usprintf(&prob->check_cmd, "%s", DFLT_P_CHECK_CMD);
   } else {
-    snprintf(prob->check_cmd, sizeof(prob->check_cmd), "%s", "check_%Ps");
+    usprintf(&prob->check_cmd, "%s", "check_%Ps");
   }
   prob->max_vm_size = 64 * SIZE_M;
   prob->variant_num = 0;
@@ -1167,8 +1167,7 @@ invoke_make(
   }
   // check for checker
   if (!prob->standard_checker[0]) {
-    get_advanced_layout_path(cmd, sizeof(cmd), global, prob,
-                             prob->check_cmd, variant);
+    get_advanced_layout_path(cmd, sizeof(cmd), global, prob, prob->check_cmd, variant);
     if (access(cmd, X_OK) < 0) {
       fprintf(flog, "Error: checker executable %s is not created\n", cmd);
       return -1;
