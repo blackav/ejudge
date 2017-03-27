@@ -991,6 +991,7 @@ void
 prepare_unparse_prob(
         FILE *f,
         const struct section_problem_data *prob,
+        const struct section_problem_data *aprob,
         const struct section_global_data *global,
         int score_system)
 {
@@ -1164,18 +1165,29 @@ prepare_unparse_prob(
         || !prob->abstract)
       fprintf(f, "tgz_pat = \"%s\"\n", CARMOR(prob->tgz_pat));
   }
-  /////////////////
   if (prob->tgzdir_sfx) {
-    if ((prob->abstract
-         && ((global->tgzdir_sfx && strcmp(prob->tgzdir_sfx, global->tgzdir_sfx))
-             || (!global->tgzdir_sfx && strcmp(prob->tgzdir_sfx, DFLT_G_TGZDIR_SFX))))
-        || !prob->abstract)
+    int need = 0;
+    if (aprob && aprob->tgzdir_sfx) {
+      need = (strcmp(prob->tgzdir_sfx, aprob->tgzdir_sfx) != 0);
+    } else if (global && global->tgzdir_sfx) {
+      need = (strcmp(prob->tgzdir_sfx, global->tgzdir_sfx) != 0);
+    } else {
+      need = (strcmp(prob->tgzdir_sfx, DFLT_G_TGZDIR_SFX) != 0);
+    }
+    if (need) {
       fprintf(f, "tgzdir_sfx = \"%s\"\n", CARMOR(prob->tgzdir_sfx));
+    }
   }
   if (prob->tgzdir_pat) {
-    if ((prob->abstract && strcmp(prob->tgzdir_pat, global->tgzdir_pat))
-        || !prob->abstract)
+    int need = 0;
+    if (aprob && aprob->tgzdir_pat) {
+      need = (strcmp(prob->tgzdir_pat, aprob->tgzdir_pat) != 0);
+    } else {
+      need = 1;
+    }
+    if (need) {
       fprintf(f, "tgzdir_pat = \"%s\"\n", CARMOR(prob->tgzdir_pat));
+    }
   }
   /*
   if (prob->use_tgz != -1) unparse_bool(f, "use_tgz", prob->use_tgz);

@@ -1465,9 +1465,13 @@ void prepare_unparse_unhandled_lang(FILE *f,
                                     const struct section_language_data *lang);
 int prepare_check_forbidden_lang(FILE *f, const struct section_language_data *lang);
 
-void prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
-                          const struct section_global_data *global,
-                          int score_system_val);
+void
+prepare_unparse_prob(
+        FILE *f,
+        const struct section_problem_data *prob,
+        const struct section_problem_data *aprob,
+        const struct section_global_data *global,
+        int score_system_val);
 void prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
                                     const struct section_global_data *global);
 int prepare_check_forbidden_prob(FILE *f, const struct section_problem_data *prob);

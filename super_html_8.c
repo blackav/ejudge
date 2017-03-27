@@ -1117,11 +1117,23 @@ super_html_serve_unparse_serve_cfg(
   }
 
   for (i = 0; i < sstate->aprob_u; i++)
-    prepare_unparse_prob(f, sstate->aprobs[i], global, global->score_system);
+    prepare_unparse_prob(f, sstate->aprobs[i], NULL, global, global->score_system);
 
   for (i = 0; i < sstate->prob_a; i++) {
-    if (!sstate->probs[i]) continue;
-    prepare_unparse_prob(f, sstate->probs[i], global, global->score_system);
+    const struct section_problem_data *prob = sstate->probs[i];
+    if (!prob) continue;
+    const struct section_problem_data *aprob = NULL;
+    if (prob->super && prob->super[0]) {
+      for (int j = 0; j < sstate->aprob_u; ++j) {
+        const struct section_problem_data *aa = sstate->aprobs[j];
+        if (aa && aa->short_name && !strcmp(prob->super, aa->short_name)) {
+          aprob = aa;
+          break;
+        }
+      }
+    }
+
+    prepare_unparse_prob(f, prob, aprob, global, global->score_system);
   }
 
   prepare_unparse_testers(f, global->secure_run,
