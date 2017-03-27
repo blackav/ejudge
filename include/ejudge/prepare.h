@@ -1146,7 +1146,7 @@ struct section_problem_data
   struct pers_dead_info *pd_infos META_ATTRIB((meta_private));
 
   /** bonus for the Nth full solution of the problem */
-  unsigned char score_bonus[256];
+  unsigned char *score_bonus;
   /** parsed: number of entries in score_bonus */
   int score_bonus_total META_ATTRIB((meta_private));
   /** parsed: score_bonus values */

@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
 void
@@ -121,7 +120,7 @@ ns_unparse_answers(
             }
 %>
 <%
-            if (prob->score_bonus && prob->score_bonus[0]) {
+            if (prob->score_bonus) {
 %>
     <tr><td><b><s:_>Score bonus</s:_>:</b></td><td><tt><s:v value="prob->score_bonus" /></tt></td></tr>
 <%

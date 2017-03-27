@@ -167,7 +167,7 @@
         MOVESTR(test_score_list);
         COPYSTR(score_tests);
         MOVEENV(test_sets);
-        COPYSTR(score_bonus);
+        MOVESTR(score_bonus);
     }
 
 cleanup:;

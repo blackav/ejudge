@@ -514,7 +514,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(tgz_pat, "s"),
   PROBLEM_PARAM(tgzdir_pat, "s"),
   PROBLEM_PARAM(personal_deadline, "x"),
-  PROBLEM_PARAM(score_bonus, "s"),
+  PROBLEM_PARAM(score_bonus, "S"),
   PROBLEM_PARAM(open_tests, "S"),
   PROBLEM_PARAM(final_open_tests, "S"),
   PROBLEM_PARAM(token_open_tests, "S"),
@@ -1085,6 +1085,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   prepare_free_group_dates(&p->gsd);
   prepare_free_group_dates(&p->gdl);
   xfree(p->problem_dir);
+  xfree(p->score_bonus);
   xfree(p->tscores);
   xfree(p->x_score_tests);
   xfree(p->standard_checker);
@@ -3547,7 +3548,7 @@ set_defaults(
 
       /* score bonus */
       prepare_set_prob_value(CNTSPROB_score_bonus, prob, aprob, g);
-      if (prob->score_bonus[0]) {
+      if (prob->score_bonus && prob->score_bonus[0]) {
         if (parse_score_bonus(prob->score_bonus, &prob->score_bonus_total,
                               &prob->score_bonus_val) < 0) return -1;
       }
@@ -5957,8 +5958,8 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_score_bonus:
-    if (!out->score_bonus[0] && abstr && abstr->score_bonus[0] && abstr->score_bonus[0] != 1) {
-      strcpy(out->score_bonus, abstr->score_bonus);
+    if (!out->score_bonus && abstr && abstr->score_bonus) {
+      xstrdup3(&out->score_bonus, abstr->score_bonus);
     }
     /*
     if (state->probs[i]->score_bonus[0]) {

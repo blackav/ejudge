@@ -1258,7 +1258,7 @@ prepare_unparse_prob(
     }
     if (prob->test_score_list && prob->test_score_list[0])
       fprintf(f, "test_score_list = \"%s\"\n", CARMOR(prob->test_score_list));
-    if (prob->score_bonus[0])
+    if (prob->score_bonus)
       fprintf(f, "score_bonus = \"%s\"\n", CARMOR(prob->score_bonus));
   }
   if (prob->open_tests && prob->open_tests[0]) {
@@ -1669,7 +1669,7 @@ prepare_unparse_actual_prob(
       fprintf(f, "disqualified_penalty = %d\n", prob->disqualified_penalty);
     if (prob->test_score_list && prob->test_score_list[0])
       fprintf(f, "test_score_list = \"%s\"\n", CARMOR(prob->test_score_list));
-    if (prob->score_bonus[0])
+    if (prob->score_bonus)
       fprintf(f, "score_bonus = \"%s\"\n", CARMOR(prob->score_bonus));
     if (prob->score_multiplier > 0)
       fprintf(f, "score_multiplier = %d\n", prob->score_multiplier);
