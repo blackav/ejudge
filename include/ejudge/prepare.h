@@ -1006,7 +1006,7 @@ struct section_problem_data
   /** number of tests for Moscow scoring */
   unsigned char score_tests[256];
   /** name of the built-in checker */
-  path_t standard_checker;
+  unsigned char *standard_checker;
   /** spelling for the festival speach generator */
   unsigned char spelling[256];
   /** file with HTML problem statement */

@@ -1199,7 +1199,7 @@ do_generate_makefile(
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     fprintf(mk_f, " %s", prob->solution_cmd);
   }
-  if ((/*!prob->standard_checker ||*/ !prob->standard_checker[0])
+  if ((!prob->standard_checker || !prob->standard_checker[0])
       && is_makefile_rule_needed(prob->check_cmd)) {
     fprintf(mk_f, " %s", prob->check_cmd);
   }
@@ -1271,7 +1271,7 @@ do_generate_makefile(
   fprintf(mk_f, "\n");
 
   /* checker compilation part */
-  if (/*!prob->standard_checker ||*/ !prob->standard_checker[0]) {
+  if (!prob->standard_checker || !prob->standard_checker[0]) {
     build_generate_checker_compilation_rule(mk_f, "check", global, prob, variant, prob->check_cmd);
   }
 
@@ -1353,7 +1353,7 @@ do_generate_makefile(
   if (prob->solution_cmd && prob->solution_cmd[0]) {
     fprintf(mk_f, " %s", prob->solution_cmd);
   }
-  if ((/*!prob->standard_checker ||*/ !prob->standard_checker[0])
+  if ((!prob->standard_checker || !prob->standard_checker[0])
       && is_makefile_rule_needed(prob->check_cmd)) {
     fprintf(mk_f, " %s", prob->check_cmd);
   }  

@@ -1310,7 +1310,7 @@ prepare_unparse_prob(
       fprintf(f, "min_tests_to_accept = %d\n", prob->min_tests_to_accept);
     }
   }
-  if (prob->standard_checker[0] && prob->standard_checker[0] != 1)
+  if (prob->standard_checker)
     fprintf(f, "standard_checker = \"%s\"\n", CARMOR(prob->standard_checker));
   if (prob->check_cmd)
     fprintf(f, "check_cmd = \"%s\"\n", CARMOR(prob->check_cmd));
@@ -1706,9 +1706,9 @@ prepare_unparse_actual_prob(
   if (prob->tokens && prob->tokens[0])
     fprintf(f, "tokens = \"%s\"\n", CARMOR(prob->tokens));
 
-  if (prob->standard_checker[0])
+  if (prob->standard_checker)
     fprintf(f, "standard_checker = \"%s\"\n", CARMOR(prob->standard_checker));
-  if (!prob->standard_checker[0] && (show_paths || (global && global->advanced_layout > 0)) && prob->check_cmd)
+  if (!prob->standard_checker && (show_paths || (global && global->advanced_layout > 0)) && prob->check_cmd)
     fprintf(f, "check_cmd = \"%s\"\n", CARMOR(prob->check_cmd));
   do_xstr(f, &ab, "checker_env", prob->checker_env);
   if ((show_paths || (global && global->advanced_layout > 0)) && prob->valuer_cmd)
@@ -2847,7 +2847,7 @@ prob_instr(
     handle_file(f, global, tmp_prob, tmp_prob->plugin_file, 0);
   }
 
-  if (!tmp_prob->standard_checker[0]) {
+  if (!tmp_prob->standard_checker) {
     if (!tmp_prob->check_cmd) {
       fprintf(f, "<p><b><font color=\"red\">Neither standard, nor custom checker is defined!</font></b></p>\n");
     } else {

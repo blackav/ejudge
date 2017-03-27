@@ -10113,7 +10113,7 @@ do_import_problem(
     snprintf(prob->corr_pat, sizeof(prob->corr_pat), "%s", cfg->corr_pat);
   }
   if (cfg->standard_checker && cfg->standard_checker[0]) {
-    snprintf(prob->standard_checker, sizeof(prob->standard_checker), "%s", cfg->standard_checker);
+    xstrdup3(&prob->standard_checker, cfg->standard_checker);
   } else if (cfg->check_cmd && cfg->check_cmd[0]) {
     xstrdup3(&prob->check_cmd, cfg->check_cmd);
   }

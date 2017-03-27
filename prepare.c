@@ -486,7 +486,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(enable_language, "x"),
   PROBLEM_PARAM(require, "x"),
   PROBLEM_PARAM(provide_ok, "x"),
-  PROBLEM_PARAM(standard_checker, "s"),
+  PROBLEM_PARAM(standard_checker, "S"),
   PROBLEM_PARAM(lang_compiler_env, "x"),
   PROBLEM_PARAM(checker_env, "x"),
   PROBLEM_PARAM(valuer_env, "x"),
@@ -1087,6 +1087,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->problem_dir);
   xfree(p->tscores);
   xfree(p->x_score_tests);
+  xfree(p->standard_checker);
   xfree(p->check_cmd);
   xfree(p->valuer_cmd);
   xfree(p->interactor_cmd);

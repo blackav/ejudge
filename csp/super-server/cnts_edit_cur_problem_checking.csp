@@ -71,7 +71,7 @@ $(function() {
         }
     });
 
-    var has_standard_checker = <s:v type="jsbool" value="tmp_prob->standard_checker[0]" />;
+    var has_standard_checker = <s:v type="jsbool" value="tmp_prob->standard_checker" />;
     $("#orig-check_cmd-div").toggle(!has_standard_checker);
     $("#orig-checker_env-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
 

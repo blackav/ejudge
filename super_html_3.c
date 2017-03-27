@@ -1166,7 +1166,7 @@ invoke_make(
     return -1;
   }
   // check for checker
-  if (!prob->standard_checker[0]) {
+  if (!prob->standard_checker) {
     get_advanced_layout_path(cmd, sizeof(cmd), global, prob, prob->check_cmd, variant);
     if (access(cmd, X_OK) < 0) {
       fprintf(flog, "Error: checker executable %s is not created\n", cmd);
@@ -1417,7 +1417,7 @@ super_html_new_check_tests(
       mkpath(info_path, g_info_path, tmp_prob->info_dir, "");
     }
     checker_path[0] = 0;
-    if (!tmp_prob->standard_checker[0]) {
+    if (!tmp_prob->standard_checker) {
       prepare_set_prob_value(CNTSPROB_check_cmd, tmp_prob, abstr, 0);
       if (global->advanced_layout > 0) {
         get_advanced_layout_path(checker_path, sizeof(checker_path),
@@ -1444,7 +1444,7 @@ super_html_new_check_tests(
       continue;
     }
 
-    if (!tmp_prob->standard_checker[0] && !already_compiled) {
+    if (!tmp_prob->standard_checker && !already_compiled) {
       if (prob->variant_num <= 0) {
         if (recompile_checker(config, flog, checker_path) < 0)
           goto cleanup;

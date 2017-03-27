@@ -995,7 +995,7 @@ generate_makefile(struct sid_state *ss,
     }
     unsigned char checker_path[PATH_MAX];
     checker_path[0] = 0;
-    if (!tmp_prob->standard_checker[0]) {
+    if (!tmp_prob->standard_checker) {
         prepare_set_prob_value(CNTSPROB_check_cmd, tmp_prob, abstr, 0);
         get_advanced_layout_path(checker_path, sizeof(checker_path),
                                  global, tmp_prob, tmp_prob->check_cmd, -1);
