@@ -331,7 +331,7 @@ struct section_global_data
   /** suffix of the tgz archive files */
   unsigned char tgz_sfx[32];
   /** suffix of the working directory master copy */
-  unsigned char tgzdir_sfx[32];
+  unsigned char *tgzdir_sfx;
   /** path to the built-in checkers */
   path_t ejudge_checkers_dir;
   /** command to run when the contest starts */
@@ -355,7 +355,7 @@ struct section_global_data
   /** printf pattern for the files with the working dir archive */
   unsigned char tgz_pat[32];
   /** printf pattern for the files with the working directory master copy */
-  unsigned char tgzdir_pat[32];
+  unsigned char *tgzdir_pat;
 
   /** the clarification base storage plugin (file, mysql) */
   unsigned char clardb_plugin[32];
@@ -981,7 +981,7 @@ struct section_problem_data
   /** tar test archive suffix */
   unsigned char tgz_sfx[32];
   /** working directory master copy suffix */
-  unsigned char tgzdir_sfx[32];
+  unsigned char *tgzdir_sfx;
   /** input file name */
   unsigned char input_file[256];
   /** output file name */
@@ -1047,7 +1047,7 @@ struct section_problem_data
   /** printf pattern for the tgz archive pattern */
   unsigned char tgz_pat[32];
   /** printf pattern for the working directory master copy */
-  unsigned char tgzdir_pat[32];
+  unsigned char *tgzdir_pat;
 
   /** number of tests found */
   int ntests META_ATTRIB((meta_private));

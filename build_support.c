@@ -712,9 +712,9 @@ build_prepare_test_file_names(
       fprintf(log_f, "invalid tgz files pattern\n");
       FAIL(SSERV_ERR_UNSUPPORTED_SETTINGS);
     }
-    if (prob->tgzdir_pat[0] >= ' ' ) {
+    if (prob->tgzdir_pat) {
       snprintf(tgzdir_pat, buf_size, "%s%s", pat_prefix, prob->tgzdir_pat);
-    } else if (prob->tgzdir_sfx[0] >= ' ') {
+    } else if (prob->tgzdir_sfx) {
       snprintf(tgzdir_pat, buf_size, "%s%%03d%s", pat_prefix, prob->tgzdir_sfx);
     } else {
       snprintf(tgzdir_pat, buf_size, "%s%%03d%s", pat_prefix, ".dir");

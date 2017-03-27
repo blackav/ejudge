@@ -507,8 +507,8 @@ function popupFilesDialog(e, skipField)
     <%@expand COPY_YESNO3 "use_tgz" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgz_pat" "prob->tgz_pat[0] == 1" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgz_sfx" "prob->tgz_sfx[0] == 1" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgzdir_pat" "prob->tgzdir_pat[0] == 1" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgzdir_sfx" "prob->tgzdir_sfx[0] == 1" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgzdir_pat" "!prob->tgzdir_pat" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgzdir_sfx" "!prob->tgzdir_sfx" %>
 
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "xml_file" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "test_dir" %>
@@ -994,7 +994,6 @@ function viewDialogOnChange(field)
                 <td>Pattern for master working dirs:</td>
                 <td><%
     str_value = prob->tgzdir_pat;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-tgzdir_pat" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -1038,7 +1037,6 @@ function viewDialogOnChange(field)
                 <td>Suffix of master working dirs:</td>
                 <td><%
     str_value = prob->tgzdir_sfx;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-tgzdir_sfx" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {

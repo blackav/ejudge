@@ -149,13 +149,13 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(corr_sfx, "s"),
   GLOBAL_PARAM(info_sfx, "s"),
   GLOBAL_PARAM(tgz_sfx, "s"),
-  GLOBAL_PARAM(tgzdir_sfx, "s"),
+  GLOBAL_PARAM(tgzdir_sfx, "S"),
   GLOBAL_PARAM(ejudge_checkers_dir, "s"),
   GLOBAL_PARAM(test_pat, "s"),
   GLOBAL_PARAM(corr_pat, "s"),
   GLOBAL_PARAM(info_pat, "s"),
   GLOBAL_PARAM(tgz_pat, "s"),
-  GLOBAL_PARAM(tgzdir_pat, "s"),
+  GLOBAL_PARAM(tgzdir_pat, "S"),
   GLOBAL_PARAM(contest_start_cmd, "s"),
   GLOBAL_PARAM(contest_stop_cmd, "S"),
   GLOBAL_PARAM(description_file, "s"),
@@ -470,7 +470,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(info_sfx, "s"),
   PROBLEM_PARAM(tgz_dir, "s"),
   PROBLEM_PARAM(tgz_sfx, "s"),
-  PROBLEM_PARAM(tgzdir_sfx, "s"),
+  PROBLEM_PARAM(tgzdir_sfx, "S"),
   PROBLEM_PARAM(input_file, "s"),
   PROBLEM_PARAM(output_file, "s"),
   PROBLEM_PARAM(test_score_list, "S"),
@@ -512,7 +512,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(corr_pat, "s"),
   PROBLEM_PARAM(info_pat, "s"),
   PROBLEM_PARAM(tgz_pat, "s"),
-  PROBLEM_PARAM(tgzdir_pat, "s"),
+  PROBLEM_PARAM(tgzdir_pat, "S"),
   PROBLEM_PARAM(personal_deadline, "x"),
   PROBLEM_PARAM(score_bonus, "S"),
   PROBLEM_PARAM(open_tests, "S"),
@@ -927,6 +927,8 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->dates_config_file);
   dates_config_free(p->dates_config);
   xfree(p->checker_locale);
+  xfree(p->tgzdir_sfx);
+  xfree(p->tgzdir_pat);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -1009,7 +1011,6 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->corr_sfx[0] = 1;
   p->info_sfx[0] = 1;
   p->tgz_sfx[0] = 1;
-  p->tgzdir_sfx[0] = 1;
   p->run_penalty = -1;
   p->acm_run_penalty = -1;
   p->disqualified_penalty = -1;
@@ -1059,7 +1060,6 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->corr_pat[0] = 1;
   p->info_pat[0] = 1;
   p->tgz_pat[0] = 1;
-  p->tgzdir_pat[0] = 1;
   p->max_vm_size = -1LL;
   p->max_stack_size = -1LL;
   p->max_data_size = -1LL;
@@ -1146,6 +1146,8 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->score_view_score);
   xfree(p->score_view_text);
   xfree(p->extid);
+  xfree(p->tgzdir_sfx);
+  xfree(p->tgzdir_pat);
 
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {
@@ -2648,8 +2650,8 @@ set_defaults(
       snprintf(g->tgz_sfx, sizeof(g->tgz_sfx), "%s", DFLT_G_TGZ_SFX);
       vinfo("global.tgz_sfx set to %s", g->tgz_sfx);
     }
-    if (!g->tgzdir_sfx[0]) {
-      snprintf(g->tgzdir_sfx, sizeof(g->tgzdir_sfx), "%s", DFLT_G_TGZDIR_SFX);
+    if (!g->tgzdir_sfx) {
+      xstrdup3(&g->tgzdir_sfx, DFLT_G_TGZDIR_SFX);
       vinfo("global.tgzdir_sfx set to %s", g->tgzdir_sfx);
     }
   }
@@ -5074,11 +5076,11 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
       snprintf(prob->tgz_sfx, sizeof(prob->tgz_sfx), "%s", DFLT_G_TGZ_SFX);
     }
   }
-  if (prob->tgzdir_sfx[0] == 1) {
-    if (global->tgzdir_sfx[0]) {
-      snprintf(prob->tgzdir_sfx, sizeof(prob->tgzdir_sfx), "%s", global->tgzdir_sfx);
+  if (!prob->tgzdir_sfx) {
+    if (global->tgzdir_sfx) {
+      xstrdup3(&prob->tgzdir_sfx, global->tgzdir_sfx);
     } else {
-      snprintf(prob->tgzdir_sfx, sizeof(prob->tgzdir_sfx), "%s", DFLT_G_TGZDIR_SFX);
+      xstrdup3(&prob->tgzdir_sfx, DFLT_G_TGZDIR_SFX);
     }
   }
   if (prob->test_pat[0] == 1) {
@@ -5105,10 +5107,9 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
       snprintf(prob->tgz_pat, sizeof(prob->tgz_pat), "%s", global->tgz_pat);
     }
   }
-  if (prob->tgzdir_pat[0] == 1) {
-    prob->tgzdir_pat[0] = 0;
-    if (global->tgzdir_pat[0]) {
-      snprintf(prob->tgzdir_pat, sizeof(prob->tgzdir_pat), "%s", global->tgzdir_pat);
+  if (!prob->tgzdir_pat) {
+    if (global->tgzdir_pat) {
+      xstrdup3(&prob->tgzdir_pat, global->tgzdir_pat);
     }
   }
 }
@@ -5884,17 +5885,14 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_tgzdir_sfx:
-    if (out->tgzdir_sfx[0] == 1 && abstr && abstr->tgzdir_sfx[0] != 1) {
-      strcpy(out->tgzdir_sfx, abstr->tgzdir_sfx);
+    if (!out->tgzdir_sfx && abstr && abstr->tgzdir_sfx) {
+      xstrdup3(&out->tgzdir_sfx, abstr->tgzdir_sfx);
     }
-    if (out->tgzdir_sfx[0] == 1 && global && global->tgzdir_sfx[0] != 1) {
-      strcpy(out->tgzdir_sfx, global->tgzdir_sfx);
+    if (!out->tgzdir_sfx && global && global->tgzdir_sfx) {
+      xstrdup3(&out->tgzdir_sfx, global->tgzdir_sfx);
     }
-    if (out->tgzdir_sfx[0] == 1) {
-      strcpy(out->tgzdir_sfx, DFLT_G_TGZDIR_SFX);
-    }
-    if (out->tgzdir_sfx[0] == 1) {
-      out->tgzdir_sfx[0] = 0;
+    if (!out->tgzdir_sfx) {
+      xstrdup3(&out->tgzdir_sfx, DFLT_G_TGZDIR_SFX);
     }
     break;
 
@@ -5947,14 +5945,11 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_tgzdir_pat:
-    if (out->tgzdir_pat[0] == 1 && abstr && abstr->tgzdir_pat[0] != 1) {
-      strcpy(out->tgzdir_pat, abstr->tgzdir_pat);
+    if (!out->tgzdir_pat && abstr && abstr->tgzdir_pat) {
+      xstrdup3(&out->tgzdir_pat, abstr->tgzdir_pat);
     }
-    if (out->tgzdir_pat[0] == 1 && global && global->tgzdir_pat[0] != 1) {
-      strcpy(out->tgzdir_pat, global->tgzdir_pat);
-    }
-    if (out->tgzdir_pat[0] == 1) {
-      out->tgzdir_pat[0] = 0;
+    if (!out->tgzdir_pat && global && global->tgzdir_pat) {
+      xstrdup3(&out->tgzdir_pat, global->tgzdir_pat);
     }
     break;
 

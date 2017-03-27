@@ -171,10 +171,9 @@
             prob->tgz_pat[1] = 0;
         }
         if (!tgzdir_pat_dflt) {
-            COPYSTR(tgzdir_pat);
+            prob->tgzdir_pat = tgzdir_pat; tgzdir_pat = NULL;
         } else {
-            prob->tgzdir_pat[0] = 1;
-            prob->tgzdir_pat[1] = 0;
+            prob->tgzdir_pat = NULL;
         }
         if (!tgz_sfx_dflt) {
             COPYSTR(tgz_sfx);
@@ -183,10 +182,9 @@
             prob->tgz_sfx[1] = 0;
         }
         if (!tgzdir_sfx_dflt) {
-            COPYSTR(tgzdir_sfx);
+            prob->tgzdir_sfx = tgzdir_sfx; tgzdir_sfx = NULL;
         } else {
-            prob->tgzdir_sfx[0] = 1;
-            prob->tgzdir_sfx[1] = 0;
+            prob->tgzdir_sfx = NULL;
         }
     }
 

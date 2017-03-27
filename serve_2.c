@@ -1982,11 +1982,10 @@ serve_run_request(
     snprintf(buf, sizeof(buf), "%%03d%s", prob->tgz_sfx);
     srpp->tgz_pat = xstrdup(buf);
   }
-  if (/*prob->tgzdir_pat &&*/ prob->tgzdir_pat[0]) {
-    srpp->tgzdir_pat = xstrdup(prob->tgzdir_pat);
-  } else {
-    snprintf(buf, sizeof(buf), "%%03d%s", prob->tgzdir_sfx);
-    srpp->tgzdir_pat = xstrdup(buf);
+  if (prob->tgzdir_pat) {
+    srpp->tgzdir_pat = xstrdup2(prob->tgzdir_pat);
+  } else if (prob->tgzdir_sfx) {
+    usprintf(&srpp->tgzdir_pat, "%%03d%s", prob->tgzdir_sfx);
   }
   srpp->test_sets = sarray_copy(prob->test_sets);
   srpp->checker_env = sarray_copy(prob->checker_env);
