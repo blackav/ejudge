@@ -1976,11 +1976,10 @@ serve_run_request(
     snprintf(buf, sizeof(buf), "%%03d%s", prob->info_sfx);
     srpp->info_pat = xstrdup(buf);
   }
-  if (/*prob->tgz_pat &&*/ prob->tgz_pat[0]) {
+  if (prob->tgz_pat) {
     srpp->tgz_pat = xstrdup(prob->tgz_pat);
-  } else {
-    snprintf(buf, sizeof(buf), "%%03d%s", prob->tgz_sfx);
-    srpp->tgz_pat = xstrdup(buf);
+  } else if (prob->tgz_sfx) {
+    usprintf(&srpp->tgz_pat, "%%03d%s", prob->tgz_sfx);
   }
   if (prob->tgzdir_pat) {
     srpp->tgzdir_pat = xstrdup2(prob->tgzdir_pat);

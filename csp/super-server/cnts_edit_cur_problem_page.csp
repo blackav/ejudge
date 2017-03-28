@@ -505,8 +505,8 @@ function popupFilesDialog(e, skipField)
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_pat" "prob->info_pat[0] == 1" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_sfx" "prob->info_sfx[0] == 1" %>
     <%@expand COPY_YESNO3 "use_tgz" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgz_pat" "prob->tgz_pat[0] == 1" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgz_sfx" "prob->tgz_sfx[0] == 1" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgz_pat" "!prob->tgz_pat" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgz_sfx" "!prob->tgz_sfx" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgzdir_pat" "!prob->tgzdir_pat" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgzdir_sfx" "!prob->tgzdir_sfx" %>
 
@@ -972,7 +972,6 @@ function viewDialogOnChange(field)
                 <td>Pattern for working dir archives:</td>
                 <td><%
     str_value = prob->tgz_pat;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-tgz_pat" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -1015,7 +1014,6 @@ function viewDialogOnChange(field)
                 <td>Suffix of working dir archives:</td>
                 <td><%
     str_value = prob->tgz_sfx;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-tgz_sfx" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {

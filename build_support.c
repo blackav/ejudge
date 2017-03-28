@@ -699,9 +699,9 @@ build_prepare_test_file_names(
       fprintf(log_f, "tgz_dir and test_dir cannot be different\n");
       FAIL(SSERV_ERR_UNSUPPORTED_SETTINGS);
     }
-    if (prob->tgz_pat[0] >= ' ' ) {
+    if (prob->tgz_pat) {
       snprintf(tgz_pat, buf_size, "%s%s", pat_prefix, prob->tgz_pat);
-    } else if (prob->tgz_sfx[0] >= ' ') {
+    } else if (prob->tgz_sfx) {
       snprintf(tgz_pat, buf_size, "%s%%03d%s", pat_prefix, prob->tgz_sfx);
     } else {
       snprintf(tgz_pat, buf_size, "%s%%03d%s", pat_prefix, ".tgz");

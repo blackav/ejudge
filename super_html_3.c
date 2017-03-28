@@ -504,8 +504,8 @@ super_html_add_abstract_problem(
   snprintf(prob->info_sfx, sizeof(prob->info_sfx), "%s", ".inf");
   prob->use_tgz = 0;
   snprintf(prob->tgz_dir, sizeof(prob->tgz_dir), "%s", "%Ps");
-  snprintf(prob->tgz_sfx, sizeof(prob->tgz_sfx), "%s", ".tgz");
-  usprintf(&prob->tgzdir_sfx, "%s", ".dir");
+  xstrdup3(&prob->tgz_sfx, ".tgz");
+  xstrdup3(&prob->tgzdir_sfx, ".dir");
   if (sstate->global && sstate->global->advanced_layout > 0) {
     usprintf(&prob->check_cmd, "%s", DFLT_P_CHECK_CMD);
   } else {
