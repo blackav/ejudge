@@ -684,7 +684,7 @@ check_config(void)
           }
         }
         if (prb->use_tgz) {
-          if (!prb->tgz_dir[0]) {
+          if (!prb->tgz_dir) {
             err("directory with tgz information is not defined");
             return -1;
           }
@@ -752,7 +752,7 @@ check_config(void)
             }
           }
           if (prb->use_tgz) {
-            if (!prb->tgz_dir[0]) {
+            if (!prb->tgz_dir) {
               err("directory with tgz is not defined");
               return -1;
             }
@@ -838,7 +838,7 @@ check_config(void)
           }
         }
         if (prb->use_tgz) {
-          if (!prb->tgz_dir[0]) {
+          if (!prb->tgz_dir) {
             err("directory with tgz information is not defined");
             return -1;
           }
@@ -940,7 +940,7 @@ check_config(void)
             }
           }
           if (prb->use_tgz) {
-            if (!prb->tgz_dir[0]) {
+            if (!prb->tgz_dir) {
               err("directory with tgz is not defined");
               return -1;
             }

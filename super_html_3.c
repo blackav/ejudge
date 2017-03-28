@@ -503,7 +503,7 @@ super_html_add_abstract_problem(
   xstrdup3(&prob->info_dir, "%Ps");
   xstrdup3(&prob->info_sfx, ".inf");
   prob->use_tgz = 0;
-  snprintf(prob->tgz_dir, sizeof(prob->tgz_dir), "%s", "%Ps");
+  xstrdup3(&prob->tgz_dir, "%Ps");
   xstrdup3(&prob->tgz_sfx, ".tgz");
   xstrdup3(&prob->tgzdir_sfx, ".dir");
   if (sstate->global && sstate->global->advanced_layout > 0) {

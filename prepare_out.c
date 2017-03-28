@@ -289,7 +289,7 @@ prepare_unparse_global(
     fprintf(f, "corr_dir = \"%s\"\n", CARMOR(global->corr_dir));
   if (global->info_dir && strcmp(global->info_dir, DFLT_G_INFO_DIR))
     fprintf(f, "info_dir = \"%s\"\n", CARMOR(global->info_dir));
-  if (global->tgz_dir[0] && strcmp(global->tgz_dir, DFLT_G_TGZ_DIR))
+  if (global->tgz_dir && strcmp(global->tgz_dir, DFLT_G_TGZ_DIR))
     fprintf(f, "tgz_dir = \"%s\"\n", CARMOR(global->tgz_dir));
   if (global->checker_dir[0] && strcmp(global->checker_dir, DFLT_G_CHECKER_DIR))
     fprintf(f, "checker_dir = \"%s\"\n", CARMOR(global->checker_dir));
@@ -1197,7 +1197,7 @@ prepare_unparse_prob(
   if ((prob->abstract && prob->use_tgz == 1)
       || (!prob->abstract && prob->use_tgz >= 0))
     unparse_bool(f, "use_tgz", prob->use_tgz);
-  if (prob->tgz_dir[0])
+  if (prob->tgz_dir)
     fprintf(f, "tgz_dir = \"%s\"\n", CARMOR(prob->tgz_dir));
   if (prob->tgz_sfx) {
     int need = 0;
@@ -1674,7 +1674,7 @@ prepare_unparse_actual_prob(
 
   if (prob->use_tgz > 0) {
     unparse_bool(f, "use_tgz", prob->use_tgz);
-    if (show_paths && prob->tgz_dir[0])
+    if (show_paths && prob->tgz_dir)
       fprintf(f, "tgz_dir = \"%s\"\n", CARMOR(prob->tgz_dir));
     if (prob->tgz_pat) {
       fprintf(f, "tgz_pat = \"%s\"\n", CARMOR(prob->tgz_pat));

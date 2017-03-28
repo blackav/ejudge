@@ -45,8 +45,7 @@
             xstrdup3(&global->test_dir, test_dir);
             xstrdup3(&global->corr_dir, corr_dir);
             xstrdup3(&global->info_dir, info_dir);
-            global->tgz_dir[0] = 0;
-            if (tgz_dir) snprintf(global->tgz_dir, sizeof(global->tgz_dir), "%s", tgz_dir);
+            xstrdup3(&global->tgz_dir, tgz_dir);
             global->checker_dir[0] = 0;
             if (checker_dir) snprintf(global->checker_dir, sizeof(global->checker_dir), "%s", checker_dir);
             global->statement_dir[0] = 0;

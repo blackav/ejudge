@@ -141,7 +141,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(test_dir, "S"),
   GLOBAL_PARAM(corr_dir, "S"),
   GLOBAL_PARAM(info_dir, "S"),
-  GLOBAL_PARAM(tgz_dir, "s"),
+  GLOBAL_PARAM(tgz_dir, "S"),
   GLOBAL_PARAM(checker_dir, "s"),
   GLOBAL_PARAM(statement_dir, "s"),
   GLOBAL_PARAM(plugin_dir, "s"),
@@ -468,7 +468,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(corr_sfx, "S"),
   PROBLEM_PARAM(info_dir, "S"),
   PROBLEM_PARAM(info_sfx, "S"),
-  PROBLEM_PARAM(tgz_dir, "s"),
+  PROBLEM_PARAM(tgz_dir, "S"),
   PROBLEM_PARAM(tgz_sfx, "S"),
   PROBLEM_PARAM(tgzdir_sfx, "S"),
   PROBLEM_PARAM(input_file, "s"),
@@ -936,6 +936,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->info_dir);
   xfree(p->info_sfx);
   xfree(p->info_pat);
+  xfree(p->tgz_dir);
   xfree(p->tgz_sfx);
   xfree(p->tgz_pat);
   xfree(p->tgzdir_sfx);
@@ -1158,6 +1159,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->info_dir);
   xfree(p->info_sfx);
   xfree(p->info_pat);
+  xfree(p->tgz_dir);
   xfree(p->tgz_sfx);
   xfree(p->tgz_pat);
   xfree(p->tgzdir_sfx);
@@ -2660,7 +2662,12 @@ set_defaults(
     if (!os_IsAbsolutePath(g->info_dir)) {
       usprintf(&g->info_dir, "%s/%s", g->conf_dir, g->info_dir);
     }
-    GLOBAL_INIT_FIELD(tgz_dir, DFLT_G_TGZ_DIR, conf_dir);
+    if (!g->tgz_dir) {
+      xstrdup3(&g->tgz_dir, DFLT_G_TGZ_DIR);
+    }
+    if (!os_IsAbsolutePath(g->tgz_dir)) {
+      usprintf(&g->tgz_dir, "%s/%s", g->conf_dir, g->tgz_dir);
+    }
   }
 
   GLOBAL_INIT_FIELD(checker_dir, DFLT_G_CHECKER_DIR, conf_dir);
@@ -3672,20 +3679,23 @@ set_defaults(
         prob->use_tgz = 0;
       }
 
-      if (!prob->tgz_dir[0] && si != -1 && prob->use_tgz && aprob->tgz_dir[0]) {
-        sformat_message(prob->tgz_dir, PATH_MAX, 0, aprob->tgz_dir,
-                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-        vinfo("problem.%s.tgz_dir taken from problem.%s ('%s')",
-             ish, sish, prob->tgz_dir);
+      if (prob->use_tgz > 0) {
+        if (!prob->tgz_dir && aprob && aprob->tgz_dir) {
+          sformat_message_2(&prob->tgz_dir, 0, aprob->tgz_dir,
+                            NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+          vinfo("problem.%s.tgz_dir taken from problem.%s ('%s')",
+                ish, sish, prob->tgz_dir);
+        }
+        if (!prob->tgz_dir) {
+          xstrdup3(&prob->tgz_dir, prob->short_name);
+          vinfo("problem.%s.tgz_dir is set to '%s'", ish, prob->tgz_dir);
+        }
+        if (!os_IsAbsolutePath(prob->tgz_dir)) {
+          usprintf(&prob->tgz_dir, "%s/%s", g->tgz_dir, prob->tgz_dir);
+          vinfo("problem.%s.tgz_dir is '%s'", ish, prob->tgz_dir);
+        }
       }
-      if (!prob->tgz_dir[0] && prob->use_tgz) {
-        pathcpy(prob->tgz_dir, prob->short_name);
-        vinfo("problem.%s.tgz_dir is set to '%s'", ish, prob->tgz_dir);
-      }
-      if (prob->use_tgz) {
-        path_add_dir(prob->tgz_dir, g->tgz_dir);
-        vinfo("problem.%s.tgz_dir is '%s'", ish, prob->tgz_dir);
-      }
+
       if (prob->open_tests && prob->open_tests[0]) {
         if (prepare_parse_open_tests(stderr, prob->open_tests,
                                      &prob->open_tests_val, &prob->open_tests_count) < 0)
@@ -4950,8 +4960,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     xstrdup3(&g->corr_dir, DFLT_G_CORR_DIR);
   if (!g->info_dir)
     xstrdup3(&g->info_dir, DFLT_G_INFO_DIR);
-  if (!g->tgz_dir[0])
-    snprintf(g->tgz_dir, sizeof(g->tgz_dir), "%s", DFLT_G_TGZ_DIR);
+  if (!g->tgz_dir)
+    xstrdup3(&g->tgz_dir, DFLT_G_TGZ_DIR);
   if (!g->checker_dir[0])
     snprintf(g->checker_dir, sizeof(g->checker_dir), "%s", DFLT_G_CHECKER_DIR);
   if (!g->statement_dir[0])
@@ -5243,7 +5253,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   xstrdup3(&global->test_dir, "../tests");
   xstrdup3(&global->corr_dir, "../tests");
   xstrdup3(&global->info_dir, "../tests");
-  strcpy(global->tgz_dir, "../tests");
+  xstrdup3(&global->tgz_dir, "../tests");
   strcpy(global->checker_dir, "../checkers");
   strcpy(global->statement_dir, "../statements");
   strcpy(global->plugin_dir, "../plugins");
@@ -5848,14 +5858,14 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_tgz_dir:
-    if (!out->tgz_dir[0] && abstr && abstr->tgz_dir[0] && abstr->tgz_dir[0] != 1) {
-      sformat_message(out->tgz_dir, PATH_MAX, 0, abstr->tgz_dir, NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    if (!out->tgz_dir && abstr && abstr->tgz_dir) {
+      sformat_message_2(&out->tgz_dir, 0, abstr->tgz_dir, NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
-    if (!out->tgz_dir[0]) {
-      snprintf(out->tgz_dir, sizeof(out->tgz_dir), "%s", out->short_name);
+    if (!out->tgz_dir) {
+      xstrdup3(&out->tgz_dir, out->short_name);
     }
-    if (global && out->tgz_dir[0]) {
-      path_add_dir(out->tgz_dir, global->tgz_dir);
+    if (global && out->tgz_dir && !os_IsAbsolutePath(out->tgz_dir)) {
+      usprintf(&out->tgz_dir, "%s/%s", global->tgz_dir, out->tgz_dir);
     }
     break;
 

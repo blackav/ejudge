@@ -315,7 +315,7 @@ struct section_global_data
   /** directory with the test info files */
   unsigned char *info_dir;
   /** directory with the working dir tgz archives */
-  path_t tgz_dir;
+  unsigned char *tgz_dir;
   /** directory with the checkers */
   path_t checker_dir;
   /** directory with the problem statements */
@@ -977,7 +977,7 @@ struct section_problem_data
   /** info files suffix */
   unsigned char *info_sfx;
   /** directory with tar test archive */
-  path_t tgz_dir;
+  unsigned char *tgz_dir;
   /** tar test archive suffix */
   unsigned char *tgz_sfx;
   /** working directory master copy suffix */
