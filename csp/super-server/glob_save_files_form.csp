@@ -42,8 +42,7 @@
         if (global) {
             global->advanced_layout = advanced_layout;
             global->uuid_run_store = uuid_run_store;
-            global->test_dir[0] = 0;
-            if (test_dir) snprintf(global->test_dir, sizeof(global->test_dir), "%s", test_dir);
+            xstrdup3(&global->test_dir, test_dir);
             global->corr_dir[0] = 0;
             if (corr_dir) snprintf(global->corr_dir, sizeof(global->corr_dir), "%s", corr_dir);
             global->info_dir[0] = 0;

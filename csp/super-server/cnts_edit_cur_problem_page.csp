@@ -493,7 +493,7 @@ function popupFilesDialog(e, skipField)
     <%@expand COPY_YESNO3 "binary_input" %>
     <%@expand COPY_SIMPLE "normalization" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "xml_file" "!prob->xml_file[0]" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_dir" "!prob->test_dir[0]" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_dir" "!prob->test_dir" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_pat" "!prob->test_pat" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_sfx" "!prob->test_sfx" %>
     <%@expand COPY_YESNO3 "use_corr" %>
@@ -762,7 +762,6 @@ function viewDialogOnChange(field)
                 <td>Directory with tests:</td>
                 <td><%
     str_value = prob->test_dir;
-    if (str_value && str_value[0] < ' ') str_value = 0;
 %><s:textfield id="orig-test_dir" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value || !sup_prob) {

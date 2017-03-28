@@ -124,7 +124,7 @@
         prob->binary_input = binary_input;
         xstrdup3(&prob->normalization, test_normalization_unparse(normalization));
         COPYSTR(xml_file);
-        COPYSTR(test_dir);
+        MOVESTR(test_dir);
         if (!test_pat_dflt) {
             MOVESTR(test_pat);
         } else {

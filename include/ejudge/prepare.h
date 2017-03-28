@@ -309,7 +309,7 @@ struct section_global_data
   /** default location of the compile and run scripts */
   path_t script_dir;
   /** directory with the tests */
-  path_t test_dir;
+  unsigned char *test_dir;
   /** directory with the correct answers */
   path_t corr_dir;
   /** directory with the test info files */
@@ -965,7 +965,7 @@ struct section_problem_data
   /** problem directory (relative to problems or absolute) */
   unsigned char *problem_dir;
   /** directory with tests */
-  path_t test_dir;
+  unsigned char *test_dir;
   /** test files suffix */
   unsigned char *test_sfx;
   /** directory with correct answers */

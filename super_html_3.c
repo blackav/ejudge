@@ -494,7 +494,7 @@ super_html_add_abstract_problem(
   prob->time_limit = 1;
   prob->time_limit_millis = 0;
   prob->real_time_limit = 5;
-  snprintf(prob->test_dir, sizeof(prob->test_dir), "%s", "%Ps");
+  xstrdup3(&prob->test_dir, "%Ps");
   xstrdup3(&prob->test_sfx, ".dat");
   prob->use_corr = 1;
   snprintf(prob->corr_dir, sizeof(prob->corr_dir), "%s", "%Ps");

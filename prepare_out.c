@@ -283,7 +283,7 @@ prepare_unparse_global(
     unparse_bool(f, "enable_virtual_restart", global->enable_virtual_restart);
   fprintf(f, "\n");
 
-  if (global->test_dir[0] && strcmp(global->test_dir, DFLT_G_TEST_DIR))
+  if (global->test_dir && strcmp(global->test_dir, DFLT_G_TEST_DIR))
     fprintf(f, "test_dir = \"%s\"\n", CARMOR(global->test_dir));
   if (global->corr_dir[0] && strcmp(global->corr_dir, DFLT_G_CORR_DIR))
     fprintf(f, "corr_dir = \"%s\"\n", CARMOR(global->corr_dir));
@@ -1104,7 +1104,7 @@ prepare_unparse_prob(
     fprintf(f, "alternatives_file = \"%s\"\n", CARMOR(prob->alternatives_file));
   if (prob->plugin_file[0])
     fprintf(f, "plugin_file = \"%s\"\n", CARMOR(prob->plugin_file));
-  if (prob->test_dir[0])
+  if (prob->test_dir)
     fprintf(f, "test_dir = \"%s\"\n", CARMOR(prob->test_dir));
 
   if (prob->test_sfx) {
@@ -1642,7 +1642,7 @@ prepare_unparse_actual_prob(
   if (show_paths && prob->plugin_file[0])
     fprintf(f, "plugin_file = \"%s\"\n", CARMOR(prob->plugin_file));
 
-  if (show_paths && prob->test_dir[0])
+  if (show_paths && prob->test_dir)
     fprintf(f, "test_dir = \"%s\"\n", CARMOR(prob->test_dir));
   if (prob->test_pat) {
     fprintf(f, "test_pat = \"%s\"\n", CARMOR(prob->test_pat));
