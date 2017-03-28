@@ -1964,11 +1964,10 @@ serve_run_request(
     snprintf(buf, sizeof(buf), "%%03d%s", prob->test_sfx);
     srpp->test_pat = xstrdup(buf);
   }
-  if (/*prob->corr_pat &&*/ prob->corr_pat[0]) {
+  if (prob->corr_pat) {
     srpp->corr_pat = xstrdup(prob->corr_pat);
-  } else {
-    snprintf(buf, sizeof(buf), "%%03d%s", prob->corr_sfx);
-    srpp->corr_pat = xstrdup(buf);
+  } else if (prob->corr_sfx) {
+    usprintf(&srpp->corr_pat, "%%03d%s", prob->corr_sfx);
   }
   if (prob->info_pat) {
     srpp->info_pat = xstrdup(prob->info_pat);

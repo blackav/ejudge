@@ -146,13 +146,13 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(statement_dir, "s"),
   GLOBAL_PARAM(plugin_dir, "s"),
   GLOBAL_PARAM(test_sfx, "s"),
-  GLOBAL_PARAM(corr_sfx, "s"),
+  GLOBAL_PARAM(corr_sfx, "S"),
   GLOBAL_PARAM(info_sfx, "S"),
   GLOBAL_PARAM(tgz_sfx, "S"),
   GLOBAL_PARAM(tgzdir_sfx, "S"),
   GLOBAL_PARAM(ejudge_checkers_dir, "s"),
   GLOBAL_PARAM(test_pat, "s"),
-  GLOBAL_PARAM(corr_pat, "s"),
+  GLOBAL_PARAM(corr_pat, "S"),
   GLOBAL_PARAM(info_pat, "S"),
   GLOBAL_PARAM(tgz_pat, "S"),
   GLOBAL_PARAM(tgzdir_pat, "S"),
@@ -465,7 +465,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(test_dir, "s"),
   PROBLEM_PARAM(test_sfx, "s"),
   PROBLEM_PARAM(corr_dir, "s"),
-  PROBLEM_PARAM(corr_sfx, "s"),
+  PROBLEM_PARAM(corr_sfx, "S"),
   PROBLEM_PARAM(info_dir, "s"),
   PROBLEM_PARAM(info_sfx, "S"),
   PROBLEM_PARAM(tgz_dir, "s"),
@@ -509,7 +509,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(solution_src, "S"),
   PROBLEM_PARAM(solution_cmd, "S"),
   PROBLEM_PARAM(test_pat, "s"),
-  PROBLEM_PARAM(corr_pat, "s"),
+  PROBLEM_PARAM(corr_pat, "S"),
   PROBLEM_PARAM(info_pat, "S"),
   PROBLEM_PARAM(tgz_pat, "S"),
   PROBLEM_PARAM(tgzdir_pat, "S"),
@@ -927,6 +927,8 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->dates_config_file);
   dates_config_free(p->dates_config);
   xfree(p->checker_locale);
+  xfree(p->corr_sfx);
+  xfree(p->corr_pat);
   xfree(p->info_sfx);
   xfree(p->info_pat);
   xfree(p->tgz_sfx);
@@ -1012,7 +1014,6 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->accept_partial = -1;
   p->min_tests_to_accept = -1;
   p->test_sfx[0] = 1;
-  p->corr_sfx[0] = 1;
   p->run_penalty = -1;
   p->acm_run_penalty = -1;
   p->disqualified_penalty = -1;
@@ -1059,7 +1060,6 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->stand_last_column = -1;
   p->priority_adjustment = -1000;
   p->test_pat[0] = 1;
-  p->corr_pat[0] = 1;
   p->max_vm_size = -1LL;
   p->max_stack_size = -1LL;
   p->max_data_size = -1LL;
@@ -1146,6 +1146,8 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->score_view_score);
   xfree(p->score_view_text);
   xfree(p->extid);
+  xfree(p->corr_sfx);
+  xfree(p->corr_pat);
   xfree(p->info_sfx);
   xfree(p->info_pat);
   xfree(p->tgz_sfx);
@@ -5060,10 +5062,9 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
       snprintf(prob->test_sfx, sizeof(prob->test_sfx), "%s", global->test_sfx);
     }
   }
-  if (prob->corr_sfx[0] == 1) {
-    prob->corr_sfx[0] = 0;
-    if (global->corr_sfx[0]) {
-      snprintf(prob->corr_sfx, sizeof(prob->corr_sfx), "%s", global->corr_sfx);
+  if (!prob->corr_sfx) {
+    if (global->corr_sfx) {
+      xstrdup3(&prob->corr_sfx, global->corr_sfx);
     }
   }
   if (!prob->info_sfx) {
@@ -5093,10 +5094,9 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
       snprintf(prob->test_pat, sizeof(prob->test_pat), "%s", global->test_pat);
     }
   }
-  if (prob->corr_pat[0] == 1) {
-    prob->corr_pat[0] = 0;
-    if (global->corr_pat[0]) {
-      snprintf(prob->corr_pat, sizeof(prob->corr_pat), "%s", global->corr_pat);
+  if (!prob->corr_pat) {
+    if (global->corr_pat) {
+      xstrdup3(&prob->corr_pat, global->corr_pat);
     }
   }
   if (!prob->info_pat) {
@@ -5845,14 +5845,11 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_corr_sfx:
-    if (out->corr_sfx[0] == 1 && abstr && abstr->corr_sfx[0] != 1) {
-      strcpy(out->corr_sfx, abstr->corr_sfx);
+    if (!out->corr_sfx && abstr && abstr->corr_sfx) {
+      xstrdup3(&out->corr_sfx, abstr->corr_sfx);
     }
-    if (out->corr_sfx[0] == 1 && global && global->corr_sfx[0] != 1) {
-      strcpy(out->corr_sfx, global->corr_sfx);
-    }
-    if (out->corr_sfx[0] == 1) {
-      out->corr_sfx[0] = 0;
+    if (!out->corr_sfx && global && global->corr_sfx) {
+      xstrdup3(&out->corr_sfx, global->corr_sfx);
     }
     break;
 
@@ -5905,14 +5902,11 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_corr_pat:
-    if (out->corr_pat[0] == 1 && abstr && abstr->corr_pat[0] != 1) {
-      strcpy(out->corr_pat, abstr->corr_pat);
+    if (!out->corr_pat && abstr && abstr->corr_pat) {
+      xstrdup3(&out->corr_pat, abstr->corr_pat);
     }
-    if (out->corr_pat[0] == 1 && global && global->corr_pat[0] != 1) {
-      strcpy(out->corr_pat, global->corr_pat);
-    }
-    if (out->corr_pat[0] == 1) {
-      out->corr_pat[0] = 0;
+    if (!out->corr_pat && global && global->corr_pat) {
+      xstrdup3(&out->corr_pat, global->corr_pat);
     }
     break;
 

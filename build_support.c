@@ -640,9 +640,9 @@ build_prepare_test_file_names(
       fprintf(log_f, "corr_dir and test_dir cannot be different\n");
       FAIL(SSERV_ERR_UNSUPPORTED_SETTINGS);
     }
-    if (prob->corr_pat[0] >= ' ' ) {
+    if (prob->corr_pat) {
       snprintf(corr_pat, buf_size, "%s%s", pat_prefix, prob->corr_pat);
-    } else if (prob->corr_sfx[0] >= ' ') {
+    } else if (prob->corr_sfx) {
       snprintf(corr_pat, buf_size, "%s%%03d%s", pat_prefix, prob->corr_sfx);
     } else {
       snprintf(corr_pat, buf_size, "%s%%03d%s", pat_prefix, ".ans");

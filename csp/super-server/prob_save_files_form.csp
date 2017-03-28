@@ -2,6 +2,8 @@
 %><%@include "includes.csp"
 %><%
 #define COPYSTR(f) snprintf(prob->f, sizeof(prob->f), "%s", (f))
+#define MOVESTR(f) xfree(prob->f); prob->f = f; f = NULL
+#define FREESTR(f) xfree(prob->f); f = NULL
 
 %><%@set getter_name = "csp_get_prob_save_files_form"
 %><%@set ac_prefix = "SSERV_CMD_"
@@ -138,55 +140,47 @@
         prob->use_corr = use_corr;
         COPYSTR(corr_dir);
         if (!corr_pat_dflt) {
-            COPYSTR(corr_pat);
+            MOVESTR(corr_pat);
         } else {
-            prob->corr_pat[0] = 1;
-            prob->corr_pat[1] = 0;
+            FREESTR(corr_pat);
         }
         if (!corr_sfx_dflt) {
-            COPYSTR(corr_sfx);
+            MOVESTR(corr_sfx);
         } else {
-            prob->corr_sfx[0] = 1;
-            prob->corr_sfx[1] = 0;
+            FREESTR(corr_sfx);
         }
         prob->use_info = use_info;
         COPYSTR(info_dir);
         if (!info_pat_dflt) {
-            prob->info_pat = info_pat; info_pat = NULL;
+            MOVESTR(info_pat);
         } else {
-            xfree(prob->info_pat);
-            prob->info_pat = NULL;
+            FREESTR(info_pat);
         }
         if (!info_sfx_dflt) {
-            prob->info_sfx = info_sfx; info_sfx = NULL;
+            MOVESTR(info_sfx);
         } else {
-            xfree(prob->info_sfx);
-            prob->info_sfx = NULL;
+            FREESTR(info_sfx);
         }
         prob->use_tgz = use_tgz;
         if (!tgz_pat_dflt) {
-            prob->tgz_pat = tgz_pat; tgz_pat = NULL;
+            MOVESTR(tgz_pat);
         } else {
-            xfree(prob->tgz_pat);
-            prob->tgz_pat = NULL;
+            FREESTR(tgz_pat);
         }
         if (!tgzdir_pat_dflt) {
-            prob->tgzdir_pat = tgzdir_pat; tgzdir_pat = NULL;
+            MOVESTR(tgzdir_pat);
         } else {
-            xfree(prob->tgzdir_pat);
-            prob->tgzdir_pat = NULL;
+            FREESTR(tgzdir_pat);
         }
         if (!tgz_sfx_dflt) {
-            prob->tgz_sfx = tgz_sfx; tgz_sfx = NULL;
+            MOVESTR(tgz_sfx);
         } else {
-            xfree(prob->tgz_sfx);
-            prob->tgz_sfx = NULL;
+            FREESTR(tgz_sfx);
         }
         if (!tgzdir_sfx_dflt) {
-            prob->tgzdir_sfx = tgzdir_sfx; tgzdir_sfx = NULL;
+            MOVESTR(tgzdir_sfx);
         } else {
-            xfree(prob->tgzdir_sfx);
-            prob->tgzdir_sfx = NULL;
+            FREESTR(tgzdir_sfx);
         }
     }
 

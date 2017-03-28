@@ -650,7 +650,7 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
   do_str(f, &ab, "corr_sfx", global->corr_sfx);
   //GLOBAL_PARAM(info_sfx, "s"),
   if (global->info_sfx && strcmp(global->info_sfx, DFLT_G_INFO_SFX))
-      do_str(f, &ab, "info_sfx", global->info_sfx);
+    do_str(f, &ab, "info_sfx", global->info_sfx);
   //GLOBAL_PARAM(tgz_sfx, "s"),
   if (global->tgz_sfx && strcmp(global->tgz_sfx, DFLT_G_TGZ_SFX))
     do_str(f, &ab, "tgz_sfx", global->tgz_sfx);
@@ -1121,15 +1121,31 @@ prepare_unparse_prob(
     unparse_bool(f, "use_corr", prob->use_corr);
   if (prob->corr_dir[0])
     fprintf(f, "corr_dir = \"%s\"\n", CARMOR(prob->corr_dir));
-  if (prob->corr_sfx[0] != 1) {
-    if ((prob->abstract && strcmp(prob->corr_sfx, global->corr_sfx))
-        || !prob->abstract)
+  if (prob->corr_sfx) {
+    int need = 0;
+    if (aprob && aprob->corr_sfx) {
+      need = (strcmp(prob->corr_sfx, aprob->corr_sfx) != 0);
+    } else if (global && global->corr_sfx) {
+      need = (strcmp(prob->corr_sfx, global->corr_sfx) != 0);
+    } else {
+      need = 1;
+    }
+    if (need) {
       fprintf(f, "corr_sfx = \"%s\"\n", CARMOR(prob->corr_sfx));
+    }
   }
-  if (prob->corr_pat[0] != 1) {
-    if ((prob->abstract && strcmp(prob->corr_pat, global->corr_pat))
-        || !prob->abstract)
+  if (prob->corr_pat) {
+    int need = 0;
+    if (aprob && aprob->corr_pat) {
+      need = (strcmp(prob->corr_pat, aprob->corr_pat) != 0);
+    } else if (global && global->corr_pat) {
+      need = (strcmp(prob->corr_pat, global->corr_pat) != 0);
+    } else {
+      need = 1;
+    }
+    if (need) {
       fprintf(f, "corr_pat = \"%s\"\n", CARMOR(prob->corr_pat));
+    }
   }
   if ((prob->abstract && prob->use_info == 1)
       || (!prob->abstract && prob->use_info >= 0))
@@ -1621,9 +1637,9 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "use_corr", prob->use_corr);
     if (show_paths && prob->corr_dir[0])
       fprintf(f, "corr_dir = \"%s\"\n", CARMOR(prob->corr_dir));
-    if (prob->corr_pat[0]) {
+    if (prob->corr_pat) {
       fprintf(f, "corr_pat = \"%s\"\n", CARMOR(prob->corr_pat));
-    } else if (prob->corr_sfx[0]) {
+    } else if (prob->corr_sfx) {
       fprintf(f, "corr_sfx = \"%s\"\n", CARMOR(prob->corr_sfx));
     }
   }
@@ -2998,8 +3014,7 @@ prob_instr(
 
     prepare_set_prob_value(CNTSPROB_corr_sfx, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_corr_pat, tmp_prob, abstr, global);
-    print_files(f, "Correct answer file names",
-                tmp_prob->corr_sfx, tmp_prob->corr_pat);
+    print_files(f, "Correct answer file names", tmp_prob->corr_sfx, tmp_prob->corr_pat);
   }
 
   prepare_set_prob_value(CNTSPROB_use_info, tmp_prob, abstr, global);

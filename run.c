@@ -653,7 +653,7 @@ check_config(void)
             var_corr_dir = prb->corr_dir;
           }
           if (check_readable_dir(var_corr_dir) < 0) return -1;
-          if ((n2 = count_files(var_corr_dir,prb->corr_sfx,prb->corr_pat)) < 0)
+          if ((n2 = count_files(var_corr_dir, prb->corr_sfx, prb->corr_pat)) < 0)
             return -1;
           n1 = n2;
           info("found %d answers for problem %s", n2, prb->short_name);
@@ -731,7 +731,7 @@ check_config(void)
               return -1;
             }
             if (check_readable_dir(var_corr_dir) < 0) return -1;
-            if ((j = count_files(var_corr_dir,prb->corr_sfx,prb->corr_pat)) < 0)
+            if ((j = count_files(var_corr_dir, prb->corr_sfx, prb->corr_pat)) < 0)
               return -1;
             if (j != 1) {
               err("output-only problem must define only one answer file");
@@ -808,7 +808,7 @@ check_config(void)
             var_corr_dir = prb->corr_dir;
           }
           if (check_readable_dir(var_corr_dir) < 0) return -1;
-          if ((n2 = count_files(var_corr_dir,prb->corr_sfx,prb->corr_pat)) < 0)
+          if ((n2 = count_files(var_corr_dir, prb->corr_sfx, prb->corr_pat)) < 0)
             return -1;
           info("found %d answers for problem %s", n2, prb->short_name);
           if (n1 != n2) {
@@ -913,7 +913,7 @@ check_config(void)
               return -1;
             }
             if (check_readable_dir(var_corr_dir) < 0) return -1;
-            if ((j = count_files(var_corr_dir,prb->corr_sfx,prb->corr_pat)) < 0)
+            if ((j = count_files(var_corr_dir, prb->corr_sfx, prb->corr_pat)) < 0)
               return -1;
             info("found %d answers for problem %s, variant %d",
                  j, prb->short_name, k);

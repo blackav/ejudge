@@ -498,8 +498,8 @@ function popupFilesDialog(e, skipField)
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_sfx" "prob->test_sfx[0] == 1" %>
     <%@expand COPY_YESNO3 "use_corr" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_dir" "!prob->corr_dir[0]" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_pat" "prob->corr_pat[0] == 1" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_sfx" "prob->corr_sfx[0] == 1" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_pat" "!prob->corr_pat" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_sfx" "!prob->corr_sfx" %>
     <%@expand COPY_YESNO3 "use_info" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_dir" "!prob->info_dir[0]" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_pat" "!prob->info_pat" %>
@@ -856,7 +856,6 @@ function viewDialogOnChange(field)
                 <td>Pattern for &quot;correct answer&quot; file names:</td>
                 <td><%
     str_value = prob->corr_pat;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-corr_pat" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -878,7 +877,6 @@ function viewDialogOnChange(field)
                 <td>Suffix of &quot;correct answer&quot; files:</td>
                 <td><%
     str_value = prob->corr_sfx;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-corr_sfx" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
