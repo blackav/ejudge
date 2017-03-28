@@ -139,7 +139,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(problems_dir, "s"),
   GLOBAL_PARAM(script_dir, "s"),
   GLOBAL_PARAM(test_dir, "S"),
-  GLOBAL_PARAM(corr_dir, "s"),
+  GLOBAL_PARAM(corr_dir, "S"),
   GLOBAL_PARAM(info_dir, "s"),
   GLOBAL_PARAM(tgz_dir, "s"),
   GLOBAL_PARAM(checker_dir, "s"),
@@ -464,7 +464,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(problem_dir, "S"),
   PROBLEM_PARAM(test_dir, "S"),
   PROBLEM_PARAM(test_sfx, "S"),
-  PROBLEM_PARAM(corr_dir, "s"),
+  PROBLEM_PARAM(corr_dir, "S"),
   PROBLEM_PARAM(corr_sfx, "S"),
   PROBLEM_PARAM(info_dir, "s"),
   PROBLEM_PARAM(info_sfx, "S"),
@@ -930,6 +930,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->test_dir);
   xfree(p->test_sfx);
   xfree(p->test_pat);
+  xfree(p->corr_dir);
   xfree(p->corr_sfx);
   xfree(p->corr_pat);
   xfree(p->info_sfx);
@@ -1150,6 +1151,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->test_dir);
   xfree(p->test_sfx);
   xfree(p->test_pat);
+  xfree(p->corr_dir);
   xfree(p->corr_sfx);
   xfree(p->corr_pat);
   xfree(p->info_sfx);
@@ -2644,7 +2646,12 @@ set_defaults(
     if (!os_IsAbsolutePath(g->test_dir)) {
       usprintf(&g->test_dir, "%s/%s", g->conf_dir, g->test_dir);
     }
-    GLOBAL_INIT_FIELD(corr_dir, DFLT_G_CORR_DIR, conf_dir);
+    if (!g->corr_dir) {
+      xstrdup3(&g->corr_dir, DFLT_G_CORR_DIR);
+    }
+    if (!os_IsAbsolutePath(g->corr_dir)) {
+      usprintf(&g->corr_dir, "%s/%s", g->conf_dir, g->corr_dir);
+    }
     GLOBAL_INIT_FIELD(info_dir, DFLT_G_INFO_DIR, conf_dir);
     GLOBAL_INIT_FIELD(tgz_dir, DFLT_G_TGZ_DIR, conf_dir);
   }
@@ -3607,7 +3614,7 @@ set_defaults(
     if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
       if (!prob->test_dir && aprob && aprob->test_dir) {
         sformat_message_2(&prob->test_dir, 0, aprob->test_dir,
-                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+                          NULL, prob, NULL, NULL, NULL, 0, 0, 0);
         vinfo("problem.%s.test_dir taken from problem.%s ('%s')",
              ish, sish, prob->test_dir);
       }
@@ -3620,14 +3627,14 @@ set_defaults(
       }
       vinfo("problem.%s.test_dir is '%s'", ish, prob->test_dir);
 
-      if (!prob->corr_dir[0] && si != -1 && aprob->corr_dir[0]) {
-        sformat_message(prob->corr_dir, PATH_MAX, 0, aprob->corr_dir,
-                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+      if (!prob->corr_dir && aprob && aprob->corr_dir) {
+        sformat_message_2(&prob->corr_dir, 0, aprob->corr_dir,
+                          NULL, prob, NULL, NULL, NULL, 0, 0, 0);
         vinfo("problem.%s.corr_dir taken from problem.%s ('%s')",
              ish, sish, prob->corr_dir);
       }
-      if (prob->corr_dir[0]) {
-        path_add_dir(prob->corr_dir, g->corr_dir);
+      if (prob->corr_dir && !os_IsAbsolutePath(prob->corr_dir)) {
+        usprintf(&prob->corr_dir, "%s/%s", g->corr_dir, prob->corr_dir);
         vinfo("problem.%s.corr_dir is '%s'", ish, prob->corr_dir);
       }
 
@@ -4932,8 +4939,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     snprintf(g->charset, sizeof(g->charset), "%s", DFLT_G_CHARSET);
   if (!g->test_dir)
     xstrdup3(&g->test_dir, DFLT_G_TEST_DIR);
-  if (!g->corr_dir[0])
-    snprintf(g->corr_dir, sizeof(g->corr_dir), "%s", DFLT_G_CORR_DIR);
+  if (!g->corr_dir)
+    xstrdup3(&g->corr_dir, DFLT_G_CORR_DIR);
   if (!g->info_dir[0])
     snprintf(g->info_dir, sizeof(g->info_dir), "%s", DFLT_G_INFO_DIR);
   if (!g->tgz_dir[0])
@@ -5227,7 +5234,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->advanced_layout = 1;
 
   xstrdup3(&global->test_dir, "../tests");
-  strcpy(global->corr_dir, "../tests");
+  xstrdup3(&global->corr_dir, "../tests");
   strcpy(global->info_dir, "../tests");
   strcpy(global->tgz_dir, "../tests");
   strcpy(global->checker_dir, "../checkers");
@@ -5788,7 +5795,7 @@ prepare_set_prob_value(
 
   case CNTSPROB_use_corr:
     if (out->use_corr < 0 && abstr) out->use_corr = abstr->use_corr;
-    if (out->use_corr < 0 && out->corr_dir[0]) out->use_corr = 1;
+    if (out->use_corr < 0 && out->corr_dir) out->use_corr = 1;
     if (out->use_corr < 0) out->use_corr = 0;
     if (out->use_corr > 0) out->use_corr = 1;
     break;
@@ -5811,11 +5818,13 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_corr_dir:
-    if (!out->corr_dir[0] && abstr && abstr->corr_dir[0] && abstr->corr_dir[0] != 1) {
-      sformat_message(out->corr_dir, PATH_MAX, 0, abstr->corr_dir, NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    if (!out->corr_dir && abstr && abstr->corr_dir) {
+      sformat_message_2(&out->corr_dir, 0, abstr->corr_dir, NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
-    if (global && out->corr_dir[0]) {
-      path_add_dir(out->corr_dir, global->corr_dir);
+    if (global && out->corr_dir && out->corr_dir[0]) {
+      if (!os_IsAbsolutePath(out->corr_dir)) {
+        usprintf(&out->corr_dir, "%s/%s", global->corr_dir, out->corr_dir);
+      }
     }
     break;
 

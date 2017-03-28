@@ -311,7 +311,7 @@ struct section_global_data
   /** directory with the tests */
   unsigned char *test_dir;
   /** directory with the correct answers */
-  path_t corr_dir;
+  unsigned char *corr_dir;
   /** directory with the test info files */
   path_t info_dir;
   /** directory with the working dir tgz archives */
@@ -969,7 +969,7 @@ struct section_problem_data
   /** test files suffix */
   unsigned char *test_sfx;
   /** directory with correct answers */
-  path_t corr_dir;
+  unsigned char *corr_dir;
   /** correct files suffix */
   unsigned char *corr_sfx;
   /** directory with info files */

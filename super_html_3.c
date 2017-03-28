@@ -497,7 +497,7 @@ super_html_add_abstract_problem(
   xstrdup3(&prob->test_dir, "%Ps");
   xstrdup3(&prob->test_sfx, ".dat");
   prob->use_corr = 1;
-  snprintf(prob->corr_dir, sizeof(prob->corr_dir), "%s", "%Ps");
+  xstrdup3(&prob->corr_dir, "%Ps");
   xstrdup3(&prob->corr_sfx, ".ans");
   prob->use_info = 0;
   snprintf(prob->info_dir, sizeof(prob->info_dir), "%s", "%Ps");

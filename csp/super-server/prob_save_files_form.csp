@@ -136,7 +136,7 @@
             FREESTR(test_sfx);
         }
         prob->use_corr = use_corr;
-        COPYSTR(corr_dir);
+        MOVESTR(corr_dir);
         if (!corr_pat_dflt) {
             MOVESTR(corr_pat);
         } else {

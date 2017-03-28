@@ -641,7 +641,7 @@ check_config(void)
       // output-only problems have no input file
       if (prb->variant_num <= 0) {
         if (prb->use_corr) {
-          if (!prb->corr_dir[0]) {
+          if (!prb->corr_dir) {
             err("directory with answers is not defined");
             return -1;
           }
@@ -726,7 +726,7 @@ check_config(void)
             snprintf(var_tgz_dir, sizeof(path_t), "%s-%d", prb->tgz_dir, k);
           }
           if (prb->use_corr) {
-            if (!prb->corr_dir[0]) {
+            if (!prb->corr_dir) {
               err("directory with answers is not defined");
               return -1;
             }
@@ -796,7 +796,7 @@ check_config(void)
           return -1;
         }
         if (prb->use_corr) {
-          if (!prb->corr_dir[0]) {
+          if (!prb->corr_dir) {
             err("directory with answers is not defined");
             return -1;
           }
@@ -908,7 +908,7 @@ check_config(void)
             return -1;
           }
           if (prb->use_corr) {
-            if (!prb->corr_dir[0]) {
+            if (!prb->corr_dir) {
               err("directory with answers is not defined");
               return -1;
             }

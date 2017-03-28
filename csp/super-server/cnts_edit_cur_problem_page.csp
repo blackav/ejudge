@@ -497,7 +497,7 @@ function popupFilesDialog(e, skipField)
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_pat" "!prob->test_pat" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_sfx" "!prob->test_sfx" %>
     <%@expand COPY_YESNO3 "use_corr" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_dir" "!prob->corr_dir[0]" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_dir" "!prob->corr_dir" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_pat" "!prob->corr_pat" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_sfx" "!prob->corr_sfx" %>
     <%@expand COPY_YESNO3 "use_info" %>
@@ -829,7 +829,6 @@ function viewDialogOnChange(field)
                 <td>Directory with &quot;correct answer&quot; files:</td>
                 <td><%
     str_value = prob->corr_dir;
-    if (str_value && str_value[0] < ' ') str_value = 0;
 %><s:textfield id="orig-corr_dir" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0 || !sup_prob) {
       if (!str_value) {
