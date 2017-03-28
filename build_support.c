@@ -669,9 +669,9 @@ build_prepare_test_file_names(
       fprintf(log_f, "info_dir and test_dir cannot be different\n");
       FAIL(SSERV_ERR_UNSUPPORTED_SETTINGS);
     }
-    if (prob->info_pat[0] >= ' ' ) {
+    if (prob->info_pat) {
       snprintf(info_pat, buf_size, "%s%s", pat_prefix, prob->info_pat);
-    } else if (prob->info_sfx[0] >= ' ') {
+    } else if (prob->info_sfx) {
       snprintf(info_pat, buf_size, "%s%%03d%s", pat_prefix, prob->info_sfx);
     } else {
       snprintf(info_pat, buf_size, "%s%%03d%s", pat_prefix, ".inf");

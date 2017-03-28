@@ -649,7 +649,7 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
   //GLOBAL_PARAM(corr_sfx, "s"),
   do_str(f, &ab, "corr_sfx", global->corr_sfx);
   //GLOBAL_PARAM(info_sfx, "s"),
-  if (global->info_sfx[0] && strcmp(global->info_sfx, DFLT_G_INFO_SFX))
+  if (global->info_sfx && strcmp(global->info_sfx, DFLT_G_INFO_SFX))
       do_str(f, &ab, "info_sfx", global->info_sfx);
   //GLOBAL_PARAM(tgz_sfx, "s"),
   if (global->tgz_sfx && strcmp(global->tgz_sfx, DFLT_G_TGZ_SFX))
@@ -1136,17 +1136,30 @@ prepare_unparse_prob(
     unparse_bool(f, "use_info", prob->use_info);
   if (prob->info_dir[0])
     fprintf(f, "info_dir = \"%s\"\n", CARMOR(prob->info_dir));
-  if (prob->info_sfx[0] != 1) {
-    if ((prob->abstract
-         && ((global->info_sfx[0] && strcmp(prob->info_sfx, global->info_sfx))
-             || (!global->info_sfx[0] && strcmp(prob->info_sfx, DFLT_G_INFO_SFX))))
-        || !prob->abstract)
+
+  if (prob->info_sfx) {
+    int need = 0;
+    if (aprob && aprob->info_sfx) {
+      need = (strcmp(prob->info_sfx, aprob->info_sfx) != 0);
+    } else if (global && global->info_sfx) {
+      need = (strcmp(prob->info_sfx, global->info_sfx) != 0);
+    } else {
+      need = (strcmp(prob->info_sfx, DFLT_G_INFO_SFX) != 0);
+    }
+    if (need) {
       fprintf(f, "info_sfx = \"%s\"\n", CARMOR(prob->info_sfx));
+    }
   }
-  if (prob->info_pat[0] != 1) {
-    if ((prob->abstract && strcmp(prob->info_pat, global->info_pat))
-        || !prob->abstract)
+  if (prob->info_pat) {
+    int need = 0;
+    if (aprob && aprob->info_pat) {
+      need = (strcmp(prob->info_pat, aprob->info_pat) != 0);
+    } else {
+      need = 1;
+    }
+    if (need) {
       fprintf(f, "info_pat = \"%s\"\n", CARMOR(prob->info_pat));
+    }
   }
   if ((prob->abstract && prob->use_tgz == 1)
       || (!prob->abstract && prob->use_tgz >= 0))
@@ -1619,9 +1632,9 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "use_info", prob->use_info);
     if (show_paths && prob->info_dir[0])
       fprintf(f, "info_dir = \"%s\"\n", CARMOR(prob->info_dir));
-    if (prob->info_pat[0]) {
+    if (prob->info_pat) {
       fprintf(f, "info_pat = \"%s\"\n", CARMOR(prob->info_pat));
-    } else if (prob->info_sfx[0]) {
+    } else if (prob->info_sfx) {
       fprintf(f, "info_sfx = \"%s\"\n", CARMOR(prob->info_sfx));
     }
   }
@@ -2999,8 +3012,7 @@ prob_instr(
 
     prepare_set_prob_value(CNTSPROB_info_sfx, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_info_pat, tmp_prob, abstr, global);
-    print_files(f, "Info file names",
-                tmp_prob->info_sfx, tmp_prob->info_pat);
+    print_files(f, "Info file names", tmp_prob->info_sfx, tmp_prob->info_pat);
   }
 
   prepare_set_prob_value(CNTSPROB_use_tgz, tmp_prob, abstr, global);

@@ -327,7 +327,7 @@ struct section_global_data
   /** suffix of the files with correct answers */
   unsigned char corr_sfx[32];
   /** suffix of the files with test info */
-  unsigned char info_sfx[32];
+  unsigned char *info_sfx;
   /** suffix of the tgz archive files */
   unsigned char *tgz_sfx;
   /** suffix of the working directory master copy */
@@ -351,7 +351,7 @@ struct section_global_data
   /** printf pattern for the files with correct answers */
   unsigned char corr_pat[32];
   /** printf pattern for the files with test information */
-  unsigned char info_pat[32];
+  unsigned char *info_pat;
   /** printf pattern for the files with the working dir archive */
   unsigned char *tgz_pat;
   /** printf pattern for the files with the working directory master copy */
@@ -975,7 +975,7 @@ struct section_problem_data
   /** directory with info files */
   path_t info_dir;
   /** info files suffix */
-  unsigned char info_sfx[32];
+  unsigned char *info_sfx;
   /** directory with tar test archive */
   path_t tgz_dir;
   /** tar test archive suffix */
@@ -1043,7 +1043,7 @@ struct section_problem_data
   /** printf pattern for the correct answer files */
   unsigned char corr_pat[32];
   /** printf pattern for the test information files */
-  unsigned char info_pat[32];
+  unsigned char *info_pat;
   /** printf pattern for the tgz archive pattern */
   unsigned char *tgz_pat;
   /** printf pattern for the working directory master copy */

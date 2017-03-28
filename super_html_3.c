@@ -501,7 +501,7 @@ super_html_add_abstract_problem(
   snprintf(prob->corr_sfx, sizeof(prob->corr_sfx), "%s", ".ans");
   prob->use_info = 0;
   snprintf(prob->info_dir, sizeof(prob->info_dir), "%s", "%Ps");
-  snprintf(prob->info_sfx, sizeof(prob->info_sfx), "%s", ".inf");
+  xstrdup3(&prob->info_sfx, ".inf");
   prob->use_tgz = 0;
   snprintf(prob->tgz_dir, sizeof(prob->tgz_dir), "%s", "%Ps");
   xstrdup3(&prob->tgz_sfx, ".tgz");

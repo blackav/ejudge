@@ -152,16 +152,16 @@
         prob->use_info = use_info;
         COPYSTR(info_dir);
         if (!info_pat_dflt) {
-            COPYSTR(info_pat);
+            prob->info_pat = info_pat; info_pat = NULL;
         } else {
-            prob->info_pat[0] = 1;
-            prob->info_pat[1] = 0;
+            xfree(prob->info_pat);
+            prob->info_pat = NULL;
         }
         if (!info_sfx_dflt) {
-            COPYSTR(info_sfx);
+            prob->info_sfx = info_sfx; info_sfx = NULL;
         } else {
-            prob->info_sfx[0] = 1;
-            prob->info_sfx[1] = 0;
+            xfree(prob->info_sfx);
+            prob->info_sfx = NULL;
         }
         prob->use_tgz = use_tgz;
         if (!tgz_pat_dflt) {

@@ -502,8 +502,8 @@ function popupFilesDialog(e, skipField)
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_sfx" "prob->corr_sfx[0] == 1" %>
     <%@expand COPY_YESNO3 "use_info" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_dir" "!prob->info_dir[0]" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_pat" "prob->info_pat[0] == 1" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_sfx" "prob->info_sfx[0] == 1" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_pat" "!prob->info_pat" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_sfx" "!prob->info_sfx" %>
     <%@expand COPY_YESNO3 "use_tgz" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgz_pat" "!prob->tgz_pat" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgz_sfx" "!prob->tgz_sfx" %>
@@ -926,7 +926,6 @@ function viewDialogOnChange(field)
                 <td>Pattern for test info file names:</td>
                 <td><%
     str_value = prob->info_pat;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-info_pat" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -948,7 +947,6 @@ function viewDialogOnChange(field)
                 <td>Suffix of test info:</td>
                 <td><%
     str_value = prob->info_sfx;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-info_sfx" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {

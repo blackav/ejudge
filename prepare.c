@@ -147,13 +147,13 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(plugin_dir, "s"),
   GLOBAL_PARAM(test_sfx, "s"),
   GLOBAL_PARAM(corr_sfx, "s"),
-  GLOBAL_PARAM(info_sfx, "s"),
+  GLOBAL_PARAM(info_sfx, "S"),
   GLOBAL_PARAM(tgz_sfx, "S"),
   GLOBAL_PARAM(tgzdir_sfx, "S"),
   GLOBAL_PARAM(ejudge_checkers_dir, "s"),
   GLOBAL_PARAM(test_pat, "s"),
   GLOBAL_PARAM(corr_pat, "s"),
-  GLOBAL_PARAM(info_pat, "s"),
+  GLOBAL_PARAM(info_pat, "S"),
   GLOBAL_PARAM(tgz_pat, "S"),
   GLOBAL_PARAM(tgzdir_pat, "S"),
   GLOBAL_PARAM(contest_start_cmd, "s"),
@@ -467,7 +467,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(corr_dir, "s"),
   PROBLEM_PARAM(corr_sfx, "s"),
   PROBLEM_PARAM(info_dir, "s"),
-  PROBLEM_PARAM(info_sfx, "s"),
+  PROBLEM_PARAM(info_sfx, "S"),
   PROBLEM_PARAM(tgz_dir, "s"),
   PROBLEM_PARAM(tgz_sfx, "S"),
   PROBLEM_PARAM(tgzdir_sfx, "S"),
@@ -510,7 +510,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(solution_cmd, "S"),
   PROBLEM_PARAM(test_pat, "s"),
   PROBLEM_PARAM(corr_pat, "s"),
-  PROBLEM_PARAM(info_pat, "s"),
+  PROBLEM_PARAM(info_pat, "S"),
   PROBLEM_PARAM(tgz_pat, "S"),
   PROBLEM_PARAM(tgzdir_pat, "S"),
   PROBLEM_PARAM(personal_deadline, "x"),
@@ -927,6 +927,8 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->dates_config_file);
   dates_config_free(p->dates_config);
   xfree(p->checker_locale);
+  xfree(p->info_sfx);
+  xfree(p->info_pat);
   xfree(p->tgz_sfx);
   xfree(p->tgz_pat);
   xfree(p->tgzdir_sfx);
@@ -1011,7 +1013,6 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->min_tests_to_accept = -1;
   p->test_sfx[0] = 1;
   p->corr_sfx[0] = 1;
-  p->info_sfx[0] = 1;
   p->run_penalty = -1;
   p->acm_run_penalty = -1;
   p->disqualified_penalty = -1;
@@ -1059,7 +1060,6 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->priority_adjustment = -1000;
   p->test_pat[0] = 1;
   p->corr_pat[0] = 1;
-  p->info_pat[0] = 1;
   p->max_vm_size = -1LL;
   p->max_stack_size = -1LL;
   p->max_data_size = -1LL;
@@ -1146,6 +1146,8 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->score_view_score);
   xfree(p->score_view_text);
   xfree(p->extid);
+  xfree(p->info_sfx);
+  xfree(p->info_pat);
   xfree(p->tgz_sfx);
   xfree(p->tgz_pat);
   xfree(p->tgzdir_sfx);
@@ -2644,8 +2646,8 @@ set_defaults(
   }
 
   if (mode != PREPARE_COMPILE) {
-    if (!g->info_sfx[0]) {
-      snprintf(g->info_sfx, sizeof(g->info_sfx), "%s", DFLT_G_INFO_SFX);
+    if (!g->info_sfx) {
+      xstrdup3(&g->info_sfx, DFLT_G_INFO_SFX);
       vinfo("global.info_sfx set to %s", g->info_sfx);
     }
     if (!g->tgz_sfx) {
@@ -5064,11 +5066,11 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
       snprintf(prob->corr_sfx, sizeof(prob->corr_sfx), "%s", global->corr_sfx);
     }
   }
-  if (prob->info_sfx[0] == 1) {
-    if (global->info_sfx[0]) {
-      snprintf(prob->info_sfx, sizeof(prob->info_sfx), "%s", global->info_sfx);
+  if (!prob->info_sfx) {
+    if (global->info_sfx) {
+      xstrdup3(&prob->info_sfx, global->info_sfx);
     } else {
-      snprintf(prob->info_sfx, sizeof(prob->info_sfx), "%s", DFLT_G_INFO_SFX);
+      xstrdup3(&prob->info_sfx, DFLT_G_INFO_SFX);
     }
   }
   if (!prob->tgz_sfx) {
@@ -5097,10 +5099,9 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
       snprintf(prob->corr_pat, sizeof(prob->corr_pat), "%s", global->corr_pat);
     }
   }
-  if (prob->info_pat[0] == 1) {
-    prob->info_pat[0] = 0;
-    if (global->info_pat[0]) {
-      snprintf(prob->info_pat, sizeof(prob->info_pat), "%s", global->info_pat);
+  if (!prob->info_pat) {
+    if (global->info_pat) {
+      xstrdup3(&prob->info_pat, global->info_pat);
     }
   }
   if (!prob->tgz_pat) {
@@ -5856,17 +5857,14 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_info_sfx:
-    if (out->info_sfx[0] == 1 && abstr && abstr->info_sfx[0] != 1) {
-      strcpy(out->info_sfx, abstr->info_sfx);
+    if (!out->info_sfx && abstr && abstr->info_sfx) {
+      xstrdup3(&out->info_sfx, abstr->info_sfx);
     }
-    if (out->info_sfx[0] == 1 && global && global->info_sfx[0]) {
-      strcpy(out->info_sfx, global->info_sfx);
+    if (!out->info_sfx && global && global->info_sfx) {
+      xstrdup3(&out->info_sfx, global->info_sfx);
     }
-    if (out->info_sfx[0] == 1) {
-      strcpy(out->info_sfx, DFLT_G_INFO_SFX);
-    }
-    if (out->info_sfx[0] == 1) {
-      out->info_sfx[0] = 0;
+    if (!out->info_sfx) {
+      xstrdup3(&out->info_sfx, DFLT_G_INFO_SFX);
     }
     break;
 
@@ -5919,14 +5917,11 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_info_pat:
-    if (out->info_pat[0] == 1 && abstr && abstr->info_pat[0] != 1) {
-      strcpy(out->info_pat, abstr->info_pat);
+    if (!out->info_pat && abstr && abstr->info_pat) {
+      xstrdup3(&out->info_pat, abstr->info_pat);
     }
-    if (out->info_pat[0] == 1 && global && global->info_pat[0] != 1) {
-      strcpy(out->info_pat, global->info_pat);
-    }
-    if (out->info_pat[0] == 1) {
-      out->info_pat[0] = 0;
+    if (!out->info_pat && global && global->info_pat) {
+      xstrdup3(&out->info_pat, global->info_pat);
     }
     break;
 

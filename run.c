@@ -675,7 +675,7 @@ check_config(void)
             var_info_dir = prb->info_dir;
           }
           if (check_readable_dir(var_info_dir) < 0) return -1;
-          if ((n2 = count_files(var_info_dir,prb->info_sfx,prb->info_pat)) < 0)
+          if ((n2 = count_files(var_info_dir,prb->info_sfx, prb->info_pat)) < 0)
             return -1;
           info("found %d info files for problem %s", n2, prb->short_name);
           if (n2 != 1) {
