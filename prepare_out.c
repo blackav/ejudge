@@ -1106,15 +1106,32 @@ prepare_unparse_prob(
     fprintf(f, "plugin_file = \"%s\"\n", CARMOR(prob->plugin_file));
   if (prob->test_dir[0])
     fprintf(f, "test_dir = \"%s\"\n", CARMOR(prob->test_dir));
-  if (prob->test_sfx[0] != 1) {
-    if ((prob->abstract && strcmp(prob->test_sfx, global->test_sfx))
-        || !prob->abstract)
+
+  if (prob->test_sfx) {
+    int need = 0;
+    if (aprob && aprob->test_sfx) {
+      need = (strcmp(prob->test_sfx, aprob->test_sfx) != 0);
+    } else if (global && global->test_sfx) {
+      need = (strcmp(prob->test_sfx, global->test_sfx) != 0);
+    } else {
+      need = 1;
+    }
+    if (need) {
       fprintf(f, "test_sfx = \"%s\"\n", CARMOR(prob->test_sfx));
+    }
   }
-  if (prob->test_pat[0] != 1) {
-    if ((prob->abstract && strcmp(prob->test_pat, global->test_pat))
-        || !prob->abstract)
+  if (prob->test_pat) {
+    int need = 0;
+    if (aprob && aprob->test_pat) {
+      need = (strcmp(prob->test_pat, aprob->test_pat) != 0);
+    } else if (global && global->test_pat) {
+      need = (strcmp(prob->test_pat, global->test_pat) != 0);
+    } else {
+      need = 1;
+    }
+    if (need) {
       fprintf(f, "test_pat = \"%s\"\n", CARMOR(prob->test_pat));
+    }
   }
   if ((prob->abstract && prob->use_corr == 1)
       || (!prob->abstract && prob->use_corr >= 0))
@@ -1627,9 +1644,9 @@ prepare_unparse_actual_prob(
 
   if (show_paths && prob->test_dir[0])
     fprintf(f, "test_dir = \"%s\"\n", CARMOR(prob->test_dir));
-  if (prob->test_pat[0]) {
+  if (prob->test_pat) {
     fprintf(f, "test_pat = \"%s\"\n", CARMOR(prob->test_pat));
-  } else if (prob->test_sfx[0]) {
+  } else if (prob->test_sfx) {
     fprintf(f, "test_sfx = \"%s\"\n", CARMOR(prob->test_sfx));
   }
 

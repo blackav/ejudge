@@ -1958,11 +1958,10 @@ serve_run_request(
     srpp->interactor_time_limit_ms = prob->interactor_time_limit * 1000;
   }
   srpp->disable_stderr = prob->disable_stderr;
-  if (/*prob->test_pat &&*/ prob->test_pat[0]) {
+  if (prob->test_pat) {
     srpp->test_pat = xstrdup(prob->test_pat);
-  } else {
-    snprintf(buf, sizeof(buf), "%%03d%s", prob->test_sfx);
-    srpp->test_pat = xstrdup(buf);
+  } else if (prob->test_sfx) {
+    usprintf(&srpp->test_pat, "%%03d%s", prob->test_sfx);
   }
   if (prob->corr_pat) {
     srpp->corr_pat = xstrdup(prob->corr_pat);

@@ -612,9 +612,9 @@ build_prepare_test_file_names(
   } else {
     snprintf(test_dir, buf_size, "%s", prob->test_dir);
   }
-  if (prob->test_pat[0] >= ' ') {
+  if (prob->test_pat) {
     snprintf(test_pat, buf_size, "%s%s", pat_prefix, prob->test_pat);
-  } else if (prob->test_sfx[0] >= ' ') {
+  } else if (prob->test_sfx) {
     snprintf(test_pat, buf_size, "%s%%03d%s", pat_prefix, prob->test_sfx);
   } else {
     snprintf(test_pat, buf_size, "%s%%03d%s", pat_prefix, ".dat");

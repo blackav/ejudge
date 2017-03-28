@@ -323,7 +323,7 @@ struct section_global_data
   /** directory with the contest and problem plugins */
   path_t plugin_dir;
   /** suffix of the test files */
-  unsigned char test_sfx[32];
+  unsigned char *test_sfx;
   /** suffix of the files with correct answers */
   unsigned char *corr_sfx;
   /** suffix of the files with test info */
@@ -347,7 +347,7 @@ struct section_global_data
   unsigned char *super_run_dir;
 
   /** printf pattern for the files with tests */
-  unsigned char test_pat[32];
+  unsigned char *test_pat;
   /** printf pattern for the files with correct answers */
   unsigned char *corr_pat;
   /** printf pattern for the files with test information */
@@ -967,7 +967,7 @@ struct section_problem_data
   /** directory with tests */
   path_t test_dir;
   /** test files suffix */
-  unsigned char test_sfx[32];
+  unsigned char *test_sfx;
   /** directory with correct answers */
   path_t corr_dir;
   /** correct files suffix */
@@ -1039,7 +1039,7 @@ struct section_problem_data
   ejintbool_t enable_testlib_mode;
 
   /** printf pattern for the test files */
-  unsigned char test_pat[32];
+  unsigned char *test_pat;
   /** printf pattern for the correct answer files */
   unsigned char *corr_pat;
   /** printf pattern for the test information files */

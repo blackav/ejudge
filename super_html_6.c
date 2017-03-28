@@ -10102,7 +10102,7 @@ do_import_problem(
     prob->max_stack_size = cfg->max_stack_size;
   }
   if (cfg->test_pat && cfg->test_pat[0]) {
-    snprintf(prob->test_pat, sizeof(prob->test_pat), "%s", cfg->test_pat);
+    xstrdup3(&prob->test_pat, cfg->test_pat);
   }
   if (cfg->use_corr > 0) {
     prob->use_corr = 1;

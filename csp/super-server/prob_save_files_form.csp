@@ -126,16 +126,14 @@
         COPYSTR(xml_file);
         COPYSTR(test_dir);
         if (!test_pat_dflt) {
-            COPYSTR(test_pat);
+            MOVESTR(test_pat);
         } else {
-            prob->test_pat[0] = 1;
-            prob->test_pat[1] = 0;
+            FREESTR(test_pat);
         }
         if (!test_sfx_dflt) {
-            COPYSTR(test_sfx);
+            MOVESTR(test_sfx);
         } else {
-            prob->test_sfx[0] = 1;
-            prob->test_sfx[1] = 0;
+            FREESTR(test_sfx);
         }
         prob->use_corr = use_corr;
         COPYSTR(corr_dir);
