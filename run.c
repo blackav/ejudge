@@ -663,7 +663,7 @@ check_config(void)
           }
         }
         if (prb->use_info) {
-          if (!prb->info_dir[0]) {
+          if (!prb->info_dir) {
             err("directory with test information is not defined");
             return -1;
           }
@@ -739,7 +739,7 @@ check_config(void)
             }
           }
           if (prb->use_info) {
-            if (!prb->info_dir[0]) {
+            if (!prb->info_dir) {
               err("directory with test infos is not defined");
               return -1;
             }
@@ -817,7 +817,7 @@ check_config(void)
           }
         }
         if (prb->use_info) {
-          if (!prb->info_dir[0]) {
+          if (!prb->info_dir) {
             err("directory with test information is not defined");
             return -1;
           }
@@ -924,7 +924,7 @@ check_config(void)
             }
           }
           if (prb->use_info) {
-            if (!prb->info_dir[0]) {
+            if (!prb->info_dir) {
               err("directory with test infos is not defined");
               return -1;
             }

@@ -44,8 +44,7 @@
             global->uuid_run_store = uuid_run_store;
             xstrdup3(&global->test_dir, test_dir);
             xstrdup3(&global->corr_dir, corr_dir);
-            global->info_dir[0] = 0;
-            if (info_dir) snprintf(global->info_dir, sizeof(global->info_dir), "%s", info_dir);
+            xstrdup3(&global->info_dir, info_dir);
             global->tgz_dir[0] = 0;
             if (tgz_dir) snprintf(global->tgz_dir, sizeof(global->tgz_dir), "%s", tgz_dir);
             global->checker_dir[0] = 0;

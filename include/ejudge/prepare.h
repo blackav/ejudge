@@ -313,7 +313,7 @@ struct section_global_data
   /** directory with the correct answers */
   unsigned char *corr_dir;
   /** directory with the test info files */
-  path_t info_dir;
+  unsigned char *info_dir;
   /** directory with the working dir tgz archives */
   path_t tgz_dir;
   /** directory with the checkers */
@@ -973,7 +973,7 @@ struct section_problem_data
   /** correct files suffix */
   unsigned char *corr_sfx;
   /** directory with info files */
-  path_t info_dir;
+  unsigned char *info_dir;
   /** info files suffix */
   unsigned char *info_sfx;
   /** directory with tar test archive */

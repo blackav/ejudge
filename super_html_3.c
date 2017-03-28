@@ -500,7 +500,7 @@ super_html_add_abstract_problem(
   xstrdup3(&prob->corr_dir, "%Ps");
   xstrdup3(&prob->corr_sfx, ".ans");
   prob->use_info = 0;
-  snprintf(prob->info_dir, sizeof(prob->info_dir), "%s", "%Ps");
+  xstrdup3(&prob->info_dir, "%Ps");
   xstrdup3(&prob->info_sfx, ".inf");
   prob->use_tgz = 0;
   snprintf(prob->tgz_dir, sizeof(prob->tgz_dir), "%s", "%Ps");

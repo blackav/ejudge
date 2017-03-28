@@ -148,7 +148,7 @@
             FREESTR(corr_sfx);
         }
         prob->use_info = use_info;
-        COPYSTR(info_dir);
+        MOVESTR(info_dir);
         if (!info_pat_dflt) {
             MOVESTR(info_pat);
         } else {
