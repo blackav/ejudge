@@ -4,6 +4,7 @@
 
 #define COPYSTR(f) snprintf(prob->f, sizeof(prob->f), "%s", (f))
 #define MOVEENV(f) sarray_free(prob->f); prob->f = f; f = NULL
+#define MOVESTR(f) xfree(prob->f); prob->f = f; f = NULL
 
 %><%@set getter_name = "csp_get_prob_save_compiling_form"
 %><%@set ac_prefix = "SSERV_CMD_"
@@ -62,8 +63,8 @@
         xstrdup3(&prob->style_checker_cmd, style_checker_cmd);
         MOVEENV(style_checker_env);
         MOVEENV(lang_compiler_env);
-        COPYSTR(source_header);
-        COPYSTR(source_footer);
+        MOVESTR(source_header);
+        MOVESTR(source_footer);
     }
 
 cleanup:;

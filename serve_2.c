@@ -1200,7 +1200,7 @@ serve_compile_request(
   sformat_extra.locale_id = locale_id;
   sformat_extra.variant = variant;
 
-  if (prob->source_header[0]) {
+  if (prob->source_header) {
     sformat_message(tmp_path, sizeof(tmp_path), 0, prob->source_header,
                     global, prob, lang, 0, 0, 0, 0, &sformat_extra);
     if (os_IsAbsolutePath(tmp_path)) {
@@ -1218,7 +1218,7 @@ serve_compile_request(
       goto failed;
     }
   }
-  if (prob->source_footer[0]) {
+  if (prob->source_footer) {
     sformat_message(tmp_path, sizeof(tmp_path), 0, prob->source_footer,
                     global, prob, lang, 0, 0, 0, 0, &sformat_extra);
     if (os_IsAbsolutePath(tmp_path)) {

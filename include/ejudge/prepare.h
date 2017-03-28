@@ -1020,9 +1020,9 @@ struct section_problem_data
   /** HTML attributes for standings column */
   unsigned char stand_attr[256];
   /** file to insert into the beginning of the source file */
-  path_t source_header;
+  unsigned char *source_header;
   /** file to insert at the end of source file */
-  path_t source_footer;
+  unsigned char *source_footer;
   /** if the valuer also sets the marked flag */
   ejintbool_t valuer_sets_marked;
   /** ignore unmarked submits in scoring */

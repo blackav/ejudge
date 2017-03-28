@@ -365,8 +365,8 @@ super_serve_op_TESTS_MAIN_PAGE(
     if (prob->interactor_cmd && prob->interactor_cmd[0]) need_interactor = 1;
     if (prob->test_checker_cmd && prob->test_checker_cmd[0]) need_test_checker = 1;
     if (prob->init_cmd && prob->init_cmd[0]) need_init = 1;
-    if (/*prob->source_header &&*/ prob->source_header[0]) need_header = 1;
-    if (/*prob->source_footer &&*/ prob->source_footer[0]) need_footer = 1;
+    if (prob->source_header && prob->source_header[0]) need_header = 1;
+    if (prob->source_footer && prob->source_footer[0]) need_footer = 1;
     if ((prob->solution_src && prob->solution_src[0])
         || (prob->solution_cmd && prob->solution_cmd[0])) need_solution = 1;
   }
@@ -511,7 +511,7 @@ super_serve_op_TESTS_MAIN_PAGE(
 
       // source header
       if (need_header) {
-        if (/*prob->source_header &&*/ prob->source_header[0]) {
+        if (prob->source_header && prob->source_header[0]) {
           fprintf(out_f, "<td title=\"%s\"%s>%s%s</a></td>",
                   ARMOR(prob->source_header), cl, 
                   html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
@@ -526,7 +526,7 @@ super_serve_op_TESTS_MAIN_PAGE(
 
       // source footer
       if (need_footer) {
-        if (/*prob->source_footer &&*/ prob->source_footer[0]) {
+        if (prob->source_footer && prob->source_footer[0]) {
           fprintf(out_f, "<td title=\"%s\"%s>%s%s</a></td>",
                   ARMOR(prob->source_footer), cl, 
                   html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
@@ -723,7 +723,7 @@ write_problem_editing_links(
                           SSERV_CMD_TESTS_STATEMENT_EDIT_PAGE, contest_id, prob_id, variant),
             "Edit the statement by sections");
   }
-  if (/*prob->source_header &&*/ prob->source_header[0]) {
+  if (prob->source_header && prob->source_header[0]) {
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",
@@ -731,7 +731,7 @@ write_problem_editing_links(
                           contest_id, variant, prob_id),
             "Edit source header");
   }
-  if (/*prob->source_footer &&*/ prob->source_footer[0]) {
+  if (prob->source_footer && prob->source_footer[0]) {
     fprintf(out_f, "<li>%s%s</a></li>",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                           NULL, "action=%d&amp;op=%d&amp;contest_id=%d&amp;variant=%d&amp;prob_id=%d",

@@ -524,8 +524,8 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(xml_file, "s"),
   PROBLEM_PARAM(alternative, "x"),
   PROBLEM_PARAM(stand_attr, "s"),
-  PROBLEM_PARAM(source_header, "s"),
-  PROBLEM_PARAM(source_footer, "s"),
+  PROBLEM_PARAM(source_header, "S"),
+  PROBLEM_PARAM(source_footer, "S"),
   PROBLEM_PARAM(score_view, "x"),
   PROBLEM_PARAM(extid, "S"),
   PROBLEM_PARAM(normalization, "S"),
@@ -1164,6 +1164,8 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->tgz_pat);
   xfree(p->tgzdir_sfx);
   xfree(p->tgzdir_pat);
+  xfree(p->source_header);
+  xfree(p->source_footer);
 
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {
@@ -6135,14 +6137,14 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_source_header:
-    if (!out->source_header[0] && abstr && abstr->source_header[0] && abstr->source_header[0] != 1) {
-      strcpy(out->source_header, abstr->source_header);
+    if (!out->source_header && abstr && abstr->source_header) {
+      xstrdup3(&out->source_header, abstr->source_header);
     }
     break;
 
   case CNTSPROB_source_footer:
-    if (!out->source_footer[0] && abstr && abstr->source_footer[0] && abstr->source_footer[0] != 1) {
-      strcpy(out->source_footer, abstr->source_footer);
+    if (!out->source_footer && abstr && abstr->source_footer) {
+      xstrdup3(&out->source_footer, abstr->source_footer);
     }
     break;
 

@@ -966,10 +966,10 @@ do_generate_makefile(
     fail_exe_names = build_make_exe_suitable_names(fail_names);
   } else if (prob->type == PROB_TYPE_STANDARD) {
     /* detect which languages we'll need */
-    if (/*prob->source_header &&*/ prob->source_header[0]) {
+    if (prob->source_header && prob->source_header[0]) {
       languages |= build_guess_language_by_src(prob->source_header);
     }
-    if (/*prob->source_footer &&*/ prob->source_footer[0]) {
+    if (prob->source_footer && prob->source_footer[0]) {
       languages |= build_guess_language_by_src(prob->source_footer);
     }
     if (prob->solution_src && prob->solution_src[0]) {
@@ -1236,18 +1236,18 @@ do_generate_makefile(
 
   /* solution compilation part  */
   if (prob->solution_cmd && prob->solution_cmd[0]) {
-    if (/*prob->source_header &&*/ prob->source_header[0]) has_header = 1;
-    if (/*prob->source_footer &&*/ prob->source_footer[0]) has_header = 1;
+    if (prob->source_header && prob->source_header[0]) has_header = 1;
+    if (prob->source_footer && prob->source_footer[0]) has_header = 1;
     if (prob->solution_src && prob->solution_src[0]) {
       languages = build_guess_language_by_src(prob->solution_src);
       source_suffix = build_get_source_suffix(languages);
       if (has_header) {
         fprintf(mk_f, "%s%s :", prob->solution_cmd, source_suffix);
-        if (/*prob->source_header &&*/ prob->source_header[0]) {
+        if (prob->source_header && prob->source_header[0]) {
           fprintf(mk_f, " %s", prob->source_header);
         }
         fprintf(mk_f, " %s", prob->solution_src);
-        if (/*prob->source_footer &&*/ prob->source_footer[0]) {
+        if (prob->source_footer && prob->source_footer[0]) {
           fprintf(mk_f, " %s", prob->source_footer);
         }
         fprintf(mk_f, "\n");

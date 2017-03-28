@@ -1227,7 +1227,6 @@ function viewDialogOnChange(field)
                 <td>Source header file:</td>
                 <td><%
     str_value = prob->source_header;
-    if (!str_value[0]) str_value = 0;
 %><s:textfield id="orig-source_header" readonly="readonly" name="param" value="prob->source_header" size="48" maxlength="1024" /><%
     if (prob_id <= 0) {
       if (!value) {
@@ -1235,7 +1234,7 @@ function viewDialogOnChange(field)
       }
     } else {
       if (!str_value) {
-        if (!tmp_prob->source_header[0]) {
+        if (!tmp_prob->source_header) {
 %>(<i>Default: none</i>)<%
         } else {
 %>(<i>Default: <s:v value="tmp_prob->source_header" /></i>)<%
@@ -1251,7 +1250,6 @@ function viewDialogOnChange(field)
                 <td>Source footer file:</td>
                 <td><%
     str_value = prob->source_footer;
-    if (!str_value[0]) str_value = 0;
 %><s:textfield id="orig-source_footer" readonly="readonly" name="param" value="prob->source_footer" size="48" maxlength="1024" checkExpr="> 0" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -1259,7 +1257,7 @@ function viewDialogOnChange(field)
       }
     } else {
       if (!str_value) {
-        if (!tmp_prob->source_footer[0]) {
+        if (!tmp_prob->source_footer) {
 %>(<i>Default: none</i>)<%
         } else {
 %>(<i>Default: <s:v value="tmp_prob->source_footer" /></i>)<%

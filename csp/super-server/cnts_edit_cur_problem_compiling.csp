@@ -57,8 +57,8 @@ function popupCompilingDialog(e, skipField)
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "style_checker_cmd" "!prob->style_checker_cmd" %>
     <%@expand COPY_TEXTFIELD "style_checker_env"  %>
     <%@expand COPY_TEXTFIELD "lang_compiler_env"  %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "source_header" "!prob->source_header[0]" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "source_footer" "!prob->source_footer[0]" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "source_header" "!prob->source_header" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "source_footer" "!prob->source_footer" %>
 
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "style_checker_cmd" %>
     <%@expand CLEAR_TEXTFIELD "style_checker_env" %>
