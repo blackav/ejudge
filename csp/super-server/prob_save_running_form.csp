@@ -123,10 +123,10 @@
         prob->check_presentation = check_presentation;
         prob->use_stdin = use_stdin;
         prob->combined_stdin = combined_stdin;
-        COPYSTR(input_file);
+        MOVESTR(input_file);
         prob->use_stdout = use_stdout;
         prob->combined_stdout = combined_stdout;
-        COPYSTR(output_file);
+        MOVESTR(output_file);
         prob->disable_stderr = disable_stderr;
         prob->ignore_exit_code = ignore_exit_code;
         MOVESTR(start_cmd);

@@ -1061,7 +1061,7 @@ prepare_unparse_prob(
   if ((prob->abstract && prob->use_stdin == 1)
       || (!prob->abstract && prob->use_stdin >= 0))
     unparse_bool(f, "use_stdin", prob->use_stdin);
-  if (prob->input_file[0])
+  if (prob->input_file)
     fprintf(f, "input_file = \"%s\"\n", CARMOR(prob->input_file));
   if ((prob->abstract && prob->combined_stdin == 1)
       || (!prob->abstract && prob->combined_stdin >= 0))
@@ -1069,7 +1069,7 @@ prepare_unparse_prob(
   if ((prob->abstract && prob->use_stdout == 1)
       || (!prob->abstract && prob->use_stdout >= 0))
     unparse_bool(f, "use_stdout", prob->use_stdout);
-  if (prob->output_file[0])
+  if (prob->output_file)
     fprintf(f, "output_file = \"%s\"\n", CARMOR(prob->output_file));
   if ((prob->abstract && prob->combined_stdout == 1)
       || (!prob->abstract && prob->combined_stdout >= 0))
@@ -1607,13 +1607,13 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "check_presentation", prob->check_presentation);
   if (prob->use_stdin > 0)
     unparse_bool(f, "use_stdin", prob->use_stdin);
-  if (prob->input_file[0])
+  if (prob->input_file)
     fprintf(f, "input_file = \"%s\"\n", CARMOR(prob->input_file));
   if (prob->combined_stdin > 0)
     unparse_bool(f, "combined_stdin", prob->combined_stdin);
   if (prob->use_stdout > 0)
     unparse_bool(f, "use_stdout", prob->use_stdout);
-  if (prob->output_file[0])
+  if (prob->output_file)
     fprintf(f, "output_file = \"%s\"\n", CARMOR(prob->output_file));
   if (prob->combined_stdout > 0)
     unparse_bool(f, "combined_stdout", prob->combined_stdout);

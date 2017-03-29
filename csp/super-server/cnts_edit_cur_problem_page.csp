@@ -1289,11 +1289,9 @@ function viewDialogOnChange(field)
                 <td><%
     if (!sup_prob) {
       const unsigned char *value = prob->input_file;
-      if (value && value[0] < ' ') value = 0;
 %><s:textfield id="orig-input_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Not set</i>)<% } %><%
     } else {
       const unsigned char *value = prob->input_file;
-      if (value && value[0] < ' ') value = 0;
 %><s:textfield id="orig-input_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->input_file" /></i>)<% } %><%
     }
 %></td>
@@ -1309,11 +1307,9 @@ function viewDialogOnChange(field)
                 <td><%
     if (!sup_prob) {
       const unsigned char *value = prob->output_file;
-      if (value && value[0] < ' ') value = 0;
 %><s:textfield id="orig-output_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Not set</i>)<% } %><%
     } else {
       const unsigned char *value = prob->output_file;
-      if (value && value[0] < ' ') value = 0;
 %><s:textfield id="orig-output_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->output_file" /></i>)<% } %><%
     }
 %></td>

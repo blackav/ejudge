@@ -1146,10 +1146,10 @@ do_generate_makefile(
   fprintf(mk_f, "EXECUTE_FLAGS = ");
   if (prob->use_stdin > 0) fprintf(mk_f, " --use-stdin");
   if (prob->use_stdout > 0) fprintf(mk_f, " --use-stdout");
-  if (prob->use_stdin <= 0 && prob->input_file[0] > ' ') {
+  if (prob->use_stdin <= 0 && prob->input_file && prob->input_file[0]) {
     fprintf(mk_f, " --input-file=%s", prob->input_file);
   }
-  if (prob->use_stdout <= 0 && prob->output_file[0] > ' ') {
+  if (prob->use_stdout <= 0 && prob->output_file && prob->output_file[0]) {
     fprintf(mk_f, " --output-file=%s", prob->output_file);
   }
   if (test_pat[0] > ' ') fprintf(mk_f, " --test-pattern=%s", test_pat);

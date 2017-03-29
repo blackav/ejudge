@@ -471,8 +471,8 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(tgz_dir, "S"),
   PROBLEM_PARAM(tgz_sfx, "S"),
   PROBLEM_PARAM(tgzdir_sfx, "S"),
-  PROBLEM_PARAM(input_file, "s"),
-  PROBLEM_PARAM(output_file, "s"),
+  PROBLEM_PARAM(input_file, "S"),
+  PROBLEM_PARAM(output_file, "S"),
   PROBLEM_PARAM(test_score_list, "S"),
   PROBLEM_PARAM(score_tests, "S"),
   PROBLEM_PARAM(test_sets, "x"),
@@ -1173,6 +1173,8 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->stand_attr);
   xfree(p->spelling);
   xfree(p->score_tests);
+  xfree(p->input_file);
+  xfree(p->output_file);
 
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {
@@ -3727,27 +3729,25 @@ set_defaults(
       }
     }
 
-    if (!prob->input_file[0] && si != -1 && aprob->input_file[0]) {
-      sformat_message(prob->input_file, PATH_MAX, 0, aprob->input_file,
-                      NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+    if (!prob->input_file && aprob && aprob->input_file) {
+      sformat_message_2(&prob->input_file, 0, aprob->input_file,
+                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
       vinfo("problem.%s.input_file inherited from problem.%s ('%s')",
             ish, sish, prob->input_file);
     }
-    if (!prob->input_file[0]) {
+    if (!prob->input_file || !prob->input_file[0]) {
       vinfo("problem.%s.input_file set to %s", ish, DFLT_P_INPUT_FILE);
-      snprintf(prob->input_file, sizeof(prob->input_file),
-               "%s", DFLT_P_INPUT_FILE);
+      xstrdup3(&prob->input_file, DFLT_P_INPUT_FILE);
     }
-    if (!prob->output_file[0] && si != -1 && aprob->output_file[0]) {
-      sformat_message(prob->output_file, PATH_MAX, 0, aprob->output_file,
+    if (!prob->output_file && aprob && aprob->output_file) {
+      sformat_message_2(&prob->output_file, 0, aprob->output_file,
                       NULL, prob, NULL, NULL, NULL, 0, 0, 0);
       vinfo("problem.%s.output_file inherited from problem.%s ('%s')",
             ish, sish, prob->output_file);
     }
-    if (!prob->output_file[0]) {
+    if (!prob->output_file && !prob->output_file[0]) {
       vinfo("problem.%s.output_file set to %s", ish, DFLT_P_OUTPUT_FILE);
-      snprintf(prob->output_file, sizeof(prob->output_file),
-               "%s", DFLT_P_OUTPUT_FILE);
+      xstrdup3(&prob->output_file, DFLT_P_OUTPUT_FILE);
     }
 
     if (prob->variant_num == -1 && si != -1 && aprob->variant_num != -1) {
@@ -5799,22 +5799,22 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_input_file:
-    if (!out->input_file[0] && abstr && abstr->input_file[0] && abstr->input_file[0] != 1) {
-      sformat_message(out->input_file, PATH_MAX, 0, abstr->input_file,
-                      NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    if (!out->input_file && abstr && abstr->input_file) {
+      sformat_message_2(&out->input_file, 0, abstr->input_file,
+                        NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
-    if (!out->input_file[0]) {
-      strcpy(out->input_file, DFLT_P_INPUT_FILE);
+    if (!out->input_file || !out->input_file[0]) {
+      xstrdup3(&out->input_file, DFLT_P_INPUT_FILE);
     }
     break;
 
   case CNTSPROB_output_file:
-    if (!out->output_file[0] && abstr && abstr->output_file[0] && abstr->input_file[0] != 1) {
-      sformat_message(out->output_file, PATH_MAX, 0, abstr->output_file,
-                      NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    if (!out->output_file && abstr && abstr->output_file) {
+      sformat_message_2(&out->output_file, 0, abstr->output_file,
+                        NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
-    if (!out->output_file[0]) {
-      strcpy(out->output_file, DFLT_P_OUTPUT_FILE);
+    if (!out->output_file || !out->output_file[0]) {
+      xstrdup3(&out->output_file, DFLT_P_OUTPUT_FILE);
     }
     break;
 

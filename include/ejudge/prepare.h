@@ -983,9 +983,9 @@ struct section_problem_data
   /** working directory master copy suffix */
   unsigned char *tgzdir_sfx;
   /** input file name */
-  unsigned char input_file[256];
+  unsigned char *input_file;
   /** output file name */
-  unsigned char output_file[256];
+  unsigned char *output_file;
   /** scores for individual tests */
   unsigned char *test_score_list;
   /** token specification */

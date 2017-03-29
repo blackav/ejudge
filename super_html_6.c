@@ -10084,13 +10084,13 @@ do_import_problem(
     prob->use_stdin = 1;
   } else if (!cfg->use_stdin) {
     prob->use_stdin = 0;
-    snprintf(prob->input_file, sizeof(prob->input_file), "%s", cfg->input_file);
+    xstrdup3(&prob->input_file, cfg->input_file);
   }
   if (cfg->use_stdout > 0) {
     prob->use_stdout = 1;
   } else if (!cfg->use_stdout) {
     prob->use_stdout = 0;
-    snprintf(prob->output_file, sizeof(prob->output_file), "%s", cfg->output_file);
+    xstrdup3(&prob->output_file,  cfg->output_file);
   }
   if (cfg->enable_testlib_mode > 0) {
     prob->enable_testlib_mode = 1;

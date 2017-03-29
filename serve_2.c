@@ -1948,8 +1948,8 @@ serve_run_request(
     }
   }
 
-  srpp->input_file = xstrdup(prob->input_file);
-  srpp->output_file = xstrdup(prob->output_file);
+  srpp->input_file = xstrdup2(prob->input_file);
+  srpp->output_file = xstrdup2(prob->output_file);
   srpp->test_score_list = xstrdup2(prob->test_score_list);
   srpp->score_tests = xstrdup2(prob->score_tests);
   srpp->standard_checker = xstrdup2(prob->standard_checker);

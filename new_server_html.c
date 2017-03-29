@@ -10103,8 +10103,14 @@ ns_unparse_statement(
   b7[0] = 0;
   if (variant > 0) snprintf(b7, sizeof(b7), "&variant=%d", variant);
   snprintf(b4, sizeof(b4), "%s%s%s%s&file", b1, b2, b3, b7);
-  snprintf(b5, sizeof(b5), "%s", prob->input_file);
-  snprintf(b6, sizeof(b6), "%s", prob->output_file);
+  b5[0] = 0;
+  if (prob->input_file) {
+    snprintf(b5, sizeof(b5), "%s", prob->input_file);
+  }
+  b6[0] = 0;
+  if (prob->output_file) {
+    snprintf(b6, sizeof(b6), "%s", prob->output_file);
+  }
 
   if (bb && *bb && !cnts->exam_mode) fprintf(fout, "%s", bb);
 
@@ -10161,7 +10167,7 @@ ns_unparse_statement(
         fprintf(fout, "<h4>");
         if (prob->use_stdin) {
           fprintf(fout, "%s", _("Input"));
-        } else {
+        } else if (prob->input_file && prob->input_file[0]) {
           fprintf(fout, "%s <tt>%s</tt>", _("Input in"), prob->input_file);
         }
         fprintf(fout, "</h4>\n<pre>");
@@ -10174,7 +10180,7 @@ ns_unparse_statement(
         fprintf(fout, "<h4>");
         if (prob->use_stdout) {
           fprintf(fout, "%s", _("Output"));
-        } else {
+        } else if (prob->output_file && prob->output_file[0]) {
           fprintf(fout, "%s <tt>%s</tt>", _("Output in"), prob->output_file);
         }
         fprintf(fout, "</h4>\n<pre>");
@@ -10241,8 +10247,14 @@ ns_unparse_answers(
   b7[0] = 0;
   if (variant > 0) snprintf(b7, sizeof(b7), "&variant=%d", variant);
   snprintf(b4, sizeof(b4), "%s%s%s%s&file", b1, b2, b3, b7);
-  snprintf(b5, sizeof(b5), "%s", prob->input_file);
-  snprintf(b6, sizeof(b6), "%s", prob->output_file);
+  b5[0] = 0;
+  if (prob->input_file) {
+    snprintf(b5, sizeof(b5), "%s", prob->input_file);
+  }
+  b6[0] = 0;
+  if (prob->output_file) {
+    snprintf(b6, sizeof(b6), "%s", prob->output_file);
+  }
 
   if (class_name && *class_name) {
     cl = (unsigned char *) alloca(strlen(class_name) + 32);
