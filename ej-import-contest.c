@@ -576,21 +576,38 @@ copy_suffix(
         struct section_problem_data *p,
         const struct section_problem_data *a,
         const struct problem_config_section *c,
-        int pf_name,
-        int ps_name,
-        int pp_name,
-        int cs_name,
-        int cp_name)
+        int pf_name,        // CNTSPROB use flag tag
+        int ps_name,        // CNTSPROB suffix tag
+        int pp_name,        // CNTSPROB pattern tag
+        int cs_name,        // problem config suffix tag
+        int cp_name)        // problem config pattern tag
 {
     int t = meta_problem_config_section_get_type(cs_name);
     ASSERT(t == 's');
     t = meta_problem_config_section_get_type(cp_name);
     ASSERT(t == 's');
     t = cntsprob_get_type(ps_name);
-    ASSERT(t == 'S');
+    ASSERT(t == 's');
     t = cntsprob_get_type(pp_name);
-    ASSERT(t == 'S');
+    ASSERT(t == 's');
     (void) t;
+
+    /* 'b' : ejbytebool_t, 'B' : ejintbool_t, 'f' : ejbyteflag_t */
+    int pft = cntsprob_get_type(pf_name);
+    int pfz = cntsprob_get_size(pf_name);
+    const void *pfp = cntsprob_get_ptr(p, pf_name);
+    int pfv = 0;
+    if (pft == 'b') {
+        ASSERT(pfz == 1);
+        
+    } else if (pft == 'B') {
+        ASSERT(pfz == 4);
+    } else if (pft == 'f') {
+        ASSERT(pfz == 1);
+    } else {
+        abort();
+    }
+
     size_t zs = cntsprob_get_size(ps_name);
     size_t zp = cntsprob_get_size(pp_name);
     const unsigned char *csv = *(const unsigned char**) meta_problem_config_section_get_ptr(c, cs_name);
