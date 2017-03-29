@@ -1931,7 +1931,7 @@ prepare_unparse_actual_prob(
     fprintf(f, "stand_name = \"%s\"\n", CARMOR(prob->stand_name));
   if (prob->group_name[0])
     fprintf(f, "group_name = \"%s\"\n", CARMOR(prob->group_name));
-  if (prob->spelling[0])
+  if (prob->spelling)
     fprintf(f, "spelling = \"%s\"\n", CARMOR(prob->spelling));
 
   if (prob->start_date > 0)

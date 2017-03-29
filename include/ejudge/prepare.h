@@ -1008,7 +1008,7 @@ struct section_problem_data
   /** name of the built-in checker */
   unsigned char *standard_checker;
   /** spelling for the festival speach generator */
-  unsigned char spelling[256];
+  unsigned char *spelling;
   /** file with HTML problem statement */
   unsigned char *statement_file;
   /** file with alternatives for select-one or select-many problem */

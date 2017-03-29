@@ -426,7 +426,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(variable_full_score, "d"),
   PROBLEM_PARAM(hidden, "d"),
   PROBLEM_PARAM(priority_adjustment, "d"),
-  PROBLEM_PARAM(spelling, "s"),
+  PROBLEM_PARAM(spelling, "S"),
   PROBLEM_PARAM(stand_hide_time, "d"),
   PROBLEM_PARAM(advance_to_next, "d"),
   PROBLEM_PARAM(disable_ctrl_chars, "d"),
@@ -1171,6 +1171,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->plugin_file);
   xfree(p->xml_file);
   xfree(p->stand_attr);
+  xfree(p->spelling);
 
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {
