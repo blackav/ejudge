@@ -369,31 +369,84 @@ check_checker(
 
 static void
 copy_bool(struct section_problem_data *p,
-          const struct section_problem_data *a,
+          const struct section_problem_data *a,     // abstract problem
           const struct problem_config_section *c,
-          int p_name,
-          int c_name)
+          int p_name,                               // CNTSPROB field tag
+          int c_name)                               // PROBLEM_CONFIG field tag
 {
-    const ejintbool_t *cv = (const ejintbool_t *) meta_problem_config_section_get_ptr(c, c_name);
-    const ejintbool_t *av = NULL;
-    if (a) {
-        av = (const ejintbool_t *) cntsprob_get_ptr(a, p_name);
+    /* 'b' : ejbytebool_t, 'B' : ejintbool_t, 'f' : ejbyteflag_t */
+    int c_type = meta_problem_config_section_get_type(c_name);
+    int c_size = meta_problem_config_section_get_size(c_name);
+    const void *c_ptr = meta_problem_config_section_get_ptr(c, c_name);
+    int c_value = 0;
+    if (c_type == 'b') {
+        ASSERT(c_size == 1);
+        c_value = *(const ejbytebool_t *) c_ptr;
+    } else if (c_type == 'B') {
+        ASSERT(c_size == 4);
+        c_value = *(const ejintbool_t *) c_ptr;
+    } else if (c_type == 'f') {
+        ASSERT(c_size == 1);
+        c_value = *(const ejbyteflag_t *) c_ptr;
+    } else {
+        error("unsupported field type '%c'", c_type);
+        return;
     }
-    ejintbool_t *pv = (ejintbool_t*) cntsprob_get_ptr_nc(p, p_name);
-    if (*cv > 0) {
-        // set value
-        if (av && *av > 0) {
-            *pv = -1; // inherited from the abstract problem
+    //if (c_value < 0) c_value = -1;
+    if (c_value < 0) c_value = 0;
+    if (c_value > 0) c_value = 1;
+
+    int p_type = cntsprob_get_type(p_name);
+    int p_size = cntsprob_get_size(p_name);
+    int a_value = 0;
+    if (a) {
+        const void *a_ptr = cntsprob_get_ptr(a, p_name);
+        if (p_type == 'b') {
+            ASSERT(p_size == 1);
+            a_value = *(const ejbytebool_t *) a_ptr;
+        } else if (p_type == 'B') {
+            ASSERT(p_size == 4);
+            a_value = *(const ejintbool_t *) a_ptr;
+        } else if (p_type == 'f') {
+            ASSERT(p_size == 1);
+            a_value = *(const ejbyteflag_t *) a_ptr;
         } else {
-            *pv = 1;
+            error("unsupported field type '%c'", p_type);
+            return;
+        }
+        //if (a_value < 0) a_value = -1;
+        if (a_value < 0) a_value = 0;
+        if (a_value > 0) a_value = 1;
+    }
+
+    int p_value = 0; // the resulting value
+    void *p_ptr = cntsprob_get_ptr_nc(p, p_name);
+    if (c_value > 0) {
+        if (a && a_value > 0) {
+            p_value = -1;
+        } else {
+            p_value = 1;
         }
     } else {
-        // clear value
-        if (av && *av > 0) {
-            *pv = 0; // redefine value from the abstract problem
+        if (a && a_value <= 0) {
+            p_value = -1;
         } else {
-            *pv = -1;
+            p_value = 0;
         }
+    }
+
+    if (p_type == 'b') {
+        ASSERT(p_size == 1);
+        * (ejbytebool_t *) p_ptr = c_value;
+    } else if (p_type == 'B') {
+        ASSERT(p_size == 4);
+        * (ejintbool_t *) p_ptr = p_value;
+    } else if (p_type == 'f') {
+        ASSERT(p_size == 1);
+        * (ejbyteflag_t *) p_ptr = p_value;
+    } else {
+        error("unsupported field type '%c'", p_type);
+        return;
     }
 }
 
