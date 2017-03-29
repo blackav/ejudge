@@ -2,7 +2,7 @@
 #ifndef __EJ_TYPES_H__
 #define __EJ_TYPES_H__
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -52,6 +52,7 @@ typedef struct ej_ip_t
 
 /* types for meta-info generator */
 typedef unsigned char ejbytebool_t;
+typedef signed char ejbyteflag_t;    // < 0 - unknown, 0 - false, > 0 - true
 typedef int ejintbool_t;
 typedef int ejintsize_t;
 typedef char **ejstrlist_t;
