@@ -194,7 +194,7 @@
         if (px && px->stmts) {
           ns_unparse_statement(out_f, phr, cnts, extra, prob, 0, px, NULL,
                                pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE);
-        } else if (prob->statement_file[0] && is_viewable) {
+        } else if (prob->statement_file && prob->statement_file[0] && is_viewable) {
           if (variant > 0) {
             prepare_insert_variant_num(variant_stmt_file,
                                        sizeof(variant_stmt_file),

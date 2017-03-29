@@ -359,7 +359,7 @@ super_serve_op_TESTS_MAIN_PAGE(
   for (prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
     if (!(prob = cs->probs[prob_id])) continue;
     if (prob->variant_num > 0) need_variant = 1;
-    if (/*prob->xml_file &&*/ prob->xml_file[0]) need_statement = 1;
+    if (prob->xml_file && prob->xml_file[0]) need_statement = 1;
     if (prob->style_checker_cmd && prob->style_checker_cmd[0]) need_style_checker = 1;
     if (prob->valuer_cmd && prob->valuer_cmd[0]) need_valuer = 1;
     if (prob->interactor_cmd && prob->interactor_cmd[0]) need_interactor = 1;
@@ -488,7 +488,7 @@ super_serve_op_TESTS_MAIN_PAGE(
       }
       // statement
       if (need_statement) {
-        if (/*prob->xml_file &&*/ prob->xml_file[0]) {
+        if (prob->xml_file && prob->xml_file[0]) {
           if (cs->global->advanced_layout > 0) {
             get_advanced_layout_path(adv_path, sizeof(adv_path), cs->global,
                                      prob, prob->xml_file, variant);
@@ -711,7 +711,7 @@ write_problem_editing_links(
                         "contest_id=%d&action=%d&prob_id=%d", contest_id,
                         SSERV_CMD_CNTS_START_EDIT_PROBLEM_ACTION, prob_id),
           "Edit settings");
-  if (/*prob->xml_file &&*/ prob->xml_file[0]) {
+  if (prob->xml_file && prob->xml_file[0]) {
     fprintf(out_f, "<li>%s%s</a></li>\n",
             html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url, NULL,
                           "action=%d&op=%d&contest_id=%d&prob_id=%d&variant=%d&plain_view=1", SSERV_CMD_HTTP_REQUEST,
@@ -4029,7 +4029,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_PAGE(
   hr_cgi_param_int_opt(phr, "plain_view", &plain_view, 0);
   if (plain_view != 1) plain_view = 0;
 
-  if (/*!prob->xml_file ||*/ !prob->xml_file[0]) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!prob->xml_file || !prob->xml_file[0]) FAIL(SSERV_ERR_INV_PROB_ID);
   if (cs->global->advanced_layout > 0) {
     get_advanced_layout_path(xml_path, sizeof(xml_path), cs->global, prob, prob->xml_file, variant);
   } else if (variant > 0) {
@@ -4345,7 +4345,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_ACTION(
 
   hr_cgi_param_int_opt(phr, "delete_num", &delete_num, 0);
 
-  if (/*!prob->xml_file ||*/ !prob->xml_file[0]) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!prob->xml_file || !prob->xml_file[0]) FAIL(SSERV_ERR_INV_PROB_ID);
   if (global->advanced_layout > 0) {
     get_advanced_layout_path(xml_path, sizeof(xml_path), cs->global, prob, prob->xml_file, variant);
   } else if (variant > 0) {
@@ -4560,7 +4560,7 @@ super_serve_op_TESTS_STATEMENT_EDIT_2_ACTION(
     if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
-  if (/*!prob->xml_file ||*/ !prob->xml_file[0]) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!prob->xml_file || !prob->xml_file[0]) FAIL(SSERV_ERR_INV_PROB_ID);
   if (global->advanced_layout > 0) {
     get_advanced_layout_path(xml_path, sizeof(xml_path), cs->global, prob, prob->xml_file, variant);
   } else if (variant > 0) {
@@ -4649,7 +4649,7 @@ super_serve_op_TESTS_STATEMENT_DELETE_ACTION(
     if (variant <= 0 || variant > prob->variant_num) FAIL(SSERV_ERR_INV_VARIANT);
   }
 
-  if (/*!prob->xml_file ||*/ !prob->xml_file[0]) FAIL(SSERV_ERR_INV_PROB_ID);
+  if (!prob->xml_file || !prob->xml_file[0]) FAIL(SSERV_ERR_INV_PROB_ID);
   if (global->advanced_layout > 0) {
     get_advanced_layout_path(xml_path, sizeof(xml_path), global, prob, prob->xml_file, variant);
   } else if (variant > 0) {

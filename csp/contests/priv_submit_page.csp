@@ -213,7 +213,7 @@ ns_unparse_answers(
     ns_unparse_statement(out_f, phr, cnts, extra, prob, variant, px, NULL, 1);
   }
 
-  if (!px && prob && prob->statement_file[0]) {
+  if (!px && prob && prob->statement_file && prob->statement_file[0]) {
     if (prob->variant_num > 0 && variant > 0) {
       prepare_insert_variant_num(variant_stmt_file,
                                  sizeof(variant_stmt_file),

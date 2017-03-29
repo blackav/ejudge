@@ -123,7 +123,7 @@
     if (!retval && phr->ss) {
         prob->binary_input = binary_input;
         xstrdup3(&prob->normalization, test_normalization_unparse(normalization));
-        COPYSTR(xml_file);
+        MOVESTR(xml_file);
         MOVESTR(test_dir);
         if (!test_pat_dflt) {
             MOVESTR(test_pat);

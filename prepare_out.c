@@ -1098,11 +1098,11 @@ prepare_unparse_prob(
   if ((prob->abstract && prob->score_tokenized > 0)
       || (!prob->abstract && prob->score_tokenized >= 0))
     unparse_bool(f, "score_tokenized", prob->score_tokenized);
-  if (prob->xml_file[0])
+  if (prob->xml_file)
     fprintf(f, "xml_file = \"%s\"\n", CARMOR(prob->xml_file));
-  if (prob->alternatives_file[0])
+  if (prob->alternatives_file)
     fprintf(f, "alternatives_file = \"%s\"\n", CARMOR(prob->alternatives_file));
-  if (prob->plugin_file[0])
+  if (prob->plugin_file)
     fprintf(f, "plugin_file = \"%s\"\n", CARMOR(prob->plugin_file));
   if (prob->test_dir)
     fprintf(f, "test_dir = \"%s\"\n", CARMOR(prob->test_dir));
@@ -1633,13 +1633,13 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "score_latest_marked", prob->score_latest_marked);
   if (prob->score_tokenized > 0)
     unparse_bool(f, "score_tokenized", prob->score_tokenized);
-  if ((show_paths || (global && global->advanced_layout > 0)) && prob->xml_file[0])
+  if ((show_paths || (global && global->advanced_layout > 0)) && prob->xml_file)
     fprintf(f, "xml_file = \"%s\"\n", CARMOR(prob->xml_file));
-  if (show_paths && prob->alternatives_file[0])
+  if (show_paths && prob->alternatives_file)
     fprintf(f, "alternatives_file = \"%s\"\n", CARMOR(prob->alternatives_file));
-  if (show_paths && prob->statement_file[0])
+  if (show_paths && prob->statement_file)
     fprintf(f, "statement_file = \"%s\"\n", CARMOR(prob->statement_file));
-  if (show_paths && prob->plugin_file[0])
+  if (show_paths && prob->plugin_file)
     fprintf(f, "plugin_file = \"%s\"\n", CARMOR(prob->plugin_file));
 
   if (show_paths && prob->test_dir)
@@ -2904,16 +2904,16 @@ prob_instr(
   }
 
   prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, abstr, global);
-  if (tmp_prob->xml_file[0]) {
-    if (global->advanced_layout <= 0) {
-      pathmake2(tmp_prob->xml_file, conf_path, "/", tmp_prob->xml_file, NULL);
+  if (tmp_prob->xml_file && tmp_prob->xml_file[0]) {
+    if (global->advanced_layout <= 0 && !os_IsAbsolutePath(tmp_prob->xml_file)) {
+      usprintf(&tmp_prob->xml_file, "%s/%s", conf_path, tmp_prob->xml_file);
     }
     fprintf(f, "<p><b>Problem statement file:</b></p>\n");
     handle_file(f, global, tmp_prob, tmp_prob->xml_file, 0);
   }
 
   prepare_set_prob_value(CNTSPROB_plugin_file, tmp_prob, abstr, global);
-  if (tmp_prob->plugin_file[0]) {
+  if (tmp_prob->plugin_file && tmp_prob->plugin_file[0]) {
     fprintf(f, "<p><b>Problem plugin file:</b></p>\n");
     handle_file(f, global, tmp_prob, tmp_prob->plugin_file, 0);
   }

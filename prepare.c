@@ -518,10 +518,10 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(open_tests, "S"),
   PROBLEM_PARAM(final_open_tests, "S"),
   PROBLEM_PARAM(token_open_tests, "S"),
-  PROBLEM_PARAM(statement_file, "s"),
-  PROBLEM_PARAM(alternatives_file, "s"),
-  PROBLEM_PARAM(plugin_file, "s"),
-  PROBLEM_PARAM(xml_file, "s"),
+  PROBLEM_PARAM(statement_file, "S"),
+  PROBLEM_PARAM(alternatives_file, "S"),
+  PROBLEM_PARAM(plugin_file, "S"),
+  PROBLEM_PARAM(xml_file, "S"),
   PROBLEM_PARAM(alternative, "x"),
   PROBLEM_PARAM(stand_attr, "s"),
   PROBLEM_PARAM(source_header, "S"),
@@ -1166,6 +1166,10 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->tgzdir_pat);
   xfree(p->source_header);
   xfree(p->source_footer);
+  xfree(p->statement_file);
+  xfree(p->alternatives_file);
+  xfree(p->plugin_file);
+  xfree(p->xml_file);
 
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {
@@ -3247,14 +3251,15 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_problem_dir, prob, aprob, g);
 
     /* parse XML here */
-    if (!prob->xml_file[0] && si != -1 && aprob->xml_file[0]) {
-      sformat_message(prob->xml_file, sizeof(prob->xml_file), 0,
-                      aprob->xml_file, 0, prob, 0, 0, 0, 0, 0, 0);
+    if (!prob->xml_file && aprob && aprob->xml_file) {
+      sformat_message_2(&prob->xml_file, 0, aprob->xml_file, 0, prob, 0, 0, 0, 0, 0, 0);
     }
-    if (prob->xml_file[0] && g->advanced_layout <= 0) {
-      path_add_dir(prob->xml_file, g->statement_dir);
+    if (prob->xml_file && prob->xml_file[0] && g->advanced_layout <= 0) {
+      if (!os_IsAbsolutePath(prob->xml_file)) {
+        usprintf(&prob->xml_file, "%s/%s", g->statement_dir, prob->xml_file);
+      }
     }
-    if (prob->xml_file[0] && prob->variant_num > 0) {
+    if (prob->xml_file && prob->xml_file[0] && prob->variant_num > 0) {
       XCALLOC(prob->xml.a, prob->variant_num);
       for (j = 1; j <= prob->variant_num; j++) {
         if (g->advanced_layout > 0) {
@@ -3266,7 +3271,7 @@ set_defaults(
           if (!(prob->xml.a[j - 1] = problem_xml_parse_safe(NULL, fpath))) return -1;
         }
       }
-    } else if (prob->xml_file[0]) {
+    } else if (prob->xml_file && prob->xml_file[0]) {
       if (g->advanced_layout > 0) {
         get_advanced_layout_path(xml_path, sizeof(xml_path), g,
                                  prob, prob->xml_file, -1);
@@ -3596,32 +3601,30 @@ set_defaults(
     }
 
     if (mode == PREPARE_SERVE) {
-      if (!prob->statement_file[0] && si != -1
-          && aprob->statement_file[0]) {
-        sformat_message(prob->statement_file, PATH_MAX,0,aprob->statement_file,
-                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+      if (!prob->statement_file && aprob && aprob->statement_file) {
+        sformat_message_2(&prob->statement_file, 0, aprob->statement_file,
+                          NULL, prob, NULL, NULL, NULL, 0, 0, 0);
       }
-      if (prob->statement_file[0]) {
-        path_add_dir(prob->statement_file, g->statement_dir);
-      }
-
-      if (!prob->alternatives_file[0] && si != -1
-          && aprob->alternatives_file[0]) {
-        sformat_message(prob->alternatives_file, PATH_MAX, 0,
-                        aprob->alternatives_file,
-                        NULL, prob, NULL, NULL, NULL, 0, 0, 0);
-      }
-      if (prob->alternatives_file[0]) {
-        path_add_dir(prob->alternatives_file, g->statement_dir);
+      if (prob->statement_file && prob->statement_file[0] && !os_IsAbsolutePath(prob->statement_file)) {
+        usprintf(&prob->statement_file, "%s/%s", g->statement_dir, prob->statement_file);
       }
 
-      if (!prob->plugin_file[0] && si != -1
-          && aprob->plugin_file[0]) {
-        sformat_message(prob->plugin_file, PATH_MAX, 0, aprob->plugin_file,
+      if (!prob->alternatives_file && aprob && aprob->alternatives_file) {
+        sformat_message_2(&prob->alternatives_file, 0, aprob->alternatives_file,
+                          NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+      }
+      if (prob->alternatives_file && prob->alternatives_file[0] && !os_IsAbsolutePath(prob->alternatives_file)) {
+        usprintf(&prob->alternatives_file, "%s/%s", g->statement_dir, prob->alternatives_file);
+      }
+
+      if (!prob->plugin_file && aprob && aprob->plugin_file) {
+        sformat_message_2(&prob->plugin_file, 0, aprob->plugin_file,
                         NULL, prob, NULL, NULL, NULL, 0, 0, 0);
       }
-      if (prob->plugin_file[0] && g->advanced_layout <= 0) {
-        path_add_dir(prob->plugin_file, g->plugin_dir);
+      if (prob->plugin_file && prob->plugin_file[0] && g->advanced_layout <= 0) {
+        if (!os_IsAbsolutePath(prob->plugin_file)) {
+          usprintf(&prob->plugin_file, "%s/%s", g->plugin_dir, prob->plugin_file);
+        }
       }
 
       prepare_set_prob_value(CNTSPROB_stand_attr, prob, aprob, g);
@@ -6091,33 +6094,38 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_statement_file:
-    if (!out->statement_file[0] && abstr && abstr->statement_file[0] && abstr->statement_file[0] != 1) {
-      sformat_message(out->statement_file, PATH_MAX, 0, abstr->statement_file,
-                      NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    if (!out->statement_file && abstr && abstr->statement_file) {
+      sformat_message_2(&out->statement_file, 0, abstr->statement_file,
+                        NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
-    if (global && out->statement_file[0]) {
-      path_add_dir(out->statement_file, global->statement_dir);
+    if (global && out->statement_file && out->statement_file[0]) {
+      if (!os_IsAbsolutePath(out->statement_file)) {
+        usprintf(&out->statement_file, "%s/%s", global->statement_dir, out->statement_file);
+      }
     }
     break;
 
   case CNTSPROB_alternatives_file:
-    if (!out->alternatives_file[0] && abstr && abstr->alternatives_file[0] && abstr->alternatives_file[0] != 1) {
-      sformat_message(out->alternatives_file, PATH_MAX, 0,
-                      abstr->alternatives_file,
-                      NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    if (!out->alternatives_file && abstr && abstr->alternatives_file) {
+      sformat_message_2(&out->alternatives_file, 0, abstr->alternatives_file,
+                        NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
-    if (global && out->alternatives_file[0]) {
-      path_add_dir(out->alternatives_file, global->statement_dir);
+    if (global && out->alternatives_file && out->alternatives_file[0]) {
+      if (!os_IsAbsolutePath(out->alternatives_file)) {
+        usprintf(&out->alternatives_file, "%s/%s", global->statement_dir, out->alternatives_file);
+      }
     }
     break;
 
   case CNTSPROB_plugin_file:
-    if (!out->plugin_file[0] && abstr && abstr->plugin_file[0] && abstr->plugin_file[0] != 1) {
-      sformat_message(out->plugin_file, PATH_MAX, 0, abstr->plugin_file,
-                      NULL, out, NULL, NULL, NULL, 0, 0, 0);
+    if (!out->plugin_file && abstr && abstr->plugin_file) {
+      sformat_message_2(&out->plugin_file, 0, abstr->plugin_file,
+                        NULL, out, NULL, NULL, NULL, 0, 0, 0);
     }
-    if (global && out->plugin_file[0] && global->advanced_layout <= 0) {
-      path_add_dir(out->plugin_file, global->statement_dir);
+    if (global && out->plugin_file && out->plugin_file[0] && global->advanced_layout <= 0) {
+      if (!os_IsAbsolutePath(out->plugin_file)) {
+        usprintf(&out->plugin_file, "%s/%s", global->statement_dir, out->plugin_file);
+      }
     }
     break;
 
@@ -6155,11 +6163,13 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_xml_file:
-    if (!out->xml_file[0] && abstr && abstr->xml_file[0]) {
-      sformat_message(out->xml_file, sizeof(out->xml_file), 0, abstr->xml_file, 0, out, 0, 0, 0, 0, 0, 0);
+    if (!out->xml_file && abstr && abstr->xml_file) {
+      sformat_message_2(&out->xml_file, 0, abstr->xml_file, 0, out, 0, 0, 0, 0, 0, 0);
     }
-    if (global && out->xml_file[0] && global->advanced_layout <= 0) {
-      path_add_dir(out->xml_file, global->statement_dir);
+    if (global && out->xml_file && out->xml_file[0] && global->advanced_layout <= 0) {
+      if (!os_IsAbsolutePath(out->xml_file)) {
+        usprintf(&out->xml_file, "%s/%s", global->statement_dir, out->xml_file);
+      }
     }
     break;
 

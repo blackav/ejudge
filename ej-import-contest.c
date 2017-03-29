@@ -937,7 +937,7 @@ generate_makefile(struct sid_state *ss,
     prepare_set_prob_value(CNTSPROB_type, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, abstr, global);
 
-    if (tmp_prob->type == PROB_TYPE_SELECT_ONE && tmp_prob->xml_file[0]) {
+    if (tmp_prob->type == PROB_TYPE_SELECT_ONE && tmp_prob->xml_file && tmp_prob->xml_file[0]) {
         info("Select-one XML-specified problem, skipping");
         return;
     }

@@ -633,7 +633,7 @@ load_problem_plugin(serve_state_t cs, int prob_id)
   if (!(prob = cs->probs[prob_id])) return;
   extra = &cs->prob_extras[prob_id];
 
-  if (!prob->plugin_file[0]) return;
+  if (!prob->plugin_file || !prob->plugin_file[0]) return;
   if (extra->plugin || extra->plugin_error) return;
 
   if (cs->global->advanced_layout > 0) {

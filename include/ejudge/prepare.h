@@ -1010,13 +1010,13 @@ struct section_problem_data
   /** spelling for the festival speach generator */
   unsigned char spelling[256];
   /** file with HTML problem statement */
-  path_t statement_file;
+  unsigned char *statement_file;
   /** file with alternatives for select-one or select-many problem */
-  path_t alternatives_file;
+  unsigned char *alternatives_file;
   /** file with the custom problem plugin */
-  path_t plugin_file;
+  unsigned char *plugin_file;
   /** XML file with the problem information */
-  path_t xml_file;
+  unsigned char *xml_file;
   /** HTML attributes for standings column */
   unsigned char stand_attr[256];
   /** file to insert into the beginning of the source file */
