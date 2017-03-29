@@ -458,7 +458,7 @@ super_serve_op_TESTS_MAIN_PAGE(
                               SSERV_CMD_CNTS_START_EDIT_PROBLEM_ACTION, prob_id),
                 ARMOR(prob->long_name));
         s = prob->short_name;
-        if (prob->internal_name[0]) {
+        if (prob->internal_name && prob->internal_name[0]) {
           s = prob->internal_name;
         }
         fprintf(out_f, "<td%s>%s%s</a></td>", cl,

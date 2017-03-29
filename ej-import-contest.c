@@ -798,9 +798,9 @@ merge_problem_section(
         p->stand_name = NULL;
     }
     if (c->internal_name) {
-        snprintf(p->internal_name, sizeof(p->internal_name), "%s", c->internal_name);
+        xstrdup3(&p->internal_name, c->internal_name);
     } else {
-        p->internal_name[0] = 0;
+        p->internal_name = NULL;
     }
     if (c->extid && c->extid[0]) {
         xfree(p->extid); p->extid = xstrdup(c->extid);
@@ -1731,7 +1731,7 @@ do_import_contest(
                       p->cfg->short_name, serve_cfg_path);
                 p->is_bad = 1;
             }
-            if (/*prob->internal_name &&*/ !strcmp(p->cfg->short_name, prob->internal_name)) {
+            if (prob->internal_name && !strcmp(p->cfg->short_name, prob->internal_name)) {
                 error("'short_name' attribute value ('%s') matches an abstract problem in '%s'",
                       p->cfg->short_name, serve_cfg_path);
                 p->is_bad = 1;
@@ -1742,7 +1742,7 @@ do_import_contest(
                           p->cfg->internal_name, serve_cfg_path);
                     p->is_bad = 1;
                 }
-                if (/*prob->internal_name &&*/ !strcmp(p->cfg->internal_name, prob->internal_name)) {
+                if (prob->internal_name && !strcmp(p->cfg->internal_name, prob->internal_name)) {
                     error("'internal_name' attribute value ('%s') matches an abstract problem in '%s'",
                           p->cfg->internal_name, serve_cfg_path);
                     p->is_bad = 1;
@@ -1757,7 +1757,7 @@ do_import_contest(
         }
         if (j < ss->prob_a) {
             const struct section_problem_data *prob = ss->probs[j];
-            if (p->cfg->internal_name /*&& prob->internal_name*/
+            if (p->cfg->internal_name && prob->internal_name
                 && strcmp(p->cfg->internal_name, prob->internal_name) != 0) {
                 error("'internal_name' attribute values ('%s' and '%s') mismatch in '%s' and '%s'",
                       p->cfg->internal_name, prob->internal_name,

@@ -2,6 +2,7 @@
 %><%@include "includes.csp"
 %><%
 #define COPYSTR(f) snprintf(prob->f, sizeof(prob->f), "%s", (f))
+#define MOVESTR(f) xfree(prob->f); prob->f = f; f = NULL
 
 %><%@set getter_name = "csp_get_prob_save_id_form"
 %><%@set ac_prefix = "SSERV_CMD_"
@@ -60,10 +61,8 @@
             fprintf(msg_f, "short_name is not unique<br/>");
             FAIL(SSERV_ERR_INVALID_PARAMETER);
         }
-        if (*internal_name) {
-            xfree(internal_name);
-            internal_name = xstrdup("");
-        }
+        xfree(internal_name);
+        internal_name = NULL;
         if (*super) {
             xfree(super);
             super = xstrdup("");
@@ -110,7 +109,7 @@
 
     if (!retval && phr->ss) {
         COPYSTR(short_name);
-        COPYSTR(internal_name);
+        MOVESTR(internal_name);
         COPYSTR(long_name);
         COPYSTR(super);
         prob->type = type_val;

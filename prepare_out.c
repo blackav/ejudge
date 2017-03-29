@@ -1016,7 +1016,7 @@ prepare_unparse_prob(
   if (!prob->abstract) {
     fprintf(f, "long_name = \"%s\"\n", CARMOR(prob->long_name));
   }
-  if (!prob->abstract && prob->internal_name[0]) {
+  if (!prob->abstract && prob->internal_name) {
     fprintf(f, "internal_name = \"%s\"\n", CARMOR(prob->internal_name));
   }
   if (prob->problem_dir && prob->problem_dir[0]) {
@@ -1585,7 +1585,7 @@ prepare_unparse_actual_prob(
   if (prob->super[0]) fprintf(f, "super = \"%s\"\n", CARMOR(prob->super));
   fprintf(f, "short_name = \"%s\"\n", CARMOR(prob->short_name));
   fprintf(f, "long_name = \"%s\"\n", CARMOR(prob->long_name));
-  if (prob->internal_name[0]) fprintf(f, "internal_name = \"%s\"\n", CARMOR(prob->internal_name));
+  if (prob->internal_name) fprintf(f, "internal_name = \"%s\"\n", CARMOR(prob->internal_name));
   if (prob->problem_dir && prob->problem_dir[0]) fprintf(f, "problem_dir = \"%s\"\n", CARMOR(prob->problem_dir));
   fprintf(f, "type = \"%s\"\n", problem_unparse_type(prob->type));
 

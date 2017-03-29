@@ -9976,7 +9976,7 @@ do_import_problem(
   }
   for (int prob_id = 1; prob_id < ss->prob_a; ++prob_id) {
     struct section_problem_data *prob = ss->probs[prob_id];
-    if (prob /*&& prob->internal_name*/ && !strcmp(prob->internal_name, internal_name)) {
+    if (prob && prob->internal_name && !strcmp(prob->internal_name, internal_name)) {
       fprintf(log_f, "internal name '%s' is not unique in this contest\n", internal_name);
       FAIL(SSERV_ERR_OPERATION_FAILED);
     }
@@ -10028,7 +10028,7 @@ do_import_problem(
         fprintf(log_f, "short name '%s' is not unique in this contest\n", cfg->short_name);
         FAIL(SSERV_ERR_OPERATION_FAILED);
       }
-      if (prob /*&& prob->internal_name*/ && !strcmp(prob->internal_name, cfg->short_name)) {
+      if (prob && prob->internal_name && !strcmp(prob->internal_name, cfg->short_name)) {
         fprintf(log_f, "short name '%s' matches internal name in this contest\n", cfg->short_name);
         FAIL(SSERV_ERR_OPERATION_FAILED);
       }
@@ -10044,7 +10044,7 @@ do_import_problem(
         fprintf(log_f, "failed to auto-assign short_name\n");
         FAIL(SSERV_ERR_OPERATION_FAILED);
       }
-      if (prob /*&& prob->internal_name*/ && !strcmp(prob->internal_name, name_buf)) {
+      if (prob && prob->internal_name && !strcmp(prob->internal_name, name_buf)) {
         fprintf(log_f, "failed to auto-assign short_name\n");
         FAIL(SSERV_ERR_OPERATION_FAILED);
       }
@@ -10064,7 +10064,7 @@ do_import_problem(
   if (super_prob) {
     snprintf(prob->super, sizeof(prob->super), "%s", super_prob->short_name);
   }
-  snprintf(prob->internal_name, sizeof(prob->internal_name), "%s", cfg->internal_name);
+  xstrdup3(&prob->internal_name, cfg->internal_name);
   if (cfg->extid) prob->extid = xstrdup(cfg->extid);
   if (cfg->long_name) snprintf(prob->long_name, sizeof(prob->long_name), "%s", cfg->long_name);
   long time_limit_ms = 0;

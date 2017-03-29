@@ -1335,7 +1335,7 @@ super_html_new_check_tests(
     if (!(prob = sstate->probs[i])) continue;
     already_compiled = 0;
 
-    if (/*prob->internal_name &&*/ prob->internal_name[0] > ' ') {
+    if (prob->internal_name && prob->internal_name[0]) {
       fprintf(flog, "*** Checking problem %s (%s) ***\n", prob->short_name, prob->internal_name);
     } else {
       fprintf(flog, "*** Checking problem %s ***\n", prob->short_name);

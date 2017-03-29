@@ -1247,7 +1247,7 @@ super_serve_find_problem(struct sid_state *ss, const unsigned char *name)
   for (int i = 0; i < ss->prob_a; ++i) {
     if (!(prob = ss->probs[i])) continue;
     if (!strcmp(name, prob->short_name)) return prob;
-    if (!strcmp(name, prob->internal_name)) return prob;
+    if (prob->internal_name && !strcmp(name, prob->internal_name)) return prob;
   }
   return NULL;
 }

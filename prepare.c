@@ -460,7 +460,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(group_name, "S"),
   PROBLEM_PARAM(stand_name, "S"),
   PROBLEM_PARAM(stand_column, "S"),
-  PROBLEM_PARAM(internal_name, "s"),
+  PROBLEM_PARAM(internal_name, "S"),
   PROBLEM_PARAM(problem_dir, "S"),
   PROBLEM_PARAM(test_dir, "S"),
   PROBLEM_PARAM(test_sfx, "S"),
@@ -1178,6 +1178,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->stand_name);
   xfree(p->stand_column);
   xfree(p->group_name);
+  xfree(p->internal_name);
 
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {
@@ -6427,7 +6428,7 @@ get_advanced_layout_path(
   prob_name = prob->short_name;
   if (prob->problem_dir && prob->problem_dir[0]) {
     prob_name = prob->problem_dir;
-  } else if (prob->internal_name[0]) {
+  } else if (prob->internal_name) {
     prob_name = prob->internal_name;
   }
 

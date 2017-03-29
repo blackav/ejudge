@@ -961,7 +961,7 @@ struct section_problem_data
   /** group name of the problem */
   unsigned char *group_name;
   /** internal problem name */
-  unsigned char internal_name[32];
+  unsigned char *internal_name;
   /** problem directory (relative to problems or absolute) */
   unsigned char *problem_dir;
   /** directory with tests */
