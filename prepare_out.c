@@ -1359,7 +1359,7 @@ prepare_unparse_prob(
     if (prob->full_user_score >= 0) {
       fprintf(f, "full_user_score = %d\n", prob->full_user_score);
     }
-    if (prob->score_tests[0])
+    if (prob->score_tests)
       fprintf(f, "score_tests = \"%s\"\n", CARMOR(prob->score_tests));
   }
   if (score_system == SCORE_OLYMPIAD) {
@@ -1756,7 +1756,7 @@ prepare_unparse_actual_prob(
       fprintf(f, "full_score = %d\n", prob->full_score);
     if (prob->full_user_score >= 0)
       fprintf(f, "full_user_score = %d\n", prob->full_user_score);
-    if (prob->score_tests[0])
+    if (prob->score_tests)
       fprintf(f, "score_tests = \"%s\"\n", CARMOR(prob->score_tests));
   }
   if (global->score_system == SCORE_OLYMPIAD) {

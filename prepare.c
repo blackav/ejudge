@@ -474,7 +474,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(input_file, "s"),
   PROBLEM_PARAM(output_file, "s"),
   PROBLEM_PARAM(test_score_list, "S"),
-  PROBLEM_PARAM(score_tests, "s"),
+  PROBLEM_PARAM(score_tests, "S"),
   PROBLEM_PARAM(test_sets, "x"),
   PROBLEM_PARAM(deadline, "t"),
   PROBLEM_PARAM(start_date, "t"),
@@ -1172,6 +1172,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->xml_file);
   xfree(p->stand_attr);
   xfree(p->spelling);
+  xfree(p->score_tests);
 
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {

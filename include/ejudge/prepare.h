@@ -1004,7 +1004,7 @@ struct section_problem_data
   struct token_info *token_info META_ATTRIB((meta_private));
 
   /** number of tests for Moscow scoring */
-  unsigned char score_tests[256];
+  unsigned char *score_tests;
   /** name of the built-in checker */
   unsigned char *standard_checker;
   /** spelling for the festival speach generator */

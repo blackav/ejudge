@@ -165,7 +165,7 @@
         prob->compile_error_penalty = compile_error_penalty;
         prob->acm_run_penalty = acm_run_penalty;
         MOVESTR(test_score_list);
-        COPYSTR(score_tests);
+        MOVESTR(score_tests);
         MOVEENV(test_sets);
         MOVESTR(score_bonus);
     }
