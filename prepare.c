@@ -3750,7 +3750,7 @@ set_defaults(
       vinfo("problem.%s.output_file inherited from problem.%s ('%s')",
             ish, sish, prob->output_file);
     }
-    if (!prob->output_file && !prob->output_file[0]) {
+    if (!prob->output_file || !prob->output_file[0]) {
       vinfo("problem.%s.output_file set to %s", ish, DFLT_P_OUTPUT_FILE);
       xstrdup3(&prob->output_file, DFLT_P_OUTPUT_FILE);
     }
