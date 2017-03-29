@@ -793,9 +793,9 @@ merge_problem_section(
         p->long_name[0] = 0;
     }
     if (c->stand_name) {
-        snprintf(p->stand_name, sizeof(p->stand_name), "%s", c->stand_name);
+        xstrdup3(&p->stand_name, c->stand_name);
     } else {
-        p->stand_name[0] = 0;
+        p->stand_name = NULL;
     }
     if (c->internal_name) {
         snprintf(p->internal_name, sizeof(p->internal_name), "%s", c->internal_name);

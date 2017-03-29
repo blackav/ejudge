@@ -955,9 +955,9 @@ struct section_problem_data
   /** long name of the problem */
   unsigned char long_name[256];
   /** name for the standings column */
-  unsigned char stand_name[32];
+  unsigned char *stand_name;
   /** column to collate this problem */
-  unsigned char stand_column[32];
+  unsigned char *stand_column;
   /** group name of the problem */
   unsigned char group_name[64];
   /** internal problem name */

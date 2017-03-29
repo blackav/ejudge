@@ -999,7 +999,7 @@ get_problem_map(
     if (!state->probs) continue;
     if (!(prob = state->probs[i])) continue;
     if (prob->hidden > 0) continue;
-    if (prob->stand_column[0]) continue;
+    if (prob->stand_column) continue;
     if (prob->start_date > 0 && cur_time < prob->start_date) continue;
     if (filter && filter->stand_prob_tree) {
       fake_entries[0].prob_id = i;
@@ -1266,12 +1266,12 @@ do_write_kirov_standings(
                   user_filter);
   for (i = 1; i < p_max; i++) {
     if (!state->probs) continue;
-    if (!(prob = state->probs[i]) || !prob->stand_column[0]) continue;
+    if (!(prob = state->probs[i]) || !prob->stand_column) continue;
     if (prob->start_date > 0 && cur_time < prob->start_date) continue;
     for (j = 1; j < p_max; j++) {
       if (!state->probs[j]) continue;
       if (!strcmp(state->probs[j]->short_name, prob->stand_column)
-          || !strcmp(state->probs[j]->stand_name, prob->stand_column))
+          || (state->probs[j]->stand_name && !strcmp(state->probs[j]->stand_name, prob->stand_column)))
         p_rev[i] = p_rev[j];
     }
   }
@@ -2043,7 +2043,7 @@ do_write_kirov_standings(
                         NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_str);
       }
-      if (state->probs[p_ind[j]]->stand_name[0]) {
+      if (state->probs[p_ind[j]]->stand_name) {
         fprintf(f, "%s", state->probs[p_ind[j]]->stand_name);
       } else {
         fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
@@ -2106,7 +2106,7 @@ do_write_kirov_standings(
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
         j = runs[last_success_run].prob_id;
-        if (state->probs[j]->stand_name[0]) {
+        if (state->probs[j]->stand_name) {
           fprintf(f, "%s", state->probs[j]->stand_name);
         } else {
           fprintf(f, "%s", state->probs[j]->short_name);
@@ -2144,7 +2144,7 @@ do_write_kirov_standings(
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
         j = runs[last_submit_run].prob_id;
-        if (state->probs[j]->stand_name[0]) {
+        if (state->probs[j]->stand_name) {
           fprintf(f, "%s", state->probs[j]->stand_name);
         } else {
           fprintf(f, "%s", state->probs[j]->short_name);
@@ -2230,7 +2230,7 @@ do_write_kirov_standings(
                           NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
-        if (state->probs[p_ind[j]]->stand_name[0]) {
+        if (state->probs[p_ind[j]]->stand_name) {
           fprintf(f, "%s", state->probs[p_ind[j]]->stand_name);
         } else {
           fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
@@ -2259,7 +2259,7 @@ do_write_kirov_standings(
                             0, 0, 0);
             fprintf(f, "<a href=\"%s\">", dur_str);
           }
-          if (state->probs[p_ind[j]]->stand_name[0]) {
+          if (state->probs[p_ind[j]]->stand_name) {
             fprintf(f, "%s", state->probs[p_ind[j]]->stand_name);
           } else {
             fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
@@ -2934,12 +2934,12 @@ do_write_moscow_standings(
                   user_filter);
   for (i = 1; i < p_max; i++) {
     if (!(prob = state->probs[i])) continue;
-    if (!prob->stand_column[0]) continue;
+    if (!prob->stand_column) continue;
     if (prob->start_date > 0 && cur_time < prob->start_date) continue;
     for (j = 1; j < p_max; j++) {
       if (!state->probs[j]) continue;
       if (!strcmp(prob->stand_column, state->probs[j]->short_name)
-          || !strcmp(prob->stand_column, state->probs[j]->stand_name))
+          || (state->probs[j]->stand_name && !strcmp(prob->stand_column, state->probs[j]->stand_name)))
         p_rev[i] = p_rev[j];
     }
   }
@@ -3236,7 +3236,7 @@ do_write_moscow_standings(
                         NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", strbuf);
       }
-      if (state->probs[p_ind[j]]->stand_name[0]) {
+      if (state->probs[p_ind[j]]->stand_name) {
         fprintf(f, "%s", state->probs[p_ind[j]]->stand_name);
       } else {
         fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
@@ -3298,7 +3298,7 @@ do_write_moscow_standings(
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
         j = runs[last_success_run].prob_id;
-        if (state->probs[j]->stand_name[0]) {
+        if (state->probs[j]->stand_name) {
           fprintf(f, "%s", state->probs[j]->stand_name);
         } else {
           fprintf(f, "%s", state->probs[j]->short_name);
@@ -3338,7 +3338,7 @@ do_write_moscow_standings(
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
         j = runs[last_submit_run].prob_id;
-        if (state->probs[j]->stand_name[0]) {
+        if (state->probs[j]->stand_name) {
           fprintf(f, "%s", state->probs[j]->stand_name);
         } else {
           fprintf(f, "%s", state->probs[j]->short_name);
@@ -3386,7 +3386,7 @@ do_write_moscow_standings(
                           NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
-        if (state->probs[p_ind[j]]->stand_name[0]) {
+        if (state->probs[p_ind[j]]->stand_name) {
           fprintf(f, "%s", state->probs[p_ind[j]]->stand_name);
         } else {
           fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
@@ -3863,12 +3863,12 @@ do_write_standings(
                   user_filter);
   for (i = 1; i < p_max; i++) {
     if (!(prob = state->probs[i])) continue;
-    if (!prob->stand_column[0]) continue;
+    if (!prob->stand_column) continue;
     if (prob->start_date > 0 && cur_time < prob->start_date) continue;
     for (j = 1; j < p_max; j++) {
       if (!state->probs[j]) continue;
       if (!strcmp(prob->stand_column, state->probs[j]->short_name)
-          || !strcmp(prob->stand_column, state->probs[j]->stand_name))
+          || (state->probs[j]->stand_name && !strcmp(prob->stand_column, state->probs[j]->stand_name)))
         p_rev[i] = p_rev[j];
     }
   }
@@ -4095,7 +4095,7 @@ do_write_standings(
         fprintf(f, "<a href=\"%s\">", dur_buf);
       }
       j = runs[last_success_run].prob_id;
-      if (state->probs[j]->stand_name[0]) {
+      if (state->probs[j]->stand_name) {
         fprintf(f, "%s", state->probs[j]->stand_name);
       } else {
         fprintf(f, "%s", state->probs[j]->short_name);
@@ -4137,7 +4137,7 @@ do_write_standings(
                         0);
         fprintf(f, "<a href=\"%s\">", url_str);
       }
-      if (state->probs[p_ind[j]]->stand_name[0]) {
+      if (state->probs[p_ind[j]]->stand_name) {
         fprintf(f, "%s", state->probs[p_ind[j]]->stand_name);
       } else {
         fprintf(f, "%s", state->probs[p_ind[j]]->short_name);

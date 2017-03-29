@@ -77,8 +77,8 @@
     }
 
     if (!retval && phr->ss) {
-        COPYSTR(stand_name);
-        COPYSTR(stand_column);
+        MOVESTR(stand_name);
+        MOVESTR(stand_column);
         prob->hidden = hidden;
         prob->stand_hide_time = stand_hide_time;
         MOVESTR(stand_attr);

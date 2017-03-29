@@ -1541,10 +1541,10 @@ prepare_unparse_prob(
   if (prob->stand_last_column >= 0
       && ((prob->abstract && prob->stand_last_column) || !prob->abstract))
       unparse_bool(f, "stand_last_column", prob->stand_last_column);
-  if (!prob->abstract && prob->stand_column[0]) {
+  if (!prob->abstract && prob->stand_column) {
     fprintf(f, "stand_column = \"%s\"\n", CARMOR(prob->stand_column));
   }
-  if (prob->stand_name[0] >= ' ')
+  if (prob->stand_name)
     fprintf(f, "stand_name = \"%s\"\n", CARMOR(prob->stand_name));
 
   if (!prob->abstract && prob->start_date > 0)
@@ -1925,9 +1925,9 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "stand_ignore_score", prob->stand_ignore_score);
   if (prob->stand_last_column > 0)
     unparse_bool(f, "stand_last_column", prob->stand_last_column);
-  if (prob->stand_column[0])
+  if (prob->stand_column)
     fprintf(f, "stand_column = \"%s\"\n", CARMOR(prob->stand_column));
-  if (prob->stand_name[0])
+  if (prob->stand_name)
     fprintf(f, "stand_name = \"%s\"\n", CARMOR(prob->stand_name));
   if (prob->group_name[0])
     fprintf(f, "group_name = \"%s\"\n", CARMOR(prob->group_name));
