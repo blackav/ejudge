@@ -1208,6 +1208,16 @@ copy_param(
     }
     ptr = (int *) ((char*) cfg + params[i].offset);
     *ptr = v;
+  } else if (params[i].type[0] == 'b') {
+    int v = 0;
+    if (size_str_to_num(varvalue, &v) < 0) {
+      fprintf(stderr, "%d: invalid value of numeric parameter for '%s'\n", ps->f_stack->lineno - 1, varname);
+      return -1;
+    }
+    if (v < 0) v = -1;
+    if (v > 0) v = 1;
+    signed char *ptr = (signed char *)((char*) cfg + params[i].offset);
+    *ptr = v;
   } else if (!strcmp(params[i].type, "s")) {
     char *ptr;
 
