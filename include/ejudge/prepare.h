@@ -959,7 +959,7 @@ struct section_problem_data
   /** column to collate this problem */
   unsigned char *stand_column;
   /** group name of the problem */
-  unsigned char group_name[64];
+  unsigned char *group_name;
   /** internal problem name */
   unsigned char internal_name[32];
   /** problem directory (relative to problems or absolute) */

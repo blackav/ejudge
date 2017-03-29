@@ -457,7 +457,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
   PROBLEM_PARAM(long_name, "s"),
-  PROBLEM_PARAM(group_name, "s"),
+  PROBLEM_PARAM(group_name, "S"),
   PROBLEM_PARAM(stand_name, "S"),
   PROBLEM_PARAM(stand_column, "S"),
   PROBLEM_PARAM(internal_name, "s"),
@@ -1177,6 +1177,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->output_file);
   xfree(p->stand_name);
   xfree(p->stand_column);
+  xfree(p->group_name);
 
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {

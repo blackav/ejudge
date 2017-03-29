@@ -1929,7 +1929,7 @@ prepare_unparse_actual_prob(
     fprintf(f, "stand_column = \"%s\"\n", CARMOR(prob->stand_column));
   if (prob->stand_name)
     fprintf(f, "stand_name = \"%s\"\n", CARMOR(prob->stand_name));
-  if (prob->group_name[0])
+  if (prob->group_name)
     fprintf(f, "group_name = \"%s\"\n", CARMOR(prob->group_name));
   if (prob->spelling)
     fprintf(f, "spelling = \"%s\"\n", CARMOR(prob->spelling));

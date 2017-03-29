@@ -261,7 +261,7 @@ ns_unparse_answers(
       if (!(prob = cs->probs[i])) continue;
       if (!(pinfo[i].status & PROB_STATUS_TABABLE)) continue;
 
-      if (prob->group_name[0] && strcmp(prob->group_name, prev_group_name)) {
+      if (prob->group_name && strcmp(prob->group_name, prev_group_name)) {
 %><div class="probDisabled"><s:v value="prob->group_name" escape="false" /></div><%
         snprintf(prev_group_name, sizeof(prev_group_name), "%s", prob->group_name);
       }
