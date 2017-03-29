@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -172,6 +172,7 @@ meta_destroy_fields(const struct meta_methods *mth, void *ptr)
     case 't':                   /* time_t */
     case 'b':                   /* ejbytebool_t */
     case 'B':                   /* ejintbool_t */
+    case 'f':                   /* ejbyteflag_t */
     case 'z':                   /* ejintsize_t */
     case 'i':                   /* int type */
     case 'Z':                   /* size_t */
@@ -214,6 +215,7 @@ meta_unparse_cfg(FILE *out_f, const struct meta_methods *mth, const void *ptr, c
       break;
     case 'b':                   /* ejbytebool_t */
     case 'B':                   /* ejintbool_t */
+    case 'f':                   /* ejbyteflag_t */
       {
         int b = 0;
         int db = 0;
@@ -339,6 +341,7 @@ meta_parse_string(
       break;
     case 'b':                   /* ejbytebool_t */
     case 'B':                   /* ejintbool_t */
+    case 'f':                   /* ejbyteflag_t */
       {
         int bval = 0;
         if (!strcasecmp(value, "yes") || !strcasecmp(value, "true") || !strcasecmp(value, "on")) {
@@ -504,6 +507,7 @@ meta_get_variable_str(
 
   case 'b':                   /* ejbytebool_t */
   case 'B':                   /* ejintbool_t */
+  case 'f':                   /* ejbyteflag_t */
     {
       int b = 0;
       switch (fz) {
