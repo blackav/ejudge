@@ -1040,8 +1040,10 @@ generate_daily_statistics(
     fprintf(f, "%-40.40s %-7.7s %-7.7s\n", "Problem", "Total", "Success");
     for (i = 0; i < p_tot; i++) {
       p = p_ind[i];
+      const unsigned char *long_name = state->probs[p]->long_name;
+      if (!long_name) long_name = "";
       snprintf(probname, sizeof(probname), "%s: %s",
-               state->probs[p]->short_name, state->probs[p]->long_name);
+               state->probs[p]->short_name, long_name);
       w = 40; y = 0;
       if (utf8_mode) w = utf8_cnt(probname, w, &y);
       fprintf(f, "%-*.*s %-7d %-7d\n", w + y, w, probname, p_total[i],

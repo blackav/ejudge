@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -842,6 +842,7 @@ unparse_runlog_xml(
       if (!state->probs[i]) continue;
       val1 = state->probs[i]->short_name;
       val2 = state->probs[i]->long_name;
+      if (!val2) val2 = "";
       if (html_armor_needed(val1, &alen1)) {
         while (alen1 >= asize1) asize1 *= 2;
         astr1 = alloca(asize1);

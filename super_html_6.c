@@ -10066,7 +10066,9 @@ do_import_problem(
   }
   xstrdup3(&prob->internal_name, cfg->internal_name);
   if (cfg->extid) prob->extid = xstrdup(cfg->extid);
-  if (cfg->long_name) snprintf(prob->long_name, sizeof(prob->long_name), "%s", cfg->long_name);
+  if (cfg->long_name) {
+    xstrdup3(&prob->long_name, cfg->long_name);
+  }
   long time_limit_ms = 0;
   if (cfg->time_limit_millis > 0) {
     prob->time_limit_millis = cfg->time_limit_millis;

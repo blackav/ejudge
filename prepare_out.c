@@ -1013,7 +1013,7 @@ prepare_unparse_prob(
       fprintf(f, "super = \"%s\"\n", CARMOR(prob->super));
   }
   fprintf(f, "short_name = \"%s\"\n", CARMOR(prob->short_name));
-  if (!prob->abstract) {
+  if (!prob->abstract && prob->long_name) {
     fprintf(f, "long_name = \"%s\"\n", CARMOR(prob->long_name));
   }
   if (!prob->abstract && prob->internal_name) {
@@ -1584,7 +1584,9 @@ prepare_unparse_actual_prob(
   if (prob->abstract > 0) fprintf(f, "abstract\n");
   if (prob->super[0]) fprintf(f, "super = \"%s\"\n", CARMOR(prob->super));
   fprintf(f, "short_name = \"%s\"\n", CARMOR(prob->short_name));
-  fprintf(f, "long_name = \"%s\"\n", CARMOR(prob->long_name));
+  if (prob->long_name) {
+    fprintf(f, "long_name = \"%s\"\n", CARMOR(prob->long_name));
+  }
   if (prob->internal_name) fprintf(f, "internal_name = \"%s\"\n", CARMOR(prob->internal_name));
   if (prob->problem_dir && prob->problem_dir[0]) fprintf(f, "problem_dir = \"%s\"\n", CARMOR(prob->problem_dir));
   fprintf(f, "type = \"%s\"\n", problem_unparse_type(prob->type));
@@ -2873,8 +2875,7 @@ prob_instr(
   path_t sc_path;
   int variant;
 
-  fprintf(f, "<h3>Problem %s: %s</h3>\n", prob->short_name,
-          ARMOR(prob->long_name));
+  fprintf(f, "<h3>Problem %s: %s</h3>\n", prob->short_name, ARMOR(prob->long_name));
   if (prob->variant_num > 0) {
     fprintf(f, "<p>This is a variant problem with <b>%d variants</b> (1-%d).</p>\n",
             prob->variant_num, prob->variant_num);

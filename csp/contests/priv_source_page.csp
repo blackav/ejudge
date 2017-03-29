@@ -259,7 +259,7 @@
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
 </s:url>
-    <td><s:a url="FilteredMainUrl"><s:v value="prob->short_name" escape="false" /> - <s:v value="prob->long_name" /></s:a><%
+    <td><s:a url="FilteredMainUrl"><s:v value="prob->short_name" escape="false" /> - <s:v value="prob->long_name" checkExpr="" /></s:a><%
     if (prob->xml_file && prob->xml_file[0]) {
 %><s:url name="SubmitPageUrl" ac="priv-submit-page"><s:param name="problem" value="prob->id" /></s:url> <s:a url="SubmitPageUrl">[<s:_>Statement</s:_>]</s:a><%
     }
@@ -294,7 +294,7 @@
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
 </s:url>
-<td><s:a url="FilteredMainUrl" ><s:v escape="false" value="lang->short_name" /> - <s:v value="lang->long_name" /></s:a></td>
+<td><s:a url="FilteredMainUrl" ><s:v escape="false" value="lang->short_name" /> - <s:v value="lang->long_name" checkExpr="" /></s:a></td>
 <%  } else if (!info.lang_id) { %>
 <td>N/A</td>
 <%  } else { %>

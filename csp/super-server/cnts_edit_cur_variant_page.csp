@@ -188,7 +188,7 @@ static const unsigned char * const form_row_attrs[]=
             <td><select name="prob_id"><option value=""></option><%
   for (j = 0; j < vmap->prob_rev_map_size; ++j) {
     const struct section_problem_data *prob = phr->ss->probs[vmap->prob_rev_map[j]];
-%><s:option value="prob->id"><s:v value="prob->short_name"/> - <s:v value="prob->long_name" /></s:option><%
+%><s:option value="prob->id"><s:v value="prob->short_name"/> - <s:v value="prob->long_name" checkExpr="" /></s:option><%
   }
 %></select></td>
             <td><s:submit ac="prob-clear-variants" label="Clear variants" /><s:submit ac="prob-random-variants" label="Random variants" /></td>

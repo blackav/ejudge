@@ -78,7 +78,7 @@ ns_unparse_answers(
 </div>
 
 <% if (prob) { %>
-<h2><s:_>Problem</s:_> <s:v value="prob->short_name" escape="false"/><s:v value="prob->internal_name" checkExpr="" sep=": " />: <s:v value="prob->long_name" /></h2>
+<h2><s:_>Problem</s:_> <s:v value="prob->short_name" escape="false"/><s:v value="prob->internal_name" checkExpr="" sep=": " />: <s:v value="prob->long_name" checkExpr="" /></h2>
 <% } %>
 
 <s:form enctype="multipart/form-data">
@@ -87,7 +87,7 @@ ns_unparse_answers(
 <tr><td class="b0"><s:_>Problem</s:_>:</td><td class="b0"><s:select name="problem"><%
   for (i = 1; i <= cs->max_prob; i++) {
     if (!(cs->probs[i])) continue;
-%><s:option value="i" selectedExpr="prob_id > 0 && i == prob_id"><s:v value="cs->probs[i]->short_name" escape="false" /><s:v value="cs->probs[i]->internal_name" checkExpr="" sep=" - " /> - <s:v value="cs->probs[i]->long_name" /></s:option><%
+%><s:option value="i" selectedExpr="prob_id > 0 && i == prob_id"><s:v value="cs->probs[i]->short_name" escape="false" /><s:v value="cs->probs[i]->internal_name" checkExpr="" sep=" - " /> - <s:v value="cs->probs[i]->long_name" checkExpr="" /></s:option><%
   }
 %></s:select></td><td class="b0"><s:submit ac="priv-submit-page" /></td></tr>
 <% if (prob && prob->variant_num > 0) { %>
@@ -242,7 +242,7 @@ ns_unparse_answers(
 <td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:select name="lang_id"><option value=""></option><%
     for (i = 1; i <= cs->max_lang; i++) {
       if (cs->langs[i]) {
-%><s:option value="i"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" /></s:option><%
+%><s:option value="i"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" checkExpr="" /></s:option><%
       }
     }
 %></s:select></td></tr>

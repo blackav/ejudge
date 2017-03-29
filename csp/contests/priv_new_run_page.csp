@@ -31,12 +31,12 @@
 <tr><td><s:_>Problem</s:_>:</td><td><s:select name="prob_id"><option value=""></option><%
   for (i = 1; i <= cs->max_prob; i++)
     if (cs->probs[i]) {
-%><s:option value="i"><s:v escape="false" value="cs->probs[i]->short_name" /> - <s:v value="cs->probs[i]->long_name" /></s:option><%
+%><s:option value="i"><s:v escape="false" value="cs->probs[i]->short_name" /> - <s:v value="cs->probs[i]->long_name" checkExpr="" /></s:option><%
     } %></s:select></td></tr>
 <tr><td><s:_>Variant</s:_>:</td><td><s:textfield name="variant" size="10" value="" /></td></tr>
 <tr><td><s:_>Language</s:_>:</td><td><s:select name="language"><option value=""></option><%
   for (i = 1; i <= cs->max_lang; i++)
-    if (cs->langs[i]) { %><s:option value="i"><s:v escape="0" value="cs->langs[i]->short_name" /> - <s:v value="cs->langs[i]->long_name" /></s:option><% } %></s:select></td></tr>
+    if (cs->langs[i]) { %><s:option value="i"><s:v escape="0" value="cs->langs[i]->short_name" /> - <s:v value="cs->langs[i]->long_name" checkExpr="" /></s:option><% } %></s:select></td></tr>
 
 <tr><td><s:_>Imported?</s:_>:</td><td><s:yesno name="is_imported" /></td></tr>
 <tr><td><s:_>Hidden?</s:_>:</td><td><s:yesno name="is_hidden" /></td></tr>

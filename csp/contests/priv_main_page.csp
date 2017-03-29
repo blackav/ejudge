@@ -441,7 +441,7 @@
 <tr><td><s:_>Problem</s:_>:</td><td><select name="problem">
 <%      for (x = 1; x <= cs->max_prob; x++) {
         if (!(prob = cs->probs[x])) continue; %>
-<option value='<s:v value="x" />'><s:v escape="false" value="prob->short_name" /><s:v value="prob->internal_name" checkExpr="" sep=" - " /> - <s:v value="prob->long_name" /></option>
+<option value='<s:v value="x" />'><s:v escape="false" value="prob->short_name" /><s:v value="prob->internal_name" checkExpr="" sep=" - " /> - <s:v value="prob->long_name" checkExpr="" /></option>
 <%      }%>
 </select></td><td><s:submit ac="priv-submit-page" label="Select problem" /></td></tr></table></s:form>
 <%
@@ -451,7 +451,7 @@
       // prob and variant have correct values
 %>
 <hr /><a name="submit"></a>
-<h2><s:_>Submit a solution for</s:_> <s:v escape="0" value="prob->short_name" /><s:v value="prob->internal_name" checkExpr="" sep="-" />-<s:v value="prob->long_name" /><%
+<h2><s:_>Submit a solution for</s:_> <s:v escape="0" value="prob->short_name" /><s:v value="prob->internal_name" checkExpr="" sep="-" />-<s:v value="prob->long_name" checkExpr="" /><%
       if (variant > 0) {
 %> (<s:_>Variant</s:_> <s:v value="variant" />)<%
       }
@@ -471,7 +471,7 @@
 <select name="lang_id"><option value="">
 <%        for (i = 1; i <= cs->max_lang; i++) {
           if (!cs->langs[i]) continue; %>
-<option value='<s:v value="i"/>'><s:v escape="0" value="cs->langs[i]->short_name" /> - <s:v value="cs->langs[i]->long_name" /></option>
+<option value='<s:v value="i"/>'><s:v escape="0" value="cs->langs[i]->short_name" /> - <s:v value="cs->langs[i]->long_name" checkExpr="" /></option>
 <%        } %>
 </select></td></tr>
 <%        if (global->enable_eoln_select > 0) { %>
@@ -524,10 +524,10 @@
 <%      for (x = 1; x <= cs->max_prob; x++) {
         if (!(prob = cs->probs[x])) continue;
         if (prob->variant_num <= 0) { %>
-<option value='<s:v value="x" />'><s:v escape="false" value="prob->short_name" /> - <s:v value="prob->long_name" /></option>
+<option value='<s:v value="x" />'><s:v escape="false" value="prob->short_name" /> - <s:v value="prob->long_name" checkExpr="" /></option>
 <%        } else {
           for (y = 1; y <= prob->variant_num; y++) { %>
-<option value='<s:v value="x" />_<s:v value="y"/>'><s:v escape="false" value="prob->short_name" /> - <s:v value="prob->long_name" />, <s:_>Variant</s:_> <s:v value="y" /></option>
+<option value='<s:v value="x" />_<s:v value="y"/>'><s:v escape="false" value="prob->short_name" /> - <s:v value="prob->long_name" checkExpr="" />, <s:_>Variant</s:_> <s:v value="y" /></option>
 <%          }
         }
       } %>

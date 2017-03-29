@@ -1896,7 +1896,7 @@ serve_run_request(
   srpp->min_tests_to_accept = prob->min_tests_to_accept;
   srpp->checker_real_time_limit_ms = prob->checker_real_time_limit * 1000;
   srpp->short_name = xstrdup(prob->short_name);
-  srpp->long_name = xstrdup(prob->long_name);
+  srpp->long_name = xstrdup2(prob->long_name);
   srpp->internal_name = xstrdup2(prob->internal_name);
   srpp->open_tests = xstrdup2(prob->open_tests);
 

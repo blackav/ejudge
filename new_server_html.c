@@ -9897,8 +9897,10 @@ html_problem_selection(serve_state_t cs,
       problem_ptr = prob->short_name;
     }
 
+    const unsigned char *long_name = prob->long_name;
+    if (!long_name) long_name = "";
     fprintf(fout, "<option value=\"%d\">%s - %s%s%s</option>\n",
-            i, problem_ptr, prob->long_name, penalty_str,
+            i, problem_ptr, long_name, penalty_str,
             deadline_str);
   }
 
@@ -9954,8 +9956,10 @@ html_problem_selection_2(serve_state_t cs,
       problem_ptr = prob->short_name;
     }
 
+    const unsigned char *long_name = prob->long_name;
+    if (!long_name) long_name = "";
     fprintf(fout, "<option value=\"%d\">%s - %s%s</option>\n",
-            i, problem_ptr, prob->long_name, deadline_str);
+            i, problem_ptr, long_name, deadline_str);
   }
 
   fprintf(fout, "</select>");
@@ -10122,7 +10126,7 @@ ns_unparse_statement(
   } else {
     fprintf(fout, "<h3>");
     fprintf(fout, "%s %s", _("Problem"), ARMOR(prob->short_name));
-    if (/*prob->long_name &&*/ prob->long_name[0]) {
+    if (prob->long_name && prob->long_name[0]) {
       fprintf(fout, ": %s", ARMOR(prob->long_name));
     }
     fprintf(fout, "</h3>");

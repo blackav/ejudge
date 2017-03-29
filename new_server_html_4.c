@@ -259,7 +259,9 @@ cmd_dump_problems(
 
   for (i = 0; i <= cs->max_prob; i++) {
     if (!(prob = cs->probs[i])) continue;
-    fprintf(fout, "%d;%s;%s\n", prob->id, prob->short_name, prob->long_name);
+    const unsigned char *long_name = prob->long_name;
+    if (!long_name) long_name = "";
+    fprintf(fout, "%d;%s;%s\n", prob->id, prob->short_name, long_name);
   }
   return 0;
 }

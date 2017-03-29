@@ -249,7 +249,7 @@
 
           if (lang_count == 1) {
 %><s:hidden name="lang_id" value="lang_id" />
-<tr><td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:v value="cs->langs[lang_id]->short_name" escape="false" /> - <s:v value="cs->langs[lang_id]->long_name" /></td></tr>
+<tr><td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:v value="cs->langs[lang_id]->short_name" escape="false" /> - <s:v value="cs->langs[lang_id]->long_name" checkExpr="" /></td></tr>
 <%
           } else {
             last_lang_id = get_last_language(cs, phr->user_id, &last_eoln_type);
@@ -268,7 +268,7 @@
                     break;
                 if (lang_list[j]) continue;
               }
-%><s:option value="i" selectedExpr="last_lang_id == i"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" /></s:option><%
+%><s:option value="i" selectedExpr="last_lang_id == i"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" checkExpr="" /></s:option><%
             }
 %></s:select></td></tr>
 <%

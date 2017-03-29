@@ -147,7 +147,7 @@
     <s:param name="filter_expr" value="b1" />
   </s:url>
   <s:url name="SubmitPageUrl" ac="priv-submit-page"><s:param name="problem" value="prob->id" /></s:url>
-  <td><s:a url="UserFilterUrl"><s:v value="prob->short_name" /> (<s:v value="prob->long_name" />)</s:a> <s:a url="SubmitPageUrl">[<s:_>Statement</s:_>]</s:a></td>
+  <td><s:a url="UserFilterUrl"><s:v value="prob->short_name" /> (<s:v value="prob->long_name" checkExpr="" />)</s:a> <s:a url="SubmitPageUrl">[<s:_>Statement</s:_>]</s:a></td>
 </tr>
 <%
   }

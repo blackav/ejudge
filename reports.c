@@ -576,7 +576,7 @@ user_report_generate(
       fprintf(fout, "\\hline\n");
 
       prob = cs->probs[i = f_id];
-      if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+      if (!prob->long_name || !prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
         fprintf(fout, "%s & ", TARMOR(prob->short_name));
       } else {
         fprintf(fout, "%s-", TARMOR(prob->short_name));
@@ -646,7 +646,7 @@ user_report_generate(
       fprintf(fout, "\\hline\n");
       i = f_id;
       prob = cs->probs[f_id];
-      if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+      if (!prob->long_name || !prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
         fprintf(fout, "%s & ", TARMOR(prob->short_name));
       } else {
         fprintf(fout, "%s-", TARMOR(prob->short_name));
@@ -710,7 +710,7 @@ user_report_generate(
       for (i = f_id, k = 0; i < l_id; i++, k++) {
         if (!(prob = cs->probs[i])) continue;
         if (!(k % 2)) fprintf(fout, "\\hline\n");
-        if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+        if (!prob->long_name || !prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
           fprintf(fout, "%s & ", TARMOR(prob->short_name));
         } else {
           fprintf(fout, "%s-", TARMOR(prob->short_name));
@@ -786,7 +786,7 @@ user_report_generate(
       for (i = f_id, k = 0; i < l_id; i++, k++) {
         if (!(prob = cs->probs[i])) continue;
         if (!(k % 3)) fprintf(fout, "\\hline\n");
-        if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+        if (!prob->long_name || !prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
           fprintf(fout, "%s & ", TARMOR(prob->short_name));
         } else {
           fprintf(fout, "%s-", TARMOR(prob->short_name));
@@ -1233,7 +1233,7 @@ full_user_report_generate(
       fprintf(fout, "& %s & %s & %s & %s\\\\\n\\hline\n",
               _("Language"), _("Tests passed"), _("Score"), _("Status"));
 
-      if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+      if (!prob->long_name || !prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
         fprintf(fout, "%s", TARMOR(prob->short_name));
       } else {
         fprintf(fout, "%s ---", TARMOR(prob->short_name));
@@ -1332,7 +1332,7 @@ full_user_report_generate(
       if (prob->variant_num > 0) fprintf(fout, " & V");
       fprintf(fout, "& %s & %s\\\\\n\\hline\n", _("Score"), _("Status"));
 
-      if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+      if (!prob->long_name || !prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
         fprintf(fout, "%s", TARMOR(prob->short_name));
       } else {
         fprintf(fout, "%s ---", TARMOR(prob->short_name));
@@ -1399,7 +1399,7 @@ full_user_report_generate(
         if (!(prob = cs->probs[i])) continue;
         fprintf(fout, "\\hline\n");
 
-        if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+        if (!prob->long_name || !prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
           fprintf(fout, "%s", TARMOR(prob->short_name));
         } else {
           fprintf(fout, "%s-", TARMOR(prob->short_name));
@@ -1476,7 +1476,7 @@ full_user_report_generate(
         if (!(prob = cs->probs[i])) continue;
         fprintf(fout, "\\hline\n");
 
-        if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+        if (!prob->long_name || !prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
           fprintf(fout, "%s", TARMOR(prob->short_name));
         } else {
           fprintf(fout, "%s-", TARMOR(prob->short_name));
@@ -2406,7 +2406,7 @@ ns_olympiad_final_user_report(
 
       fprintf(fout, "<tr>%s", td1);
       prob = cs->probs[i = f_id];
-      if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+      if (!prob->long_name || !prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
         fprintf(fout, "%s", ARMOR(prob->short_name));
       } else {
         fprintf(fout, "%s-", ARMOR(prob->short_name));
@@ -2477,7 +2477,7 @@ ns_olympiad_final_user_report(
       i = f_id;
       prob = cs->probs[f_id];
       fprintf(fout, "<tr>");
-      if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+      if (!prob->long_name || !prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
         fprintf(fout, "%s%s</td>", td1, ARMOR(prob->short_name));
       } else {
         fprintf(fout, "%s%s-", td1, ARMOR(prob->short_name));
@@ -2546,7 +2546,7 @@ ns_olympiad_final_user_report(
       for (i = f_id, k = 0; i < l_id; i++, k++) {
         if (!(prob = cs->probs[i])) continue;
         if (!(k % SHORT_ANSWER_COLUMNS)) fprintf(fout, "<tr>");
-        if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+        if (!prob->long_name || !prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
           fprintf(fout, "%s%s</td>", td1, ARMOR(prob->short_name));
         } else {
           fprintf(fout, "%s%s-", td1, ARMOR(prob->short_name));
@@ -2627,7 +2627,7 @@ ns_olympiad_final_user_report(
       for (i = f_id, k = 0; i < l_id; i++, k++) {
         if (!(prob = cs->probs[i])) continue;
         if (!(k % SELECT_ONE_COLUMNS)) fprintf(fout, "<tr>");
-        if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+        if (!prob->long_name || !prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
           fprintf(fout, "%s%s</td>", td1, ARMOR(prob->short_name));
         } else {
           fprintf(fout, "%s%s-", td1, ARMOR(prob->short_name));
@@ -3008,7 +3008,7 @@ problem_report_generate(
     fprintf(log_f, "Invalind prob_id %d\n", prob_id);
     goto cleanup;
   }
-  if (!prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
+  if (!prob->long_name || !prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
     snprintf(probname, sizeof(probname), "%s", prob->short_name);
   } else {
     snprintf(probname, sizeof(probname), "%s-%s", prob->short_name,

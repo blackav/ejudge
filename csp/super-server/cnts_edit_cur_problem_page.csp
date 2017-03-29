@@ -653,7 +653,7 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-long_name-div">
                 <td>Long name:</td>
-                <td><s:textfield id="orig-long_name" readonly="readonly" name="param" value="prob->long_name" size="48" maxlength="1024" check="no" /><% if (!prob->long_name) { %>(<i>Not set</i>)<% } %></td>
+                <td><s:textfield id="orig-long_name" readonly="readonly" name="param" value="prob->long_name" size="48" maxlength="1024" check="no" checkExpr="" /><% if (!prob->long_name) { %>(<i>Not set</i>)<% } %></td>
                 <td><input type="button" onclick="popupIdDialog(event, 'long_name')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:long_name" /></td>
             </s:tr>

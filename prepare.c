@@ -456,7 +456,7 @@ static const struct config_parse_info section_problem_params[] =
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
-  PROBLEM_PARAM(long_name, "s"),
+  PROBLEM_PARAM(long_name, "S"),
   PROBLEM_PARAM(group_name, "S"),
   PROBLEM_PARAM(stand_name, "S"),
   PROBLEM_PARAM(stand_column, "S"),
@@ -1179,6 +1179,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->stand_column);
   xfree(p->group_name);
   xfree(p->internal_name);
+  xfree(p->long_name);
 
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {
@@ -3216,7 +3217,7 @@ set_defaults(
       err("abstract problem %s must not define problem id", ish);
       return -1;
     }
-    if (aprob->long_name[0]) {
+    if (aprob->long_name && aprob->long_name[0]) {
       err("abstract problem %s must not define problem long name", ish);
       return -1;
     }
@@ -4134,7 +4135,7 @@ set_defaults(
   g->disable_prob_long_name = 0;
   for (i = 1; i <= state->max_prob; i++) {
     if (!(prob = state->probs[i])) continue;
-    if (prob && prob->long_name[0])
+    if (prob && prob->long_name && prob->long_name[0])
       break;
   }
   if (i > state->max_prob)
