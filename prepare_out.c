@@ -1551,7 +1551,7 @@ prepare_unparse_prob(
     fprintf(f, "start_date = \"%s\"\n", xml_unparse_date(prob->start_date));
   if (!prob->abstract && prob->deadline > 0)
     fprintf(f, "deadline = \"%s\"\n", xml_unparse_date(prob->deadline));
-  if (prob->stand_attr[0])
+  if (prob->stand_attr)
     fprintf(f, "stand_attr = \"%s\"\n", CARMOR(prob->stand_attr));
   if (prob->source_header)
     fprintf(f, "source_header = \"%s\"\n", CARMOR(prob->source_header));
@@ -1938,7 +1938,7 @@ prepare_unparse_actual_prob(
     fprintf(f, "start_date = \"%s\"\n", xml_unparse_date(prob->start_date));
   if (prob->deadline > 0)
     fprintf(f, "deadline = \"%s\"\n", xml_unparse_date(prob->deadline));
-  if (prob->stand_attr[0])
+  if (prob->stand_attr)
     fprintf(f, "stand_attr = \"%s\"\n", CARMOR(prob->stand_attr));
   if (prob->source_header)
     fprintf(f, "source_header = \"%s\"\n", CARMOR(prob->source_header));

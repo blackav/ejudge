@@ -81,7 +81,7 @@
         COPYSTR(stand_column);
         prob->hidden = hidden;
         prob->stand_hide_time = stand_hide_time;
-        COPYSTR(stand_attr);
+        MOVESTR(stand_attr);
         MOVEENV(score_view);
         prob->stand_ignore_score = stand_ignore_score;
         prob->stand_last_column = stand_last_column;

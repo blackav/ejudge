@@ -1018,7 +1018,7 @@ struct section_problem_data
   /** XML file with the problem information */
   unsigned char *xml_file;
   /** HTML attributes for standings column */
-  unsigned char stand_attr[256];
+  unsigned char *stand_attr;
   /** file to insert into the beginning of the source file */
   unsigned char *source_header;
   /** file to insert at the end of source file */

@@ -523,7 +523,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(plugin_file, "S"),
   PROBLEM_PARAM(xml_file, "S"),
   PROBLEM_PARAM(alternative, "x"),
-  PROBLEM_PARAM(stand_attr, "s"),
+  PROBLEM_PARAM(stand_attr, "S"),
   PROBLEM_PARAM(source_header, "S"),
   PROBLEM_PARAM(source_footer, "S"),
   PROBLEM_PARAM(score_view, "x"),
@@ -1170,6 +1170,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->alternatives_file);
   xfree(p->plugin_file);
   xfree(p->xml_file);
+  xfree(p->stand_attr);
 
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {
@@ -6138,9 +6139,8 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_stand_attr:
-    if (!out->stand_attr[0] && abstr && abstr->stand_attr[0] && abstr->stand_attr[0] != 1) {
-      snprintf(out->stand_attr, sizeof(out->stand_attr), "%s",
-               abstr->stand_attr);
+    if (!out->stand_attr && abstr && abstr->stand_attr) {
+      xstrdup3(&out->stand_attr, abstr->stand_attr);
     }
     break;
 

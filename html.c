@@ -2223,7 +2223,7 @@ do_write_kirov_standings(
       for (j = 0; j < p_tot; j++) {
         if (state->probs[p_ind[j]]->stand_last_column > 0) continue;
         col_attr = state->probs[p_ind[j]]->stand_attr;
-        if (!*col_attr) col_attr = ss.prob_attr;
+        if (!col_attr) col_attr = ss.prob_attr;
         fprintf(f, "<th%s>", col_attr);
         if (global->prob_info_url[0]) {
           sformat_message(dur_str, sizeof(dur_str), 0, global->prob_info_url,
@@ -2251,7 +2251,7 @@ do_write_kirov_standings(
         for (j = last_col_ind; j < p_tot; j++) {
           if (state->probs[p_ind[j]]->stand_last_column <= 0) continue;
           col_attr = state->probs[p_ind[j]]->stand_attr;
-          if (!*col_attr) col_attr = ss.prob_attr;
+          if (!col_attr) col_attr = ss.prob_attr;
           fprintf(f, "<th%s>", col_attr);
           if (global->prob_info_url[0]) {
             sformat_message(dur_str, sizeof(dur_str), 0, global->prob_info_url,
@@ -2342,7 +2342,7 @@ do_write_kirov_standings(
       if (state->probs[p_ind[j]]->stand_last_column > 0) continue;
       up_ind = (t << row_sh) + j;
       row_attr = state->probs[p_ind[j]]->stand_attr;
-      if (!*row_attr) row_attr = ss.prob_attr;
+      if (!row_attr) row_attr = ss.prob_attr;
       if (sm_flag[up_ind] && ss.sm_attr && ss.sm_attr[0])
         row_attr = ss.sm_attr;
       if (pr_flag[up_ind] && ss.pr_attr && ss.pr_attr[0])
@@ -2401,7 +2401,7 @@ do_write_kirov_standings(
         if (state->probs[p_ind[j]]->stand_last_column <= 0) continue;
         up_ind = (t << row_sh) + j;
         row_attr = state->probs[p_ind[j]]->stand_attr;
-        if (!*row_attr) row_attr = ss.prob_attr;
+        if (!row_attr) row_attr = ss.prob_attr;
         if (pr_flag[up_ind] && ss.pr_attr && ss.pr_attr[0])
           row_attr = ss.pr_attr;
         if (sm_flag[up_ind] && ss.sm_attr && ss.sm_attr[0])
@@ -3229,7 +3229,7 @@ do_write_moscow_standings(
               _("Warnings"));
     for (j = 0; j < p_tot; j++) {
       row_attr = state->probs[p_ind[j]]->stand_attr;
-      if (!*row_attr) row_attr = ss.prob_attr;
+      if (!row_attr) row_attr = ss.prob_attr;
       fprintf(f, "<th%s>", row_attr);
       if (global->prob_info_url[0]) {
         sformat_message(strbuf, sizeof(strbuf), 0, global->prob_info_url,
@@ -3379,7 +3379,7 @@ do_write_moscow_standings(
                 _("Warnings"));
       for (j = 0; j < p_tot; j++) {
         row_attr = state->probs[p_ind[j]]->stand_attr;
-        if (!*row_attr) row_attr = ss.prob_attr;
+        if (!row_attr) row_attr = ss.prob_attr;
         fprintf(f, "<th%s>", row_attr);
         if (global->prob_info_url[0]) {
           sformat_message(strbuf, sizeof(strbuf), 0, global->prob_info_url,
@@ -4129,7 +4129,7 @@ do_write_standings(
     }
     for (j = 0; j < p_tot; j++) {
       col_attr = state->probs[p_ind[j]]->stand_attr;
-      if (!*col_attr) col_attr = ss.prob_attr;
+      if (!col_attr) col_attr = ss.prob_attr;
       fprintf(f, "<th%s>", col_attr);
       if (global->prob_info_url[0]) {
         sformat_message(url_str, sizeof(url_str), 0, global->prob_info_url,
@@ -4234,7 +4234,7 @@ do_write_standings(
       for (j = 0; j < p_tot; j++) {
         up_ind = (t << row_sh) + j;
         col_attr = state->probs[p_ind[j]]->stand_attr;
-        if (!*col_attr) col_attr = ss.prob_attr;
+        if (!col_attr) col_attr = ss.prob_attr;
         if (pr_flag[up_ind] && ss.pr_attr && ss.pr_attr[0])
           col_attr = ss.pr_attr;
         if (trans_flag[up_ind] && ss.trans_attr && ss.trans_attr[0])
