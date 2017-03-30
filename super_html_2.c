@@ -575,9 +575,9 @@ super_html_commit_contest_2(
           need_variant_map = 1;
     }
 
-    if (need_variant_map && !sstate->global->variant_map_file[0])
-      snprintf(sstate->global->variant_map_file,
-               sizeof(sstate->global->variant_map_file), "variant.map");
+    if (need_variant_map && !sstate->global->variant_map_file)
+      xstrdup3(&sstate->global->variant_map_file, "variant.map");
+
     if (need_variant_map && !sstate->global->variant_map) {
       char *vlog_s = 0;
       size_t vlog_z = 0;

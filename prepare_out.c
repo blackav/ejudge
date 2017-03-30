@@ -530,7 +530,7 @@ prepare_unparse_global(
     fprintf(f, "team_download_time = %d\n", global->team_download_time);
   if (global->cpu_bogomips > 0)
     fprintf(f, "cpu_bogomips = %d\n", global->cpu_bogomips);
-  if (global->variant_map_file[0] && need_variant_map)
+  if (global->variant_map_file && need_variant_map)
     fprintf(f, "variant_map_file = \"%s\"\n", CARMOR(global->variant_map_file));
   if (global->clardb_plugin[0] && strcmp(global->clardb_plugin, "file"))
     fprintf(f, "clardb_plugin = \"%s\"\n", CARMOR(global->clardb_plugin));

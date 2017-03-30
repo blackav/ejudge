@@ -310,7 +310,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(skip_full_testing, "d"),
   GLOBAL_PARAM(skip_accept_testing, "d"),
 
-  GLOBAL_PARAM(variant_map_file, "s"),
+  GLOBAL_PARAM(variant_map_file, "S"),
 
   GLOBAL_PARAM(enable_printing, "d"),
   GLOBAL_PARAM(disable_banner_page, "d"),
@@ -949,6 +949,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->wrong_sound);
   xfree(p->internal_sound);
   xfree(p->start_sound);
+  xfree(p->variant_map_file);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2732,8 +2733,8 @@ set_defaults(
 
     GLOBAL_INIT_FIELD(status_dir, DFLT_G_STATUS_DIR, var_dir);
     GLOBAL_INIT_FIELD(serve_socket, DFLT_G_SERVE_SOCKET, var_dir);
-    if (g->variant_map_file[0]) {
-      GLOBAL_INIT_FIELD(variant_map_file, "", conf_dir);
+    if (g->variant_map_file && !os_IsAbsolutePath(g->variant_map_file)) {
+      usprintf(&g->variant_map_file, "%s/%s", g->conf_dir, g->variant_map_file);
     }
     if (g->contest_plugin_file[0]) {
       GLOBAL_INIT_FIELD(contest_plugin_file, "", plugin_dir);
@@ -3796,7 +3797,7 @@ set_defaults(
       if (prob && prob->variant_num > 0) var_prob_num++;
     }
     if (var_prob_num > 0) {
-      if (!g->variant_map_file[0]) {
+      if (!g->variant_map_file) {
         err("There are variant problems, but no variant file name");
         return -1;
       }

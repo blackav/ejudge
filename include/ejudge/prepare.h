@@ -694,7 +694,7 @@ struct section_global_data
   ejintbool_t skip_accept_testing;
 
   /** path to the file with variant assignment */
-  path_t variant_map_file;
+  unsigned char *variant_map_file;
   /** parsed variant map */
   struct variant_map *variant_map META_ATTRIB((meta_private));
 

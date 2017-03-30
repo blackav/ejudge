@@ -1792,14 +1792,12 @@ super_html_update_variant_map(FILE *flog, int contest_id,
       snprintf(conf_dir, sizeof(conf_dir), "%s", cnts->conf_dir);
     }
 
-    if (!global->variant_map_file[0]) {
-      snprintf(global->variant_map_file, sizeof(global->variant_map_file),
-               "variant.map");
+    if (!global->variant_map_file) {
+      xstrdup3(&global->variant_map_file, "variant.map");
     }
 
     if (!os_IsAbsolutePath(global->variant_map_file)) {
-      snprintf(variant_file, sizeof(variant_file), "%s/%s", conf_dir,
-               global->variant_map_file);
+      snprintf(variant_file, sizeof(variant_file), "%s/%s", conf_dir, global->variant_map_file);
     } else {
       snprintf(variant_file, sizeof(variant_file), "%s", global->variant_map_file);
     }
