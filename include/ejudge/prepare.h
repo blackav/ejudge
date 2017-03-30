@@ -634,21 +634,21 @@ struct section_global_data
   /** disable sound notifications */
   ejintbool_t disable_sound;
   /** path to a sound file player */
-  path_t sound_player;
+  unsigned char *sound_player;
   /** sound to be played in case of success */
-  path_t accept_sound;
+  unsigned char *accept_sound;
   /** sound to be played in case of run-time error */
-  path_t runtime_sound;
+  unsigned char *runtime_sound;
   /** sound to be played in case of time-limit exceeded error */
-  path_t timelimit_sound;
+  unsigned char *timelimit_sound;
   /** sound to be played in case of presentation error */
-  path_t presentation_sound;
+  unsigned char *presentation_sound;
   /** sound to be played in case of wrong answer */
-  path_t wrong_sound;
+  unsigned char *wrong_sound;
   /** sound to be played in case of check failed condition */
-  path_t internal_sound;
+  unsigned char *internal_sound;
   /** sound to be played upon start of the contest */
-  path_t start_sound;
+  unsigned char *start_sound;
 
   /** @deprecated participant's archive download interval */
   int team_download_time;

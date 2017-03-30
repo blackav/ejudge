@@ -267,13 +267,13 @@ static const struct config_parse_info section_global_params[] =
   // just for fun
   GLOBAL_PARAM(extended_sound, "d"),
   GLOBAL_PARAM(disable_sound, "d"),
-  GLOBAL_PARAM(sound_player, "s"),
-  GLOBAL_PARAM(accept_sound, "s"),
-  GLOBAL_PARAM(runtime_sound, "s"),
-  GLOBAL_PARAM(timelimit_sound, "s"),
-  GLOBAL_PARAM(wrong_sound, "s"),
-  GLOBAL_PARAM(presentation_sound, "s"),
-  GLOBAL_PARAM(internal_sound, "s"),
+  GLOBAL_PARAM(sound_player, "S"),
+  GLOBAL_PARAM(accept_sound, "S"),
+  GLOBAL_PARAM(runtime_sound, "S"),
+  GLOBAL_PARAM(timelimit_sound, "S"),
+  GLOBAL_PARAM(wrong_sound, "S"),
+  GLOBAL_PARAM(presentation_sound, "S"),
+  GLOBAL_PARAM(internal_sound, "S"),
   GLOBAL_PARAM(start_sound, "s"),
 
   GLOBAL_PARAM(enable_l10n, "d"),
@@ -941,6 +941,14 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->tgz_pat);
   xfree(p->tgzdir_sfx);
   xfree(p->tgzdir_pat);
+  xfree(p->sound_player);
+  xfree(p->accept_sound);
+  xfree(p->runtime_sound);
+  xfree(p->timelimit_sound);
+  xfree(p->presentation_sound);
+  xfree(p->wrong_sound);
+  xfree(p->internal_sound);
+  xfree(p->start_sound);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -3039,16 +3047,14 @@ set_defaults(
       vinfo("global.max_cmd_length set to %d", g->max_cmd_length);
     }
 
-    if (g->sound_player[0]) {
+    if (g->sound_player) {
       char *tmps;
 
       tmps = varsubst_heap(state, g->sound_player, 0,
                            section_global_params, section_problem_params,
                            section_language_params, section_tester_params, NULL, NULL, NULL);
-      if (tmps != g->sound_player) {
-        snprintf(g->sound_player, sizeof(g->sound_player),"%s",tmps);
-        xfree(tmps);
-      }
+      xfree(g->sound_player);
+      g->sound_player = tmps;
     }
   }
 

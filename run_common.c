@@ -3265,7 +3265,7 @@ play_sound(
   unsigned char b1[64], b2[64], b3[64];
   tpTask tsk = NULL;
 
-  if (/*!global->sound_player ||*/ !global->sound_player[0] || disable_sound > 0) return;
+  if (!global->sound_player || !global->sound_player[0] || disable_sound > 0) return;
 
   if (global->extended_sound > 0) {
     tsk = task_New();
