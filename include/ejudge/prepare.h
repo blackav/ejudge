@@ -759,28 +759,7 @@ struct section_global_data
   ejintbool_t disable_passed_tests META_ATTRIB((meta_private));
 };
 
-/* paths depending on advanced_layout */
-/*
-  +path_t test_dir;
-  +path_t corr_dir;
-  +path_t info_dir;
-  +path_t tgz_dir;
-  path_t statement_file;
-  path_t alternatives_file;
-  +path_t plugin_file;
-  +path_t xml_file;
-  +path_t source_header;
-  +path_t source_footer;
-  +path_t check_cmd;
-  +path_t valuer_cmd;
-  +path_t interactor_cmd;
-  +path_t style_checker_cmd;
-  +unsigned char *test_checker_cmd;
-  +unsigned char *solution_src;
-  +unsigned char *solution_cmd;
- */
-
-/* sizeof(struct section_problem_data) == 65284/65560 */
+/* sizeof(struct section_problem_data) == 748/1184 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));   // 32 bytes
