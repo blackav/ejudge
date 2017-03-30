@@ -386,28 +386,17 @@ prepare_unparse_global(
 
   if (global->stand_fancy_style > 0)
     unparse_bool(f, "stand_fancy_style", global->stand_fancy_style);
-  if (global->stand_success_attr[0])
-    fprintf(f, "stand_success_attr = \"%s\"\n", CARMOR(global->stand_success_attr));
-  if (global->stand_table_attr[0])
-    fprintf(f, "stand_table_attr = \"%s\"\n", CARMOR(global->stand_table_attr));
-  if (global->stand_place_attr[0])
-    fprintf(f, "stand_place_attr = \"%s\"\n", CARMOR(global->stand_place_attr));
-  if (global->stand_team_attr[0])
-    fprintf(f, "stand_team_attr = \"%s\"\n", CARMOR(global->stand_team_attr));
-  if (global->stand_prob_attr[0])
-    fprintf(f, "stand_prob_attr = \"%s\"\n", CARMOR(global->stand_prob_attr));
-  if (global->stand_solved_attr[0])
-    fprintf(f, "stand_solved_attr = \"%s\"\n", CARMOR(global->stand_solved_attr));
-  if (global->stand_score_attr[0])
-    fprintf(f, "stand_score_attr = \"%s\"\n", CARMOR(global->stand_score_attr));
-  if (global->stand_penalty_attr[0])
-    fprintf(f, "stand_penalty_attr = \"%s\"\n", CARMOR(global->stand_penalty_attr));
-  if (global->stand_fail_attr[0])
-    fprintf(f, "stand_fail_attr = \"%s\"\n", CARMOR(global->stand_fail_attr));
-  if (global->stand_trans_attr[0])
-    fprintf(f, "stand_trans_attr = \"%s\"\n", CARMOR(global->stand_trans_attr));
-  if (global->stand_disq_attr[0])
-    fprintf(f, "stand_disq_attr = \"%s\"\n", CARMOR(global->stand_disq_attr));
+  do_str(f, &ab, "stand_success_attr", global->stand_success_attr);
+  do_str(f, &ab, "stand_table_attr", global->stand_table_attr);
+  do_str(f, &ab, "stand_place_attr", global->stand_place_attr);
+  do_str(f, &ab, "stand_team_attr", global->stand_team_attr);
+  do_str(f, &ab, "stand_prob_attr", global->stand_prob_attr);
+  do_str(f, &ab, "stand_solved_attr", global->stand_solved_attr);
+  do_str(f, &ab, "stand_score_attr", global->stand_score_attr);
+  do_str(f, &ab, "stand_penalty_attr", global->stand_penalty_attr);
+  do_str(f, &ab, "stand_fail_attr", global->stand_fail_attr);
+  do_str(f, &ab, "stand_trans_attr", global->stand_trans_attr);
+  do_str(f, &ab, "stand_disq_attr", global->stand_disq_attr);
   if (global->stand_use_login != DFLT_G_STAND_USE_LOGIN)
     unparse_bool(f, "stand_use_login", global->stand_use_login);
   if (global->stand_show_ok_time != DFLT_G_STAND_SHOW_OK_TIME)
@@ -420,30 +409,24 @@ prepare_unparse_global(
     unparse_bool(f, "stand_collate_name", global->stand_collate_name);
   if (global->stand_enable_penalty)
     unparse_bool(f, "stand_enable_penalty", global->stand_enable_penalty);
-  if (global->stand_show_ok_time && global->stand_time_attr[0])
-    fprintf(f, "stand_time_attr = \"%s\"\n", CARMOR(global->stand_time_attr));
-  if (global->is_virtual) {
-    if (global->stand_self_row_attr[0])
-      fprintf(f, "stand_self_row_attr = \"%s\"\n", CARMOR(global->stand_self_row_attr));
-    if (global->stand_r_row_attr[0])
-      fprintf(f, "stand_r_row_attr = \"%s\"\n", CARMOR(global->stand_r_row_attr));
-    if (global->stand_v_row_attr[0])
-      fprintf(f, "stand_v_row_attr = \"%s\"\n", CARMOR(global->stand_v_row_attr));
-    if (global->stand_u_row_attr[0])
-      fprintf(f, "stand_u_row_attr = \"%s\"\n", CARMOR(global->stand_u_row_attr));
+  if (global->stand_show_ok_time) {
+    do_str(f, &ab, "stand_time_attr", global->stand_time_attr);
   }
-  if (global->stand_extra_format[0]) {
-    fprintf(f, "stand_extra_format = \"%s\"\n", CARMOR(global->stand_extra_format));
-    if (global->stand_extra_legend[0])
-      fprintf(f, "stand_extra_legend = \"%s\"\n", CARMOR(global->stand_extra_legend));
-    if (global->stand_extra_attr[0])
-      fprintf(f, "stand_extra_attr = \"%s\"\n", CARMOR(global->stand_extra_attr));
+  if (global->is_virtual) {
+    do_str(f, &ab, "stand_self_row_attr", global->stand_self_row_attr);
+    do_str(f, &ab, "stand_r_row_attr", global->stand_r_row_attr);
+    do_str(f, &ab, "stand_v_row_attr", global->stand_v_row_attr);
+    do_str(f, &ab, "stand_u_row_attr", global->stand_u_row_attr);
+  }
+  if (global->stand_extra_format && global->stand_extra_format[0]) {
+    do_str(f, &ab, "stand_extra_format", global->stand_extra_format);
+    do_str(f, &ab, "stand_extra_legend", global->stand_extra_legend);
+    do_str(f, &ab, "stand_extra_attr", global->stand_extra_attr);
   }
   if (global->stand_show_warn_number != DFLT_G_STAND_SHOW_WARN_NUMBER)
     unparse_bool(f, "stand_show_warn_number", global->stand_show_warn_number);
   if (global->stand_show_warn_number) {
-    if (global->stand_warn_number_attr[0])
-      fprintf(f, "stand_warn_number_attr = \"%s\"\n", CARMOR(global->stand_warn_number_attr));
+    do_str(f, &ab, "stand_warn_number_attr", global->stand_warn_number_attr);
   }
   //GLOBAL_PARAM(stand_row_attr, "x"),
   do_xstr(f, &ab, "stand_row_attr", global->stand_row_attr);

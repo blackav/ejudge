@@ -668,7 +668,7 @@ serve_create_symlinks(serve_state_t state)
   int total_users = 0;
 
   if (global->stand_symlink_dir && global->stand_symlink_dir[0]
-      && global->htdocs_dir[0]) {
+      && global->htdocs_dir && global->htdocs_dir[0]) {
     if (global->users_on_page > 0) {
       // FIXME: check, that standings_file_name depends on page number
       if (global->disable_user_database > 0) {
@@ -719,7 +719,7 @@ serve_create_symlinks(serve_state_t state)
     }
   }
   if (global->stand2_symlink_dir && global->stand2_symlink_dir[0]
-      && global->htdocs_dir[0]
+      && global->htdocs_dir && global->htdocs_dir[0]
       && global->stand2_file_name && global->stand2_file_name[0]) {
     snprintf(src_path, sizeof(src_path), "%s/dir/%s",
              global->status_dir, global->stand2_file_name);
@@ -737,7 +737,7 @@ serve_create_symlinks(serve_state_t state)
     }
   }
   if (global->plog_symlink_dir && global->plog_symlink_dir[0]
-      && global->htdocs_dir[0]
+      && global->htdocs_dir && global->htdocs_dir[0]
       && global->plog_file_name && global->plog_file_name[0]
       && global->plog_update_time > 0) {
     snprintf(src_path, sizeof(src_path), "%s/dir/%s",

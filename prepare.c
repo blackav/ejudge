@@ -209,7 +209,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(is_virtual, "d"),
   GLOBAL_ALIAS(virtual, is_virtual, "d"),
 
-  GLOBAL_PARAM(htdocs_dir, "s"),
+  GLOBAL_PARAM(htdocs_dir, "S"),
 
   GLOBAL_PARAM(team_info_url, "S"),
   GLOBAL_PARAM(prob_info_url, "S"),
@@ -233,25 +233,25 @@ static const struct config_parse_info section_global_params[] =
 
   // standings table attributes
   GLOBAL_PARAM(stand_fancy_style, "d"),
-  GLOBAL_PARAM(stand_extra_format, "s"),
-  GLOBAL_PARAM(stand_extra_legend, "s"),
-  GLOBAL_PARAM(stand_extra_attr, "s"),
-  GLOBAL_PARAM(stand_table_attr, "s"),
-  GLOBAL_PARAM(stand_place_attr, "s"),
-  GLOBAL_PARAM(stand_team_attr, "s"),
-  GLOBAL_PARAM(stand_prob_attr, "s"),
-  GLOBAL_PARAM(stand_solved_attr, "s"),
-  GLOBAL_PARAM(stand_score_attr, "s"),
-  GLOBAL_PARAM(stand_penalty_attr, "s"),
-  GLOBAL_PARAM(stand_time_attr, "s"),
-  GLOBAL_PARAM(stand_self_row_attr, "s"),
-  GLOBAL_PARAM(stand_v_row_attr, "s"),
-  GLOBAL_PARAM(stand_r_row_attr, "s"),
-  GLOBAL_PARAM(stand_u_row_attr, "s"),
-  GLOBAL_PARAM(stand_success_attr, "s"),
-  GLOBAL_PARAM(stand_fail_attr, "s"),
-  GLOBAL_PARAM(stand_trans_attr, "s"),
-  GLOBAL_PARAM(stand_disq_attr, "s"),
+  GLOBAL_PARAM(stand_extra_format, "S"),
+  GLOBAL_PARAM(stand_extra_legend, "S"),
+  GLOBAL_PARAM(stand_extra_attr, "S"),
+  GLOBAL_PARAM(stand_table_attr, "S"),
+  GLOBAL_PARAM(stand_place_attr, "S"),
+  GLOBAL_PARAM(stand_team_attr, "S"),
+  GLOBAL_PARAM(stand_prob_attr, "S"),
+  GLOBAL_PARAM(stand_solved_attr, "S"),
+  GLOBAL_PARAM(stand_score_attr, "S"),
+  GLOBAL_PARAM(stand_penalty_attr, "S"),
+  GLOBAL_PARAM(stand_time_attr, "S"),
+  GLOBAL_PARAM(stand_self_row_attr, "S"),
+  GLOBAL_PARAM(stand_v_row_attr, "S"),
+  GLOBAL_PARAM(stand_r_row_attr, "S"),
+  GLOBAL_PARAM(stand_u_row_attr, "S"),
+  GLOBAL_PARAM(stand_success_attr, "S"),
+  GLOBAL_PARAM(stand_fail_attr, "S"),
+  GLOBAL_PARAM(stand_trans_attr, "S"),
+  GLOBAL_PARAM(stand_disq_attr, "S"),
   GLOBAL_PARAM(stand_use_login, "d"),
   GLOBAL_PARAM(stand_show_ok_time, "d"),
   GLOBAL_PARAM(stand_show_att_num, "d"),
@@ -259,10 +259,10 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_collate_name, "d"),
   GLOBAL_PARAM(stand_enable_penalty, "d"),
   GLOBAL_PARAM(stand_row_attr, "x"),
-  GLOBAL_PARAM(stand_page_table_attr, "s"),
+  GLOBAL_PARAM(stand_page_table_attr, "S"),
   GLOBAL_PARAM(stand_page_row_attr, "x"),
   GLOBAL_PARAM(stand_page_col_attr, "x"),
-  GLOBAL_PARAM(stand_page_cur_attr, "s"),
+  GLOBAL_PARAM(stand_page_cur_attr, "S"),
 
   // just for fun
   GLOBAL_PARAM(extended_sound, "d"),
@@ -325,8 +325,8 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(contestant_status_row_attr, "x"),
   GLOBAL_PARAM(stand_show_contestant_status, "d"),
   GLOBAL_PARAM(stand_show_warn_number, "d"),
-  GLOBAL_PARAM(stand_contestant_status_attr, "s"),
-  GLOBAL_PARAM(stand_warn_number_attr, "s"),
+  GLOBAL_PARAM(stand_contestant_status_attr, "S"),
+  GLOBAL_PARAM(stand_warn_number_attr, "S"),
 
   GLOBAL_PARAM(user_exam_protocol_header_file, "S"),
   GLOBAL_PARAM(user_exam_protocol_footer_file, "S"),
@@ -971,6 +971,31 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->stand_footer_file);
   xfree(p->stand_symlink_dir);
   xfree(p->stand_file_name_2);
+
+  xfree(p->htdocs_dir);
+  xfree(p->stand_extra_format);
+  xfree(p->stand_extra_legend);
+  xfree(p->stand_extra_attr);
+  xfree(p->stand_table_attr);
+  xfree(p->stand_place_attr);
+  xfree(p->stand_team_attr);
+  xfree(p->stand_prob_attr);
+  xfree(p->stand_solved_attr);
+  xfree(p->stand_score_attr);
+  xfree(p->stand_penalty_attr);
+  xfree(p->stand_time_attr);
+  xfree(p->stand_self_row_attr);
+  xfree(p->stand_r_row_attr);
+  xfree(p->stand_v_row_attr);
+  xfree(p->stand_u_row_attr);
+  xfree(p->stand_success_attr);
+  xfree(p->stand_fail_attr);
+  xfree(p->stand_trans_attr);
+  xfree(p->stand_disq_attr);
+  xfree(p->stand_page_table_attr);
+  xfree(p->stand_page_cur_attr);
+  xfree(p->stand_contestant_status_attr);
+  xfree(p->stand_warn_number_attr);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2571,8 +2596,8 @@ set_defaults(
   if (g->enable_max_stack_size < 0) g->enable_max_stack_size = 0;
 
 #if defined EJUDGE_HTTPD_HTDOCS_DIR
-  if (!g->htdocs_dir[0]) {
-    snprintf(g->htdocs_dir,sizeof(g->htdocs_dir),"%s", EJUDGE_HTTPD_HTDOCS_DIR);
+  if (!g->htdocs_dir || !g->htdocs_dir[0]) {
+    xstrdup3(&g->htdocs_dir, EJUDGE_HTTPD_HTDOCS_DIR);
   }
 #endif
 

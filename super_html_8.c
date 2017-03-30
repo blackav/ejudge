@@ -212,7 +212,7 @@ super_html_read_serve(
   prepare_set_global_defaults(global);
   if (global->stand2_file_name && global->stand2_file_name[0]) sstate->enable_stand2 = 1;
   if (global->plog_file_name && global->plog_file_name[0]) sstate->enable_plog = 1;
-  if (global->stand_extra_format[0]) sstate->enable_extra_col = 1;
+  if (global->stand_extra_format && global->stand_extra_format[0]) sstate->enable_extra_col = 1;
 
   fuh = open_memstream(&fuh_text, &fuh_size);
   prepare_unparse_unhandled_global(fuh, global);
@@ -1103,10 +1103,13 @@ super_html_serve_unparse_serve_cfg(
     xfree(global->plog_file_name);
     global->plog_file_name = NULL;
   }
-  if (sstate->enable_extra_col && !global->stand_extra_format[0]) {
-    strcpy(global->stand_extra_format, "%Mc");
+  if (sstate->enable_extra_col && (!global->stand_extra_format || !global->stand_extra_format[0])) {
+    xstrdup3(&global->stand_extra_format, "%Mc");
   }
-  if (!sstate->enable_extra_col) global->stand_extra_format[0] = 0;
+  if (!sstate->enable_extra_col) {
+    xfree(global->stand_extra_format);
+    global->stand_extra_format = NULL;
+  }
 
   for (i = 1; i < sstate->prob_a; i++)
     if (sstate->probs[i] && sstate->probs[i]->variant_num > 0)

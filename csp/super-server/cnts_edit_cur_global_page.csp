@@ -1737,37 +1737,37 @@ function advancedDialogOnChange()
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_dir-div">
                 <td>Directory for tests (relative to contest configuration dir):</td>
-                <td><s:textfield id="orig-test_dir" readonly="readonly" name="param" value="global->test_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield id="orig-test_dir" readonly="readonly" name="param" value="global->test_dir" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupFilesDialog(event, 'test_dir')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:test_dir" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-corr_dir-div">
                 <td>Directory for correct answers (relative to contest configuration dir):</td>
-                <td><s:textfield id="orig-corr_dir" readonly="readonly" name="param" value="global->corr_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield id="orig-corr_dir" readonly="readonly" name="param" value="global->corr_dir" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupFilesDialog(event, 'corr_dir')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:corr_dir" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-info_dir-div">
                 <td>Directory for test info files (relative to contest configuration dir):</td>
-                <td><s:textfield id="orig-info_dir" readonly="readonly" name="param" value="global->info_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield id="orig-info_dir" readonly="readonly" name="param" value="global->info_dir" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupFilesDialog(event, 'info_dir')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:info_dir" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-tgz_dir-div">
                 <td>Directory for test tgz files (relative to contest configuration dir):</td>
-                <td><s:textfield id="orig-tgz_dir" readonly="readonly" name="param" value="global->tgz_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield id="orig-tgz_dir" readonly="readonly" name="param" value="global->tgz_dir" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupFilesDialog(event, 'tgz_dir')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:tgz_dir" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-checker_dir-div">
                 <td>Directory for checkers (relative to contest configuration dir):</td>
-                <td><s:textfield id="orig-checker_dir" readonly="readonly" name="param" value="global->checker_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield id="orig-checker_dir" readonly="readonly" name="param" value="global->checker_dir" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupFilesDialog(event, 'checker_dir')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:checker_dir" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-statement_dir-div">
                 <td>Directory for problem statements (relative to contest configuration dir):</td>
-                <td><s:textfield id="orig-statement_dir" readonly="readonly" name="param" value="global->statement_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield id="orig-statement_dir" readonly="readonly" name="param" value="global->statement_dir" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupFilesDialog(event, 'statement_dir')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:statement_dir" /></td>
             </s:tr>
@@ -1856,19 +1856,19 @@ function advancedDialogOnChange()
         <table border="0" onclick="popupUrlsDialog()">
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_info_url-div">
                 <td>URL to view detailed contestant information:</td>
-                <td><s:textfield readonly="readonly" id="orig-team_info_url" name="param" value="global->team_info_url" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-team_info_url" name="param" value="global->team_info_url" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupUrlsDialog(event, 'team_info_url')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:team_info_url" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-prob_info_url-div">
                 <td>URL to view problem statement:</td>
-                <td><s:textfield readonly="readonly" id="orig-prob_info_url" name="param" value="global->prob_info_url" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-prob_info_url" name="param" value="global->prob_info_url" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupUrlsDialog(event, 'prob_info_url')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:prob_info_url" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-standings_file_name-div">
                 <td>Name of the current standings file:</td>
-                <td><s:textfield readonly="readonly" id="orig-standings_file_name" name="param" value="global->standings_file_name" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-standings_file_name" name="param" value="global->standings_file_name" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupUrlsDialog(event, 'standings_file_name')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:standings_file_name" /></td>
             </s:tr>
@@ -1880,19 +1880,19 @@ function advancedDialogOnChange()
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_header_file-div">
                 <td>HTML header file for the standings:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_header_file" name="param" value="global->stand_header_file" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_header_file" name="param" value="global->stand_header_file" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupUrlsDialog(event, 'stand_header_file')" value="Clear" />[<s:a ac="glob-edit-stand-header-file-page">Edit</s:a>]</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_header_file" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_footer_file-div">
                 <td>HTML footer file for the standings:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_footer_file" name="param" value="global->stand_footer_file" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_footer_file" name="param" value="global->stand_footer_file" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupUrlsDialog(event, 'stand_footer_file')" value="Clear" />[<s:a ac="glob-edit-stand-footer-file-page">Edit</s:a>]</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_footer_file" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_symlink_dir-div">
                 <td>Directory to make standings symlink (rel. to DocumentRoot):</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_symlink_dir" name="param" value="global->stand_symlink_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_symlink_dir" name="param" value="global->stand_symlink_dir" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupUrlsDialog(event, 'stand_symlink_dir')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_symlink_dir" /></td>
             </s:tr>
@@ -1998,13 +1998,13 @@ function advancedDialogOnChange()
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_success_attr-div">
                 <td>HTML attributes for &quot;Last success&quot; note:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_success_attr" name="param" value="global->stand_success_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_success_attr" name="param" value="global->stand_success_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_success_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_success_attr" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_table_attr-div">
                 <td>HTML attributes for standings table:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_table_attr" name="param" value="global->stand_table_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_table_attr" name="param" value="global->stand_table_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_table_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_table_attr" /></td>
             </s:tr>
@@ -2023,37 +2023,37 @@ function advancedDialogOnChange()
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_place_attr-div">
                 <td>HTML attributes for the &quot;Place&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_place_attr" name="param" value="global->stand_place_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_place_attr" name="param" value="global->stand_place_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_place_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_place_attr" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_team_attr-div">
                 <td>HTML attributes for the &quot;Team name&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_team_attr" name="param" value="global->stand_team_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_team_attr" name="param" value="global->stand_team_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_team_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_team_attr" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_prob_attr-div">
                 <td>HTML attributes for the &quot;Problems&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_prob_attr" name="param" value="global->stand_prob_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_prob_attr" name="param" value="global->stand_prob_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_prob_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_prob_attr" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_solved_attr-div">
                 <td>HTML attributes for the &quot;Solved&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_solved_attr" name="param" value="global->stand_solved_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_solved_attr" name="param" value="global->stand_solved_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_solved_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_solved_attr" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_score_attr-div">
                 <td>HTML attributes for the &quot;Score&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_score_attr" name="param" value="global->stand_score_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_score_attr" name="param" value="global->stand_score_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_score_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_score_attr" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_penalty_attr-div">
                 <td>HTML attributes for the &quot;Penalty&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_penalty_attr" name="param" value="global->stand_penalty_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_penalty_attr" name="param" value="global->stand_penalty_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_penalty_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_penalty_attr" /></td>
             </s:tr>
@@ -2095,49 +2095,49 @@ function advancedDialogOnChange()
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_time_attr-div">
                 <td>HTML attributes for the success time:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_time_attr" name="param" value="global->stand_time_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_time_attr" name="param" value="global->stand_time_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_time_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_time_attr" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_fail_attr-div">
                 <td>HTML attributes for &quot;Check failed&quot; cells:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_fail_attr" name="param" value="global->stand_fail_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_fail_attr" name="param" value="global->stand_fail_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_fail_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_fail_attr" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_trans_attr-div">
                 <td>HTML attributes for transient cells:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_trans_attr" name="param" value="global->stand_trans_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_trans_attr" name="param" value="global->stand_trans_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_trans_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_trans_attr" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_disq_attr-div">
                 <td>HTML attributes for &quot;Disqualified&quot; cells:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_disq_attr" name="param" value="global->stand_disq_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_disq_attr" name="param" value="global->stand_disq_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_disq_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_disq_attr" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_self_row_attr-div">
                 <td>HTML attributes for the participant's table row:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_self_row_attr" name="param" value="global->stand_self_row_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_self_row_attr" name="param" value="global->stand_self_row_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_self_row_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_self_row_attr" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_v_row_attr-div">
                 <td>HTML attributes for the virtual participant's rows:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_v_row_attr" name="param" value="global->stand_v_row_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_v_row_attr" name="param" value="global->stand_v_row_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_v_row_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_v_row_attr" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_r_row_attr-div">
                 <td>HTML attributes for the real participant's rows:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_r_row_attr" name="param" value="global->stand_r_row_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_r_row_attr" name="param" value="global->stand_r_row_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_r_row_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_r_row_attr" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_u_row_attr-div">
                 <td>HTML attributes for the unknown participant's rows:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_u_row_attr" name="param" value="global->stand_u_row_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_u_row_attr" name="param" value="global->stand_u_row_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_u_row_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_u_row_attr" /></td>
             </s:tr>
@@ -2149,19 +2149,19 @@ function advancedDialogOnChange()
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_extra_format-div">
                 <td>Format string for &quot;Extra information&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_extra_format" name="param" value="global->stand_extra_format" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_extra_format" name="param" value="global->stand_extra_format" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_extra_format')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_extra_format" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_extra_legend-div">
                 <td>Column title for &quot;Extra information&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_extra_legend" name="param" value="global->stand_extra_legend" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_extra_legend" name="param" value="global->stand_extra_legend" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_extra_legend')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_extra_legend" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_extra_attr-div">
                 <td>HTML attributes for &quot;Extra information&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_extra_attr" name="param" value="global->stand_extra_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_extra_attr" name="param" value="global->stand_extra_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_extra_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_extra_attr" /></td>
             </s:tr>
@@ -2173,19 +2173,19 @@ function advancedDialogOnChange()
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_warn_number_attr-div">
                 <td>HTML attributes for &quot;Warnings&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_warn_number_attr" name="param" value="global->stand_warn_number_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_warn_number_attr" name="param" value="global->stand_warn_number_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_warn_number_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_warn_number_attr" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_page_table_attr-div">
                 <td>HTML attributes for page table:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_page_table_attr" name="param" value="global->stand_page_table_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_page_table_attr" name="param" value="global->stand_page_table_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_page_table_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_page_table_attr" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_page_cur_attr-div">
                 <td>HTML attributes for current page message:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_page_cur_attr" name="param" value="global->stand_page_cur_attr" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand_page_cur_attr" name="param" value="global->stand_page_cur_attr" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAttrsDialog(event, 'stand_page_cur_attr')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_page_cur_attr" /></td>
             </s:tr>
@@ -2390,19 +2390,19 @@ function advancedDialogOnChange()
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-clardb_plugin-div">
                 <td>ClarDB storage engine:</td>
-                <td><s:textfield readonly="readonly" id="orig-clardb_plugin" name="param" value="global->clardb_plugin" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-clardb_plugin" name="param" value="global->clardb_plugin" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAdvancedDialog(event, 'clardb_plugin')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:clardb_plugin" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-rundb_plugin-div">
                 <td>RunDB storage engine:</td>
-                <td><s:textfield readonly="readonly" id="orig-rundb_plugin" name="param" value="global->rundb_plugin" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-rundb_plugin" name="param" value="global->rundb_plugin" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAdvancedDialog(event, 'rundb_plugin')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:rundb_plugin" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-xuser_plugin-div">
                 <td>XuserDB storage engine:</td>
-                <td><s:textfield readonly="readonly" id="orig-xuser_plugin" name="param" value="global->xuser_plugin" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-xuser_plugin" name="param" value="global->xuser_plugin" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupAdvancedDialog(event, 'xuser_plugin')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:xuser_plugin" /></td>
             </s:tr>

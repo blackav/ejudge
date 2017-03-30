@@ -632,6 +632,8 @@ setup_standings_style(struct standings_style *ps,
   memset(ps, 0, sizeof(*ps));
 
   ps->table_attr = global->stand_table_attr;
+  if (!ps->table_attr) ps->table_attr = "";
+
   if (!ps->table_attr[0]) {
     if (global->stand_fancy_style || force_fancy_style)
       ps->table_attr = " width=\"100%\" class=\"standings\"";
@@ -640,31 +642,32 @@ setup_standings_style(struct standings_style *ps,
   }
 
   ps->success_attr = global->stand_success_attr;
+  if (!ps->success_attr) ps->success_attr = "";
 
-  ps->place_attr = global->stand_place_attr;
-  ps->team_attr = global->stand_team_attr;
-  ps->extra_attr = global->stand_extra_attr;
-  ps->prob_attr = global->stand_prob_attr;
-  ps->solved_attr = global->stand_solved_attr;
-  ps->score_attr = global->stand_score_attr;
-  ps->penalty_attr = global->stand_penalty_attr;
-  ps->time_attr = global->stand_time_attr;
-  ps->contestant_status_attr = global->stand_contestant_status_attr;
-  ps->warn_number_attr = global->stand_warn_number_attr;
+  if (!(ps->place_attr = global->stand_place_attr)) ps->place_attr = "";
+  if (!(ps->team_attr = global->stand_team_attr)) ps->team_attr = "";
+  if (!(ps->extra_attr = global->stand_extra_attr)) ps->extra_attr = "";
+  if (!(ps->prob_attr = global->stand_prob_attr)) ps->prob_attr = "";
+  if (!(ps->solved_attr = global->stand_solved_attr)) ps->solved_attr = "";
+  if (!(ps->score_attr = global->stand_score_attr)) ps->score_attr = "";
+  if (!(ps->penalty_attr = global->stand_penalty_attr)) ps->penalty_attr = "";
+  if (!(ps->time_attr = global->stand_time_attr)) ps->time_attr = "";
+  if (!(ps->contestant_status_attr = global->stand_contestant_status_attr)) ps->contestant_status_attr = "";
+  if (!(ps->warn_number_attr = global->stand_warn_number_attr)) ps->warn_number_attr = "";
 
-  ps->self_row_attr = global->stand_self_row_attr;
-  ps->v_row_attr = global->stand_v_row_attr;
-  ps->r_row_attr = global->stand_r_row_attr;
-  ps->u_row_attr = global->stand_u_row_attr;
+  if (!(ps->self_row_attr = global->stand_self_row_attr)) ps->self_row_attr = "";
+  if (!(ps->v_row_attr = global->stand_v_row_attr)) ps->v_row_attr = "";
+  if (!(ps->r_row_attr = global->stand_r_row_attr)) ps->r_row_attr = "";
+  if (!(ps->u_row_attr = global->stand_u_row_attr)) ps->u_row_attr = "";
 
-  ps->fail_attr = global->stand_fail_attr;
-  ps->trans_attr = global->stand_trans_attr;
-  ps->disq_attr = global->stand_disq_attr;
+  if (!(ps->fail_attr = global->stand_fail_attr)) ps->fail_attr = "";
+  if (!(ps->trans_attr = global->stand_trans_attr)) ps->trans_attr = "";
+  if (!(ps->disq_attr = global->stand_disq_attr)) ps->disq_attr = "";
   ps->pr_attr = NULL;
   ps->sm_attr = NULL;
 
-  ps->page_table_attr = global->stand_page_table_attr;
-  ps->page_cur_attr = global->stand_page_cur_attr;
+  if (!(ps->page_table_attr = global->stand_page_table_attr)) ps->page_table_attr = "";
+  if (!(ps->page_cur_attr = global->stand_page_cur_attr)) ps->page_cur_attr = "";
 
   if (global->stand_fancy_style || force_fancy_style) {
     //ps->success_attr = global->stand_success_attr;
@@ -2022,10 +2025,9 @@ do_write_kirov_standings(
     fprintf(f, "<table%s><tr%s><th%s>%s</th><th%s>%s</th>",
             ss.table_attr, r0_attr, ss.place_attr, _("Place"),
             ss.team_attr, _("User"));
-    if (global->stand_extra_format[0]) {
-      if (global->stand_extra_legend[0])
-        fprintf(f, "<th%s>%s</th>", ss.extra_attr,
-                global->stand_extra_legend);
+    if (global->stand_extra_format && global->stand_extra_format[0]) {
+      if (global->stand_extra_legend && global->stand_extra_legend[0])
+        fprintf(f, "<th%s>%s</th>", ss.extra_attr, global->stand_extra_legend);
       else
         fprintf(f, "<th%s>%s</th>", ss.extra_attr, _("Extra info"));
     }
@@ -2205,10 +2207,9 @@ do_write_kirov_standings(
               ss.table_attr, r0_attr,
               ss.place_attr, _("Place"),
               ss.team_attr, _("User"));
-      if (global->stand_extra_format[0]) {
-        if (global->stand_extra_legend[0])
-          fprintf(f, "<th%s>%s</th>", ss.extra_attr,
-                  global->stand_extra_legend);
+      if (global->stand_extra_format && global->stand_extra_format[0]) {
+        if (global->stand_extra_legend && global->stand_extra_legend[0])
+          fprintf(f, "<th%s>%s</th>", ss.extra_attr, global->stand_extra_legend);
         else
           fprintf(f, "<th%s>%s</th>", ss.extra_attr, _("Extra info"));
       }
@@ -2277,7 +2278,7 @@ do_write_kirov_standings(
     t = t_sort[i];
 
     if ((global->team_info_url && global->team_info_url[0])
-        || global->stand_extra_format[0]) {
+        || (global->stand_extra_format && global->stand_extra_format[0])) {
       teamdb_export_team(state->teamdb_state, t_ind[t], &u_info);
     } else {
       memset(&u_info, 0, sizeof(u_info));
@@ -2314,7 +2315,7 @@ do_write_kirov_standings(
       fprintf(f, "</a>");
     }
     fprintf(f, "</td>");
-    if (global->stand_extra_format[0]) {
+    if (global->stand_extra_format && global->stand_extra_format[0]) {
       memset(&fed, 0, sizeof(fed));
       fed.variant = find_user_variant(state, u_info.id, 0);
       sformat_message(dur_str, sizeof(dur_str), 1, global->stand_extra_format,
@@ -2484,7 +2485,7 @@ do_write_kirov_standings(
   fprintf(f, "<tr%s>", rT_attr);
   fprintf(f, "<td%s>&nbsp;</td>", ss.place_attr);
   fprintf(f, "<td%s>%s:</td>", ss.team_attr, _("Total"));
-  if (global->stand_extra_format[0]) {
+  if (global->stand_extra_format && global->stand_extra_format[0]) {
     fprintf(f, "<td%s>&nbsp;</td>", ss.extra_attr);
   }
   if (global->stand_show_contestant_status
@@ -2513,7 +2514,7 @@ do_write_kirov_standings(
   fprintf(f, "<tr%s>", rT_attr);
   fprintf(f, "<td%s>&nbsp;</td>", ss.place_attr);
   fprintf(f, "<td%s>%s:</td>", ss.team_attr, _("Success"));
-  if (global->stand_extra_format[0]) {
+  if (global->stand_extra_format && global->stand_extra_format[0]) {
     fprintf(f, "<td%s>&nbsp;</td>", ss.extra_attr);
   }
   if (global->stand_show_contestant_status
@@ -2542,7 +2543,7 @@ do_write_kirov_standings(
   fprintf(f, "<tr%s>", rT_attr);
   fprintf(f, "<td%s>&nbsp;</td>", ss.place_attr);
   fprintf(f, "<td%s>%%:</td>", ss.team_attr);
-  if (global->stand_extra_format[0]) {
+  if (global->stand_extra_format && global->stand_extra_format[0]) {
     fprintf(f, "<td%s>&nbsp;</td>", ss.extra_attr);
   }
   if (global->stand_show_contestant_status
@@ -3213,10 +3214,9 @@ do_write_moscow_standings(
             ss.table_attr, r0_attr,
             ss.place_attr, _("Place"),
             ss.team_attr, _("Participant"));
-    if (global->stand_extra_format[0]) {
-      if (global->stand_extra_legend[0])
-        fprintf(f, "<th%s>%s</th>", ss.extra_attr,
-                global->stand_extra_legend);
+    if (global->stand_extra_format && global->stand_extra_format[0]) {
+      if (global->stand_extra_legend && global->stand_extra_legend[0])
+        fprintf(f, "<th%s>%s</th>", ss.extra_attr, global->stand_extra_legend);
       else
         fprintf(f, "<th%s>%s</th>", ss.extra_attr,
                 _("Extra info"));
@@ -3362,10 +3362,9 @@ do_write_moscow_standings(
               ss.table_attr, r0_attr,
               ss.place_attr, _("Place"),
               ss.team_attr, _("User"));
-      if (global->stand_extra_format[0]) {
-        if (global->stand_extra_legend[0])
-          fprintf(f, "<th%s>%s</th>", ss.extra_attr,
-                  global->stand_extra_legend);
+      if (global->stand_extra_format && global->stand_extra_format[0]) {
+        if (global->stand_extra_legend && global->stand_extra_legend[0])
+          fprintf(f, "<th%s>%s</th>", ss.extra_attr, global->stand_extra_legend);
         else
           fprintf(f, "<th%s>%s</th>", ss.extra_attr,
                   _("Extra info"));
@@ -3403,7 +3402,7 @@ do_write_moscow_standings(
     u = u_sort[i];
 
     if ((global->team_info_url && global->team_info_url[0])
-        || global->stand_extra_format[0]) {
+        || (global->stand_extra_format && global->stand_extra_format[0])) {
       teamdb_export_team(state->teamdb_state, u_ind[u], &u_info);
     } else {
       memset(&u_info, 0, sizeof(u_info));
@@ -3439,7 +3438,7 @@ do_write_moscow_standings(
       fprintf(f, "</a>");
     }
     fprintf(f, "</td>");
-    if (global->stand_extra_format[0]) {
+    if (global->stand_extra_format && global->stand_extra_format[0]) {
       memset(&fed, 0, sizeof(fed));
       fed.variant = find_user_variant(state, u_info.id, 0);
       sformat_message(strbuf, sizeof(strbuf), 1, global->stand_extra_format,
@@ -3471,7 +3470,7 @@ do_write_moscow_standings(
       row_attr = ss.prob_attr;
       if (up_trans[up_ind] && ss.trans_attr && ss.trans_attr[0])
         row_attr = ss.trans_attr;
-      if (up_cf[up_ind] && global->stand_fail_attr[0])
+      if (up_cf[up_ind] && ss.fail_attr && ss.fail_attr[0])
         row_attr = ss.fail_attr;
       fprintf(f, "<td%s>", row_attr);
 
@@ -3544,7 +3543,7 @@ do_write_moscow_standings(
 
   fprintf(f, "<tr%s><td%s>&nbsp;</td><td%s>%s:</td>", rT_attr,
           ss.place_attr, ss.team_attr, _("Total"));
-  if (global->stand_extra_format[0])
+  if (global->stand_extra_format && global->stand_extra_format[0])
     fprintf(f, "<td%s>&nbsp;</td>", ss.extra_attr);
   if (global->stand_show_contestant_status
       && global->contestant_status_num > 0)
@@ -3560,7 +3559,7 @@ do_write_moscow_standings(
 
   fprintf(f, "<tr%s><td%s>&nbsp;</td><td%s>%s:</td>", rT_attr,
           ss.place_attr, ss.team_attr, _("Success"));
-  if (global->stand_extra_format[0])
+  if (global->stand_extra_format && global->stand_extra_format[0])
     fprintf(f, "<td%s>&nbsp;</td>", ss.extra_attr);
   if (global->stand_show_contestant_status
       && global->contestant_status_num > 0)
@@ -3576,7 +3575,7 @@ do_write_moscow_standings(
 
   fprintf(f, "<tr%s><td%s>&nbsp;</td><td%s>%%:</td>", rT_attr,
           ss.place_attr, ss.team_attr);
-  if (global->stand_extra_format[0])
+  if (global->stand_extra_format && global->stand_extra_format[0])
     fprintf(f, "<td%s>&nbsp;</td>", ss.extra_attr);
   if (global->stand_show_contestant_status
       && global->contestant_status_num > 0)
@@ -4110,13 +4109,11 @@ do_write_standings(
             ss.table_attr, r0_attr,
             ss.place_attr, _("Place"),
             ss.team_attr, _("User"));
-    if (global->stand_extra_format[0]) {
-      if (global->stand_extra_legend[0])
-        fprintf(f, "<th%s>%s</th>", ss.extra_attr,
-                global->stand_extra_legend);
+    if (global->stand_extra_format && global->stand_extra_format[0]) {
+      if (global->stand_extra_legend && global->stand_extra_legend[0])
+        fprintf(f, "<th%s>%s</th>", ss.extra_attr, global->stand_extra_legend);
       else
-        fprintf(f, "<th%s>%s</th>", ss.extra_attr,
-                _("Extra info"));
+        fprintf(f, "<th%s>%s</th>", ss.extra_attr, _("Extra info"));
     }
     if (global->stand_show_contestant_status
         && global->contestant_status_num > 0) {
@@ -4168,7 +4165,7 @@ do_write_standings(
       }
       bgcolor_ptr = r_attrs[group_ind][row_ind];
       if (user_id > 0 && user_id == t_ind[t] &&
-          global->stand_self_row_attr[0]) {
+          global->stand_self_row_attr && global->stand_self_row_attr[0]) {
         bgcolor_ptr = ss.self_row_attr;
       } else if (global->is_virtual) {
         int vstat = run_get_virtual_status(state->runlog_state, t_ind[t]);
@@ -4192,7 +4189,7 @@ do_write_standings(
       fputs("</td>", f);
       fprintf(f, "<td%s>", ss.team_attr);
       if ((global->team_info_url && global->team_info_url[0])
-          || global->stand_extra_format[0]) {
+          || (global->stand_extra_format && global->stand_extra_format[0])) {
         teamdb_export_team(state->teamdb_state, t_ind[t], &ttt);
       } else {
         memset(&ttt, 0, sizeof(ttt));
@@ -4207,7 +4204,7 @@ do_write_standings(
         fprintf(f, "</a>");
       }
       fprintf(f, "</td>");
-      if (global->stand_extra_format[0]) {
+      if (global->stand_extra_format && global->stand_extra_format[0]) {
         memset(&fed, 0, sizeof(fed));
         fed.variant = find_user_variant(state, ttt.id, 0);
         sformat_message(url_str, sizeof(url_str), 1,global->stand_extra_format,
@@ -4277,7 +4274,7 @@ do_write_standings(
     fprintf(f, "<tr%s>", rT_attr);
     fprintf(f, "<td%s>&nbsp;</td>", ss.place_attr);
     fprintf(f, "<td%s>Total:</td>", ss.team_attr);
-    if (global->stand_extra_format[0]) {
+    if (global->stand_extra_format && global->stand_extra_format[0]) {
       fprintf(f, "<td%s>&nbsp;</td>", ss.extra_attr);
     }
     if (global->stand_show_contestant_status
@@ -4297,7 +4294,7 @@ do_write_standings(
     fprintf(f, "<tr%s>", rT_attr);
     fprintf(f, "<td%s>&nbsp;</td>", ss.place_attr);
     fprintf(f, "<td%s>Success:</td>", ss.team_attr);
-    if (global->stand_extra_format[0]) {
+    if (global->stand_extra_format && global->stand_extra_format[0]) {
       fprintf(f, "<td%s>&nbsp;</td>", ss.extra_attr);
     }
     if (global->stand_show_contestant_status
@@ -4317,7 +4314,7 @@ do_write_standings(
     fprintf(f, "<tr%s>", rT_attr);
     fprintf(f, "<td%s>&nbsp;</td>", ss.place_attr);
     fprintf(f, "<td%s>%%:</td>", ss.team_attr);
-    if (global->stand_extra_format[0]) {
+    if (global->stand_extra_format && global->stand_extra_format[0]) {
       fprintf(f, "<td%s>&nbsp;</td>", ss.extra_attr);
     }
     if (global->stand_show_contestant_status

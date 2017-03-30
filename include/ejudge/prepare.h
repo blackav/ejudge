@@ -467,7 +467,7 @@ struct section_global_data
   path_t run_check_dir;
 
   /** httpd server html document root dir */
-  path_t htdocs_dir;
+  unsigned char *htdocs_dir;
 
   /** contest scoring system */
   int score_system;
@@ -506,43 +506,43 @@ struct section_global_data
   /** enable fancy standings style */
   ejintbool_t stand_fancy_style;
   /** format for the extra column in the standings */
-  unsigned char stand_extra_format[256];
+  unsigned char *stand_extra_format;
   /** legend for the extra column in the standings*/
-  unsigned char stand_extra_legend[256];
+  unsigned char *stand_extra_legend;
   /** HTML attribute for the extra column in the standings */
-  unsigned char stand_extra_attr[256];
+  unsigned char *stand_extra_attr;
   /** HTML attribute for the whole standings */
-  unsigned char stand_table_attr[256];
+  unsigned char *stand_table_attr;
   /** HTML attribute for the `place' column in the standings */
-  unsigned char stand_place_attr[256];
+  unsigned char *stand_place_attr;
   /** HTML attribute for the `user' column in the standings */
-  unsigned char stand_team_attr[256];
+  unsigned char *stand_team_attr;
   /** HTML attribute for the problem columns in the standings */
-  unsigned char stand_prob_attr[256];
+  unsigned char *stand_prob_attr;
   /** HTML attribute for the `solved' column in the standings */
-  unsigned char stand_solved_attr[256];
+  unsigned char *stand_solved_attr;
   /** HTML attribute for the `score' column in the standings */
-  unsigned char stand_score_attr[256];
+  unsigned char *stand_score_attr;
   /** HTML attribute for the `penalty' column in the standings */
-  unsigned char stand_penalty_attr[256];
+  unsigned char *stand_penalty_attr;
   /** HTML attribute for time in problem cells */
-  unsigned char stand_time_attr[256];
+  unsigned char *stand_time_attr;
   /** HTML attribute for rows corresponding to the current participant */
-  unsigned char stand_self_row_attr[256];
+  unsigned char *stand_self_row_attr;
   /** HTML attribute for rows corresponding to the real participants */
-  unsigned char stand_r_row_attr[256];
+  unsigned char *stand_r_row_attr;
   /** HTML attribute for rows corresponding to the virtual participants */
-  unsigned char stand_v_row_attr[256];
+  unsigned char *stand_v_row_attr;
   /** HTML attribute for rows corresponding to the unknown participants */
-  unsigned char stand_u_row_attr[256];
+  unsigned char *stand_u_row_attr;
   /** HTML attribute for "Last success" information */
-  unsigned char stand_success_attr[256];
+  unsigned char *stand_success_attr;
   /** HTML attribute for cells with "Check failed" submits */
-  unsigned char stand_fail_attr[256];
+  unsigned char *stand_fail_attr;
   /** HTML attribute for cells with transient (being tested) submits */
-  unsigned char stand_trans_attr[256];
+  unsigned char *stand_trans_attr;
   /** HTML attribute for cells with disqualified submits */
-  unsigned char stand_disq_attr[256];
+  unsigned char *stand_disq_attr;
   /** show participant's login instead of name in the standings */
   ejintbool_t stand_use_login;
   /** show success time in the standings */
@@ -554,13 +554,13 @@ struct section_global_data
   /** HTML row attributes */
   char **stand_row_attr;
   /** HTML attribute for the page navigation table in multi-page standings */
-  unsigned char stand_page_table_attr[256];
+  unsigned char *stand_page_table_attr;
   /** HTML attribute for the page navigation rows in multi-page standings */
   char **stand_page_row_attr;
   /** HTML attribute for the page navigation columns */
   char **stand_page_col_attr;
   /** HTML attribute for "Page %d out of %d" */
-  unsigned char stand_page_cur_attr[256];
+  unsigned char *stand_page_cur_attr;
   /** collate standings using user name rather then login */
   ejintbool_t stand_collate_name;
   /** calculate penalty for kirov & olympiad */
@@ -730,9 +730,9 @@ struct section_global_data
   /** show the warnings column in the standings */
   ejintbool_t stand_show_warn_number;
   /** HTML attribute for `contestant status' column of the standings */
-  unsigned char stand_contestant_status_attr[256];
+  unsigned char *stand_contestant_status_attr;
   /** HTML attribute for `warnings' column of the standings */
-  unsigned char stand_warn_number_attr[256];
+  unsigned char *stand_warn_number_attr;
 
   /** the user groups to load */
   char **load_user_group;
