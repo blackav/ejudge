@@ -17,11 +17,18 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 
 struct generic_section_config
 {
   struct generic_section_config *next;
-  char                           name[32];
+#if INT_MAX == LONG_MAX
+  char                           name[28];
+#elif LONG_MAX == LONG_LONG_MAX
+  char                           name[24];
+#else
+#error "Unsupported architecture"
+#endif
   int                            data[0];
 };
 
