@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,7 @@ int main(void)
   printf("run_entry:             %zu\n", sizeof(struct run_entry));
   //printf("clar_entry_v1:         %zu\n", sizeof(struct clar_entry_v1));
   printf("clar_entry_v2:         %zu\n", sizeof(struct clar_entry_v2));
+  printf("generic_section_config:%zu\n", sizeof(struct generic_section_config));
   printf("section_global_data:   %zu\n", sizeof(struct section_global_data));
   printf("section_problem_data:  %zu\n", sizeof(struct section_problem_data));
   printf("section_language_data: %zu\n", sizeof(struct section_language_data));
