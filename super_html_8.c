@@ -210,8 +210,8 @@ super_html_read_serve(
   */
 
   prepare_set_global_defaults(global);
-  if (global->stand2_file_name[0]) sstate->enable_stand2 = 1;
-  if (global->plog_file_name[0]) sstate->enable_plog = 1;
+  if (global->stand2_file_name && global->stand2_file_name[0]) sstate->enable_stand2 = 1;
+  if (global->plog_file_name && global->plog_file_name[0]) sstate->enable_plog = 1;
   if (global->stand_extra_format[0]) sstate->enable_extra_col = 1;
 
   fuh = open_memstream(&fuh_text, &fuh_size);
@@ -1089,14 +1089,20 @@ super_html_serve_unparse_serve_cfg(
     if (cnts->conf_dir)
       snprintf(global->conf_dir, sizeof(global->conf_dir), "%s", cnts->conf_dir);
   }
-  if (sstate->enable_stand2 && !global->stand2_file_name[0]) {
-    strcpy(global->stand2_file_name, "standings2.html");
+  if (sstate->enable_stand2 && (!global->stand2_file_name || !global->stand2_file_name[0])) {
+    xstrdup3(&global->stand2_file_name, "standings2.html");
   }
-  if (!sstate->enable_stand2) global->stand2_file_name[0] = 0;
-  if (sstate->enable_plog && !global->plog_file_name[0]) {
-    strcpy(global->plog_file_name, "plog.html");
+  if (!sstate->enable_stand2) {
+    xfree(global->stand2_file_name);
+    global->stand2_file_name = NULL;
   }
-  if (!sstate->enable_plog) global->plog_file_name[0] = 0;
+  if (sstate->enable_plog && (!global->plog_file_name || !global->plog_file_name[0])) {
+    xstrdup3(&global->plog_file_name, "plog.html");
+  }
+  if (!sstate->enable_plog) {
+    xfree(global->plog_file_name);
+    global->plog_file_name = NULL;
+  }
   if (sstate->enable_extra_col && !global->stand_extra_format[0]) {
     strcpy(global->stand_extra_format, "%Mc");
   }

@@ -358,22 +358,22 @@ prepare_unparse_global(
   }
   if (global->ignore_success_time != DFLT_G_IGNORE_SUCCESS_TIME)
     unparse_bool(f, "ignore_success_time", global->ignore_success_time);
-  if (global->stand2_file_name[0]) {
+  if (global->stand2_file_name && global->stand2_file_name[0]) {
     fprintf(f, "stand2_file_name = \"%s\"\n", CARMOR(global->stand2_file_name));
-    if (global->stand2_header_file[0])
+    if (global->stand2_header_file && global->stand2_header_file[0])
       fprintf(f, "stand2_header_file = \"%s\"\n", CARMOR(global->stand2_header_file));
-    if (global->stand2_footer_file[0])
+    if (global->stand2_footer_file && global->stand2_footer_file[0])
       fprintf(f, "stand2_footer_file = \"%s\"\n", CARMOR(global->stand2_footer_file));
-    if (global->stand2_symlink_dir[0])
+    if (global->stand2_symlink_dir && global->stand2_symlink_dir[0])
       fprintf(f, "stand2_symlink_dir = \"%s\"\n", CARMOR(global->stand2_symlink_dir));
   }
-  if (global->plog_file_name[0]) {
+  if (global->plog_file_name && global->plog_file_name[0]) {
     fprintf(f, "plog_file_name = \"%s\"\n", CARMOR(global->plog_file_name));
-    if (global->plog_header_file[0])
+    if (global->plog_header_file && global->plog_header_file[0])
       fprintf(f, "plog_header_file = \"%s\"\n", CARMOR(global->plog_header_file));
-    if (global->plog_footer_file[0])
+    if (global->plog_footer_file && global->plog_footer_file[0])
       fprintf(f, "plog_footer_file = \"%s\"\n", CARMOR(global->plog_footer_file));
-    if (global->plog_symlink_dir[0])
+    if (global->plog_symlink_dir && global->plog_symlink_dir[0])
       fprintf(f, "plog_symlink_dir = \"%s\"\n", CARMOR(global->plog_symlink_dir));
     if (global->plog_update_time != DFLT_G_PLOG_UPDATE_TIME)
       fprintf(f, "plog_update_time = %d\n", global->plog_update_time);

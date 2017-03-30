@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "includes.csp"
 %><%
 #include "ejudge/osdeps.h"
@@ -87,7 +86,7 @@
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->stand2_header_file;
         if (!file_path1 || !*file_path1) {
-            snprintf(phr->ss->global->stand2_header_file, sizeof(phr->ss->global->stand2_header_file), "%s", "stand2_header.html");
+            xstrdup3(&phr->ss->global->stand2_header_file, "stand2_header.html");
             file_path1 = phr->ss->global->stand2_header_file;
         }
         param_expl = "Supplementary standings HTML header file";
@@ -99,7 +98,7 @@
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->stand2_footer_file;
         if (!file_path1 || !*file_path1) {
-            snprintf(phr->ss->global->stand2_footer_file, sizeof(phr->ss->global->stand2_footer_file), "%s", "stand2_footer.html");
+            xstrdup3(&phr->ss->global->stand2_footer_file, "stand2_footer.html");
             file_path1 = phr->ss->global->stand2_footer_file;
         }
         param_expl = "Supplementary standings HTML footer file";
@@ -111,7 +110,7 @@
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->plog_header_file;
         if (!file_path1 || !*file_path1) {
-            snprintf(phr->ss->global->plog_header_file, sizeof(phr->ss->global->plog_header_file), "%s", "plog_header.html");
+            xstrdup3(&phr->ss->global->plog_header_file,"plog_header.html");
             file_path1 = phr->ss->global->plog_header_file;
         }
         param_expl = "Public submission log HTML header file";
@@ -121,9 +120,9 @@
         break;
     case SSERV_CMD_GLOB_EDIT_PLOG_FOOTER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
-        file_path1 = phr->ss->plog_footer_text;
+        file_path1 = phr->ss->global->plog_footer_file;
         if (!file_path1 || !*file_path1) {
-            snprintf(phr->ss->global->plog_footer_file, sizeof(phr->ss->global->plog_footer_file), "%s", "plog_footer.html");
+            xstrdup3(&phr->ss->global->plog_footer_file, "plog_footer.html");
             file_path1 = phr->ss->global->plog_footer_file;
         }
         param_expl = "Public submission log HTML footer file";

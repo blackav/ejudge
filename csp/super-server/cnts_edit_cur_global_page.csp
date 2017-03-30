@@ -933,8 +933,8 @@ $(function() {
     $('#adv-appeal_deadline_date').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
 
     $("#orig-disable_auto_testing-div").toggle(<s:v type="jsbool" value="global->disable_testing <= 0" />);
-    $("#orig-stand2_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_stand2 && global->stand2_file_name[0]" />);
-    $("#orig-plog_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_plog && global->plog_file_name[0]" />);
+    $("#orig-stand2_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_stand2 && global->stand2_file_name && global->stand2_file_name[0]" />);
+    $("#orig-plog_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_plog && global->plog_file_name && global->plog_file_name[0]" />);
 });
 
 function np(e)
@@ -1290,8 +1290,8 @@ function popupAdvancedDialog(e, skipField)
 function advancedDialogOnChange()
 {
     $("#adv-disable_auto_testing-div").toggle(!$("#adv-disable_testing").is(':checked'));
-    $("#adv-stand2_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_stand2 && global->stand2_file_name[0]" />);
-    $("#adv-plog_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_plog && global->plog_file_name[0]" />);
+    $("#adv-stand2_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_stand2 && global->stand2_file_name && global->stand2_file_name[0]" />);
+    $("#adv-plog_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_plog && global->plog_file_name && global->plog_file_name[0]" />);
 }
 </script>
 
@@ -1910,25 +1910,25 @@ function advancedDialogOnChange()
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand2_file_name-div">
                 <td>Name of the supplementary standings file:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand2_file_name" name="param" value="global->stand2_file_name" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand2_file_name" name="param" value="global->stand2_file_name" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupUrlsDialog(event, 'stand2_file_name')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand2_file_name" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand2_header_file-div">
                 <td>HTML header file for the supplementary standings:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand2_header_file" name="param" value="global->stand2_header_file" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand2_header_file" name="param" value="global->stand2_header_file" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupUrlsDialog(event, 'stand2_header_file')" value="Clear" />[<s:a ac="glob-edit-stand2-header-file-page">Edit</s:a>]</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand2_header_file" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand2_footer_file-div">
                 <td>HTML footer file for the supplementary standings:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand2_footer_file" name="param" value="global->stand2_footer_file" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand2_footer_file" name="param" value="global->stand2_footer_file" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupUrlsDialog(event, 'stand2_footer_file')" value="Clear" />[<s:a ac="glob-edit-stand2-footer-file-page">Edit</s:a>]</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand2_footer_file" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand2_symlink_dir-div">
                 <td>Directory to make suppl. standings symlink (rel. to DocumentRoot):</td>
-                <td><s:textfield readonly="readonly" id="orig-stand2_symlink_dir" name="param" value="global->stand2_symlink_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-stand2_symlink_dir" name="param" value="global->stand2_symlink_dir" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupUrlsDialog(event, 'stand2_symlink_dir')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand2_symlink_dir" /></td>
             </s:tr>
@@ -1940,25 +1940,25 @@ function advancedDialogOnChange()
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_file_name-div">
                 <td>Name of the public submission log file:</td>
-                <td><s:textfield readonly="readonly" id="orig-plog_file_name" name="param" value="global->plog_file_name" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-plog_file_name" name="param" value="global->plog_file_name" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupUrlsDialog(event, 'plog_file_name')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_file_name" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_header_file-div">
                 <td>HTML header file for the public submission log:</td>
-                <td><s:textfield readonly="readonly" id="orig-plog_header_file" name="param" value="global->plog_header_file" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-plog_header_file" name="param" value="global->plog_header_file" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupUrlsDialog(event, 'plog_header_file')" value="Clear" />[<s:a ac="glob-edit-plog-header-file-page">Edit</s:a>]</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_header_file" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_footer_file-div">
                 <td>HTML footer file for the public submission log:</td>
-                <td><s:textfield readonly="readonly" id="orig-plog_footer_file" name="param" value="global->plog_footer_file" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-plog_footer_file" name="param" value="global->plog_footer_file" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupUrlsDialog(event, 'plog_footer_file')" value="Clear" />[<s:a ac="glob-edit-plog-footer-file-page">Edit</s:a>]</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_footer_file" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_symlink_dir-div">
                 <td>Directory to make symlink to public submission log (rel. to DocumentRoot):</td>
-                <td><s:textfield readonly="readonly" id="orig-plog_symlink_dir" name="param" value="global->plog_symlink_dir" size="48" maxlength="1024" check="false" /></td>
+                <td><s:textfield readonly="readonly" id="orig-plog_symlink_dir" name="param" value="global->plog_symlink_dir" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupUrlsDialog(event, 'plog_symlink_dir')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_symlink_dir" /></td>
             </s:tr>
@@ -2344,7 +2344,7 @@ function advancedDialogOnChange()
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:standings_charset" /></td>
             </s:tr>
 <%
-  if (phr->ss->enable_stand2 && global->stand2_file_name[0]) {
+  if (phr->ss->enable_stand2 && global->stand2_file_name && global->stand2_file_name[0]) {
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand2_charset-div">
                 <td>Aux. standings character set:</td>
@@ -2357,7 +2357,7 @@ function advancedDialogOnChange()
 %>
 
 <%
-  if (phr->ss->enable_plog && global->plog_file_name[0]) {
+  if (phr->ss->enable_plog && global->plog_file_name && global->plog_file_name[0]) {
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_charset-div">
                 <td>Submission log character set:</td>

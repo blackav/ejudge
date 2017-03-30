@@ -218,15 +218,15 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_footer_file, "s"),
   GLOBAL_PARAM(stand_symlink_dir, "s"),
   GLOBAL_PARAM(users_on_page, "d"),
-  GLOBAL_PARAM(stand2_file_name, "s"),
-  GLOBAL_PARAM(stand2_header_file, "s"),
-  GLOBAL_PARAM(stand2_footer_file, "s"),
-  GLOBAL_PARAM(stand2_symlink_dir, "s"),
-  GLOBAL_PARAM(plog_file_name, "s"),
-  GLOBAL_PARAM(plog_header_file, "s"),
-  GLOBAL_PARAM(plog_footer_file, "s"),
+  GLOBAL_PARAM(stand2_file_name, "S"),
+  GLOBAL_PARAM(stand2_header_file, "S"),
+  GLOBAL_PARAM(stand2_footer_file, "S"),
+  GLOBAL_PARAM(stand2_symlink_dir, "S"),
+  GLOBAL_PARAM(plog_file_name, "S"),
+  GLOBAL_PARAM(plog_header_file, "S"),
+  GLOBAL_PARAM(plog_footer_file, "S"),
   GLOBAL_PARAM(plog_update_time, "d"),
-  GLOBAL_PARAM(plog_symlink_dir, "s"),
+  GLOBAL_PARAM(plog_symlink_dir, "S"),
 
   GLOBAL_PARAM(external_xml_update_time, "d"),
   GLOBAL_PARAM(internal_xml_update_time, "d"),
@@ -956,6 +956,14 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->prob_exam_protocol_footer_file);
   xfree(p->full_exam_protocol_header_file);
   xfree(p->full_exam_protocol_footer_file);
+  xfree(p->stand2_file_name);
+  xfree(p->stand2_header_file);
+  xfree(p->stand2_footer_file);
+  xfree(p->stand2_symlink_dir);
+  xfree(p->plog_file_name);
+  xfree(p->plog_header_file);
+  xfree(p->plog_footer_file);
+  xfree(p->plog_symlink_dir);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2918,32 +2926,29 @@ set_defaults(
       if (r < 0) return -1;
     }
 
-    if (g->stand2_file_name[0]) {
-      if (g->stand2_header_file[0]) {
-        pathmake2(g->stand2_header_file, g->conf_dir, "/",
-                  g->stand2_header_file, NULL);
+    if (g->stand2_file_name && g->stand2_file_name[0]) {
+      if (g->stand2_header_file && g->stand2_header_file[0]) {
+        path_prepend_dir(&g->stand2_header_file, g->conf_dir);
         vptr = &g->stand2_header_txt;
         r = generic_read_file(vptr, 0,&tmp_len,0, 0, g->stand2_header_file, "");
         if (r < 0) return -1;
       }
-      if (g->stand2_footer_file[0]) {
-        pathmake2(g->stand2_footer_file, g->conf_dir, "/",
-                  g->stand2_footer_file, NULL);
+      if (g->stand2_footer_file && g->stand2_footer_file[0]) {
+        path_prepend_dir(&g->stand2_footer_file, g->conf_dir);
         vptr = &g->stand2_footer_txt;
         r = generic_read_file(vptr, 0,&tmp_len,0, 0, g->stand2_footer_file, "");
         if (r < 0) return -1;
       } 
     }
 
-    if (g->plog_file_name[0]) {
-      if (g->plog_header_file[0]) {
-        pathmake2(g->plog_header_file, g->conf_dir, "/",g->plog_header_file, NULL);
-        vptr = &g->plog_header_txt;
+    if (g->plog_file_name && g->plog_file_name[0]) {
+      if (g->plog_header_file && g->plog_header_file[0]) {
+        path_prepend_dir(&g->plog_header_file, g->conf_dir);
         r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->plog_header_file, "");
         if (r < 0) return -1;
       }
-      if (g->plog_footer_file[0]) {
-        pathmake2(g->plog_footer_file, g->conf_dir, "/",g->plog_footer_file, NULL);
+      if (g->plog_footer_file && g->plog_footer_file[0]) {
+        path_prepend_dir(&g->plog_footer_file, g->conf_dir);
         vptr = &g->plog_footer_txt;
         r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->plog_footer_file, "");
         if (r < 0) return -1;

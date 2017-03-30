@@ -82,29 +82,35 @@
             snprintf(global->stand_symlink_dir, sizeof(global->stand_symlink_dir), "%s", stand_symlink_dir);
             global->stand_ignore_after = stand_ignore_after;
             phr->ss->enable_stand2 = enable_stand2;
-            snprintf(global->stand2_file_name, sizeof(global->stand2_file_name), "%s", stand2_file_name);
             if (enable_stand2) {
-                if (!global->stand2_file_name[0]) {
-                    snprintf(global->stand2_file_name, sizeof(global->stand2_file_name), "%s", "standings2.html");
+                if (!stand2_file_name || !*stand2_file_name) {
+                    xstrdup3(&stand2_file_name, "standings2.html");
                 }
+                xfree(global->stand2_file_name);
+                global->stand2_file_name = stand2_file_name;
+                stand2_file_name = NULL;
             } else {
-                global->stand2_file_name[0] = 0;
+                xfree(global->stand2_file_name);
+                global->stand2_file_name = NULL;
             }
-            snprintf(global->stand2_header_file, sizeof(global->stand2_header_file), "%s", stand2_header_file);
-            snprintf(global->stand2_footer_file, sizeof(global->stand2_footer_file), "%s", stand2_footer_file);
-            snprintf(global->stand2_symlink_dir, sizeof(global->stand2_symlink_dir), "%s", stand2_symlink_dir);
+            xstrdup3(&global->stand2_header_file, stand2_header_file);
+            xstrdup3(&global->stand2_footer_file, stand2_footer_file);
+            xstrdup3(&global->stand2_symlink_dir, stand2_symlink_dir);
             phr->ss->enable_plog = enable_plog;
-            snprintf(global->plog_file_name, sizeof(global->plog_file_name), "%s", plog_file_name);
             if (enable_plog) {
-                if (!global->plog_file_name[0]) {
-                    snprintf(global->plog_file_name, sizeof(global->plog_file_name), "%s", "plog.html");
+                if (!plog_file_name || !*plog_file_name) {
+                  xstrdup3(&plog_file_name, "plog.html");
                 }
+                xfree(global->plog_file_name);
+                global->plog_file_name = plog_file_name;
+                plog_file_name = NULL;
             } else {
-                global->plog_file_name[0] = 0;
+                xfree(global->plog_file_name);
+                global->plog_file_name = NULL;
             }
-            snprintf(global->plog_header_file, sizeof(global->plog_header_file), "%s", plog_header_file);
-            snprintf(global->plog_footer_file, sizeof(global->plog_footer_file), "%s", plog_footer_file);
-            snprintf(global->plog_symlink_dir, sizeof(global->plog_symlink_dir), "%s", plog_symlink_dir);
+            xstrdup3(&global->plog_header_file, plog_header_file);
+            xstrdup3(&global->plog_footer_file, plog_footer_file);
+            xstrdup3(&global->plog_symlink_dir, plog_symlink_dir);
             global->plog_update_time = plog_update_time;
             global->external_xml_update_time = external_xml_update_time;
             global->internal_xml_update_time = internal_xml_update_time;

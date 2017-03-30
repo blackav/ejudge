@@ -114,7 +114,7 @@ serve_update_standings_file(serve_state_t state,
                   global->stand_header_txt,
                   global->stand_footer_txt,
                   state->accepting_mode, 0, charset_id, 1 /* user_mode */);
-  if (global->stand2_file_name[0]) {
+  if (global->stand2_file_name && global->stand2_file_name[0]) {
     charset_id = charset_get_id(global->stand2_charset);
     write_standings(state, cnts, global->status_dir,
                     global->stand2_file_name, 0,
@@ -717,8 +717,9 @@ serve_create_symlinks(serve_state_t state)
       }
     }
   }
-  if (global->stand2_symlink_dir[0] && global->htdocs_dir[0]
-      && global->stand2_file_name[0]) {
+  if (global->stand2_symlink_dir && global->stand2_symlink_dir[0]
+      && global->htdocs_dir[0]
+      && global->stand2_file_name && global->stand2_file_name[0]) {
     snprintf(src_path, sizeof(src_path), "%s/dir/%s",
              global->status_dir, global->stand2_file_name);
     snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
@@ -734,8 +735,9 @@ serve_create_symlinks(serve_state_t state)
       //return -1;
     }
   }
-  if (global->plog_symlink_dir[0] && global->htdocs_dir[0]
-      && global->plog_file_name[0]
+  if (global->plog_symlink_dir && global->plog_symlink_dir[0]
+      && global->htdocs_dir[0]
+      && global->plog_file_name && global->plog_file_name[0]
       && global->plog_update_time > 0) {
     snprintf(src_path, sizeof(src_path), "%s/dir/%s",
              global->status_dir, global->plog_file_name);

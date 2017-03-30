@@ -680,20 +680,18 @@ super_html_fix_serve(struct sid_state *sstate,
            "%s", s);
   xfree(s);
 
-  if (global->stand2_file_name[0]) {
+  if (global->stand2_file_name && global->stand2_file_name[0]) {
     s = xstrdup(global->stand2_file_name);
     subst_param(&s, 6, substs_from, substs_to);
-    snprintf(global->stand2_file_name, sizeof(global->stand2_file_name),
-             "%s", s);
-    xfree(s);
+    xfree(global->stand2_file_name);
+    global->stand2_file_name = s;
   }
 
-  if (global->plog_file_name[0]) {
+  if (global->plog_file_name && global->plog_file_name[0]) {
     s = xstrdup(global->plog_file_name);
     subst_param(&s, 6, substs_from, substs_to);
-    snprintf(global->plog_file_name, sizeof(global->plog_file_name),
-             "%s", s);
-    xfree(s);
+    xfree(global->plog_file_name);
+    global->plog_file_name = s;
   }
 
   global->stand_ignore_after = 0;

@@ -572,24 +572,24 @@ struct section_global_data
   unsigned char *stand_footer_txt META_ATTRIB((meta_private));
 
   /** name of the generated file with the secondary standings */
-  unsigned char stand2_file_name[256];
+  unsigned char *stand2_file_name;
   /** secondary standings header file */
-  path_t stand2_header_file;
+  unsigned char *stand2_header_file;
   /** secondary standings footer file */
-  path_t stand2_footer_file;
+  unsigned char *stand2_footer_file;
   /** text of the secondary standings header */
   unsigned char *stand2_header_txt META_ATTRIB((meta_private));
   /** text of the secondary standings footer */
   unsigned char *stand2_footer_txt META_ATTRIB((meta_private));
   /** directory where to install a symlink to the secondary standings file */
-  path_t stand2_symlink_dir;
+  unsigned char *stand2_symlink_dir;
 
   /** name of the generated file with the public submission log */
-  unsigned char plog_file_name[256];
+  unsigned char *plog_file_name;
   /** public submission log header file */
-  path_t plog_header_file;
+  unsigned char *plog_header_file;
   /** public submission log footer file */
-  path_t plog_footer_file;
+  unsigned char *plog_footer_file;
   /** text of the public submission log header */
   unsigned char *plog_header_txt META_ATTRIB((meta_private));
   /** text of the public submission log footer */
@@ -597,7 +597,7 @@ struct section_global_data
   /** public submission log update interval */
   int plog_update_time;
   /** directory where to install a symlink to the public log file */
-  path_t plog_symlink_dir;
+  unsigned char *plog_symlink_dir;
 
   /** internal XML log update interval */
   int internal_xml_update_time;
