@@ -571,6 +571,68 @@ copy_string(struct section_problem_data *p,
     }
 }
 
+static int
+cntsprob_get_bool(
+        const struct section_problem_data *p,
+        int f_name)
+{
+    /* 'b' : ejbytebool_t, 'B' : ejintbool_t, 'f' : ejbyteflag_t */
+    int f_type = cntsprob_get_type(f_name);
+    int f_size = cntsprob_get_size(f_name);
+    const void *f_ptr = cntsprob_get_ptr(p, f_name);
+    int value = 0;
+
+    if (f_type == 'b') {
+        ASSERT(f_size == 1);
+        value = *(const ejbytebool_t *) f_ptr;
+    } else if (f_type == 'B') {
+        ASSERT(f_size == 4);
+        value = *(const ejintbool_t *) f_ptr;
+    } else if (f_type == 'f') {
+        ASSERT(f_size == 1);
+        value = *(const ejbyteflag_t *) f_ptr;
+    } else {
+        abort();
+    }
+
+    if (value < 0) value = -1;
+    if (value > 1) value = 1;
+    return value;
+}
+
+static const unsigned char *
+cntsprob_get_string(
+        const struct section_problem_data *p,
+        int f_name)
+{
+    int f_type = cntsprob_get_type(f_name);
+    ASSERT(f_type == 's');
+    return *(const unsigned char **) cntsprob_get_ptr(p, f_name);
+}
+
+static void
+cntsprob_set_string(
+        struct section_problem_data *p,
+        int f_name,
+        const unsigned char *str)
+{
+    int f_type = cntsprob_get_type(f_name);
+    ASSERT(f_type == 's');
+    unsigned char *dst = NULL;
+    if (str) dst = xstrdup(str);
+    * (unsigned char **) cntsprob_get_ptr_nc(p, f_name) = dst;
+}
+
+static const unsigned char *
+problem_config_section_get_string(
+        const struct problem_config_section *c,
+        int f_name)
+{
+    int f_type = meta_problem_config_section_get_type(f_name);
+    ASSERT(f_type == 's');
+    return *(const unsigned char **) meta_problem_config_section_get_ptr(c, f_name);
+}
+
 static void
 copy_suffix(
         struct section_problem_data *p,
@@ -582,86 +644,45 @@ copy_suffix(
         int cs_name,        // problem config suffix tag
         int cp_name)        // problem config pattern tag
 {
-    int t = meta_problem_config_section_get_type(cs_name);
-    ASSERT(t == 's');
-    t = meta_problem_config_section_get_type(cp_name);
-    ASSERT(t == 's');
-    t = cntsprob_get_type(ps_name);
-    ASSERT(t == 's');
-    t = cntsprob_get_type(pp_name);
-    ASSERT(t == 's');
-    (void) t;
-
-    /* 'b' : ejbytebool_t, 'B' : ejintbool_t, 'f' : ejbyteflag_t */
-    int pft = cntsprob_get_type(pf_name);
-    int pfz = cntsprob_get_size(pf_name);
-    const void *pfp = cntsprob_get_ptr(p, pf_name);
-    int pfv = 0;
-    if (pft == 'b') {
-        ASSERT(pfz == 1);
-        
-    } else if (pft == 'B') {
-        ASSERT(pfz == 4);
-    } else if (pft == 'f') {
-        ASSERT(pfz == 1);
-    } else {
-        abort();
-    }
-
-    size_t zs = cntsprob_get_size(ps_name);
-    size_t zp = cntsprob_get_size(pp_name);
-    const unsigned char *csv = *(const unsigned char**) meta_problem_config_section_get_ptr(c, cs_name);
-    const unsigned char *cpv = *(const unsigned char**) meta_problem_config_section_get_ptr(c, cp_name);
-    const unsigned char *asv = NULL;
-    const unsigned char *apv = NULL;
-    const ejintbool_t *afv = NULL;
+    const unsigned char *c_suf = problem_config_section_get_string(c, cs_name);
+    const unsigned char *c_pat = problem_config_section_get_string(c, cp_name);
     if (a) {
-        asv = (const unsigned char *) cntsprob_get_ptr(a, ps_name);
-        apv = (const unsigned char *) cntsprob_get_ptr(a, pp_name);
+        int p_has = 1;
+        int a_has = 1;
         if (pf_name > 0) {
-            afv = (const ejintbool_t *) cntsprob_get_ptr(a, pf_name);
+            p_has = cntsprob_get_bool(p, pf_name);
+            a_has = cntsprob_get_bool(a, pf_name);
         }
-    }
-    unsigned char *psv = cntsprob_get_ptr_nc(p, ps_name);
-    unsigned char *ppv = cntsprob_get_ptr_nc(p, pp_name);
-    const ejintbool_t *pfv = NULL;
-    if (pf_name > 0) {
-        pfv = (const ejintbool_t *) cntsprob_get_ptr(p, pf_name);
-    }
-    if (pfv) {
-        if (*pfv == 0 || (*pfv < 0 && afv && *afv <= 0)) {
-            ppv[0] = 1;
-            ppv[1] = 0;
-            psv[0] = 1;
-            psv[1] = 0;
-            return;
-        }
-    }
-    if (cpv) {
-        if (a && apv && apv[0] != 1 && !strcmp(apv, cpv)) {
-            ppv[0] = 1;
-            ppv[1] = 0;
-            psv[0] = 1;
-            psv[1] = 0;
-        } else {
-            snprintf(ppv, zp, "%s", cpv);
-            psv[0] = 1;
-            psv[1] = 0;
-        }
-    } else if (csv) {
-        if (a && apv && apv[0] == 1 && asv && asv[0] != 1 && !strcmp(asv, csv)) {
-            ppv[0] = 1;
-            ppv[1] = 0;
-            psv[0] = 1;
-            psv[1] = 0;
-        } else {
-            snprintf(psv, zs, "%s", csv);
-            ppv[0] = 1;
-            ppv[1] = 0;
+        if (p_has < 0) p_has = a_has;
+        if (p_has < 0) p_has = 0;
+        if (a_has < 0) a_has = 0;
+        if (p_has && a_has) {
+            const unsigned char *a_suf = cntsprob_get_string(a, ps_name);
+            const unsigned char *a_pat = cntsprob_get_string(a, pp_name);
+            if (c_suf && a_suf && !strcmp(c_suf, a_suf)) {
+                // do nothing
+            } else {
+                cntsprob_set_string(p, ps_name, c_suf);
+            }
+            if (c_pat && a_pat && !strcmp(c_pat, a_pat)) {
+                // do nothing
+            } else {
+                cntsprob_set_string(p, pp_name, c_pat);
+            }
+        } else if (p_has) {
+            cntsprob_set_string(p, ps_name, c_suf);
+            cntsprob_set_string(p, pp_name, c_pat);
         }
     } else {
-        ppv[0] = 0;
-        psv[0] = 0;
+        int p_has = 1;
+        if (pf_name > 0) {
+            p_has = cntsprob_get_bool(p, pf_name);
+        }
+        if (p_has < 0) p_has = 0;
+        if (p_has) {
+            cntsprob_set_string(p, ps_name, c_suf);
+            cntsprob_set_string(p, pp_name, c_pat);
+        }
     }
 }
 
