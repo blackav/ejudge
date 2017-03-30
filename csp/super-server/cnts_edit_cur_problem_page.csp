@@ -653,7 +653,7 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-long_name-div">
                 <td>Long name:</td>
-                <td><s:textfield id="orig-long_name" readonly="readonly" name="param" value="prob->long_name" size="48" maxlength="1024" check="no" checkExpr="" /><% if (!prob->long_name) { %>(<i>Not set</i>)<% } %></td>
+                <td><s:textfield id="orig-long_name" readonly="readonly" name="param" value="prob->long_name" size="48" maxlength="1024" checkExpr="" /><% if (!prob->long_name) { %>(<i>Not set</i>)<% } %></td>
                 <td><input type="button" onclick="popupIdDialog(event, 'long_name')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:long_name" /></td>
             </s:tr>
@@ -1226,7 +1226,7 @@ function viewDialogOnChange(field)
                 <td>Source header file:</td>
                 <td><%
     str_value = prob->source_header;
-%><s:textfield id="orig-source_header" readonly="readonly" name="param" value="prob->source_header" size="48" maxlength="1024" /><%
+%><s:textfield id="orig-source_header" readonly="readonly" name="param" value="prob->source_header" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!value) {
 %>(<i>Not set</i>)<%
@@ -1249,7 +1249,7 @@ function viewDialogOnChange(field)
                 <td>Source footer file:</td>
                 <td><%
     str_value = prob->source_footer;
-%><s:textfield id="orig-source_footer" readonly="readonly" name="param" value="prob->source_footer" size="48" maxlength="1024" checkExpr="> 0" /><%
+%><s:textfield id="orig-source_footer" readonly="readonly" name="param" value="prob->source_footer" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
 %>(<i>Not set</i>)<%
@@ -2091,14 +2091,14 @@ function viewDialogOnChange(field)
         <table border="0" onclick="popupStandingDialog()">
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_name-div">
                 <td>Title for the standings column:</td>
-                <td><s:textfield id="orig-stand_name" readonly="readonly" name="param" value="prob->stand_name" size="48" maxlength="1024" check="no" /><% if (!prob->stand_name) { %>(<i>Not set</i>)<% } %></td>
+                <td><s:textfield id="orig-stand_name" readonly="readonly" name="param" value="prob->stand_name" size="48" maxlength="1024" checkExpr="" /><% if (!prob->stand_name) { %>(<i>Not set</i>)<% } %></td>
                 <td><input type="button" onclick="popupStandingDialog(event, 'stand_name')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_name" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_column-div">
                 <td>Collate this problem with the specified one:</td>
-                <td><s:textfield id="orig-stand_column" readonly="readonly" name="param" value="prob->stand_column" size="48" maxlength="1024" check="no" /><% if (!prob->stand_column) { %>(<i>Not set</i>)<% } %></td>
+                <td><s:textfield id="orig-stand_column" readonly="readonly" name="param" value="prob->stand_column" size="48" maxlength="1024" checkExpr="" /><% if (!prob->stand_column) { %>(<i>Not set</i>)<% } %></td>
                 <td><input type="button" onclick="popupStandingDialog(event, 'stand_column')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_column" /></td>
             </s:tr>
