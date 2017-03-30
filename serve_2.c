@@ -667,7 +667,8 @@ serve_create_symlinks(serve_state_t state)
   int npages, pgn;
   int total_users = 0;
 
-  if (global->stand_symlink_dir[0] && global->htdocs_dir[0]) {
+  if (global->stand_symlink_dir && global->stand_symlink_dir[0]
+      && global->htdocs_dir[0]) {
     if (global->users_on_page > 0) {
       // FIXME: check, that standings_file_name depends on page number
       if (global->disable_user_database > 0) {

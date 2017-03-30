@@ -62,7 +62,7 @@
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->stand_header_file;
         if (!file_path1 || !*file_path1) {
-            snprintf(phr->ss->global->stand_header_file, sizeof(phr->ss->global->stand_header_file), "%s", "stand_header.html");
+            xstrdup3(&phr->ss->global->stand_header_file, "stand_header.html");
             file_path1 = phr->ss->global->stand_header_file;
         }
         param_expl = "Standings HTML header file";
@@ -74,7 +74,7 @@
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->stand_footer_file;
         if (!file_path1 || !*file_path1) {
-            snprintf(phr->ss->global->stand_footer_file, sizeof(phr->ss->global->stand_footer_file), "%s", "stand_footer.html");
+            xstrdup3(&phr->ss->global->stand_footer_file, "stand_footer.html");
             file_path1 = phr->ss->global->stand_footer_file;
         }
         param_expl = "Standings HTML footer file";

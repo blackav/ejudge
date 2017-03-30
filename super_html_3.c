@@ -676,8 +676,8 @@ super_html_fix_serve(struct sid_state *sstate,
 
   s = xstrdup(global->standings_file_name);
   subst_param(&s, 6, substs_from, substs_to);
-  snprintf(global->standings_file_name, sizeof(global->standings_file_name),
-           "%s", s);
+  xfree(global->standings_file_name);
+  global->standings_file_name = s;
   xfree(s);
 
   if (global->stand2_file_name && global->stand2_file_name[0]) {

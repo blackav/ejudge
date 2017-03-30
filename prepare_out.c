@@ -337,20 +337,20 @@ prepare_unparse_global(
 
   fprintf(f, "\n");
 
-  if (global->team_info_url[0])
+  if (global->team_info_url && global->team_info_url[0])
     fprintf(f, "team_info_url = \"%s\"\n", CARMOR(global->team_info_url));
-  if (global->prob_info_url[0])
+  if (global->prob_info_url && global->prob_info_url[0])
     fprintf(f, "prob_info_url = \"%s\"\n", CARMOR(global->prob_info_url));
-  if (global->standings_file_name[0] &&
+  if (global->standings_file_name && global->standings_file_name[0] &&
       strcmp(global->standings_file_name, DFLT_G_STANDINGS_FILE_NAME))
     fprintf(f, "standings_file_name = \"%s\"\n", CARMOR(global->standings_file_name));
   if (global->users_on_page > 0)
     fprintf(f, "users_on_page = %d\n", global->users_on_page);
-  if (global->stand_header_file[0])
+  if (global->stand_header_file && global->stand_header_file[0])
     fprintf(f, "stand_header_file = \"%s\"\n", CARMOR(global->stand_header_file));
-  if (global->stand_footer_file[0])
+  if (global->stand_footer_file && global->stand_footer_file[0])
     fprintf(f, "stand_footer_file = \"%s\"\n", CARMOR(global->stand_footer_file));
-  if (global->stand_symlink_dir[0])
+  if (global->stand_symlink_dir && global->stand_symlink_dir[0])
     fprintf(f, "stand_symlink_dir = \"%s\"\n", CARMOR(global->stand_symlink_dir));
   if (global->stand_ignore_after > 0) {
     fprintf(f, "stand_ignore_after = \"%s\"\n",

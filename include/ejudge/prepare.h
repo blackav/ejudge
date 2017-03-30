@@ -488,20 +488,20 @@ struct section_global_data
   ejintsize_t max_cmd_length;
 
   /** URL template for the user information link in the standings */
-  path_t team_info_url;
+  unsigned char *team_info_url;
   /** URL template for the problem link in the standings */
-  path_t prob_info_url;
+  unsigned char *prob_info_url;
   /** public standings file name */
-  unsigned char standings_file_name[256];
+  unsigned char *standings_file_name;
   /** standings header file */
-  path_t stand_header_file;
+  unsigned char *stand_header_file;
   /** standings footer file */
-  path_t stand_footer_file;
+  unsigned char *stand_footer_file;
   /** directory where to install a symlink to the standings file */
-  path_t stand_symlink_dir;
+  unsigned char *stand_symlink_dir;
   /** number of users on page */
   int    users_on_page;
-  unsigned char stand_file_name_2[256];
+  unsigned char *stand_file_name_2;
 
   /** enable fancy standings style */
   ejintbool_t stand_fancy_style;

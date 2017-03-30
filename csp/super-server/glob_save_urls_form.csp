@@ -73,13 +73,13 @@
     if (!retval && phr->ss) {
         struct section_global_data *global = phr->ss->global;
         if (global) {
-            snprintf(global->team_info_url, sizeof(global->team_info_url), "%s", team_info_url);
-            snprintf(global->prob_info_url, sizeof(global->team_info_url), "%s", prob_info_url);
-            snprintf(global->standings_file_name, sizeof(global->standings_file_name), "%s", standings_file_name);
+            xstrdup3(&global->team_info_url, team_info_url);
+            xstrdup3(&global->prob_info_url, prob_info_url);
+            xstrdup3(&global->standings_file_name, standings_file_name);
             global->users_on_page = users_on_page;
-            snprintf(global->stand_header_file, sizeof(global->stand_header_file), "%s", stand_header_file);
-            snprintf(global->stand_footer_file, sizeof(global->stand_footer_file), "%s", stand_footer_file);
-            snprintf(global->stand_symlink_dir, sizeof(global->stand_symlink_dir), "%s", stand_symlink_dir);
+            xstrdup3(&global->stand_header_file, stand_header_file);
+            xstrdup3(&global->stand_footer_file, stand_footer_file);
+            xstrdup3(&global->stand_symlink_dir, stand_symlink_dir);
             global->stand_ignore_after = stand_ignore_after;
             phr->ss->enable_stand2 = enable_stand2;
             if (enable_stand2) {

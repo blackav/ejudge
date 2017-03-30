@@ -211,12 +211,12 @@ static const struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(htdocs_dir, "s"),
 
-  GLOBAL_PARAM(team_info_url, "s"),
-  GLOBAL_PARAM(prob_info_url, "s"),
-  GLOBAL_PARAM(standings_file_name, "s"),
-  GLOBAL_PARAM(stand_header_file, "s"),
-  GLOBAL_PARAM(stand_footer_file, "s"),
-  GLOBAL_PARAM(stand_symlink_dir, "s"),
+  GLOBAL_PARAM(team_info_url, "S"),
+  GLOBAL_PARAM(prob_info_url, "S"),
+  GLOBAL_PARAM(standings_file_name, "S"),
+  GLOBAL_PARAM(stand_header_file, "S"),
+  GLOBAL_PARAM(stand_footer_file, "S"),
+  GLOBAL_PARAM(stand_symlink_dir, "S"),
   GLOBAL_PARAM(users_on_page, "d"),
   GLOBAL_PARAM(stand2_file_name, "S"),
   GLOBAL_PARAM(stand2_header_file, "S"),
@@ -964,6 +964,13 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->plog_header_file);
   xfree(p->plog_footer_file);
   xfree(p->plog_symlink_dir);
+  xfree(p->team_info_url);
+  xfree(p->prob_info_url);
+  xfree(p->standings_file_name);
+  xfree(p->stand_header_file);
+  xfree(p->stand_footer_file);
+  xfree(p->stand_symlink_dir);
+  xfree(p->stand_file_name_2);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2354,16 +2361,14 @@ make_stand_file_name_2(serve_state_t state)
   snprintf(b1, sizeof(b1), s, 1);
   snprintf(b2, sizeof(b2), s, 2);
   if (strcmp(b1, b2) != 0) {
-    snprintf(state->global->stand_file_name_2,
-             sizeof(state->global->stand_file_name_2), "%s", s);
+    xstrdup3(&state->global->stand_file_name_2, s);
     return;
   }
 
   i--;
   while (i >= 0 && s[i] != '.' && s[i] != '/') i--;
   if (i < 0 || s[i] == '/') i++;
-  snprintf(state->global->stand_file_name_2,
-           sizeof(state->global->stand_file_name_2),
+  usprintf(&state->global->stand_file_name_2,
            "%.*s%s%s", i, s, "%d", s + i);
 }
 
@@ -2888,9 +2893,8 @@ set_defaults(
       snprintf(g->charset, sizeof(g->charset), "%s", DFLT_G_CHARSET);
       vinfo("global.charset set to %s", g->charset);
     }
-    if (!g->standings_file_name[0]) {
-      snprintf(g->standings_file_name,sizeof(g->standings_file_name),
-               "%s", DFLT_G_STANDINGS_FILE_NAME);
+    if (!g->standings_file_name || !g->standings_file_name[0]) {
+      xstrdup3(&g->standings_file_name, DFLT_G_STANDINGS_FILE_NAME);
     }
     make_stand_file_name_2(state);
 
@@ -2912,15 +2916,15 @@ set_defaults(
       }
     }
 
-    if (g->stand_header_file[0]) {
-      pathmake2(g->stand_header_file, g->conf_dir, "/",g->stand_header_file, NULL);
+    if (g->stand_header_file && g->stand_header_file[0]) {
+      path_prepend_dir(&g->stand_header_file, g->conf_dir);
       vptr = &g->stand_header_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->stand_header_file, "");
       if (r < 0) return -1;
     }
 
-    if (g->stand_footer_file[0]) {
-      pathmake2(g->stand_footer_file, g->conf_dir, "/",g->stand_footer_file, NULL);
+    if (g->stand_footer_file && g->stand_footer_file[0]) {
+      path_prepend_dir(&g->stand_footer_file, g->conf_dir);
       vptr = &g->stand_footer_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->stand_footer_file, "");
       if (r < 0) return -1;
@@ -4994,9 +4998,8 @@ prepare_set_global_defaults(struct section_global_data *g)
   if (!g->plugin_dir[0])
     snprintf(g->plugin_dir, sizeof(g->plugin_dir), "%s", DFLT_G_PLUGIN_DIR);
 
-  if (!g->standings_file_name[0]) {
-    snprintf(g->standings_file_name, sizeof(g->standings_file_name),
-             "%s", DFLT_G_STANDINGS_FILE_NAME);
+  if (!g->standings_file_name || !g->standings_file_name[0]) {
+    xstrdup3(&g->standings_file_name, DFLT_G_STANDINGS_FILE_NAME);
   }
 
   if (g->enable_l10n < 0) g->enable_l10n = 1; /* ??? */
@@ -5283,7 +5286,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   strcpy(global->statement_dir, "../statements");
   strcpy(global->plugin_dir, "../plugins");
 
-  strcpy(global->standings_file_name, DFLT_G_STANDINGS_FILE_NAME);
+  xstrdup3(&global->standings_file_name, DFLT_G_STANDINGS_FILE_NAME);
   global->plog_update_time = DFLT_G_PLOG_UPDATE_TIME;
 
   global->compile_max_vm_size = ~(ej_size64_t) 0;

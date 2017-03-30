@@ -2038,7 +2038,7 @@ do_write_kirov_standings(
     }
     for (j = 0; j < p_tot; j++) {
       fprintf(f, "<th%s>", ss.prob_attr);
-      if (global->prob_info_url[0]) {
+      if (global->prob_info_url && global->prob_info_url[0]) {
         sformat_message(dur_str, sizeof(dur_str), 0, global->prob_info_url,
                         NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_str);
@@ -2048,7 +2048,7 @@ do_write_kirov_standings(
       } else {
         fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
       }
-      if (global->prob_info_url[0]) {
+      if (global->prob_info_url && global->prob_info_url[0]) {
         fprintf(f, "</a>");
       }
       fprintf(f, "</th>");
@@ -2063,8 +2063,7 @@ do_write_kirov_standings(
     if (!user_on_page) {
       current_page++;
       if (!f) {
-        snprintf(stand_name, sizeof(stand_name), global->stand_file_name_2,
-                 current_page);
+        snprintf(stand_name, sizeof(stand_name), global->stand_file_name_2, current_page);
         snprintf(stand_tmp, sizeof(stand_path), "%s/in/%s.tmp", stand_dir, stand_name);
         snprintf(stand_path, sizeof(stand_path), "%s/dir/%s", stand_dir, stand_name);
         if (charset_id > 0) {
@@ -2085,7 +2084,7 @@ do_write_kirov_standings(
 
         fprintf(f, "<tr%s><td>%s:</td><td>%s, ",
                 ss.success_attr, _("Last success"), dur_str);
-        if (global->team_info_url[0]) {
+        if (global->team_info_url && global->team_info_url[0]) {
           teamdb_export_team(state->teamdb_state,
                              runs[last_success_run].user_id,
                              &u_info);
@@ -2094,12 +2093,12 @@ do_write_kirov_standings(
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
         fprintf(f, "%s", ARMOR(stand_get_name(state, runs[last_success_run].user_id)));
-        if (global->team_info_url[0]) {
+        if (global->team_info_url && global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ", ");
 
-        if (global->prob_info_url[0]) {
+        if (global->prob_info_url && global->prob_info_url[0]) {
           sformat_message(dur_str, sizeof(dur_str), 0, global->prob_info_url,
                           NULL, state->probs[runs[last_success_run].prob_id],
                           NULL, NULL, NULL, 0, 0, 0);
@@ -2111,7 +2110,7 @@ do_write_kirov_standings(
         } else {
           fprintf(f, "%s", state->probs[j]->short_name);
         }
-        if (global->prob_info_url[0]) {
+        if (global->prob_info_url && global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ".</td></tr>\n");
@@ -2123,7 +2122,7 @@ do_write_kirov_standings(
                      dur_str, sizeof(dur_str));
         fprintf(f, "<tr%s><td>%s:</td><td>%s, ",
                 ss.success_attr, _("Last submit"), dur_str);
-        if (global->team_info_url[0]) {
+        if (global->team_info_url && global->team_info_url[0]) {
           teamdb_export_team(state->teamdb_state,
                              runs[last_submit_run].user_id,
                              &u_info);
@@ -2132,12 +2131,12 @@ do_write_kirov_standings(
           fprintf(f, "<a href=\"%s\">", dur_str);
         }
         fprintf(f, "%s", ARMOR(stand_get_name(state, runs[last_submit_run].user_id)));
-        if (global->team_info_url[0]) {
+        if (global->team_info_url && global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ", ");
 
-        if (global->prob_info_url[0]) {
+        if (global->prob_info_url && global->prob_info_url[0]) {
           sformat_message(dur_str, sizeof(dur_str), 0, global->prob_info_url,
                           NULL, state->probs[runs[last_submit_run].prob_id],
                           NULL, NULL, NULL, 0, 0, 0);
@@ -2149,7 +2148,7 @@ do_write_kirov_standings(
         } else {
           fprintf(f, "%s", state->probs[j]->short_name);
         }
-        if (global->prob_info_url[0]) {
+        if (global->prob_info_url && global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ".</td></tr>\n");
@@ -2225,7 +2224,7 @@ do_write_kirov_standings(
         col_attr = state->probs[p_ind[j]]->stand_attr;
         if (!col_attr) col_attr = ss.prob_attr;
         fprintf(f, "<th%s>", col_attr);
-        if (global->prob_info_url[0]) {
+        if (global->prob_info_url && global->prob_info_url[0]) {
           sformat_message(dur_str, sizeof(dur_str), 0, global->prob_info_url,
                           NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", dur_str);
@@ -2235,7 +2234,7 @@ do_write_kirov_standings(
         } else {
           fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
         }
-        if (global->prob_info_url[0]) {
+        if (global->prob_info_url && global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, "</th>");
@@ -2253,7 +2252,7 @@ do_write_kirov_standings(
           col_attr = state->probs[p_ind[j]]->stand_attr;
           if (!col_attr) col_attr = ss.prob_attr;
           fprintf(f, "<th%s>", col_attr);
-          if (global->prob_info_url[0]) {
+          if (global->prob_info_url && global->prob_info_url[0]) {
             sformat_message(dur_str, sizeof(dur_str), 0, global->prob_info_url,
                             NULL, state->probs[p_ind[j]], NULL, NULL, NULL,
                             0, 0, 0);
@@ -2264,7 +2263,7 @@ do_write_kirov_standings(
           } else {
             fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
           }
-          if (global->prob_info_url[0]) {
+          if (global->prob_info_url && global->prob_info_url[0]) {
             fprintf(f, "</a>");
           }
           fprintf(f, "</th>");
@@ -2277,7 +2276,8 @@ do_write_kirov_standings(
     /* print page contents */
     t = t_sort[i];
 
-    if (global->team_info_url[0] || global->stand_extra_format[0]) {
+    if ((global->team_info_url && global->team_info_url[0])
+        || global->stand_extra_format[0]) {
       teamdb_export_team(state->teamdb_state, t_ind[t], &u_info);
     } else {
       memset(&u_info, 0, sizeof(u_info));
@@ -2304,13 +2304,13 @@ do_write_kirov_standings(
     else fprintf(f, "%d-%d", t_n1[i] + 1, t_n2[i] + 1);
     fputs("</td>", f);
     fprintf(f, "<td%s>", ss.team_attr);
-    if (global->team_info_url[0]) {
+    if (global->team_info_url && global->team_info_url[0]) {
       sformat_message(dur_str, sizeof(dur_str), 0, global->team_info_url,
                       NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
       fprintf(f, "<a href=\"%s\">", dur_str);
     }
     fprintf(f, "%s", ARMOR(stand_get_name(state, t_ind[t])));
-    if (global->team_info_url[0]) {
+    if (global->team_info_url && global->team_info_url[0]) {
       fprintf(f, "</a>");
     }
     fprintf(f, "</td>");
@@ -3231,7 +3231,7 @@ do_write_moscow_standings(
       row_attr = state->probs[p_ind[j]]->stand_attr;
       if (!row_attr) row_attr = ss.prob_attr;
       fprintf(f, "<th%s>", row_attr);
-      if (global->prob_info_url[0]) {
+      if (global->prob_info_url && global->prob_info_url[0]) {
         sformat_message(strbuf, sizeof(strbuf), 0, global->prob_info_url,
                         NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
         fprintf(f, "<a href=\"%s\">", strbuf);
@@ -3241,7 +3241,7 @@ do_write_moscow_standings(
       } else {
         fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
       }
-      if (global->prob_info_url[0])
+      if (global->prob_info_url && global->prob_info_url[0])
         fprintf(f, "</a>");
       fprintf(f, "</th>");
     }
@@ -3278,20 +3278,19 @@ do_write_moscow_standings(
         }
         fprintf(f, "<p%s>%s: %s, ",
                 ss.success_attr, _("Last success"), strbuf);
-        if (global->team_info_url[0]) {
-          teamdb_export_team(state->teamdb_state, runs[last_success_run].user_id,
-                             &u_info);
+        if (global->team_info_url && global->team_info_url[0]) {
+          teamdb_export_team(state->teamdb_state, runs[last_success_run].user_id, &u_info);
           sformat_message(strbuf, sizeof(strbuf), 0, global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
         fprintf(f, "%s", ARMOR(stand_get_name(state, runs[last_success_run].user_id)));
-        if (global->team_info_url[0]) {
+        if (global->team_info_url && global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ", ");
 
-        if (global->prob_info_url[0]) {
+        if (global->prob_info_url && global->prob_info_url[0]) {
           sformat_message(strbuf, sizeof(strbuf), 0, global->prob_info_url,
                           NULL, state->probs[runs[last_success_run].prob_id],
                           NULL, NULL, NULL, 0, 0, 0);
@@ -3303,7 +3302,7 @@ do_write_moscow_standings(
         } else {
           fprintf(f, "%s", state->probs[j]->short_name);
         }
-        if (global->prob_info_url[0]) {
+        if (global->prob_info_url && global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ".</p>\n");
@@ -3319,19 +3318,19 @@ do_write_moscow_standings(
         }
         fprintf(f, "<p%s>%s: %s, ",
                 ss.success_attr, _("Last submit"), strbuf);
-        if (global->team_info_url[0]) {
+        if (global->team_info_url && global->team_info_url[0]) {
           teamdb_export_team(state->teamdb_state, runs[last_submit_run].user_id, &u_info);
           sformat_message(strbuf, sizeof(strbuf), 0, global->team_info_url,
                           NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
         }
         fprintf(f, "%s", ARMOR(stand_get_name(state, runs[last_submit_run].user_id)));
-        if (global->team_info_url[0]) {
+        if (global->team_info_url && global->team_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ", ");
 
-        if (global->prob_info_url[0]) {
+        if (global->prob_info_url && global->prob_info_url[0]) {
           sformat_message(strbuf, sizeof(strbuf), 0, global->prob_info_url,
                           NULL, state->probs[runs[last_submit_run].prob_id],
                           NULL, NULL, NULL, 0, 0, 0);
@@ -3343,7 +3342,7 @@ do_write_moscow_standings(
         } else {
           fprintf(f, "%s", state->probs[j]->short_name);
         }
-        if (global->prob_info_url[0]) {
+        if (global->prob_info_url && global->prob_info_url[0]) {
           fprintf(f, "</a>");
         }
         fprintf(f, ".</p>\n");
@@ -3381,7 +3380,7 @@ do_write_moscow_standings(
         row_attr = state->probs[p_ind[j]]->stand_attr;
         if (!row_attr) row_attr = ss.prob_attr;
         fprintf(f, "<th%s>", row_attr);
-        if (global->prob_info_url[0]) {
+        if (global->prob_info_url && global->prob_info_url[0]) {
           sformat_message(strbuf, sizeof(strbuf), 0, global->prob_info_url,
                           NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0, 0);
           fprintf(f, "<a href=\"%s\">", strbuf);
@@ -3391,7 +3390,7 @@ do_write_moscow_standings(
         } else {
           fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
         }
-        if (global->prob_info_url[0])
+        if (global->prob_info_url && global->prob_info_url[0])
           fprintf(f, "</a>");
         fprintf(f, "</th>");
       }
@@ -3403,7 +3402,8 @@ do_write_moscow_standings(
     // print the standings row
     u = u_sort[i];
 
-    if (global->team_info_url[0] || global->stand_extra_format[0]) {
+    if ((global->team_info_url && global->team_info_url[0])
+        || global->stand_extra_format[0]) {
       teamdb_export_team(state->teamdb_state, u_ind[u], &u_info);
     } else {
       memset(&u_info, 0, sizeof(u_info));
@@ -3429,13 +3429,13 @@ do_write_moscow_standings(
     if (u_n1[i] == u_n2[i]) fprintf(f, "%d", u_n1[i] + 1);
     else fprintf(f, "%d-%d", u_n1[i] + 1, u_n2[i] + 1);
     fprintf(f, "</td><td%s>", ss.team_attr);
-    if (global->team_info_url[0]) {
+    if (global->team_info_url && global->team_info_url[0]) {
       sformat_message(strbuf, sizeof(strbuf), 0, global->team_info_url,
                       NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
       fprintf(f, "<a href=\"%s\">", strbuf);
     }
     fprintf(f, "%s", ARMOR(stand_get_name(state, u_ind[u])));
-    if (global->team_info_url[0]) {
+    if (global->team_info_url && global->team_info_url[0]) {
       fprintf(f, "</a>");
     }
     fprintf(f, "</td>");
@@ -4077,18 +4077,18 @@ do_write_standings(
       }
       fprintf(f, "<p%s>%s: %s, ",
               ss.success_attr, _("Last success"), dur_buf);
-      if (global->team_info_url[0]) {
+      if (global->team_info_url && global->team_info_url[0]) {
         teamdb_export_team(state->teamdb_state, runs[last_success_run].user_id, &ttt);
         sformat_message(dur_buf, sizeof(dur_buf), 0, global->team_info_url,
                         NULL, NULL, NULL, NULL, &ttt, ttt.user, 0, 0);
         fprintf(f, "<a href=\"%s\">", dur_buf);      
       }
       fprintf(f, "%s", ARMOR(stand_get_name(state, runs[last_success_run].user_id)));
-      if (global->team_info_url[0]) {
+      if (global->team_info_url && global->team_info_url[0]) {
         fprintf(f, "</a>");
       }
       fprintf(f, ", ");
-      if (global->prob_info_url[0]) {
+      if (global->prob_info_url && global->prob_info_url[0]) {
         sformat_message(dur_buf, sizeof(dur_buf), 0, global->prob_info_url,
                         NULL, state->probs[runs[last_success_run].prob_id],
                         NULL, NULL, NULL, 0, 0, 0);
@@ -4100,7 +4100,7 @@ do_write_standings(
       } else {
         fprintf(f, "%s", state->probs[j]->short_name);
       }
-      if (global->prob_info_url[0]) {
+      if (global->prob_info_url && global->prob_info_url[0]) {
         fprintf(f, "</a>");
       }
       fprintf(f, ".</p>\n");
@@ -4131,7 +4131,7 @@ do_write_standings(
       col_attr = state->probs[p_ind[j]]->stand_attr;
       if (!col_attr) col_attr = ss.prob_attr;
       fprintf(f, "<th%s>", col_attr);
-      if (global->prob_info_url[0]) {
+      if (global->prob_info_url && global->prob_info_url[0]) {
         sformat_message(url_str, sizeof(url_str), 0, global->prob_info_url,
                         NULL, state->probs[p_ind[j]], NULL, NULL, NULL, 0, 0,
                         0);
@@ -4142,7 +4142,7 @@ do_write_standings(
       } else {
         fprintf(f, "%s", state->probs[p_ind[j]]->short_name);
       }
-      if (global->prob_info_url[0]) {
+      if (global->prob_info_url && global->prob_info_url[0]) {
         fprintf(f, "</a>");
       }
       fprintf(f, "</th>");
@@ -4191,18 +4191,19 @@ do_write_standings(
       else fprintf(f, "%d-%d", t_n1[i] + 1, t_n2[i] + 1);
       fputs("</td>", f);
       fprintf(f, "<td%s>", ss.team_attr);
-      if (global->team_info_url[0] || global->stand_extra_format[0]) {
+      if ((global->team_info_url && global->team_info_url[0])
+          || global->stand_extra_format[0]) {
         teamdb_export_team(state->teamdb_state, t_ind[t], &ttt);
       } else {
         memset(&ttt, 0, sizeof(ttt));
       }
-      if (global->team_info_url[0]) {
+      if (global->team_info_url && global->team_info_url[0]) {
         sformat_message(url_str, sizeof(url_str), 0, global->team_info_url,
                         NULL, NULL, NULL, NULL, &ttt, ttt.user, 0, 0);
         fprintf(f, "<a href=\"%s\">", url_str);      
       }
       fprintf(f, "%s", ARMOR(stand_get_name(state, t_ind[t])));
-      if (global->team_info_url[0]) {
+      if (global->team_info_url && global->team_info_url[0]) {
         fprintf(f, "</a>");
       }
       fprintf(f, "</td>");
