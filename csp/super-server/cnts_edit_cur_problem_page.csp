@@ -646,7 +646,7 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-internal_name-div">
                 <td>Internal name:</td>
-                <td><s:textfield id="orig-internal_name" readonly="readonly" name="param" value="prob->internal_name" size="48" maxlength="1024" check="no" /><% if (!prob->internal_name) { %>(<i>Not set</i>)<% } %></td>
+                <td><s:textfield id="orig-internal_name" readonly="readonly" name="param" value="prob->internal_name" size="48" maxlength="1024" checkExpr="" /><% if (!prob->internal_name) { %>(<i>Not set</i>)<% } %></td>
                 <td><input type="button" onclick="popupIdDialog(event, 'internal_name')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:internal_name" /></td>
             </s:tr>
@@ -1936,7 +1936,7 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-score_tests-div">
                 <td>Tests for problem scores:</td>
-                <td><s:textfield id="orig-score_tests" readonly="readonly" name="param" value="prob->score_tests" size="48" maxlength="1024" check="no" /></td>
+                <td><s:textfield id="orig-score_tests" readonly="readonly" name="param" value="prob->score_tests" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupScoringDialog(event, 'score_tests')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:score_tests" /></td>
             </s:tr>
@@ -2008,14 +2008,14 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-open_tests-div">
                 <td>Tests open for participants:</td>
-                <td><s:textfield id="orig-open_tests" readonly="readonly" name="param" value="prob->open_tests" size="48" maxlength="1024" check="no" /></td>
+                <td><s:textfield id="orig-open_tests" readonly="readonly" name="param" value="prob->open_tests" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupFeedbackDialog(event, 'open_tests')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:open_tests" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-final_open_tests-div">
                 <td>Tests open for participants finally:</td>
-                <td><s:textfield id="orig-final_open_tests" readonly="readonly" name="param" value="prob->final_open_tests" size="48" maxlength="1024" check="no" /></td>
+                <td><s:textfield id="orig-final_open_tests" readonly="readonly" name="param" value="prob->final_open_tests" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupFeedbackDialog(event, 'final_open_tests')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:final_open_tests" /></td>
             </s:tr>
@@ -2032,7 +2032,7 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-token_open_tests-div">
                 <td>Tests open for tokens:</td>
-                <td><s:textfield id="orig-token_open_tests" readonly="readonly" name="param" value="prob->token_open_tests" size="48" maxlength="1024" check="" /></td>
+                <td><s:textfield id="orig-token_open_tests" readonly="readonly" name="param" value="prob->token_open_tests" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupFeedbackDialog(event, 'token_open_tests')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="serve.cfg:problem:token_open_tests" /></td>
             </s:tr>
