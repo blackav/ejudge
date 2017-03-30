@@ -1567,13 +1567,15 @@ function viewDialogOnChange(field)
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-standard_checker-div">
                 <td>Standard checker:</td>
                 <td><s:hidden id="orig-standard_checker" name="param" value="prob->standard_checker" checkExpr="" /><%
-    int j;
-    for (j = 0; std_checkers[j].name; ++j) {
-      if (!strcmp(prob->standard_checker, std_checkers[j].name)) {
+    if (prob->standard_checker) {
+      int j;
+      for (j = 0; std_checkers[j].name; ++j) {
+        if (!strcmp(prob->standard_checker, std_checkers[j].name)) {
 %><s:v value="std_checkers[j].desc" /> - <%
+        }
       }
     }
-%><tt><s:v value="prob->standard_checker" /></tt></td>
+%><tt><s:v value="prob->standard_checker" checkExpr="" /></tt></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:standard_checker" /></td>
             </s:tr>
