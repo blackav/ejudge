@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2000-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -371,3 +370,23 @@ path_make_relative(
   path_split_free(s_relto);
   path_split_free(s_prefix);
 }
+
+void
+path_prepend_dir(
+        unsigned char **pdst,
+        const char *dir)
+{
+  if (*pdst && !os_IsAbsolutePath(*pdst) && dir) {
+    int len1 = strlen(dir);
+    int len2 = strlen(*pdst);
+    if (len1 > 0 && len2 > 0) {
+      unsigned char *str = malloc(len1 + len2 + 2);
+      memcpy(str, dir, len1);
+      str[len1] = '/';
+      memcpy(str + len1 + 1, *pdst, len2 + 1);
+      xfree(*pdst);
+      *pdst = str;
+    }
+  }
+}
+

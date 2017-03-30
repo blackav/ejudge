@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __PATHUTL_H__
 #define __PATHUTL_H__
 
-/* Copyright (C) 2000-2010 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -84,5 +83,10 @@ path_make_relative(
         const unsigned char *path,
         const unsigned char *relto,
         const unsigned char *prefix);
+
+void
+path_prepend_dir(
+        unsigned char **pdst,
+        const char *dir);
 
 #endif /* __PATHUTL_H__ */
