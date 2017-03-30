@@ -605,25 +605,25 @@ struct section_global_data
   int external_xml_update_time;
 
   /** header file name for the user examination protocol */
-  path_t user_exam_protocol_header_file;
+  unsigned char *user_exam_protocol_header_file;
   /** footer file name for the user examination protocol */
-  path_t user_exam_protocol_footer_file;
+  unsigned char *user_exam_protocol_footer_file;
   /** header text for the user examination protocol */
   unsigned char *user_exam_protocol_header_txt META_ATTRIB((meta_private));
   /** footer text for the user examination protocol */
   unsigned char *user_exam_protocol_footer_txt META_ATTRIB((meta_private));
   /** header file name for the problem examination protocol */
-  path_t prob_exam_protocol_header_file;
+  unsigned char *prob_exam_protocol_header_file;
   /** footer file name for the problem examination protocol */
-  path_t prob_exam_protocol_footer_file;
+  unsigned char *prob_exam_protocol_footer_file;
   /** header text for the problem examination protocol */
   unsigned char *prob_exam_protocol_header_txt META_ATTRIB((meta_private));
   /** footer text for the problem examination protocol */
   unsigned char *prob_exam_protocol_footer_txt META_ATTRIB((meta_private));
   /** header file name for the full user examination protocol */
-  path_t full_exam_protocol_header_file;
+  unsigned char *full_exam_protocol_header_file;
   /** footer file name for the full user examination protocol */
-  path_t full_exam_protocol_footer_file;
+  unsigned char *full_exam_protocol_footer_file;
   /** header text for the full user examination protocol */
   unsigned char *full_exam_protocol_header_txt META_ATTRIB((meta_private));
   /** footer text for the full user examination protocol */

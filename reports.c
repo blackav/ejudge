@@ -493,7 +493,7 @@ user_report_generate(
     }
   }
 
-  if (global->user_exam_protocol_header_file[0]
+  if (global->user_exam_protocol_header_file && global->user_exam_protocol_header_file[0]
       && global->user_exam_protocol_header_txt) {
     sformat_message(bigbuf, sizeof(bigbuf), 0,
                     global->user_exam_protocol_header_txt,
@@ -899,7 +899,7 @@ user_report_generate(
     f_id = l_id;
   }
 
-  if (global->user_exam_protocol_footer_file[0]
+  if (global->user_exam_protocol_footer_file && global->user_exam_protocol_footer_file[0]
       && global->user_exam_protocol_footer_txt) {
     sformat_message(bigbuf, sizeof(bigbuf), 0,
                     global->user_exam_protocol_footer_txt,
@@ -1133,7 +1133,7 @@ full_user_report_generate(
     }
   }
 
-  if (global->full_exam_protocol_header_file[0]
+  if (global->full_exam_protocol_header_file && global->full_exam_protocol_header_file[0]
       && global->full_exam_protocol_header_txt) {
     sformat_message(bigbuf, sizeof(bigbuf), 0,
                     global->full_exam_protocol_header_txt,
@@ -1593,7 +1593,7 @@ full_user_report_generate(
     f_id = l_id;
   }
 
-  if (global->full_exam_protocol_footer_file[0]
+  if (global->full_exam_protocol_footer_file && global->full_exam_protocol_footer_file[0]
       && global->full_exam_protocol_footer_txt) {
     sformat_message(bigbuf, sizeof(bigbuf), 0,
                     global->full_exam_protocol_footer_txt,
@@ -3239,7 +3239,7 @@ problem_report_generate(
         user_ind[run_cnt++] = i;
   }
 
-  if (global->prob_exam_protocol_header_file[0]
+  if (global->prob_exam_protocol_header_file && global->prob_exam_protocol_header_file[0]
       && global->prob_exam_protocol_header_txt) {
     sformat_message(bigbuf, sizeof(bigbuf), 0,
                     global->prob_exam_protocol_header_txt,
@@ -3544,7 +3544,7 @@ problem_report_generate(
     abort();
   }
 
-  if (global->prob_exam_protocol_footer_file[0]
+  if (global->prob_exam_protocol_footer_file && global->prob_exam_protocol_footer_file[0]
       && global->prob_exam_protocol_footer_txt) {
     sformat_message(bigbuf, sizeof(bigbuf), 0,
                     global->prob_exam_protocol_footer_txt,

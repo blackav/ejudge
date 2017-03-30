@@ -328,12 +328,12 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_contestant_status_attr, "s"),
   GLOBAL_PARAM(stand_warn_number_attr, "s"),
 
-  GLOBAL_PARAM(user_exam_protocol_header_file, "s"),
-  GLOBAL_PARAM(user_exam_protocol_footer_file, "s"),
-  GLOBAL_PARAM(prob_exam_protocol_header_file, "s"),
-  GLOBAL_PARAM(prob_exam_protocol_footer_file, "s"),
-  GLOBAL_PARAM(full_exam_protocol_header_file, "s"),
-  GLOBAL_PARAM(full_exam_protocol_footer_file, "s"),
+  GLOBAL_PARAM(user_exam_protocol_header_file, "S"),
+  GLOBAL_PARAM(user_exam_protocol_footer_file, "S"),
+  GLOBAL_PARAM(prob_exam_protocol_header_file, "S"),
+  GLOBAL_PARAM(prob_exam_protocol_footer_file, "S"),
+  GLOBAL_PARAM(full_exam_protocol_header_file, "S"),
+  GLOBAL_PARAM(full_exam_protocol_footer_file, "S"),
 
   GLOBAL_PARAM(load_user_group, "x"),
 
@@ -950,6 +950,12 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->internal_sound);
   xfree(p->start_sound);
   xfree(p->variant_map_file);
+  xfree(p->user_exam_protocol_header_file);
+  xfree(p->user_exam_protocol_footer_file);
+  xfree(p->prob_exam_protocol_header_file);
+  xfree(p->prob_exam_protocol_footer_file);
+  xfree(p->full_exam_protocol_header_file);
+  xfree(p->full_exam_protocol_footer_file);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2949,46 +2955,40 @@ set_defaults(
       g->plog_update_time = 0;
     }
 
-    if (g->user_exam_protocol_header_file[0]) {
-      pathmake2(g->user_exam_protocol_header_file, g->conf_dir, "/",
-                g->user_exam_protocol_header_file, NULL);
+    if (g->user_exam_protocol_header_file && g->user_exam_protocol_header_file[0]) {
+      path_prepend_dir(&g->user_exam_protocol_header_file, g->conf_dir);
       vptr = &g->user_exam_protocol_header_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->user_exam_protocol_header_file, "");
       if (r < 0) return -1;
     }
-    if (g->user_exam_protocol_footer_file[0]) {
-      pathmake2(g->user_exam_protocol_footer_file, g->conf_dir, "/",
-                g->user_exam_protocol_footer_file, NULL);
+    if (g->user_exam_protocol_footer_file && g->user_exam_protocol_footer_file[0]) {
+      path_prepend_dir(&g->user_exam_protocol_footer_file, g->conf_dir);
       vptr = &g->user_exam_protocol_footer_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->user_exam_protocol_footer_file, "");
       if (r < 0) return -1;
     }
 
-    if (g->prob_exam_protocol_header_file[0]) {
-      pathmake2(g->prob_exam_protocol_header_file, g->conf_dir, "/",
-                g->prob_exam_protocol_header_file, NULL);
+    if (g->prob_exam_protocol_header_file && g->prob_exam_protocol_header_file[0]) {
+      path_prepend_dir(&g->prob_exam_protocol_header_file, g->conf_dir);
       vptr = &g->prob_exam_protocol_header_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->prob_exam_protocol_header_file, "");
       if (r < 0) return -1;
     }
-    if (g->prob_exam_protocol_footer_file[0]) {
-      pathmake2(g->prob_exam_protocol_footer_file, g->conf_dir, "/",
-                g->prob_exam_protocol_footer_file, NULL);
+    if (g->prob_exam_protocol_footer_file && g->prob_exam_protocol_footer_file[0]) {
+      path_prepend_dir(&g->prob_exam_protocol_footer_file, g->conf_dir);
       vptr = &g->prob_exam_protocol_footer_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->prob_exam_protocol_footer_file, "");
       if (r < 0) return -1;
     }
 
-    if (g->full_exam_protocol_header_file[0]) {
-      pathmake2(g->full_exam_protocol_header_file, g->conf_dir, "/",
-                g->full_exam_protocol_header_file, NULL);
+    if (g->full_exam_protocol_header_file && g->full_exam_protocol_header_file[0]) {
+      path_prepend_dir(&g->full_exam_protocol_header_file, g->conf_dir);
       vptr = &g->full_exam_protocol_header_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->full_exam_protocol_header_file, "");
       if (r < 0) return -1;
     }
-    if (g->full_exam_protocol_footer_file[0]) {
-      pathmake2(g->full_exam_protocol_footer_file, g->conf_dir, "/",
-                g->full_exam_protocol_footer_file, NULL);
+    if (g->full_exam_protocol_footer_file && g->full_exam_protocol_footer_file[0]) {
+      path_prepend_dir(&g->full_exam_protocol_footer_file, g->conf_dir);
       vptr = &g->full_exam_protocol_footer_txt;
       r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->full_exam_protocol_footer_file, "");
       if (r < 0) return -1;
