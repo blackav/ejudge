@@ -783,75 +783,15 @@ struct section_global_data
 /* sizeof(struct section_problem_data) == 65284/65560 */
 struct section_problem_data
 {
-  struct generic_section_config g META_ATTRIB((meta_hidden));
+  struct generic_section_config g META_ATTRIB((meta_hidden));   // 32 bytes
 
   /** problem identifier */
   int id;
   int tester_id;
-  /** is this an abstract problem specification */
-  ejintbool_t abstract;
   /** problem type */
   int type;
-  /** 1, if this problem is checked manually */
-  ejintbool_t manual_checking;
-  /** number of independent examinations */
-  int examinator_num;
-  /** 1, if still check for PE */
-  ejintbool_t check_presentation;
-  /** 1, if the checker calculates test score */
-  ejintbool_t scoring_checker;
-  /** 1, if the valuer works in parallel with testing */
-  ejintbool_t interactive_valuer;
-  /** 1, if PEs are converted to WAs */
-  ejintbool_t disable_pe;
-  /** 1, if WTLs are converted to TLs */
-  ejintbool_t disable_wtl;
-  /** 1, if WTLs are treated as CFs */
-  ejintbool_t wtl_is_cf;
-  /** 1, if solution uses stdin for input */
-  ejintbool_t use_stdin;
-  /** 1, if solution uses stdout for output */
-  ejintbool_t use_stdout;
-  /** 1, if combined stdin/files input is enabled */
-  ejintbool_t combined_stdin;
-  /** 1, if combined stdout/files output is enabled */
-  ejintbool_t combined_stdout;
-  /** input data for problem is binary */
-  ejintbool_t binary_input;
-  /** submit is binary */
-  ejintbool_t binary;
-  /** do not treat non-zero exit code as run-time error */
-  ejintbool_t ignore_exit_code;
-  /** for KIROV contests: handle problem in the olympiad mode*/
-  ejintbool_t olympiad_mode;
-  /** for KIROV contests: score the latest submit */
-  ejintbool_t score_latest;
-  /** for KIROV contests: score the latest submit or the best unmarked */
-  ejintbool_t score_latest_or_unmarked;
-  /** for KIROV contests: score the latest marked submit */
-  ejintbool_t score_latest_marked;
-  /** for KIROV contests: score only the tokenized submits (with tokens spent on them) */
-  ejintbool_t score_tokenized;
-  /** maximum astronomical time for a problem (seconds) */
-  int real_time_limit;
-  /** time limit in seconds */
-  int time_limit;
-  /** time limit in milliseconds */
-  int time_limit_millis;
-  /** use AC instead of OK for successful submits */
-  ejintbool_t use_ac_not_ok;
-  /** mark previous AC for this problems as IG */
-  ejintbool_t ignore_prev_ac;
-  /** enable report viewing for contestants */
-  ejintbool_t team_enable_rep_view;
-  /** enable compilation error messages viewing for contestants */
-  ejintbool_t team_enable_ce_view;
-  /** show the full testing report to contestants */
-  ejintbool_t team_show_judge_report;
-  /** always show checker comments */
-  ejintbool_t show_checker_comment;
-  /** do not count compilation errors as failed runs */
-  ejintbool_t ignore_compile_errors;
+  /** number of variants for this problem */
+  int variant_num;
   /** score for successful solution */
   int full_score;
   /** score for successful user-visible solution (separate_user_score mode) */
@@ -860,8 +800,168 @@ struct section_problem_data
   int min_score_1;
   /** min score after all subtractions */
   int min_score_2;
+
+  // offset == 64
+  /** base abstract problem */
+  unsigned char super[32];
+  /** short name of the problem */
+  unsigned char short_name[32];
+
+  // offset == 128
+  /** is this an abstract problem specification */
+  ejbyteflag_t abstract;
+  /** 1, if this problem is checked manually */
+  ejbyteflag_t manual_checking;
+  /** 1, if still check for PE */
+  ejbyteflag_t check_presentation;
+  /** 1, if the checker calculates test score */
+  ejbyteflag_t scoring_checker;
+  /** 1, if the valuer works in parallel with testing */
+  ejbyteflag_t interactive_valuer;
+  /** 1, if PEs are converted to WAs */
+  ejbyteflag_t disable_pe;
+  /** 1, if WTLs are converted to TLs */
+  ejbyteflag_t disable_wtl;
+  /** 1, if WTLs are treated as CFs */
+  ejbyteflag_t wtl_is_cf;
+
+  /** 1, if solution uses stdin for input */
+  ejbyteflag_t use_stdin;
+  /** 1, if solution uses stdout for output */
+  ejbyteflag_t use_stdout;
+  /** 1, if combined stdin/files input is enabled */
+  ejbyteflag_t combined_stdin;
+  /** 1, if combined stdout/files output is enabled */
+  ejbyteflag_t combined_stdout;
+  /** input data for problem is binary */
+  ejbyteflag_t binary_input;
+  /** submit is binary */
+  ejbyteflag_t binary;
+  /** do not treat non-zero exit code as run-time error */
+  ejbyteflag_t ignore_exit_code;
+  /** for KIROV contests: handle problem in the olympiad mode*/
+  ejbyteflag_t olympiad_mode;
+
+  /** for KIROV contests: score the latest submit */
+  ejbyteflag_t score_latest;
+  /** for KIROV contests: score the latest submit or the best unmarked */
+  ejbyteflag_t score_latest_or_unmarked;
+  /** for KIROV contests: score the latest marked submit */
+  ejbyteflag_t score_latest_marked;
+  /** for KIROV contests: score only the tokenized submits (with tokens spent on them) */
+  ejbyteflag_t score_tokenized;
+  /** use AC instead of OK for successful submits */
+  ejbyteflag_t use_ac_not_ok;
+  /** mark previous AC for this problems as IG */
+  ejbyteflag_t ignore_prev_ac;
+  /** enable report viewing for contestants */
+  ejbyteflag_t team_enable_rep_view;
+  /** enable compilation error messages viewing for contestants */
+  ejbyteflag_t team_enable_ce_view;
+
+  /** show the full testing report to contestants */
+  ejbyteflag_t team_show_judge_report;
+  /** always show checker comments */
+  ejbyteflag_t show_checker_comment;
+  /** do not count compilation errors as failed runs */
+  ejbyteflag_t ignore_compile_errors;
   /** allow changing the score for successful solutions */
-  ejintbool_t variable_full_score;
+  ejbyteflag_t variable_full_score;
+  /** ignore penalty for this problem in overall penalty calculation */
+  ejbyteflag_t ignore_penalty;
+  /** pass a file with the correct answer to the checker */
+  ejbyteflag_t use_corr;
+  /** pass a file with test information to the checker */
+  ejbyteflag_t use_info;
+  /** use a working directory from the tgz archive */
+  ejbyteflag_t use_tgz;
+
+
+  /** accept solutions that do not pass all accepting tests */
+  ejbyteflag_t accept_partial;
+  /** participants cannot submit this problem */
+  ejbyteflag_t disable_user_submit;
+  /** no problem tab for this problem in problem_navigation mode */
+  ejbyteflag_t disable_tab;
+  /** do show problem statement after problem expiration */
+  ejbyteflag_t unrestricted_statement;
+  /** for compatibility with old configs */
+  ejbyteflag_t restricted_statement;
+  /** enable submit for rejected problems even after deadline */
+  ejbyteflag_t enable_submit_after_reject;
+  /** hide input/output file names from problem submit page */
+  ejbyteflag_t hide_file_names;
+  /** hide information about real time limit */
+  ejbyteflag_t hide_real_time_limit;
+
+  /** enable tokens for this problem */
+  ejbyteflag_t enable_tokens;
+  /** enable tokens only for user AC status */
+  ejbyteflag_t tokens_for_user_ac;
+  /** disable submission after this problem is solved */
+  ejbyteflag_t disable_submit_after_ok;
+  /** do not test this problem automatically */
+  ejbyteflag_t disable_auto_testing;
+  /** disable any testing of this problem */
+  ejbyteflag_t disable_testing;
+  /** check that submission compiles successfully */
+  ejbyteflag_t enable_compilation;
+  /** skip testing this problem */
+  ejbyteflag_t skip_testing;
+  /** hide the problem from standings */
+  ejbyteflag_t hidden;
+
+  /** do not show accept time in standings */
+  ejbyteflag_t stand_hide_time;
+  /** automatically advance to the next problem in navigation mode */
+  ejbyteflag_t advance_to_next;
+  /** disable any control characters except \r, \n in the source code */
+  ejbyteflag_t disable_ctrl_chars;
+  /** enable text area form for output-only problems */
+  ejbyteflag_t enable_text_form;
+  /** ignore the score in total score calculation */
+  ejbyteflag_t stand_ignore_score;
+  /** show the column after the `total' column */
+  ejbyteflag_t stand_last_column;
+  /** disable security restrictions for this problem */
+  ejbyteflag_t disable_security;
+  /** enable suid helpers for this problem */
+  ejbyteflag_t enable_suid_run;
+
+  /** if the valuer also sets the marked flag */
+  ejbyteflag_t valuer_sets_marked;
+  /** ignore unmarked submits in scoring */
+  ejbyteflag_t ignore_unmarked;
+  /** consider any output to stderr as presentation error */
+  ejbyteflag_t disable_stderr;
+  /** use process groups */
+  ejbyteflag_t enable_process_group;
+  /** hide variant number from user */
+  ejbyteflag_t hide_variant;
+  /** enable testlib-compatibility mode */
+  ejbyteflag_t enable_testlib_mode;
+  /** autoassign variants? */
+  ejbyteflag_t autoassign_variants;
+  /** require any of the specified problem, not all */
+  ejbyteflag_t require_any;
+
+
+  /** enable headers/footers specific for each test */
+  ejbyteflag_t enable_multi_header;
+  /** use lang short name in multi headers */
+  ejbyteflag_t use_lang_multi_header;
+
+  // padding to 8-byte boundary
+  unsigned char _pad1[6];
+
+  /** number of independent examinations */
+  int examinator_num;
+  /** maximum astronomical time for a problem (seconds) */
+  int real_time_limit;
+  /** time limit in seconds */
+  int time_limit;
+  /** time limit in milliseconds */
+  int time_limit_millis;
   /** score for one test */
   int test_score;
   /** penalty for one run for KIROV contests*/
@@ -872,86 +972,20 @@ struct section_problem_data
   int disqualified_penalty;
   /** penalty for a compilation error */
   int compile_error_penalty;
-  /** ignore penalty for this problem in overall penalty calculation */
-  ejintbool_t ignore_penalty;
-  /** pass a file with the correct answer to the checker */
-  ejintbool_t use_corr;
-  /** pass a file with test information to the checker */
-  ejintbool_t use_info;
-  /** use a working directory from the tgz archive */
-  ejintbool_t use_tgz;
   /** number of tests to accept solutions in olympiad contests */
   int tests_to_accept;
-  /** accept solutions that do not pass all accepting tests */
-  ejintbool_t accept_partial;
   /** minimal number of tests to accept solutions in olympiad contests */
   int min_tests_to_accept;
   /** real time limit for checkers */
   int checker_real_time_limit;
-  /** participants cannot submit this problem */
-  ejintbool_t disable_user_submit;
-  /** no problem tab for this problem in problem_navigation mode */
-  ejintbool_t disable_tab;
-  /** do show problem statement after problem expiration */
-  ejintbool_t unrestricted_statement;
-  /** for compatibility with old configs */
-  ejintbool_t restricted_statement;
-  /** enable submit for rejected problems even after deadline */
-  ejintbool_t enable_submit_after_reject;
-  /** hide input/output file names from problem submit page */
-  ejintbool_t hide_file_names;
-  /** hide information about real time limit */
-  ejintbool_t hide_real_time_limit;
-  /** enable tokens for this problem */
-  ejintbool_t enable_tokens;
-  /** enable tokens only for user AC status */
-  ejintbool_t tokens_for_user_ac;
-  /** disable submission after this problem is solved */
-  ejintbool_t disable_submit_after_ok;
-  /** do not test this problem automatically */
-  ejintbool_t disable_auto_testing;
-  /** disable any testing of this problem */
-  ejintbool_t disable_testing;
-  /** check that submission compiles successfully */
-  ejintbool_t enable_compilation;
-  /** skip testing this problem */
-  ejintbool_t skip_testing;
-  /** hide the problem from standings */
-  ejintbool_t hidden;
   /** priority adjustment for this problem */
   int priority_adjustment;
-  /** do not show accept time in standings */
-  ejintbool_t stand_hide_time;
   /** additional score multiplier for this problem */
   int score_multiplier;
   /** number of previous runs to show */
   int prev_runs_to_show;
   /** limit for the number of submits for this problem for a user */
   int max_user_run_count;
-  /** automatically advance to the next problem in navigation mode */
-  ejintbool_t advance_to_next;
-  /** disable any control characters except \r, \n in the source code */
-  ejintbool_t disable_ctrl_chars;
-  /** enable text area form for output-only problems */
-  ejintbool_t enable_text_form;
-  /** ignore the score in total score calculation */
-  ejintbool_t stand_ignore_score;
-  /** show the column after the `total' column */
-  ejintbool_t stand_last_column;
-  /** disable security restrictions for this problem */
-  ejintbool_t disable_security;
-  /** enable suid helpers for this problem */
-  ejintbool_t enable_suid_run;
-  /** enable headers/footers specific for each test */
-  ejintbool_t enable_multi_header;
-  /** use lang short name in multi headers */
-  ejintbool_t use_lang_multi_header;
-  /** require any of the specified problem, not all */
-  ejintbool_t require_any;
-  /** base abstract problem */
-  unsigned char super[32];
-  /** short name of the problem */
-  unsigned char short_name[32];
   /** long name of the problem */
   unsigned char *long_name;
   /** name for the standings column */
@@ -1023,20 +1057,8 @@ struct section_problem_data
   unsigned char *source_header;
   /** file to insert at the end of source file */
   unsigned char *source_footer;
-  /** if the valuer also sets the marked flag */
-  ejintbool_t valuer_sets_marked;
-  /** ignore unmarked submits in scoring */
-  ejintbool_t ignore_unmarked;
   /** time-limit for the interactor */
   int interactor_time_limit;
-  /** consider any output to stderr as presentation error */
-  ejintbool_t disable_stderr;
-  /** use process groups */
-  ejintbool_t enable_process_group;
-  /** hide variant number from user */
-  ejintbool_t hide_variant;
-  /** enable testlib-compatibility mode */
-  ejintbool_t enable_testlib_mode;
 
   /** printf pattern for the test files */
   unsigned char *test_pat;
@@ -1069,10 +1091,6 @@ struct section_problem_data
   time_t deadline;
   /** time for opening this problem for submission */
   time_t start_date;
-  /** autoassign variants? */
-  ejintbool_t autoassign_variants;
-  /** number of variants for this problem */
-  int variant_num;
 
   /** penalty which depends on date */
   char **date_penalty;

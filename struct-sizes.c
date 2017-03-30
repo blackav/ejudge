@@ -35,6 +35,7 @@ int main(void)
   printf("run_entry:             %zu\n", sizeof(struct run_entry));
   //printf("clar_entry_v1:         %zu\n", sizeof(struct clar_entry_v1));
   printf("clar_entry_v2:         %zu\n", sizeof(struct clar_entry_v2));
+  printf("group_dates:           %zu\n", sizeof(struct group_dates));
   printf("generic_section_config:%zu\n", sizeof(struct generic_section_config));
   printf("section_global_data:   %zu\n", sizeof(struct section_global_data));
   printf("section_problem_data:  %zu\n", sizeof(struct section_problem_data));
