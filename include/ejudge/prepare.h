@@ -366,7 +366,7 @@ struct section_global_data
 
   /* ====== VARIABLE FILES/DIRECTORIES SETUP ====== */
   /** root directory with working files, run sources/reports, etc */
-  path_t var_dir;
+  unsigned char *var_dir;
 
   /* --- server logging --- */
   //path_t log_file;              /* logger log file */

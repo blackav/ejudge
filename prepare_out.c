@@ -813,7 +813,7 @@ prepare_check_forbidden_global(FILE *f, const struct section_global_data *global
     fprintf(f, "Cannot handle contests with `name' global variable set\n");
     return -1;
   }
-  if (global->var_dir[0]) {
+  if (global->var_dir && global->var_dir[0]) {
     fprintf(f, "Cannot handle contests with `var_dir' global variable set\n");
     return -1;
   }

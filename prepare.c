@@ -166,7 +166,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(rundb_plugin, "s"),
   GLOBAL_PARAM(xuser_plugin, "s"),
 
-  GLOBAL_PARAM(var_dir, "s"),
+  GLOBAL_PARAM(var_dir, "S"),
 
   GLOBAL_PARAM(contest_id, "d"),
   GLOBAL_PARAM(socket_path, "s"),
@@ -1031,6 +1031,8 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->audit_log_dir);
   xfree(p->uuid_archive_dir);
   xfree(p->team_extra_dir);
+
+  xfree(p->var_dir);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2720,10 +2722,10 @@ set_defaults(
     snprintf(g->conf_dir, sizeof(g->conf_dir), "conf");
   }
   pathmake2(g->conf_dir, g->root_dir, "/", g->conf_dir, NULL);
-  if (!g->var_dir[0]) {
-    snprintf(g->var_dir, sizeof(g->var_dir), "var");
+  if (!g->var_dir || !g->var_dir[0]) {
+    xstrdup3(&g->var_dir, "var");
   }
-  pathmake2(g->var_dir, g->root_dir, "/", g->var_dir, NULL);
+  path_prepend_dir(&g->var_dir, g->root_dir);
 
   /* problems integrated directory (for advanced_layout) */
   if (!g->problems_dir[0]) {
