@@ -267,7 +267,7 @@ struct section_global_data
   ejintbool_t enable_virtual_restart;
 
   /** @deprecated the name of the contest */
-  unsigned char name[256];
+  unsigned char *name;
   /** @deprecated the contest root directory */
   unsigned char *root_dir;
   /** @deprecated the contest socket path */
@@ -278,7 +278,7 @@ struct section_global_data
   /** message translation catalog */
   unsigned char *l10n_dir;
   /** the language of the standings */
-  unsigned char standings_locale[128];
+  unsigned char *standings_locale;
   /** parsed `standings_locale' */
   int standings_locale_id META_ATTRIB((meta_private));
   unsigned char *checker_locale;
@@ -293,13 +293,13 @@ struct section_global_data
   unsigned char *lang_config_dir;
 
   /** html charset */
-  unsigned char charset[128];
+  unsigned char *charset;
   /** charset for the standings */
-  unsigned char standings_charset[128];
+  unsigned char *standings_charset;
   /** charset for the secondary standings */
-  unsigned char stand2_charset[128];
+  unsigned char *stand2_charset;
   /** charset for the submission log */
-  unsigned char plog_charset[128];
+  unsigned char *plog_charset;
 
   /* ====== CONFIGURATION FILES/DIRECTORIES SETUP ====== */
   /** configuration dir */
@@ -358,11 +358,11 @@ struct section_global_data
   unsigned char *tgzdir_pat;
 
   /** the clarification base storage plugin (file, mysql) */
-  unsigned char clardb_plugin[32];
+  unsigned char *clardb_plugin;
   /** the run information base storage plugin (file, mysql) */
-  unsigned char rundb_plugin[32];
+  unsigned char *rundb_plugin;
   /** the extra user information storage plugin (file, mysql) */
-  unsigned char xuser_plugin[32];
+  unsigned char *xuser_plugin;
 
   /* ====== VARIABLE FILES/DIRECTORIES SETUP ====== */
   /** root directory with working files, run sources/reports, etc */

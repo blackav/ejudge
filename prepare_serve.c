@@ -244,8 +244,7 @@ prepare_serve_defaults(
           contests_strerror(-i));
       return -1;
     }
-    snprintf(state->global->name, sizeof(state->global->name), "%s",
-             (*p_cnts)->name);
+    xstrdup3(&state->global->name, (*p_cnts)->name);
   }
   return 0;
 }

@@ -183,8 +183,7 @@ prepare_unparse_global(
     fprintf(f, "board_fog_time = %d\n", global->board_fog_time);
   if (global->board_unfog_time != DFLT_G_BOARD_UNFOG_TIME)
     fprintf(f, "board_unfog_time = %d\n", global->board_unfog_time);
-  if (global->standings_locale[0])
-    fprintf(f, "standings_locale = \"%s\"\n", CARMOR(global->standings_locale));
+  do_str(f, &ab, "standings_locale", global->standings_locale);
   if (global->checker_locale && global->checker_locale[0]) {
     do_str(f, &ab, "checker_locale", global->checker_locale);
   }
@@ -498,14 +497,11 @@ prepare_unparse_global(
 
   //???
   unparse_bool(f, "enable_l10n", global->enable_l10n);
-  if (global->charset[0] && strcmp(global->charset, DFLT_G_CHARSET))
+  if (global->charset && global->charset[0] && strcmp(global->charset, DFLT_G_CHARSET))
     fprintf(f, "charset = \"%s\"\n", CARMOR(global->charset));
-  if (global->standings_charset[0])
-    fprintf(f, "standings_charset = \"%s\"\n", CARMOR(global->standings_charset));
-  if (global->stand2_charset[0])
-    fprintf(f, "stand2_charset = \"%s\"\n", CARMOR(global->stand2_charset));
-  if (global->plog_charset[0])
-    fprintf(f, "plog_charset = \"%s\"\n", CARMOR(global->plog_charset));
+  do_str(f, &ab, "standings_charset", global->standings_charset);
+  do_str(f, &ab, "stand2_charset", global->stand2_charset);
+  do_str(f, &ab, "plog_charset", global->plog_charset);
 
   if (global->team_download_time != DFLT_G_TEAM_DOWNLOAD_TIME)
     fprintf(f, "team_download_time = %d\n", global->team_download_time);
@@ -513,11 +509,11 @@ prepare_unparse_global(
     fprintf(f, "cpu_bogomips = %d\n", global->cpu_bogomips);
   if (global->variant_map_file && need_variant_map)
     fprintf(f, "variant_map_file = \"%s\"\n", CARMOR(global->variant_map_file));
-  if (global->clardb_plugin[0] && strcmp(global->clardb_plugin, "file"))
+  if (global->clardb_plugin && global->clardb_plugin[0] && strcmp(global->clardb_plugin, "file"))
     fprintf(f, "clardb_plugin = \"%s\"\n", CARMOR(global->clardb_plugin));
-  if (global->rundb_plugin[0] && strcmp(global->rundb_plugin, "file"))
+  if (global->rundb_plugin && global->rundb_plugin[0] && strcmp(global->rundb_plugin, "file"))
     fprintf(f, "rundb_plugin = \"%s\"\n", CARMOR(global->rundb_plugin));
-  if (global->xuser_plugin[0] && strcmp(global->xuser_plugin, "file"))
+  if (global->xuser_plugin && global->xuser_plugin[0] && strcmp(global->xuser_plugin, "file"))
     fprintf(f, "xuser_plugin = \"%s\"\n", CARMOR(global->xuser_plugin));
   do_xstr(f, &ab, "load_user_group", global->load_user_group);
   fprintf(f, "\n");
@@ -807,7 +803,7 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
 int
 prepare_check_forbidden_global(FILE *f, const struct section_global_data *global)
 {
-  if (global->name[0]) {
+  if (global->name && global->name[0]) {
     fprintf(f, "Cannot handle contests with `name' global variable set\n");
     return -1;
   }

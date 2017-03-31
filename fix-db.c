@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2010-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -561,7 +561,7 @@ process_contest(int contest_id)
     error("contest %d has no global section", contest_id);
     goto failure;
   }
-  if (strcmp(global->rundb_plugin, "mysql") != 0) {
+  if (!global->rundb_plugin || strcmp(global->rundb_plugin, "mysql") != 0) {
     fprintf(stderr, "contest %d does not use mysql\n", contest_id);
     goto failure;
   }

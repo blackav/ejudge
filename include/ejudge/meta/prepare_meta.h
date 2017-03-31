@@ -71,7 +71,7 @@ enum
   CNTSGLOB_start_on_first_login,
   CNTSGLOB_enable_virtual_restart,
   CNTSGLOB_name,
-  CNTSGLOB_zroot_dir,
+  CNTSGLOB_root_dir,
   CNTSGLOB_serve_socket,
   CNTSGLOB_enable_l10n,
   CNTSGLOB_l10n_dir,

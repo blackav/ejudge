@@ -784,14 +784,14 @@ write_standings_header(const serve_state_t state,
 
   if (!start_time) {
     if (user_name) {
-      if (global->name[0] && !client_flag) {
+      if (global->name && global->name[0] && !client_flag) {
         sprintf(header, "%s - &quot;%s&quot; - %s",
                 user_name, global->name, _("standings"));
       } else {
         sprintf(header, "%s - %s", user_name, _("Standings"));
       }
     } else {
-      if (global->name[0] && !client_flag) {
+      if (global->name && global->name[0] && !client_flag) {
         sprintf(header, "%s &quot;%s&quot; - %s",
                 _("Contest"), global->name, _("standings"));
       } else {
@@ -800,11 +800,13 @@ write_standings_header(const serve_state_t state,
     }
 
     if (!client_flag) {
+      const unsigned char *charset = global->charset;
+      if (!charset) charset = "";
       if (header_str) {
-        process_template(f, header_str, 0, global->charset, header, 0);
+        process_template(f, header_str, 0, charset, header, 0);
       } else {
         fprintf(f, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"/><title>%s</title></head><body><h1>%s</h1>\n",
-                global->charset,
+                charset,
                 header, header);
       }
     } else {
@@ -825,7 +827,7 @@ write_standings_header(const serve_state_t state,
   duration_str(show_astr_time, cur_time, start_time, dur_str, 0);
 
   if (user_name) {
-    if (global->name[0] && !client_flag) {
+    if (global->name && global->name[0] && !client_flag) {
       sprintf(header, "%s  - &quot;%s&quot; - %s [%s]",
               user_name, global->name, _("standings"), dur_str);
     } else {
@@ -833,7 +835,7 @@ write_standings_header(const serve_state_t state,
               user_name, _("Standings"), dur_str);
     }
   } else {
-    if (global->name[0] && !client_flag) {
+    if (global->name && global->name[0] && !client_flag) {
       sprintf(header, "%s &quot;%s&quot; - %s [%s]",
               _("Contest"), global->name, _("standings"), dur_str);
     } else {
@@ -842,11 +844,13 @@ write_standings_header(const serve_state_t state,
   }
 
   if (!client_flag) {
+    const unsigned char *charset = global->charset;
+    if (!charset) charset = "";
     if (header_str) {
-      process_template(f, header_str, 0, global->charset, header, 0);
+      process_template(f, header_str, 0, charset, header, 0);
     } else {
       fprintf(f, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"/><title>%s</title></head><body><h1>%s</h1>",
-              global->charset,
+              charset,
               header, header);
     }
   } else {
@@ -4478,18 +4482,20 @@ do_write_public_log(
   }
 
   if (!start_time) {
-    if (global->name[0]) {
+    if (global->name && global->name[0]) {
       sprintf(header, "%s &quot;%s&quot; - %s",
               _("Contest"), ARMOR(global->name), _("submission log"));
     } else {
       sprintf(header, "%s", _("Submission log"));
     }
 
+    const unsigned char *charset = global->charset;
+    if (!charset) charset = "";
     if (header_str) {
-      process_template(f, header_str, 0, global->charset, header, 0);
+      process_template(f, header_str, 0, charset, header, 0);
     } else {
       fprintf(f, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"/><title>%s</title></head><body><h1>%s</h1>\n",
-              global->charset,
+              charset,
               header, header);
     }
   } else {
@@ -4498,18 +4504,20 @@ do_write_public_log(
     if (stop_time && cur_time > stop_time) cur_time = stop_time;
     duration_str(global->show_astr_time, cur_time, start_time, durstr, 0);
 
-    if (global->name[0]) {
+    if (global->name && global->name[0]) {
       sprintf(header, "%s &quot;%s&quot; - %s [%s]",
               _("Contest"), ARMOR(global->name), _("submission log"), durstr);
     } else {
       sprintf(header, "%s [%s]", _("Submission log"), durstr);
     }
 
+    const unsigned char *charset = global->charset;
+    if (!charset) charset = "";
     if (header_str) {
-      process_template(f, header_str, 0, global->charset, header, 0);
+      process_template(f, header_str, 0, charset, header, 0);
     } else {
       fprintf(f, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"/><title>%s</title></head><body><h1>%s</h1>",
-              global->charset,
+              charset,
               header, header);
     }
   }

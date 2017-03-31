@@ -3,6 +3,7 @@
 %><%
 
 #define COPYSTR(f) snprintf(global->f, sizeof(global->f), "%s", (f))
+#define MOVESTR(f) xfree(global->f); global->f = f; f = NULL
 
 %><%@set getter_name = "csp_get_glob_save_advanced_form"
 %><%@set ac_prefix = "SSERV_CMD_"
@@ -104,15 +105,15 @@
             global->enable_runlog_merge = enable_runlog_merge;
             global->disable_user_database = disable_user_database;
             global->enable_l10n = enable_l10n;
-            COPYSTR(charset);
-            COPYSTR(standings_charset);
-            COPYSTR(stand2_charset);
-            COPYSTR(plog_charset);
+            MOVESTR(charset);
+            MOVESTR(standings_charset);
+            MOVESTR(stand2_charset);
+            MOVESTR(plog_charset);
             global->cpu_bogomips = cpu_bogomips;
             sarray_free(global->load_user_group); global->load_user_group = load_user_group; load_user_group = NULL;
-            COPYSTR(clardb_plugin);
-            COPYSTR(rundb_plugin);
-            COPYSTR(xuser_plugin);
+            MOVESTR(clardb_plugin);
+            MOVESTR(rundb_plugin);
+            MOVESTR(xuser_plugin);
         }
     }
 

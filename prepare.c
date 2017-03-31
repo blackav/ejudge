@@ -63,7 +63,7 @@ global_parse_rounding_mode(const unsigned char *str, void *ptr, size_t size);
 #define GLOBAL_ALIAS(a, x, t) { #a, t, GLOBAL_OFFSET(x), GLOBAL_SIZE(x) }
 static const struct config_parse_info section_global_params[] =
 {
-  GLOBAL_PARAM(name, "s"),
+  GLOBAL_PARAM(name, "S"),
   GLOBAL_PARAM(sleep_time, "d"),
   GLOBAL_PARAM(serve_sleep_time, "d"),
   GLOBAL_PARAM(contest_time, "d"),
@@ -128,11 +128,11 @@ static const struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(stand_ignore_after, "t"),
   GLOBAL_PARAM(appeal_deadline, "t"),
-  GLOBAL_PARAM(charset, "s"),
+  GLOBAL_PARAM(charset, "S"),
   GLOBAL_PARAM(contest_finish_time, "t"),
-  GLOBAL_PARAM(standings_charset, "s"),
-  GLOBAL_PARAM(stand2_charset, "s"),
-  GLOBAL_PARAM(plog_charset, "s"),
+  GLOBAL_PARAM(standings_charset, "S"),
+  GLOBAL_PARAM(stand2_charset, "S"),
+  GLOBAL_PARAM(plog_charset, "S"),
 
   GLOBAL_PARAM(root_dir, "S"),
   GLOBAL_PARAM(conf_dir, "S"),
@@ -162,9 +162,9 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(contest_plugin_file, "S"),
   GLOBAL_PARAM(super_run_dir, "S"),
 
-  GLOBAL_PARAM(clardb_plugin, "s"),
-  GLOBAL_PARAM(rundb_plugin, "s"),
-  GLOBAL_PARAM(xuser_plugin, "s"),
+  GLOBAL_PARAM(clardb_plugin, "S"),
+  GLOBAL_PARAM(rundb_plugin, "S"),
+  GLOBAL_PARAM(xuser_plugin, "S"),
 
   GLOBAL_PARAM(var_dir, "S"),
 
@@ -278,7 +278,7 @@ static const struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(enable_l10n, "d"),
   GLOBAL_PARAM(l10n_dir, "S"),
-  GLOBAL_PARAM(standings_locale, "s"),
+  GLOBAL_PARAM(standings_locale, "S"),
   GLOBAL_PARAM(checker_locale, "S"),
 
   GLOBAL_PARAM(team_download_time, "d"),
@@ -1048,6 +1048,15 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->conf_dir);
   xfree(p->contests_dir);
   xfree(p->root_dir);
+  xfree(p->name);
+  xfree(p->standings_locale);
+  xfree(p->charset);
+  xfree(p->standings_charset);
+  xfree(p->stand2_charset);
+  xfree(p->plog_charset);
+  xfree(p->clardb_plugin);
+  xfree(p->rundb_plugin);
+  xfree(p->xuser_plugin);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2712,21 +2721,19 @@ set_defaults(
 
   param_subst_2(&g->root_dir, subst_src, subst_dst);
 
-  if (!g->clardb_plugin[0] && ejudge_config
+  if ((!g->clardb_plugin || !g->clardb_plugin[0]) && ejudge_config
       && ejudge_config->default_clardb_plugin
       && ejudge_config->default_clardb_plugin[0]) {
-    snprintf(g->clardb_plugin, sizeof(g->clardb_plugin), "%s",
-             ejudge_config->default_clardb_plugin);
+    xstrdup3(&g->clardb_plugin, ejudge_config->default_clardb_plugin);
   }
-  if (!g->rundb_plugin[0] && ejudge_config
+  if ((!g->rundb_plugin || !g->rundb_plugin[0]) && ejudge_config
       && ejudge_config->default_rundb_plugin
       && ejudge_config->default_rundb_plugin[0]) {
-    snprintf(g->rundb_plugin, sizeof(g->rundb_plugin), "%s",
-             ejudge_config->default_rundb_plugin);
+    xstrdup3(&g->rundb_plugin, ejudge_config->default_rundb_plugin);
   }
-  if (!g->xuser_plugin[0] && ejudge_config
+  if ((!g->xuser_plugin || !g->xuser_plugin[0]) && ejudge_config
       && ejudge_config->default_xuser_plugin && ejudge_config->default_xuser_plugin[0]) {
-    snprintf(g->xuser_plugin, sizeof(g->xuser_plugin), "%s", ejudge_config->default_xuser_plugin);
+    xstrdup3(&g->xuser_plugin, ejudge_config->default_xuser_plugin);
   }
 
   if (!g->conf_dir || !g->conf_dir[0]) {
@@ -3009,9 +3016,8 @@ set_defaults(
   }
 
   if (mode == PREPARE_SERVE) {
-    if (!g->charset[0]) {
-      snprintf(g->charset, sizeof(g->charset), "%s", DFLT_G_CHARSET);
-      vinfo("global.charset set to %s", g->charset);
+    if (!g->charset || !g->charset[0]) {
+      xstrdup3(&g->charset, DFLT_G_CHARSET);
     }
     if (!g->standings_file_name || !g->standings_file_name[0]) {
       xstrdup3(&g->standings_file_name, DFLT_G_STANDINGS_FILE_NAME);
@@ -5101,8 +5107,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     g->disable_auto_testing = DFLT_G_DISABLE_AUTO_TESTING;
   if (g->disable_testing < 0)
     g->disable_testing = DFLT_G_DISABLE_TESTING;
-  if (!g->charset[0])
-    snprintf(g->charset, sizeof(g->charset), "%s", DFLT_G_CHARSET);
+  if (!g->charset || !g->charset[0])
+    xstrdup3(&g->charset, DFLT_G_CHARSET);
   if (!g->test_dir)
     xstrdup3(&g->test_dir, DFLT_G_TEST_DIR);
   if (!g->corr_dir)
@@ -5394,7 +5400,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->stand_show_warn_number = DFLT_G_STAND_SHOW_WARN_NUMBER;
   global->use_ac_not_ok = 0;
 
-  strcpy(global->charset, DFLT_G_CHARSET);
+  xstrdup3(&global->charset, DFLT_G_CHARSET);
 
   xstrdup3(&global->root_dir, root_dir);
   xstrdup3(&global->conf_dir, DFLT_G_CONF_DIR);
