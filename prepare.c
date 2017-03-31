@@ -176,14 +176,14 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(lang_config_dir, "s"),
 
   //GLOBAL_PARAM(log_file, "s"),
-  GLOBAL_PARAM(run_log_file, "s"),
-  GLOBAL_PARAM(clar_log_file, "s"),
-  GLOBAL_PARAM(archive_dir, "s"),
-  GLOBAL_PARAM(clar_archive_dir, "s"),
-  GLOBAL_PARAM(run_archive_dir, "s"),
-  GLOBAL_PARAM(report_archive_dir, "s"),
-  GLOBAL_PARAM(team_report_archive_dir, "s"),
-  GLOBAL_PARAM(team_extra_dir, "s"),
+  GLOBAL_PARAM(run_log_file, "S"),
+  GLOBAL_PARAM(clar_log_file, "S"),
+  GLOBAL_PARAM(archive_dir, "S"),
+  GLOBAL_PARAM(clar_archive_dir, "S"),
+  GLOBAL_PARAM(run_archive_dir, "S"),
+  GLOBAL_PARAM(report_archive_dir, "S"),
+  GLOBAL_PARAM(team_report_archive_dir, "S"),
+  GLOBAL_PARAM(team_extra_dir, "S"),
 
   GLOBAL_PARAM(status_dir, "S"),
   GLOBAL_PARAM(work_dir, "S"),
@@ -1019,6 +1019,18 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->a2ps_path);
   xfree(p->lpr_path);
   xfree(p->diff_path);
+  xfree(p->run_log_file);
+  xfree(p->clar_log_file);
+  xfree(p->archive_dir);
+  xfree(p->clar_archive_dir);
+  xfree(p->run_archive_dir);
+  xfree(p->report_archive_dir);
+  xfree(p->team_report_archive_dir);
+  xfree(p->xml_report_archive_dir);
+  xfree(p->full_archive_dir);
+  xfree(p->audit_log_dir);
+  xfree(p->uuid_archive_dir);
+  xfree(p->team_extra_dir);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2785,18 +2797,54 @@ set_defaults(
   }
 
   if (mode == PREPARE_SERVE) {
-    GLOBAL_INIT_FIELD(run_log_file, DFLT_G_RUN_LOG_FILE, var_dir);
-    GLOBAL_INIT_FIELD(clar_log_file, DFLT_G_CLAR_LOG_FILE, var_dir);
-    GLOBAL_INIT_FIELD(archive_dir, DFLT_G_ARCHIVE_DIR, var_dir);
-    GLOBAL_INIT_FIELD(clar_archive_dir, DFLT_G_CLAR_ARCHIVE_DIR, archive_dir);
-    GLOBAL_INIT_FIELD(run_archive_dir, DFLT_G_RUN_ARCHIVE_DIR, archive_dir);
-    GLOBAL_INIT_FIELD(report_archive_dir,DFLT_G_REPORT_ARCHIVE_DIR,archive_dir);
-    GLOBAL_INIT_FIELD(xml_report_archive_dir,DFLT_G_XML_REPORT_ARCHIVE_DIR,archive_dir);
-    GLOBAL_INIT_FIELD(full_archive_dir, DFLT_G_FULL_ARCHIVE_DIR, archive_dir);
-    GLOBAL_INIT_FIELD(audit_log_dir, DFLT_G_AUDIT_LOG_DIR, archive_dir);
-    GLOBAL_INIT_FIELD(team_report_archive_dir,DFLT_G_TEAM_REPORT_ARCHIVE_DIR,archive_dir);
-    GLOBAL_INIT_FIELD(uuid_archive_dir, DFLT_G_RUN_UUID_ARCHIVE_DIR, archive_dir);
-    GLOBAL_INIT_FIELD(team_extra_dir, DFLT_G_TEAM_EXTRA_DIR, var_dir);
+    if (!g->run_log_file || !g->run_log_file[0]) {
+      xstrdup3(&g->run_log_file, DFLT_G_RUN_LOG_FILE);
+    }
+    path_prepend_dir(&g->run_log_file, g->var_dir);
+    if (!g->clar_log_file || !g->clar_log_file[0]) {
+      xstrdup3(&g->clar_log_file, DFLT_G_CLAR_LOG_FILE);
+    }
+    path_prepend_dir(&g->clar_log_file, g->var_dir);
+    if (!g->archive_dir || !g->archive_dir[0]) {
+      xstrdup3(&g->archive_dir, DFLT_G_ARCHIVE_DIR);
+    }
+    path_prepend_dir(&g->archive_dir, g->var_dir);
+    if (!g->clar_archive_dir || !g->clar_archive_dir[0]) {
+      xstrdup3(&g->clar_archive_dir, DFLT_G_CLAR_ARCHIVE_DIR);
+    }
+    path_prepend_dir(&g->clar_archive_dir, g->archive_dir);
+    if (!g->run_archive_dir || !g->run_archive_dir[0]) {
+      xstrdup3(&g->run_archive_dir, DFLT_G_RUN_ARCHIVE_DIR);
+    }
+    path_prepend_dir(&g->run_archive_dir, g->archive_dir);
+    if (!g->report_archive_dir || !g->report_archive_dir[0]) {
+      xstrdup3(&g->report_archive_dir, DFLT_G_REPORT_ARCHIVE_DIR);
+    }
+    path_prepend_dir(&g->report_archive_dir, g->archive_dir);
+    if (!g->xml_report_archive_dir || !g->xml_report_archive_dir[0]) {
+      xstrdup3(&g->xml_report_archive_dir, DFLT_G_XML_REPORT_ARCHIVE_DIR);
+    }
+    path_prepend_dir(&g->xml_report_archive_dir, g->archive_dir);
+    if (!g->full_archive_dir || !g->full_archive_dir[0]) {
+      xstrdup3(&g->full_archive_dir, DFLT_G_FULL_ARCHIVE_DIR);
+    }
+    path_prepend_dir(&g->full_archive_dir, g->archive_dir);
+    if (!g->audit_log_dir || !g->audit_log_dir[0]) {
+      xstrdup3(&g->audit_log_dir, DFLT_G_AUDIT_LOG_DIR);
+    }
+    path_prepend_dir(&g->audit_log_dir, g->archive_dir);
+    if (!g->team_report_archive_dir || !g->team_report_archive_dir[0]) {
+      xstrdup3(&g->team_report_archive_dir, DFLT_G_TEAM_REPORT_ARCHIVE_DIR);
+    }
+    path_prepend_dir(&g->team_report_archive_dir, g->archive_dir);
+    if (!g->uuid_archive_dir || !g->uuid_archive_dir[0]) {
+      xstrdup3(&g->uuid_archive_dir, DFLT_G_RUN_UUID_ARCHIVE_DIR);
+    }
+    path_prepend_dir(&g->uuid_archive_dir, g->archive_dir);
+    if (!g->team_extra_dir || !g->team_extra_dir[0]) {
+      xstrdup3(&g->team_extra_dir, DFLT_G_TEAM_EXTRA_DIR);
+    }
+    path_prepend_dir(&g->team_extra_dir, g->var_dir);
 
     if (!g->status_dir || !g->status_dir) {
       xstrdup3(&g->status_dir, DFLT_G_STATUS_DIR);

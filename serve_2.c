@@ -4604,21 +4604,21 @@ serve_reset_contest(const struct contest_desc *cnts, serve_state_t state)
   clar_reset(state->clarlog_state);
 
   /* clear all submissions and clarifications */
-  if (global->xml_report_archive_dir[0])
+  if (global->xml_report_archive_dir && global->xml_report_archive_dir[0])
     clear_directory(global->xml_report_archive_dir);
-  if (global->report_archive_dir[0])
+  if (global->report_archive_dir && global->report_archive_dir[0])
     clear_directory(global->report_archive_dir);
-  if (global->run_archive_dir[0])
+  if (global->run_archive_dir && global->run_archive_dir[0])
     clear_directory(global->run_archive_dir);
-  if (global->team_report_archive_dir[0])
+  if (global->team_report_archive_dir && global->team_report_archive_dir[0])
     clear_directory(global->team_report_archive_dir);
-  if (global->full_archive_dir[0])
+  if (global->full_archive_dir && global->full_archive_dir[0])
     clear_directory(global->full_archive_dir);
-  if (global->audit_log_dir[0])
+  if (global->audit_log_dir && global->audit_log_dir[0])
     clear_directory(global->audit_log_dir);
-  if (global->team_extra_dir[0])
+  if (global->team_extra_dir && global->team_extra_dir[0])
     clear_directory(global->team_extra_dir);
-  if (global->uuid_archive_dir[0])
+  if (global->uuid_archive_dir && global->uuid_archive_dir[0])
     clear_directory(global->uuid_archive_dir);
 
   unsigned char path[PATH_MAX];

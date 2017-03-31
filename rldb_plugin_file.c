@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -847,7 +847,7 @@ open_func(
   cs->run_fd = -1;
 
   runlog_path[0] = 0;
-  if (global && global->run_log_file[0]) {
+  if (global && global->run_log_file && global->run_log_file[0]) {
     snprintf(runlog_path, sizeof(runlog_path), "%s", global->run_log_file);
   }
   if (!runlog_path[0] && cnts && cnts->root_dir) {

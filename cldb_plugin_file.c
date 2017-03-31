@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -660,7 +660,7 @@ open_func(
   state->nref++;
   cs->cl_state = cl_state;
   cs->clar_fd = -1;
-  if (global && global->clar_archive_dir[0])
+  if (global && global->clar_archive_dir && global->clar_archive_dir[0])
     cs->clar_archive_dir = xstrdup(global->clar_archive_dir);
   if (!cs->clar_archive_dir && cnts && cnts->root_dir) {
     snprintf(clarlog_path, sizeof(clarlog_path),
@@ -669,7 +669,7 @@ open_func(
   }
 
   clarlog_path[0] = 0;
-  if (global && global->clar_log_file[0]) {
+  if (global && global->clar_log_file && global->clar_log_file[0]) {
     snprintf(clarlog_path, sizeof(clarlog_path), "%s", global->clar_log_file);
   }
   if (!clarlog_path[0] && cnts && cnts->root_dir) {

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2015-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -198,7 +198,7 @@ open_func(
     ++state->plugin_state->nref;
 
     state->contest_id = cnts->id;
-    if (/*global->team_extra_dir &&*/ global->team_extra_dir[0]) {
+    if (global->team_extra_dir && global->team_extra_dir[0]) {
         state->team_extra_dir = xstrdup(global->team_extra_dir);
     }
 

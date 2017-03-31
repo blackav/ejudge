@@ -371,29 +371,29 @@ struct section_global_data
   /* --- server logging --- */
   //path_t log_file;              /* logger log file */
   /** run database file (for file storage) */
-  path_t run_log_file;
+  unsigned char *run_log_file;
   /** clarification database file (for file storage) */
-  path_t clar_log_file;
+  unsigned char *clar_log_file;
   /** root directory for archives */
-  path_t archive_dir;
+  unsigned char *archive_dir;
   /** clar archive directory */
-  path_t clar_archive_dir;
+  unsigned char *clar_archive_dir;
   /** run source code archive directory */
-  path_t run_archive_dir;
+  unsigned char *run_archive_dir;
   /** @deprecated report archive directory */
-  path_t report_archive_dir;
+  unsigned char *report_archive_dir;
   /** @deprecated team report archive directory */
-  path_t team_report_archive_dir;
+  unsigned char *team_report_archive_dir;
   /** XML report archive directory */
-  path_t xml_report_archive_dir;
+  unsigned char *xml_report_archive_dir;
   /** full output archive directory */
-  path_t full_archive_dir;
+  unsigned char *full_archive_dir;
   /** directory for audit logs */
-  path_t audit_log_dir;
+  unsigned char *audit_log_dir;
   /** directory for new UUID-based archives */
-  path_t uuid_archive_dir;
+  unsigned char *uuid_archive_dir;
   /** team extra information directory */
-  path_t team_extra_dir;
+  unsigned char *team_extra_dir;
 
   /* --- server status reporting --- */
   /** server status directory */
