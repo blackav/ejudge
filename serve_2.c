@@ -1974,7 +1974,7 @@ serve_run_request(
   if (prob->info_pat) {
     srpp->info_pat = xstrdup(prob->info_pat);
   } else if (prob->info_sfx) {
-    usprintf(&prob->info_sfx, "%%03d%s", prob->info_sfx);
+    usprintf(&srpp->info_pat, "%%03d%s", prob->info_sfx);
   }
   if (prob->tgz_pat) {
     srpp->tgz_pat = xstrdup(prob->tgz_pat);
