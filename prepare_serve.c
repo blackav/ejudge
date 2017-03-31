@@ -219,12 +219,11 @@ prepare_serve_defaults(
   int i;
 
 #if defined EJUDGE_CONTESTS_DIR
-  if (!state->global->contests_dir[0]) {
-    snprintf(state->global->contests_dir, sizeof(state->global->contests_dir),
-             "%s", EJUDGE_CONTESTS_DIR);
+  if (!state->global->contests_dir || !state->global->contests_dir[0]) {
+    xstrdup3(&state->global->contests_dir, EJUDGE_CONTESTS_DIR);
   }
 #endif /* EJUDGE_CONTESTS_DIR */
-  if (!state->global->contests_dir[0]) {
+  if (!state->global->contests_dir || !state->global->contests_dir[0]) {
     err("global.contests_dir must be set");
     return -1;
   }

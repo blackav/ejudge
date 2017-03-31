@@ -170,7 +170,7 @@ static const struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(contest_id, "d"),
   GLOBAL_PARAM(socket_path, "S"),
-  GLOBAL_PARAM(contests_dir, "s"),
+  GLOBAL_PARAM(contests_dir, "S"),
   GLOBAL_PARAM(serve_socket, "S"),
 
   GLOBAL_PARAM(lang_config_dir, "S"),
@@ -1046,6 +1046,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->description_file);
   xfree(p->contest_plugin_file);
   xfree(p->conf_dir);
+  xfree(p->contests_dir);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);

@@ -288,7 +288,7 @@ struct section_global_data
   /** the `userlist-server' socket path */
   unsigned char *socket_path;
   /** the contest XML directory */
-  path_t contests_dir;
+  unsigned char *contests_dir;
   /** compiler configuration script dir */
   unsigned char *lang_config_dir;
 
