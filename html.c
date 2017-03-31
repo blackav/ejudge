@@ -1279,9 +1279,11 @@ do_write_kirov_standings(
                   user_filter);
   for (i = 1; i < p_max; i++) {
     if (!state->probs) continue;
-    if (!(prob = state->probs[i]) || !prob->stand_column) continue;
+    if (!(prob = state->probs[i])) continue;
+    if (prob->enable_submit_after_reject > 0)
+      need_eff_time = 1;
+    if (!prob->stand_column) continue;
     if (prob->start_date > 0 && cur_time < prob->start_date) continue;
-    if (prob->enable_submit_after_reject > 0) need_eff_time = 1;
     for (j = 1; j < p_max; j++) {
       if (!state->probs[j]) continue;
       if (!strcmp(state->probs[j]->short_name, prob->stand_column)
