@@ -128,7 +128,7 @@ struct token_info
 
 struct dates_config;
 
-/* sizeof(struct section_global_data) == 354296/354464 */
+/* sizeof(struct section_global_data) == 1180/1880 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
