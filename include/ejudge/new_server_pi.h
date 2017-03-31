@@ -114,6 +114,7 @@ TestingQueueArray *testing_queue_array_free(TestingQueueArray *parr, int free_st
 typedef struct UserProblemInfo
 {
     time_t deadline;
+    time_t effective_time; // time to count time-based penalties
     int best_run;
     int attempts;
     int disqualified;
@@ -133,6 +134,7 @@ typedef struct UserProblemInfo
     unsigned char marked_flag;
     unsigned char autook_flag;    // if "OK" is result of "provide_ok" setting
     unsigned char rejected_flag;  // if there are "Rejected" runs
+    unsigned char need_eff_time_flag; // if effective time needs to be recorded
 } UserProblemInfo;
 
 #endif /* __NEW_SERVER_PI_H__ */
