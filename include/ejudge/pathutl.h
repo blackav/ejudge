@@ -89,4 +89,10 @@ path_prepend_dir(
         unsigned char **pdst,
         const char *dir);
 
+unsigned char *
+path_concat(
+        unsigned char **pdst,
+        const char *dir,
+        const char *file);
+
 #endif /* __PATHUTL_H__ */

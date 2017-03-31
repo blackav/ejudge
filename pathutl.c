@@ -390,3 +390,34 @@ path_prepend_dir(
   }
 }
 
+unsigned char *
+path_concat(
+        unsigned char **pdst,
+        const char *dir,
+        const char *file)
+{
+  if (!dir || !dir[0]) {
+    if (!file || !file[0]) {
+      xfree(*pdst);
+      *pdst = NULL;
+      return NULL;
+    }
+    xfree(*pdst);
+    *pdst = xstrdup(file);
+    return *pdst;
+  } else if (!file || !file[0]) {
+    xfree(*pdst);
+    *pdst = xstrdup(dir);
+    return *pdst;
+  } else {
+    int len1 = strlen(dir);
+    int len2 = strlen(*pdst);
+    unsigned char *str = malloc(len1 + len2 + 2);
+    memcpy(str, dir, len1);
+    str[len1] = '/';
+    memcpy(str + len1 + 1, *pdst, len2 + 1);
+    xfree(*pdst);
+    *pdst = str;
+    return *pdst;
+  }
+}
