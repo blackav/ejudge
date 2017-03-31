@@ -1770,7 +1770,7 @@ do_dump_master_runs(
       snprintf(base_score_buf, sizeof(base_score_buf), "%d", orig_score);
       csv_rec[F_BASE_SCORE] = base_score_buf;
       score = calc_kirov_score(0, 0, start_time, 0, 0, 0, pe, prob, attempts, disq_attempts, ce_attempts,
-                               prev_successes, &date_penalty, 0);
+                               prev_successes, &date_penalty, 0, 0 /* FIXME: effective_time */);
       snprintf(score_buf, sizeof(score_buf), "%d", score);
       csv_rec[F_TOTAL_SCORE] = score_buf;
       if (attempts > 0) {

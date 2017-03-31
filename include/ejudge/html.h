@@ -133,7 +133,8 @@ calc_kirov_score(
         int ce_attempts,
         int prev_successes,
         int *p_date_penalty,
-        int format);
+        int format,
+        time_t effective_time);
 void
 write_html_run_status(
         const serve_state_t,
