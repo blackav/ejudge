@@ -185,16 +185,16 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(team_report_archive_dir, "s"),
   GLOBAL_PARAM(team_extra_dir, "s"),
 
-  GLOBAL_PARAM(status_dir, "s"),
-  GLOBAL_PARAM(work_dir, "s"),
-  GLOBAL_PARAM(print_work_dir, "s"),
-  GLOBAL_PARAM(diff_work_dir, "s"),
+  GLOBAL_PARAM(status_dir, "S"),
+  GLOBAL_PARAM(work_dir, "S"),
+  GLOBAL_PARAM(print_work_dir, "S"),
+  GLOBAL_PARAM(diff_work_dir, "S"),
 
-  GLOBAL_PARAM(a2ps_path, "s"),
+  GLOBAL_PARAM(a2ps_path, "S"),
   GLOBAL_PARAM(a2ps_args, "x"),
-  GLOBAL_PARAM(lpr_path, "s"),
+  GLOBAL_PARAM(lpr_path, "S"),
   GLOBAL_PARAM(lpr_args, "x"),
-  GLOBAL_PARAM(diff_path, "s"),
+  GLOBAL_PARAM(diff_path, "S"),
 
   GLOBAL_PARAM(compile_dir, "S"),
   GLOBAL_PARAM(compile_work_dir, "S"),
@@ -1005,7 +1005,6 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->run_full_archive_dir);
   xfree(p->run_work_dir);
   xfree(p->run_check_dir);
-
   xfree(p->compile_dir);
   xfree(p->compile_queue_dir);
   xfree(p->compile_src_dir);
@@ -1013,6 +1012,13 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->compile_status_dir);
   xfree(p->compile_report_dir);
   xfree(p->compile_work_dir);
+  xfree(p->status_dir);
+  xfree(p->work_dir);
+  xfree(p->print_work_dir);
+  xfree(p->diff_work_dir);
+  xfree(p->a2ps_path);
+  xfree(p->lpr_path);
+  xfree(p->diff_path);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2792,7 +2798,10 @@ set_defaults(
     GLOBAL_INIT_FIELD(uuid_archive_dir, DFLT_G_RUN_UUID_ARCHIVE_DIR, archive_dir);
     GLOBAL_INIT_FIELD(team_extra_dir, DFLT_G_TEAM_EXTRA_DIR, var_dir);
 
-    GLOBAL_INIT_FIELD(status_dir, DFLT_G_STATUS_DIR, var_dir);
+    if (!g->status_dir || !g->status_dir) {
+      xstrdup3(&g->status_dir, DFLT_G_STATUS_DIR);
+    }
+    path_prepend_dir(&g->status_dir, g->var_dir);
     GLOBAL_INIT_FIELD(serve_socket, DFLT_G_SERVE_SOCKET, var_dir);
     if (g->variant_map_file && !os_IsAbsolutePath(g->variant_map_file)) {
       usprintf(&g->variant_map_file, "%s/%s", g->conf_dir, g->variant_map_file);
@@ -2819,18 +2828,27 @@ set_defaults(
     path_concat(&g->compile_report_dir, g->compile_out_dir, DFLT_G_COMPILE_REPORT_DIR);
   }
 
-  GLOBAL_INIT_FIELD(work_dir, DFLT_G_WORK_DIR, var_dir);
-  GLOBAL_INIT_FIELD(print_work_dir, DFLT_G_PRINT_WORK_DIR, work_dir);
-  GLOBAL_INIT_FIELD(diff_work_dir, DFLT_G_DIFF_WORK_DIR, work_dir);
+  if (!g->work_dir || !g->work_dir[0]) {
+    xstrdup3(&g->work_dir, DFLT_G_WORK_DIR);
+  }
+  path_prepend_dir(&g->work_dir, g->var_dir);
+  if (!g->print_work_dir || !g->print_work_dir[0]) {
+    xstrdup3(&g->print_work_dir, DFLT_G_PRINT_WORK_DIR);
+  }
+  path_prepend_dir(&g->print_work_dir, g->work_dir);
+  if (!g->diff_work_dir || !g->diff_work_dir[0]) {
+    xstrdup3(&g->diff_work_dir, DFLT_G_DIFF_WORK_DIR);
+  }
+  path_prepend_dir(&g->diff_work_dir, g->work_dir);
 
-  if (!g->a2ps_path[0]) {
-    strcpy(g->a2ps_path, DFLT_G_A2PS_PATH);
+  if (!g->a2ps_path || !g->a2ps_path[0]) {
+    xstrdup3(&g->a2ps_path, DFLT_G_A2PS_PATH);
   }
-  if (!g->lpr_path[0]) {
-    strcpy(g->lpr_path, DFLT_G_LPR_PATH);
+  if (!g->lpr_path || !g->lpr_path[0]) {
+    xstrdup3(&g->lpr_path, DFLT_G_LPR_PATH);
   }
-  if (!g->diff_path[0]) {
-    strcpy(g->diff_path, DFLT_G_DIFF_PATH);
+  if (!g->diff_path || !g->diff_path[0]) {
+    xstrdup3(&g->diff_path, DFLT_G_DIFF_PATH);
   }
 
   if (g->team_page_quota < 0) {

@@ -397,25 +397,25 @@ struct section_global_data
 
   /* --- server status reporting --- */
   /** server status directory */
-  path_t status_dir;
+  unsigned char *status_dir;
   /** subdir for working dirs */
-  path_t work_dir;
+  unsigned char *work_dir;
   /** subdir for printing */
-  path_t print_work_dir;
+  unsigned char *print_work_dir;
   /** subdir for comparing */
-  path_t diff_work_dir;
+  unsigned char *diff_work_dir;
 
   /** path to the `a2ps' program (default is /usr/bin/a2ps) */
-  path_t a2ps_path;
+  unsigned char *a2ps_path;
   /** arguments for the `a2ps' program */
   char **a2ps_args;
   /** path to the `lpr' program (default is /usr/bin/lpr) */
-  path_t lpr_path;
+  unsigned char *lpr_path;
   /** arguments for the `lpr' program */
   char **lpr_args;
 
   /** path to the `diff' program */
-  path_t diff_path;
+  unsigned char *diff_path;
 
   /* --- server <-> compile interaction --- */
   /* global parameters are used by compile utility, whereas 
