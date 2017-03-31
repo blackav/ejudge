@@ -1438,6 +1438,8 @@ do_write_kirov_standings(
         eff_time[up_ind] = pe->time;
       }
     }
+    time_t effective_time = 0;
+    if (eff_time) effective_time = eff_time[up_ind];
 
     if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {
       if (run_score < 0) run_score = 0;
@@ -1611,7 +1613,7 @@ do_write_kirov_standings(
                                    pe, prob, att_num[up_ind],
                                    disq_num[up_ind], ce_num[up_ind],
                                    full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
-                                   0, 0, eff_time[up_ind]);
+                                   0, 0, effective_time);
           if (pe->is_marked) {
             // latest
             marked_flag[up_ind] = 1;
@@ -1636,7 +1638,7 @@ do_write_kirov_standings(
                                    separate_user_score, user_mode, token_flags,
                                    pe, prob, att_num[up_ind],
                                    disq_num[up_ind], ce_num[up_ind], RUN_TOO_MANY, 0, 0,
-                                   eff_time[up_ind]);
+                                   effective_time);
           if (pe->is_marked) {
             // latest
             marked_flag[up_ind] = 1;
@@ -1711,7 +1713,7 @@ do_write_kirov_standings(
                                      pe, prob, att_num[up_ind],
                                      disq_num[up_ind], ce_num[up_ind],
                                      full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
-                                     0, 0, eff_time[up_ind]);
+                                     0, 0, effective_time);
             if (prob->score_latest > 0 || score > prob_score[up_ind]) {
               prob_score[up_ind] = score;
               if (prob->stand_hide_time <= 0) sol_time[up_ind] = pe->time;
@@ -1774,7 +1776,7 @@ do_write_kirov_standings(
                                      separate_user_score, user_mode, token_flags,
                                      pe, prob, att_num[up_ind],
                                      disq_num[up_ind], ce_num[up_ind], RUN_TOO_MANY, 0, 0,
-                                     eff_time[up_ind]);
+                                     effective_time);
             if (prob->score_latest > 0 || score > prob_score[up_ind]) {
               prob_score[up_ind] = score;
             }
@@ -1791,7 +1793,7 @@ do_write_kirov_standings(
                                    separate_user_score, user_mode, token_flags,
                                    pe, prob, att_num[up_ind],
                                    disq_num[up_ind], ce_num[up_ind], RUN_TOO_MANY, 0, 0,
-                                   eff_time[up_ind]);
+                                   effective_time);
           if (prob->score_latest > 0 || score > prob_score[up_ind]) {
             prob_score[up_ind] = score;
           }
