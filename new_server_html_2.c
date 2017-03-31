@@ -5000,10 +5000,10 @@ ns_get_user_problems_summary(
 
     if (status == RUN_REJECTED) {
       cur_pinfo->rejected_flag = 1;
-      if (cur_pinfo->need_eff_time_flag) {
+      if (cur_pinfo->need_eff_time_flag && re.time > 0) {
         if (cur_pinfo->effective_time <= 0) {
           cur_pinfo->effective_time = re.time;
-        } else if (re.time > 0 && re.time < cur_pinfo->effective_time) {
+        } else if (re.time < cur_pinfo->effective_time) {
           cur_pinfo->effective_time = re.time;
         }
       }

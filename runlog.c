@@ -844,10 +844,10 @@ run_get_attempts(
       continue;
     }
     if (re->status == RUN_STYLE_ERR) continue;
-    if (re->status == RUN_REJECTED && peffective_time) {
+    if (re->status == RUN_REJECTED && peffective_time && re->time > 0) {
       if (*peffective_time <= 0) {
         *peffective_time = re->time;
-      } else if (re->time > 0 && re->time < *peffective_time) {
+      } else if (re->time < *peffective_time) {
         *peffective_time = re->time;
       }
     }

@@ -1077,6 +1077,7 @@ do_write_kirov_standings(
   int *penalty = 0;
   int *cf_num = 0;
   int *marked_flag = 0;
+  time_t *eff_time = NULL;
 
   int  *tot_score = 0, *tot_full = 0, *succ_att = 0, *tot_att = 0, *tot_penalty = 0;
   int  *t_sort = 0, *t_sort2 = 0, *t_n1 = 0, *t_n2 = 0;
@@ -1121,6 +1122,7 @@ do_write_kirov_standings(
   int separate_user_score = 0;
   int token_flags = 0;
   struct xuser_team_extras *extras = NULL;
+  int need_eff_time = 0;
 
   memset(&env, 0, sizeof(env));
 
@@ -1279,6 +1281,7 @@ do_write_kirov_standings(
     if (!state->probs) continue;
     if (!(prob = state->probs[i]) || !prob->stand_column) continue;
     if (prob->start_date > 0 && cur_time < prob->start_date) continue;
+    if (prob->enable_submit_after_reject > 0) need_eff_time = 1;
     for (j = 1; j < p_max; j++) {
       if (!state->probs[j]) continue;
       if (!strcmp(state->probs[j]->short_name, prob->stand_column)
@@ -1319,6 +1322,9 @@ do_write_kirov_standings(
     XCALLOC(penalty, up_ind);
     XCALLOC(cf_num, up_ind);
     XCALLOC(marked_flag, up_ind);
+    if (need_eff_time) {
+      XCALLOC(eff_time, up_ind);
+    }
   }
   XALLOCAZ(tot_score, t_tot);
   XALLOCAZ(tot_full, t_tot);
@@ -1422,6 +1428,14 @@ do_write_kirov_standings(
         run_tests = pe->test;
       } else {
         run_tests = pe->test - 1;
+      }
+    }
+
+    if (run_status == RUN_REJECTED && prob->enable_submit_after_reject > 0 && pe->time > 0) {
+      if (eff_time[up_ind] <= 0) {
+        eff_time[up_ind] = pe->time;
+      } else if (pe->time < eff_time[up_ind]) {
+        eff_time[up_ind] = pe->time;
       }
     }
 
@@ -2636,6 +2650,7 @@ do_write_kirov_standings(
   // xfree(pg_n1):       currently on stack
   // xfree(pg_n2):       currently on stack
 
+  xfree(eff_time);
   xfree(prob_score);
   xfree(att_num);
   xfree(ce_num);
