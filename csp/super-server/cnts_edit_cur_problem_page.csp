@@ -743,13 +743,13 @@ function viewDialogOnChange(field)
     if (!str_value) {
 %>(<i>Not set</i>)<%
     } else {
-%>(<i><s:v value="tmp_prob->xml_file" /></i>)<%
+%>(<i><s:v value="tmp_prob->xml_file" checkExpr="" /></i>)<%
     }
   } else {
     if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->xml_file" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->xml_file" checkExpr="" /></i>)<%
     } else {
-%>(<i><s:v value="tmp_prob->xml_file" /></i>)<%
+%>(<i><s:v value="tmp_prob->xml_file" checkExpr="" /></i>)<%
     }
   }
 %></td>
@@ -770,9 +770,9 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->test_dir" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->test_dir" checkExpr="" /></i>)<%
       } else {
-%>(<i><s:v value="tmp_prob->test_dir" /></i>)<%
+%>(<i><s:v value="tmp_prob->test_dir" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -793,7 +793,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->test_pat" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->test_pat" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -814,7 +814,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->test_sfx" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->test_sfx" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -837,9 +837,9 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->corr_dir" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->corr_dir" checkExpr="" /></i>)<%
       } else {
-%>(<i><s:v value="tmp_prob->corr_dir" /></i>)<%
+%>(<i><s:v value="tmp_prob->corr_dir" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -860,7 +860,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->corr_pat" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->corr_pat" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -881,7 +881,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->corr_sfx" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->corr_sfx" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -904,9 +904,9 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->info_dir" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->info_dir" checkExpr="" /></i>)<%
       } else {
-%>(<i><s:v value="tmp_prob->info_dir" /></i>)<%
+%>(<i><s:v value="tmp_prob->info_dir" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -927,7 +927,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->info_pat" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->info_pat" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -948,7 +948,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->info_sfx" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->info_sfx" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -971,7 +971,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->tgz_pat" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->tgz_pat" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -992,7 +992,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->tgzdir_pat" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->tgzdir_pat" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -1013,7 +1013,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->tgz_sfx" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->tgz_sfx" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -1034,7 +1034,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->tgzdir_sfx" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->tgzdir_sfx" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -1063,7 +1063,7 @@ function viewDialogOnChange(field)
         if (!tmp_prob->test_checker_cmd) {
 %>(<i>Not set</i>)<%
         } else {
-%>(<i>Default: <s:v value="tmp_prob->test_checker_cmd" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->test_checker_cmd" checkExpr="" /></i>)<%
         }
       }
     }
@@ -1292,7 +1292,7 @@ function viewDialogOnChange(field)
 %><s:textfield id="orig-input_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Not set</i>)<% } %><%
     } else {
       const unsigned char *value = prob->input_file;
-%><s:textfield id="orig-input_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->input_file" /></i>)<% } %><%
+%><s:textfield id="orig-input_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->input_file" checkExpr="" /></i>)<% } %><%
     }
 %></td>
                 <td><input type="button" onclick="popupRunningDialog(event, 'input_file')" value="Clear" /></td>
@@ -1310,7 +1310,7 @@ function viewDialogOnChange(field)
 %><s:textfield id="orig-output_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Not set</i>)<% } %><%
     } else {
       const unsigned char *value = prob->output_file;
-%><s:textfield id="orig-output_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->output_file" /></i>)<% } %><%
+%><s:textfield id="orig-output_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->output_file" checkExpr="" /></i>)<% } %><%
     }
 %></td>
                 <td><input type="button" onclick="popupRunningDialog(event, 'output_file')" value="Clear" /></td>
