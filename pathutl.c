@@ -411,11 +411,11 @@ path_concat(
     return *pdst;
   } else {
     int len1 = strlen(dir);
-    int len2 = strlen(*pdst);
+    int len2 = strlen(file);
     unsigned char *str = malloc(len1 + len2 + 2);
     memcpy(str, dir, len1);
     str[len1] = '/';
-    memcpy(str + len1 + 1, *pdst, len2 + 1);
+    memcpy(str + len1 + 1, file, len2 + 1);
     xfree(*pdst);
     *pdst = str;
     return *pdst;
