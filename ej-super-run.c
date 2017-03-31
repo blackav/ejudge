@@ -665,33 +665,25 @@ create_working_directories(serve_state_t state)
   struct section_global_data *global = state->global;
   const unsigned char *hostname = os_NodeName();
   int pid = getpid();
-  unsigned char work_dir[PATH_MAX];
-  unsigned char check_dir[PATH_MAX];
   int retval = 0;
 
 #if defined EJUDGE_LOCAL_DIR
-  if (/*!global->run_work_dir ||*/ !global->run_work_dir[0]) {
-    snprintf(global->run_work_dir, sizeof(global->run_work_dir),
-             "%s/%s/work", EJUDGE_LOCAL_DIR, super_run_dir);
+  if (!global->run_work_dir || !global->run_work_dir[0]) {
+    usprintf(&global->run_work_dir, "%s/%s/work", EJUDGE_LOCAL_DIR, super_run_dir);
   }
-  if (/*!global->run_check_dir ||*/ !global->run_check_dir[0]) {
-    snprintf(global->run_check_dir, sizeof(global->run_check_dir),
-             "%s/%s/check", EJUDGE_LOCAL_DIR, super_run_dir);
+  if (!global->run_check_dir || !global->run_check_dir[0]) {
+    usprintf(&global->run_check_dir, "%s/%s/check", EJUDGE_LOCAL_DIR, super_run_dir);
   }
 #endif
-  if (/*!global->run_work_dir ||*/ !global->run_work_dir[0]) {
-    snprintf(global->run_work_dir, sizeof(global->run_work_dir), 
-             "%s/var/work", super_run_path);
+  if (!global->run_work_dir || !global->run_work_dir[0]) {
+    usprintf(&global->run_work_dir, "%s/var/work", super_run_path);
   }
-  if (/*!global->run_check_dir ||*/ !global->run_check_dir[0]) {
-    snprintf(global->run_check_dir, sizeof(global->run_check_dir),
-             "%s/var/check", super_run_path);
+  if (!global->run_check_dir || !global->run_check_dir[0]) {
+    usprintf(&global->run_check_dir, "%s/var/check", super_run_path);
   }
 
-  snprintf(work_dir, sizeof(work_dir), "%s/%s_%d", global->run_work_dir, hostname, pid);
-  snprintf(check_dir, sizeof(check_dir), "%s/%s_%d", global->run_check_dir, hostname, pid);
-  snprintf(global->run_work_dir, sizeof(global->run_work_dir), "%s", work_dir);
-  snprintf(global->run_check_dir, sizeof(global->run_check_dir), "%s", check_dir);
+  usprintf(&global->run_work_dir, "%s/%s_%d", global->run_work_dir, hostname, pid);
+  usprintf(&global->run_check_dir, "%s/%s_%d", global->run_check_dir, hostname, pid);
 
   if (os_MakeDirPath(global->run_work_dir, 0755) < 0) {
     err("failed to create working directory '%s'", global->run_work_dir);
@@ -711,10 +703,10 @@ remove_working_directory(serve_state_t state)
   struct section_global_data *global = state->global;
 
   if (!global) return;
-  if (/*global->run_work_dir &&*/ global->run_work_dir[0]) {
+  if (global->run_work_dir && global->run_work_dir[0]) {
     remove_directory_recursively(global->run_work_dir, 0);
   }
-  if (/*global->run_check_dir &&*/ global->run_check_dir[0]) {
+  if (global->run_check_dir && global->run_check_dir[0]) {
     remove_directory_recursively(global->run_check_dir, 0);
   }
 }

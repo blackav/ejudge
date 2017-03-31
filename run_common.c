@@ -3796,10 +3796,8 @@ run_tests(
       append_msg_to_log(messages_path, "pipe() failed: %s", os_ErrorMsg());
       goto check_failed;
     }
-    snprintf(valuer_cmt_file, sizeof(valuer_cmt_file), "%s/score_cmt",
-             global->run_work_dir);
-    snprintf(valuer_jcmt_file, sizeof(valuer_jcmt_file), "%s/score_jcmt",
-             global->run_work_dir);
+    snprintf(valuer_cmt_file, sizeof(valuer_cmt_file), "%s/score_cmt", global->run_work_dir);
+    snprintf(valuer_jcmt_file, sizeof(valuer_jcmt_file), "%s/score_jcmt", global->run_work_dir);
     valuer_tsk = start_interactive_valuer(global, srp,
                                           messages_path,
                                           valuer_cmt_file,

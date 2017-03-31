@@ -444,27 +444,27 @@ struct section_global_data
 
   /* --- serve <-> run interaction --- */
   /** the run spool root directory */
-  path_t run_dir;
+  unsigned char *run_dir;
   /** common prefix dir for serve->run packets */
-  path_t run_queue_dir;
+  unsigned char *run_queue_dir;
   /** serve->run executables */
-  path_t run_exe_dir;
+  unsigned char *run_exe_dir;
 
   /** base directory for run results */
-  path_t run_out_dir;
+  unsigned char *run_out_dir;
   /** run->serve status dir */
-  path_t run_status_dir;
+  unsigned char *run_status_dir;
   /** run->serve report dir */
-  path_t run_report_dir;
+  unsigned char *run_report_dir;
   /** run->serve team report dir */
-  path_t run_team_report_dir;
+  unsigned char *run_team_report_dir;
   /** run->serve full output archive dir */
-  path_t run_full_archive_dir;
+  unsigned char *run_full_archive_dir;
 
   /** private run's temporary directory */
-  path_t run_work_dir;
+  unsigned char *run_work_dir;
   /** working directory for checked programs */
-  path_t run_check_dir;
+  unsigned char *run_check_dir;
 
   /** httpd server html document root dir */
   unsigned char *htdocs_dir;

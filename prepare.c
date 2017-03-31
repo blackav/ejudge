@@ -200,9 +200,9 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(compile_work_dir, "s"),
   GLOBAL_PARAM(extra_compile_dirs, "x"),
 
-  GLOBAL_PARAM(run_dir, "s"),
-  GLOBAL_PARAM(run_work_dir, "s"),
-  GLOBAL_PARAM(run_check_dir, "s"),
+  GLOBAL_PARAM(run_dir, "S"),
+  GLOBAL_PARAM(run_work_dir, "S"),
+  GLOBAL_PARAM(run_check_dir, "S"),
 
   GLOBAL_PARAM_2(score_system, global_parse_score_system),
   GLOBAL_PARAM_2(rounding_mode, global_parse_rounding_mode),
@@ -971,7 +971,6 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->stand_footer_file);
   xfree(p->stand_symlink_dir);
   xfree(p->stand_file_name_2);
-
   xfree(p->htdocs_dir);
   xfree(p->stand_extra_format);
   xfree(p->stand_extra_legend);
@@ -996,6 +995,17 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->stand_page_cur_attr);
   xfree(p->stand_contestant_status_attr);
   xfree(p->stand_warn_number_attr);
+
+  xfree(p->run_dir);
+  xfree(p->run_queue_dir);
+  xfree(p->run_exe_dir);
+  xfree(p->run_out_dir);
+  xfree(p->run_status_dir);
+  xfree(p->run_report_dir);
+  xfree(p->run_team_report_dir);
+  xfree(p->run_full_archive_dir);
+  xfree(p->run_work_dir);
+  xfree(p->run_check_dir);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2840,49 +2850,43 @@ set_defaults(
   }
 
   if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
-    GLOBAL_INIT_FIELD(run_dir, DFLT_G_RUN_DIR, var_dir);
-    pathmake(g->run_queue_dir, g->run_dir, "/", DFLT_G_RUN_QUEUE_DIR, 0);
-    vinfo("global.run_queue_dir is %s", g->run_queue_dir);
-    pathmake(g->run_exe_dir, g->run_dir, "/", DFLT_G_RUN_EXE_DIR, 0);
-    vinfo("global.run_exe_dir is %s", g->run_exe_dir);
+    if (!g->run_dir || !g->run_dir[0]) xstrdup3(&g->run_dir, DFLT_G_RUN_DIR);
+    path_prepend_dir(&g->run_dir, g->var_dir);
+    path_concat(&g->run_queue_dir, g->run_dir, DFLT_G_RUN_QUEUE_DIR);
+    path_concat(&g->run_exe_dir, g->run_dir, DFLT_G_RUN_EXE_DIR);
   }
   if (mode == PREPARE_SERVE) {
-    snprintf(g->run_out_dir, sizeof(g->run_out_dir),
-             "%s/%06d", g->run_dir, contest_id);
-    vinfo("global.run_out_dir is %s", g->run_out_dir);
-    pathmake(g->run_status_dir, g->run_out_dir, "/",
-             DFLT_G_RUN_STATUS_DIR, 0);
-    vinfo("global.run_status_dir is %s", g->run_status_dir);
-    pathmake(g->run_report_dir, g->run_out_dir, "/",
-             DFLT_G_RUN_REPORT_DIR, 0);
-    vinfo("global.run_report_dir is %s", g->run_report_dir);
+    usprintf(&g->run_out_dir, "%s/%06d", g->run_dir, contest_id);;
+    path_concat(&g->run_status_dir, g->run_out_dir, DFLT_G_RUN_STATUS_DIR);
+    path_concat(&g->run_report_dir, g->run_out_dir, DFLT_G_RUN_REPORT_DIR);
     if (g->team_enable_rep_view) {
-      pathmake(g->run_team_report_dir, g->run_out_dir, "/",
-               DFLT_G_RUN_TEAM_REPORT_DIR, 0);
-      vinfo("global.run_team_report_dir is %s", g->run_team_report_dir);
-    }
+      path_concat(&g->run_team_report_dir, g->run_out_dir, DFLT_G_RUN_TEAM_REPORT_DIR);
+     }
     if (g->enable_full_archive) {
-      pathmake(g->run_full_archive_dir, g->run_out_dir, "/",
-               DFLT_G_RUN_FULL_ARCHIVE_DIR, 0);
-      vinfo("global.run_full_archive_dir is %s", g->run_full_archive_dir);
+      path_concat(&g->run_full_archive_dir, g->run_out_dir, DFLT_G_RUN_FULL_ARCHIVE_DIR);
     }
   }
 
   if (mode == PREPARE_RUN) {
 #if defined EJUDGE_LOCAL_DIR
-    if (!g->run_work_dir[0]) {
-      snprintf(g->run_work_dir, sizeof(g->run_work_dir),
-               "%s/%06d/work", EJUDGE_LOCAL_DIR, contest_id);
+    if (!g->run_work_dir || !g->run_work_dir[0]) {
+      usprintf(&g->run_work_dir, "%s/%06d/work", EJUDGE_LOCAL_DIR, contest_id);
     }
 #endif
-    GLOBAL_INIT_FIELD(run_work_dir, DFLT_G_RUN_WORK_DIR, work_dir);
+    if (!g->run_work_dir || !g->run_work_dir[0]) {
+      xstrdup3(&g->run_work_dir, DFLT_G_RUN_WORK_DIR);
+    }
+    path_prepend_dir(&g->run_work_dir, g->work_dir);
+
 #if defined EJUDGE_LOCAL_DIR
-    if (!g->run_check_dir[0]) {
-      snprintf(g->run_check_dir, sizeof(g->run_check_dir),
-               "%s/%06d/check", EJUDGE_LOCAL_DIR, contest_id);
+    if (!g->run_check_dir || !g->run_check_dir[0]) {
+      usprintf(&g->run_check_dir, "%s/%06d/check", EJUDGE_LOCAL_DIR, contest_id);
     }
 #endif
-    GLOBAL_INIT_FIELD(run_check_dir, DFLT_G_RUN_CHECK_DIR, work_dir);
+    if (!g->run_check_dir || !g->run_check_dir[0]) {
+      xstrdup3(&g->run_check_dir, DFLT_G_RUN_CHECK_DIR);
+    }
+    path_prepend_dir(&g->run_check_dir, g->work_dir);
   }
 
   if (g->enable_continue == -1) g->enable_continue = DFLT_G_ENABLE_CONTINUE;
