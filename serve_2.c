@@ -3759,10 +3759,11 @@ void
 serve_invoke_start_script(serve_state_t state)
 {
   tpTask tsk = 0;
+  const unsigned char *contest_start_cmd = state->global->contest_start_cmd;
 
-  if (!state->global->contest_start_cmd[0]) return;
+  if (!contest_start_cmd || !contest_start_cmd[0]) return;
   if (!(tsk = task_New())) return;
-  task_AddArg(tsk, state->global->contest_start_cmd);
+  task_AddArg(tsk, contest_start_cmd);
   task_SetPathAsArg0(tsk);
   if (task_Start(tsk) < 0) {
     task_Delete(tsk);

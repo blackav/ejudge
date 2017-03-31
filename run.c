@@ -1089,7 +1089,7 @@ check_config(void)
 
 #if CONF_HAS_LIBINTL - 0 == 1
   // bind message catalogs, if specified
-  if (global->enable_l10n && global->l10n_dir[0]) {
+  if (global->enable_l10n && global->l10n_dir && global->l10n_dir[0]) {
     bindtextdomain("ejudge", global->l10n_dir);
     textdomain("ejudge");
   }

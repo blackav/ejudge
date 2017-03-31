@@ -291,19 +291,17 @@ prepare_unparse_global(
     fprintf(f, "info_dir = \"%s\"\n", CARMOR(global->info_dir));
   if (global->tgz_dir && strcmp(global->tgz_dir, DFLT_G_TGZ_DIR))
     fprintf(f, "tgz_dir = \"%s\"\n", CARMOR(global->tgz_dir));
-  if (global->checker_dir[0] && strcmp(global->checker_dir, DFLT_G_CHECKER_DIR))
+  if (global->checker_dir && global->checker_dir[0] && strcmp(global->checker_dir, DFLT_G_CHECKER_DIR))
     fprintf(f, "checker_dir = \"%s\"\n", CARMOR(global->checker_dir));
-  if (global->statement_dir[0] && strcmp(global->statement_dir, DFLT_G_STATEMENT_DIR))
+  if (global->statement_dir && global->statement_dir[0] && strcmp(global->statement_dir, DFLT_G_STATEMENT_DIR))
     fprintf(f, "statement_dir = \"%s\"\n", CARMOR(global->statement_dir));
-  if (global->plugin_dir[0] && strcmp(global->plugin_dir, DFLT_G_PLUGIN_DIR))
+  if (global->plugin_dir && global->plugin_dir[0] && strcmp(global->plugin_dir, DFLT_G_PLUGIN_DIR))
     fprintf(f, "plugin_dir = \"%s\"\n", CARMOR(global->plugin_dir));
-  if (global->contest_start_cmd[0])
-    fprintf(f, "contest_start_cmd = \"%s\"\n", CARMOR(global->contest_start_cmd));
+  do_str(f, &ab, "contest_start_cmd", global->contest_start_cmd);
   if (global->contest_stop_cmd && global->contest_stop_cmd[0])
     fprintf(f, "contest_stop_cmd = \"%s\"\n",
             CARMOR(global->contest_stop_cmd));
-  if (global->description_file[0])
-    fprintf(f, "description_file = \"%s\"\n", CARMOR(global->description_file));
+  do_str(f, &ab, "description_file", global->description_file);
   fprintf(f, "\n");
 
   if (global->max_run_size != DFLT_G_MAX_RUN_SIZE)
@@ -817,7 +815,7 @@ prepare_check_forbidden_global(FILE *f, const struct section_global_data *global
     fprintf(f, "Cannot handle contests with `var_dir' global variable set\n");
     return -1;
   }
-  if (global->serve_socket[0]) {
+  if (global->serve_socket && global->serve_socket[0]) {
     fprintf(f, "Cannot handle contests with `serve_socket' global variable set\n");
     return -1;
   }

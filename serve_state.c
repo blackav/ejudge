@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -810,7 +810,7 @@ serve_state_load_contest(
   }
 
   // load reporting plugin
-  if (global->contest_plugin_file[0]) {
+  if (global->contest_plugin_file && global->contest_plugin_file[0]) {
     iface = (struct contest_plugin_iface *) plugin_load(global->contest_plugin_file, "report", "");
     if (!iface) goto failure;
     state->contest_plugin = iface;

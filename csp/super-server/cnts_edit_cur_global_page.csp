@@ -1773,7 +1773,7 @@ function advancedDialogOnChange()
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-contest_start_cmd-div">
                 <td>Contest start script:</td>
-                <td><s:textfield id="orig-contest_start_cmd" readonly="readonly" name="param" value="global->contest_start_cmd" size="48" maxlength="1024" /></td>
+                <td><s:textfield id="orig-contest_start_cmd" readonly="readonly" name="param" value="global->contest_start_cmd" size="48" maxlength="1024" checkExpr="" /></td>
                 <td onclick="np(event);"><input type="button" onclick="popupFilesDialog(event, 'contest_start_cmd')" value="Clear" />[<s:a ac="glob-edit-contest-start-cmd-page">Edit</s:a>]</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:contest_start_cmd" /></td>
             </s:tr>

@@ -761,16 +761,15 @@ collect_sections(serve_state_t state)
   }
 
 #if defined EJUDGE_SCRIPT_DIR
-  if (!global->script_dir[0]) {
-    snprintf(global->script_dir, sizeof(global->script_dir), "%s", EJUDGE_SCRIPT_DIR);
+  if (!global->script_dir || !global->script_dir[0]) {
+    xstrdup3(&global->script_dir, EJUDGE_SCRIPT_DIR);
   }
-  if (!global->ejudge_checkers_dir[0]) {
-    snprintf(global->ejudge_checkers_dir, sizeof(global->ejudge_checkers_dir),
-             "%s/checkers", EJUDGE_SCRIPT_DIR);
+  if (!global->ejudge_checkers_dir || !global->ejudge_checkers_dir[0]) {
+    usprintf(&global->ejudge_checkers_dir, "%s/checkers", EJUDGE_SCRIPT_DIR);
   }
 #endif
 
-  if (!global->ejudge_checkers_dir[0]) {
+  if (!global->ejudge_checkers_dir || !global->ejudge_checkers_dir[0]) {
     fatal("ejudge_checkers_dir parameter is undefined");
   }
 

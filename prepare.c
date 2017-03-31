@@ -136,30 +136,30 @@ static const struct config_parse_info section_global_params[] =
 
   GLOBAL_PARAM(root_dir, "s"),
   GLOBAL_PARAM(conf_dir, "s"),
-  GLOBAL_PARAM(problems_dir, "s"),
-  GLOBAL_PARAM(script_dir, "s"),
+  GLOBAL_PARAM(problems_dir, "S"),
+  GLOBAL_PARAM(script_dir, "S"),
   GLOBAL_PARAM(test_dir, "S"),
   GLOBAL_PARAM(corr_dir, "S"),
   GLOBAL_PARAM(info_dir, "S"),
   GLOBAL_PARAM(tgz_dir, "S"),
-  GLOBAL_PARAM(checker_dir, "s"),
-  GLOBAL_PARAM(statement_dir, "s"),
-  GLOBAL_PARAM(plugin_dir, "s"),
+  GLOBAL_PARAM(checker_dir, "S"),
+  GLOBAL_PARAM(statement_dir, "S"),
+  GLOBAL_PARAM(plugin_dir, "S"),
   GLOBAL_PARAM(test_sfx, "S"),
   GLOBAL_PARAM(corr_sfx, "S"),
   GLOBAL_PARAM(info_sfx, "S"),
   GLOBAL_PARAM(tgz_sfx, "S"),
   GLOBAL_PARAM(tgzdir_sfx, "S"),
-  GLOBAL_PARAM(ejudge_checkers_dir, "s"),
+  GLOBAL_PARAM(ejudge_checkers_dir, "S"),
   GLOBAL_PARAM(test_pat, "S"),
   GLOBAL_PARAM(corr_pat, "S"),
   GLOBAL_PARAM(info_pat, "S"),
   GLOBAL_PARAM(tgz_pat, "S"),
   GLOBAL_PARAM(tgzdir_pat, "S"),
-  GLOBAL_PARAM(contest_start_cmd, "s"),
+  GLOBAL_PARAM(contest_start_cmd, "S"),
   GLOBAL_PARAM(contest_stop_cmd, "S"),
-  GLOBAL_PARAM(description_file, "s"),
-  GLOBAL_PARAM(contest_plugin_file, "s"),
+  GLOBAL_PARAM(description_file, "S"),
+  GLOBAL_PARAM(contest_plugin_file, "S"),
   GLOBAL_PARAM(super_run_dir, "S"),
 
   GLOBAL_PARAM(clardb_plugin, "s"),
@@ -169,11 +169,11 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(var_dir, "S"),
 
   GLOBAL_PARAM(contest_id, "d"),
-  GLOBAL_PARAM(socket_path, "s"),
+  GLOBAL_PARAM(socket_path, "S"),
   GLOBAL_PARAM(contests_dir, "s"),
-  GLOBAL_PARAM(serve_socket, "s"),
+  GLOBAL_PARAM(serve_socket, "S"),
 
-  GLOBAL_PARAM(lang_config_dir, "s"),
+  GLOBAL_PARAM(lang_config_dir, "S"),
 
   //GLOBAL_PARAM(log_file, "s"),
   GLOBAL_PARAM(run_log_file, "S"),
@@ -277,7 +277,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(start_sound, "s"),
 
   GLOBAL_PARAM(enable_l10n, "d"),
-  GLOBAL_PARAM(l10n_dir, "s"),
+  GLOBAL_PARAM(l10n_dir, "S"),
   GLOBAL_PARAM(standings_locale, "s"),
   GLOBAL_PARAM(checker_locale, "S"),
 
@@ -1031,8 +1031,20 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->audit_log_dir);
   xfree(p->uuid_archive_dir);
   xfree(p->team_extra_dir);
-
   xfree(p->var_dir);
+  xfree(p->serve_socket);
+  xfree(p->l10n_dir);
+  xfree(p->socket_path);
+  xfree(p->lang_config_dir);
+  xfree(p->problems_dir);
+  xfree(p->script_dir);
+  xfree(p->checker_dir);
+  xfree(p->statement_dir);
+  xfree(p->plugin_dir);
+  xfree(p->ejudge_checkers_dir);
+  xfree(p->contest_start_cmd);
+  xfree(p->description_file);
+  xfree(p->contest_plugin_file);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2500,11 +2512,11 @@ set_defaults(
   /* userlist-server interaction */
   if (mode == PREPARE_SERVE) {
 #if defined EJUDGE_SOCKET_PATH
-    if (!g->socket_path[0]) {
-      snprintf(g->socket_path,sizeof(g->socket_path),"%s", EJUDGE_SOCKET_PATH);
+    if (!g->socket_path || !g->socket_path[0]) {
+      xstrdup3(&g->socket_path, EJUDGE_SOCKET_PATH);
     }
 #endif /* EJUDGE_SOCKET_PATH */
-    if (!g->socket_path[0]) {
+    if (!g->socket_path || !g->socket_path[0]) {
       err("global.socket_path must be set");
       return -1;
     }
@@ -2728,24 +2740,20 @@ set_defaults(
   path_prepend_dir(&g->var_dir, g->root_dir);
 
   /* problems integrated directory (for advanced_layout) */
-  if (!g->problems_dir[0]) {
-    snprintf(g->problems_dir,sizeof(g->problems_dir),"%s",DFLT_G_PROBLEMS_DIR);
+  if (!g->problems_dir || !g->problems_dir[0]) {
+    xstrdup3(&g->problems_dir, DFLT_G_PROBLEMS_DIR);
   }
-  pathmake2(g->problems_dir, g->root_dir, "/", g->problems_dir, NULL);
+  path_prepend_dir(&g->problems_dir, g->root_dir);
 
   /* CONFIGURATION FILES DEFAULTS */
 #define GLOBAL_INIT_FIELD(f,d,c) do { if (!g->f[0]) { vinfo("global." #f " set to %s", d); snprintf(g->f, sizeof(g->f), "%s", d); } pathmake2(g->f,g->c, "/", g->f, NULL); } while (0)
 
 #if defined EJUDGE_SCRIPT_DIR
-  if (!g->script_dir[0]) {
-    snprintf(g->script_dir, sizeof(g->script_dir), "%s", EJUDGE_SCRIPT_DIR);
-    vinfo("global.script_dir is set to %s", g->script_dir);
+  if (!g->script_dir || !g->script_dir[0]) {
+    xstrdup3(&g->script_dir, EJUDGE_SCRIPT_DIR);
   }
-  if (!g->ejudge_checkers_dir[0]) {
-    snprintf(g->ejudge_checkers_dir, sizeof(g->ejudge_checkers_dir),
-             "%s/checkers", EJUDGE_SCRIPT_DIR);
-    vinfo("global.ejudge_checkers_dir is set to %s",
-         g->ejudge_checkers_dir);
+  if (!g->ejudge_checkers_dir || !g->ejudge_checkers_dir[0]) {
+    usprintf(&g->ejudge_checkers_dir, "%s/checkers", EJUDGE_SCRIPT_DIR);
   }
 #endif /* EJUDGE_SCRIPT_DIR */
 
@@ -2776,11 +2784,22 @@ set_defaults(
     }
   }
 
-  GLOBAL_INIT_FIELD(checker_dir, DFLT_G_CHECKER_DIR, conf_dir);
-  GLOBAL_INIT_FIELD(statement_dir, DFLT_G_STATEMENT_DIR, conf_dir);
-  GLOBAL_INIT_FIELD(plugin_dir, DFLT_G_PLUGIN_DIR, conf_dir);
-  if (mode == PREPARE_SERVE && g->description_file[0]) {
-    GLOBAL_INIT_FIELD(description_file, "", statement_dir);
+  if (!g->checker_dir || !g->checker_dir) {
+    path_concat(&g->checker_dir, g->conf_dir, DFLT_G_CHECKER_DIR);
+  } else {
+    path_prepend_dir(&g->checker_dir, g->conf_dir);
+  }
+  if (!g->statement_dir || !g->statement_dir[0]) {
+    xstrdup3(&g->statement_dir, DFLT_G_STATEMENT_DIR);
+  }
+  path_prepend_dir(&g->statement_dir, g->conf_dir);
+  if (!g->plugin_dir || !g->plugin_dir[0]) {
+    path_concat(&g->plugin_dir, g->conf_dir, DFLT_G_PLUGIN_DIR);
+  } else {
+    path_prepend_dir(&g->plugin_dir, g->conf_dir);
+  }
+  if (mode == PREPARE_SERVE && g->description_file && g->description_file[0]) {
+    path_prepend_dir(&g->description_file, g->statement_dir);
   }
 
   if (mode != PREPARE_COMPILE) {
@@ -2852,12 +2871,16 @@ set_defaults(
       xstrdup3(&g->status_dir, DFLT_G_STATUS_DIR);
     }
     path_prepend_dir(&g->status_dir, g->var_dir);
-    GLOBAL_INIT_FIELD(serve_socket, DFLT_G_SERVE_SOCKET, var_dir);
+    if (!g->serve_socket || !g->serve_socket[0]) {
+      path_concat(&g->serve_socket, g->var_dir, DFLT_G_SERVE_SOCKET);
+    } else {
+      path_prepend_dir(&g->serve_socket, g->var_dir);
+    }
     if (g->variant_map_file && !os_IsAbsolutePath(g->variant_map_file)) {
       usprintf(&g->variant_map_file, "%s/%s", g->conf_dir, g->variant_map_file);
     }
-    if (g->contest_plugin_file[0]) {
-      GLOBAL_INIT_FIELD(contest_plugin_file, "", plugin_dir);
+    if (g->contest_plugin_file && g->contest_plugin_file[0]) {
+      path_prepend_dir(&g->contest_plugin_file, g->plugin_dir);
     }
   }
 
@@ -2968,9 +2991,8 @@ set_defaults(
   }
 
   if (mode == PREPARE_COMPILE) {
-    if (g->lang_config_dir[0]) {
-      param_subst(g->lang_config_dir, sizeof(g->lang_config_dir),
-                  subst_src, subst_dst);
+    if (g->lang_config_dir && g->lang_config_dir[0]) {
+      param_subst_2(&g->lang_config_dir, subst_src, subst_dst);
     }
 
     if (g->compile_real_time_limit == -1) {
@@ -2996,8 +3018,8 @@ set_defaults(
     }
     make_stand_file_name_2(state);
 
-    if (g->contest_start_cmd[0]) {
-      pathmake2(g->contest_start_cmd, g->conf_dir, "/",g->contest_start_cmd, NULL);
+    if (g->contest_start_cmd && g->contest_start_cmd[0]) {
+      path_prepend_dir(&g->contest_start_cmd, g->conf_dir);
       if (check_executable(g->contest_start_cmd) < 0) {
         err("contest start command %s is not executable or does not exist",
             g->contest_start_cmd);
@@ -3115,11 +3137,11 @@ set_defaults(
 #if CONF_HAS_LIBINTL - 0 == 1
   if (g->enable_l10n < 0) g->enable_l10n = 1;
 #if defined EJUDGE_LOCALE_DIR
-  if (g->enable_l10n && !g->l10n_dir[0]) {
-    strcpy(g->l10n_dir, EJUDGE_LOCALE_DIR);
+  if (g->enable_l10n && (!g->l10n_dir || !g->l10n_dir[0])) {
+    xstrdup3(&g->l10n_dir, EJUDGE_LOCALE_DIR);
   }
 #endif /* EJUDGE_LOCALE_DIR */
-  if (g->enable_l10n && !g->l10n_dir[0]) {
+  if (g->enable_l10n && (!g->l10n_dir || !g->l10n_dir[0])) {
     g->enable_l10n = 0;
   }
 #else
@@ -5089,12 +5111,15 @@ prepare_set_global_defaults(struct section_global_data *g)
     xstrdup3(&g->info_dir, DFLT_G_INFO_DIR);
   if (!g->tgz_dir)
     xstrdup3(&g->tgz_dir, DFLT_G_TGZ_DIR);
-  if (!g->checker_dir[0])
-    snprintf(g->checker_dir, sizeof(g->checker_dir), "%s", DFLT_G_CHECKER_DIR);
-  if (!g->statement_dir[0])
-    snprintf(g->statement_dir, sizeof(g->statement_dir), "%s", DFLT_G_STATEMENT_DIR);
-  if (!g->plugin_dir[0])
-    snprintf(g->plugin_dir, sizeof(g->plugin_dir), "%s", DFLT_G_PLUGIN_DIR);
+  if (!g->checker_dir || !g->checker_dir[0]) {
+    xstrdup3(&g->checker_dir, DFLT_G_CHECKER_DIR);
+  }
+  if (!g->statement_dir || !g->statement_dir[0]) {
+    xstrdup3(&g->statement_dir, DFLT_G_STATEMENT_DIR);
+  }
+  if (!g->plugin_dir || !g->plugin_dir[0]) {
+    xstrdup3(&g->plugin_dir, DFLT_G_PLUGIN_DIR);
+  }
 
   if (!g->standings_file_name || !g->standings_file_name[0]) {
     xstrdup3(&g->standings_file_name, DFLT_G_STANDINGS_FILE_NAME);
@@ -5380,9 +5405,9 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   xstrdup3(&global->corr_dir, "../tests");
   xstrdup3(&global->info_dir, "../tests");
   xstrdup3(&global->tgz_dir, "../tests");
-  strcpy(global->checker_dir, "../checkers");
-  strcpy(global->statement_dir, "../statements");
-  strcpy(global->plugin_dir, "../plugins");
+  xstrdup3(&global->checker_dir, "../checkers");
+  xstrdup3(&global->statement_dir, "../statements");
+  xstrdup3(&global->plugin_dir, "../plugins");
 
   xstrdup3(&global->standings_file_name, DFLT_G_STANDINGS_FILE_NAME);
   global->plog_update_time = DFLT_G_PLOG_UPDATE_TIME;
@@ -6641,12 +6666,14 @@ get_advanced_layout_path(
     return buf;
   }
 
-  if (global->problems_dir[0] && os_IsAbsolutePath(global->problems_dir)) {
-    snprintf(path1, sizeof(path1), "%s", global->problems_dir);
-  } else if (global->problems_dir[0]) {
-    snprintf(path1,sizeof(path1),"%s/%s",global->root_dir,global->problems_dir);
+  if (global->problems_dir && global->problems_dir[0]) {
+    if (os_IsAbsolutePath(global->problems_dir)) {
+      snprintf(path1, sizeof(path1), "%s", global->problems_dir);
+    } else {
+      snprintf(path1, sizeof(path1), "%s/%s", global->root_dir, global->problems_dir);
+    }
   } else {
-    snprintf(path1,sizeof(path1),"%s/%s",global->root_dir,DFLT_G_PROBLEMS_DIR);
+    snprintf(path1, sizeof(path1), "%s/%s", global->root_dir, DFLT_G_PROBLEMS_DIR);
   }
 
   if (!prob) {

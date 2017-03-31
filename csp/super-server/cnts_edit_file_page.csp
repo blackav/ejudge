@@ -40,7 +40,7 @@
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->contest_start_cmd;
         if (!file_path1 || !*file_path1) {
-            snprintf(phr->ss->global->contest_start_cmd, sizeof(phr->ss->global->contest_start_cmd), "%s", "start_cmd");
+            xstrdup3(&phr->ss->global->contest_start_cmd, "start_cmd");
             file_path1 = phr->ss->global->contest_start_cmd;
         }
         param_expl = "Contest start script";
@@ -51,7 +51,7 @@
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->contest_stop_cmd;
         if (!file_path1 || !*file_path1) {
-            phr->ss->global->contest_stop_cmd = "stop_cmd";
+            xstrdup3(&phr->ss->global->contest_stop_cmd, "stop_cmd");
             file_path1 = phr->ss->global->contest_stop_cmd;
         }
         param_expl = "Contest stop script";

@@ -271,12 +271,12 @@ struct section_global_data
   /** @deprecated the contest root directory */
   path_t root_dir;
   /** @deprecated the contest socket path */
-  path_t serve_socket;
+  unsigned char *serve_socket;
 
   /** enable message translation? */
   ejintbool_t enable_l10n;
   /** message translation catalog */
-  path_t l10n_dir;
+  unsigned char *l10n_dir;
   /** the language of the standings */
   unsigned char standings_locale[128];
   /** parsed `standings_locale' */
@@ -286,11 +286,11 @@ struct section_global_data
   /** the contest number (mandatory) */
   int contest_id;
   /** the `userlist-server' socket path */
-  path_t socket_path;
+  unsigned char *socket_path;
   /** the contest XML directory */
   path_t contests_dir;
   /** compiler configuration script dir */
-  path_t lang_config_dir;
+  unsigned char *lang_config_dir;
 
   /** html charset */
   unsigned char charset[128];
@@ -305,9 +305,9 @@ struct section_global_data
   /** configuration dir */
   path_t conf_dir;
   /** directory with problem files (for advanced_layout) */
-  path_t problems_dir;
+  unsigned char *problems_dir;
   /** default location of the compile and run scripts */
-  path_t script_dir;
+  unsigned char *script_dir;
   /** directory with the tests */
   unsigned char *test_dir;
   /** directory with the correct answers */
@@ -317,11 +317,11 @@ struct section_global_data
   /** directory with the working dir tgz archives */
   unsigned char *tgz_dir;
   /** directory with the checkers */
-  path_t checker_dir;
+  unsigned char *checker_dir;
   /** directory with the problem statements */
-  path_t statement_dir;
+  unsigned char *statement_dir;
   /** directory with the contest and problem plugins */
-  path_t plugin_dir;
+  unsigned char *plugin_dir;
   /** suffix of the test files */
   unsigned char *test_sfx;
   /** suffix of the files with correct answers */
@@ -333,15 +333,15 @@ struct section_global_data
   /** suffix of the working directory master copy */
   unsigned char *tgzdir_sfx;
   /** path to the built-in checkers */
-  path_t ejudge_checkers_dir;
+  unsigned char *ejudge_checkers_dir;
   /** command to run when the contest starts */
-  path_t contest_start_cmd;
+  unsigned char *contest_start_cmd;
   /** command to run when the contest stops */
   unsigned char *contest_stop_cmd;
   /** path to the HTML file with the contest description */
-  path_t description_file;
+  unsigned char *description_file;
   /** path to the contest plugin */
-  path_t contest_plugin_file;
+  unsigned char *contest_plugin_file;
 
   /** directory for non-default super-run directory */
   unsigned char *super_run_dir;
