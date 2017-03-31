@@ -196,8 +196,8 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(lpr_args, "x"),
   GLOBAL_PARAM(diff_path, "s"),
 
-  GLOBAL_PARAM(compile_dir, "s"),
-  GLOBAL_PARAM(compile_work_dir, "s"),
+  GLOBAL_PARAM(compile_dir, "S"),
+  GLOBAL_PARAM(compile_work_dir, "S"),
   GLOBAL_PARAM(extra_compile_dirs, "x"),
 
   GLOBAL_PARAM(run_dir, "S"),
@@ -995,7 +995,6 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->stand_page_cur_attr);
   xfree(p->stand_contestant_status_attr);
   xfree(p->stand_warn_number_attr);
-
   xfree(p->run_dir);
   xfree(p->run_queue_dir);
   xfree(p->run_exe_dir);
@@ -1006,6 +1005,14 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->run_full_archive_dir);
   xfree(p->run_work_dir);
   xfree(p->run_check_dir);
+
+  xfree(p->compile_dir);
+  xfree(p->compile_queue_dir);
+  xfree(p->compile_src_dir);
+  xfree(p->compile_out_dir);
+  xfree(p->compile_status_dir);
+  xfree(p->compile_report_dir);
+  xfree(p->compile_work_dir);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2796,27 +2803,20 @@ set_defaults(
   }
 
   if (mode == PREPARE_COMPILE || mode == PREPARE_SERVE) {
-    GLOBAL_INIT_FIELD(compile_dir, DFLT_G_COMPILE_DIR, var_dir);
+    if (!g->compile_dir || !g->compile_dir[0]) {
+      xstrdup3(&g->compile_dir, DFLT_G_COMPILE_DIR);
+    }
+    path_prepend_dir(&g->compile_dir, g->var_dir);
     path_normalize(g->compile_dir, sizeof(g->compile_dir));
-    pathmake(g->compile_queue_dir, g->compile_dir, "/",
-             DFLT_G_COMPILE_QUEUE_DIR, NULL);
-    vinfo("global.compile_queue_dir is %s", g->compile_queue_dir);
-    pathmake(g->compile_src_dir, g->compile_dir, "/",
-             DFLT_G_COMPILE_SRC_DIR, NULL);
-    vinfo("global.compile_src_dir is %s", g->compile_src_dir);
+    path_concat(&g->compile_queue_dir, g->compile_dir, DFLT_G_COMPILE_QUEUE_DIR);
+    path_concat(&g->compile_src_dir, g->compile_dir, DFLT_G_COMPILE_SRC_DIR);
   }
 
   if (mode == PREPARE_SERVE) {
     /* compile_out_dir is no longer parametrized, also it uses compile_dir */
-    snprintf(g->compile_out_dir, sizeof(g->compile_out_dir),
-             "%s/%06d", g->compile_dir, contest_id);
-    vinfo("global.compile_out_dir is %s", g->compile_out_dir);
-    pathmake(g->compile_status_dir, g->compile_out_dir, "/",
-             DFLT_G_COMPILE_STATUS_DIR, 0);
-    vinfo("global.compile_status_dir is %s", g->compile_status_dir);
-    pathmake(g->compile_report_dir, g->compile_out_dir, "/",
-             DFLT_G_COMPILE_REPORT_DIR, 0);
-    vinfo("global.compile_report_dir is %s", g->compile_report_dir);
+    usprintf(&g->compile_out_dir, "%s/%06d", g->compile_dir, contest_id);
+    path_concat(&g->compile_status_dir, g->compile_out_dir, DFLT_G_COMPILE_STATUS_DIR);
+    path_concat(&g->compile_report_dir, g->compile_out_dir, DFLT_G_COMPILE_REPORT_DIR);
   }
 
   GLOBAL_INIT_FIELD(work_dir, DFLT_G_WORK_DIR, var_dir);
@@ -2839,14 +2839,15 @@ set_defaults(
 
   if (mode == PREPARE_COMPILE) {
 #if defined EJUDGE_LOCAL_DIR
-    if (!g->compile_work_dir[0]) {
-      snprintf(g->compile_work_dir, sizeof(g->compile_work_dir),
-               "%s/compile/work", EJUDGE_LOCAL_DIR);
+    if (!g->compile_work_dir || !g->compile_work_dir[0]) {
+      usprintf(&g->compile_work_dir, "%s/compile/work", EJUDGE_LOCAL_DIR);
     }
 #endif
-    GLOBAL_INIT_FIELD(compile_work_dir, DFLT_G_COMPILE_WORK_DIR, work_dir);
-    param_subst(g->compile_work_dir, sizeof(g->compile_work_dir),
-                subst_src, subst_dst);
+    if (!g->compile_work_dir || !g->compile_work_dir[0]) {
+      xstrdup3(&g->compile_work_dir, DFLT_G_COMPILE_WORK_DIR);
+    }
+    path_prepend_dir(&g->compile_work_dir, g->work_dir);
+    param_subst_2(&g->compile_work_dir, subst_src, subst_dst);
   }
 
   if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {

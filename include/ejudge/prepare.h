@@ -421,11 +421,11 @@ struct section_global_data
   /* global parameters are used by compile utility, whereas 
    * language-local parameters are used by serve */
   /** the compile spool root dir */
-  path_t compile_dir;
+  unsigned char *compile_dir;
   /** the compile packets spool directory */
-  path_t compile_queue_dir;
+  unsigned char *compile_queue_dir;
   /** the compile source files spool directory */
-  path_t compile_src_dir;
+  unsigned char *compile_src_dir;
 
   /** additional compile directories */
   char **extra_compile_dirs;
@@ -433,14 +433,14 @@ struct section_global_data
   /* these are used by serve */  
   /* var/compile prefix is implicit and cannot be changed! */
   /** base directory for compile results */
-  path_t compile_out_dir;
+  unsigned char *compile_out_dir;
   /** compile->serve status dir */
-  path_t compile_status_dir;
+  unsigned char *compile_status_dir;
   /** compile->serve report dir */
-  path_t compile_report_dir;
+  unsigned char *compile_report_dir;
 
   /** working directory for compilation */
-  path_t compile_work_dir;
+  unsigned char *compile_work_dir;
 
   /* --- serve <-> run interaction --- */
   /** the run spool root directory */

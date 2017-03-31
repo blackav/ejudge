@@ -174,15 +174,12 @@ super_html_read_serve(
   */
 
   // compile server must be used
-  if (!global->compile_dir[0]) {
+  if (!global->compile_dir || !global->compile_dir[0]) {
     fprintf(flog, "compilation server is not used\n");
     return -1;
   }
   if (!os_IsAbsolutePath(global->compile_dir)) {
-    snprintf(tmppath, sizeof(tmppath), "%s/var/%s", global->root_dir,
-             global->compile_dir);
-    path_normalize(tmppath, sizeof(tmppath));
-    snprintf(global->compile_dir, sizeof(global->compile_dir), "%s", tmppath);
+    usprintf(&global->compile_dir, "%s/var/%s", global->root_dir, global->compile_dir);
   }
   if (!config->compile_home_dir) {
     fprintf(flog, "compile server home dir is not set\n");
