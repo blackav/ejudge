@@ -1360,7 +1360,7 @@ prepare_unparse_prob(
   }
   if (prob->standard_checker)
     fprintf(f, "standard_checker = \"%s\"\n", CARMOR(prob->standard_checker));
-  if (prob->check_cmd)
+  if (prob->check_cmd && prob->check_cmd[0])
     fprintf(f, "check_cmd = \"%s\"\n", CARMOR(prob->check_cmd));
   do_xstr(f, &ab, "checker_env", prob->checker_env);
   if (prob->valuer_cmd)
