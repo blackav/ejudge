@@ -1611,7 +1611,7 @@ do_write_kirov_standings(
                                    pe, prob, att_num[up_ind],
                                    disq_num[up_ind], ce_num[up_ind],
                                    full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
-                                   0, 0, 0 /* FIXME: effective_time */);
+                                   0, 0, eff_time[up_ind]);
           if (pe->is_marked) {
             // latest
             marked_flag[up_ind] = 1;
@@ -1636,7 +1636,7 @@ do_write_kirov_standings(
                                    separate_user_score, user_mode, token_flags,
                                    pe, prob, att_num[up_ind],
                                    disq_num[up_ind], ce_num[up_ind], RUN_TOO_MANY, 0, 0,
-                                   0 /* FIXME: effective_time */);
+                                   eff_time[up_ind]);
           if (pe->is_marked) {
             // latest
             marked_flag[up_ind] = 1;
@@ -1711,7 +1711,7 @@ do_write_kirov_standings(
                                      pe, prob, att_num[up_ind],
                                      disq_num[up_ind], ce_num[up_ind],
                                      full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
-                                     0, 0, 0 /* FIXME: effective_time */);
+                                     0, 0, eff_time[up_ind]);
             if (prob->score_latest > 0 || score > prob_score[up_ind]) {
               prob_score[up_ind] = score;
               if (prob->stand_hide_time <= 0) sol_time[up_ind] = pe->time;
@@ -1774,7 +1774,7 @@ do_write_kirov_standings(
                                      separate_user_score, user_mode, token_flags,
                                      pe, prob, att_num[up_ind],
                                      disq_num[up_ind], ce_num[up_ind], RUN_TOO_MANY, 0, 0,
-                                     0 /* FIXME: effective_time */);
+                                     eff_time[up_ind]);
             if (prob->score_latest > 0 || score > prob_score[up_ind]) {
               prob_score[up_ind] = score;
             }
@@ -1791,7 +1791,7 @@ do_write_kirov_standings(
                                    separate_user_score, user_mode, token_flags,
                                    pe, prob, att_num[up_ind],
                                    disq_num[up_ind], ce_num[up_ind], RUN_TOO_MANY, 0, 0,
-                                   0 /* FIXME: effective_time */);
+                                   eff_time[up_ind]);
           if (prob->score_latest > 0 || score > prob_score[up_ind]) {
             prob_score[up_ind] = score;
           }
@@ -4471,6 +4471,7 @@ do_write_public_log(
 
   time_t run_time, start_time, cur_time, stop_time;
   int attempts, disq_attempts, ce_attempts, prev_successes;
+  time_t effective_time, *p_eff_time;
 
   char durstr[64], statstr[128];
   char *str1 = 0, *str2 = 0;
@@ -4580,11 +4581,15 @@ do_write_public_log(
     disq_attempts = 0;
     ce_attempts = 0;
     prev_successes = RUN_TOO_MANY;
+    effective_time = 0;
+    p_eff_time = NULL;
+    if (cur_prob && cur_prob->enable_submit_after_reject > 0)
+      p_eff_time = &effective_time;
 
     run_time = pe->time;
     if (global->score_system == SCORE_KIROV) {
       run_get_attempts(state->runlog_state, i, &attempts, &disq_attempts, &ce_attempts,
-                       NULL /* FIXME: effective_time */,
+                       p_eff_time,
                        cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty);
       if (status == RUN_OK && cur_prob && cur_prob->score_bonus_total > 0){
         prev_successes = run_get_prev_successes(state->runlog_state, i);
@@ -4623,7 +4628,7 @@ do_write_public_log(
     write_html_run_status(state, f, start_time, pe, user_mode,
                           0, attempts, disq_attempts, ce_attempts,
                           prev_successes, 0, 1, 0, RUN_VIEW_DEFAULT,
-                          0 /* effective_time*/);
+                          effective_time);
 
     fputs("</tr>\n", f);
   }

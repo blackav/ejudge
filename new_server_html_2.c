@@ -139,6 +139,8 @@ ns_write_priv_all_runs(
   int enable_js_status_menu = 0;
   int run_fields;
 
+  time_t effective_time, *p_eff_time;
+
   if (!u) u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
 
   run_fields = u->run_fields;
@@ -724,6 +726,9 @@ ns_write_priv_all_runs(
       }
 
       attempts = 0; disq_attempts = 0; ce_attempts = 0;
+      effective_time = 0; p_eff_time = NULL;
+      if (prob && prob->enable_submit_after_reject > 0)
+        p_eff_time = &effective_time;
       if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
         int ice = 0, cep = -1;
         if (prob) {
@@ -731,7 +736,7 @@ ns_write_priv_all_runs(
           cep = prob->compile_error_penalty;
         }
         run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts,
-                         NULL /* FIXME: effective_time */, ice, cep);
+                         p_eff_time, ice, cep);
       }
       run_time = pe->time;
       imported_str = "";
@@ -868,7 +873,7 @@ ns_write_priv_all_runs(
       run_status_str(pe->status, statstr, sizeof(statstr), prob_type, 0);
       write_html_run_status(cs, f, start_time, pe, 0, 1, attempts, disq_attempts, ce_attempts,
                             prev_successes, "b1", 0,
-                            enable_js_status_menu, run_fields, 0 /* effective_time */);
+                            enable_js_status_menu, run_fields, effective_time);
 
       if (run_fields & (1 << RUN_VIEW_SCORE_ADJ)) {
         fprintf(f, "<td%s>%d</td>", cl, pe->score_adj);
@@ -3747,6 +3752,9 @@ ns_write_user_run_status(
   time_t run_time, start_time;
   unsigned char dur_str[64];
 
+  time_t effective_time = 0;
+  time_t *p_eff_time = NULL;
+
   if (run_id < 0 || run_id >= run_get_total(cs->runlog_state))
     return -NEW_SRV_ERR_INV_RUN_ID;
   run_get_entry(cs->runlog_state, run_id, &re);
@@ -3766,9 +3774,11 @@ ns_write_user_run_status(
     cur_prob = cs->probs[re.prob_id];
 
   attempts = 0; disq_attempts = 0; ce_attempts = 0;
+  if (cur_prob && cur_prob->enable_submit_after_reject > 0)
+    p_eff_time = &effective_time;
   if (cs->global->score_system == SCORE_KIROV && !re.is_hidden)
     run_get_attempts(cs->runlog_state, run_id, &attempts, &disq_attempts, &ce_attempts,
-                     NULL /* FIXME: effective_time */,
+                     p_eff_time,
                      cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty);
 
   prev_successes = RUN_TOO_MANY;
@@ -3815,7 +3825,7 @@ ns_write_user_run_status(
   fprintf(fout, "%d;%s;%s;%u;%s;%s;", run_id, run_kind_str, dur_str, re.size,
           prob_str, lang_str);
   write_text_run_status(cs, fout, start_time, &re, 1 /* user_mode */, 0, attempts,
-                        disq_attempts, ce_attempts, prev_successes, 0 /* effective_time */);
+                        disq_attempts, ce_attempts, prev_successes, effective_time);
   fprintf(fout, "\n");
 
   return 0;
@@ -4465,7 +4475,7 @@ kirov_score_latest_or_unmarked(
                                  1 /* user_mode */, re->token_flags, re, cur_prob,
                                  pinfo->attempts,
                                  pinfo->disqualified, pinfo->ce_attempts,
-                                 pinfo->prev_successes, 0, 0, 0 /* FIXME: effective_time */);
+                                 pinfo->prev_successes, 0, 0, pinfo->effective_time);
     if (re->is_marked || cur_score > pinfo->best_score) {
       pinfo->best_score = cur_score;
       pinfo->best_run = run_id;
@@ -4480,7 +4490,7 @@ kirov_score_latest_or_unmarked(
                                  1 /* user_mode */, re->token_flags, re, cur_prob,
                                  pinfo->attempts,
                                  pinfo->disqualified, pinfo->ce_attempts,
-                                 pinfo->prev_successes, 0, 0, 0 /* FIXME: effective_time */);
+                                 pinfo->prev_successes, 0, 0, pinfo->effective_time);
     if (re->is_marked || cur_score > pinfo->best_score) {
       pinfo->best_score = cur_score;
       pinfo->best_run = run_id;
@@ -4520,7 +4530,7 @@ kirov_score_latest_or_unmarked(
                                  1 /* user_mode */, re->token_flags, re, cur_prob,
                                  pinfo->attempts,
                                  pinfo->disqualified, pinfo->ce_attempts,
-                                 pinfo->prev_successes, 0, 0, 0 /* FIXME: effective_time */);
+                                 pinfo->prev_successes, 0, 0, pinfo->effective_time);
     pinfo->attempts++;
     if (re->is_marked || cur_score > pinfo->best_score) {
       pinfo->best_score = cur_score;
@@ -4572,7 +4582,7 @@ kirov_score_latest(
                                1 /* user_mode */, re->token_flags, re, cur_prob,
                                pinfo->attempts,
                                pinfo->disqualified, pinfo->ce_attempts,
-                               pinfo->prev_successes, 0, 0, 0 /* FIXME: effective_time */);
+                               pinfo->prev_successes, 0, 0, pinfo->effective_time);
   switch (status) {
   case RUN_OK:
     pinfo->marked_flag = re->is_marked;
@@ -4713,7 +4723,7 @@ kirov_score_tokenized(
                                1 /* user_mode */, re->token_flags, re, cur_prob,
                                pinfo->attempts,
                                pinfo->disqualified, pinfo->ce_attempts,
-                               pinfo->prev_successes, 0, 0, 0 /* FIXME: effective_time */);
+                               pinfo->prev_successes, 0, 0, pinfo->effective_time);
 
   switch (status) {
   case RUN_OK:
@@ -4799,7 +4809,7 @@ kirov_score_default(
                                1 /* user_mode */, re->token_flags, re, cur_prob,
                                pinfo->attempts,
                                pinfo->disqualified, pinfo->ce_attempts,
-                               pinfo->prev_successes, 0, 0, 0 /* FIXME: effective_time */);
+                               pinfo->prev_successes, 0, 0, pinfo->effective_time);
 
   switch (status) {
   case RUN_OK:
@@ -5120,7 +5130,7 @@ ns_get_user_problems_summary(
         cur_pinfo->best_run = run_id;
         cur_score = calc_kirov_score(0, 0, start_time,
                                      separate_user_score, 1 /* user_mode */, re.token_flags,
-                                     &re, cur_prob, 0, 0, 0, 0, 0, 0, 0 /* FIXME: effective_time */);
+                                     &re, cur_prob, 0, 0, 0, 0, 0, 0, 0);
         //if (cur_score > best_score[re.prob_id])
         cur_pinfo->best_score = cur_score;
         break;
@@ -5145,7 +5155,7 @@ ns_get_user_problems_summary(
         cur_pinfo->attempts++;
         cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
                                      1 /* user_mode */, re.token_flags,
-                                     &re, cur_prob, 0, 0, 0, 0, 0, 0, 0 /* FIXME: effective_time */);
+                                     &re, cur_prob, 0, 0, 0, 0, 0, 0, 0);
         //if (cur_score > best_score[re.prob_id])
         cur_pinfo->best_score = cur_score;
         break;
@@ -5844,6 +5854,8 @@ new_write_user_runs(
   int enable_rep_view = 0;
   int separate_user_score = 0;
 
+  time_t effective_time, *p_eff_time;
+
   if (table_class && *table_class) {
     cl = alloca(strlen(table_class) + 16);
     sprintf(cl, " class=\"%s\"", table_class);
@@ -5929,9 +5941,12 @@ new_write_user_runs(
     }
 
     attempts = 0; disq_attempts = 0; ce_attempts = 0;
+    effective_time = 0; p_eff_time = NULL;
+    if (cur_prob && cur_prob->enable_submit_after_reject > 0)
+      p_eff_time = &effective_time;
     if (global->score_system == SCORE_KIROV && !re.is_hidden)
       run_get_attempts(state->runlog_state, i, &attempts, &disq_attempts, &ce_attempts,
-                       NULL /* FIXME: effective_time */,
+                       p_eff_time,
                        cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty);
 
     prev_successes = RUN_TOO_MANY;
@@ -5984,7 +5999,7 @@ new_write_user_runs(
     write_html_run_status(state, f, start_time, &re, 1 /* user_mode */,
                           0, attempts, disq_attempts, ce_attempts,
                           prev_successes, table_class, 0, 0, RUN_VIEW_DEFAULT,
-                          0 /* effective_time*/);
+                          effective_time);
 
     if (enable_src_view) {
       fprintf(f, "<td%s>", cl);

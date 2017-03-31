@@ -1439,6 +1439,8 @@ do_dump_master_runs(
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob = 0;
   const struct section_language_data *lang = 0;
+  time_t effective_time;
+  time_t *p_eff_time;
 
   filter_expr_nerrs = 0;
   u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
@@ -1657,6 +1659,7 @@ do_dump_master_runs(
     snprintf(prob_id_buf, sizeof(prob_id_buf), "%d", pe->prob_id);
     csv_rec[F_PROB_ID] = prob_id_buf;
 
+    prob = NULL;
     if (pe->prob_id > 0 && pe->prob_id <= cs->max_prob
         && (prob = cs->probs[pe->prob_id])) {
       csv_rec[F_PROB_SHORT_NAME] = prob->short_name;
@@ -1759,9 +1762,11 @@ do_dump_master_runs(
       }
 
       attempts = 0; disq_attempts = 0; ce_attempts = 0;
+      effective_time = 0; p_eff_time = NULL;
+      if (prob->enable_submit_after_reject > 0) p_eff_time = &effective_time;
       if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
         run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts,
-                         NULL /* FIXME: effective_time */,
+                         p_eff_time,
                          prob->ignore_compile_errors, prob->compile_error_penalty);
       }
 
@@ -1771,7 +1776,7 @@ do_dump_master_runs(
       snprintf(base_score_buf, sizeof(base_score_buf), "%d", orig_score);
       csv_rec[F_BASE_SCORE] = base_score_buf;
       score = calc_kirov_score(0, 0, start_time, 0, 0, 0, pe, prob, attempts, disq_attempts, ce_attempts,
-                               prev_successes, &date_penalty, 0, 0 /* FIXME: effective_time */);
+                               prev_successes, &date_penalty, 0, effective_time);
       snprintf(score_buf, sizeof(score_buf), "%d", score);
       csv_rec[F_TOTAL_SCORE] = score_buf;
       if (attempts > 0) {
