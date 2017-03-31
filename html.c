@@ -4569,6 +4569,7 @@ do_write_public_log(
     run_time = pe->time;
     if (global->score_system == SCORE_KIROV) {
       run_get_attempts(state->runlog_state, i, &attempts, &disq_attempts, &ce_attempts,
+                       NULL /* FIXME: effective_time */,
                        cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty);
       if (status == RUN_OK && cur_prob && cur_prob->score_bonus_total > 0){
         prev_successes = run_get_prev_successes(state->runlog_state, i);

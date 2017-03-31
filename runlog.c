@@ -808,6 +808,7 @@ run_get_attempts(
         int *pattempts,
         int *pdisqattempts,
         int *pce_attempts,
+        time_t *peffective_time,
         int skip_ce_flag,
         int ce_penalty)
 {
@@ -843,7 +844,13 @@ run_get_attempts(
       continue;
     }
     if (re->status == RUN_STYLE_ERR) continue;
-    if (re->status == RUN_REJECTED) continue;
+    if (re->status == RUN_REJECTED && peffective_time) {
+      if (*peffective_time <= 0) {
+        *peffective_time = re->time;
+      } else if (re->time > 0 && re->time < *peffective_time) {
+        *peffective_time = re->time;
+      }
+    }
     if (re->status == RUN_IGNORED) continue;
     if (re->is_hidden) continue;
     if (re->status == RUN_OK || re->status == RUN_PENDING || re->status == RUN_SUMMONED) continue;

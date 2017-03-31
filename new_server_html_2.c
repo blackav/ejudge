@@ -730,7 +730,8 @@ ns_write_priv_all_runs(
           ice = prob->ignore_compile_errors;
           cep = prob->compile_error_penalty;
         }
-        run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts, ice, cep);
+        run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts,
+                         NULL /* FIXME: effective_time */, ice, cep);
       }
       run_time = pe->time;
       imported_str = "";
@@ -3767,6 +3768,7 @@ ns_write_user_run_status(
   attempts = 0; disq_attempts = 0; ce_attempts = 0;
   if (cs->global->score_system == SCORE_KIROV && !re.is_hidden)
     run_get_attempts(cs->runlog_state, run_id, &attempts, &disq_attempts, &ce_attempts,
+                     NULL /* FIXME: effective_time */,
                      cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty);
 
   prev_successes = RUN_TOO_MANY;
@@ -5929,6 +5931,7 @@ new_write_user_runs(
     attempts = 0; disq_attempts = 0; ce_attempts = 0;
     if (global->score_system == SCORE_KIROV && !re.is_hidden)
       run_get_attempts(state->runlog_state, i, &attempts, &disq_attempts, &ce_attempts,
+                       NULL /* FIXME: effective_time */,
                        cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty);
 
     prev_successes = RUN_TOO_MANY;

@@ -1761,6 +1761,7 @@ do_dump_master_runs(
       attempts = 0; disq_attempts = 0; ce_attempts = 0;
       if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
         run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts,
+                         NULL /* FIXME: effective_time */,
                          prob->ignore_compile_errors, prob->compile_error_penalty);
       }
 
