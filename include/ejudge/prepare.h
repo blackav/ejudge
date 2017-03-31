@@ -269,7 +269,7 @@ struct section_global_data
   /** @deprecated the name of the contest */
   unsigned char name[256];
   /** @deprecated the contest root directory */
-  path_t root_dir;
+  unsigned char *root_dir;
   /** @deprecated the contest socket path */
   unsigned char *serve_socket;
 

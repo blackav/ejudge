@@ -144,7 +144,7 @@ prepare_unparse_global(
 
   // avoid generating root_dir and conf_dir if their values are default
   skip_elem = 0;
-  if (contests_home_dir[0] && global->root_dir[0]) {
+  if (contests_home_dir[0] && global->root_dir && global->root_dir[0]) {
     len = strlen(contests_home_dir);
     snprintf(tmp1, sizeof(tmp1), "%s/%06d", contests_home_dir, cnts->id);
     if (!strcmp(tmp1, global->root_dir)) {
@@ -161,7 +161,7 @@ prepare_unparse_global(
     fprintf(f, "root_dir = \"%s\"\n", CARMOR(global->root_dir));
 
   skip_elem = 0;
-  if (global->root_dir[0] && global->conf_dir && global->conf_dir[0]) {
+  if (global->root_dir && global->root_dir[0] && global->conf_dir && global->conf_dir[0]) {
     snprintf(tmp1, sizeof(tmp1), "%s/conf", global->root_dir);
     if (!strcmp(tmp1, global->conf_dir)
         || !strcmp(global->conf_dir, DFLT_G_CONF_DIR)) skip_elem = 1;
@@ -2884,7 +2884,6 @@ prob_instr(
     fprintf(f, "<p><b>Makefile (optional):</b></p>\n");
     handle_file(f, global, tmp_prob, "Makefile", 0);
   }
-
   prepare_set_prob_value(CNTSPROB_xml_file, tmp_prob, abstr, global);
   if (tmp_prob->xml_file && tmp_prob->xml_file[0]) {
     if (global->advanced_layout <= 0 && !os_IsAbsolutePath(tmp_prob->xml_file)) {

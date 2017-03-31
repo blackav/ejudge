@@ -84,7 +84,6 @@ super_html_read_serve(
   size_t fuh_size = 0;
   path_t cs_spool_dir;
   path_t conf_dir;
-  path_t tmppath;
   unsigned char *prob_no_any = 0;
   size_t cs_spool_dir_len = 0;
   unsigned char cs_conf_file[PATH_MAX];
@@ -135,21 +134,17 @@ super_html_read_serve(
   global = sstate->global = (struct section_global_data *) pg;
 
   // set up the default value of the root_dir
-  if (!global->root_dir[0]) {
-    snprintf(global->root_dir, sizeof(global->root_dir), "%06d", cnts->id);
+  if (!global->root_dir || !global->root_dir[0]) {
+    usprintf(&global->root_dir, "%06d", cnts->id);
   }
   if (!os_IsAbsolutePath(global->root_dir) && config
       && config->contests_home_dir
       && os_IsAbsolutePath(config->contests_home_dir)) {
-    snprintf(tmppath, sizeof(tmppath), "%s/%s", config->contests_home_dir,
-             global->root_dir);
-    snprintf(global->root_dir, sizeof(global->root_dir), "%s", tmppath);
+    usprintf(&global->root_dir, "%s/%s", config->contests_home_dir, global->root_dir);
   }
 #if defined EJUDGE_CONTESTS_HOME_DIR
   if (!os_IsAbsolutePath(global->root_dir)) {
-    snprintf(tmppath, sizeof(tmppath), "%s/%s", EJUDGE_CONTESTS_HOME_DIR,
-             global->root_dir);
-    snprintf(global->root_dir, sizeof(global->root_dir), "%s", tmppath);
+    usprintf(&global->root_dir, "%s/%s", EJUDGE_CONTESTS_HOME_DIR, global->root_dir);
   }
 #endif
   if (!os_IsAbsolutePath(global->root_dir)) {
@@ -1081,8 +1076,9 @@ super_html_serve_unparse_serve_cfg(
   if (sstate->serve_parse_errors) return;
 
   if (cnts) {
-    if (cnts->root_dir)
-      snprintf(global->root_dir, sizeof(global->root_dir), "%s", cnts->root_dir);
+    if (cnts->root_dir) {
+      xstrdup3(&global->root_dir, cnts->root_dir);
+    }
     if (cnts->conf_dir) {
       xstrdup3(&global->conf_dir, cnts->conf_dir);
     }

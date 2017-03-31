@@ -134,7 +134,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand2_charset, "s"),
   GLOBAL_PARAM(plog_charset, "s"),
 
-  GLOBAL_PARAM(root_dir, "s"),
+  GLOBAL_PARAM(root_dir, "S"),
   GLOBAL_PARAM(conf_dir, "S"),
   GLOBAL_PARAM(problems_dir, "S"),
   GLOBAL_PARAM(script_dir, "S"),
@@ -1047,6 +1047,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->contest_plugin_file);
   xfree(p->conf_dir);
   xfree(p->contests_dir);
+  xfree(p->root_dir);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2691,21 +2692,17 @@ set_defaults(
     }
   }
 
-  if (!g->root_dir[0]) {
-    snprintf(g->root_dir, sizeof(g->root_dir), "%06d", contest_id);
+  if (!g->root_dir || !g->root_dir[0]) {
+    usprintf(&g->root_dir, "%06d", contest_id);
   }
   if (!os_IsAbsolutePath(g->root_dir) && ejudge_config
       && ejudge_config->contests_home_dir
       && os_IsAbsolutePath(ejudge_config->contests_home_dir)) {
-    snprintf(fpath, sizeof(fpath), "%s/%s", ejudge_config->contests_home_dir,
-             g->root_dir);
-    snprintf(g->root_dir, sizeof(g->root_dir), "%s", fpath);
+    usprintf(&g->root_dir, "%s/%s", ejudge_config->contests_home_dir, g->root_dir);
   }
 #if defined EJUDGE_CONTESTS_HOME_DIR
   if (!os_IsAbsolutePath(g->root_dir)) {
-    snprintf(fpath, sizeof(fpath), "%s/%s", EJUDGE_CONTESTS_HOME_DIR,
-             g->root_dir);
-    snprintf(g->root_dir, sizeof(g->root_dir), "%s", fpath);
+    usprintf(&g->root_dir, "%s/%s", EJUDGE_CONTESTS_HOME_DIR, g->root_dir);
   }
 #endif
   if (!os_IsAbsolutePath(g->root_dir)) {
@@ -2713,7 +2710,7 @@ set_defaults(
     return -1;
   }
 
-  param_subst(g->root_dir, sizeof(g->root_dir), subst_src, subst_dst);
+  param_subst_2(&g->root_dir, subst_src, subst_dst);
 
   if (!g->clardb_plugin[0] && ejudge_config
       && ejudge_config->default_clardb_plugin
@@ -4460,7 +4457,7 @@ create_dirs(serve_state_t state, int mode)
   struct section_global_data *g = state->global;
 
   if (mode == PREPARE_SERVE) {
-    if (g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
+    if (g->root_dir && g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
     if (make_dir(g->var_dir, 0) < 0) return -1;
 
     /* COMPILE writes its response here */
@@ -4513,7 +4510,7 @@ create_dirs(serve_state_t state, int mode)
     }
     if (make_dir(g->team_extra_dir, 0) < 0) return -1;
   } else if (mode == PREPARE_COMPILE) {
-    if (g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
+    if (g->root_dir && g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
     if (make_dir(g->var_dir, 0) < 0) return -1;
 
 #if 0
@@ -4535,7 +4532,7 @@ create_dirs(serve_state_t state, int mode)
     if (make_dir(g->work_dir, 0) < 0) return -1;
     if (os_MakeDirPath(g->compile_work_dir, 0775) < 0) return -1;
   } else if (mode == PREPARE_RUN) {
-    if (g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
+    if (g->root_dir && g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
     if (make_dir(g->var_dir, 0) < 0) return -1;
 
     /* RUN reads its commands from here */
@@ -5399,7 +5396,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
 
   strcpy(global->charset, DFLT_G_CHARSET);
 
-  snprintf(global->root_dir, sizeof(global->root_dir), "%s", root_dir);
+  xstrdup3(&global->root_dir, root_dir);
   xstrdup3(&global->conf_dir, DFLT_G_CONF_DIR);
 
   global->advanced_layout = 1;
