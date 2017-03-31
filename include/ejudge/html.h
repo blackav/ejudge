@@ -150,7 +150,8 @@ write_html_run_status(
         const unsigned char *td_class,
         int disable_failed,
         int enable_js_status_menu,
-        int run_fields);
+        int run_fields,
+        time_t effective_time);
 
 int
 write_xml_tests_report(
@@ -202,7 +203,8 @@ write_text_run_status(
         int attempts,
         int disq_attempts,
         int ce_attempts,
-        int prev_successes);
+        int prev_successes,
+        time_t effective_time);
 
 unsigned char*
 score_view_display(

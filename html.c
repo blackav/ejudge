@@ -271,7 +271,8 @@ write_html_run_status(
         const unsigned char *td_class,
         int disable_failed,
         int enable_js_status_menu,
-        int run_fields)
+        int run_fields,
+        time_t effective_time)
 {
   const struct section_global_data *global = state->global;
   unsigned char status_str[128], score_str[128];
@@ -280,8 +281,6 @@ write_html_run_status(
   unsigned char cl[128] = { 0 };
   int status, score, test;
   int separate_user_score = 0;
-
-  time_t effective_time = 0; // FIXME: make parameter
 
   if (td_class && *td_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", td_class);
@@ -486,15 +485,14 @@ write_text_run_status(
         int attempts,
         int disq_attempts,
         int ce_attempts,
-        int prev_successes)
+        int prev_successes,
+        time_t effective_time)
 {
   const struct section_global_data *global = state->global;
   unsigned char status_str[64], score_str[64];
   struct section_problem_data *pr = 0;
   int status, score, test;
   int separate_user_score = 0;
-
-  time_t effective_time = 0; // FIXME: make parameter
 
   separate_user_score = global->separate_user_score > 0 && state->online_view_judge_score <= 0;
   if (separate_user_score > 0 && user_mode && pe->is_saved) {
@@ -4608,7 +4606,8 @@ do_write_public_log(
 
     write_html_run_status(state, f, start_time, pe, user_mode,
                           0, attempts, disq_attempts, ce_attempts,
-                          prev_successes, 0, 1, 0, RUN_VIEW_DEFAULT);
+                          prev_successes, 0, 1, 0, RUN_VIEW_DEFAULT,
+                          0 /* effective_time*/);
 
     fputs("</tr>\n", f);
   }

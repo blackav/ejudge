@@ -867,7 +867,7 @@ ns_write_priv_all_runs(
       run_status_str(pe->status, statstr, sizeof(statstr), prob_type, 0);
       write_html_run_status(cs, f, start_time, pe, 0, 1, attempts, disq_attempts, ce_attempts,
                             prev_successes, "b1", 0,
-                            enable_js_status_menu, run_fields);
+                            enable_js_status_menu, run_fields, 0 /* effective_time */);
 
       if (run_fields & (1 << RUN_VIEW_SCORE_ADJ)) {
         fprintf(f, "<td%s>%d</td>", cl, pe->score_adj);
@@ -3813,7 +3813,7 @@ ns_write_user_run_status(
   fprintf(fout, "%d;%s;%s;%u;%s;%s;", run_id, run_kind_str, dur_str, re.size,
           prob_str, lang_str);
   write_text_run_status(cs, fout, start_time, &re, 1 /* user_mode */, 0, attempts,
-                        disq_attempts, ce_attempts, prev_successes);
+                        disq_attempts, ce_attempts, prev_successes, 0 /* effective_time */);
   fprintf(fout, "\n");
 
   return 0;
@@ -5968,7 +5968,8 @@ new_write_user_runs(
 
     write_html_run_status(state, f, start_time, &re, 1 /* user_mode */,
                           0, attempts, disq_attempts, ce_attempts,
-                          prev_successes, table_class, 0, 0, RUN_VIEW_DEFAULT);
+                          prev_successes, table_class, 0, 0, RUN_VIEW_DEFAULT,
+                          0 /* effective_time*/);
 
     if (enable_src_view) {
       fprintf(f, "<td%s>", cl);
