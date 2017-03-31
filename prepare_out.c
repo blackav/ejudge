@@ -161,12 +161,12 @@ prepare_unparse_global(
     fprintf(f, "root_dir = \"%s\"\n", CARMOR(global->root_dir));
 
   skip_elem = 0;
-  if (global->root_dir[0] && global->conf_dir[0]) {
+  if (global->root_dir[0] && global->conf_dir && global->conf_dir[0]) {
     snprintf(tmp1, sizeof(tmp1), "%s/conf", global->root_dir);
     if (!strcmp(tmp1, global->conf_dir)
         || !strcmp(global->conf_dir, DFLT_G_CONF_DIR)) skip_elem = 1;
   }
-  if (!skip_elem && global->conf_dir[0])
+  if (!skip_elem && global->conf_dir && global->conf_dir[0])
     fprintf(f, "conf_dir = \"%s\"\n", CARMOR(global->conf_dir));
   fprintf(f, "\n");
 

@@ -303,7 +303,7 @@ struct section_global_data
 
   /* ====== CONFIGURATION FILES/DIRECTORIES SETUP ====== */
   /** configuration dir */
-  path_t conf_dir;
+  unsigned char *conf_dir;
   /** directory with problem files (for advanced_layout) */
   unsigned char *problems_dir;
   /** default location of the compile and run scripts */

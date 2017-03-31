@@ -1083,8 +1083,9 @@ super_html_serve_unparse_serve_cfg(
   if (cnts) {
     if (cnts->root_dir)
       snprintf(global->root_dir, sizeof(global->root_dir), "%s", cnts->root_dir);
-    if (cnts->conf_dir)
-      snprintf(global->conf_dir, sizeof(global->conf_dir), "%s", cnts->conf_dir);
+    if (cnts->conf_dir) {
+      xstrdup3(&global->conf_dir, cnts->conf_dir);
+    }
   }
   if (sstate->enable_stand2 && (!global->stand2_file_name || !global->stand2_file_name[0])) {
     xstrdup3(&global->stand2_file_name, "standings2.html");

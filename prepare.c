@@ -135,7 +135,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(plog_charset, "s"),
 
   GLOBAL_PARAM(root_dir, "s"),
-  GLOBAL_PARAM(conf_dir, "s"),
+  GLOBAL_PARAM(conf_dir, "S"),
   GLOBAL_PARAM(problems_dir, "S"),
   GLOBAL_PARAM(script_dir, "S"),
   GLOBAL_PARAM(test_dir, "S"),
@@ -1045,6 +1045,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->contest_start_cmd);
   xfree(p->description_file);
   xfree(p->contest_plugin_file);
+  xfree(p->conf_dir);
 
   memset(p, 0xab, sizeof(*p));
   xfree(p);
@@ -2730,10 +2731,11 @@ set_defaults(
     snprintf(g->xuser_plugin, sizeof(g->xuser_plugin), "%s", ejudge_config->default_xuser_plugin);
   }
 
-  if (!g->conf_dir[0]) {
-    snprintf(g->conf_dir, sizeof(g->conf_dir), "conf");
+  if (!g->conf_dir || !g->conf_dir[0]) {
+    path_concat(&g->conf_dir, g->root_dir, "conf");
+  } else {
+    path_prepend_dir(&g->conf_dir, g->root_dir);
   }
-  pathmake2(g->conf_dir, g->root_dir, "/", g->conf_dir, NULL);
   if (!g->var_dir || !g->var_dir[0]) {
     xstrdup3(&g->var_dir, "var");
   }
@@ -5397,7 +5399,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   strcpy(global->charset, DFLT_G_CHARSET);
 
   snprintf(global->root_dir, sizeof(global->root_dir), "%s", root_dir);
-  strcpy(global->conf_dir, DFLT_G_CONF_DIR);
+  xstrdup3(&global->conf_dir, DFLT_G_CONF_DIR);
 
   global->advanced_layout = 1;
 
