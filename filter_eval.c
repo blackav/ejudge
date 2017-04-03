@@ -295,6 +295,7 @@ do_eval(struct filter_env *env,
   case TOK_ARCH:
   case TOK_RESULT:
   case TOK_SCORE:
+  case TOK_SCORE_ADJ:
   case TOK_TEST:
   case TOK_IMPORTED:
   case TOK_HIDDEN:
@@ -433,6 +434,11 @@ do_eval(struct filter_env *env,
       res->kind = TOK_INT_L;
       res->type = FILTER_TYPE_INT;
       res->v.i = env->rentries[r1.v.i].score;
+      break;
+    case TOK_SCORE_ADJ:
+      res->kind = TOK_INT_L;
+      res->type = FILTER_TYPE_INT;
+      res->v.i = env->rentries[r1.v.i].score_adj;
       break;
     case TOK_TEST:
       res->kind = TOK_INT_L;
@@ -740,6 +746,11 @@ do_eval(struct filter_env *env,
     res->kind = TOK_INT_L;
     res->type = FILTER_TYPE_INT;
     res->v.i = env->cur->score;
+    break;
+  case TOK_CURSCORE_ADJ:
+    res->kind = TOK_INT_L;
+    res->type = FILTER_TYPE_INT;
+    res->v.i = env->cur->score_adj;
     break;
   case TOK_CURTEST:
     res->kind = TOK_INT_L;

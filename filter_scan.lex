@@ -129,6 +129,8 @@ lett    [A-Za-z_]
 "curstatus" { TT(TOK_CURRESULT, FILTER_TYPE_RESULT); }
 "score" { TT(TOK_SCORE, FILTER_TYPE_INT); }
 "curscore" { TT(TOK_CURSCORE, FILTER_TYPE_INT); }
+"score_adj" { TT(TOK_SCORE_ADJ, FILTER_TYPE_INT); }
+"curscore_adj" { TT(TOK_CURSCORE_ADJ, FILTER_TYPE_INT); }
 "test" { TT(TOK_TEST, FILTER_TYPE_INT); }
 "curtest" { TT(TOK_CURTEST, FILTER_TYPE_INT); }
 "now" { TT(TOK_NOW, FILTER_TYPE_TIME); }

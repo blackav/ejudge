@@ -128,6 +128,8 @@ static void *filter_expr_user_data;
 %token TOK_CURRESULT "curresult"
 %token TOK_SCORE     "score"
 %token TOK_CURSCORE  "curscore"
+%token TOK_SCORE_ADJ "score_adj"
+%token TOK_CURSCORE_ADJ "curscore_adj"
 %token TOK_TEST      "test"
 %token TOK_CURTEST   "curtest"
 %token TOK_NOW       "now"
@@ -335,6 +337,9 @@ exprA :
 | "score" { $1->kind = TOK_CURSCORE; $$ = $1; }
 | "score" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curscore" { $$ = $1; }
+| "score_adj" { $1->kind = TOK_CURSCORE_ADJ; $$ = $1; }
+| "score_adj" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "curscore_adj" { $$ = $1; }
 | "test" { $1->kind = TOK_CURTEST; $$ = $1; }
 | "test" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "curtest" { $$ = $1; }
