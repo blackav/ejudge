@@ -618,6 +618,7 @@ struct standings_style
   const unsigned char *disq_attr;
   const unsigned char *pr_attr;   // for pending reviews
   const unsigned char *sm_attr;   // for summoned for defence
+  const unsigned char *rj_attr;   // for rejected
 
   // for page table
   const unsigned char *page_table_attr;
@@ -669,6 +670,7 @@ setup_standings_style(struct standings_style *ps,
   if (!(ps->disq_attr = global->stand_disq_attr)) ps->disq_attr = "";
   ps->pr_attr = NULL;
   ps->sm_attr = NULL;
+  ps->rj_attr = NULL;
 
   if (!(ps->page_table_attr = global->stand_page_table_attr)) ps->page_table_attr = "";
   if (!(ps->page_cur_attr = global->stand_page_cur_attr)) ps->page_cur_attr = "";
@@ -712,7 +714,10 @@ setup_standings_style(struct standings_style *ps,
       ps->pr_attr = " class=\"st_prob\" bgcolor=\"#99cc99\"";
     }
     if (!ps->sm_attr || !*ps->sm_attr) {
-      ps->sm_attr = " class=\"st_prob\" bgcolor=\"#cccc99\"";
+      ps->sm_attr = " class=\"st_prob\" bgcolor=\"#cc9999\"";
+    }
+    if (!ps->rj_attr || !*ps->rj_attr) {
+      ps->rj_attr = " class=\"st_prob\" bgcolor=\"#cccc99\"";
     }
 
     //ps->page_table_attr = global->stand_page_table_attr;
@@ -1074,6 +1079,7 @@ do_write_kirov_standings(
   int *trans_num = 0;
   unsigned char *pr_flag = NULL;
   unsigned char *sm_flag = NULL;
+  unsigned char *rj_flag = NULL;
   int *penalty = 0;
   int *cf_num = 0;
   int *marked_flag = 0;
@@ -1106,6 +1112,7 @@ do_write_kirov_standings(
   int prev_prob = -1, row_ind = 0, group_ind = 1;
   int total_trans = 0;
   int total_prs = 0;
+  int total_rejected = 0;
   int total_summoned = 0;
   int total_pending = 0;
   int total_accepted = 0;
@@ -1321,6 +1328,7 @@ do_write_kirov_standings(
     XCALLOC(trans_num, up_ind);
     XCALLOC(pr_flag, up_ind);
     XCALLOC(sm_flag, up_ind);
+    XCALLOC(rj_flag, up_ind);
     XCALLOC(penalty, up_ind);
     XCALLOC(cf_num, up_ind);
     XCALLOC(marked_flag, up_ind);
@@ -1396,7 +1404,7 @@ do_write_kirov_standings(
       tdur = run_time - team_start_time;
       if (user_id > 0 && tdur > cur_duration) continue;		
     } else if (!client_flag || user_id > 0) {
-    // ignore future runs when not in privileged mode
+      // ignore future runs when not in privileged mode
       if (run_time < start_time) run_time = start_time;
       if (stop_time && run_time > stop_time) run_time = stop_time;
       if (run_time - start_time > cur_duration) continue;
@@ -1679,6 +1687,9 @@ do_write_kirov_standings(
         } else if (run_status == RUN_SUMMONED) {
           sm_flag[up_ind] = 1;
           ++total_summoned;
+        } else if (run_status == RUN_REJECTED) {
+          rj_flag[up_ind] = 1;
+          ++total_rejected;
         } else if (run_status == RUN_PENDING) {
           ++trans_num[up_ind];
           ++total_pending;
@@ -1823,6 +1834,9 @@ do_write_kirov_standings(
         } else if (run_status == RUN_ACCEPTED) {
           ++trans_num[up_ind];
           ++total_accepted;
+        } else if (run_status == RUN_REJECTED) {
+          rj_flag[up_ind] = 1;
+          ++total_rejected;
         } else if (run_status == RUN_COMPILING
                    || run_status == RUN_RUNNING) {
           trans_num[up_ind]++;
@@ -2200,6 +2214,11 @@ do_write_kirov_standings(
         fprintf(f, "<tr%s><td%s>%s:</td><td%s>%d</td></tr>",
                 ss.success_attr, row_attr, _("Runs summoned for defence"), row_attr, total_summoned);
       }
+      if (total_rejected > 0) {
+        if (ss.rj_attr && ss.rj_attr[0]) row_attr = ss.rj_attr;
+        fprintf(f, "<tr%s><td%s>%s:</td><td%s>%d</td></tr>",
+                ss.success_attr, row_attr, _("Rejected runs"), row_attr, total_rejected);
+      }
       if (total_pending > 0) {
         if (ss.trans_attr && ss.trans_attr[0]) row_attr = ss.trans_attr;
         fprintf(f, "<tr%s><td%s>%s:</td><td%s>%d</td></tr>",
@@ -2373,6 +2392,8 @@ do_write_kirov_standings(
       up_ind = (t << row_sh) + j;
       row_attr = state->probs[p_ind[j]]->stand_attr;
       if (!row_attr) row_attr = ss.prob_attr;
+      if (rj_flag[up_ind] && ss.rj_attr)
+        row_attr = ss.rj_attr;
       if (sm_flag[up_ind] && ss.sm_attr && ss.sm_attr[0])
         row_attr = ss.sm_attr;
       if (pr_flag[up_ind] && ss.pr_attr && ss.pr_attr[0])
@@ -2665,6 +2686,7 @@ do_write_kirov_standings(
   xfree(trans_num);
   xfree(pr_flag);
   xfree(sm_flag);
+  xfree(rj_flag);
   xfree(cf_num);
   xfree(penalty);
   xfree(marked_flag);

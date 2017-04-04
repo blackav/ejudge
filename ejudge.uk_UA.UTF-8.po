@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-03-17 02:54+0300\n"
+"POT-Creation-Date: 2017-04-04 17:04+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -2907,6 +2907,9 @@ msgid "Regular users"
 msgstr ""
 
 msgid "Rejected"
+msgstr ""
+
+msgid "Rejected runs"
 msgstr ""
 
 msgid "Rejudge all"
