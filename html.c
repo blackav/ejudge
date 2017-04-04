@@ -1617,6 +1617,7 @@ do_write_kirov_standings(
             sm_flag[up_ind] = 1;
             ++total_summoned;
           }
+          rj_flag[up_ind] = 0;
 
           score = calc_kirov_score(0, 0, start_time,
                                    separate_user_score, user_mode, token_flags,
@@ -1688,7 +1689,8 @@ do_write_kirov_standings(
           sm_flag[up_ind] = 1;
           ++total_summoned;
         } else if (run_status == RUN_REJECTED) {
-          rj_flag[up_ind] = 1;
+          if (!full_sol[up_ind])
+            rj_flag[up_ind] = 1;
           ++total_rejected;
         } else if (run_status == RUN_PENDING) {
           ++trans_num[up_ind];
@@ -1717,6 +1719,7 @@ do_write_kirov_standings(
             sm_flag[up_ind] = 1;
             ++total_summoned;
           }
+          rj_flag[up_ind] = 0;
 
           if (!marked_flag[up_ind] || prob->ignore_unmarked <= 0 || pe->is_marked) {
             marked_flag[up_ind] = pe->is_marked;
@@ -1835,7 +1838,8 @@ do_write_kirov_standings(
           ++trans_num[up_ind];
           ++total_accepted;
         } else if (run_status == RUN_REJECTED) {
-          rj_flag[up_ind] = 1;
+          if (!full_sol[up_ind])
+            rj_flag[up_ind] = 1;
           ++total_rejected;
         } else if (run_status == RUN_COMPILING
                    || run_status == RUN_RUNNING) {
@@ -2216,8 +2220,8 @@ do_write_kirov_standings(
       }
       if (total_rejected > 0) {
         if (ss.rj_attr && ss.rj_attr[0]) row_attr = ss.rj_attr;
-        fprintf(f, "<tr%s><td%s>%s:</td><td%s>%d</td></tr>",
-                ss.success_attr, row_attr, _("Rejected runs"), row_attr, total_rejected);
+        fprintf(f, "<tr%s><td%s>%s:</td><td%s>&nbsp;</td></tr>",
+                ss.success_attr, row_attr, _("Rejected runs"), row_attr/*, total_rejected*/);
       }
       if (total_pending > 0) {
         if (ss.trans_attr && ss.trans_attr[0]) row_attr = ss.trans_attr;
@@ -2392,7 +2396,7 @@ do_write_kirov_standings(
       up_ind = (t << row_sh) + j;
       row_attr = state->probs[p_ind[j]]->stand_attr;
       if (!row_attr) row_attr = ss.prob_attr;
-      if (rj_flag[up_ind] && ss.rj_attr)
+      if (!full_sol[up_ind] && rj_flag[up_ind] && ss.rj_attr)
         row_attr = ss.rj_attr;
       if (sm_flag[up_ind] && ss.sm_attr && ss.sm_attr[0])
         row_attr = ss.sm_attr;
