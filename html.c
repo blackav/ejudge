@@ -711,7 +711,7 @@ setup_standings_style(struct standings_style *ps,
     if (!ps->disq_attr[0])
       ps->disq_attr = " class=\"st_prob\" bgcolor=\"#ffcccc\"";
     if (!ps->pr_attr || !*ps->pr_attr) {
-      ps->pr_attr = " class=\"st_prob\" bgcolor=\"#99cc99\"";
+      ps->pr_attr = " class=\"st_prob\" bgcolor=\"#bbcc99\"";
     }
     if (!ps->sm_attr || !*ps->sm_attr) {
       ps->sm_attr = " class=\"st_prob\" bgcolor=\"#cc9999\"";
