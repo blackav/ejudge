@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -521,6 +521,12 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
         || x < 0 || x > 127)
       FAIL(TINF_E_INVALID_VALUE);
     pt->exit_code = x;
+  } else if (!strcmp(name_buf, "max_open_file_count")) {
+    if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
+    if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
+    if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n] || x < 0 || x > 1024)
+      FAIL(TINF_E_INVALID_VALUE);
+    pt->max_open_file_count = x;
   } else if (!strcmp(name_buf, "check_stderr")) {
     if (cmd.u < 1) {
       x = 1;

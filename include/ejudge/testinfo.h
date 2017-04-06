@@ -2,7 +2,7 @@
 #ifndef __TESTINFO_H__
 #define __TESTINFO_H__
 
-/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -74,6 +74,7 @@ struct testinfo_struct
   char **style_checker_env_v;
 
   int disable_valgrind;
+  int max_open_file_count;
 };
 typedef struct testinfo_struct testinfo_t;
 
