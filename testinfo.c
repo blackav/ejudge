@@ -527,6 +527,12 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
     if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n] || x < 0 || x > 1024)
       FAIL(TINF_E_INVALID_VALUE);
     pt->max_open_file_count = x;
+  } else if (!strcmp(name_buf, "max_process_count")) {
+    if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
+    if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
+    if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n] || x < 0 || x > 1024)
+      FAIL(TINF_E_INVALID_VALUE);
+    pt->max_process_count = x;
   } else if (!strcmp(name_buf, "check_stderr")) {
     if (cmd.u < 1) {
       x = 1;
@@ -627,6 +633,7 @@ testinfo_parse(const char *path, testinfo_t *pt, struct testinfo_subst_handler *
   pt->cmd_argc = -1;
   pt->disable_stderr = -1;
   pt->max_open_file_count = -1;
+  pt->max_process_count = -1;
   if (!(fin = fopen(path, "r"))) {
     memset(pt, 0, sizeof(*pt));
     return -TINF_E_CANNOT_OPEN;

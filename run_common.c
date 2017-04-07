@@ -2769,7 +2769,9 @@ run_one_test(
   } else if (srpp->max_open_file_count > 0) {
     task_SetMaxOpenFileCount(tsk, srpp->max_open_file_count);
   }
-  if (srpp->max_process_count > 0) {
+  if (srpp->use_info > 0 && tstinfo.max_process_count >= 0) {
+    task_SetMaxProcessCount(tsk, tstinfo.max_process_count);
+  } else if (srpp->max_process_count > 0) {
     task_SetMaxProcessCount(tsk, srpp->max_process_count);
   }
   if (srpp->umask && srpp->umask[0]) {
