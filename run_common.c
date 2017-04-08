@@ -1746,7 +1746,8 @@ invoke_interactor(
         int stdout_fd,
         long time_limit_ms,
         int program_pid,
-        int testlib_mode)
+        int testlib_mode,
+        int suid_run)
 	__attribute__((unused)); // on Windows
 static tpTask
 invoke_interactor(
@@ -1763,7 +1764,8 @@ invoke_interactor(
         int stdout_fd,
         long time_limit_ms,
         int program_pid,
-        int testlib_mode)
+        int testlib_mode,
+        int suid_run)
 {
   tpTask tsk_int = NULL;
   int env_u = 0;
@@ -1795,6 +1797,9 @@ invoke_interactor(
   task_SetRedir(tsk_int, 2, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
   if (checker_locale && checker_locale[0]) {
     task_SetEnv(tsk_int, "EJUDGE_LOCALE", checker_locale);
+  }
+  if (suid_run > 0) {
+    task_SetEnv(tsk_int, "EJUDGE_SUID_RUN", "1");
   }
   task_EnableAllSignals(tsk_int);
   task_IgnoreSIGPIPE(tsk_int);
@@ -2796,7 +2801,8 @@ run_one_test(
     tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src,
                                 working_dir, check_out_path, srpp->interactor_env, srgp->checker_locale,
                                 &tstinfo,
-                                pfd1[0], pfd2[1], srpp->interactor_time_limit_ms, task_GetPid(tsk), srgp->testlib_mode);
+                                pfd1[0], pfd2[1], srpp->interactor_time_limit_ms, task_GetPid(tsk), srgp->testlib_mode,
+                                srgp->suid_run);
     if (!tsk_int) {
       append_msg_to_log(check_out_path, "interactor failed to start");
       goto check_failed;
