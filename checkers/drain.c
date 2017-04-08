@@ -17,10 +17,9 @@
 #include "checker_internal.h"
 
 void
-checker_drain(int exitcode)
+checker_drain(void)
 {
     int c;
     fclose(stdout);
     while ((c = getchar_unlocked()) != EOF) {}
-    exit(exitcode);
 }

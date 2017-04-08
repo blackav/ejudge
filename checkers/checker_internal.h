@@ -146,7 +146,7 @@ void fatal_read(int streamno, char const *format, ...)
      LIBCHECKER_ATTRIB((noreturn, format(printf, 2, 3)));
 void checker_OK(void) LIBCHECKER_ATTRIB((noreturn));
 
-void checker_drain(int exitcode) LIBCHECKER_ATTRIB((noreturn));
+void checker_drain(void);
 
 void *xmalloc(size_t size);
 void *xcalloc(size_t nmemb, size_t size);
