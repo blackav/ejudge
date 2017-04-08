@@ -396,6 +396,9 @@ checker_skip_bom(FILE *f);
 int
 checker_kill(int pid, int signal);
 
+int
+checker_stoi(const char *str, int base, int *p_int);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

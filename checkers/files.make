@@ -87,6 +87,7 @@ CFILES=\
  skip_bom.c\
  kill.c\
  drain.c\
+ stoi.c\
  ok.c\
  fatal.c\
  fatal_cf.c\
