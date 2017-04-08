@@ -146,6 +146,8 @@ void fatal_read(int streamno, char const *format, ...)
      LIBCHECKER_ATTRIB((noreturn, format(printf, 2, 3)));
 void checker_OK(void) LIBCHECKER_ATTRIB((noreturn));
 
+void checker_drain(int exitcode) LIBCHECKER_ATTRIB((noreturn));
+
 void *xmalloc(size_t size);
 void *xcalloc(size_t nmemb, size_t size);
 void *xrealloc(void *ptr, size_t size);
@@ -390,6 +392,9 @@ int
 checker_require_nl(FILE *f, int allow_fail);
 void
 checker_skip_bom(FILE *f);
+
+int
+checker_kill(int pid, int signal);
 
 #ifdef __cplusplus
 }

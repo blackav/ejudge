@@ -85,6 +85,8 @@ CFILES=\
  read_sexpr.c\
  require_nl.c\
  skip_bom.c\
+ kill.c\
+ drain.c\
  ok.c\
  fatal.c\
  fatal_cf.c\
