@@ -2965,28 +2965,33 @@ run_one_test(
     } else {
       status = RUN_WALL_TIME_LIMIT_ERR;
     }
+    if (tsk_int) goto read_checker_output;
     goto cleanup;
   }
   if (task_IsTimeout(tsk)) {
     status = RUN_TIME_LIMIT_ERR;
+    if (tsk_int) goto read_checker_output;
     goto cleanup;
   }
 
   if (tst && tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error > 0
       && srgp->secure_run > 0 && task_IsMemoryLimit(tsk)) {
     status = RUN_MEM_LIMIT_ERR;
+    if (tsk_int) goto read_checker_output;
     goto cleanup;
   }
 
   if (tst && tst->memory_limit_type_val == MEMLIMIT_TYPE_JAVA && srgp->enable_memory_limit_error > 0
       && task_IsAbnormal(tsk) && is_java_memory_limit(cur_info->error, cur_info->error_size)) {
     status = RUN_MEM_LIMIT_ERR;
+    if (tsk_int) goto read_checker_output;
     goto cleanup;
   }
 
   if (tst && tst->enable_memory_limit_error > 0 && srgp->detect_violations > 0
       && srgp->secure_run > 0 && task_IsSecurityViolation(tsk)) {
     status = RUN_SECURITY_ERR;
+    if (tsk_int) goto read_checker_output;
     goto cleanup;
   }
 
@@ -2995,6 +3000,7 @@ run_one_test(
     cur_info->code = 256; /* FIXME: magic */
     cur_info->termsig = task_TermSignal(tsk);
     status = RUN_RUN_TIME_ERR;
+    if (tsk_int) goto read_checker_output;
     goto cleanup;
   }
 
@@ -3007,12 +3013,14 @@ run_one_test(
   if (srpp->use_info > 0 && tstinfo.exit_code > 0) {
     if (cur_info->code != tstinfo.exit_code) {
       status = RUN_WRONG_ANSWER_ERR;
+      if (tsk_int) goto read_checker_output;
       goto cleanup;
     }
   } else if (srpp->ignore_exit_code > 0) {
     // do not analyze exit code
   } else if (cur_info->code != 0) {
     status = RUN_RUN_TIME_ERR;
+    if (tsk_int) goto read_checker_output;
     goto cleanup;
   }
 
