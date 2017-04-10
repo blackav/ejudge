@@ -1800,6 +1800,9 @@ invoke_interactor(
   if (srgp->suid_run > 0) {
     task_SetEnv(tsk_int, "EJUDGE_SUID_RUN", "1");
   }
+  if (srgp->testlib_mode > 0) {
+    task_SetEnv(tsk_int, "EJUDGE_TESTLIB_MODE", "1");
+  }
   task_EnableAllSignals(tsk_int);
   task_IgnoreSIGPIPE(tsk_int);
   if (srpp->interactor_time_limit_ms > 0) {
