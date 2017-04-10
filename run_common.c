@@ -1739,15 +1739,12 @@ invoke_interactor(
         const unsigned char *corr_src_path,
         const unsigned char *working_dir,
         const unsigned char *check_out_path,
-        char **interactor_env,
-        const unsigned char *checker_locale,
         struct testinfo_struct *ti,
         int stdin_fd,
         int stdout_fd,
-        long time_limit_ms,
         int program_pid,
-        int testlib_mode,
-        int suid_run)
+        const struct super_run_in_global_packet *srgp,
+        const struct super_run_in_problem_packet *srpp)
 	__attribute__((unused)); // on Windows
 static tpTask
 invoke_interactor(
@@ -1757,15 +1754,12 @@ invoke_interactor(
         const unsigned char *corr_src_path,
         const unsigned char *working_dir,
         const unsigned char *check_out_path,
-        char **interactor_env,
-        const unsigned char *checker_locale,
         struct testinfo_struct *ti,
         int stdin_fd,
         int stdout_fd,
-        long time_limit_ms,
         int program_pid,
-        int testlib_mode,
-        int suid_run)
+        const struct super_run_in_global_packet *srgp,
+        const struct super_run_in_problem_packet *srpp)
 {
   tpTask tsk_int = NULL;
   int env_u = 0;
@@ -1783,28 +1777,28 @@ invoke_interactor(
   if (corr_src_path && corr_src_path[0]) {
     task_AddArg(tsk_int, corr_src_path);
   }
-  if (program_pid > 0 && testlib_mode <= 0) {
+  if (program_pid > 0 && srgp->testlib_mode <= 0) {
     char buf[64];
     snprintf(buf, sizeof(buf), "%d", program_pid);
     task_AddArg(tsk_int, buf);
   }
   task_SetPathAsArg0(tsk_int);
   task_SetWorkingDir(tsk_int, working_dir);
-  setup_environment(tsk_int, interactor_env, env_u, env_v, 1);
+  setup_environment(tsk_int, srpp->interactor_env, env_u, env_v, 1);
   task_SetEnv(tsk_int, "EJUDGE", "1");
   task_SetRedir(tsk_int, 0, TSR_DUP, stdin_fd);
   task_SetRedir(tsk_int, 1, TSR_DUP, stdout_fd);
   task_SetRedir(tsk_int, 2, TSR_FILE, check_out_path, TSK_APPEND, TSK_FULL_RW);
-  if (checker_locale && checker_locale[0]) {
-    task_SetEnv(tsk_int, "EJUDGE_LOCALE", checker_locale);
+  if (srgp->checker_locale && srgp->checker_locale[0]) {
+    task_SetEnv(tsk_int, "EJUDGE_LOCALE", srgp->checker_locale);
   }
-  if (suid_run > 0) {
+  if (srgp->suid_run > 0) {
     task_SetEnv(tsk_int, "EJUDGE_SUID_RUN", "1");
   }
   task_EnableAllSignals(tsk_int);
   task_IgnoreSIGPIPE(tsk_int);
-  if (time_limit_ms > 0) {
-    task_SetMaxTimeMillis(tsk_int, time_limit_ms);
+  if (srpp->interactor_time_limit_ms > 0) {
+    task_SetMaxTimeMillis(tsk_int, srpp->interactor_time_limit_ms);
   }
 
   task_PrintArgs(tsk_int);
@@ -2799,10 +2793,8 @@ run_one_test(
 #ifndef __WIN32__
   if (interactor_cmd) {
     tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src,
-                                working_dir, check_out_path, srpp->interactor_env, srgp->checker_locale,
-                                &tstinfo,
-                                pfd1[0], pfd2[1], srpp->interactor_time_limit_ms, task_GetPid(tsk), srgp->testlib_mode,
-                                srgp->suid_run);
+                                working_dir, check_out_path,
+                                &tstinfo, pfd1[0], pfd2[1], task_GetPid(tsk), srgp, srpp);
     if (!tsk_int) {
       append_msg_to_log(check_out_path, "interactor failed to start");
       goto check_failed;
