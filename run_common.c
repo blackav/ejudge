@@ -1737,6 +1737,7 @@ invoke_interactor(
         const unsigned char *test_src_path,
         const unsigned char *output_path,
         const unsigned char *corr_src_path,
+        const unsigned char *info_src_path,
         const unsigned char *working_dir,
         const unsigned char *check_out_path,
         struct testinfo_struct *ti,
@@ -1752,6 +1753,7 @@ invoke_interactor(
         const unsigned char *test_src_path,
         const unsigned char *output_path,
         const unsigned char *corr_src_path,
+        const unsigned char *info_src_path,
         const unsigned char *working_dir,
         const unsigned char *check_out_path,
         struct testinfo_struct *ti,
@@ -1781,6 +1783,9 @@ invoke_interactor(
     char buf[64];
     snprintf(buf, sizeof(buf), "%d", program_pid);
     task_AddArg(tsk_int, buf);
+  }
+  if (srpp->use_info > 0) {
+    task_AddArg(tsk_int, info_src_path);
   }
   task_SetPathAsArg0(tsk_int);
   task_SetWorkingDir(tsk_int, working_dir);
@@ -2792,7 +2797,7 @@ run_one_test(
 
 #ifndef __WIN32__
   if (interactor_cmd) {
-    tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src,
+    tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src, info_src,
                                 working_dir, check_out_path,
                                 &tstinfo, pfd1[0], pfd2[1], task_GetPid(tsk), srgp, srpp);
     if (!tsk_int) {
