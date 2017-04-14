@@ -88,6 +88,7 @@ CFILES=\
  kill.c\
  drain.c\
  stoi.c\
+ stoul.c\
  ok.c\
  fatal.c\
  fatal_cf.c\

@@ -398,6 +398,8 @@ checker_kill(int pid, int signal);
 
 int
 checker_stoi(const char *str, int base, int *p_int);
+int
+checker_stoul(const char *str, int base, unsigned long *p_value);
 
 #ifdef __cplusplus
 }
