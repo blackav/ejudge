@@ -3036,7 +3036,7 @@ set_defaults(
     }
 
     if (g->contest_stop_cmd && g->contest_stop_cmd[0]) {
-      usprintf(&g->contest_stop_cmd, "%s/%s", g->conf_dir, g->contest_stop_cmd);
+      path_prepend_dir(&g->contest_stop_cmd, g->conf_dir);
       if (check_executable(g->contest_stop_cmd) < 0) {
         err("contest stop command %s is not executable or does not exist",
             g->contest_stop_cmd);
@@ -3292,7 +3292,7 @@ set_defaults(
     }
 
     if (lang->style_checker_cmd && lang->style_checker_cmd[0] && lang->style_checker_cmd[0] != '@' && lang->style_checker_cmd[0] != '%') {
-      usprintf(&lang->style_checker_cmd, "%s/%s", g->ejudge_checkers_dir, lang->style_checker_cmd);
+      path_prepend_dir(&lang->style_checker_cmd, g->ejudge_checkers_dir);
     }
 
     if (!lang->src_sfx[0]) {
