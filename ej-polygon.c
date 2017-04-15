@@ -1078,6 +1078,9 @@ extract_td_content(const unsigned char *s, unsigned char *out, const unsigned ch
             ++s;
             while (*s && *s != '>') ++s;
             if (*s == '>') ++s;
+            if (!outpos) {
+                while (isspace(*s)) ++s;
+            }
             continue;
         }
         out[outpos++] = *s++;
