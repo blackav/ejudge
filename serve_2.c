@@ -1960,6 +1960,9 @@ serve_run_request(
   if (prob->interactor_time_limit > 0) {
     srpp->interactor_time_limit_ms = prob->interactor_time_limit * 1000;
   }
+  if (prob->interactor_real_time_limit > 0) {
+    srpp->interactor_real_time_limit_ms = prob->interactor_real_time_limit * 1000;
+  }
   srpp->disable_stderr = prob->disable_stderr;
   if (prob->test_pat) {
     srpp->test_pat = xstrdup(prob->test_pat);

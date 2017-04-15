@@ -453,6 +453,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(max_process_count, "d"),
   PROBLEM_PARAM_2(type, do_problem_parse_type),
   PROBLEM_PARAM(interactor_time_limit, "d"),
+  PROBLEM_PARAM(interactor_real_time_limit, "d"),
 
   PROBLEM_PARAM(super, "s"),
   PROBLEM_PARAM(short_name, "s"),
@@ -1188,6 +1189,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->max_open_file_count = -1;
   p->max_process_count = -1;
   p->interactor_time_limit = -1;
+  p->interactor_real_time_limit = -1;
   p->max_user_run_count = -1;
 }
 
@@ -3518,6 +3520,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_time_limit_millis, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_real_time_limit, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_interactor_time_limit, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_interactor_real_time_limit, prob, aprob, g);
 
     prepare_set_prob_value(CNTSPROB_test_sfx, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_corr_sfx, prob, aprob, g);
@@ -5744,6 +5747,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->valuer_sets_marked = in->valuer_sets_marked;
   out->ignore_unmarked = in->ignore_unmarked;
   out->interactor_time_limit = in->interactor_time_limit;
+  out->interactor_real_time_limit = in->interactor_real_time_limit;
   out->disable_stderr = in->disable_stderr;
   out->enable_process_group = in->enable_process_group;
   out->hide_variant = in->hide_variant;
@@ -5901,6 +5905,11 @@ prepare_set_prob_value(
   case CNTSPROB_interactor_time_limit:
     if (out->interactor_time_limit < 0 && abstr) out->interactor_time_limit = abstr->interactor_time_limit;
     if (out->interactor_time_limit < 0) out->interactor_time_limit = 0;
+    break;
+
+  case CNTSPROB_interactor_real_time_limit:
+    if (out->interactor_real_time_limit < 0 && abstr) out->interactor_real_time_limit = abstr->interactor_real_time_limit;
+    if (out->interactor_real_time_limit < 0) out->interactor_real_time_limit = 0;
     break;
 
 #define INHERIT_BOOLEAN_2(f) case CNTSPROB_##f: if (out->f < 0 && abstr) out->f = abstr->f; if (out->f < 0 && global) out->f = global->f; if (out->f < 0) out->f = 0; if (out->f > 0) out->f = 1; break
@@ -6575,6 +6584,7 @@ prepare_set_all_prob_values(
     CNTSPROB_valuer_sets_marked,
     CNTSPROB_ignore_unmarked,
     CNTSPROB_interactor_time_limit,
+    CNTSPROB_interactor_real_time_limit,
     CNTSPROB_disable_stderr,
     CNTSPROB_enable_process_group,
     CNTSPROB_enable_testlib_mode,

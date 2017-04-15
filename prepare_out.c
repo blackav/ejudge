@@ -1372,6 +1372,9 @@ prepare_unparse_prob(
   if (prob->interactor_time_limit > 0) {
     fprintf(f, "interactor_time_limit = %d\n", prob->interactor_time_limit);
   }
+  if (prob->interactor_real_time_limit > 0) {
+    fprintf(f, "interactor_real_time_limit = %d\n", prob->interactor_real_time_limit);
+  }
   if (prob->style_checker_cmd && prob->style_checker_cmd[0])
     fprintf(f,"style_checker_cmd = \"%s\"\n",CARMOR(prob->style_checker_cmd));
   do_xstr(f, &ab, "style_checker_env", prob->style_checker_env);
@@ -1769,6 +1772,8 @@ prepare_unparse_actual_prob(
   do_xstr(f, &ab, "interactor_env", prob->interactor_env);
   if (prob->interactor_time_limit > 0)
     fprintf(f, "interactor_time_limit = %d\n", prob->interactor_time_limit);
+  if (prob->interactor_real_time_limit > 0)
+    fprintf(f, "interactor_real_time_limit = %d\n", prob->interactor_real_time_limit);
   if ((show_paths || (global && global->advanced_layout > 0)) && prob->style_checker_cmd && prob->style_checker_cmd[0])
     fprintf(f,"style_checker_cmd = \"%s\"\n",CARMOR(prob->style_checker_cmd));
   do_xstr(f, &ab, "style_checker_env", prob->style_checker_env);

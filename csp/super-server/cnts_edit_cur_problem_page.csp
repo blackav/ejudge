@@ -1732,6 +1732,33 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:interactor_time_limit" /></td>
             </s:tr>
 
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-interactor_real_time_limit-div">
+                <td>Time limit for interactor (s):</td>
+                <td><s:textfield id="orig-interactor_real_time_limit" readonly="readonly" name="param" value="prob->interactor_real_time_limit" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0 || !sup_prob) {
+      if (prob->interactor_real_time_limit < 0) {
+%>(<i>Not set</i>)<%
+      } else if (!prob->interactor_real_time_limit) {
+%>(<i>Unlimited</i>)<%
+      }
+    } else {
+      if (prob->interactor_real_time_limit < 0) {
+        if (tmp_prob->interactor_real_time_limit < 0) {
+%>(<i>Not set</i>)<%
+        } else if (!tmp_prob->interactor_real_time_limit) {
+%>(<i>Default: unlimited</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->interactor_real_time_limit" /></i>)<%
+        }
+      } else if (!prob->interactor_real_time_limit) {
+%>(<i>Unlimited</i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:interactor_real_time_limit" /></td>
+            </s:tr>
+
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-init_cmd-div">
                 <td>Init-style interactor name:</td>
                 <td><%

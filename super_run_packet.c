@@ -145,6 +145,7 @@ super_run_in_problem_packet_init(struct generic_section_config *gp)
   p->checker_real_time_limit_ms = -1;
   p->valuer_sets_marked = -1;
   p->interactor_time_limit_ms = -1;
+  p->interactor_real_time_limit_ms = -1;
   p->disable_stderr = -1;
   p->max_open_file_count = -1;
   p->max_process_count = -1;
@@ -187,6 +188,7 @@ super_run_in_problem_packet_set_default(struct generic_section_config *gp)
   if (p->checker_real_time_limit_ms < 0) p->checker_real_time_limit_ms = 0;
   if (p->valuer_sets_marked < 0) p->valuer_sets_marked = 0;
   if (p->interactor_time_limit_ms < 0) p->interactor_time_limit_ms = 0;
+  if (p->interactor_real_time_limit_ms < 0) p->interactor_real_time_limit_ms = 0;
   if (p->disable_stderr < 0) p->disable_stderr = 0;
   if (p->max_open_file_count < 0) p->max_open_file_count = 0;
   if (p->max_process_count < 0) p->max_process_count = 0;

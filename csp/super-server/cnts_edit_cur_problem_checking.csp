@@ -33,6 +33,7 @@
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "interactor_cmd" "checking" "Interactor name" "250" %>
         <%@expand MENU_TEXTFIELD "interactor_env" "checking" "Interactor environment" "250" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "interactor_time_limit" "checking" "Time limit for interactor (s)" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "interactor_real_time_limit" "checking" "Real time limit for interactor (s)" "250" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "init_cmd" "checking" "Init-style interactor name" "250" %>
         <%@expand MENU_TEXTFIELD "init_env" "checking" "Init-style interactor environment" "250" %>
 
@@ -82,6 +83,7 @@ $(function() {
 
     var has_interactor = <s:v type="jsbool" value="tmp_prob->interactor_cmd" />;
     $("#orig-interactor_time_limit-div").toggle(has_interactor);
+    $("#orig-interactor_real_time_limit-div").toggle(has_interactor);
     $("#orig-interactor_env-div").toggle(has_interactor && <s:v type="jsbool" value="prob_id > 0" />);
 
     var has_init = <s:v type="jsbool" value="tmp_prob->init_cmd && tmp_prob->init_cmd[0]" />;
@@ -105,6 +107,7 @@ function popupCheckingDialog(e, skipField)
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "interactor_cmd" "!prob->interactor_cmd" %>
     <%@expand COPY_TEXTFIELD "interactor_env" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "interactor_time_limit" "prob->interactor_time_limit < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "interactor_real_time_limit" "prob->interactor_real_time_limit < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "init_cmd" "!prob->init_cmd" %>
     <%@expand COPY_TEXTFIELD "init_env" %>
 
@@ -116,6 +119,7 @@ function popupCheckingDialog(e, skipField)
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "interactor_cmd" %>
     <%@expand CLEAR_TEXTFIELD "interactor_env" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "interactor_time_limit" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "interactor_real_time_limit" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "init_cmd" %>
     <%@expand CLEAR_TEXTFIELD "init_env" %>
 
@@ -131,6 +135,7 @@ function checkingDialogOnChange(field)
     <%@expand ONCHANGE_WITH_DEFAULT "valuer_cmd" %>
     <%@expand ONCHANGE_WITH_DEFAULT "interactor_cmd" %>
     <%@expand ONCHANGE_WITH_DEFAULT "interactor_time_limit" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "interactor_real_time_limit" %>
     <%@expand ONCHANGE_WITH_DEFAULT "init_cmd" %>
 
     var has_standard_checker = $("#edit-standard_checker").val();
@@ -146,6 +151,7 @@ function checkingDialogOnChange(field)
     var interactor_cmd = $("#edit-interactor_cmd").val();
     if ($("#edit-interactor_cmd_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->interactor_cmd" />) interactor_cmd = "X";
     $("#edit-interactor_time_limit-div").toggle(interactor_cmd != "");
+    $("#edit-interactor_real_time_limit-div").toggle(interactor_cmd != "");
     $("#edit-interactor_env-div").toggle(interactor_cmd != "" && <s:v type="jsbool" value="prob_id > 0" />);
 
     var init_cmd = $("#edit-init_cmd").val();

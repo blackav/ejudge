@@ -1808,6 +1808,9 @@ invoke_interactor(
   if (srpp->interactor_time_limit_ms > 0) {
     task_SetMaxTimeMillis(tsk_int, srpp->interactor_time_limit_ms);
   }
+  if (srpp->interactor_real_time_limit_ms > 0) {
+    task_SetMaxRealTimeMillis(tsk_int, srpp->interactor_real_time_limit_ms);
+  }
 
   task_PrintArgs(tsk_int);
 

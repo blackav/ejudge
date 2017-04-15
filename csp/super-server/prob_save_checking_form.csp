@@ -34,6 +34,8 @@
     char **interactor_env = NULL;
     int interactor_time_limit = -1;
     ejintbool_t interactor_time_limit_dflt = 0;
+    int interactor_real_time_limit = -1;
+    ejintbool_t interactor_real_time_limit_dflt = 0;
     unsigned char *init_cmd = NULL;
     ejintbool_t init_cmd_dflt = 0;
     char **init_env = NULL;
@@ -64,6 +66,8 @@
 %><s:read var="interactor_env" /><%
 %><s:read var="interactor_time_limit" default="-1" /><%
 %><s:read var="interactor_time_limit_dflt" default="0" /><%
+%><s:read var="interactor_real_time_limit" default="-1" /><%
+%><s:read var="interactor_real_time_limit_dflt" default="0" /><%
 %><s:read var="init_cmd" normalize="yes" nonnull="yes" /><%
 %><s:read var="init_cmd_dflt" default="0" /><%
 %><s:read var="init_env" /><%
@@ -90,6 +94,8 @@
     if (interactor_cmd_dflt) *interactor_cmd = 0;
     if (interactor_time_limit < 0) interactor_time_limit = -1;
     if (interactor_time_limit_dflt) interactor_time_limit = -1;
+    if (interactor_real_time_limit < 0) interactor_real_time_limit = -1;
+    if (interactor_real_time_limit_dflt) interactor_real_time_limit = -1;
     if (init_cmd_dflt) {
         xfree(init_cmd); init_cmd = NULL;
     }
@@ -128,6 +134,7 @@
         MOVESTR(interactor_cmd);
         MOVEENV(interactor_env);
         prob->interactor_time_limit = interactor_time_limit;
+        prob->interactor_real_time_limit = interactor_real_time_limit;
         MOVESTR(init_cmd);
         MOVEENV(init_env);
     }
