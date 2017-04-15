@@ -90,6 +90,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_prev_runs_to_show,
   META_PROBLEM_CONFIG_SECTION_max_user_run_count,
   META_PROBLEM_CONFIG_SECTION_interactor_time_limit,
+  META_PROBLEM_CONFIG_SECTION_interactor_real_time_limit,
   META_PROBLEM_CONFIG_SECTION_max_open_file_count,
   META_PROBLEM_CONFIG_SECTION_max_process_count,
   META_PROBLEM_CONFIG_SECTION_tests_to_accept,

@@ -121,6 +121,7 @@ enum
   META_SUPER_RUN_IN_PROBLEM_PACKET_standard_checker,
   META_SUPER_RUN_IN_PROBLEM_PACKET_valuer_sets_marked,
   META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_time_limit_ms,
+  META_SUPER_RUN_IN_PROBLEM_PACKET_interactor_real_time_limit_ms,
   META_SUPER_RUN_IN_PROBLEM_PACKET_disable_stderr,
   META_SUPER_RUN_IN_PROBLEM_PACKET_test_pat,
   META_SUPER_RUN_IN_PROBLEM_PACKET_corr_pat,

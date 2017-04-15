@@ -479,6 +479,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_source_header] = { CNTSPROB_source_header, 's', XSIZE(struct section_problem_data, source_header), "source_header", XOFFSET(struct section_problem_data, source_header) },
   [CNTSPROB_source_footer] = { CNTSPROB_source_footer, 's', XSIZE(struct section_problem_data, source_footer), "source_footer", XOFFSET(struct section_problem_data, source_footer) },
   [CNTSPROB_interactor_time_limit] = { CNTSPROB_interactor_time_limit, 'i', XSIZE(struct section_problem_data, interactor_time_limit), "interactor_time_limit", XOFFSET(struct section_problem_data, interactor_time_limit) },
+  [CNTSPROB_interactor_real_time_limit] = { CNTSPROB_interactor_real_time_limit, 'i', XSIZE(struct section_problem_data, interactor_real_time_limit), "interactor_real_time_limit", XOFFSET(struct section_problem_data, interactor_real_time_limit) },
   [CNTSPROB_test_pat] = { CNTSPROB_test_pat, 's', XSIZE(struct section_problem_data, test_pat), "test_pat", XOFFSET(struct section_problem_data, test_pat) },
   [CNTSPROB_corr_pat] = { CNTSPROB_corr_pat, 's', XSIZE(struct section_problem_data, corr_pat), "corr_pat", XOFFSET(struct section_problem_data, corr_pat) },
   [CNTSPROB_info_pat] = { CNTSPROB_info_pat, 's', XSIZE(struct section_problem_data, info_pat), "info_pat", XOFFSET(struct section_problem_data, info_pat) },
