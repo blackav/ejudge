@@ -135,6 +135,7 @@ struct super_run_in_problem_packet
   unsigned char *standard_checker;
   ejintbool_t valuer_sets_marked;
   int interactor_time_limit_ms;
+  int interactor_real_time_limit_ms;
   ejintbool_t disable_stderr;
   unsigned char *test_pat;
   unsigned char *corr_pat;

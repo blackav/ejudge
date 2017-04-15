@@ -1038,6 +1038,8 @@ struct section_problem_data
   unsigned char *source_footer;
   /** time-limit for the interactor */
   int interactor_time_limit;
+  /** real time limit for the interactor */
+  int interactor_real_time_limit;
 
   /** printf pattern for the test files */
   unsigned char *test_pat;

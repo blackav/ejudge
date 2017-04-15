@@ -119,6 +119,7 @@ struct problem_config_section
   int prev_runs_to_show;
   int max_user_run_count;
   int interactor_time_limit;
+  int interactor_real_time_limit;
   int max_open_file_count;
   int max_process_count;
   int tests_to_accept;
