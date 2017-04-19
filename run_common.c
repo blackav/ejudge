@@ -2356,7 +2356,8 @@ run_one_test(
         cur_info->error_size = 0;
         cur_info->correct = xstrdup("");
         cur_info->correct_size = 0;
-        asprintf(&cur_info->chk_out, "auto-OK for language %s", srgp->lang_short_name);
+        cur_info->chk_out_size = asprintf(&cur_info->chk_out, "auto-OK for language %s", srgp->lang_short_name);
+        //cur_info->comment = xstrdup(cur_info->chk_out);
         // FIXME: set comment or team_comment
         goto cleanup;
       }
