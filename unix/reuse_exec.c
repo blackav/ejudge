@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2017 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:33:28 cher> */
 
 /*
@@ -90,9 +90,9 @@ struct tTask
   int    was_memory_limit;      /* was the memory limit happened? */
   int    was_security_violation;/* was the security violation happened? */
   int    termsig;               /* termination signal */
-  int    max_stack_size;        /* max size of stack */
-  int    max_data_size;         /* max size of data */
-  int    max_vm_size;           /* max size of virtual memory */
+  size_t max_stack_size;        /* max size of stack */
+  size_t max_data_size;         /* max size of data */
+  size_t max_vm_size;           /* max size of virtual memory */
   int    disable_core;          /* disable core dumps? */
   int    enable_memory_limit_error; /* enable memory limit error detection? */
   int    enable_secure_exec;    /* drop capabilities before exec'ing */
@@ -1209,31 +1209,31 @@ task_GetErrorMessage(tTask *tsk)
 }
 
 int
-task_SetDataSize(tTask *tsk, int size)
+task_SetDataSize(tTask *tsk, size_t size)
 {
   task_init_module();
   ASSERT(tsk);
-  if (size < 0) return -1;
+  if (size == ~(size_t) 0) return -1;
   tsk->max_data_size = size;
   return 0;
 }
 
 int
-task_SetStackSize(tTask *tsk, int size)
+task_SetStackSize(tTask *tsk, size_t size)
 {
   task_init_module();
   ASSERT(tsk);
-  if (size < 0) return -1;
+  if (size == ~(size_t) 0) return -1;
   tsk->max_stack_size = size;
   return 0;
 }
 
 int
-task_SetVMSize(tTask *tsk, int size)
+task_SetVMSize(tTask *tsk, size_t size)
 {
   task_init_module();
   ASSERT(tsk);
-  if (size < 0) return -1;
+  if (size == ~(size_t) 0) return -1;
   tsk->max_vm_size = size;
   return 0;
 }

@@ -1,7 +1,7 @@
 #ifndef __REUSE_EXEC_H__
 #define __REUSE_EXEC_H__
 
-/* Copyright (C) 1998-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2017 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:26:50 cher> */
 
 /*
@@ -88,9 +88,9 @@ int      task_FormatEnv(tTask *tsk, const char *name, const char *format, ...);
 int      task_ClearEnv(tpTask);
 
 int      task_SetKillSignal(tpTask, char const *);
-int      task_SetStackSize(tpTask, int);
-int      task_SetDataSize(tpTask, int);
-int      task_SetVMSize(tpTask, int);
+int      task_SetStackSize(tpTask, size_t);
+int      task_SetDataSize(tpTask, size_t);
+int      task_SetVMSize(tpTask, size_t);
 int      task_DisableCoreDump(tpTask);
 int      task_EnableMemoryLimitError(tpTask);
 int      task_EnableSecureExec(tpTask);

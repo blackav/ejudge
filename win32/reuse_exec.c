@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1999-2017 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1999-07-20 11:05:09 cher> */
 
 /*
@@ -683,32 +683,29 @@ task_GetErrorMessage(tTask *tsk)
 }
 
 int
-task_SetDataSize(tTask *tsk, int size)
+task_SetDataSize(tTask *tsk, size_t size)
 {
   ASSERT(tsk);
   ASSERT(tsk->state == TSK_STOPPED);
-  ASSERT(size >= 0);
   // 0 means no limit
   tsk->max_data_size = size;
   return 0;
 }
 
 int
-task_SetStackSize(tTask *tsk, int size)
+task_SetStackSize(tTask *tsk, size_t size)
 {
   ASSERT(tsk);
   ASSERT(tsk->state == TSK_STOPPED);
-  ASSERT(size >= 0);
   tsk->max_stack_size = size;
   return 0;
 }
 
 int
-task_SetVMSize(tTask *tsk, int size)
+task_SetVMSize(tTask *tsk, size_t size)
 {
   ASSERT(tsk);
   ASSERT(tsk->state == TSK_STOPPED);
-  ASSERT(size >= 0);
   tsk->max_vm_size = size;
   return 0;
 }
