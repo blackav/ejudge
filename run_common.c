@@ -2339,6 +2339,30 @@ run_one_test(
     }
     xfree(eff_inf_text); eff_inf_text = NULL;
 
+    if (srgp->lang_short_name && srgp->lang_short_name[0] && tstinfo.ok_language_u > 0) {
+      int i;
+      for (i = 0; i < tstinfo.ok_language_u; ++i) {
+        if (tstinfo.ok_language_v[i] && !strcmp(tstinfo.ok_language_v[i], srgp->lang_short_name))
+          break;
+      }
+      if (i < tstinfo.ok_language_u) {
+        // mark this test as successfully passed
+        status = RUN_OK; // FIXME: RUN_SKIPPED?
+        cur_info->input = xstrdup("");
+        cur_info->input_size = 0;
+        cur_info->output = xstrdup("");
+        cur_info->output_size = 0;
+        cur_info->error = xstrdup("");
+        cur_info->error_size = 0;
+        cur_info->correct = xstrdup("");
+        cur_info->correct_size = 0;
+        asprintf(&cur_info->chk_out, "auto-OK for language %s", srgp->lang_short_name);
+        // FIXME: set comment or team_comment
+        goto cleanup;
+      }
+    }
+
+
     if (sizeof(tstinfo.max_vm_size) != sizeof(size_t)) {
       if (tstinfo.max_vm_size > 0 && (size_t) tstinfo.max_vm_size != tstinfo.max_vm_size) {
         append_msg_to_log(check_out_path, "max_vm_size %lld cannot be represented by size_t\n", tstinfo.max_vm_size);
