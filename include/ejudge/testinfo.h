@@ -76,6 +76,10 @@ struct testinfo_struct
   int disable_valgrind;
   int max_open_file_count;
   int max_process_count;
+
+  long long max_vm_size;
+  long long max_stack_size;
+  long long max_file_size;
 };
 typedef struct testinfo_struct testinfo_t;
 

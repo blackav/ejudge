@@ -2338,6 +2338,21 @@ run_one_test(
       }
     }
     xfree(eff_inf_text); eff_inf_text = NULL;
+
+    if (sizeof(tstinfo.max_vm_size) != sizeof(size_t)) {
+      if (tstinfo.max_vm_size > 0 && (size_t) tstinfo.max_vm_size != tstinfo.max_vm_size) {
+        append_msg_to_log(check_out_path, "max_vm_size %lld cannot be represented by size_t\n", tstinfo.max_vm_size);
+        goto check_failed;
+      }
+      if (tstinfo.max_stack_size > 0 && (size_t) tstinfo.max_stack_size != tstinfo.max_stack_size) {
+        append_msg_to_log(check_out_path, "max_stack_size %lld cannot be represented by size_t\n", tstinfo.max_stack_size);
+        goto check_failed;
+      }
+      if (tstinfo.max_file_size > 0 && (size_t) tstinfo.max_file_size != tstinfo.max_file_size) {
+        append_msg_to_log(check_out_path, "max_file_size %lld cannot be represented by size_t\n", tstinfo.max_file_size);
+        goto check_failed;
+      }
+    }
   }
 
   if (srpp->use_info > 0 && tstinfo.disable_stderr >= 0) {
@@ -2648,34 +2663,46 @@ run_one_test(
   if (tst && tst->kill_signal && tst->kill_signal[0]) task_SetKillSignal(tsk, tst->kill_signal);
   if (tst && tst->no_core_dump > 0) task_DisableCoreDump(tsk);
 
+  long long max_vm_size = -1LL;
+  long long max_stack_size = -1LL;
+  long long max_file_size = -1LL;
+  if (srpp->use_info > 0) {
+    if (tstinfo.max_vm_size > 0) max_vm_size = tstinfo.max_vm_size;
+    if (tstinfo.max_stack_size > 0) max_stack_size = tstinfo.max_stack_size;
+    if (tstinfo.max_file_size > 0) max_file_size = tstinfo.max_file_size;
+  }
+  if (max_vm_size < 0 && srpp->max_vm_size > 0) max_vm_size = srpp->max_vm_size;
+  if (max_stack_size < 0 && srpp->max_stack_size > 0) max_stack_size = srpp->max_stack_size;
+  if (max_file_size < 0 && srpp->max_file_size > 0) max_file_size = srpp->max_file_size;
+
   if (!tst || tst->memory_limit_type_val < 0) {
-    if (srpp->max_stack_size > 0) {
-      task_SetStackSize(tsk, srpp->max_stack_size);
-    } else if (srgp->enable_max_stack_size > 0 && srpp->max_vm_size > 0) {
-      task_SetStackSize(tsk, srpp->max_vm_size);
+    if (max_stack_size > 0) {
+      task_SetStackSize(tsk, max_stack_size);
+    } else if (srgp->enable_max_stack_size > 0 && max_vm_size > 0) {
+      task_SetStackSize(tsk, max_vm_size);
     }
     if (srpp->max_data_size > 0)
       task_SetDataSize(tsk, srpp->max_data_size);
-    if (srpp->max_vm_size > 0)
-      task_SetVMSize(tsk, srpp->max_vm_size);
+    if (max_vm_size > 0)
+      task_SetVMSize(tsk, max_vm_size);
   } else {
     switch (tst->memory_limit_type_val) {
     case MEMLIMIT_TYPE_DEFAULT:
-      if (srpp->max_stack_size > 0) {
-        task_SetStackSize(tsk, srpp->max_stack_size);
-      } else if (srgp->enable_max_stack_size > 0 && srpp->max_vm_size > 0) {
-        task_SetStackSize(tsk, srpp->max_vm_size);
+      if (max_stack_size > 0) {
+        task_SetStackSize(tsk, max_stack_size);
+      } else if (srgp->enable_max_stack_size > 0 && max_vm_size > 0) {
+        task_SetStackSize(tsk, max_vm_size);
       }
       if (srpp->max_data_size > 0)
         task_SetDataSize(tsk, srpp->max_data_size);
-      if (srpp->max_vm_size > 0)
-        task_SetVMSize(tsk, srpp->max_vm_size);
+      if (max_vm_size > 0)
+        task_SetVMSize(tsk, max_vm_size);
       if (tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error > 0 && srgp->secure_run > 0) {
         task_EnableMemoryLimitError(tsk);
       }
       break;
     case MEMLIMIT_TYPE_JAVA:
-      make_java_limits(mem_limit_buf, sizeof(mem_limit_buf), srpp->max_vm_size, srpp->max_stack_size);
+      make_java_limits(mem_limit_buf, sizeof(mem_limit_buf), max_vm_size, max_stack_size);
       if (mem_limit_buf[0]) {
         task_PutEnv(tsk, mem_limit_buf);
       }
@@ -2683,7 +2710,7 @@ run_one_test(
     case MEMLIMIT_TYPE_DOS:
       break;
     case MEMLIMIT_TYPE_MONO:
-      make_mono_limits(mem_limit_buf, sizeof(mem_limit_buf), srpp->max_vm_size, srpp->max_stack_size);
+      make_mono_limits(mem_limit_buf, sizeof(mem_limit_buf), max_vm_size, max_stack_size);
       if (mem_limit_buf[0]) {
         task_PutEnv(tsk, mem_limit_buf);
       }
@@ -2771,8 +2798,8 @@ run_one_test(
   if (srpp->max_core_size > 0) {
     task_SetMaxCoreSize(tsk, srpp->max_core_size);
   }
-  if (srpp->max_file_size > 0) {
-    task_SetMaxFileSize(tsk, srpp->max_file_size);
+  if (max_file_size > 0) {
+    task_SetMaxFileSize(tsk, max_file_size);
   }
   if (srpp->use_info > 0 && tstinfo.max_open_file_count >= 0) {
     task_SetMaxOpenFileCount(tsk, tstinfo.max_open_file_count);

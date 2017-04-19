@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <errno.h>
 
 #if defined __GNUC__ && defined __MINGW32__
 #include <malloc.h>
@@ -418,6 +419,41 @@ is_ident_char(int c)
 #define FAIL(code) do { retval = -code; goto fail; } while (0)
 
 static int
+parse_size(const unsigned char *str, long long *p_value)
+{
+  if (!str || !*str) return -1;
+  char *eptr = NULL;
+  errno = 0;
+  long long value = strtoll(str, &eptr, 10);
+  if (errno) {
+    // overflow
+    return -1;
+  }
+  if (*eptr == 'G' || *eptr == 'g') {
+    if (__builtin_mul_overflow(value, 1024LL * 1024LL * 1024LL, &value)) {
+      // overflow
+      return -1;
+    }
+    ++eptr;
+  } else if (*eptr == 'M' || *eptr == 'm') {
+    if (__builtin_mul_overflow(value, 1024LL * 1024LL, &value)) {
+      // overflow
+      return -1;
+    }
+    ++eptr;
+  } else if (*eptr == 'K' || *eptr == 'k') {
+    if (__builtin_mul_overflow(value, 1024LL, &value)) {
+      // overflow
+      return -1;
+    }
+    ++eptr;
+  }
+  if (value < 0) value = -1;
+  if (p_value) *p_value = value;
+  return 1;
+}
+
+static int
 parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo_subst_handler *sh)
 {
   unsigned char *subst_str = NULL;
@@ -533,6 +569,18 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
     if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n] || x < 0 || x > 1024)
       FAIL(TINF_E_INVALID_VALUE);
     pt->max_process_count = x;
+  } else if (!strcmp(name_buf, "max_vm_size")) {
+    if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
+    if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
+    if (parse_size(cmd.v[0], &pt->max_vm_size) < 0) FAIL(TINF_E_INVALID_VALUE);
+  } else if (!strcmp(name_buf, "max_stack_size")) {
+    if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
+    if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
+    if (parse_size(cmd.v[0], &pt->max_stack_size) < 0) FAIL(TINF_E_INVALID_VALUE);
+  } else if (!strcmp(name_buf, "max_file_size")) {
+    if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
+    if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
+    if (parse_size(cmd.v[0], &pt->max_file_size) < 0) FAIL(TINF_E_INVALID_VALUE);
   } else if (!strcmp(name_buf, "check_stderr")) {
     if (cmd.u < 1) {
       x = 1;
@@ -634,6 +682,9 @@ testinfo_parse(const char *path, testinfo_t *pt, struct testinfo_subst_handler *
   pt->disable_stderr = -1;
   pt->max_open_file_count = -1;
   pt->max_process_count = -1;
+  pt->max_vm_size = -1LL;
+  pt->max_stack_size = -1LL;
+  pt->max_file_size = -1LL;
   if (!(fin = fopen(path, "r"))) {
     memset(pt, 0, sizeof(*pt));
     return -TINF_E_CANNOT_OPEN;
