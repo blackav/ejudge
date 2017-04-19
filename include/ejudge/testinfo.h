@@ -80,6 +80,9 @@ struct testinfo_struct
   long long max_vm_size;
   long long max_stack_size;
   long long max_file_size;
+
+  int ok_language_u;
+  char **ok_language_v;
 };
 typedef struct testinfo_struct testinfo_t;
 

@@ -397,6 +397,12 @@ testinfo_unparse_style_checker_env(const struct testinfo_struct *ti)
   return unparse_str_array(ti->style_checker_env_u, ti->style_checker_env_v);
 }
 
+unsigned char *
+testinfo_unparse_ok_language(const struct testinfo_struct *ti)
+{
+  return unparse_str_array(ti->ok_language_u, ti->ok_language_v);
+}
+
 static void
 free_cmdline(struct cmdline_buf *pcmd)
 {
@@ -529,12 +535,17 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
     if (pt->compiler_env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->compiler_env_u = cmd.u;
     pt->compiler_env_v = (char**) cmd.v;
-    memset(&cmd, 0, sizeof(cmd));    
+    memset(&cmd, 0, sizeof(cmd));
   } else if (!strcmp(name_buf, "style_checker_env")) {
     if (pt->style_checker_env_u > 0) FAIL(TINF_E_VAR_REDEFINED);
     pt->style_checker_env_u = cmd.u;
     pt->style_checker_env_v = (char**) cmd.v;
-    memset(&cmd, 0, sizeof(cmd));    
+    memset(&cmd, 0, sizeof(cmd));
+  } else if (!strcmp(name_buf, "ok_language")) {
+    if (pt->ok_language_u > 0) FAIL(TINF_E_VAR_REDEFINED);
+    pt->ok_language_u = cmd.u;
+    pt->ok_language_v = (char**) cmd.v;
+    memset(&cmd, 0, sizeof(cmd));
   } else if (!strcmp(name_buf, "comment")
              || !strcmp(name_buf, "team_comment")
              || !strcmp(name_buf, "source_stub")) {
@@ -745,6 +756,12 @@ testinfo_free(testinfo_t *pt)
       if (pt->style_checker_env_v[i]) free(pt->style_checker_env_v[i]);
     }
     free(pt->style_checker_env_v);
+  }
+  if (pt->ok_language_u > 0 && pt->ok_language_v) {
+    for (i = 0; i < pt->ok_language_u; ++i) {
+      free(pt->ok_language_v[i]);
+    }
+    free(pt->ok_language_v);
   }
   if (pt->comment) free(pt->comment);
   if (pt->team_comment) free(pt->team_comment);
