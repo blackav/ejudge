@@ -377,6 +377,7 @@ copy_bool(struct section_problem_data *p,
     /* 'b' : ejbytebool_t, 'B' : ejintbool_t, 'f' : ejbyteflag_t */
     int c_type = meta_problem_config_section_get_type(c_name);
     int c_size = meta_problem_config_section_get_size(c_name);
+    (void) c_size;
     const void *c_ptr = meta_problem_config_section_get_ptr(c, c_name);
     int c_value = 0;
     if (c_type == 'b') {
@@ -398,6 +399,7 @@ copy_bool(struct section_problem_data *p,
 
     int p_type = cntsprob_get_type(p_name);
     int p_size = cntsprob_get_size(p_name);
+    (void) p_size; // only used in ASSERT
     int a_value = 0;
     if (a) {
         const void *a_ptr = cntsprob_get_ptr(a, p_name);
@@ -579,6 +581,7 @@ cntsprob_get_bool(
     /* 'b' : ejbytebool_t, 'B' : ejintbool_t, 'f' : ejbyteflag_t */
     int f_type = cntsprob_get_type(f_name);
     int f_size = cntsprob_get_size(f_name);
+    (void) f_size;
     const void *f_ptr = cntsprob_get_ptr(p, f_name);
     int value = 0;
 
@@ -606,6 +609,7 @@ cntsprob_get_string(
         int f_name)
 {
     int f_type = cntsprob_get_type(f_name);
+    (void) f_type;
     ASSERT(f_type == 's');
     return *(const unsigned char **) cntsprob_get_ptr(p, f_name);
 }
@@ -617,6 +621,7 @@ cntsprob_set_string(
         const unsigned char *str)
 {
     int f_type = cntsprob_get_type(f_name);
+    (void) f_type;
     ASSERT(f_type == 's');
     unsigned char *dst = NULL;
     if (str) dst = xstrdup(str);
@@ -629,6 +634,7 @@ problem_config_section_get_string(
         int f_name)
 {
     int f_type = meta_problem_config_section_get_type(f_name);
+    (void) f_type;
     ASSERT(f_type == 's');
     return *(const unsigned char **) meta_problem_config_section_get_ptr(c, f_name);
 }

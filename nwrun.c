@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2010-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -13,6 +13,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+#pragma GCC diagnostic ignored "-Wformat-truncation"
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"

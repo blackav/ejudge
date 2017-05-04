@@ -3076,6 +3076,7 @@ set_defaults(
     if (g->plog_file_name && g->plog_file_name[0]) {
       if (g->plog_header_file && g->plog_header_file[0]) {
         path_prepend_dir(&g->plog_header_file, g->conf_dir);
+        vptr = &g->plog_header_txt;
         r = generic_read_file(vptr, 0, &tmp_len, 0, 0, g->plog_header_file, "");
         if (r < 0) return -1;
       }
@@ -4748,9 +4749,10 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   /* FIXME: does the name matter? */
   /* FIXME: should we use the default tester's name? */
   if (out->arch[0]) {
-    sprintf(out->name, "tst_dflt_%d_%d_%s", out->id, prob_id, out->arch);
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+    snprintf(out->name, sizeof(out->name), "tst_dflt_%d_%d_%s", out->id, prob_id, out->arch);
   } else {
-    sprintf(out->name, "tst_dflt_%d_%d", out->id, prob_id);
+    snprintf(out->name, sizeof(out->name), "tst_dflt_%d_%d", out->id, prob_id);
   }
 
   /* copy check_dir */

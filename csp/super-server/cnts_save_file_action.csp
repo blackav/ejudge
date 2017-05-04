@@ -24,6 +24,7 @@
 
     int back_action = SSERV_CMD_CNTS_EDIT_CUR_CONTEST_PAGE;
     switch (edit_action) {
+    case SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         p_str = &phr->ss->contest_start_cmd_text;
         back_action = SSERV_CMD_CNTS_EDIT_CUR_GLOBAL_PAGE;
