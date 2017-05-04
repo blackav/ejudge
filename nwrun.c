@@ -14,7 +14,9 @@
  * GNU General Public License for more details.
  */
 
+#if __GNUC__ >= 7
 #pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
 
 #include "ejudge/config.h"
 #include "ejudge/ej_limits.h"

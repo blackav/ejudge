@@ -4749,7 +4749,9 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
   /* FIXME: does the name matter? */
   /* FIXME: should we use the default tester's name? */
   if (out->arch[0]) {
+#if __GNUC__ >= 7
 #pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
     snprintf(out->name, sizeof(out->name), "tst_dflt_%d_%d_%s", out->id, prob_id, out->arch);
   } else {
     snprintf(out->name, sizeof(out->name), "tst_dflt_%d_%d", out->id, prob_id);
