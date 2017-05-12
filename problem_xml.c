@@ -49,6 +49,7 @@ static char const * const elem_map[] =
   "review_notes",
   "review_comments",
   "comment",
+  "keywords",
   0,
   "_default",
   "_text",
@@ -91,6 +92,7 @@ static const unsigned char verbatim_flags[PROB_LAST_TAG] =
   [PROB_T_NOTES] = 1,
   [PROB_T_REVIEW_NOTES] = 1,
   [PROB_T_COMMENT] = 1,
+  [PROB_T_KEYWORDS] = 1,
 };
 
 static void node_free(struct xml_tree *t);
@@ -255,6 +257,10 @@ parse_statement(problem_xml_t prb, struct xml_tree *pstmt)
     case PROB_T_REVIEW_COMMENTS:
       if (stmt->review_comments) return xml_err_elem_redefined(p1);
       stmt->review_comments = p1;
+      break;
+    case PROB_T_KEYWORDS:
+      if (stmt->keywords) return xml_err_elem_redefined(p1);
+      stmt->keywords = p1;
       break;
     default:
      return xml_err_elem_not_allowed(p1);
@@ -636,6 +642,7 @@ problem_xml_unparse_elem(
   case PROB_T_OUTPUT_FORMAT: t = stmt->output_format; break;
   case PROB_T_NOTES:         t = stmt->notes;         break;
   case PROB_T_REVIEW_NOTES:  t = stmt->review_notes;  break;
+  case PROB_T_KEYWORDS:      t = stmt->keywords;      break;
   default:
     return stmt;
   }
