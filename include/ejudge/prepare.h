@@ -1192,6 +1192,10 @@ struct section_problem_data
   int *score_view_score META_ATTRIB((meta_private));
   char **score_view_text;
 
+  /** full path to xml_file */
+  unsigned char *xml_file_path META_ATTRIB((meta_private));
+  unsigned char **var_xml_file_paths META_ATTRIB((meta_private));
+
   /* parsed XML specs */
   union
   {

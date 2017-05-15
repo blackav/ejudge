@@ -1300,6 +1300,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->group_name);
   xfree(p->internal_name);
   xfree(p->long_name);
+  xfree(p->xml_file_path);
 
   if (p->variant_num > 0 && p->xml.a) {
     for (i = 1; i <= p->variant_num; i++) {
@@ -1308,6 +1309,13 @@ prepare_problem_free_func(struct generic_section_config *gp)
     xfree(p->xml.a);
   } else {
     problem_xml_free(p->xml.p);
+  }
+
+  if (p->variant_num > 0 && p->var_xml_file_paths) {
+    for (i = 1; i <= p->variant_num; ++i) {
+      xfree(p->var_xml_file_paths[i]);
+    }
+    xfree(p->var_xml_file_paths);
   }
 
   memset(p, 0xab, sizeof(*p));
@@ -3418,14 +3426,17 @@ set_defaults(
     }
     if (prob->xml_file && prob->xml_file[0] && prob->variant_num > 0) {
       XCALLOC(prob->xml.a, prob->variant_num);
+      XCALLOC(prob->var_xml_file_paths, prob->variant_num);
       for (j = 1; j <= prob->variant_num; j++) {
         if (g->advanced_layout > 0) {
           get_advanced_layout_path(xml_path, sizeof(xml_path), g,
                                    prob, prob->xml_file, j);
           if (!(prob->xml.a[j - 1] = problem_xml_parse_safe(NULL, xml_path))) return -1;
+          prob->var_xml_file_paths[j - 1] = xstrdup(xml_path);
         } else {
           prepare_insert_variant_num(fpath, sizeof(fpath), prob->xml_file, j);
           if (!(prob->xml.a[j - 1] = problem_xml_parse_safe(NULL, fpath))) return -1;
+          prob->var_xml_file_paths[j - 1] = xstrdup(fpath);
         }
       }
     } else if (prob->xml_file && prob->xml_file[0]) {
@@ -3433,8 +3444,10 @@ set_defaults(
         get_advanced_layout_path(xml_path, sizeof(xml_path), g,
                                  prob, prob->xml_file, -1);
         if (!(prob->xml.p = problem_xml_parse_safe(NULL, xml_path))) return -1;
+        prob->xml_file_path = xstrdup(xml_path);
       } else {
         if (!(prob->xml.p = problem_xml_parse_safe(NULL, prob->xml_file))) return -1;
+        prob->xml_file_path = xstrdup(prob->xml_file);
       }
     }
 
