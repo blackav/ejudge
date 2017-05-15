@@ -6926,12 +6926,14 @@ static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAS
   [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = "priv_testing_queue_page",
   [NEW_SRV_ACTION_LOGIN_PAGE] = "priv_login_page",
   [NEW_SRV_ACTION_TOKENIZE_DISPLAYED_1] = "priv_tokenize_displayed_1_page",
+  [NEW_SRV_ACTION_RELOAD_STATEMENT] = "priv_reload_statement_page",
 };
 
 static const int external_priv_action_aliases[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_VIEW_REG_PWDS] = NEW_SRV_ACTION_VIEW_CNTS_PWDS,
   [NEW_SRV_ACTION_VIEW_USER_REPORT] = NEW_SRV_ACTION_VIEW_REPORT,
+  [NEW_SRV_ACTION_RELOAD_STATEMENT_ALL] = NEW_SRV_ACTION_RELOAD_STATEMENT,
 };
 
 static const unsigned char * const external_priv_error_names[NEW_SRV_ERR_LAST] =
