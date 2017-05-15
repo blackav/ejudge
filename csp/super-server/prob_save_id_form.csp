@@ -32,7 +32,7 @@
 
 %><s:read var="prob_id" required="yes" /><%
 %><s:read var="short_name" normalize="yes" nonnull="yes" /><%
-%><s:read var="internal_name" normalize="yes" nonnull="yes" /><%
+%><s:read var="internal_name" normalize="yes" /><%
 %><s:read var="long_name" normalize="yes" nonnull="yes" /><%
 %><s:read var="super" normalize="yes" nonnull="yes" /><%
 %><s:read var="type" /><%
@@ -84,6 +84,9 @@
             }
         }
         // internal_name must be unique
+        if (internal_name && !*internal_name) {
+            xfree(internal_name); internal_name = NULL;
+        }
         if (*internal_name) {
             other_prob = super_serve_find_problem(phr->ss, internal_name);
             if (other_prob && other_prob != prob) {

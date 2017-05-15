@@ -1228,7 +1228,7 @@ function viewDialogOnChange(field)
     str_value = prob->source_header;
 %><s:textfield id="orig-source_header" readonly="readonly" name="param" value="prob->source_header" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
-      if (!value) {
+      if (!str_value) {
 %>(<i>Not set</i>)<%
       }
     } else {
