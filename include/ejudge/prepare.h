@@ -759,7 +759,7 @@ struct section_global_data
   ejintbool_t disable_passed_tests META_ATTRIB((meta_private));
 };
 
-/* sizeof(struct section_problem_data) == 748/1184 */
+/* sizeof(struct section_problem_data) == 760/1200 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));   // 32 bytes
@@ -1204,7 +1204,7 @@ struct section_problem_data
   } xml META_ATTRIB((meta_hidden));
 };
 
-/* sizeof(struct section_language_data) == 280/360 */
+/* sizeof(struct section_language_data) == 276/352 */
 struct section_language_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -1289,7 +1289,7 @@ struct section_language_data
   int disabled_by_config META_ATTRIB((meta_private));
 };
 
-/* sizeof(struct section_tester_data) == 292/400 */
+/* sizeof(struct section_tester_data) == 288/392 */
 struct section_tester_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));

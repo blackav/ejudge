@@ -557,6 +557,8 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_score_view] = { CNTSPROB_score_view, 'x', XSIZE(struct section_problem_data, score_view), "score_view", XOFFSET(struct section_problem_data, score_view) },
   [CNTSPROB_score_view_score] = { CNTSPROB_score_view_score, '?', XSIZE(struct section_problem_data, score_view_score), NULL, XOFFSET(struct section_problem_data, score_view_score) },
   [CNTSPROB_score_view_text] = { CNTSPROB_score_view_text, 'x', XSIZE(struct section_problem_data, score_view_text), "score_view_text", XOFFSET(struct section_problem_data, score_view_text) },
+  [CNTSPROB_xml_file_path] = { CNTSPROB_xml_file_path, 's', XSIZE(struct section_problem_data, xml_file_path), NULL, XOFFSET(struct section_problem_data, xml_file_path) },
+  [CNTSPROB_var_xml_file_paths] = { CNTSPROB_var_xml_file_paths, 'x', XSIZE(struct section_problem_data, var_xml_file_paths), NULL, XOFFSET(struct section_problem_data, var_xml_file_paths) },
 };
 
 int cntsprob_get_type(int tag)

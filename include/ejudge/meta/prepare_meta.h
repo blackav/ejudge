@@ -517,6 +517,8 @@ enum
   CNTSPROB_score_view,
   CNTSPROB_score_view_score,
   CNTSPROB_score_view_text,
+  CNTSPROB_xml_file_path,
+  CNTSPROB_var_xml_file_paths,
 
   CNTSPROB_LAST_FIELD,
 };
