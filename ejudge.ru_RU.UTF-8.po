@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-04-04 17:04+0300\n"
-"PO-Revision-Date: 2017-04-04 17:42+0300\n"
+"POT-Creation-Date: 2017-05-15 21:53+0300\n"
+"PO-Revision-Date: 2017-05-15 21:56+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -3093,6 +3093,12 @@ msgstr "Пересудить"
 
 msgid "Reload"
 msgstr "Перезагрузить"
+
+msgid "Reload Statement"
+msgstr "Перезагрузить условие"
+
+msgid "Reload Statement In All Contests"
+msgstr "Перезагрузить условие во всех турнирах"
 
 msgid "Reload config files"
 msgstr "Перезагрузить конфигурационные файлы"
