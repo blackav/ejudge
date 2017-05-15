@@ -197,8 +197,8 @@ ns_unparse_answers(
 
 </table>
 
-
-
+<s:submit ac="reload-statement" />
+<s:submit ac="reload-statement-all" />
 
 <%
   /* output the problem statement */
