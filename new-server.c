@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -291,9 +291,6 @@ cmd_http_request(
   const unsigned char ** params;
   size_t *my_param_sizes;
   int i;
-  char *out_txt = 0;
-  size_t out_size = 0;
-  FILE *out_f = 0;
   struct http_request_info hr;
   unsigned char info_buf[1024];
   unsigned char *pbuf = info_buf;
@@ -393,9 +390,9 @@ cmd_http_request(
   hr.config = ejudge_config;
 
   // ok, generate HTML
-  out_f = open_memstream(&out_txt, &out_size);
-  ns_handle_http_request(state, p, out_f, &hr);
-  close_memstream(out_f); out_f = 0;
+  hr.out_f = open_memstream(&hr.out_t, &hr.out_z);
+  ns_handle_http_request(state, p, hr.out_f, &hr);
+  close_memstream(hr.out_f); hr.out_f = NULL;
 
   *pbuf = 0;
   // report IP?
@@ -437,15 +434,24 @@ cmd_http_request(
   if (hr.no_reply) goto cleanup;
 
   if (hr.protocol_reply) {
-    xfree(out_txt); out_txt = 0;
+    xfree(hr.out_t); hr.out_t = NULL;
     info("%d:%s -> %d", p->id, info_buf, hr.protocol_reply);
     nsf_close_client_fds(p);
     nsf_send_reply(state, p, hr.protocol_reply);
     goto cleanup;
   }
 
-  //
-  if (/*hr.content_type &&*/ hr.content_type[0]) {
+  if (hr.redirect) {
+    xfree(hr.out_t); hr.out_t = NULL;
+    hr.out_z = 0;
+    hr.out_f = open_memstream(&hr.out_t, &hr.out_z);
+    if (hr.client_key) {
+      fprintf(hr.out_f, "Set-Cookie: EJSID=%016llx; Path=/\n", hr.client_key);
+    }
+    fprintf(hr.out_f, "Location: %s\n\n", hr.redirect);
+    fclose(hr.out_f); hr.out_f = NULL;
+    xfree(hr.redirect); hr.redirect = NULL;
+  } else if (/*hr.content_type &&*/ hr.content_type[0]) {
     // generate header
     char *hdr_t = NULL;
     size_t hdr_z = 0;
@@ -458,34 +464,36 @@ cmd_http_request(
       fprintf(hdr_f, "Set-Cookie: EJSID=%016llx; Path=/\n", hr.client_key);
     }
     putc('\n', hdr_f);
-    if (out_size > 0) {
-      fwrite(out_txt, 1, out_size, hdr_f);
+    if (hr.out_z > 0) {
+      fwrite(hr.out_t, 1, hr.out_z, hdr_f);
     }
     fclose(hdr_f); hdr_f = NULL;
-    free(out_txt);
-    out_txt = hdr_t;
-    out_size = hdr_z;
+    free(hr.out_t);
+    hr.out_t = hdr_t;
+    hr.out_z = hdr_z;
   }
 
-  if (!out_txt || !*out_txt) {
-    xfree(out_txt); out_txt = 0;
+  if (!hr.out_t || !*hr.out_t) {
+    xfree(hr.out_t); hr.out_t = NULL;
     if (hr.allow_empty_output) {
       info("%d:%s -> OK", p->id, info_buf);
       nsf_close_client_fds(p);
       nsf_send_reply(state, p, NEW_SRV_RPL_OK);
       goto cleanup;
     }
-    out_f = open_memstream(&out_txt, &out_size);
-    fprintf(out_f, "Content-type: text/plain\n\n");
-    close_memstream(out_f); out_f = 0;
-    xfree(out_txt); out_txt = 0;
+    hr.out_f = open_memstream(&hr.out_t, &hr.out_z);
+    fprintf(hr.out_f, "Content-type: text/plain\n\n");
+    close_memstream(hr.out_f); hr.out_f = NULL;
   }
 
-  nsf_new_autoclose(state, p, out_txt, out_size);
-  info("%d:%s -> OK, %zu", p->id, info_buf, out_size);
+  nsf_new_autoclose(state, p, hr.out_t, hr.out_z);
+  info("%d:%s -> OK, %zu", p->id, info_buf, hr.out_z);
   nsf_send_reply(state, p, NEW_SRV_RPL_OK);
+  hr.out_t = NULL; hr.out_z = 0;
 
  cleanup:
+  if (hr.out_f) fclose(hr.out_f);
+  xfree(hr.out_t);
   if (hr.log_f) fclose(hr.log_f);
   xfree(hr.log_t);
   xfree(hr.login);
