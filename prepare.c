@@ -1313,7 +1313,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
 
   if (p->variant_num > 0 && p->var_xml_file_paths) {
     for (i = 1; i <= p->variant_num; ++i) {
-      xfree(p->var_xml_file_paths[i]);
+      xfree(p->var_xml_file_paths[i - 1]);
     }
     xfree(p->var_xml_file_paths);
   }
