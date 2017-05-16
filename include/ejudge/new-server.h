@@ -1062,6 +1062,7 @@ ns_reload_statement(
 
 void
 ns_add_review_comment(
+        int contest_id,
         serve_state_t cs,
         int run_id,
         const unsigned char *review_comment);

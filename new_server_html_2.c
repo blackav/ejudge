@@ -7775,10 +7775,142 @@ ns_reload_statement(
   }
 }
 
+static int
+do_add_review_comment(
+        const unsigned char *path,
+        const unsigned char *review_comment)
+{
+  // operate on text level
+  FILE *fin = fopen(path, "r");
+  if (!fin) {
+    return -1;
+  }
+  char *txt_s = NULL;
+  size_t txt_z = 0;
+  FILE *txt_f = open_memstream(&txt_s, &txt_z);
+  int c;
+  while ((c = getc_unlocked(fin)) != EOF)
+    putc_unlocked(c, txt_f);
+  fclose(fin); fin = NULL;
+  fclose(txt_f); txt_f = NULL;
+  if (strlen(txt_s) != txt_z) {
+    free(txt_s);
+    return -1;
+  }
+  unsigned char tmp_path[PATH_MAX];
+  snprintf(tmp_path, sizeof(tmp_path), "%s.tmp", path);
+  FILE *fout = NULL;
+  unsigned char *s = txt_s;
+  unsigned char *ptr1 = strstr(txt_s, "</review_comments>");
+  if (ptr1) {
+    fout = fopen(tmp_path, "w");
+    if (!fout) {
+      free(txt_s);
+      return -1;
+    }
+    for (; s != ptr1; ++s) {
+      putc_unlocked(*s, fout);
+    }
+    fprintf(fout, "<comment>%s</comment>\n", review_comment);
+    for (; *s; ++s) {
+      putc_unlocked(*s, fout);
+    }
+    fflush(fout);
+    if (ferror(fout)) {
+      fclose(fout);
+      free(txt_s);
+      unlink(tmp_path);
+      return -1;
+    }
+    fclose(fout); fout = NULL;
+    free(txt_s); txt_s = NULL;
+  } else {
+    unsigned char *ptr2 = strstr(txt_s, "</statement>");
+    if (!ptr2) {
+      free(txt_s);
+      return -1;
+    }
+    fout = fopen(tmp_path, "w");
+    if (!fout) {
+      free(txt_s);
+      return -1;
+    }
+    for (; s != ptr2; ++s) {
+      putc_unlocked(*s, fout);
+    }
+    fprintf(fout, "<review_comments>\n  <comment>%s</comment>\n</review_comments>\n", review_comment);
+    for (; *s; ++s) {
+      putc_unlocked(*s, fout);
+    }
+    fflush(fout);
+    if (ferror(fout)) {
+      fclose(fout);
+      free(txt_s);
+      unlink(tmp_path);
+      return -1;
+    }
+    fclose(fout); fout = NULL;
+    free(txt_s); txt_s = NULL;
+  }
+  if (rename(tmp_path, path) < 0) {
+    unlink(tmp_path);
+    return -1;
+  }
+  return 1;
+}
+
 void
 ns_add_review_comment(
+        int contest_id,
         serve_state_t cs,
         int run_id,
         const unsigned char *review_comment)
 {
+  struct run_entry info;
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    return;
+  }
+  run_get_entry(cs->runlog_state, run_id, &info);
+  struct section_problem_data *prob = NULL;
+  if (info.prob_id > 0 && info.prob_id <= cs->max_prob) {
+    prob = cs->probs[info.prob_id];
+  }
+  if (!prob) return;
+  if (info.user_id <= 0) return;
+  int variant = 0;
+  const unsigned char *xml_file_path = NULL;
+  if (prob->variant_num > 0) {
+    variant = info.variant;
+    if (!variant) variant = find_variant(cs, info.user_id, info.prob_id, 0);
+    if (variant <= 0 || variant > prob->variant_num) return;
+    if (prob->var_xml_file_paths) xml_file_path = prob->var_xml_file_paths[variant - 1];
+  } else {
+    variant = 0;
+    xml_file_path = prob->xml_file_path;
+  }
+  if (!xml_file_path) return;
+  if (!review_comment) return;
+
+  const unsigned char *p = review_comment;
+  while (*p && (*p == 0x7f || *p <= ' ')) ++p;
+  if (!*p) return;
+
+  unsigned char *str = xstrdup(review_comment);
+  unsigned char *s = str;
+  for (; *s; ++s) {
+    if (*s == 0x7f || *s <= ' ') *s = ' ';
+    else if (*s == '<' || *s == '>' || *s == '&') *s = '?';
+  }
+  int len = strlen(str);
+  while (len > 0 && isspace(str[len - 1])) --len;
+  str[len] = 0;
+  if (!len) {
+    xfree(str);
+    return;
+  }
+
+  if (do_add_review_comment(xml_file_path, str) >= 0) {
+    ns_reload_statement(contest_id, info.prob_id, variant, 1);
+  }
+  xfree(str);
 }
