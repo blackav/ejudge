@@ -6926,7 +6926,7 @@ static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAS
   [NEW_SRV_ACTION_VIEW_TESTING_QUEUE] = "priv_testing_queue_page",
   [NEW_SRV_ACTION_LOGIN_PAGE] = "priv_login_page",
   [NEW_SRV_ACTION_TOKENIZE_DISPLAYED_1] = "priv_tokenize_displayed_1_page",
-  [NEW_SRV_ACTION_RELOAD_STATEMENT] = "priv_reload_statement_page",
+  [NEW_SRV_ACTION_RELOAD_STATEMENT] = "priv_reload_statement_action",
 };
 
 static const int external_priv_action_aliases[NEW_SRV_ACTION_LAST] =

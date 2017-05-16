@@ -48,7 +48,7 @@ SOFILES = \
  csp_priv_passwords_page.so\
  csp_priv_priorities_page.so\
  csp_priv_priv_users_page.so\
- csp_priv_reload_statement_page.so\
+ csp_priv_reload_statement_action.so\
  csp_priv_report_page.so\
  csp_priv_settings_page.so\
  csp_priv_source_page.so\
@@ -138,7 +138,7 @@ csp_priv_online_users_page.c : priv_online_users_page.csp priv_includes.csp priv
 csp_priv_passwords_page.c : priv_passwords_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_priorities_page.c : priv_priorities_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_priv_users_page.c : priv_priv_users_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
-csp_priv_reload_statement_page.c : priv_reload_statement_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_reload_statement_action.c : priv_reload_statement_action.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_report_page.c : priv_report_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_settings_page.c : priv_settings_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_source_page.c : priv_source_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
