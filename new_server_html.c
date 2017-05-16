@@ -225,6 +225,16 @@ ns_try_contest_extra(int contest_id)
 }
 
 void
+ns_for_each_contest_extra(void (*callback)(struct contest_extra *, void *ptr), void *ptr)
+{
+  for (int i = 0; i < extra_u; ++i) {
+    if (extras[i]) {
+      callback(extras[i], ptr);
+    }
+  }
+}
+
+void
 ns_contest_unload_callback(serve_state_t cs)
 {
   struct client_state *p;

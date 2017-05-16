@@ -419,6 +419,10 @@ int nsdb_remove_examiner(int user_id, int contest_id, int prob_id);
 int_iterator_t nsdb_get_examiner_user_id_iterator(int contest_id, int prob_id);
 int nsdb_get_examiner_count(int contest_id, int prob_id);
 
+void
+ns_for_each_contest_extra(
+        void (*callback)(struct contest_extra *, void *ptr),
+        void *ptr);
 
 struct contest_extra *ns_get_contest_extra(int contest_id);
 struct contest_extra *ns_try_contest_extra(int contest_id);
