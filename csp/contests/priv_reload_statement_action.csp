@@ -1,13 +1,14 @@
 <%
 %><%@include "priv_includes.csp"
-%><%@set getter_name = "csp_get_priv_reload_statement_page"
+%><%@set getter_name = "csp_get_priv_reload_statement_action"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
-%><%@page csp_view_priv_reload_statement_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@page csp_view_priv_reload_statement_action(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
   if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
 
+%><s:redirect ac="submit-run" /><%
 cleanup:
   html_armor_free(&ab);
 %>
