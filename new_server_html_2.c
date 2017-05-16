@@ -7774,3 +7774,11 @@ ns_reload_statement(
     ns_for_each_contest_extra(do_reload_statement, &cntx);
   }
 }
+
+void
+ns_add_review_comment(
+        serve_state_t cs,
+        int run_id,
+        const unsigned char *review_comment)
+{
+}

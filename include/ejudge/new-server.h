@@ -1060,4 +1060,10 @@ ns_reload_statement(
         int variant,
         int reload_all);
 
+void
+ns_add_review_comment(
+        serve_state_t cs,
+        int run_id,
+        const unsigned char *review_comment);
+
 #endif /* __NEW_SERVER_H__ */
