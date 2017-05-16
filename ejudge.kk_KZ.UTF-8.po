@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-05-16 12:29+0300\n"
+"POT-Creation-Date: 2017-05-16 14:59+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -295,6 +295,9 @@ msgstr ""
 msgid "Add OBSERVER"
 msgstr ""
 
+msgid "Add Review Comment"
+msgstr ""
+
 msgid "Add a new run comment"
 msgstr ""
 
@@ -302,6 +305,9 @@ msgid "Add a new user specifying his/her User Id"
 msgstr ""
 
 msgid "Add a new user specifying his/her login"
+msgstr ""
+
+msgid "Add a permanent problem review comment"
 msgstr ""
 
 msgid "Add by ID"

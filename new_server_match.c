@@ -2206,6 +2206,73 @@ int ns_match_action(const unsigned char *str)
                   return 0;
                 }
                 return 0;
+              } else if (c < 'm') {
+                if (c == 'd') {
+                  c = str[3];
+                  if (c == '-') {
+                    c = str[4];
+                    if (c == 'r') {
+                      c = str[5];
+                      if (c == 'e') {
+                        c = str[6];
+                        if (c == 'v') {
+                          c = str[7];
+                          if (c == 'i') {
+                            c = str[8];
+                            if (c == 'e') {
+                              c = str[9];
+                              if (c == 'w') {
+                                c = str[10];
+                                if (c == '-') {
+                                  c = str[11];
+                                  if (c == 'c') {
+                                    c = str[12];
+                                    if (c == 'o') {
+                                      c = str[13];
+                                      if (c == 'm') {
+                                        c = str[14];
+                                        if (c == 'm') {
+                                          c = str[15];
+                                          if (c == 'e') {
+                                            c = str[16];
+                                            if (c == 'n') {
+                                              c = str[17];
+                                              if (c == 't') {
+                                                c = str[18];
+                                                if (!c) return NEW_SRV_ACTION_ADD_REVIEW_COMMENT;
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  }
+                  return 0;
+                }
+              } else {
               }
               return 0;
             }
