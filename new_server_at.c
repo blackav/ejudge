@@ -277,4 +277,5 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CONTEST_BATCH] = "contest-batch",
   [NEW_SRV_ACTION_RELOAD_STATEMENT] = "reload-statement",
   [NEW_SRV_ACTION_RELOAD_STATEMENT_ALL] = "reload-statement-all",
+  [NEW_SRV_ACTION_ADD_REVIEW_COMMENT] = "add-review-comment",
 };
