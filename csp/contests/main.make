@@ -33,6 +33,7 @@ EXPAT_LIB=-lexpat
 
 TARGETDIR = ${libexecdir}/ejudge/csp/contests
 SOFILES = \
+ csp_priv_add_review_comment_action.so\
  csp_priv_assign_cyphers_page.so\
  csp_priv_audit_log_page.so\
  csp_priv_clar_page.so\
@@ -123,6 +124,7 @@ po : contests.po
 contests.po : $(CFILES)
 	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c
 
+csp_priv_add_review_comment_action.c : priv_add_review_comment_action.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_assign_cyphers_page.c : priv_assign_cyphers_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_audit_log_page.c : priv_audit_log_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_clar_page.c : priv_clar_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
