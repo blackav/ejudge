@@ -1052,4 +1052,11 @@ compute_available_tokens(
 void
 ns_reload_server_all(void);
 
+void
+ns_reload_statement(
+        int contest_id,
+        int prob_id,
+        int variant,
+        int reload_all);
+
 #endif /* __NEW_SERVER_H__ */

@@ -7682,3 +7682,95 @@ write_xml_testing_report(
   html_armor_free(&ab);
   return 0;
 }
+
+struct ReloadStatementContext
+{
+  int contest_id;
+  int prob_id;
+  int variant;
+  const unsigned char *xml_path;
+};
+
+static void
+do_reload_statement(
+        struct contest_extra *extra,
+        void *ptr)
+{
+  struct ReloadStatementContext *cntx = (struct ReloadStatementContext*) ptr;
+  serve_state_t cs = extra->serve_state;
+  if (!cs) return;
+  for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
+    struct section_problem_data *prob = cs->probs[prob_id];
+    if (!prob) continue;
+
+    if (prob->variant_num <= 0) {
+      if (extra->contest_id == cntx->contest_id && prob_id == cntx->prob_id)
+        continue;
+      if (!prob->xml_file_path || strcmp(prob->xml_file_path, cntx->xml_path) != 0)
+        continue;
+      prob->xml.p = problem_xml_free(prob->xml.p);
+      prob->xml.p = problem_xml_parse_safe(NULL, prob->xml_file_path);
+    } else {
+      for (int variant = 1; variant <= prob->variant_num; ++variant) {
+        if (extra->contest_id == cntx->contest_id
+            && prob_id == cntx->prob_id
+            && variant == cntx->variant)
+          continue;
+        if (!prob->var_xml_file_paths || !prob->var_xml_file_paths[variant - 1])
+          continue;
+        if (strcmp(prob->var_xml_file_paths[variant - 1], cntx->xml_path) != 0)
+          continue;
+        prob->xml.a[variant - 1] = problem_xml_free(prob->xml.a[variant - 1]);
+        prob->xml.a[variant - 1] = problem_xml_parse_safe(NULL, prob->var_xml_file_paths[variant - 1]);
+      }
+    }
+  }
+}
+
+void
+ns_reload_statement(
+        int contest_id,
+        int prob_id,
+        int variant,
+        int reload_all)
+{
+  struct contest_extra *extra = ns_try_contest_extra(contest_id);
+  if (!extra) return;
+  serve_state_t cs = extra->serve_state;
+  if (!cs) return;
+  if (prob_id <= 0 || prob_id > cs->max_prob) return;
+  struct section_problem_data *prob = cs->probs[prob_id];
+  if (!prob) return;
+
+  if (prob->variant_num <= 0) {
+    variant = 0;
+  } else {
+    if (variant <= 0 || variant > prob->variant_num) return;
+  }
+
+  struct ReloadStatementContext cntx =
+  {
+    .contest_id = contest_id,
+    .prob_id = prob_id,
+    .variant = variant
+  };
+
+  if (prob->variant_num <= 0) {
+    if (!prob->xml.p) return;
+    if (!prob->xml_file_path) return;
+    prob->xml.p = problem_xml_free(prob->xml.p);
+    prob->xml.p = problem_xml_parse_safe(NULL, prob->xml_file_path);
+    cntx.xml_path = prob->xml_file_path;
+  } else {
+    if (!prob->xml.a[variant - 1]) return;
+    if (!prob->var_xml_file_paths) return;
+    if (!prob->var_xml_file_paths[variant - 1]) return;
+    prob->xml.a[variant - 1] = problem_xml_free(prob->xml.a[variant - 1]);
+    prob->xml.a[variant - 1] = problem_xml_parse_safe(NULL, prob->var_xml_file_paths[variant - 1]);
+    cntx.xml_path = prob->var_xml_file_paths[variant - 1];
+  }
+
+  if (reload_all) {
+    ns_for_each_contest_extra(do_reload_statement, &cntx);
+  }
+}
