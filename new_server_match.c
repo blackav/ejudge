@@ -6133,10 +6133,25 @@ int ns_match_action(const unsigned char *str)
                                     if (!c) return NEW_SRV_ACTION_RELOAD_SERVER;
                                     if (c == '-') {
                                       c = str[14];
-                                      if (c == '2') {
+                                      if (c == 'a') {
                                         c = str[15];
-                                        if (!c) return NEW_SRV_ACTION_RELOAD_SERVER_2;
+                                        if (c == 'l') {
+                                          c = str[16];
+                                          if (c == 'l') {
+                                            c = str[17];
+                                            if (!c) return NEW_SRV_ACTION_RELOAD_SERVER_ALL;
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
                                         return 0;
+                                      } else if (c < 'a') {
+                                        if (c == '2') {
+                                          c = str[15];
+                                          if (!c) return NEW_SRV_ACTION_RELOAD_SERVER_2;
+                                          return 0;
+                                        }
+                                      } else {
                                       }
                                       return 0;
                                     }
