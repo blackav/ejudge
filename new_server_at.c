@@ -63,6 +63,7 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLEAR_PASSWORDS_1] = "clear-passwords-1",
   [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1] = "generate-reg-passwords-1",
   [NEW_SRV_ACTION_RELOAD_SERVER] = "reload-server",
+  [NEW_SRV_ACTION_RELOAD_SERVER_ALL] = "reload-server-all",
   [NEW_SRV_ACTION_PRIV_SUBMIT_CLAR] = "priv-submit-clar",
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT] = "priv-submit-run-comment",
   [NEW_SRV_ACTION_RESET_FILTER] = "reset-filter",

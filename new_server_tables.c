@@ -48,6 +48,7 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_CLEAR_PASSWORDS_1] = __("Clear contest passwords!"),
   [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1] = __("Regenerate registration passwords!"),
   [NEW_SRV_ACTION_RELOAD_SERVER] = __("Reload config files"),
+  [NEW_SRV_ACTION_RELOAD_SERVER_ALL] = __("Reload config files for ALL contests"),
   [NEW_SRV_ACTION_PRIV_SUBMIT_CLAR] = __("Send clarification"),
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT] = __("Send run comment"),
   [NEW_SRV_ACTION_CHANGE_PASSWORD] = __("Change password"),

@@ -345,6 +345,7 @@ cmd_operation(
       return -NEW_SRV_ERR_TRANSIENT_RUNS;
     break;
   case NEW_SRV_ACTION_RELOAD_SERVER:
+  case NEW_SRV_ACTION_RELOAD_SERVER_ALL:
     extra->last_access_time = 0;
     break;
   case NEW_SRV_ACTION_START_CONTEST:
@@ -2029,6 +2030,7 @@ static cmd_handler_t cmd_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_DUMP_REPORT] = cmd_run_operation,
   [NEW_SRV_ACTION_FULL_UPLOAD_RUNLOG_XML] = cmd_import_xml_runs,
   [NEW_SRV_ACTION_RELOAD_SERVER] = cmd_operation,
+  [NEW_SRV_ACTION_RELOAD_SERVER_ALL] = cmd_operation,
   [NEW_SRV_ACTION_START_CONTEST] = cmd_operation,
   [NEW_SRV_ACTION_STOP_CONTEST] = cmd_operation,
   [NEW_SRV_ACTION_CONTINUE_CONTEST] = cmd_operation,

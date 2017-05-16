@@ -367,7 +367,7 @@
         action = NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG; %>
 <s:submit action="action" />
 <%    } %>
-<s:submit ac="reload-server" />
+<s:submit ac="reload-server" /><s:submit ac="reload-server-all" />
 </s:form>
 <%  } else { %>
 <table border="0">

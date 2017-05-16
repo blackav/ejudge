@@ -2195,6 +2195,7 @@ priv_contest_operation(FILE *fout,
     break;
 
   case NEW_SRV_ACTION_RELOAD_SERVER:
+  case NEW_SRV_ACTION_RELOAD_SERVER_ALL:
     extra->last_access_time = 0;
     break;
 
@@ -6400,6 +6401,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLAR_REPLY_YES] = priv_clar_reply,
   [NEW_SRV_ACTION_CLAR_REPLY_NO] = priv_clar_reply,
   [NEW_SRV_ACTION_RELOAD_SERVER] = priv_contest_operation,
+  [NEW_SRV_ACTION_RELOAD_SERVER_ALL] = priv_contest_operation,
   [NEW_SRV_ACTION_CHANGE_STATUS] = priv_change_status,
   [NEW_SRV_ACTION_CHANGE_RUN_STATUS] = priv_change_status,
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_2] = priv_rejudge_displayed,
@@ -6769,6 +6771,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CLAR_REPLY_YES] = priv_generic_operation,
   [NEW_SRV_ACTION_CLAR_REPLY_NO] = priv_generic_operation,
   [NEW_SRV_ACTION_RELOAD_SERVER] = priv_generic_operation,
+  [NEW_SRV_ACTION_RELOAD_SERVER_ALL] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_STATUS] = priv_generic_operation,
   [NEW_SRV_ACTION_CHANGE_RUN_STATUS] = priv_generic_operation,
   [NEW_SRV_ACTION_REJUDGE_DISPLAYED_1] = priv_generic_page,
