@@ -1049,4 +1049,7 @@ compute_available_tokens(
         const struct section_problem_data *prob,
         time_t start_time);
 
+void
+ns_reload_server_all(void);
+
 #endif /* __NEW_SERVER_H__ */

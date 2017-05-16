@@ -2059,6 +2059,18 @@ do_change_finish_time(
   serve_update_status_file(cs, 1);
 }
 
+static void
+do_reload_server(struct contest_extra *extra, void *ptr)
+{
+  extra->last_access_time = 0;
+}
+
+void
+ns_reload_server_all(void)
+{
+  ns_for_each_contest_extra(do_reload_server, NULL);
+}
+
 static int
 priv_contest_operation(FILE *fout,
                        FILE *log_f,
@@ -2205,8 +2217,11 @@ priv_contest_operation(FILE *fout,
     break;
 
   case NEW_SRV_ACTION_RELOAD_SERVER:
-  case NEW_SRV_ACTION_RELOAD_SERVER_ALL:
     extra->last_access_time = 0;
+    break;
+
+  case NEW_SRV_ACTION_RELOAD_SERVER_ALL:
+    ns_reload_server_all();
     break;
 
   case NEW_SRV_ACTION_UPDATE_STANDINGS_2:

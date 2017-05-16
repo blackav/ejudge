@@ -345,8 +345,10 @@ cmd_operation(
       return -NEW_SRV_ERR_TRANSIENT_RUNS;
     break;
   case NEW_SRV_ACTION_RELOAD_SERVER:
-  case NEW_SRV_ACTION_RELOAD_SERVER_ALL:
     extra->last_access_time = 0;
+    break;
+  case NEW_SRV_ACTION_RELOAD_SERVER_ALL:
+    ns_reload_server_all();
     break;
   case NEW_SRV_ACTION_START_CONTEST:
     run_get_times(cs->runlog_state, &start_time, 0, &duration, &stop_time, 0);
