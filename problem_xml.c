@@ -258,10 +258,6 @@ parse_statement(problem_xml_t prb, struct xml_tree *pstmt)
       if (stmt->review_comments) return xml_err_elem_redefined(p1);
       stmt->review_comments = p1;
       break;
-    case PROB_T_KEYWORDS:
-      if (stmt->keywords) return xml_err_elem_redefined(p1);
-      stmt->keywords = p1;
-      break;
     default:
      return xml_err_elem_not_allowed(p1);
     }
@@ -480,6 +476,10 @@ parse_tree(problem_xml_t tree)
     case PROB_T_ANSWER_VARIANTS:
       if (parse_answer_variants(tree, p1) < 0) return -1;
       break;
+    case PROB_T_KEYWORDS:
+      if (tree->keywords) return xml_err_elem_redefined(p1);
+      tree->keywords = p1;
+      break;
     default:
       return xml_err_elem_not_allowed(p1);
     }
@@ -642,7 +642,6 @@ problem_xml_unparse_elem(
   case PROB_T_OUTPUT_FORMAT: t = stmt->output_format; break;
   case PROB_T_NOTES:         t = stmt->notes;         break;
   case PROB_T_REVIEW_NOTES:  t = stmt->review_notes;  break;
-  case PROB_T_KEYWORDS:      t = stmt->keywords;      break;
   default:
     return stmt;
   }

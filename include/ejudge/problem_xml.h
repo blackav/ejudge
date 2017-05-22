@@ -92,7 +92,6 @@ struct problem_stmt
   struct xml_tree *notes;
   struct xml_tree *review_notes;
   struct xml_tree *review_comments;
-  struct xml_tree *keywords;
 };
 
 struct problem_time_limit
@@ -130,6 +129,8 @@ struct problem_desc
   int tr_num;                   /* number of answer translations */
   unsigned char **tr_names;     /* translation names */
   struct xml_tree ***answers;   /* two-dimensional array of pointers */
+
+  struct xml_tree *keywords;    /* keywords */
 
   time_t last_check;
   time_t last_update;
