@@ -1169,6 +1169,7 @@ function viewDialogOnChange(field)
             <%@expand ORIG_INHERITABLE_BOOLEAN "disable_ctrl_chars" "Submission" "Disable control characters in the source code" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_text_form" "Submission" "Enable textarea input form" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_submit_after_reject" "Submission" "Enable submission after deadline for rejected runs" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "notify_on_submit" "Submission" "Send notification to judges on submit" %>
             <%@expand ORIG_ENV "disable_language" "Submission" "Disabled languages" %>
             <%@expand ORIG_ENV "enable_language" "Submission" "Enabled languages" %>
             <%@expand ORIG_ENV "require" "Submission" "Required problems" %>

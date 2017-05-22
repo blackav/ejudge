@@ -930,8 +930,11 @@ struct section_problem_data
   /** use lang short name in multi headers */
   ejbyteflag_t use_lang_multi_header;
 
+  /** send a notification to judges upon submit */
+  ejbyteflag_t notify_on_submit;
+  
   // padding to 8-byte boundary
-  unsigned char _pad1[6];
+  unsigned char _pad1[5];
 
   /** number of independent examinations */
   int examinator_num;

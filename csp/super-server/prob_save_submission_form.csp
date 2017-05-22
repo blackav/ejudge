@@ -15,6 +15,7 @@
 
     int prob_id = 0;
     int disable_user_submit = -1;
+    int notify_on_submit = -1;
     int disable_submit_after_ok = -1;
     int advance_to_next = -1;
     int disable_ctrl_chars = -1;
@@ -42,6 +43,7 @@
 
 %><s:read var="prob_id" required="yes" /><%
 %><s:read var="disable_user_submit" default="-1" /><%
+%><s:read var="notify_on_submit" default="-1" /><%
 %><s:read var="disable_submit_after_ok" default="-1" /><%
 %><s:read var="advance_to_next" default="-1" /><%
 %><s:read var="disable_ctrl_chars" default="-1" /><%
@@ -61,9 +63,10 @@
     if (retval || !phr->ss) goto cleanup;
 
     if (disable_user_submit > 0) disable_user_submit = 1;
+    if (notify_on_submit > 0) notify_on_submit = 1;
     if (disable_submit_after_ok > 0) disable_submit_after_ok = 1;
     if (advance_to_next > 0) advance_to_next = 1;
-    if (disable_ctrl_chars > 0) disable_user_submit = 1;
+    if (disable_ctrl_chars > 0) disable_ctrl_chars = 1;
     if (enable_text_form > 0) enable_text_form = 1;
     if (enable_submit_after_reject > 0) enable_submit_after_reject = 1;
     if (binary > 0) binary = 1;
@@ -87,6 +90,7 @@
         if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
 
         if (disable_user_submit < 0) disable_user_submit = 0;
+        if (notify_on_submit < 0) notify_on_submit = 0;
         if (disable_submit_after_ok < 0) disable_submit_after_ok = 0;
         if (advance_to_next < 0) advance_to_next = 0;
         if (disable_ctrl_chars < 0) disable_ctrl_chars = 0;
@@ -100,6 +104,7 @@
         if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
 
         if (disable_user_submit < 0) disable_user_submit = -1;
+        if (notify_on_submit < 0) notify_on_submit = -1;
         if (disable_submit_after_ok < 0) disable_submit_after_ok = -1;
         if (advance_to_next < 0) advance_to_next = -1;
         if (disable_ctrl_chars < 0) disable_ctrl_chars = -1;
@@ -110,6 +115,7 @@
 
     if (!retval && phr->ss) {
         prob->disable_user_submit = disable_user_submit;
+        prob->notify_on_submit = notify_on_submit;
         prob->disable_submit_after_ok = disable_submit_after_ok;
         prob->advance_to_next = advance_to_next;
         prob->disable_ctrl_chars = disable_ctrl_chars;

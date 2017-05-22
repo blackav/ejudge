@@ -1447,6 +1447,8 @@ prepare_unparse_prob(
     unparse_bool(f, "disable_auto_testing", prob->disable_auto_testing);
   if (prob->disable_user_submit >= 0)
     unparse_bool(f, "disable_user_submit", prob->disable_user_submit);
+  if (prob->notify_on_submit >= 0)
+    unparse_bool(f, "notify_on_submit", prob->notify_on_submit);
   if (prob->disable_tab >= 0)
     unparse_bool(f, "disable_tab", prob->disable_tab);
   if (prob->unrestricted_statement >= 0)
@@ -1845,6 +1847,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "disable_auto_testing", prob->disable_auto_testing);
   if (prob->disable_user_submit > 0)
     unparse_bool(f, "disable_user_submit", prob->disable_user_submit);
+  if (prob->notify_on_submit > 0)
+    unparse_bool(f, "notify_on_submit", prob->notify_on_submit);
   if (prob->disable_tab > 0)
     unparse_bool(f, "disable_tab", prob->disable_tab);
   if (prob->unrestricted_statement > 0)

@@ -425,6 +425,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(skip_testing, "L"),
   PROBLEM_PARAM(variable_full_score, "L"),
   PROBLEM_PARAM(hidden, "L"),
+  PROBLEM_PARAM(notify_on_submit, "L"),
   PROBLEM_PARAM(priority_adjustment, "d"),
   PROBLEM_PARAM(spelling, "S"),
   PROBLEM_PARAM(stand_hide_time, "L"),
@@ -1147,6 +1148,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->disable_auto_testing = -1;
   p->disable_testing = -1;
   p->disable_user_submit = -1;
+  p->notify_on_submit = -1;
   p->disable_tab = -1;
   p->unrestricted_statement = -1;
   p->enable_submit_after_reject = -1;
@@ -3469,6 +3471,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_min_tests_to_accept, prob, aprob, g);
 
     prepare_set_prob_value(CNTSPROB_disable_user_submit, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_notify_on_submit, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_tab, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_unrestricted_statement, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_submit_after_reject, prob, aprob, g);
@@ -5697,6 +5700,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->min_tests_to_accept = in->min_tests_to_accept;
   out->checker_real_time_limit = in->checker_real_time_limit;
   out->disable_user_submit = in->disable_user_submit;
+  out->notify_on_submit = in->notify_on_submit;
   out->disable_tab = in->disable_tab;
   out->unrestricted_statement = in->unrestricted_statement;
   out->restricted_statement = in->restricted_statement;
@@ -5963,6 +5967,7 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN(show_checker_comment);
   INHERIT_BOOLEAN_2(ignore_compile_errors);
   INHERIT_BOOLEAN(disable_user_submit);
+  INHERIT_BOOLEAN(notify_on_submit);
   INHERIT_BOOLEAN(disable_tab);
   INHERIT_BOOLEAN(unrestricted_statement);
   INHERIT_BOOLEAN(enable_submit_after_reject);
@@ -6539,6 +6544,7 @@ prepare_set_all_prob_values(
     CNTSPROB_min_tests_to_accept,
     CNTSPROB_checker_real_time_limit,
     CNTSPROB_disable_user_submit,
+    CNTSPROB_notify_on_submit,
     CNTSPROB_disable_tab,
     CNTSPROB_unrestricted_statement,
     CNTSPROB_enable_submit_after_reject,
