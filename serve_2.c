@@ -2300,7 +2300,8 @@ serve_telegram_notify_on_submit(
         const struct contest_desc *cnts,
         const serve_state_t cs,
         int run_id,
-        const struct run_entry *re)
+        const struct run_entry *re,
+        int new_status)
 {
   if (!cnts) return;
   if (!cnts->telegram_admin_chat_id || !*cnts->telegram_admin_chat_id) return;
@@ -2341,7 +2342,7 @@ serve_telegram_notify_on_submit(
     probname = cs->probs[re->prob_id]->short_name;
   }
   args[8] = probname;
-  args[9] = run_status_str(re->status, buf4, sizeof(buf4), 0, 0);
+  args[9] = run_status_str(new_status, buf4, sizeof(buf4), 0, 0);
   args[10] = NULL;
   send_job_packet(NULL, (unsigned char **) args, 0);
 }
@@ -2737,7 +2738,7 @@ serve_read_compile_packet(
                                             comp_pkt->run_id, comp_pkt->status);
       }
       if (prob && prob->notify_on_submit > 0) {
-        serve_telegram_notify_on_submit(config, cnts, state, comp_pkt->run_id, &re);
+        serve_telegram_notify_on_submit(config, cnts, state, comp_pkt->run_id, &re, comp_pkt->status);
       }
       goto success;
     }
@@ -2888,7 +2889,7 @@ serve_read_compile_packet(
                                           comp_pkt->run_id, comp_pkt->status);
     }
     if (prob && prob->notify_on_submit > 0) {
-      serve_telegram_notify_on_submit(config, cnts, state, comp_pkt->run_id, &re);
+      serve_telegram_notify_on_submit(config, cnts, state, comp_pkt->run_id, &re, comp_pkt->status);
     }
     goto success;
   }
@@ -2927,7 +2928,7 @@ prepare_run_request:
                                           comp_pkt->run_id, RUN_ACCEPTED);
     }
     if (prob && prob->notify_on_submit > 0) {
-      serve_telegram_notify_on_submit(config, cnts, state, comp_pkt->run_id, &re);
+      serve_telegram_notify_on_submit(config, cnts, state, comp_pkt->run_id, &re, comp_pkt->status);
     }
     goto success;
   }
@@ -3294,7 +3295,7 @@ serve_read_run_packet(
                                         reply_pkt->run_id, reply_pkt->status);
   }
   if (prob && prob->notify_on_submit > 0) {
-    serve_telegram_notify_on_submit(config, cnts, state, reply_pkt->run_id, &re);
+    serve_telegram_notify_on_submit(config, cnts, state, reply_pkt->run_id, &re, reply_pkt->status);
   }
 
   // read the new testing report

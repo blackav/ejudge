@@ -535,7 +535,8 @@ serve_telegram_notify_on_submit(
         const struct contest_desc *cnts,
         const serve_state_t cs,
         int run_id,
-        const struct run_entry *re);
+        const struct run_entry *re,
+        int new_status);
 void
 serve_telegram_check_failed(
         const struct ejudge_cfg *config,
