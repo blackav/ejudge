@@ -90,7 +90,7 @@ struct problem_stmt
   struct xml_tree *input_format;
   struct xml_tree *output_format;
   struct xml_tree *notes;
-  struct xml_tree *review_notes;
+  struct xml_tree *zreview_notes;
   struct xml_tree *review_comments;
 };
 
@@ -130,7 +130,8 @@ struct problem_desc
   unsigned char **tr_names;     /* translation names */
   struct xml_tree ***answers;   /* two-dimensional array of pointers */
 
-  struct xml_tree *keywords;    /* keywords */
+  struct xml_tree *keywords;
+  struct xml_tree *review_notes;
 
   time_t last_check;
   time_t last_update;

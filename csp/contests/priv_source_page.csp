@@ -532,10 +532,10 @@ function addReviewMsg(serial)
     }
   }
 
-  if (px && px->stmts && px->stmts->review_notes) {
+  if (px && px->review_notes) {
 %>
 <h2><s:_>Review notes</s:_></h2>
-<% problem_xml_unparse_node(out_f, px->stmts->review_notes, NULL, NULL); %>
+<% problem_xml_unparse_node(out_f, px->review_notes, NULL, NULL); %>
 <%
   }
 %>
