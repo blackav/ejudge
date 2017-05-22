@@ -2295,6 +2295,58 @@ serve_send_clar_notify_email(
 }
 
 void
+serve_telegram_notify_on_submit(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        int run_id,
+        const struct run_entry *re)
+{
+  if (!cnts) return;
+  if (!cnts->telegram_admin_chat_id || !*cnts->telegram_admin_chat_id) return;
+
+  const unsigned char *telegram_bot_id = cnts->telegram_bot_id;
+  if (telegram_bot_id && !*telegram_bot_id) telegram_bot_id = NULL;
+  if (!telegram_bot_id) telegram_bot_id = ejudge_cfg_get_telegram_bot_id(config, NULL);
+  if (!telegram_bot_id) return;
+
+  const unsigned char *args[11];
+  unsigned char buf1[64];
+  unsigned char buf2[64];
+  unsigned char buf3[64];
+  unsigned char buf4[64];
+  const unsigned char *name = "";
+  const unsigned char *probname = "";
+
+  args[0] = "telegram_cf";
+  args[1] = telegram_bot_id;
+  args[2] = cnts->telegram_admin_chat_id;
+  snprintf(buf1, sizeof(buf1), "%d", cnts->id);
+  args[3] = buf1;
+  args[4] = cnts->name;
+  if (!args[4]) args[4] = "";
+  snprintf(buf2, sizeof(buf2), "%d", run_id);
+  args[5] = buf2;
+  buf3[0] = 0;
+  if (re) {
+    snprintf(buf3, sizeof(buf3), "%d", re->user_id);
+  }
+  args[6] = buf3;
+  if (re) {
+    name = teamdb_get_name_2(cs->teamdb_state, re->user_id);
+    if (!name) name = "";
+  }
+  args[7] = name;
+  if (re && re->prob_id > 0 && re->prob_id <= cs->max_prob && cs->probs[re->prob_id]) {
+    probname = cs->probs[re->prob_id]->short_name;
+  }
+  args[8] = probname;
+  args[9] = run_status_str(re->status, buf4, sizeof(buf4), 0, 0);
+  args[10] = NULL;
+  send_job_packet(NULL, (unsigned char **) args, 0);
+}
+
+void
 serve_telegram_check_failed(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,

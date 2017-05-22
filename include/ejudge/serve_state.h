@@ -2,7 +2,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -529,6 +529,13 @@ serve_telegram_user_clar_replied(
         int user_id,
         int clar_id,
         const unsigned char *reply);
+void
+serve_telegram_notify_on_submit(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        int run_id,
+        const struct run_entry *re);
 void
 serve_telegram_check_failed(
         const struct ejudge_cfg *config,
