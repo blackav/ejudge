@@ -7825,7 +7825,7 @@ do_add_review_comment(
     fclose(fout); fout = NULL;
     free(txt_s); txt_s = NULL;
   } else {
-    unsigned char *ptr2 = strstr(txt_s, "</statement>");
+    unsigned char *ptr2 = strstr(txt_s, "</problem>");
     if (!ptr2) {
       free(txt_s);
       return -1;

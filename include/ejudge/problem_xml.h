@@ -90,7 +90,6 @@ struct problem_stmt
   struct xml_tree *input_format;
   struct xml_tree *output_format;
   struct xml_tree *notes;
-  struct xml_tree *zreview_notes;
   struct xml_tree *review_comments;
 };
 
@@ -132,6 +131,7 @@ struct problem_desc
 
   struct xml_tree *keywords;
   struct xml_tree *review_notes;
+  struct xml_tree *review_comments;
 
   time_t last_check;
   time_t last_update;

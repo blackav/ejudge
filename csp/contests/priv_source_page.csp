@@ -509,7 +509,7 @@ function setDivVisibility(oper, value)
     px = prob->xml.p;
   }
 
-  if (px && px->stmts && px->stmts->review_comments) {
+  if (px && px->review_comments) {
 %><h2><s:_>Review comments</s:_></h2>
 <script>
 function addReviewMsg(serial)
@@ -521,7 +521,7 @@ function addReviewMsg(serial)
 </script>
 <%
     int rc_serial = 0;
-    for (struct xml_tree *rcp = px->stmts->review_comments->first_down; rcp; rcp = rcp->right) {
+    for (struct xml_tree *rcp = px->review_comments->first_down; rcp; rcp = rcp->right) {
       if (rcp->tag == PROB_T_COMMENT) {
 %><p><input type="button" value="(+)" onclick="addReviewMsg(<s:v value="rc_serial" />)" /><span id="ReviewMsg<s:v value="rc_serial" />"><%
         problem_xml_unparse_node(out_f, rcp, NULL, NULL);

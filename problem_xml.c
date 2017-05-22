@@ -256,10 +256,12 @@ parse_statement(problem_xml_t prb, struct xml_tree *pstmt)
       stmt->review_notes = p1;
       break;
       */
+      /*
     case PROB_T_REVIEW_COMMENTS:
       if (stmt->review_comments) return xml_err_elem_redefined(p1);
       stmt->review_comments = p1;
       break;
+      */
     default:
      return xml_err_elem_not_allowed(p1);
     }
@@ -485,6 +487,10 @@ parse_tree(problem_xml_t tree)
     case PROB_T_REVIEW_NOTES:
       if (tree->review_notes) return xml_err_elem_redefined(p1);
       tree->review_notes = p1;
+      break;
+    case PROB_T_REVIEW_COMMENTS:
+      if (tree->review_comments) return xml_err_elem_redefined(p1);
+      tree->review_comments = p1;
       break;
     default:
       return xml_err_elem_not_allowed(p1);
