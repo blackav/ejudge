@@ -386,6 +386,7 @@ enum
   CNTSPROB_require_any,
   CNTSPROB_enable_multi_header,
   CNTSPROB_use_lang_multi_header,
+  CNTSPROB_notify_on_submit,
   CNTSPROB__pad1,
   CNTSPROB_examinator_num,
   CNTSPROB_real_time_limit,
