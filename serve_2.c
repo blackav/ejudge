@@ -2656,6 +2656,10 @@ serve_read_compile_packet(
     goto non_fatal_error;
   }
 
+  if (re.prob_id >= 1 && re.prob_id <= state->max_prob) {
+    prob = state->probs[re.prob_id];
+  }
+
   comp_extra = (typeof(comp_extra)) comp_pkt->run_block;
   if (!comp_extra || comp_pkt->run_block_len != sizeof(*comp_extra)
       || comp_extra->accepting_mode < 0 || comp_extra->accepting_mode > 1) {
@@ -2731,6 +2735,9 @@ serve_read_compile_packet(
       if (global->notify_status_change > 0 && !re.is_hidden && comp_extra->notify_flag) {
         serve_notify_user_run_status_change(config, cnts, state, re.user_id,
                                             comp_pkt->run_id, comp_pkt->status);
+      }
+      if (prob && prob->notify_on_submit > 0) {
+        serve_telegram_notify_on_submit(config, cnts, state, comp_pkt->run_id, &re);
       }
       goto success;
     }
@@ -2849,8 +2856,7 @@ serve_read_compile_packet(
     goto success;
   }
 
-  if (comp_pkt->status == RUN_COMPILE_ERR
-      || comp_pkt->status == RUN_STYLE_ERR) {
+  if (comp_pkt->status == RUN_COMPILE_ERR || comp_pkt->status == RUN_STYLE_ERR) {
     /* if status change fails, we cannot do reasonable recovery */
     if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
                             comp_pkt->status) < 0)
@@ -2880,6 +2886,9 @@ serve_read_compile_packet(
         && comp_extra->notify_flag) {
       serve_notify_user_run_status_change(config, cnts, state, re.user_id,
                                           comp_pkt->run_id, comp_pkt->status);
+    }
+    if (prob && prob->notify_on_submit > 0) {
+      serve_telegram_notify_on_submit(config, cnts, state, comp_pkt->run_id, &re);
     }
     goto success;
   }
@@ -2916,6 +2925,9 @@ prepare_run_request:
         && comp_extra->notify_flag) {
       serve_notify_user_run_status_change(config, cnts, state, re.user_id,
                                           comp_pkt->run_id, RUN_ACCEPTED);
+    }
+    if (prob && prob->notify_on_submit > 0) {
+      serve_telegram_notify_on_submit(config, cnts, state, comp_pkt->run_id, &re);
     }
     goto success;
   }
@@ -3280,6 +3292,9 @@ serve_read_run_packet(
       && reply_pkt->notify_flag) {
     serve_notify_user_run_status_change(config, cnts, state, re.user_id,
                                         reply_pkt->run_id, reply_pkt->status);
+  }
+  if (prob && prob->notify_on_submit > 0) {
+    serve_telegram_notify_on_submit(config, cnts, state, reply_pkt->run_id, &re);
   }
 
   // read the new testing report
