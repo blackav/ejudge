@@ -2318,7 +2318,7 @@ serve_telegram_notify_on_submit(
   const unsigned char *name = "";
   const unsigned char *probname = "";
 
-  args[0] = "telegram_cf";
+  args[0] = "telegram_notify";
   args[1] = telegram_bot_id;
   args[2] = cnts->telegram_admin_chat_id;
   snprintf(buf1, sizeof(buf1), "%d", cnts->id);
