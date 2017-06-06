@@ -934,7 +934,7 @@ full_user_report_generate(
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob;
   const struct section_language_data *lang;
-  int *run_ids;
+  int *run_ids, *best_score, *best_status;
   int total_runs, run_id, retval = -1, f_id, l_id, i, j, k;
   struct run_entry re;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -965,7 +965,7 @@ full_user_report_generate(
   sf_extra.str1 = sf_extra_buf;
   sf_extra_buf[0] = 0;
 
-  if (global->score_system != SCORE_OLYMPIAD) return -1;
+  //if (global->score_system != SCORE_OLYMPIAD) return -1;
 
   if (teamdb_export_team(cs->teamdb_state, user_id, &tdb) < 0) {
     fprintf(log_f, "Invalid user %d\n", user_id);
@@ -977,129 +977,238 @@ full_user_report_generate(
 
   XALLOCA(run_ids, cs->max_prob + 1);
   memset(run_ids, -1, sizeof(run_ids[0]) * (cs->max_prob + 1));
+  XALLOCA(best_score, cs->max_prob + 1);
+  memset(best_score, 0, sizeof(best_score[0]) * (cs->max_prob + 1));
+  XALLOCA(best_status, cs->max_prob + 1);
+  memset(best_status, -1, sizeof(best_status[0]) * (cs->max_prob + 1));
 
-  // find the latest run in acceptable state
-  total_runs = run_get_total(cs->runlog_state);
-  if (total_runs > 0) {
-    for (run_id = total_runs - 1; run_id >= 0; run_id--) {
-      if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
-        fprintf(log_f, "Invalid run %d\n", run_id);
-        goto cleanup;
-      }
-      if (!run_is_source_available(re.status)) continue;
-      if (re.user_id != user_id) continue;
-      if (re.prob_id <= 0 || re.prob_id > cs->max_prob
-          || !(prob = cs->probs[re.prob_id])) {
-        fprintf(log_f, "Invalid problem %d in run %d\n", re.prob_id, run_id);
-        goto cleanup;
-      }
-      if (prob->type == PROB_TYPE_OUTPUT_ONLY
-          || prob->type == PROB_TYPE_SELECT_MANY
-          || prob->type == PROB_TYPE_CUSTOM) {
-        fprintf(log_f,"Problem type `%s' for problem %s is not yet supported\n",
-                problem_unparse_type(prob->type), prob->short_name);
-        goto cleanup;
-      }
-      if (run_ids[re.prob_id] >= 0) continue;
-      if (prob->type != PROB_TYPE_STANDARD) {
+  if (global->score_system == SCORE_KIROV) {
+    // FIXME: use the user summary table
+    total_runs = run_get_total(cs->runlog_state);
+    if (total_runs > 0) {
+      for (run_id = total_runs - 1; run_id >= 0; run_id--) {
+        if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+          fprintf(log_f, "Invalid run %d\n", run_id);
+          goto cleanup;
+        }
+        if (!run_is_source_available(re.status)) continue;
+        if (re.user_id != user_id) continue;
+        if (re.prob_id <= 0 || re.prob_id > cs->max_prob
+            || !(prob = cs->probs[re.prob_id])) {
+          fprintf(log_f, "Invalid problem %d in run %d\n", re.prob_id, run_id);
+          goto cleanup;
+        }
+        if (prob->type != PROB_TYPE_STANDARD) continue;
         switch (re.status) {
-        case RUN_OK:
-        case RUN_WRONG_ANSWER_ERR:
-        case RUN_PARTIAL:
-        case RUN_ACCEPTED:
-        case RUN_PENDING_REVIEW:
-        case RUN_SUMMONED:
+        case RUN_CHECK_FAILED:
+          if (best_status[re.prob_id] == RUN_CHECK_FAILED) break;
+          best_status[re.prob_id] = RUN_CHECK_FAILED;
+          best_score[re.prob_id] = 0;
           run_ids[re.prob_id] = run_id;
           break;
 
-        case RUN_IGNORED:
-        case RUN_DISQUALIFIED:
-        case RUN_PRESENTATION_ERR:
+        case RUN_OK:
+        case RUN_SUMMONED:
+        case RUN_PENDING_REVIEW:
+          if (best_status[re.prob_id] == RUN_OK || best_status[re.prob_id] == RUN_CHECK_FAILED) break;
+          best_status[re.prob_id] = RUN_OK;
+          best_score[re.prob_id] = prob->full_score;
+          run_ids[re.prob_id] = run_id;
           break;
 
-        default:
-          fprintf(log_f, "Invalid run status %d (%s) in run %d\n",
-                  re.status, run_status_str(re.status, 0, 0, 0, 0),
-                  run_id);
-          goto cleanup;
-        }
-      } else {
-        switch (re.status) {
-        case RUN_OK:
+        case RUN_RUN_TIME_ERR:
+        case RUN_TIME_LIMIT_ERR:
+        case RUN_PRESENTATION_ERR:
+        case RUN_WRONG_ANSWER_ERR:
         case RUN_PARTIAL:
+        case RUN_MEM_LIMIT_ERR:
+        case RUN_SECURITY_ERR:
+        case RUN_WALL_TIME_LIMIT_ERR:
+        case RUN_SYNC_ERR:
+          if (best_status[re.prob_id] == RUN_OK || best_status[re.prob_id] == RUN_CHECK_FAILED) break;
+          if (best_status[re.prob_id] == RUN_PARTIAL && best_score[re.prob_id] < re.score) {
+            best_score[re.prob_id] = re.score;
+            run_ids[re.prob_id] = run_id;
+            break;
+          }
+          if (best_status[re.prob_id] == RUN_PARTIAL) break;
+          best_status[re.prob_id] = RUN_PARTIAL;
+          best_score[re.prob_id] = re.score;
+          run_ids[re.prob_id] = run_id;
+          break;
+
         case RUN_ACCEPTED:
-        case RUN_PENDING_REVIEW:
-        case RUN_SUMMONED:
+          if (best_status[re.prob_id] == RUN_OK
+              || best_status[re.prob_id] == RUN_CHECK_FAILED
+              || best_status[re.prob_id] == RUN_PARTIAL
+              || best_status[re.prob_id] == RUN_ACCEPTED) break;
+          best_status[re.prob_id] = RUN_ACCEPTED;
+          best_score[re.prob_id] = re.score;
           run_ids[re.prob_id] = run_id;
           break;
 
         case RUN_COMPILE_ERR:
-        case RUN_RUN_TIME_ERR:
-        case RUN_TIME_LIMIT_ERR:
-        case RUN_WALL_TIME_LIMIT_ERR:
-        case RUN_PRESENTATION_ERR:
-        case RUN_WRONG_ANSWER_ERR:
-        case RUN_IGNORED:
-        case RUN_DISQUALIFIED:
-        case RUN_MEM_LIMIT_ERR:
-        case RUN_SECURITY_ERR:
-        case RUN_SYNC_ERR:
         case RUN_STYLE_ERR:
-        case RUN_REJECTED:
+          if (best_status[re.prob_id] == RUN_OK
+              || best_status[re.prob_id] == RUN_CHECK_FAILED
+              || best_status[re.prob_id] == RUN_PARTIAL
+              || best_status[re.prob_id] == RUN_ACCEPTED
+              || best_status[re.prob_id] == RUN_COMPILE_ERR) break;
+          best_status[re.prob_id] = RUN_COMPILE_ERR;
+          best_score[re.prob_id] = re.score;
+          run_ids[re.prob_id] = run_id;
           break;
 
+        case RUN_PENDING:
+          if (best_status[re.prob_id] == RUN_OK
+              || best_status[re.prob_id] == RUN_CHECK_FAILED
+              || best_status[re.prob_id] == RUN_PARTIAL
+              || best_status[re.prob_id] == RUN_ACCEPTED
+              || best_status[re.prob_id] == RUN_COMPILE_ERR
+              || best_status[re.prob_id] == RUN_PENDING) break;
+          best_status[re.prob_id] = RUN_PENDING;
+          best_score[re.prob_id] = re.score;
+          run_ids[re.prob_id] = run_id;
+          break;
+
+        case RUN_DISQUALIFIED:
+        case RUN_SKIPPED:
+        case RUN_REJECTED:
+        case RUN_IGNORED:
+          // plainly ignored
+          break;
         default:
-          fprintf(log_f, "Invalid run status %d (%s) in run %d\n",
-                  re.status, run_status_str(re.status, 0, 0, 0, 0),
-                  run_id);
-          goto cleanup;
+            fprintf(log_f, "Invalid run status %d (%s) in run %d\n",
+                    re.status, run_status_str(re.status, 0, 0, 0, 0),
+                    run_id);
+            goto cleanup;
         }
       }
     }
-  }
-
-  if (total_runs > 0) {
-    for (run_id = total_runs - 1; run_id >= 0; run_id--) {
-      if (run_get_entry(cs->runlog_state, run_id, &re) < 0) abort();
-      if (!run_is_source_available(re.status)) continue;
-      if (re.user_id != user_id) continue;
-      prob = cs->probs[re.prob_id];
-      if (run_ids[re.prob_id] >= 0) continue;
-      if (prob->type != PROB_TYPE_STANDARD) {
-        switch (re.status) {
-        case RUN_PRESENTATION_ERR:
-          run_ids[re.prob_id] = run_id;
-          break;
-
-        case RUN_IGNORED:
-        case RUN_DISQUALIFIED:
-          break;
-
-        default:
-          abort();
+  } else if (global->score_system == SCORE_OLYMPIAD) {
+    // find the latest run in acceptable state
+    total_runs = run_get_total(cs->runlog_state);
+    if (total_runs > 0) {
+      for (run_id = total_runs - 1; run_id >= 0; run_id--) {
+        if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+          fprintf(log_f, "Invalid run %d\n", run_id);
+          goto cleanup;
         }
-      } else {
-        switch (re.status) {
-        case RUN_COMPILE_ERR:
-        case RUN_RUN_TIME_ERR:
-        case RUN_TIME_LIMIT_ERR:
-        case RUN_WALL_TIME_LIMIT_ERR:
-        case RUN_PRESENTATION_ERR:
-        case RUN_WRONG_ANSWER_ERR:
-        case RUN_MEM_LIMIT_ERR:
-        case RUN_SECURITY_ERR:
-        case RUN_SYNC_ERR:
-        case RUN_STYLE_ERR:
-        case RUN_REJECTED:
-          run_ids[re.prob_id] = run_id;
-          break;
+        if (!run_is_source_available(re.status)) continue;
+        if (re.user_id != user_id) continue;
+        if (re.prob_id <= 0 || re.prob_id > cs->max_prob
+            || !(prob = cs->probs[re.prob_id])) {
+          fprintf(log_f, "Invalid problem %d in run %d\n", re.prob_id, run_id);
+          goto cleanup;
+        }
+        if (prob->type == PROB_TYPE_OUTPUT_ONLY
+            || prob->type == PROB_TYPE_SELECT_MANY
+            || prob->type == PROB_TYPE_CUSTOM) {
+          fprintf(log_f,"Problem type `%s' for problem %s is not yet supported\n",
+                  problem_unparse_type(prob->type), prob->short_name);
+          goto cleanup;
+        }
+        if (run_ids[re.prob_id] >= 0) continue;
+        if (prob->type != PROB_TYPE_STANDARD) {
+          switch (re.status) {
+          case RUN_OK:
+          case RUN_WRONG_ANSWER_ERR:
+          case RUN_PARTIAL:
+          case RUN_ACCEPTED:
+          case RUN_PENDING_REVIEW:
+          case RUN_SUMMONED:
+            run_ids[re.prob_id] = run_id;
+            break;
 
-        case RUN_IGNORED:
-        case RUN_DISQUALIFIED:
-          break;
+          case RUN_IGNORED:
+          case RUN_DISQUALIFIED:
+          case RUN_PRESENTATION_ERR:
+            break;
 
-        default:
-          abort();
+          default:
+            fprintf(log_f, "Invalid run status %d (%s) in run %d\n",
+                    re.status, run_status_str(re.status, 0, 0, 0, 0),
+                    run_id);
+            goto cleanup;
+          }
+        } else {
+          switch (re.status) {
+          case RUN_OK:
+          case RUN_PARTIAL:
+          case RUN_ACCEPTED:
+          case RUN_PENDING_REVIEW:
+          case RUN_SUMMONED:
+            run_ids[re.prob_id] = run_id;
+            break;
+
+          case RUN_COMPILE_ERR:
+          case RUN_RUN_TIME_ERR:
+          case RUN_TIME_LIMIT_ERR:
+          case RUN_WALL_TIME_LIMIT_ERR:
+          case RUN_PRESENTATION_ERR:
+          case RUN_WRONG_ANSWER_ERR:
+          case RUN_IGNORED:
+          case RUN_DISQUALIFIED:
+          case RUN_MEM_LIMIT_ERR:
+          case RUN_SECURITY_ERR:
+          case RUN_SYNC_ERR:
+          case RUN_STYLE_ERR:
+          case RUN_REJECTED:
+            break;
+
+          default:
+            fprintf(log_f, "Invalid run status %d (%s) in run %d\n",
+                    re.status, run_status_str(re.status, 0, 0, 0, 0),
+                    run_id);
+            goto cleanup;
+          }
+        }
+      }
+    }
+
+    if (total_runs > 0) {
+      for (run_id = total_runs - 1; run_id >= 0; run_id--) {
+        if (run_get_entry(cs->runlog_state, run_id, &re) < 0) abort();
+        if (!run_is_source_available(re.status)) continue;
+        if (re.user_id != user_id) continue;
+        prob = cs->probs[re.prob_id];
+        if (run_ids[re.prob_id] >= 0) continue;
+        if (prob->type != PROB_TYPE_STANDARD) {
+          switch (re.status) {
+          case RUN_PRESENTATION_ERR:
+            run_ids[re.prob_id] = run_id;
+            break;
+
+          case RUN_IGNORED:
+          case RUN_DISQUALIFIED:
+            break;
+
+          default:
+            abort();
+          }
+        } else {
+          switch (re.status) {
+          case RUN_COMPILE_ERR:
+          case RUN_RUN_TIME_ERR:
+          case RUN_TIME_LIMIT_ERR:
+          case RUN_WALL_TIME_LIMIT_ERR:
+          case RUN_PRESENTATION_ERR:
+          case RUN_WRONG_ANSWER_ERR:
+          case RUN_MEM_LIMIT_ERR:
+          case RUN_SECURITY_ERR:
+          case RUN_SYNC_ERR:
+          case RUN_STYLE_ERR:
+          case RUN_REJECTED:
+            run_ids[re.prob_id] = run_id;
+            break;
+
+          case RUN_IGNORED:
+          case RUN_DISQUALIFIED:
+            break;
+
+          default:
+            abort();
+          }
         }
       }
     }
