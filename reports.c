@@ -2209,6 +2209,10 @@ ns_print_user_exam_protocols(
     }
     fclose(fout); fout = 0;
 
+    (void) ps_path;
+    (void) dvi_path;
+    (void) err_path;
+    /*
     snprintf(err_path, sizeof(err_path), "%s/%06d.err",
              global->print_work_dir, user_id);
     snprintf(dvi_path, sizeof(dvi_path), "%s/%06d.dvi",
@@ -2219,9 +2223,13 @@ ns_print_user_exam_protocols(
       goto cleanup;
     if (invoke_dvips(log_f, dvi_path, err_path, global->print_work_dir, 1) < 0)
       goto cleanup;
+    */
   }
 
   // all PS files are ready, so print them all
+  (void) tdb;
+  (void) printer_name;
+  /*
   for (i = 0; i < nuser; i++) {
     user_id = user_ids[i];
 
@@ -2242,6 +2250,7 @@ ns_print_user_exam_protocols(
         goto cleanup;
     }
   }
+  */
 
   retval = 0;
 
