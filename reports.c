@@ -1418,9 +1418,11 @@ full_user_report_generate(
       xfree(num_txt); num_txt = 0; num_len = 0;
       xfree(src_txt); src_txt = 0; src_len = 0;
 
+      /*
       if (run_is_report_available(re.status)) {
         write_xml_tex_testing_report(fout, cs, run_id);
       }
+      */
       break;
 
     case PROB_TYPE_TEXT_ANSWER:
