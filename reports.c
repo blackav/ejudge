@@ -1342,12 +1342,15 @@ full_user_report_generate(
       fprintf(fout, "& %s & %s & %s & %s\\\\\n\\hline\n",
               _("Language"), _("Tests passed"), _("Score"), _("Status"));
 
+      fprintf(fout, "%s", TARMOR(prob->short_name));
+      /*
       if (!prob->long_name || !prob->long_name[0] || !strcmp(prob->long_name, prob->short_name)) {
         fprintf(fout, "%s", TARMOR(prob->short_name));
       } else {
         fprintf(fout, "%s ---", TARMOR(prob->short_name));
         fprintf(fout, "%s", TARMOR(prob->long_name));
       }
+      */
       if (variant > 0) fprintf(fout, " & %d", variant);
       if ((run_id = run_ids[i]) < 0) {
         fprintf(fout, " & & & & \\textit{%s}\\\\\n", _("No answer is given"));
@@ -1360,12 +1363,15 @@ full_user_report_generate(
       lang = 0;
       if (re.lang_id > 0 && re.lang_id <= cs->max_lang)
         lang = cs->langs[re.lang_id];
+      fprintf(fout, "& %s", TARMOR(lang->short_name));
+      /*
       if (!lang->long_name || !lang->long_name[0] || !strcmp(lang->long_name, lang->short_name)) {
         fprintf(fout, "& %s", TARMOR(lang->short_name));
       } else {
         fprintf(fout, "& %s ---", TARMOR(lang->short_name));
         fprintf(fout, "%s", TARMOR(lang->long_name));
       }
+      */
 
       // here calculate the score
       cur_score = re.score;
