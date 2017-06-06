@@ -2176,14 +2176,19 @@ ns_print_user_exam_protocols(
   path_t tst_path;
   int retval = -1, i, user_id;
   const unsigned char *printer_name = 0;
+  const unsigned char *user_login = NULL;
   struct teamdb_export tdb;
   FILE *fout = 0;
 
   for (i = 0; i < nuser; i++) {
     user_id = user_ids[i];
     if (teamdb_lookup(cs->teamdb_state, user_id) <= 0) continue;
-    snprintf(tex_path, sizeof(tex_path), "%s/%06d.tex", global->print_work_dir,
-             user_id);
+    user_login = teamdb_get_login(cs->teamdb_state, user_id);
+    if (user_login && *user_login) {
+      snprintf(tex_path, sizeof(tex_path), "%s/%s.tex", global->print_work_dir, user_login);
+    } else {
+      snprintf(tex_path, sizeof(tex_path), "%s/%06d.tex", global->print_work_dir, user_id);
+    }
     if (!(fout = fopen(tex_path, "w"))) {
       fprintf(log_f, "cannot open %s for writing\n", tex_path);
       goto cleanup;
