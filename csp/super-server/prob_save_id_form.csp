@@ -87,7 +87,7 @@
         if (internal_name && !*internal_name) {
             xfree(internal_name); internal_name = NULL;
         }
-        if (*internal_name) {
+        if (internal_name) {
             other_prob = super_serve_find_problem(phr->ss, internal_name);
             if (other_prob && other_prob != prob) {
                 fprintf(msg_f, "internal_name is not unique<br/>");
