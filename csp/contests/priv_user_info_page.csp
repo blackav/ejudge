@@ -53,7 +53,7 @@
 
 <ul>
     <li><s:a ac="main-page"><s:_>Main page</s:_></s:a></li>
-    <li><s:a ac="view-users"><s:_>View regular users</s:_></s:a></li>
+    <li><s:a ac="view-users-new-page"><s:_>View regular users</s:_></s:a></li>
     <li><s:a ac="view-reg-pwds"><s:_>View registration passwords</s:_></s:a></li>
 <%  if (!cnts->disable_team_password) { %>
     <li><s:a ac="view-cnts-pwds"><s:_>View contest passwords</s:_></s:a></li>
