@@ -7,12 +7,27 @@
 %><%@page csp_view_priv_users_new_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
-    int enable_main_menu = 0;
+    int enable_main_menu = 1;
+    const unsigned char *title = _("Users page");
 
 // locals
 
-%><%@include "priv_header.csp"
+  l10n_setlocale(phr->locale_id);
+%><%@include "priv_header_jq.csp"
 %>
+</div>
+
+<h2>Registered users</h2>
+
+<div id="UsersTableDiv">
+</div>
+
+<script type="text/javascript">
+    var SID='<s:v value="phr->session_id" />';
+    var self_url='<s:v value="phr->self_url" escape="false" />';
+    var script_name='<s:v value="phr->script_name" escape="false" />';
+    var contest_id='<s:v value="phr->contest_id" escape="false" />';
+</script>
 
 <%@include "priv_footer.csp"
 %><%
