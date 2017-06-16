@@ -6956,6 +6956,8 @@ static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAS
   [NEW_SRV_ACTION_TOKENIZE_DISPLAYED_1] = "priv_tokenize_displayed_1_page",
   [NEW_SRV_ACTION_RELOAD_STATEMENT] = "priv_reload_statement_action",
   [NEW_SRV_ACTION_ADD_REVIEW_COMMENT] = "priv_add_review_comment_action",
+  [NEW_SRV_ACTION_VIEW_USERS_NEW_PAGE] = "priv_users_new_page",
+  [NEW_SRV_ACTION_VIEW_USERS_NEW_AJAX] = "priv_users_new_ajax",
 };
 
 static const int external_priv_action_aliases[NEW_SRV_ACTION_LAST] =

@@ -61,6 +61,8 @@ SOFILES = \
  csp_priv_user_ips_page.so\
  csp_priv_user_info_page.so\
  csp_priv_users_page.so\
+ csp_priv_users_new_page.so\
+ csp_priv_users_new_ajax.so\
  csp_priv_error_internal.so\
  csp_priv_error_inv_param.so\
  csp_priv_error_no_perm.so\
@@ -151,6 +153,8 @@ csp_priv_upsolving_page.c : priv_upsolving_page.csp priv_includes.csp priv_stdva
 csp_priv_user_ips_page.c : priv_user_ips_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_user_info_page.c : priv_user_info_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_users_page.c : priv_users_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_users_new_page.c : priv_users_new_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_users_new_ajax.c : priv_users_new_ajax.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_tokenize_displayed_1_page.c : priv_tokenize_displayed_1_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 
 csp_priv_error_internal.c : priv_error_internal.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
