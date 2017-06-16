@@ -193,6 +193,7 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_RELOAD_STATEMENT] = __("Reload Statement"),
   [NEW_SRV_ACTION_RELOAD_STATEMENT_ALL] = __("Reload Statement In All Contests"),
   [NEW_SRV_ACTION_ADD_REVIEW_COMMENT] = __("Add Review Comment"),
+  [NEW_SRV_ACTION_VIEW_USERS_NEW_PAGE] = __("View regular users"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =
