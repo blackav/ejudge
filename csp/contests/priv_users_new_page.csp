@@ -9,10 +9,11 @@
 %><%
     int enable_main_menu = 1;
     const unsigned char *title = _("Users page");
+    const struct section_global_data *global = extra->serve_state->global;
 
 // locals
 
-  l10n_setlocale(phr->locale_id);
+    l10n_setlocale(phr->locale_id);
 %><%@include "priv_header_jq.csp"
 %>
 </div>
@@ -20,6 +21,31 @@
 <h2>Registered users</h2>
 
 <div id="UsersTableDiv">
+    <table class="b1">
+        <thead>
+            <tr>
+                <th class="b1"><input type="checkbox" /></th>
+                <th class="b1">NN</th>
+                <th class="b1">Id</th>
+                <th class="b1">Login</th>
+                <th class="b1">Name</th>
+                <th class="b1">Status</th>
+                <th class="b1">Flags</th>
+                <th class="b1">Reg. date</th>
+                <th class="b1">Login date</th>
+                <th class="b1">No. of submits</th>
+                <th class="b1">Size of submits</th>
+                <th class="b1">No. of clars</th>
+                <%
+    if (global->memoize_user_results > 0) {
+                %><th class="b1">Score</th><%
+    }
+                %>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
 </div>
 
 <script type="text/javascript">
@@ -27,6 +53,81 @@
     var self_url='<s:v value="phr->self_url" escape="false" />';
     var script_name='<s:v value="phr->script_name" escape="false" />';
     var contest_id='<s:v value="phr->contest_id" escape="false" />';
+
+    var action_users_new_ajax=<s:ac ac="view-users-new-ajax" />;
+</script>
+
+<script type="text/javascript">
+var htmlEscapes = {
+	'&': '&amp;',
+	'<': '&lt;',
+	'>': '&gt;',
+	'"': '&quot;',
+	"'": '&#x27;',
+	'/': '&#x2F;'
+};
+
+// Regex containing the keys listed immediately above.
+var htmlEscaper = /[&<>"'\/]/g;
+
+// Escape a string for HTML interpolation.
+function escapeHtml(string)
+{
+    return ('' + string).replace(htmlEscaper, function(match) { return htmlEscapes[match]; });
+}
+
+function updateTable(arr)
+{
+    var text = "";
+    for (var i = 0; i < arr.length; ++i) {
+        var v = arr[i];
+        text += "<tr>";
+        text += "<td class=\"b1\"><input type=\"checkbox\" /></th>";
+        text += "<td class=\"b1\">" + v.serial + "</th>";
+        text += "<td class=\"b1\">" + v.user_id + "</th>";
+        text += "<td class=\"b1\">" + escapeHtml(v.user_login) + "</th>";
+        text += "<td class=\"b1\">" + escapeHtml(v.user_name) + "</th>";
+        text += "<td class=\"b1\">" + escapeHtml(v.status) + "</th>";
+        // flags
+        text += "<td class=\"b1\">";
+        text += "???";
+        text += "</th>";
+        text += "<td class=\"b1\">" + escapeHtml(v.reg_date) + "</th>";
+        text += "<td class=\"b1\">" + escapeHtml(v.last_login_date) + "</th>";
+        text += "<td class=\"b1\">" + v.submit_count + "</th>";
+        text += "<td class=\"b1\">" + v.submit_size + "</th>";
+        text += "<td class=\"b1\">" + v.clar_count + "</th>";
+        text += "</tr>";
+    }
+    $("#UsersTableDiv > table > tbody").html(text);
+}
+
+function loadTable()
+{
+    $.ajax({
+        type: "GET",
+        url: self_url,
+        data: {
+            SID: SID,
+            action: action_users_new_ajax,
+            showHidden: 1
+        },
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function(data) {
+            if (data.result == 1) {
+                updateTable(data.data);
+            } else {
+                alert("Error: " + data.message);
+            }
+        }
+    });
+}
+
+$(function()
+{
+    loadTable();
+});
 </script>
 
 <%@include "priv_footer.csp"
