@@ -137,6 +137,15 @@ typedef struct UserProblemInfo
     unsigned char need_eff_time_flag; // if effective time needs to be recorded
 } UserProblemInfo;
 
+/* */
+
+typedef struct PrivViewUsersPage
+{
+    PageInterface b;
+    int result;
+    char *message;
+} PrivViewUsersPage;
+
 #endif /* __NEW_SERVER_PI_H__ */
 
 /*
