@@ -167,6 +167,12 @@ void clar_get_user_usage(
         int from,
         int *pn,
         size_t *pz);
+void
+clar_get_all_users_usage(
+        clarlog_state_t state,
+        int map_size,
+        int *clar_counts,
+        size_t *clar_sizes);
 char *clar_flags_html(
         clarlog_state_t state,
         int flags,

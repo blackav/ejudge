@@ -430,6 +430,22 @@ clar_get_user_usage(
   if (ps) *ps = total;
 }
 
+void
+clar_get_all_users_usage(
+        clarlog_state_t state,
+        int map_size,
+        int *clar_counts,
+        size_t *clar_sizes)
+{
+  for (int i = 0; i < state->clars.u; ++i) {
+    struct clar_entry_v2 *pc = &state->clars.v[i];
+    if (pc->from > 0 && pc->from < map_size) {
+      if (clar_counts) ++clar_counts[pc->from];
+      if (clar_sizes) clar_sizes[pc->from] += pc->size;
+    }
+  }
+}
+
 int
 clar_get_unanswered_count(
         clarlog_state_t state,
