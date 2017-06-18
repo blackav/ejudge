@@ -29,25 +29,25 @@
 #include "ejudge/logger.h"
 
 extern int
-csp_view_priv_users_page(
+csp_view_priv_users_new_ajax(
         PageInterface *ps,
         FILE *log_f,
         FILE *out_f,
         struct http_request_info *phr);
 static int
-csp_execute_priv_users_page(
+csp_execute_priv_users_new_ajax(
         PageInterface *ps,
         FILE *log_f,
         struct http_request_info *phr);
 static void
-csp_destroy_priv_users_page(
+csp_destroy_priv_users_new_ajax(
         PageInterface *ps);
 
 static struct PageInterfaceOps ops =
 {
-    csp_destroy_priv_users_page,
-    csp_execute_priv_users_page,
-    csp_view_priv_users_page,
+    csp_destroy_priv_users_new_ajax,
+    csp_execute_priv_users_new_ajax,
+    csp_view_priv_users_new_ajax,
 };
 
 PageInterface *
@@ -86,7 +86,7 @@ free_users_array(UserInfoPageArray *users)
 }
 
 static void
-csp_destroy_priv_users_page(
+csp_destroy_priv_users_new_ajax(
         PageInterface *ps)
 {
     PrivViewUsersPage *pg = (PrivViewUsersPage*) ps;
@@ -96,7 +96,7 @@ csp_destroy_priv_users_page(
 }
 
 static int
-csp_execute_priv_users_page(
+csp_execute_priv_users_new_ajax(
         PageInterface *ps,
         FILE *log_f,
         struct http_request_info *phr)

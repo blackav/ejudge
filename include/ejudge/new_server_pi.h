@@ -139,11 +139,42 @@ typedef struct UserProblemInfo
 
 /* */
 
+typedef struct UserInfoPage
+{
+    unsigned char *user_login;
+    unsigned char *user_name;
+    unsigned char *status_str;
+
+    unsigned char *create_time_str;
+    unsigned char *last_login_time_str;
+
+    size_t run_size;
+
+    int user_id;
+    int status;
+    int run_count;
+    int clar_count;
+    int result_score;
+
+    signed char is_banned;
+    signed char is_invisible;
+    signed char is_locked;
+    signed char is_incomplete;
+    signed char is_disqualified;
+} UserInfoPage;
+
+typedef struct UserInfoPageArray
+{
+    int a, u;
+    struct UserInfoPage **v;
+} UserInfoPageArray;
+
 typedef struct PrivViewUsersPage
 {
     PageInterface b;
     int result;
     char *message;
+    UserInfoPageArray *users;
 } PrivViewUsersPage;
 
 #endif /* __NEW_SERVER_PI_H__ */

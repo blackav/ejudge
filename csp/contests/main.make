@@ -102,7 +102,7 @@ SOFILES = \
  csp_unpriv_error_unknown.so\
  csp_unpriv_error_userlist_server_down.so
 
-CFILES = $(SOFILES:.so=.c) I_priv_ip_users_page.c  I_priv_priv_users_page.c  I_priv_user_ips_page.c I_priv_users_page.c
+CFILES = $(SOFILES:.so=.c) I_priv_ip_users_page.c  I_priv_priv_users_page.c  I_priv_user_ips_page.c I_priv_users_new_ajax.c
 
 all : $(CFILES) $(SOFILES)
 
@@ -121,7 +121,7 @@ csp_priv_user_ips_page.so : csp_priv_user_ips_page.c I_priv_user_ips_page.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
 csp_priv_ip_users_page.so : csp_priv_ip_users_page.c I_priv_ip_users_page.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
-csp_priv_users_new_ajax.so : csp_priv_users_new_ajax.c I_priv_users_page.c
+csp_priv_users_new_ajax.so : csp_priv_users_new_ajax.c I_priv_users_new_ajax.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
 
 po : contests.po
