@@ -22,6 +22,8 @@
 #include "ejudge/userlist_proto.h"
 #include "ejudge/clarlog.h"
 #include "ejudge/runlog.h"
+#include "ejudge/xml_utils.h"
+#include "ejudge/prepare.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -49,7 +51,7 @@ static struct PageInterfaceOps ops =
 };
 
 PageInterface *
-csp_get_priv_users_page(void)
+csp_get_priv_users_new_ajax(void)
 {
     PrivViewPrivUsersPage *pg = NULL;
 
@@ -58,12 +60,38 @@ csp_get_priv_users_page(void)
     return (PageInterface*) pg;
 }
 
+static UserInfoPage *
+free_user(UserInfoPage *user)
+{
+    xfree(user->user_login);
+    xfree(user->user_name);
+    xfree(user->status_str);
+    xfree(user->create_time_str);
+    xfree(user->last_login_time_str);
+    xfree(user);
+    return NULL;
+}
+
+static UserInfoPageArray *
+free_users_array(UserInfoPageArray *users)
+{
+    if (users) {
+        for (int i = 0; i < users->u; ++i) {
+            free_user(users->v[i]);
+        }
+        xfree(users->v);
+        xfree(users);
+    }
+    return NULL;
+}
+
 static void
 csp_destroy_priv_users_page(
         PageInterface *ps)
 {
     PrivViewUsersPage *pg = (PrivViewUsersPage*) ps;
     xfree(pg->message);
+    free_users_array(pg->users);
     xfree(pg);
 }
 
@@ -80,6 +108,10 @@ csp_execute_priv_users_page(
     int *run_counts = NULL;
     size_t *run_sizes = NULL;
     int *clar_counts = NULL;
+    const struct contest_desc *cnts = phr->cnts;
+    const struct section_global_data *global = extra->serve_state->global;
+    int new_contest_id = cnts->id;
+    if (cnts->user_contest_num > 0) new_contest_id = cnts->user_contest_num;
 
     if (ns_open_ul_connection(phr->fw_state) < 0) {
         asprintf(&pg->message, "Failed to open userlist server connection");
@@ -99,13 +131,77 @@ csp_execute_priv_users_page(
 
     xfree(xml_text); xml_text = NULL;
 
-    if (users->user_map_size > 0) {
-        XCALLOC(run_counts, users->user_map_size);
-        XCALLOC(run_sizes, users->user_map_size);
-        XCALLOC(clar_counts, users->user_map_size);
-        run_get_all_statistics(extra->serve_state->runlog_state, users->user_map_size, run_counts, run_sizes);
-        clar_get_all_users_usage(extra->serve_state->clarlog_state, users->user_map_size, clar_counts, NULL);
+    if (users->user_map_size <= 0) {
+        pg->result = 1;
+        goto cleanup;
     }
+
+    XCALLOC(run_counts, users->user_map_size);
+    XCALLOC(run_sizes, users->user_map_size);
+    XCALLOC(clar_counts, users->user_map_size);
+    run_get_all_statistics(extra->serve_state->runlog_state, users->user_map_size, run_counts, run_sizes);
+    clar_get_all_users_usage(extra->serve_state->clarlog_state, users->user_map_size, clar_counts, NULL);
+
+    XCALLOC(pg->users, 1);
+    pg->users->a = users->user_map_size;
+    XCALLOC(pg->users->v, users->user_map_size);
+
+    for (int user_id = 1; user_id < users->user_map_size; ++user_id) {
+        struct userlist_user *u = users->user_map[user_id];
+        if (!u) continue;
+        const struct userlist_contest *uc = userlist_get_user_contest(u, new_contest_id);
+        if (!uc) continue;
+
+        // additional filtering
+
+        UserInfoPage *up = NULL;
+        XCALLOC(up, 1);
+        pg->users->v[pg->users->u++] = up;
+        up->user_id = user_id;
+        up->user_login = xstrdup(u->login);
+
+        if (u->cnts0 && u->cnts0->name) {
+            up->user_name = xstrdup(u->cnts0->name);
+        } else {
+            up->user_name = xstrdup("");
+        }
+        up->status = uc->status;
+        up->status_str = xstrdup(userlist_unparse_reg_status(uc->status));
+
+        if ((uc->flags & USERLIST_UC_BANNED))
+            up->is_banned = 1;
+        if ((uc->flags & USERLIST_UC_INVISIBLE))
+            up->is_invisible = 1;
+        if ((uc->flags & USERLIST_UC_LOCKED))
+            up->is_locked = 1;
+        if ((uc->flags & USERLIST_UC_INCOMPLETE))
+            up->is_incomplete = 1;
+        if ((uc->flags & USERLIST_UC_DISQUALIFIED))
+            up->is_disqualified = 1;
+
+        if (uc->create_time > 0) {
+            up->create_time_str = xstrdup(xml_unparse_date(uc->create_time));
+        } else {
+            up->create_time_str = xstrdup("");
+        }
+        if (u->cnts0 && u->cnts0->last_login_time) {
+            up->last_login_time_str = xstrdup(xml_unparse_date(u->cnts0->last_login_time));
+        } else {
+            up->last_login_time_str = xstrdup("");
+        }
+
+        up->run_count = run_counts[user_id];
+        up->run_size = run_sizes[user_id];
+        up->clar_count = clar_counts[user_id];
+
+        if (global->memoize_user_results > 0) {
+            up->result_score = serve_get_user_result_score(extra->serve_state, user_id);
+        }
+    }
+
+    // additional sorting
+
+    pg->result = 1;
 
 cleanup:;
     xfree(xml_text);
