@@ -6330,6 +6330,7 @@ const char compile_date[] = "?";
 PrivViewPrivUsersPage dummy_pvpup;
 PrivViewUserIPsPage dummy_pvuip;
 PrivViewIPUsersPage dummy_pviup;
+PrivViewUsersPage dummy_pvup;
 
 /*
  * Local variables:
