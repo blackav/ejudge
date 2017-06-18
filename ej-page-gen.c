@@ -6331,6 +6331,7 @@ PrivViewPrivUsersPage dummy_pvpup;
 PrivViewUserIPsPage dummy_pvuip;
 PrivViewIPUsersPage dummy_pviup;
 PrivViewUsersPage dummy_pvup;
+UserInfoPage dummy_uip;
 
 /*
  * Local variables:
