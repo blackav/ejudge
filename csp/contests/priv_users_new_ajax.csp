@@ -32,12 +32,16 @@
             }
         %>
         {
-            "serial" : <s:v value="i" />,
+            "serial" : <s:v value="i + 1" />,
             "user_id" : <s:v value="ui->user_id" />,
             "user_login" : "<s:v value="ui->user_login" json="yes" />",
             "user_name" : "<s:v value="ui->user_name" json="yes" />",
             "status" : "<s:v value="ui->status_str" json="yes" />",
-            "flags" : "",
+            "is_banned" : <s:v value="ui->is_banned" json="yes" />,
+            "is_invisible" : <s:v value="ui->is_invisible" json="yes" />,
+            "is_locked" : <s:v value="ui->is_locked" json="yes" />,
+            "is_incomplete" : <s:v value="ui->is_incomplete" json="yes" />,
+            "is_disqualified" : <s:v value="ui->is_disqualified" json="yes" />,
             "create_time" : "<s:v value="ui->create_time_str" json="yes" />",
             "last_login_time" : "<s:v value="ui->last_login_time_str" json="yes" />",
             "run_count" : <s:v value="ui->run_count" />,

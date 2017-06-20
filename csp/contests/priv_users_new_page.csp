@@ -20,11 +20,17 @@
 
 <h2>Registered users</h2>
 
+<table>
+    <td><input type="checkbox" name="show_not_ok" id="ShowNotOkUsers" onchange="showNotOkUsersChange()">Show Pending/Rejected</td>
+    <td><input type="checkbox" name="show_not_ok" id="ShowNotOkUsers" onchange="showInvisibleUsersChange()">Show Invisible</td>
+    <td><input type="checkbox" name="show_not_ok" id="ShowNotOkUsers" onchange="showBannedUsersChange()">Show Banned/Locked/Disqual</td>
+</table>
+
 <div id="UsersTableDiv">
     <table class="b1">
         <thead>
             <tr>
-                <th class="b1"><input type="checkbox" /></th>
+                <th class="b1"><input id="ToggleAllCheckbox" type="checkbox" onclick="toggleUserSelection()" /></th>
                 <th class="b1">NN</th>
                 <th class="b1">Id</th>
                 <th class="b1">Login</th>
@@ -43,10 +49,121 @@
                 %>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="UsersTableTBody">
         </tbody>
     </table>
 </div>
+
+<input type="button" value="Clear selection" onclick="clearUserSelection()" /><br/>
+
+<input type="text" name="range" value="" id="UserRangeInput" /><input type="button" value="Select Range" onclick="selectUserRange()" /><br/>
+
+<h2>Change registration status</h2>
+
+<s:form onsubmit="usersRemoveRegistrationsSubmit()">
+<s:hidden id="UsersRemoveIdList" name="new_user_id_list" value ="" />
+<s:submit ac="users-remove-registrations" />
+</s:form>
+<br/>
+
+<s:form onsubmit="usersChangeRegistrationsSubmit()">
+<s:hidden id="UsersChangeIdList" name="new_user_id_list" value ="" />
+<select name="new_status">
+<option value="-1"></option>
+<option value="0">OK</option>
+<option value="1">PENDING</option>
+<option value="2">REJECTED</option>
+</select>
+<s:submit ac="users-set-pending" />
+</s:form>
+
+<s:form onsubmit="usersChangeFlagsSubmit()">
+<s:hidden id="FlagsChangeIdList" name="new_user_id_list" value ="" />
+<table border="0">
+<tr><td>&nbsp;</td><td>BANNED</td><td>INVISIBLE</td><td>LOCKED</td><td>INCOMPLETE</td><td>DISQUALIFIED</td></tr>
+<tr>
+    <td>No change</td>
+    <td><input type="radio" name="flag_0" value="0" /></td>
+    <td><input type="radio" name="flag_1" value="0" /></td>
+    <td><input type="radio" name="flag_2" value="0" /></td>
+    <td><input type="radio" name="flag_3" value="0" /></td>
+    <td><input type="radio" name="flag_4" value="0" /></td>
+</tr>
+<tr>
+    <td>Clear</td>
+    <td><input type="radio" name="flag_0" value="1" /></td>
+    <td><input type="radio" name="flag_1" value="1" /></td>
+    <td><input type="radio" name="flag_2" value="1" /></td>
+    <td><input type="radio" name="flag_3" value="1" /></td>
+    <td><input type="radio" name="flag_4" value="1" /></td>
+</tr>
+<tr>
+    <td>Set</td>
+    <td><input type="radio" name="flag_0" value="2" /></td>
+    <td><input type="radio" name="flag_1" value="2" /></td>
+    <td><input type="radio" name="flag_2" value="2" /></td>
+    <td><input type="radio" name="flag_3" value="2" /></td>
+    <td><input type="radio" name="flag_4" value="2" /></td>
+</tr>
+<tr>
+    <td>Toggle</td>
+    <td><input type="radio" name="flag_0" value="3" /></td>
+    <td><input type="radio" name="flag_1" value="3" /></td>
+    <td><input type="radio" name="flag_2" value="3" /></td>
+    <td><input type="radio" name="flag_3" value="3" /></td>
+    <td><input type="radio" name="flag_4" value="3" /></td>
+</tr>
+</table>
+<s:submit ac="users-set-pending" />
+</s:form>
+
+<h2><s:_>Disqualify selected users</s:_></h2>
+<s:form onsubmit="usersDisqualifySubmit()">
+<s:hidden id="UsersDisqualifyIdList" name="new_user_id_list" value ="" />
+<p><s:_>Disqualification explanation</s:_>:<br>
+<textarea name="disq_comment" rows="5" cols="60">
+</textarea></p>
+
+<table class="b0"><tr>
+<td class="b0"><s:submit ac="users-set-disqualified" /></td>
+</tr></table>
+</s:form>
+
+<h2><s:_>Add new user</s:_></h2>
+<s:form>
+<table>
+<tr><td><input type="text" size="32" name="add_login"/></td><td><s:submit ac="users-add-by-login" /></td><td><s:_>Add a new user specifying his/her login</s:_></td></tr>
+<tr><td><input type="text" size="32" name="add_user_id"/></td><td><s:submit ac="users-add-by-user-id" /></td><td><s:_>Add a new user specifying his/her User Id</s:_></td></tr>
+</table>
+</s:form>
+
+<h2>Protocol generation</h2>
+
+<s:form onsubmit="printProtocolSubmit()">
+<s:hidden id="ProtocolIdList" name="new_user_id_list" value ="" />
+<table>
+<%  if (1 /*global->user_exam_protocol_header_txt*/) { %>
+<tr><td><s:submit ac="print-selected-user-protocol" /></td><td><s:_>Print the user examination protocols for the selected users</s:_></td></tr>
+<% } %>
+<%  if (1 /*global->full_exam_protocol_header_txt*/) { %>
+<tr><td><s:submit ac="print-selected-user-full-protocol" /></td><td><s:_>Print the user full examination protocols for the selected users</s:_></td></tr>
+<% } %>
+<%  if (1 /*global->full_exam_protocol_header_txt*/) { %>
+<tr><td><s:submit ac="print-selected-ufc-protocol" /></td><td><s:_>Print the user full cyphered examination protocols for the selected users</s:_></td></tr>
+<% } %>
+</table>
+</s:form>
+
+<h2>Virtual participation</h2>
+
+<s:form onsubmit="virtualStartSubmitSubmit()">
+<s:hidden id="VirtualIdList" name="new_user_id_list" value ="" />
+<table>
+<%  if (1 /*global->is_virtual*/) {%>
+<tr><td><s:submit ac="force-start-virtual" /></td><td><s:_>Force virtual contest start for the selected users</s:_></td></tr>
+<%  }%>
+</table>
+</s:form>
 
 <script type="text/javascript">
     var SID='<s:v value="phr->session_id" />';
@@ -76,11 +193,69 @@ function escapeHtml(string)
     return ('' + string).replace(htmlEscaper, function(match) { return htmlEscapes[match]; });
 }
 
+function makeUserIdList()
+{
+    var list = "";
+    $("#UsersTableTBody input[type=checkbox]:checked").each(function() {
+        var cb = $(this);
+        var etr = cb.closest("tr");
+        var uid = parseInt(etr.find("td:nth-child(3)").text());
+        list += " " + uid;
+    });
+    return list;
+}
+
+function usersRemoveRegistrationsSubmit()
+{
+    $("#UsersRemoveIdList").val(makeUserIdList());
+    return true;
+}
+
+function selectUserRange()
+{
+    var intext = $("#UserRangeInput").val();
+    var pattern = /^\s*(\d+)\s*-\s*(\d+)\s*$/;
+    var result = pattern.exec(intext);
+    var low = parseInt(result[1]);
+    var high = parseInt(result[2]);
+    var userSet = {};
+    for (var i = low; i <= high; ++i) {
+        userSet[i] = 1;
+    }
+    $("#UsersTableTBody input[type=checkbox]").each(function() {
+        var cb = $(this);
+        var etr = cb.closest("tr");
+        var uid = parseInt(etr.find("td:nth-child(3)").text());
+        if (uid in userSet) {
+            cb.prop("checked", true);
+        }
+    });
+    $("#UserRangeInput").val("");
+}
+
+function toggleUserSelection()
+{
+    $("#UsersTableTBody input[type=checkbox]").each(function() {
+        var cb = $(this);
+        cb.prop("checked", !cb.prop("checked"));
+    });
+    $("#ToggleAllCheckbox").prop("checked", false);
+}
+
+function clearUserSelection()
+{
+    $("div#UsersTableDiv input[type=checkbox]").each(function() {
+        var cb = $(this);
+        cb.prop("checked", false);
+    });
+}
+
 function updateTable(arr)
 {
     var text = "";
     for (var i = 0; i < arr.length; ++i) {
         var v = arr[i];
+        var sep = "";
         text += "<tr>";
         text += "<td class=\"b1\"><input type=\"checkbox\" /></th>";
         text += "<td class=\"b1\">" + v.serial + "</th>";
@@ -90,12 +265,31 @@ function updateTable(arr)
         text += "<td class=\"b1\">" + escapeHtml(v.status) + "</th>";
         // flags
         text += "<td class=\"b1\">";
-        text += "???";
+        if (v.is_banned) {
+            text += "banned";
+            sep = ", ";
+        }
+        if (v.is_invisible) {
+            text += "invisible";
+            sep = ", ";
+        }
+        if (v.is_locked) {
+            text += "locked";
+            sep = ", ";
+        }
+        if (v.is_incomplete) {
+            text += "incomplete";
+            sep = ", ";
+        }
+        if (v.is_disqualified) {
+            text += "disqualified";
+            sep = ", ";
+        }
         text += "</th>";
-        text += "<td class=\"b1\">" + escapeHtml(v.reg_date) + "</th>";
-        text += "<td class=\"b1\">" + escapeHtml(v.last_login_date) + "</th>";
-        text += "<td class=\"b1\">" + v.submit_count + "</th>";
-        text += "<td class=\"b1\">" + v.submit_size + "</th>";
+        text += "<td class=\"b1\">" + escapeHtml(v.create_time) + "</th>";
+        text += "<td class=\"b1\">" + escapeHtml(v.last_login_time) + "</th>";
+        text += "<td class=\"b1\">" + v.run_count + "</th>";
+        text += "<td class=\"b1\">" + v.run_size + "</th>";
         text += "<td class=\"b1\">" + v.clar_count + "</th>";
         text += "</tr>";
     }
