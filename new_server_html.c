@@ -124,6 +124,12 @@ ns_get_register_url(
         const struct contest_desc *cnts,
         const struct http_request_info *phr);
 
+static int
+parse_user_list(
+        struct http_request_info *phr,
+        serve_state_t cs,
+        intarray_t *uset);
+
 struct contest_extra *
 ns_get_contest_extra(int contest_id)
 {
@@ -6241,37 +6247,19 @@ priv_print_users_exam_protocol(
   FILE *ff = 0;
   unsigned char bb[1024];
   unsigned char *ss = 0;
-  int locale_id = 0, i, x, n;
+  int locale_id = 0;
   intarray_t uset;
-  const unsigned char *s;
   int use_user_printer = 0;
   int full_report = 0;
   int use_cypher = 0;
-  int first_user_id = 0, last_user_id = -1;
+
+  memset(&uset, 0, sizeof(uset));
 
   if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  memset(&uset, 0, sizeof(uset));
-  for (i = 0; i < phr->param_num; i++) {
-    if (strncmp(phr->param_names[i], "user_", 5) != 0) continue;
-    if (sscanf((s = phr->param_names[i] + 5), "%d%n", &x, &n) != 1
-        || s[n] || x <= 0)
-      FAIL(NEW_SRV_ERR_INV_USER_ID);
-    if (teamdb_lookup(cs->teamdb_state, x) <= 0)
-      FAIL(NEW_SRV_ERR_INV_USER_ID);
-
-    XEXPAND2(uset);
-    uset.v[uset.u++] = x;
-  }
-
-  priv_parse_user_id_range(phr, &first_user_id, &last_user_id);
-  if (first_user_id > 0) {
-    for (i = first_user_id; i <= last_user_id; i++) {
-      XEXPAND2(uset);
-      uset.v[uset.u++] = i;
-    }
-  }
+  if (parse_user_list(phr, cs, &uset) < 0)
+    FAIL(NEW_SRV_ERR_INV_PARAM);
 
   if (phr->action == NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL) {
     full_report = 1;
@@ -6609,9 +6597,9 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = priv_print_user_exam_protocol,
   [NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL] = priv_print_user_exam_protocol,
   [NEW_SRV_ACTION_PRINT_UFC_PROTOCOL] = priv_print_user_exam_protocol,
-  [NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL] =priv_print_users_exam_protocol,
-  [NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL] =priv_print_users_exam_protocol,
-  [NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL] =priv_print_users_exam_protocol,
+  [NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL] = priv_print_users_exam_protocol,
+  [NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL] = priv_print_users_exam_protocol,
+  [NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL] = priv_print_users_exam_protocol,
   [NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL] = priv_print_problem_exam_protocol,
   [NEW_SRV_ACTION_MARK_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = priv_clear_displayed,
