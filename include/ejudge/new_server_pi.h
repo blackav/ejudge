@@ -156,11 +156,11 @@ typedef struct UserInfoPage
     int clar_count;
     int result_score;
 
-    signed char is_banned;
-    signed char is_invisible;
-    signed char is_locked;
-    signed char is_incomplete;
-    signed char is_disqualified;
+    ejbytebool_t is_banned;
+    ejbytebool_t is_invisible;
+    ejbytebool_t is_locked;
+    ejbytebool_t is_incomplete;
+    ejbytebool_t is_disqualified;
 } UserInfoPage;
 
 typedef struct UserInfoPageArray
