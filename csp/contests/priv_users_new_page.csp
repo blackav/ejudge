@@ -74,7 +74,7 @@
 <option value="1">PENDING</option>
 <option value="2">REJECTED</option>
 </select>
-<s:submit ac="users-set-pending" />
+<s:submit ac="users-set-status" />
 </s:form>
 
 <s:form onsubmit="usersChangeFlagsSubmit()">
@@ -114,7 +114,7 @@
     <td><input type="radio" name="flag_4" value="3" /></td>
 </tr>
 </table>
-<s:submit ac="users-set-pending" />
+<s:submit ac="users-change-flags" />
 </s:form>
 
 <h2><s:_>Disqualify selected users</s:_></h2>
