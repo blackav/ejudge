@@ -20,11 +20,11 @@
 
 <h2>Registered users</h2>
 
-<table>
+<table><tr>
     <td><input type="checkbox" name="show_not_ok" id="ShowNotOkUsers" onchange="showNotOkUsersChange()">Show Pending/Rejected</td>
-    <td><input type="checkbox" name="show_not_ok" id="ShowNotOkUsers" onchange="showInvisibleUsersChange()">Show Invisible</td>
-    <td><input type="checkbox" name="show_not_ok" id="ShowNotOkUsers" onchange="showBannedUsersChange()">Show Banned/Locked/Disqual</td>
-</table>
+    <td><input type="checkbox" name="show_invisible" id="ShowInvisibleUsers" onchange="showInvisibleUsersChange()">Show Invisible</td>
+    <td><input type="checkbox" name="show_banned" id="ShowBannedUsers" onchange="showBannedUsersChange()">Show Banned/Locked/Disqualified</td>
+</tr></table>
 
 <div id="UsersTableDiv">
     <table class="b1">
@@ -56,7 +56,7 @@
 
 <input type="button" value="Clear selection" onclick="clearUserSelection()" /><br/>
 
-<input type="text" name="range" value="" id="UserRangeInput" /><input type="button" value="Select Range" onclick="selectUserRange()" /><br/>
+<p>Range (UID1-UID2): <input type="text" name="range" value="" id="UserRangeInput" /><input type="button" value="Select Range" onclick="selectUserRange()" /></p>
 
 <h2>Change registration status</h2>
 
@@ -142,6 +142,10 @@
 <s:form onsubmit="printProtocolSubmit()">
 <s:hidden id="ProtocolIdList" name="new_user_id_list" value ="" />
 <table>
+<tr><td><input type="checkbox" name="include_testing_report" />Include testing report</td><td>&nbsp;</td></tr>
+<tr><td><input type="checkbox" name="run_latex" />Run latex automatically</td><td>&nbsp;</td></tr>
+<tr><td><input type="checkbox" name="print_pdfs" />Print generated PDFs</td><td>&nbsp;</td></tr>
+<tr><td><input type="checkbox" name="clear_working_directory" />Clear working directory after printing</td><td>&nbsp;</td></tr>
 <%  if (1 /*global->user_exam_protocol_header_txt*/) { %>
 <tr><td><s:submit ac="print-selected-user-protocol" /></td><td><s:_>Print the user examination protocols for the selected users</s:_></td></tr>
 <% } %>
@@ -172,6 +176,12 @@
     var contest_id='<s:v value="phr->contest_id" escape="false" />';
 
     var action_users_new_ajax=<s:ac ac="view-users-new-ajax" />;
+    var action_main_page=<s:ac ac="main-page" />;
+    var action_view_user_info=<s:ac ac="view-user-info" />;
+
+    var show_not_ok = false;
+    var show_invisible = false;
+    var show_banned = false;
 </script>
 
 <script type="text/javascript">
@@ -205,9 +215,56 @@ function makeUserIdList()
     return list;
 }
 
+function showNotOkUsersChange()
+{
+    show_not_ok = $("#ShowNotOkUsers").prop("checked");
+    loadTable();
+}
+
+function showInvisibleUsersChange()
+{
+    show_invisible = $("#ShowInvisibleUsers").prop("checked");
+    loadTable();
+}
+
+function showBannedUsersChange()
+{
+    show_banned = $("#ShowBannedUsers").prop("checked");
+    loadTable();
+}
+
 function usersRemoveRegistrationsSubmit()
 {
-    $("#UsersRemoveIdList").val(makeUserIdList());
+    var ids = makeUserIdList();
+    $("#UsersRemoveIdList").val(ids);
+    return true;
+}
+
+function usersChangeRegistrationsSubmit()
+{
+    var ids = makeUserIdList();
+    $("#UsersChangeIdList").val(ids);
+    return true;
+}
+
+function usersChangeFlagsSubmit()
+{
+    var ids = makeUserIdList();
+    $("#FlagsChangeIdList").val(ids);
+    return true;
+}
+
+function usersDisqualifySubmit()
+{
+    var ids = makeUserIdList();
+    $("#UsersDisqualifyIdList").val(ids);
+    return true;
+}
+
+function printProtocolSubmit()
+{
+    var ids = makeUserIdList();
+    $("#ProtocolIdList").val(ids);
     return true;
 }
 
@@ -257,12 +314,31 @@ function updateTable(arr)
         var v = arr[i];
         var sep = "";
         text += "<tr>";
-        text += "<td class=\"b1\"><input type=\"checkbox\" /></th>";
-        text += "<td class=\"b1\">" + v.serial + "</th>";
-        text += "<td class=\"b1\">" + v.user_id + "</th>";
-        text += "<td class=\"b1\">" + escapeHtml(v.user_login) + "</th>";
-        text += "<td class=\"b1\">" + escapeHtml(v.user_name) + "</th>";
-        text += "<td class=\"b1\">" + escapeHtml(v.status) + "</th>";
+        text += "<td class=\"b1\"><input type=\"checkbox\" /></td>";
+        text += "<td class=\"b1\">" + v.serial + "</td>";
+        text += "<td class=\"b1\"><a href=\"";
+        text += self_url;
+        text += "?SID=";
+        text += SID;
+        text += "&amp;action=";
+        text += action_main_page;
+        text += "&amp;filter_expr=";
+        text += encodeURIComponent("uid==" + v.user_id);
+        text += "\">";
+        text += v.user_id;
+        text += "</a></td>";
+        text += "<td class=\"b1\"><a href=\"";
+        text += self_url;
+        text += "?SID=";
+        text += SID;
+        text += "&amp;action=";
+        text += action_view_user_info;
+        text += "&amp;user_id=";
+        text += v.user_id;
+        text += "\">";
+        text += escapeHtml(v.user_login) + "</a></td>";
+        text += "<td class=\"b1\">" + escapeHtml(v.user_name) + "</td>";
+        text += "<td class=\"b1\">" + escapeHtml(v.status) + "</td>";
         // flags
         text += "<td class=\"b1\">";
         if (v.is_banned) {
@@ -285,12 +361,12 @@ function updateTable(arr)
             text += "disqualified";
             sep = ", ";
         }
-        text += "</th>";
-        text += "<td class=\"b1\">" + escapeHtml(v.create_time) + "</th>";
-        text += "<td class=\"b1\">" + escapeHtml(v.last_login_time) + "</th>";
-        text += "<td class=\"b1\">" + v.run_count + "</th>";
-        text += "<td class=\"b1\">" + v.run_size + "</th>";
-        text += "<td class=\"b1\">" + v.clar_count + "</th>";
+        text += "</td>";
+        text += "<td class=\"b1\">" + escapeHtml(v.create_time) + "</td>";
+        text += "<td class=\"b1\">" + escapeHtml(v.last_login_time) + "</td>";
+        text += "<td class=\"b1\">" + v.run_count + "</td>";
+        text += "<td class=\"b1\">" + v.run_size + "</td>";
+        text += "<td class=\"b1\">" + v.clar_count + "</td>";
         text += "</tr>";
     }
     $("#UsersTableDiv > table > tbody").html(text);
@@ -304,7 +380,9 @@ function loadTable()
         data: {
             SID: SID,
             action: action_users_new_ajax,
-            showHidden: 1
+            show_not_ok : show_not_ok,
+            show_invisible : show_invisible,
+            show_banned : show_banned
         },
         contentType: "application/json; charset=utf-8",
         dataType: "json",

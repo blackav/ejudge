@@ -112,6 +112,9 @@ csp_execute_priv_users_new_ajax(
     const struct section_global_data *global = extra->serve_state->global;
     int new_contest_id = cnts->id;
     if (cnts->user_contest_num > 0) new_contest_id = cnts->user_contest_num;
+    int show_not_ok = 0;
+    int show_invisible = 0;
+    int show_banned = 0;
 
     if (ns_open_ul_connection(phr->fw_state) < 0) {
         asprintf(&pg->message, "Failed to open userlist server connection");
@@ -136,6 +139,10 @@ csp_execute_priv_users_new_ajax(
         goto cleanup;
     }
 
+    hr_cgi_param_jsbool_opt(phr, "show_not_ok", &show_not_ok, 0);
+    hr_cgi_param_jsbool_opt(phr, "show_invisible", &show_invisible, 0);
+    hr_cgi_param_jsbool_opt(phr, "show_banned", &show_banned, 0);
+
     XCALLOC(run_counts, users->user_map_size);
     XCALLOC(run_sizes, users->user_map_size);
     XCALLOC(clar_counts, users->user_map_size);
@@ -152,7 +159,20 @@ csp_execute_priv_users_new_ajax(
         const struct userlist_contest *uc = userlist_get_user_contest(u, new_contest_id);
         if (!uc) continue;
 
-        // additional filtering
+        if (uc->status != USERLIST_REG_OK && show_not_ok <= 0) {
+            continue;
+        }
+        int need_show = 0;
+        if ((uc->flags & (USERLIST_UC_BANNED | USERLIST_UC_DISQUALIFIED | USERLIST_UC_LOCKED)) && show_banned) {
+            need_show = 1;
+        }
+        if ((uc->flags & USERLIST_UC_INVISIBLE) && show_invisible) {
+            need_show = 1;
+        }
+        if (!(uc->flags & (USERLIST_UC_INVISIBLE | USERLIST_UC_BANNED | USERLIST_UC_DISQUALIFIED | USERLIST_UC_LOCKED))) {
+            need_show = 1;
+        }
+        if (!need_show) continue;
 
         UserInfoPage *up = NULL;
         XCALLOC(up, 1);
