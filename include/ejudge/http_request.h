@@ -2,7 +2,7 @@
 #ifndef __HTTP_REQUEST_H__
 #define __HTTP_REQUEST_H__
 
-/* Copyright (C) 2014-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -187,6 +187,13 @@ hr_cgi_param_int_opt(
 
 int
 hr_cgi_param_bool_opt(
+        struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val,
+        int default_value);
+
+int
+hr_cgi_param_jsbool_opt(
         struct http_request_info *phr,
         const unsigned char *name,
         int *p_val,

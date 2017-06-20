@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2014-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -188,6 +188,52 @@ hr_cgi_param_bool_opt(
         if (*p_val != 1) *p_val = 0;
     }
     return ret;
+}
+
+int
+hr_cgi_param_jsbool_opt(
+        struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val,
+        int default_value)
+{
+    const unsigned char *s;
+    int x;
+    long v;
+    char *eptr = NULL;
+
+    x = hr_cgi_param(phr, name, &s);
+    if (x < 0) {
+        return -1;
+    }
+    if (!x) {
+        if (p_val) *p_val = default_value;
+        return 0;
+    }
+    if (!s || !*s) {
+        if (p_val) *p_val = default_value;
+        return 0;
+    }
+    if (!strcasecmp(s, "false")) {
+        if (p_val) *p_val = 0;
+        return 0;
+    }
+    if (!strcasecmp(s, "true")) {
+        if (p_val) *p_val = 1;
+        return 0;
+    }
+    errno = 0;
+    v = strtol(s, &eptr, 10);
+    if (errno || *eptr) {
+        return -1;
+    }
+    if (v < 0) {
+        v = default_value;
+    } else if (v > 0) {
+        v = 1;
+    }
+    if (p_val) *p_val = v;
+    return 1;
 }
 
 int
