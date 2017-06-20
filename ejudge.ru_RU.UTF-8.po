@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-05-16 14:59+0300\n"
-"PO-Revision-Date: 2017-05-16 15:01+0300\n"
+"POT-Creation-Date: 2017-06-20 15:01+0300\n"
+"PO-Revision-Date: 2017-06-20 15:23+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -621,6 +621,9 @@ msgstr "Сменить язык"
 
 msgid "Change duration"
 msgstr "Изменить длительность"
+
+msgid "Change flags"
+msgstr "Сменить флаги"
 
 msgid "Change language"
 msgstr "Сменить язык"
@@ -3478,6 +3481,9 @@ msgstr "Установить права"
 
 msgid "Set priorities"
 msgstr "Установить приоритеты"
+
+msgid "Set status"
+msgstr "Установить статус"
 
 msgid "Set the BANNED flag for the selected users"
 msgstr "Установить флаг ЗАБЛОКИРОВАННОСТИ для отмеченных пользователей"
