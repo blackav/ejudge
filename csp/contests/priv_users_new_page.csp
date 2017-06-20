@@ -158,16 +158,17 @@
 </table>
 </s:form>
 
+<%  if (global->is_virtual > 0) {%>
+
 <h2>Virtual participation</h2>
 
-<s:form onsubmit="virtualStartSubmitSubmit()">
+<s:form onsubmit="virtualStartSubmit()">
 <s:hidden id="VirtualIdList" name="new_user_id_list" value ="" />
 <table>
-<%  if (1 /*global->is_virtual*/) {%>
 <tr><td><s:submit ac="force-start-virtual" /></td><td><s:_>Force virtual contest start for the selected users</s:_></td></tr>
-<%  }%>
 </table>
 </s:form>
+<%  }%>
 
 <script type="text/javascript">
     var SID='<s:v value="phr->session_id" />';
@@ -265,6 +266,13 @@ function printProtocolSubmit()
 {
     var ids = makeUserIdList();
     $("#ProtocolIdList").val(ids);
+    return true;
+}
+
+function virtualStartSubmit()
+{
+    var ids = makeUserIdList();
+    $("#VirtualIdList").val(ids);
     return true;
 }
 
