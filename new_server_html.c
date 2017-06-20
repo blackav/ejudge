@@ -1826,6 +1826,94 @@ priv_user_toggle_flags(
 }
 
 static int
+int_sort_func(const void *p1, const void *p2)
+{
+  int r;
+  if (!__builtin_sub_overflow(*(const int *) p1, *(const int *) p2, &r)) {
+    return r;
+  }
+  return *(const int*) p1;
+}
+
+static int
+parse_user_list(
+        struct http_request_info *phr,
+        serve_state_t cs,
+        intarray_t *uset)
+{
+  const unsigned char *s = NULL;
+  char *eptr;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int retval = -1;
+
+  if (hr_cgi_param(phr, "new_user_id_list", &s) > 0) {
+    while (1) {
+      while (isspace(*s)) ++s;
+      if (!*s) break;
+      errno = 0;
+      long v = strtol(s, &eptr, 10);
+      if (errno || (*eptr && !isspace(*eptr)) || v <= 0 || (int) v != v) {
+        if (phr->log_f) {
+          fprintf(phr->log_f, "invalid parameter new_user_id_list value %s", ARMOR(s));
+        }
+        goto cleanup;
+      }
+      s = eptr;
+      XEXPAND2(*uset);
+      uset->v[uset->u++] = v;
+    }
+  } else {
+    for (int i = 0; i < phr->param_num; i++) {
+      const unsigned char *p = phr->param_names[i];
+      if (strncmp(p, "user_", 5) != 0) continue;
+      errno = 0;
+      long v = strtol(p + 5, &eptr, 10);
+      if (!p[5] || errno || *eptr || v <= 0 || (int) v != v) {
+        if (phr->log_f) {
+          fprintf(phr->log_f, "invalid parameter name %s", ARMOR(p));
+        }
+        goto cleanup;
+      }
+      XEXPAND2(*uset);
+      uset->v[uset->u++] = v;
+    }
+    int first_user_id = 0, last_user_id = -1;
+    priv_parse_user_id_range(phr, &first_user_id, &last_user_id);
+    if (first_user_id > 0) {
+      for (int i = first_user_id; i <= last_user_id; i++) {
+        XEXPAND2(*uset);
+        uset->v[uset->u++] = i;
+      }
+    }
+  }
+
+  qsort(uset->v, uset->u, sizeof(uset->v[0]), int_sort_func);
+  if (uset->u > 0) {
+    int i = 0;
+    for (int j = 1; j < uset->u; ++j) {
+      if (uset->v[i] != uset->v[j] && ++i != j) {
+        uset->v[i] = uset->v[j];
+      }
+    }
+    uset->u = i + 1;
+  }
+
+  for (int i = 0; i < uset->u; ++i) {
+    if (teamdb_lookup(cs->teamdb_state, uset->v[i]) <= 0) {
+      if (phr->log_f) {
+        fprintf(phr->log_f, "invalid user id %d", uset->v[i]);
+      }
+      goto cleanup;
+    }
+  }
+  retval = 1;
+
+cleanup:;
+  html_armor_free(&ab);
+  return retval;
+}
+
+static int
 priv_force_start_virtual(
         FILE *fout,
         FILE *log_f,
@@ -1835,14 +1923,14 @@ priv_force_start_virtual(
 {
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
-  const unsigned char *s;
-  int retval = 0, i, n, x;
+  int retval = 0, i;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   intarray_t uset;
   struct timeval tt;
   long nsec;
   int run_id;
-  int first_user_id = 0, last_user_id = -1;
+
+  memset(&uset, 0, sizeof(uset));
 
   if (phr->role < USER_ROLE_JUDGE)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -1851,29 +1939,10 @@ priv_force_start_virtual(
   if (!global->is_virtual)
     FAIL(NEW_SRV_ERR_NOT_VIRTUAL);
 
-  memset(&uset, 0, sizeof(uset));
-  for (i = 0; i < phr->param_num; i++) {
-    if (strncmp(phr->param_names[i], "user_", 5) != 0) continue;
-    if (sscanf((s = phr->param_names[i] + 5), "%d%n", &x, &n) != 1
-        || s[n] || x <= 0) {
-      fprintf(phr->log_f, "invalid parameter name %s", ARMOR(phr->param_names[i]));
-      error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
-      retval = -1;
-      goto cleanup;
-    }
-    if (teamdb_lookup(cs->teamdb_state, x) <= 0)
-      FAIL(NEW_SRV_ERR_INV_USER_ID);
-
-    XEXPAND2(uset);
-    uset.v[uset.u++] = x;
-  }
-
-  priv_parse_user_id_range(phr, &first_user_id, &last_user_id);
-  if (first_user_id > 0) {
-    for (i = first_user_id; i <= last_user_id; i++) {
-      XEXPAND2(uset);
-      uset.v[uset.u++] = i;
-    }
+  if (parse_user_list(phr, cs, &uset) < 0) {
+    error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
+    retval = -1;
+    goto cleanup;
   }
 
   gettimeofday(&tt, 0);
