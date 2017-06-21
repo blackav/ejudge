@@ -929,7 +929,8 @@ full_user_report_generate(
         const serve_state_t cs,
         int user_id,
         int locale_id,
-        int use_cypher)
+        int use_cypher,
+        int include_testing_report)
 {
   const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob;
@@ -1424,11 +1425,11 @@ full_user_report_generate(
       xfree(num_txt); num_txt = 0; num_len = 0;
       xfree(src_txt); src_txt = 0; src_len = 0;
 
-      /*
-      if (run_is_report_available(re.status)) {
-        write_xml_tex_testing_report(fout, cs, run_id);
+      if (include_testing_report > 0) {
+        if (run_is_report_available(re.status)) {
+          write_xml_tex_testing_report(fout, cs, run_id);
+        }
       }
-      */
       break;
 
     case PROB_TYPE_TEXT_ANSWER:
@@ -2116,7 +2117,7 @@ ns_print_user_exam_protocol(
         goto cleanup;
     } else {
       if (full_user_report_generate(log_f, fout, tex_path, cnts, cs, user_id,
-                                    locale_id, use_cypher) < 0)
+                                    locale_id, use_cypher, 0 /* FIXME */) < 0)
         goto cleanup;
     }
   } else {
@@ -2209,7 +2210,7 @@ ns_print_user_exam_protocols(
           goto cleanup;
       } else {
         if (full_user_report_generate(log_f, fout, tex_path, cnts, cs, user_id,
-                                      locale_id, use_cypher) < 0)
+                                      locale_id, use_cypher, include_testing_report) < 0)
           goto cleanup;
       }
     } else {
@@ -2227,45 +2228,45 @@ ns_print_user_exam_protocols(
     (void) ps_path;
     (void) dvi_path;
     (void) err_path;
-    /*
-    snprintf(err_path, sizeof(err_path), "%s/%06d.err",
-             global->print_work_dir, user_id);
-    snprintf(dvi_path, sizeof(dvi_path), "%s/%06d.dvi",
-             global->print_work_dir, user_id);
-    if (invoke_latex(log_f, tex_path, err_path, global->print_work_dir, 1) < 0)
-      goto cleanup;
-    if (invoke_latex(log_f, tex_path, err_path, global->print_work_dir, 0) < 0)
-      goto cleanup;
-    if (invoke_dvips(log_f, dvi_path, err_path, global->print_work_dir, 1) < 0)
-      goto cleanup;
-    */
+    if (run_latex > 0) {
+      snprintf(err_path, sizeof(err_path), "%s/%06d.err",
+               global->print_work_dir, user_id);
+      snprintf(dvi_path, sizeof(dvi_path), "%s/%06d.dvi",
+               global->print_work_dir, user_id);
+      if (invoke_latex(log_f, tex_path, err_path, global->print_work_dir, 1) < 0)
+        goto cleanup;
+      if (invoke_latex(log_f, tex_path, err_path, global->print_work_dir, 0) < 0)
+        goto cleanup;
+      if (invoke_dvips(log_f, dvi_path, err_path, global->print_work_dir, 1) < 0)
+        goto cleanup;
+    }
   }
 
   // all PS files are ready, so print them all
   (void) tdb;
   (void) printer_name;
-  /*
-  for (i = 0; i < nuser; i++) {
-    user_id = user_ids[i];
+  if (print_pdfs > 0) {
+    for (i = 0; i < nuser; i++) {
+      user_id = user_ids[i];
 
-    printer_name = 0;
-    if (use_user_printer) {
-      memset(&tdb, 0, sizeof(tdb));
-      teamdb_export_team(cs->teamdb_state, user_id, &tdb);
-      if (tdb.user && tdb.user->cnts0)
-        printer_name = tdb.user->cnts0->printer_name;
-    }
+      printer_name = 0;
+      if (use_user_printer) {
+        memset(&tdb, 0, sizeof(tdb));
+        teamdb_export_team(cs->teamdb_state, user_id, &tdb);
+        if (tdb.user && tdb.user->cnts0)
+          printer_name = tdb.user->cnts0->printer_name;
+      }
 
-    snprintf(ps_path, sizeof(ps_path), "%s/%06d.ps",
-             global->print_work_dir, user_id);
+      snprintf(ps_path, sizeof(ps_path), "%s/%06d.ps",
+               global->print_work_dir, user_id);
 
-    snprintf(tst_path, sizeof(tst_path), "%s/.noprint", global->print_work_dir);
-    if (os_CheckAccess(tst_path, REUSE_F_OK) < 0) {
-      if (invoke_lpr(log_f, global, printer_name, ps_path, err_path, 1) < 0)
-        goto cleanup;
+      snprintf(tst_path, sizeof(tst_path), "%s/.noprint", global->print_work_dir);
+      if (os_CheckAccess(tst_path, REUSE_F_OK) < 0) {
+        if (invoke_lpr(log_f, global, printer_name, ps_path, err_path, 1) < 0)
+          goto cleanup;
+      }
     }
   }
-  */
 
   retval = 0;
 
