@@ -90,7 +90,7 @@
     <td><input type="radio" name="flag_4" value="0" /></td>
 </tr>
 <tr>
-    <td>Clear</td>
+    <td>Set</td>
     <td><input type="radio" name="flag_0" value="1" /></td>
     <td><input type="radio" name="flag_1" value="1" /></td>
     <td><input type="radio" name="flag_2" value="1" /></td>
@@ -98,7 +98,7 @@
     <td><input type="radio" name="flag_4" value="1" /></td>
 </tr>
 <tr>
-    <td>Set</td>
+    <td>Clear</td>
     <td><input type="radio" name="flag_0" value="2" /></td>
     <td><input type="radio" name="flag_1" value="2" /></td>
     <td><input type="radio" name="flag_2" value="2" /></td>
@@ -352,22 +352,27 @@ function updateTable(arr)
         // flags
         text += "<td class=\"b1\">";
         if (v.is_banned) {
+            text += sep;
             text += "banned";
             sep = ", ";
         }
         if (v.is_invisible) {
+            text += sep;
             text += "invisible";
             sep = ", ";
         }
         if (v.is_locked) {
+            text += sep;
             text += "locked";
             sep = ", ";
         }
         if (v.is_incomplete) {
+            text += sep;
             text += "incomplete";
             sep = ", ";
         }
         if (v.is_disqualified) {
+            text += sep;
             text += "disqualified";
             sep = ", ";
         }
