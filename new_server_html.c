@@ -128,7 +128,8 @@ static int
 parse_user_list(
         struct http_request_info *phr,
         serve_state_t cs,
-        intarray_t *uset);
+        intarray_t *uset,
+        int skip_user_check);
 
 struct contest_extra *
 ns_get_contest_extra(int contest_id)
@@ -1277,7 +1278,7 @@ priv_registration_operation(FILE *fout,
   // extract the selected set of users
   memset(&uset, 0, sizeof(uset));
 
-  if (parse_user_list(phr, cs, &uset) < 0) {
+  if (parse_user_list(phr, cs, &uset, 1) < 0) {
     error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
     retcode = -1;
     goto cleanup;
@@ -1311,10 +1312,19 @@ priv_registration_operation(FILE *fout,
                  uset.v[i], phr->contest_id, userlist_strerror(-n));
       }
       break;
+    case NEW_SRV_ACTION_USERS_SET_STATUS:
     case NEW_SRV_ACTION_USERS_SET_PENDING:
     case NEW_SRV_ACTION_USERS_SET_OK:
     case NEW_SRV_ACTION_USERS_SET_REJECTED:
       switch (phr->action) {
+      case NEW_SRV_ACTION_USERS_SET_STATUS:
+        hr_cgi_param_int_opt(phr, "new_status", &new_status, -1);
+        if (new_status < 0 || new_status >= USERLIST_REG_LAST) {
+          error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
+          retcode = -1;
+          goto cleanup;
+        }
+        break;
       case NEW_SRV_ACTION_USERS_SET_PENDING: 
         new_status = USERLIST_REG_PENDING;
         break;
@@ -1830,7 +1840,8 @@ static int
 parse_user_list(
         struct http_request_info *phr,
         serve_state_t cs,
-        intarray_t *uset)
+        intarray_t *uset,
+        int skip_user_check)
 {
   const unsigned char *s = NULL;
   char *eptr;
@@ -1889,12 +1900,14 @@ parse_user_list(
     uset->u = i + 1;
   }
 
-  for (int i = 0; i < uset->u; ++i) {
-    if (teamdb_lookup(cs->teamdb_state, uset->v[i]) <= 0) {
-      if (phr->log_f) {
-        fprintf(phr->log_f, "invalid user id %d", uset->v[i]);
+  if (skip_user_check <= 0) {
+    for (int i = 0; i < uset->u; ++i) {
+      if (teamdb_lookup(cs->teamdb_state, uset->v[i]) <= 0) {
+        if (phr->log_f) {
+          fprintf(phr->log_f, "invalid user id %d", uset->v[i]);
+        }
+        goto cleanup;
       }
-      goto cleanup;
     }
   }
   retval = 1;
@@ -1930,7 +1943,7 @@ priv_force_start_virtual(
   if (!global->is_virtual)
     FAIL(NEW_SRV_ERR_NOT_VIRTUAL);
 
-  if (parse_user_list(phr, cs, &uset) < 0) {
+  if (parse_user_list(phr, cs, &uset, 0) < 0) {
     error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
     retval = -1;
     goto cleanup;
@@ -6247,7 +6260,7 @@ priv_print_users_exam_protocol(
   if (opcaps_check(phr->caps, OPCAP_PRINT_RUN) < 0)
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-  if (parse_user_list(phr, cs, &uset) < 0)
+  if (parse_user_list(phr, cs, &uset, 0) < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
 
   hr_cgi_param_jsbool_opt(phr, "include_testing_report", &include_testing_report, 0);
@@ -6428,6 +6441,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   /* for priv_generic_operation */
   [NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_SET_PENDING] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_SET_STATUS] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_SET_OK] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_SET_REJECTED] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_SET_INVISIBLE] = priv_registration_operation,
@@ -6797,6 +6811,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_SET_PENDING] = priv_generic_operation,
+  [NEW_SRV_ACTION_USERS_SET_STATUS] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_SET_OK] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_SET_REJECTED] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_SET_INVISIBLE] = priv_generic_operation,
