@@ -137,6 +137,7 @@
 </table>
 </s:form>
 
+<% if (global->user_exam_protocol_header_txt || global->full_exam_protocol_header_txt || global->full_exam_protocol_header_txt) { %>
 <h2>Protocol generation</h2>
 
 <s:form onsubmit="printProtocolSubmit()">
@@ -146,17 +147,18 @@
 <tr><td><input type="checkbox" name="run_latex" />Run latex automatically</td><td>&nbsp;</td></tr>
 <tr><td><input type="checkbox" name="print_pdfs" />Print generated PDFs</td><td>&nbsp;</td></tr>
 <tr><td><input type="checkbox" name="clear_working_directory" />Clear working directory after printing</td><td>&nbsp;</td></tr>
-<%  if (1 /*global->user_exam_protocol_header_txt*/) { %>
+<%  if (global->user_exam_protocol_header_txt) { %>
 <tr><td><s:submit ac="print-selected-user-protocol" /></td><td><s:_>Print the user examination protocols for the selected users</s:_></td></tr>
 <% } %>
-<%  if (1 /*global->full_exam_protocol_header_txt*/) { %>
+<%  if (global->full_exam_protocol_header_txt) { %>
 <tr><td><s:submit ac="print-selected-user-full-protocol" /></td><td><s:_>Print the user full examination protocols for the selected users</s:_></td></tr>
 <% } %>
-<%  if (1 /*global->full_exam_protocol_header_txt*/) { %>
+<%  if (global->full_exam_protocol_header_txt) { %>
 <tr><td><s:submit ac="print-selected-ufc-protocol" /></td><td><s:_>Print the user full cyphered examination protocols for the selected users</s:_></td></tr>
 <% } %>
 </table>
 </s:form>
+<% } %>
 
 <%  if (global->is_virtual > 0) {%>
 
