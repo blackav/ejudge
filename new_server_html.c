@@ -1274,6 +1274,9 @@ priv_registration_operation(FILE *fout,
   int retcode = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char *disq_comment = 0;
+  enum { FLAGS_COUNT = 5 };
+  int flags[FLAGS_COUNT] = { 0, 0, 0, 0, 0 };
+  int flag_map[FLAGS_COUNT] = { USERLIST_UC_BANNED, USERLIST_UC_INVISIBLE, USERLIST_UC_LOCKED, USERLIST_UC_INCOMPLETE, USERLIST_UC_DISQUALIFIED };
 
   // extract the selected set of users
   memset(&uset, 0, sizeof(uset));
@@ -1292,6 +1295,13 @@ priv_registration_operation(FILE *fout,
       goto cleanup;
     }
     disq_comment = text_area_process_string(s, 0, 0);
+  }
+  if (phr->action == NEW_SRV_ACTION_USERS_CHANGE_FLAGS) {
+    hr_cgi_param_int_opt(phr, "flag_0", &flags[0], 0);
+    hr_cgi_param_int_opt(phr, "flag_1", &flags[1], 0);
+    hr_cgi_param_int_opt(phr, "flag_2", &flags[2], 0);
+    hr_cgi_param_int_opt(phr, "flag_3", &flags[3], 0);
+    hr_cgi_param_int_opt(phr, "flag_4", &flags[4], 0);
   }
 
   // FIXME: probably we need to sort user_ids and remove duplicates
@@ -1408,6 +1418,17 @@ priv_registration_operation(FILE *fout,
       if (n < 0) {
         ns_error(log_f, NEW_SRV_ERR_USER_FLAGS_CHANGE_FAILED,
                  uset.v[i], phr->contest_id, userlist_strerror(-n));
+      }
+      break;
+
+    case NEW_SRV_ACTION_USERS_CHANGE_FLAGS:
+      for (int j = 0; j < FLAGS_COUNT; ++j) {
+        if (flags[j] > 0 && flags[j] <= 3) {
+          // FIXME: handle error
+          userlist_clnt_change_registration(ul_conn, uset.v[i],
+                                            phr->contest_id, -1, flags[j],
+                                            flag_map[j]);
+        }
       }
       break;
 
@@ -6454,6 +6475,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_USERS_CLEAR_INCOMPLETE] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_SET_DISQUALIFIED] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_CLEAR_DISQUALIFIED] = priv_registration_operation,
+  [NEW_SRV_ACTION_USERS_CHANGE_FLAGS] = priv_registration_operation,
   [NEW_SRV_ACTION_USERS_ADD_BY_LOGIN] = priv_add_user_by_login,
   [NEW_SRV_ACTION_USERS_ADD_BY_USER_ID] = priv_add_user_by_user_id,
   [NEW_SRV_ACTION_PRIV_USERS_REMOVE] = priv_priv_user_operation,
@@ -6824,6 +6846,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_USERS_CLEAR_INCOMPLETE] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_SET_DISQUALIFIED] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_CLEAR_DISQUALIFIED] = priv_generic_operation,
+  [NEW_SRV_ACTION_USERS_CHANGE_FLAGS] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_ADD_BY_LOGIN] = priv_generic_operation,
   [NEW_SRV_ACTION_USERS_ADD_BY_USER_ID] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_USERS_REMOVE] = priv_generic_operation,
