@@ -1277,25 +1277,11 @@ priv_registration_operation(FILE *fout,
 
   // extract the selected set of users
   memset(&uset, 0, sizeof(uset));
-  for (i = 0; i < phr->param_num; i++) {
-    if (strncmp(phr->param_names[i], "user_", 5) != 0) continue;
-    if (sscanf((s = phr->param_names[i] + 5), "%d%n", &x, &n) != 1
-        || s[n] || x <= 0) {
-      fprintf(phr->log_f, "invalid parameter name %s", ARMOR(phr->param_names[i]));
-      error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
-      retcode = -1;
-      goto cleanup;
-    }
-    XEXPAND2(uset);
-    uset.v[uset.u++] = x;
-  }
 
-  priv_parse_user_id_range(phr, &first_user_id, &last_user_id);
-  if (first_user_id > 0) {
-    for (i = first_user_id; i <= last_user_id; i++) {
-      XEXPAND2(uset);
-      uset.v[uset.u++] = i;
-    }
+  if (parse_user_list(phr, cs, &uset) < 0) {
+    error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
+    retcode = -1;
+    goto cleanup;
   }
 
   if (phr->action == NEW_SRV_ACTION_USERS_SET_DISQUALIFIED) {
