@@ -1267,13 +1267,12 @@ priv_registration_operation(FILE *fout,
                             struct contest_extra *extra)
 {
   const serve_state_t cs = extra->serve_state;
-  int i, x, n, new_status, cmd, flag;
+  int i, n, new_status, cmd, flag;
   intarray_t uset;
   const unsigned char *s;
   int retcode = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char *disq_comment = 0;
-  int first_user_id = 0, last_user_id  = -1;
 
   // extract the selected set of users
   memset(&uset, 0, sizeof(uset));
