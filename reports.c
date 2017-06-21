@@ -2172,7 +2172,11 @@ ns_print_user_exam_protocols(
         int locale_id,
         int use_user_printer,
         int full_report,
-        int use_cypher)
+        int use_cypher,
+        int include_testing_report,
+        int run_latex,
+        int print_pdfs,
+        int clear_working_directory)
 {
   const struct section_global_data *global = cs->global;
   path_t tex_path;
@@ -2268,7 +2272,7 @@ ns_print_user_exam_protocols(
  cleanup:
   if (fout) fclose(fout);
   snprintf(tst_path, sizeof(tst_path), "%s/.noclean", global->print_work_dir);
-  if (os_CheckAccess(tst_path, REUSE_F_OK) < 0) {
+  if (os_CheckAccess(tst_path, REUSE_F_OK) < 0 && clear_working_directory > 0) {
     clear_directory(global->print_work_dir);
   }
   return retval;

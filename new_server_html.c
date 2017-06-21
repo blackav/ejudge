@@ -6252,6 +6252,10 @@ priv_print_users_exam_protocol(
   int use_user_printer = 0;
   int full_report = 0;
   int use_cypher = 0;
+  int include_testing_report = 0;
+  int run_latex = 0;
+  int print_pdfs = 0;
+  int clear_working_directory = 0;
 
   memset(&uset, 0, sizeof(uset));
 
@@ -6260,6 +6264,13 @@ priv_print_users_exam_protocol(
 
   if (parse_user_list(phr, cs, &uset) < 0)
     FAIL(NEW_SRV_ERR_INV_PARAM);
+
+  hr_cgi_param_jsbool_opt(phr, "include_testing_report", &include_testing_report, 0);
+  hr_cgi_param_jsbool_opt(phr, "run_latex", &run_latex, 0);
+  hr_cgi_param_jsbool_opt(phr, "print_pdfs", &print_pdfs, 0);
+  hr_cgi_param_jsbool_opt(phr, "clear_working_directory", &clear_working_directory, 0);
+  if (!run_latex) print_pdfs = 0;
+  if (!print_pdfs) clear_working_directory = 0;
 
   if (phr->action == NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL) {
     full_report = 1;
@@ -6279,7 +6290,11 @@ priv_print_users_exam_protocol(
        use_user_printer, full_report, use_cypher);
   } else {
     r = ns_print_user_exam_protocols(cnts, cs, ff, uset.u, uset.v, locale_id,
-                                     use_user_printer, full_report, use_cypher);
+                                     use_user_printer, full_report, use_cypher,
+                                     include_testing_report,
+                                     run_latex,
+                                     print_pdfs,
+                                     clear_working_directory);
   }
   close_memstream(ff); ff = 0;
   if (locale_id > 0) l10n_resetlocale();

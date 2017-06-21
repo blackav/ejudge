@@ -818,7 +818,11 @@ ns_print_user_exam_protocols(
         int locale_id,
         int use_user_printer,
         int full_report,
-        int use_cypher);
+        int use_cypher,
+        int include_testing_report,
+        int run_latex,
+        int print_pdfs,
+        int clear_working_directory);
 
 int
 ns_olympiad_final_user_report(
