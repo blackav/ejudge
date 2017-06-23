@@ -47,6 +47,8 @@ CREATE TABLE %scntsregs
        locked TINYINT NOT NULL DEFAULT 0,
        incomplete TINYINT NOT NULL DEFAULT 0,
        disqualified TINYINT NOT NULL DEFAULT 0,
+       privileged TINYINT NOT NULL DEFAULT 0,
+       reg_readonly TINYINT NOT NULL DEFAULT 0,
        createtime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
        changetime TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00',
        PRIMARY KEY (user_id, contest_id),
@@ -163,4 +165,4 @@ CREATE TABLE %sgroupmembers
     FOREIGN KEY u(user_id) REFERENCES logins(user_id)
 );
 
-INSERT INTO %sconfig VALUES ('version', '3');
+INSERT INTO %sconfig VALUES ('version', '4');

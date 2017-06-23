@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -187,12 +187,13 @@ parse_cntsreg(
 {
   int user_id = 0, is_banned = 0, is_invisible = 0, is_locked = 0;
   int is_incomplete = 0, is_disqualified = 0;
+  int is_privileged = 0, is_reg_readonly = 0;
   int flags = 0;
 
   if (state->mi->parse_spec(state->md, field_count, row, lengths,
                         CNTSREG_WIDTH, cntsreg_spec, c,
                         &user_id, &is_banned, &is_invisible,
-                        &is_locked, &is_incomplete, &is_disqualified) < 0)
+                            &is_locked, &is_incomplete, &is_disqualified, &is_privileged, &is_reg_readonly) < 0)
     goto fail;
   if (user_id <= 0 || c->id <= 0
       || c->status < 0 || c->status >= USERLIST_REG_LAST)
@@ -202,6 +203,8 @@ parse_cntsreg(
   if (is_locked) flags |= USERLIST_UC_LOCKED;
   if (is_incomplete) flags |= USERLIST_UC_INCOMPLETE;
   if (is_disqualified) flags |= USERLIST_UC_DISQUALIFIED;
+  if (is_privileged) flags |= USERLIST_UC_PRIVILEGED;
+  if (is_reg_readonly) flags |= USERLIST_UC_REG_READONLY;
   c->flags = flags;
   return 0;
 
@@ -218,15 +221,19 @@ unparse_cntsreg(
 {
   int is_banned = 0, is_invisible = 0, is_locked = 0;
   int is_incomplete = 0, is_disqualified = 0;
+  int is_privileged = 0, is_reg_readonly = 0;
 
   if ((c->flags & USERLIST_UC_BANNED)) is_banned = 1;
   if ((c->flags & USERLIST_UC_INVISIBLE)) is_invisible = 1;
   if ((c->flags & USERLIST_UC_LOCKED)) is_locked = 1;
   if ((c->flags & USERLIST_UC_INCOMPLETE)) is_incomplete = 1;
   if ((c->flags & USERLIST_UC_DISQUALIFIED)) is_disqualified = 1;
+  is_privileged = ((c->flags & USERLIST_UC_PRIVILEGED) != 0);
+  is_reg_readonly = ((c->flags & USERLIST_UC_REG_READONLY) != 0);
   state->mi->unparse_spec(state->md, fout, CNTSREG_WIDTH, cntsreg_spec, c,
-                      user_id, is_banned, is_invisible,
-                      is_locked, is_incomplete, is_disqualified);
+                          user_id, is_banned, is_invisible,
+                          is_locked, is_incomplete, is_disqualified,
+                          is_privileged, is_reg_readonly);
 }
 
 static int

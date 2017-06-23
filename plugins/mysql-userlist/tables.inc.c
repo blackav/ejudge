@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -47,7 +47,7 @@ static struct common_mysql_parse_spec cookie_spec[COOKIE_WIDTH] =
 };
 
 // the number of columns in `cntsregs' table
-enum { CNTSREG_WIDTH = 10 };
+enum { CNTSREG_WIDTH = 12 };
 
 #define CONTEST_OFFSET(f) XOFFSET(struct userlist_contest, f)
 static struct common_mysql_parse_spec cntsreg_spec[CNTSREG_WIDTH] =
@@ -68,9 +68,13 @@ static struct common_mysql_parse_spec cntsreg_spec[CNTSREG_WIDTH] =
   { 0, 'B', "incomplete", 0, 0 },
   //[7]    disqualified TINYINT NOT NULL DEFAULT 0,
   { 0, 'B', "disqualified", 0, 0 },
-  //[8]    createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  //[8]    privileged TINYINT NOT NULL DEFAULT 0,
+  { 0, 'B', "privileged", 0, 0 },
+  //[9]    reg_readonly TINYINT NOT NULL DEFAULT 0,
+  { 0, 'B', "reg_readonly", 0, 0 },
+  //[10]    createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   { 0, 't', "createtime", CONTEST_OFFSET(create_time), 0 },
-  //[9]    changetime TIMESTAMP DEFAULT 0,
+  //[11]    changetime TIMESTAMP DEFAULT 0,
   { 0, 't', "changetime", CONTEST_OFFSET(last_change_time), 0 },
 };
 

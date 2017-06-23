@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -540,7 +540,7 @@ check_func(void *data)
     err("invalid 'version' key value");
     return -1;
   }
-  // current version is 3, so cannot handle future version
+  // current version is 4, so cannot handle future version
   if (version == 1) {
     if (state->mi->simple_fquery(state->md, "CREATE TABLE %sgroups(group_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, group_name VARCHAR(128) NOT NULL UNIQUE KEY, description VARCHAR(512) DEFAULT NULL, created_by INT NOT NULL, create_time DATETIME NOT NULL, last_change_time DATETIME DEFAULT NULL, FOREIGN KEY (created_by) REFERENCES %slogins(user_id));", state->md->table_prefix, state->md->table_prefix) < 0)
       return -1;
@@ -558,7 +558,14 @@ check_func(void *data)
       return -1;
     version = 3;
   }
-  if (version != 3) {
+  if (version == 3) {
+    if (state->mi->simple_fquery(state->md, "ALTER TABLE %scntsregs ADD privileged TINYINT NOT NULL DEFAULT 0 AFTER disqualified, ADD reg_readonly TINYINT NOT NULL DEFAULT 0 AFTER privileged;", state->md->table_prefix) < 0)
+      return -1;
+    if (state->mi->simple_fquery(state->md, "UPDATE %sconfig SET config_val = '4' WHERE config_key = 'version' ;", state->md->table_prefix) < 0)
+      return -1;
+    version = 4;
+  }
+  if (version != 4) {
     err("cannot handle database version %d", version);
     return -1;
   }
@@ -2825,9 +2832,9 @@ get_info_list_iterator_func(
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "SELECT %slogins.* FROM %slogins, %scntsregs AS R WHERE %slogins.user_id = R.user_id AND R.contest_id = %d ", state->md->table_prefix, state->md->table_prefix, state->md->table_prefix, state->md->table_prefix, contest_id);
   if (!flag_mask) {
-    fprintf(cmd_f, " AND R.banned = 0 AND R.invisible = 0 AND R.locked = 0 AND R.incomplete = 0 AND R.disqualified = 0 ");
+    fprintf(cmd_f, " AND R.banned = 0 AND R.invisible = 0 AND R.locked = 0 AND R.incomplete = 0 AND R.disqualified = 0 AND R.privileged = 0 AND R.reg_readonly = 0 ");
   } else if (flag_mask != USERLIST_UC_ALL) {
-    fprintf(cmd_f, " AND ((R.banned = 0 AND R.invisible = 0 AND R.locked = 0 AND R.incomplete = 0 AND R.disqualified = 0) ");
+    fprintf(cmd_f, " AND ((R.banned = 0 AND R.invisible = 0 AND R.locked = 0 AND R.incomplete = 0 AND R.disqualified = 0 AND R.privileged = 0 AND R.reg_readonly = 0) ");
     if ((flag_mask & USERLIST_UC_BANNED))
       fprintf(cmd_f, " OR R.banned = 1 ");
     if ((flag_mask & USERLIST_UC_INVISIBLE))
@@ -2838,6 +2845,10 @@ get_info_list_iterator_func(
       fprintf(cmd_f, " OR R.incomplete = 1 ");
     if ((flag_mask & USERLIST_UC_DISQUALIFIED))
       fprintf(cmd_f, " OR R.disqualified = 1 ");
+    if ((flag_mask & USERLIST_UC_PRIVILEGED))
+      fprintf(cmd_f, " OR R.privileged = 1 ");
+    if ((flag_mask & USERLIST_UC_REG_READONLY))
+      fprintf(cmd_f, " OR R.reg_readonly = 1 ");
     fprintf(cmd_f, ") ");
   }
   fprintf(cmd_f, "ORDER BY %slogins.user_id ; ", state->md->table_prefix);
@@ -3023,6 +3034,14 @@ set_reg_flags_func(
       fprintf(cmd_f, "%sdisqualified = 1", sep);
       sep = ", ";
     }
+    if ((value & USERLIST_UC_PRIVILEGED)) {
+      fprintf(cmd_f, "%sprivileged = 1", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_REG_READONLY)) {
+      fprintf(cmd_f, "%sreg_readonly = 1", sep);
+      sep = ", ";
+    }
     break;
   case 2:                       /* clear */
     if ((value & USERLIST_UC_INVISIBLE)) {
@@ -3043,6 +3062,14 @@ set_reg_flags_func(
     }
     if ((value & USERLIST_UC_DISQUALIFIED)) {
       fprintf(cmd_f, "%sdisqualified = 0", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_PRIVILEGED)) {
+      fprintf(cmd_f, "%sprivileged = 0", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_REG_READONLY)) {
+      fprintf(cmd_f, "%sreg_readonly = 0", sep);
       sep = ", ";
     }
     break;
@@ -3067,6 +3094,14 @@ set_reg_flags_func(
       fprintf(cmd_f, "%sdisqualified = 1 - disqualified", sep);
       sep = ", ";
     }
+    if ((value & USERLIST_UC_PRIVILEGED)) {
+      fprintf(cmd_f, "%sprivileged = 1 - privileged", sep);
+      sep = ", ";
+    }
+    if ((value & USERLIST_UC_REG_READONLY)) {
+      fprintf(cmd_f, "%sreg_readonly = 1 - reg_readonly", sep);
+      sep = ", ";
+    }
     break;
   case 4:                       /* copy */
     fprintf(cmd_f, "%sinvisible = %d", sep, !!(value & USERLIST_UC_INVISIBLE));
@@ -3078,6 +3113,10 @@ set_reg_flags_func(
     fprintf(cmd_f, "%sincomplete = %d", sep, !!(value & USERLIST_UC_INCOMPLETE));
     sep = ", ";
     fprintf(cmd_f, "%sdisqualified = %d", sep, !!(value & USERLIST_UC_DISQUALIFIED));
+    sep = ", ";
+    fprintf(cmd_f, "%sprivileged = %d", sep, !!(value & USERLIST_UC_PRIVILEGED));
+    sep = ", ";
+    fprintf(cmd_f, "%sreg_readonly = %d", sep, !!(value & USERLIST_UC_REG_READONLY));
     sep = ", ";
     break;
   default:
@@ -3936,13 +3975,21 @@ check_user_reg_data_func(
   if (ui && ui->name && *ui->name && check_str(ui->name, name_accept_chars))
     nerr++;
 
-  if (!nerr && (c->flags & USERLIST_UC_INCOMPLETE)) {
-    val = 0;
-  } else if (nerr > 0 && !(c->flags & USERLIST_UC_INCOMPLETE)
-             && (!ui || !ui->cnts_read_only)) {
-    val = 1;
+  if ((c->flags & USERLIST_UC_PRIVILEGED)) {
+    if ((c->flags & USERLIST_UC_INCOMPLETE)) {
+      val = 0;
+    } else {
+      return 0;
+    }
   } else {
-    return 0;
+    if (!nerr && (c->flags & USERLIST_UC_INCOMPLETE)) {
+      val = 0;
+    } else if (nerr > 0 && !(c->flags & USERLIST_UC_INCOMPLETE)
+               && (!ui || !ui->cnts_read_only)) {
+      val = 1;
+    } else {
+      return 0;
+    }
   }
 
   if (state->mi->simple_fquery(state->md, "UPDATE %scntsregs SET incomplete = %d WHERE user_id = %d AND contest_id = %d ;", state->md->table_prefix, val, user_id, contest_id) < 0) return -1;
