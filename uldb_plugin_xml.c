@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2904,19 +2904,29 @@ check_user_reg_data_func(void *data, int user_id, int contest_id)
   if (ui && ui->name && *ui->name && check_str(ui->name, name_accept_chars))
     nerr++;
 
-  if (!nerr && (c->flags & USERLIST_UC_INCOMPLETE)) {
-    cm = (struct userlist_contest*) c;
-    cm->flags &= ~USERLIST_UC_INCOMPLETE;
-    state->dirty = 1;
-    state->flush_interval /= 2;
-    return 1;
-  } else if (nerr > 0 && !(c->flags & USERLIST_UC_INCOMPLETE)
-             && (!ui || !ui->cnts_read_only)) {
-    cm = (struct userlist_contest*) c;
-    cm->flags |= USERLIST_UC_INCOMPLETE;
-    state->dirty = 1;
-    state->flush_interval /= 2;
-    return 1;
+  if ((c->flags & USERLIST_UC_PRIVILEGED)) {
+    if ((c->flags & USERLIST_UC_INCOMPLETE)) {
+      cm = (struct userlist_contest*) c;
+      cm->flags &= ~USERLIST_UC_INCOMPLETE;
+      state->dirty = 1;
+      state->flush_interval /= 2;
+      return 1;
+    }
+  } else {
+    if (!nerr && (c->flags & USERLIST_UC_INCOMPLETE)) {
+      cm = (struct userlist_contest*) c;
+      cm->flags &= ~USERLIST_UC_INCOMPLETE;
+      state->dirty = 1;
+      state->flush_interval /= 2;
+      return 1;
+    } else if (nerr > 0 && !(c->flags & USERLIST_UC_INCOMPLETE)
+               && (!ui || !ui->cnts_read_only)) {
+      cm = (struct userlist_contest*) c;
+      cm->flags |= USERLIST_UC_INCOMPLETE;
+      state->dirty = 1;
+      state->flush_interval /= 2;
+      return 1;
+    }
   }
   return 0;
 }

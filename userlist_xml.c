@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -142,6 +142,7 @@ static char const * const attr_map[] =
   "locked",
   "incomplete",
   "disqualified",
+  "reg_readonly",
   "status",
   "last_pwdchange",
   "public",
@@ -813,6 +814,14 @@ parse_contest(char const *path, struct xml_tree *t,
       case USERLIST_A_DISQUALIFIED:
         if (xml_attr_bool(a, &tmp) < 0) return -1;
         if (tmp) reg->flags |= USERLIST_UC_DISQUALIFIED;
+        break;
+      case USERLIST_A_PRIVILEGED:
+        if (xml_attr_bool(a, &tmp) < 0) return -1;
+        if (tmp) reg->flags |= USERLIST_UC_PRIVILEGED;
+        break;
+      case USERLIST_A_REG_READONLY:
+        if (xml_attr_bool(a, &tmp) < 0) return -1;
+        if (tmp) reg->flags |= USERLIST_UC_REG_READONLY;
         break;
       case USERLIST_A_DATE:
         if (xml_parse_date(NULL, path, a->line, a->column, a->text,
@@ -1804,6 +1813,12 @@ userlist_unparse_contest(const struct userlist_contest *cc, FILE *f,
   }
   if ((cc->flags & USERLIST_UC_DISQUALIFIED)) {
     fprintf(f, " %s=\"yes\"", attr_map[USERLIST_A_DISQUALIFIED]);
+  }
+  if ((cc->flags & USERLIST_UC_PRIVILEGED)) {
+    fprintf(f, " %s=\"yes\"", attr_map[USERLIST_A_PRIVILEGED]);
+  }
+  if ((cc->flags & USERLIST_UC_REG_READONLY)) {
+    fprintf(f, " %s=\"yes\"", attr_map[USERLIST_A_REG_READONLY]);
   }
   if (cc->create_time) {
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_DATE],

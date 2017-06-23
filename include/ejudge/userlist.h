@@ -3,7 +3,7 @@
 #ifndef __USERLIST_H__
 #define __USERLIST_H__
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -175,6 +175,7 @@ enum
     USERLIST_A_LOCKED,
     USERLIST_A_INCOMPLETE,
     USERLIST_A_DISQUALIFIED,
+    USERLIST_A_REG_READONLY,
     USERLIST_A_STATUS,
     USERLIST_A_LAST_PWDCHANGE,
     USERLIST_A_PUBLIC,

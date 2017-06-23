@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3093,7 +3093,7 @@ cmd_team_login(
     send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
     return;
   }
-  if ((c->flags & USERLIST_UC_INCOMPLETE)) {
+  if (!(c->flags & USERLIST_UC_PRIVILEGED) && (c->flags & USERLIST_UC_INCOMPLETE)) {
     err("%s -> INCOMPLETE REGISTRATION", logbuf);
     send_reply(p, -ULS_ERR_INCOMPLETE_REG);
     return;
@@ -3280,7 +3280,7 @@ cmd_team_check_user(
     send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
     return;
   }
-  if ((c->flags & USERLIST_UC_INCOMPLETE)) {
+  if (!(c->flags & USERLIST_UC_PRIVILEGED) && (c->flags & USERLIST_UC_INCOMPLETE)) {
     err("%s -> INCOMPLETE REGISTRATION", logbuf);
     send_reply(p, -ULS_ERR_INCOMPLETE_REG);
     return;
@@ -4131,7 +4131,7 @@ cmd_team_check_cookie(
     send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
     return;
   }
-  if ((c->flags & USERLIST_UC_INCOMPLETE)) {
+  if (!(c->flags & USERLIST_UC_PRIVILEGED) && (c->flags & USERLIST_UC_INCOMPLETE)) {
     err("%s -> INCOMPLETE REGISTRATION", logbuf);
     send_reply(p, -ULS_ERR_INCOMPLETE_REG);
     return;
@@ -6995,7 +6995,7 @@ cmd_edit_registration(struct client_state *p, int pkt_len,
     }
     default_set_reg_flags(data->user_id, data->contest_id,
                           data->flags_cmd, data->new_flags);
-    if (!(data->new_flags & USERLIST_UC_INCOMPLETE))
+    if (!(data->new_flags & USERLIST_UC_PRIVILEGED) && !(data->new_flags & USERLIST_UC_INCOMPLETE))
       default_check_user_reg_data(data->user_id, data->contest_id);
   }
   update_userlist_table(data->contest_id);
@@ -8093,7 +8093,7 @@ cmd_get_cookie(
     if (!c || c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
         || (c->flags & USERLIST_UC_LOCKED))
       FAIL(ULS_ERR_CANNOT_PARTICIPATE, "NOT ALLOWED");
-    if ((c->flags & USERLIST_UC_INCOMPLETE))
+    if (!(c->flags & USERLIST_UC_PRIVILEGED) && (c->flags & USERLIST_UC_INCOMPLETE))
       FAIL(ULS_ERR_INCOMPLETE_REG, "INCOMPLETE REGISTRATION");
     if (ui) user_name = ui->name;
     if (!cookie->team_login) {
