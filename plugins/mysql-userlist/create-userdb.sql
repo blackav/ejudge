@@ -17,9 +17,9 @@ CREATE TABLE %slogins
        neverclean TINYINT NOT NULL DEFAULT 0,
        simplereg TINYINT NOT NULL DEFAULT 0,
        regtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-       logintime TIMESTAMP DEFAULT 0,
-       pwdtime TIMESTAMP DEFAULT 0,
-       changetime TIMESTAMP DEFAULT 0
+       logintime TIMESTAMP DEFAULT '0000-00-00 00:00:00',
+       pwdtime TIMESTAMP DEFAULT '0000-00-00 00:00:00',
+       changetime TIMESTAMP DEFAULT '0000-00-00 00:00:00'
        );
 
 CREATE TABLE %scookies
@@ -47,8 +47,8 @@ CREATE TABLE %scntsregs
        locked TINYINT NOT NULL DEFAULT 0,
        incomplete TINYINT NOT NULL DEFAULT 0,
        disqualified TINYINT NOT NULL DEFAULT 0,
-       createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-       changetime TIMESTAMP DEFAULT 0,
+       createtime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       changetime TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00',
        PRIMARY KEY (user_id, contest_id),
        FOREIGN KEY (user_id) REFERENCES logins (user_id)
        );
@@ -61,10 +61,10 @@ CREATE TABLE %susers
        username VARCHAR(512),
        pwdmethod TINYINT NOT NULL DEFAULT 0,
        password VARCHAR(128),
-       pwdtime TIMESTAMP DEFAULT 0,
-       createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-       changetime TIMESTAMP DEFAULT 0,
-       logintime TIMESTAMP DEFAULT 0,
+       pwdtime TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00',
+       createtime TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       changetime TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00',
+       logintime TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00',
        inst VARCHAR(512),
        inst_en VARCHAR (512),
        instshort VARCHAR (512),
@@ -110,7 +110,7 @@ CREATE TABLE %smembers
        contest_id INT UNSIGNED NOT NULL,
        role_id TINYINT NOT NULL,
        createtime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-       changetime TIMESTAMP DEFAULT 0,
+       changetime TIMESTAMP DEFAULT '0000-00-00 00:00:00',
        firstname VARCHAR(512),
        firstname_en VARCHAR(512),
        middlename VARCHAR(512),
