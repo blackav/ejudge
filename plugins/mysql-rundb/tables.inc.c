@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@ static const char create_runs_query[] =
 "        run_id INT UNSIGNED NOT NULL, "
 "        contest_id INT UNSIGNED NOT NULL, "
 "        size INT UNSIGNED NOT NULL DEFAULT 0, "
-"        create_time TIMESTAMP DEFAULT 0, "
+"        create_time TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
 "        create_nsec INT UNSIGNED NOT NULL DEFAULT 0, "
 "        user_id INT UNSIGNED NOT NULL, "
 "        prob_id INT UNSIGNED NOT NULL, "
@@ -48,7 +48,7 @@ static const char create_runs_query[] =
 "        exam_score0 INT NOT NULL, "
 "        exam_score1 INT NOT NULL, "
 "        exam_score2 INT NOT NULL, "
-"        last_change_time TIMESTAMP DEFAULT 0, "
+"        last_change_time TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
 "        last_change_nsec INT UNSIGNED NOT NULL, "
 "        is_marked TINYINT NOT NULL DEFAULT 0, "
 "        is_saved TINYINT NOT NULL DEFAULT 0, "
@@ -179,15 +179,15 @@ enum
 static const char create_runheaders_query[] =
 "CREATE TABLE %srunheaders( "
 "        contest_id INT UNSIGNED NOT NULL, "
-"        start_time TIMESTAMP DEFAULT 0, "
-"        sched_time TIMESTAMP DEFAULT 0, "
+"        start_time TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
+"        sched_time TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
 "        duration INT UNSIGNED, "
-"        stop_time TIMESTAMP DEFAULT 0, "
-"        finish_time TIMESTAMP DEFAULT 0, "
+"        stop_time TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
+"        finish_time TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
 "        saved_duration INT UNSIGNED, "
-"        saved_stop_time TIMESTAMP DEFAULT 0, "
-"        saved_finish_time TIMESTAMP DEFAULT 0, "
-"        last_change_time TIMESTAMP DEFAULT 0, "
+"        saved_stop_time TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
+"        saved_finish_time TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
+"        last_change_time TIMESTAMP NOT NULL DEFAULT '0000-00-00 00:00:00', "
 "        last_change_nsec INT UNSIGNED NOT NULL, "
 "        next_run_id INT NOT NULL DEFAULT 0, "
 "        PRIMARY KEY (contest_id)"
