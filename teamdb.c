@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -533,6 +533,12 @@ teamdb_convert_flags(int old_flags)
   if ((old_flags & USERLIST_UC_DISQUALIFIED)) {
     new_flags |= TEAM_DISQUALIFIED;
   }
+  if ((old_flags & USERLIST_UC_PRIVILEGED)) {
+    new_flags |= TEAM_PRIVILEGED;
+  }
+  if ((old_flags & USERLIST_UC_REG_READONLY)) {
+    new_flags |= TEAM_REG_READONLY;
+  }
 
   return new_flags;
 }
@@ -623,6 +629,10 @@ teamdb_export_team(teamdb_state_t state, int tid, struct teamdb_export *pdata)
     pdata->flags |= TEAM_INCOMPLETE;
   if ((u_flags & USERLIST_UC_DISQUALIFIED))
     pdata->flags |= TEAM_DISQUALIFIED;
+  if ((u_flags & USERLIST_UC_PRIVILEGED))
+    pdata->flags |= TEAM_PRIVILEGED;
+  if ((u_flags & USERLIST_UC_REG_READONLY))
+    pdata->flags |= TEAM_REG_READONLY;
   strncpy(pdata->login, u_login, TEAMDB_LOGIN_LEN - 1);
   strncpy(pdata->name, u_name, TEAMDB_NAME_LEN - 1);
   pdata->user = uu;
@@ -758,6 +768,12 @@ teamdb_get_user_status_map(teamdb_state_t state, int *p_size, int **p_map)
     }
     if ((old_flags & USERLIST_UC_DISQUALIFIED)) {
       new_flags |= TEAM_DISQUALIFIED;
+    }
+    if ((old_flags & USERLIST_UC_PRIVILEGED)) {
+      new_flags |= TEAM_PRIVILEGED;
+    }
+    if ((old_flags & USERLIST_UC_REG_READONLY)) {
+      new_flags |= TEAM_REG_READONLY;
     }
     map[i] = new_flags;
   }

@@ -2,7 +2,7 @@
 #ifndef __TEAMDB_H__
 #define __TEAMDB_H__
 
-/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,8 @@ enum
   TEAM_LOCKED       = 4,
   TEAM_INCOMPLETE   = 8,
   TEAM_DISQUALIFIED = 16,
+  TEAM_PRIVILEGED   = 32,
+  TEAM_REG_READONLY = 64
 };
 
 struct teamdb_state;
