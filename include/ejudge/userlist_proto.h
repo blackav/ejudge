@@ -3,7 +3,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -437,6 +437,8 @@ struct userlist_pk_create_user_2
   int cnts_is_locked_flag;
   int cnts_is_incomplete_flag;
   int cnts_is_disqualified_flag;
+  int cnts_is_privileged_flag;
+  int cnts_is_reg_readonly_flag;
   int cnts_use_reg_passwd_flag;
   int cnts_set_null_passwd_flag;
   int cnts_random_password_flag;

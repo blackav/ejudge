@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -82,6 +82,8 @@ userlist_clnt_create_user_2(
   out->cnts_is_locked_flag = params->cnts_is_locked_flag;
   out->cnts_is_incomplete_flag = params->cnts_is_incomplete_flag;
   out->cnts_is_disqualified_flag = params->cnts_is_disqualified_flag;
+  out->cnts_is_privileged_flag = params->cnts_is_privileged_flag;
+  out->cnts_is_reg_readonly_flag = params->cnts_is_reg_readonly_flag;
   out->cnts_use_reg_passwd_flag = params->cnts_use_reg_passwd_flag;
   out->cnts_set_null_passwd_flag = params->cnts_set_null_passwd_flag;
   out->cnts_random_password_flag = params->cnts_random_password_flag;

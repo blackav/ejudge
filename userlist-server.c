@@ -10092,6 +10092,8 @@ cmd_create_user_2(
     if (data->cnts_is_locked_flag) cnts_flags |= USERLIST_UC_LOCKED;
     if (data->cnts_is_incomplete_flag) cnts_flags |= USERLIST_UC_INCOMPLETE;
     if (data->cnts_is_disqualified_flag) cnts_flags |= USERLIST_UC_DISQUALIFIED;
+    if (data->cnts_is_privileged_flag) cnts_flags |= USERLIST_UC_PRIVILEGED;
+    if (data->cnts_is_reg_readonly_flag) cnts_flags |= USERLIST_UC_REG_READONLY;
     if (default_register_contest(user_id, data->contest_id, data->cnts_status, cnts_flags,
                                  cur_time, &cnts_reg) < 0) {
       err("%s -> cannot register user", logbuf);

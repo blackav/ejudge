@@ -5038,6 +5038,8 @@ super_serve_op_USER_CREATE_ONE_ACTION(
   up.cnts_is_locked_flag = params.is_locked;
   up.cnts_is_incomplete_flag = params.is_incomplete;
   up.cnts_is_disqualified_flag = params.is_disqualified;
+  up.cnts_is_privileged_flag = params.is_privileged;
+  up.cnts_is_reg_readonly_flag = params.is_reg_readonly;
   up.cnts_use_reg_passwd_flag = params.cnts_use_reg_passwd;
   up.cnts_set_null_passwd_flag = params.cnts_null_passwd;
   up.cnts_use_sha1_flag = params.cnts_sha1;
@@ -5227,6 +5229,8 @@ super_serve_op_USER_CREATE_MANY_ACTION(
     up.cnts_is_locked_flag = params.is_locked;
     up.cnts_is_incomplete_flag = params.is_incomplete;
     up.cnts_is_disqualified_flag = params.is_disqualified;
+    up.cnts_is_privileged_flag = params.is_privileged;
+    up.cnts_is_reg_readonly_flag = params.is_reg_readonly;
     up.cnts_use_reg_passwd_flag = params.cnts_use_reg_passwd;
     up.cnts_set_null_passwd_flag = params.cnts_null_passwd;
     up.cnts_random_password_flag = params.cnts_random_passwd;
@@ -5520,6 +5524,8 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
     up.cnts_is_locked_flag = params.is_locked;
     up.cnts_is_incomplete_flag = params.is_incomplete;
     up.cnts_is_disqualified_flag = params.is_disqualified;
+    up.cnts_is_privileged_flag = params.is_privileged;
+    up.cnts_is_reg_readonly_flag = params.is_reg_readonly;
     up.cnts_use_reg_passwd_flag = params.cnts_use_reg_passwd;
     up.cnts_set_null_passwd_flag = params.cnts_null_passwd;
     up.cnts_random_password_flag = params.cnts_random_passwd;
