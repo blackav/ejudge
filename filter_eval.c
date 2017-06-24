@@ -309,6 +309,8 @@ do_eval(struct filter_env *env,
   case TOK_USERLOCKED:
   case TOK_USERINCOMPLETE:
   case TOK_USERDISQUALIFIED:
+  case TOK_USERPRIVILEGED:
+  case TOK_USERREG_READONLY:
   case TOK_LATEST:
   case TOK_LATESTMARKED:
   case TOK_AFTEROK:
@@ -551,6 +553,34 @@ do_eval(struct filter_env *env,
       } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
         res->v.b = 0;
       } else if ((flags & TEAM_DISQUALIFIED)) {
+        res->v.b = 1;
+      } else {
+        res->v.b = 0;
+      }
+      break;
+    case TOK_USERPRIVILEGED:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      user_id = env->rentries[r1.v.i].user_id;
+      if (!user_id) {
+        res->v.b = 0;
+      } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
+        res->v.b = 0;
+      } else if ((flags & TEAM_PRIVILEGED)) {
+        res->v.b = 1;
+      } else {
+        res->v.b = 0;
+      }
+      break;
+    case TOK_USERREG_READONLY:
+      res->kind = TOK_BOOL_L;
+      res->type = FILTER_TYPE_BOOL;
+      user_id = env->rentries[r1.v.i].user_id;
+      if (!user_id) {
+        res->v.b = 0;
+      } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
+        res->v.b = 0;
+      } else if ((flags & TEAM_REG_READONLY)) {
         res->v.b = 1;
       } else {
         res->v.b = 0;
@@ -861,6 +891,34 @@ do_eval(struct filter_env *env,
     } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
       res->v.b = 0;
     } else if ((flags & TEAM_DISQUALIFIED)) {
+      res->v.b = 1;
+    } else {
+      res->v.b = 0;
+    }
+    break;
+  case TOK_CURUSERPRIVILEGED:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    user_id = env->cur->user_id;
+    if (!user_id) {
+      res->v.b = 0;
+    } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
+      res->v.b = 0;
+    } else if ((flags & TEAM_PRIVILEGED)) {
+      res->v.b = 1;
+    } else {
+      res->v.b = 0;
+    }
+    break;
+  case TOK_CURUSERREG_READONLY:
+    res->kind = TOK_BOOL_L;
+    res->type = FILTER_TYPE_BOOL;
+    user_id = env->cur->user_id;
+    if (!user_id) {
+      res->v.b = 0;
+    } else if ((flags = teamdb_get_flags(env->teamdb_state, user_id)) < 0) {
+      res->v.b = 0;
+    } else if ((flags & TEAM_REG_READONLY)) {
       res->v.b = 1;
     } else {
       res->v.b = 0;

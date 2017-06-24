@@ -160,6 +160,10 @@ static void *filter_expr_user_data;
 %token TOK_CURUSERINCOMPLETE "curuserincomplete"
 %token TOK_USERDISQUALIFIED "userdisqualified"
 %token TOK_CURUSERDISQUALIFIED "curuserdisqualified"
+%token TOK_USERPRIVILEGED "userprivileged"
+%token TOK_CURUSERPRIVILEGED "curuserprivileged"
+%token TOK_USERREG_READONLY "userreg_readonly"
+%token TOK_CURUSERREG_READONLY "curuserreg_readonly"
 %token TOK_LATEST    "latest"
 %token TOK_CURLATEST "curlatest"
 %token TOK_LATESTMARKED "latestmarked"
@@ -379,6 +383,12 @@ exprA :
 | "userdisqualified" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "userdisqualified" { $1->kind = TOK_CURUSERDISQUALIFIED; $$ = $1; }
 | "curuserdisqualified" { $$ = $1; }
+| "userprivileged" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "userprivileged" { $1->kind = TOK_CURUSERPRIVILEGED; $$ = $1; }
+| "curuserprivileged" { $$ = $1; }
+| "userreg_readonly" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "userreg_readonly" { $1->kind = TOK_CURUSERREG_READONLY; $$ = $1; }
+| "curuserreg_readonly" { $$ = $1; }
 | "latest" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "latest" { $1->kind = TOK_CURLATEST; $$ = $1; }
 | "curlatest" { $$ = $1; }

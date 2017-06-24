@@ -161,6 +161,10 @@ lett    [A-Za-z_]
 "curuserincomplete" { TT(TOK_CURUSERINCOMPLETE, FILTER_TYPE_BOOL); }
 "userdisqualified" { TT(TOK_USERDISQUALIFIED, FILTER_TYPE_BOOL); }
 "curuserdisqualified" { TT(TOK_CURUSERDISQUALIFIED, FILTER_TYPE_BOOL); }
+"userprivileged" { TT(TOK_USERPRIVILEGED, FILTER_TYPE_BOOL); }
+"curuserprivileged" { TT(TOK_CURUSERPRIVILEGED, FILTER_TYPE_BOOL); }
+"userreg_readonly" { TT(TOK_USERREG_READONLY, FILTER_TYPE_BOOL); }
+"curuserreg_readonly" { TT(TOK_CURUSERREG_READONLY, FILTER_TYPE_BOOL); }
 "latest" { TT(TOK_LATEST, FILTER_TYPE_BOOL); }
 "curlatest" { TT(TOK_CURLATEST, FILTER_TYPE_BOOL); }
 "latestmarked" { TT(TOK_LATESTMARKED, FILTER_TYPE_BOOL); }
