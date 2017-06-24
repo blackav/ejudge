@@ -916,10 +916,12 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
   opcap_t gcaps = 0, caps = 0;
   int r;
   int need_privileged = 0, need_invisible = 0, need_banned = 0, need_locked = 0, need_disqualified = 0;
+  int need_reg_privileged = 0, need_reg_readonly = 0;
   int operation = 0;
   const unsigned char *button_label = 0;
   int status = USERLIST_REG_REJECTED;
   int invisible_op = 0, banned_op = 0, locked_op = 0, incomplete_op = 0, disqualified_op = 0;
+  int privileged_op = 0, reg_readonly_op = 0;
   int is_set_changed = 0;
   const int *cnts_id_list = 0;
   int cnts_id_count = 0;
@@ -975,11 +977,15 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     hr_cgi_param_int_opt(phr, "locked_op", &locked_op, 0);
     hr_cgi_param_int_opt(phr, "incomplete_op", &incomplete_op, 0);
     hr_cgi_param_int_opt(phr, "disqualified_op", &disqualified_op, 0);
+    hr_cgi_param_int_opt(phr, "privileged_op", &privileged_op, 0);
+    hr_cgi_param_int_opt(phr, "reg_readonly_op", &reg_readonly_op, 0);
     if (invisible_op < 0 || invisible_op > 3) invisible_op = 0;
     if (banned_op < 0 || banned_op > 3) banned_op = 0;
     if (locked_op < 0 || locked_op > 3) locked_op = 0;
     if (incomplete_op < 0 || incomplete_op > 3) incomplete_op = 0;
     if (disqualified_op < 0 || disqualified_op > 3) disqualified_op = 0;
+    if (privileged_op < 0 || privileged_op > 3) privileged_op = 0;
+    if (reg_readonly_op < 0 || reg_readonly_op > 3) reg_readonly_op = 0;
     break;
   case SSERV_CMD_USER_SEL_CREATE_REG_PAGE:
   case SSERV_CMD_USER_SEL_CREATE_REG_AND_COPY_PAGE:
@@ -1172,7 +1178,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
              phr->html_name, contest_id);
     break;
   case SSERV_CMD_USER_SEL_CHANGE_REG_FLAGS_PAGE:
-    if (!(invisible_op + banned_op + locked_op + incomplete_op + disqualified_op)) {
+    if (!(invisible_op + banned_op + locked_op + incomplete_op + disqualified_op + privileged_op + reg_readonly_op)) {
       ss_redirect_2(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, contest_id, group_id, 0, marked_str);
       goto cleanup;
     }
@@ -1317,6 +1323,8 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     html_hidden(out_f, "locked_op", "%d", locked_op);
     html_hidden(out_f, "incomplete_op", "%d", incomplete_op);
     html_hidden(out_f, "disqualified_op", "%d", disqualified_op);
+    html_hidden(out_f, "privileged_op", "%d", privileged_op);
+    html_hidden(out_f, "reg_readonly_op", "%d", reg_readonly_op);
     fprintf(out_f, "<p>The registration flags are to be changed for the following %d users as follows:</p>\n",
             user_count);
     cl = " class=\"b0\"";
@@ -1340,6 +1348,14 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     if (disqualified_op > 0) {
       fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>",
               cl, "Disqualified", cl, flag_op_legends[disqualified_op]);
+    }
+    if (privileged_op > 0) {
+      fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>",
+              cl, "Privileged", cl, flag_op_legends[privileged_op]);
+    }
+    if (reg_readonly_op > 0) {
+      fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>",
+              cl, "Reg. read-only", cl, flag_op_legends[reg_readonly_op]);
     }
     fprintf(out_f, "</table>\n");
     operation = SSERV_CMD_USER_SEL_CHANGE_REG_FLAGS_ACTION;
@@ -1464,6 +1480,16 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
           fprintf(out_f, "%s%s", s, "disqualified");
           s = ", ";
         }
+        if ((reg->flags & USERLIST_UC_PRIVILEGED)) {
+          need_reg_privileged = 1;
+          fprintf(out_f, "%s%s", s, "privileged");
+          s = ", ";
+        }
+        if ((reg->flags & USERLIST_UC_REG_READONLY)) {
+          need_reg_readonly = 1;
+          fprintf(out_f, "%s%s", s, "reg_readonly");
+          s = ", ";
+        }
       }
       if (!*s) fprintf(out_f, "&nbsp;");
       fprintf(out_f, "</td>");
@@ -1494,6 +1520,14 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     if (need_disqualified) {
       fprintf(out_f, "<tr><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" /></td><td%s>%s</td></tr>\n",
               cl, "include_disqualified", cl, "Peform the operation even for DISQUALIFIED users");
+    }
+    if (need_reg_privileged) {
+      fprintf(out_f, "<tr><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" /></td><td%s>%s</td></tr>\n",
+              cl, "include_reg_privileged", cl, "Peform the operation even for PRIVILEGED (flags) users");
+    }
+    if (need_reg_readonly) {
+      fprintf(out_f, "<tr><td%s><input type=\"checkbox\" name=\"%s\" value=\"1\" /></td><td%s>%s</td></tr>\n",
+              cl, "include_reg_readonly", cl, "Peform the operation even for REG. READONLY users");
     }
     fprintf(out_f, "</table>");
   }
@@ -1535,6 +1569,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
   const struct contest_desc *cnts = 0, *other_cnts = 0;
   int status = -1;
   int invisible_op = 0, banned_op = 0, locked_op = 0, incomplete_op = 0, disqualified_op = 0;
+  int privileged_op = 0, reg_readonly_op = 0;
   int clear_mask = 0, set_mask = 0, toggle_mask = 0;
   int other_contest_id = 0;
   int other_group_id = 0;
@@ -1545,6 +1580,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
   const struct userlist_user *u = 0;
   const struct userlist_contest *reg = 0;
   int include_privileged = 0, include_invisible = 0, include_banned = 0, include_locked = 0, include_disqualified = 0;
+  int include_reg_privileged = 0, include_reg_readonly = 0;
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   hr_cgi_param_int_opt(phr, "group_id", &group_id, 0);
@@ -1581,6 +1617,10 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
   if (include_locked != 1) include_locked = 0;
   hr_cgi_param_int_opt(phr, "include_disqualified", &include_disqualified, 0);
   if (include_disqualified != 1) include_disqualified = 0;
+  hr_cgi_param_int_opt(phr, "include_reg_privileged", &include_reg_privileged, 0);
+  if (include_reg_privileged != 1) include_reg_privileged = 0;
+  hr_cgi_param_int_opt(phr, "include_reg_readonly", &include_reg_readonly, 0);
+  if (include_reg_readonly != 1) include_reg_readonly = 0;
 
   /* additional parameters */
   switch (phr->action) {
@@ -1594,11 +1634,15 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
     hr_cgi_param_int_opt(phr, "locked_op", &locked_op, 0);
     hr_cgi_param_int_opt(phr, "incomplete_op", &incomplete_op, 0);
     hr_cgi_param_int_opt(phr, "disqualified_op", &disqualified_op, 0);
+    hr_cgi_param_int_opt(phr, "privileged_op", &privileged_op, 0);
+    hr_cgi_param_int_opt(phr, "reg_readonly_op", &reg_readonly_op, 0);
     if (invisible_op < 0 || invisible_op > 3) invisible_op = 0;
     if (banned_op < 0 || banned_op > 3) banned_op = 0;
     if (locked_op < 0 || locked_op > 3) locked_op = 0;
     if (incomplete_op < 0 || incomplete_op > 3) incomplete_op = 0;
     if (disqualified_op < 0 || disqualified_op > 3) disqualified_op = 0;
+    if (privileged_op < 0 || privileged_op > 3) privileged_op = 0;
+    if (reg_readonly_op < 0 || reg_readonly_op > 3) reg_readonly_op = 0;
     if (invisible_op == 1) {
       clear_mask |= USERLIST_UC_INVISIBLE;
     } else if (invisible_op == 2) {
@@ -1633,6 +1677,20 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
       set_mask |= USERLIST_UC_DISQUALIFIED;
     } else if (disqualified_op == 3) {
       toggle_mask |= USERLIST_UC_DISQUALIFIED;
+    }
+    if (privileged_op == 1) {
+      clear_mask |= USERLIST_UC_PRIVILEGED;
+    } else if (privileged_op == 2) {
+      set_mask |= USERLIST_UC_PRIVILEGED;
+    } else if (privileged_op == 3) {
+      toggle_mask |= USERLIST_UC_PRIVILEGED;
+    }
+    if (reg_readonly_op == 1) {
+      clear_mask |= USERLIST_UC_REG_READONLY;
+    } else if (reg_readonly_op == 2) {
+      set_mask |= USERLIST_UC_REG_READONLY;
+    } else if (reg_readonly_op == 3) {
+      toggle_mask |= USERLIST_UC_REG_READONLY;
     }
     if (!(clear_mask + set_mask + toggle_mask)) goto done;
     break;
@@ -1755,7 +1813,9 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
         if (((reg->flags & USERLIST_UC_INVISIBLE) && !include_invisible)
             || ((reg->flags & USERLIST_UC_BANNED) && !include_banned)
             || ((reg->flags & USERLIST_UC_LOCKED) && !include_locked)
-            || ((reg->flags & USERLIST_UC_DISQUALIFIED) && !include_disqualified)) {
+            || ((reg->flags & USERLIST_UC_DISQUALIFIED) && !include_disqualified)
+            || ((reg->flags & USERLIST_UC_PRIVILEGED) && !include_reg_privileged)
+            || ((reg->flags & USERLIST_UC_REG_READONLY) && !include_reg_readonly)) {
           bitset_off(&marked, user_id);
           continue;
         }
@@ -2627,6 +2687,14 @@ super_serve_op_USER_DETAIL_PAGE(
         if (r++) fprintf(out_f, ", ");
         fprintf(out_f, "disqualified");
       }
+      if ((reg->flags & USERLIST_UC_PRIVILEGED)) {
+        if (r++) fprintf(out_f, ", ");
+        fprintf(out_f, "privileged");
+      }
+      if ((reg->flags & USERLIST_UC_REG_READONLY)) {
+        if (r++) fprintf(out_f, ", ");
+        fprintf(out_f, "reg. read-only");
+      }
       fprintf(out_f, "</td>");
       if (reg->create_time > 0) {
         fprintf(out_f, "<td%s>%s</td>", cl, xml_unparse_date(reg->create_time));
@@ -3329,6 +3397,10 @@ super_serve_op_USER_CREATE_REG_PAGE(
           cl, "Incomplete?", cl, "is_incomplete");
   fprintf(out_f, "<tr><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Disqualified?", cl, "is_disqualified");
+  fprintf(out_f, "<tr><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Privileged?", cl, "is_privileged");
+  fprintf(out_f, "<tr><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Reg. read-only?", cl, "is_reg_readonly");
   fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"Create registration\" /></td></tr>\n", cl, cl);
   fprintf(out_f, "</table>\n");
   fprintf(out_f, "</form>\n");
@@ -3498,6 +3570,12 @@ super_serve_op_USER_EDIT_REG_PAGE(
   if ((reg->flags & USERLIST_UC_DISQUALIFIED)) s = checked;
   fprintf(out_f, "<tr><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\"%s /></td></tr>\n",
           cl, "Disqualified?", cl, "is_disqualified", s);
+  if ((reg->flags & USERLIST_UC_PRIVILEGED)) s = checked;
+  fprintf(out_f, "<tr><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\"%s /></td></tr>\n",
+          cl, "Privileged?", cl, "is_privileged", s);
+  if ((reg->flags & USERLIST_UC_REG_READONLY)) s = checked;
+  fprintf(out_f, "<tr><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\"%s /></td></tr>\n",
+          cl, "Reg. read-only?", cl, "is_reg_readonly", s);
   fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"Save changes\" /></td></tr>\n", cl, cl);
   fprintf(out_f, "</table>\n");
   fprintf(out_f, "</form>\n");
@@ -3668,6 +3746,14 @@ super_serve_op_USER_DELETE_REG_PAGE(
   if ((reg->flags & USERLIST_UC_DISQUALIFIED)) s = yes;
   fprintf(out_f, "<tr><td%s><b>%s</td></td><td%s>%s</td></tr>\n",
           cl, "Disqualified?", cl, s);
+  s = no;
+  if ((reg->flags & USERLIST_UC_PRIVILEGED)) s = yes;
+  fprintf(out_f, "<tr><td%s><b>%s</td></td><td%s>%s</td></tr>\n",
+          cl, "Privileged?", cl, s);
+  s = no;
+  if ((reg->flags & USERLIST_UC_REG_READONLY)) s = yes;
+  fprintf(out_f, "<tr><td%s><b>%s</td></td><td%s>%s</td></tr>\n",
+          cl, "Reg. read-only?", cl, s);
 
 
   fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"Confirm delete!\" /></td></tr>\n", cl, cl);
@@ -4007,6 +4093,10 @@ super_serve_op_USER_CREATE_ONE_PAGE(
           cl, "Incomplete?", cl, "is_incomplete");
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Disqualified?", cl, "is_disqualified");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Privileged?", cl, "is_privileged");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Reg. read-only?", cl, "is_reg_readonly");
 
   fprintf(out_f, "<tr class=\"CntsRegRow\" id=\"CntsRegRowUseRegPasswd\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" onchange=\"updateCntsPasswdVisibility()\" name=\"%s\" /></td></tr>\n",
           cl, "Use reg. password?", cl, "cnts_use_reg_passwd");
@@ -4393,6 +4483,10 @@ super_serve_op_USER_CREATE_MANY_PAGE(
           cl, "Incomplete?", cl, "is_incomplete");
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Disqualified?", cl, "is_disqualified");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Privileged?", cl, "is_privileged");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Reg. read-only?", cl, "is_reg_readonly");
 
   fprintf(out_f, "<tr id=\"CntsRegRowUseRegPasswd\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_use_reg_passwd\" onchange=\"updateCntsPasswdVisibility()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use registration password", cl, cl);
@@ -4730,6 +4824,10 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
           cl, "Incomplete?", cl, "is_incomplete");
   fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
           cl, "Disqualified?", cl, "is_disqualified");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Privileged?", cl, "is_privileged");
+  fprintf(out_f, "<tr class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s</td></td><td%s><input type=\"checkbox\" value=\"1\" name=\"%s\" /></td></tr>\n",
+          cl, "Reg. read-only?", cl, "is_reg_readonly");
 
   fprintf(out_f, "<tr id=\"CntsRegRowUseRegPasswd\" class=\"CntsRegRow\" style=\"display: none;\" ><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"cnts_use_reg_passwd\" onchange=\"updateCntsPasswdVisibility()\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use registration password", cl, cl);
@@ -6324,6 +6422,8 @@ super_serve_op_USER_CREATE_REG_ACTION(
   if (params.is_locked) flags |= USERLIST_UC_LOCKED;
   if (params.is_incomplete) flags |= USERLIST_UC_INCOMPLETE;
   if (params.is_disqualified) flags |= USERLIST_UC_DISQUALIFIED;
+  if (params.is_privileged) flags |= USERLIST_UC_PRIVILEGED;
+  if (params.is_reg_readonly) flags |= USERLIST_UC_REG_READONLY;
 
   if (userlist_clnt_register_contest(phr->userlist_clnt,
                                      ULS_PRIV_REGISTER_CONTEST,
@@ -6397,6 +6497,8 @@ super_serve_op_USER_EDIT_REG_ACTION(
   if (params.is_locked) flags |= USERLIST_UC_LOCKED;
   if (params.is_incomplete) flags |= USERLIST_UC_INCOMPLETE;
   if (params.is_disqualified) flags |= USERLIST_UC_DISQUALIFIED;
+  if (params.is_privileged) flags |= USERLIST_UC_PRIVILEGED;
+  if (params.is_reg_readonly) flags |= USERLIST_UC_REG_READONLY;
 
   if (userlist_clnt_change_registration(phr->userlist_clnt, params.other_user_id,
                                         cnts->id, params.status, 4, flags) < 0)
@@ -6818,6 +6920,14 @@ super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
         }
         if ((reg->flags & USERLIST_UC_DISQUALIFIED)) {
           fprintf(out_f, "%s%s", s, "disqualified");
+          s = ", ";
+        }
+        if ((reg->flags & USERLIST_UC_PRIVILEGED)) {
+          fprintf(out_f, "%s%s", s, "privileged");
+          s = ", ";
+        }
+        if ((reg->flags & USERLIST_UC_REG_READONLY)) {
+          fprintf(out_f, "%s%s", s, "reg. read-only");
           s = ", ";
         }
       }
