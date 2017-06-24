@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1295,13 +1295,14 @@ get_contest_str(unsigned char *buf, size_t len,
 
   if (!s) s = "???";
   return snprintf(buf, len,
-                  "%6d %c%c%c%c%c %-8.8s  %s",
+                  "%6d %c%c%c%c%c%c %-7.7s  %s",
                   reg->id, 
                   (reg->flags & USERLIST_UC_BANNED)?'B':' ',
                   (reg->flags & USERLIST_UC_INVISIBLE)?'I':' ',
                   (reg->flags & USERLIST_UC_LOCKED)?'L':' ',
-                  (reg->flags & USERLIST_UC_INCOMPLETE)?'N':' ',
+                  (reg->flags & USERLIST_UC_PRIVILEGED)?'P':((reg->flags & USERLIST_UC_INCOMPLETE)?'N':' '),
                   (reg->flags & USERLIST_UC_DISQUALIFIED)?'D':' ',
+                  (reg->flags & USERLIST_UC_REG_READONLY)?'R':' ',
                   userlist_unparse_reg_status(reg->status),
                   s);
 }
@@ -1752,6 +1753,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         goto menu_done;
       case 'd': case 'r': case 'b': case 'i': case 'l':
       case 'a': case 'c': case 'o': case 'y': case 'n':
+      case 'p': case 'h':
       case 'u':
         goto menu_done;
       }
@@ -1841,6 +1843,20 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
                                               reg->id, -1, 3,
                                               USERLIST_UC_DISQUALIFIED);
         if (r >= 0) reg->flags ^= USERLIST_UC_DISQUALIFIED;
+        break;
+      case 'p':
+        if (okcancel("Toggle PRIVILEGED status?") != 1) goto menu_continue;
+        r = userlist_clnt_change_registration(server_conn, u->id,
+                                              reg->id, -1, 3,
+                                              USERLIST_UC_PRIVILEGED);
+        if (r >= 0) reg->flags ^= USERLIST_UC_PRIVILEGED;
+        break;
+      case 'h':
+        if (okcancel("Toggle REG-READONLY status?") != 1) goto menu_continue;
+        r = userlist_clnt_change_registration(server_conn, u->id,
+                                              reg->id, -1, 3,
+                                              USERLIST_UC_REG_READONLY);
+        if (r >= 0) reg->flags ^= USERLIST_UC_REG_READONLY;
         break;
       }
       if (r < 0) {
@@ -2609,14 +2625,15 @@ generate_reg_user_item(unsigned char *buf, size_t size, int i,
 
   // 77 - 6 - 16 - 10 - 6 = 77 - 38 = 39
   if (utf8_mode) w = utf8_cnt(name, 36, &y);
-  buflen = snprintf(buf, size, "%c%6d  %-16.16s  %-*.*s %c%c%c%c%c %-7.7s",
+  buflen = snprintf(buf, size, "%c%6d  %-16.16s  %-*.*s %c%c%c%c%c%c %-6.6s",
                     mask[i]?'!':' ',
                     uu[i]->id, uu[i]->login, w + y, w, name,
                     (uc[i]->flags & USERLIST_UC_BANNED)?'B':' ',
                     (uc[i]->flags & USERLIST_UC_INVISIBLE)?'I':' ',
                     (uc[i]->flags & USERLIST_UC_LOCKED)?'L':' ',
-                    (uc[i]->flags & USERLIST_UC_INCOMPLETE)?'N':' ',
+                    (uc[i]->flags & USERLIST_UC_PRIVILEGED)?'P':((uc[i]->flags & USERLIST_UC_INCOMPLETE)?'N':' '),
                     (uc[i]->flags & USERLIST_UC_DISQUALIFIED)?'D':' ',
+                    (uc[i]->flags & USERLIST_UC_REG_READONLY)?'R':' ',
                     userlist_unparse_reg_status(uc[i]->status));
   return buflen;
 }
@@ -2791,6 +2808,7 @@ do_display_registered_users(
       case 'r': case 'd': case 'i': case 'b': case 'l': case 'a':
       case 's': case 'j': case 'e': case ';': case 'c': case 't':
       case '0': case 'f': case 'o': case 'n': case 'u': case 'v':
+      case 'p': case 'h':
         goto menu_done;
       }
       cmd = -1;
@@ -3162,6 +3180,78 @@ do_display_registered_users(
             continue;
           }
           uc[j]->flags ^= USERLIST_UC_DISQUALIFIED;
+          sel_users.mask[j] = 0;
+          generate_reg_user_item(descs[j], 256, j, uu, uc, sel_users.mask);
+        }
+        memset(sel_users.mask, 0, sel_users.allocated);
+        sel_users.total_selected = 0;
+      }
+    } else if (c == 'p' && !only_choose) {
+      if (!sel_users.total_selected) {
+        // operation on a single user
+        i = item_index(current_item(menu));
+        if (okcancel("Toggle PRIVILEGED status for %s?", uu[i]->login) != 1)
+          continue;
+        r = userlist_clnt_change_registration(server_conn, uu[i]->id,
+                                              cnts->id, -1, 3,
+                                              USERLIST_UC_PRIVILEGED);
+        if (r < 0) {
+          vis_err("Toggle flags failed: %s", userlist_strerror(-r));
+          continue;
+        }
+        uc[i]->flags ^= USERLIST_UC_PRIVILEGED;
+        generate_reg_user_item(descs[i], 256, i, uu, uc, sel_users.mask);
+      } else {
+        // operation on the selected users
+        if (okcancel("Toggle PRIVILEGED status for selected users?") != 1)
+          continue;
+        for (j = 0; j < nuser; j++) {
+          if (!sel_users.mask[j]) continue;
+          r = userlist_clnt_change_registration(server_conn, uu[j]->id,
+                                                cnts->id, -1, 3,
+                                                USERLIST_UC_PRIVILEGED);
+          if (r < 0) {
+            vis_err("Toggle flags failed for %d: %s",
+                    uu[j]->id, userlist_strerror(-r));
+            continue;
+          }
+          uc[j]->flags ^= USERLIST_UC_PRIVILEGED;
+          sel_users.mask[j] = 0;
+          generate_reg_user_item(descs[j], 256, j, uu, uc, sel_users.mask);
+        }
+        memset(sel_users.mask, 0, sel_users.allocated);
+        sel_users.total_selected = 0;
+      }
+    } else if (c == 'h' && !only_choose) {
+      if (!sel_users.total_selected) {
+        // operation on a single user
+        i = item_index(current_item(menu));
+        if (okcancel("Toggle REG_READONLY status for %s?", uu[i]->login) != 1)
+          continue;
+        r = userlist_clnt_change_registration(server_conn, uu[i]->id,
+                                              cnts->id, -1, 3,
+                                              USERLIST_UC_REG_READONLY);
+        if (r < 0) {
+          vis_err("Toggle flags failed: %s", userlist_strerror(-r));
+          continue;
+        }
+        uc[i]->flags ^= USERLIST_UC_REG_READONLY;
+        generate_reg_user_item(descs[i], 256, i, uu, uc, sel_users.mask);
+      } else {
+        // operation on the selected users
+        if (okcancel("Toggle REG_READONLY status for selected users?") != 1)
+          continue;
+        for (j = 0; j < nuser; j++) {
+          if (!sel_users.mask[j]) continue;
+          r = userlist_clnt_change_registration(server_conn, uu[j]->id,
+                                                cnts->id, -1, 3,
+                                                USERLIST_UC_REG_READONLY);
+          if (r < 0) {
+            vis_err("Toggle flags failed for %d: %s",
+                    uu[j]->id, userlist_strerror(-r));
+            continue;
+          }
+          uc[j]->flags ^= USERLIST_UC_REG_READONLY;
           sel_users.mask[j] = 0;
           generate_reg_user_item(descs[j], 256, j, uu, uc, sel_users.mask);
         }
