@@ -161,6 +161,8 @@ typedef struct UserInfoPage
     ejbytebool_t is_locked;
     ejbytebool_t is_incomplete;
     ejbytebool_t is_disqualified;
+    ejbytebool_t is_privileged;
+    ejbytebool_t is_reg_readonly;
 } UserInfoPage;
 
 typedef struct UserInfoPageArray

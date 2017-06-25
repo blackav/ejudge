@@ -1274,9 +1274,18 @@ priv_registration_operation(FILE *fout,
   int retcode = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char *disq_comment = 0;
-  enum { FLAGS_COUNT = 5 };
-  int flags[FLAGS_COUNT] = { 0, 0, 0, 0, 0 };
-  int flag_map[FLAGS_COUNT] = { USERLIST_UC_BANNED, USERLIST_UC_INVISIBLE, USERLIST_UC_LOCKED, USERLIST_UC_INCOMPLETE, USERLIST_UC_DISQUALIFIED };
+  enum { FLAGS_COUNT = 7 };
+  int flags[FLAGS_COUNT] = { 0, 0, 0, 0, 0, 0, 0 };
+  int flag_map[FLAGS_COUNT] =
+  {
+    USERLIST_UC_BANNED,
+    USERLIST_UC_INVISIBLE,
+    USERLIST_UC_LOCKED,
+    USERLIST_UC_INCOMPLETE,
+    USERLIST_UC_DISQUALIFIED,
+    USERLIST_UC_PRIVILEGED,
+    USERLIST_UC_REG_READONLY
+  };
 
   // extract the selected set of users
   memset(&uset, 0, sizeof(uset));
@@ -1302,6 +1311,8 @@ priv_registration_operation(FILE *fout,
     hr_cgi_param_int_opt(phr, "flag_2", &flags[2], 0);
     hr_cgi_param_int_opt(phr, "flag_3", &flags[3], 0);
     hr_cgi_param_int_opt(phr, "flag_4", &flags[4], 0);
+    hr_cgi_param_int_opt(phr, "flag_5", &flags[5], 0);
+    hr_cgi_param_int_opt(phr, "flag_6", &flags[6], 0);
   }
 
   // FIXME: probably we need to sort user_ids and remove duplicates

@@ -42,6 +42,8 @@
             "is_locked" : <s:v value="ui->is_locked" json="yes" />,
             "is_incomplete" : <s:v value="ui->is_incomplete" json="yes" />,
             "is_disqualified" : <s:v value="ui->is_disqualified" json="yes" />,
+            "is_privileged" : <s:v value="ui->is_privileged" json="yes" />,
+            "is_reg_readonly" : <s:v value="ui->is_reg_readonly" json="yes" />,
             "create_time" : "<s:v value="ui->create_time_str" json="yes" />",
             "last_login_time" : "<s:v value="ui->last_login_time_str" json="yes" />",
             "run_count" : <s:v value="ui->run_count" />,

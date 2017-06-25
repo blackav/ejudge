@@ -80,7 +80,7 @@
 <s:form onsubmit="usersChangeFlagsSubmit()">
 <s:hidden id="FlagsChangeIdList" name="new_user_id_list" value ="" />
 <table border="0">
-<tr><td>&nbsp;</td><td>BANNED</td><td>INVISIBLE</td><td>LOCKED</td><td>INCOMPLETE</td><td>DISQUALIFIED</td></tr>
+<tr><td>&nbsp;</td><td>BANNED</td><td>INVISIBLE</td><td>LOCKED</td><td>INCOMPLETE</td><td>DISQUALIFIED</td><td>PRIVILEGED</td><td>REG. READ-ONLY</td></tr>
 <tr>
     <td>No change</td>
     <td><input type="radio" name="flag_0" value="0" /></td>
@@ -88,6 +88,8 @@
     <td><input type="radio" name="flag_2" value="0" /></td>
     <td><input type="radio" name="flag_3" value="0" /></td>
     <td><input type="radio" name="flag_4" value="0" /></td>
+    <td><input type="radio" name="flag_5" value="0" /></td>
+    <td><input type="radio" name="flag_6" value="0" /></td>
 </tr>
 <tr>
     <td>Set</td>
@@ -96,6 +98,8 @@
     <td><input type="radio" name="flag_2" value="1" /></td>
     <td><input type="radio" name="flag_3" value="1" /></td>
     <td><input type="radio" name="flag_4" value="1" /></td>
+    <td><input type="radio" name="flag_5" value="1" /></td>
+    <td><input type="radio" name="flag_6" value="1" /></td>
 </tr>
 <tr>
     <td>Clear</td>
@@ -104,6 +108,8 @@
     <td><input type="radio" name="flag_2" value="2" /></td>
     <td><input type="radio" name="flag_3" value="2" /></td>
     <td><input type="radio" name="flag_4" value="2" /></td>
+    <td><input type="radio" name="flag_5" value="2" /></td>
+    <td><input type="radio" name="flag_6" value="2" /></td>
 </tr>
 <tr>
     <td>Toggle</td>
@@ -112,6 +118,8 @@
     <td><input type="radio" name="flag_2" value="3" /></td>
     <td><input type="radio" name="flag_3" value="3" /></td>
     <td><input type="radio" name="flag_4" value="3" /></td>
+    <td><input type="radio" name="flag_5" value="3" /></td>
+    <td><input type="radio" name="flag_6" value="3" /></td>
 </tr>
 </table>
 <s:submit ac="users-change-flags" />
@@ -374,6 +382,16 @@ function updateTable(arr)
         if (v.is_disqualified) {
             text += sep;
             text += "disqualified";
+            sep = ", ";
+        }
+        if (v.is_privileged) {
+            text += sep;
+            text += "privileged";
+            sep = ", ";
+        }
+        if (v.is_reg_readonly) {
+            text += sep;
+            text += "reg. readonly";
             sep = ", ";
         }
         text += "</td>";

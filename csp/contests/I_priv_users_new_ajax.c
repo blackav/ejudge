@@ -198,6 +198,10 @@ csp_execute_priv_users_new_ajax(
             up->is_incomplete = 1;
         if ((uc->flags & USERLIST_UC_DISQUALIFIED))
             up->is_disqualified = 1;
+        if ((uc->flags & USERLIST_UC_PRIVILEGED))
+            up->is_privileged = 1;
+        if ((uc->flags & USERLIST_UC_REG_READONLY))
+            up->is_reg_readonly = 1;
 
         if (uc->create_time > 0) {
             up->create_time_str = xstrdup(xml_unparse_date(uc->create_time));
