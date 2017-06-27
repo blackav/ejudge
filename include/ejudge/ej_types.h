@@ -111,6 +111,7 @@ enum user_flags
   USERLIST_UC_PRIVILEGED   = 0x00000020,
   USERLIST_UC_REG_READONLY = 0x00000040,
 
+  USERLIST_UC_NOPASSWD     = 0x0000003f,  // mask for flags to prevent mass password regeneration
   USERLIST_UC_ALL          = 0x0000007f,
 };
 
