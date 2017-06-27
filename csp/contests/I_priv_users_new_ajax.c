@@ -53,7 +53,7 @@ static struct PageInterfaceOps ops =
 PageInterface *
 csp_get_priv_users_new_ajax(void)
 {
-    PrivViewPrivUsersPage *pg = NULL;
+    PrivViewUsersPage *pg = NULL;
 
     XCALLOC(pg, 1);
     pg->b.ops = &ops;
