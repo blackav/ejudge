@@ -3059,7 +3059,12 @@ cmd_team_login(
   if (!name || !*name) name = u->login;
   if (!name) name = "";
 
-  if (cnts->disable_team_password) {
+  if (!c) {
+    err("%s -> NOT REGISTERED", logbuf);
+    send_reply(p, -ULS_ERR_NOT_REGISTERED);
+    return;
+  }
+  if (cnts->disable_team_password || (c->flags & USERLIST_UC_PRIVILEGED)) {
     if (!u->passwd) {
       err("%s -> EMPTY PASSWORD", logbuf);
       send_reply(p, -ULS_ERR_INVALID_PASSWORD);
@@ -3081,11 +3086,6 @@ cmd_team_login(
       send_reply(p, -ULS_ERR_INVALID_PASSWORD);
       return;
     }
-  }
-  if (!c) {
-    err("%s -> NOT REGISTERED", logbuf);
-    send_reply(p, -ULS_ERR_NOT_REGISTERED);
-    return;
   }
   if (c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
       || (c->flags & USERLIST_UC_LOCKED)) {
@@ -3124,7 +3124,7 @@ cmd_team_login(
   out->user_id = u->id;
   out->contest_id = orig_contest_id;
   out->locale_id = data->locale_id;
-  if (cnts->disable_team_password || !ui) {
+  if (cnts->disable_team_password || !ui || (c->flags & USERLIST_UC_PRIVILEGED)) {
     out->passwd_method = u->passwd_method;
   } else {
     out->passwd_method = ui->team_passwd_method;
@@ -3244,8 +3244,13 @@ cmd_team_check_user(
   if (!name || !*name) name = u->login;
   if (!name) name = "";
 
+  if (!c) {
+    err("%s -> NOT REGISTERED", logbuf);
+    send_reply(p, -ULS_ERR_NOT_REGISTERED);
+    return;
+  }
   if (data->pwd_special != 0x73629ae8) {
-    if (cnts->disable_team_password) {
+    if (cnts->disable_team_password || (c->flags & USERLIST_UC_PRIVILEGED)) {
       if (!u->passwd) {
         err("%s -> EMPTY PASSWORD", logbuf);
         send_reply(p, -ULS_ERR_INVALID_PASSWORD);
@@ -3268,11 +3273,6 @@ cmd_team_check_user(
         return;
       }
     }
-  }
-  if (!c) {
-    err("%s -> NOT REGISTERED", logbuf);
-    send_reply(p, -ULS_ERR_NOT_REGISTERED);
-    return;
   }
   if (c->status != USERLIST_REG_OK || (c->flags & USERLIST_UC_BANNED)
       || (c->flags & USERLIST_UC_LOCKED)) {
@@ -3311,7 +3311,7 @@ cmd_team_check_user(
   out->user_id = u->id;
   out->contest_id = orig_contest_id;
   out->locale_id = data->locale_id;
-  if (cnts->disable_team_password || !ui) {
+  if (cnts->disable_team_password || !ui || (c->flags & USERLIST_UC_PRIVILEGED)) {
     out->passwd_method = u->passwd_method;
   } else {
     out->passwd_method = ui->team_passwd_method;
