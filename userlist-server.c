@@ -6538,7 +6538,7 @@ do_generate_passwd(int contest_id, FILE *log)
 
     // also do not change password for invisible, banned, locked
     // or disqualified users
-    if ((c->flags & USERLIST_UC_ALL)) {
+    if ((c->flags & USERLIST_UC_NOPASSWD)) {
       default_unlock_user(u);
       continue;
     }
@@ -6657,7 +6657,7 @@ cmd_generate_register_passwords_2(
     }
 
     // also do not change password for invisible, banned or locked users
-    if ((c->flags & USERLIST_UC_ALL)) {
+    if ((c->flags & USERLIST_UC_NOPASSWD)) {
       default_unlock_user(u);
       continue;
     }
@@ -6718,7 +6718,7 @@ cmd_generate_team_passwords_2(
     }
 
     // also do not change password for invisible, banned or locked users
-    if ((c->flags & USERLIST_UC_ALL)) {
+    if ((c->flags & USERLIST_UC_NOPASSWD)) {
       default_unlock_user(u);
       continue;
     }
@@ -6763,7 +6763,7 @@ do_generate_team_passwd(int contest_id, FILE *log)
     }
 
     // also do not change password for invisible, banned or locked users
-    if ((c->flags & USERLIST_UC_ALL)) {
+    if ((c->flags & USERLIST_UC_NOPASSWD)) {
       default_unlock_user(u);
       continue;
     }
@@ -6857,7 +6857,7 @@ do_clear_team_passwords(int contest_id)
     }
 
     // also do not change password for invisible, banned or locked users
-    if ((c->flags & USERLIST_UC_ALL)) {
+    if ((c->flags & USERLIST_UC_NOPASSWD)) {
       default_unlock_user(u);
       continue;
     }
