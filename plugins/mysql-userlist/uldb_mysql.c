@@ -565,7 +565,14 @@ check_func(void *data)
       return -1;
     version = 4;
   }
-  if (version != 4) {
+  if (version == 4) {
+    if (state->mi->simple_fquery(state->md, "ALTER TABLE %scntsregs ADD avatar_store VARCHAR(512) DEFAULT NULL AFTER field9, ADD avatar_id VARCHAR(512) DEFAULT NULL AFTER avatar_store ;", state->md->table_prefix) < 0)
+      return -1;
+    if (state->mi->simple_fquery(state->md, "UPDATE %sconfig SET config_val = '5' WHERE config_key = 'version' ;", state->md->table_prefix) < 0)
+      return -1;
+    version = 5;
+  }
+  if (version != 5) {
     err("cannot handle database version %d", version);
     return -1;
   }

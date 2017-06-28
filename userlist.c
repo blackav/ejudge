@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -574,6 +573,8 @@ static int user_info_field_offsets[] =
   [USERLIST_NC_FIELD7] = USER_INFO_OFFSET(field7),
   [USERLIST_NC_FIELD8] = USER_INFO_OFFSET(field8),
   [USERLIST_NC_FIELD9] = USER_INFO_OFFSET(field9),
+  [USERLIST_NC_AVATAR_STORE] = USER_INFO_OFFSET(avatar_store),
+  [USERLIST_NC_AVATAR_ID] = USER_INFO_OFFSET(avatar_id),
   [USERLIST_NC_CREATE_TIME] = USER_INFO_OFFSET(create_time),
   [USERLIST_NC_LAST_LOGIN_TIME] = USER_INFO_OFFSET(last_login_time),
   [USERLIST_NC_LAST_CHANGE_TIME] = USER_INFO_OFFSET(last_change_time),
@@ -628,6 +629,8 @@ static int user_info_field_types[] =
   [USERLIST_NC_FIELD7] = USERLIST_NC_INST,
   [USERLIST_NC_FIELD8] = USERLIST_NC_INST,
   [USERLIST_NC_FIELD9] = USERLIST_NC_INST,
+  [USERLIST_NC_AVATAR_STORE] = USERLIST_NC_INST,
+  [USERLIST_NC_AVATAR_ID] = USERLIST_NC_INST,
   [USERLIST_NC_CREATE_TIME] = USERLIST_NC_CREATE_TIME,
   [USERLIST_NC_LAST_LOGIN_TIME] = USERLIST_NC_CREATE_TIME,
   [USERLIST_NC_LAST_CHANGE_TIME] = USERLIST_NC_CREATE_TIME,
@@ -1908,6 +1911,8 @@ static const struct
   { "NC_FIELD7", USERLIST_NC_FIELD7 },
   { "NC_FIELD8", USERLIST_NC_FIELD8 },
   { "NC_FIELD9", USERLIST_NC_FIELD9 },
+  { "NC_AVATAR_STORE", USERLIST_NC_AVATAR_STORE },
+  { "NC_AVATAR_ID", USERLIST_NC_AVATAR_ID },
   { "NC_CREATE_TIME", USERLIST_NC_CREATE_TIME },
   { "NC_LAST_LOGIN_TIME", USERLIST_NC_LAST_LOGIN_TIME },
   { "NC_LAST_CHANGE_TIME", USERLIST_NC_LAST_CHANGE_TIME },
@@ -2138,6 +2143,8 @@ static const unsigned char * const field_lookup_table[][7] =
   [USERLIST_NC_FIELD7] = { "field7", NULL },
   [USERLIST_NC_FIELD8] = { "field8", NULL },
   [USERLIST_NC_FIELD9] = { "field9", NULL },
+  [USERLIST_NC_AVATAR_STORE] = { "avatar_store", NULL },
+  [USERLIST_NC_AVATAR_ID] = { "avatar_id", NULL },
 
   /*
     USERLIST_NC_CREATE_TIME,

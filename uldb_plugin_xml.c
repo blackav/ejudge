@@ -2734,6 +2734,8 @@ static const int copy_user_general_fields[] =
   USERLIST_NC_FIELD7,
   USERLIST_NC_FIELD8,
   USERLIST_NC_FIELD9,
+  USERLIST_NC_AVATAR_STORE,
+  USERLIST_NC_AVATAR_ID,
 
   0
 };

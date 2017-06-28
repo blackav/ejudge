@@ -115,6 +115,8 @@ static char const * const elem_map[] =
   "field7",
   "field8",
   "field9",
+  "avatar_store",
+  "avatar_id",
   "usergroups",
   "usergroup",
   "usergroupmembers",
@@ -295,6 +297,8 @@ elem_free(struct xml_tree *t)
       xfree(p->field7);
       xfree(p->field8);
       xfree(p->field9);
+      xfree(p->avatar_store);
+      xfree(p->avatar_id);
     }
     break;
   case USERLIST_T_USERGROUP:
@@ -881,6 +885,8 @@ static const size_t leaf_info_offsets[USERLIST_LAST_TAG] =
   [USERLIST_T_FIELD7] = INFO_OFFSET(field7),
   [USERLIST_T_FIELD8] = INFO_OFFSET(field8),
   [USERLIST_T_FIELD9] = INFO_OFFSET(field9),
+  [USERLIST_T_AVATAR_STORE] = INFO_OFFSET(avatar_store),
+  [USERLIST_T_AVATAR_ID] = INFO_OFFSET(avatar_id),
 };
 
 static int

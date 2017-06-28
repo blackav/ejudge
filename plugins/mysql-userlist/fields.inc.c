@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -77,6 +77,8 @@ static struct field_description fields[USERLIST_NM_LAST] =
   [USERLIST_NC_FIELD7] = { "field7", USERLIST_NC_INST },
   [USERLIST_NC_FIELD8] = { "field8", USERLIST_NC_INST },
   [USERLIST_NC_FIELD9] = { "field9", USERLIST_NC_INST },
+  [USERLIST_NC_AVATAR_STORE] = { "avatar_store", USERLIST_NC_INST },
+  [USERLIST_NC_AVATAR_ID] = { "avatar_id", USERLIST_NC_INST },
   [USERLIST_NC_CREATE_TIME] = { "createtime", USERLIST_NC_CREATE_TIME },
   [USERLIST_NC_LAST_LOGIN_TIME] = { "logintime", USERLIST_NC_CREATE_TIME },
   [USERLIST_NC_LAST_CHANGE_TIME]={"changetime", USERLIST_NC_LAST_CHANGE_TIME },

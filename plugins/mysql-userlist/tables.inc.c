@@ -119,7 +119,7 @@ static struct common_mysql_parse_spec login_spec[LOGIN_WIDTH] =
 };
 
 // the number of columns in `users' table
-enum { USER_INFO_WIDTH = 45 };
+enum { USER_INFO_WIDTH = 47 };
 
 #define USER_INFO_OFFSET(f) XOFFSET(struct userlist_user_info, f)
 static struct common_mysql_parse_spec user_info_spec[USER_INFO_WIDTH] =
@@ -214,6 +214,10 @@ static struct common_mysql_parse_spec user_info_spec[USER_INFO_WIDTH] =
   { 1, 's', "field8", USER_INFO_OFFSET(field8), 0 },
   //[44]   field9 VARCHAR(512),
   { 1, 's', "field9", USER_INFO_OFFSET(field9), 0 },
+  //[45]   avatar_store VARCHAR(512),
+  { 1, 's', "avatar_store", USER_INFO_OFFSET(avatar_store), 0 },
+  //[46]   avatar_id VARCHAR(512),
+  { 1, 's', "avatar_id", USER_INFO_OFFSET(avatar_id), 0 },
 };
 
 // the number of columns in `members' table
