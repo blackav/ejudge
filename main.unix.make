@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2016 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -180,6 +180,7 @@ subdirs_all:
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/mongo-avatar DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" all
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" all
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" all
@@ -241,6 +242,7 @@ install: local_install
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/mongo-avatar DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" install
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" install
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" install
@@ -401,6 +403,7 @@ subdir_clean:
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/mongo-avatar DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" clean
@@ -424,6 +427,7 @@ subdir_distclean :
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/mongo-avatar DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" distclean
