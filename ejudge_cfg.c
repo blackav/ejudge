@@ -95,6 +95,7 @@ enum
     TG_DEFAULT_CLARDB_PLUGIN,
     TG_DEFAULT_RUNDB_PLUGIN,
     TG_DEFAULT_XUSER_PLUGIN,
+    TG_DEFAULT_AVATAR_PLUGIN,
     TG_HOSTS_OPTIONS,
     TG_CAPS_FILE,
     TG_BUTTONS,
@@ -184,6 +185,7 @@ static char const * const elem_map[] =
   "default_clardb_plugin",
   "default_rundb_plugin",
   "default_xuser_plugin",
+  "default_avatar_plugin",
   "hosts_options",
   "caps_file",
   "buttons",
@@ -288,6 +290,7 @@ node_free(struct xml_tree *t)
       xfree(p->default_clardb_plugin);
       xfree(p->default_rundb_plugin);
       xfree(p->default_xuser_plugin);
+      xfree(p->default_avatar_plugin);
       xfree(p->caps_file);
     }
     break;
@@ -555,6 +558,7 @@ static const size_t cfg_final_offsets[TG_LAST_TAG] =
   [TG_DEFAULT_CLARDB_PLUGIN] = CONFIG_OFFSET(default_clardb_plugin),
   [TG_DEFAULT_RUNDB_PLUGIN] = CONFIG_OFFSET(default_rundb_plugin),
   [TG_DEFAULT_XUSER_PLUGIN] = CONFIG_OFFSET(default_xuser_plugin),
+  [TG_DEFAULT_AVATAR_PLUGIN] = CONFIG_OFFSET(default_avatar_plugin),
   [TG_CAPS_FILE] = CONFIG_OFFSET(caps_file),
 };
 
