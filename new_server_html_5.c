@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1005,6 +1005,16 @@ ns_reg_main_page_view_info(
       }
     }
     fprintf(fout, "</table>\n");
+
+    ////// avatar handling goes here
+    html_start_form(fout, 2, phr->self_url, "");
+    html_hidden(fout, "SID", "%llx", phr->session_id);
+    fprintf(fout, "<input type=\"file\" name=\"img_file\" />");
+    fprintf(fout, "%s",
+            ns_submit_button(bb, sizeof(bb), 0,
+                             NEW_SRV_ACTION_REG_UPLOAD_AVATAR, 0));
+    fprintf(fout, "</form>\n");
+    //////
   } else if (phr->action >= NEW_SRV_ACTION_REG_VIEW_CONTESTANTS
              && phr->action <= NEW_SRV_ACTION_REG_VIEW_GUESTS) {
     rr = phr->action - NEW_SRV_ACTION_REG_VIEW_CONTESTANTS;
