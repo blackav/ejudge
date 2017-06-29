@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-06-20 15:01+0300\n"
-"PO-Revision-Date: 2017-06-20 15:23+0300\n"
+"POT-Creation-Date: 2017-06-29 19:57+0300\n"
+"PO-Revision-Date: 2017-06-29 19:59+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -4145,6 +4145,9 @@ msgstr "Обновить публичную таблицу положения у
 
 msgid "Update versions"
 msgstr "Обновить версии"
+
+msgid "Upload avatar"
+msgstr "Загрузить аватар"
 
 msgid "Upload judging protocol"
 msgstr "Установить протокол тестирования"
