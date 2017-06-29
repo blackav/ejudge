@@ -20,14 +20,14 @@
 
 <h2>Registered users</h2>
 
-<table><tr>
+<table class="table-filter"><tr>
     <td><input type="checkbox" name="show_not_ok" id="ShowNotOkUsers" onchange="showNotOkUsersChange()">Show Pending/Rejected</td>
     <td><input type="checkbox" name="show_invisible" id="ShowInvisibleUsers" onchange="showInvisibleUsersChange()">Show Invisible</td>
     <td><input type="checkbox" name="show_banned" id="ShowBannedUsers" onchange="showBannedUsersChange()">Show Banned/Locked/Disqualified</td>
 </tr></table>
 
 <div id="UsersTableDiv">
-    <table class="b1">
+    <table class="b1 table-b1 table-users t-left">
         <thead>
             <tr>
                 <th class="b1"><input id="ToggleAllCheckbox" type="checkbox" onclick="toggleUserSelection()" /></th>

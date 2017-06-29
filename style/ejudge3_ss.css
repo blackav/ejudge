@@ -28,6 +28,10 @@ tt
     font-size: 16px;
 }
 
+h2 {
+	margin-top: 1.4em;
+}
+
 h3
 {
     font-size: 18px;
@@ -446,6 +450,49 @@ table {
 hr, #header {
 	margin-left: -25px;
 	margin-right: -25px;
+}
+
+.table-b1 .b1 {
+	padding: 3px;
+}
+
+.userpic img {
+	width: 90px;
+	height: 90px;
+	margin: 1px;
+	border: 4px solid #fdfdfd;
+	box-shadow: #c0c0c0 0 0 0 1px;
+	vertical-align: middle;
+}
+
+.table-filter {
+	margin-top: 20px;
+}
+
+.table-users th, .table-users th.b1 {
+	background: #b5b5b5;
+	text-align: center;
+	padding: 4px 5px;
+	border: 1px solid #616161;
+}
+
+.table-users tr {
+	background: #eaeaea;
+}
+
+.table-users tr:nth-child(odd) {
+	background: #dadada;
+}
+
+.table-users td, .table-users td.b1 {
+	padding: 3px 5px;
+	text-align: center;
+	border: 1px solid #828282;
+}
+
+.t-left th, .t-left th.b1, .t-left td, .t-left td.b1 {
+	text-align: left;
+	padding: 5px 10px;
 }
 
 /**************** FRAME *************************/
