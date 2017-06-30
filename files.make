@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -119,6 +119,7 @@ COMMON_CFILES=\
  allowed_list.c\
  archive_paths.c\
  avatar_plugin.c\
+ base32.c\
  base64.c\
  bitset.c\
  bson_utils.c\
@@ -507,6 +508,7 @@ CFILES=\
 HFILES=\
  ./include/ejudge/archive_paths.h\
  ./include/ejudge/avatar_plugin.h\
+ ./include/ejudge/base32.h\
  ./include/ejudge/base64.h\
  ./include/ejudge/bitset.h\
  ./include/ejudge/bson_utils.h\
