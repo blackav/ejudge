@@ -118,6 +118,7 @@ REUSE_CFILES=\
 COMMON_CFILES=\
  allowed_list.c\
  archive_paths.c\
+ avatar_plugin.c\
  base64.c\
  bitset.c\
  bson_utils.c\
@@ -505,6 +506,7 @@ CFILES=\
 
 HFILES=\
  ./include/ejudge/archive_paths.h\
+ ./include/ejudge/avatar_plugin.h\
  ./include/ejudge/base64.h\
  ./include/ejudge/bitset.h\
  ./include/ejudge/bson_utils.h\
