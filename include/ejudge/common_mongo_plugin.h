@@ -3,7 +3,7 @@
 #ifndef __COMMON_MONGO_PLUGIN_H__
 #define __COMMON_MONGO_PLUGIN_H__
 
-/* Copyright (C) 2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -75,6 +75,10 @@ struct common_mongo_iface
         const unsigned char *table,
         struct _bson **selector,
         struct _bson **update);
+    int (*index_create)(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        const struct _bson *b);
 };
 
 #endif /* __COMMON_MONGO_PLUGIN_H__ */

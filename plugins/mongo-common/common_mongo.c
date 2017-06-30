@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2015-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -69,6 +69,11 @@ update_and_free_func(
         const unsigned char *table,
         struct _bson **pselector,
         struct _bson **pupdate);
+static int
+index_create_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        const struct _bson *b);
 
 struct common_mongo_iface plugin_common_mongo =
 {
@@ -90,6 +95,7 @@ struct common_mongo_iface plugin_common_mongo =
     insert_and_free_func,
     update_func,
     update_and_free_func,
+    index_create_func,
 };
 
 static struct common_plugin_data *
@@ -375,6 +381,22 @@ update_and_free_func(
         *pupdate = NULL;
     }
     return res;
+}
+
+static int
+index_create_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        const struct _bson *b)
+{
+    unsigned char ns[1024];
+
+    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, table);
+    if (!mongo_sync_cmd_index_create(state->conn, ns, b, 0)) {
+        err("common_mongo::index_create: failed: %s", os_ErrorMsg());
+        return -1;
+    }
+    return 0;
 }
 
 /*
