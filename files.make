@@ -169,6 +169,7 @@ COMMON_CFILES=\
  html_parse.c\
  html_start_form.c\
  http_request.c\
+ imagemagick.c\
  l10n.c\
  lang_config.c\
  lang_config_vis.c\
@@ -550,6 +551,7 @@ HFILES=\
  ./include/ejudge/html.h\
  ./include/ejudge/html_parse.h\
  ./include/ejudge/http_request.h\
+ ./include/ejudge/imagemagick.h\
  ./include/ejudge/interrupt.h\
  ./include/ejudge/iterators.h\
  ./include/ejudge/job_packet.h\
