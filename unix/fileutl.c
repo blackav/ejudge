@@ -1966,6 +1966,7 @@ write_tmp_file_2(
     size_t bz = size;
     if (bz > PIPE_BUF) bz = PIPE_BUF;
     const unsigned char *p = data;
+    size_t z = bz;
     while (bz) {
       ssize_t w = write(fd, p, bz);
       if (w < 0) {
@@ -1978,8 +1979,8 @@ write_tmp_file_2(
       p += w;
       bz -= w;
     }
-    data += bz;
-    size -= bz;
+    data += z;
+    size -= z;
   }
   if (close(fd) < 0) {
     fd = -1;
