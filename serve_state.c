@@ -38,6 +38,7 @@
 #include "ejudge/win32_compat.h"
 #include "ejudge/variant_map.h"
 #include "ejudge/xuser_plugin.h"
+#include "ejudge/avatar_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -229,6 +230,8 @@ serve_state_destroy(
     }
     xfree(state->compiler_options);
   }
+
+  avatar_plugin_destroy(state->main_avatar_plugin);
 
   memset(state, 0, sizeof(*state));
   xfree(state);
