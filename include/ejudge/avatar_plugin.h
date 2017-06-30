@@ -23,12 +23,17 @@
 /* version of the plugin interface structure */
 #define AVATAR_PLUGIN_IFACE_VERSION 1
 
+struct avatar_plugin_data
+{
+    struct common_plugin_data b;
+};
+
 struct avatar_plugin_iface
 {
     struct common_plugin_iface b;
     int xuser_version;
 
-    int (*insert)(struct common_plugin_data *data,
+    int (*insert)(struct avatar_plugin_data *data,
         int user_id,
         int contest_id,
         int is_cropped,
@@ -50,6 +55,17 @@ struct avatar_loaded_plugin
     struct avatar_plugin_iface *iface;
     struct avatar_plugin_data *data;
 };
+
+struct serve_state;
+struct contest_desc;
+struct ejudge_cfg;
+
+struct avatar_loaded_plugin *
+avatar_plugin_get(
+        struct serve_state *cs,
+        const struct contest_desc *cnts,
+        const struct ejudge_cfg *config,
+        const unsigned char *plugin_name);
 
 struct avatar_loaded_plugin *
 avatar_plugin_destroy(struct avatar_loaded_plugin *);

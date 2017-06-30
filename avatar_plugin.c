@@ -29,7 +29,7 @@
 #define AVATAR_PLUGIN_TYPE "avatar"
 
 struct avatar_loaded_plugin *
-get_avatar_plugin(
+avatar_plugin_get(
         struct serve_state *cs,
         const struct contest_desc *cnts,
         const struct ejudge_cfg *config,
