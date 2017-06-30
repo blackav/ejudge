@@ -21,9 +21,9 @@ CFLAGS = -I../../include $(MONGO_CFLAGS) $(CDEBUGFLAGS) $(CCOMPFLAGS) $(CEXTRAFL
 LDFLAGS = $(MYSQL_LIB_OPT) $(EXPAT_LIB_OPT) $(CDEBUGFLAGS) $(LDCOMPFLAGS) $(LDEXTRAFLAGS)
 LDLIBS = $(EXTRALIBS) $(MONGO_LIBS) -lexpat -lm
 
-CFILES = mongo_avatar.c
+CFILES = avatar_mongo.c
 
-PLUGINS = mongo_avatar.so
+PLUGINS = avatar_mongo.so
 
 all : $(PLUGINS)
 
@@ -42,6 +42,6 @@ deps.make : $(CFILES) $(HFILES)
 
 include deps.make
 
-mongo_avatar.so : $(MONGO_AVATAR_OFILES)
+avatar_mongo.so : $(MONGO_AVATAR_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
