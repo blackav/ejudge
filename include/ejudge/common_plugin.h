@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __COMMON_PLUGIN_H__
 #define __COMMON_PLUGIN_H__
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -25,7 +24,11 @@
 
 #define COMMON_PLUGIN_IFACE_VERSION 1
 
-struct common_plugin_data;
+struct common_plugin_data
+{
+  // empty structures are not allowed in C
+  void (*destroy)(struct common_plugin_data *);
+};
 
 struct common_plugin_iface
 {
