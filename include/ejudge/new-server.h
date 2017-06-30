@@ -391,6 +391,8 @@ struct last_access_idx
   int a;
 };
 
+struct avatar_loaded_plugin;
+
 struct contest_extra
 {
   int contest_id;
@@ -410,6 +412,10 @@ struct contest_extra
 
   serve_state_t serve_state;
   time_t last_access_time;
+
+  // the main avatar plugin
+  // FIXME: implement multiple avatar plugins per contest
+  struct avatar_loaded_plugin *main_avatar_plugin;
 };
 
 int nsdb_check_role(int user_id, int contest_id, int role);

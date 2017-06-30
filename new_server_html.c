@@ -60,6 +60,7 @@
 #include "ejudge/blowfish.h"
 #include "ejudge/base64.h"
 #include "ejudge/random.h"
+#include "ejudge/avatar_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -311,6 +312,8 @@ do_unload_contest(int idx)
     xfree(extra->user_access[i].v);
   }
   xfree(extra->user_access_idx.v);
+
+  avatar_plugin_destroy(extra->main_avatar_plugin);
 
   memset(extra, 0, sizeof(*extra));
   xfree(extra);
