@@ -47,9 +47,9 @@ base32_buf(unsigned char *outbuf, const unsigned char *inbuf, size_t insize, int
         if (val <= 9) {
             val += '0';
         } else if (upcase_flag) {
-            val += 'A';
+            val += 'A' - 10;
         } else {
-            val += 'a';
+            val += 'a' - 10;
         }
         *outbuf-- = val;
     }
