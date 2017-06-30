@@ -113,7 +113,7 @@ prepare_func(
 
     state->common = (struct common_mongo_state *) common_plugin->data;
     unsigned char buf[1024];
-    snprintf(buf, sizeof(buf), "%s.%savatar", state->common->database, state->common->table_prefix);
+    snprintf(buf, sizeof(buf), "%savatars", state->common->table_prefix);
     state->avatar_table = xstrdup(buf);
 
     return 0;
@@ -159,6 +159,12 @@ insert_func(
         return -1;
     }
      */
+
+    res = bson_new();
+    bson_append_int32(res, "random_key", 1);
+    bson_finish(res);
+    state->common->i->index_create(state->common, state->avatar_table, res);
+    bson_free(res);
 
     return 0;
 }
