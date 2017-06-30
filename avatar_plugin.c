@@ -17,7 +17,7 @@
 #include "ejudge/avatar_plugin.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/contests.h"
-#include "ejudge/serve_state.h"
+#include "ejudge/new-server.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
@@ -30,7 +30,7 @@
 
 struct avatar_loaded_plugin *
 avatar_plugin_get(
-        struct serve_state *cs,
+        struct contest_extra *extra,
         const struct contest_desc *cnts,
         const struct ejudge_cfg *config,
         const unsigned char *plugin_name)
@@ -39,12 +39,12 @@ avatar_plugin_get(
     if (!plugin_name && config) plugin_name = config->default_avatar_plugin;
     if (!plugin_name) plugin_name = DEFAULT_AVATAR_PLUGIN;
 
-    if (cs->main_avatar_plugin) {
-        if (!strcmp(cs->main_avatar_plugin->name, plugin_name)) {
-            return cs->main_avatar_plugin;
+    if (extra->main_avatar_plugin) {
+        if (!strcmp(extra->main_avatar_plugin->name, plugin_name)) {
+            return extra->main_avatar_plugin;
         }
         // FIXME: support multiple plugins per contest
-        err("default avatar plugin is '%s', but plugin '%s' requested for load", cs->main_avatar_plugin->name, plugin_name);
+        err("default avatar plugin is '%s', but plugin '%s' requested for load", extra->main_avatar_plugin->name, plugin_name);
         return NULL;
     }
 
@@ -73,7 +73,7 @@ avatar_plugin_get(
     avt->iface = (struct avatar_plugin_iface*) loaded_plugin->iface;
     avt->data = (struct avatar_plugin_data*) loaded_plugin->data;
 
-    cs->main_avatar_plugin = avt;
+    extra->main_avatar_plugin = avt;
     return avt;
 }
 
@@ -86,7 +86,6 @@ avatar_plugin_destroy(struct avatar_loaded_plugin *plugin)
     }
     return NULL;
 }
-
 
 /*
  * Local variables:
