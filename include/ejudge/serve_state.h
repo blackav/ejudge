@@ -175,6 +175,8 @@ struct serve_group_member
 
 #define EJ_SERVE_STATE_TOTAL_PROBS 28
 
+struct avatar_loaded_plugin;
+
 struct serve_state
 {
   unsigned char *config_path;
@@ -322,6 +324,10 @@ struct serve_state
 
   // compiler options to report
   unsigned char **compiler_options;
+
+  // the main avatar plugin
+  // FIXME: implement multiple avatar plugins per contest
+  struct avatar_loaded_plugin *main_avatar_plugin;
 };
 typedef struct serve_state *serve_state_t;
 
