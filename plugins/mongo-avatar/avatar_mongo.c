@@ -49,6 +49,7 @@ insert_func(
         int contest_id,
         int is_cropped,
         int is_temporary,
+        int is_public,
         int mime_type,
         int width,
         int height,
@@ -126,6 +127,7 @@ insert_func(
         int contest_id,
         int is_cropped,
         int is_temporary,
+        int is_public,
         int mime_type,
         int width,
         int height,
@@ -142,6 +144,7 @@ insert_func(
     bson_append_int32(res, "contest_id", contest_id);
     bson_append_boolean(res, "is_cropped", is_cropped);
     bson_append_boolean(res, "is_temporary", is_temporary);
+    bson_append_boolean(res, "is_public", is_public);
     const unsigned char *mime_type_str = mime_type_get_type(mime_type);
     bson_append_string(res, "mime_type", mime_type_str, strlen(mime_type_str));
     bson_append_int32(res, "width", width);

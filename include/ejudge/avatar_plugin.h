@@ -39,6 +39,7 @@ struct avatar_plugin_iface
         int contest_id,
         int is_cropped,
         int is_temporary,
+        int is_public,
         int mime_type,
         int width,
         int height,
