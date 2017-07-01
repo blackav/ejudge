@@ -30,6 +30,11 @@
 #include "ejudge/compat.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/external_action.h"
+#include "ejudge/mime_type.h"
+#include "ejudge/imagemagick.h"
+#include "ejudge/random.h"
+#include "ejudge/base32.h"
+#include "ejudge/avatar_plugin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -2447,6 +2452,96 @@ register_for_contest(
   xfree(log_t);
 }
 
+enum { MAX_IMAGE_SIZE = 2 * 1024 * 1024, MAX_IMAGE_WIDTH = 10000, MAX_IMAGE_HEIGHT = 10000 };
+enum { AVATAR_WIDTH = 90, AVATAR_HEIGHT = 90 };
+enum { RANDOM_KEY_SIZE = 16 };
+
+static void
+upload_avatar(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  FILE *log_f = 0;
+  char *log_t = 0;
+  size_t log_z = 0;
+  const unsigned char *img_data = NULL;
+  size_t img_size = 0;
+  int mime_type = 0, width = 0, height = 0;
+  unsigned char random_key_bin[RANDOM_KEY_SIZE];
+  unsigned char random_key[RANDOM_KEY_SIZE * 2];
+
+  log_f = open_memstream(&log_t, &log_z);
+
+  if (hr_cgi_param_bin(phr, "img_file", &img_data, &img_size) <= 0) {
+    fprintf(log_f, "image is not attached\n");
+    goto done;
+  }
+  if (img_size > MAX_IMAGE_SIZE) {
+    fprintf(log_f, "image file size (%zu) exceeds maximum allowed (%d)", img_size, (int) MAX_IMAGE_SIZE);
+    goto done;
+  }
+
+  mime_type = image_identify(log_f, NULL, img_data, img_size, &width, &height);
+  if (mime_type < 0) {
+    goto done;
+  }
+  if (mime_type < MIME_TYPE_IMAGE_FIRST || mime_type > MIME_TYPE_IMAGE_LAST) {
+    goto done;
+  }
+  if (width < 0 || height < 0) {
+    fprintf(log_f, "invalid image dimensions (%dx%d)", width, height);
+    goto done;
+  }
+  if (width > MAX_IMAGE_WIDTH || height > MAX_IMAGE_HEIGHT) {
+    fprintf(log_f, "image is too large (%dx%d), max %dx%d is allowed", width, height, MAX_IMAGE_WIDTH, MAX_IMAGE_HEIGHT);
+    goto done;
+  }
+  if (width < AVATAR_WIDTH || height < AVATAR_HEIGHT) {
+    fprintf(log_f, "image is too small (%dx%d), min %dx%d is required", width, height, AVATAR_WIDTH, AVATAR_HEIGHT);
+    goto done;
+  }
+
+  // generate 128-bit random key
+  if (random_init() < 0) {
+    fprintf(log_f, "failed to initialize random number generator");
+    goto done;
+  }
+  random_bytes(random_key_bin, RANDOM_KEY_SIZE);
+  base32_buf(random_key, random_key_bin, RANDOM_KEY_SIZE, 0);
+
+  struct avatar_loaded_plugin *avt = avatar_plugin_get(extra, cnts, phr->config, NULL);
+  if (!avt) {
+    fprintf(log_f, "failed to load avatar plugin");
+    goto done;
+  }
+
+  int r = avt->iface->insert(avt->data, phr->user_id, phr->contest_id,
+                             0 /* is_cropped */,
+                             1 /* is_temporary */,
+                             0 /* is_public */,
+                             mime_type, width, height, random_key,
+                             cur_time,
+                             img_data,
+                             img_size,
+                             NULL);
+
+  // stop for now
+  fprintf(log_f, "%s %d %d %s %d\n", mime_type_get_type(mime_type), width, height, random_key, r);
+
+done:;
+  if (log_f) close_memstream(log_f);
+  log_f = NULL;
+
+  if (log_t && *log_t) {
+    action_error_page(fout, phr, cnts, extra, log_t);
+  } else {
+    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
+  }
+}
+
 static reg_action_handler_func_t reg_handlers[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_LOGOUT] = logout,
@@ -2459,6 +2554,7 @@ static reg_action_handler_func_t reg_handlers[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REG_ADD_MEMBER_PAGE] = add_member,
   [NEW_SRV_ACTION_REG_REMOVE_MEMBER] = remove_member,
   [NEW_SRV_ACTION_REG_MOVE_MEMBER] = move_member,
+  [NEW_SRV_ACTION_REG_UPLOAD_AVATAR] = upload_avatar,
 };
 
 typedef PageInterface *(*external_action_handler_t)(void);
