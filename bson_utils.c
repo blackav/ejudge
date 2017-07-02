@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2015-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -182,6 +182,25 @@ ej_bson_parse_int64(
         return -1;
     }
     *p_value = value;
+    return 1;
+}
+
+int
+ej_bson_parse_boolean(
+        struct _bson_cursor *bc,
+        const unsigned char *field_name,
+        int *p_value)
+{
+    if (bson_cursor_type(bc) != BSON_TYPE_BOOLEAN) {
+        err("parse_bson_boolean: boolean field type expected for '%s'", field_name);
+        return -1;
+    }
+    gboolean value = 0;
+    if (!bson_cursor_get_boolean(bc, &value)) {
+        err("parse_bson_boolean: failed to fetch boolean value of '%s'", field_name);
+        return -1;
+    }
+    *p_value = !!value;
     return 1;
 }
 

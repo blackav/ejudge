@@ -3,7 +3,7 @@
 #ifndef __BSON_UTILS_H__
 #define __BSON_UTILS_H__
 
-/* Copyright (C) 2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,11 @@ ej_bson_parse_int64(
         struct _bson_cursor *bc,
         const unsigned char *field_name,
         long long *p_value);
+int
+ej_bson_parse_boolean(
+        struct _bson_cursor *bc,
+        const unsigned char *field_name,
+        int *p_value);
 int
 ej_bson_parse_utc_datetime(
         struct _bson_cursor *bc,
