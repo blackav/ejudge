@@ -25,6 +25,100 @@
 #include <string.h>
 #include <mongo.h>
 
+static int
+avatar_info_bson_parse(bson *b, struct avatar_info *av)
+{
+    bson_cursor *bc = NULL;
+    unsigned char *mt_str = NULL;
+
+    bc = bson_cursor_new(b);
+    while (bson_cursor_next(bc)) {
+        const unsigned char *key = bson_cursor_key(bc);
+        if (!strcmp(key, "_id")) {
+            // what to do with mongo's _id?
+        } else if (!strcmp(key, "user_id")) {
+            if (ej_bson_parse_int(bc, "user_id", &av->user_id, 1, 1, 0, 0) < 0)
+                goto fail;
+        } else if (!strcmp(key, "contest_id")) {
+            if (ej_bson_parse_int(bc, "contest_id", &av->contest_id, 1, 0, 0, 0) < 0)
+                goto fail;
+        } else if (!strcmp(key, "is_cropped")) {
+            if (ej_bson_parse_boolean(bc, "is_cropped", &av->is_cropped) < 0)
+                goto fail;
+        } else if (!strcmp(key, "is_temporary")) {
+            if (ej_bson_parse_boolean(bc, "is_temporary", &av->is_temporary) < 0)
+                goto fail;
+        } else if (!strcmp(key, "is_public")) {
+            if (ej_bson_parse_boolean(bc, "is_public", &av->is_public) < 0)
+                goto fail;
+        } else if (!strcmp(key, "mime_type")) {
+            if (ej_bson_parse_string(bc, "mime_type", &mt_str) < 0)
+                goto fail;
+            int mt = mime_type_parse(mt_str);
+            if (mt < 0) {
+                err("avatar_info_bson_parse: invalid mime type '%s'", mt_str);
+                goto fail;
+            }
+            if (mt < MIME_TYPE_IMAGE_FIRST || mt > MIME_TYPE_IMAGE_LAST) {
+                err("avatar_info_bson_parse: mime type '%s' is not image mime type", mime_type_get_type(mt));
+                goto fail;
+            }
+            av->mime_type = mt;
+        } else if (!strcmp(key, "width")) {
+            if (ej_bson_parse_int(bc, "width", &av->width, 1, 0, 0, 0) < 0)
+                goto fail;
+        } else if (!strcmp(key, "height")) {
+            if (ej_bson_parse_int(bc, "height", &av->height, 1, 0, 0, 0) < 0)
+                goto fail;
+        } else if (!strcmp(key, "random_key")) {
+            if (ej_bson_parse_string(bc, "random_key", &av->random_key) < 0)
+                goto fail;
+        } else if (!strcmp(key, "create_time")) {
+            if (ej_bson_parse_utc_datetime(bc, "create_time", &av->create_time) < 0)
+                goto fail;
+        } else if (!strcmp(key, "size")) {
+            long long llsz = 0;
+            if (ej_bson_parse_int64(bc, "size", &llsz) < 0)
+                goto fail;
+            if (llsz < 0) {
+                err("avatar_info_bson_parse: size < 0");
+                goto fail;
+            }
+            if ((size_t) llsz != llsz) {
+                err("avatar_info_bson_parse: size overflow");
+                goto fail;
+            }
+            av->img_size = llsz;
+        } else if (!strcmp(key, "image")) {
+            //bson_append_binary(res, "image", BSON_BINARY_SUBTYPE_USER_DEFINED, img_data, img_size);
+            if (bson_cursor_type(bc) != BSON_TYPE_BINARY) {
+                err("avatar_info_bson_parse: binary field type expected for '%s'", "image");
+                goto fail;
+            }
+            bson_binary_subtype subtype = 0;
+            const guint8 *bson_data = NULL;
+            gint32 bson_size = 0;
+            if (!bson_cursor_get_binary(bc, &subtype, &bson_data, &bson_size)) {
+                err("avatar_info_bson_parse: failed to fetch binary data for '%s'", "image");
+                goto fail;
+            }
+            if (subtype != BSON_BINARY_SUBTYPE_USER_DEFINED) {
+                err("avatar_info_bson_parse: user-defined binary subtype expected for '%s'", "image");
+                goto fail;
+            }
+            av->img_data = xmalloc(bson_size);
+            memcpy(av->img_data, bson_data, bson_size);
+        }
+    }
+    bson_cursor_free(bc);
+    return 1;
+
+fail:;
+    if (bc) bson_cursor_free(bc);
+    xfree(mt_str);
+    return -1;
+}
+
 struct avatar_mongo_state
 {
     struct avatar_plugin_data b;
@@ -58,6 +152,12 @@ insert_func(
         const unsigned char *img_data,
         size_t img_size,
         unsigned char **p_id);
+static int
+fetch_by_key_func(
+        struct avatar_plugin_data *data,
+        const unsigned char *random_key,
+        int need_image,
+        struct avatar_info_vector *result);
 
 struct avatar_plugin_iface plugin_avatar_mongo =
 {
@@ -75,6 +175,7 @@ struct avatar_plugin_iface plugin_avatar_mongo =
     },
     AVATAR_PLUGIN_IFACE_VERSION,
     insert_func,
+    fetch_by_key_func,
 };
 
 static struct common_plugin_data *
@@ -170,6 +271,55 @@ insert_func(
     bson_free(res);
 
     return 0;
+}
+
+static int
+fetch_by_key_func(
+        struct avatar_plugin_data *data,
+        const unsigned char *random_key,
+        int omit_image,
+        struct avatar_info_vector *result)
+{
+    struct avatar_mongo_state *state = (struct avatar_mongo_state *) data;
+    bson *query = NULL;
+    bson **results = NULL;
+    int count = 0;
+    int retval = -1;
+    struct avatar_info avatar;
+
+    query = bson_new();
+    bson_append_string(query, "random_key", random_key, strlen(random_key));
+    bson_finish(query);
+
+    // FIXME: also specify selector in case of omit_image != 0
+
+    count = state->common->i->query(state->common, state->avatar_table, 0, 100, query, NULL, &results);
+    if (count < 0) goto cleanup;
+    if (count > 1) {
+        err("fetch_by_key_func: multiple entries returned");
+        goto cleanup;
+    }
+    if (!count) {
+        retval = 0;
+        goto cleanup;
+    }
+    memset(&avatar, 0, sizeof(avatar));
+    if (avatar_info_bson_parse(results[0], &avatar) < 0) goto cleanup;
+    if (result->u >= result->a) {
+        avatar_vector_expand(result);
+    }
+    memcpy(&result->v[result->u++], &avatar, sizeof(avatar));
+    retval = 1;
+
+cleanup:;
+    if (query) bson_free(query);
+    if (results) {
+        for (int i = 0; i < count; ++i) {
+            bson_free(results[i]);
+        }
+        xfree(results);
+    }
+    return retval;
 }
 
 /*

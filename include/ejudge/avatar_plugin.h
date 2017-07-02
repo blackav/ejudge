@@ -77,6 +77,11 @@ struct avatar_plugin_iface
         const unsigned char *img_data,
         size_t img_size,
         unsigned char **p_id);
+    int (*fetch_by_key)(
+        struct avatar_plugin_data *data,
+        const unsigned char *random_key,
+        int omit_image,
+        struct avatar_info_vector *result);
 };
 
 struct avatar_loaded_plugin
