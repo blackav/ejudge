@@ -35,6 +35,7 @@
 #include "ejudge/random.h"
 #include "ejudge/base32.h"
 #include "ejudge/avatar_plugin.h"
+#include "ejudge/errlog.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -2680,6 +2681,67 @@ cleanup:
   return 1;
 }
 
+static void
+reg_get_avatar(FILE *fout, struct http_request_info *phr)
+{
+  const unsigned char *key = NULL;
+  int cookie_locale_id = 0;
+  int is_team = 0;
+  int cur_user_id = 0;
+  struct avatar_info_vector avatars;
+
+  avatar_vector_init(&avatars, 1);
+  if (hr_cgi_param(phr, "key", &key) <= 0) {
+    return error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+  }
+  if (phr->session_id) {
+    if (ns_open_ul_connection(phr->fw_state) > 0) {
+      if (userlist_clnt_get_cookie(ul_conn, ULS_GET_COOKIE,
+                                   &phr->ip, phr->ssl_flag,
+                                   phr->session_id,
+                                   phr->client_key,
+                                   &phr->user_id, &phr->contest_id,
+                                   &cookie_locale_id, 0, &phr->role, &is_team,
+                                   &phr->reg_status, &phr->reg_flags, &phr->passwd_method,
+                                   &phr->login, &phr->name) >= 0) {
+        // this is an authentificated user
+        cur_user_id = phr->user_id;
+      }
+    }
+  }
+  struct avatar_loaded_plugin *avt = avatar_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
+  if (!avt) {
+    return error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+  }
+
+  if (avt->iface->fetch_by_key(avt->data, key, 1, &avatars) < 0) {
+    return error_page(fout, phr, NEW_SRV_ERR_DATABASE_FAILED);
+  }
+  if (avatars.u > 1) {
+    err("AVATAR_INTERNAL: multiple avatars with random key %s!", key);
+    avatar_vector_free(&avatars);
+    return error_page(fout, phr, NEW_SRV_ERR_INTERNAL);
+  }
+  if (avatars.u < 1) {
+    avatar_vector_free(&avatars);
+    return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+
+  struct avatar_info *av = &avatars.v[0];
+  if (!av->is_public) {
+    if (!cur_user_id || cur_user_id != av->user_id) {
+      avatar_vector_free(&avatars);
+      return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+  }
+
+  fprintf(fout, "Content-type: %s\n", mime_type_get_type(av->mime_type));
+  fprintf(fout, "Content-Disposition: attachment; filename=\"%s.%s\"\n", key, mime_type_get_type(av->mime_type));
+  fprintf(fout, "\n");
+  fwrite(av->img_data, 1, av->img_size, fout);
+  avatar_vector_free(&avatars);
+}
+
 void
 ns_register_pages(FILE *fout, struct http_request_info *phr)
 {
@@ -2695,6 +2757,10 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
 
   if (phr->action == NEW_SRV_ACTION_CHANGE_LANGUAGE)
     return change_locale(fout, phr);
+
+  if (phr->action == NEW_SRV_ACTION_GET_AVATAR) {
+    return reg_get_avatar(fout, phr);
+  }
 
   if (!phr->session_id) return anon_register_pages(fout, phr);
 
