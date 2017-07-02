@@ -24,6 +24,61 @@
 
 #include <string.h>
 
+static void
+avatar_info_free(struct avatar_info *av)
+{
+    xfree(av->random_key);
+    xfree(av->img_data);
+}
+
+void
+avatar_vector_free(struct avatar_info_vector *vec)
+{
+    for (size_t i = 0; i < vec->u; ++i) {
+        avatar_info_free(&vec->v[i]);
+    }
+    xfree(vec->v);
+    memset(vec, 0, sizeof(*vec));
+}
+
+void
+avatar_vector_init(struct avatar_info_vector *vec, size_t init_a)
+{
+    memset(vec, 0, sizeof(*vec));
+    if (init_a > 0) {
+        vec->a = init_a;
+        vec->v = xmalloc(init_a * sizeof(vec->v[0]));
+    }
+}
+
+void avatar_vector_reserve(struct avatar_info_vector *vec, size_t new_a)
+{
+    if (!new_a) {
+        avatar_vector_free(vec);
+    } else if (new_a < vec->u) {
+        for (size_t i = new_a; i < vec->u; ++i) {
+            avatar_info_free(&vec->v[i]);
+        }
+        vec->v = xrealloc(vec->v, new_a * sizeof(vec->v[0]));
+        vec->u = new_a;
+        vec->a = new_a;
+    } else {
+        vec->v = xrealloc(vec->v, new_a * sizeof(vec->v[0]));
+        vec->a = new_a;
+    }
+}
+
+void avatar_vector_expand(struct avatar_info_vector *vec)
+{
+    if (!vec->a) {
+        vec->a = 1;
+    } else {
+        vec->a *= 2;
+    }
+    vec->v = xrealloc(vec->v, vec->a * sizeof(vec->v[0]));
+}
+
+
 #define DEFAULT_AVATAR_PLUGIN "mongo"
 
 #define AVATAR_PLUGIN_TYPE "avatar"

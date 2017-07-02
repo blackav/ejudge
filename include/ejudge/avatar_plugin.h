@@ -20,6 +20,35 @@
 #include "ejudge/ejudge_plugin.h"
 #include "ejudge/common_plugin.h"
 
+struct avatar_info
+{
+    // _id should be here
+    int user_id;
+    int contest_id;
+    int is_cropped;
+    int is_temporary;
+    int is_public;
+    int mime_type;
+    int width;
+    int height;
+    unsigned char *random_key;
+    time_t create_time;
+    unsigned char *img_data;
+    size_t img_size;
+};
+
+struct avatar_info_vector
+{
+    size_t u, a;
+    struct avatar_info *v;
+};
+
+// vec is assumed to be on stack, vec itself is not freed
+void avatar_vector_free(struct avatar_info_vector *vec);
+void avatar_vector_init(struct avatar_info_vector *vec, size_t init_a);
+void avatar_vector_reserve(struct avatar_info_vector *vec, size_t new_a);
+void avatar_vector_expand(struct avatar_info_vector *vec);
+
 /* version of the plugin interface structure */
 #define AVATAR_PLUGIN_IFACE_VERSION 1
 
