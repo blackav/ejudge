@@ -1,6 +1,6 @@
 /* This is auto-generated file */
 #include <ctype.h>
-#include "ejudge/new-server.h"
+#include "ejudge/new_server_proto.h"
 int ns_match_action(const unsigned char *str)
 {
   int c;
