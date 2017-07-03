@@ -6565,42 +6565,101 @@ int ns_match_action(const unsigned char *str)
                           c = str[5];
                           if (c == 'r') {
                             c = str[6];
-                            if (c == 'e') {
+                            if (c == 'o') {
                               c = str[7];
-                              if (c == 'a') {
+                              if (c == 'p') {
                                 c = str[8];
-                                if (c == 't') {
+                                if (c == '-') {
                                   c = str[9];
-                                  if (c == 'e') {
+                                  if (c == 'a') {
                                     c = str[10];
-                                    if (c == '-') {
+                                    if (c == 'v') {
                                       c = str[11];
                                       if (c == 'a') {
                                         c = str[12];
-                                        if (c == 'c') {
+                                        if (c == 't') {
                                           c = str[13];
-                                          if (c == 'c') {
+                                          if (c == 'a') {
                                             c = str[14];
-                                            if (c == 'o') {
+                                            if (c == 'r') {
                                               c = str[15];
-                                              if (c == 'u') {
+                                              if (c == '-') {
                                                 c = str[16];
-                                                if (c == 'n') {
+                                                if (c == 'p') {
                                                   c = str[17];
-                                                  if (c == 't') {
+                                                  if (c == 'a') {
                                                     c = str[18];
-                                                    if (!c) return NEW_SRV_ACTION_REG_CREATE_ACCOUNT;
-                                                    if (c == '-') {
+                                                    if (c == 'g') {
                                                       c = str[19];
-                                                      if (c == 'p') {
+                                                      if (c == 'e') {
                                                         c = str[20];
-                                                        if (c == 'a') {
-                                                          c = str[21];
-                                                          if (c == 'g') {
-                                                            c = str[22];
-                                                            if (c == 'e') {
-                                                              c = str[23];
-                                                              if (!c) return NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE;
+                                                        if (!c) return NEW_SRV_ACTION_REG_CROP_AVATAR_PAGE;
+                                                        return 0;
+                                                      }
+                                                      return 0;
+                                                    }
+                                                    return 0;
+                                                  }
+                                                  return 0;
+                                                }
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            } else if (c < 'o') {
+                              if (c == 'e') {
+                                c = str[7];
+                                if (c == 'a') {
+                                  c = str[8];
+                                  if (c == 't') {
+                                    c = str[9];
+                                    if (c == 'e') {
+                                      c = str[10];
+                                      if (c == '-') {
+                                        c = str[11];
+                                        if (c == 'a') {
+                                          c = str[12];
+                                          if (c == 'c') {
+                                            c = str[13];
+                                            if (c == 'c') {
+                                              c = str[14];
+                                              if (c == 'o') {
+                                                c = str[15];
+                                                if (c == 'u') {
+                                                  c = str[16];
+                                                  if (c == 'n') {
+                                                    c = str[17];
+                                                    if (c == 't') {
+                                                      c = str[18];
+                                                      if (!c) return NEW_SRV_ACTION_REG_CREATE_ACCOUNT;
+                                                      if (c == '-') {
+                                                        c = str[19];
+                                                        if (c == 'p') {
+                                                          c = str[20];
+                                                          if (c == 'a') {
+                                                            c = str[21];
+                                                            if (c == 'g') {
+                                                              c = str[22];
+                                                              if (c == 'e') {
+                                                                c = str[23];
+                                                                if (!c) return NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE;
+                                                                return 0;
+                                                              }
                                                               return 0;
                                                             }
                                                             return 0;
@@ -6633,7 +6692,7 @@ int ns_match_action(const unsigned char *str)
                                 }
                                 return 0;
                               }
-                              return 0;
+                            } else {
                             }
                             return 0;
                           } else if (c < 'r') {
