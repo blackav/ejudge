@@ -2473,7 +2473,9 @@ upload_avatar(
   int mime_type = 0, width = 0, height = 0;
   unsigned char random_key_bin[RANDOM_KEY_SIZE];
   unsigned char random_key[RANDOM_KEY_SIZE * 2];
+  unsigned char urlbuf[1024];
 
+  urlbuf[0] = 0;
   log_f = open_memstream(&log_t, &log_z);
 
   if (hr_cgi_param_bin(phr, "img_file", &img_data, &img_size) <= 0) {
@@ -2528,9 +2530,14 @@ upload_avatar(
                              img_data,
                              img_size,
                              NULL);
+  if (r < 0) {
+    fprintf(log_f, "failed to store avatar image");
+    goto done;
+  }
 
-  // stop for now
-  fprintf(log_f, "%s %d %d %s %d\n", mime_type_get_type(mime_type), width, height, random_key, r);
+  snprintf(urlbuf, sizeof(urlbuf), "%s?SID=%llx&action=%d&key=%s",
+           phr->self_url, phr->session_id, NEW_SRV_ACTION_REG_CROP_AVATAR_PAGE,
+           random_key);
 
 done:;
   if (log_f) close_memstream(log_f);
@@ -2539,7 +2546,7 @@ done:;
   if (log_t && *log_t) {
     action_error_page(fout, phr, cnts, extra, log_t);
   } else {
-    ns_refresh_page(fout, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
+    ns_refresh_page_2(fout, phr->client_key, urlbuf);
   }
 }
 
@@ -2567,6 +2574,7 @@ static const unsigned char * const external_reg_action_names[NEW_SRV_ACTION_LAST
   [NEW_SRV_ACTION_CONTESTS_PAGE] = "reg_contests_page",
   [NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE] = "reg_create_page",
   [NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE] = "reg_edit_page",
+  [NEW_SRV_ACTION_REG_CROP_AVATAR_PAGE] = "reg_crop_avatar_page",
 };
 static const int external_reg_action_aliases[NEW_SRV_ACTION_LAST] =
 {
@@ -2695,7 +2703,7 @@ reg_get_avatar(FILE *fout, struct http_request_info *phr)
     return error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
   }
   if (phr->session_id) {
-    if (ns_open_ul_connection(phr->fw_state) > 0) {
+    if (ns_open_ul_connection(phr->fw_state) >= 0) {
       if (userlist_clnt_get_cookie(ul_conn, ULS_GET_COOKIE,
                                    &phr->ip, phr->ssl_flag,
                                    phr->session_id,
@@ -2706,15 +2714,35 @@ reg_get_avatar(FILE *fout, struct http_request_info *phr)
                                    &phr->login, &phr->name) >= 0) {
         // this is an authentificated user
         cur_user_id = phr->user_id;
+        if (contests_get(phr->contest_id, &phr->cnts) < 0 || !phr->cnts) {
+          fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
+          return error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+        }
+        if (!(phr->extra = ns_get_contest_extra(phr->contest_id))) {
+          fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
+          return error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+        }
       }
     }
   }
+
+  if (!phr->extra) {
+    if (contests_get(phr->contest_id, &phr->cnts) < 0 || !phr->cnts) {
+      fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
+      return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+    if (!(phr->extra = ns_get_contest_extra(phr->contest_id))) {
+      fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
+      return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+  }
+
   struct avatar_loaded_plugin *avt = avatar_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
   if (!avt) {
     return error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
   }
 
-  if (avt->iface->fetch_by_key(avt->data, key, 1, &avatars) < 0) {
+  if (avt->iface->fetch_by_key(avt->data, key, 0, &avatars) < 0) {
     return error_page(fout, phr, NEW_SRV_ERR_DATABASE_FAILED);
   }
   if (avatars.u > 1) {
@@ -2736,7 +2764,7 @@ reg_get_avatar(FILE *fout, struct http_request_info *phr)
   }
 
   fprintf(fout, "Content-type: %s\n", mime_type_get_type(av->mime_type));
-  fprintf(fout, "Content-Disposition: attachment; filename=\"%s.%s\"\n", key, mime_type_get_type(av->mime_type));
+  fprintf(fout, "Content-Disposition: attachment; filename=\"%s%s\"\n", key, mime_type_get_suffix(av->mime_type));
   fprintf(fout, "\n");
   fwrite(av->img_data, 1, av->img_size, fout);
   avatar_vector_free(&avatars);
