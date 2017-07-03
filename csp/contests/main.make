@@ -193,7 +193,7 @@ csp_unpriv_error_userlist_server_down.c : unpriv_error_userlist_server_down.csp 
 
 csp_reg_contests_page.c : reg_contests_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_footer.csp
 csp_reg_create_page.c : reg_create_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_footer.csp
-csp_reg_crop_avatar_page.c : reg_crop_avatar_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_footer.csp
+csp_reg_crop_avatar_page.c : reg_crop_avatar_page.csp reg_includes.csp reg_stdvars.csp reg_header_croppie.csp reg_separator.csp reg_footer.csp
 csp_reg_edit_page.c : reg_edit_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_footer.csp
 csp_reg_login_page.c : reg_login_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_footer.csp
 csp_reg_main_page.c : reg_main_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_main_settings.csp reg_footer.csp

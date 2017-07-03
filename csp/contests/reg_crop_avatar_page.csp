@@ -26,7 +26,7 @@
   if (!n || !*n) n = phr->login;
 
   snprintf(title, sizeof(title), "%s [%s, %s]", s, html_armor_buf(&ab, n), extra->contest_arm); 
-%><%@include "reg_header.csp"
+%><%@include "reg_header_croppie.csp"
 %>
 <div class="user_actions">
     <table class="menu">
