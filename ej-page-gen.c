@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2014-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -4913,6 +4913,23 @@ handle_img_open(
         handle_html_string(prg_f, txt_f, log_f, "\"");
     }
 
+    char *str_p = 0;
+    size_t str_z = 0;
+    FILE *str_f = open_memstream(&str_p, &str_z);
+    HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
+    if (id_attr) {
+        fprintf(str_f, " id=\"%s\"", id_attr->value);
+    }
+    HtmlAttribute *class_attr = html_element_find_attribute(elem, "class");
+    if (class_attr) {
+        fprintf(str_f, " class=\"%s\"", class_attr->value);
+    }
+    fclose(str_f); str_f = NULL;
+    if (str_z > 0) {
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+    }
+    free(str_p); str_p = NULL;
+    
     handle_html_string(prg_f, txt_f, log_f, " />");
     return 0;
 }
