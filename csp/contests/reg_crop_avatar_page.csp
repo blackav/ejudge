@@ -1,0 +1,66 @@
+<%
+%><%@include "reg_includes.csp"
+%><%
+// local includes go here
+
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
+%><%@set getter_name = "csp_get_reg_crop_avatar_page"
+%><%@page csp_view_reg_crop_avatar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "reg_stdvars.csp"
+%><%
+  const unsigned char *s;
+  const unsigned char *n;
+  unsigned char title[1024];
+
+  l10n_setlocale(phr->locale_id);
+
+  if (phr->action == NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE)
+    s = _("Editing general info");
+  else if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE)
+    s = _("Editing member info");
+  else 
+    s = _("Good!");
+
+  n = phr->name;
+  if (!n || !*n) n = phr->login;
+
+  snprintf(title, sizeof(title), "%s [%s, %s]", s, html_armor_buf(&ab, n), extra->contest_arm); 
+%><%@include "reg_header.csp"
+%>
+<div class="user_actions">
+    <table class="menu">
+        <tr>
+            <td class="menu">
+                <div class="contest_actions_item">&nbsp;</div>
+            </td>
+        </tr>
+    </table>
+</div>
+<div class="white_empty_block">&nbsp;</div>
+<div class="contest_actions">
+    <table class="menu">
+        <tr>
+            <td class="menu">
+                <div class="contest_actions_item">&nbsp;</div>
+            </td>
+        </tr>
+    </table>
+</div>
+<%@include "reg_separator.csp"
+%>
+<%
+%>
+<%@include "reg_footer.csp"
+%><%
+//cleanup:;
+  l10n_resetlocale();
+  html_armor_free(&ab);
+  return retval;
+
+//redirect_back:
+  phr->content_type[0] = 0;
+  ns_refresh_page(out_f, phr, NEW_SRV_ACTION_REG_VIEW_GENERAL, 0);
+  html_armor_free(&ab);
+  return 0;
+%>
