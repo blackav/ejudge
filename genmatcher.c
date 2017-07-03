@@ -1,6 +1,4 @@
-/* $Id$ */
-
-/* Copyright (C) 2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2013-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -14,11 +12,12 @@
  * GNU General Public License for more details.
  */
 
-#include "ejudge/new-server.h"
+#include "ejudge/new_server_proto.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 #include "new_server_at.c"
 
@@ -152,7 +151,7 @@ int main(void)
 {
   printf("/* This is auto-generated file */\n"
          "#include <ctype.h>\n"
-         "#include \"ejudge/new-server.h\"\n"
+         "#include \"ejudge/new_server_proto.h\"\n"
          "int ns_match_action(const unsigned char *str)\n"
          "{\n"
          "  int c;\n"
