@@ -285,4 +285,5 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REG_UPLOAD_AVATAR] = "reg-upload-avatar",
   [NEW_SRV_ACTION_GET_AVATAR] = "get-avatar",
   [NEW_SRV_ACTION_REG_CROP_AVATAR_PAGE] = "reg-crop-avatar-page",
+  [NEW_SRV_ACTION_REG_SAVE_CROPPED_AVATAR_AJAX] = "reg-save-cropped-avatar-ajax",
 };

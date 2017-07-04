@@ -2575,6 +2575,7 @@ static const unsigned char * const external_reg_action_names[NEW_SRV_ACTION_LAST
   [NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE] = "reg_create_page",
   [NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE] = "reg_edit_page",
   [NEW_SRV_ACTION_REG_CROP_AVATAR_PAGE] = "reg_crop_avatar_page",
+  [NEW_SRV_ACTION_REG_SAVE_CROPPED_AVATAR_AJAX] = "reg_save_cropped_avatar_ajax",
 };
 static const int external_reg_action_aliases[NEW_SRV_ACTION_LAST] =
 {
