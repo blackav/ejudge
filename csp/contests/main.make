@@ -75,6 +75,7 @@ SOFILES = \
  csp_reg_edit_page.so\
  csp_reg_login_page.so\
  csp_reg_main_page.so\
+ csp_reg_save_cropped_avatar_ajax.so\
  csp_reg_error_internal.so\
  csp_reg_error_inv_param.so\
  csp_reg_error_inv_session.so\
@@ -197,6 +198,7 @@ csp_reg_crop_avatar_page.c : reg_crop_avatar_page.csp reg_includes.csp reg_stdva
 csp_reg_edit_page.c : reg_edit_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_footer.csp
 csp_reg_login_page.c : reg_login_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_footer.csp
 csp_reg_main_page.c : reg_main_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_main_settings.csp reg_footer.csp
+csp_reg_save_cropped_avatar_ajax.c : reg_save_cropped_avatar_ajax.csp reg_includes.csp reg_stdvars.csp
 
 csp_reg_csp_error_internal.c : reg_error_internal.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp
 csp_reg_csp_error_inv_param.c : reg_error_inv_param.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp

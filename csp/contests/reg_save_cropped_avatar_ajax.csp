@@ -1,0 +1,16 @@
+<%
+%><%@include "priv_includes.csp"
+%><%
+// includes
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
+%><%@set getter_name = "csp_get_reg_save_cropped_avatar_ajax"
+%><%@page csp_view_reg_save_cropped_avatar_ajax(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+
+%>{
+}<%
+//cleanup:
+    html_armor_free(&ab);
+%>
