@@ -7347,6 +7347,101 @@ int ns_match_action(const unsigned char *str)
                               return 0;
                             }
                             return 0;
+                          } else if (c < 'u') {
+                            if (c == 'a') {
+                              c = str[6];
+                              if (c == 'v') {
+                                c = str[7];
+                                if (c == 'e') {
+                                  c = str[8];
+                                  if (c == '-') {
+                                    c = str[9];
+                                    if (c == 'c') {
+                                      c = str[10];
+                                      if (c == 'r') {
+                                        c = str[11];
+                                        if (c == 'o') {
+                                          c = str[12];
+                                          if (c == 'p') {
+                                            c = str[13];
+                                            if (c == 'p') {
+                                              c = str[14];
+                                              if (c == 'e') {
+                                                c = str[15];
+                                                if (c == 'd') {
+                                                  c = str[16];
+                                                  if (c == '-') {
+                                                    c = str[17];
+                                                    if (c == 'a') {
+                                                      c = str[18];
+                                                      if (c == 'v') {
+                                                        c = str[19];
+                                                        if (c == 'a') {
+                                                          c = str[20];
+                                                          if (c == 't') {
+                                                            c = str[21];
+                                                            if (c == 'a') {
+                                                              c = str[22];
+                                                              if (c == 'r') {
+                                                                c = str[23];
+                                                                if (c == '-') {
+                                                                  c = str[24];
+                                                                  if (c == 'a') {
+                                                                    c = str[25];
+                                                                    if (c == 'j') {
+                                                                      c = str[26];
+                                                                      if (c == 'a') {
+                                                                        c = str[27];
+                                                                        if (c == 'x') {
+                                                                          c = str[28];
+                                                                          if (!c) return NEW_SRV_ACTION_REG_SAVE_CROPPED_AVATAR_AJAX;
+                                                                          return 0;
+                                                                        }
+                                                                        return 0;
+                                                                      }
+                                                                      return 0;
+                                                                    }
+                                                                    return 0;
+                                                                  }
+                                                                  return 0;
+                                                                }
+                                                                return 0;
+                                                              }
+                                                              return 0;
+                                                            }
+                                                            return 0;
+                                                          }
+                                                          return 0;
+                                                        }
+                                                        return 0;
+                                                      }
+                                                      return 0;
+                                                    }
+                                                    return 0;
+                                                  }
+                                                  return 0;
+                                                }
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                          } else {
                           }
                           return 0;
                         } else if (c < 's') {
