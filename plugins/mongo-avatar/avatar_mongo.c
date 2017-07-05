@@ -158,6 +158,10 @@ fetch_by_key_func(
         const unsigned char *random_key,
         int need_image,
         struct avatar_info_vector *result);
+static int
+delete_by_key_func(
+        struct avatar_plugin_data *data,
+        const unsigned char *random_key);
 
 struct avatar_plugin_iface plugin_avatar_mongo =
 {
@@ -176,6 +180,7 @@ struct avatar_plugin_iface plugin_avatar_mongo =
     AVATAR_PLUGIN_IFACE_VERSION,
     insert_func,
     fetch_by_key_func,
+    delete_by_key_func,
 };
 
 static struct common_plugin_data *
@@ -319,6 +324,29 @@ cleanup:;
         }
         xfree(results);
     }
+    return retval;
+}
+
+static int
+delete_by_key_func(
+        struct avatar_plugin_data *data,
+        const unsigned char *random_key)
+{
+    int retval = -1;
+    struct avatar_mongo_state *state = (struct avatar_mongo_state *) data;
+    bson *query = NULL;
+    int r;
+
+    query = bson_new();
+    bson_append_string(query, "random_key", random_key, strlen(random_key));
+    bson_finish(query);
+
+    r = state->common->i->remove(state->common, state->avatar_table, query);
+    if (r < 0) goto cleanup;
+    retval = 0;
+
+cleanup:;
+    if (query) bson_free(query);
     return retval;
 }
 
