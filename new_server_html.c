@@ -6830,6 +6830,52 @@ priv_reload_server_2(
 {
 }
 
+static void
+priv_get_avatar(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const unsigned char *key = NULL;
+  struct avatar_info_vector avatars;
+  struct avatar_loaded_plugin *avt = NULL;
+
+  avatar_vector_init(&avatars, 1);
+  if (hr_cgi_param(phr, "key", &key) <= 0) {
+    error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
+
+  avt = avatar_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
+  if (!avt) {
+    error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
+  if (avt->iface->fetch_by_key(avt->data, key, 0, &avatars) < 0) {
+    error_page(fout, phr, 1, NEW_SRV_ERR_DATABASE_FAILED);
+    goto cleanup;
+  }
+  if (avatars.u > 1) {
+    err("AVATAR_INTERNAL: multiple avatars with random key %s!", key);
+    error_page(fout, phr, 1, NEW_SRV_ERR_INTERNAL);
+    goto cleanup;
+  }
+  if (avatars.u < 1) {
+    error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
+  }
+
+  struct avatar_info *av = &avatars.v[0];
+  fprintf(fout, "Content-type: %s\n", mime_type_get_type(av->mime_type));
+  fprintf(fout, "Content-Disposition: attachment; filename=\"%s%s\"\n", key, mime_type_get_suffix(av->mime_type));
+  fprintf(fout, "\n");
+  fwrite(av->img_data, 1, av->img_size, fout);
+
+cleanup:;
+  avatar_vector_free(&avatars);
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -7033,6 +7079,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = priv_generic_operation, ///
   [NEW_SRV_ACTION_PING] = priv_generic_page,
   [NEW_SRV_ACTION_SUBMIT_RUN_BATCH] = priv_generic_page,
+  [NEW_SRV_ACTION_GET_AVATAR] = priv_get_avatar,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
