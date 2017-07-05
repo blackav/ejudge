@@ -106,6 +106,10 @@ avatar_plugin_get(
 struct avatar_loaded_plugin *
 avatar_plugin_destroy(struct avatar_loaded_plugin *);
 
+enum { AVATAR_WIDTH = 90, AVATAR_HEIGHT = 90 };
+enum { AVATAR_RANDOM_KEY_SIZE = 16 };
+enum { AVATAR_PANEL_WIDTH = 200, AVATAR_PANEL_HEIGHT = 200 };
+
 #endif /* __AVATAR_PLUGIN_H__ */
 
 /*
