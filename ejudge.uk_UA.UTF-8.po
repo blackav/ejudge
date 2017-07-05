@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-06-29 19:57+0300\n"
+"POT-Creation-Date: 2017-07-05 19:22+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -951,6 +951,9 @@ msgid "Create contest!"
 msgstr ""
 
 msgid "Create user account"
+msgstr ""
+
+msgid "Crop avatar"
 msgstr ""
 
 msgid "Current standings"
