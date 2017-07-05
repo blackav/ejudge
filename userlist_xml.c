@@ -2048,6 +2048,12 @@ userlist_unparse_user_short(const struct userlist_user *p, FILE *f,
     xml_unparse_text(f, elem_map[USERLIST_T_NAME], ui->name, "    ");
   }
   xml_unparse_text(f, elem_map[USERLIST_T_EMAIL], p->email, "    ");
+  if (ui && ui->avatar_store && ui->avatar_store[0]) {
+    xml_unparse_text(f, elem_map[USERLIST_T_AVATAR_STORE], ui->avatar_store, "    ");
+  }
+  if (ui && ui->avatar_id && ui->avatar_id[0]) {
+    xml_unparse_text(f, elem_map[USERLIST_T_AVATAR_ID], ui->avatar_id, "    ");
+  }
   if (uc) {
     fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CONTESTS]);
     userlist_unparse_contest(uc, f, "      ");
