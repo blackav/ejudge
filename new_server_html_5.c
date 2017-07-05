@@ -2705,7 +2705,8 @@ reg_get_avatar(FILE *fout, struct http_request_info *phr)
 
   avatar_vector_init(&avatars, 1);
   if (hr_cgi_param(phr, "key", &key) <= 0) {
-    return error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+    error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
   }
   if (phr->session_id) {
     if (ns_open_ul_connection(phr->fw_state) >= 0) {
@@ -2721,11 +2722,13 @@ reg_get_avatar(FILE *fout, struct http_request_info *phr)
         cur_user_id = phr->user_id;
         if (contests_get(phr->contest_id, &phr->cnts) < 0 || !phr->cnts) {
           fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
-          return error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+          error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+          goto cleanup;
         }
         if (!(phr->extra = ns_get_contest_extra(phr->contest_id))) {
           fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
-          return error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+          error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+          goto cleanup;
         }
       }
     }
@@ -2734,37 +2737,41 @@ reg_get_avatar(FILE *fout, struct http_request_info *phr)
   if (!phr->extra) {
     if (contests_get(phr->contest_id, &phr->cnts) < 0 || !phr->cnts) {
       fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
-      return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+      error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+      goto cleanup;
     }
     if (!(phr->extra = ns_get_contest_extra(phr->contest_id))) {
       fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
-      return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+      error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+      goto cleanup;
     }
   }
 
   struct avatar_loaded_plugin *avt = avatar_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
   if (!avt) {
-    return error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+    error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
   }
 
   if (avt->iface->fetch_by_key(avt->data, key, 0, &avatars) < 0) {
-    return error_page(fout, phr, NEW_SRV_ERR_DATABASE_FAILED);
+    error_page(fout, phr, NEW_SRV_ERR_DATABASE_FAILED);
+    goto cleanup;
   }
   if (avatars.u > 1) {
     err("AVATAR_INTERNAL: multiple avatars with random key %s!", key);
-    avatar_vector_free(&avatars);
-    return error_page(fout, phr, NEW_SRV_ERR_INTERNAL);
+    error_page(fout, phr, NEW_SRV_ERR_INTERNAL);
+    goto cleanup;
   }
   if (avatars.u < 1) {
-    avatar_vector_free(&avatars);
-    return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+    error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
   }
 
   struct avatar_info *av = &avatars.v[0];
   if (!av->is_public) {
     if (!cur_user_id || cur_user_id != av->user_id) {
-      avatar_vector_free(&avatars);
-      return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+      error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+      goto cleanup;
     }
   }
 
@@ -2772,6 +2779,8 @@ reg_get_avatar(FILE *fout, struct http_request_info *phr)
   fprintf(fout, "Content-Disposition: attachment; filename=\"%s%s\"\n", key, mime_type_get_suffix(av->mime_type));
   fprintf(fout, "\n");
   fwrite(av->img_data, 1, av->img_size, fout);
+
+cleanup:;
   avatar_vector_free(&avatars);
 }
 
