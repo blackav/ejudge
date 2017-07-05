@@ -28,6 +28,23 @@ image_identify(
         int *p_width,
         int *p_height);
 
+int
+image_convert(
+        FILE *log_f,
+        const unsigned char *tmp_dir,
+        int in_mime_type,
+        int in_left,
+        int in_top,
+        int in_width,
+        int in_height,
+        const unsigned char *in_data,
+        size_t in_size,
+        int out_mime_type,
+        int out_width,
+        int out_height,
+        unsigned char **p_out_data,
+        size_t *p_out_size);
+
 #endif /* __IMAGEMAGICK_H__ */
 
 /*

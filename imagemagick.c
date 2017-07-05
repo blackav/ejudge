@@ -25,6 +25,7 @@
 #include <string.h>
 
 static const unsigned char * const identify_program = "/usr/bin/identify";
+static const unsigned char * const convert_program = "/usr/bin/convert";
 
 int
 image_identify(
@@ -102,6 +103,127 @@ cleanup:;
     }
     xfree(stdout_text);
     xfree(stderr_text);
+    return retval;
+}
+
+int
+image_convert(
+        FILE *log_f,
+        const unsigned char *tmp_dir,
+        int in_mime_type,
+        int in_left,
+        int in_top,
+        int in_width,
+        int in_height,
+        const unsigned char *in_data,
+        size_t in_size,
+        int out_mime_type,
+        int out_width,
+        int out_height,
+        unsigned char **p_out_data,
+        size_t *p_out_size)
+{
+    int retval = -1;
+    unsigned char in_tmp_path[PATH_MAX];
+    unsigned char out_tmp_path[PATH_MAX];
+    unsigned char format1[128];
+    unsigned char format2[128];
+    unsigned char *stdout_text = NULL;
+    unsigned char *stderr_text = NULL;
+    char *out_data = NULL;
+    size_t out_size = 0;
+    FILE *out_file = NULL;
+    FILE *in_file = NULL;
+
+    in_tmp_path[0] = 0;
+    out_tmp_path[0] = 0;
+
+    if (access(convert_program, X_OK) < 0) {
+        if (log_f) {
+            fprintf(log_f, "ImageMagick is not installed (%s is not executable)", convert_program);
+        }
+        goto cleanup;
+    }
+
+    if (write_tmp_file_2(log_f, tmp_dir, "ejimg_", mime_type_get_suffix(in_mime_type),
+                         in_tmp_path, sizeof(in_tmp_path), in_data, in_size) < 0) {
+        goto cleanup;
+    }
+    if (write_tmp_file_2(log_f, tmp_dir, "ejimg_", mime_type_get_suffix(out_mime_type),
+                         out_tmp_path, sizeof(out_tmp_path), "", 0) < 0) {
+        goto cleanup;
+    }
+
+    snprintf(format1, sizeof(format1), "%dx%d+%d+%d", in_width, in_height, in_left, in_top);
+    snprintf(format2, sizeof(format2), "%dx%d", out_width, out_height);
+
+    char *args[] =
+    {
+        (char*) convert_program,
+        "-extract",
+        format1,
+        "-resize",
+        format2,
+        in_tmp_path,
+        out_tmp_path,
+        NULL
+    };
+
+    int r = ejudge_invoke_process(args, NULL, NULL, NULL, "", 0, &stdout_text, &stderr_text);
+    if (r < 0) {
+        if (log_f) {
+            fprintf(log_f, "failed to start ImageMagick %s", convert_program);
+        }
+        goto cleanup;
+    }
+    if (r > 0) {
+        if (log_f) {
+            fprintf(log_f, "ImageMagick failed to convert image");
+        }
+        goto cleanup;
+    }
+
+    if (!(in_file = fopen(out_tmp_path, "r"))) {
+        if (log_f) {
+            fprintf(log_f, "failed to open output file");
+        }
+        goto cleanup;
+    }
+    out_file = open_memstream(&out_data, &out_size);
+    int c;
+    while ((c = getc_unlocked(in_file)) != EOF) {
+        putc_unlocked(c, out_file);
+    }
+    if (ferror(in_file)) {
+        if (log_f) {
+            fprintf(log_f, "read error");
+        }
+        goto cleanup;
+    }
+    fclose(in_file); in_file = NULL;
+    fclose(out_file); out_file = NULL;
+
+    if (p_out_data) {
+        *p_out_data = out_data;
+        out_data = NULL;
+    }
+    if (p_out_size) {
+        *p_out_size = out_size;
+    }
+    retval = 0;
+
+cleanup:;
+    if (in_tmp_path[0]) {
+        unlink(in_tmp_path);
+    }
+    if (out_tmp_path[0]) {
+        unlink(out_tmp_path);
+    }
+    xfree(stdout_text);
+    xfree(stderr_text);
+    if (out_file) fclose(out_file);
+    xfree(out_data);
+    if (in_file) fclose(in_file);
     return retval;
 }
 
