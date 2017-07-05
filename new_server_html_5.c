@@ -913,7 +913,7 @@ ns_reg_main_page_view_info(
 
   if (phr->action == NEW_SRV_ACTION_REG_VIEW_GENERAL) {
     fprintf(fout, "<h2>%s", _("General information"));
-    if (!u->read_only && (!ui || !ui->cnts_read_only)) {
+    if (!u->read_only && (!ui || !ui->cnts_read_only) && !(phr->reg_flags & USERLIST_UC_REG_READONLY)) {
       fprintf(fout, " [%s%s</a>]",
               ns_aref(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE, 0), _("Edit"));
     }
@@ -1012,15 +1012,21 @@ ns_reg_main_page_view_info(
     }
     fprintf(fout, "</table>\n");
 
-    ////// avatar handling goes here
-    html_start_form(fout, 2, phr->self_url, "");
-    html_hidden(fout, "SID", "%llx", phr->session_id);
-    fprintf(fout, "<input type=\"file\" name=\"img_file\" />");
-    fprintf(fout, "%s",
-            ns_submit_button(bb, sizeof(bb), 0,
-                             NEW_SRV_ACTION_REG_UPLOAD_AVATAR, 0));
-    fprintf(fout, "</form>\n");
-    //////
+    if (cnts->enable_avatar > 0) {
+      if (ui && ui->avatar_id && ui->avatar_id[0]) {
+        fprintf(fout, "<img src=\"%s?SID=%llx&key=%s&action=%d\" alt=\"avatar\" />",
+                phr->self_url, phr->session_id, ui->avatar_id, NEW_SRV_ACTION_GET_AVATAR);
+      }
+      if (!(phr->reg_flags & USERLIST_UC_REG_READONLY)) {
+        html_start_form(fout, 2, phr->self_url, "");
+        html_hidden(fout, "SID", "%llx", phr->session_id);
+        fprintf(fout, "<input type=\"file\" name=\"img_file\" />");
+        fprintf(fout, "%s",
+                ns_submit_button(bb, sizeof(bb), 0,
+                                 NEW_SRV_ACTION_REG_UPLOAD_AVATAR, 0));
+        fprintf(fout, "</form>\n");
+      }
+    }
   } else if (phr->action >= NEW_SRV_ACTION_REG_VIEW_CONTESTANTS
              && phr->action <= NEW_SRV_ACTION_REG_VIEW_GUESTS) {
     rr = phr->action - NEW_SRV_ACTION_REG_VIEW_CONTESTANTS;
