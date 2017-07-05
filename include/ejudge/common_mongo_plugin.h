@@ -79,6 +79,10 @@ struct common_mongo_iface
         struct common_mongo_state *state,
         const unsigned char *table,
         const struct _bson *b);
+    int (*remove)(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        const struct _bson *selector);
 };
 
 #endif /* __COMMON_MONGO_PLUGIN_H__ */

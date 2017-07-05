@@ -74,6 +74,11 @@ index_create_func(
         struct common_mongo_state *state,
         const unsigned char *table,
         const struct _bson *b);
+static int
+remove_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        const struct _bson *selector);
 
 struct common_mongo_iface plugin_common_mongo =
 {
@@ -96,6 +101,7 @@ struct common_mongo_iface plugin_common_mongo =
     update_func,
     update_and_free_func,
     index_create_func,
+    remove_func,
 };
 
 static struct common_plugin_data *
@@ -394,6 +400,25 @@ index_create_func(
     snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, table);
     if (!mongo_sync_cmd_index_create(state->conn, ns, b, 0)) {
         err("common_mongo::index_create: failed: %s", os_ErrorMsg());
+        return -1;
+    }
+    return 0;
+}
+
+static int
+remove_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        const struct _bson *selector)
+{
+    unsigned char ns[1024];
+
+    if (state->show_queries > 0) {
+        fprintf(stderr, "delete selector: "); ej_bson_unparse(stderr, selector, 0); fprintf(stderr, "\n");
+    }
+    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, table);
+    if (!mongo_sync_cmd_delete(state->conn, ns, 0, selector)) {
+        err("common_mongo::delete: failed: %s", os_ErrorMsg());
         return -1;
     }
     return 0;
