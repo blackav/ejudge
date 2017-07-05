@@ -2454,8 +2454,6 @@ register_for_contest(
 }
 
 enum { MAX_IMAGE_SIZE = 2 * 1024 * 1024, MAX_IMAGE_WIDTH = 10000, MAX_IMAGE_HEIGHT = 10000 };
-enum { AVATAR_WIDTH = 90, AVATAR_HEIGHT = 90 };
-enum { RANDOM_KEY_SIZE = 16 };
 
 static void
 upload_avatar(
@@ -2471,8 +2469,8 @@ upload_avatar(
   const unsigned char *img_data = NULL;
   size_t img_size = 0;
   int mime_type = 0, width = 0, height = 0;
-  unsigned char random_key_bin[RANDOM_KEY_SIZE];
-  unsigned char random_key[RANDOM_KEY_SIZE * 2];
+  unsigned char random_key_bin[AVATAR_RANDOM_KEY_SIZE];
+  unsigned char random_key[AVATAR_RANDOM_KEY_SIZE * 2];
   unsigned char urlbuf[1024];
 
   urlbuf[0] = 0;
@@ -2512,8 +2510,8 @@ upload_avatar(
     fprintf(log_f, "failed to initialize random number generator");
     goto done;
   }
-  random_bytes(random_key_bin, RANDOM_KEY_SIZE);
-  base32_buf(random_key, random_key_bin, RANDOM_KEY_SIZE, 0);
+  random_bytes(random_key_bin, AVATAR_RANDOM_KEY_SIZE);
+  base32_buf(random_key, random_key_bin, AVATAR_RANDOM_KEY_SIZE, 0);
 
   struct avatar_loaded_plugin *avt = avatar_plugin_get(extra, cnts, phr->config, NULL);
   if (!avt) {
