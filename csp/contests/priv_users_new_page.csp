@@ -27,7 +27,7 @@
 </tr></table>
 
 <div id="UsersTableDiv">
-    <table class="b1 table-b1 table-users t-left">
+    <table class="b1 table-b1 table-users<% if (cnts->enable_avatar <= 0) { %> t-left<% } %>">
         <thead>
             <tr>
                 <th class="b1"><input id="ToggleAllCheckbox" type="checkbox" onclick="toggleUserSelection()" /></th>
