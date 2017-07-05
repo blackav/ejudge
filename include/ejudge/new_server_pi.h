@@ -148,6 +148,9 @@ typedef struct UserInfoPage
     unsigned char *create_time_str;
     unsigned char *last_login_time_str;
 
+    unsigned char *avatar_store;
+    unsigned char *avatar_id;
+
     size_t run_size;
 
     int user_id;

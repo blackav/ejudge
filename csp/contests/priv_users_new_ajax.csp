@@ -46,6 +46,20 @@
             "is_reg_readonly" : <s:v value="ui->is_reg_readonly" json="yes" />,
             "create_time" : "<s:v value="ui->create_time_str" json="yes" />",
             "last_login_time" : "<s:v value="ui->last_login_time_str" json="yes" />",
+<%
+            if (cnts->enable_avatar > 0 && ui->avatar_store) {
+%>
+            "avatar_store" : "<s:v value="ui->avatar_store" json="yes" />",
+<%
+            }
+%>
+<%
+            if (cnts->enable_avatar > 0 && ui->avatar_id) {
+%>
+            "avatar_id" : "<s:v value="ui->avatar_id" json="yes" />",
+<%
+            }
+%>
             "run_count" : <s:v value="ui->run_count" />,
             "run_size" : <s:v value="ui->run_size" />,
             "clar_count" : <s:v value="ui->clar_count" />,

@@ -33,6 +33,9 @@
                 <th class="b1"><input id="ToggleAllCheckbox" type="checkbox" onclick="toggleUserSelection()" /></th>
                 <th class="b1">NN</th>
                 <th class="b1">Id</th>
+<%   if (cnts->enable_avatar > 0) { %>
+                <th class="b1">Avatar</th>
+<%   } %>
                 <th class="b1">Login</th>
                 <th class="b1">Name</th>
                 <th class="b1">Status</th>
@@ -189,6 +192,7 @@
     var action_users_new_ajax=<s:ac ac="view-users-new-ajax" />;
     var action_main_page=<s:ac ac="main-page" />;
     var action_view_user_info=<s:ac ac="view-user-info" />;
+    var action_get_avatar=<s:ac ac="get-avatar" />;
 
     var show_not_ok = false;
     var show_invisible = false;
@@ -345,6 +349,21 @@ function updateTable(arr)
         text += "\">";
         text += v.user_id;
         text += "</a></td>";
+<% if (cnts->enable_avatar > 0) { %>
+        text += "<td class=\"b1\">";
+        if (v.hasOwnProperty("avatar_id") && v.avatar_id != null) {
+            text += "<img src=\"";
+            text += self_url;
+            text += "?SID=";
+            text += SID;
+            text += "&amp;action=";
+            text += action_get_avatar;
+            text += "&amp;key=";
+            text += v.avatar_id;
+            text += "\" alt=\"avatar\" />";
+        }
+        text += "</td>";
+<% } %>
         text += "<td class=\"b1\"><a href=\"";
         text += self_url;
         text += "?SID=";
@@ -400,7 +419,7 @@ function updateTable(arr)
         text += "<td class=\"b1\">" + v.run_count + "</td>";
         text += "<td class=\"b1\">" + v.run_size + "</td>";
         text += "<td class=\"b1\">" + v.clar_count + "</td>";
-        text += "</tr>";
+        text += "</tr>\n";
     }
     $("#UsersTableDiv > table > tbody").html(text);
 }
