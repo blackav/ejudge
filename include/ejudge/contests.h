@@ -173,6 +173,7 @@ enum
     CONTEST_A_READY,
     CONTEST_A_FORCE_PASSWORD_CHANGE,
     CONTEST_A_ENABLE_USER_TELEGRAM,
+    CONTEST_A_ENABLE_AVATAR,
 
     CONTEST_LAST_ATTR
   };
@@ -317,6 +318,7 @@ struct contest_desc
   ejbytebool_t ready;
   ejbytebool_t force_password_change;
   ejbytebool_t enable_user_telegram;
+  ejbytebool_t enable_avatar;
 
   time_t         reg_deadline;
   time_t         sched_time;

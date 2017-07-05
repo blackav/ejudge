@@ -165,6 +165,7 @@ const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
   [CONTEST_A_READY] = CNTS_ready,
   [CONTEST_A_FORCE_PASSWORD_CHANGE] = CNTS_force_password_change,
   [CONTEST_A_ENABLE_USER_TELEGRAM] = CNTS_enable_user_telegram,
+  [CONTEST_A_ENABLE_AVATAR] = CNTS_enable_avatar,
 };
 
 char const * const contests_elem_map[] =
@@ -309,6 +310,7 @@ char const * const contests_attr_map[] =
   "ready",
   "force_password_change",
   "enable_user_telegram",
+  "enable_avatar",
 
   0
 };
@@ -839,6 +841,7 @@ static const unsigned char contest_bool_attr_set[CONTEST_LAST_ATTR] =
   [CONTEST_A_READY] = 1,
   [CONTEST_A_FORCE_PASSWORD_CHANGE] = 1,
   [CONTEST_A_ENABLE_USER_TELEGRAM] = 1,
+  [CONTEST_A_ENABLE_AVATAR] = 1,
 };
 
 static void

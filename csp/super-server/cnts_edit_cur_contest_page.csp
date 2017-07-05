@@ -111,6 +111,9 @@ static const unsigned char * const form_row_attrs[]=
             <input type="checkbox" name="enable_user_telegram" id="FlagsDialogEnableUserTelegram" value="1" />
             <label for="FlagsDialogEnableUserTelegram">Enable telegram interaction for users?</label>
             <br/>
+            <input type="checkbox" name="enable_avatar" id="FlagsDialogEnableAvatar" value="1" />
+            <label for="FlagsDialogEnableAvatar">Enable avatars for users?</label>
+            <br/>
         </fieldset>
     </s:form>
 </div>
@@ -1107,6 +1110,13 @@ function np(e)
         <td><s:yesno id="OrigEnableUserTelegram" disabled="disabled" name="param" value="cnts->enable_user_telegram" /></td>
         <td>&nbsp;</td>
         <td onclick="np(event);"><s:help topic="Contest.xml:enable_user_telegram" /></td>
+    </s:tr>
+
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>Enable avatars for users?</td>
+        <td><s:yesno id="OrigEnableAvatar" disabled="disabled" name="param" value="cnts->enable_avatar" /></td>
+        <td>&nbsp;</td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:enable_avatar" /></td>
     </s:tr>
 </table>
     </div>
