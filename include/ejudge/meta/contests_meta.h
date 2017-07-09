@@ -116,6 +116,7 @@ enum
   CNTS_telegram_admin_chat_id,
   CNTS_telegram_user_chat_id,
   CNTS_avatar_plugin,
+  CNTS_content_plugin,
   CNTS_slave_rules,
   CNTS_user_contest_num,
   CNTS_default_locale_num,
