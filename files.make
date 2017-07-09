@@ -137,6 +137,7 @@ COMMON_CFILES=\
  compile_packet_4.c\
  compile_packet_5.c\
  compile_packet_6.c\
+ content_plugin.c\
  contests.c\
  contests_2.c\
  contest_tmpl.c\
@@ -524,6 +525,7 @@ HFILES=\
  ./include/ejudge/compat.h\
  ./include/ejudge/compile_packet.h\
  ./include/ejudge/compile_packet_priv.h\
+ ./include/ejudge/content_plugin.h\
  ./include/ejudge/contests.h\
  ./include/ejudge/copyright.h\
  ./include/ejudge/cpu.h\
