@@ -9,6 +9,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/random.h"
 #include "ejudge/base32.h"
+#include "ejudge/mime_type.h"
 
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"
@@ -151,19 +152,22 @@
         goto done;
     }
 
-    int edited_ids[2] =
+#define UPDATED_FIELD_COUNT 3
+    int edited_ids[UPDATED_FIELD_COUNT] =
     {
         USERLIST_NC_AVATAR_STORE,
-        USERLIST_NC_AVATAR_ID
+        USERLIST_NC_AVATAR_ID,
+        USERLIST_NC_AVATAR_SUFFIX,
     };
-    const unsigned char * edited_strs[2] =
+    const unsigned char * edited_strs[UPDATED_FIELD_COUNT] =
     {
         "mongo",
-        random_key
+        random_key,
+        mime_type_get_suffix(av->mime_type),
     };
     r = userlist_clnt_edit_field_seq(ul_conn, ULS_EDIT_FIELD_SEQ,
                                      phr->user_id, phr->contest_id, 0,
-                                     0, 2, NULL,
+                                     0, UPDATED_FIELD_COUNT, NULL,
                                      edited_ids, (const unsigned char**) edited_strs);
     if (r < 0) {
         snprintf(message, sizeof(message), "failed to update avatar info");
