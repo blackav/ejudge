@@ -2,6 +2,7 @@
 %><%@include "priv_includes.csp"
 %><%
 // includes
+#include "ejudge/content_plugin.h"
 %><%@set getter_name = "csp_get_priv_users_new_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_users_new_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -10,8 +11,15 @@
     int enable_main_menu = 1;
     const unsigned char *title = _("Users page");
     const struct section_global_data *global = extra->serve_state->global;
+    struct content_loaded_plugin *cp = NULL;
+    int content_enabled = 0;
 
-// locals
+    if (cnts && cnts->enable_avatar > 0) {
+        cp = content_plugin_get(extra, cnts, phr->config, NULL);
+    }
+    if (cp) {
+        content_enabled = cp->iface->is_enabled(cp->data, cnts);
+    }
 
     l10n_setlocale(phr->locale_id);
 %><%@include "priv_header_jq.csp"
@@ -329,6 +337,25 @@ function clearUserSelection()
     });
 }
 
+<%  if (content_enabled > 0 && cp && cp->iface->generate_url_generator) {
+        cp->iface->generate_url_generator(cp->data, cnts, out_f, "getAvatarUrl");
+    } else { %>
+
+function getAvatarUrl(avatar_id, avatar_suffix)
+{
+    var text = "";
+    text += self_url;
+    text += "?SID=";
+    text += SID;
+    text += "&amp;action=";
+    text += action_get_avatar;
+    text += "&amp;key=";
+    text += avatar_id;
+    return text;
+}
+
+<% } %>
+
 function updateTable(arr)
 {
     var text = "";
@@ -353,13 +380,7 @@ function updateTable(arr)
         text += "<td class=\"b1\">";
         if (v.hasOwnProperty("avatar_id") && v.avatar_id != null) {
             text += "<img src=\"";
-            text += self_url;
-            text += "?SID=";
-            text += SID;
-            text += "&amp;action=";
-            text += action_get_avatar;
-            text += "&amp;key=";
-            text += v.avatar_id;
+            text += getAvatarUrl(v.avatar_id, v.avatar_suffix);
             text += "\" alt=\"avatar\" />";
         }
         text += "</td>";
