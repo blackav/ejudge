@@ -15,9 +15,71 @@
  */
 
 #include "ejudge/content_plugin.h"
+#include "ejudge/xalloc.h"
 
+#include <string.h>
 
+static struct common_plugin_data *
+init_func(void);
+static int
+finish_func(struct common_plugin_data *data);
+static int
+prepare_func(
+        struct common_plugin_data *data,
+        const struct ejudge_cfg *config,
+        struct xml_tree *tree);
 
+static struct content_plugin_iface plugin_content_none =
+{
+    {
+        {
+            sizeof(struct content_plugin_iface),
+            EJUDGE_PLUGIN_IFACE_VERSION,
+            "content",
+            "none",
+        },
+        COMMON_PLUGIN_IFACE_VERSION,
+        init_func,
+        finish_func,
+        prepare_func,
+    },
+    CONTENT_PLUGIN_IFACE_VERSION,
+};
+
+struct common_plugin_iface *
+plugin_content_none_get_iface(void)
+{
+    return &plugin_content_none.b;
+}
+
+static struct common_plugin_data *
+init_func(void)
+{
+    struct content_plugin_data *state = NULL;
+    XCALLOC(state, 1);
+    return &state->b;
+}
+
+static int
+finish_func(struct common_plugin_data *data)
+{
+    struct content_plugin_data *state = (struct content_plugin_data*) data;
+    if (state) {
+        memset(state, 0, sizeof(*state));
+        xfree(state);
+    }
+
+    return 0;
+}
+
+static int
+prepare_func(
+        struct common_plugin_data *data,
+        const struct ejudge_cfg *config,
+        struct xml_tree *tree)
+{
+    return 0;
+}
 
 /*
  * Local variables:
