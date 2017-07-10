@@ -158,6 +158,7 @@
 <%
   }
 %>
+            <li><s:a ac="priv-regenerate-content"><s:_>Regenerate static content</s:_></s:a></li><br/>
             <li><s:a ac="reset-1"><s:_>Reset the contest!</s:_></s:a></li><br/>
         </ul>
     </li>
