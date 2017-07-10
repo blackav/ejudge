@@ -60,6 +60,13 @@
 <%
             }
 %>
+<%
+            if (cnts->enable_avatar > 0 && ui->avatar_suffix) {
+%>
+            "avatar_suffix" : "<s:v value="ui->avatar_suffix" json="yes" />",
+<%
+            }
+%>
             "run_count" : <s:v value="ui->run_count" />,
             "run_size" : <s:v value="ui->run_size" />,
             "clar_count" : <s:v value="ui->clar_count" />,
