@@ -150,6 +150,7 @@ typedef struct UserInfoPage
 
     unsigned char *avatar_store;
     unsigned char *avatar_id;
+    unsigned char *avatar_suffix;
 
     size_t run_size;
 
