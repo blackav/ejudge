@@ -136,6 +136,7 @@ const int contests_tag_to_meta_map[CONTEST_LAST_TAG] =
   [CONTEST_TELEGRAM_USER_CHAT_ID] = CNTS_telegram_user_chat_id,
   [CONTEST_AVATAR_PLUGIN] = CNTS_avatar_plugin,
   [CONTEST_CONTENT_PLUGIN] = CNTS_content_plugin,
+  [CONTEST_CONTENT_URL_PREFIX] = CNTS_content_url_prefix,
   [CONTEST_COMMENT] = CNTS_comment,
 };
 const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
@@ -266,6 +267,7 @@ char const * const contests_elem_map[] =
   "telegram_user_chat_id",
   "avatar_plugin",
   "content_plugin",
+  "content_url_prefix",
   "comment",
 
   0
@@ -804,6 +806,7 @@ static const unsigned char contest_final_set[CONTEST_LAST_TAG] =
   [CONTEST_TELEGRAM_USER_CHAT_ID] = 1,
   [CONTEST_AVATAR_PLUGIN] = 1,
   [CONTEST_CONTENT_PLUGIN] = 1,
+  [CONTEST_CONTENT_URL_PREFIX] = 1,
   [CONTEST_COMMENT] = 1,
 };
 
