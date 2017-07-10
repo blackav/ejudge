@@ -48,6 +48,7 @@ void avatar_vector_free(struct avatar_info_vector *vec);
 void avatar_vector_init(struct avatar_info_vector *vec, size_t init_a);
 void avatar_vector_reserve(struct avatar_info_vector *vec, size_t new_a);
 void avatar_vector_expand(struct avatar_info_vector *vec);
+void avatar_vector_clear(struct avatar_info_vector *vec);
 
 /* version of the plugin interface structure */
 #define AVATAR_PLUGIN_IFACE_VERSION 1

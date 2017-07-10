@@ -42,6 +42,15 @@ avatar_vector_free(struct avatar_info_vector *vec)
 }
 
 void
+avatar_vector_clear(struct avatar_info_vector *vec)
+{
+    for (size_t i = 0; i < vec->u; ++i) {
+        avatar_info_free(&vec->v[i]);
+    }
+    vec->u = 0;
+}
+
+void
 avatar_vector_init(struct avatar_info_vector *vec, size_t init_a)
 {
     memset(vec, 0, sizeof(*vec));
