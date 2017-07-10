@@ -14,11 +14,17 @@
  * GNU General Public License for more details.
  */
 
-#include "ejudge/content_plugin.h"
+#include "ejudge/config.h"
 
+#include "ejudge/content_plugin.h"
+#include "ejudge/contests.h"
+#include "ejudge/fileutl.h"
+#include "ejudge/errlog.h"
 #include "ejudge/xalloc.h"
+#include "ejudge/osdeps.h"
 
 #include <string.h>
+#include <limits.h>
 
 struct content_plugin_file_data
 {
@@ -34,6 +40,25 @@ prepare_func(
         struct common_plugin_data *data,
         const struct ejudge_cfg *config,
         struct xml_tree *tree);
+static int
+save_content_func(
+        struct content_plugin_data *data,
+        FILE *log_f,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const unsigned char *key,
+        const unsigned char *suffix,
+        const unsigned char *content_data,
+        size_t content_size);
+
+static int
+is_enabled_func(struct content_plugin_data *data, const struct contest_desc *cnts);
+static void
+generate_url_generator_func(
+        struct content_plugin_data *,
+        const struct contest_desc *,
+        FILE *fout,
+        const unsigned char *fun_name);
 
 static struct content_plugin_iface plugin_content_file =
 {
@@ -50,6 +75,9 @@ static struct content_plugin_iface plugin_content_file =
         prepare_func,
     },
     CONTENT_PLUGIN_IFACE_VERSION,
+    is_enabled_func,
+    generate_url_generator_func,
+    save_content_func,
 };
 
 struct common_plugin_iface *
@@ -84,6 +112,93 @@ prepare_func(
         const struct ejudge_cfg *config,
         struct xml_tree *tree)
 {
+    return 0;
+}
+
+static int
+is_enabled_func(struct content_plugin_data *data, const struct contest_desc *cnts)
+{
+    return 1;
+}
+
+static void
+generate_url_generator_func(
+        struct content_plugin_data *data,
+        const struct contest_desc *cnts,
+        FILE *fout,
+        const unsigned char *fun_name)
+{
+    // FIXME: javascript escape chars
+    const unsigned char *prefix = NULL;
+    if (cnts) {
+        prefix = cnts->content_url_prefix;
+    }
+    if (!prefix) prefix = "/";
+    fprintf(fout,
+            "function %s(avatar_id, avatar_suffix)\n"
+            "{\n"
+            "    if (avatar_suffix == null) avatar_suffix = \"\";\n"
+            "    return \"%s\" + avatar_id + avatar_suffix;\n"
+            "}\n\n",
+            fun_name, prefix);
+}
+
+static int
+save_content_func(
+        struct content_plugin_data *data,
+        FILE *log_f,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const unsigned char *key,
+        const unsigned char *suffix,
+        const unsigned char *content_data,
+        size_t content_size)
+{
+    unsigned char var_dir[PATH_MAX];
+
+    var_dir[0] = 0;
+#if defined EJUDGE_LOCAL_DIR
+    if (!var_dir[0]) {
+        snprintf(var_dir, sizeof(var_dir), "%s/content", EJUDGE_LOCAL_DIR);
+    }
+#endif
+#if defined EJUDGE_CONTESTS_HOME_DIR
+    if (!var_dir[0]) {
+        snprintf(var_dir, sizeof(var_dir), "%s/var/content", EJUDGE_CONTESTS_HOME_DIR);
+    }
+#endif
+
+    if (os_MakeDirPath(var_dir, 0771) < 0) {
+        if (log_f) {
+            fprintf(log_f, "failed to create directory '%s'", var_dir);
+        }
+        err("failed to create directory '%s'", var_dir);
+        return -1;
+    }
+
+    if (!suffix) suffix = "";
+    unsigned char path[PATH_MAX];
+    snprintf(path, sizeof(path), "%s/%s%s", var_dir, key, suffix);
+    FILE *f = fopen(path, "w");
+    if (!f) {
+        if (log_f) {
+            fprintf(log_f, "cannot open output file '%s'", path);
+        }
+        err("cannot open output file '%s'", path);
+        return -1;
+    }
+    for (size_t i = 0; i < content_size; ++i) {
+        putc_unlocked(content_data[i], f);
+    }
+    if (ferror(f)) {
+        if (log_f) {
+            fprintf(log_f, "write error to '%s'", path);
+        }
+        err("write error to '%s'", path);
+        fclose(f);
+        return -1;
+    }
+    fclose(f); f = NULL;
     return 0;
 }
 

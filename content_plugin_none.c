@@ -29,6 +29,9 @@ prepare_func(
         const struct ejudge_cfg *config,
         struct xml_tree *tree);
 
+static int
+is_enabled_func(struct content_plugin_data *data, const struct contest_desc *cnts);
+
 static struct content_plugin_iface plugin_content_none =
 {
     {
@@ -44,6 +47,9 @@ static struct content_plugin_iface plugin_content_none =
         prepare_func,
     },
     CONTENT_PLUGIN_IFACE_VERSION,
+    is_enabled_func,
+    NULL, // generate_url_generator
+    NULL, // save_content
 };
 
 struct common_plugin_iface *
@@ -77,6 +83,12 @@ prepare_func(
         struct common_plugin_data *data,
         const struct ejudge_cfg *config,
         struct xml_tree *tree)
+{
+    return 0;
+}
+
+static int
+is_enabled_func(struct content_plugin_data *data, const struct contest_desc *cnts)
 {
     return 0;
 }

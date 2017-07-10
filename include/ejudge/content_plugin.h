@@ -28,11 +28,28 @@ struct content_plugin_data
     struct common_plugin_data b;
 };
 
+struct contest_desc;
+
 struct content_plugin_iface
 {
     struct common_plugin_iface b;
     int content_version;
 
+    int (*is_enabled)(struct content_plugin_data *, const struct contest_desc *);
+    void (*generate_url_generator)(
+        struct content_plugin_data *,
+        const struct contest_desc *,
+        FILE *fout,
+        const unsigned char *fun_name);
+    int (*save_content)(
+        struct content_plugin_data *,
+        FILE *log_f,
+        const struct ejudge_cfg *,
+        const struct contest_desc *,
+        const unsigned char *key,
+        const unsigned char *suffix,
+        const unsigned char *content_data,
+        size_t content_size);
 };
 
 struct content_loaded_plugin
