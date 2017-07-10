@@ -2386,6 +2386,77 @@ priv_contest_operation(FILE *fout,
 }
 
 static int
+priv_regenerate_content(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0;
+  opcap_t caps = 0;
+  struct avatar_loaded_plugin *avt = NULL;
+  struct content_loaded_plugin *cp = NULL;
+  unsigned char *xml_text = NULL;
+  struct userlist_list *users = NULL;
+  struct avatar_info_vector avatars;
+
+  avatar_vector_init(&avatars, 1);
+
+  if (opcaps_find(&cnts->capabilities, phr->login, &caps) < 0
+      || opcaps_check(caps, OPCAP_CONTROL_CONTEST) < 0) {
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+
+  if (cnts->enable_avatar <= 0) goto cleanup;
+  avt = avatar_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
+  if (!avt) goto cleanup;
+  cp = content_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
+  if (!cp) goto cleanup;
+  if (cp->iface->is_enabled(cp->data, phr->cnts) <= 0) goto cleanup;
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    goto cleanup;
+  }
+  int err = userlist_clnt_list_all_users(ul_conn, ULS_LIST_ALL_USERS, phr->contest_id, &xml_text);
+  if (err < 0) {
+    goto cleanup;
+  }
+  if (!(users = userlist_parse_str(xml_text))) {
+    goto cleanup;
+  }
+  xfree(xml_text); xml_text = NULL;
+  if (users->user_map_size <= 0) {
+    goto cleanup;
+  }
+
+  for (int user_id = 1; user_id < users->user_map_size; ++user_id) {
+    struct userlist_user *u = users->user_map[user_id];
+    if (!u) continue;
+    if (!u->cnts0) continue;
+    if (!u->cnts0->avatar_id || !u->cnts0->avatar_id[0]) continue;
+
+    avatar_vector_clear(&avatars);
+    if (avt->iface->fetch_by_key(avt->data, u->cnts0->avatar_id, 0, &avatars) < 0) {
+      continue;
+    }
+    if (avatars.u != 1) {
+      continue;
+    }
+    struct avatar_info *av = &avatars.v[0];
+    cp->iface->save_content(cp->data, NULL, phr->config, phr->cnts,
+                            av->random_key, mime_type_get_suffix(av->mime_type),
+                            av->img_data, av->img_size);
+  }
+
+cleanup:;
+  avatar_vector_free(&avatars);
+  if (users) userlist_free(&users->b);
+  xfree(xml_text);
+  return retval;
+}
+
+static int
 priv_password_operation(FILE *fout,
                         FILE *log_f,
                         struct http_request_info *phr,
@@ -6612,6 +6683,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CHANGE_RUN_FIELDS] = priv_change_run_fields,
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION] = ns_priv_edit_clar_action,
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = ns_priv_edit_run_action,
+  [NEW_SRV_ACTION_PRIV_REGENERATE_CONTENT] = priv_regenerate_content,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_DOWNLOAD_RUN] = priv_download_source,
@@ -7082,6 +7154,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PING] = priv_generic_page,
   [NEW_SRV_ACTION_SUBMIT_RUN_BATCH] = priv_generic_page,
   [NEW_SRV_ACTION_GET_AVATAR] = priv_get_avatar,
+  [NEW_SRV_ACTION_PRIV_REGENERATE_CONTENT] = priv_generic_operation,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
