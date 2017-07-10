@@ -138,6 +138,8 @@ COMMON_CFILES=\
  compile_packet_5.c\
  compile_packet_6.c\
  content_plugin.c\
+ content_plugin_file.c\
+ content_plugin_none.c\
  contests.c\
  contests_2.c\
  contest_tmpl.c\
