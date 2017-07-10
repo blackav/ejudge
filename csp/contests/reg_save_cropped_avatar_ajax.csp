@@ -10,6 +10,7 @@
 #include "ejudge/random.h"
 #include "ejudge/base32.h"
 #include "ejudge/mime_type.h"
+#include "ejudge/content_plugin.h"
 
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"
@@ -35,6 +36,8 @@
     FILE *cvt_f = NULL;
     unsigned char random_key_bin[AVATAR_RANDOM_KEY_SIZE];
     unsigned char random_key[AVATAR_RANDOM_KEY_SIZE * 2];
+    struct content_loaded_plugin *cp = NULL;
+    int content_enabled = 0;
 
     message[0] = 0;
     avatar_vector_init(&avatars, 1);
@@ -66,6 +69,11 @@
     if (!avt) {
         snprintf(message, sizeof(message), "failed to load avatar plugin");
         goto done;
+    }
+
+    cp = content_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
+    if (cp) {
+        content_enabled = cp->iface->is_enabled(cp->data, phr->cnts);
     }
 
     if (avt->iface->fetch_by_key(avt->data, key, 0, &avatars) < 0) {
@@ -145,6 +153,16 @@
     if (r < 0) {
         snprintf(message, sizeof(message), "failed to store avatar");
         goto done;
+    }
+
+    if (content_enabled > 0) {
+        r = cp->iface->save_content(cp->data, NULL, phr->config, phr->cnts,
+                                    random_key, mime_type_get_suffix(av->mime_type),
+                                    av_data, av_size);
+        if (r < 0) {
+            snprintf(message, sizeof(message), "failed to store avatar");
+            goto done;
+        }
     }
 
     if (ns_open_ul_connection(phr->fw_state) < 0) {
