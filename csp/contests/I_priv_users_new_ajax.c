@@ -70,6 +70,7 @@ free_user(UserInfoPage *user)
     xfree(user->last_login_time_str);
     xfree(user->avatar_store);
     xfree(user->avatar_id);
+    xfree(user->avatar_suffix);
     xfree(user);
     return NULL;
 }
@@ -221,6 +222,9 @@ csp_execute_priv_users_new_ajax(
         }
         if (u->cnts0 && u->cnts0->avatar_id && u->cnts0->avatar_id[0]) {
             up->avatar_id = xstrdup(u->cnts0->avatar_id);
+        }
+        if (u->cnts0 && u->cnts0->avatar_suffix && u->cnts0->avatar_suffix[0]) {
+            up->avatar_suffix = xstrdup(u->cnts0->avatar_suffix);
         }
 
         up->run_count = run_counts[user_id];
