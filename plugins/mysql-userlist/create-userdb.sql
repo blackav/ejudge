@@ -103,6 +103,7 @@ CREATE TABLE %susers
        field9 VARCHAR(512),
        avatar_store VARCHAR(512) DEFAULT NULL,
        avatar_id VARCHAR(512) DEFAULT NULL,
+       avatar_suffix VARCHAR(32) DEFAULT NULL,
        PRIMARY KEY (user_id, contest_id),
        FOREIGN KEY (user_id) REFERENCES logins (user_id)
        );
@@ -167,4 +168,4 @@ CREATE TABLE %sgroupmembers
     FOREIGN KEY u(user_id) REFERENCES logins(user_id)
 );
 
-INSERT INTO %sconfig VALUES ('version', '5');
+INSERT INTO %sconfig VALUES ('version', '6');

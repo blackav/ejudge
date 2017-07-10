@@ -79,6 +79,7 @@ static struct field_description fields[USERLIST_NM_LAST] =
   [USERLIST_NC_FIELD9] = { "field9", USERLIST_NC_INST },
   [USERLIST_NC_AVATAR_STORE] = { "avatar_store", USERLIST_NC_INST },
   [USERLIST_NC_AVATAR_ID] = { "avatar_id", USERLIST_NC_INST },
+  [USERLIST_NC_AVATAR_SUFFIX] = { "avatar_suffix", USERLIST_NC_INST },
   [USERLIST_NC_CREATE_TIME] = { "createtime", USERLIST_NC_CREATE_TIME },
   [USERLIST_NC_LAST_LOGIN_TIME] = { "logintime", USERLIST_NC_CREATE_TIME },
   [USERLIST_NC_LAST_CHANGE_TIME]={"changetime", USERLIST_NC_LAST_CHANGE_TIME },
