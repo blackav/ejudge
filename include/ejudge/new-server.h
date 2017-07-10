@@ -101,6 +101,7 @@ struct last_access_idx
 };
 
 struct avatar_loaded_plugin;
+struct content_loaded_plugin;
 
 struct contest_extra
 {
@@ -125,6 +126,8 @@ struct contest_extra
   // the main avatar plugin
   // FIXME: implement multiple avatar plugins per contest
   struct avatar_loaded_plugin *main_avatar_plugin;
+  // FIXME: the same for content plugin
+  struct content_loaded_plugin *main_content_plugin;
 };
 
 int nsdb_check_role(int user_id, int contest_id, int role);
