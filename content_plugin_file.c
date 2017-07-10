@@ -19,9 +19,11 @@
 #include "ejudge/content_plugin.h"
 #include "ejudge/contests.h"
 #include "ejudge/fileutl.h"
+#include "ejudge/xml_utils.h"
 #include "ejudge/errlog.h"
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
+#include "ejudge/logger.h"
 
 #include <string.h>
 #include <limits.h>
@@ -29,6 +31,8 @@
 struct content_plugin_file_data
 {
     struct content_plugin_data b;
+    unsigned char *content_dir;
+    unsigned char *content_url_prefix;
 };
 
 static struct common_plugin_data *
@@ -99,6 +103,8 @@ finish_func(struct common_plugin_data *data)
 {
     struct content_plugin_file_data *state = (struct content_plugin_file_data*) data;
     if (state) {
+        xfree(state->content_dir);
+        xfree(state->content_url_prefix);
         memset(state, 0, sizeof(*state));
         xfree(state);
     }
@@ -112,6 +118,17 @@ prepare_func(
         const struct ejudge_cfg *config,
         struct xml_tree *tree)
 {
+    struct content_plugin_file_data *state = (struct content_plugin_file_data*) data;
+
+    if (tree) {
+        for (struct xml_tree *p = tree->first_down; p; p = p->right) {
+            if (!strcmp(p->name[0], "content_dir")) {
+                if (xml_leaf_elem(p, &state->content_dir, 1, 0) < 0) return -1;
+            } else if (!strcmp(p->name[0], "content_url_prefix")) {
+                if (xml_leaf_elem(p, &state->content_url_prefix, 1, 0) < 0) return -1;
+            }
+        }
+    }
     return 0;
 }
 
@@ -128,10 +145,15 @@ generate_url_generator_func(
         FILE *fout,
         const unsigned char *fun_name)
 {
+    struct content_plugin_file_data *state = (struct content_plugin_file_data*) data;
+
     // FIXME: javascript escape chars
     const unsigned char *prefix = NULL;
     if (cnts) {
         prefix = cnts->content_url_prefix;
+    }
+    if (state->content_url_prefix) {
+        prefix = state->content_url_prefix;
     }
     if (!prefix) prefix = "/";
     fprintf(fout,
@@ -154,9 +176,20 @@ save_content_func(
         const unsigned char *content_data,
         size_t content_size)
 {
+    struct content_plugin_file_data *state = (struct content_plugin_file_data*) data;
+
     unsigned char var_dir[PATH_MAX];
 
     var_dir[0] = 0;
+    if (!var_dir[0] && state->content_dir) {
+        snprintf(var_dir, sizeof(var_dir), "%s", state->content_dir);
+    }
+    if (!var_dir[0] && config->var_dir) {
+        snprintf(var_dir, sizeof(var_dir), "%s/content", config->var_dir);
+    }
+    if (!var_dir[0] && config->contests_home_dir) {
+        snprintf(var_dir, sizeof(var_dir), "%s/var/content", config->contests_home_dir);
+    }
 #if defined EJUDGE_LOCAL_DIR
     if (!var_dir[0]) {
         snprintf(var_dir, sizeof(var_dir), "%s/content", EJUDGE_LOCAL_DIR);
