@@ -150,6 +150,7 @@ enum
     USERLIST_T_FIELD9,
     USERLIST_T_AVATAR_STORE,
     USERLIST_T_AVATAR_ID,
+    USERLIST_T_AVATAR_SUFFIX,
     USERLIST_T_USERGROUPS,
     USERLIST_T_USERGROUP,
     USERLIST_T_USERGROUPMEMBERS,
@@ -290,6 +291,7 @@ enum
     USERLIST_NC_AVATAR_STORE,
     USERLIST_NC_AVATAR_ID,
     /* 140 */
+    USERLIST_NC_AVATAR_SUFFIX,
     USERLIST_NC_CREATE_TIME,
     USERLIST_NC_LAST_LOGIN_TIME,
     USERLIST_NC_LAST_CHANGE_TIME,
@@ -481,6 +483,7 @@ struct userlist_user_info
   unsigned char *field9;
   unsigned char *avatar_store;
   unsigned char *avatar_id;
+  unsigned char *avatar_suffix;
   struct userlist_members *members;
 
   time_t create_time;

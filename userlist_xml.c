@@ -117,6 +117,7 @@ static char const * const elem_map[] =
   "field9",
   "avatar_store",
   "avatar_id",
+  "avatar_suffix",
   "usergroups",
   "usergroup",
   "usergroupmembers",
@@ -299,6 +300,7 @@ elem_free(struct xml_tree *t)
       xfree(p->field9);
       xfree(p->avatar_store);
       xfree(p->avatar_id);
+      xfree(p->avatar_suffix);
     }
     break;
   case USERLIST_T_USERGROUP:
@@ -887,6 +889,7 @@ static const size_t leaf_info_offsets[USERLIST_LAST_TAG] =
   [USERLIST_T_FIELD9] = INFO_OFFSET(field9),
   [USERLIST_T_AVATAR_STORE] = INFO_OFFSET(avatar_store),
   [USERLIST_T_AVATAR_ID] = INFO_OFFSET(avatar_id),
+  [USERLIST_T_AVATAR_SUFFIX] = INFO_OFFSET(avatar_suffix),
 };
 
 static int
@@ -2053,6 +2056,9 @@ userlist_unparse_user_short(const struct userlist_user *p, FILE *f,
   }
   if (ui && ui->avatar_id && ui->avatar_id[0]) {
     xml_unparse_text(f, elem_map[USERLIST_T_AVATAR_ID], ui->avatar_id, "    ");
+  }
+  if (ui && ui->avatar_suffix && ui->avatar_suffix[0]) {
+    xml_unparse_text(f, elem_map[USERLIST_T_AVATAR_SUFFIX], ui->avatar_suffix, "    ");
   }
   if (uc) {
     fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CONTESTS]);

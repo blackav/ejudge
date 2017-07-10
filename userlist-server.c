@@ -9099,6 +9099,7 @@ static const struct { unsigned char *str; int ind; } field_names[] =
   { "Field9", USERLIST_NC_FIELD9 },
   { "Avatar_Store", USERLIST_NC_AVATAR_STORE },
   { "Avatar_Id", USERLIST_NC_AVATAR_ID },
+  { "Avatar_Suffix", USERLIST_NC_AVATAR_SUFFIX },
 
   { "Status", USERLIST_NM_STATUS },
   { "Grade", USERLIST_NM_GRADE },

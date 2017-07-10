@@ -2104,6 +2104,7 @@ static const struct user_row_info user_info_rows[] =
   { USERLIST_NC_FIELD9, "Additional field 9" },
   { USERLIST_NC_AVATAR_STORE, "Avatar store type" },
   { USERLIST_NC_AVATAR_ID, "Avatar ID" },
+  { USERLIST_NC_AVATAR_SUFFIX, "Avatar Suffix" },
 
   { 0, 0 },
 };
@@ -5856,6 +5857,8 @@ super_serve_op_USER_SAVE_ACTION(
     USERLIST_NC_FIELD9,
     USERLIST_NC_AVATAR_STORE,
     USERLIST_NC_AVATAR_ID,
+    // 140
+    USERLIST_NC_AVATAR_SUFFIX,
     0,
   };
   int info_null_fields[USERLIST_NC_LAST];
@@ -6634,6 +6637,7 @@ static const unsigned char clearable_fields[] =
   [USERLIST_NC_FIELD9] = 1,
   [USERLIST_NC_AVATAR_STORE] = 1,
   [USERLIST_NC_AVATAR_ID] = 1,
+  [USERLIST_NC_AVATAR_SUFFIX] = 1,
 
   [USERLIST_NM_STATUS] = 1,
   [USERLIST_NM_GENDER] = 1,

@@ -1229,6 +1229,7 @@ static const struct user_field_desc user_descs[] =
   [USERLIST_NC_FIELD9] = { "Field 9", 1, 1 },
   [USERLIST_NC_AVATAR_STORE] = { "Avatar Store", 1, 1 },
   [USERLIST_NC_AVATAR_ID] = { "Avatar ID", 1, 1 },
+  [USERLIST_NC_AVATAR_SUFFIX] = { "Avatar Suffix", 1, 1 },
   [USERLIST_NC_CREATE_TIME] = { "User info create time", 1, 1 },
   [USERLIST_NC_LAST_LOGIN_TIME] = { "Contest last login", 1, 1 },
   [USERLIST_NC_LAST_CHANGE_TIME] = { "User info change time", 1, 1 },
@@ -1423,6 +1424,7 @@ static int field_order[] =
   USERLIST_NC_FIELD9,
   USERLIST_NC_AVATAR_STORE,
   USERLIST_NC_AVATAR_ID,
+  USERLIST_NC_AVATAR_SUFFIX,
   USERLIST_PSEUDO_FLAGS,
   USERLIST_NN_READ_ONLY,
   USERLIST_NC_CNTS_READ_ONLY,
@@ -1681,6 +1683,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         case USERLIST_NC_FIELD9:
         case USERLIST_NC_AVATAR_STORE:
         case USERLIST_NC_AVATAR_ID:
+        case USERLIST_NC_AVATAR_SUFFIX:
           help_str = "Enter-edit D-clear C-contest A-new member Q-quit";
           break;
         case USERLIST_NN_PASSWD:
