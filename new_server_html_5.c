@@ -2474,7 +2474,7 @@ register_for_contest(
   xfree(log_t);
 }
 
-enum { MAX_IMAGE_SIZE = 2 * 1024 * 1024, MAX_IMAGE_WIDTH = 10000, MAX_IMAGE_HEIGHT = 10000 };
+enum { MAX_IMAGE_SIZE = 16 * 1024 * 1024, MAX_IMAGE_WIDTH = 10000, MAX_IMAGE_HEIGHT = 10000 };
 
 static void
 upload_avatar(
