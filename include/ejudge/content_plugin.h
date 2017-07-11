@@ -50,6 +50,13 @@ struct content_plugin_iface
         const unsigned char *suffix,
         const unsigned char *content_data,
         size_t content_size);
+    int (*get_url)(
+        struct content_plugin_data *,
+        unsigned char *buf,
+        size_t size,
+        const struct contest_desc *cnts,
+        const unsigned char *key,
+        const unsigned char *suffix);
 };
 
 struct content_loaded_plugin

@@ -54,6 +54,14 @@ save_content_func(
         const unsigned char *suffix,
         const unsigned char *content_data,
         size_t content_size);
+static int
+get_url_func(
+        struct content_plugin_data *data,
+        unsigned char *buf,
+        size_t size,
+        const struct contest_desc *cnts,
+        const unsigned char *key,
+        const unsigned char *suffix);
 
 static int
 is_enabled_func(struct content_plugin_data *data, const struct contest_desc *cnts);
@@ -82,6 +90,7 @@ static struct content_plugin_iface plugin_content_file =
     is_enabled_func,
     generate_url_generator_func,
     save_content_func,
+    get_url_func,
 };
 
 struct common_plugin_iface *
@@ -233,6 +242,29 @@ save_content_func(
     }
     fclose(f); f = NULL;
     return 0;
+}
+
+static int
+get_url_func(
+        struct content_plugin_data *data,
+        unsigned char *buf,
+        size_t size,
+        const struct contest_desc *cnts,
+        const unsigned char *key,
+        const unsigned char *suffix)
+{
+    struct content_plugin_file_data *state = (struct content_plugin_file_data*) data;
+    const unsigned char *prefix = NULL;
+
+    if (cnts) {
+        prefix = cnts->content_url_prefix;
+    }
+    if (state->content_url_prefix) {
+        prefix = state->content_url_prefix;
+    }
+    if (!prefix) prefix = "/";
+    if (!suffix) suffix = "";
+    return snprintf(buf, size, "%s%s%s", prefix, key, suffix);
 }
 
 /*

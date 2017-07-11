@@ -50,6 +50,7 @@ static struct content_plugin_iface plugin_content_none =
     is_enabled_func,
     NULL, // generate_url_generator
     NULL, // save_content
+    NULL, // get_url
 };
 
 struct common_plugin_iface *
