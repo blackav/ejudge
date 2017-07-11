@@ -72,14 +72,21 @@ image_identify(
     }
     if (!stdout_text) stdout_text = xstrdup("");
 
-    int len1 = 0, len2 = 0, width = 0, height = 0;
-    if (sscanf(stdout_text, "%*s%n%d%d%n", &len1, &width, &height, &len2) != 2 || width < 0 || height < 0 || stdout_text[len2]) {
+    unsigned char *p1 = strchr(stdout_text, ' ');
+    if (!p1) {
         if (log_f) {
             fprintf(log_f, "ImageMagick returned unexpected result: %s", stdout_text);
         }
         goto cleanup;
     }
-    stdout_text[len1] = 0;
+    *p1 = 0;
+    int len2 = 0, width = 0, height = 0;
+    if (sscanf(p1 + 1, "%d%d%n", &width, &height, &len2) != 2 || width < 0 || height < 0 || stdout_text[len2]) {
+        if (log_f) {
+            fprintf(log_f, "ImageMagick returned unexpected result: %s", stdout_text);
+        }
+        goto cleanup;
+    }
 
     if (!strcmp(stdout_text, "PNG")) {
         retval = MIME_TYPE_IMAGE_PNG;
