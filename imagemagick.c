@@ -81,7 +81,7 @@ image_identify(
     }
     *p1 = 0;
     int len2 = 0, width = 0, height = 0;
-    if (sscanf(p1 + 1, "%d%d%n", &width, &height, &len2) != 2 || width < 0 || height < 0 || stdout_text[len2]) {
+    if (sscanf(p1 + 1, "%d%d%n", &width, &height, &len2) != 2 || width < 0 || height < 0) {
         if (log_f) {
             fprintf(log_f, "ImageMagick returned unexpected result: %s", stdout_text);
         }
