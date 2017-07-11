@@ -35,6 +35,7 @@
 #include "ejudge/random.h"
 #include "ejudge/base32.h"
 #include "ejudge/avatar_plugin.h"
+#include "ejudge/content_plugin.h"
 #include "ejudge/errlog.h"
 
 #include "ejudge/xalloc.h"
@@ -1014,8 +1015,22 @@ ns_reg_main_page_view_info(
 
     if (cnts->enable_avatar > 0) {
       if (ui && ui->avatar_id && ui->avatar_id[0]) {
-        fprintf(fout, "<img src=\"%s?SID=%llx&key=%s&action=%d\" alt=\"avatar\" />",
-                phr->self_url, phr->session_id, ui->avatar_id, NEW_SRV_ACTION_GET_AVATAR);
+        struct content_loaded_plugin *cp = NULL;
+        int content_enabled = 0;
+        unsigned char url_buf[1024];
+
+        cp = content_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
+        if (cp) {
+          content_enabled = cp->iface->is_enabled(cp->data, phr->cnts);
+        }
+        if (content_enabled > 0) {
+          cp->iface->get_url(cp->data, url_buf, sizeof(url_buf),
+                             phr->cnts, ui->avatar_id, ui->avatar_suffix);
+        } else {
+          snprintf(url_buf, sizeof(url_buf), "%s?SID=%llx&key=%s&action=%d",
+                   phr->self_url, phr->session_id, ui->avatar_id, NEW_SRV_ACTION_GET_AVATAR);
+        }
+        fprintf(fout, "<img src=\"%s\" alt=\"avatar\" />", url_buf);
       }
       if (!(phr->reg_flags & USERLIST_UC_REG_READONLY)) {
         html_start_form(fout, 2, phr->self_url, "");
