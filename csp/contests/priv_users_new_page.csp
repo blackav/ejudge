@@ -377,7 +377,7 @@ function updateTable(arr)
         text += v.user_id;
         text += "</a></td>";
 <% if (cnts->enable_avatar > 0) { %>
-        text += "<td class=\"b1\">";
+        text += "<td class=\"b1 userpic\">";
         if (v.hasOwnProperty("avatar_id") && v.avatar_id != null) {
             text += "<img src=\"";
             text += getAvatarUrl(v.avatar_id, v.avatar_suffix);
