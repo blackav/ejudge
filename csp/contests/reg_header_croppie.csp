@@ -2,8 +2,8 @@
 <html>
   <head>
     <meta http-equiv="Content-type" content="text/html; charset=<s:config name="charset" />"/>
-    <link rel="stylesheet" href="<s:config name="style-prefix" />unpriv.css" type="text/css"/>
     <link rel="stylesheet" href="<s:config name="style-prefix" />croppie.css" />
+    <link rel="stylesheet" href="<s:config name="style-prefix" />unpriv.css" type="text/css"/>
     <script type="text/javascript" src="<s:config name="style-prefix" />jquery.min.js"></script>
     <script src="<s:config name="style-prefix" />croppie.js"></script>
     <title><s:v value="title" escape="false" /></title>

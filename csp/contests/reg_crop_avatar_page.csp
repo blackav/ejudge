@@ -55,9 +55,11 @@
 
 <h2><s:_>Crop avatar</s:_></h2>
 
-<div id="AvatarCrop"></div>
+<div class="userinfo-avatar-cont"><div id="AvatarCrop"></div></div>
 
-<input type="button" value="Save" onclick="saveCroppedAvatar()" />
+<br/>
+
+<input class="avatar-button" type="button" value="Save" onclick="saveCroppedAvatar()" />
 
 <script type="text/javascript">
 var self_url = "<s:v value="phr->self_url" json="yes" />";
@@ -102,7 +104,7 @@ function saveCroppedAvatar()
             result += " " + i.naturalWidth;
             result += " " + i.style.left;
             result += " " + i.style.top;
-            alert(result);
+            //alert(result);
             $.ajax({
                 type: "POST",
                 url: self_url,
