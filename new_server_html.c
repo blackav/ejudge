@@ -939,6 +939,34 @@ ns_submit_button(unsigned char *buf, size_t size,
   return buf;
 }
 
+unsigned char *
+ns_submit_button_2(
+        unsigned char *buf,
+        size_t size,
+        const unsigned char *class_name,
+        const unsigned char *var_name,
+        int action,
+        const unsigned char *label)
+{
+  unsigned char name_buf[64];
+  const unsigned char *name_ptr;
+
+  if (!var_name) var_name = "action";
+  if (!label && action > 0 && action < NEW_SRV_ACTION_LAST)
+    label = gettext(ns_submit_button_labels[action]);
+  if (!label) label = "Submit";
+  name_ptr = var_name;
+  if (action > 0) {
+    // IE bug mode :(
+    snprintf(name_buf, sizeof(name_buf), "%s_%d", var_name, action);
+    name_ptr = name_buf;
+  }
+  snprintf(buf, size,
+           "<input type=\"submit\" class=\"%s\" name=\"%s\" value=\"%s\"/>",
+           class_name, name_ptr, label);
+  return buf;
+}
+
 void
 ns_refresh_page(
         FILE *fout,

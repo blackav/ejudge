@@ -177,6 +177,15 @@ ns_submit_button(unsigned char *buf, size_t size,
                  const unsigned char *label);
 
 unsigned char *
+ns_submit_button_2(
+        unsigned char *buf,
+        size_t size,
+        const unsigned char *class_name,
+        const unsigned char *var_name,
+        int action,
+        const unsigned char *label);
+
+unsigned char *
 ns_url(unsigned char *buf, size_t size,
        const struct http_request_info *phr,
        int action, const char *format, ...)
