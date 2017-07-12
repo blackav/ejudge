@@ -919,7 +919,7 @@ ns_reg_main_page_view_info(
               ns_aref(ub, sizeof(ub), phr, NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE, 0), _("Edit"));
     }
     fprintf(fout, "</h2>\n");
-    fprintf(fout, "<table class=\"b0\">\n");
+    fprintf(fout, "<table class=\"b0 table-userinfo\">\n");
     s = 0;
     if (u && u->login && *u->login) {
       s = u->login;
@@ -1014,6 +1014,7 @@ ns_reg_main_page_view_info(
     fprintf(fout, "</table>\n");
 
     if (cnts->enable_avatar > 0) {
+      fprintf(fout, "<div class=\"userinfo-avatar-cont\">\n");
       if (ui && ui->avatar_id && ui->avatar_id[0]) {
         struct content_loaded_plugin *cp = NULL;
         int content_enabled = 0;
@@ -1030,17 +1031,18 @@ ns_reg_main_page_view_info(
           snprintf(url_buf, sizeof(url_buf), "%s?SID=%llx&key=%s&action=%d",
                    phr->self_url, phr->session_id, ui->avatar_id, NEW_SRV_ACTION_GET_AVATAR);
         }
-        fprintf(fout, "<img src=\"%s\" alt=\"avatar\" />", url_buf);
+        fprintf(fout, "<img class=\"avatar-img\" src=\"%s\" alt=\"avatar\" />", url_buf);
       }
       if (!(phr->reg_flags & USERLIST_UC_REG_READONLY)) {
         html_start_form(fout, 2, phr->self_url, "");
         html_hidden(fout, "SID", "%llx", phr->session_id);
-        fprintf(fout, "<input type=\"file\" name=\"img_file\" />");
+        fprintf(fout, "<input class=\"avatar-file\" type=\"file\" name=\"img_file\" /><br/>");
         fprintf(fout, "%s",
-                ns_submit_button(bb, sizeof(bb), 0,
-                                 NEW_SRV_ACTION_REG_UPLOAD_AVATAR, 0));
+                ns_submit_button_2(bb, sizeof(bb), "avatar-button", NULL,
+                                   NEW_SRV_ACTION_REG_UPLOAD_AVATAR, 0));
         fprintf(fout, "</form>\n");
       }
+      fprintf(fout, "</div>\n");
     }
   } else if (phr->action >= NEW_SRV_ACTION_REG_VIEW_CONTESTANTS
              && phr->action <= NEW_SRV_ACTION_REG_VIEW_GUESTS) {
