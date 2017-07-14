@@ -216,7 +216,6 @@
 <% } %>
     <th style="width: 10em;"><s:_>Run ID</s:_></th>
     <th><s:_>Submission time</s:_></th>
-    <th><s:_>Contest time</s:_></th>
     <th><s:_>Originator IP</s:_></th>
     <th><s:_>User ID</s:_></th>
     <th><s:_>User login</s:_></th>
@@ -269,8 +268,7 @@
     <td><img src="<s:v value="avatar_url" escape="no" />" alt="avatar" /></td>
 <% } %>
     <td><s:v value="info.run_id" /></td>
-    <td><s:v value="info.time" />:<s:v value="info.nsec" /></td>
-    <td><s:v type="duration" value="run_time - start_time, info.nsec" /></td>
+    <td><s:v value="info.time" /></td>
 <% snprintf(filtbuf1, sizeof(filtbuf1), "ip == ip(%d)", run_id); %>
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
@@ -401,6 +399,8 @@ function setDivVisibility(oper, value)
 <div class="table-scroll" style="margin-top: 7px;">
 <table class="table">
 <tr>
+<th>Full time</th>
+<th>Duration from start</th>
 <% if (!info.lang_id) { %>
 <th><s:_>Content type</s:_></th><td><s:v type="mime_type" value="info.mime_type" /></td>
 <% } %>
@@ -420,6 +420,8 @@ function setDivVisibility(oper, value)
 <th><s:_>Pages printed</s:_>:</th>
 </tr>
 <tr>
+<td><s:v value="info.time" />:<s:v value="info.nsec" /></td>
+<td><s:v type="duration" value="run_time - start_time, info.nsec" /></td>
 <% if (!info.lang_id) { %>
 <td><s:v type="mime_type" value="info.mime_type" /></td>
 <% } %>
