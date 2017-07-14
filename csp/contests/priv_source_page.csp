@@ -754,7 +754,7 @@ Run Id: <s:a url="ViewOtherSourceUrl"><s:v value="fcev2.v[i].e.run_id" /></s:a>
 
 <s:form id="review_comment">
 <s:hidden name="run_id" checkExpr=">=0" />
-<s:textfield name="review_comment" size="80" /><br/>
+<s:textfield name="review_comment" size="80" value="" /><br/>
 <s:submit ac="add-review-comment" />
 </s:form>
 
