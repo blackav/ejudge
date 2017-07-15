@@ -47,7 +47,39 @@ a:hover {
 
 a:visited {
 	color: black;
-}	
+}
+
+/************* GENERAL CLASSES ***************/
+.ib {
+	display: inline-block !important;
+}
+
+.pt-15 {
+	padding-top: 15px;
+}
+
+.clear-b {
+	clear: both;
+}
+
+.mt-0 {
+	margin-top: 0 !important;
+}
+
+.margin-top-25 {
+	margin-top: -25px;
+}
+
+.red {
+	background: rgba(180, 52, 52, 0.50) !important;
+	border: 1px solid rgb(167, 102, 102) !important;
+}
+
+.red:hover {
+	background: rgba(177, 9, 9, 0.57) !important;
+}
+
+/************* LAYOUT ***************/
 
 body {
 	background: url("grad_grey_d.jpg") repeat-x #555555;
@@ -302,10 +334,6 @@ body {
 	border-left: 1px dotted rgb(206, 206, 206);
 }
 
-.margin-top-25 {
-	margin-top: -25px;
-}
-
 table {
 	font-size: 15px;
 }
@@ -315,14 +343,28 @@ table {
 	margin: 3px 0px
 }
 
-.red {
-	background: rgba(180, 52, 52, 0.50) !important;
-	border: 1px solid rgb(167, 102, 102) !important;
+/**************** USERPIC ******************/
+
+.userpic img, .userpic-img {
+	width: 90px;
+	height: 90px;
+	margin: 1px;
+	border: 4px solid #fdfdfd;
+	box-shadow: #c0c0c0 0 0 0 1px;
+	vertical-align: middle;
 }
 
-.red:hover {
-	background: rgba(177, 9, 9, 0.57) !important;
+.userpic-img {
+    margin: 7px 0 3px 0;
+	display: block;
+	box-shadow: #dcdcdc 0 0 0 1px;
 }
+
+.userpic-img-left {
+	float: left;
+	margin: 0 15px 15px 0;
+}
+
 /**************** TABLES ******************/
 
 .table, .table-info, .info-table {
@@ -373,8 +415,8 @@ table {
 	border-bottom: transparent;
 }
 
-.info-table {
-	box-shadow: rgba(209, 209, 209, 0.55) 0px 2px 12px 5px;
+.info-table, .table-compressed {
+	box-shadow: rgba(209, 209, 209, 0.35) 0px 2px 3px 2px;
 }
 
 .info-table th, .info-table td  {
@@ -386,6 +428,10 @@ table {
 	background: rgba(255, 255, 255, 0.49);
 	padding-top: 4px;
 	padding-bottom: 4px;
+}
+
+.table-vert td {
+	vertical-align: top;
 }
 
 .width-100 {
@@ -456,15 +502,6 @@ hr, #header {
 	padding: 3px;
 }
 
-.userpic img {
-	width: 90px;
-	height: 90px;
-	margin: 1px;
-	border: 4px solid #fdfdfd;
-	box-shadow: #c0c0c0 0 0 0 1px;
-	vertical-align: middle;
-}
-
 .table-filter {
 	margin-top: 20px;
 }
@@ -493,6 +530,20 @@ hr, #header {
 .t-left th, .t-left th.b1, .t-left td, .t-left td.b1 {
 	text-align: left;
 	padding: 5px 10px;
+}
+
+.table-compressed th, .table-compressed td {
+	border: 1px solid rgba(191, 191, 191, 0.53);
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.49);
+}
+
+.table-compressed th {
+	background: -moz-linear-gradient(top, rgba(185,211,232,1) 0%, rgba(118,178,228,0.78) 4%, rgba(122,184,234,0.78) 33%, rgba(106,154,201,0.68) 100%); /* FF3.6-15 */
+	background: -webkit-linear-gradient(top, rgba(185,211,232,1) 0%,rgba(118,178,228,0.78) 4%,rgba(122,184,234,0.78) 33%,rgba(106,154,201,0.68) 100%); /* Chrome10-25,Safari5.1-6 */
+	background: linear-gradient(to bottom, rgba(185,211,232,1) 0%,rgba(118,178,228,0.78) 4%,rgba(122,184,234,0.78) 33%,rgba(106,154,201,0.68) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#b9d3e8', endColorstr='#c76a9ac9',GradientType=0 ); /* IE6-9 */
+	border-color: rgba(89, 148, 207, 0.83);
 }
 
 /**************** FRAME *************************/
