@@ -265,7 +265,7 @@
 </tr>
 <tr>
 <% if (avatar_url[0]) { %>
-    <td><img src="<s:v value="avatar_url" escape="no" />" alt="avatar" /></td>
+    <td class="userpic"><img src="<s:v value="avatar_url" escape="no" />" alt="avatar" /></td>
 <% } %>
     <td><s:v value="info.run_id" /></td>
     <td><s:v value="info.time" /></td>

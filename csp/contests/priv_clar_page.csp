@@ -113,10 +113,12 @@
  [<s:a url="EditClarUrl"><s:_>Edit</s:_></s:a>]
 <%  } %>
 </h2>
+
+<div class="ib pt-15">
 <% if (avatar_url[0]) { %>
-    <img src="<s:v value="avatar_url" escape="no" />" alt="avatar" />
+    <img class="userpic-img userpic-img-left" src="<s:v value="avatar_url" escape="no" />" alt="avatar" />
 <% } %>
-<table border="0">
+<table border="0" class="info-table mt-0">
 <tr><td><s:_>Clar ID</s:_>:</td><td><s:v value="clar_id" /></td></tr>
 <tr><td>Clar UUID:</td><td><s:v type="uuid" value="clar.uuid" /></td></tr>
 <%  if (clar.hide_flag) { %>
@@ -195,6 +197,8 @@
 <tr><td><s:_>Locale code</s:_>:</td><td><s:v value="clar.locale_id" /></td></tr>
 <tr><td><s:_>Subject</s:_>:</td><td><s:v value="clar_subj" /></td></tr>
 </table>
+</div>
+
 <hr/>
 <%  if (clar_get_text(cs->clarlog_state, clar_id, &msg_txt, &msg_len) < 0) { %>
 <big><font color="red"><s:_>Cannot read message text!</s:_></font></big>
