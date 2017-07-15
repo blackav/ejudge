@@ -30,6 +30,7 @@
 #include "ejudge/fileutl.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/userlist.h"
+#include "ejudge/userlist_clnt.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/mischtml.h"
 #include "ejudge/prepare.h"
@@ -241,8 +242,27 @@ cmd_locked_cnts_continue(
   return 0;
 }
 
+static int
+cmd_logout(
+        FILE *log_f,
+        FILE *out_f,
+        struct http_request_info *phr)
+{
+  if (phr->userlist_clnt) {
+    userlist_clnt_delete_cookie(phr->userlist_clnt, phr->user_id,
+                                0,
+                                phr->client_key,
+                                phr->session_id);
+  }
+  // FIXME: release other session-related resources
+  phr->session_id = 0;
+  refresh_page(out_f, phr, NULL);
+  return 0;
+}
+
 static handler_func_t op_handlers[SSERV_CMD_LAST] =
 {
+  [SSERV_CMD_LOGOUT] = cmd_logout,
   [SSERV_CMD_EDITED_CNTS_BACK] = cmd_edited_cnts_back,
   [SSERV_CMD_EDITED_CNTS_CONTINUE] = cmd_edited_cnts_continue,
   [SSERV_CMD_EDITED_CNTS_START_NEW] = cmd_edited_cnts_start_new,
