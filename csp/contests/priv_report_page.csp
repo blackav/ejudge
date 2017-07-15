@@ -3,6 +3,7 @@
 %><%
 #include "ejudge/archive_paths.h"
 #include "ejudge/fileutl.h"
+#include "ejudge/content_plugin.h"
 %><%@set getter_name = "csp_get_priv_report_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_report_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -21,6 +22,11 @@
   unsigned char title[1024];
   int enable_main_menu = 0;
   int accepting_mode = 0;
+  const struct userlist_user *u = NULL;
+  const struct userlist_user_info *ui = NULL;
+  unsigned char avatar_url[1024];
+
+  avatar_url[0] = 0;
 
   if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0)
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
@@ -80,6 +86,23 @@
     accepting_mode = cs->accepting_mode;
   }
 
+  u = teamdb_get_userlist(cs->teamdb_state, re.user_id);
+  if (u) ui = u->cnts0;
+  if (ui && ui->avatar_id && ui->avatar_id[0]) {
+    struct content_loaded_plugin *cp = content_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
+    int content_enabled = 0;
+    if (cp) {
+      content_enabled = cp->iface->is_enabled(cp->data, phr->cnts);
+    }
+    if (content_enabled) {
+      cp->iface->get_url(cp->data, avatar_url, sizeof(avatar_url),
+                         phr->cnts, ui->avatar_id, ui->avatar_suffix);
+    } else {
+      snprintf(avatar_url, sizeof(avatar_url), "%s?SID=%llx&key=%s&action=%d",
+               phr->self_url, phr->session_id, ui->avatar_id, NEW_SRV_ACTION_GET_AVATAR);
+    }
+  }
+
   if (user_mode) {
     snprintf(title, sizeof(title), "%s %d", _("Viewing user report"), run_id);
   } else {
@@ -121,6 +144,10 @@
 <li><s:a url="ViewAuditLogUrl"><s:_>Audit log</s:_></s:a></li>
 </ul></div>
 </div>
+
+<% if (avatar_url[0]) { %>
+<img class="userpic-img userpic-img-left" src="<s:v value="avatar_url" escape="no" />" />
+<% } %>
 
 <%  switch (content_type) {
   case CONTENT_TYPE_TEXT:
