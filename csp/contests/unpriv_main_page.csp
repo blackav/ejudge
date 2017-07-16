@@ -88,15 +88,11 @@ ns_unparse_answers(
   for (i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
-
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
-    if (cs->upsolving_mode)
-      stop_time = run_get_stop_time(cs->runlog_state);
-    else
-      stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
                                             cs->current_time);
-    if (stop_time <= 0) accepting_mode = 1;
+    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state);
@@ -108,7 +104,6 @@ ns_unparse_answers(
   if (fog_start_time < 0) fog_start_time = 0;
 
   l10n_setlocale(phr->locale_id);
-
   if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
     title = _("Problem summary");
   } else if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS) {
@@ -251,7 +246,8 @@ ns_unparse_answers(
 %>
 <%
   /* new problem navigation */
-  if (global->problem_navigation > 0 && global->vertical_navigation > 0 && start_time > 0 && stop_time <= 0) {
+  if (global->problem_navigation > 0 && global->vertical_navigation > 0 && start_time > 0
+                                               && (stop_time <= 0 || cs->upsolving_mode)) {
 %><%
     // vertical navigation bar
 %></div></td><td class="b0" id="probNavRightList" valign="top"><%
@@ -285,7 +281,7 @@ ns_unparse_answers(
     }
 %></td></tr></table>
 <%
-  } else if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
+  } else if (global->problem_navigation > 0 && start_time > 0 && (stop_time <= 0 || cs->upsolving_mode)) {
 %><%
     // bottom navigation bar
 %></div></td></tr>

@@ -109,6 +109,7 @@ run_add_record(
         int            eoln_type,
         int            variant,
         int            is_hidden,
+        int            upsolving,
         int            mime_type,
         int            store_flags);
 int run_start_contest(runlog_state_t, time_t);

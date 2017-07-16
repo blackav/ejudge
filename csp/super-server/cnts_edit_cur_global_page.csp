@@ -86,6 +86,7 @@ static const unsigned char * const form_row_attrs[]=
                 <option value="3">Moscow</option>
                 <option value="4">Virtual ACM</option>
                 <option value="5">Virtual Olympiad</option>
+                <option value="6">Virtual Kirov</option>
             </select>
         </div>
 

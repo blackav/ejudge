@@ -22,7 +22,7 @@
       is_viewable = (pinfo[prob_id].status & PROB_STATUS_VIEWABLE) != 0;
     }
 
-    if (start_time > 0 && stop_time <= 0 && !prob_id) {
+    if (start_time > 0 && (stop_time <= 0 || cs->upsolving_mode) && !prob_id) {
 %><div class="h2-long"><h2><s:_>View the problem statement and send a submission</s:_></h2></div>
 <s:form>
 <table class="b0">
@@ -31,7 +31,7 @@
 %></td><td class="b0"><s:submit ac="view-problem-submit" label="Select problem" /></td></tr></table>
 </s:form>
 <%
-    } /* 14 */ else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
+    } /* 14 */ else if (start_time > 0 && (stop_time <= 0 || cs->upsolving_mode) && prob_id > 0) {
       prob = cs->probs[prob_id];
 
       if (!cnts->exam_mode) {

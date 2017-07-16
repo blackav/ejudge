@@ -312,6 +312,7 @@ run_add_record(
         int            eoln_type,
         int            variant,
         int            is_hidden,
+        int            upsolving,
         int            mime_type,
         int            store_flags)
 {
@@ -392,7 +393,7 @@ run_add_record(
       stop_time = ue->stop_time;
       if (!stop_time && state->head.duration)
         stop_time = ue->start_time + state->head.duration;
-      if (stop_time && timestamp > stop_time && state->head.duration) {
+      if (stop_time && timestamp > stop_time && state->head.duration && !upsolving) {
         err("run_add_record: timestamp > virtual stop time");
         return -1;
       }

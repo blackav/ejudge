@@ -2793,7 +2793,7 @@ priv_submit_run(
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
                           prob_id, lang_id, eoln_type,
-                          variant, 1, mime_type, store_flags);
+                          variant, 1, cs->upsolving_mode, mime_type, store_flags);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -4676,7 +4676,7 @@ priv_new_run(FILE *fout,
                           run_size, shaval, &run_uuid,
                           &phr->ip, phr->ssl_flag, phr->locale_id,
                           user_id, prob_id, lang_id, 0, variant,
-                          is_hidden, mime_type, store_flags);
+                          is_hidden, cs->upsolving_mode, mime_type, store_flags);
   if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
 
@@ -5650,7 +5650,7 @@ priv_upsolving_operation(
   /* check that the contest is stopped */
   run_get_saved_times(cs->runlog_state, &duration, &saved_stop_time, 0);
   stop_time = run_get_stop_time(cs->runlog_state);
-  if (stop_time <= 0 && saved_stop_time <= 0) return 0;
+  if (!cs->global->is_virtual && stop_time <= 0 && saved_stop_time <= 0) return 0;
 
   hr_cgi_param(phr, "freeze_standings", &freeze_standings);
   hr_cgi_param(phr, "view_source", &view_source);
@@ -8397,7 +8397,7 @@ ns_submit_run(
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, user_id,
                           prob_id, lang_id, eoln_type,
-                          db_variant, is_hidden, mime_type, store_flags);
+                          db_variant, is_hidden, cs->upsolving_mode, mime_type, store_flags);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -9018,7 +9018,7 @@ unpriv_submit_run(
                           run_size, shaval, &run_uuid,
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
-                          prob_id, lang_id, eoln_type, 0, 0, mime_type, store_flags);
+                          prob_id, lang_id, eoln_type, 0, 0, cs->upsolving_mode, mime_type, store_flags);
   if (run_id < 0) {
     FAIL2(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   }
@@ -9537,9 +9537,6 @@ unpriv_command(
 
   switch (phr->action) {
   case NEW_SRV_ACTION_VIRTUAL_RESTART:
-    if (cs->upsolving_mode) {
-      FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
-    }
     if (global->enable_virtual_restart <= 0) {
       FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
     }
@@ -9587,9 +9584,6 @@ unpriv_command(
                     virtual_stop_callback);
     break;
   case NEW_SRV_ACTION_VIRTUAL_STOP:
-    if (cs->upsolving_mode) {
-      FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
-    }
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     if (start_time <= 0) {
       FAIL2(NEW_SRV_ERR_CONTEST_NOT_STARTED);
@@ -10534,7 +10528,7 @@ unpriv_xml_update_answer(
                             run_size, shaval, &run_uuid,
                             &phr->ip, phr->ssl_flag,
                             phr->locale_id, phr->user_id,
-                            prob_id, 0, 0, 0, 0, 0, store_flags);
+                            prob_id, 0, 0, 0, 0, cs->upsolving_mode, 0, store_flags);
     if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     serve_move_files_to_insert_run(cs, run_id);
     new_flag = 1;

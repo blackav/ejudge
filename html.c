@@ -1058,6 +1058,7 @@ do_write_kirov_standings(
   time_t cur_duration;
   time_t tdur = 0;
   time_t team_start_time;
+  time_t team_stop_time;
   time_t run_time;
   time_t contest_dur;
 
@@ -1118,6 +1119,7 @@ do_write_kirov_standings(
   int total_accepted = 0;
   int total_disqualified = 0;
   int total_check_failed = 0;
+  int user_virtual_upsolving = 0;
   struct standings_style ss;
   int sort_flag;
   struct sformat_extra_data fed;
@@ -1167,10 +1169,12 @@ do_write_kirov_standings(
   contest_dur = run_get_duration(state->runlog_state);
   if (start_time && global->is_virtual && user_id > 0) {
     start_time = run_get_virtual_start_time(state->runlog_state, user_id);
-    if (!state->upsolving_mode)
-      stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
+    stop_time = run_get_virtual_stop_time(state->runlog_state, user_id, 0);
   }
   if (cur_time <= 0) cur_time = time(0);
+  if (start_time > 0 && stop_time > 0) {
+    user_virtual_upsolving = 1;
+  }
   if (start_time > 0 && contest_dur > 0) {
     if (stop_time <= 0 && cur_time >= start_time + contest_dur) {
       stop_time = start_time + contest_dur;
@@ -1368,6 +1372,7 @@ do_write_kirov_standings(
     int tind;
     int pind;
     int score, run_score, run_tests, run_status;
+    int run_virtual_upsolved = 0;
     const struct run_entry *pe = &runs[k];
 
     if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP
@@ -1396,13 +1401,18 @@ do_write_kirov_standings(
           continue;
       }
      */
-    
     run_time = pe->time;
-    if (global->is_virtual && !state->upsolving_mode) {
+    if (global->is_virtual) {
       // filter future runs in unprivileged mode (not upsolving)		
       team_start_time = run_get_virtual_start_time(state->runlog_state, pe->user_id);
+      team_stop_time = run_get_virtual_stop_time(state->runlog_state, pe->user_id, 0);
+      if (team_stop_time <= 0 || (team_stop_time > 0 && run_time > team_stop_time)) {
+        run_virtual_upsolved = 1;
+      }
+      if (run_virtual_upsolved && state->upsolving_freeze_standings) continue;
+      if (!user_virtual_upsolving && run_virtual_upsolved) continue;
       tdur = run_time - team_start_time;
-      if (user_id > 0 && tdur > cur_duration) continue;		
+      if (!user_virtual_upsolving && user_id > 0 && tdur > cur_duration) continue;
     } else if (!client_flag || user_id > 0) {
       // ignore future runs when not in privileged mode
       if (run_time < start_time) run_time = start_time;
@@ -2166,9 +2176,16 @@ do_write_kirov_standings(
       }
       /* print "Last submit" information */
       if (last_submit_run >= 0) {
-        duration_str(global->show_astr_time,
-                     runs[last_submit_run].time, start_time,
-                     dur_str, sizeof(dur_str));
+        if (global->is_virtual) {
+          team_start_time = run_get_virtual_start_time(state->runlog_state, runs[last_submit_run].user_id);
+          duration_str(global->show_astr_time,
+                       runs[last_submit_run].time, team_start_time,
+                       dur_str, sizeof(dur_str));
+        } else {
+          duration_str(global->show_astr_time,
+                       runs[last_submit_run].time, start_time,
+                       dur_str, sizeof(dur_str));
+        }
         fprintf(f, "<tr%s><td>%s:</td><td>%s, ",
                 ss.success_attr, _("Last submit"), dur_str);
         if (global->team_info_url && global->team_info_url[0]) {

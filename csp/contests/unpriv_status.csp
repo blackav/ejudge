@@ -61,7 +61,7 @@
     }
   }
 %><%
-  if (cs->upsolving_mode) {
+  if (cs->upsolving_mode && !(cs->global->is_virtual && stop_time <= 0)) {
 %> / <b><s:_>UPSOLVING</s:_></b><%
   }
 %><%
