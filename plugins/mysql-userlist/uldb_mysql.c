@@ -3798,9 +3798,6 @@ static const int copy_user_general_fields[] =
   USERLIST_NC_FIELD7,
   USERLIST_NC_FIELD8,
   USERLIST_NC_FIELD9,
-  USERLIST_NC_AVATAR_STORE,
-  USERLIST_NC_AVATAR_ID,
-  USERLIST_NC_AVATAR_SUFFIX,
 
   0
 };
@@ -3886,6 +3883,11 @@ copy_user_info_func(
       if (cnts && !cnts->fields[k]) continue;
       p_str_from = (unsigned char**) userlist_get_user_info_field_ptr(ui, j);
       *p_str_to = *p_str_from;
+    }
+    if (cnts && cnts->enable_avatar > 0) {
+      u_arena.avatar_store = ui->avatar_store;
+      u_arena.avatar_id = ui->avatar_id;
+      u_arena.avatar_suffix = ui->avatar_suffix;
     }
     u_arena.spelling = ui->spelling;
   }
