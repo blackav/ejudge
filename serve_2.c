@@ -655,6 +655,19 @@ serve_build_run_dirs(
                         state->testers[i]->run_queue_dir,
                         state->testers[i]->run_exe_dir, NULL);
   }
+
+  if (state->max_tester <= 0) {
+    // provide default dirs for run results and run queue
+    do_build_run_dirs(state, "default",
+                      global->run_status_dir,
+                      global->run_report_dir,
+                      global->run_team_report_dir,
+                      global->run_full_archive_dir);
+    do_build_queue_dirs(state, "default",
+                        global->run_queue_dir,
+                        global->run_exe_dir,
+                        NULL);
+  }
 }
 
 int
