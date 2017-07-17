@@ -3057,7 +3057,7 @@ do_add_row(
                           run_size, re->sha1, &run_uuid,
                           &phr->ip, phr->ssl_flag, phr->locale_id,
                           re->user_id, re->prob_id, re->lang_id, re->eoln_type,
-                          re->variant, re->is_hidden, cs->upsolving_mode, re->mime_type, store_flags);
+                          re->variant, re->is_hidden, re->mime_type, store_flags);
   if (run_id < 0) {
     fprintf(log_f, _("Failed to add row %d to runlog\n"), row);
     return -1;

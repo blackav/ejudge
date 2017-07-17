@@ -1087,7 +1087,7 @@ cmd_submit_run(
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
                           prob->id, lang_id, eoln_type,
-                          variant, hidden_flag, cs->upsolving_mode, mime_type, store_flags);
+                          variant, hidden_flag, mime_type, store_flags);
   if (run_id < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
