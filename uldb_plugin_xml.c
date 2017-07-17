@@ -2734,9 +2734,6 @@ static const int copy_user_general_fields[] =
   USERLIST_NC_FIELD7,
   USERLIST_NC_FIELD8,
   USERLIST_NC_FIELD9,
-  USERLIST_NC_AVATAR_STORE,
-  USERLIST_NC_AVATAR_ID,
-  USERLIST_NC_AVATAR_SUFFIX,
 
   0
 };
@@ -2801,6 +2798,12 @@ copy_user_info_func(
     p_str_from = (unsigned char**) userlist_get_user_info_field_ptr(ui_from,j);
     if (!*p_str_from) continue;
     *p_str_to = xstrdup(*p_str_from);
+  }
+
+  if (cnts && cnts->enable_avatar > 0) {
+    xstrdup3(&ui_to->avatar_store, ui_from->avatar_store);
+    xstrdup3(&ui_to->avatar_id, ui_from->avatar_id);
+    xstrdup3(&ui_to->avatar_suffix, ui_from->avatar_suffix);
   }
 
   /* clear `printer_name' and `location' */
