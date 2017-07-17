@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "reg_includes.csp"
 %><%
 // local includes go here
@@ -44,10 +43,6 @@ static const unsigned char * const form_row_attrs[]=
 </tr></table></div>
 </s:form>
 
-<div class="white_empty_block">&nbsp;</div>
-<div class="contest_actions"><table class="menu"><tr>
-    <td class="menu"><div class="contest_actions_item">&nbsp;</div></td>
-</tr></table></div>
 <%@include "reg_separator.csp"
 %>
 <h2><s:_>Select one of available contests</s:_></h2>
