@@ -327,5 +327,9 @@ ss_get_saved_auth(
 int
 ss_find_free_prob_id(
         const struct sid_state *ss);
+int
+ss_get_global_caps(
+        const struct http_request_info *phr,
+        opcap_t *pcap);
 
 #endif /* __SUPER_HTML_H__ */
