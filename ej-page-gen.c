@@ -4295,12 +4295,17 @@ handle_textfield_open(
     int need_check = html_attribute_get_bool(html_element_find_attribute(elem, "check"), 1);
     if (has_ac > 0) need_check = 0;
     if (need_check) {
-        HtmlAttribute *check_expr_attr = html_element_find_attribute(elem, "checkexpr");
-        fprintf(prg_f, "if ((%s)", expr);
-        if (check_expr_attr) {
-            fprintf(prg_f, " %s", check_expr_attr->value);
+        HtmlAttribute *full_check_expr_attr = html_element_find_attribute(elem, "fullcheckexpr");
+        if (full_check_expr_attr) {
+            fprintf(prg_f, "if (%s) {\n", full_check_expr_attr->value);
+        } else {
+            HtmlAttribute *check_expr_attr = html_element_find_attribute(elem, "checkexpr");
+            fprintf(prg_f, "if ((%s)", expr);
+            if (check_expr_attr) {
+                fprintf(prg_f, " %s", check_expr_attr->value);
+            }
+            fprintf(prg_f, ") {\n");
         }
-        fprintf(prg_f, ") {\n");
     }
     handle_html_string(prg_f, txt_f, log_f, " value=\"");
     processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, expr, elem, value_type);
