@@ -1,0 +1,42 @@
+<%
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_group_create_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_group_create_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = NULL;
+    const unsigned char *subtitle = "create a new group";
+    opcap_t caps = 0;
+
+    const unsigned char *marked_str = NULL; // needed for users_top_menu.csp
+    int contest_id = 0;                     // needed for users_top_menu.csp
+    int group_id = 0;                       // needed for users_top_menu.csp
+    int other_user_id = 0;                  // needed for users_top_menu.csp
+
+    if (ss_get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
+        FAIL(SSERV_ERR_PERM_DENIED);
+    }
+
+%><%@include "header.csp"
+%>
+
+<h2>Create a new group</h2>
+
+<%@include "users_top_menu.csp"
+%>
+
+<s:form>
+  <table class="b0">
+    <tr><td class="b0"><b>Group Name*:</b></td><td class="b0"><input type="text" size="80" name="group_name" /></td></tr>
+    <tr><td class="b0"><b>Description*:</b></td><td class="b0"><input type="text" size="80" name="description" /></td></tr>
+    <tr><td class="b0">&nbsp;</td><td class="b0"><s:submit ac="group-create-action" text="Create a group" /></td></tr>
+  </table>
+</s:form>
+
+<%@include "footer.csp"
+%><%
+cleanup:
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>
