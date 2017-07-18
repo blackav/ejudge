@@ -65,6 +65,7 @@ CFILES = \
  csp_user_browse_page.c\
  csp_user_browse_data.c\
  csp_get_contest_list.c\
+ csp_import_contest_from_polygon_page.c\
  csp_cnts_save_basic_form.c\
  csp_cnts_save_flags_form.c\
  csp_cnts_save_registration_form.c\
@@ -180,6 +181,7 @@ csp_prob_save_checking_form.c : prob_save_checking_form.csp includes.csp stdvars
 csp_prob_save_scoring_form.c : prob_save_scoring_form.csp includes.csp stdvars.csp
 csp_prob_save_feedback_form.c : prob_save_feedback_form.csp includes.csp stdvars.csp
 csp_prob_save_standing_form.c : prob_save_standing_form.csp includes.csp stdvars.csp
+csp_import_contest_from_polygon_page.c : import_contest_from_polygon_page.csp includes.csp stdvars.csp header.csp footer.csp
 
 csp_error_unknown_page.c : error_unknown_page.csp includes.csp stdvars.csp header.csp footer.csp
 
