@@ -7623,51 +7623,6 @@ cleanup:
 }
 
 int
-super_serve_op_GROUP_CREATE_PAGE(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  unsigned char buf[1024];
-  const unsigned char *cl = 0;
-  opcap_t caps = 0;
-
-  if (ss_get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
-    FAIL(SSERV_ERR_PERM_DENIED);
-  }
-
-  snprintf(buf, sizeof(buf), "serve-control: %s, create a new group",
-           phr->html_name);
-  ss_write_html_header(out_f, phr, buf);
-
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-
-  print_top_navigation_links(log_f, out_f, phr, 0, 0, 0, NULL);
-
-  html_start_form(out_f, 1, phr->self_url, "");
-  html_hidden(out_f, "SID", "%016llx", phr->session_id);
-  html_hidden(out_f, "action", "%d", SSERV_CMD_HTTP_REQUEST);
-  html_hidden(out_f, "op", "%d", SSERV_CMD_GROUP_CREATE_ACTION);
-
-  cl = " class=\"b0\"";
-  fprintf(out_f, "<table%s>\n", cl);
-  fprintf(out_f, "<tr><td%s><b>%s*:</b></td><td%s><input type=\"text\" size=\"80\" name=\"group_name\" /></td></tr>\n",
-          cl, "Group Name", cl);
-  fprintf(out_f, "<tr><td%s><b>%s*:</b></td><td%s><input type=\"text\" size=\"80\" name=\"description\" /></td></tr>\n",
-          cl, "Description", cl);
-  fprintf(out_f, "<tr><td%s>&nbsp;</td><td%s><input type=\"submit\" name=\"submit\" value=\"%s\" /></td></tr>\n",
-          cl, cl, "Create a group");
-  fprintf(out_f, "</table>\n");
-  fprintf(out_f, "</form>\n");
-
-  ss_write_html_footer(out_f);
-
-cleanup:
-  return retval;
-}
-
-int
 super_serve_op_GROUP_MODIFY_PAGE(
         FILE *log_f,
         FILE *out_f,
