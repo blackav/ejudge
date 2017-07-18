@@ -518,6 +518,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_PROB_SAVE_STANDING_FORM] = "prob_save_standing_form",
   [SSERV_CMD_MAIN_PAGE_BUTTON] = "main_page_button",
   [SSERV_CMD_IMPORT_CONTEST_FROM_POLYGON_PAGE] = "import_contest_from_polygon_page",
+  [SSERV_CMD_UPDATE_FROM_POLYGON_PAGE] = "update_from_polygon_page",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 
