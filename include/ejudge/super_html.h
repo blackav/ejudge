@@ -324,5 +324,8 @@ ss_get_saved_auth(
         unsigned char **p_poly_login,
         unsigned char **p_poly_password,
         unsigned char **p_poly_url);
+int
+ss_find_free_prob_id(
+        const struct sid_state *ss);
 
 #endif /* __SUPER_HTML_H__ */
