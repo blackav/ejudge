@@ -295,8 +295,11 @@ ss_get_global_caps(
 {
   return ejudge_cfg_opcaps_find(phr->config, phr->login, pcap);
 }
-static int
-get_contest_caps(const struct http_request_info *phr, const struct contest_desc *cnts, opcap_t *pcap)
+int
+ss_get_contest_caps(
+        const struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        opcap_t *pcap)
 {
   return opcaps_find(&cnts->capabilities, phr->login, pcap);
 }
@@ -647,7 +650,7 @@ super_serve_op_USER_FILTER_CHANGE_ACTION(
   } else if (!cnts) {
     // user without global OPCAP_LIST_USERS capability cannot view the full user list
     FAIL(SSERV_ERR_PERM_DENIED);
-  } else if (get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_LIST_USERS) < 0) {
+  } else if (ss_get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_LIST_USERS) < 0) {
     FAIL(SSERV_ERR_PERM_DENIED);
   }
 
@@ -1031,7 +1034,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
   case SSERV_CMD_USER_SEL_RANDOM_CNTS_PASSWD_PAGE:
     if (!cnts) FAIL(SSERV_ERR_INV_CONTEST);
     ss_get_global_caps(phr, &gcaps);
-    get_contest_caps(phr, cnts, &caps);
+    ss_get_contest_caps(phr, cnts, &caps);
     caps |= gcaps;
     if (opcaps_check(caps, OPCAP_EDIT_PASSWD) < 0 && opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) < 0)
       FAIL(SSERV_ERR_PERM_DENIED);
@@ -1041,7 +1044,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     ss_get_global_caps(phr, &gcaps);
     if (opcaps_check(gcaps, OPCAP_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_DELETE_REG;
     if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_PRIV_DELETE_REG;
-    get_contest_caps(phr, cnts, &caps);
+    ss_get_contest_caps(phr, cnts, &caps);
     caps |= gcaps;
     if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0 && opcaps_check(caps, OPCAP_DELETE_REG) < 0)
       FAIL(SSERV_ERR_PERM_DENIED);
@@ -1052,7 +1055,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     ss_get_global_caps(phr, &gcaps);
     if (opcaps_check(gcaps, OPCAP_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_EDIT_REG;
     if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_PRIV_EDIT_REG;
-    get_contest_caps(phr, cnts, &caps);
+    ss_get_contest_caps(phr, cnts, &caps);
     caps |= gcaps;
     if (opcaps_check(caps, OPCAP_PRIV_EDIT_REG) < 0 && opcaps_check(caps, OPCAP_EDIT_REG) < 0)
       FAIL(SSERV_ERR_PERM_DENIED);
@@ -1730,7 +1733,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
   case SSERV_CMD_USER_SEL_RANDOM_CNTS_PASSWD_ACTION:
     if (!cnts) FAIL(SSERV_ERR_INV_CONTEST);
     ss_get_global_caps(phr, &gcaps);
-    get_contest_caps(phr, cnts, &caps);
+    ss_get_contest_caps(phr, cnts, &caps);
     caps |= gcaps;
     if (opcaps_check(caps, OPCAP_EDIT_PASSWD) < 0 && opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) < 0)
       FAIL(SSERV_ERR_PERM_DENIED);
@@ -1740,7 +1743,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
     ss_get_global_caps(phr, &gcaps);
     if (opcaps_check(gcaps, OPCAP_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_DELETE_REG;
     if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_PRIV_DELETE_REG;
-    get_contest_caps(phr, cnts, &caps);
+    ss_get_contest_caps(phr, cnts, &caps);
     caps |= gcaps;
     if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0 && opcaps_check(caps, OPCAP_DELETE_REG) < 0)
       FAIL(SSERV_ERR_PERM_DENIED);
@@ -1751,14 +1754,14 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
     ss_get_global_caps(phr, &gcaps);
     if (opcaps_check(gcaps, OPCAP_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_EDIT_REG;
     if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_PRIV_EDIT_REG;
-    get_contest_caps(phr, cnts, &caps);
+    ss_get_contest_caps(phr, cnts, &caps);
     caps |= gcaps;
     if (opcaps_check(caps, OPCAP_PRIV_EDIT_REG) < 0 && opcaps_check(caps, OPCAP_EDIT_REG) < 0)
       FAIL(SSERV_ERR_PERM_DENIED);
     break;
   case SSERV_CMD_USER_SEL_CREATE_REG_ACTION:
     ss_get_global_caps(phr, &gcaps);
-    get_contest_caps(phr, other_cnts, &caps);
+    ss_get_contest_caps(phr, other_cnts, &caps);
     caps |= gcaps;
     if (opcaps_check(caps, OPCAP_PRIV_CREATE_REG) < 0 && opcaps_check(caps, OPCAP_CREATE_REG) < 0)
       FAIL(SSERV_ERR_PERM_DENIED);
@@ -1766,11 +1769,11 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
   case SSERV_CMD_USER_SEL_CREATE_REG_AND_COPY_ACTION:
     if  (!cnts) FAIL(SSERV_ERR_INV_CONTEST);
     ss_get_global_caps(phr, &gcaps);
-    get_contest_caps(phr, other_cnts, &caps);
+    ss_get_contest_caps(phr, other_cnts, &caps);
     caps |= gcaps;
     if (opcaps_check(caps, OPCAP_PRIV_CREATE_REG) < 0 && opcaps_check(caps, OPCAP_CREATE_REG) < 0)
       FAIL(SSERV_ERR_PERM_DENIED);
-    get_contest_caps(phr, cnts, &rcaps);
+    ss_get_contest_caps(phr, cnts, &rcaps);
     rcaps |= gcaps;
     if (opcaps_check(rcaps, OPCAP_GET_USER) < 0)
       FAIL(SSERV_ERR_PERM_DENIED);
@@ -2216,7 +2219,7 @@ super_serve_op_USER_DETAIL_PAGE(
   } else if (!cnts) {
     // user without global OPCAP_LIST_USERS capability cannot view the full user list
     FAIL(-SSERV_ERR_PERM_DENIED);
-  } else if (get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_GET_USER) < 0) {
+  } else if (ss_get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_GET_USER) < 0) {
     FAIL(-SSERV_ERR_PERM_DENIED);
   }
 
@@ -3155,7 +3158,7 @@ super_serve_op_USER_CNTS_PASSWORD_PAGE(
   opcap_t gcaps = 0;
   ss_get_global_caps(phr, &gcaps);
   opcap_t caps = 0;
-  get_contest_caps(phr, cnts, &caps);
+  ss_get_contest_caps(phr, cnts, &caps);
 
   if (is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0)
@@ -3481,7 +3484,7 @@ super_serve_op_USER_EDIT_REG_PAGE(
   ss_get_global_caps(phr, &gcaps);
   if (opcaps_check(gcaps, OPCAP_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_EDIT_REG;
   if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_PRIV_EDIT_REG;
-  get_contest_caps(phr, cnts, &caps);
+  ss_get_contest_caps(phr, cnts, &caps);
   caps |= gcaps;
   if (phr->priv_level <= 0) FAIL(SSERV_ERR_PERM_DENIED);
   if (opcaps_check(caps, OPCAP_EDIT_REG) < 0 && opcaps_check(caps, OPCAP_PRIV_EDIT_REG) < 0)
@@ -3665,7 +3668,7 @@ super_serve_op_USER_DELETE_REG_PAGE(
   ss_get_global_caps(phr, &gcaps);
   if (opcaps_check(gcaps, OPCAP_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_DELETE_REG;
   if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_PRIV_DELETE_REG;
-  get_contest_caps(phr, cnts, &caps);
+  ss_get_contest_caps(phr, cnts, &caps);
   caps |= gcaps;
   if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0 && opcaps_check(caps, OPCAP_DELETE_REG) < 0)
     FAIL(SSERV_ERR_PERM_DENIED);
@@ -5006,7 +5009,7 @@ super_serve_op_USER_CHANGE_CNTS_PASSWORD_ACTION(
 
   if (phr->priv_level <= 0) FAIL(SSERV_ERR_PERM_DENIED);
   ss_get_global_caps(phr, &gcaps);
-  get_contest_caps(phr, cnts, &ccaps);
+  ss_get_contest_caps(phr, cnts, &ccaps);
   fcaps = gcaps | ccaps;
   if (opcaps_check(fcaps, OPCAP_EDIT_PASSWD) < 0 && opcaps_check(fcaps, OPCAP_PRIV_EDIT_PASSWD) < 0)
     FAIL(SSERV_ERR_PERM_DENIED);
@@ -5102,7 +5105,7 @@ super_serve_op_USER_CREATE_ONE_ACTION(
     FAIL(SSERV_ERR_PERM_DENIED);
   }
   if (cnts) {
-    if (get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_REG) < 0) {
+    if (ss_get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_REG) < 0) {
       FAIL(SSERV_ERR_PERM_DENIED);
     }
   }
@@ -5223,7 +5226,7 @@ super_serve_op_USER_CREATE_MANY_ACTION(
     FAIL(SSERV_ERR_PERM_DENIED);
   }
   if (cnts) {
-    if (get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_REG) < 0) {
+    if (ss_get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_REG) < 0) {
       FAIL(SSERV_ERR_PERM_DENIED);
     }
   }
@@ -5429,7 +5432,7 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
     FAIL(SSERV_ERR_PERM_DENIED);
   }
   if (cnts) {
-    if (get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_REG) < 0) {
+    if (ss_get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_REG) < 0) {
       FAIL(SSERV_ERR_PERM_DENIED);
     }
   }
@@ -5710,7 +5713,7 @@ super_serve_op_USER_SAVE_ACTION(
   if (phr->priv_level <= 0) FAIL(SSERV_ERR_PERM_DENIED);
   ss_get_global_caps(phr, &gcaps);
   if (cnts) {
-    get_contest_caps(phr, cnts, &caps);
+    ss_get_contest_caps(phr, cnts, &caps);
   } else {
     caps = gcaps;
   }
@@ -6159,7 +6162,7 @@ super_serve_op_USER_CREATE_MEMBER_ACTION(
 
   if (phr->priv_level <= 0) FAIL(SSERV_ERR_PERM_DENIED);
   ss_get_global_caps(phr, &gcaps);
-  get_contest_caps(phr, cnts, &caps);
+  ss_get_contest_caps(phr, cnts, &caps);
   caps = (caps | gcaps) & ((1L << OPCAP_EDIT_USER) | (1L << OPCAP_PRIV_EDIT_USER));
   if (!caps) FAIL(SSERV_ERR_PERM_DENIED);
 
@@ -6261,7 +6264,7 @@ super_serve_op_USER_DELETE_MEMBER_PAGE(
 
   if (phr->priv_level <= 0) FAIL(SSERV_ERR_PERM_DENIED);
   ss_get_global_caps(phr, &gcaps);
-  get_contest_caps(phr, cnts, &caps);
+  ss_get_contest_caps(phr, cnts, &caps);
   caps = (caps | gcaps) & ((1L << OPCAP_EDIT_USER) | (1L << OPCAP_PRIV_EDIT_USER));
   if (!caps) FAIL(SSERV_ERR_PERM_DENIED);
 
@@ -6341,7 +6344,7 @@ super_serve_op_USER_DELETE_MEMBER_ACTION(
 
   if (phr->priv_level <= 0) FAIL(SSERV_ERR_PERM_DENIED);
   ss_get_global_caps(phr, &gcaps);
-  get_contest_caps(phr, cnts, &caps);
+  ss_get_contest_caps(phr, cnts, &caps);
   caps = (caps | gcaps) & ((1L << OPCAP_EDIT_USER) | (1L << OPCAP_PRIV_EDIT_USER));
   if (!caps) FAIL(SSERV_ERR_PERM_DENIED);
 
@@ -6409,7 +6412,7 @@ super_serve_op_USER_CREATE_REG_ACTION(
   ss_get_global_caps(phr, &gcaps);
   if (opcaps_check(gcaps, OPCAP_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_CREATE_REG;
   if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_PRIV_CREATE_REG;
-  get_contest_caps(phr, cnts, &caps);
+  ss_get_contest_caps(phr, cnts, &caps);
   caps |= gcaps;
   if (opcaps_check(caps, OPCAP_CREATE_REG) < 0 && opcaps_check(caps, OPCAP_PRIV_CREATE_REG) < 0)
     FAIL(SSERV_ERR_PERM_DENIED);
@@ -6484,7 +6487,7 @@ super_serve_op_USER_EDIT_REG_ACTION(
   ss_get_global_caps(phr, &gcaps);
   if (opcaps_check(gcaps, OPCAP_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_EDIT_REG;
   if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_PRIV_EDIT_REG;
-  get_contest_caps(phr, cnts, &caps);
+  ss_get_contest_caps(phr, cnts, &caps);
   caps |= gcaps;
   if (opcaps_check(caps, OPCAP_CREATE_REG) < 0 && opcaps_check(caps, OPCAP_PRIV_CREATE_REG) < 0)
     FAIL(SSERV_ERR_PERM_DENIED);
@@ -6559,7 +6562,7 @@ super_serve_op_USER_DELETE_REG_ACTION(
   ss_get_global_caps(phr, &gcaps);
   if (opcaps_check(gcaps, OPCAP_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_DELETE_REG;
   if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_PRIV_DELETE_REG;
-  get_contest_caps(phr, cnts, &caps);
+  ss_get_contest_caps(phr, cnts, &caps);
   caps |= gcaps;
   if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0 && opcaps_check(caps, OPCAP_DELETE_REG) < 0)
     FAIL(SSERV_ERR_PERM_DENIED);
@@ -6696,7 +6699,7 @@ super_serve_op_USER_CLEAR_FIELD_ACTION(
   if (phr->priv_level <= 0) FAIL(SSERV_ERR_PERM_DENIED);
   opcap_t gcaps = 0, caps = 0;
   ss_get_global_caps(phr, &gcaps);
-  get_contest_caps(phr, cnts, &caps);
+  ss_get_contest_caps(phr, cnts, &caps);
   caps |= gcaps;
   if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0 && opcaps_check(caps, OPCAP_EDIT_USER) < 0)
     FAIL(SSERV_ERR_PERM_DENIED);
@@ -6778,14 +6781,14 @@ super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
   switch (phr->action) {
   case SSERV_CMD_USER_SEL_VIEW_PASSWD_PAGE:
     ss_get_global_caps(phr, &gcaps);
-    if (cnts) get_contest_caps(phr, cnts, &caps);
+    if (cnts) ss_get_contest_caps(phr, cnts, &caps);
     caps |= gcaps;
     break;
   case SSERV_CMD_USER_SEL_VIEW_CNTS_PASSWD_PAGE:
     if (!cnts) FAIL(SSERV_ERR_INV_CONTEST);
     if (cnts->disable_team_password) FAIL(SSERV_ERR_INV_CONTEST);
     ss_get_global_caps(phr, &gcaps);
-    get_contest_caps(phr, cnts, &caps);
+    ss_get_contest_caps(phr, cnts, &caps);
     caps |= gcaps;
     break;
   default:
@@ -9272,7 +9275,7 @@ super_serve_op_IMPORT_FROM_POLYGON_PAGE(
   }
 
   ss_get_global_caps(phr, &caps);
-  get_contest_caps(phr, ss->edited_cnts, &lcaps);
+  ss_get_contest_caps(phr, ss->edited_cnts, &lcaps);
   caps |= lcaps;
 
   if (opcaps_check(lcaps, OPCAP_EDIT_CONTEST) < 0) {
@@ -9423,7 +9426,7 @@ super_serve_op_IMPORT_FROM_POLYGON_ACTION(
   }
 
   ss_get_global_caps(phr, &caps);
-  get_contest_caps(phr, ss->edited_cnts, &lcaps);
+  ss_get_contest_caps(phr, ss->edited_cnts, &lcaps);
   caps |= lcaps;
 
   if (opcaps_check(lcaps, OPCAP_EDIT_CONTEST) < 0) {
@@ -10368,7 +10371,7 @@ super_serve_op_UPDATE_FROM_POLYGON_PAGE(
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
   ss_get_global_caps(phr, &caps);
-  get_contest_caps(phr, cnts, &lcaps);
+  ss_get_contest_caps(phr, cnts, &lcaps);
   caps |= lcaps;
 
   if (opcaps_check(lcaps, OPCAP_EDIT_CONTEST) < 0) {
@@ -10467,7 +10470,7 @@ super_serve_op_UPDATE_FROM_POLYGON_ACTION(
   if (contests_get(contest_id, &cnts) < 0 || !cnts) FAIL(SSERV_ERR_INV_CONTEST);
 
   ss_get_global_caps(phr, &caps);
-  get_contest_caps(phr, cnts, &lcaps);
+  ss_get_contest_caps(phr, cnts, &lcaps);
   caps |= lcaps;
 
   if (opcaps_check(lcaps, OPCAP_EDIT_CONTEST) < 0) {
@@ -10854,7 +10857,7 @@ super_serve_op_IMPORT_CONTEST_FROM_POLYGON_PAGE(
   }
 
   ss_get_global_caps(phr, &caps);
-  get_contest_caps(phr, ss->edited_cnts, &lcaps);
+  ss_get_contest_caps(phr, ss->edited_cnts, &lcaps);
   caps |= lcaps;
 
   if (opcaps_check(lcaps, OPCAP_EDIT_CONTEST) < 0) {

@@ -331,5 +331,10 @@ int
 ss_get_global_caps(
         const struct http_request_info *phr,
         opcap_t *pcap);
+int
+ss_get_contest_caps(
+        const struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        opcap_t *pcap);
 
 #endif /* __SUPER_HTML_H__ */
