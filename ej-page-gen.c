@@ -3911,12 +3911,18 @@ handle_submit_open(
     if (at) {
         value = at->value;
     } else {
-        at = html_element_find_attribute(elem, "label");
+        at = html_element_find_attribute(elem, "text");
         if (at) {
-            snprintf(label_buf, sizeof(label_buf), "_(\"%s\")", at->value);
+            snprintf(label_buf, sizeof(label_buf), "\"%s\"", at->value);
             value = label_buf;
         } else {
-            value = "NULL";
+            at = html_element_find_attribute(elem, "label");
+            if (at) {
+                snprintf(label_buf, sizeof(label_buf), "_(\"%s\")", at->value);
+                value = label_buf;
+            } else {
+                value = "NULL";
+            }
         }
     }
 
