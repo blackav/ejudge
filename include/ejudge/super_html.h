@@ -337,4 +337,12 @@ ss_get_contest_caps(
         const struct contest_desc *cnts,
         opcap_t *pcap);
 
+struct ss_download_status
+{
+  unsigned char *key;
+  unsigned char *status;
+  unsigned char *polygon_id;
+  unsigned char *polygon_name;
+};
+
 #endif /* __SUPER_HTML_H__ */

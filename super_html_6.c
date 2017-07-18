@@ -9675,14 +9675,6 @@ cleanup:
   return retval;
 }
 
-struct download_status
-{
-  unsigned char *key;
-  unsigned char *status;
-  unsigned char *polygon_id;
-  unsigned char *polygon_name;
-};
-
 static int
 read_download_status(
         FILE *log_f,
@@ -9690,11 +9682,11 @@ read_download_status(
         FILE *f,
         int *p_exit_code,
         int *p_count,
-        struct download_status **p_statuses)
+        struct ss_download_status **p_statuses)
 {
   unsigned char buf[1024];
   int len, exit_code = -1, n, count = 0;
-  struct download_status *statuses = NULL;
+  struct ss_download_status *statuses = NULL;
 
   if (!fgets(buf, sizeof(buf), f)) {
     fprintf(log_f, "%s: unexpected EOF for exit_code\n", path);
@@ -9802,7 +9794,7 @@ super_serve_op_DOWNLOAD_PROGRESS_PAGE(
   int pid = 0;
   unsigned char hbuf[1024];
   int exit_code = -1, count = 0;
-  struct download_status *statuses = NULL;
+  struct ss_download_status *statuses = NULL;
   const unsigned char *cl, *s;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct polygon_packet *pp = NULL;
@@ -10280,7 +10272,7 @@ super_serve_op_DOWNLOAD_CLEANUP_AND_IMPORT_ACTION(
   struct update_state *us = ss->update_state;
   FILE *f = NULL;
   int exit_code = -1, count = 0, successes = 0, failures = 0;
-  struct download_status *statuses = NULL;
+  struct ss_download_status *statuses = NULL;
 
   if (!us) {
     int action = 0;
