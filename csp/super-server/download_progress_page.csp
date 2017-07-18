@@ -229,34 +229,3 @@ restart:; // FIXME
     l10n_resetlocale();
     html_armor_free(&ab);
 %>
-
-
-
-int
-super_serve_op_DOWNLOAD_PROGRESS_PAGE(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  unsigned char buf[1024];
-  time_t cur_time = time(NULL);
-  struct update_state *us;
-  FILE *f = NULL;
-  int pid = 0;
-  unsigned char hbuf[1024];
-  int exit_code = -1, count = 0;
-  struct download_status *statuses = NULL;
-  const unsigned char *cl, *s;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  int start_mode = 0;
-  int successes = 0, failures = 0;
-
-
-  
-
-
-
-
-
-
