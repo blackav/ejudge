@@ -1,9 +1,9 @@
 <%
 %><%@include "includes.csp"
-%><%@set getter_name = "csp_get_import_contest_from_polygon_page"
+%><%@set getter_name = "csp_get_update_from_polygon_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
-%><%@page csp_view_import_contest_from_polygon_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@page csp_view_update_from_polygon_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "stdvars.csp"
 %><%
     const unsigned char *title = NULL;
