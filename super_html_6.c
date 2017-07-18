@@ -9675,8 +9675,8 @@ cleanup:
   return retval;
 }
 
-static int
-read_download_status(
+int
+ss_read_download_status(
         FILE *log_f,
         const unsigned char *path,
         FILE *f,
@@ -9807,7 +9807,7 @@ super_serve_op_DOWNLOAD_PROGRESS_PAGE(
     snprintf(buf, sizeof(buf), "serve-control: %s, no download process", phr->html_name);
   } else {
     if (us->status_file && (f = fopen(us->status_file, "r"))) {
-      read_download_status(stderr, us->status_file, f, &exit_code, &count, &statuses);
+      ss_read_download_status(stderr, us->status_file, f, &exit_code, &count, &statuses);
       fclose(f); f = NULL;
       snprintf(buf, sizeof(buf), "serve-control: %s, download complete", phr->html_name);
     } else if (us->pid_file && (f = fopen(us->pid_file, "r"))) {
@@ -10293,7 +10293,7 @@ super_serve_op_DOWNLOAD_CLEANUP_AND_IMPORT_ACTION(
     ss_redirect(out_f, phr, SSERV_CMD_DOWNLOAD_PROGRESS_PAGE, NULL);
     goto cleanup;
   }
-  read_download_status(stderr, us->status_file, f, &exit_code, &count, &statuses);
+  ss_read_download_status(stderr, us->status_file, f, &exit_code, &count, &statuses);
   fclose(f); f = NULL;
   if (exit_code != 0 || count <= 0) {
     ss_redirect(out_f, phr, SSERV_CMD_DOWNLOAD_PROGRESS_PAGE, NULL);

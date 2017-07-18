@@ -344,5 +344,14 @@ struct ss_download_status
   unsigned char *polygon_id;
   unsigned char *polygon_name;
 };
+int
+ss_read_download_status(
+        FILE *log_f,
+        const unsigned char *path,
+        FILE *f,
+        int *p_exit_code,
+        int *p_count,
+        struct ss_download_status **p_statuses);
+
 
 #endif /* __SUPER_HTML_H__ */
