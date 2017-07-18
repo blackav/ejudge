@@ -99,6 +99,7 @@ CFILES = \
  csp_prob_save_scoring_form.c\
  csp_prob_save_feedback_form.c\
  csp_prob_save_standing_form.c\
+ csp_group_browse_page.c\
  csp_group_create_page.c\
  csp_error_unknown_page.c
 
@@ -191,6 +192,7 @@ csp_import_from_polygon_page.c : import_from_polygon_page.csp includes.csp stdva
 csp_update_from_polygon_page.c : update_from_polygon_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp
 csp_download_progress_page.c : download_progress_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp
 
+csp_group_browse_page.c : group_browse_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
 csp_group_create_page.c : group_create_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
 
 csp_error_unknown_page.c : error_unknown_page.csp includes.csp stdvars.csp header.csp footer.csp

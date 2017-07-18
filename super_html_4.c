@@ -522,6 +522,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_UPDATE_FROM_POLYGON_PAGE] = "update_from_polygon_page",
   [SSERV_CMD_DOWNLOAD_PROGRESS_PAGE] = "download_progress_page",
   [SSERV_CMD_GROUP_CREATE_PAGE] = "group_create_page",
+  [SSERV_CMD_GROUP_BROWSE_PAGE] = "group_browse_page",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 
