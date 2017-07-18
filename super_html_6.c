@@ -9169,8 +9169,8 @@ cleanup:
   return retval;
 }
 
-static int
-get_saved_auth(
+int
+ss_get_saved_auth(
         const unsigned char *ej_login,
         unsigned char **p_poly_login,
         unsigned char **p_poly_password,
@@ -9290,7 +9290,7 @@ super_serve_op_IMPORT_FROM_POLYGON_PAGE(
   int prob_id = find_free_prob_id(ss);
   problem_id_to_short_name(prob_id - 1, prob_buf);
 
-  get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url);
+  ss_get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url);
   if (!saved_login) saved_login = xstrdup("");
   if (!saved_password) saved_password = xstrdup("");
   if (!saved_url) saved_url = xstrdup("");
@@ -10378,7 +10378,7 @@ super_serve_op_UPDATE_FROM_POLYGON_PAGE(
     goto cleanup;
   }
 
-  get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url);
+  ss_get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url);
   if (!saved_login) saved_login = xstrdup("");
   if (!saved_password) saved_password = xstrdup("");
   if (!saved_url) saved_url = xstrdup("");
@@ -10872,7 +10872,7 @@ super_serve_op_IMPORT_CONTEST_FROM_POLYGON_PAGE(
   int prob_id = find_free_prob_id(ss);
   problem_id_to_short_name(prob_id - 1, prob_buf);
 
-  get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url);
+  ss_get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url);
   if (!saved_login) saved_login = xstrdup("");
   if (!saved_password) saved_password = xstrdup("");
   if (!saved_url) saved_url = xstrdup("");

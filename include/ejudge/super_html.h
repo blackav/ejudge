@@ -2,7 +2,7 @@
 #ifndef __SUPER_HTML_H__
 #define __SUPER_HTML_H__
 
-/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -317,5 +317,12 @@ html_select(FILE *f, int value, const unsigned char *param_name,
 
 void
 super_html_activate_problem(struct sid_state *sstate, int prob_id);
+
+int
+ss_get_saved_auth(
+        const unsigned char *ej_login,
+        unsigned char **p_poly_login,
+        unsigned char **p_poly_password,
+        unsigned char **p_poly_url);
 
 #endif /* __SUPER_HTML_H__ */
