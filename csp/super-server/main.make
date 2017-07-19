@@ -102,6 +102,7 @@ CFILES = \
  csp_group_browse_page.c\
  csp_group_create_page.c\
  csp_user_import_csv_page.c\
+ csp_user_create_from_csv_page.c\
  csp_error_unknown_page.c
 
 SOFILES = $(CFILES:.c=.so)
@@ -197,6 +198,7 @@ csp_group_browse_page.c : group_browse_page.csp includes.csp stdvars.csp header.
 csp_group_create_page.c : group_create_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
 
 csp_user_import_csv_page.c : user_import_csv_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_user_create_from_csv_page.c : user_create_from_csv_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
 
 csp_error_unknown_page.c : error_unknown_page.csp includes.csp stdvars.csp header.csp footer.csp
 
