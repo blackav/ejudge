@@ -255,48 +255,48 @@ function updateCntsPasswdVisibility()
       <td class="b0">&nbsp;</td>
     </tr>
     <tr>
-      <td %s><b>Use random password:</b></td>
-      <td %s><input type="checkbox" name="reg_random" value="1" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b0"><b>Use random password:</b></td>
+      <td class="b0"><input type="checkbox" name="reg_random" value="1" /></td>
+      <td class="b0">&nbsp;</td>
     </tr>
     <tr>
-      <td %s><b>Use SHA1:</b></td>
-      <td %s><input type="checkbox" name="reg_sha1" value="1" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b0"><b>Use SHA1:</b></td>
+      <td class="b0"><input type="checkbox" name="reg_sha1" value="1" /></td>
+      <td class="b0">&nbsp;</td>
     </tr>
 
 <%
     for (row = 0; ss_user_flag_rows[row].field_id > 0; ++row) {
 %>
     <tr>
-      <td %s><b><s:v value="ss_user_flag_rows[row].field_desc" escape="no" />:</b></td>
-      <td %s><input type="checkbox" name="field_<s:v value="ss_user_flag_rows[row].field_id" />" value="1" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b0"><b><s:v value="ss_user_flag_rows[row].field_desc" escape="no" />:</b></td>
+      <td class="b0"><input type="checkbox" name="field_<s:v value="ss_user_flag_rows[row].field_id" />" value="1" /></td>
+      <td class="b0">&nbsp;</td>
     </tr>
 <%
     }
 %>
 
     <tr>
-      <td %s colspan="3" align="center"><b>Contest registration</b></td>
+      <td class="b0" colspan="3" align="center"><b>Contest registration</b></td>
     </tr>
     <tr>
-      <td %s><b>Create a contest registration:</b></td>
-      <td %s><input type="checkbox" onchange="changeCntsRegCreate(this)" name="reg_cnts_create" value="1" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b0"><b>Create a contest registration:</b></td>
+      <td class="b0"><input type="checkbox" onchange="changeCntsRegCreate(this)" name="reg_cnts_create" value="1" /></td>
+      <td class="b0">&nbsp;</td>
     </tr>
     <tr class="CntsRegRow" style="display: none;" >
-      <td %s><b>Contest ID:</b></td>
-      <td %s><s:textfield id="cnts1" onchange="updateCnts1()" name="other_contest_id_1" size="20" value="contest_id" fullCheckExpr="contest_id > 0" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b0"><b>Contest ID:</b></td>
+      <td class="b0"><s:textfield id="cnts1" onchange="updateCnts1()" name="other_contest_id_1" size="20" value="contest_id" fullCheckExpr="contest_id > 0" /></td>
+      <td class="b0">&nbsp;</td>
     </tr>
 
 <%
     if (cnts_id_count > 0) {
 %>
     <tr class="CntsRegRow" style="display: none;" >
-      <td %s><b>Contest name:</b></td>
-      <td%s>
+      <td class="b0"><b>Contest name:</b></td>
+      <td class="b0">
         <select id="cnts2" onchange="updateCnts2()" name="other_contest_id_2">
           <option value="0"></option>
 <%
@@ -312,14 +312,14 @@ function updateCntsPasswdVisibility()
 %>
         </select>
       </td>
-      <td %s>&nbsp;</td>
+      <td class="b0">&nbsp;</td>
     </tr>
 <%
     }
 %>
     <tr class="CntsRegRow" style="display: none;" >
-      <td %s><b>Status:</b></td>
-      <td %s>
+      <td class="b0"><b>Status:</b></td>
+      <td class="b0">
         <select name="cnts_status">
           <option value="0">OK</option>
           <option value="1" selected="selected">Pending</option>
@@ -329,98 +329,98 @@ function updateCntsPasswdVisibility()
     </tr>
 
     <tr class="CntsRegRow" style="display: none;" >
-      <td %s><b>Invisible?</b></td>
-      <td %s><input type="checkbox" value="1" name="is_invisible" /></td>
+      <td class="b0"><b>Invisible?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_invisible" /></td>
     </tr>
     <tr class="CntsRegRow" style="display: none;" >
-      <td %s><b>Banned?</b></td>
-      <td %s><input type="checkbox" value="1" name="is_banned" /></td>
+      <td class="b0"><b>Banned?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_banned" /></td>
     </tr>
     <tr class="CntsRegRow" style="display: none;" >
-      <td %s><b>Locked?</b></td>
-      <td %s><input type="checkbox" value="1" name="is_locked" /></td>
+      <td class="b0"><b>Locked?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_locked" /></td>
     </tr>
     <tr class="CntsRegRow" style="display: none;" >
-      <td %s><b>Incomplete?</b></td>
-      <td %s><input type="checkbox" value="1" name="is_incomplete" /></td>
+      <td class="b0"><b>Incomplete?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_incomplete" /></td>
     </tr>
     <tr class="CntsRegRow" style="display: none;" >
-      <td %s><b>Disqualified?</b></td>
-      <td %s><input type="checkbox" value="1" name="is_disqualified" /></td>
+      <td class="b0"><b>Disqualified?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_disqualified" /></td>
     </tr>
     <tr class="CntsRegRow" style="display: none;" >
-      <td %s><b>Privileged?</b></td>
-      <td %s><input type="checkbox" value="1" name="is_privileged" /></td>
+      <td class="b0"><b>Privileged?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_privileged" /></td>
     </tr>
     <tr class="CntsRegRow" style="display: none;" >
-      <td %s><b>Reg. read-only?</b></td>
-      <td %s><input type="checkbox" value="1" name="is_reg_readonly" /></td>
+      <td class="b0"><b>Reg. read-only?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_reg_readonly" /></td>
     </tr>
 
     <tr id="CntsRegRowUseRegPasswd" class="CntsRegRow" style="display: none;" >
-      <td %s><b>Use registration password:</b></td>
-      <td %s><input type="checkbox" name="cnts_use_reg_passwd" onchange="updateCntsPasswdVisibility()" value="1" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b0"><b>Use registration password:</b></td>
+      <td class="b0"><input type="checkbox" name="cnts_use_reg_passwd" onchange="updateCntsPasswdVisibility()" value="1" /></td>
+      <td class="b0">&nbsp;</td>
     </tr>
     <tr id="CntsRegRowSetToNull" class="CntsRegRow" style="display: none;" >
-      <td %s><b>Set to null:</b></td>
-      <td %s><input type="checkbox" name="cnts_null_passwd" onchange="updateCntsPasswdVisibility()" value="1" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b0"><b>Set to null:</b></td>
+      <td class="b0"><input type="checkbox" name="cnts_null_passwd" onchange="updateCntsPasswdVisibility()" value="1" /></td>
+      <td class="b0">&nbsp;</td>
     </tr>
     <tr id="CntsRegRowUseRandom" class="CntsRegRow" style="display: none;" >
-      <td %s><b>Random contest password:</b></td>
-      <td %s><input type="checkbox" name="cnts_random_passwd" onchange="updateCntsPasswdVisibility()" value="1" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b0"><b>Random contest password:</b></td>
+      <td class="b0"><input type="checkbox" name="cnts_random_passwd" onchange="updateCntsPasswdVisibility()" value="1" /></td>
+      <td class="b0">&nbsp;</td>
     </tr>
     <tr id="CntsRegRowPasswdSha1" class="CntsRegRow" style="display: none;" >
-      <td %s><b>Use SHA1:</b></td>
-      <td %s><input type="checkbox" name="cnts_sha1" value="1" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b0"><b>Use SHA1:</b></td>
+      <td class="b0"><input type="checkbox" name="cnts_sha1" value="1" /></td>
+      <td class="b0">&nbsp;</td>
     </tr>
 
     <tr>
-      <td %s colspan="3" align="center"><b>Group membership</b></td>
+      <td class="b0" colspan="3" align="center"><b>Group membership</b></td>
     </tr>
 
     <tr>
-      <td %s><b>Add user to a group:</b></td>
-      <td %s><input type="checkbox" onchange="changeGroupCreate(this)" name="group_create" value="1" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b0"><b>Add user to a group:</b></td>
+      <td class="b0"><input type="checkbox" onchange="changeGroupCreate(this)" name="group_create" value="1" /></td>
+      <td class="b0">&nbsp;</td>
     </tr>
     <tr class="GroupRow" style="display: none;" >
-      <td %s><b>Group ID:</b></td>
-      <td %s><s:textfield name="other_group_id" size="20" value="group_id" fullCheckExpr="group_id > 0" />
-      <td %s>&nbsp;</td>
+      <td class="b0"><b>Group ID:</b></td>
+      <td class="b0"><s:textfield name="other_group_id" size="20" value="group_id" fullCheckExpr="group_id > 0" />
+      <td class="b0">&nbsp;</td>
     </tr>
 
     <tr>
-      <td %s colspan="3" align="center"><b>File</b></td>
+      <td class="b0" colspan="3" align="center"><b>File</b></td>
     </tr>
 
     <tr>
-      <td %s><b>Register existing users:</b></td>
-      <td %s><input type="checkbox" name="register_existing" value="1" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b0"><b>Register existing users:</b></td>
+      <td class="b0"><input type="checkbox" name="register_existing" value="1" /></td>
+      <td class="b0">&nbsp;</td>
     </tr>
     <tr>
-      <td %s><b>Field separator:</b></td>
-      <td %s><input type="text" name="separator" size="20" value=";"/></td>
-      <td %s>&nbsp;</td>
+      <td class="b0"><b>Field separator:</b></td>
+      <td class="b0"><input type="text" name="separator" size="20" value=";"/></td>
+      <td class="b0">&nbsp;</td>
     </tr>
     <tr>
-      <td %s><b>Charset:</b></td>
-      <td %s><% charset_html_select(out_f, NULL, NULL); %></td>
-      <td %s>&nbsp;</td>
+      <td class="b0"><b>Charset:</b></td>
+      <td class="b0"><% charset_html_select(out_f, NULL, NULL); %></td>
+      <td class="b0">&nbsp;</td>
     </tr>
     <tr>
-      <td %s><b>CSV File:</b></td>
-      <td %s><input type="file" name="csv_file" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b0"><b>CSV File:</b></td>
+      <td class="b0"><input type="file" name="csv_file" /></td>
+      <td class="b0">&nbsp;</td>
     </tr>
     <tr>
-      <td %s>&nbsp;</td>
-      <td %s><s:submit ac="user-create-from-csv-action" text="Create users" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b0">&nbsp;</td>
+      <td class="b0"><s:submit ac="user-create-from-csv-action" text="Create users" /></td>
+      <td class="b0">&nbsp;</td>
     </tr>
   </table>
 </form>
