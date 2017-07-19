@@ -1976,12 +1976,6 @@ super_serve_op_USER_SEL_CANCEL_ACTION(
   return 0;
 }
 
-struct user_row_info
-{
-  int field_id;
-  unsigned char *field_desc;
-};
-
 static char const * const member_string[] =
 {
   "Contestant",
@@ -2047,7 +2041,7 @@ string_row(
   html_armor_free(&ab);
 }
 
-static const struct user_row_info user_flag_rows[] =
+static const struct ss_user_row_info user_flag_rows[] =
 {
   { USERLIST_NN_IS_PRIVILEGED, "Globally privileged" },
   { USERLIST_NN_IS_INVISIBLE, "Globally invisible" },
@@ -2061,7 +2055,7 @@ static const struct user_row_info user_flag_rows[] =
   { 0, 0 },
 };
 
-static const struct user_row_info user_timestamp_rows[] =
+static const struct ss_user_row_info user_timestamp_rows[] =
 {
   { USERLIST_NN_REGISTRATION_TIME, "Registration time" },
   { USERLIST_NN_LAST_LOGIN_TIME, "Last login time" },
@@ -2070,7 +2064,7 @@ static const struct user_row_info user_timestamp_rows[] =
   { 0, 0 },
 };
 
-static const struct user_row_info user_info_rows[] =
+static const struct ss_user_row_info user_info_rows[] =
 {
   { USERLIST_NC_INST, "Institution name" },
   { USERLIST_NC_INST_EN, "Inst. name (En)" },
@@ -2114,7 +2108,7 @@ static const struct user_row_info user_info_rows[] =
   { 0, 0 },
 };
 
-static const struct user_row_info user_info_stat_rows[] =
+static const struct ss_user_row_info user_info_stat_rows[] =
 {
   { USERLIST_NC_CREATE_TIME, "Create time" },
   { USERLIST_NC_LAST_LOGIN_TIME, "Last login time" },
@@ -2124,7 +2118,7 @@ static const struct user_row_info user_info_stat_rows[] =
   { 0, 0 },
 };
 
-static const struct user_row_info member_rows[] =
+static const struct ss_user_row_info member_rows[] =
 {
   { USERLIST_NM_FIRSTNAME, "First name" },
   { USERLIST_NM_FIRSTNAME_EN, "First name (En)" },
@@ -2152,7 +2146,7 @@ static const struct user_row_info member_rows[] =
   { 0, 0 },
 };
 
-static const struct user_row_info member_date_rows[] =
+static const struct ss_user_row_info member_date_rows[] =
 {
   { USERLIST_NM_BIRTH_DATE, "Date of birth" },
   { USERLIST_NM_ENTRY_DATE, "Date of entry" },
@@ -2161,7 +2155,7 @@ static const struct user_row_info member_date_rows[] =
   { 0, 0 },
 };
 
-static const struct user_row_info member_time_rows[] =
+static const struct ss_user_row_info member_time_rows[] =
 {
   { USERLIST_NM_CREATE_TIME, "Create time" },
   { USERLIST_NM_LAST_CHANGE_TIME, "Last change time" },

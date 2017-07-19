@@ -353,5 +353,11 @@ ss_read_download_status(
         int *p_count,
         struct ss_download_status **p_statuses);
 
+struct ss_user_row_info
+{
+  int field_id;
+  unsigned char *field_desc;
+};
+
 
 #endif /* __SUPER_HTML_H__ */
