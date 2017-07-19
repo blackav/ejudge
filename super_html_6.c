@@ -7566,7 +7566,7 @@ cleanup:
   return retval;
 }
 
-static const unsigned char * const global_cap_descs[OPCAP_LAST] =
+const unsigned char * const ss_global_cap_descs[OPCAP_LAST] =
 {
   [OPCAP_MASTER_LOGIN] = "Allowed login to serve-control with administrative capabilities",
   [OPCAP_JUDGE_LOGIN] = "Allowed login to serve-control with less capabilities",
@@ -7677,7 +7677,7 @@ super_serve_op_CAPS_EDIT_PAGE(
   const unsigned char *cl = " class=\"b1\"";
   fprintf(out_f, "<table%s>", cl);
   for (int cap = 0; cap < OPCAP_LAST; ++cap) {
-    if (!global_cap_descs[cap]) continue;
+    if (!ss_global_cap_descs[cap]) continue;
     const unsigned char *s = "";
     if (opcaps_check(p->caps, cap) >= 0) s = " checked=\"yes\"";
     fprintf(out_f, "<tr>"
@@ -7687,7 +7687,7 @@ super_serve_op_CAPS_EDIT_PAGE(
             "<td%s>%s</td>"
             "</tr>\n",
             cl, cap, cl, cap, s, cl, opcaps_get_name(cap),
-            cl, global_cap_descs[cap]);
+            cl, ss_global_cap_descs[cap]);
   }
   fprintf(out_f, "</table>");
 
