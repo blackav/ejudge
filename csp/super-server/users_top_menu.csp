@@ -13,7 +13,7 @@
 %>
   <s:url name="ContestUserBrowsePageUrl" ac="user-browse-page">
     <s:param name="marked" value="marked_str" fullCheckExpr="(marked_str)" />
-    <s:param name="contest_id" />
+    <s:param name="contest_id" value="contest_id" />
   </s:url>
   <li><s:a url="ContestUserBrowsePageUrl">Browse users of contest <s:v value="contest_id" /></s:a></li>
 <%
@@ -24,7 +24,7 @@
 %>
   <s:url name="GroupUserBrowsePageUrl" ac="user-browse-page">
     <s:param name="marked" value="marked_str" fullCheckExpr="(marked_str)" />
-    <s:param name="group_id" />
+    <s:param name="group_id" value="group_id" />
   </s:url>
   <li><s:a url="GroupUserBrowsePageUrl">Browse users of group <s:v value="group_id" /></s:a></li>
 <%
