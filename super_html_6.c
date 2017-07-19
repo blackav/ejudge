@@ -2041,7 +2041,7 @@ string_row(
   html_armor_free(&ab);
 }
 
-static const struct ss_user_row_info user_flag_rows[] =
+const struct ss_user_row_info ss_user_flag_rows[] =
 {
   { USERLIST_NN_IS_PRIVILEGED, "Globally privileged" },
   { USERLIST_NN_IS_INVISIBLE, "Globally invisible" },
@@ -2425,17 +2425,17 @@ super_serve_op_USER_DETAIL_PAGE(
           cl, "Show user flags");
   fprintf(out_f, "<tr class=\"FlagRow2\" style=\"display: none;\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleFlagVisibility(false)\">[%s]</a></td></tr>\n", cl, "Hide user flags");
 
-  for (row = 0; user_flag_rows[row].field_id > 0; ++row) {
+  for (row = 0; ss_user_flag_rows[row].field_id > 0; ++row) {
     fprintf(out_f, "<tr class=\"FlagRow2\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
-            cl, user_flag_rows[row].field_desc, cl, cl);
-    int *pi = (int*) userlist_get_user_field_ptr(u, user_flag_rows[row].field_id);
+            cl, ss_user_flag_rows[row].field_desc, cl, cl);
+    int *pi = (int*) userlist_get_user_field_ptr(u, ss_user_flag_rows[row].field_id);
     if (pi) {
       s = "";
       if (*pi > 0) {
         s = " checked=\"checked\"";
       }
       fprintf(out_f, "<input type=\"checkbox\" name=\"field_%d\" value=\"1\"%s />",
-              user_flag_rows[row].field_id, s);
+              ss_user_flag_rows[row].field_id, s);
     } else {
       fprintf(out_f, "<i>Invalid field</i>");
     }
@@ -2873,10 +2873,10 @@ print_user_info(
     }
   }
 
-  for (row = 0; user_flag_rows[row].field_id > 0; ++row) {
+  for (row = 0; ss_user_flag_rows[row].field_id > 0; ++row) {
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>",
-            cl, user_flag_rows[row].field_desc, cl);
-    int *pi = (int*) userlist_get_user_field_ptr(u, user_flag_rows[row].field_id);
+            cl, ss_user_flag_rows[row].field_desc, cl);
+    int *pi = (int*) userlist_get_user_field_ptr(u, ss_user_flag_rows[row].field_id);
     if (pi) {
       fprintf(out_f, "%s", (*pi)?"YES":"NO");
     } else {
@@ -4048,9 +4048,9 @@ super_serve_op_USER_CREATE_ONE_PAGE(
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"reg_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use SHA1", cl, cl);
 
-  for (row = 0; user_flag_rows[row].field_id > 0; ++row) {
+  for (row = 0; ss_user_flag_rows[row].field_id > 0; ++row) {
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"field_%d\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
-            cl, user_flag_rows[row].field_desc, cl, user_flag_rows[row].field_id, cl);
+            cl, ss_user_flag_rows[row].field_desc, cl, ss_user_flag_rows[row].field_id, cl);
   }
 
   fprintf(out_f, "<tr><td%s colspan=\"3\" align=\"center\"><b>%s</b></td></tr>\n",
@@ -4438,9 +4438,9 @@ super_serve_op_USER_CREATE_MANY_PAGE(
   fprintf(out_f, "<tr id=\"RegPasswordSha1Row\"><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"reg_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use SHA1", cl, cl);
 
-  for (row = 0; user_flag_rows[row].field_id > 0; ++row) {
+  for (row = 0; ss_user_flag_rows[row].field_id > 0; ++row) {
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"field_%d\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
-            cl, user_flag_rows[row].field_desc, cl, user_flag_rows[row].field_id, cl);
+            cl, ss_user_flag_rows[row].field_desc, cl, ss_user_flag_rows[row].field_id, cl);
   }
 
   fprintf(out_f, "<tr><td%s colspan=\"3\" align=\"center\"><b>%s</b></td></tr>\n",
@@ -4779,9 +4779,9 @@ super_serve_op_USER_CREATE_FROM_CSV_PAGE(
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"reg_sha1\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
           cl, "Use SHA1", cl, cl);
 
-  for (row = 0; user_flag_rows[row].field_id > 0; ++row) {
+  for (row = 0; ss_user_flag_rows[row].field_id > 0; ++row) {
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s><input type=\"checkbox\" name=\"field_%d\" value=\"1\" /></td><td%s>&nbsp;</td></tr>\n",
-            cl, user_flag_rows[row].field_desc, cl, user_flag_rows[row].field_id, cl);
+            cl, ss_user_flag_rows[row].field_desc, cl, ss_user_flag_rows[row].field_id, cl);
   }
 
   fprintf(out_f, "<tr><td%s colspan=\"3\" align=\"center\"><b>%s</b></td></tr>\n",
