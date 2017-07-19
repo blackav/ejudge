@@ -526,6 +526,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_USER_IMPORT_CSV_PAGE] = "user_import_csv_page",
   [SSERV_CMD_USER_CREATE_FROM_CSV_PAGE] = "user_create_from_csv_page",
   [SSERV_CMD_USER_CREATE_MANY_PAGE] = "user_create_many_page",
+  [SSERV_CMD_USER_CREATE_ONE_PAGE] = "user_create_one_page",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 
