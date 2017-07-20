@@ -1,0 +1,28 @@
+<%
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_ejudge_xml_must_restart"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_ejudge_xml_must_restart(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = NULL;
+    const unsigned char *subtitle = "you must restart ejudge";
+
+%><%@include "header.csp"
+%>
+
+<h2>You must restart ejudge</h2>
+
+<ul>
+  <li><s:a ac="main-page">Main page</s:a></li>
+  <li><s:a ac="user-browse-page">Browse users</s:a></li>
+  <li><s:a ac="group-browse-page">Browse groups</s:a></li>
+</ul>
+
+<p>Now you must restart ejudge.</p>
+
+<%@include "footer.csp"
+%><%
+    l10n_resetlocale();
+    html_armor_free(&ab);
+%>
