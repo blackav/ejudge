@@ -66,8 +66,8 @@ extern const unsigned char * const ss_global_cap_descs[];
     <tr>
       <td class="b1"><s:v value="cap" /></td>
       <td class="b1"><input type="checkbox" name="cap_<s:v value="cap" />"<s:v value="s" escape="no" />></td>
-      <td class="b1"><tt><s:v value="opcaps_get_name(cap)" escape="no" /></tt></td>"
-      <td class="b1"><s:v value="ss_global_cap_descs[cap]" /></td>"
+      <td class="b1"><tt><s:v value="opcaps_get_name(cap)" escape="no" /></tt></td>
+      <td class="b1"><s:v value="ss_global_cap_descs[cap]" /></td>
     </tr>
 <%
     }
@@ -76,8 +76,8 @@ extern const unsigned char * const ss_global_cap_descs[];
 
   <table class="b0">
     <tr>
-      <td %s><s:submit ac="caps-edit-cancel-action" text="Cancel" /></td>
-      <td %s><s:submit ac="caps-edit-save-action" text="Save" /></td>
+      <td class="b0"><s:submit ac="caps-edit-cancel-action" text="Cancel" /></td>
+      <td class="b0"><s:submit ac="caps-edit-save-action" text="Save" /></td>
     </tr>
   </table>
 </form>
