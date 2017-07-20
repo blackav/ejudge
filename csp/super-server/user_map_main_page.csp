@@ -1,0 +1,85 @@
+<%
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_user_map_main_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_user_map_main_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = NULL;
+    const unsigned char *subtitle = "user map";
+    opcap_t caps = 0;
+    int serial = 0;
+
+    if (ss_get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) {
+        FAIL(SSERV_ERR_PERM_DENIED);
+    }
+
+    if (!phr->config->caps_file) {
+        retval = SSERV_CMD_MIGRATION_PAGE;
+        goto cleanup;
+    }
+%><%@include "header.csp"
+%>
+
+<h2>User map</h2>
+
+<ul>
+  <li><s:a ac="main-page">Main page</s:a></li>
+</ul>
+
+<%
+    ejudge_cfg_refresh_caps_file(phr->config, 1);
+%>
+
+<table class="b1">
+  <tr>
+    <th class="b1">System (unix) user</th>
+    <th class="b1">Ejudge user</th>
+  </tr>
+<%
+    if (phr->config->caps_file_info && phr->config->caps_file_info->root && phr->config->caps_file_info->root->user_map) {
+        const struct xml_tree *p;
+        for (p = phr->config->caps_file_info->root->user_map->first_down; p; p = p->right) {
+            ++serial;
+            const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
+%>
+  <tr>
+    <td class="b1"><s:v value="m->system_user_str" /></td>
+    <td class="b1"><s:v value="m->local_user_str" /></td>
+    <td class="b1">
+      <s:url name="DeleteUrl" ac="user-map-delete-action">
+        <s:param name="serial" value="serial" />
+      </s:url>
+      <s:a url="DeleteUrl">[Delete]</s:a>
+    </td>
+  </tr>
+<%
+        }
+    }
+%>
+</table>
+
+<h3>Create new mapping</h3>
+
+<s:form>
+  <table class="b0">
+    <tr>
+      <td class="b0">Unix login:</td>
+      <td class="b0"><input type="text" size="40" name="unix_login" /></td>
+    </tr>
+    <tr>
+      <td class="b0">Ejudge login:</td>
+      <td class="b0"><input type="text" size="40" name="ejudge_login" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><s:submit ac="user-map-add-action" text="Create mapping" /></td>
+    </tr>
+  </table>
+</form>
+
+<%@include "footer.csp"
+%><%
+cleanup:
+    l10n_resetlocale();
+    html_armor_free(&ab);
+%>

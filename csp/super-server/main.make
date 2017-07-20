@@ -107,6 +107,7 @@ CFILES = \
  csp_user_create_one_page.c\
  csp_caps_edit_page.c\
  csp_caps_main_page.c\
+ csp_user_map_main_page.c\
  csp_migration_page.c\
  csp_ejudge_xml_must_restart.c\
  csp_error_unknown_page.c
@@ -210,6 +211,7 @@ csp_user_create_one_page.c : user_create_one_page.csp includes.csp stdvars.csp h
 
 csp_caps_edit_page.c : caps_edit_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_caps_main_page.c : caps_main_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_user_map_main_page.c : user_map_main_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_migration_page.c : migration_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_ejudge_xml_must_restart.c : ejudge_xml_must_restart.csp includes.csp stdvars.csp header.csp footer.csp
 
