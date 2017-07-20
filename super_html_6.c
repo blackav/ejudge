@@ -7122,43 +7122,6 @@ super_serve_op_EJUDGE_XML_CANCEL_ACTION(
   return 0;
 }
 
-int
-super_serve_op_EJUDGE_XML_MUST_RESTART(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  unsigned char buf[1024];
-  unsigned char hbuf[1024];
-
-  snprintf(buf, sizeof(buf), "serve-control: %s, you must restart ejudge", phr->html_name);
-  ss_write_html_header(out_f, phr, buf);
-
-  fprintf(out_f, "<h1>%s</h1>\n", buf);
-
-  fprintf(out_f, "<ul>");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, NULL),
-          "Main page");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_BROWSE_PAGE),
-          "Browse users");
-  fprintf(out_f, "<li>%s%s</a></li>",
-          html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
-                        NULL, "action=%d&amp;op=%d",
-                        SSERV_CMD_HTTP_REQUEST, SSERV_CMD_GROUP_BROWSE_PAGE),
-          "Browse groups");
-  fprintf(out_f, "</ul>\n");
-
-  fprintf(out_f, "<p>Now you must restart ejudge.</p>");
-
-  return retval;
-}
-
 static int
 save_caps_file(FILE *log_f, const struct ejudge_cfg *cfg)
 {
