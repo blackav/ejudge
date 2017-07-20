@@ -45,7 +45,7 @@
 %><%@include "header.csp"
 %>
 
-<h2>Modifying group <s:v value="group_id" /></h2>
+<h2>Deleting group <s:v value="group_id" /></h2>
 
 <%@include "users_top_menu.csp"
 %>
