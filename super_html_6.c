@@ -423,8 +423,8 @@ userlist_user_count_cookies(struct userlist_user *u)
   return tot;
 }
 
-static struct userlist_user *
-get_user_info(
+struct userlist_user *
+ss_get_user_info(
         struct http_request_info *phr,
         int user_id,
         int contest_id)
@@ -2334,7 +2334,7 @@ super_serve_op_USER_DETAIL_PAGE(
 
   print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id, NULL);
 
-  if (!(u = get_user_info(phr, other_user_id, contest_id))) FAIL(SSERV_ERR_DB_ERROR);
+  if (!(u = ss_get_user_info(phr, other_user_id, contest_id))) FAIL(SSERV_ERR_DB_ERROR);
   ui = u->cnts0;
 
   html_start_form_id(out_f, 1, phr->self_url, "UserForm", "");
@@ -3000,7 +3000,7 @@ super_serve_op_USER_PASSWORD_PAGE(
   }
   if (group_id < 0) group_id = 0;
 
-  if (!(u = get_user_info(phr, other_user_id, 0))) FAIL(SSERV_ERR_DB_ERROR);
+  if (!(u = ss_get_user_info(phr, other_user_id, 0))) FAIL(SSERV_ERR_DB_ERROR);
 
   opcap_t caps = 0;
   if (ss_get_global_caps(phr, &caps) < 0) FAIL(SSERV_ERR_PERM_DENIED);
@@ -3146,7 +3146,7 @@ super_serve_op_USER_CNTS_PASSWORD_PAGE(
   }
   if (group_id < 0) group_id = 0;
 
-  if (!(u = get_user_info(phr, other_user_id, contest_id))) FAIL(SSERV_ERR_DB_ERROR);
+  if (!(u = ss_get_user_info(phr, other_user_id, contest_id))) FAIL(SSERV_ERR_DB_ERROR);
 
   if (phr->priv_level <= 0) FAIL(SSERV_ERR_PERM_DENIED);
   opcap_t gcaps = 0;
@@ -3346,7 +3346,7 @@ super_serve_op_USER_CREATE_REG_PAGE(
 
   print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id, NULL);
 
-  if (!(u = get_user_info(phr, other_user_id, contest_id)))
+  if (!(u = ss_get_user_info(phr, other_user_id, contest_id)))
     FAIL(SSERV_ERR_DB_ERROR);
 
   cnts_id_count = contests_get_list(&cnts_id_list);
@@ -3497,7 +3497,7 @@ super_serve_op_USER_EDIT_REG_PAGE(
     goto do_footer;
   }
 
-  if (!(u = get_user_info(phr, other_user_id, 0)))
+  if (!(u = ss_get_user_info(phr, other_user_id, 0)))
     FAIL(SSERV_ERR_DB_ERROR);
 
   if (is_globally_privileged(phr, u)) {
@@ -3674,7 +3674,7 @@ super_serve_op_USER_DELETE_REG_PAGE(
 
   print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id, NULL);
 
-  if (!(u = get_user_info(phr, other_user_id, 0))) FAIL(SSERV_ERR_DB_ERROR);
+  if (!(u = ss_get_user_info(phr, other_user_id, 0))) FAIL(SSERV_ERR_DB_ERROR);
 
   if (is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_DELETE_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
@@ -5312,7 +5312,7 @@ super_serve_op_USER_CREATE_REG_ACTION(
   if (opcaps_check(caps, OPCAP_CREATE_REG) < 0 && opcaps_check(caps, OPCAP_PRIV_CREATE_REG) < 0)
     FAIL(SSERV_ERR_PERM_DENIED);
 
-  if (!(u = get_user_info(phr, params.other_user_id, cnts->id))) FAIL(SSERV_ERR_DB_ERROR);
+  if (!(u = ss_get_user_info(phr, params.other_user_id, cnts->id))) FAIL(SSERV_ERR_DB_ERROR);
   if (is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_CREATE_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
   } else if (is_contest_privileged(cnts, u)) {
@@ -5387,7 +5387,7 @@ super_serve_op_USER_EDIT_REG_ACTION(
   if (opcaps_check(caps, OPCAP_CREATE_REG) < 0 && opcaps_check(caps, OPCAP_PRIV_CREATE_REG) < 0)
     FAIL(SSERV_ERR_PERM_DENIED);
 
-  if (!(u = get_user_info(phr, params.other_user_id, cnts->id))) FAIL(SSERV_ERR_DB_ERROR);
+  if (!(u = ss_get_user_info(phr, params.other_user_id, cnts->id))) FAIL(SSERV_ERR_DB_ERROR);
   if (is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
   } else if (is_contest_privileged(cnts, u)) {
@@ -5462,7 +5462,7 @@ super_serve_op_USER_DELETE_REG_ACTION(
   if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0 && opcaps_check(caps, OPCAP_DELETE_REG) < 0)
     FAIL(SSERV_ERR_PERM_DENIED);
 
-  if (!(u = get_user_info(phr, other_user_id, cnts->id))) FAIL(SSERV_ERR_DB_ERROR);
+  if (!(u = ss_get_user_info(phr, other_user_id, cnts->id))) FAIL(SSERV_ERR_DB_ERROR);
   if (is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_DELETE_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
   } else if (is_contest_privileged(cnts, u)) {
@@ -5599,7 +5599,7 @@ super_serve_op_USER_CLEAR_FIELD_ACTION(
   if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0 && opcaps_check(caps, OPCAP_EDIT_USER) < 0)
     FAIL(SSERV_ERR_PERM_DENIED);
 
-  if (!(u = get_user_info(phr, other_user_id, cnts->id))) FAIL(SSERV_ERR_DB_ERROR);
+  if (!(u = ss_get_user_info(phr, other_user_id, cnts->id))) FAIL(SSERV_ERR_DB_ERROR);
   if (is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(SSERV_ERR_PERM_DENIED);
   } else if (is_contest_privileged(cnts, u)) {

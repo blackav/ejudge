@@ -370,4 +370,11 @@ ss_find_elem_positions(
         int *p_caps_begin,
         int *p_caps_end);
 
+struct userlist_user;
+struct userlist_user *
+ss_get_user_info(
+        struct http_request_info *phr,
+        int user_id,
+        int contest_id);
+
 #endif /* __SUPER_HTML_H__ */
