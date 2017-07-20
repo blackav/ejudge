@@ -528,6 +528,8 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_USER_CREATE_MANY_PAGE] = "user_create_many_page",
   [SSERV_CMD_USER_CREATE_ONE_PAGE] = "user_create_one_page",
   [SSERV_CMD_CAPS_EDIT_PAGE] = "caps_edit_page",
+  [SSERV_CMD_CAPS_MAIN_PAGE] = "caps_main_page",
+  [SSERV_CMD_MIGRATION_PAGE] = "migration_page",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 
