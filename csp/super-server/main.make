@@ -110,6 +110,7 @@ CFILES = \
  csp_user_map_main_page.c\
  csp_migration_page.c\
  csp_ejudge_xml_must_restart.c\
+ csp_ejudge_xml_update_action.c\
  csp_error_unknown_page.c
 
 SOFILES = $(CFILES:.c=.so)
@@ -214,6 +215,7 @@ csp_caps_main_page.c : caps_main_page.csp includes.csp stdvars.csp header.csp fo
 csp_user_map_main_page.c : user_map_main_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_migration_page.c : migration_page.csp includes.csp stdvars.csp header.csp footer.csp
 csp_ejudge_xml_must_restart.c : ejudge_xml_must_restart.csp includes.csp stdvars.csp header.csp footer.csp
+csp_ejudge_xml_update_action.c : ejudge_xml_update_action.csp includes.csp stdvars.csp header.csp footer.csp
 
 csp_error_unknown_page.c : error_unknown_page.csp includes.csp stdvars.csp header.csp footer.csp
 

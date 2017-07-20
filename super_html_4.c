@@ -532,6 +532,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_MIGRATION_PAGE] = "migration_page",
   [SSERV_CMD_EJUDGE_XML_MUST_RESTART] = "ejudge_xml_must_restart",
   [SSERV_CMD_USER_MAP_MAIN_PAGE] = "user_map_main_page",
+  [SSERV_CMD_EJUDGE_XML_UPDATE_ACTION] = "ejudge_xml_update_action",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 
