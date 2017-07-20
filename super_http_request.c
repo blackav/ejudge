@@ -359,4 +359,6 @@ const unsigned char super_proto_is_http_request[] =
   [SSERV_CMD_PROB_SAVE_STANDING_FORM] = 1,
 
   [SSERV_CMD_MAIN_PAGE_BUTTON] = 1,
+
+  [SSERV_CMD_MIGRATION_PAGE] = 1,
 };
