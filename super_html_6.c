@@ -6612,8 +6612,8 @@ cleanup:
   return retval;
 }
 
-static void
-find_elem_positions(
+void
+ss_find_elem_positions(
         unsigned char *text,
         int size,
         int *p_user_map_count,
@@ -6778,8 +6778,8 @@ migration_page(
   }
 
   int um_count = -1, um_begin = -1, um_end = -1, caps_count = -1, caps_begin = -1, caps_end = -1;
-  find_elem_positions(text, (int) size, &um_count, &um_begin, &um_end,
-                      &caps_count, &caps_begin, &caps_end);
+  ss_find_elem_positions(text, (int) size, &um_count, &um_begin, &um_end,
+                         &caps_count, &caps_begin, &caps_end);
   if (um_count != 1 || um_begin < 0 || um_end < 0 || caps_count != 1 || caps_begin < 0 || caps_end < 0) {
     fprintf(log_f, "sorry cannot process '%s'\n", phr->config->ejudge_xml_path);
     FAIL(SSERV_ERR_INV_OPER);

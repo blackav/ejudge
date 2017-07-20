@@ -359,5 +359,15 @@ struct ss_user_row_info
   unsigned char *field_desc;
 };
 
+void
+ss_find_elem_positions(
+        unsigned char *text,
+        int size,
+        int *p_user_map_count,
+        int *p_user_map_begin,
+        int *p_user_map_end,
+        int *p_caps_count,
+        int *p_caps_begin,
+        int *p_caps_end);
 
 #endif /* __SUPER_HTML_H__ */
