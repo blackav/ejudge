@@ -1153,16 +1153,6 @@ userlist_user_count_cookies(struct userlist_user *u)
   for (cookie = FIRST_COOKIE(u); cookie; cookie = NEXT_COOKIE(cookie), tot++);
   return tot;
 }
-static int
-userlist_user_count_contests(struct userlist_user *u)
-{
-  struct userlist_contest *c;
-  int tot = 0;
-
-  if (!u || !u->contests) return 0;
-  for (c = FIRST_CONTEST(u); c; c = NEXT_CONTEST(c), tot++);
-  return tot;
-}
 
 struct user_field_desc
 {

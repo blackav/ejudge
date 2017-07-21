@@ -858,4 +858,7 @@ enum
 
 int userlist_parse_filter_op(const unsigned char *str);
 
+int
+userlist_user_count_contests(struct userlist_user *u);
+
 #endif /* __USERLIST_H__ */

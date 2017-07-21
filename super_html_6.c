@@ -404,16 +404,6 @@ ss_parse_params(
 }
 
 static int
-userlist_user_count_contests(struct userlist_user *u)
-{
-  struct userlist_contest *c;
-  int tot = 0;
-
-  if (!u || !u->contests) return 0;
-  for (c = FIRST_CONTEST(u); c; c = NEXT_CONTEST(c), tot++);
-  return tot;
-}
-static int
 userlist_user_count_cookies(struct userlist_user *u)
 {
   struct userlist_cookie *cookie;

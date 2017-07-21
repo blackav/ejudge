@@ -2245,3 +2245,19 @@ userlist_parse_filter_op(const unsigned char *str)
   }
   return 0;
 }
+
+#define FIRST_COOKIE(u) ((struct userlist_cookie*) (u)->cookies->first_down)
+#define NEXT_COOKIE(c)  ((struct userlist_cookie*) (c)->b.right)
+#define FIRST_CONTEST(u) ((struct userlist_contest*)(u)->contests->first_down)
+#define NEXT_CONTEST(c)  ((struct userlist_contest*)(c)->b.right)
+
+int
+userlist_user_count_contests(struct userlist_user *u)
+{
+  struct userlist_contest *c;
+  int tot = 0;
+
+  if (!u || !u->contests) return 0;
+  for (c = FIRST_CONTEST(u); c; c = NEXT_CONTEST(c), tot++);
+  return tot;
+}
