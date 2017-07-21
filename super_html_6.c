@@ -1968,7 +1968,7 @@ super_serve_op_USER_SEL_CANCEL_ACTION(
   return 0;
 }
 
-static char const * const member_string[] =
+char const * const ss_member_string[] =
 {
   "Contestant",
   "Reserve",
