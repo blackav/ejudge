@@ -453,6 +453,7 @@ static const int external_action_aliases[SSERV_CMD_LAST] =
   [SSERV_CMD_CNTS_EDIT_REG_WELCOME_PAGE] = SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD_PAGE,
   [SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE_PAGE] = SSERV_CMD_GLOB_EDIT_CONTEST_START_CMD_PAGE,
   [SSERV_CMD_CNTS_START_EDIT_VARIANT_ACTION] = SSERV_CMD_CNTS_EDIT_CUR_VARIANT_PAGE,
+  [SSERV_CMD_USER_SEL_VIEW_CNTS_PASSWD_PAGE] = SSERV_CMD_USER_SEL_VIEW_PASSWD_PAGE,
 };
 static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
 {
@@ -537,6 +538,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_GROUP_MODIFY_PAGE] = "group_modify_page",
   [SSERV_CMD_USER_CREATE_REG_PAGE] = "user_create_reg_page",
   [SSERV_CMD_USER_EDIT_REG_PAGE] = "user_edit_reg_page",
+  [SSERV_CMD_USER_SEL_VIEW_PASSWD_PAGE] = "user_sel_view_passwd_page",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 
