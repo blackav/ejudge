@@ -520,8 +520,8 @@ static const unsigned char * const flag_op_legends[] =
   "Do nothing", "Clear", "Set", "Toggle", NULL,
 };
 
-static unsigned char *
-collect_marked_set(
+unsigned char *
+ss_collect_marked_set(
         struct http_request_info *phr,
         bitset_t *pms)
 {
@@ -612,7 +612,7 @@ super_serve_op_USER_FILTER_CHANGE_ACTION(
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   hr_cgi_param_int_opt(phr, "group_id", &group_id, 0);
-  marked_str = collect_marked_set(phr, &marked);
+  marked_str = ss_collect_marked_set(phr, &marked);
 
   if (contest_id < 0) contest_id = 0;
   if (contest_id > 0) {
@@ -810,7 +810,7 @@ super_serve_op_USER_BROWSE_MARK_ALL_ACTION(
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   hr_cgi_param_int_opt(phr, "group_id", &group_id, 0);
-  marked_str = collect_marked_set(phr, &marked);
+  marked_str = ss_collect_marked_set(phr, &marked);
 
   if (contests_get(contest_id, &cnts) < 0 || !cnts) {
     contest_id = 0;
@@ -930,7 +930,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   hr_cgi_param_int_opt(phr, "group_id", &group_id, 0);
-  marked_str = collect_marked_set(phr, &marked);
+  marked_str = ss_collect_marked_set(phr, &marked);
 
   if (contest_id < 0) contest_id = 0;
   if (contest_id > 0) {
@@ -1581,7 +1581,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   hr_cgi_param_int_opt(phr, "group_id", &group_id, 0);
-  marked_str = collect_marked_set(phr, &marked);
+  marked_str = ss_collect_marked_set(phr, &marked);
 
   if (contest_id < 0) contest_id = 0;
   if (contest_id > 0) {
@@ -1960,7 +1960,7 @@ super_serve_op_USER_SEL_CANCEL_ACTION(
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   hr_cgi_param_int_opt(phr, "group_id", &group_id, 0);
-  marked_str = collect_marked_set(phr, &marked);
+  marked_str = ss_collect_marked_set(phr, &marked);
   ss_redirect_2(out_f, phr, SSERV_CMD_USER_BROWSE_PAGE, contest_id, group_id, 0, marked_str);
 
   xfree(marked_str);
@@ -5340,7 +5340,7 @@ super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   hr_cgi_param_int_opt(phr, "group_id", &group_id, 0);
-  marked_str = collect_marked_set(phr, &marked);
+  marked_str = ss_collect_marked_set(phr, &marked);
 
   if (contest_id < 0) contest_id = 0;
   if (contest_id > 0) {
@@ -5553,7 +5553,7 @@ super_serve_op_USER_SEL_VIEW_PASSWD_REDIRECT(
 
   hr_cgi_param_int_opt(phr, "contest_id", &contest_id, 0);
   hr_cgi_param_int_opt(phr, "group_id", &group_id, 0);
-  marked_str = collect_marked_set(phr, &marked);
+  marked_str = ss_collect_marked_set(phr, &marked);
   switch (phr->action) {
   case SSERV_CMD_USER_SEL_VIEW_PASSWD_REDIRECT:
     next_op = SSERV_CMD_USER_SEL_VIEW_PASSWD_PAGE;

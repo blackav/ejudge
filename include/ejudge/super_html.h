@@ -386,4 +386,10 @@ ss_is_contest_privileged(
         const struct contest_desc *cnts,
         const struct userlist_user *u);
 
+struct bitset_s;
+unsigned char *
+ss_collect_marked_set(
+        struct http_request_info *phr,
+        struct bitset_s *pms);
+
 #endif /* __SUPER_HTML_H__ */
