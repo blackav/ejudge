@@ -304,8 +304,10 @@ ss_get_contest_caps(
   return opcaps_find(&cnts->capabilities, phr->login, pcap);
 }
 
-static int
-is_globally_privileged(const struct http_request_info *phr, const struct userlist_user *u)
+int
+ss_is_globally_privileged(
+        const struct http_request_info *phr,
+        const struct userlist_user *u)
 {
   opcap_t caps = 0;
   if (u->is_privileged) return 1;
@@ -1107,7 +1109,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
         break;
       case SSERV_CMD_USER_SEL_CLEAR_CNTS_PASSWD_PAGE:
       case SSERV_CMD_USER_SEL_RANDOM_CNTS_PASSWD_PAGE:
-        if (is_globally_privileged(phr, u)) {
+        if (ss_is_globally_privileged(phr, u)) {
           if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0) u = 0;
         } else if (is_contest_privileged(cnts, u)) {
           if (opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) < 0) u = 0;
@@ -1116,7 +1118,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
         }
         break;
       case SSERV_CMD_USER_SEL_DELETE_REG_PAGE:
-        if (is_globally_privileged(phr, u)) {
+        if (ss_is_globally_privileged(phr, u)) {
           if (opcaps_check(gcaps, OPCAP_PRIV_DELETE_REG) < 0) u = 0;
         } else if (is_contest_privileged(cnts, u)) {
           if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0) u = 0;
@@ -1126,7 +1128,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
         break;
       case SSERV_CMD_USER_SEL_CHANGE_REG_STATUS_PAGE:
       case SSERV_CMD_USER_SEL_CHANGE_REG_FLAGS_PAGE:
-        if (is_globally_privileged(phr, u)) {
+        if (ss_is_globally_privileged(phr, u)) {
           if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_REG) < 0) u = 0;
         } else if (is_contest_privileged(cnts, u)) {
           if (opcaps_check(caps, OPCAP_PRIV_EDIT_REG) < 0) u = 0;
@@ -1835,7 +1837,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
         break;
       case SSERV_CMD_USER_SEL_CLEAR_CNTS_PASSWD_ACTION:
       case SSERV_CMD_USER_SEL_RANDOM_CNTS_PASSWD_ACTION:
-        if (is_globally_privileged(phr, u)) {
+        if (ss_is_globally_privileged(phr, u)) {
           if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0) u = 0;
         } else if (is_contest_privileged(cnts, u)) {
           if (opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) < 0) u = 0;
@@ -1844,7 +1846,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
         }
         break;
       case SSERV_CMD_USER_SEL_DELETE_REG_ACTION:
-        if (is_globally_privileged(phr, u)) {
+        if (ss_is_globally_privileged(phr, u)) {
           if (opcaps_check(gcaps, OPCAP_PRIV_DELETE_REG) < 0) u = 0;
         } else if (is_contest_privileged(cnts, u)) {
           if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0) u = 0;
@@ -1854,7 +1856,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
         break;
       case SSERV_CMD_USER_SEL_CHANGE_REG_STATUS_ACTION:
       case SSERV_CMD_USER_SEL_CHANGE_REG_FLAGS_ACTION:
-        if (is_globally_privileged(phr, u)) {
+        if (ss_is_globally_privileged(phr, u)) {
           if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_REG) < 0) u = 0;
         } else if (is_contest_privileged(cnts, u)) {
           if (opcaps_check(caps, OPCAP_PRIV_EDIT_REG) < 0) u = 0;
@@ -1864,7 +1866,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
         break;
       case SSERV_CMD_USER_SEL_CREATE_REG_ACTION:
       case SSERV_CMD_USER_SEL_CREATE_REG_AND_COPY_ACTION:
-        if (is_globally_privileged(phr, u)) {
+        if (ss_is_globally_privileged(phr, u)) {
           if (opcaps_check(gcaps, OPCAP_PRIV_CREATE_REG) < 0) u = 0;
         } else {
           if (opcaps_check(caps, OPCAP_CREATE_USER) < 0) u = 0;
@@ -3005,7 +3007,7 @@ super_serve_op_USER_PASSWORD_PAGE(
   opcap_t caps = 0;
   if (ss_get_global_caps(phr, &caps) < 0) FAIL(SSERV_ERR_PERM_DENIED);
   int cap = OPCAP_EDIT_PASSWD;
-  if (is_globally_privileged(phr, u) || is_contest_privileged(cnts, u))
+  if (ss_is_globally_privileged(phr, u) || is_contest_privileged(cnts, u))
     cap = OPCAP_PRIV_EDIT_PASSWD;
   if (opcaps_check(caps, cap) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
@@ -3154,7 +3156,7 @@ super_serve_op_USER_CNTS_PASSWORD_PAGE(
   opcap_t caps = 0;
   ss_get_contest_caps(phr, cnts, &caps);
 
-  if (is_globally_privileged(phr, u)) {
+  if (ss_is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0)
       FAIL(SSERV_ERR_PERM_DENIED);
   } else if (is_contest_privileged(cnts, u)) {
@@ -3366,7 +3368,7 @@ super_serve_op_USER_EDIT_REG_PAGE(
   if (!(u = ss_get_user_info(phr, other_user_id, 0)))
     FAIL(SSERV_ERR_DB_ERROR);
 
-  if (is_globally_privileged(phr, u)) {
+  if (ss_is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
   } else if (is_contest_privileged(cnts, u)) {
     if (opcaps_check(caps, OPCAP_PRIV_EDIT_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
@@ -3542,7 +3544,7 @@ super_serve_op_USER_DELETE_REG_PAGE(
 
   if (!(u = ss_get_user_info(phr, other_user_id, 0))) FAIL(SSERV_ERR_DB_ERROR);
 
-  if (is_globally_privileged(phr, u)) {
+  if (ss_is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_DELETE_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
   } else if (is_contest_privileged(cnts, u)) {
     if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
@@ -3697,7 +3699,7 @@ super_serve_op_USER_CHANGE_PASSWORD_ACTION(
     FAIL(SSERV_ERR_DB_ERROR);
   }
   if (!(u = userlist_parse_user_str(xml_text))) FAIL(SSERV_ERR_DB_ERROR);
-  if (is_globally_privileged(phr, u) && opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) < 0)
+  if (ss_is_globally_privileged(phr, u) && opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) < 0)
     FAIL(SSERV_ERR_PERM_DENIED);
   else if (opcaps_check(caps, OPCAP_EDIT_PASSWD) < 0)
     FAIL(SSERV_ERR_PERM_DENIED);
@@ -3785,7 +3787,7 @@ super_serve_op_USER_CHANGE_CNTS_PASSWORD_ACTION(
   }
   if (!(u = userlist_parse_user_str(xml_text))) FAIL(SSERV_ERR_DB_ERROR);
 
-  if (is_globally_privileged(phr, u)) {
+  if (ss_is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0) FAIL(SSERV_ERR_PERM_DENIED);
   } else if (is_contest_privileged(cnts, u)) {
     if (opcaps_check(fcaps, OPCAP_PRIV_EDIT_PASSWD) < 0) FAIL(SSERV_ERR_PERM_DENIED);
@@ -4533,7 +4535,7 @@ super_serve_op_USER_SAVE_ACTION(
   }
   if (changed_count > 0) {
     int bit = 0;
-    if (is_globally_privileged(phr, u)
+    if (ss_is_globally_privileged(phr, u)
         || (cnts && is_contest_privileged(cnts, u))
         || global_checkbox_vals[USERLIST_NN_IS_PRIVILEGED] != u->is_privileged) {
       bit = OPCAP_PRIV_EDIT_USER;
@@ -4689,7 +4691,7 @@ super_serve_op_USER_SAVE_ACTION(
   }
 
   if (deleted_count > 0 || changed_count > 0) {
-    if (is_globally_privileged(phr, u)) {
+    if (ss_is_globally_privileged(phr, u)) {
       if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0)
         FAIL(SSERV_ERR_PERM_DENIED);
     } else if (is_contest_privileged(cnts, u)) {
@@ -4808,7 +4810,7 @@ super_serve_op_USER_SAVE_ACTION(
         }
 
         if (deleted_count > 0 || changed_count > 0) {
-          if (is_globally_privileged(phr, u)) {
+          if (ss_is_globally_privileged(phr, u)) {
             if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0)
               FAIL(SSERV_ERR_PERM_DENIED);
           } else if (is_contest_privileged(cnts, u)) {
@@ -4935,7 +4937,7 @@ super_serve_op_USER_CREATE_MEMBER_ACTION(
   --role;
   if (role < 0 || role >= USERLIST_MB_LAST) FAIL(SSERV_ERR_INV_VALUE);
 
-  if (is_globally_privileged(phr, u)) {
+  if (ss_is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(SSERV_ERR_PERM_DENIED);
   } else if (is_contest_privileged(cnts, u)) {
     if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(SSERV_ERR_PERM_DENIED);
@@ -5035,7 +5037,7 @@ super_serve_op_USER_DELETE_MEMBER_PAGE(
   }
   if (!(u = userlist_parse_user_str(xml_text))) FAIL(SSERV_ERR_DB_ERROR);
 
-  if (is_globally_privileged(phr, u)) {
+  if (ss_is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(SSERV_ERR_PERM_DENIED);
   } else if (is_contest_privileged(cnts, u)) {
     if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(SSERV_ERR_PERM_DENIED);
@@ -5115,7 +5117,7 @@ super_serve_op_USER_DELETE_MEMBER_ACTION(
   }
   if (!(u = userlist_parse_user_str(xml_text))) FAIL(SSERV_ERR_DB_ERROR);
 
-  if (is_globally_privileged(phr, u)) {
+  if (ss_is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(SSERV_ERR_PERM_DENIED);
   } else if (is_contest_privileged(cnts, u)) {
     if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(SSERV_ERR_PERM_DENIED);
@@ -5179,7 +5181,7 @@ super_serve_op_USER_CREATE_REG_ACTION(
     FAIL(SSERV_ERR_PERM_DENIED);
 
   if (!(u = ss_get_user_info(phr, params.other_user_id, cnts->id))) FAIL(SSERV_ERR_DB_ERROR);
-  if (is_globally_privileged(phr, u)) {
+  if (ss_is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_CREATE_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
   } else if (is_contest_privileged(cnts, u)) {
     if (opcaps_check(caps, OPCAP_PRIV_CREATE_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
@@ -5254,7 +5256,7 @@ super_serve_op_USER_EDIT_REG_ACTION(
     FAIL(SSERV_ERR_PERM_DENIED);
 
   if (!(u = ss_get_user_info(phr, params.other_user_id, cnts->id))) FAIL(SSERV_ERR_DB_ERROR);
-  if (is_globally_privileged(phr, u)) {
+  if (ss_is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
   } else if (is_contest_privileged(cnts, u)) {
     if (opcaps_check(caps, OPCAP_PRIV_EDIT_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
@@ -5329,7 +5331,7 @@ super_serve_op_USER_DELETE_REG_ACTION(
     FAIL(SSERV_ERR_PERM_DENIED);
 
   if (!(u = ss_get_user_info(phr, other_user_id, cnts->id))) FAIL(SSERV_ERR_DB_ERROR);
-  if (is_globally_privileged(phr, u)) {
+  if (ss_is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_DELETE_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
   } else if (is_contest_privileged(cnts, u)) {
     if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
@@ -5466,7 +5468,7 @@ super_serve_op_USER_CLEAR_FIELD_ACTION(
     FAIL(SSERV_ERR_PERM_DENIED);
 
   if (!(u = ss_get_user_info(phr, other_user_id, cnts->id))) FAIL(SSERV_ERR_DB_ERROR);
-  if (is_globally_privileged(phr, u)) {
+  if (ss_is_globally_privileged(phr, u)) {
     if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(SSERV_ERR_PERM_DENIED);
   } else if (is_contest_privileged(cnts, u)) {
     if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(SSERV_ERR_PERM_DENIED);
@@ -5624,7 +5626,7 @@ super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
     passwd = 0;
     switch (phr->action) {
     case SSERV_CMD_USER_SEL_VIEW_PASSWD_PAGE:
-      if (is_globally_privileged(phr, u)) {
+      if (ss_is_globally_privileged(phr, u)) {
         if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) >= 0) allowed = 1;
       } else if (cnts && is_contest_privileged(cnts, u)) {
         if (opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) >= 0) allowed = 1;
@@ -5637,7 +5639,7 @@ super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
       }
       break;
     case SSERV_CMD_USER_SEL_VIEW_CNTS_PASSWD_PAGE:
-      if (is_globally_privileged(phr, u)) {
+      if (ss_is_globally_privileged(phr, u)) {
         if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) >= 0) allowed = 1;
       } else if (is_contest_privileged(cnts, u)) {
         if (opcaps_check(caps, OPCAP_PRIV_EDIT_PASSWD) >= 0) allowed = 1;

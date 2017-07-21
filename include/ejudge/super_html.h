@@ -377,4 +377,9 @@ ss_get_user_info(
         int user_id,
         int contest_id);
 
+int
+ss_is_globally_privileged(
+        const struct http_request_info *phr,
+        const struct userlist_user *u);
+
 #endif /* __SUPER_HTML_H__ */
