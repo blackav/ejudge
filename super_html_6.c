@@ -2799,8 +2799,8 @@ cleanup:
   return retval;
 }
 
-static void
-print_user_info(
+void
+ss_print_user_info(
         FILE *log_f,
         FILE *out_f,
         struct http_request_info *phr,
@@ -4868,7 +4868,7 @@ super_serve_op_USER_DELETE_MEMBER_PAGE(
 
   print_top_navigation_links(log_f, out_f, phr, contest_id, group_id, other_user_id, NULL);
 
-  print_user_info(log_f, out_f, phr, cnts, u, u->cnts0, m, role, num);
+  ss_print_user_info(log_f, out_f, phr, cnts, u, u->cnts0, m, role, num);
 
   fprintf(out_f, "<p>%s[%s]</a>",
           html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
