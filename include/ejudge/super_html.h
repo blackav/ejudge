@@ -381,5 +381,9 @@ int
 ss_is_globally_privileged(
         const struct http_request_info *phr,
         const struct userlist_user *u);
+int
+ss_is_contest_privileged(
+        const struct contest_desc *cnts,
+        const struct userlist_user *u);
 
 #endif /* __SUPER_HTML_H__ */
