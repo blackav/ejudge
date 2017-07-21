@@ -508,7 +508,7 @@ print_top_navigation_links(
   fprintf(out_f, "</ul>\n");
 }
 
-static const unsigned char * const reg_status_strs[] =
+const unsigned char * const ss_reg_status_strs[] =
 {
   "<font color=\"green\">OK</font>",
   "<font color=\"magenta\">Pending</font>",
@@ -1310,7 +1310,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
   case SSERV_CMD_USER_SEL_CHANGE_REG_STATUS_PAGE:
     html_hidden(out_f, "status", "%d", status);
     fprintf(out_f, "<p>The registration status is to be changed to %s for the following %d users:</p>\n",
-            reg_status_strs[status], user_count);
+            ss_reg_status_strs[status], user_count);
     operation = SSERV_CMD_USER_SEL_CHANGE_REG_STATUS_ACTION;
     button_label = "Change!";
     break;
@@ -1445,7 +1445,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
       if (cnts && reg) {
         r = reg->status;
         if (r < 0 || r >= USERLIST_REG_LAST) r = USERLIST_REG_LAST;
-        fprintf(out_f, "<td%s>%s</td>", cl, reg_status_strs[r]);
+        fprintf(out_f, "<td%s>%s</td>", cl, ss_reg_status_strs[r]);
       } else {
         fprintf(out_f, "<td%s>&nbsp;</td>", cl);
       }
@@ -2658,7 +2658,7 @@ super_serve_op_USER_DETAIL_PAGE(
       fprintf(out_f, "<td%s>%s</td>", cl, ARMOR(cnts->name));
       r = reg->status;
       if (r < 0 || r >= USERLIST_REG_LAST) r = USERLIST_REG_LAST;
-      fprintf(out_f, "<td%s>%s</td>", cl, reg_status_strs[r]);
+      fprintf(out_f, "<td%s>%s</td>", cl, ss_reg_status_strs[r]);
       fprintf(out_f, "<td%s>", cl);
       r = 0;
       if ((reg->flags & USERLIST_UC_INVISIBLE)) {
@@ -3403,7 +3403,7 @@ super_serve_op_USER_DELETE_REG_PAGE(
   r = reg->status;
   if (r < 0 || r >= USERLIST_REG_LAST) r = USERLIST_REG_LAST;
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>",
-          cl, "Status", cl, reg_status_strs[r]);
+          cl, "Status", cl, ss_reg_status_strs[r]);
   s = no;
   if ((reg->flags & USERLIST_UC_INVISIBLE)) s = yes;
   fprintf(out_f, "<tr><td%s><b>%s</td></td><td%s>%s</td></tr>\n",
@@ -5481,7 +5481,7 @@ super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
       if (cnts && reg) {
         r = reg->status;
         if (r < 0 || r >= USERLIST_REG_LAST) r = USERLIST_REG_LAST;
-        fprintf(out_f, "<td%s>%s</td>", cl, reg_status_strs[r]);
+        fprintf(out_f, "<td%s>%s</td>", cl, ss_reg_status_strs[r]);
       } else {
         fprintf(out_f, "<td%s>&nbsp;</td>", cl);
       }
