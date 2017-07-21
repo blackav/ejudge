@@ -324,8 +324,8 @@ ss_is_contest_privileged(
   if (opcaps_find(&cnts->capabilities, u->login, &caps) >= 0) return 1;
   return 0;
 }
-static int
-is_privileged(
+int
+ss_is_privileged(
         const struct http_request_info *phr,
         const struct contest_desc *cnts,
         const struct userlist_user *u)
@@ -1091,7 +1091,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
       /* per-user check */
       switch (phr->action) {
       case SSERV_CMD_USER_SEL_RANDOM_PASSWD_PAGE:
-        if (is_privileged(phr, cnts, u)) {
+        if (ss_is_privileged(phr, cnts, u)) {
           if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0) u = 0;
         } else {
           if (opcaps_check(gcaps, OPCAP_EDIT_PASSWD) < 0) u = 0;
@@ -1451,7 +1451,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
       }
       fprintf(out_f, "<td%s>", cl);
       s = "";
-      if (is_privileged(phr, cnts, u)) {
+      if (ss_is_privileged(phr, cnts, u)) {
         need_privileged = 1;
         fprintf(out_f, "%s%s", s, "privileged");
         s = ", ";
@@ -1801,7 +1801,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
         bitset_off(&marked, user_id);
         continue;
       }
-      if (!include_privileged && is_privileged(phr, cnts, u)) {
+      if (!include_privileged && ss_is_privileged(phr, cnts, u)) {
         bitset_off(&marked, user_id);
         continue;
       }
@@ -1819,7 +1819,7 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_ACTION(
       }
       switch (phr->action) {
       case SSERV_CMD_USER_SEL_RANDOM_PASSWD_ACTION:
-        if (is_privileged(phr, cnts, u)) {
+        if (ss_is_privileged(phr, cnts, u)) {
           if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_PASSWD) < 0) u = 0;
         } else {
           if (opcaps_check(gcaps, OPCAP_EDIT_PASSWD) < 0) u = 0;
@@ -5487,7 +5487,7 @@ super_serve_op_USER_SEL_VIEW_PASSWD_PAGE(
       }
       fprintf(out_f, "<td%s>", cl);
       s = "";
-      if (is_privileged(phr, cnts, u)) {
+      if (ss_is_privileged(phr, cnts, u)) {
         fprintf(out_f, "%s%s", s, "privileged");
         s = ", ";
       }

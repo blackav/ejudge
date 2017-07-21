@@ -391,5 +391,10 @@ unsigned char *
 ss_collect_marked_set(
         struct http_request_info *phr,
         struct bitset_s *pms);
+int
+ss_is_privileged(
+        const struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        const struct userlist_user *u);
 
 #endif /* __SUPER_HTML_H__ */
