@@ -37,15 +37,6 @@
     if (contest_id != 0) {
         if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
     }
-  //contest_id_str[0] = 0;
-  //if (contest_id > 0) {
-  //  snprintf(contest_id_str, sizeof(contest_id_str), "&amp;contest_id=%d", contest_id);
-  //}
-    if (group_id < 0) group_id = 0;
-  //group_id_str[0] = 0;
-  //if (group_id > 0) {
-  //  snprintf(group_id_str, sizeof(group_id_str), "&amp;group_id=%d", group_id);
-  //}
     if (other_contest_id <= 0) {
         FAIL(SSERV_ERR_INV_CONTEST);
     }
@@ -53,10 +44,6 @@
         FAIL(SSERV_ERR_INV_CONTEST);
     }
     if (next_op != SSERV_CMD_USER_DETAIL_PAGE && next_op != SSERV_CMD_USER_BROWSE_PAGE) next_op = 0;
-  //next_op_str[0] = 0;
-  //if (next_op > 0) {
-  //  snprintf(next_op_str, sizeof(next_op_str), "&amp;next_op=%d", next_op);
-  //}
 
     ss_get_global_caps(phr, &gcaps);
     if (opcaps_check(gcaps, OPCAP_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_EDIT_REG;
