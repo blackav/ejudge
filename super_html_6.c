@@ -2529,7 +2529,7 @@ super_serve_op_USER_DETAIL_PAGE(
         if (!(m = (struct userlist_member*) userlist_members_get_nth(ui->members, role, pers)))
           continue;
 
-        fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td colspan=\"3\"%s align=\"center\"><b>%s %d (%d)</b></td><td%s>%s[%s]</a></tr>\n", cl, member_string[role], pers + 1, m->serial, cl,
+        fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td colspan=\"3\"%s align=\"center\"><b>%s %d (%d)</b></td><td%s>%s[%s]</a></tr>\n", cl, ss_member_string[role], pers + 1, m->serial, cl,
                 html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                               NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;serial=%d%s%s",
                               SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_DELETE_MEMBER_PAGE,
@@ -2926,7 +2926,7 @@ ss_print_user_info(
   if (!m) goto cleanup;
 
   fprintf(out_f, "<tr><td%s align=\"center\" colspan=\"2\"><b>%s %s::%d (%d)</b></td></tr>\n",
-          cl, "Member", member_string[role], num + 1, m->serial);
+          cl, "Member", ss_member_string[role], num + 1, m->serial);
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%d</td></tr>\n",
           cl, "Member serial Id", cl, m->serial);
   userlist_get_member_field_str(buf, sizeof(buf), m, USERLIST_NM_STATUS, 1, 0);
@@ -4861,7 +4861,7 @@ super_serve_op_USER_DELETE_MEMBER_PAGE(
   if (role < 0 || role >= USERLIST_MB_LAST || num < 0) FAIL(SSERV_ERR_INV_SERIAL);
 
   snprintf(buf, sizeof(buf), "serve-control: %s, delete the member '%s'::%d (%d) of user %d, contest %d",
-           phr->html_name, member_string[role], num + 1, serial,
+           phr->html_name, ss_member_string[role], num + 1, serial,
            other_user_id, contest_id);
   ss_write_html_header(out_f, phr, buf);
   fprintf(out_f, "<h1>%s</h1>\n<br/>\n", buf);
