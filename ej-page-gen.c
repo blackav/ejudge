@@ -4341,27 +4341,64 @@ handle_checkbox_open(
         FILE *txt_f,
         FILE *prg_f)
 {
-    // <s:checkbox name="NAME" value="VALUE" checkedExpr="CHECKED-EXPR" disabledExpr="DISABLED-EXPR" />
     HtmlElement *elem = ps->el_stack->el;
+    TypeInfo *value_type = NULL;
 
-    HtmlAttribute *name_attr = html_element_find_attribute(elem, "name");
-    if (!name_attr) {
-        parser_error_2(ps, "<s:checkbox> element requires 'name' attribute");
-        return -1;
-    }
-    HtmlAttribute *value_attr = html_element_find_attribute(elem, "value");
-    const unsigned char *value_str = "1";
-    if (value_attr) {
-        value_str = value_attr->value;
-    }
+    HtmlAttribute *onchange_attr = html_element_find_attribute(elem, "onchange");
+    HtmlAttribute *name_serial_attr = html_element_find_attribute(elem, "nameserial");
+    if (name_serial_attr) {
+        // <s:checkbox nameSerial="var" namePrefix="prefix" value="VALUE" checkedExpr="CHECKED-EXPR" disabledExpr="DISABLED-EXPR" />
+        const unsigned char *name_prefix_str = "field_";
+        HtmlAttribute *name_prefix_attr = html_element_find_attribute(elem, "nameprefix");
+        if (name_prefix_attr) {
+            name_prefix_str = name_prefix_attr->value;
+        }
+        HtmlAttribute *value_attr = html_element_find_attribute(elem, "value");
+        const unsigned char *value_str = "1";
+        if (value_attr) {
+            value_str = value_attr->value;
+        }
+        char *str_p = 0;
+        size_t str_z = 0;
+        FILE *str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, "<input type=\"checkbox\" name=\"%s", name_prefix_str);
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
+        parse_c_expression(ps, cntx, log_f, name_serial_attr->value, &value_type, ps->pos);
+        processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, name_serial_attr->value, elem, value_type);
+        str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, "\" value=\"%s\"", value_str);
+        if (onchange_attr) {
+            fprintf(str_f, " onchange=\"%s\"", onchange_attr->value);
+        }
+        fclose(str_f); str_f = NULL;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = NULL; str_z = 0;
+    } else {
+        // <s:checkbox name="NAME" value="VALUE" checkedExpr="CHECKED-EXPR" disabledExpr="DISABLED-EXPR" />
+        HtmlAttribute *name_attr = html_element_find_attribute(elem, "name");
+        if (!name_attr) {
+            parser_error_2(ps, "<s:checkbox> element requires 'name' attribute");
+            return -1;
+        }
+        HtmlAttribute *value_attr = html_element_find_attribute(elem, "value");
+        const unsigned char *value_str = "1";
+        if (value_attr) {
+            value_str = value_attr->value;
+        }
 
-    char *str_p = 0;
-    size_t str_z = 0;
-    FILE *str_f = open_memstream(&str_p, &str_z);
-    fprintf(str_f, "<input type=\"checkbox\" name=\"%s\" value=\"%s\"", name_attr->value, value_str);
-    fclose(str_f); str_f = 0;
-    handle_html_string(prg_f, txt_f, log_f, str_p);
-    free(str_p); str_p = 0; str_z = 0;
+        char *str_p = 0;
+        size_t str_z = 0;
+        FILE *str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, "<input type=\"checkbox\" name=\"%s\" value=\"%s\"", name_attr->value, value_str);
+        if (onchange_attr) {
+            fprintf(str_f, " onchange=\"%s\"", onchange_attr->value);
+        }
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
+    }
 
     HtmlAttribute *checked_attr = html_element_find_attribute(elem, "checkedexpr");
     if (checked_attr) {
