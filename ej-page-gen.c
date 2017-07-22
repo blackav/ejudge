@@ -3485,23 +3485,30 @@ handle_a_open(
         }
         for (HtmlElement *child = url_elem->first_child; child; child = child->next_sibling) {
             HtmlAttribute *full_check_expr = html_element_find_attribute(child, "fullcheckexpr");
+            HtmlAttribute *check_expr = html_element_find_attribute(child, "checkexpr");
+            HtmlAttribute *name_attr = html_element_find_attribute(child, "name");
+            HtmlAttribute *value_attr = html_element_find_attribute(child, "value");
+            if (name_attr && !value_attr) {
+                value_attr = name_attr;
+            }
+            if (check_expr && value_attr) {
+                fprintf(prg_f, "if ((%s)%s) {\n", value_attr->value, check_expr->value);
+            }
             if (full_check_expr) {
                 fprintf(prg_f, "if (%s) {\n", full_check_expr->value);
             }
             fprintf(prg_f, "fputs(sep, out_f); sep = \"&amp;\";\n");
-            attr = html_element_find_attribute(child, "name");
-            if (attr) {
+            if (name_attr) {
                 str_p = 0;
                 str_z = 0;
                 str_f = open_memstream(&str_p, &str_z);
-                fprintf(str_f, "%s=", attr->value);
+                fprintf(str_f, "%s=", name_attr->value);
                 fclose(str_f); str_f = 0;
                 handle_html_string(prg_f, txt_f, log_f, str_p);
                 free(str_p); str_p = 0; str_z = 0;
-                attr = html_element_find_attribute(child, "value");
-                if (attr) {
+                if (value_attr) {
                     TypeInfo *t = NULL;
-                    r = parse_c_expression(ps, cntx, log_f, attr->value, &t, ps->pos);
+                    r = parse_c_expression(ps, cntx, log_f, value_attr->value, &t, ps->pos);
                     if (r >= 0) {
                         /*
                         fprintf(log_f, "Expression type: ");
@@ -3509,11 +3516,14 @@ handle_a_open(
                         fprintf(log_f, "\n");
                         */
 
-                        processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, attr->value, child, t);
+                        processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, value_attr->value, child, t);
                     }
                 }
             }
             if (full_check_expr) {
+                fprintf(prg_f, "}\n");
+            }
+            if (check_expr && value_attr) {
                 fprintf(prg_f, "}\n");
             }
         }
