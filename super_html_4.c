@@ -541,6 +541,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_USER_SEL_VIEW_PASSWD_PAGE] = "user_sel_view_passwd_page",
   [SSERV_CMD_USER_DELETE_MEMBER_PAGE] = "user_delete_member_page",
   [SSERV_CMD_USER_DELETE_REG_PAGE] = "user_delete_reg_page",
+  [SSERV_CMD_USER_CNTS_PASSWORD_PAGE] = "user_cnts_password_page",
 };
 
 static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 
