@@ -2047,7 +2047,7 @@ const struct ss_user_row_info ss_user_flag_rows[] =
   { 0, 0 },
 };
 
-static const struct ss_user_row_info user_timestamp_rows[] =
+const struct ss_user_row_info ss_user_timestamp_rows[] =
 {
   { USERLIST_NN_REGISTRATION_TIME, "Registration time" },
   { USERLIST_NN_LAST_LOGIN_TIME, "Last login time" },
@@ -2393,17 +2393,17 @@ super_serve_op_USER_DETAIL_PAGE(
           cl, "Show user statistics");
   fprintf(out_f, "<tr class=\"StatRow2\" style=\"display: none;\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleStatVisibility(false)\">[%s]</a></td></tr>\n", cl, "Hide user statistics");
 
-  for (row = 0; user_timestamp_rows[row].field_id > 0; ++row) {
+  for (row = 0; ss_user_timestamp_rows[row].field_id > 0; ++row) {
     fprintf(out_f, "<tr class=\"StatRow2\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
-            cl, user_timestamp_rows[row].field_desc, cl, cl);
-    time_t *pt = (time_t*) userlist_get_user_field_ptr(u, user_timestamp_rows[row].field_id);
+            cl, ss_user_timestamp_rows[row].field_desc, cl, cl);
+    time_t *pt = (time_t*) userlist_get_user_field_ptr(u, ss_user_timestamp_rows[row].field_id);
     if (pt && *pt > 0) {
       fprintf(out_f, "%s</td><td%s>%s%s</a></td></tr>\n",
               xml_unparse_date(*pt), cl,
               html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                             NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;field_id=%d%s%s",
                             SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_CLEAR_FIELD_ACTION,
-                            other_user_id, user_timestamp_rows[row].field_id,
+                            other_user_id, ss_user_timestamp_rows[row].field_id,
                             contest_id_str, group_id_str),
               "[Reset]");
     } else if (pt) {
@@ -2854,10 +2854,10 @@ ss_print_user_info(
   fprintf(out_f, "<tr><td colspan=\"2\"%s align=\"center\"><b>%s</b></td></tr>\n",
           cl, "User statistics");
 
-  for (row = 0; user_timestamp_rows[row].field_id > 0; ++row) {
+  for (row = 0; ss_user_timestamp_rows[row].field_id > 0; ++row) {
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>",
-            cl, user_timestamp_rows[row].field_desc, cl);
-    time_t *pt = (time_t*) userlist_get_user_field_ptr(u, user_timestamp_rows[row].field_id);
+            cl, ss_user_timestamp_rows[row].field_desc, cl);
+    time_t *pt = (time_t*) userlist_get_user_field_ptr(u, ss_user_timestamp_rows[row].field_id);
     if (pt && *pt > 0) {
       fprintf(out_f, "%s</td></tr>\n", xml_unparse_date(*pt));
     } else if (pt) {
