@@ -1985,8 +1985,8 @@ static char const * const member_string_pl[] =
   "Guests"
 };
 
-static void
-string_row(
+void
+ss_string_row(
         FILE *out_f,
         const unsigned char *tr_class,
         int is_hidden,
@@ -2491,7 +2491,7 @@ super_serve_op_USER_DETAIL_PAGE(
       s = *ps;
     }
     snprintf(hbuf, sizeof(hbuf), "%d", user_info_rows[row].field_id);
-    string_row(out_f, "UserInfoRow2", 1, "b1", user_info_rows[row].field_desc, hbuf, s);
+    ss_string_row(out_f, "UserInfoRow2", 1, "b1", user_info_rows[row].field_desc, hbuf, s);
   }
 
   if (ui) {
@@ -2556,14 +2556,14 @@ super_serve_op_USER_DETAIL_PAGE(
           s = buf2;
         }
         snprintf(hbuf, sizeof(hbuf), "%d_%d", USERLIST_NM_GRADE, m->serial);
-        string_row(out_f, "MemberInfoRow2", 1, "b1", "Grade", hbuf, s);
+        ss_string_row(out_f, "MemberInfoRow2", 1, "b1", "Grade", hbuf, s);
 
         for (row = 0; member_rows[row].field_id > 0; ++row) {
           unsigned char **ps = (unsigned char**) userlist_get_member_field_ptr(m, member_rows[row].field_id);
           if (!ps) continue;
           s = *ps;
           snprintf(hbuf, sizeof(hbuf), "%d_%d", member_rows[row].field_id, m->serial);
-          string_row(out_f, "MemberInfoRow2", 1, "b1", member_rows[row].field_desc, hbuf, s);
+          ss_string_row(out_f, "MemberInfoRow2", 1, "b1", member_rows[row].field_desc, hbuf, s);
         }
 
         for (row = 0; member_date_rows[row].field_id > 0; ++row) {
@@ -2575,7 +2575,7 @@ super_serve_op_USER_DETAIL_PAGE(
             s = buf2;
           }
           snprintf(hbuf, sizeof(hbuf), "%d_%d", member_date_rows[row].field_id, m->serial);
-          string_row(out_f, "MemberInfoRow2", 1, "b1", member_date_rows[row].field_desc, hbuf, s);
+          ss_string_row(out_f, "MemberInfoRow2", 1, "b1", member_date_rows[row].field_desc, hbuf, s);
         }
 
         for (row = 0; member_time_rows[row].field_id > 0; ++row) {

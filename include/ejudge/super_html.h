@@ -410,5 +410,14 @@ ss_print_user_info(
         const struct userlist_member *m,
         int role,
         int num);
+void
+ss_string_row(
+        FILE *out_f,
+        const unsigned char *tr_class,
+        int is_hidden,
+        const unsigned char *td_class,
+        const unsigned char *legend,
+        const unsigned char *param_suffix,
+        const unsigned char *str);
 
 #endif /* __SUPER_HTML_H__ */
