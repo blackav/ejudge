@@ -2056,7 +2056,7 @@ const struct ss_user_row_info ss_user_timestamp_rows[] =
   { 0, 0 },
 };
 
-static const struct ss_user_row_info user_info_rows[] =
+const struct ss_user_row_info ss_user_info_rows[] =
 {
   { USERLIST_NC_INST, "Institution name" },
   { USERLIST_NC_INST_EN, "Inst. name (En)" },
@@ -2478,20 +2478,20 @@ super_serve_op_USER_DETAIL_PAGE(
           cl, "Show more user info fields");
   fprintf(out_f, "<tr class=\"UserInfoRow2\" style=\"display: none;\"><td colspan=\"4\"%s align=\"center\"><a onclick=\"toggleUserInfoVisibility(false)\">[%s]</a></td></tr>\n", cl, "Hide user info fields");
 
-  for (row = 0; user_info_rows[row].field_id > 0; ++row) {
+  for (row = 0; ss_user_info_rows[row].field_id > 0; ++row) {
     s = 0;
-    if (user_info_rows[row].field_id == USERLIST_NC_INSTNUM) {
+    if (ss_user_info_rows[row].field_id == USERLIST_NC_INSTNUM) {
       if (ui && ui->instnum > 0) {
         snprintf(buf2, sizeof(buf2), "%d", ui->instnum);
         s = buf2;
       }
     } else if (ui) {
-      unsigned char **ps = (unsigned char**) userlist_get_user_info_field_ptr(ui, user_info_rows[row].field_id);
+      unsigned char **ps = (unsigned char**) userlist_get_user_info_field_ptr(ui, ss_user_info_rows[row].field_id);
       if (!ps) continue;
       s = *ps;
     }
-    snprintf(hbuf, sizeof(hbuf), "%d", user_info_rows[row].field_id);
-    ss_string_row(out_f, "UserInfoRow2", 1, "b1", user_info_rows[row].field_desc, hbuf, s);
+    snprintf(hbuf, sizeof(hbuf), "%d", ss_user_info_rows[row].field_id);
+    ss_string_row(out_f, "UserInfoRow2", 1, "b1", ss_user_info_rows[row].field_desc, hbuf, s);
   }
 
   if (ui) {
@@ -2911,10 +2911,10 @@ ss_print_user_info(
   }
   */
 
-  for (row = 0; user_info_rows[row].field_id > 0; ++row) {
-    userlist_get_user_info_field_str(buf, sizeof(buf), ui, user_info_rows[row].field_id, 1);
+  for (row = 0; ss_user_info_rows[row].field_id > 0; ++row) {
+    userlist_get_user_info_field_str(buf, sizeof(buf), ui, ss_user_info_rows[row].field_id, 1);
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
-            cl, user_info_rows[row].field_desc, cl, ARMOR(buf));
+            cl, ss_user_info_rows[row].field_desc, cl, ARMOR(buf));
   }
 
   for (row = 0; user_info_stat_rows[row].field_id > 0; ++row) {
