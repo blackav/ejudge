@@ -3968,6 +3968,11 @@ handle_v_open(
         return -1;
     }
 
+    HtmlAttribute *full_check_attr = html_element_find_attribute(elem, "fullcheckexpr");
+    if (full_check_attr) {
+        fprintf(prg_f, "if (%s) {\n", full_check_attr->value);
+    }
+
     HtmlAttribute *check_attr = html_element_find_attribute(elem, "checkexpr");
     if (check_attr) {
         fprintf(prg_f, "if ((%s) %s) {\n", at->value, check_attr->value);
@@ -4013,7 +4018,7 @@ handle_v_open(
 
     processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, at->value, elem, t);
 
-    if (check_attr) {
+    if (check_attr || full_check_attr) {
         HtmlAttribute *def_attr = html_element_find_attribute(elem, "defstr");
         if (def_attr) {
             fprintf(prg_f, "} else {\n"
