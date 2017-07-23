@@ -2100,7 +2100,7 @@ const struct ss_user_row_info ss_user_info_rows[] =
   { 0, 0 },
 };
 
-static const struct ss_user_row_info user_info_stat_rows[] =
+const struct ss_user_row_info ss_user_info_stat_rows[] =
 {
   { USERLIST_NC_CREATE_TIME, "Create time" },
   { USERLIST_NC_LAST_LOGIN_TIME, "Last login time" },
@@ -2495,17 +2495,17 @@ super_serve_op_USER_DETAIL_PAGE(
   }
 
   if (ui) {
-    for (row = 0; user_info_stat_rows[row].field_id > 0; ++row) {
+    for (row = 0; ss_user_info_stat_rows[row].field_id > 0; ++row) {
       fprintf(out_f, "<tr class=\"UserInfoRow2\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
-              cl, user_info_stat_rows[row].field_desc, cl, cl);
-      time_t *pt = (time_t*) userlist_get_user_info_field_ptr(ui, user_info_stat_rows[row].field_id);
+              cl, ss_user_info_stat_rows[row].field_desc, cl, cl);
+      time_t *pt = (time_t*) userlist_get_user_info_field_ptr(ui, ss_user_info_stat_rows[row].field_id);
       if (pt && *pt > 0) {
         fprintf(out_f, "%s</td><td%s>%s%s</a></td></tr>\n",
                 xml_unparse_date(*pt), cl,
                 html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                               NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;field_id=%d%s%s",
                               SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_CLEAR_FIELD_ACTION,
-                              other_user_id, user_info_stat_rows[row].field_id,
+                              other_user_id, ss_user_info_stat_rows[row].field_id,
                               contest_id_str, group_id_str),
                 "[Reset]");
       } else if (pt) {
@@ -2917,10 +2917,10 @@ ss_print_user_info(
             cl, ss_user_info_rows[row].field_desc, cl, ARMOR(buf));
   }
 
-  for (row = 0; user_info_stat_rows[row].field_id > 0; ++row) {
-    userlist_get_user_info_field_str(buf, sizeof(buf), ui, user_info_stat_rows[row].field_id, 1);
+  for (row = 0; ss_user_info_stat_rows[row].field_id > 0; ++row) {
+    userlist_get_user_info_field_str(buf, sizeof(buf), ui, ss_user_info_stat_rows[row].field_id, 1);
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
-            cl, user_info_stat_rows[row].field_desc, cl, ARMOR(buf));
+            cl, ss_user_info_stat_rows[row].field_desc, cl, ARMOR(buf));
   }
   
   if (!m) goto cleanup;
