@@ -2147,7 +2147,7 @@ const struct ss_user_row_info ss_member_date_rows[] =
   { 0, 0 },
 };
 
-static const struct ss_user_row_info member_time_rows[] =
+const struct ss_user_row_info ss_member_time_rows[] =
 {
   { USERLIST_NM_CREATE_TIME, "Create time" },
   { USERLIST_NM_LAST_CHANGE_TIME, "Last change time" },
@@ -2578,17 +2578,17 @@ super_serve_op_USER_DETAIL_PAGE(
           ss_string_row(out_f, "MemberInfoRow2", 1, "b1", ss_member_date_rows[row].field_desc, hbuf, s);
         }
 
-        for (row = 0; member_time_rows[row].field_id > 0; ++row) {
+        for (row = 0; ss_member_time_rows[row].field_id > 0; ++row) {
           fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td%s><b>%s:</b></td><td%s>&nbsp;</td><td%s>",
-                  cl, member_time_rows[row].field_desc, cl, cl);
-          time_t *pt = (time_t*) userlist_get_member_field_ptr(m, member_time_rows[row].field_id);
+                  cl, ss_member_time_rows[row].field_desc, cl, cl);
+          time_t *pt = (time_t*) userlist_get_member_field_ptr(m, ss_member_time_rows[row].field_id);
           if (pt && *pt > 0) {
             fprintf(out_f, "%s</td><td%s>%s%s</a></td></tr>\n",
                     xml_unparse_date(*pt), cl,
                     html_hyperref(hbuf, sizeof(hbuf), phr->session_id, phr->self_url,
                                   NULL, "action=%d&amp;op=%d&amp;other_user_id=%d&amp;member_id=%d&amp;field_id=%d%s%s",
                                   SSERV_CMD_HTTP_REQUEST, SSERV_CMD_USER_CLEAR_FIELD_ACTION,
-                                  other_user_id, m->serial, member_time_rows[row].field_id,
+                                  other_user_id, m->serial, ss_member_time_rows[row].field_id,
                                   contest_id_str, group_id_str),
                     "[Reset]");
           } else if (pt) {
@@ -2951,10 +2951,10 @@ ss_print_user_info(
             cl, ss_member_date_rows[row].field_desc, cl, ARMOR(buf));
   }
 
-  for (row = 0; member_time_rows[row].field_id > 0; ++row) {
-    userlist_get_member_field_str(buf, sizeof(buf), m, member_time_rows[row].field_id, 1, 0);
+  for (row = 0; ss_member_time_rows[row].field_id > 0; ++row) {
+    userlist_get_member_field_str(buf, sizeof(buf), m, ss_member_time_rows[row].field_id, 1, 0);
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
-            cl, member_time_rows[row].field_desc, cl, ARMOR(buf));
+            cl, ss_member_time_rows[row].field_desc, cl, ARMOR(buf));
   }
 
   fprintf(out_f, "</table>\n");
