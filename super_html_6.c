@@ -2138,7 +2138,7 @@ const struct ss_user_row_info ss_member_rows[] =
   { 0, 0 },
 };
 
-static const struct ss_user_row_info member_date_rows[] =
+const struct ss_user_row_info ss_member_date_rows[] =
 {
   { USERLIST_NM_BIRTH_DATE, "Date of birth" },
   { USERLIST_NM_ENTRY_DATE, "Date of entry" },
@@ -2566,16 +2566,16 @@ super_serve_op_USER_DETAIL_PAGE(
           ss_string_row(out_f, "MemberInfoRow2", 1, "b1", ss_member_rows[row].field_desc, hbuf, s);
         }
 
-        for (row = 0; member_date_rows[row].field_id > 0; ++row) {
-          time_t *pt = (time_t*) userlist_get_member_field_ptr(m, member_date_rows[row].field_id);
+        for (row = 0; ss_member_date_rows[row].field_id > 0; ++row) {
+          time_t *pt = (time_t*) userlist_get_member_field_ptr(m, ss_member_date_rows[row].field_id);
           if (!pt) continue;
           s = 0;
           if (*pt > 0) {
-            userlist_get_member_field_str(buf2, sizeof(buf2), m, member_date_rows[row].field_id, 0, 0);
+            userlist_get_member_field_str(buf2, sizeof(buf2), m, ss_member_date_rows[row].field_id, 0, 0);
             s = buf2;
           }
-          snprintf(hbuf, sizeof(hbuf), "%d_%d", member_date_rows[row].field_id, m->serial);
-          ss_string_row(out_f, "MemberInfoRow2", 1, "b1", member_date_rows[row].field_desc, hbuf, s);
+          snprintf(hbuf, sizeof(hbuf), "%d_%d", ss_member_date_rows[row].field_id, m->serial);
+          ss_string_row(out_f, "MemberInfoRow2", 1, "b1", ss_member_date_rows[row].field_desc, hbuf, s);
         }
 
         for (row = 0; member_time_rows[row].field_id > 0; ++row) {
@@ -2945,10 +2945,10 @@ ss_print_user_info(
             cl, ss_member_rows[row].field_desc, cl, ARMOR(buf));
   }
 
-  for (row = 0; member_date_rows[row].field_id > 0; ++row) {
-    userlist_get_member_field_str(buf, sizeof(buf), m, member_date_rows[row].field_id, 1, 0);
+  for (row = 0; ss_member_date_rows[row].field_id > 0; ++row) {
+    userlist_get_member_field_str(buf, sizeof(buf), m, ss_member_date_rows[row].field_id, 1, 0);
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
-            cl, member_date_rows[row].field_desc, cl, ARMOR(buf));
+            cl, ss_member_date_rows[row].field_desc, cl, ARMOR(buf));
   }
 
   for (row = 0; member_time_rows[row].field_id > 0; ++row) {
