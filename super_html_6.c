@@ -1976,7 +1976,7 @@ char const * const ss_member_string[] =
   "Advisor",
   "Guest"
 };
-static char const * const member_string_pl[] =
+char const * const ss_member_string_pl[] =
 {
   "Contestants",
   "Reserves",
@@ -2524,7 +2524,7 @@ super_serve_op_USER_DETAIL_PAGE(
     for (role = 0; role < CONTEST_LAST_MEMBER; ++role) {
       int role_cnt = userlist_members_count(ui->members, role);
       if (role_cnt <= 0) continue;
-      fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td colspan=\"4\"%s align=\"center\"><b>%s (%d)</b></td></tr>\n", cl, member_string_pl[role], role_cnt);
+      fprintf(out_f, "<tr class=\"MemberInfoRow2\" style=\"display: none;\"><td colspan=\"4\"%s align=\"center\"><b>%s (%d)</b></td></tr>\n", cl, ss_member_string_pl[role], role_cnt);
       for (pers = 0; pers < role_cnt; ++pers) {
         if (!(m = (struct userlist_member*) userlist_members_get_nth(ui->members, role, pers)))
           continue;
