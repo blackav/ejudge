@@ -2110,7 +2110,7 @@ const struct ss_user_row_info ss_user_info_stat_rows[] =
   { 0, 0 },
 };
 
-static const struct ss_user_row_info member_rows[] =
+const struct ss_user_row_info ss_member_rows[] =
 {
   { USERLIST_NM_FIRSTNAME, "First name" },
   { USERLIST_NM_FIRSTNAME_EN, "First name (En)" },
@@ -2558,12 +2558,12 @@ super_serve_op_USER_DETAIL_PAGE(
         snprintf(hbuf, sizeof(hbuf), "%d_%d", USERLIST_NM_GRADE, m->serial);
         ss_string_row(out_f, "MemberInfoRow2", 1, "b1", "Grade", hbuf, s);
 
-        for (row = 0; member_rows[row].field_id > 0; ++row) {
-          unsigned char **ps = (unsigned char**) userlist_get_member_field_ptr(m, member_rows[row].field_id);
+        for (row = 0; ss_member_rows[row].field_id > 0; ++row) {
+          unsigned char **ps = (unsigned char**) userlist_get_member_field_ptr(m, ss_member_rows[row].field_id);
           if (!ps) continue;
           s = *ps;
-          snprintf(hbuf, sizeof(hbuf), "%d_%d", member_rows[row].field_id, m->serial);
-          ss_string_row(out_f, "MemberInfoRow2", 1, "b1", member_rows[row].field_desc, hbuf, s);
+          snprintf(hbuf, sizeof(hbuf), "%d_%d", ss_member_rows[row].field_id, m->serial);
+          ss_string_row(out_f, "MemberInfoRow2", 1, "b1", ss_member_rows[row].field_desc, hbuf, s);
         }
 
         for (row = 0; member_date_rows[row].field_id > 0; ++row) {
@@ -2939,10 +2939,10 @@ ss_print_user_info(
   fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
           cl, "Grade", cl, ARMOR(buf));
 
-  for (row = 0; member_rows[row].field_id > 0; ++row) {
-    userlist_get_member_field_str(buf, sizeof(buf), m, member_rows[row].field_id, 1, 0);
+  for (row = 0; ss_member_rows[row].field_id > 0; ++row) {
+    userlist_get_member_field_str(buf, sizeof(buf), m, ss_member_rows[row].field_id, 1, 0);
     fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>\n",
-            cl, member_rows[row].field_desc, cl, ARMOR(buf));
+            cl, ss_member_rows[row].field_desc, cl, ARMOR(buf));
   }
 
   for (row = 0; member_date_rows[row].field_id > 0; ++row) {
