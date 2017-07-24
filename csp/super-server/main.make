@@ -120,6 +120,7 @@ CFILES = \
  csp_user_delete_reg_page.c\
  csp_user_password_page.c\
  csp_user_cnts_password_page.c\
+ csp_user_detail_page.c\
  csp_error_unknown_page.c
 
 SOFILES = $(CFILES:.c=.so)
@@ -225,6 +226,7 @@ csp_user_edit_reg_page.c : user_edit_reg_page.csp includes.csp stdvars.csp heade
 csp_user_sel_view_passwd_page.c : user_sel_view_passwd_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
 csp_user_delete_member_page.c : user_delete_member_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
 csp_user_delete_reg_page.c : user_delete_reg_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_user_detail_page.c : user_detail_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
 csp_user_password_page.c : user_password_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
 csp_user_cnts_password_page.c : user_cnts_password_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
 
