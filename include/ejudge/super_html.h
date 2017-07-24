@@ -397,19 +397,6 @@ ss_is_privileged(
         const struct contest_desc *cnts,
         const struct userlist_user *u);
 
-struct userlist_user_info;
-struct userlist_member;
-void
-ss_print_user_info(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr,
-        const struct contest_desc *cnts,
-        const struct userlist_user *u,
-        const struct userlist_user_info *ui,
-        const struct userlist_member *m,
-        int role,
-        int num);
 void
 ss_string_row(
         FILE *out_f,
