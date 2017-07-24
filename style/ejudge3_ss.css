@@ -66,8 +66,16 @@ a:visited {
 	margin-top: 0 !important;
 }
 
+.mt-20 {
+	margin-top: 20px !important;
+}
+
 .margin-top-25 {
 	margin-top: -25px;
+}
+
+.mw-600 {
+	min-width: 600px;
 }
 
 .red {
@@ -428,6 +436,10 @@ table {
 	background: rgba(255, 255, 255, 0.49);
 	padding-top: 4px;
 	padding-bottom: 4px;
+}
+
+.mw-600.info-table td:first-child {
+	width: 20%;
 }
 
 .table-vert td {
