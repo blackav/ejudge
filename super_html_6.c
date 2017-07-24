@@ -403,18 +403,6 @@ ss_parse_params(
   return 0;
 }
 
-static int
-userlist_user_count_cookies(struct userlist_user *u)
-{
-  struct userlist_cookie *cookie;
-  int tot = 0;
-
-  if (!u) return 0;
-  if (!u->cookies) return 0;
-  for (cookie = FIRST_COOKIE(u); cookie; cookie = NEXT_COOKIE(cookie), tot++);
-  return tot;
-}
-
 struct userlist_user *
 ss_get_user_info(
         struct http_request_info *phr,

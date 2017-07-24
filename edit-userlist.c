@@ -1142,18 +1142,6 @@ display_search_menu(int curval)
 #define FIRST_CONTEST(u) ((struct userlist_contest*)(u)->contests->first_down)
 #define NEXT_CONTEST(c)  ((struct userlist_contest*)(c)->b.right)
 
-static int
-userlist_user_count_cookies(struct userlist_user *u)
-{
-  struct userlist_cookie *cookie;
-  int tot = 0;
-
-  if (!u) return 0;
-  if (!u->cookies) return 0;
-  for (cookie = FIRST_COOKIE(u); cookie; cookie = NEXT_COOKIE(cookie), tot++);
-  return tot;
-}
-
 struct user_field_desc
 {
   unsigned char const *name;
