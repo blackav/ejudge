@@ -10,7 +10,7 @@ extern const unsigned char * const ss_flag_op_legends[];
 %><%@set getter_name = "csp_get_user_sel_random_passwd_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
-%><%@page csp_view_user_sel_random_passwd_page_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@page csp_view_user_sel_random_passwd_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "stdvars.csp"
 %><%
     const unsigned char *title = NULL;
