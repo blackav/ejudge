@@ -475,7 +475,7 @@ const unsigned char * const ss_reg_status_strs[] =
   "<font color=\"red\">Rejected</font>",
   "<font color=\"red\"><b>Invalid status</b></font>",
 };
-static const unsigned char * const flag_op_legends[] =
+const unsigned char * const ss_flag_op_legends[] =
 {
   "Do nothing", "Clear", "Set", "Toggle", NULL,
 };
@@ -1288,31 +1288,31 @@ super_serve_op_USER_SEL_RANDOM_PASSWD_PAGE(
     fprintf(out_f, "<table%s>", cl);
     if (invisible_op > 0) {
       fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>",
-              cl, "Invisible", cl, flag_op_legends[invisible_op]);
+              cl, "Invisible", cl, ss_flag_op_legends[invisible_op]);
     }
     if (banned_op > 0) {
       fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>",
-              cl, "Banned", cl, flag_op_legends[banned_op]);
+              cl, "Banned", cl, ss_flag_op_legends[banned_op]);
     }
     if (locked_op > 0) {
       fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>",
-              cl, "Locked", cl, flag_op_legends[locked_op]);
+              cl, "Locked", cl, ss_flag_op_legends[locked_op]);
     }
     if (incomplete_op > 0) {
       fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>",
-              cl, "Incomplete", cl, flag_op_legends[incomplete_op]);
+              cl, "Incomplete", cl, ss_flag_op_legends[incomplete_op]);
     }
     if (disqualified_op > 0) {
       fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>",
-              cl, "Disqualified", cl, flag_op_legends[disqualified_op]);
+              cl, "Disqualified", cl, ss_flag_op_legends[disqualified_op]);
     }
     if (privileged_op > 0) {
       fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>",
-              cl, "Privileged", cl, flag_op_legends[privileged_op]);
+              cl, "Privileged", cl, ss_flag_op_legends[privileged_op]);
     }
     if (reg_readonly_op > 0) {
       fprintf(out_f, "<tr><td%s><b>%s:</b></td><td%s>%s</td></tr>",
-              cl, "Reg. read-only", cl, flag_op_legends[reg_readonly_op]);
+              cl, "Reg. read-only", cl, ss_flag_op_legends[reg_readonly_op]);
     }
     fprintf(out_f, "</table>\n");
     operation = SSERV_CMD_USER_SEL_CHANGE_REG_FLAGS_ACTION;
