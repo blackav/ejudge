@@ -200,7 +200,7 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
 
   <table class="b1" id="UserData">
     <tr>
-      <td %s colspan="4" align="center">
+      <td class="b1" colspan="4" align="center">
         <s:url name="PrevUrl" ac="user-cancel-and-prev-action">
           <s:param name="other_user_id"/>
           <s:param name="contest_id" checkExpr=" > 0" />
@@ -217,33 +217,33 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
       </td>
     </tr>
     <tr>
-      <th %s width="250px">&nbsp;</th>
-      <th %s><b>NULL?</b></th>
-      <th %s>&nbsp;</th>
-      <th %s>&nbsp;</th>
+      <th class="b1" width="250px">&nbsp;</th>
+      <th class="b1"><b>NULL?</b></th>
+      <th class="b1">&nbsp;</th>
+      <th class="b1">&nbsp;</th>
     </tr>
     <tr>
-      <td %s><b>User ID:</b></td>
-      <td %s>&nbsp;</td>
-      <td %s><s:v value="other_user_id" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b1"><b>User ID:</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1"><s:v value="other_user_id" /></td>
+      <td class="b1">&nbsp;</td>
     </tr>
     <tr>
-      <td %s><b>User login:</b></td>
-      <td %s>&nbsp;</td>
-      <td %s><s:textfield name="other_login" size="50" value="u->login" checkExpr="" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b1"><b>User login:</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1"><s:textfield name="other_login" size="50" value="u->login" checkExpr="" /></td>
+      <td class="b1">&nbsp;</td>
     </tr>
     <tr>
-      <td %s><b>User e-mail:</b></td>
-      <td %s>&nbsp;</td>
-      <td %s><s:textfield name="email" size="50" value="u->email" checkExpr="" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b1"><b>User e-mail:</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1"><s:textfield name="email" size="50" value="u->email" checkExpr="" /></td>
+      <td class="b1">&nbsp;</td>
     </tr>
     <tr>
-      <td %s><b>Password:</b></td>
-      <td %s>&nbsp;</td>
-      <td %s><%
+      <td class="b1"><b>Password:</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1"><%
     if (!u->passwd) {
 %><i>NULL</i><%
     } else if (u->passwd_method == USERLIST_PWD_PLAIN) {
@@ -262,42 +262,42 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
         <s:param name="contest_id" checkExpr="> 0" />
         <s:param name="group_id" checkExpr="> 0" />
       </s:url>
-      <td %s><s:a url="ChangePasswordUrl">[Change]</s:a></td>
+      <td class="b1"><s:a url="ChangePasswordUrl">[Change]</s:a></td>
     </tr>
     <tr class="StatRow1">
-      <td colspan="4" %s align="center"><a onclick="toggleStatVisibility(true)">[Show user statistics]</a></td>
+      <td colspan="4" class="b1" align="center"><a onclick="toggleStatVisibility(true)">[Show user statistics]</a></td>
     </tr>
     <tr class="StatRow2" style="display: none;">
-      <td colspan="4" %s align="center"><a onclick="toggleStatVisibility(false)">[Hide user statistics]</a></td>
+      <td colspan="4" class="b1" align="center"><a onclick="toggleStatVisibility(false)">[Hide user statistics]</a></td>
     </tr>
 <%
     for (row = 0; ss_user_timestamp_rows[row].field_id > 0; ++row) {
         time_t *pt = (time_t*) userlist_get_user_field_ptr(u, ss_user_timestamp_rows[row].field_id);
 %>
     <tr class="StatRow2" style="display: none;">
-      <td %s><b><s:v value="ss_user_timestamp_rows[row].field_desc" escape="no"/>:</b></td>
-      <td %s>&nbsp;</td>
+      <td class="b1"><b><s:v value="ss_user_timestamp_rows[row].field_desc" escape="no"/>:</b></td>
+      <td class="b1">&nbsp;</td>
 <%
         if (pt && *pt > 0) {
 %>
-      <td %s><s:v value="xml_unparse_date(*pt)" escape="no" /></td>
+      <td class="b1"><s:v value="xml_unparse_date(*pt)" escape="no" /></td>
       <s:url name="ResetUrl" ac="user-clear-field-action">
         <s:param name="other_user_id" />
         <s:param name="field_id" value="ss_user_timestamp_rows[row].field_id" />
         <s:param name="contest_id" checkExpr="> 0" />
         <s:param name="group_id" checkExpr="> 0" />
       </s:url>
-      <td %s><s:a url="ResetUrl">[Reset]</s:a></td>
+      <td class="b1"><s:a url="ResetUrl">[Reset]</s:a></td>
 <%
         } else if (pt) {
 %>
-        <td %s><i>Not set</i></td>
-        <td %s>&nbsp;</td>
+        <td class="b1"><i>Not set</i></td>
+        <td class="b1">&nbsp;</td>
 <%
         } else {
 %>
-        <td %s><i>Invalid field</i></td>
-        <td %s>&nbsp;</td>
+        <td class="b1"><i>Invalid field</i></td>
+        <td class="b1">&nbsp;</td>
 <%
         }
 %>
@@ -307,10 +307,10 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
 %>
 
     <tr class="FlagRow1">
-      <td colspan="4" %s align="center"><a onclick="toggleFlagVisibility(true)">[Show user flags]</a></td>
+      <td colspan="4" class="b1" align="center"><a onclick="toggleFlagVisibility(true)">[Show user flags]</a></td>
     </tr>
     <tr class="FlagRow2" style="display: none;">
-      <td colspan="4" %s align="center"><a onclick="toggleFlagVisibility(false)">[Hide user flags]</a></td>
+      <td colspan="4" class="b1" align="center"><a onclick="toggleFlagVisibility(false)">[Hide user flags]</a></td>
     </tr>
 
 <%
@@ -318,9 +318,9 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
         int *pi = (int*) userlist_get_user_field_ptr(u, ss_user_flag_rows[row].field_id);
 %>
     <tr class="FlagRow2" style="display: none;">
-      <td %s><b><s:v value="ss_user_flag_rows[row].field_desc" escape="no" />:</b></td>
-      <td %s>&nbsp;</td>
-      <td %s>
+      <td class="b1"><b><s:v value="ss_user_flag_rows[row].field_desc" escape="no" />:</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1">
 <%
         if (pi) {
 %><input type="checkbox" name="field_<s:v value="ss_user_flag_rows[row].field_id" />" value="1"<% if (*pi > 0) { %> checked="checked"<% } %> /><%
@@ -328,34 +328,34 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
 %><i>Invalid field</i><%
         }
 %></td>
-      <td %s>&nbsp;</td>
+      <td class="b1">&nbsp;</td>
     </tr>
 <%
     }
 %>
 
     <tr>
-      <td %s align="center" colspan="4"><b>Generic contest-specific fields</b></td>
+      <td class="b1" align="center" colspan="4"><b>Generic contest-specific fields</b></td>
     </tr>
     <tr>
-      <td %s><b>User data is read-only:</b></td>
-      <td %s>&nbsp;</td>
-      <td %s><% field_id = USERLIST_NC_CNTS_READ_ONLY; %><s:checkbox nameserial="field_id" checkedExpr="ui && ui->cnts_read_only > 0" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b1"><b>User data is read-only:</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1"><% field_id = USERLIST_NC_CNTS_READ_ONLY; %><s:checkbox nameserial="field_id" checkedExpr="ui && ui->cnts_read_only > 0" /></td>
+      <td class="b1">&nbsp;</td>
     </tr>
     <tr><% field_id = USERLIST_NC_NAME; %>
-      <td %s><b>User name:</b></td>
-      <td %s><input type="checkbox" onchange="checkNull('<s:v value="field_id" />')" name="field_null_<s:v value="field_id" />" value="1"<% if(!ui || !ui->name) { %> checked="checked"<% } %> /></td>
-      <td %s><input type="text" onchange="uncheckNull('<s:v value="field_id" />')" name="field_<s:v value="field_id" />" value="<s:v value="ui->name" fullCheckExpr="ui && ui->name" />" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b1"><b>User name:</b></td>
+      <td class="b1"><input type="checkbox" onchange="checkNull('<s:v value="field_id" />')" name="field_null_<s:v value="field_id" />" value="1"<% if(!ui || !ui->name) { %> checked="checked"<% } %> /></td>
+      <td class="b1"><input type="text" onchange="uncheckNull('<s:v value="field_id" />')" name="field_<s:v value="field_id" />" value="<s:v value="ui->name" fullCheckExpr="ui && ui->name" />" /></td>
+      <td class="b1">&nbsp;</td>
     </tr>
 <%
     if (contest_id > 0 && cnts && !cnts->disable_team_password) {
 %>
     <tr>
-      <td %s><b>Contest password:</b></td>
-      <td %s>&nbsp;</td>
-      <td %s><%
+      <td class="b1"><b>Contest password:</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1"><%
         if (!ui || !ui->team_passwd) {
 %><i>NULL</i><%
         } else if (ui->team_passwd_method == USERLIST_PWD_PLAIN) {
@@ -368,7 +368,7 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
 %><i>Unsupported method</i><%
         }
 %></td>
-      <td %s>
+      <td class="b1">
         <s:url name="CntsPasswordChangeUrl" ac="user-cnts-password-page">
           <s:param name="other_user_id" />
           <s:param name="contest_id" />
@@ -382,10 +382,10 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
 %>
 
     <tr class="UserInfoRow1">
-      <td colspan="4" %s align="center"><a onclick="toggleUserInfoVisibility(true)">[Show more user info fields]</a></td>
+      <td colspan="4" class="b1" align="center"><a onclick="toggleUserInfoVisibility(true)">[Show more user info fields]</a></td>
     </tr>
     <tr class="UserInfoRow2" style="display: none;">
-      <td colspan="4" %s align="center"><a onclick="toggleUserInfoVisibility(false)">[Hide user info fields]</a></td>
+      <td colspan="4" class="b1" align="center"><a onclick="toggleUserInfoVisibility(false)">[Hide user info fields]</a></td>
     </tr>
 
 <%
@@ -413,29 +413,29 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
             time_t *pt = (time_t*) userlist_get_user_info_field_ptr(ui, ss_user_info_stat_rows[row].field_id);
 %>
     <tr class="UserInfoRow2" style="display: none;">
-      <td %s><b><s:v value="ss_user_info_stat_rows[row].field_desc" escape="no" />:</b></td>
-      <td %s>&nbsp;</td>
+      <td class="b1"><b><s:v value="ss_user_info_stat_rows[row].field_desc" escape="no" />:</b></td>
+      <td class="b1">&nbsp;</td>
 <%
             if (pt && *pt > 0) {
 %>
-      <td %s><s:v value="*pt" /></td>
+      <td class="b1"><s:v value="*pt" /></td>
       <s:url name="ResetUrl" ac="user-clear-field-action">
         <s:param name="other_user_id" />
         <s:param name="field_id" value="ss_user_info_stat_rows[row].field_id" />
         <s:param name="contest_id" />
         <s:param name="group_id" checkExpr="> 0" />
       </s:url>
-      <td %s><s:a url="ResetUrl">[Reset]</s:a></td>
+      <td class="b1"><s:a url="ResetUrl">[Reset]</s:a></td>
 <%
             } else if (pt) {
 %>
-      <td %s><i>Not set</i></td>
-      <td %s>&nbsp;</td>
+      <td class="b1"><i>Not set</i></td>
+      <td class="b1">&nbsp;</td>
 <%
             } else {
 %> 
-      <td %s><i>Invalid field</i></td>
-      <td %s>&nbsp;</td>
+      <td class="b1"><i>Invalid field</i></td>
+      <td class="b1">&nbsp;</td>
 <%
             }
 %>
@@ -446,10 +446,10 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
 %>
 
     <tr class="MemberInfoRow1">
-      <td colspan="4" %s align="center"><a onclick="toggleMemberInfoVisibility(true)">[Show members]</a></td>
+      <td colspan="4" class="b1" align="center"><a onclick="toggleMemberInfoVisibility(true)">[Show members]</a></td>
     </tr>
     <tr class="MemberInfoRow2" style="display: none;">
-      <td colspan="4" %s align="center"><a onclick="toggleMemberInfoVisibility(false)">[Hide members]</a></td>
+      <td colspan="4" class="b1" align="center"><a onclick="toggleMemberInfoVisibility(false)">[Hide members]</a></td>
     </tr>
 
 <%
@@ -459,7 +459,7 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
             if (role_cnt <= 0) continue;
 %>
     <tr class="MemberInfoRow2" style="display: none;">
-      <td colspan="4" %s align="center"><b><s:v value="ss_member_string_pl[role]" escape="no"/> (<s:v value="role_cnt" />)</b></td>
+      <td colspan="4" class="b1" align="center"><b><s:v value="ss_member_string_pl[role]" escape="no"/> (<s:v value="role_cnt" />)</b></td>
     </tr>
 <%
             for (pers = 0; pers < role_cnt; ++pers) {
@@ -469,25 +469,25 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
                     continue;
 %>
     <tr class="MemberInfoRow2" style="display: none;">
-      <td colspan="3" %s align="center"><b><s:v value="ss_member_string[role]" escape="no" /> <s:v value="pers + 1" /> (<s:v value="m->serial" />)</b></td>
+      <td colspan="3" class="b1" align="center"><b><s:v value="ss_member_string[role]" escape="no" /> <s:v value="pers + 1" /> (<s:v value="m->serial" />)</b></td>
       <s:url name="DeleteUrl" ac="user-delete-member-page">
         <s:param name="other_user_id" />
         <s:param name="serial" value="m->serial" />
         <s:param name="contest_id" checkExpr="> 0" />
         <s:param name="group_id" checkExpr="> 0" />
       </s:url>
-      <td %s>%s[Delete]</a>
+      <td class="b1"><s:a url="DeleteUrl">[Delete]</s:a></td>
     </tr>
     <tr class="MemberInfoRow2" style="display: none;">
-      <td %s><b>Member serial Id</b></td>
-      <td %s>&nbsp;</td>
-      <td %s><s:v value="m->serial" /></td>
-      <td %s>&nbsp;</td>
+      <td class="b1"><b>Member serial Id</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1"><s:v value="m->serial" /></td>
+      <td class="b1">&nbsp;</td>
     </tr>
     <tr class="MemberInfoRow2" style="display: none;">
-      <td %s><b>Status</b></td>
-      <td %s>&nbsp;</td>
-      <td %s>
+      <td class="b1"><b>Status</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1">
         <select name="field_<s:v value="m->serial"/>_<s:v value="userlist_nm_status" />">
           <s:option value="0" selectedExpr="m->status == 0">Undefined</s:option>
           <s:option value="1" selectedExpr="m->status == 1">School student</s:option>
@@ -500,19 +500,19 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
           <s:option value="8" selectedExpr="m->status == 8">Other</s:option>
         </select>
       </td>
-      <td %s>&nbsp;</td>
+      <td class="b1">&nbsp;</td>
     </tr>
     <tr class="MemberInfoRow2" style="display: none;">
-      <td %s><b>Gender</b></td>
-      <td %s>&nbsp;</td>
-      <td %s>
+      <td class="b1"><b>Gender</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1">
         <select name="field_<s:v value="m->serial"/>_<s:v value="userlist_nm_gender" />">
           <s:option value="0" selectedExpr="m->gender == 0">Undefined</s:option>
           <s:option value="1" selectedExpr="m->gender == 1">Male</s:option>
           <s:option value="2" selectedExpr="m->gender == 2">Female</s:option>
         </select>
       </td>
-      <td %s>&nbsp;</td>
+      <td class="b1">&nbsp;</td>
     </tr>
 <%
                 s = 0;
@@ -548,12 +548,12 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
                     time_t *pt = (time_t*) userlist_get_member_field_ptr(m, ss_member_time_rows[row].field_id);
 %>
     <tr class="MemberInfoRow2" style="display: none;">
-      <td %s><b><s:v value="ss_member_time_rows[row].field_desc" escape="no" />:</b></td>
-      <td %s>&nbsp;</td>
+      <td class="b1"><b><s:v value="ss_member_time_rows[row].field_desc" escape="no" />:</b></td>
+      <td class="b1">&nbsp;</td>
 <%
                     if (pt && *pt > 0) {
 %>
-      <td %s><s:v value="*pt" /></td>
+      <td class="b1"><s:v value="*pt" /></td>
       <s:url name="ResetUrl" ac="user-clear-field-action">
         <s:param name="other_user_id" />
         <s:param name="member_id" value="m->serial" />
@@ -561,17 +561,17 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
         <s:param name="contest_id" checkExpr="> 0" />
         <s:param name="group_id" checkExpr="> 0" />
       </s:url>
-      <td %s><s:a url="ResetUrl">[Reset]</s:a></td>
+      <td class="b1"><s:a url="ResetUrl">[Reset]</s:a></td>
 <%
                     } else if (pt) {
 %>
-      <td %s><i>Not set</i></td>
-      <td %s>&nbsp;</td>
+      <td class="b1"><i>Not set</i></td>
+      <td class="b1">&nbsp;</td>
 <%
                     } else {
 %>
-      <td %s><i>Invalid field</i></td>
-      <td %s>&nbsp;</td>
+      <td class="b1"><i>Invalid field</i></td>
+      <td class="b1">&nbsp;</td>
 <%
                     }
 %>
@@ -588,7 +588,7 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
 %>
 
     <tr>
-      <td %s colspan="4" align="center">
+      <td class="b1" colspan="4" align="center">
         <s:submit ac="user-save-and-prev-action" text="Save and goto PREV user" />
         &nbsp;
         <s:submit ac="user-save-action" text="Save and goto user list" />
@@ -597,7 +597,7 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
       </td>
     </tr>
     <tr>
-      <td %s colspan="4" align="center">
+      <td class="b1" colspan="4" align="center">
         <s:submit ac="user-cancel-and-prev-action" text="Cancel and goto PREV user" />
         &nbsp;
         <s:submit ac="user-cancel-action" text="Cancel and goto user list" />
@@ -634,15 +634,15 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
     reg_count = userlist_user_count_contests(u);
     if (reg_count > 0) {
 %>
-  <table %s>
+  <table class="b1">
     <tr>
-      <th %s align="center"><b>Contest Id</b></th>
-      <th %s align="center"><b>Contest name</b></th>
-      <th %s align="center"><b>Status</b></th>
-      <th %s align="center"><b>Flags</b></th>
-      <th %s align="center"><b>Create date</b></th>
-      <th %s align="center"><b>Last change date</b></th>
-      <th %s align="center"><b>Actions</b></th>
+      <th class="b1" align="center"><b>Contest Id</b></th>
+      <th class="b1" align="center"><b>Contest name</b></th>
+      <th class="b1" align="center"><b>Status</b></th>
+      <th class="b1" align="center"><b>Flags</b></th>
+      <th class="b1" align="center"><b>Create date</b></th>
+      <th class="b1" align="center"><b>Last change date</b></th>
+      <th class="b1" align="center"><b>Actions</b></th>
     </tr>
 <%
         for (reg = FIRST_CONTEST(u); reg; reg = NEXT_CONTEST(reg)) {
@@ -650,10 +650,10 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
             if (contests_get(reg->id, &cnts) < 0 || !cnts) continue;
 %>
     <tr>
-      <td %s><s:v value="reg->id" /></td>"
-      <td %s><s:v value="cnts->name" checkExpr="" /></td>
-      <td %s><s:v value="ss_reg_status_strs[reg->status]" escape="no" /></td>"
-      <td %s><%
+      <td class="b1"><s:v value="reg->id" /></td>"
+      <td class="b1"><s:v value="cnts->name" checkExpr="" /></td>
+      <td class="b1"><s:v value="ss_reg_status_strs[reg->status]" escape="no" /></td>"
+      <td class="b1"><%
             if ((reg->flags & USERLIST_UC_INVISIBLE)) {
 %><% if (r++) { %>, <% } %>invisible<%
             }
@@ -676,9 +676,9 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
 %><% if (r++) { %>, <% } %>reg. read-only<%
             }
 %></td>
-      <td %s><s:v value="reg->create_time" checkExpr="" defstr="<i>Not set</i>" /></td>
-      <td %s><s:v value="reg->last_change_time" checkExpr="" defstr="" /><i>Not set</i></td>
-      <td %s>
+      <td class="b1"><s:v value="reg->create_time" checkExpr="" defstr="<i>Not set</i>" /></td>
+      <td class="b1"><s:v value="reg->last_change_time" checkExpr="" defstr="" /><i>Not set</i></td>
+      <td class="b1">
         <s:url name="UserDetailsUrl" ac="user-detail-page">
           <s:param name="other_user_id" />
           <s:param name="contest_id" value="reg->id" />
@@ -727,41 +727,41 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
     cookie_count = userlist_user_count_cookies(u);
     if (cookie_count > 0) {
 %>
-  <table %s>
+  <table class="b1">
     <tr>
-      <td %s align="center"><b>IP address</b></td>
-      <td %s align="center"><b>SSL?</b></td>
-      <td %s align="center"><b>Session ID</b></td>
-      <td %s align="center"><b>Expiry time</b></td>
-      <td %s align="center"><b>Contest ID</b></td>
-      <td %s align="center"><b>Locale ID</b></td>
-      <td %s align="center"><b>Privilege Level</b></td>
-      <td %s align="center"><b>Role</b></td>
-      <td %s align="center"><b>Recovery?</b></td>
-      <td %s align="center"><b>Team?</b></td>
-      <td %s align="center"><b>Actions</b></td>
+      <td class="b1" align="center"><b>IP address</b></td>
+      <td class="b1" align="center"><b>SSL?</b></td>
+      <td class="b1" align="center"><b>Session ID</b></td>
+      <td class="b1" align="center"><b>Expiry time</b></td>
+      <td class="b1" align="center"><b>Contest ID</b></td>
+      <td class="b1" align="center"><b>Locale ID</b></td>
+      <td class="b1" align="center"><b>Privilege Level</b></td>
+      <td class="b1" align="center"><b>Role</b></td>
+      <td class="b1" align="center"><b>Recovery?</b></td>
+      <td class="b1" align="center"><b>Team?</b></td>
+      <td class="b1" align="center"><b>Actions</b></td>
     </tr>
 <%
         for (cookie=FIRST_COOKIE(u);cookie;cookie=NEXT_COOKIE(cookie)) {
 %>
     <tr>
-      <td %s><s:v value="xml_unparse_ipv6(&cookie->ip)" escape="no" /></td>
-      <td %s><s:v value="cookie->ssl" /></td>
-      <td %s><s:v value="cookie->cookie" /></td> <!-- ??? -->
-      <td %s><s:v value="cookie->expire" /></td>
-      <td %s><s:v value="cookie->contest_id" /></td>
-      <td %s><s:v value="cookie->locale_id" /></td>
-      <td %s><s:v value="cookie->priv_level" /></td>
-      <td %s><s:v value="cookie->role" /></td>
-      <td %s><s:v value="cookie->recovery" /></td>
-      <td %s><s:v value="cookie->team_login" /></td>
+      <td class="b1"><s:v value="xml_unparse_ipv6(&cookie->ip)" escape="no" /></td>
+      <td class="b1"><s:v value="cookie->ssl" /></td>
+      <td class="b1"><s:v value="cookie->cookie" /></td> <!-- ??? -->
+      <td class="b1"><s:v value="cookie->expire" /></td>
+      <td class="b1"><s:v value="cookie->contest_id" /></td>
+      <td class="b1"><s:v value="cookie->locale_id" /></td>
+      <td class="b1"><s:v value="cookie->priv_level" /></td>
+      <td class="b1"><s:v value="cookie->role" /></td>
+      <td class="b1"><s:v value="cookie->recovery" /></td>
+      <td class="b1"><s:v value="cookie->team_login" /></td>
       <s:url name="DeleteUrl" ac="user-delete-session-action">
         <s:param name="other_user_id" />
         <s:param name="other_SID" value="cookie->cookie" />
         <s:param name="contest_id" checkExpr="> 0" />
         <s:param name="group_id" checkExpr="> 0" />
       </s:url>
-      <td %s><s:a url="DeleteUrl">[Delete]</s:a></td>
+      <td class="b1"><s:a url="DeleteUrl">[Delete]</s:a></td>
     </tr>
 <%
         }
