@@ -118,7 +118,7 @@
 <% if (avatar_url[0]) { %>
     <img class="userpic-img userpic-img-left" src="<s:v value="avatar_url" escape="no" />" alt="avatar" />
 <% } %>
-<table border="0" class="info-table mt-0">
+<table border="0" class="info-table mt-0 mw-600">
 <tr><td><s:_>Clar ID</s:_>:</td><td><s:v value="clar_id" /></td></tr>
 <tr><td>Clar UUID:</td><td><s:v type="uuid" value="clar.uuid" /></td></tr>
 <%  if (clar.hide_flag) { %>
