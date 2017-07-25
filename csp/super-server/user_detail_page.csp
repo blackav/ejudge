@@ -650,9 +650,9 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
             if (contests_get(reg->id, &cnts) < 0 || !cnts) continue;
 %>
     <tr>
-      <td class="b1"><s:v value="reg->id" /></td>"
+      <td class="b1"><s:v value="reg->id" /></td>
       <td class="b1"><s:v value="cnts->name" checkExpr="" /></td>
-      <td class="b1"><s:v value="ss_reg_status_strs[reg->status]" escape="no" /></td>"
+      <td class="b1"><s:v value="ss_reg_status_strs[reg->status]" escape="no" /></td>
       <td class="b1"><%
             if ((reg->flags & USERLIST_UC_INVISIBLE)) {
 %><% if (r++) { %>, <% } %>invisible<%

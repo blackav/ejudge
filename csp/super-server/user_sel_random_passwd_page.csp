@@ -711,7 +711,7 @@ function updateGroup2()
   <table class="b0">
     <tr>
       <td class="b0"><s:submit ac="user-sel-cancel-action" text="Cancel" /></td>
-      <td class="b0"><input type="submit" name="op_<s:v value="operation" />" value="<s:v value="button_label" />" /></td>
+      <td class="b0"><input type="submit" name="action_<s:v value="operation" />" value="<s:v value="button_label" />" /></td>
     </tr>
   </table>
 

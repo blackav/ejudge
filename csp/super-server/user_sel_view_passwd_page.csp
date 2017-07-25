@@ -198,7 +198,7 @@ extern const unsigned char * const ss_reg_status_strs[];
             if (cnts && reg) {
                 r = reg->status;
                 if (r < 0 || r >= USERLIST_REG_LAST) r = USERLIST_REG_LAST;
-                    %><s:v value="ss_reg_status_strs[r]" /><%
+                    %><s:v value="ss_reg_status_strs[r]" escape="no" /><%
                 } else {
                     %>&nbsp;<%
             }%></td>
