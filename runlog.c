@@ -317,7 +317,6 @@ run_add_record(
 {
   int i;
   struct user_entry *ue;
-  time_t stop_time;
   struct run_entry re;
   int flags = 0;
 
