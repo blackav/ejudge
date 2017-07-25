@@ -11,4 +11,4 @@
       <div id="container">
         <div id="l12-col">
           <div id="l12">
-            <div class="main_phrase"><s:v value="title" escape="false" /></div>
+            <div class="main_phrase mb-m1"><s:v value="title" escape="false" /></div>

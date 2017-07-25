@@ -869,7 +869,7 @@ ns_reg_main_page_view_info(
   err_count = userlist_count_info_errors(cnts, u, ui, mmm, role_err_count);
   (void) err_count;
 
-  fprintf(fout, "<br/>\n");
+  //fprintf(fout, "<br/>\n");
   if (phr->reg_status < 0) {
     fprintf(fout, "<p>%s</p>\n", _("In order to complete the registration procedure, hit the \"Confirm registration\" link."));
   }
