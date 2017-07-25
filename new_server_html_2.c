@@ -4112,6 +4112,7 @@ ns_write_olympiads_user_runs(
       }
       start_time = re.time;
     }
+    if (cs->upsolving_mode) accepting_mode = 1;
   } else {
     accepting_mode = cs->accepting_mode;
     start_time = run_get_start_time(cs->runlog_state);

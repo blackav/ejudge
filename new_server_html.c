@@ -5859,7 +5859,7 @@ priv_upsolving_operation(
   /* check that the contest is stopped */
   run_get_saved_times(cs->runlog_state, &duration, &saved_stop_time, 0);
   stop_time = run_get_stop_time(cs->runlog_state);
-  if (stop_time <= 0 && saved_stop_time <= 0) return 0;
+  if (!cs->global->is_virtual && stop_time <= 0 && saved_stop_time <= 0) return 0;
 
   hr_cgi_param(phr, "freeze_standings", &freeze_standings);
   hr_cgi_param(phr, "view_source", &view_source);
@@ -9798,9 +9798,6 @@ unpriv_command(
 
   switch (phr->action) {
   case NEW_SRV_ACTION_VIRTUAL_RESTART:
-    if (cs->upsolving_mode) {
-      FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
-    }
     if (global->enable_virtual_restart <= 0) {
       FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
     }
@@ -9848,9 +9845,6 @@ unpriv_command(
                     virtual_stop_callback);
     break;
   case NEW_SRV_ACTION_VIRTUAL_STOP:
-    if (cs->upsolving_mode) {
-      FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
-    }
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     if (start_time <= 0) {
       FAIL2(NEW_SRV_ERR_CONTEST_NOT_STARTED);

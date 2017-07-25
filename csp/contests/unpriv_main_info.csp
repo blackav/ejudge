@@ -40,7 +40,10 @@
     }
 %></b></p>
 
-<%    if (cs->upsolving_mode) {
+<%    if (cs->upsolving_mode && !cs->global->is_virtual) {
+%><p><b><s:_>Upsolving mode</s:_></b></p>
+<%  }
+  if (cs->upsolving_mode && cs->global->is_virtual && stop_time > 0) {
 %><p><b><s:_>Upsolving mode</s:_></b></p><%
     }
 %>
@@ -176,7 +179,7 @@
       }
 %></s:form><%
     }
-  } else if (!cnts->exam_mode && global->is_virtual && stop_time <= 0 && !cs->upsolving_mode) {
+  } else if (!cnts->exam_mode && global->is_virtual && stop_time <= 0) {
 %><s:form><%
     if (cnts->exam_mode) {
 %><p><s:submit ac="virtual-stop" label="Stop exam" /></p><%

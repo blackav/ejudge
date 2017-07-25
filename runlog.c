@@ -379,33 +379,8 @@ run_add_record(
   ASSERT(ue);
   ASSERT(ue->run_id_valid > 0); // run index is ok
 
-  if (!is_hidden) {
-    if (ue->status == V_VIRTUAL_USER) {
-      if (!ue->start_time) {
-        err("run_add_record: virtual contest not started");
-        return -1;
-      }
-      if (timestamp < ue->start_time) {
-        err("run_add_record: timestamp < virtual start time");
-        return -1;
-      }
-      stop_time = ue->stop_time;
-      if (!stop_time && state->head.duration)
-        stop_time = ue->start_time + state->head.duration;
-      if (stop_time && timestamp > stop_time && state->head.duration) {
-        err("run_add_record: timestamp > virtual stop time");
-        return -1;
-      }
-    } else {
-      stop_time = state->head.stop_time;
-      if (!stop_time && state->head.duration)
-        stop_time = state->head.start_time + state->head.duration;
-      if (stop_time && timestamp > stop_time) {
-        err("run_add_record: timestamp overrun");
-        return -1;
-      }
-      ue->status = V_REAL_USER;
-    }
+  if (!is_hidden && ue->status != V_VIRTUAL_USER) {
+    ue->status = V_REAL_USER;
   }
 
   if ((i = state->iface->get_insert_run_id(state->cnts,timestamp,team,nsec))<0)
