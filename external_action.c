@@ -539,15 +539,24 @@ update_src_dir(
     unsigned char csp_name[PATH_MAX];
     struct stat stb;
 
-    snprintf(src_dir, sizeof(src_dir), "%s/%s", EJUDGE_CONTESTS_HOME_DIR, state->package);
-    snprintf(csp_name, sizeof(csp_name), "%s/%s.csp", src_dir, state->action);
-    if (stat(csp_name, &stb) < 0) {
-        snprintf(src_dir, sizeof(src_dir), "%s/%s", csp_src_path, state->package);
+    if (state->fixed_src_dir) {
+        snprintf(src_dir, sizeof(src_dir), "%s/%s", state->fixed_src_dir, state->package);
         snprintf(csp_name, sizeof(csp_name), "%s/%s.csp", src_dir, state->action);
         if (stat(csp_name, &stb) < 0) {
-            fprintf(stderr, "Action file '%s.csp' does not exist neither in '%s/%s' nor in '%s/%s'\n",
-                    state->action, EJUDGE_CONTESTS_HOME_DIR, state->package, csp_src_path, state->package);
+            fprintf(stderr, "Action file '%s.csp' does not exist in '%s'\n", state->action, src_dir);
             return -1;
+        }
+    } else {
+        snprintf(src_dir, sizeof(src_dir), "%s/%s", EJUDGE_CONTESTS_HOME_DIR, state->package);
+        snprintf(csp_name, sizeof(csp_name), "%s/%s.csp", src_dir, state->action);
+        if (stat(csp_name, &stb) < 0) {
+            snprintf(src_dir, sizeof(src_dir), "%s/%s", csp_src_path, state->package);
+            snprintf(csp_name, sizeof(csp_name), "%s/%s.csp", src_dir, state->action);
+            if (stat(csp_name, &stb) < 0) {
+                fprintf(stderr, "Action file '%s.csp' does not exist neither in '%s/%s' nor in '%s/%s'\n",
+                        state->action, EJUDGE_CONTESTS_HOME_DIR, state->package, csp_src_path, state->package);
+                return -1;
+            }
         }
     }
     if (!S_ISREG(stb.st_mode)) {
