@@ -64,7 +64,8 @@ static int
 reg_external_action(
         FILE *out_f,
         struct http_request_info *phr,
-        int action);
+        int action,
+        ContestExternalActions *cnts_actions);
 static void
 error_page(
         FILE *out_f,
@@ -412,9 +413,9 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
 
   hr_cgi_param_int(phr, "create_account", &create_flag);
 
-  // contest_id is reqired
+  // contest_id is required
   if (phr->contest_id <= 0 || contests_get(phr->contest_id,&cnts) < 0 || !cnts){
-    if (reg_external_action(fout, phr, NEW_SRV_ACTION_CONTESTS_PAGE) > 0) return;
+    if (reg_external_action(fout, phr, NEW_SRV_ACTION_CONTESTS_PAGE, NULL) > 0) return;
     error_page(fout, phr, NEW_SRV_ERR_INV_ACTION);
     return;
   }
@@ -430,10 +431,14 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
     return;
   }
 
+  cur_time = time(0);
+
   // load style stuff
   extra = ns_get_contest_extra(phr->contest_id);
+  if (cnts->enable_local_pages > 0 && !extra->cnts_actions) {
+    extra->cnts_actions = ns_get_contest_external_actions(phr->contest_id, cur_time);
+  }
   phr->extra = extra;
-  cur_time = time(0);
   watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
   extra->separator_txt = "";
   extra->copyright_txt = extra->copyright.text;
@@ -456,11 +461,11 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
   }
 
   if (phr->action < 0 || phr->action >= NEW_SRV_ACTION_LAST) phr->action = 0;
-  if (reg_external_action(fout, phr, -1) > 0) return;
+  if (reg_external_action(fout, phr, -1, extra->cnts_actions) > 0) return;
 
   if (phr->action == NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE ||
       phr->action == NEW_SRV_ACTION_REG_LOGIN_PAGE) {
-    if (reg_external_action(fout, phr, NEW_SRV_ACTION_REG_LOGIN_PAGE) > 0) return;
+    if (reg_external_action(fout, phr, NEW_SRV_ACTION_REG_LOGIN_PAGE, extra->cnts_actions) > 0) return;
     error_page(fout, phr, NEW_SRV_ERR_INV_ACTION);
   }
 
@@ -468,10 +473,10 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
     return (*action_handlers[phr->action])(fout, phr, cnts, extra, cur_time);
 
   if (cnts->assign_logins) {
-    if (reg_external_action(fout, phr, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE) > 0) return;
+    if (reg_external_action(fout, phr, NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE, extra->cnts_actions) > 0) return;
     error_page(fout, phr, NEW_SRV_ERR_INV_ACTION);
   } else {
-    if (reg_external_action(fout, phr, NEW_SRV_ACTION_REG_LOGIN_PAGE) > 0) return;
+    if (reg_external_action(fout, phr, NEW_SRV_ACTION_REG_LOGIN_PAGE, extra->cnts_actions) > 0) return;
     error_page(fout, phr, NEW_SRV_ERR_INV_ACTION);
   }
 }
@@ -2664,7 +2669,11 @@ error_page(
 }
 
 static int
-reg_external_action(FILE *out_f, struct http_request_info *phr, int action)
+reg_external_action(
+        FILE *out_f,
+        struct http_request_info *phr,
+        int action,
+        ContestExternalActions *cnts_actions)
 {
   if (action < 0) action = phr->action;
   if (external_reg_action_aliases[action] > 0) action = external_reg_action_aliases[action];
@@ -2894,9 +2903,13 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
     xfree(user_info_xml); user_info_xml = 0;
   }
 
-  extra = ns_get_contest_extra(phr->contest_id);
-  phr->extra = extra;
   cur_time = time(0);
+
+  extra = ns_get_contest_extra(phr->contest_id);
+  if (cnts->enable_local_pages > 0 && !extra->cnts_actions) {
+    extra->cnts_actions = ns_get_contest_external_actions(phr->contest_id, cur_time);
+  }
+  phr->extra = extra;
   watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
   extra->separator_txt = "";
   extra->copyright_txt = extra->copyright.text;
@@ -2915,12 +2928,12 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   }
 
   if (phr->action <= 0 || phr->action >= NEW_SRV_ACTION_LAST) phr->action = NEW_SRV_ACTION_MAIN_PAGE;
-  if (reg_external_action(fout, phr, -1) > 0) return;
+  if (reg_external_action(fout, phr, -1, extra->cnts_actions) > 0) return;
 
   if (reg_handlers[phr->action])
     return (*reg_handlers[phr->action])(fout, phr, cnts, extra, cur_time);
 
-  if (reg_external_action(fout, phr, NEW_SRV_ACTION_MAIN_PAGE) > 0) return;
+  if (reg_external_action(fout, phr, NEW_SRV_ACTION_MAIN_PAGE, extra->cnts_actions) > 0) return;
   error_page(fout, phr, NEW_SRV_ERR_INV_ACTION);
   //return main_page(fout, phr, cnts, extra, cur_time);
 }
