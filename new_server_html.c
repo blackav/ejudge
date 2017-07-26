@@ -7399,6 +7399,7 @@ error_page(
                                                   "csp/contests",
                                                   error_name,
                                                   "csp_get_",
+                                                  NULL /* fixed_src_dir */,
                                                   phr->current_time,
                                                   0 /* contest_id */);
   if (!error_states[error_code] || !error_states[error_code]->action_handler) {
@@ -7426,6 +7427,7 @@ priv_external_action(FILE *out_f, struct http_request_info *phr)
                                                                "csp/contests",
                                                                external_priv_action_names[action],
                                                                "csp_get_",
+                                                               NULL /* fixed_src_dir */,
                                                                phr->current_time,
                                                                0 /* contest_id */);
   }
@@ -11095,6 +11097,7 @@ unpriv_external_action(FILE *out_f, struct http_request_info *phr)
                                                                  "csp/contests",
                                                                  external_unpriv_action_names[action],
                                                                  "csp_get_",
+                                                                 NULL /* fixed_src_dir */,
                                                                  phr->current_time,
                                                                  0 /* contest_id */);
   }

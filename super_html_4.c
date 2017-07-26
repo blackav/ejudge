@@ -628,6 +628,7 @@ external_error_page(
                                                            "csp/super-server",
                                                            external_error_names[error_code],
                                                            "csp_get_",
+                                                           NULL /* fixed_src_dir */,
                                                            phr->current_time,
                                                            0 /* contest_id */);
   if (!external_error_states[error_code] || !external_error_states[error_code]->action_handler) {
@@ -722,6 +723,7 @@ redo_action:
                                                                 "csp/super-server",
                                                                 external_action_names[ext_action],
                                                                 "csp_get_",
+                                                                NULL /* fixed_src_dir */,
                                                                 phr->current_time,
                                                                 0 /* contest_id */);
       if (!external_action_states[ext_action] || !external_action_states[ext_action]->action_handler) {
