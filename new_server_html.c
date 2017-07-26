@@ -2343,6 +2343,14 @@ ns_reload_contest_pages(int contest_id)
   }
 }
 
+static void
+ns_reload_all_contest_pages()
+{
+  for (int i = 0; i < cnts_ext_actions.u; ++i) {
+    ns_reload_contest_pages(cnts_ext_actions.v[i].contest_id);
+  }
+}
+
 static int
 priv_contest_operation(FILE *fout,
                        FILE *log_f,
@@ -2498,6 +2506,10 @@ priv_contest_operation(FILE *fout,
 
   case NEW_SRV_ACTION_RELOAD_CONTEST_PAGES:
     ns_reload_contest_pages(cs->contest_id);
+    break;
+
+  case NEW_SRV_ACTION_RELOAD_ALL_CONTEST_PAGES:
+    ns_reload_all_contest_pages();
     break;
 
   case NEW_SRV_ACTION_UPDATE_STANDINGS_2:
@@ -6896,6 +6908,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PING] = ping_page,
   [NEW_SRV_ACTION_SUBMIT_RUN_BATCH] = priv_submit_run_batch_page,
   [NEW_SRV_ACTION_RELOAD_CONTEST_PAGES] = priv_contest_operation,
+  [NEW_SRV_ACTION_RELOAD_ALL_CONTEST_PAGES] = priv_contest_operation,
 };
 
 static void
@@ -7323,6 +7336,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GET_AVATAR] = priv_get_avatar,
   [NEW_SRV_ACTION_PRIV_REGENERATE_CONTENT] = priv_generic_operation,
   [NEW_SRV_ACTION_RELOAD_CONTEST_PAGES] = priv_generic_operation,
+  [NEW_SRV_ACTION_RELOAD_ALL_CONTEST_PAGES] = priv_generic_operation,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =

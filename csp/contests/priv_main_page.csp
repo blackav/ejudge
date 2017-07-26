@@ -160,6 +160,7 @@
 %>
             <li><s:a ac="priv-regenerate-content"><s:_>Regenerate static content</s:_></s:a></li><br/>
             <li><s:a ac="reload-contest-pages">Reload Contest-Specific Pages</s:a></li><br/>
+            <li><s:a ac="reload-all-contest-pages">Reload ALL Contest-Specific Pages</s:a></li><br/>
             <li><s:a ac="reset-1"><s:_>Reset the contest!</s:_></s:a></li><br/>
         </ul>
     </li>
