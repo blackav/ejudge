@@ -808,12 +808,13 @@ external_action_load(
         const unsigned char *dir,
         const unsigned char *action,
         const unsigned char *name_prefix,
-        time_t current_time)
+        time_t current_time,
+        int contest_id)
 {
     if (!initialized_flag) initialize_module();
 
     if (!state) {
-        state = external_action_state_create(dir, action, 0); ///////
+        state = external_action_state_create(dir, action, contest_id);
         os_MakeDirPath(state->gen_dir, 0700);
         os_MakeDirPath(state->obj_dir, 0700);
         os_MakeDirPath(state->bin_dir, 0700);

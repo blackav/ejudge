@@ -628,7 +628,8 @@ external_error_page(
                                                            "csp/super-server",
                                                            external_error_names[error_code],
                                                            "csp_get_",
-                                                           phr->current_time);
+                                                           phr->current_time,
+                                                           0 /* contest_id */);
   if (!external_error_states[error_code] || !external_error_states[error_code]->action_handler) {
     default_error_page(p_out_t, p_out_z, phr);
     return;
@@ -721,7 +722,8 @@ redo_action:
                                                                 "csp/super-server",
                                                                 external_action_names[ext_action],
                                                                 "csp_get_",
-                                                                phr->current_time);
+                                                                phr->current_time,
+                                                                0 /* contest_id */);
       if (!external_action_states[ext_action] || !external_action_states[ext_action]->action_handler) {
         external_error_page(p_out_t, p_out_z, phr, SSERV_ERR_INV_OPER);
         return;

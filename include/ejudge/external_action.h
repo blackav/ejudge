@@ -59,7 +59,8 @@ external_action_load(
         const unsigned char *dir,
         const unsigned char *action,
         const unsigned char *name_prefix,
-        time_t current_time);
+        time_t current_time,
+        int contest_id);
 
 #endif /* __EXTERNAL_ACTION_H__ */
 

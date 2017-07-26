@@ -2653,7 +2653,8 @@ error_page(
                                                   "csp/contests",
                                                   error_name,
                                                   "csp_get_",
-                                                  phr->current_time);
+                                                  phr->current_time,
+                                                  0 /* contest_id */);
   if (!error_states[error_code] || !error_states[error_code]->action_handler) {
     return ns_html_error(out_f, phr, 0, error_code);
   }
@@ -2687,7 +2688,8 @@ reg_external_action(
                                                                 "csp/contests",
                                                                 external_reg_action_names[action],
                                                                 "csp_get_",
-                                                                phr->current_time);
+                                                                phr->current_time,
+                                                                0 /* contest_id */);
       action_state = external_reg_action_states[action];
     }
   }
