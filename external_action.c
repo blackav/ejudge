@@ -728,7 +728,7 @@ load_so_file(
 
     xfree(state->err_msg); state->err_msg = NULL;
 
-    state->dl_handle = dlopen(state->so_path, RTLD_GLOBAL | RTLD_NOW);
+    state->dl_handle = dlopen(state->so_path, RTLD_LOCAL | RTLD_NOW);
     if (!state->dl_handle) {
         state->err_msg = xstrdup(dlerror());
         retval = -ENOEXEC;
