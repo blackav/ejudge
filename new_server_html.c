@@ -95,11 +95,34 @@
 
 #pragma GCC diagnostic ignored "-Wformat-security" 
 
+typedef struct ContestExternalActions
+{
+  int nref; // reference counter
+  int contest_id;
+  int actions_size;
+  int errors_size;
+  ExternalActionState **priv_actions;
+  ExternalActionState **priv_errors;
+  ExternalActionState **unpriv_actions;
+  ExternalActionState **unpriv_errors;
+  ExternalActionState **reg_actions;
+  ExternalActionState **reg_errors;
+} ContestExternalActions;
+
+typedef struct ContestExternalActionVector
+{
+  int a; // allocated
+  int u; // size
+  ContestExternalActions *v;
+} ContestExternalActionVector;
+
 enum { CONTEST_EXPIRE_TIME = 300 };
 static struct contest_extra **extras = 0;
 static size_t extra_a = 0, extra_u = 0;
 
 extern const unsigned char * const ns_symbolic_action_table[];
+
+static ContestExternalActionVector cnts_ext_actions;
 
 static void
 error_page(
@@ -132,6 +155,77 @@ parse_user_list(
         serve_state_t cs,
         intarray_t *uset,
         int skip_user_check);
+
+static void
+init_contest_external_action(ContestExternalActions *pact, int contest_id)
+{
+  memset(pact, 0, sizeof(*pact));
+  pact->nref = 1;
+  pact->contest_id = contest_id;
+  pact->actions_size = NEW_SRV_ACTION_LAST;
+  pact->errors_size = NEW_SRV_ERR_LAST;
+  XCALLOC(pact->priv_actions, pact->actions_size);
+  XCALLOC(pact->unpriv_actions, pact->actions_size);
+  XCALLOC(pact->reg_actions, pact->actions_size);
+  XCALLOC(pact->priv_errors, pact->errors_size);
+  XCALLOC(pact->unpriv_errors, pact->errors_size);
+  XCALLOC(pact->reg_errors, pact->errors_size);
+}
+
+ContestExternalActions *
+ns_get_contest_external_actions(int contest_id, time_t current_time)
+{
+  if (contest_id <= 0) return NULL;
+  if (cnts_ext_actions.a <= 0) {
+    cnts_ext_actions.a = 16;
+    XCALLOC(cnts_ext_actions.v, cnts_ext_actions.a);
+  }
+  if (cnts_ext_actions.u <= 0) {
+    cnts_ext_actions.u = 1;
+    init_contest_external_action(&cnts_ext_actions.v[0], contest_id);
+    return &cnts_ext_actions.v[0];
+  }
+  if (contest_id > cnts_ext_actions.v[cnts_ext_actions.u - 1].contest_id) {
+    if (cnts_ext_actions.u == cnts_ext_actions.a) {
+      XREALLOC(cnts_ext_actions.v, cnts_ext_actions.a *= 2);
+    }
+    int i = cnts_ext_actions.u++;
+    init_contest_external_action(&cnts_ext_actions.v[i], contest_id);
+    return &cnts_ext_actions.v[i];
+  }
+  if (contest_id < cnts_ext_actions.v[0].contest_id) {
+    if (cnts_ext_actions.u == cnts_ext_actions.a) {
+      XREALLOC(cnts_ext_actions.v, cnts_ext_actions.a *= 2);
+    }
+    memmove(&cnts_ext_actions.v[1], &cnts_ext_actions.v[0], cnts_ext_actions.u * sizeof(cnts_ext_actions.v[0]));
+    ++cnts_ext_actions.u;
+    int i = 0;
+    init_contest_external_action(&cnts_ext_actions.v[i], contest_id);
+    return &cnts_ext_actions.v[i];
+  }
+  int l = 0, h = cnts_ext_actions.u;
+  while (l < h) {
+    int i = (l + h) / 2;
+    if (cnts_ext_actions.v[i].contest_id == contest_id) {
+      return &cnts_ext_actions.v[i];
+    }
+    if (cnts_ext_actions.v[i].contest_id < contest_id) {
+      l = i + 1;
+    } else {
+      h = i;
+    }
+  }
+  ASSERT(h < cnts_ext_actions.u);
+  ASSERT(contest_id < cnts_ext_actions.v[h].contest_id);
+  ASSERT(contest_id > cnts_ext_actions.v[h - 1].contest_id);
+  if (cnts_ext_actions.u == cnts_ext_actions.a) {
+    XREALLOC(cnts_ext_actions.v, cnts_ext_actions.a *= 2);
+  }
+  memmove(&cnts_ext_actions.v[h + 1], &cnts_ext_actions.v[h], (cnts_ext_actions.u - h) * sizeof(cnts_ext_actions.v[0]));
+  ++cnts_ext_actions.u;
+  init_contest_external_action(&cnts_ext_actions.v[h], contest_id);
+  return &cnts_ext_actions.v[h];
+}
 
 struct contest_extra *
 ns_get_contest_extra(int contest_id)
