@@ -2655,7 +2655,8 @@ error_page(
                                                   "csp_get_",
                                                   NULL /* fixed_src_dir */,
                                                   phr->current_time,
-                                                  0 /* contest_id */);
+                                                  0 /* contest_id */,
+                                                  0 /* allow_fail */);
   if (!error_states[error_code] || !error_states[error_code]->action_handler) {
     return ns_html_error(out_f, phr, 0, error_code);
   }
@@ -2693,7 +2694,8 @@ reg_external_action(
                                   "csp_get_",
                                   root_dir,
                                   phr->current_time,
-                                  phr->contest_id);
+                                  phr->contest_id,
+                                  1 /* allow_fail */);
         if (!st) {
           cnts_actions->reg_actions[action] = EXTERNAL_ACTION_NONE;
         } else {
@@ -2709,7 +2711,8 @@ reg_external_action(
                                                                 "csp_get_",
                                                                 NULL /* fixed_src_dir */,
                                                                 phr->current_time,
-                                                                0 /* contest_id */);
+                                                                0 /* contest_id */,
+                                                                0 /* allow_fail */);
       action_state = external_reg_action_states[action];
     }
   }

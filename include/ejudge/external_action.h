@@ -63,7 +63,8 @@ external_action_load(
         const unsigned char *name_prefix,
         const unsigned char *fixed_src_dir,
         time_t current_time,
-        int contest_id);
+        int contest_id,
+        int allow_fail);
 
 #define EXTERNAL_ACTION_NONE ((ExternalActionState *) ((size_t) 1))
 

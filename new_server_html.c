@@ -7401,7 +7401,8 @@ error_page(
                                                   "csp_get_",
                                                   NULL /* fixed_src_dir */,
                                                   phr->current_time,
-                                                  0 /* contest_id */);
+                                                  0 /* contest_id */,
+                                                  0 /* allow_fail */);
   if (!error_states[error_code] || !error_states[error_code]->action_handler) {
     return ns_html_error(out_f, phr, priv_mode, error_code);
   }
@@ -7429,7 +7430,8 @@ priv_external_action(FILE *out_f, struct http_request_info *phr)
                                                                "csp_get_",
                                                                NULL /* fixed_src_dir */,
                                                                phr->current_time,
-                                                               0 /* contest_id */);
+                                                               0 /* contest_id */,
+                                                               0 /* allow_fail */);
   }
 
   if (external_priv_action_states[action] && external_priv_action_states[action]->action_handler) {
@@ -11099,7 +11101,8 @@ unpriv_external_action(FILE *out_f, struct http_request_info *phr)
                                                                  "csp_get_",
                                                                  NULL /* fixed_src_dir */,
                                                                  phr->current_time,
-                                                                 0 /* contest_id */);
+                                                                 0 /* contest_id */,
+                                                                 0 /* allow_fail */);
   }
 
   if (external_unpriv_action_states[action] && external_unpriv_action_states[action]->action_handler) {
