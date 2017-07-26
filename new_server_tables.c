@@ -198,6 +198,7 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_USERS_CHANGE_FLAGS] = __("Change flags"),
   [NEW_SRV_ACTION_REG_UPLOAD_AVATAR] = __("Upload avatar"),
   [NEW_SRV_ACTION_PRIV_REGENERATE_CONTENT] = __("Regenerate static content"),
+  [NEW_SRV_ACTION_RELOAD_CONTEST_PAGES] = __("Reload Contest Pages"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =

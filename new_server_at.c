@@ -287,4 +287,5 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REG_CROP_AVATAR_PAGE] = "reg-crop-avatar-page",
   [NEW_SRV_ACTION_REG_SAVE_CROPPED_AVATAR_AJAX] = "reg-save-cropped-avatar-ajax",
   [NEW_SRV_ACTION_PRIV_REGENERATE_CONTENT] = "priv-regenerate-content",
+  [NEW_SRV_ACTION_RELOAD_CONTEST_PAGES] = "reload-contest-pages",
 };
