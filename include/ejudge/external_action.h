@@ -56,6 +56,9 @@ typedef struct ExternalActionState
 } ExternalActionState;
 
 ExternalActionState *
+external_action_state_free(ExternalActionState *state);
+
+ExternalActionState *
 external_action_load(
         ExternalActionState *state,
         const unsigned char *dir,
