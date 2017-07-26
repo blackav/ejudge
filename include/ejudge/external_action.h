@@ -65,6 +65,8 @@ external_action_load(
         time_t current_time,
         int contest_id);
 
+#define EXTERNAL_ACTION_NONE ((ExternalActionState *) ((size_t) 1))
+
 #endif /* __EXTERNAL_ACTION_H__ */
 
 /*
