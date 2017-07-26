@@ -2678,16 +2678,22 @@ reg_external_action(
   if (action < 0) action = phr->action;
   if (external_reg_action_aliases[action] > 0) action = external_reg_action_aliases[action];
 
+  ExternalActionState *action_state = NULL;
   if (external_reg_action_names[action]) {
-    external_reg_action_states[action] = external_action_load(external_reg_action_states[action],
-                                                              "csp/contests",
-                                                              external_reg_action_names[action],
-                                                              "csp_get_",
-                                                              phr->current_time);
+    if (cnts_actions && cnts_actions->reg_actions && action >= 0 && action < cnts_actions->actions_size) {
+    }
+    if (!action_state) {
+      external_reg_action_states[action] = external_action_load(external_reg_action_states[action],
+                                                                "csp/contests",
+                                                                external_reg_action_names[action],
+                                                                "csp_get_",
+                                                                phr->current_time);
+      action_state = external_reg_action_states[action];
+    }
   }
 
-  if (external_reg_action_states[action] && external_reg_action_states[action]->action_handler) {
-    PageInterface *pg = ((external_action_handler_t) external_reg_action_states[action]->action_handler)();
+  if (action_state && action_state->action_handler) {
+    PageInterface *pg = ((external_action_handler_t) action_state->action_handler)();
     
     if (pg->ops->execute) {
       int r = pg->ops->execute(pg, phr->log_f, phr);
