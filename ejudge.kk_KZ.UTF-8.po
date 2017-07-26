@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-25 11:45+0300\n"
+"POT-Creation-Date: 2017-07-26 19:09+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -2970,6 +2970,9 @@ msgid "Rejudge runs"
 msgstr ""
 
 msgid "Reload"
+msgstr ""
+
+msgid "Reload Contest Pages"
 msgstr ""
 
 msgid "Reload Statement"

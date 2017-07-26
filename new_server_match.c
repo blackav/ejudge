@@ -6335,6 +6335,61 @@ int ns_match_action(const unsigned char *str)
                         } else {
                         }
                         return 0;
+                      } else if (c < 's') {
+                        if (c == 'c') {
+                          c = str[8];
+                          if (c == 'o') {
+                            c = str[9];
+                            if (c == 'n') {
+                              c = str[10];
+                              if (c == 't') {
+                                c = str[11];
+                                if (c == 'e') {
+                                  c = str[12];
+                                  if (c == 's') {
+                                    c = str[13];
+                                    if (c == 't') {
+                                      c = str[14];
+                                      if (c == '-') {
+                                        c = str[15];
+                                        if (c == 'p') {
+                                          c = str[16];
+                                          if (c == 'a') {
+                                            c = str[17];
+                                            if (c == 'g') {
+                                              c = str[18];
+                                              if (c == 'e') {
+                                                c = str[19];
+                                                if (c == 's') {
+                                                  c = str[20];
+                                                  if (!c) return NEW_SRV_ACTION_RELOAD_CONTEST_PAGES;
+                                                  return 0;
+                                                }
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                      } else {
                       }
                       return 0;
                     }
