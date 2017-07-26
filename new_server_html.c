@@ -2313,6 +2313,36 @@ ns_reload_server_all(void)
   ns_for_each_contest_extra(do_reload_server, NULL);
 }
 
+static void
+ns_reload_contest_pages(int contest_id)
+{
+  ContestExternalActions *actions = ns_try_contest_external_actions(contest_id);
+  if (!actions) return;
+
+  for (int i = 0; i < actions->actions_size; ++i) {
+    if (actions->priv_actions) {
+      actions->priv_actions[i] = external_action_state_free(actions->priv_actions[i]);
+    }
+    if (actions->unpriv_actions) {
+      actions->unpriv_actions[i] = external_action_state_free(actions->unpriv_actions[i]);
+    }
+    if (actions->reg_actions) {
+      actions->reg_actions[i] = external_action_state_free(actions->reg_actions[i]);
+    }
+  }
+  for (int i = 0; i < actions->errors_size; ++i) {
+    if (actions->priv_errors) {
+      actions->priv_errors[i] = external_action_state_free(actions->priv_errors[i]);
+    }
+    if (actions->unpriv_errors) {
+      actions->unpriv_errors[i] = external_action_state_free(actions->unpriv_errors[i]);
+    }
+    if (actions->reg_errors) {
+      actions->reg_errors[i] = external_action_state_free(actions->reg_errors[i]);
+    }
+  }
+}
+
 static int
 priv_contest_operation(FILE *fout,
                        FILE *log_f,
@@ -2464,6 +2494,10 @@ priv_contest_operation(FILE *fout,
 
   case NEW_SRV_ACTION_RELOAD_SERVER_ALL:
     ns_reload_server_all();
+    break;
+
+  case NEW_SRV_ACTION_RELOAD_CONTEST_PAGES:
+    ns_reload_contest_pages(cs->contest_id);
     break;
 
   case NEW_SRV_ACTION_UPDATE_STANDINGS_2:
@@ -6861,6 +6895,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_UNMARK_DISPLAYED_2] = priv_clear_displayed,
   [NEW_SRV_ACTION_PING] = ping_page,
   [NEW_SRV_ACTION_SUBMIT_RUN_BATCH] = priv_submit_run_batch_page,
+  [NEW_SRV_ACTION_RELOAD_CONTEST_PAGES] = priv_contest_operation,
 };
 
 static void
@@ -7287,6 +7322,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SUBMIT_RUN_BATCH] = priv_generic_page,
   [NEW_SRV_ACTION_GET_AVATAR] = priv_get_avatar,
   [NEW_SRV_ACTION_PRIV_REGENERATE_CONTENT] = priv_generic_operation,
+  [NEW_SRV_ACTION_RELOAD_CONTEST_PAGES] = priv_generic_operation,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
