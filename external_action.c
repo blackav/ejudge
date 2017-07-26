@@ -435,6 +435,27 @@ external_action_state_unload(ExternalActionState *state)
     }
 }
 
+ExternalActionState *
+external_action_state_free(ExternalActionState *state)
+{
+    if (!state) return NULL;
+
+    external_action_state_unload(state);
+    xfree(state->fixed_src_dir);
+    xfree(state->package);
+    xfree(state->action);
+    xfree(state->src_dir);
+    xfree(state->gen_dir);
+    xfree(state->obj_dir);
+    xfree(state->bin_dir);
+    xfree(state->so_path);
+    xfree(state->err_msg);
+
+    memset(state, 0, sizeof(*state));
+    xfree(state);
+    return NULL;
+}
+
 static int
 invoke_page_gen(
         FILE *log_f,
