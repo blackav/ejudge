@@ -2683,6 +2683,24 @@ reg_external_action(
   ExternalActionState *action_state = NULL;
   if (external_reg_action_names[action]) {
     if (cnts_actions && cnts_actions->reg_actions && action >= 0 && action < cnts_actions->actions_size) {
+      ExternalActionState *st = cnts_actions->reg_actions[action];
+      const unsigned char *root_dir = NULL;
+      if (phr->cnts) root_dir = phr->cnts->root_dir;
+      if (st != EXTERNAL_ACTION_NONE) {
+        st = external_action_load(st,
+                                  "csp/contests",
+                                  external_reg_action_names[action],
+                                  "csp_get_",
+                                  root_dir,
+                                  phr->current_time,
+                                  phr->contest_id);
+        if (!st) {
+          cnts_actions->reg_actions[action] = EXTERNAL_ACTION_NONE;
+        } else {
+          cnts_actions->reg_actions[action] = st;
+          action_state = st;
+        }
+      }
     }
     if (!action_state) {
       external_reg_action_states[action] = external_action_load(external_reg_action_states[action],
