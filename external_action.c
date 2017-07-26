@@ -438,7 +438,7 @@ external_action_state_unload(ExternalActionState *state)
 ExternalActionState *
 external_action_state_free(ExternalActionState *state)
 {
-    if (!state) return NULL;
+    if (!state || state == EXTERNAL_ACTION_NONE) return NULL;
 
     external_action_state_unload(state);
     xfree(state->fixed_src_dir);
