@@ -382,7 +382,7 @@ fix_action(
     return buf;
 }
 
-ExternalActionState *
+static ExternalActionState *
 external_action_state_create(
         const unsigned char *dir, 
         const unsigned char *action,
