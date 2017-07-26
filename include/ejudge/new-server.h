@@ -807,4 +807,24 @@ ns_add_review_comment(
         int run_id,
         const unsigned char *review_comment);
 
+struct ExternalActionState;
+typedef struct ContestExternalActions
+{
+  int nref; // reference counter
+  int contest_id;
+  int actions_size;
+  int errors_size;
+  struct ExternalActionState **priv_actions;
+  struct ExternalActionState **priv_errors;
+  struct ExternalActionState **unpriv_actions;
+  struct ExternalActionState **unpriv_errors;
+  struct ExternalActionState **reg_actions;
+  struct ExternalActionState **reg_errors;
+} ContestExternalActions;
+
+struct ContestExternalActions *
+ns_get_contest_external_actions(
+        int contest_id,
+        time_t current_time);
+
 #endif /* __NEW_SERVER_H__ */

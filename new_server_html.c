@@ -95,20 +95,6 @@
 
 #pragma GCC diagnostic ignored "-Wformat-security" 
 
-typedef struct ContestExternalActions
-{
-  int nref; // reference counter
-  int contest_id;
-  int actions_size;
-  int errors_size;
-  ExternalActionState **priv_actions;
-  ExternalActionState **priv_errors;
-  ExternalActionState **unpriv_actions;
-  ExternalActionState **unpriv_errors;
-  ExternalActionState **reg_actions;
-  ExternalActionState **reg_errors;
-} ContestExternalActions;
-
 typedef struct ContestExternalActionVector
 {
   int a; // allocated
