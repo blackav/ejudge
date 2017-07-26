@@ -114,6 +114,9 @@ static const unsigned char * const form_row_attrs[]=
             <input type="checkbox" name="enable_avatar" id="FlagsDialogEnableAvatar" value="1" />
             <label for="FlagsDialogEnableAvatar">Enable avatars for users?</label>
             <br/>
+            <input type="checkbox" name="enable_local_pages" id="FlagsDialogEnableLocalPages" value="1" />
+            <label for="FlagsDialogEnableLocalPages">Enable Contest-specific pages?</label>
+            <br/>
         </fieldset>
     </s:form>
 </div>
@@ -1117,6 +1120,13 @@ function np(e)
         <td><s:yesno id="OrigEnableAvatar" disabled="disabled" name="param" value="cnts->enable_avatar" /></td>
         <td>&nbsp;</td>
         <td onclick="np(event);"><s:help topic="Contest.xml:enable_avatar" /></td>
+    </s:tr>
+
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>Enable Contest-specific Pages?</td>
+        <td><s:yesno id="OrigEnableLocalPages" disabled="disabled" name="param" value="cnts->enable_local_pages" /></td>
+        <td>&nbsp;</td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:enable_local_pages" /></td>
     </s:tr>
 </table>
     </div>
