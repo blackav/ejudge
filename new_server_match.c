@@ -2922,6 +2922,300 @@ int ns_match_action(const unsigned char *str)
               return 0;
             }
             return 0;
+          } else if (c < 'v') {
+            if (c == 't') {
+              c = str[3];
+              if (c == '-') {
+                c = str[4];
+                if (c == 'm') {
+                  c = str[5];
+                  if (c == 'o') {
+                    c = str[6];
+                    if (c == 's') {
+                      c = str[7];
+                      if (c == 'c') {
+                        c = str[8];
+                        if (c == 'o') {
+                          c = str[9];
+                          if (c == 'w') {
+                            c = str[10];
+                            if (c == '-') {
+                              c = str[11];
+                              if (c == 's') {
+                                c = str[12];
+                                if (c == 't') {
+                                  c = str[13];
+                                  if (c == 'a') {
+                                    c = str[14];
+                                    if (c == 'n') {
+                                      c = str[15];
+                                      if (c == 'd') {
+                                        c = str[16];
+                                        if (c == 'i') {
+                                          c = str[17];
+                                          if (c == 'n') {
+                                            c = str[18];
+                                            if (c == 'g') {
+                                              c = str[19];
+                                              if (c == 's') {
+                                                c = str[20];
+                                                if (!c) return NEW_SRV_ACTION_INT_MOSCOW_STANDINGS;
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  }
+                  return 0;
+                } else if (c < 'm') {
+                  if (c == 'k') {
+                    c = str[5];
+                    if (c == 'i') {
+                      c = str[6];
+                      if (c == 'r') {
+                        c = str[7];
+                        if (c == 'o') {
+                          c = str[8];
+                          if (c == 'v') {
+                            c = str[9];
+                            if (c == '-') {
+                              c = str[10];
+                              if (c == 's') {
+                                c = str[11];
+                                if (c == 't') {
+                                  c = str[12];
+                                  if (c == 'a') {
+                                    c = str[13];
+                                    if (c == 'n') {
+                                      c = str[14];
+                                      if (c == 'd') {
+                                        c = str[15];
+                                        if (c == 'i') {
+                                          c = str[16];
+                                          if (c == 'n') {
+                                            c = str[17];
+                                            if (c == 'g') {
+                                              c = str[18];
+                                              if (c == 's') {
+                                                c = str[19];
+                                                if (!c) return NEW_SRV_ACTION_INT_KIROV_STANDINGS;
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  } else if (c < 'k') {
+                    if (c == 'a') {
+                      c = str[5];
+                      if (c == 'c') {
+                        c = str[6];
+                        if (c == 'm') {
+                          c = str[7];
+                          if (c == '-') {
+                            c = str[8];
+                            if (c == 's') {
+                              c = str[9];
+                              if (c == 't') {
+                                c = str[10];
+                                if (c == 'a') {
+                                  c = str[11];
+                                  if (c == 'n') {
+                                    c = str[12];
+                                    if (c == 'd') {
+                                      c = str[13];
+                                      if (c == 'i') {
+                                        c = str[14];
+                                        if (c == 'n') {
+                                          c = str[15];
+                                          if (c == 'g') {
+                                            c = str[16];
+                                            if (c == 's') {
+                                              c = str[17];
+                                              if (!c) return NEW_SRV_ACTION_INT_ACM_STANDINGS;
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                  } else {
+                  }
+                } else {
+                  if (c == 'o') {
+                    c = str[5];
+                    if (c == 'l') {
+                      c = str[6];
+                      if (c == 'y') {
+                        c = str[7];
+                        if (c == 'm') {
+                          c = str[8];
+                          if (c == 'p') {
+                            c = str[9];
+                            if (c == '-') {
+                              c = str[10];
+                              if (c == 'a') {
+                                c = str[11];
+                                if (c == 'c') {
+                                  c = str[12];
+                                  if (c == 'c') {
+                                    c = str[13];
+                                    if (c == 'e') {
+                                      c = str[14];
+                                      if (c == 'p') {
+                                        c = str[15];
+                                        if (c == 't') {
+                                          c = str[16];
+                                          if (c == 'i') {
+                                            c = str[17];
+                                            if (c == 'n') {
+                                              c = str[18];
+                                              if (c == 'g') {
+                                                c = str[19];
+                                                if (c == '-') {
+                                                  c = str[20];
+                                                  if (c == 's') {
+                                                    c = str[21];
+                                                    if (c == 't') {
+                                                      c = str[22];
+                                                      if (c == 'a') {
+                                                        c = str[23];
+                                                        if (c == 'n') {
+                                                          c = str[24];
+                                                          if (c == 'd') {
+                                                            c = str[25];
+                                                            if (c == 'i') {
+                                                              c = str[26];
+                                                              if (c == 'n') {
+                                                                c = str[27];
+                                                                if (c == 'g') {
+                                                                  c = str[28];
+                                                                  if (c == 's') {
+                                                                    c = str[29];
+                                                                    if (!c) return NEW_SRV_ACTION_INT_OLYMP_ACCEPTING_STANDINGS;
+                                                                    return 0;
+                                                                  }
+                                                                  return 0;
+                                                                }
+                                                                return 0;
+                                                              }
+                                                              return 0;
+                                                            }
+                                                            return 0;
+                                                          }
+                                                          return 0;
+                                                        }
+                                                        return 0;
+                                                      }
+                                                      return 0;
+                                                    }
+                                                    return 0;
+                                                  }
+                                                  return 0;
+                                                }
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  }
+                }
+                return 0;
+              }
+              return 0;
+            }
+          } else {
           }
           return 0;
         } else if (c < 'n') {
