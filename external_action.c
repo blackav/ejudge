@@ -386,6 +386,7 @@ ExternalActionState *
 external_action_state_create(
         const unsigned char *dir, 
         const unsigned char *action,
+        const unsigned char *fixed_src_dir,
         int contest_id)
 {
     ExternalActionState *state = NULL;
@@ -395,6 +396,7 @@ external_action_state_create(
     XCALLOC(state, 1);
     state->package = xstrdup(dir);
     state->contest_id = contest_id;
+    state->fixed_src_dir = xstrdup2(fixed_src_dir);
 
     if (contest_id > 0) {
         snprintf(path, sizeof(path), "%s/%06d/%s", csp_gen_path, contest_id, dir);
@@ -814,7 +816,7 @@ external_action_load(
     if (!initialized_flag) initialize_module();
 
     if (!state) {
-        state = external_action_state_create(dir, action, contest_id);
+        state = external_action_state_create(dir, action, NULL, contest_id);
         os_MakeDirPath(state->gen_dir, 0700);
         os_MakeDirPath(state->obj_dir, 0700);
         os_MakeDirPath(state->bin_dir, 0700);
