@@ -1,7 +1,6 @@
 /* -*- c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -386,7 +385,8 @@ fix_action(
 ExternalActionState *
 external_action_state_create(
         const unsigned char *dir, 
-        const unsigned char *action)
+        const unsigned char *action,
+        int contest_id)
 {
     ExternalActionState *state = NULL;
     unsigned char path[PATH_MAX];
@@ -394,13 +394,23 @@ external_action_state_create(
 
     XCALLOC(state, 1);
     state->package = xstrdup(dir);
+    state->contest_id = contest_id;
 
-    snprintf(path, sizeof(path), "%s/%s", csp_gen_path, dir);
-    state->gen_dir = xstrdup(path);
-    snprintf(path, sizeof(path), "%s/%s", csp_obj_path, dir);
-    state->obj_dir = xstrdup(path);
-    snprintf(path, sizeof(path), "%s/%s", csp_bin_path, dir);
-    state->bin_dir = xstrdup(path);
+    if (contest_id > 0) {
+        snprintf(path, sizeof(path), "%s/%06d/%s", csp_gen_path, contest_id, dir);
+        state->gen_dir = xstrdup(path);
+        snprintf(path, sizeof(path), "%s/%06d/%s", csp_obj_path, contest_id, dir);
+        state->obj_dir = xstrdup(path);
+        snprintf(path, sizeof(path), "%s/%06d/%s", csp_bin_path, contest_id, dir);
+        state->bin_dir = xstrdup(path);
+    } else {
+        snprintf(path, sizeof(path), "%s/%s", csp_gen_path, dir);
+        state->gen_dir = xstrdup(path);
+        snprintf(path, sizeof(path), "%s/%s", csp_obj_path, dir);
+        state->obj_dir = xstrdup(path);
+        snprintf(path, sizeof(path), "%s/%s", csp_bin_path, dir);
+        state->bin_dir = xstrdup(path);
+    }
 
     fix_action(action_buf, sizeof(action_buf), action);
     state->action = xstrdup(action_buf);
@@ -803,7 +813,7 @@ external_action_load(
     if (!initialized_flag) initialize_module();
 
     if (!state) {
-        state = external_action_state_create(dir, action);
+        state = external_action_state_create(dir, action, 0); ///////
         os_MakeDirPath(state->gen_dir, 0700);
         os_MakeDirPath(state->obj_dir, 0700);
         os_MakeDirPath(state->bin_dir, 0700);
