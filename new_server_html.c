@@ -213,6 +213,30 @@ ns_get_contest_external_actions(int contest_id, time_t current_time)
   return &cnts_ext_actions.v[h];
 }
 
+ContestExternalActions *
+ns_try_contest_external_actions(int contest_id)
+{
+  if (contest_id <= 0) return NULL;
+  if (cnts_ext_actions.u <= 0) return NULL;
+  if (contest_id > cnts_ext_actions.v[cnts_ext_actions.u - 1].contest_id) return NULL;
+  if (contest_id < cnts_ext_actions.v[0].contest_id) return NULL;
+
+  int l = 0, h = cnts_ext_actions.u;
+  while (l < h) {
+    int i = (l + h) / 2;
+    if (cnts_ext_actions.v[i].contest_id == contest_id) {
+      return &cnts_ext_actions.v[i];
+    }
+    if (cnts_ext_actions.v[i].contest_id < contest_id) {
+      l = i + 1;
+    } else {
+      h = i;
+    }
+  }
+
+  return NULL;
+}
+
 struct contest_extra *
 ns_get_contest_extra(int contest_id)
 {
