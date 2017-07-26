@@ -39,6 +39,8 @@ typedef struct ExternalActionState
     time_t last_check_time;
     int contest_id;
 
+    unsigned char *fixed_src_dir;
+
     unsigned char *package;
     unsigned char *action;
 
