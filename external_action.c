@@ -854,6 +854,9 @@ external_action_load(
         os_MakeDirPath(state->bin_dir, 0700);
 
         if (first_load(stderr, state, name_prefix, current_time) < 0) {
+            if (allow_fail) {
+                return external_action_state_free(state);
+            }
             err("page load error: %s", state->err_msg);
         }
         return state;
