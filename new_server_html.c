@@ -2343,6 +2343,11 @@ ns_reload_contest_pages(int contest_id)
       actions->reg_errors[i] = external_action_state_free(actions->reg_errors[i]);
     }
   }
+  if (actions->int_actions) {
+    for (int i = 0; i < actions->ints_size; ++i) {
+      actions->int_actions[i] = external_action_state_free(actions->int_actions[i]);
+    }
+  }
 }
 
 static void
