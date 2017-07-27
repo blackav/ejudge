@@ -150,12 +150,14 @@ init_contest_external_action(ContestExternalActions *pact, int contest_id)
   pact->contest_id = contest_id;
   pact->actions_size = NEW_SRV_ACTION_LAST;
   pact->errors_size = NEW_SRV_ERR_LAST;
+  pact->ints_size = NEW_SRV_INT_LAST;
   XCALLOC(pact->priv_actions, pact->actions_size);
   XCALLOC(pact->unpriv_actions, pact->actions_size);
   XCALLOC(pact->reg_actions, pact->actions_size);
   XCALLOC(pact->priv_errors, pact->errors_size);
   XCALLOC(pact->unpriv_errors, pact->errors_size);
   XCALLOC(pact->reg_errors, pact->errors_size);
+  XCALLOC(pact->int_actions, pact->ints_size);
 }
 
 ContestExternalActions *

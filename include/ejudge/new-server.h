@@ -814,12 +814,14 @@ typedef struct ContestExternalActions
   int contest_id;
   int actions_size;
   int errors_size;
+  int ints_size; // internal actions
   struct ExternalActionState **priv_actions;
   struct ExternalActionState **priv_errors;
   struct ExternalActionState **unpriv_actions;
   struct ExternalActionState **unpriv_errors;
   struct ExternalActionState **reg_actions;
   struct ExternalActionState **reg_errors;
+  struct ExternalActionState **int_actions; // internal actions
 } ContestExternalActions;
 
 struct ContestExternalActions *
