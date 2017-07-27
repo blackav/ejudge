@@ -1,0 +1,18 @@
+<%
+%><%
+// includes here
+#include "ejudge/new-server.h"
+#include "ejudge/new_server_pi.h"
+#include "ejudge/new_server_proto.h"
+#include "ejudge/external_action.h"
+#include "ejudge/misctext.h"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_int_acm_standings(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%
+// local vars here
+    int retval __attribute__((unused)) = 0;
+    struct html_armor_buffer ab __attribute__((unused)) = HTML_ARMOR_INITIALIZER;
+
+//cleanup:
+    html_armor_free(&ab);
+%>
