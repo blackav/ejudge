@@ -183,6 +183,13 @@ typedef struct PrivViewUsersPage
     UserInfoPageArray *users;
 } PrivViewUsersPage;
 
+typedef struct PublicLogExtraInfo
+{
+    const unsigned char *header_str;
+    const unsigned char *footer_str;
+    int user_mode;
+} PublicLogExtraInfo;
+
 #endif /* __NEW_SERVER_PI_H__ */
 
 /*
