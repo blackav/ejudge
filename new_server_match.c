@@ -3109,57 +3109,100 @@ int ns_match_action(const unsigned char *str)
                   } else {
                   }
                 } else {
-                  if (c == 'o') {
+                  if (c == 'p') {
                     c = str[5];
-                    if (c == 'l') {
+                    if (c == 'u') {
                       c = str[6];
-                      if (c == 'y') {
+                      if (c == 'b') {
                         c = str[7];
-                        if (c == 'm') {
+                        if (c == 'l') {
                           c = str[8];
-                          if (c == 'p') {
+                          if (c == 'i') {
                             c = str[9];
-                            if (c == '-') {
+                            if (c == 'c') {
                               c = str[10];
-                              if (c == 'a') {
+                              if (c == '-') {
                                 c = str[11];
-                                if (c == 'c') {
+                                if (c == 'l') {
                                   c = str[12];
-                                  if (c == 'c') {
+                                  if (c == 'o') {
                                     c = str[13];
-                                    if (c == 'e') {
+                                    if (c == 'g') {
                                       c = str[14];
-                                      if (c == 'p') {
-                                        c = str[15];
-                                        if (c == 't') {
-                                          c = str[16];
-                                          if (c == 'i') {
-                                            c = str[17];
-                                            if (c == 'n') {
-                                              c = str[18];
-                                              if (c == 'g') {
-                                                c = str[19];
-                                                if (c == '-') {
-                                                  c = str[20];
-                                                  if (c == 's') {
-                                                    c = str[21];
-                                                    if (c == 't') {
-                                                      c = str[22];
-                                                      if (c == 'a') {
-                                                        c = str[23];
-                                                        if (c == 'n') {
-                                                          c = str[24];
-                                                          if (c == 'd') {
-                                                            c = str[25];
-                                                            if (c == 'i') {
-                                                              c = str[26];
-                                                              if (c == 'n') {
-                                                                c = str[27];
-                                                                if (c == 'g') {
-                                                                  c = str[28];
-                                                                  if (c == 's') {
-                                                                    c = str[29];
-                                                                    if (!c) return NEW_SRV_ACTION_INT_OLYMP_ACCEPTING_STANDINGS;
+                                      if (!c) return NEW_SRV_ACTION_INT_PUBLIC_LOG;
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  } else if (c < 'p') {
+                    if (c == 'o') {
+                      c = str[5];
+                      if (c == 'l') {
+                        c = str[6];
+                        if (c == 'y') {
+                          c = str[7];
+                          if (c == 'm') {
+                            c = str[8];
+                            if (c == 'p') {
+                              c = str[9];
+                              if (c == '-') {
+                                c = str[10];
+                                if (c == 'a') {
+                                  c = str[11];
+                                  if (c == 'c') {
+                                    c = str[12];
+                                    if (c == 'c') {
+                                      c = str[13];
+                                      if (c == 'e') {
+                                        c = str[14];
+                                        if (c == 'p') {
+                                          c = str[15];
+                                          if (c == 't') {
+                                            c = str[16];
+                                            if (c == 'i') {
+                                              c = str[17];
+                                              if (c == 'n') {
+                                                c = str[18];
+                                                if (c == 'g') {
+                                                  c = str[19];
+                                                  if (c == '-') {
+                                                    c = str[20];
+                                                    if (c == 's') {
+                                                      c = str[21];
+                                                      if (c == 't') {
+                                                        c = str[22];
+                                                        if (c == 'a') {
+                                                          c = str[23];
+                                                          if (c == 'n') {
+                                                            c = str[24];
+                                                            if (c == 'd') {
+                                                              c = str[25];
+                                                              if (c == 'i') {
+                                                                c = str[26];
+                                                                if (c == 'n') {
+                                                                  c = str[27];
+                                                                  if (c == 'g') {
+                                                                    c = str[28];
+                                                                    if (c == 's') {
+                                                                      c = str[29];
+                                                                      if (!c) return NEW_SRV_ACTION_INT_OLYMP_ACCEPTING_STANDINGS;
+                                                                      return 0;
+                                                                    }
                                                                     return 0;
                                                                   }
                                                                   return 0;
@@ -3208,7 +3251,7 @@ int ns_match_action(const unsigned char *str)
                       }
                       return 0;
                     }
-                    return 0;
+                  } else {
                   }
                 }
                 return 0;
