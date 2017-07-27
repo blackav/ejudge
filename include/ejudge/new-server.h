@@ -829,4 +829,9 @@ ns_get_contest_external_actions(
         int contest_id,
         time_t current_time);
 
+int
+ns_int_external_action(
+        struct http_request_info *phr,
+        int action);
+
 #endif /* __NEW_SERVER_H__ */

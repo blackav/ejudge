@@ -11461,6 +11461,100 @@ cleanup:
   xfree(phr->log_t); phr->log_t = NULL; phr->log_z = 0;
 }
 
+static const unsigned char * const external_int_action_names[NEW_SRV_INT_LAST] =
+{
+  [NEW_SRV_INT_ACM_STANDINGS] = "int_acm_standings",
+  [NEW_SRV_INT_KIROV_STANDINGS] = "int_kirov_standings",
+  [NEW_SRV_INT_MOSCOW_STANDINGS] = "int_moscow_standings",
+  [NEW_SRV_INT_OLYMP_ACCEPT_STANDINGS] = "int_olymp_accept_standings",
+  [NEW_SRV_INT_PUBLIC_LOG] = "int_public_log",
+};
+static ExternalActionState *external_int_action_states[NEW_SRV_INT_LAST];
+
+int
+ns_int_external_action(
+        struct http_request_info *phr,
+        int action)
+{
+  if (action <= 0 || action >= NEW_SRV_INT_LAST) {
+    err("ns_int_external_action: invalid action: %d", action);
+    return -1;
+  }
+  if (!external_int_action_names[action]) {
+    err("ns_int_external_action: action %d is undefined", action);
+    return -1;
+  }
+
+  ContestExternalActions *cnts_actions = NULL;
+  if (phr->extra) cnts_actions = phr->extra->cnts_actions;
+
+  ExternalActionState *action_state = NULL;
+  if (cnts_actions && cnts_actions->int_actions && action < cnts_actions->ints_size) {
+    ExternalActionState *st = cnts_actions->int_actions[action];
+    const unsigned char *root_dir = NULL;
+    if (phr->cnts) root_dir = phr->cnts->root_dir;
+    if (st != EXTERNAL_ACTION_NONE) {
+      st = external_action_load(st,
+                                "csp/contests",
+                                external_int_action_names[action],
+                                "csp_get_",
+                                root_dir,
+                                phr->current_time,
+                                phr->contest_id,
+                                1 /* allow_fail */);
+      if (!st) {
+        cnts_actions->int_actions[action] = EXTERNAL_ACTION_NONE;
+      } else {
+        cnts_actions->int_actions[action] = st;
+        action_state = st;
+      }
+    }
+  }
+
+  if (!action_state) {
+    external_int_action_states[action] = external_action_load(external_int_action_states[action],
+                                                              "csp/contests",
+                                                              external_int_action_names[action],
+                                                              "csp_get_",
+                                                              NULL /* fixed_src_dir */,
+                                                              phr->current_time,
+                                                              0 /* contest_id */,
+                                                              0 /* allow_fail */);
+    action_state = external_int_action_states[action];
+  }
+
+  if (!action_state) {
+    err("ns_int_external_action: failed to load action %d", action);
+    return -1;
+  }
+  if (!action_state->action_handler) {
+    err("ns_int_external_action: action %d handler is NULL", action);
+    return -1;
+  }
+
+  PageInterface *pg = ((external_action_handler_t) action_state->action_handler)();
+    
+  if (pg->ops->execute) {
+    int r = pg->ops->execute(pg, phr->log_f, phr);
+    if (r < 0) {
+      if (pg->ops->destroy) pg->ops->destroy(pg);
+      return r;
+    }
+  }
+
+  if (pg->ops->render) {
+    int r = pg->ops->render(pg, phr->log_f, phr->out_f, phr);
+    if (r < 0) {
+      if (pg->ops->destroy) pg->ops->destroy(pg);
+      return r;
+    }
+  }
+
+  if (pg->ops->destroy) pg->ops->destroy(pg);
+
+  return 0;
+}
+
 const unsigned char *
 ns_get_register_url(
         unsigned char *buf,
