@@ -4689,20 +4689,6 @@ do_write_public_log(
 }
 
 void
-write_public_log(
-        struct contest_extra *extra,
-        const serve_state_t state,
-        const struct contest_desc *cnts,
-        char const *stat_dir,
-        char const *name,
-        char const *header_str,
-        char const *footer_str,
-        int charset_id,
-        int user_mode)
-{
-}
-
-void
 old_write_public_log(
         struct contest_extra *extra,
         const serve_state_t state,
