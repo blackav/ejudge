@@ -3174,39 +3174,27 @@ int ns_match_action(const unsigned char *str)
                                           c = str[15];
                                           if (c == 't') {
                                             c = str[16];
-                                            if (c == 'i') {
+                                            if (c == '-') {
                                               c = str[17];
-                                              if (c == 'n') {
+                                              if (c == 's') {
                                                 c = str[18];
-                                                if (c == 'g') {
+                                                if (c == 't') {
                                                   c = str[19];
-                                                  if (c == '-') {
+                                                  if (c == 'a') {
                                                     c = str[20];
-                                                    if (c == 's') {
+                                                    if (c == 'n') {
                                                       c = str[21];
-                                                      if (c == 't') {
+                                                      if (c == 'd') {
                                                         c = str[22];
-                                                        if (c == 'a') {
+                                                        if (c == 'i') {
                                                           c = str[23];
                                                           if (c == 'n') {
                                                             c = str[24];
-                                                            if (c == 'd') {
+                                                            if (c == 'g') {
                                                               c = str[25];
-                                                              if (c == 'i') {
+                                                              if (c == 's') {
                                                                 c = str[26];
-                                                                if (c == 'n') {
-                                                                  c = str[27];
-                                                                  if (c == 'g') {
-                                                                    c = str[28];
-                                                                    if (c == 's') {
-                                                                      c = str[29];
-                                                                      if (!c) return NEW_SRV_ACTION_INT_OLYMP_ACCEPTING_STANDINGS;
-                                                                      return 0;
-                                                                    }
-                                                                    return 0;
-                                                                  }
-                                                                  return 0;
-                                                                }
+                                                                if (!c) return NEW_SRV_ACTION_INT_OLYMP_ACCEPT_STANDINGS;
                                                                 return 0;
                                                               }
                                                               return 0;
