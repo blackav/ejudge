@@ -168,7 +168,7 @@ serve_update_public_log_file(
 
   charset_id = charset_get_id(global->plog_charset);
   l10n_setlocale(global->standings_locale_id);
-  write_public_log(state, cnts, global->status_dir,
+  write_public_log(extra, state, cnts, global->status_dir,
                    global->plog_file_name,
                    global->plog_header_txt,
                    global->plog_footer_txt,

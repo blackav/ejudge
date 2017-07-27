@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <time.h>
 
+struct contest_extra;
+
 void
 write_standings(
         const serve_state_t,
@@ -38,6 +40,7 @@ write_standings(
         int user_mode);
 void
 write_public_log(
+        struct contest_extra *extra,
         const serve_state_t,
         const struct contest_desc *,
         char const *,

@@ -4690,6 +4690,7 @@ do_write_public_log(
 
 void
 write_public_log(
+        struct contest_extra *extra,
         const serve_state_t state,
         const struct contest_desc *cnts,
         char const *stat_dir,
