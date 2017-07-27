@@ -138,8 +138,10 @@ serve_update_standings_file(serve_state_t state,
 }
 
 void
-serve_update_public_log_file(serve_state_t state,
-                             const struct contest_desc *cnts)
+serve_update_public_log_file(
+        struct contest_extra *extra,
+        serve_state_t state,
+        const struct contest_desc *cnts)
 {
   struct section_global_data *global = state->global;
   time_t start_time, stop_time, duration;

@@ -346,11 +346,15 @@ serve_state_destroy_stand_expr(struct user_filter_info *u);
 
 void serve_state_set_config_path(serve_state_t state, const unsigned char *);
 
+struct contest_extra;
+
 void serve_update_standings_file(serve_state_t state,
                                  const struct contest_desc *cnts,
                                  int force_flag);
-void serve_update_public_log_file(serve_state_t state,
-                                  const struct contest_desc *cnts);
+void serve_update_public_log_file(
+        struct contest_extra *extra,
+        serve_state_t state,
+        const struct contest_desc *cnts);
 void serve_update_external_xml_log(serve_state_t state,
                                    const struct contest_desc *cnts);
 void serve_update_internal_xml_log(serve_state_t state,
