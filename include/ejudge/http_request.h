@@ -127,6 +127,8 @@ struct http_request_info
   char *log_t;
   size_t log_z;
 
+  void *extra_info;
+
   unsigned char data[0];
 };
 
