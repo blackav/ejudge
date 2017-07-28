@@ -143,17 +143,7 @@ void
 serve_update_public_log_file(
         struct contest_extra *extra,
         serve_state_t state,
-        const struct contest_desc *cnts,
-        void (*write_public_log_func)(
-            struct contest_extra *extra,
-            const serve_state_t state,
-            const struct contest_desc *cnts,
-            char const *stat_dir,
-            char const *name,
-            char const *header_str,
-            char const *footer_str,
-            int charset_id,
-            int user_mode))
+        const struct contest_desc *cnts)
 {
   struct section_global_data *global = state->global;
   time_t start_time, stop_time, duration;
@@ -180,11 +170,11 @@ serve_update_public_log_file(
 
   charset_id = charset_get_id(global->plog_charset);
   l10n_setlocale(global->standings_locale_id);
-  write_public_log_func(extra, state, cnts, global->status_dir,
-                        global->plog_file_name,
-                        global->plog_header_txt,
-                        global->plog_footer_txt,
-                        charset_id, 1 /* user_mode */);
+  write_public_log(extra, state, cnts, global->status_dir,
+                   global->plog_file_name,
+                   global->plog_header_txt,
+                   global->plog_footer_txt,
+                   charset_id, 1 /* user_mode */);
   state->last_update_public_log = state->current_time;
   l10n_resetlocale();
 }

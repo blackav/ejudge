@@ -359,17 +359,7 @@ void
 serve_update_public_log_file(
         struct contest_extra *extra,
         serve_state_t state,
-        const struct contest_desc *cnts,
-        void (*write_public_log_func)(
-            struct contest_extra *extra,
-            const serve_state_t state,
-            const struct contest_desc *cnts,
-            char const *stat_dir,
-            char const *name,
-            char const *header_str,
-            char const *footer_str,
-            int charset_id,
-            int user_mode));
+        const struct contest_desc *cnts);
 void serve_update_external_xml_log(serve_state_t state,
                                    const struct contest_desc *cnts);
 void serve_update_internal_xml_log(serve_state_t state,

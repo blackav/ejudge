@@ -593,7 +593,7 @@ ns_loop_callback(struct server_framework_state *state)
     e->serve_state->current_time = cur_time;
     ns_check_contest_events(e, e->serve_state, cnts);
 
-    serve_update_public_log_file(e, e->serve_state, cnts, write_public_log);
+    serve_update_public_log_file(e, e->serve_state, cnts);
     serve_update_external_xml_log(e->serve_state, cnts);
     serve_update_internal_xml_log(e->serve_state, cnts);
 
