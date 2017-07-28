@@ -11611,10 +11611,67 @@ ns_write_standings(
         time_t cur_time)
 {
   if (phr && !extra) extra = phr->extra;
+  if (phr && !cnts) cnts = phr->cnts;
   if (extra && !state) state = extra->serve_state;
   int score_system = 0;
   if (state->global) score_system = state->global->score_system;
+  int hr_allocated = 0;
+  int int_action = 0;
 
+  StandingsExtraInfo extra_info =
+  {
+    .stand_dir = stand_dir,
+    .client_flag = client_flag,
+    .only_table_flag = only_table_flag,
+    .user_id = user_id,
+    .header_str = header_str,
+    .footer_str = footer_str,
+    .raw_flag = raw_flag,
+    .accepting_mode = accepting_mode,
+    .user_name = user_name,
+    .force_fancy_style = force_fancy_style,
+    .charset_id = charset_id,
+    .user_filter = user_filter,
+    .user_mode = user_mode
+  };
+  if (!phr) {
+    phr = alloca(sizeof(*phr));
+    memset(phr, 0, sizeof(*phr));
+    phr->contest_id = cnts->id;
+    phr->anonymous_mode = 1;
+    phr->current_time = cur_time;
+    phr->cnts = cnts;
+    phr->extra = extra;
+    phr->out_f = open_memstream(&phr->out_t, &phr->out_z);
+    phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
+    hr_allocated = 1;
+  }
+  phr->config = ejudge_config;
+  phr->extra_info = &extra_info;
+  switch (score_system) {
+  case SCORE_KIROV:
+  case SCORE_OLYMPIAD:
+    int_action = NEW_SRV_INT_KIROV_STANDINGS;
+    break;
+  case SCORE_MOSCOW:
+    int_action = NEW_SRV_INT_MOSCOW_STANDINGS;
+    break;
+  case SCORE_ACM:
+  default:
+    int_action = NEW_SRV_INT_ACM_STANDINGS;
+    break;
+  }
+  int r = ns_int_external_action(phr, int_action);
+  if (r >= 0) {
+    if (hr_allocated) {
+      if (phr->log_f) fclose(phr->log_f);
+      xfree(phr->log_t);
+    }
+    // FIXME: what to do with output stream?
+    return;
+  }
+
+  // default action
   switch (score_system) {
   case SCORE_KIROV:
   case SCORE_OLYMPIAD:
