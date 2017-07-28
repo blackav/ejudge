@@ -11572,6 +11572,10 @@ ns_int_external_action(
   }
 
   PageInterface *pg = ((external_action_handler_t) action_state->action_handler)();
+  if (!pg) {
+    err("ns_int_external_action: action %d create error", action);
+    return -1;
+  }
     
   if (pg->ops->execute) {
     int r = pg->ops->execute(pg, phr->log_f, phr);
