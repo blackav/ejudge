@@ -11589,6 +11589,58 @@ ns_int_external_action(
 }
 
 void
+do_write_kirov_standings(
+        const serve_state_t,
+        const struct contest_desc *cnts,
+        FILE *f,
+        const unsigned char *stand_dir,
+        int client_flag,
+        int only_table_flag,
+        int user_id,
+        const unsigned char *header_str,
+        unsigned char const *footer_str,
+        int raw_flag,
+        int accepting_mode,
+        int force_fancy_style,
+        time_t cur_time,
+        int charset_id,
+        struct user_filter_info *u,
+        int user_mode);
+
+void
+do_write_standings(
+        const serve_state_t,
+        const struct contest_desc *cnts,
+        FILE *f,
+        int client_flag,
+        int only_table_flag,
+        int user_id,
+        const unsigned char *header_str,
+        unsigned char const *footer_str,
+        int raw_flag,
+        const unsigned char *user_name,
+        int force_fancy_style,
+        time_t cur_time,
+        struct user_filter_info *u);
+
+void
+do_write_moscow_standings(
+        const serve_state_t,
+        const struct contest_desc *cnts,
+        FILE *f,
+        const unsigned char *stand_dir,
+        int client_flag, int only_table_flag,
+        int user_id,
+        const unsigned char *header_str,
+        const unsigned char *footer_str,
+        int raw_flag,
+        const unsigned char *user_name,
+        int force_fancy_style,
+        time_t cur_time,
+        int charset_id,
+        struct user_filter_info *u);
+
+void
 ns_write_standings(
         struct http_request_info *phr,
         struct contest_extra *extra,
