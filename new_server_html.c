@@ -240,11 +240,13 @@ ns_try_contest_external_actions(int contest_id)
 }
 
 struct contest_extra *
-ns_get_contest_extra(int contest_id)
+ns_get_contest_extra(const struct contest_desc *cnts)
 {
   struct contest_extra *p;
   size_t i, j, k;
 
+  if (!cnts) return NULL;
+  int contest_id = cnts->id;
   ASSERT(contest_id > 0 && contest_id <= EJ_MAX_CONTEST_ID);
 
   if (!extra_u) {
@@ -256,6 +258,9 @@ ns_get_contest_extra(int contest_id)
     extras[extra_u++] = p;
     p->contest_id = contest_id;
     p->last_access_time = time(0);
+    if (cnts->enable_local_pages > 0 && !p->cnts_actions) {
+      p->cnts_actions = ns_get_contest_external_actions(contest_id, p->last_access_time);
+    }
     return p;
   }
 
@@ -268,6 +273,9 @@ ns_get_contest_extra(int contest_id)
     extras[extra_u++] = p;
     p->contest_id = contest_id;
     p->last_access_time = time(0);
+    if (cnts->enable_local_pages > 0 && !p->cnts_actions) {
+      p->cnts_actions = ns_get_contest_external_actions(contest_id, p->last_access_time);
+    }
     return p;
   }
 
@@ -276,6 +284,9 @@ ns_get_contest_extra(int contest_id)
     k = (i + j) / 2;
     if ((p = extras[k])->contest_id == contest_id) {
       p->last_access_time = time(0);
+      if (cnts->enable_local_pages > 0 && !p->cnts_actions) {
+        p->cnts_actions = ns_get_contest_external_actions(contest_id, p->last_access_time);
+      }
       return p;
     }
     if (p->contest_id < contest_id) {
@@ -297,6 +308,9 @@ ns_get_contest_extra(int contest_id)
     extras[j] = p;
     p->contest_id = contest_id;
     p->last_access_time = time(0);
+    if (cnts->enable_local_pages > 0 && !p->cnts_actions) {
+      p->cnts_actions = ns_get_contest_external_actions(contest_id, p->last_access_time);
+    }
     return p;
   }
   ASSERT(i > 0);
@@ -311,6 +325,9 @@ ns_get_contest_extra(int contest_id)
   extras[j] = p;
   p->contest_id = contest_id;
   p->last_access_time = time(0);
+  if (cnts->enable_local_pages > 0 && !p->cnts_actions) {
+    p->cnts_actions = ns_get_contest_external_actions(contest_id, p->last_access_time);
+  }
   return p;
 }
 
@@ -7619,7 +7636,10 @@ privileged_entry_point(
     error_page(fout, phr, 1, NEW_SRV_ERR_INV_CONTEST_ID);
     goto cleanup;
   }
-  extra = ns_get_contest_extra(phr->contest_id);
+  extra = ns_get_contest_extra(cnts);
+  if (cnts->enable_local_pages > 0 && !extra->cnts_actions) {
+    extra->cnts_actions = ns_get_contest_external_actions(phr->contest_id, cur_time);
+  }
   ASSERT(extra);
 
   phr->cnts = cnts;
@@ -7779,7 +7799,10 @@ unpriv_load_html_style(struct http_request_info *phr,
   FILE *state_json_f = 0;
 #endif
 
-  extra = ns_get_contest_extra(phr->contest_id);
+  extra = ns_get_contest_extra(cnts);
+  if (cnts->enable_local_pages > 0 && !extra->cnts_actions) {
+    extra->cnts_actions = ns_get_contest_external_actions(phr->contest_id, cur_time);
+  }
   ASSERT(extra);
 
   cur_time = time(0);
@@ -11273,17 +11296,23 @@ unprivileged_entry_point(
   phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
 
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_1) {
-    phr->extra = ns_get_contest_extra(phr->contest_id);
+    contests_get(phr->contest_id, &cnts);
+    phr->cnts = cnts;
+    phr->extra = ns_get_contest_extra(cnts);
     unpriv_external_action(fout, phr);
     return;
   }
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_2) {
-    phr->extra = ns_get_contest_extra(phr->contest_id);
+    contests_get(phr->contest_id, &cnts);
+    phr->cnts = cnts;
+    phr->extra = ns_get_contest_extra(cnts);
     unpriv_external_action(fout, phr);
     return;
   }
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_3) {
-    phr->extra = ns_get_contest_extra(phr->contest_id);
+    contests_get(phr->contest_id, &cnts);
+    phr->cnts = cnts;
+    phr->extra = ns_get_contest_extra(cnts);
     unpriv_external_action(fout, phr);
     return;
   }
@@ -11291,7 +11320,8 @@ unprivileged_entry_point(
   if ((phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
       && !phr->session_id && ejudge_config->enable_contest_select){
     phr->action = NEW_SRV_ACTION_CONTESTS_PAGE;
-    phr->extra = ns_get_contest_extra(phr->contest_id);
+    phr->cnts = cnts;
+    phr->extra = ns_get_contest_extra(cnts);
     unpriv_external_action(fout, phr);
     return;
   }
@@ -11299,7 +11329,7 @@ unprivileged_entry_point(
   phr->cnts = cnts;
 
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE) {
-    phr->extra = ns_get_contest_extra(phr->contest_id);
+    phr->extra = ns_get_contest_extra(phr->cnts);
     return unprivileged_page_login(fout, phr);
   }
 
@@ -11351,7 +11381,7 @@ unprivileged_entry_point(
     error_page(fout, phr, 0, -NEW_SRV_ERR_INV_CONTEST_ID);
     goto cleanup;
   }
-  extra = ns_get_contest_extra(phr->contest_id);
+  extra = ns_get_contest_extra(cnts);
   ASSERT(extra);
   phr->cnts = cnts;
   phr->extra = extra;
@@ -11977,7 +12007,7 @@ cleanup:
 static void
 do_load_contest(struct http_request_info *phr, const struct contest_desc *cnts)
 {
-  struct contest_extra *extra = ns_get_contest_extra(phr->contest_id);
+  struct contest_extra *extra = ns_get_contest_extra(cnts);
   if (!extra) return;
 
   phr->extra = extra;

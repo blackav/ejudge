@@ -2089,7 +2089,7 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
     return -NEW_SRV_ERR_INV_CONTEST_ID;
   if (!cnts->managed)
     return -NEW_SRV_ERR_INV_CONTEST_ID;
-  extra = ns_get_contest_extra(phr->contest_id);
+  extra = ns_get_contest_extra(cnts);
   ASSERT(extra);
 
   if (phr->role < 0 || phr->role >= USER_ROLE_LAST)
