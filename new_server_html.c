@@ -11175,19 +11175,46 @@ unpriv_external_action(FILE *out_f, struct http_request_info *phr)
   int action = phr->action;
   if (external_unpriv_action_aliases[action] > 0) action = external_unpriv_action_aliases[action];
 
+  ContestExternalActions *cnts_actions = NULL;
+  if (phr->extra) cnts_actions = phr->extra->cnts_actions;
+
+  ExternalActionState *action_state = NULL;
   if (external_unpriv_action_names[action]) {
-    external_unpriv_action_states[action] = external_action_load(external_unpriv_action_states[action],
-                                                                 "csp/contests",
-                                                                 external_unpriv_action_names[action],
-                                                                 "csp_get_",
-                                                                 NULL /* fixed_src_dir */,
-                                                                 phr->current_time,
-                                                                 0 /* contest_id */,
-                                                                 0 /* allow_fail */);
+    if (cnts_actions && cnts_actions->unpriv_actions && action >= 0 && action < cnts_actions->actions_size) {
+      ExternalActionState *st = cnts_actions->unpriv_actions[action];
+      const unsigned char *root_dir = NULL;
+      if (phr->cnts) root_dir = phr->cnts->root_dir;
+      if (st != EXTERNAL_ACTION_NONE) {
+        st = external_action_load(st,
+                                  "csp/contests",
+                                  external_unpriv_action_names[action],
+                                  "csp_get_",
+                                  root_dir,
+                                  phr->current_time,
+                                  phr->contest_id,
+                                  1 /* allow_fail */);
+        if (!st) {
+          cnts_actions->unpriv_actions[action] = EXTERNAL_ACTION_NONE;
+        } else {
+          cnts_actions->unpriv_actions[action] = st;
+          action_state = st;
+        }
+      }
+    }
+    if (!action_state) {
+      external_unpriv_action_states[action] = external_action_load(external_unpriv_action_states[action],
+                                                                   "csp/contests",
+                                                                   external_unpriv_action_names[action],
+                                                                   "csp_get_",
+                                                                   NULL /* fixed_src_dir */,
+                                                                   phr->current_time,
+                                                                   0 /* contest_id */,
+                                                                   0 /* allow_fail */);
+    }
   }
 
-  if (external_unpriv_action_states[action] && external_unpriv_action_states[action]->action_handler) {
-    PageInterface *pg = ((external_action_handler_t) external_unpriv_action_states[action]->action_handler)();
+  if (action_state && action_state->action_handler) {
+    PageInterface *pg = ((external_action_handler_t) action_state->action_handler)();
 
     if (pg->ops->execute) {
       int r = pg->ops->execute(pg, phr->log_f, phr);
@@ -11240,14 +11267,17 @@ unprivileged_entry_point(
   phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
 
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_1) {
+    phr->extra = ns_get_contest_extra(phr->contest_id);
     unpriv_external_action(fout, phr);
     return;
   }
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_2) {
+    phr->extra = ns_get_contest_extra(phr->contest_id);
     unpriv_external_action(fout, phr);
     return;
   }
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_3) {
+    phr->extra = ns_get_contest_extra(phr->contest_id);
     unpriv_external_action(fout, phr);
     return;
   }
@@ -11255,14 +11285,17 @@ unprivileged_entry_point(
   if ((phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
       && !phr->session_id && ejudge_config->enable_contest_select){
     phr->action = NEW_SRV_ACTION_CONTESTS_PAGE;
+    phr->extra = ns_get_contest_extra(phr->contest_id);
     unpriv_external_action(fout, phr);
     return;
   }
 
   phr->cnts = cnts;
 
-  if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
+  if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE) {
+    phr->extra = ns_get_contest_extra(phr->contest_id);
     return unprivileged_page_login(fout, phr);
+  }
 
   // validate cookie
   if (ns_open_ul_connection(phr->fw_state) < 0) {
