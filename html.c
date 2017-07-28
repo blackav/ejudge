@@ -4723,6 +4723,15 @@ do_write_public_log(
   html_armor_free(&ab);
 }
 
+typedef void (*write_public_log_func_t)(
+        struct http_request_info *phr,
+        struct contest_extra *extra,
+        const struct contest_desc *cnts,
+        FILE *f,
+        char const *header_str,
+        char const *footer_str,
+        int user_mode);
+
 void
 old_write_public_log(
         struct contest_extra *extra,
@@ -4748,7 +4757,23 @@ old_write_public_log(
   } else {
     if (!(f = sf_fopen(tpath, "w"))) return;
   }
-  do_write_public_log(state, cnts, f, header_str, footer_str, user_mode);
+
+  // to break compile-time dependency!
+  static write_public_log_func_t public_log_func = NULL;
+  if (!public_log_func) {
+    public_log_func = dlsym(NULL, "ns_write_public_log");
+  }
+  if (public_log_func) {
+    public_log_func(NULL /* struct http_request_info *phr */,
+                    extra,
+                    cnts,
+                    f,
+                    header_str,
+                    footer_str,
+                    user_mode);
+  }
+  (void) do_write_public_log;
+
   fclose(f); f = 0;
   if (charset_id > 0) {
     encode_txt = charset_encode_heap(charset_id, encode_txt);
