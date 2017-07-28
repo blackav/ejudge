@@ -4478,18 +4478,53 @@ write_standings(
     if (!(f = sf_fopen(tpath, "w")))
       return;
   }
-  if (global->score_system == SCORE_KIROV
-      || global->score_system == SCORE_OLYMPIAD)
-    do_write_kirov_standings(state, cnts, f, stat_dir, 0, 0, 0, header_str,
-                             footer_str, 0, accepting_mode, force_fancy_style,
-                             0, charset_id, NULL, user_mode);
+  if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD)
+    do_write_kirov_standings(state /* const serve_state_t */,
+                             cnts /* const struct contest_desc *cnts */,
+                             f /* FILE *f */,
+                             stat_dir /* const unsigned char *stand_dir */,
+                             0 /* int client_flag */,
+                             0 /* int only_table_flag */,
+                             0 /* int user_id */,
+                             header_str /* const unsigned char *header_str */,
+                             footer_str /* unsigned char const *footer_str */,
+                             0 /* int raw_flag */,
+                             accepting_mode /* int accepting_mode */,
+                             force_fancy_style /* int force_fancy_style */,
+                             0 /* time_t cur_time */,
+                             charset_id /* int charset_id */,
+                             NULL /* struct user_filter_info *u */,
+                             user_mode /* */);
   else if (global->score_system == SCORE_MOSCOW)
-    do_write_moscow_standings(state, cnts, f, stat_dir, 0, 0, 0, header_str,
-                              footer_str, 0, 0, force_fancy_style, 0,
-                              charset_id, NULL);
+    do_write_moscow_standings(state /* const serve_state_t */,
+                              cnts /* const struct contest_desc *cnts */,
+                              f /* FILE *f */,
+                              stat_dir /* const unsigned char *stand_dir */,
+                              0 /* int client_flag */,
+                              0 /* int only_table_flag */,
+                              0 /* int user_id */,
+                              header_str /* const unsigned char *header_str */,
+                              footer_str /* unsigned char const *footer_str */,
+                              0 /* int raw_flag */,
+                              0 /* const unsigned char *user_name */,
+                              force_fancy_style /* int force_fancy_style */,
+                              0 /* time_t cur_time */,
+                              charset_id /* int charset_id */,
+                              NULL /* struct user_filter_info *u */);
   else
-    do_write_standings(state, cnts, f, 0, 0, 0, header_str, footer_str, 0, 0,
-                       force_fancy_style, 0, NULL);
+    do_write_standings(state /* const serve_state_t */,
+                       cnts /* const struct contest_desc *cnts */,
+                       f /* FILE *f */,
+                       0 /* int client_flag */,
+                       0 /* int only_table_flag */,
+                       0 /* int user_id */,
+                       header_str /* const unsigned char *header_str */,
+                       footer_str /* unsigned char const *footer_str */,
+                       0 /* int raw_flag */,
+                       0 /* const unsigned char *user_name */,
+                       force_fancy_style /* int force_fancy_style */,
+                       0 /* time_t cur_time */,
+                       NULL /* struct user_filter_info *u */);
   if (charset_id > 0) {
     fclose(f); f = 0; encode_len = 0;
     encode_txt = charset_encode_heap(charset_id, encode_txt);
