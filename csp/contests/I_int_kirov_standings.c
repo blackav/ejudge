@@ -15,7 +15,7 @@
  */
 
 #include "ejudge/new-server.h"
-#include "ejudge/new_server_pi.h"
+#include "ejudge/internal_pages.h"
 #include "ejudge/new_server_proto.h"
 #include "ejudge/external_action.h"
 

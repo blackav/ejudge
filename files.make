@@ -560,6 +560,7 @@ HFILES=\
  ./include/ejudge/html_parse.h\
  ./include/ejudge/http_request.h\
  ./include/ejudge/imagemagick.h\
+ ./include/ejudge/internal_pages.h\
  ./include/ejudge/interrupt.h\
  ./include/ejudge/iterators.h\
  ./include/ejudge/job_packet.h\
