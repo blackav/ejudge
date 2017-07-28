@@ -190,6 +190,23 @@ typedef struct PublicLogExtraInfo
     int user_mode;
 } PublicLogExtraInfo;
 
+typedef struct StandingsExtraInfo
+{
+    const unsigned char *stand_dir;
+    int client_flag;
+    int only_table_flag;
+    int user_id;
+    const unsigned char *header_str;
+    unsigned char const *footer_str;
+    int raw_flag;
+    int accepting_mode;
+    const unsigned char *user_name;
+    int force_fancy_style;
+    int charset_id;
+    struct user_filter_info *user_filter;
+    int user_mode;
+} StandingsExtraInfo;
+
 #endif /* __NEW_SERVER_PI_H__ */
 
 /*
