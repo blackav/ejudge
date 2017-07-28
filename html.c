@@ -4733,7 +4733,7 @@ typedef void (*write_public_log_func_t)(
         int user_mode);
 
 void
-old_write_public_log(
+write_public_log(
         struct contest_extra *extra,
         const serve_state_t state,
         const struct contest_desc *cnts,
