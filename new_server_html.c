@@ -11684,7 +11684,6 @@ void
 ns_write_standings(
         struct http_request_info *phr,
         struct contest_extra *extra,
-        struct serve_state *state,
         const struct contest_desc *cnts,
         FILE *f,
         const unsigned char *stand_dir,
@@ -11704,7 +11703,11 @@ ns_write_standings(
 {
   if (phr && !extra) extra = phr->extra;
   if (phr && !cnts) cnts = phr->cnts;
-  if (extra && !state) state = extra->serve_state;
+
+  ASSERT(extra);
+  serve_state_t state = extra->serve_state;
+  ASSERT(state);
+
   int score_system = 0;
   if (state->global) score_system = state->global->score_system;
   int hr_allocated = 0;

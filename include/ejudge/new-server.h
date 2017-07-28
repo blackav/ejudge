@@ -841,7 +841,6 @@ void
 ns_write_standings(
         struct http_request_info *phr,
         struct contest_extra *extra,
-        struct serve_state *state,
         const struct contest_desc *cnts,
         FILE *f,
         const unsigned char *stand_dir,

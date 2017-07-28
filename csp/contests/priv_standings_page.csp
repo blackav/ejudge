@@ -51,7 +51,6 @@
 <%
     ns_write_standings(phr /* struct http_request_info *phr */,
                        NULL /* struct contest_extra *extra */,
-                       cs /* const serve_state_t state */,
                        cnts /* const struct contest_desc *cnts */,
                        out_f /* FILE *f */,
                        NULL /* const unsigned char *stand_dir */,

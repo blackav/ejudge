@@ -4452,7 +4452,6 @@ do_write_standings(
 typedef void (*write_standings_func_t)(
         struct http_request_info *phr,
         struct contest_extra *extra,
-        struct serve_state *state,
         const struct contest_desc *cnts,
         FILE *f,
         const unsigned char *stand_dir,
@@ -4509,7 +4508,6 @@ write_standings(
   if (stand_func) {
     stand_func(NULL /* struct http_request_info *phr */,
                extra /* struct contest_extra *extra */,
-               state /* struct serve_state *state */,
                cnts /* const struct contest_desc *cnts */,
                f /* FILE *f */,
                stat_dir /* const unsigned char *stand_dir */,
