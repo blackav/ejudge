@@ -838,6 +838,16 @@ ns_int_external_action(
         int action);
 
 void
+ns_write_public_log(
+        struct http_request_info *phr,
+        struct contest_extra *extra,
+        const struct contest_desc *cnts,
+        FILE *f,
+        char const *header_str,
+        char const *footer_str,
+        int user_mode);
+
+void
 ns_write_standings(
         struct http_request_info *phr,
         struct contest_extra *extra,

@@ -11824,6 +11824,49 @@ ns_write_standings(
 }
 
 void
+ns_write_public_log(
+        struct http_request_info *phr,
+        struct contest_extra *extra,
+        const struct contest_desc *cnts,
+        FILE *f,
+        char const *header_str,
+        char const *footer_str,
+        int user_mode)
+{
+  if (phr && !extra) extra = phr->extra;
+  if (phr && !cnts) cnts = phr->cnts;
+
+  ASSERT(extra);
+  serve_state_t state = extra->serve_state;
+  ASSERT(state);
+
+  // temporary
+  ASSERT(!phr);
+
+    PublicLogExtraInfo extra_info =
+  {
+    .header_str = header_str,
+    .footer_str = footer_str,
+    .user_mode = user_mode
+  };
+  struct http_request_info hr;
+
+  memset(&hr, 0, sizeof(hr));
+  hr.contest_id = cnts->id;
+  hr.extra = extra;
+  hr.anonymous_mode = 1;
+  hr.current_time = time(NULL);
+  hr.cnts = cnts;
+  hr.config = ejudge_config;
+  hr.out_f = f;
+  hr.log_f = open_memstream(&hr.log_t, &hr.log_z);
+  hr.extra_info = &extra_info;
+  ns_int_external_action(&hr, NEW_SRV_INT_PUBLIC_LOG);
+  if (hr.log_f) fclose(hr.log_f);
+  xfree(hr.log_t);
+}
+
+void
 write_public_log(
         struct contest_extra *extra,
         const serve_state_t state,
