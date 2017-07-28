@@ -198,7 +198,6 @@ typedef struct StandingsExtraInfo
     int user_id;
     const unsigned char *header_str;
     unsigned char const *footer_str;
-    int raw_flag;
     int accepting_mode;
     const unsigned char *user_name;
     int force_fancy_style;
