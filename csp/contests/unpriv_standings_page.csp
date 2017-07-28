@@ -74,6 +74,31 @@
 <%
     if (global->disable_user_standings > 0) {
 %><p><s:_>Information is not available.</s:_></p><%
+    } else if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
+%><p><s:_>Information is not available.</s:_></p><%
+    } else {
+        ns_write_standings(phr /* struct http_request_info *phr */,
+                           NULL /* struct contest_extra *extra */,
+                           cs /* const serve_state_t state */,
+                           cnts /* const struct contest_desc *cnts */,
+                           out_f /* FILE *f */,
+                           NULL /* const unsigned char *stand_dir */,
+                           1 /* int client_flag */,
+                           1 /* int only_table_flag */,
+                           phr->user_id /* int user_id */,
+                           NULL /* const unsigned char *header_str */,
+                           NULL /* unsigned char const *footer_str */,
+                           0 /* int raw_flag */,
+                           0 /* int accepting_mode */,
+                           NULL /* const unsigned char *user_name */,
+                           1 /* int force_fancy_style */,
+                           0 /* int charset_id */,
+                           NULL /* struct user_filter_info *user_filter */,
+                           1 /* int user_mode */,
+                           cur_time /* time_t cur_time */);
+    }
+    if (global->disable_user_standings > 0) {
+%><p><s:_>Information is not available.</s:_></p><%
     } else if (global->score_system == SCORE_ACM) {
         do_write_standings(cs /* const serve_state_t state */,
                            cnts /* const struct contest_desc *cnts */,
