@@ -50,6 +50,7 @@
 
 #include <time.h>
 #include <unistd.h>
+#include <dlfcn.h>
 
 #ifndef EJUDGE_CHARSET
 #define EJUDGE_CHARSET EJ_INTERNAL_CHARSET
@@ -4448,6 +4449,27 @@ do_write_standings(
   if (extras) extras->free(extras);
 }
 
+typedef void (*write_standings_func_t)(
+        struct http_request_info *phr,
+        struct contest_extra *extra,
+        struct serve_state *state,
+        const struct contest_desc *cnts,
+        FILE *f,
+        const unsigned char *stand_dir,
+        int client_flag,
+        int only_table_flag,
+        int user_id,
+        const unsigned char *header_str,
+        const unsigned char *footer_str,
+        int raw_flag,
+        int accepting_mode,
+        const unsigned char *user_name,
+        int force_fancy_style,
+        int charset_id,
+        struct user_filter_info *user_filter,
+        int user_mode,
+        time_t cur_time);
+
 void
 write_standings(
         const serve_state_t state,
@@ -4478,6 +4500,30 @@ write_standings(
     if (!(f = sf_fopen(tpath, "w")))
       return;
   }
+
+  // to break compile-time dependency!
+  write_standings_func_t stand_func = dlsym(NULL, "ns_write_standings");
+  if (stand_func) {
+    stand_func(NULL /* struct http_request_info *phr */,
+               NULL /* struct contest_extra *extra */,
+               state /* struct serve_state *state */,
+               cnts /* const struct contest_desc *cnts */,
+               f /* FILE *f */,
+               stat_dir /* const unsigned char *stand_dir */,
+               0 /* int client_flag */,
+               0 /* int only_table_flag */,
+               0 /* int user_id */,
+               header_str /* const unsigned char *header_str */,
+               footer_str /* const unsigned char *footer_str */,
+               0 /* int raw_flag */,
+               accepting_mode /* int accepting_mode */,
+               NULL /* const unsigned char *user_name */,
+               force_fancy_style /* int force_fancy_style */,
+               charset_id /* int charset_id */,
+               NULL /* struct user_filter_info *u */,
+               user_mode /* int user_mode */,
+               0 /* time_t cur_time */);
+  }
   if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD)
     do_write_kirov_standings(state /* const serve_state_t */,
                              cnts /* const struct contest_desc *cnts */,
@@ -4494,7 +4540,7 @@ write_standings(
                              0 /* time_t cur_time */,
                              charset_id /* int charset_id */,
                              NULL /* struct user_filter_info *u */,
-                             user_mode /* */);
+                             user_mode /* int user_mode */);
   else if (global->score_system == SCORE_MOSCOW)
     do_write_moscow_standings(state /* const serve_state_t */,
                               cnts /* const struct contest_desc *cnts */,
