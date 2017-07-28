@@ -514,12 +514,12 @@ invoke_gcc(
         fprintf(out_m, "\t-rm -f \"I_%s.c\"\n", state->action);
         fprintf(out_m, "\tln -s \"%s/I_%s.c\" \"I_%s.c\"\n", state->src_dir, state->action, state->action);
     }
-    fprintf(out_m, "\t$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) -MM %s.c", state->action);
+    fprintf(out_m, "\t$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) -I\"%s\" -MM %s.c", state->src_dir, state->action);
     if (enable_i_c) {
         fprintf(out_m, " I_%s.c", state->action);
     }
     fprintf(out_m, " > %s.dc\n", state->action);
-    fprintf(out_m, "\t$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) %s.c", state->action);
+    fprintf(out_m, "\t$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) -I\"%s\" %s.c", state->src_dir, state->action);
     if (enable_i_c) {
         fprintf(out_m, " I_%s.c", state->action);
     }
