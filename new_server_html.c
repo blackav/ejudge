@@ -11589,6 +11589,30 @@ ns_int_external_action(
 }
 
 void
+ns_write_standings(
+        struct http_request_info *phr,
+        struct contest_extra *extra,
+        const serve_state_t state,
+        const struct contest_desc *cnts,
+        FILE *f,
+        const unsigned char *stand_dir,
+        int client_flag,
+        int only_table_flag,
+        int user_id,
+        const unsigned char *header_str,
+        const unsigned char *footer_str,
+        int raw_flag,
+        int accepting_mode,
+        const unsigned char *user_name,
+        int force_fancy_style,
+        int charset_id,
+        struct user_filter_info *user_filter,
+        int user_mode,
+        time_t cur_time)
+{
+}
+
+void
 write_public_log(
         struct contest_extra *extra,
         const serve_state_t state,
