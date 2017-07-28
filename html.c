@@ -1044,7 +1044,6 @@ do_write_kirov_standings(
         int user_id,
         const unsigned char *header_str,
         unsigned char const *footer_str,
-        int raw_flag,
         int accepting_mode,
         int force_fancy_style,
         time_t cur_time,
@@ -1185,7 +1184,6 @@ do_write_kirov_standings(
     }
   }
   if (!start_time || cur_time < start_time) {
-    if (raw_flag) goto cleanup;
     if (!client_flag && !only_table_flag) 
       write_standings_header(state, cnts, f, client_flag, 0, header_str, 0);
     if (!only_table_flag)
@@ -2026,29 +2024,6 @@ do_write_kirov_standings(
     }
   }
 
-  if (raw_flag) {
-    /* print table contents */
-    for (i = 0; i < t_tot; i++) {
-      int t = t_sort[i];
-
-      fprintf(f, "%d;%d;", t_n1[i] + 1, t_n2[i] + 1);
-      fprintf(f, "%d;", t_ind[t]);
-      for (j = 0; j < p_tot; j++) {
-        up_ind = (t << row_sh) + j;
-        if (!att_num[up_ind]) {
-          fprintf(f, "0;0;;");
-        } else if (full_sol[up_ind]) {
-          fprintf(f, "%d;1;%d;", att_num[up_ind], prob_score[up_ind]);
-        } else {
-          fprintf(f, "%d;0;%d;", att_num[up_ind], prob_score[up_ind]);
-        }
-      }
-      fprintf(f, "%d;%d;", tot_full[t], tot_score[t]);
-      fprintf(f, "\n");
-    }
-    goto cleanup;
-  }
-
   /* print standings table */
   users_per_page = t_tot;
   total_pages = 1;
@@ -2792,7 +2767,6 @@ do_write_moscow_standings(
         int user_id,
         const unsigned char *header_str,
         const unsigned char *footer_str,
-        int raw_flag,
         const unsigned char *user_name,
         int force_fancy_style,
         time_t cur_time,
@@ -2935,7 +2909,6 @@ do_write_moscow_standings(
   }
   current_dur = cur_time - start_time;
   if (!start_time) {
-    if (raw_flag) return;
     if (only_table_flag) return;
     write_standings_header(state, cnts, f, client_flag, user_id, header_str,
                            user_name);
@@ -3225,21 +3198,6 @@ do_write_moscow_standings(
       u_n2[j] = i - 1;
     }
     u = i;
-  }
-
-  if (raw_flag) {
-    for (i = 0; i < u_tot; i++) {
-      u = u_sort[i];
-      fprintf(f, "%d;%d;%d;", u_n1[i] + 1, u_n2[i] + 1, u_ind[u]);
-      for (p = 0; p < p_tot; p++) {
-        up_ind = (u << row_sh) + p;
-        fprintf(f, "%d;%d;%d;%d;%d;", up_solved[up_ind],
-                up_score[up_ind], up_att[up_ind], up_time[up_ind],
-                up_totatt[up_ind]);
-      }
-      fprintf(f, "%d;%d;\n", u_score[u], u_pen[u]);
-    }
-    goto free_resources;
   }
 
   users_per_page = u_tot;
@@ -3696,7 +3654,6 @@ do_write_moscow_standings(
     rename(stand_tmp, stand_path);
   }
 
- free_resources:
   // xfree(u_runs):  currently on stack
   // xfree(u_ind):   currently on stack
   // xfree(u_rev):   currently on stack
@@ -3748,7 +3705,6 @@ do_write_standings(
         int user_id,
         const unsigned char *header_str,
         unsigned char const *footer_str,
-        int raw_flag,
         const unsigned char *user_name,
         int force_fancy_style,
         time_t cur_time,
@@ -3862,8 +3818,6 @@ do_write_standings(
   }
   current_dur = cur_time - start_time;
   if (!start_time) {
-    if (raw_flag) return;
-
     if (!only_table_flag) {
       fprintf(f, "<%s>%s</%s>", head_style, _("The contest is not started"),
               head_style);
@@ -4118,25 +4072,7 @@ do_write_standings(
     i = j;
   }
 
-  if (raw_flag) {
-    for (i = 0; i < t_tot; i++) {
-      t = t_sort[i];
-      fprintf(f, "%d;%d;", t_n1[i] + 1, t_n2[i] + 1);
-      fprintf(f, "%d;", t_ind[t]);
-      for (j = 0; j < p_tot; j++) {
-        up_ind = (t << row_sh) + j;
-        if (calc[up_ind] < 0) {
-          fprintf(f, "%d;0;;", -calc[up_ind]);
-        } else if (calc[up_ind] > 0) {
-          fprintf(f, "%d;1;%ld;", calc[up_ind] - 1, ok_time[up_ind]);
-        } else {
-          fprintf(f, "0;0;;");
-        }
-      }
-      fprintf(f, "%d;%d;", t_prob[t], t_pen[t]);
-      fprintf(f, "\n");
-    }
-  } else {
+  {
     /* print "last success" string */
     if (last_success_run >= 0) {
       unsigned char dur_buf[128];
