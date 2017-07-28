@@ -4502,7 +4502,10 @@ write_standings(
   }
 
   // to break compile-time dependency!
-  write_standings_func_t stand_func = dlsym(NULL, "ns_write_standings");
+  static write_standings_func_t stand_func = NULL;
+  if (!stand_func) {
+    stand_func = dlsym(NULL, "ns_write_standings");
+  }
   if (stand_func) {
     stand_func(NULL /* struct http_request_info *phr */,
                extra /* struct contest_extra *extra */,
