@@ -495,7 +495,10 @@ ns_list_all_users_callback(
         int contest_id,
         unsigned char **p_xml);
 void
-ns_check_contest_events(serve_state_t cs, const struct contest_desc *cnts);
+ns_check_contest_events(
+        struct contest_extra *extra,
+        serve_state_t cs,
+        const struct contest_desc *cnts);
 void ns_contest_unload_callback(serve_state_t cs);
 void ns_client_destroy_callback(struct client_state *p);
 struct client_state *ns_get_client_by_id(int client_id);

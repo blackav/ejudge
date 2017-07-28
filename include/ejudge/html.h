@@ -27,6 +27,7 @@ struct contest_extra;
 
 void
 write_standings(
+        struct contest_extra *extra,
         const serve_state_t,
         const struct contest_desc *,
         char const *,

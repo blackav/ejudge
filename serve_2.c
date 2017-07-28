@@ -75,9 +75,11 @@
 #define ARMOR(s)  html_armor_buf(&ab, s)
 
 void
-serve_update_standings_file(serve_state_t state,
-                            const struct contest_desc *cnts,
-                            int force_flag)
+serve_update_standings_file(
+        struct contest_extra *extra,
+        serve_state_t state,
+        const struct contest_desc *cnts,
+        int force_flag)
 {
   struct section_global_data *global = state->global;
   time_t start_time, stop_time, duration;
@@ -108,7 +110,7 @@ serve_update_standings_file(serve_state_t state,
   }
   charset_id = charset_get_id(global->standings_charset);
   l10n_setlocale(global->standings_locale_id);
-  write_standings(state, cnts, global->status_dir,
+  write_standings(extra, state, cnts, global->status_dir,
                   global->standings_file_name,
                   global->users_on_page,
                   global->stand_header_txt,
@@ -116,7 +118,7 @@ serve_update_standings_file(serve_state_t state,
                   state->accepting_mode, 0, charset_id, 1 /* user_mode */);
   if (global->stand2_file_name && global->stand2_file_name[0]) {
     charset_id = charset_get_id(global->stand2_charset);
-    write_standings(state, cnts, global->status_dir,
+    write_standings(extra, state, cnts, global->status_dir,
                     global->stand2_file_name, 0,
                     global->stand2_header_txt,
                     global->stand2_footer_txt,
@@ -2606,6 +2608,7 @@ serve_notify_user_run_status_change(
 
 int
 serve_read_compile_packet(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         serve_state_t state,
         const struct contest_desc *cnts,
@@ -2757,7 +2760,7 @@ serve_read_compile_packet(
       if (run_change_status_4(state->runlog_state, comp_pkt->run_id, comp_pkt->status) < 0)
         goto non_fatal_error;
 
-      serve_update_standings_file(state, cnts, 0);
+      serve_update_standings_file(extra, state, cnts, 0);
       if (global->notify_status_change > 0 && !re.is_hidden && comp_extra->notify_flag) {
         serve_notify_user_run_status_change(config, cnts, state, re.user_id,
                                             comp_pkt->run_id, comp_pkt->status);
@@ -2907,7 +2910,7 @@ serve_read_compile_packet(
                compile_report_dir, pname, rep_flags, rep_path);
       goto report_check_failed;
     }
-    serve_update_standings_file(state, cnts, 0);
+    serve_update_standings_file(extra, state, cnts, 0);
     if (global->notify_status_change > 0 && !re.is_hidden
         && comp_extra->notify_flag) {
       serve_notify_user_run_status_change(config, cnts, state, re.user_id,
@@ -3155,6 +3158,7 @@ dur_to_str(unsigned char *buf, size_t size, int sec1, int usec1,
 
 int
 serve_read_run_packet(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         serve_state_t state,
         const struct contest_desc *cnts,
@@ -3313,7 +3317,7 @@ serve_read_run_packet(
                             user_score) < 0)
       goto failed;
   }
-  serve_update_standings_file(state, cnts, 0);
+  serve_update_standings_file(extra, state, cnts, 0);
   if (global->notify_status_change > 0 && !re.is_hidden
       && reply_pkt->notify_flag) {
     serve_notify_user_run_status_change(config, cnts, state, re.user_id,
@@ -3495,6 +3499,7 @@ unparse_scoring_system(unsigned char *buf, size_t size, int val)
 
 void
 serve_judge_built_in_problem(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         serve_state_t state,
         const struct contest_desc *cnts,
@@ -3647,7 +3652,7 @@ serve_judge_built_in_problem(
   (void) failed_test;
   run_change_status_3(state->runlog_state, run_id, glob_status, passed_tests, 1,
                       score, 0, 0, 0, 0, 0, 0);
-  serve_update_standings_file(state, cnts, 0);
+  serve_update_standings_file(extra, state, cnts, 0);
   /*
   if (global->notify_status_change > 0 && !re.is_hidden
       && comp_extra->notify_flag) {
@@ -3724,6 +3729,7 @@ serve_report_check_failed(
 
 void
 serve_rejudge_run(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state,
@@ -3778,7 +3784,7 @@ serve_rejudge_run(
     }
 
     if (prob->type == PROB_TYPE_SELECT_ONE && px && px->ans_num > 0) {
-      serve_judge_built_in_problem(config, state, cnts, run_id, 1 /* judge_id*/,
+      serve_judge_built_in_problem(extra, config, state, cnts, run_id, 1 /* judge_id*/,
                                    variant, accepting_mode, &re, prob,
                                    px, user_id, ip, ssl_flag);
       return;
@@ -4012,6 +4018,7 @@ struct rejudge_by_mask_job
 {
   struct server_framework_job b;
 
+  struct contest_extra *extra;
   const struct ejudge_cfg *config;
   const struct contest_desc *cnts;
   serve_state_t state;
@@ -4053,7 +4060,7 @@ rejudge_by_mask_run_func(
     if (run_get_entry(job->state->runlog_state, job->cur_id, &re) >= 0
         && is_generally_rejudgable(job->state, &re, INT_MAX)
         && (job->mask[job->cur_id / BITS_PER_LONG] & (1L << (job->cur_id % BITS_PER_LONG)))) {
-      serve_rejudge_run(job->config, job->cnts, job->state, job->cur_id,
+      serve_rejudge_run(job->extra, job->config, job->cnts, job->state, job->cur_id,
                         job->user_id, &job->ip, job->ssl_flag,
                         job->force_flag, job->priority_adjustment);
     }
@@ -4087,6 +4094,7 @@ static const struct server_framework_job_funcs rejudge_by_mask_funcs __attribute
 
 static struct server_framework_job *
 create_rejudge_by_mask_job(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state,
@@ -4101,6 +4109,7 @@ create_rejudge_by_mask_job(
   struct rejudge_by_mask_job *job = NULL;
 
   XCALLOC(job, 1);
+  job->extra = extra;
   job->config = config;
   job->cnts = cnts;
   job->state = state;
@@ -4124,6 +4133,7 @@ create_rejudge_by_mask_job(
  */
 struct server_framework_job *
 serve_rejudge_by_mask(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state,
@@ -4143,7 +4153,7 @@ serve_rejudge_by_mask(
 
   struct server_framework_job *job = NULL;
   if (create_job_flag) {
-    job = create_rejudge_by_mask_job(config, cnts, state, user_id, ip,
+    job = create_rejudge_by_mask_job(extra, config, cnts, state, user_id, ip,
                                      ssl_flag, mask_size, mask,
                                      force_flag, priority_adjustment);
     if (job) return job;
@@ -4196,7 +4206,7 @@ serve_rejudge_by_mask(
     if (run_get_entry(state->runlog_state, r, &re) >= 0
         && is_generally_rejudgable(state, &re, INT_MAX)
         && (mask[r / BITS_PER_LONG] & (1L << (r % BITS_PER_LONG)))) {
-      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag,
+      serve_rejudge_run(extra, config, cnts, state, r, user_id, ip, ssl_flag,
                         force_flag, priority_adjustment);
     }
   }
@@ -4208,6 +4218,7 @@ struct rejudge_problem_job
 {
   struct server_framework_job b;
 
+  struct contest_extra *extra;
   const struct ejudge_cfg *config;
   const struct contest_desc *cnts;
   serve_state_t state;
@@ -4245,7 +4256,7 @@ rejudge_problem_run_func(
         && is_generally_rejudgable(job->state, &re, INT_MAX)
         && re.status != RUN_IGNORED && re.status != RUN_DISQUALIFIED
         && re.prob_id == job->prob_id) {
-      serve_rejudge_run(job->config, job->cnts, job->state, job->cur_id,
+      serve_rejudge_run(job->extra, job->config, job->cnts, job->state, job->cur_id,
                         job->user_id, &job->ip, job->ssl_flag, 0,
                         job->priority_adjustment);
     }
@@ -4279,6 +4290,7 @@ static const struct server_framework_job_funcs rejudge_problem_funcs __attribute
 
 static struct server_framework_job *
 create_rejudge_problem_job(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state,
@@ -4291,6 +4303,7 @@ create_rejudge_problem_job(
   struct rejudge_problem_job *job = NULL;
 
   XCALLOC(job, 1);
+  job->extra = extra;
   job->config = config;
   job->cnts = cnts;
   job->state = state;
@@ -4305,6 +4318,7 @@ create_rejudge_problem_job(
 
 struct server_framework_job *
 serve_rejudge_problem(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state,
@@ -4325,7 +4339,7 @@ serve_rejudge_problem(
 
   struct server_framework_job *job = NULL;
   if (create_job_flag) {
-    job = create_rejudge_problem_job(config, cnts, state, user_id, ip,
+    job = create_rejudge_problem_job(extra, config, cnts, state, user_id, ip,
                                      ssl_flag, prob_id,
                                      priority_adjustment);
     if (job) return job;
@@ -4357,7 +4371,7 @@ serve_rejudge_problem(
       if (re.prob_id != prob_id) continue;
       if (flag[re.user_id]) continue;
       flag[re.user_id] = 1;
-      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0,
+      serve_rejudge_run(extra, config, cnts, state, r, user_id, ip, ssl_flag, 0,
                         priority_adjustment);
     }
     return NULL;
@@ -4368,7 +4382,7 @@ serve_rejudge_problem(
         && is_generally_rejudgable(state, &re, INT_MAX)
         && re.status != RUN_IGNORED && re.status != RUN_DISQUALIFIED
         && re.prob_id == prob_id) {
-      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0,
+      serve_rejudge_run(extra, config, cnts, state, r, user_id, ip, ssl_flag, 0,
                         priority_adjustment);
     }
   }
@@ -4379,6 +4393,7 @@ struct judge_suspended_job
 {
   struct server_framework_job b;
 
+  struct contest_extra *extra;
   const struct ejudge_cfg *config;
   const struct contest_desc *cnts;
   serve_state_t state;
@@ -4411,7 +4426,7 @@ judge_suspended_run_func(
   sj->total_runs = run_get_total(sj->state->runlog_state);
   for (; sj->cur_run < sj->total_runs && *p_count < max_count; ++sj->cur_run, ++(*p_count)) {
     if (run_get_entry(sj->state->runlog_state, sj->cur_run, &re) >= 0 && re.status == RUN_PENDING) {
-      serve_rejudge_run(sj->config, sj->cnts, sj->state,
+      serve_rejudge_run(sj->extra, sj->config, sj->cnts, sj->state,
                         sj->cur_run, sj->user_id, &sj->ip, sj->ssl_flag, 0,
                         sj->priority_adjustment);
     }
@@ -4445,6 +4460,7 @@ static const struct server_framework_job_funcs judge_suspended_funcs =
 
 struct server_framework_job *
 create_judge_suspended_job(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state,
@@ -4460,6 +4476,7 @@ create_judge_suspended_job(
   sj->b.vt = &judge_suspended_funcs;
   sj->b.contest_id = cnts->id;
   sj->b.title = xstrdup("Judge PENDING initialization");
+  sj->extra = extra;
   sj->config = config;
   sj->cnts = cnts;
   sj->state = state;
@@ -4474,6 +4491,7 @@ create_judge_suspended_job(
 
 struct server_framework_job *
 serve_judge_suspended(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state,
@@ -4488,7 +4506,7 @@ serve_judge_suspended(
 
   struct server_framework_job *job = NULL;
   if (create_job_flag) {
-    job = create_judge_suspended_job(config, cnts, state, user_id, ip,
+    job = create_judge_suspended_job(extra, config, cnts, state, user_id, ip,
                                      ssl_flag, priority_adjustment);
     if (job) return job;
   }
@@ -4503,7 +4521,7 @@ serve_judge_suspended(
     if (run_get_entry(state->runlog_state, r, &re) >= 0
         && is_generally_rejudgable(state, &re, INT_MAX)
         && re.status == RUN_PENDING) {
-      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0,
+      serve_rejudge_run(extra, config, cnts, state, r, user_id, ip, ssl_flag, 0,
                         priority_adjustment);
     }
   }
@@ -4515,6 +4533,7 @@ struct rejudge_all_job
   struct server_framework_job b;
 
   // passed parameters
+  struct contest_extra *extra;
   const struct ejudge_cfg *config;
   const struct contest_desc *cnts;
   serve_state_t state;
@@ -4549,7 +4568,7 @@ rejudge_all_run_func(
     if (run_get_entry(rj->state->runlog_state, rj->cur_run, &re) >= 0
         && is_generally_rejudgable(rj->state, &re, INT_MAX)
         && re.status != RUN_IGNORED && re.status != RUN_DISQUALIFIED) {
-      serve_rejudge_run(rj->config, rj->cnts, rj->state,
+      serve_rejudge_run(rj->extra, rj->config, rj->cnts, rj->state,
                         rj->cur_run, rj->user_id, &rj->ip, rj->ssl_flag, 0,
                         rj->priority_adjustment);
     }
@@ -4583,6 +4602,7 @@ static const struct server_framework_job_funcs rejudge_all_funcs =
 
 static struct server_framework_job *
 create_rejudge_all_job(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state,
@@ -4602,6 +4622,7 @@ create_rejudge_all_job(
   rj->b.vt = &rejudge_all_funcs;
   rj->b.contest_id = cnts->id;
   rj->b.title = xstrdup("Full rejudge initialization");
+  rj->extra = extra;
   rj->config = config;
   rj->cnts = cnts;
   rj->state = state;
@@ -4616,6 +4637,7 @@ create_rejudge_all_job(
 
 struct server_framework_job *
 serve_rejudge_all(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state,
@@ -4631,7 +4653,7 @@ serve_rejudge_all(
 
   struct server_framework_job *job = NULL;
   if (create_job_flag) {
-    job = create_rejudge_all_job(config, cnts, state, user_id, ip,
+    job = create_rejudge_all_job(extra, config, cnts, state, user_id, ip,
                                  ssl_flag, priority_adjustment);
     if (job) return job;
   }
@@ -4665,7 +4687,7 @@ serve_rejudge_all(
       idx = re.user_id * total_probs + re.prob_id;
       if (flag[idx]) continue;
       flag[idx] = 1;
-      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0,
+      serve_rejudge_run(extra, config, cnts, state, r, user_id, ip, ssl_flag, 0,
                         priority_adjustment);
     }
     return NULL;
@@ -4675,7 +4697,7 @@ serve_rejudge_all(
     if (run_get_entry(state->runlog_state, r, &re) >= 0
         && is_generally_rejudgable(state, &re, INT_MAX)
         && re.status != RUN_IGNORED && re.status != RUN_DISQUALIFIED) {
-      serve_rejudge_run(config, cnts, state, r, user_id, ip, ssl_flag, 0,
+      serve_rejudge_run(extra, config, cnts, state, r, user_id, ip, ssl_flag, 0,
                         priority_adjustment);
     }
   }
@@ -4987,6 +5009,7 @@ handle_virtual_stop_event(
 
 static void
 handle_judge_olympiad_event(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t cs,
@@ -5010,7 +5033,7 @@ handle_judge_olympiad_event(
     goto done;
   // already judged somehow
   if (rs.judge_id > 0) goto done;
-  serve_judge_virtual_olympiad(config, cnts, cs, p->user_id, re.run_id,
+  serve_judge_virtual_olympiad(extra, config, cnts, cs, p->user_id, re.run_id,
                                DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
   if (p->handler) (*p->handler)(cnts, cs, p);
 
@@ -5021,6 +5044,7 @@ handle_judge_olympiad_event(
 
 void
 serve_handle_events(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t cs)
@@ -5037,7 +5061,7 @@ serve_handle_events(
       handle_virtual_stop_event(cnts, cs, p);
       break;
     case SERVE_EVENT_JUDGE_OLYMPIAD:
-      handle_judge_olympiad_event(config, cnts, cs, p);
+      handle_judge_olympiad_event(extra, config, cnts, cs, p);
       break;
     default:
       abort();
@@ -5047,6 +5071,7 @@ serve_handle_events(
 
 void
 serve_judge_virtual_olympiad(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t cs,
@@ -5095,7 +5120,7 @@ serve_judge_virtual_olympiad(
 
   for (i = 1; i <= cs->max_prob; i++) {
     if (latest_runs[i] >= 0)
-      serve_rejudge_run(config, cnts, cs, latest_runs[i], user_id, 0, 0, 1,
+      serve_rejudge_run(extra, config, cnts, cs, latest_runs[i], user_id, 0, 0, 1,
                         priority_adjustment);
   }
   run_set_judge_id(cs->runlog_state, vstart_id, 1);

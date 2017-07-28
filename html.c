@@ -4472,6 +4472,7 @@ typedef void (*write_standings_func_t)(
 
 void
 write_standings(
+        struct contest_extra *extra,
         const serve_state_t state,
         const struct contest_desc *cnts,
         char const *stat_dir,
@@ -4505,7 +4506,7 @@ write_standings(
   write_standings_func_t stand_func = dlsym(NULL, "ns_write_standings");
   if (stand_func) {
     stand_func(NULL /* struct http_request_info *phr */,
-               NULL /* struct contest_extra *extra */,
+               extra /* struct contest_extra *extra */,
                state /* struct serve_state *state */,
                cnts /* const struct contest_desc *cnts */,
                f /* FILE *f */,

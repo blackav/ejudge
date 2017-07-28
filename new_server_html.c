@@ -380,7 +380,7 @@ ns_client_destroy_callback(struct client_state *p)
     cs->testing_suspended = cs->saved_testing_suspended;
     serve_update_status_file(cs, 1);
     if (!cs->testing_suspended)
-      serve_judge_suspended(ejudge_config, cnts, cs, 0, 0, 0,
+      serve_judge_suspended(extra, ejudge_config, cnts, cs, 0, 0, 0,
                             DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 0);
   }
   xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
@@ -407,7 +407,7 @@ do_unload_contest(int idx)
     if (extra->serve_state->xuser_state) {
       extra->serve_state->xuser_state->vt->flush(extra->serve_state->xuser_state);
     }
-    extra->serve_state = serve_state_destroy(ejudge_config, extra->serve_state, cnts, ul_conn);
+    extra->serve_state = serve_state_destroy(extra, ejudge_config, extra->serve_state, cnts, ul_conn);
   }
 
   xfree(extra->contest_arm);
@@ -492,7 +492,10 @@ ns_unload_expired_contests(time_t cur_time)
 }
 
 static void
-handle_pending_xml_import(const struct contest_desc *cnts, serve_state_t cs)
+handle_pending_xml_import(
+        struct contest_extra *extra,
+        const struct contest_desc *cnts,
+        serve_state_t cs)
 {
   struct client_state *p;
   FILE *fout = 0;
@@ -504,7 +507,7 @@ handle_pending_xml_import(const struct contest_desc *cnts, serve_state_t cs)
       cs->testing_suspended = cs->saved_testing_suspended;
       serve_update_status_file(cs, 1);
       if (!cs->testing_suspended)
-        serve_judge_suspended(ejudge_config, cnts, cs, 0, 0, 0,
+        serve_judge_suspended(extra, ejudge_config, cnts, cs, 0, 0, 0,
                               DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 0);
     }
     xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
@@ -528,7 +531,7 @@ handle_pending_xml_import(const struct contest_desc *cnts, serve_state_t cs)
     cs->testing_suspended = cs->saved_testing_suspended;
     serve_update_status_file(cs, 1);
     if (!cs->testing_suspended)
-      serve_judge_suspended(ejudge_config, cnts, cs, 0, 0, 0,
+      serve_judge_suspended(extra, ejudge_config, cnts, cs, 0, 0, 0,
                             DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 0);
   }
   xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
@@ -571,7 +574,7 @@ ns_loop_callback(struct server_framework_state *state)
     if (contests_get(contest_id, &cnts) < 0 || !cnts) continue;
 
     e->serve_state->current_time = cur_time;
-    ns_check_contest_events(e->serve_state, cnts);
+    ns_check_contest_events(e, e->serve_state, cnts);
 
     serve_update_public_log_file(e, e->serve_state, cnts, write_public_log);
     serve_update_external_xml_log(e->serve_state, cnts);
@@ -583,7 +586,7 @@ ns_loop_callback(struct server_framework_state *state)
       if (files.u <= 0) continue;
       for (int j = 0; j < files.u && count < MAX_WORK_BATCH; ++j) {
         ++count;
-        serve_read_compile_packet(ejudge_config, cs, cnts,
+        serve_read_compile_packet(e, ejudge_config, cs, cnts,
                                   cs->compile_dirs[i].status_dir,
                                   cs->compile_dirs[i].report_dir,
                                   files.v[j]);
@@ -598,7 +601,7 @@ ns_loop_callback(struct server_framework_state *state)
         continue;
       for (int j = 0; j < files.u && count < MAX_WORK_BATCH; ++j) {
         ++count;
-        serve_read_run_packet(ejudge_config, cs, cnts,
+        serve_read_run_packet(e, ejudge_config, cs, cnts,
                               cs->run_dirs[i].status_dir,
                               cs->run_dirs[i].report_dir,
                               cs->run_dirs[i].full_report_dir,
@@ -609,7 +612,7 @@ ns_loop_callback(struct server_framework_state *state)
     }
 
     if (cs->pending_xml_import && !serve_count_transient_runs(cs))
-      handle_pending_xml_import(cnts, cs);
+      handle_pending_xml_import(e, cnts, cs);
   }
 
   ns_unload_expired_contests(cur_time);
@@ -634,7 +637,7 @@ ns_post_select_callback(struct server_framework_state *state)
     if (contests_get(contest_id, &cnts) < 0 || !cnts) continue;
 
     e->serve_state->current_time = cur_time;
-    ns_check_contest_events(e->serve_state, cnts);
+    ns_check_contest_events(e, e->serve_state, cnts);
   }
 }
 
@@ -1107,7 +1110,10 @@ ns_refresh_page_2(
 }
 
 void
-ns_check_contest_events(serve_state_t cs, const struct contest_desc *cnts)
+ns_check_contest_events(
+        struct contest_extra *extra,
+        serve_state_t cs,
+        const struct contest_desc *cnts)
 {
   const struct section_global_data *global = cs->global;
   time_t start_time, stop_time, sched_time, duration, finish_time;
@@ -1146,11 +1152,11 @@ ns_check_contest_events(serve_state_t cs, const struct contest_desc *cnts)
       info("CONTEST IS STARTED");
       run_start_contest(cs->runlog_state, sched_time);
       serve_invoke_start_script(cs);
-      serve_update_standings_file(cs, cnts, 0);
+      serve_update_standings_file(extra, cs, cnts, 0);
     }
   }
 
-  if (cs->event_first) serve_handle_events(ejudge_config, cnts, cs);
+  if (cs->event_first) serve_handle_events(extra, ejudge_config, cnts, cs);
 }
 
 static int
@@ -2218,7 +2224,7 @@ do_schedule(FILE *log_f,
     }
   }
   run_sched_contest(cs->runlog_state, sloc);
-  serve_update_standings_file(cs, cnts, 0);
+  serve_update_standings_file(phr->extra, cs, cnts, 0);
   serve_update_status_file(cs, 1);
 }
 
@@ -2262,7 +2268,7 @@ do_change_duration(FILE *log_f,
   }
 
   run_set_duration(cs->runlog_state, d);
-  serve_update_standings_file(cs, cnts, 0);
+  serve_update_standings_file(phr->extra, cs, cnts, 0);
   serve_update_status_file(cs, 1);
   return;
 }
@@ -2299,7 +2305,7 @@ do_change_finish_time(
   }
 
   run_set_finish_time(cs->runlog_state, ft);
-  serve_update_standings_file(cs, cnts, 0);
+  serve_update_standings_file(phr->extra, cs, cnts, 0);
   serve_update_status_file(cs, 1);
 }
 
@@ -2392,7 +2398,7 @@ priv_contest_operation(FILE *fout,
     run_start_contest(cs->runlog_state, cs->current_time);
     serve_update_status_file(cs, 1);
     serve_invoke_start_script(cs);
-    serve_update_standings_file(cs, cnts, 0);
+    serve_update_standings_file(phr->extra, cs, cnts, 0);
     break;
 
   case NEW_SRV_ACTION_STOP_CONTEST:
@@ -2520,7 +2526,7 @@ priv_contest_operation(FILE *fout,
     break;
 
   case NEW_SRV_ACTION_UPDATE_STANDINGS_2:
-    serve_update_standings_file(cs, cnts, 1);
+    serve_update_standings_file(phr->extra, cs, cnts, 1);
     break;
 
   case NEW_SRV_ACTION_RESET_2:
@@ -4380,7 +4386,7 @@ priv_change_status(
     goto cleanup;
   }
   if (status == RUN_REJUDGE || status == RUN_FULL_REJUDGE) {
-    serve_rejudge_run(ejudge_config, cnts, cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+    serve_rejudge_run(extra, ejudge_config, cnts, cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
                       (status == RUN_FULL_REJUDGE),
                       DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
     goto cleanup;
@@ -4745,7 +4751,7 @@ priv_rejudge_displayed(FILE *fout,
     prio_adj = 10;
   }
 
-  nsf_add_job(phr->fw_state, serve_rejudge_by_mask(ejudge_config, cnts, cs, phr->user_id,
+  nsf_add_job(phr->fw_state, serve_rejudge_by_mask(extra, ejudge_config, cnts, cs, phr->user_id,
                                                    &phr->ip, phr->ssl_flag,
                                                    mask_size, mask, force_full, prio_adj,
                                                    background_mode));
@@ -4787,7 +4793,7 @@ priv_rejudge_problem(FILE *fout,
     goto cleanup;
   }
 
-  nsf_add_job(phr->fw_state, serve_rejudge_problem(ejudge_config, cnts, cs, phr->user_id,
+  nsf_add_job(phr->fw_state, serve_rejudge_problem(extra, ejudge_config, cnts, cs, phr->user_id,
                                                    &phr->ip, phr->ssl_flag, prob_id,
                                                    DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT,
                                                    background_mode));
@@ -4820,10 +4826,10 @@ priv_rejudge_all(FILE *fout,
 
   switch (phr->action) {
   case NEW_SRV_ACTION_REJUDGE_SUSPENDED_2:
-    nsf_add_job(phr->fw_state, serve_judge_suspended(ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, background_mode));
+    nsf_add_job(phr->fw_state, serve_judge_suspended(extra, ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, background_mode));
     break;
   case NEW_SRV_ACTION_REJUDGE_ALL_2:
-    nsf_add_job(phr->fw_state, serve_rejudge_all(ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, background_mode));
+    nsf_add_job(phr->fw_state, serve_rejudge_all(extra, ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, background_mode));
     
     break;
   default:
@@ -7715,7 +7721,7 @@ privileged_entry_point(
   callbacks.list_all_users = ns_list_all_users_callback;
 
   // invoke the contest
-  if (serve_state_load_contest(ejudge_config, phr->contest_id,
+  if (serve_state_load_contest(extra, ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
                                &extra->serve_state, 0, 0) < 0) {
@@ -7732,7 +7738,7 @@ privileged_entry_point(
   }
 
   extra->serve_state->current_time = time(0);
-  ns_check_contest_events(extra->serve_state, cnts);
+  ns_check_contest_events(phr->extra, extra->serve_state, cnts);
   
   if (phr->action <= 0 || phr->action >= NEW_SRV_ACTION_LAST) {
     phr->action = NEW_SRV_ACTION_MAIN_PAGE;
@@ -8963,7 +8969,7 @@ ns_submit_run(
     run_get_entry(cs->runlog_state, run_id, &re);
     serve_audit_log(cs, run_id, &re, user_id, &phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_RUNNING, NULL);
-    serve_judge_built_in_problem(ejudge_config, cs, cnts, run_id, 1 /* judge_id */,
+    serve_judge_built_in_problem(extra, ejudge_config, cs, cnts, run_id, 1 /* judge_id */,
                                  variant, cs->accepting_mode, &re,
                                  prob, px, user_id, &phr->ip,
                                  phr->ssl_flag);
@@ -9556,7 +9562,7 @@ unpriv_submit_run(
         run_get_entry(cs->runlog_state, run_id, &re);
         serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_RUNNING, NULL);
-        serve_judge_built_in_problem(ejudge_config, cs, cnts, run_id, 1 /* judge_id */,
+        serve_judge_built_in_problem(extra, ejudge_config, cs, cnts, run_id, 1 /* judge_id */,
                                      variant, cs->accepting_mode, &re,
                                      prob, px, phr->user_id, &phr->ip,
                                      phr->ssl_flag);
@@ -11395,7 +11401,7 @@ unprivileged_entry_point(
   callbacks.list_all_users = ns_list_all_users_callback;
 
   // invoke the contest
-  if (serve_state_load_contest(ejudge_config, phr->contest_id,
+  if (serve_state_load_contest(extra, ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
                                &extra->serve_state, 0, 0) < 0) {
@@ -11405,7 +11411,7 @@ unprivileged_entry_point(
 
   cs = extra->serve_state;
   cs->current_time = time(0);
-  ns_check_contest_events(cs, cnts);
+  ns_check_contest_events(phr->extra, cs, cnts);
 
   // check the user map
   if (phr->user_id >= extra->user_access_idx.a) {
@@ -11991,7 +11997,7 @@ do_load_contest(struct http_request_info *phr, const struct contest_desc *cnts)
   callbacks.list_all_users = ns_list_all_users_callback;
 
   // invoke the contest
-  if (serve_state_load_contest(ejudge_config, phr->contest_id,
+  if (serve_state_load_contest(extra, ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
                                &extra->serve_state, 0, 0) < 0) {
@@ -11999,7 +12005,7 @@ do_load_contest(struct http_request_info *phr, const struct contest_desc *cnts)
   }
 
   extra->serve_state->current_time = time(0);
-  ns_check_contest_events(extra->serve_state, cnts);
+  ns_check_contest_events(extra, extra->serve_state, cnts);
 }
 
 static void

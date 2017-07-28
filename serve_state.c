@@ -79,6 +79,7 @@ serve_state_destroy_stand_expr(struct user_filter_info *u)
 
 serve_state_t
 serve_state_destroy(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         serve_state_t state,
         const struct contest_desc *cnts,
@@ -97,7 +98,7 @@ serve_state_destroy(
       state->testing_suspended = state->saved_testing_suspended;
       serve_update_status_file(state, 1);
       if (!state->testing_suspended && cnts)
-        serve_judge_suspended(config, cnts, state, 0, 0, 0, 0, 0);
+        serve_judge_suspended(extra, config, cnts, state, 0, 0, 0, 0, 0);
     }
     if (state->destroy_callback) (*state->destroy_callback)(state);
     xfree(state->pending_xml_import);
@@ -639,6 +640,7 @@ const size_t serve_struct_sizes_array_num = sizeof(serve_struct_sizes_array) / s
 
 int
 serve_state_load_contest_config(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         int contest_id,
         const struct contest_desc *cnts,
@@ -699,12 +701,13 @@ serve_state_load_contest_config(
   return 1;
 
  failure:
-  serve_state_destroy(config, state, cnts, NULL);
+  serve_state_destroy(extra, config, state, cnts, NULL);
   return -1;
 }
 
 int
 serve_state_load_contest(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         int contest_id,
         struct userlist_clnt *ul_conn,
@@ -881,13 +884,13 @@ serve_state_load_contest(
 
   teamdb_refresh(state->teamdb_state);
   serve_create_symlinks(state);
-  serve_update_standings_file(state, cnts, 0);
+  serve_update_standings_file(extra, state, cnts, 0);
 
   *p_state = state;
   return 1;
 
  failure:
-  serve_state_destroy(config, state, cnts, ul_conn);
+  serve_state_destroy(extra, config, state, cnts, ul_conn);
   return -1;
 }
 

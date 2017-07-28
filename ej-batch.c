@@ -300,12 +300,13 @@ load_contest_extra(int contest_id)
             contest_id);
     return NULL;
   }
-  if (serve_state_load_contest(ejudge_config, contest_id, NULL, NULL, &state, 0, 1) < 0) {
+
+  extra = &contest_extras[contest_id];
+  if (serve_state_load_contest(extra, ejudge_config, contest_id, NULL, NULL, &state, 0, 1) < 0) {
     fprintf(stderr, "get_contest_extra: failed to load contest %d\n", contest_id);
     return NULL;
   }
 
-  extra = &contest_extras[contest_id];
   extra->contest_id = contest_id;
   extra->cnts = cnts;
   extra->state = state;

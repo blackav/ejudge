@@ -2283,7 +2283,7 @@ ns_priv_edit_run_action(
                   "  mask: 0x%08x", mask);
 
   if (need_rejudge > 0) {
-    serve_rejudge_run(ejudge_config, cnts, cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
+    serve_rejudge_run(extra, ejudge_config, cnts, cs, run_id, phr->user_id, &phr->ip, phr->ssl_flag,
                       (need_rejudge == RUN_FULL_REJUDGE),
                       DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT);
   }

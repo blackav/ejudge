@@ -304,7 +304,7 @@ do_schedule(
     if (start_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_STARTED;
   }
   run_sched_contest(cs->runlog_state, sloc);
-  serve_update_standings_file(cs, cnts, 0);
+  serve_update_standings_file(phr->extra, cs, cnts, 0);
   serve_update_status_file(cs, 1);
   return 0;
 }
@@ -326,7 +326,7 @@ cmd_operation(
 
   switch (phr->action) {
   case NEW_SRV_ACTION_SOFT_UPDATE_STANDINGS:
-    serve_update_standings_file(cs, cnts, 0);
+    serve_update_standings_file(extra, cs, cnts, 0);
     break;
 
   case NEW_SRV_ACTION_TEST_SUSPEND:
@@ -338,7 +338,7 @@ cmd_operation(
     serve_update_status_file(cs, 1);
     break;
   case NEW_SRV_ACTION_REJUDGE_SUSPENDED_2:
-    serve_judge_suspended(ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 0);
+    serve_judge_suspended(extra, ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 0);
     break;
   case NEW_SRV_ACTION_HAS_TRANSIENT_RUNS:
     if (serve_count_transient_runs(cs) > 0)
@@ -357,7 +357,7 @@ cmd_operation(
     run_start_contest(cs->runlog_state, cs->current_time);
     serve_update_status_file(cs, 1);
     serve_invoke_start_script(cs);
-    serve_update_standings_file(cs, cnts, 0);
+    serve_update_standings_file(extra, cs, cnts, 0);
     break;
   case NEW_SRV_ACTION_STOP_CONTEST:
     run_get_times(cs->runlog_state, &start_time, 0, &duration, &stop_time, 0);
@@ -421,7 +421,7 @@ cmd_operation(
     serve_update_status_file(cs, 1);
     break;
   case NEW_SRV_ACTION_REJUDGE_ALL_2:
-    nsf_add_job(phr->fw_state, serve_rejudge_all(ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 1));
+    nsf_add_job(phr->fw_state, serve_rejudge_all(extra, ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 1));
     break;
   case NEW_SRV_ACTION_SCHEDULE:
     return do_schedule(phr, cs, cnts);
@@ -1189,7 +1189,7 @@ cmd_submit_run(
         run_get_entry(cs->runlog_state, run_id, &re);
         serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_RUNNING, NULL);
-        serve_judge_built_in_problem(ejudge_config, cs, cnts, run_id, 1 /* judge_id */,
+        serve_judge_built_in_problem(extra, ejudge_config, cs, cnts, run_id, 1 /* judge_id */,
                                      variant, cs->accepting_mode, &re,
                                      prob, px, phr->user_id, &phr->ip,
                                      phr->ssl_flag);
@@ -2149,7 +2149,7 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
   callbacks.list_all_users = ns_list_all_users_callback;
 
   // invoke the contest
-  if (serve_state_load_contest(ejudge_config, phr->contest_id,
+  if (serve_state_load_contest(extra, ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
                                &extra->serve_state, 0, 0) < 0) {
@@ -2165,7 +2165,7 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
   }
 
   extra->serve_state->current_time = time(0);
-  ns_check_contest_events(extra->serve_state, cnts);
+  ns_check_contest_events(extra, extra->serve_state, cnts);
   phr->allow_empty_output = 1;
 
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST
