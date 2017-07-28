@@ -19,6 +19,8 @@
 #include "ejudge/new_server_proto.h"
 #include "ejudge/external_action.h"
 
+#include "ejudge/xalloc.h"
+
 extern int
 csp_view_int_kirov_standings(
         PageInterface *ps,
@@ -44,26 +46,22 @@ static struct PageInterfaceOps ops __attribute__((unused)) =
 PageInterface *
 csp_get_int_kirov_standings(void)
 {
-  /*
-    PrivViewUsersPage *pg = NULL;
+    StandingsPage *pg = NULL;
 
     XCALLOC(pg, 1);
     pg->b.ops = &ops;
     return (PageInterface*) pg;
-  */
-  return NULL;
 }
 
 static void
 csp_destroy_int_kirov_standings(
         PageInterface *ps)
 {
+    StandingsPage *pg = (StandingsPage *) ps;
   /*
-    PrivViewUsersPage *pg = (PrivViewUsersPage*) ps;
-    xfree(pg->message);
-    free_users_array(pg->users);
-    xfree(pg);
+    FIXME: free structure
   */
+    xfree(pg);
 }
 
 static int
