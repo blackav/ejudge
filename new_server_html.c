@@ -11592,7 +11592,7 @@ void
 ns_write_standings(
         struct http_request_info *phr,
         struct contest_extra *extra,
-        const serve_state_t state,
+        struct serve_state *state,
         const struct contest_desc *cnts,
         FILE *f,
         const unsigned char *stand_dir,
@@ -11610,6 +11610,65 @@ ns_write_standings(
         int user_mode,
         time_t cur_time)
 {
+  if (phr && !extra) extra = phr->extra;
+  if (extra && !state) state = extra->serve_state;
+  int score_system = 0;
+  if (state->global) score_system = state->global->score_system;
+
+  switch (score_system) {
+  case SCORE_KIROV:
+  case SCORE_OLYMPIAD:
+    do_write_kirov_standings(state,
+                             cnts,
+                             f,
+                             stand_dir,
+                             client_flag,
+                             only_table_flag,
+                             user_id,
+                             header_str,
+                             footer_str,
+                             raw_flag,
+                             accepting_mode,
+                             force_fancy_style,
+                             cur_time,
+                             charset_id,
+                             user_filter,
+                             user_mode);
+    break;
+  case SCORE_MOSCOW:
+    do_write_moscow_standings(state,
+                              cnts,
+                              f,
+                              stand_dir,
+                              client_flag,
+                              only_table_flag,
+                              user_id,
+                              header_str,
+                              footer_str,
+                              raw_flag,
+                              user_name,
+                              force_fancy_style,
+                              cur_time,
+                              charset_id,
+                              user_filter);
+    break;
+  case SCORE_ACM:
+  default:
+    do_write_standings(state,
+                       cnts,
+                       f,
+                       client_flag,
+                       only_table_flag,
+                       user_id,
+                       header_str,
+                       footer_str,
+                       raw_flag,
+                       user_name,
+                       force_fancy_style,
+                       cur_time,
+                       user_filter);
+    break;
+  }
 }
 
 void
