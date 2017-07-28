@@ -11866,53 +11866,6 @@ ns_write_public_log(
   xfree(hr.log_t);
 }
 
-void
-write_public_log(
-        struct contest_extra *extra,
-        const serve_state_t state,
-        const struct contest_desc *cnts,
-        char const *stat_dir,
-        char const *name,
-        char const *header_str,
-        char const *footer_str,
-        int charset_id,
-        int user_mode)
-{
-  PublicLogExtraInfo extra_info =
-  {
-    .header_str = header_str,
-    .footer_str = footer_str,
-    .user_mode = user_mode
-  };
-  struct http_request_info hr;
-
-  memset(&hr, 0, sizeof(hr));
-  hr.contest_id = cnts->id;
-  hr.anonymous_mode = 1;
-  hr.current_time = time(NULL);
-  hr.cnts = cnts;
-  hr.extra = extra;
-  hr.config = ejudge_config;
-  hr.out_f = open_memstream(&hr.out_t, &hr.out_z);
-  hr.log_f = open_memstream(&hr.log_t, &hr.log_z);
-  hr.extra_info = &extra_info;
-  int r = ns_int_external_action(&hr, NEW_SRV_INT_PUBLIC_LOG);
-  if (r < 0) {
-    // FIXME: report error
-  }
-  if (hr.log_f) fclose(hr.log_f);
-  xfree(hr.log_t);
-  if (hr.out_f) fclose(hr.out_f);
-
-  if (charset_id > 0) {
-    hr.out_t = charset_encode_heap(charset_id, hr.out_t);
-    hr.out_z = strlen(hr.out_t);
-  }
-
-  generic_write_file(hr.out_t, hr.out_z, SAFE, stat_dir, name, "");
-}
-
-
 const unsigned char *
 ns_get_register_url(
         unsigned char *buf,
