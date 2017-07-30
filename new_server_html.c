@@ -11776,7 +11776,7 @@ ns_write_standings(
   unsigned char file_path[PATH_MAX];
   int file_is_opened = 0;
   if (!f) {
-    snprintf(file_path, sizeof(file_path), "%s/%s", stand_dir, file_name);
+    snprintf(file_path, sizeof(file_path), "%s/dir/%s", stand_dir, file_name);
     f = fopen(file_path, "w");
     if (!f) {
       err("ns_write_standings: cannot open '%s': %s", file_path, os_ErrorMsg());
