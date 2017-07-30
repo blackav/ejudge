@@ -110,19 +110,34 @@ serve_update_standings_file(
   }
   charset_id = charset_get_id(global->standings_charset);
   l10n_setlocale(global->standings_locale_id);
-  write_standings(extra, state, cnts, global->status_dir,
+  write_standings(extra,
+                  state,
+                  cnts,
+                  global->status_dir,
                   global->standings_file_name,
+                  global->stand_file_name_2,
                   global->users_on_page,
                   global->stand_header_txt,
                   global->stand_footer_txt,
-                  state->accepting_mode, 0, charset_id, 1 /* user_mode */);
+                  state->accepting_mode,
+                  0 /* force_fancy_style */,
+                  charset_id,
+                  1 /* user_mode */);
   if (global->stand2_file_name && global->stand2_file_name[0]) {
     charset_id = charset_get_id(global->stand2_charset);
-    write_standings(extra, state, cnts, global->status_dir,
-                    global->stand2_file_name, 0,
+    write_standings(extra,
+                    state,
+                    cnts,
+                    global->status_dir,
+                    global->stand2_file_name,
+                    NULL /* name2 */, 
+                    0 /* users_on_page */,
                     global->stand2_header_txt,
                     global->stand2_footer_txt,
-                    state->accepting_mode, 0, charset_id, 1 /* user_mode */);
+                    state->accepting_mode,
+                    0 /* force_fancy_style */,
+                    charset_id,
+                    1 /* user_mode */);
   }
   l10n_resetlocale();
   if (global->is_virtual) return;

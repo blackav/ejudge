@@ -28,16 +28,17 @@ struct contest_extra;
 void
 write_standings(
         struct contest_extra *extra,
-        const serve_state_t,
-        const struct contest_desc *,
-        char const *,
-        char const *,
-        int,
-        char const *,
-        char const *,
-        int,
-        int,
-        int,
+        serve_state_t state,
+        const struct contest_desc *cnts,
+        char const *stat_dir,
+        char const *name,
+        char const *name2,
+        int users_on_page,
+        char const *header_str,
+        char const *footer_str,
+        int accepting_mode,
+        int force_fancy_style,
+        int charset_id,
         int user_mode);
 void
 write_public_log(

@@ -4407,10 +4407,11 @@ typedef void (*write_standings_func_t)(
 void
 write_standings(
         struct contest_extra *extra,
-        const serve_state_t state,
+        serve_state_t state,
         const struct contest_desc *cnts,
         char const *stat_dir,
-        char const *name,
+        char const *name,   // file name for the first or the only standings page
+        char const *name2,  // file name for the second and next standings pages
         int users_on_page,
         char const *header_str,
         char const *footer_str,
