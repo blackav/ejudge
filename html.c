@@ -1039,6 +1039,7 @@ do_write_kirov_standings(
         const struct contest_desc *cnts,
         FILE *f,
         const unsigned char *stand_dir,
+        int users_on_page,
         int client_flag,
         int only_table_flag,
         int user_id,
@@ -2029,8 +2030,8 @@ do_write_kirov_standings(
   total_pages = 1;
   current_page = 0;
   user_on_page = 0;
-  if (!client_flag && global->users_on_page > 0) {
-    users_per_page = global->users_on_page;
+  if (!client_flag && users_on_page > 0) {
+    users_per_page = users_on_page;
     total_pages = (t_tot + users_per_page - 1) / users_per_page;
     XALLOCA(pgrefs, total_pages);
     dur_len = snprintf(dur_str, sizeof(dur_str), global->standings_file_name, 1);

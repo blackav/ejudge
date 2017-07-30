@@ -11634,6 +11634,7 @@ do_write_kirov_standings(
         const struct contest_desc *cnts,
         FILE *f,
         const unsigned char *stand_dir,
+        int users_on_page,
         int client_flag,
         int only_table_flag,
         int user_id,
@@ -11740,8 +11741,6 @@ ns_write_standings(
     phr->current_time = cur_time;
     phr->cnts = cnts;
     phr->extra = extra;
-    phr->out_f = open_memstream(&phr->out_t, &phr->out_z);
-    phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
     hr_allocated = 1;
   }
   phr->config = ejudge_config;
@@ -11764,10 +11763,16 @@ ns_write_standings(
     if (hr_allocated) {
       if (phr->log_f) fclose(phr->log_f);
       xfree(phr->log_t);
+      if (phr->out_f) fclose(phr->out_f);
+      xfree(phr->out_t);
     }
-    // FIXME: what to do with output stream?
     return;
   }
+
+  // backward mode: no charset conversion, no multi-page standings
+  charset_id = 0;
+  users_on_page = 0;
+  file_name2 = NULL;
 
   // default action
   switch (score_system) {
@@ -11777,6 +11782,7 @@ ns_write_standings(
                              cnts,
                              f,
                              stand_dir,
+                             users_on_page,
                              client_flag,
                              only_table_flag,
                              user_id,
