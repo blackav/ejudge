@@ -270,6 +270,8 @@ typedef struct ProcessorState
     ReadTypeHandlerArray read_type_handlers;
     ReadTypeHandlerArray read_array_type_handlers;
     MacroArray macros;
+
+    int is_in_function;
 } ProcessorState;
 
 static ProcessorState *
@@ -2936,6 +2938,64 @@ html_attribute_get_bool(const HtmlAttribute *attr, int default_value)
 }
 
 static int
+handle_directive_function(ScannerState *ss, TypeContext *cntx, FILE *out_f)
+{
+    int retval = -1;
+    unsigned char *page_name = NULL;
+    enum { MAX_PARAM_COUNT = 1024 };
+    TypeInfo *info[MAX_PARAM_COUNT];
+    int idx = 0;
+    int start_param_pos = 0;
+
+    if (ss->ps->is_in_function > 0) {
+        processor_state_pop_scope(ss->ps);
+        processor_state_pop_scope(ss->ps);
+        fprintf(out_f, "return retval;\n}\n\n");
+    }
+
+    next_token(ss); //dump_token(ss);
+    if (ss->token != TOK_IDENT) {
+        parser_error(ss, "page name (identifier) expected");
+        goto cleanup;
+    }
+    page_name = ss->value; ss->value = NULL;
+    start_param_pos = ss->idx;
+    next_token(ss);
+
+    info[idx++] = tc_get_u32(cntx, 0);
+    info[idx++] = tc_get_ident(cntx, page_name);
+    info[idx++] = tc_get_i32_type(cntx);
+    if (parse_params(ss, cntx, info, MAX_PARAM_COUNT, idx, 0) < 0) {
+        goto cleanup;
+    }
+
+    TypeInfo *f = tc_get_function(cntx, info);
+    TypeInfo *empty_id = tc_get_ident(cntx, "");
+    processor_state_push_scope(ss->ps, tc_scope_create());
+    for (int i = 3; i < f->n.count; ++i) {
+        TypeInfo *param = f->n.info[i];
+        if (param->kind == NODE_PARAM && param->n.info[3] != empty_id) {
+            processor_state_add_to_scope(ss->ps, param, param->n.info[3]);
+        }
+    }
+    processor_state_push_scope(ss->ps, tc_scope_create());
+
+    if (ss->token != TOK_EOF) {
+        parser_error(ss, "garbage after directive");
+        goto cleanup;
+    }
+
+    ss->ps->is_in_function = 1;
+    fprintf(out_f, "static int %s%s\n{\n", page_name, ss->buf + start_param_pos);
+
+    retval = 0;
+
+cleanup:
+    xfree(page_name);
+    return retval;
+}
+
+static int
 handle_directive_page(ScannerState *ss, TypeContext *cntx, FILE *out_f)
 {
     int retval = -1;
@@ -2944,6 +3004,13 @@ handle_directive_page(ScannerState *ss, TypeContext *cntx, FILE *out_f)
     TypeInfo *info[MAX_PARAM_COUNT];
     int idx = 0;
     int start_param_pos = 0;
+
+    if (ss->ps->is_in_function > 0) {
+        processor_state_pop_scope(ss->ps);
+        processor_state_pop_scope(ss->ps);
+        fprintf(out_f, "return retval;\n}\n\n");
+    }
+    ss->ps->is_in_function = 1;
 
     next_token(ss); //dump_token(ss);
     if (ss->token != TOK_IDENT) {
@@ -3269,6 +3336,8 @@ handle_directive(
 
     if (ss->token != TOK_IDENT) {
         parser_error(ss, "directive expected");
+    } else if (!strcmp(ss->value, "function")) {
+        handle_directive_function(ss, cntx, out_f);
     } else if (!strcmp(ss->value, "page")) {
         handle_directive_page(ss, cntx, out_f);
     } else if (!strcmp(ss->value, "set")) {
