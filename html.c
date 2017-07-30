@@ -4424,6 +4424,36 @@ write_standings(
         int charset_id,
         int user_mode)
 {
+  // to break compile-time dependency!
+  static write_standings_func_t stand_func = NULL;
+  if (!stand_func) {
+    stand_func = dlsym(NULL, "ns_write_standings");
+  }
+  if (stand_func) {
+    stand_func(NULL /* struct http_request_info *phr */,
+               extra /* struct contest_extra *extra */,
+               cnts /* const struct contest_desc *cnts */,
+               NULL /* FILE *f */,
+               stat_dir /* const unsigned char *stand_dir */,
+               name /* const unsigned char *file_name */,
+               name2 /* const unsigned char *file_name2 */,
+               users_on_page /* int users_on_page */,
+               -1 /* int page_index */,
+               0 /* int client_flag */,
+               0 /* int only_table_flag */,
+               0 /* int user_id */,
+               header_str /* const unsigned char *header_str */,
+               footer_str /* const unsigned char *footer_str */,
+               accepting_mode /* int accepting_mode */,
+               NULL /* const unsigned char *user_name */,
+               force_fancy_style /* int force_fancy_style */,
+               charset_id /* int charset_id */,
+               NULL /* struct user_filter_info *u */,
+               user_mode /* int user_mode */,
+               0 /* time_t cur_time */);
+  }
+
+#if 0
   char    tbuf[64];
   path_t  tpath;
   FILE   *f;
@@ -4479,6 +4509,7 @@ write_standings(
   }
   generic_copy_file(REMOVE, stat_dir, tbuf, "", SAFE, stat_dir, name, "");
   return;
+#endif
 }
 
 static void
