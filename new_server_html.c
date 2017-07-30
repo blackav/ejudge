@@ -11773,6 +11773,17 @@ ns_write_standings(
   charset_id = 0;
   users_on_page = 0;
   file_name2 = NULL;
+  unsigned char file_path[PATH_MAX];
+  int file_is_opened = 0;
+  if (!f) {
+    snprintf(file_path, sizeof(file_path), "%s/%s", stand_dir, file_name);
+    f = fopen(file_path, "w");
+    if (!f) {
+      err("ns_write_standings: cannot open '%s': %s", file_path, os_ErrorMsg());
+      return;
+    }
+    file_is_opened = 1;
+  }
 
   // default action
   switch (score_system) {
@@ -11826,6 +11837,10 @@ ns_write_standings(
                        cur_time,
                        user_filter);
     break;
+  }
+
+  if (file_is_opened) {
+    fclose(f);
   }
 }
 
