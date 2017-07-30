@@ -193,6 +193,10 @@ typedef struct PublicLogExtraInfo
 typedef struct StandingsExtraInfo
 {
     const unsigned char *stand_dir;
+    const unsigned char *file_name;
+    const unsigned char *file_name2;
+    int users_on_page;
+    int page_index;
     int client_flag;
     int only_table_flag;
     int user_id;

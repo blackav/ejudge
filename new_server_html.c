@@ -11716,6 +11716,10 @@ ns_write_standings(
   StandingsExtraInfo extra_info =
   {
     .stand_dir = stand_dir,
+    .file_name = file_name,
+    .file_name2 = file_name2,
+    .users_on_page = users_on_page,
+    .page_index = page_index,
     .client_flag = client_flag,
     .only_table_flag = only_table_flag,
     .user_id = user_id,
