@@ -231,6 +231,7 @@ COMMON_CFILES=\
  session.c\
  sformat.c\
  shellcfg_parse.c\
+ standings.c\
  stringset.c\
  super_html.c\
  super_html_2.c\
