@@ -265,4 +265,10 @@ struct standings_style
   const unsigned char *page_cur_attr;
 };
 
+void
+stand_setup_style(
+        struct standings_style *ps,
+        const struct section_global_data *global,
+        int force_fancy_style);
+
 #endif /* __HTML_H__ */
