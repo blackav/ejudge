@@ -731,6 +731,16 @@ write_standings_header(const serve_state_t state,
   }
 }
 
+void
+stand_write_footer(FILE *f, const unsigned char *footer_str)
+{
+  if (footer_str) {
+    process_template(f, footer_str, 0, 0, 0, get_copyright(0));
+  } else {
+    fprintf(f, "</body></html>");
+  }
+}
+
 static void
 write_kirov_page_table(const struct standings_style *pss,
                        FILE *f, int total_pages, int current_page,

@@ -270,5 +270,9 @@ stand_setup_style(
         struct standings_style *ps,
         const struct section_global_data *global,
         int force_fancy_style);
+void
+stand_write_footer(
+        FILE *f,
+        const unsigned char *footer_str);
 
 #endif /* __HTML_H__ */
