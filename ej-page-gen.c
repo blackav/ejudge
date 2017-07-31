@@ -3769,6 +3769,106 @@ handle_redirect_open(
 }
 
 static int
+handle_td_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+
+    char *str_p = 0;
+    size_t str_z = 0;
+    FILE *str_f = open_memstream(&str_p, &str_z);
+    fprintf(str_f, "<td");
+
+    HtmlAttribute *valign_attr = html_element_find_attribute(elem, "valign");
+    if (valign_attr) {
+        fprintf(str_f, " valign=\"%s\"", valign_attr->value);
+    }
+    HtmlAttribute *onclickexpr_attr = html_element_find_attribute(elem, "onclickexpr");
+    if (onclickexpr_attr) {
+        fprintf(str_f, " onclick=\"");
+        fclose(str_f); str_f = NULL;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = NULL; str_z = 0;
+        TypeInfo *t = NULL;
+        int r = parse_c_expression(ps, cntx, log_f, onclickexpr_attr->value, &t, ps->pos);
+        if (r >= 0) {
+            processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, onclickexpr_attr->value, elem, t);
+        }
+        str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, "\"");
+    }
+    HtmlAttribute *onclick_attr = html_element_find_attribute(elem, "onclick");
+    if (onclick_attr) {
+        fprintf(str_f, " onclick=\"%s\"", onclick_attr->value);
+    }
+    HtmlAttribute *id_attr = html_element_find_attribute(elem, "id");
+    HtmlAttribute *idsuffix_attr = html_element_find_attribute(elem, "idsuffix");
+    if (id_attr && idsuffix_attr) {
+        fprintf(str_f, " id=\"%s", id_attr->value);
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
+        TypeInfo *t = NULL;
+        int r = parse_c_expression(ps, cntx, log_f, idsuffix_attr->value, &t, ps->pos);
+        if (r >= 0) {
+            processor_state_invoke_type_handler(log_f, cntx, ps, txt_f, prg_f, idsuffix_attr->value, elem, t);
+        }
+        str_f = open_memstream(&str_p, &str_z);
+        fprintf(str_f, "\"");
+    } else if (id_attr) {
+        fprintf(str_f, " id=\"%s\"", id_attr->value);
+    }
+
+    HtmlAttribute *hiddenexpr_attr = html_element_find_attribute(elem, "hiddenexpr");
+    if (hiddenexpr_attr) {
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
+        fprintf(prg_f, "if (%s) {\n", hiddenexpr_attr->value);
+        handle_html_string(prg_f, txt_f, log_f, " style=\"display: none;\"");
+        fprintf(prg_f, "}\n");
+        str_f = open_memstream(&str_p, &str_z);
+    }
+
+    HtmlAttribute *attr_attr = html_element_find_attribute(elem, "attr");
+    if (attr_attr) {
+        fprintf(str_f, " ");
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
+        fprintf(prg_f, "fputs(%s, out_f);\n", attr_attr->value);
+        handle_html_string(prg_f, txt_f, log_f, ">");
+    } else {
+        fprintf(str_f, ">");
+        fclose(str_f); str_f = 0;
+        handle_html_string(prg_f, txt_f, log_f, str_p);
+        free(str_p); str_p = 0; str_z = 0;
+    }
+
+    return 0;
+}
+
+static int
+handle_td_close(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        unsigned char *mem,
+        int beg_i,
+        int end_i)
+{
+    handle_html_text(prg_f, txt_f, log_f, mem, beg_i, end_i);
+    handle_html_string(prg_f, txt_f, log_f, "</td>");
+    return 0;
+}
+
+static int
 handle_tr_open(
         FILE *log_f,
         TypeContext *cntx,
@@ -3864,7 +3964,7 @@ handle_tr_close(
         int end_i)
 {
     handle_html_text(prg_f, txt_f, log_f, mem, beg_i, end_i);
-    handle_html_string(prg_f, txt_f, log_f, "</tr>\n");
+    handle_html_string(prg_f, txt_f, log_f, "</tr>");
     return 0;
 }
 
@@ -5243,6 +5343,7 @@ static const struct ElementInfo element_handlers[] =
     { "s:read", handle_read_open, NULL },
     { "s:numselect", handle_numselect_open, NULL },
     { "s:tr", handle_tr_open, handle_tr_close },
+    { "s:td", handle_td_open, handle_td_close },
     { "s:redirect", handle_redirect_open, NULL },
     { "s:help", handle_help_open, NULL },
     { "s:indir", handle_indir_open, handle_indir_close },
