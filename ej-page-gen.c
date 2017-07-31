@@ -23,6 +23,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/new_server_pi.h"
 #include "ejudge/super_serve_pi.h"
+#include "ejudge/internal_pages.h"
 
 #include "ejudge/osdeps.h"
 #include "ejudge/xalloc.h"
@@ -4106,6 +4107,56 @@ handle_v_open(
 }
 
 static int
+handle_indir_open(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f)
+{
+    HtmlElement *elem = ps->el_stack->el;
+
+    HtmlAttribute *at = html_element_find_attribute(elem, "value");
+    if (!at) {
+        parser_error_2(ps, "<s:indir> element requires value attribute");
+        return -1;
+    }
+
+    ps->el_stack->extra = html_element_clone(elem);
+
+    fprintf(prg_f,
+            "putc_unlocked('<', out_f);\n"
+            "fputs(%s, out_f);\n"
+            "putc_unlocked('>', out_f);\n", at->value);
+
+    return 0;
+}
+
+static int
+handle_indir_close(
+        FILE *log_f,
+        TypeContext *cntx,
+        ProcessorState *ps,
+        FILE *txt_f,
+        FILE *prg_f,
+        unsigned char *mem,
+        int beg_i,
+        int end_i)
+{
+    handle_html_text(prg_f, txt_f, log_f, mem, beg_i, end_i);
+
+    HtmlElement *elem = ps->el_stack->extra;
+    HtmlAttribute *at = html_element_find_attribute(elem, "value");
+
+    fprintf(prg_f,
+            "putc_unlocked('<', out_f);\n"
+            "putc_unlocked('/', out_f);\n"
+            "fputs(%s, out_f);\n"
+            "putc_unlocked('>', out_f);\n", at->value);
+    return 0;
+}
+
+static int
 handle_vb_open(
         FILE *log_f,
         TypeContext *cntx,
@@ -5194,6 +5245,7 @@ static const struct ElementInfo element_handlers[] =
     { "s:tr", handle_tr_open, handle_tr_close },
     { "s:redirect", handle_redirect_open, NULL },
     { "s:help", handle_help_open, NULL },
+    { "s:indir", handle_indir_open, handle_indir_close },
 
     { NULL, NULL, NULL },
 };
@@ -6481,6 +6533,7 @@ PrivViewUserIPsPage dummy_pvuip;
 PrivViewIPUsersPage dummy_pviup;
 PrivViewUsersPage dummy_pvup;
 UserInfoPage dummy_uip;
+StandingsPage dummy_page;
 
 /*
  * Local variables:
