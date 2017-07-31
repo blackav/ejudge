@@ -227,4 +227,42 @@ html_print_testing_report_file_content(
         struct testing_report_file_content *fc,
         int type);
 
+/* structure to tune standings style */
+struct standings_style
+{
+  // "last success", "last submit"
+  const unsigned char *success_attr;
+
+  // for tables
+  const unsigned char *table_attr;
+  const unsigned char *place_attr;
+  const unsigned char *team_attr;
+  const unsigned char *extra_attr;
+  const unsigned char *prob_attr;
+  const unsigned char *solved_attr;
+  const unsigned char *score_attr;
+  const unsigned char *penalty_attr;
+  const unsigned char *time_attr;
+  const unsigned char *contestant_status_attr;
+  const unsigned char *warn_number_attr;
+
+  // for virtual contests
+  const unsigned char *self_row_attr;
+  const unsigned char *v_row_attr;
+  const unsigned char *r_row_attr;
+  const unsigned char *u_row_attr;
+
+  // for table cells
+  const unsigned char *fail_attr;
+  const unsigned char *trans_attr;
+  const unsigned char *disq_attr;
+  const unsigned char *pr_attr;   // for pending reviews
+  const unsigned char *sm_attr;   // for summoned for defence
+  const unsigned char *rj_attr;   // for rejected
+
+  // for page table
+  const unsigned char *page_table_attr;
+  const unsigned char *page_cur_attr;
+};
+
 #endif /* __HTML_H__ */
