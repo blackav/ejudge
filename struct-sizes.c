@@ -25,6 +25,7 @@
 #include "ejudge/problem_config.h"
 #include "ejudge/userlist.h"
 #include "ejudge/super_run_status.h"
+#include "ejudge/internal_pages.h"
 
 #include <stdio.h>
 
@@ -47,5 +48,6 @@ int main(void)
   printf("problem_config_section:%zu\n", sizeof(struct problem_config_section));
   printf("userlist_cookie:       %zu\n", sizeof(struct userlist_cookie));
   printf("super_run_status:      %zu\n", sizeof(struct super_run_status));
+  printf("StandingsCell:         %zu\n", sizeof(StandingsCell));
   return 0;
 }
