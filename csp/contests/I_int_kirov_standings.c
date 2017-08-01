@@ -128,6 +128,472 @@ calc_kirov_score(
         int format,
         time_t effective_time);
 
+static void
+process_kirov_run(
+    StandingsPage *pg,
+    StandingsExtraInfo *sii,
+    struct serve_state *cs,
+    int run_id,
+    const struct run_entry *pe,
+    int need_eff_time)
+{
+    const struct section_global_data *global = cs->global;
+    int tind = pg->t_rev[pe->user_id];
+    int pind = pg->p_rev[pe->prob_id];
+    int up_ind = (tind << pg->row_sh) + pind;
+    const struct section_problem_data *prob = cs->probs[pe->prob_id];
+    StandingsCell *cell = &pg->cells[up_ind];
+    StandingsUserRow *row = &pg->rows[tind];
+    StandingsProblemColumn *col = &pg->columns[pind];
+    time_t run_time = pe->time;
+
+    int token_flags = 0;
+    if (sii->user_mode && sii->user_id > 0 && sii->user_id == pe->user_id) {
+        token_flags = pe->token_flags;
+    }
+
+    if (prob->score_tokenized > 0 && !pe->token_flags) return;
+
+    int run_status = RUN_CHECK_FAILED;
+    int run_score = 0;
+    int run_tests = 0;
+    if (pg->separate_user_score > 0 && sii->user_mode && pe->is_saved && !(pe->token_flags & TOKEN_FINALSCORE_BIT)) {
+        run_status = pe->saved_status;
+        run_score = pe->saved_score;
+        if (run_status == RUN_OK && !prob->variable_full_score) {
+            if (prob->full_user_score >= 0) {
+                run_score = prob->full_user_score;
+            } else {
+                run_score = prob->full_score;
+            }
+        }
+        run_tests = pe->saved_test;
+    } else {
+        run_status = pe->status;
+        run_score = pe->score;
+        if (run_status == RUN_OK && !prob->variable_full_score) {
+            run_score = prob->full_score;
+        }
+        if (pe->passed_mode > 0) {
+            run_tests = pe->test;
+        } else {
+            run_tests = pe->test - 1;
+        }
+    }
+
+    if (run_status == RUN_REJECTED && prob->enable_submit_after_reject > 0 && run_time > 0) {
+        if (cell->eff_time <= 0) {
+            cell->eff_time = run_time;
+        } else if (run_time < cell->eff_time) {
+            cell->eff_time = run_time;
+        }
+    }
+    time_t effective_time = 0;
+    if (need_eff_time) {
+        effective_time = cell->eff_time;
+    }
+
+    if (global->score_system == SCORE_OLYMPIAD && sii->accepting_mode) {
+        if (run_score < 0) run_score = 0;
+        if (run_tests < 0) run_tests = 0;
+        if (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0) run_status = RUN_PARTIAL;
+        switch (run_status) {
+        case RUN_OK:
+        case RUN_ACCEPTED:
+        case RUN_PENDING_REVIEW:
+        case RUN_SUMMONED:
+            if (!cell->full_sol) ++cell->sol_att;
+            cell->full_sol = 1;
+            cell->prob_score = prob->tests_to_accept;
+            ++cell->att_num;  /* hmm, it is not used... */
+            if (run_status == RUN_PENDING_REVIEW)
+                cell->pr_flag = 1;
+            if (run_status == RUN_SUMMONED)
+                cell->sm_flag = 1;
+            break;
+        case RUN_PARTIAL:
+            if (!cell->full_sol) ++cell->sol_att;
+            if (run_tests > prob->tests_to_accept)
+                run_tests = prob->tests_to_accept;
+            if (run_tests > cell->prob_score) 
+                cell->prob_score = run_tests;
+            cell->full_sol = 1;
+            ++cell->att_num;
+            break;
+        case RUN_COMPILE_ERR:
+        case RUN_TIME_LIMIT_ERR:
+        case RUN_WALL_TIME_LIMIT_ERR:
+        case RUN_RUN_TIME_ERR:
+        case RUN_WRONG_ANSWER_ERR:
+        case RUN_PRESENTATION_ERR:
+        case RUN_MEM_LIMIT_ERR:
+        case RUN_SECURITY_ERR:
+        case RUN_SYNC_ERR:
+        case RUN_STYLE_ERR:
+        case RUN_REJECTED:
+            if (!cell->full_sol) ++cell->sol_att;
+            if (run_tests > prob->tests_to_accept)
+                run_tests = prob->tests_to_accept;
+            if (run_tests > cell->prob_score) 
+                cell->prob_score = run_score;
+            ++cell->att_num;
+            break;
+        case RUN_DISQUALIFIED:
+            if (!cell->full_sol) ++cell->sol_att;
+            ++cell->disq_num;
+            break;
+        case RUN_PENDING:
+            if (!cell->full_sol) ++cell->sol_att;
+            ++cell->att_num;
+            ++cell->trans_num;
+            break;
+        case RUN_COMPILING:
+        case RUN_RUNNING:
+            ++cell->trans_num;
+            break;
+        case RUN_CHECK_FAILED:
+            ++cell->cf_num;
+            break;
+        default:
+            break;
+        }
+    } else if (global->score_system == SCORE_OLYMPIAD) {
+        run_score += pe->score_adj;
+        if (run_score < 0) run_score = 0;
+        if (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0) run_status = RUN_PARTIAL;
+        switch (run_status) {
+        case RUN_OK:
+            if (prob->score_latest > 0) {
+                // score best, actually
+                if (run_score > cell->prob_score) {
+                    cell->full_sol = 1;
+                    cell->prob_score = run_score;
+                } else if (run_score == cell->prob_score) {
+                    cell->full_sol = 1;
+                }
+            } else {
+                cell->full_sol = 1;
+                cell->prob_score = run_score;
+            }
+            cell->trans_num = 0;
+            ++cell->att_num;
+            if (global->stand_enable_penalty && prob->ignore_penalty <= 0) {
+                cell->penalty += sec_to_min(global->rounding_mode, run_time);
+            }
+            //if (run_score > prob->full_score) run_score = prob->full_score;
+            break;
+        case RUN_PARTIAL:
+            if (prob->score_latest > 0) {
+                // score best, actually
+                if (run_score > cell->prob_score) {
+                    cell->full_sol = 0;
+                    cell->prob_score = run_score;
+                }
+            } else {
+                cell->prob_score = run_score;
+                cell->full_sol = 0;
+            }
+            cell->trans_num = 0;
+            ++cell->att_num;
+            if (global->stand_enable_penalty && prob->ignore_penalty <= 0) {
+                cell->penalty += sec_to_min(global->rounding_mode, run_time - row->start_time);
+            }
+            break;
+        case RUN_ACCEPTED:
+            ++cell->att_num;
+            ++cell->trans_num;
+            break;
+        case RUN_PENDING_REVIEW:
+            ++cell->att_num;
+            ++cell->trans_num;
+            cell->pr_flag = 1;
+            break;
+        case RUN_SUMMONED:
+            ++cell->att_num;
+            ++cell->trans_num;
+            cell->sm_flag = 1;
+            break;
+        case RUN_PENDING:
+            ++cell->att_num;
+            ++cell->trans_num;
+            break;
+        case RUN_COMPILE_ERR:
+        case RUN_TIME_LIMIT_ERR:
+        case RUN_WALL_TIME_LIMIT_ERR:
+        case RUN_RUN_TIME_ERR:
+        case RUN_WRONG_ANSWER_ERR:
+        case RUN_PRESENTATION_ERR:
+        case RUN_MEM_LIMIT_ERR:
+        case RUN_SECURITY_ERR:
+        case RUN_SYNC_ERR:
+        case RUN_STYLE_ERR:
+        case RUN_REJECTED:
+            ++cell->att_num;
+            break;
+        case RUN_DISQUALIFIED:
+            ++cell->disq_num;
+            break;
+        case RUN_COMPILING:
+        case RUN_RUNNING:
+            ++cell->trans_num;
+            break;
+        case RUN_CHECK_FAILED:
+            ++cell->cf_num;
+            break;
+        default:
+            break;
+        }
+    } else {
+        // KIROV system with variations
+        if (run_score == -1) run_score = 0;
+
+        if (prob->score_latest_or_unmarked > 0) {
+            if (run_status == RUN_OK || run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED) {
+                if (run_status == RUN_PENDING_REVIEW) {
+                    cell->pr_flag = 1;
+                    ++pg->total_prs;
+                }
+                if (run_status == RUN_SUMMONED) {
+                    cell->sm_flag = 1;
+                    ++pg->total_summoned;
+                }
+                cell->rj_flag = 0;
+
+                int score = calc_kirov_score(0, 0, row->start_time,
+                                             pg->separate_user_score, sii->user_mode, token_flags,
+                                             pe, prob, cell->att_num,
+                                             cell->disq_num, cell->ce_num,
+                                             cell->full_sol?RUN_TOO_MANY:col->succ_att,
+                                             0, 0, effective_time);
+                if (pe->is_marked) {
+                    // latest
+                    cell->marked_flag = 1;
+                    cell->prob_score = score;
+                    if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
+                } else if (cell->marked_flag) {
+                    // do nothing
+                } else if (score > cell->prob_score) {
+                    // best score
+                    cell->prob_score = score;
+                    if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
+                }
+                ++cell->sol_att;
+                ++col->succ_att;
+                ++col->tot_att;
+                ++cell->att_num;
+                cell->full_sol = 1;
+                pg->last_submit_run = run_id;
+                pg->last_success_run = run_id;
+            } else if (run_status == RUN_PARTIAL || (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0)) {
+                int score = calc_kirov_score(0, 0, row->start_time,
+                                             pg->separate_user_score, sii->user_mode, token_flags,
+                                             pe, prob, cell->att_num,
+                                             cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
+                                             effective_time);
+                if (pe->is_marked) {
+                    // latest
+                    cell->marked_flag = 1;
+                    cell->prob_score = score;
+                    if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
+                } else if (cell->marked_flag) {
+                    // do nothing
+                } else if (score > cell->prob_score) {
+                    // best score
+                    cell->prob_score = score;
+                    if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
+                }
+                if (!cell->full_sol) ++cell->sol_att;
+                ++cell->att_num;
+                if (!cell->full_sol) ++col->tot_att;
+                cell->full_sol = 0;
+                pg->last_submit_run = run_id;
+            } else if (run_status == RUN_COMPILE_ERR) {
+                if (prob->ignore_compile_errors <= 0) {
+                    if (prob->compile_error_penalty >= 0) {
+                        ++cell->ce_num;
+                    } else {
+                        ++cell->att_num;
+                    }
+                    if (!cell->full_sol) ++cell->sol_att;
+                    if (!cell->full_sol) ++col->tot_att;
+                    pg->last_submit_run = run_id;
+                }
+            } else if (run_status == RUN_DISQUALIFIED) {
+                if (!cell->full_sol) ++cell->sol_att;
+                ++cell->disq_num;
+                ++pg->total_disqualified;
+            } else if (run_status == RUN_PENDING_REVIEW) {
+                cell->pr_flag = 1;
+                ++pg->total_prs;
+            } else if (run_status == RUN_SUMMONED) {
+                cell->sm_flag = 1;
+                ++pg->total_summoned;
+            } else if (run_status == RUN_REJECTED) {
+                if (!cell->full_sol)
+                    cell->rj_flag = 1;
+                ++pg->total_rejected;
+            } else if (run_status == RUN_PENDING) {
+                ++cell->trans_num;
+                ++pg->total_pending;
+            } else if (run_status == RUN_ACCEPTED) {
+                ++cell->trans_num;
+                ++pg->total_accepted;
+            } else if (run_status == RUN_COMPILING || run_status == RUN_RUNNING) {
+                ++cell->trans_num;
+                ++pg->total_trans;
+            } else if (run_status == RUN_CHECK_FAILED) {
+                ++cell->cf_num;
+                ++pg->total_check_failed;
+            } else if (run_status == RUN_STYLE_ERR || run_status == RUN_REJECTED) {
+            } else {
+                /* something strange... */
+            }
+        } else {
+            if (run_status == RUN_OK || run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED) {
+                if (run_status == RUN_PENDING_REVIEW) {
+                    cell->pr_flag = 1;
+                    ++pg->total_prs;
+                }
+                if (run_status == RUN_SUMMONED) {
+                    cell->sm_flag = 1;
+                    ++pg->total_summoned;
+                }
+                cell->rj_flag = 0;
+
+                if (!cell->marked_flag || prob->ignore_unmarked <= 0 || pe->is_marked) {
+                    cell->marked_flag = pe->is_marked;
+                    if (!cell->full_sol) ++cell->sol_att;
+                    int score = calc_kirov_score(0, 0, row->start_time,
+                                                 pg->separate_user_score, sii->user_mode, token_flags,
+                                                 pe, prob, cell->att_num,
+                                                 cell->disq_num, cell->ce_num,
+                                                 cell->full_sol?RUN_TOO_MANY:col->succ_att,
+                                                 0, 0, effective_time);
+                    if (prob->score_latest > 0 || score > cell->prob_score) {
+                        cell->prob_score = score;
+                        if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
+                    }
+                    if (!cell->sol_time && prob->stand_hide_time <= 0)
+                        cell->sol_time = run_time;
+                    if (!cell->full_sol) {
+                        ++col->succ_att;
+                        ++col->tot_att;
+                    }
+                    ++cell->att_num;
+                    cell->full_sol = 1;
+                    pg->last_submit_run = run_id;
+                    pg->last_success_run = run_id;
+                    if (prob->provide_ok) {
+                        for (int dst_i = 0; prob->provide_ok[dst_i]; ++dst_i) {
+                            // find a matching problem
+                            int dst_pind = 0;
+                            for (dst_pind = 0; dst_pind < pg->p_tot; ++dst_pind) {
+                                if (!strcmp(prob->provide_ok[dst_i], cs->probs[pg->p_ind[dst_pind]]->short_name))
+                                    break;
+                            }
+                            if (dst_pind >= pg->p_tot) continue;
+
+                            int dst_up_ind = (tind << pg->row_sh) + dst_pind;
+                            const struct section_problem_data *dst_prob = cs->probs[pg->p_ind[dst_pind]];
+                            StandingsCell *dest_cell = &pg->cells[dst_up_ind];
+                            dest_cell->marked_flag = pe->is_marked;
+                            if (!dest_cell->full_sol) ++dest_cell->sol_att;
+                            score = dst_prob->full_score;
+                            /*
+                              score = calc_kirov_score(0, 0, start_time,
+                              separate_user_score, user_mode,
+                              pe, prob, att_num[up_ind],
+                              disq_num[up_ind],
+                              full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
+                              0, 0);
+                            */
+                            if (dst_prob->score_latest > 0 || score > dest_cell->prob_score) {
+                                dest_cell->prob_score = score;
+                                if (dst_prob->stand_hide_time <= 0) dest_cell->sol_time = run_time;
+                            }
+                            if (!dest_cell->sol_time && dst_prob->stand_hide_time <= 0) {
+                                dest_cell->sol_time = run_time;
+                            }
+                            if (!dest_cell->full_sol) {
+                                ++pg->columns[dst_pind].succ_att;
+                                ++pg->columns[dst_pind].tot_att;
+                            }
+                            ++dest_cell->att_num;
+                            dest_cell->full_sol = 1;
+                        }
+                    }
+                }
+            } else if (run_status == RUN_PARTIAL) {
+                if (!cell->marked_flag || prob->ignore_unmarked <= 0 || pe->is_marked) {
+                    cell->marked_flag = pe->is_marked;
+                    if (!cell->full_sol) ++cell->sol_att;
+                    int score = calc_kirov_score(0, 0, row->start_time,
+                                                 pg->separate_user_score, sii->user_mode, token_flags,
+                                                 pe, prob, cell->att_num,
+                                                 cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
+                                                 effective_time);
+                    if (prob->score_latest > 0 || score > cell->prob_score) {
+                        cell->prob_score = score;
+                    }
+                    if (prob->score_latest > 0) {
+                        cell->full_sol = 0;
+                    }
+                    ++cell->att_num;
+                    if (!cell->full_sol) ++col->tot_att;
+                    pg->last_submit_run = run_id;
+                }
+            } else if (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0) {
+                if (!cell->full_sol) ++cell->sol_att;
+                int score = calc_kirov_score(0, 0, row->start_time,
+                                             pg->separate_user_score, sii->user_mode, token_flags,
+                                             pe, prob, cell->att_num,
+                                             cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
+                                             effective_time);
+                if (prob->score_latest > 0 || score > cell->prob_score) {
+                    cell->prob_score = score;
+                }
+                ++cell->att_num;
+                if (!cell->full_sol) ++col->tot_att;
+                pg->last_submit_run = run_id;
+            } else if (run_status == RUN_COMPILE_ERR) {
+                if (prob->ignore_compile_errors <= 0) {
+                    if (prob->compile_error_penalty >= 0) {
+                        ++cell->ce_num;
+                    } else {
+                        ++cell->att_num;
+                    }
+                    if (!cell->full_sol) ++cell->sol_att;
+                    if (!cell->full_sol) ++col->tot_att;
+                    pg->last_submit_run = run_id;
+                }
+            } else if (run_status == RUN_DISQUALIFIED) {
+                if (!cell->full_sol) ++cell->sol_att;
+                ++cell->disq_num;
+                ++pg->total_disqualified;
+            } else if (run_status == RUN_PENDING) {
+                ++cell->trans_num;
+                ++pg->total_pending;
+            } else if (run_status == RUN_ACCEPTED) {
+                ++cell->trans_num;
+                ++pg->total_accepted;
+            } else if (run_status == RUN_REJECTED) {
+                if (!cell->full_sol)
+                    cell->rj_flag = 1;
+                ++pg->total_rejected;
+            } else if (run_status == RUN_COMPILING || run_status == RUN_RUNNING) {
+                ++cell->trans_num;
+                ++pg->total_trans;
+            } else if (run_status == RUN_CHECK_FAILED) {
+                ++cell->cf_num;
+                ++pg->total_check_failed;
+            } else if (run_status == RUN_STYLE_ERR || run_status == RUN_REJECTED) {
+            } else {
+                /* something strange... */
+            }
+        }
+    }
+}
+
 static int
 csp_execute_int_kirov_standings(
         PageInterface *ps,
@@ -158,6 +624,9 @@ csp_execute_int_kirov_standings(
         pg->stop_time = run_get_virtual_stop_time(cs->runlog_state, sii->user_id, 0);
     }
 
+    if (pg->start_time > 0 && pg->cur_time < pg->start_time) {
+        pg->cur_time = pg->start_time;
+    }
     /*
     // WTF?
     if (start_time > 0 && stop_time > 0) {
@@ -194,7 +663,7 @@ csp_execute_int_kirov_standings(
     if (global->prune_empty_users > 0 || global->disable_user_database > 0) {
         memset(t_runs, 0, pg->t_max);
         for (int k = 0; k < pg->r_tot; k++) {
-            if (pg->runs[k].status == RUN_EMPTY || pg->runs[k].status == RUN_VIRTUAL_START || pg->runs[k].status == RUN_VIRTUAL_STOP) continue;
+            if (pg->runs[k].status == RUN_EMPTY) continue;
             if (pg->runs[k].is_hidden) continue;
             if(pg->runs[k].user_id <= 0 && pg->runs[k].user_id >= pg->t_max) continue;
             t_runs[pg->runs[k].user_id] = 1;
@@ -253,18 +722,19 @@ csp_execute_int_kirov_standings(
     pg->p_ind = malloc(pg->p_max * sizeof(pg->p_ind[0]));
     pg->p_rev = malloc(pg->p_max * sizeof(pg->p_rev[0]));
     get_problem_map(cs, pg->cur_time, pg->p_rev, pg->p_max, pg->p_ind, &pg->p_tot, &pg->last_col_ind, sii->user_filter);
-    for (int i = 1; i < pg->p_max; i++) {
-        if (!cs->probs) continue;
-        const struct section_problem_data *prob = cs->probs[i];
-        if (!prob) continue;
-        need_eff_time = (prob->enable_submit_after_reject > 0);
-        if (!prob->stand_column) continue;
-        if (prob->start_date > 0 && pg->cur_time < prob->start_date) continue;
-        for (int j = 1; j < pg->p_max; j++) {
-            if (!cs->probs[j]) continue;
-            if (!strcmp(cs->probs[j]->short_name, prob->stand_column)
-                || (cs->probs[j]->stand_name && !strcmp(cs->probs[j]->stand_name, prob->stand_column))) {
-                pg->p_rev[i] = pg->p_rev[j];
+    if (cs->probs) {
+        for (int i = 1; i < pg->p_max; i++) {
+            const struct section_problem_data *prob = cs->probs[i];
+            if (!prob) continue;
+            need_eff_time = (prob->enable_submit_after_reject > 0);
+            if (!prob->stand_column) continue;
+            if (prob->start_date > 0 && pg->cur_time < prob->start_date) continue;
+            for (int j = 1; j < pg->p_max; j++) {
+                if (!cs->probs[j]) continue;
+                if (!strcmp(cs->probs[j]->short_name, prob->stand_column)
+                    || (cs->probs[j]->stand_name && !strcmp(cs->probs[j]->stand_name, prob->stand_column))) {
+                    pg->p_rev[i] = pg->p_rev[j];
+                }
             }
         }
     }
@@ -331,473 +801,30 @@ csp_execute_int_kirov_standings(
         if (tind < 0) continue;
         int pind = pg->p_rev[pe->prob_id];
         if (pind < 0) continue;
-        int up_ind = (tind << pg->row_sh) + pind;
         const struct section_problem_data *prob = cs->probs[pe->prob_id];
         if (!prob || prob->hidden) continue;
-        StandingsCell *cell = &pg->cells[up_ind];
         StandingsUserRow *row = &pg->rows[tind];
-        StandingsProblemColumn *col = &pg->columns[pind];
 
         time_t run_time = pe->time;
+        time_t run_duration = run_time - row->start_time;
         if (global->is_virtual > 0) {
             // filter future runs in unprivileged mode (not upsolving)
             if (row->start_time <= 0) continue;
-            if (run_time < row->start_time && cs->upsolving_freeze_standings > 0) continue;
+            if (run_time < row->start_time) continue;
+            //if (run_time < row->start_time && cs->upsolving_freeze_standings > 0) continue;
             if (row->stop_time > 0 && run_time > row->stop_time && cs->upsolving_freeze_standings > 0) continue;
+            if (sii->user_id > 0 && run_duration > pg->cur_duration)
+                continue;
         } else if (!sii->client_flag || sii->user_id > 0) {
             // ignore future runs when not in privileged mode
+            if (pg->cur_duration > 0 && run_time - pg->start_time > pg->cur_duration) continue;
             if (run_time < row->start_time) run_time = row->start_time;
             if (row->stop_time > 0 && run_time > row->stop_time) run_time = row->stop_time;
             if (global->stand_ignore_after > 0 && run_time >= global->stand_ignore_after)
                 continue;
         }
 
-        int token_flags = 0;
-        if (sii->user_mode && sii->user_id > 0 && sii->user_id == pe->user_id) {
-            token_flags = pe->token_flags;
-        }
-
-        if (prob->score_tokenized > 0 && !pe->token_flags) continue;
-
-        int run_status = RUN_CHECK_FAILED;
-        int run_score = 0;
-        int run_tests = 0;
-        if (pg->separate_user_score > 0 && sii->user_mode && pe->is_saved && !(pe->token_flags & TOKEN_FINALSCORE_BIT)) {
-            run_status = pe->saved_status;
-            run_score = pe->saved_score;
-            if (run_status == RUN_OK && !prob->variable_full_score) {
-                if (prob->full_user_score >= 0) {
-                    run_score = prob->full_user_score;
-                } else {
-                    run_score = prob->full_score;
-                }
-            }
-            run_tests = pe->saved_test;
-        } else {
-            run_status = pe->status;
-            run_score = pe->score;
-            if (run_status == RUN_OK && !prob->variable_full_score) {
-                run_score = prob->full_score;
-            }
-            if (pe->passed_mode > 0) {
-                run_tests = pe->test;
-            } else {
-                run_tests = pe->test - 1;
-            }
-        }
-
-        if (run_status == RUN_REJECTED && prob->enable_submit_after_reject > 0 && run_time > 0) {
-            if (cell->eff_time <= 0) {
-                cell->eff_time = run_time;
-            } else if (run_time < cell->eff_time) {
-                cell->eff_time = run_time;
-            }
-        }
-        time_t effective_time = 0;
-        if (need_eff_time) {
-            effective_time = cell->eff_time;
-        }
-
-        if (global->score_system == SCORE_OLYMPIAD && sii->accepting_mode) {
-            if (run_score < 0) run_score = 0;
-            if (run_tests < 0) run_tests = 0;
-            if (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0) run_status = RUN_PARTIAL;
-            switch (run_status) {
-            case RUN_OK:
-            case RUN_ACCEPTED:
-            case RUN_PENDING_REVIEW:
-            case RUN_SUMMONED:
-                if (!cell->full_sol) ++cell->sol_att;
-                cell->full_sol = 1;
-                cell->prob_score = prob->tests_to_accept;
-                ++cell->att_num;  /* hmm, it is not used... */
-                if (run_status == RUN_PENDING_REVIEW)
-                    cell->pr_flag = 1;
-                if (run_status == RUN_SUMMONED)
-                    cell->sm_flag = 1;
-                break;
-            case RUN_PARTIAL:
-                if (!cell->full_sol) ++cell->sol_att;
-                if (run_tests > prob->tests_to_accept)
-                    run_tests = prob->tests_to_accept;
-                if (run_tests > cell->prob_score) 
-                    cell->prob_score = run_tests;
-                cell->full_sol = 1;
-                ++cell->att_num;
-                break;
-            case RUN_COMPILE_ERR:
-            case RUN_TIME_LIMIT_ERR:
-            case RUN_WALL_TIME_LIMIT_ERR:
-            case RUN_RUN_TIME_ERR:
-            case RUN_WRONG_ANSWER_ERR:
-            case RUN_PRESENTATION_ERR:
-            case RUN_MEM_LIMIT_ERR:
-            case RUN_SECURITY_ERR:
-            case RUN_SYNC_ERR:
-            case RUN_STYLE_ERR:
-            case RUN_REJECTED:
-                if (!cell->full_sol) ++cell->sol_att;
-                if (run_tests > prob->tests_to_accept)
-                    run_tests = prob->tests_to_accept;
-                if (run_tests > cell->prob_score) 
-                    cell->prob_score = run_score;
-                ++cell->att_num;
-                break;
-            case RUN_DISQUALIFIED:
-                if (!cell->full_sol) ++cell->sol_att;
-                ++cell->disq_num;
-                break;
-            case RUN_PENDING:
-                if (!cell->full_sol) ++cell->sol_att;
-                ++cell->att_num;
-                ++cell->trans_num;
-                break;
-            case RUN_COMPILING:
-            case RUN_RUNNING:
-                ++cell->trans_num;
-                break;
-            case RUN_CHECK_FAILED:
-                ++cell->cf_num;
-                break;
-            default:
-                break;
-            }
-        } else if (global->score_system == SCORE_OLYMPIAD) {
-            run_score += pe->score_adj;
-            if (run_score < 0) run_score = 0;
-            if (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0) run_status = RUN_PARTIAL;
-            switch (run_status) {
-            case RUN_OK:
-                if (prob->score_latest > 0) {
-                    // score best, actually
-                    if (run_score > cell->prob_score) {
-                        cell->full_sol = 1;
-                        cell->prob_score = run_score;
-                    } else if (run_score == cell->prob_score) {
-                        cell->full_sol = 1;
-                    }
-                } else {
-                    cell->full_sol = 1;
-                    cell->prob_score = run_score;
-                }
-                cell->trans_num = 0;
-                ++cell->att_num;
-                if (global->stand_enable_penalty && prob->ignore_penalty <= 0) {
-                    cell->penalty += sec_to_min(global->rounding_mode, run_time);
-                }
-                //if (run_score > prob->full_score) run_score = prob->full_score;
-                break;
-            case RUN_PARTIAL:
-                if (prob->score_latest > 0) {
-                    // score best, actually
-                    if (run_score > cell->prob_score) {
-                        cell->full_sol = 0;
-                        cell->prob_score = run_score;
-                    }
-                } else {
-                    cell->prob_score = run_score;
-                    cell->full_sol = 0;
-                }
-                cell->trans_num = 0;
-                ++cell->att_num;
-                if (global->stand_enable_penalty && prob->ignore_penalty <= 0) {
-                    cell->penalty += sec_to_min(global->rounding_mode, run_time - row->start_time);
-                }
-                break;
-            case RUN_ACCEPTED:
-                ++cell->att_num;
-                ++cell->trans_num;
-                break;
-            case RUN_PENDING_REVIEW:
-                ++cell->att_num;
-                ++cell->trans_num;
-                cell->pr_flag = 1;
-                break;
-            case RUN_SUMMONED:
-                ++cell->att_num;
-                ++cell->trans_num;
-                cell->sm_flag = 1;
-                break;
-            case RUN_PENDING:
-                ++cell->att_num;
-                ++cell->trans_num;
-                break;
-            case RUN_COMPILE_ERR:
-            case RUN_TIME_LIMIT_ERR:
-            case RUN_WALL_TIME_LIMIT_ERR:
-            case RUN_RUN_TIME_ERR:
-            case RUN_WRONG_ANSWER_ERR:
-            case RUN_PRESENTATION_ERR:
-            case RUN_MEM_LIMIT_ERR:
-            case RUN_SECURITY_ERR:
-            case RUN_SYNC_ERR:
-            case RUN_STYLE_ERR:
-            case RUN_REJECTED:
-                ++cell->att_num;
-                break;
-            case RUN_DISQUALIFIED:
-                ++cell->disq_num;
-                break;
-            case RUN_COMPILING:
-            case RUN_RUNNING:
-                ++cell->trans_num;
-                break;
-            case RUN_CHECK_FAILED:
-                ++cell->cf_num;
-                break;
-            default:
-                break;
-            }
-        } else {
-            // KIROV system with variations
-            if (run_score == -1) run_score = 0;
-
-            if (prob->score_latest_or_unmarked > 0) {
-                if (run_status == RUN_OK || run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED) {
-                    if (run_status == RUN_PENDING_REVIEW) {
-                        cell->pr_flag = 1;
-                        ++pg->total_prs;
-                    }
-                    if (run_status == RUN_SUMMONED) {
-                        cell->sm_flag = 1;
-                        ++pg->total_summoned;
-                    }
-                    cell->rj_flag = 0;
-                    
-                    int score = calc_kirov_score(0, 0, row->start_time,
-                                                 pg->separate_user_score, sii->user_mode, token_flags,
-                                                 pe, prob, cell->att_num,
-                                                 cell->disq_num, cell->ce_num,
-                                                 cell->full_sol?RUN_TOO_MANY:col->succ_att,
-                                                 0, 0, effective_time);
-                    if (pe->is_marked) {
-                        // latest
-                        cell->marked_flag = 1;
-                        cell->prob_score = score;
-                        if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
-                    } else if (cell->marked_flag) {
-                        // do nothing
-                    } else if (score > cell->prob_score) {
-                        // best score
-                        cell->prob_score = score;
-                        if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
-                    }
-                    ++cell->sol_att;
-                    ++col->succ_att;
-                    ++col->tot_att;
-                    ++cell->att_num;
-                    cell->full_sol = 1;
-                    pg->last_submit_run = k;
-                    pg->last_success_run = k;
-                } else if (run_status == RUN_PARTIAL || (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0)) {
-                    int score = calc_kirov_score(0, 0, row->start_time,
-                                                 pg->separate_user_score, sii->user_mode, token_flags,
-                                                 pe, prob, cell->att_num,
-                                                 cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
-                                                 effective_time);
-                    if (pe->is_marked) {
-                        // latest
-                        cell->marked_flag = 1;
-                        cell->prob_score = score;
-                        if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
-                    } else if (cell->marked_flag) {
-                        // do nothing
-                    } else if (score > cell->prob_score) {
-                        // best score
-                        cell->prob_score = score;
-                        if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
-                    }
-                    if (!cell->full_sol) ++cell->sol_att;
-                    ++cell->att_num;
-                    if (!cell->full_sol) ++col->tot_att;
-                    cell->full_sol = 0;
-                    pg->last_submit_run = k;
-                } else if (run_status == RUN_COMPILE_ERR) {
-                    if (prob->ignore_compile_errors <= 0) {
-                        if (prob->compile_error_penalty >= 0) {
-                            ++cell->ce_num;
-                        } else {
-                            ++cell->att_num;
-                        }
-                        if (!cell->full_sol) ++cell->sol_att;
-                        if (!cell->full_sol) ++col->tot_att;
-                        pg->last_submit_run = k;
-                    }
-                } else if (run_status == RUN_DISQUALIFIED) {
-                    if (!cell->full_sol) ++cell->sol_att;
-                    ++cell->disq_num;
-                    ++pg->total_disqualified;
-                } else if (run_status == RUN_PENDING_REVIEW) {
-                    cell->pr_flag = 1;
-                    ++pg->total_prs;
-                } else if (run_status == RUN_SUMMONED) {
-                    cell->sm_flag = 1;
-                    ++pg->total_summoned;
-                } else if (run_status == RUN_REJECTED) {
-                    if (!cell->full_sol)
-                        cell->rj_flag = 1;
-                    ++pg->total_rejected;
-                } else if (run_status == RUN_PENDING) {
-                    ++cell->trans_num;
-                    ++pg->total_pending;
-                } else if (run_status == RUN_ACCEPTED) {
-                    ++cell->trans_num;
-                    ++pg->total_accepted;
-                } else if (run_status == RUN_COMPILING
-                           || run_status == RUN_RUNNING) {
-                    ++cell->trans_num;
-                    ++pg->total_trans;
-                } else if (run_status == RUN_CHECK_FAILED) {
-                    ++cell->cf_num;
-                    ++pg->total_check_failed;
-                } else if (run_status == RUN_STYLE_ERR || run_status == RUN_REJECTED) {
-                } else {
-                    /* something strange... */
-                }
-            } else {
-                if (run_status == RUN_OK || run_status == RUN_PENDING_REVIEW || run_status == RUN_SUMMONED) {
-                    if (run_status == RUN_PENDING_REVIEW) {
-                        cell->pr_flag = 1;
-                        ++pg->total_prs;
-                    }
-                    if (run_status == RUN_SUMMONED) {
-                        cell->sm_flag = 1;
-                        ++pg->total_summoned;
-                    }
-                    cell->rj_flag = 0;
-                    
-                    if (!cell->marked_flag || prob->ignore_unmarked <= 0 || pe->is_marked) {
-                        cell->marked_flag = pe->is_marked;
-                        if (!cell->full_sol) ++cell->sol_att;
-                        int score = calc_kirov_score(0, 0, row->start_time,
-                                                     pg->separate_user_score, sii->user_mode, token_flags,
-                                                     pe, prob, cell->att_num,
-                                                     cell->disq_num, cell->ce_num,
-                                                     cell->full_sol?RUN_TOO_MANY:col->succ_att,
-                                                     0, 0, effective_time);
-                        if (prob->score_latest > 0 || score > cell->prob_score) {
-                            cell->prob_score = score;
-                            if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
-                        }
-                        if (!cell->sol_time && prob->stand_hide_time <= 0)
-                            cell->sol_time = run_time;
-                        if (!cell->full_sol) {
-                            ++col->succ_att;
-                            ++col->tot_att;
-                        }
-                        ++cell->att_num;
-                        cell->full_sol = 1;
-                        pg->last_submit_run = k;
-                        pg->last_success_run = k;
-                        if (prob->provide_ok) {
-                            for (int dst_i = 0; prob->provide_ok[dst_i]; ++dst_i) {
-                                // find a matching problem
-                                int dst_pind = 0;
-                                for (dst_pind = 0; dst_pind < pg->p_tot; ++dst_pind) {
-                                    if (!strcmp(prob->provide_ok[dst_i], cs->probs[pg->p_ind[dst_pind]]->short_name))
-                                        break;
-                                }
-                                if (dst_pind >= pg->p_tot) continue;
-                                
-                                int dst_up_ind = (tind << pg->row_sh) + dst_pind;
-                                const struct section_problem_data *dst_prob = cs->probs[pg->p_ind[dst_pind]];
-                                StandingsCell *dest_cell = &pg->cells[dst_up_ind];
-                                dest_cell->marked_flag = pe->is_marked;
-                                if (!dest_cell->full_sol) ++dest_cell->sol_att;
-                                score = dst_prob->full_score;
-                                /*
-                                  score = calc_kirov_score(0, 0, start_time,
-                                  separate_user_score, user_mode,
-                                  pe, prob, att_num[up_ind],
-                                  disq_num[up_ind],
-                                  full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
-                                  0, 0);
-                                */
-                                if (dst_prob->score_latest > 0 || score > dest_cell->prob_score) {
-                                    dest_cell->prob_score = score;
-                                    if (dst_prob->stand_hide_time <= 0) dest_cell->sol_time = run_time;
-                                }
-                                if (!dest_cell->sol_time && dst_prob->stand_hide_time <= 0) {
-                                    dest_cell->sol_time = run_time;
-                                }
-                                if (!dest_cell->full_sol) {
-                                    ++pg->columns[dst_pind].succ_att;
-                                    ++pg->columns[dst_pind].tot_att;
-                                }
-                                ++dest_cell->att_num;
-                                dest_cell->full_sol = 1;
-                            }
-                        }
-                    }
-                } else if (run_status == RUN_PARTIAL) {
-                    if (!cell->marked_flag || prob->ignore_unmarked <= 0 || pe->is_marked) {
-                        cell->marked_flag = pe->is_marked;
-                        if (!cell->full_sol) ++cell->sol_att;
-                        int score = calc_kirov_score(0, 0, row->start_time,
-                                                     pg->separate_user_score, sii->user_mode, token_flags,
-                                                     pe, prob, cell->att_num,
-                                                     cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
-                                                     effective_time);
-                        if (prob->score_latest > 0 || score > cell->prob_score) {
-                            cell->prob_score = score;
-                        }
-                        if (prob->score_latest > 0) {
-                            cell->full_sol = 0;
-                        }
-                        ++cell->att_num;
-                        if (!cell->full_sol) ++col->tot_att;
-                        pg->last_submit_run = k;
-                    }
-                } else if (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0) {
-                    if (!cell->full_sol) ++cell->sol_att;
-                    int score = calc_kirov_score(0, 0, row->start_time,
-                                                 pg->separate_user_score, sii->user_mode, token_flags,
-                                                 pe, prob, cell->att_num,
-                                                 cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
-                                                 effective_time);
-                    if (prob->score_latest > 0 || score > cell->prob_score) {
-                        cell->prob_score = score;
-                    }
-                    ++cell->att_num;
-                    if (!cell->full_sol) ++col->tot_att;
-                    pg->last_submit_run = k;
-                } else if (run_status == RUN_COMPILE_ERR) {
-                    if (prob->ignore_compile_errors <= 0) {
-                        if (prob->compile_error_penalty >= 0) {
-                            ++cell->ce_num;
-                        } else {
-                            ++cell->att_num;
-                        }
-                        if (!cell->full_sol) ++cell->sol_att;
-                        if (!cell->full_sol) ++col->tot_att;
-                        pg->last_submit_run = k;
-                    }
-                } else if (run_status == RUN_DISQUALIFIED) {
-                    if (!cell->full_sol) ++cell->sol_att;
-                    ++cell->disq_num;
-                    ++pg->total_disqualified;
-                } else if (run_status == RUN_PENDING) {
-                    ++cell->trans_num;
-                    ++pg->total_pending;
-                } else if (run_status == RUN_ACCEPTED) {
-                    ++cell->trans_num;
-                    ++pg->total_accepted;
-                } else if (run_status == RUN_REJECTED) {
-                    if (!cell->full_sol)
-                        cell->rj_flag = 1;
-                    ++pg->total_rejected;
-                } else if (run_status == RUN_COMPILING || run_status == RUN_RUNNING) {
-                    ++cell->trans_num;
-                    ++pg->total_trans;
-                } else if (run_status == RUN_CHECK_FAILED) {
-                    ++cell->cf_num;
-                    ++pg->total_check_failed;
-                } else if (run_status == RUN_STYLE_ERR || run_status == RUN_REJECTED) {
-                } else {
-                    /* something strange... */
-                }
-            }
-        }
+        process_kirov_run(pg, sii, cs, k, pe, need_eff_time);
     }
 
     /* compute the total for each team */
