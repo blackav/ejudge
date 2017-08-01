@@ -272,7 +272,6 @@ load_contest_extra(int contest_id)
 {
   struct contest_extra *extra = 0;
   const struct contest_desc *cnts = 0;
-  serve_state_t state = 0;
 
   if (contest_id <= 0 || contest_id > MAX_CONTEST_ID) return NULL;
 
@@ -302,14 +301,13 @@ load_contest_extra(int contest_id)
   }
 
   extra = &contest_extras[contest_id];
-  if (serve_state_load_contest(extra, ejudge_config, contest_id, NULL, NULL, &state, 0, 1) < 0) {
+  if (serve_state_load_contest(extra, ejudge_config, contest_id, NULL, NULL, 0, 1) < 0) {
     fprintf(stderr, "get_contest_extra: failed to load contest %d\n", contest_id);
     return NULL;
   }
 
   extra->contest_id = contest_id;
   extra->cnts = cnts;
-  extra->state = state;
   extra->load_time = time(0);
 
   return extra;

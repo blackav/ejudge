@@ -712,7 +712,6 @@ serve_state_load_contest(
         int contest_id,
         struct userlist_clnt *ul_conn,
         struct teamdb_db_callbacks *teamdb_callbacks,
-        serve_state_t *p_state,
         const struct contest_desc **p_cnts,
         int no_users_flag)
 {
@@ -729,7 +728,6 @@ serve_state_load_contest(
   const struct section_global_data *global = 0;
   time_t contest_finish_time = 0;
 
-  if (*p_state) return 0;
   if (contests_get(contest_id, &cnts) < 0 || !cnts) goto failure;
 
   if (cnts->conf_dir && os_IsAbsolutePath(cnts->conf_dir)) {
@@ -768,6 +766,7 @@ serve_state_load_contest(
   state->config_path = xstrdup(config_path);
   state->current_time = time(0);
   state->load_time = state->current_time;
+  extra->serve_state = state;
 
   info("loading contest %d configuration file", contest_id);
   if (prepare(cnts, state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
@@ -787,7 +786,6 @@ serve_state_load_contest(
   }
 
   if (no_users_flag) {
-    *p_state = state;
     return 1;
   }
 
@@ -886,10 +884,10 @@ serve_state_load_contest(
   serve_create_symlinks(state);
   serve_update_standings_file(extra, state, cnts, 0);
 
-  *p_state = state;
   return 1;
 
  failure:
+  extra->serve_state = NULL;
   serve_state_destroy(extra, config, state, cnts, ul_conn);
   return -1;
 }

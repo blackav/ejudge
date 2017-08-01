@@ -402,7 +402,6 @@ int serve_state_load_contest(
         int contest_id,
         struct userlist_clnt *ul_conn,
         struct teamdb_db_callbacks *teamdb_callbacks,
-        serve_state_t *p_state,
         const struct contest_desc **p_cnts,
         int no_users_flag);
 

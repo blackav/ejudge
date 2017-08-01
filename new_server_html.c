@@ -7744,7 +7744,7 @@ privileged_entry_point(
   if (serve_state_load_contest(extra, ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
-                               &extra->serve_state, 0, 0) < 0) {
+                               0, 0) < 0) {
     if (log_file_pos_1 >= 0) {
       log_file_pos_2 = generic_file_size(NULL, ejudge_config->new_server_log, NULL);
     }
@@ -11434,7 +11434,7 @@ unprivileged_entry_point(
   if (serve_state_load_contest(extra, ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
-                               &extra->serve_state, 0, 0) < 0) {
+                               0, 0) < 0) {
     error_page(fout, phr, 0, NEW_SRV_ERR_CNTS_UNAVAILABLE);
     goto cleanup;
   }
@@ -12054,7 +12054,7 @@ do_load_contest(struct http_request_info *phr, const struct contest_desc *cnts)
   if (serve_state_load_contest(extra, ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
-                               &extra->serve_state, 0, 0) < 0) {
+                               0, 0) < 0) {
     return;
   }
 

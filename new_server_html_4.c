@@ -2152,7 +2152,7 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
   if (serve_state_load_contest(extra, ejudge_config, phr->contest_id,
                                ul_conn,
                                &callbacks,
-                               &extra->serve_state, 0, 0) < 0) {
+                               0, 0) < 0) {
     return -NEW_SRV_ERR_INV_CONTEST_ID;
   }
 
