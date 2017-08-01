@@ -850,7 +850,7 @@ score_view_display_f(
   }
 }
 
-static void
+void
 get_problem_map(
         const serve_state_t state,
         time_t cur_time,        /* the current time */
