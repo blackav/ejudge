@@ -11532,10 +11532,7 @@ cleanup:
 
 static const unsigned char * const external_int_action_names[NEW_SRV_INT_LAST] =
 {
-  [NEW_SRV_INT_ACM_STANDINGS] = "int_acm_standings",
-  [NEW_SRV_INT_KIROV_STANDINGS] = "int_kirov_standings",
-  [NEW_SRV_INT_MOSCOW_STANDINGS] = "int_moscow_standings",
-  [NEW_SRV_INT_OLYMP_ACCEPT_STANDINGS] = "int_olymp_accept_standings",
+  [NEW_SRV_INT_STANDINGS] = "int_standings",
   [NEW_SRV_INT_PUBLIC_LOG] = "int_public_log",
 };
 static ExternalActionState *external_int_action_states[NEW_SRV_INT_LAST];
@@ -11712,7 +11709,6 @@ ns_write_standings(
   int score_system = 0;
   if (state->global) score_system = state->global->score_system;
   int hr_allocated = 0;
-  int int_action = 0;
 
   StandingsExtraInfo extra_info =
   {
@@ -11746,20 +11742,7 @@ ns_write_standings(
   }
   phr->config = ejudge_config;
   phr->extra_info = &extra_info;
-  switch (score_system) {
-  case SCORE_KIROV:
-  case SCORE_OLYMPIAD:
-    int_action = NEW_SRV_INT_KIROV_STANDINGS;
-    break;
-  case SCORE_MOSCOW:
-    int_action = NEW_SRV_INT_MOSCOW_STANDINGS;
-    break;
-  case SCORE_ACM:
-  default:
-    int_action = NEW_SRV_INT_ACM_STANDINGS;
-    break;
-  }
-  int r = ns_int_external_action(phr, int_action);
+  int r = ns_int_external_action(phr, NEW_SRV_INT_STANDINGS);
   if (r >= 0) {
     if (hr_allocated) {
       if (phr->log_f) fclose(phr->log_f);
