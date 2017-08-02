@@ -1094,7 +1094,7 @@ csp_execute_int_standings(
         }
 
         if (pg->duration_before_fog >= 0) {
-            if (!pg->unfog_flag || run_duration >= pg->duration_before_fog) {
+            if (!pg->unfog_flag && run_duration >= pg->duration_before_fog) {
                 // this is fogged run
                 if (run_time > cell->last_fogged_time) {
                     cell->last_fogged_time = run_time;
