@@ -690,7 +690,7 @@
                         if (cell->sol_att > 0) {
                             %><s:v value="cell->sol_att" /><%
                         }
-                        if (global->ignore_success_time < 0 && global->stand_show_ok_time > 0) {
+                        if (global->ignore_success_time <= 0 && global->stand_show_ok_time > 0) {
                             snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", cell->prob_score / 60, cell->prob_score % 60);
                             %> <div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
                         }
