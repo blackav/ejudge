@@ -606,10 +606,16 @@
                     }
                     if (global->ignore_success_time <= 0 && global->stand_show_ok_time > 0) {
                         snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", cell->prob_score / 60, cell->prob_score % 60);
-                        %> <div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
+                        %> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="dur_buf" escape="no" />)</div><%
                     }
                 } else if (cell->fogged_num > 0) {
+                    time_t dur = cell->last_fogged_time - row->start_time;
+                    if (dur < 0) dur = 0;
                     %>?<s:v value="cell->fogged_num + cell->sol_att" /><%
+                    if (global->ignore_success_time <= 0 && global->stand_show_ok_time > 0) {
+                        snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", dur / 60, dur % 60);
+                        %> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="dur_buf" escape="no" />)</div><%
+                    }
                 } else if (cell->sol_att > 0) {
                     %>-<s:v value="cell->sol_att" /><%
                 } else {
@@ -694,10 +700,16 @@
                         }
                         if (global->ignore_success_time <= 0 && global->stand_show_ok_time > 0) {
                             snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", cell->prob_score / 60, cell->prob_score % 60);
-                            %> <div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
+                            %> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="dur_buf" escape="no" />)</div><%
                         }
                     } else if (cell->fogged_num > 0) {
+                        time_t dur = cell->last_fogged_time - row->start_time;
+                        if (dur < 0) dur = 0;
                         %>?<s:v value="cell->fogged_num + cell->sol_att" /><%
+                        if (global->ignore_success_time <= 0 && global->stand_show_ok_time > 0) {
+                            snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", dur / 60, dur % 60);
+                            %> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="dur_buf" escape="no" />)</div><%
+                        }
                     } else if (cell->sol_att > 0) {
                         %>-<s:v value="cell->sol_att" /><%
                     } else {
