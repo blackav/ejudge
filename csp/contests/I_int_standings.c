@@ -30,29 +30,29 @@
 #include <string.h>
 
 extern int
-csp_view_int_kirov_standings(
+csp_view_int_standings(
         PageInterface *ps,
         FILE *log_f,
         FILE *out_f,
         struct http_request_info *phr);
 static int
-csp_execute_int_kirov_standings(
+csp_execute_int_standings(
         PageInterface *ps,
         FILE *log_f,
         struct http_request_info *phr);
 static void
-csp_destroy_int_kirov_standings(
+csp_destroy_int_standings(
         PageInterface *ps);
 
 static struct PageInterfaceOps ops __attribute__((unused)) =
 {
-    csp_destroy_int_kirov_standings,
-    csp_execute_int_kirov_standings,
-    csp_view_int_kirov_standings,
+    csp_destroy_int_standings,
+    csp_execute_int_standings,
+    csp_view_int_standings,
 };
 
 PageInterface *
-csp_get_int_kirov_standings(void)
+csp_get_int_standings(void)
 {
     StandingsPage *pg = NULL;
 
@@ -65,7 +65,7 @@ csp_get_int_kirov_standings(void)
 }
 
 static void
-csp_destroy_int_kirov_standings(
+csp_destroy_int_standings(
         PageInterface *ps)
 {
     StandingsPage *pg = (StandingsPage *) ps;
@@ -179,7 +179,7 @@ process_acm_run(
     }
 }
 
-void
+static void
 sort_acm(
         StandingsPage *pg,
         StandingsExtraInfo *sii,
@@ -718,7 +718,7 @@ process_kirov_run(
     }
 }
 
-void
+static void
 sort_kirov(
         StandingsPage *pg,
         StandingsExtraInfo *sii,
@@ -855,7 +855,7 @@ sort_kirov(
 }
 
 static int
-csp_execute_int_kirov_standings(
+csp_execute_int_standings(
         PageInterface *ps,
         FILE *log_f,
         struct http_request_info *phr)
