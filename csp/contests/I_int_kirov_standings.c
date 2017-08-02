@@ -137,7 +137,7 @@ process_acm_run(
     const struct run_entry *pe,
     int need_eff_time)
 {
-    //const struct section_global_data *global = cs->global;
+    const struct section_global_data *global = cs->global;
     int tind = pg->t_rev[pe->user_id];
     int pind = pg->p_rev[pe->prob_id];
     int up_ind = (tind << pg->row_sh) + pind;
@@ -156,6 +156,7 @@ process_acm_run(
         cell->full_sol = 1;
         cell->penalty += prob->acm_run_penalty * cell->sol_att;
         cell->sol_time = run_time;
+        cell->penalty += sec_to_min(global->rounding_mode, run_duration);
     } else if (pe->status == RUN_COMPILE_ERR && prob->ignore_compile_errors <= 0) {
         if (cell->full_sol) return;
         pg->last_submit_run = run_id;
