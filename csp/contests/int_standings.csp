@@ -826,7 +826,7 @@ do_footer:;
         stand_write_footer(out_f, sii->footer_str);
     }
     html_armor_free(&ab);
-%><%@page csp_view_int_kirov_standings(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@page csp_view_int_standings(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%
 // local vars here
     int retval = 0;
