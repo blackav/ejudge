@@ -33,10 +33,7 @@ EXPAT_LIB=-lexpat
 
 TARGETDIR = ${libexecdir}/ejudge/csp/contests
 SOFILES = \
- csp_int_acm_standings.so\
- csp_int_kirov_standings.so\
- csp_int_moscow_standings.so\
- csp_int_olymp_accept_standings.so\
+ csp_int_standings.so\
  csp_int_public_log.so\
  csp_priv_add_review_comment_action.so\
  csp_priv_assign_cyphers_page.so\
@@ -131,13 +128,7 @@ csp_priv_ip_users_page.so : csp_priv_ip_users_page.c I_priv_ip_users_page.c
 csp_priv_users_new_ajax.so : csp_priv_users_new_ajax.c I_priv_users_new_ajax.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
 
-csp_int_acm_standings.so : csp_int_acm_standings.c I_int_acm_standings.c
-	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
-csp_int_kirov_standings.so : csp_int_kirov_standings.c I_int_kirov_standings.c
-	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
-csp_int_moscow_standings.so : csp_int_moscow_standings.c I_int_moscow_standings.c
-	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
-csp_int_olymp_accept_standings.so : csp_int_olymp_accept_standings.c I_int_olymp_accept_standings.c
+csp_int_standings.so : csp_int_standings.c I_int_standings.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
 csp_int_public_log.so : csp_int_public_log.c I_int_public_log.c
 	$(CC) $(CCOMPFLAGS) ${WPTRSIGN} $(LDFLAGS) $^ -o $@
@@ -216,10 +207,7 @@ csp_reg_login_page.c : reg_login_page.csp reg_includes.csp reg_stdvars.csp reg_h
 csp_reg_main_page.c : reg_main_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_main_settings.csp reg_footer.csp
 csp_reg_save_cropped_avatar_ajax.c : reg_save_cropped_avatar_ajax.csp reg_includes.csp reg_stdvars.csp
 
-csp_int_acm_standings.c : int_acm_standings.csp
-csp_int_kirov_standings.c : int_kirov_standings.csp
-csp_int_moscow_standings.c : int_moscow_standings.csp
-csp_int_olymp_accept_standings.c : int_olymp_accept_standings.csp
+csp_int_standings.c : int_standings.csp
 csp_int_public_log.c : int_public_log.csp
 
 csp_reg_csp_error_internal.c : reg_error_internal.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp
