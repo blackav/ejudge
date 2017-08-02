@@ -126,6 +126,7 @@ typedef struct StandingsPage
     struct xuser_team_extras *extras;
     int not_started_flag;
     time_t duration_before_fog;
+    int fog_flag;
     int unfog_flag;
 } StandingsPage;
 
