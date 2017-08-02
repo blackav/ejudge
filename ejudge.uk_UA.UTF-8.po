@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-26 23:40+0300\n"
+"POT-Creation-Date: 2017-08-02 23:49+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -4509,10 +4509,19 @@ msgstr ""
 msgid "error code 1"
 msgstr ""
 
+msgid "finished"
+msgstr ""
+
+msgid "frozen"
+msgstr ""
+
 msgid "generic server error"
 msgstr ""
 
 msgid "group with this name already exists"
+msgstr ""
+
+msgid "in progress"
 msgstr ""
 
 msgid "incomplete registration"

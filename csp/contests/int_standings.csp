@@ -96,9 +96,60 @@ sec_to_min(int rounding_mode, int secs)
         pc_attrs[i] = global->stand_page_col_attr[i];
     }
 
-    if (!sii->client_flag && !sii->only_table_flag) {
-        write_standings_header(cs, cnts, out_f, sii->client_flag, 0 /* user_id */, sii->header_str, NULL /* user_name */);
+%><%
+    FILE *saved_out_f = out_f;
+    char *title_s = NULL;
+    size_t title_z = 0;
+    out_f = open_memstream(&title_s, &title_z);
+
+    if (sii->user_name && sii->user_name[0]) {
+        %><s:v value="sii->user_name" /> - <%
+    } else {
+        %><s:_>Contest</s:_> <%
     }
+    %>&quot;<s:v value="cnts->name" checkExpr="" />&quot; - <%
+    if (pg->user_start_time <= 0) {
+        %><s:_>Contest is not started</s:_><%
+    } else {
+        time_t rel_time = pg->cur_time;
+        if (rel_time < pg->user_start_time) rel_time = pg->user_start_time;
+        if (pg->user_stop_time > 0 && rel_time > pg->user_stop_time) rel_time = pg->user_stop_time;
+        int show_astr_time = global->show_astr_time;
+        if (global->is_virtual && !sii->user_id) {
+            show_astr_time = 1;
+        }
+        if (show_astr_time) {
+            duration_str(1, pg->cur_time, pg->user_start_time, dur_buf, 0);
+        } else {
+            duration_str(0, rel_time, pg->user_start_time, dur_buf, 0);
+        }
+        %>[<s:v value="dur_buf" escape="no" />]<%
+        if (pg->user_stop_time > 0) {
+            %>, <s:_>finished</s:_><%
+            if (pg->fog_flag) {
+                %>, <s:_>frozen</s:_><%
+            }
+        } else {
+            %>, <s:_>in progress</s:_><%
+            if (pg->fog_flag) {
+                %>, <s:_>frozen</s:_><%
+            }
+        }
+    }
+
+    fclose(out_f); out_f = saved_out_f; saved_out_f = NULL;
+
+    if (!sii->only_table_flag) {
+        if (!sii->client_flag) {
+            stand_write_header(out_f, sii->header_str, global->charset, title_s);
+        } else if (sii->user_mode) {
+            %><s:indir value="cnts->team_head_style"><s:v value="title_s" escape="no" checkExpr="" /></s:indir><%
+        } else {
+            %><h2><s:v value="title_s" escape="no" checkExpr="" /></h2><%
+        }
+    }
+    free(title_s); title_s = NULL;
+%><%
 
     if (pg->not_started_flag) {
         if (!sii->only_table_flag) {

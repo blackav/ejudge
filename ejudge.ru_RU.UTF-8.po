@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-26 23:40+0300\n"
-"PO-Revision-Date: 2017-07-26 23:41+0300\n"
+"POT-Creation-Date: 2017-08-02 23:49+0300\n"
+"PO-Revision-Date: 2017-08-02 23:51+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -4727,11 +4727,20 @@ msgstr "отсылка электронной почты завершилась 
 msgid "error code 1"
 msgstr "ошибка с кодом 1"
 
+msgid "finished"
+msgstr "завершен"
+
+msgid "frozen"
+msgstr "заморожен"
+
 msgid "generic server error"
 msgstr "неопределённая ошибка сервера"
 
 msgid "group with this name already exists"
 msgstr "группа с таким временем уже существует"
+
+msgid "in progress"
+msgstr "идет"
 
 msgid "incomplete registration"
 msgstr "неполная регистрация"
