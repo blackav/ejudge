@@ -11700,7 +11700,7 @@ ns_write_standings(
         int charset_id,
         struct user_filter_info *user_filter,
         int user_mode,
-        time_t cur_time)
+        time_t stand_time)
 {
   if (phr && !extra) extra = phr->extra;
   if (phr && !cnts) cnts = phr->cnts;
@@ -11731,14 +11731,15 @@ ns_write_standings(
     .force_fancy_style = force_fancy_style,
     .charset_id = charset_id,
     .user_filter = user_filter,
-    .user_mode = user_mode
+    .user_mode = user_mode,
+    .stand_time = stand_time
   };
   if (!phr) {
     phr = alloca(sizeof(*phr));
     memset(phr, 0, sizeof(*phr));
     phr->contest_id = cnts->id;
     phr->anonymous_mode = 1;
-    phr->current_time = cur_time;
+    phr->current_time = time(0);
     phr->cnts = cnts;
     phr->extra = extra;
     hr_allocated = 1;
@@ -11801,7 +11802,7 @@ ns_write_standings(
                              footer_str,
                              accepting_mode,
                              force_fancy_style,
-                             cur_time,
+                             stand_time,
                              charset_id,
                              user_filter,
                              user_mode);
@@ -11818,7 +11819,7 @@ ns_write_standings(
                               footer_str,
                               user_name,
                               force_fancy_style,
-                              cur_time,
+                              stand_time,
                               charset_id,
                               user_filter);
     break;
@@ -11834,7 +11835,7 @@ ns_write_standings(
                        footer_str,
                        user_name,
                        force_fancy_style,
-                       cur_time,
+                       stand_time,
                        user_filter);
     break;
   }

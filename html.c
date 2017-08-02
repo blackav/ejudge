@@ -4279,7 +4279,7 @@ typedef void (*write_standings_func_t)(
         int charset_id,
         struct user_filter_info *user_filter,
         int user_mode,
-        time_t cur_time);
+        time_t stand_time);
 
 void
 write_standings(
