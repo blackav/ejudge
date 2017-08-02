@@ -916,12 +916,14 @@ csp_execute_int_standings(
     pg->cur_duration = pg->cur_time - pg->user_start_time;
 
     pg->duration_before_fog = -1;
-    if (pg->duration > 0 && global->board_fog_time > 0) {
+    if (sii->user_mode && pg->duration > 0 && global->board_fog_time > 0) {
         pg->duration_before_fog = pg->duration - global->board_fog_time;
         if (pg->duration_before_fog < 0) pg->duration_before_fog = 0;
     }
-    if (pg->duration > 0 && global->board_fog_time > 0 && global->board_unfog_time > 0) {
-        if (pg->cur_time > pg->user_start_time + pg->duration + global->board_unfog_time) {
+    if (pg->duration_before_fog >= 0 && global->board_unfog_time > 0) {
+        time_t stop_time = pg->user_stop_time;
+        if (stop_time <= 0) stop_time = pg->user_start_time + pg->duration;
+        if (pg->cur_time > stop_time + global->board_unfog_time) {
             pg->unfog_flag = 1;
         }
     }
