@@ -208,6 +208,7 @@ typedef struct StandingsExtraInfo
     int charset_id;
     struct user_filter_info *user_filter;
     int user_mode;
+    time_t stand_time;
 } StandingsExtraInfo;
 
 #endif /* __NEW_SERVER_PI_H__ */
