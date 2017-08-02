@@ -612,43 +612,43 @@ csp_execute_int_kirov_standings(
 
     memset(&env, 0, sizeof(env));
 
-    pg->cur_time = phr->current_time;
+    if (global->score_system == SCORE_KIROV) {
+        pg->separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
+    }
+
+    pg->cur_time = sii->stand_time;
     if (!pg->cur_time) pg->cur_time = time(NULL);
 
-    pg->separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
     pg->start_time = run_get_start_time(cs->runlog_state);
-    pg->stop_time = run_get_stop_time(cs->runlog_state);
-    pg->duration = run_get_duration(cs->runlog_state);
-    if (pg->start_time > 0 && global->is_virtual > 0 && sii->user_id > 0) {
-        pg->start_time = run_get_virtual_start_time(cs->runlog_state, sii->user_id);
-        pg->stop_time = run_get_virtual_stop_time(cs->runlog_state, sii->user_id, 0);
-    }
-
-    if (pg->start_time > 0 && pg->cur_time < pg->start_time) {
-        pg->cur_time = pg->start_time;
-    }
-    /*
-    // WTF?
-    if (start_time > 0 && stop_time > 0) {
-        user_virtual_upsolving = 1;
-    }
-    */
-    if (pg->start_time > 0 && pg->duration > 0) {
-        if (pg->stop_time <= 0 && pg->cur_time >= pg->start_time + pg->duration) {
-            pg->stop_time = pg->start_time + pg->duration;
-        }
-        if (pg->stop_time > 0 && pg->cur_time > pg->stop_time) {
-            pg->cur_time = pg->stop_time;
-        }
-    }
     if (pg->start_time <= 0 || pg->cur_time < pg->start_time) {
         // contest is not started
+        pg->not_started_flag = 1;
         goto cleanup;
     }
 
-    if (pg->start_time > pg->cur_time) pg->cur_time = pg->start_time; // RLY? Didn't we quit earlier?
-    if (pg->stop_time > 0 && pg->cur_time > pg->stop_time) pg->cur_time = pg->stop_time;
-    pg->cur_duration = pg->cur_time - pg->start_time;
+    pg->stop_time = run_get_stop_time(cs->runlog_state);
+    pg->duration = run_get_duration(cs->runlog_state);
+
+    if (global->is_virtual > 0 && sii->user_id > 0) {
+        pg->user_start_time = run_get_virtual_start_time(cs->runlog_state, sii->user_id);
+        if (pg->user_start_time <= 0 || pg->cur_time < pg->user_start_time) {
+            // contest is not started
+            pg->not_started_flag = 1;
+            goto cleanup;
+        }
+        pg->user_stop_time = run_get_virtual_stop_time(cs->runlog_state, sii->user_id, 0);
+        pg->user_duration = pg->duration;
+        if (pg->user_stop_time <= 0 && pg->user_duration > 0) {
+            if (pg->cur_time > pg->user_stop_time + pg->user_duration) {
+                pg->user_stop_time = pg->user_stop_time + pg->user_duration;
+            }
+        }
+    } else {
+        pg->user_start_time = pg->start_time;
+        pg->user_stop_time = pg->stop_time;
+        pg->user_duration = pg->duration;
+    }
+    pg->cur_duration = pg->cur_time - pg->user_start_time;
 
     pg->r_tot = run_get_total(cs->runlog_state);
     pg->runs = run_get_entries_ptr(cs->runlog_state);
@@ -805,23 +805,14 @@ csp_execute_int_kirov_standings(
         if (!prob || prob->hidden) continue;
         StandingsUserRow *row = &pg->rows[tind];
 
+        if (row->start_time <= 0) continue;
         time_t run_time = pe->time;
+        if (row->stop_time > 0 && run_time > row->stop_time && cs->upsolving_freeze_standings > 0) continue;
         time_t run_duration = run_time - row->start_time;
-        if (global->is_virtual > 0) {
-            // filter future runs in unprivileged mode (not upsolving)
-            if (row->start_time <= 0) continue;
-            if (run_time < row->start_time) continue;
-            //if (run_time < row->start_time && cs->upsolving_freeze_standings > 0) continue;
-            if (row->stop_time > 0 && run_time > row->stop_time && cs->upsolving_freeze_standings > 0) continue;
-            if (sii->user_id > 0 && run_duration > pg->cur_duration)
-                continue;
-        } else if (!sii->client_flag || sii->user_id > 0) {
-            // ignore future runs when not in privileged mode
-            if (pg->cur_duration > 0 && run_time - pg->start_time > pg->cur_duration) continue;
-            if (run_time < row->start_time) run_time = row->start_time;
-            if (row->stop_time > 0 && run_time > row->stop_time) run_time = row->stop_time;
-            if (global->stand_ignore_after > 0 && run_time >= global->stand_ignore_after)
-                continue;
+        if (run_duration < 0) run_duration = 0;
+        if (sii->user_id > 0) {
+            // run from the (virtual) future
+            if (run_duration > pg->cur_duration) continue;
         }
 
         process_kirov_run(pg, sii, cs, k, pe, need_eff_time);

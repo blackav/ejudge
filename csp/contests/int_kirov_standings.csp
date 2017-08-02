@@ -91,7 +91,7 @@
         write_standings_header(cs, cnts, out_f, sii->client_flag, 0 /* user_id */, sii->header_str, NULL /* user_name */);
     }
 
-    if (!pg->start_time || pg->cur_time < pg->start_time) {
+    if (pg->not_started_flag) {
         if (!sii->only_table_flag) {
 %>
 <s:indir value="head_style"><s:_>The contest is not started</s:_></s:indir>
@@ -111,11 +111,7 @@
         if (user_ind >= 0) row = &pg->rows[user_ind];
         const struct section_problem_data *prob = NULL;
         if (pe->prob_id > 0 && pe->prob_id <= cs->max_prob) prob = cs->probs[pe->prob_id];
-        time_t user_start_time = pg->start_time;
-        if (global->is_virtual) {
-            user_start_time = row->start_time;
-        }
-        duration_str(global->show_astr_time, pe->time, user_start_time, dur_buf, sizeof(dur_buf));
+        duration_str(global->show_astr_time, pe->time, row->start_time, dur_buf, sizeof(dur_buf));
 %>
   <s:tr attr="ss.success_attr">
     <td><s:_>Last success</s:_>:</td>
@@ -157,11 +153,7 @@
         if (user_ind >= 0) row = &pg->rows[user_ind];
         const struct section_problem_data *prob = NULL;
         if (pe->prob_id > 0 && pe->prob_id <= cs->max_prob) prob = cs->probs[pe->prob_id];
-        time_t user_start_time = pg->start_time;
-        if (global->is_virtual) {
-            user_start_time = row->start_time;
-        }
-        duration_str(global->show_astr_time, pe->time, user_start_time, dur_buf, sizeof(dur_buf));
+        duration_str(global->show_astr_time, pe->time, row->start_time, dur_buf, sizeof(dur_buf));
 %>
   <s:tr attr="ss.success_attr">
     <td><s:_>Last submit</s:_>:</td>

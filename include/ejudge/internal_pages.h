@@ -79,6 +79,9 @@ typedef struct StandingsPage
     time_t duration; // contest duration ( <= 0 --- unlimited contest)
     time_t cur_time; // time moment for standings generation
     time_t cur_duration; // duration from the start to the current time moment
+    time_t user_start_time; // user-specific start time (esp. for virtual users)
+    time_t user_stop_time;  // user-specific stop time
+    time_t user_duration;
 
     int r_tot; // total number of runs
     const struct run_entry *runs;
@@ -119,6 +122,7 @@ typedef struct StandingsPage
     StandingsTablePage *pages;
 
     struct xuser_team_extras *extras;
+    int not_started_flag;
 } StandingsPage;
 
 #endif
