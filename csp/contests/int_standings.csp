@@ -418,14 +418,21 @@
 %></s:th>
 <%
     }
+    if (global->score_system == SCORE_ACM) {
+%>
+    <s:th attr="ss.solved_attr"><s:_>Total</s:_></s:th>
+    <s:th attr="ss.penalty_attr"><s:_>Penalty</s:_></s:th>
+<%
+    } else {
 %>
     <s:th attr="ss.solved_attr"><s:_>Solved</s:_></s:th>
     <s:th attr="ss.score_attr"><s:_>Score</s:_></s:th>
 <%
-    if (global->stand_enable_penalty) {
+        if (global->stand_enable_penalty) {
 %>
     <s:th attr="ss.penalty_attr"><s:_>Penalty</s:_></s:th>
 <%
+        }
     }
 %>
 <%
@@ -491,6 +498,20 @@
             row_ind ^= 1;
         }
         const unsigned char *row_attr = r_attrs[group_ind][row_ind];
+        if (sii->user_id > 0 && sii->user_id == user_ind
+            && global->stand_self_row_attr && global->stand_self_row_attr[0]) {
+            row_attr = global->stand_self_row_attr;
+        } else if (global->is_virtual) {
+            int vstat = run_get_virtual_status(cs->runlog_state, user_id);
+            if (vstat == 1 && ss.r_row_attr[0]) {
+                row_attr = ss.r_row_attr;
+            } else if (vstat == 2 && ss.v_row_attr[0]) {
+                row_attr = ss.v_row_attr;
+            } else if (!vstat && ss.u_row_attr[0]) {
+                row_attr = ss.u_row_attr;
+            }
+        }
+
         if (global->contestant_status_row_attr && t_extra && t_extra->status >= 0 && t_extra->status < global->contestant_status_num) {
             row_attr = global->contestant_status_row_attr[t_extra->status];
         }
@@ -577,40 +598,65 @@
                 cell_attr = ss.fail_attr;
 %>
     <s:td attr="cell_attr"><%
-            if (!cell->att_num) {
-                %>&nbsp;<%
-            } else if (cell->full_sol) {
-                score_view_display(score_buf, sizeof(score_buf), prob, cell->prob_score);
-%><b><s:v value="score_buf" escape="no" /></b><%
-                if (global->stand_show_att_num) {
-                    %> (<s:v value="cell->sol_att" />)<%
-                }
-                if (global->stand_show_ok_time && cell->sol_time > 0) {
-                    duration_str(global->show_astr_time, cell->sol_time, row->start_time, dur_buf, 0);
-%><div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
+            if (global->score_system == SCORE_ACM) {
+                if (cell->full_sol) {
+                    %>+<%
+                    if (cell->sol_att > 0) {
+                        %><s:v value="cell->sol_att" /><%
+                    }
+                    if (global->ignore_success_time < 0 && global->stand_show_ok_time > 0) {
+                        snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", cell->prob_score / 60, cell->prob_score % 60);
+                        %> <div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
+                    }
+                } else if (cell->sol_att > 0) {
+                    %>-<s:v value="cell->sol_att" /><%
+                } else {
+                    %>&nbsp;<%
                 }
             } else {
-                score_view_display(score_buf, sizeof(score_buf), prob, cell->prob_score);
-%><s:v value="score_buf" escape="no" /><%
-                if (global->stand_show_att_num) {
-                    %> (<s:v value="cell->sol_att" />)<%
-                }
-                if (global->stand_show_ok_time && cell->sol_time > 0) {
-                    duration_str(global->show_astr_time, cell->sol_time, row->start_time, dur_buf, 0);
-%><div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
+                if (!cell->att_num) {
+                    %>&nbsp;<%
+                } else if (cell->full_sol) {
+                    score_view_display(score_buf, sizeof(score_buf), prob, cell->prob_score);
+                    %><b><s:v value="score_buf" escape="no" /></b><%
+                    if (global->stand_show_att_num) {
+                        %> (<s:v value="cell->sol_att" />)<%
+                    }
+                    if (global->stand_show_ok_time && cell->sol_time > 0) {
+                        duration_str(global->show_astr_time, cell->sol_time, row->start_time, dur_buf, 0);
+                        %><div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
+                    }
+                } else {
+                    score_view_display(score_buf, sizeof(score_buf), prob, cell->prob_score);
+                    %><s:v value="score_buf" escape="no" /><%
+                    if (global->stand_show_att_num) {
+                        %> (<s:v value="cell->sol_att" />)<%
+                    }
+                    if (global->stand_show_ok_time && cell->sol_time > 0) {
+                        duration_str(global->show_astr_time, cell->sol_time, row->start_time, dur_buf, 0);
+                        %><div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
+                    }
                 }
             }
 %></s:td>
 <%
         }
+%><%
+        if (global->score_system == SCORE_ACM) {
+%>
+    <s:td attr="ss.solved_attr"><s:v value="row->tot_full" /></s:td>
+    <s:td attr="ss.penalty_attr"><s:v value="row->tot_penalty" /></s:td>
+<%
+        } else {
 %>
     <s:td attr="ss.solved_attr"><s:v value="row->tot_full" /></s:td>
     <s:td attr="ss.score_attr"><s:v value="row->tot_score" /></s:td>
 <%
-        if (global->stand_enable_penalty) {
+            if (global->stand_enable_penalty) {
 %>
     <s:td attr="ss.penalty_attr"><s:v value="row->tot_penalty" /></s:td>
 <%
+            }
         }
 %>
 <%
@@ -638,27 +684,44 @@
                     cell_attr = ss.fail_attr;
 %>
     <s:td attr="cell_attr"><%
-                if (!cell->att_num) {
-                    %>&nbsp;<%
-                } else if (cell->full_sol) {
-                    score_view_display(score_buf, sizeof(score_buf), prob, cell->prob_score);
-%><b><s:v value="score_buf" escape="no" /></b><%
-                    if (global->stand_show_att_num) {
-                        %> (<s:v value="cell->sol_att" />)<%
-                    }
-                    if (global->stand_show_ok_time && cell->sol_time > 0) {
-                        duration_str(global->show_astr_time, cell->sol_time, row->start_time, dur_buf, 0);
-                        %><div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
+                if (global->score_system == SCORE_ACM) {
+                    if (cell->full_sol) {
+                        %>+<%
+                        if (cell->sol_att > 0) {
+                            %><s:v value="cell->sol_att" /><%
+                        }
+                        if (global->ignore_success_time < 0 && global->stand_show_ok_time > 0) {
+                            snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", cell->prob_score / 60, cell->prob_score % 60);
+                            %> <div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
+                        }
+                    } else if (cell->sol_att > 0) {
+                        %>-<s:v value="cell->sol_att" /><%
+                    } else {
+                        %>&nbsp;<%
                     }
                 } else {
-                    score_view_display(score_buf, sizeof(score_buf), prob, cell->prob_score);
-%><s:v value="score_buf" escape="no" /><%
-                    if (global->stand_show_att_num) {
-                        %> (<s:v value="cell->sol_att" />)<%
-                    }
-                    if (global->stand_show_ok_time && cell->sol_time > 0) {
-                        duration_str(global->show_astr_time, cell->sol_time, row->start_time, dur_buf, 0);
-                        %><div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
+                    if (!cell->att_num) {
+                        %>&nbsp;<%
+                    } else if (cell->full_sol) {
+                        score_view_display(score_buf, sizeof(score_buf), prob, cell->prob_score);
+                        %><b><s:v value="score_buf" escape="no" /></b><%
+                        if (global->stand_show_att_num) {
+                            %> (<s:v value="cell->sol_att" />)<%
+                        }
+                        if (global->stand_show_ok_time && cell->sol_time > 0) {
+                            duration_str(global->show_astr_time, cell->sol_time, row->start_time, dur_buf, 0);
+                            %><div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
+                        }
+                    } else {
+                        score_view_display(score_buf, sizeof(score_buf), prob, cell->prob_score);
+                        %><s:v value="score_buf" escape="no" /><%
+                        if (global->stand_show_att_num) {
+                            %> (<s:v value="cell->sol_att" />)<%
+                        }
+                        if (global->stand_show_ok_time && cell->sol_time > 0) {
+                            duration_str(global->show_astr_time, cell->sol_time, row->start_time, dur_buf, 0);
+                            %><div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
+                        }
                     }
                 }
 %></s:td>
