@@ -609,7 +609,7 @@
                         %> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="dur_buf" escape="no" />)</div><%
                     }
                 } else if (cell->fogged_num > 0) {
-                    time_t dur = cell->last_fogged_time - row->start_time;
+                    int dur = cell->last_fogged_time - row->start_time;
                     if (dur < 0) dur = 0;
                     %>?<s:v value="cell->fogged_num + cell->sol_att" /><%
                     if (global->ignore_success_time <= 0 && global->stand_show_ok_time > 0) {
@@ -703,7 +703,7 @@
                             %> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="dur_buf" escape="no" />)</div><%
                         }
                     } else if (cell->fogged_num > 0) {
-                        time_t dur = cell->last_fogged_time - row->start_time;
+                        int dur = cell->last_fogged_time - row->start_time;
                         if (dur < 0) dur = 0;
                         %>?<s:v value="cell->fogged_num + cell->sol_att" /><%
                         if (global->ignore_success_time <= 0 && global->stand_show_ok_time > 0) {
