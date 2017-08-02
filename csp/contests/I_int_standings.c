@@ -145,7 +145,7 @@ process_acm_run(
     const struct section_problem_data *prob = cs->probs[pe->prob_id];
     StandingsCell *cell = &pg->cells[up_ind];
     StandingsUserRow *row = &pg->rows[tind];
-    //StandingsProblemColumn *col = &pg->columns[pind];
+    StandingsProblemColumn *col = &pg->columns[pind];
     time_t run_time = pe->time;
     time_t run_duration = run_time - row->start_time;
     if (run_duration < 0) run_duration = 0;
@@ -159,14 +159,18 @@ process_acm_run(
         cell->sol_time = run_time;
         cell->prob_score = sec_to_min(global->rounding_mode, run_duration);
         cell->penalty += cell->prob_score;
+        ++col->succ_att;
+        ++col->tot_att;
     } else if (pe->status == RUN_COMPILE_ERR && prob->ignore_compile_errors <= 0) {
         if (cell->full_sol) return;
         pg->last_submit_run = run_id;
         ++cell->sol_att;
+        ++col->tot_att;
     } else if (run_is_failed_attempt(pe->status)) {
         if (cell->full_sol) return;
         pg->last_submit_run = run_id;
         ++cell->sol_att;
+        ++col->tot_att;
     } else if (pe->status == RUN_DISQUALIFIED) {
         ++cell->disq_num;
     } else if (pe->status == RUN_PENDING_REVIEW || pe->status == RUN_SUMMONED) {
