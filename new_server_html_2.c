@@ -2579,6 +2579,7 @@ ns_set_stand_filter(
   unsigned char *stand_user_expr = 0;
   unsigned char *stand_prob_expr = 0;
   unsigned char *stand_run_expr = 0;
+  unsigned char *stand_time_expr = NULL;
   struct user_filter_info *u = 0;
 
   u = user_filter_info_allocate(state, phr->user_id, phr->session_id);
@@ -2587,15 +2588,16 @@ ns_set_stand_filter(
   READ_PARAM(stand_user_expr);
   READ_PARAM(stand_prob_expr);
   READ_PARAM(stand_run_expr);
+  READ_PARAM(stand_time_expr);
 
-  if (!*stand_user_expr && !*stand_prob_expr && !*stand_run_expr) {
+  if (!*stand_user_expr && !*stand_prob_expr && !*stand_run_expr && !*stand_time_expr) {
     // all cleared
     serve_state_destroy_stand_expr(u);
     return;
   }
 
   if (IS_EQUAL(stand_user_expr) && IS_EQUAL(stand_prob_expr)
-      && IS_EQUAL(stand_run_expr)) {
+      && IS_EQUAL(stand_run_expr && IS_EQUAL(stand_time_expr))) {
     // nothing to do
     return;
   }

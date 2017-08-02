@@ -70,6 +70,7 @@ serve_state_destroy_stand_expr(struct user_filter_info *u)
   xfree(u->stand_user_expr); u->stand_user_expr = 0;
   xfree(u->stand_prob_expr); u->stand_prob_expr = 0;
   xfree(u->stand_run_expr); u->stand_run_expr = 0;
+  xfree(u->stand_time_expr); u->stand_time_expr = NULL;
   xfree(u->stand_error_msgs); u->stand_error_msgs = 0;
   filter_tree_delete(u->stand_mem); u->stand_mem = 0;
   u->stand_user_tree = 0;

@@ -82,6 +82,7 @@ struct user_filter_info
   struct filter_tree *stand_run_tree;
   struct filter_tree_mem *stand_mem;
   unsigned char *stand_error_msgs;
+  unsigned char *stand_time_expr;
 };
 
 struct user_state_info
