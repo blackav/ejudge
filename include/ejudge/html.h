@@ -271,6 +271,12 @@ stand_setup_style(
         const struct section_global_data *global,
         int force_fancy_style);
 void
+stand_write_header(
+        FILE *f,
+        const unsigned char *header_str,
+        const unsigned char *charset,
+        const unsigned char *header);
+void
 stand_write_footer(
         FILE *f,
         const unsigned char *footer_str);

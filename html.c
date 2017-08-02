@@ -672,15 +672,7 @@ write_standings_header(const serve_state_t state,
     }
 
     if (!client_flag) {
-      const unsigned char *charset = global->charset;
-      if (!charset) charset = "";
-      if (header_str) {
-        process_template(f, header_str, 0, charset, header, 0);
-      } else {
-        fprintf(f, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"/><title>%s</title></head><body><h1>%s</h1>\n",
-                charset,
-                header, header);
-      }
+      stand_write_header(f, header_str, global->charset, header);
     } else {
       fprintf(f, "<%s>%s</%s>\n", cnts->team_head_style,
               header, cnts->team_head_style);
@@ -716,18 +708,28 @@ write_standings_header(const serve_state_t state,
   }
 
   if (!client_flag) {
-    const unsigned char *charset = global->charset;
-    if (!charset) charset = "";
-    if (header_str) {
-      process_template(f, header_str, 0, charset, header, 0);
-    } else {
-      fprintf(f, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"/><title>%s</title></head><body><h1>%s</h1>",
-              charset,
-              header, header);
-    }
+    stand_write_header(f, header_str, global->charset, header);
   } else {
     fprintf(f, "<%s>%s</%s>\n", cnts->team_head_style,
             header, cnts->team_head_style);
+  }
+}
+
+void
+stand_write_header(
+        FILE *f,
+        const unsigned char *header_str,
+        const unsigned char *charset,
+        const unsigned char *header)
+{
+  if (!header) header = "";
+  if (!charset) charset = EJUDGE_CHARSET;
+  if (header_str) {
+    process_template(f, header_str, 0, charset, header, 0);
+  } else {
+    fprintf(f, "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=%s\"/><title>%s</title></head><body><h1>%s</h1>\n",
+                charset,
+                header, header);
   }
 }
 
