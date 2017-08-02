@@ -2597,7 +2597,7 @@ ns_set_stand_filter(
   }
 
   if (IS_EQUAL(stand_user_expr) && IS_EQUAL(stand_prob_expr)
-      && IS_EQUAL(stand_run_expr && IS_EQUAL(stand_time_expr))) {
+      && IS_EQUAL(stand_run_expr) && IS_EQUAL(stand_time_expr)) {
     // nothing to do
     return;
   }

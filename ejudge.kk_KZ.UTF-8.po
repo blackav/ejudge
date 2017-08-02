@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-08-02 23:49+0300\n"
+"POT-Creation-Date: 2017-08-03 00:02+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -3823,6 +3823,9 @@ msgid "Time"
 msgstr ""
 
 msgid "Time (sec)"
+msgstr ""
+
+msgid "Time expression"
 msgstr ""
 
 msgid "Time limit"
