@@ -25,6 +25,7 @@
 #include "ejudge/xuser_plugin.h"
 
 #include "ejudge/xalloc.h"
+#include "ejudge/logger.h"
 
 #include <string.h>
 
@@ -176,6 +177,79 @@ process_acm_run(
     } else if (pe->status == RUN_CHECK_FAILED) {
         ++cell->cf_num;
     }
+}
+
+void
+sort_acm(
+        StandingsPage *pg,
+        StandingsExtraInfo *sii,
+        struct serve_state *cs)
+{
+    if (pg->t_tot <= 0) return;
+
+    int max_pen = -1;
+    int max_solved = -1;
+    for (int i = 0; i < pg->t_tot; ++i) {
+        StandingsUserRow *row = &pg->rows[i];
+        ASSERT(row->tot_full >= 0);
+        ASSERT(row->tot_penalty >= 0);
+        if (row->tot_full > max_solved) max_solved = row->tot_full;
+        if (row->tot_penalty > max_pen) max_pen = row->tot_penalty;
+    }
+
+    int *prob_cnt = NULL;
+    XALLOCAZ(prob_cnt, max_solved + 1);
+    int *pen_cnt = NULL;
+    XCALLOC(pen_cnt, max_pen + 1);
+
+    for (int i = 0; i < pg->t_tot; ++i) {
+        StandingsUserRow *row = &pg->rows[i];
+        ++prob_cnt[row->tot_full];
+        ++pen_cnt[row->tot_penalty];
+    }
+    int i = 0;
+    for (int t = max_solved - 1; t >= 0; --t) {
+        int j = prob_cnt[t + 1] + i;
+        prob_cnt[t + 1] = i;
+        i = j;
+    }
+    prob_cnt[0] = i;
+    i = 0;
+    int t;
+    for (t = 1; t <= max_pen; ++t) {
+        int j = pen_cnt[t - 1] + i;
+        pen_cnt[t - 1] = i;
+        i = j;
+    }
+    pen_cnt[t - 1] = i;
+    int *t_sort2 = NULL;
+    XALLOCA(t_sort2, pg->t_tot);
+    XCALLOC(pg->t_sort, pg->t_tot);
+    XCALLOC(pg->places, pg->t_tot);
+    for (t = 0; t < pg->t_tot; ++t) {
+        StandingsUserRow *row = &pg->rows[t];
+        t_sort2[pen_cnt[row->tot_penalty]++] = t;
+    }
+    for (t = 0; t < pg->t_tot; ++t) {
+        StandingsUserRow *row = &pg->rows[t_sort2[t]];
+        pg->t_sort[prob_cnt[row->tot_full]++] = t_sort2[t];
+    }
+
+    /* now resolve ties */
+    for(i = 0; i < pg->t_tot;) {
+        int j;
+        for (j = i + 1; j < pg->t_tot; ++j) {
+            StandingsUserRow *ri = &pg->rows[pg->t_sort[i]];
+            StandingsUserRow *rj = &pg->rows[pg->t_sort[j]];
+            if (ri->tot_full != rj->tot_full || ri->tot_penalty != rj->tot_penalty) break;
+        }
+        for (int k = i; k < j; ++k) {
+            pg->places[k].t_n1 = i;
+            pg->places[k].t_n2 = j - 1;
+        }
+        i = j;
+    }
+    xfree(pen_cnt);
 }
 
 static void
@@ -1076,7 +1150,11 @@ csp_execute_int_kirov_standings(
         }
     }
 
-    sort_kirov(pg, sii, cs);
+    if (global->score_system == SCORE_ACM) {
+        sort_acm(pg, sii, cs);
+    } else {
+        sort_kirov(pg, sii, cs);
+    }
 
     /* memoize the results */
     if (!sii->accepting_mode && global->memoize_user_results) {
