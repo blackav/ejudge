@@ -24,6 +24,7 @@ typedef struct StandingsCell
 {
     ej_time64_t sol_time; // solution time 
     ej_time64_t eff_time; // effective time (for enable_submit_after_reject)
+    ej_time64_t last_fogged_time; // the last submit made during standings fog period
     int prob_score;  // the standings score for the cell
     int att_num;     // the number of attempts
     int disq_num;    // the number of disqualified attempts
@@ -32,12 +33,13 @@ typedef struct StandingsCell
     int trans_num;   // the number of "transient" runs
     int penalty;     // the cell penalty
     int cf_num;      // the number of check failed runs
+    unsigned short fogged_num; // the number of fogged submits
     unsigned char full_sol; // 1, if full solution
     unsigned char pr_flag;  // 1, if pending review
     unsigned char sm_flag;  // 1, if summoned for defence
     unsigned char rj_flag;  // 1, if rejected
     unsigned char marked_flag; // 1, if marked
-    unsigned char _pad[11];
+    unsigned char _pad[1];
 } StandingsCell;
 
 typedef struct StandingsUserRow
@@ -123,6 +125,8 @@ typedef struct StandingsPage
 
     struct xuser_team_extras *extras;
     int not_started_flag;
+    time_t duration_before_fog;
+    int unfog_flag;
 } StandingsPage;
 
 #endif

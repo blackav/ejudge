@@ -650,6 +650,17 @@ csp_execute_int_kirov_standings(
     }
     pg->cur_duration = pg->cur_time - pg->user_start_time;
 
+    pg->duration_before_fog = -1;
+    if (pg->duration > 0 && global->board_fog_time > 0) {
+        pg->duration_before_fog = pg->duration - global->board_fog_time;
+        if (pg->duration_before_fog < 0) pg->duration_before_fog = 0;
+    }
+    if (pg->duration > 0 && global->board_fog_time > 0 && global->board_unfog_time > 0) {
+        if (pg->cur_time > pg->user_start_time + pg->duration + global->board_unfog_time) {
+            pg->unfog_flag = 1;
+        }
+    }
+
     pg->r_tot = run_get_total(cs->runlog_state);
     pg->runs = run_get_entries_ptr(cs->runlog_state);
 
@@ -804,6 +815,8 @@ csp_execute_int_kirov_standings(
         const struct section_problem_data *prob = cs->probs[pe->prob_id];
         if (!prob || prob->hidden) continue;
         StandingsUserRow *row = &pg->rows[tind];
+        int up_ind = (tind << pg->row_sh) + pind;
+        StandingsCell *cell = &pg->cells[up_ind];
 
         if (row->start_time <= 0) continue;
         time_t run_time = pe->time;
@@ -813,6 +826,18 @@ csp_execute_int_kirov_standings(
         if (sii->user_id > 0) {
             // run from the (virtual) future
             if (run_duration > pg->cur_duration) continue;
+        }
+
+        if (pg->duration_before_fog >= 0) {
+            if (!pg->unfog_flag || run_duration >= pg->duration_before_fog) {
+                // this is fogged run
+                if (run_time > cell->last_fogged_time) {
+                    cell->last_fogged_time = run_time;
+                }
+                ++cell->fogged_num;
+                if (!cell->fogged_num) --cell->fogged_num; // overflow, keep the value at USHRT_MAX
+                continue;
+            }
         }
 
         process_kirov_run(pg, sii, cs, k, pe, need_eff_time);
