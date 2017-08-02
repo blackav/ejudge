@@ -157,7 +157,8 @@ process_acm_run(
         cell->full_sol = 1;
         cell->penalty += prob->acm_run_penalty * cell->sol_att;
         cell->sol_time = run_time;
-        cell->penalty += sec_to_min(global->rounding_mode, run_duration);
+        cell->prob_score = sec_to_min(global->rounding_mode, run_duration);
+        cell->penalty += cell->prob_score;
     } else if (pe->status == RUN_COMPILE_ERR && prob->ignore_compile_errors <= 0) {
         if (cell->full_sol) return;
         pg->last_submit_run = run_id;
