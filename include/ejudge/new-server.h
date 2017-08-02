@@ -869,6 +869,7 @@ ns_write_standings(
         int charset_id,
         struct user_filter_info *user_filter,
         int user_mode,
-        time_t cur_time);
+        time_t cur_time,
+        int compat_mode);
 
 #endif /* __NEW_SERVER_H__ */

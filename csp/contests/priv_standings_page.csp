@@ -1,15 +1,16 @@
 <%
-/* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
 %><%@set getter_name = "csp_get_priv_standings_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
 %><%@page csp_view_priv_standings_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
 %><%@include "priv_stdvars.csp"
 %><%
   struct user_filter_info *u = 0;
   const unsigned char *title = NULL;
   int enable_main_menu = 0;
+  int compat_mode = 0;
 
   if (phr->role < USER_ROLE_JUDGE) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -19,6 +20,7 @@
   }
 
   u = user_filter_info_allocate(cs, phr->user_id, phr->session_id);
+  %><s:read name="compat_mode" default="0" /><%
 
   l10n_setlocale(phr->locale_id);
   title = _("Current standings");
@@ -69,7 +71,8 @@
                        0 /* int charset_id */,
                        u /* struct user_filter_info *user_filter */,
                        0 /* int user_mode */,
-                       0 /* time_t cur_time */);
+                       0 /* time_t cur_time */,
+                       compat_mode /* int compat_mode */);
 %>
 <%@include "priv_footer.csp"
 %><%

@@ -4279,7 +4279,8 @@ typedef void (*write_standings_func_t)(
         int charset_id,
         struct user_filter_info *user_filter,
         int user_mode,
-        time_t stand_time);
+        time_t stand_time,
+        int compat_mode);
 
 void
 write_standings(
@@ -4323,7 +4324,8 @@ write_standings(
                charset_id /* int charset_id */,
                NULL /* struct user_filter_info *u */,
                user_mode /* int user_mode */,
-               0 /* time_t cur_time */);
+               0 /* time_t cur_time */,
+               0 /* int compat_mode */);
   }
 
 #if 0

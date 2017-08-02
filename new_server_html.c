@@ -11697,7 +11697,8 @@ ns_write_standings(
         int charset_id,
         struct user_filter_info *user_filter,
         int user_mode,
-        time_t stand_time)
+        time_t stand_time,
+        int compat_mode)
 {
   if (phr && !extra) extra = phr->extra;
   if (phr && !cnts) cnts = phr->cnts;
@@ -11742,15 +11743,17 @@ ns_write_standings(
   }
   phr->config = ejudge_config;
   phr->extra_info = &extra_info;
-  int r = ns_int_external_action(phr, NEW_SRV_INT_STANDINGS);
-  if (r >= 0) {
-    if (hr_allocated) {
-      if (phr->log_f) fclose(phr->log_f);
-      xfree(phr->log_t);
-      if (phr->out_f) fclose(phr->out_f);
-      xfree(phr->out_t);
+  if (!compat_mode) {
+    int r = ns_int_external_action(phr, NEW_SRV_INT_STANDINGS);
+    if (r >= 0) {
+      if (hr_allocated) {
+        if (phr->log_f) fclose(phr->log_f);
+        xfree(phr->log_t);
+        if (phr->out_f) fclose(phr->out_f);
+        xfree(phr->out_t);
+      }
+      return;
     }
-    return;
   }
 
   // backward mode: no charset conversion, no multi-page standings
