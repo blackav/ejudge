@@ -644,6 +644,142 @@ process_kirov_run(
     }
 }
 
+void
+sort_kirov(
+        StandingsPage *pg,
+        StandingsExtraInfo *sii,
+        struct serve_state *cs)
+{
+    const struct section_global_data *global = cs->global;
+
+    if (pg->t_tot <= 0) return;
+
+    int max_full = -1;
+    int max_score = -1;
+    for (int t = 0; t < pg->t_tot; ++t) {
+        StandingsUserRow *row = &pg->rows[t];
+        if (row->tot_full > max_full) max_full = row->tot_full;
+        if (row->tot_score > max_score) max_score = row->tot_score;
+    }
+    int *ind_full;
+    XALLOCAZ(ind_full, max_full + 1);
+    int *ind_score;
+    XALLOCAZ(ind_score, max_score + 1);
+    for (int t = 0; t < pg->t_tot; ++t) {
+        StandingsUserRow *row = &pg->rows[t];
+        ++ind_full[row->tot_full];
+        ++ind_score[row->tot_score];
+    }
+    int i = 0;
+    for (int t = max_full - 1; t >= 0; --t) {
+        int j = ind_full[t + 1] + i;
+        ind_full[t + 1] = i;
+        i = j;
+    }
+    ind_full[0] = i;
+    i = 0;
+    for (int t = max_score - 1; t >= 0; --t) {
+        int j = ind_score[t + 1] + i;
+        ind_score[t + 1] = i;
+        i = j;
+    }
+    ind_score[0] = i;
+
+    XCALLOC(pg->t_sort, pg->t_tot);
+    XCALLOC(pg->places, pg->t_tot);
+    if (sii->accepting_mode) {
+        /* sort by the number of solved problems */
+        for (int t = 0; t < pg->t_tot; ++t)
+            pg->t_sort[ind_full[pg->rows[t].tot_full]++] = t;
+
+        /* resolve ties */
+        for(int i = 0; i < pg->t_tot;) {
+            int j;
+            for (j = i + 1; j < pg->t_tot; ++j) {
+                if (pg->rows[pg->t_sort[i]].tot_full != pg->rows[pg->t_sort[j]].tot_full) break;
+            }
+            for (int k = i; k < j; ++k) {
+                pg->places[k].t_n1 = i;
+                pg->places[k].t_n2 = j - 1;
+            }
+            i = j;
+        }
+    } else if (global->stand_sort_by_solved) {
+        /* sort by the number of solved problems, then by the score */
+        int *t_sort2;
+        XALLOCA(t_sort2, pg->t_tot);
+        for (int t = 0; t < pg->t_tot; ++t)
+            t_sort2[ind_score[pg->rows[t].tot_score]++] = t;
+        for (int t = 0; t < pg->t_tot; ++t)
+            pg->t_sort[ind_full[pg->rows[t_sort2[t]].tot_full]++] = t_sort2[t];
+
+        /* resolve ties */
+        for(int i = 0; i < pg->t_tot;) {
+            int j;
+            for (j = i + 1; j < pg->t_tot; ++j) {
+                if (pg->rows[pg->t_sort[i]].tot_full != pg->rows[pg->t_sort[j]].tot_full
+                    || pg->rows[pg->t_sort[i]].tot_score != pg->rows[pg->t_sort[j]].tot_score)
+                    break;
+            }
+            for (int k = i; k < j; ++k) {
+                pg->places[k].t_n1 = i;
+                pg->places[k].t_n2 = j - 1;
+            }
+            i = j;
+        }
+    } else if (global->stand_enable_penalty) {
+        /* sort by the number of solved problems, then by the penalty */
+        for (int t = 0; t < pg->t_tot; ++t)
+            pg->t_sort[ind_score[pg->rows[t].tot_score]++] = t;
+        // bubble sort on penalty
+        int sort_flag;
+        do {
+            sort_flag = 0;
+            for (int i = 1; i < pg->t_tot; ++i)
+                if (pg->rows[pg->t_sort[i-1]].tot_score == pg->rows[pg->t_sort[i]].tot_score
+                    && pg->rows[pg->t_sort[i-1]].tot_penalty > pg->rows[pg->t_sort[i]].tot_penalty) {
+                    int j = pg->t_sort[i - 1];
+                    pg->t_sort[i - 1] = pg->t_sort[i];
+                    pg->t_sort[i] = j;
+                    sort_flag = 1;
+                }
+        } while (sort_flag);
+
+        /* resolve ties */
+        for(int i = 0; i < pg->t_tot;) {
+            int j;
+            for (j = i + 1; j < pg->t_tot; ++j) {
+                if (pg->rows[pg->t_sort[i]].tot_penalty != pg->rows[pg->t_sort[j]].tot_penalty
+                    || pg->rows[pg->t_sort[i]].tot_score != pg->rows[pg->t_sort[j]].tot_score)
+                    break;
+            }
+            for (int k = i; k < j; ++k) {
+                pg->places[k].t_n1 = i;
+                pg->places[k].t_n2 = j - 1;
+            }
+            i = j;
+        }
+    } else {
+        /* sort by the score */
+        for (int t = 0; t < pg->t_tot; ++t)
+            pg->t_sort[ind_score[pg->rows[t].tot_score]++] = t;
+
+        /* resolve ties */
+        for(int i = 0; i < pg->t_tot;) {
+            int j;
+            for (j = i + 1; j < pg->t_tot; ++j) {
+                if (pg->rows[pg->t_sort[i]].tot_score != pg->rows[pg->t_sort[j]].tot_score)
+                    break;
+            }
+            for (int k = i; k < j; ++k) {
+                pg->places[k].t_n1 = i;
+                pg->places[k].t_n2 = j - 1;
+            }
+            i = j;
+        }
+    }
+}
+
 static int
 csp_execute_int_kirov_standings(
         PageInterface *ps,
@@ -940,132 +1076,7 @@ csp_execute_int_kirov_standings(
         }
     }
 
-    if (pg->t_tot > 0) {
-        int max_full = -1;
-        int max_score = -1;
-        for (int t = 0; t < pg->t_tot; ++t) {
-            StandingsUserRow *row = &pg->rows[t];
-            if (row->tot_full > max_full) max_full = row->tot_full;
-            if (row->tot_score > max_score) max_score = row->tot_score;
-        }
-        int *ind_full;
-        XALLOCAZ(ind_full, max_full + 1);
-        int *ind_score;
-        XALLOCAZ(ind_score, max_score + 1);
-        for (int t = 0; t < pg->t_tot; ++t) {
-            StandingsUserRow *row = &pg->rows[t];
-            ++ind_full[row->tot_full];
-            ++ind_score[row->tot_score];
-        }
-        int i = 0;
-        for (int t = max_full - 1; t >= 0; --t) {
-            int j = ind_full[t + 1] + i;
-            ind_full[t + 1] = i;
-            i = j;
-        }
-        ind_full[0] = i;
-        i = 0;
-        for (int t = max_score - 1; t >= 0; --t) {
-            int j = ind_score[t + 1] + i;
-            ind_score[t + 1] = i;
-            i = j;
-        }
-        ind_score[0] = i;
-
-        XCALLOC(pg->t_sort, pg->t_tot);
-        XCALLOC(pg->places, pg->t_tot);
-        if (sii->accepting_mode) {
-            /* sort by the number of solved problems */
-            for (int t = 0; t < pg->t_tot; ++t)
-                pg->t_sort[ind_full[pg->rows[t].tot_full]++] = t;
-
-            /* resolve ties */
-            for(int i = 0; i < pg->t_tot;) {
-                int j;
-                for (j = i + 1; j < pg->t_tot; ++j) {
-                    if (pg->rows[pg->t_sort[i]].tot_full != pg->rows[pg->t_sort[j]].tot_full) break;
-                }
-                for (int k = i; k < j; ++k) {
-                    pg->places[k].t_n1 = i;
-                    pg->places[k].t_n2 = j - 1;
-                }
-                i = j;
-            }
-        } else if (global->stand_sort_by_solved) {
-            /* sort by the number of solved problems, then by the score */
-            int *t_sort2;
-            XALLOCA(t_sort2, pg->t_tot);
-            for (int t = 0; t < pg->t_tot; ++t)
-                t_sort2[ind_score[pg->rows[t].tot_score]++] = t;
-            for (int t = 0; t < pg->t_tot; ++t)
-                pg->t_sort[ind_full[pg->rows[t_sort2[t]].tot_full]++] = t_sort2[t];
-
-            /* resolve ties */
-            for(int i = 0; i < pg->t_tot;) {
-                int j;
-                for (j = i + 1; j < pg->t_tot; ++j) {
-                    if (pg->rows[pg->t_sort[i]].tot_full != pg->rows[pg->t_sort[j]].tot_full
-                        || pg->rows[pg->t_sort[i]].tot_score != pg->rows[pg->t_sort[j]].tot_score)
-                        break;
-                }
-                for (int k = i; k < j; ++k) {
-                    pg->places[k].t_n1 = i;
-                    pg->places[k].t_n2 = j - 1;
-                }
-                i = j;
-            }
-        } else if (global->stand_enable_penalty) {
-            /* sort by the number of solved problems, then by the penalty */
-            for (int t = 0; t < pg->t_tot; ++t)
-                pg->t_sort[ind_score[pg->rows[t].tot_score]++] = t;
-            // bubble sort on penalty
-            int sort_flag;
-            do {
-                sort_flag = 0;
-                for (int i = 1; i < pg->t_tot; ++i)
-                    if (pg->rows[pg->t_sort[i-1]].tot_score == pg->rows[pg->t_sort[i]].tot_score
-                        && pg->rows[pg->t_sort[i-1]].tot_penalty > pg->rows[pg->t_sort[i]].tot_penalty) {
-                        int j = pg->t_sort[i - 1];
-                        pg->t_sort[i - 1] = pg->t_sort[i];
-                        pg->t_sort[i] = j;
-                        sort_flag = 1;
-                    }
-            } while (sort_flag);
-
-            /* resolve ties */
-            for(int i = 0; i < pg->t_tot;) {
-                int j;
-                for (j = i + 1; j < pg->t_tot; ++j) {
-                    if (pg->rows[pg->t_sort[i]].tot_penalty != pg->rows[pg->t_sort[j]].tot_penalty
-                        || pg->rows[pg->t_sort[i]].tot_score != pg->rows[pg->t_sort[j]].tot_score)
-                        break;
-                }
-                for (int k = i; k < j; ++k) {
-                    pg->places[k].t_n1 = i;
-                    pg->places[k].t_n2 = j - 1;
-                }
-                i = j;
-            }
-        } else {
-            /* sort by the score */
-            for (int t = 0; t < pg->t_tot; ++t)
-                pg->t_sort[ind_score[pg->rows[t].tot_score]++] = t;
-
-            /* resolve ties */
-            for(int i = 0; i < pg->t_tot;) {
-                int j;
-                for (j = i + 1; j < pg->t_tot; ++j) {
-                    if (pg->rows[pg->t_sort[i]].tot_score != pg->rows[pg->t_sort[j]].tot_score)
-                        break;
-                }
-                for (int k = i; k < j; ++k) {
-                    pg->places[k].t_n1 = i;
-                    pg->places[k].t_n2 = j - 1;
-                }
-                i = j;
-            }
-        }
-    }
+    sort_kirov(pg, sii, cs);
 
     /* memoize the results */
     if (!sii->accepting_mode && global->memoize_user_results) {
