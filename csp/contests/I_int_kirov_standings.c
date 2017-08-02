@@ -129,6 +129,55 @@ calc_kirov_score(
         time_t effective_time);
 
 static void
+process_acm_run(
+    StandingsPage *pg,
+    StandingsExtraInfo *sii,
+    struct serve_state *cs,
+    int run_id,
+    const struct run_entry *pe,
+    int need_eff_time)
+{
+    //const struct section_global_data *global = cs->global;
+    int tind = pg->t_rev[pe->user_id];
+    int pind = pg->p_rev[pe->prob_id];
+    int up_ind = (tind << pg->row_sh) + pind;
+    const struct section_problem_data *prob = cs->probs[pe->prob_id];
+    StandingsCell *cell = &pg->cells[up_ind];
+    StandingsUserRow *row = &pg->rows[tind];
+    //StandingsProblemColumn *col = &pg->columns[pind];
+    time_t run_time = pe->time;
+    time_t run_duration = run_time - row->start_time;
+    if (run_duration < 0) run_duration = 0;
+
+    if (pe->status == RUN_OK) {
+        if (cell->full_sol) return;
+        pg->last_success_run = run_id;
+        pg->last_submit_run = run_id;
+        cell->full_sol = 1;
+        cell->penalty += prob->acm_run_penalty * cell->sol_att;
+        cell->sol_time = run_time;
+    } else if (pe->status == RUN_COMPILE_ERR && prob->ignore_compile_errors <= 0) {
+        if (cell->full_sol) return;
+        pg->last_submit_run = run_id;
+        ++cell->sol_att;
+    } else if (run_is_failed_attempt(pe->status)) {
+        if (cell->full_sol) return;
+        pg->last_submit_run = run_id;
+        ++cell->sol_att;
+    } else if (pe->status == RUN_DISQUALIFIED) {
+        ++cell->disq_num;
+    } else if (pe->status == RUN_PENDING_REVIEW || pe->status == RUN_SUMMONED) {
+        cell->pr_flag = 1;
+    } else if (pe->status == RUN_PENDING || pe->status == RUN_ACCEPTED) {
+        ++cell->trans_num;
+    } else if (pe->status >= RUN_TRANSIENT_FIRST && pe->status <= RUN_TRANSIENT_LAST) {
+        ++cell->trans_num;
+    } else if (pe->status == RUN_CHECK_FAILED) {
+        ++cell->cf_num;
+    }
+}
+
+static void
 process_kirov_run(
     StandingsPage *pg,
     StandingsExtraInfo *sii,
@@ -840,7 +889,11 @@ csp_execute_int_kirov_standings(
             }
         }
 
-        process_kirov_run(pg, sii, cs, k, pe, need_eff_time);
+        if (global->score_system == SCORE_ACM) {
+            process_acm_run(pg, sii, cs, k, pe, need_eff_time);
+        } else {
+            process_kirov_run(pg, sii, cs, k, pe, need_eff_time);
+        }
     }
 
     /* compute the total for each team */
