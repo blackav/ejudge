@@ -889,6 +889,8 @@ process_moscow_run(
         cell->sol_time = run_time;
         cell->eff_time = sec_to_min(global->rounding_mode, run_duration);
         cell->penalty += cell->eff_time;
+        cell->score = prob->full_score;
+        if (prob->variable_full_score) cell->score = pe->score;
         ++col->succ_att;
         ++col->tot_att;
         /*
@@ -896,7 +898,6 @@ process_moscow_run(
       up_pen[up_ind] = sec_to_min(global->rounding_mode, udur);
       up_totatt[up_ind]++;
       up_score[up_ind] = prob->full_score;
-      if (prob->variable_full_score) up_score[up_ind] = pe->score;
       p_att[p]++;
       p_succ[p]++;
         */
@@ -905,19 +906,12 @@ process_moscow_run(
         pg->last_submit_run = run_id;
         ++cell->sol_att;
         ++col->tot_att;
+        cell->score = pe->score;
         /*
       if (pe->score > up_score[up_ind]) {
         up_att[up_ind] = up_totatt[up_ind];
         up_pen[up_ind] = sec_to_min(global->rounding_mode, udur);
         up_time[up_ind] = run_time;
-        up_score[up_ind] = pe->score;
-      }
-      up_totatt[up_ind]++;
-      p_att[p]++;
-      if (!global->is_virtual) {
-        last_submit_run = i;
-        last_submit_time = pe->time;
-        last_submit_start = ustart;
       }
         */
     } else if (run_is_failed_attempt(pe->status)) {
