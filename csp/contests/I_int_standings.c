@@ -859,6 +859,93 @@ sort_kirov(
     }
 }
 
+static void
+process_moscow_run(
+    StandingsPage *pg,
+    StandingsExtraInfo *sii,
+    struct serve_state *cs,
+    int run_id,
+    const struct run_entry *pe,
+    int need_eff_time)
+{
+    const struct section_global_data *global = cs->global;
+    int tind = pg->t_rev[pe->user_id];
+    int pind = pg->p_rev[pe->prob_id];
+    int up_ind = (tind << pg->row_sh) + pind;
+    const struct section_problem_data *prob = cs->probs[pe->prob_id];
+    StandingsCell *cell = &pg->cells[up_ind];
+    StandingsUserRow *row = &pg->rows[tind];
+    StandingsProblemColumn *col = &pg->columns[pind];
+    time_t run_time = pe->time;
+    time_t run_duration = run_time - row->start_time;
+    if (run_duration < 0) run_duration = 0;
+
+    if (pe->status == RUN_OK) {
+        if (cell->full_sol) return;
+        pg->last_success_run = run_id;
+        pg->last_submit_run = run_id;
+        cell->full_sol = 1;
+        cell->penalty += prob->acm_run_penalty * cell->sol_att;
+        cell->sol_time = run_time;
+        cell->prob_score = sec_to_min(global->rounding_mode, run_duration);
+        cell->penalty += cell->prob_score;
+        ++col->succ_att;
+        ++col->tot_att;
+        /*
+      up_att[up_ind] = up_totatt[up_ind];
+      up_pen[up_ind] = sec_to_min(global->rounding_mode, udur);
+      up_totatt[up_ind]++;
+      up_score[up_ind] = prob->full_score;
+      if (prob->variable_full_score) up_score[up_ind] = pe->score;
+      p_att[p]++;
+      p_succ[p]++;
+        */
+    } else if (pe->status == RUN_COMPILE_ERR && prob->ignore_compile_errors <= 0) {
+        if (cell->full_sol) return;
+        pg->last_submit_run = run_id;
+        ++cell->sol_att;
+        ++col->tot_att;
+        /*
+      if (pe->score > up_score[up_ind]) {
+        up_att[up_ind] = up_totatt[up_ind];
+        up_pen[up_ind] = sec_to_min(global->rounding_mode, udur);
+        up_time[up_ind] = run_time;
+        up_score[up_ind] = pe->score;
+      }
+      up_totatt[up_ind]++;
+      p_att[p]++;
+      if (!global->is_virtual) {
+        last_submit_run = i;
+        last_submit_time = pe->time;
+        last_submit_start = ustart;
+      }
+        */
+    } else if (run_is_failed_attempt(pe->status)) {
+        if (cell->full_sol) return;
+        pg->last_submit_run = run_id;
+        ++cell->sol_att;
+        ++col->tot_att;
+    } else if (pe->status == RUN_DISQUALIFIED) {
+        ++cell->disq_num;
+    } else if (pe->status == RUN_PENDING_REVIEW || pe->status == RUN_SUMMONED) {
+        cell->pr_flag = 1;
+    } else if (pe->status == RUN_PENDING || pe->status == RUN_ACCEPTED) {
+        ++cell->trans_num;
+    } else if (pe->status >= RUN_TRANSIENT_FIRST && pe->status <= RUN_TRANSIENT_LAST) {
+        ++cell->trans_num;
+    } else if (pe->status == RUN_CHECK_FAILED) {
+        ++cell->cf_num;
+    }
+}
+
+static void
+sort_moscow(
+        StandingsPage *pg,
+        StandingsExtraInfo *sii,
+        struct serve_state *cs)
+{
+}
+
 static int
 csp_execute_int_standings(
         PageInterface *ps,
@@ -1151,6 +1238,8 @@ csp_execute_int_standings(
 
         if (global->score_system == SCORE_ACM) {
             process_acm_run(pg, sii, cs, k, pe, need_eff_time);
+        } else if (global->score_system == SCORE_MOSCOW) {
+            process_moscow_run(pg, sii, cs, k, pe, need_eff_time);
         } else {
             process_kirov_run(pg, sii, cs, k, pe, need_eff_time);
         }
@@ -1201,6 +1290,8 @@ csp_execute_int_standings(
 
     if (global->score_system == SCORE_ACM) {
         sort_acm(pg, sii, cs);
+    } else if (global->score_system == SCORE_MOSCOW) {
+        sort_moscow(pg, sii, cs);
     } else {
         sort_kirov(pg, sii, cs);
     }
