@@ -917,7 +917,7 @@ csp_execute_int_standings(
             if (new_time > pg->cur_time) new_time = pg->cur_time;
         }
         pg->cur_time = new_time;
-    } else if (sii->user_filter && sii->user_filter->stand_time_expr_mode == 2) {
+    } else if (sii->user_filter && sii->user_filter->stand_time_expr_mode == 3) {
         time_t new_time = sii->user_filter->stand_time_expr_time;
         if (new_time < pg->start_time) new_time = pg->start_time;
         if (pg->stop_time > 0) {

@@ -2728,6 +2728,7 @@ parse_time_expr(struct user_filter_info *u)
         return;
       } else {
         if (*s != ':') goto fail;
+        ++s;
         while (isspace(*s)) ++s;
         errno = 0;
         long v5 = strtol(s, &ep, 10);
@@ -2739,6 +2740,7 @@ parse_time_expr(struct user_filter_info *u)
           // date, hour, min
         } else {
           if (*s != ':') goto fail;
+          ++s;
           while (isspace(*s)) ++s;
           errno = 0;
           long v6 = strtol(s, &ep, 10);
