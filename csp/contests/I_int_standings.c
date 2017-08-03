@@ -157,8 +157,8 @@ process_acm_run(
         cell->full_sol = 1;
         cell->penalty += prob->acm_run_penalty * cell->sol_att;
         cell->sol_time = run_time;
-        cell->prob_score = sec_to_min(global->rounding_mode, run_duration);
-        cell->penalty += cell->prob_score;
+        cell->score = sec_to_min(global->rounding_mode, run_duration);
+        cell->penalty += cell->score;
         ++col->succ_att;
         ++col->tot_att;
     } else if (pe->status == RUN_COMPILE_ERR && prob->ignore_compile_errors <= 0) {
@@ -333,7 +333,7 @@ process_kirov_run(
         case RUN_SUMMONED:
             if (!cell->full_sol) ++cell->sol_att;
             cell->full_sol = 1;
-            cell->prob_score = prob->tests_to_accept;
+            cell->score = prob->tests_to_accept;
             ++cell->att_num;  /* hmm, it is not used... */
             if (run_status == RUN_PENDING_REVIEW)
                 cell->pr_flag = 1;
@@ -344,8 +344,8 @@ process_kirov_run(
             if (!cell->full_sol) ++cell->sol_att;
             if (run_tests > prob->tests_to_accept)
                 run_tests = prob->tests_to_accept;
-            if (run_tests > cell->prob_score) 
-                cell->prob_score = run_tests;
+            if (run_tests > cell->score) 
+                cell->score = run_tests;
             cell->full_sol = 1;
             ++cell->att_num;
             break;
@@ -363,8 +363,8 @@ process_kirov_run(
             if (!cell->full_sol) ++cell->sol_att;
             if (run_tests > prob->tests_to_accept)
                 run_tests = prob->tests_to_accept;
-            if (run_tests > cell->prob_score) 
-                cell->prob_score = run_score;
+            if (run_tests > cell->score) 
+                cell->score = run_score;
             ++cell->att_num;
             break;
         case RUN_DISQUALIFIED:
@@ -394,15 +394,15 @@ process_kirov_run(
         case RUN_OK:
             if (prob->score_latest > 0) {
                 // score best, actually
-                if (run_score > cell->prob_score) {
+                if (run_score > cell->score) {
                     cell->full_sol = 1;
-                    cell->prob_score = run_score;
-                } else if (run_score == cell->prob_score) {
+                    cell->score = run_score;
+                } else if (run_score == cell->score) {
                     cell->full_sol = 1;
                 }
             } else {
                 cell->full_sol = 1;
-                cell->prob_score = run_score;
+                cell->score = run_score;
             }
             cell->trans_num = 0;
             ++cell->att_num;
@@ -414,12 +414,12 @@ process_kirov_run(
         case RUN_PARTIAL:
             if (prob->score_latest > 0) {
                 // score best, actually
-                if (run_score > cell->prob_score) {
+                if (run_score > cell->score) {
                     cell->full_sol = 0;
-                    cell->prob_score = run_score;
+                    cell->score = run_score;
                 }
             } else {
-                cell->prob_score = run_score;
+                cell->score = run_score;
                 cell->full_sol = 0;
             }
             cell->trans_num = 0;
@@ -497,13 +497,13 @@ process_kirov_run(
                 if (pe->is_marked) {
                     // latest
                     cell->marked_flag = 1;
-                    cell->prob_score = score;
+                    cell->score = score;
                     if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
                 } else if (cell->marked_flag) {
                     // do nothing
-                } else if (score > cell->prob_score) {
+                } else if (score > cell->score) {
                     // best score
-                    cell->prob_score = score;
+                    cell->score = score;
                     if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
                 }
                 ++cell->sol_att;
@@ -522,13 +522,13 @@ process_kirov_run(
                 if (pe->is_marked) {
                     // latest
                     cell->marked_flag = 1;
-                    cell->prob_score = score;
+                    cell->score = score;
                     if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
                 } else if (cell->marked_flag) {
                     // do nothing
-                } else if (score > cell->prob_score) {
+                } else if (score > cell->score) {
                     // best score
-                    cell->prob_score = score;
+                    cell->score = score;
                     if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
                 }
                 if (!cell->full_sol) ++cell->sol_att;
@@ -598,8 +598,8 @@ process_kirov_run(
                                                  cell->disq_num, cell->ce_num,
                                                  cell->full_sol?RUN_TOO_MANY:col->succ_att,
                                                  0, 0, effective_time);
-                    if (prob->score_latest > 0 || score > cell->prob_score) {
-                        cell->prob_score = score;
+                    if (prob->score_latest > 0 || score > cell->score) {
+                        cell->score = score;
                         if (prob->stand_hide_time <= 0) cell->sol_time = run_time;
                     }
                     if (!cell->sol_time && prob->stand_hide_time <= 0)
@@ -636,8 +636,8 @@ process_kirov_run(
                               full_sol[up_ind]?RUN_TOO_MANY:succ_att[pind],
                               0, 0);
                             */
-                            if (dst_prob->score_latest > 0 || score > dest_cell->prob_score) {
-                                dest_cell->prob_score = score;
+                            if (dst_prob->score_latest > 0 || score > dest_cell->score) {
+                                dest_cell->score = score;
                                 if (dst_prob->stand_hide_time <= 0) dest_cell->sol_time = run_time;
                             }
                             if (!dest_cell->sol_time && dst_prob->stand_hide_time <= 0) {
@@ -661,8 +661,8 @@ process_kirov_run(
                                                  pe, prob, cell->att_num,
                                                  cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
                                                  effective_time);
-                    if (prob->score_latest > 0 || score > cell->prob_score) {
-                        cell->prob_score = score;
+                    if (prob->score_latest > 0 || score > cell->score) {
+                        cell->score = score;
                     }
                     if (prob->score_latest > 0) {
                         cell->full_sol = 0;
@@ -678,8 +678,8 @@ process_kirov_run(
                                              pe, prob, cell->att_num,
                                              cell->disq_num, cell->ce_num, RUN_TOO_MANY, 0, 0,
                                              effective_time);
-                if (prob->score_latest > 0 || score > cell->prob_score) {
-                    cell->prob_score = score;
+                if (prob->score_latest > 0 || score > cell->score) {
+                    cell->score = score;
                 }
                 ++cell->att_num;
                 if (!cell->full_sol) ++col->tot_att;
@@ -887,8 +887,8 @@ process_moscow_run(
         cell->full_sol = 1;
         cell->penalty += prob->acm_run_penalty * cell->sol_att;
         cell->sol_time = run_time;
-        cell->prob_score = sec_to_min(global->rounding_mode, run_duration);
-        cell->penalty += cell->prob_score;
+        cell->score = sec_to_min(global->rounding_mode, run_duration);
+        cell->penalty += cell->score;
         ++col->succ_att;
         ++col->tot_att;
         /*
@@ -1257,16 +1257,16 @@ csp_execute_int_standings(
                 for (int j = 0; j < pg->p_tot; ++j) {
                     int up_ind = (i << pg->row_sh) + j;
                     StandingsCell *cell = &pg->cells[up_ind];
-                    if (!used_flag[j] && cell->prob_score > 0 && (max_ind < 0 || cell->prob_score > max_score)) {
+                    if (!used_flag[j] && cell->score > 0 && (max_ind < 0 || cell->score > max_score)) {
                         max_ind = j;
-                        max_score = cell->prob_score;
+                        max_score = cell->score;
                     }
                 }
                 if (max_ind < 0) break;
                 {
                     int up_ind = (i << pg->row_sh) + max_ind;
                     StandingsCell *cell = &pg->cells[up_ind];
-                    row->tot_score += cell->prob_score;
+                    row->tot_score += cell->score;
                     row->tot_full += cell->full_sol;
                     row->tot_penalty += cell->penalty;
                     used_flag[max_ind] = 1;
@@ -1280,7 +1280,7 @@ csp_execute_int_standings(
                 int up_ind = (i << pg->row_sh) + j;
                 StandingsCell *cell = &pg->cells[up_ind];
                 if (cs->probs[pg->p_ind[j]]->stand_ignore_score <= 0) {
-                    row->tot_score += cell->prob_score;
+                    row->tot_score += cell->score;
                     row->tot_full += cell->full_sol;
                     row->tot_penalty += cell->penalty;
                 }

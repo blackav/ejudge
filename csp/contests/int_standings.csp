@@ -665,7 +665,7 @@ sec_to_min(int rounding_mode, int secs)
                         %><s:v value="cell->sol_att" /><%
                     }
                     if (global->ignore_success_time <= 0 && global->stand_show_ok_time > 0) {
-                        snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", cell->prob_score / 60, cell->prob_score % 60);
+                        snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", cell->score / 60, cell->score % 60);
                         %> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="dur_buf" escape="no" />)</div><%
                     }
                 } else if (cell->fogged_num > 0) {
@@ -685,7 +685,7 @@ sec_to_min(int rounding_mode, int secs)
                 if (!cell->att_num) {
                     %>&nbsp;<%
                 } else if (cell->full_sol) {
-                    score_view_display(score_buf, sizeof(score_buf), prob, cell->prob_score);
+                    score_view_display(score_buf, sizeof(score_buf), prob, cell->score);
                     %><b><s:v value="score_buf" escape="no" /></b><%
                     if (global->stand_show_att_num) {
                         %> (<s:v value="cell->sol_att" />)<%
@@ -695,7 +695,7 @@ sec_to_min(int rounding_mode, int secs)
                         %><div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
                     }
                 } else {
-                    score_view_display(score_buf, sizeof(score_buf), prob, cell->prob_score);
+                    score_view_display(score_buf, sizeof(score_buf), prob, cell->score);
                     %><s:v value="score_buf" escape="no" /><%
                     if (global->stand_show_att_num) {
                         %> (<s:v value="cell->sol_att" />)<%
@@ -759,7 +759,7 @@ sec_to_min(int rounding_mode, int secs)
                             %><s:v value="cell->sol_att" /><%
                         }
                         if (global->ignore_success_time <= 0 && global->stand_show_ok_time > 0) {
-                            snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", cell->prob_score / 60, cell->prob_score % 60);
+                            snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", cell->score / 60, cell->score % 60);
                             %> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="dur_buf" escape="no" />)</div><%
                         }
                     } else if (cell->fogged_num > 0) {
@@ -779,7 +779,7 @@ sec_to_min(int rounding_mode, int secs)
                     if (!cell->att_num) {
                         %>&nbsp;<%
                     } else if (cell->full_sol) {
-                        score_view_display(score_buf, sizeof(score_buf), prob, cell->prob_score);
+                        score_view_display(score_buf, sizeof(score_buf), prob, cell->score);
                         %><b><s:v value="score_buf" escape="no" /></b><%
                         if (global->stand_show_att_num) {
                             %> (<s:v value="cell->sol_att" />)<%
@@ -789,7 +789,7 @@ sec_to_min(int rounding_mode, int secs)
                             %><div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
                         }
                     } else {
-                        score_view_display(score_buf, sizeof(score_buf), prob, cell->prob_score);
+                        score_view_display(score_buf, sizeof(score_buf), prob, cell->score);
                         %><s:v value="score_buf" escape="no" /><%
                         if (global->stand_show_att_num) {
                             %> (<s:v value="cell->sol_att" />)<%
