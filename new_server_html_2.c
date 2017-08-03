@@ -2569,6 +2569,39 @@ stand_parse_error_func(void *data, unsigned char const *format, ...)
 
 #define IS_EQUAL(name) ((((!u->name || !*u->name) && !*name) || (u->name && !strcmp(u->name, name))))
 
+static int
+parse_date(const unsigned char *s, struct tm *ptt, const unsigned char **out_s)
+{
+  while (isspace(*s)) ++s;
+  if (!*s) return -1;
+
+  char *ep = NULL;
+  errno = 0;
+  long v = strtol(s, &ep, 10);
+  if (errno || (int) v != v || v < 0) return -1;
+  s = ep;
+  ptt->tm_year = v;
+  while (isspace(*s)) ++s;
+  if (*s != '/' && *s != '-') return -1;
+  int sep = *s++;
+  while (isspace(*s)) ++s;
+  errno = 0;
+  v = strtol(s, &ep, 10);
+  if (errno || (int) v != v || v < 0) return -1;
+  s = ep;
+  ptt->tm_mon = v;
+  while (isspace(*s)) ++s;
+  if (*s != sep) return -1;
+  while (isspace(*s)) ++s;
+  errno = 0;
+  v = strtol(s, &ep, 10);
+  if (errno || (int) v != v || v < 0) return -1;
+  s = ep;
+  ptt->tm_sec = v;
+  if (out_s) *out_s = s;
+  return 0;
+}
+
 static void
 parse_time_expr(struct user_filter_info *u)
 {
@@ -2651,9 +2684,143 @@ parse_time_expr(struct user_filter_info *u)
     return;
   }
 
-  // calendar time case is unhandled
-  goto fail;
-  //return;
+  struct tm tt;
+  memset(&tt, 0, sizeof(tt));
+  tt.tm_isdst = -1;
+
+  char *ep = NULL;
+  errno = 0;
+  long v1 = strtol(s, &ep, 10);
+  if (errno || (int) v1 != v1 || v1 < 0) goto fail;
+  s = ep;
+  while (isspace(*s)) ++s;
+  if (*s == '-' || *s == '/') {
+    tt.tm_year = v1;
+    int sep = *s;
+    ++s;
+    while (isspace(*s)) ++s;
+    errno = 0;
+    long v2 = strtol(s, &ep, 10);
+    if (errno || (int) v2 != v2 || v2 < 0) goto fail;
+    tt.tm_mon = v2;
+    s = ep;
+    while (isspace(*s)) ++s;
+    if (*s != sep) goto fail;
+    ++s;
+    while (isspace(*s)) ++s;
+    errno = 0;
+    long v3 = strtol(s, &ep, 10);
+    if (errno || (int) v3 != v3 || v3 < 0) goto fail;
+    tt.tm_mday = v3;
+    s = ep;
+    while (isspace(*s)) ++s;
+    if (!*s) {
+      // just date
+    } else {
+      errno = 0;
+      long v4 = strtol(s, &ep, 10);
+      if (errno || (int) v4 != v4 || v4 < 0) goto fail;
+      tt.tm_hour = v4;
+      s = ep;
+      while (isspace(*s)) ++s;
+      if (!*s) {
+        // date, hour
+        return;
+      } else {
+        if (*s != ':') goto fail;
+        while (isspace(*s)) ++s;
+        errno = 0;
+        long v5 = strtol(s, &ep, 10);
+        if (errno || (int) v5 != v5 || v5 < 0) goto fail;
+        tt.tm_min = v5;
+        s = ep;
+        while (isspace(*s)) ++s;
+        if (!*s) {
+          // date, hour, min
+        } else {
+          if (*s != ':') goto fail;
+          while (isspace(*s)) ++s;
+          errno = 0;
+          long v6 = strtol(s, &ep, 10);
+          if (errno || (int) v6 != v6 || v6 < 0) goto fail;
+          tt.tm_sec = v6;
+          s = ep;
+          while (isspace(*s)) ++s;
+          if (*s) goto fail;
+          // date, hour, min, sec
+        }
+      }
+    }
+  } else if (!*s) {
+    // h
+    time_t cur = time(0);
+    struct tm *ptt = localtime(&cur);
+    tt.tm_mday = ptt->tm_mday;
+    tt.tm_mon = ptt->tm_mon;
+    tt.tm_year = ptt->tm_year;
+    tt.tm_hour = v1;
+  } else if (*s == ':') {
+    ++s;
+    while (isspace(*s)) ++s;
+    errno = 0;
+    long v2 = strtol(s, &ep, 10);
+    if (errno || (int) v2 != v2 || v2 < 0) goto fail;
+    s = ep;
+    while (isspace(*s)) ++s;
+    if (!*s) {
+      // h : m
+      time_t cur = time(0);
+      struct tm *ptt = localtime(&cur);
+      tt.tm_mday = ptt->tm_mday;
+      tt.tm_mon = ptt->tm_mon;
+      tt.tm_year = ptt->tm_year;
+      tt.tm_hour = v1;
+      tt.tm_min = v2;
+    } else if (*s == ':') {
+      ++s;
+      while (isspace(*s)) ++s;
+      errno = 0;
+      long v3 = strtol(s, &ep, 10);
+      if (errno || (int) v3 != v3 || v3 < 0) goto fail;
+      s = ep;
+      while (isspace(*s)) ++s;
+      if (!*s) {
+        // h : m : s
+        time_t cur = time(0);
+        struct tm *ptt = localtime(&cur);
+        tt.tm_mday = ptt->tm_mday;
+        tt.tm_mon = ptt->tm_mon;
+        tt.tm_year = ptt->tm_year;
+        tt.tm_hour = v1;
+        tt.tm_min = v2;
+        tt.tm_sec = v2;
+      } else {
+        tt.tm_hour = v1;
+        tt.tm_min = v2;
+        tt.tm_sec = v2;
+        if (parse_date(s, &tt, &s) < 0) goto fail;
+        while (isspace(*s)) ++s;
+        if (!*s) goto fail;
+      }
+    } else {
+      tt.tm_hour = v1;
+      tt.tm_min = v2;
+      if (parse_date(s, &tt, &s) < 0) goto fail;
+      while (isspace(*s)) ++s;
+      if (!*s) goto fail;
+    }
+  } else {
+    tt.tm_hour = v1;
+    if (parse_date(s, &tt, &s) < 0) goto fail;
+    while (isspace(*s)) ++s;
+    if (!*s) goto fail;
+  }
+
+  time_t ttt = mktime(&tt);
+  if (ttt == (time_t) -1) goto fail;
+  u->stand_time_expr_mode = 3;
+  u->stand_time_expr_time = ttt;
+  return;
 
 fail:
   xfree(u->stand_time_expr);
