@@ -34,6 +34,7 @@
 <tr><td><s:_>Problem filter expression</s:_>:</td><td><s:textfield name="stand_prob_expr" size="64" value="u->stand_prob_expr" /></td></tr>
 <tr><td><s:_>Run filter expression</s:_>:</td><td><s:textfield name="stand_run_expr" size="64" value="u->stand_run_expr" /></td></tr>
 <tr><td><s:_>Time expression</s:_>:</td><td><s:textfield name="stand_time_expr" size="64" value="u->stand_time_expr" /></td></tr>
+<tr><td><s:_>User mode</s:_>:</td><td><s:checkbox name="stand_user_mode" checkedExpr="u->stand_user_mode > 0" /></td></tr>
 <tr><td>&nbsp;</td><td><s:submit ac="set-stand-filter" /><s:submit ac="reset-stand-filter" /></td></tr>
 <tr><td>&nbsp;</td><td><a href='<s:config name="style-prefix" />filter_expr.html' target="_blank"><s:_>Help</s:_></a></td></tr>
 
@@ -71,7 +72,7 @@
                        1 /* int force_fancy_style */,
                        0 /* int charset_id */,
                        u /* struct user_filter_info *user_filter */,
-                       0 /* int user_mode */,
+                       u->stand_user_mode /* int user_mode */,
                        0 /* time_t cur_time */,
                        compat_mode /* int compat_mode */);
 %>

@@ -76,6 +76,8 @@ serve_state_destroy_stand_expr(struct user_filter_info *u)
   u->stand_user_tree = 0;
   u->stand_prob_tree = 0;
   u->stand_run_tree = 0;
+  u->stand_time_expr_mode = 0;
+  u->stand_time_expr_time = 0;
 }
 
 serve_state_t

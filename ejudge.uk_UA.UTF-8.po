@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-08-03 00:02+0300\n"
+"POT-Creation-Date: 2017-08-03 10:37+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -4095,6 +4095,9 @@ msgid "User login page"
 msgstr ""
 
 msgid "User login/ID"
+msgstr ""
+
+msgid "User mode"
 msgstr ""
 
 msgid "User name"

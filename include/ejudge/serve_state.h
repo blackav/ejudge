@@ -83,6 +83,9 @@ struct user_filter_info
   struct filter_tree_mem *stand_mem;
   unsigned char *stand_error_msgs;
   unsigned char *stand_time_expr;
+  int stand_user_mode;
+  int stand_time_expr_mode; /* 0 - nothing, 1 - relative, 2 - absolute */
+  time_t stand_time_expr_time;
 };
 
 struct user_state_info
