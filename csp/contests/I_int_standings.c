@@ -1119,10 +1119,14 @@ csp_execute_int_standings(
         if (row->stop_time > 0 && run_time > row->stop_time && cs->upsolving_freeze_standings > 0) continue;
         time_t run_duration = run_time - row->start_time;
         if (run_duration < 0) run_duration = 0;
+
+        /*
         if (sii->user_id > 0) {
             // run from the (virtual) future
             if (run_duration > pg->cur_duration) continue;
         }
+        */
+        if (run_duration > pg->cur_duration) continue;
 
         if (pg->duration_before_fog >= 0) {
             if (!pg->unfog_flag && run_duration >= pg->duration_before_fog) {
