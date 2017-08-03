@@ -78,6 +78,7 @@ serve_state_destroy_stand_expr(struct user_filter_info *u)
   u->stand_run_tree = 0;
   u->stand_time_expr_mode = 0;
   u->stand_time_expr_time = 0;
+  u->stand_user_mode = 0;
 }
 
 serve_state_t
@@ -730,6 +731,8 @@ serve_state_load_contest(
   const unsigned char *f = __FUNCTION__;
   const struct section_global_data *global = 0;
   time_t contest_finish_time = 0;
+
+  if (extra->serve_state) return 0;
 
   if (contests_get(contest_id, &cnts) < 0 || !cnts) goto failure;
 
