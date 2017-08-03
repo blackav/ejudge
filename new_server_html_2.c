@@ -2613,6 +2613,7 @@ ns_set_stand_filter(
       u->stand_user_expr = 0;
       u->stand_user_tree = 0;
     } else {
+      xfree(u->stand_user_expr);
       u->stand_user_expr = xstrdup(stand_user_expr);
       if (!u->stand_mem) {
         u->stand_mem = filter_tree_new();
@@ -2638,6 +2639,7 @@ ns_set_stand_filter(
       u->stand_prob_expr = 0;
       u->stand_prob_tree = 0;
     } else {
+      xfree(u->stand_prob_expr);
       u->stand_prob_expr = xstrdup(stand_prob_expr);
       if (!u->stand_mem) {
         u->stand_mem = filter_tree_new();
@@ -2664,6 +2666,7 @@ ns_set_stand_filter(
       u->stand_run_expr = 0;
       u->stand_run_tree = 0;
     } else {
+      xfree(u->stand_run_expr);
       u->stand_run_expr = xstrdup(stand_run_expr);
       if (!u->stand_mem) {
         u->stand_mem = filter_tree_new();
@@ -2683,6 +2686,21 @@ ns_set_stand_filter(
       }
     }
   }
+
+  if (!IS_EQUAL(stand_time_expr)) {
+    if (!*stand_time_expr) {
+      xfree(u->stand_time_expr);
+      u->stand_time_expr = NULL;
+      u->stand_time_expr_mode = 0;
+      u->stand_time_expr_time = 0;
+    } else {
+      xfree(u->stand_time_expr);
+      u->stand_time_expr = xstrdup(stand_time_expr);
+      // FIXME: parse time expr
+    }
+  }
+
+  u->stand_user_mode = stand_user_mode;
 
   if (!u->stand_user_tree && !u->stand_prob_tree && !u->stand_run_tree) {
     u->stand_mem = filter_tree_delete(u->stand_mem);
