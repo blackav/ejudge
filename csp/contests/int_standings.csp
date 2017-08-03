@@ -665,7 +665,7 @@ sec_to_min(int rounding_mode, int secs)
                         %><s:v value="cell->sol_att" /><%
                     }
                     if (global->ignore_success_time <= 0 && global->stand_show_ok_time > 0) {
-                        snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", cell->score / 60, cell->score % 60);
+                        snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", (int) cell->eff_time / 60, (int) cell->eff_time % 60);
                         %> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="dur_buf" escape="no" />)</div><%
                     }
                 } else if (cell->fogged_num > 0) {
@@ -759,7 +759,7 @@ sec_to_min(int rounding_mode, int secs)
                             %><s:v value="cell->sol_att" /><%
                         }
                         if (global->ignore_success_time <= 0 && global->stand_show_ok_time > 0) {
-                            snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", cell->score / 60, cell->score % 60);
+                            snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", (int) cell->eff_time / 60, (int) cell->eff_time % 60);
                             %> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="dur_buf" escape="no" />)</div><%
                         }
                     } else if (cell->fogged_num > 0) {

@@ -157,8 +157,8 @@ process_acm_run(
         cell->full_sol = 1;
         cell->penalty += prob->acm_run_penalty * cell->sol_att;
         cell->sol_time = run_time;
-        cell->score = sec_to_min(global->rounding_mode, run_duration);
-        cell->penalty += cell->score;
+        cell->eff_time = sec_to_min(global->rounding_mode, run_duration);
+        cell->penalty += cell->eff_time;
         ++col->succ_att;
         ++col->tot_att;
     } else if (pe->status == RUN_COMPILE_ERR && prob->ignore_compile_errors <= 0) {
@@ -887,8 +887,8 @@ process_moscow_run(
         cell->full_sol = 1;
         cell->penalty += prob->acm_run_penalty * cell->sol_att;
         cell->sol_time = run_time;
-        cell->score = sec_to_min(global->rounding_mode, run_duration);
-        cell->penalty += cell->score;
+        cell->eff_time = sec_to_min(global->rounding_mode, run_duration);
+        cell->penalty += cell->eff_time;
         ++col->succ_att;
         ++col->tot_att;
         /*
