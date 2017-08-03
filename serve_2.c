@@ -82,11 +82,13 @@ serve_update_standings_file(
         int force_flag)
 {
   struct section_global_data *global = state->global;
-  time_t start_time, stop_time, duration;
-  int p = 0, charset_id = 0;
+  //time_t start_time, stop_time, duration;
+  //int p = 0;
+  int charset_id = 0;
 
-  run_get_times(state->runlog_state, &start_time, 0, &duration, &stop_time, 0);
+  //run_get_times(state->runlog_state, &start_time, 0, &duration, &stop_time, 0);
 
+  /*
   while (1) {
     if (global->is_virtual) break;
     if (force_flag) break;
@@ -108,6 +110,7 @@ serve_update_standings_file(
     p = run_get_fog_period(state->runlog_state, state->current_time,
                            global->board_fog_time, global->board_unfog_time);
   }
+  */
   charset_id = charset_get_id(global->standings_charset);
   l10n_setlocale(global->standings_locale_id);
   write_standings(extra,
@@ -140,6 +143,7 @@ serve_update_standings_file(
                     1 /* user_mode */);
   }
   l10n_resetlocale();
+  /*
   if (global->is_virtual) return;
   switch (p) {
   case 0:
@@ -152,6 +156,7 @@ serve_update_standings_file(
     global->unfog_standings_updated = 1;
     break;
   }
+  */
 }
 
 void
@@ -161,12 +166,14 @@ serve_update_public_log_file(
         const struct contest_desc *cnts)
 {
   struct section_global_data *global = state->global;
-  time_t start_time, stop_time, duration;
-  int p, charset_id = 0;
+  //time_t start_time, stop_time, duration;
+  //int p;
+  int charset_id = 0;
 
   if (!global->plog_update_time) return;
   if (state->current_time < state->last_update_public_log + global->plog_update_time) return;
 
+  /*
   run_get_times(state->runlog_state, &start_time, 0, &duration, &stop_time, 0);
 
   while (1) {
@@ -182,6 +189,7 @@ serve_update_public_log_file(
     if (p == 1) return;
     break;
   }
+  */
 
   charset_id = charset_get_id(global->plog_charset);
   l10n_setlocale(global->standings_locale_id);
