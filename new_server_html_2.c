@@ -2569,6 +2569,100 @@ stand_parse_error_func(void *data, unsigned char const *format, ...)
 
 #define IS_EQUAL(name) ((((!u->name || !*u->name) && !*name) || (u->name && !strcmp(u->name, name))))
 
+static void
+parse_time_expr(struct user_filter_info *u)
+{
+  const unsigned char *s = u->stand_time_expr;
+  if (!s) goto fail;
+  while (isspace(*s)) ++s;
+  if (*s == '+' || *s == '-') {
+    // m or h:m or h:m:s
+    int sgn = 1;
+    if (*s == '-') sgn = 2;
+    ++s;
+    while (isspace(*s)) ++s;
+    if (!*s) goto fail;
+    char *ep = NULL;
+    errno = 0;
+    long v1 = strtol(s, &ep, 10);
+    if (errno || (int) v1 != v1 || v1 < 0) goto fail;
+    s = ep;
+    while (isspace(*s)) ++s;
+    if (*s == 's' || *s == 'S' || *s == 'm' || *s == 'M' || *s == 'h' || *s == 'H' || *s == 'd' || *s == 'D') {
+      int res = v1;
+      if (*s == 's' || *s == 'S') {
+        // nothing
+      } else if (*s == 'm' || *s == 'M') {
+        if (__builtin_mul_overflow(res, 60, &res)) goto fail;
+      } else if (*s == 'h' || *s == 'H') {
+        if (__builtin_mul_overflow(res, 3600, &res)) goto fail;
+      } else if (*s == 'd' || *s == 'D') {
+        if (__builtin_mul_overflow(res, 86400, &res)) goto fail;
+      }
+      ++s;
+      while (isspace(*s)) ++s;
+      if (*s) goto fail;
+      u->stand_time_expr_mode = sgn;
+      u->stand_time_expr_time = res;
+      return;
+    }
+    if (!*s) {
+      int res = v1;
+      if (__builtin_mul_overflow(res, 60, &res)) goto fail;
+      u->stand_time_expr_mode = sgn;
+      u->stand_time_expr_time = res;
+      return;
+    }
+    if (*s != ':') goto fail;
+    ++s;
+    while (isspace(*s)) ++s;
+    if (!*s) goto fail;
+    errno = 0;
+    long v2 = strtol(s, &ep, 10);
+    if (errno || (int) v2 != v2 || v2 < 0) goto fail;
+    s = ep;
+    while (isspace(*s)) ++s;
+    if (!*s) {
+      int res = v1;
+      if (__builtin_mul_overflow(res, 60, &res)) goto fail;
+      if (__builtin_add_overflow(res, (int) v2, &res)) goto fail;
+      if (__builtin_mul_overflow(res, 60, &res)) goto fail;
+      u->stand_time_expr_mode = sgn;
+      u->stand_time_expr_time = res;
+      return;
+    }
+    if (*s != ':') goto fail;
+    ++s;
+    while (isspace(*s)) ++s;
+    if (!*s) goto fail;
+    errno = 0;
+    long v3 = strtol(s, &ep, 10);
+    if (errno || (int) v3 != v3 || v3 < 0) goto fail;
+    s = ep;
+    while (isspace(*s)) ++s;
+    if (*s) goto fail;
+    int res = v1;
+    if (__builtin_mul_overflow(res, 60, &res)) goto fail;
+    if (__builtin_add_overflow(res, (int) v2, &res)) goto fail;
+    if (__builtin_mul_overflow(res, 60, &res)) goto fail;
+    if (__builtin_add_overflow(res, (int) v3, &res)) goto fail;
+    u->stand_time_expr_mode = sgn;
+    u->stand_time_expr_time = res;
+    return;
+  }
+
+  // calendar time case is unhandled
+  goto fail;
+  //return;
+
+fail:
+  xfree(u->stand_time_expr);
+  u->stand_time_expr = NULL;
+  u->stand_time_expr_mode = 0;
+  u->stand_time_expr_time = 0;
+  return;
+}
+
 void
 ns_set_stand_filter(
         const serve_state_t state,
@@ -2696,7 +2790,7 @@ ns_set_stand_filter(
     } else {
       xfree(u->stand_time_expr);
       u->stand_time_expr = xstrdup(stand_time_expr);
-      // FIXME: parse time expr
+      parse_time_expr(u);
     }
   }
 

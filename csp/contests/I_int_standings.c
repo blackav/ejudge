@@ -894,6 +894,31 @@ csp_execute_int_standings(
     pg->stop_time = run_get_stop_time(cs->runlog_state);
     pg->duration = run_get_duration(cs->runlog_state);
 
+    if (sii->user_filter && sii->user_filter->stand_time_expr_mode == 1) {
+        // relative to the contest start
+        time_t new_time = pg->start_time + sii->user_filter->stand_time_expr_time;
+        if (new_time < pg->start_time) new_time = pg->start_time;
+        if (pg->stop_time > 0 && new_time > pg->stop_time) {
+            new_time = pg->stop_time;
+        } else if (pg->stop_time <= 0 && new_time > pg->cur_time) {
+            new_time = pg->cur_time;
+        }
+        pg->cur_time = new_time;
+    } else if (sii->user_filter && sii->user_filter->stand_time_expr_mode == 2) {
+        // relative to the current time or contest end
+        time_t new_time;
+        if (pg->stop_time > 0) {
+            new_time = pg->stop_time - sii->user_filter->stand_time_expr_time;
+            if (new_time < pg->start_time) new_time = pg->start_time;
+            if (new_time > pg->stop_time) new_time = pg->stop_time;
+        } else {
+            new_time = pg->cur_time - sii->user_filter->stand_time_expr_time;
+            if (new_time < pg->start_time) new_time = pg->start_time;
+            if (new_time > pg->cur_time) new_time = pg->cur_time;
+        }
+        pg->cur_time = new_time;
+    }
+
     if (global->is_virtual > 0 && sii->user_id > 0) {
         pg->user_start_time = run_get_virtual_start_time(cs->runlog_state, sii->user_id);
         if (pg->user_start_time <= 0 || pg->cur_time < pg->user_start_time) {
