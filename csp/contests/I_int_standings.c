@@ -917,6 +917,15 @@ csp_execute_int_standings(
             if (new_time > pg->cur_time) new_time = pg->cur_time;
         }
         pg->cur_time = new_time;
+    } else if (sii->user_filter && sii->user_filter->stand_time_expr_mode == 2) {
+        time_t new_time = sii->user_filter->stand_time_expr_time;
+        if (new_time < pg->start_time) new_time = pg->start_time;
+        if (pg->stop_time > 0) {
+            if (new_time > pg->stop_time) new_time = pg->stop_time;
+        } else {
+            if (new_time > pg->cur_time) new_time = pg->cur_time;
+        }
+        pg->cur_time = new_time;
     }
 
     if (global->is_virtual > 0 && sii->user_id > 0) {
