@@ -483,6 +483,11 @@ sec_to_min(int rounding_mode, int secs)
     <s:th attr="ss.solved_attr"><s:_>Total</s:_></s:th>
     <s:th attr="ss.penalty_attr"><s:_>Penalty</s:_></s:th>
 <%
+    } else if (global->score_system == SCORE_MOSCOW) {
+%>
+    <s:th attr="ss.score_attr"><s:_>Score</s:_></s:th>
+    <s:th attr="ss.penalty_attr"><s:_>Penalty</s:_></s:th>
+<%
     } else {
 %>
     <s:th attr="ss.solved_attr"><s:_>Solved</s:_></s:th>
@@ -681,6 +686,47 @@ sec_to_min(int rounding_mode, int secs)
                 } else {
                     %>&nbsp;<%
                 }
+            } else if (global->score_system == SCORE_MOSCOW) {
+                if (cell->full_sol) {
+                    %><b><s:v value="cell->score" /></b><%
+                    /*
+        if (global->stand_show_ok_time && up_time[up_ind] > 0) {
+          if (global->show_astr_time) {
+            duration_str(1, up_time[up_ind], start_time, strbuf, 0);
+          } else {
+            snprintf(strbuf, sizeof(strbuf), "%d:%02d",
+                     up_pen[up_ind] / 60, up_pen[up_ind] % 60);
+          }
+          fprintf(f, " <div%s>(%d,%s)</div>",
+                  ss.time_attr,
+                  up_att[up_ind] + 1, strbuf);
+        } else
+          fprintf(f, " <div%s>(%d)</div>",
+                  ss.time_attr, up_att[up_ind] + 1);
+                    */
+                } else if (cell->score > 0) {
+                    %><s:v value="cell->score" /><%
+                    /*
+        if (global->stand_show_ok_time && up_time[up_ind] > 0) {
+          if (global->show_astr_time) {
+            duration_str(1, up_time[up_ind], start_time, strbuf, 0);
+          } else {
+            snprintf(strbuf, sizeof(strbuf), "%d:%02d",
+                     up_pen[up_ind] / 60, up_pen[up_ind] % 60);
+          }
+          fprintf(f, " <div%s>(%d,%s)</div> -%d",
+                  ss.time_attr, up_att[up_ind] + 1,
+                  strbuf, up_totatt[up_ind]);
+        } else
+          fprintf(f, " <div%s>(%d)</div> -%d",
+                  ss.time_attr, up_att[up_ind] + 1,
+                  up_totatt[up_ind]);
+                    */
+                } else if (cell->sol_att > 0) {
+                    %>0 -<s:v value="cell->sol_att" /><%
+                } else {
+                    %>&nbsp;<%
+                }
             } else {
                 if (!cell->att_num) {
                     %>&nbsp;<%
@@ -713,6 +759,11 @@ sec_to_min(int rounding_mode, int secs)
         if (global->score_system == SCORE_ACM) {
 %>
     <s:td attr="ss.solved_attr"><s:v value="row->tot_full" /></s:td>
+    <s:td attr="ss.penalty_attr"><s:v value="row->tot_penalty" /></s:td>
+<%
+        } else if (global->score_system == SCORE_MOSCOW) {
+%>
+    <s:td attr="ss.score_attr"><s:v value="row->tot_score" /></s:td>
     <s:td attr="ss.penalty_attr"><s:v value="row->tot_penalty" /></s:td>
 <%
         } else {
@@ -775,6 +826,8 @@ sec_to_min(int rounding_mode, int secs)
                     } else {
                         %>&nbsp;<%
                     }
+                } else if (global->score_system == SCORE_MOSCOW) {
+                    // FIXME
                 } else {
                     if (!cell->att_num) {
                         %>&nbsp;<%
