@@ -944,6 +944,63 @@ sort_moscow(
         StandingsExtraInfo *sii,
         struct serve_state *cs)
 {
+    int *pen_cnt = NULL;
+    int *pen_st = NULL;
+    int max_pen = -1;
+    int max_score = -1;
+    int *u_sort1 = NULL;
+    XALLOCAZ(u_sort1, pg->t_tot);
+    for (int u = 0; u < pg->t_tot; ++u) {
+        StandingsUserRow *row = &pg->rows[u];
+        if (row->tot_penalty > max_pen)
+            max_pen = row->tot_penalty;
+        if (row->tot_score > max_score)
+            max_score = row->tot_score;
+    }
+    if (max_pen >= 0) {
+        XCALLOC(pen_cnt, max_pen + 1);
+        XCALLOC(pen_st, max_pen + 1);
+        for (int u = 0; u < pg->t_tot; ++u) {
+            StandingsUserRow *row = &pg->rows[u];
+            ++pen_cnt[row->tot_penalty];
+        }
+        for (int i = 1; i <= max_pen; ++i)
+            pen_st[i] = pen_cnt[i - 1] + pen_st[i - 1];
+        for (int u = 0; u < pg->t_tot; ++u) {
+            StandingsUserRow *row = &pg->rows[u];
+            u_sort1[pen_st[row->tot_penalty]++] = u;
+        }
+    }
+    int *sc_cnt = NULL;
+    int *sc_st = NULL;
+    if (max_score >= 0) {
+        XALLOCAZ(sc_cnt, max_score + 1);
+        XALLOCAZ(sc_st, max_score + 1);
+        for (int u = 0; u < pg->t_tot; ++u) {
+            StandingsUserRow *row = &pg->rows[u];
+            ++sc_cnt[row->tot_score];
+        }
+        for (int i = max_score - 1; i >= 0; --i)
+            sc_st[i] = sc_cnt[i + 1] + sc_st[i + 1];
+        for (int u = 0; u < pg->t_tot; ++u) {
+            pg->t_sort[sc_st[pg->rows[u_sort1[u]].tot_score]++] = u_sort1[u];
+        }
+    }
+    for (int u = 0; u < pg->t_tot; ) {
+        int i;
+        for (i = u + 1;
+             i < pg->t_tot
+                 && pg->rows[pg->t_sort[u]].tot_score == pg->rows[pg->t_sort[i]].tot_score
+                 && pg->rows[pg->t_sort[u]].tot_penalty == pg->rows[pg->t_sort[i]].tot_penalty;
+             ++i);
+        for (int j = u; j < i; ++j) {
+            pg->places[j].t_n1 = u;
+            pg->places[j].t_n2 = i - 1;
+        }
+        u = i;
+    }
+    xfree(pen_cnt);
+    xfree(pen_st);
 }
 
 static int
