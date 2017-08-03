@@ -2580,7 +2580,7 @@ parse_date(const unsigned char *s, struct tm *ptt, const unsigned char **out_s)
   long v = strtol(s, &ep, 10);
   if (errno || (int) v != v || v < 0) return -1;
   s = ep;
-  ptt->tm_year = v;
+  ptt->tm_year = v - 1900;
   while (isspace(*s)) ++s;
   if (*s != '/' && *s != '-') return -1;
   int sep = *s++;
@@ -2589,7 +2589,7 @@ parse_date(const unsigned char *s, struct tm *ptt, const unsigned char **out_s)
   v = strtol(s, &ep, 10);
   if (errno || (int) v != v || v < 0) return -1;
   s = ep;
-  ptt->tm_mon = v;
+  ptt->tm_mon = v - 1;
   while (isspace(*s)) ++s;
   if (*s != sep) return -1;
   while (isspace(*s)) ++s;
@@ -2695,14 +2695,14 @@ parse_time_expr(struct user_filter_info *u)
   s = ep;
   while (isspace(*s)) ++s;
   if (*s == '-' || *s == '/') {
-    tt.tm_year = v1;
+    tt.tm_year = v1 - 1900;
     int sep = *s;
     ++s;
     while (isspace(*s)) ++s;
     errno = 0;
     long v2 = strtol(s, &ep, 10);
     if (errno || (int) v2 != v2 || v2 < 0) goto fail;
-    tt.tm_mon = v2;
+    tt.tm_mon = v2 - 1;
     s = ep;
     while (isspace(*s)) ++s;
     if (*s != sep) goto fail;
