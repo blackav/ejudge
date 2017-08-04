@@ -24,40 +24,27 @@
                 }
             } else if (global->score_system == SCORE_MOSCOW) {
                 if (cell->full_sol) {
-                    %><b><s:v value="cell->score" /></b><%
-                    /*
-        if (global->stand_show_ok_time && up_time[up_ind] > 0) {
-          if (global->show_astr_time) {
-            duration_str(1, up_time[up_ind], start_time, strbuf, 0);
-          } else {
-            snprintf(strbuf, sizeof(strbuf), "%d:%02d",
-                     up_pen[up_ind] / 60, up_pen[up_ind] % 60);
-          }
-          fprintf(f, " <div%s>(%d,%s)</div>",
-                  ss.time_attr,
-                  up_att[up_ind] + 1, strbuf);
-        } else
-          fprintf(f, " <div%s>(%d)</div>",
-                  ss.time_attr, up_att[up_ind] + 1);
-                    */
+                    %><b><s:v value="cell->score" /></b> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="cell->sol_att + 1" /><%
+                    if (global->stand_show_ok_time && cell->sol_time > 0) {
+                        if (global->show_astr_time) {
+                            duration_str(1, cell->sol_time, pg->user_start_time, dur_buf, 0);
+                        } else {
+                            snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", (int) cell->eff_time / 60, (int) cell->eff_time % 60);
+                        }
+                        %>,<s:v value="dur_buf" escape="no" /><%
+                    }
+                    %>)</div><%
                 } else if (cell->score > 0) {
-                    %><s:v value="cell->score" /><%
-                    /*
-        if (global->stand_show_ok_time && up_time[up_ind] > 0) {
-          if (global->show_astr_time) {
-            duration_str(1, up_time[up_ind], start_time, strbuf, 0);
-          } else {
-            snprintf(strbuf, sizeof(strbuf), "%d:%02d",
-                     up_pen[up_ind] / 60, up_pen[up_ind] % 60);
-          }
-          fprintf(f, " <div%s>(%d,%s)</div> -%d",
-                  ss.time_attr, up_att[up_ind] + 1,
-                  strbuf, up_totatt[up_ind]);
-        } else
-          fprintf(f, " <div%s>(%d)</div> -%d",
-                  ss.time_attr, up_att[up_ind] + 1,
-                  up_totatt[up_ind]);
-                    */
+                    %><s:v value="cell->score" /> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="cell->sol_att + 1" /><%
+                    if (global->stand_show_ok_time && cell->sol_time > 0) {
+                        if (global->show_astr_time) {
+                            duration_str(1, cell->sol_time, pg->user_start_time, dur_buf, 0);
+                        } else {
+                            snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", (int) cell->eff_time / 60, (int) cell->eff_time % 60);
+                        }
+                        %>,<s:v value="dur_buf" escape="no" /><%
+                    }
+                    %>)</div><%
                 } else if (cell->sol_att > 0) {
                     %>0 -<s:v value="cell->sol_att" /><%
                 } else {
