@@ -662,97 +662,8 @@ sec_to_min(int rounding_mode, int secs)
             if (cell->cf_num > 0 && ss.fail_attr && ss.fail_attr[0])
                 cell_attr = ss.fail_attr;
 %>
-    <s:td attr="cell_attr"><%
-            if (global->score_system == SCORE_ACM) {
-                if (cell->full_sol) {
-                    %>+<%
-                    if (cell->sol_att > 0) {
-                        %><s:v value="cell->sol_att" /><%
-                    }
-                    if (global->ignore_success_time <= 0 && global->stand_show_ok_time > 0) {
-                        snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", (int) cell->eff_time / 60, (int) cell->eff_time % 60);
-                        %> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="dur_buf" escape="no" />)</div><%
-                    }
-                } else if (cell->fogged_num > 0) {
-                    int dur = sec_to_min(global->rounding_mode, cell->last_fogged_time - row->start_time);
-                    if (dur < 0) dur = 0;
-                    %>?<s:v value="cell->fogged_num + cell->sol_att" /><%
-                    if (global->ignore_success_time <= 0 && global->stand_show_ok_time > 0) {
-                        snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", dur / 60, dur % 60);
-                        %> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="dur_buf" escape="no" />)</div><%
-                    }
-                } else if (cell->sol_att > 0) {
-                    %>-<s:v value="cell->sol_att" /><%
-                } else {
-                    %>&nbsp;<%
-                }
-            } else if (global->score_system == SCORE_MOSCOW) {
-                if (cell->full_sol) {
-                    %><b><s:v value="cell->score" /></b><%
-                    /*
-        if (global->stand_show_ok_time && up_time[up_ind] > 0) {
-          if (global->show_astr_time) {
-            duration_str(1, up_time[up_ind], start_time, strbuf, 0);
-          } else {
-            snprintf(strbuf, sizeof(strbuf), "%d:%02d",
-                     up_pen[up_ind] / 60, up_pen[up_ind] % 60);
-          }
-          fprintf(f, " <div%s>(%d,%s)</div>",
-                  ss.time_attr,
-                  up_att[up_ind] + 1, strbuf);
-        } else
-          fprintf(f, " <div%s>(%d)</div>",
-                  ss.time_attr, up_att[up_ind] + 1);
-                    */
-                } else if (cell->score > 0) {
-                    %><s:v value="cell->score" /><%
-                    /*
-        if (global->stand_show_ok_time && up_time[up_ind] > 0) {
-          if (global->show_astr_time) {
-            duration_str(1, up_time[up_ind], start_time, strbuf, 0);
-          } else {
-            snprintf(strbuf, sizeof(strbuf), "%d:%02d",
-                     up_pen[up_ind] / 60, up_pen[up_ind] % 60);
-          }
-          fprintf(f, " <div%s>(%d,%s)</div> -%d",
-                  ss.time_attr, up_att[up_ind] + 1,
-                  strbuf, up_totatt[up_ind]);
-        } else
-          fprintf(f, " <div%s>(%d)</div> -%d",
-                  ss.time_attr, up_att[up_ind] + 1,
-                  up_totatt[up_ind]);
-                    */
-                } else if (cell->sol_att > 0) {
-                    %>0 -<s:v value="cell->sol_att" /><%
-                } else {
-                    %>&nbsp;<%
-                }
-            } else {
-                if (!cell->att_num) {
-                    %>&nbsp;<%
-                } else if (cell->full_sol) {
-                    score_view_display(score_buf, sizeof(score_buf), prob, cell->score);
-                    %><b><s:v value="score_buf" escape="no" /></b><%
-                    if (global->stand_show_att_num) {
-                        %> (<s:v value="cell->sol_att" />)<%
-                    }
-                    if (global->stand_show_ok_time && cell->sol_time > 0) {
-                        duration_str(global->show_astr_time, cell->sol_time, row->start_time, dur_buf, 0);
-                        %><div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
-                    }
-                } else {
-                    score_view_display(score_buf, sizeof(score_buf), prob, cell->score);
-                    %><s:v value="score_buf" escape="no" /><%
-                    if (global->stand_show_att_num) {
-                        %> (<s:v value="cell->sol_att" />)<%
-                    }
-                    if (global->stand_show_ok_time && cell->sol_time > 0) {
-                        duration_str(global->show_astr_time, cell->sol_time, row->start_time, dur_buf, 0);
-                        %><div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
-                    }
-                }
-            }
-%></s:td>
+<%@include "int_standings_cell.csp"
+%>
 <%
         }
 %><%
@@ -802,58 +713,8 @@ sec_to_min(int rounding_mode, int secs)
                 if (cell->cf_num > 0 && ss.fail_attr && ss.fail_attr[0])
                     cell_attr = ss.fail_attr;
 %>
-    <s:td attr="cell_attr"><%
-                if (global->score_system == SCORE_ACM) {
-                    if (cell->full_sol) {
-                        %>+<%
-                        if (cell->sol_att > 0) {
-                            %><s:v value="cell->sol_att" /><%
-                        }
-                        if (global->ignore_success_time <= 0 && global->stand_show_ok_time > 0) {
-                            snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", (int) cell->eff_time / 60, (int) cell->eff_time % 60);
-                            %> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="dur_buf" escape="no" />)</div><%
-                        }
-                    } else if (cell->fogged_num > 0) {
-                        int dur = sec_to_min(global->rounding_mode, cell->last_fogged_time - row->start_time);
-                        if (dur < 0) dur = 0;
-                        %>?<s:v value="cell->fogged_num + cell->sol_att" /><%
-                        if (global->ignore_success_time <= 0 && global->stand_show_ok_time > 0) {
-                            snprintf(dur_buf, sizeof(dur_buf), "%d:%02d", dur / 60, dur % 60);
-                            %> <div<s:v value="ss.time_attr" escape="no" />>(<s:v value="dur_buf" escape="no" />)</div><%
-                        }
-                    } else if (cell->sol_att > 0) {
-                        %>-<s:v value="cell->sol_att" /><%
-                    } else {
-                        %>&nbsp;<%
-                    }
-                } else if (global->score_system == SCORE_MOSCOW) {
-                    // FIXME
-                } else {
-                    if (!cell->att_num) {
-                        %>&nbsp;<%
-                    } else if (cell->full_sol) {
-                        score_view_display(score_buf, sizeof(score_buf), prob, cell->score);
-                        %><b><s:v value="score_buf" escape="no" /></b><%
-                        if (global->stand_show_att_num) {
-                            %> (<s:v value="cell->sol_att" />)<%
-                        }
-                        if (global->stand_show_ok_time && cell->sol_time > 0) {
-                            duration_str(global->show_astr_time, cell->sol_time, row->start_time, dur_buf, 0);
-                            %><div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
-                        }
-                    } else {
-                        score_view_display(score_buf, sizeof(score_buf), prob, cell->score);
-                        %><s:v value="score_buf" escape="no" /><%
-                        if (global->stand_show_att_num) {
-                            %> (<s:v value="cell->sol_att" />)<%
-                        }
-                        if (global->stand_show_ok_time && cell->sol_time > 0) {
-                            duration_str(global->show_astr_time, cell->sol_time, row->start_time, dur_buf, 0);
-                            %><div<s:v value="ss.time_attr" escape="no" />><s:v value="dur_buf" escape="no" /></div><%
-                        }
-                    }
-                }
-%></s:td>
+<%@include "int_standings_cell.csp"
+%>
 <%
             }
         }

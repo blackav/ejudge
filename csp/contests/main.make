@@ -207,7 +207,7 @@ csp_reg_login_page.c : reg_login_page.csp reg_includes.csp reg_stdvars.csp reg_h
 csp_reg_main_page.c : reg_main_page.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_separator.csp reg_main_settings.csp reg_footer.csp
 csp_reg_save_cropped_avatar_ajax.c : reg_save_cropped_avatar_ajax.csp reg_includes.csp reg_stdvars.csp
 
-csp_int_standings.c : int_standings.csp
+csp_int_standings.c : int_standings.csp int_standings_cell.csp
 csp_int_public_log.c : int_public_log.csp
 
 csp_reg_csp_error_internal.c : reg_error_internal.csp reg_includes.csp reg_stdvars.csp reg_header.csp reg_footer.csp
