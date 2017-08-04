@@ -259,6 +259,7 @@ struct standings_style
   const unsigned char *pr_attr;   // for pending reviews
   const unsigned char *sm_attr;   // for summoned for defence
   const unsigned char *rj_attr;   // for rejected
+  const unsigned char *first_attr; // first to solve
 
   // for page table
   const unsigned char *page_table_attr;

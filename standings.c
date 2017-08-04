@@ -110,6 +110,7 @@ stand_setup_style(
         if (!ps->rj_attr || !*ps->rj_attr) {
             ps->rj_attr = " class=\"st_prob\" bgcolor=\"#cccc99\"";
         }
+        ps->first_attr = " class=\"st_prob\" bgcolor=\"#88ffff\"";
 
         //ps->page_table_attr = global->stand_page_table_attr;
         //ps->page_cur_attr = global->stand_page_cur_attr;

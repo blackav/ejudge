@@ -661,6 +661,8 @@ sec_to_min(int rounding_mode, int secs)
                 cell_attr = ss.disq_attr;
             if (cell->cf_num > 0 && ss.fail_attr && ss.fail_attr[0])
                 cell_attr = ss.fail_attr;
+            if (cell->first_solver && ss.first_attr && ss.first_attr[0])
+                cell_attr = ss.first_attr;
 %>
 <%@include "int_standings_cell.csp"
 %>
@@ -712,6 +714,8 @@ sec_to_min(int rounding_mode, int secs)
                     cell_attr = ss.disq_attr;
                 if (cell->cf_num > 0 && ss.fail_attr && ss.fail_attr[0])
                     cell_attr = ss.fail_attr;
+                if (cell->first_solver && ss.first_attr && ss.first_attr[0])
+                    cell_attr = ss.first_attr;
 %>
 <%@include "int_standings_cell.csp"
 %>
