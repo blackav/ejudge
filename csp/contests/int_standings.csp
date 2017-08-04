@@ -646,27 +646,10 @@ sec_to_min(int rounding_mode, int secs)
             if (prob->stand_last_column > 0) continue;
             int up_ind = (user_ind << pg->row_sh) + prob_ind;
             StandingsCell *cell = &pg->cells[up_ind];
-            const unsigned char *cell_attr = prob->stand_attr;
             StandingsUserRow *row = &pg->rows[user_ind];
-            if (!cell_attr) cell_attr = ss.prob_attr;
-            if (!cell->full_sol && cell->rj_flag && ss.rj_attr)
-                cell_attr = ss.rj_attr;
-            if (cell->sm_flag && ss.sm_attr && ss.sm_attr[0])
-                cell_attr = ss.sm_attr;
-            if (cell->pr_flag && ss.pr_attr && ss.pr_attr[0])
-                cell_attr = ss.pr_attr;
-            if (cell->trans_num && ss.trans_attr && ss.trans_attr[0])
-                cell_attr = ss.trans_attr;
-            if (cell->disq_num > 0 && ss.disq_attr && ss.disq_attr[0])
-                cell_attr = ss.disq_attr;
-            if (cell->cf_num > 0 && ss.fail_attr && ss.fail_attr[0])
-                cell_attr = ss.fail_attr;
-            if (cell->first_solver && ss.first_attr && ss.first_attr[0])
-                cell_attr = ss.first_attr;
-%>
-<%@include "int_standings_cell.csp"
-%>
-<%
+%><%
+%><%@include "int_standings_cell.csp"
+%><%
         }
 %><%
         if (global->score_system == SCORE_ACM) {
@@ -699,27 +682,10 @@ sec_to_min(int rounding_mode, int secs)
                 if (prob->stand_last_column <= 0) continue;
                 int up_ind = (user_ind << pg->row_sh) + prob_ind;
                 StandingsCell *cell = &pg->cells[up_ind];
-                const unsigned char *cell_attr = prob->stand_attr;
                 StandingsUserRow *row = &pg->rows[user_ind];
-                if (!cell_attr) cell_attr = ss.prob_attr;
-                if (!cell->full_sol && cell->rj_flag && ss.rj_attr)
-                    cell_attr = ss.rj_attr;
-                if (cell->sm_flag && ss.sm_attr && ss.sm_attr[0])
-                    cell_attr = ss.sm_attr;
-                if (cell->pr_flag && ss.pr_attr && ss.pr_attr[0])
-                    cell_attr = ss.pr_attr;
-                if (cell->trans_num && ss.trans_attr && ss.trans_attr[0])
-                    cell_attr = ss.trans_attr;
-                if (cell->disq_num > 0 && ss.disq_attr && ss.disq_attr[0])
-                    cell_attr = ss.disq_attr;
-                if (cell->cf_num > 0 && ss.fail_attr && ss.fail_attr[0])
-                    cell_attr = ss.fail_attr;
-                if (cell->first_solver && ss.first_attr && ss.first_attr[0])
-                    cell_attr = ss.first_attr;
-%>
-<%@include "int_standings_cell.csp"
-%>
-<%
+%><%
+%><%@include "int_standings_cell.csp"
+%><%
             }
         }
 %>
