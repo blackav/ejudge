@@ -39,7 +39,7 @@ typedef struct StandingsCell
     unsigned char sm_flag;  // 1, if summoned for defence
     unsigned char rj_flag;  // 1, if rejected
     unsigned char marked_flag; // 1, if marked
-    unsigned char _pad[1];
+    unsigned char first_solver; // 1, if first solution of the problem
 } StandingsCell;
 
 typedef struct StandingsUserRow
@@ -56,6 +56,7 @@ typedef struct StandingsProblemColumn
 {
     int succ_att; // successful attempts
     int tot_att; // total attempts
+    int is_solved; // if this problem is already solved, used for first_solver computation
 } StandingsProblemColumn;
 
 typedef struct StandingsPlace

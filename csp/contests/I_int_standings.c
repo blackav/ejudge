@@ -161,6 +161,10 @@ process_acm_run(
         cell->penalty += cell->eff_time;
         ++col->succ_att;
         ++col->tot_att;
+        if (!col->is_solved) {
+            cell->first_solver = 1;
+            col->is_solved = 1;
+        }
     } else if (pe->status == RUN_COMPILE_ERR && prob->ignore_compile_errors <= 0) {
         if (cell->full_sol) return;
         pg->last_submit_run = run_id;
@@ -339,6 +343,10 @@ process_kirov_run(
                 cell->pr_flag = 1;
             if (run_status == RUN_SUMMONED)
                 cell->sm_flag = 1;
+            if (!col->is_solved) {
+                cell->first_solver = 1;
+                col->is_solved = 1;
+            }
             break;
         case RUN_PARTIAL:
             if (!cell->full_sol) ++cell->sol_att;
@@ -410,6 +418,10 @@ process_kirov_run(
                 cell->penalty += sec_to_min(global->rounding_mode, run_time);
             }
             //if (run_score > prob->full_score) run_score = prob->full_score;
+            if (!col->is_solved) {
+                cell->first_solver = 1;
+                col->is_solved = 1;
+            }
             break;
         case RUN_PARTIAL:
             if (prob->score_latest > 0) {
@@ -513,6 +525,10 @@ process_kirov_run(
                 cell->full_sol = 1;
                 pg->last_submit_run = run_id;
                 pg->last_success_run = run_id;
+                if (!col->is_solved) {
+                    cell->first_solver = 1;
+                    col->is_solved = 1;
+                }
             } else if (run_status == RUN_PARTIAL || (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0)) {
                 int score = calc_kirov_score(0, 0, row->start_time,
                                              pg->separate_user_score, sii->user_mode, token_flags,
@@ -588,6 +604,11 @@ process_kirov_run(
                     ++pg->total_summoned;
                 }
                 cell->rj_flag = 0;
+
+                if (!col->is_solved) {
+                    cell->first_solver = 1;
+                    col->is_solved = 1;
+                }
 
                 if (!cell->marked_flag || prob->ignore_unmarked <= 0 || pe->is_marked) {
                     cell->marked_flag = pe->is_marked;
@@ -893,6 +914,10 @@ process_moscow_run(
         if (prob->variable_full_score) cell->score = pe->score;
         ++col->succ_att;
         ++col->tot_att;
+        if (!col->is_solved) {
+            cell->first_solver = 1;
+            col->is_solved = 1;
+        }
         /*
       up_att[up_ind] = up_totatt[up_ind];
       up_pen[up_ind] = sec_to_min(global->rounding_mode, udur);
