@@ -685,7 +685,8 @@ sec_to_min(int rounding_mode, int secs)
                 StandingsUserRow *row = &pg->rows[user_ind];
 %><%
 %><%@include "int_standings_cell.csp"
-%><%
+%>
+<%
             }
         }
 %>
