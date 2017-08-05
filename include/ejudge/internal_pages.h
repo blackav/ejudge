@@ -50,6 +50,7 @@ typedef struct StandingsUserRow
     int tot_full;  // the number of completely solved problems
     int tot_penalty; // the total penalty
     const unsigned char *name;
+    unsigned char *avatar_url;
 } StandingsUserRow;
 
 typedef struct StandingsProblemColumn

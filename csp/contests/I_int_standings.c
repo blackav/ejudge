@@ -78,7 +78,12 @@ csp_destroy_int_standings(
     xfree(pg->t_sort);
     xfree(pg->places);
     xfree(pg->columns);
-    xfree(pg->rows);
+    if (pg->rows) {
+        for (int i = 0; i < pg->t_tot; ++i) {
+            xfree(pg->rows[i].avatar_url);
+        }
+        xfree(pg->rows);
+    }
     xfree(pg->cells);
     xfree(pg->p_ind);
     xfree(pg->p_rev);
