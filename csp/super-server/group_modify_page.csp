@@ -88,31 +88,3 @@ cleanup:
     xfree(xml_text);
     userlist_free(&users->b);
 %>
-
-
-
-
-
-int
-super_serve_op_GROUP_MODIFY_PAGE(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0, r;
-  unsigned char buf[1024];
-  const unsigned char *cl = 0;
-  const unsigned char *s;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-
-
-
-  ss_write_html_footer(out_f);
-
-cleanup:
-  html_armor_free(&ab);
-  return retval;
-}
-
-
-

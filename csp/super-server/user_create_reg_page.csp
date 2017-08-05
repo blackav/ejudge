@@ -171,36 +171,3 @@ cleanup:
     html_armor_free(&ab);
     userlist_free(&u->b);
 %>
-
-
-
-
-
-int
-super_serve_op_USER_CREATE_REG_PAGE(
-        FILE *log_f,
-        FILE *out_f,
-        struct http_request_info *phr)
-{
-  int retval = 0;
-  int other_user_id = 0, contest_id = 0, group_id = 0;
-  const struct contest_desc *cnts = 0;
-  unsigned char buf[1024];
-  unsigned char *xml_text = 0;
-  struct userlist_user *u = 0;
-  const unsigned char *cl = 0;
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-  const int *cnts_id_list = 0;
-  int cnts_id_count, i, other_contest_id_2;
-
-
-
-
-do_footer:
-  ss_write_html_footer(out_f);
-
-cleanup:
-  xfree(xml_text); xml_text = 0;
-  html_armor_free(&ab);
-  return retval;
-}
