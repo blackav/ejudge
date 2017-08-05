@@ -427,6 +427,11 @@ sec_to_min(int rounding_mode, int secs)
     <s:th attr="ss.place_attr"><s:_>Place</s:_></s:th>
     <s:th attr="ss.team_attr"><s:_>User</s:_></s:th>
 <%
+    if (global->stand_show_avatar > 0) {
+%>
+    <th><s:_>Avatar</s:_></th>
+<%
+    }
     if (global->stand_extra_format && global->stand_extra_format[0]) {
 %>
     <s:th attr="ss.extra_attr"><%
@@ -602,6 +607,15 @@ sec_to_min(int rounding_mode, int secs)
         }
 %></s:td>
 <%
+        if (global->stand_show_avatar > 0) {
+%>
+    <td class="userpic"><%
+            if (row->avatar_url && row->avatar_url[0]) {
+                %><img alt="avatar" src="<s:v value="row->avatar_url" escape="no" />" /><%
+            }
+%></td>
+<%
+        }
         if (global->stand_extra_format && global->stand_extra_format[0]) {
             struct sformat_extra_data fed;
             memset(&fed, 0, sizeof(fed));

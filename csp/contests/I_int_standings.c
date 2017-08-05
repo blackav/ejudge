@@ -23,6 +23,8 @@
 #include "ejudge/new_server_pi.h"
 #include "ejudge/team_extra.h"
 #include "ejudge/xuser_plugin.h"
+#include "ejudge/content_plugin.h"
+#include "ejudge/userlist.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -1042,6 +1044,9 @@ csp_execute_int_standings(
     //const struct run_entry *runs = NULL;
     unsigned char *t_runs = NULL;
     int need_eff_time = 0; // need to compute the effective submit time
+    struct content_loaded_plugin *cp = NULL;
+    int content_enabled = 0;
+    unsigned char avatar_url[1024];
 
     memset(&env, 0, sizeof(env));
 
@@ -1237,6 +1242,12 @@ csp_execute_int_standings(
         pg->columns = calloc(pg->p_tot, sizeof(pg->columns[0]));
     }
 
+    if (global->stand_show_avatar > 0) {
+        if ((cp = content_plugin_get(phr->extra, phr->cnts, phr->config, NULL))) {
+            content_enabled = cp->iface->is_enabled(cp->data, phr->cnts);
+        }
+    }
+
     for (int i = 0; i < pg->t_tot; ++i) {
         int user_id = pg->t_ind[i];
         StandingsUserRow *row = &pg->rows[i];
@@ -1251,6 +1262,22 @@ csp_execute_int_standings(
             row->name = teamdb_get_login(cs->teamdb_state, user_id);
         } else {
             row->name = teamdb_get_name_2(cs->teamdb_state, user_id);
+        }
+        if (global->stand_show_avatar > 0) {
+            const struct userlist_user *u = teamdb_get_userlist(cs->teamdb_state, user_id);
+            const struct userlist_user_info *ui = NULL;
+            if (u) ui = u->cnts0;
+            if (ui && ui->avatar_id && ui->avatar_id[0]) {
+                if (content_enabled) {
+                    cp->iface->get_url(cp->data, avatar_url, sizeof(avatar_url),
+                                       phr->cnts, ui->avatar_id, ui->avatar_suffix);
+                    row->avatar_url = xstrdup(avatar_url);
+                } else if (phr->self_url && phr->session_id) {
+                    snprintf(avatar_url, sizeof(avatar_url), "%s?SID=%llx&key=%s&action=%d",
+                             phr->self_url, phr->session_id, ui->avatar_id, NEW_SRV_ACTION_GET_AVATAR);
+                    row->avatar_url = xstrdup(avatar_url);
+                }
+            }
         }
     }
 
