@@ -441,6 +441,10 @@ static const unsigned char * const form_row_attrs[]=
             <div style="width: 300px; display: inline-block;"><label for="attrs-stand_use_login">Use login instead of name:</label></div>
             <input type="checkbox" name="stand_use_login" id="attrs-stand_use_login" value="1" onchange="attrsDialogOnChange()" />
         </div>
+        <div id="attrs-stand_show_avatar-div">
+            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_show_avatar">Show avatars in standings:</label></div>
+            <input type="checkbox" name="stand_show_avatar" id="attrs-stand_show_avatar" value="1" onchange="attrsDialogOnChange()" />
+        </div>
         <div id="attrs-stand_show_ok_time-div">
             <div style="width: 300px; display: inline-block;"><label for="attrs-stand_show_ok_time">Show success time in standings:</label></div>
             <input type="checkbox" name="stand_show_ok_time" id="attrs-stand_show_ok_time" value="1" onchange="attrsDialogOnChange()" />
@@ -1176,6 +1180,7 @@ function popupAttrsDialog(e, skipField)
     $("#attrs-stand_score_attr").val($("#orig-stand_score_attr").val());
     $("#attrs-stand_penalty_attr").val($("#orig-stand_penalty_attr").val());
     copyCheckbox("attrs-stand_use_login", "orig-stand_use_login");
+    copyCheckbox("attrs-stand_show_avatar", "orig-stand_show_avatar");
     copyCheckbox("attrs-stand_show_ok_time", "orig-stand_show_ok_time");
     copyCheckbox("attrs-stand_show_att_num", "orig-stand_show_att_num");
     copyCheckbox("attrs-stand_sort_by_solved", "orig-stand_sort_by_solved");
@@ -2063,6 +2068,12 @@ function advancedDialogOnChange()
                 <td><s:yesno disabled="disabled" id="orig-stand_use_login" name="param" value="global->stand_use_login" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_use_login" /></td>
+            </s:tr>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_show_avatar-div">
+                <td>Show avatars in standings:</td>
+                <td><s:yesno disabled="disabled" id="orig-stand_show_avatar" name="param" value="global->stand_show_avatar" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_show_avatar" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_show_ok_time-div">
                 <td>Show success time in standings:</td>

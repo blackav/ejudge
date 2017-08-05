@@ -198,6 +198,7 @@ static struct meta_info_item meta_info_section_global_data_data[] =
   [CNTSGLOB_stand_trans_attr] = { CNTSGLOB_stand_trans_attr, 's', XSIZE(struct section_global_data, stand_trans_attr), "stand_trans_attr", XOFFSET(struct section_global_data, stand_trans_attr) },
   [CNTSGLOB_stand_disq_attr] = { CNTSGLOB_stand_disq_attr, 's', XSIZE(struct section_global_data, stand_disq_attr), "stand_disq_attr", XOFFSET(struct section_global_data, stand_disq_attr) },
   [CNTSGLOB_stand_use_login] = { CNTSGLOB_stand_use_login, 'B', XSIZE(struct section_global_data, stand_use_login), "stand_use_login", XOFFSET(struct section_global_data, stand_use_login) },
+  [CNTSGLOB_stand_show_avatar] = { CNTSGLOB_stand_show_avatar, 'B', XSIZE(struct section_global_data, stand_show_avatar), "stand_show_avatar", XOFFSET(struct section_global_data, stand_show_avatar) },
   [CNTSGLOB_stand_show_ok_time] = { CNTSGLOB_stand_show_ok_time, 'B', XSIZE(struct section_global_data, stand_show_ok_time), "stand_show_ok_time", XOFFSET(struct section_global_data, stand_show_ok_time) },
   [CNTSGLOB_stand_show_att_num] = { CNTSGLOB_stand_show_att_num, 'B', XSIZE(struct section_global_data, stand_show_att_num), "stand_show_att_num", XOFFSET(struct section_global_data, stand_show_att_num) },
   [CNTSGLOB_stand_sort_by_solved] = { CNTSGLOB_stand_sort_by_solved, 'B', XSIZE(struct section_global_data, stand_sort_by_solved), "stand_sort_by_solved", XOFFSET(struct section_global_data, stand_sort_by_solved) },

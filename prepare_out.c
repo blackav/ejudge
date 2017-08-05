@@ -396,6 +396,8 @@ prepare_unparse_global(
   do_str(f, &ab, "stand_disq_attr", global->stand_disq_attr);
   if (global->stand_use_login != DFLT_G_STAND_USE_LOGIN)
     unparse_bool(f, "stand_use_login", global->stand_use_login);
+  if (global->stand_show_avatar > 0)
+    unparse_bool(f, "stand_show_avatar", global->stand_show_avatar);
   if (global->stand_show_ok_time != DFLT_G_STAND_SHOW_OK_TIME)
     unparse_bool(f, "stand_show_ok_time", global->stand_show_ok_time);
   if (global->stand_show_att_num)

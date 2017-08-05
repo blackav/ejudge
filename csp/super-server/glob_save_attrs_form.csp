@@ -24,6 +24,7 @@
     unsigned char *stand_score_attr = NULL;
     unsigned char *stand_penalty_attr = NULL;
     ejintbool_t stand_use_login = 0;
+    ejintbool_t stand_show_avatar = 0;
     ejintbool_t stand_show_ok_time = 0;
     ejintbool_t stand_show_att_num = 0;
     ejintbool_t stand_sort_by_solved = 0;
@@ -62,6 +63,7 @@
 %><s:read var="stand_score_attr" normalize="yes" nonnull="yes" prepend="" /><%
 %><s:read var="stand_penalty_attr" normalize="yes" nonnull="yes" prepend="" /><%
 %><s:read var="stand_use_login" default="0" /><%
+%><s:read var="stand_show_avatar" default="0" /><%
 %><s:read var="stand_show_ok_time" default="0" /><%
 %><s:read var="stand_show_att_num" default="0" /><%
 %><s:read var="stand_sort_by_solved" default="0" /><%
@@ -100,6 +102,7 @@
             MOVESTR(stand_score_attr);
             MOVESTR(stand_penalty_attr);
             global->stand_use_login = stand_use_login;
+            global->stand_show_avatar = stand_show_avatar;
             global->stand_show_ok_time = stand_show_ok_time;
             global->stand_show_att_num = stand_show_att_num;
             global->stand_sort_by_solved = stand_sort_by_solved;
