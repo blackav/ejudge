@@ -16,7 +16,8 @@
     if (cell->first_solver && ss.first_attr && ss.first_attr[0])
         cell_attr = ss.first_attr;
 %><%
-%>    <s:td attr="cell_attr"><%
+%>
+    <s:td attr="cell_attr"><%
             if (global->score_system == SCORE_ACM) {
                 if (cell->full_sol) {
                     %>+<%
