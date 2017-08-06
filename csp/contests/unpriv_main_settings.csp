@@ -15,9 +15,7 @@
         }
 %>
 <div class="h2-long"><h2><s:_>Avatar</s:_></h2></div>
-<div class="userinfo-avatar-cont">
-  <img class="avatar-img" src="<s:v value="avatar_url" escape="no" />" alt="avatar" />
-</div>
+<img class="userpic-img userpic-img-upage" src="<s:v value="avatar_url" escape="no" />" alt="avatar" />
 <%
       }
     }

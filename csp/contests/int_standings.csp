@@ -429,7 +429,7 @@ sec_to_min(int rounding_mode, int secs)
 <%
     if (global->stand_show_avatar > 0) {
 %>
-    <th><s:_>Avatar</s:_></th>
+    <th width="98px" class="st_team userpic"><s:_>Avatar</s:_></th>
 <%
     }
     if (global->stand_extra_format && global->stand_extra_format[0]) {
@@ -609,7 +609,7 @@ sec_to_min(int rounding_mode, int secs)
 <%
         if (global->stand_show_avatar > 0) {
 %>
-    <td class="userpic"><%
+    <td class="st_team userpic" width="98px"><%
             if (row->avatar_url && row->avatar_url[0]) {
                 %><img alt="avatar" src="<s:v value="row->avatar_url" escape="no" />" /><%
             }
@@ -713,6 +713,13 @@ sec_to_min(int rounding_mode, int secs)
     <s:td attr="ss.place_attr">&nbsp;</s:td>
     <s:td attr="ss.team_attr"><s:_>Total</s:_>:</s:td>
 <%
+    if (global->stand_show_avatar > 0) {
+%>
+    <td class="st_team userpic" width="98px">&nbsp;</td>
+<%
+    }
+%>
+<%
     if (global->stand_extra_format && global->stand_extra_format[0]) {
 %>
     <s:td attr="ss.extra_attr">&nbsp;</s:td>
@@ -759,6 +766,13 @@ sec_to_min(int rounding_mode, int secs)
     <s:td attr="ss.place_attr">&nbsp;</s:td>
     <s:td attr="ss.team_attr"><s:_>Success</s:_>:</s:td>
 <%
+    if (global->stand_show_avatar > 0) {
+%>
+    <td class="st_team userpic" width="98px">&nbsp;</td>
+<%
+    }
+%>
+<%
     if (global->stand_extra_format && global->stand_extra_format[0]) {
 %>
     <s:td attr="ss.extra_attr">&nbsp;</s:td>
@@ -804,6 +818,13 @@ sec_to_min(int rounding_mode, int secs)
   <s:tr attr="rT_attr">
     <s:td attr="ss.place_attr">&nbsp;</s:td>
     <s:td attr="ss.team_attr">%:</s:td>
+<%
+    if (global->stand_show_avatar > 0) {
+%>
+    <td class="st_team userpic" width="98px">&nbsp;</td>
+<%
+    }
+%>
 <%
     if (global->stand_extra_format && global->stand_extra_format[0]) {
 %>
