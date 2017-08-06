@@ -11239,6 +11239,7 @@ unpriv_external_action(FILE *out_f, struct http_request_info *phr)
                                                                    phr->current_time,
                                                                    0 /* contest_id */,
                                                                    0 /* allow_fail */);
+      action_state = external_unpriv_action_states[action];
     }
   }
 
