@@ -2,6 +2,7 @@
 %><%@include "unpriv_includes.csp"
 %><%
 #include "ejudge/compat.h"
+#include "ejudge/content_plugin.h"
 
 void
 ns_unparse_statement(
@@ -60,6 +61,12 @@ ns_unparse_answers(
   const unsigned char *prob_name = 0;
   UserProblemInfo *pinfo = 0;
   const unsigned char *telegram_token = NULL;
+  const struct userlist_user *u = teamdb_get_userlist(cs->teamdb_state, phr->user_id);
+  const struct userlist_user_info *ui = NULL;
+  if (u) ui = u->cnts0;
+  struct content_loaded_plugin *cp = NULL;
+  unsigned char avatar_url[1024];
+  avatar_url[0] = 0;
 
 %><s:read var="telegram_token" ignoreerrors="yes" /><%
 %><s:read var="all_runs" ignoreerrors="yes" default="0" /><%
