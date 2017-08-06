@@ -96,21 +96,21 @@ stand_setup_style(
         //ps->u_row_attr = global->stand_u_row_attr;
 
         if (!ps->fail_attr[0])
-            ps->fail_attr = " class=\"st_prob\" bgcolor=\"#ff8888\"";
+            ps->fail_attr = " class=\"st_prob cell_attr_cf\"";
         if (!ps->trans_attr[0])
-            ps->trans_attr = " class=\"st_prob\" bgcolor=\"#ffff88\"";
+            ps->trans_attr = " class=\"st_prob cell_attr_tr\"";
         if (!ps->disq_attr[0])
-            ps->disq_attr = " class=\"st_prob\" bgcolor=\"#ffcccc\"";
+            ps->disq_attr = " class=\"st_prob cell_attr_dq\"";
         if (!ps->pr_attr || !*ps->pr_attr) {
-            ps->pr_attr = " class=\"st_prob\" bgcolor=\"#bbcc99\"";
+            ps->pr_attr = " class=\"st_prob cell_attr_pr\"";
         }
         if (!ps->sm_attr || !*ps->sm_attr) {
-            ps->sm_attr = " class=\"st_prob\" bgcolor=\"#cc9999\"";
+            ps->sm_attr = " class=\"st_prob cell_attr_sm\"";
         }
         if (!ps->rj_attr || !*ps->rj_attr) {
-            ps->rj_attr = " class=\"st_prob\" bgcolor=\"#cccc99\"";
+            ps->rj_attr = " class=\"st_prob cell_attr_rj\"";
         }
-        ps->first_attr = " class=\"st_prob\" bgcolor=\"#88ffff\"";
+        ps->first_attr = " class=\"st_prob cell_attr_first\"";
 
         //ps->page_table_attr = global->stand_page_table_attr;
         //ps->page_cur_attr = global->stand_page_cur_attr;
