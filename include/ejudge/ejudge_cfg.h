@@ -106,6 +106,7 @@ struct ejudge_cfg
   unsigned char *default_xuser_plugin;
   unsigned char *default_avatar_plugin;
   unsigned char *default_content_plugin;
+  unsigned char *default_content_url_prefix;
   unsigned char *caps_file;
   struct xml_tree *user_map;
   struct xml_tree *compile_servers;
