@@ -138,6 +138,12 @@ prepare_func(
             }
         }
     }
+
+    if (config->default_content_url_prefix && config->default_content_url_prefix[0]) {
+        xfree(state->content_url_prefix);
+        state->content_url_prefix = xstrdup(config->default_content_url_prefix);
+    }
+
     return 0;
 }
 
