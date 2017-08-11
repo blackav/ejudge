@@ -651,6 +651,9 @@ function popupFlagsDialog()
     copyCheckbox("FlagsDialogDisablePasswordChange", "OrigDisablePasswordChange");
     copyCheckbox("FlagsDialogDisableLocaleChange", "OrigDisableLocaleChange");
     copyCheckbox("FlagsDialogAllowRegDataEdit", "OrigAllowRegDataEdit");
+    copyCheckbox("FlagsDialogEnableUserTelegram", "OrigAllowEnableUserTelegram");
+    copyCheckbox("FlagsDialogEnableAvatar", "OrigAllowEnableAvatar");
+    copyCheckbox("FlagsDialogEnableLocalPages", "OrigAllowEnableLocalPages");
 
     $("#FlagsDialogDiv").dialog('open');
 }
