@@ -814,38 +814,67 @@ function np(e)
     <h3>Basic contest identification</h3>
     <div>
 
+<%#define ORIG_TEXT_ROW
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>@3:</td>
+        <td><s:textfield id="Ori_@1" readonly="readonly" size="@4" name="param" value="cnts->@1" notset="yes" /></td>
+        <td><input type="button" onclick="popup@2Dialog(event, '@1');" value="Clear" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:@1" /></td>
+    </s:tr>
+#%>
+
+<%#define ORIG_TEXT_ROW_NO_CLEAR
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>@2:</td>
+        <td><s:textfield id="Ori_@1" readonly="readonly" size="@3" name="param" value="cnts->@1" notset="yes" /></td>
+        <td>&nbsp;</td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:@1" /></td>
+    </s:tr>
+#%>
+
+<%#define ORIG_BOOL_ROW
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>@2?</td>
+        <td><s:yesno id="Ori_@1" disabled="disabled" name="param" value="cnts->@1" /></td>
+        <td>&nbsp;</td>
+        <td><s:help topic="Contest.xml:@1" /></td>
+    </s:tr>
+#%>
+
+<%#define ORIG_TEXT_ROW_WITH_EDIT
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>@3:</td>
+        <td><s:textfield id="Ori_@1" readonly="readonly" size="@4" name="param" value="cnts->@1" notset="yes" /></td>
+        <td onclick="np(event);"><input type="button" onclick="popup@2Dialog(event, '@1');" value="Clear" />[<s:a ac="cnts-edit-@5-page">Edit</s:a>]</td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:@1" /></td>
+    </s:tr>
+#%>
+
+<%#define ORIG_ACCESS_ROW
+    <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
+        <td>@2</td>
+        <td><pre><% super_html_unparse_access_2(out_f, cnts->@1_access); %></pre></td>
+        <td><s:a ac="cnts-edit-@1-access-page">Edit</s:a></td>
+        <td><s:help topic="Contest.xml:@1_access" /></td>
+    </s:tr>
+#%>
+
+<%#define ORIG_DATE_TIME_ROW
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td>@3:</td>
+        <td><% html_date_select_2(out_f, cnts->@1, "Ori_@1", "param", NULL, 1, 0, 0); %></td>
+        <td><input type="button" onclick="popup@2Dialog(event, '@1');" value="Clear" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:@1" /></td>
+    </s:tr>
+#%>
+
 <table border="0" onclick="popupBasicDialog();">
     <s:tr attr="form_row_attrs[row ^= 1]"><td>Contest ID:</td><td><s:v value="cnts->id" /></td><td>&nbsp;</td><td>&nbsp;</td></s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Name:</td>
-        <td><s:textfield id="Ori_name" readonly="readonly" size="48" name="param" value="cnts->name" notset="yes" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:name" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Name (English):</td>
-        <td><s:textfield id="Ori_name_en" readonly="readonly" size="48" name="param" value="cnts->name_en" notset="yes" /></td>
-        <td><input type="button" onclick="popupBasicDialog(event, 'name_en');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:name_en" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Main URL:</td>
-        <td><s:textfield id="Ori_main_url" readonly="readonly" size="48" name="param" value="cnts->main_url" notset="yes" /></td>
-        <td><input type="button" onclick="popupBasicDialog(event, 'main_url');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:main_url" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Keywords:</td>
-        <td><s:textfield id="Ori_keywords" readonly="readonly" size="48" name="param" value="cnts->keywords" notset="yes" /></td>
-        <td><input type="button" onclick="popupBasicDialog(event, 'keywords');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:keywords" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Contest to share users with:</td>
-        <td><s:textfield id="Ori_user_contest" readonly="readonly" size="48" name="param" value="cnts->user_contest" notset="yes" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:user_contest" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW_NO_CLEAR "name" "Name" "48" %>
+    <%@expand ORIG_TEXT_ROW "name_en" "Basic" "Name (English)" "48" %>
+    <%@expand ORIG_TEXT_ROW "main_url" "Basic" "Main URL" "48" %>
+    <%@expand ORIG_TEXT_ROW "keywords" "Basic" "Keywords" "48" %>
+    <%@expand ORIG_TEXT_ROW "user_contest" "Basic" "Contest to share users with" "48" %>
 <%
   if (cnts->default_locale && *cnts->default_locale) {
     int locale_id = l10n_parse_locale(cnts->default_locale);
@@ -858,18 +887,8 @@ function np(e)
     }
   }
 %>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Default locale:</td>
-        <td><s:textfield id="Ori_default_locale" readonly="readonly" size="48" name="param" value="cnts->default_locale" notset="yes" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:default_locale" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>The contest is personal?</td>
-        <td><s:yesno id="Ori_personal" disabled="disabled" name="param" value="cnts->personal" /></td>
-        <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:personal" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW_NO_CLEAR "default_locale" "Default locale" "48" %>
+    <%@expand ORIG_BOOL_ROW "personal" "The contest is personal" %>
 </table>
     </div>
 
@@ -884,42 +903,12 @@ function np(e)
         <td>&nbsp;</td>
         <td onclick="np(event);"><s:help topic="Contest.xml:autoregister" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Registration deadline:</td>
-        <td><% html_date_select_2(out_f, cnts->reg_deadline, "Ori_reg_deadline", "param", NULL, 1, 0, 0); %></td>
-        <td><input type="button" onclick="popupRegistrationDialog(event, 'reg_deadline');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:reg_deadline" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Registration email sender (From: field):</td>
-        <td><s:textfield readonly="readonly" id="Ori_register_email" size="48" name="param" value="cnts->register_email" notset="yes" /></td>
-        <td><input type="button" onclick="popupRegistrationDialog(event, 'register_email');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:register_email" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>URL for registration:</td>
-        <td><s:textfield readonly="readonly" id="Ori_register_url" size="48" name="param" value="cnts->register_url" notset="yes" /></td>
-        <td><input type="button" onclick="popupRegistrationDialog(event, 'register_url');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:register_url" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Registration letter subject:</td>
-        <td><s:textfield readonly="readonly" id="Ori_register_subject" size="48" name="param" value="cnts->register_subject" notset="yes" /></td>
-        <td><input type="button" onclick="popupRegistrationDialog(event, 'register_subject');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:register_subject" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Registration letter subject (en):</td>
-        <td><s:textfield readonly="readonly" id="Ori_register_subject_en" size="48" name="param" value="cnts->register_subject_en" notset="yes" /></td>
-        <td><input type="button" onclick="popupRegistrationDialog(event, 'register_subject_en');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:register_subject_en" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Registration letter template file:</td>
-        <td><s:textfield readonly="readonly" id="Ori_register_email_file" size="48" name="param" value="cnts->register_email_file" notset="yes" /></td>
-        <td><input type="button" onclick="popupRegistrationDialog(event, 'register_email_file');" value="Clear" />[<s:a ac="cnts-edit-register-email-file-page">Edit</s:a>]</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:register_email_file" /></td>
-    </s:tr>
+    <%@expand ORIG_DATE_TIME_ROW "reg_deadline" "Registration" "Registration deadline" %>
+    <%@expand ORIG_TEXT_ROW "register_email" "Registration" "Registration email sender (From: field)" "48" %>
+    <%@expand ORIG_TEXT_ROW "register_url" "Registration" "URL for registration" "48" %>
+    <%@expand ORIG_TEXT_ROW "register_subject" "Registration" "Registration letter subject" "48" %>
+    <%@expand ORIG_TEXT_ROW "register_subject_en" "Registration" "Registration letter subject (en)" "48" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "register_email_file" "Registration" "Registration letter template file" "48" "register-email-file" %>
 </table>
     </div>
 
@@ -928,24 +917,9 @@ function np(e)
     <div>
 <table border="0" onclick="popupTimingDialog();">
 <% row = 1; %>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Contest start date:</td>
-        <td><% html_date_select_2(out_f, cnts->sched_time, "Ori_sched_time", "param", NULL, 1, 0, 0); %></td>
-        <td><input type="button" onclick="popupTimingDialog(event, 'sched_time');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:sched_time" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Virtual contest open date:</td>
-        <td><% html_date_select_2(out_f, cnts->open_time, "Ori_open_time", "param", NULL, 1, 0, 0); %></td>
-        <td><input type="button" onclick="popupTimingDialog(event, 'open_time');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:open_time" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Virtual contest close date:</td>
-        <td><% html_date_select_2(out_f, cnts->close_time, "Ori_close_time", "param", NULL, 1, 0, 0); %></td>
-        <td><input type="button" onclick="popupTimingDialog(event, 'close_time');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:close_time" /></td>
-    </s:tr>
+    <%@expand ORIG_DATE_TIME_ROW "sched_time" "Timing" "Contest start date" %>
+    <%@expand ORIG_DATE_TIME_ROW "open_time" "Timing" "Virtual contest open date" %>
+    <%@expand ORIG_DATE_TIME_ROW "close_time" "Timing" "Virtual contest close date" %>
 </table>
     </div>
 
@@ -955,36 +929,11 @@ function np(e)
 <table border="0" onclick="popupUrlDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>URL for participation:</td>
-        <td><s:textfield id="Ori_team_url" readonly="readonly" size="48" name="param" value="cnts->team_url" notset="yes" /></td>
-        <td><input type="button" onclick="popupUrlDialog(event, 'team_url');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:team_url" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>URL for the current standings:</td>
-        <td><s:textfield id="Ori_standings_url" readonly="readonly" size="48" name="param" value="cnts->standings_url" notset="yes" /></td>
-        <td><input type="button" onclick="popupUrlDialog(event, 'standings_url');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:standings_url" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>URL for the problemset:</td>
-        <td><s:textfield id="Ori_problems_url" readonly="readonly" size="48" name="param" value="cnts->problems_url" notset="yes" /></td>
-        <td><input type="button" onclick="popupUrlDialog(event, 'problems_url');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:problems_url" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>URL for the contest logo:</td>
-        <td><s:textfield id="Ori_logo_url" readonly="readonly" size="48" name="param" value="cnts->logo_url" notset="yes" /></td>
-        <td><input type="button" onclick="popupUrlDialog(event, 'logo_url');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:logo_url" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>URL for the contest CSS:</td>
-        <td><s:textfield id="Ori_css_url" readonly="readonly" size="48" name="param" value="cnts->css_url" notset="yes" /></td>
-        <td><input type="button" onclick="popupUrlDialog(event, 'css_url');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:css_url" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW "team_url" "Url" "URL for participation" "48" %>
+    <%@expand ORIG_TEXT_ROW "standings_url" "Url" "URL for the current standings" "48" %>
+    <%@expand ORIG_TEXT_ROW "problems_url" "Url" "URL for the problemset" "48" %>
+    <%@expand ORIG_TEXT_ROW "logo_url" "Url" "URL for the contest logo" "48" %>
+    <%@expand ORIG_TEXT_ROW "css_url" "Url" "URL for the contest CSS" "48" %>
 </table>
     </div>
 
@@ -994,143 +943,34 @@ function np(e)
 <table border="0" onclick="popupFlagsDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Disable separate team password?</td>
-        <td><s:yesno id="Ori_disable_team_password" disabled="disabled" name="param" value="cnts->disable_team_password" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:disable_team_password" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Force user password change?</td>
-        <td><s:yesno id="Ori_force_password_change" disabled="disabled" name="param" value="cnts->force_password_change" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:force_password_change" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Enable simple registration (no email)?</td>
-        <td><s:yesno id="Ori_simple_registration" disabled="disabled" name="param" value="cnts->simple_registration" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:simple_registration" /></td>
-    </s:tr>
+    <%@expand ORIG_BOOL_ROW "disable_team_password" "Disable separate team password" %>
+    <%@expand ORIG_BOOL_ROW "force_password_change" "Force user password change" %>
+    <%@expand ORIG_BOOL_ROW "simple_registration" "Enable simple registration (no email)" %>
 <%
   if (cnts->simple_registration) {
 %>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Send e-mail with password anyway?</td>
-        <td><s:yesno id="Ori_send_passwd_email" disabled="disabled" name="param" value="cnts->send_passwd_email" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:send_passwd_email" /></td>
-    </s:tr>
+    <%@expand ORIG_BOOL_ROW "send_passwd_email" "Send e-mail with password anyway" %>
 <%
   } else {
 %><s:hidden id="Ori_send_passwd_email" name="send_passwd_email" value="cnts->send_passwd_email" check="no" /><%
   }
 %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Allow pruning users?</td>
-        <td><s:yesno id="Ori_clean_users" disabled="disabled" name="param" value="cnts->clean_users" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:clean_users" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Closed for participation?</td>
-        <td><s:yesno id="Ori_closed" disabled="disabled" name="param" value="cnts->closed" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:closed" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Invisible in serve-control?</td>
-        <td><s:yesno id="Ori_invisible" disabled="disabled" name="param" value="cnts->invisible" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:invisible" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Disallow team member removal?</td>
-        <td><s:yesno id="Ori_disable_member_delete" disabled="disabled" name="param" value="cnts->disable_member_delete" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:disable_member_delete" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Auto-assign logins?</td>
-        <td><s:yesno id="Ori_assign_logins" disabled="disabled" name="param" value="cnts->assign_logins" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:assign_logins" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Force contest registration?</td>
-        <td><s:yesno id="Ori_force_registration" disabled="disabled" name="param" value="cnts->force_registration" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:force_registration" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Disable &quot;Name&quot; field?</td>
-        <td><s:yesno id="Ori_disable_name" disabled="disabled" name="param" value="cnts->disable_name" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:disable_name" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Enable password recovery?</td>
-        <td><s:yesno id="Ori_enable_password_recovery" disabled="disabled" name="param" value="cnts->enable_password_recovery" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:enable_password_recovery" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Examination mode?</td>
-        <td><s:yesno id="Ori_exam_mode" disabled="disabled" name="param" value="cnts->exam_mode" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:exam_mode" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Disable password change?</td>
-        <td><s:yesno id="Ori_disable_password_change" disabled="disabled" name="param" value="cnts->disable_password_change" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:disable_password_change" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Disable locale change?</td>
-        <td><s:yesno id="Ori_disable_local_change" disabled="disabled" name="param" value="cnts->disable_locale_change" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:disable_locale_change" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Allow edit registration data during contest?</td>
-        <td><s:yesno id="Ori_allow_reg_data_edit" disabled="disabled" name="param" value="cnts->allow_reg_data_edit" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:allow_reg_data_edit" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Enable telegram interaction for users?</td>
-        <td><s:yesno id="Ori_enable_user_telegram" disabled="disabled" name="param" value="cnts->enable_user_telegram" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:enable_user_telegram" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Enable avatars for users?</td>
-        <td><s:yesno id="Ori_enable_avatar" disabled="disabled" name="param" value="cnts->enable_avatar" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:enable_avatar" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Enable Contest-specific Pages?</td>
-        <td><s:yesno id="Ori_enable_local_pages" disabled="disabled" name="param" value="cnts->enable_local_pages" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:enable_local_pages" /></td>
-    </s:tr>
+    <%@expand ORIG_BOOL_ROW "clean_users" "Allow pruning users" %>
+    <%@expand ORIG_BOOL_ROW "closed" "Closed for participation" %>
+    <%@expand ORIG_BOOL_ROW "invisible" "Invisible in serve-control" %>
+    <%@expand ORIG_BOOL_ROW "disable_member_delete" "Disallow team member removal" %>
+    <%@expand ORIG_BOOL_ROW "assign_logins" "Auto-assign logins" %>
+    <%@expand ORIG_BOOL_ROW "force_registration" "Force contest registration" %>
+    <%@expand ORIG_BOOL_ROW "disable_name" "Disable &quot;Name&quot; field" %>
+    <%@expand ORIG_BOOL_ROW "enable_password_recovery" "Enable password recovery" %>
+    <%@expand ORIG_BOOL_ROW "exam_mode" "Examination mode" %>
+    <%@expand ORIG_BOOL_ROW "disable_password_change" "Disable password change" %>
+    <%@expand ORIG_BOOL_ROW "disable_locale_change" "Disable locale change" %>
+    <%@expand ORIG_BOOL_ROW "allow_reg_data_edit" "Allow edit registration data during contest" %>
+    <%@expand ORIG_BOOL_ROW "enable_user_telegram" "Enable telegram interaction for users" %>
+    <%@expand ORIG_BOOL_ROW "enable_avatar" "Enable avatars for users" %>
+    <%@expand ORIG_BOOL_ROW "enable_local_pages" "Enable Contest-specific Pages" %>
 </table>
     </div>
 
@@ -1140,42 +980,12 @@ function np(e)
 <table border="0">
 <% row = 1; %>
 
-    <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
-        <td>Access to contest registration</td>
-        <td><pre><% super_html_unparse_access_2(out_f, cnts->register_access); %></pre></td>
-        <td><s:a ac="cnts-edit-register-access-page">Edit</s:a></td>
-        <td><s:help topic="Contest.xml:register_access" /></td>
-    </s:tr>
-    <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
-        <td>Access to user list display</td>
-        <td><pre><% super_html_unparse_access_2(out_f, cnts->users_access); %></pre></td>
-        <td><s:a ac="cnts-edit-users-access-page">Edit</s:a></td>
-        <td><s:help topic="Contest.xml:users_access" /></td>
-    </s:tr>
-    <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
-        <td>Access to contest participation</td>
-        <td><pre><% super_html_unparse_access_2(out_f, cnts->team_access); %></pre></td>
-        <td><s:a ac="cnts-edit-team-access-page">Edit</s:a></td>
-        <td><s:help topic="Contest.xml:team_access" /></td>
-    </s:tr>
-    <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
-        <td>Access to contest administration</td>
-        <td><pre><% super_html_unparse_access_2(out_f, cnts->master_access); %></pre></td>
-        <td><s:a ac="cnts-edit-master-access-page">Edit</s:a></td>
-        <td><s:help topic="Contest.xml:master_access" /></td>
-    </s:tr>
-    <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
-        <td>Access to contest judging</td>
-        <td><pre><% super_html_unparse_access_2(out_f, cnts->judge_access); %></pre></td>
-        <td><s:a ac="cnts-edit-judge-access-page">Edit</s:a></td>
-        <td><s:help topic="Contest.xml:judge_access" /></td>
-    </s:tr>
-    <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
-        <td>Access to contest setup</td>
-        <td><pre><% super_html_unparse_access_2(out_f, cnts->serve_control_access); %></pre></td>
-        <td><s:a ac="cnts-edit-serve-control-access-page">Edit</s:a></td>
-        <td><s:help topic="Contest.xml:serve_control_access" /></td>
-    </s:tr>
+    <%@expand ORIG_ACCESS_ROW "register" "Access to contest registration" %>
+    <%@expand ORIG_ACCESS_ROW "users" "Access to user list display" %>
+    <%@expand ORIG_ACCESS_ROW "team" "Access to contest participation" %>
+    <%@expand ORIG_ACCESS_ROW "master" "Access to contest administration" %>
+    <%@expand ORIG_ACCESS_ROW "judge" "Access to contest judging" %>
+    <%@expand ORIG_ACCESS_ROW "serve_control" "Access to contest setup" %>
 </table>
 
     </div>
@@ -1416,36 +1226,11 @@ initial count = <s:v value="memb->init_count" />
 <table border="0" onclick="popupHeadersDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>HTML header file for 'users' CGI-program:</td>
-        <td><s:textfield id="Ori_users_header_file" readonly="readonly" size="48" name="param" value="cnts->users_header_file" notset="yes"/></td>
-        <td onclick="np(event);"><input type="button" onclick="popupHeadersDialog(event, 'users_header_file');" value="Clear" />[<s:a ac="cnts-edit-users-header-page">Edit</s:a>]</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_header_file" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>HTML footer file for 'users' CGI-program:</td>
-        <td><s:textfield id="Ori_users_footer_file" readonly="readonly" size="48" name="param" value="cnts->users_footer_file" notset="yes" /></td>
-        <td onclick="np(event);"><input type="button" onclick="popupHeadersDialog(event, 'users_footer_file');" value="Clear" />[<s:a ac="cnts-edit-users-footer-page">Edit</s:a>]</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_footer_file" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Copyright notice file:</td>
-        <td><s:textfield id="Ori_copyright_file" readonly="readonly" size="48" name="param" value="cnts->copyright_file" notset="yes" /></td>
-        <td onclick="np(event);"><input type="button" onclick="popupHeadersDialog(event, 'copyright_file');" value="Clear" />[<s:a ac="cnts-edit-copyright-page">Edit</s:a>]</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:copyright_file" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Participant welcome message file:</td>
-        <td><s:textfield id="Ori_welcome_file" readonly="readonly" size="48" name="param" value="cnts->welcome_file" notset="yes" /></td>
-        <td onclick="np(event);"><input type="button" onclick="popupHeadersDialog(event, 'welcome_file');" value="Clear" />[<s:a ac="cnts-edit-welcome-page">Edit</s:a>]</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:welcome_file" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Registration welcome message file:</td>
-        <td><s:textfield id="Ori_reg_welcome_file" readonly="readonly" size="48" name="param" value="cnts->reg_welcome_file" notset="yes" /></td>
-        <td onclick="np(event);"><input type="button" onclick="popupHeadersDialog(event, 'reg_welcome_file');" value="Clear" />[<s:a ac="cnts-edit-reg-welcome-page">Edit</s:a>]</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:reg_welcome_file" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "users_header_file" "Headers" "HTML header file for 'users' CGI-program" "48" "users-header" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "users_footer_file" "Headers" "HTML footer file for 'users' CGI-program" "48" "users-footer" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "copyright_file" "Headers" "Copyright notice file" "48" "copyright" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "welcome_file" "Headers" "Participant welcome message file" "48" "welcome" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "reg_welcome_file" "Headers" "Registration welcome message file" "48" "reg-welcome" %>
 </table>
 
     </div>
@@ -1456,60 +1241,15 @@ initial count = <s:v value="memb->init_count" />
 <table border="0" onclick="popupAttrsDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>HTML attributes for 'users' headers:</td>
-        <td><s:textfield id="Ori_users_head_style" readonly="readonly" size="48" name="param" value="cnts->users_head_style" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'users_head_style');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_head_style" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>HTML attributes for 'users' paragraphs:</td>
-        <td><s:textfield id="Ori_users_par_style" readonly="readonly" size="48" name="param" value="cnts->users_par_style" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'users_par_style');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_par_style" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>HTML attributes for 'users' tables:</td>
-        <td><s:textfield id="Ori_users_table_style" readonly="readonly" size="48" name="param" value="cnts->users_table_style" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'users_table_style');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_table_style" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>HTML attributes for 'users' verbatim text:</td>
-        <td><s:textfield id="Ori_users_verb_style" readonly="readonly" size="48" name="param" value="cnts->users_verb_style" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'users_verb_style');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_verb_style" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Format specification for users table:</td>
-        <td><s:textfield id="Ori_users_table_format" readonly="readonly" size="48" name="param" value="cnts->users_table_format" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'users_table_format');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_table_format" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Format specification for users table (En):</td>
-        <td><s:textfield id="Ori_users_table_format_en" readonly="readonly" size="48" name="param" value="cnts->users_table_format_en" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'users_table_format_en');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_table_format_en" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Legend specification for users table:</td>
-        <td><s:textfield id="Ori_users_table_legend" readonly="readonly" size="48" name="param" value="cnts->users_table_legend" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'users_table_legend');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_table_legend" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Legend specification for users table (En):</td>
-        <td><s:textfield id="Ori_users_table_legend_en" readonly="readonly" size="48" name="param" value="cnts->users_table_legend_en" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'users_table_legend_en');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_table_legend_en" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Additional comment for user name field:</td>
-        <td><s:textfield id="Ori_user_name_comment" readonly="readonly" size="48" name="param" value="cnts->user_name_comment" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'user_name_comment');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:user_name_comment" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW "users_head_style" "Attrs" "HTML attributes for 'users' headers" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_par_style" "Attrs" "HTML attributes for 'users' paragraphs" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_table_style" "Attrs" "HTML attributes for 'users' tables" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_verb_style" "Attrs" "HTML attributes for 'users' verbatim text" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_table_format" "Attrs" "Format specification for users table" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_table_format_en" "Attrs" "Format specification for users table (En)" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_table_legend" "Attrs" "Legend specification for users table" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_table_legend_en" "Attrs" "Legend specification for users table (En)" "48" %>
+    <%@expand ORIG_TEXT_ROW "user_name_comment" "Attrs" "Additional comment for user name field" "48" %>
 </table>
 
     </div>
@@ -1520,24 +1260,9 @@ initial count = <s:v value="memb->init_count" />
 <table border="0" onclick="popupNotificationsDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>CHECK FAILED e-mail notification address:</td>
-        <td><s:textfield id="Ori_cf_notify_email" readonly="readonly" size="48" name="param" value="cnts->cf_notify_email" notset="yes" /></td>
-        <td><input type="button" onclick="popupNotificationsDialog(event, 'cf_notify_email');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:cf_notify_email" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Clar request e-mail notification address:</td>
-        <td><s:textfield id="Ori_clar_notify_email" readonly="readonly" size="48" name="param" value="cnts->clar_notify_email" notset="yes" /></td>
-        <td><input type="button" onclick="popupNotificationsDialog(event, 'clar_notify_email');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:clar_notify_email" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Daily statistics email address:</td>
-        <td><s:textfield id="Ori_daily_stat_email" readonly="readonly" size="48" name="param" value="cnts->daily_stat_email" notset="yes" /></td>
-        <td><input type="button" onclick="popupNotificationsDialog(event, 'daily_stat_email');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:daily_stat_email" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW "cf_notify_email" "Notifications" "CHECK FAILED e-mail notification address" "48" %>
+    <%@expand ORIG_TEXT_ROW "clar_notify_email" "Notifications" "Clar request e-mail notification address" "48" %>
+    <%@expand ORIG_TEXT_ROW "daily_stat_email" "Notifications" "Daily statistics email address" "48" %>
 </table>
 
     </div>
@@ -1548,51 +1273,16 @@ initial count = <s:v value="memb->init_count" />
 <table border="0" onclick="popupAdvancedDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>The directory permissions (octal):</td>
-        <td><s:textfield id="Ori_dir_mode" readonly="readonly" size="48" name="param" value="cnts->dir_mode" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'dir_mode');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:dir_mode" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>The directory group:</td>
-        <td><s:textfield id="Ori_dir_group" readonly="readonly" size="48" name="param" value="cnts->dir_group" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'dir_group');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:dir_group" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>The file permissions (octal):</td>
-        <td><s:textfield id="Ori_file_mode" readonly="readonly" size="48" name="param" value="cnts->file_mode" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'file_mode');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:file_mode" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>The file group:</td>
-        <td><s:textfield id="Ori_file_group" readonly="readonly" size="48" name="param" value="cnts->file_group" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'file_group');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:file_group" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Allowed programming languages:</td>
-        <td><s:textfield id="Ori_allowed_languages" readonly="readonly" size="48" name="param" value="cnts->allowed_languages" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'allowed_languages');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:allowed_languages" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Allowed regions:</td>
-        <td><s:textfield id="Ori_allowed_regions" readonly="readonly" size="48" name="param" value="cnts->allowed_regions" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'allowed_regions');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:allowed_regions" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW "dir_mode" "Advanced" "The directory permissions (octal)" "48" %>
+    <%@expand ORIG_TEXT_ROW "dir_group" "Advanced" "The directory group" "48" %>
+    <%@expand ORIG_TEXT_ROW "file_mode" "Advanced" "The file permissions (octal)" "48" %>
+    <%@expand ORIG_TEXT_ROW "file_group" "Advanced" "The file group" "48" %>
+    <%@expand ORIG_TEXT_ROW "allowed_languages" "Advanced" "Allowed programming languages" "48" %>
+    <%@expand ORIG_TEXT_ROW "allowed_regions" "Advanced" "Allowed regions" "48" %>
 <%
   if (cnts->assign_logins) {
 %>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Template for new logins:</td>
-        <td><s:textfield id="Ori_login_template" readonly="readonly" size="48" name="param" value="cnts->login_template" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'login_template');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:login_template" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW "login_template" "Advanced" "Template for new logins" "48" %>
 <%
   }
 %>
@@ -1600,12 +1290,7 @@ initial count = <s:v value="memb->init_count" />
 <%
   if (cnts->assign_logins) {
 %>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Login auto-assign options:</td>
-        <td><s:textfield id="Ori_login_template_options" readonly="readonly" size="48" name="param" value="cnts->login_template_options" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'login_template_options');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:login_template_options" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW "login_template_options" "Advanced" "Login auto-assign options" "48" %>
 <%
   }
 %>
