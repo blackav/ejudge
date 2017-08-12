@@ -1,6 +1,75 @@
 <%
 %><%@include "includes.csp"
 %><%
+#include "ejudge/meta/contests_meta.h"
+%><%
+static const unsigned char MSG_name[] = "Name";
+static const unsigned char MSG_name_en[] = "Name (English)";
+static const unsigned char MSG_main_url[] = "Main URL";
+static const unsigned char MSG_keywords[] = "Keywords";
+static const unsigned char MSG_user_contest[] = "Contest to share users with";
+static const unsigned char MSG_default_locale[] = "Default Locale";
+static const unsigned char MSG_personal[] = "The contest is personal";
+static const unsigned char MSG_closed[] = "Closed for participation";
+static const unsigned char MSG_disable_team_password[] = "Disable separate team password";
+static const unsigned char MSG_force_password_change[] = "Force user password change";
+static const unsigned char MSG_simple_registration[] = "Enable simple registration (no email)";
+static const unsigned char MSG_send_passwd_email[] = "Always send password e-mail";
+static const unsigned char MSG_invisible[] = "Invisible in serve-control";
+static const unsigned char MSG_clean_users[] = "Allow removal of non-active users";
+static const unsigned char MSG_disable_member_delete[] = "Disallow removal of team members";
+static const unsigned char MSG_assign_logins[] = "Auto-assign logins";
+static const unsigned char MSG_force_registration[] = "Force contest registration";
+static const unsigned char MSG_disable_name[] = "Disable user &quot;Name&quot; field";
+static const unsigned char MSG_enable_password_recovery[] = "Enable password recovery";
+static const unsigned char MSG_exam_mode[] = "Examination (simplified) mode";
+static const unsigned char MSG_disable_password_change[] = "Disable password change";
+static const unsigned char MSG_disable_locale_change[] = "Disable locale change";
+static const unsigned char MSG_allow_reg_data_edit[] = "Allow edit registration data during contest";
+static const unsigned char MSG_enable_user_telegram[] = "Enable telegram interaction for users";
+static const unsigned char MSG_enable_avatar[] = "Enable avatars for users";
+static const unsigned char MSG_enable_local_pages[] = "Enable Contest-specific pages";
+static const unsigned char MSG_autoregister[] = "Registration mode";
+static const unsigned char MSG_reg_deadline[] = "Registration deadline";
+static const unsigned char MSG_register_email[] = "Registration email sender (From: field)";
+static const unsigned char MSG_register_url[] = "URL for registration";
+static const unsigned char MSG_register_subject[] = "Registration letter subject";
+static const unsigned char MSG_register_subject_en[] = "Registration letter subject (en)";
+static const unsigned char MSG_register_email_file[] = "Registration letter template file";
+static const unsigned char MSG_sched_time[] = "Contest start date";
+static const unsigned char MSG_open_time[] = "Virtual contest open time";
+static const unsigned char MSG_close_time[] = "Virtual contest close time";
+static const unsigned char MSG_team_url[] = "URL for participation";
+static const unsigned char MSG_standings_url[] = "URL for the current standings";
+static const unsigned char MSG_problems_url[] = "URL for the problemset";
+static const unsigned char MSG_logo_url[] = "URL for the contest logo";
+static const unsigned char MSG_css_url[] = "URL for the contest CSS";
+static const unsigned char MSG_users_header_file[] = "HTML header file for 'users' CGI-program";
+static const unsigned char MSG_users_footer_file[] = "HTML footer file for 'users' CGI-program";
+static const unsigned char MSG_copyright_file[] = "Copyright notice file";
+static const unsigned char MSG_welcome_file[] = "Participant welcome message file";
+static const unsigned char MSG_reg_welcome_file[] = "Registration welcome message file";
+static const unsigned char MSG_users_head_style[] = "HTML attributes for 'users' headers";
+static const unsigned char MSG_users_par_style[] = "HTML attributes for 'users' paragraphs";
+static const unsigned char MSG_users_table_style[] = "HTML attributes for 'users' tables";
+static const unsigned char MSG_users_verb_style[] = "HTML attributes for 'users' verbatim text";
+static const unsigned char MSG_users_table_format[] = "Format specification for users table";
+static const unsigned char MSG_users_table_format_en[] = "Format specification for users table (en)";
+static const unsigned char MSG_users_table_legend[] = "Legend specification for users table";
+static const unsigned char MSG_users_table_legend_en[] = "Legend specification for users table (en)";
+static const unsigned char MSG_user_name_comment[] = "Additional comment for user name field";
+static const unsigned char MSG_cf_notify_email[] = "CHECK FAILED e-mail notification address";
+static const unsigned char MSG_clar_notify_email[] = "Clar request e-mail notification address";
+static const unsigned char MSG_daily_stat_email[] = "Daily statistics email address";
+static const unsigned char MSG_dir_mode[] = "The directory permissions (octal)";
+static const unsigned char MSG_dir_group[] = "The directory group";
+static const unsigned char MSG_file_mode[] = "The file permissions (octal)";
+static const unsigned char MSG_file_group[] = "The file group";
+static const unsigned char MSG_allowed_languages[] = "Allowed programming languages";
+static const unsigned char MSG_allowed_regions[] = "Allowed regions";
+static const unsigned char MSG_login_template[] = "Template for new logins";
+static const unsigned char MSG_login_template_options[] = "Login auto-assign options";
+
 %><%@set getter_name = "csp_get_cnts_edit_cur_contest_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -34,18 +103,18 @@ static const unsigned char * const form_row_attrs[]=
 %>
 
 <%#define EDIT_TEXT_ROW
-            <label for="@2Dialo_@1">@3:</label>
-            <s:textfield size="@4" name="@1" id="@2Dialo_@1" value="" class="text ui-widget-content ui-corner-all" /><br/>
+            <label for="@2Dialo_@1"><s:v value="MSG_@1" escape="no" />:</label>
+            <s:textfield size="@3" name="@1" id="@2Dialo_@1" value="" class="text ui-widget-content ui-corner-all" /><br/>
 #%>
 
 <%#define EDIT_BOOL_ROW
             <input type="checkbox" name="@1" id="@2Dialo_@1" value="1" />
-            <label for="@2Dialo_@1">@3?</label>
+            <label for="@2Dialo_@1"><s:v value="MSG_@1" escape="no" />?</label>
             <br/>
 #%>
 
 <%#define EDIT_DATE_TIME_ROW
-            <label for="@2Dialo_@1_time">@3:</label>
+            <label for="@2Dialo_@1_time"><s:v value="MSG_@1" escape="no" />:</label>
             <input id="@2Dialo_@1_time" type="text" name="@1_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
             <input id="@2Dialo_@1_date" type="text" name="@1_date" size="10" class="text ui-widget-content ui-corner-all" />
             <br/>
@@ -55,16 +124,16 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="BasicDialogForm">
         <s:hidden name="action" ac="cnts-save-basic-form" />
         <fieldset>
-            <%@expand EDIT_TEXT_ROW "name" "Basic" "Name" "48" %>
-            <%@expand EDIT_TEXT_ROW "name_en" "Basic" "Name (English)" "48" %>
-            <%@expand EDIT_TEXT_ROW "main_url" "Basic" "Main URL" "48" %>
-            <%@expand EDIT_TEXT_ROW "keywords" "Basic" "Keywords" "48" %>
-            <label for="BasicDialo_user_contest">Contest to share users with:</label>
+            <%@expand EDIT_TEXT_ROW "name" "Basic" "48" %>
+            <%@expand EDIT_TEXT_ROW "name_en" "Basic" "48" %>
+            <%@expand EDIT_TEXT_ROW "main_url" "Basic" "48" %>
+            <%@expand EDIT_TEXT_ROW "keywords" "Basic" "48" %>
+            <label for="BasicDialo_user_contest"><s:v value="MSG_user_contest" escape="no" />:</label>
             <select id="BasicDialo_user_contest" name="user_contest"></select><br/>
-            <label for="BasicDialo_default_locale">Default Locale:</label>
+            <label for="BasicDialo_default_locale"><s:v value="MSG_default_locale" escape="no" />:</label>
 <% l10n_html_locale_select_3(out_f, "BasicDialo_default_locale", NULL, "default_locale", NULL, -1); %>
             <br/>
-            <%@expand EDIT_BOOL_ROW "personal" "Basic" "The contest is personal" %>
+            <%@expand EDIT_BOOL_ROW "personal" "Basic" %>
         </fieldset>
     </s:form>
 </div>
@@ -73,25 +142,25 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="FlagsDialogForm">
         <s:hidden name="action" ac="cnts-save-flags-form" />
         <fieldset>
-            <%@expand EDIT_BOOL_ROW "closed" "Flags" "Closed for participation" %>
-            <%@expand EDIT_BOOL_ROW "disable_team_password" "Flags" "Disable separate team password" %>
-            <%@expand EDIT_BOOL_ROW "force_password_change" "Flags" "Force user password change" %>
-            <%@expand EDIT_BOOL_ROW "simple_registration" "Flags" "Enable simple registration (no email)" %>
-            <%@expand EDIT_BOOL_ROW "send_passwd_email" "Flags" "Always send password e-mail" %>
-            <%@expand EDIT_BOOL_ROW "invisible" "Flags" "Invisible in serve-control" %>
-            <%@expand EDIT_BOOL_ROW "clean_users" "Flags" "Allow removal of non-active users" %>
-            <%@expand EDIT_BOOL_ROW "disable_member_delete" "Flags" "Disallow removal of team members" %>
-            <%@expand EDIT_BOOL_ROW "assign_logins" "Flags" "Auto-assign logins" %>
-            <%@expand EDIT_BOOL_ROW "force_registration" "Flags" "Force contest registration" %>
-            <%@expand EDIT_BOOL_ROW "disable_name" "Flags" "Disable user &quot;Name&quot; field" %>
-            <%@expand EDIT_BOOL_ROW "enable_password_recovery" "Flags" "Enable password recovery" %>
-            <%@expand EDIT_BOOL_ROW "exam_mode" "Flags" "Examination (simplified) mode" %>
-            <%@expand EDIT_BOOL_ROW "disable_password_change" "Flags" "Disable password change" %>
-            <%@expand EDIT_BOOL_ROW "disable_locale_change" "Flags" "Disable locale change" %>
-            <%@expand EDIT_BOOL_ROW "allow_reg_data_edit" "Flags" "Allow edit registration data during contest" %>
-            <%@expand EDIT_BOOL_ROW "enable_user_telegram" "Flags" "Enable telegram interaction for users" %>
-            <%@expand EDIT_BOOL_ROW "enable_avatar" "Flags" "Enable avatars for users" %>
-            <%@expand EDIT_BOOL_ROW "enable_local_pages" "Flags" "Enable Contest-specific pages" %>
+            <%@expand EDIT_BOOL_ROW "closed" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "disable_team_password" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "force_password_change" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "simple_registration" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "send_passwd_email" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "invisible" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "clean_users" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "disable_member_delete" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "assign_logins" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "force_registration" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "disable_name" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "enable_password_recovery" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "exam_mode" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "disable_password_change" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "disable_locale_change" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "allow_reg_data_edit" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "enable_user_telegram" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "enable_avatar" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "enable_local_pages" "Flags" %>
         </fieldset>
     </s:form>
 </div>
@@ -100,16 +169,16 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="RegistrationDialogForm">
         <s:hidden name="action" ac="cnts-save-registration-form" />
         <fieldset>
-            <label for="RegistrationDialo_autoregister">Registration mode:</label>
+            <label for="RegistrationDialo_autoregister"><s:v value="MSG_autoregister" escape="no" />:</label>
             <s:yesno id="RegistrationDialo_autoregister" name="autoregister" noLabel="Moderated registration" yesLabel="Free registration" />
             <br/>
 
-            <%@expand EDIT_DATE_TIME_ROW "reg_deadline" "Registration" "Registration deadline" %>
-            <%@expand EDIT_TEXT_ROW "register_email" "Registration" "Registration email sender (From: field)" "48" %>
-            <%@expand EDIT_TEXT_ROW "register_url" "Registration" "URL for registration" "48" %>
-            <%@expand EDIT_TEXT_ROW "register_subject" "Registration" "Registration letter subject" "48" %>
-            <%@expand EDIT_TEXT_ROW "register_subject_en" "Registration" "Registration letter subject (en)" "48" %>
-            <%@expand EDIT_TEXT_ROW "register_email_file" "Registration" "Registration letter template file" "48" %>
+            <%@expand EDIT_DATE_TIME_ROW "reg_deadline" "Registration"  %>
+            <%@expand EDIT_TEXT_ROW "register_email" "Registration" "48" %>
+            <%@expand EDIT_TEXT_ROW "register_url" "Registration" "48" %>
+            <%@expand EDIT_TEXT_ROW "register_subject" "Registration" "48" %>
+            <%@expand EDIT_TEXT_ROW "register_subject_en" "Registration" "48" %>
+            <%@expand EDIT_TEXT_ROW "register_email_file" "Registration" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -118,9 +187,9 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="TimingDialogForm">
         <s:hidden name="action" ac="cnts-save-timing-form" />
         <fieldset>
-            <%@expand EDIT_DATE_TIME_ROW "sched_time" "Timing" "Contest start date" %>
-            <%@expand EDIT_DATE_TIME_ROW "open_time" "Timing" "Virtual contest open time" %>
-            <%@expand EDIT_DATE_TIME_ROW "close_time" "Timing" "Virtual contest close time" %>
+            <%@expand EDIT_DATE_TIME_ROW "sched_time" "Timing" %>
+            <%@expand EDIT_DATE_TIME_ROW "open_time" "Timing" %>
+            <%@expand EDIT_DATE_TIME_ROW "close_time" "Timing" %>
         </fieldset>
     </s:form>
 </div>
@@ -129,11 +198,11 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="UrlDialogForm">
         <s:hidden name="action" ac="cnts-save-urls-form" />
         <fieldset>
-            <%@expand EDIT_TEXT_ROW "team_url" "Url" "URL for participation" "48" %>
-            <%@expand EDIT_TEXT_ROW "standings_url" "Url" "URL for the current standings" "48" %>
-            <%@expand EDIT_TEXT_ROW "problems_url" "Url" "URL for the problemset" "48" %>
-            <%@expand EDIT_TEXT_ROW "logo_url" "Url" "URL for the contest logo" "48" %>
-            <%@expand EDIT_TEXT_ROW "css_url" "Url" "URL for the contest CSS" "48" %>
+            <%@expand EDIT_TEXT_ROW "team_url" "Url" "48" %>
+            <%@expand EDIT_TEXT_ROW "standings_url" "Url" "48" %>
+            <%@expand EDIT_TEXT_ROW "problems_url" "Url" "48" %>
+            <%@expand EDIT_TEXT_ROW "logo_url" "Url" "48" %>
+            <%@expand EDIT_TEXT_ROW "css_url" "Url" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -142,11 +211,11 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="HeadersDialogForm">
         <s:hidden name="action" ac="cnts-save-headers-form" />
         <fieldset>
-            <%@expand EDIT_TEXT_ROW "users_header_file" "Headers" "HTML header file for 'users' CGI-program" "48" %>
-            <%@expand EDIT_TEXT_ROW "users_footer_file" "Headers" "HTML footer file for 'users' CGI-program" "48" %>
-            <%@expand EDIT_TEXT_ROW "copyright_file" "Headers" "Copyright notice file" "48" %>
-            <%@expand EDIT_TEXT_ROW "welcome_file" "Headers" "Participant welcome message file" "48" %>
-            <%@expand EDIT_TEXT_ROW "reg_welcome_file" "Headers" "Registration welcome message file" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_header_file" "Headers" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_footer_file" "Headers" "48" %>
+            <%@expand EDIT_TEXT_ROW "copyright_file" "Headers" "48" %>
+            <%@expand EDIT_TEXT_ROW "welcome_file" "Headers" "48" %>
+            <%@expand EDIT_TEXT_ROW "reg_welcome_file" "Headers" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -155,15 +224,15 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="AttrsDialogForm">
         <s:hidden name="action" ac="cnts-save-attrs-form" />
         <fieldset>
-            <%@expand EDIT_TEXT_ROW "users_head_style" "Attrs" "HTML attributes for 'users' headers" "48" %>
-            <%@expand EDIT_TEXT_ROW "users_par_style" "Attrs" "HTML attributes for 'users' paragraphs" "48" %>
-            <%@expand EDIT_TEXT_ROW "users_table_style" "Attrs" "HTML attributes for 'users' tables" "48" %>
-            <%@expand EDIT_TEXT_ROW "users_verb_style" "Attrs" "HTML attributes for 'users' verbatim text" "48" %>
-            <%@expand EDIT_TEXT_ROW "users_table_format" "Attrs" "Format specification for users table" "48" %>
-            <%@expand EDIT_TEXT_ROW "users_table_format_en" "Attrs" "Format specification for users table (en)" "48" %>
-            <%@expand EDIT_TEXT_ROW "users_table_legend" "Attrs" "Legend specification for users table" "48" %>
-            <%@expand EDIT_TEXT_ROW "users_table_legend_en" "Attrs" "Legend specification for users table (en)" "48" %>
-            <%@expand EDIT_TEXT_ROW "user_name_comment" "Attrs" "Additional comment for user name field" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_head_style" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_par_style" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_table_style" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_verb_style" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_table_format" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_table_format_en" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_table_legend" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_table_legend_en" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "user_name_comment" "Attrs" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -172,9 +241,9 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="NotificationsDialogForm">
         <s:hidden name="action" ac="cnts-save-notifications-form" />
         <fieldset>
-            <%@expand EDIT_TEXT_ROW "cf_notify_email" "Notifications" "CHECK FAILED e-mail notification address" "48" %>
-            <%@expand EDIT_TEXT_ROW "clar_notify_email" "Notifications" "Clar request e-mail notification address" "48" %>
-            <%@expand EDIT_TEXT_ROW "daily_stat_email" "Notifications" "Daily statistics email address" "48" %>
+            <%@expand EDIT_TEXT_ROW "cf_notify_email" "Notifications" "48" %>
+            <%@expand EDIT_TEXT_ROW "clar_notify_email" "Notifications" "48" %>
+            <%@expand EDIT_TEXT_ROW "daily_stat_email" "Notifications" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -183,14 +252,14 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="AdvancedDialogForm">
         <s:hidden name="action" ac="cnts-save-advanced-form" />
         <fieldset>
-            <%@expand EDIT_TEXT_ROW "dir_mode" "Advanced" "The directory permissions (octal)" "48" %>
-            <%@expand EDIT_TEXT_ROW "dir_group" "Advanced" "The directory group" "48" %>
-            <%@expand EDIT_TEXT_ROW "file_mode" "Advanced" "The file permissions (octal)" "48" %>
-            <%@expand EDIT_TEXT_ROW "file_group" "Advanced" "The file group" "48" %>
-            <%@expand EDIT_TEXT_ROW "allowed_languages" "Advanced" "Allowed programming languages" "48" %>
-            <%@expand EDIT_TEXT_ROW "allowed_regions" "Advanced" "Allowed regions" "48" %>
-            <%@expand EDIT_TEXT_ROW "login_template" "Advanced" "Template for new logins" "48" %>
-            <%@expand EDIT_TEXT_ROW "login_template_options" "Advanced" "Login auto-assign options" "48" %>
+            <%@expand EDIT_TEXT_ROW "dir_mode" "Advanced" "48" %>
+            <%@expand EDIT_TEXT_ROW "dir_group" "Advanced" "48" %>
+            <%@expand EDIT_TEXT_ROW "file_mode" "Advanced" "48" %>
+            <%@expand EDIT_TEXT_ROW "file_group" "Advanced" "48" %>
+            <%@expand EDIT_TEXT_ROW "allowed_languages" "Advanced" "48" %>
+            <%@expand EDIT_TEXT_ROW "allowed_regions" "Advanced" "48" %>
+            <%@expand EDIT_TEXT_ROW "login_template" "Advanced" "48" %>
+            <%@expand EDIT_TEXT_ROW "login_template_options" "Advanced" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -706,8 +775,8 @@ function np(e)
 
 <%#define ORIG_TEXT_ROW
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>@3:</td>
-        <td><s:textfield id="Ori_@1" readonly="readonly" size="@4" name="param" value="cnts->@1" notset="yes" /></td>
+        <td><s:v value="MSG_@1" escape="no" />:</td>
+        <td><s:textfield id="Ori_@1" readonly="readonly" size="@3" name="param" value="cnts->@1" notset="yes" /></td>
         <td><input type="button" onclick="popup@2Dialog(event, '@1');" value="Clear" /></td>
         <td onclick="np(event);"><s:help topic="Contest.xml:@1" /></td>
     </s:tr>
@@ -715,8 +784,8 @@ function np(e)
 
 <%#define ORIG_TEXT_ROW_NO_CLEAR
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>@2:</td>
-        <td><s:textfield id="Ori_@1" readonly="readonly" size="@3" name="param" value="cnts->@1" notset="yes" /></td>
+        <td><s:v value="MSG_@1" escape="no" />:</td>
+        <td><s:textfield id="Ori_@1" readonly="readonly" size="@2" name="param" value="cnts->@1" notset="yes" /></td>
         <td>&nbsp;</td>
         <td onclick="np(event);"><s:help topic="Contest.xml:@1" /></td>
     </s:tr>
@@ -724,7 +793,7 @@ function np(e)
 
 <%#define ORIG_BOOL_ROW
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>@2?</td>
+        <td><s:v value="MSG_@1" escape="no" />?</td>
         <td><s:yesno id="Ori_@1" disabled="disabled" name="param" value="cnts->@1" /></td>
         <td>&nbsp;</td>
         <td><s:help topic="Contest.xml:@1" /></td>
@@ -733,9 +802,9 @@ function np(e)
 
 <%#define ORIG_TEXT_ROW_WITH_EDIT
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>@3:</td>
-        <td><s:textfield id="Ori_@1" readonly="readonly" size="@4" name="param" value="cnts->@1" notset="yes" /></td>
-        <td onclick="np(event);"><input type="button" onclick="popup@2Dialog(event, '@1');" value="Clear" />[<s:a ac="cnts-edit-@5-page">Edit</s:a>]</td>
+        <td><s:v value="MSG_@1" escape="no" />:</td>
+        <td><s:textfield id="Ori_@1" readonly="readonly" size="@3" name="param" value="cnts->@1" notset="yes" /></td>
+        <td onclick="np(event);"><input type="button" onclick="popup@2Dialog(event, '@1');" value="Clear" />[<s:a ac="cnts-edit-@4-page">Edit</s:a>]</td>
         <td onclick="np(event);"><s:help topic="Contest.xml:@1" /></td>
     </s:tr>
 #%>
@@ -751,7 +820,7 @@ function np(e)
 
 <%#define ORIG_DATE_TIME_ROW
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>@3:</td>
+        <td><s:v value="MSG_@1" escape="no" />:</td>
         <td><% html_date_select_2(out_f, cnts->@1, "Ori_@1", "param", NULL, 1, 0, 0); %></td>
         <td><input type="button" onclick="popup@2Dialog(event, '@1');" value="Clear" /></td>
         <td onclick="np(event);"><s:help topic="Contest.xml:@1" /></td>
@@ -760,11 +829,11 @@ function np(e)
 
 <table border="0" onclick="popupBasicDialog();">
     <s:tr attr="form_row_attrs[row ^= 1]"><td>Contest ID:</td><td><s:v value="cnts->id" /></td><td>&nbsp;</td><td>&nbsp;</td></s:tr>
-    <%@expand ORIG_TEXT_ROW_NO_CLEAR "name" "Name" "48" %>
-    <%@expand ORIG_TEXT_ROW "name_en" "Basic" "Name (English)" "48" %>
-    <%@expand ORIG_TEXT_ROW "main_url" "Basic" "Main URL" "48" %>
-    <%@expand ORIG_TEXT_ROW "keywords" "Basic" "Keywords" "48" %>
-    <%@expand ORIG_TEXT_ROW "user_contest" "Basic" "Contest to share users with" "48" %>
+    <%@expand ORIG_TEXT_ROW_NO_CLEAR "name" "48" %>
+    <%@expand ORIG_TEXT_ROW "name_en" "Basic" "48" %>
+    <%@expand ORIG_TEXT_ROW "main_url" "Basic" "48" %>
+    <%@expand ORIG_TEXT_ROW "keywords" "Basic" "48" %>
+    <%@expand ORIG_TEXT_ROW "user_contest" "Basic" "48" %>
 <%
   if (cnts->default_locale && *cnts->default_locale) {
     int locale_id = l10n_parse_locale(cnts->default_locale);
@@ -777,8 +846,8 @@ function np(e)
     }
   }
 %>
-    <%@expand ORIG_TEXT_ROW_NO_CLEAR "default_locale" "Default locale" "48" %>
-    <%@expand ORIG_BOOL_ROW "personal" "The contest is personal" %>
+    <%@expand ORIG_TEXT_ROW_NO_CLEAR "default_locale" "48" %>
+    <%@expand ORIG_BOOL_ROW "personal" %>
 </table>
     </div>
 
@@ -788,17 +857,17 @@ function np(e)
 <table border="0" onclick="popupRegistrationDialog();">
 <% row = 1; %>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Registration mode:</td>
+        <td><s:v value="MSG_autoregister" escape="no" />:</td>
         <td><s:yesno disabled="disabled" id="Ori_autoregister" name="param" value="cnts->autoregister" noLabel="Moderated registration" yesLabel="Free registration" /></td>
         <td>&nbsp;</td>
         <td onclick="np(event);"><s:help topic="Contest.xml:autoregister" /></td>
     </s:tr>
-    <%@expand ORIG_DATE_TIME_ROW "reg_deadline" "Registration" "Registration deadline" %>
-    <%@expand ORIG_TEXT_ROW "register_email" "Registration" "Registration email sender (From: field)" "48" %>
-    <%@expand ORIG_TEXT_ROW "register_url" "Registration" "URL for registration" "48" %>
-    <%@expand ORIG_TEXT_ROW "register_subject" "Registration" "Registration letter subject" "48" %>
-    <%@expand ORIG_TEXT_ROW "register_subject_en" "Registration" "Registration letter subject (en)" "48" %>
-    <%@expand ORIG_TEXT_ROW_WITH_EDIT "register_email_file" "Registration" "Registration letter template file" "48" "register-email-file" %>
+    <%@expand ORIG_DATE_TIME_ROW "reg_deadline" "Registration" %>
+    <%@expand ORIG_TEXT_ROW "register_email" "Registration" "48" %>
+    <%@expand ORIG_TEXT_ROW "register_url" "Registration" "48" %>
+    <%@expand ORIG_TEXT_ROW "register_subject" "Registration" "48" %>
+    <%@expand ORIG_TEXT_ROW "register_subject_en" "Registration" "48" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "register_email_file" "Registration" "48" "register-email-file" %>
 </table>
     </div>
 
@@ -807,9 +876,9 @@ function np(e)
     <div>
 <table border="0" onclick="popupTimingDialog();">
 <% row = 1; %>
-    <%@expand ORIG_DATE_TIME_ROW "sched_time" "Timing" "Contest start date" %>
-    <%@expand ORIG_DATE_TIME_ROW "open_time" "Timing" "Virtual contest open date" %>
-    <%@expand ORIG_DATE_TIME_ROW "close_time" "Timing" "Virtual contest close date" %>
+    <%@expand ORIG_DATE_TIME_ROW "sched_time" "Timing" %>
+    <%@expand ORIG_DATE_TIME_ROW "open_time" "Timing" %>
+    <%@expand ORIG_DATE_TIME_ROW "close_time" "Timing" %>
 </table>
     </div>
 
@@ -819,11 +888,11 @@ function np(e)
 <table border="0" onclick="popupUrlDialog();">
 <% row = 1; %>
 
-    <%@expand ORIG_TEXT_ROW "team_url" "Url" "URL for participation" "48" %>
-    <%@expand ORIG_TEXT_ROW "standings_url" "Url" "URL for the current standings" "48" %>
-    <%@expand ORIG_TEXT_ROW "problems_url" "Url" "URL for the problemset" "48" %>
-    <%@expand ORIG_TEXT_ROW "logo_url" "Url" "URL for the contest logo" "48" %>
-    <%@expand ORIG_TEXT_ROW "css_url" "Url" "URL for the contest CSS" "48" %>
+    <%@expand ORIG_TEXT_ROW "team_url" "Url" "48" %>
+    <%@expand ORIG_TEXT_ROW "standings_url" "Url" "48" %>
+    <%@expand ORIG_TEXT_ROW "problems_url" "Url" "48" %>
+    <%@expand ORIG_TEXT_ROW "logo_url" "Url" "48" %>
+    <%@expand ORIG_TEXT_ROW "css_url" "Url" "48" %>
 </table>
     </div>
 
@@ -833,34 +902,34 @@ function np(e)
 <table border="0" onclick="popupFlagsDialog();">
 <% row = 1; %>
 
-    <%@expand ORIG_BOOL_ROW "disable_team_password" "Disable separate team password" %>
-    <%@expand ORIG_BOOL_ROW "force_password_change" "Force user password change" %>
-    <%@expand ORIG_BOOL_ROW "simple_registration" "Enable simple registration (no email)" %>
+    <%@expand ORIG_BOOL_ROW "disable_team_password" %>
+    <%@expand ORIG_BOOL_ROW "force_password_change" %>
+    <%@expand ORIG_BOOL_ROW "simple_registration" %>
 <%
   if (cnts->simple_registration) {
 %>
-    <%@expand ORIG_BOOL_ROW "send_passwd_email" "Send e-mail with password anyway" %>
+    <%@expand ORIG_BOOL_ROW "send_passwd_email" %>
 <%
   } else {
 %><s:hidden id="Ori_send_passwd_email" name="send_passwd_email" value="cnts->send_passwd_email" check="no" /><%
   }
 %>
 
-    <%@expand ORIG_BOOL_ROW "clean_users" "Allow pruning users" %>
-    <%@expand ORIG_BOOL_ROW "closed" "Closed for participation" %>
-    <%@expand ORIG_BOOL_ROW "invisible" "Invisible in serve-control" %>
-    <%@expand ORIG_BOOL_ROW "disable_member_delete" "Disallow team member removal" %>
-    <%@expand ORIG_BOOL_ROW "assign_logins" "Auto-assign logins" %>
-    <%@expand ORIG_BOOL_ROW "force_registration" "Force contest registration" %>
-    <%@expand ORIG_BOOL_ROW "disable_name" "Disable &quot;Name&quot; field" %>
-    <%@expand ORIG_BOOL_ROW "enable_password_recovery" "Enable password recovery" %>
-    <%@expand ORIG_BOOL_ROW "exam_mode" "Examination mode" %>
-    <%@expand ORIG_BOOL_ROW "disable_password_change" "Disable password change" %>
-    <%@expand ORIG_BOOL_ROW "disable_locale_change" "Disable locale change" %>
-    <%@expand ORIG_BOOL_ROW "allow_reg_data_edit" "Allow edit registration data during contest" %>
-    <%@expand ORIG_BOOL_ROW "enable_user_telegram" "Enable telegram interaction for users" %>
-    <%@expand ORIG_BOOL_ROW "enable_avatar" "Enable avatars for users" %>
-    <%@expand ORIG_BOOL_ROW "enable_local_pages" "Enable Contest-specific Pages" %>
+    <%@expand ORIG_BOOL_ROW "clean_users" %>
+    <%@expand ORIG_BOOL_ROW "closed" %>
+    <%@expand ORIG_BOOL_ROW "invisible" %>
+    <%@expand ORIG_BOOL_ROW "disable_member_delete" %>
+    <%@expand ORIG_BOOL_ROW "assign_logins" %>
+    <%@expand ORIG_BOOL_ROW "force_registration" %>
+    <%@expand ORIG_BOOL_ROW "disable_name" %>
+    <%@expand ORIG_BOOL_ROW "enable_password_recovery" %>
+    <%@expand ORIG_BOOL_ROW "exam_mode" %>
+    <%@expand ORIG_BOOL_ROW "disable_password_change" %>
+    <%@expand ORIG_BOOL_ROW "disable_locale_change" %>
+    <%@expand ORIG_BOOL_ROW "allow_reg_data_edit" %>
+    <%@expand ORIG_BOOL_ROW "enable_user_telegram" %>
+    <%@expand ORIG_BOOL_ROW "enable_avatar" %>
+    <%@expand ORIG_BOOL_ROW "enable_local_pages" %>
 </table>
     </div>
 
@@ -1116,11 +1185,11 @@ initial count = <s:v value="memb->init_count" />
 <table border="0" onclick="popupHeadersDialog();">
 <% row = 1; %>
 
-    <%@expand ORIG_TEXT_ROW_WITH_EDIT "users_header_file" "Headers" "HTML header file for 'users' CGI-program" "48" "users-header" %>
-    <%@expand ORIG_TEXT_ROW_WITH_EDIT "users_footer_file" "Headers" "HTML footer file for 'users' CGI-program" "48" "users-footer" %>
-    <%@expand ORIG_TEXT_ROW_WITH_EDIT "copyright_file" "Headers" "Copyright notice file" "48" "copyright" %>
-    <%@expand ORIG_TEXT_ROW_WITH_EDIT "welcome_file" "Headers" "Participant welcome message file" "48" "welcome" %>
-    <%@expand ORIG_TEXT_ROW_WITH_EDIT "reg_welcome_file" "Headers" "Registration welcome message file" "48" "reg-welcome" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "users_header_file" "Headers" "48" "users-header" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "users_footer_file" "Headers" "48" "users-footer" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "copyright_file" "Headers" "48" "copyright" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "welcome_file" "Headers" "48" "welcome" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "reg_welcome_file" "Headers" "48" "reg-welcome" %>
 </table>
 
     </div>
@@ -1131,15 +1200,15 @@ initial count = <s:v value="memb->init_count" />
 <table border="0" onclick="popupAttrsDialog();">
 <% row = 1; %>
 
-    <%@expand ORIG_TEXT_ROW "users_head_style" "Attrs" "HTML attributes for 'users' headers" "48" %>
-    <%@expand ORIG_TEXT_ROW "users_par_style" "Attrs" "HTML attributes for 'users' paragraphs" "48" %>
-    <%@expand ORIG_TEXT_ROW "users_table_style" "Attrs" "HTML attributes for 'users' tables" "48" %>
-    <%@expand ORIG_TEXT_ROW "users_verb_style" "Attrs" "HTML attributes for 'users' verbatim text" "48" %>
-    <%@expand ORIG_TEXT_ROW "users_table_format" "Attrs" "Format specification for users table" "48" %>
-    <%@expand ORIG_TEXT_ROW "users_table_format_en" "Attrs" "Format specification for users table (En)" "48" %>
-    <%@expand ORIG_TEXT_ROW "users_table_legend" "Attrs" "Legend specification for users table" "48" %>
-    <%@expand ORIG_TEXT_ROW "users_table_legend_en" "Attrs" "Legend specification for users table (En)" "48" %>
-    <%@expand ORIG_TEXT_ROW "user_name_comment" "Attrs" "Additional comment for user name field" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_head_style" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_par_style" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_table_style" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_verb_style" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_table_format" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_table_format_en" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_table_legend" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_table_legend_en" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "user_name_comment" "Attrs" "48" %>
 </table>
 
     </div>
@@ -1150,9 +1219,9 @@ initial count = <s:v value="memb->init_count" />
 <table border="0" onclick="popupNotificationsDialog();">
 <% row = 1; %>
 
-    <%@expand ORIG_TEXT_ROW "cf_notify_email" "Notifications" "CHECK FAILED e-mail notification address" "48" %>
-    <%@expand ORIG_TEXT_ROW "clar_notify_email" "Notifications" "Clar request e-mail notification address" "48" %>
-    <%@expand ORIG_TEXT_ROW "daily_stat_email" "Notifications" "Daily statistics email address" "48" %>
+    <%@expand ORIG_TEXT_ROW "cf_notify_email" "Notifications" "48" %>
+    <%@expand ORIG_TEXT_ROW "clar_notify_email" "Notifications" "48" %>
+    <%@expand ORIG_TEXT_ROW "daily_stat_email" "Notifications" "48" %>
 </table>
 
     </div>
@@ -1163,16 +1232,16 @@ initial count = <s:v value="memb->init_count" />
 <table border="0" onclick="popupAdvancedDialog();">
 <% row = 1; %>
 
-    <%@expand ORIG_TEXT_ROW "dir_mode" "Advanced" "The directory permissions (octal)" "48" %>
-    <%@expand ORIG_TEXT_ROW "dir_group" "Advanced" "The directory group" "48" %>
-    <%@expand ORIG_TEXT_ROW "file_mode" "Advanced" "The file permissions (octal)" "48" %>
-    <%@expand ORIG_TEXT_ROW "file_group" "Advanced" "The file group" "48" %>
-    <%@expand ORIG_TEXT_ROW "allowed_languages" "Advanced" "Allowed programming languages" "48" %>
-    <%@expand ORIG_TEXT_ROW "allowed_regions" "Advanced" "Allowed regions" "48" %>
+    <%@expand ORIG_TEXT_ROW "dir_mode" "Advanced" "48" %>
+    <%@expand ORIG_TEXT_ROW "dir_group" "Advanced" "48" %>
+    <%@expand ORIG_TEXT_ROW "file_mode" "Advanced" "48" %>
+    <%@expand ORIG_TEXT_ROW "file_group" "Advanced" "48" %>
+    <%@expand ORIG_TEXT_ROW "allowed_languages" "Advanced" "48" %>
+    <%@expand ORIG_TEXT_ROW "allowed_regions" "Advanced" "48" %>
 <%
   if (cnts->assign_logins) {
 %>
-    <%@expand ORIG_TEXT_ROW "login_template" "Advanced" "Template for new logins" "48" %>
+    <%@expand ORIG_TEXT_ROW "login_template" "Advanced" "48" %>
 <%
   }
 %>
@@ -1180,7 +1249,7 @@ initial count = <s:v value="memb->init_count" />
 <%
   if (cnts->assign_logins) {
 %>
-    <%@expand ORIG_TEXT_ROW "login_template_options" "Advanced" "Login auto-assign options" "48" %>
+    <%@expand ORIG_TEXT_ROW "login_template_options" "Advanced" "48" %>
 <%
   }
 %>
