@@ -33,25 +33,38 @@ static const unsigned char * const form_row_attrs[]=
 <%@include "cnts_edit_cur_top_menu.csp"
 %>
 
+<%#define EDIT_TEXT_ROW
+            <label for="@2Dialo_@1">@3:</label>
+            <s:textfield size="@4" name="@1" id="@2Dialo_@1" value="" class="text ui-widget-content ui-corner-all" /><br/>
+#%>
+
+<%#define EDIT_BOOL_ROW
+            <input type="checkbox" name="@1" id="@2Dialo_@1" value="1" />
+            <label for="@2Dialo_@1">@3?</label>
+            <br/>
+#%>
+
+<%#define EDIT_DATE_TIME_ROW
+            <label for="@2Dialo_@1_time">@3:</label>
+            <input id="@2Dialo_@1_time" type="text" name="@1_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
+            <input id="@2Dialo_@1_date" type="text" name="@1_date" size="10" class="text ui-widget-content ui-corner-all" />
+            <br/>
+#%>
+
 <div id="BasicDialogDiv" title="Basic Contest Settings" style="overflow: auto;">
     <s:form id="BasicDialogForm">
         <s:hidden name="action" ac="cnts-save-basic-form" />
         <fieldset>
-            <label for="BasicDialo_name">Name:</label>
-            <s:textfield size="48" name="name" id="BasicDialo_name" value="" class="text ui-widget-content ui-corner-all" /><br/>
-            <label for="BasicDialo_name_en">Name (English):</label>
-            <s:textfield size="48" name="name_en" id="BasicDialo_name_en" value="" class="text ui-widget-content ui-corner-all" /><br/>
-            <label for="BasicDialo_main_url">Main URL:</label>
-            <s:textfield size="48" name="main_url" id="BasicDialo_main_url" value="" class="text ui-widget-content ui-corner-all" /><br/>
-            <label for="BasicDialo_keywords">Keywords:</label>
-            <s:textfield size="48" name="keywords" id="BasicDialo_keywords" value="" class="text ui-widget-content ui-corner-all" /><br/>
+            <%@expand EDIT_TEXT_ROW "name" "Basic" "Name" "48" %>
+            <%@expand EDIT_TEXT_ROW "name_en" "Basic" "Name (English)" "48" %>
+            <%@expand EDIT_TEXT_ROW "main_url" "Basic" "Main URL" "48" %>
+            <%@expand EDIT_TEXT_ROW "keywords" "Basic" "Keywords" "48" %>
             <label for="BasicDialo_user_contest">Contest to share users with:</label>
             <select id="BasicDialo_user_contest" name="user_contest"></select><br/>
             <label for="BasicDialo_default_locale">Default Locale:</label>
 <% l10n_html_locale_select_3(out_f, "BasicDialo_default_locale", NULL, "default_locale", NULL, -1); %>
             <br/>
-            <label for="BasicDialo_personal">The contest is personal?</label>
-            <input type="checkbox" name="personal" id="BasicDialo_personal" value="1" />
+            <%@expand EDIT_BOOL_ROW "personal" "Basic" "The contest is personal" %>
         </fieldset>
     </s:form>
 </div>
@@ -60,63 +73,25 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="FlagsDialogForm">
         <s:hidden name="action" ac="cnts-save-flags-form" />
         <fieldset>
-            <input type="checkbox" name="closed" id="FlagsDialo_closed" value="1" />
-            <label for="FlagsDialo_closed">Closed for participation?</label>
-            <br/>
-            <input type="checkbox" name="disable_team_password" id="FlagsDialo_disable_team_password" value="1" />
-            <label for="FlagsDialo_disable_team_password">Disable separate team password?</label>
-            <br/>
-            <input type="checkbox" name="force_password_change" id="FlagsDialo_force_password_change" value="1" />
-            <label for="FlagsDialo_force_password_change">Force user password change?</label>
-            <br/>
-            <input type="checkbox" name="simple_registration" id="FlagsDialo_simple_registration" value="1" />
-            <label for="FlagsDialo_simple_registration">Enable simple registration (no email)?</label>
-            <br/>
-            <input type="checkbox" name="send_passwd_email" id="FlagsDialo_send_passwd_email" value="1" />
-            <label for="FlagsDialo_send_passwd_email">Always send password e-mail?</label>
-            <br/>
-            <input type="checkbox" name="invisible" id="FlagsDialo_invisible" value="1" />
-            <label for="FlagsDialo_invisible">Invisible in serve-control?</label>
-            <br/>
-            <input type="checkbox" name="clean_users" id="FlagsDialo_clean_users" value="1" />
-            <label for="FlagsDialo_clean_users">Allow removal of non-active users?</label>
-            <br/>
-            <input type="checkbox" name="disable_member_delete" id="FlagsDialo_disable_member_delete" value="1" />
-            <label for="FlagsDialo_disable_member_delete">Disallow removal of team members?</label>
-            <br/>
-            <input type="checkbox" name="assign_logins" id="FlagsDialo_assign_logins" value="1" />
-            <label for="FlagsDialo_assign_logins">Auto-assign logins?</label>
-            <br/>
-            <input type="checkbox" name="force_registration" id="FlagsDialo_force_registration" value="1" />
-            <label for="FlagsDialo_force_registration">Force contest registration?</label>
-            <br/>
-            <input type="checkbox" name="disable_name" id="FlagsDialo_disable_name" value="1" />
-            <label for="FlagsDialo_disable_name">Disable user &quot;Name&quot; field?</label>
-            <br/>
-            <input type="checkbox" name="enable_password_recovery" id="FlagsDialo_enable_password_recovery" value="1" />
-            <label for="FlagsDialo_enable_password_recovery">Enable password recovery?</label>
-            <br/>
-            <input type="checkbox" name="exam_mode" id="FlagsDialo_exam_mode" value="1" />
-            <label for="FlagsDialo_exam_mode">Examination (simplified) mode?</label>
-            <br/>
-            <input type="checkbox" name="disable_password_change" id="FlagsDialo_disable_password_change" value="1" />
-            <label for="FlagsDialo_disable_password_change">Disable password change?</label>
-            <br/>
-            <input type="checkbox" name="disable_locale_change" id="FlagsDialo_disable_locale_change" value="1" />
-            <label for="FlagsDialo_disable_locale_change">Disable locale change?</label>
-            <br/>
-            <input type="checkbox" name="allow_reg_data_edit" id="FlagsDialo_allow_reg_data_edit" value="1" />
-            <label for="FlagsDialo_allow_reg_data_edit">Allow edit registration data during contest?</label>
-            <br/>
-            <input type="checkbox" name="enable_user_telegram" id="FlagsDialo_enable_user_telegram" value="1" />
-            <label for="FlagsDialo_enable_user_telegram">Enable telegram interaction for users?</label>
-            <br/>
-            <input type="checkbox" name="enable_avatar" id="FlagsDialo_enable_avatar" value="1" />
-            <label for="FlagsDialo_enable_avatar">Enable avatars for users?</label>
-            <br/>
-            <input type="checkbox" name="enable_local_pages" id="FlagsDialo_enable_local_pages" value="1" />
-            <label for="FlagsDialo_enable_local_pages">Enable Contest-specific pages?</label>
-            <br/>
+            <%@expand EDIT_BOOL_ROW "closed" "Flags" "Closed for participation" %>
+            <%@expand EDIT_BOOL_ROW "disable_team_password" "Flags" "Disable separate team password" %>
+            <%@expand EDIT_BOOL_ROW "force_password_change" "Flags" "Force user password change" %>
+            <%@expand EDIT_BOOL_ROW "simple_registration" "Flags" "Enable simple registration (no email)" %>
+            <%@expand EDIT_BOOL_ROW "send_passwd_email" "Flags" "Always send password e-mail" %>
+            <%@expand EDIT_BOOL_ROW "invisible" "Flags" "Invisible in serve-control" %>
+            <%@expand EDIT_BOOL_ROW "clean_users" "Flags" "Allow removal of non-active users" %>
+            <%@expand EDIT_BOOL_ROW "disable_member_delete" "Flags" "Disallow removal of team members" %>
+            <%@expand EDIT_BOOL_ROW "assign_logins" "Flags" "Auto-assign logins" %>
+            <%@expand EDIT_BOOL_ROW "force_registration" "Flags" "Force contest registration" %>
+            <%@expand EDIT_BOOL_ROW "disable_name" "Flags" "Disable user &quot;Name&quot; field" %>
+            <%@expand EDIT_BOOL_ROW "enable_password_recovery" "Flags" "Enable password recovery" %>
+            <%@expand EDIT_BOOL_ROW "exam_mode" "Flags" "Examination (simplified) mode" %>
+            <%@expand EDIT_BOOL_ROW "disable_password_change" "Flags" "Disable password change" %>
+            <%@expand EDIT_BOOL_ROW "disable_locale_change" "Flags" "Disable locale change" %>
+            <%@expand EDIT_BOOL_ROW "allow_reg_data_edit" "Flags" "Allow edit registration data during contest" %>
+            <%@expand EDIT_BOOL_ROW "enable_user_telegram" "Flags" "Enable telegram interaction for users" %>
+            <%@expand EDIT_BOOL_ROW "enable_avatar" "Flags" "Enable avatars for users" %>
+            <%@expand EDIT_BOOL_ROW "enable_local_pages" "Flags" "Enable Contest-specific pages" %>
         </fieldset>
     </s:form>
 </div>
@@ -129,25 +104,12 @@ static const unsigned char * const form_row_attrs[]=
             <s:yesno id="RegistrationDialo_autoregister" name="autoregister" noLabel="Moderated registration" yesLabel="Free registration" />
             <br/>
 
-            <label for="RegistrationDialo_reg_deadline_time">Registration deadline:</label>
-            <input id="RegistrationDialo_reg_deadline_time" type="text" name="reg_deadline_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
-            <input id="RegistrationDialo_reg_deadline_date" type="text" name="reg_deadline_date" size="10" class="text ui-widget-content ui-corner-all" />
-            <br/>
-
-            <label for="RegistrationDialo_register_email">Registration email sender (From: field):</label>
-            <s:textfield size="48" name="register_email" id="RegistrationDialo_register_email" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="RegistrationDialo_register_url">URL for registration:</label>
-            <s:textfield size="48" name="register_url" id="RegistrationDialo_register_url" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="RegistrationDialo_register_subject">Registration letter subject:</label>
-            <s:textfield size="48" name="register_subject" id="RegistrationDialo_register_subject" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="RegistrationDialo_register_subject_en">Registration letter subject (en):</label>
-            <s:textfield size="48" name="register_subject_en" id="RegistrationDialo_register_subject_en" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="RegistrationDialo_register_email_file">Registration letter template file:</label>
-            <s:textfield size="48" name="register_email_file" id="RegistrationDialo_register_email_file" value="" class="text ui-widget-content ui-corner-all" />
+            <%@expand EDIT_DATE_TIME_ROW "reg_deadline" "Registration" "Registration deadline" %>
+            <%@expand EDIT_TEXT_ROW "register_email" "Registration" "Registration email sender (From: field)" "48" %>
+            <%@expand EDIT_TEXT_ROW "register_url" "Registration" "URL for registration" "48" %>
+            <%@expand EDIT_TEXT_ROW "register_subject" "Registration" "Registration letter subject" "48" %>
+            <%@expand EDIT_TEXT_ROW "register_subject_en" "Registration" "Registration letter subject (en)" "48" %>
+            <%@expand EDIT_TEXT_ROW "register_email_file" "Registration" "Registration letter template file" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -156,19 +118,9 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="TimingDialogForm">
         <s:hidden name="action" ac="cnts-save-timing-form" />
         <fieldset>
-            <label for="TimingDialo_sched_time_time">Contest start date:</label>
-            <input id="TimingDialo_sched_time_time" type="text" name="sched_time_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
-            <input id="TimingDialo_sched_time_date" type="text" name="sched_time_date" size="10" class="text ui-widget-content ui-corner-all" />
-            <br/>
-
-            <label for="TimingDialo_open_time_time">Virtual contest open time:</label>
-            <input id="TimingDialo_open_time_time" type="text" name="open_time_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
-            <input id="TimingDialo_open_time_date" type="text" name="open_time_date" size="10" class="text ui-widget-content ui-corner-all" />
-            <br/>
-
-            <label for="TimingDialo_close_time_time">Virtual contest close time:</label>
-            <input id="TimingDialo_close_time_time" type="text" name="close_time_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
-            <input id="TimingDialo_close_time_date" type="text" name="close_time_date" size="10" class="text ui-widget-content ui-corner-all" />
+            <%@expand EDIT_DATE_TIME_ROW "sched_time" "Timing" "Contest start date" %>
+            <%@expand EDIT_DATE_TIME_ROW "open_time" "Timing" "Virtual contest open time" %>
+            <%@expand EDIT_DATE_TIME_ROW "close_time" "Timing" "Virtual contest close time" %>
         </fieldset>
     </s:form>
 </div>
@@ -177,24 +129,11 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="UrlDialogForm">
         <s:hidden name="action" ac="cnts-save-urls-form" />
         <fieldset>
-            <label for="UrlDialo_team_url">URL for participation:</label>
-            <s:textfield size="48" name="team_url" id="UrlDialo_team_url" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-
-            <label for="UrlDialo_standings_url">URL for the current standings:</label>
-            <s:textfield size="48" name="standings_url" id="UrlDialo_standings_url" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-
-            <label for="UrlDialo_problems_url">URL for the problemset:</label>
-            <s:textfield size="48" name="problems_url" id="UrlDialo_problems_url" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-
-            <label for="UrlDialo_logo_url">URL for the contest logo:</label>
-            <s:textfield size="48" name="logo_url" id="UrlDialo_logo_url" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-
-            <label for="UrlDialo_css_url">URL for the contest CSS:</label>
-            <s:textfield size="48" name="css_url" id="UrlDialo_css_url" value="" class="text ui-widget-content ui-corner-all" />
+            <%@expand EDIT_TEXT_ROW "team_url" "Url" "URL for participation" "48" %>
+            <%@expand EDIT_TEXT_ROW "standings_url" "Url" "URL for the current standings" "48" %>
+            <%@expand EDIT_TEXT_ROW "problems_url" "Url" "URL for the problemset" "48" %>
+            <%@expand EDIT_TEXT_ROW "logo_url" "Url" "URL for the contest logo" "48" %>
+            <%@expand EDIT_TEXT_ROW "css_url" "Url" "URL for the contest CSS" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -203,20 +142,11 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="HeadersDialogForm">
         <s:hidden name="action" ac="cnts-save-headers-form" />
         <fieldset>
-            <label for="HeadersDialo_users_header_file">HTML header file for 'users' CGI-program:</label>
-            <s:textfield size="48" name="users_header_file" id="HeadersDialo_users_header_file" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="HeadersDialo_users_footer_file">HTML footer file for 'users' CGI-program:</label>
-            <s:textfield size="48" name="users_footer_file" id="HeadersDialo_users_footer_file" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="HeadersDialo_copyright_file">Copyright notice file:</label>
-            <s:textfield size="48" name="copyright_file" id="HeadersDialo_copyright_file" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="HeadersDialo_welcome_file">Participant welcome message file:</label>
-            <s:textfield size="48" name="welcome_file" id="HeadersDialo_welcome_file" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="HeadersDialo_reg_welcome_file">Registration welcome message file:</label>
-            <s:textfield size="48" name="reg_welcome_file" id="HeadersDialo_reg_welcome_file" value="" class="text ui-widget-content ui-corner-all" />
+            <%@expand EDIT_TEXT_ROW "users_header_file" "Headers" "HTML header file for 'users' CGI-program" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_footer_file" "Headers" "HTML footer file for 'users' CGI-program" "48" %>
+            <%@expand EDIT_TEXT_ROW "copyright_file" "Headers" "Copyright notice file" "48" %>
+            <%@expand EDIT_TEXT_ROW "welcome_file" "Headers" "Participant welcome message file" "48" %>
+            <%@expand EDIT_TEXT_ROW "reg_welcome_file" "Headers" "Registration welcome message file" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -225,33 +155,15 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="AttrsDialogForm">
         <s:hidden name="action" ac="cnts-save-attrs-form" />
         <fieldset>
-            <label for="AttrsDialo_users_head_style">HTML attributes for 'users' headers:</label>
-            <s:textfield size="48" name="users_head_style" id="AttrsDialo_users_head_style" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialo_users_par_style">HTML attributes for 'users' paragraphs:</label>
-            <s:textfield size="48" name="users_par_style" id="AttrsDialo_users_par_style" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialo_users_table_style">HTML attributes for 'users' tables:</label>
-            <s:textfield size="48" name="users_table_style" id="AttrsDialo_users_table_style" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialo_users_verb_style">HTML attributes for 'users' verbatim text:</label>
-            <s:textfield size="48" name="users_verb_style" id="AttrsDialo_users_verb_style" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialo_users_table_format">Format specification for users table:</label>
-            <s:textfield size="48" name="users_table_format" id="AttrsDialo_users_table_format" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialo_users_table_format_en">Format specification for users table (en):</label>
-            <s:textfield size="48" name="users_table_format_en" id="AttrsDialo_users_table_format_en" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialo_users_table_legend">Legend specification for users table:</label>
-            <s:textfield size="48" name="users_table_legend" id="AttrsDialo_users_table_legend" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialo_users_table_legend_en">Legend specification for users table (en):</label>
-            <s:textfield size="48" name="users_table_legend_en" id="AttrsDialo_users_table_legend_en" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialo_user_name_comment">Additional comment for user name field:</label>
-            <s:textfield size="48" name="user_name_comment" id="AttrsDialo_user_name_comment" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
+            <%@expand EDIT_TEXT_ROW "users_head_style" "Attrs" "HTML attributes for 'users' headers" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_par_style" "Attrs" "HTML attributes for 'users' paragraphs" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_table_style" "Attrs" "HTML attributes for 'users' tables" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_verb_style" "Attrs" "HTML attributes for 'users' verbatim text" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_table_format" "Attrs" "Format specification for users table" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_table_format_en" "Attrs" "Format specification for users table (en)" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_table_legend" "Attrs" "Legend specification for users table" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_table_legend_en" "Attrs" "Legend specification for users table (en)" "48" %>
+            <%@expand EDIT_TEXT_ROW "user_name_comment" "Attrs" "Additional comment for user name field" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -260,15 +172,9 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="NotificationsDialogForm">
         <s:hidden name="action" ac="cnts-save-notifications-form" />
         <fieldset>
-            <label for="NotificationsDialo_cf_notify_email">CHECK FAILED e-mail notification address:</label>
-            <s:textfield size="48" name="cf_notify_email" id="NotificationsDialo_cf_notify_email" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="NotificationsDialo_clar_notify_email">Clar request e-mail notification address:</label>
-            <s:textfield size="48" name="clar_notify_email" id="NotificationsDialo_clar_notify_email" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="NotificationsDialo_daily_stat_email">Daily statistics email address:</label>
-            <s:textfield size="48" name="daily_stat_email" id="NotificationsDialo_daily_stat_email" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
+            <%@expand EDIT_TEXT_ROW "cf_notify_email" "Notifications" "CHECK FAILED e-mail notification address" "48" %>
+            <%@expand EDIT_TEXT_ROW "clar_notify_email" "Notifications" "Clar request e-mail notification address" "48" %>
+            <%@expand EDIT_TEXT_ROW "daily_stat_email" "Notifications" "Daily statistics email address" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -277,30 +183,14 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="AdvancedDialogForm">
         <s:hidden name="action" ac="cnts-save-advanced-form" />
         <fieldset>
-            <label for="AdvancedDialo_dir_mode">The directory permissions (octal):</label>
-            <s:textfield size="48" name="dir_mode" id="AdvancedDialo_dir_mode" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AdvancedDialo_dir_group">The directory group:</label>
-            <s:textfield size="48" name="dir_group" id="AdvancedDialo_dir_group" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AdvancedDialo_file_mode">The file permissions (octal):</label>
-            <s:textfield size="48" name="file_mode" id="AdvancedDialo_file_mode" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AdvancedDialo_file_group">The file group:</label>
-            <s:textfield size="48" name="file_group" id="AdvancedDialo_file_group" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AdvancedDialo_allowed_languages">Allowed programming languages:</label>
-            <s:textfield size="48" name="allowed_languages" id="AdvancedDialo_allowed_languages" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AdvancedDialo_allowed_regions">Allowed regions:</label>
-            <s:textfield size="48" name="allowed_regions" id="AdvancedDialo_allowed_regions" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AdvancedDialo_login_template">Template for new logins:</label>
-            <s:textfield size="48" name="login_template" id="AdvancedDialo_login_template" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AdvancedDialo_login_template_options">Login auto-assign options:</label>
-            <s:textfield size="48" name="login_template_options" id="AdvancedDialo_login_template_options" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
+            <%@expand EDIT_TEXT_ROW "dir_mode" "Advanced" "The directory permissions (octal)" "48" %>
+            <%@expand EDIT_TEXT_ROW "dir_group" "Advanced" "The directory group" "48" %>
+            <%@expand EDIT_TEXT_ROW "file_mode" "Advanced" "The file permissions (octal)" "48" %>
+            <%@expand EDIT_TEXT_ROW "file_group" "Advanced" "The file group" "48" %>
+            <%@expand EDIT_TEXT_ROW "allowed_languages" "Advanced" "Allowed programming languages" "48" %>
+            <%@expand EDIT_TEXT_ROW "allowed_regions" "Advanced" "Allowed regions" "48" %>
+            <%@expand EDIT_TEXT_ROW "login_template" "Advanced" "Template for new logins" "48" %>
+            <%@expand EDIT_TEXT_ROW "login_template_options" "Advanced" "Login auto-assign options" "48" %>
         </fieldset>
     </s:form>
 </div>
