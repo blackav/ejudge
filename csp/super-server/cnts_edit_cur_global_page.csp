@@ -211,13 +211,17 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
 
+<%#define EDIT_TEXT_ROW
+        <div id="@2-@1-div">
+            <div style="width: @4; display: inline-block;"><label for="@2-@1"><s:v value="MSG_@1" escape="no" />:</label></div>
+            <s:textfield size="@3" name="@1" id="@2-@1" value="" class="text ui-widget-content ui-corner-all" onchange="@2DialogOnChange()" />
+        </div>
+#%>
+
 <div id="MainDialogDiv" title="Main Properties" style="overflow: auto;">
     <s:form id="MainDialogForm">
         <s:hidden name="action" ac="glob-save-main-form" />
-        <div>
-            <div style="width: 300px; display: inline-block;"><label for="main-contest_time">Contest time (HH:MM):</label></div>
-            <s:textfield size="10" name="contest_time" id="main-contest_time" value="" class="text ui-widget-content ui-corner-all" onchange="mainDialogOnChange()" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "contest_time" "main" "10" "300px" %>
 
         <div id="main-contest_finish_time-div">
             <div style="width: 300px; display: inline-block;"><label for="main-contest_finish_time_time">Contest end time:</label></div>
@@ -238,15 +242,8 @@ static const unsigned char * const form_row_attrs[]=
             </select>
         </div>
 
-        <div id="main-board_fog_time-div">
-            <div style="width: 300px; display: inline-block;"><label for="main-board_fog_time">Standings freeze time (HH:MM) before finish:</label></div>
-            <s:textfield size="10" name="board_fog_time" id="main-board_fog_time" value="" class="text ui-widget-content ui-corner-all" onchange="mainDialogOnChange()" />
-        </div>
-
-        <div id="main-board_unfog_time-div">
-            <div style="width: 300px; display: inline-block;"><label for="main-board_unfog_time">Standings unfreeze time (HH:MM) after finish:</label></div>
-            <s:textfield size="10" name="board_unfog_time" id="main-board_unfog_time" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "board_fog_time" "main" "10" "300px" %>
+        <%@expand EDIT_TEXT_ROW "board_unfog_time" "main" "10" "300px" %>
 
         <div>
             <div style="width: 300px; display: inline-block;"><label for="main-use_compilation_server">Use the default compilation server:</label></div>
@@ -380,38 +377,16 @@ static const unsigned char * const form_row_attrs[]=
             <div style="width: 300px; display: inline-block;"><label for="files-uuid_run_store">Use UUID instead of run_id to store runs:</label></div>
             <input type="checkbox" name="uuid_run_store" id="files-uuid_run_store" value="1" onchange="filesDialogOnChange()" />
         </div>
-        <div id="files-test_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-test_dir">Directory for tests:</label></div>
-            <s:textfield size="48" name="test_dir" id="files-test_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-corr_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-corr_dir">Directory for correct answers:</label></div>
-            <s:textfield size="48" name="corr_dir" id="files-corr_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-info_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-info_dir">Directory for test info files:</label></div>
-            <s:textfield size="48" name="info_dir" id="files-info_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-tgz_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-tgz_dir">Directory for test tgz files:</label></div>
-            <s:textfield size="48" name="tgz_dir" id="files-tgz_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-checker_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-checker_dir">Directory for checkers:</label></div>
-            <s:textfield size="48" name="checker_dir" id="files-checker_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-statement_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-statement_dir">Directory for problem statements:</label></div>
-            <s:textfield size="48" name="statement_dir" id="files-statement_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-contest_start_cmd-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-contest_start_cmd">Contest start script:</label></div>
-            <s:textfield size="48" name="contest_start_cmd" id="files-contest_start_cmd" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-contest_stop_cmd-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-contest_stop_cmd">Contest stop script:</label></div>
-            <s:textfield size="48" name="contest_stop_cmd" id="files-contest_stop_cmd" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
+
+        <%@expand EDIT_TEXT_ROW "test_dir" "files" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "corr_dir" "files" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "info_dir" "files" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "tgz_dir" "files" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "checker_dir" "files" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "statement_dir" "files" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "contest_start_cmd" "files" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "contest_stop_cmd" "files" "48" "300px" %>
+
     </s:form>
 </div>
 
@@ -419,34 +394,13 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="QuotasDialogForm">
         <s:hidden name="action" ac="glob-save-quotas-form" />
 
-        <div id="quotas-max_run_size-div">
-            <div style="width: 300px; display: inline-block;"><label for="quotas-max_run_size">Maximum size of one submitted program:</label></div>
-            <s:textfield size="48" name="max_run_size" id="quotas-max_run_size" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="quotas-max_run_total-div">
-            <div style="width: 300px; display: inline-block;"><label for="quotas-max_run_total">Maximum total size of all submitted programs:</label></div>
-            <s:textfield size="48" name="max_run_total" id="quotas-max_run_total" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="quotas-max_run_num-div">
-            <div style="width: 300px; display: inline-block;"><label for="quotas-max_run_num">Maximum number of submits:</label></div>
-            <s:textfield size="48" name="max_run_num" id="quotas-max_run_num" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="quotas-max_clar_size-div">
-            <div style="width: 300px; display: inline-block;"><label for="quotas-max_clar_size">Maximum size of one clarification request:</label></div>
-            <s:textfield size="48" name="max_clar_size" id="quotas-max_clar_size" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="quotas-max_clar_total-div">
-            <div style="width: 300px; display: inline-block;"><label for="quotas-max_clar_total">Maximum size of all clarification requests:</label></div>
-            <s:textfield size="48" name="max_clar_total" id="quotas-max_clar_total" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="quotas-max_clar_num-div">
-            <div style="width: 300px; display: inline-block;"><label for="quotas-max_clar_num">Maximum number of clarification requests:</label></div>
-            <s:textfield size="48" name="max_clar_num" id="quotas-max_clar_num" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="quotas-team_page_quota-div">
-            <div style="width: 300px; display: inline-block;"><label for="quotas-team_page_quota">Maximum number of printed pages:</label></div>
-            <s:textfield size="48" name="team_page_quota" id="quotas-team_page_quota" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "max_run_size" "quotas" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "max_run_total" "quotas" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "max_run_num" "quotas" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "max_clar_size" "quotas" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "max_clar_total" "quotas" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "max_clar_num" "quotas" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "team_page_quota" "quotas" "48" "300px" %>
     </s:form>
 </div>
 
@@ -454,34 +408,13 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="UrlsDialogForm">
         <s:hidden name="action" ac="glob-save-urls-form" />
 
-        <div id="urls-team_info_url-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-team_info_url">URL to view detailed contestant information:</label></div>
-            <s:textfield size="48" name="team_info_url" id="urls-team_info_url" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-prob_info_url-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-prob_info_url">URL to view problem statement:</label></div>
-            <s:textfield size="48" name="prob_info_url" id="urls-prob_info_url" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-standings_file_name-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-standings_file_name">Name of the current standings file:</label></div>
-            <s:textfield size="48" name="standings_file_name" id="urls-standings_file_name" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-users_on_page-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-users_on_page">Number of users on standings page:</label></div>
-            <s:textfield size="48" name="users_on_page" id="urls-users_on_page" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-stand_header_file-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-stand_header_file">HTML header file for the standings:</label></div>
-            <s:textfield size="48" name="stand_header_file" id="urls-stand_header_file" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-stand_footer_file-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-stand_footer_file">HTML footer file for the standings:</label></div>
-            <s:textfield size="48" name="stand_footer_file" id="urls-stand_footer_file" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-stand_symlink_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-stand_symlink_dir">Directory to make standings symlink:</label></div>
-            <s:textfield size="48" name="stand_symlink_dir" id="urls-stand_symlink_dir" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "team_info_url" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "prob_info_url" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "standings_file_name" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "users_on_page" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_header_file" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_footer_file" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_symlink_dir" "urls" "48" "300px" %>
         <div id="urls-stand_ignore_after-div">
             <div style="width: 300px; display: inline-block;"><label for="urls-stand_ignore_after">Ignore submissions after:</label></div>
             <input id="urls-stand_ignore_after_time" type="text" name="stand_ignore_after_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
@@ -491,54 +424,21 @@ static const unsigned char * const form_row_attrs[]=
             <div style="width: 300px; display: inline-block;"><label for="urls-enable_stand2">Enable supplementary standings table:</label></div>
             <input type="checkbox" name="enable_stand2" id="urls-enable_stand2" value="1" onchange="urlsDialogOnChange()" />
         </div>
-        <div id="urls-stand2_file_name-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-stand2_file_name">Name of the supplementary standings file:</label></div>
-            <s:textfield size="48" name="stand2_file_name" id="urls-stand2_file_name" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-stand2_header_file-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-stand2_header_file">HTML header file for the supplementary standings:</label></div>
-            <s:textfield size="48" name="stand2_header_file" id="urls-stand2_header_file" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-stand2_footer_file-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-stand2_footer_file">HTML footer file for the supplementary standings:</label></div>
-            <s:textfield size="48" name="stand2_footer_file" id="urls-stand2_footer_file" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-stand2_symlink_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-stand2_symlink_dir">Directory to make suppl. standings symlink:</label></div>
-            <s:textfield size="48" name="stand2_symlink_dir" id="urls-stand2_symlink_dir" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "stand2_file_name" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand2_header_file" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand2_footer_file" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand2_symlink_dir" "urls" "48" "300px" %>
         <div id="urls-enable_plog-div">
             <div style="width: 300px; display: inline-block;"><label for="urls-enable_plog">Enable public submission log:</label></div>
             <input type="checkbox" name="enable_plog" id="urls-enable_plog" value="1" onchange="urlsDialogOnChange()" />
         </div>
-        <div id="urls-plog_file_name-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-plog_file_name">Name of the public submission log file:</label></div>
-            <s:textfield size="48" name="plog_file_name" id="urls-plog_file_name" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-plog_header_file-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-plog_header_file">HTML header file for the public submission log:</label></div>
-            <s:textfield size="48" name="plog_header_file" id="urls-plog_header_file" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-plog_footer_file-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-plog_footer_file">HTML footer file for the public submission log:</label></div>
-            <s:textfield size="48" name="plog_footer_file" id="urls-plog_footer_file" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-plog_symlink_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-plog_symlink_dir">Directory to make symlink to public submission log:</label></div>
-            <s:textfield size="48" name="plog_symlink_dir" id="urls-plog_symlink_dir" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-plog_update_time-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-plog_update_time">Public submission log update interval (sec):</label></div>
-            <s:textfield size="48" name="plog_update_time" id="urls-plog_update_time" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-external_xml_update_time-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-external_xml_update_time">External XML log update interval (sec):</label></div>
-            <s:textfield size="48" name="external_xml_update_time" id="urls-external_xml_update_time" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-internal_xml_update_time-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-internal_xml_update_time">Internal XML log update interval (sec):</label></div>
-            <s:textfield size="48" name="internal_xml_update_time" id="urls-internal_xml_update_time" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "plog_file_name" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "plog_header_file" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "plog_footer_file" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "plog_symlink_dir" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "plog_update_time" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "external_xml_update_time" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "internal_xml_update_time" "urls" "48" "300px" %>
     </s:form>
 </div>
 
@@ -549,42 +449,15 @@ static const unsigned char * const form_row_attrs[]=
             <div style="width: 300px; display: inline-block;"><label for="attrs-stand_fancy_style">Use fancy decorations:</label></div>
             <input type="checkbox" name="stand_fancy_style" id="attrs-stand_fancy_style" value="1" onchange="attrsDialogOnChange()" />
         </div>
-        <div id="attrs-stand_success_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_success_attr">HTML attributes for &quot;Last success&quot; note:</label></div>
-            <s:textfield size="48" name="stand_success_attr" id="attrs-stand_success_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_table_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_table_attr">HTML attributes for standings table:</label></div>
-            <s:textfield size="48" name="stand_table_attr" id="attrs-stand_table_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_row_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_row_attr">Standings row attributes:</label></div>
-            <s:textfield size="48" name="stand_row_attr" id="attrs-stand_row_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_place_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_place_attr">HTML attributes for the &quot;Place&quot; column:</label></div>
-            <s:textfield size="48" name="stand_place_attr" id="attrs-stand_place_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_team_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_team_attr">HTML attributes for the &quot;Team name&quot; column:</label></div>
-            <s:textfield size="48" name="stand_team_attr" id="attrs-stand_team_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_prob_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_prob_attr">HTML attributes for the &quot;Problems&quot; column:</label></div>
-            <s:textfield size="48" name="stand_prob_attr" id="attrs-stand_prob_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_solved_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_solved_attr">HTML attributes for the &quot;Solved&quot; column:</label></div>
-            <s:textfield size="48" name="stand_solved_attr" id="attrs-stand_solved_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_score_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_score_attr">HTML attributes for the &quot;Score&quot; column:</label></div>
-            <s:textfield size="48" name="stand_score_attr" id="attrs-stand_score_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_penalty_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_penalty_attr">HTML attributes for the &quot;Penalty&quot; column:</label></div>
-            <s:textfield size="48" name="stand_penalty_attr" id="attrs-stand_penalty_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "stand_success_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_table_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_row_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_place_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_team_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_prob_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_solved_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_score_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_penalty_attr" "attrs" "48" "300px" %>
         <div id="attrs-stand_use_login-div">
             <div style="width: 300px; display: inline-block;"><label for="attrs-stand_use_login">Use login instead of name:</label></div>
             <input type="checkbox" name="stand_use_login" id="attrs-stand_use_login" value="1" onchange="attrsDialogOnChange()" />
@@ -613,78 +486,30 @@ static const unsigned char * const form_row_attrs[]=
             <div style="width: 300px; display: inline-block;"><label for="attrs-ignore_success_time">Ignore success time in penalty calculation:</label></div>
             <input type="checkbox" name="ignore_success_time" id="attrs-ignore_success_time" value="1" onchange="attrsDialogOnChange()" />
         </div>
-        <div id="attrs-stand_time_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_time_attr">HTML attributes for the success time:</label></div>
-            <s:textfield size="48" name="stand_time_attr" id="attrs-stand_time_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_fail_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_fail_attr">HTML attributes for &quot;Check failed&quot; cells:</label></div>
-            <s:textfield size="48" name="stand_fail_attr" id="attrs-stand_fail_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_trans_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_trans_attr">HTML attributes for transient cells:</label></div>
-            <s:textfield size="48" name="stand_trans_attr" id="attrs-stand_trans_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_disq_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_disq_attr">HTML attributes for &quot;Disqualified&quot; cells:</label></div>
-            <s:textfield size="48" name="stand_disq_attr" id="attrs-stand_disq_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_self_row_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_self_row_attr">HTML attributes for the participant's table row:</label></div>
-            <s:textfield size="48" name="stand_self_row_attr" id="attrs-stand_self_row_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_v_row_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_v_row_attr">HTML attributes for the virtual participant's rows:</label></div>
-            <s:textfield size="48" name="stand_v_row_attr" id="attrs-stand_v_row_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_r_row_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_r_row_attr">HTML attributes for the real participant's rows:</label></div>
-            <s:textfield size="48" name="stand_r_row_attr" id="attrs-stand_r_row_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_u_row_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_u_row_attr">HTML attributes for the unknown participant's rows:</label></div>
-            <s:textfield size="48" name="stand_u_row_attr" id="attrs-stand_u_row_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "stand_time_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_fail_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_trans_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_disq_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_self_row_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_v_row_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_r_row_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_u_row_attr" "attrs" "48" "300px" %>
         <div id="attrs-enable_extra_col-div">
             <div style="width: 300px; display: inline-block;"><label for="attrs-enable_extra_col">Show &quot;Extra information&quot; column:</label></div>
             <input type="checkbox" name="enable_extra_col" id="attrs-enable_extra_col" value="1" onchange="attrsDialogOnChange()" />
         </div>
-        <div id="attrs-stand_extra_format-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_extra_format">Format string for &quot;Extra information&quot; column:</label></div>
-            <s:textfield size="48" name="stand_extra_format" id="attrs-stand_extra_format" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_extra_legend-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_extra_legend">Column title for &quot;Extra information&quot; column:</label></div>
-            <s:textfield size="48" name="stand_extra_legend" id="attrs-stand_extra_legend" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_extra_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_extra_attr">HTML attributes for &quot;Extra information&quot; column:</label></div>
-            <s:textfield size="48" name="stand_extra_attr" id="attrs-stand_extra_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "stand_extra_format" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_extra_legend" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_extra_attr" "attrs" "48" "300px" %>
         <div id="attrs-stand_show_warn_number-div">
             <div style="width: 300px; display: inline-block;"><label for="attrs-stand_show_warn_number">Show &quot;Warnings&quot; column:</label></div>
             <input type="checkbox" name="stand_show_warn_number" id="attrs-stand_show_warn_number" value="1" onchange="attrsDialogOnChange()" />
         </div>
-        <div id="attrs-stand_warn_number_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_warn_number_attr">HTML attributes for &quot;Warnings&quot; column:</label></div>
-            <s:textfield size="48" name="stand_warn_number_attr" id="attrs-stand_warn_number_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_page_table_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_page_table_attr">HTML attributes for page table:</label></div>
-            <s:textfield size="48" name="stand_page_table_attr" id="attrs-stand_page_table_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_page_cur_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_page_cur_attr">HTML attributes for current page message:</label></div>
-            <s:textfield size="48" name="stand_page_cur_attr" id="attrs-stand_page_cur_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_page_row_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_page_row_attr">Page table row attributes:</label></div>
-            <s:textfield size="48" name="stand_page_row_attr" id="attrs-stand_page_row_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_page_col_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_page_col_attr">Page table column attributes:</label></div>
-            <s:textfield size="48" name="stand_page_col_attr" id="attrs-stand_page_col_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "stand_warn_number_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_page_table_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_page_cur_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_page_row_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_page_col_attr" "attrs" "48" "300px" %>
     </s:form>
 </div>
 
@@ -713,18 +538,9 @@ static const unsigned char * const form_row_attrs[]=
                 <option value="2">Rounding</option>
             </select>
         </div>
-        <div id="adv-max_file_length-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-max_file_length">Maximal file size to be included into testing protocol:</label></div>
-            <s:textfield size="48" name="max_file_length" id="adv-max_file_length" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-max_line_length-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-max_line_length">Maximal line length to be included into testing protocol:</label></div>
-            <s:textfield size="48" name="max_line_length" id="adv-max_line_length" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-inactivity_timeout-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-inactivity_timeout">Inactivity timeout:</label></div>
-            <s:textfield size="48" name="inactivity_timeout" id="adv-inactivity_timeout" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "max_file_length" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "max_line_length" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "inactivity_timeout" "adv" "48" "400px" %>
         <div id="adv-ignore_bom-div">
             <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-ignore_bom">Ignore BOM in text submits:</label></div>
             <input type="checkbox" name="ignore_bom" id="adv-ignore_bom" value="1" onchange="advancedDialogOnChange()" />
@@ -757,42 +573,15 @@ static const unsigned char * const form_row_attrs[]=
             <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-enable_l10n">Enable message translation:</label></div>
             <input type="checkbox" name="enable_l10n" id="adv-enable_l10n" value="1" onchange="advancedDialogOnChange()" />
         </div>
-        <div id="adv-charset-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-charset">Character set:</label></div>
-            <s:textfield size="48" name="charset" id="adv-charset" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-standings_charset-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-standings_charset">Standings character set:</label></div>
-            <s:textfield size="48" name="standings_charset" id="adv-standings_charset" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-stand2_charset-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-stand2_charset">Aux. standings character set:</label></div>
-            <s:textfield size="48" name="stand2_charset" id="adv-stand2_charset" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-plog_charset-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-plog_charset">Submission log character set:</label></div>
-            <s:textfield size="48" name="plog_charset" id="adv-plog_charset" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-cpu_bogomips-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-cpu_bogomips">CPU speed (BogoMIPS):</label></div>
-            <s:textfield size="48" name="cpu_bogomips" id="adv-cpu_bogomips" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-load_user_group-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-load_user_group">User groups to load:</label></div>
-            <s:textfield size="48" name="load_user_group" id="adv-load_user_group" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-clardb_plugin-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-clardb_plugin">ClarDB storage engine:</label></div>
-            <s:textfield size="48" name="clardb_plugin" id="adv-clardb_plugin" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-rundb_plugin-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-rundb_plugin">RunDB storage engine:</label></div>
-            <s:textfield size="48" name="rundb_plugin" id="adv-rundb_plugin" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-xuser_plugin-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-xuser_plugin">XuserDB storage engine:</label></div>
-            <s:textfield size="48" name="xuser_plugin" id="adv-xuser_plugin" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "charset" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "standings_charset" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "stand2_charset" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "plog_charset" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "cpu_bogomips" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "load_user_group" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "clardb_plugin" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "rundb_plugin" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "xuser_plugin" "adv" "48" "400px" %>
     </s:form>
 </div>
 
