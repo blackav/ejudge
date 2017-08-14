@@ -162,6 +162,7 @@ static const unsigned char MSG_xuser_plugin[] = "XuserDB storage engine";
     opcap_t caps = 0;
     int row = 1;
     int cur_page = 2;
+    int active = 0;
 
     unsigned char contest_time_str[64];
     unsigned char board_fog_time_str[64];
@@ -169,6 +170,8 @@ static const unsigned char MSG_xuser_plugin[] = "XuserDB storage engine";
     const unsigned char *standings_locale = NULL;
     const unsigned char *checker_locale = NULL;
     int cpu_bogomips = cpu_get_bogomips();
+
+    %><s:read name="active" default="0" ignoreerrors="yes" /><%
 
 static const unsigned char * const form_row_attrs[]=
 {
@@ -210,6 +213,13 @@ static const unsigned char * const form_row_attrs[]=
     goto bottom_links;
   }
 %>
+
+<script type="text/javascript">
+  var SID='<s:v value="phr->session_id" />';
+  var self_url='<s:v value="phr->self_url" escape="false" />';
+  var script_name='<s:v value="phr->script_name" escape="false" />';
+  var cnts_edit_cur_global_page_action=<s:ac ac="cnts-edit-cur-global-page" />;
+</script>
 
 <%#define EDIT_TEXT_ROW
         <div id="@2-@1-div">
@@ -290,39 +300,39 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="CapsDialogForm">
         <s:hidden name="action" ac="glob-save-capabilities-form" />
 
-        <%@expand EDIT_BOOL_ROW "team_enable_src_view" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "disable_failed_test_view" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "team_enable_rep_view" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "team_enable_ce_view" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "team_show_judge_report" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "report_error_code" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "disable_clars" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "disable_team_clars" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "enable_eoln_select" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "disable_submit_after_ok" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "ignore_compile_errors" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "ignore_duplicated_runs" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "show_deadline" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "show_sha1" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "show_judge_identity" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "enable_printing" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "disable_banner_page" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "printout_uses_login" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "prune_empty_users" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "enable_full_archive" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "always_show_problems" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "disable_user_standings" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "disable_language" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "problem_navigation" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "vertical_navigation" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "disable_virtual_start" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "disable_virtual_auto_judge" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "enable_auto_print_protocol" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "notify_clar_reply" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "notify_status_change" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "disable_auto_refresh" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "start_on_first_login" "caps" "300px" %>
-        <%@expand EDIT_BOOL_ROW "enable_virtual_restart" "caps" "300px" %>
+        <%@expand EDIT_BOOL_ROW "team_enable_src_view" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_failed_test_view" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "team_enable_rep_view" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "team_enable_ce_view" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "team_show_judge_report" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "report_error_code" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_clars" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_team_clars" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "enable_eoln_select" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_submit_after_ok" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "ignore_compile_errors" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "ignore_duplicated_runs" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "show_deadline" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "show_sha1" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "show_judge_identity" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "enable_printing" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_banner_page" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "printout_uses_login" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "prune_empty_users" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "enable_full_archive" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "always_show_problems" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_user_standings" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_language" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "problem_navigation" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "vertical_navigation" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_virtual_start" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_virtual_auto_judge" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "enable_auto_print_protocol" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "notify_clar_reply" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "notify_status_change" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_auto_refresh" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "start_on_first_login" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "enable_virtual_restart" "caps" "400px" %>
     </s:form>
 </div>
 
@@ -467,7 +477,7 @@ static const unsigned char * const form_row_attrs[]=
 
 <script type="text/javascript">
 $(function() {
-    $('#GlobalAccordion').accordion({ heightStyle: "content" });
+    $('#GlobalAccordion').accordion({ heightStyle: "content" <% if (active > 0) { %>, active: <s:v value="active" /><% } %> });
 
     mainDialog = $("#MainDialogDiv").dialog({
         autoOpen: false,
@@ -484,7 +494,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + cnts_edit_cur_global_page_action + '&active=0';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -516,7 +527,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + cnts_edit_cur_global_page_action + '&active=1';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -559,7 +571,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + cnts_edit_cur_global_page_action + '&active=2';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -596,7 +609,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + cnts_edit_cur_global_page_action + '&active=3';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -635,7 +649,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + cnts_edit_cur_global_page_action + '&active=4';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -677,7 +692,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + cnts_edit_cur_global_page_action + '&active=5';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -737,7 +753,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + cnts_edit_cur_global_page_action + '&active=6';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -883,7 +900,7 @@ function popupCapsDialog(e, skipField)
     ];
 
     for (var i in fields) {
-        copyCheckbox("caps-" + i + "-cb", "orig-" + i);
+        copyCheckbox("caps-" + fields[i], "orig-" + fields[i]);
     }
 
     if (e) e.stopPropagation();
@@ -894,14 +911,14 @@ function popupCapsDialog(e, skipField)
 function capsDialogOnChange()
 {
     $("#caps-disable_failed_test_view-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_ACM || global->score_system == SCORE_MOSCOW" />);
-    $("#caps-team_enable_ce_view-div").toggle(!$("#caps-team_enable_rep_view-cb").is(':checked'));
-    $("#caps-team_show_judge_report-div").toggle($("#caps-team_enable_rep_view-cb").is(':checked'));
-    $("#caps-report_error_code-div").toggle($("#caps-team_enable_rep_view-cb").is(':checked') && !$("#caps-team_show_judge_report-cb").is(':checked'));
-    $("#caps-disable_team_clars-div").toggle(!$("#caps-disable_clars-cb").is(':checked'));
+    $("#caps-team_enable_ce_view-div").toggle(!$("#caps-team_enable_rep_view").is(':checked'));
+    $("#caps-team_show_judge_report-div").toggle($("#caps-team_enable_rep_view").is(':checked'));
+    $("#caps-report_error_code-div").toggle($("#caps-team_enable_rep_view").is(':checked') && !$("#caps-team_show_judge_report").is(':checked'));
+    $("#caps-disable_team_clars-div").toggle(!$("#caps-disable_clars").is(':checked'));
     $("#caps-show_deadline-div").toggle(<s:v type="jsbool" value="global->contest_time <= 0" />);
-    $("#caps-disable_banner_page-div").toggle($("#caps-enable_printing-cb").is(':checked'));
-    $("#caps-printout_uses_login-div").toggle($("#caps-enable_printing-cb").is(':checked') && $("#caps-disable_banner_page-cb").is(':checked'));
-    $("#caps-vertical_navigation-div").toggle($("#caps-problem_navigation-cb").is(':checked'));
+    $("#caps-disable_banner_page-div").toggle($("#caps-enable_printing").is(':checked'));
+    $("#caps-printout_uses_login-div").toggle($("#caps-enable_printing").is(':checked') && $("#caps-disable_banner_page").is(':checked'));
+    $("#caps-vertical_navigation-div").toggle($("#caps-problem_navigation").is(':checked'));
     $("#caps-disable_virtual_start-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" />);
     $("#caps-disable_virtual_auto_judge-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
     $("#caps-enable_auto_print_protocol-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
@@ -961,6 +978,10 @@ function popupQuotasDialog(e, skipField)
 
     if (e) e.stopPropagation();
     $("#QuotasDialogDiv").dialog('open');
+}
+
+function quotasDialogOnChange()
+{
 }
 
 function popupUrlsDialog(e, skipField)
