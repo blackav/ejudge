@@ -188,7 +188,6 @@ static const unsigned char * const form_row_attrs[]=
     cnts = phr->ss->edited_cnts;
     struct section_global_data *global = phr->ss->global;
     int score_system;
-    unsigned char *xstr = 0;
 %><%@include "header_jqgrid.csp"
 %>
 
@@ -1182,6 +1181,15 @@ function advancedDialogOnChange()
             </s:tr>
 #%>
 
+<%#define ORIG_BOOL_ROW_WITH_VALUE
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-@1-div">
+                <td><s:v value="MSG_@1" escape="false" />?</td>
+                <td><s:yesno id="orig-@1" disabled="disabled" name="param" value="@2" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);">&nbsp;</td>
+            </s:tr>
+#%>
+
 <%#define ORIG_TEXT_ROW
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-@1-div">
                 <td><s:v value="MSG_@1" escape="false" />:</td>
@@ -1198,6 +1206,24 @@ function advancedDialogOnChange()
                 <td onclick="np(event);"><input type="button" onclick="popup@2Dialog(event, '@1')" value="Clear" />[<s:a ac="glob-edit-@1-page">Edit</s:a>]</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:@1" /></td>
             </s:tr>
+#%>
+
+<%#define ORIG_XSTR_ROW
+<%
+  {
+    unsigned char *xstr = NULL;
+    if (global->@1 && global->@1[0]) xstr = sarray_unparse_2(global->@1);
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-@1-div">
+                <td><s:v value="MSG_@1" escape="no" />:</td>
+                <td><s:textfield readonly="readonly" id="orig-@1" name="param" value="xstr" size="@3" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popup@2Dialog(event, '@1')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:@1" /></td>
+            </s:tr>
+<%
+    xfree(xstr);
+  }
+%>
 #%>
 
 <div id="GlobalAccordion">
@@ -1313,20 +1339,8 @@ function advancedDialogOnChange()
   }
 %>
 
-            <s:tr attr="form_row_attrs[row ^= 1]">
-                <td><s:v value="MSG_use_compilation_server" escape="no" />:</td>
-                <td><s:yesno disabled="disabled" id="orig-use_compilation_server" name="param" value="!phr->ss->disable_compilation_server" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:use_compilation_server" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]">
-                <td><s:v value="MSG_enable_win32_languages" escape="no" />:</td>
-                <td><s:yesno disabled="disabled" id="orig-enable_win32_languages" name="param" value="phr->ss->enable_win32_languages" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_win32_languages" /></td>
-            </s:tr>
-
+            <%@expand ORIG_BOOL_ROW_WITH_VALUE "use_compilation_server" "!phr->ss->disable_compilation_server" %>
+            <%@expand ORIG_BOOL_ROW_WITH_VALUE "enable_win32_languages" "phr->ss->enable_win32_languages" %>
             <%@expand ORIG_BOOL_ROW "separate_user_score" %>
             <%@expand ORIG_BOOL_ROW "secure_run" %>
 
@@ -1530,22 +1544,12 @@ function advancedDialogOnChange()
                 <td><input type="button" onclick="popupUrlsDialog(event, 'stand_ignore_after')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_ignore_after" /></td>
             </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_stand2-div">
-                <td><s:v value="MSG_enable_stand2" escape="no" />:</td>
-                <td><s:yesno disabled="disabled" id="orig-enable_stand2" name="param" value="phr->ss->enable_stand2" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_stand2" /></td>
-            </s:tr>
+            <%@expand ORIG_BOOL_ROW_WITH_VALUE "enable_stand2" "phr->ss->enable_stand2" %>
             <%@expand ORIG_TEXT_ROW "stand2_file_name" "Urls" "48" %>
             <%@expand ORIG_TEXT_ROW_WITH_EDIT "stand2_header_file" "Urls" "48" %>
             <%@expand ORIG_TEXT_ROW_WITH_EDIT "stand2_footer_file" "Urls" "48" %>
             <%@expand ORIG_TEXT_ROW "stand2_symlink_dir" "Urls" "48" %>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_plog-div">
-                <td><s:v value="MSG_enable_stand2" escape="no" />?</td>
-                <td><s:yesno disabled="disabled" id="orig-enable_plog" name="param" value="phr->ss->enable_plog" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_plog" /></td>
-            </s:tr>
+            <%@expand ORIG_BOOL_ROW_WITH_VALUE "enable_plog" "phr->ss->enable_plog" %>
             <%@expand ORIG_TEXT_ROW "plog_file_name" "Urls" "48" %>
             <%@expand ORIG_TEXT_ROW_WITH_EDIT "plog_header_file" "Urls" "48" %>
             <%@expand ORIG_TEXT_ROW_WITH_EDIT "plog_footer_file" "Urls" "48" %>
@@ -1581,19 +1585,7 @@ function advancedDialogOnChange()
             <%@expand ORIG_BOOL_ROW "stand_fancy_style" %>
             <%@expand ORIG_TEXT_ROW "stand_success_attr" "Attrs" "48" %>
             <%@expand ORIG_TEXT_ROW "stand_table_attr" "Attrs" "48" %>
-<%
-    xstr = 0;
-    if (global->stand_row_attr && global->stand_row_attr[0]) xstr = sarray_unparse_2(global->stand_row_attr);
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_row_attr-div">
-                <td><s:v value="MSG_stand_row_attr" escape="no" />:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_row_attr" name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_row_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_row_attr" /></td>
-            </s:tr>
-<%
-  xfree(xstr); xstr = 0;
-%>
+            <%@expand ORIG_XSTR_ROW "stand_row_attr" "Attrs" "48" %>
             <%@expand ORIG_TEXT_ROW "stand_place_attr" "Attrs" "48" %>
             <%@expand ORIG_TEXT_ROW "stand_team_attr" "Attrs" "48" %>
             <%@expand ORIG_TEXT_ROW "stand_prob_attr" "Attrs" "48" %>
@@ -1615,12 +1607,7 @@ function advancedDialogOnChange()
             <%@expand ORIG_TEXT_ROW "stand_v_row_attr" "Attrs" "48" %>
             <%@expand ORIG_TEXT_ROW "stand_r_row_attr" "Attrs" "48" %>
             <%@expand ORIG_TEXT_ROW "stand_u_row_attr" "Attrs" "48" %>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_extra_col-div">
-                <td><s:v value="MSG_enable_extra_col" escape="no" />?</td>
-                <td><s:yesno disabled="disabled" id="orig-enable_extra_col" name="param" value="phr->ss->enable_extra_col" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:globalenable_extra_col:" /></td>
-            </s:tr>
+            <%@expand ORIG_BOOL_ROW_WITH_VALUE "enable_extra_col" "phr->ss->enable_extra_col" %>
             <%@expand ORIG_TEXT_ROW "stand_extra_format" "Attrs" "48" %>
             <%@expand ORIG_TEXT_ROW "stand_extra_legend" "Attrs" "48" %>
             <%@expand ORIG_TEXT_ROW "stand_extra_attr" "Attrs" "48" %>
@@ -1628,32 +1615,8 @@ function advancedDialogOnChange()
             <%@expand ORIG_TEXT_ROW "stand_warn_number_attr" "Attrs" "48" %>
             <%@expand ORIG_TEXT_ROW "stand_page_table_attr" "Attrs" "48" %>
             <%@expand ORIG_TEXT_ROW "stand_page_cur_attr" "Attrs" "48" %>
-<%
-    xstr = 0;
-    if (global->stand_page_row_attr && global->stand_page_row_attr[0]) xstr = sarray_unparse_2(global->stand_page_row_attr);
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_page_row_attr-div">
-                <td><s:v value="MSG_stand_page_row_attr" escape="no" />:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_page_row_attr" name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_page_row_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_page_row_attr" /></td>
-            </s:tr>
-<%
-    xfree(xstr); xstr = 0;
-%>
-<%
-    xstr = 0;
-    if (global->stand_page_col_attr && global->stand_page_col_attr[0]) xstr = sarray_unparse_2(global->stand_page_col_attr);
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_page_col_attr-div">
-                <td><s:v value="MSG_stand_page_col_attr" escape="no" />:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_page_col_attr" name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_page_col_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_page_col_attr" /></td>
-            </s:tr>
-<%
-    xfree(xstr); xstr = 0;
-%>
+            <%@expand ORIG_XSTR_ROW "stand_page_row_attr" "Attrs" "48" %>
+            <%@expand ORIG_XSTR_ROW "stand_page_col_attr" "Attrs" "48" %>
         </table>
     </div>
 
@@ -1744,19 +1707,7 @@ function advancedDialogOnChange()
                 <td><input type="button" onclick="popupAdvancedDialog(event, 'cpu_bogomips')" value="Clear" /><input type="button" onclick="popupAdvancedDialog(event, 'cpu_bogomips_detect')" value="Detect" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:cpu_bogomips" /></td>
             </s:tr>
-<%
-  xstr = 0;
-  if (global->load_user_group && global->load_user_group[0]) xstr = sarray_unparse_2(global->load_user_group);
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-load_user_group-div">
-                <td><s:v value="MSG_load_user_group" escape="no" />:</td>
-                <td><s:textfield readonly="readonly" id="orig-load_user_group" name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupAdvancedDialog(event, 'load_user_group')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:load_user_group" /></td>
-            </s:tr>
-<%
-  xfree(xstr); xstr = 0;
-%>
+            <%@expand ORIG_XSTR_ROW "load_user_group" "Advanced" "48" %>
             <%@expand ORIG_TEXT_ROW "clardb_plugin" "Advanced" "48" %>
             <%@expand ORIG_TEXT_ROW "rundb_plugin" "Advanced" "48" %>
             <%@expand ORIG_TEXT_ROW "xuser_plugin" "Advanced" "48" %>
