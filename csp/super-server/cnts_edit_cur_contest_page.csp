@@ -82,6 +82,9 @@ static const unsigned char MSG_login_template_options[] = "Login auto-assign opt
     opcap_t caps = 0;
     int row = 1;
     int cur_page = 1;
+    int active = 0;
+
+    %><s:read name="active" default="0" ignoreerrors="yes" /><%
 
 static const unsigned char * const form_row_attrs[]=
 {
@@ -98,6 +101,13 @@ static const unsigned char * const form_row_attrs[]=
     cnts = phr->ss->edited_cnts;
 %><%@include "header_jqgrid.csp"
 %>
+
+<script type="text/javascript">
+  var SID='<s:v value="phr->session_id" />';
+  var self_url='<s:v value="phr->self_url" escape="false" />';
+  var script_name='<s:v value="phr->script_name" escape="false" />';
+  var current_action=<s:ac ac="cnts-edit-cur-contest-page" />;
+</script>
 
 <%@include "cnts_edit_cur_top_menu.csp"
 %>
@@ -266,7 +276,7 @@ static const unsigned char * const form_row_attrs[]=
 
 <script type="text/javascript">
 $(function() {
-    $('#ContestAccordion').accordion({ heightStyle: "content" });
+    $('#ContestAccordion').accordion({ heightStyle: "content" <% if (active > 0) { %>, active: <s:v value="active" /><% } %> });
     dialog = $("#BasicDialogDiv").dialog({
         autoOpen: false,
         height: 300,
@@ -282,7 +292,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=0';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -311,7 +322,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=4';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -340,7 +352,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=1';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -372,7 +385,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=2';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -408,7 +422,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=3';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -438,7 +453,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=8';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -468,7 +484,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=9';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -498,7 +515,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=10';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -528,7 +546,8 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=11';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
                         //if fails     
@@ -608,7 +627,7 @@ function popupFlagsDialog()
     copyCheckbox("FlagsDialo_enable_password_recovery", "Ori_enable_password_recovery");
     copyCheckbox("FlagsDialo_exam_mode", "Ori_exam_mode");
     copyCheckbox("FlagsDialo_disable_password_change", "Ori_disable_password_change");
-    copyCheckbox("FlagsDialo_disable_locale_change", "Ori_disable_local_change");
+    copyCheckbox("FlagsDialo_disable_locale_change", "Ori_disable_locale_change");
     copyCheckbox("FlagsDialo_allow_reg_data_edit", "Ori_allow_reg_data_edit");
     copyCheckbox("FlagsDialo_enable_user_telegram", "Ori_enable_user_telegram");
     copyCheckbox("FlagsDialo_enable_avatar", "Ori_enable_avatar");
