@@ -62,6 +62,8 @@
 #include "ejudge/random.h"
 #include "ejudge/avatar_plugin.h"
 #include "ejudge/content_plugin.h"
+#include "ejudge/imagemagick.h"
+#include "ejudge/base32.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -7160,6 +7162,117 @@ cleanup:;
   avatar_vector_free(&avatars);
 }
 
+enum { MAX_IMAGE_SIZE = 16 * 1024 * 1024, MAX_IMAGE_WIDTH = 10000, MAX_IMAGE_HEIGHT = 10000 };
+
+static void
+priv_upload_avatar(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int errcode = 0;
+  int other_user_id = 0;
+  const unsigned char *img_data = NULL;
+  size_t img_size = 0;
+  int mime_type = 0;
+  int width = 0;
+  int height = 0;
+  FILE *log_f = 0;
+  char *log_t = 0;
+  size_t log_z = 0;
+  unsigned char random_key_bin[AVATAR_RANDOM_KEY_SIZE];
+  unsigned char random_key[AVATAR_RANDOM_KEY_SIZE * 2];
+  unsigned char urlbuf[1024];
+
+  urlbuf[0] = 0;
+
+  if (opcaps_check(phr->caps, OPCAP_EDIT_USER) < 0) {
+    errcode = NEW_SRV_ERR_PERMISSION_DENIED;
+    goto cleanup;
+  }
+
+  if (hr_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
+    errcode = NEW_SRV_ERR_INV_USER_ID;
+    goto cleanup;
+  }
+  if (!teamdb_lookup(extra->serve_state->teamdb_state, other_user_id)) {
+    errcode = NEW_SRV_ERR_INV_USER_ID;
+    goto cleanup;
+  }
+  if (hr_cgi_param_bin(phr, "img_file", &img_data, &img_size) <= 0) {
+    errcode = NEW_SRV_ERR_INV_PARAM;
+    goto cleanup;
+  }
+  if (img_size > MAX_IMAGE_SIZE) {
+    errcode = NEW_SRV_ERR_INV_PARAM;
+    goto cleanup;
+  }
+  log_f = open_memstream(&log_t, &log_z);
+  mime_type = image_identify(log_f, NULL, img_data, img_size, &width, &height);
+  fclose(log_f); log_f = NULL;
+  free(log_t); log_t = NULL;
+  log_z = 0;
+  if (mime_type < 0) {
+    errcode = NEW_SRV_ERR_INV_PARAM;
+    goto cleanup;
+  }
+  if (mime_type < MIME_TYPE_IMAGE_FIRST || mime_type > MIME_TYPE_IMAGE_LAST) {
+    errcode = NEW_SRV_ERR_INV_PARAM;
+    goto cleanup;
+  }
+  if (width < 0 || height < 0) {
+    errcode = NEW_SRV_ERR_INV_PARAM;
+    goto cleanup;
+  }
+  if (width > MAX_IMAGE_WIDTH || height > MAX_IMAGE_HEIGHT) {
+    errcode = NEW_SRV_ERR_INV_PARAM;
+    goto cleanup;
+  }
+  if (width < AVATAR_WIDTH || height < AVATAR_HEIGHT) {
+    errcode = NEW_SRV_ERR_INV_PARAM;
+    goto cleanup;
+  }
+
+  // generate 128-bit random key
+  if (random_init() < 0) {
+    errcode = NEW_SRV_ERR_INTERNAL;
+    goto cleanup;
+  }
+  random_bytes(random_key_bin, AVATAR_RANDOM_KEY_SIZE);
+  base32_buf(random_key, random_key_bin, AVATAR_RANDOM_KEY_SIZE, 0);
+
+  struct avatar_loaded_plugin *avt = avatar_plugin_get(extra, cnts, phr->config, NULL);
+  if (!avt) {
+    errcode = NEW_SRV_ERR_INTERNAL;
+    goto cleanup;
+  }
+
+  int r = avt->iface->insert(avt->data, other_user_id, phr->contest_id,
+                             0 /* is_cropped */,
+                             1 /* is_temporary */,
+                             0 /* is_public */,
+                             mime_type, width, height, random_key,
+                             phr->current_time,
+                             img_data,
+                             img_size,
+                             NULL);
+  if (r < 0) {
+    errcode = NEW_SRV_ERR_INTERNAL;
+    goto cleanup;
+  }
+
+  snprintf(urlbuf, sizeof(urlbuf), "%s?SID=%llx&action=%d&key=%s&other_user_id=%d",
+           phr->self_url, phr->session_id, NEW_SRV_ACTION_REG_CROP_AVATAR_PAGE,
+           random_key, other_user_id);
+  ns_refresh_page_2(fout, phr->client_key, urlbuf);
+
+cleanup:
+  if (errcode > 0) {
+    error_page(fout, phr, 1, errcode);
+  }
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -7364,6 +7477,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PING] = priv_generic_page,
   [NEW_SRV_ACTION_SUBMIT_RUN_BATCH] = priv_generic_page,
   [NEW_SRV_ACTION_GET_AVATAR] = priv_get_avatar,
+  [NEW_SRV_ACTION_UPLOAD_AVATAR] = priv_upload_avatar,
   [NEW_SRV_ACTION_PRIV_REGENERATE_CONTENT] = priv_generic_operation,
   [NEW_SRV_ACTION_RELOAD_CONTEST_PAGES] = priv_generic_operation,
   [NEW_SRV_ACTION_RELOAD_ALL_CONTEST_PAGES] = priv_generic_operation,
