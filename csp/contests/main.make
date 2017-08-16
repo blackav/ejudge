@@ -39,6 +39,7 @@ SOFILES = \
  csp_priv_assign_cyphers_page.so\
  csp_priv_audit_log_page.so\
  csp_priv_clar_page.so\
+ csp_priv_crop_avatar_page.so\
  csp_priv_download_runs_confirmation_page.so\
  csp_priv_edit_clar_page.so\
  csp_priv_edit_run_page.so\
@@ -167,6 +168,7 @@ csp_priv_users_page.c : priv_users_page.csp priv_includes.csp priv_stdvars.csp p
 csp_priv_users_new_page.c : priv_users_new_page.csp priv_includes.csp priv_stdvars.csp priv_header_jq.csp priv_footer.csp
 csp_priv_users_new_ajax.c : priv_users_new_ajax.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_tokenize_displayed_1_page.c : priv_tokenize_displayed_1_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_crop_avatar_page.c : priv_crop_avatar_page.csp priv_includes.csp priv_stdvars.csp priv_header_croppie.csp priv_footer.csp
 
 csp_priv_error_internal.c : priv_error_internal.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_error_inv_param.c : priv_error_inv_param.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
