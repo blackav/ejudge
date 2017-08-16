@@ -1044,7 +1044,7 @@ ns_reg_main_page_view_info(
         fprintf(fout, "<input class=\"avatar-file\" type=\"file\" name=\"img_file\" /><br/>");
         fprintf(fout, "%s",
                 ns_submit_button_2(bb, sizeof(bb), "avatar-button", NULL,
-                                   NEW_SRV_ACTION_REG_UPLOAD_AVATAR, 0));
+                                   NEW_SRV_ACTION_UPLOAD_AVATAR, 0));
         fprintf(fout, "</form>\n");
       }
       fprintf(fout, "</div>\n");
@@ -2588,7 +2588,7 @@ static reg_action_handler_func_t reg_handlers[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_REG_ADD_MEMBER_PAGE] = add_member,
   [NEW_SRV_ACTION_REG_REMOVE_MEMBER] = remove_member,
   [NEW_SRV_ACTION_REG_MOVE_MEMBER] = move_member,
-  [NEW_SRV_ACTION_REG_UPLOAD_AVATAR] = upload_avatar,
+  [NEW_SRV_ACTION_UPLOAD_AVATAR] = upload_avatar,
 };
 
 typedef PageInterface *(*external_action_handler_t)(void);

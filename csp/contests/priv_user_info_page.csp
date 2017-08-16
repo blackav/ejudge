@@ -92,7 +92,7 @@
     <td class="b1">
       <s:form enctype="multipart/form-data">
         <input class="avatar-file" type="file" name="img_file" /><br/>
-        <s:submit ac="reg-upload-avatar" text="Upload" />
+        <s:submit ac="upload-avatar" text="Upload" />
       </s:form>
     </td>
   </tr>
