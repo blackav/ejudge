@@ -95,7 +95,8 @@ function saveCroppedAvatar()
                 url: self_url,
                 data: {
                     SID: SID,
-                    action: reg_save_cropped_avatar_ajax_ac,
+                    action: save_cropped_avatar_ajax_ac,
+                    other_user_id: other_user_id,
                     key: key,
                     width: html.style.width,
                     height: html.style.height,
@@ -108,7 +109,7 @@ function saveCroppedAvatar()
                     if (data.result < 0) {
                         alert(data.message);
                     } else {
-                        window.location.href = self_url + '?SID=' + SID + "&action=" + view_user_info_ac + "&view_user_id=" + other_user_id;
+                        window.location.href = self_url + '?SID=' + SID + "&action=" + view_user_info_ac + "&user_id=" + other_user_id;
                     }
                 },
                 error: function(data) {
