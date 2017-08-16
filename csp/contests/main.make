@@ -54,6 +54,7 @@ SOFILES = \
  csp_priv_priv_users_page.so\
  csp_priv_reload_statement_action.so\
  csp_priv_report_page.so\
+ csp_priv_save_cropped_avatar_ajax.so\
  csp_priv_settings_page.so\
  csp_priv_source_page.so\
  csp_priv_standings_page.so\
@@ -169,6 +170,7 @@ csp_priv_users_new_page.c : priv_users_new_page.csp priv_includes.csp priv_stdva
 csp_priv_users_new_ajax.c : priv_users_new_ajax.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_tokenize_displayed_1_page.c : priv_tokenize_displayed_1_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_crop_avatar_page.c : priv_crop_avatar_page.csp priv_includes.csp priv_stdvars.csp priv_header_croppie.csp priv_footer.csp
+csp_priv_save_cropped_avatar_ajax.c : priv_save_cropped_avatar_ajax.csp priv_includes.csp priv_stdvars.csp
 
 csp_priv_error_internal.c : priv_error_internal.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_error_inv_param.c : priv_error_inv_param.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
