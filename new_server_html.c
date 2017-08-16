@@ -7263,7 +7263,7 @@ priv_upload_avatar(
   }
 
   snprintf(urlbuf, sizeof(urlbuf), "%s?SID=%llx&action=%d&key=%s&other_user_id=%d",
-           phr->self_url, phr->session_id, NEW_SRV_ACTION_REG_CROP_AVATAR_PAGE,
+           phr->self_url, phr->session_id, NEW_SRV_ACTION_CROP_AVATAR_PAGE,
            random_key, other_user_id);
   ns_refresh_page_2(fout, phr->client_key, urlbuf);
 

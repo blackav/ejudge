@@ -66,7 +66,7 @@ var self_url = "<s:v value="phr->self_url" json="yes" />";
 var SID = "<s:v value="phr->session_id" json="yes" />";
 var key = "<s:v value="key" json="yes" />";
 var get_avatar_ac = <s:ac ac="get-avatar" />;
-var reg_save_cropped_avatar_ajax_ac = <s:ac ac="reg-save-cropped-avatar-ajax" />;
+var reg_save_cropped_avatar_ajax_ac = <s:ac ac="save-cropped-avatar-ajax" />;
 var reg_view_general_ac = <s:ac ac="reg-view-general" />;
 var croppie = null;
 $(function() {
