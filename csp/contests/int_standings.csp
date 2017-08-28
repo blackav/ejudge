@@ -206,7 +206,7 @@ sec_to_min(int rounding_mode, int secs)
 %>
 <%
     if (pg->last_submit_run >= 0) {
-        const struct run_entry *pe = &pg->runs[pg->last_success_run];
+        const struct run_entry *pe = &pg->runs[pg->last_submit_run];
         int user_ind = -1;
         if (pe->user_id > 0 && pe->user_id < pg->t_max) user_ind = pg->t_rev[pe->user_id];
         StandingsUserRow *row = NULL;
