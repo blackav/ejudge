@@ -464,6 +464,7 @@ super_html_commit_contest_2(
   int i, j;
 
   path_t conf_path;
+  path_t var_path;
   path_t xml_path;
   path_t serve_cfg_path;
   path_t serve_cfg_path_2 = { 0 };
@@ -615,6 +616,8 @@ super_html_commit_contest_2(
     snprintf(conf_path, sizeof(conf_path), "%s", cnts->conf_dir);
   }
 
+  snprintf(var_path, sizeof(var_path), "%s/%s", cnts->root_dir, "var");
+
   /* Create the contest root directory */
   if (stat(cnts->root_dir, &sb) >= 0) {
     if (!S_ISDIR(sb.st_mode)) {
@@ -658,6 +661,27 @@ super_html_commit_contest_2(
       fprintf(log_f, "Version control:\n%s\n", vcs_str);
       xfree(vcs_str); vcs_str = 0;
     }
+  }
+
+  /* Create the working directory */
+  if (lstat(var_path, &sb) >= 0) {
+    if (S_ISLNK(sb.st_mode)) {
+      fprintf(log_f, "error: contest working directory '%s' must not be a symlink\n", var_path);
+      goto failed;
+    }
+    if (!S_ISDIR(sb.st_mode)) {
+      fprintf(log_f, "error: contest working directory '%s' must be a directory\n", var_path);
+      goto failed;
+    }
+    fprintf(log_f, "contest working directory '%s' already exists\n", var_path);
+  } else {
+    if ((errcode = os_MakeDirPath(var_path, 0775)) < 0) {
+      fprintf(log_f, "error: contest working directory '%s' creation failed\n", var_path);
+      fprintf(log_f, "error: %s\n", os_GetErrorString(-errcode));
+      goto failed;
+    }
+    file_perms_set(log_f, var_path, dir_group, dir_mode, 0, 0);
+    fprintf(log_f, "contest working directory '%s' is created\n", var_path);
   }
 
   /* FIXME: create statement, test, checker directories, etc... */
