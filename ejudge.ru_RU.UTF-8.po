@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-09-06 08:33+0300\n"
-"PO-Revision-Date: 2017-09-06 08:33+0300\n"
+"POT-Creation-Date: 2017-09-06 17:19+0300\n"
+"PO-Revision-Date: 2017-09-06 17:21+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -3028,6 +3028,9 @@ msgstr "Восстановить пароль"
 msgid "Refresh"
 msgstr "Обновить"
 
+msgid "Reg. read-only?"
+msgstr "Запрет модификации рег. данных?"
+
 #, c-format
 msgid ""
 "Regards,\n"
@@ -3493,6 +3496,9 @@ msgstr "Изменение параметров сессии не удалось
 #, c-format
 msgid "Session update failed: %s"
 msgstr "Изменение параметров сессии не удалось: %s"
+
+msgid "Set"
+msgstr "Установить"
 
 msgid "Set REJECTED run status"
 msgstr "Установить статус Отклонено (REJECTED)"

@@ -251,7 +251,7 @@
     if ((flags & TEAM_INCOMPLETE)) {
 %><s:submit ac="toggle-incompleteness" label="Clear" /><%
     } else {
-%><s:submit ac="toggle-incompleteness" label="Clear" /><%
+%><s:submit ac="toggle-incompleteness" label="Set" /><%
     }
   } else {
 %>&nbsp;<%
@@ -262,6 +262,73 @@
 <% } %>
 
 <tr><td><s:_>Disqualified?</s:_>:</td><td><s:vb value="flags &amp; TEAM_DISQUALIFIED" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+
+<%  allowed_edit = 0;
+  if (u) {
+    if (u->is_privileged) {
+      if ((flags & TEAM_PRIVILEGED)) needed_cap = OPCAP_PRIV_CREATE_REG;
+      else needed_cap = OPCAP_PRIV_DELETE_REG;
+    } else {
+      if ((flags & TEAM_PRIVILEGED)) needed_cap = OPCAP_CREATE_REG;
+      else needed_cap = OPCAP_DELETE_REG;
+    }
+    if (opcaps_check(phr->caps, needed_cap) >= 0) allowed_edit = 1;
+  }
+%>
+<%
+  if (allowed_edit) {
+%>
+<s:form>
+<s:hidden name="user_id" value="view_user_id" />
+<%  } %>
+<tr><td><s:_>Privileged?</s:_>:</td><td><s:vb value="flags &amp; TEAM_PRIVILEGED" /></td><td>&nbsp;</td><td><%
+  if(allowed_edit) {
+    if ((flags & TEAM_PRIVILEGED)) {
+%><s:submit ac="toggle-privileged" label="Clear" /><%
+    } else {
+%><s:submit ac="toggle-privileged" label="Set" /><%
+    }
+  } else {
+%>&nbsp;<%
+  }
+%></td></tr>
+<%  if (allowed_edit) { %>
+</s:form>
+<% } %>
+
+<%  allowed_edit = 0;
+  if (u) {
+    if (u->is_privileged) {
+      if ((flags & TEAM_REG_READONLY)) needed_cap = OPCAP_PRIV_CREATE_REG;
+      else needed_cap = OPCAP_PRIV_DELETE_REG;
+    } else {
+      if ((flags & TEAM_REG_READONLY)) needed_cap = OPCAP_CREATE_REG;
+      else needed_cap = OPCAP_DELETE_REG;
+    }
+    if (opcaps_check(phr->caps, needed_cap) >= 0) allowed_edit = 1;
+  }
+%>
+<%
+  if (allowed_edit) {
+%>
+<s:form>
+<s:hidden name="user_id" value="view_user_id" />
+<%  } %>
+<tr><td><s:_>Reg. read-only?</s:_>:</td><td><s:vb value="flags &amp; TEAM_REG_READONLY" /></td><td>&nbsp;</td><td><%
+  if(allowed_edit) {
+    if ((flags & TEAM_REG_READONLY)) {
+%><s:submit ac="toggle-reg-readonly" label="Clear" /><%
+    } else {
+%><s:submit ac="toggle-reg-readonly" label="Set" /><%
+    }
+  } else {
+%>&nbsp;<%
+  }
+%></td></tr>
+<%  if (allowed_edit) { %>
+</s:form>
+<% } %>
+
 <tr><td><s:_>Number of Runs</s:_>:</td><td><s:v value="runs_num" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
 <tr><td><s:_>Total size of Runs</s:_>:</td><td><s:v value="runs_total" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
 <tr><td><s:_>Number of Clars</s:_>:</td><td><s:v value="clars_num" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
