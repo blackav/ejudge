@@ -1968,6 +1968,47 @@ priv_user_issue_warning(
 }
 
 static int
+priv_user_change_status_2(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int retval = 0, user_id, status, n;
+
+  if (phr->role < USER_ROLE_JUDGE)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (opcaps_check(phr->caps, OPCAP_EDIT_REG) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (hr_cgi_param_int(phr, "user_id", &user_id) < 0)
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+  if (hr_cgi_param_int(phr, "status", &status) < 0)
+    FAIL(NEW_SRV_ERR_INV_STATUS);
+  if (status < 0 || status >= USERLIST_REG_LAST)
+    FAIL(NEW_SRV_ERR_INV_STATUS);
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+    retval = -1;
+    goto cleanup;
+  }
+  n = userlist_clnt_change_registration(ul_conn, user_id, phr->contest_id, status, 0, 0);
+  if (n < 0) {
+    ns_error(log_f, NEW_SRV_ERR_USER_FLAGS_CHANGE_FAILED,
+             user_id, phr->contest_id, userlist_strerror(-n));
+    retval = -1;
+    goto cleanup;
+  }
+
+  snprintf(phr->next_extra, sizeof(phr->next_extra), "user_id=%d", user_id);
+  retval = NEW_SRV_ACTION_VIEW_USER_INFO;
+
+cleanup:
+  return retval;
+}
+
+static int
 priv_user_toggle_flags(
         FILE *fout,
         FILE *log_f,
@@ -6946,6 +6987,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_DELETE_AVATAR] = priv_delete_avatar,
   [NEW_SRV_ACTION_TOGGLE_PRIVILEGED] = priv_user_toggle_flags,
   [NEW_SRV_ACTION_TOGGLE_REG_READONLY] = priv_user_toggle_flags,
+  [NEW_SRV_ACTION_USER_CHANGE_STATUS_2] = priv_user_change_status_2,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_DOWNLOAD_RUN] = priv_download_source,
@@ -7486,6 +7528,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS] = priv_generic_operation,
   [NEW_SRV_ACTION_TOGGLE_PRIVILEGED] = priv_generic_operation,
   [NEW_SRV_ACTION_TOGGLE_REG_READONLY] = priv_generic_operation,
+  [NEW_SRV_ACTION_USER_CHANGE_STATUS_2] = priv_generic_operation,
   [NEW_SRV_ACTION_VIEW_ONLINE_USERS] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL] = priv_generic_page,
