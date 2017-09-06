@@ -96,6 +96,12 @@
         <s:submit ac="upload-avatar" text="Upload" />
       </s:form>
     </td>
+    <td class="b1">
+      <s:form enctype="multipart/form-data">
+        <s:hidden name="other_user_id" value="view_user_id" />
+        <s:submit ac="delete-avatar" />
+      </s:form>
+    </td>
   </tr>
 </table>
 <% } %>
