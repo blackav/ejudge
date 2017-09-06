@@ -201,6 +201,7 @@ const unsigned char * const ns_submit_button_labels[NEW_SRV_ACTION_LAST]=
   [NEW_SRV_ACTION_RELOAD_CONTEST_PAGES] = __("Reload Contest Pages"),
   [NEW_SRV_ACTION_RELOAD_ALL_CONTEST_PAGES] = __("Reload ALL Contest Pages"),
   [NEW_SRV_ACTION_DELETE_AVATAR] = __("Delete Avatar"),
+  [NEW_SRV_ACTION_USER_CHANGE_STATUS_2] = __("Change Status"),
 };
 
 const int ns_priv_next_state[NEW_SRV_ACTION_LAST] =

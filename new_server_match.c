@@ -10397,6 +10397,15 @@ int ns_match_action(const unsigned char *str)
                                               if (c == 's') {
                                                 c = str[18];
                                                 if (!c) return NEW_SRV_ACTION_USER_CHANGE_STATUS;
+                                                if (c == '-') {
+                                                  c = str[19];
+                                                  if (c == '2') {
+                                                    c = str[20];
+                                                    if (!c) return NEW_SRV_ACTION_USER_CHANGE_STATUS_2;
+                                                    return 0;
+                                                  }
+                                                  return 0;
+                                                }
                                                 return 0;
                                               }
                                               return 0;

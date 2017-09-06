@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-09-06 17:19+0300\n"
+"POT-Creation-Date: 2017-09-06 17:56+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -565,6 +565,9 @@ msgid "Change"
 msgstr ""
 
 msgid "Change Language"
+msgstr ""
+
+msgid "Change Status"
 msgstr ""
 
 msgid "Change duration"
