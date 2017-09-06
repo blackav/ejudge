@@ -2647,6 +2647,57 @@ int ns_match_action(const unsigned char *str)
                   return 0;
                 }
                 return 0;
+              } else if (c < 'i') {
+                if (c == 'e') {
+                  c = str[2];
+                  if (c == 'l') {
+                    c = str[3];
+                    if (c == 'e') {
+                      c = str[4];
+                      if (c == 't') {
+                        c = str[5];
+                        if (c == 'e') {
+                          c = str[6];
+                          if (c == '-') {
+                            c = str[7];
+                            if (c == 'a') {
+                              c = str[8];
+                              if (c == 'v') {
+                                c = str[9];
+                                if (c == 'a') {
+                                  c = str[10];
+                                  if (c == 't') {
+                                    c = str[11];
+                                    if (c == 'a') {
+                                      c = str[12];
+                                      if (c == 'r') {
+                                        c = str[13];
+                                        if (!c) return NEW_SRV_ACTION_DELETE_AVATAR;
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  }
+                  return 0;
+                }
+              } else {
               }
             } else {
               if (c == 'u') {

@@ -289,4 +289,5 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_REGENERATE_CONTENT] = "priv-regenerate-content",
   [NEW_SRV_ACTION_RELOAD_CONTEST_PAGES] = "reload-contest-pages",
   [NEW_SRV_ACTION_RELOAD_ALL_CONTEST_PAGES] = "reload-all-contest-pages",
+  [NEW_SRV_ACTION_DELETE_AVATAR] = "delete-avatar",
 };
