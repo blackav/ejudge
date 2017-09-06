@@ -1997,6 +1997,12 @@ priv_user_toggle_flags(
   case NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS:
     flag = USERLIST_UC_INCOMPLETE;
     break;
+  case NEW_SRV_ACTION_TOGGLE_PRIVILEGED:
+    flag = USERLIST_UC_PRIVILEGED;
+    break;
+  case NEW_SRV_ACTION_TOGGLE_REG_READONLY:
+    flag = USERLIST_UC_REG_READONLY;
+    break;
   default:
     abort();
   }
@@ -6935,6 +6941,8 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = ns_priv_edit_run_action,
   [NEW_SRV_ACTION_PRIV_REGENERATE_CONTENT] = priv_regenerate_content,
   [NEW_SRV_ACTION_DELETE_AVATAR] = priv_delete_avatar,
+  [NEW_SRV_ACTION_TOGGLE_PRIVILEGED] = priv_user_toggle_flags,
+  [NEW_SRV_ACTION_TOGGLE_REG_READONLY] = priv_user_toggle_flags,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_DOWNLOAD_RUN] = priv_download_source,
@@ -7473,6 +7481,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TOGGLE_BAN] = priv_generic_operation,
   [NEW_SRV_ACTION_TOGGLE_LOCK] = priv_generic_operation,
   [NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS] = priv_generic_operation,
+  [NEW_SRV_ACTION_TOGGLE_PRIVILEGED] = priv_generic_operation,
+  [NEW_SRV_ACTION_TOGGLE_REG_READONLY] = priv_generic_operation,
   [NEW_SRV_ACTION_VIEW_ONLINE_USERS] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_USER_PROTOCOL] = priv_generic_page,
   [NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL] = priv_generic_page,
