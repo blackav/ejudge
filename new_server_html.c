@@ -6265,6 +6265,46 @@ priv_set_priorities(
 }
 
 static int
+priv_delete_avatar(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int retval = 0;
+  int other_user_id = -1;
+
+  if (phr->role != USER_ROLE_ADMIN)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (opcaps_check(phr->caps, OPCAP_EDIT_USER) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  hr_cgi_param_int_opt(phr, "other_user_id", &other_user_id, -1);
+  if (other_user_id <= 0) FAIL(NEW_SRV_ERR_INV_USER_ID);
+  if (!teamdb_lookup(cs->teamdb_state, other_user_id)) FAIL(NEW_SRV_ERR_INV_USER_ID);
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+#define DELETED_FIELD_COUNT 3
+  int deleted_ids[DELETED_FIELD_COUNT] =
+  {
+    USERLIST_NC_AVATAR_STORE,
+    USERLIST_NC_AVATAR_ID,
+    USERLIST_NC_AVATAR_SUFFIX,
+  };
+
+  int r = userlist_clnt_edit_field_seq(ul_conn, ULS_EDIT_FIELD_SEQ,
+                                       other_user_id, phr->contest_id, 0,
+                                       DELETED_FIELD_COUNT, 0, deleted_ids,
+                                       NULL, NULL);
+  if (r < 0) FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+
+ cleanup:
+  return retval;
+}
+
+static int
 priv_testing_queue_operation(
         FILE *fout,
         FILE *log_f,
@@ -6894,6 +6934,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION] = ns_priv_edit_clar_action,
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = ns_priv_edit_run_action,
   [NEW_SRV_ACTION_PRIV_REGENERATE_CONTENT] = priv_regenerate_content,
+  [NEW_SRV_ACTION_DELETE_AVATAR] = priv_delete_avatar,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_DOWNLOAD_RUN] = priv_download_source,
@@ -7481,6 +7522,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_REGENERATE_CONTENT] = priv_generic_operation,
   [NEW_SRV_ACTION_RELOAD_CONTEST_PAGES] = priv_generic_operation,
   [NEW_SRV_ACTION_RELOAD_ALL_CONTEST_PAGES] = priv_generic_operation,
+  [NEW_SRV_ACTION_DELETE_AVATAR] = priv_generic_operation,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
