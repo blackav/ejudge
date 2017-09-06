@@ -6306,6 +6306,9 @@ priv_delete_avatar(
                                        NULL, NULL);
   if (r < 0) FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
 
+  snprintf(phr->next_extra, sizeof(phr->next_extra), "user_id=%d", other_user_id);
+  retval = NEW_SRV_ACTION_VIEW_USER_INFO;
+
  cleanup:
   return retval;
 }
