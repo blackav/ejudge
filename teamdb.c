@@ -558,6 +558,20 @@ teamdb_get_flags(teamdb_state_t state, int id)
   return teamdb_convert_flags(state->u_contests[id]->flags);
 }
 
+int
+teamdb_get_status(teamdb_state_t state, int id)
+{
+  if (state->disabled) return 0;
+
+  if (teamdb_refresh(state) < 0) return -1;
+  if (!teamdb_lookup_client(state, id)) {
+    err("teamdb_get_status: bad team id %d (contest_id %d)", id, state->contest_id);
+    return -1;
+  }
+  ASSERT(state->u_contests[id]);
+  return state->u_contests[id]->status;
+}
+
 const struct userlist_user *
 teamdb_get_userlist(teamdb_state_t state, int user_id)
 {

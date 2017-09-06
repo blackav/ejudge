@@ -68,6 +68,7 @@ const unsigned char *teamdb_get_cypher(teamdb_state_t, int);
 const struct userlist_user *teamdb_get_userlist(teamdb_state_t, int);
 int   teamdb_get_max_team_id(teamdb_state_t);
 int   teamdb_get_flags(teamdb_state_t, int);
+int   teamdb_get_status(teamdb_state_t state, int id);
 int   teamdb_get_total_teams(teamdb_state_t);
 int   teamdb_get_vintage(teamdb_state_t);
 
