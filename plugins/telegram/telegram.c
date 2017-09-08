@@ -914,7 +914,7 @@ handle_incoming_message(
             size_t reply_z = 0;
             FILE *reply_f = open_memstream(&reply_s, &reply_z);
             fprintf(reply_f,
-                    "Won't speak in public. Let's use a private chat.\n");
+                    "Stierlitz has never been so close to failure. Let's use a private chat!\n");
             fclose(reply_f); reply_f = NULL;
             send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
             free(reply_s);
