@@ -164,8 +164,9 @@ csp_execute_priv_users_new_ajax(
         const struct userlist_contest *uc = userlist_get_user_contest(u, new_contest_id);
         if (!uc) continue;
 
-        if (show_only_pending && uc->status != USERLIST_REG_PENDING) {
-            continue;
+        if (show_only_pending) {
+            if (uc->status != USERLIST_REG_PENDING)
+                continue;
         } else {
             if (uc->status != USERLIST_REG_OK && show_not_ok <= 0) {
                 continue;
