@@ -32,6 +32,7 @@
     <td><input type="checkbox" name="show_not_ok" id="ShowNotOkUsers" onchange="showNotOkUsersChange()">Show Pending/Rejected</td>
     <td><input type="checkbox" name="show_invisible" id="ShowInvisibleUsers" onchange="showInvisibleUsersChange()">Show Invisible</td>
     <td><input type="checkbox" name="show_banned" id="ShowBannedUsers" onchange="showBannedUsersChange()">Show Banned/Locked/Disqualified</td>
+    <td><input type="checkbox" name="show_only_pending" id="ShowOnlyPendingUsers" onchange="showOnlyPendingUsersChange()">Show Only Pending</td>
 </tr></table>
 
 <div id="UsersTableDiv">
@@ -205,6 +206,7 @@
     var show_not_ok = false;
     var show_invisible = false;
     var show_banned = false;
+    var show_only_pending = false;
 </script>
 
 <script type="text/javascript">
@@ -253,6 +255,12 @@ function showInvisibleUsersChange()
 function showBannedUsersChange()
 {
     show_banned = $("#ShowBannedUsers").prop("checked");
+    loadTable();
+}
+
+function showOnlyPendingUsersChange()
+{
+    show_only_pending = $("#ShowOnlyPendingUsers").prop("checked");
     loadTable();
 }
 
@@ -455,7 +463,8 @@ function loadTable()
             action: action_users_new_ajax,
             show_not_ok : show_not_ok,
             show_invisible : show_invisible,
-            show_banned : show_banned
+            show_banned : show_banned,
+            show_only_pending : show_only_pending
         },
         contentType: "application/json; charset=utf-8",
         dataType: "json",
