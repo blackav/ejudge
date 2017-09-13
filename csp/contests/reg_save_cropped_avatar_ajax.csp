@@ -42,6 +42,15 @@
     message[0] = 0;
     avatar_vector_init(&avatars, 1);
 
+    if (phr->reg_status != USERLIST_REG_PENDING && phr->reg_status != USERLIST_REG_OK) {
+        snprintf(message, sizeof(message), "permission denied");
+        goto done;
+    }
+    if ((phr->reg_flags & USERLIST_UC_REG_READONLY)) {
+        snprintf(message, sizeof(message), "permission denied");
+        goto done;
+    }
+
 %><s:read var="key" ignoreerrors="yes" /><%
     if (!key) key = "";
     s = NULL;

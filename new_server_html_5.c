@@ -1926,6 +1926,11 @@ submit_member_editing(
 
   log_f = open_memstream(&log_t, &log_z);
 
+  if ((phr->reg_flags & USERLIST_UC_REG_READONLY)) {
+    fprintf(log_f, "permission denied\n");
+    goto done;
+  }
+
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     fprintf(log_f, "%s.\n", _("User database server is down"));
     goto done;
@@ -2001,6 +2006,11 @@ submit_general_editing(
 
   l10n_setlocale(phr->locale_id);
   log_f = open_memstream(&log_t, &log_z);
+
+  if ((phr->reg_flags & USERLIST_UC_REG_READONLY)) {
+    fprintf(log_f, "permission denied\n");
+    goto done;
+  }
 
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     fprintf(log_f, "%s.\n", _("User database server is down"));
@@ -2503,6 +2513,15 @@ upload_avatar(
 
   urlbuf[0] = 0;
   log_f = open_memstream(&log_t, &log_z);
+
+  if (phr->reg_status != USERLIST_REG_PENDING && phr->reg_status != USERLIST_REG_OK) {
+    fprintf(log_f, "permission denied\n");
+    goto done;
+  }
+  if ((phr->reg_flags & USERLIST_UC_REG_READONLY)) {
+    fprintf(log_f, "permission denied\n");
+    goto done;
+  }
 
   if (hr_cgi_param_bin(phr, "img_file", &img_data, &img_size) <= 0) {
     fprintf(log_f, "image is not attached\n");
