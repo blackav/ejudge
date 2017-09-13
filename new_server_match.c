@@ -508,6 +508,53 @@ int ns_match_action(const unsigned char *str)
               } else {
               }
               return 0;
+            } else if (c < 't') {
+              if (c == 'f') {
+                c = str[4];
+                if (c == 'i') {
+                  c = str[5];
+                  if (c == 'r') {
+                    c = str[6];
+                    if (c == 'm') {
+                      c = str[7];
+                      if (c == '-') {
+                        c = str[8];
+                        if (c == 'a') {
+                          c = str[9];
+                          if (c == 'v') {
+                            c = str[10];
+                            if (c == 'a') {
+                              c = str[11];
+                              if (c == 't') {
+                                c = str[12];
+                                if (c == 'a') {
+                                  c = str[13];
+                                  if (c == 'r') {
+                                    c = str[14];
+                                    if (!c) return NEW_SRV_ACTION_CONFIRM_AVATAR;
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  }
+                  return 0;
+                }
+                return 0;
+              }
+            } else {
             }
             return 0;
           } else if (c < 'n') {

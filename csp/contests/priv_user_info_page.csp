@@ -101,7 +101,8 @@
     <td class="b1">
       <s:form enctype="multipart/form-data">
         <s:hidden name="other_user_id" value="view_user_id" />
-        <s:submit ac="delete-avatar" />
+        <s:submit ac="delete-avatar" /><br/>
+        <s:submit ac="confirm-avatar" />
       </s:form>
     </td>
   </tr>

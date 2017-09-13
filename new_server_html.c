@@ -6355,6 +6355,40 @@ priv_delete_avatar(
 }
 
 static int
+priv_confirm_avatar(
+        FILE *fout,
+        FILE *log_f,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  int retval = 0;
+  int other_user_id = -1;
+
+  if (phr->role != USER_ROLE_ADMIN)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  if (opcaps_check(phr->caps, OPCAP_EDIT_USER) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  hr_cgi_param_int_opt(phr, "other_user_id", &other_user_id, -1);
+  if (other_user_id <= 0) FAIL(NEW_SRV_ERR_INV_USER_ID);
+  if (!teamdb_lookup(cs->teamdb_state, other_user_id)) FAIL(NEW_SRV_ERR_INV_USER_ID);
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+  if (userlist_clnt_change_registration(ul_conn, other_user_id, phr->contest_id,
+                                        USERLIST_REG_OK, 1, USERLIST_UC_REG_READONLY) < 0) {
+    FAIL(NEW_SRV_ERR_USER_FLAGS_CHANGE_FAILED);
+  }
+
+  snprintf(phr->next_extra, sizeof(phr->next_extra), "user_id=%d", other_user_id);
+  retval = NEW_SRV_ACTION_VIEW_USER_INFO;
+
+ cleanup:
+  return retval;
+}
+
+static int
 priv_testing_queue_operation(
         FILE *fout,
         FILE *log_f,
@@ -6988,6 +7022,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TOGGLE_PRIVILEGED] = priv_user_toggle_flags,
   [NEW_SRV_ACTION_TOGGLE_REG_READONLY] = priv_user_toggle_flags,
   [NEW_SRV_ACTION_USER_CHANGE_STATUS_2] = priv_user_change_status_2,
+  [NEW_SRV_ACTION_CONFIRM_AVATAR] = priv_confirm_avatar,
 
   /* for priv_generic_page */
   [NEW_SRV_ACTION_DOWNLOAD_RUN] = priv_download_source,
@@ -7579,6 +7614,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_RELOAD_CONTEST_PAGES] = priv_generic_operation,
   [NEW_SRV_ACTION_RELOAD_ALL_CONTEST_PAGES] = priv_generic_operation,
   [NEW_SRV_ACTION_DELETE_AVATAR] = priv_generic_operation,
+  [NEW_SRV_ACTION_CONFIRM_AVATAR] = priv_generic_operation,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
