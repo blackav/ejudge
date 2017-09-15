@@ -2076,7 +2076,15 @@ invoke_checker(
   }
 
   status = exitcode;
-  if (status == RUN_CHECK_FAILED || status == RUN_PRESENTATION_ERR) {
+  if (status == RUN_CHECK_FAILED) {
+    goto cleanup;
+  }
+  if (status == RUN_PRESENTATION_ERR) {
+    if (user_score_mode) {
+      cur_info->user_score = 0;
+      cur_info->user_status = status;
+      cur_info->user_tests_passed = 0;
+    }
     goto cleanup;
   }
 
