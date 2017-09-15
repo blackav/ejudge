@@ -3902,6 +3902,12 @@ run_tests(
 
   if (srpp->type_val) {
     status = check_output_only(global, srgp, srpp, reply_pkt, far, exe_name, &tests, check_cmd);
+    has_user_score = reply_pkt->has_user_score;
+    if (has_user_score) {
+      user_status = reply_pkt->user_status;
+      user_score = reply_pkt->user_score;
+      user_tests_passed = reply_pkt->user_tests_passed;
+    }
     goto done;
   }
 
