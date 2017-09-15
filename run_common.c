@@ -53,6 +53,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <limits.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -506,9 +507,12 @@ read_checker_score(
         const unsigned char *path,
         const unsigned char *log_path,
         const unsigned char *what,
+        int user_score_mode,
         int max_score,
         int default_score, // if >= 0, allow failure
-        int *p_score)
+        int *p_score,
+        int *p_user_score,
+        int *p_user_verdict)
 {
   char *score_buf = 0;
   size_t score_buf_size = 0;
@@ -531,16 +535,77 @@ read_checker_score(
     goto fail;
   }
 
-  if (sscanf(score_buf, "%d%n", &x, &n) != 1 || score_buf[n]) {
-    append_msg_to_log(log_path, "The %s score output (%s) is invalid", what, score_buf);
-    goto fail;
-  }
-  if (x < 0 || x > max_score) {
-    append_msg_to_log(log_path, "The %s score (%d) is invalid", what, x);
-    goto fail;
+  if (user_score_mode) {
+    // valid score file variants:
+    //   score user_score user_verdict
+    //   score user_score
+    //   score
+    if (p_score) *p_score = -1;
+    if (p_user_score) *p_user_score = -1;
+    if (p_user_verdict) *p_user_verdict = -1;
+
+    char *ptr = score_buf;
+    char *eptr;
+    errno = 0;
+    long lx = strtol(ptr, &eptr, 10);
+    if (errno || eptr == ptr || (int) lx != lx || lx < 0 || lx > max_score || (*eptr && !isspace(*eptr))) {
+      append_msg_to_log(log_path, "The %s score is invalid", what);
+      goto fail;
+    }
+    if (p_score) *p_score = lx;
+    ptr = eptr;
+    while (isspace(*ptr)) ++ptr;
+    if (*ptr) {
+      errno = 0;
+      long lx = strtol(ptr, &eptr, 10);
+      if (errno || eptr == ptr || (int) lx != lx || lx < 0 || lx > max_score || (*eptr && !isspace(*eptr))) {
+        append_msg_to_log(log_path, "The %s user score is invalid", what);
+        goto fail;
+      }
+      if (p_user_score) *p_user_score = lx;
+      ptr = eptr;
+      while (isspace(*ptr)) ++ptr;
+      if (ptr) {
+        errno = 0;
+        long lx = strtol(ptr, &eptr, 10);
+        if (errno || eptr == ptr || (int) lx != lx || lx < 0 || (*eptr && !isspace(*eptr))) {
+          append_msg_to_log(log_path, "The %s user verdict is invalid", what);
+          goto fail;
+        }
+        // what is valid here:
+        switch (lx) {
+        case RUN_OK:
+        case RUN_PRESENTATION_ERR:
+        case RUN_WRONG_ANSWER_ERR:
+        case RUN_PARTIAL:
+        case RUN_ACCEPTED:
+        case RUN_PENDING_REVIEW:
+          break;
+        default:
+          append_msg_to_log(log_path, "The %s user verdict (%d) is invalid", what, lx);
+          goto fail;
+        }
+        if (p_user_verdict) *p_user_verdict = lx;
+        ptr = eptr;
+        while (isspace(*ptr)) ++ptr;
+        if (*ptr) {
+          append_msg_to_log(log_path, "The %s garbage after scoring information", what);
+          goto fail;
+        }
+      }
+    }
+  } else {
+    if (sscanf(score_buf, "%d%n", &x, &n) != 1 || score_buf[n]) {
+      append_msg_to_log(log_path, "The %s score output (%s) is invalid", what, score_buf);
+      goto fail;
+    }
+    if (x < 0 || x > max_score) {
+      append_msg_to_log(log_path, "The %s score (%d) is invalid", what, x);
+      goto fail;
+    }
+    if (p_score) *p_score = x;
   }
 
-  *p_score = x;
   xfree(score_buf);
   return 0;
 
@@ -731,7 +796,6 @@ read_valuer_score(
   r = parse_valuer_score(log_path, score_buf, score_buf_size,
                          0, max_score, valuer_sets_marked, separate_user_score,
                          NULL, p_score, p_marked,
-
                          p_user_status, p_user_score, p_user_tests_passed);
 
   xfree(score_buf);
@@ -1909,7 +1973,8 @@ invoke_checker(
         const unsigned char *check_dir,
         testinfo_t *ti,
         int test_score_count,
-        const int *test_score_val)
+        const int *test_score_val,
+        int output_only)
 {
   tpTask tsk = NULL;
   int status = RUN_CHECK_FAILED;
@@ -1917,6 +1982,7 @@ invoke_checker(
   int default_score = -1;
   int env_u = 0;
   char **env_v = 0;
+  int user_score_mode = 0;
 
   if (ti) {
     env_u = ti->checker_env_u;
@@ -1960,6 +2026,10 @@ invoke_checker(
   task_SetEnv(tsk, "EJUDGE", "1");
   if (srgp->checker_locale && srgp->checker_locale[0]) {
     task_SetEnv(tsk, "EJUDGE_LOCALE", srgp->checker_locale);
+  }
+  if (srgp->separate_user_score > 0 && output_only > 0) {
+    task_SetEnv(tsk, "EJUDGE_USER_SCORE", "1");
+    user_score_mode = 1;
   }
   task_EnableAllSignals(tsk);
 
@@ -2031,12 +2101,23 @@ invoke_checker(
     abort();
   }
   if (srpp->scoring_checker > 0) {
+    int user_score = -1;
+    int user_status = -1;
     if (status == RUN_OK) default_score = test_max_score;
     if (read_checker_score(score_out_path, check_out_path, "checker",
+                           user_score_mode,
                            test_max_score, default_score,
-                           &cur_info->score) < 0) {
+                           &cur_info->score,
+                           &user_score,
+                           &user_status) < 0) {
       status = RUN_CHECK_FAILED;
       goto cleanup;
+    }
+    if (user_score_mode) {
+      if (user_score < 0) user_score = cur_info->score;
+      if (user_status < 0) user_status = status;
+      cur_info->user_score = user_score;
+      cur_info->user_status = user_status;
     }
   } else {
     if (status == RUN_OK) cur_info->score = test_max_score;
@@ -3147,7 +3228,7 @@ run_checker:;
                           check_cmd, test_src, output_path_to_check,
                           corr_src, info_src, tgzdir_src,
                           working_dir, score_out_path, check_out_path,
-                          check_dir, &tstinfo, test_score_count, test_score_val);
+                          check_dir, &tstinfo, test_score_count, test_score_val, 0);
 
   // read the checker output
 read_checker_output:;
@@ -3456,7 +3537,7 @@ check_output_only(
                           check_cmd, test_src, output_path,
                           corr_src, NULL, NULL,
                           global->run_work_dir, score_out_path, check_out_path,
-                          global->run_work_dir, NULL, 0, NULL);
+                          global->run_work_dir, NULL, 0, NULL, 1);
 
   cur_info->status = status;
 
@@ -3479,6 +3560,10 @@ check_output_only(
     reply_pkt->score = cur_info->score;
     reply_pkt->failed_test = 1;
     reply_pkt->tests_passed = 0;
+  }
+  if (srgp->separate_user_score > 0) {
+    reply_pkt->user_status = cur_info->user_status;
+    reply_pkt->user_score = cur_info->user_score;
   }
 
   // output file

@@ -2,7 +2,7 @@
 #ifndef __RUN_H__
 #define __RUN_H__
 
-/* Copyright (C) 2010-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -59,6 +59,8 @@ struct testinfo
   unsigned char *program_stats_str;
   unsigned char *interactor_stats_str;
   unsigned char *checker_stats_str;
+  int user_status;              /* for output-only separate-user-score problems */
+  int user_score;               /* for output-only separate-user-score problems */
 };
 
 struct testinfo_vector
