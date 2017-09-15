@@ -59,8 +59,10 @@ struct testinfo
   unsigned char *program_stats_str;
   unsigned char *interactor_stats_str;
   unsigned char *checker_stats_str;
-  int user_status;              /* for output-only separate-user-score problems */
-  int user_score;               /* for output-only separate-user-score problems */
+  /* for output-only separate-user-score problems */
+  int user_status;
+  int user_score;
+  int user_tests_passed;
 };
 
 struct testinfo_vector

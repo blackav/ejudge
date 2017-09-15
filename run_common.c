@@ -575,11 +575,12 @@ read_checker_score(
         // what is valid here:
         switch (lx) {
         case RUN_OK:
+        case RUN_ACCEPTED:
+        case RUN_PENDING_REVIEW:
+          break;
         case RUN_PRESENTATION_ERR:
         case RUN_WRONG_ANSWER_ERR:
         case RUN_PARTIAL:
-        case RUN_ACCEPTED:
-        case RUN_PENDING_REVIEW:
           break;
         default:
           append_msg_to_log(log_path, "The %s user verdict (%d) is invalid", what, lx);
@@ -2103,6 +2104,7 @@ invoke_checker(
   if (srpp->scoring_checker > 0) {
     int user_score = -1;
     int user_status = -1;
+    int user_tests_passed = -1;
     if (status == RUN_OK) default_score = test_max_score;
     if (read_checker_score(score_out_path, check_out_path, "checker",
                            user_score_mode,
@@ -2116,8 +2118,23 @@ invoke_checker(
     if (user_score_mode) {
       if (user_score < 0) user_score = cur_info->score;
       if (user_status < 0) user_status = status;
+      switch (user_status) {
+      case RUN_OK:
+      case RUN_ACCEPTED:
+      case RUN_PENDING_REVIEW:
+        user_tests_passed = 1;
+        break;
+      case RUN_PRESENTATION_ERR:
+      case RUN_WRONG_ANSWER_ERR:
+      case RUN_PARTIAL:
+        user_tests_passed = 0;
+        break;
+      }
+      if (user_tests_passed < 0) user_tests_passed = 0;
+
       cur_info->user_score = user_score;
       cur_info->user_status = user_status;
+      cur_info->user_tests_passed = user_tests_passed;
     }
   } else {
     if (status == RUN_OK) cur_info->score = test_max_score;
@@ -3562,8 +3579,10 @@ check_output_only(
     reply_pkt->tests_passed = 0;
   }
   if (srgp->separate_user_score > 0) {
+    reply_pkt->has_user_score = 1;
     reply_pkt->user_status = cur_info->user_status;
     reply_pkt->user_score = cur_info->user_score;
+    reply_pkt->user_tests_passed = cur_info->user_tests_passed;
   }
 
   // output file
