@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -154,6 +154,7 @@ enum
   TR_A_TOO_BIG,
   TR_A_ORIGINAL_SIZE,
   TR_A_BASE64,
+  TR_A_HAS_USER,
 
   TR_A_LAST_ATTR,
 };
@@ -247,6 +248,7 @@ static const char * const attr_map[] =
   [TR_A_TOO_BIG] = "too-big",
   [TR_A_ORIGINAL_SIZE] = "original-size",
   [TR_A_BASE64] = "base64",
+  [TR_A_HAS_USER] = "has-user",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -408,6 +410,14 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       }
       p->status = x;
       break;
+    case TR_A_USER_STATUS:
+      if (!a->text || run_str_short_to_status(a->text, &x) < 0
+          || !run_is_valid_test_status(x)) {
+        xml_err_attr_invalid(a);
+        goto failure;
+      }
+      p->user_status = x;
+      break;
     case TR_A_TIME:
       if (xml_attr_int(a, &x) < 0) goto failure;
       if (x < 0) {
@@ -462,6 +472,14 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       }
       p->score = x;
       break;
+    case TR_A_USER_SCORE:
+      if (xml_attr_int(a, &x) < 0) goto failure;
+      if (x < 0 || x > EJ_MAX_SCORE) {
+        xml_err_attr_invalid(a);
+        goto failure;
+      }
+      p->user_score = x;
+      break;
     case TR_A_VISIBILITY:
       x = test_visibility_parse(a->text);
       if (x < 0 || x >= TV_LAST) {
@@ -501,6 +519,10 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
     case TR_A_CHECKER_OUTPUT_AVAILABLE:
       if (xml_attr_bool(a, &x) < 0) goto failure;
       p->checker_output_available = x;
+      break;
+    case TR_A_HAS_USER:
+      if (xml_attr_bool(a, &x) < 0) goto failure;
+      p->has_user = x;
       break;
     case TR_A_ARGS_TOO_LONG:
       if (xml_attr_bool(a, &x) < 0) goto failure;
@@ -1641,6 +1663,15 @@ testing_report_unparse_xml(
       unparse_bool_attr(out, TR_A_ARGS_TOO_LONG, t->args_too_long);
       if (t->visibility > 0) {
         fprintf(out, " %s=\"%s\"", attr_map[TR_A_VISIBILITY], test_visibility_unparse(t->visibility));
+      }
+      if (t->has_user > 0) {
+        if (t->user_status >= 0) {
+          run_status_to_str_short(buf1, sizeof(buf1), t->user_status);
+          fprintf(out, " %s=\"%s\"", attr_map[TR_A_USER_STATUS], buf1);
+        }
+        if (t->user_score >= 0) {
+          fprintf(out, " %s=\"%d\"", attr_map[TR_A_USER_SCORE], t->user_score);
+        }
       }
       fprintf(out, " >\n");
 

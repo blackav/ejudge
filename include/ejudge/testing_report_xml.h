@@ -2,7 +2,7 @@
 #ifndef __TESTING_REPORT_XML_H__
 #define __TESTING_REPORT_XML_H__
 
-/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -58,6 +58,9 @@ struct testing_report_test
   int has_info_digest;
   int visibility;
   unsigned long max_memory_used;
+  int has_user;
+  int user_status;
+  int user_score;
 
   // digests are BINARY SHA1 (20 bytes)
   unsigned char input_digest[32];
