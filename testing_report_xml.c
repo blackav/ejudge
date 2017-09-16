@@ -1665,6 +1665,7 @@ testing_report_unparse_xml(
         fprintf(out, " %s=\"%s\"", attr_map[TR_A_VISIBILITY], test_visibility_unparse(t->visibility));
       }
       if (t->has_user > 0) {
+        unparse_bool_attr(out, TR_A_HAS_USER, t->has_user);
         if (t->user_status >= 0) {
           run_status_to_str_short(buf1, sizeof(buf1), t->user_status);
           fprintf(out, " %s=\"%s\"", attr_map[TR_A_USER_STATUS], buf1);
