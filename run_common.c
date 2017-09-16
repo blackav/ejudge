@@ -386,6 +386,13 @@ generate_xml_report(
       if (tests[i].visibility > 0) {
         trt->visibility = tests[i].visibility;
       }
+      if (tests[i].user_status >= 0) {
+        trt->has_user = 1;
+        trt->user_status = tests[i].user_status;
+        if (tests[i].user_score >= 0) {
+          trt->user_score = tests[i].user_score;
+        }
+      }
       if (tests[i].args && strlen(tests[i].args) < srgp->max_cmd_length) {
         trt->args = xstrdup(tests[i].args);
       }
