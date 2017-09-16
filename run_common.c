@@ -2386,6 +2386,9 @@ run_one_test(
   if (open_tests_val && cur_test > 0 && cur_test < open_tests_count) {
     cur_info->visibility = open_tests_val[cur_test];
   }
+  cur_info->user_status = -1;
+  cur_info->user_score = -1;
+  cur_info->user_nominal_score = -1;
 
   time_limit_value_ms = 0;
   if (srpp->time_limit_ms > 0) {
@@ -3567,6 +3570,9 @@ check_output_only(
   cur_info->correct_size = -1;
   cur_info->chk_out_size = -1;
   cur_info->visibility = TV_NORMAL;
+  cur_info->user_status = -1;
+  cur_info->user_nominal_score = -1;
+  cur_info->user_score = -1;
 
   snprintf(output_path, sizeof(output_path), "%s/%s", global->run_work_dir, exe_name);
   status = invoke_checker(srgp, srpp, cur_test, cur_info,
