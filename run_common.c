@@ -4356,6 +4356,18 @@ run_tests(
         }
       }
     }
+    if (user_max_score < 0) {
+      user_max_score = 0;
+      for (cur_test = 1; cur_test < tests.size; ++cur_test) {
+        if (tests.data[cur_test].visibility != TV_HIDDEN) {
+          if (tests.data[cur_test].user_nominal_score > 0) {
+            user_max_score += tests.data[cur_test].user_nominal_score;
+          } else if (tests.data[cur_test].score > 0) {
+            user_max_score += tests.data[cur_test].nominal_score;
+          }
+        }
+      }
+    }
     if (srgp->scoring_system_val == SCORE_KIROV
         || (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0)) {
       if (user_score < 0) {
