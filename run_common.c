@@ -511,7 +511,7 @@ chk_printf(struct testinfo *result, const char *format, ...)
 }
 
 static int
-read_checker_score(
+parse_checker_score(
         const unsigned char *path,
         const unsigned char *log_path,
         const unsigned char *what,
@@ -2122,12 +2122,12 @@ invoke_checker(
     int user_status = -1;
     int user_tests_passed = -1;
     if (status == RUN_OK) default_score = test_max_score;
-    if (read_checker_score(score_out_path, check_out_path, "checker",
-                           user_score_mode,
-                           test_max_score, default_score,
-                           &cur_info->score,
-                           &user_score,
-                           &user_status) < 0) {
+    if (parse_checker_score(score_out_path, check_out_path, "checker",
+                            user_score_mode,
+                            test_max_score, default_score,
+                            &cur_info->score,
+                            &user_score,
+                            &user_status) < 0) {
       status = RUN_CHECK_FAILED;
       goto cleanup;
     }
