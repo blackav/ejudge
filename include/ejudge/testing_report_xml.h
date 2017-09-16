@@ -61,6 +61,7 @@ struct testing_report_test
   int has_user;
   int user_status;
   int user_score;
+  int user_nominal_score;
 
   // digests are BINARY SHA1 (20 bytes)
   unsigned char input_digest[32];

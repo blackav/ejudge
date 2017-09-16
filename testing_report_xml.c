@@ -155,6 +155,7 @@ enum
   TR_A_ORIGINAL_SIZE,
   TR_A_BASE64,
   TR_A_HAS_USER,
+  TR_A_USER_NOMINAL_SCORE,
 
   TR_A_LAST_ATTR,
 };
@@ -249,6 +250,7 @@ static const char * const attr_map[] =
   [TR_A_ORIGINAL_SIZE] = "original-size",
   [TR_A_BASE64] = "base64",
   [TR_A_HAS_USER] = "has-user",
+  [TR_A_USER_NOMINAL_SCORE] = "user-nominal-score",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -478,6 +480,14 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
         goto failure;
       }
       p->user_score = x;
+      break;
+    case TR_A_USER_NOMINAL_SCORE:
+      if (xml_attr_int(a, &x) < 0) goto failure;
+      if (x < 0 || x > EJ_MAX_SCORE) {
+        xml_err_attr_invalid(a);
+        goto failure;
+      }
+      p->user_nominal_score = x;
       break;
     case TR_A_VISIBILITY:
       x = test_visibility_parse(a->text);
@@ -1671,6 +1681,9 @@ testing_report_unparse_xml(
         }
         if (t->user_score >= 0) {
           fprintf(out, " %s=\"%d\"", attr_map[TR_A_USER_SCORE], t->user_score);
+        }
+        if (t->user_nominal_score >= 0) {
+          fprintf(out, " %s=\"%d\"", attr_map[TR_A_USER_NOMINAL_SCORE], t->user_nominal_score);
         }
       }
       fprintf(out, " >\n");

@@ -63,6 +63,7 @@ struct testinfo
   int user_status;
   int user_score;
   int user_tests_passed;
+  int user_nominal_score;
 };
 
 struct testinfo_vector
