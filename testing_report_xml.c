@@ -393,6 +393,9 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
   p->term_signal = -1;
   p->nominal_score = -1;
   p->score = -1;
+  p->user_status = -1;
+  p->user_score = -1;
+  p->user_nominal_score = -1;
 
   for (a = t->first; a; a = a->next) {
     switch (a->tag) {
