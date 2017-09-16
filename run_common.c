@@ -4356,6 +4356,7 @@ run_tests(
         }
       }
     }
+    /*
     if (user_max_score < 0) {
       user_max_score = 0;
       for (cur_test = 1; cur_test < tests.size; ++cur_test) {
@@ -4368,6 +4369,7 @@ run_tests(
         }
       }
     }
+    */
     if (srgp->scoring_system_val == SCORE_KIROV
         || (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0)) {
       if (user_score < 0) {
