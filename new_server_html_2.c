@@ -6771,16 +6771,25 @@ write_xml_team_testing_report(
       continue;
     }
 
+    status = t->status;
+    score = t->score;
+    max_score = t->nominal_score;
+    if (user_status_mode && t->has_user) {
+      if (t->user_status >= 0) status = t->user_status;
+      if (t->user_score >= 0) score = t->user_score;
+      if (t->user_nominal_score >= 0) max_score = t->user_nominal_score;
+    }
+
     fprintf(f, "<tr>");
     fprintf(f, "<td%s>%d</td>", cl, serial);
-    if (t->status == RUN_OK || t->status == RUN_ACCEPTED || t->status == RUN_PENDING_REVIEW || t->status == RUN_SUMMONED) {
+    if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || status == RUN_SUMMONED) {
       font_color = "green";
     } else {
       font_color = "red";
     }
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
-            cl, font_color, run_status_str(t->status, 0, 0, output_only, 0));
-    if ((t->status == RUN_TIME_LIMIT_ERR || t->status == RUN_WALL_TIME_LIMIT_ERR) && r->time_limit_ms > 0) {
+            cl, font_color, run_status_str(status, 0, 0, output_only, 0));
+    if ((status == RUN_TIME_LIMIT_ERR || status == RUN_WALL_TIME_LIMIT_ERR) && r->time_limit_ms > 0) {
       fprintf(f, "<td%s>&gt;%d.%03d</td>", cl,
               r->time_limit_ms / 1000, r->time_limit_ms % 1000);
     } else {
@@ -6797,7 +6806,7 @@ write_xml_team_testing_report(
     */
     if (need_info) {
       fprintf(f, "<td%s>", cl);
-      if (t->status == RUN_RUN_TIME_ERR
+      if (status == RUN_RUN_TIME_ERR
           && (global->report_error_code || visibility == TV_FULL)) {
         if (t->exit_comment) {
           fprintf(f, "%s", t->exit_comment);
@@ -6813,7 +6822,7 @@ write_xml_team_testing_report(
       fprintf(f, "</td>");
     }
     if (is_kirov && !hide_score) {
-      fprintf(f, "<td%s>%d (%d)</td>", cl, t->score, t->nominal_score);
+      fprintf(f, "<td%s>%d (%d)</td>", cl, score, max_score);
     }
     if (need_comment) {
       if (!t->team_comment) {
