@@ -411,8 +411,7 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
       p->status = x;
       break;
     case TR_A_USER_STATUS:
-      if (!a->text || run_str_short_to_status(a->text, &x) < 0
-          || !run_is_valid_test_status(x)) {
+      if (!a->text || run_str_short_to_status(a->text, &x) < 0) {
         xml_err_attr_invalid(a);
         goto failure;
       }
