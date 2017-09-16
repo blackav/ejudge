@@ -393,6 +393,9 @@ generate_xml_report(
         if (ti->user_score >= 0) {
           trt->user_score = ti->user_score;
         }
+        if (ti->user_nominal_score >= 0) {
+          trt->user_nominal_score = ti->user_nominal_score;
+        }
       }
       if (ti->args && strlen(ti->args) < srgp->max_cmd_length) {
         trt->args = xstrdup(ti->args);
@@ -3573,6 +3576,14 @@ check_output_only(
                           global->run_work_dir, NULL, 0, NULL, 1);
 
   cur_info->status = status;
+  cur_info->max_score = srpp->full_score;
+  if (srgp->separate_user_score > 0) {
+    if (srpp->full_user_score >= 0) {
+      cur_info->user_nominal_score = srpp->full_user_score;
+    } else {
+      cur_info->user_nominal_score = srpp->full_score;
+    }
+  }
 
   if ((status == RUN_PRESENTATION_ERR || status == RUN_WRONG_ANSWER_ERR)
       && (srgp->scoring_system_val == SCORE_KIROV
