@@ -313,96 +313,96 @@ generate_xml_report(
       struct testing_report_test *trt = testing_report_test_alloc(i, tests[i].status);
       tr->tests[i - 1] = trt;
       const struct testinfo *ti = &tests[i];
-      if (tests[i].status == RUN_RUN_TIME_ERR) {
-        if (tests[i].code == 256) {
-          trt->term_signal = tests[i].termsig;
+      if (ti->status == RUN_RUN_TIME_ERR) {
+        if (ti->code == 256) {
+          trt->term_signal = ti->termsig;
         } else {
-          trt->exit_code = tests[i].code;
+          trt->exit_code = ti->code;
         }
       }
-      trt->time = tests[i].times;
-      if (tests[i].real_time >= 0 && has_real_time) {
-        trt->real_time = tests[i].real_time;
+      trt->time = ti->times;
+      if (ti->real_time >= 0 && has_real_time) {
+        trt->real_time = ti->real_time;
       }
-      if (tests[i].max_memory_used > 0) {
-        trt->max_memory_used = tests[i].max_memory_used;
+      if (ti->max_memory_used > 0) {
+        trt->max_memory_used = ti->max_memory_used;
       }
-      if (tests[i].program_stats_str) {
-        trt->program_stats_str = xstrdup(tests[i].program_stats_str);
+      if (ti->program_stats_str) {
+        trt->program_stats_str = xstrdup(ti->program_stats_str);
       }
-      if (tests[i].interactor_stats_str) {
-        trt->interactor_stats_str = xstrdup(tests[i].interactor_stats_str);
+      if (ti->interactor_stats_str) {
+        trt->interactor_stats_str = xstrdup(ti->interactor_stats_str);
       }
-      if (tests[i].checker_stats_str) {
-        trt->checker_stats_str = xstrdup(tests[i].checker_stats_str);
+      if (ti->checker_stats_str) {
+        trt->checker_stats_str = xstrdup(ti->checker_stats_str);
       }
       if (srgp->scoring_system_val == SCORE_OLYMPIAD && srgp->accepting_mode <= 0) {
-        trt->nominal_score = tests[i].max_score;
-        trt->score = tests[i].score;
+        trt->nominal_score = ti->max_score;
+        trt->score = ti->score;
       } else if (srgp->scoring_system_val == SCORE_KIROV) {
-        trt->nominal_score = tests[i].max_score;
-        trt->score = tests[i].score;
+        trt->nominal_score = ti->max_score;
+        trt->score = ti->score;
       }
-      if (tests[i].comment && tests[i].comment[0]) {
-        trt->comment = xstrdup(tests[i].comment);
+      if (ti->comment && ti->comment[0]) {
+        trt->comment = xstrdup(ti->comment);
       }
-      if (tests[i].team_comment && tests[i].team_comment[0]) {
-        trt->team_comment = xstrdup(tests[i].team_comment);
+      if (ti->team_comment && ti->team_comment[0]) {
+        trt->team_comment = xstrdup(ti->team_comment);
       }
-      if (tests[i].exit_comment && tests[i].exit_comment[0]) {
-        trt->exit_comment = xstrdup(tests[i].exit_comment);
+      if (ti->exit_comment && ti->exit_comment[0]) {
+        trt->exit_comment = xstrdup(ti->exit_comment);
       }
-      if ((tests[i].status == RUN_WRONG_ANSWER_ERR || tests[i].status == RUN_PRESENTATION_ERR || tests[i].status == RUN_OK)
-          && tests[i].chk_out_size > 0 && tests[i].chk_out && tests[i].chk_out[0]) {
-        trt->checker_comment = prepare_checker_comment(utf8_mode, tests[i].chk_out);
+      if ((ti->status == RUN_WRONG_ANSWER_ERR || ti->status == RUN_PRESENTATION_ERR || ti->status == RUN_OK)
+          && ti->chk_out_size > 0 && ti->chk_out && ti->chk_out[0]) {
+        trt->checker_comment = prepare_checker_comment(utf8_mode, ti->chk_out);
       }
       if (srgp->enable_full_archive > 0) {
-        if (tests[i].has_input_digest) {
+        if (ti->has_input_digest) {
           trt->has_input_digest = 1;
-          filehash_copy(trt->input_digest, tests[i].input_digest);
+          filehash_copy(trt->input_digest, ti->input_digest);
         }
-        if (tests[i].has_correct_digest) {
+        if (ti->has_correct_digest) {
           trt->has_correct_digest = 1;
-          filehash_copy(trt->correct_digest, tests[i].correct_digest);
+          filehash_copy(trt->correct_digest, ti->correct_digest);
         }
-        if (tests[i].has_info_digest) {
+        if (ti->has_info_digest) {
           trt->has_info_digest = 1;
-          filehash_copy(trt->info_digest, tests[i].info_digest);
+          filehash_copy(trt->info_digest, ti->info_digest);
         }
       }
       if (srgp->enable_full_archive > 0) {
-        if (tests[i].output_size >= 0) {
+        if (ti->output_size >= 0) {
           trt->output_available = 1;
         }
-        if (tests[i].error_size >= 0) {
+        if (ti->error_size >= 0) {
           trt->stderr_available = 1;
         }
-        if (tests[i].chk_out_size >= 0) {
+        if (ti->chk_out_size >= 0) {
           trt->checker_output_available = 1;
         }
       }
-      if (tests[i].args && strlen(tests[i].args) >= srgp->max_cmd_length) {
+      if (ti->args && strlen(ti->args) >= srgp->max_cmd_length) {
         trt->args_too_long = 1;
       }
-      if (tests[i].visibility > 0) {
-        trt->visibility = tests[i].visibility;
+      if (ti->visibility > 0) {
+        trt->visibility = ti->visibility;
       }
-      if (tests[i].user_status >= 0) {
+      if (ti->user_status >= 0) {
         trt->has_user = 1;
-        trt->user_status = tests[i].user_status;
-        if (tests[i].user_score >= 0) {
-          trt->user_score = tests[i].user_score;
+        trt->user_status = ti->user_status;
+        if (ti->user_score >= 0) {
+          trt->user_score = ti->user_score;
         }
       }
-      if (tests[i].args && strlen(tests[i].args) < srgp->max_cmd_length) {
-        trt->args = xstrdup(tests[i].args);
+      if (ti->args && strlen(ti->args) < srgp->max_cmd_length) {
+        trt->args = xstrdup(ti->args);
       }
       if (srgp->enable_full_archive <= 0) {
-        make_file_content(&trt->input, srgp, tests[i].input, tests[i].input_size, utf8_mode);
-        make_file_content(&trt->output, srgp, tests[i].output, tests[i].output_size, utf8_mode);
-        make_file_content(&trt->correct, srgp, tests[i].correct, tests[i].correct_size, utf8_mode);
-        make_file_content(&trt->error, srgp, tests[i].error, tests[i].error_size, utf8_mode);
-        make_file_content(&trt->checker, srgp, tests[i].chk_out, tests[i].chk_out_size, utf8_mode);
+        make_file_content(&trt->input, srgp, ti->input, ti->input_size, utf8_mode);
+        make_file_content(&trt->output, srgp, ti->output, ti->output_size, utf8_mode);
+        make_file_content(&trt->correct, srgp, ti->correct, ti->correct_size, utf8_mode);
+        make_file_content(&trt->error, srgp, ti->error, ti->error_size, utf8_mode);
+        make_file_content(&trt->checker, srgp, ti->chk_out, ti->chk_out_size, utf8_mode);
       }
     }
   }
