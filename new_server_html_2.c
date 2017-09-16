@@ -6574,6 +6574,7 @@ write_xml_team_testing_report(
   unsigned char hbuf[1024];
   unsigned char tbuf[1024];
   int hide_score = 0;
+  int user_status_mode = 0;
 
   if (table_class && *table_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
@@ -6594,12 +6595,16 @@ write_xml_team_testing_report(
     return 0;
   }
 
+  if (global->separate_user_score > 0 && state->online_view_judge_score <= 0 && !(token_flags & TOKEN_FINALSCORE_BIT)) {
+    user_status_mode = 1;
+  }
+
   status = r->status;
   score = r->score;
   max_score = r->max_score;
   run_tests = r->run_tests;
   tests_passed = r->tests_passed;
-  if (global->separate_user_score > 0 && state->online_view_judge_score <= 0 && !(token_flags & TOKEN_FINALSCORE_BIT)) {
+  if (user_status_mode) {
     if (r->user_status >= 0) status = r->user_status;
     if (r->user_score >= 0) score = r->user_score;
     if (r->user_max_score >= 0) max_score = r->user_max_score;
@@ -6620,29 +6625,37 @@ write_xml_team_testing_report(
       testing_report_free(r);
       return 0;
     }
+    status = t->status;
+    score = t->score;
+    max_score = t->nominal_score;
+    if (user_status_mode && t->has_user) {
+      if (t->user_status >= 0) status = t->user_status;
+      if (t->user_score >= 0) score = t->user_score;
+      if (t->user_nominal_score >= 0) max_score = t->user_nominal_score;
+    }
     fprintf(f,
       "<table class=\"table\">"
       "<tr><th%s>N</th><th%s>%s</th>",
       cl, cl, _("Result"));
-    if (t->score >= 0 && t->nominal_score >= 0)
+    if (score >= 0 && max_score >= 0)
       fprintf(f, "<th%s>%s</th>", cl, _("Score"));
-    if (t->status == RUN_PRESENTATION_ERR || prob->show_checker_comment > 0) {
+    if (status == RUN_PRESENTATION_ERR || prob->show_checker_comment > 0) {
       fprintf(f, "<th%s>%s</th>", cl, _("Extra info"));
     }
     fprintf(f, "</tr>\n");
 
     fprintf(f, "<tr>");
     fprintf(f, "<td%s>%d</td>", cl, t->num);
-    if (t->status == RUN_OK || t->status == RUN_ACCEPTED || t->status == RUN_PENDING_REVIEW || t->status == RUN_SUMMONED) {
+    if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || status == RUN_SUMMONED) {
       font_color = "green";
     } else {
       font_color = "red";
     }
     fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
-            cl, font_color, run_status_str(t->status, 0, 0, output_only, 0));
-    if (t->score >= 0 && t->nominal_score >= 0)
-      fprintf(f, "<td%s>%d (%d)</td>", cl, t->score, t->nominal_score);
-    if (t->status == RUN_PRESENTATION_ERR || prob->show_checker_comment > 0) {
+            cl, font_color, run_status_str(status, 0, 0, output_only, 0));
+    if (score >= 0 && max_score >= 0)
+      fprintf(f, "<td%s>%d (%d)</td>", cl, score, max_score);
+    if (status == RUN_PRESENTATION_ERR || prob->show_checker_comment > 0) {
       s = html_armor_string_dup(t->checker_comment);
       fprintf(f, "<td%s>%s</td>", cl, s);
       xfree(s); s = 0;
