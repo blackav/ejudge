@@ -312,6 +312,7 @@ generate_xml_report(
     for (i = 1; i < total_tests; ++i) {
       struct testing_report_test *trt = testing_report_test_alloc(i, tests[i].status);
       tr->tests[i - 1] = trt;
+      const struct testinfo *ti = &tests[i];
       if (tests[i].status == RUN_RUN_TIME_ERR) {
         if (tests[i].code == 256) {
           trt->term_signal = tests[i].termsig;
