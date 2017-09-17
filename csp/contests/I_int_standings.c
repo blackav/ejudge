@@ -1404,6 +1404,25 @@ csp_execute_int_standings(
         sort_kirov(pg, sii, cs);
     }
 
+    /* recompute the total number of rejected runs */
+    if (pg->total_rejected > 0) {
+        pg->total_rejected = 0;
+        for (int i = 0; i < pg->t_tot; ++i) {
+            for (int j = 0; j < pg->p_tot; ++j) {
+                int up_ind = (i << pg->row_sh) + j;
+                StandingsCell *cell = &pg->cells[up_ind];
+                int rj_flag = cell->rj_flag;
+                if (cell->full_sol) rj_flag = 0;
+                if (cell->sm_flag) rj_flag = 0;
+                if (cell->pr_flag) rj_flag = 0;
+                if (cell->trans_num) rj_flag = 0;
+                if (cell->disq_num > 0) rj_flag = 0;
+                if (cell->cf_num > 0) rj_flag = 0;
+                pg->total_rejected += rj_flag;
+            }
+        }
+    }
+
     /* memoize the results */
     if (!sii->accepting_mode && global->memoize_user_results) {
         for (int i = 0; i < pg->t_tot; ++i) {
