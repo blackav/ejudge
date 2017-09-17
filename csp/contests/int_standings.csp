@@ -283,7 +283,7 @@ sec_to_min(int rounding_mode, int secs)
 %>
   <s:tr attr="ss.success_attr">
     <s:td attr="cell_attr"><s:_>Rejected runs</s:_></s:td>
-    <s:td attr="cell_attr"><!--<s:v value="pg->total_rejected" />--></s:td>
+    <s:td attr="cell_attr"><s:v value="pg->total_rejected" /></s:td>
   </s:tr>
 <%
     }
