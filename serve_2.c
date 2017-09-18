@@ -3302,6 +3302,8 @@ serve_read_run_packet(
   } else if (prob->use_ac_not_ok > 0 && reply_pkt->status == RUN_OK) {
     reply_pkt->status = RUN_PENDING_REVIEW;
     if (prob->ignore_prev_ac > 0) ignore_prev_ac = 1;
+  } else if (reply_pkt->has_user_score > 0 && reply_pkt->user_status == RUN_ACCEPTED && prob->ignore_prev_ac > 0) {
+    ignore_prev_ac = 1;
   }
   if (reply_pkt->status == RUN_CHECK_FAILED) {
     serve_send_check_failed_email(config, cnts, reply_pkt->run_id);
@@ -3466,6 +3468,9 @@ serve_read_run_packet(
     for (i = reply_pkt->run_id - 1; i >= 0; --i) {
       if (run_get_entry(state->runlog_state, i, &pe) < 0) continue;
       if ((pe.status == RUN_ACCEPTED || pe.status == RUN_PENDING_REVIEW)
+          && pe.prob_id == re.prob_id && pe.user_id == re.user_id) {
+        run_change_status_3(state->runlog_state, i, RUN_IGNORED, 0, 1, 0, 0, 0, 0, 0, 0, 0);
+      } else if (pe.is_saved && (pe.saved_status == RUN_ACCEPTED || pe.saved_status == RUN_PENDING_REVIEW)
           && pe.prob_id == re.prob_id && pe.user_id == re.user_id) {
         run_change_status_3(state->runlog_state, i, RUN_IGNORED, 0, 1, 0, 0, 0, 0, 0, 0, 0);
       }
