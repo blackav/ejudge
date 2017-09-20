@@ -128,6 +128,10 @@ struct token_info
 
 struct dates_config;
 
+struct virtual_end_info_s
+{
+};
+
 /* sizeof(struct section_global_data) == 1180/1880 */
 struct section_global_data
 {
@@ -342,6 +346,10 @@ struct section_global_data
   unsigned char *description_file;
   /** path to the contest plugin */
   unsigned char *contest_plugin_file;
+
+  /** user-visible behavior after the end of virtual contest for the user */
+  unsigned char *virtual_end_options;
+  struct virtual_end_info_s *virtual_end_info META_ATTRIB((meta_private));
 
   /** directory for non-default super-run directory */
   unsigned char *super_run_dir;

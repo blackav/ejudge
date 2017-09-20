@@ -106,6 +106,8 @@ enum
   CNTSGLOB_contest_stop_cmd,
   CNTSGLOB_description_file,
   CNTSGLOB_contest_plugin_file,
+  CNTSGLOB_virtual_end_options,
+  CNTSGLOB_virtual_end_info,
   CNTSGLOB_super_run_dir,
   CNTSGLOB_test_pat,
   CNTSGLOB_corr_pat,

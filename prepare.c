@@ -161,6 +161,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(description_file, "S"),
   GLOBAL_PARAM(contest_plugin_file, "S"),
   GLOBAL_PARAM(super_run_dir, "S"),
+  GLOBAL_PARAM(virtual_end_options, "S"),
 
   GLOBAL_PARAM(clardb_plugin, "S"),
   GLOBAL_PARAM(rundb_plugin, "S"),
@@ -893,6 +894,23 @@ global_init_func(struct generic_section_config *gp)
 static void free_user_adjustment_info(struct user_adjustment_info*);
 static void free_user_adjustment_map(struct user_adjustment_map*);
 
+static struct virtual_end_info_s *
+parse_virtual_end_info(const unsigned char *str)
+{
+  struct virtual_end_info_s *info;
+  XCALLOC(info, 1);
+  return info;
+}
+
+static struct virtual_end_info_s *
+free_virtual_end_info(struct virtual_end_info_s *info)
+{
+  if (info) {
+    xfree(info);
+  }
+  return NULL;
+}
+
 void
 prepare_global_free_func(struct generic_section_config *gp)
 {
@@ -924,6 +942,8 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->full_exam_protocol_header_txt);
   xfree(p->full_exam_protocol_footer_txt);
   xfree(p->contest_stop_cmd);
+  xfree(p->virtual_end_options);
+  free_virtual_end_info(p->virtual_end_info);
   sarray_free(p->load_user_group);
   xfree(p->super_run_dir);
   xfree(p->tokens);
@@ -3186,6 +3206,14 @@ set_defaults(
     g->team_download_time = DFLT_G_TEAM_DOWNLOAD_TIME;
   }
   g->team_download_time *= 60;
+
+  if (mode == PREPARE_SERVE && g->virtual_end_options && g->virtual_end_options[0]) {
+    g->virtual_end_info = parse_virtual_end_info(g->virtual_end_options);
+    if (!g->virtual_end_info) {
+      err("global.virtual_end_options is invalid");
+      return -1;
+    }
+  }
 
   /* only run needs these parameters */
   if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
