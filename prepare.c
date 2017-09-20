@@ -898,8 +898,95 @@ static struct virtual_end_info_s *
 parse_virtual_end_info(const unsigned char *str)
 {
   struct virtual_end_info_s *info;
+  const unsigned char *p = str;
   XCALLOC(info, 1);
+  info->source_mode = -1;
+  info->report_mode = -1;
+  info->visibility_mode = -1;
+  info->score_mode = -1;
+  while (1) {
+    while (isspace(*p)) ++p;
+    if (!*p) break;
+    if (*p == '=' || *p == ',') goto fail;
+    const unsigned char *q = p;
+    while (*q && *q != '=' && *q != ',' && !isspace(*q)) ++q;
+    const unsigned char *p1 = q;
+    while (isspace(*p1)) ++p1;
+    if (!*p1 || *p1 == ',') {
+    } else if (*p1 != '=') {
+      goto fail;
+    }
+    ++p1;
+    while (isspace(*p1)) ++p1;
+    const unsigned char *q1 = p1;
+    while (*q1 && *q1 != '=' && *q1 != ',' && !isspace(*q1)) ++q1;
+    // [p;q) = [p1;q1)
+    if (q1 != p1) {
+      int name_len = q - p;
+      unsigned char *name = alloca(name_len + 1);
+      memcpy(name, p, name_len);
+      name[name_len] = 0;
+      int value_len = q1 - p1;
+      unsigned char *value = alloca(value_len + 1);
+      memcpy(value, p1, value_len);
+      value[value_len] = 0;
+      if (!strcmp(name, "source")) {
+        if (!strcmp(value, "yes")) {
+          info->source_mode = 1;
+        } else if (!strcmp(value, "no")) {
+          info->source_mode = 0;
+        } else if (!strcmp(value, "default")) {
+          info->source_mode = -1;
+        } else {
+          goto fail;
+        }
+      } else if (!strcmp(name, "report")) {
+        if (!strcmp(value, "yes")) {
+          info->report_mode = 1;
+        } else if (!strcmp(value, "no")) {
+          info->report_mode = 0;
+        } else if (!strcmp(value, "default")) {
+          info->report_mode = -1;
+        } else {
+          goto fail;
+        }
+      } else if (!strcmp(name, "visibility")) {
+        if (!strcmp(value, "token")) {
+          info->visibility_mode = 1;
+        } else if (!strcmp(value, "final")) {
+          info->visibility_mode = 2;
+        } else if (!strcmp(value, "default")) {
+          info->visibility_mode = -1;
+        } else {
+          goto fail;
+        }
+      } else if (!strcmp(name, "score")) {
+        if (!strcmp(value, "full")) {
+          info->score_mode = 1;
+        } else if (!strcmp(value, "user")) {
+          info->score_mode = 0;
+        } else if (!strcmp(value, "default")) {
+          info->score_mode = -1;
+        } else {
+          goto fail;
+        }
+      } else {
+        goto fail;
+      }
+      printf("<%s>,<%s>\n", name, value);
+    } else {
+      goto fail;
+    }
+    p = q1;
+    while (isspace(*p)) ++p;
+    if (!*p) break;
+    if (*p != ',') goto fail;
+    ++p;
+  }
   return info;
+fail:
+  xfree(info);
+  return NULL;
 }
 
 static struct virtual_end_info_s *

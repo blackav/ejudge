@@ -130,6 +130,10 @@ struct dates_config;
 
 struct virtual_end_info_s
 {
+  int source_mode;
+  int report_mode;
+  int visibility_mode;
+  int score_mode;
 };
 
 /* sizeof(struct section_global_data) == 1180/1880 */
