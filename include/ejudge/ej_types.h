@@ -194,11 +194,11 @@ session_parse(
 enum
 {
   TOKEN_FINALSCORE_BIT = 1, // show the final score
-  TOKEN_TESTS_MASK = 6,
+  TOKEN_TESTS_MASK = 14,
   TOKEN_BASICTESTS_BIT = 2, // show the basic test info
   TOKEN_TOKENTESTS_BIT = 4, // show the token test info
   TOKEN_FINALTESTS_BIT = 6, // show the final test info
-  TOKEN_VALUER_JUDGE_COMMENT_BIT = 8 // show the judge's valuer comment
+  TOKEN_VALUER_JUDGE_COMMENT_BIT = 16 // show the judge's valuer comment
 };
 
 typedef struct ej_uuid_t
