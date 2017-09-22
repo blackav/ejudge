@@ -5211,6 +5211,11 @@ ns_get_user_problems_summary(
   int separate_user_score = 0;
   int need_prev_succ = 0; // 1, if we need to compute 'prev_successes' array
   UserProblemInfo *cur_pinfo;
+  const struct virtual_end_info_s *vend_info = NULL;
+
+  if (global->is_virtual > 0 && stop_time > 0 && cs->current_time >= stop_time) {
+    vend_info = global->virtual_end_info;
+  }
 
   /* if 'score_bonus' is set for atleast one problem, we have to scan all runs */
   for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
@@ -5230,6 +5235,9 @@ ns_get_user_problems_summary(
     total_teams = teamdb_get_max_team_id(cs->teamdb_state) + 1;
   }
   separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
+  if (vend_info && vend_info->score_mode > 0) {
+    separate_user_score = 0;
+  }
 
   /*
   time_t start_time;
@@ -6141,12 +6149,17 @@ new_write_user_runs(
   int enable_src_view = 0;
   int enable_rep_view = 0;
   int separate_user_score = 0;
+  struct virtual_end_info_s *vend_info = NULL;
 
   time_t effective_time, *p_eff_time;
 
   if (table_class && *table_class) {
     cl = alloca(strlen(table_class) + 16);
     sprintf(cl, " class=\"%s\"", table_class);
+  }
+
+  if (global->is_virtual > 0 && stop_time > 0 && state->current_time >= stop_time) {
+    vend_info = global->virtual_end_info;
   }
 
   if (prob_id < 0 || prob_id > state->max_prob 
@@ -6182,6 +6195,12 @@ new_write_user_runs(
   enable_src_view = (state->online_view_source > 0 || (!state->online_view_source && global->team_enable_src_view > 0));
   enable_rep_view = (state->online_view_report > 0 || (!state->online_view_report && global->team_enable_rep_view > 0));
   separate_user_score = global->separate_user_score > 0 && state->online_view_judge_score <= 0;
+
+  if (vend_info) {
+    if (vend_info->source_mode > 0) enable_src_view = 1;
+    if (vend_info->report_mode > 0) enable_rep_view = 1;
+    if (vend_info->score_mode > 0) separate_user_score = 0;
+  }
 
   if (enable_src_view)
     fprintf(f, "<th%s>%s</th>", cl, _("View source"));
