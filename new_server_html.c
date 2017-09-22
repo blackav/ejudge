@@ -510,6 +510,14 @@ ns_unload_expired_contests(time_t cur_time)
   extra_u = j;
 }
 
+extern const unsigned char login_accept_chars[257];
+static int
+check_login(const unsigned char *login_str)
+{
+  if (!login_str || !*login_str) return -1;
+  return check_str(login_str, login_accept_chars);
+}
+
 static void
 handle_pending_xml_import(
         struct contest_extra *extra,
@@ -1307,6 +1315,10 @@ privileged_page_login(FILE *fout,
   if ((r = hr_cgi_param(phr, "login", &login)) < 0) {
     fprintf(phr->log_f, "cannot parse login");
     return error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
+  }
+  if (login && check_login(login) < 0) {
+    fprintf(phr->log_f, "invalid login");
+    return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
   }
   if (!r || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return privileged_page_login_page(fout, phr);
@@ -8192,6 +8204,10 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
     fprintf(phr->log_f, "cannot parse login");
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
+  if (login && check_login(login) < 0) {
+    fprintf(phr->log_f, "invalid login");
+    return error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
+  }
   if (!r || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)
     return unprivileged_page_login_page(fout, phr);
 
@@ -8206,23 +8222,29 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
   phr->login = xstrdup(login);
   if ((r = hr_cgi_param(phr, "password", &password)) <= 0) {
     fprintf(phr->log_f, "cannot parse password");
+    xfree(phr->login); phr->login = NULL;
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
   if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
     fprintf(phr->log_f, "%s://%s is not allowed for USER for contest %d", ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
+    xfree(phr->login); phr->login = NULL;
     return error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
   }
   if (cnts->closed) {
     fprintf(phr->log_f, "contest %d is closed", cnts->id);
+    xfree(phr->login); phr->login = NULL;
     return error_page(fout, phr, 0, NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
   }
   if (!cnts->managed) {
     fprintf(phr->log_f, "contest %d is not managed", cnts->id);
+    xfree(phr->login); phr->login = NULL;
     return error_page(fout, phr, 0, NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
   }
 
-  if (ns_open_ul_connection(phr->fw_state) < 0)
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    xfree(phr->login); phr->login = NULL;
     return error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+  }
 
   if ((r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
                                &phr->ip, phr->client_key,
@@ -8240,13 +8262,17 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
     case ULS_ERR_NOT_REGISTERED:
     case ULS_ERR_CANNOT_PARTICIPATE:
       fprintf(phr->log_f, "user_login failed: %s", userlist_strerror(-r));
+      xfree(phr->login); phr->login = NULL;
       return error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
     case ULS_ERR_DISCONNECT:
+      xfree(phr->login); phr->login = NULL;
       return error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     case ULS_ERR_INCOMPLETE_REG:
+      xfree(phr->login); phr->login = NULL;
       return error_page(fout, phr, 0, NEW_SRV_ERR_REGISTRATION_INCOMPLETE);
     default:
       fprintf(phr->log_f, "user_login failed: %s", userlist_strerror(-r));
+      xfree(phr->login); phr->login = NULL;
       return error_page(fout, phr, 0, NEW_SRV_ERR_INTERNAL);
     }
   }
