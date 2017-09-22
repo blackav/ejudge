@@ -961,7 +961,7 @@ parse_virtual_end_info(const unsigned char *str)
           goto fail;
         }
       } else if (!strcmp(name, "score")) {
-        if (!strcmp(value, "full")) {
+        if (!strcmp(value, "final")) {
           info->score_mode = 1;
         } else if (!strcmp(value, "user")) {
           info->score_mode = 0;
