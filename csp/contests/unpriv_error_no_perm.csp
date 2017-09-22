@@ -28,6 +28,7 @@
 %><%@include "unpriv_header.csp"
 %><%@include "unpriv_menu.csp"
 %>
+<div class="l14">
 <h2><font color="red"><s:v value="title" escape="false" /></font></h2>
 
 <p><s:_>Permission denied. The possible reasons are as follows.</s:_></p>
@@ -45,29 +46,30 @@
 <p><s:_>Note, that the exact reason is not reported due to security reasons.</s:_></p>
 
 <p>Additional information:</p>
-<table>
-  <tr><td>Error ID:</td><td><s:v value="random_id_str" /></td></tr>
+<table class="b1">
+  <tr><td class="b1">Error ID:</td><td class="b1"><s:v value="random_id_str" /></td></tr>
 <%
   if (phr->login && *phr->login) {
 %>
-  <tr><td>Login:</td><td><s:v value="phr->login" /></td></tr>
+  <tr><td class="b1">Login:</td><td class="b1"><s:v value="phr->login" /></td></tr>
 <%
   }
 %>
 <%
   if (cnts && cnts->name && *cnts->name) {
 %>
-  <tr><td>Contest:</td><td><s:v value="cnts->name" /></td></tr>
+  <tr><td class="b1">Contest:</td><td class="b1"><s:v value="cnts->name" /></td></tr>
 <%
   } else if (phr->contest_id > 0) {
 %>
-  <tr><td>Contest ID:</td><td><s:v value="phr->contest_id" /></td></tr>
+  <tr><td class="b1">Contest ID:</td><td class="b1"><s:v value="phr->contest_id" /></td></tr>
 <%
   }
 %>
-  <tr><td>IP address:</td><td><s:v value="phr->ip" /></td></tr>
+  <tr><td class="b1">IP address:</td><td class="b1"><s:v value="phr->ip" /></td></tr>
 </table>
 
+</div>
 <%@include "unpriv_footer.csp"
 %><%
   l10n_resetlocale();
