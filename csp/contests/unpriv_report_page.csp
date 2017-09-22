@@ -261,14 +261,16 @@ ns_unpriv_parse_run_id(
         write_xml_testing_report(out_f, phr, 1, rep_start, "b1", "b0");
       } else {
         int token_flags = re.token_flags;
-        if (vend_info->score_mode == 1) token_flags |= TOKEN_FINALSCORE_BIT;
-        if (vend_info->visibility_mode == 1 && (token_flags & TOKEN_TESTS_MASK) < TOKEN_TOKENTESTS_BIT) {
-          token_flags &= ~TOKEN_TESTS_MASK;
-          token_flags |= TOKEN_TOKENTESTS_BIT;
-        }
-        if (vend_info->visibility_mode == 2 && (token_flags & TOKEN_TESTS_MASK) < TOKEN_FINALTESTS_BIT) {
-          token_flags &= ~TOKEN_TESTS_MASK;
-          token_flags |= TOKEN_FINALTESTS_BIT;
+        if (vend_info) {
+          if (vend_info->score_mode == 1) token_flags |= TOKEN_FINALSCORE_BIT;
+          if (vend_info->visibility_mode == 1 && (token_flags & TOKEN_TESTS_MASK) < TOKEN_TOKENTESTS_BIT) {
+            token_flags &= ~TOKEN_TESTS_MASK;
+            token_flags |= TOKEN_TOKENTESTS_BIT;
+          }
+          if (vend_info->visibility_mode == 2 && (token_flags & TOKEN_TESTS_MASK) < TOKEN_FINALTESTS_BIT) {
+            token_flags &= ~TOKEN_TESTS_MASK;
+            token_flags |= TOKEN_FINALTESTS_BIT;
+          }
         }
         write_xml_team_testing_report(cs, prob, out_f, phr,
                                       prob->type != PROB_TYPE_STANDARD,
