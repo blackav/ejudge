@@ -36,12 +36,16 @@ ns_unpriv_parse_run_id(
   path_t src_path;
   int view_enabled = 1;
   const unsigned char *language_type = "unknown";
+  int page_enabled = 0;
+  struct virtual_end_info_s *vend_info = NULL;
 
   start_time = run_get_start_time(cs->runlog_state);
   stop_time = run_get_stop_time(cs->runlog_state);
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+    if (stop_time > 0 && cs->current_time >= stop_time && global->virtual_end_info)
+      vend_info = global->virtual_end_info;
   }
 
   if (ns_unpriv_parse_run_id(out_f, phr, cnts, extra, &run_id, &re) < 0)
@@ -57,7 +61,10 @@ ns_unpriv_parse_run_id(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
-  if (cs->online_view_source < 0 || (!cs->online_view_source && global->team_enable_src_view <= 0)) {
+  if (cs->online_view_source > 0) page_enabled = 1;
+  if (global->team_enable_src_view > 0) page_enabled = 1;
+  if (vend_info && vend_info->source_mode > 0) page_enabled = 1;
+  if (!page_enabled) {
     FAIL(NEW_SRV_ERR_SOURCE_VIEW_DISABLED);
   }
   if (!run_is_normal_or_transient_status(re.status)) {
