@@ -271,6 +271,7 @@ ns_unpriv_parse_run_id(
             token_flags &= ~TOKEN_TESTS_MASK;
             token_flags |= TOKEN_FINALTESTS_BIT;
           }
+          if (vend_info->checker_comment_mode > 0) token_flags |= TOKEN_CHECKER_COMMENT_BIT;
         }
         write_xml_team_testing_report(cs, prob, out_f, phr,
                                       prob->type != PROB_TYPE_STANDARD,
