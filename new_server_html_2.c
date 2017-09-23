@@ -6303,7 +6303,7 @@ new_write_user_runs(
       fprintf(f, "<td%s><tt>%s</tt></td>", cl, unparse_abbrev_sha1(re.sha1));
     }
 
-    write_html_run_status(state, f, start_time, &re, 1 /* user_mode */,
+    write_html_run_status(state, f, start_time, &re, separate_user_score /* user_mode */,
                           0, attempts, disq_attempts, ce_attempts,
                           prev_successes, table_class, 0, 0, RUN_VIEW_DEFAULT,
                           effective_time);
