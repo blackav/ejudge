@@ -67,6 +67,7 @@ ns_unparse_answers(
   struct content_loaded_plugin *cp = NULL;
   unsigned char avatar_url[1024];
   avatar_url[0] = 0;
+  struct virtual_end_info_s *vend_info = NULL;
 
 %><s:read var="telegram_token" ignoreerrors="yes" /><%
 %><s:read var="all_runs" ignoreerrors="yes" default="0" /><%
@@ -100,6 +101,8 @@ ns_unparse_answers(
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
                                             cs->current_time);
     if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+    if (stop_time > 0 && cs->current_time >= stop_time)
+      vend_info = global->virtual_end_info;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state);

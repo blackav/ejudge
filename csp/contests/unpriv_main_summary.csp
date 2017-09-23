@@ -50,6 +50,7 @@
         int total_score = 0;
         int total_score_uncertain = 0;
         int act_status = RUN_CHECK_FAILED;
+        if (vend_info && vend_info->score_mode > 0) separate_user_score = 0;
 %>
 <table class="table">
     <tr>
