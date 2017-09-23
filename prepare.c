@@ -904,6 +904,7 @@ parse_virtual_end_info(const unsigned char *str)
   info->report_mode = -1;
   info->visibility_mode = -1;
   info->score_mode = -1;
+  info->checker_comment_mode = -1;
   while (1) {
     while (isspace(*p)) ++p;
     if (!*p) break;
@@ -970,10 +971,16 @@ parse_virtual_end_info(const unsigned char *str)
         } else {
           goto fail;
         }
+      } else if (!strcmp(name, "checker_comment")) {
+        if (!strcmp(value, "show")) {
+          info->checker_comment_mode = 1;
+        } else {
+          goto fail;
+        }
       } else {
         goto fail;
       }
-      printf("<%s>,<%s>\n", name, value);
+      //printf("<%s>,<%s>\n", name, value);
     } else {
       goto fail;
     }

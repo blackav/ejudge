@@ -198,7 +198,8 @@ enum
   TOKEN_BASICTESTS_BIT = 2, // show the basic test info
   TOKEN_TOKENTESTS_BIT = 4, // show the token test info
   TOKEN_FINALTESTS_BIT = 6, // show the final test info
-  TOKEN_VALUER_JUDGE_COMMENT_BIT = 16 // show the judge's valuer comment
+  TOKEN_VALUER_JUDGE_COMMENT_BIT = 16, // show the judge's valuer comment
+  TOKEN_CHECKER_COMMENT_BIT = 32, // show the checker comment
 };
 
 typedef struct ej_uuid_t

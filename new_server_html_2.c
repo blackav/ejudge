@@ -6594,6 +6594,7 @@ write_xml_team_testing_report(
   unsigned char tbuf[1024];
   int hide_score = 0;
   int user_status_mode = 0;
+  int show_checker_comment_mode = 0;
 
   if (table_class && *table_class) {
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
@@ -6652,13 +6653,17 @@ write_xml_team_testing_report(
       if (t->user_score >= 0) score = t->user_score;
       if (t->user_nominal_score >= 0) max_score = t->user_nominal_score;
     }
+    show_checker_comment_mode = 0;
+    if (status == RUN_PRESENTATION_ERR) show_checker_comment_mode = 1;
+    if (prob->show_checker_comment > 0) show_checker_comment_mode = 1;
+    if ((token_flags & TOKEN_CHECKER_COMMENT_BIT)) show_checker_comment_mode = 1;
     fprintf(f,
       "<table class=\"table\">"
       "<tr><th%s>N</th><th%s>%s</th>",
       cl, cl, _("Result"));
     if (score >= 0 && max_score >= 0)
       fprintf(f, "<th%s>%s</th>", cl, _("Score"));
-    if (status == RUN_PRESENTATION_ERR || prob->show_checker_comment > 0) {
+    if (show_checker_comment_mode) {
       fprintf(f, "<th%s>%s</th>", cl, _("Extra info"));
     }
     fprintf(f, "</tr>\n");
@@ -6674,7 +6679,7 @@ write_xml_team_testing_report(
             cl, font_color, run_status_str(status, 0, 0, output_only, 0));
     if (score >= 0 && max_score >= 0)
       fprintf(f, "<td%s>%d (%d)</td>", cl, score, max_score);
-    if (status == RUN_PRESENTATION_ERR || prob->show_checker_comment > 0) {
+    if (show_checker_comment_mode) {
       s = html_armor_string_dup(t->checker_comment);
       fprintf(f, "<td%s>%s</td>", cl, s);
       xfree(s); s = 0;

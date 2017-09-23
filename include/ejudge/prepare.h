@@ -134,6 +134,7 @@ struct virtual_end_info_s
   int report_mode;
   int visibility_mode;
   int score_mode;
+  int checker_comment_mode;
 };
 
 /* sizeof(struct section_global_data) == 1180/1880 */
