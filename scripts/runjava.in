@@ -8,6 +8,7 @@
 # EJUDGE_JAVA_COMPILER is the compiler version (javac or javac7)
 
 runfile="$1"
+shift
 
 CONFIG_FILE=javac
 if [ "${EJUDGE_JAVA_COMPILER}" = "javac7" ]
@@ -70,8 +71,8 @@ then
     mv "$1" Main.jar || exit 128
     # FIXME: consider special options for scala
     F=${EJUDGE_JAVA_FLAGS//-X/-J-X}
-    exec scala ${F} Main.jar
+    exec scala ${F} Main.jar "$@"
 fi
 
 mv "$1" Main.jar || exit 128
-exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} -Djava.security.manager -Djava.security.policy="${policy_file}" -jar ./Main.jar
+exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} -Djava.security.manager -Djava.security.policy="${policy_file}" -jar ./Main.jar "$@"
