@@ -6685,6 +6685,54 @@ write_xml_team_testing_report(
       xfree(s); s = 0;
     }
     fprintf(f, "</table>\n");
+
+    // hack for "full visibility"
+    if (r->tests && !(t = r->tests[0])) {
+      if (r->scoring_system == SCORE_KIROV ||
+          (r->scoring_system == SCORE_OLYMPIAD && !r->accepting_mode)) {
+        is_kirov = 1;
+      }
+      visibility = cntsprob_get_test_visibility(prob, 1, state->online_final_visibility, token_flags);
+      if (visibility == TV_FULLIFMARKED) {
+        visibility = TV_HIDDEN;
+        if (is_marked) visibility = TV_FULL;
+      }
+      if (visibility == TV_FULL) {
+        fprintf(f, "<pre>");
+        fprintf(f, _("<b>====== Test #%d =======</b>\n"), t->num);
+        if (t->args || t->args_too_long) {
+          fprintf(f, "<a name=\"%dL\"></a>", t->num);
+          fprintf(f, _("<u>--- Command line arguments ---</u>\n"));
+          if (t->args_too_long) {
+            fprintf(f, _("<i>Command line is too long</i>\n"));
+          } else {
+            fprintf(f, "%s", ARMOR(t->args));
+          }
+        }
+        if (t->input.size >= 0) {
+          fprintf(f, "<a name=\"%dI\"></a>", t->num);
+          html_print_testing_report_file_content(f, &ab, &t->input, TESTING_REPORT_INPUT);
+        }
+        if (t->output.size >= 0) {
+          fprintf(f, "<a name=\"%dO\"></a>", t->num);
+          html_print_testing_report_file_content(f, &ab, &t->output, TESTING_REPORT_OUTPUT);
+        }
+        if (t->correct.size >= 0) {
+          fprintf(f, "<a name=\"%dA\"></a>", t->num);
+          html_print_testing_report_file_content(f, &ab, &t->correct, TESTING_REPORT_CORRECT);
+        }
+        if (t->error.size >= 0) {
+          fprintf(f, "<a name=\"%dE\"></a>", t->num);
+          html_print_testing_report_file_content(f, &ab, &t->error, TESTING_REPORT_ERROR);
+        }
+        if (t->checker.size >= 0) {
+          fprintf(f, "<a name=\"%dC\"></a>", t->num);
+          html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
+        }
+        fprintf(f, "</pre>");
+      }
+    }
+
     testing_report_free(r);
     return 0;
   }
