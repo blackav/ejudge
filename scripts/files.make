@@ -80,6 +80,8 @@ SCRIPTS_IN = \
  pypy3-version.in\
  ruby.in\
  ruby-version.in\
+ rust.in\
+ rust-version.in\
  tpc.in\
  tpc-version.in\
  yabasic.in\
