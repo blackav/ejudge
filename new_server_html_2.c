@@ -6687,7 +6687,7 @@ write_xml_team_testing_report(
     fprintf(f, "</table>\n");
 
     // hack for "full visibility"
-    if (r->tests && !(t = r->tests[0])) {
+    if (r->tests && (t = r->tests[0])) {
       if (r->scoring_system == SCORE_KIROV ||
           (r->scoring_system == SCORE_OLYMPIAD && !r->accepting_mode)) {
         is_kirov = 1;
