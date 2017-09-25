@@ -826,7 +826,7 @@ get_random_phrase(const unsigned char *filename)
     if (!(f = fopen(path, "r"))) goto cleanup;
     lines_a = 16;
     XCALLOC(lines, lines_a);
-    while (fgets(linebuf, sizeof(linebuf), stdin)) {
+    while (fgets(linebuf, sizeof(linebuf), f)) {
         size_t len = strlen(linebuf);
         while (len > 0 && isspace(linebuf[len - 1])) --len;
         linebuf[len] = 0;
