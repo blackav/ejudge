@@ -17,6 +17,7 @@
 #include "ejudge/telegram.h"
 #include "ejudge/ej_jobs.h"
 #include "ejudge/xml_utils.h"
+#include "ejudge/random.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
@@ -38,6 +39,7 @@
 #endif
 
 #include <string.h>
+#include <ctype.h>
 
 static struct common_plugin_data *
 init_func(void);
@@ -809,6 +811,49 @@ cleanup:
     if (send_result) send_result->b.destroy(&send_result->b);
 }
 
+static unsigned char *
+get_random_phrase(const unsigned char *filename)
+{
+    unsigned char path[PATH_MAX];
+    FILE *f = NULL;
+    unsigned char *retval = NULL;
+    unsigned char **lines = NULL;
+    size_t lines_a = 0;
+    size_t lines_u = 0;
+    unsigned char linebuf[1024];
+
+    snprintf(path, sizeof(path), "%s/%s", EJUDGE_CONF_DIR, filename);
+    if (!(f = fopen(path, "r"))) goto cleanup;
+    lines_a = 16;
+    XCALLOC(lines, lines_a);
+    while (fgets(linebuf, sizeof(linebuf), stdin)) {
+        size_t len = strlen(linebuf);
+        while (len > 0 && isspace(linebuf[len - 1])) --len;
+        linebuf[len] = 0;
+        if (len > 0) {
+            if (lines_u == lines_a) {
+                XREALLOC(lines, (lines_a *= 2));
+            }
+            lines[lines_u++] = xstrdup(linebuf);
+        }
+    }
+    if (lines_u > 0) {
+        random_init();
+        int ind = random_range(0, lines_u);
+        retval = lines[ind]; lines[ind] = NULL;
+    }
+
+cleanup:
+    if (lines) {
+        for (size_t i = 0; i < lines_u; ++i) {
+            xfree(lines[i]);
+        }
+        xfree(lines);
+    }
+    if (f) fclose(f);
+    return retval;
+}
+
 static int
 safe_strcmp(const unsigned char *s1, const unsigned char *s2)
 {
@@ -913,8 +958,12 @@ handle_incoming_message(
             char *reply_s = NULL;
             size_t reply_z = 0;
             FILE *reply_f = open_memstream(&reply_s, &reply_z);
-            fprintf(reply_f,
-                    "Stierlitz has never been so close to failure. Let's use a private chat!\n");
+            unsigned char *txt = get_random_phrase("phrases_1.txt");
+            if (!txt) {
+                txt = xstrdup("Let's use a private chat!");
+            }
+            fprintf(reply_f, "%s\n", txt);
+            xfree(txt); txt = NULL;
             fclose(reply_f); reply_f = NULL;
             send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
             free(reply_s);
