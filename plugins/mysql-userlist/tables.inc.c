@@ -131,7 +131,7 @@ static struct common_mysql_parse_spec user_info_spec[USER_INFO_WIDTH] =
   //[2]    cnts_read_only TINYINT NOT NULL DEFAULT 0,
   { 0, 'b', "cnts_read_only", USER_INFO_OFFSET(cnts_read_only), 0 },
   //[3]    instnum INT,
-  { 0, 'd', "instnum", USER_INFO_OFFSET(instnum), 0 },
+  { 1, 'd', "instnum", USER_INFO_OFFSET(instnum), 0 },
   //[4]    username VARCHAR(512),
   { 1, 's', "username", USER_INFO_OFFSET(name), 0 },
   //[5]    pwdmethod TINYINT NOT NULL DEFAULT 0,
