@@ -2322,9 +2322,10 @@ write_from_contest_dir(
     goto done;
   }
 
-  if (pattern[0]) {
+  if (pattern && pattern[0]) {
     snprintf(path2, sizeof(path2), pattern, test_num);
   } else {
+    if (!suffix) suffix = "";
     snprintf(path2, sizeof(path2), "%03d%s", test_num, suffix);
   }
 
@@ -2393,6 +2394,7 @@ write_from_archive(
     goto done;
   }
 
+  if (!suffix) suffix = "";
   snprintf(fnbuf, sizeof(fnbuf), "%06d%s", test_num, suffix);
 
   rep_flag = serve_make_full_report_read_path(cs, arch_path, sizeof(arch_path), re);
