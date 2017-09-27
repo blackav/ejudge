@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -679,8 +679,11 @@ parse_spec_func(
     case 'e':
       errno = 0;
       eptr = 0;
-      x = strtol(row[i], &eptr, 10);
-      if (errno || *eptr) goto invalid_format;
+      x = -1;
+      if (row[i]) {
+        x = strtol(row[i], &eptr, 10);
+        if (errno || *eptr) goto invalid_format;
+      }
       p_int = XPDEREF(int, data, specs[i].offset);
       *p_int = x;
       break;
