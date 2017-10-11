@@ -1307,7 +1307,7 @@ static void
 privileged_page_login(FILE *fout,
                       struct http_request_info *phr)
 {
-  const unsigned char *login, *password, *s;
+  const unsigned char *login = NULL, *password = NULL, *s;
   int r, n;
   const struct contest_desc *cnts = 0;
   opcap_t caps;
