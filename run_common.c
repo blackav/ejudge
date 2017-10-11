@@ -3748,6 +3748,7 @@ append_skipped_test(
   ++tests->size;
 
   cur_info->status = RUN_SKIPPED;
+  cur_info->user_status = -1;
 
   cur_info->visibility = TV_NORMAL;
   if (open_tests_val && cur_test > 0 && cur_test < open_tests_count) {
