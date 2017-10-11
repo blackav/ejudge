@@ -169,7 +169,9 @@ process_acm_run(
         ++col->succ_att;
         ++col->tot_att;
         if (!col->is_solved) {
-            cell->first_solver = 1;
+            if (global->is_virtual <= 0) {
+                cell->first_solver = 1;
+            }
             col->is_solved = 1;
         }
     } else if (pe->status == RUN_COMPILE_ERR && prob->ignore_compile_errors <= 0) {
@@ -351,7 +353,9 @@ process_kirov_run(
             if (run_status == RUN_SUMMONED)
                 cell->sm_flag = 1;
             if (!col->is_solved) {
-                cell->first_solver = 1;
+                if (global->is_virtual <= 0) {
+                    cell->first_solver = 1;
+                }
                 col->is_solved = 1;
             }
             break;
@@ -426,7 +430,9 @@ process_kirov_run(
             }
             //if (run_score > prob->full_score) run_score = prob->full_score;
             if (!col->is_solved) {
-                cell->first_solver = 1;
+                if (global->is_virtual <= 0) {
+                    cell->first_solver = 1;
+                }
                 col->is_solved = 1;
             }
             break;
@@ -533,7 +539,9 @@ process_kirov_run(
                 pg->last_submit_run = run_id;
                 pg->last_success_run = run_id;
                 if (!col->is_solved) {
-                    cell->first_solver = 1;
+                    if (global->is_virtual <= 0) {
+                        cell->first_solver = 1;
+                    }
                     col->is_solved = 1;
                 }
             } else if (run_status == RUN_PARTIAL || (run_status == RUN_WRONG_ANSWER_ERR && prob->type != 0)) {
@@ -613,7 +621,9 @@ process_kirov_run(
                 cell->rj_flag = 0;
 
                 if (!col->is_solved) {
-                    cell->first_solver = 1;
+                    if (global->is_virtual <= 0) {
+                        cell->first_solver = 1;
+                    }
                     col->is_solved = 1;
                 }
 
@@ -922,7 +932,9 @@ process_moscow_run(
         ++col->succ_att;
         ++col->tot_att;
         if (!col->is_solved) {
-            cell->first_solver = 1;
+            if (global->is_virtual <= 0) {
+                cell->first_solver = 1;
+            }
             col->is_solved = 1;
         }
         /*
