@@ -1316,7 +1316,7 @@ privileged_page_login(FILE *fout,
     fprintf(phr->log_f, "cannot parse login");
     return error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
   }
-  if (login && check_login(login) < 0) {
+  if (login && *login && check_login(login) < 0) {
     fprintf(phr->log_f, "invalid login");
     return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
   }
@@ -8204,7 +8204,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
     fprintf(phr->log_f, "cannot parse login");
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
-  if (login && check_login(login) < 0) {
+  if (login && *login && check_login(login) < 0) {
     fprintf(phr->log_f, "invalid login");
     return error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
   }
