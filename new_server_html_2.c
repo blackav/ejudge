@@ -4808,7 +4808,6 @@ kirov_score_latest_or_unmarked(
   case RUN_TIME_LIMIT_ERR:
   case RUN_WALL_TIME_LIMIT_ERR:
   case RUN_PRESENTATION_ERR:
-  case RUN_WRONG_ANSWER_ERR:
   case RUN_CHECK_FAILED:
   case RUN_MEM_LIMIT_ERR:
   case RUN_SECURITY_ERR:
@@ -4816,13 +4815,14 @@ kirov_score_latest_or_unmarked(
     break;
 
   case RUN_PARTIAL:
+  case RUN_WRONG_ANSWER_ERR:
     cur_score = calc_kirov_score(0, 0, start_time, separate_user_score,
                                  1 /* user_mode */, re->token_flags, re, cur_prob,
                                  pinfo->attempts,
                                  pinfo->disqualified, pinfo->ce_attempts,
                                  pinfo->prev_successes, 0, 0, pinfo->effective_time);
     pinfo->attempts++;
-    if (re->is_marked || cur_score > pinfo->best_score) {
+    if (re->is_marked || cur_score > pinfo->best_score || pinfo->best_score <= 0) {
       pinfo->best_score = cur_score;
       pinfo->best_run = run_id;
     }
