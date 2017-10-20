@@ -402,7 +402,7 @@ function setDivVisibility(oper, value)
 <th>Full time</th>
 <th>Duration from start</th>
 <% if (!info.lang_id) { %>
-<th><s:_>Content type</s:_></th><td><s:v type="mime_type" value="info.mime_type" /></td>
+<th><s:_>Content type</s:_></th>
 <% } %>
 <% #if CONF_HAS_LIBUUID - 0 != 0 %>
     <th>UUID</th>
