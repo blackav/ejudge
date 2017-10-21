@@ -3,7 +3,7 @@
 %><%
 #define COPYSTR(f) snprintf(prob->f, sizeof(prob->f), "%s", (f))
 #define MOVESTR(f) xfree(prob->f); prob->f = f; f = NULL
-#define FREESTR(f) xfree(prob->f); f = NULL
+#define FREESTR(f) xfree(prob->f); prob->f = NULL
 
 %><%@set getter_name = "csp_get_prob_save_files_form"
 %><%@set ac_prefix = "SSERV_CMD_"
