@@ -1897,7 +1897,7 @@ function viewDialogOnChange(field)
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-compile_error_penalty-div">
-                <td>Penalty for a submission:</td>
+                <td>Penalty for a compilation error:</td>
                 <td><s:textfield id="orig-compile_error_penalty" readonly="readonly" name="param" value="prob->compile_error_penalty" size="48" maxlength="1024" checkExpr=" >= 0" /><%
     if (prob_id <= 0) {
       if (prob->compile_error_penalty < 0) {
