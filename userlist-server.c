@@ -1703,19 +1703,21 @@ send_registration_email(
 
   unsigned char *email_subject = NULL;
 
-  if (locale_id == 1) {
-    // russian
-    if (cnts->register_subject) {
-      email_subject = cnts->register_subject;
-    } else if (cnts->register_subject_en) {
-      email_subject = cnts->register_subject_en;
-    }
-  } else {
-    // default - english
-    if (cnts->register_subject_en) {
-      email_subject = cnts->register_subject_en;
-    } else if (cnts->register_subject) {
-      email_subject = cnts->register_subject;
+  if (cnts) {
+    if (locale_id == 1) {
+      // russian
+      if (cnts->register_subject) {
+        email_subject = cnts->register_subject;
+      } else if (cnts->register_subject_en) {
+        email_subject = cnts->register_subject_en;
+      }
+    } else {
+      // default - english
+      if (cnts->register_subject_en) {
+        email_subject = cnts->register_subject_en;
+      } else if (cnts->register_subject) {
+        email_subject = cnts->register_subject;
+      }
     }
   }
 
