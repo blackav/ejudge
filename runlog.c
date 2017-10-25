@@ -455,6 +455,18 @@ run_add_record(
     ue->run_id_valid = 0;
     state->run_extras[i].prev_user_id = -1;
     state->run_extras[i].next_user_id = -1;
+    // drop the following indices
+    for (int j = i + 1; j < state->run_u; ++j) {
+      int uu = state->runs[j].user_id;
+      state->run_extras[j].prev_user_id = -1;
+      state->run_extras[j].next_user_id = -1;
+      if (uu > 0) {
+        struct user_entry *uue = try_user_entry(state, uu);
+        if (uue) {
+          uue->run_id_valid = 0;
+        }
+      }
+    }
     // increase run_id for runs inserted after the given
     if (state->uuid_hash_state > 0) {
       for (int i = 0; i < state->uuid_hash_size; ++i) {
@@ -1763,6 +1775,7 @@ run_virtual_stop(
   re.ssl_flag = ssl_flag;
   re.status = RUN_VIRTUAL_STOP;
   pvt->stop_time = t;
+  pvt->run_id_valid = 0; // rebuild index later
 
   if (state->max_user_id >= 0 && user_id > state->max_user_id) {
     state->max_user_id = user_id;
@@ -1770,8 +1783,35 @@ run_virtual_stop(
   state->user_count = -1;
 
   if ((i = state->iface->add_entry(state->cnts, i, &re, RE_USER_ID | RE_IP | RE_SSL_FLAG | RE_STATUS)) < 0) return -1;
-  struct user_entry *ue = try_user_entry(state, user_id);
-  if (ue) ue->run_id_valid = 0;
+
+  // updating user_id index
+  extend_run_extras(state);
+  state->run_extras[i].prev_user_id = -1;
+  state->run_extras[i].next_user_id = -1;
+  if (i < state->run_u - 1) {
+    // inserting somewhere in the middle
+    // drop the following indices
+    for (int j = i + 1; j < state->run_u; ++j) {
+      int uu = state->runs[j].user_id;
+      state->run_extras[j].prev_user_id = -1;
+      state->run_extras[j].next_user_id = -1;
+      if (uu > 0) {
+        struct user_entry *uue = try_user_entry(state, uu);
+        if (uue) {
+          uue->run_id_valid = 0;
+        }
+      }
+    }
+    // increase run_id for runs inserted after the given
+    if (state->uuid_hash_state > 0) {
+      for (int i = 0; i < state->uuid_hash_size; ++i) {
+        if (state->uuid_hash[i].run_id >= i) {
+          ++state->uuid_hash[i].run_id;
+        }
+      }
+    }
+  }
+
   return i;
 }
 
