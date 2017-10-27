@@ -268,6 +268,7 @@ COMMON_CFILES=\
  type_info.c\
  uldb_plugin_xml.c\
  userlist.c\
+ userlist_bin.c\
  userlist_check.c\
  userlist_proto.c\
  userlist_xml.c\
@@ -631,6 +632,7 @@ HFILES=\
  ./include/ejudge/type_info.h\
  ./include/ejudge/uldb_plugin.h\
  ./include/ejudge/userlist.h\
+ ./include/ejudge/userlist_bin.h\
  ./include/ejudge/userlist_clnt.h\
  ./include/ejudge/variant_map.h\
  ./include/ejudge/varsubst.h\
