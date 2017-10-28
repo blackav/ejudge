@@ -26,6 +26,7 @@
 #include "ejudge/userlist.h"
 #include "ejudge/super_run_status.h"
 #include "ejudge/internal_pages.h"
+#include "ejudge/userlist_bin.h"
 
 #include <stdio.h>
 
@@ -49,5 +50,7 @@ int main(void)
   printf("userlist_cookie:       %zu\n", sizeof(struct userlist_cookie));
   printf("super_run_status:      %zu\n", sizeof(struct super_run_status));
   printf("StandingsCell:         %zu\n", sizeof(StandingsCell));
+  printf("xml_tree:              %zu\n", sizeof(struct xml_tree));
+  printf("UserlistBinaryHeader:  %zu\n", sizeof(UserlistBinaryHeader));
   return 0;
 }

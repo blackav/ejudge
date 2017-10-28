@@ -17,4 +17,28 @@
  * GNU General Public License for more details.
  */
 
+#include "userlist.h"
+
+#include <stdint.h>
+
+#define USERLIST_BIN_VERSION 1
+
+/* binary transfer protocol indended for data transfer between ej-users and ej-contests */
+
+typedef struct UserlistBinaryHeader
+{
+    // just in case
+    unsigned char endianness;      // 1 - LE
+    unsigned char ptr_size;        // 4 or 8
+    unsigned char pad1[6];
+    int32_t version;
+    uint32_t size;                 // total size of data[]
+    uint32_t struct_size;          // size of structured data
+    uint32_t string_size;          // size of strings
+    uint32_t userlist_list_size;   // sizeof(struct userlist_list) aligned to 16
+    uint32_t userlist_user_size;   // sizeof(struct userlist_user)
+    uint32_t userlist_info_size;   // sizeof(struct userlist_user_info)
+    unsigned char data[];
+} UserlistBinaryHeader;
+
 #endif /* __USERLIST_BIN_H__ */
