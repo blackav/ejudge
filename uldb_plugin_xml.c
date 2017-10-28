@@ -1973,13 +1973,10 @@ remove_user_contest_info_func(void *data, int user_id, int contest_id)
     return -1;
   }
 
-  // no contest info
-  if (contest_id <= 0 || contest_id >= u->cntsinfo_a
-      || !(uc = u->cntsinfo[contest_id])) return 0;
-
-  xml_unlink_node(&uc->b);
-  userlist_free(&uc->b);
-  u->cntsinfo[contest_id] = 0;
+  if ((uc = userlist_remove_user_info(u, contest_id))) {
+    xml_unlink_node(&uc->b);
+    userlist_free(&uc->b);
+  }
 
   state->dirty = 1;
   state->flush_interval /= 2;
@@ -3154,8 +3151,9 @@ userlist_clone_user_info(
   if (p_cloned_flag) *p_cloned_flag = 0;
   if (contest_id <= 0 || contest_id > EJ_MAX_CONTEST_ID) return 0;
   if (!u) return 0;
-  if (u->cntsinfo && contest_id < u->cntsinfo_a && u->cntsinfo[contest_id])
-    return u->cntsinfo[contest_id];
+
+  if ((ui = userlist_get_user_info_nc(u, contest_id)))
+    return ui;
 
   // ok, needs clone
   // 1. find <cntsinfos> element in the list of childs
@@ -3171,8 +3169,7 @@ userlist_clone_user_info(
   ci->contest_id = contest_id;
   ci->instnum = -1;
   if (!(ui = u->cnts0)) {
-    userlist_expand_cntsinfo(u, contest_id);
-    u->cntsinfo[contest_id] = ci;
+    userlist_insert_user_info(u, contest_id, ci);
     if (p_cloned_flag) *p_cloned_flag = 1;
     return ci;
   }
@@ -3262,8 +3259,7 @@ userlist_clone_user_info(
     }
   }
 
-  userlist_expand_cntsinfo(u, contest_id);
-  u->cntsinfo[contest_id] = ci;
+  userlist_insert_user_info(u, contest_id, ci);
 
   if (p_cloned_flag) *p_cloned_flag = 1;
   return ci;

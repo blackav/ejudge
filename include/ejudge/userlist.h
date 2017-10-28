@@ -530,9 +530,9 @@ struct userlist_user
   time_t last_access_time;
   time_t last_pwdchange_time;
 
-  /* the contest-specific information */
-  int cntsinfo_a;
-  struct userlist_user_info **cntsinfo;
+  /* the contest-specific information: sorted by contest_id, for bsearch */
+  int cis_a;
+  struct userlist_user_info **cis;
 
   /* the default (legacy) values for contest-specific fields */
   /* also these fields are returned when contest_id is provided for
@@ -749,7 +749,15 @@ int userlist_build_cookie_hash(struct userlist_list *p);
 int userlist_cookie_hash_add(struct userlist_list *, const struct userlist_cookie *);
 int userlist_cookie_hash_del(struct userlist_list *, const struct userlist_cookie *);
 
-void userlist_expand_cntsinfo(struct userlist_user *u, int contest_id);
+void
+userlist_insert_user_info(
+        struct userlist_user *u,
+        int contest_id,
+        struct userlist_user_info *ui);
+struct userlist_user_info *
+userlist_remove_user_info(
+        struct userlist_user *u,
+        int contest_id);
 
 struct userlist_user_info *
 userlist_new_cntsinfo(struct userlist_user *u, int contest_id,

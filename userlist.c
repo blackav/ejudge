@@ -1647,23 +1647,149 @@ userlist_cookie_hash_del(
   return 0;
 }
 
-void
-userlist_expand_cntsinfo(struct userlist_user *u, int contest_id)
+const struct userlist_user_info *
+userlist_get_user_info(
+        const struct userlist_user *u,
+        int contest_id)
 {
-  int new_size;
-  struct userlist_user_info **new_arr;
-
-  if (contest_id < u->cntsinfo_a) return;
-
-  if (!(new_size = u->cntsinfo_a)) new_size = 32;
-  while (contest_id >= new_size) new_size *= 2;
-  XCALLOC(new_arr, new_size);
-  if (u->cntsinfo_a > 0) {
-    memcpy(new_arr, u->cntsinfo, u->cntsinfo_a * sizeof(new_arr[0]));
+  if (!u || contest_id <= 0) return NULL;
+  int high = u->cis_a;
+  if (high <= 0) return NULL;
+  if (high <= 4) {
+    for (int mid = 0; mid < high; ++mid) {
+      const struct userlist_user_info *ui = u->cis[mid];
+      if (ui->contest_id == contest_id)
+        return ui;
+      else if (ui->contest_id > contest_id)
+        return NULL;
+    }
+  } else {
+    int low = 0;
+    while (low < high) {
+      int mid = (low + high) / 2;
+      const struct userlist_user_info *ui = u->cis[mid];
+      if (ui->contest_id == contest_id)
+        return ui;
+      else if (ui->contest_id < contest_id)
+        low = mid + 1;
+      else
+        high = mid;
+    }
   }
-  xfree(u->cntsinfo);
-  u->cntsinfo_a = new_size;
-  u->cntsinfo = new_arr;
+  return NULL;
+}
+
+struct userlist_user_info *
+userlist_get_user_info_nc(
+        struct userlist_user *u,
+        int contest_id)
+{
+  if (!u || contest_id <= 0) return NULL;
+  int high = u->cis_a;
+  if (high <= 0) return NULL;
+  if (high <= 4) {
+    for (int mid = 0; mid < high; ++mid) {
+      struct userlist_user_info *ui = u->cis[mid];
+      if (ui->contest_id == contest_id) {
+        return ui;
+      } else if (ui->contest_id > contest_id) {
+        return NULL;
+      }
+    }
+  } else {
+    int low = 0;
+    while (low < high) {
+      int mid = (low + high) / 2;
+      struct userlist_user_info *ui = u->cis[mid];
+      if (ui->contest_id == contest_id) {
+        return ui;
+      } else if (ui->contest_id < contest_id)
+        low = mid + 1;
+      else
+        high = mid;
+    }
+  }
+  return NULL;
+}
+
+void
+userlist_insert_user_info(
+        struct userlist_user *u,
+        int contest_id,
+        struct userlist_user_info *ui)
+{
+  int high = u->cis_a;
+  if (high <= 0) {
+    u->cis_a = 1;
+    XCALLOC(u->cis, u->cis_a);
+    u->cis[0] = ui;
+  } else {
+    int low = 0;
+    while (low < high) {
+      int mid = (low + high) / 2;
+      struct userlist_user_info *tmp = u->cis[mid];
+      if (tmp->contest_id == contest_id) {
+        // do not expect to find an item
+        abort();
+      } else if (tmp->contest_id < contest_id) {
+        low = mid + 1;
+      } else {
+        high = mid;
+      }
+    }
+    ++u->cis_a;
+    u->cis = realloc(u->cis, u->cis_a * sizeof(u->cis[0]));
+    if (low + 1 < u->cis_a) {
+      memmove(&u->cis[low + 1], &u->cis[low], (u->cis_a - low - 1) * sizeof(u->cis[0]));
+    }
+    u->cis[low] = ui;
+  }
+}
+
+struct userlist_user_info *
+userlist_remove_user_info(
+        struct userlist_user *u,
+        int contest_id)
+{
+  if (!u) return NULL;
+  if (u->cis_a <= 0) return NULL;
+  if (contest_id <= 0) return NULL;
+
+  int high = u->cis_a;
+  int mid = 0;
+  struct userlist_user_info *uc = NULL;
+  if (high <= 4) {
+    for (int mid = 0; mid < high; ++mid) {
+      uc = u->cis[mid];
+      if (uc->contest_id == contest_id) {
+        break;
+      }
+    }
+    if (mid >= high) return 0;
+  } else {
+    int low = 0;
+    while (low < high) {
+      mid = (low + high) / 2;
+      uc = u->cis[mid];
+      if (uc->contest_id == contest_id) {
+        break;
+      } else if (uc->contest_id < contest_id) {
+        low = mid + 1;
+      } else {
+        high = mid;
+      }
+    }
+    if (low >= high) return 0;
+  }
+
+  uc = u->cis[mid];
+  if (mid + 1 < high) {
+    memmove(&u->cis[mid], &u->cis[mid + 1], high - mid - 1);
+  }
+  if (!--u->cis_a) {
+    xfree(u->cis); u->cis = NULL;
+  }
+  return uc;
 }
 
 struct userlist_user_info *
@@ -1676,8 +1802,8 @@ userlist_new_cntsinfo(struct userlist_user *u, int contest_id,
   ASSERT(contest_id > 0 && contest_id <= EJ_MAX_CONTEST_ID);
   ASSERT(u);
 
-  if (u->cntsinfo && contest_id < u->cntsinfo_a && u->cntsinfo[contest_id])
-    return u->cntsinfo[contest_id];
+  ui = userlist_get_user_info_nc(u, contest_id);
+  if (ui) return ui;
 
   // ok, needs clone
   // 1. find <cntsinfos> element in the list of childs
@@ -1690,8 +1816,7 @@ userlist_new_cntsinfo(struct userlist_user *u, int contest_id,
 
   ui = (struct userlist_user_info*) userlist_node_alloc(USERLIST_T_CNTSINFO);
   xml_link_node_last(p, &ui->b);
-  userlist_expand_cntsinfo(u, contest_id);
-  u->cntsinfo[contest_id] = ui;
+  userlist_insert_user_info(u, contest_id, ui);
 
   ui->contest_id = contest_id;
   ui->instnum = -1;
@@ -1699,28 +1824,6 @@ userlist_new_cntsinfo(struct userlist_user *u, int contest_id,
   ui->last_change_time = current_time;
 
   return ui;
-}
-
-const struct userlist_user_info *
-userlist_get_user_info(const struct userlist_user *u, int contest_id)
-{
-  ASSERT(u);
-
-  if (contest_id > 0 && contest_id < u->cntsinfo_a
-      && u->cntsinfo[contest_id])
-    return u->cntsinfo[contest_id];
-  return u->cnts0;
-}
-
-struct userlist_user_info *
-userlist_get_user_info_nc(struct userlist_user *u, int contest_id)
-{
-  ASSERT(u);
-
-  if (contest_id > 0 && contest_id < u->cntsinfo_a
-      && u->cntsinfo[contest_id])
-    return u->cntsinfo[contest_id];
-  return u->cnts0;
 }
 
 const struct userlist_contest *
