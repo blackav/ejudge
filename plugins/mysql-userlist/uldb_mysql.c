@@ -400,8 +400,7 @@ userlist_attach_user_info(
   if (ui->contest_id <= 0) {
     u->cnts0 = ui;
   } else {
-    userlist_expand_cntsinfo(u, ui->contest_id);
-    u->cntsinfo[ui->contest_id] = ui;
+    userlist_insert_user_info(u, ui->contest_id, ui);
   }
 }
 
@@ -862,9 +861,9 @@ insert_func(void *data, const struct userlist_user *user, int *p_member_serial)
   }
 
   if (!user->cnts0) {
-    for (contest_id = 1; contest_id < user->cntsinfo_a; contest_id++) {
-      if (!(cntsinfo = user->cntsinfo[contest_id])) continue;
-      if (insert_contest_info(state, user->id, contest_id, cntsinfo, 0) < 0)
+    for (int i = 0; i < user->cis_a; ++i) {
+      struct userlist_user_info *ui = user->cis[i];
+      if (insert_contest_info(state, user->id, ui->contest_id, ui, 0) < 0)
         goto fail;
     }
     return 0;
@@ -874,9 +873,9 @@ insert_func(void *data, const struct userlist_user *user, int *p_member_serial)
   if (insert_contest_info(state, user->id, 0, user->cnts0, 0) < 0)
     goto fail;
 
-  for (contest_id = 1; contest_id < user->cntsinfo_a; contest_id++) {
-    if (!(cntsinfo = user->cntsinfo[contest_id])) continue;
-    if (insert_contest_info(state, user->id, contest_id, cntsinfo, 0) < 0)
+  for (int i = 0; i < user->cis_a; ++i) {
+    struct userlist_user_info *ui = user->cis[i];
+    if (insert_contest_info(state, user->id, ui->contest_id, ui, 0) < 0)
       goto fail;
   }
 
@@ -896,12 +895,11 @@ insert_func(void *data, const struct userlist_user *user, int *p_member_serial)
     if (uc->id > 0 && uc->id <= max_contest_id)
       contest_set[uc->id] = 1;
   }
-  
-  for (contest_id = 1;
-       contest_id < user->cntsinfo_a && contest_id <= max_contest_id;
-       contest_id++) {
-    if (!(cntsinfo = user->cntsinfo[contest_id])) continue;
-    contest_set[contest_id] = 0;
+
+  for (int i = 0; i < user->cis_a; ++i) {
+    cntsinfo = user->cis[i];
+    if (cntsinfo->contest_id > 0 && cntsinfo->contest_id <= max_contest_id)
+      contest_set[cntsinfo->contest_id] = 0;
   }
 
   // now in contest_set we've got the contests need cloning
@@ -4170,21 +4168,17 @@ unlock_user_func(
   int i;
   struct userlist_user *u = (struct userlist_user*) c_u;
   struct xml_tree *p, *q;
-  struct userlist_user_info *ui = 0;
 
   if (!c_u) return;
 
   // detach all existing user_infos
-  for (i = 0; i < u->cntsinfo_a; i++) {
-    if (!(ui = u->cntsinfo[i])) continue;
-    // FIXME: unsafe :(
-    //ui->members = 0;
-    u->cntsinfo[i] = 0;
+  for (i = 0; i < u->cis_a; ++i) {
+    u->cis[i] = NULL;
   }
-  xfree(u->cntsinfo);
-  u->cntsinfo = 0;
-  u->cntsinfo_a = 0;
-  u->cnts0 = 0;
+  xfree(u->cis);
+  u->cis = NULL;
+  u->cis_a = 0;
+  u->cnts0 = NULL;
 
   // detach all existing cntsregs
   if (u->contests) {

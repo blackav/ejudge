@@ -223,7 +223,7 @@ elem_free(struct xml_tree *t)
       xfree(p->email);
       xfree(p->passwd);
       xfree(p->extra1);
-      xfree(p->cntsinfo);
+      xfree(p->cis);
     }
     break;
   case USERLIST_T_MEMBER:
@@ -916,10 +916,6 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
       if (xml_attr_int(a, &ui->contest_id) < 0) return -1;
       if (ui->contest_id <= 0 || ui->contest_id > EJ_MAX_CONTEST_ID)
         return xml_err_attr_invalid(a);
-      if (ui->contest_id < usr->cntsinfo_a && usr->cntsinfo[ui->contest_id]) {
-        xml_err_a(a, "duplicated contest_id %d", ui->contest_id);
-        return -1;
-      }
       break;
     case USERLIST_A_CNTS_READ_ONLY:
       if (xml_attr_bool(a, &ui->cnts_read_only) < 0) return -1;
@@ -993,8 +989,7 @@ parse_cntsinfo(const char *path, struct xml_tree *node,
 
   if (!ui->name) ui->name = xstrdup("");
 
-  userlist_expand_cntsinfo(usr, ui->contest_id);
-  usr->cntsinfo[ui->contest_id] = ui;
+  userlist_insert_user_info(usr, ui->contest_id, ui);
 
   return 0;
 }
@@ -1010,7 +1005,6 @@ parse_cntsinfos(const char *path, struct xml_tree *node,
 
   if (xml_empty_text(node) < 0) return -1;
   if (node->first) return xml_err_attrs(node);
-  if (usr->cntsinfo_a > 0) return xml_err_elem_redefined(node);
 
   for (p = node->first_down; p; p = p->right) {
     if (p->tag != USERLIST_T_CNTSINFO)
@@ -2016,18 +2010,17 @@ unparse_usergroupmembers(
 
 /* called from `userlist_unparse_short' */
 void
-userlist_unparse_user_short(const struct userlist_user *p, FILE *f,
-                            int contest_id)
+userlist_unparse_user_short(
+        const struct userlist_user *p,
+        FILE *f,
+        int contest_id)
 {
   const struct userlist_contest *uc = 0;
   const struct userlist_user_info *ui;
 
   if (!p) return;
 
-  if (p->cntsinfo && contest_id > 0 && contest_id < p->cntsinfo_a
-      && p->cntsinfo[contest_id]) {
-    ui = p->cntsinfo[contest_id];
-  } else {
+  if (!(ui = userlist_get_user_info(p, contest_id))) {
     ui = p->cnts0;
   }
 
@@ -2085,17 +2078,14 @@ userlist_real_unparse_user(
         int flags)
 {
   unsigned char attr_str[128];
-  int i, cnt;
+  int i;
   const struct userlist_user_info *ui;
   const struct userlist_member *m;
   unsigned char **p_str;
 
   if (!p) return;
 
-  if (contest_id > 0 && p->cntsinfo && contest_id < p->cntsinfo_a
-      && p->cntsinfo[contest_id]) {
-    ui = p->cntsinfo[contest_id];
-  } else {
+  if (!(ui = userlist_get_user_info(p, contest_id))) {
     ui = p->cnts0;
   }
 
@@ -2218,13 +2208,11 @@ userlist_real_unparse_user(
     }
   }
 
-  if (contest_id < 0 && p->cntsinfo) {
-    for (cnt = 0, i = 0; i < p->cntsinfo_a; i++)
-      if (p->cntsinfo[i])
-        cnt++;
+  if (contest_id < 0 && p->cis_a > 0) {
     fprintf(f, "    <%s>\n", elem_map[USERLIST_T_CNTSINFOS]);
-    for (i = 0; i < p->cntsinfo_a; i++)
-      unparse_cntsinfo(p->cntsinfo[i], f);
+    for (i = 0; i < p->cis_a; ++i) {
+      unparse_cntsinfo(p->cis[i], f);
+    }
     fprintf(f, "    </%s>\n", elem_map[USERLIST_T_CNTSINFOS]);
   }
 

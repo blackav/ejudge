@@ -193,13 +193,10 @@ sformat_message(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   if (user_data) {
-    if (cnts_data && cnts_data->id > 0
-        && cnts_data->id < user_data->cntsinfo_a
-        && user_data->cntsinfo[cnts_data->id]) {
-      ui = user_data->cntsinfo[cnts_data->id];
-    } else {
-      ui = user_data->cnts0;
+    if (cnts_data) {
+      ui = userlist_get_user_info(user_data, cnts_data->id);
     }
+    if (!ui) ui = user_data->cnts0;
   }
 
   if (team_data && team_data->user) tui = team_data->user->cnts0;
