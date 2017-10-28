@@ -2008,26 +2008,42 @@ serve_run_request(
     srpp->test_pat = xstrdup(prob->test_pat);
   } else if (prob->test_sfx) {
     usprintf(&srpp->test_pat, "%%03d%s", prob->test_sfx);
+  } else {
+    srpp->test_pat = xstrdup("%03d.dat");
   }
-  if (prob->corr_pat) {
-    srpp->corr_pat = xstrdup(prob->corr_pat);
-  } else if (prob->corr_sfx) {
-    usprintf(&srpp->corr_pat, "%%03d%s", prob->corr_sfx);
+  if (prob->use_corr > 0) {
+    if (prob->corr_pat) {
+      srpp->corr_pat = xstrdup(prob->corr_pat);
+    } else if (prob->corr_sfx) {
+      usprintf(&srpp->corr_pat, "%%03d%s", prob->corr_sfx);
+    } else {
+      srpp->corr_pat = xstrdup("%03d.ans");
+    }
   }
-  if (prob->info_pat) {
-    srpp->info_pat = xstrdup(prob->info_pat);
-  } else if (prob->info_sfx) {
-    usprintf(&srpp->info_pat, "%%03d%s", prob->info_sfx);
+  if (prob->use_info > 0) {
+    if (prob->info_pat) {
+      srpp->info_pat = xstrdup(prob->info_pat);
+    } else if (prob->info_sfx) {
+      usprintf(&srpp->info_pat, "%%03d%s", prob->info_sfx);
+    } else {
+      srpp->info_pat = xstrdup("%03d.inf");
+    }
   }
-  if (prob->tgz_pat) {
-    srpp->tgz_pat = xstrdup(prob->tgz_pat);
-  } else if (prob->tgz_sfx) {
-    usprintf(&srpp->tgz_pat, "%%03d%s", prob->tgz_sfx);
-  }
-  if (prob->tgzdir_pat) {
-    srpp->tgzdir_pat = xstrdup2(prob->tgzdir_pat);
-  } else if (prob->tgzdir_sfx) {
-    usprintf(&srpp->tgzdir_pat, "%%03d%s", prob->tgzdir_sfx);
+  if (prob->use_tgz > 0) {
+    if (prob->tgz_pat) {
+      srpp->tgz_pat = xstrdup(prob->tgz_pat);
+    } else if (prob->tgz_sfx) {
+      usprintf(&srpp->tgz_pat, "%%03d%s", prob->tgz_sfx);
+    } else {
+      srpp->tgz_pat = xstrdup("%03d.tgz");
+    }
+    if (prob->tgzdir_pat) {
+      srpp->tgzdir_pat = xstrdup2(prob->tgzdir_pat);
+    } else if (prob->tgzdir_sfx) {
+      usprintf(&srpp->tgzdir_pat, "%%03d%s", prob->tgzdir_sfx);
+    } else {
+      srpp->tgzdir_pat = xstrdup("%03d.dir");
+    }
   }
   srpp->test_sets = sarray_copy(prob->test_sets);
   srpp->checker_env = sarray_copy(prob->checker_env);
