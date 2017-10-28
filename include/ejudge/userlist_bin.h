@@ -38,6 +38,11 @@ typedef struct UserlistBinaryHeader
     uint32_t userlist_list_size;   // sizeof(struct userlist_list) aligned to 16
     uint32_t userlist_user_size;   // sizeof(struct userlist_user)
     uint32_t userlist_info_size;   // sizeof(struct userlist_user_info)
+    uint32_t userlist_member_size; // sizeof(struct userlist_member)
+    uint32_t cur_struct_offset;
+    uint32_t cur_string_offset;
+    uint32_t root_offset;
+    unsigned char pad2[16];
     unsigned char data[];
 } UserlistBinaryHeader;
 
