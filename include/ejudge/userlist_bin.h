@@ -39,11 +39,40 @@ typedef struct UserlistBinaryHeader
     uint32_t userlist_user_size;   // sizeof(struct userlist_user)
     uint32_t userlist_info_size;   // sizeof(struct userlist_user_info)
     uint32_t userlist_member_size; // sizeof(struct userlist_member)
+    uint32_t max_user_id;          // maximum user_id in the data
     uint32_t cur_struct_offset;
     uint32_t cur_string_offset;
     uint32_t root_offset;          // offset from data[] to the root of the tree, currently 16
-    unsigned char pad3[12];
+    int32_t contest_id;
+    unsigned char pad3[4];
     unsigned char data[];
 } UserlistBinaryHeader;
+
+void
+userlist_bin_init_header(
+        UserlistBinaryHeader *header);
+void
+userlist_bin_finish_header(
+        UserlistBinaryHeader *header);
+
+UserlistBinaryHeader *
+userlist_bin_marshall_start(
+        void *dst,
+        const UserlistBinaryHeader *in_header,
+        int contest_id);
+void
+userlist_bin_marshall_end(
+        UserlistBinaryHeader *header);
+
+void
+userlist_bin_calculate_user_size(
+        UserlistBinaryHeader *header,
+        const struct userlist_user *u,
+        int contest_id);
+void
+userlist_bin_marshall_user(
+        UserlistBinaryHeader *header,
+        const struct userlist_user *u,
+        int contest_id);
 
 #endif /* __USERLIST_BIN_H__ */

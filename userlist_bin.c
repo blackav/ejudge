@@ -17,8 +17,11 @@
 #include "ejudge/userlist_bin.h"
 
 #include "ejudge/logger.h"
+#include "ejudge/xalloc.h"
 
 #include <string.h>
+
+enum { FIRST_DATA_ITEM_OFFSET = 16 };
 
 #if 0
 /* structure takes 40 bytes (without `name') on ia32 
@@ -147,7 +150,7 @@ userlist_bin_calculate_member_size(
   header->string_size += strsize(m->phone);
 }
 
-static void
+void
 userlist_bin_calculate_user_size(
         UserlistBinaryHeader *header,
         const struct userlist_user *u,
@@ -167,6 +170,8 @@ userlist_bin_calculate_user_size(
         }
     }
     if (!uc) return;
+
+    if (u->id > header->max_user_id) header->max_user_id = u->id;
 
     header->struct_size += align16(sizeof(*u));
     header->struct_size += align16(sizeof(struct xml_tree));
@@ -258,12 +263,38 @@ userlist_bin_calculate_size(
         userlist_bin_calculate_user_size(header, ul->user_map[user_id], contest_id);
     }
 
-    header->struct_size = align16(header->struct_size);
+    header->struct_size = align16(header->struct_size) + FIRST_DATA_ITEM_OFFSET;
     header->string_size = align16(header->string_size);
-    header->size = header->struct_size + header->string_size + sizeof(UserlistBinaryHeader) + 16;
+    header->size = header->struct_size + header->string_size;
 }
 
-struct userlist_member *
+void
+userlist_bin_init_header(
+        UserlistBinaryHeader *header)
+{
+    memset(header, 0, sizeof(*header));
+    header->endianness = 1;
+    header->ptr_size = sizeof(void*);
+    header->version = USERLIST_BIN_VERSION;
+    header->userlist_list_size = align16(sizeof(struct userlist_list));
+    header->userlist_user_size = align16(sizeof(struct userlist_user));
+    header->userlist_info_size = align16(sizeof(struct userlist_user_info));
+    header->userlist_member_size = align16(sizeof(struct userlist_member));
+}
+
+void
+userlist_bin_finish_header(
+        UserlistBinaryHeader *header)
+{
+    header->struct_size += align16(sizeof(struct userlist_list));
+    header->struct_size += align16((header->max_user_id + 1) * sizeof(struct userlist_user *));
+    header->struct_size = align16(header->struct_size) + FIRST_DATA_ITEM_OFFSET;
+    header->string_size = align16(header->string_size);
+    header->size = header->struct_size + header->string_size;
+    header->pkt_size = header->size + sizeof(UserlistBinaryHeader);
+}
+
+static struct userlist_member *
 userlist_bin_marshall_member(
         UserlistBinaryHeader *header,
         const struct userlist_member *m)
@@ -313,15 +344,14 @@ userlist_bin_marshall_member(
     return dm;
 }
 
-static struct userlist_user *
+void
 userlist_bin_marshall_user(
         UserlistBinaryHeader *header,
-        struct userlist_list *dul,
         const struct userlist_user *u,
         int contest_id)
 {
-    if (!u) return NULL;
-    if (!u->contests) return NULL;
+    if (!u) return;
+    if (!u->contests) return;
     const struct userlist_contest *uc = NULL;
     for (const struct xml_tree *p = u->contests->first_down; p; p = p->right) {
         ASSERT(p->tag == USERLIST_T_CONTEST);
@@ -331,11 +361,16 @@ userlist_bin_marshall_user(
             break;
         }
     }
-    if (!uc) return NULL;
+    if (!uc) return;
+
+    struct userlist_list *dul = (struct userlist_list *) (header->data + header->root_offset);
 
     struct userlist_user *du = ulalloc(header, sizeof(*du));
     du->b.tag = USERLIST_T_USER;
     xml_link_node_last(&dul->b, &du->b);
+
+    ASSERT(du->id < dul->user_map_size);
+    dul->user_map[du->id] = du;
 
     du->id = u->id;
     du->is_privileged = u->is_privileged;
@@ -449,7 +484,7 @@ userlist_bin_marshall_user(
         }
     }
 
-    return du;
+    return;
 }
 
 UserlistBinaryHeader *
@@ -460,11 +495,11 @@ userlist_bin_marshall(
         int contest_id)
 {
     UserlistBinaryHeader *header = dst;
-    if (!header) header = malloc(in_header->size);
+    if (!header) header = xmalloc(in_header->size);
     memcpy(header, in_header, sizeof(*header));
-    header->cur_struct_offset = 16;
-    header->cur_string_offset = 16 + header->struct_size;
-    header->root_offset = 16;
+    header->cur_struct_offset = FIRST_DATA_ITEM_OFFSET;
+    header->cur_string_offset = header->struct_size;
+    header->root_offset = FIRST_DATA_ITEM_OFFSET;
 
     struct userlist_list *dul = ulalloc(header, sizeof(*dul));
     dul->b.tag = USERLIST_T_USERLIST;
@@ -475,8 +510,42 @@ userlist_bin_marshall(
     dul->member_serial = ul->member_serial;
     dul->total = ul->total;
     for (int user_id = 1; user_id < ul->user_map_size; ++user_id) {
-        dul->user_map[user_id] = userlist_bin_marshall_user(header, dul, ul->user_map[user_id], contest_id);
+        userlist_bin_marshall_user(header, ul->user_map[user_id], contest_id);
     }
     // fix pointers
     return header;
+}
+
+UserlistBinaryHeader *
+userlist_bin_marshall_start(
+        void *dst,
+        const UserlistBinaryHeader *in_header,
+        int contest_id)
+{
+    UserlistBinaryHeader *header = dst;
+    if (!header) header = xmalloc(in_header->size);
+    memcpy(header, in_header, sizeof(*header));
+    header->cur_struct_offset = FIRST_DATA_ITEM_OFFSET;
+    header->cur_string_offset = header->struct_size;
+    header->root_offset = FIRST_DATA_ITEM_OFFSET;
+    header->contest_id = contest_id;
+
+    struct userlist_list *dul = ulalloc(header, sizeof(*dul));
+    dul->b.tag = USERLIST_T_USERLIST;
+    dul->user_map_size = header->max_user_id + 1;
+    if (dul->user_map_size > 0) {
+        dul->user_map = ulalloc(header, dul->user_map_size * sizeof(dul->user_map[0]));
+    }
+
+    return header;
+}
+
+void
+userlist_bin_marshall_end(
+        UserlistBinaryHeader *header)
+{
+    ASSERT(header->cur_struct_offset <= header->struct_size);
+    ASSERT(header->cur_string_offset <= header->struct_size + header->string_size);
+
+    // fix pointers
 }

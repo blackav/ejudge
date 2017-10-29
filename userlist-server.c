@@ -42,6 +42,7 @@
 #include "ejudge/compat.h"
 #include "ejudge/bitset.h"
 #include "ejudge/sha256utils.h"
+#include "ejudge/userlist_bin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -4853,9 +4854,12 @@ cmd_list_standings_users(
   unsigned char logbuf[1024];
   ptr_iterator_t iter;
   const struct userlist_user *u;
+  struct timeval ts1, ts2;
 
   snprintf(logbuf, sizeof(logbuf), "PRIV_STANDINGS_USERS: %d, %d",
            p->user_id, data->contest_id);
+
+  gettimeofday(&ts1, NULL);
 
   if (is_admin(p, logbuf) < 0) return;
   if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
@@ -4909,8 +4913,16 @@ cmd_list_standings_users(
   out->info_len = xml_size;
   memcpy(out->data, xml_ptr, xml_size + 1);
   xfree(xml_ptr);
+
+  gettimeofday(&ts2, NULL);
+
+  unsigned long long ms1 = ts1.tv_sec * 1000000ULL;
+  ms1 += ts1.tv_usec;
+  unsigned long long ms2 = ts2.tv_sec * 1000000ULL;
+  ms2 += ts2.tv_usec;
+
   enqueue_reply_to_client(p, out_size, out);
-  info("%s -> OK, size = %zu", logbuf, xml_size); 
+  info("%s -> OK, size = %zu, time = %llu", logbuf, xml_size, (ms2 - ms1));
   xfree(out);
 }
 
@@ -4920,18 +4932,19 @@ cmd_list_standings_users_2(
         int pkt_len,
         struct userlist_pk_map_contest *data)
 {
-  char *xml_ptr = 0;
-  size_t xml_size = 0;
   struct userlist_pk_xml_data *out = 0;
-  size_t out_size = 0;
   int flags = 0, subflags;
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
   ptr_iterator_t iter;
   const struct userlist_user *u;
+  UserlistBinaryHeader header1;
+  struct timeval ts1, ts2;
 
   snprintf(logbuf, sizeof(logbuf), "PRIV_STANDINGS_USERS_2: %d, %d",
            p->user_id, data->contest_id);
+
+  gettimeofday(&ts1, NULL);
 
   if (is_admin(p, logbuf) < 0) return;
   if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
@@ -4953,6 +4966,8 @@ cmd_list_standings_users_2(
     flags &= ~USERLIST_SHOW_REG_PASSWD;
   }
 
+  userlist_bin_init_header(&header1);
+  // pass1 - compute the total size of the data
   for (iter = default_get_standings_list_iterator(data->contest_id);
        iter->has_next(iter);
        iter->next(iter)) {
@@ -4968,19 +4983,35 @@ cmd_list_standings_users_2(
       subflags |= flags & (USERLIST_SHOW_REG_PASSWD|USERLIST_SHOW_CNTS_PASSWD);
     }
 
+    userlist_bin_calculate_user_size(&header1, u, data->contest_id);
     default_unlock_user(u);
   }
   iter->destroy(iter);
+  userlist_bin_finish_header(&header1);
 
-  ASSERT(xml_size == strlen(xml_ptr));
-  out_size = sizeof(*out) + xml_size;
-  out = (typeof(out)) xcalloc(1, out_size);
-  out->reply_id = ULS_XML_DATA;
-  out->info_len = xml_size;
-  memcpy(out->data, xml_ptr, xml_size + 1);
-  xfree(xml_ptr);
-  enqueue_reply_to_client(p, out_size, out);
-  info("%s -> OK, size = %zu", logbuf, xml_size); 
+  out = xmalloc(header1.pkt_size);
+  out->reply_id = ULS_BIN_DATA;
+
+  UserlistBinaryHeader *header2 = userlist_bin_marshall_start(out, &header1, data->contest_id);
+  for (iter = default_get_standings_list_iterator(data->contest_id);
+       iter->has_next(iter);
+       iter->next(iter)) {
+    u = (const struct userlist_user*) iter->get(iter);
+    userlist_bin_marshall_user(header2, u, data->contest_id);
+    default_unlock_user(u);
+  }
+  iter->destroy(iter);
+  userlist_bin_marshall_end(header2);
+
+  gettimeofday(&ts2, NULL);
+
+  unsigned long long ms1 = ts1.tv_sec * 1000000ULL;
+  ms1 += ts1.tv_usec;
+  unsigned long long ms2 = ts2.tv_sec * 1000000ULL;
+  ms2 += ts2.tv_usec;
+
+  enqueue_reply_to_client(p, header2->pkt_size, header2);
+  info("%s -> OK, size = %zu, time = %llu", logbuf, header2->pkt_size, (ms2 - ms1));
   xfree(out);
 }
 
