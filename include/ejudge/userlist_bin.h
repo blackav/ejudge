@@ -27,11 +27,11 @@
 
 typedef struct UserlistBinaryHeader
 {
-    // just in case
+    unsigned short reply_id;       // reserved for userlist-server reply code
     unsigned char endianness;      // 1 - LE
     unsigned char ptr_size;        // 4 or 8
-    unsigned char pad1[6];
-    int32_t version;
+    uint32_t pkt_size;             // reserved for the total packed length of userlist-server reply
+    int32_t version;               // packet version
     uint32_t size;                 // total size of data[]
     uint32_t struct_size;          // size of structured data
     uint32_t string_size;          // size of strings
@@ -41,8 +41,8 @@ typedef struct UserlistBinaryHeader
     uint32_t userlist_member_size; // sizeof(struct userlist_member)
     uint32_t cur_struct_offset;
     uint32_t cur_string_offset;
-    uint32_t root_offset;
-    unsigned char pad2[16];
+    uint32_t root_offset;          // offset from data[] to the root of the tree, currently 16
+    unsigned char pad3[12];
     unsigned char data[];
 } UserlistBinaryHeader;
 
