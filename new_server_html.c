@@ -852,6 +852,13 @@ ns_list_all_users_callback(
 
   if (userlist_clnt_list_all_users(ul_conn, ULS_LIST_STANDINGS_USERS,
                                    contest_id, p_xml) < 0) return -1;
+
+  // debug
+  unsigned char *data = NULL;
+  int r = userlist_clnt_bin_data(ul_conn, ULS_LIST_STANDINGS_USERS_2, contest_id, &data);
+  xfree(data);
+  (void) r;
+
   return 0;
 }
 
