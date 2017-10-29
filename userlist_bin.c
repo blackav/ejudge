@@ -164,7 +164,7 @@ userlist_bin_calculate_user_size(
     for (const struct xml_tree *p = u->contests->first_down; p; p = p->right) {
         ASSERT(p->tag == USERLIST_T_CONTEST);
         const struct userlist_contest *uctmp = (const struct userlist_contest *) p;
-        if (uc->id == contest_id) {
+        if (uctmp->id == contest_id) {
             uc = uctmp;
             break;
         }
@@ -356,7 +356,7 @@ userlist_bin_marshall_user(
     for (const struct xml_tree *p = u->contests->first_down; p; p = p->right) {
         ASSERT(p->tag == USERLIST_T_CONTEST);
         const struct userlist_contest *uctmp = (const struct userlist_contest *) p;
-        if (uc->id == contest_id) {
+        if (uctmp->id == contest_id) {
             uc = uctmp;
             break;
         }
