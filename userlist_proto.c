@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -156,6 +155,7 @@ static const unsigned char * const requests[] =
   [ULS_EDIT_FIELD_SEQ]            = "EDIT_FIELD_SEQ",
   [ULS_MOVE_MEMBER]               = "MOVE_MEMBER",
   [ULS_IMPORT_CSV_USERS]          = "IMPORT_CSV_USERS",
+  [ULS_LIST_STANDINGS_USERS_2]    = "LIST_STANDINGS_USERS_2",
 
   NULL,
 };

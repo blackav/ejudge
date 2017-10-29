@@ -4915,6 +4915,76 @@ cmd_list_standings_users(
 }
 
 static void
+cmd_list_standings_users_2(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_map_contest *data)
+{
+  char *xml_ptr = 0;
+  size_t xml_size = 0;
+  struct userlist_pk_xml_data *out = 0;
+  size_t out_size = 0;
+  int flags = 0, subflags;
+  const struct contest_desc *cnts = 0;
+  unsigned char logbuf[1024];
+  ptr_iterator_t iter;
+  const struct userlist_user *u;
+
+  snprintf(logbuf, sizeof(logbuf), "PRIV_STANDINGS_USERS_2: %d, %d",
+           p->user_id, data->contest_id);
+
+  if (is_admin(p, logbuf) < 0) return;
+  if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
+  if (is_cnts_capable(p, cnts, OPCAP_MAP_CONTEST, logbuf) < 0) return;
+
+  if (cnts->personal) flags |= USERLIST_FORCE_FIRST_MEMBER;
+  flags |= USERLIST_SHOW_PRIV_REG_PASSWD | USERLIST_SHOW_PRIV_CNTS_PASSWD
+    | USERLIST_SHOW_REG_PASSWD | USERLIST_SHOW_CNTS_PASSWD;
+  if (check_dbcnts_capable(p, cnts, OPCAP_PRIV_EDIT_PASSWD) < 0) {
+    flags &= ~(USERLIST_SHOW_PRIV_REG_PASSWD | USERLIST_SHOW_PRIV_CNTS_PASSWD);
+  } else if (check_db_capable(p, OPCAP_PRIV_EDIT_PASSWD) < 0
+             && !cnts->disable_team_password) {
+    flags &= ~USERLIST_SHOW_PRIV_REG_PASSWD;
+  }
+  if (check_dbcnts_capable(p, cnts, OPCAP_EDIT_PASSWD) < 0) {
+    flags &= ~(USERLIST_SHOW_REG_PASSWD | USERLIST_SHOW_CNTS_PASSWD);
+  } else if (check_db_capable(p, OPCAP_EDIT_PASSWD) < 0
+             && !cnts->disable_team_password) {
+    flags &= ~USERLIST_SHOW_REG_PASSWD;
+  }
+
+  for (iter = default_get_standings_list_iterator(data->contest_id);
+       iter->has_next(iter);
+       iter->next(iter)) {
+    u = (const struct userlist_user*) iter->get(iter);
+
+    subflags = flags & USERLIST_FORCE_FIRST_MEMBER;
+    if (is_privileged_cnts_user(u, cnts) >= 0) {
+      if ((flags & USERLIST_SHOW_PRIV_REG_PASSWD))
+        subflags |= USERLIST_SHOW_REG_PASSWD;
+      if ((flags & USERLIST_SHOW_PRIV_CNTS_PASSWD))
+        subflags |= USERLIST_SHOW_CNTS_PASSWD;
+    } else {
+      subflags |= flags & (USERLIST_SHOW_REG_PASSWD|USERLIST_SHOW_CNTS_PASSWD);
+    }
+
+    default_unlock_user(u);
+  }
+  iter->destroy(iter);
+
+  ASSERT(xml_size == strlen(xml_ptr));
+  out_size = sizeof(*out) + xml_size;
+  out = (typeof(out)) xcalloc(1, out_size);
+  out->reply_id = ULS_XML_DATA;
+  out->info_len = xml_size;
+  memcpy(out->data, xml_ptr, xml_size + 1);
+  xfree(xml_ptr);
+  enqueue_reply_to_client(p, out_size, out);
+  info("%s -> OK, size = %zu", logbuf, xml_size); 
+  xfree(out);
+}
+
+static void
 cmd_get_user_contests(struct client_state *p,
                       int pkt_len,
                       struct userlist_pk_get_user_info *data)
@@ -10493,6 +10563,7 @@ static void (*cmd_table[])() =
   [ULS_LIST_ALL_USERS_4] =      cmd_list_all_users_4,
   [ULS_GET_GROUP_INFO] =        cmd_get_group_info,
   [ULS_PRIV_CHECK_PASSWORD] =   cmd_priv_check_password,
+  [ULS_LIST_STANDINGS_USERS_2] =cmd_list_standings_users_2,
 
   [ULS_LAST_CMD] = 0
 };
@@ -10597,6 +10668,7 @@ static int (*check_table[])() =
   [ULS_LIST_ALL_USERS_3] =      check_pk_list_users_2,
   [ULS_LIST_ALL_USERS_4] =      check_pk_list_users_2,
   [ULS_GET_GROUP_INFO] =        check_pk_map_contest,
+  [ULS_LIST_STANDINGS_USERS_2] =check_pk_map_contest,
 
   [ULS_LAST_CMD] = 0
 };
