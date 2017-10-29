@@ -5011,7 +5011,7 @@ cmd_list_standings_users_2(
   ms2 += ts2.tv_usec;
 
   enqueue_reply_to_client(p, header2->pkt_size, header2);
-  info("%s -> OK, size = %zu, time = %llu", logbuf, header2->pkt_size, (ms2 - ms1));
+  info("%s -> OK, size = %u, time = %llu", logbuf, (unsigned) header2->pkt_size, (ms2 - ms1));
   xfree(out);
 }
 
