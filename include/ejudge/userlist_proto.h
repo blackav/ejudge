@@ -144,6 +144,7 @@ enum
     ULS_NEW_PASSWORD,
     ULS_TEXT_DATA_FAILURE,
     ULS_COUNT,
+    ULS_BIN_DATA,
   };
 
 /* various error codes */
