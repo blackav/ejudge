@@ -3,7 +3,7 @@
 #ifndef __USERLIST_CLNT_H__
 #define __USERLIST_CLNT_H__
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -478,5 +478,12 @@ userlist_clnt_get_prev_user_id(
         int user_id,
         const unsigned char *filter,
         int *p_user_id);
+
+int
+userlist_clnt_bin_data(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int contest_id,
+        unsigned char **p_data);
 
 #endif /* __USERLIST_CLNT_H__ */

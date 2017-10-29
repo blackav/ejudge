@@ -534,4 +534,12 @@ struct userlist_pk_count
   long long count;
 };
 
+struct userlist_pk_bin_data
+{
+    short         reply_id;
+    unsigned char endianness;      // 1 - LE
+    unsigned char ptr_size;        // 4 or 8
+    unsigned      pkt_size;
+};
+
 #endif /* __USERLIST_PROTO_H__ */
