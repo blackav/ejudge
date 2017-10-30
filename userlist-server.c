@@ -4938,7 +4938,7 @@ cmd_list_standings_users_2(
   unsigned char logbuf[1024];
   ptr_iterator_t iter;
   const struct userlist_user *u;
-  UserlistBinaryHeader header1;
+  UserlistBinaryContext cntx;
   struct timeval ts1, ts2;
 
   snprintf(logbuf, sizeof(logbuf), "PRIV_STANDINGS_USERS_2: %d, %d",
@@ -4966,7 +4966,8 @@ cmd_list_standings_users_2(
     flags &= ~USERLIST_SHOW_REG_PASSWD;
   }
 
-  userlist_bin_init_header(&header1);
+  userlist_bin_init_context(&cntx);
+  userlist_bin_marshall_user_list(&cntx, NULL, data->contest_id);
   // pass1 - compute the total size of the data
   for (iter = default_get_standings_list_iterator(data->contest_id);
        iter->has_next(iter);
@@ -4983,25 +4984,15 @@ cmd_list_standings_users_2(
       subflags |= flags & (USERLIST_SHOW_REG_PASSWD|USERLIST_SHOW_CNTS_PASSWD);
     }
 
-    userlist_bin_calculate_user_size(&header1, u, data->contest_id);
+    userlist_bin_marshall_user(&cntx, u, data->contest_id);
     default_unlock_user(u);
   }
   iter->destroy(iter);
-  userlist_bin_finish_header(&header1);
-
-  out = xmalloc(header1.pkt_size);
+  userlist_bin_finish_context(&cntx);
+  out = xmalloc(cntx.total_size);
+  UserlistBinaryHeader *header = userlist_bin_marshall(out, &cntx, data->contest_id);
   out->reply_id = ULS_BIN_DATA;
-
-  UserlistBinaryHeader *header2 = userlist_bin_marshall_start(out, &header1, data->contest_id);
-  for (iter = default_get_standings_list_iterator(data->contest_id);
-       iter->has_next(iter);
-       iter->next(iter)) {
-    u = (const struct userlist_user*) iter->get(iter);
-    userlist_bin_marshall_user(header2, u, data->contest_id);
-    default_unlock_user(u);
-  }
-  iter->destroy(iter);
-  userlist_bin_marshall_end(header2);
+  userlist_bin_destroy_context(&cntx);
 
   gettimeofday(&ts2, NULL);
 
@@ -5010,8 +5001,8 @@ cmd_list_standings_users_2(
   unsigned long long ms2 = ts2.tv_sec * 1000000ULL;
   ms2 += ts2.tv_usec;
 
-  enqueue_reply_to_client(p, header2->pkt_size, header2);
-  info("%s -> OK, size = %u, time = %llu", logbuf, (unsigned) header2->pkt_size, (ms2 - ms1));
+  enqueue_reply_to_client(p, header->pkt_size, header);
+  info("%s -> OK, size = %u, time = %llu", logbuf, (unsigned) header->pkt_size, (ms2 - ms1));
   xfree(out);
 }
 
