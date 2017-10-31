@@ -369,10 +369,11 @@ userlist_bin_finish_context(
         UserlistBinaryContext *cntx)
 {
     cntx->s.u = align16(cntx->s.u);
-    struct userlist_list *ul = (struct userlist_list *)(cntx->d.v + cntx->root_offset);
     if (cntx->max_user_id > 0) {
+        struct userlist_user **user_map = ulalloc(cntx, (cntx->max_user_id + 1) * sizeof(user_map[0]));
+        struct userlist_list *ul = (struct userlist_list *)(cntx->d.v + cntx->root_offset);
         ul->user_map_size = cntx->max_user_id + 1;
-        ul->user_map = ulalloc(cntx, ul->user_map_size * sizeof(ul->user_map[0]));
+        ul->user_map = user_map;
         for (int i = 0; i < ul->user_map_size; ++i) {
             ul->user_map[i] = (struct userlist_user *) cntx->user_offsets[i];
             if (ul->user_map[i]) {
