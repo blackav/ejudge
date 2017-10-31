@@ -375,8 +375,10 @@ userlist_bin_finish_context(
         ul->user_map = ulalloc(cntx, ul->user_map_size * sizeof(ul->user_map[0]));
         for (int i = 0; i < ul->user_map_size; ++i) {
             ul->user_map[i] = (struct userlist_user *) cntx->user_offsets[i];
-            struct userlist_user *u = (struct userlist_user*) (cntx->d.v + cntx->user_offsets[i]);
-            xml_link_node_last(&ul->b, &u->b);
+            if (ul->user_map[i]) {
+                struct userlist_user *u = (struct userlist_user*) (cntx->d.v + cntx->user_offsets[i]);
+                xml_link_node_last(&ul->b, &u->b);
+            }
         }
         // fix link pointers
         ul->user_map = make_offset_ptr(cntx, ul->user_map);
