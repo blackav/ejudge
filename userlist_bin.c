@@ -337,7 +337,7 @@ userlist_bin_marshall(
 {
     UserlistBinaryHeader *header = dst;
     if (!header) header = xmalloc(cntx->total_size);
-    memset(header, 0, cntx->total_size);
+    memset(header, 0, sizeof(*header));
     header->endianness = 1;
     header->ptr_size = sizeof(void*);
     header->pkt_size = cntx->total_size;
