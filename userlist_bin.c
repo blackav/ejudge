@@ -48,9 +48,11 @@ ulstrdup(UserlistBinaryContext *cntx, const unsigned char *str)
     if (!str) return NULL;
     size_t size = strlen(str) + 1;
     if (cntx->s.u + size > cntx->s.a) {
+        size_t old_a = cntx->s.a;
         while (cntx->s.u + size > cntx->s.a)
             cntx->s.a *= 2;
         cntx->s.v = xrealloc(cntx->s.v, cntx->s.a * sizeof(cntx->s.v[0]));
+        memset(cntx->s.v + old_a, 0, (cntx->s.a - old_a) * sizeof(cntx->s.v[0]));
     }
     unsigned char *dst = cntx->s.v + cntx->s.u;
     cntx->s.u += size;
@@ -62,10 +64,12 @@ static void
 ulreserve(UserlistBinaryContext *cntx, size_t size)
 {
     if (cntx->d.u + size > cntx->d.a) {
+        size_t old_a = cntx->d.a;
         while (cntx->d.u + size > cntx->d.a) {
             cntx->d.a *= 2;
         }
         cntx->d.v = xrealloc(cntx->d.v, cntx->d.a * sizeof(cntx->d.v[0]));
+        memset(cntx->d.v + old_a, 0, (cntx->d.a - old_a) * sizeof(cntx->d.v[0]));
     }
 }
 
@@ -108,10 +112,10 @@ userlist_bin_init_context(UserlistBinaryContext *cntx)
 {
     memset(cntx, 0, sizeof(*cntx));
     cntx->d.a = 1024;
-    cntx->d.v = xmalloc(cntx->d.a);
+    cntx->d.v = xcalloc(1, cntx->d.a);
     cntx->d.u = FIRST_DATA_ITEM_OFFSET;
     cntx->s.a = 1024;
-    cntx->s.v = xmalloc(cntx->s.a);
+    cntx->s.v = xcalloc(1, cntx->s.a);
     cntx->s.u = FIRST_STRING_ITEM_OFFSET;
 }
 
@@ -333,7 +337,7 @@ userlist_bin_marshall(
 {
     UserlistBinaryHeader *header = dst;
     if (!header) header = xmalloc(cntx->total_size);
-    memset(header, 0, sizeof(*header));
+    memset(header, 0, cntx->total_size);
     header->endianness = 1;
     header->ptr_size = sizeof(void*);
     header->pkt_size = cntx->total_size;
