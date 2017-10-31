@@ -822,6 +822,24 @@ enqueue_reply_to_client(struct client_state *p,
   p->write_len = msg_length + 4;
 }
 
+static void
+enqueue_reply_to_client_2(
+        struct client_state *p,
+        int msg_length,
+        void *msg)
+{
+  ASSERT(p);
+  ASSERT(msg_length > 0);
+  ASSERT(msg);
+
+  if (p->write_len) {
+    SWERR(("Server->client reply slot is busy!"));
+  }
+  p->write_buf = msg;
+  memcpy(p->write_buf, &msg_length, 4);
+  p->write_len = msg_length + 4;
+}
+
 static void report_uptime(time_t t1, time_t t2);
 static void cleanup_clients(void);
 static void
@@ -4932,7 +4950,6 @@ cmd_list_standings_users_2(
         int pkt_len,
         struct userlist_pk_map_contest *data)
 {
-  struct userlist_pk_xml_data *out = 0;
   int flags = 0, subflags;
   const struct contest_desc *cnts = 0;
   unsigned char logbuf[1024];
@@ -4989,9 +5006,10 @@ cmd_list_standings_users_2(
   }
   iter->destroy(iter);
   userlist_bin_finish_context(&cntx);
-  out = xmalloc(cntx.total_size);
-  UserlistBinaryHeader *header = userlist_bin_marshall(out, &cntx, data->contest_id);
-  out->reply_id = ULS_BIN_DATA;
+
+  unsigned char *msg = xmalloc(cntx.total_size + 4);
+  UserlistBinaryHeader *header = userlist_bin_marshall(msg + 4, &cntx, data->contest_id);
+  header->reply_id = ULS_BIN_DATA;
   userlist_bin_destroy_context(&cntx);
 
   gettimeofday(&ts2, NULL);
@@ -5001,9 +5019,8 @@ cmd_list_standings_users_2(
   unsigned long long ms2 = ts2.tv_sec * 1000000ULL;
   ms2 += ts2.tv_usec;
 
-  enqueue_reply_to_client(p, header->pkt_size, header);
+  enqueue_reply_to_client_2(p, header->pkt_size, msg);
   info("%s -> OK, size = %u, time = %llu", logbuf, (unsigned) header->pkt_size, (ms2 - ms1));
-  xfree(out);
 }
 
 static void
