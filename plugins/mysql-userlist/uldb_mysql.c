@@ -539,7 +539,7 @@ check_func(void *data)
     err("invalid 'version' key value");
     return -1;
   }
-  // current version is 6, so cannot handle future version
+  // current version is 7, so cannot handle future version
   if (version == 1) {
     if (state->mi->simple_fquery(state->md, "CREATE TABLE %sgroups(group_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, group_name VARCHAR(128) NOT NULL UNIQUE KEY, description VARCHAR(512) DEFAULT NULL, created_by INT NOT NULL, create_time DATETIME NOT NULL, last_change_time DATETIME DEFAULT NULL, FOREIGN KEY (created_by) REFERENCES %slogins(user_id));", state->md->table_prefix, state->md->table_prefix) < 0)
       return -1;
@@ -578,7 +578,20 @@ check_func(void *data)
       return -1;
     version = 6;
   }
-  if (version != 6) {
+  if (version == 6) {
+    if (state->mi->simple_fquery(state->md, "ALTER TABLE %scntsregs ADD INDEX IF NOT EXISTS cntsregs_user_id_idx (user_id), ADD INDEX IF NOT EXISTS cntsregs_contest_id_idx (contest_id);", state->md->table_prefix) < 0)
+      return -1;
+    if (state->mi->simple_fquery(state->md, "ALTER TABLE %susers    ADD INDEX IF NOT EXISTS users_user_id_idx (user_id), ADD INDEX IF NOT EXISTS users_contest_id_idx (contest_id);", state->md->table_prefix) < 0)
+      return -1;
+    if (state->mi->simple_fquery(state->md, "ALTER TABLE %smembers  ADD INDEX IF NOT EXISTS members_user_id_idx (user_id), ADD INDEX IF NOT EXISTS members_contest_id_idx (contest_id);", state->md->table_prefix) < 0)
+      return -1;
+    if (state->mi->simple_fquery(state->md, "ALTER TABLE %sgroupmembers ADD INDEX IF NOT EXISTS groupmembers_group_id_idx (group_id), ADD INDEX IF NOT EXISTS groupmembers_user_id_idx (user_id);", state->md->table_prefix) < 0)
+      return -1;
+    if (state->mi->simple_fquery(state->md, "UPDATE %sconfig SET config_val = '7' WHERE config_key = 'version' ;", state->md->table_prefix) < 0)
+      return -1;
+    version = 7;
+  }
+  if (version != 7) {
     err("cannot handle database version %d", version);
     return -1;
   }
