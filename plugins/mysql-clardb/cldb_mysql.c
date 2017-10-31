@@ -309,7 +309,7 @@ do_create(struct cldb_mysql_state *state)
     db_error_fail(md);
   if (mi->simple_fquery(md, create_texts_query, md->table_prefix) < 0)
     db_error_fail(md);
-  if (mi->simple_fquery(md, "ALTER TABLE %sclartexts ADD INDEX IF NOT EXISTS clartexts_clar_id_idx (clar_id), ADD INDEX IF NOT EXISTS clartexts_contest_id_idx (contest_id);", md->table_prefix) < 0)
+  if (mi->simple_fquery(md, "ALTER TABLE %sclartexts ADD INDEX IF NOT EXISTS clartexts_contest_id_idx (contest_id);", md->table_prefix) < 0)
     return -1;
   if (mi->simple_fquery(md, "INSERT INTO %sconfig VALUES ('clar_version', '%d') ;", md->table_prefix, CLAR_VERSION) < 0)
     db_error_fail(md);
@@ -419,7 +419,7 @@ do_open(struct cldb_mysql_state *state)
     clar_version = 6;
   }
   if (clar_version == 6) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sclartexts ADD INDEX IF NOT EXISTS clartexts_clar_id_idx (clar_id), ADD INDEX IF NOT EXISTS clartexts_contest_id_idx (contest_id);", md->table_prefix) < 0)
+    if (mi->simple_fquery(md, "ALTER TABLE %sclartexts ADD INDEX IF NOT EXISTS clartexts_contest_id_idx (contest_id);", md->table_prefix) < 0)
       return -1;
     if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '7' WHERE config_key = 'clar_version' ;", md->table_prefix) < 0)
       return -1;
