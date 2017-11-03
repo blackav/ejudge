@@ -91,4 +91,7 @@ void
 userlist_bin_destroy_context(
         UserlistBinaryContext *cntx);
 
+const struct userlist_list *
+userlist_bin_unmarshall(UserlistBinaryHeader *header);
+
 #endif /* __USERLIST_BIN_H__ */

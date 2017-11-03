@@ -23,24 +23,9 @@
 
 enum { FIRST_DATA_ITEM_OFFSET = 16, FIRST_STRING_ITEM_OFFSET = 1 };
 
-#if 0
-/* structure takes 40 bytes (without `name') on ia32 
-   and 72 bytes (without `name') on x86_64
-*/
-struct xml_tree
-{
-  struct xml_tree *up, *first_down, *last_down, *left, *right;
-  struct xml_attr *first, *last;
-  unsigned short tag, column;
-  int line;
-  char *text;
-  char *name[0];                /* when "default" node is enabled */
-};
-#endif
-
 #define align16(x) (((x) + 15U) & ~15U)
 #define make_offset(cntx, ptr) (((unsigned char *)(ptr)) - (cntx)->d.v)
-#define make_offset_ptr(cntx, ptr) ((void*)(((unsigned char *)(ptr)) - (cntx)->d.v))
+#define make_offset_ptr(cntx, ptr) ((ptr)?((void*)(((unsigned char *)(ptr)) - (cntx)->d.v)):((void*) NULL))
 
 static unsigned char *
 ulstrdup(UserlistBinaryContext *cntx, const unsigned char *str)
@@ -117,6 +102,23 @@ userlist_bin_init_context(UserlistBinaryContext *cntx)
     cntx->s.a = 1024;
     cntx->s.v = xcalloc(1, cntx->s.a);
     cntx->s.u = FIRST_STRING_ITEM_OFFSET;
+}
+
+static void
+userlist_bin_fix_tree(
+        UserlistBinaryContext *cntx,
+        struct xml_tree *node)
+{
+    if (!node) return;
+    struct xml_tree *p1 = node->first_down;
+    struct xml_tree *p2 = node->right;
+    node->up = make_offset_ptr(cntx, node->up);
+    node->first_down = make_offset_ptr(cntx, node->first_down);
+    node->last_down = make_offset_ptr(cntx, node->last_down);
+    node->left = make_offset_ptr(cntx, node->left);
+    node->right = make_offset_ptr(cntx, node->right);
+    userlist_bin_fix_tree(cntx, p1);
+    userlist_bin_fix_tree(cntx, p2);
 }
 
 static struct userlist_member *
@@ -320,11 +322,16 @@ userlist_bin_marshall_user(
                 struct userlist_member *dm = userlist_bin_marshall_member(cntx, ui->members->m[i]);
                 members->m[i] = dm;
                 xml_link_node_last(&members->b, &dm->b);
+                members->m[i] = make_offset_ptr(cntx, members->m[i]);
             }
         }
+
+        du->cnts0 = make_offset_ptr(cntx, du->cnts0);
+        du->cis[0] = make_offset_ptr(cntx, du->cis[0]);
+        du->cis = make_offset_ptr(cntx, du->cis);
     }
 
-    // FIX pointers
+    userlist_bin_fix_tree(cntx, &du->b);
 
     return;
 }
@@ -380,10 +387,12 @@ userlist_bin_finish_context(
         ul->user_map = user_map;
         for (int i = 0; i < ul->user_map_size; ++i) {
             ul->user_map[i] = (struct userlist_user *) cntx->user_offsets[i];
+            /*
             if (ul->user_map[i]) {
                 struct userlist_user *u = (struct userlist_user*) (cntx->d.v + cntx->user_offsets[i]);
                 xml_link_node_last(&ul->b, &u->b);
             }
+            */
         }
         // fix link pointers
         ul->user_map = make_offset_ptr(cntx, ul->user_map);
@@ -398,4 +407,156 @@ userlist_bin_destroy_context(
     xfree(cntx->d.v);
     xfree(cntx->s.v);
     xfree(cntx->user_offsets);
+}
+
+/* FIXME: unmarshaller should check all fields */
+
+#define unmarshall_ptr(l, h, v) ((l) = ((typeof(l)) ((h)->data + (intptr_t) (v))))
+#define unmarshall_str(l, h)    ((l) = ((l)?(unsigned char *)((h)->data + (h)->struct_size + (intptr_t)(l)):NULL))
+
+static void
+unmarshall_member(UserlistBinaryHeader *header, struct userlist_member *m)
+{
+    unmarshall_str(m->firstname, header);
+    unmarshall_str(m->firstname_en, header);
+    unmarshall_str(m->middlename, header);
+    unmarshall_str(m->middlename_en, header);
+    unmarshall_str(m->surname, header);
+    unmarshall_str(m->surname_en, header);
+    unmarshall_str(m->group, header);
+    unmarshall_str(m->group_en, header);
+    unmarshall_str(m->email, header);
+    unmarshall_str(m->homepage, header);
+    unmarshall_str(m->occupation, header);
+    unmarshall_str(m->occupation_en, header);
+    unmarshall_str(m->discipline, header);
+    unmarshall_str(m->inst, header);
+    unmarshall_str(m->inst_en, header);
+    unmarshall_str(m->instshort, header);
+    unmarshall_str(m->instshort_en, header);
+    unmarshall_str(m->fac, header);
+    unmarshall_str(m->fac_en, header);
+    unmarshall_str(m->facshort, header);
+    unmarshall_str(m->facshort_en, header);
+    unmarshall_str(m->phone, header);
+}
+
+static void
+unmarshall_user(UserlistBinaryHeader *header, struct userlist_user *u)
+{
+    unmarshall_str(u->login, header);
+    unmarshall_str(u->email, header);
+    unmarshall_str(u->passwd, header);
+    unmarshall_str(u->extra1, header);
+    if (u->cis) {
+        unmarshall_ptr(u->cis, header, u->cis);
+        for (int i = 0; i < u->cis_a; ++i) {
+            if (u->cis[i]) {
+                unmarshall_ptr(u->cis[i], header, u->cis[i]);
+            }
+        }
+    }
+    struct userlist_user_info *ui = NULL;
+    if (u->cnts0) {
+        unmarshall_ptr(ui, header, u->cnts0);
+        ui = u->cnts0;
+    }
+    if (ui) {
+        unmarshall_str(ui->name, header);
+        unmarshall_str(ui->team_passwd, header);
+        unmarshall_str(ui->inst, header);
+        unmarshall_str(ui->inst_en, header);
+        unmarshall_str(ui->instshort, header);
+        unmarshall_str(ui->instshort_en, header);
+        unmarshall_str(ui->fac, header);
+        unmarshall_str(ui->fac_en, header);
+        unmarshall_str(ui->facshort, header);
+        unmarshall_str(ui->facshort_en, header);
+        unmarshall_str(ui->homepage, header);
+        unmarshall_str(ui->city, header);
+        unmarshall_str(ui->city_en, header);
+        unmarshall_str(ui->country, header);
+        unmarshall_str(ui->country_en, header);
+        unmarshall_str(ui->region, header);
+        unmarshall_str(ui->area, header);
+        unmarshall_str(ui->zip, header);
+        unmarshall_str(ui->street, header);
+        unmarshall_str(ui->location, header);
+        unmarshall_str(ui->spelling, header);
+        unmarshall_str(ui->printer_name, header);
+        unmarshall_str(ui->exam_id, header);
+        unmarshall_str(ui->exam_cypher, header);
+        unmarshall_str(ui->languages, header);
+        unmarshall_str(ui->phone, header);
+        unmarshall_str(ui->field0, header);
+        unmarshall_str(ui->field1, header);
+        unmarshall_str(ui->field2, header);
+        unmarshall_str(ui->field3, header);
+        unmarshall_str(ui->field4, header);
+        unmarshall_str(ui->field5, header);
+        unmarshall_str(ui->field6, header);
+        unmarshall_str(ui->field7, header);
+        unmarshall_str(ui->field8, header);
+        unmarshall_str(ui->field9, header);
+        unmarshall_str(ui->avatar_store, header);
+        unmarshall_str(ui->avatar_id, header);
+        unmarshall_str(ui->avatar_suffix, header);
+        if (ui->members) {
+            struct userlist_members *members;
+            unmarshall_ptr(members, header, ui->members);
+            ui->members = members;
+            if (members->m) {
+                unmarshall_ptr(members->m, header, members->m);
+                for (int i = 0; i < members->u; ++i) {
+                    struct userlist_member *member;
+                    unmarshall_ptr(member, header, members->m[i]);
+                    members->m[i] = member;
+                    unmarshall_member(header, member);
+                }
+            }
+        }
+    }
+}
+
+static void
+unmarshall_tree(UserlistBinaryHeader *header, struct xml_tree *node)
+{
+    if (node->first_down) {
+        struct xml_tree *t;
+        struct xml_tree *prev = NULL;
+        unmarshall_ptr(t, header, node->first_down);
+        node->first_down = t;
+        while (1) {
+            t->up = node;
+            t->left = prev;
+            unmarshall_tree(header, t);
+            prev = t;
+            if (!t->right) break;
+            unmarshall_ptr(t, header, t->right);
+            prev->right = t;
+        }
+        if (prev) {
+            node->last_down = prev;
+        }
+    }
+}
+
+const struct userlist_list *
+userlist_bin_unmarshall(UserlistBinaryHeader *header)
+{
+    struct userlist_list *ul = (struct userlist_list *) (header->data + header->root_offset);
+    if (ul->user_map) {
+        unmarshall_ptr(ul->user_map, header, ul->user_map);
+        for (int user_id = 1; user_id < ul->user_map_size; ++user_id) {
+            if (ul->user_map[user_id]) {
+                struct userlist_user *u;
+                unmarshall_ptr(u, header, ul->user_map[user_id]);
+                ul->user_map[user_id] = u;
+                xml_link_node_last(&ul->b, &u->b);
+                unmarshall_tree(header, &u->b);
+                unmarshall_user(header, u);
+            }
+        }
+    }
+    return ul;
 }
