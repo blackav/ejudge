@@ -50,5 +50,5 @@ userlist_clnt_bin_data(
     return -ULS_ERR_PROTOCOL;
   }
   *p_data = (unsigned char *) in;
-  return ULS_XML_DATA;
+  return ULS_BIN_DATA;
 }

@@ -247,6 +247,8 @@ userlist_bin_marshall_user(
     duc->flags = uc->flags;
     duc->create_time = uc->create_time;
     duc->last_change_time = uc->last_change_time;
+    du->contests = contests;
+    du->contests = make_offset_ptr(cntx, du->contests);
 
     if (ui) {
         struct userlist_user_info *dui = ulalloc(cntx, sizeof(*dui));
@@ -456,10 +458,13 @@ unmarshall_user(UserlistBinaryHeader *header, struct userlist_user *u)
             }
         }
     }
+    if (u->contests) {
+      unmarshall_ptr(u->contests, header, u->contests);
+    }
     struct userlist_user_info *ui = NULL;
     if (u->cnts0) {
         unmarshall_ptr(ui, header, u->cnts0);
-        ui = u->cnts0;
+        u->cnts0 = ui;
     }
     if (ui) {
         unmarshall_str(ui->name, header);
