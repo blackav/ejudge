@@ -64,6 +64,7 @@
 #include "ejudge/content_plugin.h"
 #include "ejudge/imagemagick.h"
 #include "ejudge/base32.h"
+#include "ejudge/userlist_bin.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -845,21 +846,53 @@ int
 ns_list_all_users_callback(
         void *user_data,
         int contest_id,
-        unsigned char **p_xml)
+        unsigned char **p_xml,
+        UserlistBinaryHeader **p_header)
 {
   struct server_framework_state *state = (struct server_framework_state *) user_data;
-  if (ns_open_ul_connection(state) < 0) return -1;
-
-  if (userlist_clnt_list_all_users(ul_conn, ULS_LIST_STANDINGS_USERS,
-                                   contest_id, p_xml) < 0) return -1;
-
-  // debug
+  unsigned char *xml = NULL;
+  UserlistBinaryHeader *header = NULL;
   unsigned char *data = NULL;
-  int r = userlist_clnt_bin_data(ul_conn, ULS_LIST_STANDINGS_USERS_2, contest_id, &data);
-  xfree(data);
-  (void) r;
+
+  if (ns_open_ul_connection(state) < 0) goto fail;
+
+  if (p_xml) {
+    if (userlist_clnt_list_all_users(ul_conn, ULS_LIST_STANDINGS_USERS,
+                                     contest_id, &xml) < 0)
+      goto fail;
+  }
+
+  if (p_header) {
+    int r = userlist_clnt_bin_data(ul_conn, ULS_LIST_STANDINGS_USERS_2, contest_id, &data);
+    if (r < 0) goto fail;
+    if (r == ULS_BIN_DATA) {
+      header = (UserlistBinaryHeader*) data;
+      data = NULL;
+      if (!userlist_bin_unmarshall(header)) {
+        goto fail;
+      }
+    } else {
+      xfree(data); data = NULL;
+    }
+  }
+  if (p_xml) {
+    *p_xml = xml;
+  } else {
+    xfree(xml);
+  }
+  if (p_header) {
+    *p_header = header;
+  } else {
+    xfree(header);
+  }
 
   return 0;
+
+fail:
+  xfree(xml);
+  xfree(data);
+  xfree(header);
+  return -1;
 }
 
 static const unsigned char *role_strs[] =
