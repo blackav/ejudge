@@ -168,11 +168,9 @@ teamdb_refresh(teamdb_state_t state)
   size_t xml_size = 0;
   const struct contest_desc *cnts = 0;
   int user_contest_id = state->contest_id;
-  UserlistBinaryHeader *header;
 
   struct timeval tv1, tv2;
 
-  (void) header;
   if (state->disabled) return 0;
   if (state->callbacks) {
     if (state->users && !state->need_update) return 0;
