@@ -27,6 +27,7 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
+#include "ejudge/userlist_bin.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -41,6 +42,7 @@
 #include <sys/shm.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <sys/time.h>
 
 teamdb_state_t
 teamdb_init(int contest_id)
@@ -166,16 +168,24 @@ teamdb_refresh(teamdb_state_t state)
   size_t xml_size = 0;
   const struct contest_desc *cnts = 0;
   int user_contest_id = state->contest_id;
+  UserlistBinaryHeader *header;
 
+  struct timeval tv1, tv2;
+
+  (void) header;
   if (state->disabled) return 0;
+  if (state->callbacks) {
+    if (state->users && !state->need_update) return 0;
+  }
+
+  gettimeofday(&tv1, NULL);
 
   if (state->contest_id > 0) contests_get(state->contest_id, &cnts);
   if (cnts && cnts->user_contest_num) user_contest_id = cnts->user_contest_num;
 
   if (state->callbacks) {
-    if (state->users && !state->need_update) return 0;
     r = state->callbacks->list_all_users(state->callbacks->user_data,
-                                         user_contest_id, &xml_text);
+                                         user_contest_id, &xml_text, NULL);
     if (r < 0) {
       err("teamdb_refresh: cannot load userlist: %s", userlist_strerror(-r));
       return -1;
@@ -230,7 +240,11 @@ teamdb_refresh(teamdb_state_t state)
     }
   }
 
-  userlist_free((struct xml_tree*) state->users);
+  if (!state->header) {
+    if (state->users) {
+      userlist_free((struct xml_tree*) state->users);
+    }
+  }
   state->users = new_users;
   xfree(state->participants);
   state->participants = 0;
@@ -274,8 +288,13 @@ teamdb_refresh(teamdb_state_t state)
         state->total_participants);
   }
 
-  info("teamdb_refresh: updated: %d users, %d max user, XML size = %zu",
-       state->total_participants, state->users->user_map_size - 1, xml_size);
+  gettimeofday(&tv2, NULL);
+
+  unsigned long long t1 = (unsigned long long) tv1.tv_sec * 1000000UL + tv1.tv_usec;
+  unsigned long long t2 = (unsigned long long) tv2.tv_sec * 1000000UL + tv2.tv_usec;
+
+  info("teamdb_refresh: updated: %d users, %d max user, XML size = %zu, time = %llu",
+       state->total_participants, state->users->user_map_size - 1, xml_size, (t2 - t1));
   state->extra_out_of_sync = 1;
   call_update_hooks(state);
   return 1;
@@ -811,7 +830,13 @@ teamdb_destroy(teamdb_state_t state)
   }
   xfree(state->callbacks);
 
-  if (state->users) userlist_free((struct xml_tree*) state->users);
+  if (!state->header) {
+    if (state->users) {
+      userlist_free((struct xml_tree*) state->users);
+    }
+  } else {
+    xfree(state->header);
+  }
   xfree(state->participants);
   xfree(state->u_contests);
   for (i = 0; i < state->extra_num; i++)
