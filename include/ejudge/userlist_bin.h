@@ -93,5 +93,7 @@ userlist_bin_destroy_context(
 
 const struct userlist_list *
 userlist_bin_unmarshall(UserlistBinaryHeader *header);
+const struct userlist_list *
+userlist_bin_get_root(const UserlistBinaryHeader *header);
 
 #endif /* __USERLIST_BIN_H__ */

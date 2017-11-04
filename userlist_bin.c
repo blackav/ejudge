@@ -565,3 +565,9 @@ userlist_bin_unmarshall(UserlistBinaryHeader *header)
     }
     return ul;
 }
+
+const struct userlist_list *
+userlist_bin_get_root(const UserlistBinaryHeader *header)
+{
+    return (const struct userlist_list *) (header->data + header->root_offset);
+}
