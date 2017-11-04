@@ -160,14 +160,14 @@ int
 teamdb_refresh(teamdb_state_t state)
 {
   int i, r, j;
-  unsigned char *xml_text;
   struct userlist_list *new_users;
   unsigned long prev_vintage;
   struct userlist_user *uu;
   struct userlist_contest *uc;
-  size_t xml_size = 0;
+  size_t data_size = 0;
   const struct contest_desc *cnts = 0;
   int user_contest_id = state->contest_id;
+  UserlistBinaryHeader *new_header = NULL;
 
   struct timeval tv1, tv2;
 
@@ -183,21 +183,17 @@ teamdb_refresh(teamdb_state_t state)
 
   if (state->callbacks) {
     r = state->callbacks->list_all_users(state->callbacks->user_data,
-                                         user_contest_id, &xml_text, NULL);
+                                         user_contest_id, NULL, &new_header);
     if (r < 0) {
       err("teamdb_refresh: cannot load userlist: %s", userlist_strerror(-r));
       return -1;
     }
-    xml_size = strlen(xml_text);
-    new_users = userlist_parse_str(xml_text);
-    xfree(xml_text); xml_text = 0;
-    if (!new_users) {
-      err("teamdb_refresh: XML parse error");
-      return -1;
-    }
+    data_size = new_header->pkt_size;
+    new_users = (struct userlist_list*) userlist_bin_get_root(new_header);
     state->need_update = 0;
     state->pseudo_vintage++;
   } else {
+    unsigned char *xml_text = NULL;
     if (open_connection(&state->old, user_contest_id) < 0) return -1;
 
     if (state->old.server_users
@@ -227,7 +223,7 @@ teamdb_refresh(teamdb_state_t state)
       close_connection(&state->old);
       return -1;
     }
-    xml_size = strlen(xml_text);
+    data_size = strlen(xml_text);
     new_users = userlist_parse_str(xml_text);
     xfree(xml_text); xml_text = 0;
     if (!new_users) {
@@ -243,6 +239,10 @@ teamdb_refresh(teamdb_state_t state)
       userlist_free((struct xml_tree*) state->users);
     }
   }
+  if (state->header) {
+    xfree(state->header);
+  }
+  state->header = new_header;
   state->users = new_users;
   xfree(state->participants);
   state->participants = 0;
@@ -292,7 +292,7 @@ teamdb_refresh(teamdb_state_t state)
   unsigned long long t2 = (unsigned long long) tv2.tv_sec * 1000000UL + tv2.tv_usec;
 
   info("teamdb_refresh: updated: %d users, %d max user, XML size = %zu, time = %llu",
-       state->total_participants, state->users->user_map_size - 1, xml_size, (t2 - t1));
+       state->total_participants, state->users->user_map_size - 1, data_size, (t2 - t1));
   state->extra_out_of_sync = 1;
   call_update_hooks(state);
   return 1;
