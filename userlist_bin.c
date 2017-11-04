@@ -326,6 +326,7 @@ userlist_bin_marshall_user(
                 xml_link_node_last(&members->b, &dm->b);
                 members->m[i] = make_offset_ptr(cntx, members->m[i]);
             }
+            dui->members = make_offset_ptr(cntx, dui->members);
         }
 
         du->cnts0 = make_offset_ptr(cntx, du->cnts0);
