@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __TEAMDB_PRIV_H__
 #define __TEAMDB_PRIV_H__
 
-/* Copyright (C) 2010-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -50,6 +49,7 @@ struct old_db_state
   key_t shm_key;
 };
 
+struct UserlistBinaryHeader;
 struct teamdb_state
 {
   int contest_id;
@@ -62,7 +62,9 @@ struct teamdb_state
 
   struct old_db_state old;
 
+  struct UserlistBinaryHeader *header;
   struct userlist_list *users;
+
   int total_participants;
   struct userlist_user **participants;
   struct userlist_contest **u_contests;
