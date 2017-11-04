@@ -35,10 +35,11 @@ enum
 struct teamdb_state;
 typedef struct teamdb_state *teamdb_state_t;
 
+struct UserlistBinaryHeader;
 struct teamdb_db_callbacks
 {
   void *user_data;
-  int (*list_all_users)(void *, int, unsigned char **);
+  int (*list_all_users)(void *, int, unsigned char **, struct UserlistBinaryHeader **p_header);
 };
 struct userlist_user;
 

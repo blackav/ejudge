@@ -489,11 +489,14 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr);
 struct server_framework_state;
 int ns_open_ul_connection(struct server_framework_state *state);
 
+struct UserlistBinaryHeader;
+
 int
 ns_list_all_users_callback(
         void *user_data,
         int contest_id,
-        unsigned char **p_xml);
+        unsigned char **p_xml,
+        struct UserlistBinaryHeader **p_header);
 void
 ns_check_contest_events(
         struct contest_extra *extra,
