@@ -83,6 +83,8 @@ struct testinfo_struct
 
   int ok_language_u;
   char **ok_language_v;
+
+  char *working_dir;
 };
 typedef struct testinfo_struct testinfo_t;
 
