@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,7 @@ sock_op_put_fds(
         const int *fds)
 {
   struct msghdr msg;
-  unsigned char msgbuf[512];
+  unsigned char msgbuf[256];
   size_t arrsize;
   struct cmsghdr *pmsg;
   struct iovec send_vec[1];
@@ -36,6 +36,7 @@ sock_op_put_fds(
   int val = 0;
 
   memset(&msg, 0, sizeof(msg));
+  memset(msgbuf, 0, sizeof(msgbuf));
   msg.msg_control = msgbuf;
   msg.msg_controllen = sizeof(msgbuf);
   arrsize = sizeof(int) * fds_num;
