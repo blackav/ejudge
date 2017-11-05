@@ -243,7 +243,6 @@ sort_acm(
     int *t_sort2 = NULL;
     XALLOCA(t_sort2, pg->t_tot);
     XCALLOC(pg->t_sort, pg->t_tot);
-    XCALLOC(pg->places, pg->t_tot);
     for (t = 0; t < pg->t_tot; ++t) {
         StandingsUserRow *row = &pg->rows[t];
         t_sort2[pen_cnt[row->tot_penalty]++] = t;
@@ -803,7 +802,6 @@ sort_kirov(
     ind_score[0] = i;
 
     XCALLOC(pg->t_sort, pg->t_tot);
-    XCALLOC(pg->places, pg->t_tot);
     if (sii->accepting_mode) {
         /* sort by the number of solved problems */
         for (int t = 0; t < pg->t_tot; ++t)
