@@ -2737,11 +2737,14 @@ run_one_test(
     task_pnAddArgs(tsk, tstinfo.cmd_argc, (char**) tstinfo.cmd_argv);
   }
   task_SetPathAsArg0(tsk);
+  /*
   if (tstinfo.working_dir) {
     task_SetWorkingDir(tsk, tstinfo.working_dir);
   } else {
     task_SetWorkingDir(tsk, working_dir);
   }
+  */
+  task_SetWorkingDir(tsk, working_dir);
   if (srpp->enable_process_group > 0) {
     task_EnableProcessGroup(tsk);
 #ifndef __WIN32__
