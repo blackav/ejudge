@@ -579,13 +579,13 @@ check_func(void *data)
     version = 6;
   }
   if (version == 6) {
-    if (state->mi->simple_fquery(state->md, "ALTER TABLE %scntsregs ADD INDEX IF NOT EXISTS cntsregs_user_id_idx (user_id), ADD INDEX IF NOT EXISTS cntsregs_contest_id_idx (contest_id);", state->md->table_prefix) < 0)
+    if (state->mi->simple_fquery(state->md, "ALTER TABLE %scntsregs ADD INDEX cntsregs_user_id_idx (user_id), ADD INDEX cntsregs_contest_id_idx (contest_id);", state->md->table_prefix) < 0)
       return -1;
-    if (state->mi->simple_fquery(state->md, "ALTER TABLE %susers    ADD INDEX IF NOT EXISTS users_user_id_idx (user_id), ADD INDEX IF NOT EXISTS users_contest_id_idx (contest_id);", state->md->table_prefix) < 0)
+    if (state->mi->simple_fquery(state->md, "ALTER TABLE %susers    ADD INDEX users_user_id_idx (user_id), ADD INDEX users_contest_id_idx (contest_id);", state->md->table_prefix) < 0)
       return -1;
-    if (state->mi->simple_fquery(state->md, "ALTER TABLE %smembers  ADD INDEX IF NOT EXISTS members_user_id_idx (user_id), ADD INDEX IF NOT EXISTS members_contest_id_idx (contest_id);", state->md->table_prefix) < 0)
+    if (state->mi->simple_fquery(state->md, "ALTER TABLE %smembers  ADD INDEX members_user_id_idx (user_id), ADD INDEX members_contest_id_idx (contest_id);", state->md->table_prefix) < 0)
       return -1;
-    if (state->mi->simple_fquery(state->md, "ALTER TABLE %sgroupmembers ADD INDEX IF NOT EXISTS groupmembers_group_id_idx (group_id), ADD INDEX IF NOT EXISTS groupmembers_user_id_idx (user_id);", state->md->table_prefix) < 0)
+    if (state->mi->simple_fquery(state->md, "ALTER TABLE %sgroupmembers ADD INDEX groupmembers_group_id_idx (group_id), ADD INDEX groupmembers_user_id_idx (user_id);", state->md->table_prefix) < 0)
       return -1;
     if (state->mi->simple_fquery(state->md, "UPDATE %sconfig SET config_val = '7' WHERE config_key = 'version' ;", state->md->table_prefix) < 0)
       return -1;

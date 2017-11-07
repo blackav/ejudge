@@ -168,14 +168,14 @@ CREATE TABLE %sgroupmembers
     FOREIGN KEY u(user_id) REFERENCES logins(user_id)
 );
 
-ALTER TABLE %scntsregs ADD INDEX IF NOT EXISTS cntsregs_user_id_idx (user_id),
-                       ADD INDEX IF NOT EXISTS cntsregs_contest_id_idx (contest_id);
-ALTER TABLE %susers    ADD INDEX IF NOT EXISTS users_user_id_idx (user_id),
-                       ADD INDEX IF NOT EXISTS users_contest_id_idx (contest_id);
-ALTER TABLE %smembers  ADD INDEX IF NOT EXISTS members_user_id_idx (user_id),
-                       ADD INDEX IF NOT EXISTS members_contest_id_idx (contest_id);
+ALTER TABLE %scntsregs ADD INDEX cntsregs_user_id_idx (user_id),
+                       ADD INDEX cntsregs_contest_id_idx (contest_id);
+ALTER TABLE %susers    ADD INDEX users_user_id_idx (user_id),
+                       ADD INDEX users_contest_id_idx (contest_id);
+ALTER TABLE %smembers  ADD INDEX members_user_id_idx (user_id),
+                       ADD INDEX members_contest_id_idx (contest_id);
 
-ALTER TABLE %sgroupmembers ADD INDEX IF NOT EXISTS groupmembers_group_id_idx (group_id),
-                           ADD INDEX IF NOT EXISTS groupmembers_user_id_idx (user_id);
+ALTER TABLE %sgroupmembers ADD INDEX groupmembers_group_id_idx (group_id),
+                           ADD INDEX groupmembers_user_id_idx (user_id);
 
 INSERT INTO %sconfig VALUES ('version', '7');

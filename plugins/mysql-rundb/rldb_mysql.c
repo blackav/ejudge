@@ -167,7 +167,7 @@ do_create(struct rldb_mysql_state *state)
     db_error_fail(md);
   if (mi->simple_fquery(md, create_runs_query, md->table_prefix) < 0)
     db_error_fail(md);
-  if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD INDEX IF NOT EXISTS runs_contest_id_idx (contest_id);", md->table_prefix) < 0)
+  if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD INDEX runs_contest_id_idx (contest_id);", md->table_prefix) < 0)
       return -1;
   if (mi->simple_fquery(md,
                         "INSERT INTO %sconfig VALUES ('run_version', '9') ;",
@@ -266,7 +266,7 @@ do_open(struct rldb_mysql_state *state)
     run_version = 8;
   }
   if (run_version == 8) {
-    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD INDEX IF NOT EXISTS runs_contest_id_idx (contest_id);", md->table_prefix) < 0)
+    if (mi->simple_fquery(md, "ALTER TABLE %sruns ADD INDEX runs_contest_id_idx (contest_id);", md->table_prefix) < 0)
       return -1;
     if (mi->simple_fquery(md, "UPDATE %sconfig SET config_val = '9' WHERE config_key = 'run_version' ;", md->table_prefix) < 0)
       return -1;
