@@ -466,15 +466,18 @@ simple_fquery_func(
         const char *format,
         ...)
 {
-  unsigned char cmdbuf[2024];
-  size_t cmdlen;
   va_list args;
+  char *cmd = NULL;
+  int cmdlen;
+  int ret;
 
   va_start(args, format);
-  vsnprintf(cmdbuf, sizeof(cmdbuf), format, args);
+  cmdlen = vasprintf(&cmd, format, args);
   va_end(args);
-  cmdlen = strlen(cmdbuf);
-  return state->i->simple_query(state, cmdbuf, cmdlen);
+
+  ret = state->i->simple_query(state, cmd, cmdlen);
+  free(cmd);
+  return ret;
 }
 
 static int
