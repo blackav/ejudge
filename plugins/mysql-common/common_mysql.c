@@ -509,15 +509,18 @@ fquery_func(
         const char *format,
         ...)
 {
-  unsigned char cmdbuf[2024];
-  size_t cmdlen;
+  int cmdlen;
   va_list args;
+  char *cmd = NULL;
+  int ret;
 
   va_start(args, format);
-  vsnprintf(cmdbuf, sizeof(cmdbuf), format, args);
+  cmdlen = vasprintf(&cmd, format, args);
   va_end(args);
-  cmdlen = strlen(cmdbuf);
-  return state->i->query(state, cmdbuf, cmdlen, colnum);
+
+  ret = state->i->query(state, cmd, cmdlen, colnum);
+  free(cmd);
+  return ret;
 }
 
 static int
