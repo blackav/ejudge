@@ -110,7 +110,7 @@ ns_unpriv_parse_run_id(
     FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
   }
 
-  if (accepting_mode && prob->type != PROB_TYPE_STANDARD) {
+  if (accepting_mode && (prob->type != PROB_TYPE_STANDARD && prob->type != PROB_TYPE_TESTS)) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
