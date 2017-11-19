@@ -4490,7 +4490,7 @@ ns_write_olympiads_user_runs(
     if (start_time > run_time) run_time = start_time;
     duration_str(global->show_astr_time, run_time, start_time, dur_str, 0);
 
-    if (prob && prob->type != PROB_TYPE_STANDARD) {
+    if (prob && prob->type != PROB_TYPE_STANDARD && prob->type != PROB_TYPE_TESTS) {
       // there are check statuses that can never appear in output-only probs
       switch (re.status) {
       case RUN_COMPILE_ERR:
