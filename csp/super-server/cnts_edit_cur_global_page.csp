@@ -102,6 +102,7 @@ static const unsigned char MSG_stand_score_attr[] = "HTML attributes for the &qu
 static const unsigned char MSG_stand_penalty_attr[] = "HTML attributes for the &quot;Penalty&quot; column";
 static const unsigned char MSG_stand_use_login[] = "Use login instead of name";
 static const unsigned char MSG_stand_show_avatar[] = "Show avatars in standings";
+static const unsigned char MSG_stand_show_first_solver[] = "Show first solver in standings";
 static const unsigned char MSG_stand_show_ok_time[] = "Show success time in standings";
 static const unsigned char MSG_stand_show_att_num[] = "Show number of attempts in standings";
 static const unsigned char MSG_stand_sort_by_solved[] = "Sort participants by the solved problems first";
@@ -410,6 +411,7 @@ static const unsigned char * const form_row_attrs[]=
         <%@expand EDIT_TEXT_ROW "stand_penalty_attr" "attrs" "48" "300px" %>
         <%@expand EDIT_BOOL_ROW "stand_use_login" "attrs" "300px" %>
         <%@expand EDIT_BOOL_ROW "stand_show_avatar" "attrs" "300px" %>
+        <%@expand EDIT_BOOL_ROW "stand_show_first_solver" "attrs" "300px" %>
         <%@expand EDIT_BOOL_ROW "stand_show_ok_time" "attrs" "300px" %>
         <%@expand EDIT_BOOL_ROW "stand_show_att_num" "attrs" "300px" %>
         <%@expand EDIT_BOOL_ROW "stand_sort_by_solved" "attrs" "300px" %>
@@ -1052,6 +1054,7 @@ function popupAttrsDialog(e, skipField)
     $("#attrs-stand_penalty_attr").val($("#orig-stand_penalty_attr").val());
     copyCheckbox("attrs-stand_use_login", "orig-stand_use_login");
     copyCheckbox("attrs-stand_show_avatar", "orig-stand_show_avatar");
+    copyCheckbox("attrs-stand_show_first_solver", "orig-stand_show_first_solver");
     copyCheckbox("attrs-stand_show_ok_time", "orig-stand_show_ok_time");
     copyCheckbox("attrs-stand_show_att_num", "orig-stand_show_att_num");
     copyCheckbox("attrs-stand_sort_by_solved", "orig-stand_sort_by_solved");
@@ -1594,6 +1597,7 @@ function advancedDialogOnChange()
             <%@expand ORIG_TEXT_ROW "stand_penalty_attr" "Attrs" "48" %>
             <%@expand ORIG_BOOL_ROW "stand_use_login" %>
             <%@expand ORIG_BOOL_ROW "stand_show_avatar" %>
+            <%@expand ORIG_BOOL_ROW "stand_show_first_solver" %>
             <%@expand ORIG_BOOL_ROW "stand_show_ok_time" %>
             <%@expand ORIG_BOOL_ROW "stand_show_att_num" %>
             <%@expand ORIG_BOOL_ROW "stand_sort_by_solved" %>

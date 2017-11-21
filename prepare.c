@@ -255,6 +255,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(stand_disq_attr, "S"),
   GLOBAL_PARAM(stand_use_login, "d"),
   GLOBAL_PARAM(stand_show_avatar, "d"),
+  GLOBAL_PARAM(stand_show_first_solver, "d"),
   GLOBAL_PARAM(stand_show_ok_time, "d"),
   GLOBAL_PARAM(stand_show_att_num, "d"),
   GLOBAL_PARAM(stand_sort_by_solved, "d"),
@@ -842,6 +843,7 @@ global_init_func(struct generic_section_config *gp)
   p->stand_fancy_style = -1;
   p->stand_use_login = -1;
   p->stand_show_avatar = -1;
+  p->stand_show_first_solver = -1;
   p->stand_show_ok_time = -1;
   p->stand_show_warn_number = -1;
   p->disable_auto_testing = -1;
@@ -2750,6 +2752,8 @@ set_defaults(
     g->stand_use_login = DFLT_G_STAND_USE_LOGIN;
   if (g->stand_show_avatar < 0)
     g->stand_show_avatar = 0;
+  if (g->stand_show_first_solver < 0)
+    g->stand_show_first_solver = 0;
   if (g->stand_show_ok_time == -1)
     g->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;
   if (g->stand_show_warn_number == -1)
@@ -5332,6 +5336,8 @@ prepare_set_global_defaults(struct section_global_data *g)
     g->stand_use_login = DFLT_G_STAND_USE_LOGIN;
   if (g->stand_show_avatar < 0)
     g->stand_show_avatar = 0;
+  if (g->stand_show_first_solver < 0)
+    g->stand_show_first_solver = 0;
   if (g->advanced_layout < 0)
     g->advanced_layout = 0;
   if (g->uuid_run_store < 0)
@@ -5550,6 +5556,7 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->stand_fancy_style = 0;
   global->stand_use_login = DFLT_G_STAND_USE_LOGIN;
   global->stand_show_avatar = 0;
+  global->stand_show_first_solver = 0;
   global->stand_show_ok_time = DFLT_G_STAND_SHOW_OK_TIME;
   global->stand_show_warn_number = DFLT_G_STAND_SHOW_WARN_NUMBER;
   global->use_ac_not_ok = 0;

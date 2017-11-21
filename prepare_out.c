@@ -400,6 +400,8 @@ prepare_unparse_global(
     unparse_bool(f, "stand_use_login", global->stand_use_login);
   if (global->stand_show_avatar > 0)
     unparse_bool(f, "stand_show_avatar", global->stand_show_avatar);
+  if (global->stand_show_first_solver > 0)
+    unparse_bool(f, "stand_show_first_solver", global->stand_show_first_solver);
   if (global->stand_show_ok_time != DFLT_G_STAND_SHOW_OK_TIME)
     unparse_bool(f, "stand_show_ok_time", global->stand_show_ok_time);
   if (global->stand_show_att_num)

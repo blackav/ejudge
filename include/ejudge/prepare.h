@@ -560,6 +560,8 @@ struct section_global_data
   ejintbool_t stand_use_login;
   /** show participant's avatar, if supported */
   ejintbool_t stand_show_avatar;
+  /** show first solver of the problem */
+  ejintbool_t stand_show_first_solver;
   /** show success time in the standings */
   ejintbool_t stand_show_ok_time;
   /** show number of attempts in Kirov standings */
