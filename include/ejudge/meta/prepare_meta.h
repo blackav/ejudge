@@ -196,6 +196,7 @@ enum
   CNTSGLOB_stand_disq_attr,
   CNTSGLOB_stand_use_login,
   CNTSGLOB_stand_show_avatar,
+  CNTSGLOB_stand_show_first_solver,
   CNTSGLOB_stand_show_ok_time,
   CNTSGLOB_stand_show_att_num,
   CNTSGLOB_stand_sort_by_solved,
