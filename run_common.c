@@ -1681,7 +1681,7 @@ invoke_tar(
   info("starting: %s", tar_path);
   tsk = task_New();
   task_AddArg(tsk, tar_path);
-  task_AddArg(tsk, "xfv");
+  task_AddArg(tsk, "xpfv");
   task_AddArg(tsk, archive_path);
   task_SetPathAsArg0(tsk);
   task_SetWorkingDir(tsk, working_dir);
