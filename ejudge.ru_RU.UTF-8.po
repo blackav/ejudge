@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-09-13 12:49+0300\n"
-"PO-Revision-Date: 2017-09-13 12:49+0300\n"
+"POT-Creation-Date: 2017-12-06 13:19+0300\n"
+"PO-Revision-Date: 2017-12-06 13:20+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -1034,6 +1034,9 @@ msgstr "Создать новую учётную запись"
 msgid "Crop avatar"
 msgstr "Вырезать аватар"
 
+msgid "Current penalty"
+msgstr "Текущий штраф"
+
 msgid "Current standings"
 msgstr "Текущее положение участников"
 
@@ -1059,8 +1062,8 @@ msgstr "ДИСКВАЛИФИЦИРОВАТЬ пользователей"
 msgid "Database error"
 msgstr "Ошибка базы данных"
 
-msgid "Date penalty"
-msgstr "Штраф по дате сдачи"
+msgid "Date penalty formula"
+msgstr "Формула штрафа за время"
 
 msgid "Deactivate"
 msgstr "Деактивировать"
@@ -2459,6 +2462,9 @@ msgstr "Новая учётная запись создана"
 
 msgid "Next problem"
 msgstr "Следующая задача"
+
+msgid "Next soft deadline"
+msgstr "След. мягкий срок"
 
 msgid "No"
 msgstr "Нет"

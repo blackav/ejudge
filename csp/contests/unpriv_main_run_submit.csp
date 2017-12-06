@@ -150,19 +150,57 @@
 %>
 
 <%
-        if ((pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE) && prob->date_penalty) {
-          int dpi;
-%>
-    <tr><td><b><s:_>Date penalty</s:_>:</b></td><td><tt><%
-          for (dpi = 0; prob->date_penalty[dpi]; ++dpi) {
-            char *dp = prob->date_penalty[dpi];
-            if (dp != prob->date_penalty[0]) {
-%>, <%
+        if (pinfo[prob_id].deadline <= 0 || cs->current_time < pinfo[prob_id].deadline) {
+          if ((pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE) && prob->date_penalty) {
+            int dpi;
+            time_t base_time = start_time;
+            if (prob->start_date > 0 && prob->start_date > base_time) {
+              base_time = prob->start_date;
             }
-%><s:v value="dp" /><%
-          }
-%></tt></td></tr>
+            for (dpi = 0; dpi < prob->dp_total; ++dpi) {
+              if (cs->current_time < prob->dp_infos[dpi].date)
+                break;
+            }
+            const struct penalty_info *dp = NULL;
+            if (dpi < prob->dp_total) {
+              if (dpi > 0) {
+                base_time = prob->dp_infos[dpi - 1].date;
+              }
+              dp = &prob->dp_infos[dpi];
+            }
+            if (dp) {
+              const unsigned char *formula = prob->date_penalty[dpi];
+              int penalty = dp->penalty;
+              time_t next_deadline = 0;
+              if (dp->scale > 0) {
+                time_t offset = cs->current_time - base_time;
+                if (offset < 0) offset = 0;
+                penalty += dp->decay * (offset / dp->scale);
+                next_deadline = base_time + (offset / dp->scale + 1) * dp->scale;
+                if (next_deadline >= dp->date) {
+                  next_deadline = dp->date;
+                }
+                if (pinfo[prob_id].deadline > 0 && next_deadline >= pinfo[prob_id].deadline) {
+                  next_deadline = 0;
+                }
+              }
+%>
+    <tr><td><b><s:_>Date penalty formula</s:_>:</b></td><td><tt><s:v value="formula" /></tt></td></tr>
 <%
+              if (penalty > 0) {
+%>
+    <tr><td><b><s:_>Current penalty</s:_>:</b></td><td><tt><s:v value="penalty" /></tt></td></tr>
+<%
+              }
+              if (next_deadline > 0) {
+%>
+    <tr><td><b><s:_>Next soft deadline</s:_>:</b></td><td><tt><s:v value="next_deadline" /></tt></td></tr>
+<%
+              }
+%>
+<%
+            }
+          }
         }
 %>
 

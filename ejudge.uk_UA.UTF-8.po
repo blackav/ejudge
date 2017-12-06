@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-09-13 12:49+0300\n"
+"POT-Creation-Date: 2017-12-06 13:19+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -977,6 +977,9 @@ msgstr ""
 msgid "Crop avatar"
 msgstr ""
 
+msgid "Current penalty"
+msgstr ""
+
 msgid "Current standings"
 msgstr ""
 
@@ -1002,7 +1005,7 @@ msgstr ""
 msgid "Database error"
 msgstr ""
 
-msgid "Date penalty"
+msgid "Date penalty formula"
 msgstr ""
 
 msgid "Deactivate"
@@ -2321,6 +2324,9 @@ msgid "New user account is created"
 msgstr ""
 
 msgid "Next problem"
+msgstr ""
+
+msgid "Next soft deadline"
 msgstr ""
 
 msgid "No"
