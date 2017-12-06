@@ -184,6 +184,7 @@
                   next_deadline = 0;
                 }
               }
+              penalty = -penalty; // penalty is negative
 %>
     <tr><td><b><s:_>Date penalty formula</s:_>:</b></td><td><tt><s:v value="formula" /></tt></td></tr>
 <%
