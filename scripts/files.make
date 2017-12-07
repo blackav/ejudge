@@ -92,6 +92,8 @@ SCRIPTS_IN = \
  javac7-version.in\
  scala.in\
  scala-version.in\
+ kotlin.in\
+ kotlin-version.in\
  mcs.in\
  mcs-version.in\
  vbnc.in\
