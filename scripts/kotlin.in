@@ -1,0 +1,36 @@
+#!/bin/bash
+# Copyright (c) 2017 Alexander Chernov <cher@ejudge.ru>
+
+# Usage: kotlin in-file out-file
+# The working dir must not contain any .class files.
+
+# using EJUDGE_FLAGS we may pass additional flags
+
+prefix="@prefix@"
+exec_prefix="@exec_prefix@"
+libexecdir="@libexecdir@"
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/kotlin.cfg"
+
+infile="$1"
+outfile="$2"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  version="unknown"
+  KOTLINRUN="kotlin"
+  KOTLINCRUN="kotlinc"
+fi
+
+if [ x"${version}" = x ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+rm -f *.class *.jar
+"${KOTLINCRUN}" "${infile}" -include-runtime -d output.jar || exit 1
+exec mv output.jar "${outfile}"
