@@ -2,7 +2,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -311,5 +311,9 @@ text_substitute(
         const void *p,
         const unsigned char *str,
         unsigned char *(*getvar_func)(const void *, const unsigned char *));
+
+int json_armor_needed(const unsigned char *str, size_t *psz);
+int json_armor_string(const unsigned char *str, char *out);
+const unsigned char *json_armor_buf(struct html_armor_buffer *pb, const unsigned char *s);
 
 #endif /* __MISCTEXT_H__ */

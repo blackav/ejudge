@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2632,3 +2632,70 @@ text_substitute(
   out_s[out_u] = 0;
   return out_s;
 }
+
+int
+json_armor_needed(const unsigned char *str, size_t *psz)
+{
+  size_t src_z = 0, dst_z = 0;
+  while (*str) {
+    ++src_z;
+    unsigned char c = *str++;
+    if (c == '\"' || c == '\\') {
+      dst_z += 2;
+    } else if (c == 0x7f) {
+      dst_z += 6;
+    } else if (c >= ' ') {
+      ++dst_z;
+    } else if (c == '\b' || c == '\f' || c == '\n' || c == '\r' || c == '\t') {
+      dst_z += 2;
+    } else {
+      dst_z += 6;
+    }
+  }
+  if (psz) *psz = dst_z;
+  return src_z != dst_z;
+}
+
+int
+json_armor_string(const unsigned char *str, char *out)
+{
+  char *s = out;
+  while (*str) {
+    unsigned char c = *str++;
+    switch (c) {
+    case '\"': *s++ = '\\'; *s++ = '\"'; break;
+    case '\\': *s++ = '\\'; *s++ = '\\'; break;
+    case '\b': *s++ = '\\'; *s++ = 'b'; break;
+    case '\f': *s++ = '\\'; *s++ = 'f'; break;
+    case '\n': *s++ = '\\'; *s++ = 'n'; break;
+    case '\r': *s++ = '\\'; *s++ = 'r'; break;
+    case '\t': *s++ = '\\'; *s++ = 't'; break;
+    case 0x7f: *s++ = '\\'; *s++ = 'u'; *s++ = '0'; *s++ = '0'; *s++ = '7'; *s++ = 'f'; break;
+    default:
+      if (c >= ' ') {
+        *s++ = c;
+      } else {
+        s += sprintf(s, "\\u%04x", c);
+      }
+      break;
+    }
+  }
+  *s = 0;
+  return s - out;
+}
+
+const unsigned char *
+json_armor_buf(struct html_armor_buffer *pb, const unsigned char *s)
+{
+  size_t newsz = 0;
+  if (!json_armor_needed(s, &newsz)) return s;
+  if (newsz >= pb->size) {
+    xfree(pb->buf);
+    if (!pb->size) pb->size = 64;
+    while (newsz >= pb->size) pb->size *= 2;
+    pb->buf = (unsigned char*) xmalloc(pb->size);
+  }
+  json_armor_string(s, pb->buf);
+  return pb->buf;
+}
+

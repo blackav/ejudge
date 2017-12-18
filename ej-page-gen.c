@@ -5537,7 +5537,7 @@ string_type_handler(
             fprintf(prg_f, "fputs(html_armor_buf(&ab, (%s)), out_f);\n", text);
         }
     } else if (need_json) {
-        fprintf(prg_f, "fputs(c_armor_buf(&ab, (%s)), out_f);\n", text);
+        fprintf(prg_f, "fputs(json_armor_buf(&ab, (%s)), out_f);\n", text);
     } else {
         fprintf(prg_f, "fputs((%s), out_f);\n", text);
     }
