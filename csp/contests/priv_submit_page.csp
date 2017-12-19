@@ -89,7 +89,15 @@ ns_unparse_answers(
     if (!(cs->probs[i])) continue;
 %><s:option value="i" selectedExpr="prob_id > 0 && i == prob_id"><s:v value="cs->probs[i]->short_name" escape="false" /><s:v value="cs->probs[i]->internal_name" checkExpr="" sep=" - " /> - <s:v value="cs->probs[i]->long_name" checkExpr="" /></s:option><%
   }
-%></s:select></td><td class="b0"><s:submit ac="priv-submit-page" /></td></tr>
+%></s:select></td><td class="b0"><s:submit ac="priv-submit-page" /></td><%
+  int next_prob_id = prob_id + 1;
+  while (next_prob_id <= cs->max_prob && !cs->probs[next_prob_id]) {
+    ++next_prob_id;
+  }
+  if (next_prob_id <= cs->max_prob) {
+%><s:url name="NextProbUrl" ac="priv-submit-page"><s:param name="prob_id" value="next_prob_id" /></s:url><s:a url="NextProbUrl">[Next Problem]</s:a><%
+  }
+%></tr>
 <% if (prob && prob->variant_num > 0) { %>
 <tr><td class="b0"><s:_>Variant</s:_>:</td><td class="b0"><s:select name="variant"><%
     for (i = 0; i <= prob->variant_num; i++) {
