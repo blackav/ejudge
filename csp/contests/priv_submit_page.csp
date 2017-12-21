@@ -83,8 +83,15 @@ ns_unparse_answers(
 
 <s:form enctype="multipart/form-data">
 
-<table class="b0"><tr>
-<tr><td class="b0"><s:_>Problem</s:_>:</td><td class="b0"><s:select name="problem"><%
+<table class="b0"><tr><%
+  int prev_prob_id = prob_id - 1;
+  while (prev_prob_id > 0 && !cs->probs[prev_prob_id]) {
+    --prev_prob_id;
+  }
+  if (prev_prob_id > 0) {
+%><td><s:url name="PrevProbUrl" ac="priv-submit-page"><s:param name="problem" value="prev_prob_id" /></s:url><s:a url="PrevProbUrl">[Prev Problem]</s:a></td><%
+  }
+%><td class="b0"><s:_>Problem</s:_>:</td><td class="b0"><s:select name="problem"><%
   for (i = 1; i <= cs->max_prob; i++) {
     if (!(cs->probs[i])) continue;
 %><s:option value="i" selectedExpr="prob_id > 0 && i == prob_id"><s:v value="cs->probs[i]->short_name" escape="false" /><s:v value="cs->probs[i]->internal_name" checkExpr="" sep=" - " /> - <s:v value="cs->probs[i]->long_name" checkExpr="" /></s:option><%
