@@ -419,7 +419,7 @@ function updateGroup2()
         button_label = "Delete registrations!";
         break;
     case SSERV_CMD_USER_SEL_CHANGE_REG_STATUS_PAGE:
-%><s:hidden name="status" /><%
+%><s:hidden name="status" checkExpr="" /><%
 %><p>The registration status is to be changed to <s:v value="ss_reg_status_strs[status]" escape="no" /> for the following <s:v value="user_count" /> users:</p><%
         operation = SSERV_CMD_USER_SEL_CHANGE_REG_STATUS_ACTION;
         button_label = "Change!";
