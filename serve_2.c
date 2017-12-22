@@ -2153,6 +2153,9 @@ serve_run_request(
   if (find_lang_specific_size(prob->lang_max_stack_size, lang, &lang_specific_size) > 0) {
     srpp->max_stack_size = lang_specific_size;
   }
+  if (lang && lang->run_max_stack_size > 0) {
+    srpp->max_stack_size = lang->run_max_stack_size;
+  }
 
   if (tester) {
     struct super_run_in_tester_packet *srtp = srp->tester;
