@@ -64,6 +64,8 @@ SCRIPTS_IN = \
  mzscheme-version.in\
  nasm-x86.in\
  nasm-x86-version.in\
+ node.in\
+ node-version.in\
  qb.in\
  qb-version.in\
  perl.in\
