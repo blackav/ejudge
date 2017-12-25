@@ -6736,6 +6736,7 @@ PrivViewIPUsersPage dummy_pviup;
 PrivViewUsersPage dummy_pvup;
 UserInfoPage dummy_uip;
 StandingsPage dummy_page;
+LanguageStat dummy_lang_stat;
 
 /*
  * Local variables:
