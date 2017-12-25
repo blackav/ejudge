@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-12-25 09:34+0300\n"
+"POT-Creation-Date: 2017-12-25 13:53+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -2022,6 +2022,9 @@ msgid "Language is empty in row %d\n"
 msgstr ""
 
 msgid "Language settings (serve.cfg)"
+msgstr ""
+
+msgid "Language statistics"
 msgstr ""
 
 msgid "Last User_Id (incl.)"
