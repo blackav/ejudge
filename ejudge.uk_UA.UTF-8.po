@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-12-06 13:19+0300\n"
+"POT-Creation-Date: 2017-12-25 09:34+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -2810,6 +2810,9 @@ msgid "Program stderr output"
 msgstr ""
 
 msgid "Programming language"
+msgstr ""
+
+msgid "Programming language statistics"
 msgstr ""
 
 msgid "Programming languages"
