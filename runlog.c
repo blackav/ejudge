@@ -2124,6 +2124,7 @@ runlog_check(
 
     if (e->status == RUN_VIRTUAL_START || e->status == RUN_VIRTUAL_STOP) {
       /* kinda paranoia */
+      /*
       memcpy(&te, e, sizeof(te));
       te.run_id = 0;
       te.status = 0;
@@ -2141,6 +2142,7 @@ runlog_check(
                   i, j);
         nerr++;
       }
+      */
       continue;
     }
 
