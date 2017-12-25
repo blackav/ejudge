@@ -238,7 +238,7 @@
         }
 %></td>
         <td class="b1"><%
-        if (ls->disqualified_runs > 0) {
+        if (ls->best_score > 0) {
 %><s:v value="ls->best_score" /><%
         }
 %></td>
