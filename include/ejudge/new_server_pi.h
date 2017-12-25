@@ -222,6 +222,7 @@ typedef struct LanguageStat
     int ignored_runs;
     int disqualified_runs;
     int partial_runs;
+    int best_score;
 } LanguageStat;
 
 #endif /* __NEW_SERVER_PI_H__ */
