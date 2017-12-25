@@ -116,6 +116,7 @@
     <% if (need_examiners) { %>
             <li><s:a ac="examiners-page"><s:_>Examiners assignments</s:_></s:a></li>
     <% } %>
+            <li><s:a ac="language-stats-page"><s:_>Programming language statistics</s:_></s:a></li><br/>
         </ul>
     </li>
 

@@ -294,4 +294,5 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_TOGGLE_REG_READONLY] = "toggle-reg-readonly",
   [NEW_SRV_ACTION_USER_CHANGE_STATUS_2] = "user-change-status-2",
   [NEW_SRV_ACTION_CONFIRM_AVATAR] = "confirm-avatar",
+  [NEW_SRV_ACTION_LANGUAGE_STATS_PAGE] = "language-stats-page",
 };

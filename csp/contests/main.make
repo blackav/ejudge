@@ -45,6 +45,7 @@ SOFILES = \
  csp_priv_edit_run_page.so\
  csp_priv_exam_info_page.so\
  csp_priv_ip_users_page.so\
+ csp_priv_language_stats_page.so\
  csp_priv_login_page.so\
  csp_priv_main_page.so\
  csp_priv_new_run_page.so\
@@ -148,6 +149,7 @@ csp_priv_edit_run_page.c: priv_edit_run_page.csp priv_includes.csp priv_stdvars.
 csp_priv_edit_clar_page.c: priv_edit_clar_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_exam_info_page.c: priv_exam_info_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_ip_users_page.c : priv_ip_users_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_language_stats_page.c : priv_language_stats_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_login_page.c : priv_login_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_main_page.c : priv_main_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_new_run_page.c : priv_new_run_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
