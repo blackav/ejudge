@@ -211,6 +211,19 @@ typedef struct StandingsExtraInfo
     time_t stand_time;
 } StandingsExtraInfo;
 
+typedef struct LanguageStat
+{
+    int total_runs;
+    int transient_runs;
+    int success_runs;
+    int check_failed_runs;
+    int compilation_failed_runs;
+    int pending_runs;
+    int ignored_runs;
+    int disqualified_runs;
+    int partial_runs;
+} LanguageStat;
+
 #endif /* __NEW_SERVER_PI_H__ */
 
 /*
