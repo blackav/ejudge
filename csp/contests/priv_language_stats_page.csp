@@ -158,6 +158,8 @@
         <th class="b1">Long Name</th>
         <th class="b1">Total</th>
         <th class="b1">Success</th>
+        <th class="b1">Check Failed</th>
+        <th class="b1">Testing</th>
     </tr>
 <%
     for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
@@ -179,6 +181,19 @@
         if (ls->success_runs > 0) {
             snprintf(filtbuf, sizeof(filtbuf), "lang == \"%s\" && (status == ok || status == pr || status == rj || status == sm)",  lang->short_name);
 %><s:url name="FilteredMainUrl" ac="main-page"><s:param name="filter_expr" value="filtbuf" /></s:url><s:a url="FilteredMainUrl"><s:v value="ls->success_runs" /></s:a><%
+        }
+%></td>
+        <td class="b1"><%
+        if (ls->check_failed_runs > 0) {
+            snprintf(filtbuf, sizeof(filtbuf), "lang == \"%s\" && (status == cf)",  lang->short_name);
+%><s:url name="FilteredMainUrl" ac="main-page"><s:param name="filter_expr" value="filtbuf" /></s:url><s:a url="FilteredMainUrl"><s:v value="ls->check_failed_runs" /></s:a><%
+        }
+%></td>
+    </tr>
+        <td class="b1"><%
+        if (ls->transient_runs > 0) {
+            snprintf(filtbuf, sizeof(filtbuf), "lang == \"%s\" && (status == cg || status == ru)",  lang->short_name);
+%><s:url name="FilteredMainUrl" ac="main-page"><s:param name="filter_expr" value="filtbuf" /></s:url><s:a url="FilteredMainUrl"><s:v value="ls->transient_runs" /></s:a><%
         }
 %></td>
     </tr>
