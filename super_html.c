@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@
 #include "ejudge/prepare.h"
 #include "ejudge/vcs.h"
 #include "ejudge/compat.h"
+#include "ejudge/file_perms.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -752,6 +753,7 @@ super_html_load_serve_cfg(const struct contest_desc *cnts,
                           struct sid_state *sstate)
 {
   path_t serve_cfg_path;
+  unsigned char var_dir_path[PATH_MAX];
   char *flog_txt = 0;
   size_t flog_len = 0;
   FILE *flog = 0;
@@ -766,6 +768,27 @@ super_html_load_serve_cfg(const struct contest_desc *cnts,
   }
 
   flog = open_memstream(&flog_txt, &flog_len);
+
+  snprintf(var_dir_path, sizeof(var_dir_path), "%s/var", cnts->root_dir);
+  int dir_mode = file_perms_parse_mode(cnts->dir_mode);
+  int dir_group = file_perms_parse_group(cnts->dir_group);
+  struct stat stb;
+  if (stat(var_dir_path, &stb) >= 0) {
+    if (!S_ISDIR(stb.st_mode)) {
+      fprintf(flog, "%s is not a directory\n", var_dir_path);
+      close_memstream(flog); flog = 0;
+      sstate->serve_parse_errors = flog_txt;
+      flog_txt = 0; flog_len = 0;
+    }
+  } else {
+    if (mkdir(var_dir_path, 0777) < 0) {
+      fprintf(flog, "cannot create directory '%s': %s\n", var_dir_path, os_ErrorMsg());
+      close_memstream(flog); flog = 0;
+      sstate->serve_parse_errors = flog_txt;
+      flog_txt = 0; flog_len = 0;
+    }
+    file_perms_set(flog, var_dir_path, dir_group, dir_mode, 0, 0);
+  }
 
   if (access(serve_cfg_path, R_OK) < 0) {
     fprintf(flog, "file %s does not exist or is not readable\n", serve_cfg_path);
