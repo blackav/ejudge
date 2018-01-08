@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -82,6 +82,11 @@ compile_request_packet_read(
   pout->ts1 = cvt_bin_to_host_32(pin->ts1);
   pout->ts1_us = cvt_bin_to_host_32(pin->ts1_us);
   FAIL_IF(pout->ts1_us < 0 || pout->ts1_us > USEC_MAX);
+
+  pout->user_id = cvt_bin_to_host_32(pin->user_id);
+  if (pout->user_id > 0) {
+    FAIL_IF(pout->user_id < 0);
+  }
 
   pout->max_vm_size = cvt_bin_to_host_64(pin->max_vm_size);
   pout->max_stack_size = cvt_bin_to_host_64(pin->max_stack_size);
@@ -193,6 +198,28 @@ compile_request_packet_read(
     memcpy(pout->compiler_env_pat, pin_ptr, compiler_env_pat_len);
     pout->compiler_env_pat[compiler_env_pat_len] = 0;
     pin_ptr += pkt_bin_align(compiler_env_pat_len);
+  }
+
+  pout->user_login = NULL;
+  int user_login_len = cvt_bin_to_host_32(pin->user_login_len);
+  FAIL_IF(user_login_len < 0 || user_login_len >= PATH_MAX);
+  FAIL_IF(pin_ptr + user_login_len > end_ptr);
+  if (user_login_len > 0) {
+    pout->user_login = xmalloc(user_login_len + 1);
+    memcpy(pout->user_login, pin_ptr, user_login_len);
+    pout->user_login[user_login_len] = 0;
+    pin_ptr += pkt_bin_align(user_login_len);
+  }
+
+  pout->exam_cypher = NULL;
+  int exam_cypher_len = cvt_bin_to_host_32(pin->exam_cypher_len);
+  FAIL_IF(exam_cypher_len < 0 || exam_cypher_len >= PATH_MAX);
+  FAIL_IF(pin_ptr + exam_cypher_len > end_ptr);
+  if (exam_cypher_len > 0) {
+    pout->exam_cypher = xmalloc(exam_cypher_len + 1);
+    memcpy(pout->exam_cypher, pin_ptr, exam_cypher_len);
+    pout->exam_cypher[exam_cypher_len] = 0;
+    pin_ptr += pkt_bin_align(exam_cypher_len);
   }
 
   pout->env_num = cvt_bin_to_host_32(pin->env_num);
