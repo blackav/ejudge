@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1204,7 +1204,8 @@ serve_compile_request(
         int no_db_flag,
         const ej_uuid_t *puuid,
         int store_flags,
-        int rejudge_flag)
+        int rejudge_flag,
+        const struct userlist_user *user)
 {
   struct compile_run_extra rx;
   struct compile_request_packet cp;
@@ -3792,6 +3793,11 @@ serve_rejudge_run(
   if (re.is_imported) return;
   if (re.is_readonly) return;
 
+  const struct userlist_user *user = NULL;
+  if (re.user_id > 0) {
+    user = teamdb_get_userlist(state->teamdb_state, re.user_id);
+  }
+
   serve_audit_log(state, run_id, &re, user_id, ip, ssl_flag,
                   "rejudge", "ok", RUN_COMPILING, NULL);
  
@@ -3841,7 +3847,8 @@ serve_rejudge_run(
                                 1 /* notify flag */,
                                 prob, NULL /* lang */,
                                 0 /* no_db_flag */, &re.run_uuid, re.store_flags,
-                                1 /* rejudge_flag */);
+                                1 /* rejudge_flag */,
+                                user);
       if (r < 0) {
         serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
         err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));
@@ -3886,7 +3893,7 @@ serve_rejudge_run(
                             prob->style_checker_env,
                             accepting_mode, priority_adjustment, 1, prob, lang, 0,
                             &re.run_uuid, re.store_flags,
-                            1 /* rejudge_flag */);
+                            1 /* rejudge_flag */, user);
   if (r < 0) {
     serve_report_check_failed(config, cnts, state, run_id, serve_err_str(r));
     err("rejudge_run: serve_compile_request failed: %s", serve_err_str(r));

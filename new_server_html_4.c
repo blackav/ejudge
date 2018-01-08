@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1110,6 +1110,8 @@ cmd_submit_run(
     FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
   }
 
+  const struct userlist_user *user = teamdb_get_userlist(cs->teamdb_state, phr->user_id);
+
   if (prob->type == PROB_TYPE_STANDARD) {
     if (prob->disable_auto_testing > 0
         || (prob->disable_testing > 0 && prob->enable_compilation <= 0)
@@ -1130,7 +1132,7 @@ cmd_submit_run(
                                      0, prob->style_checker_cmd,
                                      prob->style_checker_env,
                                      -1, 0, 0, prob, lang, 0, &run_uuid, store_flags,
-                                     0 /* rejudge_flag */)) < 0) {
+                                     0 /* rejudge_flag */, user)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
     }
@@ -1158,7 +1160,7 @@ cmd_submit_run(
                                        0 /* notify flag */,
                                        prob, NULL /* lang */,
                                        0 /* no_db_flag */, &run_uuid, store_flags,
-                                       0 /* rejudge_flag */)) < 0) {
+                                       0 /* rejudge_flag */, user)) < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
@@ -1209,7 +1211,7 @@ cmd_submit_run(
                                        0 /* notify flag */,
                                        prob, NULL /* lang */,
                                        0 /* no_db_flag */, &run_uuid, store_flags,
-                                       0 /* rejudge_flag */)) < 0) {
+                                       0 /* rejudge_flag */, user)) < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {

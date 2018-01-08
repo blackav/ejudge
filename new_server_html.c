@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3307,6 +3307,8 @@ priv_submit_run(
     FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
   }
 
+  const struct userlist_user *user = teamdb_get_userlist(cs->teamdb_state, phr->user_id);
+
   if (prob->type == PROB_TYPE_STANDARD) {
     // automatically tested programs
     if (prob->disable_auto_testing > 0
@@ -3328,7 +3330,7 @@ priv_submit_run(
                                      0, prob->style_checker_cmd,
                                      prob->style_checker_env,
                                      -1, 0, 0, prob, lang, 0, &run_uuid,
-                                     store_flags, 0 /* rejudge_flag */)) < 0) {
+                                     store_flags, 0 /* rejudge_flag */, user)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
     }
@@ -3358,7 +3360,8 @@ priv_submit_run(
                                   0 /* no_db_flag */,
                                   &run_uuid,
                                   store_flags,
-                                  0 /* rejudge_flag*/);
+                                  0 /* rejudge_flag*/,
+                                  user);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -3400,7 +3403,8 @@ priv_submit_run(
                                   0 /* no_db_flag */,
                                   &run_uuid,
                                   store_flags,
-                                  0 /* rejudge_flag */);
+                                  0 /* rejudge_flag */,
+                                  user);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -9218,6 +9222,8 @@ ns_submit_run(
     goto done;
   }
 
+  const struct userlist_user *user = teamdb_get_userlist(cs->teamdb_state, phr->user_id);
+
   if (prob->type == PROB_TYPE_STANDARD) {
     if (lang->disable_auto_testing > 0 || lang->disable_testing > 0) {
       serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
@@ -9241,7 +9247,7 @@ ns_submit_run(
                               -1 /* accepting_mode */, 0 /* priority_adjustment */,
                               1 /* notify_flag */, prob, lang,
                               0 /* no_db_flag */, &run_uuid, store_flags,
-                              0 /* rejudge_flag */);
+                              0 /* rejudge_flag */, user);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       goto cleanup;
@@ -9275,7 +9281,7 @@ ns_submit_run(
                                 0 /* notify flag */,
                                 prob, NULL /* lang */,
                                 0 /* no_db_flag */, &run_uuid, store_flags,
-                                0 /* rejudge_flag */);
+                                0 /* rejudge_flag */, user);
       if (r < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         goto cleanup;
@@ -9330,7 +9336,7 @@ ns_submit_run(
                               0 /* notify flag */,
                               prob, NULL /* lang */,
                               0 /* no_db_flag */, &run_uuid, store_flags,
-                              0 /* rejudge_flag */);
+                              0 /* rejudge_flag */, user);
     if (r < 0) {
       serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       goto cleanup;
@@ -9806,7 +9812,6 @@ unpriv_submit_run(
     arch_flags = archive_prepare_write_path(cs, run_path, sizeof(run_path),
                                             global->run_archive_dir, run_id,
                                             run_size, NULL, 0, 0);
-
   }
   if (arch_flags < 0) {
     run_undo_add_record(cs->runlog_state, run_id);
@@ -9817,6 +9822,8 @@ unpriv_submit_run(
     run_undo_add_record(cs->runlog_state, run_id);
     FAIL2(NEW_SRV_ERR_DISK_WRITE_ERROR);
   }
+
+  const struct userlist_user *user = teamdb_get_userlist(cs->teamdb_state, phr->user_id);
 
   if (prob->type == PROB_TYPE_STANDARD) {
     if (prob->disable_auto_testing > 0
@@ -9839,7 +9846,7 @@ unpriv_submit_run(
                                      0, prob->style_checker_cmd,
                                      prob->style_checker_env,
                                      -1, 0, 1, prob, lang, 0, &run_uuid, store_flags,
-                                     0 /* rejudge_flag */)) < 0) {
+                                     0 /* rejudge_flag */, user)) < 0) {
         serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
       }
     }
@@ -9867,7 +9874,7 @@ unpriv_submit_run(
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
                                   0 /* no_db_flag */, &run_uuid, store_flags,
-                                  0 /* rejudge_flag */);
+                                  0 /* rejudge_flag */, user);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
@@ -9926,7 +9933,7 @@ unpriv_submit_run(
                                   0 /* notify flag */,
                                   prob, NULL /* lang */,
                                   0 /* no_db_flag */, &run_uuid, store_flags,
-                                  0 /* rejudge_flag */);
+                                  0 /* rejudge_flag */, user);
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }

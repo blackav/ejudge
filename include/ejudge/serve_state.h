@@ -2,7 +2,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -419,6 +419,7 @@ user_filter_info_allocate(serve_state_t state, int user_id,
 void serve_move_files_to_insert_run(serve_state_t state, int run_id);
 
 struct run_entry;
+struct userlist_user;
 void
 serve_audit_log(
         serve_state_t state,
@@ -459,7 +460,8 @@ serve_compile_request(
         int no_db_flag,
         const ej_uuid_t *puuid,
         int store_flags,
-        int rejudge_flag)
+        int rejudge_flag,
+        const struct userlist_user *user)
 #if defined __GNUC__
   __attribute__((warn_unused_result))
 #endif

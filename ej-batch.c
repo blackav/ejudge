@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2010-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -589,7 +589,8 @@ process_submit(
                             1 /* no_db_flag */,
                             NULL /* uuid */,
                             0 /* store_flags */,
-                            0 /* rejudge_flag */);
+                            0 /* rejudge_flag */,
+                            NULL /* user */);
   if (r < 0) {
     // FIXME: handle error
     abort();
