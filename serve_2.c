@@ -1388,6 +1388,14 @@ serve_compile_request(
     cp.compiler_env_pat = prob->compiler_env_pat;
   }
 
+  if (user) {
+    cp.user_id = user->id;
+    cp.user_login = user->login;
+    if (user->cnts0) {
+      cp.exam_cypher = user->cnts0->exam_cypher;
+    }
+  }
+
   memset(&rx, 0, sizeof(rx));
   rx.accepting_mode = accepting_mode;
   rx.priority_adjustment = priority_adjustment;
