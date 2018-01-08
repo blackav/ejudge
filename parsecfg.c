@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1445,7 +1445,9 @@ struct parsecfg_file
   return cfg;
 
  cleanup:
-  xfree(cfg);
+  if (cfg) {
+    param_free(cfg, params);
+  }
   if (f) fclose(f);
   if (ff) {
     if (ff->f) fclose(ff->f);
