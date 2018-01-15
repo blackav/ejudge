@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1236,8 +1236,18 @@ process_problem_row(
         goto cleanup;
     }
     pi->author = strdup(buf);
+
     if (!(s = strstr(s, "<td"))) {
-        fprintf(log_f, "expected column 5 (revision), but got nothing in row %s\n", text);
+        fprintf(log_f, "expected column 5, but got nothing in row %s\n", text);
+        goto cleanup;
+    }
+    if (extract_td_content(s, buf, &s) < 0) {
+        fprintf(log_f, "failed to extract the content of column 7: %.60s...\n", s);
+        goto cleanup;
+    }
+
+    if (!(s = strstr(s, "<td"))) {
+        fprintf(log_f, "expected column 6 (revision), but got nothing in row %s\n", text);
         goto cleanup;
     }
     if (extract_td_content(s, buf, &s) < 0) {
@@ -1270,7 +1280,7 @@ process_problem_row(
     pi->latest_rev = lr;
     pi->package_rev = pr;
     if (!(s = strstr(s, "<td"))) {
-        fprintf(log_f, "expected column 6 (modification time), but got nothing in row %s\n", text);
+        fprintf(log_f, "expected column 7 (modification time), but got nothing in row %s\n", text);
         goto cleanup;
     }
     if (extract_td_content(s, buf, &s) < 0) {
@@ -1282,15 +1292,6 @@ process_problem_row(
     if (lt < 0) goto cleanup;
 
     pi->mtime = lt;
-
-    if (!(s = strstr(s, "<td"))) {
-        fprintf(log_f, "expected column 7, but got nothing in row %s\n", text);
-        goto cleanup;
-    }
-    if (extract_td_content(s, buf, &s) < 0) {
-        fprintf(log_f, "failed to extract the content of column 7: %.60s...\n", s);
-        goto cleanup;
-    }
 
     if (!(s = strstr(s, "<td"))) {
         fprintf(log_f, "expected column 8 (links), but got nothing in row %s\n", text);
