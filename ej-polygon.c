@@ -129,6 +129,14 @@ struct PolygonState
 {
     unsigned char *ccid; // may be NULL for older versions of Polygon
     unsigned char *ccid_amp; // "&ccid=CCID" or ""
+
+    // problem table column indices
+    int id_column_num;
+    int name_column_num;
+    int owner_column_num;
+    int rev_column_num;
+    int modif_column_num;
+    int edit_column_num;
 };
 
 struct ProblemSet
@@ -1333,6 +1341,116 @@ cleanup:
     xfree(buf);
 }
 
+static const unsigned char *
+skip_to_tag_end(const unsigned char *s)
+{
+    // make something complicated
+    while (*s && *s != '>') {
+        ++s;
+    }
+    return s;
+}
+
+static int
+find_column(int count, unsigned char **titles, const unsigned char *str)
+{
+    if (count <= 0) return 0;
+    for (int i = 0; i < count; ++i) {
+        if (!strcmp(titles[i], str)) {
+            return i + 1;
+        }
+    }
+    return 0;
+}
+
+static int
+process_problems_table_header(
+        FILE *log_f,
+        struct PolygonState *ps,
+        const unsigned char *text)
+{
+    unsigned char **titles = NULL;
+    int title_a = 0;
+    int title_u = 0;
+
+    // extract table header
+    const unsigned char *thead_beg = strstr(text, "<thead>");
+    if (!thead_beg) {
+        fprintf(log_f, "no <thead> tag in problems page\n");
+        return -1;
+    }
+    const unsigned char *thead_end = strstr(text, "</thead>");
+    if (!thead_end) {
+        fprintf(log_f, "no </thead> tag in problems page\n");
+        return -1;
+    }
+    if (thead_end < thead_beg) {
+        fprintf(log_f, "invalid location of <thead> and </thead> tags\n");
+        return -1;
+    }
+
+    unsigned char *thbuf = xmalloc(thead_end - thead_beg + 9); // + </thead> + \0
+    memcpy(thbuf, thead_beg, thead_end - thead_beg + 8);
+    thbuf[thead_end - thead_beg + 8] = 0;
+
+    const unsigned char *s = thbuf + 7;
+    while ((s = strstr(s, "<th"))) {
+        s = skip_to_tag_end(s + 3);
+        if (!*s) {
+            fprintf(log_f, "unexpected end of th tag\n");
+            break;
+        }
+        ++s;
+        const unsigned char *q = strstr(s, "</th>");
+        if (!q) {
+            fprintf(log_f, "no matching </th> tag\n");
+            break;
+        }
+        while (s < q && isspace(*s)) {
+            ++s;
+        }
+        int len = q - s;
+        unsigned char *title = xmalloc(len + 1);
+        memcpy(title, s, len);
+        while (len > 0 && isspace(title[len - 1]))
+            --len;
+        title[len] = 0;
+        s = q + 5;
+        if (title_u == title_a) {
+            if (!(title_a *= 2)) title_a = 16;
+            titles = xrealloc(titles, sizeof(titles[0]) * title_a);
+        }
+        titles[title_u++] = title; title = NULL;
+    }
+
+    fprintf(log_f, "Problem table columns:\n");
+    for (int i = 0; i < title_u; ++i) {
+        fprintf(log_f, "    %s\n", titles[i]);
+    }
+
+    ps->id_column_num = find_column(title_u, titles, "#");
+    ps->name_column_num = find_column(title_u, titles, "Name");
+    ps->owner_column_num = find_column(title_u, titles, "Owner");
+    ps->rev_column_num = find_column(title_u, titles, "Rev.");
+    ps->modif_column_num = find_column(title_u, titles, "Modif.");
+    ps->edit_column_num = find_column(title_u, titles, "Edit session");
+
+    fprintf(log_f, "Problem table columns:\n");
+    fprintf(log_f, "    Id:    %d\n", ps->id_column_num);
+    fprintf(log_f, "    Name:  %d\n", ps->name_column_num);
+    fprintf(log_f, "    Owner: %d\n", ps->owner_column_num);
+    fprintf(log_f, "    Rev:   %d\n", ps->rev_column_num);
+    fprintf(log_f, "    Modif: %d\n", ps->modif_column_num);
+    fprintf(log_f, "    Edit:  %d\n", ps->edit_column_num);
+
+    for (int i = 0; i < title_u; ++i) {
+        xfree(titles[i]);
+    }
+    xfree(titles);
+    xfree(thbuf);
+    return 0;
+}
+
 static void
 process_problems_page(
         FILE *log_f,
@@ -1345,6 +1463,11 @@ process_problems_page(
     unsigned char *row = NULL;
 
     if (!text) text = "";
+
+    if (process_problems_table_header(log_f, ps, text) < 0) {
+        return;
+    }
+
     s = text;
 
     while ((s = strstr(s, "<tr problemId=\""))) {
