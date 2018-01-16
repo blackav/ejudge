@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2017-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -165,7 +165,9 @@ process_acm_run(
         cell->penalty += prob->acm_run_penalty * cell->sol_att;
         cell->sol_time = run_time;
         cell->eff_time = sec_to_min(global->rounding_mode, run_duration);
-        cell->penalty += cell->eff_time;
+        if (global->ignore_success_time <= 0) {
+            cell->penalty += cell->eff_time;
+        }
         ++col->succ_att;
         ++col->tot_att;
         if (!col->is_solved) {
@@ -924,7 +926,9 @@ process_moscow_run(
         cell->penalty += prob->acm_run_penalty * cell->sol_att;
         cell->sol_time = run_time;
         cell->eff_time = sec_to_min(global->rounding_mode, run_duration);
-        cell->penalty += cell->eff_time;
+        if (global->ignore_success_time <= 0) {
+            cell->penalty += cell->eff_time;
+        }
         cell->score = prob->full_score;
         if (prob->variable_full_score) cell->score = pe->score;
         ++col->succ_att;
