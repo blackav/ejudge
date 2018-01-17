@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru>
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -138,4 +138,5 @@ CHKCFILES =\
 
 STYLECFILES =\
  style_archive.c\
+ style_asm.c\
  style_c.c
