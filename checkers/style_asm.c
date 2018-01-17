@@ -56,6 +56,7 @@ err(const char *format, ...)
   va_start(args, format);
   vsnprintf(buf, sizeof(buf), format, args);
   va_end(args);
+  ++errcount;
 
   if (!current_file_path) {
     fprintf(stderr, "%s: %s\n", program_name, buf);
