@@ -190,7 +190,7 @@ trim_lines(int line_count, unsigned char **lines)
 static int
 isidchar(int c)
 {
-    return isalnum(c) || c == '$' || c == '_' || c == '.' || c == '@' || c == '?';
+    return isalnum(c) || c == '$' || c == '_' || c == '.' || c == '@' || c == '?' || c == '(' || c == ')' || c == ',';
 }
 
 static void
