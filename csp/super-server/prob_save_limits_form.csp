@@ -138,17 +138,17 @@
         if (max_vm_size >= 0) {
             prob->max_vm_size = (size_t) max_vm_size;
         } else {
-            prob->max_vm_size = ~(size_t) 0;
+            prob->max_vm_size = -1LL;
         }
         if (max_stack_size >= 0) {
             prob->max_stack_size = (size_t) max_stack_size;
         } else {
-            prob->max_stack_size = ~(size_t) 0;
+            prob->max_stack_size = -1LL;
         }
         if (max_file_size >= 0) {
             prob->max_file_size = (size_t) max_file_size;
         } else {
-            prob->max_file_size = ~(size_t) 0;
+            prob->max_file_size = -1LL;
         }
         prob->max_open_file_count = max_open_file_count;
         prob->max_process_count = max_process_count;
