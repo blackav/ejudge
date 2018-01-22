@@ -83,15 +83,24 @@
         }
         if (!std_checkers[i].name) standard_checker = "";
     }
-    if (check_cmd_dflt) *check_cmd = 0;
+    if (check_cmd_dflt) {
+        xfree(check_cmd);
+        check_cmd = NULL;
+    }
     if (checker_real_time_limit < 0) checker_real_time_limit = -1;
     if (checker_real_time_limit_dflt) checker_real_time_limit = -1;
     if (scoring_checker > 0) scoring_checker = 1;
     if (enable_testlib_mode > 0) enable_testlib_mode = 1;
-    if (valuer_cmd_dflt) *valuer_cmd = 0;
+    if (valuer_cmd_dflt) {
+        xfree(valuer_cmd);
+        valuer_cmd = NULL;
+    }
     if (valuer_sets_marked > 0) valuer_sets_marked = 1;
     if (interactive_valuer > 0) interactive_valuer = 1;
-    if (interactor_cmd_dflt) *interactor_cmd = 0;
+    if (interactor_cmd_dflt) {
+        xfree(interactor_cmd);
+        interactor_cmd = 0;
+    }
     if (interactor_time_limit < 0) interactor_time_limit = -1;
     if (interactor_time_limit_dflt) interactor_time_limit = -1;
     if (interactor_real_time_limit < 0) interactor_real_time_limit = -1;
