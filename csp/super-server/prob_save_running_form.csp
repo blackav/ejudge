@@ -70,10 +70,16 @@
     if (check_presentation > 0) check_presentation = 1;
     if (use_stdin > 0) use_stdin = 1;
     if (combined_stdin > 0) combined_stdin = 1;
-    if (input_file_dflt) *input_file = 0;
+    if (input_file_dflt) {
+        xfree(input_file);
+        input_file = NULL;
+    }
     if (use_stdout > 0) use_stdout = 1;
     if (combined_stdout > 0) combined_stdout = 1;
-    if (output_file_dflt) *output_file = 0;
+    if (output_file_dflt) {
+        xfree(output_file);
+        output_file = NULL;
+    }
     if (disable_stderr > 0) disable_stderr = 1;
     if (ignore_exit_code > 0) ignore_exit_code = 1;
     if (start_cmd_dflt) {

@@ -50,7 +50,10 @@
 
     if (hidden > 0) hidden = 1;
     if (stand_hide_time > 0) stand_hide_time = 1;
-    if (stand_attr_dflt) *stand_attr = 0;
+    if (stand_attr_dflt) {
+        xfree(stand_attr);
+        stand_attr = NULL;
+    }
     if (stand_ignore_score > 0) stand_ignore_score = 1;
     if (stand_last_column > 0) stand_last_column = 1;
 

@@ -42,9 +42,18 @@
 
     if (retval || !phr->ss) goto cleanup;
 
-    if (style_checker_cmd_dflt && style_checker_cmd) *style_checker_cmd = '\0';
-    if (source_header_dflt && source_header) *source_header = '\0';
-    if (source_footer_dflt && source_footer) *source_footer = '\0';
+    if (style_checker_cmd_dflt) {
+        xfree(style_checker_cmd);
+        style_checker_cmd = NULL;
+    }
+    if (source_header_dflt) {
+        xfree(source_header);
+        source_header = NULL;
+    }
+    if (source_footer_dflt) {
+        xfree(source_footer);
+        source_footer = NULL;;
+    }
 
     if (style_checker_cmd && !*style_checker_cmd) {
         xfree(style_checker_cmd); style_checker_cmd = NULL;
