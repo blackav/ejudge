@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -201,7 +201,8 @@ html_armor_to_file_nbsp(FILE *out, char const *str, int size)
       fputs("&nbsp;", out);
     } else if (*p == '\t') {
       // FIXME: this is wrong, yet works for leading tabulations!
-      fputs("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", out);
+      //fputs("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", out);
+      fputs("&#9;", out);
     } else if (!(t = armored_html_translate_table[*p])) {
       putc(*p, out);
     } else {
