@@ -195,18 +195,27 @@ html_armor_to_file_nbsp(FILE *out, char const *str, int size)
   unsigned char const *p = (unsigned char const *) str;
   unsigned char const *t;
   int i = size;
+  int column = 0;
 
   for (; i > 0; p++, i--) {
-    if (*p == ' ') {
-      fputs("&nbsp;", out);
+    if (*p == '\r' || *p == '\n') {
+      putc_unlocked(*p, out);
+      column = 0;
     } else if (*p == '\t') {
-      // FIXME: this is wrong, yet works for leading tabulations!
-      //fputs("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;", out);
-      fputs("&#9;", out);
+      int spacing = ((column + 8) & ~7) - column;
+      column = ((column + 8) & ~7);
+      for (; spacing; --spacing) {
+        fputs("&nbsp;", out);
+      }
+    } else if (*p <= ' ') {
+      fputs("&nbsp;", out);
+      ++column;
     } else if (!(t = armored_html_translate_table[*p])) {
       putc(*p, out);
+      ++column;
     } else {
       fputs(t, out);
+      ++column;
     }
   }
 }
