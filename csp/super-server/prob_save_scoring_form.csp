@@ -99,7 +99,7 @@
     if (full_score_dflt) full_score = -1;
     if (full_user_score < 0) full_user_score = -1;
     if (full_user_score_dflt) full_user_score = -1;
-    if (variable_full_score > 0) score_tokenized = 1;
+    if (variable_full_score > 0) variable_full_score = 1;
     if (test_score < 0) test_score = -1;
     if (test_score_dflt) test_score = -1;
     if (run_penalty < 0) run_penalty = -1;
