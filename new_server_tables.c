@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -294,6 +294,8 @@ const int ns_priv_prev_state[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
   [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
   [NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN] = NEW_SRV_ACTION_PRIV_USERS_VIEW,
+  [NEW_SRV_ACTION_GENERATE_PASSWORDS_2] = NEW_SRV_ACTION_VIEW_CNTS_PWDS,
+  [NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2] = NEW_SRV_ACTION_VIEW_REG_PWDS,
 };
 
 /* previous state (return in case of error) for unprivileged users */
