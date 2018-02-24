@@ -37,6 +37,7 @@
     <s:param name="marked" value="marked_str" fullCheckExpr="(marked_str)" />
     <s:param name="group_id" value="group_id" fullCheckExpr="group_id > 0" />
     <s:param name="contest_id" value="contest_id" fullCheckExpr="contest_id > 0" />
+    <s:param name="other_user_id" value="other_user_id" />
   </s:url>
   <li><s:a url="UserDetailPageUrl">User details</s:a></li>
 <%

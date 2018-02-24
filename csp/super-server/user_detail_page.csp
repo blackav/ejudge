@@ -62,6 +62,10 @@ extern const unsigned char * const ss_reg_status_strs[];
     }
     if (group_id < 0) group_id = 0;
 
+    if (other_user_id <= 0) {
+        FAIL(SSERV_ERR_INV_PARAM);
+    }
+
     if (ss_get_global_caps(phr, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_GET_USER) >= 0) {
         // this user can view the full user list and the user list for any contest
     } else if (!cnts) {
