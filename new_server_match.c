@@ -2284,6 +2284,89 @@ int ns_match_action(const unsigned char *str)
                                                           return 0;
                                                         }
                                                         return 0;
+                                                      } else if (c < 'i') {
+                                                        if (c == 'a') {
+                                                          c = str[22];
+                                                          if (c == 'l') {
+                                                            c = str[23];
+                                                            if (c == 'u') {
+                                                              c = str[24];
+                                                              if (c == 'e') {
+                                                                c = str[25];
+                                                                if (c == 'r') {
+                                                                  c = str[26];
+                                                                  if (c == '-') {
+                                                                    c = str[27];
+                                                                    if (c == 'j') {
+                                                                      c = str[28];
+                                                                      if (c == 'u') {
+                                                                        c = str[29];
+                                                                        if (c == 'd') {
+                                                                          c = str[30];
+                                                                          if (c == 'g') {
+                                                                            c = str[31];
+                                                                            if (c == 'e') {
+                                                                              c = str[32];
+                                                                              if (c == '-') {
+                                                                                c = str[33];
+                                                                                if (c == 'c') {
+                                                                                  c = str[34];
+                                                                                  if (c == 'o') {
+                                                                                    c = str[35];
+                                                                                    if (c == 'm') {
+                                                                                      c = str[36];
+                                                                                      if (c == 'm') {
+                                                                                        c = str[37];
+                                                                                        if (c == 'e') {
+                                                                                          c = str[38];
+                                                                                          if (c == 'n') {
+                                                                                            c = str[39];
+                                                                                            if (c == 't') {
+                                                                                              c = str[40];
+                                                                                              if (c == 's') {
+                                                                                                c = str[41];
+                                                                                                if (!c) return NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VALUER_JUDGE_COMMENTS;
+                                                                                                return 0;
+                                                                                              }
+                                                                                              return 0;
+                                                                                            }
+                                                                                            return 0;
+                                                                                          }
+                                                                                          return 0;
+                                                                                        }
+                                                                                        return 0;
+                                                                                      }
+                                                                                      return 0;
+                                                                                    }
+                                                                                    return 0;
+                                                                                  }
+                                                                                  return 0;
+                                                                                }
+                                                                                return 0;
+                                                                              }
+                                                                              return 0;
+                                                                            }
+                                                                            return 0;
+                                                                          }
+                                                                          return 0;
+                                                                        }
+                                                                        return 0;
+                                                                      }
+                                                                      return 0;
+                                                                    }
+                                                                    return 0;
+                                                                  }
+                                                                  return 0;
+                                                                }
+                                                                return 0;
+                                                              }
+                                                              return 0;
+                                                            }
+                                                            return 0;
+                                                          }
+                                                          return 0;
+                                                        }
+                                                      } else {
                                                       }
                                                       return 0;
                                                     } else if (c < 'v') {

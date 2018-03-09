@@ -1,13 +1,13 @@
 # -*- mode: po; coding: UTF-8 -*-
 # ejudge messages catalog
-# Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-12-25 13:53+0300\n"
-"PO-Revision-Date: 2017-12-25 14:09+0300\n"
+"POT-Creation-Date: 2018-03-09 10:03+0300\n"
+"PO-Revision-Date: 2018-03-09 10:06+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -4382,6 +4382,9 @@ msgstr "Информация об оценивании"
 
 msgid "Valuer judge comments"
 msgstr "Комментарий об оценивании для судей"
+
+msgid "Valuer judge comments are displayed"
+msgstr "Показывается комментарий об оценивании для судей"
 
 msgid "Variant"
 msgstr "Вариант"
