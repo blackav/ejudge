@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -6768,7 +6768,8 @@ write_xml_team_testing_report(
             ARMOR(r->valuer_comment));
     hide_score = 1;
   }
-  if ((token_flags & TOKEN_VALUER_JUDGE_COMMENT_BIT) && r->valuer_judge_comment) {
+  if (((token_flags & TOKEN_VALUER_JUDGE_COMMENT_BIT) || state->online_valuer_judge_comments)
+       && r->valuer_judge_comment) {
     fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
             ARMOR(r->valuer_judge_comment));
     hide_score = 1;

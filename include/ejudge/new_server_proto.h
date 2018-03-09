@@ -3,7 +3,7 @@
 #ifndef __NEW_SERVER_PROTO_H__
 #define __NEW_SERVER_PROTO_H__
 
-/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -339,6 +339,7 @@ enum
   NEW_SRV_ACTION_USER_CHANGE_STATUS_2,
   NEW_SRV_ACTION_CONFIRM_AVATAR,
   NEW_SRV_ACTION_LANGUAGE_STATS_PAGE,
+  NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VALUER_JUDGE_COMMENTS,
 
   NEW_SRV_ACTION_LAST,
 };

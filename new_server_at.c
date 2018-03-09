@@ -265,6 +265,7 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT] = "admin-change-online-view-report",
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE] = "admin-change-online-view-judge-score",
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY] = "admin-change-online-final-visibility",
+  [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VALUER_JUDGE_COMMENTS] = "admin-change-online-valuer-judge-comments",
   [NEW_SRV_ACTION_RELOAD_SERVER_2] = "reload-server-2",
   [NEW_SRV_ACTION_CHANGE_RUN_FIELDS] = "change-run-fields",
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE] = "priv-edit-clar-page",

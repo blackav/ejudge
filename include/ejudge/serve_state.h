@@ -276,6 +276,11 @@ struct serve_state
      0 - no, 1 - yes.
    */
   int online_final_visibility;
+  /**
+     Show the judge evaluator comments.
+     0 - no, 1 - yes
+   */
+  int online_valuer_judge_comments;
 
   time_t stat_last_check_time;
   time_t stat_reported_before;

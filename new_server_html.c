@@ -2660,6 +2660,7 @@ priv_contest_operation(FILE *fout,
   case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT:
   case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE:
   case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY:
+  case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VALUER_JUDGE_COMMENTS:
     if (hr_cgi_param_int(phr, "param", &param) < 0) {
       ns_error(log_f, NEW_SRV_ERR_INV_PARAM);
       goto cleanup;
@@ -2683,6 +2684,10 @@ priv_contest_operation(FILE *fout,
     case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY:
       if (param) param = 1;
       cs->online_final_visibility = param;
+      break;
+    case NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VALUER_JUDGE_COMMENTS:
+      if (param) param = 1;
+      cs->online_valuer_judge_comments = param;
       break;
     }
 
@@ -7070,6 +7075,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT] = priv_contest_operation,
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE] = priv_contest_operation,
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY] = priv_contest_operation,
+  [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VALUER_JUDGE_COMMENTS] = priv_contest_operation,
   [NEW_SRV_ACTION_CHANGE_RUN_FIELDS] = priv_change_run_fields,
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION] = ns_priv_edit_clar_action,
   [NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION] = ns_priv_edit_run_action,
@@ -7658,6 +7664,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT] = priv_generic_operation,
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE] = priv_generic_operation,
   [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY] = priv_generic_operation,
+  [NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VALUER_JUDGE_COMMENTS] = priv_generic_operation,
   [NEW_SRV_ACTION_RELOAD_SERVER_2] = priv_reload_server_2,
   [NEW_SRV_ACTION_CHANGE_RUN_FIELDS] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION] = priv_generic_operation,

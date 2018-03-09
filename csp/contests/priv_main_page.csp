@@ -231,6 +231,9 @@
 <%  if (cs->online_final_visibility > 0) { %>
 <p><big><b><s:_>Final visibility rules are active</s:_></b></big></p>
 <%  } %>
+<%  if (cs->online_valuer_judge_comments > 0) { %>
+<p><big><b><s:_>Valuer judge comments are displayed</s:_></b></big></p>
+<%  } %>
 
 <%
   // count online users
