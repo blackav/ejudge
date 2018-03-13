@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -521,6 +521,7 @@ parse_checker_score(
         int user_score_mode,
         int max_score,
         int default_score, // if >= 0, allow failure
+        int testlib_mode,
         int *p_score,
         int *p_user_score,
         int *p_user_verdict)
@@ -542,6 +543,12 @@ parse_checker_score(
   while (score_buf_size > 0 && isspace(score_buf[score_buf_size - 1]))
     score_buf[--score_buf_size] = 0;
   if (!score_buf_size) {
+    if (testlib_mode > 0) {
+      *p_score = 0;
+      *p_user_score = 0;
+      *p_user_verdict = RUN_WRONG_ANSWER_ERR;
+      return 0;
+    }
     append_msg_to_log(log_path, "The %s score output is empty", what);
     goto fail;
   }
@@ -2128,6 +2135,7 @@ invoke_checker(
     if (parse_checker_score(score_out_path, check_out_path, "checker",
                             user_score_mode,
                             test_max_score, default_score,
+                            srgp->testlib_mode,
                             &cur_info->score,
                             &user_score,
                             &user_status) < 0) {
