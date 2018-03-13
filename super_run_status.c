@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -51,7 +51,7 @@ super_run_status_add_str(struct super_run_status *psrs, const unsigned char *str
     if (!str) return 0;
 
     int len = strlen(str);
-    if (psrs->str_lens + len + 1 > sizeof(*psrs)) {
+    if (psrs->strings_off + psrs->str_lens + len + 1 > sizeof(*psrs)) {
         str = "?";
         len = 1;
         if (psrs->str_lens + 2 > sizeof(*psrs))
