@@ -123,6 +123,11 @@ main(int argc, char **argv)
         fprintf(stderr, "%s: setgid failed\n", argv[0]);
         abort();
     }
+    int supp_groups[1] = { grp->gr_gid };
+    if (setgroups(1, supp_groups) < 0) {
+        fprintf(stderr, "%s: setgroups failed\n", argv[0]);
+        abort();
+    }
     if (setuid(pwd->pw_uid) < 0) {
         fprintf(stderr, "%s: setuid failed\n", argv[0]);
         abort();
