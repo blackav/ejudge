@@ -211,6 +211,14 @@ ns_unparse_answers(
         }
 %>
 
+<%
+        if (prob && prob->problem_dir && prob->problem_dir[0]) {
+%>
+    <tr><td><b><s:_>Problem directory</s:_>:</b></td><td><tt><s:v value="prob->problem_dir" /></tt></td></tr>
+<%
+        }
+%>
+
 </table>
 
 <s:submit ac="reload-statement" />
