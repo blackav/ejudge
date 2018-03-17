@@ -352,6 +352,9 @@ generate_xml_report(
       if (ti->exit_comment && ti->exit_comment[0]) {
         trt->exit_comment = xstrdup(ti->exit_comment);
       }
+      if (ti->checker_token && ti->checker_token[0]) {
+        trt->checker_token = xstrdup(ti->checker_token);
+      }
       if ((ti->status == RUN_WRONG_ANSWER_ERR || ti->status == RUN_PRESENTATION_ERR || ti->status == RUN_OK)
           && ti->chk_out_size > 0 && ti->chk_out && ti->chk_out[0]) {
         trt->checker_comment = prepare_checker_comment(utf8_mode, ti->chk_out);
@@ -522,9 +525,11 @@ parse_checker_score(
         int max_score,
         int default_score, // if >= 0, allow failure
         int testlib_mode,
+        int checker_token_mode,
         int *p_score,
         int *p_user_score,
-        int *p_user_verdict)
+        int *p_user_verdict,
+        unsigned char **p_checker_token)
 {
   char *score_buf = 0;
   size_t score_buf_size = 0;
@@ -614,15 +619,38 @@ parse_checker_score(
       }
     }
   } else {
-    if (sscanf(score_buf, "%d%n", &x, &n) != 1 || score_buf[n]) {
-      append_msg_to_log(log_path, "The %s score output (%s) is invalid", what, score_buf);
-      goto fail;
+    if (checker_token_mode) {
+      char *eptr = NULL;
+      errno = 0;
+      long xx = strtol(score_buf, &eptr, 10);
+      if (errno || (*eptr && !isspace((unsigned char) *eptr))) {
+        append_msg_to_log(log_path, "The %s score output (%s) is invalid", what, score_buf);
+        goto fail;
+      }
+      if (xx < 0 || xx > max_score) {
+        append_msg_to_log(log_path, "The %s score (%ld) is invalid", what, xx);
+        goto fail;
+      }
+      if (p_score) *p_score = xx;
+      if (*eptr) {
+        score_buf = eptr;
+        while (isspace((unsigned char) *score_buf)) ++score_buf;
+        if (*score_buf && p_checker_token) {
+          if (*p_checker_token) free(*p_checker_token);
+          *p_checker_token = xstrdup(score_buf);
+        }
+      }
+    } else {
+      if (sscanf(score_buf, "%d%n", &x, &n) != 1 || score_buf[n]) {
+        append_msg_to_log(log_path, "The %s score output (%s) is invalid", what, score_buf);
+        goto fail;
+      }
+      if (x < 0 || x > max_score) {
+        append_msg_to_log(log_path, "The %s score (%d) is invalid", what, x);
+        goto fail;
+      }
+      if (p_score) *p_score = x;
     }
-    if (x < 0 || x > max_score) {
-      append_msg_to_log(log_path, "The %s score (%d) is invalid", what, x);
-      goto fail;
-    }
-    if (p_score) *p_score = x;
   }
 
   xfree(score_buf);
@@ -978,6 +1006,12 @@ invoke_valuer(
     fprintf(f, "%d", tests[i].status);
     fprintf(f, " %d", tests[i].score);
     fprintf(f, " %ld", tests[i].times);
+    if (srpp->enable_checker_token > 0) {
+      if (tests[i].checker_token && tests[i].checker_token[0]) {
+        fprintf(f, " %s", tests[i].checker_token);
+      }
+      // FIXME: what to do if no checker_token?
+    }
     fprintf(f, "\n");
   }
   if (ferror(f)) {
@@ -1026,6 +1060,9 @@ invoke_valuer(
   }
   if (srgp->rejudge_flag > 0) {
     task_SetEnv(tsk, "EJUDGE_REJUDGE", "1");
+  }
+  if (srpp->enable_checker_token > 0) {
+    task_SetEnv(tsk, "EJUDGE_CHECKER_TOKEN", "1");
   }
   task_EnableAllSignals(tsk);
 
@@ -2041,6 +2078,9 @@ invoke_checker(
   setup_environment(tsk, srpp->checker_env, env_u, env_v, 1);
   if (srpp->scoring_checker > 0) {
     task_SetEnv(tsk, "EJUDGE_SCORING_CHECKER", "1");
+    if (srpp->enable_checker_token > 0) {
+      task_SetEnv(tsk, "EJUDGE_CHECKER_TOKEN", "1");
+    }
   }
   task_SetEnv(tsk, "EJUDGE", "1");
   if (srgp->checker_locale && srgp->checker_locale[0]) {
@@ -2136,9 +2176,11 @@ invoke_checker(
                             user_score_mode,
                             test_max_score, default_score,
                             srgp->testlib_mode,
+                            srpp->enable_checker_token,
                             &cur_info->score,
                             &user_score,
-                            &user_status) < 0) {
+                            &user_status,
+                            &cur_info->checker_token) < 0) {
       status = RUN_CHECK_FAILED;
       goto cleanup;
     }
@@ -3366,6 +3408,7 @@ free_testinfo_vector(struct testinfo_vector *tv)
     xfree(ti->program_stats_str);
     xfree(ti->interactor_stats_str);
     xfree(ti->checker_stats_str);
+    xfree(ti->checker_token);
   }
   memset(tv->data, 0, sizeof(tv->data[0]) * tv->size);
   xfree(tv->data);
