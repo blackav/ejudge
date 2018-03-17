@@ -2,7 +2,7 @@
 #ifndef __SUPER_RUN_PACKET_H__
 #define __SUPER_RUN_PACKET_H__
 
-/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -95,6 +95,7 @@ struct super_run_in_problem_packet
   int id;
   ejintbool_t check_presentation;
   ejintbool_t scoring_checker;
+  ejintbool_t enable_checker_token;
   ejintbool_t interactive_valuer;
   ejintbool_t disable_pe;
   ejintbool_t disable_wtl;

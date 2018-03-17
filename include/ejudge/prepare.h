@@ -2,7 +2,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -812,6 +812,8 @@ struct section_problem_data
   ejbyteflag_t check_presentation;
   /** 1, if the checker calculates test score */
   ejbyteflag_t scoring_checker;
+  /** 1, if the scoring checker also produces a token */
+  ejbyteflag_t enable_checker_token;
   /** 1, if the valuer works in parallel with testing */
   ejbyteflag_t interactive_valuer;
   /** 1, if PEs are converted to WAs */
@@ -951,7 +953,7 @@ struct section_problem_data
   ejbyteflag_t notify_on_submit;
   
   // padding to 8-byte boundary
-  unsigned char _pad1[5];
+  unsigned char _pad1[4];
 
   /** number of independent examinations */
   int examinator_num;
