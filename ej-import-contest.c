@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -726,6 +726,7 @@ merge_problem_section(
         { CNTSPROB_manual_checking, META_PROBLEM_CONFIG_SECTION_manual_checking },
         { CNTSPROB_check_presentation, META_PROBLEM_CONFIG_SECTION_check_presentation },
         { CNTSPROB_scoring_checker, META_PROBLEM_CONFIG_SECTION_scoring_checker },
+        { CNTSPROB_enable_checker_token, META_PROBLEM_CONFIG_SECTION_enable_checker_token },
         { CNTSPROB_interactive_valuer, META_PROBLEM_CONFIG_SECTION_interactive_valuer },
         { CNTSPROB_disable_pe, META_PROBLEM_CONFIG_SECTION_disable_pe },
         { CNTSPROB_disable_wtl, META_PROBLEM_CONFIG_SECTION_disable_wtl },
@@ -1048,6 +1049,7 @@ generate_makefile(struct sid_state *ss,
     prepare_set_prob_value(CNTSPROB_input_file, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_output_file, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_scoring_checker, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_enable_checker_token, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_interactive_valuer, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_disable_pe, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_disable_wtl, tmp_prob, abstr, global);

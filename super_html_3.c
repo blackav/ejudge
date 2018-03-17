@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -475,6 +475,7 @@ super_html_add_abstract_problem(
   prob->examinator_num = 0;
   prob->check_presentation = 0;
   prob->scoring_checker = 0;
+  prob->enable_checker_token = 0;
   prob->interactive_valuer = 0;
   prob->disable_pe = 0;
   prob->disable_wtl = 0;
@@ -1374,6 +1375,7 @@ super_html_new_check_tests(
     prepare_set_prob_value(CNTSPROB_input_file, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_output_file, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_scoring_checker, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_enable_checker_token, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_interactive_valuer, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_manual_checking, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_enable_testlib_mode, tmp_prob, abstr, global);

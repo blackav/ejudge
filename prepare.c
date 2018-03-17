@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -361,6 +361,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(tester_id, "d"),
   PROBLEM_PARAM(abstract, "L"),
   PROBLEM_PARAM(scoring_checker, "L"),
+  PROBLEM_PARAM(enable_checker_token, "L"),
   PROBLEM_PARAM(interactive_valuer, "L"),
   PROBLEM_PARAM(disable_pe, "L"),
   PROBLEM_PARAM(disable_wtl, "L"),
@@ -1224,6 +1225,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
 
   p->type = -1;
   p->scoring_checker = -1;
+  p->enable_checker_token = -1;
   p->interactive_valuer = -1;
   p->disable_pe = -1;
   p->disable_wtl = -1;
@@ -3647,6 +3649,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_stand_ignore_score, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_stand_last_column, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_scoring_checker, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_enable_checker_token, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_interactive_valuer, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_pe, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_wtl, prob, aprob, g);
@@ -5362,6 +5365,7 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
 
   if (prob->type < 0) prob->type = 0;
   if (prob->scoring_checker < 0) prob->scoring_checker = 0;
+  if (prob->enable_checker_token < 0) prob->enable_checker_token = 0;
   if (prob->interactive_valuer < 0) prob->interactive_valuer = 0;
   if (prob->disable_pe < 0) prob->disable_pe = 0;
   if (prob->disable_wtl < 0) prob->disable_wtl = 0;
@@ -5792,6 +5796,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->examinator_num = in->examinator_num;
   out->check_presentation = in->check_presentation;
   out->scoring_checker = in->scoring_checker;
+  out->enable_checker_token = in->enable_checker_token;
   out->interactive_valuer = in->interactive_valuer;
   out->disable_pe = in->disable_pe;
   out->disable_wtl = in->disable_wtl;
@@ -6015,6 +6020,7 @@ prepare_set_prob_value(
 #define INHERIT_BOOLEAN(f) case CNTSPROB_##f: if (out->f < 0 && abstr) out->f = abstr->f; if (out->f < 0) out->f = 0; if (out->f > 0) out->f = 1; break
 
   INHERIT_BOOLEAN(scoring_checker);
+  INHERIT_BOOLEAN(enable_checker_token);
   INHERIT_BOOLEAN(interactive_valuer);
   INHERIT_BOOLEAN(disable_pe);
   INHERIT_BOOLEAN(disable_wtl);
@@ -6636,6 +6642,7 @@ prepare_set_all_prob_values(
     CNTSPROB_examinator_num,
     CNTSPROB_check_presentation,
     CNTSPROB_scoring_checker,
+    CNTSPROB_enable_checker_token,
     CNTSPROB_interactive_valuer,
     CNTSPROB_disable_pe,
     CNTSPROB_disable_wtl,

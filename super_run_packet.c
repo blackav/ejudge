@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -118,6 +118,7 @@ super_run_in_problem_packet_init(struct generic_section_config *gp)
 
   p->check_presentation = -1;
   p->scoring_checker = -1;
+  p->enable_checker_token = -1;
   p->interactive_valuer = -1;
   p->disable_pe = -1;
   p->disable_wtl = -1;
@@ -162,6 +163,7 @@ super_run_in_problem_packet_set_default(struct generic_section_config *gp)
 
   if (p->check_presentation < 0) p->check_presentation = 0;
   if (p->scoring_checker < 0) p->scoring_checker = 0;
+  if (p->enable_checker_token < 0) p->enable_checker_token = 0;
   if (p->interactive_valuer < 0) p->interactive_valuer = 0;
   if (p->disable_pe < 0) p->disable_pe = 0;
   if (p->disable_wtl < 0) p->disable_wtl = 0;

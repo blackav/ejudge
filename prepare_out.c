@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1023,6 +1023,9 @@ prepare_unparse_prob(
   if ((prob->abstract && prob->scoring_checker == 1)
       || (!prob->abstract && prob->scoring_checker >= 0))
     unparse_bool(f, "scoring_checker", prob->scoring_checker);
+  if ((prob->abstract && prob->enable_checker_token == 1)
+      || (!prob->abstract && prob->enable_checker_token >= 0))
+    unparse_bool(f, "enable_checker_token", prob->enable_checker_token);
   if ((prob->abstract && prob->interactive_valuer == 1)
       || (!prob->abstract && prob->interactive_valuer >= 0))
     unparse_bool(f, "interactive_valuer", prob->interactive_valuer);
@@ -1584,6 +1587,8 @@ prepare_unparse_actual_prob(
 
   if (prob->scoring_checker > 0)
     unparse_bool(f, "scoring_checker", prob->scoring_checker);
+  if (prob->enable_checker_token > 0)
+    unparse_bool(f, "enable_checker_token", prob->enable_checker_token);
   if (prob->interactive_valuer > 0)
     unparse_bool(f, "interactive_valuer", prob->interactive_valuer);
   if (prob->disable_pe > 0)
@@ -2565,6 +2570,7 @@ prepare_unparse_testers(
     tmp_prob = prepare_copy_problem(probs[i]);
     prepare_set_prob_value(CNTSPROB_type, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_scoring_checker, tmp_prob, abstr, global);
+    prepare_set_prob_value(CNTSPROB_enable_checker_token, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_interactive_valuer, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_disable_pe, tmp_prob, abstr, global);
     prepare_set_prob_value(CNTSPROB_disable_wtl, tmp_prob, abstr, global);
