@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -156,6 +156,7 @@ enum
   TR_A_BASE64,
   TR_A_HAS_USER,
   TR_A_USER_NOMINAL_SCORE,
+  TR_A_CHECKER_TOKEN,
 
   TR_A_LAST_ATTR,
 };
@@ -251,6 +252,7 @@ static const char * const attr_map[] =
   [TR_A_BASE64] = "base64",
   [TR_A_HAS_USER] = "has-user",
   [TR_A_USER_NOMINAL_SCORE] = "user-nominal-score",
+  [TR_A_CHECKER_TOKEN] = "checker-token",
 
   [TR_A_LAST_ATTR] = 0,
 };
@@ -518,6 +520,11 @@ parse_test(struct xml_tree *t, testing_report_xml_t r)
     case TR_A_EXIT_COMMENT:
       p->exit_comment = a->text;
       a->text = 0;
+      break;
+
+    case TR_A_CHECKER_TOKEN:
+      p->checker_token = a->text;
+      a->text = NULL;
       break;
 
     case TR_A_OUTPUT_AVAILABLE:
@@ -1305,6 +1312,7 @@ testing_report_test_free(struct testing_report_test *p)
   xfree(p->team_comment); p->team_comment = 0;
   xfree(p->checker_comment); p->checker_comment = 0;
   xfree(p->exit_comment); p->exit_comment = 0;
+  xfree(p->checker_token); p->checker_token = NULL;
 
   xfree(p->args); p->args = 0;
   xfree(p->program_stats_str); p->program_stats_str = 0;
@@ -1665,6 +1673,7 @@ testing_report_unparse_xml(
       unparse_string_attr(out, &ab, TR_A_TEAM_COMMENT, t->team_comment);
       unparse_string_attr(out, &ab, TR_A_EXIT_COMMENT, t->exit_comment);
       unparse_string_attr(out, &ab, TR_A_CHECKER_COMMENT, t->checker_comment);
+      unparse_string_attr(out, &ab, TR_A_CHECKER_TOKEN, t->checker_token);
       unparse_digest_attr(out, TR_A_INPUT_DIGEST, t->input_digest);
       unparse_digest_attr(out, TR_A_CORRECT_DIGEST, t->correct_digest);
       unparse_digest_attr(out, TR_A_INFO_DIGEST, t->info_digest);
