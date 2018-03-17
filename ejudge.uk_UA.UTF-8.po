@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-03-09 10:03+0300\n"
+"POT-Creation-Date: 2018-03-17 13:18+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -2770,6 +2770,9 @@ msgid "Problem column is undefined\n"
 msgstr ""
 
 msgid "Problem configuration error"
+msgstr ""
+
+msgid "Problem directory"
 msgstr ""
 
 msgid "Problem filter expression"
