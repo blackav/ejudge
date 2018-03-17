@@ -10,6 +10,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_manual_checking = 1,
   META_PROBLEM_CONFIG_SECTION_check_presentation,
   META_PROBLEM_CONFIG_SECTION_scoring_checker,
+  META_PROBLEM_CONFIG_SECTION_enable_checker_token,
   META_PROBLEM_CONFIG_SECTION_interactive_valuer,
   META_PROBLEM_CONFIG_SECTION_disable_pe,
   META_PROBLEM_CONFIG_SECTION_disable_wtl,

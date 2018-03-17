@@ -328,6 +328,7 @@ enum
   CNTSPROB_manual_checking,
   CNTSPROB_check_presentation,
   CNTSPROB_scoring_checker,
+  CNTSPROB_enable_checker_token,
   CNTSPROB_interactive_valuer,
   CNTSPROB_disable_pe,
   CNTSPROB_disable_wtl,

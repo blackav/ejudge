@@ -368,6 +368,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_manual_checking] = { CNTSPROB_manual_checking, 'f', XSIZE(struct section_problem_data, manual_checking), "manual_checking", XOFFSET(struct section_problem_data, manual_checking) },
   [CNTSPROB_check_presentation] = { CNTSPROB_check_presentation, 'f', XSIZE(struct section_problem_data, check_presentation), "check_presentation", XOFFSET(struct section_problem_data, check_presentation) },
   [CNTSPROB_scoring_checker] = { CNTSPROB_scoring_checker, 'f', XSIZE(struct section_problem_data, scoring_checker), "scoring_checker", XOFFSET(struct section_problem_data, scoring_checker) },
+  [CNTSPROB_enable_checker_token] = { CNTSPROB_enable_checker_token, 'f', XSIZE(struct section_problem_data, enable_checker_token), "enable_checker_token", XOFFSET(struct section_problem_data, enable_checker_token) },
   [CNTSPROB_interactive_valuer] = { CNTSPROB_interactive_valuer, 'f', XSIZE(struct section_problem_data, interactive_valuer), "interactive_valuer", XOFFSET(struct section_problem_data, interactive_valuer) },
   [CNTSPROB_disable_pe] = { CNTSPROB_disable_pe, 'f', XSIZE(struct section_problem_data, disable_pe), "disable_pe", XOFFSET(struct section_problem_data, disable_pe) },
   [CNTSPROB_disable_wtl] = { CNTSPROB_disable_wtl, 'f', XSIZE(struct section_problem_data, disable_wtl), "disable_wtl", XOFFSET(struct section_problem_data, disable_wtl) },
