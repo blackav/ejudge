@@ -633,11 +633,11 @@ parse_checker_score(
       }
       if (p_score) *p_score = xx;
       if (*eptr) {
-        score_buf = eptr;
-        while (isspace((unsigned char) *score_buf)) ++score_buf;
-        if (*score_buf && p_checker_token) {
+        char *ptr = eptr;
+        while (isspace((unsigned char) *ptr)) ++ptr;
+        if (*ptr && p_checker_token) {
           if (*p_checker_token) free(*p_checker_token);
-          *p_checker_token = xstrdup(score_buf);
+          *p_checker_token = xstrdup(ptr);
         }
       }
     } else {
