@@ -7635,6 +7635,7 @@ write_xml_testing_report(
   unsigned char *cl2 = "";
   int max_cpu_time = -1, max_cpu_time_tl = -1;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int need_checker_token = 0;
 
   if (class1 && *class1) {
     cl1 = (unsigned char *) alloca(strlen(class1) + 16);
@@ -7767,7 +7768,9 @@ write_xml_testing_report(
     if (!(t = r->tests[i])) continue;
     if (t->comment || t->team_comment) {
       need_comment = 1;
-      break;
+    }
+    if (t->checker_token && t->checker_token[0]) {
+      need_checker_token = 1;
     }
   }
 
@@ -7785,6 +7788,9 @@ write_xml_testing_report(
   fprintf(f, "<th%s>%s</th>", cl1, _("Extra info"));
   if (is_kirov) {
     fprintf(f, "<th%s>%s</th>", cl1, _("Score"));
+  }
+  if (need_checker_token) {
+    fprintf(f, "<th%s>%s</th>", cl1, _("Checker Token"));
   }
   if (need_comment) {
     fprintf(f, "<th%s>%s</th>", cl1, _("Comment"));
@@ -7883,6 +7889,15 @@ write_xml_testing_report(
     fprintf(f, "</td>");
     if (is_kirov) {
       fprintf(f, "<td%s>%d (%d)</td>", cl1, t->score, t->nominal_score);
+    }
+    if (need_checker_token) {
+      if (t->checker_token && t->checker_token[0]) {
+        s = html_armor_string_dup(t->checker_token);
+        fprintf(f, "<td%s>%s</td>", cl1, s);
+        xfree(s);
+      } else {
+        fprintf(f, "<td%s>&nbsp;</td>", cl1);
+      }
     }
     if (need_comment) {
       if (t->comment) {

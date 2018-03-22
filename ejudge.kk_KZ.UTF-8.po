@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-03-17 13:18+0300\n"
+"POT-Creation-Date: 2018-03-22 09:09+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -621,6 +621,9 @@ msgid "Check failed"
 msgstr ""
 
 msgid "Check failed runs"
+msgstr ""
+
+msgid "Checker Token"
 msgstr ""
 
 msgid "Checker output"
