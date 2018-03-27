@@ -989,6 +989,7 @@ sort_moscow(
     int max_pen = -1;
     int max_score = -1;
     int *u_sort1 = NULL;
+    XCALLOC(pg->t_sort, pg->t_tot);
     XALLOCAZ(u_sort1, pg->t_tot);
     for (int u = 0; u < pg->t_tot; ++u) {
         StandingsUserRow *row = &pg->rows[u];
