@@ -2,7 +2,7 @@
 #ifndef __INTERNAL_PAGES_H__
 #define __INTERNAL_PAGES_H__
 
-/* Copyright (C) 2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2017-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -87,6 +87,7 @@ typedef struct StandingsPage
     time_t user_stop_time;  // user-specific stop time
     time_t user_duration;
 
+    int r_beg; // first loaded run
     int r_tot; // total number of runs
     const struct run_entry *runs;
 

@@ -53,6 +53,7 @@
     }
     (void) unfog_flag;
 
+    int begin = run_get_first(cs->runlog_state);
     int total = run_get_total(cs->runlog_state);
     const struct run_entry *runs = run_get_entries_ptr(cs->runlog_state);
     int separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
@@ -126,7 +127,7 @@
   </tr>
 <%
     int i;
-    for (i = total - 1; i >= 0; --i) {
+    for (i = total - 1; i >= begin; --i) {
         const struct run_entry *pe = &runs[i];
         if (pe->is_hidden) continue;
         int status = pe->status;

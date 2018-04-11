@@ -207,6 +207,7 @@ do_update_xml_log(serve_state_t state, const struct contest_desc *cnts,
                   char const *name, int external_mode)
 {
   struct run_header rhead;
+  int rbegin;
   int rtotal;
   const struct run_entry *rentries;
   path_t path1;
@@ -214,6 +215,7 @@ do_update_xml_log(serve_state_t state, const struct contest_desc *cnts,
   FILE *fout;
 
   run_get_header(state->runlog_state, &rhead);
+  rbegin = run_get_first(state->runlog_state);
   rtotal = run_get_total(state->runlog_state);
   rentries = run_get_entries_ptr(state->runlog_state);
 
@@ -224,7 +226,7 @@ do_update_xml_log(serve_state_t state, const struct contest_desc *cnts,
     err("update_xml_log: cannot open %s", path1);
     return;
   }
-  unparse_runlog_xml(state, cnts, fout, &rhead, rtotal, rentries,
+  unparse_runlog_xml(state, cnts, fout, &rhead, rbegin, rtotal, rentries,
                      external_mode, 0, state->current_time);
   if (ferror(fout)) {
     err("update_xml_log: write error");
@@ -4868,7 +4870,7 @@ serve_collect_virtual_stop_events(serve_state_t cs)
   //const struct section_global_data *global = cs->global;
   struct run_header head;
   const struct run_entry *runs, *pe;
-  int total_runs, i;
+  int begin_runs, total_runs, i;
   time_t *user_time = 0, *new_time, *pt;
   int user_time_size = 0, new_size;
   int need_reload = 0;
@@ -4877,6 +4879,7 @@ serve_collect_virtual_stop_events(serve_state_t cs)
 
   run_get_header(cs->runlog_state, &head);
   if (!head.duration) return 0;
+  begin_runs = run_get_first(cs->runlog_state);
   total_runs = run_get_total(cs->runlog_state);
   runs = run_get_entries_ptr(cs->runlog_state);
 
@@ -4884,7 +4887,7 @@ serve_collect_virtual_stop_events(serve_state_t cs)
   XCALLOC(user_time, user_time_size);
 
 #if 0
-  for (i = 0; i < total_runs; i++) {
+  for (i = begin_runs; i < total_runs; i++) {
     if (!run_is_valid_status(runs[i].status)) continue;
     if (runs[i].status >= RUN_PSEUDO_FIRST
         && runs[i].status <= RUN_PSEUDO_LAST) continue;
@@ -4904,7 +4907,7 @@ serve_collect_virtual_stop_events(serve_state_t cs)
   }
 #endif
 
-  for (i = 0; i < total_runs; i++) {
+  for (i = begin_runs; i < total_runs; i++) {
     pe = &runs[i];
     if (!run_is_valid_status(pe->status)) continue;
     if (pe->status == RUN_EMPTY) continue;

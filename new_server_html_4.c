@@ -1484,6 +1484,7 @@ do_dump_master_runs(
   env.langs = (const struct section_language_data * const *) cs->langs;
   env.maxprob = cs->max_prob;
   env.probs = (const struct section_problem_data * const *) cs->probs;
+  env.rbegin = run_get_first(cs->runlog_state);
   env.rtotal = run_get_total(cs->runlog_state);
   run_get_header(cs->runlog_state, &env.rhead);
   env.cur_time = time(0);
@@ -1494,7 +1495,7 @@ do_dump_master_runs(
   match_tot = 0;
   transient_tot = 0;
 
-  for (i = 0; i < env.rtotal; i++) {
+  for (i = env.rbegin; i < env.rtotal; i++) {
     if (env.rentries[i].status >= RUN_TRANSIENT_FIRST
         && env.rentries[i].status <= RUN_TRANSIENT_LAST)
       transient_tot++;

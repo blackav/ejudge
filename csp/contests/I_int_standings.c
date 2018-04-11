@@ -1154,6 +1154,7 @@ csp_execute_int_standings(
         }
     }
 
+    pg->r_beg = run_get_first(cs->runlog_state);
     pg->r_tot = run_get_total(cs->runlog_state);
     pg->runs = run_get_entries_ptr(cs->runlog_state);
 
@@ -1166,7 +1167,7 @@ csp_execute_int_standings(
     t_runs = malloc(pg->t_max);
     if (global->prune_empty_users > 0 || global->disable_user_database > 0) {
         memset(t_runs, 0, pg->t_max);
-        for (int k = 0; k < pg->r_tot; k++) {
+        for (int k = pg->r_beg; k < pg->r_tot; k++) {
             if (pg->runs[k].status == RUN_EMPTY) continue;
             if (pg->runs[k].is_hidden) continue;
             if(pg->runs[k].user_id <= 0 && pg->runs[k].user_id >= pg->t_max) continue;
@@ -1304,13 +1305,14 @@ csp_execute_int_standings(
         env.langs = (const struct section_language_data * const *) cs->langs;
         env.maxprob = cs->max_prob;
         env.probs = (const struct section_problem_data * const *) cs->probs;
+        env.rbegin = pg->r_beg;
         env.rtotal = pg->r_tot;
         env.cur_time = pg->cur_time;
         env.rentries = pg->runs;
         env.rid = 0;
     }
 
-    for (int k = 0; k < pg->r_tot; ++k) {
+    for (int k = pg->r_beg; k < pg->r_tot; ++k) {
         const struct run_entry *pe = &pg->runs[k];
 
         if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP || pe->status == RUN_EMPTY) continue;

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -937,7 +937,7 @@ do_write_kirov_standings(
   time_t run_time;
   time_t contest_dur;
 
-  int  t_max, t_tot, p_max, p_tot, r_tot;
+  int  t_max, t_tot, p_max, p_tot, r_tot, r_beg;
   int *t_ind = 0, *t_rev = 0, *p_ind = 0, *p_rev = 0;
   unsigned char *t_runs = 0;
 
@@ -1081,6 +1081,7 @@ do_write_kirov_standings(
   /* The contest is started, so we can collect scores */
 
   /* download all runs in the whole */
+  r_beg = run_get_first(state->runlog_state);
   r_tot = run_get_total(state->runlog_state);
   runs = run_get_entries_ptr(state->runlog_state);
 
@@ -1094,7 +1095,7 @@ do_write_kirov_standings(
   t_runs = alloca(t_max);
   if (global->prune_empty_users || global->disable_user_database > 0) {
     memset(t_runs, 0, t_max);
-    for (k = 0; k < r_tot; k++) {
+    for (k = r_beg; k < r_tot; k++) {
       if (runs[k].status == RUN_EMPTY || runs[k].status == RUN_VIRTUAL_START
           || runs[k].status == RUN_VIRTUAL_STOP) continue;
       if (runs[k].is_hidden) continue;
@@ -1236,13 +1237,14 @@ do_write_kirov_standings(
     env.langs = (const struct section_language_data * const *) state->langs;
     env.maxprob = state->max_prob;
     env.probs = (const struct section_problem_data * const *) state->probs;
+    env.rbegin = r_beg;
     env.rtotal = r_tot;
     env.cur_time = cur_time;
     env.rentries = runs;
     env.rid = 0;
   }
 
-  for (k = 0; k < r_tot; k++) {
+  for (k = r_beg; k < r_tot; k++) {
     int tind;
     int pind;
     int score, run_score, run_tests, run_status;
@@ -2661,6 +2663,7 @@ do_write_moscow_standings(
   time_t last_submit_time = 0;
   time_t last_submit_start = 0;
 
+  int r_beg;                    /* the first available run */
   int r_tot;                    /* total number of runs */
   const struct run_entry *runs; /* the pointer to the PRIMARY runs storage */
   int u_max;                    /* maximal user_id + 1 */
@@ -2799,6 +2802,7 @@ do_write_moscow_standings(
     return;
   }
 
+  r_beg = run_get_first(state->runlog_state);
   r_tot = run_get_total(state->runlog_state);
   runs = run_get_entries_ptr(state->runlog_state);
 
@@ -2810,7 +2814,7 @@ do_write_moscow_standings(
   u_runs = (unsigned char*) alloca(u_max);
   if (global->prune_empty_users || global->disable_user_database > 0) {
     memset(u_runs, 0, u_max);
-    for (i = 0; i < r_tot; i++)
+    for (i = r_beg; i < r_tot; i++)
       if (runs[i].status != RUN_EMPTY
           && runs[i].user_id > 0 && runs[i].user_id < u_max
           && !runs[i].is_hidden)
@@ -2907,13 +2911,14 @@ do_write_moscow_standings(
     env.langs = (const struct section_language_data * const *) state->langs;
     env.maxprob = state->max_prob;
     env.probs = (const struct section_problem_data * const *) state->probs;
+    env.rbegin = r_beg;
     env.rtotal = r_tot;
     env.cur_time = cur_time;
     env.rentries = runs;
     env.rid = 0;
   }
 
-  for (i = 0; i < r_tot; i++) {
+  for (i = r_beg; i < r_tot; i++) {
     const struct run_entry *pe = &runs[i];
     time_t run_time = pe->time;
     int up_ind;
@@ -3605,6 +3610,7 @@ do_write_standings(
   int     *p_rev = 0;
   int      p_max;
   int      p_tot;
+  int      r_beg;
   int      r_tot, k;
   int      tt, pp;
   int      ttot_att, ttot_succ, perc;
@@ -3707,6 +3713,7 @@ do_write_standings(
     return;
   }
 
+  r_beg = run_get_first(state->runlog_state);
   r_tot = run_get_total(state->runlog_state);
   runs = run_get_entries_ptr(state->runlog_state);
 
@@ -3718,7 +3725,7 @@ do_write_standings(
   t_runs = alloca(t_max);
   if (global->prune_empty_users || global->disable_user_database > 0) {
     memset(t_runs, 0, t_max);
-    for (k = 0; k < r_tot; k++) {
+    for (k = r_beg; k < r_tot; k++) {
       if (runs[k].status == RUN_EMPTY) continue;
       if (runs[k].user_id <= 0 || runs[k].user_id >= t_max) continue;
       if (runs[k].is_hidden) continue;
@@ -3799,6 +3806,7 @@ do_write_standings(
     env.langs = (const struct section_language_data * const *) state->langs;
     env.maxprob = state->max_prob;
     env.probs = (const struct section_problem_data * const *) state->probs;
+    env.rbegin = r_beg;
     env.rtotal = r_tot;
     env.cur_time = cur_time;
     env.rentries = runs;
@@ -3806,7 +3814,7 @@ do_write_standings(
   }
 
   /* now scan runs log */
-  for (k = 0; k < r_tot; k++) {
+  for (k = r_beg; k < r_tot; k++) {
     pe = &runs[k];
     run_time = pe->time;
     if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP
@@ -4341,7 +4349,7 @@ do_write_public_log(
         int user_mode)
 {
   const struct section_global_data *global = state->global;
-  int total;
+  int begin, total;
   int i;
 
   time_t run_time, start_time, cur_time, stop_time;
@@ -4359,6 +4367,7 @@ do_write_public_log(
 
   start_time = run_get_start_time(state->runlog_state);
   stop_time = run_get_stop_time(state->runlog_state);
+  begin = run_get_first(state->runlog_state);
   total = run_get_total(state->runlog_state);
   runs = run_get_entries_ptr(state->runlog_state);
   separate_user_score = global->separate_user_score > 0 && state->online_view_judge_score <= 0;
@@ -4436,7 +4445,7 @@ do_write_public_log(
   }
   fprintf(f, "</tr>\n");
 
-  for (i = total - 1; i >= 0; i--) {
+  for (i = total - 1; i >= begin; i--) {
     int status;
 
     pe = &runs[i];

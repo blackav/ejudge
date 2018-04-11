@@ -1975,6 +1975,7 @@ run_write_xml(
   }
 
   unparse_runlog_xml(serve_state, cnts, f, &state->head, state->run_u,
+                     0, /* FIXME: begin run_id */
                      state->runs, export_mode, source_mode, current_time);
   return 0;
 }

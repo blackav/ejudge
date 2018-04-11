@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -671,11 +671,12 @@ collect_telegram_reminder(
 {
   memset(pdata, 0, sizeof(*pdata));
 
+  int r_beg = run_get_first(cs->runlog_state);
   int r_tot = run_get_total(cs->runlog_state);
   const struct run_entry *runs = run_get_entries_ptr(cs->runlog_state);
   time_t old_time = cs->current_time - 2 * 24 * 60 * 60;
 
-  for (int run_id = 0; run_id < r_tot; ++run_id) {
+  for (int run_id = r_beg; run_id < r_tot; ++run_id) {
     const struct run_entry *run = runs + run_id;
     if (run->status == RUN_PENDING_REVIEW) {
       ++pdata->pr_total;
@@ -701,7 +702,7 @@ generate_daily_statistics(
   int *p_ind, *p_rev;
   int row_sz, row_sh;
   unsigned char *solved = 0;
-  int r_tot, u, p, idx, max_u_total;
+  int r_beg, r_tot, u, p, idx, max_u_total;
   const struct run_entry *runs, *rcur;
   int *u_total = 0, *u_ok = 0, *u_failed = 0, *u_afterok = 0, *u_errors = 0;
   int *u_trans = 0, *u_cf = 0, *u_ac = 0, *u_ign = 0, *u_disq = 0, *u_pend = 0;
@@ -779,6 +780,7 @@ generate_daily_statistics(
     }
   }
 
+  r_beg = run_get_first(state->runlog_state);
   r_tot = run_get_total(state->runlog_state);
   runs = run_get_entries_ptr(state->runlog_state);
 
@@ -811,7 +813,7 @@ generate_daily_statistics(
   XALLOCAZ(p_total, p_tot);
   XALLOCAZ(p_ok, p_tot);
 
-  for (i = 0, rcur = runs; i < r_tot; i++, rcur++) {
+  for (i = r_beg, rcur = runs; i < r_tot; i++, rcur++) {
     if (rcur->time >= to_time) break;
     if (rcur->time < from_time) {
       if (rcur->status == RUN_EMPTY) continue;
