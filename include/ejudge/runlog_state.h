@@ -2,7 +2,7 @@
 #ifndef __RUNLOG_STATE_H__
 #define __RUNLOG_STATE_H__
 
-/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  */
 
-#define RUNLOG_MAX_SIZE    10485760
+#define RUNLOG_MAX_SIZE    15625000         // 2000000000 bytes
 
 enum
   {
@@ -66,6 +66,7 @@ struct runlog_state
 {
   RUNS_ACCESS struct run_header  head;
   RUNS_ACCESS struct run_entry  *runs;
+  RUNS_ACCESS int                run_f;  // first run loaded
   RUNS_ACCESS int                run_u;
   RUNS_ACCESS int                run_a;
   teamdb_state_t     teamdb_state;

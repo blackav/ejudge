@@ -2,7 +2,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -160,6 +160,8 @@ int  run_set_duration(runlog_state_t, time_t);
 time_t run_get_stop_time(runlog_state_t);
 int    run_stop_contest(runlog_state_t, time_t);
 int    run_sched_contest(runlog_state_t, time_t);
+
+int    run_get_first(runlog_state_t);
 int    run_get_total(runlog_state_t);
 
 void run_get_saved_times(runlog_state_t, time_t *p_sd, time_t *p_sst, time_t*);

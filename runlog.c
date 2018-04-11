@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -752,6 +752,12 @@ run_save_times(runlog_state_t state)
       || state->head.saved_finish_time)
     return 0;
   return state->iface->save_times(state->cnts);
+}
+
+int
+run_get_first(runlog_state_t state)
+{
+  return 0;
 }
 
 int
