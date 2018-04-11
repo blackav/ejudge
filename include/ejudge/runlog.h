@@ -357,7 +357,9 @@ int run_write_xml(runlog_state_t, void *, const struct contest_desc *cnts,
 int unparse_runlog_xml(serve_state_t,
                        const struct contest_desc *cnts,
                        FILE *, const struct run_header*,
-                       size_t, const struct run_entry*, int, int, time_t);
+                       size_t,
+                       size_t,
+                       const struct run_entry*, int, int, time_t);
 int parse_runlog_xml(const unsigned char *, struct run_header *,
                      size_t *, struct run_entry **, struct run_data **,
                      struct run_xml_helpers *);

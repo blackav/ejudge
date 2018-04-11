@@ -739,6 +739,7 @@ unparse_runlog_xml(
         const struct contest_desc *cnts,
         FILE *f,
         const struct run_header *phead,
+        size_t begin, // first item index in entries
         size_t nelems,
         const struct run_entry *entries,
         int external_mode,
@@ -890,7 +891,7 @@ unparse_runlog_xml(
     fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_LANGUAGES]);
   }
   fprintf(f, "  <%s>\n", elem_map[RUNLOG_T_RUNS]);
-  for (i = 0; i < nelems; i++) {
+  for (i = begin; i < nelems; i++) {
     pp = &entries[i];
     //if (external_mode && pp->is_hidden) continue;
     if (pp->is_hidden) continue;
