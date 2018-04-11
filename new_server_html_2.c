@@ -208,8 +208,7 @@ ns_write_priv_all_runs(
     env.cur_time = time(0);
     env.rentries = run_get_entries_ptr(cs->runlog_state);
 
-    match_idx = alloca((env.rtotal + 1) * sizeof(match_idx[0]));
-    memset(match_idx, 0, (env.rtotal + 1) * sizeof(match_idx[0]));
+    XCALLOC(match_idx, env.rtotal + 1);
     match_tot = 0;
     transient_tot = 0;
 
@@ -238,8 +237,7 @@ ns_write_priv_all_runs(
     displayed_mask = (unsigned long*) alloca(displayed_size*sizeof(displayed_mask[0]));
     memset(displayed_mask, 0, displayed_size * sizeof(displayed_mask[0]));
 
-    list_idx = alloca((env.rtotal + 1) * sizeof(list_idx[0]));
-    memset(list_idx, 0, (env.rtotal + 1) * sizeof(list_idx[0]));
+    XCALLOC(list_idx, (env.rtotal + 1));
     list_tot = 0;
 
     if (!first_run_set) {
@@ -476,7 +474,7 @@ ns_write_priv_all_runs(
 
     for (i = 0; i < list_tot; i++) {
       rid = list_idx[i];
-      ASSERT(rid >= 0 && rid < env.rtotal);
+      ASSERT(rid >= env.rbegin && rid < env.rtotal);
       pe = &env.rentries[rid];
 
       displayed_mask[rid / BITS_PER_LONG] |= (1L << (rid % BITS_PER_LONG));
@@ -1110,6 +1108,8 @@ ns_write_priv_all_runs(
                     0, 0, 0, 0, 0, 0, 0);
   */
   html_armor_free(&ab);
+  xfree(list_idx);
+  xfree(match_idx);
 }
 
 static int

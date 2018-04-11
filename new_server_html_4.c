@@ -1490,8 +1490,7 @@ do_dump_master_runs(
   env.cur_time = time(0);
   env.rentries = run_get_entries_ptr(cs->runlog_state);
 
-  match_idx = alloca((env.rtotal + 1) * sizeof(match_idx[0]));
-  memset(match_idx, 0, (env.rtotal + 1) * sizeof(match_idx[0]));
+  XCALLOC(match_idx, (env.rtotal + 1));
   match_tot = 0;
   transient_tot = 0;
 
@@ -1515,8 +1514,7 @@ do_dump_master_runs(
     return -NEW_SRV_ERR_INV_FILTER_EXPR;
   }
 
-  list_idx = alloca((env.rtotal + 1) * sizeof(list_idx[0]));
-  memset(list_idx, 0, (env.rtotal + 1) * sizeof(list_idx[0]));
+  XCALLOC(list_idx, (env.rtotal + 1));
   list_tot = 0;
 
   if (!first_run_set) {
@@ -1573,7 +1571,7 @@ do_dump_master_runs(
     memset(csv_rec, 0, sizeof(csv_rec));
 
     rid = list_idx[i];
-    ASSERT(rid >= 0 && rid < env.rtotal);
+    ASSERT(rid >= env.rbegin && rid < env.rtotal);
     pe = &env.rentries[rid];
     snprintf(run_id_buf, sizeof(run_id_buf), "%d", rid);
     csv_rec[F_RUN_ID] = run_id_buf;
@@ -1819,6 +1817,9 @@ do_dump_master_runs(
       abort();
     }
   }
+
+  free(list_idx);
+  free(match_idx);
   return 0;
 }
 

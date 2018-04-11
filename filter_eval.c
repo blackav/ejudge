@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -50,7 +50,7 @@ is_latest(struct filter_env *env, int rid)
 {
   int r;
 
-  if (rid < 0 || rid >= env->rtotal) return 0;
+  if (rid < env->rbegin || rid >= env->rtotal) return 0;
   switch (env->rentries[rid].status) {
   case RUN_OK:
   case RUN_PARTIAL:
@@ -84,7 +84,7 @@ is_latestmarked(struct filter_env *env, int rid)
 {
   int r;
 
-  if (rid < 0 || rid >= env->rtotal) return 0;
+  if (rid < env->rbegin || rid >= env->rtotal) return 0;
   if (!env->rentries[rid].is_marked) return 0;
   for (r = rid + 1; r < env->rtotal; r++) {
     if (env->rentries[rid].user_id == env->rentries[r].user_id
@@ -100,7 +100,7 @@ is_afterok(struct filter_env *env, int rid)
 {
   int r;
 
-  if (rid < 0 || rid >= env->rtotal) return 0;
+  if (rid < env->rbegin || rid >= env->rtotal) return 0;
   if (env->rentries[rid].status >= RUN_PSEUDO_FIRST
       && env->rentries[rid].status <= RUN_PSEUDO_LAST)
     return 0;
@@ -327,7 +327,7 @@ do_eval(struct filter_env *env,
     ASSERT(r1.kind == TOK_INT_L);
     if (r1.v.i < 0) r1.v.i = env->rtotal + r1.v.i;
     if (r1.v.i >= env->rtotal) return -FILTER_ERR_RANGE;
-    if (r1.v.i < 0) return -FILTER_ERR_RANGE;
+    if (r1.v.i < env->rbegin) return -FILTER_ERR_RANGE;
     switch (t->kind) {
     case TOK_TIME:
       res->kind = TOK_TIME_L;
@@ -1033,7 +1033,7 @@ do_eval(struct filter_env *env,
     ASSERT(r1.kind == TOK_INT_L);
     if (r1.v.i < 0) r1.v.i = env->rtotal + r1.v.i;
     if (r1.v.i >= env->rtotal) return -FILTER_ERR_RANGE;
-    if (r1.v.i < 0) return -FILTER_ERR_RANGE;
+    if (r1.v.i < env->rbegin) return -FILTER_ERR_RANGE;
     if ((c = do_eval(env, t->v.t[1], &r2)) < 0) return c;
     ASSERT(r2.kind == TOK_INT_L);
     res->kind = TOK_BOOL_L;
