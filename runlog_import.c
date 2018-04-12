@@ -177,7 +177,7 @@ runlog_import_xml(
     XCALLOC(cur_entries, cur_entries_num);
   }
   run_get_header(runlog_state, &cur_header);
-  zrun_get_all_entries(runlog_state, cur_entries);
+  run_get_all_entries(runlog_state, cur_entries);
 
   if (!cur_header.start_time) {
     fprintf(flog, "Contest is not yet started\n");
