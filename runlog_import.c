@@ -183,7 +183,8 @@ runlog_import_xml(
 
   fprintf(flog, "Current run log has %zu entries\n", cur_entries_num);
   fprintf(flog, "Doing sanity check on the current log\n");
-  if (runlog_check(flog, &cur_header, cur_entries_num, cur_entries) < 0) {
+  // FIXME: support non-zero begin index
+  if (runlog_check(flog, &cur_header, 0, cur_entries_num, cur_entries) < 0) {
     fprintf(flog, "Sanity check failed!\n");
     goto done;
   }
@@ -572,7 +573,8 @@ runlog_import_xml(
   }
 
   fprintf(flog, "Doing sanity check of the new runlog\n");
-  if (runlog_check(flog, &cur_header, in_entries_num, in_entries) < 0) {
+  // FIXME: support non-zero begin 
+  if (runlog_check(flog, &cur_header, 0, in_entries_num, in_entries) < 0) {
     fprintf(flog, "Sanity check failed\n");
   }
   fprintf(flog, "Sanity check is ok\n");
@@ -732,7 +734,8 @@ runlog_import_xml(
   }
 
   fprintf(flog, "Performing sanity check on the resulting log\n");
-  if (runlog_check(flog, &cur_header, out_entries_num, out_entries) < 0)
+  // FIXME: support non-zero begin
+  if (runlog_check(flog, &cur_header, 0, out_entries_num, out_entries) < 0)
     goto done;
   fprintf(flog, "Sanity check done\n");
 

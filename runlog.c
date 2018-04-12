@@ -148,7 +148,8 @@ run_set_runlog(
         int total_entries,
         struct run_entry *entries)
 {
-  if (runlog_check(0, &state->head, total_entries, entries) < 0)
+  // FIXME: set first number as well
+  if (runlog_check(0, &state->head, 0, total_entries, entries) < 0)
     return -1;
 
   if (state->iface->set_runlog(state->cnts, total_entries, entries) < 0)
@@ -213,7 +214,7 @@ run_open(
     if (!(flags & RUN_LOG_NOINDEX)) {
       if (state->iface->check && state->iface->check(state->cnts, 0) < 0)
         return -1;
-      if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
+      if (runlog_check(0, &state->head, state->run_f, state->run_u, state->runs) < 0)
         return -1;
       build_indices(state, flags);
     }
@@ -234,7 +235,7 @@ run_open(
     if (!(flags & RUN_LOG_NOINDEX)) {
       if (state->iface->check && state->iface->check(state->cnts, 0) < 0)
         return -1;
-      if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
+      if (runlog_check(0, &state->head, state->run_f, state->run_u, state->runs) < 0)
         return -1;
       build_indices(state, flags);
     }
@@ -276,7 +277,7 @@ run_open(
   if (!(flags & RUN_LOG_NOINDEX)) {
     if (state->iface->check && state->iface->check(state->cnts, 0) < 0)
       return -1;
-    if (runlog_check(0, &state->head, state->run_u, state->runs) < 0)
+    if (runlog_check(0, &state->head, state->run_f, state->run_u, state->runs) < 0)
       return -1;
     build_indices(state, flags);
   }
@@ -2006,8 +2007,9 @@ int
 runlog_check(
         FILE *ferr,
         const struct run_header *phead,
+        size_t begin,
         size_t nentries,
-        const struct run_entry *pentries)
+        const struct run_entry *pentries)  // not offsetted pointer
 {
   int i, j;
   int max_team_id;
@@ -2057,8 +2059,8 @@ runlog_check(
   */
 
   /* check local consistency of fields */
-  for (i = 0; i < nentries; i++) {
-    e = &pentries[i];
+  for (i = begin; i < nentries; i++) {
+    e = &pentries[i - begin];
     if (run_is_invalid_status(e->status)) {
       check_msg(1,ferr, "Run %d invalid status %d", i, e->status);
       nerr++;
@@ -2223,10 +2225,10 @@ runlog_check(
   if (nerr > 0) return -1;
 
   max_team_id = -1;
-  for (i = 0; i < nentries; i++) {
-    if (pentries[i].status == RUN_EMPTY) continue;
-    ASSERT(pentries[i].user_id >= 0);
-    if (pentries[i].user_id > max_team_id) max_team_id = pentries[i].user_id;
+  for (i = begin; i < nentries; i++) {
+    if (pentries[i - begin].status == RUN_EMPTY) continue;
+    ASSERT(pentries[i - begin].user_id >= 0);
+    if (pentries[i - begin].user_id > max_team_id) max_team_id = pentries[i - begin].user_id;
   }
   if (max_team_id == -1) {
     check_msg(0,ferr, "The runlog contains only EMPTY records");
@@ -2240,8 +2242,8 @@ runlog_check(
     stop_time = phead->start_time + phead->duration;
   }
 
-  for (i = 0; i < nentries; i++) {
-    e = &pentries[i];
+  for (i = begin; i < nentries; i++) {
+    e = &pentries[i - begin];
     if (e->is_hidden) continue;
     switch (e->status) {
     case RUN_EMPTY: break;

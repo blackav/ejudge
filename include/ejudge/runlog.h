@@ -371,7 +371,7 @@ int run_backup(runlog_state_t, const unsigned char *path);
 int run_set_runlog(runlog_state_t, int total_entries,
                    struct run_entry *entries);
 
-int runlog_check(FILE *, const struct run_header *, size_t, const struct run_entry *);
+int runlog_check(FILE *, const struct run_header *, size_t begin, size_t, const struct run_entry *);
 
 int run_get_pages(runlog_state_t, int run_id);
 int run_set_pages(runlog_state_t, int run_id, int pages);
