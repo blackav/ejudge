@@ -52,6 +52,8 @@ struct rldb_mysql_state
   // mysql access
   struct common_mysql_iface *mi;
   struct common_mysql_state *md;
+
+  int window;
 };
 
 struct rldb_mysql_cnts
@@ -142,6 +144,7 @@ prepare_func(
 {
   struct rldb_mysql_state *state = (struct rldb_mysql_state*) data;
   const struct common_loaded_plugin *mplg;
+  const struct xml_parse_spec *spec = ejudge_cfg_get_spec();
 
   // load common_mysql plugin
   if (!(mplg = plugin_load_external(0, "common", "mysql", config))) {
@@ -150,6 +153,18 @@ prepare_func(
   }
   state->mi = (struct common_mysql_iface*) mplg->iface;
   state->md = (struct common_mysql_state*) mplg->data;
+
+  for (struct xml_tree *p = tree->first_down; p; p = p->right) {
+    ASSERT(p->tag == spec->default_elem);
+    if (!strcmp(p->name[0], "window")) {
+      if (p->first) return xml_err_attrs(p);
+      if (p->first_down) return xml_err_nested_elems(p);
+      if (state->window > 0) return xml_err_elem_redefined(p);
+      if (xml_parse_int(NULL, "", p->line, p->column, p->text, &state->window) < 0) return -1;
+    } else {
+      return xml_err_elem_not_allowed(p);
+    }
+  }
 
   return 0;
 }
@@ -405,11 +420,16 @@ load_runs(struct rldb_mysql_cnts *cs)
   int i, mime_type;
   ruint32_t sha1[5];
   ej_uuid_t run_uuid;
+  unsigned char limit_buf[64];
 
+  limit_buf[0] = 0;
+  if (state->window > 0) {
+    snprintf(limit_buf, sizeof(limit_buf), " LIMIT %d", state->window);
+  }
   memset(&ri, 0, sizeof(ri));
   if (mi->fquery(md, RUNS_ROW_WIDTH,
-                 "SELECT * FROM %sruns WHERE contest_id=%d ORDER BY run_id ;",
-                 md->table_prefix, cs->contest_id) < 0)
+                 "SELECT * FROM %sruns WHERE contest_id=%d ORDER BY run_id %s;",
+                 md->table_prefix, cs->contest_id, limit_buf) < 0)
     goto fail;
   if (!md->row_count) {
     mi->free_res(md);
