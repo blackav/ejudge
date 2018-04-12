@@ -770,7 +770,7 @@ run_save_times(runlog_state_t state)
 int
 run_get_first(runlog_state_t state)
 {
-  return 0;
+  return state->run_f;
 }
 
 int
