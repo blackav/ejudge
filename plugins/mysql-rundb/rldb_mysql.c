@@ -401,7 +401,7 @@ expand_runs(struct runlog_state *rls, int run_id)
     new_v[i].run_id = i + rls->run_f;
     new_v[i].status = RUN_EMPTY;
   }
-  if (rls->run_u) memcpy(new_v, rls->runs, rls->run_u * sizeof(new_v[0]));
+  if (rls->run_u - rls->run_f > 0) memcpy(new_v, rls->runs, (rls->run_u - rls->run_f) * sizeof(new_v[0]));
   xfree(rls->runs);
   rls->runs = new_v;
   rls->run_a = new_a;
