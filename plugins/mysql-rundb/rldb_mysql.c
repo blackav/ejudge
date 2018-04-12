@@ -420,17 +420,19 @@ load_runs(struct rldb_mysql_cnts *cs)
   int i, mime_type;
   ruint32_t sha1[5];
   ej_uuid_t run_uuid;
-  unsigned char limit_buf[64];
 
-  limit_buf[0] = 0;
-  if (state->window > 0) {
-    snprintf(limit_buf, sizeof(limit_buf), " LIMIT %d", state->window);
-  }
   memset(&ri, 0, sizeof(ri));
-  if (mi->fquery(md, RUNS_ROW_WIDTH,
-                 "SELECT * FROM %sruns WHERE contest_id=%d ORDER BY run_id %s;",
-                 md->table_prefix, cs->contest_id, limit_buf) < 0)
-    goto fail;
+  if (state->window > 0) {
+    if (mi->fquery(md, RUNS_ROW_WIDTH,
+                   "(SELECT * FROM %sruns WHERE contest_id=%d ORDER BY run_id DESC LIMIT %d) ORDER BY run_id;",
+                   md->table_prefix, cs->contest_id, state->window) < 0)
+      goto fail;
+  } else {
+    if (mi->fquery(md, RUNS_ROW_WIDTH,
+                   "SELECT * FROM %sruns WHERE contest_id=%d ORDER BY run_id ;",
+                   md->table_prefix, cs->contest_id) < 0)
+      goto fail;
+  }
   if (!md->row_count) {
     mi->free_res(md);
     return 0;
