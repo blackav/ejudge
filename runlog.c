@@ -145,15 +145,14 @@ run_destroy(runlog_state_t state)
 int
 run_set_runlog(
         runlog_state_t state,
-        int first_entry,
+        int id_offset,
         int total_entries,
         struct run_entry *entries)
 {
-  // FIXME: set first number as well
-  if (runlog_check(0, &state->head, first_entry, total_entries, entries) < 0)
+  if (runlog_check(0, &state->head, id_offset, total_entries, entries) < 0)
     return -1;
 
-  if (state->iface->set_runlog(state->cnts, total_entries, entries) < 0)
+  if (state->iface->set_runlog(state->cnts, id_offset, total_entries, entries) < 0)
     return -1;
 
   build_indices(state, 0);

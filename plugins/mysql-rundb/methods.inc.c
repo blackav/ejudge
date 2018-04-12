@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -52,6 +51,7 @@ reset_func(
 static int
 set_runlog_func(
         struct rldb_plugin_cnts *cdata,
+        int id_offset,
         int total_entries,
         struct run_entry *entries);
 

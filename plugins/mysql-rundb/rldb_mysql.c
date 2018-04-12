@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -627,6 +627,7 @@ reset_func(
 static int
 set_runlog_func(
         struct rldb_plugin_cnts *cdata,
+        int id_offset,
         int total_entries,
         struct run_entry *entries)
 {
@@ -636,6 +637,9 @@ set_runlog_func(
   struct common_mysql_state *md = state->md;
   struct runlog_state *rls = cs->rl_state;
   int i;
+
+  // FIXME: support id_offset > 0
+  ASSERT(id_offset == 0);
 
   mi->simple_fquery(md, "DELETE FROM %sruns WHERE contest_id = %d ;",
                     md->table_prefix, cs->contest_id);
