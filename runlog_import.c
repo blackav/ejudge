@@ -145,6 +145,7 @@ runlog_import_xml(
   size_t in_entries_num = 0;
   size_t cur_entries_num = 0;
   size_t out_entries_num = 0;
+  size_t cur_entries_beg = 0;
   int r, i, st, j, k, corr_total, i2, j2, i3, j3, cur_out, prev_i;
   int min_i, min_j;
   time_t prev_time, cur_time = 0;
@@ -169,12 +170,14 @@ runlog_import_xml(
   memset(&in_header, 0, sizeof(in_header));
   memset(&cur_header, 0, sizeof(cur_header));
 
+  cur_entries_beg = run_get_first(runlog_state);
+  ASSERT(cur_entries_beg == 0);
   cur_entries_num = run_get_total(runlog_state);
   if (cur_entries_num > 0) {
     XCALLOC(cur_entries, cur_entries_num);
   }
   run_get_header(runlog_state, &cur_header);
-  run_get_all_entries(runlog_state, cur_entries);
+  zrun_get_all_entries(runlog_state, cur_entries);
 
   if (!cur_header.start_time) {
     fprintf(flog, "Contest is not yet started\n");
