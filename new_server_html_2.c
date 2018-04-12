@@ -268,25 +268,19 @@ ns_write_priv_all_runs(
 
     if (first_run >= match_tot) {
       first_run = match_tot - 1;
-      if (first_run < env.rbegin) first_run = env.rbegin;
+      if (first_run < 0) first_run = 0;
     }
     if (first_run < 0) {
       first_run = match_tot + first_run;
-      if (first_run < env.rbegin) first_run = env.rbegin;
+      if (first_run < 0) first_run = 0;
     }
     if (last_run >= match_tot) {
       last_run = match_tot - 1;
-      if (last_run < env.rbegin) last_run = env.rbegin;
+      if (last_run < 0) last_run = 0;
     }
     if (last_run < 0) {
       last_run = match_tot + last_run;
-      if (last_run < env.rbegin) last_run = env.rbegin;
-    }
-    if (first_run < env.rbegin) {
-      first_run = env.rbegin;
-    }
-    if (last_run < env.rbegin) {
-      last_run = env.rbegin;
+      if (last_run < 0) last_run = 0;
     }
     if (first_run <= last_run) {
       for (i = first_run; i <= last_run && i < match_tot; i++)
