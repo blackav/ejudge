@@ -1565,10 +1565,7 @@ check_func(
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
 
-  int retval = 0;
-
-  ///////////////////////////
-  retval = run_fix_runlog_time(log_f, rls->run_u, rls->runs, NULL);
+  int retval = run_fix_runlog_time(log_f, rls->run_f, rls->run_u, rls->runs, NULL);
   if (retval < 0) {
     return retval;
   }

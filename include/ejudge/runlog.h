@@ -417,6 +417,7 @@ run_get_all_statistics(
 int
 run_fix_runlog_time(
         FILE *log_f,
+        int run_f,
         int run_u,
         struct run_entry *runs,
         unsigned char *fix_mask);

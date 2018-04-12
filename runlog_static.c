@@ -342,6 +342,7 @@ run_is_source_available(int status)
 int
 run_fix_runlog_time(
         FILE *log_f,
+        int run_f, // unused, but added for the sake of uniformity
         int run_u,
         struct run_entry *runs,
         unsigned char *fix_mask)
