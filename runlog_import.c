@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -741,7 +741,8 @@ runlog_import_xml(
 
   fprintf(flog, "Saving the new runlog\n");
   run_backup(runlog_state, state->global->run_log_file);
-  run_set_runlog(runlog_state, out_entries_num, out_entries);
+  // FIXME: support non-zero offsets
+  run_set_runlog(runlog_state, 0, out_entries_num, out_entries);
   fprintf(flog, "Renaming archive files\n");
   for (i = 0; i < cur_entries_num; i++)
     if (cur_entries[i].is_imported)

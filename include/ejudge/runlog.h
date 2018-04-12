@@ -368,8 +368,11 @@ void runlog_import_xml(serve_state_t, struct runlog_state *,
                        const unsigned char *in_xml);
 
 int run_backup(runlog_state_t, const unsigned char *path);
-int run_set_runlog(runlog_state_t, int total_entries,
-                   struct run_entry *entries);
+int run_set_runlog(
+        runlog_state_t,
+        int first_entry,
+        int total_entries,
+        struct run_entry *entries);
 
 int runlog_check(FILE *, const struct run_header *, size_t begin, size_t, const struct run_entry *);
 
