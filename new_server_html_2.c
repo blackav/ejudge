@@ -208,7 +208,7 @@ ns_write_priv_all_runs(
     env.cur_time = time(0);
     env.rentries = run_get_entries_ptr(cs->runlog_state);
 
-    XCALLOC(match_idx, env.rtotal + 1);
+    XCALLOC(match_idx, env.rtotal + 1 - env.rbegin);
     match_tot = 0;
     transient_tot = 0;
 
@@ -237,7 +237,7 @@ ns_write_priv_all_runs(
     displayed_mask = (unsigned long*) alloca(displayed_size*sizeof(displayed_mask[0]));
     memset(displayed_mask, 0, displayed_size * sizeof(displayed_mask[0]));
 
-    XCALLOC(list_idx, (env.rtotal + 1));
+    XCALLOC(list_idx, (env.rtotal + 1 - env.rbegin));
     list_tot = 0;
 
     if (!first_run_set) {
@@ -268,19 +268,25 @@ ns_write_priv_all_runs(
 
     if (first_run >= match_tot) {
       first_run = match_tot - 1;
-      if (first_run < 0) first_run = 0;
+      if (first_run < env.rbegin) first_run = env.rbegin;
     }
     if (first_run < 0) {
       first_run = match_tot + first_run;
-      if (first_run < 0) first_run = 0;
+      if (first_run < env.rbegin) first_run = env.rbegin;
     }
     if (last_run >= match_tot) {
       last_run = match_tot - 1;
-      if (last_run < 0) last_run = 0;
+      if (last_run < env.rbegin) last_run = env.rbegin;
     }
     if (last_run < 0) {
       last_run = match_tot + last_run;
-      if (last_run < 0) last_run = 0;
+      if (last_run < env.rbegin) last_run = env.rbegin;
+    }
+    if (first_run < env.rbegin) {
+      first_run = env.rbegin;
+    }
+    if (last_run < env.rbegin) {
+      last_run = env.rbegin;
     }
     if (first_run <= last_run) {
       for (i = first_run; i <= last_run && i < match_tot; i++)
