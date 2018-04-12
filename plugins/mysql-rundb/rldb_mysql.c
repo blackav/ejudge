@@ -370,17 +370,20 @@ expand_runs(struct runlog_state *rls, int run_id)
   int new_a, i;
   struct run_entry *new_v;
 
+  ASSERT(run_id >= rls->run_f);
+
   if (run_id < rls->run_u) return;
-  if (run_id < rls->run_a) {
+  if (run_id - rls->run_f < rls->run_a) {
     rls->run_u = run_id + 1;
     return;
   }
 
   if (!(new_a = rls->run_a)) new_a = 128;
-  while (run_id >= new_a) new_a *= 2;
+  while (run_id - rls->run_f >= new_a) new_a *= 2;
   XCALLOC(new_v, new_a);
   for (i = 0; i < new_a; ++i) {
-    new_v[i].run_id = i;
+    // this is physicall access, must add to get run id
+    new_v[i].run_id = i + rls->run_f;
     new_v[i].status = RUN_EMPTY;
   }
   if (rls->run_u) memcpy(new_v, rls->runs, rls->run_u * sizeof(new_v[0]));
@@ -412,6 +415,10 @@ load_runs(struct rldb_mysql_cnts *cs)
     mi->free_res(md);
     return 0;
   }
+
+  // as the result is sorted by run_id, the first table row determines the id_offset (run_f) for the runs table
+  int run_f = -1;
+
   for (i = 0; i < md->row_count; i++) {
     memset(&ri, 0, sizeof(ri));
     memset(sha1, 0, sizeof(sha1));
@@ -422,6 +429,11 @@ load_runs(struct rldb_mysql_cnts *cs)
                        RUNS_ROW_WIDTH, runs_spec, &ri) < 0)
       goto fail;
     if (ri.run_id < 0) db_error_inv_value_fail(md, "run_id");
+    if (run_f < 0) {
+      run_f = ri.run_id;
+      rls->run_f = run_f; // FIXME: check!
+    }
+    if (ri.run_id < run_f) continue;
     if (ri.size < 0) db_error_inv_value_fail(md, "size");
     /* FIXME: check ordering on create_time/create_nsec */
     if (ri.create_nsec < 0 || ri.create_nsec > NSEC_MAX)
@@ -434,7 +446,7 @@ load_runs(struct rldb_mysql_cnts *cs)
       xfree(ri.run_uuid); ri.run_uuid = 0;
 
       expand_runs(rls, ri.run_id);
-      re = &rls->runs[ri.run_id];
+      re = &rls->runs[ri.run_id - rls->run_f];
       memset(re, 0, sizeof(*re));
 
       re->run_id = ri.run_id;
@@ -461,7 +473,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     xfree(ri.run_uuid); ri.run_uuid = 0;
 
     expand_runs(rls, ri.run_id);
-    re = &rls->runs[ri.run_id];
+    re = &rls->runs[ri.run_id - rls->run_f];
 
     re->run_id = ri.run_id;
     re->size = ri.size;
@@ -560,6 +572,7 @@ close_func(struct rldb_plugin_cnts *cdata)
   if (rls) {
     xfree(rls->runs); rls->runs = 0;
     rls->run_a = rls->run_u = 0;
+    rls->run_f = 0;
   }
   if (cs->plugin_state) cs->plugin_state->nref--;
   memset(cs, 0, sizeof(*cs));
@@ -587,6 +600,7 @@ reset_func(
   struct timeval curtime;
 
   rls->run_u = 0;
+  rls->run_f = 0;
   if (rls->run_a > 0) {
     memset(rls->runs, 0, sizeof(rls->runs[0]) * rls->run_a);
     for (i = 0; i < rls->run_a; ++i)
@@ -703,19 +717,19 @@ find_insert_point(
   }
 
   run_id = rls->run_u - 1;
-  while (run_id >= 0 && rls->runs[run_id].status == RUN_EMPTY)
+  while (run_id >= rls->run_f && rls->runs[run_id - rls->run_f].status == RUN_EMPTY)
     run_id--;
-  if (run_id < 0) return 0;
+  if (run_id < rls->run_f) return rls->run_f;
 
-  if (rls->runs[run_id].time < create_time) {
+  if (rls->runs[run_id - rls->run_f].time < create_time) {
     // preserve RUN_EMPTY runs anyway
     run_id = rls->run_u;
     //run_id++;
     expand_runs(rls, run_id);
     return run_id;
   }
-  if (rls->runs[run_id].time == create_time
-      && rls->runs[run_id].nsec < create_nsec) {
+  if (rls->runs[run_id - rls->run_f].time == create_time
+      && rls->runs[run_id - rls->run_f].nsec < create_nsec) {
     run_id = rls->run_u;
     //run_id++;
     expand_runs(rls, run_id);
@@ -723,7 +737,7 @@ find_insert_point(
   }
 
   // ok, use slow function and so on
-  r = compare_runs(&rls->runs[run_id], create_time, create_nsec, user_id);
+  r = compare_runs(&rls->runs[run_id - rls->run_f], create_time, create_nsec, user_id);
   if (r < 0) {
     run_id++;
     expand_runs(rls, run_id);
@@ -733,9 +747,9 @@ find_insert_point(
 
   // bsearch
   f = 0;
-  while (rls->runs[f].status == RUN_EMPTY && f < rls->run_u) f++;
-  ASSERT(f < rls->run_u);
-  l = run_id + 1;
+  while (rls->runs[f].status == RUN_EMPTY) ++f;
+  ASSERT(f < rls->run_u - rls->run_f);
+  l = run_id + 1 - rls->run_f;
   while (f < l) {
     m1 = (f + l) / 2;
     if (rls->runs[m1].status != RUN_EMPTY) {
@@ -770,12 +784,12 @@ find_insert_point(
       continue;
     }
     // insert somewhere inbetween [m1,m2]
-    run_id = m1 + 1;
+    run_id = m1 + 1 + rls->run_f;
     return run_id;
   }
   ASSERT(f == l);
   expand_runs(rls, rls->run_u);
-  return f;
+  return f + rls->run_f;
 
  duplicate_insert:
   err("find_insert_point: duplicate insert?");
@@ -806,16 +820,16 @@ get_insert_run_id(
     goto fail;
   ASSERT(run_id < rls->run_u);
 
-  if (rls->runs[run_id].status != RUN_EMPTY) {
+  if (rls->runs[run_id - rls->run_f].status != RUN_EMPTY) {
     // move [run_id, run_u - 1) one forward
-    memmove(&rls->runs[run_id + 1], &rls->runs[run_id],
+    memmove(&rls->runs[run_id + 1 - rls->run_f], &rls->runs[run_id - rls->run_f],
             (rls->run_u - run_id - 1) * sizeof(rls->runs[0]));
     for (i = run_id + 1; i < rls->run_u; ++i)
-      rls->runs[i].run_id = i;
+      rls->runs[i - rls->run_f].run_id = i;
     if (mi->simple_fquery(md, "UPDATE %sruns SET run_id = run_id + 1 WHERE contest_id = %d AND run_id >= %d ORDER BY run_id DESC;", md->table_prefix, cs->contest_id, run_id) < 0)
       goto fail;
   }
-  re = &rls->runs[run_id];
+  re = &rls->runs[run_id - rls->run_f];
   memset(re, 0, sizeof(*re));
   re->run_id = run_id;
   re->time = create_time;
@@ -1123,8 +1137,8 @@ do_update_entry(
   size_t cmd_z = 0;
   FILE *cmd_f = 0;
 
-  ASSERT(run_id >= 0 && run_id < rls->run_u);
-  de = &rls->runs[run_id];
+  ASSERT(run_id >= rls->run_f && run_id < rls->run_u);
+  de = &rls->runs[run_id - rls->run_f];
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "UPDATE %sruns SET ", state->md->table_prefix);
@@ -1154,8 +1168,8 @@ add_entry_func(
   struct runlog_state *rls = cs->rl_state;
   struct run_entry *de;
 
-  ASSERT(run_id >= 0 && run_id < rls->run_u);
-  de = &rls->runs[run_id];
+  ASSERT(run_id >= rls->run_f && run_id < rls->run_u);
+  de = &rls->runs[run_id - rls->run_f];
 
   ASSERT(de->run_id == run_id);
   ASSERT(de->status == RUN_EMPTY);
@@ -1177,8 +1191,8 @@ undo_add_entry_func(
   struct runlog_state *rls = cs->rl_state;
   struct run_entry *re;
 
-  ASSERT(run_id >= 0 && run_id < rls->run_u);
-  re = &rls->runs[run_id];
+  ASSERT(run_id >= rls->run_f && run_id < rls->run_u);
+  re = &rls->runs[run_id - rls->run_f];
 
   if (mi->simple_fquery(md, "DELETE FROM %sruns WHERE run_id = %d AND contest_id = %d ;", md->table_prefix, run_id, cs->contest_id) < 0)
     return -1;
@@ -1442,8 +1456,8 @@ clear_entry_func(
   struct runlog_state *rls = cs->rl_state;
   struct run_entry *re;
 
-  ASSERT(run_id >= 0 && run_id < rls->run_u);
-  re = &rls->runs[run_id];
+  ASSERT(run_id >= rls->run_f && run_id < rls->run_u);
+  re = &rls->runs[run_id - rls->run_f];
 
   if (state->mi->simple_fquery(state->md, "DELETE FROM %sruns WHERE run_id = %d AND contest_id = %d ;", state->md->table_prefix, run_id, cs->contest_id) < 0)
     return -1;
@@ -1512,8 +1526,8 @@ set_entry_func(
   struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
   struct runlog_state *rls = cs->rl_state;
 
-  ASSERT(run_id >= 0 && run_id < rls->run_u);
-  ASSERT(rls->runs[run_id].status != RUN_EMPTY);
+  ASSERT(run_id >= rls->run_f && run_id < rls->run_u);
+  ASSERT(rls->runs[run_id - rls->run_f].status != RUN_EMPTY);
 
   (void) rls;
   return do_update_entry(cs, run_id, in, flags);
@@ -1544,7 +1558,7 @@ put_entry_func(
   ASSERT(re->run_id >= 0);
 
   expand_runs(rls, re->run_id);
-  if (rls->runs[re->run_id].status != RUN_EMPTY) return -1;
+  if (rls->runs[re->run_id - rls->run_f].status != RUN_EMPTY) return -1;
   if (re->status == RUN_EMPTY) return -1;
 
   // FIXME: check, that time is valid
@@ -1612,7 +1626,7 @@ put_entry_func(
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = 0;
 
-  memcpy(&rls->runs[re->run_id], re, sizeof(rls->runs[0]));
+  memcpy(&rls->runs[re->run_id - rls->run_f], re, sizeof(rls->runs[0]));
 
   return 0;
 
@@ -1667,6 +1681,7 @@ check_func(
   struct runlog_state *rls = cs->rl_state;
   int retval = 0;
 
+  ////////////////////// FIX IT!
   retval = run_fix_runlog_time(log_f, rls->run_u, rls->runs, NULL);
   if (retval < 0) {
     return retval;

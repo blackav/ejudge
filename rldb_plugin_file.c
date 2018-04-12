@@ -360,20 +360,21 @@ run_read_entry_v0(struct rldb_file_cnts *cs, int n)
   char tip[RUN_RECORD_SIZE + 16];
   int  k, r;
   ej_ip4_t ip;
+  int n_off = n - rls->run_f;
 
   memset(buf, 0, sizeof(buf));
   if (run_read_record_v0(cs, buf, RUN_RECORD_SIZE) < 0) return -1;
   r = sscanf(buf, " %lld %d %u %hd %d %d %d %hhu %hd %d %s %n",
-             &rls->runs[n].time, &rls->runs[n].run_id,
-             &rls->runs[n].size, &rls->runs[n].locale_id,
-             &rls->runs[n].user_id, &rls->runs[n].lang_id,
-             &rls->runs[n].prob_id, &rls->runs[n].status,
-             &rls->runs[n].test, &rls->runs[n].score, tip, &k);
+             &rls->runs[n_off].time, &rls->runs[n_off].run_id,
+             &rls->runs[n_off].size, &rls->runs[n_off].locale_id,
+             &rls->runs[n_off].user_id, &rls->runs[n_off].lang_id,
+             &rls->runs[n_off].prob_id, &rls->runs[n_off].status,
+             &rls->runs[n_off].test, &rls->runs[n_off].score, tip, &k);
   if (r != 11) ERR_R("[%d]: sscanf returned %d", n, r);
   if (buf[k] != 0) ERR_R("[%d]: excess data", n);
   if (strlen(tip) > RUN_MAX_IP_LEN) ERR_R("[%d]: ip is to long", n);
   if (xml_parse_ip(NULL, 0, 0, 0, tip, &ip) < 0) ERR_R("[%d]: cannot parse IP");
-  rls->runs[n].a.ip = ip;
+  rls->runs[n_off].a.ip = ip;
   return 0;
 }
 
@@ -422,6 +423,8 @@ read_runlog_version_0(struct rldb_file_cnts *cs)
   if ((filesize - RUN_HEADER_SIZE) % RUN_RECORD_SIZE != 0)
     ERR_C("bad runs file size: remainder %d", (filesize - RUN_HEADER_SIZE) % RUN_RECORD_SIZE);
 
+  // id_offset is always 0
+  rls->run_f = 0;
   rls->run_u = (filesize - RUN_HEADER_SIZE) / RUN_RECORD_SIZE;
   rls->run_a = 128;
   while (rls->run_u > rls->run_a) rls->run_a *= 2;
@@ -903,6 +906,7 @@ reset_func(
   int i;
 
   rls->run_u = 0;
+  rls->run_f = 0;
   if (rls->run_a > 0) {
     memset(rls->runs, 0, sizeof(rls->runs[0]) * rls->run_a);
     for (i = 0; i < rls->run_a; ++i)
@@ -1280,6 +1284,7 @@ change_status_func(
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
 
+  ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].status = new_status;
@@ -1372,6 +1377,7 @@ set_status_func(
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
 
+  ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].status = new_status;
@@ -1386,6 +1392,7 @@ clear_entry_func(
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
 
+  ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   if (run_id == rls->run_u - 1) {
@@ -1411,6 +1418,7 @@ set_hidden_func(
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
 
+  ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].is_hidden = new_hidden;
@@ -1426,6 +1434,7 @@ set_judge_id_func(
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
 
+  ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].judge_id = new_judge_id;
@@ -1441,6 +1450,7 @@ set_pages_func(
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
 
+  ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].pages = new_pages;
@@ -1457,6 +1467,7 @@ set_entry_func(
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
 
+  ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   memcpy(&rls->runs[run_id], in, sizeof(*in));
@@ -1534,6 +1545,7 @@ change_status_2_func(
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
 
+  ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].status = new_status;
@@ -1555,6 +1567,7 @@ check_func(
 
   int retval = 0;
 
+  ///////////////////////////
   retval = run_fix_runlog_time(log_f, rls->run_u, rls->runs, NULL);
   if (retval < 0) {
     return retval;
@@ -1582,6 +1595,7 @@ change_status_3_func(
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
 
+  ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].status = new_status;
@@ -1606,6 +1620,7 @@ change_status_4_func(
   struct rldb_file_cnts *cs = (struct rldb_file_cnts*) cdata;
   struct runlog_state *rls = cs->rl_state;
 
+  ASSERT(rls->run_f == 0);
   ASSERT(run_id >= 0 && run_id < rls->run_u);
 
   rls->runs[run_id].status = new_status;
