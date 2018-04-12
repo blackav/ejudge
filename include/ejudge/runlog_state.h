@@ -66,7 +66,7 @@ struct runlog_state
 {
   RUNS_ACCESS struct run_header  head;
   RUNS_ACCESS struct run_entry  *runs;
-  RUNS_ACCESS int                run_f;  // first run loaded
+  RUNS_ACCESS int                run_f;  // first run loaded, runs[0] is information for run run_f
   RUNS_ACCESS int                run_u;
   RUNS_ACCESS int                run_a;
   teamdb_state_t     teamdb_state;
@@ -78,6 +78,7 @@ struct runlog_state
   int max_user_id;
   int user_count;
 
+  int run_extra_f;  // first index offset, i.e. run_extras[0] is actually index for run id run_extra_f, see also run_f
   int run_extra_u, run_extra_a;
   struct run_entry_extra *run_extras; /* run indices */
 

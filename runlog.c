@@ -444,24 +444,24 @@ run_add_record(
   extend_run_extras(state);
   if (i == state->run_u - 1) {
     // inserting at the last position
-    state->run_extras[i].prev_user_id = ue->run_id_last;
-    state->run_extras[i].next_user_id = -1;
+    state->run_extras[i - state->run_extra_f].prev_user_id = ue->run_id_last;
+    state->run_extras[i - state->run_extra_f].next_user_id = -1;
     if (ue->run_id_last < 0) {
       ue->run_id_first = i;
     } else {
-      state->run_extras[ue->run_id_last].next_user_id = i;
+      state->run_extras[ue->run_id_last - state->run_extra_f].next_user_id = i;
     }
     ue->run_id_last = i;
   } else {
     // inserting somewhere in the middle
     ue->run_id_valid = 0;
-    state->run_extras[i].prev_user_id = -1;
-    state->run_extras[i].next_user_id = -1;
+    state->run_extras[i - state->run_extra_f].prev_user_id = -1;
+    state->run_extras[i - state->run_extra_f].next_user_id = -1;
     // drop the following indices
     for (int j = i + 1; j < state->run_u; ++j) {
       int uu = state->runs[j - state->run_f].user_id;
-      state->run_extras[j].prev_user_id = -1;
-      state->run_extras[j].next_user_id = -1;
+      state->run_extras[j - state->run_extra_f].prev_user_id = -1;
+      state->run_extras[j - state->run_extra_f].next_user_id = -1;
       if (uu > 0) {
         struct user_entry *uue = try_user_entry(state, uu);
         if (uue) {
@@ -793,7 +793,7 @@ run_get_team_usage(
   ASSERT(ue);
   ASSERT(ue->run_id_valid > 0); // run index is ok
 
-  for (int run_id = ue->run_id_first; run_id >= state->run_f; run_id = state->run_extras[run_id].next_user_id) {
+  for (int run_id = ue->run_id_first; run_id >= state->run_f; run_id = state->run_extras[run_id - state->run_extra_f].next_user_id) {
     ASSERT(run_id < state->run_u);
     int off_run_id = run_id - state->run_f;
     ASSERT(state->runs[off_run_id].user_id == user_id);
@@ -836,7 +836,7 @@ run_get_attempts(
 
   // FIXME: use user_id+prob_id index
 
-  for (i = ue->run_id_first; i >= state->run_f; i = state->run_extras[i].next_user_id) {
+  for (i = ue->run_id_first; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].next_user_id) {
     ASSERT(i < state->run_u);
     const struct run_entry *re = &state->runs[i - state->run_f];
     ASSERT(re->user_id == sample_re->user_id);
@@ -885,7 +885,7 @@ run_count_all_attempts(runlog_state_t state, int user_id, int prob_id)
 
   // FIXME: use user_id+prob_id index
 
-  for (i = ue->run_id_first; i >= state->run_f; i = state->run_extras[i].next_user_id) {
+  for (i = ue->run_id_first; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].next_user_id) {
     ASSERT(i < state->run_u);
     const struct run_entry *re = &state->runs[i - state->run_f];
     ASSERT(re->user_id == user_id);
@@ -908,7 +908,7 @@ run_count_all_attempts_2(runlog_state_t state, int user_id, int prob_id, int ign
   ASSERT(ue);
   ASSERT(ue->run_id_valid > 0); // run index is ok
 
-  for (i = ue->run_id_first; i >= state->run_f; i = state->run_extras[i].next_user_id) {
+  for (i = ue->run_id_first; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].next_user_id) {
     ASSERT(i < state->run_u);
     const struct run_entry *re = &state->runs[i - state->run_f];
     ASSERT(re->user_id == user_id);
@@ -932,7 +932,7 @@ run_count_tokens(runlog_state_t state, int user_id, int prob_id)
   ASSERT(ue);
   ASSERT(ue->run_id_valid > 0); // run index is ok
 
-  for (i = ue->run_id_first; i >= state->run_f; i = state->run_extras[i].next_user_id) {
+  for (i = ue->run_id_first; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].next_user_id) {
     ASSERT(i < state->run_u);
     const struct run_entry *re = &state->runs[i - state->run_f];
     ASSERT(re->user_id == user_id);
@@ -1051,6 +1051,7 @@ run_reset(
   state->run_extras = NULL;
   state->run_extra_u = 0;
   state->run_extra_a = 0;
+  state->run_extra_f = 0;
 
   run_drop_uuid_hash(state);
 
@@ -1074,7 +1075,7 @@ run_check_duplicate(runlog_state_t state, int run_id)
 
   // FIXME: use user_id+prob_id index
 
-  for (i = state->run_extras[run_id].prev_user_id; i >= state->run_f; i = state->run_extras[i].prev_user_id) {
+  for (i = state->run_extras[run_id - state->run_extra_f].prev_user_id; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].prev_user_id) {
     ASSERT(i < state->run_u);
     q = &state->runs[i - state->run_f];
     ASSERT(q->user_id == p->user_id);
@@ -1122,7 +1123,7 @@ run_find_duplicate(
 
   // FIXME: use user_id+prob_id index
 
-  for (i = ue->run_id_last; i >= state->run_f; i = state->run_extras[i].prev_user_id) {
+  for (i = ue->run_id_last; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].prev_user_id) {
     ASSERT(i < state->run_u);
     q = &state->runs[i - state->run_f];
     ASSERT(q->user_id == user_id);
@@ -1160,7 +1161,7 @@ run_get_accepted_set(
   ASSERT(ue);
   ASSERT(ue->run_id_valid > 0); // run index is ok
 
-  for (i = ue->run_id_first; i >= state->run_f; i = state->run_extras[i].next_user_id) {
+  for (i = ue->run_id_first; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].next_user_id) {
     ASSERT(i < state->run_u);
     q = &state->runs[i - state->run_f];
     ASSERT(q->user_id == user_id);
@@ -1192,7 +1193,7 @@ run_get_ok_and_reject_count(
   ASSERT(ue);
   ASSERT(ue->run_id_valid > 0); // run index is ok
 
-  for (i = ue->run_id_first; i >= state->run_f; i = state->run_extras[i].next_user_id) {
+  for (i = ue->run_id_first; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].next_user_id) {
     ASSERT(i < state->run_u);
     q = &state->runs[i - state->run_f];
     ASSERT(q->user_id == user_id);
@@ -1213,7 +1214,6 @@ run_get_header(runlog_state_t state, struct run_header *out)
 void
 run_get_all_entries(runlog_state_t state, struct run_entry *out)
 {
-  ///////////////////////// FIXIT
   memcpy(out, state->runs, sizeof(out[0]) * state->run_u);
 }
 
@@ -1537,13 +1537,13 @@ extend_run_extras(runlog_state_t state)
     state->run_extra_u = state->run_u;
     return;
   }
-  if (state->run_u <= state->run_extra_a) {
+  if (state->run_u <= state->run_extra_a - state->run_extra_f) {
     state->run_extra_u = state->run_u;
     return;
   }
   int new_a = state->run_extra_a * 2;
   if (!new_a) new_a = 32;
-  while (new_a < state->run_u) new_a *= 2;
+  while (new_a < state->run_u - state->run_f) new_a *= 2;
   struct run_entry_extra *new_x = calloc(new_a, sizeof(new_x[0]));
   if (state->run_extra_u > 0) {
     memcpy(new_x, state->run_extras, state->run_extra_u * sizeof(new_x[0]));
@@ -1551,6 +1551,7 @@ extend_run_extras(runlog_state_t state)
   xfree(state->run_extras); state->run_extras = new_x;
   state->run_extra_a = new_a;
   state->run_extra_u = state->run_u;
+  state->run_extra_f = state->run_f;
 }
 
 static const unsigned char valid_user_run_statuses[256] =
@@ -1631,13 +1632,13 @@ get_user_entry(runlog_state_t state, int user_id)
       const struct run_entry *re = &state->runs[run_id - state->run_f];
       if (valid_user_run_statuses[re->status] && re->user_id == user_id) {
         // append to the double-linked list
-        state->run_extras[run_id].prev_user_id = ut->run_id_last;
-        state->run_extras[run_id].next_user_id = -1;
+        state->run_extras[run_id - state->run_extra_f].prev_user_id = ut->run_id_last;
+        state->run_extras[run_id - state->run_extra_f].next_user_id = -1;
         if (ut->run_id_first < 0) {
           ut->run_id_first = run_id;
         }
         if (ut->run_id_last >= 0) {
-          state->run_extras[ut->run_id_last].next_user_id = run_id;
+          state->run_extras[ut->run_id_last - state->run_extra_f].next_user_id = run_id;
         }
         ut->run_id_last = run_id;
       }
@@ -1810,15 +1811,15 @@ run_virtual_stop(
 
   // updating user_id index
   extend_run_extras(state);
-  state->run_extras[i].prev_user_id = -1;
-  state->run_extras[i].next_user_id = -1;
+  state->run_extras[i - state->run_extra_f].prev_user_id = -1;
+  state->run_extras[i - state->run_extra_f].next_user_id = -1;
   if (i < state->run_u - 1) {
     // inserting somewhere in the middle
     // drop the following indices
     for (int j = i + 1; j < state->run_u; ++j) {
       int uu = state->runs[j - state->run_f].user_id;
-      state->run_extras[j].prev_user_id = -1;
-      state->run_extras[j].next_user_id = -1;
+      state->run_extras[j - state->run_extra_f].prev_user_id = -1;
+      state->run_extras[j - state->run_extra_f].next_user_id = -1;
       if (uu > 0) {
         struct user_entry *uue = try_user_entry(state, uu);
         if (uue) {
@@ -1955,7 +1956,7 @@ run_has_transient_user_runs(runlog_state_t state, int user_id)
   ASSERT(ue);
   ASSERT(ue->run_id_valid > 0); // run index is ok
 
-  for (i = ue->run_id_first; i >= state->run_f; i = state->run_extras[i].next_user_id) {
+  for (i = ue->run_id_first; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].next_user_id) {
     ASSERT(i < state->run_u);
     const struct run_entry *re = &state->runs[i - state->run_f];
     ASSERT(re->user_id == user_id);
@@ -2535,13 +2536,13 @@ build_indices(runlog_state_t state, int flags)
     }
 
     // append to the double-linked list
-    state->run_extras[i].prev_user_id = ue->run_id_last;
-    state->run_extras[i].next_user_id = -1;
+    state->run_extras[i - state->run_extra_f].prev_user_id = ue->run_id_last;
+    state->run_extras[i - state->run_extra_f].next_user_id = -1;
     if (ue->run_id_first < 0) {
       ue->run_id_first = i;
     }
     if (ue->run_id_last >= 0) {
-      state->run_extras[ue->run_id_last].next_user_id = i;
+      state->run_extras[ue->run_id_last - state->run_extra_f].next_user_id = i;
     }
     ue->run_id_last = i;
 
@@ -2628,7 +2629,7 @@ run_find(
     ASSERT(ue->run_id_valid > 0);
     if (first_run <= last_run) {
       // forward search
-      for (i = ue->run_id_first; i >= state->run_f && i <= last_run; i = state->run_extras[i].next_user_id) {
+      for (i = ue->run_id_first; i >= state->run_f && i <= last_run; i = state->run_extras[i - state->run_extra_f].next_user_id) {
         if (i < first_run) continue;
         if (prob_id && prob_id != state->runs[i - state->run_f].prob_id) continue;
         if (lang_id && lang_id != state->runs[i - state->run_f].lang_id) continue;
@@ -2639,7 +2640,7 @@ run_find(
       }
     } else {
       // backward search
-      for (i = ue->run_id_last; i >= state->run_f && i >= last_run; i = state->run_extras[i].prev_user_id) {
+      for (i = ue->run_id_last; i >= state->run_f && i >= last_run; i = state->run_extras[i - state->run_extra_f].prev_user_id) {
         if (i > first_run) continue;
         if (prob_id && prob_id != state->runs[i - state->run_f].prob_id) continue;
         if (lang_id && lang_id != state->runs[i - state->run_f].lang_id) continue;
@@ -2717,7 +2718,7 @@ run_get_virtual_info(
   ASSERT(ue);
   ASSERT(ue->run_id_valid);
 
-  for (i = ue->run_id_last; i >= state->run_f; i = state->run_extras[i].prev_user_id) {
+  for (i = ue->run_id_last; i >= state->run_f; i = state->run_extras[i - state->run_extra_f].prev_user_id) {
     ASSERT(i < state->run_u);
     ASSERT(state->runs[i - state->run_f].user_id == user_id);
     if ((s = state->runs[i - state->run_f].status) == RUN_EMPTY) continue;
@@ -2943,15 +2944,15 @@ run_get_user_first_run_id(runlog_state_t state, int user_id)
 int
 run_get_user_next_run_id(runlog_state_t state, int run_id)
 {
-  if (run_id < 0 || run_id >= state->run_extra_u) return -1;
-  return state->run_extras[run_id].next_user_id;
+  if (run_id < state->run_extra_f || run_id >= state->run_extra_u) return -1;
+  return state->run_extras[run_id - state->run_extra_f].next_user_id;
 }
 
 int
 run_get_user_prev_run_id(runlog_state_t state, int run_id)
 {
-  if (run_id < 0 || run_id >= state->run_extra_u) return -1;
-  return state->run_extras[run_id].prev_user_id;
+  if (run_id < state->run_extra_f || run_id >= state->run_extra_u) return -1;
+  return state->run_extras[run_id - state->run_extra_f].prev_user_id;
 }
 
 int
@@ -3011,7 +3012,7 @@ run_fetch_user_runs(
   ASSERT(ue);
   ASSERT(ue->run_id_valid > 0); // run index is ok
 
-  for (int run_id = ue->run_id_first; run_id >= state->run_f; run_id = state->run_extras[run_id].next_user_id) {
+  for (int run_id = ue->run_id_first; run_id >= state->run_f; run_id = state->run_extras[run_id - state->run_extra_f].next_user_id) {
     ASSERT(run_id < state->run_u);
     ASSERT(state->runs[run_id - state->run_f].user_id == user_id);
     if (state->runs[run_id - state->run_f].prob_id == prob_id && run_id >= low_run_id && run_id < high_run_id)
@@ -3027,7 +3028,7 @@ run_fetch_user_runs(
   struct run_entry *out;
   XCALLOC(out, count);
   int out_ind = 0;
-  for (int run_id = ue->run_id_first; run_id >= state->run_f; run_id = state->run_extras[run_id].next_user_id) {
+  for (int run_id = ue->run_id_first; run_id >= state->run_f; run_id = state->run_extras[run_id - state->run_extra_f].next_user_id) {
     ASSERT(run_id < state->run_u);
     ASSERT(state->runs[run_id - state->run_f].user_id == user_id);
     if (state->runs[run_id - state->run_f].prob_id == prob_id && run_id >= low_run_id && run_id < high_run_id) {
