@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -342,12 +342,12 @@ run_is_source_available(int status)
 int
 run_fix_runlog_time(
         FILE *log_f,
-        int run_f, // unused, but added for the sake of uniformity
+        int run_f,
         int run_u,
         struct run_entry *runs,
         unsigned char *fix_mask)
 {
-  int run_id = 1, run_id2;
+  int run_id = run_f + 1, run_id2;
   time_t cur_time, prev_time = 0, new_time;
   //struct tm prev_tm, cur_tm;
 
@@ -360,19 +360,19 @@ run_fix_runlog_time(
   prev_time = runs[0].time;
 
   while (run_id < run_u) {
-    if (runs[run_id].status == RUN_EMPTY) {
+    if (runs[run_id - run_f].status == RUN_EMPTY) {
       ++run_id;
       continue;
     }
 
-    if (runs[run_id].time >= prev_time) {
-      prev_time = runs[run_id].time;
+    if (runs[run_id - run_f].time >= prev_time) {
+      prev_time = runs[run_id - run_f].time;
       ++run_id;
       continue;
     }
 
     // check that we have the DST problem
-    cur_time = (time_t) runs[run_id].time;
+    cur_time = (time_t) runs[run_id - run_f].time;
 
     if (prev_time >= cur_time + 3600) {
       fprintf(log_f, "Error: timestamp for run %d: %ld (%s); ",
@@ -413,16 +413,16 @@ run_fix_runlog_time(
     // find how many runs need fixing
     new_time = prev_time + 1;
     run_id2 = run_id;
-    while (run_id2 < run_u - 1 && new_time > runs[run_id2 + 1].time) {
+    while (run_id2 < run_u - 1 && new_time > runs[run_id2 + 1 - run_f].time) {
       ++new_time;
       ++run_id2;
     }
 
     fprintf(log_f, "Warning: runs %d-%d to be fixed\n", run_id, run_id2);
     for (new_time = prev_time + 1; run_id <= run_id2; ++run_id, ++new_time) {
-      runs[run_id].time = new_time;
+      runs[run_id - run_f].time = new_time;
       if (fix_mask) {
-        fix_mask[run_id] = 1;
+        fix_mask[run_id - run_f] = 1;
       }
     }
     prev_time = 0;
