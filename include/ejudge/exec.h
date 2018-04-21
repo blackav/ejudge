@@ -1,7 +1,7 @@
 #ifndef __REUSE_EXEC_H__
 #define __REUSE_EXEC_H__
 
-/* Copyright (C) 1998-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2018 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:26:50 cher> */
 
 /*
@@ -113,6 +113,8 @@ tpTask   task_NewWait(tpTask);
 int      task_Kill(tpTask);
 int      task_TryProcessGroup(tpTask);
 int      task_KillProcessGroup(tpTask);
+int      task_TryAnyProcess(tpTask);
+int      task_KillAllProcesses(tpTask);
 int      task_Status(tpTask);
 int      task_TermSignal(tpTask);
 int      task_ExitCode(tpTask);

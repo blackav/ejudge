@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2018 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:33:28 cher> */
 
 /*
@@ -2542,6 +2542,23 @@ task_KillProcessGroup(tTask *tsk)
   task_init_module();
   if (tsk->pid > 0) {
     do_kill(tsk, -tsk->pid, SIGKILL);
+  }
+  return 0;
+}
+
+int
+task_TryAnyProcess(tTask *tsk)
+{
+  task_init_module();
+  return do_kill(tsk, -1, 0);
+}
+
+int
+task_KillAllProcesses(tTask *tsk)
+{
+  task_init_module();
+  if (tsk->pid > 0) {
+    do_kill(tsk, -1, SIGKILL);
   }
   return 0;
 }
