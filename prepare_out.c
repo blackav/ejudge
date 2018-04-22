@@ -1518,6 +1518,10 @@ prepare_unparse_prob(
       || (!prob->abstract && prob->enable_process_group >= 0)) {
     unparse_bool(f, "enable_process_group", prob->enable_process_group);
   }
+  if ((prob->abstract > 0 && prob->enable_kill_all > 0)
+      || (!prob->abstract && prob->enable_kill_all >= 0)) {
+    unparse_bool(f, "enable_kill_all", prob->enable_kill_all);
+  }
   if ((prob->abstract > 0 && prob->enable_testlib_mode > 0)
       || (!prob->abstract && prob->enable_testlib_mode >= 0)) {
     unparse_bool(f, "enable_testlib_mode", prob->enable_testlib_mode);
@@ -1917,6 +1921,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "disable_stderr", prob->disable_stderr);
   if (prob->enable_process_group > 0)
     unparse_bool(f, "enable_process_group", prob->enable_process_group);
+  if (prob->enable_kill_all > 0)
+    unparse_bool(f, "enable_kill_all", prob->enable_kill_all);
   if (prob->enable_testlib_mode > 0)
     unparse_bool(f, "enable_testlib_mode", prob->enable_testlib_mode);
   if (prob->hide_variant > 0)

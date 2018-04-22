@@ -1547,6 +1547,7 @@ function viewDialogOnChange(field)
             </s:tr>
 
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_process_group" "Limits" "Use separate process group" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "enable_kill_all" "Limits" "Kill all processes of ejuser" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "disable_security" "Limits" "Disable security restrictions" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_suid_run" "Limits" "Enable SUID helper" %>
             <%@expand ORIG_ENV "lang_time_adj" "Limits" "Language-specific time-limit adjustment (s)" %>

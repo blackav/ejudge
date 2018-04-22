@@ -439,6 +439,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(ignore_unmarked, "L"),
   PROBLEM_PARAM(disable_stderr, "L"),
   PROBLEM_PARAM(enable_process_group, "L"),
+  PROBLEM_PARAM(enable_kill_all, "L"),
   PROBLEM_PARAM(enable_testlib_mode, "L"),
   PROBLEM_PARAM(hide_variant, "L"),
   PROBLEM_PARAM(autoassign_variants, "L"),
@@ -1299,6 +1300,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->ignore_unmarked = -1;
   p->disable_stderr = -1;
   p->enable_process_group = -1;
+  p->enable_kill_all = -1;
   p->enable_testlib_mode = -1;
   p->hide_variant = -1;
   p->autoassign_variants = -1;
@@ -3638,13 +3640,14 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_advance_to_next, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_stand_hide_time, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_ctrl_chars, prob, aprob, g);
-    prepare_set_prob_value(CNTSPROB_valuer_sets_marked, prob, aprob, g);    
-    prepare_set_prob_value(CNTSPROB_ignore_unmarked, prob, aprob, g);    
-    prepare_set_prob_value(CNTSPROB_disable_stderr, prob, aprob, g);    
-    prepare_set_prob_value(CNTSPROB_enable_process_group, prob, aprob, g);    
-    prepare_set_prob_value(CNTSPROB_enable_testlib_mode, prob, aprob, g);    
-    prepare_set_prob_value(CNTSPROB_hide_variant, prob, aprob, g);    
-    prepare_set_prob_value(CNTSPROB_autoassign_variants, prob, aprob, g);    
+    prepare_set_prob_value(CNTSPROB_valuer_sets_marked, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_ignore_unmarked, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_disable_stderr, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_enable_process_group, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_enable_kill_all, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_enable_testlib_mode, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_hide_variant, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_autoassign_variants, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_text_form, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_stand_ignore_score, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_stand_last_column, prob, aprob, g);
@@ -5915,6 +5918,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->interactor_real_time_limit = in->interactor_real_time_limit;
   out->disable_stderr = in->disable_stderr;
   out->enable_process_group = in->enable_process_group;
+  out->enable_kill_all = in->enable_kill_all;
   out->hide_variant = in->hide_variant;
   out->enable_testlib_mode = in->enable_testlib_mode;
   xstrdup3(&out->test_pat, in->test_pat);
@@ -6197,6 +6201,7 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN(ignore_unmarked);
   INHERIT_BOOLEAN(disable_stderr);
   INHERIT_BOOLEAN(enable_process_group);
+  INHERIT_BOOLEAN(enable_kill_all);
   INHERIT_BOOLEAN(enable_testlib_mode);
   INHERIT_BOOLEAN(hide_variant);
   INHERIT_BOOLEAN(autoassign_variants);
@@ -6756,6 +6761,7 @@ prepare_set_all_prob_values(
     CNTSPROB_interactor_real_time_limit,
     CNTSPROB_disable_stderr,
     CNTSPROB_enable_process_group,
+    CNTSPROB_enable_kill_all,
     CNTSPROB_enable_testlib_mode,
     CNTSPROB_hide_variant,
     CNTSPROB_test_pat,
