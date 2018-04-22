@@ -158,7 +158,7 @@ ns_unpriv_parse_run_id(
 <s:url name="DownloadRunUrl" ac="download-run">
     <s:param name="run_id" value="run_id" />
 </s:url>
-<s:url name="ResubmitUrl" ac="main-page">
+<s:url name="ResubmitUrl" ac="view-problem-submit">
     <s:param name="prob_id" value="re.prob_id" />
     <s:param name="lang_id" value="re.lang_id" />
 </s:url>
