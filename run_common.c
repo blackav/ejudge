@@ -2795,6 +2795,9 @@ run_one_test(
   }
   */
   task_SetWorkingDir(tsk, working_dir);
+  if (srpp->enable_kill_all > 0) {
+    task_EnableKillAll(tsk);
+  }
   if (srpp->enable_process_group > 0) {
     task_EnableProcessGroup(tsk);
 #ifndef __WIN32__
@@ -3066,7 +3069,12 @@ run_one_test(
   }
 #endif
 
-  if (srpp->enable_process_group > 0 && task_TryProcessGroup(tsk) >= 0) {
+  if (srpp->enable_kill_all > 0 && task_TryAnyProcess(tsk) >= 0) {
+    append_msg_to_log(check_out_path,
+                      "There exist processes belonging to the 'ejexec' user\n");
+    pg_not_empty = 1;
+    task_KillAllProcesses(tsk);
+  } else if (srpp->enable_process_group > 0 && task_TryProcessGroup(tsk) >= 0) {
     // there exist some processes beloging to the process group
     append_msg_to_log(check_out_path,
                       "There exist processes belonging to the process group of the program being tested\n");

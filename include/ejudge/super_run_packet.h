@@ -168,6 +168,7 @@ struct super_run_in_problem_packet
   unsigned char *open_tests;
   ejintbool_t enable_process_group;
   unsigned char *umask;
+  ejintbool_t enable_kill_all;
 
   int type_val META_ATTRIB((meta_hidden));
 };
