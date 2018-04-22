@@ -455,7 +455,7 @@ function setDivVisibility(oper, value)
     <s:param name="prob" value="info.prob_id" />
     <s:param name="lang" value="info.lang_id" />
 </s:url>
-<p style="display: inline-block;"><s:a url="DownloadRunUrl"><s:_>Download run</s:_></s:a></p>
+<p style="display: inline-block;"><s:a url="ResubmitUrl">Resubmit</s:a>&nbsp;&nbsp;<s:a url="DownloadRunUrl"><s:_>Download run</s:_></s:a></p>
 
 <% if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0 && info.is_readonly <= 0) { %>
 <s:form>
