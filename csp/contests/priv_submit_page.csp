@@ -37,6 +37,7 @@ ns_unparse_answers(
   const struct section_problem_data *prob = 0;
   const struct section_global_data *global = 0;
   int prob_id = 0, variant = 0, i;
+  int lang_id = 0;
   problem_xml_t px = 0;
   struct watched_file *pw = 0;
   const unsigned char *pw_path = 0;
@@ -61,6 +62,10 @@ ns_unparse_answers(
       || (prob && prob->variant_num > 0 && variant > prob->variant_num)) {
     FAIL(NEW_SRV_ERR_INV_VARIANT);
   }
+%><s:read var="lang_id" default="0" /><%
+  if (lang_id < 0 || lang_id > cs->max_lang || !cs->langs[lang_id]) lang_id = 0;
+
+
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
@@ -263,7 +268,7 @@ ns_unparse_answers(
 
 <%  if (!prob || !prob->type) { %>
 <tr>
-<td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:select name="lang_id"><option value=""></option><%
+<td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:select name="lang_id" value="lang_id"><option value=""></option><%
     for (i = 1; i <= cs->max_lang; i++) {
       if (cs->langs[i]) {
 %><s:option value="i"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" checkExpr="" /></s:option><%
