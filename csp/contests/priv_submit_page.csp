@@ -268,10 +268,10 @@ ns_unparse_answers(
 
 <%  if (!prob || !prob->type) { %>
 <tr>
-<td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:select name="lang_id" value="lang_id"><option value=""></option><%
+<td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:select name="lang_id"><option value=""></option><%
     for (i = 1; i <= cs->max_lang; i++) {
       if (cs->langs[i]) {
-%><s:option value="i"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" checkExpr="" /></s:option><%
+%><s:option value="i" selectedExpr="i == lang_id"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" checkExpr="" /></s:option><%
       }
     }
 %></s:select></td></tr>
