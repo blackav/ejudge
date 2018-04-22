@@ -451,6 +451,10 @@ function setDivVisibility(oper, value)
 <s:url name="DownloadRunUrl" ac="download-run">
     <s:param name="run_id" value="run_id" />
 </s:url>
+<s:url name="ResubmitUrl" ac="priv-submit-page">
+    <s:param name="prob" value="info.prob_id" />
+    <s:param name="lang" value="info.lang_id" />
+</s:url>
 <p style="display: inline-block;"><s:a url="DownloadRunUrl"><s:_>Download run</s:_></s:a></p>
 
 <% if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0 && info.is_readonly <= 0) { %>
