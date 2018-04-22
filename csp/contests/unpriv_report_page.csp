@@ -194,6 +194,18 @@ ns_unpriv_parse_run_id(
 %>
 <div class="l14">
 <%
+  // FIXME: better check submit availability (deadlines, contest end, etc)
+  if (status != RUN_OK && status != RUN_PENDING_REVIEW && status != RUN_ACCEPTED && status != RUN_PENDING) {
+%>
+<s:url name="ResubmitUrl" ac="view-problem-submit">
+    <s:param name="prob_id" value="re.prob_id" />
+    <s:param name="lang_id" value="re.lang_id" />
+</s:url>
+<p style="display: inline-block;"><s:a url="ResubmitUrl"><s:_>Resubmit</s:_></s:a></p>
+<%
+  }
+%>
+<%
   switch (content_type) {
   case CONTENT_TYPE_TEXT:
 %><pre><s:v value="rep_text" /></pre><%
