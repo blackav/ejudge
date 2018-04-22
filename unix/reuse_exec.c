@@ -103,6 +103,7 @@ struct tTask
   int    enable_all_signals;    /* unmask all signals after fork */
   int    ignore_sigpipe;        /* ignore SIGPIPE after fork */
   int    enable_process_group;  /* create a new process group */
+  int    enable_kill_all;       /* kill all processes (using -1 for kill) */
   ssize_t max_core_size;        /* maximum size of core files */
   ssize_t max_file_size;        /* maximum size of created files */
   ssize_t max_locked_mem_size;  /* maximum size of locked memory */
@@ -1088,6 +1089,15 @@ task_EnableProcessGroup(tTask *tsk)
   task_init_module();
   ASSERT(tsk);
   tsk->enable_process_group = 1;
+  return 0;
+}
+
+int
+task_EnableKillAll(tTask *tsk)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->enable_kill_all = 1;
   return 0;
 }
 
@@ -2188,7 +2198,9 @@ task_NewWait(tTask *tsk)
       gettimeofday(&cur_time, NULL);
       if (cur_time.tv_sec > rt_timeout.tv_sec
           || (cur_time.tv_sec == rt_timeout.tv_sec && cur_time.tv_usec >= rt_timeout.tv_usec)) {
-        if (tsk->enable_process_group > 0) {
+        if (tsk->enable_kill_all > 0) {
+          do_kill(tsk, -1, tsk->termsig);
+        } else if (tsk->enable_process_group > 0) {
           do_kill(tsk, -tsk->pid, tsk->termsig);
         } else {
           do_kill(tsk, tsk->pid, tsk->termsig);
@@ -2212,7 +2224,9 @@ task_NewWait(tTask *tsk)
         cur_utime = (cur_utime * 1000) / info.clock_ticks;
         //fprintf(stderr, "CPUTime: %lld\n", cur_utime);
         if (cur_utime >= max_time_ms) {
-          if (tsk->enable_process_group > 0) {
+          if (tsk->enable_kill_all > 0) {
+            do_kill(tsk, -1, tsk->termsig);
+          } else if (tsk->enable_process_group > 0) {
             do_kill(tsk, -tsk->pid, tsk->termsig);
           } else {
             do_kill(tsk, tsk->pid, tsk->termsig);

@@ -98,6 +98,7 @@ int      task_EnableSuidExec(tpTask);
 int      task_EnableAllSignals(tpTask);
 int      task_EnableSecurityViolationError(tpTask);
 int      task_EnableProcessGroup(tpTask);
+int      task_EnableKillAll(tpTask);
 int      task_IgnoreSIGPIPE(tpTask);
 
 int      task_SetSuidHelperDir(tpTask, const char *);
