@@ -452,8 +452,8 @@ function setDivVisibility(oper, value)
     <s:param name="run_id" value="run_id" />
 </s:url>
 <s:url name="ResubmitUrl" ac="priv-submit-page">
-    <s:param name="prob" value="info.prob_id" />
-    <s:param name="lang" value="info.lang_id" />
+    <s:param name="problem" value="info.prob_id" />
+    <s:param name="lang_id" value="info.lang_id" />
 </s:url>
 <p style="display: inline-block;"><s:a url="ResubmitUrl">Resubmit</s:a>&nbsp;&nbsp;<s:a url="DownloadRunUrl"><s:_>Download run</s:_></s:a></p>
 
