@@ -30,7 +30,7 @@
 #endif /* __RCC__ */
 #endif /* META_ATTRIB */
 
-/* sizeof(struct problem_config_section) == 552 */
+/* sizeof(struct problem_config_section) == 712 */
 struct problem_config_section
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -97,6 +97,7 @@ struct problem_config_section
   ejintbool_t ignore_unmarked;
   ejintbool_t disable_stderr;
   ejintbool_t enable_process_group;
+  ejintbool_t enable_kill_all;
   ejintbool_t enable_testlib_mode;
   ejintbool_t hide_variant;
 

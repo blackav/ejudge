@@ -425,6 +425,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_ignore_unmarked] = { CNTSPROB_ignore_unmarked, 'f', XSIZE(struct section_problem_data, ignore_unmarked), "ignore_unmarked", XOFFSET(struct section_problem_data, ignore_unmarked) },
   [CNTSPROB_disable_stderr] = { CNTSPROB_disable_stderr, 'f', XSIZE(struct section_problem_data, disable_stderr), "disable_stderr", XOFFSET(struct section_problem_data, disable_stderr) },
   [CNTSPROB_enable_process_group] = { CNTSPROB_enable_process_group, 'f', XSIZE(struct section_problem_data, enable_process_group), "enable_process_group", XOFFSET(struct section_problem_data, enable_process_group) },
+  [CNTSPROB_enable_kill_all] = { CNTSPROB_enable_kill_all, 'f', XSIZE(struct section_problem_data, enable_kill_all), "enable_kill_all", XOFFSET(struct section_problem_data, enable_kill_all) },
   [CNTSPROB_hide_variant] = { CNTSPROB_hide_variant, 'f', XSIZE(struct section_problem_data, hide_variant), "hide_variant", XOFFSET(struct section_problem_data, hide_variant) },
   [CNTSPROB_enable_testlib_mode] = { CNTSPROB_enable_testlib_mode, 'f', XSIZE(struct section_problem_data, enable_testlib_mode), "enable_testlib_mode", XOFFSET(struct section_problem_data, enable_testlib_mode) },
   [CNTSPROB_autoassign_variants] = { CNTSPROB_autoassign_variants, 'f', XSIZE(struct section_problem_data, autoassign_variants), "autoassign_variants", XOFFSET(struct section_problem_data, autoassign_variants) },

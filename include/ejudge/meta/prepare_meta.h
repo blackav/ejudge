@@ -385,6 +385,7 @@ enum
   CNTSPROB_ignore_unmarked,
   CNTSPROB_disable_stderr,
   CNTSPROB_enable_process_group,
+  CNTSPROB_enable_kill_all,
   CNTSPROB_hide_variant,
   CNTSPROB_enable_testlib_mode,
   CNTSPROB_autoassign_variants,

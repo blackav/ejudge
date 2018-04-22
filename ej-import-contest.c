@@ -785,6 +785,7 @@ merge_problem_section(
         { CNTSPROB_ignore_unmarked, META_PROBLEM_CONFIG_SECTION_ignore_unmarked },
         { CNTSPROB_disable_stderr, META_PROBLEM_CONFIG_SECTION_disable_stderr },
         { CNTSPROB_enable_process_group, META_PROBLEM_CONFIG_SECTION_enable_process_group },
+        { CNTSPROB_enable_kill_all, META_PROBLEM_CONFIG_SECTION_enable_kill_all },
         { CNTSPROB_hide_variant, META_PROBLEM_CONFIG_SECTION_hide_variant },
         { CNTSPROB_enable_testlib_mode, META_PROBLEM_CONFIG_SECTION_enable_testlib_mode },
 

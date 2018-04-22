@@ -69,6 +69,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_ignore_unmarked,
   META_PROBLEM_CONFIG_SECTION_disable_stderr,
   META_PROBLEM_CONFIG_SECTION_enable_process_group,
+  META_PROBLEM_CONFIG_SECTION_enable_kill_all,
   META_PROBLEM_CONFIG_SECTION_enable_testlib_mode,
   META_PROBLEM_CONFIG_SECTION_hide_variant,
   META_PROBLEM_CONFIG_SECTION_id,

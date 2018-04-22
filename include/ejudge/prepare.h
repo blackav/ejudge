@@ -934,6 +934,8 @@ struct section_problem_data
   ejbyteflag_t disable_stderr;
   /** use process groups */
   ejbyteflag_t enable_process_group;
+  /** kill all processes belonging to 'ejexec' user */
+  ejbyteflag_t enable_kill_all;
   /** hide variant number from user */
   ejbyteflag_t hide_variant;
   /** enable testlib-compatibility mode */
@@ -953,7 +955,7 @@ struct section_problem_data
   ejbyteflag_t notify_on_submit;
   
   // padding to 8-byte boundary
-  unsigned char _pad1[4];
+  unsigned char _pad1[3];
 
   /** number of independent examinations */
   int examinator_num;
