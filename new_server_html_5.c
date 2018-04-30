@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2860,6 +2860,142 @@ cleanup:;
   avatar_vector_free(&avatars);
 }
 
+#if 0
+static void
+cmd_login(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra,
+        time_t cur_time)
+{
+  const unsigned char *login = 0;
+  const unsigned char *password = 0;
+  int r, i;
+  unsigned char urlbuf[1024];
+  int need_regform = 0;
+
+  if (hr_cgi_param(phr, "login", &login) <= 0) {
+    fprintf(phr->log_f, "login is invalid");
+    return error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+  }
+  phr->login = xstrdup(login);
+  if (hr_cgi_param(phr, "password", &password) <= 0) {
+    fprintf(phr->log_f, "password is invalid");
+    return error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
+  }
+
+  // if neither login, nor password is not specified, just change the locale
+  if ((!login || !*login) && (!password || !*password)) {
+    snprintf(urlbuf, sizeof(urlbuf), "%s?contest_id=%d&locale_id=%d&action=%d",
+             phr->self_url, phr->contest_id, phr->locale_id,
+             NEW_SRV_ACTION_REG_LOGIN_PAGE);
+    ns_refresh_page_2(fout, phr->client_key, urlbuf);
+    return;
+  }
+
+  /* check password action is here */
+  if (ns_open_ul_connection(phr->fw_state) < 0)
+    return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+
+  if ((r = userlist_clnt_login(ul_conn, ULS_CHECK_USER,
+                               &phr->ip, phr->client_key,
+                               phr->ssl_flag, phr->contest_id,
+                               phr->locale_id, 0, phr->login, password,
+                               &phr->user_id,
+                               &phr->session_id,
+                               &phr->client_key,
+                               &phr->name)) < 0) {
+    switch (-r) {
+    case ULS_ERR_INVALID_LOGIN:
+    case ULS_ERR_INVALID_PASSWORD:
+    case ULS_ERR_BAD_CONTEST_ID:
+    case ULS_ERR_IP_NOT_ALLOWED:
+    case ULS_ERR_NO_PERMS:
+    case ULS_ERR_NOT_REGISTERED:
+    case ULS_ERR_CANNOT_PARTICIPATE:
+      fprintf(phr->log_f, "user_login failed: %s", userlist_strerror(-r));
+      return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+    case ULS_ERR_DISCONNECT:
+      return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+    case ULS_ERR_SIMPLE_REGISTERED:
+      return error_page(fout, phr, NEW_SRV_ERR_SIMPLE_REGISTERED);
+    default:
+      fprintf(phr->log_f, "user_login failed: %s", userlist_strerror(-r));
+      return error_page(fout, phr, NEW_SRV_ERR_INTERNAL);
+    }
+  }
+
+  if (!cnts->disable_name) need_regform = 1;
+  if (!cnts->disable_team_password) need_regform = 1;
+  for (i = CONTEST_FIRST_FIELD; i < CONTEST_LAST_FIELD; i++)
+    if (cnts->fields[i])
+      need_regform = 1;
+  for (i = 0; i < CONTEST_LAST_MEMBER; i++)
+    if (cnts->members[i] && cnts->members[i]->max_count > 0)
+      need_regform = 1;
+
+  // if there is no editable fields and autoregister flag is set,
+  // then register immediately for the contest and redirect there
+  if (cnts->force_registration && cnts->autoregister && !need_regform) {
+    r = userlist_clnt_register_contest(ul_conn, ULS_REGISTER_CONTEST_2,
+                                       phr->user_id, phr->contest_id,
+                                       &phr->ip, phr->ssl_flag);
+    if (r < 0) {
+      fprintf(phr->log_f, "register_contest failed: %s", userlist_strerror(-r));
+      return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+
+    curl(urlbuf, sizeof(urlbuf), cnts, phr, 1, "&", 0, NULL);
+    ns_get_session(phr->session_id, phr->client_key, 0);
+    ns_refresh_page_2(fout, phr->client_key, urlbuf);
+  } else if (cnts->force_registration) {
+    // register for the contest anyway, but do not redirect to new-client
+    // since we're not allowed to login unless the registration form
+    // is complete, we may relax registration procedure
+    r = userlist_clnt_register_contest(ul_conn, ULS_REGISTER_CONTEST_2,
+                                       phr->user_id, phr->contest_id,
+                                       &phr->ip, phr->ssl_flag);
+    if (r < 0) {
+      fprintf(phr->log_f, "register_contest failed: %s", userlist_strerror(-r));
+      return error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+  }
+
+  snprintf(urlbuf, sizeof(urlbuf), "%s?SID=%llx", phr->self_url,
+           phr->session_id);
+  ns_refresh_page_2(fout, phr->client_key, urlbuf);
+}
+#endif
+
+static int
+do_reg_login_json(FILE *fout, struct http_request_info *phr)
+{
+  return -NEW_SRV_ERR_NOT_SUPPORTED;
+}
+
+static void
+reg_login_json(FILE *fout, struct http_request_info *phr)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+  int res = do_reg_login_json(fout, phr);
+
+  snprintf(phr->content_type, sizeof(phr->content_type), "text/json");
+  fprintf(fout, "{\n");
+  fprintf(fout, "  \"result\": %s", (res?"false":"true"));
+  if (res) {
+    if (res < 0) res = -res;
+    fprintf(fout, ",\n  \"error_code\": %d", res);
+    const unsigned char *msg = ns_error_title_2(res);
+    if (msg) {
+      fprintf(fout, ",\n  \"error_message\": \"%s\"", json_armor_buf(&ab, msg));
+    }
+  }
+  fprintf(fout, "\n}\n");
+  html_armor_free(&ab);
+}
+
 void
 ns_register_pages(FILE *fout, struct http_request_info *phr)
 {
@@ -2878,6 +3014,9 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
 
   if (phr->action == NEW_SRV_ACTION_GET_AVATAR) {
     return reg_get_avatar(fout, phr);
+  }
+  if (phr->action == NEW_SRV_ACTION_LOGIN_JSON) {
+    return reg_login_json(fout, phr);
   }
 
   if (!phr->session_id) return anon_register_pages(fout, phr);
