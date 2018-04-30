@@ -353,6 +353,14 @@ ns_error_title(int error_code)
 }
 
 const unsigned char *
+ns_error_title_2(int error_code)
+{
+  if (error_code < 0) error_code = -error_code;
+  if (error_code <= 0 || error_code >= NEW_SRV_ERR_LAST) return NULL;
+  return ns_error_titles[error_code];
+}
+
+const unsigned char *
 ns_strerror(int code, ...)
 {
   static unsigned char buf[1024];

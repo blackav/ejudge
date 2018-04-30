@@ -340,6 +340,7 @@ enum
   NEW_SRV_ACTION_CONFIRM_AVATAR,
   NEW_SRV_ACTION_LANGUAGE_STATS_PAGE,
   NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VALUER_JUDGE_COMMENTS,
+  NEW_SRV_ACTION_USER_CONTESTS_JSON,
 
   NEW_SRV_ACTION_LAST,
 };
@@ -540,5 +541,6 @@ const unsigned char *ns_strerror_2(int code, ...);
 const unsigned char *ns_strerror_r(unsigned char *buf, size_t size,
                                    int code, ...);
 const unsigned char *ns_error_title(int error_code);
+const unsigned char *ns_error_title_2(int error_code);
 
 #endif /* __NEW_SERVER_PROTO_H__ */
