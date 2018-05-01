@@ -11613,7 +11613,7 @@ do_user_contests_json(
         FILE *fout,
         struct http_request_info *phr)
 {
-  return -SRV_ERR_NOT_SUPPORTED;
+  return -NEW_SRV_ERR_NOT_SUPPORTED;
 }
 
 static void
