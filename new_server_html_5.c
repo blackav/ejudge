@@ -2873,6 +2873,7 @@ struct RegLoginJsonResponse
 {
   unsigned error_id;
   unsigned char log_msg[256];
+  time_t expire;
 };
 
 static int
@@ -2917,7 +2918,7 @@ do_reg_login_json(FILE *fout, struct http_request_info *phr, struct RegLoginJson
                               &phr->session_id,
                               &phr->client_key,
                               &phr->name,
-                              NULL /* expire */);
+                              &resp->expire);
   if (r < 0) {
     r = -r;
     switch (r) {
@@ -2975,6 +2976,11 @@ reg_login_json(FILE *fout, struct http_request_info *phr)
       fprintf(fout, ",\n  \"user_name\": \"%s\"", json_armor_buf(&ab, phr->name));
     }
     fprintf(fout, ",\n  \"session\": \"%016llx-%016llx\"", phr->session_id, phr->client_key);
+    fprintf(fout, ",\n  \"session_id\": \"%016llx\"", phr->session_id);
+    fprintf(fout, ",\n  \"client_key\": \"%016llx\"", phr->client_key);
+    if (resp.expire > 0) {
+      fprintf(fout, ",\n  \"expire\": %lld", (long long) resp.expire);
+    }
   }
   fprintf(fout, "\n}\n");
   html_armor_free(&ab);
