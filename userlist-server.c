@@ -3091,6 +3091,7 @@ cmd_check_user_2(
   answer->client_key = cookie->client_key;
   answer->user_id = u->id;
   answer->contest_id = 0;
+  answer->expire = cookie->expire;
   answer->passwd_method = u->passwd_method;
   answer->login_len = strlen(u->login);
   name_ptr = answer->data + answer->login_len + 1;

@@ -468,6 +468,7 @@ struct userlist_pk_login_ok
   int                reg_status;
   int                reg_flags;
   int                passwd_method;
+  ej_time64_t        expire;        // cookie expiration
   unsigned char      login_len;
   unsigned char      name_len;
   char               data[2];

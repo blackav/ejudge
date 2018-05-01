@@ -8304,7 +8304,8 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
                                phr->locale_id, 0, login, password,
                                &phr->user_id,
                                &phr->session_id, &phr->client_key,
-                               &phr->name)) < 0) {
+                               &phr->name,
+                               NULL /* expire */)) < 0) {
     switch (-r) {
     case ULS_ERR_INVALID_LOGIN:
     case ULS_ERR_INVALID_PASSWORD:
@@ -12503,7 +12504,8 @@ batch_login(
                               login_str, "xxx",
                               &phr->user_id,
                               &phr->session_id, &phr->client_key,
-                              &phr->name);
+                              &phr->name,
+                              NULL /* expire */);
   if (r < 0) {
     err("batch_login: login failed: %d", r);
     goto database_error;

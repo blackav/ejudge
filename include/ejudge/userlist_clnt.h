@@ -3,7 +3,7 @@
 #ifndef __USERLIST_CLNT_H__
 #define __USERLIST_CLNT_H__
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 #include "ejudge/ej_types.h"
 
 #include <string.h>
+#include <time.h>
 
 struct userlist_clnt;
 typedef struct userlist_clnt *userlist_clnt_t;
@@ -79,7 +80,8 @@ userlist_clnt_login(
         int *p_user_id,
         ej_cookie_t *p_cookie,
         ej_cookie_t *p_client_key,
-        unsigned char **p_name);
+        unsigned char **p_name,
+        time_t *p_expire);
 
 int
 userlist_clnt_lookup_user(struct userlist_clnt *clnt,
