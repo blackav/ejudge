@@ -2,7 +2,7 @@
 #ifndef __HTTP_REQUEST_H__
 #define __HTTP_REQUEST_H__
 
-/* Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -272,6 +272,12 @@ void
 hr_print_help_url(FILE *f, int action);
 void
 hr_print_help_url_2(FILE *f, const unsigned char *topic);
+
+int
+hr_cgi_param_h64(
+        const struct http_request_info *phr,
+        const unsigned char *name,
+        unsigned long long *p_val);
 
 #endif /* __HTTP_REQUEST_H__ */
 
