@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -156,6 +156,7 @@ static const unsigned char * const requests[] =
   [ULS_MOVE_MEMBER]               = "MOVE_MEMBER",
   [ULS_IMPORT_CSV_USERS]          = "IMPORT_CSV_USERS",
   [ULS_LIST_STANDINGS_USERS_2]    = "LIST_STANDINGS_USERS_2",
+  [ULS_CHECK_USER_2]              = "CHECK_USER_2",
 
   NULL,
 };

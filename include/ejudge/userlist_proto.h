@@ -3,7 +3,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -123,6 +123,7 @@ enum
     ULS_GET_GROUP_INFO,
     ULS_PRIV_CHECK_PASSWORD,
     ULS_LIST_STANDINGS_USERS_2,
+    ULS_CHECK_USER_2,
 
     ULS_LAST_CMD
   };
