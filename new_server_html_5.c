@@ -2986,6 +2986,192 @@ reg_login_json(FILE *fout, struct http_request_info *phr)
   html_armor_free(&ab);
 }
 
+struct RegUserContestsJsonContest
+{
+  // owned somewhere else
+  int id;
+  const struct contest_desc *cnts;
+  const struct userlist_contest *uc;
+  const struct userlist_user_info *ui;
+};
+
+struct RegUserContestsJson
+{
+  unsigned char log_msg[256];
+  struct userlist_user *u;
+
+  int r_a, r_u;
+  struct RegUserContestsJsonContest *r_p;
+};
+
+static int
+do_reg_user_contests_json(FILE *fout, struct http_request_info *phr, struct RegUserContestsJson *resp)
+{
+  // session_id, client_key as params
+  if (hr_cgi_param_h64(phr, "session_id", &phr->session_id) < 0 || !phr->session_id) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "session_id is invalid");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  if (hr_cgi_param_h64(phr, "client_key", &phr->client_key) < 0 || !phr->client_key) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "client_key is invalid");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+
+  // filtering options
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+  }
+  int priv_level = 0;
+  int is_team = 0;
+  int r = userlist_clnt_get_cookie(ul_conn,
+                                   ULS_GET_COOKIE,
+                                   &phr->ip,
+                                   phr->ssl_flag,
+                                   phr->session_id,
+                                   phr->client_key,
+                                   &phr->user_id,
+                                   &phr->contest_id,
+                                   NULL /* p_locale_id */,
+                                   &priv_level,
+                                   &phr->role,
+                                   &is_team,
+                                   NULL /* p_reg_status */,
+                                   NULL /* p_reg_flags */,
+                                   NULL /* p_passwd_method */,
+                                   &phr->login,
+                                   &phr->name);
+  if (r < 0) {
+    r = -r;
+    switch (r) {
+    case ULS_ERR_NO_COOKIE:
+    case ULS_ERR_CANNOT_PARTICIPATE:
+    case ULS_ERR_NOT_REGISTERED:
+      snprintf(resp->log_msg, sizeof(resp->log_msg), "GET_COOKIE failed: %s", userlist_strerror(r));
+      return -NEW_SRV_ERR_INV_SESSION;
+    case ULS_ERR_DISCONNECT:
+      return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+    default:
+      snprintf(resp->log_msg, sizeof(resp->log_msg), "GET_COOKIE failed: %s", userlist_strerror(r));
+      return -NEW_SRV_ERR_INTERNAL;
+    }
+  }
+  if (phr->contest_id > 0) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "cookie is bound to contest %d", phr->contest_id);
+    return -NEW_SRV_ERR_INV_SESSION;
+  }
+  if (priv_level > 0) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "cookie has privilege level %d", priv_level);
+    return -NEW_SRV_ERR_INV_SESSION;
+  }
+  if (is_team) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "cookie is participation-bound");
+    return -NEW_SRV_ERR_INV_SESSION;
+  }
+  unsigned char *xml_text = NULL;
+  r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO,
+                             phr->user_id, 0, &xml_text);
+  if (r < 0) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "PRIV_GET_USER_INFO failed: %s", userlist_strerror(-r));
+    return -NEW_SRV_ERR_DATABASE_FAILED;
+  }
+  resp->u = userlist_parse_user_str(xml_text);
+  if (!resp->u) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "XML parse error");
+    xfree(xml_text);
+    return -NEW_SRV_ERR_DATABASE_FAILED;
+  }
+  xfree(xml_text);
+
+  const int *contest_ids = NULL;
+  int contest_count = contests_get_list(&contest_ids);
+  if (contest_count <= 0 || !contest_ids) return 0;
+
+  for (int i = 0; i < contest_count; ++i) {
+    int cnts_id = contest_ids[i];
+    const struct contest_desc *cnts = NULL;
+    if (contests_get(cnts_id, &cnts) < 0 || !cnts) continue;
+
+    const struct userlist_contest *uc = userlist_get_user_contest(resp->u, cnts_id);
+    if (!uc) continue;
+    const struct userlist_user_info *ui = userlist_get_user_info(resp->u, cnts_id);
+
+    // FIXME: implement filtering
+
+    if (uc->status != USERLIST_REG_OK) continue;
+    if ((uc->flags & (USERLIST_UC_BANNED | USERLIST_UC_LOCKED | USERLIST_UC_INVISIBLE | USERLIST_UC_DISQUALIFIED)) != 0) continue;
+
+    if (!cnts->disable_team_password) continue;
+    if (cnts->closed) continue;
+    if (cnts->open_time > 0 && phr->current_time < cnts->open_time) continue;
+    if (cnts->close_time > 0 && phr->current_time >= cnts->close_time) continue;
+    if (!contests_check_team_ip_2(cnts, &phr->ip, phr->ssl_flag)) continue;
+
+    if (resp->r_u == resp->r_a) {
+      if (!(resp->r_a *= 2)) resp->r_a = 16;
+      XREALLOC(resp->r_p, resp->r_a);
+    }
+    struct RegUserContestsJsonContest *cur = &resp->r_p[resp->r_u++];
+    memset(cur, 0, sizeof(*cur));
+    cur->id = cnts_id;
+    cur->cnts = cnts;
+    cur->uc = uc;
+    cur->ui = ui;
+  }
+
+  return 0;
+}
+
+static void
+reg_user_contests_json(FILE *fout, struct http_request_info *phr)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct RegUserContestsJson resp = {};
+
+  int res = do_reg_user_contests_json(fout, phr, &resp);
+  snprintf(phr->content_type, sizeof(phr->content_type), "text/json");
+  fprintf(fout, "{\n");
+  fprintf(fout, "  \"result\": %s", (res?"false":"true"));
+  if (res) {
+    if (res < 0) res = -res;
+    random_init();
+    unsigned error_id = random_u32();
+
+    fprintf(fout, ",\n  \"error_code\": %d", res);
+    const unsigned char *msg = ns_error_title_2(res);
+    if (msg) {
+      fprintf(fout, ",\n  \"error_message\": \"%s\"", json_armor_buf(&ab, msg));
+    }
+    if (error_id) {
+      fprintf(fout, ",\n  \"error_id\": \"%08x\"", error_id);
+    }
+    if (!msg) msg = "unknown error";
+    err("%d: %s: error_id = %08x: %s", phr->id, msg, error_id, resp.log_msg);
+  } else {
+    if (resp.r_u > 0) {
+      fprintf(fout, ",\n  \"contests\": [\n");
+      for (int i = 0; i < resp.r_u; ++i) {
+        struct RegUserContestsJsonContest *cur = &resp.r_p[i];
+        if (i > 0) {
+          fprintf(fout, ",\n");
+        }
+        fprintf(fout, "    {\n");
+        fprintf(fout, "      \"id\": %d\n", cur->id);
+        fprintf(fout, "    }");
+      }
+      fprintf(fout, "\n  ]");
+    }
+  }
+  fprintf(fout, "\n}\n");
+  html_armor_free(&ab);
+  if (resp.u) {
+    userlist_free(&resp.u->b);
+  }
+  if (resp.r_p) {
+    free(resp.r_p);
+  }
+}
+
 void
 ns_register_pages(FILE *fout, struct http_request_info *phr)
 {
@@ -3007,6 +3193,9 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   }
   if (phr->action == NEW_SRV_ACTION_LOGIN_JSON) {
     return reg_login_json(fout, phr);
+  }
+  if (phr->action == NEW_SRV_ACTION_USER_CONTESTS_JSON) {
+    return reg_user_contests_json(fout, phr);
   }
 
   if (!phr->session_id) return anon_register_pages(fout, phr);
