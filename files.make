@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@ USERLIST_CLNT_CFILES=\
  userlist_clnt/cnts_passwd_op.c\
  userlist_clnt/control.c\
  userlist_clnt/copy_user_info.c\
+ userlist_clnt/create_cookie.c\
  userlist_clnt/create_member.c\
  userlist_clnt/create_user.c\
  userlist_clnt/create_user_2.c\

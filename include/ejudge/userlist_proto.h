@@ -124,6 +124,7 @@ enum
     ULS_PRIV_CHECK_PASSWORD,
     ULS_LIST_STANDINGS_USERS_2,
     ULS_CHECK_USER_2,
+    ULS_CREATE_COOKIE,
 
     ULS_LAST_CMD
   };
@@ -260,6 +261,12 @@ struct userlist_pk_cookie_login
   ej_cookie_t        cookie;
   ej_cookie_t        client_key;
   int                role;
+  // the following fields are used for ULS_CREATE_COOKIE
+  ej_time64_t expire;
+  int user_id;
+  int priv_level;
+  int recovery;
+  int team_login;               /* used in case when team_passwd != reg_passwd*/
 };
 
 struct userlist_pk_do_logout

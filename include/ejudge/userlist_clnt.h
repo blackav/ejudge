@@ -488,4 +488,12 @@ userlist_clnt_bin_data(
         int contest_id,
         unsigned char **p_data);
 
+struct userlist_cookie;
+int
+userlist_clnt_create_cookie(
+        struct userlist_clnt *clnt,
+        int cmd,
+        const struct userlist_cookie *in_c,
+        struct userlist_cookie *out_c);
+
 #endif /* __USERLIST_CLNT_H__ */

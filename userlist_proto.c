@@ -157,6 +157,7 @@ static const unsigned char * const requests[] =
   [ULS_IMPORT_CSV_USERS]          = "IMPORT_CSV_USERS",
   [ULS_LIST_STANDINGS_USERS_2]    = "LIST_STANDINGS_USERS_2",
   [ULS_CHECK_USER_2]              = "CHECK_USER_2",
+  [ULS_CREATE_COOKIE]             = "CREATE_COOKIE",
 
   NULL,
 };
