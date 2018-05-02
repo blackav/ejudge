@@ -2941,6 +2941,7 @@ do_reg_login_json(FILE *fout, struct http_request_info *phr, struct RegLoginJson
     }
   }
 
+  phr->login = xstrdup(login);
   return 0;
 }
 
@@ -2973,6 +2974,7 @@ reg_login_json(FILE *fout, struct http_request_info *phr)
     err("%d: %s: error_id = %08x: %s", phr->id, msg, resp.error_id, resp.log_msg);
   } else {
     fprintf(fout, ",\n  \"user_id\": %d", phr->user_id);
+    fprintf(fout, ",\n  \"user_login\": \"%s\"", json_armor_buf(&ab, phr->login));
     if (phr->name && *phr->name) {
       fprintf(fout, ",\n  \"user_name\": \"%s\"", json_armor_buf(&ab, phr->name));
     }
@@ -3426,12 +3428,12 @@ reg_enter_contest_json(FILE *fout, struct http_request_info *phr)
       fprintf(fout, ",\n  \"expire\": %lld", (long long) resp.expire);
     }
     fprintf(fout, ",\n  \"user_id\": %d", resp.u->id);
-    fprintf(fout, ",\n  \"login\": \"%s\"", json_armor_buf(&ab, resp.u->login));
+    fprintf(fout, ",\n  \"user_login\": \"%s\"", json_armor_buf(&ab, resp.u->login));
     const unsigned char *name = resp.u->login;
     if (resp.ui && resp.ui->name) {
       name = resp.ui->name;
     }
-    fprintf(fout, ",\n  \"name\": \"%s\"", json_armor_buf(&ab, name));
+    fprintf(fout, ",\n  \"user_name\": \"%s\"", json_armor_buf(&ab, name));
     unparse_userlist_contest_json(fout, &ab, resp.uc,
                                   "cntsreg",
                                   ",\n",
