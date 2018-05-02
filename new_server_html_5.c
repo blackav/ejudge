@@ -3157,7 +3157,8 @@ reg_user_contests_json(FILE *fout, struct http_request_info *phr)
           fprintf(fout, ",\n");
         }
         fprintf(fout, "    {\n");
-        fprintf(fout, "      \"id\": %d\n", cur->id);
+        fprintf(fout, "      \"id\": %d,\n", cur->id);
+        fprintf(fout, "      \"name\": \"%s\"\n", json_armor_buf(&ab, cur->cnts->name));
         fprintf(fout, "    }");
       }
       fprintf(fout, "\n  ]");
