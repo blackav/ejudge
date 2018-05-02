@@ -544,5 +544,6 @@ const unsigned char *ns_strerror_r(unsigned char *buf, size_t size,
                                    int code, ...);
 const unsigned char *ns_error_title(int error_code);
 const unsigned char *ns_error_title_2(int error_code);
+const unsigned char *ns_error_symbol(int error_code);
 
 #endif /* __NEW_SERVER_PROTO_H__ */
