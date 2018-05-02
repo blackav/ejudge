@@ -3099,7 +3099,8 @@ do_reg_user_contests_json(FILE *fout, struct http_request_info *phr, struct RegU
     // FIXME: implement filtering
 
     if (uc->status != USERLIST_REG_OK) continue;
-    if ((uc->flags & (USERLIST_UC_BANNED | USERLIST_UC_LOCKED | USERLIST_UC_INVISIBLE | USERLIST_UC_DISQUALIFIED)) != 0) continue;
+    if ((uc->flags & (USERLIST_UC_BANNED | USERLIST_UC_LOCKED | USERLIST_UC_DISQUALIFIED)) != 0) continue;
+    if ((uc->flags & (USERLIST_UC_INCOMPLETE | USERLIST_UC_PRIVILEGED)) == USERLIST_UC_INCOMPLETE) continue;
 
     if (!cnts->disable_team_password) continue;
     if (cnts->closed) continue;
@@ -3172,6 +3173,182 @@ reg_user_contests_json(FILE *fout, struct http_request_info *phr)
   }
 }
 
+struct RegEnterContestJson
+{
+  unsigned char log_msg[256];
+  struct userlist_user *u;
+  const struct userlist_contest *uc;
+  const struct userlist_user_info *ui;
+};
+
+static int
+do_reg_enter_contest_json(FILE *fout, struct http_request_info *phr, struct RegEnterContestJson *resp)
+{
+  // session_id, client_key as params
+  if (hr_cgi_param_h64(phr, "session_id", &phr->session_id) < 0 || !phr->session_id) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "session_id is invalid");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  if (hr_cgi_param_h64(phr, "client_key", &phr->client_key) < 0 || !phr->client_key) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "client_key is invalid");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  if (hr_cgi_param_int(phr, "contest_id", &phr->contest_id) < 0) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "contest_id is invalid");
+    return -NEW_SRV_ERR_INV_CONTEST_ID;
+  }
+  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &phr->cnts) < 0 || !phr->cnts){
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "contest_id is invalid");
+    return -NEW_SRV_ERR_INV_CONTEST_ID;
+  }
+
+  // filtering options
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+  }
+  int priv_level = 0;
+  int is_team = 0;
+  int r = userlist_clnt_get_cookie(ul_conn,
+                                   ULS_GET_COOKIE,
+                                   &phr->ip,
+                                   phr->ssl_flag,
+                                   phr->session_id,
+                                   phr->client_key,
+                                   &phr->user_id,
+                                   &phr->contest_id,
+                                   NULL /* p_locale_id */,
+                                   &priv_level,
+                                   &phr->role,
+                                   &is_team,
+                                   NULL /* p_reg_status */,
+                                   NULL /* p_reg_flags */,
+                                   NULL /* p_passwd_method */,
+                                   &phr->login,
+                                   &phr->name);
+  if (r < 0) {
+    r = -r;
+    switch (r) {
+    case ULS_ERR_NO_COOKIE:
+    case ULS_ERR_CANNOT_PARTICIPATE:
+    case ULS_ERR_NOT_REGISTERED:
+      snprintf(resp->log_msg, sizeof(resp->log_msg), "GET_COOKIE failed: %s", userlist_strerror(r));
+      return -NEW_SRV_ERR_INV_SESSION;
+    case ULS_ERR_DISCONNECT:
+      return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+    default:
+      snprintf(resp->log_msg, sizeof(resp->log_msg), "GET_COOKIE failed: %s", userlist_strerror(r));
+      return -NEW_SRV_ERR_INTERNAL;
+    }
+  }
+  if (phr->contest_id > 0) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "cookie is bound to contest %d", phr->contest_id);
+    return -NEW_SRV_ERR_INV_SESSION;
+  }
+  if (priv_level > 0) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "cookie has privilege level %d", priv_level);
+    return -NEW_SRV_ERR_INV_SESSION;
+  }
+  if (is_team) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "cookie is participation-bound");
+    return -NEW_SRV_ERR_INV_SESSION;
+  }
+
+  if (!phr->cnts->disable_team_password) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "contest %d is contest-password-enabled", phr->contest_id);
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  if (phr->cnts->closed) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "contest %d is closed", phr->contest_id);
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  if (phr->cnts->open_time > 0 && phr->current_time < phr->cnts->open_time){
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "contest %d is not opened", phr->contest_id);
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  // FIXME: handle close time
+  if (!contests_check_team_ip_2(phr->cnts, &phr->ip, phr->ssl_flag)) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "contest %d IP is not allowed", phr->contest_id);
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+
+  unsigned char *xml_text = NULL;
+  r = userlist_clnt_get_info(ul_conn, ULS_PRIV_GET_USER_INFO, phr->user_id, phr->contest_id, &xml_text);
+  if (r < 0) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "PRIV_GET_USER_INFO failed: %s", userlist_strerror(-r));
+    return -NEW_SRV_ERR_DATABASE_FAILED;
+  }
+  resp->u = userlist_parse_user_str(xml_text);
+  if (!resp->u) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "XML parse error");
+    xfree(xml_text);
+    return -NEW_SRV_ERR_DATABASE_FAILED;
+  }
+  xfree(xml_text);
+
+  resp->uc = userlist_get_user_contest(resp->u, phr->contest_id);
+  resp->ui = userlist_get_user_info(resp->u, phr->contest_id);
+  if (!resp->uc) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "user is not registered");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  if (resp->uc->status != USERLIST_REG_OK) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "user registration status is not OK");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  if ((resp->uc->flags & USERLIST_UC_BANNED)) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "user is BANNED");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  if ((resp->uc->flags & USERLIST_UC_DISQUALIFIED)) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "user is DISQUALIFIED");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  if ((resp->uc->flags & USERLIST_UC_LOCKED)) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "user is LOCKED");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  if ((resp->uc->flags & (USERLIST_UC_INCOMPLETE | USERLIST_UC_PRIVILEGED)) == USERLIST_UC_INCOMPLETE) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "user registration is INCOMPLETE");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+
+  return 0;
+}
+
+static void
+reg_enter_contest_json(FILE *fout, struct http_request_info *phr)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct RegEnterContestJson resp = {};
+  int res = do_reg_enter_contest_json(fout, phr, &resp);
+  snprintf(phr->content_type, sizeof(phr->content_type), "text/json");
+  fprintf(fout, "{\n");
+  fprintf(fout, "  \"result\": %s", (res?"false":"true"));
+  if (res) {
+    if (res < 0) res = -res;
+    random_init();
+    unsigned error_id = random_u32();
+
+    fprintf(fout, ",\n  \"error_code\": %d", res);
+    const unsigned char *msg = ns_error_title_2(res);
+    if (msg) {
+      fprintf(fout, ",\n  \"error_message\": \"%s\"", json_armor_buf(&ab, msg));
+    }
+    if (error_id) {
+      fprintf(fout, ",\n  \"error_id\": \"%08x\"", error_id);
+    }
+    if (!msg) msg = "unknown error";
+    err("%d: %s: error_id = %08x: %s", phr->id, msg, error_id, resp.log_msg);
+  } else {
+  }
+  fprintf(fout, "\n}\n");
+  html_armor_free(&ab);
+  if (resp.u) {
+    userlist_free(&resp.u->b);
+  }
+}
+
 void
 ns_register_pages(FILE *fout, struct http_request_info *phr)
 {
@@ -3196,6 +3373,9 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   }
   if (phr->action == NEW_SRV_ACTION_USER_CONTESTS_JSON) {
     return reg_user_contests_json(fout, phr);
+  }
+  if (phr->action == NEW_SRV_ACTION_ENTER_CONTEST_JSON) {
+    return reg_enter_contest_json(fout, phr);
   }
 
   if (!phr->session_id) return anon_register_pages(fout, phr);

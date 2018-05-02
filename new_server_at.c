@@ -298,4 +298,5 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_LANGUAGE_STATS_PAGE] = "language-stats-page",
   [NEW_SRV_ACTION_USER_CONTESTS_JSON] = "user-contests-json",
   [NEW_SRV_ACTION_LOGIN_JSON] = "login-json",
+  [NEW_SRV_ACTION_ENTER_CONTEST_JSON] = "enter-contest-json",
 };
