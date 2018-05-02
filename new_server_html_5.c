@@ -2954,13 +2954,14 @@ reg_login_json(FILE *fout, struct http_request_info *phr)
 
   snprintf(phr->content_type, sizeof(phr->content_type), "text/json");
   fprintf(fout, "{\n");
-  fprintf(fout, "  \"result\": %s", (res?"false":"true"));
+  fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
   if (res) {
     if (res < 0) res = -res;
     random_init();
     resp.error_id = random_u32();
 
     fprintf(fout, ",\n  \"error_code\": %d", res);
+    fprintf(fout, ",\n  \"error_symbol\": \"%s\"", ns_error_symbol(res));
     const unsigned char *msg = ns_error_title_2(res);
     if (msg) {
       fprintf(fout, ",\n  \"error_message\": \"%s\"", json_armor_buf(&ab, msg));
@@ -3132,13 +3133,14 @@ reg_user_contests_json(FILE *fout, struct http_request_info *phr)
   int res = do_reg_user_contests_json(fout, phr, &resp);
   snprintf(phr->content_type, sizeof(phr->content_type), "text/json");
   fprintf(fout, "{\n");
-  fprintf(fout, "  \"result\": %s", (res?"false":"true"));
+  fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
   if (res) {
     if (res < 0) res = -res;
     random_init();
     unsigned error_id = random_u32();
 
     fprintf(fout, ",\n  \"error_code\": %d", res);
+    fprintf(fout, ",\n  \"error_symbol\": \"%s\"", ns_error_symbol(res));
     const unsigned char *msg = ns_error_title_2(res);
     if (msg) {
       fprintf(fout, ",\n  \"error_message\": \"%s\"", json_armor_buf(&ab, msg));
@@ -3396,13 +3398,14 @@ reg_enter_contest_json(FILE *fout, struct http_request_info *phr)
   int res = do_reg_enter_contest_json(fout, phr, &resp);
   snprintf(phr->content_type, sizeof(phr->content_type), "text/json");
   fprintf(fout, "{\n");
-  fprintf(fout, "  \"result\": %s", (res?"false":"true"));
+  fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
   if (res) {
     if (res < 0) res = -res;
     random_init();
     unsigned error_id = random_u32();
 
     fprintf(fout, ",\n  \"error_code\": %d", res);
+    fprintf(fout, ",\n  \"error_symbol\": \"%s\"", ns_error_symbol(res));
     const unsigned char *msg = ns_error_title_2(res);
     if (msg) {
       fprintf(fout, ",\n  \"error_message\": \"%s\"", json_armor_buf(&ab, msg));
