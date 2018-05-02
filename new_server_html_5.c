@@ -2946,6 +2946,33 @@ do_reg_login_json(FILE *fout, struct http_request_info *phr, struct RegLoginJson
 }
 
 static void
+json_error(
+        FILE *fout,
+        struct http_request_info *phr,
+        struct html_armor_buffer *pab,
+        int num,
+        const unsigned char *log_msg)
+{
+  if (num < 0) num = -num;
+  random_init();
+  unsigned error_id = random_u32();
+
+  fprintf(fout, ",\n  \"error\": {\n");
+  fprintf(fout, "    \"num\": %d", num);
+  fprintf(fout, ",\n    \"symbol\": \"%s\"", ns_error_symbol(num));
+  const unsigned char *msg = ns_error_title_2(num);
+  if (msg) {
+    fprintf(fout, ",\n    \"message\": \"%s\"", json_armor_buf(pab, msg));
+  }
+  if (error_id) {
+    fprintf(fout, ",\n    \"log_id\": \"%08x\"", error_id);
+  }
+  fprintf(fout, "\n  }");
+  if (!msg) msg = "unknown error";
+  err("%d: %s: error_id = %08x: %s", phr->id, msg, error_id, log_msg);
+}
+
+static void
 reg_login_json(FILE *fout, struct http_request_info *phr)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -2957,21 +2984,7 @@ reg_login_json(FILE *fout, struct http_request_info *phr)
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
   if (res) {
-    if (res < 0) res = -res;
-    random_init();
-    resp.error_id = random_u32();
-
-    fprintf(fout, ",\n  \"error_code\": %d", res);
-    fprintf(fout, ",\n  \"error_symbol\": \"%s\"", ns_error_symbol(res));
-    const unsigned char *msg = ns_error_title_2(res);
-    if (msg) {
-      fprintf(fout, ",\n  \"error_message\": \"%s\"", json_armor_buf(&ab, msg));
-    }
-    if (resp.error_id) {
-      fprintf(fout, ",\n  \"error_id\": \"%08x\"", resp.error_id);
-    }
-    if (!msg) msg = "unknown error";
-    err("%d: %s: error_id = %08x: %s", phr->id, msg, resp.error_id, resp.log_msg);
+    json_error(fout, phr, &ab, res, resp.log_msg);
   } else {
     fprintf(fout, ",\n  \"user_id\": %d", phr->user_id);
     fprintf(fout, ",\n  \"user_login\": \"%s\"", json_armor_buf(&ab, phr->login));
@@ -3137,21 +3150,7 @@ reg_user_contests_json(FILE *fout, struct http_request_info *phr)
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
   if (res) {
-    if (res < 0) res = -res;
-    random_init();
-    unsigned error_id = random_u32();
-
-    fprintf(fout, ",\n  \"error_code\": %d", res);
-    fprintf(fout, ",\n  \"error_symbol\": \"%s\"", ns_error_symbol(res));
-    const unsigned char *msg = ns_error_title_2(res);
-    if (msg) {
-      fprintf(fout, ",\n  \"error_message\": \"%s\"", json_armor_buf(&ab, msg));
-    }
-    if (error_id) {
-      fprintf(fout, ",\n  \"error_id\": \"%08x\"", error_id);
-    }
-    if (!msg) msg = "unknown error";
-    err("%d: %s: error_id = %08x: %s", phr->id, msg, error_id, resp.log_msg);
+    json_error(fout, phr, &ab, res, resp.log_msg);
   } else {
     if (resp.r_u > 0) {
       fprintf(fout, ",\n  \"contests\": [\n");
@@ -3402,21 +3401,7 @@ reg_enter_contest_json(FILE *fout, struct http_request_info *phr)
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
   if (res) {
-    if (res < 0) res = -res;
-    random_init();
-    unsigned error_id = random_u32();
-
-    fprintf(fout, ",\n  \"error_code\": %d", res);
-    fprintf(fout, ",\n  \"error_symbol\": \"%s\"", ns_error_symbol(res));
-    const unsigned char *msg = ns_error_title_2(res);
-    if (msg) {
-      fprintf(fout, ",\n  \"error_message\": \"%s\"", json_armor_buf(&ab, msg));
-    }
-    if (error_id) {
-      fprintf(fout, ",\n  \"error_id\": \"%08x\"", error_id);
-    }
-    if (!msg) msg = "unknown error";
-    err("%d: %s: error_id = %08x: %s", phr->id, msg, error_id, resp.log_msg);
+    json_error(fout, phr, &ab, res, resp.log_msg);
   } else {
     if (resp.contest_id > 0) {
       fprintf(fout, ",\n  \"contest_id\": %d", resp.contest_id);
