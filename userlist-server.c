@@ -10617,6 +10617,69 @@ cmd_get_group_info(
   info("%s -> OK, size = %zu", logbuf, xml_size); 
 }
 
+static void
+cmd_create_cookie(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_cookie_login *data)
+{
+  unsigned char logbuf[1024];
+  unsigned char cbuf[64];
+  struct userlist_pk_login_ok *answer = NULL;
+  int ans_len = 0;
+  const struct userlist_cookie *cookie = NULL;
+
+  if (pkt_len != sizeof(*data)) {
+    CONN_BAD("packet size is invalid: %d instead of %d", pkt_len, (int) sizeof(*data));
+    return;
+  }
+  snprintf(logbuf, sizeof(logbuf), "CREATE_COOKIE: %s, %d, %d, %d",
+           xml_unparse_ipv6(&data->origin_ip), data->ssl, data->user_id, data->contest_id);
+
+  if (is_admin(p, logbuf) < 0) return;
+  if (is_db_capable(p, OPCAP_LIST_USERS, logbuf) < 0) return;
+
+  int r = default_new_cookie_2(
+    data->user_id,
+    &data->origin_ip,
+    data->ssl,
+    0 /* cookie */,     // ignore data->cookie
+    0 /* client_key */, // ignore data->client_key
+    0 /* expire */,     // ignore data->expire
+    data->contest_id,
+    0 /* locale_id */,  // ignore data->locale_id
+    0 /* priv_level */, // ignore data->priv_level
+    0 /* role*/,        // ignore data->role
+    0 /* recovery */,   // ignore data->recovery
+    data->team_login,
+    &cookie);
+  if (r < 0) {
+    err("%s -> cookie creation failed", logbuf);
+    send_reply(p, -ULS_ERR_OUT_OF_MEM);
+    return;
+  }
+
+  ans_len = sizeof(struct userlist_pk_login_ok);
+  answer = alloca(ans_len);
+  memset(answer, 0, ans_len);
+  answer->reply_id = ULS_LOGIN_COOKIE;
+
+  answer->user_id = cookie->user_id;
+  answer->cookie = cookie->cookie;
+  answer->client_key = cookie->client_key;
+  answer->contest_id = cookie->contest_id;
+  answer->locale_id = cookie->locale_id;
+  answer->priv_level = cookie->priv_level;
+  answer->role = cookie->role;
+  answer->team_login = cookie->team_login;
+  answer->expire = cookie->expire;
+
+  enqueue_reply_to_client(p, ans_len, answer);
+  info("%s -> OK, %d, %s, %lld", logbuf, data->user_id,
+       xml_unparse_full_cookie(cbuf, sizeof(cbuf), &answer->cookie, &answer->client_key),
+       (long long) answer->expire);
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW] =          cmd_register_new,
@@ -10720,6 +10783,7 @@ static void (*cmd_table[])() =
   [ULS_PRIV_CHECK_PASSWORD] =   cmd_priv_check_password,
   [ULS_LIST_STANDINGS_USERS_2] =cmd_list_standings_users_2,
   [ULS_CHECK_USER_2] =          cmd_check_user_2,
+  [ULS_CREATE_COOKIE] =         cmd_create_cookie,
 
   [ULS_LAST_CMD] = 0
 };
@@ -10826,6 +10890,7 @@ static int (*check_table[])() =
   [ULS_GET_GROUP_INFO] =        check_pk_map_contest,
   [ULS_LIST_STANDINGS_USERS_2] =check_pk_map_contest,
   [ULS_CHECK_USER] =            NULL,
+  [ULS_CREATE_COOKIE] =         NULL,
 
   [ULS_LAST_CMD] = 0
 };
