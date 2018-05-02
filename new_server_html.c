@@ -11609,38 +11609,6 @@ cleanup:
   return 1;
 }
 
-static int
-do_user_contests_json(
-        FILE *fout,
-        struct http_request_info *phr)
-{
-  return -NEW_SRV_ERR_NOT_SUPPORTED;
-}
-
-static void
-unpriv_user_contests_json(
-        FILE *fout,
-        struct http_request_info *phr)
-{
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
-
-  int res = do_user_contests_json(fout, phr);
-
-  snprintf(phr->content_type, sizeof(phr->content_type), "text/json");
-  fprintf(fout, "{\n");
-  fprintf(fout, "  \"result\": %s", (res?"false":"true"));
-  if (res) {
-    if (res < 0) res = -res;
-    fprintf(fout, ",\n  \"error_code\": %d", res);
-    const unsigned char *msg = ns_error_title_2(res);
-    if (msg) {
-      fprintf(fout, ",\n  \"error_message\": \"%s\"", json_armor_buf(&ab, msg));
-    }
-  }
-  fprintf(fout, "\n}\n");
-  html_armor_free(&ab);
-}
-
 static void
 unprivileged_entry_point(
         FILE *fout,
@@ -11679,10 +11647,6 @@ unprivileged_entry_point(
     phr->cnts = cnts;
     phr->extra = ns_get_contest_extra(cnts);
     unpriv_external_action(fout, phr);
-    return;
-  }
-  if (phr->action == NEW_SRV_ACTION_USER_CONTESTS_JSON) {
-    unpriv_user_contests_json(fout, phr);
     return;
   }
 
