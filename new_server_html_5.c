@@ -2996,8 +2996,8 @@ reg_login_json(FILE *fout, struct http_request_info *phr)
       fprintf(fout, ",\n  \"user_name\": \"%s\"", json_armor_buf(&ab, phr->name));
     }
     fprintf(fout, ",\n  \"session\": \"%016llx-%016llx\"", phr->session_id, phr->client_key);
-    fprintf(fout, ",\n  \"session_id\": \"%016llx\"", phr->session_id);
-    fprintf(fout, ",\n  \"client_key\": \"%016llx\"", phr->client_key);
+    fprintf(fout, ",\n  \"SID\": \"%016llx\"", phr->session_id);
+    fprintf(fout, ",\n  \"EJSID\": \"%016llx\"", phr->client_key);
     if (resp.expire > 0) {
       fprintf(fout, ",\n  \"expire\": %lld", (long long) resp.expire);
     }
@@ -3028,11 +3028,11 @@ static int
 do_reg_user_contests_json(FILE *fout, struct http_request_info *phr, struct RegUserContestsJson *resp)
 {
   // session_id, client_key as params
-  if (hr_cgi_param_h64(phr, "session_id", &phr->session_id) < 0 || !phr->session_id) {
+  if (hr_cgi_param_h64(phr, "SID", &phr->session_id) < 0 || !phr->session_id) {
     snprintf(resp->log_msg, sizeof(resp->log_msg), "session_id is invalid");
     return -NEW_SRV_ERR_PERMISSION_DENIED;
   }
-  if (hr_cgi_param_h64(phr, "client_key", &phr->client_key) < 0 || !phr->client_key) {
+  if (hr_cgi_param_h64(phr, "EJSID", &phr->client_key) < 0 || !phr->client_key) {
     snprintf(resp->log_msg, sizeof(resp->log_msg), "client_key is invalid");
     return -NEW_SRV_ERR_PERMISSION_DENIED;
   }
@@ -3197,11 +3197,11 @@ static int
 do_reg_enter_contest_json(FILE *fout, struct http_request_info *phr, struct RegEnterContestJson *resp)
 {
   // session_id, client_key as params
-  if (hr_cgi_param_h64(phr, "session_id", &phr->session_id) < 0 || !phr->session_id) {
+  if (hr_cgi_param_h64(phr, "SID", &phr->session_id) < 0 || !phr->session_id) {
     snprintf(resp->log_msg, sizeof(resp->log_msg), "session_id is invalid");
     return -NEW_SRV_ERR_PERMISSION_DENIED;
   }
-  if (hr_cgi_param_h64(phr, "client_key", &phr->client_key) < 0 || !phr->client_key) {
+  if (hr_cgi_param_h64(phr, "EJSID", &phr->client_key) < 0 || !phr->client_key) {
     snprintf(resp->log_msg, sizeof(resp->log_msg), "client_key is invalid");
     return -NEW_SRV_ERR_PERMISSION_DENIED;
   }
@@ -3411,8 +3411,8 @@ reg_enter_contest_json(FILE *fout, struct http_request_info *phr)
       fprintf(fout, ",\n  \"contest_id\": %d", resp.contest_id);
     }
     fprintf(fout, ",\n  \"session\": \"%016llx-%016llx\"", resp.session_id, resp.client_key);
-    fprintf(fout, ",\n  \"session_id\": \"%016llx\"", resp.session_id);
-    fprintf(fout, ",\n  \"client_key\": \"%016llx\"", resp.client_key);
+    fprintf(fout, ",\n  \"SID\": \"%016llx\"", resp.session_id);
+    fprintf(fout, ",\n  \"EJSID\": \"%016llx\"", resp.client_key);
     if (resp.expire > 0) {
       fprintf(fout, ",\n  \"expire\": %lld", (long long) resp.expire);
     }
@@ -3446,11 +3446,11 @@ static int
 do_reg_ping_json(FILE *fout, struct http_request_info *phr, struct RegPingJson *resp)
 {
   // session_id, client_key as params
-  if (hr_cgi_param_h64(phr, "session_id", &phr->session_id) < 0 || !phr->session_id) {
+  if (hr_cgi_param_h64(phr, "SID", &phr->session_id) < 0 || !phr->session_id) {
     snprintf(resp->log_msg, sizeof(resp->log_msg), "session_id is invalid");
     return -NEW_SRV_ERR_INV_PARAM;
   }
-  if (hr_cgi_param_h64(phr, "client_key", &phr->client_key) < 0 || !phr->client_key) {
+  if (hr_cgi_param_h64(phr, "EJSID", &phr->client_key) < 0 || !phr->client_key) {
     snprintf(resp->log_msg, sizeof(resp->log_msg), "client_key is invalid");
     return -NEW_SRV_ERR_INV_PARAM;
   }

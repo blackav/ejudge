@@ -12779,6 +12779,20 @@ cleanup:
 static void
 parse_cookie(struct http_request_info *phr)
 {
+  if (phr->json_reply) {
+    const unsigned char *s = NULL;
+    if (hr_cgi_param(phr, "EJSID", &s) > 0 && *s) {
+      unsigned long long x;
+      char *eptr = NULL;
+      errno = 0;
+      x = strtoull(s, &eptr, 16);
+      if (!errno && !*eptr && (unsigned char *) eptr != s && x) {
+        phr->client_key = x;
+        return;
+      }
+    }
+  }
+
   const unsigned char *cookies = hr_getenv(phr, "HTTP_COOKIE");
   if (!cookies) return;
   const unsigned char *s = cookies;
