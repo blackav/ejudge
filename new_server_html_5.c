@@ -2373,10 +2373,14 @@ logout(
                               phr->session_id,
                               phr->client_key);
   ns_remove_session(phr->session_id);
-  snprintf(urlbuf, sizeof(urlbuf),
-           "%s?contest_id=%d&locale_id=%d",
-           phr->self_url, phr->contest_id, phr->locale_id);
-  ns_refresh_page_2(fout, phr->client_key, urlbuf);
+  if (phr->json_reply) {
+    fprintf(fout, "{\n  \"ok\": true\n}\n");
+  } else {
+    snprintf(urlbuf, sizeof(urlbuf),
+             "%s?contest_id=%d&locale_id=%d",
+             phr->self_url, phr->contest_id, phr->locale_id);
+    ns_refresh_page_2(fout, phr->client_key, urlbuf);
+  }
 }
 
 static void
