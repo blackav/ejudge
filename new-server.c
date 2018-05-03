@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -451,6 +451,23 @@ cmd_http_request(
     fprintf(hr.out_f, "Location: %s\n\n", hr.redirect);
     fclose(hr.out_f); hr.out_f = NULL;
     xfree(hr.redirect); hr.redirect = NULL;
+  } else if (hr.json_reply && !hr.content_type[0]) {
+    // generate JSON responce header
+    char *hdr_t = NULL;
+    size_t hdr_z = 0;
+    FILE *hdr_f = open_memstream(&hdr_t, &hdr_z);
+
+    fprintf(hdr_f, "Content-Type: %s\n", "text/json");
+    fprintf(hdr_f, "Cache-Control: no-cache\n");
+    fprintf(hdr_f, "Pragma: no-cache\n");
+    putc('\n', hdr_f);
+    if (hr.out_z > 0) {
+      fwrite(hr.out_t, 1, hr.out_z, hdr_f);
+    }
+    fclose(hdr_f); hdr_f = NULL;
+    free(hr.out_t);
+    hr.out_t = hdr_t;
+    hr.out_z = hdr_z;
   } else if (/*hr.content_type &&*/ hr.content_type[0]) {
     // generate header
     char *hdr_t = NULL;

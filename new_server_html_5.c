@@ -2980,7 +2980,7 @@ reg_login_json(FILE *fout, struct http_request_info *phr)
 
   int res = do_reg_login_json(fout, phr, &resp);
 
-  snprintf(phr->content_type, sizeof(phr->content_type), "text/json");
+  phr->json_reply = 1;
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
   if (res) {
@@ -3146,7 +3146,7 @@ reg_user_contests_json(FILE *fout, struct http_request_info *phr)
   struct RegUserContestsJson resp = {};
 
   int res = do_reg_user_contests_json(fout, phr, &resp);
-  snprintf(phr->content_type, sizeof(phr->content_type), "text/json");
+  phr->json_reply = 1;
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
   if (res) {
@@ -3397,7 +3397,7 @@ reg_enter_contest_json(FILE *fout, struct http_request_info *phr)
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct RegEnterContestJson resp = {};
   int res = do_reg_enter_contest_json(fout, phr, &resp);
-  snprintf(phr->content_type, sizeof(phr->content_type), "text/json");
+  phr->json_reply = 1;
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
   if (res) {
@@ -3510,7 +3510,7 @@ reg_ping_json(FILE *fout, struct http_request_info *phr)
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct RegPingJson resp = {};
   int res = do_reg_ping_json(fout, phr, &resp);
-  snprintf(phr->content_type, sizeof(phr->content_type), "text/json");
+  phr->json_reply = 1;
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
   if (res) {

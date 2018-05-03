@@ -12911,6 +12911,9 @@ ns_handle_http_request(
   if (hr_cgi_param(phr, "json", &s) > 0) {
     phr->json_reply = 1;
   }
+  if (hr_cgi_param(phr, "plain_text", &s) > 0) {
+    phr->plain_text = 1;
+  }
 
   // parse the client IP address
   if (!(remote_addr = hr_getenv(phr, "REMOTE_ADDR"))) {
@@ -12949,10 +12952,6 @@ ns_handle_http_request(
       }
       return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
     }
-  }
-
-  if (hr_cgi_param(phr, "plain_text", &s) > 0) {
-    phr->plain_text = 1;
   }
 
   // parse the session_id
