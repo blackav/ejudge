@@ -2660,6 +2660,23 @@ error_page(
   const unsigned char * const * error_names = external_reg_error_names;
   ExternalActionState **error_states = external_reg_error_states;
 
+  if (phr->json_reply) {
+    struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+    fprintf(out_f, "{\n");
+    fprintf(out_f, "  \"ok\": false");
+    fprintf(out_f, ",\n  \"error\": {\n");
+    fprintf(out_f, "    \"num\": %d", error_code);
+    fprintf(out_f, ",\n    \"symbol\": \"%s\"", ns_error_symbol(error_code));
+    const unsigned char *msg = ns_error_title_2(error_code);
+    if (msg) {
+      fprintf(out_f, ",\n    \"message\": \"%s\"", json_armor_buf(&ab, msg));
+    }
+    fprintf(out_f, "\n  }");
+    fprintf(out_f, "\n}\n");
+    html_armor_free(&ab);
+    return;
+  }
+
   if (phr->log_t && !*phr->log_t) {
     xfree(phr->log_t); phr->log_t = NULL; phr->log_z = 0;
   }
@@ -3593,6 +3610,11 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   }
   if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;
   if (phr->locale_id < 0) phr->locale_id = 0;
+
+  // allow logout
+  if (phr->contest_id <= 0 && phr->action == NEW_SRV_ACTION_LOGOUT) {
+    return logout(fout, phr, NULL, NULL, time(NULL));
+  }
 
   if (phr->role > 0) {
     fprintf(phr->log_f, "role %d > 0", phr->role);
