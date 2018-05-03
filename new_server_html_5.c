@@ -3432,6 +3432,98 @@ reg_enter_contest_json(FILE *fout, struct http_request_info *phr)
   }
 }
 
+struct RegPingJson
+{
+  unsigned char log_msg[256];
+  time_t expire;
+};
+
+static int
+do_reg_ping_json(FILE *fout, struct http_request_info *phr, struct RegPingJson *resp)
+{
+  // session_id, client_key as params
+  if (hr_cgi_param_h64(phr, "session_id", &phr->session_id) < 0 || !phr->session_id) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "session_id is invalid");
+    return -NEW_SRV_ERR_INV_PARAM;
+  }
+  if (hr_cgi_param_h64(phr, "client_key", &phr->client_key) < 0 || !phr->client_key) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "client_key is invalid");
+    return -NEW_SRV_ERR_INV_PARAM;
+  }
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+  }
+  int priv_level = 0;
+  int is_team = 0;
+  int r = userlist_clnt_get_cookie(ul_conn,
+                                   ULS_GET_COOKIE,
+                                   &phr->ip,
+                                   phr->ssl_flag,
+                                   phr->session_id,
+                                   phr->client_key,
+                                   &phr->user_id,
+                                   &phr->contest_id,
+                                   NULL /* p_locale_id */,
+                                   &priv_level,
+                                   &phr->role,
+                                   &is_team,
+                                   NULL /* p_reg_status */,
+                                   NULL /* p_reg_flags */,
+                                   NULL /* p_passwd_method */,
+                                   &phr->login,
+                                   &phr->name);
+  if (r < 0) {
+    r = -r;
+    switch (r) {
+    case ULS_ERR_NO_COOKIE:
+    case ULS_ERR_CANNOT_PARTICIPATE:
+    case ULS_ERR_NOT_REGISTERED:
+      snprintf(resp->log_msg, sizeof(resp->log_msg), "GET_COOKIE failed: %s", userlist_strerror(r));
+      return -NEW_SRV_ERR_INV_SESSION;
+    case ULS_ERR_DISCONNECT:
+      return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+    default:
+      snprintf(resp->log_msg, sizeof(resp->log_msg), "GET_COOKIE failed: %s", userlist_strerror(r));
+      return -NEW_SRV_ERR_INTERNAL;
+    }
+  }
+  if (phr->contest_id > 0) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "cookie is bound to contest %d", phr->contest_id);
+    return -NEW_SRV_ERR_INV_SESSION;
+  }
+  if (priv_level > 0) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "cookie has privilege level %d", priv_level);
+    return -NEW_SRV_ERR_INV_SESSION;
+  }
+  if (is_team) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "cookie is participation-bound");
+    return -NEW_SRV_ERR_INV_SESSION;
+  }
+
+  return 0;
+}
+
+static void
+reg_ping_json(FILE *fout, struct http_request_info *phr)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct RegPingJson resp = {};
+  int res = do_reg_ping_json(fout, phr, &resp);
+  snprintf(phr->content_type, sizeof(phr->content_type), "text/json");
+  fprintf(fout, "{\n");
+  fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
+  if (res) {
+    json_error(fout, phr, &ab, res, resp.log_msg);
+  } else {
+    if (resp.expire > 0) {
+      fprintf(fout, ",\n  \"expire\": %lld", (long long) resp.expire);
+    }
+  }
+  fprintf(fout, "\n}\n");
+  html_armor_free(&ab);
+}
+
 void
 ns_register_pages(FILE *fout, struct http_request_info *phr)
 {
@@ -3459,6 +3551,9 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
   }
   if (phr->action == NEW_SRV_ACTION_ENTER_CONTEST_JSON) {
     return reg_enter_contest_json(fout, phr);
+  }
+  if (phr->action == NEW_SRV_ACTION_PING) {
+    return reg_ping_json(fout, phr);
   }
 
   if (!phr->session_id) return anon_register_pages(fout, phr);
