@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/parsecfg.h"
 #include "ejudge/xml_utils.h"
+#include "ejudge/misctext.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -218,6 +219,27 @@ initialize(int argc, char *argv[])
   cgi_read(client_charset);
 }
 
+static void
+json_error_reply(FILE *out_f, int error_code)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  fprintf(out_f, "Content-Type: text/json; charset=UTF-8\n"
+          "Cache-Control: no-cache\n"
+          "Pragma: no-cache\n\n");
+  fprintf(out_f, "{\n");
+  fprintf(out_f, "  \"ok\": false");
+  fprintf(out_f, ",\n  \"error\": {\n");
+  fprintf(out_f, "    \"num\": %d", error_code);
+  fprintf(out_f, ",\n    \"symbol\": \"%s\"", ns_error_symbol(error_code));
+  const unsigned char *msg = ns_error_title_2(error_code);
+  if (msg) {
+    fprintf(out_f, ",\n    \"message\": \"%s\"", json_armor_buf(&ab, msg));
+  }
+  fprintf(out_f, "\n  }");
+  fprintf(out_f, "\n}\n");
+  html_armor_free(&ab);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -225,6 +247,7 @@ main(int argc, char *argv[])
   int r = 0, param_num, i, attempt;
   unsigned char **param_names, **params;
   size_t *param_sizes;
+  int json_mode = 0;
 
   FILE *log_f = 0;
   char *log_t = 0;
@@ -232,6 +255,17 @@ main(int argc, char *argv[])
 
   logger_set_level(-1, LOG_WARNING);
   initialize(argc, argv);
+
+  param_num = cgi_get_param_num();
+  XALLOCAZ(param_names, param_num);
+  XALLOCAZ(param_sizes, param_num);
+  XALLOCAZ(params, param_num);
+  for (i = 0; i < param_num; i++) {
+    cgi_get_nth_param_bin(i, &param_names[i], &param_sizes[i], &params[i]);
+    if (!strcmp(param_names[i], "json") && !strcmp(params[i], "1")) {
+      json_mode = 1;
+    }
+  }
 
   for (attempt = 0; attempt < global->connect_attempts; attempt++) {
     r = new_server_clnt_open(global->new_server_socket, &conn);
@@ -241,15 +275,12 @@ main(int argc, char *argv[])
 
   if (r < 0) {
     err("new-client: cannot connect to the server: %d", -r);
-    client_not_configured(client_charset, "cannot connect to the server", 0,0);
-  }
-
-  param_num = cgi_get_param_num();
-  XALLOCAZ(param_names, param_num);
-  XALLOCAZ(param_sizes, param_num);
-  XALLOCAZ(params, param_num);
-  for (i = 0; i < param_num; i++) {
-    cgi_get_nth_param_bin(i, &param_names[i], &param_sizes[i], &params[i]);
+    if (json_mode) {
+      json_error_reply(stdout, -r);
+      return 0;
+    } else {
+      client_not_configured(client_charset, "cannot connect to the server", 0,0);
+    }
   }
 
   log_f = open_memstream(&log_t, &log_z);
@@ -264,7 +295,11 @@ main(int argc, char *argv[])
   }
   if (r < 0) {
     err("new-client: http_request failed: %d", -r);
-    client_not_configured(client_charset, "request failed", 0, log_t);
+    if (json_mode) {
+      json_error_reply(stdout, -r);
+    } else {
+      client_not_configured(client_charset, "request failed", 0, log_t);
+    }
   }
 
   return 0;
