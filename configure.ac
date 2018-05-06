@@ -814,6 +814,8 @@ then
   CC="${saved_CC} -Wall -Wno-format-truncation -Werror"
   CFLAGS=
   AC_COMPILE_IFELSE([[
+#include <string.h>
+#include <stdio.h>
 int main(void)
 {
   char buf1[32];
