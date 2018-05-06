@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -749,7 +749,7 @@ run_all_tests(int argc, char *argv[])
     }
     if (tgzdir_pattern && tgzdir_pattern[0]) {
       snprintf(tgzdir_base, sizeof(tgzdir_base), tgzdir_pattern, serial);
-      snprintf(tgzdir_path, sizeof(tgzdir_path), "%s/%s", test_dir, tgzdir_path);
+      snprintf(tgzdir_path, sizeof(tgzdir_path), "%s/%s", test_dir, tgzdir_base);
       tgzdir_file = xstrdup(tgzdir_path);
     }
     cpu_time = 0;

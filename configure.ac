@@ -1,4 +1,4 @@
-dnl Copyright (C) 2004-2017 Alexander Chernov <cher@ejudge.ru>
+dnl Copyright (C) 2004-2018 Alexander Chernov <cher@ejudge.ru>
 
 AC_INIT(ejudge,3)
 AC_PREREQ(2.59)
@@ -748,7 +748,7 @@ LIBS="${saved_LIBS}"
 dnl compiler warning checking
 saved_CC="${CC}"
 saved_CFLAGS="${CFLAGS}"
-AC_MSG_CHECKING([for annoying gcc warnings])
+AC_MSG_CHECKING([for -Wno-pointer-sign necessity])
 CC="${CC} -Wall -Werror"
 AC_COMPILE_IFELSE([[
 #include <string.h>
@@ -781,6 +781,51 @@ int main(void)
 ]],[
 AC_MSG_RESULT([yes])
 ac_cv_gcc_wno_pointer_sign=-Wno-pointer-sign
+],[
+AC_MSG_RESULT([no])
+])
+fi
+CC="${saved_CC}"
+CFLAGS="${saved_CFLAGS}"
+
+saved_CC="${CC}"
+saved_CFLAGS="${CFLAGS}"
+AC_MSG_CHECKING([for -Wno-format-truncation necessity])
+CC="${CC} -Wall -Werror"
+AC_COMPILE_IFELSE([[
+#include <string.h>
+#include <stdio.h>
+int main(void)
+{
+  char buf1[32];
+  char buf2[32];
+  if (fgets(buf1, sizeof(buf1), stdin))
+    snprintf(buf2, sizeof(buf2), "prefix%s", buf1);
+}
+]],[
+AC_MSG_RESULT([no])
+],[
+AC_MSG_RESULT([yes])
+ac_cv_annoying_warning2=1
+])
+if [[ x"${ac_cv_annoying_warning2}" = x1 ]]
+then
+  AC_MSG_CHECKING([for -Wno-format-truncation])
+  CC="${saved_CC} -Wall -Wno-format-truncation -Werror"
+  CFLAGS=
+  AC_COMPILE_IFELSE([[
+#include <string.h>
+#include <stdio.h>
+int main(void)
+{
+  char buf1[32];
+  char buf2[32];
+  if (fgets(buf1, sizeof(buf1), stdin))
+    snprintf(buf2, sizeof(buf2), "prefix%s", buf1);
+}
+]],[
+AC_MSG_RESULT([yes])
+ac_cv_gcc_wno_format_truncation=-Wno-format-truncation
 ],[
 AC_MSG_RESULT([no])
 ])
@@ -1106,6 +1151,7 @@ AC_SUBST(ac_cv_no_kernel)
 AC_SUBST(ac_cv_no_rpath)
 AC_SUBST(ac_cv_nls)
 AC_SUBST(ac_cv_gcc_wno_pointer_sign)
+AC_SUBST(ac_cv_gcc_wno_format_truncation)
 AC_SUBST(cgibindir)
 AC_SUBST(XGETTEXT)
 AC_SUBST(MSGMERGE)

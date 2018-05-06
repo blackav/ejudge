@@ -1,8 +1,7 @@
 # -*- Makefile -*-
-# $Id$
 # @configure_input@
 
-# Copyright (C) 2006-2012 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -32,7 +31,7 @@ MYSQL_INCL_OPT=@ac_cv_mysql_include_opt@
 MYSQL_LIB_OPT=@ac_cv_mysql_lib_opt@
 MYSQL_LIBS=@ac_cv_mysql_libs@
 
-WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@
+WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@ @ac_cv_gcc_wno_format_truncation@
 WERROR=@ac_cv_werror_flag@
 
 ifdef RELEASE

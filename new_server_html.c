@@ -12178,8 +12178,6 @@ ns_write_public_log(
   if (phr && !cnts) cnts = phr->cnts;
 
   ASSERT(extra);
-  serve_state_t state = extra->serve_state;
-  ASSERT(state);
 
   // temporary
   ASSERT(!phr);

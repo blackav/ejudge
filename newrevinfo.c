@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2014-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -547,7 +547,7 @@ main(int argc, char **argv)
     const unsigned char *versions_file = "db/versions";
     const unsigned char *checksum_prefix = "db/info-";
     unsigned char full_version[1024];
-    unsigned char version_string[1024];
+    unsigned char version_string[2048];
     int build = 0;
     struct verdb *latest = NULL;
 
