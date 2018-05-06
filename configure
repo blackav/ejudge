@@ -7251,6 +7251,8 @@ $as_echo_n "checking for -Wno-format-truncation... " >&6; }
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
+#include <string.h>
+#include <stdio.h>
 int main(void)
 {
   char buf1[32];
