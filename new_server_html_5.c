@@ -3007,17 +3007,19 @@ reg_login_json(FILE *fout, struct http_request_info *phr)
   if (res) {
     json_error(fout, phr, &ab, res, resp.log_msg);
   } else {
-    fprintf(fout, ",\n  \"user_id\": %d", phr->user_id);
-    fprintf(fout, ",\n  \"user_login\": \"%s\"", json_armor_buf(&ab, phr->login));
+    fprintf(fout, ",\n  \"result\": {");
+    fprintf(fout, "\n    \"user_id\": %d", phr->user_id);
+    fprintf(fout, ",\n    \"user_login\": \"%s\"", json_armor_buf(&ab, phr->login));
     if (phr->name && *phr->name) {
-      fprintf(fout, ",\n  \"user_name\": \"%s\"", json_armor_buf(&ab, phr->name));
+      fprintf(fout, ",\n    \"user_name\": \"%s\"", json_armor_buf(&ab, phr->name));
     }
-    fprintf(fout, ",\n  \"session\": \"%016llx-%016llx\"", phr->session_id, phr->client_key);
-    fprintf(fout, ",\n  \"SID\": \"%016llx\"", phr->session_id);
-    fprintf(fout, ",\n  \"EJSID\": \"%016llx\"", phr->client_key);
+    fprintf(fout, ",\n    \"session\": \"%016llx-%016llx\"", phr->session_id, phr->client_key);
+    fprintf(fout, ",\n    \"SID\": \"%016llx\"", phr->session_id);
+    fprintf(fout, ",\n    \"EJSID\": \"%016llx\"", phr->client_key);
     if (resp.expire > 0) {
-      fprintf(fout, ",\n  \"expire\": %lld", (long long) resp.expire);
+      fprintf(fout, ",\n    \"expire\": %lld", (long long) resp.expire);
     }
+    fprintf(fout, "\n  }");
   }
   fprintf(fout, "\n}\n");
   html_armor_free(&ab);
@@ -3173,19 +3175,21 @@ reg_user_contests_json(FILE *fout, struct http_request_info *phr)
   if (res) {
     json_error(fout, phr, &ab, res, resp.log_msg);
   } else {
+    fprintf(fout, ",\n  \"result\": {");
     if (resp.r_u > 0) {
-      fprintf(fout, ",\n  \"contests\": [\n");
+      fprintf(fout, "\n    \"contests\": [\n");
       for (int i = 0; i < resp.r_u; ++i) {
         struct RegUserContestsJsonContest *cur = &resp.r_p[i];
         if (i > 0) {
           fprintf(fout, ",\n");
         }
-        fprintf(fout, "    {\n");
-        fprintf(fout, "      \"id\": %d,\n", cur->id);
-        fprintf(fout, "      \"name\": \"%s\"\n", json_armor_buf(&ab, cur->cnts->name));
-        fprintf(fout, "    }");
+        fprintf(fout, "      {\n");
+        fprintf(fout, "        \"id\": %d,\n", cur->id);
+        fprintf(fout, "        \"name\": \"%s\"\n", json_armor_buf(&ab, cur->cnts->name));
+        fprintf(fout, "      }");
       }
-      fprintf(fout, "\n  ]");
+      fprintf(fout, "\n    ]");
+      fprintf(fout, "\n  }");
     }
   }
   fprintf(fout, "\n}\n");
@@ -3424,27 +3428,29 @@ reg_enter_contest_json(FILE *fout, struct http_request_info *phr)
   if (res) {
     json_error(fout, phr, &ab, res, resp.log_msg);
   } else {
+    fprintf(fout, ",\n  \"result\": {");
+    fprintf(fout, "\n    \"session\": \"%016llx-%016llx\"", resp.session_id, resp.client_key);
+    fprintf(fout, ",\n    \"SID\": \"%016llx\"", resp.session_id);
+    fprintf(fout, ",\n    \"EJSID\": \"%016llx\"", resp.client_key);
     if (resp.contest_id > 0) {
-      fprintf(fout, ",\n  \"contest_id\": %d", resp.contest_id);
+      fprintf(fout, ",\n    \"contest_id\": %d", resp.contest_id);
     }
-    fprintf(fout, ",\n  \"session\": \"%016llx-%016llx\"", resp.session_id, resp.client_key);
-    fprintf(fout, ",\n  \"SID\": \"%016llx\"", resp.session_id);
-    fprintf(fout, ",\n  \"EJSID\": \"%016llx\"", resp.client_key);
     if (resp.expire > 0) {
-      fprintf(fout, ",\n  \"expire\": %lld", (long long) resp.expire);
+      fprintf(fout, ",\n    \"expire\": %lld", (long long) resp.expire);
     }
-    fprintf(fout, ",\n  \"user_id\": %d", resp.u->id);
-    fprintf(fout, ",\n  \"user_login\": \"%s\"", json_armor_buf(&ab, resp.u->login));
+    fprintf(fout, ",\n    \"user_id\": %d", resp.u->id);
+    fprintf(fout, ",\n    \"user_login\": \"%s\"", json_armor_buf(&ab, resp.u->login));
     const unsigned char *name = resp.u->login;
     if (resp.ui && resp.ui->name) {
       name = resp.ui->name;
     }
-    fprintf(fout, ",\n  \"user_name\": \"%s\"", json_armor_buf(&ab, name));
+    fprintf(fout, ",\n    \"user_name\": \"%s\"", json_armor_buf(&ab, name));
     unparse_userlist_contest_json(fout, &ab, resp.uc,
                                   "cntsreg",
                                   ",\n",
                                   "",
-                                  "  ");
+                                  "    ");
+    fprintf(fout, "\n  }");
   }
   fprintf(fout, "\n}\n");
   html_armor_free(&ab);
@@ -3537,9 +3543,11 @@ reg_ping_json(FILE *fout, struct http_request_info *phr)
   if (res) {
     json_error(fout, phr, &ab, res, resp.log_msg);
   } else {
+    fprintf(fout, ",\n  \"result\": {");
     if (resp.expire > 0) {
-      fprintf(fout, ",\n  \"expire\": %lld", (long long) resp.expire);
+      fprintf(fout, "\n    \"expire\": %lld", (long long) resp.expire);
     }
+    fprintf(fout, "\n  }");
   }
   fprintf(fout, "\n}\n");
   html_armor_free(&ab);
