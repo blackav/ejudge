@@ -12039,6 +12039,84 @@ cleanup:
   html_armor_free(&ab);
 }
 
+static void
+unpriv_problem_statement_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  time_t start_time = 0;
+  time_t stop_time = 0;
+  int accepting_mode = 0;
+
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+    accepting_mode = cs->accepting_mode;
+  }
+  if (start_time <= 0) {
+    goto fail;
+  }
+
+  int prob_id = 0;
+  const struct section_problem_data *prob = NULL;
+  int variant = 0;
+  if (hr_cgi_param_int(phr, "problem", &prob_id) < 0) {
+    fprintf(phr->log_f, "'problem' parameter is not set or invalid\n");
+    goto fail;
+  }
+  if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id])) {
+    fprintf(phr->log_f, "invalid problem id\n");
+    goto fail;
+  }
+  if (!serve_is_problem_started(cs, phr->user_id, prob)) {
+    fprintf(phr->log_f, "problem is not yet opened\n");
+    goto fail;
+  }
+  if (prob->variant_num > 0) {
+    if ((variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0) {
+      goto fail;
+    }
+  }
+
+  UserProblemInfo *pinfo = NULL;
+  XALLOCAZ(pinfo, cs->max_prob + 1);
+  for (int i = 0; i <= cs->max_prob; ++i) {
+    pinfo[i].best_run = -1;
+  }
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, pinfo);
+  if (!(pinfo[prob_id].status & PROB_STATUS_VIEWABLE)) {
+    goto fail;
+  }
+
+  problem_xml_t px = NULL;
+  if (variant > 0 && prob->xml.a && prob->xml.a[variant - 1]) {
+    px = prob->xml.a[variant - 1];
+  } else if (variant <= 0 && prob->xml.p) {
+    px = prob->xml.p;
+  }
+  if (!px || !px->stmts) {
+    goto fail;
+  }
+  ns_unparse_statement(fout, phr, cnts, extra, prob, 0, px, NULL, 0);
+
+cleanup:
+  html_armor_free(&ab);
+  return;
+
+fail:
+  fprintf(fout, "<h2>Statement is not available</h2>\n");
+  goto cleanup;
+}
+
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = unpriv_change_language,
@@ -12065,6 +12143,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GENERATE_TELEGRAM_TOKEN] = unpriv_generate_telegram_token,
   [NEW_SRV_ACTION_CONTEST_STATUS_JSON] = unpriv_contest_status_json,
   [NEW_SRV_ACTION_PROBLEM_STATUS_JSON] = unpriv_problem_status_json,
+  [NEW_SRV_ACTION_PROBLEM_STATEMENT_JSON] = unpriv_problem_statement_json,
 };
 
 static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_LAST] =
