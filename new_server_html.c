@@ -11478,6 +11478,567 @@ unpriv_get_file(
   xfree(file_bytes);
 }
 
+static const unsigned char *
+to_json_bool(int value)
+{
+  if (value > 0) return "true";
+  else return "false";
+}
+
+static void
+unpriv_contest_status_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int ok = 1;
+  phr->json_reply = 1;
+  const unsigned char *sep;
+
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  UserProblemInfo *pinfo = NULL;
+
+  time_t start_time;
+  time_t stop_time;
+  int accepting_mode = 0;
+  struct virtual_end_info_s *vend_info = NULL;
+  time_t sched_time = 0;
+  time_t duration = 0;
+  time_t finish_time = 0;
+  time_t fog_start_time = 0;
+
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+    if (stop_time > 0 && cs->current_time >= stop_time) {
+      vend_info = global->virtual_end_info;
+    }
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+    accepting_mode = cs->accepting_mode;
+  }
+  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, &finish_time);
+  if (duration > 0 && start_time > 0 && stop_time <= 0 && global->board_fog_time > 0) {
+    fog_start_time = start_time + duration - global->board_fog_time;
+    if (fog_start_time < start_time) fog_start_time = start_time;
+  }
+
+  XALLOCAZ(pinfo, cs->max_prob + 1);
+  for (int i = 0; i <= cs->max_prob; ++i) {
+    pinfo[i].best_run = -1;
+  }
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, pinfo);
+
+  (void) vend_info;
+
+  /*
+<%
+  if (global->description_file && global->description_file[0]) {
+    watched_file_update(&cs->description, global->description_file, cs->current_time);
+    if (cs->description.text) {
+%><s:v value="cs->description.text" escape="false" /><%
+    }
+  }
+%>
+  */
+
+  fprintf(fout, "{\n");
+  fprintf(fout, "  \"ok\" : %s", ok?"true":"false");
+  fprintf(fout, ",\n  \"result\": {");
+  fprintf(fout, "\n    \"server_time\": %lld", (long long) cs->current_time);
+  fprintf(fout, ",\n    \"contest\": {");
+  fprintf(fout, "\n      \"id\": %d", cnts->id);
+  fprintf(fout, ",\n      \"name\": \"%s\"", json_armor_buf(&ab, cnts->name));
+  fprintf(fout, ",\n      \"is_virtual\": %s", to_json_bool(global->is_virtual));
+  fprintf(fout, ",\n      \"is_unlimited\": %s", to_json_bool(duration <= 0));
+  if (duration > 0) {
+    fprintf(fout, ",\n      \"duration\": %lld", (long long) duration);
+  }
+  if (global->is_virtual) {
+    fprintf(fout, ",\n      \"is_restartable\": %s", to_json_bool(global->enable_virtual_restart));
+  }
+  fprintf(fout, ",\n      \"is_upsolving\": %s", to_json_bool(cs->upsolving_mode));
+  fprintf(fout, ",\n      \"is_started\": %s", to_json_bool(start_time > 0));
+  if (start_time > 0) {
+    fprintf(fout, ",\n      \"start_time\": %lld", (long long) start_time);
+    fprintf(fout, ",\n      \"is_clients_suspended\": %s", to_json_bool(cs->clients_suspended));
+    fprintf(fout, ",\n      \"is_testing_suspended\": %s", to_json_bool(cs->testing_suspended));
+    if (global->enable_printing) {
+      fprintf(fout, ",\n      \"is_printing_suspended\": %s", to_json_bool(cs->printing_suspended));
+    }
+    if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
+      fprintf(fout, ",\n      \"is_olympiad_accepting_mode\": %s", to_json_bool(cs->accepting_mode));
+      fprintf(fout, ",\n      \"is_testing_finished\": %s", to_json_bool(cs->testing_finished));
+    }
+    fprintf(fout, ",\n      \"is_stopped\": %s", to_json_bool(stop_time > 0));
+    if (stop_time > 0) {
+      fprintf(fout, ",\n      \"stop_time\": %lld", (long long) stop_time);
+      if (duration > 0 && global->is_virtual <= 0 && global->board_fog_time > 0 && global->board_unfog_time > 0) {
+        fprintf(fout, ",\n      \"is_freezable\": %s", to_json_bool(global->board_fog_time > 0 && global->board_unfog_time > 0));
+        if (global->board_fog_time > 0 && global->board_unfog_time > 0) {
+          time_t unfreeze_time = stop_time + global->board_unfog_time;
+          fprintf(fout, ",\n      \"is_frozen\": %s", to_json_bool(cs->current_time < unfreeze_time));
+          fprintf(fout, ",\n      \"unfreeze_time\": %lld", (long long) unfreeze_time);
+        }
+      }
+    } else {
+      // not stopped yet
+      if (duration > 0 && global->is_virtual <= 0) {
+        fprintf(fout, ",\n      \"is_freezable\": %s", to_json_bool(global->board_fog_time > 0));
+        if (global->board_fog_time > 0) {
+          time_t freeze_time = start_time + duration - global->board_fog_time;
+          if (freeze_time < start_time) freeze_time = start_time;
+          fprintf(fout, ",\n      \"is_frozen\": %s", to_json_bool(cs->current_time >= freeze_time));
+          fprintf(fout, ",\n      \"freeze_time\": %lld", (long long) freeze_time);
+        }
+      }
+      if (duration > 0) {
+        fprintf(fout, ",\n      \"expected_stop_time\": %lld", (long long) (stop_time + duration));
+      } else if (duration <= 0 && finish_time > 0) {
+        fprintf(fout, ",\n      \"scheduled_finish_time\": %lld", (long long) finish_time);
+      }
+    }
+  } else {
+    // not started yet
+    if (global->is_virtual > 0) {
+      if (cnts->open_time > 0) {
+        fprintf(fout, ",\n      \"open_time\": %lld", (long long) cnts->open_time);
+      }
+      if (cnts->close_time > 0) {
+        fprintf(fout, ",\n      \"close_time\": %lld", (long long) cnts->close_time);
+      }
+    } else if (sched_time > 0) {
+      fprintf(fout, ",\n      \"scheduled_start_time\": %lld", (long long) sched_time);
+    }
+  }
+  fprintf(fout, "\n    }");
+
+  fprintf(fout, ",\n    \"online\": {");
+  fprintf(fout, "\n      \"user_count\": %d", phr->online_users);
+  fprintf(fout, ",\n      \"max_user_count\": %d", cs->max_online_count);
+  fprintf(fout, ",\n      \"max_time\": %lld", (long long) cs->max_online_time);
+  fprintf(fout, "\n    }");
+
+  if (start_time > 0) {
+    fprintf(fout, ",\n    \"compilers\": [");
+    sep = "";
+    for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+      const struct section_language_data *lang = cs->langs[lang_id];
+      if (!lang) continue;
+      if (lang->disabled > 0) continue;
+
+      fprintf(fout, "%s\n      {", sep);
+      sep = ",";
+      fprintf(fout, "\n        \"id\": %d", lang->id);
+      fprintf(fout, ",\n        \"short_name\": \"%s\"", json_armor_buf(&ab, lang->short_name));
+      if (lang->long_name) {
+        fprintf(fout, ",\n        \"long_name\": \"%s\"", json_armor_buf(&ab, lang->long_name));
+      }
+      fprintf(fout, ",\n        \"src_sfx\": \"%s\"", json_armor_buf(&ab, lang->src_sfx));
+      /* FIXME: report compiler_env */
+      fprintf(fout, "\n      }");
+    }
+    fprintf(fout, "\n    ]");
+
+    fprintf(fout, ",\n    \"problems\": [");
+    sep = "";
+    for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
+      const struct section_problem_data *prob = cs->probs[prob_id];
+      if (!prob) continue;
+      if (!serve_is_problem_started(cs, phr->user_id, prob)) continue;
+
+      fprintf(fout, "%s\n      {", sep);
+      sep = ",";
+
+      fprintf(fout, "\n        \"id\": %d", prob->id);
+      fprintf(fout, ",\n        \"short_name\": \"%s\"", json_armor_buf(&ab, prob->short_name));
+      if (prob->long_name) {
+        fprintf(fout, ",\n        \"long_name\": \"%s\"", json_armor_buf(&ab, prob->long_name));
+      }
+
+      fprintf(fout, "\n      }");
+    }
+    fprintf(fout, "\n    ]");
+  }
+
+  fprintf(fout, "\n  }");
+  fprintf(fout, "\n}\n");
+
+  html_armor_free(&ab);
+}
+
+static void
+unpriv_problem_status_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  int ok = 1;
+
+  time_t start_time = 0;
+  time_t stop_time = 0;
+  int accepting_mode = 0;
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+    accepting_mode = cs->accepting_mode;
+  }
+  if (start_time <= 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_CONTEST_NOT_STARTED);
+    goto cleanup;
+  }
+
+  int prob_id = 0;
+  const struct section_problem_data *prob = NULL;
+  int variant = 0;
+  if (hr_cgi_param_int(phr, "problem", &prob_id) < 0) {
+    fprintf(phr->log_f, "'problem' parameter is not set or invalid\n");
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
+    goto cleanup;
+  }
+  if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id])) {
+    fprintf(phr->log_f, "invalid problem id\n");
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
+    goto cleanup;
+  }
+  if (!serve_is_problem_started(cs, phr->user_id, prob)) {
+    fprintf(phr->log_f, "problem is not yet opened\n");
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
+    goto cleanup;
+  }
+  if (prob->variant_num > 0) {
+    if ((variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0) {
+      error_page(fout, phr, 0, NEW_SRV_ERR_INV_VARIANT);
+      goto cleanup;
+    }
+  }
+
+  UserProblemInfo *pinfo = NULL;
+  XALLOCAZ(pinfo, cs->max_prob + 1);
+  for (int i = 0; i <= cs->max_prob; ++i) {
+    pinfo[i].best_run = -1;
+  }
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, pinfo);
+
+  fprintf(fout, "{\n");
+  fprintf(fout, "  \"ok\" : %s", ok?"true":"false");
+  fprintf(fout, ",\n  \"result\": {");
+  fprintf(fout, "\n    \"server_time\": %lld", (long long) cs->current_time);
+  fprintf(fout, ",\n    \"problem\": {");
+  fprintf(fout, "\n      \"id\": %d", prob->id);
+  fprintf(fout, ",\n      \"short_name\": \"%s\"", json_armor_buf(&ab, prob->short_name));
+  if (prob->long_name) {
+    fprintf(fout, ",\n      \"long_name\": \"%s\"", json_armor_buf(&ab, prob->long_name));
+  }
+  fprintf(fout, ",\n      \"type\": \"%s\"", json_armor_buf(&ab, problem_unparse_type(prob->type)));
+  if (global->score_system != SCORE_MOSCOW) {
+    fprintf(fout, ",\n      \"full_score\": %d", prob->full_score);
+    if (global->separate_user_score > 0) {
+      fprintf(fout, ",\n      \"full_user_score\": %d", prob->full_user_score);
+    }
+    if (prob->min_score_1 > 0) {
+      fprintf(fout, ",\n      \"min_score_1\": %d", prob->min_score_1);
+    }
+    if (prob->min_score_2 > 0) {
+      fprintf(fout, ",\n      \"min_score_2\": %d", prob->min_score_2);
+    }
+  }
+  if (prob->use_stdin > 0) {
+    fprintf(fout, ",\n      \"use_stdin\": %s", to_json_bool(prob->use_stdin));
+  }
+  if (prob->use_stdout > 0) {
+    fprintf(fout, ",\n      \"use_stdout\": %s", to_json_bool(prob->use_stdout));
+  }
+  if (prob->combined_stdin > 0) {
+    fprintf(fout, ",\n      \"combined_stdin\": %s", to_json_bool(prob->combined_stdin));
+  }
+  if (prob->combined_stdout > 0) {
+    fprintf(fout, ",\n      \"combined_stdout\": %s", to_json_bool(prob->combined_stdout));
+  }
+  if (prob->use_ac_not_ok > 0) {
+    fprintf(fout, ",\n      \"use_ac_not_ok\": %s", to_json_bool(prob->use_ac_not_ok));
+  }
+  if (prob->ignore_prev_ac > 0) {
+    fprintf(fout, ",\n      \"ignore_prev_ac\": %s", to_json_bool(prob->ignore_prev_ac));
+  }
+  if (prob->team_enable_rep_view > 0) {
+    fprintf(fout, ",\n      \"team_enable_rep_view\": %s", to_json_bool(prob->team_enable_rep_view));
+  }
+  if (prob->team_enable_ce_view > 0) {
+    fprintf(fout, ",\n      \"team_enable_ce_view\": %s", to_json_bool(prob->team_enable_ce_view));
+  }
+  if (prob->ignore_compile_errors > 0) {
+    fprintf(fout, ",\n      \"ignore_compile_errors\": %s", to_json_bool(prob->ignore_compile_errors));
+  }
+  if (prob->disable_user_submit > 0) {
+    fprintf(fout, ",\n      \"disable_user_submit\": %s", to_json_bool(prob->disable_user_submit));
+  }
+  if (prob->disable_tab > 0) {
+    fprintf(fout, ",\n      \"disable_tab\": %s", to_json_bool(prob->disable_tab));
+  }
+  if (prob->enable_submit_after_reject > 0) {
+    fprintf(fout, ",\n      \"enable_submit_after_reject\": %s", to_json_bool(prob->enable_submit_after_reject));
+  }
+  if (prob->enable_tokens > 0) {
+    fprintf(fout, ",\n      \"enable_tokens\": %s", to_json_bool(prob->enable_tokens));
+  }
+  if (prob->tokens_for_user_ac > 0) {
+    fprintf(fout, ",\n      \"tokens_for_user_ac\": %s", to_json_bool(prob->tokens_for_user_ac));
+  }
+  if (prob->disable_submit_after_ok > 0) {
+    fprintf(fout, ",\n      \"disable_submit_after_ok\": %s", to_json_bool(prob->disable_submit_after_ok));
+  }
+  if (prob->disable_auto_testing > 0) {
+    fprintf(fout, ",\n      \"disable_auto_testing\": %s", to_json_bool(prob->disable_auto_testing));
+  }
+  if (prob->disable_testing > 0) {
+    fprintf(fout, ",\n      \"disable_testing\": %s", to_json_bool(prob->disable_testing));
+  }
+  if (prob->enable_compilation > 0) {
+    fprintf(fout, ",\n      \"enable_compilation\": %s", to_json_bool(prob->enable_compilation));
+  }
+  if (prob->skip_testing > 0) {
+    fprintf(fout, ",\n      \"skip_testing\": %s", to_json_bool(prob->skip_testing));
+  }
+  if (prob->hidden > 0) {
+    fprintf(fout, ",\n      \"hidden\": %s", to_json_bool(prob->hidden));
+  }
+  if (prob->stand_hide_time > 0) {
+    fprintf(fout, ",\n      \"stand_hide_time\": %s", to_json_bool(prob->stand_hide_time));
+  }
+  if (prob->stand_ignore_score > 0) {
+    fprintf(fout, ",\n      \"stand_ignore_score\": %s", to_json_bool(prob->stand_ignore_score));
+  }
+  if (prob->stand_last_column > 0) {
+    fprintf(fout, ",\n      \"stand_last_column\": %s", to_json_bool(prob->stand_last_column));
+  }
+  if (prob->disable_stderr > 0) {
+    fprintf(fout, ",\n      \"disable_stderr\": %s", to_json_bool(prob->disable_stderr));
+  }
+
+  if (prob->real_time_limit > 0) {
+    fprintf(fout, ",\n      \"real_time_limit_ms\": %d", prob->real_time_limit * 1000);
+  }
+  if (prob->time_limit_millis > 0) {
+    fprintf(fout, ",\n      \"time_limit_ms\": %d", prob->time_limit_millis);
+  } else if (prob->time_limit > 0) {
+    fprintf(fout, ",\n      \"time_limit_ms\": %d", prob->time_limit * 1000);
+  }
+  if (global->score_system == SCORE_MOSCOW || global->score_system == SCORE_ACM) {
+    if (prob->acm_run_penalty >= 0 && prob->acm_run_penalty != 20) {
+      fprintf(fout, ",\n      \"acm_run_penalty\": %d", prob->acm_run_penalty);
+    }
+  } else {
+    if (prob->test_score >= 0) {
+      fprintf(fout, ",\n      \"test_score\": %d", prob->test_score);
+    }
+    if (prob->run_penalty >= 0) {
+      fprintf(fout, ",\n      \"run_penalty\": %d", prob->run_penalty);
+    }
+    if (prob->disqualified_penalty >= 0) {
+      fprintf(fout, ",\n      \"disqualified_penalty\": %d", prob->disqualified_penalty);
+    }
+    if (prob->compile_error_penalty >= 0) {
+      fprintf(fout, ",\n      \"compile_error_penalty\": %d", prob->compile_error_penalty);
+    }
+  }
+  if (global->score_system == SCORE_OLYMPIAD) {
+    if (prob->tests_to_accept >= 0) {
+      fprintf(fout, ",\n      \"tests_to_accept\": %d", prob->tests_to_accept);
+    }
+    if (prob->min_tests_to_accept >= 0) {
+      fprintf(fout, ",\n      \"min_tests_to_accept\": %d", prob->min_tests_to_accept);
+    }
+  }
+  if (prob->score_multiplier > 1) {
+    fprintf(fout, ",\n      \"score_multiplier\": %d", prob->score_multiplier);
+  }
+  if (prob->max_user_run_count > 0) {
+    fprintf(fout, ",\n      \"max_user_run_count\": %d", prob->max_user_run_count);
+  }
+  if (prob->stand_name && prob->stand_name[0]) {
+    fprintf(fout, ",\n      \"stand_name\": %s", json_armor_buf(&ab, prob->stand_name));
+  }
+  if (prob->stand_column && prob->stand_column[0]) {
+    fprintf(fout, ",\n      \"stand_column\": %s", json_armor_buf(&ab, prob->stand_column));
+  }
+  if (prob->group_name && prob->group_name[0]) {
+    fprintf(fout, ",\n      \"group_name\": %s", json_armor_buf(&ab, prob->group_name));
+  }
+  if ((prob->use_stdin <= 0 || prob->combined_stdin > 0) && prob->input_file && prob->input_file[0]) {
+    fprintf(fout, ",\n      \"input_file\": %s", json_armor_buf(&ab, prob->input_file));
+  }
+  if ((prob->use_stdout <= 0 || prob->combined_stdout > 0) && prob->output_file && prob->output_file[0]) {
+    fprintf(fout, ",\n      \"output_file\": %s", json_armor_buf(&ab, prob->output_file));
+  }
+  if (prob->ok_status && prob->ok_status[0]) {
+    fprintf(fout, ",\n      \"ok_status\": %s", json_armor_buf(&ab, prob->ok_status));
+  }
+  if (prob->start_date > 0) {
+    fprintf(fout, ",\n      \"start_date\": %lld", (long long) prob->start_date);
+  }
+  unsigned *lset = NULL;
+  if (prob->enable_language && prob->enable_language[0]) {
+    int ssize = (cs->max_lang + 31) / 2;
+    lset = alloca(ssize * sizeof(lset[0]));
+    memset(lset, 0, ssize * sizeof(lset[0]));
+    for (int j = 0; prob->enable_language[j]; ++j) {
+      const unsigned char *lng = prob->enable_language[j];
+      for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+        const struct section_language_data *lang = cs->langs[lang_id];
+        if (lang && lang->short_name && !strcmp(lang->short_name, lng) && lang->disabled <= 0) {
+          lset[lang_id / 32] |= 1U << (lang_id % 32);
+          break;
+        }
+      }
+    }
+  } else if (prob->disable_language && prob->disable_language[0]) {
+    int ssize = (cs->max_lang + 31) / 2;
+    lset = alloca(ssize * sizeof(lset[0]));
+    memset(lset, 0, ssize * sizeof(lset[0]));
+    for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+      const struct section_language_data *lang = cs->langs[lang_id];
+      if (lang && lang->short_name && lang->disabled <= 0) {
+        lset[lang_id / 32] |= 1U << (lang_id % 32);
+      }
+    }
+    for (int j = 0; prob->enable_language[j]; ++j) {
+      const unsigned char *lng = prob->enable_language[j];
+      for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+        const struct section_language_data *lang = cs->langs[lang_id];
+        if (lang && lang->short_name && !strcmp(lang->short_name, lng) && lang->disabled <= 0) {
+          lset[lang_id / 32] &= ~(1U << (lang_id % 32));
+          break;
+        }
+      }
+    }
+  }
+  if (lset) {
+    fprintf(fout, ",\n      \"compilers\": [ ");
+    const unsigned char *sep = "";
+    for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+      if ((lset[lang_id / 32] & (1U << (lang_id % 32))) != 0) {
+        fprintf(fout, "%s%d", sep, lang_id);
+        sep = ", ";
+      }
+    }
+    fprintf(fout, " ]");
+  }
+#if 0
+  char **disable_language;
+  char **enable_language;
+  char **require;
+  char **provide_ok;
+#endif
+  if (prob->max_vm_size != 0 && prob->max_vm_size != ~(ej_size64_t) 0) {
+    fprintf(fout, ",\n      \"max_vm_size\": \"%llu\"", prob->max_vm_size);
+  }
+  if (prob->max_stack_size != 0 && prob->max_stack_size != ~(ej_size64_t) 0) {
+    fprintf(fout, ",\n      \"max_stack_size\": \"%llu\"", prob->max_stack_size);
+  }
+  // whether statement is available
+  if (variant > 0 && prob->xml.a[variant - 1]) {
+    fprintf(fout, ",\n      \"is_statement_avaiable\": %s", to_json_bool(1));
+    // FIXME: calculate size estimate?
+    fprintf(fout, ",\n      \"est_stmt_size\": %d", 0);
+  } else if (!variant && prob->xml.p) {
+    fprintf(fout, ",\n      \"is_statement_avaiable\": %s", to_json_bool(1));
+    // FIXME: calculate size estimate?
+    fprintf(fout, ",\n      \"est_stmt_size\": %d", 0);
+  }
+  fprintf(fout, "\n    }");
+
+  UserProblemInfo *upi = &pinfo[prob_id];
+  fprintf(fout, ",\n    \"problem_status\": {");
+  fprintf(fout, "\n      \"is_viewable\" : %s", to_json_bool((upi->status & PROB_STATUS_VIEWABLE) != 0));
+  fprintf(fout, ",\n      \"is_submittable\" : %s", to_json_bool((upi->status & PROB_STATUS_SUBMITTABLE) != 0));
+  if ((upi->status & PROB_STATUS_TABABLE) != 0) {
+    fprintf(fout, ",\n      \"is_tabable\" : %s", to_json_bool((upi->status & PROB_STATUS_TABABLE) != 0));
+  }
+  if (upi->solved_flag > 0) {
+    fprintf(fout, ",\n      \"is_solved\" : %s", to_json_bool(upi->solved_flag));
+  }
+  if (upi->accepted_flag > 0) {
+    fprintf(fout, ",\n      \"is_accepted\" : %s", to_json_bool(upi->accepted_flag));
+  }
+  if (upi->pending_flag > 0) {
+    fprintf(fout, ",\n      \"is_pending\" : %s", to_json_bool(upi->pending_flag));
+  }
+  if (upi->pr_flag > 0) {
+    fprintf(fout, ",\n      \"is_pending_review\" : %s", to_json_bool(upi->pr_flag));
+  }
+  if (upi->trans_flag > 0) {
+    fprintf(fout, ",\n      \"is_transient\" : %s", to_json_bool(upi->trans_flag));
+  }
+  if (upi->last_untokenized > 0) {
+    fprintf(fout, ",\n      \"is_last_untokenized\" : %s", to_json_bool(upi->last_untokenized));
+  }
+  if (upi->marked_flag > 0) {
+    fprintf(fout, ",\n      \"is_marked\" : %s", to_json_bool(upi->marked_flag));
+  }
+  if (upi->autook_flag > 0) {
+    fprintf(fout, ",\n      \"is_autook\" : %s", to_json_bool(upi->autook_flag));
+  }
+  if (upi->rejected_flag > 0) {
+    fprintf(fout, ",\n      \"is_rejected\" : %s", to_json_bool(upi->rejected_flag));
+  }
+  if (upi->need_eff_time_flag > 0) {
+    fprintf(fout, ",\n      \"is_eff_time_needed\" : %s", to_json_bool(upi->need_eff_time_flag));
+  }
+  if (upi->best_run >= 0) {
+    fprintf(fout, ",\n      \"best_run\" : %d", upi->best_run);
+  }
+  if (upi->attempts > 0) {
+    fprintf(fout, ",\n      \"attempts\" : %d", upi->attempts);
+  }
+  if (upi->disqualified > 0) {
+    fprintf(fout, ",\n      \"disqualified\" : %d", upi->disqualified);
+  }
+  if (upi->ce_attempts > 0) {
+    fprintf(fout, ",\n      \"ce_attempts\" : %d", upi->ce_attempts);
+  }
+  if (upi->best_score > 0) {
+    fprintf(fout, ",\n      \"best_score\" : %d", upi->best_score);
+  }
+  if (upi->prev_successes > 0) {
+    fprintf(fout, ",\n      \"prev_successes\" : %d", upi->prev_successes);
+  }
+  if (upi->all_attempts > 0) {
+    fprintf(fout, ",\n      \"all_attempts\" : %d", upi->all_attempts);
+  }
+  if (upi->eff_attempts > 0) {
+    fprintf(fout, ",\n      \"eff_attempts\" : %d", upi->eff_attempts);
+  }
+  if (upi->token_count > 0) {
+    fprintf(fout, ",\n      \"token_count\" : %d", upi->token_count);
+  }
+  if (upi->deadline > 0) {
+    fprintf(fout, ",\n      \"deadline\" : %lld", (long long) upi->deadline);
+  }
+  if (upi->effective_time > 0) {
+    fprintf(fout, ",\n      \"effective_time\" : %lld", (long long) upi->effective_time);
+  }
+  fprintf(fout, "\n    }");
+
+  fprintf(fout, "\n  }");
+  fprintf(fout, "\n}\n");
+cleanup:
+  html_armor_free(&ab);
+}
+
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = unpriv_change_language,
@@ -11502,6 +12063,8 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_GET_FILE] = unpriv_get_file,
   [NEW_SRV_ACTION_USE_TOKEN] = unpriv_use_token,
   [NEW_SRV_ACTION_GENERATE_TELEGRAM_TOKEN] = unpriv_generate_telegram_token,
+  [NEW_SRV_ACTION_CONTEST_STATUS_JSON] = unpriv_contest_status_json,
+  [NEW_SRV_ACTION_PROBLEM_STATUS_JSON] = unpriv_problem_status_json,
 };
 
 static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_LAST] =
