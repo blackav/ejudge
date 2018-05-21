@@ -11953,11 +11953,11 @@ unpriv_problem_status_json(
   if (variant > 0 && prob->xml.a[variant - 1]) {
     fprintf(fout, ",\n      \"is_statement_avaiable\": %s", to_json_bool(1));
     // FIXME: calculate size estimate?
-    fprintf(fout, ",\n      \"est_stmt_size\": %d", 0);
+    fprintf(fout, ",\n      \"est_stmt_size\": %d", 4096);
   } else if (!variant && prob->xml.p) {
     fprintf(fout, ",\n      \"is_statement_avaiable\": %s", to_json_bool(1));
     // FIXME: calculate size estimate?
-    fprintf(fout, ",\n      \"est_stmt_size\": %d", 0);
+    fprintf(fout, ",\n      \"est_stmt_size\": %d", 4096);
   }
   fprintf(fout, "\n    }");
 
