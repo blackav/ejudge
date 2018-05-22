@@ -302,4 +302,6 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CONTEST_STATUS_JSON] = "contest-status-json",
   [NEW_SRV_ACTION_PROBLEM_STATUS_JSON] = "problem-status-json",
   [NEW_SRV_ACTION_PROBLEM_STATEMENT_JSON] = "problem-statement-json",
+  [NEW_SRV_ACTION_LIST_RUNS_JSON] = "list-runs-json",
+  [NEW_SRV_ACTION_RUN_STATUS_JSON] = "run-status-json",
 };
