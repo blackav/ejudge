@@ -9975,11 +9975,21 @@ unpriv_submit_run(
       if (i > cs->max_prob) i = 0;
     }
   }
-  if (i > 0) {
-    snprintf(bb, sizeof(bb), "prob_id=%d", i);
-    ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT, bb);
-  }  else {
-    ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_SUBMISSIONS, 0);
+  if (phr->json_reply) {
+    fprintf(fout, "{\n");
+    fprintf(fout, "  \"ok\" : %s", "true");
+    fprintf(fout, ",\n  \"result\": {");
+    fprintf(fout, "\n    \"server_time\": %lld", (long long) cs->current_time);
+    fprintf(fout, ",\n    \"run_id\": %d", run_id);
+    fprintf(fout, "\n  }");
+    fprintf(fout, "\n}");
+  } else {
+    if (i > 0) {
+      snprintf(bb, sizeof(bb), "prob_id=%d", i);
+      ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT, bb);
+    }  else {
+      ns_refresh_page(fout, phr, NEW_SRV_ACTION_VIEW_SUBMISSIONS, 0);
+    }
   }
 
 cleanup:;
