@@ -6383,7 +6383,6 @@ filter_user_runs(
       run_get_attempts(cs->runlog_state, i, &attempts, &disq_attempts, &ce_attempts,
                        p_eff_time,
                        cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty);
-
     prev_successes = RUN_TOO_MANY;
     if (global->score_system == SCORE_KIROV
         && status == RUN_OK
@@ -6413,6 +6412,11 @@ filter_user_runs(
     if (global->show_astr_time <= 0) ri->is_with_duration = 1;
     ri->status = status;
     ri->prob_id = re.prob_id;
+
+    if (cur_prob && cur_prob->enable_submit_after_reject > 0) {
+      ri->is_with_effective_time = 1;
+      ri->effective_time = effective_time;
+    }
 
     if (cur_prob) {
       if (cur_prob->variant_num > 0) {

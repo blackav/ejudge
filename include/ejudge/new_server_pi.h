@@ -232,6 +232,7 @@ typedef struct RunDisplayInfo
     unsigned char *abbrev_sha1;
     long long run_time;
     long long duration;
+    long long effective_time;
     int run_id;
     int prob_id;
     int variant;
@@ -260,6 +261,7 @@ typedef struct RunDisplayInfo
     unsigned char is_score_available;
     unsigned char is_success_score;
     unsigned char is_passed_tests_available;
+    unsigned char is_with_effective_time;
 } RunDisplayInfo;
 
 typedef struct RunDisplayInfos
