@@ -12127,6 +12127,95 @@ fail:
   goto cleanup;
 }
 
+static void
+unpriv_list_runs_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  RunDisplayInfos rdis = {};
+  int ok = 1;
+  phr->json_reply = 1;
+
+  time_t start_time = 0;
+  time_t stop_time = 0;
+  int accepting_mode = 0;
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+    accepting_mode = cs->accepting_mode;
+  }
+  if (start_time <= 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_CONTEST_NOT_STARTED);
+    goto cleanup;
+  }
+
+  int prob_id = 0;
+  const struct section_problem_data *prob = NULL;
+  hr_cgi_param_int_opt(phr, "prob_id", &prob_id, 0);
+  if (prob_id != 0) {
+    if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id])) {
+      fprintf(phr->log_f, "invalid problem id\n");
+      error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
+      goto cleanup;
+    }
+    if (!serve_is_problem_started(cs, phr->user_id, prob)) {
+      fprintf(phr->log_f, "problem is not yet opened\n");
+      error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
+      goto cleanup;
+    }
+  }
+
+  UserProblemInfo *pinfo = NULL;
+  XALLOCAZ(pinfo, cs->max_prob + 1);
+  for (int i = 0; i <= cs->max_prob; ++i) {
+    pinfo[i].best_run = -1;
+  }
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, pinfo);
+
+  filter_user_runs(cs, phr, prob->id, pinfo, start_time, stop_time, 0, &rdis);
+
+  fprintf(fout, "{\n");
+  fprintf(fout, "  \"ok\" : %s", ok?"true":"false");
+  fprintf(fout, ",\n  \"result\": {");
+  fprintf(fout, "\n    \"server_time\": %lld", (long long) cs->current_time);
+  fprintf(fout, ",\n    \"runs\": [");
+  for (int i = 0; i < rdis.size; ++i) {
+    RunDisplayInfo *rdi = &rdis.runs[i];
+    if (i > 0) fprintf(fout, ",");
+    fprintf(fout, "\n      {");
+    fprintf(fout, "\n        \"run_id\": %d", rdi->run_id);
+    fprintf(fout, ",\n        \"prob_id\": %d", rdi->prob_id);
+    fprintf(fout, ",\n        \"run_time\": %lld", (long long) rdi->run_time);
+    fprintf(fout, ",\n        \"status\": %d", rdi->status);
+    if (rdi->is_failed_test_available) {
+      fprintf(fout, ",\n        \"failed_test\": %d", rdi->failed_test);
+    }
+    if (rdi->is_passed_tests_available) {
+      fprintf(fout, ",\n        \"passed_tests\": %d", rdi->passed_tests);
+    }
+    if (rdi->is_score_available) {
+      fprintf(fout, ",\n        \"score\": %d", rdi->score);
+    }
+
+    fprintf(fout, "\n      }");
+  }
+  fprintf(fout, "\n    ]");
+  fprintf(fout, "\n  }");
+  fprintf(fout, "\n}\n");
+cleanup:
+  free(rdis.runs);
+  html_armor_free(&ab);
+}
+
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = unpriv_change_language,
@@ -12154,6 +12243,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CONTEST_STATUS_JSON] = unpriv_contest_status_json,
   [NEW_SRV_ACTION_PROBLEM_STATUS_JSON] = unpriv_problem_status_json,
   [NEW_SRV_ACTION_PROBLEM_STATEMENT_JSON] = unpriv_problem_statement_json,
+  [NEW_SRV_ACTION_LIST_RUNS_JSON] = unpriv_list_runs_json,
 };
 
 static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_LAST] =
