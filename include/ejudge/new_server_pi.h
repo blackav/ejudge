@@ -2,7 +2,7 @@
 #ifndef __NEW_SERVER_PI_H__
 #define __NEW_SERVER_PI_H__
 
-/* Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -224,6 +224,50 @@ typedef struct LanguageStat
     int partial_runs;
     int best_score;
 } LanguageStat;
+
+typedef struct RunDisplayInfo
+{
+    unsigned char *prob_str;
+    unsigned char *lang_str;
+    unsigned char *abbrev_sha1;
+    long long run_time;
+    long long duration;
+    int run_id;
+    int prob_id;
+    int variant;
+    int lang_id;
+    int size;
+    int token_open_cost;
+    int available_tokens;
+    int token_count;
+    int failed_test;
+    int passed_tests;
+    int score;
+    unsigned char status;
+    unsigned char is_imported;
+    unsigned char is_hidden;
+    unsigned char is_with_variants;
+    unsigned char is_with_duration;
+    unsigned char is_src_enabled;
+    unsigned char is_report_enabled;
+    unsigned char is_use_token_enabled;
+    unsigned char is_printing_enabled;
+    unsigned char is_separate_score;
+    unsigned char is_saved_score;
+    unsigned char is_standard_problem;
+    unsigned char is_scoring_checker;
+    unsigned char is_failed_test_available;
+    unsigned char is_score_available;
+    unsigned char is_success_score;
+    unsigned char is_passed_tests_available;
+} RunDisplayInfo;
+
+typedef struct RunDisplayInfos
+{
+    RunDisplayInfo *runs;
+    int size;
+    int reserved;
+} RunDisplayInfos;
 
 #endif /* __NEW_SERVER_PI_H__ */
 

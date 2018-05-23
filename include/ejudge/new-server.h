@@ -3,7 +3,7 @@
 #ifndef __NEW_SERVER_H__
 #define __NEW_SERVER_H__
 
-/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -657,6 +657,17 @@ new_write_user_runs(
         int back_action,
         time_t start_time,
         time_t stop_time);
+struct RunDisplayInfos;
+void
+filter_user_runs(
+        const serve_state_t cs,
+        struct http_request_info *phr,
+        int prob_id,
+        const struct UserProblemInfo *pinfo,
+        time_t start_time,
+        time_t stop_time,
+        int gen_strings_flag,
+        struct RunDisplayInfos *rinfo);
 
 void
 new_write_user_clars(
