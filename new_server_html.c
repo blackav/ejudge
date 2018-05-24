@@ -12216,6 +12216,23 @@ cleanup:
   html_armor_free(&ab);
 }
 
+static void
+unpriv_run_status_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  phr->json_reply = 1;
+
+  (void) global;
+
+  html_armor_free(&ab);
+}
+
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = unpriv_change_language,
@@ -12244,6 +12261,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PROBLEM_STATUS_JSON] = unpriv_problem_status_json,
   [NEW_SRV_ACTION_PROBLEM_STATEMENT_JSON] = unpriv_problem_statement_json,
   [NEW_SRV_ACTION_LIST_RUNS_JSON] = unpriv_list_runs_json,
+  [NEW_SRV_ACTION_RUN_STATUS_JSON] = unpriv_run_status_json,
 };
 
 static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_LAST] =
