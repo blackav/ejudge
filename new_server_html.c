@@ -11753,7 +11753,7 @@ unpriv_problem_status_json(
   if (prob->long_name) {
     fprintf(fout, ",\n      \"long_name\": \"%s\"", json_armor_buf(&ab, prob->long_name));
   }
-  fprintf(fout, ",\n      \"type\": \"%s\"", json_armor_buf(&ab, problem_unparse_type(prob->type)));
+  fprintf(fout, ",\n      \"type\": %d", prob->type);
   if (global->score_system != SCORE_MOSCOW) {
     fprintf(fout, ",\n      \"full_score\": %d", prob->full_score);
     if (global->separate_user_score > 0) {
@@ -11839,7 +11839,7 @@ unpriv_problem_status_json(
     fprintf(fout, ",\n      \"disable_stderr\": %s", to_json_bool(prob->disable_stderr));
   }
 
-  if (prob->real_time_limit > 0) {
+  if (prob->real_time_limit > 0 && prob->hide_real_time_limit <= 0) {
     fprintf(fout, ",\n      \"real_time_limit_ms\": %d", prob->real_time_limit * 1000);
   }
   if (prob->time_limit_millis > 0) {
@@ -11888,14 +11888,17 @@ unpriv_problem_status_json(
   if (prob->group_name && prob->group_name[0]) {
     fprintf(fout, ",\n      \"group_name\": %s", json_armor_buf(&ab, prob->group_name));
   }
-  if ((prob->use_stdin <= 0 || prob->combined_stdin > 0) && prob->input_file && prob->input_file[0]) {
+  if ((prob->use_stdin <= 0 || prob->combined_stdin > 0) && prob->input_file && prob->input_file[0] && prob->hide_file_names <= 0) {
     fprintf(fout, ",\n      \"input_file\": %s", json_armor_buf(&ab, prob->input_file));
   }
-  if ((prob->use_stdout <= 0 || prob->combined_stdout > 0) && prob->output_file && prob->output_file[0]) {
+  if ((prob->use_stdout <= 0 || prob->combined_stdout > 0) && prob->output_file && prob->output_file[0] && prob->hide_file_names <= 0) {
     fprintf(fout, ",\n      \"output_file\": %s", json_armor_buf(&ab, prob->output_file));
   }
   if (prob->ok_status && prob->ok_status[0]) {
-    fprintf(fout, ",\n      \"ok_status\": %s", json_armor_buf(&ab, prob->ok_status));
+    int ok_status = 0;
+    if (run_str_short_to_status(prob->ok_status, &ok_status) >= 0) {
+      fprintf(fout, ",\n      \"ok_status\": %d", ok_status);
+    }
   }
   if (prob->start_date > 0) {
     fprintf(fout, ",\n      \"start_date\": %lld", (long long) prob->start_date);
@@ -11953,6 +11956,9 @@ unpriv_problem_status_json(
   char **require;
   char **provide_ok;
 #endif
+  if (global->enable_max_stack_size > 0) {
+    fprintf(fout, ",\n      \"enable_max_stack_size\": %s", to_json_bool(global->enable_max_stack_size));
+  }
   if (prob->max_vm_size != 0 && prob->max_vm_size != ~(ej_size64_t) 0) {
     fprintf(fout, ",\n      \"max_vm_size\": \"%llu\"", prob->max_vm_size);
   }
