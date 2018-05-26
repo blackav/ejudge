@@ -230,9 +230,12 @@ typedef struct RunDisplayInfo
     unsigned char *prob_str;
     unsigned char *lang_str;
     unsigned char *abbrev_sha1;
+    // in seconds
     long long run_time;
     long long duration;
     long long effective_time;
+    // in microseconds
+    long long run_time_us;
     int run_id;
     int prob_id;
     int variant;

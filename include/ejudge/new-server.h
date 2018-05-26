@@ -658,6 +658,17 @@ new_write_user_runs(
         time_t start_time,
         time_t stop_time);
 struct RunDisplayInfos;
+struct RunDisplayInfo;
+void
+fill_user_run_info(
+        const serve_state_t cs,
+        const struct UserProblemInfo *pinfo,
+        int run_id,
+        const struct run_entry *pre,
+        time_t start_time,
+        time_t stop_time,
+        int gen_strings_flag,
+        struct RunDisplayInfo *ri); // out
 void
 filter_user_runs(
         const serve_state_t cs,

@@ -6293,6 +6293,264 @@ collect_run_status(
 }
 
 void
+fill_user_run_info(
+        const serve_state_t cs,
+        const UserProblemInfo *pinfo,
+        int run_id,
+        const struct run_entry *pre,
+        time_t start_time,
+        time_t stop_time,
+        int gen_strings_flag,
+        RunDisplayInfo *ri) // out
+{
+  const struct section_global_data *global = cs->global;
+  const struct section_language_data *lang = NULL;
+  const struct section_problem_data *cur_prob = NULL;
+  int status = -1;
+
+  struct virtual_end_info_s *vend_info = NULL;
+
+  if (global->is_virtual > 0 && stop_time > 0 && cs->current_time >= stop_time) {
+    vend_info = global->virtual_end_info;
+  }
+
+  int enable_src_view = (cs->online_view_source > 0 || (!cs->online_view_source && global->team_enable_src_view > 0));
+  int enable_rep_view = (cs->online_view_report > 0 || (!cs->online_view_report && global->team_enable_rep_view > 0));
+  int separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
+
+  if (vend_info) {
+    if (vend_info->source_mode > 0) enable_src_view = 1;
+    if (vend_info->report_mode > 0) enable_rep_view = 1;
+    if (vend_info->score_mode > 0) separate_user_score = 0;
+  }
+
+  memset(ri, 0, sizeof(*ri));
+
+  if (pre->prob_id > 0 && pre->prob_id <= cs->max_prob && cs->probs)
+    cur_prob = cs->probs[pre->prob_id];
+
+  if (pre->lang_id > 0 && pre->lang_id <= cs->max_lang)
+    lang = cs->langs[pre->lang_id];
+  (void) lang;
+
+  if (separate_user_score > 0 && pre->is_saved) {
+    if (pre->token_count > 0 && (pre->token_flags & TOKEN_FINALSCORE_BIT)) {
+      status = pre->status;
+    } else {
+      status = pre->saved_status;
+    }
+  } else {
+    status = pre->status;
+  }
+
+  if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
+    if (status == RUN_OK || status == RUN_PARTIAL)
+      status = RUN_ACCEPTED;
+  }
+
+  int attempts = 0;
+  int disq_attempts = 0;
+  int ce_attempts = 0;
+  time_t effective_time = 0;
+  time_t *p_eff_time = NULL;
+  int prev_successes = 0;
+  if (cur_prob && cur_prob->enable_submit_after_reject > 0)
+    p_eff_time = &effective_time;
+
+  if (global->score_system == SCORE_KIROV && !pre->is_hidden)
+    run_get_attempts(cs->runlog_state, run_id, &attempts, &disq_attempts, &ce_attempts,
+                     p_eff_time,
+                     cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty);
+  prev_successes = RUN_TOO_MANY;
+  if (global->score_system == SCORE_KIROV
+      && status == RUN_OK
+      && !pre->is_hidden
+      && cur_prob && cur_prob->score_bonus_total > 0) {
+    if ((prev_successes = run_get_prev_successes(cs->runlog_state, run_id)) < 0)
+      prev_successes = RUN_TOO_MANY;
+  }
+
+  if (pre->is_imported) ri->is_imported = 1;
+  if (pre->is_hidden) ri->is_hidden = 1;
+  ri->run_time = pre->time;
+  ri->run_time_us = pre->time * 1000000LL + pre->nsec / 1000;
+  if (!start_time) {
+    ri->run_time = start_time;
+    ri->run_time_us = start_time * 1000000LL;
+  }
+  if (start_time > ri->run_time) {
+    ri->run_time = start_time;
+    ri->run_time_us = start_time * 1000000LL;
+  }
+  ri->duration = ri->run_time - start_time;
+  if (global->show_astr_time <= 0) ri->is_with_duration = 1;
+  ri->status = status;
+  ri->prob_id = pre->prob_id;
+
+  if (cur_prob && cur_prob->enable_submit_after_reject > 0) {
+    ri->is_with_effective_time = 1;
+    ri->effective_time = effective_time;
+  }
+
+  if (cur_prob) {
+    if (cur_prob->variant_num > 0) {
+      int variant = pre->variant;
+      if (!variant) variant = find_variant(cs, pre->user_id, pre->prob_id, 0);
+      ri->variant = variant;
+      ri->is_with_variants = 1;
+      if (gen_strings_flag > 0) {
+        char *p = NULL;
+        if (variant > 0) {
+          asprintf(&p, "%s-%d", cur_prob->short_name, variant);
+        } else {
+          asprintf(&p, "%s-?", cur_prob->short_name);
+        }
+        ri->prob_str = p;
+      }
+    } else {
+      if (gen_strings_flag > 0) {
+        ri->prob_str = xstrdup(cur_prob->short_name);
+      }
+    }
+  } else {
+    if (gen_strings_flag > 0) {
+      ri->prob_str = xstrdup("???");
+    }
+  }
+
+  ri->lang_id = pre->lang_id;
+  if (gen_strings_flag > 0) {
+    if (!pre->lang_id) {
+      ri->lang_str = xstrdup("N/A");
+    } else if (lang) {
+      ri->lang_str = xstrdup(lang->short_name);
+    } else {
+      ri->lang_str = xstrdup("???");
+    }
+  }
+  ri->run_id = run_id;
+  ri->size = pre->size;
+
+  if (global->show_sha1 > 0 && gen_strings_flag > 0) {
+    ri->abbrev_sha1 = strdup(unparse_abbrev_sha1(pre->sha1));
+  }
+
+  collect_run_status(cs, start_time, pre, separate_user_score,
+                     0 /* priv_level */,
+                     attempts, disq_attempts, ce_attempts, prev_successes,
+                     0 /* disable_failed */,
+                     effective_time,
+                     gen_strings_flag,
+                     ri);
+
+  ri->is_src_enabled = (enable_src_view > 0);
+
+  if (cur_prob->enable_tokens > 0) {
+    int enable_report_link = 0;
+    int enable_use_link = 0;
+
+    int available_tokens = compute_available_tokens(cs, cur_prob, start_time);
+    available_tokens -= pinfo[pre->prob_id].token_count;
+    if (available_tokens < 0) available_tokens = 0;
+
+    switch (status) {
+    case RUN_OK:
+    case RUN_RUN_TIME_ERR:
+    case RUN_TIME_LIMIT_ERR:
+    case RUN_PRESENTATION_ERR:
+    case RUN_WRONG_ANSWER_ERR:
+    case RUN_PARTIAL:
+    case RUN_ACCEPTED:
+    case RUN_DISQUALIFIED:
+    case RUN_MEM_LIMIT_ERR:
+    case RUN_SECURITY_ERR:
+    case RUN_SYNC_ERR:
+    case RUN_WALL_TIME_LIMIT_ERR:
+    case RUN_PENDING_REVIEW:
+    case RUN_SUMMONED:
+    case RUN_REJECTED:
+      if (cur_prob->team_enable_rep_view > 0) {
+        enable_report_link = 1;
+      } else if ((pre->token_flags & TOKEN_TESTS_MASK)) {
+        // report is paid by tokens
+        enable_report_link = 1;
+      }
+      if (start_time > 0 && stop_time <= 0) {
+        if (cur_prob->token_info
+            && (pre->token_flags & cur_prob->token_info->open_flags) != cur_prob->token_info->open_flags
+            && available_tokens >= cur_prob->token_info->open_cost) {
+          if (cur_prob->tokens_for_user_ac <= 0) {
+            enable_use_link = 1;
+          } else if (pre->is_saved && pre->saved_status == RUN_ACCEPTED) {
+            enable_use_link = 1;
+          }
+        }
+      }
+      break;
+
+    case RUN_COMPILE_ERR:
+    case RUN_STYLE_ERR:
+      if (cur_prob->team_enable_ce_view > 0 || cur_prob->team_enable_rep_view > 0) {
+        // reports enabled by contest settings
+        enable_report_link = 1;
+      } else if ((pre->token_flags & TOKEN_TESTS_MASK)) {
+        // report is paid by tokens
+        enable_report_link = 1;
+      } else if (cur_prob->token_info && (cur_prob->token_info->open_flags & TOKEN_TESTS_MASK) != 0
+                 && available_tokens >= cur_prob->token_info->open_cost) {
+        enable_use_link = 1;
+      }
+      break;
+
+        /*
+          case RUN_CHECK_FAILED:
+          case RUN_IGNORED:
+          case RUN_PENDING:
+          case RUN_SKIPPED:
+        */
+    default:
+      // nothing
+      ;
+    }
+    if (!enable_report_link && !enable_use_link) {
+      // nothing
+    } else {
+      if (enable_report_link) ri->is_report_enabled = 1;
+      if (enable_use_link) {
+        ri->is_use_token_enabled = 1;
+        ri->token_open_cost = cur_prob->token_info->open_cost;
+        ri->available_tokens = available_tokens;
+      }
+    }
+    if (pre->token_count > 0) {
+      ri->token_count = pre->token_count;
+    }
+  } else if (enable_rep_view) {
+    if (status == RUN_CHECK_FAILED || status == RUN_IGNORED
+        || status == RUN_PENDING || !run_is_normal_status(status)
+        || (cur_prob && !cur_prob->team_enable_rep_view)) {
+      // nothing
+    } else {
+      ri->is_report_enabled = 1;
+    }
+  } else if (global->team_enable_ce_view) {
+    if (status != RUN_COMPILE_ERR && status != RUN_STYLE_ERR) {
+      // nothing
+    } else {
+      ri->is_report_enabled = 1;
+    }
+  }
+
+  if (global->enable_printing && !cs->printing_suspended) {
+    if (pre->pages > 0) {
+      // nothing
+    } else {
+      ri->is_printing_enabled = 1;
+    }
+  }
+}
+
+void
 filter_user_runs(
         const serve_state_t cs,
         struct http_request_info *phr,
@@ -6303,41 +6561,17 @@ filter_user_runs(
         int gen_strings_flag,
         struct RunDisplayInfos *rinfo) // out
 {
-  const struct section_global_data *global = cs->global;
   int i, showed, runs_to_show = 0;
-  int attempts, disq_attempts, ce_attempts, prev_successes;
   struct run_entry re;
   struct section_problem_data *cur_prob;
-  struct section_language_data *lang = 0;
-  int status;
-  int enable_src_view = 0;
-  int enable_rep_view = 0;
-  int separate_user_score = 0;
-  struct virtual_end_info_s *vend_info = NULL;
 
-  time_t effective_time, *p_eff_time;
-
-  if (global->is_virtual > 0 && stop_time > 0 && cs->current_time >= stop_time) {
-    vend_info = global->virtual_end_info;
-  }
-
-  if (prob_id < 0 || prob_id > cs->max_prob 
+  if (prob_id < 0 || prob_id > cs->max_prob
       || !cs->probs || !cs->probs[prob_id])
     prob_id = 0;
 
   //if (prob_id > 0) runs_to_show = cs->probs[prob_id]->prev_runs_to_show;
   //if (runs_to_show <= 0) runs_to_show = 15;
   runs_to_show = 100000;
-
-  enable_src_view = (cs->online_view_source > 0 || (!cs->online_view_source && global->team_enable_src_view > 0));
-  enable_rep_view = (cs->online_view_report > 0 || (!cs->online_view_report && global->team_enable_rep_view > 0));
-  separate_user_score = global->separate_user_score > 0 && cs->online_view_judge_score <= 0;
-
-  if (vend_info) {
-    if (vend_info->source_mode > 0) enable_src_view = 1;
-    if (vend_info->report_mode > 0) enable_rep_view = 1;
-    if (vend_info->score_mode > 0) separate_user_score = 0;
-  }
 
   for (showed = 0, i = run_get_user_last_run_id(cs->runlog_state, phr->user_id);
        i >= 0 && showed < runs_to_show;
@@ -6356,42 +6590,6 @@ filter_user_runs(
 
     showed++;
 
-    lang = 0;
-    if (re.lang_id > 0 && re.lang_id <= cs->max_lang)
-      lang = cs->langs[re.lang_id];
-
-    if (separate_user_score > 0 && re.is_saved) {
-      if (re.token_count > 0 && (re.token_flags & TOKEN_FINALSCORE_BIT)) {
-        status = re.status;
-      } else {
-        status = re.saved_status;
-      }
-    } else {
-      status = re.status;
-    }
-
-    if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
-      if (status == RUN_OK || status == RUN_PARTIAL)
-        status = RUN_ACCEPTED;
-    }
-
-    attempts = 0; disq_attempts = 0; ce_attempts = 0;
-    effective_time = 0; p_eff_time = NULL;
-    if (cur_prob && cur_prob->enable_submit_after_reject > 0)
-      p_eff_time = &effective_time;
-    if (global->score_system == SCORE_KIROV && !re.is_hidden)
-      run_get_attempts(cs->runlog_state, i, &attempts, &disq_attempts, &ce_attempts,
-                       p_eff_time,
-                       cur_prob->ignore_compile_errors, cur_prob->compile_error_penalty);
-    prev_successes = RUN_TOO_MANY;
-    if (global->score_system == SCORE_KIROV
-        && status == RUN_OK
-        && !re.is_hidden
-        && cur_prob && cur_prob->score_bonus_total > 0) {
-      if ((prev_successes = run_get_prev_successes(cs->runlog_state, i)) < 0)
-        prev_successes = RUN_TOO_MANY;
-    }
-
     if (rinfo->size == rinfo->reserved) {
       if (!(rinfo->reserved *= 2)) rinfo->reserved = 16;
       rinfo->runs = xrealloc(rinfo->runs, rinfo->reserved * sizeof(rinfo->runs[0]));
@@ -6399,181 +6597,7 @@ filter_user_runs(
     RunDisplayInfo *ri = &rinfo->runs[rinfo->size++];
     memset(ri, 0, sizeof(*ri));
 
-    if (re.is_imported) ri->is_imported = 1;
-    if (re.is_hidden) ri->is_hidden = 1;
-    ri->run_time = re.time;
-    if (!start_time) {
-      ri->run_time = start_time;
-    }
-    if (start_time > ri->run_time) {
-      ri->run_time = start_time;
-    }
-    ri->duration = ri->run_time - start_time;
-    if (global->show_astr_time <= 0) ri->is_with_duration = 1;
-    ri->status = status;
-    ri->prob_id = re.prob_id;
-
-    if (cur_prob && cur_prob->enable_submit_after_reject > 0) {
-      ri->is_with_effective_time = 1;
-      ri->effective_time = effective_time;
-    }
-
-    if (cur_prob) {
-      if (cur_prob->variant_num > 0) {
-        int variant = re.variant;
-        if (!variant) variant = find_variant(cs, re.user_id, re.prob_id, 0);
-        ri->variant = variant;
-        ri->is_with_variants = 1;
-        if (gen_strings_flag > 0) {
-          char *p = NULL;
-          if (variant > 0) {
-            asprintf(&p, "%s-%d", cur_prob->short_name, variant);
-          } else {
-            asprintf(&p, "%s-?", cur_prob->short_name);
-          }
-          ri->prob_str = p;
-        }
-      } else {
-        if (gen_strings_flag > 0) {
-          ri->prob_str = xstrdup(cur_prob->short_name);
-        }
-      }
-    } else {
-      if (gen_strings_flag > 0) {
-        ri->prob_str = xstrdup("???");
-      }
-    }
-
-    ri->lang_id = re.lang_id;
-    if (gen_strings_flag > 0) {
-      if (!re.lang_id) {
-        ri->lang_str = xstrdup("N/A");
-      } else if (lang) {
-        ri->lang_str = xstrdup(lang->short_name);
-      } else {
-        ri->lang_str = xstrdup("???");
-      }
-    }
-    ri->run_id = i;
-    ri->size = re.size;
-
-    if (global->show_sha1 > 0 && gen_strings_flag > 0) {
-      ri->abbrev_sha1 = strdup(unparse_abbrev_sha1(re.sha1));
-    }
-
-    collect_run_status(cs, start_time, &re, separate_user_score,
-                       0 /* priv_level */,
-                       attempts, disq_attempts, ce_attempts, prev_successes,
-                       0 /* disable_failed */,
-                       effective_time,
-                       gen_strings_flag,
-                       ri);
-
-    ri->is_src_enabled = (enable_src_view > 0);
-
-    if (cur_prob->enable_tokens > 0) {
-      int enable_report_link = 0;
-      int enable_use_link = 0;
-
-      int available_tokens = compute_available_tokens(cs, cur_prob, start_time);
-      available_tokens -= pinfo[re.prob_id].token_count;
-      if (available_tokens < 0) available_tokens = 0;
-
-      switch (status) {
-      case RUN_OK:
-      case RUN_RUN_TIME_ERR:
-      case RUN_TIME_LIMIT_ERR:
-      case RUN_PRESENTATION_ERR:
-      case RUN_WRONG_ANSWER_ERR:
-      case RUN_PARTIAL:
-      case RUN_ACCEPTED:
-      case RUN_DISQUALIFIED:
-      case RUN_MEM_LIMIT_ERR:
-      case RUN_SECURITY_ERR:
-      case RUN_SYNC_ERR:
-      case RUN_WALL_TIME_LIMIT_ERR:
-      case RUN_PENDING_REVIEW:
-      case RUN_SUMMONED:
-      case RUN_REJECTED:
-        if (cur_prob->team_enable_rep_view > 0) {
-          enable_report_link = 1;
-        } else if ((re.token_flags & TOKEN_TESTS_MASK)) {
-          // report is paid by tokens
-          enable_report_link = 1;
-        }
-        if (start_time > 0 && stop_time <= 0) {
-          if (cur_prob->token_info
-              && (re.token_flags & cur_prob->token_info->open_flags) != cur_prob->token_info->open_flags
-              && available_tokens >= cur_prob->token_info->open_cost) {
-            if (cur_prob->tokens_for_user_ac <= 0) {
-              enable_use_link = 1;
-            } else if (re.is_saved && re.saved_status == RUN_ACCEPTED) {
-              enable_use_link = 1;
-            }
-          }
-        }
-        break;
-
-      case RUN_COMPILE_ERR:
-      case RUN_STYLE_ERR:
-        if (cur_prob->team_enable_ce_view > 0 || cur_prob->team_enable_rep_view > 0) {
-          // reports enabled by contest settings
-          enable_report_link = 1;
-        } else if ((re.token_flags & TOKEN_TESTS_MASK)) {
-          // report is paid by tokens
-          enable_report_link = 1;
-        } else if (cur_prob->token_info && (cur_prob->token_info->open_flags & TOKEN_TESTS_MASK) != 0
-                   && available_tokens >= cur_prob->token_info->open_cost) {
-          enable_use_link = 1;
-        }
-        break;
-
-        /*
-      case RUN_CHECK_FAILED:
-      case RUN_IGNORED:
-      case RUN_PENDING:
-      case RUN_SKIPPED:
-        */
-      default:
-        // nothing
-        ;
-      }
-      if (!enable_report_link && !enable_use_link) {
-        // nothing
-      } else {
-        if (enable_report_link) ri->is_report_enabled = 1;
-        if (enable_use_link) {
-          ri->is_use_token_enabled = 1;
-          ri->token_open_cost = cur_prob->token_info->open_cost;
-          ri->available_tokens = available_tokens;
-        }
-      }
-      if (re.token_count > 0) {
-        ri->token_count = re.token_count;
-      }
-    } else if (enable_rep_view) {
-      if (status == RUN_CHECK_FAILED || status == RUN_IGNORED
-          || status == RUN_PENDING || !run_is_normal_status(status)
-          || (cur_prob && !cur_prob->team_enable_rep_view)) {
-        // nothing
-      } else {
-        ri->is_report_enabled = 1;
-      }
-    } else if (global->team_enable_ce_view) {
-      if (status != RUN_COMPILE_ERR && status != RUN_STYLE_ERR) {
-        // nothing
-      } else {
-        ri->is_report_enabled = 1;
-      }
-    }
-
-    if (global->enable_printing && !cs->printing_suspended) {
-      if (re.pages > 0) {
-        // nothing
-      } else {
-        ri->is_printing_enabled = 1;
-      }
-    }
+    fill_user_run_info(cs, pinfo, i, &re, start_time, stop_time, gen_strings_flag, ri);
   }
 }
 
