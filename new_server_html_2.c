@@ -6289,7 +6289,7 @@ collect_run_status(
     ri->score = calc_kirov_score(score_buf, sizeof(score_buf),
                                  start_time, separate_user_score, user_mode, pe->token_flags,
                                  pe, pr, attempts,
-                                 disq_attempts, ce_attempts, prev_successes, 0, 0, effective_time);
+                                 disq_attempts, ce_attempts, prev_successes, 0, 1, effective_time);
     if (gen_strings_flag) {
       ri->score_str = strdup(score_buf);
     }
@@ -8929,7 +8929,7 @@ write_json_run_info(
       fprintf(fout, ",\n      \"is_score_available\": %s", to_json_bool(ri.is_score_available));
       fprintf(fout, ",\n      \"score\": %d", ri.score);
       if (ri.score_str && ri.score_str[0]) {
-        fprintf(fout, ",\n      \"score_str\": %s", ri.score_str);
+        fprintf(fout, ",\n      \"score_str\": \"%s\"", json_armor_buf(&ab, ri.score_str));
       }
     }
 
