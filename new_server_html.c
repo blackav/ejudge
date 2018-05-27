@@ -11951,8 +11951,6 @@ unpriv_problem_status_json(
     fprintf(fout, " ]");
   }
 #if 0
-  char **disable_language;
-  char **enable_language;
   char **require;
   char **provide_ok;
 #endif
@@ -12229,14 +12227,65 @@ unpriv_run_status_json(
         const struct contest_desc *cnts,
         struct contest_extra *extra)
 {
-  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
   phr->json_reply = 1;
 
-  (void) global;
+  time_t start_time = 0;
+  time_t stop_time = 0;
+  int accepting_mode = 0;
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+    accepting_mode = cs->accepting_mode;
+  }
+  if (start_time <= 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_CONTEST_NOT_STARTED);
+    goto cleanup;
+  }
 
-  html_armor_free(&ab);
+  int run_id = -1;
+  if (hr_cgi_param_int(phr, "run_id", &run_id) < 0 || run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  struct run_entry re;
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if (re.user_id != phr->user_id) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if (re.status < 0 || re.status == RUN_EMPTY || re.status > RUN_AVAILABLE) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if (re.status > RUN_LOW_LAST && re.status < RUN_TRANSIENT_FIRST) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+
+  const struct section_problem_data *prob = NULL;
+  if (re.prob_id <= 0 || re.prob_id > cs->max_prob || !(prob = cs->probs[re.prob_id])) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if (!serve_is_problem_started(cs, phr->user_id, prob)) {
+    fprintf(phr->log_f, "problem is not yet opened\n");
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+
+  write_json_run_info(fout, cs, phr, run_id, &re, start_time, stop_time, accepting_mode);
+
+cleanup:
+  ;
 }
 
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =

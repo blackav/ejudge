@@ -6284,11 +6284,15 @@ collect_run_status(
   if (score < 0 || !pr) {
   } else {
     // FIXME: generate more verbose info about kirov score calculation
+    unsigned char score_buf[256];
     ri->is_score_available = 1;
-    ri->score = calc_kirov_score(NULL, 0,
+    ri->score = calc_kirov_score(score_buf, sizeof(score_buf),
                                  start_time, separate_user_score, user_mode, pe->token_flags,
                                  pe, pr, attempts,
                                  disq_attempts, ce_attempts, prev_successes, 0, 0, effective_time);
+    if (gen_strings_flag) {
+      ri->score_str = strdup(score_buf);
+    }
   }
 }
 
@@ -6344,6 +6348,7 @@ fill_user_run_info(
   }
 
   if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
+    ri->is_accepting_mode = 1;
     if (status == RUN_OK || status == RUN_PARTIAL)
       status = RUN_ACCEPTED;
   }
@@ -6386,6 +6391,7 @@ fill_user_run_info(
   if (global->show_astr_time <= 0) ri->is_with_duration = 1;
   ri->status = status;
   ri->prob_id = pre->prob_id;
+  ri->user_id = pre->user_id;
 
   if (cur_prob && cur_prob->enable_submit_after_reject > 0) {
     ri->is_with_effective_time = 1;
@@ -8794,4 +8800,635 @@ ns_add_review_comment(
     ns_reload_statement(contest_id, info.prob_id, variant, 1);
   }
   xfree(str);
+}
+
+static const unsigned char *
+to_json_bool(int value)
+{
+  if (value > 0) return "true";
+  else return "false";
+}
+
+void
+write_json_run_info(
+        FILE *fout,
+        const serve_state_t cs,
+        const struct http_request_info *phr,
+        int run_id,
+        const struct run_entry *pre,
+        time_t start_time,
+        time_t stop_time,
+        int accepting_mode)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const struct section_problem_data *prob = NULL;
+  int ok = 1;
+  UserProblemInfo *pinfo = NULL;
+  unsigned char rep_path[PATH_MAX];
+  int flags;
+  char *rep_txt = NULL;
+  size_t rep_len = 0;
+  testing_report_xml_t tr = NULL;
+  int is_compiler_output_available = 0;
+  int is_report_available = 0;
+  char *comp_out_txt = NULL;
+  size_t comp_out_len = 0;
+  char *b64_txt = NULL;
+  size_t b64_len = 0;
+
+  if (pre->prob_id > 0 && pre->prob_id <= cs->max_prob)
+    prob = cs->probs[pre->prob_id];
+
+  XALLOCAZ(pinfo, cs->max_prob + 1);
+  for (int i = 0; i <= cs->max_prob; ++i) {
+    pinfo[i].best_run = -1;
+  }
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, pinfo);
+
+  RunDisplayInfo ri;
+  fill_user_run_info(cs, pinfo, run_id, pre, start_time, stop_time, 1, &ri);
+
+  fprintf(fout, "{\n");
+  fprintf(fout, "  \"ok\" : %s", ok?"true":"false");
+  fprintf(fout, ",\n  \"result\": {");
+  fprintf(fout, "\n    \"server_time\": %lld", (long long) cs->current_time);
+
+  fprintf(fout, ",\n    \"run\": {");
+  fprintf(fout, "\n      \"run_id\": %d", ri.run_id);
+  fprintf(fout, ",\n      \"prob_id\": %d", ri.prob_id);
+  fprintf(fout, ",\n      \"run_time_us\": %lld", ri.run_time_us);
+  fprintf(fout, ",\n      \"run_time\": %lld", ri.run_time);
+  fprintf(fout, ",\n      \"duration\": %lld", ri.duration);
+  if (ri.lang_id > 0) {
+    fprintf(fout, ",\n      \"lang_id\": %d", ri.lang_id);
+  }
+  if (phr->user_id != ri.user_id) {
+    fprintf(fout, ",\n      \"user_id\": %d", ri.user_id);
+  }
+  fprintf(fout, ",\n      \"size\": %d", (int) ri.size);
+  fprintf(fout, ",\n      \"status\": %d", ri.status);
+  if (ri.is_imported) {
+    fprintf(fout, ",\n      \"is_imported\": %s", to_json_bool(ri.is_imported));
+  }
+  if (ri.is_hidden) {
+    fprintf(fout, ",\n      \"is_hidden\": %s", to_json_bool(ri.is_hidden));
+  }
+  if (ri.is_with_duration) {
+    fprintf(fout, ",\n      \"is_with_duration\": %s", to_json_bool(ri.is_with_duration));
+  }
+  if (ri.is_standard_problem) {
+    fprintf(fout, ",\n      \"is_standard_problem\": %s", to_json_bool(ri.is_standard_problem));
+  }
+  int is_minimal_report = 0;
+  if (ri.status > RUN_TRANSIENT_LAST || (ri.status > RUN_LOW_LAST && ri.status < RUN_TRANSIENT_FIRST)) {
+    is_minimal_report = 1;
+  } else {
+    switch (ri.status) {
+    case RUN_CHECK_FAILED:
+    case RUN_IGNORED:
+    case RUN_SKIPPED:
+    case RUN_VIRTUAL_START:
+    case RUN_VIRTUAL_STOP:
+    case RUN_EMPTY:
+    case RUN_FULL_REJUDGE:
+    case RUN_RUNNING:
+    case RUN_COMPILED:
+    case RUN_COMPILING:
+    case RUN_AVAILABLE:
+      is_minimal_report = 1;
+      break;
+    }
+  }
+  if (!is_minimal_report) {
+    if (ri.is_with_effective_time) {
+      fprintf(fout, ",\n      \"is_with_effective_time\": %s", to_json_bool(ri.is_with_effective_time));
+    }
+    if (ri.is_with_effective_time && ri.effective_time > 0) {
+      fprintf(fout, ",\n      \"effective_time\": %lld", ri.effective_time);
+    }
+    if (ri.is_src_enabled) {
+      fprintf(fout, ",\n      \"is_src_enabled\": %s", to_json_bool(ri.is_src_enabled));
+      const struct section_language_data *lang = NULL;
+      if (ri.lang_id > 0 && ri.lang_id <= cs->max_lang) lang = cs->langs[ri.lang_id];
+      if (lang && lang->src_sfx) {
+        fprintf(fout, ",\n      \"src_sfx\": \"%s\"", json_armor_buf(&ab, lang->src_sfx));
+      }
+    }
+    if (ri.is_report_enabled) {
+      fprintf(fout, ",\n      \"is_report_enabled\": %s", to_json_bool(ri.is_report_enabled));
+    }
+    if (ri.is_failed_test_available) {
+      fprintf(fout, ",\n      \"is_failed_test_available\": %s", to_json_bool(ri.is_failed_test_available));
+      fprintf(fout, ",\n      \"failed_test\": %d", ri.failed_test);
+    }
+    if (ri.is_passed_tests_available) {
+      fprintf(fout, ",\n      \"is_passed_tests_available\": %s", to_json_bool(ri.is_passed_tests_available));
+      fprintf(fout, ",\n      \"passed_tests\": %d", ri.passed_tests);
+    }
+    if (ri.is_score_available) {
+      fprintf(fout, ",\n      \"is_score_available\": %s", to_json_bool(ri.is_score_available));
+      fprintf(fout, ",\n      \"score\": %d", ri.score);
+      if (ri.score_str && ri.score_str[0]) {
+        fprintf(fout, ",\n      \"score_str\": %s", ri.score_str);
+      }
+    }
+
+    if ((flags = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), pre)) >= 0) {
+      if (generic_read_file(&rep_txt, 0, &rep_len, flags, 0, rep_path, 0) >= 0) {
+        const unsigned char *start_ptr = NULL;
+        if (get_content_type(rep_txt, &start_ptr) == CONTENT_TYPE_XML) {
+          if ((tr = testing_report_parse_xml(start_ptr))) {
+            if (tr->compiler_output && tr->compiler_output[0]) {
+              is_compiler_output_available = 1;
+              comp_out_txt = xstrdup(tr->compiler_output);
+              comp_out_len = strlen(comp_out_txt);
+            }
+          } else {
+          }
+        } else if (ri.status == RUN_COMPILE_ERR || ri.status == RUN_STYLE_ERR) {
+          is_compiler_output_available = 1;
+          comp_out_txt = rep_txt; rep_txt = NULL;
+          comp_out_len = rep_len; rep_len = 0;
+        }
+      } else {
+      }
+    } else if (ri.status == RUN_COMPILE_ERR || ri.status == RUN_STYLE_ERR) {
+      if ((flags = serve_make_report_read_path(cs, rep_path, sizeof(rep_path), pre)) >= 0) {
+        if (generic_read_file(&rep_txt, 0, &rep_len, flags, 0, rep_path, 0) >= 0) {
+          is_compiler_output_available = 1;
+          comp_out_txt = rep_txt; rep_txt = NULL;
+          comp_out_len = rep_len; rep_len = 0;
+        } else {
+        }
+      } else {
+      }
+    }
+    if (is_compiler_output_available) {
+      if (!prob || (prob->team_enable_ce_view <= 0 && !ri.is_report_enabled)) {
+        is_compiler_output_available = 0;
+      }
+    }
+    if (is_compiler_output_available) {
+      fprintf(fout, ",\n      \"is_compiler_output_available\": %s", to_json_bool(is_compiler_output_available));
+    }
+  }
+  fprintf(fout, "\n    }"); // end of "run"
+
+  if (is_compiler_output_available && comp_out_txt && comp_out_len > 0) {
+    b64_txt = xmalloc(comp_out_len * 2 + 64);
+    b64_len = base64_encode(comp_out_txt, comp_out_len, b64_txt);
+    b64_txt[b64_len] = 0;
+    fprintf(fout, ",\n    \"compiler_output\": {");
+    fprintf(fout, "\n      \"method\": %d", 1); // FIXME: hard-coded base64
+    fprintf(fout, ",\n      \"size\": %zu", comp_out_len);
+    fprintf(fout, ",\n      \"data\": \"%s\"", b64_txt);
+    fprintf(fout, "\n    }"); // end of "compiler_output"
+    xfree(b64_txt); b64_txt = NULL; b64_len = 0;
+  }
+  if (is_report_available) {
+  }
+
+  /*
+  const struct section_global_data *global = state->global;
+  testing_report_xml_t r = 0;
+  struct testing_report_test *t;
+  unsigned char *style = 0, *s, *font_color = 0;
+  int need_comment = 0, need_info = 0, is_kirov = 0, i;
+  unsigned char cl[128] = { 0 };
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int visibility = 0, serial = 0, has_full = 0, need_links = 0;
+  int status, score, max_score;
+  int run_tests, tests_passed;
+  unsigned char hbuf[1024];
+  unsigned char tbuf[1024];
+  int hide_score = 0;
+  int user_status_mode = 0;
+  int show_checker_comment_mode = 0;
+
+  if (table_class && *table_class) {
+    snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
+  }
+
+  if (!(r = testing_report_parse_xml(txt))) {
+    fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
+    return 0;
+  }
+
+  if (r->compile_error) {
+    fprintf(f, "<h2 style=\"color: #A32C2C; margin-bottom: 7px;\">%s</h2>\n", run_status_str(r->status, 0, 0, 0, 0));
+    if (r->compiler_output) {
+      fprintf(f, "<pre>%s</pre>\n", ARMOR(r->compiler_output));
+    }
+    testing_report_free(r);
+    html_armor_free(&ab);
+    return 0;
+  }
+
+  if (global->separate_user_score > 0 && state->online_view_judge_score <= 0 && !(token_flags & TOKEN_FINALSCORE_BIT)) {
+    user_status_mode = 1;
+  }
+
+  status = r->status;
+  score = r->score;
+  max_score = r->max_score;
+  run_tests = r->run_tests;
+  tests_passed = r->tests_passed;
+  if (user_status_mode) {
+    if (r->user_status >= 0) status = r->user_status;
+    if (r->user_score >= 0) score = r->user_score;
+    if (r->user_max_score >= 0) max_score = r->user_max_score;
+    if (r->user_run_tests >= 0) run_tests = r->user_run_tests;
+    if (r->user_tests_passed >= 0) tests_passed = r->user_tests_passed;
+  }
+
+  if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || status == RUN_SUMMONED) {
+    style = "color: green; margin-bottom: 7px;";
+  } else {
+    style = "color: #A32C2C; margin-bottom: 7px;";
+  }
+  fprintf(f, "<h2 style=\"%s\">%s</h2>\n",
+          style, run_status_str(status, 0, 0, output_only, 0));
+
+  if (output_only) {
+    if (r->run_tests != 1 || !(t = r->tests[0])) {
+      testing_report_free(r);
+      return 0;
+    }
+    status = t->status;
+    score = t->score;
+    max_score = t->nominal_score;
+    if (user_status_mode && t->has_user) {
+      if (t->user_status >= 0) status = t->user_status;
+      if (t->user_score >= 0) score = t->user_score;
+      if (t->user_nominal_score >= 0) max_score = t->user_nominal_score;
+    }
+    show_checker_comment_mode = 0;
+    if (status == RUN_PRESENTATION_ERR) show_checker_comment_mode = 1;
+    if (prob->show_checker_comment > 0) show_checker_comment_mode = 1;
+    if ((token_flags & TOKEN_CHECKER_COMMENT_BIT)) show_checker_comment_mode = 1;
+    fprintf(f,
+      "<table class=\"table\">"
+      "<tr><th%s>N</th><th%s>%s</th>",
+      cl, cl, _("Result"));
+    if (score >= 0 && max_score >= 0)
+      fprintf(f, "<th%s>%s</th>", cl, _("Score"));
+    if (show_checker_comment_mode) {
+      fprintf(f, "<th%s>%s</th>", cl, _("Extra info"));
+    }
+    fprintf(f, "</tr>\n");
+
+    fprintf(f, "<tr>");
+    fprintf(f, "<td%s>%d</td>", cl, t->num);
+    if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || status == RUN_SUMMONED) {
+      font_color = "green";
+    } else {
+      font_color = "red";
+    }
+    fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
+            cl, font_color, run_status_str(status, 0, 0, output_only, 0));
+    if (score >= 0 && max_score >= 0)
+      fprintf(f, "<td%s>%d (%d)</td>", cl, score, max_score);
+    if (show_checker_comment_mode) {
+      s = html_armor_string_dup(t->checker_comment);
+      fprintf(f, "<td%s>%s</td>", cl, s);
+      xfree(s); s = 0;
+    }
+    fprintf(f, "</table>\n");
+
+    // hack for "full visibility"
+    if (r->tests && (t = r->tests[0])) {
+      if (r->scoring_system == SCORE_KIROV ||
+          (r->scoring_system == SCORE_OLYMPIAD && !r->accepting_mode)) {
+        is_kirov = 1;
+      }
+      visibility = cntsprob_get_test_visibility(prob, 1, state->online_final_visibility, token_flags);
+      if (visibility == TV_FULLIFMARKED) {
+        visibility = TV_HIDDEN;
+        if (is_marked) visibility = TV_FULL;
+      }
+      if (visibility == TV_FULL) {
+        fprintf(f, "<pre>");
+        fprintf(f, _("<b>====== Test #%d =======</b>\n"), t->num);
+        if (t->args || t->args_too_long) {
+          fprintf(f, "<a name=\"%dL\"></a>", t->num);
+          fprintf(f, _("<u>--- Command line arguments ---</u>\n"));
+          if (t->args_too_long) {
+            fprintf(f, _("<i>Command line is too long</i>\n"));
+          } else {
+            fprintf(f, "%s", ARMOR(t->args));
+          }
+        }
+        if (t->input.size >= 0) {
+          fprintf(f, "<a name=\"%dI\"></a>", t->num);
+          html_print_testing_report_file_content(f, &ab, &t->input, TESTING_REPORT_INPUT);
+        }
+        if (t->output.size >= 0) {
+          fprintf(f, "<a name=\"%dO\"></a>", t->num);
+          html_print_testing_report_file_content(f, &ab, &t->output, TESTING_REPORT_OUTPUT);
+        }
+        if (t->correct.size >= 0) {
+          fprintf(f, "<a name=\"%dA\"></a>", t->num);
+          html_print_testing_report_file_content(f, &ab, &t->correct, TESTING_REPORT_CORRECT);
+        }
+        if (t->error.size >= 0) {
+          fprintf(f, "<a name=\"%dE\"></a>", t->num);
+          html_print_testing_report_file_content(f, &ab, &t->error, TESTING_REPORT_ERROR);
+        }
+        if (t->checker.size >= 0) {
+          fprintf(f, "<a name=\"%dC\"></a>", t->num);
+          html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
+        }
+        fprintf(f, "</pre>");
+      }
+    }
+
+    testing_report_free(r);
+    return 0;
+  }
+
+  if (r->scoring_system == SCORE_KIROV ||
+      (r->scoring_system == SCORE_OLYMPIAD && !r->accepting_mode)) {
+    is_kirov = 1;
+  }
+
+  if (is_kirov) {
+    fprintf(f, _("<big>%d total tests runs, %d passed, %d failed.<br/>\n"),
+            run_tests, tests_passed, run_tests - tests_passed);
+    fprintf(f, _("Score gained: %d (out of %d).<br/><br/></big>\n"),
+            score, max_score);
+  } else {
+    if (status != RUN_OK && status != RUN_ACCEPTED && status != RUN_PENDING_REVIEW && status != RUN_SUMMONED) {
+      fprintf(f, _("<big>Failed test: %d.<br/><br/></big>\n"), r->failed_test);
+    }
+  }
+
+  /x*
+  if (r->comment) {
+    s = html_armor_string_dup(r->comment);
+    fprintf(f, "<big>Note: %s.<br/><br/></big>\n", s);
+    xfree(s);
+  }
+  *x/
+
+  if (r->valuer_comment) {
+    fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
+            ARMOR(r->valuer_comment));
+    hide_score = 1;
+  }
+  if (((token_flags & TOKEN_VALUER_JUDGE_COMMENT_BIT) || state->online_valuer_judge_comments)
+       && r->valuer_judge_comment) {
+    fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
+            ARMOR(r->valuer_judge_comment));
+    hide_score = 1;
+  }
+
+  for (i = 0; i < r->run_tests; ++i) {
+    if (!(t = r->tests[i])) continue;
+    // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
+    visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
+    if (visibility == TV_FULLIFMARKED) {
+      visibility = TV_HIDDEN;
+      if (is_marked) visibility = TV_FULL;
+    }
+    if (visibility == TV_EXISTS || visibility == TV_HIDDEN) continue;
+    if (t->team_comment) {
+      need_comment = 1;
+    }
+    // for any visibility of TV_NORMAL, TV_FULL, TV_BRIEF
+    if (global->report_error_code && t->status == RUN_RUN_TIME_ERR) {
+      need_info = 1;
+    }
+    if (visibility == TV_FULL) {
+      if (t->status == RUN_RUN_TIME_ERR) need_info = 1;
+      has_full = 1;
+      if (r->archive_available) need_links = 1;
+    }
+  }
+
+  fprintf(f,
+          "<table class=\"table\">"
+          "<tr><th%s>N</th><th%s>%s</th><th%s>%s</th>",
+          cl, cl, _("Result"), cl, _("Time (sec)")/x*,
+          cl, _("Real time (sec)")*x/);
+  if (need_info) {
+    fprintf(f, "<th%s>%s</th>", cl, _("Extra info"));
+  }
+  if (is_kirov && !hide_score) {
+    fprintf(f, "<th%s>%s</th>", cl, _("Score"));
+  }
+  if (need_comment) {
+    fprintf(f, "<th%s>%s</th>", cl, _("Comment"));
+  }
+  if (need_links) {
+    fprintf(f, "<th%s>%s</th>", cl, _("Links"));
+  }
+
+  fprintf(f, "</tr>\n");
+
+  for (i = 0; i < r->run_tests; i++) {
+    if (!(t = r->tests[i])) continue;
+    // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
+    visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
+    if (visibility == TV_FULLIFMARKED) {
+      visibility = TV_HIDDEN;
+      if (is_marked) visibility = TV_FULL;
+    }
+    if (visibility == TV_HIDDEN) continue;
+    ++serial;
+    if (visibility == TV_EXISTS) {
+      fprintf(f, "<tr>");
+      fprintf(f, "<td%s>%d</td>", cl, serial);
+      fprintf(f, "<td%s>&nbsp;</td>", cl); // status
+      fprintf(f, "<td%s>&nbsp;</td>", cl); // time
+      if (need_info) {
+        fprintf(f, "<td%s>&nbsp;</td>", cl); // info
+      }
+      if (is_kirov && !hide_score) {
+        fprintf(f, "<td%s>&nbsp;</td>", cl); // score
+      }
+      if (need_comment) {
+        fprintf(f, "<td%s>&nbsp;</td>", cl); // info
+      }
+      fprintf(f, "</tr>\n");
+      continue;
+    }
+
+    status = t->status;
+    score = t->score;
+    max_score = t->nominal_score;
+    if (user_status_mode && t->has_user) {
+      if (t->user_status >= 0) status = t->user_status;
+      if (t->user_score >= 0) score = t->user_score;
+      if (t->user_nominal_score >= 0) max_score = t->user_nominal_score;
+    }
+
+    fprintf(f, "<tr>");
+    fprintf(f, "<td%s>%d</td>", cl, serial);
+    if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || status == RUN_SUMMONED) {
+      font_color = "green";
+    } else {
+      font_color = "red";
+    }
+    fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
+            cl, font_color, run_status_str(status, 0, 0, output_only, 0));
+    if ((status == RUN_TIME_LIMIT_ERR || status == RUN_WALL_TIME_LIMIT_ERR) && r->time_limit_ms > 0) {
+      fprintf(f, "<td%s>&gt;%d.%03d</td>", cl,
+              r->time_limit_ms / 1000, r->time_limit_ms % 1000);
+    } else {
+      fprintf(f, "<td%s>%d.%03d</td>", cl, t->time / 1000, t->time % 1000);
+    }
+    /x*
+    if (t->real_time > 0) {
+      disp_time = t->real_time;
+      if (disp_time < t->time) disp_time = t->time;
+      fprintf(f, "<td%s>%d.%03d</td>", cl, disp_time / 1000, disp_time % 1000);
+    } else {
+      fprintf(f, "<td%s>N/A</td>", cl);
+    }
+    *x/
+    if (need_info) {
+      fprintf(f, "<td%s>", cl);
+      if (status == RUN_RUN_TIME_ERR
+          && (global->report_error_code || visibility == TV_FULL)) {
+        if (t->exit_comment) {
+          fprintf(f, "%s", t->exit_comment);
+        } else if (t->term_signal >= 0) {
+          fprintf(f, "%s %d (%s)", _("Signal"), t->term_signal,
+                  os_GetSignalString(t->term_signal));
+        } else {
+          fprintf(f, "%s %d", _("Exit code"), t->exit_code);
+        }
+      } else {
+        fprintf(f, "&nbsp;");
+      }
+      fprintf(f, "</td>");
+    }
+    if (is_kirov && !hide_score) {
+      fprintf(f, "<td%s>%d (%d)</td>", cl, score, max_score);
+    }
+    if (need_comment) {
+      if (!t->team_comment) {
+        fprintf(f, "<td%s>&nbsp;</td>", cl);
+      } else {
+        s = html_armor_string_dup(t->team_comment);
+        fprintf(f, "<td%s>%s</td>", cl, s);
+        xfree(s);
+      }
+    }
+    if (need_links) {
+      fprintf(f, "<td%s>", cl);
+      if (visibility == TV_FULL) {
+        fprintf(f, "&nbsp;%s[I]</a>",
+                ns_aref_2(hbuf, sizeof(hbuf), phr,
+                          html_make_title(tbuf, sizeof(tbuf), _("Test input data")),
+                          NEW_SRV_ACTION_VIEW_TEST_INPUT,
+                          "run_id=%d&test_num=%d",
+                          r->run_id, t->num));
+        if (t->output_available) {
+          fprintf(f, "&nbsp;%s[O]</a>",
+                  ns_aref_2(hbuf, sizeof(hbuf), phr,
+                            html_make_title(tbuf, sizeof(tbuf), _("Program output")),
+                            NEW_SRV_ACTION_VIEW_TEST_OUTPUT,
+                            "run_id=%d&test_num=%d",
+                            r->run_id, t->num));
+        }
+        if (r->correct_available) {
+          fprintf(f, "&nbsp;%s[A]</a>",
+                  ns_aref_2(hbuf, sizeof(hbuf), phr,
+                            html_make_title(tbuf, sizeof(tbuf), _("Correct answer")),
+                            NEW_SRV_ACTION_VIEW_TEST_ANSWER,
+                            "run_id=%d&test_num=%d",
+                            r->run_id, t->num));
+        }
+        if (t->stderr_available) {
+          fprintf(f, "&nbsp;%s[E]</a>",
+                  ns_aref_2(hbuf, sizeof(hbuf), phr,
+                            html_make_title(tbuf, sizeof(tbuf), _("Program stderr output")),
+                            NEW_SRV_ACTION_VIEW_TEST_ERROR,
+                            "run_id=%d&test_num=%d",
+                            r->run_id, t->num));
+        }
+        if (t->checker_output_available) {
+          fprintf(f, "&nbsp;%s[C]</a>",
+                  ns_aref_2(hbuf, sizeof(hbuf), phr,
+                            html_make_title(tbuf, sizeof(tbuf), _("Checker output")),
+                            NEW_SRV_ACTION_VIEW_TEST_CHECKER,
+                            "run_id=%d&test_num=%d",
+                            r->run_id, t->num));
+        }
+        if (r->info_available) {
+          fprintf(f, "&nbsp;%s[F]</a>",
+                  ns_aref_2(hbuf, sizeof(hbuf), phr,
+                            html_make_title(tbuf, sizeof(tbuf), _("Test information")),
+                            NEW_SRV_ACTION_VIEW_TEST_INFO,
+                            "run_id=%d&test_num=%d",
+                            r->run_id, t->num));
+        }
+      }
+      fprintf(f, "</td>");
+    }
+    fprintf(f, "</tr>\n");
+  }
+  fprintf(f, "</table>\n");
+
+  if (has_full) {
+    fprintf(f, "<pre>");
+    for (i = 0; i < r->run_tests; i++) {
+      if (!(t = r->tests[i])) continue;
+      if (t->status == RUN_SKIPPED) continue;
+      visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
+      if (visibility == TV_FULLIFMARKED) {
+        visibility = TV_HIDDEN;
+        if (is_marked) visibility = TV_FULL;
+      }
+      if (visibility != TV_FULL) continue;
+      if (!t->args && !t->args_too_long && t->input.size < 0
+          && t->output.size < 0 && t->error.size < 0 && t->correct.size < 0 && t->checker.size < 0)
+        continue;
+      fprintf(f, _("<b>====== Test #%d =======</b>\n"), t->num);
+      if (t->args || t->args_too_long) {
+        fprintf(f, "<a name=\"%dL\"></a>", t->num);
+        fprintf(f, _("<u>--- Command line arguments ---</u>\n"));
+        if (t->args_too_long) {
+          fprintf(f, _("<i>Command line is too long</i>\n"));
+        } else {
+          fprintf(f, "%s", ARMOR(t->args));
+        }
+      }
+      if (t->input.size >= 0) {
+        fprintf(f, "<a name=\"%dI\"></a>", t->num);
+        html_print_testing_report_file_content(f, &ab, &t->input, TESTING_REPORT_INPUT);
+      }
+      if (t->output.size >= 0) {
+        fprintf(f, "<a name=\"%dO\"></a>", t->num);
+        html_print_testing_report_file_content(f, &ab, &t->output, TESTING_REPORT_OUTPUT);
+      }
+      if (t->correct.size >= 0) {
+        fprintf(f, "<a name=\"%dA\"></a>", t->num);
+        html_print_testing_report_file_content(f, &ab, &t->correct, TESTING_REPORT_CORRECT);
+      }
+      if (t->error.size >= 0) {
+        fprintf(f, "<a name=\"%dE\"></a>", t->num);
+        html_print_testing_report_file_content(f, &ab, &t->error, TESTING_REPORT_ERROR);
+      }
+      if (t->checker.size >= 0) {
+        fprintf(f, "<a name=\"%dC\"></a>", t->num);
+        html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
+      }
+    }
+    fprintf(f, "</pre>");
+  }
+
+  html_armor_free(&ab);
+  testing_report_free(r);
+  return 0;
+   */
+
+  fprintf(fout, "\n  }"); // end of "result"
+  fprintf(fout, "\n}"); // end of the root object
+
+  html_armor_free(&ab);
+  testing_report_free(tr);
+  free(rep_txt);
+  free(comp_out_txt);
 }

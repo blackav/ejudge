@@ -896,5 +896,15 @@ ns_write_standings(
         int user_mode,
         time_t cur_time,
         int compat_mode);
+void
+write_json_run_info(
+        FILE *fout,
+        const serve_state_t cs,
+        const struct http_request_info *phr,
+        int run_id,
+        const struct run_entry *pre,
+        time_t start_time,
+        time_t stop_time,
+        int accepting_mode);
 
 #endif /* __NEW_SERVER_H__ */
