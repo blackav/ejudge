@@ -8830,7 +8830,7 @@ write_json_content(
   fprintf(fout, "\n%s  \"method\": %d", indent, 1); // FIXME: hard-coded base64
   fprintf(fout, ",\n%s  \"size\": %zu", indent, size);
   fprintf(fout, ",\n%s  \"data\": \"%s\"", indent, b64_txt);
-  fprintf(fout, "%s}", indent);
+  fprintf(fout, "\n%s}", indent);
   free(b64_txt);
   return ",";
 }
@@ -8847,6 +8847,7 @@ write_json_run_info(
         int accepting_mode)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const struct section_global_data *global = cs->global;
   const struct section_problem_data *prob = NULL;
   int ok = 1;
   UserProblemInfo *pinfo = NULL;
@@ -8869,8 +8870,11 @@ write_json_run_info(
   }
   ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, pinfo);
 
-  RunDisplayInfo ri;
+  RunDisplayInfo ri = {};
   fill_user_run_info(cs, pinfo, run_id, pre, start_time, stop_time, 1, &ri);
+
+  int token_flags = pre->token_flags;
+  // FIXME: adjust the token flags
 
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\" : %s", ok?"true":"false");
@@ -9013,6 +9017,23 @@ write_json_run_info(
   if (is_report_available) {
     unsigned char *sep1 = "";
     fprintf(fout, ",\n    \"testing_report\": {");
+
+    int user_status_mode = 0;
+    if (global->separate_user_score > 0 && cs->online_view_judge_score <= 0 && !(token_flags & TOKEN_FINALSCORE_BIT)) {
+      user_status_mode = 1;
+    }
+
+    int is_kirov = 0;
+    if (tr->scoring_system == SCORE_KIROV ||
+        (tr->scoring_system == SCORE_OLYMPIAD && !tr->accepting_mode)) {
+      is_kirov = 1;
+    }
+
+    int hide_score = 0;
+    if (((token_flags & TOKEN_VALUER_JUDGE_COMMENT_BIT) || cs->online_valuer_judge_comments)
+        && tr->valuer_judge_comment) {
+      hide_score = 1;
+    }
 
   /*
   const struct section_global_data *global = state->global;
@@ -9260,63 +9281,34 @@ write_json_run_info(
       const unsigned char *sep2 = "";
       for (int i = 0; i < tr->run_tests; ++i) {
         struct testing_report_test *t = tr->tests[i];
-        if (t) continue;
-    /*
-  for (i = 0; i < r->run_tests; i++) {
-    if (!(t = r->tests[i])) continue;
-    // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
-    visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
-    if (visibility == TV_FULLIFMARKED) {
-      visibility = TV_HIDDEN;
-      if (is_marked) visibility = TV_FULL;
-    }
-    if (visibility == TV_HIDDEN) continue;
-    ++serial;
-    if (visibility == TV_EXISTS) {
-      fprintf(f, "<tr>");
-      fprintf(f, "<td%s>%d</td>", cl, serial);
-      fprintf(f, "<td%s>&nbsp;</td>", cl); // status
-      fprintf(f, "<td%s>&nbsp;</td>", cl); // time
-      if (need_info) {
-        fprintf(f, "<td%s>&nbsp;</td>", cl); // info
-      }
-      if (is_kirov && !hide_score) {
-        fprintf(f, "<td%s>&nbsp;</td>", cl); // score
-      }
-      if (need_comment) {
-        fprintf(f, "<td%s>&nbsp;</td>", cl); // info
-      }
-      fprintf(f, "</tr>\n");
-      continue;
-    }
+        if (!t) continue;
 
-    status = t->status;
-    score = t->score;
-    max_score = t->nominal_score;
-    if (user_status_mode && t->has_user) {
-      if (t->user_status >= 0) status = t->user_status;
-      if (t->user_score >= 0) score = t->user_score;
-      if (t->user_nominal_score >= 0) max_score = t->user_nominal_score;
-    }
-    */
+        int visibility = cntsprob_get_test_visibility(prob, i + 1, cs->online_final_visibility, token_flags);
+        if (visibility == TV_FULLIFMARKED) {
+          visibility = TV_HIDDEN;
+          if (pre->is_marked) visibility = TV_FULL;
+        }
+        if (visibility == TV_HIDDEN) continue;
+
         fprintf(fout, "%s\n        {", sep2); sep2 = ",";
-        /*
-    fprintf(f, "<tr>");
-    fprintf(f, "<td%s>%d</td>", cl, serial);
-    if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || status == RUN_SUMMONED) {
-      font_color = "green";
-    } else {
-      font_color = "red";
-    }
-    fprintf(f, "<td%s><font color=\"%s\">%s</font></td>\n",
-            cl, font_color, run_status_str(status, 0, 0, output_only, 0));
-    if ((status == RUN_TIME_LIMIT_ERR || status == RUN_WALL_TIME_LIMIT_ERR) && r->time_limit_ms > 0) {
-      fprintf(f, "<td%s>&gt;%d.%03d</td>", cl,
-              r->time_limit_ms / 1000, r->time_limit_ms % 1000);
-    } else {
-      fprintf(f, "<td%s>%d.%03d</td>", cl, t->time / 1000, t->time % 1000);
-    }
-    /x*
+        fprintf(fout, "\n          \"num\": %d", t->num);
+
+        if (visibility != TV_EXISTS) {
+          int status = t->status;
+          int score = t->score;
+          int max_score = t->nominal_score;
+          if (user_status_mode && t->has_user) {
+            if (t->user_status >= 0) status = t->user_status;
+            if (t->user_score >= 0) score = t->user_score;
+            if (t->user_nominal_score >= 0) max_score = t->user_nominal_score;
+          }
+          fprintf(fout, ",\n          \"status\": %d", status);
+          if ((status == RUN_TIME_LIMIT_ERR || status == RUN_WALL_TIME_LIMIT_ERR) && tr->time_limit_ms > 0) {
+            // report nothing
+          } else {
+            fprintf(fout, ",\n          \"time_ms\": %d", t->time);
+          }
+    /*
     if (t->real_time > 0) {
       disp_time = t->real_time;
       if (disp_time < t->time) disp_time = t->time;
@@ -9324,7 +9316,8 @@ write_json_run_info(
     } else {
       fprintf(f, "<td%s>N/A</td>", cl);
     }
-    *x/
+    */
+          /*
     if (need_info) {
       fprintf(f, "<td%s>", cl);
       if (status == RUN_RUN_TIME_ERR
@@ -9342,9 +9335,12 @@ write_json_run_info(
       }
       fprintf(f, "</td>");
     }
-    if (is_kirov && !hide_score) {
-      fprintf(f, "<td%s>%d (%d)</td>", cl, score, max_score);
-    }
+          */
+          if (is_kirov && !hide_score) {
+            fprintf(fout, ",\n          \"score\": %d", score);
+            fprintf(fout, ",\n          \"max_score\": %d", max_score);
+          }
+    /*
     if (need_comment) {
       if (!t->team_comment) {
         fprintf(f, "<td%s>&nbsp;</td>", cl);
@@ -9458,6 +9454,7 @@ write_json_run_info(
     fprintf(f, "</pre>");
   }
    */
+        }
         fprintf(fout, "\n        }");
       }
       fprintf(fout, "\n      ]");
