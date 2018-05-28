@@ -8809,6 +8809,32 @@ to_json_bool(int value)
   else return "false";
 }
 
+static const unsigned char *
+write_json_content(
+        FILE *fout,
+        const unsigned char *data,
+        size_t size,
+        const unsigned char *sep,
+        const unsigned char *indent)
+{
+  char *b64_txt = NULL;
+  size_t b64_len = 0;
+
+  if (size == (size_t) -1) size = strlen(data);
+  b64_txt = xmalloc(size * 2 + 64);
+  b64_len = base64_encode(data, size, b64_txt);
+  b64_txt[b64_len] = 0;
+  if (!sep) sep = "";
+  if (!indent) indent = "";
+  fprintf(fout, "%s\n%s\"content\": {", sep, indent);
+  fprintf(fout, "\n%s  \"method\": %d", indent, 1); // FIXME: hard-coded base64
+  fprintf(fout, ",\n%s  \"size\": %zu", indent, size);
+  fprintf(fout, ",\n%s  \"data\": \"%s\"", indent, b64_txt);
+  fprintf(fout, "%s}", indent);
+  free(b64_txt);
+  return ",";
+}
+
 void
 write_json_run_info(
         FILE *fout,
@@ -8833,8 +8859,6 @@ write_json_run_info(
   int is_report_available = 0;
   char *comp_out_txt = NULL;
   size_t comp_out_len = 0;
-  char *b64_txt = NULL;
-  size_t b64_len = 0;
 
   if (pre->prob_id > 0 && pre->prob_id <= cs->max_prob)
     prob = cs->probs[pre->prob_id];
@@ -8938,6 +8962,7 @@ write_json_run_info(
         const unsigned char *start_ptr = NULL;
         if (get_content_type(rep_txt, &start_ptr) == CONTENT_TYPE_XML) {
           if ((tr = testing_report_parse_xml(start_ptr))) {
+            is_report_available = 1;
             if (tr->compiler_output && tr->compiler_output[0]) {
               is_compiler_output_available = 1;
               comp_out_txt = xstrdup(tr->compiler_output);
@@ -8963,6 +8988,9 @@ write_json_run_info(
       } else {
       }
     }
+    if (is_report_available) {
+      if (!ri.is_report_enabled) is_report_available = 0;
+    }
     if (is_compiler_output_available) {
       if (!prob || (prob->team_enable_ce_view <= 0 && !ri.is_report_enabled)) {
         is_compiler_output_available = 0;
@@ -8971,22 +8999,20 @@ write_json_run_info(
     if (is_compiler_output_available) {
       fprintf(fout, ",\n      \"is_compiler_output_available\": %s", to_json_bool(is_compiler_output_available));
     }
+    if (is_report_available) {
+      fprintf(fout, ",\n      \"is_report_available\": %s", to_json_bool(is_report_available));
+    }
   }
   fprintf(fout, "\n    }"); // end of "run"
 
   if (is_compiler_output_available && comp_out_txt && comp_out_len > 0) {
-    b64_txt = xmalloc(comp_out_len * 2 + 64);
-    b64_len = base64_encode(comp_out_txt, comp_out_len, b64_txt);
-    b64_txt[b64_len] = 0;
     fprintf(fout, ",\n    \"compiler_output\": {");
-    fprintf(fout, "\n      \"method\": %d", 1); // FIXME: hard-coded base64
-    fprintf(fout, ",\n      \"size\": %zu", comp_out_len);
-    fprintf(fout, ",\n      \"data\": \"%s\"", b64_txt);
+    write_json_content(fout, comp_out_txt, comp_out_len, "", "      ");
     fprintf(fout, "\n    }"); // end of "compiler_output"
-    xfree(b64_txt); b64_txt = NULL; b64_len = 0;
   }
   if (is_report_available) {
-  }
+    unsigned char *sep1 = "";
+    fprintf(fout, ",\n    \"testing_report\": {");
 
   /*
   const struct section_global_data *global = state->global;
@@ -9169,12 +9195,15 @@ write_json_run_info(
     xfree(s);
   }
   *x/
+  */
 
-  if (r->valuer_comment) {
-    fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
-            ARMOR(r->valuer_comment));
-    hide_score = 1;
-  }
+    if (tr->valuer_comment && tr->valuer_comment[0]) {
+      fprintf(fout, "%s\n      \"valuer_comment\": {", sep1); sep1 = ",";
+      write_json_content(fout, tr->valuer_comment, -1, "", "      ");
+      fprintf(fout, "\n      }");
+    }
+
+    /*
   if (((token_flags & TOKEN_VALUER_JUDGE_COMMENT_BIT) || state->online_valuer_judge_comments)
        && r->valuer_judge_comment) {
     fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
@@ -9224,7 +9253,15 @@ write_json_run_info(
   }
 
   fprintf(f, "</tr>\n");
+    */
 
+    if (tr->run_tests > 0) {
+      fprintf(fout, "%s\n      \"tests\": [", sep1); sep1 = ",";
+      const unsigned char *sep2 = "";
+      for (int i = 0; i < tr->run_tests; ++i) {
+        struct testing_report_test *t = tr->tests[i];
+        if (t) continue;
+    /*
   for (i = 0; i < r->run_tests; i++) {
     if (!(t = r->tests[i])) continue;
     // TV_NORMAL, TV_FULL, TV_FULLIFMARKED, TV_BRIEF, TV_EXISTS, TV_HIDDEN
@@ -9261,7 +9298,9 @@ write_json_run_info(
       if (t->user_score >= 0) score = t->user_score;
       if (t->user_nominal_score >= 0) max_score = t->user_nominal_score;
     }
-
+    */
+        fprintf(fout, "%s\n        {", sep2); sep2 = ",";
+        /*
     fprintf(f, "<tr>");
     fprintf(f, "<td%s>%d</td>", cl, serial);
     if (status == RUN_OK || status == RUN_ACCEPTED || status == RUN_PENDING_REVIEW || status == RUN_SUMMONED) {
@@ -9418,11 +9457,13 @@ write_json_run_info(
     }
     fprintf(f, "</pre>");
   }
-
-  html_armor_free(&ab);
-  testing_report_free(r);
-  return 0;
    */
+        fprintf(fout, "\n        }");
+      }
+      fprintf(fout, "\n      ]");
+    }
+    fprintf(fout, "\n    }"); // end of "testing_report"
+  }
 
   fprintf(fout, "\n  }"); // end of "result"
   fprintf(fout, "\n}"); // end of the root object
