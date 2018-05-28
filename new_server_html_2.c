@@ -8910,6 +8910,7 @@ write_json_run_info(
   int is_minimal_report = 0;
   if (ri.status > RUN_TRANSIENT_LAST || (ri.status > RUN_LOW_LAST && ri.status < RUN_TRANSIENT_FIRST)) {
     is_minimal_report = 1;
+    fprintf(fout, ",\n      \"is_minimal_report\": %s", to_json_bool(is_minimal_report));
   } else {
     switch (ri.status) {
     case RUN_CHECK_FAILED:
@@ -8924,6 +8925,7 @@ write_json_run_info(
     case RUN_COMPILING:
     case RUN_AVAILABLE:
       is_minimal_report = 1;
+      fprintf(fout, ",\n      \"is_minimal_report\": %s", to_json_bool(is_minimal_report));
       break;
     }
   }
@@ -9293,6 +9295,9 @@ write_json_run_info(
         fprintf(fout, "%s\n        {", sep2); sep2 = ",";
         fprintf(fout, "\n          \"num\": %d", t->num);
 
+        if (visibility == TV_EXISTS) {
+          fprintf(fout, ",\n          \"is_visibility_exists\": %s", to_json_bool(1));
+        }
         if (visibility != TV_EXISTS) {
           int status = t->status;
           int score = t->score;
