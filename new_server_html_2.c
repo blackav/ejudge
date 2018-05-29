@@ -5681,14 +5681,17 @@ ns_get_user_problems_summary(
       user_deadline = 0;
     }
 
-    if (cur_prob->unrestricted_statement > 0 || !is_deadlined)
+    if (start_time > 0 && cs->current_time >= start_time
+        && (cur_prob->unrestricted_statement > 0 || !is_deadlined))
       pinfo[prob_id].status |= PROB_STATUS_VIEWABLE;
 
-    if (!is_deadlined && cur_prob->disable_user_submit <= 0
+    if (start_time > 0 && cs->current_time >= start_time
+        && (stop_time <= 0 || cs->current_time < stop_time)
+        && !is_deadlined && cur_prob->disable_user_submit <= 0
         && (cur_prob->disable_submit_after_ok <= 0 || !pinfo[prob_id].solved_flag))
       pinfo[prob_id].status |= PROB_STATUS_SUBMITTABLE;
 
-    if (cur_prob->disable_tab <= 0)
+    if (start_time > 0 && cs->current_time >= start_time && cur_prob->disable_tab <= 0)
       pinfo[prob_id].status |= PROB_STATUS_TABABLE;
   }
 }
