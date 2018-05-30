@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -745,4 +745,17 @@ clar_fetch_run_messages_2(
     ERR_R("not supported");
   }
   return -1;
+}
+
+int
+clar_count_run_messages(
+        clarlog_state_t state,
+        const ej_uuid_t *p_run_uuid)
+{
+  int count = 0;
+  for (int clar_id = 0; clar_id < state->clars.u; ++clar_id) {
+    const struct clar_entry_v2 *pe = &state->clars.v[clar_id];
+    count += (!memcmp(p_run_uuid, &pe->run_uuid, sizeof(pe->run_uuid)));
+  }
+  return 0;
 }

@@ -2,7 +2,7 @@
 #ifndef __CLARLOG_H__
 #define __CLARLOG_H__
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -240,5 +240,10 @@ int
 clar_get_unanswered_count(
         clarlog_state_t state,
         time_t thr_time);
+
+int
+clar_count_run_messages(
+        clarlog_state_t state,
+        const ej_uuid_t *p_run_uuid);
 
 #endif /* __CLARLOG_H__ */
