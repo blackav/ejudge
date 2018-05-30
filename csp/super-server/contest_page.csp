@@ -19,14 +19,14 @@
 %>
 
 <div class="icons-1">
-   
+
 <s:url name="ContestPageUrl" ac="contest-page">
     <s:param name="contest_id" value="phr->contest_id" />
 </s:url>
         <s:a ac="main-page"><img src="<s:config name="style-prefix" />back_sh.png" alt="Main page" /></s:a>
         <s:a url="ContestPageUrl"><img src="<s:config name="style-prefix" />refresh_sh.png" alt="Refresh" /></s:a>
        <s:a ac="logout"><img src="<s:config name="style-prefix" />logout_sh.png" alt="Logout"/></s:a>
-    
+
 </div>
 
 <div class="h2-long" style="margin-top: 0"><h2>Detailed information about contest <s:v value="phr->contest_id" /></h2></div>
@@ -100,7 +100,7 @@
 <% if (cnts->personal) { %>
     <tr>
         <td><s:_>The contest is personal</s:_>?</td>
-        <td><s:vb value="cnts->personal" /></td> 
+        <td><s:vb value="cnts->personal" /></td>
         <td></td>
     </tr>
 <% } %>

@@ -295,7 +295,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -331,7 +331,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -377,7 +377,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -409,7 +409,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -524,7 +524,7 @@ function popupFilesDialog(e, skipField)
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "tgz_sfx" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "tgzdir_pat" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "tgzdir_sfx" %>
-    
+
     if (e) e.stopPropagation();
     filesDialogOnChange();
     $("#FilesDialogDiv").dialog('open');

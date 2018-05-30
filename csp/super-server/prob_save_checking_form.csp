@@ -40,7 +40,7 @@
     unsigned char *init_cmd = NULL;
     ejintbool_t init_cmd_dflt = 0;
     char **init_env = NULL;
-    
+
     int i;
     struct section_problem_data *prob = NULL;
 

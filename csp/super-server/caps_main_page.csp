@@ -87,5 +87,3 @@ cleanup:
     l10n_resetlocale();
     html_armor_free(&ab);
 %>
-
-

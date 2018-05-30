@@ -117,7 +117,7 @@ restart:; // FIXME
         }
 %>
 </table>
-                        
+
 <p><b>Successes: <s:v value="successes" />, failures: <s:v value="failures" />.</b></p>
 <%
     } if (pid > 0) {
@@ -211,7 +211,7 @@ restart:; // FIXME
         xfree(cfg_text); cfg_text = NULL; cfg_size = 0;
     }
 %>
-    
+
 <%@include "footer.csp"
 %><%
 //cleanup:

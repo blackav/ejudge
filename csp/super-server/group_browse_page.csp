@@ -21,7 +21,7 @@
     int min_group_id = INT_MAX;
     int max_group_id = 0;
     const struct userlist_group *g;
-    int serial; 
+    int serial;
 
     const unsigned char *marked_str = NULL; // needed for users_top_menu.csp
     int contest_id = 0;                     // needed for users_top_menu.csp

@@ -437,7 +437,7 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
       <td class="b1">&nbsp;</td>
 <%
             } else {
-%> 
+%>
       <td class="b1"><i>Invalid field</i></td>
       <td class="b1">&nbsp;</td>
 <%

@@ -22,7 +22,7 @@
     ejintbool_t source_header_dflt = 0;
     unsigned char *source_footer = NULL;
     ejintbool_t source_footer_dflt = 0;
-    
+
     int i;
     struct section_problem_data *prob = NULL;
 

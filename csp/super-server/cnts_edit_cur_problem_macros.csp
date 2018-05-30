@@ -1,6 +1,6 @@
 <% // -*- html -*-
 %>
-<%#define MENU_TEXTFIELD_WITH_DEFAULT 
+<%#define MENU_TEXTFIELD_WITH_DEFAULT
         <div id="edit-@1-div">
             <div style="width: @4px; display: inline-block;"><label style="display:block; width: @4px" for="edit-@1">@3:</label></div>
             <input type="text" size="20" name="@1" id="edit-@1" value="" class="text ui-widget-content ui-corner-all" onchange="@2DialogOnChange('@1')" /><%

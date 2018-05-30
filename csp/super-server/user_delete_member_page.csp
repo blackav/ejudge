@@ -195,13 +195,13 @@ extern const struct ss_user_row_info ss_member_time_rows[];
   <s:param name="other_user_id" value="other_user_id" />
   <s:param name="contest_id" value="contest_id" fullCheckExpr="contest_id > 0" />
   <s:param name="group_id" value="group_id" fullCheckExpr="group_id > 0" />
-</s:url>                                      
+</s:url>
 <s:url name="DeleteUrl" ac="user-delete-member-action">
   <s:param name="other_user_id" value="other_user_id" />
   <s:param name="serial" value="m->serial" />
   <s:param name="contest_id" value="contest_id" fullCheckExpr="contest_id > 0" />
   <s:param name="group_id" value="group_id" fullCheckExpr="group_id > 0" />
-</s:url>                                      
+</s:url>
 <p><s:a url="CancelUrl">[Cancel]</s:a>&nbsp;<s:a url="DeleteUrl">[Delete]</s:a></p>
 
 <%@include "footer.csp"

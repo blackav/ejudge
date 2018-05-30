@@ -296,7 +296,7 @@ $(function() {
                         window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=0';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -326,7 +326,7 @@ $(function() {
                         window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=4';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -356,7 +356,7 @@ $(function() {
                         window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=1';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -389,7 +389,7 @@ $(function() {
                         window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=2';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -426,7 +426,7 @@ $(function() {
                         window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=3';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -457,7 +457,7 @@ $(function() {
                         window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=8';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -488,7 +488,7 @@ $(function() {
                         window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=9';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -519,7 +519,7 @@ $(function() {
                         window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=10';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -550,7 +550,7 @@ $(function() {
                         window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=11';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
