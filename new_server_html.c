@@ -10503,6 +10503,9 @@ unpriv_download_run(
     FAIL2(NEW_SRV_ERR_DISK_READ_ERROR);
   }
 
+  // never json
+  phr->json_reply = 0;
+
   if (prob->type > 0) {
     fprintf(fout, "Content-type: %s\n", mime_type_get_type(re.mime_type));
     /*
