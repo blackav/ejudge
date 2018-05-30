@@ -48,4 +48,3 @@ include deps.make
 
 rldb_mysql.so : $(RLDB_MYSQL_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
-

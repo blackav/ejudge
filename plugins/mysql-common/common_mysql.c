@@ -680,7 +680,7 @@ parse_spec_func(
       p_uq = XPDEREF(unsigned long long, data, specs[i].offset);
       *p_uq = uq;
       break;
-      
+
     case 'd':
     case 'e':
       errno = 0;

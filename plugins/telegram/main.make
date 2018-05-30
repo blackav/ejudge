@@ -44,4 +44,3 @@ include deps.make
 
 sn_telegram.so : $(TELEGRAM_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
-

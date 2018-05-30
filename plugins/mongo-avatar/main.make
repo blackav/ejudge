@@ -44,4 +44,3 @@ include deps.make
 
 avatar_mongo.so : $(MONGO_AVATAR_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
-

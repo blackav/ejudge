@@ -44,4 +44,3 @@ include deps.make
 
 xuser_mongo.so : $(XUSER_MONGO_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
-

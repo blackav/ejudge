@@ -989,7 +989,7 @@ modify_record_func(
     } else {
       fprintf(cmd_f, "NULL");
     }
-    sep = sep1;    
+    sep = sep1;
   }
   if (mask & (1 << CLAR_FIELD_OLD_RUN_STATUS)) {
     fprintf(cmd_f, "%sold_run_status = %d", sep, pe->old_run_status);

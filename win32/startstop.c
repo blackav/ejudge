@@ -27,7 +27,7 @@
 #if STARTSTOP_DEBUG - 0
 #include <stdio.h>
 #endif /* STARTSTOP_DEBUG - 0 */
- 
+
 void
 start_set_self_args(int argc, char *argv[])
 {

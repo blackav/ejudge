@@ -596,7 +596,7 @@ count_read_clars_func(
     return extra->clar_uuids_size;
 }
 
-static int 
+static int
 isort_func(const void *p1, const void *p2)
 {
     const int *i1 = (const int *) p1;

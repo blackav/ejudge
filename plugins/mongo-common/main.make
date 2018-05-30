@@ -44,4 +44,3 @@ include deps.make
 
 common_mongo.so : $(COMMON_MONGO_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
-

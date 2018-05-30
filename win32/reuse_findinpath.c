@@ -31,7 +31,7 @@ os_FindInPath(char const *name)
   char buf1[1024];
   char *buf = buf1, *pext = 0;
   unsigned len = sizeof(buf1), new_len;
-  
+
   new_len = SearchPath(NULL, name, NULL, len, buf, &pext);
   if (!new_len) return NULL;
   if (new_len < len) return xstrdup(buf);

@@ -48,4 +48,3 @@ include deps.make
 
 common_mysql.so : $(COMMON_MYSQL_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
-

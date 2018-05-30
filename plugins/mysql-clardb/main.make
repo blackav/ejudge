@@ -48,4 +48,3 @@ include deps.make
 
 cldb_mysql.so : $(CLDB_MYSQL_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
-

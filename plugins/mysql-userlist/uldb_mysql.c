@@ -774,7 +774,7 @@ insert_contest_info(
 }
 
 static int
-insert_contest(struct uldb_mysql_state *state, int user_id, 
+insert_contest(struct uldb_mysql_state *state, int user_id,
                struct userlist_contest *c)
 {
   char *cmd_t = 0;
@@ -803,7 +803,7 @@ insert_contest(struct uldb_mysql_state *state, int user_id,
 }
 
 static int
-insert_cookie(struct uldb_mysql_state *state, int user_id, 
+insert_cookie(struct uldb_mysql_state *state, int user_id,
               struct userlist_cookie *c)
 {
   char *cmd_t = 0;
@@ -1559,7 +1559,7 @@ remove_expired_users_func(
   if (min_reg_time <= 0) min_reg_time = time(0) - 24 * 60 * 60;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "SELECT user_id FROM %slogins WHERE regtime < ", 
+  fprintf(cmd_f, "SELECT user_id FROM %slogins WHERE regtime < ",
           state->md->table_prefix);
   state->mi->write_timestamp(state->md, cmd_f, "", min_reg_time);
   fprintf(cmd_f, " AND (logintime = NULL OR logintime = 0) ;");
@@ -3702,7 +3702,7 @@ new_member_func(
   info("new member serial = %d", current_member);
   remove_member_from_pool(state, user_id, contest_id);
   return current_member;
-  
+
  fail:
   return -1;
 }

@@ -52,4 +52,3 @@ include deps.make
 
 uldb_mysql.so : $(ULDB_MYSQL_OFILES)
 	$(LD) -shared $(LDFLAGS) $^ -o $@ $(LDLIBS)
-

@@ -186,7 +186,7 @@ scan_dir(char const *partial_path, char *found_item, size_t fi_size, int random_
 
   for (i = 0; i < 32; i++) {
     if (items[i]) {
-      // pathcpy(found_item, items[i]); (GM) 
+      // pathcpy(found_item, items[i]); (GM)
       snprintf(found_item, fi_size, "%s", items[i]);
       info("scan_dir: found '%s' (priority %d)", found_item, i - 16);
       return 1;
@@ -305,7 +305,7 @@ safe_write_file(char const *buf, size_t size,
     write_log(0, LOG_ERR, "MoveFile failed");
     return -1;
   }
-  return 0;  
+  return 0;
 }
 
 /* remove all files in the specified directory */
@@ -919,7 +919,7 @@ generic_file_size(const unsigned char *dir, const unsigned char *name,
   if (lo == INVALID_FILE_SIZE) {
     err("generic_file_size: GetFileSize failed on `%s'", path);
     return -1;
-  }    
+  }
 
   // avoid unsigned overflow
   if ((retval = (ssize_t) lo) < 0) {

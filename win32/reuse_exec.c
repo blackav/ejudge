@@ -96,33 +96,33 @@ struct task_args_s
 };
 
 /*
-typedef struct _PROCESS_INFORMATION { 
-    HANDLE hProcess; 
-    HANDLE hThread; 
-    DWORD dwProcessId; 
-    DWORD dwThreadId; 
-} PROCESS_INFORMATION; 
+typedef struct _PROCESS_INFORMATION {
+    HANDLE hProcess;
+    HANDLE hThread;
+    DWORD dwProcessId;
+    DWORD dwThreadId;
+} PROCESS_INFORMATION;
 
-typedef struct _STARTUPINFO { 
-    DWORD   cb; 
-    LPTSTR  lpReserved; 
-    LPTSTR  lpDesktop; 
-    LPTSTR  lpTitle; 
-    DWORD   dwX; 
-    DWORD   dwY; 
-    DWORD   dwXSize; 
-    DWORD   dwYSize; 
-    DWORD   dwXCountChars; 
-    DWORD   dwYCountChars; 
-    DWORD   dwFillAttribute; 
-    DWORD   dwFlags; 
-    WORD    wShowWindow; 
-    WORD    cbReserved2; 
-    LPBYTE  lpReserved2; 
-    HANDLE  hStdInput; 
-    HANDLE  hStdOutput; 
-    HANDLE  hStdError; 
-} STARTUPINFO, *LPSTARTUPINFO; 
+typedef struct _STARTUPINFO {
+    DWORD   cb;
+    LPTSTR  lpReserved;
+    LPTSTR  lpDesktop;
+    LPTSTR  lpTitle;
+    DWORD   dwX;
+    DWORD   dwY;
+    DWORD   dwXSize;
+    DWORD   dwYSize;
+    DWORD   dwXCountChars;
+    DWORD   dwYCountChars;
+    DWORD   dwFillAttribute;
+    DWORD   dwFlags;
+    WORD    wShowWindow;
+    WORD    cbReserved2;
+    LPBYTE  lpReserved2;
+    HANDLE  hStdInput;
+    HANDLE  hStdOutput;
+    HANDLE  hStdError;
+} STARTUPINFO, *LPSTARTUPINFO;
 */
 
 struct tTask
@@ -280,12 +280,12 @@ task_Delete(tTask *tsk)
     xfree(tsk->args.v[i]);
   }
   xfree(tsk->args.v);
-  
+
   for (i = 0; i < tsk->env.u; i++)
     xfree(tsk->env.v[i]);
   xfree(tsk->env.v);
   xfree(tsk->envblock);
-  
+
   xfree(tsk->redirs.v);
   xfree(tsk);
 }
@@ -307,7 +307,7 @@ task_GetPipe(tTask *tsk, int fd)
       return (int) p->u.p.pipe[1 - p->u.p.idx];
     }
   }
-  
+
   return -1;
 }
 
@@ -506,7 +506,7 @@ task_FormatEnv(tTask *tsk, const char *name, const char *format, ...)
   snprintf(buf2, sizeof(buf2), "%s=%s", name, buf);
   return task_PutEnv(tsk, buf2);
 }
-        
+
 int
 task_ClearEnv(tTask *tsk)
 {
@@ -852,7 +852,7 @@ task_PrintArgs(tTask *tsk)
 
 static int std_handle_names[3] =
 {
-  STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE 
+  STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE
 };
 
 static HANDLE
@@ -932,7 +932,7 @@ task_Start(tTask *tsk)
     return -1;
   }
 
-  if (verbose_flag) task_PrintArgs(tsk);  
+  if (verbose_flag) task_PrintArgs(tsk);
 
   if (tsk->main) {
     int code;
@@ -1107,7 +1107,7 @@ task_Start(tTask *tsk)
   }
 
   // if no limits are set, just run the process
-  if (!tsk->max_proc_count 
+  if (!tsk->max_proc_count
       && !tsk->max_vm_size && !tsk->max_stack_size && !tsk->max_data_size
       && !tsk->max_time && !tsk->max_time_millis) {
     if (!CreateProcess(NULL, tsk->cmdline, NULL, NULL,
@@ -1334,7 +1334,7 @@ task_Wait(tTask *tsk)
   }
 
   if (tsk->job != INVALID_HANDLE_VALUE) {
-    if (!QueryInformationJobObject(tsk->job, 
+    if (!QueryInformationJobObject(tsk->job,
                                    JobObjectBasicAccountingInformation,
                                    &basic_acct, sizeof(basic_acct), NULL)) {
       // accounting information is not available
@@ -1399,7 +1399,7 @@ task_IsTimeout(tTask *tsk)
   if (tsk->was_real_timeout) return 1;
   if (tsk->max_time_millis > 0 && tsk->used_time >= tsk->max_time_millis) return 1;
   if (tsk->max_time > 0 && tsk->used_time >= tsk->max_time * 1000) return 1;
-  return 0;       
+  return 0;
 }
 
 int

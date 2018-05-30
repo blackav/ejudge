@@ -21,7 +21,7 @@
 #include "ejudge/teamdb.h"
 #include "../mysql-common/common_mysql.h"
 
-#define RUNS_ACCESS 
+#define RUNS_ACCESS
 #include "ejudge/runlog_state.h"
 
 #include "ejudge/errlog.h"

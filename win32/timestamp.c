@@ -103,4 +103,3 @@ file_stamp_free(file_stamp_t ts)
   xfree(ts);
   return 0;
 }
-

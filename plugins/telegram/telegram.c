@@ -174,7 +174,7 @@ prepare_func(
             }
         }
     }
-  
+
     ej_jobs_add_handler("telegram", packet_handler_telegram, state);
     ej_jobs_add_handler("telegram_token", packet_handler_telegram_token, state);
     ej_jobs_add_handler("telegram_reviewed", packet_handler_telegram_reviewed, state);
@@ -277,7 +277,7 @@ send_message(
             goto cleanup;
         }
     }
-    
+
  cleanup:
     if (root) cJSON_Delete(root);
     xfree(resp_s);
@@ -633,7 +633,7 @@ packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
         tc->_id = chat_id;
         telegram_chat_save(state->conn, tc);
     }
-    
+
     {
         size_t msg_z = 0;
         FILE *msg_f = open_memstream(&msg_s, &msg_z);
@@ -1022,7 +1022,7 @@ handle_incoming_message(
             send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
             free(reply_s);
             telegram_chat_state_reset(tcs);
-            update_state = 1;            
+            update_state = 1;
         } else if (!strcmp(tem->text, "/help")) {
             send_result = send_message(state, bs, mc,
                                        "List of commands:\n"
@@ -1162,7 +1162,7 @@ cleanup:
     telegram_user_free(mu);
     return 0;
 }
-    
+
 static void
 handle_reply(struct telegram_plugin_data *state,
              struct bot_state *bs,
@@ -1258,7 +1258,7 @@ get_updates(struct telegram_plugin_data *state, struct bot_state *bs)
 
     //fprintf(stderr, "reply body: %s\n", resp_s);
     handle_reply(state, bs, pbs, resp_s);
-    
+
 cleanup:
     xfree(resp_s);
     xfree(url_s);

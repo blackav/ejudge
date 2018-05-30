@@ -143,7 +143,7 @@ telegram_token_remove_expired(struct mongo_conn *conn, time_t current_time)
     if (current_time <= 0) current_time = time(NULL);
 
     if (!mongo_conn_open(conn)) return;
-    
+
     bson *qq = bson_new();
     bson_append_utc_datetime(qq, "$lt", 1000LL * current_time);
     bson_finish(qq);
@@ -160,7 +160,7 @@ void
 telegram_token_remove(struct mongo_conn *conn, const unsigned char *token)
 {
     if (!mongo_conn_open(conn)) return;
-    
+
     bson *q = bson_new();
     bson_append_string(q, "token", token, strlen(token));
     bson_finish(q);
@@ -185,7 +185,7 @@ telegram_token_fetch(struct mongo_conn *conn, const unsigned char *token_str, st
     query = bson_new();
     bson_append_string(query, "token", token_str, strlen(token_str));
     bson_finish(query);
-    
+
     pkt = mongo_sync_cmd_query(conn->conn, mongo_conn_ns(conn, TELEGRAM_TOKENS_TABLE_NAME), 0, 0, 1, query, NULL);
     if (!pkt && errno == ENOENT) {
         retval = 0;
@@ -244,7 +244,7 @@ telegram_token_save(struct mongo_conn *conn, const struct telegram_token *token)
     bson_append_int32(ind, "token", 1);
     bson_finish(ind);
     mongo_sync_cmd_index_create(conn->conn, conn->ns, ind, 0);
-    
+
     retval = 0;
 cleanup:
     if (ind) bson_free(ind);
