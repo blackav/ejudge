@@ -906,5 +906,12 @@ write_json_run_info(
         time_t start_time,
         time_t stop_time,
         int accepting_mode);
+const unsigned char *
+write_json_content(
+        FILE *fout,
+        const unsigned char *data,
+        size_t size,
+        const unsigned char *sep,
+        const unsigned char *indent);
 
 #endif /* __NEW_SERVER_H__ */

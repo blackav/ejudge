@@ -8812,7 +8812,7 @@ to_json_bool(int value)
   else return "false";
 }
 
-static const unsigned char *
+const unsigned char *
 write_json_content(
         FILE *fout,
         const unsigned char *data,
