@@ -1577,7 +1577,7 @@ task_Start(tTask *tsk)
         write_log(LOG_REUSE, LOG_ERROR, "%s: %s", __FUNCTION__ , errbuf);
       }
       close(pp[0]); close(pp[1]); close(comm_fd);
-      return -1;      
+      return -1;
     }
     close(pp[0]);
     close(pp[1]);
@@ -1597,7 +1597,7 @@ task_Start(tTask *tsk)
       }
       close(comm_fd);
       close(comm_fd + 1);
-      return -1;      
+      return -1;
     }
   }
 
@@ -1755,7 +1755,7 @@ task_Start(tTask *tsk)
               }
             close(tfd);
             break;
-            
+
           case TSR_DUP:
             errno = 0;
             if (dup2(tsk->redirs.v[i].u.fd2, tsk->redirs.v[i].fd) < 0)
@@ -1805,7 +1805,7 @@ task_Start(tTask *tsk)
             break;
           default:
             /*
-            write_log(LOG_REUSE, LOG_CRIT, 
+            write_log(LOG_REUSE, LOG_CRIT,
                       "task_Start: child: invalid redirection %d",
                       tsk->redirs.v[i].tag);
             */
@@ -1828,7 +1828,7 @@ task_Start(tTask *tsk)
         _exit(TASK_ERR_PUTENV_FAILED);
       }
     }
-    
+
 
     /* change the working directory */
     if (tsk->working_dir) {
@@ -2635,7 +2635,7 @@ linux_set_fix_flag(void)
     linux_ms_time_limit = 0;
     return;
   }
-  
+
   if (mjver >= 3 || (mjver == 2 && mnver >= 6))
     linux_fix_time_flag = 0;
 

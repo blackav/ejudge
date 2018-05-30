@@ -45,13 +45,13 @@ static void addONode(
 {
   struct oListNode **pcur = &oList;
   struct oListNode *node = calloc(1, sizeof(struct oListNode));
-  
+
   if(node == NULL)
     abort();
-  
+
   while((*pcur) && (*pcur)->o_stream_number < o_stream_number)
     pcur = &((*pcur)->pnext);
-        
+
   node->pnext = *pcur;
   node->o_stream_number = o_stream_number;
   node->file = file;
@@ -97,7 +97,7 @@ static int get_o_stream_number(void)
 {
   int o_stream_number = 1;
   struct oListNode *cur = oList;
-  
+
   while(cur && o_stream_number >= cur->o_stream_number){
     o_stream_number++;
         cur = cur->pnext;
@@ -112,16 +112,16 @@ open_memstream(char **ptr, size_t *sizeloc)
   FILE *f;
   char file_name[30];
   int o_stream_number;
-  
+
   o_stream_number = get_o_stream_number();
   sprintf(file_name,"o_stream_%d",o_stream_number);
   f = fopen(file_name,"w+");
-  
+
   if(!f)
     return NULL;
-  
+
   addONode(o_stream_number, f, ptr, sizeloc);
-  
+
   return f;
 }
 

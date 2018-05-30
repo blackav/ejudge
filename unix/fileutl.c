@@ -53,7 +53,7 @@ struct direlem_node
 {
   struct direlem_node *next;
   unsigned char *name;
-}; 
+};
 
 /* remove all files in the specified directory */
 int
@@ -1504,7 +1504,7 @@ remove_directory_recursively(
   ptail = &head->next;
   head->fullpath = xstrdup(rootpath);
   head->node = root;
-  
+
   while (head) {
     /* ignore the errors */
     chmod(head->fullpath, 0770);
@@ -2003,4 +2003,3 @@ cleanup:;
   }
   return retval;
 }
-

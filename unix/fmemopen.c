@@ -68,7 +68,7 @@ delINode(FILE *file)
   } else {
     sprintf(file_name,"i_stream_%d",todel->i_stream_number);
     remove(file_name);
-      
+
     (*pcur) = todel->pnext;
     free(todel);
   }
@@ -79,7 +79,7 @@ get_i_stream_number(void)
 {
   int i_stream_number = 1;
   struct iListNode *cur = iList;
-  
+
   while(cur && i_stream_number >= cur->i_stream_number){
     i_stream_number++;
     cur = cur->pnext;
@@ -93,14 +93,14 @@ fmemopen(void *buf, size_t size, const char *mode)
   FILE *f;
   char file_name[30];
   int i_stream_number;
-  
+
   i_stream_number = get_i_stream_number();
   sprintf(file_name,"i_stream_%d",i_stream_number);
   f = fopen(file_name,"w+");
-  
+
   if(!f)
     return NULL;
-  
+
   if(size != fwrite(buf, 1, size, f)){
     fclose(f);
     remove(file_name);
@@ -111,9 +111,9 @@ fmemopen(void *buf, size_t size, const char *mode)
     remove(file_name);
     return NULL;
   }
-  
+
   addINode(i_stream_number, f);
-  
+
   return f;
 }
 

@@ -21,7 +21,7 @@
 #if 0
 /* names of signals */
 #define SIGNUM 31
-static const char *signames[SIGNUM] = 
+static const char *signames[SIGNUM] =
 {
   "(unknown signal)",
   "SIGHUP",     "SIGINT",    "SIGQUIT",   "SIGILL",
