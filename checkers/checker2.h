@@ -15,4 +15,3 @@
  */
 
 #include "checker_internal.h"
-

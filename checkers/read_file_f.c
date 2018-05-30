@@ -52,4 +52,3 @@ checker_read_file_f(FILE *f, char **out, size_t *out_len)
   if (out) *out = buf;
   if (out_len) *out_len = buf_len;
 }
-

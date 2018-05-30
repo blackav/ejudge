@@ -30,7 +30,7 @@ invoke_kill_helper(int pid, int signal)
     char signal_buf[64];
     char *helper_args[] = { EJUDGE_KILL_HELPER, pid_buf, signal_buf, NULL };
     sigset_t empty;
-  
+
     sigemptyset(&empty);
     sigprocmask(SIG_SETMASK, &empty, NULL);
     snprintf(pid_buf, sizeof(pid_buf), "%d", pid);

@@ -69,4 +69,3 @@ checker_read_file_by_line_f(FILE *f,
 
   free(b_v);
 }
-

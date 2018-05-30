@@ -59,6 +59,6 @@ int checker_main(int argc, char **argv)
         fatal_WA(_("Line %zu differs: output:\n>%s<\ncorrect:\n>%s<"),
                  i + 1, out_lines[i], corr_lines[i]);
     }
-  
+
   checker_OK();
 }

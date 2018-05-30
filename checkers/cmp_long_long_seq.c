@@ -65,4 +65,3 @@ int checker_main(int argc, char **argv)
 
   checker_OK();
 }
-

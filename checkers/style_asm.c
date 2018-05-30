@@ -289,7 +289,7 @@ process_line(const unsigned char *line)
         ++q;
         ++column;
     }
-    
+
     if (saved_col != 8) {
         err("assembler instruction must start at column 8");
     }

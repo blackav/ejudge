@@ -482,7 +482,7 @@ fail:
   if (arg4) free(arg4);
   if (arg5) free(arg5);
   if (arg6) free(arg6);
-  
+
   return -1;
 }
 
@@ -498,7 +498,7 @@ check_zip_date(const unsigned char *dbuf, const unsigned char *tbuf)
     return -1;
   }
   if (!isdigit(dbuf[0]) || !isdigit(dbuf[1]) || !isdigit(dbuf[2])
-      || !isdigit(dbuf[3]) 
+      || !isdigit(dbuf[3])
       || dbuf[4] != '-' || !isdigit(dbuf[5]) || !isdigit(dbuf[6])
       || dbuf[7] != '-' || !isdigit(dbuf[8]) || !isdigit(dbuf[9])) {
     error("date '%s' is invalid, expected to be in YYYY-MM-DD format", dbuf);
@@ -1211,7 +1211,7 @@ make_report(
       closedir(d); d = 0;
     }
   }
-  
+
   remove_directory_recursively(wd, 0);
   return 0;
 
@@ -1365,7 +1365,7 @@ make_make_report(
     }
   }
   closedir(d); d = 0;
-  
+
   remove_directory_recursively(wd, 0);
   return 0;
 
