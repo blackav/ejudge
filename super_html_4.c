@@ -554,7 +554,7 @@ static const unsigned char * const external_action_names[SSERV_CMD_LAST] =
   [SSERV_CMD_USER_SEL_RANDOM_PASSWD_PAGE] = "user_sel_random_passwd_page",
 };
 
-static const unsigned char * const external_error_names[SSERV_ERR_LAST] = 
+static const unsigned char * const external_error_names[SSERV_ERR_LAST] =
 {
   [1] = "error_unknown_page", // here comes the default error handler
 };

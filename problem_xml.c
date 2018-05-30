@@ -171,7 +171,7 @@ static int
 num_suffix(const unsigned char *str)
 {
   if (!str[0]) return 1;
-  if (str[1]) return 0; 
+  if (str[1]) return 0;
   if (str[0] == 'k' || str[0] == 'K') return 1024;
   if (str[0] == 'm' || str[0] == 'M') return 1024 * 1024;
   if (str[0] == 'g' || str[0] == 'G') return 1024 * 1024 * 1024;
@@ -650,7 +650,7 @@ problem_xml_unparse_elem(
   switch (elem) {
   case PROB_T_TITLE:         t = stmt->title;         break;
   case PROB_T_DESCRIPTION:   t = stmt->desc;          break;
-  case PROB_T_INPUT_FORMAT:  t = stmt->input_format;  break; 
+  case PROB_T_INPUT_FORMAT:  t = stmt->input_format;  break;
   case PROB_T_OUTPUT_FORMAT: t = stmt->output_format; break;
   case PROB_T_NOTES:         t = stmt->notes;         break;
   default:

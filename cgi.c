@@ -455,7 +455,7 @@ cgi_param(char const *name)
 }
 
 int
-cgi_param_bin(const unsigned char *name, 
+cgi_param_bin(const unsigned char *name,
               size_t *psize,
               const unsigned char **pvalue)
 {

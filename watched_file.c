@@ -68,7 +68,7 @@ watched_file_update(struct watched_file *pw, const unsigned char *path,
   xfree(pw->text); pw->text = 0;
   pw->size = 0;
   generic_read_file(&tmpc, 0, &pw->size, 0, 0, pw->path, "");
-  pw->text = tmpc;  
+  pw->text = tmpc;
 }
 
 void

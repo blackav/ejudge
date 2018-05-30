@@ -364,7 +364,7 @@ run_program(
 
   result->comment[0] = 0;
 
-  if (packet->enable_secure_run > 0 
+  if (packet->enable_secure_run > 0
       && packet->enable_memory_limit_error > 0 && task_IsMemoryLimit(tsk)) {
     task_Delete(tsk);
     return RUN_MEM_LIMIT_ERR;
@@ -593,7 +593,7 @@ read_packet(const unsigned char *dir_path)
   if (!packet_config) goto cleanup;
 
   nwrun_in_packet_print(stderr, (const struct nwrun_in_packet *) packet_config);
-  
+
   /* setup packet defaults */
   if (packet->contest_id <= 0) {
     err("contest_id is not set");
@@ -697,7 +697,7 @@ read_packet(const unsigned char *dir_path)
   nwrun_out_packet_print(f, &result);
   fclose(f); f = 0;
 
-  nwrun_out_packet_print(stderr, &result); 
+  nwrun_out_packet_print(stderr, &result);
 
   if (rename(result_in_dir, result_dir_dir) < 0) {
     err("rename: %s -> %s failed: %s", result_in_dir, result_dir_dir, os_ErrorMsg());

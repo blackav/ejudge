@@ -251,7 +251,7 @@ parse_config(const unsigned char *path, const unsigned char *default_config)
         if (xml_elem_ipv6_mask(t2, &pip->addr, &pip->mask) < 0) goto failed;
       }
       break;
-      
+
     default:
       xml_err_elem_not_allowed(t1);
       goto failed;

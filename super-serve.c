@@ -90,7 +90,7 @@ struct client_state
   int id;
   int fd;
   int state;
-  
+
   int peer_pid;
   int peer_uid;
   int peer_gid;
@@ -544,7 +544,7 @@ acquire_contest_resources(const struct contest_desc *cnts,
   }
   extra->root_dir = xstrdup(cnts->root_dir);
 
-  /* check the serve and run config file 
+  /* check the serve and run config file
    * FIXME: make the config_path configurable
    */
   snprintf(config_path, sizeof(config_path), "%s/conf/serve.cfg",
@@ -716,7 +716,7 @@ release_resources(void)
                 extras[i]->id, pid, WTERMSIG(status),
                 os_GetSignalString(WTERMSIG(status)));
           } else {
-            err("contest %d run unknown termination status", 
+            err("contest %d run unknown termination status",
                 extras[i]->id);
           }
           extras[i]->run_pid = -1;
@@ -1792,7 +1792,7 @@ cmd_http_request(
   my_param_sizes = (typeof(my_param_sizes)) out_ptr;
   out_ptr += sizeof(my_param_sizes[0]) * pkt->param_num;
   pkt_bin_align_addr(out_ptr, phr->data);
-  
+
   bptr = (unsigned long) pkt;
   bptr += sizeof(*pkt);
   arg_sizes = (const ej_size_t *) bptr;
@@ -2675,7 +2675,7 @@ prepare_sockets(void)
       err("%s is not a directory", socket_dir);
       return 1;
     }
-      
+
     if (forced_mode) unlink(config->super_serve_socket);
     memset(&addr, 0, sizeof(addr));
     addr.sun_family = AF_UNIX;

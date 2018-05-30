@@ -42,7 +42,7 @@ struct mime_type_info
 
 static const struct mime_type_info mime_types[MIME_TYPE_LAST] =
 {
-  [MIME_TYPE_TEXT] = 
+  [MIME_TYPE_TEXT] =
   { "text/plain", ".txt", "" },
   [MIME_TYPE_BINARY] =
   { "application/octet-stream", "", "" },
@@ -52,15 +52,15 @@ static const struct mime_type_info mime_types[MIME_TYPE_LAST] =
   { "application/rtf", ".rtf", "Rich Text Format data" },
   [MIME_TYPE_APPL_PDF] =
   { "application/pdf", ".pdf", "PDF document" },
-  [MIME_TYPE_APPL_MSEXCEL] = 
+  [MIME_TYPE_APPL_MSEXCEL] =
   { "application/vnd.ms-excel", ".xls", "" },
-  [MIME_TYPE_APPL_MSPOWERPOINT] = 
+  [MIME_TYPE_APPL_MSPOWERPOINT] =
   { "application/vnd.ms-powerpoint", ".ppt", "" },
-  [MIME_TYPE_APPL_MSPROJECT] = 
+  [MIME_TYPE_APPL_MSPROJECT] =
   { "application/vnd.ms-project", "", "" },
   [MIME_TYPE_APPL_MSEQ] =
   { "application/vnd.mseq", "", "" },
-  [MIME_TYPE_APPL_VISIO] = 
+  [MIME_TYPE_APPL_VISIO] =
   { "application/vnd.visio", "", "" },
   [MIME_TYPE_APPL_COMPRESS] =
   { "application/x-compress", ".Z", "" },

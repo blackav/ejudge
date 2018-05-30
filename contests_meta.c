@@ -178,4 +178,3 @@ const struct meta_methods contest_desc_methods =
   (void *(*)(void *ptr, int tag))contest_desc_get_ptr_nc,
   contest_desc_lookup_field,
 };
-

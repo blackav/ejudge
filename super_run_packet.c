@@ -393,4 +393,3 @@ super_run_in_packet_get_variable(
     return meta_get_variable_str(&meta_super_run_in_global_packet_methods, p->global, name + 7);
   }
 }
-

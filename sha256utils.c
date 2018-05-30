@@ -68,4 +68,3 @@ void sha256b64file(char *out, size_t out_size, FILE *in)
         snprintf(out, out_size, "%s", buf);
     }
 }
-

@@ -222,7 +222,7 @@ bitset_url_encode(bitset_t *ss)
         // series of '0': [num2, num3)
         // determine if we should terminate the current series
         int bi1 = (num2 - 1 - cur_num) / 6;
-        int bi2 = (num3 - cur_num) / 6; 
+        int bi2 = (num3 - cur_num) / 6;
         if (bi2 - bi1 > 5) {
           // the gap is too long
           break;
@@ -269,7 +269,7 @@ bitset_url_encode(bitset_t *ss)
         // series of '0': [num2, num3)
         // determine if we should terminate the current series
         int bi1 = (num2 - 1 - cur_num) / 6;
-        int bi2 = (num3 - cur_num) / 6; 
+        int bi2 = (num3 - cur_num) / 6;
         if (bi2 - bi1 > 5) {
           // the gap is too long
           break;

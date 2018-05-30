@@ -72,7 +72,7 @@
 #endif
 #define __(x) x
 
-#define BITS_PER_LONG (8*sizeof(unsigned long)) 
+#define BITS_PER_LONG (8*sizeof(unsigned long))
 #define BUTTON(a) ns_submit_button(bb, sizeof(bb), 0, a, 0)
 #define ARMOR(s)  html_armor_buf(&ab, s)
 
@@ -912,7 +912,7 @@ ns_write_priv_all_runs(
       }
       */
 
-      fprintf(f, "<td%s><a href=\"%s\">%s</a></td>", cl, 
+      fprintf(f, "<td%s><a href=\"%s\">%s</a></td>", cl,
               ns_url(hbuf, sizeof(hbuf), phr, NEW_SRV_ACTION_VIEW_SOURCE,
                      "run_id=%d", rid),
               _("View"));
@@ -1328,7 +1328,7 @@ ns_write_all_clars(
     fprintf(f, "<tr>");
     if (clar.hide_flag) fprintf(f, "<td%s>%d#</td>", cl, i);
     else fprintf(f, "<td%s>%d</td>", cl, i);
-    fprintf(f, "<td%s>%s</td>", cl, 
+    fprintf(f, "<td%s>%s</td>", cl,
             clar_flags_html(cs->clarlog_state, clar.flags,
                             clar.from, clar.to, 0, 0));
     fprintf(f, "<td%s>%s</td>", cl, durstr);
@@ -1518,27 +1518,27 @@ ns_priv_edit_clar_action(
   }
   if (hr_cgi_param_int_opt(phr, "in_reply_to", &new_in_reply_to, -1) < 0) {
     fprintf(log_f, "invalid 'in_reply_to' field value\n");
-    FAIL(NEW_SRV_ERR_INV_PARAM);    
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   if (new_in_reply_to < -1 || new_in_reply_to >= clar_get_total(cs->clarlog_state)) {
     fprintf(log_f, "invalid 'in_reply_to' field value\n");
-    FAIL(NEW_SRV_ERR_INV_PARAM);    
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   ++new_in_reply_to;
   if (hr_cgi_param_int_opt(phr, "run_id", &new_run_id, -1) < 0) {
     fprintf(log_f, "invalid 'run_id' field value\n");
-    FAIL(NEW_SRV_ERR_INV_PARAM);    
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   if (new_run_id < -1 || new_run_id >= run_get_total(cs->runlog_state)) {
     fprintf(log_f, "invalid 'run_id' field value\n");
-    FAIL(NEW_SRV_ERR_INV_PARAM);    
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   ++new_run_id;
 
   s = NULL;
   if ((r = hr_cgi_param(phr, "charset", &s)) < 0) {
     fprintf(log_f, "invalid 'charset' field value\n");
-    FAIL(NEW_SRV_ERR_INV_PARAM);    
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   if (!r || !s) s = "";
   new_charset = text_input_process_string(s, 0, 0);
@@ -1549,7 +1549,7 @@ ns_priv_edit_clar_action(
   s = NULL;
   if ((r = hr_cgi_param(phr, "subject", &s)) < 0) {
     fprintf(log_f, "invalid 'subject' field value\n");
-    FAIL(NEW_SRV_ERR_INV_PARAM);    
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   if (!r || !s) s = "";
   new_subject = text_input_process_string(s, 0, 0);
@@ -1557,7 +1557,7 @@ ns_priv_edit_clar_action(
   s = NULL;
   if ((r = hr_cgi_param(phr, "text", &s)) < 0) {
     fprintf(log_f, "invalid 'text' field value\n");
-    FAIL(NEW_SRV_ERR_INV_PARAM);    
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   if (!r || !s) s = "";
   new_text = text_area_process_string(s, 0, 0);
@@ -1725,12 +1725,12 @@ ns_priv_edit_run_action(
   value = -1;
   if (hr_cgi_param_int(phr, "prob", &value) < 0 || value <= 0) {
     fprintf(log_f, "invalid 'prob' field value\n");
-    FAIL(NEW_SRV_ERR_INV_PARAM);    
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   if (info.prob_id != value) {
     if (value > cs->max_prob || !cs->probs[value]) {
       fprintf(log_f, "invalid 'prob' field value\n");
-      FAIL(NEW_SRV_ERR_INV_PARAM);    
+      FAIL(NEW_SRV_ERR_INV_PARAM);
     }
     new_info.prob_id = value;
     mask |= RE_PROB_ID;
@@ -1768,18 +1768,18 @@ ns_priv_edit_run_action(
   value = -1;
   if (hr_cgi_param_int(phr, "lang", &value) < 0 || value < 0) {
     fprintf(log_f, "invalid 'lang' field value\n");
-    FAIL(NEW_SRV_ERR_INV_PARAM);    
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   if (info.lang_id != value) {
     if (prob && prob->type == PROB_TYPE_STANDARD) {
       if (value <= 0 || value > cs->max_lang || !cs->langs[value]) {
         fprintf(log_f, "invalid 'lang' field value\n");
-        FAIL(NEW_SRV_ERR_INV_PARAM);    
+        FAIL(NEW_SRV_ERR_INV_PARAM);
       }
     } else if (prob) {
       if (value != 0) {
         fprintf(log_f, "invalid 'lang' field value\n");
-        FAIL(NEW_SRV_ERR_INV_PARAM);    
+        FAIL(NEW_SRV_ERR_INV_PARAM);
       }
     }
     new_info.lang_id = value;
@@ -1792,7 +1792,7 @@ ns_priv_edit_run_action(
   if (hr_cgi_param_int(phr, "eoln_type", &value) < 0
       || value < 0 || value > EOLN_CRLF) {
     fprintf(log_f, "invalid 'eoln_type' field value\n");
-    FAIL(NEW_SRV_ERR_INV_PARAM);    
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   if (info.eoln_type != value) {
     new_info.eoln_type = value;
@@ -1810,7 +1810,7 @@ ns_priv_edit_run_action(
   value = -1;
   if (hr_cgi_param_int(phr, "status", &value) < 0 || value < 0) {
     fprintf(log_f, "invalid 'status' field value\n");
-    FAIL(NEW_SRV_ERR_INV_PARAM);    
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   if (value == RUN_REJUDGE || value == RUN_FULL_REJUDGE) {
     need_rejudge = value;
@@ -1820,7 +1820,7 @@ ns_priv_edit_run_action(
     // FIXME: handle rejudge request
     if (!run_is_normal_status(value)) {
       fprintf(log_f, "invalid 'status' field value\n");
-      FAIL(NEW_SRV_ERR_INV_PARAM);    
+      FAIL(NEW_SRV_ERR_INV_PARAM);
     }
     new_info.status = value;
     mask |= RE_STATUS;
@@ -2006,7 +2006,7 @@ ns_priv_edit_run_action(
       value = -1;
       if (hr_cgi_param_int(phr, "saved_status", &value) < 0 || value < 0) {
         fprintf(log_f, "invalid 'saved_status' field value\n");
-        FAIL(NEW_SRV_ERR_INV_PARAM);    
+        FAIL(NEW_SRV_ERR_INV_PARAM);
       }
       if (info.saved_status != value || !info.is_saved) {
         if (!run_is_normal_status(value)) {
@@ -2155,12 +2155,12 @@ ns_priv_edit_run_action(
   value = -1;
   if (hr_cgi_param_int(phr, "size", &value) < 0 || value < 0) {
     fprintf(log_f, "invalid 'size' field value\n");
-    FAIL(NEW_SRV_ERR_INV_PARAM);    
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   if (info.size != value) {
     if (value >= (1 * 1024 * 1024 * 1024)) {
       fprintf(log_f, "invalid 'size' field value\n");
-      FAIL(NEW_SRV_ERR_INV_PARAM);    
+      FAIL(NEW_SRV_ERR_INV_PARAM);
     }
     new_info.size = value;
     mask |= RE_SIZE;
@@ -2169,13 +2169,13 @@ ns_priv_edit_run_action(
   s = NULL;
   if ((r = hr_cgi_param(phr, "sha1", &s)) < 0) {
     fprintf(log_f, "invalid 'sha1' field value\n");
-    FAIL(NEW_SRV_ERR_INV_PARAM);    
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   if (r > 0 && s && *s) {
     memset(new_sha1, 0, sizeof(new_sha1));
     if ((r = parse_sha1(new_sha1, s)) < 0) {
       fprintf(log_f, "invalid 'sha1' field value\n");
-      FAIL(NEW_SRV_ERR_INV_PARAM);    
+      FAIL(NEW_SRV_ERR_INV_PARAM);
     }
     if (r > 0 && memcmp(info.sha1, new_sha1, sizeof(info.sha1)) != 0) {
       memcpy(new_info.sha1, new_sha1, sizeof(new_info.sha1));
@@ -2187,13 +2187,13 @@ ns_priv_edit_run_action(
   s = NULL;
   if ((r = hr_cgi_param(phr, "uuid", &s)) < 0) {
     fprintf(log_f, "invalid 'uuid' field value\n");
-    FAIL(NEW_SRV_ERR_INV_PARAM);    
+    FAIL(NEW_SRV_ERR_INV_PARAM);
   }
   if (r > 0 && s && *s) {
     ej_uuid_t new_uuid;
     if (ej_uuid_parse(s, &new_uuid) < 0) {
       fprintf(log_f, "invalid 'uuid' field value\n");
-      FAIL(NEW_SRV_ERR_INV_PARAM);    
+      FAIL(NEW_SRV_ERR_INV_PARAM);
     }
     if (memcmp(&info.run_uuid, &new_uuid, sizeof(info.run_uuid)) != 0) {
       memcpy(&new_info.run_uuid, &new_uuid, sizeof(new_info.run_uuid));
@@ -2214,12 +2214,12 @@ ns_priv_edit_run_action(
     s = NULL;
     if ((r = hr_cgi_param(phr, "mime_type", &s)) < 0) {
       fprintf(log_f, "invalid 'mime_type' field value\n");
-      FAIL(NEW_SRV_ERR_INV_PARAM);    
+      FAIL(NEW_SRV_ERR_INV_PARAM);
     }
     if (r > 0 && s && *s) {
       if ((value = mime_type_parse(s)) < 0) {
         fprintf(log_f, "invalid 'mime_type' field value\n");
-        FAIL(NEW_SRV_ERR_INV_PARAM);    
+        FAIL(NEW_SRV_ERR_INV_PARAM);
       }
       if (info.mime_type != value) {
         new_info.mime_type = value;
@@ -2233,7 +2233,7 @@ ns_priv_edit_run_action(
   if (info.is_hidden != value) {
     if (!value && info.time < start_time) {
       fprintf(log_f, "is_hidden flag cannot be cleared because time < start_time");
-      FAIL(NEW_SRV_ERR_INV_PARAM);    
+      FAIL(NEW_SRV_ERR_INV_PARAM);
     }
     new_info.is_hidden = value;
     mask |= RE_IS_HIDDEN;
@@ -2467,7 +2467,7 @@ ns_write_tests(
   }
   xfree(rep_text); rep_text = 0;
 
-  if (test_num <= 0 || test_num > r->run_tests) { 
+  if (test_num <= 0 || test_num > r->run_tests) {
     FAIL(NEW_SRV_ERR_INV_TEST);
   }
 
@@ -2490,7 +2490,7 @@ ns_write_tests(
 
   if ((prb->variant_num > 0
        && (r->variant <= 0 || r->variant > prb->variant_num))
-      || (prb->variant_num <= 0 && r->variant > 0)) { 
+      || (prb->variant_num <= 0 && r->variant > 0)) {
     FAIL(NEW_SRV_ERR_INV_VARIANT);
   }
 
@@ -3067,7 +3067,7 @@ ns_download_runs(
   need_remove = 1;
 
   snprintf(name3, sizeof(name3), "contest_%d_%04d%02d%02d%02d%02d%02d",
-           cnts->id, 
+           cnts->id,
            ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
            ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
   snprintf(dir3, sizeof(dir3), "%s/%s", dir2, name3);
@@ -3299,7 +3299,7 @@ ns_download_runs(
     ns_error(log_f, NEW_SRV_ERR_DISK_READ_ERROR);
     goto cleanup;
   }
-  
+
   fprintf(fout,
           "Content-type: application/x-tar\n"
           "Content-Disposition: attachment; filename=\"%s\"\n"
@@ -3342,7 +3342,7 @@ do_add_row(
   if (cs->global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
     store_flags = 1;
   }
-  run_id = run_add_record(cs->runlog_state, 
+  run_id = run_add_record(cs->runlog_state,
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, re->sha1, &run_uuid,
                           &phr->ip, phr->ssl_flag, phr->locale_id,
@@ -3446,7 +3446,7 @@ ns_upload_csv_runs(
   for (row = 1; row < csv->u; row++)
     if (csv->v[row].u != ncol) {
       fprintf(log_f,
-              _("Header row defines %d columns, but row %d has %zu columns\n"), 
+              _("Header row defines %d columns, but row %d has %zu columns\n"),
               ncol, row, csv->v[row].u);
       goto cleanup;
     }
@@ -3731,7 +3731,7 @@ ns_upload_csv_results(
   for (row = 1; row < csv->u; row++)
     if (csv->v[row].u != ncol) {
       fprintf(log_f,
-              _("Header row defines %d columns, but row %d has %zu columns\n"), 
+              _("Header row defines %d columns, but row %d has %zu columns\n"),
               ncol, row, csv->v[row].u);
       goto cleanup;
     }
@@ -4804,7 +4804,7 @@ kirov_score_latest_or_unmarked(
 
   case RUN_STYLE_ERR:
     break;
-    
+
   case RUN_RUN_TIME_ERR:
   case RUN_TIME_LIMIT_ERR:
   case RUN_WALL_TIME_LIMIT_ERR:
@@ -5608,7 +5608,7 @@ ns_get_user_problems_summary(
       case RUN_IGNORED:
       case RUN_DISQUALIFIED:
         break;
- 
+
       case RUN_ACCEPTED:
       case RUN_PENDING_REVIEW:
       case RUN_SUMMONED:
@@ -6654,7 +6654,7 @@ new_write_user_runs(
     vend_info = global->virtual_end_info;
   }
 
-  if (prob_id < 0 || prob_id > state->max_prob 
+  if (prob_id < 0 || prob_id > state->max_prob
       || !state->probs || !state->probs[prob_id])
     prob_id = 0;
 
@@ -7647,7 +7647,7 @@ write_xml_team_output_only_acc_report(
 int
 write_xml_team_accepting_report(
         FILE *f,
-        struct http_request_info *phr,        
+        struct http_request_info *phr,
         const unsigned char *txt,
         int rid,
         const struct run_entry *re,
@@ -8108,7 +8108,7 @@ done:
 int
 write_xml_testing_report(
         FILE *f,
-        struct http_request_info *phr,        
+        struct http_request_info *phr,
         int user_mode,
         unsigned char const *txt,
         const unsigned char *class1,

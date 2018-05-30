@@ -384,7 +384,7 @@ fix_action(
 
 static ExternalActionState *
 external_action_state_create(
-        const unsigned char *dir, 
+        const unsigned char *dir,
         const unsigned char *action,
         const unsigned char *fixed_src_dir,
         int contest_id)

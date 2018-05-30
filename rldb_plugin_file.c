@@ -19,7 +19,7 @@
 #include "ejudge/runlog.h"
 #include "ejudge/teamdb.h"
 
-#define RUNS_ACCESS 
+#define RUNS_ACCESS
 #include "ejudge/runlog_state.h"
 
 #include "ejudge/pathutl.h"

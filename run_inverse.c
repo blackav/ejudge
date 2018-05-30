@@ -600,7 +600,7 @@ cleanup:
   if (clear_check_dir) clear_directory(check_dir);
   tt_cell->status = retval;
   return retval;
-} 
+}
 
 static int
 invoke_checker(

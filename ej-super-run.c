@@ -603,7 +603,7 @@ do_loop(
     last_handled_ms = ((long long) ctv.tv_sec) * 1000 + ctv.tv_usec / 1000;
   }
 
-  super_run_status_remove(super_run_heartbeat_path, status_file_name);  
+  super_run_status_remove(super_run_heartbeat_path, status_file_name);
   return 0;
 }
 
@@ -1338,7 +1338,7 @@ main(int argc, char *argv[])
       "%s/%s/ej-super-run.log", EJUDGE_LOCAL_DIR, super_run_dir);
 #endif
     if (!super_run_log_path[0]) {
-      snprintf(super_run_log_path, sizeof(super_run_log_path), 
+      snprintf(super_run_log_path, sizeof(super_run_log_path),
                "%s/var/ej-super-run.log", super_run_path);
     }
   } else {
@@ -1405,4 +1405,3 @@ cleanup:
   remove_working_directory(state);
   return retval;
 }
-

@@ -636,7 +636,7 @@ process_compile_packet(
   }
 
   if (pkt->status != RUN_OK) {
-    pi->pkt->ops->set_submit(pi->pkt, pi->log_f, run_index, 
+    pi->pkt->ops->set_submit(pi->pkt, pi->log_f, run_index,
                              pkt->status, 0, report_txt);
     ++pi->processed_count;
     if (!--pi->pending_count) pi->completed = 1;
@@ -780,7 +780,7 @@ process_run_packet(
   if (pi->pkt->ops->get_submit(pi->pkt, stderr, run_index, &submit) < 0) {
     abort();
   }
-  
+
   if (get_content_type(report_txt, &start_ptr) != CONTENT_TYPE_XML) {
     // we expect the master log in XML format
     abort();
@@ -794,7 +794,7 @@ process_run_packet(
   ASSERT(!report->compile_error);
 
   out_text = make_report_data(report, &submit);
-  pi->pkt->ops->set_submit(pi->pkt, pi->log_f, run_index, 
+  pi->pkt->ops->set_submit(pi->pkt, pi->log_f, run_index,
                            pkt->status, pkt->score, out_text);
   ++pi->processed_count;
   if (!--pi->pending_count) pi->completed = 1;

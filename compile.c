@@ -820,7 +820,7 @@ handle_packet(
                 if (cur_status == RUN_CHECK_FAILED) {
                   status = RUN_CHECK_FAILED;
                 } else if (cur_status == RUN_COMPILE_ERR) {
-                  if (status == RUN_OK || status == RUN_STYLE_ERR) { 
+                  if (status == RUN_OK || status == RUN_STYLE_ERR) {
                     status = RUN_COMPILE_ERR;
                   }
                 } else if (cur_status != RUN_OK) {
@@ -848,7 +848,7 @@ handle_packet(
             }
           }
         } else {
-          if (status == RUN_OK || status == RUN_STYLE_ERR) { 
+          if (status == RUN_OK || status == RUN_STYLE_ERR) {
             status = RUN_COMPILE_ERR;
           }
         }
@@ -867,7 +867,7 @@ handle_packet(
           fprintf(log_f, "output file '%s' is not executable: %s\n", test_exe_path, strerror(errno));
           status = RUN_CHECK_FAILED;
         } else if (tinf && tinf->compiler_must_fail > 0) {
-          if (status == RUN_OK || status == RUN_STYLE_ERR) { 
+          if (status == RUN_OK || status == RUN_STYLE_ERR) {
             status = RUN_COMPILE_ERR;
           }
           fprintf(log_f, "compiler must fail on test %d, but compilation was successful\n", serial);
@@ -1457,7 +1457,7 @@ do_loop(void)
           task_SetMaxRealTime(tsk, lang->compile_real_time_limit);
         }
         task_EnableAllSignals(tsk);
-        
+
         /*
         if (cr_serialize_lock(&serve_state) < 0) {
           // FIXME: propose reasonable recovery?
@@ -1968,4 +1968,3 @@ main(int argc, char *argv[])
   printf("  -c C   - substitute ${COMPILE_HOME_DIR} for C in the config\n");
   return code;
 }
-

@@ -752,21 +752,21 @@ main(int argc, char *argv[])
       restart_mode = 1;
       cur_arg++;
     } else if (!strcmp(argv[cur_arg], "-u")) {
-      if (cur_arg + 1 >= argc) { 
+      if (cur_arg + 1 >= argc) {
         err("argument expected for `-u' option");
         return 1;
       }
       user = argv[cur_arg + 1];
       cur_arg += 2;
     } else if (!strcmp(argv[cur_arg], "-g")) {
-      if (cur_arg + 1 >= argc) { 
+      if (cur_arg + 1 >= argc) {
         err("argument expected for `-g' option");
         return 1;
       }
       group = argv[cur_arg + 1];
       cur_arg += 2;
     } else if (!strcmp(argv[cur_arg], "-C")) {
-      if (cur_arg + 1 >= argc) { 
+      if (cur_arg + 1 >= argc) {
         err("argument expected for `-C' option");
         return 1;
       }

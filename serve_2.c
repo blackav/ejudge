@@ -99,7 +99,7 @@ serve_update_standings_file(
     ASSERT(state->current_time >= start_time);
     ASSERT(global->board_fog_time >= 0);
     ASSERT(global->board_unfog_time >= 0);
-    
+
     p = run_get_fog_period(state->runlog_state, state->current_time,
                            global->board_fog_time, global->board_unfog_time);
     if (p == 1) return;
@@ -133,7 +133,7 @@ serve_update_standings_file(
                     cnts,
                     global->status_dir,
                     global->stand2_file_name,
-                    NULL /* name2 */, 
+                    NULL /* name2 */,
                     0 /* users_on_page */,
                     global->stand2_header_txt,
                     global->stand2_footer_txt,
@@ -183,7 +183,7 @@ serve_update_public_log_file(
     ASSERT(state->current_time >= start_time);
     ASSERT(global->board_fog_time >= 0);
     ASSERT(global->board_unfog_time >= 0);
-    
+
     p = run_get_fog_period(state->runlog_state, state->current_time,
                            global->board_fog_time, global->board_unfog_time);
     if (p == 1) return;
@@ -704,7 +704,7 @@ serve_build_run_dirs(
 int
 serve_create_symlinks(serve_state_t state)
 {
-  const struct section_global_data *global = state->global;  
+  const struct section_global_data *global = state->global;
   unsigned char src_path[PATH_MAX];
   unsigned char dst_path[PATH_MAX];
   path_t stand_file;
@@ -830,7 +830,7 @@ serve_check_telegram_reminder(
 
   if (!cnts->telegram_admin_chat_id || !cnts->telegram_admin_chat_id[0])
     return;
-  
+
   const unsigned char *telegram_bot_id = cnts->telegram_bot_id;
   if (telegram_bot_id && !*telegram_bot_id) telegram_bot_id = NULL;
   if (!telegram_bot_id) telegram_bot_id = ejudge_cfg_get_telegram_bot_id(config, NULL);
@@ -1643,7 +1643,7 @@ serve_run_request(
 
   get_current_time(&current_time, &current_time_us);
 
-  if (prob_id <= 0 || prob_id > state->max_prob 
+  if (prob_id <= 0 || prob_id > state->max_prob
       || !(prob = state->probs[prob_id])) {
     fprintf(errf, "invalid problem %d", prob_id);
     goto fail;
@@ -1744,7 +1744,7 @@ serve_run_request(
   prio += priority_adjustment;
   if (prob_id < EJ_SERVE_STATE_TOTAL_PROBS)
     prio += state->prob_prio[prob_id];
-  
+
   if (judge_id < 0) {
     if (!state->compile_request_id) state->compile_request_id++;
     judge_id = state->compile_request_id++;
@@ -3814,7 +3814,7 @@ serve_rejudge_run(
 
   serve_audit_log(state, run_id, &re, user_id, ip, ssl_flag,
                   "rejudge", "ok", RUN_COMPILING, NULL);
- 
+
   if (re.prob_id <= 0 || re.prob_id > state->max_prob
       || !(prob = state->probs[re.prob_id])) {
     err("rejudge_run: bad problem: %d", re.prob_id);
@@ -4070,7 +4070,7 @@ is_generally_rejudgable(const serve_state_t state,
   return 1;
 }
 
-#define BITS_PER_LONG (8*sizeof(unsigned long)) 
+#define BITS_PER_LONG (8*sizeof(unsigned long))
 
 struct rejudge_by_mask_job
 {

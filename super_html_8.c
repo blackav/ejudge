@@ -165,7 +165,7 @@ super_html_read_serve(
       || (cnts->conf_dir && strcmp(cnts->conf_dir, global->conf_dir))) {
     fprintf(flog, "conf_dir does not match\n");
     return -1;
-  } 
+  }
   */
 
   // compile server must be used
@@ -337,7 +337,7 @@ super_html_read_serve(
             lang->compiler_env[k - 1] = lang->compiler_env[k];
           }
           lang->compiler_env[k - 1] = lang->compiler_env[k];
-        }        
+        }
       }
     }
   }
@@ -677,7 +677,7 @@ super_html_read_serve(
       max_i = 0;
       for (i = 1; i < mem_u; i++)
         if (mem_cnt[i] > mem_cnt[max_i])
-          max_i = i; 
+          max_i = i;
       aprob->max_vm_size = mem_lims[max_i];
       for (j = 1; j < sstate->prob_a; j++) {
         if (!(prob = sstate->probs[j]) || !prob->super[0]
@@ -693,7 +693,7 @@ super_html_read_serve(
       max_i = 0;
       for (i = 1; i < st_u; i++)
         if (st_cnt[i] > st_cnt[max_i])
-          max_i = i; 
+          max_i = i;
       aprob->max_stack_size = st_lims[max_i];
       for (j = 1; j < sstate->prob_a; j++) {
         if (!(prob = sstate->probs[j]) || !prob->super[0]
@@ -940,7 +940,7 @@ super_html_create_problem(
     sstate->prob_flags = new_flags;
     sstate->prob_a = new_prob_a;
   }
- 
+
   if (sstate->probs[prob_id])
     return NULL;
 
@@ -1238,7 +1238,7 @@ super_html_get_contest_header_and_footer(
     while (*p3 != '\n' && p3 < p1) p3++;
     if (*p3 == '\n') p3++;
   }
-    
+
   s1 = xmalloc(xml_text_size + 1);
   s2 = xmalloc(xml_text_size + 1);
 
@@ -1256,4 +1256,3 @@ super_html_get_contest_header_and_footer(
   xfree(xml_text);
   return errcode;
 }
-

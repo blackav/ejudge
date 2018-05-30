@@ -162,7 +162,7 @@ varsubst_heap(
   return out_str;
 }
 
-static const unsigned char * const configure_names[] = 
+static const unsigned char * const configure_names[] =
 {
   "@lang_config_dir@",
   "@prefix@",

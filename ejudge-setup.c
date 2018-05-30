@@ -252,7 +252,7 @@ struct path_edit_item
 static const struct path_edit_item set_edit_items[];
 static const struct path_edit_item path_edit_items[] =
 {
-  [PATH_LINE_SOCKET_PATH] = 
+  [PATH_LINE_SOCKET_PATH] =
   {
     "Socket path", 1, config_socket_path,
     sizeof(config_socket_path),
@@ -261,7 +261,7 @@ static const struct path_edit_item path_edit_items[] =
     EJUDGE_SOCKET_PATH,
 #endif /* EJUDGE_SOCKET_PATH */
   },
-  [PATH_LINE_SUPER_SERVE_SOCKET] = 
+  [PATH_LINE_SUPER_SERVE_SOCKET] =
   {
     "Super-serve socket path", 1, config_super_serve_socket,
     sizeof(config_super_serve_socket),
@@ -677,7 +677,7 @@ is_valid_path(int idx)
     if (stat(path_edit_items[idx].buf, &stbuf) < 0 || !S_ISDIR(stbuf.st_mode))
       return 0;
     return 1;
-    
+
   case PATH_LINE_RUN_PATH:
     if (!path_edit_items[idx].buf[0]) return 0;
     if (stat(path_edit_items[idx].buf, &stbuf) < 0 || !S_ISREG(stbuf.st_mode)
@@ -715,7 +715,7 @@ update_lang_config_dir(const unsigned char *new_compile_dir)
   snprintf(config_ejudge_lang_config_dir,sizeof(config_ejudge_lang_config_dir),
            "%s", new_buf);
   config_ejudge_lang_config_dir_modified = 1;
-  
+
 }
 
 static const unsigned char builtin_change_warning[] =
@@ -2068,7 +2068,7 @@ do_settings_menu(int *p_cur_item)
 
       if (i == SET_LINE_WORKDISK_FLAG) {
         j = ncurses_yesno(0, "\\begin{center}\nCreate working disk during installation?\n\\end{center}\n");
-        if (j < 0) continue; 
+        if (j < 0) continue;
         snprintf(config_workdisk_flag, sizeof(config_workdisk_flag),
                  "%s", j?"yes":"no");
         cur_item = i;
@@ -2077,7 +2077,7 @@ do_settings_menu(int *p_cur_item)
       }
       if (i == SET_LINE_INSTALL_FLAG) {
         j = ncurses_yesno(0, "\\begin{center}\nInstall symlinks to CGI tools to the web server cgi-bin directory?\n\\end{center}\n");
-        if (j < 0) continue; 
+        if (j < 0) continue;
         snprintf(config_install_flag, sizeof(config_install_flag),
                  "%s", j?"yes":"no");
         cur_item = i;
@@ -2229,7 +2229,7 @@ base64_encode_file(FILE *f, const unsigned char *path, int mode,
 static const unsigned char *
 c_armor_2(
         struct html_armor_buffer *pa,
-        const unsigned char *str, 
+        const unsigned char *str,
         const unsigned char *pfx)
 {
   int plen;
@@ -2246,7 +2246,7 @@ c_armor_2(
 static const unsigned char *
 xml_armor_2(
         struct html_armor_buffer *pa,
-        const unsigned char *str, 
+        const unsigned char *str,
         const unsigned char *pfx)
 {
   int plen;
@@ -2646,7 +2646,7 @@ generate_serve_cfg(FILE *f)
             version);
     need_default_arch = 1;
   }
-  
+
   if (is_lang_available("gcc", &version)) {
     fprintf(f,
             "[language]\n"
@@ -3412,7 +3412,7 @@ generate_ejudge_xml(FILE *f)
     if (!config_mysql_database[0]) {
       snprintf(config_mysql_database, sizeof(config_mysql_database), "%s", "ejudge");
     }
-    fprintf(f, 
+    fprintf(f,
             "    <plugin type=\"common\" name=\"mysql\" load=\"yes\">\n"
             "      <config>\n"
             "        <password_file>%s</password_file>\n"
@@ -3784,7 +3784,7 @@ generate_install_script(FILE *f)
   FILE *floc = 0, *ff = 0;
   char *txt_ptr = 0;
   size_t txt_len = 0, style_len = 0;
-  unsigned char fpath[PATH_MAX]; 
+  unsigned char fpath[PATH_MAX];
   int cgi_config_needed = is_cgi_config_needed();
   unsigned char date_buf[64];
   strarray_t created_dirs;
@@ -4232,7 +4232,7 @@ generate_install_script(FILE *f)
                 config_system_uid, config_system_gid, fpath);
   }
   fprintf(f, "\n");
-  
+
   fprintf(f, "# install tests and answer files\n");
   fprintf(f, "cat << _EOF | %s -o - | tar xvfz - -C \"%s\"\n",
           uudecode_path, config_contest1_home_dir);
@@ -4360,7 +4360,7 @@ save_install_script(int batch_mode, const unsigned char *output_name)
     unlink(filepath);
     goto cleanup;
   }
-  
+
  cleanup:
   free(txt_ptr); txt_ptr = 0; txt_len = 0;
 }

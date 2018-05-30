@@ -78,7 +78,7 @@ ej_uuid_unparse(const ej_uuid_t *puuid, const unsigned char *default_value)
 #else
   if (puuid->v[0] || puuid->v[1] || puuid->v[2] || puuid->v[3] || !default_value) {
     // must support unparse in any case
-    // "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"; 
+    // "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
     static char uuid_buf[40];
     const unsigned char *u = (const unsigned char *) puuid;
     snprintf(uuid_buf, sizeof(uuid_buf),
@@ -104,7 +104,7 @@ ej_uuid_unparse_r(
     uuid_unparse((void*) puuid, buf);
 #else
     // must support unparse in any case
-    // "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x"; 
+    // "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x";
     const unsigned char *u = (const unsigned char *) puuid;
     snprintf(buf, size,
              "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",

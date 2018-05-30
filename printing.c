@@ -261,7 +261,7 @@ do_print_run(const serve_state_t state, int run_id,
       if (sscanf(in_buf, "[Total: %d pages", &x) == 1 && x >= 1 && x < 100000) {
         pages_num = x;
         break;
-      } 
+      }
     }
   }
   fclose(f);

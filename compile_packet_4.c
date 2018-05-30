@@ -96,7 +96,7 @@ compile_reply_packet_read(
 
 #if 0
   /* debug */
-  fprintf(stderr, 
+  fprintf(stderr,
           "compile reply packet:\n"
           "  judge_id:      %d\n"
           "  contest_id:    %d\n"

@@ -268,7 +268,7 @@ meta_unparse_cfg(FILE *out_f, const struct meta_methods *mth, const void *ptr, c
         fprintf(out_f, "%s = \"%s\"\n", fn, CARMOR(*(const unsigned char**) fp));
       }
       break;
-      
+
     case 'x':                   /* ejstrlist_t */
     case 'X':                   /* ejenvlist_t */
       {

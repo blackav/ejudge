@@ -108,7 +108,7 @@ variant_map_unparse(
 int
 variant_map_save(
         FILE *log_f,
-        const struct variant_map *vmap, 
+        const struct variant_map *vmap,
         const unsigned char *path,
         int mode)
 {
@@ -550,7 +550,7 @@ variant_map_parse(
     }
     */
   }
-  
+
   if (head_f) {
     close_memstream(head_f);
     head_f = 0;

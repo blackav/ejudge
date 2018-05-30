@@ -454,7 +454,7 @@ parse_plugins(struct ejudge_cfg *cfg, struct xml_tree *tree)
   if (tree->tag != TG_PLUGINS) return xml_err_elem_not_allowed(tree);
   if (xml_empty_text(tree) < 0) return -1;
   if (tree->first) return xml_err_attrs(tree);
-    
+
   for (p = tree->first_down; p; p = p->right) {
     if (p->tag != TG_PLUGIN) return xml_err_elem_not_allowed(p);
     if (xml_empty_text(p) < 0) return -1;
@@ -1106,7 +1106,7 @@ ejudge_cfg_refresh_caps_file(const struct ejudge_cfg *cfg, int force_flag)
 int
 ejudge_cfg_opcaps_find(
         const struct ejudge_cfg *cfg,
-        const unsigned char *login_str, 
+        const unsigned char *login_str,
         opcap_t *p_caps)
 {
   int r;

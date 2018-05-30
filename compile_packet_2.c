@@ -295,4 +295,3 @@ compile_request_packet_write(
   xfree(out_data);
   return -1;
 }
-

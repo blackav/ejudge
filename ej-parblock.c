@@ -241,7 +241,7 @@ main(int argc, char *argv[])
             ++ap;
         }
     }
-    
+
     if (argc != ap + 1) {
         fprintf(stderr, "invalid number of args\n");
         exit(1);

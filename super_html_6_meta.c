@@ -410,4 +410,3 @@ const struct meta_methods meta_ss_op_param_USER_EDIT_REG_ACTION_methods =
   (void *(*)(void *ptr, int tag))meta_ss_op_param_USER_EDIT_REG_ACTION_get_ptr_nc,
   meta_ss_op_param_USER_EDIT_REG_ACTION_lookup_field,
 };
-

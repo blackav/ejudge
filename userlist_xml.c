@@ -788,7 +788,7 @@ parse_contest(char const *path, struct xml_tree *t,
     if (p->first_down) return xml_err_nested_elems(p);
     if (xml_empty_text(p) < 0) return -1;
     reg = (struct userlist_contest*) p;
-    
+
     reg->id = -1;
     reg->status = -1;
     for (a = p->first; a; a = a->next) {
@@ -1965,7 +1965,7 @@ unparse_usergroups(
     if ((grp = lst->group_map[i])) {
       userlist_unparse_usergroup(fout, grp, "      ", "\n");
     }
-  }  
+  }
   fprintf(fout, "  </%s>\n", elem_map[USERLIST_T_USERGROUPS]);
 }
 
@@ -2315,11 +2315,11 @@ userlist_unparse(struct userlist_list *p, FILE *f)
 
   if (!p) return;
 
-  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n", 
+  fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\" ?>\n",
           EJUDGE_CHARSET);
   fprintf(f, "<%s %s=\"%d\"", elem_map[USERLIST_T_USERLIST],
           attr_map[USERLIST_A_MEMBER_SERIAL], p->member_serial);
-  
+
   if (p->name && *p->name)
     fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_NAME], p->name);
   fputs(">\n", f);

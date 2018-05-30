@@ -809,7 +809,7 @@ find_tester(const serve_state_t state,int problem, char const *arch)
     if (state->testers[i]->any && !strcmp(arch, state->testers[i]->arch))
       return i;
   }
-  
+
   return 0;
 }
 
@@ -2301,7 +2301,7 @@ prepare_parse_open_tests(
         goto fail;
       }
       p = q;
-      while (isspace(*p)) ++p;      
+      while (isspace(*p)) ++p;
     }
     if (*p == ',') {
       ++p;
@@ -2423,7 +2423,7 @@ parse_tokens_periodic(
   if (*p != '/') return 0;
   ++p;
   while (isspace(*p)) ++p;
-  if (*p < '0' || *p > '9') return 0; 
+  if (*p < '0' || *p > '9') return 0;
   long long value2 = strtol(p, (char**) &ep, 10);
   if (errno) return 0;
   p = ep;
@@ -3209,7 +3209,7 @@ set_defaults(
         vptr = &g->stand2_footer_txt;
         r = generic_read_file(vptr, 0,&tmp_len,0, 0, g->stand2_footer_file, "");
         if (r < 0) return -1;
-      } 
+      }
     }
 
     if (g->plog_file_name && g->plog_file_name[0]) {
@@ -3395,7 +3395,7 @@ set_defaults(
       vinfo("language.%d.long_name set to \"Language %d\"", i, i);
       usprintf(&lang->long_name, "Language %d", i);
     }
-    
+
     if (mode == PREPARE_SERVE) {
       if (lang->compile_dir_index > 0) {
         int extras_len = sarray_len(g->extra_compile_dirs);
@@ -3466,7 +3466,7 @@ set_defaults(
 #endif /* EJUDGE_CONTESTS_HOME_DIR */
       param_subst_2(&lang->cmd, subst_src, subst_dst);
 
-      vinfo("language.%d.cmd is %s", i, lang->cmd);      
+      vinfo("language.%d.cmd is %s", i, lang->cmd);
       if (lang->compile_real_time_limit == -1) {
         lang->compile_real_time_limit = g->compile_real_time_limit;
         vinfo("language.%d.compile_real_time_limit is inherited from global (%d)", i, lang->compile_real_time_limit);
@@ -4225,7 +4225,7 @@ set_defaults(
       if (tp->no_core_dump == -1 && atp && atp->no_core_dump != -1) {
         tp->no_core_dump = atp->no_core_dump;
         vinfo("tester.%d.no_core_dump inherited from tester.%s (%d)",
-              i, sish, tp->no_core_dump);        
+              i, sish, tp->no_core_dump);
       }
       if (tp->no_core_dump == -1) {
         tp->no_core_dump = 0;
@@ -4307,7 +4307,7 @@ set_defaults(
       if (tp->is_dos == -1 && atp && atp->is_dos != -1) {
         tp->is_dos = atp->is_dos;
         vinfo("tester.%d.is_dos inherited from tester.%s (%d)",
-              i, sish, tp->is_dos);        
+              i, sish, tp->is_dos);
       }
       if (tp->is_dos == -1) {
         tp->is_dos = 0;
@@ -4315,7 +4315,7 @@ set_defaults(
       if (tp->no_redirect == -1 && atp && atp->no_redirect != -1) {
         tp->no_redirect = atp->no_redirect;
         vinfo("tester.%d.no_redirect inherited from tester.%s (%d)",
-              i, sish, tp->no_redirect);        
+              i, sish, tp->no_redirect);
       }
       if (tp->no_redirect == -1) {
         tp->no_redirect = 0;
@@ -4323,7 +4323,7 @@ set_defaults(
       if (tp->ignore_stderr == -1 && atp && atp->ignore_stderr != -1) {
         tp->ignore_stderr = atp->ignore_stderr;
         vinfo("tester.%d.ignore_stderr inherited from tester.%s (%d)",
-              i, sish, tp->ignore_stderr);        
+              i, sish, tp->ignore_stderr);
       }
       if (tp->ignore_stderr == -1) {
         tp->ignore_stderr = 0;
@@ -4332,7 +4332,7 @@ set_defaults(
         sformat_message_2(&tp->errorcode_file, 0, atp->errorcode_file,
                         g, tp_prob, NULL, tp, NULL, 0, 0, 0);
         vinfo("tester.%d.errorcode_file inherited from tester.%s ('%s')",
-              i, sish, tp->errorcode_file);        
+              i, sish, tp->errorcode_file);
       }
 
       if (atp && atp->start_env && !tp->any) {
@@ -4594,7 +4594,7 @@ collect_sections(serve_state_t state, int mode)
           }
           if (t->problem_name[0]) {
             int j;
-            
+
             for (j = 1; j <= state->max_prob; j++) {
               if (state->probs[j] && !strcmp(state->probs[j]->short_name, t->problem_name))
                 break;
@@ -5012,7 +5012,7 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
     out->memory_limit_type_val = atp->memory_limit_type_val;
   }
   xstrdup3(&out->memory_limit_type, prepare_unparse_memory_limit_type(out->memory_limit_type_val));
-  
+
   if (tp->secure_exec_type) {
     out->secure_exec_type_val = prepare_parse_secure_exec_type(tp->secure_exec_type);
     if (out->secure_exec_type_val < 0) {

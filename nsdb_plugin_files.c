@@ -212,7 +212,7 @@ check_func(void *data)
 {
   struct nsdb_files_state *state = (struct nsdb_files_state*) data;
   struct stat stb;
-  
+
   if (stat(state->data_dir, &stb) < 0) {
     err("data_dir `%s' does not exist. create it with --create",
         state->data_dir);
@@ -225,7 +225,7 @@ check_func(void *data)
 
   if (user_priv_load(&state->user_priv, state->data_dir) < 0)
     return -1;
-  
+
   return 1;
 }
 

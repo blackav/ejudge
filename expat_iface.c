@@ -579,7 +579,7 @@ chardata_hnd(void *data, const XML_Char *s, int len)
     case '\"': s = "&quot;"; len = 6; break;
     }
   }
-  
+
   if (!pd->tag_stack->a) pd->tag_stack->a = 32;
   while (pd->tag_stack->u + len >= pd->tag_stack->a)
     pd->tag_stack->a *= 2;

@@ -45,7 +45,7 @@
 #define CONF_STYLE_PREFIX "/ejudge/"
 #endif
 
-#pragma GCC diagnostic ignored "-Wformat-security" 
+#pragma GCC diagnostic ignored "-Wformat-security"
 
 #define ARMOR(s)  html_armor_buf(&ab, s)
 

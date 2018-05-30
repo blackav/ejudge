@@ -37,7 +37,7 @@
 static const unsigned char *
 c_armor_2(
         struct html_armor_buffer *pb,
-        const unsigned char *str, 
+        const unsigned char *str,
         const unsigned char *pfx)
 {
   int plen;
@@ -439,7 +439,7 @@ prepare_unparse_global(
   do_str(f, &ab, "stand_page_cur_attr", global->stand_page_cur_attr);
   //GLOBAL_PARAM(stand_page_row_attr, "x"),
   do_xstr(f, &ab, "stand_page_row_attr", global->stand_page_row_attr);
-  //GLOBAL_PARAM(stand_page_col_attr, "x"),  
+  //GLOBAL_PARAM(stand_page_col_attr, "x"),
   do_xstr(f, &ab, "stand_page_col_attr", global->stand_page_col_attr);
   fprintf(f, "\n");
 
@@ -1432,7 +1432,7 @@ prepare_unparse_prob(
   if (prob->max_user_run_count > 0) {
     fprintf(f, "max_user_run_count = %d\n", prob->max_user_run_count);
   }
- 
+
   if (prob->use_ac_not_ok >= 0)
     unparse_bool(f, "use_ac_not_ok", prob->use_ac_not_ok);
   if (prob->ok_status && prob->ok_status[0])
@@ -1695,7 +1695,7 @@ prepare_unparse_actual_prob(
   } else if (prob->time_limit > 0) {
     fprintf(f, "time_limit = %d\n", prob->time_limit);
   }
-  if (prob->real_time_limit > 0) 
+  if (prob->real_time_limit > 0)
     fprintf(f, "real_time_limit = %d\n", prob->real_time_limit);
   if (prob->checker_real_time_limit > 0)
     fprintf(f, "checker_real_time_limit = %d\n", prob->checker_real_time_limit);
@@ -1737,7 +1737,7 @@ prepare_unparse_actual_prob(
     if (prob->run_penalty >= 0)
       fprintf(f, "run_penalty = %d\n", prob->run_penalty);
     if (prob->compile_error_penalty >= 0)
-      fprintf(f, "compile_error_penalty = %d\n", prob->compile_error_penalty);      
+      fprintf(f, "compile_error_penalty = %d\n", prob->compile_error_penalty);
     if (prob->disqualified_penalty >= 0)
       fprintf(f, "disqualified_penalty = %d\n", prob->disqualified_penalty);
     if (prob->test_score_list && prob->test_score_list[0])
@@ -1898,7 +1898,7 @@ prepare_unparse_actual_prob(
   if (prob->skip_testing  > 0)
     unparse_bool(f, "skip_testing", prob->skip_testing);
   if (prob->priority_adjustment > 0)
-    fprintf(f, "priority_adjustment = %d\n", prob->priority_adjustment);    
+    fprintf(f, "priority_adjustment = %d\n", prob->priority_adjustment);
   if (prob->enable_compilation > 0)
     unparse_bool(f, "enable_compilation", prob->enable_compilation);
   if (prob->hidden > 0)
@@ -1908,7 +1908,7 @@ prepare_unparse_actual_prob(
   if (prob->advance_to_next > 0)
     unparse_bool(f, "advance_to_next", prob->advance_to_next);
   if (prob->prev_runs_to_show > 0)
-    fprintf(f, "prev_runs_to_show = %d\n", prob->prev_runs_to_show);    
+    fprintf(f, "prev_runs_to_show = %d\n", prob->prev_runs_to_show);
   if (prob->max_user_run_count > 0)
     fprintf(f, "max_user_run_count = %d\n", prob->max_user_run_count);
   if (prob->disable_ctrl_chars > 0)
@@ -2645,7 +2645,7 @@ prepare_unparse_testers(
   XCALLOC(need_sep_tester, total_probs);
   for (i = 0; i < total_probs; i++) {
     if (!probs[i] || probs[i]->disable_testing > 0) continue;
-    if (/*vm_sizes[i] != def_vm_size 
+    if (/*vm_sizes[i] != def_vm_size
         || stack_sizes[i] != def_stack_size
         || file_ios[i] != def_use_files*/ 0)
       need_sep_tester[i] = 1;
@@ -2760,7 +2760,7 @@ report_directory(
     fprintf(f, "<td><font color=\"green\">OK</font></td>");
   }
   fprintf(f, "</tr>");
- 
+
   html_armor_free(&ab);
 }
 
@@ -2788,7 +2788,7 @@ report_file(
     fprintf(f, "<td><font color=\"green\">OK</font></td>");
   }
   fprintf(f, "</tr>");
- 
+
   html_armor_free(&ab);
 }
 
@@ -2970,7 +2970,7 @@ prob_instr(
     fprintf(f, "<p><b>Score evaluator:</b></p>\n");
     handle_file(f, global, tmp_prob, tmp_prob->valuer_cmd, 1);
   }
-  
+
   prepare_set_prob_value(CNTSPROB_interactor_cmd, tmp_prob, abstr, global);
   if (tmp_prob->interactor_cmd && tmp_prob->interactor_cmd[0]) {
     fprintf(f, "<p><b>Interactor:</b></p>\n");
@@ -3023,7 +3023,7 @@ prob_instr(
   handle_directory(f, global, tmp_prob, conf_path,
                    global->test_dir, DFLT_G_TEST_DIR,
                    tmp_prob->test_dir, DFLT_P_TEST_DIR);
-  
+
   prepare_set_prob_value(CNTSPROB_test_sfx, tmp_prob, abstr, global);
   prepare_set_prob_value(CNTSPROB_test_pat, tmp_prob, abstr, global);
   print_files(f, "Test file names", tmp_prob->test_sfx, tmp_prob->test_pat);

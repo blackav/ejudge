@@ -780,7 +780,7 @@ swap_words(unsigned char *buf)
   int len = strlen(buf);
   while (len > 0 && isspace(buf[len - 1])) --len;
   buf[len] = 0;
-  
+
   unsigned char *pos = strchr(buf, ' ');
   if (!pos) return;
   int len2 = (int) (pos - buf);
@@ -788,7 +788,7 @@ swap_words(unsigned char *buf)
   unsigned char *buf1 = alloca(len + 1);
   memcpy(buf1, buf, len2);
   buf1[len2] = 0;
-  
+
   while (isspace(*pos)) ++pos;
   int len3 = strlen(pos);
   memmove(buf, pos, len3);
@@ -1238,7 +1238,7 @@ do_choose_file(
     snprintf(time_str, sizeof(time_str), "%04d/%02d/%02d %02d:%02d:%02d",
              ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday,
              ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
-    
+
     if (files[i]->lstbuf.st_size > 1073741824) {
       snprintf(size_str, sizeof(size_str), ">1G");
     } else {
@@ -1987,7 +1987,7 @@ static unsigned char utf8_kbd_map[0x500] =
 };
 
 /**
- * 
+ *
  */
 int
 ncurses_getkey(int utf8_mode, int *p_code)

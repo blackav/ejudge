@@ -1122,7 +1122,7 @@ userlist_get_user_field_str(unsigned char *buf, size_t len,
     return snprintf(buf, len, "%s", s);
   case USERLIST_NN_REGISTRATION_TIME:
     p_time = (const time_t *) userlist_get_user_field_ptr(u, field_id);
-    return snprintf(buf, len, "%s", userlist_unparse_date(*p_time, convert_null));    
+    return snprintf(buf, len, "%s", userlist_unparse_date(*p_time, convert_null));
   default:
     abort();
   }

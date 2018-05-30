@@ -91,4 +91,3 @@ const struct meta_methods meta_polygon_packet_methods =
   (void *(*)(void *ptr, int tag))meta_polygon_packet_get_ptr_nc,
   meta_polygon_packet_lookup_field,
 };
-

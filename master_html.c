@@ -205,7 +205,7 @@ write_change_status_dialog(
   fprintf(f, "</select></td>\n");
 }
 
-#define BITS_PER_LONG (8*sizeof(unsigned long)) 
+#define BITS_PER_LONG (8*sizeof(unsigned long))
 
 #define BGCOLOR_CHECK_FAILED " bgcolor=\"#FF80FF\""
 #define BGCOLOR_FAIL         " bgcolor=\"#FF8080\""
@@ -401,7 +401,7 @@ write_xml_tests_report(
       stb = "<strike>";
       ste = "</strike>";
     }
-    
+
     fprintf(f, "<tr>");
     trr = r->tt_rows[i];
     if (trr->status == RUN_CHECK_FAILED) {
@@ -1119,6 +1119,6 @@ generate_daily_statistics(
             "From judges:            %d\n\n",
             clar_total_today, clar_to_judges, clar_from_judges);
   }
-  
+
   xfree(solved);
 }

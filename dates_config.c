@@ -52,7 +52,7 @@ static void dates_problem_free_func(struct generic_section_config *);
 
 static const struct config_section_info dates_params[] =
 {
-    { 
+    {
         "global", sizeof(struct dates_global_data), NULL, NULL,
         dates_global_init_func, dates_global_free_func,
         &meta_dates_global_data_methods,

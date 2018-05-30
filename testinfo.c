@@ -172,7 +172,7 @@ parse_cmdline(const unsigned char *str, struct cmdline_buf *pcmd)
             if (isxdigit(*p)) nb[1] = *p++;
             *q++ = strtol(nb, 0, 16);
             break;
-            
+
           case '0': case '1': case '2': case '3':
             p++;
             memset(nb, 0, sizeof(nb));
@@ -181,7 +181,7 @@ parse_cmdline(const unsigned char *str, struct cmdline_buf *pcmd)
             if (*p >= '0' && *p <= '7') nb[2] = *p++;
             *q++ = strtol(nb, 0, 8);
             break;
-            
+
           case '4': case '5': case '6': case '7':
             p++;
             memset(nb, 0, sizeof(nb));
@@ -189,7 +189,7 @@ parse_cmdline(const unsigned char *str, struct cmdline_buf *pcmd)
             if (*p >= '0' && *p <= '7') nb[1] = *p++;
             *q++ = strtol(nb, 0, 8);
             break;
-            
+
           case 'a': *q++ = '\a'; p += 2; break;
           case 'b': *q++ = '\b'; p += 2; break;
           case 'f': *q++ = '\f'; p += 2; break;

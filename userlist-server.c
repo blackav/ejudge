@@ -1819,12 +1819,12 @@ cmd_register_new_2(struct client_state *p,
   if (!cnts->simple_registration) {
     err("%s -> simple registration is not enabled", logbuf);
     send_reply(p, -ULS_ERR_BAD_CONTEST_ID);
-    return;    
+    return;
   }
   if (cnts->closed) {
     err("%s -> contest is closed", logbuf);
     send_reply(p, -ULS_ERR_CANNOT_PARTICIPATE);
-    return;        
+    return;
   }
   if (cnts->reg_deadline && current_time > cnts->reg_deadline){
     err("%s -> registration deadline", logbuf);
@@ -2120,7 +2120,7 @@ cmd_register_new(struct client_state *p,
     }
   }
   originator_email = get_email_sender(cnts);
- 
+
   if (cnts && cnts->assign_logins && cnts->login_template) {
     if (cnts->login_template_options
         && sscanf(cnts->login_template_options, "%d%d%n",
@@ -2429,7 +2429,7 @@ cmd_recover_password_1(struct client_state *p,
   }
 
   msg_f = open_memstream(&msg_text, &msg_size);
-  fprintf(msg_f, 
+  fprintf(msg_f,
           _("Hello,\n"
             "\n"
             "Somebody (probably you) have requested registration password\n"
@@ -2613,7 +2613,7 @@ cmd_recover_password_2(struct client_state *p,
 
   // generate a e-mail message
   msg_f = open_memstream(&msg_text, &msg_size);
-  fprintf(msg_f, 
+  fprintf(msg_f,
           _("Hello,\n"
             "\n"
             "New random password was successfully generated!\n\n"));
@@ -3270,7 +3270,7 @@ cmd_team_login(
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
   strcpy(name_ptr, name);
-  
+
   p->user_id = u->id;
   p->contest_id = orig_contest_id;
   p->cnts_login = 1;
@@ -3457,7 +3457,7 @@ cmd_team_check_user(
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
   strcpy(name_ptr, name);
-  
+
   enqueue_reply_to_client(p, out_size, out);
   default_touch_login_time(user_id, data->contest_id, cur_time);
   if (daemon_mode) {
@@ -3680,7 +3680,7 @@ cmd_priv_login(
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
   strcpy(name_ptr, name);
-  
+
   p->user_id = u->id;
   p->priv_level = priv_level;
   p->cookie = out->cookie;
@@ -3870,7 +3870,7 @@ cmd_priv_check_user(
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
   strcpy(name_ptr, name);
-  
+
   enqueue_reply_to_client(p, out_size, out);
   default_touch_login_time(out->user_id, 0, cur_time);
   if (daemon_mode) {
@@ -3994,7 +3994,7 @@ cmd_priv_check_password(
   out->name_len = name_len;
   strcpy(login_ptr, u->login);
   strcpy(name_ptr, name);
-  
+
   enqueue_reply_to_client(p, out_size, out);
   info("%s -> OK, %d", logbuf, out->user_id);
 }
@@ -4296,7 +4296,7 @@ cmd_team_check_cookie(
   out->name_len = name_len;
   strcpy(login_ptr, user_login);
   strcpy(name_ptr, name);
-  
+
   p->user_id = user_id;
   p->contest_id = orig_contest_id;
   p->cnts_login = 1;
@@ -4485,7 +4485,7 @@ cmd_priv_check_cookie(
   out->priv_level = data->priv_level;
   strcpy(login_ptr, u->login);
   strcpy(name_ptr, name);
-  
+
   p->user_id = u->id;
   p->contest_id = orig_contest_id;
   p->priv_level = out->priv_level;
@@ -4548,7 +4548,7 @@ cmd_priv_cookie_login(
     return;
   }
   */
-  
+
   if (data->role <= 0 || data->role >= USER_ROLE_LAST) {
     err("%s -> invalid privilege level", logbuf);
     send_reply(p, -ULS_ERR_NO_COOKIE);
@@ -4686,7 +4686,7 @@ cmd_priv_cookie_login(
   strcpy(login_ptr, u->login);
   strcpy(name_ptr, name);
 
-  /*  
+  /*
   p->user_id = u->id;
   p->contest_id = orig_contest_id;
   p->priv_level = priv_level;
@@ -4968,7 +4968,7 @@ cmd_list_all_users(
   memcpy(out->data, xml_ptr, xml_size + 1);
   xfree(xml_ptr);
   enqueue_reply_to_client(p, out_size, out);
-  info("%s -> OK, size = %zu", logbuf, xml_size); 
+  info("%s -> OK, size = %zu", logbuf, xml_size);
   xfree(out);
 }
 
@@ -7474,7 +7474,7 @@ cmd_delete_field(
   } else {
     if (is_dbcnts_capable(p, cnts, bit, logbuf) < 0) return;
   }
-  
+
   if (data->field >= USERLIST_NN_FIRST && data->field < USERLIST_NN_LAST) {
     switch (data->field) {
     case USERLIST_NN_ID:
@@ -8048,7 +8048,7 @@ cmd_copy_user_info(
   if (default_get_user_info_1(data->user_id, &u) < 0 || !u) goto invalid_user;
 
   // GET_USER for reading + {PRIV_}EDIT_PASSWD for password reading
-  // {PRIV_}EDIT_USER + {PRIV_}EDIT_PASSWD 
+  // {PRIV_}EDIT_USER + {PRIV_}EDIT_PASSWD
   if (is_dbcnts_capable(p, cnts, OPCAP_GET_USER, logbuf) < 0) return;
   if (is_privileged_cnts2_user(u, cnts, cnts2) >= 0) {
     if (is_dbcnts_capable(p, cnts2, OPCAP_PRIV_EDIT_USER, logbuf) < 0) return;
@@ -8185,7 +8185,7 @@ cmd_lookup_user_id(struct client_state *p,
     if (full_get_contest(p, logbuf, &data->contest_id, &cnts) < 0) return;
   }
   if (is_dbcnts_capable(p, cnts, OPCAP_LIST_USERS, logbuf)) return;
-  
+
   if (default_get_user_info_2(data->user_id, data->contest_id, &u, &ui) < 0 || !u) {
     err("%s -> NO SUCH USER", logbuf);
     send_reply(p, -ULS_ERR_BAD_UID);
@@ -8376,7 +8376,7 @@ cmd_get_cookie(
   }
   strcpy(login_ptr, user_login);
   strcpy(name_ptr, user_name);
-  
+
   enqueue_reply_to_client(p, out_size, out);
 
   /*
@@ -9622,7 +9622,7 @@ cmd_list_all_groups(
   memcpy(out->data, xml_ptr, xml_size + 1);
   xfree(xml_ptr); xml_ptr = 0;
   enqueue_reply_to_client(p, out_size, out);
-  info("%s -> OK, size = %zu", logbuf, xml_size); 
+  info("%s -> OK, size = %zu", logbuf, xml_size);
 }
 
 static void
@@ -9818,7 +9818,7 @@ cmd_list_group_users(
   memcpy(out->data, xml_ptr, xml_size + 1);
   xfree(xml_ptr); xml_ptr = 0;
   enqueue_reply_to_client(p, out_size, out);
-  info("%s -> OK, size = %zu", logbuf, xml_size); 
+  info("%s -> OK, size = %zu", logbuf, xml_size);
 }
 
 static void
@@ -9854,7 +9854,7 @@ cmd_create_group_member(
     send_reply(p, -ULS_ERR_DB_ERROR);
     return;
   }
-  
+
   send_reply(p, ULS_OK);
   info("%s -> OK", logbuf);
 }
@@ -9892,7 +9892,7 @@ cmd_delete_group_member(
     send_reply(p, -ULS_ERR_DB_ERROR);
     return;
   }
-  
+
   send_reply(p, ULS_OK);
   info("%s -> OK", logbuf);
 }
@@ -10046,7 +10046,7 @@ cmd_list_all_users_2(
   memcpy(out->data, xml_ptr, xml_size + 1);
   xfree(xml_ptr); xml_ptr = 0;
   enqueue_reply_to_client(p, out_size, out);
-  info("%s -> OK, size = %zu", logbuf, xml_size); 
+  info("%s -> OK, size = %zu", logbuf, xml_size);
   xfree(out); out = 0;
 }
 
@@ -10080,14 +10080,14 @@ cmd_get_user_count(
   if (count < 0) {
     err("%s -> invalid value of count %lld", logbuf, count);
     send_reply(p, -ULS_ERR_DB_ERROR);
-    return;    
+    return;
   }
 
   memset(&out, 0, sizeof(out));
   out.reply_id = ULS_COUNT;
   out.count = count;
   enqueue_reply_to_client(p, sizeof(out), &out);
-  info("%s -> OK, %lld", logbuf, out.count); 
+  info("%s -> OK, %lld", logbuf, out.count);
 }
 
 static void
@@ -10138,7 +10138,7 @@ cmd_list_all_groups_2(
   memcpy(out->data, xml_ptr, xml_size + 1);
   xfree(xml_ptr); xml_ptr = 0;
   enqueue_reply_to_client(p, out_size, out);
-  info("%s -> OK, size = %zu", logbuf, xml_size); 
+  info("%s -> OK, size = %zu", logbuf, xml_size);
   xfree(out); out = 0;
 }
 
@@ -10167,14 +10167,14 @@ cmd_get_group_count(
   if (count < 0) {
     err("%s -> invalid value of count %lld", logbuf, count);
     send_reply(p, -ULS_ERR_DB_ERROR);
-    return;    
+    return;
   }
 
   memset(&out, 0, sizeof(out));
   out.reply_id = ULS_COUNT;
   out.count = count;
   enqueue_reply_to_client(p, sizeof(out), &out);
-  info("%s -> OK, %lld", logbuf, out.count); 
+  info("%s -> OK, %lld", logbuf, out.count);
 }
 
 static void
@@ -10402,7 +10402,7 @@ cmd_create_user_2(
   out.reply_id = ULS_LOGIN_OK;
   out.user_id = user_id;
   enqueue_reply_to_client(p, sizeof(out), &out);
-  info("%s -> OK, %d", logbuf, user_id); 
+  info("%s -> OK, %d", logbuf, user_id);
 }
 
 static void
@@ -10445,7 +10445,7 @@ cmd_next_user(
     out.reply_id = ULS_LOGIN_OK;
     out.user_id = 0;
     enqueue_reply_to_client(p, sizeof(out), &out);
-    info("%s -> not implemented, %d", logbuf, 0); 
+    info("%s -> not implemented, %d", logbuf, 0);
     return;
   }
 
@@ -10458,7 +10458,7 @@ cmd_next_user(
   out.reply_id = ULS_LOGIN_OK;
   out.user_id = user_id;
   enqueue_reply_to_client(p, sizeof(out), &out);
-  info("%s -> OK, %d", logbuf, user_id); 
+  info("%s -> OK, %d", logbuf, user_id);
 }
 
 static void
@@ -10511,7 +10511,7 @@ cmd_list_all_users_3(
   memcpy(out->data, xml_ptr, xml_size + 1);
   xfree(xml_ptr); xml_ptr = 0;
   enqueue_reply_to_client(p, out_size, out);
-  info("%s -> OK, size = %zu", logbuf, xml_size); 
+  info("%s -> OK, size = %zu", logbuf, xml_size);
   xfree(out); out = 0;
   bitset_free(&marked);
 }
@@ -10567,7 +10567,7 @@ cmd_list_all_users_4(
   memcpy(out->data, xml_ptr, xml_size + 1);
   xfree(xml_ptr); xml_ptr = 0;
   enqueue_reply_to_client(p, out_size, out);
-  info("%s -> OK, size = %zu", logbuf, xml_size); 
+  info("%s -> OK, size = %zu", logbuf, xml_size);
   xfree(out); out = 0;
   bitset_free(&marked);
 }
@@ -10614,7 +10614,7 @@ cmd_get_group_info(
   memcpy(out->data, xml_ptr, xml_size + 1);
   xfree(xml_ptr); xml_ptr = 0;
   enqueue_reply_to_client(p, out_size, out);
-  info("%s -> OK, size = %zu", logbuf, xml_size); 
+  info("%s -> OK, size = %zu", logbuf, xml_size);
 }
 
 static void

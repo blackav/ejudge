@@ -1296,7 +1296,7 @@ parse_struct_type_die(
         if (tag2 == DW_TAG_structure_type || tag2 == DW_TAG_union_type) {
             r = parse_struct_type_die(log_f, path, dbg, die2, cntx, dm, tag2, p_info, cur, global_scope);
             if (r < 0) goto done;
-        }        
+        }
         if ((r = s_dwarf_sibling(log_f, path, dbg, die2, &die2)) < 0) goto done;
     }
 
@@ -1427,7 +1427,7 @@ parse_function_type_die(
     TypeInfo *ret_type = NULL;
     if ((r = parse_type(log_f, path, dbg, die, cntx, dm, &ret_type, cur, global_scope)) < 0) goto done;
     if (!r || !ret_type) ret_type = tc_get_i0_type(cntx);
-    
+
     int count = 0;
     die2 = NULL;
     if ((r = s_dwarf_child(log_f, path, die, &die2)) < 0) goto done;
@@ -1599,7 +1599,7 @@ struct TopDieParseTable
     Dwarf_Half tag;
     int kind;
     const char *comment;
-    parse_kind_func_t handler;    
+    parse_kind_func_t handler;
 };
 static const struct TopDieParseTable top_die_table[] =
 {

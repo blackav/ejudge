@@ -664,7 +664,7 @@ contests_set_default(
         int default_is_allow)
 {
   struct contest_access *new_acc = 0;
-  
+
   if (*p_acc && (*p_acc)->b.first_down) {
     (*p_acc)->default_is_allow = !!default_is_allow;
     return;

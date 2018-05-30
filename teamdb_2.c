@@ -81,7 +81,7 @@ teamdb_get_user_map(
       for (i = 1; i < u_max; ++i) {
         if (!state->users->user_map[i]) continue;
         f = state->u_contests[i]->flags;
-        if ((f & (USERLIST_UC_INVISIBLE 
+        if ((f & (USERLIST_UC_INVISIBLE
                   | USERLIST_UC_BANNED
                   | USERLIST_UC_DISQUALIFIED)))
           continue;
@@ -95,7 +95,7 @@ teamdb_get_user_map(
       for (i = 1; i < u_max; ++i) {
         if (!state->users->user_map[i]) continue;
         f = state->u_contests[i]->flags;
-        if ((f & (USERLIST_UC_INVISIBLE 
+        if ((f & (USERLIST_UC_INVISIBLE
                   | USERLIST_UC_BANNED
                   | USERLIST_UC_DISQUALIFIED)))
           continue;
@@ -109,7 +109,7 @@ teamdb_get_user_map(
       for (i = 1; i < u_max; ++i) {
         if (!state->users->user_map[i]) continue;
         f = state->u_contests[i]->flags;
-        if ((f & (USERLIST_UC_INVISIBLE 
+        if ((f & (USERLIST_UC_INVISIBLE
                   | USERLIST_UC_BANNED
                   | USERLIST_UC_DISQUALIFIED)))
           continue;
@@ -122,7 +122,7 @@ teamdb_get_user_map(
       for (i = 1; i < u_max; ++i) {
         if (!state->users->user_map[i]) continue;
         f = state->u_contests[i]->flags;
-        if ((f & (USERLIST_UC_INVISIBLE 
+        if ((f & (USERLIST_UC_INVISIBLE
                   | USERLIST_UC_BANNED
                   | USERLIST_UC_DISQUALIFIED)))
           continue;

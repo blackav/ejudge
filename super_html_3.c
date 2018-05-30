@@ -917,7 +917,7 @@ invoke_compile_process(
     fprintf(flog, "%s", out_text);
     xfree(out_text); out_text = 0;
   }
-  
+
   if (!retval) {
     fprintf(flog, "process is completed successfully\n");
   } else if (retval >= 256) {
@@ -986,7 +986,7 @@ get_compiler_path(
            script_path, short_name);
   if (!(s = read_process_output(cmd, 0, 0, 0))) s = xstrdup("");
   return s;
-} 
+}
 
 static int
 recompile_checker(
@@ -1546,7 +1546,7 @@ super_html_new_check_tests(
       }
       fprintf(flog, "Info: assuming, that there are %d tests for this problem\n",
               total_tests);
-      
+
       for (j = 1; j <= total_tests; j++) {
         if (tmp_prob->use_corr
             && check_test_file(flog, j, corr_path, tmp_prob->corr_pat,
@@ -1681,7 +1681,7 @@ super_html_new_check_tests(
             goto cleanup;
           }
         }
-      
+
         for (j = 1; j <= total_tests; j++) {
           if (tmp_prob->use_corr
               && check_test_file(flog, j, v_corr_path, tmp_prob->corr_pat,

@@ -382,7 +382,7 @@ do_loop(void)
       snprintf(full_full_dir, sizeof(full_full_dir),
                "%s/%06d/output", global->run_dir, srgp->contest_id);
     }
-             
+
     if (generic_copy_file(0, NULL, report_path, "",
                           0, full_report_dir, run_base, "") < 0)
       return -1;

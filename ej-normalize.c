@@ -141,7 +141,7 @@ ends_with(const unsigned char *str, const unsigned char *suffix)
 
 static int
 read_file(
-        const unsigned char *path, 
+        const unsigned char *path,
         long long *p_size,
         unsigned char **p_data)
 {

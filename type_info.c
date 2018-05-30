@@ -1629,7 +1629,7 @@ tc_balance(TypeContext *cntx, TypeInfo *t1, TypeInfo *t2)
     NODE_STRUCT_TYPE,
     NODE_UNION_TYPE,
     // u32 size == 0 --- sequence of any types, for ellipsis parameters
-    NODE_ANYSEQ_TYPE, 
+    NODE_ANYSEQ_TYPE,
  */
 
 TypeInfo *

@@ -65,7 +65,7 @@ pathmake(char *dst, ...)
 {
   va_list  args;
   char    *p;
-  
+
   dst[0] = 0;
   va_start(args, dst);
   while ((p = va_arg(args, char*))) {
@@ -87,7 +87,7 @@ pathmake2(char *dst, ...)
   path_t   temp;
 
   if (os_IsAbsolutePath(dst)) return strlen(dst);
-  
+
   temp[0] = 0;
   va_start(args, dst);
   while ((p = va_arg(args, char*))) {
@@ -119,7 +119,7 @@ pathmake3(char *dst, ...)
     }
   }
   va_end(args);
-  
+
   dst[0] = 0;
   if (!os_IsAbsolutePath(temp)) {
     os_rGetWorkingDir(dst, PATH_MAX, 1);
@@ -152,7 +152,7 @@ path_add_dir(char *path, char const *dir)
   pathmake2(path, dir, "/", path, NULL);
 }
 
-void 
+void
 path_init(char *path, char const *dir, char const *def)
 {
   if (!path[0]) pathcpy(path, def);

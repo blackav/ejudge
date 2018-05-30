@@ -346,7 +346,7 @@ runlog_import_xml(
     } else if (in_data[i].audit.data) {
       fprintf(flog, " %d: audit=%zu\n", i, in_data[i].audit.size);
     }
-  }  
+  }
 
   /* all maps are initialized with -1 */
   /* maps original run entries to the new entries */
@@ -576,7 +576,7 @@ runlog_import_xml(
   }
 
   fprintf(flog, "Doing sanity check of the new runlog\n");
-  // FIXME: support non-zero begin 
+  // FIXME: support non-zero begin
   if (runlog_check(flog, &cur_header, 0, in_entries_num, in_entries) < 0) {
     fprintf(flog, "Sanity check failed\n");
   }

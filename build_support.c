@@ -463,7 +463,7 @@ build_generate_solution_compilation_rule(
     snprintf(last_exe_name, sizeof(last_exe_name), "%s", exe_name);
   } else if (!src_name && src_suffix) {
     language = build_guess_language_by_src(src_suffix);
-    src_name = exe_name;    
+    src_name = exe_name;
     snprintf(full_src_name, sizeof(full_src_name), "%s%s%s%s", dir_prefix, sep, src_name, src_suffix);
     snprintf(last_src_name, sizeof(last_src_name), "%s%s", src_name, src_suffix);
     snprintf(full_exe_name, sizeof(full_exe_name), "%s%s%s", dir_prefix, sep, exe_name);
@@ -1293,7 +1293,7 @@ do_generate_makefile(
     if (prob->test_checker_cmd && prob->test_checker_cmd[0]) {
       fprintf(mk_f, "check_tests : %s\n", prob->test_checker_cmd);
       fprintf(mk_f, "\t${EXECUTE} ${TC_EXECUTE_FLAGS} --test-dir=%s --workdir=%s --all-tests %s\n", "tests", "tests", prob->test_checker_cmd);
-      fprintf(mk_f, "\n");    
+      fprintf(mk_f, "\n");
       fprintf(mk_f, "check_test : %s\n", prob->test_checker_cmd);
       fprintf(mk_f, "\tcd tests && ${EXECUTE} ${TC_EXECUTE_FLAGS} --test-num=${TEST_NUM} ../%s\n", prob->test_checker_cmd);
       fprintf(mk_f, "\n");
@@ -1356,19 +1356,19 @@ do_generate_makefile(
   if ((!prob->standard_checker || !prob->standard_checker[0])
       && is_makefile_rule_needed(prob->check_cmd)) {
     fprintf(mk_f, " %s", prob->check_cmd);
-  }  
+  }
   if (is_makefile_rule_needed(prob->valuer_cmd)) {
     fprintf(mk_f, " %s", prob->valuer_cmd);
-  }  
+  }
   if (is_makefile_rule_needed(prob->interactor_cmd)) {
     fprintf(mk_f, " %s", prob->interactor_cmd);
-  }  
+  }
   if (is_makefile_rule_needed(prob->test_checker_cmd)) {
     fprintf(mk_f, " %s", prob->test_checker_cmd);
-  }  
+  }
   if (is_makefile_rule_needed(prob->init_cmd)) {
     fprintf(mk_f, " %s", prob->init_cmd);
-  }  
+  }
   if (has_solutions) {
     fprintf(mk_f, " solutions/*.o");
   }

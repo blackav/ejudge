@@ -99,7 +99,7 @@ cmd_login(
 
   switch (phr->role) {
   case USER_ROLE_CONTESTANT:
-    if (cnts->closed) 
+    if (cnts->closed)
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag))
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -246,7 +246,7 @@ cmd_dump_runs(
 
   return 0;
 }
-           
+
 static int
 cmd_dump_problems(
         FILE *fout,
@@ -515,7 +515,7 @@ cmd_operation_2(
   const struct section_global_data *global = cs->global;
   time_t start_time = 0, duration = 0, stop_time = 0, sched = 0;
 
-  run_get_times(cs->runlog_state, &start_time, &sched, &duration, &stop_time, 0);	
+  run_get_times(cs->runlog_state, &start_time, &sched, &duration, &stop_time, 0);
   switch (phr->action) {
   case NEW_SRV_ACTION_GET_CONTEST_NAME:
     fprintf(fout, "%s", cnts->name);
@@ -788,7 +788,7 @@ cmd_submit_run(
   switch (phr->role) {
   case USER_ROLE_CONTESTANT:
     break;
-    
+
   case USER_ROLE_OBSERVER:
   case USER_ROLE_EXAMINER:
   case USER_ROLE_CHIEF_EXAMINER:
@@ -833,7 +833,7 @@ cmd_submit_run(
     }
     variant = 0;
     break;
-    
+
   case USER_ROLE_JUDGE:
   case USER_ROLE_ADMIN:
     if (prob->variant_num <= 0) {
@@ -897,14 +897,14 @@ cmd_submit_run(
     break;
   case PROB_TYPE_OUTPUT_ONLY:
   case PROB_TYPE_TESTS:
-    if (!prob->binary_input && !prob->binary && strlen(run_text) != run_size) 
+    if (!prob->binary_input && !prob->binary && strlen(run_text) != run_size)
       FAIL(NEW_SRV_ERR_BINARY_FILE);
     break;
   case PROB_TYPE_TEXT_ANSWER:
   case PROB_TYPE_SHORT_ANSWER:
   case PROB_TYPE_SELECT_ONE:
   case PROB_TYPE_SELECT_MANY:
-    if (strlen(run_text) != run_size) 
+    if (strlen(run_text) != run_size)
       FAIL(NEW_SRV_ERR_BINARY_FILE);
     break;
   case PROB_TYPE_CUSTOM:
@@ -1082,7 +1082,7 @@ cmd_submit_run(
   if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
     store_flags = 1;
   }
-  run_id = run_add_record(cs->runlog_state, 
+  run_id = run_add_record(cs->runlog_state,
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, &run_uuid,
                           &phr->ip, phr->ssl_flag,
@@ -1718,7 +1718,7 @@ do_dump_master_runs(
     } else if (global->score_system == SCORE_OLYMPIAD) {
       if (pe->passed_mode > 0 && pe->test >= 0) {
         snprintf(passed_tests_buf, sizeof(passed_tests_buf), "%d", pe->test);
-        csv_rec[F_PASSED_TESTS] = passed_tests_buf;        
+        csv_rec[F_PASSED_TESTS] = passed_tests_buf;
       } else {
         if (has_failed_test_num[pe->status]) {
           snprintf(failed_test_buf, sizeof(failed_test_buf), "%d", pe->test);

@@ -238,7 +238,7 @@ zip_packet_class_parse(
       continue;
     }
     submit->file_size = zs.size;
-    
+
     //printf("[%d]: %s, %s, %s, %s, %s, %ld\n", i, submit->filename,
     //       submit->prob_guid, submit->user_guid, submit->prog_lang,
     //       submit->prog_charset, zs.size);
@@ -572,7 +572,7 @@ zip_packet_get_file(
   while (rz > 0) {
     rr = zip_fread(zf, ptr, rz);
     if (rr < 0) {
-      logerr("read of '%s' failed: %s", t3sb->filename, 
+      logerr("read of '%s' failed: %s", t3sb->filename,
              zip_file_strerror(zf));
       zip_fclose(zf);
       return -1;

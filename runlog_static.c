@@ -234,7 +234,7 @@ run_str_short_to_status(const unsigned char *str, int *pr)
   return -1;
 }
 
-static const unsigned char run_valid_statuses[RUN_STATUS_SIZE] = 
+static const unsigned char run_valid_statuses[RUN_STATUS_SIZE] =
 {
   [RUN_OK]               = 1,
   [RUN_COMPILE_ERR]      = 1,
@@ -271,7 +271,7 @@ run_is_valid_status(int status)
   return run_valid_statuses[status];
 }
 
-static const unsigned char run_valid_user_statuses[RUN_STATUS_SIZE] = 
+static const unsigned char run_valid_user_statuses[RUN_STATUS_SIZE] =
 {
   [RUN_OK]               = 1,
   [RUN_COMPILE_ERR]      = 1,
@@ -305,7 +305,7 @@ run_is_valid_user_status(int status)
   return run_valid_user_statuses[status];
 }
 
-static const unsigned char run_source_available_statuses[RUN_STATUS_SIZE] = 
+static const unsigned char run_source_available_statuses[RUN_STATUS_SIZE] =
 {
   [RUN_OK]               = 1,
   [RUN_COMPILE_ERR]      = 1,

@@ -215,7 +215,7 @@ parse_warnings(struct xml_tree *t, struct team_extra *te, int *pw_flag)
       switch (a->tag) {
       case TE_A_ISSUER_ID:
         if (xml_parse_int(NULL, 0, a->line, a->column, a->text, &x) < 0) return -1;
-        if (x <= 0 || x > RUNLOG_MAX_TEAM_ID) 
+        if (x <= 0 || x > RUNLOG_MAX_TEAM_ID)
           return xml_err_attr_invalid(a);
         cur_warn->issuer_id = x;
         break;

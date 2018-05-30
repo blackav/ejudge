@@ -241,7 +241,7 @@ l10n_html_locale_select_3(
 #endif
 }
 
-static struct locale_names 
+static struct locale_names
 {
   const char * const name;
   int value;

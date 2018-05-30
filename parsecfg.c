@@ -1101,7 +1101,7 @@ read_first_line(struct parsecfg_state *ps)
   if (buflen <= 3) return 0;
 
   p = buf;
-  if (*p == '#' || *p == ';' || *p == '%') p++; 
+  if (*p == '#' || *p == ';' || *p == '%') p++;
   while (isspace(*p)) p++;
   if (p[0] != '-' || p[1] != '*' || p[2] != '-') return 0;
   p += 3;
@@ -1187,7 +1187,7 @@ copy_param(
     ej_size64_t v = 0, *ptr = 0;
     if (size_str_to_size64_t(varvalue, &v) < 0) {
       fprintf(stderr, "%d: invalid value of size64 parameter for '%s'\n", ps->f_stack->lineno - 1, varname);
-      return -1;              
+      return -1;
     }
     ptr = (ej_size64_t *) ((char*) cfg + params[i].offset);
     *ptr = v;
@@ -1196,7 +1196,7 @@ copy_param(
 
     if (size_str_to_size_t(varvalue, &v) < 0) {
       fprintf(stderr, "%d: invalid value of size parameter for '%s'\n", ps->f_stack->lineno - 1, varname);
-      return -1;              
+      return -1;
     }
     ptr = (size_t*) ((char*) cfg + params[i].offset);
     *ptr = v;
@@ -1747,7 +1747,7 @@ sarray_parse(const unsigned char *str, char ***p_a)
           *q++ = *s++;
         }
       }
-      s++;      
+      s++;
     } else {
       while (*s && !isspace(*s)) *q++ = *s++;
     }
@@ -1869,7 +1869,7 @@ sarray_parse_2(const unsigned char *str, char ***p_a)
           *q++ = *s++;
         }
       }
-      s++;      
+      s++;
     } else {
       while (*s && !isspace(*s)) *q++ = *s++;
     }

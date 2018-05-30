@@ -403,7 +403,7 @@ main(int argc, char **argv)
         reply = 0;
         break;
       }
-      printf("Please answer y[es] or n[o].\n"); 
+      printf("Please answer y[es] or n[o].\n");
     }
     if (reply) continue;
 

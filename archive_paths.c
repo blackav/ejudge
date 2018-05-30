@@ -557,4 +557,3 @@ uuid_archive_remove(
 
   return 0;
 }
-

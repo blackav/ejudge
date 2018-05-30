@@ -188,7 +188,7 @@ client_make_form_headers(unsigned char const *self_url)
   sprintf(form_header_multipart,
           "<form method=\"post\" action=\"%s\" "
           "enctype=\"multipart/form-data\">",
-          self_url);  
+          self_url);
 }
 
 void

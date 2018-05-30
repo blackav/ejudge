@@ -1511,7 +1511,7 @@ full_user_report_generate(
       fprintf(fout, "\\hline\n");
       fprintf(fout, "%s", _("Problem"));
       if (need_variant) fprintf(fout, " & V");
-      fprintf(fout, " & %s & %s & %s & %s \\\\\n", 
+      fprintf(fout, " & %s & %s & %s & %s \\\\\n",
               _("Answer"), _("Score"), _("Status"), _("Comment"));
       for (i = f_id, k = 0; i < l_id; i++, k++) {
         if (!(prob = cs->probs[i])) continue;
@@ -1563,7 +1563,7 @@ full_user_report_generate(
           cur_score = prob->full_score;
         if (cur_score >= 0)
           fprintf(fout, " & %d", cur_score);
-        else 
+        else
           fprintf(fout, " &");
         fprintf(fout, " & %s", run_status_str(re.status, 0, 0, 0, 0));
         psrc = ns_get_checker_comment(cs, run_id, 0);
@@ -1588,7 +1588,7 @@ full_user_report_generate(
       fprintf(fout, "\\hline\n");
       fprintf(fout, "%s", _("Problem"));
       if (need_variant) fprintf(fout, " & V");
-      fprintf(fout, " & %s & %s & %s & %s \\\\\n", 
+      fprintf(fout, " & %s & %s & %s & %s \\\\\n",
               _("Answer code"), _("Answer"), _("Score"), _("Status"));
       for (i = f_id, k = 0; i < l_id; i++, k++) {
         if (!(prob = cs->probs[i])) continue;
@@ -1600,7 +1600,7 @@ full_user_report_generate(
           fprintf(fout, "%s-", TARMOR(prob->short_name));
           fprintf(fout, "%s", TARMOR(prob->long_name));
         }
-      
+
         variant = 0;
         if (prob->variant_num > 0) {
           variant = find_variant(cs, user_id, prob->id, 0);
@@ -1692,7 +1692,7 @@ full_user_report_generate(
         //fprintf(fout, " & %s", TARMOR(src_txt));
         if (cur_score >= 0)
           fprintf(fout, " & %d", cur_score);
-        else 
+        else
           fprintf(fout, " &");
         fprintf(fout, " & %s\\\\\n",
                 run_status_str(re.status, 0, 0, 0, 0));
@@ -2666,7 +2666,7 @@ ns_olympiad_final_user_report(
               "<br/><table class=\"b1\"><tr>%s%s</th></tr>\n<tr>%s<pre>%s</pre></td></tr></table>\n",
               th1, _("Answer text"),
               td1, ARMOR(num_txt));
-      fprintf(fout, "<p>%s</p>\n", 
+      fprintf(fout, "<p>%s</p>\n",
               _("Note, lines are numbered just for your convinience."));
       xfree(num_txt); num_txt = 0; num_len = 0;
       xfree(src_txt); src_txt = 0; src_len = 0;
@@ -3047,7 +3047,7 @@ write_xml_tex_testing_report(
 
     case RUN_RUN_TIME_ERR:
       if (t->exit_comment) {
-        fprintf(fout, " & %s", t->exit_comment); 
+        fprintf(fout, " & %s", t->exit_comment);
       } else if (t->term_signal >= 0) {
         fprintf(fout, " & %s %d (%s)", _("Signal"), t->term_signal,
                 os_GetSignalString(t->term_signal));
@@ -3660,7 +3660,7 @@ problem_report_generate(
       fprintf(fout, " & %s", run_status_str(re.status, 0, 0, 0, 0));
       if (re.score >= 0)
         fprintf(fout, " & %d", re.score);
-      else 
+      else
         fprintf(fout, " &");
       psrc = ns_get_checker_comment(cs, run_id, 0);
       if (!psrc) psrc = xstrdup("");

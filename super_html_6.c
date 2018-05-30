@@ -2270,16 +2270,16 @@ super_serve_op_USER_SAVE_ACTION(
     }
     if (opcaps_check(gcaps, bit) < 0) FAIL(SSERV_ERR_PERM_DENIED);
 
-    
+
     if (strcmp(u->login, other_login_str) != 0) {
-      if (userlist_clnt_edit_field(phr->userlist_clnt, ULS_EDIT_FIELD, other_user_id, contest_id, 0, 
+      if (userlist_clnt_edit_field(phr->userlist_clnt, ULS_EDIT_FIELD, other_user_id, contest_id, 0,
                                    USERLIST_NN_LOGIN, other_login_str))
-        FAIL(SSERV_ERR_DB_ERROR);        
+        FAIL(SSERV_ERR_DB_ERROR);
     }
     if (strcmp(u->email, email_str) != 0) {
-      if (userlist_clnt_edit_field(phr->userlist_clnt, ULS_EDIT_FIELD, other_user_id, contest_id, 0, 
+      if (userlist_clnt_edit_field(phr->userlist_clnt, ULS_EDIT_FIELD, other_user_id, contest_id, 0,
                                    USERLIST_NN_EMAIL, email_str))
-        FAIL(SSERV_ERR_DB_ERROR);        
+        FAIL(SSERV_ERR_DB_ERROR);
     }
     changed_count = 0;
     for (int i = 0; (field_id = global_checkbox_ids[i]); ++i) {
@@ -2433,7 +2433,7 @@ super_serve_op_USER_SAVE_ACTION(
     }
   }
 
-  static const int member_field_ids[] = 
+  static const int member_field_ids[] =
   {
     USERLIST_NM_STATUS,
     USERLIST_NM_GENDER,

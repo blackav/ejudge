@@ -977,7 +977,7 @@ ns_reg_main_page_view_info(
       if (!cnts->fields[ff]) continue;
       userlist_get_user_info_field_str(fbuf, sizeof(fbuf), ui,
                                        userlist_contest_field_ids[ff], 0);
-      
+
       legend = cnts->fields[ff]->legend;
       if (!legend || !*legend)
         legend = gettext(contest_field_desc[ff].description);
@@ -1293,7 +1293,7 @@ ns_edit_general_form(
                               contest_field_desc[ff].size, 0,
                               "%s", ARMOR(bb)));
     }
-  
+
     if (!comment) comment = "&nbsp;";
     fprintf(fout, "<td class=\"b0\" valign=\"top\"><font color=\"red\"><i>%s</i></font></td>", comment);
     fprintf(fout, "</tr>\n");
@@ -1541,7 +1541,7 @@ ns_edit_member_form(
     if (cm->fields[ff]->mandatory) fprintf(fout, "</b>");
     fprintf(fout, "</td>");
     bb[0] = 0;
-    if (m) 
+    if (m)
       userlist_get_member_field_str(bb, sizeof(bb), m,
                                     userlist_member_field_ids[ff], 0, 1);
     comment = 0;
@@ -2760,7 +2760,7 @@ reg_external_action(
 
   if (action_state && action_state->action_handler) {
     PageInterface *pg = ((external_action_handler_t) action_state->action_handler)();
-    
+
     if (pg->ops->execute) {
       int r = pg->ops->execute(pg, phr->log_f, phr);
       if (r < 0) {

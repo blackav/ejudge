@@ -530,7 +530,7 @@ super_html_commit_contest_2(
   size_t vmap_size = 0;
   FILE *vmap_f = 0;
   struct opcap_list_item *capp;
-  int dir_mode = -1, dir_group = -1, file_mode = -1, file_group = -1; 
+  int dir_mode = -1, dir_group = -1, file_mode = -1, file_group = -1;
   int old_vmap_group = 0, old_vmap_mode = 0;
   int old_serve_group = 0, old_serve_mode = 0;
 
@@ -963,7 +963,7 @@ super_html_commit_contest_2(
   }
   xfree(diff_str); diff_str = 0;
   xfree(vcs_str); vcs_str = 0;
-        
+
 
   /* 12. Rename files */
   rename_files(log_f, uhf, users_header_path, users_header_path_2, file_group, file_mode);
@@ -971,7 +971,7 @@ super_html_commit_contest_2(
   rename_files(log_f, rhf, register_header_path, register_header_path_2, file_group, file_mode);
   rename_files(log_f, rff, register_footer_path, register_footer_path_2, file_group, file_mode);
   rename_files(log_f, thf, team_header_path, team_header_path_2, file_group, file_mode);
-  
+
   rename_files(log_f, t1f, team_menu_1_path, team_menu_1_path_2, file_group, file_mode);
   rename_files(log_f, t2f, team_menu_2_path, team_menu_2_path_2, file_group, file_mode);
   rename_files(log_f, t3f, team_menu_3_path, team_menu_3_path_2, file_group, file_mode);

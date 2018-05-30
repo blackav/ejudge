@@ -319,4 +319,3 @@ const struct meta_methods meta_super_run_in_tester_packet_methods =
   (void *(*)(void *ptr, int tag))meta_super_run_in_tester_packet_get_ptr_nc,
   meta_super_run_in_tester_packet_lookup_field,
 };
-

@@ -15,8 +15,8 @@ You should have received a copy of the GNU Lesser General Public
 License along with this library; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-  
-	
+
+
 
 COMMENTS ON USING THIS CODE:
 
@@ -31,7 +31,7 @@ Normal usage is as follows:
    [4] Decryption is the same as encryption except that the plaintext and
        ciphertext are reversed.
 
-Warning #1:  The code does not check key lengths. (Caveat encryptor.) 
+Warning #1:  The code does not check key lengths. (Caveat encryptor.)
 Warning #2:  Beware that Blowfish keys repeat such that "ab" = "abab".
 Warning #3:  It is normally a good idea to zeroize the BLOWFISH_CTX before
   freeing it.
@@ -41,16 +41,16 @@ Warning #4:  Endianness conversions are the responsibility of the caller.
 Warning #5:  Make sure to use a reasonable mode of operation for your
   application.  (If you don't know what CBC mode is, see Warning #7.)
 Warning #6:  This code is susceptible to timing attacks.
-Warning #7:  Security engineering is risky and non-intuitive.  Have someone 
+Warning #7:  Security engineering is risky and non-intuitive.  Have someone
   check your work.  If you don't know what you are doing, get help.
 
 
 This is code is fast enough for most applications, but is not optimized for
 speed.
 
-If you require this code under a license other than LGPL, please ask.  (I 
-can be located using your favorite search engine.)  Unfortunately, I do not 
-have time to provide unpaid support for everyone who uses this code.  
+If you require this code under a license other than LGPL, please ask.  (I
+can be located using your favorite search engine.)  Unfortunately, I do not
+have time to provide unpaid support for everyone who uses this code.
 
                                              -- Paul Kocher
 */
@@ -447,5 +447,3 @@ void Blowfish_Init(BLOWFISH_CTX *ctx, unsigned char *key, int keyLen) {
     }
   }
 }
-
-

@@ -88,7 +88,7 @@ base64_encode(char const *in, int size, char *out)
     /* make a 12-bit group */
     ebuf = *(unsigned const char*) p++ << 4;
     ebuf += (ebuf & ~0x3F);
-    ebuf += (ebuf & ~0x3F);    
+    ebuf += (ebuf & ~0x3F);
     *s++ = base64_encode_table[(ebuf >> 8) & 0xFF];
     *s++ = base64_encode_table[ebuf & 0xFF];
     *s++ = '=';

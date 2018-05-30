@@ -620,7 +620,7 @@ collect_runlog(struct xml_tree *xt, size_t *psize,
   int max_run_id = -1, i, j;
   struct run_entry *ee;
   struct run_data *pd = 0;
-  
+
   for (xx = xt; xx; xx = xx->right) {
     ASSERT(xx->tag == RUNLOG_T_RUN);
     xr = (struct run_element*) xx;
@@ -669,7 +669,7 @@ collect_runlog(struct xml_tree *xt, size_t *psize,
 
 int
 parse_runlog_xml(
-        const unsigned char *str, 
+        const unsigned char *str,
         struct run_header *phead,
         size_t *psize,
         struct run_entry **pentries,
@@ -861,7 +861,7 @@ unparse_runlog_xml(
               attr_map[RUNLOG_A_ID], i,
               attr_map[RUNLOG_A_SHORT_NAME], val1,
               attr_map[RUNLOG_A_LONG_NAME], val2);
-                       
+
     }
     fprintf(f, "  </%s>\n", elem_map[RUNLOG_T_PROBLEMS]);
 
@@ -923,7 +923,7 @@ unparse_runlog_xml(
     if (!external_mode) {
       if (pp->ipv6_flag > 0)
         fprintf(f, " %s=\"yes\"", attr_map[RUNLOG_A_IPV6]);
-      if (pp->a.ip) 
+      if (pp->a.ip)
         fprintf(f, " %s=\"%s\"", attr_map[RUNLOG_A_IP],
                 xml_unparse_ip(pp->a.ip));
       if (pp->ssl_flag)

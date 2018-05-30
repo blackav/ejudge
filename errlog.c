@@ -66,4 +66,3 @@ info(char const *msg, ...)
   vwrite_log(0, LOG_INFO, msg, args);
   va_end(args);
 }
-

@@ -157,4 +157,3 @@ plugin_get(
       return &plugins[i];
   return NULL;
 }
-

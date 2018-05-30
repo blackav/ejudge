@@ -191,7 +191,7 @@ find_user_group(struct filter_env *env, const unsigned char *group_name)
       return i;
   }
   return FILTER_ERR_INV_USERGROUP;
-} 
+}
 
 static int
 check_user_group(struct filter_env *env, int user_id, int group_ind)
@@ -236,7 +236,7 @@ do_eval(struct filter_env *env,
       res->v.b = 1;
     }
     break;
-    
+
   case TOK_LOGAND:
     res->kind = TOK_BOOL_L;
     res->type = FILTER_TYPE_BOOL;
@@ -1086,11 +1086,11 @@ do_eval(struct filter_env *env,
 
   case TOK_INUSERGROUPINT:
     if ((c = do_eval(env, t->v.t[0], &r1)) < 0) return c;
-    ASSERT(r1.kind == TOK_INT_L); 
+    ASSERT(r1.kind == TOK_INT_L);
     res->kind = TOK_BOOL_L;
     res->type = FILTER_TYPE_BOOL;
     res->v.b = check_user_group(env, env->cur->user_id, r1.v.i);
-    break;   
+    break;
 
   default:
     SWERR(("unhandled kind: %d", t->kind));

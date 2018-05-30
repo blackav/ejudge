@@ -665,7 +665,7 @@ main(int argc, char const *argv[])
     fflush(stdout);
     r = userlist_clnt_list_users(server_conn, &user_ip, ssl_flag,
                                  user_contest_id,
-                                 client_locale_id, user_id, 
+                                 client_locale_id, user_id,
                                  0, self_url, "");
     if (r < 0) {
       printf("<p>%s</p>\n", _("Information is not available"));

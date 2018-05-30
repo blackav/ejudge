@@ -1059,7 +1059,7 @@ do_write_kirov_standings(
     }
   }
   if (!start_time || cur_time < start_time) {
-    if (!client_flag && !only_table_flag) 
+    if (!client_flag && !only_table_flag)
       write_standings_header(state, cnts, f, client_flag, 0, header_str, 0);
     if (!only_table_flag)
       fprintf(f, "<%s>%s</%s>", head_style, _("The contest is not started"),
@@ -1119,7 +1119,7 @@ do_write_kirov_standings(
     for (i = 1, t_tot = 0; i < t_max; i++) {
       t_rev[i] = -1;
       if (!teamdb_lookup(state->teamdb_state, i)) continue;
-      if ((teamdb_get_flags(state->teamdb_state, 
+      if ((teamdb_get_flags(state->teamdb_state,
                             i) & (TEAM_INVISIBLE | TEAM_BANNED
                                   | TEAM_DISQUALIFIED))) continue;
       if (!t_runs[i]) continue;
@@ -1261,7 +1261,7 @@ do_write_kirov_standings(
       if (filter_tree_bool_eval(&env, user_filter->stand_run_tree) <= 0)
         continue;
     }
-    
+
     tind = t_rev[pe->user_id];
     pind = p_rev[pe->prob_id];
     up_ind = (tind << row_sh) + pind;
@@ -1279,7 +1279,7 @@ do_write_kirov_standings(
      */
     run_time = pe->time;
     if (global->is_virtual) {
-      // filter future runs in unprivileged mode (not upsolving)		
+      // filter future runs in unprivileged mode (not upsolving)
       team_start_time = run_get_virtual_start_time(state->runlog_state, pe->user_id);
       team_stop_time = run_get_virtual_stop_time(state->runlog_state, pe->user_id, 0);
       if (team_stop_time <= 0 || (team_stop_time > 0 && run_time > team_stop_time)) {
@@ -1359,7 +1359,7 @@ do_write_kirov_standings(
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         if (run_tests > prob->tests_to_accept)
           run_tests = prob->tests_to_accept;
-        if (run_tests > prob_score[up_ind]) 
+        if (run_tests > prob_score[up_ind])
           prob_score[up_ind] = run_tests;
         full_sol[up_ind] = 1;
         att_num[up_ind]++;
@@ -1378,7 +1378,7 @@ do_write_kirov_standings(
         if (!full_sol[up_ind]) sol_att[up_ind]++;
         if (run_tests > prob->tests_to_accept)
           run_tests = prob->tests_to_accept;
-        if (run_tests > prob_score[up_ind]) 
+        if (run_tests > prob_score[up_ind])
           prob_score[up_ind] = run_score;
         att_num[up_ind]++;
         break;
@@ -2294,7 +2294,7 @@ do_write_kirov_standings(
                   row_attr, score_buf, att_buf,
                   ss.time_attr, dur_str);
         } else {
-          fprintf(f, "<td%s><b>%s</b>%s</td>", row_attr, 
+          fprintf(f, "<td%s><b>%s</b>%s</td>", row_attr,
                   score_buf, att_buf);
         }
       } else {
@@ -2353,7 +2353,7 @@ do_write_kirov_standings(
                     row_attr, score_buf, att_buf,
                     ss.time_attr, dur_str);
           } else {
-            fprintf(f, "<td%s><b>%s</b>%s</td>", row_attr, 
+            fprintf(f, "<td%s><b>%s</b>%s</td>", row_attr,
                     score_buf, att_buf);
           }
         } else {
@@ -2738,7 +2738,7 @@ do_write_moscow_standings(
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   struct filter_env env;
   struct xuser_team_extras *extras = NULL;
-  
+
   memset(&env, 0, sizeof(env));
 
   if (client_flag) head_style = cnts->team_head_style;
@@ -3509,7 +3509,7 @@ do_write_moscow_standings(
             ss.solved_attr,
             (int)(all_succ * 100.0 / all_att + 0.5),
             ss.penalty_attr);
-  
+
   fputs("</table>\n", f);
   if (!client_flag) {
     if (total_pages > 1) {
@@ -3627,7 +3627,7 @@ do_write_standings(
   char          url_str[1024];
   const unsigned char *bgcolor_ptr;
   unsigned char *head_style;
-  struct teamdb_export ttt;      
+  struct teamdb_export ttt;
   const struct run_entry *runs, *pe;
   unsigned char *t_runs = 0;
   int last_success_run = -1;
@@ -3973,7 +3973,7 @@ do_write_standings(
         teamdb_export_team(state->teamdb_state, runs[last_success_run].user_id, &ttt);
         sformat_message(dur_buf, sizeof(dur_buf), 0, global->team_info_url,
                         NULL, NULL, NULL, NULL, &ttt, ttt.user, 0, 0);
-        fprintf(f, "<a href=\"%s\">", dur_buf);      
+        fprintf(f, "<a href=\"%s\">", dur_buf);
       }
       fprintf(f, "%s", ARMOR(stand_get_name(state, runs[last_success_run].user_id)));
       if (global->team_info_url && global->team_info_url[0]) {
@@ -4090,7 +4090,7 @@ do_write_standings(
       if (global->team_info_url && global->team_info_url[0]) {
         sformat_message(url_str, sizeof(url_str), 0, global->team_info_url,
                         NULL, NULL, NULL, NULL, &ttt, ttt.user, 0, 0);
-        fprintf(f, "<a href=\"%s\">", url_str);      
+        fprintf(f, "<a href=\"%s\">", url_str);
       }
       fprintf(f, "%s", ARMOR(stand_get_name(state, t_ind[t])));
       if (global->team_info_url && global->team_info_url[0]) {
@@ -4230,14 +4230,14 @@ do_write_standings(
     }
     fprintf(f, "<td%s>%d%%</td><td%s>&nbsp;</td></tr>\n",
             ss.solved_attr, perc, ss.penalty_attr);
-    
+
     fputs("</table>\n", f);
     if (!client_flag && !only_table_flag) {
       if (footer_str) {
         process_template(f, footer_str, 0, 0, 0, get_copyright(0));
       } else {
         fputs("</body></html>", f);
-      } 
+      }
     }
   }
 
@@ -4436,7 +4436,7 @@ do_write_public_log(
   fprintf(f, "<table border=\"1\"><tr><th>%s</th><th>%s</th>"
           "<th>%s</th>"
           "<th>%s</th><th>%s</th>"
-          "<th>%s</th><th>%s</th>", 
+          "<th>%s</th><th>%s</th>",
           _("Run ID"), _("Time"),
           _("User name"), _("Problem"),
           _("Language"), _("Result"), str1);

@@ -472,10 +472,10 @@ okcancel(unsigned char const *fmt, ...)
     case 'q': case 'G' & 31: case '\033':
       c = 'q';
       goto menu_done;
-    case 'y': 
+    case 'y':
       c = 'y';
       goto menu_done;
-    case 'n': 
+    case 'n':
       c = 'n';
       goto menu_done;
     case '\n': case '\r': case ' ':
@@ -597,10 +597,10 @@ yesno(int init_val, unsigned char const *fmt, ...)
     case 'q': case 'G' & 31: case '\033':
       c = 'q';
       goto menu_done;
-    case 'y': 
+    case 'y':
       c = 'y';
       goto menu_done;
-    case 'n': 
+    case 'n':
       c = 'n';
       goto menu_done;
     case '\n': case '\r': case ' ':
@@ -1277,7 +1277,7 @@ get_contest_str(unsigned char *buf, size_t len,
   if (!s) s = "???";
   return snprintf(buf, len,
                   "%6d %c%c%c%c%c%c %-7.7s  %s",
-                  reg->id, 
+                  reg->id,
                   (reg->flags & USERLIST_UC_BANNED)?'B':' ',
                   (reg->flags & USERLIST_UC_INVISIBLE)?'I':' ',
                   (reg->flags & USERLIST_UC_LOCKED)?'L':' ',
@@ -2180,7 +2180,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         if (info[cur_i].field == USERLIST_NM_SERIAL) goto menu_continue;
         if (info[cur_i].field == USERLIST_NM_STATUS) {
           int new_status;
-          
+
           new_status = display_member_status_menu(cur_line, m->status);
           if (new_status < 0 || new_status >= USERLIST_ST_LAST
               || new_status == m->status)
@@ -2207,7 +2207,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
         }
         if (info[cur_i].field == USERLIST_NM_GENDER) {
           int new_gender;
-          
+
           new_gender = display_member_gender_menu(cur_line, m->gender);
           if (new_gender < 0 || new_gender >= USERLIST_SX_LAST
               || new_gender == m->gender)
@@ -2262,7 +2262,7 @@ do_display_user(unsigned char const *upper, int user_id, int contest_id,
           *p_start_item = cur_i;
           goto menu_continue;
         }
-      }        
+      }
     }
   menu_continue:
     unpost_menu(menu);
@@ -2459,7 +2459,7 @@ user_search(struct userlist_user **uu, int total_users, int cur_user)
       if (user_match(uu[i], search_regex_ready)) break;
     }
     break;
-    
+
   default:
     vis_err("Invalid regexp search");
     return -2;
@@ -2944,7 +2944,7 @@ do_display_registered_users(
       } else {
         // operation on a group of users
         if (okcancel("Set registration status for the selected users to %s?",
-                     userlist_unparse_reg_status(new_status)) != 1) 
+                     userlist_unparse_reg_status(new_status)) != 1)
           continue;
         for (j = 0; j < nuser; j++) {
           if (!sel_users.mask[j]) continue;
@@ -4246,7 +4246,7 @@ do_display_user_menu(unsigned char *upper, int *p_start_item, int only_choose)
         memset(g_sel_users.mask, 0, g_sel_users.allocated);
         g_sel_users.total_selected = 0;
       } else if (!g_sel_users.total_selected) {
-        // register the current user to the selected contests 
+        // register the current user to the selected contests
         i = item_index(current_item(menu));
         if (okcancel("Register user %d for selected contests?", uu[i]->id) != 1)
           goto menu_continue;
@@ -4783,7 +4783,7 @@ do_display_group_members_menu(
       // delete description
       i = item_index(current_item(menu));
       j = userlist_clnt_delete_field(server_conn, ULS_DELETE_GROUP_FIELD,
-                                     uu[i]->group_id, 0, 0, 
+                                     uu[i]->group_id, 0, 0,
                                      USERLIST_GRP_DESCRIPTION);
       if (j < 0) {
         vis_err("Operation failed: %s", userlist_strerror(-j));
@@ -5138,7 +5138,7 @@ do_display_group_menu(
       // delete description
       i = item_index(current_item(menu));
       j = userlist_clnt_delete_field(server_conn, ULS_DELETE_GROUP_FIELD,
-                                     uu[i]->group_id, 0, 0, 
+                                     uu[i]->group_id, 0, 0,
                                      USERLIST_GRP_DESCRIPTION);
       if (j < 0) {
         vis_err("Operation failed: %s", userlist_strerror(-j));
@@ -5326,7 +5326,7 @@ display_main_menu(void)
     hide_panel(in_pan);
     update_panels();
     doupdate();
-    
+
     // handle the requested action
     if (c == '\n') {
       ITEM *cur = current_item(menu);
@@ -5351,7 +5351,7 @@ display_main_menu(void)
 
     // perform other actions
   }
-  
+
   // cleanup
   del_panel(in_pan);
   del_panel(panel);

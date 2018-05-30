@@ -104,7 +104,7 @@ prepare_checker_comment(int utf8_mode, const unsigned char *str)
     len = strlen(wstr);
     if (len > 128) {
       p = wstr + 120;
-      while (*p >= 0x80 && *p <= 0xbf) p--; 
+      while (*p >= 0x80 && *p <= 0xbf) p--;
       *p++ = '.';
       *p++ = '.';
       *p++ = '.';
@@ -861,7 +861,7 @@ setup_environment(
   int jj;
   unsigned char env_buf[1024];
   const unsigned char *envval = NULL;
-  
+
   if (force_ejudge_env > 0) {
 #if defined EJUDGE_PREFIX_DIR
     task_SetEnv(tsk, "EJUDGE_PREFIX_DIR", EJUDGE_PREFIX_DIR);
@@ -2104,7 +2104,7 @@ invoke_checker(
   task_Log(tsk, 0, LOG_INFO);
 
   cur_info->checker_stats_str = get_process_stats_str(tsk);
-  
+
   if (task_IsTimeout(tsk)) {
     append_msg_to_log(check_out_path, "checker timeout (%ld ms)", task_GetRunningTime(tsk));
     err("checker timeout (%ld ms)", task_GetRunningTime(tsk));
@@ -2758,7 +2758,7 @@ run_one_test(
     }
   }
 
-  /*  
+  /*
   if (tst && tst->start_cmd && tst->start_cmd[0]) {
     info("starting: %s %s", tst->start_cmd, arg0_path);
     task_AddArg(tsk, tst->start_cmd);
@@ -3090,7 +3090,7 @@ run_one_test(
   if (chmod(output_path, 0600) < 0) {
     err("chmod failed: %s", os_ErrorMsg());
   }
-  
+
   /* fill test report structure */
   cur_info->times = task_GetRunningTime(tsk);
   *p_has_real_time = 1;
@@ -4190,7 +4190,7 @@ run_tests(
         --cur_test;
         continue;
       }
-                             
+
       close(evfds[1]); evfds[1] = -1;
       task_Wait(valuer_tsk);
       if (task_IsAbnormal(valuer_tsk)) {
@@ -4298,7 +4298,7 @@ run_tests(
       }
       tests.data[cur_test].max_score = this_score;
       total_max_score += this_score;
-      
+
       if (srpp->scoring_checker > 0) {
         total_score += tests.data[cur_test].score;
       } else if (tests.data[cur_test].status == RUN_OK) {
@@ -4336,7 +4336,7 @@ run_tests(
     reply_pkt->score = total_score;
 
     play_sound(global, messages_path, srgp->disable_sound, status,
-               tests.size - failed_test_count, total_score, 
+               tests.size - failed_test_count, total_score,
                user_spelling, problem_spelling);
   } else {
     reply_pkt->failed_test = tests.size - 1;

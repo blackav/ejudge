@@ -92,22 +92,22 @@ static struct MemoryBufferArray strs;
 
 static unsigned char const * const armored_c_translate_table[256] =
 {
-  "\\0", "\\x01", "\\x02", "\\x03", "\\x04", "\\x05", "\\x06", "\\a", "\\b", "\\t", "\\n", "\\v", "\\f", "\\r", "\\x0e", "\\x0f", 
-  "\\x10", "\\x11", "\\x12", "\\x13", "\\x14", "\\x15", "\\x16", "\\x17", "\\x18", "\\x19", "\\x1a", "\\x1b", "\\x1c", "\\x1d", "\\x1e", "\\x1f", 
-  0, 0, "\\\"", 0, 0, 0, 0, "\\\'", 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "\\\\", 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "\\x7f", 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+  "\\0", "\\x01", "\\x02", "\\x03", "\\x04", "\\x05", "\\x06", "\\a", "\\b", "\\t", "\\n", "\\v", "\\f", "\\r", "\\x0e", "\\x0f",
+  "\\x10", "\\x11", "\\x12", "\\x13", "\\x14", "\\x15", "\\x16", "\\x17", "\\x18", "\\x19", "\\x1a", "\\x1b", "\\x1c", "\\x1d", "\\x1e", "\\x1f",
+  0, 0, "\\\"", 0, 0, 0, 0, "\\\'", 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "\\\\", 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "\\x7f",
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
 static void
@@ -1347,7 +1347,7 @@ next_number(ScannerState *ss)
                 return next_float_number_e(ss, cur);
             }
             if (isfloatsuffix(ss->buf[cur])) ++cur;
-            return next_float_number(ss, cur);            
+            return next_float_number(ss, cur);
         }
         if (ss->buf[cur] == 'e' || ss->buf[cur] == 'E') {
             return next_float_number_e(ss, cur);
@@ -1360,7 +1360,7 @@ next_number(ScannerState *ss)
             return next_float_number_e(ss, cur);
         }
         if (isfloatsuffix(ss->buf[cur])) ++cur;
-        return next_float_number(ss, cur);            
+        return next_float_number(ss, cur);
     } else {
         abort();
     }
@@ -1552,7 +1552,7 @@ next_token(ScannerState *ss)
                 return next_op(ss, 1);
             }
         }
-        if (c == ';' || c == ',' || c == '{' || c == '}' 
+        if (c == ';' || c == ',' || c == '{' || c == '}'
             || c == ':' || c == '(' || c == ')' || c == '['
             || c == ']' || c == '?' || c == '~') {
             return next_op(ss, 1);
@@ -2044,7 +2044,7 @@ static int
 parse_declr_2(
         ScannerState *ss,
         TypeContext *cntx,
-        int quiet_mode, 
+        int quiet_mode,
         int anon_allowed,
         DeclrHelper **p_head,
         TypeInfo **p_ident)
@@ -2875,7 +2875,7 @@ parse_expression_1(ScannerState *ss, TypeContext *cntx, TypeInfo **p_info)
     TypeInfo *lhs_info = NULL;
     int r = parse_expression_2(ss, cntx, &lhs_info);
     if (r < 0) return r;
-    if (IS_OPER(ss, '=') 
+    if (IS_OPER(ss, '=')
         || IS_OPER_2(ss, '*', '=')
         || IS_OPER_2(ss, '/', '=')
         || IS_OPER_2(ss, '%', '=')
@@ -3053,7 +3053,7 @@ handle_directive_page(ScannerState *ss, TypeContext *cntx, FILE *out_f)
         }
 
         fprintf(out_f, "int %s%s;\n", page_name, ss->buf + start_param_pos);
-        fprintf(out_f, 
+        fprintf(out_f,
                 "static PageInterfaceOps page_ops =\n"
                 "{\n"
                 "    NULL, // destroy\n"
@@ -3540,7 +3540,7 @@ handle_a_open(
             fprintf(str_f, " title=\"%s\"", title_attr->value);
         }
         fprintf(str_f, " href=\"");
-        fclose(str_f); str_f = 0; 
+        fclose(str_f); str_f = 0;
         handle_html_string(prg_f, txt_f, log_f, str_p);
         free(str_p); str_p = 0; str_z = 0;
         if (script_attr) {
@@ -5312,7 +5312,7 @@ handle_img_open(
         handle_html_string(prg_f, txt_f, log_f, str_p);
     }
     free(str_p); str_p = NULL;
-    
+
     handle_html_string(prg_f, txt_f, log_f, " />");
     return 0;
 }
@@ -6086,7 +6086,7 @@ string_read_type_handler(
                 fprintf(prg_f,
                         "  FAIL(%s);\n"
                         "}\n",
-                        
+
                         process_err_attr(log_f, cntx, ps, errcode_buf, sizeof(errcode_buf), invalid_code));
             }
         }
@@ -6194,7 +6194,7 @@ process_file(
             }
         }
         processor_state_init_file(ps, path);
-        
+
         // read the whole file to memory
         mem_a = 1024;
         mem = xmalloc(mem_a * sizeof(mem[0]));

@@ -96,7 +96,7 @@
 #define URLARMOR(s)  url_armor_buf(&ab, s)
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
 
-#pragma GCC diagnostic ignored "-Wformat-security" 
+#pragma GCC diagnostic ignored "-Wformat-security"
 
 typedef struct ContestExternalActionVector
 {
@@ -1562,7 +1562,7 @@ priv_registration_operation(FILE *fout,
           goto cleanup;
         }
         break;
-      case NEW_SRV_ACTION_USERS_SET_PENDING: 
+      case NEW_SRV_ACTION_USERS_SET_PENDING:
         new_status = USERLIST_REG_PENDING;
         break;
       case NEW_SRV_ACTION_USERS_SET_OK:
@@ -3282,7 +3282,7 @@ priv_submit_run(
   if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
     store_flags = 1;
   }
-  run_id = run_add_record(cs->runlog_state, 
+  run_id = run_add_record(cs->runlog_state,
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, &run_uuid,
                           &phr->ip, phr->ssl_flag,
@@ -3343,14 +3343,14 @@ priv_submit_run(
     // manually tested outputs
     if (prob->check_presentation <= 0) {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
-                      "priv-submit", "ok", RUN_ACCEPTED, 
+                      "priv-submit", "ok", RUN_ACCEPTED,
                       "  This problem is checked manually");
       run_change_status_4(cs->runlog_state, run_id, RUN_ACCEPTED);
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_COMPILING, NULL);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        r = serve_compile_request(cs, run_text, run_size, cnts->id, 
+        r = serve_compile_request(cs, run_text, run_size, cnts->id,
                                   run_id, phr->user_id, 0 /* lang_id */, variant,
                                   0 /* locale_id */, 1 /* output_only*/,
                                   mime_type_get_suffix(mime_type),
@@ -3413,7 +3413,7 @@ priv_submit_run(
         if (r < 0) {
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
-      } else {      
+      } else {
         if (serve_run_request(cs, cnts, log_f, run_text, run_size,
                               cnts->id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
@@ -3659,7 +3659,7 @@ priv_set_run_rejected_status(
   }
   if ((re.status != RUN_ACCEPTED && re.status != RUN_PENDING_REVIEW && re.status != RUN_SUMMONED) && opcaps_check(phr->caps, OPCAP_EDIT_RUN)<0){
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;    
+    goto cleanup;
   }
   if (hr_cgi_param(phr, "msg_text", &text) < 0) {
     snprintf(errmsg, sizeof(errmsg), "%s", "msg_text is binary");
@@ -3820,7 +3820,7 @@ priv_submit_run_comment(
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT) {
     run_change_status_4(cs->runlog_state, run_id, RUN_REJECTED);
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_SUMMON) {
-    run_change_status_4(cs->runlog_state, run_id, RUN_SUMMONED);    
+    run_change_status_4(cs->runlog_state, run_id, RUN_SUMMONED);
   } else if (phr->action == NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK) {
     struct section_problem_data *prob = 0;
     int full_score = 0;
@@ -4102,7 +4102,7 @@ parse_run_id(FILE *fout, struct http_request_info *phr,
   int n, run_id;
   const unsigned char *s = 0, *errmsg = 0;
   unsigned char msgbuf[1024];
-  
+
   if (!(n = hr_cgi_param(phr, "run_id", &s))) {
     errmsg = ns_strerror_r(msgbuf, sizeof(msgbuf),
                            NEW_SRV_ERR_RUN_ID_UNDEFINED);
@@ -4631,7 +4631,7 @@ priv_simple_change_status(
   }
   if ((re.status != RUN_ACCEPTED && re.status != RUN_PENDING_REVIEW && re.status != RUN_SUMMONED) && opcaps_check(phr->caps, OPCAP_EDIT_RUN)<0){
     ns_error(log_f, NEW_SRV_ERR_PERMISSION_DENIED);
-    goto cleanup;    
+    goto cleanup;
   }
 
   memset(&new_run, 0, sizeof(new_run));
@@ -4957,7 +4957,7 @@ priv_rejudge_all(FILE *fout,
     break;
   case NEW_SRV_ACTION_REJUDGE_ALL_2:
     nsf_add_job(phr->fw_state, serve_rejudge_all(extra, ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, background_mode));
-    
+
     break;
   default:
     abort();
@@ -5170,7 +5170,7 @@ priv_new_run(FILE *fout,
   if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
     store_flags = 1;
   }
-  run_id = run_add_record(cs->runlog_state, 
+  run_id = run_add_record(cs->runlog_state,
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, &run_uuid,
                           &phr->ip, phr->ssl_flag, phr->locale_id,
@@ -5724,7 +5724,7 @@ priv_download_source(
       content_type = lang->content_type;
     } else if (lang->binary) {
       if (re.mime_type <= 0 && !strcmp(src_sfx, ".tar")) {
-        int mime_type = mime_type_guess(global->diff_work_dir, 
+        int mime_type = mime_type_guess(global->diff_work_dir,
                                         run_text, run_size);
         switch (mime_type) {
         case MIME_TYPE_APPL_GZIP: // application/x-gzip
@@ -5819,7 +5819,7 @@ priv_upload_runlog_csv_1(
   unsigned char bb[1024];
 
   if (opcaps_check(phr->caps, OPCAP_IMPORT_XML_RUNS) < 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
@@ -5870,7 +5870,7 @@ priv_upload_runlog_csv_2(
   int import_mode = -1;
 
   if (opcaps_check(phr->caps, OPCAP_IMPORT_XML_RUNS) < 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   if (!(r = hr_cgi_param(phr, "file", &s)))
     FAIL(NEW_SRV_ERR_FILE_UNSPECIFIED);
@@ -5949,7 +5949,7 @@ priv_upload_runlog_xml_1(
   unsigned char bb[1024];
 
   if (opcaps_check(phr->caps, OPCAP_IMPORT_XML_RUNS) < 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   l10n_setlocale(phr->locale_id);
   ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
@@ -6090,7 +6090,7 @@ priv_download_runs(
     use_problem_dir = 1;
 
   hr_cgi_param(phr, "problem_dir_prefix", &problem_dir_prefix);
-  
+
   if (hr_cgi_param(phr, "file_pattern_run", &s) > 0)
     file_name_mask |= NS_FILE_PATTERN_RUN;
   if (hr_cgi_param(phr, "file_pattern_uid", &s) > 0)
@@ -7854,7 +7854,7 @@ priv_external_action(FILE *out_f, struct http_request_info *phr)
 
   if (external_priv_action_states[action] && external_priv_action_states[action]->action_handler) {
     PageInterface *pg = ((external_action_handler_t) external_priv_action_states[action]->action_handler)();
-    
+
     if (pg->ops->execute) {
       int r = pg->ops->execute(pg, phr->log_f, phr);
       if (r < 0) {
@@ -8073,7 +8073,7 @@ privileged_entry_point(
 
   extra->serve_state->current_time = time(0);
   ns_check_contest_events(phr->extra, extra->serve_state, cnts);
-  
+
   if (phr->action <= 0 || phr->action >= NEW_SRV_ACTION_LAST) {
     phr->action = NEW_SRV_ACTION_MAIN_PAGE;
   }
@@ -8186,7 +8186,7 @@ unpriv_parse_run_id(FILE *fout, struct http_request_info *phr,
   int n, run_id;
   const unsigned char *s = 0, *errmsg = 0;
   unsigned char msgbuf[1024];
-  
+
   if (!(n = hr_cgi_param(phr, "run_id", &s))) {
     errmsg = ns_strerror_r(msgbuf, sizeof(msgbuf),
                            NEW_SRV_ERR_RUN_ID_UNDEFINED);
@@ -8828,7 +8828,7 @@ ns_submit_run(
     }
     break;
 
-  case PROB_TYPE_SELECT_MANY: 
+  case PROB_TYPE_SELECT_MANY:
     if (enable_ans_collect > 0) {
       // "ans_*"
       int max_ans = -1;
@@ -9177,7 +9177,7 @@ ns_submit_run(
   if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
     store_flags = 1;
   }
-  run_id = run_add_record(cs->runlog_state, 
+  run_id = run_add_record(cs->runlog_state,
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, uuid_ptr,
                           &phr->ip, phr->ssl_flag,
@@ -9801,7 +9801,7 @@ unpriv_submit_run(
   if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
     store_flags = 1;
   }
-  run_id = run_add_record(cs->runlog_state, 
+  run_id = run_add_record(cs->runlog_state,
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, &run_uuid,
                           &phr->ip, phr->ssl_flag,
@@ -10020,7 +10020,7 @@ unpriv_submit_clar(FILE *fout,
   int clar_id;
   int retval = 0;
 
-  // parameters: prob_id, subject, text,  
+  // parameters: prob_id, subject, text,
 
   if ((n = hr_cgi_param(phr, "prob_id", &s)) < 0) {
     FAIL2(NEW_SRV_ERR_INV_PROB_ID);
@@ -10159,7 +10159,7 @@ unpriv_submit_appeal(FILE *fout,
   int clar_id, test;
   int retval = 0;
 
-  // parameters: prob_id, subject, text,  
+  // parameters: prob_id, subject, text,
 
   if ((n = hr_cgi_param(phr, "prob_id", &s)) < 0) {
     FAIL2(NEW_SRV_ERR_INV_PROB_ID);
@@ -10291,7 +10291,7 @@ virtual_stop_callback(
 
   if (global->enable_auto_print_protocol <= 0) return;
 
-  // Note, that all printing errors are ignored... 
+  // Note, that all printing errors are ignored...
   if (cnts->default_locale_num > 0) locale_id = cnts->default_locale_num;
   if (locale_id > 0) l10n_setlocale(locale_id);
   tmpf = open_memstream(&tmps, &tmpz);
@@ -10615,7 +10615,7 @@ unpriv_view_test(
     break;
   default:
     FAIL2(NEW_SRV_ERR_PERMISSION_DENIED);
-  }    
+  }
 
   retval = ns_write_tests(cs, fout, phr->log_f, phr->action, run_id, test_num);
   if (retval < 0) goto fail;
@@ -11322,7 +11322,7 @@ unpriv_xml_update_answer(
     if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
       store_flags = 1;
     }
-    run_id = run_add_record(cs->runlog_state, 
+    run_id = run_add_record(cs->runlog_state,
                             precise_time.tv_sec, precise_time.tv_usec * 1000,
                             run_size, shaval, &run_uuid,
                             &phr->ip, phr->ssl_flag,
@@ -12751,7 +12751,7 @@ ns_int_external_action(
     err("ns_int_external_action: action %d create error", action);
     return -1;
   }
-    
+
   if (pg->ops->execute) {
     int r = pg->ops->execute(pg, phr->log_f, phr);
     if (r < 0) {

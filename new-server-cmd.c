@@ -350,7 +350,7 @@ static void
 shift_args(int *p_argc, char **argv, int i, int n)
 {
   int j;
-  
+
   if (i >= *p_argc || i + n > *p_argc) return;
   for (j = i + n; j < *p_argc; j++)
     argv[j - n] = argv[j];
@@ -511,7 +511,7 @@ post_login(void)
     if (ferror(fout) || fclose(fout) < 0)
       op_error("write error");
   }
-  
+
   return 0;
 }
 
@@ -859,7 +859,7 @@ main(int argc, char *argv[])
     startup_error("cannot load contest %d: %s",
                   contest_id, contests_strerror(-n));
   i++;
-  
+
   if (i >= argc) startup_error("command expected");
   command = argv[i++];
 

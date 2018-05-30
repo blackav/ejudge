@@ -300,4 +300,3 @@ compile_request_packet_read(
   compile_request_packet_free(pout);
   return -1;
 }
-

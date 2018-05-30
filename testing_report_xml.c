@@ -1486,7 +1486,7 @@ unparse_digest_attr(
     fprintf(out, "  %s=\"", attr_map[attr_index]);
     digest_to_file(out, DIGEST_SHA1, raw);
     fprintf(out, "\"");
-  } 
+  }
 }
 
 static void

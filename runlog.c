@@ -732,7 +732,7 @@ run_get_finish_time(runlog_state_t state)
 
 void
 run_get_times(
-        runlog_state_t state, 
+        runlog_state_t state,
         time_t *start,
         time_t *sched,
         time_t *dur,
@@ -1859,7 +1859,7 @@ run_clear_entry(runlog_state_t state, int run_id)
   case RUN_EMPTY:
     break;
   case RUN_VIRTUAL_STOP:
-    /* VSTOP events can safely be cleared */ 
+    /* VSTOP events can safely be cleared */
     ue = get_user_entry(state, state->runs[run_id - state->run_f].user_id);
     ASSERT(ue->status == V_VIRTUAL_USER);
     ASSERT(ue->start_time > 0);
@@ -2735,7 +2735,7 @@ run_get_virtual_info(
 
   if (run_start < 0 || run_end < 0) return -1;
   if (vs) memcpy(vs, &state->runs[run_start - state->run_f], sizeof(*vs));
-  if (ve) memcpy(ve, &state->runs[run_end - state->run_f], sizeof(*ve));  
+  if (ve) memcpy(ve, &state->runs[run_end - state->run_f], sizeof(*ve));
   return count;
 }
 

@@ -283,6 +283,6 @@ userlist_count_info_errors(
 
     }
   }
-  
+
   return err_count;
 }
