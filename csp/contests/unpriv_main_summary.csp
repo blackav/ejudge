@@ -263,7 +263,7 @@
         <td class="b1"><% score_view_display_f(out_f, prob, pinfo[prob_id].best_score); %></td>
 <%
                 } else {
-                  if (re.passed_mode > 0) { 
+                  if (re.passed_mode > 0) {
 %>
         <td class="b1"><s:v value="test" /></td>
 <%
@@ -428,7 +428,7 @@
         if ((global->score_system == SCORE_OLYMPIAD && !accepting_mode)
             || global->score_system == SCORE_KIROV || global->score_system == SCORE_MOSCOW) {
 %>
-<p><big><s:_>Total score</s:_>: <s:v value="total_score" /><% 
+<p><big><s:_>Total score</s:_>: <s:v value="total_score" /><%
           if (total_score_uncertain) {
 %> - <i><s:_>May change!</s:_></i><%
           } %></big></p>

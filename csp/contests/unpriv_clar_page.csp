@@ -67,7 +67,7 @@
   unpriv_load_html_style(phr, cnts, 0, 0);
   l10n_setlocale(phr->locale_id);
   snprintf(title, sizeof(title), "%s %d", _("Clarification"), clar_id);
-%><%@include "unpriv_header.csp" 
+%><%@include "unpriv_header.csp"
 %><%@include "unpriv_menu.csp"
 %><%@include "unpriv_status.csp"
 %>

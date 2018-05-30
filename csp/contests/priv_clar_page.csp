@@ -20,7 +20,7 @@
   int enable_main_menu = 0;
   unsigned char *prob_name = NULL;
   const struct section_problem_data *prob = NULL;
-  int user_id = 0;   
+  int user_id = 0;
   const struct userlist_user *u = NULL;
   const struct userlist_user_info *ui = NULL;
   unsigned char avatar_url[1024];
@@ -101,7 +101,7 @@
 
   unsigned char title[1024];
   snprintf(title, sizeof(title), "%s %d", _("Viewing clar"), clar_id);
-%><%@include "priv_header.csp" 
+%><%@include "priv_header.csp"
 %>
 </div>
 

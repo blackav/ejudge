@@ -16,7 +16,7 @@
   int enable_main_menu = 0;
 
   if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   if (cs->upsolving_mode) {
 %><s:read var="freeze_standings" ignoreerrors="yes" /><%

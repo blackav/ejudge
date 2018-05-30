@@ -47,7 +47,7 @@
   r = userlist_clnt_recover_passwd_2(ul_conn, ULS_RECOVER_PASSWORD_2,
                                      &phr->ip, phr->ssl_flag,
                                      phr->contest_id, phr->session_id,
-                                     &user_id, &regstatus, 
+                                     &user_id, &regstatus,
                                      &login, &name, &passwd);
 
   s = name;

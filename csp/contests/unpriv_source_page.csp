@@ -136,7 +136,7 @@ ns_unpriv_parse_run_id(
   l10n_setlocale(phr->locale_id);
   snprintf(title, sizeof(title), "%s %d", _("Source for run"), run_id);
 #define INCLUDE_PRISM 1
-%><%@include "unpriv_header.csp" 
+%><%@include "unpriv_header.csp"
 %><%@include "unpriv_menu.csp"
 %><%@include "unpriv_status.csp"
 %>

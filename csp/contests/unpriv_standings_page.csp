@@ -64,7 +64,7 @@
       }
     }
   }
-%><%@include "unpriv_header.csp" 
+%><%@include "unpriv_header.csp"
 %><%@include "unpriv_menu.csp"
 %><%@include "unpriv_status.csp"
 %>

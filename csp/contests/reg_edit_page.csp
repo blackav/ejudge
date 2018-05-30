@@ -52,20 +52,20 @@ ns_edit_general_form(
   } else {
     goto redirect_back;
   }
- 
+
   l10n_setlocale(phr->locale_id);
 
   if (phr->action == NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE)
     s = _("Editing general info");
   else if (phr->action == NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE)
     s = _("Editing member info");
-  else 
+  else
     s = _("Good!");
 
   n = phr->name;
   if (!n || !*n) n = phr->login;
 
-  snprintf(title, sizeof(title), "%s [%s, %s]", s, html_armor_buf(&ab, n), extra->contest_arm); 
+  snprintf(title, sizeof(title), "%s [%s, %s]", s, html_armor_buf(&ab, n), extra->contest_arm);
 %><%@include "reg_header.csp"
 %>
 <div class="user_actions">

@@ -35,7 +35,7 @@
     for (i = 0; i < CONTEST_LAST_MEMBER; i++)
       if (cnts->members[i] && cnts->members[i]->max_count > 0)
         allowed_info_edit = 1;
-    
+
     (void) allowed_info_edit;
   } else {
 %><s:read var="login" ignoreerrors="yes" /><%
@@ -197,7 +197,7 @@ e-mail address. You should try to register later.
 
 <p><s:_><b>Note</b>, that you must log in 24 hours after the form is filled and submitted, or your registration will be cancelled!</s:_></p>
 
-<p><s:_>If you already have an ejudge account on this server, you may use it. If so, follow the link</s:_>: 
+<p><s:_>If you already have an ejudge account on this server, you may use it. If so, follow the link</s:_>:
 <s:url name="LoginUrl" ac="reg-login-page"><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url>
 <s:a url="LoginUrl"><s:_>Use an existing account</s:_></s:a>.
 

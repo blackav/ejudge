@@ -522,7 +522,7 @@
         break;
       } %>
 <tr><td><s:_>Send!</s:_></td><td><s:submit ac="submit-run" /></td></tr></table></s:form>
-     
+
 <hr/><a name="submit"></a>
 <h2><s:_>Select another problem</s:_></h2>
 <s:form method="get">
