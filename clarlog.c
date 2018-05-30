@@ -757,5 +757,5 @@ clar_count_run_messages(
     const struct clar_entry_v2 *pe = &state->clars.v[clar_id];
     count += (!memcmp(p_run_uuid, &pe->run_uuid, sizeof(pe->run_uuid)));
   }
-  return 0;
+  return count;
 }
