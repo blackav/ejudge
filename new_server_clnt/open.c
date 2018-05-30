@@ -40,7 +40,7 @@ new_server_clnt_open(const unsigned char *socketpath, new_server_conn_t *p_conn)
   signal(SIGPIPE, SIG_IGN);
 
   if (!socketpath) return -NEW_SRV_ERR_BAD_SOCKET_NAME;
-  max_path_buf = sizeof(struct sockaddr_un) - 
+  max_path_buf = sizeof(struct sockaddr_un) -
     XOFFSET(struct sockaddr_un, sun_path);
   if (strlen(socketpath) >= max_path_buf) {
     err("new_server_clnt_open: socket path length is too long (%zu)",
