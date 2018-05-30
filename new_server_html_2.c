@@ -8873,6 +8873,11 @@ write_json_run_info(
   }
   ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, pinfo);
 
+  int message_count = 0;
+  if (pre->run_uuid.v[0] || pre->run_uuid.v[1] || pre->run_uuid.v[2] || pre->run_uuid.v[3]) {
+    message_count = clar_count_run_messages(cs->clarlog_state, &pre->run_uuid);
+  }
+
   RunDisplayInfo ri = {};
   fill_user_run_info(cs, pinfo, run_id, pre, start_time, stop_time, 1, &ri);
 
@@ -8964,6 +8969,9 @@ write_json_run_info(
       if (ri.score_str && ri.score_str[0]) {
         fprintf(fout, ",\n      \"score_str\": \"%s\"", json_armor_buf(&ab, ri.score_str));
       }
+    }
+    if (message_count > 0) {
+      fprintf(fout, ",\n      \"message_count\": %d", message_count);
     }
 
     if ((flags = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), pre)) >= 0) {
