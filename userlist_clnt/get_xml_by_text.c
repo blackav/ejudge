@@ -53,7 +53,7 @@ userlist_clnt_get_xml_by_text(
 
   in = (struct userlist_pk_xml_data*) in_gen;
   xml_len = strlen(in->data);
-  if (xml_len != in->info_len) goto cleanup; 
+  if (xml_len != in->info_len) goto cleanup;
   if (in_size != sizeof(*in) + xml_len) goto cleanup;
 
   if (reply_text) {
