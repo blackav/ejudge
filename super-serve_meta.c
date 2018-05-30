@@ -170,3 +170,4 @@ const struct meta_methods ss_sid_state_methods =
   (void *(*)(void *ptr, int tag))ss_sid_state_get_ptr_nc,
   ss_sid_state_lookup_field,
 };
+

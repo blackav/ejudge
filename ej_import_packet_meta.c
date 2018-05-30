@@ -77,3 +77,4 @@ const struct meta_methods meta_ej_import_packet_methods =
   (void *(*)(void *ptr, int tag))meta_ej_import_packet_get_ptr_nc,
   meta_ej_import_packet_lookup_field,
 };
+

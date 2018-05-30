@@ -233,3 +233,4 @@ const struct meta_methods meta_problem_config_section_methods =
   (void *(*)(void *ptr, int tag))meta_problem_config_section_get_ptr_nc,
   meta_problem_config_section_lookup_field,
 };
+

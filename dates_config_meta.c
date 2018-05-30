@@ -134,3 +134,4 @@ const struct meta_methods meta_dates_problem_data_methods =
   (void *(*)(void *ptr, int tag))meta_dates_problem_data_get_ptr_nc,
   meta_dates_problem_data_lookup_field,
 };
+

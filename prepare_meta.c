@@ -806,3 +806,4 @@ const struct meta_methods cntstester_methods =
   (void *(*)(void *ptr, int tag))cntstester_get_ptr_nc,
   cntstester_lookup_field,
 };
+
