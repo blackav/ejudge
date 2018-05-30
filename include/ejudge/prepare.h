@@ -431,7 +431,7 @@ struct section_global_data
   unsigned char *diff_path;
 
   /* --- server <-> compile interaction --- */
-  /* global parameters are used by compile utility, whereas 
+  /* global parameters are used by compile utility, whereas
    * language-local parameters are used by serve */
   /** the compile spool root dir */
   unsigned char *compile_dir;
@@ -443,7 +443,7 @@ struct section_global_data
   /** additional compile directories */
   char **extra_compile_dirs;
 
-  /* these are used by serve */  
+  /* these are used by serve */
   /* var/compile prefix is implicit and cannot be changed! */
   /** base directory for compile results */
   unsigned char *compile_out_dir;
@@ -953,7 +953,7 @@ struct section_problem_data
 
   /** send a notification to judges upon submit */
   ejbyteflag_t notify_on_submit;
-  
+
   // padding to 8-byte boundary
   unsigned char _pad1[3];
 
@@ -1413,7 +1413,7 @@ int
 prepare(
         const struct contest_desc *cnts,
         serve_state_t,
-        char const *, 
+        char const *,
         int flags,
         int mode,
         char const *opts,

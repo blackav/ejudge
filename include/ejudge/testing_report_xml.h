@@ -140,7 +140,7 @@ typedef struct testing_report_xml
   int user_score;
   int user_max_score;
   int user_run_tests;
-  int compile_error; // only compiler_output is filled 
+  int compile_error; // only compiler_output is filled
   unsigned char *comment;       /* additional testing comment */
   unsigned char *valuer_comment;
   unsigned char *valuer_judge_comment;

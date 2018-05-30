@@ -61,7 +61,7 @@ path_add_dir(char *path, char const *dir)
 {
   pathmake2(path, dir, "/", path, NULL);
 }
-extern inline void 
+extern inline void
 path_init(char *path, char const *dir, char const *def)
 {
   if (!path[0]) pathcpy(path, def);

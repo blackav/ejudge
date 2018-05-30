@@ -235,7 +235,7 @@ hr_client_url(
 void
 hr_set_symbolic_action_table(
         int table_size,
-        const unsigned char * const *table, 
+        const unsigned char * const *table,
         const unsigned char * const *submit_labels,
         const unsigned char * const *helps);
 

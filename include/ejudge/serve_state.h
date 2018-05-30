@@ -758,7 +758,7 @@ serve_get_user_result_score(
 
 int
 serve_testing_queue_delete(
-        const struct contest_desc *cnts, 
+        const struct contest_desc *cnts,
         serve_state_t state,
         const unsigned char *queue_id,
         const unsigned char *packet,
@@ -774,7 +774,7 @@ serve_testing_queue_change_priority(
 
 int
 serve_testing_queue_delete_all(
-        const struct contest_desc *cnts, 
+        const struct contest_desc *cnts,
         serve_state_t state,
         const unsigned char *user_login);
 

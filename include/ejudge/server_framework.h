@@ -41,7 +41,7 @@ struct client_state
   int id;
   int fd;
   int state;
-  
+
   int peer_pid;
   int peer_uid;
   int peer_gid;
@@ -113,7 +113,7 @@ struct server_framework_watch
 {
   int fd;
   int mode;
-  void (*callback)(struct server_framework_state *, 
+  void (*callback)(struct server_framework_state *,
                    struct server_framework_watch *,
                    int event);
   void *user;

@@ -160,4 +160,3 @@ xml_parse_full_cookie(
         ej_cookie_t *p_client_key);
 
 #endif /* __XML_UTILS_H__ */
-

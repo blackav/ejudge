@@ -63,7 +63,7 @@ variant_map_unparse(
 int
 variant_map_save(
         FILE *log_f,
-        const struct variant_map *vmap, 
+        const struct variant_map *vmap,
         const unsigned char *path,
         int mode);
 struct variant_map *

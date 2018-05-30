@@ -23,11 +23,11 @@
  * Strings are terminated with '\0' character and can have
  * unlimited length. The module provides type-specific interface for
  * C code generated from AST specifications.
- * 
+ *
  * The following operations are defined on type tFString
  * (they are actually defined as macros, so don't confuse that tFString
  * is passed by value even it is modified in the function).
- * 
+ *
  */
 
 #include "ejudge/integral.h"
@@ -48,8 +48,8 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define fsNULL             { NULL, 0, 0 }
-/* 
- * fsNULL is a STATIC INITIALIZER. 
+/*
+ * fsNULL is a STATIC INITIALIZER.
  * You can use it for initialization of your static data like this
  * static tFString fs_foo = fsNULL;
  */
@@ -66,7 +66,7 @@ extern "C" {
  *   initialized value to the routine it will not fail, but this
  *   will cause a heap memory leak. But call fsInit after another
  *   fsInit or after fsDestroy is safe.
- */    
+ */
 
 #define fsInitEmpty(a)     _fsInitEmpty(&(a))
   void _fsInitEmpty(tFString *pfs);
@@ -84,7 +84,7 @@ extern "C" {
 
 #define fsDestroy(a)       _fsDestroy(&(a))
   void _fsDestroy(tFString *pfs);
-/* 
+/*
  * void fsDestroy(tFString fs);
  *    Frees memory allocated for the given flexible string and
  *    resets its value to the value of empty string.
@@ -100,17 +100,17 @@ extern "C" {
  * void fsClear(tFString fs);
  *    clears string contained in its argument but do not release
  *    dynamic memory.
- */    
+ */
 
 #define fsAlloc(a,s) _fsAlloc(&(a),s)
   void _fsAlloc(tFString *pfs,size_t size);
 /*
- * void fsAlloc(tFString fs,size_t size);   
+ * void fsAlloc(tFString fs,size_t size);
  *    allocates enough memory for storing a string of length size
  *    (size must count '\0' string terminator), but do not change contents
  *    of the string `fs'. If string `fs' already has enough size, no
  *    action is performed.
- */ 
+ */
 
 #define fsSetChar(a,b)  _fsSetChar(&(a),b)
   void _fsSetChar(tFString *pfs, int);
@@ -127,11 +127,11 @@ extern "C" {
  *    adds a character passed in argument 'c' to the end of string
  *    and expands string memory if necessary.
  */
-    
+
 #define fsAppend(a,b) _fsInsStr(&(a),b,(a).Used)
 /*
  * void fsAppend(tFString fs,char *str);
- *    adds a null-terminated string passed in 'str' to the end 
+ *    adds a null-terminated string passed in 'str' to the end
  *    of the flexible string 'fs'.
  */
 
@@ -144,11 +144,11 @@ extern "C" {
 
 #define fsConcat(d,s) _fsInsFS(&(d),&(s),(d).Used)
 /*
- * void fsConcat(tFString fsDest,tFString fsSrc);      
+ * void fsConcat(tFString fsDest,tFString fsSrc);
  *    concatenates two flexible strings 'fsDest' and 'fsSrc' and
  *    puts the result to `fsDest'.
  */
-    
+
 #define fsInsChar(fs,c,p)  _fsInsChar(&(fs),c,p)
   void _fsInsChar(tFString *,char,int);
 /*
@@ -159,14 +159,14 @@ extern "C" {
  *    If pos lies out of valid range, range check error is reported
  *    and program aborts.
  */
-    
+
 #define fsInsStr(fs,s,p)   _fsInsStr(&(fs),s,p)
   void _fsInsStr(tFString *,char *,int);
 /*
  * void fsInsStr(tFString fsDest,char *str,int pos);
  *    inserts a string `str' at position `pos'
  */
-    
+
 #define fsInsMem(fs,s,l,p) _fsInsMem(&(fs),s,l,p)
   void _fsInsMem(tFString*,char*,int l,int p);
 /*
@@ -179,7 +179,7 @@ extern "C" {
 /*
  * void fsInsFS(tFString fsDest,tFString fsSrc,int pos);
  *    inserts a flexible string `fsSrc' at position `pos'
- */ 
+ */
 
 #define fsCut(fs,i,l) _fsCut(&(fs),i,l)
   void _fsCut(tFString *, int, int);
@@ -199,7 +199,7 @@ extern "C" {
  *    returns the length of flexible string 'fs'.
  *    '\0' terminator of the string is not counted.
  */
-    
+
 #define fsString(a)        ((a).String)
 /*
  * char* fsString(tFString fs);
@@ -212,11 +212,11 @@ extern "C" {
  *    for the string memory that lies right after the terminator of
  *    the string.
  */
-    
+
 #define fsDup(a)           _fsDup(&(a))
   char *_fsDup(tFString *pfs);
 /*
- * char* fsDup(tFString fs);   
+ * char* fsDup(tFString fs);
  *    returns a duplicate of C string contained in string 'fs'.
  *    Memory for the copy is allocated in the heap, so user should
  *    take care to free allocated memory when the string will not
@@ -235,12 +235,12 @@ extern "C" {
 #define fsAssign(d,s) _fsAssign(&(d),&(s))
   void _fsAssign(tFString *,tFString *);
 /*
- * void fsAssign(tFString fsDest,tFString fsSrc);      
+ * void fsAssign(tFString fsDest,tFString fsSrc);
  *    assigns value of flexible sting 'fsSrc' to 'fsDest'.
  *    (in C++ it corresponds to overloaded assignment operator).
  *    Memory, possibly used by string `d' is correctly freed.
  */
-    
+
 #define fsCopy(d,s) _fsCopy(&(d),&(s))
   void _fsCopy(tFString *,tFString *);
 /*
@@ -249,13 +249,13 @@ extern "C" {
  *    fsDest must not be initialized. (in C++ this function
  *    corresponds to copy constructor).
  */
-    
+
 #define fsPut(s,f)         _fsPut(&(s),f)
   void _fsPut(tFString *pfs,FILE *f);
 /*
  * void fsPut(tFString fs,FILE *f);
  *    writes contents of flexible string 'fs' to binary file 'f'.
- */    
+ */
 
 #define fsGet(s,f) _fsGet(&(s),f)
   void _fsGet(tFString *pfs,FILE *f);
@@ -263,7 +263,7 @@ extern "C" {
  * void fsGet(tFString fs,FILE *f);
  *    reads flexible string from binary file 'f'. Read value is put
  *    to 'fs'.
- */    
+ */
 
 #define fsWrite(s,f)       _fsWrite(&(s),f)
 /*
@@ -271,13 +271,13 @@ extern "C" {
  *    writes flexible string 'fs' to text file 'f'.
  */
   void _fsWrite(tFString *pfs,FILE *f);
-    
+
 #define fsRead(s,f) _fsRead(&(s),f)
   void _fsRead(tFString *pfs,FILE *f);
 /*
- * void fsRead(tFString fs,FILE *f);   
+ * void fsRead(tFString fs,FILE *f);
  *    reads flexible string 'fs' from the text file 'f'.
- */    
+ */
 
 #define fsInt(s,pi)        _fsInt(&(s),pi)
 /*
@@ -286,7 +286,7 @@ extern "C" {
  *    successful and False if conversion failed.
  */
   int  _fsInt(tFString *pfs,int *pi);
-    
+
 #define fsDouble(s,pd)     _fsDouble(&(s),pd)
 /*
  * Bool fsDouble(tFString fs,double *pd);
@@ -335,7 +335,7 @@ extern "C" {
   void fsCloseModule(void);
 /*
  *    Releases memory used for internal buffers
- */    
+ */
 
 /* Macros for Cocktail.
  * This macros will be used by AST generated routines if you use
@@ -384,7 +384,7 @@ extern tFString reuse_fsTempBuf;
 
 #define closetString(a)        if(a != NULL) free(a); a = NULL;
 #define begintString(a)        a = NULL;
-     
+
 /* Cocktail type specific macros for `char'.
  * Only Read and Write macros are redefined here since other
  * macros for `char' are good enought.
@@ -393,7 +393,7 @@ extern tFString reuse_fsTempBuf;
  */
 #define readchar(a)            fscanf(yyf," \'%c\'",&(a));
 #define writechar(a)           fprintf(yyf,"\'%c\'",(a));
-     
+
 #if defined __cplusplus
 }
 #endif /* __cplusplus */

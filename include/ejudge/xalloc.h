@@ -51,7 +51,7 @@ char *xmemdup(char const *, size_t size);
 
 /* s1 and s2 both dropped after merging */
 char *xstrmerge0(char *s1, char *s2);
-/* only s1 dropped after merging */  
+/* only s1 dropped after merging */
 char *xstrmerge1(char *s1, char const *s2);
 /* neither s1 nor x2 are dropped after merging */
 char *xstrmerge2(char const *s1, char const *s2);

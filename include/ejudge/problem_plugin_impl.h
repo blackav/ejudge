@@ -74,7 +74,7 @@ text_area_process_string(const unsigned char *s,
 
 static int
 parse_form(
-        FILE *fout, 
+        FILE *fout,
         FILE *flog,
         struct http_request_info *phr,
         const struct contest_desc *cnts,
@@ -82,7 +82,7 @@ parse_form(
 
 static unsigned char *
 parse_form_func(
-        void *data, 
+        void *data,
         FILE *flog,
         struct http_request_info *phr,
         const struct contest_desc *cnts,

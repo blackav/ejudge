@@ -157,7 +157,7 @@ ejudge_cfg_free_caps_file(struct ejudge_cfg_caps_file *info);
 int
 ejudge_cfg_opcaps_find(
         const struct ejudge_cfg *cfg,
-        const unsigned char *login_str, 
+        const unsigned char *login_str,
         opcap_t *p_caps);
 const unsigned char *
 ejudge_cfg_user_map_find(

@@ -241,7 +241,7 @@ struct uldb_plugin_iface
   int (*remove_group_member)(void *, int group_id, int user_id);
   // list users
   ptr_iterator_t (*get_brief_list_iterator_2)(
-        void *, 
+        void *,
         int contest_id,
         int group_id,
         const unsigned char *filter,

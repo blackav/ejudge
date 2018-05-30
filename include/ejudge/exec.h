@@ -25,7 +25,7 @@ extern "C"
 
 /* Task states */
 enum
-{ 
+{
   TSK_ERROR,                    /* error occured */
   TSK_STOPPED,                  /* task is not started */
   TSK_RUNNING,                  /* task is runnning */

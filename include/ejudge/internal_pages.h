@@ -22,7 +22,7 @@
 
 typedef struct StandingsCell
 {
-    ej_time64_t sol_time; // solution time 
+    ej_time64_t sol_time; // solution time
     ej_time64_t eff_time; // effective time (for enable_submit_after_reject)
     ej_time64_t last_fogged_time; // the last submit made during standings fog period
     int score;       // the standings score for the cell

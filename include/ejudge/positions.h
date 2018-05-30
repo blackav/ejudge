@@ -191,7 +191,7 @@ extern "C" {
  */
 
 /* Iterators for FName table */
-#define posWriteFName(pos,f) fprintf((f),"%u",(pos).FName) 
+#define posWriteFName(pos,f) fprintf((f),"%u",(pos).FName)
 #define posFirstFName()      ((tFName) 0)
 #define posNextFName(f)      ((f)++)
   char *posGetFNameStr(tFName);

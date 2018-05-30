@@ -23,4 +23,3 @@ int filehash_get(const unsigned char *path, unsigned char *val);
 #define filehash_copy(dst,src) (memcpy((dst), (src), 20))
 
 #endif /* __FILEHASH_H__ */
-

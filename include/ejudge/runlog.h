@@ -47,7 +47,7 @@ enum
   RUN_SYNC_ERR         = 19,
   OLD_RUN_MAX_STATUS   = 19, // obsoleted
   RUN_NORMAL_LAST      = 19, // may safely overlap pseudo statuses
-  
+
   RUN_PSEUDO_FIRST     = 20,
   RUN_VIRTUAL_START    = 20,
   RUN_VIRTUAL_STOP     = 21,

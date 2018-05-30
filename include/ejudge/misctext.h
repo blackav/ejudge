@@ -49,7 +49,7 @@ void html_armor_free(struct html_armor_buffer *pb);
 
 
 //unsigned char *html_armor_string_dupa(const unsigned char *str);
-#define html_armor_string_dupa(s) ({ unsigned char *_dupa_tmp_s = (s); size_t _dupa_tmp_len = strlen(_dupa_tmp_s), _dupa_tmp_len_2 = html_armored_memlen(_dupa_tmp_s, _dupa_tmp_len); unsigned char *_dupa_tmp_str = (unsigned char*) alloca(_dupa_tmp_len_2 + 1); html_armor_text(_dupa_tmp_s, _dupa_tmp_len, _dupa_tmp_str); _dupa_tmp_str; }) 
+#define html_armor_string_dupa(s) ({ unsigned char *_dupa_tmp_s = (s); size_t _dupa_tmp_len = strlen(_dupa_tmp_s), _dupa_tmp_len_2 = html_armored_memlen(_dupa_tmp_s, _dupa_tmp_len); unsigned char *_dupa_tmp_str = (unsigned char*) alloca(_dupa_tmp_len_2 + 1); html_armor_text(_dupa_tmp_s, _dupa_tmp_len, _dupa_tmp_str); _dupa_tmp_str; })
 
 char *duration_str(int show_astr, time_t cur,
                    time_t time, char *buf, int len);
@@ -122,7 +122,7 @@ int utf8_cnt(const unsigned char *s, int width, int *p_w);
  * length is all checks are ok
  */
 int ucs2_to_utf8(unsigned char **pu8str, const unsigned char *u16str,
-                 int u16len); 
+                 int u16len);
 
 /*
  * converts UTF8 buffer `in' of the size `in_size' to UCS4 buffer `out'

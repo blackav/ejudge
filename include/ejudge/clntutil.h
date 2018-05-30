@@ -40,7 +40,7 @@ void  client_put_header(
         unsigned char const *content_type,
         unsigned char const *charset,
         int http_flag,
-        int locale_id, 
+        int locale_id,
         ej_cookie_t client_key,
         char const *format,
         ...)

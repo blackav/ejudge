@@ -703,7 +703,7 @@ write_xml_team_testing_report(
 int
 write_xml_team_accepting_report(
         FILE *f,
-        struct http_request_info *phr,        
+        struct http_request_info *phr,
         const unsigned char *txt,
         int rid,
         const struct run_entry *re,
@@ -722,7 +722,7 @@ write_xml_team_tests_report(
 int
 write_xml_testing_report(
         FILE *f,
-        struct http_request_info *phr,        
+        struct http_request_info *phr,
         int user_mode,
         unsigned char const *txt,
         const unsigned char *class1,
