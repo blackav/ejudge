@@ -45,7 +45,7 @@ xml_unparse_ip_mask(ej_ip4_t addr, ej_ip4_t mask)
     snprintf(buf, sizeof(buf), "0");
   } else {
     for (k = (unsigned) -1, n = 0; n <= 32 && k != mask; n++, k >>= 1);
-    if (n <= 32) 
+    if (n <= 32)
       snprintf(buf, sizeof(buf), "%u.%u.%u.%u/%d",
                (addr) & 0xff,
                (addr >> 8) & 0xff,
