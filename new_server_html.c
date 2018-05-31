@@ -12357,7 +12357,7 @@ unpriv_run_messages_json(
       fprintf(fout, ",\n        \"time_us\": %lld", time_us);
       fprintf(fout, ",\n        \"from\": %d", fce->e.from);
       fprintf(fout, ",\n        \"to\": %d", fce->e.to);
-      fprintf(fout, ",\n        \"subject\": %s", json_armor_buf(&ab, fce->e.subj));
+      fprintf(fout, ",\n        \"subject\": \"%s\"", json_armor_buf(&ab, fce->e.subj));
 
       write_json_content(fout, fce->text, fce->size, ",", "        ");
       fprintf(fout, "\n      }");
