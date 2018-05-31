@@ -12291,6 +12291,88 @@ cleanup:
   ;
 }
 
+static void
+unpriv_run_messages_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  struct full_clar_entry_vector fcev = {};
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  phr->json_reply = 1;
+
+  time_t start_time = 0;
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+  }
+  if (start_time <= 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_CONTEST_NOT_STARTED);
+    goto cleanup;
+  }
+
+  int run_id = -1;
+  if (hr_cgi_param_int(phr, "run_id", &run_id) < 0 || run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  struct run_entry re;
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if (re.user_id != phr->user_id) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if (re.status < 0 || re.status == RUN_EMPTY || re.status > RUN_AVAILABLE) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if (re.status > RUN_LOW_LAST && re.status < RUN_TRANSIENT_FIRST) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+
+  fprintf(fout, "{\n");
+  fprintf(fout, "  \"ok\" : %s", "true");
+  fprintf(fout, ",\n  \"result\": {");
+  fprintf(fout, "\n    \"server_time\": %lld", (long long) cs->current_time);
+  fprintf(fout, ",\n    \"messages\": [");
+
+  if (ej_uuid_is_nonempty(re.run_uuid)) {
+    clar_fetch_run_messages(cs->clarlog_state, &re.run_uuid, &fcev);
+    const unsigned char *sep = "";
+    for (int i = 0; i < fcev.u; ++i) {
+      struct full_clar_entry *fce = &fcev.v[i];
+      if (fce->e.from != phr->user_id && fce->e.to != phr->user_id) continue;
+      fprintf(fout, "%s\n      {", sep); sep = ",";
+      fprintf(fout, "\n        \"clar_id\": %d", fce->e.id);
+      fprintf(fout, ",\n        \"size\": %d", fce->e.size);
+      long long time_us = fce->e.time * 1000000LL + fce->e.nsec / 1000;
+      fprintf(fout, ",\n        \"time_us\": %lld", time_us);
+      fprintf(fout, ",\n        \"from\": %d", fce->e.from);
+      fprintf(fout, ",\n        \"to\": %d", fce->e.to);
+      fprintf(fout, ",\n        \"subject\": %s", json_armor_buf(&ab, fce->e.subj));
+
+      write_json_content(fout, fce->text, fce->size, ",", "        ");
+      fprintf(fout, "\n      }");
+    }
+  }
+
+  fprintf(fout, "\n    ]");
+  fprintf(fout, "\n  }");
+  fprintf(fout, "\n}\n");
+
+cleanup:
+  clar_free_fcev(&fcev);
+  html_armor_free(&ab);
+}
+
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = unpriv_change_language,
@@ -12320,6 +12402,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PROBLEM_STATEMENT_JSON] = unpriv_problem_statement_json,
   [NEW_SRV_ACTION_LIST_RUNS_JSON] = unpriv_list_runs_json,
   [NEW_SRV_ACTION_RUN_STATUS_JSON] = unpriv_run_status_json,
+  [NEW_SRV_ACTION_RUN_MESSAGES_JSON] = unpriv_run_messages_json,
 };
 
 static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_LAST] =
