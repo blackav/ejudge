@@ -9420,7 +9420,7 @@ write_json_run_info(
   fprintf(f, "</table>\n");
    */
           if (visibility == TV_FULL) {
-            fprintf(fout, ",\n          \"is_full_visibility\": %s", to_json_bool(1));
+            fprintf(fout, ",\n          \"is_visibility_full\": %s", to_json_bool(1));
             if (t->args_too_long || t->args) {
               fprintf(fout, ",\n          \"args\": {");
               if (t->args_too_long) {
