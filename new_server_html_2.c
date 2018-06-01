@@ -8838,6 +8838,29 @@ write_json_content(
   return ",";
 }
 
+static const unsigned char *
+write_json_brief_test(
+        FILE *fout,
+        const unsigned char *name,
+        const struct testing_report_file_content *fc,
+        const unsigned char *sep,
+        const unsigned char *indent)
+{
+  if (fc->size < 0) return sep;
+
+  fprintf(fout, "%s\n%s\"%s\": {", sep, indent, name);
+  if (fc->is_too_big) {
+    fprintf(fout, "\n%s  \"is_too_big\": %s", indent, to_json_bool(1));
+  } else {
+    fprintf(fout, "\n%s  \"size\": %lld", indent, (long long) fc->size);
+    if (fc->is_base64) {
+      fprintf(fout, ",\n%s  \"is_binary\": %s", indent, to_json_bool(1));
+    }
+  }
+  fprintf(fout, "\n%s}", indent);
+  return ",";
+}
+
 void
 write_json_run_info(
         FILE *fout,
@@ -9267,26 +9290,6 @@ write_json_run_info(
       if (r->archive_available) need_links = 1;
     }
   }
-
-  fprintf(f,
-          "<table class=\"table\">"
-          "<tr><th%s>N</th><th%s>%s</th><th%s>%s</th>",
-          cl, cl, _("Result"), cl, _("Time (sec)")/x*,
-          cl, _("Real time (sec)")*x/);
-  if (need_info) {
-    fprintf(f, "<th%s>%s</th>", cl, _("Extra info"));
-  }
-  if (is_kirov && !hide_score) {
-    fprintf(f, "<th%s>%s</th>", cl, _("Score"));
-  }
-  if (need_comment) {
-    fprintf(f, "<th%s>%s</th>", cl, _("Comment"));
-  }
-  if (need_links) {
-    fprintf(f, "<th%s>%s</th>", cl, _("Links"));
-  }
-
-  fprintf(f, "</tr>\n");
     */
 
     if (tr->run_tests > 0) {
@@ -9356,16 +9359,10 @@ write_json_run_info(
             fprintf(fout, ",\n          \"score\": %d", score);
             fprintf(fout, ",\n          \"max_score\": %d", max_score);
           }
+          if (t->team_comment && t->team_comment[0]) {
+            fprintf(fout, ",\n          \"team_comment\": \"%s\"", json_armor_buf(&ab, t->team_comment));
+          }
     /*
-    if (need_comment) {
-      if (!t->team_comment) {
-        fprintf(f, "<td%s>&nbsp;</td>", cl);
-      } else {
-        s = html_armor_string_dup(t->team_comment);
-        fprintf(f, "<td%s>%s</td>", cl, s);
-        xfree(s);
-      }
-    }
     if (need_links) {
       fprintf(f, "<td%s>", cl);
       if (visibility == TV_FULL) {
@@ -9421,55 +9418,23 @@ write_json_run_info(
     fprintf(f, "</tr>\n");
   }
   fprintf(f, "</table>\n");
-
-  if (has_full) {
-    fprintf(f, "<pre>");
-    for (i = 0; i < r->run_tests; i++) {
-      if (!(t = r->tests[i])) continue;
-      if (t->status == RUN_SKIPPED) continue;
-      visibility = cntsprob_get_test_visibility(prob, i + 1, state->online_final_visibility, token_flags);
-      if (visibility == TV_FULLIFMARKED) {
-        visibility = TV_HIDDEN;
-        if (is_marked) visibility = TV_FULL;
-      }
-      if (visibility != TV_FULL) continue;
-      if (!t->args && !t->args_too_long && t->input.size < 0
-          && t->output.size < 0 && t->error.size < 0 && t->correct.size < 0 && t->checker.size < 0)
-        continue;
-      fprintf(f, _("<b>====== Test #%d =======</b>\n"), t->num);
-      if (t->args || t->args_too_long) {
-        fprintf(f, "<a name=\"%dL\"></a>", t->num);
-        fprintf(f, _("<u>--- Command line arguments ---</u>\n"));
-        if (t->args_too_long) {
-          fprintf(f, _("<i>Command line is too long</i>\n"));
-        } else {
-          fprintf(f, "%s", ARMOR(t->args));
-        }
-      }
-      if (t->input.size >= 0) {
-        fprintf(f, "<a name=\"%dI\"></a>", t->num);
-        html_print_testing_report_file_content(f, &ab, &t->input, TESTING_REPORT_INPUT);
-      }
-      if (t->output.size >= 0) {
-        fprintf(f, "<a name=\"%dO\"></a>", t->num);
-        html_print_testing_report_file_content(f, &ab, &t->output, TESTING_REPORT_OUTPUT);
-      }
-      if (t->correct.size >= 0) {
-        fprintf(f, "<a name=\"%dA\"></a>", t->num);
-        html_print_testing_report_file_content(f, &ab, &t->correct, TESTING_REPORT_CORRECT);
-      }
-      if (t->error.size >= 0) {
-        fprintf(f, "<a name=\"%dE\"></a>", t->num);
-        html_print_testing_report_file_content(f, &ab, &t->error, TESTING_REPORT_ERROR);
-      }
-      if (t->checker.size >= 0) {
-        fprintf(f, "<a name=\"%dC\"></a>", t->num);
-        html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
-      }
-    }
-    fprintf(f, "</pre>");
-  }
    */
+          if (visibility == TV_FULL) {
+            if (t->args_too_long || t->args) {
+              fprintf(fout, ",\n          \"args\": {");
+              if (t->args_too_long) {
+                fprintf(fout, "\n            \"is_too_big\": %s", to_json_bool(1));
+              } else if (t->args) {
+                fprintf(fout, "\n            \"size\": %d", strlen(t->args));
+              }
+              fprintf(fout, "\n          }");
+            }
+            write_json_brief_test(fout, "input", &t->input, ",", "          ");
+            write_json_brief_test(fout, "output", &t->output, ",", "          ");
+            write_json_brief_test(fout, "correct", &t->correct, ",", "          ");
+            write_json_brief_test(fout, "error", &t->error, ",", "          ");
+            write_json_brief_test(fout, "checker", &t->checker, ",", "          ");
+          }
         }
         fprintf(fout, "\n        }");
       }
