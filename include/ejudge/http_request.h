@@ -279,6 +279,13 @@ hr_cgi_param_h64(
         const unsigned char *name,
         unsigned long long *p_val);
 
+int
+hr_cgi_param_i64_opt(
+        const struct http_request_info *phr,
+        const unsigned char *name,
+        long long *p_val,
+        long long default_value);
+
 #endif /* __HTTP_REQUEST_H__ */
 
 /*

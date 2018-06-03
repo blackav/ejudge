@@ -669,6 +669,32 @@ hr_cgi_param_h64(
     return 0;
 }
 
+int
+hr_cgi_param_i64_opt(
+        const struct http_request_info *phr,
+        const unsigned char *name,
+        long long *p_val,
+        long long default_value)
+{
+    const unsigned char *s = NULL;
+    int res = hr_cgi_param(phr, name, &s);
+    if (!res || !s) {
+        if (p_val) *p_val = default_value;
+        return 0;
+    }
+    if (res < 0) {
+        return -1;
+    }
+    char *eptr = NULL;
+    errno = 0;
+    long long x = strtoll(s, &eptr, 10);
+    if (errno || (const unsigned char *) eptr == s || *eptr) {
+        return -1;
+    }
+    if (p_val) *p_val = x;
+    return 1;
+}
+
 /*
  * Local variables:
  *  c-basic-offset: 4
