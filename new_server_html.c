@@ -65,6 +65,7 @@
 #include "ejudge/imagemagick.h"
 #include "ejudge/base32.h"
 #include "ejudge/userlist_bin.h"
+#include "ejudge/testing_report_xml.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -12373,6 +12374,225 @@ cleanup:
   html_armor_free(&ab);
 }
 
+/*
+ * request parameters:
+ *  run_id
+ *  num
+ *  index
+ *  offset
+ *  length
+ */
+static void
+unpriv_run_test_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const struct section_problem_data *prob = NULL;
+  phr->json_reply = 1;
+  char *rep_txt = NULL;
+  size_t rep_len = 0;
+  testing_report_xml_t tr = NULL;
+
+  time_t start_time = 0;
+  time_t stop_time = 0;
+  int accepting_mode = 0;
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+    accepting_mode = cs->accepting_mode;
+  }
+  if (start_time <= 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_CONTEST_NOT_STARTED);
+    goto cleanup;
+  }
+
+  int run_id = -1;
+  if (hr_cgi_param_int(phr, "run_id", &run_id) < 0 || run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  struct run_entry re;
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if (re.user_id != phr->user_id) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+
+  if (re.prob_id > 0 && re.prob_id <= cs->max_prob) {
+    prob = cs->probs[re.prob_id];
+  }
+  if (!prob) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_PROB_ID);
+    goto cleanup;
+  }
+
+  int num = 0;
+  if (hr_cgi_param_int(phr, "num", &num) < 0 || num <= 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
+  int index = 0;
+  if (hr_cgi_param_int(phr, "index", &index) < 0 || index < 0 || index >= TESTING_REPORT_LAST) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
+  long long offset = 0;
+  if (hr_cgi_param_i64_opt(phr, "offset", &offset, 0LL) < 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
+  long long length = 0;
+  if (hr_cgi_param_i64_opt(phr, "length", &length, -1LL) < 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+    goto cleanup;
+  }
+
+  UserProblemInfo *pinfo = NULL;
+  XALLOCAZ(pinfo, cs->max_prob + 1);
+  for (int i = 0; i <= cs->max_prob; ++i) {
+    pinfo[i].best_run = -1;
+  }
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, pinfo);
+
+  RunDisplayInfo ri = {};
+  fill_user_run_info(cs, pinfo, run_id, &re, start_time, stop_time, 0, &ri);
+
+  if (!ri.is_report_enabled) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
+  }
+
+  unsigned char rep_path[PATH_MAX];
+  int flags = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re);
+  if (flags < 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_REPORT_NONEXISTANT);
+    goto cleanup;
+  }
+  if (generic_read_file(&rep_txt, 0, &rep_len, flags, 0, rep_path, 0) < 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_REPORT_NONEXISTANT);
+    goto cleanup;
+  }
+  const unsigned char *start_ptr = NULL;
+  if (get_content_type(rep_txt, &start_ptr) != CONTENT_TYPE_XML) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_REPORT_NONEXISTANT);
+    goto cleanup;
+  }
+  if (!(tr = testing_report_parse_xml(start_ptr))) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_REPORT_NONEXISTANT);
+    goto cleanup;
+  }
+  if (num <= 0 || num > tr->run_tests) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_TEST_NONEXISTANT);
+    goto cleanup;
+  }
+  struct testing_report_test *t = tr->tests[num - 1];
+  if (t->num != num) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_TEST_NONEXISTANT);
+    goto cleanup;
+  }
+  int token_flags = re.token_flags;
+  int visibility = cntsprob_get_test_visibility(prob, num, cs->online_final_visibility, token_flags);
+  if (visibility == TV_FULLIFMARKED) {
+    visibility = TV_HIDDEN;
+    if (re.is_marked) visibility = TV_FULL;
+  }
+  if (visibility != TV_FULL) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
+  }
+
+  const unsigned char *data = NULL;
+  long long size = -1;
+
+  switch (index) {
+  case TESTING_REPORT_INPUT:
+    if (t->input.size >= 0 && t->input.data && !t->input.is_too_big) {
+      data = t->input.data;
+      size = t->input.size;
+    }
+    break;
+  case TESTING_REPORT_OUTPUT:
+    if (t->output.size >= 0 && t->output.data && !t->output.is_too_big) {
+      data = t->output.data;
+      size = t->output.size;
+    }
+    break;
+  case TESTING_REPORT_CORRECT:
+    if (t->correct.size >= 0 && t->correct.data && !t->correct.is_too_big) {
+      data = t->correct.data;
+      size = t->correct.size;
+    }
+    break;
+  case TESTING_REPORT_ERROR:
+    if (t->error.size >= 0 && t->error.data && !t->error.is_too_big) {
+      data = t->error.data;
+      size = t->error.size;
+    }
+    break;
+  case TESTING_REPORT_CHECKER:
+    if (t->checker.size >= 0 && t->checker.data && !t->checker.is_too_big) {
+      data = t->checker.data;
+      size = t->checker.size;
+    }
+    break;
+  case TESTING_REPORT_ARGS:
+    if (t->args && !t->args_too_long) {
+      data = t->args;
+      size = strlen(t->args);
+    }
+    break;
+  default:
+    break;
+  }
+  if (!data || size < 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
+  }
+
+  if (offset < 0) offset = 0;
+  if (offset > size) offset = size;
+  if (length < 0) length = size;
+  if (offset + length > size) length = size - offset;
+
+  phr->json_reply = 0;
+  snprintf(phr->content_type, sizeof(phr->content_type), "application/octet-stream");
+
+  const unsigned char *outptr = data + offset;
+  while (length > 0) {
+    int portion = 65536;
+    if (portion < length) portion = length;
+    while (portion > 0) {
+      size_t wz = fwrite(outptr, 1, portion, fout);
+      if (ferror(fout)) {
+        // FIXME: what to do?
+        length = 0;
+        break;
+      }
+      ASSERT(wz <= portion);
+      portion -= wz;
+      length -= wz;
+      outptr += wz;
+    }
+  }
+
+cleanup:
+  html_armor_free(&ab);
+  testing_report_free(tr);
+  free(rep_txt);
+}
+
 static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
 {
   [NEW_SRV_ACTION_CHANGE_LANGUAGE] = unpriv_change_language,
@@ -12403,6 +12623,7 @@ static action_handler_t user_actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_LIST_RUNS_JSON] = unpriv_list_runs_json,
   [NEW_SRV_ACTION_RUN_STATUS_JSON] = unpriv_run_status_json,
   [NEW_SRV_ACTION_RUN_MESSAGES_JSON] = unpriv_run_messages_json,
+  [NEW_SRV_ACTION_RUN_TEST_JSON] = unpriv_run_test_json,
 };
 
 static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_LAST] =
