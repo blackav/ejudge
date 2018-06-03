@@ -12572,7 +12572,7 @@ unpriv_run_test_json(
   const unsigned char *outptr = data + offset;
   while (length > 0) {
     int portion = 65536;
-    if (portion < length) portion = length;
+    if (length < portion) portion = length;
     while (portion > 0) {
       size_t wz = fwrite(outptr, 1, portion, fout);
       if (ferror(fout)) {
