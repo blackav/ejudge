@@ -9228,30 +9228,6 @@ write_json_run_info(
     testing_report_free(r);
     return 0;
   }
-
-  if (r->scoring_system == SCORE_KIROV ||
-      (r->scoring_system == SCORE_OLYMPIAD && !r->accepting_mode)) {
-    is_kirov = 1;
-  }
-
-  if (is_kirov) {
-    fprintf(f, _("<big>%d total tests runs, %d passed, %d failed.<br/>\n"),
-            run_tests, tests_passed, run_tests - tests_passed);
-    fprintf(f, _("Score gained: %d (out of %d).<br/><br/></big>\n"),
-            score, max_score);
-  } else {
-    if (status != RUN_OK && status != RUN_ACCEPTED && status != RUN_PENDING_REVIEW && status != RUN_SUMMONED) {
-      fprintf(f, _("<big>Failed test: %d.<br/><br/></big>\n"), r->failed_test);
-    }
-  }
-
-  /x*
-  if (r->comment) {
-    s = html_armor_string_dup(r->comment);
-    fprintf(f, "<big>Note: %s.<br/><br/></big>\n", s);
-    xfree(s);
-  }
-  *x/
   */
 
     if (tr->valuer_comment && tr->valuer_comment[0]) {
@@ -9260,13 +9236,13 @@ write_json_run_info(
       fprintf(fout, "\n      }");
     }
 
+    if (((token_flags & TOKEN_VALUER_JUDGE_COMMENT_BIT) || cs->online_valuer_judge_comments)
+        && tr->valuer_judge_comment && tr->valuer_judge_comment[0]) {
+      fprintf(fout, "%s\n      \"valuer_judge_comment\": {", sep1); sep1 = ",";
+      write_json_content(fout, tr->valuer_judge_comment, -1, "", "      ");
+      fprintf(fout, "\n      }");
+    }
     /*
-  if (((token_flags & TOKEN_VALUER_JUDGE_COMMENT_BIT) || state->online_valuer_judge_comments)
-       && r->valuer_judge_comment) {
-    fprintf(f, "<p><b>%s</b>:<br/></p><pre>%s</pre>\n", _("Valuer comments"),
-            ARMOR(r->valuer_judge_comment));
-    hide_score = 1;
-  }
 
   for (i = 0; i < r->run_tests; ++i) {
     if (!(t = r->tests[i])) continue;
@@ -9336,25 +9312,15 @@ write_json_run_info(
       fprintf(f, "<td%s>N/A</td>", cl);
     }
     */
-          /*
-    if (need_info) {
-      fprintf(f, "<td%s>", cl);
-      if (status == RUN_RUN_TIME_ERR
-          && (global->report_error_code || visibility == TV_FULL)) {
-        if (t->exit_comment) {
-          fprintf(f, "%s", t->exit_comment);
-        } else if (t->term_signal >= 0) {
-          fprintf(f, "%s %d (%s)", _("Signal"), t->term_signal,
-                  os_GetSignalString(t->term_signal));
-        } else {
-          fprintf(f, "%s %d", _("Exit code"), t->exit_code);
-        }
-      } else {
-        fprintf(f, "&nbsp;");
-      }
-      fprintf(f, "</td>");
-    }
-          */
+          if ((global->report_error_code > 0 || visibility == TV_FULL) && status == RUN_RUN_TIME_ERR) {
+            if (t->exit_comment && t->exit_comment[0]) {
+              fprintf(fout, ",\n          \"exit_comment\": \"%s\"", json_armor_buf(&ab, t->exit_comment));
+            } else if (t->term_signal >= 0) {
+              fprintf(fout, ",\n          \"term_signal\": %d", t->term_signal);
+            } else {
+              fprintf(fout, ",\n          \"exit_code\": %d", t->exit_code);
+            }
+          }
           if (is_kirov && !hide_score) {
             fprintf(fout, ",\n          \"score\": %d", score);
             fprintf(fout, ",\n          \"max_score\": %d", max_score);
