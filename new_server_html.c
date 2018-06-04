@@ -11568,6 +11568,7 @@ unpriv_contest_status_json(
   fprintf(fout, ",\n    \"contest\": {");
   fprintf(fout, "\n      \"id\": %d", cnts->id);
   fprintf(fout, ",\n      \"name\": \"%s\"", json_armor_buf(&ab, cnts->name));
+  fprintf(fout, ",\n      \"score_system\": %d", global->score_system);
   fprintf(fout, ",\n      \"is_virtual\": %s", to_json_bool(global->is_virtual));
   fprintf(fout, ",\n      \"is_unlimited\": %s", to_json_bool(duration <= 0));
   if (duration > 0) {
