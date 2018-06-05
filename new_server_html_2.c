@@ -8886,6 +8886,7 @@ write_json_run_info(
   int is_report_available = 0;
   char *comp_out_txt = NULL;
   size_t comp_out_len = 0;
+  RunDisplayInfo ri = {};
 
   if (pre->prob_id > 0 && pre->prob_id <= cs->max_prob)
     prob = cs->probs[pre->prob_id];
@@ -8901,7 +8902,6 @@ write_json_run_info(
     message_count = clar_count_run_messages(cs->clarlog_state, &pre->run_uuid);
   }
 
-  RunDisplayInfo ri = {};
   fill_user_run_info(cs, pinfo, run_id, pre, start_time, stop_time, 1, &ri);
 
   int token_flags = pre->token_flags;
@@ -9413,8 +9413,20 @@ write_json_run_info(
   fprintf(fout, "\n  }"); // end of "result"
   fprintf(fout, "\n}"); // end of the root object
 
+  run_display_info_free(&ri);
   html_armor_free(&ab);
   testing_report_free(tr);
   free(rep_txt);
   free(comp_out_txt);
+}
+
+void
+run_display_info_free(struct RunDisplayInfo *rdi)
+{
+  if (rdi) {
+    free(rdi->prob_str);
+    free(rdi->lang_str);
+    free(rdi->abbrev_sha1);
+    free(rdi->score_str);
+  }
 }

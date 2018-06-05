@@ -277,6 +277,8 @@ typedef struct RunDisplayInfos
     int reserved;
 } RunDisplayInfos;
 
+void run_display_info_free(struct RunDisplayInfo *rdi);
+
 #endif /* __NEW_SERVER_PI_H__ */
 
 /*
