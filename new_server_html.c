@@ -11816,17 +11816,11 @@ unpriv_problem_status_json(
   if (prob->disable_submit_after_ok > 0) {
     fprintf(fout, ",\n      \"disable_submit_after_ok\": %s", to_json_bool(prob->disable_submit_after_ok));
   }
-  if (prob->disable_auto_testing > 0) {
-    fprintf(fout, ",\n      \"disable_auto_testing\": %s", to_json_bool(prob->disable_auto_testing));
-  }
-  if (prob->disable_testing > 0) {
-    fprintf(fout, ",\n      \"disable_testing\": %s", to_json_bool(prob->disable_testing));
+  if (prob->disable_auto_testing > 0 || prob->disable_testing > 0) {
+    fprintf(fout, ",\n      \"disable_testing\": %s", to_json_bool(1));
   }
   if (prob->enable_compilation > 0) {
     fprintf(fout, ",\n      \"enable_compilation\": %s", to_json_bool(prob->enable_compilation));
-  }
-  if (prob->skip_testing > 0) {
-    fprintf(fout, ",\n      \"skip_testing\": %s", to_json_bool(prob->skip_testing));
   }
   if (prob->hidden > 0) {
     fprintf(fout, ",\n      \"hidden\": %s", to_json_bool(prob->hidden));
@@ -11890,9 +11884,11 @@ unpriv_problem_status_json(
   if (prob->stand_column && prob->stand_column[0]) {
     fprintf(fout, ",\n      \"stand_column\": %s", json_armor_buf(&ab, prob->stand_column));
   }
+  /*
   if (prob->group_name && prob->group_name[0]) {
     fprintf(fout, ",\n      \"group_name\": %s", json_armor_buf(&ab, prob->group_name));
   }
+  */
   if ((prob->use_stdin <= 0 || prob->combined_stdin > 0) && prob->input_file && prob->input_file[0] && prob->hide_file_names <= 0) {
     fprintf(fout, ",\n      \"input_file\": %s", json_armor_buf(&ab, prob->input_file));
   }
