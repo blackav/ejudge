@@ -511,14 +511,6 @@ ns_unload_expired_contests(time_t cur_time)
   extra_u = j;
 }
 
-extern const unsigned char login_accept_chars[257];
-static int
-check_login(const unsigned char *login_str)
-{
-  if (!login_str || !*login_str) return -1;
-  return check_str(login_str, login_accept_chars);
-}
-
 static void
 handle_pending_xml_import(
         struct contest_extra *extra,
@@ -1356,7 +1348,7 @@ privileged_page_login(FILE *fout,
     fprintf(phr->log_f, "cannot parse login");
     return error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
   }
-  if (login && *login && check_login(login) < 0) {
+  if (login && *login && !is_valid_login(login)) {
     fprintf(phr->log_f, "invalid login");
     return error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
   }
@@ -8256,7 +8248,7 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
     fprintf(phr->log_f, "cannot parse login");
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
-  if (login && *login && check_login(login) < 0) {
+  if (login && *login && !is_valid_login(login)) {
     fprintf(phr->log_f, "invalid login");
     return error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
   }

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3584,7 +3584,7 @@ super_serve_op_GROUP_CREATE_ACTION(
   group_name = fix_string(s);
   if (!group_name || !*group_name) FAIL(SSERV_ERR_INV_GROUP_NAME);
   if (strlen(group_name) > 1024) FAIL(SSERV_ERR_INV_GROUP_NAME);
-  if (check_str(group_name, login_accept_chars) < 0) FAIL(SSERV_ERR_INV_GROUP_NAME);
+  if (!is_valid_login(group_name)) FAIL(SSERV_ERR_INV_GROUP_NAME);
 
   s = 0;
   if (hr_cgi_param(phr, "description", &s) < 0) FAIL(SSERV_ERR_INV_DESCRIPTION);
@@ -3647,7 +3647,7 @@ super_serve_op_GROUP_MODIFY_ACTION(
   group_name = fix_string(s);
   if (!group_name || !*group_name) FAIL(SSERV_ERR_INV_GROUP_NAME);
   if (strlen(group_name) > 1024) FAIL(SSERV_ERR_INV_GROUP_NAME);
-  if (check_str(group_name, login_accept_chars) < 0) FAIL(SSERV_ERR_INV_GROUP_NAME);
+  if (!is_valid_login(group_name)) FAIL(SSERV_ERR_INV_GROUP_NAME);
 
   s = 0;
   if (hr_cgi_param(phr, "description", &s) < 0) FAIL(SSERV_ERR_INV_DESCRIPTION);

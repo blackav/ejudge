@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -206,7 +206,7 @@ create_account(
     r = hr_cgi_param(phr, "login", &login);
     if (r < 0) FAIL2(NEW_SRV_ERR_LOGIN_BINARY);
     if (!r || !login) FAIL2(NEW_SRV_ERR_LOGIN_UNSPECIFIED);
-    if (check_str(login, login_accept_chars) < 0)
+    if (!is_valid_login(login))
       FAIL2(NEW_SRV_ERR_LOGIN_INV_CHARS);
   } else {
     login = "";

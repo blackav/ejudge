@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -225,7 +225,7 @@ super_html_set_contest_var(struct sid_state *sstate, int cmd,
 
   case SSERV_CMD_CNTS_ADD_PERMISSION:
     if (!param2 || !*param2) return -SSERV_ERR_INVALID_PARAMETER;
-    if (check_str(param2, login_accept_chars) < 0)
+    if (!is_valid_login(param2))
       return -SSERV_ERR_INVALID_PARAMETER;
     contests_add_permission(cnts, param2, 0);
     return 0;
