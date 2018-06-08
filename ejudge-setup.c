@@ -1146,26 +1146,6 @@ make_sha1_passwd(unsigned char *out_buf, const unsigned char *str)
   }
 }
 
-static const unsigned char login_valid_chars[257] =
-"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\1\1\1\0\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1";
-
-static int
-is_valid_login(const unsigned char *str)
-{
-  // disallow empty login
-  if (!str || !*str) return 0;
-  // disallow login starting with ' '
-  if (*str == ' ') return 0;
-  // check valid chars
-  for (; *str; ++str) {
-    if (!login_valid_chars[*str])
-      return 0;
-  }
-  // disallow login ending with ' '
-  if (str[-1] == ' ') return 0;
-  return 1;
-}
-
 static int
 do_identity_menu(int *p_cur_item)
 {
