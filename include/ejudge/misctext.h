@@ -2,7 +2,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -102,6 +102,7 @@ void allowed_list_map(
 int check_str(const unsigned char *str, const unsigned char *map);
 int check_str_2(const unsigned char *str, const unsigned char *map,
                 unsigned char *invchars, size_t invsize, int utf8_flag);
+int is_valid_login(const unsigned char *str);
 
 unsigned char *text_input_process_string(const unsigned char *s,
                                          int sep, int sep_repl);
