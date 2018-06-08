@@ -9392,7 +9392,7 @@ write_json_run_info(
               if (t->args_too_long) {
                 fprintf(fout, "\n            \"is_too_big\": %s", to_json_bool(1));
               } else if (t->args) {
-                fprintf(fout, "\n            \"size\": %d", strlen(t->args));
+                fprintf(fout, "\n            \"size\": %zu", strlen(t->args));
               }
               fprintf(fout, "\n          }");
             }
