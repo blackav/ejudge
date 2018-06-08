@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -152,8 +152,6 @@ static unsigned char config_install_flag[64];
 
 static unsigned char tmp_work_dir[PATH_MAX];
 
-static unsigned char const login_accept_chars[] =
-"._-0123456789?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static unsigned char const email_accept_chars[] =
 "@.%!+=_-0123456789?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 static unsigned char const name_accept_chars[] =
@@ -1148,6 +1146,26 @@ make_sha1_passwd(unsigned char *out_buf, const unsigned char *str)
   }
 }
 
+static const unsigned char login_valid_chars[257] =
+"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\1\1\1\0\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1";
+
+static int
+is_valid_login(const unsigned char *str)
+{
+  // disallow empty login
+  if (!str || !*str) return 0;
+  // disallow login starting with ' '
+  if (*str == ' ') return 0;
+  // check valid chars
+  for (; *str; ++str) {
+    if (!login_valid_chars[*str])
+      return 0;
+  }
+  // disallow login ending with ' '
+  if (str[-1] == ' ') return 0;
+  return 1;
+}
+
 static int
 do_identity_menu(int *p_cur_item)
 {
@@ -1354,7 +1372,7 @@ do_identity_menu(int *p_cur_item)
           ncurses_errbox("\\begin{center}\nERROR!\n\nThe administrator login is too long!\n\\end{center}\n");
           continue;
         }
-        if (strspn(buf1, login_accept_chars) != j) {
+        if (!is_valid_login(buf1)) {
           ncurses_errbox("\\begin{center}\nERROR!\n\nThe administrator login contains invalid characters!\n\\end{center}\n");
           continue;
         }
