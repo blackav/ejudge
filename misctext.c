@@ -898,6 +898,26 @@ check_str_2(
   return retval;
 }
 
+static const unsigned char login_valid_chars[257] =
+"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\1\1\1\0\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\1\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1";
+
+int
+is_valid_login(const unsigned char *str)
+{
+  // disallow empty login
+  if (!str || !*str) return 0;
+  // disallow login starting with ' '
+  if (*str == ' ') return 0;
+  // check valid chars
+  for (; *str; ++str) {
+    if (!login_valid_chars[*str])
+      return 0;
+  }
+  // disallow login ending with ' '
+  if (str[-1] == ' ') return 0;
+  return 1;
+}
+
 unsigned char *
 text_input_process_string(const unsigned char *s, int sep, int sep_repl)
 {
