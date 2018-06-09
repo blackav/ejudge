@@ -38,6 +38,8 @@
 #include <string.h>
 #include <time.h>
 #include <limits.h>
+#include <pwd.h>
+#include <dirent.h>
 
 #ifdef __linux__
 #include <sys/ptrace.h>
@@ -2563,8 +2565,62 @@ task_KillProcessGroup(tTask *tsk)
 int
 task_TryAnyProcess(tTask *tsk)
 {
+  static int ejexec_uid = -1;
+
   task_init_module();
-  return do_kill(tsk, -1, 0);
+
+  if (ejexec_uid == -2) {
+    // no 'ejexec' user
+    return -1;
+  } else if (ejexec_uid == -1) {
+    struct passwd *pwd = getpwnam("ejexec");
+    if (pwd && pwd->pw_uid > 0) {
+      ejexec_uid = pwd->pw_uid;
+    } else {
+      ejexec_uid = -2;
+      return -1;
+    }
+  }
+  DIR *d = opendir("/proc");
+  if (!d) {
+    return -1;
+  }
+  int retval = 0;
+  struct dirent *dd;
+  while ((dd = readdir(d))) {
+    errno = 0;
+    char *eptr = NULL;
+    long val = strtol(dd->d_name, &eptr, 10);
+    if (val <= 0 || errno || *eptr || eptr == dd->d_name || (int) val != val) continue;
+    char p[PATH_MAX];
+    if (snprintf(p, sizeof(p), "/proc/%ld", val) >= sizeof(p)) continue;
+    struct stat stb;
+    if (lstat(p, &stb) < 0 || !S_ISDIR(stb.st_mode)) continue;
+    char pp[PATH_MAX];
+    if (snprintf(pp, sizeof(pp), "%s/status", p) >= sizeof(p)) continue;
+    FILE *f = fopen(pp, "r");
+    if (!f) continue;
+    char buf[1024];
+    int uid = -1;
+    while (fgets(buf, sizeof(buf), f)) {
+      int len = strlen(buf);
+      if (len + 1 == sizeof(buf)) break;
+      if (buf[0] == 'U' && buf[1] == 'i' && buf[2] == 'd' && buf[3] == ':' && buf[4] == '\t') {
+        errno = 0;
+        long vv = strtol(buf + 5, &eptr, 10);
+        if (vv < 0 || errno || *eptr != '\t' || eptr == buf + 5 || (int) vv != vv) continue;
+        uid = vv;
+        break;
+      }
+    }
+    fclose(f);
+    if (uid == ejexec_uid) {
+      retval = 1;
+      break;
+    }
+  }
+  closedir(d);
+  return retval;
 }
 
 int
