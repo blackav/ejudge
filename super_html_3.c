@@ -1088,7 +1088,7 @@ recompile_checker(
       fprintf(f, "Error: GNU C support is not configured\n");
       return -1;
     }
-    snprintf(cmd, sizeof(cmd), "%s -DEJUDGE -std=gnu99 -O2 -Wall -I%s/include/ejudge -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gcc_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
+    snprintf(cmd, sizeof(cmd), "%s -DEJUDGE -std=gnu11 -O2 -Wall -I%s/include/ejudge -L%s/lib -Wl,--rpath,%s/lib %s -o %s -lchecker -lm", gcc_path, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, EJUDGE_PREFIX_DIR, filename2, filename);
     break;
   case CHECKER_LANG_CPP:
     gpp_path = get_compiler_path(config, "g++", gpp_path);

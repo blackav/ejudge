@@ -46,7 +46,7 @@ endif
 CEXTRAFLAGS=
 LDEXTRAFLAGS=
 EXTRALIBS=
-CCOMPFLAGS=-D_GNU_SOURCE -std=gnu99 -I$(includedir) -g -DPIC -fPIC
+CCOMPFLAGS=-D_GNU_SOURCE -std=gnu11 -I$(includedir) -g -DPIC -fPIC
 LDCOMPFLAGS= -g -shared
 EXESFX=
 

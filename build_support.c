@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1010,14 +1010,14 @@ do_generate_makefile(
     xfree(compiler_path); compiler_path = NULL;
     compiler_flags = build_get_compiler_flags(cs, sstate, "gcc");
     if (!compiler_flags) {
-      fprintf(mk_f, "CFLAGS = -Wall -g -O2 -std=gnu99 -Wno-pointer-sign\n");
+      fprintf(mk_f, "CFLAGS = -Wall -g -O2 -std=gnu11 -Wno-pointer-sign\n");
     } else {
       fprintf(mk_f, "CFLAGS = %s\n", compiler_flags);
     }
     compiler_flags = NULL;
     fprintf(mk_f, "CLIBS = -lm\n");
     if (need_c_libchecker) {
-      fprintf(mk_f, "CLIBCHECKERFLAGS =%s -Wall -Wno-pointer-sign -g -std=gnu99 -O2 -I${EJUDGE_PREFIX_DIR}/include/ejudge -L%s -Wl,--rpath,%s\n", m32_opt, libdir, libdir);
+      fprintf(mk_f, "CLIBCHECKERFLAGS =%s -Wall -Wno-pointer-sign -g -std=gnu11 -O2 -I${EJUDGE_PREFIX_DIR}/include/ejudge -L%s -Wl,--rpath,%s\n", m32_opt, libdir, libdir);
       fprintf(mk_f, "CLIBCHECKERLIBS = -lchecker -lm\n");
     }
     fprintf(mk_f, "\n");

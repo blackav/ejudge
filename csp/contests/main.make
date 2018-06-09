@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2018 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ endif
 CEXTRAFLAGS=
 LDEXTRAFLAGS=
 EXTRALIBS=
-CCOMPFLAGS=-D_GNU_SOURCE -std=gnu99 -I../.. -I../../include -g -DPIC -fPIC
+CCOMPFLAGS=-D_GNU_SOURCE -std=gnu11 -I../.. -I../../include -g -DPIC -fPIC
 LDCOMPFLAGS= -g -shared
 EXESFX=
 
