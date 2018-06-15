@@ -719,7 +719,7 @@ do_eval(struct filter_env *env,
     if (env->cur->prob_id <= 0 || env->cur->prob_id > env->maxprob || !env->probs[env->cur->prob_id] || !env->probs[env->cur->prob_id]->problem_dir) {
       res->v.s = envdup(env, "");
     } else {
-      res->v.s = envdup(env, env->probs[env->cur->prob_id]->short_name);
+      res->v.s = envdup(env, env->probs[env->cur->prob_id]->problem_dir);
       for (int i = 0; res->v.s[i]; ++i) {
         if (res->v.s[i] == '/') res->v.s[i] = '.';
       }
