@@ -1,6 +1,6 @@
 /* -*- mode: fundamental -*- */
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -195,6 +195,8 @@ static void *filter_expr_user_data;
 %token TOK_CURTOKEN_COUNT "curtoken_count"
 %token TOK_HAS_TEST_RESULT "has_test_result"
 %token TOK_CURHAS_TEST_RESULT "curhas_test_result"
+%token TOK_PROB_DIR "prob_dir"
+%token TOK_CURPROB_DIR "curprob_dir"
 %token TOK_INUSERGROUPINT
 %token TOK_INT       "int"
 %token TOK_STRING    "string"
@@ -425,6 +427,9 @@ exprA :
 | "token_count" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
 | "token_count" { $1->kind = TOK_CURTOKEN_COUNT; $$ = $1; }
 | "curtoken_count" { $$ = $1; }
+| "prob_dir" { $1->kind = TOK_CURPROB_DIR; $$ = $1; }
+| "prob_dir" '(' expr0 ')' { $1->v.t[0] = check_int($3); $$ = $1; }
+| "curprob_dir" { $$ = $1; }
 | "has_test_result" '(' expr0 ',' expr1 ')' { $1->v.t[0] = check_int($3); $1->v.t[1] = check_result($5); $$ = $1; }
 | "has_test_result" '(' expr0 ')' { $1->kind = TOK_CURHAS_TEST_RESULT; $1->v.t[0] = check_result($3); $$ = $1; }
 | "curhas_test_result" '(' expr0 ')' { $1->v.t[01] = check_result($3); $$ = $1; }
