@@ -3044,6 +3044,13 @@ prepare_run_request:
   xfree(txt_text);
   compile_reply_packet_free(comp_pkt);
   testing_report_free(testing_report);
+  // remove stale reports
+  if (snprintf(txt_report_path, sizeof(txt_report_path), "%s/%s.txt", compile_report_dir, pname) < sizeof(txt_report_path)) {
+    unlink(txt_report_path);
+  }
+  if (snprintf(txt_report_path, sizeof(txt_report_path), "%s/%s", compile_report_dir, pname) < sizeof(txt_report_path)) {
+    unlink(txt_report_path);
+  }
   return 1;
 
  report_check_failed:
@@ -3076,6 +3083,13 @@ prepare_run_request:
   xfree(txt_text);
   compile_reply_packet_free(comp_pkt);
   testing_report_free(testing_report);
+  // remove stale reports
+  if (snprintf(txt_report_path, sizeof(txt_report_path), "%s/%s.txt", compile_report_dir, pname) < sizeof(txt_report_path)) {
+    unlink(txt_report_path);
+  }
+  if (snprintf(txt_report_path, sizeof(txt_report_path), "%s/%s", compile_report_dir, pname) < sizeof(txt_report_path)) {
+    unlink(txt_report_path);
+  }
   return 0;
 }
 
