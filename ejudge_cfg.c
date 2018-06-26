@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -106,6 +106,7 @@ enum
     TG_VALUE,
     TG_SCRIPT,
     TG_PAGE,
+    TG_WS_PORT,
 
     TG__BARRIER,
     TG__DEFAULT,
@@ -198,6 +199,7 @@ static char const * const elem_map[] =
   "value",
   "script",
   "page",
+  "ws_port",
   0,
   "_default",
 
@@ -663,6 +665,23 @@ ejudge_cfg_do_parse(char const *path, int no_system_lookup)
     case TG_BUTTONS:
       cfg->buttons = p;
       break;
+    case TG_WS_PORT:
+      {
+        if (cfg->ws_port > 0) {
+          xml_err_elem_redefined(p);
+          goto failed;
+        }
+        if (p->text && p->text[0]) {
+          errno = 0;
+          char *eptr = NULL;
+          long k = strtol(p->text, &eptr, 10);
+          if (errno || *eptr || eptr == p->text || k <= 0 || k > 65535) {
+            xml_err_elem_invalid(p);
+            goto failed;
+          }
+          cfg->ws_port = k;
+        }
+      }
     default:
       xml_err_elem_not_allowed(p);
       break;

@@ -3,7 +3,7 @@
 #ifndef __EJUDGE_CFG_H__
 #define __EJUDGE_CFG_H__ 1
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -65,6 +65,9 @@ struct ejudge_cfg
   int enable_cookie_ip_check;  // supported since 2.3.29
   int enable_contest_select;
   int disable_new_users;
+
+  // WebSocket port number
+  int ws_port;
 
   // these strings actually point into other strings in XML tree
   unsigned char *socket_path;
