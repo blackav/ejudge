@@ -106,7 +106,7 @@ enum
     TG_VALUE,
     TG_SCRIPT,
     TG_PAGE,
-    TG_WS_PORT,
+    TG_CONTESTS_WS_PORT,
 
     TG__BARRIER,
     TG__DEFAULT,
@@ -199,7 +199,7 @@ static char const * const elem_map[] =
   "value",
   "script",
   "page",
-  "ws_port",
+  "contests_ws_port",
   0,
   "_default",
 
@@ -665,9 +665,9 @@ ejudge_cfg_do_parse(char const *path, int no_system_lookup)
     case TG_BUTTONS:
       cfg->buttons = p;
       break;
-    case TG_WS_PORT:
+    case TG_CONTESTS_WS_PORT:
       {
-        if (cfg->ws_port > 0) {
+        if (cfg->contests_ws_port > 0) {
           xml_err_elem_redefined(p);
           goto failed;
         }
@@ -679,9 +679,10 @@ ejudge_cfg_do_parse(char const *path, int no_system_lookup)
             xml_err_elem_invalid(p);
             goto failed;
           }
-          cfg->ws_port = k;
+          cfg->contests_ws_port = k;
         }
       }
+      break;
     default:
       xml_err_elem_not_allowed(p);
       break;

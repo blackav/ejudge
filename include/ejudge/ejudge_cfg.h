@@ -67,7 +67,7 @@ struct ejudge_cfg
   int disable_new_users;
 
   // WebSocket port number
-  int ws_port;
+  int contests_ws_port;
 
   // these strings actually point into other strings in XML tree
   unsigned char *socket_path;

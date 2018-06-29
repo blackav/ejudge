@@ -832,6 +832,9 @@ main(int argc, char *argv[])
 
   params.socket_path = ejudge_config->new_server_socket;
   params.log_path = ejudge_config->new_server_log;
+  if (ejudge_config->contests_ws_port > 0) {
+    params.ws_port = ejudge_config->contests_ws_port;
+  }
 
   if (load_plugins() < 0) return 1;
 
