@@ -1,6 +1,5 @@
 #!/bin/sh
-# $Id$
-# Copyright (c) 2012 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2012-2018 Alexander Chernov <cher@ejudge.ru>
 
 # This is a version script for a generic build system.
 # It supports make, ant, scons, etc...
@@ -41,7 +40,7 @@ if [ x"$1" = x-r ]
 then
   arg="$2"
 
-  [ "${verbose}" = 1 ] && echo -n "checking whether make is available... " >&2
+  [ "${verbose}" = 1 ] && echo -n "checking whether make+valgrind is available... " >&2
 
   version=`make --version | grep Make | gawk '{print $3}'`
   echo 'version="'"${version}"'"'
