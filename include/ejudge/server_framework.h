@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __SERVER_FRAMEWORK_H__
 #define __SERVER_FRAMEWORK_H__
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,6 +30,27 @@ enum
   STATE_WRITE,
   STATE_WRITECLOSE,
   STATE_DISCONNECT,
+};
+
+enum
+{
+  WS_STATE_INITIAL,
+  WS_STATE_INITIAL_REPLY,
+  WS_STATE_HTTP_ERROR,
+  WS_STATE_ACTIVE,
+
+  WS_STATE_DISCONNECT,
+};
+
+struct ws_frame
+{
+  struct ws_frame *next;
+  struct ws_frame *prev;
+
+  unsigned char *data;
+  int size;
+  int fragments;
+  unsigned char hdr[2];
 };
 
 struct client_state
@@ -60,6 +80,49 @@ struct client_state
   void (*destroy_callback)(struct client_state*);
 };
 
+struct ws_client_state
+{
+  struct ws_client_state *prev;
+  struct ws_client_state *next;
+
+  struct ws_frame *frame_first;
+  struct ws_frame *frame_last;
+
+  unsigned char *remote_host;
+  unsigned char *read_buf;
+  unsigned char *write_buf;
+
+  unsigned char *uri;
+  unsigned char *host;
+  unsigned char *user_agent;
+  unsigned char *accept_encoding;
+  unsigned char *origin;
+  
+  long long last_read_time_us;
+  long long last_write_time_us;
+
+  int id;
+  int fd;
+
+  int remote_port;
+  int read_reserved;
+  int read_expected;
+  int read_size;
+
+  int write_reserved;
+  int write_size;
+
+  unsigned char ssl_flag;
+  unsigned char state;
+  unsigned char in_close_state; // 0 - input active, 1 - close received, 2 - EOF event read
+  unsigned char out_close_state; // 0 - output active, 1 - close in the output queue, 2 - close on the wire
+  unsigned char hdr_flag;
+
+  unsigned char hdr_expected;
+  unsigned char hdr_size;
+  unsigned char hdr_buf[16];
+};
+
 struct server_framework_state;
 struct new_server_prot_packet;
 
@@ -86,6 +149,23 @@ struct server_framework_params
   void (*free_memory)(struct server_framework_state *, void *);
   int  (*loop_start)(struct server_framework_state *);
   void (*post_select)(struct server_framework_state *);
+
+  // WebSocket port, if > 0, then the server listens for websocket incoming connections
+  int ws_port;
+
+  struct ws_client_state *(*ws_alloc_state)(
+        struct server_framework_state *);
+
+  void (*ws_handle_packet)(
+        struct server_framework_state *,
+        struct ws_client_state *,
+        int opcode,
+        const unsigned char *data,
+        size_t);
+
+  void (*ws_cleanup)(
+        struct server_framework_state *,
+        struct ws_client_state *);
 };
 
 struct server_framework_state *nsf_init(struct server_framework_params *params, void *data, time_t server_start_time);

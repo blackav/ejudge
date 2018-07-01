@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,6 +21,9 @@
 #include "ejudge/new_server_proto.h"
 #include "ejudge/sock_op.h"
 #include "ejudge/startstop.h"
+#include "ejudge/sha.h"
+#include "ejudge/base64.h"
+#include "ejudge/websocket.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -39,6 +41,9 @@
 #include <sys/select.h>
 #include <time.h>
 #include <unistd.h>
+#include <netinet/ip.h>
+#include <ctype.h>
+#include <arpa/inet.h>
 
 #define MAX_IN_PACKET_SIZE 134217728 /* 128 mb */
 
@@ -78,6 +83,9 @@ struct server_framework_state
   int client_id;
   int restart_requested;
 
+  // websocket file descriptor
+  int ws_fd;
+
   time_t server_start_time;
 
   struct client_state *clients_first;
@@ -89,6 +97,9 @@ struct server_framework_state
   int job_count, job_serial;
 
   void *user_data;
+
+  struct ws_client_state *ws_first;
+  struct ws_client_state *ws_last;
 };
 
 static struct client_state *
@@ -117,6 +128,54 @@ client_state_new(struct server_framework_state *state, int fd)
     state->clients_first->prev = p;
     state->clients_first = p;
   }
+  return p;
+}
+
+static struct ws_client_state *
+ws_client_state_new(
+        struct server_framework_state *state,
+        int fd,
+        const unsigned char *remote_host,
+        int remote_port,
+        int ssl_flag)
+{
+  struct ws_client_state *p;
+
+  int old = fcntl(fd, F_GETFL);
+  if (old < 0) {
+    err("fcntl failed: %s", os_ErrorMsg());
+    return NULL;
+  }
+  if (fcntl(fd, F_SETFL, old | O_NONBLOCK) < 0) {
+    err("fcntl failed: %s", os_ErrorMsg());
+    return NULL;
+  }
+
+  if (state->params->ws_alloc_state) {
+    if (!(p = state->params->ws_alloc_state(state))) {
+      return NULL;
+    }
+  } else {
+    if (!(p = calloc(1, sizeof(*p)))) {
+      err("calloc: out of memory");
+      return NULL;
+    }
+  }
+
+  p->id = state->client_id++;
+  p->fd = fd;
+  p->state = WS_STATE_INITIAL;
+  if (remote_host) p->remote_host = xstrdup(remote_host);
+  p->remote_port = remote_port;
+  p->ssl_flag = ssl_flag;
+
+  p->prev = state->ws_last;
+  if (p->prev) {
+    p->prev->next = p;
+  } else {
+    state->ws_first = p;
+  }
+  state->ws_last = p;
   return p;
 }
 
@@ -203,6 +262,59 @@ client_state_delete(struct server_framework_state *state,
     state->params->free_memory(state, p);
   else
     xfree(p);
+}
+
+static void
+ws_frame_free(struct ws_frame *wsf)
+{
+  if (wsf) {
+    free(wsf->data);
+    free(wsf);
+  }
+}
+
+static void
+ws_client_state_free(struct ws_client_state *p)
+{
+  if (p) {
+    struct ws_frame *wsp, *wsq;
+    for (wsp = p->frame_first; wsp; wsp = wsq) {
+      wsq = wsp->next;
+      ws_frame_free(wsp);
+    }
+
+    free(p->uri);
+    free(p->host);
+    free(p->user_agent);
+    free(p->accept_encoding);
+    free(p->origin);
+    free(p->remote_host);
+    free(p->read_buf);
+    free(p->write_buf);
+    if (p->fd >= 0) close(p->fd);
+    memset(p, -1, sizeof(*p));
+    free(p);
+  }
+}
+
+static void
+ws_client_state_delete(
+        struct server_framework_state *state,
+        struct ws_client_state *p)
+{
+  if (p) {
+    if (p->prev) {
+      p->prev->next = p->next;
+    } else {
+      state->ws_first = p->next;
+    }
+    if (p->next) {
+      p->next->prev = p->prev;
+    } else {
+      state->ws_last = p->prev;
+    }
+    ws_client_state_free(p);
+  }
 }
 
 int
@@ -408,6 +520,612 @@ accept_new_connection(struct server_framework_state *state)
   client_state_new(state, fd);
 }
 
+static void
+accept_new_ws_connections(struct server_framework_state *state)
+{
+  struct sockaddr_in clnt_addr;
+  socklen_t addr_len;
+  int fd;
+  unsigned char addrstr[256];
+
+  while (1) {
+    addr_len = sizeof(clnt_addr);
+    fd = accept(state->ws_fd, (void*) &clnt_addr, &addr_len);
+    if (fd < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+      break;
+    }
+    if (fd < 0) {
+      err("accept failed: %s", os_ErrorMsg());
+      break;
+    }
+    ASSERT(addr_len == sizeof(clnt_addr));
+
+    inet_ntop(AF_INET, &clnt_addr.sin_addr, addrstr, sizeof(addrstr));
+    struct ws_client_state *wcs = ws_client_state_new(state, fd, addrstr, ntohs(clnt_addr.sin_port), 0);
+    wcs->state = WS_STATE_INITIAL;
+  }
+}
+
+int
+nsf_ws_append_reply_raw(
+        struct ws_client_state *p,
+        const unsigned char *buf,
+        int size)
+{
+  if (p->out_close_state > 0) return 0;
+
+  if (p->write_size + size > p->write_reserved) {
+    int new_reserved = p->write_reserved;
+    if (!new_reserved) new_reserved = 256;
+    while (p->write_size + size > new_reserved) new_reserved *= 2;
+    if (new_reserved >= 128 * 1024 * 1024) {
+      // FIXME: drop the data, report missing packet
+      return 0;
+    }
+    unsigned char *new_buf = realloc(p->write_buf, new_reserved);
+    if (!new_buf) {
+      // FIXME: drop the data, report missing packet
+      return 0;
+    }
+    p->write_reserved = new_reserved;
+    p->write_buf = new_buf;
+  }
+  memcpy(p->write_buf + p->write_size, buf, size);
+  p->write_size += size;
+  return 1;
+}
+
+static int
+append_ws_http_error(
+        struct ws_client_state *p,
+        const char *text)
+{
+  if (text && *text) {
+    int res = nsf_ws_append_reply_raw(p, text, strlen(text));
+    p->state = WS_STATE_HTTP_ERROR;
+    return res;
+  }
+  return 0;
+}
+
+void
+nsf_ws_append_close_request(
+        struct ws_client_state *p,
+        int error_code)
+{
+  if (p->out_close_state > 0) return;
+
+  if (error_code > 0) {
+    unsigned char close_pkt[4] = { 0x88, 0x02, error_code >> 8, error_code };
+    nsf_ws_append_reply_raw(p, close_pkt, sizeof(close_pkt));
+    p->out_close_state = 1;
+  } else {
+    unsigned char close_pkt[2] = { 0x88, 0x00 };
+    nsf_ws_append_reply_raw(p, close_pkt, sizeof(close_pkt));
+    p->out_close_state = 1;
+  }
+}
+
+int
+nsf_ws_append_reply_frame(
+        struct ws_client_state *p,
+        int opcode,
+        const unsigned char *data,
+        int size)
+{
+  if (p->out_close_state > 0) return 0;
+
+  ASSERT(size >= 0);
+  ASSERT(size < 128 * 1024 * 1024);
+
+  unsigned int wire_size = size + 2;
+  if (size >= 65536) {
+    wire_size += 8;
+  } else if (size >= 126) {
+    wire_size += 2;
+  }
+  if (p->write_size + wire_size > p->write_reserved) {
+    int new_size = p->write_reserved;
+    if (!new_size) new_size = 256;
+    while (p->write_size + wire_size > new_size) new_size *= 2;
+    if (new_size >= 128 * 1024 * 1024) {
+      // FIXME: drop the data, report missing packet
+      return 0;
+    }
+    unsigned char *new_buf = realloc(p->write_buf, new_size);
+    if (!new_buf) {
+      // FIXME: drop the data, report missing packet
+      return 0;
+    }
+    p->write_reserved = new_size;
+    p->write_buf = new_buf;
+  }
+
+  // we never mask data and never fragment
+  unsigned char *out_ptr = p->write_buf + p->write_size;
+  *out_ptr++ = 0x80 | (opcode & 0x0f);
+  if (size < 126) {
+    *out_ptr++ = size;
+  } else if (size < 65536) {
+    *out_ptr++ = 126;
+    *out_ptr++ = size >> 8;
+    *out_ptr++ = size;
+  } else {
+    *out_ptr++ = 127;
+    // the high 32 bits are 0
+    *out_ptr++ = 0;
+    *out_ptr++ = 0;
+    *out_ptr++ = 0;
+    *out_ptr++ = 0;
+    *out_ptr++ = size >> 24;
+    *out_ptr++ = size >> 16;
+    *out_ptr++ = size >> 8;
+    *out_ptr++ = size;
+  }
+  memcpy(out_ptr, data, size);
+  p->write_size += wire_size;
+  return 1;
+}
+
+static void
+append_ws_bad_request(struct ws_client_state *p)
+{
+  append_ws_http_error(p, "HTTP/1.1 400 Bad Request\r\n\r\n");
+}
+
+static struct ws_frame *
+append_new_ws_frame(struct ws_client_state *p)
+{
+  struct ws_frame *wsf = calloc(1, sizeof(*wsf));
+  if (!wsf) return NULL;
+
+  wsf->data = p->read_buf;
+  wsf->size = p->read_size;
+  wsf->hdr[0] = p->hdr_buf[0];
+  wsf->hdr[1] = p->hdr_buf[1];
+  p->read_buf = NULL;
+  p->read_size = 0;
+  p->read_expected = 0;
+  p->read_reserved = 0;
+  wsf->prev = p->frame_last;
+  if (!p->frame_last) {
+    p->frame_first = wsf;
+  } else {
+    p->frame_last->next = wsf;
+  }
+  p->frame_last = wsf;
+  return wsf;
+}
+
+static void
+read_ws_connection(struct ws_client_state *p)
+{
+  unsigned char buf[4096];
+
+  if (p->state == WS_STATE_INITIAL) {
+    while (1) {
+      int r = read(p->fd, buf, sizeof(buf));
+      if (r < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+        // no more data
+        break;
+      } else if (r < 0) {
+        err("read error: %s", os_ErrorMsg());
+        append_ws_bad_request(p);
+        return;
+      } else if (!r) {
+        p->in_close_state = 2;
+        break;
+      } else {
+        if (p->read_size + r + 1 > p->read_reserved) {
+          int new_reserved = p->read_reserved;
+          if (!new_reserved) new_reserved = 1024;
+          while (p->read_size + r + 1 > new_reserved) {
+            new_reserved *= 2;
+          }
+          if (new_reserved > 128 * 1024) {
+            err("read size exceeds the limit");
+            append_ws_bad_request(p);
+            return;
+          }
+          unsigned char *new_ptr = realloc(p->read_buf, new_reserved);
+          if (!new_ptr) {
+            err("of out memory");
+            append_ws_bad_request(p);
+            return;
+          }
+          p->read_reserved = new_reserved;
+          p->read_buf = new_ptr;
+        }
+        memcpy(p->read_buf + p->read_size, buf, r);
+        p->read_size += r;
+        p->read_buf[p->read_size] = 0;
+      }
+    }
+    int len = strlen(p->read_buf);
+    if (len != p->read_size) {
+      err("zero byte in WS handshake");
+      append_ws_bad_request(p);
+      return;
+    }
+    unsigned char *curc = p->read_buf;
+    unsigned char *endp = NULL;
+    for (; *curc; ++curc) {
+      if (curc[0] == '\n' && curc[1] == '\n') {
+        endp = curc + 2;
+        break;
+      } else if (curc[0] == '\r' && curc[1] == '\n' && curc[2] == '\r' && curc[3] == '\n') {
+        endp = curc + 4;
+        break;
+      }
+    }
+    if (!endp) {
+      // incomplete header, wait for the rest
+      return;
+    }
+    if (*endp) {
+      err("garbage after HTTP header");
+      append_ws_bad_request(p);
+      return;
+    }
+    fprintf(stderr, "%d,%d:<%s>", p->read_size, p->in_close_state, p->read_buf);
+
+    // parse http header
+    const unsigned char *get_uri = NULL;
+    const unsigned char *host = NULL;
+    const unsigned char *user_agent = NULL;
+    const unsigned char *accept_encoding = NULL;
+    const unsigned char *sec_websocket_version = NULL;
+    const unsigned char *origin = NULL;
+    const unsigned char *sec_websocket_extensions = NULL;
+    const unsigned char *sec_websocket_key = NULL;
+    const unsigned char *connection = NULL;
+    const unsigned char *upgrade = NULL;
+
+    /*
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,* / *;q=0.8
+Accept-Language: en-US,en;q=0.5
+
+Sec-WebSocket-Key: 4LadtICuEqMWoi50H+8+Ug==
+Connection: keep-alive, Upgrade
+Pragma: no-cache
+Cache-Control: no-cache
+Upgrade: websocket
+     */
+
+    curc = p->read_buf;
+    while (*curc) {
+      unsigned char *nextl;
+      nextl = endp = strchr(curc, '\n');
+      if (!endp) break;
+      while (endp > curc && isspace(endp[-1])) --endp;
+      *endp = 0;
+
+      if (*curc) {
+        fprintf(stderr, ">>%s<<\n", curc);
+        if (!strncasecmp(curc, "GET ", 3)) {
+          if (get_uri) {
+            err("duplicate GET request");
+            append_ws_bad_request(p);
+            return;
+          }
+          unsigned char *pc = curc + 3;
+          while (isspace(*pc)) ++pc;
+          if (!*pc) {
+            err("empty GET request");
+            append_ws_bad_request(p);
+            return;
+          }
+          get_uri = pc;
+          while (*pc && !isspace(*pc)) ++pc;
+          *pc = 0;
+        } else {
+          const unsigned char *par_name = curc;
+          unsigned char *pc = curc;
+          while (*pc && *pc != ':' && !isspace(*pc)) ++pc;
+          unsigned char *endc = pc;
+          while (isspace(*pc)) ++pc;
+          if (*pc != ':') {
+            err("':' expected");
+            append_ws_bad_request(p);
+            return;
+          }
+          *endc = 0;
+          ++pc;
+          while (isspace(*pc)) ++pc;
+          const unsigned char *par_value = pc;
+
+          if (!strcasecmp(par_name, "host")) {
+            host = par_value;
+          } else if (!strcasecmp(par_name, "user-agent")) {
+            user_agent = par_value;
+          } else if (!strcasecmp(par_name, "accept-encoding")) {
+            accept_encoding = par_value;
+          } else if (!strcasecmp(par_name, "sec-websocket-version")) {
+            sec_websocket_version = par_value;
+          } else if (!strcasecmp(par_name, "origin")) {
+            origin = par_value;
+          } else if (!strcasecmp(par_name, "sec-websocket-extensions")) {
+            sec_websocket_extensions = par_value;
+          } else if (!strcasecmp(par_name, "sec-websocket-key")) {
+            sec_websocket_key = par_value;
+          } else if (!strcasecmp(par_name, "connection")) {
+            connection = par_value;
+          } else if (!strcasecmp(par_name, "upgrade")) {
+            upgrade = par_value;
+          }
+        }
+      }
+
+      curc = nextl + 1;
+    }
+    p->read_size = 0;
+
+    if (get_uri) {
+      //fprintf(stderr, "URI: %s\n", get_uri);
+      p->uri = xstrdup(get_uri);
+    }
+    if (host) {
+      //fprintf(stderr, "Host: %s\n", host);
+      p->host = xstrdup(host);
+    }
+    if (user_agent) {
+      //fprintf(stderr, "User-Agent: %s\n", user_agent);
+      p->user_agent = xstrdup(user_agent);
+    }
+    if (accept_encoding) {
+      //fprintf(stderr, "Accept-Encoding: %s\n", accept_encoding);
+      p->accept_encoding = xstrdup(accept_encoding);
+    }
+    if (sec_websocket_version) {
+      //fprintf(stderr, "Sec-Websocket-Version: %s\n", sec_websocket_version);
+    }
+    if (origin) {
+      //fprintf(stderr, "Origin: %s\n", origin);
+      p->origin = xstrdup(origin);
+    }
+    if (sec_websocket_extensions) {
+      //fprintf(stderr, "Sec-Websocket-Extensions: %s\n", sec_websocket_extensions);
+    }
+    if (sec_websocket_key) {
+      //fprintf(stderr, "Sec-Websocket-Key: %s\n", sec_websocket_key);
+    }
+    if (connection) {
+      //fprintf(stderr, "Connection: %s\n", connection);
+    }
+    if (upgrade) {
+      //fprintf(stderr, "Upgrade: %s\n", upgrade);
+    }
+
+    if (!connection || !strcasestr(connection, "upgrade")) {
+      err("no connection: upgrade");
+      append_ws_bad_request(p);
+      return;
+    }
+    if (!upgrade || strcasecmp(upgrade, "websocket")) {
+      err("no upgrade: websocket");
+      append_ws_bad_request(p);
+      return;
+    }
+    if (!sec_websocket_key || !*sec_websocket_key) {
+      err("no sec-websocket-key");
+      append_ws_bad_request(p);
+      return;
+    }
+
+    static const unsigned char ws_handshake_uuid[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+    char *ws_concat_keys = NULL;
+    int ws_concat_len = asprintf((void *) &ws_concat_keys, "%s%s", sec_websocket_key, ws_handshake_uuid);
+    unsigned char shabin[20];
+    sha_buffer(ws_concat_keys, ws_concat_len, shabin);
+    unsigned char shabuf[64];
+    int shabuflen = base64_encode(shabin, sizeof(shabin), shabuf);
+    shabuf[shabuflen] = 0;
+
+    char *ws_reply = NULL;
+    int ws_reply_len = asprintf(&ws_reply,
+                                "HTTP/1.1 101 Switching Protocols\r\n"
+                                "Upgrade: websocket\r\n"
+                                "Connection: Upgrade\r\n"
+                                "Sec-WebSocket-Accept: %s\r\n"
+                                "\r\n",
+                                shabuf);
+    nsf_ws_append_reply_raw(p, ws_reply, ws_reply_len);
+    p->state = WS_STATE_INITIAL_REPLY;
+
+    free(ws_concat_keys); ws_concat_keys = NULL;
+    free(ws_reply); ws_reply = NULL;
+    return;
+  } else if (p->state == WS_STATE_ACTIVE) {
+    /*
+      0                   1                   2                   3
+      0 1 2 3 4 5 6 7|8 9 0 1 2 3 4 5|6 7 8 9 0 1 2 3|4 5 6 7 8 9 0 1
+     +-+-+-+-+-------+-+-------------+-------------------------------+
+     |F|R|R|R| opcode|M| Payload len |    Extended payload length    |
+     |I|S|S|S|  (4)  |A|     (7)     |             (16/64)           |
+     |N|V|V|V|       |S|             |   (if payload len==126/127)   |
+     | |1|2|3|       |K|             |                               |
+     +-+-+-+-+-------+-+-------------+ - - - - - - - - - - - - - - - +
+     |     Extended payload length continued, if payload len == 127  |
+     + - - - - - - - - - - - - - - - +-------------------------------+
+     |                               |Masking-key, if MASK set to 1  |
+     +-------------------------------+-------------------------------+
+     | Masking-key (continued)       |          Payload Data         |
+     +-------------------------------- - - - - - - - - - - - - - - - +
+     :                     Payload Data continued ...                :
+     + - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - +
+     |                     Payload Data continued ...                |
+     +---------------------------------------------------------------+
+     */
+    while (1) {
+      int r = read(p->fd, buf, sizeof(buf));
+      if (r < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+        break;
+      } else if (r < 0) {
+        err("read error: %s", os_ErrorMsg());
+        p->state = WS_STATE_DISCONNECT;
+        return;
+      } else if (!r) {
+        p->state = WS_STATE_DISCONNECT;
+        return;
+      } else {
+        const unsigned char *ptr = buf;
+        while (r) {
+          if (!p->hdr_flag) {
+            // reading frame header
+            if (!p->hdr_expected) {
+              p->hdr_buf[p->hdr_size++] = *ptr++;
+              --r;
+              if (p->hdr_size == 2) {
+                p->hdr_expected = 2;
+                unsigned char paylen = p->hdr_buf[1] & 0x7f;
+                if (paylen == 126) {
+                  p->hdr_expected += 2;
+                } else if (paylen == 127) {
+                  p->hdr_expected += 8;
+                }
+                if ((signed char) p->hdr_buf[1] < 0) {
+                  // masking enabled
+                  p->hdr_expected += 4;
+                }
+                if (p->hdr_size == p->hdr_expected) {
+                  if (paylen > p->read_reserved) {
+                    int new_reserved = p->read_reserved;
+                    if (!new_reserved) new_reserved = 64;
+                    while (paylen > new_reserved) new_reserved *= 2;
+                    unsigned char *new_ptr = realloc(p->read_buf, new_reserved);
+                    if (!new_ptr) {
+                      nsf_ws_append_close_request(p, WS_STATUS_MESSAGE_TOO_BIG);
+                      return;
+                    }
+                    p->read_reserved = new_reserved;
+                    p->read_buf = new_ptr;
+                  }
+                  p->hdr_flag = 1;
+                  p->read_expected = paylen;
+                  p->read_size = 0;
+                }
+              }
+            } else {
+              p->hdr_buf[p->hdr_size++] = *ptr++;
+              --r;
+              if (p->hdr_size == p->hdr_expected) {
+                p->hdr_flag = 1;
+                unsigned long long payload_size = p->hdr_buf[1] & 0x7f;
+                if (payload_size == 126) {
+                  payload_size = (unsigned long long) p->hdr_buf[2] << 8;
+                  payload_size |= (unsigned long long) p->hdr_buf[3];
+                  if (payload_size < 126) {
+                    nsf_ws_append_close_request(p, WS_STATUS_PROTOCOL_ERROR);
+                    return;
+                  }
+                } else if (payload_size == 127) {
+                  payload_size = (unsigned long long) p->hdr_buf[2] << 56;
+                  payload_size |= (unsigned long long) p->hdr_buf[3] << 48;
+                  payload_size |= (unsigned long long) p->hdr_buf[4] << 40;
+                  payload_size |= (unsigned long long) p->hdr_buf[5] << 32;
+                  payload_size |= (unsigned long long) p->hdr_buf[6] << 24;
+                  payload_size |= (unsigned long long) p->hdr_buf[7] << 16;
+                  payload_size |= (unsigned long long) p->hdr_buf[8] << 8;
+                  payload_size |= (unsigned long long) p->hdr_buf[9];
+                  if ((long long) payload_size < 0 || payload_size < 65536) {
+                    nsf_ws_append_close_request(p, WS_STATUS_PROTOCOL_ERROR);
+                    return;
+                  }
+                }
+                if (payload_size >= 128 * 1024 * 1024) {
+                  nsf_ws_append_close_request(p, WS_STATUS_MESSAGE_TOO_BIG);
+                  return;
+                }
+                if (payload_size > p->read_reserved) {
+                  int new_reserved = p->read_reserved;
+                  if (!new_reserved) new_reserved = 64;
+                  while (payload_size > new_reserved) new_reserved *= 2;
+                  unsigned char *new_ptr = realloc(p->read_buf, payload_size);
+                  if (!new_ptr) {
+                    nsf_ws_append_close_request(p, WS_STATUS_MESSAGE_TOO_BIG);
+                    return;
+                  }
+                  p->read_reserved = new_reserved;
+                  p->read_buf = new_ptr;
+                }
+                p->read_expected = payload_size;
+                p->read_size = 0;
+              }
+            }
+          } else {
+            // reading payload
+            int want = p->read_expected - p->read_size;
+            if (want > r) want = r;
+            memcpy(p->read_buf + p->read_size, ptr, want);
+            p->read_size += want;
+            r -= want;
+            if (p->read_size == p->read_expected) {
+              if ((signed char) p->hdr_buf[1] < 0) {
+                // masking
+                const unsigned char *mask_ptr = p->hdr_buf + 2;
+                if (p->hdr_buf[1] == (0x80 + 126)) {
+                  mask_ptr = p->hdr_buf + 4;
+                } else if (p->hdr_buf[1] == (0x80 + 127)) {
+                  mask_ptr = p->hdr_buf + 10;
+                }
+                for (int i = 0; i < p->read_size; ++i) {
+                  p->read_buf[i] ^= mask_ptr[i & 3];
+                }
+              }
+              if (!p->frame_last || (signed char) p->frame_last->hdr[0] < 0) {
+                if (!append_new_ws_frame(p)) {
+                  nsf_ws_append_close_request(p, WS_STATUS_MESSAGE_TOO_BIG);
+                  return;
+                }
+              } else {
+                // opcode must be 0
+                if ((p->hdr_buf[0] & 0xf) != 0) {
+                  nsf_ws_append_close_request(p, WS_STATUS_PROTOCOL_ERROR);
+                  return;
+                }
+                struct ws_frame *wsf = p->frame_last;
+                wsf->hdr[0] |= p->hdr_buf[0] & 0x80;
+                if (p->read_size > 0) {
+                  unsigned char *new_ptr = realloc(wsf->data, wsf->size + p->read_size);
+                  if (!new_ptr) {
+                    nsf_ws_append_close_request(p, WS_STATUS_MESSAGE_TOO_BIG);
+                    return;
+                  }
+                  wsf->data = new_ptr;
+                  memcpy(new_ptr + wsf->size, p->read_buf, p->read_size);
+                  wsf->size += p->read_size;
+                }
+                p->read_size = 0;
+                p->read_expected = 0;
+                p->hdr_flag = 0;
+                p->hdr_expected = 0;
+                p->hdr_size = 0;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+static void
+write_ws_connection(struct ws_client_state *p)
+{
+  while (p->write_size > 0) {
+    int w = write(p->fd, p->write_buf, p->write_size);
+    if (w < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+    } else if (w < 0) {
+    } else if (!w) {
+    } else {
+      if (w < p->write_size) {
+        memmove(p->write_buf, p->write_buf + w, p->write_size - w);
+      }
+      p->write_size -= w;
+    }
+  }
+}
+
 void
 nsf_enqueue_reply(struct server_framework_state *state,
                   struct client_state *p, ej_size_t len, void const *msg)
@@ -532,6 +1250,7 @@ nsf_main_loop(struct server_framework_state *state)
   fd_set rset, wset;
   struct watchlist *pw;
   int mode;
+  struct ws_client_state *ws_clnt;
 
   while (1) {
     int work_done = 1;
@@ -545,6 +1264,10 @@ nsf_main_loop(struct server_framework_state *state)
       FD_SET(state->socket_fd, &rset);
       if (state->socket_fd > fd_max) fd_max = state->socket_fd;
     }
+    if (state->ws_fd >= 0) {
+      FD_SET(state->ws_fd, &rset);
+      if (state->ws_fd > fd_max) fd_max = state->ws_fd;
+    }
 
     for (cur_clnt = state->clients_first; cur_clnt; cur_clnt = cur_clnt->next) {
       if (cur_clnt->state==STATE_WRITE || cur_clnt->state==STATE_WRITECLOSE) {
@@ -554,6 +1277,33 @@ nsf_main_loop(struct server_framework_state *state)
                  && cur_clnt->state <= STATE_READ_DATA) {
         FD_SET(cur_clnt->fd, &rset);
         if (cur_clnt->fd > fd_max) fd_max = cur_clnt->fd;
+      }
+    }
+
+    for (ws_clnt = state->ws_first; ws_clnt; ws_clnt = ws_clnt->next) {
+      switch (ws_clnt->state) {
+      case WS_STATE_INITIAL:
+        FD_SET(ws_clnt->fd, &rset);
+        if (ws_clnt->fd > fd_max) fd_max = ws_clnt->fd;
+        break;
+      case WS_STATE_INITIAL_REPLY: case WS_STATE_HTTP_ERROR:
+        if (ws_clnt->write_size > 0) {
+          FD_SET(ws_clnt->fd, &wset);
+          if (ws_clnt->fd > fd_max) fd_max = ws_clnt->fd;
+        }
+        break;
+      case WS_STATE_ACTIVE:
+        if (!ws_clnt->in_close_state) {
+          FD_SET(ws_clnt->fd, &rset);
+          if (ws_clnt->fd > fd_max) fd_max = ws_clnt->fd;
+        }
+        if (ws_clnt->write_size > 0) {
+          FD_SET(ws_clnt->fd, &wset);
+            if (ws_clnt->fd > fd_max) fd_max = ws_clnt->fd;
+        }
+        break;
+      default:
+        abort();
       }
     }
 
@@ -615,6 +1365,11 @@ nsf_main_loop(struct server_framework_state *state)
     }
     remove_pending_watches(state);
 
+    // new WebSocket connections
+    if (state->ws_fd >= 0 && FD_ISSET(state->ws_fd, &rset)) {
+      accept_new_ws_connections(state);
+    }
+
     // check for new control connections
     if (state->socket_fd >= 0 && FD_ISSET(state->socket_fd, &rset)) {
       accept_new_connection(state);
@@ -638,11 +1393,80 @@ nsf_main_loop(struct server_framework_state *state)
       }
     }
 
+    for (ws_clnt = state->ws_first; ws_clnt; ws_clnt = ws_clnt->next) {
+      if (FD_ISSET(ws_clnt->fd, &rset)) {
+        read_ws_connection(ws_clnt);
+      }
+      if (FD_ISSET(ws_clnt->fd, &wset)) {
+        write_ws_connection(ws_clnt);
+        if (ws_clnt->write_size == 0 && ws_clnt->state == WS_STATE_INITIAL_REPLY) {
+          ws_clnt->state = WS_STATE_ACTIVE;
+        } else if (ws_clnt->write_size == 0 && ws_clnt->state == WS_STATE_HTTP_ERROR) {
+          ws_clnt->state = WS_STATE_DISCONNECT;
+        }
+      }
+    }
+
     // execute ready commands from control connections
     for (cur_clnt = state->clients_first; cur_clnt; cur_clnt = cur_clnt->next) {
       if (cur_clnt->state == STATE_READ_READY) {
         handle_control_command(state, cur_clnt);
         ASSERT(cur_clnt->state != STATE_READ_READY);
+      }
+    }
+
+    for (ws_clnt = state->ws_first; ws_clnt; ws_clnt = ws_clnt->next) {
+      if (ws_clnt->state == WS_STATE_ACTIVE) {
+        while (1) {
+          struct ws_frame *wsf = ws_clnt->frame_first;
+          if (!wsf || (signed char) wsf->hdr[0] >= 0) break;
+
+          switch (wsf->hdr[0] & 0x0F) {
+          case WS_FRAME_TEXT:
+          case WS_FRAME_BIN:
+            if (state->params->ws_handle_packet) {
+              state->params->ws_handle_packet(state, ws_clnt, wsf->hdr[0] & 0x0F, wsf->data, wsf->size);
+            }
+            /*
+            fprintf(stderr, "ws_text_frame: %d\n", wsf->size);
+            nsf_ws_append_reply_frame(ws_clnt, WS_FRAME_TEXT, wsf->data, wsf->size);
+            */
+            break;
+          case WS_FRAME_CLOSE:
+            fprintf(stderr, "ws_close_frame:\n");
+            ws_clnt->in_close_state = 1;
+            if (!ws_clnt->out_close_state) {
+              int close_code = -1;
+              if (wsf->size > 2) {
+                close_code = (wsf->data[0] << 8) | (wsf->data[1]);
+              }
+              nsf_ws_append_close_request(ws_clnt, close_code);
+            }
+            break;
+          case WS_FRAME_PING:
+            fprintf(stderr, "ws_ping_frame:\n");
+            if (wsf->fragments > 1 || wsf->size >= 126) {
+              nsf_ws_append_close_request(ws_clnt, WS_STATUS_PROTOCOL_ERROR);
+            } else {
+              nsf_ws_append_reply_frame(ws_clnt, WS_FRAME_PONG, wsf->data, wsf->size);
+            }
+            break;
+          default:
+            nsf_ws_append_close_request(ws_clnt, WS_STATUS_PROTOCOL_ERROR);
+            break;
+          }
+
+          ws_clnt->frame_first = wsf->next;
+          if (wsf->next) {
+            wsf->next->prev = NULL;
+          } else {
+            ws_clnt->frame_last = NULL;
+          }
+          ws_frame_free(wsf);
+        }
+        if (ws_clnt->in_close_state > 0 && ws_clnt->out_close_state == 2) {
+          ws_clnt->state = WS_STATE_DISCONNECT;
+        }
       }
     }
 
@@ -654,6 +1478,16 @@ nsf_main_loop(struct server_framework_state *state)
         cur_clnt = tmp;
       } else {
         cur_clnt = cur_clnt->next;
+      }
+    }
+
+    for (ws_clnt = state->ws_first; ws_clnt; ) {
+      if (ws_clnt->state == WS_STATE_DISCONNECT) {
+        struct ws_client_state *tmp = ws_clnt->next;
+        ws_client_state_delete(state, ws_clnt);
+        ws_clnt = tmp;
+      } else {
+        ws_clnt = ws_clnt->next;
       }
     }
   }
@@ -675,6 +1509,42 @@ nsf_prepare(struct server_framework_state *state)
     errno = 0;
     if (unlink(state->params->socket_path) < 0 && errno != ENOENT)
       state->params->startup_error("cannot remove stale socket file");
+  }
+
+  // create a websocket socket
+  state->ws_fd = -1;
+  if (state->params->ws_port > 0) {
+    if ((state->ws_fd = socket(PF_INET, SOCK_STREAM, 0)) < 0) {
+      state->params->startup_error("socket() failed: %s", os_ErrorMsg());
+    }
+
+    int value = 1;
+    if (setsockopt(state->ws_fd, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(value)) < 0) {
+      state->params->startup_error("setsockopt() failed: %s", os_ErrorMsg());
+    }
+    if (setsockopt(state->ws_fd, SOL_SOCKET, SO_REUSEPORT, &value, sizeof(value)) < 0) {
+      state->params->startup_error("setsockopt() failed: %s", os_ErrorMsg());
+    }
+
+    struct sockaddr_in bind_addr = {};
+    bind_addr.sin_family = AF_INET;
+    bind_addr.sin_port = htons(state->params->ws_port);
+    bind_addr.sin_addr.s_addr = INADDR_ANY;
+    if (bind(state->ws_fd, (void *) &bind_addr, sizeof(bind_addr)) < 0) {
+      state->params->startup_error("bind() failed: %s", os_ErrorMsg());
+    }
+
+    if (listen(state->ws_fd, 32) < 0) {
+      state->params->startup_error("listen() failed: %s", os_ErrorMsg());
+    }
+
+    int old_flags = fcntl(state->ws_fd, F_GETFL, 0);
+    if (old_flags < 0) {
+      state->params->startup_error("fcntl() failed: %s", os_ErrorMsg());
+    }
+    if (fcntl(state->ws_fd, F_SETFL, old_flags | O_NONBLOCK) < 0) {
+      state->params->startup_error("fcntl() failed: %s", os_ErrorMsg());
+    }
   }
 
   // create a control socket
