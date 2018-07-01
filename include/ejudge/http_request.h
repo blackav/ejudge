@@ -30,6 +30,7 @@ struct contest_extra;
 struct ejudge_cfg;
 struct sid_state;
 struct userlist_clnt;
+struct cJSON;
 
 struct http_request_info
 {
@@ -48,6 +49,8 @@ struct http_request_info
   const unsigned char **param_names;
   const size_t *param_sizes;
   const unsigned char **params;
+
+  struct cJSON *json;
 
   const unsigned char *http_host;
   const unsigned char *self_url;
