@@ -618,6 +618,7 @@ nsf_ws_append_reply_frame(
   ASSERT(size >= 0);
   ASSERT(size < 128 * 1024 * 1024);
 
+  if (!opcode) opcode = WS_FRAME_TEXT;
   unsigned int wire_size = size + 2;
   if (size >= 65536) {
     wire_size += 8;
@@ -1449,8 +1450,8 @@ nsf_main_loop(struct server_framework_state *state)
               state->params->ws_handle_packet(state, ws_clnt, wsf->hdr[0] & 0x0F, wsf->data, wsf->size);
             }
 
-            fprintf(stderr, "ws_text_frame: %d\n", wsf->size);
-            nsf_ws_append_reply_frame(ws_clnt, WS_FRAME_TEXT, wsf->data, wsf->size);
+            fprintf(stderr, "ws_frame: %d, %d\n", (wsf->hdr[0] & 0x0F), wsf->size);
+            //nsf_ws_append_reply_frame(ws_clnt, WS_FRAME_TEXT, wsf->data, wsf->size);
 
             break;
           case WS_FRAME_CLOSE:
