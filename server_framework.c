@@ -687,6 +687,9 @@ append_new_ws_frame(struct ws_client_state *p)
   p->read_size = 0;
   p->read_expected = 0;
   p->read_reserved = 0;
+  p->hdr_flag = 0;
+  p->hdr_expected = 0;
+  p->hdr_size = 0;
   wsf->prev = p->frame_last;
   if (!p->frame_last) {
     p->frame_first = wsf;
@@ -1427,10 +1430,10 @@ nsf_main_loop(struct server_framework_state *state)
             if (state->params->ws_handle_packet) {
               state->params->ws_handle_packet(state, ws_clnt, wsf->hdr[0] & 0x0F, wsf->data, wsf->size);
             }
-            /*
+
             fprintf(stderr, "ws_text_frame: %d\n", wsf->size);
             nsf_ws_append_reply_frame(ws_clnt, WS_FRAME_TEXT, wsf->data, wsf->size);
-            */
+
             break;
           case WS_FRAME_CLOSE:
             fprintf(stderr, "ws_close_frame:\n");
