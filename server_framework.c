@@ -783,6 +783,8 @@ read_ws_connection(struct ws_client_state *p)
     const unsigned char *sec_websocket_key = NULL;
     const unsigned char *connection = NULL;
     const unsigned char *upgrade = NULL;
+    const unsigned char *x_forwarded_for = NULL;
+    const unsigned char *x_forwarded_host = NULL;
 
     /*
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,* / *;q=0.8
@@ -793,6 +795,9 @@ Connection: keep-alive, Upgrade
 Pragma: no-cache
 Cache-Control: no-cache
 Upgrade: websocket
+X-Forwarded-For: 127.0.0.1
+X-Forwarded-Host: localhost
+X-Forwarded-Server: localhost.localdomain
      */
 
     curc = p->read_buf;
@@ -855,6 +860,10 @@ Upgrade: websocket
             connection = par_value;
           } else if (!strcasecmp(par_name, "upgrade")) {
             upgrade = par_value;
+          } else if (!strcasecmp(par_name, "x-forwarded-for")) {
+            x_forwarded_for = par_value;
+          } else if (!strcasecmp(par_name, "x-forwarded-host")) {
+            x_forwarded_host = par_value;
           }
         }
       }
@@ -897,6 +906,14 @@ Upgrade: websocket
     }
     if (upgrade) {
       //fprintf(stderr, "Upgrade: %s\n", upgrade);
+    }
+    if (x_forwarded_for && *x_forwarded_for) {
+      free(p->remote_host);
+      p->remote_host = xstrdup(x_forwarded_for);
+    }
+    if (x_forwarded_host && *x_forwarded_host) {
+      free(p->host);
+      p->host = xstrdup(x_forwarded_host);
     }
 
     if (!connection || !strcasestr(connection, "upgrade")) {
