@@ -251,5 +251,11 @@ time_t
 nsf_get_server_start_time(
         struct server_framework_state *state);
 
+int
+nsf_ws_append_reply_frame(
+        struct ws_client_state *p,
+        int opcode,
+        const unsigned char *data,
+        int size);
 
 #endif /* __SERVER_FRAMEWORK_H__ */
