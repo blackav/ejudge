@@ -1008,10 +1008,10 @@ X-Forwarded-Server: localhost.localdomain
                   p->hdr_expected += 4;
                 }
                 if (p->hdr_size == p->hdr_expected) {
-                  if (paylen > p->read_reserved) {
+                  if (paylen >= p->read_reserved) {
                     int new_reserved = p->read_reserved;
                     if (!new_reserved) new_reserved = 64;
-                    while (paylen > new_reserved) new_reserved *= 2;
+                    while (paylen >= new_reserved) new_reserved *= 2;
                     unsigned char *new_ptr = realloc(p->read_buf, new_reserved);
                     if (!new_ptr) {
                       nsf_ws_append_close_request(p, WS_STATUS_MESSAGE_TOO_BIG);
@@ -1056,10 +1056,10 @@ X-Forwarded-Server: localhost.localdomain
                   nsf_ws_append_close_request(p, WS_STATUS_MESSAGE_TOO_BIG);
                   return;
                 }
-                if (payload_size > p->read_reserved) {
+                if (payload_size >= p->read_reserved) {
                   int new_reserved = p->read_reserved;
                   if (!new_reserved) new_reserved = 64;
-                  while (payload_size > new_reserved) new_reserved *= 2;
+                  while (payload_size >= new_reserved) new_reserved *= 2;
                   unsigned char *new_ptr = realloc(p->read_buf, payload_size);
                   if (!new_ptr) {
                     nsf_ws_append_close_request(p, WS_STATUS_MESSAGE_TOO_BIG);
@@ -1092,6 +1092,7 @@ X-Forwarded-Server: localhost.localdomain
                   p->read_buf[i] ^= mask_ptr[i & 3];
                 }
               }
+              p->read_buf[p->read_size] = 0;
               if (!p->frame_last || (signed char) p->frame_last->hdr[0] < 0) {
                 if (!append_new_ws_frame(p)) {
                   nsf_ws_append_close_request(p, WS_STATUS_MESSAGE_TOO_BIG);
