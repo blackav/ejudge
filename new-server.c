@@ -258,22 +258,47 @@ startup_error(const char *format, ...)
   exit(1);
 }
 
-struct client_state *
-ns_get_client_by_id(int client_id)
+int
+ns_is_valid_client_id(int client_id)
 {
-  return nsf_get_client_by_id(state, client_id);
+  return nsf_get_client_by_id(state, client_id) != NULL;
 }
 
 void
-ns_send_reply(struct client_state *p, int answer)
+ns_client_state_clear_contest_id(int client_id)
 {
-  return nsf_send_reply(state, p, answer);
+  struct client_state *p = nsf_get_client_by_id(state, client_id);
+  if (p) {
+    p->contest_id = 0;
+    p->destroy_callback = 0;
+  }
 }
 
 void
-ns_new_autoclose(struct client_state *p, void *write_buf, size_t write_len)
+ns_close_client_fds(int client_id)
 {
-  return nsf_new_autoclose(state, p, write_buf, write_len);
+  struct client_state *p = nsf_get_client_by_id(state, client_id);
+  if (p) {
+    nsf_close_client_fds(p);
+  }
+}
+
+void
+ns_send_reply_2(int client_id, int answer)
+{
+  struct client_state *p = nsf_get_client_by_id(state, client_id);
+  if (p) {
+    nsf_send_reply(state, p, answer);
+  }
+}
+
+void
+ns_new_autoclose_2(int client_id, void *write_buf, size_t write_len)
+{
+  struct client_state *p = nsf_get_client_by_id(state, client_id);
+  if (p) {
+    nsf_new_autoclose(state, p, write_buf, write_len);
+  }
 }
 
 extern const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST];

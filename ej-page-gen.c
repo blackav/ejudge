@@ -6714,17 +6714,25 @@ nsdb_priv_remove_user(int user_id, int contest_id)
     return 0;
 }
 void
-ns_send_reply(void * /*struct client_state * */ p, int answer)
+ns_send_reply_2(int client_id, int answer)
 {
 }
 void
-ns_new_autoclose(void * /*struct client_state * */ p, void *write_buf, size_t write_len)
+ns_new_autoclose_2(int client_id, void *write_buf, size_t write_len)
 {
 }
-void * /*struct client_state * */
-ns_get_client_by_id(int client_id)
+void
+ns_client_state_clear_contest_id(int client_id)
 {
-    return NULL;
+}
+void
+ns_close_client_fds(int client_id)
+{
+}
+int
+ns_is_valid_client_id(int client_id)
+{
+    return 0;
 }
 
 const char compile_version[] = "?";

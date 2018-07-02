@@ -503,10 +503,14 @@ ns_check_contest_events(
         serve_state_t cs,
         const struct contest_desc *cnts);
 void ns_contest_unload_callback(serve_state_t cs);
+
 void ns_client_destroy_callback(struct client_state *p);
-struct client_state *ns_get_client_by_id(int client_id);
-void ns_send_reply(struct client_state *p, int answer);
-void ns_new_autoclose(struct client_state *p, void *, size_t);
+
+int ns_is_valid_client_id(int client_id);
+void ns_client_state_clear_contest_id(int client_id);
+void ns_close_client_fds(int client_id);
+void ns_send_reply_2(int client_id, int answer);
+void ns_new_autoclose_2(int client_id, void *write_buf, size_t write_len);
 
 struct UserProblemInfo;
 void

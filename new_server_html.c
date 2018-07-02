@@ -373,16 +373,13 @@ ns_for_each_contest_extra(void (*callback)(struct contest_extra *, void *ptr), v
 void
 ns_contest_unload_callback(serve_state_t cs)
 {
-  struct client_state *p;
-
   if (cs->client_id < 0 || !cs->pending_xml_import
-      || !(p = ns_get_client_by_id(cs->client_id)))
+      || !ns_is_valid_client_id(cs->client_id))
     return;
 
-  p->contest_id = 0;
-  p->destroy_callback = 0;
-  nsf_close_client_fds(p);
-  ns_send_reply(p, -NEW_SRV_ERR_CONTEST_UNLOADED);
+  ns_client_state_clear_contest_id(cs->client_id);
+  ns_close_client_fds(cs->client_id);
+  ns_send_reply_2(cs->client_id, -NEW_SRV_ERR_CONTEST_UNLOADED);
 }
 
 void
@@ -518,12 +515,11 @@ handle_pending_xml_import(
         const struct contest_desc *cnts,
         serve_state_t cs)
 {
-  struct client_state *p;
   FILE *fout = 0;
   char *out_text = 0;
   size_t out_size = 0;
 
-  if (cs->client_id < 0 || !(p = ns_get_client_by_id(cs->client_id))) {
+  if (cs->client_id < 0 || !ns_is_valid_client_id(cs->client_id)) {
     if (cs->saved_testing_suspended != cs->testing_suspended) {
       cs->testing_suspended = cs->saved_testing_suspended;
       serve_update_status_file(cs, 1);
@@ -540,13 +536,13 @@ handle_pending_xml_import(
   runlog_import_xml(cs, cs->runlog_state, fout, 1, cs->pending_xml_import);
   close_memstream(fout); fout = 0;
   if (out_size > 0) {
-    ns_new_autoclose(p, out_text, out_size);
+    ns_new_autoclose_2(cs->client_id, out_text, out_size);
     out_text = 0;
   } else {
-    nsf_close_client_fds(p);
+    ns_close_client_fds(cs->client_id);
     xfree(out_text); out_text = 0;
   }
-  ns_send_reply(p, NEW_SRV_RPL_OK);
+  ns_send_reply_2(cs->client_id, NEW_SRV_RPL_OK);
 
   if (cs->saved_testing_suspended != cs->testing_suspended) {
     cs->testing_suspended = cs->saved_testing_suspended;
@@ -557,8 +553,7 @@ handle_pending_xml_import(
   }
   xfree(cs->pending_xml_import); cs->pending_xml_import = 0;
   cs->client_id = -1; cs->destroy_callback = 0;
-  p->contest_id = 0;
-  p->destroy_callback = 0;
+  ns_client_state_clear_contest_id(cs->client_id);
 }
 
 enum { MAX_WORK_BATCH = 10 };
