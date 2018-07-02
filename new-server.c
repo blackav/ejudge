@@ -31,6 +31,8 @@
 #include "ejudge/userlist.h"
 #include "ejudge/compat.h"
 #include "ejudge/xml_utils.h"
+#include "ejudge/cJSON.h"
+#include "ejudge/misctext.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -49,6 +51,13 @@ static void handle_packet_func(struct server_framework_state *,
                                struct client_state *,
                                size_t,
                                const struct new_server_prot_packet *);
+static void
+handle_ws_request(
+        struct server_framework_state *state,
+        struct ws_client_state *p,
+        int opcode,
+        const unsigned char *data,
+        size_t size);
 
 static struct server_framework_params params =
 {
@@ -63,6 +72,7 @@ static struct server_framework_params params =
   .handle_packet = handle_packet_func,
   .loop_start = ns_loop_callback,
   .post_select = ns_post_select_callback,
+  .ws_handle_packet = handle_ws_request,
 };
 
 static struct server_framework_state *state = 0;
@@ -518,6 +528,55 @@ cmd_http_request(
   xfree(hr.name_arm);
   xfree(hr.script_part);
   xfree(hr.body_attr);
+}
+
+void
+ns_ws_error(
+        struct ws_client_state *p,
+        int error_code)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  char *out_s = NULL;
+  size_t out_z = 0;
+  FILE *out_f = open_memstream(&out_s, &out_z);
+  fprintf(out_f, "{\n");
+  fprintf(out_f, "  \"ok\": false");
+  fprintf(out_f, ",\n  \"error\": {\n");
+  fprintf(out_f, "    \"num\": %d", error_code);
+  fprintf(out_f, ",\n    \"symbol\": \"%s\"", ns_error_symbol(error_code));
+  const unsigned char *msg = ns_error_title_2(error_code);
+  if (msg) {
+    fprintf(out_f, ",\n    \"message\": \"%s\"", json_armor_buf(&ab, msg));
+  }
+  fprintf(out_f, "\n  }");
+  fprintf(out_f, "\n}\n");
+  fclose(out_f); out_f = NULL;
+  html_armor_free(&ab);
+  nsf_ws_append_reply_frame(p, 0, out_s, out_z);
+  free(out_s);
+}
+
+static void
+handle_ws_request(
+        struct server_framework_state *state,
+        struct ws_client_state *p,
+        int opcode,
+        const unsigned char *data,
+        size_t size)
+{
+  // FIXME: handle only WS_FRAME_TEXT?
+  cJSON *root = cJSON_Parse(data);
+  if (!root) {
+    ns_ws_error(p, NEW_SRV_ERR_PROTOCOL_ERROR);
+    return;
+  }
+  if (root->type != cJSON_Object) {
+    ns_ws_error(p, NEW_SRV_ERR_PROTOCOL_ERROR);
+    cJSON_Delete(root);
+    return;
+  }
+
+  cJSON_Delete(root);
 }
 
 static int
