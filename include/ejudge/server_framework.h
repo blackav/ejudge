@@ -258,4 +258,14 @@ nsf_ws_append_reply_frame(
         const unsigned char *data,
         int size);
 
+int
+nsf_get_contest_id(struct client_state *p);
+void
+nsf_set_destroy_callback(
+        struct client_state *p,
+        int cnts_id,
+        void (*destroy_callback)(struct client_state*));
+int
+nsf_get_peer_uid(struct client_state *p);
+
 #endif /* __SERVER_FRAMEWORK_H__ */

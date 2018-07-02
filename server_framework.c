@@ -218,6 +218,28 @@ nsf_get_client_by_id(struct server_framework_state *state, int id)
   return 0;
 }
 
+int
+nsf_get_contest_id(struct client_state *p)
+{
+  return p->contest_id;
+}
+
+void
+nsf_set_destroy_callback(
+        struct client_state *p,
+        int cnts_id,
+        void (*destroy_callback)(struct client_state*))
+{
+  p->contest_id = cnts_id;
+  p->destroy_callback = destroy_callback;
+}
+
+int
+nsf_get_peer_uid(struct client_state *p)
+{
+  return p->peer_uid;
+}
+
 static void
 client_state_delete(struct server_framework_state *state,
                     struct client_state *p)

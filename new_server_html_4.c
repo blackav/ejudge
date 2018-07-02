@@ -1271,8 +1271,7 @@ cmd_import_xml_runs(
     cs->saved_testing_suspended = cs->testing_suspended;
     cs->testing_suspended = 1;
     serve_update_status_file(cs, 1);
-    phr->client_state->contest_id = cnts->id;
-    phr->client_state->destroy_callback = ns_client_destroy_callback;
+    nsf_set_destroy_callback(phr->client_state, cnts->id, ns_client_destroy_callback);
     cs->client_id = phr->id;
     cs->pending_xml_import = xstrdup(s);
     cs->destroy_callback = ns_contest_unload_callback;
@@ -1931,9 +1930,10 @@ cmd_reload_server_2(
             phr->client_state->peer_gid);
     */
 
-    if (phr->client_state->peer_uid <= 0) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    int peer_uid = nsf_get_peer_uid(phr->client_state);
+    if (peer_uid <= 0) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
-    struct passwd *pwd = getpwuid(phr->client_state->peer_uid);
+    struct passwd *pwd = getpwuid(peer_uid);
     if (!pwd || !pwd->pw_name) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     //fprintf(fout, "system login: %s\n", pwd->pw_name);
     if (!ejudge_config) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
