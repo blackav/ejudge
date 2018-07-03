@@ -76,6 +76,12 @@ struct client_state
 
   int id;
   int fd;
+};
+
+struct ht_client_state
+{
+  struct client_state b;
+
   int state;
 
   int peer_pid;
@@ -159,7 +165,7 @@ struct server_framework_params
                         struct client_state *,
                         size_t,
                         const struct new_server_prot_packet *);
-  struct client_state *(*alloc_state)(struct server_framework_state *);
+  struct ht_client_state *(*alloc_state)(struct server_framework_state *);
   void (*cleanup_client)(struct server_framework_state *,
                          struct client_state *);
   void (*free_memory)(struct server_framework_state *, void *);

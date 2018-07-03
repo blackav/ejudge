@@ -267,7 +267,7 @@ ns_is_valid_client_id(int client_id)
 void
 ns_client_state_clear_contest_id(int client_id)
 {
-  struct client_state *p = nsf_get_client_by_id(state, client_id);
+  struct ht_client_state *p = (struct ht_client_state *) nsf_get_client_by_id(state, client_id);
   if (p) {
     p->contest_id = 0;
     p->destroy_callback = 0;
@@ -607,13 +607,14 @@ handle_ws_request(
 static int
 check_restart_permissions(struct client_state *p)
 {
+  struct ht_client_state *pp = (struct ht_client_state *) p;
   struct passwd *sysp = 0;
   opcap_t caps = 0;
 
-  if (!p->peer_uid) return 1;   /* root is allowed */
-  if (p->peer_uid == getuid()) return 1; /* the current user also allowed */
-  if (!(sysp = getpwuid(p->peer_uid)) || !sysp->pw_name) {
-    err("no user %d in system tables", p->peer_uid);
+  if (!pp->peer_uid) return 1;   /* root is allowed */
+  if (pp->peer_uid == getuid()) return 1; /* the current user also allowed */
+  if (!(sysp = getpwuid(pp->peer_uid)) || !sysp->pw_name) {
+    err("no user %d in system tables", pp->peer_uid);
     return -1;
   }
   const unsigned char *ejudge_login = ejudge_cfg_user_map_find(ejudge_config, sysp->pw_name);
@@ -631,6 +632,8 @@ cmd_control(struct server_framework_state *state,
             size_t pkt_size,
             const struct new_server_prot_packet *pkt)
 {
+  struct ht_client_state *pp = (struct ht_client_state *) p;
+
   int mon_fd = -1;
   int sig = 0;
 
@@ -654,7 +657,7 @@ cmd_control(struct server_framework_state *state,
 
   mon_fd = dup(p->fd);
   fcntl(mon_fd, F_SETFD, FD_CLOEXEC);
-  p->state = STATE_DISCONNECT;
+  pp->state = STATE_DISCONNECT;
   raise(sig);
 }
 

@@ -88,8 +88,8 @@ struct server_framework_state
 
   time_t server_start_time;
 
-  struct client_state *clients_first;
-  struct client_state *clients_last;
+  struct ht_client_state *clients_first;
+  struct ht_client_state *clients_last;
 
   struct watchlist *w_first, *w_last;
 
@@ -120,10 +120,10 @@ static const struct client_state_operations http_client_state_operations =
   nsf_set_destroy_callback, // set_destroy_callback
 };
 
-static struct client_state *
+static struct ht_client_state *
 client_state_new(struct server_framework_state *state, int fd)
 {
-  struct client_state *p;
+  struct ht_client_state *p;
 
   fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
 
@@ -133,9 +133,9 @@ client_state_new(struct server_framework_state *state, int fd)
     XCALLOC(p, 1);
   }
 
-  p->ops = &http_client_state_operations;
-  p->id = state->client_id++;
-  p->fd = fd;
+  p->b.ops = &http_client_state_operations;
+  p->b.id = state->client_id++;
+  p->b.fd = fd;
   p->client_fds[0] = -1;
   p->client_fds[1] = -1;
   p->state = STATE_READ_CREDS;
@@ -143,8 +143,8 @@ client_state_new(struct server_framework_state *state, int fd)
   if (!state->clients_first) {
     state->clients_first = state->clients_last = p;
   } else {
-    p->next = state->clients_first;
-    state->clients_first->prev = p;
+    p->b.next = (struct client_state *) state->clients_first;
+    state->clients_first->b.prev = (struct client_state*) p;
     state->clients_first = p;
   }
   return p;
@@ -203,27 +203,29 @@ nsf_new_autoclose(struct server_framework_state *state,
                   struct client_state *p, void *write_buf,
                   size_t write_len)
 {
-  struct client_state *q;
+  struct ht_client_state *pp = (struct ht_client_state*) p;
+  struct ht_client_state *q;
 
-  q = client_state_new(state, p->client_fds[0]);
-  q->client_fds[1] = p->client_fds[1];
+  q = client_state_new(state, pp->client_fds[0]);
+  q->client_fds[1] = pp->client_fds[1];
   q->write_buf = write_buf;
   q->write_len = write_len;
   q->state = STATE_WRITECLOSE;
 
-  p->client_fds[0] = -1;
-  p->client_fds[1] = -1;
+  pp->client_fds[0] = -1;
+  pp->client_fds[1] = -1;
 }
 
 void
 nsf_close_client_fds(struct client_state *p)
 {
   if (!p) return;
+  struct ht_client_state *pp = (struct ht_client_state*) p;
 
-  if (p->client_fds[0] >= 0) close(p->client_fds[0]);
-  if (p->client_fds[1] >= 0) close(p->client_fds[1]);
-  p->client_fds[0] = -1;
-  p->client_fds[1] = -1;
+  if (pp->client_fds[0] >= 0) close(pp->client_fds[0]);
+  if (pp->client_fds[1] >= 0) close(pp->client_fds[1]);
+  pp->client_fds[0] = -1;
+  pp->client_fds[1] = -1;
 }
 
 struct client_state *
@@ -231,7 +233,7 @@ nsf_get_client_by_id(struct server_framework_state *state, int id)
 {
   struct client_state *p;
 
-  for (p = state->clients_first; p; p = p->next)
+  for (p = (struct client_state*) state->clients_first; p; p = p->next)
     if (p->id == id)
       return p;
   return 0;
@@ -240,7 +242,8 @@ nsf_get_client_by_id(struct server_framework_state *state, int id)
 static int
 nsf_get_contest_id(const struct client_state *p)
 {
-  return p->contest_id;
+  const struct ht_client_state *pp = (const struct ht_client_state*) p;
+  return pp->contest_id;
 }
 
 void
@@ -249,26 +252,30 @@ nsf_set_destroy_callback(
         int cnts_id,
         void (*destroy_callback)(struct client_state*))
 {
-  p->contest_id = cnts_id;
-  p->destroy_callback = destroy_callback;
+  struct ht_client_state *pp = (struct ht_client_state *) p;
+  pp->contest_id = cnts_id;
+  pp->destroy_callback = destroy_callback;
 }
 
 static int
 nsf_get_peer_uid(const struct client_state *p)
 {
-  return p->peer_uid;
+  const struct ht_client_state *pp = (const struct ht_client_state*) p;
+  return pp->peer_uid;
 }
 
 static void
-client_state_delete(struct server_framework_state *state,
-                    struct client_state *p)
+client_state_delete(
+        struct server_framework_state *state,
+        struct client_state *p)
 {
   if (!p) return;
+  struct ht_client_state *pp = (struct ht_client_state*) p;
 
-  if (p->contest_id > 0) {
-    if (p->destroy_callback) (*p->destroy_callback)(p);
-    p->contest_id = 0;
-    p->destroy_callback = 0;
+  if (pp->contest_id > 0) {
+    if (pp->destroy_callback) (*pp->destroy_callback)(p);
+    pp->contest_id = 0;
+    pp->destroy_callback = 0;
   }
 
   if (p->next && p->prev) {
@@ -277,11 +284,11 @@ client_state_delete(struct server_framework_state *state,
     p->next->prev = p->prev;
   } else if (p->next) {
     // the first element
-    state->clients_first = p->next;
+    state->clients_first = (struct ht_client_state*) p->next;
     p->next->prev = 0;
   } else if (p->prev) {
     // the last element
-    state->clients_last = p->prev;
+    state->clients_last = (struct ht_client_state *) p->prev;
     p->prev->next = 0;
   } else {
     // the only element
@@ -290,15 +297,15 @@ client_state_delete(struct server_framework_state *state,
 
   fcntl(p->fd, F_SETFL, fcntl(p->fd, F_GETFL) & ~O_NONBLOCK);
   if (p->fd >= 0) close(p->fd);
-  if (p->client_fds[0] >= 0) close(p->client_fds[0]);
-  if (p->client_fds[1] >= 0) close(p->client_fds[1]);
-  xfree(p->read_buf);
-  xfree(p->write_buf);
+  if (pp->client_fds[0] >= 0) close(pp->client_fds[0]);
+  if (pp->client_fds[1] >= 0) close(pp->client_fds[1]);
+  xfree(pp->read_buf);
+  xfree(pp->write_buf);
 
   if (state->params->cleanup_client)
     state->params->cleanup_client(state, p);
 
-  memset(p, -1, sizeof(*p));
+  memset(pp, -1, sizeof(*pp));
   if (state->params->free_memory)
     state->params->free_memory(state, p);
   else
@@ -417,13 +424,13 @@ remove_pending_watches(struct server_framework_state *state)
 }
 
 static void
-read_from_control_connection(struct client_state *p)
+read_from_control_connection(struct ht_client_state *p)
 {
   int r, n;
 
   switch (p->state) {
   case STATE_READ_CREDS:
-    if (sock_op_get_creds(p->fd, p->id, &p->peer_pid, &p->peer_uid,
+    if (sock_op_get_creds(p->b.fd, p->b.id, &p->peer_pid, &p->peer_uid,
                           &p->peer_gid) < 0) {
       p->state = STATE_DISCONNECT;
       return;
@@ -433,7 +440,7 @@ read_from_control_connection(struct client_state *p)
     break;
 
   case STATE_READ_FDS:
-    if (sock_op_get_fds(p->fd, p->id, p->client_fds) < 0) {
+    if (sock_op_get_fds(p->b.fd, p->b.id, p->client_fds) < 0) {
       p->state = STATE_DISCONNECT;
       return;
     }
@@ -442,12 +449,12 @@ read_from_control_connection(struct client_state *p)
 
   case STATE_READ_LEN:
     /* read the packet length */
-    if ((r = read(p->fd, &p->expected_len, sizeof(p->expected_len))) < 0) {
+    if ((r = read(p->b.fd, &p->expected_len, sizeof(p->expected_len))) < 0) {
       if (errno == EINTR || errno == EAGAIN) {
-        info("%d: descriptor not ready", p->id);
+        info("%d: descriptor not ready", p->b.id);
         return;
       }
-      err("%d: read failed: %s", p->id, os_ErrorMsg());
+      err("%d: read failed: %s", p->b.id, os_ErrorMsg());
       p->state = STATE_DISCONNECT;
       return;
     }
@@ -457,12 +464,12 @@ read_from_control_connection(struct client_state *p)
       return;
     }
     if (r != 4) {
-      err("%d: expected 4 bytes of packet length", p->id);
+      err("%d: expected 4 bytes of packet length", p->b.id);
       p->state = STATE_DISCONNECT;
       return;
     }
     if (p->expected_len <= 0 || p->expected_len > MAX_IN_PACKET_SIZE) {
-      err("%d: bad packet length %d", p->id, p->expected_len);
+      err("%d: bad packet length %d", p->b.id, p->expected_len);
       p->state = STATE_DISCONNECT;
       return;
     }
@@ -474,17 +481,17 @@ read_from_control_connection(struct client_state *p)
   case STATE_READ_DATA:
     n = p->expected_len - p->read_len;
     ASSERT(n > 0);
-    if ((r = read(p->fd, p->read_buf + p->read_len, n)) < 0) {
+    if ((r = read(p->b.fd, p->read_buf + p->read_len, n)) < 0) {
       if (errno == EINTR || errno == EAGAIN) {
-        info("%d: descriptor not ready", p->id);
+        info("%d: descriptor not ready", p->b.id);
         return;
       }
-      err("%d: read failed: %s", p->id, os_ErrorMsg());
+      err("%d: read failed: %s", p->b.id, os_ErrorMsg());
       p->state = STATE_DISCONNECT;
       return;
     }
     if (!r) {
-      err("%d: unexpected EOF", p->id);
+      err("%d: unexpected EOF", p->b.id);
       p->state = STATE_DISCONNECT;
       return;
     }
@@ -493,13 +500,13 @@ read_from_control_connection(struct client_state *p)
     break;
 
   default:
-    err("%d: invalid read state %d", p->id, p->state);
+    err("%d: invalid read state %d", p->b.id, p->state);
     abort();
   }
 }
 
 static void
-write_to_control_connection(struct client_state *p)
+write_to_control_connection(struct ht_client_state *p)
 {
   int n, r;
 
@@ -510,12 +517,12 @@ write_to_control_connection(struct client_state *p)
     ASSERT(p->written >= 0);
     ASSERT(p->written < p->write_len);
     n = p->write_len - p->written;
-    if ((r = write(p->fd, p->write_buf + p->written, n)) <= 0) {
+    if ((r = write(p->b.fd, p->write_buf + p->written, n)) <= 0) {
       if (r < 0 && (errno == EINTR || errno == EAGAIN)) {
-        info("%d: descriptor not ready", p->id);
+        info("%d: descriptor not ready", p->b.id);
         return;
       }
-      err("%d: write error: %s", p->id, os_ErrorMsg());
+      err("%d: write error: %s", p->b.id, os_ErrorMsg());
       p->state = STATE_DISCONNECT;
       return;
     }
@@ -535,7 +542,7 @@ write_to_control_connection(struct client_state *p)
     break;
 
   default:
-    err("%d: invalid write state %d", p->id, p->state);
+    err("%d: invalid write state %d", p->b.id, p->state);
     abort();
   }
 }
@@ -1193,19 +1200,23 @@ void
 nsf_enqueue_reply(struct server_framework_state *state,
                   struct client_state *p, ej_size_t len, void const *msg)
 {
-  ASSERT(!p->write_len);
+  struct ht_client_state *pp = (struct ht_client_state*) p;
 
-  p->write_len = len + sizeof(len);
-  p->write_buf = xmalloc(p->write_len);
-  memcpy(p->write_buf, &len, sizeof(len));
-  memcpy(p->write_buf + sizeof(len), msg, len);
-  p->written = 0;
-  p->state = STATE_WRITE;
+  ASSERT(!pp->write_len);
+
+  pp->write_len = len + sizeof(len);
+  pp->write_buf = xmalloc(pp->write_len);
+  memcpy(pp->write_buf, &len, sizeof(len));
+  memcpy(pp->write_buf + sizeof(len), msg, len);
+  pp->written = 0;
+  pp->state = STATE_WRITE;
 }
 
 void
-nsf_send_reply(struct server_framework_state *state,
-               struct client_state *p, int answer)
+nsf_send_reply(
+        struct server_framework_state *state,
+        struct client_state *p,
+        int answer)
 {
   struct new_server_prot_packet pkt;
 
@@ -1216,86 +1227,103 @@ nsf_send_reply(struct server_framework_state *state,
 }
 
 void
-nsf_err_protocol_error(struct server_framework_state *state,
-                       struct client_state *p)
+nsf_err_protocol_error(
+        struct server_framework_state *state,
+        struct client_state *p)
 {
+  struct ht_client_state *pp = (struct ht_client_state*) p;
   err("%d: protocol error", p->id);
   nsf_send_reply(state, p, NEW_SRV_ERR_PROTOCOL_ERROR);
-  if (p->client_fds[0] >= 0) close(p->client_fds[0]);
-  if (p->client_fds[1] >= 0) close(p->client_fds[1]);
-  p->client_fds[0] = p->client_fds[1] = -1;
+  if (pp->client_fds[0] >= 0) close(pp->client_fds[0]);
+  if (pp->client_fds[1] >= 0) close(pp->client_fds[1]);
+  pp->client_fds[0] = pp->client_fds[1] = -1;
 }
 
 void
-nsf_err_bad_packet_length(struct server_framework_state *state,
-                          struct client_state *p, size_t len, size_t exp_len)
+nsf_err_bad_packet_length(
+        struct server_framework_state *state,
+        struct client_state *p,
+        size_t len,
+        size_t exp_len)
 {
+  struct ht_client_state *pp = (struct ht_client_state*) p;
   err("%d: bad packet length: %zu, expected %zu", p->id, len, exp_len);
-  p->state = STATE_DISCONNECT;
+  pp->state = STATE_DISCONNECT;
 }
 
 void
-nsf_err_packet_too_small(struct server_framework_state *state,
-                         struct client_state *p, size_t len, size_t min_len)
+nsf_err_packet_too_small(
+        struct server_framework_state *state,
+        struct client_state *p,
+        size_t len,
+        size_t min_len)
 {
+  struct ht_client_state *pp = (struct ht_client_state*) p;
   err("%d: packet is too small: %zu, minimum %zu", p->id, len, min_len);
-  p->state = STATE_DISCONNECT;
+  pp->state = STATE_DISCONNECT;
 }
 
 void
-nsf_err_invalid_command(struct server_framework_state *state,
-                        struct client_state *p, int id)
+nsf_err_invalid_command(
+        struct server_framework_state *state,
+        struct client_state *p,
+        int id)
 {
+  struct ht_client_state *pp = (struct ht_client_state *) p;
   err("%d: invalid protocol command: %d", p->id, id);
-  p->state = STATE_DISCONNECT;
+  pp->state = STATE_DISCONNECT;
 }
 
 static void
-cmd_pass_fd(struct server_framework_state *state,
-            struct client_state *p,
-            size_t len,
-            const struct new_server_prot_packet *pkt)
+cmd_pass_fd(
+        struct server_framework_state *state,
+        struct client_state *p,
+        size_t len,
+        const struct new_server_prot_packet *pkt)
 {
+  struct ht_client_state *pp = (struct ht_client_state*) p;
+
   if (len != sizeof(*pkt))
     return nsf_err_bad_packet_length(state, p, len, sizeof(*pkt));
 
-  if (p->client_fds[0] >= 0 || p->client_fds[1] >= 0) {
+  if (pp->client_fds[0] >= 0 || pp->client_fds[1] >= 0) {
     err("%d: cannot stack unprocessed client descriptors", p->id);
-    p->state = STATE_DISCONNECT;
+    pp->state = STATE_DISCONNECT;
     return;
   }
 
-  p->state = STATE_READ_FDS;
+  pp->state = STATE_READ_FDS;
 }
 
 static void
-handle_control_command(struct server_framework_state *state,
-                       struct client_state *p)
+handle_control_command(
+        struct server_framework_state *state,
+        struct ht_client_state *p)
 {
   struct new_server_prot_packet *pkt;
 
   if (p->read_len < sizeof(*pkt)) {
-    err("%d: packet length is too small: %d", p->id, p->read_len);
+    err("%d: packet length is too small: %d", p->b.id, p->read_len);
     p->state = STATE_DISCONNECT;
     return;
   }
   pkt = (struct new_server_prot_packet*) p->read_buf;
 
   if (pkt->magic != NEW_SERVER_PROT_PACKET_MAGIC) {
-    err("%d: invalid magic value: %04x", p->id, pkt->magic);
+    err("%d: invalid magic value: %04x", p->b.id, pkt->magic);
     p->state = STATE_DISCONNECT;
     return;
   }
 
   if (pkt->id <= 0) {
-    err("%d: invalid protocol command: %d", p->id, pkt->id);
+    err("%d: invalid protocol command: %d", p->b.id, pkt->id);
     p->state = STATE_DISCONNECT;
     return;
   }
 
-  if (pkt->id == 1) cmd_pass_fd(state, p, p->read_len, pkt);
+  if (pkt->id == 1) cmd_pass_fd(state, &p->b, p->read_len, pkt);
   else if (state->params->handle_packet)
-    state->params->handle_packet(state, p, p->read_len, pkt);
+    state->params->handle_packet(state, &p->b, p->read_len, pkt);
 
   if (p->state == STATE_READ_READY) p->state = STATE_READ_LEN;
   if (p->read_buf) xfree(p->read_buf);
@@ -1307,7 +1335,7 @@ handle_control_command(struct server_framework_state *state,
 void
 nsf_main_loop(struct server_framework_state *state)
 {
-  struct client_state *cur_clnt;
+  struct ht_client_state *cur_clnt;
   struct timeval timeout;
   int fd_max, n, errcode;
   fd_set rset, wset;
@@ -1332,14 +1360,14 @@ nsf_main_loop(struct server_framework_state *state)
       if (state->ws_fd > fd_max) fd_max = state->ws_fd;
     }
 
-    for (cur_clnt = state->clients_first; cur_clnt; cur_clnt = cur_clnt->next) {
+    for (cur_clnt = state->clients_first; cur_clnt; cur_clnt = (struct ht_client_state *) cur_clnt->b.next) {
       if (cur_clnt->state==STATE_WRITE || cur_clnt->state==STATE_WRITECLOSE) {
-        FD_SET(cur_clnt->fd, &wset);
-        if (cur_clnt->fd > fd_max) fd_max = cur_clnt->fd;
+        FD_SET(cur_clnt->b.fd, &wset);
+        if (cur_clnt->b.fd > fd_max) fd_max = cur_clnt->b.fd;
       } else if (cur_clnt->state >= STATE_READ_CREDS
                  && cur_clnt->state <= STATE_READ_DATA) {
-        FD_SET(cur_clnt->fd, &rset);
-        if (cur_clnt->fd > fd_max) fd_max = cur_clnt->fd;
+        FD_SET(cur_clnt->b.fd, &rset);
+        if (cur_clnt->b.fd > fd_max) fd_max = cur_clnt->b.fd;
       }
     }
 
@@ -1439,18 +1467,18 @@ nsf_main_loop(struct server_framework_state *state)
     }
 
     // read from/write to control sockets
-    for (cur_clnt = state->clients_first; cur_clnt; cur_clnt = cur_clnt->next) {
+    for (cur_clnt = state->clients_first; cur_clnt; cur_clnt = (struct ht_client_state *) cur_clnt->b.next) {
       switch (cur_clnt->state) {
       case STATE_READ_CREDS:
       case STATE_READ_FDS:
       case STATE_READ_LEN:
       case STATE_READ_DATA:
-        if (FD_ISSET(cur_clnt->fd, &rset))
+        if (FD_ISSET(cur_clnt->b.fd, &rset))
           read_from_control_connection(cur_clnt);
         break;
       case STATE_WRITE:
       case STATE_WRITECLOSE:
-        if (FD_ISSET(cur_clnt->fd, &wset))
+        if (FD_ISSET(cur_clnt->b.fd, &wset))
           write_to_control_connection(cur_clnt);
         break;
       }
@@ -1471,7 +1499,7 @@ nsf_main_loop(struct server_framework_state *state)
     }
 
     // execute ready commands from control connections
-    for (cur_clnt = state->clients_first; cur_clnt; cur_clnt = cur_clnt->next) {
+    for (cur_clnt = state->clients_first; cur_clnt; cur_clnt = (struct ht_client_state *) cur_clnt->b.next) {
       if (cur_clnt->state == STATE_READ_READY) {
         handle_control_command(state, cur_clnt);
         ASSERT(cur_clnt->state != STATE_READ_READY);
@@ -1536,11 +1564,11 @@ nsf_main_loop(struct server_framework_state *state)
     // disconnect file descriptors marked for disconnection
     for (cur_clnt = state->clients_first; cur_clnt; ) {
       if (cur_clnt->state == STATE_DISCONNECT) {
-        struct client_state *tmp = cur_clnt->next;
-        client_state_delete(state, cur_clnt);
-        cur_clnt = tmp;
+        struct client_state *tmp = cur_clnt->b.next;
+        client_state_delete(state, &cur_clnt->b);
+        cur_clnt = (struct ht_client_state *) tmp;
       } else {
-        cur_clnt = cur_clnt->next;
+        cur_clnt = (struct ht_client_state *) cur_clnt->b.next;
       }
     }
 
@@ -1677,11 +1705,11 @@ nsf_prepare(struct server_framework_state *state)
 void
 nsf_cleanup(struct server_framework_state *state)
 {
-  struct client_state *p;
+  struct ht_client_state *p;
 
-  for (p = state->clients_first; p; p = p->next) {
-    if (p->fd >= 0) close(p->fd);
-    p->fd = -1;
+  for (p = state->clients_first; p; p = (struct ht_client_state *) p->b.next) {
+    if (p->b.fd >= 0) close(p->b.fd);
+    p->b.fd = -1;
 
     if (p->client_fds[0] >= 0) close(p->client_fds[0]);
     if (p->client_fds[1] >= 0) close(p->client_fds[1]);
