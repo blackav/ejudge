@@ -104,8 +104,7 @@ struct ht_client_state
 
 struct ws_client_state
 {
-  struct ws_client_state *prev;
-  struct ws_client_state *next;
+  struct client_state b;
 
   struct ws_frame *frame_first;
   struct ws_frame *frame_last;
@@ -122,9 +121,6 @@ struct ws_client_state
   
   long long last_read_time_us;
   long long last_write_time_us;
-
-  int id;
-  int fd;
 
   int remote_port;
   int read_reserved;

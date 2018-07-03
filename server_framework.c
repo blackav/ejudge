@@ -181,16 +181,16 @@ ws_client_state_new(
     }
   }
 
-  p->id = state->client_id++;
-  p->fd = fd;
+  p->b.id = state->client_id++;
+  p->b.fd = fd;
   p->state = WS_STATE_INITIAL;
   if (remote_host) p->remote_host = xstrdup(remote_host);
   p->remote_port = remote_port;
   p->ssl_flag = ssl_flag;
 
-  p->prev = state->ws_last;
-  if (p->prev) {
-    p->prev->next = p;
+  p->b.prev = (struct client_state *) state->ws_last;
+  if (p->b.prev) {
+    p->b.prev->next = (struct client_state *) p;
   } else {
     state->ws_first = p;
   }
@@ -339,7 +339,7 @@ ws_client_state_free(struct ws_client_state *p)
     free(p->remote_host);
     free(p->read_buf);
     free(p->write_buf);
-    if (p->fd >= 0) close(p->fd);
+    if (p->b.fd >= 0) close(p->b.fd);
     memset(p, -1, sizeof(*p));
     free(p);
   }
@@ -351,15 +351,15 @@ ws_client_state_delete(
         struct ws_client_state *p)
 {
   if (p) {
-    if (p->prev) {
-      p->prev->next = p->next;
+    if (p->b.prev) {
+      p->b.prev->next = p->b.next;
     } else {
-      state->ws_first = p->next;
+      state->ws_first = (struct ws_client_state *) p->b.next;
     }
-    if (p->next) {
-      p->next->prev = p->prev;
+    if (p->b.next) {
+      p->b.next->prev = p->b.prev;
     } else {
-      state->ws_last = p->prev;
+      state->ws_last = (struct ws_client_state *) p->b.prev;
     }
     ws_client_state_free(p);
   }
@@ -756,7 +756,7 @@ read_ws_connection(struct ws_client_state *p)
 
   if (p->state == WS_STATE_INITIAL) {
     while (1) {
-      int r = read(p->fd, buf, sizeof(buf));
+      int r = read(p->b.fd, buf, sizeof(buf));
       if (r < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
         // no more data
         break;
@@ -1026,7 +1026,7 @@ X-Forwarded-Server: localhost.localdomain
      +---------------------------------------------------------------+
      */
     while (1) {
-      int r = read(p->fd, buf, sizeof(buf));
+      int r = read(p->b.fd, buf, sizeof(buf));
       if (r < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
         break;
       } else if (r < 0) {
@@ -1183,7 +1183,7 @@ static void
 write_ws_connection(struct ws_client_state *p)
 {
   while (p->write_size > 0) {
-    int w = write(p->fd, p->write_buf, p->write_size);
+    int w = write(p->b.fd, p->write_buf, p->write_size);
     if (w < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
     } else if (w < 0) {
     } else if (!w) {
@@ -1371,26 +1371,26 @@ nsf_main_loop(struct server_framework_state *state)
       }
     }
 
-    for (ws_clnt = state->ws_first; ws_clnt; ws_clnt = ws_clnt->next) {
+    for (ws_clnt = state->ws_first; ws_clnt; ws_clnt = (struct ws_client_state *) ws_clnt->b.next) {
       switch (ws_clnt->state) {
       case WS_STATE_INITIAL:
-        FD_SET(ws_clnt->fd, &rset);
-        if (ws_clnt->fd > fd_max) fd_max = ws_clnt->fd;
+        FD_SET(ws_clnt->b.fd, &rset);
+        if (ws_clnt->b.fd > fd_max) fd_max = ws_clnt->b.fd;
         break;
       case WS_STATE_INITIAL_REPLY: case WS_STATE_HTTP_ERROR:
         if (ws_clnt->write_size > 0) {
-          FD_SET(ws_clnt->fd, &wset);
-          if (ws_clnt->fd > fd_max) fd_max = ws_clnt->fd;
+          FD_SET(ws_clnt->b.fd, &wset);
+          if (ws_clnt->b.fd > fd_max) fd_max = ws_clnt->b.fd;
         }
         break;
       case WS_STATE_ACTIVE:
         if (!ws_clnt->in_close_state) {
-          FD_SET(ws_clnt->fd, &rset);
-          if (ws_clnt->fd > fd_max) fd_max = ws_clnt->fd;
+          FD_SET(ws_clnt->b.fd, &rset);
+          if (ws_clnt->b.fd > fd_max) fd_max = ws_clnt->b.fd;
         }
         if (ws_clnt->write_size > 0) {
-          FD_SET(ws_clnt->fd, &wset);
-            if (ws_clnt->fd > fd_max) fd_max = ws_clnt->fd;
+          FD_SET(ws_clnt->b.fd, &wset);
+            if (ws_clnt->b.fd > fd_max) fd_max = ws_clnt->b.fd;
         }
         break;
       default:
@@ -1484,11 +1484,11 @@ nsf_main_loop(struct server_framework_state *state)
       }
     }
 
-    for (ws_clnt = state->ws_first; ws_clnt; ws_clnt = ws_clnt->next) {
-      if (FD_ISSET(ws_clnt->fd, &rset)) {
+    for (ws_clnt = state->ws_first; ws_clnt; ws_clnt = (struct ws_client_state *) ws_clnt->b.next) {
+      if (FD_ISSET(ws_clnt->b.fd, &rset)) {
         read_ws_connection(ws_clnt);
       }
-      if (FD_ISSET(ws_clnt->fd, &wset)) {
+      if (FD_ISSET(ws_clnt->b.fd, &wset)) {
         write_ws_connection(ws_clnt);
         if (ws_clnt->write_size == 0 && ws_clnt->state == WS_STATE_INITIAL_REPLY) {
           ws_clnt->state = WS_STATE_ACTIVE;
@@ -1506,7 +1506,7 @@ nsf_main_loop(struct server_framework_state *state)
       }
     }
 
-    for (ws_clnt = state->ws_first; ws_clnt; ws_clnt = ws_clnt->next) {
+    for (ws_clnt = state->ws_first; ws_clnt; ws_clnt = (struct ws_client_state *) ws_clnt->b.next) {
       if (ws_clnt->state == WS_STATE_ACTIVE) {
         while (1) {
           struct ws_frame *wsf = ws_clnt->frame_first;
@@ -1574,11 +1574,11 @@ nsf_main_loop(struct server_framework_state *state)
 
     for (ws_clnt = state->ws_first; ws_clnt; ) {
       if (ws_clnt->state == WS_STATE_DISCONNECT) {
-        struct ws_client_state *tmp = ws_clnt->next;
+        struct ws_client_state *tmp = (struct ws_client_state *) ws_clnt->b.next;
         ws_client_state_delete(state, ws_clnt);
         ws_clnt = tmp;
       } else {
-        ws_clnt = ws_clnt->next;
+        ws_clnt = (struct ws_client_state*) ws_clnt->b.next;
       }
     }
   }
