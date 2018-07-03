@@ -44,6 +44,7 @@
 #include <netinet/ip.h>
 #include <ctype.h>
 #include <arpa/inet.h>
+#include <sys/time.h>
 
 #define MAX_IN_PACKET_SIZE 134217728 /* 128 mb */
 
@@ -750,7 +751,7 @@ append_new_ws_frame(struct ws_client_state *p)
 }
 
 static void
-read_ws_connection(struct ws_client_state *p)
+read_ws_connection(struct ws_client_state *p, long long current_time_us)
 {
   unsigned char buf[4096];
 
@@ -768,6 +769,7 @@ read_ws_connection(struct ws_client_state *p)
         p->in_close_state = 2;
         break;
       } else {
+        p->last_read_time_us = current_time_us;
         if (p->read_size + r + 1 > p->read_reserved) {
           int new_reserved = p->read_reserved;
           if (!new_reserved) new_reserved = 1024;
@@ -1037,6 +1039,7 @@ X-Forwarded-Server: localhost.localdomain
         p->state = WS_STATE_DISCONNECT;
         return;
       } else {
+        p->last_read_time_us = current_time_us;
         const unsigned char *ptr = buf;
         while (r) {
           if (!p->hdr_flag) {
@@ -1180,7 +1183,7 @@ X-Forwarded-Server: localhost.localdomain
 }
 
 static void
-write_ws_connection(struct ws_client_state *p)
+write_ws_connection(struct ws_client_state *p, long long current_time_us)
 {
   while (p->write_size > 0) {
     int w = write(p->b.fd, p->write_buf, p->write_size);
@@ -1192,6 +1195,7 @@ write_ws_connection(struct ws_client_state *p)
         memmove(p->write_buf, p->write_buf + w, p->write_size - w);
       }
       p->write_size -= w;
+      p->last_write_time_us = current_time_us;
     }
   }
 }
@@ -1342,6 +1346,7 @@ nsf_main_loop(struct server_framework_state *state)
   struct watchlist *pw;
   int mode;
   struct ws_client_state *ws_clnt;
+  long long current_time_us;
 
   while (1) {
     int work_done = 1;
@@ -1456,6 +1461,10 @@ nsf_main_loop(struct server_framework_state *state)
     }
     remove_pending_watches(state);
 
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    current_time_us = tv.tv_sec * 1000000LL + tv.tv_usec;
+
     // new WebSocket connections
     if (state->ws_fd >= 0 && FD_ISSET(state->ws_fd, &rset)) {
       accept_new_ws_connections(state);
@@ -1486,10 +1495,10 @@ nsf_main_loop(struct server_framework_state *state)
 
     for (ws_clnt = state->ws_first; ws_clnt; ws_clnt = (struct ws_client_state *) ws_clnt->b.next) {
       if (FD_ISSET(ws_clnt->b.fd, &rset)) {
-        read_ws_connection(ws_clnt);
+        read_ws_connection(ws_clnt, current_time_us);
       }
       if (FD_ISSET(ws_clnt->b.fd, &wset)) {
-        write_ws_connection(ws_clnt);
+        write_ws_connection(ws_clnt, current_time_us);
         if (ws_clnt->write_size == 0 && ws_clnt->state == WS_STATE_INITIAL_REPLY) {
           ws_clnt->state = WS_STATE_ACTIVE;
         } else if (ws_clnt->write_size == 0 && ws_clnt->state == WS_STATE_HTTP_ERROR) {
