@@ -389,7 +389,7 @@ ns_client_destroy_callback(struct client_state *p)
   const struct contest_desc *cnts = 0;
   serve_state_t cs;
 
-  int cnts_id = nsf_get_contest_id(p);
+  int cnts_id = p->ops->get_contest_id(p);
   if (cnts_id <= 0) return;
   if (contests_get(cnts_id, &cnts) < 0) return;
   if (!(extra = ns_try_contest_extra(cnts_id))) return;

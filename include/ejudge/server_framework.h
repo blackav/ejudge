@@ -44,8 +44,8 @@ enum
 
 struct ws_frame
 {
-  struct ws_frame *next;
   struct ws_frame *prev;
+  struct ws_frame *next;
 
   unsigned char *data;
   int size;
@@ -53,10 +53,26 @@ struct ws_frame
   unsigned char hdr[2];
 };
 
+struct client_state;
+
+struct client_state_operations
+{
+  void (*destroy)(struct client_state *);
+
+  int (*get_peer_uid)(const struct client_state *);
+  int (*get_contest_id)(const struct client_state *);
+
+  void (*set_destroy_callback)(
+        struct client_state *p,
+        int cnts_id,
+        void (*destroy_callback)(struct client_state*));
+};
+
 struct client_state
 {
-  struct client_state *next;
+  const struct client_state_operations *ops;
   struct client_state *prev;
+  struct client_state *next;
 
   int id;
   int fd;
@@ -257,15 +273,5 @@ nsf_ws_append_reply_frame(
         int opcode,
         const unsigned char *data,
         int size);
-
-int
-nsf_get_contest_id(struct client_state *p);
-void
-nsf_set_destroy_callback(
-        struct client_state *p,
-        int cnts_id,
-        void (*destroy_callback)(struct client_state*));
-int
-nsf_get_peer_uid(struct client_state *p);
 
 #endif /* __SERVER_FRAMEWORK_H__ */

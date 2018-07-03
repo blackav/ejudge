@@ -102,6 +102,24 @@ struct server_framework_state
   struct ws_client_state *ws_last;
 };
 
+static int
+nsf_get_peer_uid(const struct client_state *p);
+static int
+nsf_get_contest_id(const struct client_state *p);
+static void
+nsf_set_destroy_callback(
+        struct client_state *p,
+        int cnts_id,
+        void (*destroy_callback)(struct client_state*));
+
+static const struct client_state_operations http_client_state_operations =
+{
+  NULL, // destroy
+  nsf_get_peer_uid, // get_peer_uid
+  nsf_get_contest_id, // get_contest_id
+  nsf_set_destroy_callback, // set_destroy_callback
+};
+
 static struct client_state *
 client_state_new(struct server_framework_state *state, int fd)
 {
@@ -115,6 +133,7 @@ client_state_new(struct server_framework_state *state, int fd)
     XCALLOC(p, 1);
   }
 
+  p->ops = &http_client_state_operations;
   p->id = state->client_id++;
   p->fd = fd;
   p->client_fds[0] = -1;
@@ -218,8 +237,8 @@ nsf_get_client_by_id(struct server_framework_state *state, int id)
   return 0;
 }
 
-int
-nsf_get_contest_id(struct client_state *p)
+static int
+nsf_get_contest_id(const struct client_state *p)
 {
   return p->contest_id;
 }
@@ -234,8 +253,8 @@ nsf_set_destroy_callback(
   p->destroy_callback = destroy_callback;
 }
 
-int
-nsf_get_peer_uid(struct client_state *p)
+static int
+nsf_get_peer_uid(const struct client_state *p)
 {
   return p->peer_uid;
 }

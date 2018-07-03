@@ -1271,7 +1271,7 @@ cmd_import_xml_runs(
     cs->saved_testing_suspended = cs->testing_suspended;
     cs->testing_suspended = 1;
     serve_update_status_file(cs, 1);
-    nsf_set_destroy_callback(phr->client_state, cnts->id, ns_client_destroy_callback);
+    phr->client_state->ops->set_destroy_callback(phr->client_state, cnts->id, ns_client_destroy_callback);
     cs->client_id = phr->id;
     cs->pending_xml_import = xstrdup(s);
     cs->destroy_callback = ns_contest_unload_callback;
@@ -1930,7 +1930,7 @@ cmd_reload_server_2(
             phr->client_state->peer_gid);
     */
 
-    int peer_uid = nsf_get_peer_uid(phr->client_state);
+    int peer_uid = phr->client_state->ops->get_peer_uid(phr->client_state);
     if (peer_uid <= 0) FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
     struct passwd *pwd = getpwuid(peer_uid);
