@@ -17,6 +17,7 @@
 #include "ejudge/http_request.h"
 #include "ejudge/contests.h"
 #include "ejudge/l10n.h"
+#include "ejudge/cJSON.h"
 
 #include "ejudge/logger.h"
 
@@ -55,16 +56,33 @@ hr_cgi_param(
         const unsigned char *param,
         const unsigned char **p_value)
 {
-  int i;
+    if (phr->json) {
+        cJSON *jj = cJSON_GetObjectItem(phr->json, param);
+        if (jj) {
+            if (jj->type == cJSON_NULL) {
+                if (p_value) *p_value = NULL;
+                return 1;
+            } else if (jj->type == cJSON_String) {
+                if (p_value) *p_value = jj->valuestring;
+                return 1;
+            } else {
+                return -1;
+            }
+        } else {
+            return 0;
+        }
+    } else {
+        int i;
 
-  if (!param) return -1;
-  for (i = 0; i < phr->param_num; i++)
-    if (!strcmp(phr->param_names[i], param))
-      break;
-  if (i >= phr->param_num) return 0;
-  if (strlen(phr->params[i]) != phr->param_sizes[i]) return -1;
-  *p_value = phr->params[i];
-  return 1;
+        if (!param) return -1;
+        for (i = 0; i < phr->param_num; i++)
+            if (!strcmp(phr->param_names[i], param))
+                break;
+        if (i >= phr->param_num) return 0;
+        if (strlen(phr->params[i]) != phr->param_sizes[i]) return -1;
+        *p_value = phr->params[i];
+        return 1;
+    }
 }
 
 int
@@ -101,27 +119,66 @@ hr_cgi_nname(
   return 0;
 }
 
+static int
+json_to_int(cJSON *jj, int *p_val, int retval)
+{
+    if (jj->type == cJSON_False) {
+        if (p_val) *p_val = 0;
+        return retval;
+    } else if (jj->type == cJSON_True) {
+        if (p_val) *p_val = 1;
+        return retval;
+    } else if (jj->type == cJSON_NULL) {
+        if (p_val) *p_val = 0;
+        return 0;
+    } else if (jj->type == cJSON_Number) {
+        if (jj->valueint != jj->valuedouble) return -1;
+        if (p_val) *p_val = jj->valueint;
+        return retval;
+    } else if (jj->type == cJSON_String) {
+        const char *s = jj->valuestring;
+        char *eptr = NULL;
+        errno = 0;
+        long x = strtol(s, &eptr, 10);
+        if (errno || eptr == s || *eptr || (int) x != x) return -1;
+        if (p_val) *p_val = x;
+        return retval;
+    } else {
+        // invalid value
+        return -1;
+    }
+}
+
 int
 hr_cgi_param_int(
         const struct http_request_info *phr,
         const unsigned char *name,
         int *p_val)
 {
-  const unsigned char *s = 0, *p = 0;
-  char *eptr = 0;
-  int x;
+    if (phr->json) {
+        cJSON *jj = cJSON_GetObjectItem(phr->json, name);
+        if (jj) {
+            return json_to_int(jj, p_val, 0);
+        } else {
+            return -1;
+        }
+    } else {
+        const unsigned char *s = 0, *p = 0;
+        char *eptr = 0;
+        int x;
 
-  if (hr_cgi_param(phr, name, &s) <= 0) return -1;
+        if (hr_cgi_param(phr, name, &s) <= 0) return -1;
 
-  p = s;
-  while (*p && isspace(*p)) p++;
-  if (!*p) return -1;
+        p = s;
+        while (*p && isspace(*p)) p++;
+        if (!*p) return -1;
 
-  errno = 0;
-  x = strtol(s, &eptr, 10);
-  if (errno || *eptr) return -1;
-  if (p_val) *p_val = x;
-  return 0;
+        errno = 0;
+        x = strtol(s, &eptr, 10);
+        if (errno || *eptr) return -1;
+        if (p_val) *p_val = x;
+        return 0;
+    }
 }
 
 /* returns -1 if invalid param, 0 if no param, 1 if ok */
@@ -131,21 +188,30 @@ hr_cgi_param_int_2(
         const unsigned char *name,
         int *p_val)
 {
-  const unsigned char *s = 0, *p = 0;
-  char *eptr = 0;
-  int x, r;
+    if (phr->json) {
+        cJSON *jj = cJSON_GetObjectItem(phr->json, name);
+        if (jj) {
+            return json_to_int(jj, p_val, 1);
+        } else {
+            return 0;
+        }
+    } else {
+        const unsigned char *s = 0, *p = 0;
+        char *eptr = 0;
+        int x, r;
 
-  if ((r = hr_cgi_param(phr, name, &s)) <= 0) return r;
+        if ((r = hr_cgi_param(phr, name, &s)) <= 0) return r;
 
-  p = s;
-  while (*p && isspace(*p)) p++;
-  if (!*p) return 0;
+        p = s;
+        while (*p && isspace(*p)) p++;
+        if (!*p) return 0;
 
-  errno = 0;
-  x = strtol(s, &eptr, 10);
-  if (errno || *eptr) return -1;
-  if (p_val) *p_val = x;
-  return 1;
+        errno = 0;
+        x = strtol(s, &eptr, 10);
+        if (errno || *eptr) return -1;
+        if (p_val) *p_val = x;
+        return 1;
+    }
 }
 
 int
@@ -155,25 +221,35 @@ hr_cgi_param_int_opt(
         int *p_val,
         int default_value)
 {
-  const unsigned char *s = 0, *p;
-  char *eptr = 0;
-  int x;
+    if (phr->json) {
+        cJSON *jj = cJSON_GetObjectItem(phr->json, name);
+        if (jj) {
+            return json_to_int(jj, p_val, 0);
+        } else {
+            if (p_val) *p_val = default_value;
+            return 0;
+        }
+    } else {
+        const unsigned char *s = 0, *p;
+        char *eptr = 0;
+        int x;
 
-  if (!(x = hr_cgi_param(phr, name, &s))) {
-    if (p_val) *p_val = default_value;
-    return 0;
-  } else if (x < 0) return -1;
-  p = s;
-  while (*p && isspace(*p)) p++;
-  if (!*p) {
-    if (p_val) *p_val = default_value;
-    return 0;
-  }
-  errno = 0;
-  x = strtol(s, &eptr, 10);
-  if (errno || *eptr) return -1;
-  if (p_val) *p_val = x;
-  return 0;
+        if (!(x = hr_cgi_param(phr, name, &s))) {
+            if (p_val) *p_val = default_value;
+            return 0;
+        } else if (x < 0) return -1;
+        p = s;
+        while (*p && isspace(*p)) p++;
+        if (!*p) {
+            if (p_val) *p_val = default_value;
+            return 0;
+        }
+        errno = 0;
+        x = strtol(s, &eptr, 10);
+        if (errno || *eptr) return -1;
+        if (p_val) *p_val = x;
+        return 0;
+    }
 }
 
 int
@@ -197,43 +273,61 @@ hr_cgi_param_jsbool_opt(
         int *p_val,
         int default_value)
 {
-    const unsigned char *s;
-    int x;
-    long v;
-    char *eptr = NULL;
+    if (phr->json) {
+        cJSON *jj = cJSON_GetObjectItem(phr->json, name);
+        if (jj) {
+            if (jj->type == cJSON_True) {
+                if (p_val) *p_val = 1;
+                return 1;
+            } else if (jj->type == cJSON_False) {
+                if (p_val) *p_val = 0;
+                return 1;
+            } else {
+                return -1;
+            }
+        } else {
+            if (p_val) *p_val = default_value;
+            return 0;
+        }
+    } else {
+        const unsigned char *s;
+        int x;
+        long v;
+        char *eptr = NULL;
 
-    x = hr_cgi_param(phr, name, &s);
-    if (x < 0) {
-        return -1;
+        x = hr_cgi_param(phr, name, &s);
+        if (x < 0) {
+            return -1;
+        }
+        if (!x) {
+            if (p_val) *p_val = default_value;
+            return 0;
+        }
+        if (!s || !*s) {
+            if (p_val) *p_val = default_value;
+            return 0;
+        }
+        if (!strcasecmp(s, "false")) {
+            if (p_val) *p_val = 0;
+            return 1;
+        }
+        if (!strcasecmp(s, "true")) {
+            if (p_val) *p_val = 1;
+            return 1;
+        }
+        errno = 0;
+        v = strtol(s, &eptr, 10);
+        if (errno || *eptr) {
+            return -1;
+        }
+        if (v < 0) {
+            v = default_value;
+        } else if (v > 0) {
+            v = 1;
+        }
+        if (p_val) *p_val = v;
+        return 1;
     }
-    if (!x) {
-        if (p_val) *p_val = default_value;
-        return 0;
-    }
-    if (!s || !*s) {
-        if (p_val) *p_val = default_value;
-        return 0;
-    }
-    if (!strcasecmp(s, "false")) {
-        if (p_val) *p_val = 0;
-        return 0;
-    }
-    if (!strcasecmp(s, "true")) {
-        if (p_val) *p_val = 1;
-        return 0;
-    }
-    errno = 0;
-    v = strtol(s, &eptr, 10);
-    if (errno || *eptr) {
-        return -1;
-    }
-    if (v < 0) {
-        v = default_value;
-    } else if (v > 0) {
-        v = 1;
-    }
-    if (p_val) *p_val = v;
-    return 1;
 }
 
 int
@@ -243,29 +337,40 @@ hr_cgi_param_int_opt_2(
         int *p_val,
         int *p_set_flag)
 {
-  const unsigned char *s = 0, *p;
-  char *eptr = 0;
-  int x;
+    if (phr->json) {
+        cJSON *jj = cJSON_GetObjectItem(phr->json, name);
+        if (jj) {
+            int r = json_to_int(jj, p_val, 0);
+            if (r >= 0) *p_set_flag = 1;
+            return r;
+        } else {
+            return 0;
+        }
+    } else {
+        const unsigned char *s = 0, *p;
+        char *eptr = 0;
+        int x;
 
-  ASSERT(p_val);
-  ASSERT(p_set_flag);
+        ASSERT(p_val);
+        ASSERT(p_set_flag);
 
-  *p_val = 0;
-  *p_set_flag = 0;
+        *p_val = 0;
+        *p_set_flag = 0;
 
-  if (!(x = hr_cgi_param(phr, name, &s))) return 0;
-  else if (x < 0) return -1;
+        if (!(x = hr_cgi_param(phr, name, &s))) return 0;
+        else if (x < 0) return -1;
 
-  p = s;
-  while (*p && isspace(*p)) p++;
-  if (!*p) return 0;
+        p = s;
+        while (*p && isspace(*p)) p++;
+        if (!*p) return 0;
 
-  errno = 0;
-  x = strtol(s, &eptr, 10);
-  if (errno || *eptr) return -1;
-  *p_val = x;
-  *p_set_flag = 1;
-  return 0;
+        errno = 0;
+        x = strtol(s, &eptr, 10);
+        if (errno || *eptr) return -1;
+        *p_val = x;
+        *p_set_flag = 1;
+        return 0;
+    }
 }
 
 #define SIZE_T (1024LL * 1024L * 1024L * 1024L)
@@ -280,52 +385,109 @@ hr_cgi_param_size64_opt(
         ej_size64_t *p_val,
         ej_size64_t default_value)
 {
-    const unsigned char *s = 0, *e;
-    char *eptr = 0;
-    long long x;
-    int len;
+    if (phr->json) {
+        cJSON *jj = cJSON_GetObjectItem(phr->json, name);
+        if (jj) {
+            if (jj->type == cJSON_Number) {
+                if (jj->valueint != jj->valuedouble) return -1;
+                if (p_val) *p_val = jj->valueint;
+                return 0;
+            } else if (jj->type == cJSON_String) {
+                long long current_size = 0;
+                const unsigned char *pc = jj->valuestring;
+                while (isspace(*pc)) ++pc;
+                if (!*pc) {
+                    if (p_val) *p_val = default_value;
+                    return 0;
+                }
+                while (*pc) {
+                    while (isspace(*pc)) ++pc;
+                    if (!*pc) break;
+                    if (*pc != '-' && *pc != '+' && !isdigit(*pc)) return -1;
+                    long long cur = 0;
+                    errno = 0;
+                    char *eptr = NULL;
+                    cur = strtoll(pc, &eptr, 10);
+                    if (errno || (const unsigned char*) eptr == pc) return -1;
+                    pc = eptr;
+                    while (isspace(*pc)) ++pc;
+                    if (!*pc) {
+                        if (__builtin_add_overflow(current_size, cur, &current_size)) return -1;
+                        break;
+                    } else if (*pc == 'k' || *pc == 'K') {
+                        if (__builtin_mul_overflow(cur, 1024LL, &cur)) return -1;
+                        if (__builtin_add_overflow(current_size, cur, &current_size)) return -1;
+                    } else if (*pc == 'm' || *pc == 'M') {
+                        if (__builtin_mul_overflow(cur, 1048576LL, &cur)) return -1;
+                        if (__builtin_add_overflow(current_size, cur, &current_size)) return -1;
+                    } else if (*pc == 'g' || *pc == 'G') {
+                        if (__builtin_mul_overflow(cur, 1073741824LL, &cur)) return -1;
+                        if (__builtin_add_overflow(current_size, cur, &current_size)) return -1;
+                    } else if (*pc == 't' || *pc == 'T') {
+                        if (__builtin_mul_overflow(cur, 1099511627776LL, &cur)) return -1;
+                        if (__builtin_add_overflow(current_size, cur, &current_size)) return -1;
+                    } else {
+                        return -1;
+                    }
+                    ++pc;
+                }
+                if (p_val) *p_val = current_size;
+                return 0;
+            } else {
+                return -1;
+            }
+        } else {
+            if (p_val) *p_val = default_value;
+            return 0;
+        }
+    } else {
+        const unsigned char *s = 0, *e;
+        char *eptr = 0;
+        long long x;
+        int len;
 
-    if (!(x = hr_cgi_param(phr, name, &s)) || !s) {
-        if (p_val) *p_val = default_value;
-        return 0;
-    } else if (x < 0) return -1;
+        if (!(x = hr_cgi_param(phr, name, &s)) || !s) {
+            if (p_val) *p_val = default_value;
+            return 0;
+        } else if (x < 0) return -1;
 
-    len = strlen(s);
-    while (len > 0 && isspace(s[len - 1])) --len;
-    if (!len) {
-        if (p_val) *p_val = default_value;
-        return 0;
-    }
-    e = s + len;
+        len = strlen(s);
+        while (len > 0 && isspace(s[len - 1])) --len;
+        if (!len) {
+            if (p_val) *p_val = default_value;
+            return 0;
+        }
+        e = s + len;
 
-    errno = 0;
-    x = strtoll(s, &eptr, 10);
-    if (errno) return -1;
-    s = (const unsigned char *) eptr;
-    if (s == e) {
+        errno = 0;
+        x = strtoll(s, &eptr, 10);
+        if (errno) return -1;
+        s = (const unsigned char *) eptr;
+        if (s == e) {
+            if (p_val) *p_val = x;
+            return 0;
+        }
+        while (isspace(*s)) ++s;
+        if (*s == 't' || *s == 'T') {
+            if (x < -8388608LL || x > 8388607LL) return -1;
+            x *= SIZE_T;
+        } else if (*s == 'g' || *s == 'G') {
+            if (x < -8589934592LL || x > 8589934591LL) return -1;
+            x *= SIZE_G;
+        } else if (*s == 'm' || *s == 'M') {
+            if (x < -8796093022208LL || x > 8796093022207LL) return -1;
+            x *= SIZE_M;
+        } else if (*s == 'k' || *s == 'K') {
+            if (x < -9007199254740992LL || x > 9007199254740991LL) return -1;
+            x *= SIZE_K;
+        } else {
+            return -1;
+        }
+        ++s;
+        if (s != e) return -1;
         if (p_val) *p_val = x;
         return 0;
     }
-    while (isspace(*s)) ++s;
-    if (*s == 't' || *s == 'T') {
-        if (x < -8388608LL || x > 8388607LL) return -1;
-        x *= SIZE_T;
-    } else if (*s == 'g' || *s == 'G') {
-        if (x < -8589934592LL || x > 8589934591LL) return -1;
-        x *= SIZE_G;
-    } else if (*s == 'm' || *s == 'M') {
-        if (x < -8796093022208LL || x > 8796093022207LL) return -1;
-        x *= SIZE_M;
-    } else if (*s == 'k' || *s == 'K') {
-        if (x < -9007199254740992LL || x > 9007199254740991LL) return -1;
-        x *= SIZE_K;
-    } else {
-        return -1;
-    }
-    ++s;
-    if (s != e) return -1;
-    if (p_val) *p_val = x;
-    return 0;
 }
 
 void
@@ -569,14 +731,32 @@ hr_cgi_param_string(
         const unsigned char *prepend_str)
 {
     const unsigned char *str = NULL;
-    int r = hr_cgi_param(phr, param, &str);
-    if (r <= 0) {
-        *p_value = NULL;
-        return r;
-    }
-    if (!str) {
-        *p_value = NULL;
-        return 0;
+    if (phr->json) {
+        cJSON *jj = cJSON_GetObjectItem(phr->json, param);
+        if (jj) {
+            if (jj->type == cJSON_NULL) {
+                *p_value = NULL;
+                return 0;
+            } else if (jj->type == cJSON_String) {
+                str = jj->valuestring;
+            } else {
+                *p_value = NULL;
+                return -1;
+            }
+        } else {
+            *p_value = NULL;
+            return 0;
+        }
+    } else {
+        int r = hr_cgi_param(phr, param, &str);
+        if (r <= 0) {
+            *p_value = NULL;
+            return r;
+        }
+        if (!str) {
+            *p_value = NULL;
+            return 0;
+        }
     }
     int i = 0;
     while (str[i] && (str[i] <= ' ' || str[i] == 0x7f)) ++i;
@@ -615,14 +795,32 @@ hr_cgi_param_string_2(
         const unsigned char *prepend_str)
 {
     const unsigned char *str = NULL;
-    int r = hr_cgi_param(phr, param, &str);
-    if (r <= 0) {
-        *p_value = strdup("");
-        return r;
-    }
-    if (!str) {
-        *p_value = strdup("");
-        return 0;
+    if (phr->json) {
+        cJSON *jj = cJSON_GetObjectItem(phr->json, param);
+        if (jj) {
+            if (jj->type == cJSON_NULL) {
+                *p_value = strdup("");
+                return 0;
+            } else if (jj->type == cJSON_String) {
+                str = jj->valuestring;
+            } else {
+                *p_value = strdup("");
+                return -1;
+            }
+        } else {
+            *p_value = strdup("");
+            return 0;
+        }
+    } else {
+        int r = hr_cgi_param(phr, param, &str);
+        if (r <= 0) {
+            *p_value = strdup("");
+            return r;
+        }
+        if (!str) {
+            *p_value = strdup("");
+            return 0;
+        }
     }
     int i = 0;
     while (str[i] && (str[i] <= ' ' || str[i] == 0x7f)) ++i;
@@ -659,14 +857,33 @@ hr_cgi_param_h64(
         const unsigned char *name,
         unsigned long long *p_val)
 {
-    const unsigned char *s = NULL;
-    if (hr_cgi_param(phr, name, &s) <= 0 || !s) return -1;
-    char *eptr = NULL;
-    errno = 0;
-    unsigned long long x = strtoull(s, &eptr, 16);
-    if (errno || (const unsigned char *) eptr == s || *eptr) return -1;
-    if (p_val) *p_val = x;
-    return 0;
+    if (phr->json) {
+        cJSON *jj = cJSON_GetObjectItem(phr->json, name);
+        if (jj) {
+            if (jj->type == cJSON_String) {
+                const char *s = jj->valuestring;
+                char *eptr = NULL;
+                errno = 0;
+                unsigned long long x = strtoull(s, &eptr, 16);
+                if (errno || eptr == s || *eptr) return -1;
+                if (p_val) *p_val = x;
+                return 0;
+            } else {
+                return -1;
+            }
+        } else {
+            return -1;
+        }
+    } else {
+        const unsigned char *s = NULL;
+        if (hr_cgi_param(phr, name, &s) <= 0 || !s) return -1;
+        char *eptr = NULL;
+        errno = 0;
+        unsigned long long x = strtoull(s, &eptr, 16);
+        if (errno || (const unsigned char *) eptr == s || *eptr) return -1;
+        if (p_val) *p_val = x;
+        return 0;
+    }
 }
 
 int
@@ -676,23 +893,59 @@ hr_cgi_param_i64_opt(
         long long *p_val,
         long long default_value)
 {
-    const unsigned char *s = NULL;
-    int res = hr_cgi_param(phr, name, &s);
-    if (!res || !s) {
-        if (p_val) *p_val = default_value;
-        return 0;
+    if (phr->json) {
+        cJSON *jj = cJSON_GetObjectItem(phr->json, name);
+        if (jj) {
+            if (jj->type == cJSON_False) {
+                if (p_val) *p_val = 0;
+                return 1;
+            } else if (jj->type == cJSON_True) {
+                if (p_val) *p_val = 1;
+                return 1;
+            } else if (jj->type == cJSON_NULL) {
+                if (p_val) *p_val = 0;
+                return 1;
+            } else if (jj->type == cJSON_Number) {
+                if (jj->valueint != jj->valuedouble) return -1;
+                if (p_val) *p_val = jj->valueint;
+                return 1;
+            } else if (jj->type == cJSON_String) {
+                const char *s = jj->valuestring;
+                char *eptr = NULL;
+                errno = 0;
+                long long x = strtoll(s, &eptr, 10);
+                if (errno || eptr == s || *eptr) {
+                    return -1;
+                }
+                if (p_val) *p_val = x;
+                return 1;
+            } else {
+                // invalid value
+                return -1;
+            }
+        } else {
+            if (p_val) *p_val = default_value;
+            return 0;
+        }
+    } else {
+        const unsigned char *s = NULL;
+        int res = hr_cgi_param(phr, name, &s);
+        if (!res || !s) {
+            if (p_val) *p_val = default_value;
+            return 0;
+        }
+        if (res < 0) {
+            return -1;
+        }
+        char *eptr = NULL;
+        errno = 0;
+        long long x = strtoll(s, &eptr, 10);
+        if (errno || (const unsigned char *) eptr == s || *eptr) {
+            return -1;
+        }
+        if (p_val) *p_val = x;
+        return 1;
     }
-    if (res < 0) {
-        return -1;
-    }
-    char *eptr = NULL;
-    errno = 0;
-    long long x = strtoll(s, &eptr, 10);
-    if (errno || (const unsigned char *) eptr == s || *eptr) {
-        return -1;
-    }
-    if (p_val) *p_val = x;
-    return 1;
 }
 
 /*
