@@ -66,6 +66,7 @@
 #include "ejudge/base32.h"
 #include "ejudge/userlist_bin.h"
 #include "ejudge/testing_report_xml.h"
+#include "ejudge/cJSON.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -13938,9 +13939,9 @@ ns_handle_http_request(
   const unsigned char *script_filename = 0;
   path_t last_name;
   const unsigned char *http_host;
-  const unsigned char *script_name;
+  const unsigned char *script_name = NULL;
   const unsigned char *protocol = "http";
-  const unsigned char *remote_addr;
+  const unsigned char *remote_addr = NULL;
   const unsigned char *s;
   path_t self_url;
   path_t context_url;
@@ -13951,13 +13952,32 @@ ns_handle_http_request(
   (void) forced_linking;
 
   // make a self-referencing URL
-  if (hr_getenv(phr, "SSL_PROTOCOL") || hr_getenv(phr, "HTTPS")) {
-    phr->ssl_flag = 1;
-    protocol = "https";
+  if (phr->client_state->ops->get_ssl_flag) {
+    phr->ssl_flag = phr->client_state->ops->get_ssl_flag(phr->client_state);
+    protocol = "ws";
+    if (phr->ssl_flag) protocol = "wss";
+  } else {
+    if (hr_getenv(phr, "SSL_PROTOCOL") || hr_getenv(phr, "HTTPS")) {
+      phr->ssl_flag = 1;
+      protocol = "https";
+    }
   }
-  if (!(http_host = hr_getenv(phr, "HTTP_HOST"))) http_host = "localhost";
-  if (!(script_name = hr_getenv(phr, "SCRIPT_NAME")))
-    script_name = "/cgi-bin/new-client";
+  if (phr->client_state->ops->get_host) {
+    if (!(http_host = phr->client_state->ops->get_host(phr->client_state))) http_host = "localhost";
+  } else {
+    if (!(http_host = hr_getenv(phr, "HTTP_HOST"))) http_host = "localhost";
+  }
+
+  if (phr->json) {
+    cJSON *jj = cJSON_GetObjectItem(phr->json, "SCRIPT_NAME");
+    if (jj && jj->type == cJSON_String) {
+      script_name = jj->valuestring;
+    }
+  }
+  if (!script_name) {
+    if (!(script_name = hr_getenv(phr, "SCRIPT_NAME")))
+      script_name = "/cgi-bin/new-client";
+  }
 
 #if defined EJUDGE_REST_PREFIX
   if (!strncmp(script_name, EJUDGE_REST_PREFIX, EJUDGE_REST_PREFIX_LEN)) {
@@ -14026,20 +14046,29 @@ ns_handle_http_request(
   if (rs) *rs = 0;
   phr->context_url = context_url;
 
-  if (hr_cgi_param(phr, "json", &s) > 0) {
+  if (phr->json) {
     phr->json_reply = 1;
-  }
-  if (hr_cgi_param(phr, "plain_text", &s) > 0) {
-    phr->plain_text = 1;
+  } else {
+    if (hr_cgi_param(phr, "json", &s) > 0) {
+      phr->json_reply = 1;
+    }
+    if (hr_cgi_param(phr, "plain_text", &s) > 0) {
+      phr->plain_text = 1;
+    }
   }
 
   // parse the client IP address
-  if (!(remote_addr = hr_getenv(phr, "REMOTE_ADDR"))) {
-    err("REMOTE_ADDR does not exist");
-    if (phr->log_f) {
-      fprintf(phr->log_f, "REMOTE_ADDR does not exist");
+  if (phr->client_state->ops->get_remote_addr) {
+    remote_addr = phr->client_state->ops->get_remote_addr(phr->client_state);
+  }
+  if (!remote_addr) {
+    if (!(remote_addr = hr_getenv(phr, "REMOTE_ADDR"))) {
+      err("REMOTE_ADDR does not exist");
+      if (phr->log_f) {
+        fprintf(phr->log_f, "REMOTE_ADDR does not exist");
+      }
+      return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
     }
-    return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
   if (!strcmp(remote_addr, "::1")) remote_addr = "127.0.0.1";
   if (xml_parse_ipv6(NULL, 0, 0, 0, remote_addr, &phr->ip) < 0) {
