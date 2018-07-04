@@ -118,6 +118,9 @@ static const struct client_state_operations http_client_state_operations =
   NULL, // destroy
   nsf_get_peer_uid, // get_peer_uid
   nsf_get_contest_id, // get_contest_id
+  NULL, // get_ssl_flag
+  NULL, // get_host
+  NULL, // get_remote_addr
   nsf_set_destroy_callback, // set_destroy_callback
 };
 
@@ -151,6 +154,24 @@ client_state_new(struct server_framework_state *state, int fd)
   return p;
 }
 
+static int
+ws_client_get_ssl_flag(const struct client_state *p);
+static const unsigned char *
+ws_client_get_host(const struct client_state *p);
+static const unsigned char *
+ws_client_get_remote_addr(const struct client_state *p);
+
+static const struct client_state_operations ws_client_state_operations =
+{
+  NULL, // destroy
+  NULL, // get_peer_uid
+  NULL, // get_contest_id
+  ws_client_get_ssl_flag, // get_ssl_flag
+  ws_client_get_host, // get_host
+  ws_client_get_remote_addr, // get_remote_addr
+  NULL, // set_destroy_callback
+};
+
 static struct ws_client_state *
 ws_client_state_new(
         struct server_framework_state *state,
@@ -182,6 +203,7 @@ ws_client_state_new(
     }
   }
 
+  p->b.ops = &ws_client_state_operations;
   p->b.id = state->client_id++;
   p->b.fd = fd;
   p->state = WS_STATE_INITIAL;
@@ -1819,4 +1841,25 @@ nsf_get_server_start_time(
         struct server_framework_state *state)
 {
   return state->server_start_time;
+}
+
+static int
+ws_client_get_ssl_flag(const struct client_state *p)
+{
+  const struct ws_client_state *pp = (const struct ws_client_state *) p;
+  return pp->ssl_flag;
+}
+
+static const unsigned char *
+ws_client_get_host(const struct client_state *p)
+{
+  const struct ws_client_state *pp = (const struct ws_client_state *) p;
+  return pp->host;
+}
+
+static const unsigned char *
+ws_client_get_remote_addr(const struct client_state *p)
+{
+  const struct ws_client_state *pp = (const struct ws_client_state *) p;
+  return pp->remote_addr;
 }

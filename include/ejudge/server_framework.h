@@ -61,6 +61,9 @@ struct client_state_operations
 
   int (*get_peer_uid)(const struct client_state *);
   int (*get_contest_id)(const struct client_state *);
+  int (*get_ssl_flag)(const struct client_state *);
+  const unsigned char *(*get_host)(const struct client_state *);
+  const unsigned char *(*get_remote_addr)(const struct client_state *);
 
   void (*set_destroy_callback)(
         struct client_state *p,
