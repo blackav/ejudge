@@ -155,7 +155,7 @@ static struct ws_client_state *
 ws_client_state_new(
         struct server_framework_state *state,
         int fd,
-        const unsigned char *remote_host,
+        const unsigned char *remote_addr,
         int remote_port,
         int ssl_flag)
 {
@@ -185,7 +185,7 @@ ws_client_state_new(
   p->b.id = state->client_id++;
   p->b.fd = fd;
   p->state = WS_STATE_INITIAL;
-  if (remote_host) p->remote_host = xstrdup(remote_host);
+  if (remote_addr) p->remote_addr = xstrdup(remote_addr);
   p->remote_port = remote_port;
   p->ssl_flag = ssl_flag;
 
@@ -337,7 +337,7 @@ ws_client_state_free(struct ws_client_state *p)
     free(p->user_agent);
     free(p->accept_encoding);
     free(p->origin);
-    free(p->remote_host);
+    free(p->remote_addr);
     free(p->read_buf);
     free(p->write_buf);
     if (p->b.fd >= 0) close(p->b.fd);
@@ -959,8 +959,8 @@ X-Forwarded-Server: localhost.localdomain
       //fprintf(stderr, "Upgrade: %s\n", upgrade);
     }
     if (x_forwarded_for && *x_forwarded_for) {
-      free(p->remote_host);
-      p->remote_host = xstrdup(x_forwarded_for);
+      free(p->remote_addr);
+      p->remote_addr = xstrdup(x_forwarded_for);
     }
     if (x_forwarded_host && *x_forwarded_host) {
       free(p->host);

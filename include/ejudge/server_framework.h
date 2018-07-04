@@ -109,7 +109,7 @@ struct ws_client_state
   struct ws_frame *frame_first;
   struct ws_frame *frame_last;
 
-  unsigned char *remote_host;
+  unsigned char *remote_addr;
   unsigned char *read_buf;
   unsigned char *write_buf;
 
