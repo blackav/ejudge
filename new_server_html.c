@@ -13932,7 +13932,6 @@ static void *forced_linking[] =
 void
 ns_handle_http_request(
         struct server_framework_state *state,
-        struct client_state *p,
         FILE *fout,
         struct http_request_info *phr)
 {

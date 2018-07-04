@@ -52,10 +52,10 @@ struct contest_desc;
 struct contest_extra;
 
 void
-ns_handle_http_request(struct server_framework_state *state,
-                               struct client_state *p,
-                               FILE *out,
-                               struct http_request_info *phr);
+ns_handle_http_request(
+        struct server_framework_state *state,
+        FILE *out,
+        struct http_request_info *phr);
 
 struct ejudge_cfg;
 struct userlist_clnt;
