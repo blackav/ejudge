@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -31,8 +31,11 @@
 char *
 strmcpy(char *dst, char const *src, size_t maxsize)
 {
+  snprintf(dst, maxsize, "%s", src);
+  /*
   strncpy(dst, src, maxsize);
   dst[maxsize - 1] = 0;
+  */
   return dst;
 }
 

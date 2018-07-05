@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2001-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2001-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -432,8 +431,9 @@ initialize(int argc, char const *argv[])
     // never get here
   }
   namelen = 5;                  /* "users" */
-  memset(progname, 0, sizeof(progname));
-  strncpy(progname, basename, namelen);
+  //memset(progname, 0, sizeof(progname));
+  //strncpy(progname, basename, namelen);
+  snprintf(progname, sizeof(progname), "%.5s", basename);
 
   /* we need CGI parameters relatively early because of contest_id */
   cgi_read(0);
