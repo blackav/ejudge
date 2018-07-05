@@ -426,7 +426,7 @@ cmd_http_request(
 
   // ok, generate HTML
   hr.out_f = open_memstream(&hr.out_t, &hr.out_z);
-  ns_handle_http_request(state, p, hr.out_f, &hr);
+  ns_handle_http_request(state, hr.out_f, &hr);
   close_memstream(hr.out_f); hr.out_f = NULL;
 
   *pbuf = 0;
