@@ -9397,7 +9397,7 @@ unpriv_submit_run(
   char **lang_list;
   int mime_type = 0;
   ruint32_t shaval[5];
-  int variant = 0, run_id, arch_flags = 0;
+  int variant = 0, run_id = 0, arch_flags = 0;
   unsigned char *acc_probs = 0;
   struct timeval precise_time;
   path_t run_path;

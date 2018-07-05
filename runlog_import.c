@@ -172,6 +172,7 @@ runlog_import_xml(
 
   cur_entries_beg = run_get_first(runlog_state);
   ASSERT(cur_entries_beg == 0);
+  (void) cur_entries_beg;
   cur_entries_num = run_get_total(runlog_state);
   if (cur_entries_num > 0) {
     XCALLOC(cur_entries, cur_entries_num);

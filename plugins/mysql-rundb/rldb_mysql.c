@@ -145,6 +145,7 @@ prepare_func(
   struct rldb_mysql_state *state = (struct rldb_mysql_state*) data;
   const struct common_loaded_plugin *mplg;
   const struct xml_parse_spec *spec = ejudge_cfg_get_spec();
+  (void) spec;
 
   // load common_mysql plugin
   if (!(mplg = plugin_load_external(0, "common", "mysql", config))) {
