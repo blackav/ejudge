@@ -621,33 +621,25 @@ int ns_match_action(const unsigned char *str)
                       } else if (c < 's') {
                         if (c == '-') {
                           c = str[8];
-                          if (c == 's') {
+                          if (c == 'i') {
                             c = str[9];
-                            if (c == 't') {
+                            if (c == 'n') {
                               c = str[10];
-                              if (c == 'a') {
+                              if (c == 'f') {
                                 c = str[11];
-                                if (c == 't') {
+                                if (c == 'o') {
                                   c = str[12];
-                                  if (c == 'u') {
+                                  if (c == '-') {
                                     c = str[13];
-                                    if (c == 's') {
+                                    if (c == 'j') {
                                       c = str[14];
-                                      if (c == '-') {
+                                      if (c == 's') {
                                         c = str[15];
-                                        if (c == 'j') {
+                                        if (c == 'o') {
                                           c = str[16];
-                                          if (c == 's') {
+                                          if (c == 'n') {
                                             c = str[17];
-                                            if (c == 'o') {
-                                              c = str[18];
-                                              if (c == 'n') {
-                                                c = str[19];
-                                                if (!c) return NEW_SRV_ACTION_CONTEST_STATUS_JSON;
-                                                return 0;
-                                              }
-                                              return 0;
-                                            }
+                                            if (!c) return NEW_SRV_ACTION_CONTEST_INFO_JSON;
                                             return 0;
                                           }
                                           return 0;
@@ -665,7 +657,7 @@ int ns_match_action(const unsigned char *str)
                               return 0;
                             }
                             return 0;
-                          } else if (c < 's') {
+                          } else if (c < 'i') {
                             if (c == 'b') {
                               c = str[9];
                               if (c == 'a') {
@@ -688,6 +680,51 @@ int ns_match_action(const unsigned char *str)
                               return 0;
                             }
                           } else {
+                            if (c == 's') {
+                              c = str[9];
+                              if (c == 't') {
+                                c = str[10];
+                                if (c == 'a') {
+                                  c = str[11];
+                                  if (c == 't') {
+                                    c = str[12];
+                                    if (c == 'u') {
+                                      c = str[13];
+                                      if (c == 's') {
+                                        c = str[14];
+                                        if (c == '-') {
+                                          c = str[15];
+                                          if (c == 'j') {
+                                            c = str[16];
+                                            if (c == 's') {
+                                              c = str[17];
+                                              if (c == 'o') {
+                                                c = str[18];
+                                                if (c == 'n') {
+                                                  c = str[19];
+                                                  if (!c) return NEW_SRV_ACTION_CONTEST_STATUS_JSON;
+                                                  return 0;
+                                                }
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
                           }
                           return 0;
                         }
