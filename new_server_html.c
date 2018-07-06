@@ -14209,7 +14209,19 @@ ns_handle_http_request(
   }
 
   // check how we've been called
-  script_filename = hr_getenv(phr, "SCRIPT_FILENAME");
+  if (phr->json) {
+    cJSON *jj = cJSON_GetObjectItem(phr->json, "SCRIPT_FILENAME");
+    if (jj && jj->type == cJSON_String) {
+      script_filename = jj->valuestring;
+    }
+    if (!script_filename) {
+      cJSON *jj = cJSON_GetObjectItem(phr->json, "SCRIPT_NAME");
+      if (jj && jj->type == cJSON_String) {
+        script_filename = jj->valuestring;
+      }
+    }
+  }
+  if (!script_filename) script_filename = hr_getenv(phr, "SCRIPT_FILENAME");
   if (!script_filename && phr->arg_num > 0) script_filename = phr->args[0];
   if (!script_filename) {
     err("cannot get script filename");

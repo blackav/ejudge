@@ -589,6 +589,10 @@ handle_ws_request(
         const unsigned char *data,
         size_t size)
 {
+  struct http_request_info hr;
+  unsigned char info_buf[1024];
+  unsigned char *pbuf = info_buf;
+
   // FIXME: handle only WS_FRAME_TEXT?
   cJSON *root = cJSON_Parse(data);
   if (!root) {
@@ -601,6 +605,69 @@ handle_ws_request(
     return;
   }
 
+  memset(&hr, 0, sizeof(hr));
+  hr.id = p->b.id;
+  hr.client_state = &p->b;
+  hr.fw_state = state;
+  gettimeofday(&hr.timestamp1, 0);
+  hr.current_time = hr.timestamp1.tv_sec;
+  hr.locale_id = -1;
+  hr.config = ejudge_config;
+  hr.json = root;
+
+  hr.log_f = open_memstream(&hr.log_t, &hr.log_z);
+  hr.out_f = open_memstream(&hr.out_t, &hr.out_z);
+  ns_handle_http_request(state, hr.out_f, &hr);
+  close_memstream(hr.log_f); hr.log_f = NULL;
+  close_memstream(hr.out_f); hr.out_f = NULL;
+
+  *pbuf = 0;
+  if (hr.ssl_flag) {
+    pbuf = stpcpy(pbuf, "WSS:");
+  } else {
+    pbuf = stpcpy(pbuf, "WS:");
+  }
+  pbuf = stpcpy(pbuf, xml_unparse_ipv6(&hr.ip));
+  *pbuf++ = ':';
+  if (/*hr.role_name*/ 1) {
+    pbuf = stpcpy(pbuf, hr.role_name);
+  }
+  if (hr.action > 0 && hr.action < NEW_SRV_ACTION_LAST && ns_symbolic_action_table[hr.action]) {
+    *pbuf++ = '/';
+    pbuf = stpcpy(pbuf, ns_symbolic_action_table[hr.action]);
+  }
+  if (hr.session_id) {
+    *pbuf++ = '/';
+    *pbuf++ = 'S';
+    pbuf += sprintf(pbuf, "%016llx", hr.session_id);
+    if (hr.client_key) {
+      *pbuf++ = '-';
+      pbuf += sprintf(pbuf, "%016llx", hr.client_key);
+    }
+  }
+  if (hr.user_id > 0) {
+    *pbuf++ = '/';
+    *pbuf++ = 'U';
+    pbuf += sprintf(pbuf, "%d", hr.user_id);
+  }
+  if (hr.contest_id > 0) {
+    *pbuf++ = '/';
+    *pbuf++ = 'C';
+    pbuf += sprintf(pbuf, "%d", hr.contest_id);
+  }
+
+  nsf_ws_append_reply_frame(p, 0, hr.out_t, hr.out_z);
+  info("%d:%s -> OK", p->b.id, info_buf);
+
+  if (hr.out_f) fclose(hr.out_f);
+  xfree(hr.out_t);
+  if (hr.log_f) fclose(hr.log_f);
+  xfree(hr.log_t);
+  xfree(hr.login);
+  xfree(hr.name);
+  xfree(hr.name_arm);
+  xfree(hr.script_part);
+  xfree(hr.body_attr);
   cJSON_Delete(root);
 }
 

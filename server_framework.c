@@ -1550,7 +1550,7 @@ nsf_main_loop(struct server_framework_state *state)
               state->params->ws_handle_packet(state, ws_clnt, wsf->hdr[0] & 0x0F, wsf->data, wsf->size);
             }
 
-            fprintf(stderr, "ws_frame: %d, %d\n", (wsf->hdr[0] & 0x0F), wsf->size);
+            //fprintf(stderr, "ws_frame: %d, %d\n", (wsf->hdr[0] & 0x0F), wsf->size);
             //nsf_ws_append_reply_frame(ws_clnt, WS_FRAME_TEXT, wsf->data, wsf->size);
 
             break;
