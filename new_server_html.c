@@ -7772,6 +7772,14 @@ read_file_range(
 }
 
 static void
+json_error(
+        FILE *fout,
+        struct http_request_info *phr,
+        struct html_armor_buffer *pab,
+        int num,
+        const unsigned char *log_msg);
+
+static void
 error_page(
         FILE *out_f,
         struct http_request_info *phr,
@@ -7780,6 +7788,27 @@ error_page(
 {
   const unsigned char * const * error_names = external_unpriv_error_names;
   ExternalActionState **error_states = external_unpriv_error_states;
+
+  if (phr->json_reply) {
+    struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+    if (phr->log_f) {
+      fclose(phr->log_f); phr->log_f = 0;
+    }
+    if (phr->log_t) {
+      unsigned char *ps = phr->log_t;
+      for (;*ps; ++ps) {
+        if (*ps < ' ') *ps = ' ';
+      }
+    }
+    fprintf(out_f, "{\n");
+    fprintf(out_f, "  \"ok\": %s", "false");
+    fprintf(out_f, ",\n  \"server_time\": %lld", (long long) phr->current_time);
+    json_error(out_f, phr, &ab, error_code, phr->log_t);
+    fprintf(out_f, "\n}\n");
+    free(phr->log_t); phr->log_t = NULL;
+    html_armor_free(&ab);
+    return;
+  }
 
   if (phr->log_f) {
     fclose(phr->log_f); phr->log_f = 0;
@@ -12717,6 +12746,226 @@ cleanup:
   return 1;
 }
 
+extern const unsigned char login_accept_chars[257];
+static int
+check_login(const unsigned char *login_str)
+{
+  if (!login_str || !*login_str) return -1;
+  return check_str(login_str, login_accept_chars);
+}
+
+struct UnprivLoginJsonResponse
+{
+  unsigned error_id;
+  unsigned char log_msg[256];
+  time_t expire;
+};
+
+static int
+do_unpriv_login_json(FILE *fout, struct http_request_info *phr, struct UnprivLoginJsonResponse *resp)
+{
+  const struct contest_desc *cnts = NULL;
+  struct contest_extra *extra = NULL;
+
+  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts){
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "invalid contest_id %d", phr->contest_id);
+    return -NEW_SRV_ERR_INV_CONTEST_ID;
+  }
+  extra = ns_get_contest_extra(cnts);
+  ASSERT(extra);
+  phr->cnts = cnts;
+  phr->extra = extra;
+  if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "%s://%s is banned for USER for contest %d",
+             ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  if (cnts->closed) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "contest %d is closed\n", cnts->id);
+    return -NEW_SRV_ERR_SERVICE_NOT_AVAILABLE;
+  }
+  if (!cnts->managed) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "contest %d is not managed", cnts->id);
+    return -NEW_SRV_ERR_SERVICE_NOT_AVAILABLE;
+  }
+  const unsigned char *login = NULL;
+  if (hr_cgi_param(phr, "login", &login) <= 0) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "login is not specified");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  if (!login || !*login) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "login is empty");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  if (check_login(login) < 0) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "login is invalid");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+
+  const unsigned char *password = NULL;
+  if (hr_cgi_param(phr, "password", &password) <= 0) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "password is not specified");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  if (!password || !*password) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "password is empty");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+  }
+
+  int r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
+                              &phr->ip,
+                              0, /* client_key */
+                              phr->ssl_flag,
+                              phr->contest_id,
+                              phr->locale_id,
+                              0, /* ??? */
+                              login, password,
+                              &phr->user_id,
+                              &phr->session_id, &phr->client_key,
+                              &phr->name,
+                              &resp->expire);
+  if (r < 0) {
+    r = -r;
+    switch (r) {
+    case ULS_ERR_INVALID_LOGIN:
+    case ULS_ERR_INVALID_PASSWORD:
+    case ULS_ERR_BAD_CONTEST_ID:
+    case ULS_ERR_IP_NOT_ALLOWED:
+    case ULS_ERR_NO_PERMS:
+    case ULS_ERR_NOT_REGISTERED:
+    case ULS_ERR_CANNOT_PARTICIPATE:
+      snprintf(resp->log_msg, sizeof(resp->log_msg), "TEAM_CHECK_USER failed: %s", userlist_strerror(r));
+      return -NEW_SRV_ERR_PERMISSION_DENIED;
+    case ULS_ERR_DISCONNECT:
+      return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
+    case ULS_ERR_INCOMPLETE_REG:
+      return -NEW_SRV_ERR_REGISTRATION_INCOMPLETE;
+    default:
+      snprintf(resp->log_msg, sizeof(resp->log_msg), "TEAM_CHECK_USER failed: %s", userlist_strerror(r));
+      return -NEW_SRV_ERR_INTERNAL;
+    }
+  }
+  phr->login = xstrdup(login);
+  return 0;
+}
+
+static void
+json_error(
+        FILE *fout,
+        struct http_request_info *phr,
+        struct html_armor_buffer *pab,
+        int num,
+        const unsigned char *log_msg)
+{
+  if (num < 0) num = -num;
+  random_init();
+  unsigned error_id = random_u32();
+
+  fprintf(fout, ",\n  \"error\": {\n");
+  fprintf(fout, "    \"num\": %d", num);
+  fprintf(fout, ",\n    \"symbol\": \"%s\"", ns_error_symbol(num));
+  const unsigned char *msg = ns_error_title_2(num);
+  if (msg) {
+    fprintf(fout, ",\n    \"message\": \"%s\"", json_armor_buf(pab, msg));
+  }
+  if (error_id) {
+    fprintf(fout, ",\n    \"log_id\": \"%08x\"", error_id);
+  }
+  fprintf(fout, "\n  }");
+  if (!msg) msg = "unknown error";
+  err("%d: %s: error_id = %08x: %s", phr->id, msg, error_id, log_msg);
+}
+
+static void
+unpriv_login_json(FILE *fout, struct http_request_info *phr)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct UnprivLoginJsonResponse resp = {};
+
+  int res = do_unpriv_login_json(fout, phr, &resp);
+
+  phr->json_reply = 1;
+  fprintf(fout, "{\n");
+  fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
+  fprintf(fout, ",\n  \"server_time\": %lld", (long long) phr->current_time);
+  if (res) {
+    json_error(fout, phr, &ab, res, resp.log_msg);
+  } else {
+    fprintf(fout, ",\n  \"result\": {");
+    fprintf(fout, "\n    \"user_id\": %d", phr->user_id);
+    fprintf(fout, ",\n    \"user_login\": \"%s\"", json_armor_buf(&ab, phr->login));
+    if (phr->name && *phr->name) {
+      fprintf(fout, ",\n    \"user_name\": \"%s\"", json_armor_buf(&ab, phr->name));
+    }
+    fprintf(fout, ",\n    \"session\": \"%016llx-%016llx\"", phr->session_id, phr->client_key);
+    fprintf(fout, ",\n    \"SID\": \"%016llx\"", phr->session_id);
+    fprintf(fout, ",\n    \"EJSID\": \"%016llx\"", phr->client_key);
+    if (resp.expire > 0) {
+      fprintf(fout, ",\n    \"expire\": %lld", (long long) resp.expire);
+    }
+    fprintf(fout, "\n  }");
+  }
+  fprintf(fout, "\n}\n");
+  html_armor_free(&ab);
+}
+
+static void
+unpriv_contest_info_json(FILE *fout, struct http_request_info *phr)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  int res = 0;
+  unsigned char log_msg[256];
+  const struct contest_desc *cnts = NULL;
+  struct contest_extra *extra = NULL;
+
+  do {
+    if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts){
+      snprintf(log_msg, sizeof(log_msg), "invalid contest_id %d", phr->contest_id);
+      res = -NEW_SRV_ERR_INV_CONTEST_ID;
+      break;
+    }
+    extra = ns_get_contest_extra(cnts);
+    phr->cnts = cnts;
+    phr->extra = extra;
+    if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+      snprintf(log_msg, sizeof(log_msg), "%s://%s is banned for USER for contest %d",
+               ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
+      res = -NEW_SRV_ERR_PERMISSION_DENIED;
+      break;
+    }
+    if (cnts->closed) {
+      snprintf(log_msg, sizeof(log_msg), "contest %d is closed\n", cnts->id);
+      res = -NEW_SRV_ERR_SERVICE_NOT_AVAILABLE;
+      break;
+    }
+    if (!cnts->managed) {
+      snprintf(log_msg, sizeof(log_msg), "contest %d is not managed", cnts->id);
+      res = -NEW_SRV_ERR_SERVICE_NOT_AVAILABLE;
+      break;
+    }
+  } while (0);
+
+  phr->json_reply = 1;
+  fprintf(fout, "{\n");
+  fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
+  fprintf(fout, ",\n  \"server_time\": %lld", (long long) phr->current_time);
+  if (res) {
+    json_error(fout, phr, &ab, res, log_msg);
+  } else {
+    fprintf(fout, ",\n  \"result\": {");
+    fprintf(fout, "\n    \"contest_id\": %d", cnts->id);
+    if (cnts->name) {
+      fprintf(fout, ",\n    \"contest_name\": \"%s\"", json_armor_buf(&ab, cnts->name));
+    }
+    fprintf(fout, "\n  }");
+  }
+  fprintf(fout, "\n}\n");
+  html_armor_free(&ab);
+}
+
 static void
 unprivileged_entry_point(
         FILE *fout,
@@ -12756,6 +13005,12 @@ unprivileged_entry_point(
     phr->extra = ns_get_contest_extra(cnts);
     unpriv_external_action(fout, phr);
     return;
+  }
+  if (phr->action == NEW_SRV_ACTION_LOGIN_JSON) {
+    return unpriv_login_json(fout, phr);
+  }
+  if (phr->action == NEW_SRV_ACTION_CONTEST_INFO_JSON) {
+    return unpriv_contest_info_json(fout, phr);
   }
 
   if ((phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
@@ -14084,6 +14339,14 @@ ns_handle_http_request(
   }
 
   // parse the contest_id
+  if ((r = hr_cgi_param_int_opt(phr, "contest_id", &phr->contest_id, 0)) < 0) {
+    err("cannot parse contest_id");
+    if (phr->log_f) {
+      fprintf(phr->log_f, "cannot parse contest_id");
+    }
+    return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+  }
+  /*
   if ((r = hr_cgi_param(phr, "contest_id", &s)) < 0) {
     err("cannot parse contest_id");
     if (phr->log_f) {
@@ -14100,6 +14363,7 @@ ns_handle_http_request(
       return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
     }
   }
+  */
 
   // parse the session_id
   if (!phr->session_id) {
