@@ -618,8 +618,12 @@ handle_ws_request(
   hr.log_f = open_memstream(&hr.log_t, &hr.log_z);
   hr.out_f = open_memstream(&hr.out_t, &hr.out_z);
   ns_handle_http_request(state, hr.out_f, &hr);
-  close_memstream(hr.log_f); hr.log_f = NULL;
-  close_memstream(hr.out_f); hr.out_f = NULL;
+  if (hr.log_f) {
+    close_memstream(hr.log_f); hr.log_f = NULL;
+  }
+  if (hr.out_f) {
+    close_memstream(hr.out_f); hr.out_f = NULL;
+  }
 
   *pbuf = 0;
   if (hr.ssl_flag) {
