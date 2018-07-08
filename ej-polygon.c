@@ -406,7 +406,7 @@ curl_iface_login_action_func(struct DownloadData *data, struct PolygonState *ps)
         char *p = strchr(data->clean_url, '?');
         if (p) *p = 0;
     }
-    if (!data->clean_url || (!ends_with(data->clean_url, "/problems") && !strstr(data->clean_url, "/problems/")) {
+    if (!data->clean_url || (!ends_with(data->clean_url, "/problems") && !strstr(data->clean_url, "/problems/"))) {
         fprintf(data->log_f, "polygon login action failed: invalid login or password?\n");
         retval = 1;
         goto cleanup;
