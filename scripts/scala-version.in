@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2017 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2017-2018 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
@@ -49,7 +49,7 @@ then
     SCALARUN="${scalacdir1}/scala"
   fi
   "${SCALARUN}" -version >/dev/null 2>/dev/null
-  scalafullpath=`which "${SCALARUN}"` || failure
+  scalafullpath=`which "${SCALARUN}" 2>/dev/null` || failure
   [ "${scalafullpath}" != "" ] || failure
   scalafulldir=`dirname "${scalafullpath}"` || failure
   [ "${scalafulldir}" != "" -a "${scalafulldir}" != "." ] || failure
