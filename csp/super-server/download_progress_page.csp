@@ -85,8 +85,6 @@ restart:; // FIXME
 %>
 <h2>Download complete with code <s:v value="exit_code" /></h2>
 
-    cl = " class=\"b1\"";
-
 <table class="b1">
   <tr>
     <th class="b1">Key</th>
