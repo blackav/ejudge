@@ -12958,6 +12958,10 @@ unpriv_contest_info_json(FILE *fout, struct http_request_info *phr)
   if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST && ns_symbolic_action_table[phr->action]) {
     fprintf(fout, ",\n  \"action\": \"%s\"", ns_symbolic_action_table[phr->action]);
   }
+  if (phr->client_state->ops->get_reply_id) {
+    int reply_id = phr->client_state->ops->get_reply_id(phr->client_state);
+    fprintf(fout, ",\n  \"reply_id\": %d", reply_id);
+  }
   if (res) {
     json_error(fout, phr, &ab, res, log_msg);
   } else {

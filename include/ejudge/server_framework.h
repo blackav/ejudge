@@ -69,6 +69,8 @@ struct client_state_operations
         struct client_state *p,
         int cnts_id,
         void (*destroy_callback)(struct client_state*));
+
+  int (*get_reply_id)(struct client_state *);
 };
 
 struct client_state
@@ -132,6 +134,8 @@ struct ws_client_state
 
   int write_reserved;
   int write_size;
+
+  int reply_id;
 
   unsigned char ssl_flag;
   unsigned char state;

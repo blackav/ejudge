@@ -160,6 +160,8 @@ static const unsigned char *
 ws_client_get_host(const struct client_state *p);
 static const unsigned char *
 ws_client_get_remote_addr(const struct client_state *p);
+static int
+ws_client_get_reply_id(struct client_state *p);
 
 static const struct client_state_operations ws_client_state_operations =
 {
@@ -170,6 +172,7 @@ static const struct client_state_operations ws_client_state_operations =
   ws_client_get_host, // get_host
   ws_client_get_remote_addr, // get_remote_addr
   NULL, // set_destroy_callback
+  ws_client_get_reply_id, // get_reply_id
 };
 
 static struct ws_client_state *
@@ -1862,4 +1865,11 @@ ws_client_get_remote_addr(const struct client_state *p)
 {
   const struct ws_client_state *pp = (const struct ws_client_state *) p;
   return pp->remote_addr;
+}
+
+static int
+ws_client_get_reply_id(struct client_state *p)
+{
+  struct ws_client_state *pp = (struct ws_client_state *) p;
+  return ++pp->reply_id;
 }
