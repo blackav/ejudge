@@ -66,6 +66,7 @@ struct http_request_info
   int action;
   unsigned char role_name[32];
   int anonymous_mode; // not authentificated
+  int request_id; // request serial number from the client (for websockets)
 
   int priv_level;
   int user_id;

@@ -12952,6 +12952,12 @@ unpriv_contest_info_json(FILE *fout, struct http_request_info *phr)
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
   fprintf(fout, ",\n  \"server_time\": %lld", (long long) phr->current_time);
+  if (phr->request_id > 0) {
+    fprintf(fout, ",\n  \"request_id\": %d", phr->request_id);
+  }
+  if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST && ns_symbolic_action_table[phr->action]) {
+    fprintf(fout, ",\n  \"action\": \"%s\"", ns_symbolic_action_table[phr->action]);
+  }
   if (res) {
     json_error(fout, phr, &ab, res, log_msg);
   } else {
@@ -14364,6 +14370,15 @@ ns_handle_http_request(
     }
   }
   */
+
+  // parse request_id
+  if ((r = hr_cgi_param_int_opt(phr, "request_id", &phr->request_id, 0)) < 0) {
+    err("cannot parse request_id");
+    if (phr->log_f) {
+      fprintf(phr->log_f, "cannot parse request_id");
+    }
+    return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+  }
 
   // parse the session_id
   if (!phr->session_id) {
