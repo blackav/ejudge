@@ -55,6 +55,23 @@ struct ws_frame
 
 struct client_state;
 
+struct client_auth
+{
+  unsigned char *login;
+  unsigned char *name;
+  ej_cookie_t session_id;
+  ej_cookie_t client_key;
+  time_t create_time;
+  time_t expire_time;
+  int contest_id;
+  int locale_id;
+  int role;
+  int priv_level;
+  int user_id;
+  int reg_status;
+  int reg_flags;
+};
+
 struct client_state_operations
 {
   void (*destroy)(struct client_state *);
@@ -71,6 +88,8 @@ struct client_state_operations
         void (*destroy_callback)(struct client_state*));
 
   int (*get_reply_id)(struct client_state *);
+  const struct client_auth * (*get_client_auth)(const struct client_state *);
+  void (*set_client_auth)(struct client_state *, struct client_auth *);
 };
 
 struct client_state
@@ -123,7 +142,9 @@ struct ws_client_state
   unsigned char *user_agent;
   unsigned char *accept_encoding;
   unsigned char *origin;
-  
+
+  struct client_auth *auth;
+
   long long last_read_time_us;
   long long last_write_time_us;
 
@@ -282,5 +303,8 @@ nsf_ws_append_reply_frame(
         int opcode,
         const unsigned char *data,
         int size);
+
+void
+nsf_client_auth_free(struct client_auth *ca);
 
 #endif /* __SERVER_FRAMEWORK_H__ */

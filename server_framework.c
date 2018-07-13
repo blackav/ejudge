@@ -347,6 +347,16 @@ ws_frame_free(struct ws_frame *wsf)
   }
 }
 
+void
+nsf_client_auth_free(struct client_auth *ca)
+{
+  if (ca) {
+    free(ca->login);
+    free(ca->name);
+    free(ca);
+  }
+}
+
 static void
 ws_client_state_free(struct ws_client_state *p)
 {
@@ -366,6 +376,7 @@ ws_client_state_free(struct ws_client_state *p)
     free(p->read_buf);
     free(p->write_buf);
     if (p->b.fd >= 0) close(p->b.fd);
+    nsf_client_auth_free(p->auth);
     memset(p, -1, sizeof(*p));
     free(p);
   }
