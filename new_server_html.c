@@ -12891,6 +12891,16 @@ unpriv_login_json(FILE *fout, struct http_request_info *phr)
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
   fprintf(fout, ",\n  \"server_time\": %lld", (long long) phr->current_time);
+  if (phr->request_id > 0) {
+    fprintf(fout, ",\n  \"request_id\": %d", phr->request_id);
+  }
+  if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST && ns_symbolic_action_table[phr->action]) {
+    fprintf(fout, ",\n  \"action\": \"%s\"", ns_symbolic_action_table[phr->action]);
+  }
+  if (phr->client_state->ops->get_reply_id) {
+    int reply_id = phr->client_state->ops->get_reply_id(phr->client_state);
+    fprintf(fout, ",\n  \"reply_id\": %d", reply_id);
+  }
   if (res) {
     json_error(fout, phr, &ab, res, resp.log_msg);
   } else {
