@@ -61,12 +61,12 @@ struct client_auth
   unsigned char *name;
   ej_cookie_t session_id;
   ej_cookie_t client_key;
+  unsigned long long caps;
   time_t create_time;
   time_t expire_time;
   int contest_id;
   int locale_id;
   int role;
-  int priv_level;
   int user_id;
   int reg_status;
   int reg_flags;
