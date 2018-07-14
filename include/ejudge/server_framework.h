@@ -66,6 +66,7 @@ struct client_auth
   time_t expire_time;
   int contest_id;
   int locale_id;
+  int priv_level;
   int role;
   int user_id;
   int reg_status;
