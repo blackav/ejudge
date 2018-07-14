@@ -32,7 +32,10 @@ userlist_clnt_login(
         ej_cookie_t *p_cookie,
         ej_cookie_t *p_client_key,
         unsigned char **p_name,
-        time_t *p_expire)
+        time_t *p_expire,
+        int *p_priv_level,
+        int *p_reg_status,
+        int *p_reg_flags)
 {
   struct userlist_pk_do_login *out = 0;
   struct userlist_pk_login_ok *in = 0;
@@ -114,6 +117,9 @@ userlist_clnt_login(
   if (p_client_key) *p_client_key = in->client_key;
   if (p_name) *p_name = xstrdup(name_ptr);
   if (p_expire) *p_expire = in->expire;
+  if (p_priv_level) *p_priv_level = in->priv_level;
+  if (p_reg_status) *p_reg_status = in->reg_status;
+  if (p_reg_flags) *p_reg_flags = in->reg_flags;
 
   r = in->reply_id;
  cleanup:

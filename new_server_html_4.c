@@ -132,7 +132,10 @@ cmd_login(
                             &phr->session_id,
                             &phr->client_key,
                             &phr->name,
-                            NULL /* expire */);
+                            NULL /* expire */,
+                            &phr->priv_level,
+                            &phr->reg_status,
+                            &phr->reg_flags);
   } else {
     r = userlist_clnt_priv_login(ul_conn, ULS_PRIV_CHECK_USER,
                                  &phr->ip, phr->client_key,

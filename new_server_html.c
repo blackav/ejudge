@@ -8324,7 +8324,10 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
                                &phr->user_id,
                                &phr->session_id, &phr->client_key,
                                &phr->name,
-                               NULL /* expire */)) < 0) {
+                               NULL /* expire */,
+                               &phr->priv_level,
+                               &phr->reg_status,
+                               &phr->reg_flags)) < 0) {
     switch (-r) {
     case ULS_ERR_INVALID_LOGIN:
     case ULS_ERR_INVALID_PASSWORD:
@@ -12826,7 +12829,10 @@ do_unpriv_login_json(FILE *fout, struct http_request_info *phr, struct UnprivLog
                               &phr->user_id,
                               &phr->session_id, &phr->client_key,
                               &phr->name,
-                              &resp->expire);
+                              &resp->expire,
+                              &phr->priv_level,
+                              &phr->reg_status,
+                              &phr->reg_flags);
   if (r < 0) {
     r = -r;
     switch (r) {
@@ -12904,6 +12910,23 @@ unpriv_login_json(FILE *fout, struct http_request_info *phr)
   if (res) {
     json_error(fout, phr, &ab, res, resp.log_msg);
   } else {
+    if (phr->client_state->ops->set_client_auth) {
+      struct client_auth *auth = xcalloc(1, sizeof(*auth));
+      auth->user_id = phr->user_id;
+      auth->contest_id = phr->contest_id;
+      auth->locale_id = phr->locale_id;
+      auth->session_id = phr->session_id;
+      auth->role = USER_ROLE_CONTESTANT;
+      auth->client_key = phr->client_key;
+      auth->create_time = phr->current_time;
+      auth->expire_time = resp.expire;
+      auth->login = xstrdup(phr->login);
+      auth->name = xstrdup(phr->name);
+      auth->priv_level = phr->priv_level;
+      auth->reg_status = phr->reg_status;
+      auth->reg_flags = phr->reg_flags;
+      phr->client_state->ops->set_client_auth(phr->client_state, auth);
+    }
     fprintf(fout, ",\n  \"result\": {");
     fprintf(fout, "\n    \"user_id\": %d", phr->user_id);
     fprintf(fout, ",\n    \"user_login\": \"%s\"", json_armor_buf(&ab, phr->login));
@@ -13850,7 +13873,10 @@ batch_login(
                               &phr->user_id,
                               &phr->session_id, &phr->client_key,
                               &phr->name,
-                              NULL /* expire */);
+                              NULL /* expire */,
+                              &phr->priv_level,
+                              &phr->reg_status,
+                              &phr->reg_flags);
   if (r < 0) {
     err("batch_login: login failed: %d", r);
     goto database_error;

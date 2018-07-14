@@ -331,7 +331,10 @@ cmd_login(
                                &phr->session_id,
                                &phr->client_key,
                                &phr->name,
-                               NULL /* expire */)) < 0) {
+                               NULL /* expire */,
+                               &phr->priv_level,
+                               &phr->reg_status,
+                               &phr->reg_flags)) < 0) {
     switch (-r) {
     case ULS_ERR_INVALID_LOGIN:
     case ULS_ERR_INVALID_PASSWORD:
@@ -2939,7 +2942,10 @@ do_reg_login_json(FILE *fout, struct http_request_info *phr, struct RegLoginJson
                               &phr->session_id,
                               &phr->client_key,
                               &phr->name,
-                              &resp->expire);
+                              &resp->expire,
+                              &phr->priv_level,
+                              &phr->reg_status,
+                              &phr->reg_flags);
   if (r < 0) {
     r = -r;
     switch (r) {

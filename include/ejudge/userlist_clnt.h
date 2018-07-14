@@ -81,7 +81,10 @@ userlist_clnt_login(
         ej_cookie_t *p_cookie,
         ej_cookie_t *p_client_key,
         unsigned char **p_name,
-        time_t *p_expire);
+        time_t *p_expire,
+        int *p_priv_level,
+        int *p_reg_status,
+        int *p_reg_flags);
 
 int
 userlist_clnt_lookup_user(struct userlist_clnt *clnt,
