@@ -1227,6 +1227,7 @@ process_problem_row(
         fprintf(log_f, "expected column 3 (problemName), but got nothing in row %s\n", text);
         goto cleanup;
     }
+    /*
     if (extract_td_content(s, buf, &s) < 0) {
         fprintf(log_f, "failed to extract the content of column 3 (problemName): %.60s...\n", s);
         goto cleanup;
@@ -1235,6 +1236,7 @@ process_problem_row(
         fprintf(log_f, "problemName mismatch: <tr>: %s, <td>: %s\n", pi->problem_name, buf);
         goto cleanup;
     }
+    */
     if (!(s = strstr(s, "<td"))) {
         fprintf(log_f, "expected column 4 (author), but got nothing in row %s\n", text);
         goto cleanup;
