@@ -122,6 +122,9 @@ static const struct client_state_operations http_client_state_operations =
   NULL, // get_host
   NULL, // get_remote_addr
   nsf_set_destroy_callback, // set_destroy_callback
+  NULL, // get_reply_id
+  NULL, // get_client_auth
+  NULL, // set_client_auth
 };
 
 static struct ht_client_state *
@@ -162,6 +165,10 @@ static const unsigned char *
 ws_client_get_remote_addr(const struct client_state *p);
 static int
 ws_client_get_reply_id(struct client_state *p);
+static const struct client_auth *
+ws_client_get_client_auth(const struct client_state *p);
+static void
+ws_client_set_client_auth(struct client_state *, struct client_auth *);
 
 static const struct client_state_operations ws_client_state_operations =
 {
@@ -173,6 +180,8 @@ static const struct client_state_operations ws_client_state_operations =
   ws_client_get_remote_addr, // get_remote_addr
   NULL, // set_destroy_callback
   ws_client_get_reply_id, // get_reply_id
+  ws_client_get_client_auth, // get_client_auth
+  ws_client_set_client_auth, // set_client_auth
 };
 
 static struct ws_client_state *
@@ -1883,4 +1892,21 @@ ws_client_get_reply_id(struct client_state *p)
 {
   struct ws_client_state *pp = (struct ws_client_state *) p;
   return ++pp->reply_id;
+}
+
+static const struct client_auth *
+ws_client_get_client_auth(const struct client_state *p)
+{
+  const struct ws_client_state *pp = (const struct ws_client_state *) p;
+  return pp->auth;
+}
+
+static void
+ws_client_set_client_auth(struct client_state *p, struct client_auth *auth)
+{
+  struct ws_client_state *pp = (struct ws_client_state *) p;
+  if (pp->auth) {
+    nsf_client_auth_free(pp->auth);
+  }
+  pp->auth = auth;
 }
