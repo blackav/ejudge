@@ -615,7 +615,7 @@ handle_ws_request(
   hr.config = ejudge_config;
   hr.json = root;
 
-  hr.log_f = open_memstream(&hr.log_t, &hr.log_z);
+  //hr.log_f = open_memstream(&hr.log_t, &hr.log_z);
   hr.out_f = open_memstream(&hr.out_t, &hr.out_z);
   ns_handle_http_request(state, hr.out_f, &hr);
   if (hr.log_f) {

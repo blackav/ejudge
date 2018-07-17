@@ -1157,7 +1157,7 @@ X-Forwarded-Server: localhost.localdomain
                   int new_reserved = p->read_reserved;
                   if (!new_reserved) new_reserved = 64;
                   while (payload_size >= new_reserved) new_reserved *= 2;
-                  unsigned char *new_ptr = realloc(p->read_buf, payload_size);
+                  unsigned char *new_ptr = realloc(p->read_buf, new_reserved);
                   if (!new_ptr) {
                     nsf_ws_append_close_request(p, WS_STATUS_MESSAGE_TOO_BIG);
                     return;
