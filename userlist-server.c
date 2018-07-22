@@ -3451,6 +3451,7 @@ cmd_team_check_user(
   out->priv_level = PRIV_LEVEL_USER;
   out->reg_status = c->status;
   out->reg_flags = c->flags;
+  out->expire = cookie->expire;
   if (cnts->disable_team_password || !ui || (c->flags & USERLIST_UC_PRIVILEGED)) {
     out->passwd_method = u->passwd_method;
   } else {
