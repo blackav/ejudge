@@ -267,6 +267,7 @@ struct userlist_pk_cookie_login
   int priv_level;
   int recovery;
   int team_login;               /* used in case when team_passwd != reg_passwd*/
+  int is_ws;                    /* for WebSocket use */
 };
 
 struct userlist_pk_do_logout
