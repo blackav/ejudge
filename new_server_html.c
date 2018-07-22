@@ -11584,9 +11584,19 @@ unpriv_contest_status_json(
 
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\" : %s", ok?"true":"false");
+  fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
+  if (phr->request_id > 0) {
+    fprintf(fout, ",\n  \"request_id\": %d", phr->request_id);
+  }
+  if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST && ns_symbolic_action_table[phr->action]) {
+    fprintf(fout, ",\n  \"action\": \"%s\"", ns_symbolic_action_table[phr->action]);
+  }
+  if (phr->client_state->ops->get_reply_id) {
+    int reply_id = phr->client_state->ops->get_reply_id(phr->client_state);
+    fprintf(fout, ",\n  \"reply_id\": %d", reply_id);
+  }
   fprintf(fout, ",\n  \"result\": {");
-  fprintf(fout, "\n    \"server_time\": %lld", (long long) cs->current_time);
-  fprintf(fout, ",\n    \"contest\": {");
+  fprintf(fout, "\n    \"contest\": {");
   fprintf(fout, "\n      \"id\": %d", cnts->id);
   fprintf(fout, ",\n      \"name\": \"%s\"", json_armor_buf(&ab, cnts->name));
   fprintf(fout, ",\n      \"score_system\": %d", global->score_system);
@@ -12936,6 +12946,7 @@ unpriv_login_json(FILE *fout, struct http_request_info *phr)
     fprintf(fout, ",\n    \"session\": \"%016llx-%016llx\"", phr->session_id, phr->client_key);
     fprintf(fout, ",\n    \"SID\": \"%016llx\"", phr->session_id);
     fprintf(fout, ",\n    \"EJSID\": \"%016llx\"", phr->client_key);
+    fprintf(fout, ",\n    \"contest_id\": %d", phr->contest_id);
     if (resp.expire > 0) {
       fprintf(fout, ",\n    \"expire\": %lld", (long long) resp.expire);
     }
