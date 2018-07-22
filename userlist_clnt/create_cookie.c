@@ -42,6 +42,7 @@ userlist_clnt_create_cookie(
     out->priv_level = in_c->priv_level;   // ignored at the server side
     out->recovery = in_c->recovery;
     out->team_login = in_c->team_login;
+    out->is_ws = in_c->is_ws;
 
     int r;
     if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) {
@@ -93,29 +94,11 @@ userlist_clnt_create_cookie(
     out_c->role = login_in->role;
     out_c->team_login = login_in->team_login;
     out_c->expire = login_in->expire;
+    out_c->is_ws = login_in->is_ws;
 
     r = login_in->reply_id;
     free(login_in);
     return r;
-    /*
-struct userlist_pk_login_ok
-{
-  int                reg_status;
-  int                reg_flags;
-  int                passwd_method;
-  unsigned char      login_len;
-  unsigned char      name_len;
-  char               data[2];
-};
-struct userlist_cookie
-{
-  struct xml_tree b;
-
-  ej_ip_t ip;
-  int ssl;
-  int recovery;
-};
-     */
 }
 
 /*

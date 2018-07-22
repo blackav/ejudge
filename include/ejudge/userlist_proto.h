@@ -475,6 +475,7 @@ struct userlist_pk_login_ok
   int                team_login;
   int                reg_status;
   int                reg_flags;
+  int                is_ws;
   int                passwd_method;
   ej_time64_t        expire;        // cookie expiration
   unsigned char      login_len;
