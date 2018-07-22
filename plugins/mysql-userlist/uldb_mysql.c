@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -539,7 +539,7 @@ check_func(void *data)
     err("invalid 'version' key value");
     return -1;
   }
-  // current version is 7, so cannot handle future version
+  // current version is 8, so cannot handle future version
   if (version == 1) {
     if (state->mi->simple_fquery(state->md, "CREATE TABLE %sgroups(group_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, group_name VARCHAR(128) NOT NULL UNIQUE KEY, description VARCHAR(512) DEFAULT NULL, created_by INT NOT NULL, create_time DATETIME NOT NULL, last_change_time DATETIME DEFAULT NULL, FOREIGN KEY (created_by) REFERENCES %slogins(user_id));", state->md->table_prefix, state->md->table_prefix) < 0)
       return -1;
@@ -591,7 +591,14 @@ check_func(void *data)
       return -1;
     version = 7;
   }
-  if (version != 7) {
+  if (version == 7) {
+    if (state->mi->simple_fquery(state->md, "ALTER TABLE %scookies ADD is_ws TINYINT NOT NULL DEFAULT 0 AFTER expire ;", state->md->table_prefix) < 0)
+      return -1;
+    if (state->mi->simple_fquery(state->md, "UPDATE %sconfig SET config_val = '8' WHERE config_key = 'version' ;", state->md->table_prefix) < 0)
+      return -1;
+    version = 8;
+  }
+  if (version != 8) {
     err("cannot handle database version %d", version);
     return -1;
   }

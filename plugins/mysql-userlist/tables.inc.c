@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,7 +15,7 @@
  */
 
 // the number of columns in `cookies' table
-enum { COOKIE_WIDTH = 12 };
+enum { COOKIE_WIDTH = 13 };
 
 #define COOKIE_OFFSET(f) XOFFSET(struct userlist_cookie, f)
 static struct common_mysql_parse_spec cookie_spec[COOKIE_WIDTH] =
@@ -44,6 +44,8 @@ static struct common_mysql_parse_spec cookie_spec[COOKIE_WIDTH] =
   { 0, 'b', "ssl_flag", COOKIE_OFFSET(ssl), 0 },
   //[11]      expire DATETIME NOT NULL)
   { 0, 't', "expire", COOKIE_OFFSET(expire), 0 },
+  //[12]      is_ws TINYINT NOT NULL DEFAULT 0,
+  { 0, 'b', "is_ws", COOKIE_OFFSET(is_ws), 0 },
 };
 
 // the number of columns in `cntsregs' table

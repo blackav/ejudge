@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -176,6 +176,7 @@ static char const * const attr_map[] =
   "user_id",
   "client_key",
   "total",
+  "is_ws",
 
   0
 };
@@ -549,6 +550,9 @@ parse_cookies(
         break;
       case USERLIST_A_TEAM_LOGIN:
         if (xml_attr_bool(a, &c->team_login) < 0) return -1;
+        break;
+      case USERLIST_A_IS_WS:
+          if (xml_attr_bool(a, &c->is_ws) < 0) return -1;
         break;
       case USERLIST_A_EXPIRE:
         if (xml_parse_date(NULL, path, a->line, a->column, a->text, &c->expire) < 0)
@@ -1779,6 +1783,9 @@ unparse_cookies(const struct xml_tree *p, FILE *f)
     if (c->team_login > 0) {
       fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_TEAM_LOGIN],
               xml_unparse_bool(c->team_login));
+    }
+    if (c->is_ws > 0) {
+      fprintf(f, " %s=\"%s\"", attr_map[USERLIST_A_IS_WS], xml_unparse_bool(c->is_ws));
     }
     if (c->locale_id >= 0) {
       fprintf(f, " %s=\"%d\"", attr_map[USERLIST_A_LOCALE_ID], c->locale_id);
