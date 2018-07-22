@@ -91,6 +91,12 @@ struct client_state_operations
   int (*get_reply_id)(struct client_state *);
   const struct client_auth * (*get_client_auth)(const struct client_state *);
   void (*set_client_auth)(struct client_state *, struct client_auth *);
+
+  void (*get_session_id)(
+        const struct client_state *,
+        unsigned char *p_is_new,
+        unsigned long long *p_sid_1,
+        unsigned long long *p_sid_2);
 };
 
 struct client_state
@@ -149,6 +155,9 @@ struct ws_client_state
   long long last_read_time_us;
   long long last_write_time_us;
 
+  unsigned long long ws_sid_1;
+  unsigned long long ws_sid_2;
+
   int remote_port;
   int read_reserved;
   int read_expected;
@@ -164,6 +173,7 @@ struct ws_client_state
   unsigned char in_close_state; // 0 - input active, 1 - close received, 2 - EOF event read
   unsigned char out_close_state; // 0 - output active, 1 - close in the output queue, 2 - close on the wire
   unsigned char hdr_flag;
+  unsigned char ws_is_new; // 1 - if newly generated session Id
 
   unsigned char hdr_expected;
   unsigned char hdr_size;
@@ -213,6 +223,14 @@ struct server_framework_params
   void (*ws_cleanup)(
         struct server_framework_state *,
         struct ws_client_state *);
+
+  // check the session id from the client on websocket connection upgrade
+  // returns >= 0 if ok, < 0 if not ok
+  int (*ws_check_session)(
+        struct server_framework_state *,
+        struct ws_client_state *,
+        unsigned long long sid_1,
+        unsigned long long sid_2);
 };
 
 struct server_framework_state *nsf_init(struct server_framework_params *params, void *data, time_t server_start_time);

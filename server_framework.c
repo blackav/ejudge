@@ -24,6 +24,7 @@
 #include "ejudge/sha.h"
 #include "ejudge/base64.h"
 #include "ejudge/websocket.h"
+#include "ejudge/random.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -169,6 +170,12 @@ static const struct client_auth *
 ws_client_get_client_auth(const struct client_state *p);
 static void
 ws_client_set_client_auth(struct client_state *, struct client_auth *);
+static void
+ws_client_get_session_id(
+        const struct client_state *,
+        unsigned char *p_is_new,
+        unsigned long long *p_sid_1,
+        unsigned long long *p_sid_2);
 
 static const struct client_state_operations ws_client_state_operations =
 {
@@ -182,6 +189,7 @@ static const struct client_state_operations ws_client_state_operations =
   ws_client_get_reply_id, // get_reply_id
   ws_client_get_client_auth, // get_client_auth
   ws_client_set_client_auth, // set_client_auth
+  ws_client_get_session_id, // get_session_id
 };
 
 static struct ws_client_state *
@@ -796,7 +804,10 @@ append_new_ws_frame(struct ws_client_state *p)
 }
 
 static void
-read_ws_connection(struct ws_client_state *p, long long current_time_us)
+read_ws_connection(
+        struct server_framework_state *state,
+        struct ws_client_state *p,
+        long long current_time_us)
 {
   unsigned char buf[4096];
 
@@ -881,6 +892,7 @@ read_ws_connection(struct ws_client_state *p, long long current_time_us)
     const unsigned char *upgrade = NULL;
     const unsigned char *x_forwarded_for = NULL;
     const unsigned char *x_forwarded_host = NULL;
+    int is_session_defined = 0;
 
     /*
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,* / *;q=0.8
@@ -960,6 +972,38 @@ X-Forwarded-Server: localhost.localdomain
             x_forwarded_for = par_value;
           } else if (!strcasecmp(par_name, "x-forwarded-host")) {
             x_forwarded_host = par_value;
+          } else if (!strcasecmp(par_name, "cookie")) {
+            const unsigned char *ckp = strstr(par_value, "EJWSSESSION=");
+            //fprintf(stderr, ">>>%s\n", ckp);
+            if (ckp) {
+              ckp += 12;
+              const unsigned char *ckq = ckp;
+              // invalid chars: CTL, whitespace, [",;\]
+              while (*ckq > ' ' && *ckq < 127 && *ckq != '\"' && *ckq != ',' && *ckq != ';' && *ckq != '\\') {
+                ++ckq;
+              }
+              if (ckq - ckp == 32) {
+                unsigned char buf1[17];
+                unsigned char buf2[17];
+                memcpy(buf1, ckp, 16); buf1[16] = 0;
+                memcpy(buf2, ckp + 16, 16); buf2[16] = 0;
+                unsigned long long val1 = 0, val2 = 0;
+                errno = 0;
+                char *eptr;
+                val1 = strtoull(buf1, &eptr, 16);
+                if (!errno && !*eptr) {
+                  val2 = strtoull(buf2, &eptr, 16);
+                  if (!errno && !*eptr) {
+                    if (state->params->ws_check_session
+                        && state->params->ws_check_session(state, p, val1, val2) >= 0) {
+                      is_session_defined = 1;
+                      p->ws_sid_1 = val1;
+                      p->ws_sid_2 = val2;
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1028,6 +1072,15 @@ X-Forwarded-Server: localhost.localdomain
       return;
     }
 
+    if (!is_session_defined) {
+      random_init();
+      p->ws_is_new = 1;
+      p->ws_sid_1 = random_u64();
+      p->ws_sid_2 = random_u64();
+    }
+
+    //fprintf(stderr, "cookie: %016llx%016llx\n", p->ws_sid_1, p->ws_sid_2);
+    
     static const unsigned char ws_handshake_uuid[] = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
     char *ws_concat_keys = NULL;
     int ws_concat_len = asprintf((void *) &ws_concat_keys, "%s%s", sec_websocket_key, ws_handshake_uuid);
@@ -1043,8 +1096,9 @@ X-Forwarded-Server: localhost.localdomain
                                 "Upgrade: websocket\r\n"
                                 "Connection: Upgrade\r\n"
                                 "Sec-WebSocket-Accept: %s\r\n"
+                                "Set-Cookie: EJWSSESSION=%016llx%016llx; HttpOnly; Path=/\r\n"
                                 "\r\n",
-                                shabuf);
+                                shabuf, p->ws_sid_1, p->ws_sid_2);
     nsf_ws_append_reply_raw(p, ws_reply, ws_reply_len);
     p->state = WS_STATE_INITIAL_REPLY;
 
@@ -1540,7 +1594,7 @@ nsf_main_loop(struct server_framework_state *state)
 
     for (ws_clnt = state->ws_first; ws_clnt; ws_clnt = (struct ws_client_state *) ws_clnt->b.next) {
       if (FD_ISSET(ws_clnt->b.fd, &rset)) {
-        read_ws_connection(ws_clnt, current_time_us);
+        read_ws_connection(state, ws_clnt, current_time_us);
       }
       if (FD_ISSET(ws_clnt->b.fd, &wset)) {
         write_ws_connection(ws_clnt, current_time_us);
@@ -1909,4 +1963,17 @@ ws_client_set_client_auth(struct client_state *p, struct client_auth *auth)
     nsf_client_auth_free(pp->auth);
   }
   pp->auth = auth;
+}
+
+static void
+ws_client_get_session_id(
+        const struct client_state *p,
+        unsigned char *p_is_new,
+        unsigned long long *p_sid_1,
+        unsigned long long *p_sid_2)
+{
+  struct ws_client_state *pp = (struct ws_client_state *) p;
+  *p_is_new = pp->ws_is_new;
+  *p_sid_1 = pp->ws_sid_1;
+  *p_sid_2 = pp->ws_sid_2;
 }
