@@ -13028,6 +13028,52 @@ ns_ws_check_session(
         unsigned long long sid_1,
         unsigned long long sid_2)
 {
+  if (ns_open_ul_connection(state) < 0) {
+    return -1;
+  }
+
+  int s_user_id = 0;
+  int s_contest_id = 0;
+  int s_locale_id = 0;
+  int s_priv_level = 0;
+  int s_role = 0;
+  int s_team_login = 0;
+  int s_reg_status = 0;
+  int s_reg_flags = 0;
+  int s_passwd_method = 0;
+  int s_is_ws = 0;
+  unsigned char *s_login = NULL;
+  unsigned char *s_name = NULL;
+
+  // FIXME: also need expire_time
+  int r = userlist_clnt_get_cookie(
+    ul_conn,
+    ULS_FETCH_COOKIE,
+    NULL, // FIXME: here must be IP
+    p->ssl_flag,
+    sid_1,
+    sid_2,
+    &s_user_id,
+    &s_contest_id,
+    &s_locale_id,
+    &s_priv_level,
+    &s_role,
+    &s_team_login,
+    &s_reg_status,
+    &s_reg_flags,
+    &s_passwd_method,
+    &s_is_ws,
+    &s_login,
+    &s_name);
+  if (r < 0) {
+    xfree(s_login);
+    xfree(s_name);
+    return r;
+  }
+
+  /*
+FIXME: complete
+   */
   return -1;
 }
 
