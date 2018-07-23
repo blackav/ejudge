@@ -2819,6 +2819,7 @@ reg_get_avatar(FILE *fout, struct http_request_info *phr)
                                    &cookie_locale_id, 0, &phr->role, &is_team,
                                    &phr->reg_status, &phr->reg_flags, &phr->passwd_method,
                                    NULL /* p_is_ws */,
+                                   NULL /* p_expire */,
                                    &phr->login, &phr->name) >= 0) {
         // this is an authentificated user
         cur_user_id = phr->user_id;
@@ -3086,6 +3087,7 @@ do_reg_user_contests_json(FILE *fout, struct http_request_info *phr, struct RegU
                                    NULL /* p_reg_flags */,
                                    NULL /* p_passwd_method */,
                                    NULL /* p_is_ws */,
+                                   NULL /* p_expire */,
                                    &phr->login,
                                    &phr->name);
   if (r < 0) {
@@ -3267,6 +3269,7 @@ do_reg_enter_contest_json(FILE *fout, struct http_request_info *phr, struct RegE
                                    NULL /* p_reg_flags */,
                                    NULL /* p_passwd_method */,
                                    NULL /* p_is_ws */,
+                                   NULL /* p_expire */,
                                    &phr->login,
                                    &phr->name);
   if (r < 0) {
@@ -3508,6 +3511,7 @@ do_reg_ping_json(FILE *fout, struct http_request_info *phr, struct RegPingJson *
                                    NULL /* p_reg_flags */,
                                    NULL /* p_passwd_method */,
                                    NULL /* p_is_ws */,
+                                   NULL /* p_expire */,
                                    &phr->login,
                                    &phr->name);
   if (r < 0) {
@@ -3612,6 +3616,7 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
                                     &cookie_locale_id, 0, &phr->role, &is_team,
                                     &phr->reg_status, &phr->reg_flags, &phr->passwd_method,
                                     NULL /* p_is_ws */,
+                                    NULL /* p_expire */,
                                     &phr->login, &phr->name)) < 0) {
     if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;
     if (phr->locale_id < 0) phr->locale_id = 0;

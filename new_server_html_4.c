@@ -2083,6 +2083,7 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr)
                                     &phr->locale_id, 0, &phr->role, 0, 0, 0,
                                     NULL /* p_passwd_method */,
                                     NULL /* p_is_ws */,
+                                    NULL /* p_expire */,
                                     &phr->login, &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_NO_COOKIE:

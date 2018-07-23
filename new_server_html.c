@@ -7942,6 +7942,7 @@ privileged_entry_point(
                                     &phr->locale_id, 0, &phr->role, 0, 0, 0,
                                     NULL /* p_passwd_method */,
                                     NULL /* p_is_ws */,
+                                    NULL /* p_expire */,
                                     &phr->login, &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_NO_COOKIE:
@@ -13042,10 +13043,10 @@ ns_ws_check_session(
   int s_reg_flags = 0;
   int s_passwd_method = 0;
   int s_is_ws = 0;
+  time_t s_expire = 0;
   unsigned char *s_login = NULL;
   unsigned char *s_name = NULL;
 
-  // FIXME: also need expire_time
   int r = userlist_clnt_get_cookie(
     ul_conn,
     ULS_FETCH_COOKIE,
@@ -13063,6 +13064,7 @@ ns_ws_check_session(
     &s_reg_flags,
     &s_passwd_method,
     &s_is_ws,
+    &s_expire,
     &s_login,
     &s_name);
   if (r < 0) {
@@ -13153,6 +13155,7 @@ unprivileged_entry_point(
                                     &cookie_locale_id, 0, &phr->role, 0, 0, 0,
                                     &phr->passwd_method,
                                     NULL /* p_is_ws */,
+                                    NULL /* p_expire */,
                                     &phr->login, &phr->name)) < 0) {
     if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;
     if (phr->locale_id < 0 && cnts && cnts->default_locale_num >= 0) {
