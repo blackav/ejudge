@@ -7941,6 +7941,7 @@ privileged_entry_point(
                                     &phr->user_id, &phr->contest_id,
                                     &phr->locale_id, 0, &phr->role, 0, 0, 0,
                                     NULL /* p_passwd_method */,
+                                    NULL /* p_is_ws */,
                                     &phr->login, &phr->name)) < 0) {
     switch (-r) {
     case ULS_ERR_NO_COOKIE:
@@ -13095,6 +13096,7 @@ unprivileged_entry_point(
                                     &phr->user_id, &phr->contest_id,
                                     &cookie_locale_id, 0, &phr->role, 0, 0, 0,
                                     &phr->passwd_method,
+                                    NULL /* p_is_ws */,
                                     &phr->login, &phr->name)) < 0) {
     if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;
     if (phr->locale_id < 0 && cnts && cnts->default_locale_num >= 0) {

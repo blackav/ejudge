@@ -116,6 +116,7 @@ userlist_clnt_get_cookie(
         int *p_reg_status,
         int *p_reg_flags,
         int *p_passwd_method,
+        int *p_is_ws,
         unsigned char **p_login,
         unsigned char **p_name);
 
