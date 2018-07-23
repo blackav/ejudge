@@ -8250,6 +8250,7 @@ cmd_get_cookie(
   int user_id = 0;
   int need_touch_login_time = 0;
   int passwd_method = 0;
+  int cookie_is_ws = 0;
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("bad packet length: %d", pkt_len);
@@ -8291,6 +8292,7 @@ cmd_get_cookie(
   cookie_priv_level = cookie->priv_level;
   cookie_role = cookie->role;
   cookie_team_login = cookie->team_login;
+  cookie_is_ws = cookie->is_ws;
 
   if (default_get_user_info_3(cookie->user_id, new_contest_id, &u, &ui, &c) < 0
       || !u)
@@ -8372,6 +8374,7 @@ cmd_get_cookie(
   out->priv_level = cookie_priv_level;
   out->role = cookie_role;
   out->team_login = cookie_team_login;
+  out->is_ws = cookie_is_ws;
   out->reg_status = -1;
   out->passwd_method = passwd_method;
   if (c) {
