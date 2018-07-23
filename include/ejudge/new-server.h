@@ -918,4 +918,11 @@ write_json_content(
         const unsigned char *sep,
         const unsigned char *indent);
 
+int
+ns_ws_check_session(
+        struct server_framework_state *state,
+        struct ws_client_state *p,
+        unsigned long long sid_1,
+        unsigned long long sid_2);
+
 #endif /* __NEW_SERVER_H__ */

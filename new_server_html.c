@@ -13021,6 +13021,16 @@ unpriv_contest_info_json(FILE *fout, struct http_request_info *phr)
   html_armor_free(&ab);
 }
 
+int
+ns_ws_check_session(
+        struct server_framework_state *state,
+        struct ws_client_state *p,
+        unsigned long long sid_1,
+        unsigned long long sid_2)
+{
+  return -1;
+}
+
 static void
 unprivileged_entry_point(
         FILE *fout,

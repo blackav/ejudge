@@ -73,6 +73,7 @@ static struct server_framework_params params =
   .loop_start = ns_loop_callback,
   .post_select = ns_post_select_callback,
   .ws_handle_packet = handle_ws_request,
+  .ws_check_session = ns_ws_check_session,
 };
 
 static struct server_framework_state *state = 0;
