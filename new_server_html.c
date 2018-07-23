@@ -13046,11 +13046,17 @@ ns_ws_check_session(
   time_t s_expire = 0;
   unsigned char *s_login = NULL;
   unsigned char *s_name = NULL;
+  ej_ip_t ip = {};
+
+  if (xml_parse_ipv6(NULL, 0, 0, 0, p->remote_addr, &ip) < 0) {
+    err("ns_ws_check_session: cannot parse REMOTE_ADDR");
+    return -1;
+  }
 
   int r = userlist_clnt_get_cookie(
     ul_conn,
     ULS_FETCH_COOKIE,
-    NULL, // FIXME: here must be IP
+    &ip,
     p->ssl_flag,
     sid_1,
     sid_2,
@@ -13073,10 +13079,34 @@ ns_ws_check_session(
     return r;
   }
 
-  /*
-FIXME: complete
-   */
-  return -1;
+  if (!s_is_ws) {
+    xfree(s_login);
+    xfree(s_name);
+    return r;
+  }
+
+  ASSERT(!p->auth);
+
+  struct client_auth *auth = NULL;
+  XCALLOC(auth, 1);
+  p->auth = auth;
+
+  auth->login = s_login; s_login = NULL;
+  auth->name = s_name; s_name = NULL;
+  auth->session_id = sid_1;
+  auth->client_key = sid_2;
+  auth->expire_time = s_expire;
+  auth->contest_id = s_contest_id;
+  auth->locale_id = s_locale_id;
+  auth->priv_level = s_priv_level;
+  auth->locale_id = s_locale_id;
+  auth->priv_level = s_priv_level;
+  auth->role = s_role;
+  auth->user_id = s_user_id;
+  auth->reg_status = s_reg_status;
+  auth->reg_flags = s_reg_flags;
+
+  return 0;
 }
 
 static void
