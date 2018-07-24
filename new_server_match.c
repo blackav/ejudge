@@ -4766,6 +4766,69 @@ int ns_match_action(const unsigned char *str)
                 return 0;
               }
               return 0;
+            } else if (c < 't') {
+              if (c == 's') {
+                c = str[3];
+                if (c == 's') {
+                  c = str[4];
+                  if (c == 'i') {
+                    c = str[5];
+                    if (c == 'o') {
+                      c = str[6];
+                      if (c == 'n') {
+                        c = str[7];
+                        if (c == '-') {
+                          c = str[8];
+                          if (c == 'i') {
+                            c = str[9];
+                            if (c == 'n') {
+                              c = str[10];
+                              if (c == 'f') {
+                                c = str[11];
+                                if (c == 'o') {
+                                  c = str[12];
+                                  if (c == '-') {
+                                    c = str[13];
+                                    if (c == 'j') {
+                                      c = str[14];
+                                      if (c == 's') {
+                                        c = str[15];
+                                        if (c == 'o') {
+                                          c = str[16];
+                                          if (c == 'n') {
+                                            c = str[17];
+                                            if (!c) return NEW_SRV_ACTION_SESSION_INFO_JSON;
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  }
+                  return 0;
+                }
+                return 0;
+              }
+            } else {
             }
             return 0;
           }
