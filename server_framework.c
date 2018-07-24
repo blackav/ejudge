@@ -24,7 +24,6 @@
 #include "ejudge/sha.h"
 #include "ejudge/base64.h"
 #include "ejudge/websocket.h"
-#include "ejudge/random.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -170,12 +169,6 @@ static const struct client_auth *
 ws_client_get_client_auth(const struct client_state *p);
 static void
 ws_client_set_client_auth(struct client_state *, struct client_auth *);
-static void
-ws_client_get_session_id(
-        const struct client_state *,
-        unsigned char *p_is_new,
-        unsigned long long *p_sid_1,
-        unsigned long long *p_sid_2);
 
 static const struct client_state_operations ws_client_state_operations =
 {
@@ -189,7 +182,6 @@ static const struct client_state_operations ws_client_state_operations =
   ws_client_get_reply_id, // get_reply_id
   ws_client_get_client_auth, // get_client_auth
   ws_client_set_client_auth, // set_client_auth
-  ws_client_get_session_id, // get_session_id
 };
 
 static struct ws_client_state *
@@ -892,7 +884,6 @@ read_ws_connection(
     const unsigned char *upgrade = NULL;
     const unsigned char *x_forwarded_for = NULL;
     const unsigned char *x_forwarded_host = NULL;
-    int is_session_defined = 0;
 
     /*
 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,* / *;q=0.8
@@ -996,9 +987,7 @@ X-Forwarded-Server: localhost.localdomain
                   if (!errno && !*eptr) {
                     if (state->params->ws_check_session
                         && state->params->ws_check_session(state, p, val1, val2) >= 0) {
-                      is_session_defined = 1;
-                      p->ws_sid_1 = val1;
-                      p->ws_sid_2 = val2;
+                      // nothing
                     }
                   }
                 }
@@ -1072,11 +1061,12 @@ X-Forwarded-Server: localhost.localdomain
       return;
     }
 
-    if (!is_session_defined) {
-      random_init();
-      p->ws_is_new = 1;
-      p->ws_sid_1 = random_u64();
-      p->ws_sid_2 = random_u64();
+    if (!p->auth) {
+      if (state->params->ws_create_session) {
+        if (state->params->ws_create_session(state, p) >= 0) {
+          // nothing
+        }
+      }
     }
 
     //fprintf(stderr, "cookie: %016llx%016llx\n", p->ws_sid_1, p->ws_sid_2);
@@ -1091,15 +1081,22 @@ X-Forwarded-Server: localhost.localdomain
     shabuf[shabuflen] = 0;
 
     char *ws_reply = NULL;
-    int ws_reply_len = asprintf(&ws_reply,
-                                "HTTP/1.1 101 Switching Protocols\r\n"
-                                "Upgrade: websocket\r\n"
-                                "Connection: Upgrade\r\n"
-                                "Sec-WebSocket-Accept: %s\r\n"
-                                "Set-Cookie: EJWSSESSION=%016llx%016llx; HttpOnly; Path=/\r\n"
-                                "\r\n",
-                                shabuf, p->ws_sid_1, p->ws_sid_2);
-    nsf_ws_append_reply_raw(p, ws_reply, ws_reply_len);
+    size_t ws_reply_z = 0;
+    FILE *ws_reply_f = open_memstream(&ws_reply, &ws_reply_z);
+    fprintf(ws_reply_f, 
+            "HTTP/1.1 101 Switching Protocols\r\n"
+            "Upgrade: websocket\r\n"
+            "Connection: Upgrade\r\n"
+            "Sec-WebSocket-Accept: %s\r\n",
+            shabuf);
+    if (p->auth && (p->auth->session_id || p->auth->client_key)) {
+      fprintf(ws_reply_f,
+              "Set-Cookie: EJWSSESSION=%016llx%016llx; HttpOnly; Path=/\r\n",
+              p->auth->session_id, p->auth->client_key);
+    }
+    fprintf(ws_reply_f, "\r\n");
+    fclose(ws_reply_f); ws_reply_f = NULL;
+    nsf_ws_append_reply_raw(p, ws_reply, ws_reply_z);
     p->state = WS_STATE_INITIAL_REPLY;
 
     free(ws_concat_keys); ws_concat_keys = NULL;
@@ -1963,17 +1960,4 @@ ws_client_set_client_auth(struct client_state *p, struct client_auth *auth)
     nsf_client_auth_free(pp->auth);
   }
   pp->auth = auth;
-}
-
-static void
-ws_client_get_session_id(
-        const struct client_state *p,
-        unsigned char *p_is_new,
-        unsigned long long *p_sid_1,
-        unsigned long long *p_sid_2)
-{
-  struct ws_client_state *pp = (struct ws_client_state *) p;
-  *p_is_new = pp->ws_is_new;
-  *p_sid_1 = pp->ws_sid_1;
-  *p_sid_2 = pp->ws_sid_2;
 }
