@@ -13110,6 +13110,67 @@ ns_ws_check_session(
 }
 
 static void
+unpriv_session_info_json(FILE *fout, struct http_request_info *phr)
+{
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const struct client_auth *auth = NULL;
+  unsigned char log_msg[256];
+  int res = 0;
+
+  if (phr && phr->client_state && phr->client_state->ops && phr->client_state->ops->get_client_auth) {
+    auth = phr->client_state->ops->get_client_auth(phr->client_state);
+  }
+  if (!auth) {
+    snprintf(log_msg, sizeof(log_msg), "connection has no session");
+    res = -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+
+  phr->json_reply = 1;
+  fprintf(fout, "{\n");
+  fprintf(fout, "  \"ok\": %s", (res?"false":"true"));
+  fprintf(fout, ",\n  \"server_time\": %lld", (long long) phr->current_time);
+  if (phr->request_id > 0) {
+    fprintf(fout, ",\n  \"request_id\": %d", phr->request_id);
+  }
+  if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST && ns_symbolic_action_table[phr->action]) {
+    fprintf(fout, ",\n  \"action\": \"%s\"", ns_symbolic_action_table[phr->action]);
+  }
+  if (phr->client_state->ops->get_reply_id) {
+    int reply_id = phr->client_state->ops->get_reply_id(phr->client_state);
+    fprintf(fout, ",\n  \"reply_id\": %d", reply_id);
+  }
+  if (res) {
+    json_error(fout, phr, &ab, res, log_msg);
+  } else {
+    fprintf(fout, ",\n  \"result\": {");
+    const unsigned char *sep = "";
+    if (auth->user_id > 0) {
+      fprintf(fout, "%s\n    \"user_id\": %d", sep, auth->user_id); sep = ",";
+    }
+    if (auth->login && *auth->login) {
+      fprintf(fout, "%s\n    \"user_login\": \"%s\"", sep, json_armor_buf(&ab, auth->login)); sep = ",";
+    }
+    if (auth->name && *auth->name) {
+      fprintf(fout, "%s\n    \"user_name\": \"%s\"", sep, json_armor_buf(&ab, auth->name)); sep = ",";
+    }
+    if (auth->session_id || auth->client_key) {
+      fprintf(fout, "%s\n    \"session\": \"%016llx-%016llx\"", sep, auth->session_id, auth->client_key); sep = ",";
+      fprintf(fout, "%s\n    \"SID\": \"%016llx\"", sep, auth->session_id);
+      fprintf(fout, "%s\n    \"EJSID\": \"%016llx\"", sep, auth->client_key);
+    }
+    if (auth->contest_id > 0) {
+      fprintf(fout, "%s\n    \"contest_id\": %d", sep, auth->contest_id); sep = ",";
+    }
+    if (auth->expire_time > 0) {
+      fprintf(fout, "%s\n    \"expire\": %lld", sep, (long long) auth->expire_time);
+    }
+    fprintf(fout, "\n  }");
+  }
+  fprintf(fout, "\n}\n");
+  html_armor_free(&ab);
+}
+
+static void
 unprivileged_entry_point(
         FILE *fout,
         struct http_request_info *phr)
@@ -13154,6 +13215,9 @@ unprivileged_entry_point(
   }
   if (phr->action == NEW_SRV_ACTION_CONTEST_INFO_JSON) {
     return unpriv_contest_info_json(fout, phr);
+  }
+  if (phr->action == NEW_SRV_ACTION_SESSION_INFO_JSON) {
+    return unpriv_session_info_json(fout, phr);
   }
 
   if ((phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
