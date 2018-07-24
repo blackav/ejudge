@@ -13109,6 +13109,14 @@ ns_ws_check_session(
   return 0;
 }
 
+int
+ns_ws_create_session(
+        struct server_framework_state *state,
+        struct ws_client_state *p)
+{
+  return -1;
+}
+
 static void
 unpriv_session_info_json(FILE *fout, struct http_request_info *phr)
 {

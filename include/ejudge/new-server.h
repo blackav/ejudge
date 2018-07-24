@@ -925,4 +925,9 @@ ns_ws_check_session(
         unsigned long long sid_1,
         unsigned long long sid_2);
 
+int
+ns_ws_create_session(
+        struct server_framework_state *state,
+        struct ws_client_state *p);
+
 #endif /* __NEW_SERVER_H__ */

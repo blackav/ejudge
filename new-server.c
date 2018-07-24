@@ -74,6 +74,7 @@ static struct server_framework_params params =
   .post_select = ns_post_select_callback,
   .ws_handle_packet = handle_ws_request,
   .ws_check_session = ns_ws_check_session,
+  .ws_create_session = ns_ws_create_session,
 };
 
 static struct server_framework_state *state = 0;
