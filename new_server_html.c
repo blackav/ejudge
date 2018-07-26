@@ -13114,7 +13114,16 @@ ns_ws_create_session(
         struct server_framework_state *state,
         struct ws_client_state *p)
 {
-  return -1;
+  // as we are not yet authentificated, we cannot create a regular session :(
+  random_init();
+
+  XCALLOC(p->auth, 1);
+  p->auth->session_id = random_u64();
+  p->auth->client_key = random_u64();
+  p->auth->create_time = time(NULL);
+  p->auth->expire_time = p->auth->create_time + 24 * 60 * 60;
+
+  return 0;
 }
 
 static void
