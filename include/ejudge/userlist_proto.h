@@ -227,7 +227,9 @@ struct userlist_pk_do_login
 {
   short         request_id;
   ej_ip_t       origin_ip;
+  ej_cookie_t   cookie;
   ej_cookie_t   client_key;
+  ej_time64_t   expire;
   int           ssl;
   int           contest_id;
   signed char   locale_id;
