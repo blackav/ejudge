@@ -324,7 +324,10 @@ cmd_login(
     return error_page(fout, phr, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
 
   if ((r = userlist_clnt_login(ul_conn, ULS_CHECK_USER,
-                               &phr->ip, phr->client_key,
+                               &phr->ip,
+                               0, /* cookie */
+                               phr->client_key,
+                               0, /* expire */
                                phr->ssl_flag, phr->contest_id,
                                phr->locale_id, 0, phr->login, password,
                                &phr->user_id,
@@ -2934,7 +2937,9 @@ do_reg_login_json(FILE *fout, struct http_request_info *phr, struct RegLoginJson
 
   int r = userlist_clnt_login(ul_conn, ULS_CHECK_USER_2,
                               &phr->ip,
+                              0, /* cookie */
                               0ULL /* client_key */,
+                              0, /* expire */
                               phr->ssl_flag,
                               0 /* contest_id */,
                               0 /* locale_id */,

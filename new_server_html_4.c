@@ -125,7 +125,10 @@ cmd_login(
 
   if (phr->role == USER_ROLE_CONTESTANT) {
     r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
-                            &phr->ip, phr->client_key,
+                            &phr->ip,
+                            0, /* cookie */
+                            phr->client_key,
+                            0, /* expire */
                             phr->ssl_flag, phr->contest_id,
                             phr->locale_id, 0, login, password,
                             &phr->user_id,

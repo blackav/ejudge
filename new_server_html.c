@@ -8320,7 +8320,10 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
   }
 
   if ((r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
-                               &phr->ip, phr->client_key,
+                               &phr->ip,
+                               0 /* cookie */,
+                               phr->client_key,
+                               0 /* expire */,
                                phr->ssl_flag, phr->contest_id,
                                phr->locale_id, 0, login, password,
                                &phr->user_id,
@@ -12832,7 +12835,9 @@ do_unpriv_login_json(FILE *fout, struct http_request_info *phr, struct UnprivLog
 
   int r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
                               &phr->ip,
+                              0, /* cookie */
                               0, /* client_key */
+                              0, /* expire */
                               phr->ssl_flag,
                               phr->contest_id,
                               phr->locale_id,
@@ -14049,7 +14054,10 @@ batch_login(
 
   int action = NEW_SRV_ACTION_MAIN_PAGE;
   int r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
-                              &phr->ip, phr->client_key,
+                              &phr->ip,
+                              0 /* cookie */,
+                              phr->client_key,
+                              0 /* expire */,
                               phr->ssl_flag, contest_id,
                               locale_id, 0x73629ae8,
                               login_str, "xxx",
