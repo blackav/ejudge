@@ -8325,7 +8325,10 @@ unprivileged_page_login(FILE *fout, struct http_request_info *phr)
                                phr->client_key,
                                0 /* expire */,
                                phr->ssl_flag, phr->contest_id,
-                               phr->locale_id, 0, login, password,
+                               phr->locale_id,
+                               0, /* pwd_special */
+                               0, /* is_ws */
+                               login, password,
                                &phr->user_id,
                                &phr->session_id, &phr->client_key,
                                &phr->name,
@@ -12854,7 +12857,8 @@ do_unpriv_login_json(FILE *fout, struct http_request_info *phr, struct UnprivLog
                               phr->ssl_flag,
                               phr->contest_id,
                               phr->locale_id,
-                              0, /* ??? */
+                              0, /* pwd_special */
+                              0, /* is_ws */
                               login, password,
                               &phr->user_id,
                               &phr->session_id, &phr->client_key,
@@ -14078,7 +14082,9 @@ batch_login(
                               phr->client_key,
                               0 /* expire */,
                               phr->ssl_flag, contest_id,
-                              locale_id, 0x73629ae8,
+                              locale_id,
+                              0x73629ae8, /* pwd_special */
+                              0, /* is_ws */
                               login_str, "xxx",
                               &phr->user_id,
                               &phr->session_id, &phr->client_key,

@@ -28,6 +28,7 @@ userlist_clnt_login(
         int contest_id,
         int locale_id,
         int pwd_special,
+        int is_ws,
         unsigned char const *login,
         unsigned char const *passwd,
         int *p_user_id,
@@ -74,6 +75,7 @@ userlist_clnt_login(
   out->contest_id = contest_id;
   out->locale_id = locale_id;
   out->pwd_special = pwd_special;
+  out->is_ws = is_ws;
   out->login_length = login_len;
   out->password_length = passwd_len;
   strcpy(login_ptr, login);

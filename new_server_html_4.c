@@ -130,7 +130,10 @@ cmd_login(
                             phr->client_key,
                             0, /* expire */
                             phr->ssl_flag, phr->contest_id,
-                            phr->locale_id, 0, login, password,
+                            phr->locale_id,
+                            0, /* pwd_special */
+                            0, /* is_ws */
+                            login, password,
                             &phr->user_id,
                             &phr->session_id,
                             &phr->client_key,

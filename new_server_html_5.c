@@ -329,7 +329,10 @@ cmd_login(
                                phr->client_key,
                                0, /* expire */
                                phr->ssl_flag, phr->contest_id,
-                               phr->locale_id, 0, phr->login, password,
+                               phr->locale_id,
+                               0, /* pwd_special */
+                               0, /* is_ws */
+                               phr->login, password,
                                &phr->user_id,
                                &phr->session_id,
                                &phr->client_key,
@@ -2943,7 +2946,8 @@ do_reg_login_json(FILE *fout, struct http_request_info *phr, struct RegLoginJson
                               phr->ssl_flag,
                               0 /* contest_id */,
                               0 /* locale_id */,
-                              0 /* ??? */,
+                              0 /* pwd_special */,
+                              0, /* is_ws */
                               login, password,
                               &phr->user_id,
                               &phr->session_id,
