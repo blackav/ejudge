@@ -12833,11 +12833,24 @@ do_unpriv_login_json(FILE *fout, struct http_request_info *phr, struct UnprivLog
     return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
   }
 
+  ej_cookie_t in_cookie = 0;
+  ej_cookie_t in_client_key = 0;
+  time_t in_expire = 0;
+  const struct client_auth *auth = NULL;
+  if (phr->client_state->ops->get_client_auth) {
+    auth = phr->client_state->ops->get_client_auth(phr->client_state);
+  }
+  if (auth) {
+    in_cookie = auth->session_id;
+    in_client_key = auth->client_key;
+    in_expire = auth->expire_time;
+  }
+
   int r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
                               &phr->ip,
-                              0, /* cookie */
-                              0, /* client_key */
-                              0, /* expire */
+                              in_cookie,
+                              in_client_key,
+                              in_expire,
                               phr->ssl_flag,
                               phr->contest_id,
                               phr->locale_id,
@@ -13053,6 +13066,8 @@ ns_ws_check_session(
   unsigned char *s_name = NULL;
   ej_ip_t ip = {};
 
+  fprintf(stderr, "check session: %016llx%016llx\n", sid_1, sid_2);
+
   if (xml_parse_ipv6(NULL, 0, 0, 0, p->remote_addr, &ip) < 0) {
     err("ns_ws_check_session: cannot parse REMOTE_ADDR");
     return -1;
@@ -13084,11 +13099,13 @@ ns_ws_check_session(
     return r;
   }
 
+  /*
   if (!s_is_ws) {
     xfree(s_login);
     xfree(s_name);
     return r;
   }
+  */
 
   ASSERT(!p->auth);
 
@@ -13127,6 +13144,8 @@ ns_ws_create_session(
   p->auth->client_key = random_u64();
   p->auth->create_time = time(NULL);
   p->auth->expire_time = p->auth->create_time + 24 * 60 * 60;
+
+  fprintf(stderr, "session created: %016llx%016llx\n", p->auth->session_id, p->auth->client_key);
 
   return 0;
 }
