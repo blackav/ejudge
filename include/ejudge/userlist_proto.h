@@ -236,6 +236,7 @@ struct userlist_pk_do_login
   unsigned char priv_level;
   int           role;
   int           pwd_special;
+  int           is_ws;
   unsigned char login_length;
   unsigned char password_length;
   unsigned char data[2];
