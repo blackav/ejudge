@@ -67,7 +67,9 @@ userlist_clnt_login(
   if (origin_ip) {
     out->origin_ip = *origin_ip;
   }
+  out->cookie = cookie;
   out->client_key = client_key;
+  out->expire = expire;
   out->ssl = ssl;
   out->contest_id = contest_id;
   out->locale_id = locale_id;
