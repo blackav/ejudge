@@ -3434,7 +3434,9 @@ cmd_team_check_user(
     data->locale_id = 0;
   }
 
-  if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0, data->client_key, 0,
+  if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl,
+                           data->cookie,
+                           data->client_key, data->expire,
                            orig_contest_id, data->locale_id,
                            PRIV_LEVEL_USER, 0, 0, 1, &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
