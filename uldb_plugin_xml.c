@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -244,6 +244,7 @@ new_cookie_2_func(
         ej_cookie_t,
         ej_cookie_t,
         time_t,
+        int,
         int,
         int,
         int,
@@ -992,6 +993,7 @@ new_cookie_2_func(
         int role,
         int recovery,
         int team_login,
+        int is_ws,
         const struct userlist_cookie **p_cookie)
 {
   struct uldb_xml_state *state = (struct uldb_xml_state*) data;
@@ -1040,6 +1042,7 @@ new_cookie_2_func(
   c->role = role;
   c->recovery = recovery;
   c->team_login = team_login;
+  c->is_ws = is_ws;
   xml_link_node_last(cs, &c->b);
   userlist_cookie_hash_add(ul, c);
 

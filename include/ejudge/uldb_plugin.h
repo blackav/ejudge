@@ -3,7 +3,7 @@
 #ifndef __ULDB_PLUGIN_H__
 #define __ULDB_PLUGIN_H__
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,7 +35,7 @@ struct contest_desc;
 struct userlist_members;
 
 /* version of the plugin interface structure */
-#define ULDB_PLUGIN_IFACE_VERSION 2
+#define ULDB_PLUGIN_IFACE_VERSION 3
 
 struct uldb_plugin_iface
 {
@@ -278,13 +278,14 @@ struct uldb_plugin_iface
         int ssl_flag,
         ej_cookie_t cookie,
         ej_cookie_t client_key,
-        time_t,
+        time_t expire,
         int contest_id,
         int locale_id,
         int priv_level,
         int role,
         int recovery,
         int team_login,
+        int is_ws,
         const struct userlist_cookie **);
   // find a client key, returns any cookie which matches the given client_key
   int (*get_client_key)(void *,

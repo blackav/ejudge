@@ -612,7 +612,7 @@ link_client_state(struct client_state *p)
 #define default_get_user_count(a, b, c, d, e, f, g) dflt_iface->get_user_count(uldb_default->data, a, b, c, d, e, f, g)
 #define default_get_group_iterator_2(a, b, c) dflt_iface->get_group_iterator_2(uldb_default->data, a, b, c)
 #define default_get_group_count(a, b) dflt_iface->get_group_count(uldb_default->data, a, b)
-#define default_new_cookie_2(a, b, c, d, e, f, g, h, i, j, k, l, m) dflt_iface->new_cookie_2(uldb_default->data, a, b, c, d, e, f, g, h, i, j, k, l, m)
+#define default_new_cookie_2(a, b, c, d, e, f, g, h, i, j, k, l, m, n) dflt_iface->new_cookie_2(uldb_default->data, a, b, c, d, e, f, g, h, i, j, k, l, m, n)
 
 static void
 update_all_user_contests(int user_id)
@@ -2823,7 +2823,9 @@ cmd_login(
   if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0,
                            data->client_key,
                            0, orig_contest_id, data->locale_id, PRIV_LEVEL_USER,
-                           0, 0, 0, &cookie) < 0) {
+                           0, 0, 0,
+                           0, /* is_ws */
+                           &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -2965,7 +2967,9 @@ cmd_check_user(
 
   if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0, data->client_key, 0,
                            orig_contest_id, data->locale_id, PRIV_LEVEL_USER, 0,
-                           0, 0, &cookie) < 0) {
+                           0, 0,
+                           0, /* is_ws */
+                           &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -3080,7 +3084,9 @@ cmd_check_user_2(
 
   if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0, data->client_key, 0,
                            0, data->locale_id, PRIV_LEVEL_USER, 0,
-                           0, 0, &cookie) < 0) {
+                           0, 0,
+                           0, /* is_ws */
+                           &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -3249,7 +3255,9 @@ cmd_team_login(
 
   if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0, data->client_key, 0,
                            orig_contest_id, data->locale_id,
-                           PRIV_LEVEL_USER, 0, 0, 1, &cookie) < 0) {
+                           PRIV_LEVEL_USER, 0, 0, 1,
+                           0, /* is_ws */
+                           &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -3438,7 +3446,9 @@ cmd_team_check_user(
                            data->cookie,
                            data->client_key, data->expire,
                            orig_contest_id, data->locale_id,
-                           PRIV_LEVEL_USER, 0, 0, 1, &cookie) < 0) {
+                           PRIV_LEVEL_USER, 0, 0, 1,
+                           0, /* is_ws */
+                           &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
     return;
@@ -3668,7 +3678,9 @@ cmd_priv_login(
   if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0,
                            data->client_key, 0,
                            orig_contest_id, data->locale_id,
-                           priv_level, data->role, 0, 0, &cookie) < 0) {
+                           priv_level, data->role, 0, 0,
+                           0, /* is_ws */
+                           &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -3858,7 +3870,9 @@ cmd_priv_check_user(
 
   if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0, data->client_key, 0,
                            orig_contest_id, data->locale_id,
-                           priv_level, data->role, 0, 0, &cookie) < 0) {
+                           priv_level, data->role, 0, 0,
+                           0, /* is_ws */
+                           &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -4673,7 +4687,9 @@ cmd_priv_cookie_login(
 
   if (default_new_cookie_2(u->id, &data->origin_ip, data->ssl, 0, data->client_key,
                            0, orig_contest_id, data->locale_id,
-                           priv_level, data->role, 0, 0, &new_cookie) < 0) {
+                           priv_level, data->role, 0, 0,
+                           0, /* is_ws */
+                           &new_cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_NO_PERMS);
     return;
@@ -10664,6 +10680,7 @@ cmd_create_cookie(
     0 /* role*/,        // ignore data->role
     0 /* recovery */,   // ignore data->recovery
     data->team_login,
+    0 /* is_ws */,
     &cookie);
   if (r < 0) {
     err("%s -> cookie creation failed", logbuf);

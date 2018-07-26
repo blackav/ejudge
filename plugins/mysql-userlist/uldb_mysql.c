@@ -1344,6 +1344,7 @@ new_cookie_2_func(
         int role,
         int recovery,
         int team_login,
+        int is_ws,
         const struct userlist_cookie **p_cookie)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
@@ -1381,6 +1382,7 @@ new_cookie_2_func(
   newc.role = role;
   newc.recovery = recovery;
   newc.team_login = team_login;
+  newc.is_ws = is_ws;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "INSERT INTO %scookies VALUES ( ", state->md->table_prefix);
