@@ -3447,7 +3447,7 @@ cmd_team_check_user(
                            data->client_key, data->expire,
                            orig_contest_id, data->locale_id,
                            PRIV_LEVEL_USER, 0, 0, 1,
-                           0, /* is_ws */
+                           data->is_ws,
                            &cookie) < 0) {
     err("%s -> cookie creation failed", logbuf);
     send_reply(p, -ULS_ERR_OUT_OF_MEM);
