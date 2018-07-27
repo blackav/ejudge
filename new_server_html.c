@@ -12787,6 +12787,7 @@ do_unpriv_login_json(FILE *fout, struct http_request_info *phr, struct UnprivLog
 {
   const struct contest_desc *cnts = NULL;
   struct contest_extra *extra = NULL;
+  const struct client_auth *auth = NULL;
 
   if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts){
     snprintf(resp->log_msg, sizeof(resp->log_msg), "invalid contest_id %d", phr->contest_id);
@@ -12832,6 +12833,15 @@ do_unpriv_login_json(FILE *fout, struct http_request_info *phr, struct UnprivLog
     snprintf(resp->log_msg, sizeof(resp->log_msg), "password is empty");
     return -NEW_SRV_ERR_PERMISSION_DENIED;
   }
+
+  if (phr->client_state->ops->get_client_auth) {
+    auth = phr->client_state->ops->get_client_auth(phr->client_state);
+  }
+  if (auth && auth->user_id > 0) {
+    snprintf(resp->log_msg, sizeof(resp->log_msg), "already authentificated");
+    return -NEW_SRV_ERR_PERMISSION_DENIED;
+  }
+
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     return -NEW_SRV_ERR_USERLIST_SERVER_DOWN;
   }
@@ -12839,14 +12849,12 @@ do_unpriv_login_json(FILE *fout, struct http_request_info *phr, struct UnprivLog
   ej_cookie_t in_cookie = 0;
   ej_cookie_t in_client_key = 0;
   time_t in_expire = 0;
-  const struct client_auth *auth = NULL;
-  if (phr->client_state->ops->get_client_auth) {
-    auth = phr->client_state->ops->get_client_auth(phr->client_state);
-  }
+  int is_ws = 0;
   if (auth) {
     in_cookie = auth->session_id;
     in_client_key = auth->client_key;
     in_expire = auth->expire_time;
+    is_ws = 1;
   }
 
   int r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
@@ -12858,7 +12866,7 @@ do_unpriv_login_json(FILE *fout, struct http_request_info *phr, struct UnprivLog
                               phr->contest_id,
                               phr->locale_id,
                               0, /* pwd_special */
-                              0, /* is_ws */
+                              is_ws,
                               login, password,
                               &phr->user_id,
                               &phr->session_id, &phr->client_key,
@@ -13103,13 +13111,11 @@ ns_ws_check_session(
     return r;
   }
 
-  /*
   if (!s_is_ws) {
     xfree(s_login);
     xfree(s_name);
     return r;
   }
-  */
 
   ASSERT(!p->auth);
 
