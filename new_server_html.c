@@ -13287,42 +13287,60 @@ unprivileged_entry_point(
     return unprivileged_page_login(fout, phr);
   }
 
-  // validate cookie
-  if (ns_open_ul_connection(phr->fw_state) < 0) {
-    error_page(fout, phr, 0, -NEW_SRV_ERR_USERLIST_SERVER_DOWN);
-    goto cleanup;
+  const struct client_auth *auth = NULL;
+  if (phr->client_state->ops->get_client_auth) {
+    auth = phr->client_state->ops->get_client_auth(phr->client_state);
   }
-  if ((r = userlist_clnt_get_cookie(ul_conn, ULS_TEAM_GET_COOKIE,
-                                    &phr->ip, phr->ssl_flag,
-                                    phr->session_id,
-                                    phr->client_key,
-                                    &phr->user_id, &phr->contest_id,
-                                    &cookie_locale_id, 0, &phr->role, 0, 0, 0,
-                                    &phr->passwd_method,
-                                    NULL /* p_is_ws */,
-                                    NULL /* p_expire */,
-                                    &phr->login, &phr->name)) < 0) {
-    if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;
-    if (phr->locale_id < 0 && cnts && cnts->default_locale_num >= 0) {
-      phr->locale_id = cnts->default_locale_num;
+  if (auth) {
+    if (auth->session_id != phr->session_id || auth->client_key != phr->client_key || auth->user_id <= 0) {
+      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
+      goto cleanup;
     }
-    if (phr->locale_id < 0) phr->locale_id = 0;
-    switch (-r) {
-    case ULS_ERR_NO_COOKIE:
-    case ULS_ERR_CANNOT_PARTICIPATE:
-    case ULS_ERR_NOT_REGISTERED:
-      error_page(fout, phr, 0, -NEW_SRV_ERR_INV_SESSION);
-      goto cleanup;
-    case ULS_ERR_INCOMPLETE_REG:
-      error_page(fout, phr, 0, -NEW_SRV_ERR_REGISTRATION_INCOMPLETE);
-      goto cleanup;
-    case ULS_ERR_DISCONNECT:
+    phr->user_id = auth->user_id;
+    phr->contest_id = auth->contest_id;
+    cookie_locale_id = 0;
+    phr->role = auth->role;
+    //phr->passwd_method = 0;
+    phr->login = xstrdup(auth->login);
+    phr->name = xstrdup(auth->name);
+  } else {
+    // validate cookie
+    if (ns_open_ul_connection(phr->fw_state) < 0) {
       error_page(fout, phr, 0, -NEW_SRV_ERR_USERLIST_SERVER_DOWN);
       goto cleanup;
-    default:
-      fprintf(phr->log_f, "get_cookie failed: %s\n", userlist_strerror(-r));
-      error_page(fout, phr, 0, -NEW_SRV_ERR_INTERNAL);
-      goto cleanup;
+    }
+    if ((r = userlist_clnt_get_cookie(ul_conn, ULS_TEAM_GET_COOKIE,
+                                      &phr->ip, phr->ssl_flag,
+                                      phr->session_id,
+                                      phr->client_key,
+                                      &phr->user_id, &phr->contest_id,
+                                      &cookie_locale_id, 0, &phr->role, 0, 0, 0,
+                                      &phr->passwd_method,
+                                      NULL /* p_is_ws */,
+                                      NULL /* p_expire */,
+                                      &phr->login, &phr->name)) < 0) {
+      if (phr->locale_id < 0 && cookie_locale_id >= 0) phr->locale_id = cookie_locale_id;
+      if (phr->locale_id < 0 && cnts && cnts->default_locale_num >= 0) {
+        phr->locale_id = cnts->default_locale_num;
+      }
+      if (phr->locale_id < 0) phr->locale_id = 0;
+      switch (-r) {
+      case ULS_ERR_NO_COOKIE:
+      case ULS_ERR_CANNOT_PARTICIPATE:
+      case ULS_ERR_NOT_REGISTERED:
+        error_page(fout, phr, 0, -NEW_SRV_ERR_INV_SESSION);
+        goto cleanup;
+      case ULS_ERR_INCOMPLETE_REG:
+        error_page(fout, phr, 0, -NEW_SRV_ERR_REGISTRATION_INCOMPLETE);
+        goto cleanup;
+      case ULS_ERR_DISCONNECT:
+        error_page(fout, phr, 0, -NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+        goto cleanup;
+      default:
+        fprintf(phr->log_f, "get_cookie failed: %s\n", userlist_strerror(-r));
+        error_page(fout, phr, 0, -NEW_SRV_ERR_INTERNAL);
+        goto cleanup;
+      }
     }
   }
 
