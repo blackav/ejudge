@@ -11157,10 +11157,42 @@ unpriv_logout(FILE *fout,
                               phr->session_id,
                               phr->client_key);
   ns_remove_session(phr->session_id);
-  snprintf(urlbuf, sizeof(urlbuf),
-           "%s?contest_id=%d&locale_id=%d",
-           phr->self_url, phr->contest_id, phr->locale_id);
-  ns_refresh_page_2(fout, phr->client_key, urlbuf);
+
+  if (phr->client_state->ops->set_client_auth) {
+    phr->client_state->ops->set_client_auth(phr->client_state, NULL);
+  }
+
+  if (phr->json_reply) {
+    struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+    int ok = 1;
+    time_t current_time = time(NULL);
+
+    fprintf(fout, "{\n");
+    fprintf(fout, "  \"ok\" : %s", ok?"true":"false");
+    fprintf(fout, ",\n  \"server_time\": %lld", (long long) current_time);
+    if (phr->request_id > 0) {
+      fprintf(fout, ",\n  \"request_id\": %d", phr->request_id);
+    }
+    if (phr->action > 0 && phr->action < NEW_SRV_ACTION_LAST && ns_symbolic_action_table[phr->action]) {
+      fprintf(fout, ",\n  \"action\": \"%s\"", ns_symbolic_action_table[phr->action]);
+    }
+    if (phr->client_state->ops->get_reply_id) {
+      int reply_id = phr->client_state->ops->get_reply_id(phr->client_state);
+      fprintf(fout, ",\n  \"reply_id\": %d", reply_id);
+    }
+    fprintf(fout, ",\n  \"result\": {");
+    if (phr->contest_id > 0) {
+      fprintf(fout, "\n    \"contest_id\": %d", phr->contest_id);
+    }
+    fprintf(fout, "\n  }");
+    fprintf(fout, "\n}\n");
+    html_armor_free(&ab);
+  } else {
+    snprintf(urlbuf, sizeof(urlbuf),
+             "%s?contest_id=%d&locale_id=%d",
+             phr->self_url, phr->contest_id, phr->locale_id);
+    ns_refresh_page_2(fout, phr->client_key, urlbuf);
+  }
 }
 
 void
@@ -13078,7 +13110,7 @@ ns_ws_check_session(
   unsigned char *s_name = NULL;
   ej_ip_t ip = {};
 
-  fprintf(stderr, "check session: %016llx%016llx\n", sid_1, sid_2);
+  //fprintf(stderr, "check session: %016llx%016llx\n", sid_1, sid_2);
 
   if (xml_parse_ipv6(NULL, 0, 0, 0, p->remote_addr, &ip) < 0) {
     err("ns_ws_check_session: cannot parse REMOTE_ADDR");
@@ -13155,7 +13187,7 @@ ns_ws_create_session(
   p->auth->create_time = time(NULL);
   p->auth->expire_time = p->auth->create_time + 24 * 60 * 60;
 
-  fprintf(stderr, "session created: %016llx%016llx\n", p->auth->session_id, p->auth->client_key);
+  //fprintf(stderr, "session created: %016llx%016llx\n", p->auth->session_id, p->auth->client_key);
 
   return 0;
 }
