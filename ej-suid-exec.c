@@ -10,6 +10,8 @@
 #include <limits.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #define EXEC_USER "ejexec"
 #define EXEC_GROUP "ejexec"
@@ -93,7 +95,6 @@ main(int argc, char **argv)
         }
     }
 
-
     struct passwd *pwd = getpwnam(EXEC_USER);
     struct group *grp = getgrnam(EXEC_GROUP);
     endpwent();
@@ -119,6 +120,13 @@ main(int argc, char **argv)
         safe_chown(".", pwd->pw_uid, grp->gr_gid, my_uid);
         chown_rec(".", pwd->pw_uid, grp->gr_gid, my_uid);
     }
+
+    // fix for https://lore.kernel.org/patchwork/patch/855414/
+    struct rlimit rr;
+    getrlimit(RLIMIT_STACK, &rr);
+    rr.rlim_cur = rr.rlim_max;
+    setrlimit(RLIMIT_STACK, &rr);
+
     if (setgid(grp->gr_gid) < 0) {
         fprintf(stderr, "%s: setgid failed\n", argv[0]);
         abort();

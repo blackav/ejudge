@@ -1227,6 +1227,7 @@ process_problem_row(
         fprintf(log_f, "expected column 3 (problemName), but got nothing in row %s\n", text);
         goto cleanup;
     }
+    s += 4;
     /*
     if (extract_td_content(s, buf, &s) < 0) {
         fprintf(log_f, "failed to extract the content of column 3 (problemName): %.60s...\n", s);
