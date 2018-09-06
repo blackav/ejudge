@@ -298,7 +298,6 @@ serve_update_status_file(serve_state_t state, int force_flag)
   status.continuation_enabled = global->enable_continue;
   status.printing_enabled = global->enable_printing;
   status.printing_suspended = state->printing_suspended;
-  status.always_show_problems = global->always_show_problems;
   status.accepting_mode = state->accepting_mode;
   status.testing_finished = state->testing_finished;
 

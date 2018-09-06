@@ -30,7 +30,8 @@
     ejintbool_t printout_uses_login = 0;
     ejintbool_t prune_empty_users = 0;
     ejintbool_t enable_full_archive = 0;
-    ejintbool_t always_show_problems = 0;
+    ejintbool_t show_problems_link_before_start = 0;
+    ejintbool_t show_problems_link_after_finish = 0;
     ejintbool_t disable_user_standings = 0;
     ejintbool_t disable_language = 0;
     ejintbool_t problem_navigation = 0;
@@ -67,7 +68,8 @@
 %><s:read var="printout_uses_login" default="0" /><%
 %><s:read var="prune_empty_users" default="0" /><%
 %><s:read var="enable_full_archive" default="0" /><%
-%><s:read var="always_show_problems" default="0" /><%
+%><s:read var="show_problems_link_before_start" default="0" /><%
+%><s:read var="show_problems_link_after_finish" default="0" /><%
 %><s:read var="disable_user_standings" default="0" /><%
 %><s:read var="disable_language" default="0" /><%
 %><s:read var="problem_navigation" default="0" /><%
@@ -104,7 +106,8 @@
             global->printout_uses_login = printout_uses_login;
             global->prune_empty_users = prune_empty_users;
             global->enable_full_archive = enable_full_archive;
-            global->always_show_problems = always_show_problems;
+            global->show_problems_link_before_start = show_problems_link_before_start;
+            global->show_problems_link_after_finish = show_problems_link_after_finish;
             global->disable_user_standings = disable_user_standings;
             global->disable_language = disable_language;
             global->problem_navigation = problem_navigation;

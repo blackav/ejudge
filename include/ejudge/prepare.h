@@ -243,7 +243,9 @@ struct section_global_data
   /** do not show the failed test number to contestants */
   ejintbool_t disable_failed_test_view;
   /** show the "Problems" link before the contest start */
-  ejintbool_t always_show_problems;
+  ejintbool_t show_problems_link_before_start;
+  /** show the "Problems" link after the contest finish */
+  ejintbool_t show_problems_link_after_finish;
   /** disable the built-in contest standings */
   ejintbool_t disable_user_standings;
   /** do not show "language" column to contestants */

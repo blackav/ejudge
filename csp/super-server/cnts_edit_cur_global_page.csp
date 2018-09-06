@@ -39,7 +39,8 @@ static const unsigned char MSG_disable_banner_page[] = "Disable banner page on p
 static const unsigned char MSG_printout_uses_login[] = "Show login (not name) on printouts";
 static const unsigned char MSG_prune_empty_users[] = "Hide contestants without submits in standings";
 static const unsigned char MSG_enable_full_archive[] = "Store FULL program output in an archive";
-static const unsigned char MSG_always_show_problems[] = "Contestants may view Problems link before start";
+static const unsigned char MSG_show_problems_link_before_start[] = "Contestants may view Problems link before start";
+static const unsigned char MSG_show_problems_link_after_finish[] = "Contestants may view Problems link after finish";
 static const unsigned char MSG_disable_user_standings[] = "Disable build-in standings in new-client";
 static const unsigned char MSG_disable_language[] = "Disable language column in new-client";
 static const unsigned char MSG_problem_navigation[] = "Advanced problem navigation";
@@ -320,7 +321,8 @@ static const unsigned char * const form_row_attrs[]=
         <%@expand EDIT_BOOL_ROW "printout_uses_login" "caps" "400px" %>
         <%@expand EDIT_BOOL_ROW "prune_empty_users" "caps" "400px" %>
         <%@expand EDIT_BOOL_ROW "enable_full_archive" "caps" "400px" %>
-        <%@expand EDIT_BOOL_ROW "always_show_problems" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "show_problems_link_before_start" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "show_problems_link_after_finish" "caps" "400px" %>
         <%@expand EDIT_BOOL_ROW "disable_user_standings" "caps" "400px" %>
         <%@expand EDIT_BOOL_ROW "disable_language" "caps" "400px" %>
         <%@expand EDIT_BOOL_ROW "problem_navigation" "caps" "400px" %>
@@ -885,7 +887,8 @@ function popupCapsDialog(e, skipField)
         "printout_uses_login",
         "prune_empty_users",
         "enable_full_archive",
-        "always_show_problems",
+        "show_problems_link_before_start",
+        "show_problems_link_after_finish",
         "disable_user_standings",
         "disable_language",
         "problem_navigation",
@@ -1424,7 +1427,8 @@ function advancedDialogOnChange()
             <%@expand ORIG_BOOL_ROW "printout_uses_login" %>
             <%@expand ORIG_BOOL_ROW "prune_empty_users" %>
             <%@expand ORIG_BOOL_ROW "enable_full_archive" %>
-            <%@expand ORIG_BOOL_ROW "always_show_problems" %>
+            <%@expand ORIG_BOOL_ROW "show_problems_link_before_start" %>
+            <%@expand ORIG_BOOL_ROW "show_problems_link_after_finish" %>
             <%@expand ORIG_BOOL_ROW "disable_user_standings" %>
             <%@expand ORIG_BOOL_ROW "disable_language" %>
             <%@expand ORIG_BOOL_ROW "problem_navigation" %>

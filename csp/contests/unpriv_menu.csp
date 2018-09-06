@@ -85,16 +85,14 @@
 %></div></li><%
   }
 %><%
-  if (global && start_time > 0 && stop_time <= 0 && cnts->problems_url) {
+  if (global && cnts && cnts->problems_url
+      && (start_time > 0 || global->show_problems_link_before_start)
+      && (stop_time <= 0 || global->show_problems_link_after_finish)) {
 //      && (stop_time <= 0 || cnts->problems_url)
 //      && (global->problem_navigation <= 0 || cnts->problems_url)) {
 %><li><div class="contest_actions_item"><%
     if (phr->action != NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS) {
-      if (cnts->problems_url) {
 %><a class="menu" href="<s:v value="cnts->problems_url" escape="false" />" target="_blank"><s:_>Statements</s:_></a><%
-      } else {
-%><s:a class="menu" ac="view-problem-statements"><s:_>Statements</s:_></s:a><%
-      }
     } else {
 %><s:_>Statements</s:_><%
     }

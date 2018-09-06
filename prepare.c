@@ -101,7 +101,8 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(secure_run, "d"),
   GLOBAL_PARAM(detect_violations, "d"),
   GLOBAL_PARAM(enable_memory_limit_error, "d"),
-  GLOBAL_PARAM(always_show_problems, "d"),
+  GLOBAL_PARAM(show_problems_link_before_start, "d"),
+  GLOBAL_PARAM(show_problems_link_after_finish, "d"),
   GLOBAL_PARAM(disable_user_standings, "d"),
   GLOBAL_PARAM(disable_language, "d"),
   GLOBAL_PARAM(problem_navigation, "d"),
@@ -834,7 +835,8 @@ global_init_func(struct generic_section_config *gp)
   p->printout_uses_login = -1;
   p->prune_empty_users = -1;
   p->enable_full_archive = -1;
-  p->always_show_problems = -1;
+  p->show_problems_link_before_start = -1;
+  p->show_problems_link_after_finish = -1;
   p->disable_user_standings = -1;
   p->disable_language = -1;
   p->problem_navigation = -1;
@@ -2733,8 +2735,10 @@ set_defaults(
     g->prune_empty_users = DFLT_G_PRUNE_EMPTY_USERS;
   if (g->enable_full_archive == -1)
     g->enable_full_archive = DFLT_G_ENABLE_FULL_ARCHIVE;
-  if (g->always_show_problems == -1)
-    g->always_show_problems = DFLT_G_ALWAYS_SHOW_PROBLEMS;
+  if (g->show_problems_link_before_start == -1)
+    g->show_problems_link_before_start = DFLT_G_SHOW_PROBLEMS_LINK_BEFORE_START;
+  if (g->show_problems_link_after_finish == -1)
+    g->show_problems_link_after_finish = DFLT_G_SHOW_PROBLEMS_LINK_AFTER_FINISH;
   if (g->disable_user_standings == -1)
     g->disable_user_standings = DFLT_G_DISABLE_USER_STANDINGS;
   if (g->disable_language == -1)
@@ -5239,7 +5243,8 @@ prepare_set_global_defaults(struct section_global_data *g)
   if (g->team_enable_src_view < 0) g->team_enable_src_view=DFLT_G_TEAM_ENABLE_SRC_VIEW;
   if (g->team_enable_rep_view < 0) g->team_enable_rep_view=DFLT_G_TEAM_ENABLE_REP_VIEW;
   if (g->team_enable_ce_view < 0) g->team_enable_ce_view = DFLT_G_TEAM_ENABLE_CE_VIEW;
-  if (g->always_show_problems < 0) g->always_show_problems=DFLT_G_ALWAYS_SHOW_PROBLEMS;
+  if (g->show_problems_link_before_start < 0) g->show_problems_link_before_start=DFLT_G_SHOW_PROBLEMS_LINK_BEFORE_START;
+  if (g->show_problems_link_after_finish < 0) g->show_problems_link_after_finish=DFLT_G_SHOW_PROBLEMS_LINK_AFTER_FINISH;
   if (g->disable_user_standings < 0) g->disable_user_standings=DFLT_G_DISABLE_USER_STANDINGS;
   if (g->disable_language < 0) g->disable_language = DFLT_G_DISABLE_LANGUAGE;
   if (g->problem_navigation < 0) g->problem_navigation = DFLT_G_PROBLEM_NAVIGATION;
@@ -5520,7 +5525,8 @@ prepare_new_global_section(int contest_id, const unsigned char *root_dir,
   global->inactivity_timeout = DFLT_G_INACTIVITY_TIMEOUT;
   global->disable_auto_testing = DFLT_G_DISABLE_AUTO_TESTING;
   global->disable_testing = DFLT_G_DISABLE_TESTING;
-  global->always_show_problems = DFLT_G_ALWAYS_SHOW_PROBLEMS;
+  global->show_problems_link_before_start = DFLT_G_SHOW_PROBLEMS_LINK_BEFORE_START;
+  global->show_problems_link_after_finish = DFLT_G_SHOW_PROBLEMS_LINK_AFTER_FINISH;
   global->disable_user_standings = DFLT_G_DISABLE_USER_STANDINGS;
   global->disable_language = DFLT_G_DISABLE_LANGUAGE;
   global->problem_navigation = 1;

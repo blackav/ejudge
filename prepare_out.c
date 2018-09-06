@@ -252,8 +252,10 @@ prepare_unparse_global(
     unparse_bool(f, "prune_empty_users", global->prune_empty_users);
   if (global->enable_full_archive != DFLT_G_ENABLE_FULL_ARCHIVE)
     unparse_bool(f, "enable_full_archive", global->enable_full_archive);
-  if (global->always_show_problems != DFLT_G_ALWAYS_SHOW_PROBLEMS)
-    unparse_bool(f, "always_show_problems", global->always_show_problems);
+  if (global->show_problems_link_before_start != DFLT_G_SHOW_PROBLEMS_LINK_BEFORE_START)
+    unparse_bool(f, "show_problems_link_before_start", global->show_problems_link_before_start);
+  if (global->show_problems_link_after_finish != DFLT_G_SHOW_PROBLEMS_LINK_AFTER_FINISH)
+    unparse_bool(f, "show_problems_link_after_finish", global->show_problems_link_after_finish);
   if (global->disable_user_standings != DFLT_G_DISABLE_USER_STANDINGS)
     unparse_bool(f, "disable_user_standings", global->disable_user_standings);
   if (global->disable_language != DFLT_G_DISABLE_LANGUAGE)
