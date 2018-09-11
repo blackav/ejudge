@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -583,6 +583,18 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
     if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n] || x < 0 || x > 1024)
       FAIL(TINF_E_INVALID_VALUE);
     pt->max_process_count = x;
+  } else if (!strcmp(name_buf, "time_limit_ms")) {
+    if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
+    if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
+    if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n] || x <= 0)
+      FAIL(TINF_E_INVALID_VALUE);
+    pt->time_limit_ms = x;
+  } else if (!strcmp(name_buf, "real_time_limit_ms")) {
+    if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
+    if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
+    if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n] || x <= 0)
+      FAIL(TINF_E_INVALID_VALUE);
+    pt->real_time_limit_ms = x;
   } else if (!strcmp(name_buf, "max_vm_size")) {
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);

@@ -2851,7 +2851,10 @@ run_one_test(
   if (tst && tst->clear_env > 0) task_ClearEnv(tsk);
   setup_environment(tsk, start_env, tstinfo.env_u, tstinfo.env_v, 0);
 
-  if (time_limit_value_ms > 0) {
+  if (tstinfo.time_limit_ms > 0) {
+    task_SetMaxTimeMillis(tsk, tstinfo.time_limit_ms);
+    *p_report_time_limit_ms = tstinfo.time_limit_ms;
+  } else if (time_limit_value_ms > 0) {
     if ((time_limit_value_ms % 1000)) {
       task_SetMaxTimeMillis(tsk, time_limit_value_ms);
     } else {
@@ -2860,7 +2863,10 @@ run_one_test(
     *p_report_time_limit_ms = time_limit_value_ms;
   }
 
-  if (srpp->real_time_limit_ms > 0) {
+  if (tstinfo.real_time_limit_ms > 0) {
+    task_SetMaxRealTimeMillis(tsk, tstinfo.real_time_limit_ms);
+    *p_report_real_time_limit_ms = tstinfo.real_time_limit_ms;
+  } else if (srpp->real_time_limit_ms > 0) {
     task_SetMaxRealTimeMillis(tsk, srpp->real_time_limit_ms);
     *p_report_real_time_limit_ms = srpp->real_time_limit_ms;
   }
