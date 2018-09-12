@@ -5694,6 +5694,27 @@ ns_get_user_problems_summary(
     if (start_time > 0 && cs->current_time >= start_time && cur_prob->disable_tab <= 0)
       pinfo[prob_id].status |= PROB_STATUS_TABABLE;
   }
+
+  // clear submittable status for problems depending on 'provide_ok', if the source problem is submittable
+  for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
+    if (!(cur_prob = cs->probs[prob_id])) continue;
+    if ((pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE) && cur_prob->provide_ok) {
+      for (int jj = 0; cur_prob->provide_ok[jj]; ++jj) {
+        for (int other_id = 1; other_id <= cs->max_prob; ++other_id) {
+          const struct section_problem_data *other_prob = cs->probs[other_id];
+          if (other_prob) {
+            if (other_prob->short_name && !strcmp(cur_prob->provide_ok[jj], other_prob->short_name)) {
+              pinfo[other_id].status &= ~PROB_STATUS_SUBMITTABLE;
+              break;
+            } else if (other_prob->internal_name && !strcmp(cur_prob->provide_ok[jj], other_prob->internal_name)) {
+              pinfo[other_id].status &= ~PROB_STATUS_SUBMITTABLE;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 int
