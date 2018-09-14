@@ -7514,6 +7514,7 @@ priv_enter_contest(
   in_c.role = USER_ROLE_CONTESTANT;
   in_c.recovery = 0;
   in_c.team_login = 1;
+  in_c.client_key = phr->client_key;
 
   int r = userlist_clnt_create_cookie(ul_conn, ULS_CREATE_COOKIE, &in_c, &out_c);
   if (r < 0) {
