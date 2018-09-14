@@ -5506,6 +5506,9 @@ ns_get_user_problems_summary(
         kirov_score_default(cur_prob, &re, &pinfo[re.prob_id],
                             start_time, run_id, separate_user_score, status, score);
       }
+      if (re.status == RUN_SUMMONED) {
+        cur_pinfo->summoned_flag = 1;
+      }
       if (re.status == RUN_OK && cur_prob->provide_ok) {
         for (int oki = 0; cur_prob->provide_ok[oki]; ++oki) {
           for (int p2i = 1; p2i <= cs->max_prob; ++p2i) {
