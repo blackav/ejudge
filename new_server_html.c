@@ -7454,6 +7454,92 @@ cleanup:
   }
 }
 
+static const unsigned char *
+get_client_url(
+        unsigned char *buf,
+        size_t size,
+        const struct contest_desc *cnts,
+        const struct http_request_info *phr)
+{
+  if (phr->rest_mode > 0) {
+    snprintf(buf, size, "%s/user", phr->context_url);
+  } else if (cnts->team_url) {
+    snprintf(buf, size, "%s", cnts->team_url);
+  } else {
+#if defined CGI_PROG_SUFFIX
+    snprintf(buf, size, "%s/new-client%s", phr->context_url, CGI_PROG_SUFFIX);
+#else
+    snprintf(buf, size, "%s/new-client", phr->contest_url);
+#endif
+  }
+  return buf;
+}
+
+static void
+priv_enter_contest(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  int errcode = 0;
+  int other_user_id = 0;
+  unsigned char urlbuf[1024];
+  unsigned char clnturlbuf[1024];
+
+  if (phr->role != USER_ROLE_ADMIN) {
+    errcode = NEW_SRV_ERR_PERMISSION_DENIED;
+    goto cleanup;
+  }
+  if (opcaps_check(phr->caps, OPCAP_EDIT_USER) < 0) {
+    errcode = NEW_SRV_ERR_PERMISSION_DENIED;
+    goto cleanup;
+  }
+
+  if (hr_cgi_param_int(phr, "other_user_id", &other_user_id) < 0) {
+    errcode = NEW_SRV_ERR_INV_USER_ID;
+    goto cleanup;
+  }
+
+  struct userlist_cookie in_c;
+  struct userlist_cookie out_c;
+
+  memset(&in_c, 0, sizeof(in_c));
+  memcpy(&in_c.ip, &phr->ip, sizeof(in_c.ip));
+  in_c.ssl = phr->ssl_flag;
+  in_c.user_id = other_user_id;
+  in_c.contest_id = phr->contest_id;
+  in_c.locale_id = 0;
+  in_c.priv_level = 0;
+  in_c.role = USER_ROLE_CONTESTANT;
+  in_c.recovery = 0;
+  in_c.team_login = 0;
+
+  int r = userlist_clnt_create_cookie(ul_conn, ULS_CREATE_COOKIE, &in_c, &out_c);
+  if (r < 0) {
+    errcode = NEW_SRV_ERR_INV_USER_ID;
+    goto cleanup;
+  }
+
+  if (phr->rest_mode > 0) {
+    snprintf(urlbuf, sizeof(urlbuf), "%s/%s/S%016llx",
+             get_client_url(clnturlbuf, sizeof(clnturlbuf), phr->cnts, phr),
+             ns_symbolic_action_table[NEW_SRV_ACTION_MAIN_PAGE],
+             out_c.cookie);
+  } else {
+    snprintf(urlbuf, sizeof(urlbuf), "%s?action=%d&SID=%016llx",
+             get_client_url(clnturlbuf, sizeof(clnturlbuf), phr->cnts, phr),
+             NEW_SRV_ACTION_MAIN_PAGE,
+             out_c.cookie);
+  }
+  ns_refresh_page_2(fout, phr->client_key, urlbuf);
+
+cleanup:
+  if (errcode > 0) {
+    error_page(fout, phr, 1, errcode);
+  }
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -7668,6 +7754,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_RELOAD_ALL_CONTEST_PAGES] = priv_generic_operation,
   [NEW_SRV_ACTION_DELETE_AVATAR] = priv_generic_operation,
   [NEW_SRV_ACTION_CONFIRM_AVATAR] = priv_generic_operation,
+  [NEW_SRV_ACTION_ENTER_CONTEST] = priv_enter_contest,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =

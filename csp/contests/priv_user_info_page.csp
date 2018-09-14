@@ -490,7 +490,7 @@
 <s:url name="EnterContestUrl" ac="enter-contest">
     <s:param name="other_user_id" value="view_user_id" />
 </s:url>
-<p><s:a url="EnterContestUrl">Open as this user</s:a></p>
+<p><s:a url="EnterContestUrl" target="_blank">Open as this user</s:a></p>
 
 <%
   }
