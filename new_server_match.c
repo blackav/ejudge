@@ -2846,6 +2846,7 @@ int ns_match_action(const unsigned char *str)
                                   c = str[12];
                                   if (c == 't') {
                                     c = str[13];
+                                    if (!c) return NEW_SRV_ACTION_ENTER_CONTEST;
                                     if (c == '-') {
                                       c = str[14];
                                       if (c == 'j') {

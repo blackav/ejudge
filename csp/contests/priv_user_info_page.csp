@@ -481,6 +481,21 @@
 </s:form>
 <%  } %>
 
+<%
+  if (phr->role == USER_ROLE_ADMIN) {
+%>
+
+<h2>Impersonate User</h2>
+
+<s:url name="EnterContestUrl" ac="enter-contest">
+    <s:param name="other_user_id" value="view_user_id" />
+</s:url>
+<p><s:a url="EnterContestUrl">Open as this user</s:a></p>
+
+<%
+  }
+%>
+
 <%@include "priv_footer.csp"
 %><%
 cleanup:
