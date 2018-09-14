@@ -5347,9 +5347,14 @@ ns_get_user_problems_summary(
         switch (status) {
         case RUN_ACCEPTED:
         case RUN_PENDING_REVIEW:
+          cur_pinfo->accepted_flag = 1;
+          cur_pinfo->best_run = run_id;
+          break;
+
         case RUN_SUMMONED:
           cur_pinfo->accepted_flag = 1;
           cur_pinfo->best_run = run_id;
+          cur_pinfo->summoned_flag = 1;
           break;
 
         case RUN_PRESENTATION_ERR:
@@ -5379,9 +5384,14 @@ ns_get_user_problems_summary(
         case RUN_PARTIAL:
         case RUN_ACCEPTED:
         case RUN_PENDING_REVIEW:
+          cur_pinfo->accepted_flag = 1;
+          cur_pinfo->best_run = run_id;
+          break;
+
         case RUN_SUMMONED:
           cur_pinfo->accepted_flag = 1;
           cur_pinfo->best_run = run_id;
+          cur_pinfo->summoned_flag = 1;
           break;
 
         case RUN_COMPILE_ERR:
@@ -5461,7 +5471,10 @@ ns_get_user_problems_summary(
 
       case RUN_ACCEPTED:
       case RUN_PENDING_REVIEW:
+        break;
+
       case RUN_SUMMONED:
+        cur_pinfo->summoned_flag = 1;
         break;
 
       case RUN_IGNORED:
@@ -5561,8 +5574,14 @@ ns_get_user_problems_summary(
 
       case RUN_ACCEPTED:
       case RUN_PENDING_REVIEW:
-      case RUN_SUMMONED:
       case RUN_PENDING:
+        cur_pinfo->pending_flag = 1;
+        cur_pinfo->attempts++;
+        if (cur_pinfo->best_run < 0) cur_pinfo->best_run = run_id;
+        break;
+
+      case RUN_SUMMONED:
+        cur_pinfo->summoned_flag = 1;
         cur_pinfo->pending_flag = 1;
         cur_pinfo->attempts++;
         if (cur_pinfo->best_run < 0) cur_pinfo->best_run = run_id;
@@ -5611,8 +5630,14 @@ ns_get_user_problems_summary(
 
       case RUN_ACCEPTED:
       case RUN_PENDING_REVIEW:
-      case RUN_SUMMONED:
       case RUN_PENDING:
+        cur_pinfo->pending_flag = 1;
+        cur_pinfo->attempts++;
+        if (cur_pinfo->best_run < 0) cur_pinfo->best_run = run_id;
+        break;
+
+      case RUN_SUMMONED:
+        cur_pinfo->summoned_flag = 1;
         cur_pinfo->pending_flag = 1;
         cur_pinfo->attempts++;
         if (cur_pinfo->best_run < 0) cur_pinfo->best_run = run_id;

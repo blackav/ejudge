@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-04-22 13:51+0300\n"
+"POT-Creation-Date: 2018-09-15 01:15+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -29,6 +29,10 @@ msgstr ""
 
 #, c-format
 msgid " (%d token(s) used)"
+msgstr ""
+
+#, c-format
+msgid " / <b>%d summoned for defence runs</b>"
 msgstr ""
 
 #, c-format

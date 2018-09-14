@@ -17,6 +17,7 @@
   unsigned char dur_str[64];
   const unsigned char *clar_subj = 0;
   unsigned char title[1024];
+  int summoned_count = 0;
 
 %><s:read var="clar_id" required="yes" error="inv-clar-id" /><%
 

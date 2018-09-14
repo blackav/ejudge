@@ -9,6 +9,7 @@
   time_t cur_time = 0, fog_stop_time = 0;
   unsigned char dur_buf[128];
   unsigned char title[1024];
+  int summoned_count = 0;
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);

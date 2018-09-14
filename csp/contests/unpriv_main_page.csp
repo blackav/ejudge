@@ -68,6 +68,7 @@ ns_unparse_answers(
   unsigned char avatar_url[1024];
   avatar_url[0] = 0;
   struct virtual_end_info_s *vend_info = NULL;
+  int summoned_count = 0;
 
 %><s:read var="telegram_token" ignoreerrors="yes" /><%
 %><s:read var="all_runs" ignoreerrors="yes" default="0" /><%
@@ -138,11 +139,14 @@ ns_unparse_answers(
   }
 
   unpriv_load_html_style(phr, cnts, 0, 0);
+
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, pinfo);
+  for (i = 1; i <= cs->max_prob; ++i) {
+    summoned_count += pinfo[i].summoned_flag;
+  }
 %><%@include "unpriv_header.csp"
 %><%@include "unpriv_menu.csp"
 %><%@include "unpriv_status.csp"
-%><%
-  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, pinfo);
 %><%
   // top navigation
   if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {

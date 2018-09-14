@@ -135,6 +135,7 @@ typedef struct UserProblemInfo
     unsigned char autook_flag;    // if "OK" is result of "provide_ok" setting
     unsigned char rejected_flag;  // if there are "Rejected" runs
     unsigned char need_eff_time_flag; // if effective time needs to be recorded
+    unsigned char summoned_flag; // if "Summoned for Defence"
 } UserProblemInfo;
 
 /* */
