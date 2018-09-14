@@ -10672,7 +10672,7 @@ cmd_create_cookie(
     &data->origin_ip,
     data->ssl,
     0 /* cookie */,     // ignore data->cookie
-    0 /* client_key */, // ignore data->client_key
+    data->client_key,
     0 /* expire */,     // ignore data->expire
     data->contest_id,
     0 /* locale_id */,  // ignore data->locale_id
