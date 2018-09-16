@@ -2782,11 +2782,17 @@ run_one_test(
   }
   */
 
-  task_AddArg(tsk, arg0_path);
+  if (tstinfo.program_name && *tstinfo.program_name) {
+    task_AddArg(tsk, tstinfo.program_name);
+    task_SetPath(tsk, arg0_path);
+  } else {
+    task_AddArg(tsk, arg0_path);
+    task_SetPathAsArg0(tsk);
+  }
+
   if (srpp->use_info > 0 && tstinfo.cmd_argc >= 1) {
     task_pnAddArgs(tsk, tstinfo.cmd_argc, (char**) tstinfo.cmd_argv);
   }
-  task_SetPathAsArg0(tsk);
   /*
   if (tstinfo.working_dir) {
     task_SetWorkingDir(tsk, tstinfo.working_dir);

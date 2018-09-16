@@ -549,13 +549,16 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
   } else if (!strcmp(name_buf, "comment")
              || !strcmp(name_buf, "team_comment")
              || !strcmp(name_buf, "source_stub")
-             || !strcmp(name_buf, "working_dir")) {
+             || !strcmp(name_buf, "working_dir")
+             || !strcmp(name_buf, "program_name")) {
     if (!strcmp(name_buf, "comment")) {
       ppval = (unsigned char**) ((void*) &pt->comment);
     } else if (!strcmp(name_buf, "source_stub")) {
       ppval = (unsigned char**) ((void*) &pt->source_stub);
     } else if (!strcmp(name_buf, "working_dir")) {
       ppval = (unsigned char**) ((void*)&pt->working_dir);
+    } else if (!strcmp(name_buf, "program_name")) {
+      ppval = (unsigned char**) ((void*)&pt->program_name);
     } else {
       ppval = (unsigned char**) ((void*)&pt->team_comment);
     }
@@ -782,6 +785,7 @@ testinfo_free(testinfo_t *pt)
   if (pt->team_comment) free(pt->team_comment);
   if (pt->source_stub) free(pt->source_stub);
   free(pt->working_dir);
+  free(pt->program_name);
   memset(pt, 0, sizeof(*pt));
 }
 

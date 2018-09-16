@@ -88,6 +88,8 @@ struct testinfo_struct
 
   int time_limit_ms;
   int real_time_limit_ms;
+
+  char *program_name;
 };
 typedef struct testinfo_struct testinfo_t;
 
