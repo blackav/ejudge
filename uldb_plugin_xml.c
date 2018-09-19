@@ -2148,8 +2148,8 @@ set_user_info_field_func(void *data,
   if (cur_time <= 0) cur_time = time(0);
 
   if (!contest_id) ui = userlist_get_cnts0(u);
-  ui = userlist_get_user_info_nc(u, contest_id);
-  if (userlist_is_equal_user_info_field(ui, field_id, value)) return 0;
+  else ui = userlist_get_user_info_nc(u, contest_id);
+  if (ui && userlist_is_equal_user_info_field(ui, field_id, value)) return 0;
 
   if (contest_id > 0) {
     if (!(userlist_clone_user_info(u, contest_id, &ul->member_serial,
