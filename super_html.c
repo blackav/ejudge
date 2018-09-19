@@ -779,6 +779,7 @@ super_html_load_serve_cfg(const struct contest_desc *cnts,
       close_memstream(flog); flog = 0;
       sstate->serve_parse_errors = flog_txt;
       flog_txt = 0; flog_len = 0;
+      return;
     }
   } else {
     if (mkdir(var_dir_path, 0777) < 0) {
@@ -786,6 +787,7 @@ super_html_load_serve_cfg(const struct contest_desc *cnts,
       close_memstream(flog); flog = 0;
       sstate->serve_parse_errors = flog_txt;
       flog_txt = 0; flog_len = 0;
+      return;
     }
     file_perms_set(flog, var_dir_path, dir_group, dir_mode, 0, 0);
   }
