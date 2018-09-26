@@ -1546,7 +1546,7 @@ extend_run_extras(runlog_state_t state)
   while (new_a < state->run_u - state->run_f) new_a *= 2;
   struct run_entry_extra *new_x = calloc(new_a, sizeof(new_x[0]));
   if (state->run_extra_u > 0) {
-    memcpy(new_x, state->run_extras, state->run_extra_u * sizeof(new_x[0]));
+    memcpy(new_x, state->run_extras, (state->run_extra_u - state->run_extra_f) * sizeof(new_x[0]));
   }
   xfree(state->run_extras); state->run_extras = new_x;
   state->run_extra_a = new_a;
