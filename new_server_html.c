@@ -318,8 +318,11 @@ ns_get_contest_extra(
     if (cnts->enable_local_pages > 0 && !p->cnts_actions) {
       p->cnts_actions = ns_get_contest_external_actions(contest_id, p->last_access_time);
     }
+    if (config && config->max_loaded_contests > 0) {
+    }
     return p;
   }
+  // FIXME: eliminate code clone
   ASSERT(i > 0);
   ASSERT(extras[i - 1]->contest_id < contest_id);
   if (extra_u == extra_a) {
