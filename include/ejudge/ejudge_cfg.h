@@ -69,6 +69,9 @@ struct ejudge_cfg
   // WebSocket port number
   int contests_ws_port;
 
+  // max loaded contests count for ej-contests
+  int max_loaded_contests;
+
   // these strings actually point into other strings in XML tree
   unsigned char *socket_path;
   unsigned char *db_path;

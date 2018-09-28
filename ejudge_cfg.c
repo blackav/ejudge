@@ -107,6 +107,7 @@ enum
     TG_SCRIPT,
     TG_PAGE,
     TG_CONTESTS_WS_PORT,
+    TG_MAX_LOADED_CONTESTS,
 
     TG__BARRIER,
     TG__DEFAULT,
@@ -200,6 +201,7 @@ static char const * const elem_map[] =
   "script",
   "page",
   "contests_ws_port",
+  "max_loaded_contests",
   0,
   "_default",
 
@@ -680,6 +682,24 @@ ejudge_cfg_do_parse(char const *path, int no_system_lookup)
             goto failed;
           }
           cfg->contests_ws_port = k;
+        }
+      }
+      break;
+    case TG_MAX_LOADED_CONTESTS:
+      {
+        if (cfg->max_loaded_contests > 0) {
+          xml_err_elem_redefined(p);
+          goto failed;
+        }
+        if (p->text && p->text[0]) {
+          errno = 0;
+          char *eptr = NULL;
+          long k = strtol(p->text, &eptr, 10);
+          if (errno || *eptr || eptr == p->text || k < 0 || k > 10000) {
+            xml_err_elem_invalid(p);
+            goto failed;
+          }
+          cfg->max_loaded_contests = k;
         }
       }
       break;
