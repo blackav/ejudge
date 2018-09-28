@@ -152,7 +152,9 @@ ns_for_each_contest_extra(
         void (*callback)(struct contest_extra *, void *ptr),
         void *ptr);
 
-struct contest_extra *ns_get_contest_extra(const struct contest_desc *cnts);
+struct contest_extra *ns_get_contest_extra(
+        const struct contest_desc *cnts,
+        const struct ejudge_cfg *config);
 struct contest_extra *ns_try_contest_extra(int contest_id);
 
 void

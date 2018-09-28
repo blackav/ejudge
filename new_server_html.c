@@ -245,7 +245,9 @@ ns_try_contest_external_actions(int contest_id)
 }
 
 struct contest_extra *
-ns_get_contest_extra(const struct contest_desc *cnts)
+ns_get_contest_extra(
+        const struct contest_desc *cnts,
+        const struct ejudge_cfg *config)
 {
   struct contest_extra *p;
   size_t i, j, k;
@@ -8059,7 +8061,7 @@ privileged_entry_point(
     error_page(fout, phr, 1, NEW_SRV_ERR_INV_CONTEST_ID);
     goto cleanup;
   }
-  extra = ns_get_contest_extra(cnts);
+  extra = ns_get_contest_extra(cnts, phr->config);
   if (cnts->enable_local_pages > 0 && !extra->cnts_actions) {
     extra->cnts_actions = ns_get_contest_external_actions(phr->contest_id, cur_time);
   }
@@ -8222,7 +8224,7 @@ unpriv_load_html_style(struct http_request_info *phr,
   FILE *state_json_f = 0;
 #endif
 
-  extra = ns_get_contest_extra(cnts);
+  extra = ns_get_contest_extra(cnts, phr->config);
   if (cnts->enable_local_pages > 0 && !extra->cnts_actions) {
     extra->cnts_actions = ns_get_contest_external_actions(phr->contest_id, cur_time);
   }
@@ -12913,7 +12915,7 @@ do_unpriv_login_json(FILE *fout, struct http_request_info *phr, struct UnprivLog
     snprintf(resp->log_msg, sizeof(resp->log_msg), "invalid contest_id %d", phr->contest_id);
     return -NEW_SRV_ERR_INV_CONTEST_ID;
   }
-  extra = ns_get_contest_extra(cnts);
+  extra = ns_get_contest_extra(cnts, phr->config);
   ASSERT(extra);
   phr->cnts = cnts;
   phr->extra = extra;
@@ -13123,7 +13125,7 @@ unpriv_contest_info_json(FILE *fout, struct http_request_info *phr)
       res = -NEW_SRV_ERR_INV_CONTEST_ID;
       break;
     }
-    extra = ns_get_contest_extra(cnts);
+    extra = ns_get_contest_extra(cnts, phr->config);
     phr->cnts = cnts;
     phr->extra = extra;
     if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
@@ -13363,21 +13365,21 @@ unprivileged_entry_point(
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_1) {
     contests_get(phr->contest_id, &cnts);
     phr->cnts = cnts;
-    phr->extra = ns_get_contest_extra(cnts);
+    phr->extra = ns_get_contest_extra(cnts, phr->config);
     unpriv_external_action(fout, phr);
     return;
   }
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_2) {
     contests_get(phr->contest_id, &cnts);
     phr->cnts = cnts;
-    phr->extra = ns_get_contest_extra(cnts);
+    phr->extra = ns_get_contest_extra(cnts, phr->config);
     unpriv_external_action(fout, phr);
     return;
   }
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_3) {
     contests_get(phr->contest_id, &cnts);
     phr->cnts = cnts;
-    phr->extra = ns_get_contest_extra(cnts);
+    phr->extra = ns_get_contest_extra(cnts, phr->config);
     unpriv_external_action(fout, phr);
     return;
   }
@@ -13395,7 +13397,7 @@ unprivileged_entry_point(
       && !phr->session_id && ejudge_config->enable_contest_select){
     phr->action = NEW_SRV_ACTION_CONTESTS_PAGE;
     phr->cnts = cnts;
-    phr->extra = ns_get_contest_extra(cnts);
+    phr->extra = ns_get_contest_extra(cnts, phr->config);
     unpriv_external_action(fout, phr);
     return;
   }
@@ -13403,7 +13405,7 @@ unprivileged_entry_point(
   phr->cnts = cnts;
 
   if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE) {
-    phr->extra = ns_get_contest_extra(phr->cnts);
+    phr->extra = ns_get_contest_extra(phr->cnts, phr->config);
     return unprivileged_page_login(fout, phr);
   }
 
@@ -13475,7 +13477,7 @@ unprivileged_entry_point(
     error_page(fout, phr, 0, -NEW_SRV_ERR_INV_CONTEST_ID);
     goto cleanup;
   }
-  extra = ns_get_contest_extra(cnts);
+  extra = ns_get_contest_extra(cnts, phr->config);
   ASSERT(extra);
   phr->cnts = cnts;
   phr->extra = extra;
@@ -14106,7 +14108,7 @@ cleanup:
 static void
 do_load_contest(struct http_request_info *phr, const struct contest_desc *cnts)
 {
-  struct contest_extra *extra = ns_get_contest_extra(cnts);
+  struct contest_extra *extra = ns_get_contest_extra(cnts, phr->config);
   if (!extra) return;
 
   phr->extra = extra;

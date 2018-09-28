@@ -444,7 +444,7 @@ anon_register_pages(FILE *fout, struct http_request_info *phr)
   cur_time = time(0);
 
   // load style stuff
-  extra = ns_get_contest_extra(cnts);
+  extra = ns_get_contest_extra(cnts, phr->config);
   if (cnts->enable_local_pages > 0 && !extra->cnts_actions) {
     extra->cnts_actions = ns_get_contest_external_actions(phr->contest_id, cur_time);
   }
@@ -2834,7 +2834,7 @@ reg_get_avatar(FILE *fout, struct http_request_info *phr)
           error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
           goto cleanup;
         }
-        if (!(phr->extra = ns_get_contest_extra(phr->cnts))) {
+        if (!(phr->extra = ns_get_contest_extra(phr->cnts, phr->config))) {
           fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
           error_page(fout, phr, NEW_SRV_ERR_INV_PARAM);
           goto cleanup;
@@ -2849,7 +2849,7 @@ reg_get_avatar(FILE *fout, struct http_request_info *phr)
       error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
       goto cleanup;
     }
-    if (!(phr->extra = ns_get_contest_extra(phr->cnts))) {
+    if (!(phr->extra = ns_get_contest_extra(phr->cnts, phr->config))) {
       fprintf(phr->log_f, "invalid contest_id %d", phr->contest_id);
       error_page(fout, phr, NEW_SRV_ERR_PERMISSION_DENIED);
       goto cleanup;
@@ -3690,7 +3690,7 @@ ns_register_pages(FILE *fout, struct http_request_info *phr)
 
   cur_time = time(0);
 
-  extra = ns_get_contest_extra(cnts);
+  extra = ns_get_contest_extra(cnts, phr->config);
   phr->extra = extra;
   watched_file_update(&extra->copyright, cnts->copyright_file, cur_time);
   extra->separator_txt = "";
