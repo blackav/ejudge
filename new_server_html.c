@@ -319,6 +319,20 @@ ns_get_contest_extra(
       p->cnts_actions = ns_get_contest_external_actions(contest_id, p->last_access_time);
     }
     if (config && config->max_loaded_contests > 0) {
+      // count loaded contests and the oldest contest
+      int loaded_count = 0;
+      int oldest_idx = -1;
+      for (int idx = 0; idx < extra_u; ++idx) {
+        if (extras[idx]->serve_state) {
+          ++loaded_count;
+          if (oldest_idx < 0 || extras[oldest_idx]->last_access_time > extras[idx]->last_access_time) {
+            oldest_idx = idx;
+          }
+        }
+      }
+      if (loaded_count >= config->max_loaded_contests && oldest_idx >= 0) {
+        extras[oldest_idx]->last_access_time = 0;
+      }
     }
     return p;
   }
@@ -337,6 +351,22 @@ ns_get_contest_extra(
   p->last_access_time = time(0);
   if (cnts->enable_local_pages > 0 && !p->cnts_actions) {
     p->cnts_actions = ns_get_contest_external_actions(contest_id, p->last_access_time);
+  }
+  if (config && config->max_loaded_contests > 0) {
+    // count loaded contests and the oldest contest
+    int loaded_count = 0;
+    int oldest_idx = -1;
+    for (int idx = 0; idx < extra_u; ++idx) {
+      if (extras[idx]->serve_state) {
+        ++loaded_count;
+        if (oldest_idx < 0 || extras[oldest_idx]->last_access_time > extras[idx]->last_access_time) {
+          oldest_idx = idx;
+        }
+      }
+    }
+    if (loaded_count >= config->max_loaded_contests && oldest_idx >= 0) {
+      extras[oldest_idx]->last_access_time = 0;
+    }
   }
   return p;
 }
