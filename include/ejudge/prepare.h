@@ -710,6 +710,9 @@ struct section_global_data
   ejintbool_t skip_full_testing;
   ejintbool_t skip_accept_testing;
 
+  /** load problem uuid from history.txt file */
+  ejintbool_t enable_problem_history;
+
   /** path to the file with variant assignment */
   unsigned char *variant_map_file;
   /** parsed variant map */
