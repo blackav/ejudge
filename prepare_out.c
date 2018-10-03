@@ -252,6 +252,8 @@ prepare_unparse_global(
     unparse_bool(f, "prune_empty_users", global->prune_empty_users);
   if (global->enable_full_archive != DFLT_G_ENABLE_FULL_ARCHIVE)
     unparse_bool(f, "enable_full_archive", global->enable_full_archive);
+  if (global->enable_problem_history)
+    unparse_bool(f, "enable_problem_history", global->enable_problem_history);
   if (global->always_show_problems != DFLT_G_ALWAYS_SHOW_PROBLEMS)
     unparse_bool(f, "always_show_problems", global->always_show_problems);
   if (global->disable_user_standings != DFLT_G_DISABLE_USER_STANDINGS)

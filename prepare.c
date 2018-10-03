@@ -312,6 +312,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(cpu_bogomips, "d"),
   GLOBAL_PARAM(skip_full_testing, "d"),
   GLOBAL_PARAM(skip_accept_testing, "d"),
+  GLOBAL_PARAM(enable_problem_history, "d"),
 
   GLOBAL_PARAM(variant_map_file, "S"),
 

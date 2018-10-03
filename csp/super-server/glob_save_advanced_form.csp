@@ -28,6 +28,7 @@
     ejintbool_t enable_report_upload = 0;
     ejintbool_t enable_runlog_merge = 0;
     ejintbool_t disable_user_database = 0;
+    ejintbool_t enable_problem_history = 0;
     ejintbool_t enable_l10n = 0;
     unsigned char *charset = NULL;
     unsigned char *standings_charset = NULL;
@@ -60,6 +61,7 @@
 %><s:read var="enable_report_upload" default="0" /><%
 %><s:read var="enable_runlog_merge" default="0" /><%
 %><s:read var="disable_user_database" default="0" /><%
+%><s:read var="enable_problem_history" default="0" /><%
 %><s:read var="enable_l10n" default="0" /><%
 %><s:read var="charset" normalize="yes" nonnull="yes" /><%
 %><s:read var="standings_charset" normalize="yes" nonnull="yes" /><%
@@ -104,6 +106,7 @@
             global->enable_report_upload = enable_report_upload;
             global->enable_runlog_merge = enable_runlog_merge;
             global->disable_user_database = disable_user_database;
+            global->enable_problem_history = enable_problem_history;
             global->enable_l10n = enable_l10n;
             MOVESTR(charset);
             MOVESTR(standings_charset);
