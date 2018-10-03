@@ -195,6 +195,7 @@ static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
   [META_SUPER_RUN_IN_PROBLEM_PACKET_enable_process_group] = { META_SUPER_RUN_IN_PROBLEM_PACKET_enable_process_group, 'B', XSIZE(struct super_run_in_problem_packet, enable_process_group), "enable_process_group", XOFFSET(struct super_run_in_problem_packet, enable_process_group) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_umask] = { META_SUPER_RUN_IN_PROBLEM_PACKET_umask, 's', XSIZE(struct super_run_in_problem_packet, umask), "umask", XOFFSET(struct super_run_in_problem_packet, umask) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_enable_kill_all] = { META_SUPER_RUN_IN_PROBLEM_PACKET_enable_kill_all, 'B', XSIZE(struct super_run_in_problem_packet, enable_kill_all), "enable_kill_all", XOFFSET(struct super_run_in_problem_packet, enable_kill_all) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_uuid] = { META_SUPER_RUN_IN_PROBLEM_PACKET_uuid, 's', XSIZE(struct super_run_in_problem_packet, uuid), "uuid", XOFFSET(struct super_run_in_problem_packet, uuid) },
 };
 
 int meta_super_run_in_problem_packet_get_type(int tag)
