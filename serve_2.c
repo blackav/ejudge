@@ -1955,6 +1955,7 @@ serve_run_request(
   srpp->short_name = xstrdup(prob->short_name);
   srpp->long_name = xstrdup2(prob->long_name);
   srpp->internal_name = xstrdup2(prob->internal_name);
+  srpp->uuid = xstrdup2(prob->uuid);
   srpp->open_tests = xstrdup2(prob->open_tests);
 
   if (srgp->advanced_layout > 0) {

@@ -469,6 +469,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(stand_name, "S"),
   PROBLEM_PARAM(stand_column, "S"),
   PROBLEM_PARAM(internal_name, "S"),
+  PROBLEM_PARAM(uuid, "S"),
   PROBLEM_PARAM(problem_dir, "S"),
   PROBLEM_PARAM(test_dir, "S"),
   PROBLEM_PARAM(test_sfx, "S"),
@@ -1425,6 +1426,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->stand_column);
   xfree(p->group_name);
   xfree(p->internal_name);
+  xfree(p->uuid);
   xfree(p->long_name);
   xfree(p->xml_file_path);
 
@@ -5883,6 +5885,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   xstrdup3(&out->stand_column, in->stand_column);
   xstrdup3(&out->group_name, in->group_name);
   xstrdup3(&out->internal_name, in->internal_name);
+  xstrdup3(&out->uuid, in->uuid);
   xstrdup3(&out->problem_dir, in->problem_dir);
   xstrdup3(&out->test_dir, in->test_dir);
   xstrdup3(&out->test_sfx, in->test_sfx);

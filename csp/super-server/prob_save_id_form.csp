@@ -16,6 +16,7 @@
     int prob_id = 0;
     unsigned char *short_name = NULL;
     unsigned char *internal_name = NULL;
+    unsigned char *uuid = NULL;
     unsigned char *long_name = NULL;
     unsigned char *super = NULL;
     const unsigned char *type = NULL;
@@ -33,6 +34,7 @@
 %><s:read var="prob_id" required="yes" /><%
 %><s:read var="short_name" normalize="yes" nonnull="yes" /><%
 %><s:read var="internal_name" normalize="yes" /><%
+%><s:read var="uuid" normalize="yes" /><%
 %><s:read var="long_name" normalize="yes" nonnull="yes" /><%
 %><s:read var="super" normalize="yes" nonnull="yes" /><%
 %><s:read var="type" /><%
@@ -63,6 +65,8 @@
         }
         xfree(internal_name);
         internal_name = NULL;
+        xfree(uuid);
+        uuid = NULL;
         if (*super) {
             xfree(super);
             super = xstrdup("");
@@ -115,6 +119,7 @@
         MOVESTR(internal_name);
         MOVESTR(long_name);
         COPYSTR(super);
+        MOVESTR(uuid);
         prob->type = type_val;
         prob->variant_num = variant_num;
         prob->autoassign_variants = autoassign_variants;
@@ -134,6 +139,7 @@ cleanup:;
     xfree(msg_s);
     xfree(short_name);
     xfree(internal_name);
+    xfree(uuid);
     xfree(long_name);
     xfree(super);
 %>

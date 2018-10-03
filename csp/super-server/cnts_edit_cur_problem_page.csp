@@ -118,6 +118,7 @@ static const unsigned char * const form_row_attrs[]=
         <%@expand MENU_TEXTFIELD "short_name" "id" "Short name" "250" %>
         <%@expand MENU_TEXTFIELD "internal_name" "id" "Internal name" "250" %>
         <%@expand MENU_TEXTFIELD "long_name" "id" "Long name" "250" %>
+        <%@expand MENU_TEXTFIELD "uuid" "id" "UUID" "250" %>
 
 
         <div id="edit-super-div">
@@ -309,6 +310,7 @@ $(function() {
 
     $("#orig-id-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#orig-internal_name-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-uuid-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#orig-super-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#orig-variant_num-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#orig-autoassign_variants-div").toggle(<s:v type="jsbool" value="prob->variant_num > 0" />);
@@ -461,6 +463,7 @@ function popupIdDialog(e, skipField)
     $("#edit-prob_id").val(prob_id);
     <%@expand COPY_SIMPLE "short_name" %>
     <%@expand COPY_SIMPLE "internal_name" %>
+    <%@expand COPY_SIMPLE "uuid" %>
     <%@expand COPY_SIMPLE "long_name" %>
     <%@expand COPY_SIMPLE "super" %>
     <%@expand COPY_SIMPLE "type" %>
@@ -469,6 +472,7 @@ function popupIdDialog(e, skipField)
 
     <%@expand CLEAR_TEXTFIELD "short_name" %>
     <%@expand CLEAR_TEXTFIELD "internal_name" %>
+    <%@expand CLEAR_TEXTFIELD "uuid" %>
     <%@expand CLEAR_TEXTFIELD "long_name" %>
 
     if (e) e.stopPropagation();
@@ -480,6 +484,7 @@ function idDialogOnChange()
 {
     $("#edit-prob_id-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#edit-internal_name-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-uuid-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#edit-super-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#edit-variant_num-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     var num = parseInt($("#edit-variant_num").val());
@@ -649,6 +654,13 @@ function viewDialogOnChange(field)
                 <td><s:textfield id="orig-internal_name" readonly="readonly" name="param" value="prob->internal_name" size="48" maxlength="1024" checkExpr="" /><% if (!prob->internal_name) { %>(<i>Not set</i>)<% } %></td>
                 <td><input type="button" onclick="popupIdDialog(event, 'internal_name')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:internal_name" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-uuid-div">
+                <td>UUID (optional):</td>
+                <td><s:textfield id="orig-uuid" readonly="readonly" name="param" value="prob->uuid" size="48" maxlength="1024" checkExpr="" /><% if (!prob->uuid) { %>(<i>Not set</i>)<% } %></td>
+                <td><input type="button" onclick="popupIdDialog(event, 'uuid')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:uuid" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-long_name-div">
