@@ -267,6 +267,7 @@ enum
   CNTSGLOB_cpu_bogomips,
   CNTSGLOB_skip_full_testing,
   CNTSGLOB_skip_accept_testing,
+  CNTSGLOB_enable_problem_history,
   CNTSGLOB_variant_map_file,
   CNTSGLOB_variant_map,
   CNTSGLOB_enable_printing,
