@@ -185,6 +185,7 @@ struct problem_config_section
   unsigned char *header_pat;
   unsigned char *footer_pat;
   unsigned char *compiler_env_pat;
+  unsigned char *uuid;
 
   char **test_sets;
   char **date_penalty;
