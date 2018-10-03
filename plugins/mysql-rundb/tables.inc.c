@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -60,6 +60,7 @@ static const char create_runs_query[] =
 "        store_flags INT NOT NULL DEFAULT 0, "
 "        token_flags INT NOT NULL DEFAULT 0, "
 "        token_count INT NOT NULL DEFAULT 0, "
+"        prob_uuid VARCHAR(40) DEFAULT NULL, "
 "        PRIMARY KEY (run_id, contest_id)"
 "        );";
 
@@ -109,9 +110,10 @@ struct run_entry_internal
   int store_flags;
   int token_flags;
   int token_count;
+  unsigned char *prob_uuid;
 };
 
-enum { RUNS_ROW_WIDTH = 44 };
+enum { RUNS_ROW_WIDTH = 45 };
 
 #define RUNS_OFFSET(f) XOFFSET(struct run_entry_internal, f)
 static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
@@ -160,6 +162,7 @@ static const struct common_mysql_parse_spec runs_spec[RUNS_ROW_WIDTH] =
   { 0, 'd', "store_flags", RUNS_OFFSET(store_flags), 0 },
   { 0, 'd', "token_flags", RUNS_OFFSET(token_flags), 0 },
   { 0, 'd', "token_count", RUNS_OFFSET(token_count), 0 },
+  { 1, 's', "prob_uuid", RUNS_OFFSET(prob_uuid), 0 },
 };
 
 enum
