@@ -33,7 +33,8 @@ userlist_clnt_get_xml_by_text(
   if (!request_text) request_text = "";
   request_len = strlen(request_text);
   out_size = sizeof(*out) + request_len;
-  XALLOCAZ(out, 1);
+  out = (typeof(out)) alloca(out_size);
+  memset(out, 0, out_size);
   out->request_id = cmd;
   out->info_len = request_len;
   memcpy(out->data, request_text, request_len + 1);
