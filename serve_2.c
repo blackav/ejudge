@@ -48,6 +48,7 @@
 #include "ejudge/team_extra.h"
 #include "ejudge/packet_name.h"
 #include "ejudge/xuser_plugin.h"
+#include "ejudge/random.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -5046,6 +5047,11 @@ handle_virtual_stop_event(
       info("inserting virtual stop event");
       nsec = precise_time.tv_usec * 1000;
     }
+  }
+
+  if (nsec < 0) {
+    random_init();
+    nsec = random_u32() % 1000000000;
   }
 
   /*
