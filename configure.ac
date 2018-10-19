@@ -1351,15 +1351,15 @@ then
   AC_DEFINE_UNQUOTED(EJUDGE_REST_PREFIX_LEN,${ac_cv_rest_len})
 fi
 
-if [[ x"${ac_cv_primary_user}" != x && x"${ac_cv_primary_user}" != xno ]]
+if [[ x"${ac_cv_primary_user}" != x -a x"${ac_cv_primary_user}" != xno ]]
 then
   AC_DEFINE_UNQUOTED(EJUDGE_PRIMARY_USER,"${ac_cv_primary_user}")
 fi
-if [[ x"${ac_cv_exec_user}" != x && x"${ac_cv_exec_user}" != xno ]]
+if [[ x"${ac_cv_exec_user}" != x -a x"${ac_cv_exec_user}" != xno ]]
 then
   AC_DEFINE_UNQUOTED(EJUDGE_EXEC_USER,"${ac_cv_exec_user}")
 fi
-if [[ x"${ac_cv_compile_user}" != x && x"${ac_cv_compile_user}" != xno ]]
+if [[ x"${ac_cv_compile_user}" != x -a x"${ac_cv_compile_user}" != xno ]]
 then
   AC_DEFINE_UNQUOTED(EJUDGE_COMPILE_USER,"${ac_cv_compile_user}")
 fi
