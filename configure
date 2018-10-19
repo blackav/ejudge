@@ -8146,21 +8146,21 @@ _ACEOF
 
 fi
 
-if [ x"${ac_cv_primary_user}" != x && x"${ac_cv_primary_user}" != xno ]
+if [ x"${ac_cv_primary_user}" != x -a x"${ac_cv_primary_user}" != xno ]
 then
   cat >>confdefs.h <<_ACEOF
 #define EJUDGE_PRIMARY_USER "${ac_cv_primary_user}"
 _ACEOF
 
 fi
-if [ x"${ac_cv_exec_user}" != x && x"${ac_cv_exec_user}" != xno ]
+if [ x"${ac_cv_exec_user}" != x -a x"${ac_cv_exec_user}" != xno ]
 then
   cat >>confdefs.h <<_ACEOF
 #define EJUDGE_EXEC_USER "${ac_cv_exec_user}"
 _ACEOF
 
 fi
-if [ x"${ac_cv_compile_user}" != x && x"${ac_cv_compile_user}" != xno ]
+if [ x"${ac_cv_compile_user}" != x -a x"${ac_cv_compile_user}" != xno ]
 then
   cat >>confdefs.h <<_ACEOF
 #define EJUDGE_COMPILE_USER "${ac_cv_compile_user}"
