@@ -1,5 +1,4 @@
 /* -*- mode:c -*- */
-/* $Id$ */
 
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
@@ -171,6 +170,10 @@
 
 #undef EJUDGE_REST_PREFIX
 #undef EJUDGE_REST_PREFIX_LEN
+
+#undef EJUDGE_PRIMARY_USER
+#undef EJUDGE_EXEC_USER
+#undef EJUDGE_COMPILE_USER
 
 #endif /* __CONFIG_H__ */
 

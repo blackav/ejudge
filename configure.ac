@@ -82,6 +82,10 @@ AC_ARG_ENABLE([lang-config-dir],AC_HELP_STRING([--enable-lang-config-dir],[insta
 
 AC_ARG_WITH([rest],AC_HELP_STRING([--with-rest],[enable RESTful API]),[ac_cv_rest="$withval"])
 
+AC_ARG_WITH([primary-user],AC_HELP_STRING([--with-primary-user],[primary ejudge user]),[ac_cv_primary_user="$withval"])
+AC_ARG_WITH([exec-user],AC_HELP_STRING([--with-exec-user],[ejudge executer user]),[ac_cv_exec_user="$withval"])
+AC_ARG_WITH([compile-user],AC_HELP_STRING([--with-compile-user],[ejudge compiler user]),[ac_cv_compile_user="$withval"])
+
 AC_ARG_WITH([httpd-cgi-bin-dir],AC_HELP_STRING([--with-httpd-cgi-bin-dir],[specify the path to the web serve CGI directory]),[ac_cv_httpd_cgi_bin_dir="${withval}"])
 AC_ARG_WITH([httpd-htdocs-dir],AC_HELP_STRING([--with-httpd-htdocs-dir],[specify the path to the web server HTML directory]),[ac_cv_httpd_htdocs_dir="${withval}"])
 
@@ -1345,6 +1349,19 @@ then
   ac_cv_rest_len=${#ac_cv_rest}
   AC_DEFINE_UNQUOTED(EJUDGE_REST_PREFIX,"${ac_cv_rest}")
   AC_DEFINE_UNQUOTED(EJUDGE_REST_PREFIX_LEN,${ac_cv_rest_len})
+fi
+
+if [[ x"${ac_cv_primary_user}" != x && x"${ac_cv_primary_user}" != xno ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_PRIMARY_USER,"${ac_cv_primary_user}")
+fi
+if [[ x"${ac_cv_exec_user}" != x && x"${ac_cv_exec_user}" != xno ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_EXEC_USER,"${ac_cv_exec_user}")
+fi
+if [[ x"${ac_cv_compile_user}" != x && x"${ac_cv_compile_user}" != xno ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_COMPILE_USER,"${ac_cv_compile_user}")
 fi
 
 if [[ x"${ac_cv_conf_64_bit}" != xyes ]]
