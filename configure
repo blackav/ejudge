@@ -769,6 +769,9 @@ enable_werror
 enable_preserve_scripts
 enable_lang_config_dir
 with_rest
+with_primary_user
+with_exec_user
+with_compile_user
 with_httpd_cgi_bin_dir
 with_httpd_htdocs_dir
 with_festival
@@ -1464,6 +1467,9 @@ Optional Packages:
                           [[EXPAT-DIR/lib]]
   --with-mysql=MYSQL-DIR  specify the path to the mysql installation directory
   --with-rest             enable RESTful API
+  --with-primary-user     primary ejudge user
+  --with-exec-user        ejudge executer user
+  --with-compile-user     ejudge compiler user
   --with-httpd-cgi-bin-dir
                           specify the path to the web serve CGI directory
   --with-httpd-htdocs-dir specify the path to the web server HTML directory
@@ -5653,6 +5659,25 @@ fi
 
 
 
+# Check whether --with-primary-user was given.
+if test "${with_primary_user+set}" = set; then :
+  withval=$with_primary_user; ac_cv_primary_user="$withval"
+fi
+
+
+# Check whether --with-exec-user was given.
+if test "${with_exec_user+set}" = set; then :
+  withval=$with_exec_user; ac_cv_exec_user="$withval"
+fi
+
+
+# Check whether --with-compile-user was given.
+if test "${with_compile_user+set}" = set; then :
+  withval=$with_compile_user; ac_cv_compile_user="$withval"
+fi
+
+
+
 # Check whether --with-httpd-cgi-bin-dir was given.
 if test "${with_httpd_cgi_bin_dir+set}" = set; then :
   withval=$with_httpd_cgi_bin_dir; ac_cv_httpd_cgi_bin_dir="${withval}"
@@ -8117,6 +8142,28 @@ _ACEOF
 
   cat >>confdefs.h <<_ACEOF
 #define EJUDGE_REST_PREFIX_LEN ${ac_cv_rest_len}
+_ACEOF
+
+fi
+
+if [ x"${ac_cv_primary_user}" != x && x"${ac_cv_primary_user}" != xno ]
+then
+  cat >>confdefs.h <<_ACEOF
+#define EJUDGE_PRIMARY_USER "${ac_cv_primary_user}"
+_ACEOF
+
+fi
+if [ x"${ac_cv_exec_user}" != x && x"${ac_cv_exec_user}" != xno ]
+then
+  cat >>confdefs.h <<_ACEOF
+#define EJUDGE_EXEC_USER "${ac_cv_exec_user}"
+_ACEOF
+
+fi
+if [ x"${ac_cv_compile_user}" != x && x"${ac_cv_compile_user}" != xno ]
+then
+  cat >>confdefs.h <<_ACEOF
+#define EJUDGE_COMPILE_USER "${ac_cv_compile_user}"
 _ACEOF
 
 fi
