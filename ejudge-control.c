@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -228,34 +228,15 @@ command_start(
 
   // start ej-compile
   if (!master_mode && !(skip_mask & EJ_COMPILE_MASK)) {
-    for (int i = 0; i < compile_parallelism; ++i) {
-      snprintf(path, sizeof(path), "%s/ej-compile", EJUDGE_SERVER_BIN_PATH);
-      tsk = task_New();
-      task_AddArg(tsk, path);
-      if (compile_parallelism > 1) {
-        task_AddArg(tsk, "-p");
-      }
-      task_AddArg(tsk, "-D");
-      if (user) {
-        task_AddArg(tsk, "-u");
-        task_AddArg(tsk, user);
-      }
-      if (group) {
-        task_AddArg(tsk, "-g");
-        task_AddArg(tsk, group);
-      }
-      if (workdir) {
-        snprintf(path, sizeof(path), "%s/compile", workdir);
-        task_AddArg(tsk, "-C");
-        task_AddArg(tsk, path);
-      }
-      task_AddArg(tsk, "conf/compile.cfg");
-      task_SetPathAsArg0(tsk);
-      task_Start(tsk);
-      task_Wait(tsk);
-      if (task_IsAbnormal(tsk)) goto failed;
-      task_Delete(tsk); tsk = 0;
-    }
+    snprintf(path, sizeof(path), "%s/ej-compile-control", EJUDGE_SERVER_BIN_PATH);
+    tsk = task_New();
+    task_AddArg(tsk, path);
+    task_AddArg(tsk, "start");
+    task_SetPathAsArg0(tsk);
+    task_Start(tsk);
+    task_Wait(tsk);
+    if (task_IsAbnormal(tsk)) goto failed;
+    task_Delete(tsk); tsk = 0;
     compile_started = 1;
   }
 
