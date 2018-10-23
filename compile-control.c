@@ -407,6 +407,15 @@ int main(int argc, char *argv[])
         return EXIT_SYSTEM_ERROR;
     }
 
+    uid_t ruid = -1, euid = -1, suid = -1;
+
+    getresuid(&ruid, &euid, &suid);
+    // drop privileges for a while
+    if (setresuid(-1, ruid, euid) < 0) {
+        fprintf(stderr, "bad\n");
+        return EXIT_SYSTEM_ERROR;
+    }
+
     int compile_uid = -1;
     int compile_gid = -1;
     int primary_uid = -1;
@@ -572,12 +581,12 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (setresuid(-1, euid, euid) < 0) {
+        fprintf(stderr, "bad\n");
+        return EXIT_SYSTEM_ERROR;
+    }
     if (primary_uid != compile_uid) {
         // change the identity
-        if (setuid(compile_uid) < 0) {
-            fprintf(stderr, "%s: cannot change user to %d: %s\n", program_name, compile_uid, strerror(errno));
-            return EXIT_SYSTEM_ERROR;
-        }
         if (setgid(compile_gid) < 0) {
             fprintf(stderr, "%s: cannot change group to %d: %s\n", program_name, compile_gid, strerror(errno));
             return EXIT_SYSTEM_ERROR;
@@ -585,6 +594,10 @@ int main(int argc, char *argv[])
         int supp_groups[1] = { compile_gid };
         if (setgroups(1, supp_groups) < 0) {
             fprintf(stderr, "%s: cannot change groups to %d: %s\n", program_name, compile_gid, strerror(errno));
+            return EXIT_SYSTEM_ERROR;
+        }
+        if (setuid(compile_uid) < 0) {
+            fprintf(stderr, "%s: cannot change user to %d: %s\n", program_name, compile_uid, strerror(errno));
             return EXIT_SYSTEM_ERROR;
         }
     }

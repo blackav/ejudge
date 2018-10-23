@@ -122,7 +122,9 @@ invoke_stopper(const char *prog, const char *ejudge_xml_path)
   tsk = task_New();
   task_AddArg(tsk, path);
   task_AddArg(tsk, "stop");
-  if (ejudge_xml_path) task_AddArg(tsk, ejudge_xml_path);
+  if (strcmp(prog, "ej-compile") != 0) {
+    if (ejudge_xml_path) task_AddArg(tsk, ejudge_xml_path);
+  }
   task_Start(tsk);
   task_Wait(tsk);
   task_Delete(tsk);
@@ -489,7 +491,7 @@ main(int argc, char *argv[])
   if (!strcmp(command, "start")) {
     if (command_start(config, user, group, ejudge_xml_path, force_mode,
                       slave_mode, all_run_serve, master_mode, parallelism,
-                      compile_parallelism, skip_mask) < 0) 
+                      compile_parallelism, skip_mask) < 0)
       r = 1;
   } else if (!strcmp(command, "stop")) {
     if (command_stop(config, ejudge_xml_path, slave_mode, master_mode) < 0)
