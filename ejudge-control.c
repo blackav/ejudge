@@ -122,7 +122,9 @@ invoke_stopper(const char *prog, const char *ejudge_xml_path)
   tsk = task_New();
   task_AddArg(tsk, path);
   task_AddArg(tsk, "stop");
-  if (ejudge_xml_path) task_AddArg(tsk, ejudge_xml_path);
+  if (strcmp(prog, "ej-compile") != 0) {
+    if (ejudge_xml_path) task_AddArg(tsk, ejudge_xml_path);
+  }
   task_Start(tsk);
   task_Wait(tsk);
   task_Delete(tsk);
