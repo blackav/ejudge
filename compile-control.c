@@ -394,7 +394,8 @@ int main(int argc, char *argv[])
             ++aidx;
         }
         if (aidx != argc - 1) {
-            system_error("invalid command line");
+            // ignore remaining args -- for compatibility
+            //system_error("invalid command line");
         }
         operation = argv[aidx];
     }
