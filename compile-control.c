@@ -94,6 +94,21 @@ system_error(const char *format, ...)
     exit(EXIT_SYSTEM_ERROR);
 }
 
+static void __attribute__((format(printf, 1, 2), noreturn))
+syscall_error(const char *format, ...)
+{
+    va_list args;
+    char buf[1024];
+    int saved_errno = errno;
+
+    va_start(args, format);
+    vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+
+    fprintf(stderr, "%s: %s: %s\n", program_name, buf, strerror(saved_errno));
+    exit(EXIT_SYSTEM_ERROR);
+}
+
 struct EnvVector
 {
     char **v;
@@ -412,8 +427,7 @@ int main(int argc, char *argv[])
     getresuid(&ruid, &euid, &suid);
     // drop privileges for a while
     if (setresuid(-1, ruid, euid) < 0) {
-        fprintf(stderr, "bad\n");
-        return EXIT_SYSTEM_ERROR;
+        syscall_error("setresuid failed");
     }
 
     int compile_uid = -1;
@@ -501,8 +515,7 @@ int main(int argc, char *argv[])
     }
     log_fd = open(logpath, O_WRONLY | O_APPEND | O_CREAT | O_NONBLOCK, 0600);
     if (log_fd < 0) {
-        fprintf(stderr, "%s: cannot open log file '%s': %s\n", program_name, logpath, strerror(errno));
-        return EXIT_SYSTEM_ERROR;
+        syscall_error("cannot open log file '%s'", logpath);
     }
     struct stat stb;
     fstat(log_fd, &stb);
@@ -582,23 +595,19 @@ int main(int argc, char *argv[])
     }
 
     if (setresuid(-1, euid, euid) < 0) {
-        fprintf(stderr, "bad\n");
-        return EXIT_SYSTEM_ERROR;
+        syscall_error("setresuid failed");
     }
     if (primary_uid != compile_uid) {
         // change the identity
         if (setgid(compile_gid) < 0) {
-            fprintf(stderr, "%s: cannot change group to %d: %s\n", program_name, compile_gid, strerror(errno));
-            return EXIT_SYSTEM_ERROR;
+            syscall_error("cannot change group to %d", compile_gid);
         }
         int supp_groups[1] = { compile_gid };
         if (setgroups(1, supp_groups) < 0) {
-            fprintf(stderr, "%s: cannot change groups to %d: %s\n", program_name, compile_gid, strerror(errno));
-            return EXIT_SYSTEM_ERROR;
+            syscall_error("cannot change groups to %d", compile_gid);
         }
         if (setuid(compile_uid) < 0) {
-            fprintf(stderr, "%s: cannot change user to %d: %s\n", program_name, compile_uid, strerror(errno));
-            return EXIT_SYSTEM_ERROR;
+            syscall_error("cannot change user to %d", compile_uid);
         }
     }
 
