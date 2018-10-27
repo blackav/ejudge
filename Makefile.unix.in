@@ -60,4 +60,8 @@ WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@ @ac_cv_gcc_wno_format_truncation@
 NCURSES_SUFFIX=@ac_cv_ncurses_suffix@
 WERROR=@ac_cv_werror_flag@
 
+PRIMARY_USER=@ac_cv_primary_user@
+COMPILE_USER=@ac_cv_compile_user@
+PRIMARY_USER=@ac_cv_exec_user@
+
 include main.unix.make
