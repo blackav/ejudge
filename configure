@@ -624,6 +624,9 @@ enable_option_checking=no
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 subdirs
+ac_cv_exec_user
+ac_cv_compile_user
+ac_cv_primary_user
 ac_cv_libmongo_client_libs
 ac_cv_libmongo_client_cflags
 ac_cv_has_libmongo_client
@@ -7823,6 +7826,10 @@ if [ x"${ac_cv_rest}" = x ]
 then
   ac_cv_rest="/ej/"
 fi
+
+
+
+
 
 
 
