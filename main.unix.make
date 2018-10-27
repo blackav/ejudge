@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2018 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -154,10 +154,10 @@ PB_OBJECTS = $(PB_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 INSTALLSCRIPT = ejudge-install.sh
 BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd
 SERVERBINTARGETS = ej-compile ej-compile-control ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen ej-parblock
-CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
-TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} newrevinfo
-STYLEFILES = style/logo.gif style/priv.css style/unpriv.css style/unpriv3.css style/ejudge3.css style/priv.js style/priv_prob_dlg.js style/unpriv.js style/filter_expr.html style/sprintf.js style/ejudge3_ss.css style/ejudge_mobile.css style/jquery.min.js style/jquery.timepicker.css style/jquery.timepicker.min.js style/prism.js style/prism.css style/Roboto-Regular.ttf style/Roboto-Bold.ttf style/Roboto-Italic.ttf style/Roboto-BoldItalic.ttf style/croppie.css style/croppie.js
 SUIDBINTARGETS = ej-suid-chown ej-suid-exec ej-suid-ipcrm ej-suid-kill
+CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
+TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} newrevinfo ${SUIDBINTARGETS}
+STYLEFILES = style/logo.gif style/priv.css style/unpriv.css style/unpriv3.css style/ejudge3.css style/priv.js style/priv_prob_dlg.js style/unpriv.js style/filter_expr.html style/sprintf.js style/ejudge3_ss.css style/ejudge_mobile.css style/jquery.min.js style/jquery.timepicker.css style/jquery.timepicker.min.js style/prism.js style/prism.css style/Roboto-Regular.ttf style/Roboto-Bold.ttf style/Roboto-Italic.ttf style/Roboto-BoldItalic.ttf style/croppie.css style/croppie.js
 
 all: prereq_all local_all subdirs_all mo
 local_all: $(TARGETS) ejudge-config
@@ -229,7 +229,7 @@ local_install: ${TARGETS} ejudge-config po mo
 	install -d "${DESTDIR}${prefix}/lib/ejudge/make"
 	install -m 0644 csp_header.make "${DESTDIR}${prefix}/lib/ejudge/make"
 
-install: local_install
+install: local_install suid_install
 	$(MAKE) -C libdwarf DESTDIR="${DESTDIR}" install
 	$(MAKE) -C reuse DESTDIR="${DESTDIR}" install
 	$(MAKE) -C cfront DESTDIR="${DESTDIR}" install
@@ -248,6 +248,12 @@ install: local_install
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" install
 	#if [ ! -f "${INSTALLSCRIPT}" ]; then ./ejudge-setup -b; fi
 	if [ -f "${INSTALLSCRIPT}" ]; then install -m 0755 "${INSTALLSCRIPT}" "${DESTDIR}${bindir}"; fi
+	@if [ `id -u` != 0 ]; then echo; echo '========================================='; echo "Please, execute 'make suidperms' as root!"; echo '========================================='; else $(MAKE) DESTDIR="${DESTDIR}" suidperms; fi
+
+suidperms :
+	@if [ `id -u` != 0 ]; then echo; echo '========================================='; echo "Please, execute 'make suidperms' as root!"; echo '========================================='; false; fi;
+	for i in ${SUIDBINTARGETS}; do chown root:root "${DESTDIR}${serverbindir}/$$i" || echo 'chown failed!'; chmod 6555 "${DESTDIR}${serverbindir}/$$i"; done
+	if [ "${COMPILE_USER}" != "" -a "${COMPILE_USER}" != "${PRIMARY_USER}" ]; then chown root:root "${DESTDIR}${serverbindir}/ej-compile-control"; chmod 6555 "${DESTDIR}${serverbindir}/ej-compile-control"; fi
 
 suid_install : suid_bins
 	install -d "${DESTDIR}${serverbindir}"
