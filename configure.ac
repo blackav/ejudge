@@ -1189,6 +1189,10 @@ AC_SUBST(ac_cv_has_libmongo_client)
 AC_SUBST(ac_cv_libmongo_client_cflags)
 AC_SUBST(ac_cv_libmongo_client_libs)
 
+AC_SUBST(ac_cv_primary_user)
+AC_SUBST(ac_cv_compile_user)
+AC_SUBST(ac_cv_exec_user)
+
 if [[ x"${ac_cv_has_regex}" = x1 ]]
 then
   AC_DEFINE(CONF_HAS_REGEX,1)

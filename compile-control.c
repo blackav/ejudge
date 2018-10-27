@@ -94,6 +94,21 @@ system_error(const char *format, ...)
     exit(EXIT_SYSTEM_ERROR);
 }
 
+static void __attribute__((format(printf, 1, 2), noreturn))
+syscall_error(const char *format, ...)
+{
+    va_list args;
+    char buf[1024];
+    int saved_errno = errno;
+
+    va_start(args, format);
+    vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+
+    fprintf(stderr, "%s: %s: %s\n", program_name, buf, strerror(saved_errno));
+    exit(EXIT_SYSTEM_ERROR);
+}
+
 struct EnvVector
 {
     char **v;
@@ -345,8 +360,7 @@ emergency_stop(void)
 int main(int argc, char *argv[])
 {
     if (argc < 1) {
-        fprintf(stderr, "%s: no arguments\n", program_name);
-        return EXIT_SYSTEM_ERROR;
+        system_error("no arguments");
     }
 
     {
@@ -373,22 +387,20 @@ int main(int argc, char *argv[])
                 ++aidx;
                 break;
             } else if (argv[aidx][0] == '-') {
-                fprintf(stderr, "%s: invalid option '%s'\n", program_name, argv[aidx]);
-                return EXIT_SYSTEM_ERROR;
+                system_error("invalid option '%s'", argv[aidx]);
             } else {
                 break;
             }
             ++aidx;
         }
         if (aidx != argc - 1) {
-            fprintf(stderr, "%s: invalid command line\n", program_name);
-            return EXIT_SYSTEM_ERROR;
+            // ignore remaining args -- for compatibility
+            //system_error("invalid command line");
         }
         operation = argv[aidx];
     }
     if (!operation) {
-        fprintf(stderr, "%s: no operation\n", program_name);
-        return EXIT_SYSTEM_ERROR;
+        system_error("no operation");
     }
     if (!strcmp(operation, "start")) {
         op = OPERATION_START;
@@ -403,8 +415,7 @@ int main(int argc, char *argv[])
     } else if (!strcmp(operation, "status")) {
         op = OPERATION_STATUS;
     } else {
-        fprintf(stderr, "%s: invalid operation '%s'\n", program_name, operation);
-        return EXIT_SYSTEM_ERROR;
+        system_error("invalid operation '%s'", operation);
     }
 
     uid_t ruid = -1, euid = -1, suid = -1;
@@ -412,8 +423,7 @@ int main(int argc, char *argv[])
     getresuid(&ruid, &euid, &suid);
     // drop privileges for a while
     if (setresuid(-1, ruid, euid) < 0) {
-        fprintf(stderr, "bad\n");
-        return EXIT_SYSTEM_ERROR;
+        syscall_error("setresuid failed");
     }
 
     int compile_uid = -1;
@@ -426,14 +436,12 @@ int main(int argc, char *argv[])
     {
         struct passwd *upwd = getpwnam(EJUDGE_COMPILE_USER);
         if (!upwd) {
-            fprintf(stderr, "%s: no user '%s'\n", program_name, EJUDGE_COMPILE_USER);
-            return EXIT_SYSTEM_ERROR;
+            system_error("no user '%s'", EJUDGE_COMPILE_USER);
         }
         compile_uid = upwd->pw_uid;
         compile_gid = upwd->pw_gid;
         if (snprintf(compile_home, sizeof(compile_home), "%s", upwd->pw_dir) >= sizeof(compile_home)) {
-            fprintf(stderr, "%s: invalid home directory\n", program_name);
-            return EXIT_SYSTEM_ERROR;
+            system_error("invalid home directory");
         }
         const unsigned char *primary_user = NULL;
 #if defined EJUDGE_PRIMARY_USER
@@ -443,8 +451,7 @@ int main(int argc, char *argv[])
 #endif
         upwd = getpwnam(primary_user);
         if (!upwd) {
-            fprintf(stderr, "%s: no user '%s'\n", program_name, primary_user);
-            return EXIT_SYSTEM_ERROR;
+            system_error("no user '%s'", primary_user);
         }
         primary_uid = upwd->pw_uid;
     }
@@ -453,8 +460,7 @@ int main(int argc, char *argv[])
     if (primary_uid != compile_uid) {
         // disallow running this program by unwanted users
         if (current_uid != 0 && current_uid != primary_uid) {
-            fprintf(stderr, "%s: this program cannot be run by this user\n", program_name);
-            return EXIT_SYSTEM_ERROR;
+            system_error("this program cannot be run by this user");
         }
     }
 
@@ -464,24 +470,21 @@ int main(int argc, char *argv[])
     if (!ejudge_xml_path) ejudge_xml_path = EJUDGE_XML_PATH;
 #endif /* EJUDGE_XML_PATH */
     if (!(config = ejudge_cfg_parse(ejudge_xml_path, 1))) {
-        fprintf(stderr, "%s: failed to parse '%s'\n", program_name, ejudge_xml_path);
-        return EXIT_SYSTEM_ERROR;
+        system_error("failed to parse '%s'", ejudge_xml_path);
     }
 
     unsigned char **host_names = NULL;
     if (!(host_names = ejudge_get_host_names())) {
-        fprintf(stderr, "%s: cannot obtain the list of host names\n", program_name);
-        return EXIT_SYSTEM_ERROR;
+        system_error("cannot obtain the list of host names");
     }
     if (!host_names[0]) {
-        fprintf(stderr, "%s: cannot determine the name of the host\n", program_name);
-        return EXIT_SYSTEM_ERROR;
+        system_error("cannot determine the name of the host");
     }
 
     int compile_parallelism = 1;
     compile_parallelism = ejudge_cfg_get_host_option_int(config, host_names, "compile_parallelism", 1, 0);
     if (compile_parallelism <= 0 || compile_parallelism > 128) {
-        fprintf(stderr, "%s: invalid value of compile_parallelism host option\n", program_name);
+        system_error("invalid value of compile_parallelism host option");
     }
 
     // open log path before changing the user
@@ -490,60 +493,50 @@ int main(int argc, char *argv[])
 #if defined EJUDGE_CONTESTS_HOME_DIR
     if (!logpath[0]) {
       if (snprintf(logpath, sizeof(logpath), "%s/var/ej-compile.log", EJUDGE_CONTESTS_HOME_DIR) >= sizeof(logpath)) {
-        fprintf(stderr, "%s: log path is too long\n", program_name);
-        return EXIT_SYSTEM_ERROR;
+        system_error("log path is too long");
       }
     }
 #endif
     if (!logpath[0]) {
-      fprintf(stderr, "%s: compile log file is not specified\n", program_name);
-      return EXIT_SYSTEM_ERROR;
+      system_error("compile log file is not specified");
     }
     log_fd = open(logpath, O_WRONLY | O_APPEND | O_CREAT | O_NONBLOCK, 0600);
     if (log_fd < 0) {
-        fprintf(stderr, "%s: cannot open log file '%s': %s\n", program_name, logpath, strerror(errno));
-        return EXIT_SYSTEM_ERROR;
+        syscall_error("cannot open log file '%s'", logpath);
     }
     struct stat stb;
     fstat(log_fd, &stb);
     if (!S_ISREG(stb.st_mode)) {
-        fprintf(stderr, "%s: log file '%s' is not regular\n", program_name, logpath);
-        return EXIT_SYSTEM_ERROR;
+        system_error("log file '%s' is not regular", logpath);
     }
     fcntl(log_fd, F_SETFL, fcntl(log_fd, F_GETFL) & ~O_NONBLOCK);
 
     unsigned char workdir[PATH_MAX] = {};
     if (config && config->compile_home_dir && config->compile_home_dir[0]) {
         if (snprintf(workdir, sizeof(workdir), "%s", config->compile_home_dir) >= sizeof(workdir)) {
-            fprintf(stderr, "%s: invalid working directory\n", program_name);
-            return EXIT_SYSTEM_ERROR;
+            system_error("invalid working directory");
         }
     }
 #if defined EJUDGE_CONTESTS_HOME_DIR
     if (!workdir[0]) {
         if (snprintf(workdir, sizeof(workdir), "%s/compile", EJUDGE_CONTESTS_HOME_DIR) >= sizeof(workdir)) {
-            fprintf(stderr, "%s: invalid working directory\n", program_name);
-            return EXIT_SYSTEM_ERROR;
+            system_error("invalid working directory");
         }
     }
 #endif
     if (!workdir[0]) {
-        fprintf(stderr, "%s: working directory not specified\n", program_name);
-        return EXIT_SYSTEM_ERROR;
+        system_error("working directory not specified");
     }
     if (stat(workdir, &stb) < 0) {
-        fprintf(stderr, "%s: working directory does not exist\n", program_name);
-        return EXIT_SYSTEM_ERROR;
+        system_error("working directory does not exist");
     }
     if (!S_ISDIR(stb.st_mode)) {
-        fprintf(stderr, "%s: invalid working directory\n", program_name);
-        return EXIT_SYSTEM_ERROR;
+        system_error("invalid working directory");
     }
 
     unsigned char ej_compile_path[PATH_MAX];
     if (snprintf(ej_compile_path, sizeof(ej_compile_path), "%s/%s", EJUDGE_SERVER_BIN_PATH, EJ_COMPILE_PROGRAM) >= sizeof(ej_compile_path)) {
-        fprintf(stderr, "%s: invalid ej-compile path\n", program_name);
-        return EXIT_SYSTEM_ERROR;
+        system_error("invalid ej-compile path");
     }
 
     struct EnvVector ev = {};
@@ -582,23 +575,19 @@ int main(int argc, char *argv[])
     }
 
     if (setresuid(-1, euid, euid) < 0) {
-        fprintf(stderr, "bad\n");
-        return EXIT_SYSTEM_ERROR;
+        syscall_error("setresuid failed");
     }
     if (primary_uid != compile_uid) {
         // change the identity
         if (setgid(compile_gid) < 0) {
-            fprintf(stderr, "%s: cannot change group to %d: %s\n", program_name, compile_gid, strerror(errno));
-            return EXIT_SYSTEM_ERROR;
+            syscall_error("cannot change group to %d", compile_gid);
         }
         int supp_groups[1] = { compile_gid };
         if (setgroups(1, supp_groups) < 0) {
-            fprintf(stderr, "%s: cannot change groups to %d: %s\n", program_name, compile_gid, strerror(errno));
-            return EXIT_SYSTEM_ERROR;
+            syscall_error("cannot change groups to %d", compile_gid);
         }
         if (setuid(compile_uid) < 0) {
-            fprintf(stderr, "%s: cannot change user to %d: %s\n", program_name, compile_uid, strerror(errno));
-            return EXIT_SYSTEM_ERROR;
+            syscall_error("cannot change user to %d", compile_uid);
         }
     }
 
@@ -678,8 +667,7 @@ int main(int argc, char *argv[])
         }
         break;
     default:
-        fprintf(stderr, "%s: unhandled operation %d\n", program_name, op);
-        return EXIT_SYSTEM_ERROR;
+        system_error("unhandled operation %d", op);
     }
 }
 
