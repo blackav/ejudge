@@ -571,7 +571,7 @@ static const size_t cfg_final_offsets[TG_LAST_TAG] =
 };
 
 static struct ejudge_cfg *
-ejudge_cfg_do_parse(char const *path, int no_system_lookup)
+ejudge_cfg_do_parse(char const *path, FILE *in_file, int no_system_lookup)
 {
   struct xml_tree *tree = 0, *p;
   struct ejudge_cfg *cfg = 0;
@@ -581,7 +581,13 @@ ejudge_cfg_do_parse(char const *path, int no_system_lookup)
   xml_err_path = path;
   xml_err_spec = &ejudge_config_parse_spec;
 
-  tree = xml_build_tree(NULL, path, &ejudge_config_parse_spec);
+  if (in_file) {
+    tree = xml_build_tree_file(NULL, in_file, &ejudge_config_parse_spec);
+    // in_file is closed in the function, so reset the pointer
+    in_file = NULL;
+  } else {
+    tree = xml_build_tree(NULL, path, &ejudge_config_parse_spec);
+  }
   if (!tree) return 0;
   if (tree->tag != TG_CONFIG) {
     xml_err_top_level(tree, TG_CONFIG);
@@ -690,7 +696,7 @@ ejudge_cfg_parse(char const *path, int no_system_lookup)
   struct ejudge_cfg *cfg = 0;
   unsigned char pathbuf[PATH_MAX];
 
-  cfg = ejudge_cfg_do_parse(path, no_system_lookup);
+  cfg = ejudge_cfg_do_parse(path, NULL, no_system_lookup);
   if (!cfg) return NULL;
 
   if (!cfg->db_path) {
@@ -1079,7 +1085,7 @@ ejudge_cfg_refresh_caps_file(const struct ejudge_cfg *cfg, int force_flag)
 
   info("reloading %s", inf->path);
 
-  struct ejudge_cfg *new_cfg = ejudge_cfg_do_parse(inf->path, 0);
+  struct ejudge_cfg *new_cfg = ejudge_cfg_do_parse(inf->path, NULL, 0);
   if (!new_cfg) {
     err("%s: %s parsing failed", __FUNCTION__, inf->path);
     return;
