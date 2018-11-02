@@ -1617,6 +1617,7 @@ main(int argc, char *argv[])
   int     prepare_flags = 0;
   unsigned char *user = 0, *group = 0, *workdir = 0;
   int     parallel_mode = 0;
+  int     ejudge_xml_fd = -1;
 
 #if HAVE_SETSID - 0
   path_t  log_path;
@@ -1698,6 +1699,17 @@ main(int argc, char *argv[])
       ejudge_xml_path = argv[i++];
       argv_restart[j++] = "-x";
       argv_restart[j++] = ejudge_xml_path;
+    } else if (!strcmp(argv[i], "-l")) {
+      if (++i >= argc) goto print_usage;
+      argv_restart[j++] = argv[i - 1];
+      argv_restart[j++] = argv[i];
+      char *eptr = NULL;
+      errno = 0;
+      long lval = strtol(argv[i++], &eptr, 10);
+      if (errno || *eptr || eptr == argv[i - 1] || (int) lval != lval || lval < 0) goto print_usage;
+      struct stat stb;
+      if (fstat(lval, &stb) < 0 || !S_ISREG(stb.st_mode)) goto print_usage;
+      ejudge_xml_fd = lval;
     } else if (!strcmp(argv[i], "-p")) {
       parallel_mode = 1;
       ++i;
@@ -1736,7 +1748,16 @@ main(int argc, char *argv[])
 #endif
 
 #ifndef __WIN32__
-  ejudge_config = ejudge_cfg_parse(ejudge_xml_path, 1);
+  if (ejudge_xml_fd > 0) {
+    FILE *exf = fdopen(dup(ejudge_xml_fd), "r");
+    if (!exf) {
+      fprintf(stderr, "%s: FD is invalid\n", argv[0]);
+      return 1;
+    }
+    ejudge_config = ejudge_cfg_parse_file(ejudge_xml_path, exf, 1);
+  } else {
+    ejudge_config = ejudge_cfg_parse(ejudge_xml_path, 1);
+  }
   if (!ejudge_config) {
     fprintf(stderr, "%s: ejudge.xml is invalid\n", argv[0]);
     return 1;

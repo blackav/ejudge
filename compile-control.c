@@ -272,7 +272,8 @@ start_process(
         struct EnvVector *ev,
         const unsigned char *exepath,
         int is_parallel,
-        int replace_env)
+        int replace_env,
+        int ej_xml_fd)
 {
     int pid = fork();
     if (pid < 0) {
@@ -316,9 +317,15 @@ start_process(
     sigprocmask(SIG_SETMASK, &ss, NULL);
 
     char *args[64];
+    char lbuf[64];
     int argi = 0;
     args[argi++] = (char*) exepath;
     if (is_parallel) args[argi++] = "-p";
+    if (ej_xml_fd >= 0) {
+        args[argi++] = "-l";
+        snprintf(lbuf, sizeof(lbuf), "%d", ej_xml_fd);
+        args[argi++] = lbuf;
+    }
     args[argi++] = "conf/compile.cfg";
     args[argi] = NULL;
 
@@ -473,6 +480,14 @@ int main(int argc, char *argv[])
         system_error("failed to parse '%s'", ejudge_xml_path);
     }
 
+    int ejudge_xml_fd = -1;
+    if (primary_uid != compile_uid) {
+        ejudge_xml_fd = open(ejudge_xml_path, O_RDONLY);
+        if (ejudge_xml_fd < 0) {
+            system_error("cannot open '%s'", ejudge_xml_path);
+        }
+    }
+
     unsigned char **host_names = NULL;
     if (!(host_names = ejudge_get_host_names())) {
         system_error("cannot obtain the list of host names");
@@ -612,7 +627,7 @@ int main(int argc, char *argv[])
             }
 
             for (int i = 0; i < compile_parallelism; ++i) {
-                int ret = start_process(config, EJ_COMPILE_PROGRAM, log_fd, workdir, &ev, ej_compile_path, compile_parallelism > 1, 1 /* FIXME */);
+                int ret = start_process(config, EJ_COMPILE_PROGRAM, log_fd, workdir, &ev, ej_compile_path, compile_parallelism > 1, 1 /* FIXME */, ejudge_xml_fd);
                 if (ret < 0) {
                     emergency_stop();
                     return EXIT_SYSTEM_ERROR;
