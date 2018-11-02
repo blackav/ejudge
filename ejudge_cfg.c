@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -690,13 +690,13 @@ ejudge_cfg_do_parse(char const *path, FILE *in_file, int no_system_lookup)
   return 0;
 }
 
-struct ejudge_cfg *
-ejudge_cfg_parse(char const *path, int no_system_lookup)
+static struct ejudge_cfg *
+ejudge_cfg_parse_2(char const *path, FILE *in_file, int no_system_lookup)
 {
   struct ejudge_cfg *cfg = 0;
   unsigned char pathbuf[PATH_MAX];
 
-  cfg = ejudge_cfg_do_parse(path, NULL, no_system_lookup);
+  cfg = ejudge_cfg_do_parse(path, in_file, no_system_lookup);
   if (!cfg) return NULL;
 
   if (!cfg->db_path) {
@@ -777,7 +777,9 @@ ejudge_cfg_parse(char const *path, int no_system_lookup)
   }
 #endif /* EJUDGE_SCRIPT_DIR */
 
-  cfg->caps_file_info = ejudge_cfg_create_caps_file(path);
+  if (path) {
+    cfg->caps_file_info = ejudge_cfg_create_caps_file(path);
+  }
 
   //ejudge_cfg_unparse(cfg, stdout);
   return cfg;
@@ -785,6 +787,18 @@ ejudge_cfg_parse(char const *path, int no_system_lookup)
  failed:
   if (cfg) ejudge_cfg_free(cfg);
   return 0;
+}
+
+struct ejudge_cfg *
+ejudge_cfg_parse(char const *path, int no_system_lookup)
+{
+  return ejudge_cfg_parse_2(path, NULL, no_system_lookup);
+}
+
+struct ejudge_cfg *
+ejudge_cfg_parse_file(const char *path, FILE *in_file, int no_system_lookup)
+{
+  return ejudge_cfg_parse_2(path, in_file, no_system_lookup);
 }
 
 struct ejudge_cfg *

@@ -3,7 +3,7 @@
 #ifndef __EJUDGE_CFG_H__
 #define __EJUDGE_CFG_H__ 1
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -123,6 +123,7 @@ struct ejudge_cfg
 };
 
 struct ejudge_cfg *ejudge_cfg_parse(char const *, int no_system_lookup);
+struct ejudge_cfg *ejudge_cfg_parse_file(const char *path, FILE *in_file, int no_system_lookup);
 struct ejudge_cfg *ejudge_cfg_free(struct ejudge_cfg *);
 struct xml_tree   *ejudge_cfg_free_subtree(struct xml_tree *p);
 void ejudge_cfg_unparse(struct ejudge_cfg *, FILE *);
