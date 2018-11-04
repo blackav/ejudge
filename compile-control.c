@@ -364,6 +364,170 @@ emergency_stop(void)
     signal_and_wait(SIGTERM);
 }
 
+static void
+change_ownership_and_permissions(const unsigned char *dir, const unsigned char *name, int uid, int gid, int perms)
+{
+    unsigned char p[PATH_MAX];
+    if (snprintf(p, sizeof(p), "%s/%s", dir, name) >= sizeof(p)) return;
+    struct stat stb;
+    if (stat(p, &stb) < 0 || !S_ISDIR(stb.st_mode)) return;
+
+    chown(p, uid, gid);
+    chmod(p, perms);
+}
+
+static void
+spool_change_ownership_and_permissions(const unsigned char *dir, const unsigned char *name, int uid, int gid, int perms)
+{
+    unsigned char p[PATH_MAX];
+    if (snprintf(p, sizeof(p), "%s/%s", dir, name) >= sizeof(p)) return;
+    struct stat stb;
+    if (stat(p, &stb) < 0 || !S_ISDIR(stb.st_mode)) return;
+
+    change_ownership_and_permissions(p, "dir", uid, gid, perms);
+    change_ownership_and_permissions(p, "in", uid, gid, perms);
+    change_ownership_and_permissions(p, "out", uid, gid, perms);
+}
+
+static void
+check_directories(int primary_uid, int compile_uid, int primary_gid, int compile_gid, const struct ejudge_cfg *config)
+{
+    // check compile working directory
+    unsigned char d1[PATH_MAX];
+    unsigned char d2[PATH_MAX];
+    unsigned char d3[PATH_MAX];
+    unsigned char d4[PATH_MAX];
+    struct stat stb;
+
+#if defined EJUDGE_LOCAL_DIR
+    snprintf(d1, sizeof(d1), "%s", EJUDGE_LOCAL_DIR);
+    if (stat(d1, &stb) < 0 || !S_ISDIR(stb.st_mode)) {
+        system_error("directory '%s' does not exist", d1);
+    }
+    snprintf(d2, sizeof(d2), "%s/compile", d1);
+    if (stat(d2, &stb) >= 0) {
+        if (!S_ISDIR(stb.st_mode)) {
+            system_error("'%s' is not a directory", d2);
+        }
+    } else {
+        if (mkdir(d2, 0755) < 0) {
+            syscall_error("cannot create '%s'", d2);
+        }
+    }
+    snprintf(d3, sizeof(d3), "%s/work", d2);
+    if (stat(d3, &stb) >= 0) {
+        if (!S_ISDIR(stb.st_mode)) {
+            system_error("'%s' is not a directory", d3);
+        }
+        // must be group-writable
+        if (stb.st_gid != compile_gid) {
+            chown(d3, -1, compile_gid);
+            chmod(d3, 06775);
+        }
+    } else {
+        if (mkdir(d3, 0755) < 0) {
+            syscall_error("cannot create '%s'", d3);
+        }
+        chown(d3, primary_uid, compile_gid);
+        chmod(d3, 06775);
+    }
+#endif
+    d1[0] = 0;
+    if (config && config->compile_home_dir && config->compile_home_dir[0]) {
+        snprintf(d1, sizeof(d1), "%s", config->compile_home_dir);
+    }
+#if defined EJUDGE_CONTESTS_HOME_DIR
+    if (!d1[0]) {
+        snprintf(d1, sizeof(d1), "%s/compile", EJUDGE_CONTESTS_HOME_DIR);
+    }
+#endif
+    if (stat(d1, &stb) < 0 || !S_ISDIR(stb.st_mode)) {
+        system_error("'%s' is not a directory", d1);
+    }
+    snprintf(d2, sizeof(d2), "%s/var", d1);
+    if (stat(d2, &stb) >= 0) {
+        if (!S_ISDIR(stb.st_mode)) {
+            system_error("'%s' is not a directory", d2);
+        }
+    } else {
+        if (mkdir(d2, 0755) < 0) {
+            syscall_error("cannot create '%s'", d2);
+        }
+        chown(d3, primary_uid, primary_gid);
+        chmod(d3, 0755);
+    }
+    // reserve working directory
+    snprintf(d3, sizeof(d3), "%s/work", d2);
+    if (stat(d3, &stb) >= 0) {
+        if (!S_ISDIR(stb.st_mode)) {
+            system_error("'%s' is not a directory", d3);
+        }
+        // must be group-writable
+        if (stb.st_gid != compile_gid) {
+            chown(d3, -1, compile_gid);
+            chmod(d3, 06775);
+        }
+    } else {
+        if (mkdir(d3, 0755) < 0) {
+            syscall_error("cannot create '%s'", d3);
+        }
+        chown(d3, primary_uid, compile_gid);
+        chmod(d3, 06775);
+    }
+    // spool directory
+    snprintf(d3, sizeof(d3), "%s/compile", d2);
+    if (stat(d3, &stb) >= 0) {
+        if (!S_ISDIR(stb.st_mode)) {
+            system_error("'%s' is not a directory", d3);
+        }
+        // must be group-writable
+        if (stb.st_gid != compile_gid) {
+            chown(d3, -1, compile_gid);
+            chmod(d3, 06775);
+        }
+    } else {
+        if (mkdir(d3, 0755) < 0) {
+            syscall_error("cannot create '%s'", d3);
+        }
+        chown(d3, primary_uid, compile_gid);
+        chmod(d3, 06775);
+    }
+    // spool directory skeleton
+    snprintf(d4, sizeof(d4), "%s/upgrade-v2", d3);
+    if (lstat(d4, &stb) >= 0) {
+        if (!S_ISREG(stb.st_mode)) {
+            system_error("'%s' is not a regular file", d4);
+        }
+        return;
+    }
+
+    change_ownership_and_permissions(d3, "src", primary_uid, compile_gid, 06777);
+    spool_change_ownership_and_permissions(d3, "queue", primary_uid, compile_gid, 06777);
+
+    DIR *d = opendir(d3);
+    if (d) {
+        struct dirent *dd;
+        while ((dd = readdir(d))) {
+            if (strlen(dd->d_name) == 6) {
+                errno = 0;
+                char *eptr = 0;
+                long cnts_id = strtol(dd->d_name, &eptr, 10);
+                if (!errno && !*eptr && (int) cnts_id == cnts_id && cnts_id > 0) {
+                    snprintf(d4, sizeof(d4), "%s/%s", d3, dd->d_name);
+                    if (stat(d4, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+                        change_ownership_and_permissions(d4, "report", primary_uid, compile_gid, 06777);
+                        spool_change_ownership_and_permissions(d4, "status", primary_uid, compile_gid, 06777);
+                    }
+                }
+            }
+        }
+        closedir(d);
+    }
+
+    snprintf(d4, sizeof(d4), "%s/upgrade-v2", d3);
+    close(open(d4, O_WRONLY | O_CREAT | O_NONBLOCK, 0660));
+}
+
 int main(int argc, char *argv[])
 {
     if (argc < 1) {
@@ -436,6 +600,7 @@ int main(int argc, char *argv[])
     int compile_uid = -1;
     int compile_gid = -1;
     int primary_uid = -1;
+    int primary_gid = -1;
     int current_uid = -1;
     unsigned char compile_home[PATH_MAX] = {};
 #if defined EJUDGE_COMPILE_USER
@@ -461,6 +626,7 @@ int main(int argc, char *argv[])
             system_error("no user '%s'", primary_user);
         }
         primary_uid = upwd->pw_uid;
+        primary_gid = upwd->pw_gid;
     }
 #endif
     current_uid = getuid();
@@ -587,6 +753,10 @@ int main(int argc, char *argv[])
                 env_set(&ev, "LANG", ep + 1);
             }
         }
+    }
+
+    if (op == OPERATION_START && primary_uid != compile_uid) {
+        check_directories(primary_uid, primary_gid, compile_uid, compile_gid, config);
     }
 
     if (setresuid(-1, euid, euid) < 0) {
