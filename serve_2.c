@@ -2173,6 +2173,9 @@ serve_run_request(
   if (lang && lang->run_max_stack_size > 0) {
     srpp->max_stack_size = lang->run_max_stack_size;
   }
+  if (lang && lang->run_max_vm_size > 0) {
+    srpp->max_vm_size = lang->run_max_vm_size;
+  }
 
   if (tester) {
     struct super_run_in_tester_packet *srtp = srp->tester;

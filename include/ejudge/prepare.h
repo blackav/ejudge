@@ -1297,6 +1297,8 @@ struct section_language_data
   ej_size64_t max_file_size;
   /** stack size limit for compiled programs, overrides the problem settings */
   ej_size64_t run_max_stack_size;
+  /** virtual memory size limit for compiled programs, overrides the problem settings */
+  ej_size64_t run_max_vm_size;
 
   /** index of the compile directory in the list of compile servers */
   int compile_dir_index;

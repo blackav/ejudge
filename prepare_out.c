@@ -902,6 +902,9 @@ prepare_unparse_lang(
   if (lang->run_max_stack_size > 0) {
     fprintf(f, "run_max_stack_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), lang->run_max_stack_size));
   }
+  if (lang->run_max_vm_size > 0) {
+    fprintf(f, "run_max_vm_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), lang->run_max_vm_size));
+  }
 
   if (lang->compiler_env) {
     for (i = 0; lang->compiler_env[i]; i++) {
