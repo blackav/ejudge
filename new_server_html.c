@@ -14336,7 +14336,7 @@ batch_login(
 
 database_error:
   fprintf(fout, "Content-type: text/plain; charset=%s\n\n", EJUDGE_CHARSET);
-  fprintf(fout, "fail\n");
+  fprintf(fout, "PERMISSION DENIED: did you participate in the first day?\n");
   goto cleanup;
 
 invalid_parameter:
