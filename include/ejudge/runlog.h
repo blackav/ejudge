@@ -110,6 +110,7 @@ run_add_record(
         int            variant,
         int            is_hidden,
         int            mime_type,
+        const unsigned char *prob_uuid,
         int            store_flags);
 int run_start_contest(runlog_state_t, time_t);
 time_t run_get_start_time(runlog_state_t);

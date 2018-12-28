@@ -315,6 +315,7 @@ run_add_record(
         int            variant,
         int            is_hidden,
         int            mime_type,
+        const unsigned char *prob_uuid,
         int            store_flags)
 {
   int i;
@@ -419,6 +420,9 @@ run_add_record(
     flags |= RE_RUN_UUID;
   }
 #endif
+  if (prob_uuid) {
+    flags |= RE_PROB_UUID;
+  }
 
   int uuid_hash_index = -1;
   if (state->uuid_hash_state >= 0) {
@@ -438,7 +442,11 @@ run_add_record(
   }
   state->user_count = -1;
 
-  if (state->iface->add_entry(state->cnts, i, &re, flags) < 0) return -1;
+  if (state->iface->add_entry_2 && (flags & RE_PROB_UUID)) {
+    if (state->iface->add_entry_2(state->cnts, i, &re, flags, prob_uuid) < 0) return -1;
+  } else {
+    if (state->iface->add_entry(state->cnts, i, &re, flags) < 0) return -1;
+  }
 
   // updating user_id index
   extend_run_extras(state);
