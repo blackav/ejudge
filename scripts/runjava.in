@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2004-2017 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2004-2018 Alexander Chernov <cher@ejudge.ru>
 
 # assume that we have single argument
 # EJUDGE_JAVA_FLAGS may be used to pass additional flags
@@ -40,8 +40,7 @@ fi
 if [ x"${EJUDGE_JAVA_POLICY}" = xnone ]
 then
   # no security policy, use with caution!
-  mv "${runfile}" Main.jar || exit 128
-  exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} -jar ./Main.jar
+  exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} -jar "${runfile}"
 fi
 
 [ x"${EJUDGE_JAVA_POLICY}" = x ] && EJUDGE_JAVA_POLICY=default.policy
@@ -68,11 +67,9 @@ fi
 if unzip -c -q "${runfile}" META-INF/MANIFEST.MF | grep Scala > /dev/null
 then
     # that's scala
-    mv "${runfile}" Main.jar || exit 128
     # FIXME: consider special options for scala
     F=${EJUDGE_JAVA_FLAGS//-X/-J-X}
-    exec scala ${F} Main.jar "$@"
+    exec scala ${F} "${runfile}" "$@"
 fi
 
-mv "${runfile}" Main.jar || exit 128
-exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} -Djava.security.manager -Djava.security.policy="${policy_file}" -jar ./Main.jar "$@"
+exec "${JAVARUN}" ${EJUDGE_JAVA_FLAGS} -Djava.security.manager -Djava.security.policy="${policy_file}" -jar "${runfile}" "$@"

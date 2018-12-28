@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2003-2017 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2003-2018 Alexander Chernov <cher@ejudge.ru>
 
 # This is a `compilation' script for the Python language.
 # The idea is to append "#!${PYTHONPATH}" string
@@ -25,7 +25,7 @@ then
   exit 1
 fi
 
-echo "#! ${PYTHONPATH} -S" > $2
+echo "#! ${PYTHONPATH}" > $2
 echo "# coding: utf-8" >> $2
 echo >> $2
 cat $1 >> $2
