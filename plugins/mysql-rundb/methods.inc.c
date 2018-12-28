@@ -203,3 +203,11 @@ change_status_4_func(
         struct rldb_plugin_cnts *cdata,
         int run_id,
         int new_status);
+
+static int
+add_entry_2_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        const struct run_entry *re,
+        int flags,
+        const unsigned char *prob_uuid);

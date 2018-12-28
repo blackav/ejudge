@@ -31,7 +31,7 @@ struct run_header;
 struct run_entry;
 
 /* version of the plugin interface structure */
-#define RLDB_PLUGIN_IFACE_VERSION 2
+#define RLDB_PLUGIN_IFACE_VERSION 3
 
 struct rldb_plugin_data;
 struct rldb_plugin_cnts;
@@ -168,6 +168,14 @@ struct rldb_plugin_iface
         int prob_id,
         int *p_count,
         struct run_entry **p_entries);
+
+  // write a new run to the database, including problem UUID
+  int (*add_entry_2)(
+        struct rldb_plugin_cnts *,
+        int i,
+        const struct run_entry *,
+        int,
+        const unsigned char *prob_uuid);
 };
 
 /* default plugin: compiled into new-server */

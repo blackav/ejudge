@@ -111,6 +111,8 @@ struct rldb_plugin_iface plugin_rldb_mysql =
   check_func,
   change_status_3_func,
   change_status_4_func,
+  NULL,
+  add_entry_2_func,
 };
 
 static struct common_plugin_data *
@@ -898,7 +900,8 @@ generate_update_entry_clause(
         struct rldb_mysql_state *state,
         FILE *f,
         const struct run_entry *re,
-        int flags)
+        int flags,
+        const unsigned char *prob_uuid)
 {
   struct timeval curtime;
   const unsigned char *sep = "";
@@ -1046,6 +1049,11 @@ generate_update_entry_clause(
     fprintf(f, "%stoken_count = %d", sep, re->token_count);
     sep = comma;
   }
+  if ((flags & RE_PROB_UUID) && prob_uuid) {
+    fprintf(f, "%sprob_uuid = ", sep);
+    state->mi->write_escaped_string(state->md, f, NULL, prob_uuid);
+    sep = comma;
+  }
 
   gettimeofday(&curtime, 0);
   fprintf(f, "%slast_change_time = ", sep);
@@ -1158,7 +1166,8 @@ do_update_entry(
         struct rldb_mysql_cnts *cs,
         int run_id,
         const struct run_entry *re,
-        int flags)
+        int flags,
+        const unsigned char *prob_uuid)
 {
   struct rldb_mysql_state *state = cs->plugin_state;
   struct runlog_state *rls = cs->rl_state;
@@ -1172,7 +1181,7 @@ do_update_entry(
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
   fprintf(cmd_f, "UPDATE %sruns SET ", state->md->table_prefix);
-  generate_update_entry_clause(state, cmd_f, re, flags);
+  generate_update_entry_clause(state, cmd_f, re, flags, prob_uuid);
   fprintf(cmd_f, " WHERE contest_id = %d AND run_id = %d ;",
           cs->contest_id, run_id);
   close_memstream(cmd_f); cmd_f = 0;
@@ -1206,7 +1215,7 @@ add_entry_func(
   ASSERT(de->time > 0);
   (void) de;
 
-  return do_update_entry(cs, run_id, re, flags);
+  return do_update_entry(cs, run_id, re, flags, NULL);
 }
 
 static int
@@ -1255,7 +1264,8 @@ change_status_func(
   te.judge_id = new_judge_id;
 
   return do_update_entry(cs, run_id, &te,
-                         RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_PASSED_MODE);
+                         RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_PASSED_MODE,
+                         NULL);
 }
 
 static void
@@ -1473,7 +1483,7 @@ set_status_func(
   memset(&te, 0, sizeof(te));
   te.status = new_status;
 
-  return do_update_entry(cs, run_id, &te, RE_STATUS);
+  return do_update_entry(cs, run_id, &te, RE_STATUS, NULL);
 }
 
 static int
@@ -1513,7 +1523,7 @@ set_hidden_func(
   memset(&te, 0, sizeof(te));
   te.is_hidden = new_hidden;
 
-  return do_update_entry(cs, run_id, &te, RE_IS_HIDDEN);
+  return do_update_entry(cs, run_id, &te, RE_IS_HIDDEN, NULL);
 }
 
 static int
@@ -1528,7 +1538,7 @@ set_judge_id_func(
   memset(&te, 0, sizeof(te));
   te.judge_id = new_judge_id;
 
-  return do_update_entry(cs, run_id, &te, RE_JUDGE_ID);
+  return do_update_entry(cs, run_id, &te, RE_JUDGE_ID, NULL);
 }
 
 static int
@@ -1543,7 +1553,7 @@ set_pages_func(
   memset(&te, 0, sizeof(te));
   te.pages = new_pages;
 
-  return do_update_entry(cs, run_id, &te, RE_PAGES);
+  return do_update_entry(cs, run_id, &te, RE_PAGES, NULL);
 }
 
 static int
@@ -1560,7 +1570,7 @@ set_entry_func(
   ASSERT(rls->runs[run_id - rls->run_f].status != RUN_EMPTY);
 
   (void) rls;
-  return do_update_entry(cs, run_id, in, flags);
+  return do_update_entry(cs, run_id, in, flags, NULL);
 }
 
 static int
@@ -1699,7 +1709,8 @@ change_status_2_func(
   te.is_marked = new_is_marked;
 
   return do_update_entry(cs, run_id, &te,
-                         RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_IS_MARKED | RE_PASSED_MODE);
+                         RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_IS_MARKED | RE_PASSED_MODE,
+                         NULL);
 }
 
 static int
@@ -1750,7 +1761,8 @@ change_status_3_func(
 
   return do_update_entry(cs, run_id, &te,
                          RE_STATUS | RE_TEST | RE_SCORE | RE_JUDGE_ID | RE_IS_MARKED
-                         | RE_IS_SAVED | RE_SAVED_STATUS | RE_SAVED_TEST | RE_SAVED_SCORE | RE_PASSED_MODE);
+                         | RE_IS_SAVED | RE_SAVED_STATUS | RE_SAVED_TEST | RE_SAVED_SCORE | RE_PASSED_MODE,
+                         NULL);
 }
 
 static int
@@ -1777,7 +1789,32 @@ change_status_4_func(
   return do_update_entry(cs, run_id, &te,
                          RE_STATUS /* | RE_TEST */ | RE_SCORE | RE_JUDGE_ID
                          | RE_IS_MARKED | RE_IS_SAVED | RE_SAVED_STATUS
-                         /* | RE_SAVED_TEST */ | RE_SAVED_SCORE | RE_PASSED_MODE);
+                         /* | RE_SAVED_TEST */ | RE_SAVED_SCORE | RE_PASSED_MODE,
+                         NULL);
+}
+
+static int
+add_entry_2_func(
+        struct rldb_plugin_cnts *cdata,
+        int run_id,
+        const struct run_entry *re,
+        int flags,
+        const unsigned char *prob_uuid)
+{
+  // FIXME
+  struct rldb_mysql_cnts *cs = (struct rldb_mysql_cnts *) cdata;
+  struct runlog_state *rls = cs->rl_state;
+  struct run_entry *de;
+
+  ASSERT(run_id >= rls->run_f && run_id < rls->run_u);
+  de = &rls->runs[run_id - rls->run_f];
+
+  ASSERT(de->run_id == run_id);
+  ASSERT(de->status == RUN_EMPTY);
+  ASSERT(de->time > 0);
+  (void) de;
+
+  return do_update_entry(cs, run_id, re, flags, prob_uuid);
 }
 
 /*
