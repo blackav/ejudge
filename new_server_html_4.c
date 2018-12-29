@@ -1083,6 +1083,9 @@ cmd_submit_run(
       }
     }
   }
+  if (ns_load_problem_uuid(phr->log_f, global, prob, variant) < 0) {
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  }
 
   gettimeofday(&precise_time, 0);
   ej_uuid_t run_uuid;
@@ -1098,7 +1101,7 @@ cmd_submit_run(
                           phr->locale_id, phr->user_id,
                           prob->id, lang_id, eoln_type,
                           variant, hidden_flag, mime_type,
-                          NULL /* problem_uuid */,
+                          prob->uuid,
                           store_flags);
   if (run_id < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);

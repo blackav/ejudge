@@ -3365,6 +3365,11 @@ priv_submit_run(
       }
     }
   }
+  if (ns_load_problem_uuid(phr->log_f, global, prob, variant) < 0) {
+    fprintf(log_f, "UUID for this problem is undefined\n");
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    goto cleanup;
+  }
 
   // OK, so all checks are done, now we add this submit to the database
   sha_buffer(run_text, run_size, shaval);
@@ -3383,7 +3388,7 @@ priv_submit_run(
                           phr->locale_id, phr->user_id,
                           prob_id, lang_id, eoln_type,
                           variant, 1, mime_type,
-                          NULL /* problem_uuid */,
+                          prob->uuid,
                           store_flags);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
@@ -5256,6 +5261,11 @@ priv_new_run(FILE *fout,
     re.score = score;
     re_flags |= RE_SCORE;
   }
+  if (ns_load_problem_uuid(phr->log_f, global, prob, variant) < 0) {
+    fprintf(log_f, "UUID for this problem is undefined\n");
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    goto cleanup;
+  }
 
   if (!lang) lang_id = 0;
   gettimeofday(&precise_time, 0);
@@ -5272,7 +5282,7 @@ priv_new_run(FILE *fout,
                           &phr->ip, phr->ssl_flag, phr->locale_id,
                           user_id, prob_id, lang_id, 0, variant,
                           is_hidden, mime_type,
-                          NULL /* problem_uuid */,
+                          prob->uuid,
                           store_flags);
   if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
@@ -9382,6 +9392,9 @@ ns_submit_run(
     if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode)
       accept_immediately = 1;
   }
+  if (ns_load_problem_uuid(phr->log_f, global, prob, variant) < 0) {
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  }
 
   // OK, so all checks are done, now we add this submit to the database
   int db_variant = variant;
@@ -9410,7 +9423,7 @@ ns_submit_run(
                           phr->locale_id, user_id,
                           prob_id, lang_id, eoln_type,
                           db_variant, is_hidden, mime_type,
-                          NULL /* problem_uuid */,
+                          prob->uuid,
                           store_flags);
   if (run_id < 0) {
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
@@ -10019,6 +10032,9 @@ unpriv_submit_run(
     if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode)
       accept_immediately = 1;
   }
+  if (ns_load_problem_uuid(phr->log_f, global, prob, variant) < 0) {
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  }
 
   // OK, so all checks are done, now we add this submit to the database
   gettimeofday(&precise_time, 0);
@@ -10035,7 +10051,7 @@ unpriv_submit_run(
                           &phr->ip, phr->ssl_flag,
                           phr->locale_id, phr->user_id,
                           prob_id, lang_id, eoln_type, 0, 0, mime_type,
-                          NULL /* problem_uuid */,
+                          prob->uuid,
                           store_flags);
   if (run_id < 0) {
     FAIL2(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
@@ -11577,6 +11593,9 @@ unpriv_xml_update_answer(
       if (prob->require[i]) FAIL(NEW_SRV_ERR_NOT_ALL_REQ_SOLVED);
     }
   }
+  if (ns_load_problem_uuid(phr->log_f, global, prob, variant) < 0) {
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  }
 
   ej_uuid_t run_uuid;
   int store_flags = 0;
@@ -11593,7 +11612,7 @@ unpriv_xml_update_answer(
                             &phr->ip, phr->ssl_flag,
                             phr->locale_id, phr->user_id,
                             prob_id, 0, 0, 0, 0, 0,
-                            NULL /* problem_uuid */,
+                            prob->uuid,
                             store_flags);
     if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
     serve_move_files_to_insert_run(cs, run_id);

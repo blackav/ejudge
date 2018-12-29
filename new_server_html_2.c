@@ -3335,6 +3335,18 @@ do_add_row(
   int arch_flags = 0;
   path_t run_path;
 
+  const struct section_problem_data *prob = NULL;
+  if (re->prob_id > 0 && re->prob_id < cs->max_prob) {
+    prob = cs->probs[re->prob_id];
+  }
+  const unsigned char *prob_uuid = NULL;
+  if (prob) {
+    int variant = re->variant;
+    if (variant <= 0) variant = find_variant(cs, re->user_id, re->prob_id, 0);
+    ns_load_problem_uuid(log_f, cs->global, prob, variant);
+    prob_uuid = prob->uuid;
+  }
+
   ej_uuid_t run_uuid;
   int store_flags = 0;
   gettimeofday(&precise_time, 0);
@@ -3348,7 +3360,7 @@ do_add_row(
                           &phr->ip, phr->ssl_flag, phr->locale_id,
                           re->user_id, re->prob_id, re->lang_id, re->eoln_type,
                           re->variant, re->is_hidden, re->mime_type,
-                          NULL /* problem_uuid */,
+                          prob_uuid,
                           store_flags);
   if (run_id < 0) {
     fprintf(log_f, _("Failed to add row %d to runlog\n"), row);
