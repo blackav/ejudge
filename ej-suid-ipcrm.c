@@ -112,12 +112,12 @@ scan_sem(int search_uid, int *p_count, FILE *rep_f)
         return 1;
     }
     while (getl(buf, sizeof(buf), f) >= 0) {
-        int key = 0, semid = 0, perms = 0, nsems = 0, uid = 0, gid = 0;
-        if (sscanf(buf, "%d%d%o%d%d%d", &key, &semid, &perms, &nsems, &uid, &gid) != 6) {
+        int key = 0, semid = 0, perms = 0, nsems = 0, uid = 0, gid = 0, cuid = 0;
+        if (sscanf(buf, "%d%d%o%d%d%d%d", &key, &semid, &perms, &nsems, &uid, &gid, &cuid) != 7) {
             fprintf(stderr, "format error in '/proc/sysvipc/sem'\n");
             return 1;
         }
-        if (uid == search_uid) {
+        if (uid == search_uid || cuid == search_uid) {
             fprintf(rep_f, "semaphore array: key = 0x%08x, semid = %d, perms = %03o\n", key, semid, perms);
             if (semctl(semid, 0, IPC_RMID, NULL) < 0) {
                 fprintf(stderr, "semctl failed: %s\n", strerror(errno));
