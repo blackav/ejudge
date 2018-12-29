@@ -151,6 +151,7 @@ static const unsigned char MSG_clardb_plugin[] = "ClarDB storage engine";
 static const unsigned char MSG_rundb_plugin[] = "RunDB storage engine";
 static const unsigned char MSG_xuser_plugin[] = "XuserDB storage engine";
 static const unsigned char MSG_enable_problem_history[] = "Load problem UUID from history.txt";
+static const unsigned char MSG_require_problem_uuid[] = "Require problem UUID";
 
 %><%@set getter_name = "csp_get_cnts_edit_cur_global_page"
 %><%@set ac_prefix = "SSERV_CMD_"
@@ -475,6 +476,7 @@ static const unsigned char * const form_row_attrs[]=
         <%@expand EDIT_TEXT_ROW "rundb_plugin" "adv" "48" "400px" %>
         <%@expand EDIT_TEXT_ROW "xuser_plugin" "adv" "48" "400px" %>
         <%@expand EDIT_BOOL_ROW "enable_problem_history" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "require_problem_uuid" "adv" "400px" %>
     </s:form>
 </div>
 
@@ -1141,6 +1143,7 @@ function popupAdvancedDialog(e, skipField)
     copyCheckbox("adv-enable_report_upload", "orig-enable_report_upload");
     copyCheckbox("adv-enable_runlog_merge", "orig-enable_runlog_merge");
     copyCheckbox("adv-disable_user_database", "orig-disable_user_database");
+    copyCheckbox("adv-require_problem_uuid", "orig-require_problem_uuid");
     copyCheckbox("adv-enable_l10n", "orig-enable_l10n");
     $("#adv-charset").val($("#orig-charset").val());
     $("#adv-standings_charset").val($("#orig-standings_charset").val());
@@ -1689,6 +1692,7 @@ function advancedDialogOnChange()
             <%@expand ORIG_BOOL_ROW "enable_report_upload" %>
             <%@expand ORIG_BOOL_ROW "enable_runlog_merge" %>
             <%@expand ORIG_BOOL_ROW "disable_user_database" %>
+            <%@expand ORIG_BOOL_ROW "require_problem_uuid" %>
             <%@expand ORIG_BOOL_ROW "enable_l10n" %>
             <%@expand ORIG_TEXT_ROW "charset" "Advanced" "48" %>
             <%@expand ORIG_TEXT_ROW "standings_charset" "Advanced" "48" %>

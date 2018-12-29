@@ -502,6 +502,8 @@ prepare_unparse_global(
     fprintf(f, "time_limit_retry_count = %d\n", global->time_limit_retry_count);
   if (global->score_n_best_problems > 0)
     fprintf(f, "score_n_best_problems = %d\n", global->score_n_best_problems);
+  if (global->require_problem_uuid > 0)
+    unparse_bool(f, "require_problem_uuid", global->require_problem_uuid);
 
   //???
   unparse_bool(f, "enable_l10n", global->enable_l10n);

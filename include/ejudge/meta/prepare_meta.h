@@ -35,6 +35,7 @@ enum
   CNTSGLOB_enable_max_stack_size,
   CNTSGLOB_time_limit_retry_count,
   CNTSGLOB_score_n_best_problems,
+  CNTSGLOB_require_problem_uuid,
   CNTSGLOB_stand_ignore_after,
   CNTSGLOB_contest_finish_time,
   CNTSGLOB_appeal_deadline,

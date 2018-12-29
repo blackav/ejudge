@@ -125,6 +125,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(score_n_best_problems, "d"),
   GLOBAL_PARAM(start_on_first_login, "d"),
   GLOBAL_PARAM(enable_virtual_restart, "d"),
+  GLOBAL_PARAM(require_problem_uuid, "d"),
 
   GLOBAL_PARAM(stand_ignore_after, "t"),
   GLOBAL_PARAM(appeal_deadline, "t"),
@@ -891,6 +892,7 @@ global_init_func(struct generic_section_config *gp)
   p->disable_auto_refresh = -1;
   p->disable_user_database = -1;
   p->enable_max_stack_size = -1;
+  p->require_problem_uuid = -1;
 
   p->compile_max_vm_size = ~(ej_size64_t) 0;
   p->compile_max_stack_size = ~(ej_size64_t) 0;
@@ -2800,6 +2802,7 @@ set_defaults(
   if (g->disable_user_database < 0)
     g->disable_user_database = 0;
   if (g->enable_max_stack_size < 0) g->enable_max_stack_size = 0;
+  if (g->require_problem_uuid < 0) g->require_problem_uuid = 0;
 
 #if defined EJUDGE_HTTPD_HTDOCS_DIR
   if (!g->htdocs_dir || !g->htdocs_dir[0]) {
@@ -5362,6 +5365,7 @@ prepare_set_global_defaults(struct section_global_data *g)
   if (g->disable_user_database < 0)
     g->disable_user_database = 0;
   if (g->enable_max_stack_size < 0) g->enable_max_stack_size = 0;
+  if (g->require_problem_uuid < 0) g->require_problem_uuid = 0;
 }
 
 void

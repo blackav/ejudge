@@ -199,6 +199,8 @@ struct section_global_data
   int time_limit_retry_count;
   /** score n best problems */
   int score_n_best_problems;
+  /** require problem UUID */
+  ejintbool_t require_problem_uuid;
 
   /** do not show submits after this time in the standings */
   time_t stand_ignore_after;
