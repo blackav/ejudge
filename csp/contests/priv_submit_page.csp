@@ -63,8 +63,7 @@ ns_unparse_answers(
     FAIL(NEW_SRV_ERR_INV_VARIANT);
   }
 %><s:read var="lang_id" default="0" /><%
-  if (lang_id < 0 || lang_id > cs->max_lang || !cs->langs[lang_id]) lang_id = 0;
-
+  if (lang_id <= 0 || lang_id > cs->max_lang || !cs->langs[lang_id]) lang_id = 0;
 
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
