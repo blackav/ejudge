@@ -932,4 +932,11 @@ ns_ws_create_session(
         struct server_framework_state *state,
         struct ws_client_state *p);
 
+int
+ns_load_problem_uuid(
+        FILE *log_f,
+        const struct section_global_data *global,
+        const struct section_problem_data *prob,
+        int variant);
+
 #endif /* __NEW_SERVER_H__ */

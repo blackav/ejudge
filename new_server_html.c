@@ -2973,6 +2973,75 @@ priv_reset_filter(FILE *fout,
   return 0;
 }
 
+int
+ns_load_problem_uuid(
+        FILE *log_f,
+        const struct section_global_data *global,
+        const struct section_problem_data *prob,
+        int variant)
+{
+  if (prob->uuid && prob->uuid[0]) return 0;
+  if (global->enable_problem_history <= 0 || global->advanced_layout <= 0) {
+    if (global->require_problem_uuid > 0) return -1;
+    return 0;
+  }
+
+  // XXXXX
+  unsigned char hist_path[PATH_MAX];
+  get_advanced_layout_path(hist_path, sizeof(hist_path), global, prob, "history.txt", variant);
+  FILE *hist_f = fopen(hist_path, "r");
+  if (!hist_f) {
+    if (global->require_problem_uuid <= 0) return 0;
+    err("ns_load_problem_uuid: cannot open '%s': %s", hist_path, os_ErrorMsg());
+    return -1;
+  }
+  unsigned char uuid_buf[80];
+  if (!fgets(uuid_buf, sizeof(uuid_buf), hist_f)) {
+    if (global->require_problem_uuid <= 0) return 0;
+    err("ns_load_problem_uuid: file '%s' is empty", hist_path);
+    fclose(hist_f);
+    return -1;
+  }
+  fclose(hist_f); hist_f = NULL;
+  size_t uuid_z = strlen(uuid_buf);
+  if (uuid_z + 1 == sizeof(uuid_buf)) {
+    err("ns_load_problem_uuid: line 1 in '%s' is too long", hist_path);
+    return -1;
+  }
+  while (uuid_z > 0 && isspace(uuid_buf[uuid_z - 1])) --uuid_z;
+  uuid_buf[uuid_z] = 0;
+  if (!uuid_z) {
+    if (global->require_problem_uuid <= 0) return 0;
+    err("ns_load_problem_uuid: line 1 in '%s' is empty", hist_path);
+    return -1;
+  }
+  // HHHHHHHH-HHHH-HHHH-HHHH-HHHHHHHHHHHH
+  //         8901234567890123456789012345
+  if (uuid_z != 36) {
+    err("ns_load_problem_uuid: line 1 in '%s' is invalid", hist_path);
+    return -1;
+  }
+  if (uuid_buf[8] != '-' || uuid_buf[13] != '-' || uuid_buf[18] != '-' || uuid_buf[23] != '-') {
+    err("ns_load_problem_uuid: line 1 in '%s' is invalid, wrong separation", hist_path);
+    return -1;
+  }
+  uuid_buf[8] = '0'; uuid_buf[13] = '0'; uuid_buf[18] = '0'; uuid_buf[23] = '0';
+  for (size_t i = 0; i < 36; ++i) {
+    if (!isxdigit(uuid_buf[i])) {
+      err("ns_load_problem_uuid: line 1 in '%s' is invalid, bad char at %zu", hist_path, i);
+      return -1;
+    }
+    uuid_buf[i] = tolower(uuid_buf[i]);
+  }
+  uuid_buf[8] = '-'; uuid_buf[13] = '-'; uuid_buf[18] = '-'; uuid_buf[23] = '-';
+  if (prob->uuid) {
+    xfree(prob->uuid);
+    ((struct section_problem_data *) prob)->uuid = NULL;
+  }
+  ((struct section_problem_data *) prob)->uuid = xstrdup(uuid_buf);
+  return 0;
+}
+
 static int
 priv_submit_run(
         FILE *fout,
