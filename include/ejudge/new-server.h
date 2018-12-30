@@ -115,6 +115,11 @@ struct contest_extra
   const unsigned char *header_txt;
   const unsigned char *footer_txt;
   const unsigned char *separator_txt;
+
+  const unsigned char *priv_header_txt;
+  const unsigned char *priv_footer_txt;
+  const unsigned char *priv_separator_txt;
+
   const unsigned char *copyright_txt;
   unsigned char *contest_arm;
 

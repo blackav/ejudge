@@ -5411,7 +5411,7 @@ priv_confirmation_page(FILE *fout,
   }
 
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+  ns_header(fout, extra->priv_header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
             phr->client_key,
             "%s [%s, %d, %s]: %s &quot;%s&quot;",
             ns_unparse_role(phr->role), phr->name_arm, phr->contest_id,
@@ -5488,7 +5488,7 @@ priv_confirmation_page(FILE *fout,
   }
   fprintf(fout, "</form></td></tr></table>\n");
 
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  ns_footer(fout, extra->priv_footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_resetlocale();
   html_armor_free(&ab);
   xfree(run_mask);
@@ -5650,12 +5650,12 @@ priv_examiners_page(
   */
 
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+  ns_header(fout, extra->priv_header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
             phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Add new run"));
   ns_examiners_page(fout, log_f, phr, cnts, extra);
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  ns_footer(fout, extra->priv_footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_resetlocale();
 
   //cleanup:
@@ -5930,7 +5930,7 @@ priv_upload_runlog_csv_1(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+  ns_header(fout, extra->priv_header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
             phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, "Add new runs in CSV format");
@@ -5952,7 +5952,7 @@ priv_upload_runlog_csv_1(
           BUTTON(NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2));
 
   fprintf(fout, "</form>\n");
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  ns_footer(fout, extra->priv_footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_resetlocale();
 
  cleanup:
@@ -6013,7 +6013,7 @@ priv_upload_runlog_csv_2(
   close_memstream(ff); ff = 0;
 
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+  ns_header(fout, extra->priv_header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
             phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Adding new runs"));
@@ -6035,7 +6035,7 @@ priv_upload_runlog_csv_2(
   xfree(ss); ss = 0;
   xfree(log_text); log_text = 0;
 
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  ns_footer(fout, extra->priv_footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_resetlocale();
 
  cleanup:
@@ -6060,7 +6060,7 @@ priv_upload_runlog_xml_1(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+  ns_header(fout, extra->priv_header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
             phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, "Merge XML runlog");
@@ -6071,7 +6071,7 @@ priv_upload_runlog_xml_1(
           BUTTON(NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_2));
 
   fprintf(fout, "</form>\n");
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  ns_footer(fout, extra->priv_footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_resetlocale();
 
  cleanup:
@@ -6114,7 +6114,7 @@ priv_upload_runlog_xml_2(
   close_memstream(ff); ff = 0;
 
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+  ns_header(fout, extra->priv_header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
             phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Merging runs"));
@@ -6133,7 +6133,7 @@ priv_upload_runlog_xml_2(
   xfree(ss); ss = 0;
   xfree(log_text); log_text = 0;
 
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  ns_footer(fout, extra->priv_footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_resetlocale();
 
  cleanup:
@@ -6403,7 +6403,7 @@ priv_assign_cyphers_2(
   if (r < 0) FAIL(NEW_SRV_ERR_INTERNAL);
 
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+  ns_header(fout, extra->priv_header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
             phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role),
             phr->name_arm, phr->contest_id, extra->contest_arm,
@@ -6425,7 +6425,7 @@ priv_assign_cyphers_2(
     fprintf(fout, "<pre>%s</pre>\n", ARMOR(csv_reply));
   }
 
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  ns_footer(fout, extra->priv_footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_resetlocale();
 
  cleanup:
@@ -6809,7 +6809,7 @@ priv_print_user_exam_protocol(
   if (locale_id > 0) l10n_resetlocale();
 
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+  ns_header(fout, extra->priv_header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
             phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Printing user protocol"));
@@ -6831,7 +6831,7 @@ priv_print_user_exam_protocol(
   xfree(ss); ss = 0;
   xfree(log_text); log_text = 0;
 
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  ns_footer(fout, extra->priv_footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_resetlocale();
 
  cleanup:
@@ -6909,7 +6909,7 @@ priv_print_users_exam_protocol(
   if (locale_id > 0) l10n_resetlocale();
 
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+  ns_header(fout, extra->priv_header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
             phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm, _("Printing user protocol"));
@@ -6931,7 +6931,7 @@ priv_print_users_exam_protocol(
   xfree(ss); ss = 0;
   xfree(log_text); log_text = 0;
 
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  ns_footer(fout, extra->priv_footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_resetlocale();
 
  cleanup:
@@ -6975,7 +6975,7 @@ priv_print_problem_exam_protocol(
   if (locale_id > 0) l10n_resetlocale();
 
   l10n_setlocale(phr->locale_id);
-  ns_header(fout, extra->header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
+  ns_header(fout, extra->priv_header_txt, 0, 0, 0, 0, phr->locale_id, cnts,
             phr->client_key,
             "%s [%s, %d, %s]: %s", ns_unparse_role(phr->role), phr->name_arm,
             phr->contest_id, extra->contest_arm,_("Printing problem protocol"));
@@ -6997,7 +6997,7 @@ priv_print_problem_exam_protocol(
   xfree(ss); ss = 0;
   xfree(log_text); log_text = 0;
 
-  ns_footer(fout, extra->footer_txt, extra->copyright_txt, phr->locale_id);
+  ns_footer(fout, extra->priv_footer_txt, extra->copyright_txt, phr->locale_id);
   l10n_resetlocale();
 
  cleanup:
@@ -8245,10 +8245,10 @@ privileged_entry_point(
     log_file_pos_1 = generic_file_size(NULL, ejudge_config->new_server_log, NULL);
   }
 
-  if (!extra->header_txt || !extra->footer_txt) {
-    extra->header_txt = ns_fancy_priv_header;
-    extra->footer_txt = ns_fancy_priv_footer;
-    extra->separator_txt = ns_fancy_priv_separator;
+  if (!extra->priv_header_txt || !extra->priv_footer_txt) {
+    extra->priv_header_txt = ns_fancy_priv_header;
+    extra->priv_footer_txt = ns_fancy_priv_footer;
+    extra->priv_separator_txt = ns_fancy_priv_separator;
   }
 
   if (phr->name && *phr->name) {
@@ -14244,10 +14244,15 @@ do_load_contest(struct http_request_info *phr, const struct contest_desc *cnts)
 
   phr->extra = extra;
 
-  if (!extra->header_txt || !extra->footer_txt) {
-    extra->header_txt = ns_fancy_priv_header;
-    extra->footer_txt = ns_fancy_priv_footer;
-    extra->separator_txt = ns_fancy_priv_separator;
+  if (!extra->priv_header_txt || !extra->priv_footer_txt) {
+    extra->priv_header_txt = ns_fancy_priv_header;
+    extra->priv_footer_txt = ns_fancy_priv_footer;
+    extra->priv_separator_txt = ns_fancy_priv_separator;
+  }
+  if (!extra->header_txt || !extra->footer_txt || !extra->separator_txt) {
+    extra->header_txt = ns_fancy_header;
+    extra->footer_txt = ns_fancy_footer;
+    extra->separator_txt = ns_fancy_separator;
   }
 
   if (extra->contest_arm) xfree(extra->contest_arm);
