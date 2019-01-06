@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -220,6 +220,17 @@ compile_request_packet_read(
     memcpy(pout->exam_cypher, pin_ptr, exam_cypher_len);
     pout->exam_cypher[exam_cypher_len] = 0;
     pin_ptr += pkt_bin_align(exam_cypher_len);
+  }
+
+  pout->contest_server_id = NULL;
+  int contest_server_id_len = cvt_bin_to_host_32(pin->contest_server_id_len);
+  FAIL_IF(contest_server_id_len < 0 || contest_server_id_len >= PATH_MAX);
+  FAIL_IF(pin_ptr + contest_server_id_len > end_ptr);
+  if (contest_server_id_len > 0) {
+    pout->contest_server_id = xmalloc(contest_server_id_len + 1);
+    memcpy(pout->contest_server_id, pin_ptr, contest_server_id_len);
+    pout->contest_server_id[contest_server_id_len] = 0;
+    pin_ptr += pkt_bin_align(contest_server_id_len);
   }
 
   pout->env_num = cvt_bin_to_host_32(pin->env_num);

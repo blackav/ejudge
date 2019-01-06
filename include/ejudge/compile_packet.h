@@ -2,7 +2,7 @@
 #ifndef __COMPILE_PACKET_H__
 #define __COMPILE_PACKET_H__
 
-/* Copyright (C) 2005-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -48,6 +48,7 @@ struct compile_request_packet
   unsigned char *compiler_env_pat;// pattern for compiler environment files
   unsigned char *user_login;
   unsigned char *exam_cypher;
+  unsigned char *contest_server_id; // contest server to pass the compilation result to
   int run_block_len;
   void *run_block;
   int env_num;
