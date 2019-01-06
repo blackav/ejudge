@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,8 @@
 
 #define PROC_DIRECTORY "/proc"
 #define EXE_LINK "exe"
+
+#define START_WAIT_COUNT 10
 
 extern char **environ;
 
@@ -804,13 +806,19 @@ int main(int argc, char *argv[])
                 }
             }
 
-            while (1) {
+            int sleep_count = 0;
+            // wait 1s max
+            while (sleep_count < START_WAIT_COUNT) {
                 pv_free(&pv);
                 usleep(100000);
                 if (find_all(EJ_COMPILE_PROGRAM, &pv) < 0) {
                     system_error("cannot enumerate processes");
                 }
                 if (pv.u == compile_parallelism) break;
+                ++sleep_count;
+            }
+            if (sleep_count >= START_WAIT_COUNT) {
+                system_error("failed to start ej-compile, please see the logs");
             }
         }
         break;
