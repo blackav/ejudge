@@ -113,17 +113,17 @@ check_style_only(
   snprintf(work_log_path, sizeof(work_log_path), "%s/%s.log",
            full_working_dir, work_run_name);
 
-  r = generic_copy_file(REMOVE, global->compile_src_dir, pkt_name, src_sfx,
+  r = generic_copy_file(REMOVE, compile_server_src_dir, pkt_name, src_sfx,
                         0, full_working_dir, work_run_name, src_sfx);
   if (!r) {
     snprintf(msgbuf, sizeof(msgbuf), "The source file %s/%s%s is missing.\n",
-             global->compile_src_dir, pkt_name, src_sfx);
+             compile_server_src_dir, pkt_name, src_sfx);
     goto internal_error;
   }
   if (r < 0) {
     snprintf(msgbuf, sizeof(msgbuf),
              "Read error on the source file %s/%s%s is missing.\n",
-             global->compile_src_dir, pkt_name, src_sfx);
+             compile_server_src_dir, pkt_name, src_sfx);
     goto internal_error;
   }
 
@@ -939,6 +939,19 @@ new_loop(int parallel_mode)
     snprintf(full_working_dir, sizeof(full_working_dir), "%s", global->compile_work_dir);
   }
 
+#if defined EJUDGE_COMPILE_SPOOL_DIR
+  // nothing to do
+#else
+  if (snprintf(compile_server_queue_dir, sizeof(compile_server_queue_dir), "%s", global->compile_queue_dir) >= sizeof(compile_server_queue_dir)) {
+    err("path '%s' is too long", global->compile_queue_dir);
+    return -1;
+  }
+  if (snprintf(compile_server_src_dir, sizeof(compile_server_src_dir), "%s", global->compile_src_dir) >= sizeof(compile_server_src_dir)) {
+    err("path '%s' is too long", global->compile_src_dir);
+    return -1;
+  }
+#endif
+
   interrupt_init();
   interrupt_disable();
 
@@ -948,7 +961,7 @@ new_loop(int parallel_mode)
 
     unsigned char pkt_name[PATH_MAX];
     pkt_name[0] = 0;
-    int r = scan_dir(global->compile_queue_dir, pkt_name, sizeof(pkt_name), 0);
+    int r = scan_dir(compile_server_queue_dir, pkt_name, sizeof(pkt_name), 0);
 
     if (r < 0) {
       switch (-r) {
@@ -975,7 +988,7 @@ new_loop(int parallel_mode)
 
     char *pkt_ptr = NULL;
     size_t pkt_len = 0;
-    r = generic_read_file(&pkt_ptr, 0, &pkt_len, SAFE | REMOVE, global->compile_queue_dir, pkt_name, "");
+    r = generic_read_file(&pkt_ptr, 0, &pkt_len, SAFE | REMOVE, compile_server_queue_dir, pkt_name, "");
     if (r == 0) continue;
     if (r < 0 || !pkt_ptr) {
       // it looks like there's no reasonable recovery strategy
@@ -1018,8 +1031,41 @@ new_loop(int parallel_mode)
     rpl.run_block_len = req->run_block_len;
     rpl.run_block = req->run_block; /* !!! shares memory with req */
 
+    unsigned char contest_server_reply_dir[PATH_MAX];
+    contest_server_reply_dir[0] = 0;
+#if defined EJUDGE_COMPILE_SPOOL_DIR
+    {
+      const unsigned char *contest_server_id = NULL;
+      if (req->contest_server_id && *req->contest_server_id) {
+        contest_server_id = req->contest_server_id;
+      }
+      if (!contest_server_id) {
+        contest_server_id = compile_server_id;
+      }
+      if (!contest_server_id || !*contest_server_id) {
+        contest_server_id = "localhost";
+      }
+      if (snprintf(contest_server_reply_dir, sizeof(contest_server_reply_dir), "%s/%s", EJUDGE_COMPILE_SPOOL_DIR, contest_server_id) >= sizeof(contest_server_reply_dir)) {
+        rpl.run_block = NULL;
+        compile_request_packet_free(req);
+        continue;
+      }
+      if (make_dir(contest_server_reply_dir, 0777) < 0) {
+        rpl.run_block = NULL;
+        compile_request_packet_free(req);
+        continue;
+      }
+    }
+#else
+    if (snprintf(contest_server_reply_dir, sizeof(contest_server_reply_dir), "%s", global->compile_dir) >= sizeof(contest_server_reply_dir)) {
+      rpl.run_block = NULL;
+      compile_request_packet_free(req);
+      continue;
+    }
+#endif
+
     unsigned char status_dir[PATH_MAX];
-    snprintf(status_dir, sizeof(status_dir), "%s/%06d/status", global->compile_dir, rpl.contest_id);
+    snprintf(status_dir, sizeof(status_dir), "%s/%06d/status", contest_server_reply_dir, rpl.contest_id);
     if (make_all_dir(status_dir, 0777) < 0) {
       rpl.run_block = NULL;
       compile_request_packet_free(req);
@@ -1034,7 +1080,7 @@ new_loop(int parallel_mode)
     }
 
     unsigned char report_dir[PATH_MAX];
-    snprintf(report_dir, sizeof(report_dir), "%s/%06d/report", global->compile_dir, rpl.contest_id);
+    snprintf(report_dir, sizeof(report_dir), "%s/%06d/report", contest_server_reply_dir, rpl.contest_id);
     if (make_dir(report_dir, 0777) < 0) {
       rpl.run_block = NULL;
       compile_request_packet_free(req);
@@ -1075,7 +1121,7 @@ new_loop(int parallel_mode)
     unlink(exe_path);
 
     unsigned char src_path[PATH_MAX];
-    snprintf(src_path, sizeof(src_path), "%s/%s%s", global->compile_src_dir, pkt_name, req->src_sfx);
+    snprintf(src_path, sizeof(src_path), "%s/%s%s", compile_server_src_dir, pkt_name, req->src_sfx);
 
     override_exe = 0;
     exe_copied = 0;
@@ -1592,8 +1638,10 @@ check_config(void)
   int i;
   int total = 0;
 
+#if !defined EJUDGE_COMPILE_SPOOL_DIR
   if (check_writable_spool(serve_state.global->compile_queue_dir, SPOOL_OUT) < 0)
     return -1;
+#endif
   for (i = 1; i <= serve_state.max_lang; i++) {
     if (!serve_state.langs[i]) continue;
 
