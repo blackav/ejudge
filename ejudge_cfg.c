@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -816,6 +816,22 @@ ejudge_cfg_parse_2(char const *path, FILE *in_file, int no_system_lookup)
     cfg->plugin_dir = xstrdup(pathbuf);
   }
 #endif /* EJUDGE_SCRIPT_DIR */
+
+  if (!cfg->contest_server_id || !*cfg->contest_server_id) {
+    xfree(cfg->contest_server_id); cfg->contest_server_id = NULL;
+    const unsigned char *s = getenv("EJ_CONTEST_SERVER_ID");
+    if (s && *s) {
+      cfg->contest_server_id = xstrdup(s);
+    }
+  }
+  if (!cfg->contest_server_id || !*cfg->contest_server_id) {
+    xfree(cfg->contest_server_id); cfg->contest_server_id = NULL;
+    cfg->contest_server_id = xstrdup(os_NodeName());
+  }
+  if (!cfg->contest_server_id || !*cfg->contest_server_id) {
+    xfree(cfg->contest_server_id); cfg->contest_server_id = NULL;
+    cfg->contest_server_id = "localhost";
+  }
 
   if (path) {
     cfg->caps_file_info = ejudge_cfg_create_caps_file(path);

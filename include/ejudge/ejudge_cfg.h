@@ -3,7 +3,7 @@
 #ifndef __EJUDGE_CFG_H__
 #define __EJUDGE_CFG_H__ 1
 
-/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -114,6 +114,7 @@ struct ejudge_cfg
   unsigned char *default_content_plugin;
   unsigned char *default_content_url_prefix;
   unsigned char *caps_file;
+  unsigned char *contest_server_id;
   struct xml_tree *user_map;
   struct xml_tree *compile_servers;
 
