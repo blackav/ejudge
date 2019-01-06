@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -71,6 +71,11 @@ static int initialize_mode = 0;
 
 static int daemon_mode;
 static int restart_mode;
+
+static unsigned char *compile_server_id;
+static unsigned char compile_server_spool_dir[PATH_MAX];
+static unsigned char compile_server_queue_dir[PATH_MAX];
+static unsigned char compile_server_src_dir[PATH_MAX];
 
 static int
 check_style_only(
@@ -1651,6 +1656,13 @@ main(int argc, char *argv[])
   const unsigned char **subst_src_ptr = 0;
   const unsigned char **subst_dst_ptr = 0;
 
+  {
+    const unsigned char *s = getenv("EJ_COMPILE_SERVER_ID");
+    if (s && *s) {
+      compile_server_id = xstrdup(s);
+    }
+  }
+
   start_set_self_args(argc, argv);
   XCALLOC(argv_restart, argc + 2);
   argv_restart[j++] = argv[0];
@@ -1699,6 +1711,12 @@ main(int argc, char *argv[])
       ejudge_xml_path = argv[i++];
       argv_restart[j++] = "-x";
       argv_restart[j++] = ejudge_xml_path;
+    } else if (!strcmp(argv[i], "-i")) {
+      if (++i >= argc) goto print_usage;
+      xfree(compile_server_id); compile_server_id = NULL;
+      compile_server_id = xstrdup(argv[i++]);
+      argv_restart[j++] = "-i";
+      argv_restart[j++] = argv[i - 1];
     } else if (!strcmp(argv[i], "-l")) {
       if (++i >= argc) goto print_usage;
       argv_restart[j++] = argv[i - 1];
@@ -1727,6 +1745,15 @@ main(int argc, char *argv[])
   if (i < argc) goto print_usage;
   argv_restart[j] = 0;
   start_set_args(argv_restart);
+
+  if (!compile_server_id || !*compile_server_id) {
+    xfree(compile_server_id); compile_server_id = NULL;
+    compile_server_id = xstrdup(os_NodeName());
+  }
+  if (!compile_server_id || !*compile_server_id) {
+    xfree(compile_server_id); compile_server_id = NULL;
+    compile_server_id = xstrdup("localhost");
+  }
 
 #if defined EJUDGE_XML_PATH
   if (!ejudge_xml_path) ejudge_xml_path = EJUDGE_XML_PATH;
@@ -1862,6 +1889,25 @@ main(int argc, char *argv[])
   }
 #endif /* __WIN32__ */
 
+#if defined EJUDGE_COMPILE_SPOOL_DIR
+  {
+    struct stat stb;
+
+    if (stat(EJUDGE_COMPILE_SPOOL_DIR, &stb) < 0) {
+      fprintf(stderr, "%s: compile spool directory '%s' does not exist\n", argv[0], EJUDGE_COMPILE_SPOOL_DIR);
+      return 1;
+    }
+    if (!S_ISDIR(stb.st_mode)) {
+      fprintf(stderr, "%s: compile spool '%s' is not directory\n", argv[0], EJUDGE_COMPILE_SPOOL_DIR);
+      return 1;
+    }
+    if (access(EJUDGE_COMPILE_SPOOL_DIR, X_OK | W_OK | R_OK) < 0) {
+      fprintf(stderr, "%s: compile spool '%s' has unsufficient permissions\n", argv[0], EJUDGE_COMPILE_SPOOL_DIR);
+      return 1;
+    }
+  }
+#endif
+
   if (start_prepare(user, group, workdir) < 0) return 1;
 
   memset(subst_src, 0, sizeof(subst_src));
@@ -1929,6 +1975,29 @@ main(int argc, char *argv[])
     return 1;
 #endif /* HAVE_OPEN_MEMSTREAM */
   if (key && filter_languages(key) < 0) return 1;
+
+#if defined EJUDGE_COMPILE_SPOOL_DIR
+  {
+    if (snprintf(compile_server_spool_dir, sizeof(compile_server_spool_dir), "%s/%s", EJUDGE_COMPILE_SPOOL_DIR, compile_server_id) >= sizeof(compile_server_spool_dir)) {
+      fprintf(stderr, "%s: path '%s/%s' is too long\n", argv[0], EJUDGE_COMPILE_SPOOL_DIR, compile_server_id);
+      return 1;
+    }
+    if (make_dir(compile_server_spool_dir, 0) < 0) return 1;
+
+    if (snprintf(compile_server_queue_dir, sizeof(compile_server_queue_dir), "%s/queue", compile_server_spool_dir) >= sizeof(compile_server_queue_dir)) {
+      fprintf(stderr, "%s: path '%s/queue' is too long\n", argv[0], compile_server_spool_dir);
+      return 1;
+    }
+    if (make_all_dir(compile_server_queue_dir, 0777) < 0) return 1;
+
+    if (snprintf(compile_server_src_dir, sizeof(compile_server_src_dir), "%s/src", compile_server_spool_dir) >= sizeof(compile_server_src_dir)) {
+      fprintf(stderr, "%s: path '%s/src' is too long\n", argv[0], compile_server_spool_dir);
+      return 1;
+    }
+    if (make_dir(compile_server_src_dir, 0777) < 0) return 1;
+  }
+#endif
+
   if (create_dirs(&serve_state, PREPARE_COMPILE) < 0) return 1;
   if (check_config() < 0) return 1;
   if (initialize_mode) return 0;
@@ -1985,6 +2054,7 @@ main(int argc, char *argv[])
   printf("  -g G   - start as group G (only as root)\n");
   printf("  -C D   - change directory to D\n");
   printf("  -x X   - specify a path to ejudge.xml file\n");
+  printf("  -i ID  - specify compile server id\n");
   printf("  -r S   - substitute ${CONTESTS_HOME_DIR} for S in the config\n");
   printf("  -c C   - substitute ${COMPILE_HOME_DIR} for C in the config\n");
   return code;

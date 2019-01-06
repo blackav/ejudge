@@ -19,6 +19,7 @@
 #include "ejudge/version.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/ej_process.h"
+#include "ejudge/osdeps.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -476,8 +477,32 @@ check_directories(int primary_uid, int compile_uid, int primary_gid, int compile
         chown(d3, primary_uid, compile_gid);
         chmod(d3, 06775);
     }
-    // spool directory
+
+#if defined EJUDGE_COMPILE_SPOOL_DIR
+    if (snprintf(d1, sizeof(d1), "%s", EJUDGE_COMPILE_SPOOL_DIR) >= sizeof(d1)) {
+        system_error("path '%s' is too long", EJUDGE_COMPILE_SPOOL_DIR);
+    }
+    if (stat(d1, &stb) < 0) {
+        system_error("directory '%s' does not exist. please, create it", d1);
+    }
+    if (!S_ISDIR(stb.st_mode)) {
+        system_error("'%s' is not a directory", d1);
+    }
+    const unsigned char *compile_server_id = getenv("EJ_COMPILE_SERVER_ID");
+    if (!compile_server_id || !*compile_server_id) {
+        compile_server_id = os_NodeName();
+    }
+    if (!compile_server_id || !*compile_server_id) {
+        compile_server_id = "localhost";
+    }
+    if (snprintf(d3, sizeof(d3), "%s/%s", d1, compile_server_id) >= sizeof(d3)) {
+        system_error("path '%s/%s' is too long", d1, compile_server_id);
+    }
+#else
+    // spool directory: /home/judges/compile/var
     snprintf(d3, sizeof(d3), "%s/compile", d2);
+#endif
+
     if (stat(d3, &stb) >= 0) {
         if (!S_ISDIR(stb.st_mode)) {
             system_error("'%s' is not a directory", d3);
@@ -494,6 +519,7 @@ check_directories(int primary_uid, int compile_uid, int primary_gid, int compile
         chown(d3, primary_uid, compile_gid);
         chmod(d3, 06775);
     }
+
     // spool directory skeleton
     snprintf(d4, sizeof(d4), "%s/upgrade-v2", d3);
     if (lstat(d4, &stb) >= 0) {
@@ -506,25 +532,70 @@ check_directories(int primary_uid, int compile_uid, int primary_gid, int compile
     change_ownership_and_permissions(d3, "src", primary_uid, compile_gid, 06777);
     spool_change_ownership_and_permissions(d3, "queue", primary_uid, compile_gid, 06777);
 
-    DIR *d = opendir(d3);
-    if (d) {
-        struct dirent *dd;
-        while ((dd = readdir(d))) {
-            if (strlen(dd->d_name) == 6) {
-                errno = 0;
-                char *eptr = 0;
-                long cnts_id = strtol(dd->d_name, &eptr, 10);
-                if (!errno && !*eptr && (int) cnts_id == cnts_id && cnts_id > 0) {
-                    snprintf(d4, sizeof(d4), "%s/%s", d3, dd->d_name);
-                    if (stat(d4, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
-                        change_ownership_and_permissions(d4, "report", primary_uid, compile_gid, 06777);
-                        spool_change_ownership_and_permissions(d4, "status", primary_uid, compile_gid, 06777);
+#if defined EJUDGE_COMPILE_SPOOL_DIR
+    // scan all hosts in EJUDGE_COMPILE_SPOOL_DIR
+    {
+        DIR *hd = opendir(d1);
+        if (hd) {
+            struct dirent *hdd;
+            while ((hdd = readdir(hd))) {
+                if (!strcmp(hdd->d_name, ".") || !strcmp(hdd->d_name, "..")) continue;
+                if (snprintf(d2, sizeof(d2), "%s/%s", d1, hdd->d_name) >= sizeof(d2)) {
+                    system_error("path '%s/%s' is too long", d1, hdd->d_name);
+                }
+                if (stat(d2, &stb) < 0) continue;
+                if (!S_ISDIR(stb.st_mode)) continue;
+
+                DIR *d = opendir(d2);
+                if (d) {
+                    struct dirent *dd;
+                    while ((dd = readdir(d))) {
+                        if (strlen(dd->d_name) == 6) {
+                            errno = 0;
+                            char *eptr = 0;
+                            long cnts_id = strtol(dd->d_name, &eptr, 10);
+                            if (!errno && !*eptr && (int) cnts_id == cnts_id && cnts_id > 0) {
+                                snprintf(d4, sizeof(d4), "%s/%s", d2, dd->d_name);
+                                if (stat(d4, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+                                    change_ownership_and_permissions(d4, "report", primary_uid, compile_gid, 06777);
+                                    spool_change_ownership_and_permissions(d4, "status", primary_uid, compile_gid, 06777);
+                                }
+                            }
+                        }
+                    }
+                    closedir(d);
+                }
+
+                snprintf(d4, sizeof(d4), "%s/upgrade-v2", d2);
+                close(open(d4, O_WRONLY | O_CREAT | O_NONBLOCK, 0660));
+            }
+
+            closedir(hd);
+        }
+    }
+#else
+    {
+        DIR *d = opendir(d3);
+        if (d) {
+            struct dirent *dd;
+            while ((dd = readdir(d))) {
+                if (strlen(dd->d_name) == 6) {
+                    errno = 0;
+                    char *eptr = 0;
+                    long cnts_id = strtol(dd->d_name, &eptr, 10);
+                    if (!errno && !*eptr && (int) cnts_id == cnts_id && cnts_id > 0) {
+                        snprintf(d4, sizeof(d4), "%s/%s", d3, dd->d_name);
+                        if (stat(d4, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+                            change_ownership_and_permissions(d4, "report", primary_uid, compile_gid, 06777);
+                            spool_change_ownership_and_permissions(d4, "status", primary_uid, compile_gid, 06777);
+                        }
                     }
                 }
             }
+            closedir(d);
         }
-        closedir(d);
     }
+#endif
 
     snprintf(d4, sizeof(d4), "%s/upgrade-v2", d3);
     close(open(d4, O_WRONLY | O_CREAT | O_NONBLOCK, 0660));
