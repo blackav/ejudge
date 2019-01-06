@@ -1234,6 +1234,8 @@ serve_compile_request(
   const unsigned char *compile_queue_dir = 0;
   int errcode = -SERVE_ERR_GENERIC;
   struct sformat_extra_data sformat_extra;
+  unsigned char compile_src_buf[PATH_MAX];
+  unsigned char compile_queue_buf[PATH_MAX];
 
   memset(&sformat_extra, 0, sizeof(sformat_extra));
 
@@ -1374,6 +1376,7 @@ serve_compile_request(
   cp.src_sfx = (unsigned char*) sfx;
   cp.sc_env_num = -1;
   cp.sc_env_vars = (unsigned char**) style_checker_env;
+  cp.contest_server_id = config->contest_server_id;
 
   if (prob->enable_multi_header > 0) {
     unsigned char test_dir[PATH_MAX];
@@ -1425,6 +1428,22 @@ serve_compile_request(
   if (prob && prob->id < EJ_SERVE_STATE_TOTAL_PROBS)
     prio += state->prob_prio[prob->id];
 
+#if defined EJUDGE_COMPILE_SPOOL_DIR
+  if (lang && lang->compile_src_dir && lang->compile_src_dir[0]) {
+    compile_src_dir = lang->compile_src_dir;
+  } else {
+    // FIXME: tune the compile server name
+    snprintf(compile_src_buf, sizeof(compile_src_buf), "%s/%s/src", EJUDGE_COMPILE_SPOOL_DIR, config->contest_server_id);
+    compile_src_dir = compile_src_buf;
+  }
+  if (lang && lang->compile_queue_dir && lang->compile_queue_dir[0]) {
+    compile_queue_dir = lang->compile_queue_dir;
+  } else {
+    // FIXME: tune the compile server name
+    snprintf(compile_queue_buf, sizeof(compile_queue_buf), "%s/%s/queue", EJUDGE_COMPILE_SPOOL_DIR, config->contest_server_id);
+    compile_queue_dir = compile_queue_buf;
+  }
+#else
   compile_src_dir = global->compile_src_dir;
   if (lang && lang->compile_src_dir && lang->compile_src_dir[0]) {
     compile_src_dir = lang->compile_src_dir;
@@ -1433,6 +1452,7 @@ serve_compile_request(
   if (lang && lang->compile_queue_dir && lang->compile_queue_dir[0]) {
     compile_queue_dir = lang->compile_queue_dir;
   }
+#endif
 
   if (!sfx) sfx = "";
   serve_packet_name(contest_id, run_id, prio, pkt_name, sizeof(pkt_name));
