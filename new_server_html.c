@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3427,7 +3427,7 @@ priv_submit_run(
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_COMPILING, NULL);
-      if ((r = serve_compile_request(cs, run_text, run_size, cnts->id,
+      if ((r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                                      run_id, phr->user_id,
                                      lang->compile_id, variant,
                                      phr->locale_id, 0,
@@ -3451,7 +3451,7 @@ priv_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_COMPILING, NULL);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        r = serve_compile_request(cs, run_text, run_size, cnts->id,
+        r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                                   run_id, phr->user_id, 0 /* lang_id */, variant,
                                   0 /* locale_id */, 1 /* output_only*/,
                                   mime_type_get_suffix(mime_type),
@@ -3494,7 +3494,7 @@ priv_submit_run(
                       "priv-submit", "ok", RUN_COMPILING, NULL);
       /* FIXME: check for XML problem */
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        r = serve_compile_request(cs, run_text, run_size, cnts->id,
+        r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                                   run_id, phr->user_id, 0 /* lang_id */, variant,
                                   0 /* locale_id */, 1 /* output_only*/,
                                   mime_type_get_suffix(mime_type),
@@ -9484,7 +9484,7 @@ ns_submit_run(
 
     serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_COMPILING, NULL);
-    r = serve_compile_request(cs, run_text, run_size, cnts->id,
+    r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                               run_id, user_id,
                               lang->compile_id, variant,
                               phr->locale_id, 0 /* output_only */,
@@ -9517,7 +9517,7 @@ ns_submit_run(
     if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
       serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_COMPILING, NULL);
-      r = serve_compile_request(cs, run_text, run_size, cnts->id,
+      r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                                 run_id, user_id, 0 /* lang_id */, variant,
                                 0 /* locale_id */, 1 /* output_only */,
                                 mime_type_get_suffix(mime_type),
@@ -9572,7 +9572,7 @@ ns_submit_run(
   }
 
   if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-    r = serve_compile_request(cs, run_text, run_size, cnts->id,
+    r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                               run_id, user_id, 0 /* lang_id */, variant,
                               0 /* locale_id */, 1 /* output_only */,
                               mime_type_get_suffix(mime_type),
@@ -10091,7 +10091,7 @@ unpriv_submit_run(
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_COMPILING, NULL);
-      if ((r = serve_compile_request(cs, run_text, run_size, cnts->id,
+      if ((r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                                      run_id, phr->user_id,
                                      lang->compile_id, variant,
                                      phr->locale_id, 0,
@@ -10115,7 +10115,7 @@ unpriv_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "submit", "ok", RUN_COMPILING, NULL);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        r = serve_compile_request(cs, run_text, run_size, cnts->id,
+        r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                                   run_id, phr->user_id, 0 /* lang_id */, variant,
                                   0 /* locale_id */, 1 /* output_only*/,
                                   mime_type_get_suffix(mime_type),
@@ -10174,7 +10174,7 @@ unpriv_submit_run(
         serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
 
-        r = serve_compile_request(cs, run_text, run_size, cnts->id,
+        r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                                   run_id, phr->user_id, 0 /* lang_id */, variant,
                                   0 /* locale_id */, 1 /* output_only*/,
                                   mime_type_get_suffix(mime_type),

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1138,7 +1138,7 @@ cmd_submit_run(
     } else {
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
-      if ((r = serve_compile_request(cs, run_text, run_size, cnts->id,
+      if ((r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                                      run_id, phr->user_id,
                                      lang->compile_id, variant,
                                      phr->locale_id, 0,
@@ -1162,7 +1162,7 @@ cmd_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-        if ((r = serve_compile_request(cs, run_text, run_size, cnts->id,
+        if ((r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                                        run_id, phr->user_id, 0 /* lang_id */, variant,
                                        0 /* locale_id */, 1 /* output_only*/,
                                        mime_type_get_suffix(mime_type),
@@ -1213,7 +1213,7 @@ cmd_submit_run(
       } else if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_COMPILING, NULL);
-        if ((r = serve_compile_request(cs, run_text, run_size, cnts->id,
+        if ((r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
                                        run_id, phr->user_id, 0 /* lang_id */, variant,
                                        0 /* locale_id */, 1 /* output_only*/,
                                        mime_type_get_suffix(mime_type),

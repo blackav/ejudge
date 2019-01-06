@@ -2,7 +2,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -442,6 +442,7 @@ serve_audit_log(
 
 int
 serve_compile_request(
+        const struct ejudge_cfg *config,
         serve_state_t state,
         unsigned char const *str,
         int len,

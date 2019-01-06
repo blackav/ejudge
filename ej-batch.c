@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2010-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -570,7 +570,7 @@ process_submit(
 
   compile_spool_add_reply_dir(result_queue_dir);
 
-  r = serve_compile_request(state, text, size, global->contest_id,
+  r = serve_compile_request(ejudge_config, state, text, size, global->contest_id,
                             sb.run_id /* run_id */,
                             1 /* user_id */,
                             lang->compile_id,

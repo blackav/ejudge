@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1186,6 +1186,7 @@ filter_lang_environ(const unsigned char *lang_short_name, char **environ)
 
 int
 serve_compile_request(
+        const struct ejudge_cfg *config,
         serve_state_t state,
         unsigned char const *str,
         int len,
@@ -3867,7 +3868,7 @@ serve_rejudge_run(
     }
 
     if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
-      r = serve_compile_request(state, 0 /* str*/, -1 /* len*/, cnts->id,
+      r = serve_compile_request(config, state, 0 /* str*/, -1 /* len*/, cnts->id,
                                 run_id, re.user_id, 0 /* lang_id */, re.variant,
                                 0 /* locale_id */, 1 /* output_only*/,
                                 mime_type_get_suffix(re.mime_type),
@@ -3917,7 +3918,7 @@ serve_rejudge_run(
     accepting_mode = 0;
   }
 
-  r = serve_compile_request(state, 0, -1, cnts->id, run_id, re.user_id,
+  r = serve_compile_request(config, state, 0, -1, cnts->id, run_id, re.user_id,
                             lang->compile_id, re.variant, re.locale_id,
                             (prob->type > 0),
                             lang->src_sfx,
