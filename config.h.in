@@ -72,6 +72,9 @@
 /* the path to the compiler spool directory */
 #undef EJUDGE_COMPILE_SPOOL_DIR
 
+/* the path to the run spool directory */
+#undef EJUDGE_RUN_SPOOL_DIR
+
 /* path (absolute or relative) to CGI configuration files */
 #undef CGI_DATA_PATH
 

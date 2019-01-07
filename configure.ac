@@ -73,6 +73,7 @@ AC_ARG_ENABLE([ejudge-xml],AC_HELP_STRING([--enable-ejudge-xml],[specify the def
 AC_ARG_ENABLE([contests-dir],AC_HELP_STRING([--enable-contests-dir],[specify the default path to the contest configuration directory]),[ac_cv_contests_dir="$enableval"],[ac_cv_contests_dir=""])
 AC_ARG_ENABLE([contests-home-dir],AC_HELP_STRING([--enable-contests-home-dir],[specify the default path to the contests home directory]),[ac_cv_contests_home_dir="$enableval"],[ac_cv_contests_home_dir=""])
 AC_ARG_ENABLE([compile-spool-dir],AC_HELP_STRING([--enable-compile-spool-dir],[specify the path to the compile spool directory]),[ac_cv_compile_spool_dir="$enableval"],[ac_cv_compile_spool_dir=""])
+AC_ARG_ENABLE([run-spool-dir],AC_HELP_STRING([--enable-run-spool-dir],[specify the path to the run spool directory]),[ac_cv_run_spool_dir="$enableval"],[ac_cv_run_spool_dir=""])
 AC_ARG_ENABLE([local-dir],AC_HELP_STRING([--enable-local-dir],[specify the default path to the local state directory]),[ac_cv_local_dir="$enableval"],[ac_cv_local_dir=""])
 AC_ARG_ENABLE([ajax],AC_HELP_STRING([--enable-ajax],[enable use of the ajax technology for the client web interface]),[ac_cv_ajax="$enableval"],[ac_cv_ajax=""])
 AC_ARG_ENABLE([style-prefix],AC_HELP_STRING([--enable-style-prefix],[specify the prefix for HTML style files]),[ac_cv_style_prefix="$enableval"],[ac_cv_style_prefix=""])
@@ -141,7 +142,8 @@ fi
 [[ x"${ac_cv_cgi_conf_dir}" = x -o x"${ac_cv_cgi_conf_dir}" = xyes ]] && ac_cv_cgi_conf_dir="../cgi-data"
 [[ x"${ac_cv_style_prefix}" = x -o x"${ac_cv_style_prefix}" = xyes ]] && ac_cv_style_prefix="/ejudge/"
 [[ x"${ac_cv_lang_config_dir}" = x -o x"${ac_cv_lang_config_dir}" = xyes ]] && ac_cv_lang_config_dir="${ac_cv_contests_home_dir}/compile/conf/lang.d"
-[[ x"${ac_cv_compile_spool_dir}" = xyes ]] && ac_cv_compile_spool_dir="${ac_cv_contests_home_dir}/../ej-compile-spool"
+[[ x"${ac_cv_compile_spool_dir}" = xyes ]] && ac_cv_compile_spool_dir=`dirname "${ac_cv_contests_home_dir}"`/ej-compile-spool
+[[ x"${ac_cv_run_spool_dir}" = xyes ]] && ac_cv_run_spool_dir=`dirname "${ac_cv_contests_home_dir}"`/ej-run-spool
 
 machine=`uname -m`
 
@@ -1338,6 +1340,10 @@ fi
 if [[ x"${ac_cv_compile_spool_dir}" != x ]]
 then
   AC_DEFINE_UNQUOTED(EJUDGE_COMPILE_SPOOL_DIR,"${ac_cv_compile_spool_dir}")
+fi
+if [[ x"${ac_cv_run_spool_dir}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_RUN_SPOOL_DIR,"${ac_cv_run_spool_dir}")
 fi
 
 if [[ x"${ac_cv_conf_dos_filenaming}" != x ]]
