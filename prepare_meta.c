@@ -660,6 +660,7 @@ static struct meta_info_item meta_info_section_language_data_data[] =
   [CNTSLANG_compile_status_dir] = { CNTSLANG_compile_status_dir, 's', XSIZE(struct section_language_data, compile_status_dir), "compile_status_dir", XOFFSET(struct section_language_data, compile_status_dir) },
   [CNTSLANG_compile_report_dir] = { CNTSLANG_compile_report_dir, 's', XSIZE(struct section_language_data, compile_report_dir), "compile_report_dir", XOFFSET(struct section_language_data, compile_report_dir) },
   [CNTSLANG_compiler_env] = { CNTSLANG_compiler_env, 'X', XSIZE(struct section_language_data, compiler_env), "compiler_env", XOFFSET(struct section_language_data, compiler_env) },
+  [CNTSLANG_compile_server_id] = { CNTSLANG_compile_server_id, 's', XSIZE(struct section_language_data, compile_server_id), "compile_server_id", XOFFSET(struct section_language_data, compile_server_id) },
   [CNTSLANG_unhandled_vars] = { CNTSLANG_unhandled_vars, 's', XSIZE(struct section_language_data, unhandled_vars), "unhandled_vars", XOFFSET(struct section_language_data, unhandled_vars) },
   [CNTSLANG_disabled_by_config] = { CNTSLANG_disabled_by_config, 'i', XSIZE(struct section_language_data, disabled_by_config), NULL, XOFFSET(struct section_language_data, disabled_by_config) },
 };

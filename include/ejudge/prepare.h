@@ -2,7 +2,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -137,7 +137,7 @@ struct virtual_end_info_s
   int checker_comment_mode;
 };
 
-/* sizeof(struct section_global_data) == 1180/1880 */
+/* sizeof(struct section_global_data) == 1204/1912 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -781,7 +781,7 @@ struct section_global_data
   ejintbool_t disable_passed_tests META_ATTRIB((meta_private));
 };
 
-/* sizeof(struct section_problem_data) == 760/1200 */
+/* sizeof(struct section_problem_data) == 764/1208 */
 struct section_problem_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));   // 32 bytes
@@ -1235,7 +1235,7 @@ struct section_problem_data
   } xml META_ATTRIB((meta_hidden));
 };
 
-/* sizeof(struct section_language_data) == 276/352 */
+/* sizeof(struct section_language_data) == 296/376 */
 struct section_language_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -1318,6 +1318,8 @@ struct section_language_data
   unsigned char *compile_report_dir;
   /** environment to pass to the compiler */
   ejenvlist_t compiler_env;
+  /** ID of compilation server */
+  unsigned char *compile_server_id;
 
   unsigned char *unhandled_vars;
   /** disabled by configuration script */

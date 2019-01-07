@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -857,6 +857,9 @@ prepare_unparse_lang(
   }
   if (lang->super_run_dir && lang->super_run_dir[0]) {
     fprintf(f, "super_run_dir = \"%s\"\n", CARMOR(lang->super_run_dir));
+  }
+  if (lang->compile_server_id && lang->compile_server_id[0]) {
+    fprintf(f, "compile_server_id = \"%s\"\n", CARMOR(lang->compile_server_id));
   }
   if (lang->arch && lang->arch[0])
     fprintf(f, "arch = \"%s\"\n", CARMOR(lang->arch));

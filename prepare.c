@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -590,6 +590,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(compiler_env, "x"),
   LANGUAGE_PARAM(extid, "S"),
   LANGUAGE_PARAM(super_run_dir, "S"),
+  LANGUAGE_PARAM(compile_server_id, "S"),
 
   { 0, 0, 0, 0 }
 };
@@ -1220,6 +1221,7 @@ prepare_language_free_func(struct generic_section_config *gp)
   xfree(p->long_name);
   xfree(p->key);
   xfree(p->arch);
+  xfree(p->compile_server_id);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
