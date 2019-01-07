@@ -533,8 +533,7 @@ serve_build_compile_dirs(
     if (lang && lang->compile_server_id && lang->compile_server_id[0]) {
       compile_server_id = lang->compile_server_id;
     } else {
-      //compile_server_id = config->contest_server_id;
-      compile_server_id = "localhost";
+      compile_server_id = config->contest_server_id;
     }
 
     unsigned char compile_report_buf[PATH_MAX];
@@ -547,9 +546,9 @@ serve_build_compile_dirs(
       compile_status_dir = lang->compile_status_dir;
       compile_report_dir = lang->compile_report_dir;
     } else {
-      snprintf(compile_status_buf, sizeof(compile_status_buf), "%s/%s/status", compile_spool_dir, compile_server_id);
+      snprintf(compile_status_buf, sizeof(compile_status_buf), "%s/%s/%06d/status", compile_spool_dir, compile_server_id, state->contest_id);
       compile_status_dir = compile_status_buf;
-      snprintf(compile_report_buf, sizeof(compile_report_buf), "%s/%s/report", compile_spool_dir, compile_server_id);
+      snprintf(compile_report_buf, sizeof(compile_report_buf), "%s/%s/%06d/report", compile_spool_dir, compile_server_id, state->contest_id);
       compile_report_dir = compile_report_buf;
     }
 #else
