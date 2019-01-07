@@ -1429,19 +1429,27 @@ serve_compile_request(
     prio += state->prob_prio[prob->id];
 
 #if defined EJUDGE_COMPILE_SPOOL_DIR
-  if (lang && lang->compile_src_dir && lang->compile_src_dir[0]) {
-    compile_src_dir = lang->compile_src_dir;
-  } else {
-    // FIXME: tune the compile server name
-    snprintf(compile_src_buf, sizeof(compile_src_buf), "%s/%s/src", EJUDGE_COMPILE_SPOOL_DIR, config->contest_server_id);
-    compile_src_dir = compile_src_buf;
-  }
-  if (lang && lang->compile_queue_dir && lang->compile_queue_dir[0]) {
-    compile_queue_dir = lang->compile_queue_dir;
-  } else {
-    // FIXME: tune the compile server name
-    snprintf(compile_queue_buf, sizeof(compile_queue_buf), "%s/%s/queue", EJUDGE_COMPILE_SPOOL_DIR, config->contest_server_id);
-    compile_queue_dir = compile_queue_buf;
+  {
+    const unsigned char *compile_spool_dir = EJUDGE_COMPILE_SPOOL_DIR;
+    const unsigned char *compile_server_id = NULL;
+    if (lang && lang->compile_server_id && lang->compile_server_id[0]) {
+      compile_server_id = lang->compile_server_id;
+    } else {
+      compile_server_id = config->contest_server_id;
+    }
+
+    if (lang && lang->compile_src_dir && lang->compile_src_dir[0]) {
+      compile_src_dir = lang->compile_src_dir;
+    } else {
+      snprintf(compile_src_buf, sizeof(compile_src_buf), "%s/%s/src", compile_spool_dir, compile_server_id);
+      compile_src_dir = compile_src_buf;
+    }
+    if (lang && lang->compile_queue_dir && lang->compile_queue_dir[0]) {
+      compile_queue_dir = lang->compile_queue_dir;
+    } else {
+      snprintf(compile_queue_buf, sizeof(compile_queue_buf), "%s/%s/queue", compile_spool_dir, compile_server_id);
+      compile_queue_dir = compile_queue_buf;
+    }
   }
 #else
   compile_src_dir = global->compile_src_dir;
