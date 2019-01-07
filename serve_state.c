@@ -56,6 +56,7 @@ serve_state_init(int contest_id)
   serve_state_t state;
 
   XCALLOC(state, 1);
+  state->contest_id = contest_id;
   state->clarlog_state = clar_init();
   state->teamdb_state = teamdb_init(contest_id);
   state->runlog_state = run_init(state->teamdb_state);
