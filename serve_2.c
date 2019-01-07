@@ -516,12 +516,45 @@ void
 serve_build_compile_dirs(serve_state_t state)
 {
   int i;
+  const struct section_global_data *global = state->global;
 
   for (i = 1; i <= state->max_lang; i++) {
-    if (!state->langs[i]) continue;
-    do_build_compile_dirs(state,
-                          state->langs[i]->compile_status_dir,
-                          state->langs[i]->compile_report_dir);
+    const struct section_language_data *lang = state->langs[i];
+    if (!lang) continue;
+
+    const unsigned char *compile_status_dir = NULL;
+    const unsigned char *compile_report_dir = NULL;
+
+#if defined EJUDGE_COMPILE_SPOOL_DIR
+    const unsigned char *compile_spool_dir = EJUDGE_COMPILE_SPOOL_DIR;
+    const unsigned char *compile_server_id = NULL;
+    if (lang && lang->compile_server_id && lang->compile_server_id[0]) {
+      compile_server_id = lang->compile_server_id;
+    } else {
+      //compile_server_id = config->contest_server_id;
+      compile_server_id = "localhost";
+    }
+
+    unsigned char compile_report_buf[PATH_MAX];
+    unsigned char compile_status_buf[PATH_MAX];
+
+    if (lang && lang->compile_dir_index > 0) {
+      compile_status_dir = lang->compile_status_dir;
+      compile_report_dir = lang->compile_report_dir;
+    } else if (lang && lang->compile_dir && lang->compile_dir[0] && global && global->compile_dir && strcmp(lang->compile_dir, global->compile_dir) != 0) {
+      compile_status_dir = lang->compile_status_dir;
+      compile_report_dir = lang->compile_report_dir;
+    } else {
+      snprintf(compile_status_buf, sizeof(compile_status_buf), "%s/%s/status", compile_spool_dir, compile_server_id);
+      compile_status_dir = compile_status_buf;
+      snprintf(compile_report_buf, sizeof(compile_report_buf), "%s/%s/report", compile_spool_dir, compile_server_id);
+      compile_report_dir = compile_report_buf;
+    }
+#else
+    compile_status_dir = lang->compile_status_dir;
+    compile_report_dir = lang->compile_report_dir;
+#endif
+    do_build_compile_dirs(state, compile_status_dir, compile_report_dir);
   }
 }
 
