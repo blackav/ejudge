@@ -1438,15 +1438,15 @@ serve_compile_request(
       compile_server_id = config->contest_server_id;
     }
 
-    if (lang && lang->compile_src_dir && lang->compile_src_dir[0]) {
+    if (lang && lang->compile_dir_index > 0) {
       compile_src_dir = lang->compile_src_dir;
+      compile_queue_dir = lang->compile_queue_dir;
+    } else if (lang && lang->compile_dir && lang->compile_dir[0] && global && global->compile_dir && strcmp(lang->compile_dir, global->compile_dir) != 0) {
+      compile_src_dir = lang->compile_src_dir;
+      compile_queue_dir = lang->compile_queue_dir;
     } else {
       snprintf(compile_src_buf, sizeof(compile_src_buf), "%s/%s/src", compile_spool_dir, compile_server_id);
       compile_src_dir = compile_src_buf;
-    }
-    if (lang && lang->compile_queue_dir && lang->compile_queue_dir[0]) {
-      compile_queue_dir = lang->compile_queue_dir;
-    } else {
       snprintf(compile_queue_buf, sizeof(compile_queue_buf), "%s/%s/queue", compile_spool_dir, compile_server_id);
       compile_queue_dir = compile_queue_buf;
     }
