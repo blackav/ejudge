@@ -765,6 +765,7 @@ enable_ejudge_xml
 enable_contests_dir
 enable_contests_home_dir
 enable_compile_spool_dir
+enable_run_spool_dir
 enable_local_dir
 enable_ajax
 enable_style_prefix
@@ -1439,6 +1440,7 @@ Optional Features:
                           directory
   --enable-compile-spool-dir
                           specify the path to the compile spool directory
+  --enable-run-spool-dir  specify the path to the run spool directory
   --enable-local-dir      specify the default path to the local state
                           directory
   --enable-ajax           enable use of the ajax technology for the client web
@@ -5614,6 +5616,13 @@ else
   ac_cv_compile_spool_dir=""
 fi
 
+# Check whether --enable-run-spool-dir was given.
+if test "${enable_run_spool_dir+set}" = set; then :
+  enableval=$enable_run_spool_dir; ac_cv_run_spool_dir="$enableval"
+else
+  ac_cv_run_spool_dir=""
+fi
+
 # Check whether --enable-local-dir was given.
 if test "${enable_local_dir+set}" = set; then :
   enableval=$enable_local_dir; ac_cv_local_dir="$enableval"
@@ -5838,7 +5847,8 @@ fi
 [ x"${ac_cv_cgi_conf_dir}" = x -o x"${ac_cv_cgi_conf_dir}" = xyes ] && ac_cv_cgi_conf_dir="../cgi-data"
 [ x"${ac_cv_style_prefix}" = x -o x"${ac_cv_style_prefix}" = xyes ] && ac_cv_style_prefix="/ejudge/"
 [ x"${ac_cv_lang_config_dir}" = x -o x"${ac_cv_lang_config_dir}" = xyes ] && ac_cv_lang_config_dir="${ac_cv_contests_home_dir}/compile/conf/lang.d"
-[ x"${ac_cv_compile_spool_dir}" = xyes ] && ac_cv_compile_spool_dir="${ac_cv_contests_home_dir}/../ej-compile-spool"
+[ x"${ac_cv_compile_spool_dir}" = xyes ] && ac_cv_compile_spool_dir=`dirname "${ac_cv_contests_home_dir}"`/ej-compile-spool
+[ x"${ac_cv_run_spool_dir}" = xyes ] && ac_cv_run_spool_dir=`dirname "${ac_cv_contests_home_dir}"`/ej-run-spool
 
 machine=`uname -m`
 
@@ -8129,6 +8139,13 @@ if [ x"${ac_cv_compile_spool_dir}" != x ]
 then
   cat >>confdefs.h <<_ACEOF
 #define EJUDGE_COMPILE_SPOOL_DIR "${ac_cv_compile_spool_dir}"
+_ACEOF
+
+fi
+if [ x"${ac_cv_run_spool_dir}" != x ]
+then
+  cat >>confdefs.h <<_ACEOF
+#define EJUDGE_RUN_SPOOL_DIR "${ac_cv_run_spool_dir}"
 _ACEOF
 
 fi
