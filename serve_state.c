@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -876,7 +876,7 @@ serve_state_load_contest(
     goto failure;
   serve_load_status_file(state);
   serve_set_upsolving_mode(state);
-  serve_build_compile_dirs(state);
+  serve_build_compile_dirs(config, state);
   serve_build_run_dirs(state, cnts);
 
   XCALLOC(state->prob_extras, state->max_prob + 1);

@@ -513,7 +513,9 @@ do_build_compile_dirs(serve_state_t state,
 }
 
 void
-serve_build_compile_dirs(serve_state_t state)
+serve_build_compile_dirs(
+        const struct ejudge_cfg *config,
+        serve_state_t state)
 {
   int i;
   const struct section_global_data *global = state->global;

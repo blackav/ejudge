@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -184,7 +184,7 @@ main(int argc, char *argv[])
                 config, cur_contest, global, 0, 0) < 0)
     return 1;
   serve_load_status_file(&serve_state);
-  serve_build_compile_dirs(&serve_state);
+  serve_build_compile_dirs(config, &serve_state);
   serve_build_run_dirs(&serve_state, cur_contest);
   if (serve_create_symlinks(&serve_state) < 0) return 1;
   serve_state.current_time = time(0);
