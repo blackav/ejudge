@@ -1064,8 +1064,16 @@ new_loop(int parallel_mode)
     }
 #endif
 
+    unsigned char contest_reply_dir[PATH_MAX];
+    snprintf(contest_reply_dir, sizeof(contest_reply_dir), "%s/%06d", contest_server_reply_dir, rpl.contest_id);
+    if (make_dir(contest_reply_dir, 0777) < 0) {
+      rpl.run_block = NULL;
+      compile_request_packet_free(req);
+      continue;
+    }
+
     unsigned char status_dir[PATH_MAX];
-    snprintf(status_dir, sizeof(status_dir), "%s/%06d/status", contest_server_reply_dir, rpl.contest_id);
+    snprintf(status_dir, sizeof(status_dir), "%s/status", contest_reply_dir);
     if (make_all_dir(status_dir, 0777) < 0) {
       rpl.run_block = NULL;
       compile_request_packet_free(req);
@@ -1080,7 +1088,7 @@ new_loop(int parallel_mode)
     }
 
     unsigned char report_dir[PATH_MAX];
-    snprintf(report_dir, sizeof(report_dir), "%s/%06d/report", contest_server_reply_dir, rpl.contest_id);
+    snprintf(report_dir, sizeof(report_dir), "%s/report", contest_reply_dir);
     if (make_dir(report_dir, 0777) < 0) {
       rpl.run_block = NULL;
       compile_request_packet_free(req);
