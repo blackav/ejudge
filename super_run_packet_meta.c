@@ -63,6 +63,8 @@ static struct meta_info_item meta_info_super_run_in_global_packet_data[] =
   [META_SUPER_RUN_IN_GLOBAL_PACKET_run_uuid] = { META_SUPER_RUN_IN_GLOBAL_PACKET_run_uuid, 's', XSIZE(struct super_run_in_global_packet, run_uuid), "run_uuid", XOFFSET(struct super_run_in_global_packet, run_uuid) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_zip_mode] = { META_SUPER_RUN_IN_GLOBAL_PACKET_zip_mode, 'B', XSIZE(struct super_run_in_global_packet, zip_mode), "zip_mode", XOFFSET(struct super_run_in_global_packet, zip_mode) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_testlib_mode] = { META_SUPER_RUN_IN_GLOBAL_PACKET_testlib_mode, 'B', XSIZE(struct super_run_in_global_packet, testlib_mode), "testlib_mode", XOFFSET(struct super_run_in_global_packet, testlib_mode) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_contest_server_id] = { META_SUPER_RUN_IN_GLOBAL_PACKET_contest_server_id, 's', XSIZE(struct super_run_in_global_packet, contest_server_id), "contest_server_id", XOFFSET(struct super_run_in_global_packet, contest_server_id) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_separate_run_spool_mode] = { META_SUPER_RUN_IN_GLOBAL_PACKET_separate_run_spool_mode, 'B', XSIZE(struct super_run_in_global_packet, separate_run_spool_mode), "separate_run_spool_mode", XOFFSET(struct super_run_in_global_packet, separate_run_spool_mode) },
 };
 
 int meta_super_run_in_global_packet_get_type(int tag)
