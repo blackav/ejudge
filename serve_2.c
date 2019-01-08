@@ -1766,6 +1766,22 @@ serve_run_request(
 
   if (cnts && cnts->run_managed) {
     // FIXME: resolve conflict when both prob->super_run_dir and lang->super_run_dir are set
+#if defined EJUDGE_RUN_SPOOL_DIR
+    {
+      const unsigned char *run_server_id = NULL;
+      if (prob->super_run_dir && prob->super_run_dir[0]) {
+        run_server_id = prob->super_run_dir;
+      } else if (lang && lang->super_run_dir && lang->super_run_dir[0]) {
+        run_server_id = lang->super_run_dir;
+      } else if (global->super_run_dir && global->super_run_dir[0]) {
+        run_server_id = global->super_run_dir;
+      } else {
+        run_server_id = config->contest_server_id;
+      }
+      snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/%s/exe", EJUDGE_RUN_SPOOL_DIR, run_server_id);
+      snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/%s/queue", EJUDGE_RUN_SPOOL_DIR, run_server_id);
+    }
+#else
     if (prob->super_run_dir && prob->super_run_dir[0]) {
       snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/var/exe", prob->super_run_dir);
       snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/var/queue", prob->super_run_dir);
@@ -1779,6 +1795,7 @@ serve_run_request(
       snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/super-run/var/exe", EJUDGE_CONTESTS_HOME_DIR);
       snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
     }
+#endif
   } else if (tester && tester->run_dir && tester->run_dir[0]) {
     snprintf(run_exe_dir, sizeof(run_exe_dir), "%s/exe", tester->run_dir);
     snprintf(run_queue_dir, sizeof(run_queue_dir), "%s/queue", tester->run_dir);
@@ -1951,6 +1968,7 @@ serve_run_request(
     srgp->reply_packet_name = xstrdup(buf);
   }
 
+#if !defined EJUDGE_RUN_SPOOL_DIR
   if (global->super_run_dir && global->super_run_dir[0]) {
     snprintf(pathbuf, sizeof(pathbuf), "var/%06d/report", contest_id);
     srgp->reply_report_dir = xstrdup(pathbuf);
@@ -1970,6 +1988,7 @@ serve_run_request(
       srgp->reply_full_archive_dir = xstrdup(pathbuf);
     }
   }
+#endif
   if (global->checker_locale && global->checker_locale[0]) {
     if (!strcasecmp(global->checker_locale, "user") && locale_id > 0) {
       char buf[64];
@@ -1981,6 +2000,7 @@ serve_run_request(
   }
   srgp->rejudge_flag = rejudge_flag;
   srgp->zip_mode = zip_mode;
+  srgp->contest_server_id = xstrdup(config->contest_server_id);
 
   struct super_run_in_problem_packet *srpp = srp->problem;
   srpp->type = xstrdup(problem_unparse_type(prob->type));
