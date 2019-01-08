@@ -631,6 +631,7 @@ do_build_queue_dirs(
 
 void
 serve_build_run_dirs(
+        const struct ejudge_cfg *config,
         serve_state_t state,
         const struct contest_desc *cnts)
 {

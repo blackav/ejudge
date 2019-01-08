@@ -388,7 +388,10 @@ int serve_get_cnts_caps(serve_state_t state, const struct contest_desc *,
 void serve_build_compile_dirs(
         const struct ejudge_cfg *config,
         serve_state_t state);
-void serve_build_run_dirs(serve_state_t state, const struct contest_desc *cnts);
+void serve_build_run_dirs(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        const struct contest_desc *cnts);
 
 int serve_create_symlinks(serve_state_t state);
 

@@ -878,7 +878,7 @@ serve_state_load_contest(
   serve_load_status_file(state);
   serve_set_upsolving_mode(state);
   serve_build_compile_dirs(config, state);
-  serve_build_run_dirs(state, cnts);
+  serve_build_run_dirs(config, state, cnts);
 
   XCALLOC(state->prob_extras, state->max_prob + 1);
   for (i = 1; i <= state->max_prob; i++) {
