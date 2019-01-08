@@ -629,6 +629,39 @@ do_build_queue_dirs(
   return state->run_queues_u++;
 }
 
+static void
+build_run_dir(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        const struct contest_desc *cnts,
+        const unsigned char *contest_server_id,
+        const unsigned char *run_server_id)
+{
+  unsigned char d1[PATH_MAX];
+  snprintf(d1, sizeof(d1), "%s/%s", EJUDGE_RUN_SPOOL_DIR, run_server_id);
+
+  unsigned char queue_dir[PATH_MAX];
+  unsigned char exe_dir[PATH_MAX];
+  unsigned char heartbeat_dir[PATH_MAX];
+  snprintf(queue_dir, sizeof(queue_dir), "%s/queue", d1);
+  snprintf(exe_dir, sizeof(exe_dir), "%s/exe", d1);
+  snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/heartbeat", d1);
+  do_build_queue_dirs(state, "", queue_dir, exe_dir, heartbeat_dir);
+
+  unsigned char d2[PATH_MAX];
+  snprintf(d2, sizeof(d2), "%s/%s/%06d", EJUDGE_RUN_SPOOL_DIR, contest_server_id, cnts->id);
+
+  unsigned char status_dir[PATH_MAX];
+  unsigned char report_dir[PATH_MAX];
+  unsigned char team_report_dir[PATH_MAX];
+  unsigned char full_report_dir[PATH_MAX];
+  snprintf(status_dir, sizeof(status_dir), "%s/status", d2);
+  snprintf(report_dir, sizeof(report_dir), "%s/report", d2);
+  snprintf(full_report_dir, sizeof(full_report_dir), "%s/output", d2);
+  snprintf(team_report_dir, sizeof(team_report_dir), "%s/teamreports", d2);
+  do_build_run_dirs(state, "", status_dir, report_dir, team_report_dir, full_report_dir);
+}
+
 void
 serve_build_run_dirs(
         const struct ejudge_cfg *config,
@@ -637,6 +670,7 @@ serve_build_run_dirs(
 {
   const struct section_global_data *global = state->global;
   int i;
+#if !defined EJUDGE_RUN_SPOOL_DIR
   unsigned char status_dir[PATH_MAX];
   unsigned char report_dir[PATH_MAX];
   unsigned char team_report_dir[PATH_MAX];
@@ -644,15 +678,23 @@ serve_build_run_dirs(
   unsigned char queue_dir[PATH_MAX];
   unsigned char exe_dir[PATH_MAX];
   unsigned char heartbeat_dir[PATH_MAX];
+#endif
 
   if (cnts && cnts->run_managed) {
+#if defined EJUDGE_RUN_SPOOL_DIR
+    build_run_dir(config, state, cnts, config->contest_server_id, config->contest_server_id);
+#else
     snprintf(queue_dir, sizeof(queue_dir), "%s/super-run/var/queue", EJUDGE_CONTESTS_HOME_DIR);
     snprintf(exe_dir, sizeof(exe_dir), "%s/super-run/var/exe", EJUDGE_CONTESTS_HOME_DIR);
     snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/super-run/var/heartbeat", EJUDGE_CONTESTS_HOME_DIR);
     do_build_queue_dirs(state, "", queue_dir, exe_dir, heartbeat_dir);
+#endif
   }
 
   if (global->super_run_dir && global->super_run_dir[0]) {
+#if defined EJUDGE_RUN_SPOOL_DIR
+    build_run_dir(config, state, cnts, config->contest_server_id, global->super_run_dir);
+#else
     snprintf(status_dir, sizeof(status_dir),
              "%s/var/%06d/status", global->super_run_dir, cnts->id);
     snprintf(report_dir, sizeof(report_dir),
@@ -667,11 +709,15 @@ serve_build_run_dirs(
     snprintf(exe_dir, sizeof(exe_dir), "%s/var/exe", global->super_run_dir);
     snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/var/heartbeat", global->super_run_dir);
     do_build_queue_dirs(state, global->super_run_dir, queue_dir, exe_dir, heartbeat_dir);
+#endif
   }
 
   for (i = 1; i <= state->max_lang; ++i) {
     struct section_language_data *lang = state->langs[i];
     if (lang && lang->super_run_dir && lang->super_run_dir[0]) {
+#if defined EJUDGE_RUN_SPOOL_DIR
+      build_run_dir(config, state, cnts, config->contest_server_id, lang->super_run_dir);
+#else
       snprintf(status_dir, sizeof(status_dir),
                "%s/var/%06d/status", lang->super_run_dir, cnts->id);
       snprintf(report_dir, sizeof(report_dir),
@@ -686,12 +732,16 @@ serve_build_run_dirs(
       snprintf(exe_dir, sizeof(exe_dir), "%s/var/exe", lang->super_run_dir);
       snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/var/heartbeat", lang->super_run_dir);
       do_build_queue_dirs(state, lang->super_run_dir, queue_dir, exe_dir, heartbeat_dir);
+#endif
     }
   }
 
   for (i = 1; i <= state->max_prob; ++i) {
     struct section_problem_data *prob = state->probs[i];
     if (prob && prob->super_run_dir && prob->super_run_dir[0]) {
+#if defined EJUDGE_RUN_SPOOL_DIR
+      build_run_dir(config, state, cnts, config->contest_server_id, prob->super_run_dir);
+#else
       snprintf(status_dir, sizeof(status_dir),
                "%s/var/%06d/status", prob->super_run_dir, cnts->id);
       snprintf(report_dir, sizeof(report_dir),
@@ -706,9 +756,11 @@ serve_build_run_dirs(
       snprintf(exe_dir, sizeof(exe_dir), "%s/var/exe", prob->super_run_dir);
       snprintf(heartbeat_dir, sizeof(heartbeat_dir), "%s/var/heartbeat", prob->super_run_dir);
       do_build_queue_dirs(state, prob->super_run_dir, queue_dir, exe_dir, heartbeat_dir);
+#endif
     }
   }
 
+#if !defined EJUDGE_RUN_SPOOL_DIR
   for (i = 1; i <= state->max_tester; i++) {
     if (!state->testers[i]) continue;
     //if (state->testers[i]->any) continue;
@@ -735,6 +787,7 @@ serve_build_run_dirs(
                         global->run_exe_dir,
                         NULL);
   }
+#endif
 }
 
 int
