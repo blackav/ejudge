@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -56,9 +56,11 @@ struct ignored_problem_info
 
 #define SUPER_RUN_DIRECTORY "super-run"
 static unsigned char *super_run_dir = NULL;
+static unsigned char *run_server_id = NULL;
 
 static const unsigned char *program_name = 0;
 struct ejudge_cfg *ejudge_config = NULL;
+static unsigned char super_run_server_path[PATH_MAX];
 static unsigned char super_run_path[PATH_MAX];
 static unsigned char super_run_spool_path[PATH_MAX];
 static unsigned char super_run_exe_path[PATH_MAX];
@@ -647,13 +649,25 @@ write_version(void)
 static void
 create_directories(void)
 {
+#if defined EJUDGE_RUN_SPOOL_DIR
+  snprintf(super_run_server_path, sizeof(super_run_server_path), "%s/%s", EJUDGE_RUN_SPOOL_DIR, run_server_id);
+  os_MakeDirPath(super_run_server_path, 0775);
+  snprintf(super_run_spool_path, sizeof(super_run_spool_path), "%s/%s", super_run_server_path, "queue");
+  snprintf(super_run_exe_path, sizeof(super_run_exe_path), "%s/%s", super_run_server_path, "exe");
+  if (heartbeat_mode) {
+    snprintf(super_run_heartbeat_path, sizeof(super_run_heartbeat_path), "%s/%s", super_run_server_path, "heartbeat");
+  }
+#else
   snprintf(super_run_spool_path, sizeof(super_run_spool_path), "%s/var/%s", super_run_path, "queue");
   snprintf(super_run_exe_path, sizeof(super_run_exe_path), "%s/var/%s", super_run_path, "exe");
+  if (heartbeat_mode) {
+    snprintf(super_run_heartbeat_path, sizeof(super_run_heartbeat_path), "%s/var/%s", super_run_path, "heartbeat");
+  }
+#endif
   os_MakeDirPath(super_run_spool_path, 0777);
   os_MakeDirPath(super_run_exe_path, 0777);
   make_all_dir(super_run_spool_path, 0777);
   if (heartbeat_mode) {
-    snprintf(super_run_heartbeat_path, sizeof(super_run_heartbeat_path), "%s/var/%s", super_run_path, "heartbeat");
     os_MakeDirPath(super_run_heartbeat_path, 0777);
     make_all_dir(super_run_heartbeat_path, 0777);
   }
@@ -1204,7 +1218,13 @@ main(int argc, char *argv[])
       if (cur_arg + 1 >= argc) fatal("argument expected for -p");
       xfree(super_run_dir); super_run_dir = NULL;
       super_run_dir = xstrdup(argv[cur_arg + 1]);
-      xfree(queue_name); queue_name = xstrdup(argv[cur_arg + 1]);
+      argv_restart[argc_restart++] = argv[cur_arg];
+      argv_restart[argc_restart++] = argv[cur_arg + 1];
+      cur_arg += 2;
+    } else if (!strcmp(argv[cur_arg], "-d")) {
+      if (cur_arg + 1 >= argc) fatal("argument expected for -d");
+      xfree(run_server_id); run_server_id = NULL;
+      run_server_id = xstrdup(argv[cur_arg + 1]);
       argv_restart[argc_restart++] = argv[cur_arg];
       argv_restart[argc_restart++] = argv[cur_arg + 1];
       cur_arg += 2;
@@ -1279,9 +1299,38 @@ main(int argc, char *argv[])
   if (!host_names[0]) {
     fatal("cannot determine the name of the host");
   }
-  if (!super_run_dir) {
-    super_run_dir = xstrdup(SUPER_RUN_DIRECTORY);
+
+  if (super_run_dir && !*super_run_dir) {
+    xfree(super_run_dir); super_run_dir = NULL;
   }
+  if (run_server_id && !*run_server_id) {
+    xfree(run_server_id); run_server_id = NULL;
+  }
+  xfree(queue_name); queue_name = NULL;
+
+  if (!super_run_dir) {
+    // default zero-setup mode
+    if (!run_server_id) {
+      const unsigned char *s = getenv("EJ_RUN_SERVER_ID");
+      if (s && *s) {
+        run_server_id = xstrdup(s);
+      }
+    }
+    if (!run_server_id) {
+      const unsigned char *s = os_NodeName();
+      if (s && *s) {
+        run_server_id = xstrdup(s);
+      }
+    }
+    if (!run_server_id) {
+      run_server_id = xstrdup("localhost");
+    }
+    super_run_dir = xstrdup(SUPER_RUN_DIRECTORY);
+  } else if (super_run_dir && !run_server_id) {
+    run_server_id = xstrdup(super_run_dir);
+  } else {
+  }
+  queue_name = xstrdup(run_server_id);
 
   if (!ejudge_xml_path[0]) {
 #if defined EJUDGE_CONTESTS_HOME_DIR
