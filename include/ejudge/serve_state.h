@@ -478,6 +478,7 @@ serve_compile_request(
 struct compile_reply_packet;
 int
 serve_run_request(
+        const struct ejudge_cfg *config,
         serve_state_t state,
         const struct contest_desc *cnts,
         FILE *errf,

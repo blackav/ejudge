@@ -3472,7 +3472,7 @@ priv_submit_run(
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
-        if (serve_run_request(cs, cnts, log_f, run_text, run_size,
+        if (serve_run_request(phr->config, cs, cnts, log_f, run_text, run_size,
                               cnts->id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
@@ -3515,7 +3515,7 @@ priv_submit_run(
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
-        if (serve_run_request(cs, cnts, log_f, run_text, run_size,
+        if (serve_run_request(phr->config, cs, cnts, log_f, run_text, run_size,
                               cnts->id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
@@ -9540,7 +9540,7 @@ ns_submit_run(
 
     serve_audit_log(cs, run_id, NULL, user_id, &phr->ip, phr->ssl_flag,
                     "submit", "ok", RUN_RUNNING, NULL);
-    r = serve_run_request(cs, cnts, log_f, run_text, run_size,
+    r = serve_run_request(phr->config, cs, cnts, log_f, run_text, run_size,
                           cnts->id, run_id,
                           user_id, prob_id, 0, variant, 0, -1, -1, 1,
                           mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
@@ -9593,7 +9593,7 @@ ns_submit_run(
     goto done;
   }
 
-  r = serve_run_request(cs, cnts, log_f, run_text, run_size,
+  r = serve_run_request(phr->config, cs, cnts, log_f, run_text, run_size,
                         cnts->id, run_id,
                         user_id, prob_id, 0, variant, 0, -1, -1, 1,
                         mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
@@ -10133,7 +10133,7 @@ unpriv_submit_run(
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
-        if (serve_run_request(cs, cnts, phr->log_f, run_text, run_size,
+        if (serve_run_request(phr->config, cs, cnts, phr->log_f, run_text, run_size,
                               cnts->id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
@@ -10195,7 +10195,7 @@ unpriv_submit_run(
         serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_RUNNING, NULL);
 
-        if (serve_run_request(cs, cnts, phr->log_f, run_text, run_size,
+        if (serve_run_request(phr->config, cs, cnts, phr->log_f, run_text, run_size,
                               cnts->id, run_id,
                               phr->user_id, prob_id, 0, variant, 0, -1, -1, 1,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,

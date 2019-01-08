@@ -1179,7 +1179,7 @@ cmd_submit_run(
           serve_report_check_failed(ejudge_config, cnts, cs, run_id, serve_err_str(r));
         }
       } else {
-        if (serve_run_request(cs, cnts, stderr, run_text, run_size,
+        if (serve_run_request(phr->config, cs, cnts, stderr, run_text, run_size,
                               cnts->id, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
@@ -1232,7 +1232,7 @@ cmd_submit_run(
       } else {
         serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                         "submit", "ok", RUN_RUNNING, NULL);
-        if (serve_run_request(cs, cnts, stderr, run_text, run_size,
+        if (serve_run_request(phr->config, cs, cnts, stderr, run_text, run_size,
                               cnts->id, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,

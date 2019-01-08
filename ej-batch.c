@@ -673,7 +673,7 @@ process_compile_packet(
            global->contest_id);
   run_spool_add_reply_dir(result_queue_dir);
 
-  r = serve_run_request(extra->state, NULL, stderr, report_txt, report_len,
+  r = serve_run_request(ejudge_config, extra->state, NULL, stderr, report_txt, report_len,
                         global->contest_id,
                         pkt->run_id,
                         1 /* user_id */,

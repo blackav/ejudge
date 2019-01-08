@@ -1648,6 +1648,7 @@ find_lang_specific_size(
 
 int
 serve_run_request(
+        const struct ejudge_cfg *config,
         serve_state_t state,
         const struct contest_desc *cnts,
         FILE *errf,
@@ -3094,7 +3095,7 @@ prepare_run_request:
       goto report_check_failed;
   }
 
-  if (serve_run_request(state, cnts, stderr, run_text, run_size,
+  if (serve_run_request(config, state, cnts, stderr, run_text, run_size,
                         cnts->id, comp_pkt->run_id,
                         re.user_id, re.prob_id, re.lang_id, re.variant,
                         comp_extra->priority_adjustment,
@@ -3959,7 +3960,7 @@ serve_rejudge_run(
                           0, run_arch_path, 0) < 0)
       return;
 
-    serve_run_request(state, cnts, stderr, run_text, run_size,
+    serve_run_request(config, state, cnts, stderr, run_text, run_size,
                       cnts->id, run_id,
                       re.user_id, re.prob_id, re.lang_id,
                       re.variant, priority_adjustment,
