@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -65,11 +65,15 @@ static struct telegram_plugin_data *telegram_data = NULL;
 static int
 make_path_in_var_dir(unsigned char *buf, const unsigned char *file)
 {
+#if defined EJUDGE_LOCAL_DIR
+  snprintf(buf, PATH_MAX, "%s/%s", EJUDGE_LOCAL_DIR, file);
+#else
   if (!config->var_dir || !os_IsAbsolutePath(config->var_dir)) {
     err("<var_dir> is not set or not an absolute path");
     return -1;
   }
   snprintf(buf, sizeof(path_t), "%s/%s", config->var_dir, file);
+#endif
   return 0;
 }
 
