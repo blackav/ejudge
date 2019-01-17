@@ -76,7 +76,7 @@
 #undef EJUDGE_RUN_SPOOL_DIR
 
 /* the path to the status directory */
-#undef EJUDGE_STATUS_DIR
+#undef EJUDGE_CONTESTS_STATUS_DIR
 
 /* path (absolute or relative) to CGI configuration files */
 #undef CGI_DATA_PATH
