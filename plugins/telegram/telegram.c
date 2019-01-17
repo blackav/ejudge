@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2016-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -107,6 +107,7 @@ struct telegram_plugin_data
     } bots;
 
     struct mongo_conn *conn;
+    int curl_verbose_flag;
 };
 
 static struct bot_state *
@@ -172,6 +173,8 @@ prepare_func(
                     add_bot_id(state, bot_id);
                 }
             }
+        } else if (!strcmp(p->name[0], "curl_verbose")) {
+            state->curl_verbose_flag = 1;
         }
     }
 
@@ -257,6 +260,9 @@ send_message(
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, resp_f);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, (char*) post_s);
         curl_easy_setopt(curl, CURLOPT_POST, 1);
+        if (state->curl_verbose_flag > 0) {
+            curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+        }
         CURLcode res = curl_easy_perform(curl);
         fclose(resp_f);
         if (res != CURLE_OK) {
@@ -345,6 +351,9 @@ packet_handler_telegram(int uid, int argc, char **argv, void *user)
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, resp_f);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, (char*) post_s);
     curl_easy_setopt(curl, CURLOPT_POST, 1);
+    if (state->curl_verbose_flag > 0) {
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+    }
     res = curl_easy_perform(curl);
     fclose(resp_f); resp_f = NULL;
     if (res != CURLE_OK) {
@@ -1246,6 +1255,9 @@ get_updates(struct telegram_plugin_data *state, struct bot_state *bs)
         curl_easy_setopt(curl, CURLOPT_URL, url_s);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, resp_f);
+        if (state->curl_verbose_flag > 0) {
+            curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+        }
         CURLcode res = curl_easy_perform(curl);
         fclose(resp_f);
         if (res != CURLE_OK) {
