@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -49,7 +48,9 @@ send_job_packet(const unsigned char *q_dir, unsigned char **args,
   if (q_dir) {
     snprintf(q_path, sizeof(q_path), "%s", q_dir);
   } else {
-#if defined EJUDGE_CONTESTS_HOME_DIR
+#if defined EJUDGE_LOCAL_DIR
+    snprintf(q_path, sizeof(q_path), "%s/jspool", EJUDGE_LOCAL_DIR);
+#elif defined EJUDGE_CONTESTS_HOME_DIR
     snprintf(q_path, sizeof(q_path), "%s/var/jspool", EJUDGE_CONTESTS_HOME_DIR);
 #else
     err("send_job_packet: no queue dir defined");
