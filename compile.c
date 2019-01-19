@@ -594,30 +594,28 @@ handle_packet(
     unsigned char header_path[PATH_MAX];
     unsigned char footer_path[PATH_MAX];
     unsigned char compiler_env_path[PATH_MAX];
+    unsigned char lang_name_part[PATH_MAX];
     header_path[0] = 0;
     footer_path[0] = 0;
     compiler_env_path[0] = 0;
+    lang_name_part[0] = 0;
+
+    if (req->lang_header) {
+      if (lang->multi_header_suffix && lang->multi_header_suffix[0]) {
+        snprintf(lang_name_part, sizeof(lang_name_part), ".%s", lang->multi_header_suffix);
+      } else {
+        snprintf(lang_name_part, sizeof(lang_name_part), ".%s", lang->short_name);
+      }
+    }
 
     if (header_base[0]) {
-      if (req->lang_header) {
-        snprintf(header_path, sizeof(header_path), "%s/%s.%s%s", req->header_dir, header_base, lang->short_name, lang->src_sfx);
-      } else {
-        snprintf(header_path, sizeof(header_path), "%s/%s%s", req->header_dir, header_base, lang->src_sfx);
-      }
+      snprintf(header_path, sizeof(header_path), "%s/%s%s%s", req->header_dir, header_base, lang_name_part, lang->src_sfx);
     }
     if (footer_base[0]) {
-      if (req->lang_header) {
-        snprintf(footer_path, sizeof(footer_path), "%s/%s.%s%s", req->header_dir, footer_base, lang->short_name, lang->src_sfx);
-      } else {
-        snprintf(footer_path, sizeof(footer_path), "%s/%s%s", req->header_dir, footer_base, lang->src_sfx);
-      }
+      snprintf(footer_path, sizeof(footer_path), "%s/%s%s%s", req->header_dir, footer_base, lang_name_part, lang->src_sfx);
     }
     if (compiler_env_base[0]) {
-      if (req->lang_header) {
-        snprintf(compiler_env_path, sizeof(compiler_env_path), "%s/%s.%s", req->header_dir, compiler_env_base, lang->short_name);
-      } else {
-        snprintf(compiler_env_path, sizeof(compiler_env_path), "%s/%s", req->header_dir, compiler_env_base);
-      }
+      snprintf(compiler_env_path, sizeof(compiler_env_path), "%s/%s%s", req->header_dir, compiler_env_base, lang_name_part);
     }
 
     int header_exists = (header_path[0] && access(header_path, R_OK) >= 0);
@@ -773,12 +771,7 @@ handle_packet(
       } else if (cur_status == RUN_COMPILE_ERR) {
         if (tinf && tinf->compiler_must_fail > 0 && tinf->source_stub) {
           unsigned char source_stub_path[PATH_MAX];
-          if (req->lang_header) {
-            snprintf(source_stub_path, sizeof(source_stub_path), "%s/%s.%s%s",
-                     req->header_dir, tinf->source_stub, lang->short_name, lang->src_sfx);
-          } else {
-            snprintf(source_stub_path, sizeof(source_stub_path), "%s/%s%s", req->header_dir, tinf->source_stub, lang->src_sfx);
-          }
+          snprintf(source_stub_path, sizeof(source_stub_path), "%s/%s%s%s", req->header_dir, tinf->source_stub, lang_name_part, lang->src_sfx);
           if (stat(source_stub_path, &stb) < 0) {
             fprintf(log_f, "source stub file '%s' does not exist: %s\n", source_stub_path, strerror(errno));
             status = RUN_CHECK_FAILED;

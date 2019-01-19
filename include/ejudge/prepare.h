@@ -1320,6 +1320,8 @@ struct section_language_data
   ejenvlist_t compiler_env;
   /** ID of compilation server */
   unsigned char *compile_server_id;
+  /** suffix to use for multi-header setup */
+  unsigned char *multi_header_suffix;
 
   unsigned char *unhandled_vars;
   /** disabled by configuration script */

@@ -586,6 +586,7 @@ enum
   CNTSLANG_compile_report_dir,
   CNTSLANG_compiler_env,
   CNTSLANG_compile_server_id,
+  CNTSLANG_multi_header_suffix,
   CNTSLANG_unhandled_vars,
   CNTSLANG_disabled_by_config,
 
