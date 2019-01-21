@@ -1265,13 +1265,17 @@ filter_lang_environ(
   char **env = NULL;
   llen = strlen(lang->short_name);
   for (i = 0; environ[i]; ++i) {
-    if (strlen(environ[i]) > llen && !strncmp(lang->short_name, environ[i], llen) && environ[i][llen] == '=') {
+    if (environ[i][0] == '*' && environ[i][1] == '=') {
+      ++count;
+    } else if (strlen(environ[i]) > llen && !strncmp(lang->short_name, environ[i], llen) && environ[i][llen] == '=') {
       ++count;
     }
   }
   XCALLOC(env, count + 1);
   for (i = 0; environ[i]; ++i) {
-    if (strlen(environ[i]) > llen && !strncmp(lang->short_name, environ[i], llen) && environ[i][llen] == '=') {
+    if (environ[i][0] == '*' && environ[i][1] == '=') {
+      env[j++] = prepare_varsubst(state, environ[i] + 2, 0, prob, lang, tester);
+    } else if (strlen(environ[i]) > llen && !strncmp(lang->short_name, environ[i], llen) && environ[i][llen] == '=') {
       env[j++] = prepare_varsubst(state, environ[i] + llen + 1, 0, prob, lang, tester);
     }
   }
