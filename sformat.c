@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2001-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2001-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -49,6 +49,7 @@
  *   La - arch
  *   Ls - src_sfx
  *   Le - exe_sfx
+ *   Lm - multi_header_suffix / short_name
  *  T - tester data
  *  M - team data
  *   Mi - team id
@@ -380,11 +381,12 @@ sformat_message(
          * La - arch
          * Ls - src_sfx
          * Le - exe_sfx
+         * Lm - multi_header_suffix / short_name
          */
       case 'L':
         pf++;
         switch (*pf) {
-        case 'i': case 'n': case 'l': case 'a': case 's': case 'e':
+        case 'i': case 'n': case 'l': case 'a': case 's': case 'e': case 'm':
           break;
         case 0:
           is_invalid = 1;
@@ -422,6 +424,13 @@ sformat_message(
             papp = "";
             if (lang_data) papp = lang_data->exe_sfx;
             break;
+          case 'm':
+            papp = "";
+            if (lang_data && lang_data->multi_header_suffix && lang_data->multi_header_suffix[0]) {
+              papp = lang_data->multi_header_suffix;
+            } else if (lang_data) {
+              papp = lang_data->short_name;
+            }
           default:
             abort();
           }
