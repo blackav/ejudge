@@ -476,6 +476,7 @@ load_runs(struct rldb_mysql_cnts *cs)
       xfree(ri.hash); ri.hash = 0;
       xfree(ri.mime_type); ri.mime_type = 0;
       xfree(ri.run_uuid); ri.run_uuid = 0;
+      xfree(ri.prob_uuid); ri.prob_uuid = NULL;
 
       expand_runs(rls, ri.run_id);
       re = &rls->runs[ri.run_id - rls->run_f];
@@ -503,6 +504,7 @@ load_runs(struct rldb_mysql_cnts *cs)
     xfree(ri.hash); ri.hash = 0;
     xfree(ri.mime_type); ri.mime_type = 0;
     xfree(ri.run_uuid); ri.run_uuid = 0;
+    xfree(ri.prob_uuid); ri.prob_uuid = NULL;
 
     expand_runs(rls, ri.run_id);
     re = &rls->runs[ri.run_id - rls->run_f];
@@ -547,6 +549,7 @@ load_runs(struct rldb_mysql_cnts *cs)
   xfree(ri.hash);
   xfree(ri.mime_type);
   xfree(ri.run_uuid);
+  xfree(ri.prob_uuid);
   mi->free_res(md);
   return -1;
 }
