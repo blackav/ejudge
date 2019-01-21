@@ -7068,3 +7068,30 @@ prepare_varsubst(
                        section_tester_params,
                        prob, lang, tester);
 }
+
+char **
+prepare_sarray_varsubst(
+        serve_state_t state,
+        const struct section_problem_data *prob,
+        const struct section_language_data *lang,
+        const struct section_tester_data *tester,
+        char **a1)
+{
+  int newlen = 0, i = 0, j;
+  char **aa = 0;
+
+  if (!a1 || !a1[0]) return NULL;
+
+  newlen = sarray_len(a1);
+  XCALLOC(aa, newlen + 1);
+  if (a1) {
+    for (j = 0; a1[j]; ++j)
+      aa[i++] = varsubst_heap(state, a1[j], 0,
+                              section_global_params,
+                              section_problem_params,
+                              section_language_params,
+                              section_tester_params,
+                              prob, lang, tester);
+  }
+  return aa;
+}
