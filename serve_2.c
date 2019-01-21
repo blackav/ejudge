@@ -1324,6 +1324,7 @@ serve_compile_request(
   char **sc_env_mem = 0;
   char **comp_env_mem = NULL;
   char **comp_env_mem_2 = NULL;
+  char **compiler_env_copy = NULL;
   const unsigned char *compile_src_dir = 0;
   const unsigned char *compile_queue_dir = 0;
   int errcode = -SERVE_ERR_GENERIC;
@@ -1334,7 +1335,8 @@ serve_compile_request(
   memset(&sformat_extra, 0, sizeof(sformat_extra));
 
   // perform substitutions
-  compiler_env = prepare_sarray_varsubst(state, prob, lang, NULL, compiler_env);
+  compiler_env_copy = prepare_sarray_varsubst(state, prob, lang, NULL, compiler_env);
+  compiler_env = compiler_env_copy;
 
   if (prob->variant_num <= 0 && variant > 0) {
     goto failed;
@@ -1641,7 +1643,7 @@ serve_compile_request(
   sarray_free(comp_env_mem_2);
   sarray_free(comp_env_mem);
   sarray_free(sc_env_mem);
-  sarray_free(compiler_env);
+  sarray_free(compiler_env_copy);
   xfree(pkt_buf);
   xfree(src_header_text);
   xfree(src_footer_text);
@@ -1653,7 +1655,7 @@ serve_compile_request(
   sarray_free(comp_env_mem_2);
   sarray_free(comp_env_mem);
   sarray_free(sc_env_mem);
-  sarray_free(compiler_env);
+  sarray_free(compiler_env_copy);
   xfree(pkt_buf);
   xfree(src_header_text);
   xfree(src_footer_text);
