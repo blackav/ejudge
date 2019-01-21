@@ -154,9 +154,11 @@ varsubst_heap(
   }
   if (!*p1) {
     if (free_flag) {
+      /*
       if (orig_in_str != in_str) {
         xfree(orig_in_str);
       }
+      */
     } else {
       if (orig_in_str == in_str) {
         in_str = xstrdup(in_str);
