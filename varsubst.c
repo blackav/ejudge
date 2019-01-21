@@ -95,6 +95,7 @@ varsubst_heap(
         const struct section_language_data *lang,
         const struct section_tester_data *tester)
 {
+  unsigned char *orig_in_str = in_str;
   unsigned char *out_str = 0, *p1, *p2;
   unsigned char *var_name = 0;
   size_t var_name_size = 0, in_str_len = 0, var_value_len = 0;
@@ -151,7 +152,18 @@ varsubst_heap(
   for (p1 = in_str; *p1; p1++) {
     if (*p1 == '$' && p1[1] == '$') break;
   }
-  if (!*p1) return in_str;
+  if (!*p1) {
+    if (free_flag) {
+      if (orig_in_str != in_str) {
+        xfree(in_str); in_str = orig_in_str;
+      }
+    } else {
+      if (orig_in_str == in_str) {
+        in_str = xstrdup(in_str);
+      }
+    }
+    return in_str;
+  }
 
   out_str = xmalloc(in_str_len + 1);
   for (p1 = in_str, p2 = out_str; *p1; p1++, p2++) {
