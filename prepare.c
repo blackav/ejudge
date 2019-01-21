@@ -3486,6 +3486,7 @@ set_defaults(
       ASSERT(lang->compile_real_time_limit >= 0);
     }
 
+    /*
     if (lang->compiler_env) {
       for (j = 0; lang->compiler_env[j]; j++) {
         lang->compiler_env[j] = varsubst_heap(state, lang->compiler_env[j], 1,
@@ -3496,6 +3497,7 @@ set_defaults(
         if (!lang->compiler_env[j]) return -1;
       }
     }
+    */
     if (lang->style_checker_env) {
       for (j = 0; lang->style_checker_env[j]; ++j) {
         lang->style_checker_env[j] = varsubst_heap(state,
