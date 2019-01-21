@@ -1253,20 +1253,26 @@ serve_audit_log(
 }
 
 static char **
-filter_lang_environ(const unsigned char *lang_short_name, char **environ)
+filter_lang_environ(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        const struct section_problem_data *prob,
+        const struct section_language_data *lang,
+        const struct section_tester_data *tester,
+        char **environ)
 {
   int count = 0, i, llen, j = 0;
   char **env = NULL;
-  llen = strlen(lang_short_name);
+  llen = strlen(lang->short_name);
   for (i = 0; environ[i]; ++i) {
-    if (strlen(environ[i]) > llen && !strncmp(lang_short_name, environ[i], llen) && environ[i][llen] == '=') {
+    if (strlen(environ[i]) > llen && !strncmp(lang->short_name, environ[i], llen) && environ[i][llen] == '=') {
       ++count;
     }
   }
   XCALLOC(env, count + 1);
   for (i = 0; environ[i]; ++i) {
-    if (strlen(environ[i]) > llen && !strncmp(lang_short_name, environ[i], llen) && environ[i][llen] == '=') {
-      env[j++] = xstrdup(environ[i] + llen + 1);
+    if (strlen(environ[i]) > llen && !strncmp(lang->short_name, environ[i], llen) && environ[i][llen] == '=') {
+      env[j++] = prepare_varsubst(state, environ[i] + llen + 1, 0, prob, lang, tester);
     }
   }
   return env;
@@ -1403,7 +1409,7 @@ serve_compile_request(
   }
 
   if (prob && prob->lang_compiler_env && lang) {
-    comp_env_mem_2 = filter_lang_environ(lang->short_name, prob->lang_compiler_env);
+    comp_env_mem_2 = filter_lang_environ(config, state, prob, lang, NULL, prob->lang_compiler_env);
   }
 
   if (compiler_env && compiler_env[0] && comp_env_mem_2 && comp_env_mem_2[0]) {
