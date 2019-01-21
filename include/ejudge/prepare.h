@@ -1623,4 +1623,13 @@ prepare_copy_dates(
         struct section_problem_data *prob,
         struct dates_config *dcfg);
 
+unsigned char *
+prepare_varsubst(
+        serve_state_t state,
+        unsigned char *in_str,
+        int free_flag,
+        const struct section_problem_data *prob,
+        const struct section_language_data *lang,
+        const struct section_tester_data *tester);
+
 #endif /* __PREPARE_H__ */

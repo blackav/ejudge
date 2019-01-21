@@ -3839,6 +3839,7 @@ set_defaults(
         prob->lang_compiler_env = sarray_merge_pf(aprob->lang_compiler_env,
                                                   prob->lang_compiler_env);
       }
+      /*
       if (prob->lang_compiler_env) {
         for (j = 0; prob->lang_compiler_env[j]; j++) {
           prob->lang_compiler_env[j] = varsubst_heap(state,
@@ -3850,6 +3851,7 @@ set_defaults(
           if (!prob->lang_compiler_env[j]) return -1;
         }
       }
+      */
 
       if (si != -1 && aprob->style_checker_env) {
         prob->style_checker_env = sarray_merge_pf(aprob->style_checker_env,
@@ -7048,4 +7050,21 @@ fail:
   }
   xfree(arr);
   return -1;
+}
+
+unsigned char *
+prepare_varsubst(
+        serve_state_t state,
+        unsigned char *in_str,
+        int free_flag,
+        const struct section_problem_data *prob,
+        const struct section_language_data *lang,
+        const struct section_tester_data *tester)
+{
+  return varsubst_heap(state, in_str, free_flag,
+                       section_global_params,
+                       section_problem_params,
+                       section_language_params,
+                       section_tester_params,
+                       prob, lang, tester);
 }
