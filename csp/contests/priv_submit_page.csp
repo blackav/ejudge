@@ -269,9 +269,22 @@ ns_unparse_answers(
 <tr>
 <td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:select name="lang_id"><option value=""></option><%
     for (i = 1; i <= cs->max_lang; i++) {
-      if (cs->langs[i]) {
-%><s:option value="i" selectedExpr="i == lang_id"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" checkExpr="" /></s:option><%
+      const struct section_language_data *cl = cs->langs[i];
+      char **ll;
+      int li;
+      if (!cl || cl->disabled > 0) continue;
+      if ((ll = prob->enable_language)) {
+        for (li = 0; ll[li]; ++li)
+          if (!strcmp(ll[li], cl->short_name))
+            break;
+        if (!ll[li]) continue;
+      } else if ((ll = prob->disable_language)) {
+        for (li = 0; ll[li]; ++li)
+          if (!strcmp(ll[li], cl->short_name))
+            break;
+        if (ll[li]) continue;
       }
+%><s:option value="i" selectedExpr="i == lang_id"><s:v value="cl->short_name" escape="false" /> - <s:v value="cl->long_name" checkExpr="" /></s:option><%
     }
 %></s:select></td></tr>
 
