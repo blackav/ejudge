@@ -433,7 +433,7 @@ ns_client_destroy_callback(struct client_state *p)
   if (!cs->pending_xml_import || cs->client_id < 0) return;
   if (cs->saved_testing_suspended != cs->testing_suspended) {
     cs->testing_suspended = cs->saved_testing_suspended;
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     if (!cs->testing_suspended)
       serve_judge_suspended(extra, ejudge_config, cnts, cs, 0, 0, 0,
                             DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 0);
@@ -458,7 +458,7 @@ do_unload_contest(int idx)
 
   if (extra->serve_state) {
     serve_check_stat_generation(ejudge_config, extra->serve_state, cnts, 1, utf8_mode);
-    serve_update_status_file(extra->serve_state, 1);
+    serve_update_status_file(cnts, extra->serve_state, 1);
     if (extra->serve_state->xuser_state) {
       extra->serve_state->xuser_state->vt->flush(extra->serve_state->xuser_state);
     }
@@ -559,7 +559,7 @@ handle_pending_xml_import(
   if (cs->client_id < 0 || !ns_is_valid_client_id(cs->client_id)) {
     if (cs->saved_testing_suspended != cs->testing_suspended) {
       cs->testing_suspended = cs->saved_testing_suspended;
-      serve_update_status_file(cs, 1);
+      serve_update_status_file(cnts, cs, 1);
       if (!cs->testing_suspended)
         serve_judge_suspended(extra, ejudge_config, cnts, cs, 0, 0, 0,
                               DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 0);
@@ -583,7 +583,7 @@ handle_pending_xml_import(
 
   if (cs->saved_testing_suspended != cs->testing_suspended) {
     cs->testing_suspended = cs->saved_testing_suspended;
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     if (!cs->testing_suspended)
       serve_judge_suspended(extra, ejudge_config, cnts, cs, 0, 0, 0,
                             DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 0);
@@ -2368,7 +2368,7 @@ do_schedule(FILE *log_f,
   }
   run_sched_contest(cs->runlog_state, sloc);
   serve_update_standings_file(phr->extra, cs, cnts, 0);
-  serve_update_status_file(cs, 1);
+  serve_update_status_file(cnts, cs, 1);
 }
 
 static void
@@ -2412,7 +2412,7 @@ do_change_duration(FILE *log_f,
 
   run_set_duration(cs->runlog_state, d);
   serve_update_standings_file(phr->extra, cs, cnts, 0);
-  serve_update_status_file(cs, 1);
+  serve_update_status_file(cnts, cs, 1);
   return;
 }
 
@@ -2449,7 +2449,7 @@ do_change_finish_time(
 
   run_set_finish_time(cs->runlog_state, ft);
   serve_update_standings_file(phr->extra, cs, cnts, 0);
-  serve_update_status_file(cs, 1);
+  serve_update_status_file(cnts, cs, 1);
 }
 
 static void
@@ -2539,7 +2539,7 @@ priv_contest_operation(FILE *fout,
       goto cleanup;
     }
     run_start_contest(cs->runlog_state, cs->current_time);
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     serve_invoke_start_script(cs);
     serve_update_standings_file(phr->extra, cs, cnts, 0);
     break;
@@ -2555,7 +2555,7 @@ priv_contest_operation(FILE *fout,
     }
     run_stop_contest(cs->runlog_state, cs->current_time);
     serve_invoke_stop_script(cs);
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_CONTINUE_CONTEST:
@@ -2578,7 +2578,7 @@ priv_contest_operation(FILE *fout,
     run_set_finish_time(cs->runlog_state, 0);
     run_stop_contest(cs->runlog_state, 0);
     serve_invoke_stop_script(cs);
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_SCHEDULE:
@@ -2595,46 +2595,46 @@ priv_contest_operation(FILE *fout,
 
   case NEW_SRV_ACTION_SUSPEND:
     cs->clients_suspended = 1;
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_RESUME:
     cs->clients_suspended = 0;
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_TEST_SUSPEND:
     cs->testing_suspended = 1;
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_TEST_RESUME:
     cs->testing_suspended = 0;
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_PRINT_SUSPEND:
     if (!global->enable_printing) break;
     cs->printing_suspended = 1;
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_PRINT_RESUME:
     if (!global->enable_printing) break;
     cs->printing_suspended = 0;
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_SET_JUDGING_MODE:
     if (global->score_system != SCORE_OLYMPIAD) break;
     cs->accepting_mode = 0;
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_SET_ACCEPTING_MODE:
     if (global->score_system != SCORE_OLYMPIAD) break;
     cs->accepting_mode = 1;
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG:
@@ -2643,13 +2643,13 @@ priv_contest_operation(FILE *fout,
         ||(global->is_virtual && global->disable_virtual_auto_judge <= 0))
       break;
     cs->testing_finished = 1;
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG:
     if (global->score_system != SCORE_OLYMPIAD) break;
     cs->testing_finished = 0;
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     break;
 
   case NEW_SRV_ACTION_RELOAD_SERVER:
@@ -2716,7 +2716,7 @@ priv_contest_operation(FILE *fout,
       break;
     }
 
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     break;
   }
 
@@ -6278,7 +6278,7 @@ priv_upsolving_operation(
     cs->upsolving_view_protocol = 0;
     cs->upsolving_full_protocol = 0;
     cs->upsolving_disable_clars = 0;
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     extra->last_access_time = 0;          // force reload
     break;
   case NEW_SRV_ACTION_UPSOLVING_CONFIG_4: // start upsolving
@@ -6297,7 +6297,7 @@ priv_upsolving_operation(
     if (view_protocol && *view_protocol) cs->upsolving_view_protocol = 1;
     if (full_proto && *full_proto) cs->upsolving_full_protocol = 1;
     if (disable_clars && *disable_clars) cs->upsolving_disable_clars = 1;
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
     extra->last_access_time = 0;          // force reload
     break;
   default:
@@ -13714,7 +13714,7 @@ unprivileged_entry_point(
   if (online_users > cs->max_online_count) {
     cs->max_online_count = online_users;
     cs->max_online_time = cs->current_time;
-    serve_update_status_file(cs, 1);
+    serve_update_status_file(cnts, cs, 1);
   }
   phr->online_users = online_users;
 

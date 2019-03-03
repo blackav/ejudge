@@ -2047,7 +2047,7 @@ main(int argc, char *argv[])
   }
 #endif
 
-  if (create_dirs(&serve_state, PREPARE_COMPILE) < 0) return 1;
+  if (create_dirs(NULL, &serve_state, PREPARE_COMPILE) < 0) return 1;
   if (check_config() < 0) return 1;
   if (initialize_mode) return 0;
 

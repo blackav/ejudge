@@ -101,7 +101,7 @@ serve_state_destroy(
   if (state->pending_xml_import) {
     if (state->saved_testing_suspended != state->testing_suspended) {
       state->testing_suspended = state->saved_testing_suspended;
-      serve_update_status_file(state, 1);
+      serve_update_status_file(cnts, state, 1);
       if (!state->testing_suspended && cnts)
         serve_judge_suspended(extra, config, cnts, state, 0, 0, 0, 0, 0);
     }
@@ -779,7 +779,7 @@ serve_state_load_contest(
   if (prepare(cnts, state, state->config_path, 0, PREPARE_SERVE, "", 1, 0, 0) < 0)
     goto failure;
   if (prepare_serve_defaults(cnts, state, p_cnts) < 0) goto failure;
-  if (create_dirs(state, PREPARE_SERVE) < 0) goto failure;
+  if (create_dirs(cnts, state, PREPARE_SERVE) < 0) goto failure;
 
   global = state->global;
   teamdb_disable(state->teamdb_state, global->disable_user_database);
@@ -875,7 +875,7 @@ serve_state_load_contest(
 
   if (clar_open(state->clarlog_state, config, cnts, global, 0, 0) < 0)
     goto failure;
-  serve_load_status_file(state);
+  serve_load_status_file(cnts, state);
   serve_set_upsolving_mode(state);
   serve_build_compile_dirs(config, state);
   serve_build_run_dirs(config, state, cnts);
@@ -888,7 +888,7 @@ serve_state_load_contest(
   }
 
   teamdb_refresh(state->teamdb_state);
-  serve_create_symlinks(state);
+  serve_create_symlinks(cnts, state);
   serve_update_standings_file(extra, state, cnts, 0);
 
   return 1;

@@ -152,7 +152,7 @@ main(int argc, char *argv[])
   global = serve_state.global;
   l10n_prepare(global->enable_l10n, global->l10n_dir);
 
-  if (create_dirs(&serve_state, PREPARE_SERVE) < 0) return 1;
+  if (create_dirs(cur_contest, &serve_state, PREPARE_SERVE) < 0) return 1;
   serve_state.teamdb_state = teamdb_init(cur_contest->id);
   serve_state.xuser_state = team_extra_open(config, cur_contest, global, NULL, 0);
   if (!serve_state.xuser_state) {
@@ -183,12 +183,12 @@ main(int argc, char *argv[])
   if (clar_open(serve_state.clarlog_state,
                 config, cur_contest, global, 0, 0) < 0)
     return 1;
-  serve_load_status_file(&serve_state);
+  serve_load_status_file(cur_contest, &serve_state);
   serve_build_compile_dirs(config, &serve_state);
   serve_build_run_dirs(config, &serve_state, cur_contest);
-  if (serve_create_symlinks(&serve_state) < 0) return 1;
+  if (serve_create_symlinks(cur_contest, &serve_state) < 0) return 1;
   serve_state.current_time = time(0);
-  serve_update_status_file(&serve_state, 1);
+  serve_update_status_file(cur_contest, &serve_state, 1);
   if (serve_state.xuser_state) {
     serve_state.xuser_state->vt->flush(serve_state.xuser_state);
   }

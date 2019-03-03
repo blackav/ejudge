@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1145,7 +1145,7 @@ main(int argc, char *argv[])
               cpp_opts, managed_mode_flag, 0, 0) < 0)
     return 1;
   if (filter_testers(key) < 0) return 1;
-  if (create_dirs(&serve_state, PREPARE_RUN) < 0) return 1;
+  if (create_dirs(NULL, &serve_state, PREPARE_RUN) < 0) return 1;
   if (check_config() < 0) return 1;
   if (do_loop() < 0) return 1;
   if (restart_flag) {
