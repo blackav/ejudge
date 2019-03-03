@@ -44,6 +44,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <errno.h>
+#include <dirent.h>
 
 #include "ejudge/win32_compat.h"
 
@@ -4677,8 +4678,51 @@ create_dirs(
       // FIXME
       abort();
     }
+    if (make_dir(EJUDGE_CONTESTS_STATUS_DIR, 0) < 0) return -1;
     if (make_all_dir(status_dir, 0) < 0) return -1;
     // FIXME: make symlinks?
+    {
+      struct stat stb;
+      if (lstat(g->legacy_status_dir, &stb) >= 0 && S_ISDIR(stb.st_mode)) {
+        info("legacy status dir '%s' exists", g->legacy_status_dir);
+        unsigned char d1[PATH_MAX];
+        if (snprintf(d1, sizeof(d1), "%s/%s", g->legacy_status_dir, "dir") >= sizeof(d1)) {
+          abort();
+        }
+        int error_count = 0;
+        DIR *d = opendir(d1);
+        if (d) {
+          struct dirent *dd;
+          while ((dd = readdir(d))) {
+            unsigned char d2[PATH_MAX];
+            if (snprintf(d2, sizeof(d2), "%s/%s", d1, dd->d_name) >= sizeof(d2)) {
+              abort();
+            }
+            if (lstat(d2, &stb) >= 0 && S_ISREG(stb.st_mode)) {
+              info("found file '%s' in legacy status directory", dd->d_name);
+              unsigned char d3[PATH_MAX];
+              if (snprintf(d3, sizeof(d3), "%s/%s/%s", status_dir, "dir", dd->d_name) >= sizeof(d3)) {
+                abort();
+              }
+              if (rename(d2, d3) < 0) {
+                if (errno == EXDEV) {
+                  if (generic_copy_file(REMOVE, NULL, d2, NULL, 0, NULL, d3, NULL) < 0) {
+                    ++error_count;
+                  }
+                } else {
+                  err("move '%s' -> '%s' failed: %s", d2, d3, os_ErrorMsg());
+                  ++error_count;
+                }
+              }
+            }
+          }
+          closedir(d);
+          if (!error_count) {
+            remove_directory_recursively(g->legacy_status_dir, 0);
+          }
+        }
+      }
+    }
 #else
     if (make_all_dir(g->legacy_status_dir, 0) < 0) return -1;
 #endif
