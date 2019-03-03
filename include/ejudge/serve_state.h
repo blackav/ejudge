@@ -373,9 +373,19 @@ void serve_update_external_xml_log(serve_state_t state,
                                    const struct contest_desc *cnts);
 void serve_update_internal_xml_log(serve_state_t state,
                                    const struct contest_desc *cnts);
-int  serve_update_status_file(serve_state_t state, int force_flag);
-void serve_load_status_file(serve_state_t state);
-void serve_remove_status_file(serve_state_t state);
+int
+serve_update_status_file(
+        const struct contest_desc *cnts,
+        serve_state_t state,
+        int force_flag);
+void
+serve_load_status_file(
+        const struct contest_desc *cnts,
+        serve_state_t state);
+void
+serve_remove_status_file(
+        const struct contest_desc *cnts,
+        serve_state_t state);
 
 int serve_check_user_quota(serve_state_t, int user_id, size_t size);
 int serve_check_clar_quota(serve_state_t, int user_id, size_t size);
@@ -393,7 +403,10 @@ void serve_build_run_dirs(
         serve_state_t state,
         const struct contest_desc *cnts);
 
-int serve_create_symlinks(serve_state_t state);
+int
+serve_create_symlinks(
+        const struct contest_desc *cnts,
+        serve_state_t state);
 
 const unsigned char *serve_get_email_sender(const struct ejudge_cfg *config,
                                             const struct contest_desc *cnts);
