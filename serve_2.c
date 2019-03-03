@@ -112,12 +112,23 @@ serve_update_standings_file(
                            global->board_fog_time, global->board_unfog_time);
   }
   */
+  unsigned char status_dir[PATH_MAX];
+  unsigned char *status_dir_ptr = status_dir;
+#if defined EJUDGE_CONTESTS_STATUS_DIR
+  if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
+    // FIXME
+    abort();
+  }
+#else
+  status_dir_ptr = global->legacy_status_dir;
+#endif
+
   charset_id = charset_get_id(global->standings_charset);
   l10n_setlocale(global->standings_locale_id);
   write_standings(extra,
                   state,
                   cnts,
-                  global->status_dir,
+                  status_dir_ptr,
                   global->standings_file_name,
                   global->stand_file_name_2,
                   global->users_on_page,
@@ -132,7 +143,7 @@ serve_update_standings_file(
     write_standings(extra,
                     state,
                     cnts,
-                    global->status_dir,
+                    status_dir_ptr,
                     global->stand2_file_name,
                     NULL /* name2 */,
                     0 /* users_on_page */,
@@ -192,9 +203,20 @@ serve_update_public_log_file(
   }
   */
 
+  unsigned char status_dir[PATH_MAX];
+  unsigned char *status_dir_ptr = status_dir;
+#if defined EJUDGE_CONTESTS_STATUS_DIR
+  if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
+    // FIXME
+    abort();
+  }
+#else
+  status_dir_ptr = global->legacy_status_dir;
+#endif
+
   charset_id = charset_get_id(global->plog_charset);
   l10n_setlocale(global->standings_locale_id);
-  write_public_log(extra, state, cnts, global->status_dir,
+  write_public_log(extra, state, cnts, status_dir_ptr,
                    global->plog_file_name,
                    global->plog_header_txt,
                    global->plog_footer_txt,
@@ -220,8 +242,19 @@ do_update_xml_log(serve_state_t state, const struct contest_desc *cnts,
   rtotal = run_get_total(state->runlog_state);
   rentries = run_get_entries_ptr(state->runlog_state);
 
-  snprintf(path1, sizeof(path1), "%s/in/%s.tmp",state->global->status_dir,name);
-  snprintf(path2, sizeof(path2), "%s/dir/%s", state->global->status_dir, name);
+  unsigned char status_dir[PATH_MAX];
+  unsigned char *status_dir_ptr = status_dir;
+#if defined EJUDGE_CONTESTS_STATUS_DIR
+  if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
+    // FIXME
+    abort();
+  }
+#else
+  status_dir_ptr = state->global->legacy_status_dir;
+#endif
+
+  snprintf(path1, sizeof(path1), "%s/in/%s.tmp", status_dir_ptr, name);
+  snprintf(path2, sizeof(path2), "%s/dir/%s", status_dir_ptr, name);
 
   if (!(fout = fopen(path1, "w"))) {
     err("update_xml_log: cannot open %s", path1);
@@ -268,7 +301,10 @@ serve_update_internal_xml_log(serve_state_t state,
 }
 
 int
-serve_update_status_file(serve_state_t state, int force_flag)
+serve_update_status_file(
+        const struct contest_desc *cnts,
+        serve_state_t state,
+        int force_flag)
 {
   const struct section_global_data *global = state->global;
   struct prot_serve_status_v2 status;
@@ -344,21 +380,45 @@ serve_update_status_file(serve_state_t state, int force_flag)
 
   memcpy(status.prob_prio, state->prob_prio, sizeof(status.prob_prio));
 
+  unsigned char status_dir[PATH_MAX];
+  unsigned char *status_dir_ptr = status_dir;
+#if defined EJUDGE_CONTESTS_STATUS_DIR
+  if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
+    // FIXME
+    abort();
+  }
+#else
+  status_dir_ptr = global->legacy_status_dir;
+#endif
+
   generic_write_file((char*) &status, sizeof(status), SAFE,
-                     global->status_dir, "status", "");
+                     status_dir_ptr, "status", "");
   state->last_update_status_file = state->current_time;
   return 1;
 }
 
 void
-serve_load_status_file(serve_state_t state)
+serve_load_status_file(
+        const struct contest_desc *cnts,
+        serve_state_t state)
 {
   struct section_global_data *global = state->global;
   struct prot_serve_status_v2 status;
   size_t stat_len = 0;
   char *ptr = 0;
 
-  if (generic_read_file(&ptr, 0, &stat_len, 0, global->status_dir,
+  unsigned char status_dir[PATH_MAX];
+  unsigned char *status_dir_ptr = status_dir;
+#if defined EJUDGE_CONTESTS_STATUS_DIR
+  if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
+    // FIXME
+    abort();
+  }
+#else
+  status_dir_ptr = global->legacy_status_dir;
+#endif
+
+  if (generic_read_file(&ptr, 0, &stat_len, 0, status_dir_ptr,
                         "dir/status", "") < 0) {
     if (global->score_system == SCORE_OLYMPIAD)
       state->accepting_mode = 1;
@@ -421,10 +481,24 @@ serve_load_status_file(serve_state_t state)
 }
 
 void
-serve_remove_status_file(serve_state_t state)
+serve_remove_status_file(
+        const struct contest_desc *cnts,
+        serve_state_t state)
 {
   if (!state || !state->global) return;
-  relaxed_remove(state->global->status_dir, "dir/status");
+
+  unsigned char status_dir[PATH_MAX];
+  unsigned char *status_dir_ptr = status_dir;
+#if defined EJUDGE_CONTESTS_STATUS_DIR
+  if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
+    // FIXME
+    abort();
+  }
+#else
+  status_dir_ptr = state->global->legacy_status_dir;
+#endif
+
+  relaxed_remove(status_dir_ptr, "dir/status");
 }
 
 int
@@ -792,7 +866,9 @@ serve_build_run_dirs(
 }
 
 int
-serve_create_symlinks(serve_state_t state)
+serve_create_symlinks(
+        const struct contest_desc *cnts,
+        serve_state_t state)
 {
   const struct section_global_data *global = state->global;
   unsigned char src_path[PATH_MAX];
@@ -800,6 +876,17 @@ serve_create_symlinks(serve_state_t state)
   path_t stand_file;
   int npages, pgn;
   int total_users = 0;
+
+  unsigned char status_dir[PATH_MAX];
+  unsigned char *status_dir_ptr = status_dir;
+#if defined EJUDGE_CONTESTS_STATUS_DIR
+  if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
+    // FIXME
+    abort();
+  }
+#else
+  status_dir_ptr = global->legacy_status_dir;
+#endif
 
   if (global->stand_symlink_dir && global->stand_symlink_dir[0]
       && global->htdocs_dir && global->htdocs_dir[0]) {
@@ -821,7 +908,7 @@ serve_create_symlinks(serve_state_t state)
                    global->stand_file_name_2, pgn + 1);
         }
         snprintf(src_path, sizeof(src_path), "%s/dir/%s",
-                 global->status_dir, stand_file);
+                 status_dir_ptr, stand_file);
         snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
                  global->htdocs_dir, global->stand_symlink_dir,
                  stand_file);
@@ -837,7 +924,7 @@ serve_create_symlinks(serve_state_t state)
       }
     } else {
       snprintf(src_path, sizeof(src_path), "%s/dir/%s",
-               global->status_dir, global->standings_file_name);
+               status_dir_ptr, global->standings_file_name);
       snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
                global->htdocs_dir, global->stand_symlink_dir,
                global->standings_file_name);
@@ -856,7 +943,7 @@ serve_create_symlinks(serve_state_t state)
       && global->htdocs_dir && global->htdocs_dir[0]
       && global->stand2_file_name && global->stand2_file_name[0]) {
     snprintf(src_path, sizeof(src_path), "%s/dir/%s",
-             global->status_dir, global->stand2_file_name);
+             status_dir_ptr, global->stand2_file_name);
     snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
              global->htdocs_dir, global->stand2_symlink_dir,
              global->stand2_file_name);
@@ -875,7 +962,7 @@ serve_create_symlinks(serve_state_t state)
       && global->plog_file_name && global->plog_file_name[0]
       && global->plog_update_time > 0) {
     snprintf(src_path, sizeof(src_path), "%s/dir/%s",
-             global->status_dir, global->plog_file_name);
+             status_dir_ptr, global->plog_file_name);
     snprintf(dst_path, sizeof(dst_path), "%s/%s/%s",
              global->htdocs_dir, global->plog_symlink_dir,
              global->plog_file_name);
@@ -4973,8 +5060,19 @@ serve_reset_contest(const struct contest_desc *cnts, serve_state_t state)
   if (global->uuid_archive_dir && global->uuid_archive_dir[0])
     clear_directory(global->uuid_archive_dir);
 
+  unsigned char status_dir[PATH_MAX];
+  unsigned char *status_dir_ptr = status_dir;
+#if defined EJUDGE_CONTESTS_STATUS_DIR
+  if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
+    // FIXME
+    abort();
+  }
+#else
+  status_dir_ptr = global->legacy_status_dir;
+#endif
+
   unsigned char path[PATH_MAX];
-  snprintf(path, sizeof(path), "%s/dir", global->status_dir);
+  snprintf(path, sizeof(path), "%s/dir", status_dir_ptr);
   clear_directory(path);
 }
 

@@ -681,7 +681,7 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
   do_str(f, &ab, "l10n_dir", global->l10n_dir);
 
   //GLOBAL_PARAM(status_dir, "s"),
-  do_str(f, &ab, "status_dir", global->status_dir);
+  do_str(f, &ab, "legacy_status_dir", global->legacy_status_dir);
   //GLOBAL_PARAM(work_dir, "s"),
   do_str(f, &ab, "work_dir", global->work_dir);
   //GLOBAL_PARAM(print_work_dir, "s"),

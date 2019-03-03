@@ -131,7 +131,7 @@ enum
   CNTSGLOB_audit_log_dir,
   CNTSGLOB_uuid_archive_dir,
   CNTSGLOB_team_extra_dir,
-  CNTSGLOB_status_dir,
+  CNTSGLOB_legacy_status_dir,
   CNTSGLOB_work_dir,
   CNTSGLOB_print_work_dir,
   CNTSGLOB_diff_work_dir,

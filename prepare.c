@@ -187,7 +187,7 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(team_report_archive_dir, "S"),
   GLOBAL_PARAM(team_extra_dir, "S"),
 
-  GLOBAL_PARAM(status_dir, "S"),
+  GLOBAL_PARAM(legacy_status_dir, "S"),
   GLOBAL_PARAM(work_dir, "S"),
   GLOBAL_PARAM(print_work_dir, "S"),
   GLOBAL_PARAM(diff_work_dir, "S"),
@@ -1143,7 +1143,7 @@ prepare_global_free_func(struct generic_section_config *gp)
   xfree(p->compile_status_dir);
   xfree(p->compile_report_dir);
   xfree(p->compile_work_dir);
-  xfree(p->status_dir);
+  xfree(p->legacy_status_dir);
   xfree(p->work_dir);
   xfree(p->print_work_dir);
   xfree(p->diff_work_dir);
@@ -3027,10 +3027,10 @@ set_defaults(
     }
     path_prepend_dir(&g->team_extra_dir, g->var_dir);
 
-    if (!g->status_dir || !g->status_dir) {
-      xstrdup3(&g->status_dir, DFLT_G_STATUS_DIR);
+    if (!g->legacy_status_dir || !g->legacy_status_dir) {
+      xstrdup3(&g->legacy_status_dir, DFLT_G_STATUS_DIR);
     }
-    path_prepend_dir(&g->status_dir, g->var_dir);
+    path_prepend_dir(&g->legacy_status_dir, g->var_dir);
     if (!g->serve_socket || !g->serve_socket[0]) {
       path_concat(&g->serve_socket, g->var_dir, DFLT_G_SERVE_SOCKET);
     } else {
@@ -4632,7 +4632,10 @@ collect_sections(serve_state_t state, int mode)
 }
 
 int
-create_dirs(serve_state_t state, int mode)
+create_dirs(
+        const struct contest_desc *cnts,
+        serve_state_t state,
+        int mode)
 {
   int i;
   struct section_global_data *g = state->global;
@@ -4668,7 +4671,17 @@ create_dirs(serve_state_t state, int mode)
     }
 
     /* SERVE's status directory */
-    if (make_all_dir(g->status_dir, 0) < 0) return -1;
+#if defined EJUDGE_CONTESTS_STATUS_DIR
+    unsigned char status_dir[PATH_MAX];
+    if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
+      // FIXME
+      abort();
+    }
+    if (make_all_dir(status_dir, 0) < 0) return -1;
+    // FIXME: make symlinks?
+#else
+    if (make_all_dir(g->legacy_status_dir, 0) < 0) return -1;
+#endif
 
     /* working directory (if somebody needs it) */
     if (make_dir(g->work_dir, 0) < 0) return -1;
