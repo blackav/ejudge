@@ -412,7 +412,7 @@ struct section_global_data
 
   /* --- server status reporting --- */
   /** server status directory */
-  unsigned char *status_dir;
+  unsigned char *legacy_status_dir;
   /** subdir for working dirs */
   unsigned char *work_dir;
   /** subdir for printing */
@@ -1433,7 +1433,9 @@ prepare(
         int managed_flag,
         const unsigned char **,
         const unsigned char **);
-int create_dirs(serve_state_t, int mode);
+int create_dirs(
+        const struct contest_desc *cnts,
+        serve_state_t, int mode);
 int
 prepare_serve_defaults(
         const struct contest_desc *cnts,
