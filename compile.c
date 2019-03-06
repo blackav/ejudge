@@ -601,7 +601,9 @@ handle_packet(
     lang_name_part[0] = 0;
 
     if (req->lang_header) {
-      if (lang->multi_header_suffix && lang->multi_header_suffix[0]) {
+      if (req->lang_short_name && req->lang_short_name[0]) {
+        snprintf(lang_name_part, sizeof(lang_name_part), ".%s", req->lang_short_name);
+      } else if (lang->multi_header_suffix && lang->multi_header_suffix[0]) {
         snprintf(lang_name_part, sizeof(lang_name_part), ".%s", lang->multi_header_suffix);
       } else {
         snprintf(lang_name_part, sizeof(lang_name_part), ".%s", lang->short_name);

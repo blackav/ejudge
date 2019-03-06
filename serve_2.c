@@ -1587,6 +1587,13 @@ serve_compile_request(
     cp.header_dir = test_dir;
     cp.compiler_env_pat = prob->compiler_env_pat;
   }
+  if (cp.lang_header) {
+    if (lang->multi_header_suffix && lang->multi_header_suffix[0]) {
+      cp.lang_short_name = lang->multi_header_suffix;
+    } else if (lang->short_name && lang->short_name[0]) {
+      cp.lang_short_name = (unsigned char*) lang->short_name;
+    }
+  }
 
   if (user) {
     cp.user_id = user->id;
