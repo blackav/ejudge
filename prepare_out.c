@@ -683,11 +683,11 @@ prepare_unparse_unhandled_global(FILE *f, const struct section_global_data *glob
   //GLOBAL_PARAM(status_dir, "s"),
   do_str(f, &ab, "legacy_status_dir", global->legacy_status_dir);
   //GLOBAL_PARAM(work_dir, "s"),
-  do_str(f, &ab, "work_dir", global->work_dir);
+  //do_str(f, &ab, "work_dir", global->work_dir);
   //GLOBAL_PARAM(print_work_dir, "s"),
-  do_str(f, &ab, "print_work_dir", global->print_work_dir);
+  //do_str(f, &ab, "print_work_dir", global->print_work_dir);
   //GLOBAL_PARAM(diff_work_dir, "s"),
-  do_str(f, &ab, "diff_work_dir", global->diff_work_dir);
+  //do_str(f, &ab, "diff_work_dir", global->diff_work_dir);
   //GLOBAL_PARAM(compile_work_dir, "s"),
   do_str(f, &ab, "compile_work_dir", global->compile_work_dir);
   //GLOBAL_PARAM(run_work_dir, "s"),

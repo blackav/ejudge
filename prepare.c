@@ -189,9 +189,9 @@ static const struct config_parse_info section_global_params[] =
   GLOBAL_PARAM(team_extra_dir, "S"),
 
   GLOBAL_PARAM(legacy_status_dir, "S"),
-  GLOBAL_PARAM(work_dir, "S"),
-  GLOBAL_PARAM(print_work_dir, "S"),
-  GLOBAL_PARAM(diff_work_dir, "S"),
+  //GLOBAL_PARAM(work_dir, "S"),
+  //GLOBAL_PARAM(print_work_dir, "S"),
+  //GLOBAL_PARAM(diff_work_dir, "S"),
 
   GLOBAL_PARAM(a2ps_path, "S"),
   GLOBAL_PARAM(a2ps_args, "x"),
@@ -3062,10 +3062,17 @@ set_defaults(
     path_concat(&g->compile_report_dir, g->compile_out_dir, DFLT_G_COMPILE_REPORT_DIR);
   }
 
+#if defined EJUDGE_LOCAL_DIR
+  if (!g->work_dir || !g->work_dir[0]) {
+    usprintf(&g->work_dir, "%s/cwork/%06d", EJUDGE_LOCAL_DIR, contest_id);
+  }
+#else
   if (!g->work_dir || !g->work_dir[0]) {
     xstrdup3(&g->work_dir, DFLT_G_WORK_DIR);
   }
   path_prepend_dir(&g->work_dir, g->var_dir);
+#endif
+
   if (!g->print_work_dir || !g->print_work_dir[0]) {
     xstrdup3(&g->print_work_dir, DFLT_G_PRINT_WORK_DIR);
   }
@@ -4727,8 +4734,17 @@ create_dirs(
     if (make_all_dir(g->legacy_status_dir, 0) < 0) return -1;
 #endif
 
+#if defined EJUDGE_LOCAL_DIR
+    {
+      unsigned char ld[PATH_MAX];
+      if (snprintf(ld, sizeof(ld), "%s/cwork", EJUDGE_LOCAL_DIR) < sizeof(ld)) {
+        if (make_dir(ld, 0700) < 0) return -1;
+      }
+    }
+#endif
+
     /* working directory (if somebody needs it) */
-    if (make_dir(g->work_dir, 0) < 0) return -1;
+    if (make_dir(g->work_dir, 0700) < 0) return -1;
     if (make_dir(g->print_work_dir, 0) < 0) return -1;
     if (make_dir(g->diff_work_dir, 0) < 0) return -1;
 
