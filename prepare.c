@@ -4783,7 +4783,9 @@ create_dirs(
     if (make_dir(g->compile_src_dir, 0) < 0) return -1;
 
     /* working directory (if somebody needs it) */
+#if !defined EJUDGE_LOCAL_DIR
     if (make_dir(g->work_dir, 0) < 0) return -1;
+#endif
     if (os_MakeDirPath(g->compile_work_dir, 0775) < 0) return -1;
   } else if (mode == PREPARE_RUN) {
     if (g->root_dir && g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
@@ -4794,7 +4796,9 @@ create_dirs(
     if (make_all_dir(g->run_queue_dir, 0777) < 0) return -1;
     if (make_dir(g->run_exe_dir, 0) < 0) return -1;
 
+#if !defined EJUDGE_LOCAL_DIR
     if (make_dir(g->work_dir, 0) < 0) return -1;
+#endif
     if (os_MakeDirPath(g->run_work_dir, 0775) < 0) return -1;
     if (os_MakeDirPath(g->run_check_dir, 0) < 0) return -1;
   }
