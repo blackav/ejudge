@@ -4762,7 +4762,7 @@ create_dirs(
     if (g->enable_full_archive) {
       if (make_dir(g->full_archive_dir, 0) < 0) return -1;
     }
-    if (make_dir(g->team_extra_dir, 0) < 0) return -1;
+    //if (make_dir(g->team_extra_dir, 0) < 0) return -1;
   } else if (mode == PREPARE_COMPILE) {
     if (g->root_dir && g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
     if (make_dir(g->var_dir, 0) < 0) return -1;

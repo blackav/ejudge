@@ -24,6 +24,7 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
+#include "ejudge/fileutl.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -200,6 +201,8 @@ open_func(
     state->contest_id = cnts->id;
     if (global->team_extra_dir && global->team_extra_dir[0]) {
         state->team_extra_dir = xstrdup(global->team_extra_dir);
+        // FIXME: handle an error
+        make_dir(state->team_extra_dir, 0700);
     }
 
     return (struct xuser_cnts_state *) state;
