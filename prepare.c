@@ -3109,7 +3109,6 @@ set_defaults(
     param_subst_2(&g->compile_work_dir, subst_src, subst_dst);
   }
 
-#if !defined EJUDGE_RUN_SPOOL_DIR
   if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
     if (!g->run_dir || !g->run_dir[0]) xstrdup3(&g->run_dir, DFLT_G_RUN_DIR);
     path_prepend_dir(&g->run_dir, g->var_dir);
@@ -3127,7 +3126,6 @@ set_defaults(
       path_concat(&g->run_full_archive_dir, g->run_out_dir, DFLT_G_RUN_FULL_ARCHIVE_DIR);
     }
   }
-#endif
 
   if (mode == PREPARE_RUN) {
 #if defined EJUDGE_LOCAL_DIR
@@ -4665,6 +4663,7 @@ create_dirs(
     if (make_all_dir(g->compile_status_dir, 0) < 0) return -1;
     if (make_dir(g->compile_report_dir, 0) < 0) return -1;
 
+#if !defined EJUDGE_RUN_SPOOL_DIR
     /* RUN writes its response here */
     if (make_dir(g->run_dir, 0) < 0) return -1;
     if (make_all_dir(g->run_queue_dir, 0) < 0) return -1;
@@ -4679,6 +4678,7 @@ create_dirs(
     if (g->enable_full_archive) {
       if (make_dir(g->run_full_archive_dir, 0777) < 0) return -1;
     }
+#endif
 
     /* SERVE's status directory */
 #if defined EJUDGE_CONTESTS_STATUS_DIR
@@ -4796,10 +4796,12 @@ create_dirs(
     if (g->root_dir && g->root_dir[0] && make_dir(g->root_dir, 0) < 0) return -1;
     if (make_dir(g->var_dir, 0) < 0) return -1;
 
+#if !defined EJUDGE_RUN_SPOOL_DIR
     /* RUN reads its commands from here */
     if (make_dir(g->run_dir, 0) < 0) return -1;
     if (make_all_dir(g->run_queue_dir, 0777) < 0) return -1;
     if (make_dir(g->run_exe_dir, 0) < 0) return -1;
+#endif
 
 #if !defined EJUDGE_LOCAL_DIR
     if (make_dir(g->work_dir, 0) < 0) return -1;
