@@ -4750,17 +4750,20 @@ create_dirs(
 
     /* SERVE's archive directories */
     if (make_dir(g->archive_dir, 0) < 0) return -1;
-    if (make_dir(g->clar_archive_dir, 0) < 0) return -1;
-    if (make_dir(g->run_archive_dir, 0) < 0) return -1;
-    if (make_dir(g->xml_report_archive_dir, 0) < 0) return -1;
-    if (make_dir(g->report_archive_dir, 0) < 0) return -1;
-    if (make_dir(g->audit_log_dir, 0777) < 0) return -1;
-    if (make_dir(g->uuid_archive_dir, 0755) < 0) return -1;
-    if (g->team_enable_rep_view) {
-      if (make_dir(g->team_report_archive_dir, 0) < 0) return -1;
-    }
-    if (g->enable_full_archive) {
-      if (make_dir(g->full_archive_dir, 0) < 0) return -1;
+    //if (make_dir(g->clar_archive_dir, 0) < 0) return -1;
+    if (g->uuid_run_store <= 0) {
+      if (make_dir(g->run_archive_dir, 0) < 0) return -1;
+      if (make_dir(g->xml_report_archive_dir, 0) < 0) return -1;
+      if (make_dir(g->report_archive_dir, 0) < 0) return -1;
+      if (make_dir(g->audit_log_dir, 0777) < 0) return -1;
+      if (g->team_enable_rep_view) {
+        if (make_dir(g->team_report_archive_dir, 0) < 0) return -1;
+      }
+      if (g->enable_full_archive) {
+        if (make_dir(g->full_archive_dir, 0) < 0) return -1;
+      }
+    } else {
+      if (make_dir(g->uuid_archive_dir, 0755) < 0) return -1;
     }
     //if (make_dir(g->team_extra_dir, 0) < 0) return -1;
   } else if (mode == PREPARE_COMPILE) {

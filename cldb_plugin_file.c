@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -667,6 +667,7 @@ open_func(
              "%s/var/archive/clars", cnts->root_dir);
     cs->clar_archive_dir = xstrdup(clarlog_path);
   }
+  make_dir(cs->clar_archive_dir, 0700);
 
   clarlog_path[0] = 0;
   if (global && global->clar_log_file && global->clar_log_file[0]) {
