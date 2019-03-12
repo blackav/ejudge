@@ -3109,6 +3109,7 @@ set_defaults(
     param_subst_2(&g->compile_work_dir, subst_src, subst_dst);
   }
 
+#if !defined EJUDGE_RUN_SPOOL_DIR
   if (mode == PREPARE_RUN || mode == PREPARE_SERVE) {
     if (!g->run_dir || !g->run_dir[0]) xstrdup3(&g->run_dir, DFLT_G_RUN_DIR);
     path_prepend_dir(&g->run_dir, g->var_dir);
@@ -3126,6 +3127,7 @@ set_defaults(
       path_concat(&g->run_full_archive_dir, g->run_out_dir, DFLT_G_RUN_FULL_ARCHIVE_DIR);
     }
   }
+#endif
 
   if (mode == PREPARE_RUN) {
 #if defined EJUDGE_LOCAL_DIR
