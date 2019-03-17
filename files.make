@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -234,6 +234,7 @@ COMMON_CFILES=\
  sformat.c\
  shellcfg_parse.c\
  standings.c\
+ status_plugin_file.c\
  stringset.c\
  super_html.c\
  super_html_2.c\
@@ -618,6 +619,7 @@ HFILES=\
  ./include/ejudge/sha.h\
  ./include/ejudge/sha256.h\
  ./include/ejudge/sha256utils.h\
+ ./include/ejudge/status_plugin.h\
  ./include/ejudge/blowfish.h\
  ./include/ejudge/t3m_dir_listener.h\
  ./include/ejudge/t3m_packet_class.h\

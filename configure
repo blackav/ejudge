@@ -8274,7 +8274,7 @@ ac_config_headers="$ac_config_headers config.h"
 subdirs="$subdirs libdwarf"
 
 
-ac_config_files="$ac_config_files Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/mysql-common/Makefile plugins/mysql-userlist/Makefile plugins/mysql-clardb/Makefile plugins/mysql-rundb/Makefile plugins/mongo-common/Makefile plugins/mongo-xuser/Makefile style/ejudge-upgrade-web cfront/Makefile reuse/Makefile csp/contests/Makefile csp/super-server/Makefile csp_header.make plugins/telegram/Makefile plugins/mongo-avatar/Makefile"
+ac_config_files="$ac_config_files Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/mysql-common/Makefile plugins/mysql-userlist/Makefile plugins/mysql-clardb/Makefile plugins/mysql-rundb/Makefile plugins/mongo-common/Makefile plugins/mongo-xuser/Makefile style/ejudge-upgrade-web cfront/Makefile reuse/Makefile csp/contests/Makefile csp/super-server/Makefile csp_header.make plugins/telegram/Makefile plugins/mongo-avatar/Makefile plugins/mongo-status/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -8991,6 +8991,7 @@ do
     "csp_header.make") CONFIG_FILES="$CONFIG_FILES csp_header.make" ;;
     "plugins/telegram/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/telegram/Makefile" ;;
     "plugins/mongo-avatar/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/mongo-avatar/Makefile" ;;
+    "plugins/mongo-status/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/mongo-status/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
