@@ -234,6 +234,7 @@ COMMON_CFILES=\
  sformat.c\
  shellcfg_parse.c\
  standings.c\
+ statusdb.c\
  status_plugin_file.c\
  stringset.c\
  super_html.c\
@@ -609,6 +610,7 @@ HFILES=\
  ./include/ejudge/shellcfg_parse.h\
  ./include/ejudge/sock_op.h\
  ./include/ejudge/startstop.h\
+ ./include/ejudge/statusdb.h\
  ./include/ejudge/stringset.h\
  ./include/ejudge/super_clnt.h\
  ./include/ejudge/super_html.h\
