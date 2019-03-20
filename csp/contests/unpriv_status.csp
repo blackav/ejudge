@@ -38,13 +38,13 @@
       }
     } else {
       if (cnts->exam_mode) {
-%>EXAM IS RUNNING<%
+%><s:_>EXAM IS RUNNING</s:_><%
       } else {
-%>RUNNING<%
+%><s:_>RUNNING</s:_><%
       }
     }
   } else {
-%>NOT STARTED<%
+%><s:_>NOT STARTED</s:_><%
   }
 %></b><%
   if (start_time > 0) {
