@@ -376,8 +376,10 @@ struct section_global_data
   unsigned char *clardb_plugin;
   /** the run information base storage plugin (file, mysql) */
   unsigned char *rundb_plugin;
-  /** the extra user information storage plugin (file, mysql) */
+  /** the extra user information storage plugin (file, mongo) */
   unsigned char *xuser_plugin;
+  /** the contest status plugin */
+  unsigned char *status_plugin;
 
   /* ====== VARIABLE FILES/DIRECTORIES SETUP ====== */
   /** root directory with working files, run sources/reports, etc */
