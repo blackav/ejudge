@@ -525,6 +525,8 @@ prepare_unparse_global(
     fprintf(f, "rundb_plugin = \"%s\"\n", CARMOR(global->rundb_plugin));
   if (global->xuser_plugin && global->xuser_plugin[0] && strcmp(global->xuser_plugin, "file"))
     fprintf(f, "xuser_plugin = \"%s\"\n", CARMOR(global->xuser_plugin));
+  if (global->status_plugin && global->status_plugin[0] && strcmp(global->status_plugin, "file"))
+    fprintf(f, "status_plugin = \"%s\"\n", CARMOR(global->status_plugin));
   do_xstr(f, &ab, "load_user_group", global->load_user_group);
   fprintf(f, "\n");
 

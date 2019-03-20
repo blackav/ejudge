@@ -108,6 +108,7 @@ enum
     TG_PAGE,
     TG_CONTESTS_WS_PORT,
     TG_MAX_LOADED_CONTESTS,
+    TG_DEFAULT_STATUS_PLUGIN,
 
     TG__BARRIER,
     TG__DEFAULT,
@@ -202,6 +203,7 @@ static char const * const elem_map[] =
   "page",
   "contests_ws_port",
   "max_loaded_contests",
+  "default_status_plugin",
   0,
   "_default",
 
@@ -301,6 +303,7 @@ node_free(struct xml_tree *t)
       xfree(p->default_avatar_plugin);
       xfree(p->default_content_plugin);
       xfree(p->default_content_url_prefix);
+      xfree(p->default_status_plugin);
       xfree(p->caps_file);
     }
     break;
@@ -571,6 +574,7 @@ static const size_t cfg_final_offsets[TG_LAST_TAG] =
   [TG_DEFAULT_AVATAR_PLUGIN] = CONFIG_OFFSET(default_avatar_plugin),
   [TG_DEFAULT_CONTENT_PLUGIN] = CONFIG_OFFSET(default_content_plugin),
   [TG_DEFAULT_CONTENT_URL_PREFIX] = CONFIG_OFFSET(default_content_url_prefix),
+  [TG_DEFAULT_STATUS_PLUGIN] = CONFIG_OFFSET(default_status_plugin),
   [TG_CAPS_FILE] = CONFIG_OFFSET(caps_file),
 };
 

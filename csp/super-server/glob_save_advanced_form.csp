@@ -40,6 +40,7 @@
     unsigned char *clardb_plugin = NULL;
     unsigned char *rundb_plugin = NULL;
     unsigned char *xuser_plugin = NULL;
+    unsigned char *status_plugin = NULL;
 
     time_t appeal_deadline = 0;
 
@@ -74,6 +75,7 @@
 %><s:read var="clardb_plugin" normalize="yes" nonnull="yes" /><%
 %><s:read var="rundb_plugin" normalize="yes" nonnull="yes" /><%
 %><s:read var="xuser_plugin" normalize="yes" nonnull="yes" /><%
+%><s:read var="status_plugin" normalize="yes" nonnull="yes" /><%
 
     if (parse_date_twopart(appeal_deadline_date, appeal_deadline_time, &appeal_deadline) < 0) {
         fprintf(msg_f, "Invalid finish time<br/>");
@@ -120,6 +122,7 @@
             MOVESTR(clardb_plugin);
             MOVESTR(rundb_plugin);
             MOVESTR(xuser_plugin);
+            MOVESTR(status_plugin);
         }
     }
 
@@ -140,6 +143,7 @@ cleanup:;
     xfree(clardb_plugin);
     xfree(rundb_plugin);
     xfree(xuser_plugin);
+    xfree(status_plugin);
     sarray_free(load_user_group);
     html_armor_free(&ab);
     xfree(msg_s);

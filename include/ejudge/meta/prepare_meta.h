@@ -118,6 +118,7 @@ enum
   CNTSGLOB_clardb_plugin,
   CNTSGLOB_rundb_plugin,
   CNTSGLOB_xuser_plugin,
+  CNTSGLOB_status_plugin,
   CNTSGLOB_var_dir,
   CNTSGLOB_run_log_file,
   CNTSGLOB_clar_log_file,

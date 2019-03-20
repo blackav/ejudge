@@ -150,6 +150,7 @@ static const unsigned char MSG_load_user_group[] = "User groups to load";
 static const unsigned char MSG_clardb_plugin[] = "ClarDB storage engine";
 static const unsigned char MSG_rundb_plugin[] = "RunDB storage engine";
 static const unsigned char MSG_xuser_plugin[] = "XuserDB storage engine";
+static const unsigned char MSG_status_plugin[] = "Status storage engine";
 static const unsigned char MSG_enable_problem_history[] = "Load problem UUID from history.txt";
 static const unsigned char MSG_require_problem_uuid[] = "Require problem UUID";
 
@@ -475,6 +476,7 @@ static const unsigned char * const form_row_attrs[]=
         <%@expand EDIT_TEXT_ROW "clardb_plugin" "adv" "48" "400px" %>
         <%@expand EDIT_TEXT_ROW "rundb_plugin" "adv" "48" "400px" %>
         <%@expand EDIT_TEXT_ROW "xuser_plugin" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "status_plugin" "adv" "48" "400px" %>
         <%@expand EDIT_BOOL_ROW "enable_problem_history" "caps" "400px" %>
         <%@expand EDIT_BOOL_ROW "require_problem_uuid" "adv" "400px" %>
     </s:form>
@@ -1154,6 +1156,7 @@ function popupAdvancedDialog(e, skipField)
     $("#adv-clardb_plugin").val($("#orig-clardb_plugin").val());
     $("#adv-rundb_plugin").val($("#orig-rundb_plugin").val());
     $("#adv-xuser_plugin").val($("#orig-xuser_plugin").val());
+    $("#adv-status_plugin").val($("#orig-status_plugin").val());
     copyCheckbox("adv-enable_problem_history", "orig-enable_problem_history");
 
     if (skipField != null) {
@@ -1723,6 +1726,7 @@ function advancedDialogOnChange()
             <%@expand ORIG_TEXT_ROW "clardb_plugin" "Advanced" "48" %>
             <%@expand ORIG_TEXT_ROW "rundb_plugin" "Advanced" "48" %>
             <%@expand ORIG_TEXT_ROW "xuser_plugin" "Advanced" "48" %>
+            <%@expand ORIG_TEXT_ROW "status_plugin" "Advanced" "48" %>
         </table>
     </div>
 
