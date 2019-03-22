@@ -38,6 +38,7 @@
 #include "ejudge/win32_compat.h"
 #include "ejudge/variant_map.h"
 #include "ejudge/xuser_plugin.h"
+#include "ejudge/statusdb.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -123,6 +124,10 @@ serve_state_destroy(
   clar_destroy(state->clarlog_state);
 
   watched_file_clear(&state->description);
+
+  if (state->statusdb_state) {
+    status_db_close(state->statusdb_state);
+  }
 
   if (state->prob_extras) {
     for (i = 1; i <= state->max_prob; i++) {
@@ -790,6 +795,12 @@ serve_state_load_contest(
       if (!(prob = state->probs[i])) continue;
       if (prob->olympiad_mode > 0) state->has_olympiad_mode = 1;
     }
+  }
+
+  state->statusdb_state = status_db_open(config, cnts, global, NULL, 0);
+  if (!state->statusdb_state) {
+    err("load_contest: contest %d status_db plugin failed to load", contest_id);
+    goto failure;
   }
 
   if (no_users_flag) {

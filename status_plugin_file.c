@@ -223,6 +223,7 @@ open_func(
         int flags)
 {
     struct status_db_file_state *sfs = NULL;
+    info("status_plugin_file:open_func");
     XCALLOC(sfs, 1);
     sfs->b.plugin = self;
     return (struct status_db_state *) sfs;
@@ -266,6 +267,8 @@ load_func(
         err("status_plugin_file:load_func: path is too long: %s/dir/status", status_dir_ptr);
         goto fail;
     }
+
+    info("status_plugin_file:load_func: loading from %s", status_path);
 
     fd = open(status_path, O_RDONLY | O_NONBLOCK | O_NOFOLLOW);
     if (fd < 0) {
@@ -313,6 +316,7 @@ load_func(
             err("status_plugin_file:load_func: file %s has invalid size", status_path);
             goto fail;
         }
+        info("status_plugin_file:load_func: %s version 2", status_path);
         const struct prot_serve_status_v2 *v2stat = (const struct prot_serve_status_v2*) memptr;
         memset(stat, 0, sizeof(*stat));
         stat->cur_time = v2stat->cur_time;
@@ -361,6 +365,7 @@ load_func(
             err("status_plugin_file:load_func: file %s has invalid size", status_path);
             goto fail;
         }
+        info("status_plugin_file:load_func: %s version 3", status_path);
         const struct prot_serve_status_v3 *v3stat = (const struct prot_serve_status_v3*) memptr;
         *stat = v3stat->v;
     } else {
