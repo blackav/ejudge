@@ -119,4 +119,11 @@ status_db_save(
         int flags,
         const struct prot_serve_status *stat);
 
+void
+status_db_remove(
+        struct status_db_state *sds,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global);
+
 #endif /* __STATUSDB_H__ */

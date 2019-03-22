@@ -61,6 +61,12 @@ struct status_plugin_iface
         const struct section_global_data *global,
         int flags,
         const struct prot_serve_status *stat);
+
+    void (*remove)(
+        struct status_db_state *sds,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global);
 };
 
 #endif /* __STATUS_PLUGIN_H__ */

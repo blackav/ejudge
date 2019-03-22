@@ -167,6 +167,12 @@ save_func(
         const struct section_global_data *global,
         int flags,
         const struct prot_serve_status *stat);
+static void
+remove_func(
+        struct status_db_state *sds,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global);
 
 struct status_plugin_iface plugin_status_file =
 {
@@ -186,7 +192,8 @@ struct status_plugin_iface plugin_status_file =
     open_func,
     close_func,
     load_func,
-    save_func
+    save_func,
+    remove_func
 };
 
 static struct common_plugin_data *
@@ -417,4 +424,25 @@ save_func(
         return -1;
     }
     return 1;
+}
+
+static void
+remove_func(
+        struct status_db_state *sds,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global)
+{
+    unsigned char status_dir[PATH_MAX];
+    unsigned char *status_dir_ptr = status_dir;
+#if defined EJUDGE_CONTESTS_STATUS_DIR
+    if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
+        err("status_plugin_file:save_func: path %s/%06d is too long", EJUDGE_CONTESTS_STATUS_DIR, cnts->id);
+        return;
+    }
+#else
+    status_dir_ptr = global->legacy_status_dir;
+#endif
+
+    relaxed_remove(status_dir_ptr, "dir/status");
 }

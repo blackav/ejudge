@@ -98,3 +98,14 @@ status_db_save(
     const struct status_plugin_iface *iface = (struct status_plugin_iface*) sds->plugin->iface;
     return iface->save(sds, config, cnts, global, flags, stat);
 }
+
+void
+status_db_remove(
+        struct status_db_state *sds,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global)
+{
+    const struct status_plugin_iface *iface = (struct status_plugin_iface*) sds->plugin->iface;
+    iface->remove(sds, config, cnts, global);
+}

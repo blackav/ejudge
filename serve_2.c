@@ -49,6 +49,7 @@
 #include "ejudge/packet_name.h"
 #include "ejudge/xuser_plugin.h"
 #include "ejudge/random.h"
+#include "ejudge/statusdb.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -486,19 +487,9 @@ serve_remove_status_file(
         serve_state_t state)
 {
   if (!state || !state->global) return;
+  if (!state->statusdb_state) return;
 
-  unsigned char status_dir[PATH_MAX];
-  unsigned char *status_dir_ptr = status_dir;
-#if defined EJUDGE_CONTESTS_STATUS_DIR
-  if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
-    // FIXME
-    abort();
-  }
-#else
-  status_dir_ptr = state->global->legacy_status_dir;
-#endif
-
-  relaxed_remove(status_dir_ptr, "dir/status");
+  status_db_remove(state->statusdb_state, NULL, cnts, state->global);
 }
 
 int
