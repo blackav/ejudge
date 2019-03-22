@@ -22,7 +22,7 @@
 
 #include <string.h>
 
-extern struct status_plugin_iface plugin_status_file __attribute__((weak));
+extern struct status_plugin_iface plugin_status_file;
 static int plugin_registered;
 
 struct status_db_state *
