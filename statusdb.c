@@ -13,3 +13,88 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+
+#include "ejudge/statusdb.h"
+#include "ejudge/status_plugin.h"
+#include "ejudge/common_plugin.h"
+#include "ejudge/errlog.h"
+#include "ejudge/prepare.h"
+
+#include <string.h>
+
+extern struct status_plugin_iface plugin_status_file __attribute__((weak));
+static int plugin_registered;
+
+struct status_db_state *
+status_db_open(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        const unsigned char *plugin_name,
+        int flags)
+{
+    if (!plugin_registered) {
+        if (!plugin_register_builtin(&plugin_status_file.b, config)) {
+            err("cannot register default plugin plugin_status_file");
+            return NULL;
+        }
+        plugin_registered = 1;
+    }
+
+    if (!plugin_name) {
+        if (global) plugin_name = global->status_plugin;
+    }
+    if (!plugin_name) plugin_name = "";
+
+    const struct common_loaded_plugin *loaded_plugin = NULL;
+    if (!plugin_name[0] || !strcmp(plugin_name, "file")) {
+        if (!(loaded_plugin = plugin_get("status", "file"))) {
+            err("cannot load default plugin_status_file");
+            return NULL;
+        }
+        const struct status_plugin_iface *iface = (struct status_plugin_iface*) loaded_plugin->iface;
+        return iface->open(loaded_plugin, config, cnts, global, flags);
+    }
+
+  return NULL;
+}
+
+void
+status_db_close(
+        struct status_db_state *sds)
+{
+    if (sds) {
+        if (sds->plugin) {
+            const struct status_plugin_iface *iface = (struct status_plugin_iface*) sds->plugin->iface;
+            iface->close(sds);
+        } else {
+            free(sds);
+        }
+    }
+}
+
+int
+status_db_load(
+        struct status_db_state *sds,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags,
+        struct prot_serve_status *stat)
+{
+    const struct status_plugin_iface *iface = (struct status_plugin_iface*) sds->plugin->iface;
+    return iface->load(sds, config, cnts, global, flags, stat);
+}
+
+int
+status_db_save(
+        struct status_db_state *sds,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags,
+        const struct prot_serve_status *stat)
+{
+    const struct status_plugin_iface *iface = (struct status_plugin_iface*) sds->plugin->iface;
+    return iface->save(sds, config, cnts, global, flags, stat);
+}

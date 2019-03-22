@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,12 +27,22 @@
 #include "ejudge/super_run_status.h"
 #include "ejudge/internal_pages.h"
 #include "ejudge/userlist_bin.h"
+#include "ejudge/statusdb.h"
 
 #include <stdio.h>
+
+struct prot_serve_status_v3
+{
+    uint32_t magic;
+    unsigned char _pad[12];
+    struct prot_serve_status v;
+};
 
 int main(void)
 {
   printf("prot_serve_status_v2:  %zu\n", sizeof(struct prot_serve_status_v2));
+  printf("prot_serve_status_v3:  %zu\n", sizeof(struct prot_serve_status_v3));
+  printf("prot_serve_status:     %zu\n", sizeof(struct prot_serve_status));
   printf("run_header:            %zu\n", sizeof(struct run_header));
   printf("run_entry:             %zu\n", sizeof(struct run_entry));
   //printf("clar_entry_v1:         %zu\n", sizeof(struct clar_entry_v1));

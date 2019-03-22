@@ -24,12 +24,43 @@
 
 #define STATUS_PLUGIN_IFACE_VERSION 1
 
+struct common_loaded_plugin;
+struct status_db_state
+{
+    const struct common_loaded_plugin *plugin;
+};
+
+struct prot_serve_status;
+
 struct status_plugin_iface
 {
     struct common_plugin_iface b;
     int status_version;
 
-    
+    struct status_db_state * (*open)(
+        const struct common_loaded_plugin *self,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags);
+
+    void (*close)(struct status_db_state *sds);
+
+    int (*load)(
+        struct status_db_state *sds,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags,
+        struct prot_serve_status *stat);
+
+    int (*save)(
+        struct status_db_state *sds,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags,
+        const struct prot_serve_status *stat);
 };
 
 #endif /* __STATUS_PLUGIN_H__ */
