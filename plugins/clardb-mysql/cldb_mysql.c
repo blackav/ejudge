@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 #include "ejudge/cldb_plugin.h"
 #include "ejudge/clarlog.h"
 #include "ejudge/clarlog_state.h"
-#include "../mysql-common/common_mysql.h"
+#include "../common-mysql/common_mysql.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/errlog.h"
 #include "ejudge/contests.h"

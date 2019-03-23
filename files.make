@@ -658,4 +658,4 @@ HFILES=\
 OTHERFILES=\
  filter_expr.y\
  filter_scan.lex\
- plugins/mysql-userlist/uldb_mysql.c
+ plugins/userlist-mysql/uldb_mysql.c

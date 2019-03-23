@@ -8274,7 +8274,7 @@ ac_config_headers="$ac_config_headers config.h"
 subdirs="$subdirs libdwarf"
 
 
-ac_config_files="$ac_config_files Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/mysql-common/Makefile plugins/mysql-userlist/Makefile plugins/mysql-clardb/Makefile plugins/mysql-rundb/Makefile plugins/mongo-common/Makefile plugins/mongo-xuser/Makefile style/ejudge-upgrade-web cfront/Makefile reuse/Makefile csp/contests/Makefile csp/super-server/Makefile csp_header.make plugins/telegram/Makefile plugins/avatar-mongo/Makefile plugins/status-mongo/Makefile"
+ac_config_files="$ac_config_files Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/common-mysql/Makefile plugins/userlist-mysql/Makefile plugins/clardb-mysql/Makefile plugins/rundb-mysql/Makefile plugins/common-mongo/Makefile plugins/xuser-mongo/Makefile style/ejudge-upgrade-web cfront/Makefile reuse/Makefile csp/contests/Makefile csp/super-server/Makefile csp_header.make plugins/telegram/Makefile plugins/avatar-mongo/Makefile plugins/status-mongo/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -8977,12 +8977,12 @@ do
     "scripts/Makefile") CONFIG_FILES="$CONFIG_FILES scripts/Makefile" ;;
     "ejudge-config.v") CONFIG_FILES="$CONFIG_FILES ejudge-config.v" ;;
     "scripts/festival") CONFIG_FILES="$CONFIG_FILES scripts/festival" ;;
-    "plugins/mysql-common/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/mysql-common/Makefile" ;;
-    "plugins/mysql-userlist/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/mysql-userlist/Makefile" ;;
-    "plugins/mysql-clardb/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/mysql-clardb/Makefile" ;;
-    "plugins/mysql-rundb/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/mysql-rundb/Makefile" ;;
-    "plugins/mongo-common/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/mongo-common/Makefile" ;;
-    "plugins/mongo-xuser/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/mongo-xuser/Makefile" ;;
+    "plugins/common-mysql/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/common-mysql/Makefile" ;;
+    "plugins/userlist-mysql/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/userlist-mysql/Makefile" ;;
+    "plugins/clardb-mysql/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/clardb-mysql/Makefile" ;;
+    "plugins/rundb-mysql/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/rundb-mysql/Makefile" ;;
+    "plugins/common-mongo/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/common-mongo/Makefile" ;;
+    "plugins/xuser-mongo/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/xuser-mongo/Makefile" ;;
     "style/ejudge-upgrade-web") CONFIG_FILES="$CONFIG_FILES style/ejudge-upgrade-web" ;;
     "cfront/Makefile") CONFIG_FILES="$CONFIG_FILES cfront/Makefile" ;;
     "reuse/Makefile") CONFIG_FILES="$CONFIG_FILES reuse/Makefile" ;;

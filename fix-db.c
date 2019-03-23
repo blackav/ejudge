@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2010-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 #include "ejudge/compat.h"
 
 #define EJUDGE_SKIP_MYSQL 1
-#include "plugins/mysql-common/common_mysql.h"
+#include "plugins/common-mysql/common_mysql.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"

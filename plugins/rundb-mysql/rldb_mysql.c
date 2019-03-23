@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 #include "ejudge/rldb_plugin.h"
 #include "ejudge/runlog.h"
 #include "ejudge/teamdb.h"
-#include "../mysql-common/common_mysql.h"
+#include "../common-mysql/common_mysql.h"
 
 #define RUNS_ACCESS
 #include "ejudge/runlog_state.h"

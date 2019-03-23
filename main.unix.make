@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2018 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2019 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -174,12 +174,12 @@ subdirs_all:
 	$(MAKE) -C extra DESTDIR="${DESTDIR}" all
 	$(MAKE) -C checkers DESTDIR="${DESTDIR}" all
 	$(MAKE) -C scripts DESTDIR="${DESTDIR}" all
-	$(MAKE) -C plugins/mysql-common DESTDIR="${DESTDIR}" all
-	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" all
-	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" all
-	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" all
-	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" all
-	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/common-mysql DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/userlist-mysql DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/clardb-mysql DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/rundb-mysql DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/common-mongo DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/xuser-mongo DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" all
@@ -237,12 +237,12 @@ install: local_install suid_install
 	$(MAKE) -C scripts DESTDIR="${DESTDIR}" install
 	$(MAKE) -C checkers DESTDIR="${DESTDIR}" install
 	$(MAKE) -C extra DESTDIR="${DESTDIR}" install
-	$(MAKE) -C plugins/mysql-common DESTDIR="${DESTDIR}" install
-	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" install
-	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" install
-	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" install
-	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" install
-	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/common-mysql DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/userlist-mysql DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/clardb-mysql DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/rundb-mysql DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/common-mongo DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/xuser-mongo DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" install
@@ -405,12 +405,12 @@ clean: subdir_clean local_clean
 subdir_clean:
 	$(MAKE) -C extra clean
 	$(MAKE) -C checkers clean
-	$(MAKE) -C plugins/mysql-common DESTDIR="${DESTDIR}" clean
-	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" clean
-	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" clean
-	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" clean
-	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" clean
-	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/common-mysql DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/userlist-mysql DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/clardb-mysql DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/rundb-mysql DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/common-mongo DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/xuser-mongo DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" clean
@@ -430,12 +430,12 @@ subdir_distclean :
 	$(MAKE) -C extra/captest distclean
 	$(MAKE) -C checkers distclean
 	$(MAKE) -C scripts distclean
-	$(MAKE) -C plugins/mysql-common DESTDIR="${DESTDIR}" distclean
-	$(MAKE) -C plugins/mysql-userlist DESTDIR="${DESTDIR}" distclean
-	$(MAKE) -C plugins/mysql-clardb DESTDIR="${DESTDIR}" distclean
-	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" distclean
-	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" distclean
-	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/common-mysql DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/userlist-mysql DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/clardb-mysql DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/rundb-mysql DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/common-mongo DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/xuser-mongo DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" distclean
@@ -489,7 +489,7 @@ prjutils2/cdeps.o: prjutils2/cdeps.c
 log: mkChangeLog2
 	L=`./mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ./mkChangeLog2 --user-map=AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/ --strip-prefix=/trunk/ejudge/ --ignore-subdirs
 	for i in win32 unix userlist_clnt checkers extra scripts super_clnt xml_utils new_server_clnt; do cd $$i; L=`../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../mkChangeLog2 --user-map=../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ..; done
-	for i in plugins/mysql-common plugins/mysql-userlist plugins/mysql-clardb plugins/mysql-rundb; do cd $$i; L=`../../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../../mkChangeLog2 --user-map=../../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ../..; done
+	for i in plugins/common-mysql plugins/userlist-mysql plugins/clardb-mysql plugins/rundb-mysql; do cd $$i; L=`../../mkChangeLog2 --input=ChangeLog --latest-revision`; echo "Latest revision: $$L"; svn log -v --xml -r "$$L:HEAD" | ../../mkChangeLog2 --user-map=../../AUTHORS --input=ChangeLog --output=ChangeLog --prefix=/trunk/ejudge/$$i/ --strip-prefix=/trunk/ejudge/$$i/; cd ../..; done
 
 # localization stuff
 ifdef ENABLE_NLS

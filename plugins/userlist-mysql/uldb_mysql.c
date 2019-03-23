@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,7 @@
 #include "ejudge/list_ops.h"
 #include "ejudge/misctext.h"
 #include "ejudge/random.h"
-#include "../mysql-common/common_mysql.h"
+#include "../common-mysql/common_mysql.h"
 #include "ejudge/compat.h"
 
 #include "ejudge/xalloc.h"
