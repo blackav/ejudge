@@ -180,7 +180,7 @@ subdirs_all:
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" all
-	$(MAKE) -C plugins/mongo-avatar DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" all
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" all
@@ -243,7 +243,7 @@ install: local_install suid_install
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" install
-	$(MAKE) -C plugins/mongo-avatar DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" install
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" install
@@ -411,7 +411,7 @@ subdir_clean:
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" clean
-	$(MAKE) -C plugins/mongo-avatar DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" clean
@@ -436,7 +436,7 @@ subdir_distclean :
 	$(MAKE) -C plugins/mysql-rundb DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/mongo-common DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/mongo-xuser DESTDIR="${DESTDIR}" distclean
-	$(MAKE) -C plugins/mongo-avatar DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" distclean
