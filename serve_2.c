@@ -308,15 +308,13 @@ serve_update_status_file(
         serve_state_t state,
         int force_flag)
 {
-  const struct section_global_data *global = state->global;
-  struct prot_serve_status_v2 status;
-  time_t t1, t2, t3, t4, t5;
-  int p;
-
   if (!force_flag && state->current_time <= state->last_update_status_file) return 0;
 
-  memset(&status, 0, sizeof(status));
-  status.magic = PROT_SERVE_STATUS_MAGIC_V2;
+  const struct section_global_data *global = state->global;
+
+  struct prot_serve_status status = {};
+  time_t t1, t2, t3, t4, t5;
+  int p;
 
   status.cur_time = state->current_time;
   run_get_times(state->runlog_state, &t1, &t2, &t3, &t4, &t5);
@@ -382,19 +380,7 @@ serve_update_status_file(
 
   memcpy(status.prob_prio, state->prob_prio, sizeof(status.prob_prio));
 
-  unsigned char status_dir[PATH_MAX];
-  unsigned char *status_dir_ptr = status_dir;
-#if defined EJUDGE_CONTESTS_STATUS_DIR
-  if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
-    // FIXME
-    abort();
-  }
-#else
-  status_dir_ptr = global->legacy_status_dir;
-#endif
-
-  generic_write_file((char*) &status, sizeof(status), SAFE,
-                     status_dir_ptr, "status", "");
+  statusdb_save(state->statusdb_state, config, cnts, state->global, 0, &status);
   state->last_update_status_file = state->current_time;
   return 1;
 }
