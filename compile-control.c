@@ -16,7 +16,6 @@
 
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
-#include "ejudge/version.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/ej_process.h"
 #include "ejudge/osdeps.h"
@@ -69,18 +68,12 @@ write_help(void)
          "Usage: %s [OPTIONS] COMMAND\n"
          "  OPTIONS:\n"
          "    --help    write message and exit\n"
-         "    --version report version and exit\n"
          "  COMMAND:\n"
          "    start     start the ej-compile\n"
          "    stop      stop the ej-compile\n"
          "    restart   restart the ej-compile\n"
          "    status    report the ej-compile status\n",
          program_name, program_name);
-}
-static void
-write_version(void)
-{
-  printf("%s %s, compiled %s\n", program_name, compile_version, compile_date);
 }
 
 static void __attribute__((format(printf, 1, 2), noreturn))
@@ -624,9 +617,6 @@ int main(int argc, char *argv[])
             if (!strcmp(argv[aidx], "--help")) {
                 write_help();
                 return 0;
-            } else if (!strcmp(argv[aidx], "--version")) {
-                write_version();
-                return 0;
             } else if (!strcmp(argv[aidx], "--")) {
                 ++aidx;
                 break;
@@ -939,7 +929,6 @@ int main(int argc, char *argv[])
 #if 0
 #include "ejudge/config.h"
 #include "ejudge/ej_types.h"
-#include "ejudge/version.h"
 #include "ejudge/ejudge_cfg.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/serve_state.h"
