@@ -403,65 +403,36 @@ serve_load_status_file(
         const struct contest_desc *cnts,
         serve_state_t state)
 {
-  struct section_global_data *global = state->global;
-  struct prot_serve_status_v2 status;
-  size_t stat_len = 0;
-  char *ptr = 0;
+  struct prot_serve_status status = {};
 
-  unsigned char status_dir[PATH_MAX];
-  unsigned char *status_dir_ptr = status_dir;
-#if defined EJUDGE_CONTESTS_STATUS_DIR
-  if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
-    // FIXME
-    abort();
-  }
-#else
-  status_dir_ptr = global->legacy_status_dir;
-#endif
-
-  if (generic_read_file(&ptr, 0, &stat_len, 0, status_dir_ptr,
-                        "dir/status", "") < 0) {
-    if (global->score_system == SCORE_OLYMPIAD)
-      state->accepting_mode = 1;
-    return;
-  }
-  if (stat_len != sizeof(status)) {
-    info("load_status_file: length %zu does not match %zu",
-         stat_len, sizeof(status));
-    xfree(ptr);
-    if (global->score_system == SCORE_OLYMPIAD)
-      state->accepting_mode = 1;
-    return;
-  }
-  memcpy(&status, ptr, sizeof(status));
-  xfree(ptr);
-  if (status.magic != PROT_SERVE_STATUS_MAGIC_V2) {
-    info("load_status_file: bad magic value");
-    if (global->score_system == SCORE_OLYMPIAD)
+  int ret = status_db_load(state->statusdb_state, NULL, cnts, state->global, 0, &status);
+  if (ret <= 0) {
+    if (state->global->score_system == SCORE_OLYMPIAD)
       state->accepting_mode = 1;
     return;
   }
 
+  
   state->clients_suspended = status.clients_suspended;
-  info("load_status_file: clients_suspended = %d", state->clients_suspended);
+  //info("load_status_file: clients_suspended = %d", state->clients_suspended);
   state->testing_suspended = status.testing_suspended;
-  info("load_status_file: testing_suspended = %d", state->testing_suspended);
+  //info("load_status_file: testing_suspended = %d", state->testing_suspended);
   state->accepting_mode = status.accepting_mode;
-  if (global->score_system == SCORE_OLYMPIAD
-      && global->is_virtual) {
+  if (state->global->score_system == SCORE_OLYMPIAD
+      && state->global->is_virtual) {
     state->accepting_mode = 1;
   }
-  if (global->score_system != SCORE_OLYMPIAD) {
+  if (state->global->score_system != SCORE_OLYMPIAD) {
     state->accepting_mode = 0;
   }
-  info("load_status_file: accepting_mode = %d", state->accepting_mode);
+  //info("load_status_file: accepting_mode = %d", state->accepting_mode);
   state->printing_suspended = status.printing_suspended;
-  info("load_status_file: printing_suspended = %d", state->printing_suspended);
+  //info("load_status_file: printing_suspended = %d", state->printing_suspended);
   state->stat_reported_before = status.stat_reported_before;
   state->stat_report_time = status.stat_report_time;
 
   state->upsolving_mode = status.upsolving_mode;
-  info("load_status_file: upsolving_mode = %d", state->upsolving_mode);
+  //info("load_status_file: upsolving_mode = %d", state->upsolving_mode);
   state->upsolving_freeze_standings = status.upsolving_freeze_standings;
   state->upsolving_view_source = status.upsolving_view_source;
   state->upsolving_view_protocol = status.upsolving_view_protocol;
