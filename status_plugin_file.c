@@ -230,7 +230,6 @@ open_func(
         int flags)
 {
     struct statusdb_file_state *sfs = NULL;
-    info("status_plugin_file:open_func");
     XCALLOC(sfs, 1);
     sfs->b.plugin = self;
     return (struct statusdb_state *) sfs;
@@ -275,7 +274,7 @@ load_func(
         goto fail;
     }
 
-    info("status_plugin_file:load_func: loading from %s", status_path);
+    //info("status_plugin_file:load_func: loading from %s", status_path);
 
     fd = open(status_path, O_RDONLY | O_NONBLOCK | O_NOFOLLOW);
     if (fd < 0) {
@@ -372,7 +371,6 @@ load_func(
             err("status_plugin_file:load_func: file %s has invalid size", status_path);
             goto fail;
         }
-        info("status_plugin_file:load_func: %s version 3", status_path);
         const struct prot_serve_status_v3 *v3stat = (const struct prot_serve_status_v3*) memptr;
         *stat = v3stat->v;
     } else {
