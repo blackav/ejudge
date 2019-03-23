@@ -39,7 +39,7 @@ struct teamdb_db_callbacks;
 struct userlist_clnt;
 struct ejudge_cfg;
 struct xuser_cnts_state;
-struct status_db_state;
+struct statusdb_state;
 
 /* error codes */
 enum
@@ -201,7 +201,7 @@ struct serve_state
   int max_tester;
 
   /* contest status db state */
-  struct status_db_state *statusdb_state;
+  struct statusdb_state *statusdb_state;
 
   /* clarlog internal state */
   struct clarlog_state *clarlog_state;

@@ -128,9 +128,9 @@ struct plugin_status_file_state
     int nref; // reference counter
 };
 
-struct status_db_file_state
+struct statusdb_file_state
 {
-    struct status_db_state b;
+    struct statusdb_state b;
 };
 
 static struct common_plugin_data *
@@ -142,7 +142,7 @@ prepare_func(
         struct common_plugin_data *data,
         const struct ejudge_cfg *config,
         struct xml_tree *plugin_config);
-static struct status_db_state *
+static struct statusdb_state *
 open_func(
         const struct common_loaded_plugin *self,
         const struct ejudge_cfg *config,
@@ -150,10 +150,10 @@ open_func(
         const struct section_global_data *global,
         int flags);
 static void
-close_func(struct status_db_state *sds);
+close_func(struct statusdb_state *sds);
 static int
 load_func(
-        struct status_db_state *sds,
+        struct statusdb_state *sds,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
@@ -161,7 +161,7 @@ load_func(
         struct prot_serve_status *stat);
 static int
 save_func(
-        struct status_db_state *sds,
+        struct statusdb_state *sds,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
@@ -169,7 +169,7 @@ save_func(
         const struct prot_serve_status *stat);
 static void
 remove_func(
-        struct status_db_state *sds,
+        struct statusdb_state *sds,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global);
@@ -221,7 +221,7 @@ prepare_func(
     return 0;
 }
 
-static struct status_db_state *
+static struct statusdb_state *
 open_func(
         const struct common_loaded_plugin *self,
         const struct ejudge_cfg *config,
@@ -229,30 +229,30 @@ open_func(
         const struct section_global_data *global,
         int flags)
 {
-    struct status_db_file_state *sfs = NULL;
+    struct statusdb_file_state *sfs = NULL;
     info("status_plugin_file:open_func");
     XCALLOC(sfs, 1);
     sfs->b.plugin = self;
-    return (struct status_db_state *) sfs;
+    return (struct statusdb_state *) sfs;
 }
 
 static void
-close_func(struct status_db_state *sds)
+close_func(struct statusdb_state *sds)
 {
-    struct status_db_file_state *sfs = (struct status_db_file_state*) sds;
+    struct statusdb_file_state *sfs = (struct statusdb_file_state*) sds;
     xfree(sfs);
 }
 
 static int
 load_func(
-        struct status_db_state *sds,
+        struct statusdb_state *sds,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
         int flags,
         struct prot_serve_status *stat)
 {
-    struct status_db_file_state *sfs __attribute__((unused)) = (struct status_db_file_state*) sds;
+    struct statusdb_file_state *sfs __attribute__((unused)) = (struct statusdb_file_state*) sds;
 
     void *memptr = MAP_FAILED;
     size_t memsize = 0;
@@ -395,7 +395,7 @@ fail:
 
 static int
 save_func(
-        struct status_db_state *sds,
+        struct statusdb_state *sds,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
@@ -428,7 +428,7 @@ save_func(
 
 static void
 remove_func(
-        struct status_db_state *sds,
+        struct statusdb_state *sds,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global)

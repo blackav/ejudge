@@ -84,13 +84,13 @@ struct prot_serve_status
     /* 176 */
 };
 
-struct status_db_state;
+struct statusdb_state;
 struct ejudge_cfg;
 struct contest_desc;
 struct section_global_data;
 
-struct status_db_state *
-status_db_open(
+struct statusdb_state *
+statusdb_open(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
@@ -98,12 +98,12 @@ status_db_open(
         int flags);
 
 void
-status_db_close(
-        struct status_db_state *sds);
+statusdb_close(
+        struct statusdb_state *sds);
 
 int
-status_db_load(
-        struct status_db_state *sds,
+statusdb_load(
+        struct statusdb_state *sds,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
@@ -111,8 +111,8 @@ status_db_load(
         struct prot_serve_status *stat);
 
 int
-status_db_save(
-        struct status_db_state *sds,
+statusdb_save(
+        struct statusdb_state *sds,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
@@ -120,8 +120,8 @@ status_db_save(
         const struct prot_serve_status *stat);
 
 void
-status_db_remove(
-        struct status_db_state *sds,
+statusdb_remove(
+        struct statusdb_state *sds,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global);

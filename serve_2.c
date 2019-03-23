@@ -407,7 +407,7 @@ serve_load_status_file(
 {
   struct prot_serve_status status = {};
 
-  int ret = status_db_load(state->statusdb_state, config, cnts, state->global, 0, &status);
+  int ret = statusdb_load(state->statusdb_state, config, cnts, state->global, 0, &status);
   if (ret <= 0) {
     if (state->global->score_system == SCORE_OLYMPIAD)
       state->accepting_mode = 1;
@@ -463,7 +463,7 @@ serve_remove_status_file(
   if (!state || !state->global) return;
   if (!state->statusdb_state) return;
 
-  status_db_remove(state->statusdb_state, config, cnts, state->global);
+  statusdb_remove(state->statusdb_state, config, cnts, state->global);
 }
 
 int

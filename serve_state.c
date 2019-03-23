@@ -126,7 +126,7 @@ serve_state_destroy(
   watched_file_clear(&state->description);
 
   if (state->statusdb_state) {
-    status_db_close(state->statusdb_state);
+    statusdb_close(state->statusdb_state);
   }
 
   if (state->prob_extras) {
@@ -797,9 +797,9 @@ serve_state_load_contest(
     }
   }
 
-  state->statusdb_state = status_db_open(config, cnts, global, NULL, 0);
+  state->statusdb_state = statusdb_open(config, cnts, global, NULL, 0);
   if (!state->statusdb_state) {
-    err("load_contest: contest %d status_db plugin failed to load", contest_id);
+    err("load_contest: contest %d statusdb plugin failed to load", contest_id);
     goto failure;
   }
 

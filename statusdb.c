@@ -25,8 +25,8 @@
 extern struct status_plugin_iface plugin_status_file;
 static int plugin_registered;
 
-struct status_db_state *
-status_db_open(
+struct statusdb_state *
+statusdb_open(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
@@ -60,8 +60,8 @@ status_db_open(
 }
 
 void
-status_db_close(
-        struct status_db_state *sds)
+statusdb_close(
+        struct statusdb_state *sds)
 {
     if (sds) {
         if (sds->plugin) {
@@ -74,8 +74,8 @@ status_db_close(
 }
 
 int
-status_db_load(
-        struct status_db_state *sds,
+statusdb_load(
+        struct statusdb_state *sds,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
@@ -87,8 +87,8 @@ status_db_load(
 }
 
 int
-status_db_save(
-        struct status_db_state *sds,
+statusdb_save(
+        struct statusdb_state *sds,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global,
@@ -100,8 +100,8 @@ status_db_save(
 }
 
 void
-status_db_remove(
-        struct status_db_state *sds,
+statusdb_remove(
+        struct statusdb_state *sds,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global)
