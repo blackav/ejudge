@@ -183,12 +183,12 @@ main(int argc, char *argv[])
   if (clar_open(serve_state.clarlog_state,
                 config, cur_contest, global, 0, 0) < 0)
     return 1;
-  serve_load_status_file(cur_contest, &serve_state);
+  serve_load_status_file(config, cur_contest, &serve_state);
   serve_build_compile_dirs(config, &serve_state);
   serve_build_run_dirs(config, &serve_state, cur_contest);
   if (serve_create_symlinks(cur_contest, &serve_state) < 0) return 1;
   serve_state.current_time = time(0);
-  serve_update_status_file(cur_contest, &serve_state, 1);
+  serve_update_status_file(config, cur_contest, &serve_state, 1);
   if (serve_state.xuser_state) {
     serve_state.xuser_state->vt->flush(serve_state.xuser_state);
   }

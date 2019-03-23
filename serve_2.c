@@ -303,6 +303,7 @@ serve_update_internal_xml_log(serve_state_t state,
 
 int
 serve_update_status_file(
+        const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state,
         int force_flag)
@@ -400,12 +401,13 @@ serve_update_status_file(
 
 void
 serve_load_status_file(
+        const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state)
 {
   struct prot_serve_status status = {};
 
-  int ret = status_db_load(state->statusdb_state, NULL, cnts, state->global, 0, &status);
+  int ret = status_db_load(state->statusdb_state, config, cnts, state->global, 0, &status);
   if (ret <= 0) {
     if (state->global->score_system == SCORE_OLYMPIAD)
       state->accepting_mode = 1;
@@ -454,13 +456,14 @@ serve_load_status_file(
 
 void
 serve_remove_status_file(
+        const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state)
 {
   if (!state || !state->global) return;
   if (!state->statusdb_state) return;
 
-  status_db_remove(state->statusdb_state, NULL, cnts, state->global);
+  status_db_remove(state->statusdb_state, config, cnts, state->global);
 }
 
 int

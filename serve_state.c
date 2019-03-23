@@ -102,7 +102,7 @@ serve_state_destroy(
   if (state->pending_xml_import) {
     if (state->saved_testing_suspended != state->testing_suspended) {
       state->testing_suspended = state->saved_testing_suspended;
-      serve_update_status_file(cnts, state, 1);
+      serve_update_status_file(config, cnts, state, 1);
       if (!state->testing_suspended && cnts)
         serve_judge_suspended(extra, config, cnts, state, 0, 0, 0, 0, 0);
     }
@@ -886,7 +886,7 @@ serve_state_load_contest(
 
   if (clar_open(state->clarlog_state, config, cnts, global, 0, 0) < 0)
     goto failure;
-  serve_load_status_file(cnts, state);
+  serve_load_status_file(config, cnts, state);
   serve_set_upsolving_mode(state);
   serve_build_compile_dirs(config, state);
   serve_build_run_dirs(config, state, cnts);

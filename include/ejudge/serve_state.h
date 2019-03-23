@@ -379,15 +379,18 @@ void serve_update_internal_xml_log(serve_state_t state,
                                    const struct contest_desc *cnts);
 int
 serve_update_status_file(
+        const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state,
         int force_flag);
 void
 serve_load_status_file(
+        const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state);
 void
 serve_remove_status_file(
+        const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state);
 

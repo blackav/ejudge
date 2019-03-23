@@ -315,7 +315,7 @@ do_schedule(
   }
   run_sched_contest(cs->runlog_state, sloc);
   serve_update_standings_file(phr->extra, cs, cnts, 0);
-  serve_update_status_file(cnts, cs, 1);
+  serve_update_status_file(ejudge_config, cnts, cs, 1);
   return 0;
 }
 
@@ -341,11 +341,11 @@ cmd_operation(
 
   case NEW_SRV_ACTION_TEST_SUSPEND:
     cs->testing_suspended = 1;
-    serve_update_status_file(cnts, cs, 1);
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
   case NEW_SRV_ACTION_TEST_RESUME:
     cs->testing_suspended = 0;
-    serve_update_status_file(cnts, cs, 1);
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
   case NEW_SRV_ACTION_REJUDGE_SUSPENDED_2:
     serve_judge_suspended(extra, ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 0);
@@ -365,7 +365,7 @@ cmd_operation(
     if (stop_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_FINISHED;
     if (start_time > 0) return -NEW_SRV_ERR_CONTEST_ALREADY_STARTED;
     run_start_contest(cs->runlog_state, cs->current_time);
-    serve_update_status_file(cnts, cs, 1);
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
     serve_invoke_start_script(cs);
     serve_update_standings_file(extra, cs, cnts, 0);
     break;
@@ -375,7 +375,7 @@ cmd_operation(
     if (start_time <= 0) return -NEW_SRV_ERR_CONTEST_NOT_STARTED;
     run_stop_contest(cs->runlog_state, cs->current_time);
     serve_invoke_stop_script(cs);
-    serve_update_status_file(cnts, cs, 1);
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
   case NEW_SRV_ACTION_CONTINUE_CONTEST:
     run_get_times(cs->runlog_state, &start_time, 0, &duration, &stop_time, 0);
@@ -387,35 +387,35 @@ cmd_operation(
     run_set_finish_time(cs->runlog_state, 0);
     run_stop_contest(cs->runlog_state, 0);
     serve_invoke_stop_script(cs);
-    serve_update_status_file(cnts, cs, 1);
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
   case NEW_SRV_ACTION_SUSPEND:
     cs->clients_suspended = 1;
-    serve_update_status_file(cnts, cs, 1);
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
   case NEW_SRV_ACTION_RESUME:
     cs->clients_suspended = 0;
-    serve_update_status_file(cnts, cs, 1);
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
   case NEW_SRV_ACTION_PRINT_SUSPEND:
     if (!global->enable_printing) break;
     cs->printing_suspended = 1;
-    serve_update_status_file(cnts, cs, 1);
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
   case NEW_SRV_ACTION_PRINT_RESUME:
     if (!global->enable_printing) break;
     cs->printing_suspended = 1;
-    serve_update_status_file(cnts, cs, 1);
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
   case NEW_SRV_ACTION_SET_JUDGING_MODE:
     if (global->score_system != SCORE_OLYMPIAD) break;
     cs->accepting_mode = 0;
-    serve_update_status_file(cnts, cs, 1);
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
   case NEW_SRV_ACTION_SET_ACCEPTING_MODE:
     if (global->score_system != SCORE_OLYMPIAD) break;
     cs->accepting_mode = 1;
-    serve_update_status_file(cnts, cs, 1);
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
   case NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG:
     if (global->score_system != SCORE_OLYMPIAD) break;
@@ -423,12 +423,12 @@ cmd_operation(
         ||(global->is_virtual && global->disable_virtual_auto_judge <= 0))
       break;
     cs->testing_finished = 1;
-    serve_update_status_file(cnts, cs, 1);
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
   case NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG:
     if (global->score_system != SCORE_OLYMPIAD) break;
     cs->testing_finished = 0;
-    serve_update_status_file(cnts, cs, 1);
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
     break;
   case NEW_SRV_ACTION_REJUDGE_ALL_2:
     nsf_add_job(phr->fw_state, serve_rejudge_all(extra, ejudge_config, cnts, cs, phr->user_id, &phr->ip, phr->ssl_flag, DFLT_G_REJUDGE_PRIORITY_ADJUSTMENT, 1));
@@ -1284,7 +1284,7 @@ cmd_import_xml_runs(
       return -NEW_SRV_ERR_PENDING_IMPORT_EXISTS;
     cs->saved_testing_suspended = cs->testing_suspended;
     cs->testing_suspended = 1;
-    serve_update_status_file(cnts, cs, 1);
+    serve_update_status_file(ejudge_config, cnts, cs, 1);
     phr->client_state->ops->set_destroy_callback(phr->client_state, cnts->id, ns_client_destroy_callback);
     cs->client_id = phr->id;
     cs->pending_xml_import = xstrdup(s);
