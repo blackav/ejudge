@@ -43,7 +43,7 @@ EXPAT_LIB=-lexpat
 C_CFILES=compile.c version.c
 C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
-CC_CFILES=compile-control.c
+CC_CFILES=ej-compile-control.c
 CC_OBJECTS=$(CC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 SERVE_CFILES=serve.c version.c

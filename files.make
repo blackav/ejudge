@@ -378,10 +378,10 @@ CFILES=\
  clean-users.c\
  collect-emails.c\
  compile.c\
- compile-control.c\
  convert-clars.c\
  convert-runs.c\
  edit-userlist.c\
+ ej-compile-control.c\
  ej-ncheck.c\
  ej-batch.c\
  ej-import-contest.c\
