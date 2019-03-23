@@ -3,7 +3,7 @@
 #ifndef __PROTOCOL_H__
 #define __PROTOCOL_H__
 
-/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,87 +21,8 @@
 
 #include <time.h>
 
-#define PROT_SERVE_STATUS_MAGIC_V1 (0xe739aa02)
-struct prot_serve_status_v1
-{
-  unsigned int magic;
-  ej_time_t cur_time;
-  ej_time_t start_time;
-  ej_time_t sched_time;
-  ej_time_t duration;
-  ej_time_t stop_time;
-  ej_time_t freeze_time;
-  int total_runs;
-  int total_clars;
-  int download_interval;
-  unsigned char clars_disabled;
-  unsigned char team_clars_disabled;
-  unsigned char standings_frozen;
-  unsigned char score_system;
-  unsigned char clients_suspended;
-  unsigned char testing_suspended;
-  unsigned char is_virtual;
-  unsigned char olympiad_judging_mode;
-  unsigned char continuation_enabled;
-};
-
 // number of problems with dynamic priority stored in serve_status structure
 #define EJ_SERVE_STATUS_TOTAL_PROBS 28
-
-#define PROT_SERVE_STATUS_MAGIC_V2 (0xe739aa03)
-struct prot_serve_status_v2
-{
-  unsigned int magic;
-  ej_time_t cur_time;
-  ej_time_t start_time;
-  ej_time_t sched_time;
-  ej_time_t duration;
-  ej_time_t stop_time;
-  ej_time_t freeze_time;
-  int total_runs;
-  int total_clars;
-  int download_interval;
-  unsigned char clars_disabled;
-  unsigned char team_clars_disabled;
-  unsigned char standings_frozen;
-  unsigned char score_system;
-  unsigned char clients_suspended;
-  unsigned char testing_suspended;
-  unsigned char is_virtual;
-  unsigned char _olympiad_judging_mode; /* unused */
-  unsigned char continuation_enabled;
-  unsigned char printing_enabled;
-  unsigned char printing_suspended;
-  unsigned char always_show_problems;
-  ej_time_t finish_time;
-  ej_time_t stat_reported_before;
-  ej_time_t stat_report_time;
-  unsigned char accepting_mode;
-
-  // upsolving mode
-  unsigned char upsolving_mode;
-  unsigned char upsolving_freeze_standings;
-  unsigned char upsolving_view_source;
-  unsigned char upsolving_view_protocol;
-  unsigned char upsolving_full_protocol;
-  unsigned char upsolving_disable_clars;
-  unsigned char testing_finished;
-
-  ej_time64_t   max_online_time;
-  int           max_online_count;
-
-  // priority adjustments for problems
-  signed char   prob_prio[EJ_SERVE_STATUS_TOTAL_PROBS];
-
-  signed char online_view_source;
-  signed char online_view_report;
-  unsigned char online_view_judge_score;
-  unsigned char online_final_visibility;
-  unsigned char online_valuer_judge_comments;
-
-  unsigned char _pad[3];
-  ej_time64_t last_daily_reminder;
-};
 
 #define PROT_SERVE_PACKET_MAGIC (0xe342)
 struct prot_serve_packet
