@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2015-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -79,6 +79,18 @@ remove_func(
         struct common_mongo_state *state,
         const unsigned char *table,
         const struct _bson *selector);
+static int
+upsert_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        const struct _bson *selector,
+        const struct _bson *update);
+static int
+upsert_and_free_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        struct _bson **pselector,
+        struct _bson **pupdate);
 
 struct common_mongo_iface plugin_common_mongo =
 {
@@ -102,6 +114,8 @@ struct common_mongo_iface plugin_common_mongo =
     update_and_free_func,
     index_create_func,
     remove_func,
+    upsert_func,
+    upsert_and_free_func,
 };
 
 static struct common_plugin_data *
@@ -422,6 +436,50 @@ remove_func(
         return -1;
     }
     return 0;
+}
+
+static int
+upsert_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        const struct _bson *selector,
+        const struct _bson *update)
+{
+    unsigned char ns[1024];
+
+    if (state->show_queries > 0) {
+        fprintf(stderr, "update selector: "); ej_bson_unparse(stderr, selector, 0); fprintf(stderr, "\n");
+        fprintf(stderr, "update update: "); ej_bson_unparse(stderr, update, 0); fprintf(stderr, "\n");
+    }
+    snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, table);
+    if (!mongo_sync_cmd_update(state->conn, ns, MONGO_WIRE_FLAG_UPDATE_UPSERT, selector, update)) {
+        err("common_mongo::update: failed: %s", os_ErrorMsg());
+        return -1;
+    }
+    return 0;
+}
+
+static int
+upsert_and_free_func(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        struct _bson **pselector,
+        struct _bson **pupdate)
+{
+    bson *selector = NULL;
+    bson *update = NULL;
+    if (pselector) selector = *pselector;
+    if (pupdate) update = *pupdate;
+    int res = upsert_func(state, table, selector, update);
+    if (selector) {
+        bson_free(selector);
+        *pselector = NULL;
+    }
+    if (update) {
+        bson_free(update);
+        *pupdate = NULL;
+    }
+    return res;
 }
 
 /*

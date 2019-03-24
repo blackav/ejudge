@@ -3,7 +3,7 @@
 #ifndef __COMMON_MONGO_PLUGIN_H__
 #define __COMMON_MONGO_PLUGIN_H__
 
-/* Copyright (C) 2015-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #include "ejudge/ejudge_plugin.h"
 #include "ejudge/common_plugin.h"
 
-#define COMMON_MONGO_PLUGIN_IFACE_VERSION 1
+#define COMMON_MONGO_PLUGIN_IFACE_VERSION 2
 
 struct _mongo_sync_connection;
 struct _bson;
@@ -83,6 +83,16 @@ struct common_mongo_iface
         struct common_mongo_state *state,
         const unsigned char *table,
         const struct _bson *selector);
+    int (*upsert)(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        const struct _bson *selector,
+        const struct _bson *update);
+    int (*upsert_and_free)(
+        struct common_mongo_state *state,
+        const unsigned char *table,
+        struct _bson **selector,
+        struct _bson **update);
 };
 
 #endif /* __COMMON_MONGO_PLUGIN_H__ */
