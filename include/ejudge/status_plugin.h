@@ -75,6 +75,13 @@ struct status_plugin_iface
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global);
+
+    int (*has_status)(
+        const struct common_loaded_plugin *self,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags);
 };
 
 #endif /* __STATUS_PLUGIN_H__ */

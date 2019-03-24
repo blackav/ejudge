@@ -113,7 +113,8 @@ struct status_plugin_iface plugin_status_mongo =
     close_func,
     load_func,
     save_func,
-    remove_func
+    remove_func,
+    NULL, // has_status_func
 };
 
 static struct common_plugin_data *

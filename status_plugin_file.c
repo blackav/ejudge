@@ -173,6 +173,13 @@ remove_func(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         const struct section_global_data *global);
+static int
+has_status_func(
+        const struct common_loaded_plugin *self,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags);
 
 struct status_plugin_iface plugin_status_file =
 {
@@ -193,7 +200,8 @@ struct status_plugin_iface plugin_status_file =
     close_func,
     load_func,
     save_func,
-    remove_func
+    remove_func,
+    has_status_func,
 };
 
 static struct common_plugin_data *
@@ -443,4 +451,32 @@ remove_func(
 #endif
 
     relaxed_remove(status_dir_ptr, "dir/status");
+}
+
+static int
+has_status_func(
+        const struct common_loaded_plugin *self,
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const struct section_global_data *global,
+        int flags)
+{
+    unsigned char status_dir[PATH_MAX];
+    unsigned char status_path[PATH_MAX];
+    unsigned char *status_dir_ptr = status_dir;
+#if defined EJUDGE_CONTESTS_STATUS_DIR
+    if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
+        err("status_plugin_file:has_status_func: path %s/%06d is too long", EJUDGE_CONTESTS_STATUS_DIR, cnts->id);
+        return -1;
+    }
+#else
+    status_dir_ptr = global->legacy_status_dir;
+#endif
+
+    if (snprintf(status_path, sizeof(status_path), "%s/dir/status", status_dir_ptr) >= sizeof(status_path)) {
+        err("status_plugin_file:has_status_func: path %s/dir/status is too long", status_dir_ptr);
+        return -1;
+    }
+
+    return access(status_path, R_OK | W_OK) >= 0;
 }
