@@ -440,17 +440,24 @@ remove_func(
         const struct section_global_data *global)
 {
     unsigned char status_dir[PATH_MAX];
+    unsigned char status_path[PATH_MAX];
     unsigned char *status_dir_ptr = status_dir;
 #if defined EJUDGE_CONTESTS_STATUS_DIR
     if (snprintf(status_dir, sizeof(status_dir), "%s/%06d", EJUDGE_CONTESTS_STATUS_DIR, cnts->id) >= sizeof(status_dir)) {
-        err("status_plugin_file:save_func: path %s/%06d is too long", EJUDGE_CONTESTS_STATUS_DIR, cnts->id);
+        err("status_plugin_file:remove_func: path %s/%06d is too long", EJUDGE_CONTESTS_STATUS_DIR, cnts->id);
         return;
     }
 #else
     status_dir_ptr = global->legacy_status_dir;
 #endif
 
-    relaxed_remove(status_dir_ptr, "dir/status");
+    if (snprintf(status_path, sizeof(status_path), "%s/dir/status", status_dir_ptr) >= sizeof(status_path)) {
+        err("status_plugin_file:remove_func: path %s/dir/status is too long", status_dir_ptr);
+        return;
+    }
+
+    info("removing status file %s", status_path);
+    unlink(status_path);
 }
 
 static int
