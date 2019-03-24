@@ -24,13 +24,21 @@
 
 #define STATUS_PLUGIN_IFACE_VERSION 1
 
+struct status_common_plugin_state
+{
+    struct common_plugin_data b;
+};
+
 struct common_loaded_plugin;
 struct statusdb_state
 {
     const struct common_loaded_plugin *plugin;
 };
 
+struct ejudge_cfg;
 struct prot_serve_status;
+struct contest_desc;
+struct section_global_data;
 
 struct status_plugin_iface
 {
