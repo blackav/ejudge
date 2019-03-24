@@ -56,7 +56,36 @@ statusdb_open(
         return iface->open(loaded_plugin, config, cnts, global, flags);
     }
 
-  return NULL;
+    if ((loaded_plugin = plugin_get("status", plugin_name))) {
+        const struct status_plugin_iface *iface = (struct status_plugin_iface*) loaded_plugin->iface;
+        return iface->open(loaded_plugin, config, cnts, global, flags);
+    }
+
+    if (!config) {
+        err("cannot load any plugin");
+        return NULL;
+    }
+
+    const struct xml_tree *p = NULL;
+    const struct ejudge_plugin *plg = NULL;
+    for (p = config->plugin_list; p; p = p->right) {
+        plg = (const struct ejudge_plugin*) p;
+        if (plg->load_flag && !strcmp(plg->type, "status")
+            && !strcmp(plg->name, plugin_name))
+            break;
+    }
+    if (!p || !plg) {
+        err("status plugin '%s' is not registered", plugin_name);
+        return NULL;
+    }
+
+    loaded_plugin = plugin_load_external(plg->path, plg->type, plg->name, config);
+    if (!loaded_plugin) {
+        err("cannot load plugin %s, %s", plg->type, plg->name);
+        return NULL;
+    }
+    const struct status_plugin_iface *iface = (struct status_plugin_iface*) loaded_plugin->iface;
+    return iface->open(loaded_plugin, config, cnts, global, flags);
 }
 
 void
