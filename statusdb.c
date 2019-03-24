@@ -56,6 +56,13 @@ statusdb_open(
         return iface->open(loaded_plugin, config, cnts, global, flags);
     }
 
+    // need file plugin for migration anyway
+    const struct common_loaded_plugin *file_plugin = plugin_get("status", "file");
+    if (!file_plugin) {
+        err("cannot load plugin_status_file");
+        return NULL;
+    }
+
     if ((loaded_plugin = plugin_get("status", plugin_name))) {
         const struct status_plugin_iface *iface = (struct status_plugin_iface*) loaded_plugin->iface;
         return iface->open(loaded_plugin, config, cnts, global, flags);
@@ -85,7 +92,38 @@ statusdb_open(
         return NULL;
     }
     const struct status_plugin_iface *iface = (struct status_plugin_iface*) loaded_plugin->iface;
-    return iface->open(loaded_plugin, config, cnts, global, flags);
+    struct statusdb_state *sds = iface->open(loaded_plugin, config, cnts, global, flags);
+    if (!sds) return NULL;
+
+    // check if we need to upgrade from the file plugin
+    const struct status_plugin_iface *fif = (struct status_plugin_iface*) file_plugin->iface;
+    if (fif->has_status(file_plugin, config, cnts, global, flags) <= 0) {
+        return sds;
+    }
+
+    // do need upgrade
+    struct statusdb_state *sfs = fif->open(file_plugin, config, cnts, global, flags);
+    if (!sfs) {
+        err("cannot open contest %d with status_file plugin", cnts->id);
+        return NULL;
+    }
+
+    struct prot_serve_status stat = {};
+    int lr = fif->load(sfs, config, cnts, global, flags, &stat);
+    if (lr > 0) {
+        if (iface->save(sds, config, cnts, global, flags, &stat) < 0) {
+            err("failed to save the contest state by plugin %s", plugin_name);
+            return NULL;
+        }
+        info("contest %d status upgrade: %s -> %s successful", cnts->id, "file", plugin_name);
+        fif->remove(sfs, config, cnts, global);
+    } else if (lr < 0) {
+        err("failed to load existing contest state for contest %d", cnts->id);
+        // FIXME: ignore this error?
+        return NULL;
+    }
+    fif->close(sfs); sfs = NULL;
+    return sds;
 }
 
 void
