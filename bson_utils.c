@@ -93,7 +93,14 @@ ej_bson_unparse(
             }
             break;
         case BSON_TYPE_OID:
+            break;
         case BSON_TYPE_BOOLEAN:
+            {
+                gboolean bb = 0;
+                if (bson_cursor_get_boolean(cursor, &bb)) {
+                    fprintf(out, "%s", bb?"true":"false");
+                }
+            }
             break;
         case BSON_TYPE_UTC_DATETIME:
             {
