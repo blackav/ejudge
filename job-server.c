@@ -852,6 +852,7 @@ job_server_force_link[] =
 {
   cJSON_Delete,
   ej_bson_parse_string,
+  xml_parse_int,
 };
 
 #endif
