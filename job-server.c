@@ -29,6 +29,7 @@
 #include "ejudge/ej_jobs.h"
 #include "ejudge/cJSON.h"
 #include "ejudge/bson_utils.h"
+#include "ejudge/xml_utils.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
