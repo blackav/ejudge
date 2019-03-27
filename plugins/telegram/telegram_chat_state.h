@@ -2,7 +2,7 @@
 #ifndef __TELEGRAM_CHAT_STATE_H__
 #define __TELEGRAM_CHAT_STATE_H__
 
-/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,15 @@
  * GNU General Public License for more details.
  */
 
+#include "ejudge/config.h"
+
+#if HAVE_LIBMONGOC - 0 == 1
+struct _bson_t;
+typedef struct _bson_t ej_bson_t;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
 struct _bson;
+typedef struct _bson ej_bson_t;
+#endif
 
 struct telegram_chat_state
 {
@@ -36,8 +44,8 @@ telegram_chat_state_create(void);
 void
 telegram_chat_state_reset(struct telegram_chat_state *tcs);
 struct telegram_chat_state *
-telegram_chat_state_parse_bson(struct _bson *bson);
-struct _bson *
+telegram_chat_state_parse_bson(ej_bson_t *bson);
+ej_bson_t *
 telegram_chat_state_unparse_bson(const struct telegram_chat_state *tcs);
 
 struct mongo_conn;

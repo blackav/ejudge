@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,11 @@
 #include "ejudge/osdeps.h"
 #include "ejudge/errlog.h"
 
+#if HAVE_LIBMONGOC - 0 == 1
+#include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
+#endif
 
 #include <errno.h>
 #include <string.h>
@@ -59,8 +63,11 @@ telegram_subscription_create(const unsigned char *bot_id, int contest_id, int us
 }
 
 struct telegram_subscription *
-telegram_subscription_parse_bson(struct _bson *bson)
+telegram_subscription_parse_bson(ej_bson_t *bson)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct telegram_subscription *sub = NULL;
     bson_cursor *bc = NULL;
 
@@ -90,11 +97,17 @@ telegram_subscription_parse_bson(struct _bson *bson)
 cleanup:
     telegram_subscription_free(sub);
     return NULL;
+#else
+    return NULL;
+#endif
 }
 
-struct _bson *
+ej_bson_t *
 telegram_subscription_unparse_bson(const struct telegram_subscription *sub)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!sub) return NULL;
 
     bson *b = bson_new();
@@ -121,11 +134,17 @@ telegram_subscription_unparse_bson(const struct telegram_subscription *sub)
     }
     bson_finish(b);
     return b;
+#else
+    return NULL;
+#endif
 }
 
 struct telegram_subscription *
 telegram_subscription_fetch(struct mongo_conn *conn, const unsigned char *bot_id, int contest_id, int user_id)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!mongo_conn_open(conn)) return NULL;
 
     unsigned char buf[1024];
@@ -171,11 +190,17 @@ cleanup:
     if (pkt) mongo_wire_packet_free(pkt);
     if (query) bson_free(query);
     return retval;
+#else
+    return NULL;
+#endif
 }
 
 int
 telegram_subscription_save(struct mongo_conn *conn, const struct telegram_subscription *sub)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!mongo_conn_open(conn)) return -1;
     int retval = -1;
 
@@ -195,6 +220,9 @@ cleanup:
     bson_free(q);
     bson_free(b);
     return retval;
+#else
+    return 0;
+#endif
 }
 
 /*

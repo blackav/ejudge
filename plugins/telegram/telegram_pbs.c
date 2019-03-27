@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,11 +18,16 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
 #include "ejudge/osdeps.h"
+#include "ejudge/config.h"
 
 #include "telegram_pbs.h"
 #include "mongo_conn.h"
 
+#if HAVE_LIBMONGOC - 0 == 1
+#include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGO_CLIENT
 #include <mongo.h>
+#endif
 
 #include <errno.h>
 
@@ -48,8 +53,11 @@ telegram_pbs_create(const unsigned char *_id)
 }
 
 struct telegram_pbs *
-telegram_pbs_parse_bson(struct _bson *bson)
+telegram_pbs_parse_bson(ej_bson_t *bson)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson_cursor *bc = NULL;
     struct telegram_pbs *pbs = NULL;
 
@@ -69,11 +77,17 @@ telegram_pbs_parse_bson(struct _bson *bson)
 cleanup:
     telegram_pbs_free(pbs);
     return NULL;
+#else
+    return NULL
+#endif
 }
 
-bson *
+ej_bson_t *
 telegram_pbs_unparse_bson(const struct telegram_pbs *pbs)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!pbs) return NULL;
 
     bson *bson = bson_new();
@@ -85,11 +99,17 @@ telegram_pbs_unparse_bson(const struct telegram_pbs *pbs)
     }
     bson_finish(bson);
     return bson;
+#else
+    return NULL;
+#endif
 }
 
 int
 telegram_pbs_save(struct mongo_conn *conn, const struct telegram_pbs *pbs)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!mongo_conn_open(conn)) return -1;
     int retval = -1;
 
@@ -108,11 +128,17 @@ done:
     bson_free(s);
     bson_free(b);
     return retval;
+#else
+    return 0;
+#endif
 }
 
 struct telegram_pbs *
 telegram_pbs_fetch(struct mongo_conn *conn, const unsigned char *bot_id)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!mongo_conn_open(conn)) return NULL;
 
     mongo_packet *pkt = NULL;
@@ -157,6 +183,9 @@ cleanup:
     if (pkt) mongo_wire_packet_free(pkt);
     if (query) bson_free(query);
     return pbs;
+#else
+    return NULL;
+#endif
 }
 
 /*

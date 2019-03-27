@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,11 @@
 #include "telegram_token.h"
 #include "mongo_conn.h"
 
+#if HAVE_LIBMONGOC - 0 == 1
+#include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
+#endif
 
 #include <errno.h>
 
@@ -43,8 +47,11 @@ telegram_token_free(struct telegram_token *token)
 }
 
 struct telegram_token *
-telegram_token_parse_bson(struct _bson *bson)
+telegram_token_parse_bson(ej_bson_t *bson)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct telegram_token *token = NULL;
     bson_cursor *bc = NULL;
 
@@ -80,6 +87,9 @@ telegram_token_parse_bson(struct _bson *bson)
 cleanup:
     telegram_token_free(token);
     return NULL;
+#else
+    return 0;
+#endif
 }
 
 struct telegram_token *
@@ -90,9 +100,12 @@ telegram_token_create(void)
     return token;
 }
 
-struct _bson *
+ej_bson_t *
 telegram_token_unparse_bson(const struct telegram_token *token)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!token) return NULL;
 
     bson *b = bson_new();
@@ -135,11 +148,17 @@ telegram_token_unparse_bson(const struct telegram_token *token)
     }
     bson_finish(b);
     return b;
+#else
+    return NULL;
+#endif
 }
 
 void
 telegram_token_remove_expired(struct mongo_conn *conn, time_t current_time)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (current_time <= 0) current_time = time(NULL);
 
     if (!mongo_conn_open(conn)) return;
@@ -154,11 +173,15 @@ telegram_token_remove_expired(struct mongo_conn *conn, time_t current_time)
     mongo_sync_cmd_delete(conn->conn, mongo_conn_ns(conn, TELEGRAM_TOKENS_TABLE_NAME), 0, q);
 
     bson_free(q);
+#endif
 }
 
 void
 telegram_token_remove(struct mongo_conn *conn, const unsigned char *token)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!mongo_conn_open(conn)) return;
 
     bson *q = bson_new();
@@ -168,11 +191,15 @@ telegram_token_remove(struct mongo_conn *conn, const unsigned char *token)
     mongo_sync_cmd_delete(conn->conn, mongo_conn_ns(conn, TELEGRAM_TOKENS_TABLE_NAME), 0, q);
 
     bson_free(q);
+#endif
 }
 
 int
 telegram_token_fetch(struct mongo_conn *conn, const unsigned char *token_str, struct telegram_token **p_token)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     int retval = -1;
 
     if (!mongo_conn_open(conn)) return -1;
@@ -224,11 +251,17 @@ cleanup:
     if (pkt) mongo_wire_packet_free(pkt);
     if (query) bson_free(query);
     return retval;
+#else
+    return 0;
+#endif
 }
 
 int
 telegram_token_save(struct mongo_conn *conn, const struct telegram_token *token)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!mongo_conn_open(conn)) return -1;
     int retval = -1;
 
@@ -250,6 +283,9 @@ cleanup:
     if (ind) bson_free(ind);
     bson_free(b);
     return retval;
+#else
+    return 0;
+#endif
 }
 
 

@@ -2,7 +2,7 @@
 #ifndef __MONGO_CONN_H__
 #define __MONGO_CONN_H__
 
-/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,9 +16,15 @@
  * GNU General Public License for more details.
  */
 
+#include "ejudge/config.h"
+
 #include <time.h>
 
+#if HAVE_LIBMONGOC - 0 == 1
+#include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
 struct _mongo_sync_connection;
+#endif
 
 // mongo connectivity
 struct mongo_conn
@@ -30,7 +36,10 @@ struct mongo_conn
     unsigned char *password;
     int port;
     int show_queries;
+#if HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct _mongo_sync_connection *conn;
+#endif
     time_t last_check_time;
     unsigned char ns[128];
 };

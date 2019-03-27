@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,11 @@
 #include "telegram_chat.h"
 #include "mongo_conn.h"
 
+#if HAVE_LIBMONGOC - 0 == 1
+#include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
+#endif
 
 #include <errno.h>
 
@@ -52,8 +56,11 @@ telegram_chat_create(void)
 }
 
 struct telegram_chat *
-telegram_chat_parse_bson(struct _bson *bson)
+telegram_chat_parse_bson(ej_bson_t *bson)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson_cursor *bc = NULL;
     struct telegram_chat *tc = NULL;
 
@@ -81,11 +88,17 @@ telegram_chat_parse_bson(struct _bson *bson)
 cleanup:
     telegram_chat_free(tc);
     return NULL;
+#else
+    return NULL;
+#endif
 }
 
-bson *
+ej_bson_t *
 telegram_chat_unparse_bson(const struct telegram_chat *tc)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!tc) return NULL;
 
     bson *bson = bson_new();
@@ -109,11 +122,17 @@ telegram_chat_unparse_bson(const struct telegram_chat *tc)
     }
     bson_finish(bson);
     return bson;
+#else
+    return NULL;
+#endif
 }
 
 struct telegram_chat *
 telegram_chat_fetch(struct mongo_conn *conn, long long _id)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!mongo_conn_open(conn)) return NULL;
 
     bson *query = NULL;
@@ -155,11 +174,17 @@ cleanup:
     if (pkt) mongo_wire_packet_free(pkt);
     if (query) bson_free(query);
     return retval;
+#else
+    return NULL;
+#endif
 }
 
 int
 telegram_chat_save(struct mongo_conn *conn, const struct telegram_chat *tc)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!mongo_conn_open(conn)) return -1;
     int retval = -1;
 
@@ -179,6 +204,9 @@ cleanup:
     bson_free(q);
     bson_free(b);
     return retval;
+#else
+    return 0;
+#endif
 }
 
 /*

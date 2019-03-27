@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,11 @@
 #include "telegram_chat_state.h"
 #include "mongo_conn.h"
 
+#if HAVE_LIBMONGOC - 0 == 1
+#include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
+#endif
 
 #include <errno.h>
 
@@ -57,8 +61,11 @@ telegram_chat_state_reset(struct telegram_chat_state *tcs)
 }
 
 struct telegram_chat_state *
-telegram_chat_state_parse_bson(struct _bson *bson)
+telegram_chat_state_parse_bson(ej_bson_t *bson)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson_cursor *bc = NULL;
     struct telegram_chat_state *tcs = NULL;
 
@@ -86,11 +93,17 @@ telegram_chat_state_parse_bson(struct _bson *bson)
 cleanup:
     telegram_chat_state_free(tcs);
     return NULL;
+#else
+    return NULL;
+#endif
 }
 
-bson *
+ej_bson_t *
 telegram_chat_state_unparse_bson(const struct telegram_chat_state *tcs)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!tcs) return NULL;
 
     bson *bson = bson_new();
@@ -114,11 +127,17 @@ telegram_chat_state_unparse_bson(const struct telegram_chat_state *tcs)
     }
     bson_finish(bson);
     return bson;
+#else
+    return NULL;
+#endif
 }
 
 struct telegram_chat_state *
 telegram_chat_state_fetch(struct mongo_conn *conn, long long _id)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!mongo_conn_open(conn)) return NULL;
 
     bson *query = NULL;
@@ -160,11 +179,17 @@ cleanup:
     if (pkt) mongo_wire_packet_free(pkt);
     if (query) bson_free(query);
     return retval;
+#else
+    return NULL;
+#endif
 }
 
 int
 telegram_chat_state_save(struct mongo_conn *conn, const struct telegram_chat_state *tcs)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!mongo_conn_open(conn)) return -1;
     int retval = -1;
 
@@ -184,6 +209,9 @@ cleanup:
     bson_free(q);
     bson_free(b);
     return retval;
+#else
+    return 0;
+#endif
 }
 
 /*
