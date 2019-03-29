@@ -125,6 +125,7 @@ COMMON_CFILES=\
  base64.c\
  bitset.c\
  bson_utils.c\
+ bson_utils_new.c\
  build_support.c\
  cgi.c\
  charsets.c\
