@@ -44,7 +44,7 @@ telegram_chat_state_create(void);
 void
 telegram_chat_state_reset(struct telegram_chat_state *tcs);
 struct telegram_chat_state *
-telegram_chat_state_parse_bson(ej_bson_t *bson);
+telegram_chat_state_parse_bson(const ej_bson_t *bson);
 ej_bson_t *
 telegram_chat_state_unparse_bson(const struct telegram_chat_state *tcs);
 
