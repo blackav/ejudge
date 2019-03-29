@@ -294,7 +294,7 @@ ej-users-control: ${ULC_OBJECTS}
 	${LD} ${LDFLAGS} $^  libcommon.a -rdynamic -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 ej-jobs: ${JS_OBJECTS}
-	${LD} ${LDFLAGS} $^ libcommon.a libplatform.a -rdynamic -o $@ ${LDLIBS} -ldl ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS)
+	${LD} ${LDFLAGS} $^ libcommon.a libplatform.a -rdynamic -o $@ ${LDLIBS} -ldl ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
 
 ej-jobs-control: ${JSC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a libplatform.a -o $@ ${LDLIBS} ${EXPAT_LIB}
@@ -324,7 +324,7 @@ ej-import-contest: ${IC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} ${LIBCURL} ${LIBZIP} -ldl
 
 ej-page-gen: ${G_OBJECTS} libuserlist_clnt.a libnew_server_clnt.a
-	${LD} ${LDFLAGS} -Wl,--whole-archive $^ -o $@ ${LDLIBS} libdwarf/libdwarf/libdwarf.a -lelf ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive $(MONGO_LIBS)
+	${LD} ${LDFLAGS} -Wl,--whole-archive $^ -o $@ ${LDLIBS} libdwarf/libdwarf/libdwarf.a -lelf ${EXPAT_LIB} ${LIBZIP} -ldl -lpanel${NCURSES_SUFFIX} -lmenu${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX} ${LIBUUID} -Wl,--no-whole-archive $(MONGO_LIBS) $(MONGOC_LIBS)
 ej-page-gen.debug : ej-page-gen
 	objcopy --only-keep-debug $< $@
 
@@ -380,7 +380,7 @@ new-client${CGI_PROG_SUFFIX} : $(NC_OBJECTS)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 ej-contests : $(NS_OBJECTS)
-	$(LD) $(LDFLAGS) -rdynamic $(NS_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS)
+	$(LD) $(LDFLAGS) -rdynamic $(NS_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB} ${LIBZIP} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
 
 ejudge-contests-cmd : $(NSM_OBJECTS)
 	$(LD) $(LDFLAGS) $(NSM_OBJECTS) -o $@ $(LDLIBS) ${EXPAT_LIB}
