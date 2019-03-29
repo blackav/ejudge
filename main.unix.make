@@ -588,4 +588,7 @@ include/libdwarf-internal/dwarf.h include/libdwarf-internal/libdwarf.h libdwarf/
 bson_utils.o : bson_utils.c
 	$(CC) $(CFLAGS) $(MONGO_CFLAGS) -c $< -o $@
 
+bson_utils_new.o : bson_utils_new.c
+	$(CC) $(CFLAGS) $(MONGOC_CFLAGS) -c $< -o $@
+
 include deps.make
