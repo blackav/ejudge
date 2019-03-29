@@ -44,7 +44,7 @@ struct telegram_subscription
 struct telegram_subscription *
 telegram_subscription_free(struct telegram_subscription *subscription);
 struct telegram_subscription *
-telegram_subscription_parse_bson(ej_bson_t *bson);
+telegram_subscription_parse_bson(const ej_bson_t *bson);
 struct telegram_subscription *
 telegram_subscription_create(const unsigned char *bot_id, int contest_id, int user_id);
 ej_bson_t *
