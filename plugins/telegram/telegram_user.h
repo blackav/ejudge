@@ -39,7 +39,7 @@ telegram_user_free(struct telegram_user *tu);
 struct telegram_user *
 telegram_user_create(void);
 struct telegram_user *
-telegram_user_parse_bson(ej_bson_t *bson);
+telegram_user_parse_bson(const ej_bson_t *bson);
 ej_bson_t *
 telegram_user_unparse_bson(const struct telegram_user *tu);
 
