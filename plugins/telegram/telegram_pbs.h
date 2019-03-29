@@ -36,7 +36,7 @@ struct telegram_pbs
 struct telegram_pbs *
 telegram_pbs_free(struct telegram_pbs *pbs);
 struct telegram_pbs *
-telegram_pbs_parse_bson(ej_bson_t *bson);
+telegram_pbs_parse_bson(const ej_bson_t *bson);
 struct telegram_pbs *
 telegram_pbs_create(const unsigned char *_id);
 ej_bson_t *

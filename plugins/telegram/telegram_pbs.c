@@ -53,9 +53,28 @@ telegram_pbs_create(const unsigned char *_id)
 }
 
 struct telegram_pbs *
-telegram_pbs_parse_bson(ej_bson_t *bson)
+telegram_pbs_parse_bson(const ej_bson_t *bson)
 {
 #if HAVE_LIBMONGOC - 0 == 1
+    bson_iter_t iter, * const bc = &iter;
+    struct telegram_pbs *pbs = NULL;
+
+    if (!bson_iter_init(&iter, bson)) goto cleanup;
+
+    XCALLOC(pbs, 1);
+    while (bson_iter_next(&iter)) {
+        const unsigned char *key = bson_iter_key(bc);
+        if (!strcmp(key, "_id")) {
+            if (ej_bson_parse_string_new(bc, "_id", &pbs->_id) < 0) goto cleanup;
+        } else if (!strcmp(key, "update_id")) {
+            if (ej_bson_parse_int64_new(bc, "update_id", &pbs->update_id) < 0) goto cleanup;
+        }
+    }
+
+    return pbs;
+
+cleanup:
+    telegram_pbs_free(pbs);
     return NULL;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson_cursor *bc = NULL;
@@ -86,7 +105,16 @@ ej_bson_t *
 telegram_pbs_unparse_bson(const struct telegram_pbs *pbs)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return NULL;
+    if (!pbs) return NULL;
+
+    bson_t *bson = bson_new();
+    if (pbs->_id && *pbs->_id) {
+        bson_append_utf8(bson, "_id", -1, pbs->_id, strlen(pbs->_id));
+    }
+    if (pbs->update_id != 0) {
+        bson_append_int64(bson, "update_id", -1, pbs->update_id);
+    }
+    return bson;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!pbs) return NULL;
 
@@ -108,7 +136,34 @@ int
 telegram_pbs_save(struct mongo_conn *conn, const struct telegram_pbs *pbs)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return 0;
+    if (!mongo_conn_open(conn)) return -1;
+
+    int retval = -1;
+    mongoc_collection_t *coll = NULL;
+    bson_t *query = NULL;
+    bson_t *bson = NULL;
+    bson_error_t error;
+
+    if (!(coll = mongoc_client_get_collection(conn->client, conn->database, TELEGRAM_BOTS_TABLE_NAME))) {
+        err("get_collection failed\n");
+        goto cleanup;
+    }
+    query = bson_new();
+    bson_append_utf8(query, "_id", -1, pbs->_id, -1);
+    bson = telegram_pbs_unparse_bson(pbs);
+
+    if (!mongoc_collection_update(coll, MONGOC_UPDATE_UPSERT, query, bson, NULL, &error)) {
+        err("telegram_chat_save: failed: %s", error.message);
+        goto cleanup;
+    }
+
+    retval = 0;
+
+cleanup:
+    if (coll) mongoc_collection_destroy(coll);
+    if (query) bson_destroy(query);
+    if (bson) bson_destroy(bson);
+    return retval;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!mongo_conn_open(conn)) return -1;
     int retval = -1;
@@ -137,7 +192,38 @@ struct telegram_pbs *
 telegram_pbs_fetch(struct mongo_conn *conn, const unsigned char *bot_id)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return NULL;
+    if (!mongo_conn_open(conn)) return NULL;
+
+    bson_t *query = NULL;
+    mongoc_cursor_t *cursor = NULL;
+    const bson_t *doc = NULL;
+    struct telegram_pbs *retval = NULL;
+    mongoc_collection_t *coll = NULL;
+
+    if (!(coll = mongoc_client_get_collection(conn->client, conn->database, TELEGRAM_BOTS_TABLE_NAME))) {
+        err("get_collection failed\n");
+        goto cleanup;
+    }
+    query = bson_new();
+    bson_append_utf8(query, "_id", -1, bot_id, -1);
+    cursor = mongoc_collection_find_with_opts(coll, query, NULL, NULL);
+    if (cursor && mongoc_cursor_next(cursor, &doc)) {
+        retval = telegram_pbs_parse_bson(doc);
+        goto cleanup;
+    }
+
+    if (cursor) mongoc_cursor_destroy(cursor);
+    cursor = NULL;
+    bson_destroy(query); query = NULL;
+    mongoc_collection_destroy(coll); coll = NULL;
+    retval = telegram_pbs_create(bot_id);
+    telegram_pbs_save(conn, retval);
+
+cleanup:
+    if (cursor) mongoc_cursor_destroy(cursor);
+    if (coll) mongoc_collection_destroy(coll);
+    if (query) bson_destroy(query);
+    return retval;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (!mongo_conn_open(conn)) return NULL;
 
