@@ -7730,23 +7730,26 @@ then
   ac_cv_libmongoc_libs=`pkg-config --libs libmongoc-1.0`
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libmongo-client" >&5
+if [ x"${ac_cv_has_libmongoc}" != x1 ]
+then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libmongo-client" >&5
 $as_echo_n "checking for libmongo-client... " >&6; }
-if pkg-config --exists libmongo-client
-then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+  if pkg-config --exists libmongo-client
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-  ac_cv_has_libmongo_client=1
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+    ac_cv_has_libmongo_client=1
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-  ac_cv_has_libmongo_client=
-fi
+    ac_cv_has_libmongo_client=
+  fi
 
-if [ x"${ac_cv_has_libmongo_client}" = x1 ]
-then
-  ac_cv_libmongo_client_cflags=`pkg-config --cflags libmongo-client`
-  ac_cv_libmongo_client_libs=`pkg-config --libs libmongo-client`
+  if [ x"${ac_cv_has_libmongo_client}" = x1 ]
+  then
+    ac_cv_libmongo_client_cflags=`pkg-config --cflags libmongo-client`
+    ac_cv_libmongo_client_libs=`pkg-config --libs libmongo-client`
+  fi
 fi
 
 
