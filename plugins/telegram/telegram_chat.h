@@ -49,7 +49,7 @@ telegram_chat_free(struct telegram_chat *tc);
 struct telegram_chat *
 telegram_chat_create(void);
 struct telegram_chat *
-telegram_chat_parse_bson(ej_bson_t *bson);
+telegram_chat_parse_bson(const ej_bson_t *bson);
 ej_bson_t *
 telegram_chat_unparse_bson(const struct telegram_chat *tc);
 
