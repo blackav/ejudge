@@ -987,20 +987,23 @@ then
   ac_cv_libmongoc_libs=`pkg-config --libs libmongoc-1.0`
 fi
 
-AC_MSG_CHECKING([for libmongo-client])
-if pkg-config --exists libmongo-client
+if [[ x"${ac_cv_has_libmongoc}" != x1 ]]
 then
-  AC_MSG_RESULT([yes])
-  ac_cv_has_libmongo_client=1
-else
-  AC_MSG_RESULT([no])
-  ac_cv_has_libmongo_client=
-fi
+  AC_MSG_CHECKING([for libmongo-client])
+  if pkg-config --exists libmongo-client
+  then
+    AC_MSG_RESULT([yes])
+    ac_cv_has_libmongo_client=1
+  else
+    AC_MSG_RESULT([no])
+    ac_cv_has_libmongo_client=
+  fi
 
-if [[ x"${ac_cv_has_libmongo_client}" = x1 ]]
-then
-  ac_cv_libmongo_client_cflags=`pkg-config --cflags libmongo-client`
-  ac_cv_libmongo_client_libs=`pkg-config --libs libmongo-client`
+  if [[ x"${ac_cv_has_libmongo_client}" = x1 ]]
+  then
+    ac_cv_libmongo_client_cflags=`pkg-config --cflags libmongo-client`
+    ac_cv_libmongo_client_libs=`pkg-config --libs libmongo-client`
+  fi
 fi
 
 dnl Checking for available languages
