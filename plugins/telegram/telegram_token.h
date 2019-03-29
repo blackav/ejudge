@@ -47,7 +47,7 @@ struct telegram_token
 struct telegram_token *
 telegram_token_free(struct telegram_token *token);
 struct telegram_token *
-telegram_token_parse_bson(ej_bson_t *bson);
+telegram_token_parse_bson(const ej_bson_t *bson);
 struct telegram_token *
 telegram_token_create(void);
 ej_bson_t *

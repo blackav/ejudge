@@ -42,6 +42,7 @@ struct mongo_conn
     struct _mongo_sync_connection *conn;
 #endif
     time_t last_check_time;
+    int token_index_created;
     unsigned char ns[128];
 };
 
