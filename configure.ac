@@ -971,6 +971,22 @@ then
   AC_CHECK_HEADER([libintl.h],[],[ac_cv_nls=""])
 fi
 
+AC_MSG_CHECKING([for libmongoc])
+if pkg-config --exists libmongoc-1.0
+then
+  AC_MSG_RESULT([yes])
+  ac_cv_has_libmongoc=1
+else
+  AC_MSG_RESULT([no])
+  ac_cv_has_libmongoc=
+fi
+
+if [[ x"${ac_cv_has_libmongoc}" = x1 ]]
+then
+  ac_cv_libmongoc_cflags=`pkg-config --cflags libmongoc-1.0`
+  ac_cv_libmongoc_libs=`pkg-config --libs libmongoc-1.0`
+fi
+
 AC_MSG_CHECKING([for libmongo-client])
 if pkg-config --exists libmongo-client
 then
@@ -1202,6 +1218,9 @@ AC_SUBST(ac_cv_lang_config_dir_expanded)
 AC_SUBST(ac_cv_has_libmongo_client)
 AC_SUBST(ac_cv_libmongo_client_cflags)
 AC_SUBST(ac_cv_libmongo_client_libs)
+AC_SUBST(ac_cv_has_libmongoc)
+AC_SUBST(ac_cv_libmongoc_cflags)
+AC_SUBST(ac_cv_libmongoc_libs)
 
 AC_SUBST(ac_cv_primary_user)
 AC_SUBST(ac_cv_compile_user)
@@ -1412,6 +1431,11 @@ fi
 if [[ x"${ac_cv_has___int64}" = x1 ]]
 then
   AC_DEFINE(R_HAS___INT64, 1)
+fi
+
+if [[ x"${ac_cv_has_libmongoc}" = x1 ]]
+then
+  AC_DEFINE(HAVE_LIBMONGOC, 1)
 fi
 
 if [[ x"${ac_cv_has_libmongo_client}" = x1 ]]
