@@ -37,6 +37,7 @@ struct mongo_conn
     int port;
     int show_queries;
 #if HAVE_LIBMONGOC - 0 == 1
+    mongoc_client_t *client;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct _mongo_sync_connection *conn;
 #endif
