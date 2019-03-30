@@ -386,6 +386,7 @@ CFILES=\
  ej-ncheck.c\
  ej-batch.c\
  ej-import-contest.c\
+ ej-jobs.c\
  ej-normalize.c\
  ej-page-gen.c\
  ej-parblock.c\
@@ -396,7 +397,6 @@ CFILES=\
  ejudge-setup.c\
  execute.c\
  fix-db.c\
- job-server.c\
  job-server-control.c\
  job-server-cmd.c\
  make-js-actions.c\

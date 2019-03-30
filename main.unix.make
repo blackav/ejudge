@@ -70,7 +70,7 @@ UL_OBJECTS = ${UL_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a lib
 ULC_CFILES = userlist-server-control.c version.c
 ULC_OBJECTS = ${ULC_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
-JS_CFILES = job-server.c version.c
+JS_CFILES = ej-jobs.c version.c
 JS_OBJECTS = ${JS_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 
 JSC_CFILES = job-server-control.c version.c
