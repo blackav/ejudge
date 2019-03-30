@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -883,10 +883,12 @@ setup_log_file(void)
 }
 
 extern int ej_bson_force_link_dummy;
+extern int ej_bson_new_force_link_dummy;
 
 static void *forced_symbols[] __attribute__((unused,used)) =
 {
   &ej_bson_force_link_dummy,
+  &ej_bson_new_force_link_dummy,
 };
 
 int
