@@ -22,7 +22,11 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
 
+#if HAVE_LIBMONGOC - 0 == 1
+#include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
+#endif
 
 #include <string.h>
 #include <limits.h>
@@ -44,53 +48,53 @@ query_func(
         const unsigned char *table,
         int skip,
         int count,
-        const struct _bson *query,
-        const struct _bson *sel,
-        struct _bson ***p_res);
+        const ej_bson_t *query,
+        const ej_bson_t *sel,
+        ej_bson_t ***p_res);
 static int
 insert_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        const struct _bson *b);
+        const ej_bson_t *b);
 static int
 insert_and_free_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        struct _bson **b);
+        ej_bson_t **b);
 static int
 update_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        const struct _bson *selector,
-        const struct _bson *update);
+        const ej_bson_t *selector,
+        const ej_bson_t *update);
 static int
 update_and_free_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        struct _bson **pselector,
-        struct _bson **pupdate);
+        ej_bson_t **pselector,
+        ej_bson_t **pupdate);
 static int
 index_create_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        const struct _bson *b);
+        const ej_bson_t *b);
 static int
 remove_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        const struct _bson *selector);
+        const ej_bson_t *selector);
 static int
 upsert_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        const struct _bson *selector,
-        const struct _bson *update);
+        const ej_bson_t *selector,
+        const ej_bson_t *update);
 static int
 upsert_and_free_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        struct _bson **pselector,
-        struct _bson **pupdate);
+        ej_bson_t **pselector,
+        ej_bson_t **pupdate);
 
 struct common_mongo_iface plugin_common_mongo =
 {
@@ -252,6 +256,8 @@ prepare_func(
     if (!state->table_prefix) state->table_prefix = xstrdup("");
     state->show_queries = 1;
 
+#if HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     state->conn = mongo_sync_connect(state->host, state->port, 0);
     if (!state->conn) {
         err("cannot connect to mongodb: %s", os_ErrorMsg());
@@ -265,6 +271,7 @@ prepare_func(
             return -1;
         }
     }
+#endif
 
     return 0;
 }
@@ -275,10 +282,13 @@ query_func(
         const unsigned char *table,
         int skip,
         int count,
-        const struct _bson *query,
-        const struct _bson *sel,
-        struct _bson ***p_res)
+        const ej_bson_t *query,
+        const ej_bson_t *sel,
+        ej_bson_t ***p_res)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     mongo_packet *pkt = NULL;
     mongo_sync_cursor *cursor = NULL;
     unsigned char ns[1024];
@@ -322,14 +332,20 @@ query_func(
     mongo_sync_cursor_free(cursor);
     *p_res = res;
     return u;
+#else
+    return 0;
+#endif
 }
 
 static int
 insert_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        const struct _bson *b)
+        const ej_bson_t *b)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     unsigned char ns[1024];
 
     if (state->show_queries > 0) {
@@ -341,14 +357,20 @@ insert_func(
         return -1;
     }
     return 0;
+#else
+    return 0;
+#endif
 }
 
 static int
 insert_and_free_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        struct _bson **b)
+        ej_bson_t **b)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson *p = NULL;
     if (b) p = *b;
     int res = insert_func(state, table, p);
@@ -357,15 +379,21 @@ insert_and_free_func(
         *b = NULL;
     }
     return res;
+#else
+    return 0;
+#endif
 }
 
 static int
 update_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        const struct _bson *selector,
-        const struct _bson *update)
+        const ej_bson_t *selector,
+        const ej_bson_t *update)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     unsigned char ns[1024];
 
     if (state->show_queries > 0) {
@@ -378,15 +406,21 @@ update_func(
         return -1;
     }
     return 0;
+#else
+    return 0;
+#endif
 }
 
 static int
 update_and_free_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        struct _bson **pselector,
-        struct _bson **pupdate)
+        ej_bson_t **pselector,
+        ej_bson_t **pupdate)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson *selector = NULL;
     bson *update = NULL;
     if (pselector) selector = *pselector;
@@ -401,14 +435,20 @@ update_and_free_func(
         *pupdate = NULL;
     }
     return res;
+#else
+    return 0;
+#endif
 }
 
 static int
 index_create_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        const struct _bson *b)
+        const ej_bson_t *b)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     unsigned char ns[1024];
 
     snprintf(ns, sizeof(ns), "%s.%s%s", state->database, state->table_prefix, table);
@@ -417,14 +457,20 @@ index_create_func(
         return -1;
     }
     return 0;
+#else
+    return 0;
+#endif
 }
 
 static int
 remove_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        const struct _bson *selector)
+        const ej_bson_t *selector)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     unsigned char ns[1024];
 
     if (state->show_queries > 0) {
@@ -436,15 +482,21 @@ remove_func(
         return -1;
     }
     return 0;
+#else
+    return 0;
+#endif
 }
 
 static int
 upsert_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        const struct _bson *selector,
-        const struct _bson *update)
+        const ej_bson_t *selector,
+        const ej_bson_t *update)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     unsigned char ns[1024];
 
     if (state->show_queries > 0) {
@@ -457,15 +509,21 @@ upsert_func(
         return -1;
     }
     return 0;
+#else
+    return 0;
+#endif
 }
 
 static int
 upsert_and_free_func(
         struct common_mongo_state *state,
         const unsigned char *table,
-        struct _bson **pselector,
-        struct _bson **pupdate)
+        ej_bson_t **pselector,
+        ej_bson_t **pupdate)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson *selector = NULL;
     bson *update = NULL;
     if (pselector) selector = *pselector;
@@ -480,6 +538,9 @@ upsert_and_free_func(
         *pupdate = NULL;
     }
     return res;
+#else
+    return 0;
+#endif
 }
 
 /*

@@ -17,13 +17,32 @@
  * GNU General Public License for more details.
  */
 
+#include "config.h"
+
 #include "ejudge/ejudge_plugin.h"
 #include "ejudge/common_plugin.h"
 
 #define COMMON_MONGO_PLUGIN_IFACE_VERSION 2
 
+#if HAVE_LIBMONGOC - 0 == 1
+struct _mongoc_client_t;
+struct _bson_t;
+
+typedef struct _mongoc_client_t ej_mongo_conn_t;
+typedef struct _bson_t ej_bson_t;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
 struct _mongo_sync_connection;
 struct _bson;
+
+typedef struct _mongo_sync_connection ej_mongo_conn_t;
+typedef struct _bson ej_bson_t;
+#else
+struct mongo_connection_missing;
+struct bson_definition_missing;
+
+typedef struct mongo_connection_missing ej_mongo_conn_t;
+typedef struct bson_definition_missing ej_bson_t;
+#endif
 
 struct common_mongo_iface;
 
@@ -41,7 +60,7 @@ struct common_mongo_state
     unsigned char *password;
     int show_queries;
 
-    struct _mongo_sync_connection *conn;
+    ej_mongo_conn_t *conn;
 };
 
 struct common_mongo_iface
@@ -54,45 +73,45 @@ struct common_mongo_iface
         const unsigned char *table,
         int skip,
         int count,
-        const struct _bson *query,
-        const struct _bson *sel,
-        struct _bson ***p_res);
+        const ej_bson_t *query,
+        const ej_bson_t *sel,
+        ej_bson_t ***p_res);
     int (*insert)(
         struct common_mongo_state *state,
         const unsigned char *table,
-        const struct _bson *b);
+        const ej_bson_t *b);
     int (*insert_and_free)(
         struct common_mongo_state *state,
         const unsigned char *table,
-        struct _bson **b);
+        ej_bson_t **b);
     int (*update)(
         struct common_mongo_state *state,
         const unsigned char *table,
-        const struct _bson *selector,
-        const struct _bson *update);
+        const ej_bson_t *selector,
+        const ej_bson_t *update);
     int (*update_and_free)(
         struct common_mongo_state *state,
         const unsigned char *table,
-        struct _bson **selector,
-        struct _bson **update);
+        ej_bson_t **selector,
+        ej_bson_t **update);
     int (*index_create)(
         struct common_mongo_state *state,
         const unsigned char *table,
-        const struct _bson *b);
+        const ej_bson_t *b);
     int (*remove)(
         struct common_mongo_state *state,
         const unsigned char *table,
-        const struct _bson *selector);
+        const ej_bson_t *selector);
     int (*upsert)(
         struct common_mongo_state *state,
         const unsigned char *table,
-        const struct _bson *selector,
-        const struct _bson *update);
+        const ej_bson_t *selector,
+        const ej_bson_t *update);
     int (*upsert_and_free)(
         struct common_mongo_state *state,
         const unsigned char *table,
-        struct _bson **selector,
-        struct _bson **update);
+        ej_bson_t **selector,
+        ej_bson_t **update);
 };
 
 #endif /* __COMMON_MONGO_PLUGIN_H__ */

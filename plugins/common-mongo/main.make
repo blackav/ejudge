@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2015 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2015-2019 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -17,9 +17,9 @@ PLUGINDIR = $(libexecdir)/ejudge/plugins
 CC = gcc
 LD = gcc
 
-CFLAGS = -I../../include $(MONGO_CFLAGS) $(CDEBUGFLAGS) $(CCOMPFLAGS) $(CEXTRAFLAGS) $(WPTRSIGN)
+CFLAGS = -I../../include $(MONGO_CFLAGS) $(MONGOC_CFLAGS) $(CDEBUGFLAGS) $(CCOMPFLAGS) $(CEXTRAFLAGS) $(WPTRSIGN)
 LDFLAGS = $(MYSQL_LIB_OPT) $(EXPAT_LIB_OPT) $(CDEBUGFLAGS) $(LDCOMPFLAGS) $(LDEXTRAFLAGS)
-LDLIBS = $(EXTRALIBS) $(MONGO_LIBS) -lexpat -lm
+LDLIBS = $(EXTRALIBS) $(MONGO_LIBS) $(MONGOC_LIBS) -lexpat -lm
 
 CFILES = common_mongo.c
 
