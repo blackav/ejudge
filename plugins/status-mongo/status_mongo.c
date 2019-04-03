@@ -23,7 +23,11 @@
 
 #include "ejudge/xalloc.h"
 
+#if HAVE_LIBMONGOC - 0 == 1
+#include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
+#endif
 
 #include <errno.h>
 
@@ -85,10 +89,10 @@ remove_func(
 
 static int
 serve_status_bson_parse(
-        bson *bson,
+        ej_bson_t *bson,
         struct prot_serve_status *status)
     __attribute__((unused));
-static bson *
+static ej_bson_t *
 serve_status_bson_unparse(
         const struct prot_serve_status *status)
     __attribute__((unused));
@@ -191,6 +195,9 @@ load_func(
         int flags,
         struct prot_serve_status *stat)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return -1;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct status_mongo_state *sms = (struct status_mongo_state *) sds;
     struct status_mongo_plugin_state *ps = (struct status_mongo_plugin_state *) sms->b.plugin->data;
     bson *query = NULL;
@@ -241,6 +248,9 @@ done:
         xfree(results);
     }
     return retval;
+#else
+    return -1;
+#endif
 }
 
 static int
@@ -252,6 +262,9 @@ save_func(
         int flags,
         const struct prot_serve_status *stat)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return -1;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct status_mongo_state *sms = (struct status_mongo_state *) sds;
     struct status_mongo_plugin_state *ps = (struct status_mongo_plugin_state *) sms->b.plugin->data;
     int retval = -1;
@@ -280,6 +293,9 @@ save_func(
     if (filter) bson_free(filter);
     if (bs) bson_free(bs);
     return retval;
+#else
+    return -1;
+#endif
 }
 
 static void
@@ -292,14 +308,17 @@ remove_func(
     struct status_mongo_state *sms __attribute__((unused)) = (struct status_mongo_state *) sds;
 }
 
+static ej_bson_t *
+serve_status_bson_unparse(
+        const struct prot_serve_status *status)
+{
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #define UNPARSE_DATE_FIELD(f) do { if (status->f > 0) { bson_append_utc_datetime(res, #f, status->f * 1000LL); } } while (0)
 #define UNPARSE_INT32NZ_FIELD(f) do { if (status->f != 0) { bson_append_int32(res, #f, status->f); } } while (0)
 #define UNPARSE_BOOLEAN_FIELD(f) do { if (status->f > 0) { bson_append_boolean(res, #f, status->f); } } while (0)
 
-static bson *
-serve_status_bson_unparse(
-        const struct prot_serve_status *status)
-{
     bson *res = bson_new();
 
     UNPARSE_DATE_FIELD(cur_time);
@@ -368,13 +387,19 @@ serve_status_bson_unparse(
 
     bson_finish(res);
     return res;
+#else
+    return -1;
+#endif
 }
 
 static int
 serve_status_bson_parse(
-        bson *b,
+        ej_bson_t *b,
         struct prot_serve_status *status)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return -1;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson_cursor *bc = NULL;
     bson_cursor *bca = NULL;
     bson *arr = NULL;
@@ -502,4 +527,7 @@ fail:
     if (bca) bson_cursor_free(bca);
     if (arr) bson_free(arr);
     return -1;
+#else
+    return -1;
+#endif
 }
