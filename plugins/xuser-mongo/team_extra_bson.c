@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2015-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,13 +19,24 @@
 
 #include "ejudge/xalloc.h"
 
+#if HAVE_LIBMONGOC - 0 == 1
+#include <mongoc/mongoc.h>
+struct _bson_t;
+typedef struct _bson_t ej_bson_t;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
+struct _bson;
+typedef struct _bson ej_bson_t;
+#endif
 
 #define BPE (CHAR_BIT * sizeof(((struct team_extra*)0)->clar_map[0]))
 
 struct team_warning *
-team_warning_bson_parse(bson *b)
+team_warning_bson_parse(ej_bson_t *b)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGOC - 0 == 1
     struct team_warning *res = NULL;
     bson_cursor *bc = NULL;
 
@@ -59,11 +70,17 @@ fail:
     }
     if (bc) bson_cursor_free(bc);
     return NULL;
+#else
+    return NULL;
+#endif
 }
 
 struct team_extra *
-team_extra_bson_parse(bson *b)
+team_extra_bson_parse(ej_bson_t *b)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGOC - 0 == 1
     bson_cursor *bc = NULL;
     bson_cursor *bc2 = NULL;
     struct team_extra *res = NULL;
@@ -137,11 +154,17 @@ fail:
     if (bc2) bson_cursor_free(bc2);
     if (bc) bson_cursor_free(bc);
     return NULL;
+#else
+    return NULL;
+#endif
 }
 
-bson *
+ej_bson_t *
 team_warning_bson_unparse(const struct team_warning *tw)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGOC - 0 == 1
     bson *res = bson_new();
     long long utc_dt = (long long) tw->date * 1000;
     bson_append_utc_datetime(res, "date", utc_dt);
@@ -155,11 +178,17 @@ team_warning_bson_unparse(const struct team_warning *tw)
     }
     bson_finish(res);
     return res;
+#else
+    return NULL;
+#endif
 }
 
-bson *
+ej_bson_t *
 team_warnings_bson_unparse(struct team_warning **tws, int count)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGOC - 0 == 1
     bson *res = bson_new();
     if (tws && count > 0) {
         for (int i = 0; i < count; ++i) {
@@ -172,11 +201,17 @@ team_warnings_bson_unparse(struct team_warning **tws, int count)
     }
     bson_finish(res);
     return res;
+#else
+    return NULL;
+#endif
 }
 
-bson *
+ej_bson_t *
 team_extra_bson_unparse(const struct team_extra *extra)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGOC - 0 == 1
     bson *res = bson_new();
     ej_bson_append_uuid(res, "_id", &extra->uuid);
     bson_append_int32(res, "user_id", extra->user_id);
@@ -211,6 +246,9 @@ team_extra_bson_unparse(const struct team_extra *extra)
     }
     bson_finish(res);
     return res;
+#else
+    return NULL;
+#endif
 }
 
 /*

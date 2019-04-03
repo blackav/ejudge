@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2015-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,11 @@
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
 
+#if HAVE_LIBMONGOC - 0 == 1
+#include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
+#endif
 
 #include <string.h>
 #include <ctype.h>
@@ -59,10 +63,10 @@ struct xuser_mongo_cnts_state
 };
 
 struct team_extra *
-team_extra_bson_parse(bson *b);
-bson *
+team_extra_bson_parse(ej_bson_t *b);
+ej_bson_t *
 team_warning_bson_unparse(const struct team_warning *tw);
-bson *
+ej_bson_t *
 team_extra_bson_unparse(const struct team_extra *extra);
 
 static struct common_plugin_data *
@@ -280,7 +284,7 @@ find_entry(
     return NULL;
 }
 
-static void
+static void __attribute__((unused))
 insert_entry(
         struct xuser_mongo_cnts_state *state,
         int user_id,
@@ -319,6 +323,9 @@ do_get_entry(
         struct xuser_mongo_cnts_state *state,
         int user_id)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGOC - 0 == 1
     struct team_extra *extra = NULL;
     bson *query = NULL;
     int pos = 0, count = 0;
@@ -360,6 +367,9 @@ done:
         xfree(results);
     }
     return extra;
+#else
+    return NULL;
+#endif
 }
 
 static const struct team_extra *
@@ -387,11 +397,14 @@ get_clar_status_func(
     return 0;
 }
 
-static int
+static int __attribute__((unused))
 do_insert(
         struct xuser_mongo_cnts_state *state,
         struct team_extra *extra)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return -1;
+#elif HAVE_LIBMONGOC - 0 == 1
     if (extra->contest_id <= 0) extra->contest_id = state->contest_id;
     if (!ej_uuid_is_nonempty(extra->uuid)) {
         ej_uuid_generate(&extra->uuid);
@@ -401,15 +414,21 @@ do_insert(
         return -1;
     }
     return 0;
+#else
+    return -1;
+#endif
 }
 
-static int
+static int __attribute__((unused))
 do_update(
         struct xuser_mongo_cnts_state *state,
         struct team_extra *extra,
         const unsigned char *op,
-        bson *update_doc)
+        ej_bson_t *update_doc)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return -1;
+#elif HAVE_LIBMONGOC - 0 == 1
     bson *filter = bson_new();
     ej_bson_append_uuid(filter, "_id", &extra->uuid);
     bson_finish(filter);
@@ -423,6 +442,9 @@ do_update(
     bson_free(filter); filter = NULL;
     bson_free(update_doc); update_doc = NULL;
     return retval;
+#else
+    return NULL;
+#endif
 }
 
 static int
@@ -432,6 +454,9 @@ set_clar_status_func(
         int clar_id,
         const ej_uuid_t *p_clar_uuid)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return -1;
+#elif HAVE_LIBMONGOC - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
@@ -449,6 +474,9 @@ set_clar_status_func(
         return do_insert(state, extra);
     }
     return -1;
+#else
+    return NULL;
+#endif
 }
 
 static void
@@ -467,6 +495,9 @@ append_warning_func(
         const unsigned char *txt,
         const unsigned char *cmt)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return -1;
+#elif HAVE_LIBMONGOC - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
@@ -495,6 +526,9 @@ append_warning_func(
     } else {
         return do_insert(state, extra);
     }
+#else
+    return -1;
+#endif
 }
 
 static int
@@ -503,6 +537,9 @@ set_status_func(
         int user_id,
         int status)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return -1;
+#elif HAVE_LIBMONGOC - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
@@ -516,6 +553,9 @@ set_status_func(
     } else {
         return do_insert(state, extra);
     }
+#else
+    return -1;
+#endif
 }
 
 static int
@@ -524,6 +564,9 @@ set_disq_comment_func(
         int user_id,
         const unsigned char *disq_comment)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return -1;
+#elif HAVE_LIBMONGOC - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
@@ -550,6 +593,9 @@ set_disq_comment_func(
     } else {
         return do_insert(state, extra);
     }
+#else
+    return -1;
+#endif
 }
 
 static int
@@ -569,6 +615,9 @@ set_run_fields_func(
         int user_id,
         int run_fields)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return -1;
+#elif HAVE_LIBMONGOC - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
@@ -583,6 +632,9 @@ set_run_fields_func(
     } else {
         return do_insert(state, extra);
     }
+#else
+    return -1;
+#endif
 }
 
 static int
@@ -596,7 +648,7 @@ count_read_clars_func(
     return extra->clar_uuids_size;
 }
 
-static int
+static int __attribute__((unused))
 isort_func(const void *p1, const void *p2)
 {
     const int *i1 = (const int *) p1;
@@ -613,7 +665,7 @@ struct xuser_mongo_team_extras
     struct xuser_mongo_cnts_state *state;
 };
 
-static struct xuser_team_extras *
+/*static*/ struct xuser_team_extras * __attribute__((unused))
 xuser_mongo_team_extras_free(struct xuser_team_extras *x)
 {
     struct xuser_mongo_team_extras *xm = (struct xuser_mongo_team_extras *) x;
@@ -623,19 +675,22 @@ xuser_mongo_team_extras_free(struct xuser_team_extras *x)
     return NULL;
 }
 
-static const struct team_extra *
+/*static*/ const struct team_extra * __attribute__((unused))
 xuser_mongo_team_extras_get(struct xuser_team_extras *x, int user_id)
 {
     struct xuser_mongo_team_extras *xm = (struct xuser_mongo_team_extras*) x;
     return find_entry(xm->state, user_id, NULL);
 }
 
-static struct xuser_team_extras *
+static struct xuser_team_extras * __attribute__((unused))
 get_entries_func(
         struct xuser_cnts_state *data,
         int count,
         int *user_ids)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return NULL;
+#elif HAVE_LIBMONGOC - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     int *loc_users = NULL;
     int loc_count = count, query_count = 0;
@@ -788,6 +843,9 @@ get_entries_func(
 
 done:
     return &res->b;
+#else
+    return NULL;
+#endif
 }
 
 /*
