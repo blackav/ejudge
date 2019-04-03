@@ -128,6 +128,9 @@ init_func(void)
     struct common_mongo_state *state = 0;
     XCALLOC(state, 1);
     state->i = &plugin_common_mongo;
+
+    mongoc_init();
+
     return (struct common_plugin_data*) state;
 }
 
@@ -257,6 +260,19 @@ prepare_func(
     state->show_queries = 1;
 
 #if HAVE_LIBMONGOC - 0 == 1
+    {
+        unsigned char uri[1024];
+        if (snprintf(uri, sizeof(uri), "mongodb://%s:%d", state->host, state->port) >= sizeof(uri)) {
+            err("mongodb URI is too long");
+            return -1;
+        }
+
+        state->conn = mongoc_client_new(uri);
+        if (!state->conn) {
+            err("cannot create mongoc client");
+            return -1;
+        }
+    }
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     state->conn = mongo_sync_connect(state->host, state->port, 0);
     if (!state->conn) {
@@ -287,7 +303,47 @@ query_func(
         ej_bson_t ***p_res)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return 0;
+    if (state->show_queries > 0) {
+        fprintf(stderr, "query: "); ej_bson_unparse_new(stderr, query, 0); fprintf(stderr, "\n");
+    }
+
+    int retval = -1;
+    mongoc_collection_t *coll = NULL;
+    mongoc_cursor_t *cursor = NULL;
+    const bson_t *doc = NULL;
+    bson_t **res = NULL;
+    int a = 0, u = 0;
+    char *full_table_name = NULL;
+    const unsigned char *table_name_ptr = table;
+
+    if (state->table_prefix && state->table_prefix[0]) {
+        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+    }
+    if (!(coll = mongoc_client_get_collection(state->conn, state->database, table_name_ptr))) {
+        err("common_mongo::query: get_collection failed");
+        goto cleanup;
+    }
+    if (!(cursor = mongoc_collection_find_with_opts(coll, query, sel, NULL))) {
+        retval = 0;
+        goto cleanup;
+    }
+
+    while (mongoc_cursor_next(cursor, &doc)) {
+        if (a == u) {
+            if (!(a *= 2)) a = 8;
+            XREALLOC(res, a);
+        }
+        res[u++] = bson_copy(doc);
+    }
+
+    *p_res = res;
+    return u;
+
+cleanup:
+    if (cursor) mongoc_cursor_destroy(cursor);
+    if (coll) mongoc_collection_destroy(coll);
+    free(full_table_name);
+    return retval;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     mongo_packet *pkt = NULL;
     mongo_sync_cursor *cursor = NULL;
@@ -344,6 +400,33 @@ insert_func(
         const ej_bson_t *b)
 {
 #if HAVE_LIBMONGOC - 0 == 1
+    if (state->show_queries > 0) {
+        fprintf(stderr, "insert: "); ej_bson_unparse_new(stderr, b, 0); fprintf(stderr, "\n");
+    }
+
+    char *full_table_name = NULL;
+    const unsigned char *table_name_ptr = table;
+    if (state->table_prefix && state->table_prefix[0]) {
+        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+    }
+
+    mongoc_collection_t *coll = mongoc_client_get_collection(state->conn, state->database, table_name_ptr);
+    if (!coll) {
+        err("common_mongo::insert: get_collection for %s %s failed", state->database, table);
+        free(full_table_name);
+        return -1;
+    }
+
+    bson_error_t error;
+    if (!mongoc_collection_insert_one(coll, b, NULL, NULL, &error)) {
+        err("common_mongo::insert: failed for %s %s: %s", state->database, table, error.message);
+        mongoc_collection_destroy(coll);
+        free(full_table_name);
+        return -1;
+    }
+
+    mongoc_collection_destroy(coll);
+    free(full_table_name);
     return 0;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     unsigned char ns[1024];
@@ -369,6 +452,38 @@ insert_and_free_func(
         ej_bson_t **b)
 {
 #if HAVE_LIBMONGOC - 0 == 1
+    if (state->show_queries > 0 && b) {
+        fprintf(stderr, "insert: "); ej_bson_unparse_new(stderr, *b, 0); fprintf(stderr, "\n");
+    }
+
+    char *full_table_name = NULL;
+    const unsigned char *table_name_ptr = table;
+    if (state->table_prefix && state->table_prefix[0]) {
+        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+    }
+
+    mongoc_collection_t *coll = mongoc_client_get_collection(state->conn, state->database, table_name_ptr);
+    if (!coll) {
+        err("common_mongo::insert: get_collection for %s %s failed", state->database, table_name_ptr);
+        free(full_table_name);
+        return -1;
+    }
+
+    bson_error_t error;
+    bson_t *bb = *b;
+    if (!mongoc_collection_insert_one(coll, bb, NULL, NULL, &error)) {
+        err("common_mongo::insert: failed for %s %s: %s", state->database, table_name_ptr, error.message);
+        mongoc_collection_destroy(coll);
+        bson_destroy(bb);
+        *b = NULL;
+        free(full_table_name);
+        return -1;
+    }
+
+    free(full_table_name);
+    mongoc_collection_destroy(coll);
+    bson_destroy(bb);
+    *b = NULL;
     return 0;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson *p = NULL;
@@ -392,6 +507,34 @@ update_func(
         const ej_bson_t *update)
 {
 #if HAVE_LIBMONGOC - 0 == 1
+    if (state->show_queries > 0) {
+        fprintf(stderr, "update selector: "); ej_bson_unparse_new(stderr, selector, 0); fprintf(stderr, "\n");
+        fprintf(stderr, "update update: "); ej_bson_unparse_new(stderr, update, 0); fprintf(stderr, "\n");
+    }
+
+    char *full_table_name = NULL;
+    const unsigned char *table_name_ptr = table;
+    if (state->table_prefix && state->table_prefix[0]) {
+        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+    }
+
+    mongoc_collection_t *coll = mongoc_client_get_collection(state->conn, state->database, table_name_ptr);
+    if (!coll) {
+        err("common_mongo::update: get_collection for %s %s failed", state->database, table_name_ptr);
+        free(full_table_name);
+        return -1;
+    }
+
+    bson_error_t error;
+    if (!mongoc_collection_update(coll, 0, selector, update, NULL, &error)) {
+        err("common_mongo::update: failed for %s %s: %s", state->database, table_name_ptr, error.message);
+        mongoc_collection_destroy(coll);
+        free(full_table_name);
+        return -1;
+    }
+
+    mongoc_collection_destroy(coll);
+        free(full_table_name);
     return 0;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     unsigned char ns[1024];
@@ -419,7 +562,46 @@ update_and_free_func(
         ej_bson_t **pupdate)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return 0;
+    ej_bson_t *selector = NULL;
+    ej_bson_t *update = NULL;
+    mongoc_collection_t *coll = NULL;
+    int retval = -1;
+    char *full_table_name = NULL;
+    const unsigned char *table_name_ptr = table;
+
+    if (state->table_prefix && state->table_prefix[0]) {
+        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+    }
+
+    if (pselector) selector = *pselector;
+    if (pupdate) update = *pupdate;
+
+    if (state->show_queries > 0) {
+        fprintf(stderr, "update selector: "); ej_bson_unparse_new(stderr, selector, 0); fprintf(stderr, "\n");
+        fprintf(stderr, "update update: "); ej_bson_unparse_new(stderr, update, 0); fprintf(stderr, "\n");
+    }
+
+    coll = mongoc_client_get_collection(state->conn, state->database, table_name_ptr);
+    if (!coll) {
+        err("common_mongo::update: get_collection for %s %s failed", state->database, table_name_ptr);
+        goto cleanup;
+    }
+
+    bson_error_t error;
+    if (!mongoc_collection_update(coll, 0, selector, update, NULL, &error)) {
+        err("common_mongo::update: failed for %s %s: %s", state->database, table_name_ptr, error.message);
+        goto cleanup;
+    }
+    retval = 0;
+
+cleanup:
+    mongoc_collection_destroy(coll);
+    if (selector) bson_destroy(selector);
+    if (update) bson_destroy(update);
+    if (*pselector) *pselector = NULL;
+    if (*pupdate) *pupdate = NULL;
+    free(full_table_name);
+    return retval;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson *selector = NULL;
     bson *update = NULL;
@@ -447,6 +629,26 @@ index_create_func(
         const ej_bson_t *b)
 {
 #if HAVE_LIBMONGOC - 0 == 1
+    char *full_table_name = NULL;
+    const unsigned char *table_name_ptr = table;
+    if (state->table_prefix && state->table_prefix[0]) {
+        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+    }
+    char *index_name = mongoc_collection_keys_to_index_string(b);
+    bson_t *index_bson = BCON_NEW("createIndexes", BCON_UTF8(table_name_ptr),
+                                  "indexes", "[", "{", "key", BCON_DOCUMENT(b),
+                                  "name", BCON_UTF8(index_name), "}", "]");
+
+    mongoc_database_t *db = NULL;
+    if ((db = mongoc_client_get_database(state->conn, state->database))) {
+        mongoc_database_write_command_with_opts(db, index_bson, NULL, NULL, NULL);
+    }
+
+    mongoc_database_destroy(db);
+    bson_destroy(index_bson);
+    bson_free(index_name);
+    free(full_table_name);
+
     return 0;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     unsigned char ns[1024];
@@ -469,6 +671,33 @@ remove_func(
         const ej_bson_t *selector)
 {
 #if HAVE_LIBMONGOC - 0 == 1
+    if (state->show_queries > 0) {
+        fprintf(stderr, "delete selector: "); ej_bson_unparse_new(stderr, selector, 0); fprintf(stderr, "\n");
+    }
+
+    char *full_table_name = NULL;
+    const unsigned char *table_name_ptr = table;
+    if (state->table_prefix && state->table_prefix[0]) {
+        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+    }
+
+    mongoc_collection_t *coll = mongoc_client_get_collection(state->conn, state->database, table_name_ptr);
+    if (!coll) {
+        err("common_mongo::remove: get_collection for %s %s failed", state->database, table_name_ptr);
+        free(full_table_name);
+        return -1;
+    }
+
+    bson_error_t error;
+    if (!mongoc_collection_delete_many(coll, selector, NULL, NULL, &error)) {
+        err("common_mongo::remove: failed for %s %s: %s", state->database, table_name_ptr, error.message);
+        mongoc_collection_destroy(coll);
+        free(full_table_name);
+        return -1;
+    }
+
+    mongoc_collection_destroy(coll);
+    free(full_table_name);
     return 0;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     unsigned char ns[1024];
@@ -495,6 +724,34 @@ upsert_func(
         const ej_bson_t *update)
 {
 #if HAVE_LIBMONGOC - 0 == 1
+    if (state->show_queries > 0) {
+        fprintf(stderr, "update selector: "); ej_bson_unparse_new(stderr, selector, 0); fprintf(stderr, "\n");
+        fprintf(stderr, "update update: "); ej_bson_unparse_new(stderr, update, 0); fprintf(stderr, "\n");
+    }
+
+    char *full_table_name = NULL;
+    const unsigned char *table_name_ptr = table;
+    if (state->table_prefix && state->table_prefix[0]) {
+        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+    }
+
+    mongoc_collection_t *coll = mongoc_client_get_collection(state->conn, state->database, table_name_ptr);
+    if (!coll) {
+        err("common_mongo::upsert: get_collection for %s %s failed", state->database, table_name_ptr);
+        free(full_table_name);
+        return -1;
+    }
+
+    bson_error_t error;
+    if (!mongoc_collection_update(coll, MONGOC_UPDATE_UPSERT, selector, update, NULL, &error)) {
+        err("common_mongo::upsert: failed for %s %s: %s", state->database, table_name_ptr, error.message);
+        mongoc_collection_destroy(coll);
+        free(full_table_name);
+        return -1;
+    }
+
+    mongoc_collection_destroy(coll);
+    free(full_table_name);
     return 0;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     unsigned char ns[1024];
@@ -522,7 +779,46 @@ upsert_and_free_func(
         ej_bson_t **pupdate)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return 0;
+    ej_bson_t *selector = NULL;
+    ej_bson_t *update = NULL;
+    mongoc_collection_t *coll = NULL;
+    int retval = -1;
+    char *full_table_name = NULL;
+    const unsigned char *table_name_ptr = table;
+
+    if (state->table_prefix && state->table_prefix[0]) {
+        asprintf(&full_table_name, "%s%s", state->table_prefix, table);
+    }
+
+    if (pselector) selector = *pselector;
+    if (pupdate) update = *pupdate;
+
+    if (state->show_queries > 0) {
+        fprintf(stderr, "update selector: "); ej_bson_unparse_new(stderr, selector, 0); fprintf(stderr, "\n");
+        fprintf(stderr, "update update: "); ej_bson_unparse_new(stderr, update, 0); fprintf(stderr, "\n");
+    }
+
+    coll = mongoc_client_get_collection(state->conn, state->database, table_name_ptr);
+    if (!coll) {
+        err("common_mongo::upsert: get_collection for %s %s failed", state->database, table_name_ptr);
+        goto cleanup;
+    }
+
+    bson_error_t error;
+    if (!mongoc_collection_update(coll, MONGOC_UPDATE_UPSERT, selector, update, NULL, &error)) {
+        err("common_mongo::upsert: failed for %s %s: %s", state->database, table_name_ptr, error.message);
+        goto cleanup;
+    }
+    retval = 0;
+
+cleanup:
+    mongoc_collection_destroy(coll);
+    if (selector) bson_destroy(selector);
+    if (update) bson_destroy(update);
+    if (*pselector) *pselector = NULL;
+    if (*pupdate) *pupdate = NULL;
+    free(full_table_name);
+    return retval;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson *selector = NULL;
     bson *update = NULL;
