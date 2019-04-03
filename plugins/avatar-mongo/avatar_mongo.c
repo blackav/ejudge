@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2017-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -22,12 +22,20 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
 
-#include <string.h>
+#if HAVE_LIBMONGOC - 0 == 1
+#include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
+#endif
 
-static int
-avatar_info_bson_parse(bson *b, struct avatar_info *av)
+#include <string.h>
+
+static int __attribute__((unused))
+avatar_info_bson_parse(ej_bson_t *b, struct avatar_info *av)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return -1;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson_cursor *bc = NULL;
     unsigned char *mt_str = NULL;
 
@@ -117,6 +125,9 @@ fail:;
     if (bc) bson_cursor_free(bc);
     xfree(mt_str);
     return -1;
+#else
+    return -1;
+#endif
 }
 
 struct avatar_mongo_state
@@ -243,6 +254,9 @@ insert_func(
         size_t img_size,
         unsigned char **p_id)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return 0;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct avatar_mongo_state *state = (struct avatar_mongo_state *) data;
 
     bson *res = bson_new();
@@ -276,6 +290,9 @@ insert_func(
     bson_free(res);
 
     return 0;
+#else
+    return 0;
+#endif
 }
 
 static int
@@ -285,6 +302,9 @@ fetch_by_key_func(
         int omit_image,
         struct avatar_info_vector *result)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return -1;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct avatar_mongo_state *state = (struct avatar_mongo_state *) data;
     bson *query = NULL;
     bson **results = NULL;
@@ -325,6 +345,9 @@ cleanup:;
         xfree(results);
     }
     return retval;
+#else
+    return -1;
+#endif
 }
 
 static int
@@ -332,6 +355,9 @@ delete_by_key_func(
         struct avatar_plugin_data *data,
         const unsigned char *random_key)
 {
+#if HAVE_LIBMONGOC - 0 == 1
+    return -1;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     int retval = -1;
     struct avatar_mongo_state *state = (struct avatar_mongo_state *) data;
     bson *query = NULL;
@@ -348,6 +374,9 @@ delete_by_key_func(
 cleanup:;
     if (query) bson_free(query);
     return retval;
+#else
+    return -1;
+#endif
 }
 
 /*
