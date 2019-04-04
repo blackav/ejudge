@@ -34,7 +34,92 @@ static int __attribute__((unused))
 avatar_info_bson_parse(ej_bson_t *b, struct avatar_info *av)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return -1;
+    bson_iter_t iter, * const bc = &iter;
+    unsigned char *mt_str = NULL;
+    int retval = -1;
+
+    if (!bson_iter_init(&iter, b)) goto fail;
+
+    while (bson_iter_next(&iter)) {
+        const unsigned char *key = bson_iter_key(bc);
+        if (!strcmp(key, "_id")) {
+            // what to do with mongo's _id?
+        } else if (!strcmp(key, "user_id")) {
+            if (ej_bson_parse_int_new(bc, "user_id", &av->user_id, 1, 1, 0, 0) < 0)
+                goto fail;
+        } else if (!strcmp(key, "contest_id")) {
+            if (ej_bson_parse_int_new(bc, "contest_id", &av->contest_id, 1, 0, 0, 0) < 0)
+                goto fail;
+        } else if (!strcmp(key, "is_cropped")) {
+            if (ej_bson_parse_boolean_new(bc, "is_cropped", &av->is_cropped) < 0)
+                goto fail;
+        } else if (!strcmp(key, "is_temporary")) {
+            if (ej_bson_parse_boolean_new(bc, "is_temporary", &av->is_temporary) < 0)
+                goto fail;
+        } else if (!strcmp(key, "is_public")) {
+            if (ej_bson_parse_boolean_new(bc, "is_public", &av->is_public) < 0)
+                goto fail;
+        } else if (!strcmp(key, "mime_type")) {
+            if (ej_bson_parse_string_new(bc, "mime_type", &mt_str) < 0)
+                goto fail;
+            int mt = mime_type_parse(mt_str);
+            if (mt < 0) {
+                err("avatar_info_bson_parse: invalid mime type '%s'", mt_str);
+                goto fail;
+            }
+            if (mt < MIME_TYPE_IMAGE_FIRST || mt > MIME_TYPE_IMAGE_LAST) {
+                err("avatar_info_bson_parse: mime type '%s' is not image mime type", mime_type_get_type(mt));
+                goto fail;
+            }
+            av->mime_type = mt;
+        } else if (!strcmp(key, "width")) {
+            if (ej_bson_parse_int_new(bc, "width", &av->width, 1, 0, 0, 0) < 0)
+                goto fail;
+        } else if (!strcmp(key, "height")) {
+            if (ej_bson_parse_int_new(bc, "height", &av->height, 1, 0, 0, 0) < 0)
+                goto fail;
+        } else if (!strcmp(key, "random_key")) {
+            if (ej_bson_parse_string_new(bc, "random_key", &av->random_key) < 0)
+                goto fail;
+        } else if (!strcmp(key, "create_time")) {
+            if (ej_bson_parse_utc_datetime_new(bc, "create_time", &av->create_time) < 0)
+                goto fail;
+        } else if (!strcmp(key, "size")) {
+            long long llsz = 0;
+            if (ej_bson_parse_int64_new(bc, "size", &llsz) < 0)
+                goto fail;
+            if (llsz < 0) {
+                err("avatar_info_bson_parse: size < 0");
+                goto fail;
+            }
+            if ((size_t) llsz != llsz) {
+                err("avatar_info_bson_parse: size overflow");
+                goto fail;
+            }
+            av->img_size = llsz;
+        } else if (!strcmp(key, "image")) {
+            //bson_append_binary(res, "image", BSON_BINARY_SUBTYPE_USER_DEFINED, img_data, img_size);
+            if (bson_iter_type(bc) != BSON_TYPE_BINARY) {
+                err("avatar_info_bson_parse: binary field type expected for '%s'", "image");
+                goto fail;
+            }
+            bson_subtype_t subtype = 0;
+            const uint8_t *bson_data = NULL;
+            uint32_t bson_size = 0;
+            bson_iter_binary(bc, &subtype, &bson_size, &bson_data);
+            if (subtype != BSON_SUBTYPE_USER) {
+                err("avatar_info_bson_parse: user-defined binary subtype expected for '%s'", "image");
+                goto fail;
+            }
+            av->img_data = xmalloc(bson_size);
+            memcpy(av->img_data, bson_data, bson_size);
+        }
+    }
+    retval = 1;
+
+fail:
+    free(mt_str);
+    return retval;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson_cursor *bc = NULL;
     unsigned char *mt_str = NULL;
@@ -136,6 +221,7 @@ struct avatar_mongo_state
     struct common_mongo_state *common;
     int nref;
     unsigned char *avatar_table;
+    int avatar_table_index_created;
 };
 
 static struct common_plugin_data *
@@ -255,6 +341,33 @@ insert_func(
         unsigned char **p_id)
 {
 #if HAVE_LIBMONGOC - 0 == 1
+    struct avatar_mongo_state *state = (struct avatar_mongo_state *) data;
+
+    bson_t *res = bson_new();
+    bson_append_int32(res, "user_id", -1, user_id);
+    bson_append_int32(res, "contest_id", -1, contest_id);
+    bson_append_bool(res, "is_cropped", -1, is_cropped);
+    bson_append_bool(res, "is_temporary", -1, is_temporary);
+    bson_append_bool(res, "is_public", -1, is_public);
+    const unsigned char *mime_type_str = mime_type_get_type(mime_type);
+    bson_append_utf8(res, "mime_type", -1, mime_type_str, -1);
+    bson_append_int32(res, "width", -1, width);
+    bson_append_int32(res, "height", -1, height);
+    bson_append_utf8(res, "random_key", -1, random_key, -1);
+    bson_append_date_time(res, "create_time", -1, create_time * 1000LL);
+    bson_append_int64(res, "size", -1, (int64_t) img_size);
+    bson_append_binary(res, "image", -1, BSON_SUBTYPE_USER, img_data, img_size);
+
+    state->common->i->insert_and_free(state->common, state->avatar_table, &res);
+
+    if (!state->avatar_table_index_created) {
+        res = bson_new();
+        bson_append_int32(res, "random_key", -1, 1);
+        state->common->i->index_create(state->common, state->avatar_table, res);
+        bson_destroy(res); res = NULL;
+        state->avatar_table_index_created = 1;
+    }
+
     return 0;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct avatar_mongo_state *state = (struct avatar_mongo_state *) data;
@@ -303,7 +416,41 @@ fetch_by_key_func(
         struct avatar_info_vector *result)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return -1;
+    struct avatar_mongo_state *state = (struct avatar_mongo_state *) data;
+    bson_t *query = NULL;
+    bson_t **results = NULL;
+    int count = 0;
+    int retval = -1;
+    struct avatar_info avatar = {};
+
+    query = bson_new();
+    bson_append_utf8(query, "random_key", -1, random_key, -1);
+    count = state->common->i->query(state->common, state->avatar_table, 0, 100, query, NULL, &results);
+    if (count < 0) goto cleanup;
+    if (count > 1) {
+        err("fetch_by_key_func: multiple entries returned");
+        goto cleanup;
+    }
+    if (!count) {
+        retval = 0;
+        goto cleanup;
+    }
+    if (avatar_info_bson_parse(results[0], &avatar) < 0) goto cleanup;
+    if (result->u >= result->a) {
+        avatar_vector_expand(result);
+    }
+    memcpy(&result->v[result->u++], &avatar, sizeof(avatar));
+    retval = 1;
+
+cleanup:;
+    if (query) bson_destroy(query);
+    if (results) {
+        for (int i = 0; i < count; ++i) {
+            bson_destroy(results[i]);
+        }
+        xfree(results);
+    }
+    return retval;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct avatar_mongo_state *state = (struct avatar_mongo_state *) data;
     bson *query = NULL;
@@ -356,7 +503,21 @@ delete_by_key_func(
         const unsigned char *random_key)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return -1;
+    struct avatar_mongo_state *state = (struct avatar_mongo_state *) data;
+    int retval = -1;
+    bson_t *query = NULL;
+    int r;
+
+    query = bson_new();
+    bson_append_utf8(query, "random_key", -1, random_key, -1);
+
+    r = state->common->i->remove(state->common, state->avatar_table, query);
+    if (r < 0) goto cleanup;
+    retval = 0;
+
+cleanup:;
+    if (query) bson_destroy(query);
+    return retval;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     int retval = -1;
     struct avatar_mongo_state *state = (struct avatar_mongo_state *) data;
