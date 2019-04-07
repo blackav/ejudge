@@ -22,7 +22,9 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 1
+#include <mongoc.h>
+#elif HAVE_LIBMONGOC - 0 > 0
 #include <mongoc/mongoc.h>
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
@@ -129,7 +131,7 @@ init_func(void)
     XCALLOC(state, 1);
     state->i = &plugin_common_mongo;
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     mongoc_init();
 #endif
 
@@ -261,12 +263,19 @@ prepare_func(
     if (!state->table_prefix) state->table_prefix = xstrdup("");
     state->show_queries = 1;
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     {
         unsigned char uri[1024];
-        if (snprintf(uri, sizeof(uri), "mongodb://%s:%d", state->host, state->port) >= sizeof(uri)) {
-            err("mongodb URI is too long");
-            return -1;
+        if (state->user && state->password) {
+            if (snprintf(uri, sizeof(uri), "mongodb://%s:%s@%s:%d", state->user, state->password, state->host, state->port) >= sizeof(uri)) {
+                err("mongodb URI is too long");
+                return -1;
+            }
+        } else {
+            if (snprintf(uri, sizeof(uri), "mongodb://%s:%d", state->host, state->port) >= sizeof(uri)) {
+                err("mongodb URI is too long");
+                return -1;
+            }
         }
 
         state->conn = mongoc_client_new(uri);
@@ -304,7 +313,7 @@ query_func(
         const ej_bson_t *sel,
         ej_bson_t ***p_res)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (state->show_queries > 0) {
         fprintf(stderr, "query: "); ej_bson_unparse_new(stderr, query, 0); fprintf(stderr, "\n");
     }
@@ -401,7 +410,7 @@ insert_func(
         const unsigned char *table,
         const ej_bson_t *b)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (state->show_queries > 0) {
         fprintf(stderr, "insert: "); ej_bson_unparse_new(stderr, b, 0); fprintf(stderr, "\n");
     }
@@ -453,7 +462,7 @@ insert_and_free_func(
         const unsigned char *table,
         ej_bson_t **b)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (state->show_queries > 0 && b) {
         fprintf(stderr, "insert: "); ej_bson_unparse_new(stderr, *b, 0); fprintf(stderr, "\n");
     }
@@ -508,7 +517,7 @@ update_func(
         const ej_bson_t *selector,
         const ej_bson_t *update)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (state->show_queries > 0) {
         fprintf(stderr, "update selector: "); ej_bson_unparse_new(stderr, selector, 0); fprintf(stderr, "\n");
         fprintf(stderr, "update update: "); ej_bson_unparse_new(stderr, update, 0); fprintf(stderr, "\n");
@@ -563,7 +572,7 @@ update_and_free_func(
         ej_bson_t **pselector,
         ej_bson_t **pupdate)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     ej_bson_t *selector = NULL;
     ej_bson_t *update = NULL;
     mongoc_collection_t *coll = NULL;
@@ -630,7 +639,7 @@ index_create_func(
         const unsigned char *table,
         const ej_bson_t *b)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     char *full_table_name = NULL;
     const unsigned char *table_name_ptr = table;
     if (state->table_prefix && state->table_prefix[0]) {
@@ -672,7 +681,7 @@ remove_func(
         const unsigned char *table,
         const ej_bson_t *selector)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (state->show_queries > 0) {
         fprintf(stderr, "delete selector: "); ej_bson_unparse_new(stderr, selector, 0); fprintf(stderr, "\n");
     }
@@ -725,7 +734,7 @@ upsert_func(
         const ej_bson_t *selector,
         const ej_bson_t *update)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (state->show_queries > 0) {
         fprintf(stderr, "update selector: "); ej_bson_unparse_new(stderr, selector, 0); fprintf(stderr, "\n");
         fprintf(stderr, "update update: "); ej_bson_unparse_new(stderr, update, 0); fprintf(stderr, "\n");
@@ -780,7 +789,7 @@ upsert_and_free_func(
         ej_bson_t **pselector,
         ej_bson_t **pupdate)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     ej_bson_t *selector = NULL;
     ej_bson_t *update = NULL;
     mongoc_collection_t *coll = NULL;
