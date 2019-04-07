@@ -2,7 +2,7 @@
 #ifndef __PROBLEM_CONFIG_H__
 #define __PROBLEM_CONFIG_H__
 
-/* Copyright (C) 2012-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -100,6 +100,7 @@ struct problem_config_section
   ejintbool_t enable_kill_all;
   ejintbool_t enable_testlib_mode;
   ejintbool_t hide_variant;
+  ejintbool_t enable_extended_info;
 
   int id;
   int real_time_limit;
