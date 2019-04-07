@@ -22,8 +22,10 @@
 #include "telegram_token.h"
 #include "mongo_conn.h"
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGOC - 0 > 0
+#include <mongoc.h>
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
 #endif
@@ -49,7 +51,7 @@ telegram_token_free(struct telegram_token *token)
 struct telegram_token *
 telegram_token_parse_bson(const ej_bson_t *bson)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     bson_iter_t iter, * const bc = &iter;
     struct telegram_token *token = NULL;
 
@@ -136,7 +138,7 @@ telegram_token_create(void)
 ej_bson_t *
 telegram_token_unparse_bson(const struct telegram_token *token)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!token) return NULL;
 
     bson_t *bson = bson_new();
@@ -230,7 +232,7 @@ telegram_token_unparse_bson(const struct telegram_token *token)
 void
 telegram_token_remove_expired(struct mongo_conn *conn, time_t current_time)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (current_time <= 0) current_time = time(NULL);
 
     if (!mongo_conn_open(conn)) return;
@@ -282,7 +284,7 @@ cleanup:
 void
 telegram_token_remove(struct mongo_conn *conn, const unsigned char *token)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!mongo_conn_open(conn)) return;
 
     mongoc_collection_t *coll = NULL;
@@ -321,7 +323,7 @@ cleanup:
 int
 telegram_token_fetch(struct mongo_conn *conn, const unsigned char *token_str, struct telegram_token **p_token)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!mongo_conn_open(conn)) return -1;
 
     int retval = -1;
@@ -413,7 +415,7 @@ cleanup:
 int
 telegram_token_save(struct mongo_conn *conn, const struct telegram_token *token)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!mongo_conn_open(conn)) return -1;
 
     int retval = -1;

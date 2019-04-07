@@ -20,8 +20,10 @@
 #include "ejudge/errlog.h"
 #include "ejudge/osdeps.h"
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGOC - 0 > 0
+#include <mongoc.h>
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
 #endif
@@ -41,7 +43,7 @@ mongo_conn_create(void)
 struct mongo_conn *
 mongo_conn_free(struct mongo_conn *conn)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (conn) {
         xfree(conn->database);
         xfree(conn->host);
@@ -77,7 +79,7 @@ mongo_conn_free(struct mongo_conn *conn)
 int
 mongo_conn_open(struct mongo_conn *state)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (state->client) return 1;
 
     time_t current_time = time(NULL);

@@ -846,7 +846,7 @@ main(int argc, char *argv[])
   return 0;
 }
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
 void *
 job_server_force_link[] =
 {

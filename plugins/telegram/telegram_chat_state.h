@@ -18,7 +18,7 @@
 
 #include "ejudge/config.h"
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
 struct _bson_t;
 typedef struct _bson_t ej_bson_t;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1

@@ -22,8 +22,10 @@
 #include "telegram_chat.h"
 #include "mongo_conn.h"
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGOC - 0 > 0
+#include <mongoc.h>
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
 #endif
@@ -58,7 +60,7 @@ telegram_chat_create(void)
 struct telegram_chat *
 telegram_chat_parse_bson(const ej_bson_t *bson)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     bson_iter_t iter, * const bc = &iter;
     struct telegram_chat *tc = NULL;
 
@@ -124,7 +126,7 @@ cleanup:
 ej_bson_t *
 telegram_chat_unparse_bson(const struct telegram_chat *tc)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!tc) return NULL;
 
     bson_t *bson = bson_new();
@@ -181,7 +183,7 @@ telegram_chat_unparse_bson(const struct telegram_chat *tc)
 struct telegram_chat *
 telegram_chat_fetch(struct mongo_conn *conn, long long _id)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!mongo_conn_open(conn)) return NULL;
 
     mongoc_collection_t *coll = NULL;
@@ -259,7 +261,7 @@ cleanup:
 int
 telegram_chat_save(struct mongo_conn *conn, const struct telegram_chat *tc)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!mongo_conn_open(conn)) return -1;
 
     int retval = -1;

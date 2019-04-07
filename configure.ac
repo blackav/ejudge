@@ -976,7 +976,11 @@ fi
 if [[ x"${ac_cv_enable_libmongoc}" != xdisable ]]
 then
   AC_MSG_CHECKING([for libmongoc])
-  if pkg-config --exists libmongoc-1.0
+  if pkg-config --atleast-version 1.13.0 libmongoc-1.0
+  then
+    AC_MSG_RESULT([yes])
+    ac_cv_has_libmongoc=2
+  elif pkg-config --exists libmongoc-1.0
   then
     AC_MSG_RESULT([yes])
     ac_cv_has_libmongoc=1
@@ -986,13 +990,13 @@ then
   fi
 fi
 
-if [[ x"${ac_cv_has_libmongoc}" = x1 ]]
+if [[ x"${ac_cv_has_libmongoc}" != x ]]
 then
   ac_cv_libmongoc_cflags=`pkg-config --cflags libmongoc-1.0`
   ac_cv_libmongoc_libs=`pkg-config --libs libmongoc-1.0`
 fi
 
-if [[ x"${ac_cv_has_libmongoc}" != x1 ]]
+if [[ x"${ac_cv_has_libmongoc}" = x ]]
 then
   AC_MSG_CHECKING([for libmongo-client])
   if pkg-config --exists libmongo-client
@@ -1441,7 +1445,10 @@ then
   AC_DEFINE(R_HAS___INT64, 1)
 fi
 
-if [[ x"${ac_cv_has_libmongoc}" = x1 ]]
+if [[ x"${ac_cv_has_libmongoc}" = x2 ]]
+then
+  AC_DEFINE(HAVE_LIBMONGOC, 2)
+elif [[ x"${ac_cv_has_libmongoc}" = x1 ]]
 then
   AC_DEFINE(HAVE_LIBMONGOC, 1)
 fi

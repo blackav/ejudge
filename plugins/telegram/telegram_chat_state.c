@@ -22,8 +22,10 @@
 #include "telegram_chat_state.h"
 #include "mongo_conn.h"
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGOC - 0 > 0
+#include <mongoc.h>
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
 #endif
@@ -63,7 +65,7 @@ telegram_chat_state_reset(struct telegram_chat_state *tcs)
 struct telegram_chat_state *
 telegram_chat_state_parse_bson(const ej_bson_t *bson)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     bson_iter_t iter, * const bc = &iter;
     struct telegram_chat_state *tcs = NULL;
 
@@ -128,7 +130,7 @@ cleanup:
 ej_bson_t *
 telegram_chat_state_unparse_bson(const struct telegram_chat_state *tcs)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!tcs) return NULL;
 
     bson_t *bson = bson_new();
@@ -185,7 +187,7 @@ telegram_chat_state_unparse_bson(const struct telegram_chat_state *tcs)
 struct telegram_chat_state *
 telegram_chat_state_fetch(struct mongo_conn *conn, long long _id)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!mongo_conn_open(conn)) return NULL;
 
     mongoc_collection_t *coll = NULL;
@@ -264,7 +266,7 @@ cleanup:
 int
 telegram_chat_state_save(struct mongo_conn *conn, const struct telegram_chat_state *tcs)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!mongo_conn_open(conn)) return -1;
 
     int retval = -1;

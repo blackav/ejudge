@@ -5692,7 +5692,7 @@ fi
 if test "${enable_libmongoc+set}" = set; then :
   enableval=$enable_libmongoc; ac_cv_enable_libmongoc="${enableval}"
 else
-  ac_cv_enable_libmongoc=disable
+  ac_cv_enable_libmongoc=
 fi
 
 
@@ -7725,7 +7725,12 @@ if [ x"${ac_cv_enable_libmongoc}" != xdisable ]
 then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libmongoc" >&5
 $as_echo_n "checking for libmongoc... " >&6; }
-  if pkg-config --exists libmongoc-1.0
+  if pkg-config --atleast-version 1.13.0 libmongoc-1.0
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    ac_cv_has_libmongoc=2
+  elif pkg-config --exists libmongoc-1.0
   then
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
@@ -7737,13 +7742,13 @@ $as_echo "no" >&6; }
   fi
 fi
 
-if [ x"${ac_cv_has_libmongoc}" = x1 ]
+if [ x"${ac_cv_has_libmongoc}" != x ]
 then
   ac_cv_libmongoc_cflags=`pkg-config --cflags libmongoc-1.0`
   ac_cv_libmongoc_libs=`pkg-config --libs libmongoc-1.0`
 fi
 
-if [ x"${ac_cv_has_libmongoc}" != x1 ]
+if [ x"${ac_cv_has_libmongoc}" = x ]
 then
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libmongo-client" >&5
 $as_echo_n "checking for libmongo-client... " >&6; }
@@ -8301,7 +8306,11 @@ then
 
 fi
 
-if [ x"${ac_cv_has_libmongoc}" = x1 ]
+if [ x"${ac_cv_has_libmongoc}" = x2 ]
+then
+  $as_echo "#define HAVE_LIBMONGOC 2" >>confdefs.h
+
+elif [ x"${ac_cv_has_libmongoc}" = x1 ]
 then
   $as_echo "#define HAVE_LIBMONGOC 1" >>confdefs.h
 

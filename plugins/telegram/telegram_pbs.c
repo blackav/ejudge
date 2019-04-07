@@ -23,8 +23,10 @@
 #include "telegram_pbs.h"
 #include "mongo_conn.h"
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGOC - 0 > 0
+#include <mongoc.h>
 #elif HAVE_LIBMONGO_CLIENT
 #include <mongo.h>
 #endif
@@ -55,7 +57,7 @@ telegram_pbs_create(const unsigned char *_id)
 struct telegram_pbs *
 telegram_pbs_parse_bson(const ej_bson_t *bson)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     bson_iter_t iter, * const bc = &iter;
     struct telegram_pbs *pbs = NULL;
 
@@ -104,7 +106,7 @@ cleanup:
 ej_bson_t *
 telegram_pbs_unparse_bson(const struct telegram_pbs *pbs)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!pbs) return NULL;
 
     bson_t *bson = bson_new();
@@ -135,7 +137,7 @@ telegram_pbs_unparse_bson(const struct telegram_pbs *pbs)
 int
 telegram_pbs_save(struct mongo_conn *conn, const struct telegram_pbs *pbs)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!mongo_conn_open(conn)) return -1;
 
     int retval = -1;
@@ -191,7 +193,7 @@ done:
 struct telegram_pbs *
 telegram_pbs_fetch(struct mongo_conn *conn, const unsigned char *bot_id)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!mongo_conn_open(conn)) return NULL;
 
     bson_t *query = NULL;

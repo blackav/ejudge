@@ -24,7 +24,7 @@
 
 #define COMMON_MONGO_PLUGIN_IFACE_VERSION 2
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
 struct _mongoc_client_t;
 struct _bson_t;
 

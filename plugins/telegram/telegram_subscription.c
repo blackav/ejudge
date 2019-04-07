@@ -22,8 +22,10 @@
 #include "ejudge/osdeps.h"
 #include "ejudge/errlog.h"
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGOC - 0 > 0
+#include <mongoc.h>
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
 #endif
@@ -65,7 +67,7 @@ telegram_subscription_create(const unsigned char *bot_id, int contest_id, int us
 struct telegram_subscription *
 telegram_subscription_parse_bson(const ej_bson_t *bson)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     bson_iter_t iter, * const bc = &iter;
     struct telegram_subscription *sub = NULL;
 
@@ -133,7 +135,7 @@ cleanup:
 ej_bson_t *
 telegram_subscription_unparse_bson(const struct telegram_subscription *sub)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!sub) return NULL;
 
     bson_t *bson = bson_new();
@@ -194,7 +196,7 @@ telegram_subscription_unparse_bson(const struct telegram_subscription *sub)
 struct telegram_subscription *
 telegram_subscription_fetch(struct mongo_conn *conn, const unsigned char *bot_id, int contest_id, int user_id)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!mongo_conn_open(conn)) return NULL;
 
     unsigned char buf[1024];
@@ -280,7 +282,7 @@ cleanup:
 int
 telegram_subscription_save(struct mongo_conn *conn, const struct telegram_subscription *sub)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (!mongo_conn_open(conn)) return -1;
 
     int retval = -1;
