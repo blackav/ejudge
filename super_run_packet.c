@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -152,6 +152,7 @@ super_run_in_problem_packet_init(struct generic_section_config *gp)
   p->max_process_count = -1;
   p->enable_process_group = -1;
   p->enable_kill_all = -1;
+  p->enable_extended_info = -1;
 
   p->type_val = -1;
 }
