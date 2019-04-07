@@ -777,6 +777,7 @@ enable_hidden_server_bins
 enable_werror
 enable_preserve_scripts
 enable_lang_config_dir
+enable_libmongoc
 with_rest
 with_primary_user
 with_exec_user
@@ -1461,6 +1462,7 @@ Optional Features:
   --enable-lang-config-dir
                           install language config scripts into specified
                           directory
+  --enable-libmongoc      enable libmongoc mongo client library
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -5686,6 +5688,14 @@ else
 fi
 
 
+# Check whether --enable-libmongoc was given.
+if test "${enable_libmongoc+set}" = set; then :
+  enableval=$enable_libmongoc; ac_cv_enable_libmongoc="${enableval}"
+else
+  ac_cv_enable_libmongoc=disable
+fi
+
+
 
 # Check whether --with-rest was given.
 if test "${with_rest+set}" = set; then :
@@ -7711,17 +7721,20 @@ fi
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libmongoc" >&5
-$as_echo_n "checking for libmongoc... " >&6; }
-if pkg-config --exists libmongoc-1.0
+if [ x"${ac_cv_enable_libmongoc}" != xdisable ]
 then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libmongoc" >&5
+$as_echo_n "checking for libmongoc... " >&6; }
+  if pkg-config --exists libmongoc-1.0
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-  ac_cv_has_libmongoc=1
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+    ac_cv_has_libmongoc=1
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-  ac_cv_has_libmongoc=
+    ac_cv_has_libmongoc=
+  fi
 fi
 
 if [ x"${ac_cv_has_libmongoc}" = x1 ]
