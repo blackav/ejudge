@@ -2361,6 +2361,7 @@ serve_run_request(
   srpp->enable_process_group = prob->enable_process_group;
   srpp->enable_kill_all = prob->enable_kill_all;
   srgp->testlib_mode = prob->enable_testlib_mode;
+  srpp->enable_extended_info = prob->enable_extended_info;
   if (prob->umask && prob->umask[0]) {
     srpp->umask = xstrdup(prob->umask);
   }

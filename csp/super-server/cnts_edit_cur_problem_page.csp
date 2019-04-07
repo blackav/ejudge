@@ -1655,6 +1655,7 @@ function viewDialogOnChange(field)
             <%@expand ORIG_INHERITABLE_BOOLEAN "scoring_checker" "Checking" "Checker calculates score" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_checker_token" "Checking" "Scoring checker produces token" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_testlib_mode" "Checking" "Enable testlib.h compatibility mode" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "enable_extended_info" "Checking" "Pass extended info to checkers" %>
 
 <%
   {

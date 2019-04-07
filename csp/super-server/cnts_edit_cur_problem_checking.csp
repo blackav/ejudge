@@ -27,6 +27,7 @@
         <%@expand MENU_YESNO3 "scoring_checker" "checking" "Checker calculates score" "250" %>
         <%@expand MENU_YESNO3 "enable_checker_token" "checking" "Scoring checker produces a token" "250" %>
         <%@expand MENU_YESNO3 "enable_testlib_mode" "checking" "Enable testlib.h compatibility mode" "250" %>
+        <%@expand MENU_YESNO3 "enable_extended_info" "checking" "Pass extended info to checkers" "250" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "valuer_cmd" "checking" "Score valuer name" "250" %>
         <%@expand MENU_YESNO3 "valuer_sets_marked" "checking" "Valuer sets <i>marked</i> flag" "250" %>
         <%@expand MENU_YESNO3 "interactive_valuer" "checking" "Valuer works interactively" "250" %>
@@ -102,6 +103,7 @@ function popupCheckingDialog(e, skipField)
     <%@expand COPY_YESNO3 "scoring_checker" %>
     <%@expand COPY_YESNO3 "enable_checker_token" %>
     <%@expand COPY_YESNO3 "enable_testlib_mode" %>
+    <%@expand COPY_YESNO3 "enable_extended_info" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "valuer_cmd" "!prob->valuer_cmd" %>
     <%@expand COPY_YESNO3 "valuer_sets_marked" %>
     <%@expand COPY_YESNO3 "interactive_valuer" %>

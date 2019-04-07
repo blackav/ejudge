@@ -25,6 +25,7 @@
     int scoring_checker = -1;
     int enable_checker_token = -1;
     int enable_testlib_mode = -1;
+    int enable_extended_info = -1;
     unsigned char *valuer_cmd = NULL;
     ejintbool_t valuer_cmd_dflt = 0;
     int valuer_sets_marked = -1;
@@ -58,6 +59,7 @@
 %><s:read var="scoring_checker" default="-1" /><%
 %><s:read var="enable_checker_token" default="-1" /><%
 %><s:read var="enable_testlib_mode" default="-1" /><%
+%><s:read var="enable_extended_info" default="-1" /><%
 %><s:read var="valuer_cmd" normalize="yes" nonnull="yes" /><%
 %><s:read var="valuer_cmd_dflt" default="0" /><%
 %><s:read var="valuer_sets_marked" default="-1" /><%
@@ -94,6 +96,7 @@
     if (scoring_checker > 0) scoring_checker = 1;
     if (enable_checker_token > 0) enable_checker_token = 1;
     if (enable_testlib_mode > 0) enable_testlib_mode = 1;
+    if (enable_extended_info > 0) enable_extended_info = 1;
     if (valuer_cmd_dflt) {
         xfree(valuer_cmd);
         valuer_cmd = NULL;
@@ -120,6 +123,7 @@
         if (scoring_checker < 0) scoring_checker = 0;
         if (enable_checker_token < 0) enable_checker_token = 0;
         if (enable_testlib_mode < 0) enable_testlib_mode = 0;
+        if (enable_extended_info < 0) enable_extended_info = 0;
         if (valuer_sets_marked < 0) valuer_sets_marked = 0;
         if (interactive_valuer < 0) interactive_valuer = 0;
     } else {
@@ -130,6 +134,7 @@
         if (scoring_checker < 0) scoring_checker = -1;
         if (enable_checker_token < 0) enable_checker_token = -1;
         if (enable_testlib_mode < 0) enable_testlib_mode = -1;
+        if (enable_extended_info < 0) enable_extended_info = -1;
         if (valuer_sets_marked < 0) valuer_sets_marked = -1;
         if (interactive_valuer < 0) interactive_valuer = -1;
     }
@@ -142,6 +147,7 @@
         prob->scoring_checker = scoring_checker;
         prob->enable_checker_token = enable_checker_token;
         prob->enable_testlib_mode = enable_testlib_mode;
+        prob->enable_extended_info = enable_extended_info;
         MOVESTR(valuer_cmd);
         prob->valuer_sets_marked = valuer_sets_marked;
         prob->interactive_valuer = interactive_valuer;

@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1865,7 +1865,8 @@ invoke_interactor(
         int stdout_fd,
         int program_pid,
         const struct super_run_in_global_packet *srgp,
-        const struct super_run_in_problem_packet *srpp)
+        const struct super_run_in_problem_packet *srpp,
+        int cur_test)
 	__attribute__((unused)); // on Windows
 static tpTask
 invoke_interactor(
@@ -1881,7 +1882,8 @@ invoke_interactor(
         int stdout_fd,
         int program_pid,
         const struct super_run_in_global_packet *srgp,
-        const struct super_run_in_problem_packet *srpp)
+        const struct super_run_in_problem_packet *srpp,
+        int cur_test)
 {
   tpTask tsk_int = NULL;
   int env_u = 0;
@@ -1922,6 +1924,19 @@ invoke_interactor(
   }
   if (srgp->testlib_mode > 0) {
     task_SetEnv(tsk_int, "EJUDGE_TESTLIB_MODE", "1");
+  }
+  if (srpp->enable_extended_info > 0) {
+    unsigned char buf[64];
+    snprintf(buf, sizeof(buf), "%d", srgp->user_id);
+    task_SetEnv(tsk_int, "EJUDGE_USER_ID", buf);
+    snprintf(buf, sizeof(buf), "%d", srgp->contest_id);
+    task_SetEnv(tsk_int, "EJUDGE_CONTEST_ID", buf);
+    snprintf(buf, sizeof(buf), "%d", srgp->run_id);
+    task_SetEnv(tsk_int, "EJUDGE_RUN_ID", buf);
+    snprintf(buf, sizeof(buf), "%d", cur_test);
+    task_SetEnv(tsk_int, "EJUDGE_TEST_NUM", buf);
+    task_SetEnv(tsk_int, "EJUDGE_USER_LOGIN", srgp->user_login);
+    task_SetEnv(tsk_int, "EJUDGE_USER_NAME", srgp->user_name);
   }
   task_EnableAllSignals(tsk_int);
   task_IgnoreSIGPIPE(tsk_int);
@@ -3049,7 +3064,7 @@ run_one_test(
   if (interactor_cmd) {
     tsk_int = invoke_interactor(interactor_cmd, test_src, output_path, corr_src, info_src,
                                 working_dir, check_out_path,
-                                &tstinfo, pfd1[0], pfd2[1], task_GetPid(tsk), srgp, srpp);
+                                &tstinfo, pfd1[0], pfd2[1], task_GetPid(tsk), srgp, srpp, cur_test);
     if (!tsk_int) {
       append_msg_to_log(check_out_path, "interactor failed to start");
       goto check_failed;
