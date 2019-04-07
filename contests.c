@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -317,6 +317,7 @@ char const * const contests_attr_map[] =
   "enable_user_telegram",
   "enable_avatar",
   "enable_local_pages",
+  "is_password",
 
   0
 };
@@ -597,6 +598,9 @@ parse_member(struct contest_member *mb, char const *path)
         }
         if (xml_attr_bool(a, &pf->mandatory) < 0) return -1;
         if (a->tag == CONTEST_A_OPTIONAL) pf->mandatory = !pf->mandatory;
+        break;
+      case CONTEST_A_IS_PASSWORD:
+        if (xml_attr_bool(a, &pf->is_password) < 0) return -1;
         break;
       default:
         return xml_err_attr_not_allowed(t, a);

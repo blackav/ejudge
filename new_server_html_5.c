@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -552,10 +552,17 @@ change_locale(FILE *fout, struct http_request_info *phr)
 }
 
 static void
-info_table_row(FILE *fout, const unsigned char *s1, const unsigned char *s2,
-               int is_empty, int is_mandatory, const unsigned char *valid_chars,
-               struct html_armor_buffer *pb, int is_href,
-               const unsigned char *login)
+info_table_row(
+        FILE *fout,
+        const unsigned char *s1,
+        const unsigned char *s2,
+        int is_empty,
+        int is_mandatory,
+        int is_password,
+        const unsigned char *valid_chars,
+        struct html_armor_buffer *pb,
+        int is_href,
+        const unsigned char *login)
 {
   const unsigned char *red_beg = "", *red_end = "", *s;
   unsigned char invstr[512];
@@ -578,6 +585,8 @@ info_table_row(FILE *fout, const unsigned char *s1, const unsigned char *s2,
   } else if (is_href) {
     s = html_armor_buf(pb, s2);
     fprintf(fout, "<a href=\"%s\" target=\"_blank\"><tt>%s</tt></a>", s, s);
+  } else if (is_password) {
+    fprintf(fout, "<tt>***</tt>");
   } else {
     fprintf(fout, "<tt>%s</tt>", html_armor_buf(pb, s2));
   }
@@ -939,18 +948,18 @@ ns_reg_main_page_view_info(
     if (u && u->login && *u->login) {
       s = u->login;
     }
-    info_table_row(fout,  _("Login"), s, 0, 0, 0, &ab, 0, 0);
+    info_table_row(fout,  _("Login"), s, 0, 0, 0, 0, &ab, 0, 0);
     s = 0;
     if (u && u->email && *u->email) {
       s = u->email;
     }
-    info_table_row(fout,  _("E-mail"), s, 0, 0, 0, &ab, 0, 0);
+    info_table_row(fout,  _("E-mail"), s, 0, 0, 0, 0, &ab, 0, 0);
     if (!cnts->disable_name) {
       s = 0;
       if (ui && ui->name && *ui->name) {
         s = ui->name;
       }
-      info_table_row(fout, cnts->personal?_("User name (for standings)"):_("Team name"), s, 0, 0, name_accept_chars, &ab, 0, u->login);
+      info_table_row(fout, cnts->personal?_("User name (for standings)"):_("Team name"), s, 0, 0, 0, name_accept_chars, &ab, 0, u->login);
     }
     if (ui && cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]
         && cnts->members[rr]->max_count > 0) {
@@ -965,6 +974,7 @@ ns_reg_main_page_view_info(
           info_table_row(fout, legend, fbuf,
                          userlist_is_empty_member_field(m, userlist_member_field_ids[ff]),
                          cnts->members[rr]->fields[ff]->mandatory,
+                         cnts->members[rr]->fields[ff]->is_password,
                          userlist_get_member_accepting_chars(ff),
                          &ab, member_field_desc[ff].is_href, 0);
         }
@@ -977,6 +987,7 @@ ns_reg_main_page_view_info(
             legend = gettext(member_field_desc[ff].description);
           info_table_row(fout, legend, fbuf, 1,
                          cnts->members[rr]->fields[ff]->mandatory,
+                         cnts->members[rr]->fields[ff]->is_password,
                          userlist_get_member_accepting_chars(ff),
                          &ab, member_field_desc[ff].is_href, 0);
         }
@@ -993,6 +1004,7 @@ ns_reg_main_page_view_info(
       info_table_row(fout, legend, fbuf,
                      userlist_is_empty_user_info_field(ui, userlist_contest_field_ids[ff]),
                      cnts->fields[ff]->mandatory,
+                     0 /* is_password */,
                      userlist_get_contest_accepting_chars(ff),
                      &ab, contest_field_desc[ff].is_href, 0);
     }
@@ -1009,6 +1021,7 @@ ns_reg_main_page_view_info(
           info_table_row(fout, legend, fbuf,
                          userlist_is_empty_member_field(m, userlist_member_field_ids[ff]),
                          cnts->members[rr]->fields[ff]->mandatory,
+                         cnts->members[rr]->fields[ff]->is_password,
                          userlist_get_member_accepting_chars(ff),
                          &ab, member_field_desc[ff].is_href, 0);
         }
@@ -1021,6 +1034,7 @@ ns_reg_main_page_view_info(
             legend = gettext(member_field_desc[ff].description);
           info_table_row(fout, legend, fbuf, 1,
                          cnts->members[rr]->fields[ff]->mandatory,
+                         cnts->members[rr]->fields[ff]->is_password,
                          userlist_get_member_accepting_chars(ff),
                          &ab, member_field_desc[ff].is_href, 0);
         }
@@ -1135,6 +1149,7 @@ ns_reg_main_page_view_info(
           info_table_row(fout, legend, fbuf,
                          userlist_is_empty_member_field(m, userlist_member_field_ids[ff]),
                          cnts->members[rr]->fields[ff]->mandatory,
+                         cnts->members[rr]->fields[ff]->is_password,
                          userlist_get_member_accepting_chars(ff),
                          &ab, member_field_desc[ff].is_href, 0);
         }
@@ -1593,10 +1608,17 @@ ns_edit_member_form(
 
     default:
       snprintf(varname, sizeof(varname), "%sparam_%d", var_prefix, ff);
-      fprintf(fout, "<td class=\"b0\">%s</td>",
-              html_input_text(bb, sizeof(bb), varname,
-                              member_field_desc[ff].size, 0,
-                              "%s", ARMOR(bb)));
+      if (cm->fields[ff]->is_password) {
+        fprintf(fout, "<td class=\"b0\">%s</td>",
+                html_input_password(bb, sizeof(bb), varname,
+                                    member_field_desc[ff].size,
+                                    "%s", ARMOR(bb)));
+      } else {
+        fprintf(fout, "<td class=\"b0\">%s</td>",
+                html_input_text(bb, sizeof(bb), varname,
+                                member_field_desc[ff].size, 0,
+                                "%s", ARMOR(bb)));
+      }
       break;
     }
 

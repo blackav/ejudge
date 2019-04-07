@@ -3,7 +3,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -177,6 +177,7 @@ enum
     CONTEST_A_ENABLE_USER_TELEGRAM,
     CONTEST_A_ENABLE_AVATAR,
     CONTEST_A_ENABLE_LOCAL_PAGES,
+    CONTEST_A_IS_PASSWORD,
 
     CONTEST_LAST_ATTR
   };
@@ -268,6 +269,7 @@ struct contest_field
   unsigned char *separator;
   unsigned char *options;
   int checkbox;
+  int is_password;
 };
 
 struct contest_ip
