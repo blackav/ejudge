@@ -17,6 +17,10 @@ PLUGINDIR = $(libexecdir)/ejudge/plugins
 CC = gcc
 LD = gcc
 
+ifneq ($(MONGOC_EXISTS),)
+MONGOC_LIBS = -lmongoc-1.0 -lbson-1.0
+endif
+
 CFLAGS = -I../../include $(MONGO_CFLAGS) $(MONGOC_CFLAGS) $(CDEBUGFLAGS) $(CCOMPFLAGS) $(CEXTRAFLAGS) $(WPTRSIGN)
 LDFLAGS = $(MYSQL_LIB_OPT) $(EXPAT_LIB_OPT) $(CDEBUGFLAGS) $(LDCOMPFLAGS) $(LDEXTRAFLAGS)
 LDLIBS = $(EXTRALIBS) $(MONGO_LIBS) $(MONGOC_LIBS) -lexpat -lm
