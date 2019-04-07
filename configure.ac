@@ -83,6 +83,8 @@ AC_ARG_ENABLE([werror],AC_HELP_STRING([--enable-werror],[enable -Werror compilat
 AC_ARG_ENABLE([preserve-scripts],AC_HELP_STRING([--enable-preserve-scripts],[do not overwrite the existing language scripts]), [ac_cv_preserve_scripts=1],[ac_cv_preserve_scripts=])
 AC_ARG_ENABLE([lang-config-dir],AC_HELP_STRING([--enable-lang-config-dir],[install language config scripts into specified directory]),[ac_cv_lang_config_dir="${enableval}"],[ac_cv_lang_config_dir=])
 
+AC_ARG_ENABLE([libmongoc],AC_HELP_STRING([--enable-libmongoc],[enable libmongoc mongo client library]),[ac_cv_enable_libmongoc="${enableval}"],[ac_cv_enable_libmongoc=disable])
+
 AC_ARG_WITH([rest],AC_HELP_STRING([--with-rest],[enable RESTful API]),[ac_cv_rest="$withval"])
 
 AC_ARG_WITH([primary-user],AC_HELP_STRING([--with-primary-user],[primary ejudge user]),[ac_cv_primary_user="$withval"])
@@ -971,14 +973,17 @@ then
   AC_CHECK_HEADER([libintl.h],[],[ac_cv_nls=""])
 fi
 
-AC_MSG_CHECKING([for libmongoc])
-if pkg-config --exists libmongoc-1.0
+if [[ x"${ac_cv_enable_libmongoc}" != xdisable ]]
 then
-  AC_MSG_RESULT([yes])
-  ac_cv_has_libmongoc=1
-else
-  AC_MSG_RESULT([no])
-  ac_cv_has_libmongoc=
+  AC_MSG_CHECKING([for libmongoc])
+  if pkg-config --exists libmongoc-1.0
+  then
+    AC_MSG_RESULT([yes])
+    ac_cv_has_libmongoc=1
+  else
+    AC_MSG_RESULT([no])
+    ac_cv_has_libmongoc=
+  fi
 fi
 
 if [[ x"${ac_cv_has_libmongoc}" = x1 ]]
