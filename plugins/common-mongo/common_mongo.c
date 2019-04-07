@@ -129,7 +129,9 @@ init_func(void)
     XCALLOC(state, 1);
     state->i = &plugin_common_mongo;
 
+#if HAVE_LIBMONGOC - 0 == 1
     mongoc_init();
+#endif
 
     return (struct common_plugin_data*) state;
 }
