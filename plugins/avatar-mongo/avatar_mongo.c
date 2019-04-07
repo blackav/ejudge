@@ -22,8 +22,10 @@
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGOC - 0 > 0
+#include <mongoc.h>
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
 #endif
@@ -33,7 +35,7 @@
 static int __attribute__((unused))
 avatar_info_bson_parse(ej_bson_t *b, struct avatar_info *av)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     bson_iter_t iter, * const bc = &iter;
     unsigned char *mt_str = NULL;
     int retval = -1;
@@ -340,7 +342,7 @@ insert_func(
         size_t img_size,
         unsigned char **p_id)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     struct avatar_mongo_state *state = (struct avatar_mongo_state *) data;
 
     bson_t *res = bson_new();
@@ -415,7 +417,7 @@ fetch_by_key_func(
         int omit_image,
         struct avatar_info_vector *result)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     struct avatar_mongo_state *state = (struct avatar_mongo_state *) data;
     bson_t *query = NULL;
     bson_t **results = NULL;
@@ -502,7 +504,7 @@ delete_by_key_func(
         struct avatar_plugin_data *data,
         const unsigned char *random_key)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     struct avatar_mongo_state *state = (struct avatar_mongo_state *) data;
     int retval = -1;
     bson_t *query = NULL;
