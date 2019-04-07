@@ -393,6 +393,7 @@ enum
   CNTSPROB_enable_testlib_mode,
   CNTSPROB_autoassign_variants,
   CNTSPROB_require_any,
+  CNTSPROB_enable_extended_info,
   CNTSPROB_enable_multi_header,
   CNTSPROB_use_lang_multi_header,
   CNTSPROB_notify_on_submit,

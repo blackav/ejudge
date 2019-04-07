@@ -433,6 +433,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_enable_testlib_mode] = { CNTSPROB_enable_testlib_mode, 'f', XSIZE(struct section_problem_data, enable_testlib_mode), "enable_testlib_mode", XOFFSET(struct section_problem_data, enable_testlib_mode) },
   [CNTSPROB_autoassign_variants] = { CNTSPROB_autoassign_variants, 'f', XSIZE(struct section_problem_data, autoassign_variants), "autoassign_variants", XOFFSET(struct section_problem_data, autoassign_variants) },
   [CNTSPROB_require_any] = { CNTSPROB_require_any, 'f', XSIZE(struct section_problem_data, require_any), "require_any", XOFFSET(struct section_problem_data, require_any) },
+  [CNTSPROB_enable_extended_info] = { CNTSPROB_enable_extended_info, 'f', XSIZE(struct section_problem_data, enable_extended_info), "enable_extended_info", XOFFSET(struct section_problem_data, enable_extended_info) },
   [CNTSPROB_enable_multi_header] = { CNTSPROB_enable_multi_header, 'f', XSIZE(struct section_problem_data, enable_multi_header), "enable_multi_header", XOFFSET(struct section_problem_data, enable_multi_header) },
   [CNTSPROB_use_lang_multi_header] = { CNTSPROB_use_lang_multi_header, 'f', XSIZE(struct section_problem_data, use_lang_multi_header), "use_lang_multi_header", XOFFSET(struct section_problem_data, use_lang_multi_header) },
   [CNTSPROB_notify_on_submit] = { CNTSPROB_notify_on_submit, 'f', XSIZE(struct section_problem_data, notify_on_submit), "notify_on_submit", XOFFSET(struct section_problem_data, notify_on_submit) },

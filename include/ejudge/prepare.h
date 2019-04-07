@@ -951,7 +951,8 @@ struct section_problem_data
   ejbyteflag_t autoassign_variants;
   /** require any of the specified problem, not all */
   ejbyteflag_t require_any;
-
+  /** pass extended info to checker, valuer, interactor */
+  ejbyteflag_t enable_extended_info;
 
   /** enable headers/footers specific for each test */
   ejbyteflag_t enable_multi_header;
@@ -962,7 +963,7 @@ struct section_problem_data
   ejbyteflag_t notify_on_submit;
 
   // padding to 8-byte boundary
-  unsigned char _pad1[3];
+  unsigned char _pad1[2];
 
   /** number of independent examinations */
   int examinator_num;
