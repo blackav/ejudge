@@ -133,7 +133,7 @@ ns_unparse_answers(
 %>
     <tr><td><b><s:_>Full score</s:_>:</b></td><td><tt><s:v value="prob->full_score" /></tt></td></tr>
 <%
-            if (prob->run_penalty > 0) {
+            if (prob->run_penalty != -1 && prob->run_penalty != 0) {
 %>
     <tr><td><b><s:_>Run penalty</s:_>:</b></td><td><tt><s:v value="prob->run_penalty" /></tt></td></tr>
 <%

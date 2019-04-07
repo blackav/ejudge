@@ -5502,7 +5502,7 @@ prepare_set_abstr_problem_defaults(struct section_problem_data *prob,
   if (prob->test_score < 0) prob->test_score = DFLT_P_TEST_SCORE;
   if (prob->variable_full_score < 0)
     prob->variable_full_score = DFLT_P_VARIABLE_FULL_SCORE;
-  if (prob->run_penalty < 0) prob->run_penalty = DFLT_P_RUN_PENALTY;
+  if (prob->run_penalty == -1) prob->run_penalty = DFLT_P_RUN_PENALTY;
   if (prob->acm_run_penalty < 0) prob->acm_run_penalty = DFLT_P_ACM_RUN_PENALTY;
   if (prob->disqualified_penalty < 0) prob->disqualified_penalty = prob->run_penalty;
   if (prob->use_corr < 0) prob->use_corr = 0;
@@ -6269,8 +6269,8 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_run_penalty:
-    if (out->run_penalty < 0 && abstr) out->run_penalty = abstr->run_penalty;
-    if (out->run_penalty < 0) out->run_penalty = DFLT_P_RUN_PENALTY;
+    if (out->run_penalty == -1 && abstr) out->run_penalty = abstr->run_penalty;
+    if (out->run_penalty == -1) out->run_penalty = DFLT_P_RUN_PENALTY;
     break;
 
   case CNTSPROB_acm_run_penalty:
@@ -6284,7 +6284,7 @@ prepare_set_prob_value(
     break;
 
   case CNTSPROB_compile_error_penalty:
-    if (out->compile_error_penalty < 0 && abstr) out->compile_error_penalty = abstr->compile_error_penalty;
+    if (out->compile_error_penalty == -1 && abstr) out->compile_error_penalty = abstr->compile_error_penalty;
     break;
 
   INHERIT_BOOLEAN(variable_full_score);

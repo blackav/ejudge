@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -159,15 +159,25 @@ calc_kirov_score(
   //score = init_score * score_mult - attempts * pr->run_penalty + dp + pe->score_adj - disq_attempts * pr->disqualified_penalty + score_bonus;
   //if (score > pr->full_score) score = pr->full_score;
   // solution score is the initial score minus all score penalties plus score_bonus
-  score = init_score * score_mult - attempts * pr->run_penalty + pe->score_adj + score_bonus;
-  if (pr->compile_error_penalty > 0) {
-    score -= ce_attempts * pr->compile_error_penalty;
+  if (status != RUN_OK && pr->run_penalty < 0) {
+    score = init_score * score_mult + pe->score_adj + score_bonus;
+  } else {
+    score = init_score * score_mult - attempts * pr->run_penalty + pe->score_adj + score_bonus;
+  }
+  if (pr->compile_error_penalty < -1) {
+    fprintf(stderr, "COMPILE_PENALTY: %d\n", pr->compile_error_penalty);
+  }
+  if (pr->compile_error_penalty > 0 || pr->compile_error_penalty < -1) {
+    if (pr->compile_error_penalty > 0 || status == RUN_OK) {
+      score -= ce_attempts * pr->compile_error_penalty;
+    }
   }
   if (status == RUN_OK && pr->min_score_1 > 0 && score < pr->min_score_1) score = pr->min_score_1;
   score += dp;
   if (status == RUN_OK && pr->min_score_2 > 0 && score < pr->min_score_2) score = pr->min_score_2;
   score -= disq_attempts * pr->disqualified_penalty;
   if (score < 0) score = 0;
+
   if (!outbuf) return score;
 
   if (pr && pr->score_view && pr->score_view[0]) {
@@ -192,14 +202,14 @@ calc_kirov_score(
       snprintf(init_score_str, sizeof(init_score_str), "%d", init_score);
     }
 
-    if (attempts > 0 && pr->run_penalty > 0) {
+    if (attempts > 0 && (pr->run_penalty > 0 || pr->run_penalty < -1)) {
       snprintf(run_penalty_str, sizeof(run_penalty_str),
                "-%d*%d", attempts, pr->run_penalty);
     } else {
       run_penalty_str[0] = 0;
     }
 
-    if (ce_attempts > 0 && pr->compile_error_penalty > 0) {
+    if (ce_attempts > 0 && (pr->compile_error_penalty > 0 || pr->compile_error_penalty < -1)) {
       snprintf(ce_penalty_str, sizeof(ce_penalty_str),
                "-%d*%d", ce_attempts, pr->compile_error_penalty);
     } else {
@@ -1555,7 +1565,7 @@ do_write_kirov_standings(
           last_submit_run = k;
         } else if (run_status == RUN_COMPILE_ERR) {
           if (prob->ignore_compile_errors <= 0) {
-            if (prob->compile_error_penalty >= 0) {
+            if (prob->compile_error_penalty != -1) {
               ++ce_num[up_ind];
             } else {
               ++att_num[up_ind];
@@ -1704,7 +1714,7 @@ do_write_kirov_standings(
           last_submit_run = k;
         } else if (run_status == RUN_COMPILE_ERR) {
           if (prob->ignore_compile_errors <= 0) {
-            if (prob->compile_error_penalty >= 0) {
+            if (prob->compile_error_penalty != -1) {
               ++ce_num[up_ind];
             } else {
               att_num[up_ind]++;

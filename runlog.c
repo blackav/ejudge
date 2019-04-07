@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -853,7 +853,7 @@ run_get_attempts(
     if (re->status == RUN_VIRTUAL_START || re->status == RUN_VIRTUAL_STOP) continue;
     if (re->prob_id != sample_re->prob_id) continue;
     if ((re->status == RUN_COMPILE_ERR) && skip_ce_flag) continue;
-    if (re->status == RUN_COMPILE_ERR && ce_penalty > 0) {
+    if (re->status == RUN_COMPILE_ERR && (ce_penalty > 0 || ce_penalty < -1)) {
       ++cen;
       continue;
     }

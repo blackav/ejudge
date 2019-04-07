@@ -363,7 +363,7 @@ done:;
     }
     if (query) bson_destroy(query);
     return extra;
-#elif HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct team_extra *extra = NULL;
     bson *query = NULL;
     int pos = 0, count = 0;
@@ -450,7 +450,7 @@ do_insert(
         return -1;
     }
     return 0;
-#elif HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (extra->contest_id <= 0) extra->contest_id = state->contest_id;
     if (!ej_uuid_is_nonempty(extra->uuid)) {
         ej_uuid_generate(&extra->uuid);
@@ -482,7 +482,7 @@ do_update(
 
     int retval = state->plugin_state->common->i->update_and_free(state->plugin_state->common, "xuser", &filter, &update);
     return retval;
-#elif HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson *filter = bson_new();
     ej_bson_append_uuid(filter, "_id", &extra->uuid);
     bson_finish(filter);
@@ -497,7 +497,7 @@ do_update(
     bson_free(update_doc); update_doc = NULL;
     return retval;
 #else
-    return NULL;
+    return -1;
 #endif
 }
 
@@ -525,7 +525,7 @@ set_clar_status_func(
         return do_insert(state, extra);
     }
     return -1;
-#elif HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
@@ -544,7 +544,7 @@ set_clar_status_func(
     }
     return -1;
 #else
-    return NULL;
+    return -1;
 #endif
 }
 
@@ -592,7 +592,7 @@ append_warning_func(
     } else {
         return do_insert(state, extra);
     }
-#elif HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
@@ -645,7 +645,7 @@ set_status_func(
     } else {
         return do_insert(state, extra);
     }
-#elif HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
@@ -695,7 +695,7 @@ set_disq_comment_func(
     } else {
         return do_insert(state, extra);
     }
-#elif HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
@@ -757,7 +757,7 @@ set_run_fields_func(
     } else {
         return do_insert(state, extra);
     }
-#elif HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
@@ -933,7 +933,7 @@ get_entries_func(
         bson_destroy(query); query = NULL;
         xfree(query_results); query_results = NULL;
     }
-#elif HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     {
         int query_count = 0;
         struct team_extra *extra = NULL;

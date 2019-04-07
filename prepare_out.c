@@ -1322,7 +1322,7 @@ prepare_unparse_prob(
           || !prob->abstract)
         fprintf(f, "run_penalty = %d\n", prob->run_penalty);
     }
-    if (prob->compile_error_penalty >= 0) {
+    if (prob->compile_error_penalty != -1) {
         fprintf(f, "compile_error_penalty = %d\n", prob->compile_error_penalty);
     }
     if (prob->disqualified_penalty >= 0) {
@@ -1752,7 +1752,7 @@ prepare_unparse_actual_prob(
       unparse_bool(f, "variable_full_score", prob->variable_full_score);
     if (prob->run_penalty >= 0)
       fprintf(f, "run_penalty = %d\n", prob->run_penalty);
-    if (prob->compile_error_penalty >= 0)
+    if (prob->compile_error_penalty != -1)
       fprintf(f, "compile_error_penalty = %d\n", prob->compile_error_penalty);
     if (prob->disqualified_penalty >= 0)
       fprintf(f, "disqualified_penalty = %d\n", prob->disqualified_penalty);
