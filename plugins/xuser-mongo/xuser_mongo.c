@@ -324,7 +324,45 @@ do_get_entry(
         int user_id)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return NULL;
+    struct team_extra *extra = NULL;
+    int pos = 0, count = 0;
+    bson_t *query = NULL;
+    bson_t **results = NULL;
+
+    if (user_id <= 0) return NULL;
+
+    if ((extra = find_entry(state, user_id, &pos)))
+        return extra;
+
+    query = bson_new();
+    bson_append_int32(query, "contest_id", -1, state->contest_id);
+    bson_append_int32(query, "user_id", -1, user_id);
+    count = state->plugin_state->common->i->query(state->plugin_state->common, "xuser", 0, 1, query, NULL, &results);
+    if (count < 0) goto done;
+    if (count > 1) {
+        err("do_get_entry: multiple entries returned: %d", count);
+        goto done;
+    }
+    if (count == 1) {
+        if (!(extra = team_extra_bson_parse(results[0]))) {
+            goto done;
+        }
+    }
+    if (!extra) {
+        XCALLOC(extra, 1);
+        extra->user_id = user_id;
+        extra->contest_id = state->contest_id;
+    }
+    insert_entry(state, user_id, extra, pos);
+done:;
+    if (results) {
+        for (int i = 0; i < count; ++i) {
+            bson_destroy(results[i]);
+        }
+        xfree(results);
+    }
+    if (query) bson_destroy(query);
+    return extra;
 #elif HAVE_LIBMONGOC - 0 == 1
     struct team_extra *extra = NULL;
     bson *query = NULL;
@@ -403,7 +441,15 @@ do_insert(
         struct team_extra *extra)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return -1;
+    if (extra->contest_id <= 0) extra->contest_id = state->contest_id;
+    if (!ej_uuid_is_nonempty(extra->uuid)) {
+        ej_uuid_generate(&extra->uuid);
+    }
+    bson_t *b = team_extra_bson_unparse(extra);
+    if (state->plugin_state->common->i->insert_and_free(state->plugin_state->common, "xuser", &b) < 0) {
+        return -1;
+    }
+    return 0;
 #elif HAVE_LIBMONGOC - 0 == 1
     if (extra->contest_id <= 0) extra->contest_id = state->contest_id;
     if (!ej_uuid_is_nonempty(extra->uuid)) {
@@ -427,7 +473,15 @@ do_update(
         ej_bson_t *update_doc)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return -1;
+    bson_t *filter = bson_new();
+    ej_bson_append_uuid_new(filter, "_id", &extra->uuid);
+    bson_t *update = bson_new();
+    if (!op) op = "$set";
+    bson_append_document(update, op, -1, update_doc);
+    bson_destroy(update_doc); update_doc = NULL;
+
+    int retval = state->plugin_state->common->i->update_and_free(state->plugin_state->common, "xuser", &filter, &update);
+    return retval;
 #elif HAVE_LIBMONGOC - 0 == 1
     bson *filter = bson_new();
     ej_bson_append_uuid(filter, "_id", &extra->uuid);
@@ -455,6 +509,21 @@ set_clar_status_func(
         const ej_uuid_t *p_clar_uuid)
 {
 #if HAVE_LIBMONGOC - 0 == 1
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    struct team_extra *extra = do_get_entry(state, user_id);
+    if (!extra) return -1;
+    if (!p_clar_uuid) return -1;
+    int r = team_extra_add_clar_uuid(extra, p_clar_uuid);
+    if (r <= 0) return r;
+    if (ej_uuid_is_nonempty(extra->uuid)) {
+        bson_t *arr = ej_bson_unparse_array_uuid_new(extra->clar_uuids, extra->clar_uuids_size);
+        bson_t *doc = bson_new();
+        bson_append_array(doc, "clar_uuids", -1, arr);
+        bson_destroy(arr); arr = NULL;
+        return do_update(state, extra, NULL, doc);
+    } else {
+        return do_insert(state, extra);
+    }
     return -1;
 #elif HAVE_LIBMONGOC - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
@@ -496,7 +565,33 @@ append_warning_func(
         const unsigned char *cmt)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return -1;
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    struct team_extra *extra = do_get_entry(state, user_id);
+    if (!extra) return -1;
+
+    if (extra->warn_u == extra->warn_a) {
+        extra->warn_a *= 2;
+        if (!extra->warn_a) extra->warn_a = 8;
+        XREALLOC(extra->warns, extra->warn_a);
+    }
+    struct team_warning *cur_warn = NULL;
+    XCALLOC(cur_warn, 1);
+    extra->warns[extra->warn_u++] = cur_warn;
+
+    cur_warn->date = issue_date;
+    cur_warn->issuer_id = issuer_id;
+    cur_warn->issuer_ip = *issuer_ip;
+    cur_warn->text = xstrdup(txt);
+    cur_warn->comment = xstrdup(cmt);
+    if (ej_uuid_is_nonempty(extra->uuid)) {
+        bson_t *w = team_warning_bson_unparse(cur_warn);
+        bson_t *doc = bson_new();
+        bson_append_document(doc, "warnings", -1, w);
+        bson_destroy(w); w = NULL;
+        return do_update(state, extra, "$push", doc);
+    } else {
+        return do_insert(state, extra);
+    }
 #elif HAVE_LIBMONGOC - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
@@ -538,7 +633,18 @@ set_status_func(
         int status)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return -1;
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    struct team_extra *extra = do_get_entry(state, user_id);
+    if (!extra) return -1;
+    if (extra->status == status) return 0;
+    extra->status = status;
+    if (ej_uuid_is_nonempty(extra->uuid)) {
+        bson_t *doc = bson_new();
+        bson_append_int32(doc, "status", -1, status);
+        return do_update(state, extra, NULL, doc);
+    } else {
+        return do_insert(state, extra);
+    }
 #elif HAVE_LIBMONGOC - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
@@ -565,7 +671,30 @@ set_disq_comment_func(
         const unsigned char *disq_comment)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return -1;
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    struct team_extra *extra = do_get_entry(state, user_id);
+    if (!extra) return -1;
+    if (!extra->disq_comment && !disq_comment) {
+        return 0;
+    }
+    if (extra->disq_comment && !disq_comment) {
+        ASSERT(ej_uuid_is_nonempty(extra->uuid));
+        xfree(extra->disq_comment); extra->disq_comment = NULL;
+        bson_t *doc = bson_new();
+        bson_append_utf8(doc, "disq_comment", -1, "", 0);
+        return do_update(state, extra, "$unset", doc);
+    }
+    if (extra->disq_comment && !strcmp(extra->disq_comment, disq_comment))
+        return 0;
+    xfree(extra->disq_comment);
+    extra->disq_comment = xstrdup(disq_comment);
+    if (ej_uuid_is_nonempty(extra->uuid)) {
+        bson_t *doc = bson_new();
+        bson_append_utf8(doc, "disq_comment", -1, extra->disq_comment, -1);
+        return do_update(state, extra, NULL, doc);
+    } else {
+        return do_insert(state, extra);
+    }
 #elif HAVE_LIBMONGOC - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
@@ -616,7 +745,18 @@ set_run_fields_func(
         int run_fields)
 {
 #if HAVE_LIBMONGOC - 0 == 1
-    return -1;
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    struct team_extra *extra = do_get_entry(state, user_id);
+    if (!extra) return -1;
+    if (extra->run_fields == run_fields) return 0;
+    extra->run_fields = run_fields;
+    if (ej_uuid_is_nonempty(extra->uuid)) {
+        bson_t *doc = bson_new();
+        bson_append_int32(doc, "run_fields", -1, run_fields);
+        return do_update(state, extra, NULL, doc);
+    } else {
+        return do_insert(state, extra);
+    }
 #elif HAVE_LIBMONGOC - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
@@ -688,15 +828,10 @@ get_entries_func(
         int count,
         int *user_ids)
 {
-#if HAVE_LIBMONGOC - 0 == 1
-    return NULL;
-#elif HAVE_LIBMONGOC - 0 == 1
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     int *loc_users = NULL;
-    int loc_count = count, query_count = 0;
+    int loc_count = count;
     struct xuser_mongo_team_extras *res = NULL;
-    bson **query_results = NULL;
-    struct team_extra *extra = NULL;
 
     if (count <= 0 || !user_ids) return NULL;
 
@@ -772,28 +907,63 @@ get_entries_func(
 
     if (loc_count <= 0) goto done;
 
-    bson *arr = ej_bson_unparse_array_int(loc_users, loc_count);
-    bson *indoc = bson_new();
-    bson_append_array(indoc, "$in", arr);
-    bson_finish(indoc);
-    bson_free(arr); arr = NULL;
-    bson *query = bson_new();
-    bson_append_int32(query, "contest_id", state->contest_id);
-    bson_append_document(query, "user_id", indoc);
-    bson_finish(query);
-    bson_free(indoc); indoc = NULL;
+#if HAVE_LIBMONGOC - 0 == 1
+    {
+        int query_count = 0;
+        struct team_extra *extra = NULL;
+        bson_t **query_results = NULL;
+        bson_t *arr = ej_bson_unparse_array_int_new(loc_users, loc_count);
+        bson_t *indoc = bson_new();
+        bson_append_array(indoc, "$in", -1, arr);
+        bson_destroy(arr); arr = NULL;
+        bson_t *query = bson_new();
+        bson_append_int32(query, "contest_id", -1, state->contest_id);
+        bson_append_document(query, "user_id", -1, indoc);
+        bson_destroy(indoc); indoc = NULL;
 
-    query_count = state->plugin_state->common->i->query(state->plugin_state->common, "xuser", 0, loc_count, query, NULL, &query_results);
-    if (query_count > 0) {
-        for (i1 = 0; i1 < query_count; ++i1) {
-            if ((extra = team_extra_bson_parse(query_results[i1]))) {
-                insert_entry(state, extra->user_id, extra, -1);
+        query_count = state->plugin_state->common->i->query(state->plugin_state->common, "xuser", 0, loc_count, query, NULL, &query_results);
+        if (query_count > 0) {
+            for (i1 = 0; i1 < query_count; ++i1) {
+                if ((extra = team_extra_bson_parse(query_results[i1]))) {
+                    insert_entry(state, extra->user_id, extra, -1);
+                }
+                bson_destroy(query_results[i1]); query_results[i1] = NULL;
             }
-            bson_free(query_results[i1]); query_results[i1] = NULL;
         }
+        bson_destroy(query); query = NULL;
+        xfree(query_results); query_results = NULL;
     }
-    bson_free(query); query = NULL;
-    xfree(query_results); query_results = NULL;
+#elif HAVE_LIBMONGOC - 0 == 1
+    {
+        int query_count = 0;
+        struct team_extra *extra = NULL;
+        bson **query_results = NULL;
+        bson *arr = ej_bson_unparse_array_int(loc_users, loc_count);
+        bson *indoc = bson_new();
+        bson_append_array(indoc, "$in", arr);
+        bson_finish(indoc);
+        bson_free(arr); arr = NULL;
+        bson *query = bson_new();
+        bson_append_int32(query, "contest_id", state->contest_id);
+        bson_append_document(query, "user_id", indoc);
+        bson_finish(query);
+        bson_free(indoc); indoc = NULL;
+
+        query_count = state->plugin_state->common->i->query(state->plugin_state->common, "xuser", 0, loc_count, query, NULL, &query_results);
+        if (query_count > 0) {
+            for (i1 = 0; i1 < query_count; ++i1) {
+                if ((extra = team_extra_bson_parse(query_results[i1]))) {
+                    insert_entry(state, extra->user_id, extra, -1);
+                }
+                bson_free(query_results[i1]); query_results[i1] = NULL;
+            }
+        }
+        bson_free(query); query = NULL;
+        xfree(query_results); query_results = NULL;
+    }
+#else
+    return NULL;
+#endif
 
     // remove existing entries from loc_count
     for (i1 = 0, i2 = 0; i1 < state->u && i2 < loc_count; ) {
@@ -843,9 +1013,6 @@ get_entries_func(
 
 done:
     return &res->b;
-#else
-    return NULL;
-#endif
 }
 
 /*
