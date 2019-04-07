@@ -40,7 +40,7 @@ struct prot_serve_status_v3
 
 int main(void)
 {
-  printf("prot_serve_status_v2:  %zu\n", sizeof(struct prot_serve_status_v2));
+  //printf("prot_serve_status_v2:  %zu\n", sizeof(struct prot_serve_status_v2));
   printf("prot_serve_status_v3:  %zu\n", sizeof(struct prot_serve_status_v3));
   printf("prot_serve_status:     %zu\n", sizeof(struct prot_serve_status));
   printf("run_header:            %zu\n", sizeof(struct run_header));
