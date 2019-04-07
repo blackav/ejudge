@@ -30,8 +30,10 @@
 #include "ejudge/logger.h"
 #include "ejudge/osdeps.h"
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc/mongoc.h>
+#elif HAVE_LIBMONGOC - 0 > 0
+#include <mongoc.h>
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
 #endif
@@ -323,7 +325,7 @@ do_get_entry(
         struct xuser_mongo_cnts_state *state,
         int user_id)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     struct team_extra *extra = NULL;
     int pos = 0, count = 0;
     bson_t *query = NULL;
@@ -440,7 +442,7 @@ do_insert(
         struct xuser_mongo_cnts_state *state,
         struct team_extra *extra)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     if (extra->contest_id <= 0) extra->contest_id = state->contest_id;
     if (!ej_uuid_is_nonempty(extra->uuid)) {
         ej_uuid_generate(&extra->uuid);
@@ -472,7 +474,7 @@ do_update(
         const unsigned char *op,
         ej_bson_t *update_doc)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     bson_t *filter = bson_new();
     ej_bson_append_uuid_new(filter, "_id", &extra->uuid);
     bson_t *update = bson_new();
@@ -508,7 +510,7 @@ set_clar_status_func(
         int clar_id,
         const ej_uuid_t *p_clar_uuid)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
@@ -564,7 +566,7 @@ append_warning_func(
         const unsigned char *txt,
         const unsigned char *cmt)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
@@ -632,7 +634,7 @@ set_status_func(
         int user_id,
         int status)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
@@ -670,7 +672,7 @@ set_disq_comment_func(
         int user_id,
         const unsigned char *disq_comment)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
@@ -744,7 +746,7 @@ set_run_fields_func(
         int user_id,
         int run_fields)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
     struct team_extra *extra = do_get_entry(state, user_id);
     if (!extra) return -1;
@@ -907,7 +909,7 @@ get_entries_func(
 
     if (loc_count <= 0) goto done;
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     {
         int query_count = 0;
         struct team_extra *extra = NULL;

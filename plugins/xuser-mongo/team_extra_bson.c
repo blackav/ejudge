@@ -19,8 +19,12 @@
 
 #include "ejudge/xalloc.h"
 
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc/mongoc.h>
+struct _bson_t;
+typedef struct _bson_t ej_bson_t;
+#elif HAVE_LIBMONGOC - 0 > 0
+#include <mongoc.h>
 struct _bson_t;
 typedef struct _bson_t ej_bson_t;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
@@ -34,7 +38,7 @@ typedef struct _bson ej_bson_t;
 struct team_warning *
 team_warning_bson_parse(ej_bson_t *b)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     bson_iter_t iter, * const bc = &iter;
     struct team_warning *res = NULL;
 
@@ -65,7 +69,7 @@ fail:;
         xfree(res);
     }
     return NULL;
-#elif HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     struct team_warning *res = NULL;
     bson_cursor *bc = NULL;
 
@@ -107,7 +111,7 @@ fail:
 struct team_extra *
 team_extra_bson_parse(ej_bson_t *b)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     struct team_extra *res = NULL;
     bson_iter_t iter, * const bc = &iter;
     bson_t *arr = NULL;
@@ -177,7 +181,7 @@ fail:;
     if (arr) bson_destroy(arr);
     team_extra_free(res);
     return NULL;
-#elif HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson_cursor *bc = NULL;
     bson_cursor *bc2 = NULL;
     struct team_extra *res = NULL;
@@ -259,7 +263,7 @@ fail:
 ej_bson_t *
 team_warning_bson_unparse(const struct team_warning *tw)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     bson_t *res = bson_new();
     long long utc_dt = (long long) tw->date * 1000;
     bson_append_date_time(res, "date", -1, utc_dt);
@@ -272,7 +276,7 @@ team_warning_bson_unparse(const struct team_warning *tw)
         bson_append_utf8(res, "comment", -1, tw->comment, strlen(tw->comment));
     }
     return res;
-#elif HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson *res = bson_new();
     long long utc_dt = (long long) tw->date * 1000;
     bson_append_utc_datetime(res, "date", utc_dt);
@@ -294,7 +298,7 @@ team_warning_bson_unparse(const struct team_warning *tw)
 ej_bson_t *
 team_warnings_bson_unparse(struct team_warning **tws, int count)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     bson_t *res = bson_new();
     if (tws && count > 0) {
         for (int i = 0; i < count; ++i) {
@@ -306,7 +310,7 @@ team_warnings_bson_unparse(struct team_warning **tws, int count)
         }
     }
     return res;
-#elif HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson *res = bson_new();
     if (tws && count > 0) {
         for (int i = 0; i < count; ++i) {
@@ -327,7 +331,7 @@ team_warnings_bson_unparse(struct team_warning **tws, int count)
 ej_bson_t *
 team_extra_bson_unparse(const struct team_extra *extra)
 {
-#if HAVE_LIBMONGOC - 0 == 1
+#if HAVE_LIBMONGOC - 0 > 0
     bson_t *res = bson_new();
     ej_bson_append_uuid_new(res, "_id", &extra->uuid);
     bson_append_int32(res, "user_id", -1, extra->user_id);
@@ -360,7 +364,7 @@ team_extra_bson_unparse(const struct team_extra *extra)
         bson_destroy(arr); arr = NULL;
     }
     return res;
-#elif HAVE_LIBMONGOC - 0 == 1
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
     bson *res = bson_new();
     ej_bson_append_uuid(res, "_id", &extra->uuid);
     bson_append_int32(res, "user_id", extra->user_id);
