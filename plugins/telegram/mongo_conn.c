@@ -94,9 +94,16 @@ mongo_conn_open(struct mongo_conn *state)
     }
 
     unsigned char uri[1024];
-    if (snprintf(uri, sizeof(uri), "mongodb://%s:%d", state->host, state->port) >= sizeof(uri)) {
-        err("mongodb URI is too long");
-        return 0;
+    if (state->user && state->password) {
+        if (snprintf(uri, sizeof(uri), "mongodb://%s:%s@%s:%d", state->user, state->password, state->host, state->port) >= sizeof(uri)) {
+            err("mongodb URI is too long");
+            return 0;
+        }
+    } else {
+        if (snprintf(uri, sizeof(uri), "mongodb://%s:%d", state->host, state->port) >= sizeof(uri)) {
+            err("mongodb URI is too long");
+            return 0;
+        }
     }
 
     state->last_check_time = current_time;
