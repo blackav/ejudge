@@ -28,7 +28,7 @@
 #if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc/mongoc.h>
 #else
-#include <mongoc/mongoc.h>
+#include <mongoc.h>
 #endif
 
 void

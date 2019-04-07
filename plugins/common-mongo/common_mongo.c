@@ -25,7 +25,7 @@
 #if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc.h>
 #elif HAVE_LIBMONGOC - 0 > 0
-#include <mongoc/mongoc.h>
+#include <mongoc.h>
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
 #include <mongo.h>
 #endif
