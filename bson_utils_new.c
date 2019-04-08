@@ -37,7 +37,7 @@ ej_bson_unparse_new(
         const bson_t *b,
         int is_array)
 {
-    char *json = bson_as_canonical_extended_json(b, NULL);
+    char *json = bson_as_json(b, NULL);
     fprintf(out, "%s", json);
     bson_free(json);
 }
@@ -158,7 +158,7 @@ ej_bson_parse_uuid_new(
 {
     bson_iter_t *bc = vbc;
     if (bson_iter_type(bc) != BSON_TYPE_BINARY) {
-        err("parse_bson_int: UUID field type expected for '%s'", field_name);
+        err("parse_bson_uuid: UUID field type expected for '%s', actual type is %d", field_name, bson_iter_type(bc));
         return -1;
     }
     bson_subtype_t bt = 0;

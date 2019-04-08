@@ -131,7 +131,7 @@ team_extra_bson_parse(ej_bson_t *b)
             if (ej_bson_parse_int_new(bc, "user_id", &res->user_id, 1, 1, 0, 0) < 0) goto fail;
         } else if (!strcmp(key, "viewed_clars")) {
             if (ej_bson_parse_array_new(bc, "viewed_clars", &arr) < 0) goto fail;
-            bson_iter_t iter2, * const bc2 = &iter;
+            bson_iter_t iter2, * const bc2 = &iter2;
             if (!bson_iter_init(&iter2, arr)) goto fail;
             while (bson_iter_next(&iter2)) {
                 int clar_id = 0;
@@ -141,8 +141,8 @@ team_extra_bson_parse(ej_bson_t *b)
             }
             bson_destroy(arr); arr = NULL;
         } else if (!strcmp(key, "clar_uuids")) {
-            if (ej_bson_parse_array_new(bc, "viewed_clars", &arr) < 0) goto fail;
-            bson_iter_t iter2, * const bc2 = &iter;
+            if (ej_bson_parse_array_new(bc, "clar_uuids", &arr) < 0) goto fail;
+            bson_iter_t iter2, * const bc2 = &iter2;
             if (!bson_iter_init(&iter2, arr)) goto fail;
             while (bson_iter_next(&iter2)) {
                 ej_uuid_t uuid;
