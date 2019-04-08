@@ -348,7 +348,7 @@ query_func(
     }
 
     *p_res = res;
-    return u;
+    retval = u;
 
 cleanup:
     if (cursor) mongoc_cursor_destroy(cursor);
