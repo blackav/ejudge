@@ -120,7 +120,7 @@ mongo_conn_open(struct mongo_conn *state)
 
     mongoc_client_set_appname(state->client, "ejudge-plugin-telegram");
 
-    return 0;
+    return 1;
 #elif HAVE_LIBMONGO_CLIENT - 0 == 1
     if (state->conn) return 1;
 
