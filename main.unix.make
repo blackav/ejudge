@@ -590,5 +590,7 @@ bson_utils.o : bson_utils.c
 
 bson_utils_new.o : bson_utils_new.c
 	$(CC) $(CFLAGS) $(MONGOC_CFLAGS) -c $< -o $@
+testing_report_bson.o : testing_report_bson.c
+	$(CC) $(CFLAGS) $(MONGOC_CFLAGS) -c $< -o $@
 
 include deps.make

@@ -264,6 +264,7 @@ COMMON_CFILES=\
  team_extra.c\
  team_extra_xml.c\
  testinfo.c\
+ testing_report_bson.c\
  testing_report_xml.c\
  tex_dom.c\
  tex_dom_parse.c\
