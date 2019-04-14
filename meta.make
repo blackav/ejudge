@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2011-2016 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2011-2019 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -63,3 +63,6 @@ csp/contests/priv_main_page.c : ej-page-gen csp/contests/priv_main_page.csp
 
 csp/contests/%.o : csp/contests/%.c
 	$(CC) $(CFLAGS) -fPIC -DPIC -c $<
+
+genmatcher2 : genmatcher2.c
+	$(CC) $(CFLAGS) $< -o $@
