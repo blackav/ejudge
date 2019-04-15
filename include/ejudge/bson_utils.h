@@ -181,6 +181,12 @@ ej_bson_parse_document_new(
         const unsigned char *field_name,
         struct _bson_t **p_value);
 
+int
+ej_bson_parse_sha1_new(
+        void *bc,
+        const unsigned char *field_name,
+        unsigned char *p_value);
+
 void
 ej_bson_append_uuid(
         struct _bson *b,

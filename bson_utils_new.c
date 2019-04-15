@@ -256,6 +256,31 @@ ej_bson_parse_array_new(
 }
 
 int
+ej_bson_parse_sha1_new(
+        void *vbc,
+        const unsigned char *field_name,
+        unsigned char *p_value)
+{
+    bson_iter_t *bc = vbc;
+    if (bson_iter_type(bc) != BSON_TYPE_BINARY) {
+        err("ej_bson_parse_sha1: BINARY field type expected for '%s', actual type is %d", field_name, bson_iter_type(bc));
+        return -1;
+    }
+    bson_subtype_t bt = 0;
+    uint32_t bz = 0;
+    const uint8_t *bd = NULL;
+    bson_iter_binary(bc, &bt, &bz, &bd);
+    if (bt != BSON_SUBTYPE_USER || bz != 20) {
+        err("ej_bson_parse_sha1: invalid binary data for in '%s'", field_name);
+        return -1;
+    }
+    if (p_value) {
+        memcpy(p_value, bd, 20);
+    }
+    return 1;
+}
+
+int
 ej_bson_parse_document_new(
         void *vbc,
         const unsigned char *field_name,
