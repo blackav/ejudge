@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -289,7 +289,7 @@ parse_scoring(const unsigned char *str, int *px)
   return 0;
 }
 
-static struct testing_report_test * testing_report_test_free(struct testing_report_test *p);
+struct testing_report_test * testing_report_test_free(struct testing_report_test *p);
 
 static int
 parse_file(
@@ -1303,7 +1303,7 @@ testing_report_parse_xml(const unsigned char *str)
   return 0;
 }
 
-static struct testing_report_test *
+struct testing_report_test *
 testing_report_test_free(struct testing_report_test *p)
 {
   if (!p) return 0;
