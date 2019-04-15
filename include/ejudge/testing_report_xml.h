@@ -2,7 +2,7 @@
 #ifndef __TESTING_REPORT_XML_H__
 #define __TESTING_REPORT_XML_H__
 
-/* Copyright (C) 2005-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -170,6 +170,7 @@ testing_report_test_alloc(int num, int status);
 
 testing_report_xml_t testing_report_alloc(int contest_id, int run_id, int judge_id);
 testing_report_xml_t testing_report_parse_xml(const unsigned char *path);
+struct testing_report_test *testing_report_test_free(struct testing_report_test *p);
 testing_report_xml_t testing_report_free(testing_report_xml_t r);
 void
 testing_report_unparse_xml(
@@ -194,5 +195,11 @@ testing_report_to_file(
         int max_file_length,
         int max_line_length,
         testing_report_xml_t r);
+
+// BSON format readers/writers
+
+// returns 1, if bson is supported
+int testing_report_bson_available(void);
+testing_report_xml_t testing_report_parse_data(const unsigned char *data, unsigned int size);
 
 #endif /* __TESTING_REPORT_XML_H__ */
