@@ -136,7 +136,10 @@ main(int argc, char *argv[])
             strz = 0;
             continue;
         }
-        if (strlen(str) != ret) abort();
+        if (strlen(str) != ret) {
+            fprintf(stderr, "entry has embedded NUL byte\n");
+            return 1;
+        }
 
         if (strsu == strsa) {
             if (!(strsa *= 2)) strsa = 16;
@@ -158,8 +161,10 @@ main(int argc, char *argv[])
     enums = calloc(strsu, sizeof(enums[0]));
 
     for (int i = 1; i < strsu; ++i) {
-        if (!strcmp(sorted_strs[i - 1], sorted_strs[i]))
-            abort();
+        if (!strcmp(sorted_strs[i - 1], sorted_strs[i])) {
+            fprintf(stderr, "duplicated entry '%s'\n", sorted_strs[i]);
+            return 1;
+        }
     }
 
     // generate enum
