@@ -41,6 +41,7 @@ struct testing_report_file_content
   unsigned char *data;
   int            is_too_big;
   int            is_base64;
+  int            is_bzip2;
 };
 
 struct testing_report_test
