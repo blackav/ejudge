@@ -66,3 +66,6 @@ csp/contests/%.o : csp/contests/%.c
 
 genmatcher2 : genmatcher2.c
 	$(CC) $(CFLAGS) $< -o $@
+
+testing_report_tags.c : genmatcher2 testing_report_tags.txt
+	./genmatcher2 < testing_report_tags.txt > testing_report_tags.c
