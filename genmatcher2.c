@@ -118,6 +118,7 @@ main(int argc, char *argv[])
 
     char *enum_prefix = NULL;
     char *function_name = NULL;
+    char *table_name = NULL;
 
     if (argc > 0) {
         enum_prefix = argv[1];
@@ -125,8 +126,12 @@ main(int argc, char *argv[])
     if (argc > 1) {
         function_name = argv[2];
     }
+    if (argc > 2) {
+      table_name = argv[3];
+    }
     if (!enum_prefix) enum_prefix = "Tag_";
     if (!function_name) function_name = "match";
+    if (!table_name) table_name = "tag_table";
 
     while ((ret = getline(&str, &strz, stdin)) > 0) {
         while (ret > 0 && isspace((unsigned char) str[ret - 1])) --ret;
@@ -183,6 +188,13 @@ main(int argc, char *argv[])
             printf(",");
         }
         printf("\n");
+    }
+    printf("};\n");
+    printf("static const char * const %s[] =\n"
+           "{\n"
+           "    NULL,\n", table_name);
+    for (int i = 0; i < strsu; ++i) {
+        printf("    \"%s\",\n", strs[i]);
     }
     printf("};\n");
     qsort(enums, strsu, sizeof(strs[0]), sort_func);
