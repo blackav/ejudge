@@ -1046,7 +1046,13 @@ do_unparse(
     return 0;
 }
 
-
+int
+testing_report_to_file_bson(
+        const unsigned char *path,
+        testing_report_xml_t r)
+{
+    return -1;
+}
 #else
 // stubs when bson format is not available
 int testing_report_bson_available(void)
@@ -1059,5 +1065,13 @@ testing_report_parse_data(
         unsigned int size)
 {
     return NULL;
+}
+
+int
+testing_report_to_file_bson(
+        const unsigned char *path,
+        testing_report_xml_t r)
+{
+    return -1;
 }
 #endif

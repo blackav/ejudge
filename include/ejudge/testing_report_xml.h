@@ -197,4 +197,9 @@ testing_report_to_file(
 int testing_report_bson_available(void);
 testing_report_xml_t testing_report_parse_data(const unsigned char *data, unsigned int size);
 
+int
+testing_report_to_file_bson(
+        const unsigned char *path,
+        testing_report_xml_t r);
+
 #endif /* __TESTING_REPORT_XML_H__ */
