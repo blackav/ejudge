@@ -1519,8 +1519,6 @@ void
 testing_report_unparse_xml(
         FILE *out,
         int utf8_mode,
-        int max_file_length,
-        int max_line_length,
         testing_report_xml_t r)
 {
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
@@ -1776,7 +1774,7 @@ testing_report_to_str(
   FILE *f = open_memstream(pstr, psize);
   fprintf(f, "Content-type: text/xml\n\n");
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
-  testing_report_unparse_xml(f, utf8_mode, max_file_length, max_line_length, r);
+  testing_report_unparse_xml(f, utf8_mode, r);
   fclose(f); f = NULL;
 }
 
@@ -1794,7 +1792,7 @@ testing_report_to_file(
   }
   fprintf(f, "Content-type: text/xml\n\n");
   fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", EJUDGE_CHARSET);
-  testing_report_unparse_xml(f, utf8_mode, max_file_length, max_line_length, r);
+  testing_report_unparse_xml(f, utf8_mode, r);
   if (ferror(f)) {
     fclose(f);
     return -1;

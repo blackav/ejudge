@@ -177,8 +177,6 @@ void
 testing_report_unparse_xml(
         FILE *out,
         int utf8_mode,
-        int max_file_length,
-        int max_line_length,
         testing_report_xml_t r);
 
 void
