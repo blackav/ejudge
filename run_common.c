@@ -413,9 +413,12 @@ generate_xml_report(
     }
   }
 
-  if (testing_report_to_file(report_path, utf8_mode, tr) < 0) {
-    err("generate_xml_report: failed to save file '%s'", report_path);
-    return -1;
+  if (srgp->bson_available && testing_report_bson_available()) {
+  } else {
+    if (testing_report_to_file(report_path, utf8_mode, tr) < 0) {
+      err("generate_xml_report: failed to save file '%s'", report_path);
+      return -1;
+    }
   }
   testing_report_free(tr);
   return 0;
