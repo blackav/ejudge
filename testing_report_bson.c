@@ -20,8 +20,11 @@
 #include "ejudge/testing_report_xml.h"
 #include "ejudge/bson_utils.h"
 #include "ejudge/xalloc.h"
+#include "ejudge/errlog.h"
+#include "ejudge/osdeps.h"
 
 #include <stdio.h>
+#include <sys/mman.h>
 
 #if HAVE_LIBMONGOC - 0 > 0
 
@@ -743,15 +746,6 @@ unparse_file_content(
 static bson_t *
 do_unparse(
         bson_t *b,
-        int max_file_length,
-        int max_line_length,
-        testing_report_xml_t r)
-    __attribute__((unused));
-static bson_t *
-do_unparse(
-        bson_t *b,
-        int max_file_length,
-        int max_line_length,
         testing_report_xml_t r)
 {
 
@@ -1051,7 +1045,38 @@ testing_report_to_file_bson(
         const unsigned char *path,
         testing_report_xml_t r)
 {
-    return -1;
+    int retval = -1;
+    bson_t *b = bson_new();
+    int fd = -1;
+    void *ptr = MAP_FAILED;
+    do_unparse(b, r);
+    const unsigned char *data = bson_get_data(b);
+
+    fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0666);
+    if (fd < 0) {
+        err("testing_report_to_file_bson: open: %s: failed: %s", path, os_ErrorMsg());
+        goto cleanup;
+    }
+    if (ftruncate(fd, b->len) < 0) {
+        err("testing_report_to_file_bson: ftruncate: %s: failed: %s", path, os_ErrorMsg());
+        goto cleanup;
+    }
+    if (b->len > 0) {
+        ptr = mmap(NULL, b->len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        if (ptr == MAP_FAILED) {
+            err("testing_report_to_file_bson: mmap: %s: failed: %s", path, os_ErrorMsg());
+            goto cleanup;
+        }
+        memcpy(ptr, data, b->len);
+        munmap(ptr, b->len);
+    }
+    close(fd); fd = -1;
+    bson_destroy(b); b = NULL;
+
+cleanup:
+    if (b) bson_destroy(b);
+    if (fd < 0) close(fd);
+    return retval;
 }
 #else
 // stubs when bson format is not available
