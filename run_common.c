@@ -413,7 +413,7 @@ generate_xml_report(
     }
   }
 
-  if (testing_report_to_file(report_path, utf8_mode, srgp->max_file_length, srgp->max_line_length, tr) < 0) {
+  if (testing_report_to_file(report_path, utf8_mode, tr) < 0) {
     err("generate_xml_report: failed to save file '%s'", report_path);
     return -1;
   }

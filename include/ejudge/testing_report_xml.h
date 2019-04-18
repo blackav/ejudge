@@ -184,15 +184,11 @@ testing_report_to_str(
         char **pstr,
         size_t *psize,
         int utf8_mode,
-        int max_file_length,
-        int max_line_length,
         testing_report_xml_t r);
 int
 testing_report_to_file(
         const unsigned char *path,
         int utf8_mode,
-        int max_file_length,
-        int max_line_length,
         testing_report_xml_t r);
 
 // BSON format readers/writers

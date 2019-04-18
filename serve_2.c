@@ -2967,7 +2967,7 @@ serve_read_compile_packet(
     memcpy(&testing_report->uuid, &re.run_uuid, sizeof(testing_report->uuid));
 
     xfree(txt_text); txt_text = NULL; txt_size = 0;
-    testing_report_to_str(&txt_text, &txt_size, 1, global->max_file_length, global->max_line_length, testing_report);
+    testing_report_to_str(&txt_text, &txt_size, 1, testing_report);
 
     if (re.store_flags == 1) {
       rep_flags = uuid_archive_make_write_path(state, rep_path, sizeof(rep_path),
@@ -3044,7 +3044,7 @@ serve_read_compile_packet(
     memcpy(&testing_report->uuid, &re.run_uuid, sizeof(testing_report->uuid));
 
     xfree(txt_text); txt_text = NULL; txt_size = 0;
-    testing_report_to_str(&txt_text, &txt_size, 1, global->max_file_length, global->max_line_length, testing_report);
+    testing_report_to_str(&txt_text, &txt_size, 1, testing_report);
 
     if (re.store_flags == 1) {
       rep_flags = uuid_archive_make_write_path(state, rep_path, sizeof(rep_path),
@@ -3629,7 +3629,7 @@ serve_read_run_packet(
       if (new_tr && !new_tr->compiler_output) {
         new_tr->compiler_output = compiler_output; compiler_output = NULL;
         xfree(new_rep_text); new_rep_text = NULL; new_rep_len = 0;
-        testing_report_to_str(&new_rep_text, &new_rep_len, 1, global->max_file_length, global->max_line_length, new_tr);
+        testing_report_to_str(&new_rep_text, &new_rep_len, 1, new_tr);
       }
       testing_report_free(new_tr); new_tr = NULL;
       xfree(compiler_output); compiler_output = NULL;
@@ -3975,7 +3975,7 @@ serve_report_check_failed(
   tr->user_status = -1;
   tr->errors = xstrdup(error_text);
 
-  testing_report_to_str(&tr_t, &tr_z, 1/*utf8_mode*/, global->max_file_length, global->max_line_length, tr);
+  testing_report_to_str(&tr_t, &tr_z, 1/*utf8_mode*/, tr);
   tr = testing_report_free(tr);
 
   serve_audit_log(state, run_id, &re, 0, 0, 0,

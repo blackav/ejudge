@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2010-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1384,7 +1384,7 @@ cleanup:
   reply_pkt->ts7 = reply_pkt->ts6;
   reply_pkt->ts7_us = reply_pkt->ts6_us;
 
-  if (testing_report_to_file(report_path, utf8_mode, srgp->max_file_length, srgp->max_line_length, report_xml) < 0) {
+  if (testing_report_to_file(report_path, utf8_mode, report_xml) < 0) {
     // too late to report error
     //perr("run_inverse_testing: failed to save file '%s'", report_path);
   }
