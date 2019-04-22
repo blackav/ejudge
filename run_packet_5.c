@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -72,6 +72,7 @@ run_reply_packet_write(
   if (in_data->notify_flag) flags |= FLAGS_NOTIFY;
   if (in_data->marked_flag) flags |= FLAGS_MARKED;
   if (in_data->has_user_score) flags |= FLAGS_HAS_USER_SCORE;
+  if (in_data->bson_flag) flags |= FLAGS_BSON;
   out_data->flags = cvt_host_to_bin_32(flags);
 
   out_data->ts1 = cvt_host_to_bin_32(in_data->ts1);

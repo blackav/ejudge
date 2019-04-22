@@ -417,6 +417,7 @@ generate_xml_report(
     if (testing_report_to_file_bson(report_path, tr) < 0) {
       err("generate_xml_report: failed to save BSON file '%s'", report_path);
     }
+    reply_pkt->bson_flag = 1;
   } else {
     if (testing_report_to_file(report_path, utf8_mode, tr) < 0) {
       err("generate_xml_report: failed to save file '%s'", report_path);
