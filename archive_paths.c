@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -398,12 +398,14 @@ uuid_archive_make_write_path(
   ASSERT(ej_uuid_is_nonempty(*prun_uuid));
 
   const unsigned char *suffix = "";
-  if ((zip_mode & ZIP)) {
-    suffix = ".zip";
-    zip_mode = ZIP;
-  } else if (zip_mode >= 0 && state->global->use_gzip > 0 && file_size > state->global->min_gzip_size) {
-    suffix = ".gz";
-    zip_mode = GZIP;
+  if (zip_mode >= 0) {
+    if ((zip_mode & ZIP)) {
+      suffix = ".zip";
+      zip_mode = ZIP;
+    } else if (state->global->use_gzip > 0 && file_size > state->global->min_gzip_size) {
+      suffix = ".gz";
+      zip_mode = GZIP;
+    }
   }
 
   snprintf(path, size, "%s/%02x/%02x/%s/%s%s",
@@ -435,24 +437,27 @@ uuid_archive_make_read_path(
     err("uuid_archive_make_read_path: archive path is too long");
     return -1;
   }
-  if ((gzip_preferred & ZIP)) {
+  if (gzip_preferred > 0 && (gzip_preferred & ZIP)) {
     path[len] = '.'; path[len + 1] = 'z'; path[len + 2] = 'i'; path[len + 3] = 'p'; path[len + 4] = 0;
     if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return ZIP;
     path[len] = 0;
     if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return 0;
-  } else if (gzip_preferred) {
+  } else if (gzip_preferred > 0) {
     if (state->global->use_gzip) {
       path[len] = '.'; path[len + 1] = 'g'; path[len + 2] = 'z'; path[len + 3] = 0;
       if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return GZIP;
     }
     path[len] = 0;
     if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return 0;
-  } else {
+  } else if (!gzip_preferred) {
     if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return 0;
     if (state->global->use_gzip) {
       path[len] = '.'; path[len + 1] = 'g'; path[len + 2] = 'z'; path[len + 3] = 0;
       if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return GZIP;
     }
+  } else {
+    // never try .gz files
+    if (stat(path, &sb) >= 0 && S_ISREG(sb.st_mode)) return 0;
   }
 
   path[len] = 0;
