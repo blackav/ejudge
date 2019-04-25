@@ -2,7 +2,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -70,6 +70,13 @@ enum
 };
 
 enum { RUN_LOG_CREATE = 1, RUN_LOG_READONLY = 2, RUN_LOG_NOINDEX = 4, RUN_LOG_UUID_INDEX = 8 };
+
+enum
+{
+  STORE_FLAGS_DEFAULT,
+  STORE_FLAGS_UUID,      // each run is stored in the separate directory under its uuid
+  STORE_FLAGS_UUID_BSON, // testing report is stored as BSON instead of XML
+};
 
 struct ejudge_cfg;
 struct contest_desc;
