@@ -3,7 +3,7 @@
 #ifndef __NEW_SERVER_PROTO_H__
 #define __NEW_SERVER_PROTO_H__
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -288,7 +288,7 @@ enum
   NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE,
   NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK,
   NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_SUMMON,
-  NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED,
+  NEW_SRV_ACTION_PRIV_OLD_SET_RUN_REJECTED,
   NEW_SRV_ACTION_VIEW_TESTING_QUEUE,
   NEW_SRV_ACTION_TESTING_DELETE,
   NEW_SRV_ACTION_TESTING_UP,

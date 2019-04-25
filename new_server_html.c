@@ -3737,6 +3737,9 @@ priv_set_run_rejected_status(
         const struct contest_desc *cnts,
         struct contest_extra *extra)
 {
+  ns_error(log_f, NEW_SRV_ERR_NOT_SUPPORTED);
+  return 0;
+  /*
   const serve_state_t cs = extra->serve_state;
   const struct section_global_data *global = cs->global;
   int run_id = 0, rep_flags;
@@ -3819,6 +3822,7 @@ priv_set_run_rejected_status(
   fprintf(phr->log_f, "%s", errmsg);
   error_page(fout, phr, 1, NEW_SRV_ERR_INV_PARAM);
   return -1;
+  */
 }
 
 static int
@@ -7167,7 +7171,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_simple_change_status,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_simple_change_status,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_SUMMON] = priv_simple_change_status,
-  [NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED] = priv_set_run_rejected_status,
+  [NEW_SRV_ACTION_PRIV_OLD_SET_RUN_REJECTED] = priv_set_run_rejected_status,
   [NEW_SRV_ACTION_TESTING_DELETE] = priv_testing_queue_operation,
   [NEW_SRV_ACTION_TESTING_UP] = priv_testing_queue_operation,
   [NEW_SRV_ACTION_TESTING_DOWN] = priv_testing_queue_operation,
@@ -7841,7 +7845,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK] = priv_generic_operation,
   [NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_SUMMON] = priv_generic_operation,
-  [NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED] = priv_generic_operation,
+  [NEW_SRV_ACTION_PRIV_OLD_SET_RUN_REJECTED] = priv_generic_operation,
   [NEW_SRV_ACTION_TESTING_DELETE] = priv_generic_operation,
   [NEW_SRV_ACTION_TESTING_UP] = priv_generic_operation,
   [NEW_SRV_ACTION_TESTING_DOWN] = priv_generic_operation,

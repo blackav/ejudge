@@ -5771,133 +5771,44 @@ int ns_match_action(const unsigned char *str)
                   c = str[4];
                   if (c == '-') {
                     c = str[5];
-                    if (c == 's') {
+                    if (c == 'r') {
                       c = str[6];
-                      if (c == 'u') {
+                      if (c == 'e') {
                         c = str[7];
-                        if (c == 'b') {
+                        if (c == 'g') {
                           c = str[8];
-                          if (c == 'm') {
+                          if (c == 'e') {
                             c = str[9];
-                            if (c == 'i') {
+                            if (c == 'n') {
                               c = str[10];
-                              if (c == 't') {
+                              if (c == 'e') {
                                 c = str[11];
-                                if (c == '-') {
+                                if (c == 'r') {
                                   c = str[12];
-                                  if (c == 'p') {
+                                  if (c == 'a') {
                                     c = str[13];
-                                    if (c == 'a') {
+                                    if (c == 't') {
                                       c = str[14];
-                                      if (c == 'g') {
+                                      if (c == 'e') {
                                         c = str[15];
-                                        if (c == 'e') {
+                                        if (c == '-') {
                                           c = str[16];
-                                          if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_PAGE;
-                                          return 0;
-                                        }
-                                        return 0;
-                                      }
-                                      return 0;
-                                    }
-                                    return 0;
-                                  } else if (c < 'p') {
-                                    if (c == 'c') {
-                                      c = str[13];
-                                      if (c == 'l') {
-                                        c = str[14];
-                                        if (c == 'a') {
-                                          c = str[15];
-                                          if (c == 'r') {
-                                            c = str[16];
-                                            if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_CLAR;
-                                            return 0;
-                                          }
-                                          return 0;
-                                        }
-                                        return 0;
-                                      }
-                                      return 0;
-                                    }
-                                  } else {
-                                    if (c == 'r') {
-                                      c = str[13];
-                                      if (c == 'u') {
-                                        c = str[14];
-                                        if (c == 'n') {
-                                          c = str[15];
-                                          if (c == '-') {
-                                            c = str[16];
-                                            if (c == 'j') {
-                                              c = str[17];
-                                              if (c == 'u') {
-                                                c = str[18];
-                                                if (c == 's') {
-                                                  c = str[19];
-                                                  if (c == 't') {
-                                                    c = str[20];
-                                                    if (c == '-') {
-                                                      c = str[21];
-                                                      if (c == 'o') {
-                                                        c = str[22];
-                                                        if (c == 'k') {
-                                                          c = str[23];
-                                                          if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK;
-                                                          return 0;
-                                                        }
+                                          if (c == 'c') {
+                                            c = str[17];
+                                            if (c == 'o') {
+                                              c = str[18];
+                                              if (c == 'n') {
+                                                c = str[19];
+                                                if (c == 't') {
+                                                  c = str[20];
+                                                  if (c == 'e') {
+                                                    c = str[21];
+                                                    if (c == 'n') {
+                                                      c = str[22];
+                                                      if (c == 't') {
+                                                        c = str[23];
+                                                        if (!c) return NEW_SRV_ACTION_PRIV_REGENERATE_CONTENT;
                                                         return 0;
-                                                      } else if (c < 'o') {
-                                                        if (c == 'i') {
-                                                          c = str[22];
-                                                          if (c == 'g') {
-                                                            c = str[23];
-                                                            if (c == 'n') {
-                                                              c = str[24];
-                                                              if (c == 'o') {
-                                                                c = str[25];
-                                                                if (c == 'r') {
-                                                                  c = str[26];
-                                                                  if (c == 'e') {
-                                                                    c = str[27];
-                                                                    if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE;
-                                                                    return 0;
-                                                                  }
-                                                                  return 0;
-                                                                }
-                                                                return 0;
-                                                              }
-                                                              return 0;
-                                                            }
-                                                            return 0;
-                                                          }
-                                                          return 0;
-                                                        }
-                                                      } else {
-                                                        if (c == 's') {
-                                                          c = str[22];
-                                                          if (c == 'u') {
-                                                            c = str[23];
-                                                            if (c == 'm') {
-                                                              c = str[24];
-                                                              if (c == 'm') {
-                                                                c = str[25];
-                                                                if (c == 'o') {
-                                                                  c = str[26];
-                                                                  if (c == 'n') {
-                                                                    c = str[27];
-                                                                    if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_SUMMON;
-                                                                    return 0;
-                                                                  }
-                                                                  return 0;
-                                                                }
-                                                                return 0;
-                                                              }
-                                                              return 0;
-                                                            }
-                                                            return 0;
-                                                          }
-                                                          return 0;
-                                                        }
                                                       }
                                                       return 0;
                                                     }
@@ -5908,145 +5819,6 @@ int ns_match_action(const unsigned char *str)
                                                 return 0;
                                               }
                                               return 0;
-                                            } else if (c < 'j') {
-                                              if (c == 'c') {
-                                                c = str[17];
-                                                if (c == 'o') {
-                                                  c = str[18];
-                                                  if (c == 'm') {
-                                                    c = str[19];
-                                                    if (c == 'm') {
-                                                      c = str[20];
-                                                      if (c == 'e') {
-                                                        c = str[21];
-                                                        if (c == 'n') {
-                                                          c = str[22];
-                                                          if (c == 't') {
-                                                            c = str[23];
-                                                            if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT;
-                                                            if (c == '-') {
-                                                              c = str[24];
-                                                              if (c == 'a') {
-                                                                c = str[25];
-                                                                if (c == 'n') {
-                                                                  c = str[26];
-                                                                  if (c == 'd') {
-                                                                    c = str[27];
-                                                                    if (c == '-') {
-                                                                      c = str[28];
-                                                                      if (c == 'r') {
-                                                                        c = str[29];
-                                                                        if (c == 'e') {
-                                                                          c = str[30];
-                                                                          if (c == 'j') {
-                                                                            c = str[31];
-                                                                            if (c == 'e') {
-                                                                              c = str[32];
-                                                                              if (c == 'c') {
-                                                                                c = str[33];
-                                                                                if (c == 't') {
-                                                                                  c = str[34];
-                                                                                  if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT;
-                                                                                  return 0;
-                                                                                }
-                                                                                return 0;
-                                                                              }
-                                                                              return 0;
-                                                                            }
-                                                                            return 0;
-                                                                          }
-                                                                          return 0;
-                                                                        }
-                                                                        return 0;
-                                                                      } else if (c < 'r') {
-                                                                        if (c == 'o') {
-                                                                          c = str[29];
-                                                                          if (c == 'k') {
-                                                                            c = str[30];
-                                                                            if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK;
-                                                                            return 0;
-                                                                          }
-                                                                          return 0;
-                                                                        } else if (c < 'o') {
-                                                                          if (c == 'i') {
-                                                                            c = str[29];
-                                                                            if (c == 'g') {
-                                                                              c = str[30];
-                                                                              if (c == 'n') {
-                                                                                c = str[31];
-                                                                                if (c == 'o') {
-                                                                                  c = str[32];
-                                                                                  if (c == 'r') {
-                                                                                    c = str[33];
-                                                                                    if (c == 'e') {
-                                                                                      c = str[34];
-                                                                                      if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE;
-                                                                                      return 0;
-                                                                                    }
-                                                                                    return 0;
-                                                                                  }
-                                                                                  return 0;
-                                                                                }
-                                                                                return 0;
-                                                                              }
-                                                                              return 0;
-                                                                            }
-                                                                            return 0;
-                                                                          }
-                                                                        } else {
-                                                                        }
-                                                                      } else {
-                                                                        if (c == 's') {
-                                                                          c = str[29];
-                                                                          if (c == 'u') {
-                                                                            c = str[30];
-                                                                            if (c == 'm') {
-                                                                              c = str[31];
-                                                                              if (c == 'm') {
-                                                                                c = str[32];
-                                                                                if (c == 'o') {
-                                                                                  c = str[33];
-                                                                                  if (c == 'n') {
-                                                                                    c = str[34];
-                                                                                    if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_SUMMON;
-                                                                                    return 0;
-                                                                                  }
-                                                                                  return 0;
-                                                                                }
-                                                                                return 0;
-                                                                              }
-                                                                              return 0;
-                                                                            }
-                                                                            return 0;
-                                                                          }
-                                                                          return 0;
-                                                                        }
-                                                                      }
-                                                                      return 0;
-                                                                    }
-                                                                    return 0;
-                                                                  }
-                                                                  return 0;
-                                                                }
-                                                                return 0;
-                                                              }
-                                                              return 0;
-                                                            }
-                                                            return 0;
-                                                          }
-                                                          return 0;
-                                                        }
-                                                        return 0;
-                                                      }
-                                                      return 0;
-                                                    }
-                                                    return 0;
-                                                  }
-                                                  return 0;
-                                                }
-                                                return 0;
-                                              }
-                                            } else {
                                             }
                                             return 0;
                                           }
@@ -6056,6 +5828,7 @@ int ns_match_action(const unsigned char *str)
                                       }
                                       return 0;
                                     }
+                                    return 0;
                                   }
                                   return 0;
                                 }
@@ -6068,109 +5841,54 @@ int ns_match_action(const unsigned char *str)
                           return 0;
                         }
                         return 0;
-                      } else if (c < 'u') {
-                        if (c == 'e') {
+                      }
+                      return 0;
+                    } else if (c < 'r') {
+                      if (c == 'o') {
+                        c = str[6];
+                        if (c == 'l') {
                           c = str[7];
-                          if (c == 't') {
+                          if (c == 'd') {
                             c = str[8];
                             if (c == '-') {
                               c = str[9];
-                              if (c == 'r') {
+                              if (c == 's') {
                                 c = str[10];
-                                if (c == 'u') {
+                                if (c == 'e') {
                                   c = str[11];
-                                  if (c == 'n') {
+                                  if (c == 't') {
                                     c = str[12];
                                     if (c == '-') {
                                       c = str[13];
                                       if (c == 'r') {
                                         c = str[14];
-                                        if (c == 'e') {
+                                        if (c == 'u') {
                                           c = str[15];
-                                          if (c == 'j') {
+                                          if (c == 'n') {
                                             c = str[16];
-                                            if (c == 'e') {
+                                            if (c == '-') {
                                               c = str[17];
-                                              if (c == 'c') {
+                                              if (c == 'r') {
                                                 c = str[18];
-                                                if (c == 't') {
+                                                if (c == 'e') {
                                                   c = str[19];
-                                                  if (c == 'e') {
-                                                    c = str[20];
-                                                    if (c == 'd') {
-                                                      c = str[21];
-                                                      if (!c) return NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED;
-                                                      return 0;
-                                                    }
-                                                    return 0;
-                                                  }
-                                                  return 0;
-                                                }
-                                                return 0;
-                                              }
-                                              return 0;
-                                            }
-                                            return 0;
-                                          }
-                                          return 0;
-                                        }
-                                        return 0;
-                                      }
-                                      return 0;
-                                    }
-                                    return 0;
-                                  }
-                                  return 0;
-                                }
-                                return 0;
-                              }
-                              return 0;
-                            }
-                            return 0;
-                          }
-                          return 0;
-                        }
-                      } else {
-                      }
-                      return 0;
-                    } else if (c < 's') {
-                      if (c == 'r') {
-                        c = str[6];
-                        if (c == 'e') {
-                          c = str[7];
-                          if (c == 'g') {
-                            c = str[8];
-                            if (c == 'e') {
-                              c = str[9];
-                              if (c == 'n') {
-                                c = str[10];
-                                if (c == 'e') {
-                                  c = str[11];
-                                  if (c == 'r') {
-                                    c = str[12];
-                                    if (c == 'a') {
-                                      c = str[13];
-                                      if (c == 't') {
-                                        c = str[14];
-                                        if (c == 'e') {
-                                          c = str[15];
-                                          if (c == '-') {
-                                            c = str[16];
-                                            if (c == 'c') {
-                                              c = str[17];
-                                              if (c == 'o') {
-                                                c = str[18];
-                                                if (c == 'n') {
-                                                  c = str[19];
-                                                  if (c == 't') {
+                                                  if (c == 'j') {
                                                     c = str[20];
                                                     if (c == 'e') {
                                                       c = str[21];
-                                                      if (c == 'n') {
+                                                      if (c == 'c') {
                                                         c = str[22];
                                                         if (c == 't') {
                                                           c = str[23];
-                                                          if (!c) return NEW_SRV_ACTION_PRIV_REGENERATE_CONTENT;
+                                                          if (c == 'e') {
+                                                            c = str[24];
+                                                            if (c == 'd') {
+                                                              c = str[25];
+                                                              if (!c) return NEW_SRV_ACTION_PRIV_OLD_SET_RUN_REJECTED;
+                                                              return 0;
+                                                            }
+                                                            return 0;
+                                                          }
                                                           return 0;
                                                         }
                                                         return 0;
@@ -6206,7 +5924,7 @@ int ns_match_action(const unsigned char *str)
                           return 0;
                         }
                         return 0;
-                      } else if (c < 'r') {
+                      } else if (c < 'o') {
                         if (c == 'e') {
                           c = str[6];
                           if (c == 'd') {
@@ -6859,6 +6577,308 @@ int ns_match_action(const unsigned char *str)
                           return 0;
                         }
                         return 0;
+                      } else if (c < 'u') {
+                        if (c == 's') {
+                          c = str[6];
+                          if (c == 'u') {
+                            c = str[7];
+                            if (c == 'b') {
+                              c = str[8];
+                              if (c == 'm') {
+                                c = str[9];
+                                if (c == 'i') {
+                                  c = str[10];
+                                  if (c == 't') {
+                                    c = str[11];
+                                    if (c == '-') {
+                                      c = str[12];
+                                      if (c == 'p') {
+                                        c = str[13];
+                                        if (c == 'a') {
+                                          c = str[14];
+                                          if (c == 'g') {
+                                            c = str[15];
+                                            if (c == 'e') {
+                                              c = str[16];
+                                              if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_PAGE;
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      } else if (c < 'p') {
+                                        if (c == 'c') {
+                                          c = str[13];
+                                          if (c == 'l') {
+                                            c = str[14];
+                                            if (c == 'a') {
+                                              c = str[15];
+                                              if (c == 'r') {
+                                                c = str[16];
+                                                if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_CLAR;
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                      } else {
+                                        if (c == 'r') {
+                                          c = str[13];
+                                          if (c == 'u') {
+                                            c = str[14];
+                                            if (c == 'n') {
+                                              c = str[15];
+                                              if (c == '-') {
+                                                c = str[16];
+                                                if (c == 'j') {
+                                                  c = str[17];
+                                                  if (c == 'u') {
+                                                    c = str[18];
+                                                    if (c == 's') {
+                                                      c = str[19];
+                                                      if (c == 't') {
+                                                        c = str[20];
+                                                        if (c == '-') {
+                                                          c = str[21];
+                                                          if (c == 'o') {
+                                                            c = str[22];
+                                                            if (c == 'k') {
+                                                              c = str[23];
+                                                              if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK;
+                                                              return 0;
+                                                            }
+                                                            return 0;
+                                                          } else if (c < 'o') {
+                                                            if (c == 'i') {
+                                                              c = str[22];
+                                                              if (c == 'g') {
+                                                                c = str[23];
+                                                                if (c == 'n') {
+                                                                  c = str[24];
+                                                                  if (c == 'o') {
+                                                                    c = str[25];
+                                                                    if (c == 'r') {
+                                                                      c = str[26];
+                                                                      if (c == 'e') {
+                                                                        c = str[27];
+                                                                        if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE;
+                                                                        return 0;
+                                                                      }
+                                                                      return 0;
+                                                                    }
+                                                                    return 0;
+                                                                  }
+                                                                  return 0;
+                                                                }
+                                                                return 0;
+                                                              }
+                                                              return 0;
+                                                            }
+                                                          } else {
+                                                            if (c == 's') {
+                                                              c = str[22];
+                                                              if (c == 'u') {
+                                                                c = str[23];
+                                                                if (c == 'm') {
+                                                                  c = str[24];
+                                                                  if (c == 'm') {
+                                                                    c = str[25];
+                                                                    if (c == 'o') {
+                                                                      c = str[26];
+                                                                      if (c == 'n') {
+                                                                        c = str[27];
+                                                                        if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_SUMMON;
+                                                                        return 0;
+                                                                      }
+                                                                      return 0;
+                                                                    }
+                                                                    return 0;
+                                                                  }
+                                                                  return 0;
+                                                                }
+                                                                return 0;
+                                                              }
+                                                              return 0;
+                                                            }
+                                                          }
+                                                          return 0;
+                                                        }
+                                                        return 0;
+                                                      }
+                                                      return 0;
+                                                    }
+                                                    return 0;
+                                                  }
+                                                  return 0;
+                                                } else if (c < 'j') {
+                                                  if (c == 'c') {
+                                                    c = str[17];
+                                                    if (c == 'o') {
+                                                      c = str[18];
+                                                      if (c == 'm') {
+                                                        c = str[19];
+                                                        if (c == 'm') {
+                                                          c = str[20];
+                                                          if (c == 'e') {
+                                                            c = str[21];
+                                                            if (c == 'n') {
+                                                              c = str[22];
+                                                              if (c == 't') {
+                                                                c = str[23];
+                                                                if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT;
+                                                                if (c == '-') {
+                                                                  c = str[24];
+                                                                  if (c == 'a') {
+                                                                    c = str[25];
+                                                                    if (c == 'n') {
+                                                                      c = str[26];
+                                                                      if (c == 'd') {
+                                                                        c = str[27];
+                                                                        if (c == '-') {
+                                                                          c = str[28];
+                                                                          if (c == 'r') {
+                                                                            c = str[29];
+                                                                            if (c == 'e') {
+                                                                              c = str[30];
+                                                                              if (c == 'j') {
+                                                                                c = str[31];
+                                                                                if (c == 'e') {
+                                                                                  c = str[32];
+                                                                                  if (c == 'c') {
+                                                                                    c = str[33];
+                                                                                    if (c == 't') {
+                                                                                      c = str[34];
+                                                                                      if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT;
+                                                                                      return 0;
+                                                                                    }
+                                                                                    return 0;
+                                                                                  }
+                                                                                  return 0;
+                                                                                }
+                                                                                return 0;
+                                                                              }
+                                                                              return 0;
+                                                                            }
+                                                                            return 0;
+                                                                          } else if (c < 'r') {
+                                                                            if (c == 'o') {
+                                                                              c = str[29];
+                                                                              if (c == 'k') {
+                                                                                c = str[30];
+                                                                                if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK;
+                                                                                return 0;
+                                                                              }
+                                                                              return 0;
+                                                                            } else if (c < 'o') {
+                                                                              if (c == 'i') {
+                                                                                c = str[29];
+                                                                                if (c == 'g') {
+                                                                                  c = str[30];
+                                                                                  if (c == 'n') {
+                                                                                    c = str[31];
+                                                                                    if (c == 'o') {
+                                                                                      c = str[32];
+                                                                                      if (c == 'r') {
+                                                                                        c = str[33];
+                                                                                        if (c == 'e') {
+                                                                                          c = str[34];
+                                                                                          if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE;
+                                                                                          return 0;
+                                                                                        }
+                                                                                        return 0;
+                                                                                      }
+                                                                                      return 0;
+                                                                                    }
+                                                                                    return 0;
+                                                                                  }
+                                                                                  return 0;
+                                                                                }
+                                                                                return 0;
+                                                                              }
+                                                                            } else {
+                                                                            }
+                                                                          } else {
+                                                                            if (c == 's') {
+                                                                              c = str[29];
+                                                                              if (c == 'u') {
+                                                                                c = str[30];
+                                                                                if (c == 'm') {
+                                                                                  c = str[31];
+                                                                                  if (c == 'm') {
+                                                                                    c = str[32];
+                                                                                    if (c == 'o') {
+                                                                                      c = str[33];
+                                                                                      if (c == 'n') {
+                                                                                        c = str[34];
+                                                                                        if (!c) return NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_SUMMON;
+                                                                                        return 0;
+                                                                                      }
+                                                                                      return 0;
+                                                                                    }
+                                                                                    return 0;
+                                                                                  }
+                                                                                  return 0;
+                                                                                }
+                                                                                return 0;
+                                                                              }
+                                                                              return 0;
+                                                                            }
+                                                                          }
+                                                                          return 0;
+                                                                        }
+                                                                        return 0;
+                                                                      }
+                                                                      return 0;
+                                                                    }
+                                                                    return 0;
+                                                                  }
+                                                                  return 0;
+                                                                }
+                                                                return 0;
+                                                              }
+                                                              return 0;
+                                                            }
+                                                            return 0;
+                                                          }
+                                                          return 0;
+                                                        }
+                                                        return 0;
+                                                      }
+                                                      return 0;
+                                                    }
+                                                    return 0;
+                                                  }
+                                                } else {
+                                                }
+                                                return 0;
+                                              }
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                                return 0;
+                              }
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                      } else {
                       }
                     }
                     return 0;
