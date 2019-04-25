@@ -1041,6 +1041,23 @@ do_unparse(
 }
 
 int
+testing_report_to_mem_bson(
+        char **pstr,
+        size_t *psize,
+        testing_report_xml_t r)
+{
+    bson_t *b = bson_new();
+    do_unparse(b, r);
+    const unsigned char *data = bson_get_data(b);
+    char *res = malloc(b->len);
+    memcpy(res, data, b->len);
+    *pstr = res;
+    *psize = b->len;
+    bson_destroy(b);
+    return 0;
+}
+
+int
 testing_report_to_file_bson(
         const unsigned char *path,
         testing_report_xml_t r)
@@ -1090,6 +1107,15 @@ testing_report_parse_data(
         unsigned int size)
 {
     return NULL;
+}
+
+int
+testing_report_to_mem_bson(
+        char **pstr,
+        size_t *psize,
+        testing_report_xml_t r)
+{
+    return -1;
 }
 
 int
