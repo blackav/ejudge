@@ -554,6 +554,10 @@ uuid_archive_remove(
   snprintf(path, sizeof(path), "%s/%s", base, DFLT_R_UUID_XML_REPORT);
   remove_all_suffixes(path);
 
+  // bson is never compressed
+  snprintf(path, sizeof(path), "%s/%s", base, DFLT_R_UUID_BSON_REPORT);
+  unlink(path);
+
   snprintf(path, sizeof(path), "%s/%s", base, DFLT_R_UUID_REPORT);
   remove_all_suffixes(path);
 
