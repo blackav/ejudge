@@ -2966,16 +2966,24 @@ serve_read_compile_packet(
     testing_report->compile_error = 1;
     memcpy(&testing_report->uuid, &re.run_uuid, sizeof(testing_report->uuid));
 
-    xfree(txt_text); txt_text = NULL; txt_size = 0;
-    testing_report_to_str(&txt_text, &txt_size, 1, testing_report);
-
-    if (re.store_flags == 1) {
+    if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+      xfree(txt_text); txt_text = NULL; txt_size = 0;
+      testing_report_to_mem_bson(&txt_text, &txt_size, testing_report);
       rep_flags = uuid_archive_make_write_path(state, rep_path, sizeof(rep_path),
-                                               &re.run_uuid, txt_size, DFLT_R_UUID_XML_REPORT, 0);
+                                               &re.run_uuid, txt_size, DFLT_R_UUID_BSON_REPORT, -1);
     } else {
-      rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
-                                          global->xml_report_archive_dir, comp_pkt->run_id, txt_size, 0, 0);
+      xfree(txt_text); txt_text = NULL; txt_size = 0;
+      testing_report_to_str(&txt_text, &txt_size, 1, testing_report);
+
+      if (re.store_flags == STORE_FLAGS_UUID) {
+        rep_flags = uuid_archive_make_write_path(state, rep_path, sizeof(rep_path),
+                                                 &re.run_uuid, txt_size, DFLT_R_UUID_XML_REPORT, 0);
+      } else {
+        rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
+                                            global->xml_report_archive_dir, comp_pkt->run_id, txt_size, 0, 0);
+      }
     }
+
     if (rep_flags < 0) {
       snprintf(errmsg, sizeof(errmsg),
                "archive_make_write_path: %s, %d, %ld failed\n",
@@ -2984,7 +2992,12 @@ serve_read_compile_packet(
       goto report_check_failed;
     }
 
-    if (re.store_flags == 1) {
+    if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+      if (uuid_archive_dir_prepare(state, &re.run_uuid, DFLT_R_UUID_BSON_REPORT, 0) < 0) {
+        snprintf(errmsg, sizeof(errmsg), "uuid_archive_dir_prepare: failed\n");
+        goto report_check_failed;
+      }
+    } else if (re.store_flags == STORE_FLAGS_UUID) {
       if (uuid_archive_dir_prepare(state, &re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0) {
         snprintf(errmsg, sizeof(errmsg), "uuid_archive_dir_prepare: failed\n");
         goto report_check_failed;
@@ -3029,7 +3042,7 @@ serve_read_compile_packet(
     abort();
   }
 
-  if (1 /*re.store_flags == 1*/) {
+  if (1 /*re.store_flags == STORE_FLAGS_UUID || re.store_flags == STORE_FLAGS_UUID_BSON */) {
     snprintf(txt_packet_path, sizeof(txt_packet_path), "%s/%s.txt", compile_report_dir, pname);
     generic_read_file(&txt_text, 0, &txt_size, REMOVE, NULL, txt_packet_path, NULL);
 
@@ -3043,18 +3056,30 @@ serve_read_compile_packet(
     testing_report->compile_error = 1;
     memcpy(&testing_report->uuid, &re.run_uuid, sizeof(testing_report->uuid));
 
-    xfree(txt_text); txt_text = NULL; txt_size = 0;
-    testing_report_to_str(&txt_text, &txt_size, 1, testing_report);
-
-    if (re.store_flags == 1) {
+    if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+      xfree(txt_text); txt_text = NULL; txt_size = 0;
+      testing_report_to_mem_bson(&txt_text, &txt_size, testing_report);
       rep_flags = uuid_archive_make_write_path(state, rep_path, sizeof(rep_path),
-                                               &re.run_uuid, txt_size, DFLT_R_UUID_XML_REPORT, 0);
+                                               &re.run_uuid, txt_size, DFLT_R_UUID_BSON_REPORT, -1);
     } else {
-      rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
-                                          global->xml_report_archive_dir, comp_pkt->run_id, txt_size, 0, 0);
+      xfree(txt_text); txt_text = NULL; txt_size = 0;
+      testing_report_to_str(&txt_text, &txt_size, 1, testing_report);
+
+      if (re.store_flags == STORE_FLAGS_UUID) {
+        rep_flags = uuid_archive_make_write_path(state, rep_path, sizeof(rep_path),
+                                                 &re.run_uuid, txt_size, DFLT_R_UUID_XML_REPORT, 0);
+      } else {
+        rep_flags = archive_make_write_path(state, rep_path, sizeof(rep_path),
+                                            global->xml_report_archive_dir, comp_pkt->run_id, txt_size, 0, 0);
+      }
     }
     ASSERT(rep_flags >= 0);
-    if (re.store_flags == 1) {
+    if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+      if (uuid_archive_dir_prepare(state, &re.run_uuid, DFLT_R_UUID_BSON_REPORT, 0) < 0) {
+        snprintf(errmsg, sizeof(errmsg), "uuid_archive_dir_prepare: failed\n");
+        goto report_check_failed;
+      }
+    } else if (re.store_flags == STORE_FLAGS_UUID) {
       if (uuid_archive_dir_prepare(state, &re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0) {
         snprintf(errmsg, sizeof(errmsg), "uuid_archive_dir_prepare: failed\n");
         goto report_check_failed;
@@ -3072,6 +3097,12 @@ serve_read_compile_packet(
     goto prepare_run_request;
   }
 
+  // looks like we never should get here
+  if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+    err("read_compile_packet: unsupported mode: STORE_FLAGS_UUID_BSON not supported here");
+    goto report_check_failed;
+  }
+
   if (comp_pkt->status == RUN_CHECK_FAILED
       || comp_pkt->status == RUN_COMPILE_ERR
       || comp_pkt->status == RUN_STYLE_ERR) {
@@ -3081,7 +3112,7 @@ serve_read_compile_packet(
       goto report_check_failed;
     }
 
-    if (re.store_flags == 1) {
+    if (re.store_flags == STORE_FLAGS_UUID) {
       rep_flags = uuid_archive_make_write_path(state, rep_path, sizeof(rep_path),
                                                &re.run_uuid, report_size, DFLT_R_UUID_XML_REPORT, 0);
     } else {
@@ -3146,7 +3177,7 @@ serve_read_compile_packet(
                             comp_pkt->status) < 0)
       goto non_fatal_error;
 
-    if (re.store_flags == 1) {
+    if (re.store_flags == STORE_FLAGS_UUID) {
       if (uuid_archive_dir_prepare(state, &re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0) {
         snprintf(errmsg, sizeof(errmsg), "archive_dir_prepare: %s, %d failed\n",
                  global->uuid_archive_dir, comp_pkt->run_id);
@@ -3267,17 +3298,33 @@ prepare_run_request:
   serve_telegram_check_failed(config, cnts, state, comp_pkt->run_id, &re);
 
   /* this is error recover, so if error happens again, we cannot do anything */
-  if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
-                          RUN_CHECK_FAILED) < 0)
+  if (run_change_status_4(state->runlog_state, comp_pkt->run_id, RUN_CHECK_FAILED) < 0)
     goto non_fatal_error;
   report_size = strlen(errmsg);
-  if (re.store_flags == 1) {
+
+  if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+    testing_report = testing_report_alloc(comp_pkt->contest_id, comp_pkt->run_id, re.judge_id);
+    testing_report->status = RUN_CHECK_FAILED;
+    if (txt_text) {
+      testing_report->compiler_output = xstrdup(errmsg);
+      utf8_fix_string(testing_report->compiler_output, NULL);
+    }
+    testing_report->scoring_system = global->score_system;
+    testing_report->compile_error = 1;
+    memcpy(&testing_report->uuid, &re.run_uuid, sizeof(testing_report->uuid));
+    xfree(txt_text); txt_text = NULL; txt_size = 0;
+    testing_report_to_mem_bson(&txt_text, &txt_size, testing_report);
     rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
-                                                &re.run_uuid, report_size, DFLT_R_UUID_XML_REPORT, 0, 0);
+                                                &re.run_uuid, txt_size, DFLT_R_UUID_BSON_REPORT, 0, -1);
   } else {
-    rep_flags = archive_prepare_write_path(state, rep_path, sizeof(rep_path),
-                                           global->xml_report_archive_dir, comp_pkt->run_id,
-                                           report_size, NULL, 0, 0);
+    if (re.store_flags == STORE_FLAGS_UUID) {
+      rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
+                                                  &re.run_uuid, report_size, DFLT_R_UUID_XML_REPORT, 0, 0);
+    } else {
+      rep_flags = archive_prepare_write_path(state, rep_path, sizeof(rep_path),
+                                             global->xml_report_archive_dir, comp_pkt->run_id,
+                                             report_size, NULL, 0, 0);
+    }
   }
   if (rep_flags < 0)
     goto non_fatal_error;
@@ -3606,37 +3653,60 @@ serve_read_run_packet(
   // try to read the existing testing report
   cur_rep_flag = serve_make_xml_report_read_path(state, cur_rep_path, sizeof(cur_rep_path), &re);
   if (cur_rep_flag >= 0) {
-    if (generic_read_file(&cur_rep_text, 0, &cur_rep_len, cur_rep_flag, 0, cur_rep_path, 0) >= 0) {
-      const unsigned char *cur_start_ptr = NULL;
-      int cur_content_type = get_content_type(cur_rep_text, &cur_start_ptr);
-      if (cur_content_type == CONTENT_TYPE_XML && cur_start_ptr) {
-        cur_tr = testing_report_parse_xml(cur_start_ptr);
-        if (cur_tr && cur_tr->compiler_output) {
-          compiler_output = cur_tr->compiler_output; cur_tr->compiler_output = NULL;
-        }
+    if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+      cur_tr = testing_report_parse_bson_file(cur_rep_path);
+      if (cur_tr && cur_tr->compiler_output) {
+        compiler_output = cur_tr->compiler_output; cur_tr->compiler_output = NULL;
         testing_report_free(cur_tr); cur_tr = NULL;
       }
-      xfree(cur_rep_text); cur_rep_text = NULL;
+    } else {
+      if (generic_read_file(&cur_rep_text, 0, &cur_rep_len, cur_rep_flag, 0, cur_rep_path, 0) >= 0) {
+        const unsigned char *cur_start_ptr = NULL;
+        int cur_content_type = get_content_type(cur_rep_text, &cur_start_ptr);
+        if (cur_content_type == CONTENT_TYPE_XML && cur_start_ptr) {
+          cur_tr = testing_report_parse_xml(cur_start_ptr);
+          if (cur_tr && cur_tr->compiler_output) {
+            compiler_output = cur_tr->compiler_output; cur_tr->compiler_output = NULL;
+          }
+          testing_report_free(cur_tr); cur_tr = NULL;
+        }
+        xfree(cur_rep_text); cur_rep_text = NULL;
+      }
     }
   }
 
   // try to merge the testing reports
   if (compiler_output) {
-    const unsigned char *new_start_ptr = NULL;
-    int new_content_type = get_content_type(new_rep_text, &new_start_ptr);
-    if (new_content_type == CONTENT_TYPE_XML && new_start_ptr) {
-      new_tr = testing_report_parse_xml(new_start_ptr);
-      if (new_tr && !new_tr->compiler_output) {
-        new_tr->compiler_output = compiler_output; compiler_output = NULL;
-        xfree(new_rep_text); new_rep_text = NULL; new_rep_len = 0;
-        testing_report_to_str(&new_rep_text, &new_rep_len, 1, new_tr);
+    if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+      if ((new_tr = testing_report_parse_bson_data(new_rep_text, new_rep_len))) {
+        if (new_tr && !new_tr->compiler_output) {
+          new_tr->compiler_output = compiler_output; compiler_output = NULL;
+          xfree(new_rep_text); new_rep_text = NULL; new_rep_len = 0;
+          testing_report_to_mem_bson(&new_rep_text, &new_rep_len, new_tr);
+        }
+        testing_report_free(new_tr); new_tr = NULL;
+        xfree(compiler_output); compiler_output = NULL;
       }
-      testing_report_free(new_tr); new_tr = NULL;
-      xfree(compiler_output); compiler_output = NULL;
+    } else {
+      const unsigned char *new_start_ptr = NULL;
+      int new_content_type = get_content_type(new_rep_text, &new_start_ptr);
+      if (new_content_type == CONTENT_TYPE_XML && new_start_ptr) {
+        new_tr = testing_report_parse_xml(new_start_ptr);
+        if (new_tr && !new_tr->compiler_output) {
+          new_tr->compiler_output = compiler_output; compiler_output = NULL;
+          xfree(new_rep_text); new_rep_text = NULL; new_rep_len = 0;
+          testing_report_to_str(&new_rep_text, &new_rep_len, 1, new_tr);
+        }
+        testing_report_free(new_tr); new_tr = NULL;
+        xfree(compiler_output); compiler_output = NULL;
+      }
     }
   }
 
-  if (re.store_flags == 1) {
+  if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+    rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
+                                                &re.run_uuid, new_rep_len, DFLT_R_UUID_BSON_REPORT, 0, -1);
+  } else if (re.store_flags == STORE_FLAGS_UUID) {
     rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
                                                 &re.run_uuid, new_rep_len, DFLT_R_UUID_XML_REPORT, 0, 0);
   } else {
@@ -3937,15 +4007,33 @@ serve_judge_built_in_problem(
 
   // FIXME: handle errors
   run_get_entry(state->runlog_state, run_id, re);
-  if (re->store_flags == 1) {
-    rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
-                                                &re->run_uuid, xml_len, DFLT_R_UUID_XML_REPORT, 0, 0);
+
+  if (re->store_flags == STORE_FLAGS_UUID_BSON) {
+    // FIXME: this sucks, FIX report generation (above) to create internal structure instead of text
+    const unsigned char *start_ptr = NULL;
+    int content_type = get_content_type(xml_buf, &start_ptr);
+    if (content_type == CONTENT_TYPE_XML && start_ptr) {
+      testing_report_xml_t tr = testing_report_parse_xml(start_ptr);
+      if (tr) {
+        free(xml_buf); xml_buf = NULL; xml_len = 0;
+        testing_report_to_mem_bson(&xml_buf, &xml_len, tr);
+        testing_report_free(tr);
+        rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
+                                                    &re->run_uuid, xml_len, DFLT_R_UUID_BSON_REPORT, 0, -1);
+        generic_write_file(xml_buf, xml_len, rep_flags, 0, rep_path, "");
+      }
+    }
   } else {
-    rep_flags = archive_prepare_write_path(state, rep_path, sizeof(rep_path),
-                                           global->xml_report_archive_dir, run_id,
-                                           xml_len, NULL, 0, 0);
+    if (re->store_flags == STORE_FLAGS_UUID) {
+      rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
+                                                  &re->run_uuid, xml_len, DFLT_R_UUID_XML_REPORT, 0, 0);
+    } else {
+      rep_flags = archive_prepare_write_path(state, rep_path, sizeof(rep_path),
+                                             global->xml_report_archive_dir, run_id,
+                                             xml_len, NULL, 0, 0);
+    }
+    generic_write_file(xml_buf, xml_len, rep_flags, 0, rep_path, "");
   }
-  generic_write_file(xml_buf, xml_len, rep_flags, 0, rep_path, "");
 
   xfree(xml_buf); xml_buf = 0;
   html_armor_free(&ab);
@@ -3969,25 +4057,32 @@ serve_report_check_failed(
 
   run_get_entry(state->runlog_state, run_id, &re);
 
+  serve_audit_log(state, run_id, &re, 0, 0, 0,
+                  NULL, "check failed", -1,
+                  "  %s\n\n", error_text);
+
   tr->status = RUN_CHECK_FAILED;
   tr->scoring_system = global->score_system;
   tr->marked_flag = 0;
   tr->user_status = -1;
   tr->errors = xstrdup(error_text);
 
-  testing_report_to_str(&tr_t, &tr_z, 1/*utf8_mode*/, tr);
-  tr = testing_report_free(tr);
-
-  serve_audit_log(state, run_id, &re, 0, 0, 0,
-                  NULL, "check failed", -1,
-                  "  %s\n\n", error_text);
-
-  if (re.store_flags) {
+  if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+    testing_report_to_mem_bson(&tr_t, &tr_z, tr);
+    tr = testing_report_free(tr);
     flags = uuid_archive_prepare_write_path(state, tr_p, sizeof(tr_p),
-                                            &re.run_uuid, tr_z, DFLT_R_UUID_XML_REPORT, 0, 0);
+                                            &re.run_uuid, tr_z, DFLT_R_UUID_BSON_REPORT, 0, 0);
   } else {
-    flags = archive_prepare_write_path(state, tr_p, sizeof(tr_p), global->xml_report_archive_dir, run_id,
-                                       tr_z, NULL, 0, 0);
+    testing_report_to_str(&tr_t, &tr_z, 1/*utf8_mode*/, tr);
+    tr = testing_report_free(tr);
+
+    if (re.store_flags == STORE_FLAGS_UUID) {
+      flags = uuid_archive_prepare_write_path(state, tr_p, sizeof(tr_p),
+                                              &re.run_uuid, tr_z, DFLT_R_UUID_XML_REPORT, 0, 0);
+    } else {
+      flags = archive_prepare_write_path(state, tr_p, sizeof(tr_p), global->xml_report_archive_dir, run_id,
+                                         tr_z, NULL, 0, 0);
+    }
   }
   if (flags < 0) {
     err("archive_make_write_path: %s, %d, %ld failed\n", global->xml_report_archive_dir, run_id, (long) tr_z);
@@ -6122,7 +6217,10 @@ serve_make_xml_report_read_path(
         const struct run_entry *re)
 {
   int ret;
-  if (re->store_flags == 1) {
+  if (re->store_flags == STORE_FLAGS_UUID_BSON) {
+    ret = uuid_archive_make_read_path(state, path, size,
+                                      &re->run_uuid, DFLT_R_UUID_BSON_REPORT, -1);
+  } else if (re->store_flags == STORE_FLAGS_UUID) {
     ret = uuid_archive_make_read_path(state, path, size,
                                       &re->run_uuid, DFLT_R_UUID_XML_REPORT, 1);
   } else {
