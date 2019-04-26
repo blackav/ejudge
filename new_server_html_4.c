@@ -42,6 +42,7 @@
 #include "ejudge/errlog.h"
 #include "ejudge/prepare_dflt.h"
 #include "ejudge/ej_uuid.h"
+#include "ejudge/testing_report_xml.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -1093,6 +1094,7 @@ cmd_submit_run(
   ej_uuid_generate(&run_uuid);
   if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
     store_flags = STORE_FLAGS_UUID;
+    if (testing_report_bson_available()) store_flags = STORE_FLAGS_UUID_BSON;
   }
   run_id = run_add_record(cs->runlog_state,
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
@@ -1107,7 +1109,7 @@ cmd_submit_run(
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
 
-  if (store_flags == STORE_FLAGS_UUID) {
+  if (store_flags == STORE_FLAGS_UUID || store_flags == STORE_FLAGS_UUID_BSON) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
                                                  &run_uuid, run_size, DFLT_R_UUID_SOURCE, 0, 0);
   } else {
