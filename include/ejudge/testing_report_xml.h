@@ -195,10 +195,15 @@ testing_report_to_file(
 
 // returns 1, if bson is supported
 int testing_report_bson_available(void);
+
 testing_report_xml_t
 testing_report_parse_data(
         const unsigned char *data,
         unsigned int size);
+
+testing_report_xml_t
+testing_report_parse_bson_file(
+        const unsigned char *path);
 
 int
 testing_report_to_mem_bson(

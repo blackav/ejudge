@@ -703,6 +703,51 @@ testing_report_parse_data(
     return NULL;
 }
 
+testing_report_xml_t
+testing_report_parse_bson_file(
+        const unsigned char *path)
+{
+    int fd = -1;
+    struct stat stb;
+    size_t memz = 0;
+    unsigned char *memp = NULL;
+    testing_report_xml_t r = NULL;
+
+    if ((fd = open(path, O_RDONLY | O_NOCTTY | O_NONBLOCK, 0)) < 0) {
+        err("testing_report_parse_bson_file: open %s failed: %s", path, os_ErrorMsg());
+        goto fail;
+    }
+    if (fstat(fd, &stb) < 0) {
+        err("testing_report_parse_bson_file: fstat %s failed: %s", path, os_ErrorMsg());
+        goto fail;
+    }
+    if (!S_ISREG(stb.st_mode)) {
+        err("testing_report_parse_bson_file: %s is not regular", path);
+        goto fail;
+    }
+    long long fz = stb.st_size;
+    if (fz <= 0 || (int) fz != fz) {
+        err("testing_report_parse_bson_file: %s has invalid size %lld", path, fz);
+        goto fail;
+    }
+    memz = fz;
+    if ((memp = mmap(NULL, memz, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) {
+        err("testing_report_parse_bson_file: mmap %s failed: %s", path, os_ErrorMsg());
+        goto fail;
+    }
+    close(fd); fd = -1;
+    if (!(r = testing_report_parse_data(memp, memz))) {
+        goto fail;
+    }
+    munmap(memp, memz);
+    return r;
+
+fail:
+    if (memp) munmap(memp, memz);
+    if (fd < 0) close(fd);
+    return NULL;
+}
+
 static void
 unparse_digest_attr(
         bson_t *b,
@@ -1101,10 +1146,18 @@ int testing_report_bson_available(void)
 {
     return 0;
 }
+
 testing_report_xml_t
 testing_report_parse_data(
         const unsigned char *data,
         unsigned int size)
+{
+    return NULL;
+}
+
+testing_report_xml_t
+testing_report_parse_bson_file(
+        const unsigned char *path)
 {
     return NULL;
 }
