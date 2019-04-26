@@ -1789,7 +1789,8 @@ serve_run_request(
         int no_db_flag,
         ej_uuid_t *puuid,
         int rejudge_flag,
-        int zip_mode)
+        int zip_mode,
+        int store_flags)
 {
   int cn;
   struct section_global_data *global = state->global;
@@ -2118,7 +2119,7 @@ serve_run_request(
   srgp->rejudge_flag = rejudge_flag;
   srgp->zip_mode = zip_mode;
   srgp->contest_server_id = xstrdup(config->contest_server_id);
-  srgp->bson_available = testing_report_bson_available();
+  srgp->bson_available = (store_flags == STORE_FLAGS_UUID_BSON);
 
   struct super_run_in_problem_packet *srpp = srp->problem;
   srpp->type = xstrdup(problem_unparse_type(prob->type));
@@ -3272,7 +3273,7 @@ prepare_run_request:
                         comp_pkt->judge_id, comp_extra->accepting_mode,
                         comp_extra->notify_flag, re.mime_type, re.eoln_type,
                         re.locale_id, compile_report_dir, comp_pkt, 0, &re.run_uuid,
-                        comp_extra->rejudge_flag, comp_pkt->zip_mode) < 0) {
+                        comp_extra->rejudge_flag, comp_pkt->zip_mode, re.store_flags) < 0) {
     snprintf(errmsg, sizeof(errmsg), "failed to write run packet\n");
     goto report_check_failed;
   }
@@ -4200,7 +4201,7 @@ serve_rejudge_run(
                       re.variant, priority_adjustment,
                       -1, accepting_mode, 1, re.mime_type, re.eoln_type,
                       re.locale_id, 0, 0, 0, &re.run_uuid,
-                      1 /* rejudge_flag */, 0 /* zip_mode */);
+                      1 /* rejudge_flag */, 0 /* zip_mode */, re.store_flags);
     xfree(run_text);
     return;
   }

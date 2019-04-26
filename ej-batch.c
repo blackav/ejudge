@@ -692,7 +692,8 @@ process_compile_packet(
                         1 /* no_db_flag */,
                         NULL /* uuid */,
                         0 /* rejudge_flag */,
-                        0 /* zip_mode */);
+                        0 /* zip_mode */,
+                        0 /* store_flags */);
   if (r < 0) abort();
 
   return 0;

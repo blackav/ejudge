@@ -1185,7 +1185,7 @@ cmd_submit_run(
                               cnts->id, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
-                              0 /* rejudge_flag */, 0 /* zip_mode */) < 0)
+                              0 /* rejudge_flag */, 0 /* zip_mode */, store_flags) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }
@@ -1238,7 +1238,7 @@ cmd_submit_run(
                               cnts->id, run_id,
                               phr->user_id, prob->id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
-                              0 /* rejudge_flag */, 0 /* zip_mode */) < 0)
+                              0 /* rejudge_flag */, 0 /* zip_mode */, store_flags) < 0)
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
       }
     }

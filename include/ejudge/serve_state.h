@@ -525,7 +525,8 @@ serve_run_request(
         int no_db_flag,
         ej_uuid_t *puuid,
         int rejudge_flag,
-        int zip_mode);
+        int zip_mode,
+        int store_flags);
 
 int serve_is_valid_status(serve_state_t state, int status, int mode);
 
