@@ -1170,7 +1170,7 @@ serve_move_files_to_insert_run(serve_state_t state, int run_id)
   if (run_id == total - 1) return;
   for (i = total - 2; i >= run_id; i--) {
     if (run_get_entry(state->runlog_state, i, &re) < 0) continue;
-    if (re.store_flags == 1) continue;
+    if (re.store_flags == STORE_FLAGS_UUID) continue;
 
     info("rename: %d -> %d", i, i + 1);
     archive_remove(state, global->run_archive_dir, i + 1, 0);
@@ -1244,7 +1244,7 @@ serve_audit_log(
            ltm->tm_year + 1900, ltm->tm_mon + 1, ltm->tm_mday,
            ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
 
-  if (re && re->store_flags == 1) {
+  if (re && re->store_flags == STORE_FLAGS_UUID) {
     flags = uuid_archive_prepare_write_path(state, audit_path, sizeof(audit_path),
                                             &re->run_uuid, 0, DFLT_R_UUID_AUDIT, 0, 1);
   } else {
@@ -1616,7 +1616,7 @@ serve_compile_request(
 
   if (src_header_size > 0 || src_footer_size > 0) {
     if (len < 0) {
-      if (store_flags == 1) {
+      if (store_flags == STORE_FLAGS_UUID) {
         arch_flags = uuid_archive_make_read_path(state, run_arch, sizeof(run_arch),
                                                  puuid, DFLT_R_UUID_SOURCE, 0);
       } else {
@@ -1651,7 +1651,7 @@ serve_compile_request(
     }
   } else if (len < 0) {
     // copy from archive
-    if (store_flags == 1) {
+    if (store_flags == STORE_FLAGS_UUID) {
       arch_flags = uuid_archive_make_read_path(state, run_arch, sizeof(run_arch),
                                                puuid, DFLT_R_UUID_SOURCE, 0);
     } else {
@@ -3136,7 +3136,7 @@ serve_read_compile_packet(
   snprintf(txt_packet_path, sizeof(txt_packet_path), "%s/%s.txt", compile_report_dir, pname);
   if (generic_read_file(&txt_text, 0, &txt_size, REMOVE, NULL, txt_packet_path, NULL) >= 0
       && txt_size >= min_txt_size) {
-    if (re.store_flags == 1) {
+    if (re.store_flags == STORE_FLAGS_UUID) {
       arch_flags = uuid_archive_make_write_path(state, txt_report_path, sizeof(txt_report_path),
                                                 &re.run_uuid, txt_size, DFLT_R_UUID_REPORT, 0);
     } else {
@@ -3153,7 +3153,7 @@ serve_read_compile_packet(
     if (run_change_status_4(state->runlog_state, comp_pkt->run_id,
                             RUN_CHECK_FAILED) < 0)
       goto non_fatal_error;
-    if (re.store_flags == 1) {
+    if (re.store_flags == STORE_FLAGS_UUID) {
       if (uuid_archive_dir_prepare(state, &re.run_uuid, DFLT_R_UUID_XML_REPORT, 0) < 0)
         goto non_fatal_error;
     } else {
@@ -3728,7 +3728,7 @@ serve_read_run_packet(
       full_flags = ZIP;
       full_suffix = ".zip";
     }
-    if (re.store_flags == 1) {
+    if (re.store_flags == STORE_FLAGS_UUID) {
       full_flags = uuid_archive_prepare_write_path(state, full_path, sizeof(full_path),
                                                    &re.run_uuid, 0, DFLT_R_UUID_FULL_ARCHIVE, full_flags, 0);
     } else {
@@ -5538,7 +5538,7 @@ serve_clear_by_mask(serve_state_t state,
     if ((mask[r / BITS_PER_LONG] & (1L << (r % BITS_PER_LONG)))
         && !run_is_readonly(state->runlog_state, r)) {
       if (run_get_entry(state->runlog_state, r, &re) >= 0 && run_clear_entry(state->runlog_state, r) >= 0) {
-        if (re.store_flags == 1) {
+        if (re.store_flags == STORE_FLAGS_UUID) {
           uuid_archive_remove(state, &re.run_uuid, 0);
         } else {
           archive_remove(state, global->run_archive_dir, r, 0);
@@ -5597,7 +5597,7 @@ serve_ignore_by_mask(serve_state_t state,
 
     re.status = new_status;
     if (run_set_entry(state->runlog_state, r, RE_STATUS, &re) >= 0) {
-      if (re.store_flags == 1) {
+      if (re.store_flags == STORE_FLAGS_UUID) {
         uuid_archive_remove(state, &re.run_uuid, 1);
       } else {
         archive_remove(state, global->xml_report_archive_dir, r, 0);
@@ -6199,7 +6199,7 @@ serve_make_source_read_path(
         const struct run_entry *re)
 {
   int ret;
-  if (re->store_flags == 1) {
+  if (re->store_flags == STORE_FLAGS_UUID) {
     ret = uuid_archive_make_read_path(state, path, size,
                                       &re->run_uuid, DFLT_R_UUID_SOURCE, 1);
   } else {
@@ -6238,7 +6238,7 @@ serve_make_report_read_path(
         const struct run_entry *re)
 {
   int ret;
-  if (re->store_flags == 1) {
+  if (re->store_flags == STORE_FLAGS_UUID) {
     ret = uuid_archive_make_read_path(state, path, size,
                                       &re->run_uuid, DFLT_R_UUID_REPORT, 1);
   } else {
@@ -6266,7 +6266,7 @@ serve_make_full_report_read_path(
         const struct run_entry *re)
 {
   int ret;
-  if (re->store_flags == 1) {
+  if (re->store_flags == STORE_FLAGS_UUID) {
     ret = uuid_archive_make_read_path(state, path, size,
                                       &re->run_uuid, DFLT_R_UUID_FULL_ARCHIVE, ZIP);
   } else {
@@ -6284,7 +6284,7 @@ serve_make_audit_read_path(
         const struct run_entry *re)
 {
   int ret;
-  if (re->store_flags == 1) {
+  if (re->store_flags == STORE_FLAGS_UUID) {
     ret = uuid_archive_make_read_path(state, path, size,
                                       &re->run_uuid, DFLT_R_UUID_AUDIT, 0);
   } else {

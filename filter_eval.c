@@ -128,7 +128,7 @@ is_missing_source(
 
   if (!run_is_normal_or_transient_status(re->status)) return 0;
 
-  if (re->store_flags == 1) {
+  if (re->store_flags == STORE_FLAGS_UUID) {
     if ((src_flags = uuid_archive_make_read_path(cs, src_path, sizeof(src_path),
                                                  &re->run_uuid, DFLT_R_UUID_SOURCE, 0)) < 0)
       return 1;

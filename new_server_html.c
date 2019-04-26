@@ -3379,7 +3379,7 @@ priv_submit_run(
   int store_flags = 0;
   ej_uuid_generate(&run_uuid);
   if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
-    store_flags = 1;
+    store_flags = STORE_FLAGS_UUID;
   }
   run_id = run_add_record(cs->runlog_state,
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
@@ -3395,7 +3395,7 @@ priv_submit_run(
   }
   serve_move_files_to_insert_run(cs, run_id);
 
-  if (store_flags == 1) {
+  if (store_flags == STORE_FLAGS_UUID) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
                                                  &run_uuid, run_size, DFLT_R_UUID_SOURCE, 0, 0);
   } else {
@@ -3778,7 +3778,7 @@ priv_set_run_rejected_status(
   text2 = text_area_process_string(text, 0, 0);
   text2_len = strlen(text2);
 
-  if (re.store_flags == 1) {
+  if (re.store_flags == STORE_FLAG_UUID) {
     rep_flags = uuid_archive_prepare_write_path(cs, rep_path, sizeof(rep_path),
                                                 &re.run_uuid, text2_len, DFLT_R_UUID_XML_REPORT, 0, 0);
   } else {
@@ -4310,7 +4310,7 @@ priv_clear_run(FILE *fout, FILE *log_f,
   if (run_clear_entry(cs->runlog_state, run_id) < 0)
     FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
 
-  if (re.store_flags == 1) {
+  if (re.store_flags == STORE_FLAGS_UUID) {
     uuid_archive_remove(cs, &re.run_uuid, 0);
   } else {
     archive_remove(cs, global->run_archive_dir, run_id, 0);
@@ -5278,7 +5278,7 @@ priv_new_run(FILE *fout,
   int store_flags = 0;
   ej_uuid_generate(&run_uuid);
   if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
-    store_flags = 1;
+    store_flags = STORE_FLAGS_UUID;
   }
   run_id = run_add_record(cs->runlog_state,
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
@@ -5291,7 +5291,7 @@ priv_new_run(FILE *fout,
   if (run_id < 0) FAIL(NEW_SRV_ERR_RUNLOG_UPDATE_FAILED);
   serve_move_files_to_insert_run(cs, run_id);
 
-  if (store_flags == 1) {
+  if (store_flags == STORE_FLAGS_UUID) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
                                                  &run_uuid, run_size, DFLT_R_UUID_SOURCE, 0, 0);
   } else {
@@ -9418,7 +9418,7 @@ ns_submit_run(
     uuid_ptr = &run_uuid;
   }
   if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
-    store_flags = 1;
+    store_flags = STORE_FLAGS_UUID;
   }
   run_id = run_add_record(cs->runlog_state,
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
@@ -9437,7 +9437,7 @@ ns_submit_run(
   unsigned char run_path[PATH_MAX];
   run_path[0] = 0;
   int arch_flags = 0;
-  if (store_flags == 1) {
+  if (store_flags == STORE_FLAGS_UUID) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
                                                  uuid_ptr, run_size, DFLT_R_UUID_SOURCE,
                                                  0, 0);
@@ -10047,7 +10047,7 @@ unpriv_submit_run(
   int store_flags = 0;
   ej_uuid_generate(&run_uuid);
   if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
-    store_flags = 1;
+    store_flags = STORE_FLAGS_UUID;
   }
   run_id = run_add_record(cs->runlog_state,
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
@@ -10062,7 +10062,7 @@ unpriv_submit_run(
   }
   serve_move_files_to_insert_run(cs, run_id);
 
-  if (store_flags == 1) {
+  if (store_flags == STORE_FLAGS_UUID) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
                                                  &run_uuid, run_size, DFLT_R_UUID_SOURCE,
                                                  0, 0);
@@ -11608,7 +11608,7 @@ unpriv_xml_update_answer(
     gettimeofday(&precise_time, 0);
     ej_uuid_generate(&run_uuid);
     if (global->uuid_run_store > 0 && run_get_uuid_hash_state(cs->runlog_state) >= 0 && ej_uuid_is_nonempty(run_uuid)) {
-      store_flags = 1;
+      store_flags = STORE_FLAGS_UUID;
     }
     run_id = run_add_record(cs->runlog_state,
                             precise_time.tv_sec, precise_time.tv_usec * 1000,
@@ -11623,7 +11623,7 @@ unpriv_xml_update_answer(
     new_flag = 1;
   }
 
-  if (arch_flags == 1) {
+  if (store_flags == STORE_FLAGS_UUID) {
     arch_flags = uuid_archive_prepare_write_path(cs, run_path, sizeof(run_path),
                                                  &run_uuid, run_size, DFLT_R_UUID_SOURCE, 0, 0);
   } else {
