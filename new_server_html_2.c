@@ -2454,16 +2454,21 @@ ns_write_tests(
     FAIL(NEW_SRV_ERR_REPORT_NONEXISTANT);
   }
 
-  if (generic_read_file(&rep_text, 0, &rep_len, rep_flag,0,rep_path, "") < 0) {
-    FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
-  }
-  if (get_content_type(rep_text, &start_ptr) != CONTENT_TYPE_XML) {
-    // we expect the master log in XML format
-    FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
-  }
-
-  if (!(r = testing_report_parse_xml(start_ptr))) {
-    FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
+  if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+    if (!(r = testing_report_parse_bson_file(rep_path))) {
+      FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    }
+  } else {
+    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag,0,rep_path, "") < 0) {
+      FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
+    }
+    if (get_content_type(rep_text, &start_ptr) != CONTENT_TYPE_XML) {
+      // we expect the master log in XML format
+      FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    }
+    if (!(r = testing_report_parse_xml(start_ptr))) {
+      FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    }
   }
   xfree(rep_text); rep_text = 0;
 
@@ -4254,12 +4259,17 @@ ns_get_checker_comment(
 
   if ((rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re)) < 0)
     goto cleanup;
-  if (generic_read_file(&rep_txt, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0)
-    goto cleanup;
-  if (get_content_type(rep_txt, &start_ptr) != CONTENT_TYPE_XML)
-    goto cleanup;
-  if (!(rep_xml = testing_report_parse_xml(start_ptr)))
-    goto cleanup;
+  if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+    if (!(rep_xml = testing_report_parse_bson_file(rep_path)))
+      goto cleanup;
+  } else {
+    if (generic_read_file(&rep_txt, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0)
+      goto cleanup;
+    if (get_content_type(rep_txt, &start_ptr) != CONTENT_TYPE_XML)
+      goto cleanup;
+    if (!(rep_xml = testing_report_parse_xml(start_ptr)))
+      goto cleanup;
+  }
   /*
   if (rep_xml->status != RUN_PRESENTATION_ERR)
     goto cleanup;
@@ -4332,12 +4342,17 @@ static int get_accepting_passed_tests(
   r = 0;
   if ((rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), re)) < 0)
     goto cleanup;
-  if (generic_read_file(&rep_txt, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0)
-    goto cleanup;
-  if (get_content_type(rep_txt, &start_ptr) != CONTENT_TYPE_XML)
-    goto cleanup;
-  if (!(rep_xml = testing_report_parse_xml(start_ptr)))
-    goto cleanup;
+  if (re->store_flags == STORE_FLAGS_UUID_BSON) {
+    if (!(rep_xml = testing_report_parse_bson_file(rep_path)))
+      goto cleanup;
+  } else {
+    if (generic_read_file(&rep_txt, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0)
+      goto cleanup;
+    if (get_content_type(rep_txt, &start_ptr) != CONTENT_TYPE_XML)
+      goto cleanup;
+    if (!(rep_xml = testing_report_parse_xml(start_ptr)))
+      goto cleanup;
+  }
   /*
   if (rep_xml->status != RUN_PRESENTATION_ERR)
     goto cleanup;
@@ -9062,24 +9077,35 @@ write_json_run_info(
     }
 
     if ((flags = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), pre)) >= 0) {
-      if (generic_read_file(&rep_txt, 0, &rep_len, flags, 0, rep_path, 0) >= 0) {
-        const unsigned char *start_ptr = NULL;
-        if (get_content_type(rep_txt, &start_ptr) == CONTENT_TYPE_XML) {
-          if ((tr = testing_report_parse_xml(start_ptr))) {
-            is_report_available = 1;
-            if (tr->compiler_output && tr->compiler_output[0]) {
-              is_compiler_output_available = 1;
-              comp_out_txt = xstrdup(tr->compiler_output);
-              comp_out_len = strlen(comp_out_txt);
-            }
-          } else {
+      if (pre->store_flags == STORE_FLAGS_UUID_BSON) {
+        if ((tr = testing_report_parse_bson_file(rep_path))) {
+          is_report_available = 1;
+          if (tr->compiler_output && tr->compiler_output[0]) {
+            is_compiler_output_available = 1;
+            comp_out_txt = xstrdup(tr->compiler_output);
+            comp_out_len = strlen(comp_out_txt);
           }
-        } else if (ri.status == RUN_COMPILE_ERR || ri.status == RUN_STYLE_ERR) {
-          is_compiler_output_available = 1;
-          comp_out_txt = rep_txt; rep_txt = NULL;
-          comp_out_len = rep_len; rep_len = 0;
         }
       } else {
+        if (generic_read_file(&rep_txt, 0, &rep_len, flags, 0, rep_path, 0) >= 0) {
+          const unsigned char *start_ptr = NULL;
+          if (get_content_type(rep_txt, &start_ptr) == CONTENT_TYPE_XML) {
+            if ((tr = testing_report_parse_xml(start_ptr))) {
+              is_report_available = 1;
+              if (tr->compiler_output && tr->compiler_output[0]) {
+                is_compiler_output_available = 1;
+                comp_out_txt = xstrdup(tr->compiler_output);
+                comp_out_len = strlen(comp_out_txt);
+              }
+            } else {
+            }
+          } else if (ri.status == RUN_COMPILE_ERR || ri.status == RUN_STYLE_ERR) {
+            is_compiler_output_available = 1;
+            comp_out_txt = rep_txt; rep_txt = NULL;
+            comp_out_len = rep_len; rep_len = 0;
+          }
+        } else {
+        }
       }
     } else if (ri.status == RUN_COMPILE_ERR || ri.status == RUN_STYLE_ERR) {
       if ((flags = serve_make_report_read_path(cs, rep_path, sizeof(rep_path), pre)) >= 0) {

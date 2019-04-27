@@ -667,18 +667,22 @@ cmd_run_operation(
   case NEW_SRV_ACTION_DUMP_REPORT:
     if (!run_is_report_available(re.status))
       FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
-    src_flags = serve_make_xml_report_read_path(cs, src_path, sizeof(src_path), &re);
-    if (src_flags < 0) {
-      src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
-                                         global->report_archive_dir,
-                                         run_id, 0, 1);
+    if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+      // FIXME: support it
+    } else {
+      src_flags = serve_make_xml_report_read_path(cs, src_path, sizeof(src_path), &re);
+      if (src_flags < 0) {
+        src_flags = archive_make_read_path(cs, src_path, sizeof(src_path),
+                                           global->report_archive_dir,
+                                           run_id, 0, 1);
+      }
+      if (src_flags < 0)
+        FAIL(NEW_SRV_ERR_REPORT_NONEXISTANT);
+      if (generic_read_file(&src_text, 0, &src_len, src_flags,0,src_path, "") < 0)
+        FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
+      if (fwrite(src_text, 1, src_len, fout) != src_len)
+        FAIL(NEW_SRV_ERR_WRITE_ERROR);
     }
-    if (src_flags < 0)
-      FAIL(NEW_SRV_ERR_REPORT_NONEXISTANT);
-    if (generic_read_file(&src_text, 0, &src_len, src_flags,0,src_path, "") < 0)
-      FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
-    if (fwrite(src_text, 1, src_len, fout) != src_len)
-      FAIL(NEW_SRV_ERR_WRITE_ERROR);
     break;
   default:
     abort();

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -162,9 +162,13 @@ has_test_result(
 
   rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), re);
   if (rep_flag < 0) goto cleanup;
-  if (generic_read_file(&rep_txt, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0) goto cleanup;
-  if (get_content_type(rep_txt, &start_ptr) != CONTENT_TYPE_XML) goto cleanup;
-  if (!(rep_xml = testing_report_parse_xml(start_ptr))) goto cleanup;
+  if (re->store_flags == STORE_FLAGS_UUID_BSON) {
+    if (!(rep_xml = testing_report_parse_bson_file(rep_path))) goto cleanup;
+  } else {
+    if (generic_read_file(&rep_txt, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0) goto cleanup;
+    if (get_content_type(rep_txt, &start_ptr) != CONTENT_TYPE_XML) goto cleanup;
+    if (!(rep_xml = testing_report_parse_xml(start_ptr))) goto cleanup;
+  }
   if (rep_xml->run_tests <= 0) goto cleanup;
   for (int i = 0; i < rep_xml->run_tests; ++i) {
     const struct testing_report_test *rep_tst = rep_xml->tests[i];

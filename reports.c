@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2913,19 +2913,26 @@ write_xml_tex_testing_report(
     goto cleanup;
   }
 
-  if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0) {
-    fprintf(fout, "\n\nRead error for report %d.\n\n", run_id);
-    goto cleanup;
-  }
+  if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+    if (!(r = testing_report_parse_bson_file(rep_path))) {
+      fprintf(fout, "\n\nBSON report parse error.\n\n");
+      goto cleanup;
+    }
+  } else {
+    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0) {
+      fprintf(fout, "\n\nRead error for report %d.\n\n", run_id);
+      goto cleanup;
+    }
 
-  if (get_content_type(rep_text, &start_ptr) != CONTENT_TYPE_XML) {
-    fprintf(fout, "\n\nReport is not in XML format.\n\n");
-    goto cleanup;
-  }
+    if (get_content_type(rep_text, &start_ptr) != CONTENT_TYPE_XML) {
+      fprintf(fout, "\n\nReport is not in XML format.\n\n");
+      goto cleanup;
+    }
 
-  if (!(r = testing_report_parse_xml(start_ptr))) {
-    fprintf(fout, "\n\nXML report parse error.\n\n");
-    goto cleanup;
+    if (!(r = testing_report_parse_xml(start_ptr))) {
+      fprintf(fout, "\n\nXML report parse error.\n\n");
+      goto cleanup;
+    }
   }
 
   if (r->compile_error) {

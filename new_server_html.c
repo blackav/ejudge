@@ -12778,18 +12778,25 @@ unpriv_run_test_json(
     error_page(fout, phr, 0, NEW_SRV_ERR_REPORT_NONEXISTANT);
     goto cleanup;
   }
-  if (generic_read_file(&rep_txt, 0, &rep_len, flags, 0, rep_path, 0) < 0) {
-    error_page(fout, phr, 0, NEW_SRV_ERR_REPORT_NONEXISTANT);
-    goto cleanup;
-  }
-  const unsigned char *start_ptr = NULL;
-  if (get_content_type(rep_txt, &start_ptr) != CONTENT_TYPE_XML) {
-    error_page(fout, phr, 0, NEW_SRV_ERR_REPORT_NONEXISTANT);
-    goto cleanup;
-  }
-  if (!(tr = testing_report_parse_xml(start_ptr))) {
-    error_page(fout, phr, 0, NEW_SRV_ERR_REPORT_NONEXISTANT);
-    goto cleanup;
+  if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+    if (!(tr = testing_report_parse_bson_file(rep_path))) {
+      error_page(fout, phr, 0, NEW_SRV_ERR_REPORT_NONEXISTANT);
+      goto cleanup;
+    }
+  } else {
+    if (generic_read_file(&rep_txt, 0, &rep_len, flags, 0, rep_path, 0) < 0) {
+      error_page(fout, phr, 0, NEW_SRV_ERR_REPORT_NONEXISTANT);
+      goto cleanup;
+    }
+    const unsigned char *start_ptr = NULL;
+    if (get_content_type(rep_txt, &start_ptr) != CONTENT_TYPE_XML) {
+      error_page(fout, phr, 0, NEW_SRV_ERR_REPORT_NONEXISTANT);
+      goto cleanup;
+    }
+    if (!(tr = testing_report_parse_xml(start_ptr))) {
+      error_page(fout, phr, 0, NEW_SRV_ERR_REPORT_NONEXISTANT);
+      goto cleanup;
+    }
   }
   if (num <= 0 || num > tr->run_tests) {
     error_page(fout, phr, 0, NEW_SRV_ERR_TEST_NONEXISTANT);
