@@ -195,7 +195,7 @@
       }
     } else {
       if (user_mode && global->score_system == SCORE_OLYMPIAD && accepting_mode) {
-        write_xml_team_accepting_report(out_f, phr, start_ptr, run_id, &re, prob, cnts->exam_mode, "b1");
+        write_xml_team_accepting_report(out_f, phr, tr, run_id, &re, prob, cnts->exam_mode, "b1");
       } else if (user_mode) {
         write_xml_team_testing_report(cs, prob, out_f, phr, prob->type != 0, re.is_marked, re.token_flags, tr, "b1");
       } else {

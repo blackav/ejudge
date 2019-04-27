@@ -717,7 +717,7 @@ int
 write_xml_team_accepting_report(
         FILE *f,
         struct http_request_info *phr,
-        const unsigned char *txt,
+        const struct testing_report_xml *tr,
         int rid,
         const struct run_entry *re,
         const struct section_problem_data *prob,
