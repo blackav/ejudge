@@ -737,7 +737,7 @@ write_xml_testing_report(
         FILE *f,
         struct http_request_info *phr,
         int user_mode,
-        unsigned char const *txt,
+        const struct testing_report_xml *r,
         const unsigned char *class1,
         const unsigned char *class2);
 

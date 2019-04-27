@@ -285,7 +285,7 @@ ns_unpriv_parse_run_id(
         write_xml_team_accepting_report(out_f, phr, tr, run_id, &re, prob,
                                         cnts->exam_mode, "b1");
       } else if (prob->team_show_judge_report) {
-        write_xml_testing_report(out_f, phr, 1, rep_start, "b1", "b0");
+        write_xml_testing_report(out_f, phr, 1, tr, "b1", "b0");
       } else {
         int token_flags = re.token_flags;
         if (vend_info) {

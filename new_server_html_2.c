@@ -8150,11 +8150,10 @@ write_xml_testing_report(
         FILE *f,
         struct http_request_info *phr,
         int user_mode,
-        unsigned char const *txt,
+        const struct testing_report_xml *r,
         const unsigned char *class1,
         const unsigned char *class2)
 {
-  testing_report_xml_t r = 0;
   unsigned char *s = 0;
   unsigned char *font_color = 0;
   int i, is_kirov = 0, need_comment = 0;
@@ -8176,20 +8175,11 @@ write_xml_testing_report(
     sprintf(cl2, " class=\"%s\"", class2);
   }
 
-  if (!(r = testing_report_parse_xml(txt))) {
-    fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
-    s = html_armor_string_dup(txt);
-    fprintf(f, "<pre>%s</pre>\n", s);
-    xfree(s);
-    return 0;
-  }
-
   if (r->compile_error) {
     fprintf(f, "<h2><font color=\"red\">%s</font></h2>\n", run_status_str(r->status, 0, 0, 0, 0));
     if (r->compiler_output) {
       fprintf(f, "<pre>%s</pre>\n", ARMOR(r->compiler_output));
     }
-    testing_report_free(r);
     html_armor_free(&ab);
     return 0;
   }
@@ -8608,7 +8598,6 @@ write_xml_testing_report(
   }
   fprintf(f, "</pre>");
 
-  testing_report_free(r);
   html_armor_free(&ab);
   return 0;
 }
