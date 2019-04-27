@@ -6,6 +6,7 @@
 #include "ejudge/team_extra.h"
 #include "ejudge/ej_uuid.h"
 #include "ejudge/xuser_plugin.h"
+#include "ejudge/testing_report_xml.h"
 
 int
 ns_unpriv_parse_run_id(
@@ -37,6 +38,7 @@ ns_unpriv_parse_run_id(
   int i;
   struct virtual_end_info_s *vend_info = NULL;
   int summoned_count = 0;
+  testing_report_xml_t tr = NULL;
 
   start_time = run_get_start_time(cs->runlog_state);
   stop_time = run_get_stop_time(cs->runlog_state);
@@ -130,15 +132,22 @@ ns_unpriv_parse_run_id(
 
   flags = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re);
   if (flags >= 0) {
-    if (generic_read_file(&rep_text, 0, &rep_size, flags, 0, rep_path, 0) < 0) {
-      FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
-    }
-    content_type = get_content_type(rep_text, &rep_start);
-    if (content_type != CONTENT_TYPE_XML
-        && status != RUN_COMPILE_ERR
-        && status != RUN_STYLE_ERR
-        && status != RUN_REJECTED) {
-      FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+      if (!(tr = testing_report_parse_bson_file(rep_path))) {
+        FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
+      }
+      content_type = CONTENT_TYPE_BSON;
+    } else {
+      if (generic_read_file(&rep_text, 0, &rep_size, flags, 0, rep_path, 0) < 0) {
+        FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
+      }
+      content_type = get_content_type(rep_text, &rep_start);
+      if (content_type != CONTENT_TYPE_XML
+          && status != RUN_COMPILE_ERR
+          && status != RUN_STYLE_ERR
+          && status != RUN_REJECTED) {
+        FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
+      }
     }
   } else {
     // legacy mode, the testing report not in XML format
@@ -167,6 +176,11 @@ ns_unpriv_parse_run_id(
       FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
     }
     content_type = get_content_type(rep_text, &rep_start);
+  }
+  if (content_type == CONTENT_TYPE_XML) {
+    if (!(tr = testing_report_parse_xml(rep_start))) {
+      FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    }
   }
 
 %><s:read var="clar_id" ignoreerrors="yes" default="-1" /><%
@@ -289,7 +303,7 @@ ns_unpriv_parse_run_id(
         write_xml_team_testing_report(cs, prob, out_f, phr,
                                       prob->type != PROB_TYPE_STANDARD,
                                       re.is_marked, token_flags,
-                                      rep_start, "b1");
+                                      tr, "b1");
       }
     }
     break;
@@ -305,4 +319,5 @@ cleanup:;
   l10n_resetlocale();
   html_armor_free(&ab);
   xfree(rep_text);
+  testing_report_free(tr);
 %>

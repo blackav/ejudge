@@ -4,6 +4,7 @@
 #include "ejudge/archive_paths.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/content_plugin.h"
+#include "ejudge/testing_report_xml.h"
 %><%@set getter_name = "csp_get_priv_report_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@page csp_view_priv_report_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -25,6 +26,7 @@
   const struct userlist_user *u = NULL;
   const struct userlist_user_info *ui = NULL;
   unsigned char avatar_url[1024];
+  testing_report_xml_t tr = NULL;
 
   avatar_url[0] = 0;
 
@@ -62,10 +64,17 @@
 
   rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re);
   if (rep_flag >= 0) {
-    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
-      FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
+    if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+      if (!(tr = testing_report_parse_bson_file(rep_path))) {
+        FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
+      }
+      content_type = CONTENT_TYPE_BSON;
+    } else {
+      if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0)<0){
+        FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
+      }
+      content_type = get_content_type(rep_text, &start_ptr);
     }
-    content_type = get_content_type(rep_text, &start_ptr);
   } else {
     if (user_mode) {
       rep_flag = archive_make_read_path(cs, rep_path, sizeof(rep_path),
@@ -80,6 +89,13 @@
       FAIL(NEW_SRV_ERR_DISK_READ_ERROR);
     }
     content_type = get_content_type(rep_text, &start_ptr);
+  }
+
+  if (content_type == CONTENT_TYPE_XML) {
+    if (!(tr = testing_report_parse_xml(start_ptr))) {
+      FAIL(NEW_SRV_ERR_REPORT_UNAVAILABLE);
+      // FIXME: show the raw file content
+    }
   }
 
   if (user_mode && global->score_system == SCORE_OLYMPIAD) {
@@ -169,6 +185,7 @@
     fprintf(out_f, "%s", start_ptr);
     break;
   case CONTENT_TYPE_XML:
+  case CONTENT_TYPE_BSON:
     if (prob->type == PROB_TYPE_TESTS) {
       if (user_mode) {
         write_xml_team_tests_report(cs, prob, out_f, start_ptr, "b1");
@@ -180,7 +197,7 @@
       if (user_mode && global->score_system == SCORE_OLYMPIAD && accepting_mode) {
         write_xml_team_accepting_report(out_f, phr, start_ptr, run_id, &re, prob, cnts->exam_mode, "b1");
       } else if (user_mode) {
-        write_xml_team_testing_report(cs, prob, out_f, phr, prob->type != 0, re.is_marked, re.token_flags, start_ptr, "b1");
+        write_xml_team_testing_report(cs, prob, out_f, phr, prob->type != 0, re.is_marked, re.token_flags, tr, "b1");
       } else {
         write_xml_testing_report(out_f, phr, 0, start_ptr, "b1", 0);
       }
@@ -197,4 +214,5 @@ cleanup:
   l10n_resetlocale();
   xfree(rep_text);
   html_armor_free(&ab);
+  testing_report_free(tr);
 %>

@@ -7148,11 +7148,10 @@ write_xml_team_testing_report(
         int output_only,
         int is_marked,
         int token_flags,
-        const unsigned char *txt,
+        const struct testing_report_xml *r,
         const unsigned char *table_class)
 {
   const struct section_global_data *global = state->global;
-  testing_report_xml_t r = 0;
   struct testing_report_test *t;
   unsigned char *style = 0, *s, *font_color = 0;
   int need_comment = 0, need_info = 0, is_kirov = 0, i;
@@ -7171,17 +7170,11 @@ write_xml_team_testing_report(
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
   }
 
-  if (!(r = testing_report_parse_xml(txt))) {
-    fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
-    return 0;
-  }
-
   if (r->compile_error) {
     fprintf(f, "<h2 style=\"color: #A32C2C; margin-bottom: 7px;\">%s</h2>\n", run_status_str(r->status, 0, 0, 0, 0));
     if (r->compiler_output) {
       fprintf(f, "<pre>%s</pre>\n", ARMOR(r->compiler_output));
     }
-    testing_report_free(r);
     html_armor_free(&ab);
     return 0;
   }
@@ -7213,7 +7206,6 @@ write_xml_team_testing_report(
 
   if (output_only) {
     if (r->run_tests != 1 || !(t = r->tests[0])) {
-      testing_report_free(r);
       return 0;
     }
     status = t->status;
@@ -7304,7 +7296,6 @@ write_xml_team_testing_report(
       }
     }
 
-    testing_report_free(r);
     return 0;
   }
 
@@ -7582,7 +7573,6 @@ write_xml_team_testing_report(
   }
 
   html_armor_free(&ab);
-  testing_report_free(r);
   return 0;
 }
 

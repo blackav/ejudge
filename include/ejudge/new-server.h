@@ -3,7 +3,7 @@
 #ifndef __NEW_SERVER_H__
 #define __NEW_SERVER_H__
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -699,6 +699,8 @@ new_write_user_clars(
         unsigned int show_flags,
         const unsigned char *table_class);
 
+struct testing_report_xml;
+
 int
 write_xml_team_testing_report(
         serve_state_t state,
@@ -708,7 +710,7 @@ write_xml_team_testing_report(
         int output_only,
         int is_marked,
         int token_flags,
-        const unsigned char *txt,
+        const struct testing_report_xml *tr,
         const unsigned char *table_class);
 
 int
