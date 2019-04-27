@@ -278,7 +278,7 @@ ns_unpriv_parse_run_id(
         write_xml_tests_report(out_f, 1, rep_start, phr->session_id,
                                  phr->self_url, "", "b1", "b0");
       } else {
-        write_xml_team_tests_report(cs, prob, out_f, rep_start, "b1");
+        write_xml_team_tests_report(cs, prob, out_f, tr, "b1");
       }
     } else {
       if (global->score_system == SCORE_OLYMPIAD && accepting_mode) {

@@ -8046,10 +8046,9 @@ write_xml_team_tests_report(
         const serve_state_t state,
         const struct section_problem_data *prob,
         FILE *f,
-        const unsigned char *txt,
+        const struct testing_report_xml *r,
         const unsigned char *table_class)
 {
-  testing_report_xml_t r = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   unsigned char *cl = 0;
   const unsigned char *font_color = 0;
@@ -8059,23 +8058,11 @@ write_xml_team_tests_report(
   int i;
   struct testing_report_row *trr = 0;
 
-  if (!(r = testing_report_parse_xml(txt))) {
-    fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
-    fprintf(f, "<pre>%s</pre>\n", ARMOR(txt));
-    goto done;
-  }
-
   if (r->compile_error) {
     fprintf(f, "<h2><font color=\"red\">%s</font></h2>\n", run_status_str(r->status, 0, 0, 0, 0));
     if (r->compiler_output) {
       fprintf(f, "<pre>%s</pre>\n", ARMOR(r->compiler_output));
     }
-    goto done;
-  }
-
-  if (!r->tests_mode) {
-    fprintf(f, "<p><big>Invalid XML file!</big></p>\n");
-    fprintf(f, "<pre>%s</pre>\n", ARMOR(txt));
     goto done;
   }
 
@@ -8154,7 +8141,6 @@ write_xml_team_tests_report(
 
 
 done:
-  testing_report_free(r);
   html_armor_free(&ab);
   return 0;
 }

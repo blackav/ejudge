@@ -729,7 +729,7 @@ write_xml_team_tests_report(
         const serve_state_t state,
         const struct section_problem_data *prob,
         FILE *f,
-        const unsigned char *txt,
+        const struct testing_report_xml *r,
         const unsigned char *table_class);
 
 int
