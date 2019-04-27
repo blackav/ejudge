@@ -7579,30 +7579,23 @@ write_xml_team_testing_report(
 int
 write_xml_team_output_only_acc_report(
         FILE *f,
-        const unsigned char *txt,
+        const struct testing_report_xml *r,
         int rid,
         const struct run_entry *re,
         const struct section_problem_data *prob,
         const unsigned char *table_class)
 {
-  testing_report_xml_t r = 0;
   struct testing_report_test *t;
   unsigned char *font_color = 0, *s;
   int i, act_status, tests_to_show;
   unsigned char *cl = "";
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
-  if (!(r = testing_report_parse_xml(txt))) {
-    fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
-    return 0;
-  }
-
   if (r->compile_error) {
     fprintf(f, "<h2><font color=\"red\">%s</font></h2>\n", run_status_str(r->status, 0, 0, 0, 0));
     if (r->compiler_output) {
       fprintf(f, "<pre>%s</pre>\n", ARMOR(r->compiler_output));
     }
-    testing_report_free(r);
     html_armor_free(&ab);
     return 0;
   }
@@ -7709,7 +7702,6 @@ write_xml_team_output_only_acc_report(
   }
   fprintf(f, "</table>\n");
 
-  testing_report_free(r);
   return 0;
 }
 
@@ -7737,8 +7729,15 @@ write_xml_team_accepting_report(
     snprintf(cl, sizeof(cl), " class=\"%s\"", table_class);
   }
 
-  if (prob->type > 0)
-    return write_xml_team_output_only_acc_report(f, txt, rid, re, prob, table_class);
+  if (prob->type > 0) {
+    if (!(r = testing_report_parse_xml(txt))) {
+      fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
+      return 0;
+    }
+    int retval = write_xml_team_output_only_acc_report(f, r, rid, re, prob, table_class);
+    testing_report_free(r);
+    return retval;
+  }
 
   if (!(r = testing_report_parse_xml(txt))) {
     fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
