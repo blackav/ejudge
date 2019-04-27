@@ -2,7 +2,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -75,6 +75,7 @@ enum
   CONTENT_TYPE_TEXT = 0,
   CONTENT_TYPE_HTML,
   CONTENT_TYPE_XML,
+  CONTENT_TYPE_BSON,
 };
 int get_content_type(const unsigned char *txt, const unsigned char **p_start_ptr);
 
