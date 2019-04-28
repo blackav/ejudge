@@ -1384,9 +1384,14 @@ cleanup:
   reply_pkt->ts7 = reply_pkt->ts6;
   reply_pkt->ts7_us = reply_pkt->ts6_us;
 
-  if (testing_report_to_file(report_path, utf8_mode, report_xml) < 0) {
-    // too late to report error
-    //perr("run_inverse_testing: failed to save file '%s'", report_path);
+  if (srgp->bson_available && testing_report_bson_available()) {
+    if (testing_report_to_file_bson(report_path, report_xml) < 0) {
+    }
+  } else {
+    if (testing_report_to_file(report_path, utf8_mode, report_xml) < 0) {
+      // too late to report error
+      //perr("run_inverse_testing: failed to save file '%s'", report_path);
+    }
   }
   report_xml = testing_report_free(report_xml);
 
