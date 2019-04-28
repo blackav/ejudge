@@ -863,7 +863,7 @@ do_unparse(
         bson_append_bool(b, tag_table[Tag_marked_flag], -1, r->marked_flag);
     }
     if (r->tests_mode > 0) {
-        bson_append_bool(b, tag_table[Tag_marked_flag], -1, 1);
+        bson_append_bool(b, tag_table[Tag_tests_mode], -1, 1);
     }
     if (r->tests_mode > 0 && r->tt_row_count > 0  && r->tt_column_count > 0) {
         bson_append_int32(b, tag_table[Tag_tt_row_count], -1, r->tt_row_count);
