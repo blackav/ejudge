@@ -406,6 +406,8 @@ uuid_archive_make_write_path(
       suffix = ".gz";
       zip_mode = GZIP;
     }
+  } else {
+    zip_mode = 0;
   }
 
   snprintf(path, size, "%s/%02x/%02x/%s/%s%s",
