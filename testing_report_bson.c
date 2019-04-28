@@ -661,18 +661,18 @@ parse_testing_report_bson(bson_iter_t *bi, testing_report_xml_t r)
         }
     }
 
-    if (r->tests_mode) {
-        if (has_tests) {
-            if (parse_array(&tests_iter, r, parse_test) < 0)
-                return -1;
-        }
-    } else {
+    if (r->tests_mode > 0) {
         if (has_ttrows) {
             if (parse_array(&ttrows_iter, r, parse_ttrow) < 0)
                 return -1;
         }
         if (has_ttcells) {
             if (parse_array(&ttcells_iter, r, parse_ttcell) < 0)
+                return -1;
+        }
+    } else {
+        if (has_tests) {
+            if (parse_array(&tests_iter, r, parse_test) < 0)
                 return -1;
         }
     }
@@ -1134,6 +1134,7 @@ testing_report_to_file_bson(
     }
     close(fd); fd = -1;
     bson_destroy(b); b = NULL;
+    retval = 0;
 
 cleanup:
     if (b) bson_destroy(b);
