@@ -268,7 +268,7 @@ parse_test(int index, bson_iter_t *bi, testing_report_xml_t r)
         }
     }
 
-    if (p->num <= 0 || p->num >= r->run_tests || r->tests[p->num - 1])
+    if (p->num <= 0 || p->num > r->run_tests || r->tests[p->num - 1])
         goto cleanup;
     r->tests[p->num - 1] = p;
     p = NULL;
