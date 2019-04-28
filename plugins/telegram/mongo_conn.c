@@ -89,11 +89,11 @@ mongo_conn_open(struct mongo_conn *state)
 
     if (!state->database) {
         if (!state->database) state->database = xstrdup("ejudge");
-        if (!state->host) state->host = xstrdup("localhost");
-        if (!state->table_prefix) state->table_prefix = xstrdup("");
-        if (state->port <= 0) state->port = 27017;
         state->show_queries = 1;
     }
+    if (!state->table_prefix) state->table_prefix = xstrdup("");
+    if (!state->host) state->host = xstrdup("localhost");
+    if (state->port <= 0) state->port = 27017;
 
     unsigned char uri[1024];
     if (state->user && state->password) {
@@ -131,11 +131,11 @@ mongo_conn_open(struct mongo_conn *state)
 
     if (!state->database) {
         if (!state->database) state->database = xstrdup("ejudge");
-        if (!state->host) state->host = xstrdup("localhost");
-        if (!state->table_prefix) state->table_prefix = xstrdup("");
-        if (state->port <= 0) state->port = 27017;
         state->show_queries = 1;
     }
+    if (!state->host) state->host = xstrdup("localhost");
+    if (!state->table_prefix) state->table_prefix = xstrdup("");
+    if (state->port <= 0) state->port = 27017;
     state->last_check_time = current_time;
 
     state->conn = mongo_sync_connect(state->host, state->port, 0);
