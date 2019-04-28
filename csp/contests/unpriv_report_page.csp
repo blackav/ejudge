@@ -229,6 +229,7 @@ ns_unpriv_parse_run_id(
 %><s:v value="rep_start" escape="false" /><%
     break;
   case CONTENT_TYPE_XML:
+  case CONTENT_TYPE_BSON:
     if (fcev.u > 0) {
 %>
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 10px;">
