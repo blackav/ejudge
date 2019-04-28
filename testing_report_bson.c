@@ -1012,11 +1012,12 @@ do_unparse(
                 char buf[32];
                 const char *key;
                 uint32_t z = bson_uint32_to_string(index, &key, buf, sizeof(buf));
-                bson_append_document(b_testsp, key, z, b_testp);
+                if (!bson_append_document(b_testsp, key, z, b_testp)) abort();
             }
             bson_destroy(b_testp);
         }
         bson_append_array(b, tag_table[Tag_tests], -1, b_testsp);
+        bson_destroy(b_testsp);
     }
     if (r->tt_row_count > 0 && r->tt_rows) {
         bson_t b_ttrows;
