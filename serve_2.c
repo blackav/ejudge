@@ -3316,7 +3316,7 @@ prepare_run_request:
     xfree(txt_text); txt_text = NULL; txt_size = 0;
     testing_report_to_mem_bson(&txt_text, &txt_size, testing_report);
     rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
-                                                &re.run_uuid, txt_size, DFLT_R_UUID_BSON_REPORT, 0, -1);
+                                                &re.run_uuid, txt_size, DFLT_R_UUID_BSON_REPORT, -1, 0);
   } else {
     if (re.store_flags == STORE_FLAGS_UUID) {
       rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
@@ -3706,7 +3706,7 @@ serve_read_run_packet(
 
   if (re.store_flags == STORE_FLAGS_UUID_BSON) {
     rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
-                                                &re.run_uuid, new_rep_len, DFLT_R_UUID_BSON_REPORT, 0, -1);
+                                                &re.run_uuid, new_rep_len, DFLT_R_UUID_BSON_REPORT, -1, 0);
   } else if (re.store_flags == STORE_FLAGS_UUID) {
     rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
                                                 &re.run_uuid, new_rep_len, DFLT_R_UUID_XML_REPORT, 0, 0);
@@ -4020,7 +4020,7 @@ serve_judge_built_in_problem(
         testing_report_to_mem_bson(&xml_buf, &xml_len, tr);
         testing_report_free(tr);
         rep_flags = uuid_archive_prepare_write_path(state, rep_path, sizeof(rep_path),
-                                                    &re->run_uuid, xml_len, DFLT_R_UUID_BSON_REPORT, 0, -1);
+                                                    &re->run_uuid, xml_len, DFLT_R_UUID_BSON_REPORT, -1, 0);
         generic_write_file(xml_buf, xml_len, rep_flags, 0, rep_path, "");
       }
     }
@@ -4072,7 +4072,7 @@ serve_report_check_failed(
     testing_report_to_mem_bson(&tr_t, &tr_z, tr);
     tr = testing_report_free(tr);
     flags = uuid_archive_prepare_write_path(state, tr_p, sizeof(tr_p),
-                                            &re.run_uuid, tr_z, DFLT_R_UUID_BSON_REPORT, 0, 0);
+                                            &re.run_uuid, tr_z, DFLT_R_UUID_BSON_REPORT, -1, 0);
   } else {
     testing_report_to_str(&tr_t, &tr_z, 1/*utf8_mode*/, tr);
     tr = testing_report_free(tr);
