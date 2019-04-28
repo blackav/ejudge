@@ -915,13 +915,20 @@ do_unparse(
         bson_append_utf8(b, tag_table[Tag_compiler_output], -1, r->compiler_output, -1);
     }
     if (r->run_tests > 0 && r->tests) {
-        bson_t *b_testsp = bson_new();
+        bson_t b_tests, *b_testsp = &b_tests;
         int index = -1;
+        bson_append_array_begin(b, tag_table[Tag_tests], -1, b_testsp);
         for (int i = 0; i < r->run_tests; ++i) {
             struct testing_report_test *t;
             if (!(t = r->tests[i])) continue;
             ++index;
-            bson_t *b_testp = bson_new();
+            bson_t b_test, *b_testp = &b_test;
+            {
+                char buf[32];
+                const char *key;
+                uint32_t z = bson_uint32_to_string(index, &key, buf, sizeof(buf));
+                bson_append_document_begin(b_testsp, key, z, b_testp);
+            }
             bson_append_int32(b_testp, tag_table[Tag_num], -1, i + 1);
             bson_append_int32(b_testp, tag_table[Tag_status], -1, t->status);
             if (t->term_signal > 0) {
@@ -1008,16 +1015,9 @@ do_unparse(
             unparse_file_content(b_testp, tag_table[Tag_correct], &t->correct);
             unparse_file_content(b_testp, tag_table[Tag_stderr], &t->error);
             unparse_file_content(b_testp, tag_table[Tag_checker], &t->checker);
-            {
-                char buf[32];
-                const char *key;
-                uint32_t z = bson_uint32_to_string(index, &key, buf, sizeof(buf));
-                if (!bson_append_document(b_testsp, key, z, b_testp)) abort();
-            }
-            bson_destroy(b_testp);
+            bson_append_document_end(b_testsp, b_testp);
         }
-        bson_append_array(b, tag_table[Tag_tests], -1, b_testsp);
-        bson_destroy(b_testsp);
+        bson_append_array_end(b, b_testsp);
     }
     if (r->tt_row_count > 0 && r->tt_rows) {
         bson_t b_ttrows;
