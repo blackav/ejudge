@@ -1244,7 +1244,7 @@ serve_audit_log(
            ltm->tm_year + 1900, ltm->tm_mon + 1, ltm->tm_mday,
            ltm->tm_hour, ltm->tm_min, ltm->tm_sec);
 
-  if (re && re->store_flags == STORE_FLAGS_UUID) {
+  if (re && (re->store_flags == STORE_FLAGS_UUID || re->store_flags == STORE_FLAGS_UUID_BSON)) {
     flags = uuid_archive_prepare_write_path(state, audit_path, sizeof(audit_path),
                                             &re->run_uuid, 0, DFLT_R_UUID_AUDIT, 0, 1);
   } else {
@@ -1616,7 +1616,7 @@ serve_compile_request(
 
   if (src_header_size > 0 || src_footer_size > 0) {
     if (len < 0) {
-      if (store_flags == STORE_FLAGS_UUID) {
+      if (store_flags == STORE_FLAGS_UUID || store_flags == STORE_FLAGS_UUID_BSON) {
         arch_flags = uuid_archive_make_read_path(state, run_arch, sizeof(run_arch),
                                                  puuid, DFLT_R_UUID_SOURCE, 0);
       } else {
@@ -1651,7 +1651,7 @@ serve_compile_request(
     }
   } else if (len < 0) {
     // copy from archive
-    if (store_flags == STORE_FLAGS_UUID) {
+    if (store_flags == STORE_FLAGS_UUID || store_flags == STORE_FLAGS_UUID_BSON) {
       arch_flags = uuid_archive_make_read_path(state, run_arch, sizeof(run_arch),
                                                puuid, DFLT_R_UUID_SOURCE, 0);
     } else {
@@ -3729,7 +3729,7 @@ serve_read_run_packet(
       full_flags = ZIP;
       full_suffix = ".zip";
     }
-    if (re.store_flags == STORE_FLAGS_UUID) {
+    if (re.store_flags == STORE_FLAGS_UUID || re.store_flags == STORE_FLAGS_UUID_BSON) {
       full_flags = uuid_archive_prepare_write_path(state, full_path, sizeof(full_path),
                                                    &re.run_uuid, 0, DFLT_R_UUID_FULL_ARCHIVE, full_flags, 0);
     } else {
@@ -5539,7 +5539,7 @@ serve_clear_by_mask(serve_state_t state,
     if ((mask[r / BITS_PER_LONG] & (1L << (r % BITS_PER_LONG)))
         && !run_is_readonly(state->runlog_state, r)) {
       if (run_get_entry(state->runlog_state, r, &re) >= 0 && run_clear_entry(state->runlog_state, r) >= 0) {
-        if (re.store_flags == STORE_FLAGS_UUID) {
+        if (re.store_flags == STORE_FLAGS_UUID || re.store_flags == STORE_FLAGS_UUID_BSON) {
           uuid_archive_remove(state, &re.run_uuid, 0);
         } else {
           archive_remove(state, global->run_archive_dir, r, 0);
@@ -5598,7 +5598,7 @@ serve_ignore_by_mask(serve_state_t state,
 
     re.status = new_status;
     if (run_set_entry(state->runlog_state, r, RE_STATUS, &re) >= 0) {
-      if (re.store_flags == STORE_FLAGS_UUID) {
+      if (re.store_flags == STORE_FLAGS_UUID || re.store_flags == STORE_FLAGS_UUID_BSON) {
         uuid_archive_remove(state, &re.run_uuid, 1);
       } else {
         archive_remove(state, global->xml_report_archive_dir, r, 0);
@@ -6200,7 +6200,7 @@ serve_make_source_read_path(
         const struct run_entry *re)
 {
   int ret;
-  if (re->store_flags == STORE_FLAGS_UUID) {
+  if (re->store_flags == STORE_FLAGS_UUID || re->store_flags == STORE_FLAGS_UUID_BSON) {
     ret = uuid_archive_make_read_path(state, path, size,
                                       &re->run_uuid, DFLT_R_UUID_SOURCE, 1);
   } else {
@@ -6239,7 +6239,7 @@ serve_make_report_read_path(
         const struct run_entry *re)
 {
   int ret;
-  if (re->store_flags == STORE_FLAGS_UUID) {
+  if (re->store_flags == STORE_FLAGS_UUID || re->store_flags == STORE_FLAGS_UUID_BSON) {
     ret = uuid_archive_make_read_path(state, path, size,
                                       &re->run_uuid, DFLT_R_UUID_REPORT, 1);
   } else {
@@ -6267,7 +6267,7 @@ serve_make_full_report_read_path(
         const struct run_entry *re)
 {
   int ret;
-  if (re->store_flags == STORE_FLAGS_UUID) {
+  if (re->store_flags == STORE_FLAGS_UUID || re->store_flags == STORE_FLAGS_UUID_BSON) {
     ret = uuid_archive_make_read_path(state, path, size,
                                       &re->run_uuid, DFLT_R_UUID_FULL_ARCHIVE, ZIP);
   } else {
@@ -6285,7 +6285,7 @@ serve_make_audit_read_path(
         const struct run_entry *re)
 {
   int ret;
-  if (re->store_flags == STORE_FLAGS_UUID) {
+  if (re->store_flags == STORE_FLAGS_UUID || re->store_flags == STORE_FLAGS_UUID_BSON) {
     ret = uuid_archive_make_read_path(state, path, size,
                                       &re->run_uuid, DFLT_R_UUID_AUDIT, 0);
   } else {
