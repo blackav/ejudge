@@ -781,7 +781,7 @@ unparse_file_content(
                 bson_append_bool(&b_fc, tag_table[Tag_bzip2], -1, 1);
             }
             if (fc->data) {
-                bson_append_binary(b, tag_table[Tag_data], -1, BSON_SUBTYPE_USER, fc->data, fc->size);
+                bson_append_binary(&b_fc, tag_table[Tag_data], -1, BSON_SUBTYPE_USER, fc->data, fc->size);
             }
         }
         bson_append_document_end(b, &b_fc);
