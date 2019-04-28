@@ -922,100 +922,100 @@ do_unparse(
             struct testing_report_test *t;
             if (!(t = r->tests[i])) continue;
             ++index;
-            bson_t b_test;
+            bson_t *b_testp = bson_new();
+            bson_append_int32(b_testp, tag_table[Tag_num], -1, i + 1);
+            bson_append_int32(b_testp, tag_table[Tag_status], -1, t->status);
+            if (t->term_signal > 0) {
+                bson_append_int32(b_testp, tag_table[Tag_term_signal], -1, t->term_signal);
+            }
+            if (t->exit_code > 0) {
+                bson_append_int32(b_testp, tag_table[Tag_exit_code], -1, t->exit_code);
+            }
+            if (t->time >= 0) {
+                bson_append_int32(b_testp, tag_table[Tag_time], -1, t->time);
+            }
+            if (r->real_time_available > 0 && t->real_time >= 0) {
+                bson_append_int32(b_testp, tag_table[Tag_real_time], -1, t->real_time);
+            }
+            if (r->max_memory_used_available > 0 && t->max_memory_used > 0) {
+                bson_append_int64(b_testp, tag_table[Tag_max_memory_used], -1, t->max_memory_used);
+            }
+            if (r->scoring_system == SCORE_OLYMPIAD && r->accepting_mode <= 0) {
+                bson_append_int32(b_testp, tag_table[Tag_nominal_score], -1, t->nominal_score);
+                bson_append_int32(b_testp, tag_table[Tag_score], -1, t->score);
+            } else if (r->scoring_system == SCORE_KIROV) {
+                bson_append_int32(b_testp, tag_table[Tag_nominal_score], -1, t->nominal_score);
+                bson_append_int32(b_testp, tag_table[Tag_score], -1, t->score);
+            }
+            if (t->comment && t->comment[0]) {
+                bson_append_utf8(b_testp, tag_table[Tag_comment], -1, t->comment, -1);
+            }
+            if (t->team_comment && t->team_comment[0]) {
+                bson_append_utf8(b_testp, tag_table[Tag_team_comment], -1, t->team_comment, -1);
+            }
+            if (t->exit_comment && t->exit_comment[0]) {
+                bson_append_utf8(b_testp, tag_table[Tag_exit_comment], -1, t->exit_comment, -1);
+            }
+            if (t->checker_comment && t->checker_comment[0]) {
+                bson_append_utf8(b_testp, tag_table[Tag_checker_comment], -1, t->checker_comment, -1);
+            }
+            if (t->checker_token && t->checker_token[0]) {
+                bson_append_utf8(b_testp, tag_table[Tag_checker_token], -1, t->checker_token, -1);
+            }
+            unparse_digest_attr(b_testp, tag_table[Tag_input_digest], t->input_digest);
+            unparse_digest_attr(b_testp, tag_table[Tag_correct_digest], t->correct_digest);
+            unparse_digest_attr(b_testp, tag_table[Tag_info_digest], t->info_digest);
+            if (t->output_available > 0) {
+                bson_append_bool(b_testp, tag_table[Tag_output_available], -1, 1);
+            }
+            if (t->stderr_available > 0) {
+                bson_append_bool(b_testp, tag_table[Tag_stderr_available], -1, 1);
+            }
+            if (t->checker_output_available > 0) {
+                bson_append_bool(b_testp, tag_table[Tag_checker_output_available], -1, 1);
+            }
+            if (t->args_too_long > 0) {
+                bson_append_bool(b_testp, tag_table[Tag_args_too_long], -1, 1);
+            }
+            if (t->visibility > 0) {
+                bson_append_int32(b_testp, tag_table[Tag_visibility], -1, t->visibility);
+            }
+            if (t->has_user > 0) {
+                bson_append_bool(b_testp, tag_table[Tag_has_user], -1, 1);
+                if (t->user_status >= 0) {
+                    bson_append_int32(b_testp, tag_table[Tag_user_status], -1, t->user_status);
+                }
+                if (t->user_score >= 0) {
+                    bson_append_int32(b_testp, tag_table[Tag_user_score], -1, t->user_score);
+                }
+                if (t->user_nominal_score >= 0) {
+                    bson_append_int32(b_testp, tag_table[Tag_user_nominal_score], -1, t->user_nominal_score);
+                }
+            }
+            if (t->args && t->args[0]) {
+                bson_append_utf8(b_testp, tag_table[Tag_args], -1, t->args, -1);
+            }
+            if (t->program_stats_str && t->program_stats_str[0]) {
+                bson_append_utf8(b_testp, tag_table[Tag_program_stats_str], -1, t->program_stats_str, -1);
+            }
+            if (t->interactor_stats_str && t->interactor_stats_str[0]) {
+                bson_append_utf8(b_testp, tag_table[Tag_interactor_stats_str], -1, t->interactor_stats_str, -1);
+            }
+            if (t->checker_stats_str && t->checker_stats_str[0]) {
+                bson_append_utf8(b_testp, tag_table[Tag_checker_stats_str], -1, t->checker_stats_str, -1);
+            }
+            unparse_file_content(b_testp, tag_table[Tag_input], &t->input);
+            unparse_file_content(b_testp, tag_table[Tag_output], &t->output);
+            unparse_file_content(b_testp, tag_table[Tag_correct], &t->correct);
+            unparse_file_content(b_testp, tag_table[Tag_stderr], &t->error);
+            unparse_file_content(b_testp, tag_table[Tag_checker], &t->checker);
             {
                 char buf[32];
                 const char *key;
                 uint32_t z = bson_uint32_to_string(index, &key, buf, sizeof(buf));
-                bson_append_document_begin(b, key, z, &b_test);
+                bson_append_document(&b_tests, key, z, b_testp);
             }
-            bson_append_int32(&b_test, tag_table[Tag_num], -1, i + 1);
-            bson_append_int32(&b_test, tag_table[Tag_status], -1, t->status);
-            if (t->term_signal > 0) {
-                bson_append_int32(&b_test, tag_table[Tag_term_signal], -1, t->term_signal);
-            }
-            if (t->exit_code > 0) {
-                bson_append_int32(&b_test, tag_table[Tag_exit_code], -1, t->exit_code);
-            }
-            if (t->time >= 0) {
-                bson_append_int32(&b_test, tag_table[Tag_time], -1, t->time);
-            }
-            if (r->real_time_available > 0 && t->real_time >= 0) {
-                bson_append_int32(&b_test, tag_table[Tag_real_time], -1, t->real_time);
-            }
-            if (r->max_memory_used_available > 0 && t->max_memory_used > 0) {
-                bson_append_int64(&b_test, tag_table[Tag_max_memory_used], -1, t->max_memory_used);
-            }
-            if (r->scoring_system == SCORE_OLYMPIAD && r->accepting_mode <= 0) {
-                bson_append_int32(&b_test, tag_table[Tag_nominal_score], -1, t->nominal_score);
-                bson_append_int32(&b_test, tag_table[Tag_score], -1, t->score);
-            } else if (r->scoring_system == SCORE_KIROV) {
-                bson_append_int32(&b_test, tag_table[Tag_nominal_score], -1, t->nominal_score);
-                bson_append_int32(&b_test, tag_table[Tag_score], -1, t->score);
-            }
-            if (t->comment && t->comment[0]) {
-                bson_append_utf8(&b_test, tag_table[Tag_comment], -1, t->comment, -1);
-            }
-            if (t->team_comment && t->team_comment[0]) {
-                bson_append_utf8(&b_test, tag_table[Tag_team_comment], -1, t->team_comment, -1);
-            }
-            if (t->exit_comment && t->exit_comment[0]) {
-                bson_append_utf8(&b_test, tag_table[Tag_exit_comment], -1, t->exit_comment, -1);
-            }
-            if (t->checker_comment && t->checker_comment[0]) {
-                bson_append_utf8(&b_test, tag_table[Tag_checker_comment], -1, t->checker_comment, -1);
-            }
-            if (t->checker_token && t->checker_token[0]) {
-                bson_append_utf8(&b_test, tag_table[Tag_checker_token], -1, t->checker_token, -1);
-            }
-            unparse_digest_attr(&b_test, tag_table[Tag_input_digest], t->input_digest);
-            unparse_digest_attr(&b_test, tag_table[Tag_correct_digest], t->correct_digest);
-            unparse_digest_attr(&b_test, tag_table[Tag_info_digest], t->info_digest);
-            if (t->output_available > 0) {
-                bson_append_bool(&b_test, tag_table[Tag_output_available], -1, 1);
-            }
-            if (t->stderr_available > 0) {
-                bson_append_bool(&b_test, tag_table[Tag_stderr_available], -1, 1);
-            }
-            if (t->checker_output_available > 0) {
-                bson_append_bool(&b_test, tag_table[Tag_checker_output_available], -1, 1);
-            }
-            if (t->args_too_long > 0) {
-                bson_append_bool(&b_test, tag_table[Tag_args_too_long], -1, 1);
-            }
-            if (t->visibility > 0) {
-                bson_append_int32(&b_test, tag_table[Tag_visibility], -1, t->visibility);
-            }
-            if (t->has_user > 0) {
-                bson_append_bool(&b_test, tag_table[Tag_has_user], -1, 1);
-                if (t->user_status >= 0) {
-                    bson_append_int32(&b_test, tag_table[Tag_user_status], -1, t->user_status);
-                }
-                if (t->user_score >= 0) {
-                    bson_append_int32(&b_test, tag_table[Tag_user_score], -1, t->user_score);
-                }
-                if (t->user_nominal_score >= 0) {
-                    bson_append_int32(&b_test, tag_table[Tag_user_nominal_score], -1, t->user_nominal_score);
-                }
-            }
-            if (t->args && t->args[0]) {
-                bson_append_utf8(&b_test, tag_table[Tag_args], -1, t->args, -1);
-            }
-            if (t->program_stats_str && t->program_stats_str[0]) {
-                bson_append_utf8(&b_test, tag_table[Tag_program_stats_str], -1, t->program_stats_str, -1);
-            }
-            if (t->interactor_stats_str && t->interactor_stats_str[0]) {
-                bson_append_utf8(&b_test, tag_table[Tag_interactor_stats_str], -1, t->interactor_stats_str, -1);
-            }
-            if (t->checker_stats_str && t->checker_stats_str[0]) {
-                bson_append_utf8(&b_test, tag_table[Tag_checker_stats_str], -1, t->checker_stats_str, -1);
-            }
-            unparse_file_content(&b_test, tag_table[Tag_input], &t->input);
-            unparse_file_content(&b_test, tag_table[Tag_output], &t->output);
-            unparse_file_content(&b_test, tag_table[Tag_correct], &t->correct);
-            unparse_file_content(&b_test, tag_table[Tag_stderr], &t->error);
-            unparse_file_content(&b_test, tag_table[Tag_checker], &t->checker);
-            bson_append_document_end(b, &b_test);
+            bson_destroy(b_testp);
         }
         bson_append_array_end(b, &b_tests);
     }
