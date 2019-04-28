@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -212,7 +212,7 @@ write_change_status_dialog(
 #define BGCOLOR_PASS         " bgcolor=\"#80FF80\""
 
 static int
-is_duplicated_row(testing_report_xml_t r, int row)
+is_duplicated_row(const struct testing_report_xml *r, int row)
 {
   if (!r || !r->tests_mode) return 0;
 
@@ -242,7 +242,7 @@ is_duplicated_row(testing_report_xml_t r, int row)
 }
 
 static int
-is_duplicated_column(testing_report_xml_t r, int col)
+is_duplicated_column(const struct testing_report_xml *r, int col)
 {
   if (!r || !r->tests_mode) return 0;
   if (col <= 0 || col >= r->tt_column_count) return 0;
@@ -273,7 +273,7 @@ int
 write_xml_tests_report(
         FILE *f,
         int user_mode,
-        unsigned char const *txt,
+        const struct testing_report_xml *r,
         ej_cookie_t sid,
         unsigned char const *self_url,
         unsigned char const *extra_args,
@@ -282,7 +282,6 @@ write_xml_tests_report(
 {
   unsigned char *cl1 = " border=\"1\"";
   unsigned char *cl2 = "";
-  testing_report_xml_t r = 0;
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
   const unsigned char *font_color = "";
   const unsigned char *bgcolor = "";
@@ -301,23 +300,11 @@ write_xml_tests_report(
     sprintf(cl2, " class=\"%s\"", class2);
   }
 
-  if (!(r = testing_report_parse_xml(txt))) {
-    fprintf(f, "<p><big>Cannot parse XML file!</big></p>\n");
-    fprintf(f, "<pre>%s</pre>\n", ARMOR(txt));
-    goto done;
-  }
-
   if (r->compile_error) {
     fprintf(f, "<h2><font color=\"red\">%s</font></h2>\n", run_status_str(r->status, 0, 0, 0, 0));
     if (r->compiler_output) {
       fprintf(f, "<pre>%s</pre>\n", ARMOR(r->compiler_output));
     }
-    goto done;
-  }
-
-  if (!r->tests_mode) {
-    fprintf(f, "<p><big>Invalid XML file!</big></p>\n");
-    fprintf(f, "<pre>%s</pre>\n", ARMOR(txt));
     goto done;
   }
 
@@ -450,7 +437,6 @@ write_xml_tests_report(
   }
 
 done:
-  testing_report_free(r);
   html_armor_free(&ab);
   return 0;
 }

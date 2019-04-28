@@ -2,7 +2,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -106,11 +106,13 @@ write_html_run_status(
         int run_fields,
         time_t effective_time);
 
+struct testing_report_xml;
+
 int
 write_xml_tests_report(
         FILE *f,
         int user_mode,
-        unsigned char const *txt,
+        const struct testing_report_xml *r,
         ej_cookie_t sid,
         unsigned char const *self_url,
         unsigned char const *extra_args,

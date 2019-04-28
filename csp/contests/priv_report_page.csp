@@ -190,7 +190,7 @@
       if (user_mode) {
         write_xml_team_tests_report(cs, prob, out_f, tr, "b1");
       } else {
-        write_xml_tests_report(out_f, 0, start_ptr, phr->session_id, phr->self_url,
+        write_xml_tests_report(out_f, 0, tr, phr->session_id, phr->self_url,
                                "", "b1", 0);
       }
     } else {
