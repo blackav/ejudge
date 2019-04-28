@@ -927,7 +927,7 @@ do_unparse(
                 char buf[32];
                 const char *key;
                 uint32_t z = bson_uint32_to_string(index, &key, buf, sizeof(buf));
-                bson_append_document_begin(&b_tests, key, z, &b_test);
+                bson_append_document_begin(b, key, z, &b_test);
             }
             bson_append_int32(&b_test, tag_table[Tag_num], -1, i + 1);
             bson_append_int32(&b_test, tag_table[Tag_status], -1, t->status);
@@ -1015,7 +1015,7 @@ do_unparse(
             unparse_file_content(&b_test, tag_table[Tag_correct], &t->correct);
             unparse_file_content(&b_test, tag_table[Tag_stderr], &t->error);
             unparse_file_content(&b_test, tag_table[Tag_checker], &t->checker);
-            bson_append_document_end(&b_tests, &b_test);
+            bson_append_document_end(b, &b_test);
         }
         bson_append_array_end(b, &b_tests);
     }
