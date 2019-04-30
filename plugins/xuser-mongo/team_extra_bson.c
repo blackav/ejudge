@@ -63,6 +63,7 @@ team_warning_bson_parse(ej_bson_t *b)
     return res;
 
 fail:;
+    err("team_warning_bson_parse: failed");
     if (res) {
         xfree(res->text);
         xfree(res->comment);
@@ -177,6 +178,7 @@ team_extra_bson_parse(ej_bson_t *b)
     return res;
 
 fail:;
+    err("team_extra_bson_parse: failed");
     if (doc) bson_destroy(doc);
     if (arr) bson_destroy(arr);
     team_extra_free(res);
