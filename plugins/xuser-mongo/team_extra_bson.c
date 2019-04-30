@@ -18,6 +18,7 @@
 #include "ejudge/bson_utils.h"
 
 #include "ejudge/xalloc.h"
+#include "ejudge/errlog.h"
 
 #if HAVE_LIBMONGOC - 0 > 1
 #include <mongoc/mongoc.h>
