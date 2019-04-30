@@ -345,6 +345,9 @@ query_func(
             XREALLOC(res, a);
         }
         res[u++] = bson_copy(doc);
+        if (state->show_queries > 0) {
+            fprintf(stderr, "result: "); ej_bson_unparse_new(stderr, doc, 0); fprintf(stderr, "\n");
+        }
     }
 
     *p_res = res;
