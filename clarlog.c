@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -758,4 +758,14 @@ clar_count_run_messages(
     count += (!memcmp(p_run_uuid, &pe->run_uuid, sizeof(pe->run_uuid)));
   }
   return count;
+}
+
+int
+clar_fetch_total(clarlog_state_t state)
+{
+  if (state->iface->fetch_total) {
+    int res = (*state->iface->fetch_total)(state->cnts);
+    if (res < 0) res = state->clars.u;
+  }
+  return state->clars.u;
 }

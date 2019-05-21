@@ -99,6 +99,9 @@ fetch_run_messages_2_func(
         int uuid_count,
         const ej_uuid_t *p_run_uuid,
         struct full_clar_entry **pp);
+static int
+fetch_total(
+        struct cldb_plugin_cnts *cdata);
 
 /* plugin entry point */
 struct cldb_plugin_iface plugin_cldb_mysql =
@@ -129,6 +132,7 @@ struct cldb_plugin_iface plugin_cldb_mysql =
   modify_record_func,
   fetch_run_messages_func,
   fetch_run_messages_2_func,
+  fetch_total
 };
 
 static struct common_plugin_data *
@@ -1152,6 +1156,42 @@ fail:
   }
   state->mi->free_res(state->md);
   xfree(uuid_s);
+  return -1;
+}
+
+static int
+fetch_total(
+        struct cldb_plugin_cnts *cdata)
+{
+  struct cldb_mysql_cnts *cs = (struct cldb_mysql_cnts*) cdata;
+  struct cldb_mysql_state *state = cs->plugin_state;
+  struct common_mysql_iface *mi = state->mi;
+  struct common_mysql_state *md = state->md;
+
+  if (mi->fquery(md, 1, "SELECT max(clar_id) FROM %sclars WHERE contest_id = %d ;", md->table_prefix, cs->contest_id) < 0)
+    return -1;
+  if (md->row_count <= 0) {
+    return -1;
+  }
+  if (mi->next_row(md) < 0) goto fail;
+  if (!md->row[0]) {
+    mi->free_res(md);
+    return 0;
+  }
+  if (strlen(md->row[0]) != md->lengths[0]) goto fail;
+
+  errno = 0;
+  char *eptr = NULL;
+  long val = strtol(md->row[0], &eptr, 10);
+  if (errno || *eptr || eptr == md->row[0] || (int) val != val || val < 0)
+    goto fail;
+
+  int res = val + 1;
+  mi->free_res(md);
+  return res;
+
+ fail:
+  mi->free_res(md);
   return -1;
 }
 

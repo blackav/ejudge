@@ -666,6 +666,9 @@ ns_loop_callback(struct server_framework_state *state)
 
     if (cs->pending_xml_import && !serve_count_transient_runs(cs))
       handle_pending_xml_import(e, cnts, cs);
+
+    if (cs->clarlog_state && clar_get_total(cs->clarlog_state) != clar_fetch_total(cs->clarlog_state))
+      e->last_access_time = 0;
   }
 
   ns_unload_expired_contests(cur_time);
