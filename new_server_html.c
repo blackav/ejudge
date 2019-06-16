@@ -12492,7 +12492,7 @@ unpriv_list_runs_json(
   }
   ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, pinfo);
 
-  filter_user_runs(cs, phr, prob->id, pinfo, start_time, stop_time, 0, &rdis);
+  filter_user_runs(cs, phr, prob_id, pinfo, start_time, stop_time, 0, &rdis);
 
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\" : %s", ok?"true":"false");
