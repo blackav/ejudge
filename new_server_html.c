@@ -12185,10 +12185,10 @@ unpriv_problem_status_json(
     fprintf(fout, ",\n      \"max_user_run_count\": %d", prob->max_user_run_count);
   }
   if (prob->stand_name && prob->stand_name[0]) {
-    fprintf(fout, ",\n      \"stand_name\": %s", json_armor_buf(&ab, prob->stand_name));
+    fprintf(fout, ",\n      \"stand_name\": \"%s\"", json_armor_buf(&ab, prob->stand_name));
   }
   if (prob->stand_column && prob->stand_column[0]) {
-    fprintf(fout, ",\n      \"stand_column\": %s", json_armor_buf(&ab, prob->stand_column));
+    fprintf(fout, ",\n      \"stand_column\": \"%s\"", json_armor_buf(&ab, prob->stand_column));
   }
   /*
   if (prob->group_name && prob->group_name[0]) {
@@ -12196,10 +12196,10 @@ unpriv_problem_status_json(
   }
   */
   if ((prob->use_stdin <= 0 || prob->combined_stdin > 0) && prob->input_file && prob->input_file[0] && prob->hide_file_names <= 0) {
-    fprintf(fout, ",\n      \"input_file\": %s", json_armor_buf(&ab, prob->input_file));
+    fprintf(fout, ",\n      \"input_file\": \"%s\"", json_armor_buf(&ab, prob->input_file));
   }
   if ((prob->use_stdout <= 0 || prob->combined_stdout > 0) && prob->output_file && prob->output_file[0] && prob->hide_file_names <= 0) {
-    fprintf(fout, ",\n      \"output_file\": %s", json_armor_buf(&ab, prob->output_file));
+    fprintf(fout, ",\n      \"output_file\": \"%s\"", json_armor_buf(&ab, prob->output_file));
   }
   if (prob->ok_status && prob->ok_status[0]) {
     int ok_status = 0;
