@@ -3712,18 +3712,7 @@ serve_judge_built_in_problem(
     serve_telegram_check_failed(config, cnts, state, run_id, re);
   }
 
-  /* FIXME: handle database update error */
-  (void) failed_test;
-  run_change_status_3(state->runlog_state, run_id, glob_status, passed_tests, 1,
-                      score, 0, 0, 0, 0, 0, 0);
   serve_update_standings_file(extra, state, cnts, 0);
-  /*
-  if (global->notify_status_change > 0 && !re.is_hidden
-      && comp_extra->notify_flag) {
-    serve_notify_user_run_status_change(cnts, state, re.user_id,
-                                        run_id, glob_status);
-  }
-  */
 
   // FIXME: handle errors
   run_get_entry(state->runlog_state, run_id, re);
@@ -3736,6 +3725,19 @@ serve_judge_built_in_problem(
                                            xml_len, NULL, 0, 0);
   }
   generic_write_file(xml_buf, xml_len, rep_flags, 0, rep_path, "");
+
+  /* FIXME: handle database update error */
+  (void) failed_test;
+  run_change_status_3(state->runlog_state, run_id, glob_status, passed_tests, 1,
+                      score, 0, 0, 0, 0, 0, 0);
+
+  /*
+  if (global->notify_status_change > 0 && !re.is_hidden
+      && comp_extra->notify_flag) {
+    serve_notify_user_run_status_change(cnts, state, re.user_id,
+                                        run_id, glob_status);
+  }
+  */
 
   xfree(xml_buf); xml_buf = 0;
   html_armor_free(&ab);
