@@ -174,6 +174,7 @@ struct super_run_in_problem_packet
   ejintbool_t enable_kill_all;
   unsigned char *uuid;
   ejintbool_t enable_extended_info;
+  ejintbool_t stop_on_first_fail;
 
   int type_val META_ATTRIB((meta_hidden));
 };

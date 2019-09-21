@@ -153,6 +153,7 @@ super_run_in_problem_packet_init(struct generic_section_config *gp)
   p->enable_process_group = -1;
   p->enable_kill_all = -1;
   p->enable_extended_info = -1;
+  p->stop_on_first_fail = -1;
 
   p->type_val = -1;
 }

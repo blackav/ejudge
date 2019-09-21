@@ -200,6 +200,7 @@ static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
   [META_SUPER_RUN_IN_PROBLEM_PACKET_enable_kill_all] = { META_SUPER_RUN_IN_PROBLEM_PACKET_enable_kill_all, 'B', XSIZE(struct super_run_in_problem_packet, enable_kill_all), "enable_kill_all", XOFFSET(struct super_run_in_problem_packet, enable_kill_all) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_uuid] = { META_SUPER_RUN_IN_PROBLEM_PACKET_uuid, 's', XSIZE(struct super_run_in_problem_packet, uuid), "uuid", XOFFSET(struct super_run_in_problem_packet, uuid) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_enable_extended_info] = { META_SUPER_RUN_IN_PROBLEM_PACKET_enable_extended_info, 'B', XSIZE(struct super_run_in_problem_packet, enable_extended_info), "enable_extended_info", XOFFSET(struct super_run_in_problem_packet, enable_extended_info) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_stop_on_first_fail] = { META_SUPER_RUN_IN_PROBLEM_PACKET_stop_on_first_fail, 'B', XSIZE(struct super_run_in_problem_packet, stop_on_first_fail), "stop_on_first_fail", XOFFSET(struct super_run_in_problem_packet, stop_on_first_fail) },
 };
 
 int meta_super_run_in_problem_packet_get_type(int tag)
