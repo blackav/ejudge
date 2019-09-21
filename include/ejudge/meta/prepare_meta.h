@@ -394,6 +394,7 @@ enum
   CNTSPROB_autoassign_variants,
   CNTSPROB_require_any,
   CNTSPROB_enable_extended_info,
+  CNTSPROB_stop_on_first_fail,
   CNTSPROB_enable_multi_header,
   CNTSPROB_use_lang_multi_header,
   CNTSPROB_notify_on_submit,

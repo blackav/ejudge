@@ -1656,6 +1656,7 @@ function viewDialogOnChange(field)
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_checker_token" "Checking" "Scoring checker produces token" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_testlib_mode" "Checking" "Enable testlib.h compatibility mode" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_extended_info" "Checking" "Pass extended info to checkers" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "stop_on_first_fail" "Checking" "Stop after the first failed test (like ACM)" %>
 
 <%
   {
