@@ -73,6 +73,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_enable_testlib_mode,
   META_PROBLEM_CONFIG_SECTION_hide_variant,
   META_PROBLEM_CONFIG_SECTION_enable_extended_info,
+  META_PROBLEM_CONFIG_SECTION_stop_on_first_fail,
   META_PROBLEM_CONFIG_SECTION_id,
   META_PROBLEM_CONFIG_SECTION_real_time_limit,
   META_PROBLEM_CONFIG_SECTION_time_limit,
