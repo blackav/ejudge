@@ -4174,6 +4174,7 @@ run_tests(
       if (srgp->scoring_system_val == SCORE_MOSCOW) break;
       if (srgp->scoring_system_val == SCORE_OLYMPIAD
           && accept_testing && !accept_partial) break;
+      if (srgp->scoring_system_val == SCORE_KIROV && srpp->stop_on_first_fail > 0) break;
     }
     if (valuer_tsk) {
       unsigned char buf[1024];
