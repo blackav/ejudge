@@ -2296,6 +2296,25 @@ remap_command(const unsigned char *cmd, const struct remap_spec *specs)
 }
 
 static int
+does_test_exist(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        const struct super_run_in_packet *srp,
+        int cur_test)
+{
+  unsigned char test_base[PATH_MAX];
+  unsigned char test_src[PATH_MAX];
+  const struct super_run_in_problem_packet *srpp = srp->problem;
+
+  test_src[0] = 0;
+  if (srpp->test_pat && srpp->test_pat[0]) {
+    snprintf(test_base, sizeof(test_base), srpp->test_pat, cur_test);
+    snprintf(test_src, sizeof(test_src), "%s/%s", srpp->test_dir, test_base);
+  }
+  return os_CheckAccess(test_src, REUSE_R_OK) >= 0;
+}
+
+static int
 run_one_test(
         const struct ejudge_cfg *config,
         serve_state_t state,
@@ -4174,7 +4193,16 @@ run_tests(
       if (srgp->scoring_system_val == SCORE_MOSCOW) break;
       if (srgp->scoring_system_val == SCORE_OLYMPIAD
           && accept_testing && !accept_partial) break;
-      if (srgp->scoring_system_val == SCORE_KIROV && srpp->stop_on_first_fail > 0) break;
+      if (srgp->scoring_system_val == SCORE_KIROV && srpp->stop_on_first_fail > 0) {
+        while (1) {
+          ++cur_test;
+          if (!does_test_exist(config, state, srp, cur_test)) break;
+          append_skipped_test(srpp, cur_test, &tests,
+                              open_tests_count, open_tests_val,
+                              test_score_count, test_score_val);
+        }
+        break;
+      }
     }
     if (valuer_tsk) {
       unsigned char buf[1024];
