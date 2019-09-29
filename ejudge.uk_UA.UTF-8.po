@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-11-12 11:49+0300\n"
+"POT-Creation-Date: 2019-09-29 08:21+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -2069,6 +2069,9 @@ msgid "Location"
 msgstr ""
 
 msgid "Lock"
+msgstr ""
+
+msgid "Lock filter"
 msgstr ""
 
 msgid "Locked?"

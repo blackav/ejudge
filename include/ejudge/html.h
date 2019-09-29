@@ -62,6 +62,7 @@ void write_standings_header(const serve_state_t state,
 
 struct user_filter_info;
 
+void html_lock_filter(serve_state_t, int user_id, ej_cookie_t session_id);
 void html_reset_filter(serve_state_t, int user_id, ej_cookie_t session_id);
 void html_reset_clar_filter(serve_state_t, int user_id, ej_cookie_t session_id);
 

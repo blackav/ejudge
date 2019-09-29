@@ -204,6 +204,45 @@ int ns_match_action(const unsigned char *str)
           } else {
           }
           return 0;
+        } else if (c < 'g') {
+          if (c == 'c') {
+            c = str[3];
+            if (c == 'k') {
+              c = str[4];
+              if (c == '-') {
+                c = str[5];
+                if (c == 'f') {
+                  c = str[6];
+                  if (c == 'i') {
+                    c = str[7];
+                    if (c == 'l') {
+                      c = str[8];
+                      if (c == 't') {
+                        c = str[9];
+                        if (c == 'e') {
+                          c = str[10];
+                          if (c == 'r') {
+                            c = str[11];
+                            if (!c) return NEW_SRV_ACTION_LOCK_FILTER;
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  }
+                  return 0;
+                }
+                return 0;
+              }
+              return 0;
+            }
+            return 0;
+          }
+        } else {
         }
         return 0;
       }

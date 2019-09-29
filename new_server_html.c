@@ -2974,6 +2974,10 @@ priv_reset_filter(FILE *fout,
   case NEW_SRV_ACTION_RESET_CLAR_FILTER:
     html_reset_clar_filter(cs, phr->user_id, phr->session_id);
     break;
+
+  case NEW_SRV_ACTION_LOCK_FILTER:
+    html_lock_filter(cs, phr->user_id, phr->session_id);
+    break;
   }
   return 0;
 }
@@ -7251,6 +7255,7 @@ static action_handler2_t priv_actions_table_2[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_SUBMIT_RUN_BATCH] = priv_submit_run_batch_page,
   [NEW_SRV_ACTION_RELOAD_CONTEST_PAGES] = priv_contest_operation,
   [NEW_SRV_ACTION_RELOAD_ALL_CONTEST_PAGES] = priv_contest_operation,
+  [NEW_SRV_ACTION_LOCK_FILTER] = priv_reset_filter,
 };
 
 static void
@@ -7885,6 +7890,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_DELETE_AVATAR] = priv_generic_operation,
   [NEW_SRV_ACTION_CONFIRM_AVATAR] = priv_generic_operation,
   [NEW_SRV_ACTION_ENTER_CONTEST] = priv_enter_contest,
+  [NEW_SRV_ACTION_LOCK_FILTER] = priv_generic_operation,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =

@@ -1,12 +1,12 @@
 # -*- mode: po; coding: UTF-8 -*-
 # ejudge messages catalog
-# Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-09-15 01:15+0300\n"
+"POT-Creation-Date: 2019-09-29 08:36+0300\n"
 "PO-Revision-Date: 2018-09-15 01:16+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -35,7 +35,7 @@ msgstr " (%d из %d)"
 msgid " (%d token(s) used)"
 msgstr " (использовано: %d)"
 
-#, fuzzy, c-format
+#, c-format
 msgid " / <b>%d summoned for defence runs</b>"
 msgstr " / <b>%d посылок вызвано на защиту</b>"
 
@@ -153,9 +153,16 @@ msgid ""
 "the <a href=\"http://www.fsf.org\">Free Software Foundation</a>; either "
 "version 2 of the License, or (at your option) any later version.</p>\n"
 msgstr ""
-"<p class=\"ejudge_copyright\">Это &mdash; система администрирования турниров <a href=\"%s\"><b>ejudge</b></a>, версия %s, дата компиляции %s.</p>\n"
-"<p class=\"ejudge_copyright\">Авторские права на программу: &copy; %s Александр Чернов.</p>\n"
-"<p class=\"ejudge_copyright\">Данная программа является свободным ПО. Вы можете распространять и/или модифицировать её в соответствии с <a href=\"http://www.gnu.org/licenses/gpl.html\">Общей Лицензией GNU</a> (GNU General Public License), опубликованной <a href=\"http://www.fsf.org\">Фондом свободного ПО</a> (Free Software Foundation), либо версии 2 Лицензии, либо (по Вашему желанию) любой последующей версии.</p>"
+"<p class=\"ejudge_copyright\">Это &mdash; система администрирования турниров "
+"<a href=\"%s\"><b>ejudge</b></a>, версия %s, дата компиляции %s.</p>\n"
+"<p class=\"ejudge_copyright\">Авторские права на программу: &copy; %s "
+"Александр Чернов.</p>\n"
+"<p class=\"ejudge_copyright\">Данная программа является свободным ПО. Вы "
+"можете распространять и/или модифицировать её в соответствии с <a href="
+"\"http://www.gnu.org/licenses/gpl.html\">Общей Лицензией GNU</a> (GNU "
+"General Public License), опубликованной <a href=\"http://www.fsf.org"
+"\">Фондом свободного ПО</a> (Free Software Foundation), либо версии 2 "
+"Лицензии, либо (по Вашему желанию) любой последующей версии.</p>"
 
 msgid ""
 "<p class=\"fixed_width\">First stage of password recovery is successful. You "
@@ -2192,6 +2199,9 @@ msgstr "Размещение"
 
 msgid "Lock"
 msgstr "Закрыть"
+
+msgid "Lock filter"
+msgstr "Закрепить фильтр"
 
 msgid "Locked?"
 msgstr "Запертый?"

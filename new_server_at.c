@@ -309,4 +309,5 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CONTEST_INFO_JSON] = "contest-info-json",
   [NEW_SRV_ACTION_SESSION_INFO_JSON] = "session-info-json",
   [NEW_SRV_ACTION_ENTER_CONTEST] = "enter-contest",
+  [NEW_SRV_ACTION_LOCK_FILTER] = "lock-filter",
 };

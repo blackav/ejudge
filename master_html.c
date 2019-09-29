@@ -442,6 +442,71 @@ done:
 }
 
 void
+html_lock_filter(serve_state_t cs, int user_id, ej_cookie_t session_id)
+{
+  struct user_filter_info *u = user_filter_info_allocate(cs, user_id, session_id);
+
+  if (u->error_msgs || !u->prev_filter_expr || !*u->prev_filter_expr || !u->tree_mem || !u->prev_tree) {
+    return html_reset_filter(cs, user_id, session_id);
+  }
+
+  char *new_filter_s = NULL;
+  size_t new_filter_z = 0;
+  FILE *new_filter_f = open_memstream(&new_filter_s, &new_filter_z);
+  struct filter_env env;
+  int count = 0;
+
+  memset(&env, 0, sizeof(env));
+  env.teamdb_state = cs->teamdb_state;
+  env.serve_state = cs;
+  env.mem = filter_tree_new();
+  env.maxlang = cs->max_lang;
+  env.langs = (const struct section_language_data * const *) cs->langs;
+  env.maxprob = cs->max_prob;
+  env.probs = (const struct section_problem_data * const *) cs->probs;
+  env.rbegin = run_get_first(cs->runlog_state);
+  env.rtotal = run_get_total(cs->runlog_state);
+  run_get_header(cs->runlog_state, &env.rhead);
+  env.cur_time = time(NULL);
+  env.rentries = run_get_entries_ptr(cs->runlog_state);
+
+  for (int i = env.rbegin; i < env.rtotal; i++) {
+    env.rid = i;
+    if (filter_tree_bool_eval(&env, u->prev_tree) > 0) {
+      if (count > 0) fprintf(new_filter_f, "&&");
+      fprintf(new_filter_f, "id=%d", i);
+      ++count;
+    }
+  }
+  env.mem = filter_tree_delete(env.mem);
+  fclose(new_filter_f); new_filter_f = NULL;
+
+  if (count <= 0) {
+    free(new_filter_s);
+    return html_reset_filter(cs, user_id, session_id);
+  }
+
+  if (u->prev_filter_expr) xfree(u->prev_filter_expr);
+  if (u->tree_mem) filter_tree_delete(u->tree_mem);
+  if (u->error_msgs) xfree(u->error_msgs);
+  u->error_msgs = 0;
+  u->prev_filter_expr = 0;
+  u->prev_tree = 0;
+  u->tree_mem = 0;
+  u->prev_filter_expr = new_filter_s; new_filter_s = NULL;
+  u->tree_mem = filter_tree_new();
+  filter_expr_set_string(u->prev_filter_expr, u->tree_mem, NULL, cs);
+  filter_expr_init_parser(u->tree_mem, NULL, cs);
+  int res = filter_expr_parse();
+  if (res + filter_expr_nerrs == 0 && filter_expr_lval &&
+      filter_expr_lval->type == FILTER_TYPE_BOOL) {
+    u->prev_tree = filter_expr_lval;
+  } else {
+    return html_reset_filter(cs, user_id, session_id);
+  }
+}
+
+void
 html_reset_filter(serve_state_t state, int user_id, ej_cookie_t session_id)
 {
   struct user_filter_info *u = user_filter_info_allocate(state, user_id, session_id);
