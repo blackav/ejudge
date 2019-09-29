@@ -473,7 +473,7 @@ html_lock_filter(serve_state_t cs, int user_id, ej_cookie_t session_id)
   for (int i = env.rbegin; i < env.rtotal; i++) {
     env.rid = i;
     if (filter_tree_bool_eval(&env, u->prev_tree) > 0) {
-      if (count > 0) fprintf(new_filter_f, "&&");
+      if (count > 0) fprintf(new_filter_f, "||");
       fprintf(new_filter_f, "id==%d", i);
       ++count;
     }
