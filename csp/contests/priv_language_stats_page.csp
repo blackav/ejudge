@@ -248,6 +248,31 @@
 %>
 </table>
 
+<table class="b1">
+    <tr>
+        <th class="b1">Id</th>
+        <th class="b1">Short Name</th>
+        <th class="b1">Long Name</th>
+        <th class="b1">Internal Name</th>
+        <th class="b1">Problem Dir</th>
+    </tr>
+<%
+    for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
+        const struct section_problem_data *prob = cs->probs[prob_id];
+        if (!prob) continue;
+%>
+    <tr>
+        <td class="b1"><s:v value="prob->id" /></td>
+        <td class="b1"><s:v value="prob->short_name" /></td>
+        <td class="b1"><s:v value="prob->long_name" checkExpr="" /></td>
+        <td class="b1"><s:v value="prob->internal_name" checkExpr="" /></td>
+        <td class="b1"><s:v value="prob->problem_dir" checkExpr="" /></td>
+    </tr>
+<%
+    }
+%>
+</table>
+
 <%@include "priv_footer.csp"
 %><%
 cleanup:
