@@ -1956,7 +1956,7 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
   }
 
   // columns: login, email, reg_password (regpassword, password), cnts_password (cntspassword), name (cnts_name, cntsname)
-  int login_idx = -1, email_idx = -1, reg_password_idx = -1, cnts_password_idx = -1, cnts_name_idx = -1;
+  int login_idx = -1, email_idx = -1, reg_password_idx = -1, cnts_password_idx = -1, cnts_name_idx = -1, cnts_contest_id_idx = -1;
   int column_count = csv_parsed->v[0].u;
   int failed = 0;
   for (int col = 0; col < column_count; ++col) {
@@ -1998,6 +1998,13 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
       } else {
         cnts_name_idx = col;
       }
+    } else if (!strcasecmp(txt, "contest_id")) {
+      if (cnts_contest_id_idx >= 0) {
+        fprintf(log_f, "dupicated column 'contest_id'\n");
+        failed = 1;
+      } else {
+        cnts_contest_id_idx = col;
+      }
     } else {
       fprintf(log_f, "unidentified column %d (%s), skipped\n", col + 1, txt);
     }
@@ -2030,6 +2037,9 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
   }
   if (!cnts) {
     cnts_name_idx = -1;
+  }
+  if (!cnts) {
+    cnts_contest_id_idx = -1;
   }
   if (failed) FAIL(SSERV_ERR_INV_CSV_FILE);
 
@@ -2082,6 +2092,20 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
       }
       xfree(txt); txt = 0;
     }
+    if (cnts_contest_id_idx >= 0) {
+      txt = fix_string(csv_parsed->v[row].v[cnts_contest_id_idx]);
+      if (txt && *txt) {
+        char *eptr = NULL;
+        errno = 0;
+        long cur_contest_id = strtol(txt, &eptr, 10);
+        const struct contest_desc *cur_cnts = NULL;
+        if (*eptr || errno || (int) cur_contest_id != cur_contest_id || cur_contest_id <= 0 || contests_get(cur_contest_id, &cur_cnts) < 0 || !cur_cnts) {
+          fprintf(log_f, "row %d: invalid contest_id %s\n", row + 1, txt);
+          failed = 1;
+        }
+      }
+      xfree(txt); txt = NULL;
+    }
   }
   if (failed) FAIL(SSERV_ERR_INV_CSV_FILE);
 
@@ -2097,6 +2121,12 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
     if (reg_password_idx >= 0) reg_password_str = fix_string(csv_parsed->v[row].v[reg_password_idx]);
     if (cnts_password_idx >= 0) cnts_password_str = fix_string(csv_parsed->v[row].v[cnts_password_idx]);
     if (cnts_name_idx >= 0) cnts_name_str = fix_string(csv_parsed->v[row].v[cnts_name_idx]);
+    int cur_contest_id = -1;
+    if (cnts_contest_id_idx >= 0) {
+      unsigned char *txt = fix_string(csv_parsed->v[row].v[cnts_contest_id_idx]);
+      cur_contest_id = strtol(txt, NULL, 10);
+      xfree(txt);
+    }
 
     struct userlist_pk_create_user_2 up;
     int other_user_id = 0;
@@ -2112,7 +2142,11 @@ super_serve_op_USER_CREATE_FROM_CSV_ACTION(
     up.read_only_flag = params.field_7;
     up.never_clean_flag = params.field_8;
     up.simple_registration_flag = params.field_9;
-    up.contest_id = params.other_contest_id_1;
+    if (cur_contest_id > 0) {
+      up.contest_id = cur_contest_id;
+    } else {
+      up.contest_id = params.other_contest_id_1;
+    }
     up.cnts_status = params.cnts_status;
     up.cnts_is_invisible_flag = params.is_invisible;
     up.cnts_is_banned_flag = params.is_banned;
