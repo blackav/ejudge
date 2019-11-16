@@ -21,6 +21,9 @@ LANG_CONFIG_DIR="@lang_config_dir@"
 common_config() {
   echo 'long_name=".NET C# compiler"'
   echo 'src_sfx=".cs"'
+  echo 'exe_sfx=".dll"'
+  echo 'arch="dotnet"'
+  echo 'insecure=1'
 }
 
 failure() {
@@ -77,7 +80,7 @@ EOF
   mv conftest/bin/Release/${target}/conftest.dll . || failure
   "${DOTNETRUN}" conftest.dll >/dev/null 2>&1 || failure
 
-  rm -f ./conftest*
+  rm -rf ./conftest*
   DOTNETDIR=`dirname "${DOTNETRUN}"`
   [ "${DOTNETDIR}" = . ] && DOTNETDIR=""
   echo 'version="'"${version}"'"'

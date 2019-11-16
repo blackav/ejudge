@@ -20,7 +20,10 @@ LANG_CONFIG_DIR="@lang_config_dir@"
 
 common_config() {
   echo 'long_name=".NET Visual Basic compiler"'
-  echo 'src_sfx=".cs"'
+  echo 'src_sfx=".vb"'
+  echo 'exe_sfx=".dll"'
+  echo 'arch="dotnet"'
+  echo 'insecure=1'
 }
 
 failure() {
@@ -89,7 +92,7 @@ then
   exit 0
 fi
 
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/dotnet-cs.cfg"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/dotnet-vb.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then

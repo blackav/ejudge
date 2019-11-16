@@ -36,10 +36,22 @@ unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
 
-if ! "${DOTNETRUN}" build
+if ! "${DOTNETRUN}" new console -lang 'c#' -n solution
 then
     echo "Compilation failed." >&2
     exit 1
 fi
+
+cat "$1" > solution/Program.cs
+
+target="netcoreapp3.0"
+
+if ! "${DOTNETRUN}" build -c Release solution
+then
+    echo "Compilation failed." >&2
+    exit 1
+fi
+
+mv solution/bin/Release/${target}/solution.dll "$2"
 
 exit 0
