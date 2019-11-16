@@ -2102,6 +2102,7 @@ enum
   ARCH_MSIL,
   ARCH_WIN32,
   ARCH_VALGRIND,
+  ARCH_DOTNET,
 
   ARCH_LAST,
 };
@@ -2118,6 +2119,7 @@ static const unsigned char * const supported_archs[] =
   "msil",
   "win32",
   "valgrind",
+  "dotnet",
 
   0,
 };
@@ -2133,6 +2135,7 @@ static const unsigned char * const arch_abstract_names [] =
   "Linux-msil",
   "Win32",
   "Valgrind",
+  "Dotnet",
 
   0,
 };
@@ -2389,6 +2392,23 @@ generate_abstract_tester(
     }
     break;
 
+  case ARCH_DOTNET:
+    fprintf(f, "[tester]\n"
+            "name = %s\n"
+            "arch = \"%s\"\n"
+            "abstract\n"
+            "no_core_dump\n"
+            "kill_signal = TERM\n"
+            "memory_limit_type = \"dotnet\"\n"
+            "secure_exec_type = \"dotnet\"\n"
+            "start_cmd = \"rundotnet\"\n",
+            arch_abstract_names[arch], supported_archs[arch]);
+    if (!atst) {
+      fprintf(f, "start_env = \"LANG=C\"\n"
+              "start_env = \"EJUDGE_PREFIX_DIR\"\n");
+    }
+    break;
+
   default:
     abort();
   }
@@ -2488,6 +2508,9 @@ generate_concrete_tester(FILE *f, int arch,
     break;
 
   case ARCH_VALGRIND:
+    break;
+
+  case ARCH_DOTNET:
     break;
 
   default:

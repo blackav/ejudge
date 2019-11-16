@@ -1036,6 +1036,22 @@ create_configs(
           "start_env = \"LC_CTYPE=en_US.UTF-8\"\n"
           "start_env = \"HOME\"\n\n");
 
+  fprintf(f,
+          "[tester]\n"
+          "name = Dotnet\n"
+          "arch = \"dotnet\"\n"
+          "abstract\n"
+          "no_core_dump\n"
+          "kill_signal = TERM\n"
+          "memory_limit_type = \"dotnet\"\n"
+          "secure_exec_type = \"dotnet\"\n"
+          "clear_env\n"
+          "start_cmd = \"rundotnet\"\n"
+          "start_env = \"PATH=/usr/local/bin:/usr/bin:/bin\"\n"
+          "start_env = \"LANG=en_US.UTF-8\"\n"
+          "start_env = \"EJUDGE_PREFIX_DIR\"\n"
+          "start_env = \"HOME\"\n\n");
+
   fclose(f); f = NULL;
 }
 
@@ -1049,6 +1065,7 @@ upgrade_times[] =
   "2015/11/01 00:00:00",
   "2016/01/18 18:00:00",
   "2016/05/15 00:00:00",
+  "2019/11/16 00:00:00",
 
   NULL
 };

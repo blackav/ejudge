@@ -2946,6 +2946,7 @@ run_one_test(
   } else {
     switch (tst->memory_limit_type_val) {
     case MEMLIMIT_TYPE_DEFAULT:
+    case MEMLIMIT_TYPE_DOTNET:  // don't know how to setup limits
       if (max_stack_size > 0) {
         task_SetStackSize(tsk, max_stack_size);
       } else if (srgp->enable_max_stack_size > 0 && max_vm_size > 0) {
@@ -3015,6 +3016,9 @@ run_one_test(
       // nothing secure
       break;
     case SEXEC_TYPE_VALGRIND:
+      // nothing secure
+      break;
+    case SEXEC_TYPE_DOTNET:
       // nothing secure
       break;
     default:
