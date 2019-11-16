@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2017 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2017-2019 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -120,10 +120,15 @@ SCRIPTS_IN = \
  pasabc-linux-version.in\
  mars.in\
  mars-version.in\
+ dotnet-cs-version.in\
+ dotnet-cs.in\
+ dotnet-vb-version.in\
+ dotnet-vb.in\
  runvg.in\
  runjava.in\
  runmono.in\
- runperl.in
+ runperl.in\
+ rundotnet.in
 
 POLICIES = \
  fileio.policy \
