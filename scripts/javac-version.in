@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2005-2018 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2005-2019 Alexander Chernov <cher@ejudge.ru>
 
 LANG_CONFIG_DIR="@lang_config_dir@"
 
@@ -61,6 +61,10 @@ then
   version=`${JAVARUN} -version 2>&1 | grep " version" | sed 's/^.*"\(.*\)".*$/\1/g'` || failure
   [ "${version}" != "" ] || failure
   case x"${version}" in
+    x14.*) JAVAVER=14;;
+    x13.*) JAVAVER=13;;
+    x12.*) JAVAVER=12;;
+    x11.*) JAVAVER=11;;
     x10.*) JAVAVER=10;;
     x9.*) JAVAVER=1.9;;
     x1.8.*) JAVAVER=1.8;;
