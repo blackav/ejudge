@@ -7,7 +7,7 @@
 # using EJUDGE_FLAGS we may pass additional flags
 
 LANG_CONFIG_DIR="@lang_config_dir@"
-[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/dotnet-cs.cfg"
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/dotnet-vb.cfg"
 
 if [ -f "${EJUDGE_LANG_CONFIG}" ]
 then
@@ -36,10 +36,22 @@ unset LC_ALL
 unset LC_MESSAGES
 unset LANGUAGE
 
-if ! "${DOTNETRUN}" build
+if ! "${DOTNETRUN}" new console -lang 'vb' -n solution
 then
     echo "Compilation failed." >&2
     exit 1
 fi
+
+cat "$1" > solution/Program.vb
+
+target="netcoreapp3.0"
+
+if ! "${DOTNETRUN}" build -c Release solution
+then
+    echo "Compilation failed." >&2
+    exit 1
+fi
+
+mv solution/bin/Release/${target}/solution.dll "$2"
 
 exit 0

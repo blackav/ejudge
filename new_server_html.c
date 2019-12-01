@@ -10243,9 +10243,9 @@ unpriv_submit_run(
   if (phr->json_reply) {
     fprintf(fout, "{\n");
     fprintf(fout, "  \"ok\" : %s", "true");
+    fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
     fprintf(fout, ",\n  \"result\": {");
-    fprintf(fout, "\n    \"server_time\": %lld", (long long) cs->current_time);
-    fprintf(fout, ",\n    \"run_id\": %d", run_id);
+    fprintf(fout, "\n    \"run_id\": %d", run_id);
     fprintf(fout, "\n  }");
     fprintf(fout, "\n}");
   } else {
@@ -12062,9 +12062,9 @@ unpriv_problem_status_json(
 
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\" : %s", ok?"true":"false");
+  fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
   fprintf(fout, ",\n  \"result\": {");
-  fprintf(fout, "\n    \"server_time\": %lld", (long long) cs->current_time);
-  fprintf(fout, ",\n    \"problem\": {");
+  fprintf(fout, "\n    \"problem\": {");
   fprintf(fout, "\n      \"id\": %d", prob->id);
   fprintf(fout, ",\n      \"short_name\": \"%s\"", json_armor_buf(&ab, prob->short_name));
   if (prob->long_name) {
@@ -12502,9 +12502,9 @@ unpriv_list_runs_json(
 
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\" : %s", ok?"true":"false");
+  fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
   fprintf(fout, ",\n  \"result\": {");
-  fprintf(fout, "\n    \"server_time\": %lld", (long long) cs->current_time);
-  fprintf(fout, ",\n    \"runs\": [");
+  fprintf(fout, "\n    \"runs\": [");
   for (int i = 0; i < rdis.size; ++i) {
     RunDisplayInfo *rdi = &rdis.runs[i];
     if (i > 0) fprintf(fout, ",");
@@ -12650,9 +12650,9 @@ unpriv_run_messages_json(
 
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\" : %s", "true");
+  fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
   fprintf(fout, ",\n  \"result\": {");
-  fprintf(fout, "\n    \"server_time\": %lld", (long long) cs->current_time);
-  fprintf(fout, ",\n    \"messages\": [");
+  fprintf(fout, "\n    \"messages\": [");
 
   if (ej_uuid_is_nonempty(re.run_uuid)) {
     clar_fetch_run_messages(cs->clarlog_state, &re.run_uuid, &fcev);

@@ -8939,10 +8939,10 @@ write_json_run_info(
 
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\" : %s", ok?"true":"false");
+  fprintf(fout, ",\n    \"server_time\": %lld", (long long) cs->current_time);
   fprintf(fout, ",\n  \"result\": {");
-  fprintf(fout, "\n    \"server_time\": %lld", (long long) cs->current_time);
 
-  fprintf(fout, ",\n    \"run\": {");
+  fprintf(fout, "\n    \"run\": {");
   fprintf(fout, "\n      \"run_id\": %d", ri.run_id);
   fprintf(fout, ",\n      \"prob_id\": %d", ri.prob_id);
   fprintf(fout, ",\n      \"run_time_us\": %lld", ri.run_time_us);

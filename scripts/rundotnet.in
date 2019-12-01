@@ -22,4 +22,17 @@ fi
 
 [ x"${DOTNETDIR}" != x ] && PATH="${DOTNETDIR}/bin:$PATH"
 
-exec "${DOTNETRUN}" ${EJUDGE_DOTNET_FLAGS} "${runfile}"
+mv "${runfile}" solution.dll
+cat <<EOF > solution.runtimeconfig.json
+{
+  "runtimeOptions": {
+    "tfm": "netcoreapp3.0",
+    "framework": {
+      "name": "Microsoft.NETCore.App",
+      "version": "3.0.0"
+    }
+  }
+}
+EOF
+
+exec "${DOTNETRUN}" ${EJUDGE_DOTNET_FLAGS} solution.dll
