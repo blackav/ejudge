@@ -14342,19 +14342,6 @@ batch_login(
   phr->contest_id = contest_id;
   phr->cnts = cnts;
 
-  const unsigned char *prob_name = NULL;
-  hr_cgi_param(phr, "p", &prob_name);
-
-  int expire_time = 0;
-  hr_cgi_param_int_opt(phr, "x", &expire_time, 0);
-  if (expire_time > 0) {
-    time_t current_time = time(NULL);
-    if (current_time >= expire_time) {
-      err("batch_login: operation expired");
-      goto invalid_parameter;
-    }
-  }
-
   int locale_id = -1;
   hr_cgi_param_int_opt(phr, "o", &locale_id, -1);
   if (locale_id < 0) locale_id = 0;
@@ -14382,6 +14369,97 @@ batch_login(
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     err("batch_login: failed to open userlist connection");
     goto database_error;
+  }
+
+  // in the final view mode try to select contest_id to which the user is not banned
+  int final_view_mode = 0;
+  if (hr_cgi_param_int(phr, "z", &final_view_mode) >= 0 && final_view_mode == 1) {
+    int check_contests_id[10];
+    int check_contests_count = 0;
+    if (cnts->comment && cnts->comment[0]) {
+      char *p = cnts->comment;
+      char *ep = NULL;
+      while (*p) {
+        errno = 0;
+        long v = strtol(p, &ep, 10);
+        if (p == ep) break;
+        if (errno || (*ep && !isspace(*ep)) || v <= 0 || (int) v != v) {
+          err("batch_login: contest %d: contests list '%s' is invalid", contest_id, cnts->comment);
+          goto invalid_parameter;
+        }
+        if (check_contests_count == 10) {
+          err("batch_login: contest %d: too many contests", contest_id);
+          goto invalid_parameter;
+        }
+        check_contests_id[check_contests_count++] = (int) v;
+
+        p = ep;
+      }
+    }
+
+    int user_id = 0;
+    int r = userlist_clnt_lookup_user(ul_conn, login_str, 0, &user_id, 0);
+    if (r < 0 && r != -ULS_ERR_INVALID_LOGIN) {
+      err("batch_register: userlist error %d", r);
+      goto database_error;
+    }
+    if (r < 0 || user_id <= 0) {
+      err("batch_register: user '%s' is not registered", login_str);
+      goto invalid_parameter;
+    }
+
+    // iterate over the contests and find an appropriate registration
+    int best_contest_id = 0;
+    for (int i = 0; i < check_contests_count; ++i) {
+      int cur_contest_id = check_contests_id[i];
+      const struct contest_desc *cur_cnts = NULL;
+      if (contests_get(cur_contest_id, &cur_cnts) < 0 || !cur_cnts) {
+        err("batch_register: invalid contest %d", cur_contest_id);
+        goto invalid_parameter;
+      }
+      int r = userlist_clnt_login(ul_conn, ULS_TEAM_CHECK_USER,
+                                  &phr->ip,
+                                  0 /* cookie */,
+                                  phr->client_key,
+                                  0 /* expire */,
+                                  phr->ssl_flag, cur_contest_id,
+                                  locale_id,
+                                  0x73629ae8, /* pwd_special */
+                                  0, /* is_ws */
+                                  login_str, "xxx",
+                                  &phr->user_id,
+                                  &phr->session_id, &phr->client_key,
+                                  &phr->name,
+                                  NULL /* expire */,
+                                  &phr->priv_level,
+                                  &phr->reg_status,
+                                  &phr->reg_flags);
+      if (r >= 0 && !(phr->reg_flags & USERLIST_UC_BANNED) && phr->reg_status == USERLIST_REG_OK) {
+        if (cur_contest_id > best_contest_id) {
+          best_contest_id = cur_contest_id;
+        }
+      }
+    }
+    if (best_contest_id <= 0) {
+      err("batch_login: user not registered");
+      goto invalid_parameter;
+    }
+    phr->contest_id = best_contest_id;
+    contest_id = best_contest_id;
+    contests_get(phr->contest_id, &phr->cnts);
+  }
+
+  const unsigned char *prob_name = NULL;
+  hr_cgi_param(phr, "p", &prob_name);
+
+  int expire_time = 0;
+  hr_cgi_param_int_opt(phr, "x", &expire_time, 0);
+  if (expire_time > 0) {
+    time_t current_time = time(NULL);
+    if (current_time >= expire_time) {
+      err("batch_login: operation expired");
+      goto invalid_parameter;
+    }
   }
 
   int action = NEW_SRV_ACTION_MAIN_PAGE;
