@@ -354,6 +354,10 @@ write_xml_tests_report(
   }
 
   if (r->tt_row_count <= 0 || r->tt_column_count <= 0) {
+    if (r->errors) {
+      fprintf(f, "<h3>%s</h3>\n", _("Testing messages"));
+      fprintf(f, "<pre>%s</pre>\n", ARMOR(r->errors));
+    }
     fprintf(f, "<p>%s</p>\n",
             _("Further testing information is not available"));
     goto done;
