@@ -8873,6 +8873,14 @@ do_get_database(FILE *f, int contest_id, const struct contest_desc *cnts)
                                        ui, userlist_contest_field_ids[i], 0);
       fprintf(gen_f, ";%s", CSVARMOR(vbuf));
     }
+    {
+      vbuf[0] = 0;
+      userlist_get_user_info_field_str(vbuf, sizeof(vbuf), ui, USERLIST_NC_AVATAR_ID, 0);
+      fprintf(gen_f, ";%s", CSVARMOR(vbuf));
+      vbuf[0] = 0;
+      userlist_get_user_info_field_str(vbuf, sizeof(vbuf), ui, USERLIST_NC_AVATAR_SUFFIX, 0);
+      fprintf(gen_f, ";%s", CSVARMOR(vbuf));
+    }
     close_memstream(gen_f); gen_f = 0;
 
     pers_tot = 0;
