@@ -1993,7 +1993,7 @@ make_java_limits(unsigned char *buf, int blen, ej_size64_t max_vm_size, ej_size6
   }
 }
 
-static void
+static void __attribute__((unused))
 make_mono_limits(unsigned char *buf, int blen, ej_size64_t max_vm_size, ej_size64_t max_stack_size)
 {
   unsigned char bv[1024];
@@ -2947,6 +2947,7 @@ run_one_test(
     switch (tst->memory_limit_type_val) {
     case MEMLIMIT_TYPE_DEFAULT:
     case MEMLIMIT_TYPE_DOTNET:  // don't know how to setup limits
+    case MEMLIMIT_TYPE_MONO:    // no reasonable limit support
       if (max_stack_size > 0) {
         task_SetStackSize(tsk, max_stack_size);
       } else if (srgp->enable_max_stack_size > 0 && max_vm_size > 0) {
@@ -2968,12 +2969,14 @@ run_one_test(
       break;
     case MEMLIMIT_TYPE_DOS:
       break;
+      /*
     case MEMLIMIT_TYPE_MONO:
       make_mono_limits(mem_limit_buf, sizeof(mem_limit_buf), max_vm_size, max_stack_size);
       if (mem_limit_buf[0]) {
         task_PutEnv(tsk, mem_limit_buf);
       }
       break;
+      */
     case MEMLIMIT_TYPE_VALGRIND:
       //???
       break;
