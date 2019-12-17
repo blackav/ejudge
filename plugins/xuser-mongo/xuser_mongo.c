@@ -1,4 +1,4 @@
-/* -*- mode: c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 
 /* Copyright (C) 2015-2019 Alexander Chernov <cher@ejudge.ru> */
 
@@ -147,6 +147,11 @@ get_entries_func(
         struct xuser_cnts_state *data,
         int count,
         int *user_ids);
+static int
+set_problem_dir_prefix_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        const unsigned char *problem_dir_prefix);
 
 struct xuser_plugin_iface plugin_xuser_mongo =
 {
@@ -176,6 +181,7 @@ struct xuser_plugin_iface plugin_xuser_mongo =
     set_run_fields_func,
     count_read_clars_func,
     get_entries_func,
+    set_problem_dir_prefix_func,
 };
 
 static struct common_plugin_data *
@@ -1017,8 +1023,65 @@ done:
     return &res->b;
 }
 
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */
+static int
+set_problem_dir_prefix_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        const unsigned char *problem_dir_prefix)
+{
+#if HAVE_LIBMONGOC - 0 > 0
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    struct team_extra *extra = do_get_entry(state, user_id);
+    if (!extra) return -1;
+    if (!extra->problem_dir_prefix && !problem_dir_prefix) {
+        return 0;
+    }
+    if (extra->problem_dir_prefix && !problem_dir_prefix) {
+        ASSERT(ej_uuid_is_nonempty(extra->uuid));
+        xfree(extra->problem_dir_prefix); extra->problem_dir_prefix = NULL;
+        bson_t *doc = bson_new();
+        bson_append_utf8(doc, "problem_dir_prefix", -1, "", 0);
+        return do_update(state, extra, "$unset", doc);
+    }
+    if (extra->problem_dir_prefix && !strcmp(extra->problem_dir_prefix, problem_dir_prefix))
+        return 0;
+    xfree(extra->problem_dir_prefix);
+    extra->problem_dir_prefix = xstrdup(problem_dir_prefix);
+    if (ej_uuid_is_nonempty(extra->uuid)) {
+        bson_t *doc = bson_new();
+        bson_append_utf8(doc, "problem_dir_prefix", -1, extra->problem_dir_prefix, -1);
+        return do_update(state, extra, NULL, doc);
+    } else {
+        return do_insert(state, extra);
+    }
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
+    struct xuser_mongo_cnts_state *state = (struct xuser_mongo_cnts_state *) data;
+    struct team_extra *extra = do_get_entry(state, user_id);
+    if (!extra) return -1;
+    if (!extra->problem_dir_prefix && !problem_dir_prefix) {
+        return 0;
+    }
+    if (extra->problem_dir_prefix && !problem_dir_prefix) {
+        ASSERT(ej_uuid_is_nonempty(extra->uuid));
+        xfree(extra->problem_dir_prefix); extra->problem_dir_prefix = NULL;
+        bson *doc = bson_new();
+        bson_append_string(doc, "problem_dir_prefix", "", 0);
+        bson_finish(doc);
+        return do_update(state, extra, "$unset", doc);
+    }
+    if (extra->problem_dir_prefix && !strcmp(extra->problem_dir_prefix, problem_dir_prefix))
+        return 0;
+    xfree(extra->problem_dir_prefix);
+    extra->problem_dir_prefix = xstrdup(problem_dir_prefix);
+    if (ej_uuid_is_nonempty(extra->uuid)) {
+        bson *doc = bson_new();
+        bson_append_string(doc, "problem_dir_prefix", extra->problem_dir_prefix, strlen(extra->problem_dir_prefix));
+        bson_finish(doc);
+        return do_update(state, extra, NULL, doc);
+    } else {
+        return do_insert(state, extra);
+    }
+#else
+    return -1;
+#endif
+}

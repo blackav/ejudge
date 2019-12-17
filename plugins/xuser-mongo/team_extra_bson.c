@@ -1,4 +1,4 @@
-/* -*- mode: c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 
 /* Copyright (C) 2015-2019 Alexander Chernov <cher@ejudge.ru> */
 
@@ -154,6 +154,8 @@ team_extra_bson_parse(ej_bson_t *b)
             bson_destroy(arr); arr = NULL;
         } else if (!strcmp(key, "disq_comment")) {
             if (ej_bson_parse_string_new(bc, "disq_comment", &res->disq_comment) < 0) goto fail;
+        } else if (!strcmp(key, "problem_dir_prefix")) {
+            if (ej_bson_parse_string_new(bc, "problem_dir_prefix", &res->problem_dir_prefix) < 0) goto fail;
         } else if (!strcmp(key, "warnings")) {
             if (ej_bson_parse_array_new(bc, "warnings", &arr) < 0) goto fail;
             bson_iter_t iter2, * const bc2 = &iter;
@@ -227,6 +229,8 @@ fail:;
             bson_free(arr); arr = NULL;
         } else if (!strcmp(key, "disq_comment")) {
             if (ej_bson_parse_string(bc, "disq_comment", &res->disq_comment) < 0) goto fail;
+        } else if (!strcmp(key, "problem_dir_prefix")) {
+            if (ej_bson_parse_string(bc, "problem_dir_prefix", &res->problem_dir_prefix) < 0) goto fail;
         } else if (!strcmp(key, "warnings")) {
             if (ej_bson_parse_array(bc, "warnings", &arr) < 0) goto fail;
             bc2 = bson_cursor_new(arr);
@@ -342,6 +346,9 @@ team_extra_bson_unparse(const struct team_extra *extra)
     if (extra->disq_comment) {
         bson_append_utf8(res, "disq_comment", -1, extra->disq_comment, -1);
     }
+    if (extra->problem_dir_prefix) {
+        bson_append_utf8(res, "problem_dir_prefix", -1, extra->problem_dir_prefix, -1);
+    }
     bson_append_int32(res, "status", -1, extra->status);
     bson_append_int32(res, "run_fields", -1, extra->run_fields);
     if (extra->clar_map_size > 0) {
@@ -375,6 +382,9 @@ team_extra_bson_unparse(const struct team_extra *extra)
     if (extra->disq_comment) {
         bson_append_string(res, "disq_comment", extra->disq_comment, strlen(extra->disq_comment));
     }
+    if (extra->problem_dir_prefix) {
+        bson_append_string(res, "problem_dir_prefix", extra->problem_dir_prefix, strlen(extra->problem_dir_prefix));
+    }
     bson_append_int32(res, "status", extra->status);
     bson_append_int32(res, "run_fields", extra->run_fields);
     if (extra->clar_map_size > 0) {
@@ -406,9 +416,3 @@ team_extra_bson_unparse(const struct team_extra *extra)
     return NULL;
 #endif
 }
-
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */

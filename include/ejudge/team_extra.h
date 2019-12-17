@@ -3,7 +3,7 @@
 #ifndef __TEAM_EXTRA_H__
 #define __TEAM_EXTRA_H__
 
-/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -61,6 +61,8 @@ struct team_extra
 
   // run table fields
   int run_fields;
+
+  unsigned char *problem_dir_prefix;
 };
 
 struct team_extra *team_extra_free(struct team_extra *te);

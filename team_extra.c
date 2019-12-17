@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -58,6 +58,7 @@ team_extra_free(struct team_extra *te)
   xfree(te->clar_map);
   xfree(te->disq_comment);
   xfree(te->clar_uuids);
+  xfree(te->problem_dir_prefix);
   xfree(te);
   return NULL;
 }

@@ -6240,6 +6240,10 @@ priv_download_runs(
   ns_download_runs(cnts, cs, fout, log_f, run_selection, dir_struct, file_name_mask, use_problem_extid, use_problem_dir,
                    problem_dir_prefix, mask_size, mask);
 
+  if (cs->xuser_state) {
+    cs->xuser_state->vt->set_problem_dir_prefix(cs->xuser_state, phr->user_id, problem_dir_prefix);
+  }
+
  cleanup:
   return retval;
 

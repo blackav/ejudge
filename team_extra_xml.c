@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2004-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -51,6 +51,7 @@ enum
   TE_T_RUN_FIELDS,
   TE_T_UUID,
   TE_T_CLAR_UUIDS,
+  TE_T_PROBLEM_DIR_PREFIX,
 
   TE_T_LAST_TAG,
 };
@@ -78,6 +79,7 @@ static const char * const elem_map[] =
   [TE_T_RUN_FIELDS]   = "run_fields",
   [TE_T_UUID]         = "uuid",
   [TE_T_CLAR_UUIDS]   = "clar_uuids",
+  [TE_T_PROBLEM_DIR_PREFIX] = "problem_dir_prefix",
   [TE_T_LAST_TAG]     = 0,
 };
 static const char * const attr_map[] =
@@ -362,6 +364,13 @@ team_extra_parse_xml(const unsigned char *path, struct team_extra **pte)
       te->disq_comment = t2->text;
       t2->text = 0;
       break;
+    case TE_T_PROBLEM_DIR_PREFIX:
+      if (t2->first) return xml_err_attrs(t2);
+      if (t2->first_down) return xml_err_nested_elems(t2);
+      if (te->problem_dir_prefix) return xml_err_elem_redefined(t2);
+      te->problem_dir_prefix = t2->text;
+      t2->text = 0;
+      break;
     case TE_T_RUN_FIELDS:
       if (parse_run_felds(t2, te) < 0) goto cleanup;
       break;
@@ -453,6 +462,9 @@ team_extra_unparse_xml(FILE *f, const struct team_extra *te)
   }
   if (te->disq_comment) {
     xml_unparse_text(f, elem_map[TE_T_DISQ_COMMENT], te->disq_comment, "  ");
+  }
+  if (te->problem_dir_prefix) {
+    xml_unparse_text(f, elem_map[TE_T_PROBLEM_DIR_PREFIX], te->problem_dir_prefix, "  ");
   }
   if (te->run_fields > 0) {
     fprintf(f, "  <%s>%08x</%s>\n", elem_map[TE_T_RUN_FIELDS], te->run_fields, elem_map[TE_T_RUN_FIELDS]);

@@ -1,4 +1,4 @@
-/* -*- mode: c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 
 /* Copyright (C) 2015-2019 Alexander Chernov <cher@ejudge.ru> */
 
@@ -124,6 +124,11 @@ get_entries_func(
         struct xuser_cnts_state *data,
         int count,
         int *user_ids);
+static int
+set_problem_dir_prefix_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        const unsigned char *problem_dir_prefix);
 
 struct xuser_plugin_iface plugin_xuser_file =
 {
@@ -153,6 +158,7 @@ struct xuser_plugin_iface plugin_xuser_file =
     set_run_fields_func,
     count_read_clars_func,
     get_entries_func,
+    set_problem_dir_prefix_func,
 };
 
 static struct common_plugin_data *
@@ -676,8 +682,24 @@ get_entries_func(
     return &vec->b;
 }
 
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */
+static int
+set_problem_dir_prefix_func(
+        struct xuser_cnts_state *data,
+        int user_id,
+        const unsigned char *problem_dir_prefix)
+{
+    struct xuser_file_cnts_state *state = (struct xuser_file_cnts_state *) data;
+    struct team_extra *te;
+
+    ASSERT(user_id > 0 && user_id <= EJ_MAX_USER_ID);
+
+    if (user_id >= state->team_map_size) extend_team_map(state, user_id);
+    te = get_entry(state, user_id, 0);
+    if (te == (struct team_extra*) ~(size_t) 0) return -1;
+    ASSERT(te->user_id == user_id);
+
+    xfree(te->problem_dir_prefix);
+    te->problem_dir_prefix = xstrdup(problem_dir_prefix);
+    te->is_dirty = 1;
+    return 1;
+}
