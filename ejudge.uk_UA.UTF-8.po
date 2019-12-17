@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-09-29 08:21+0300\n"
+"POT-Creation-Date: 2019-12-17 17:04+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -2794,6 +2794,9 @@ msgid "Problem priority"
 msgstr ""
 
 msgid "Problem statements"
+msgstr ""
+
+msgid "Problem statistics"
 msgstr ""
 
 msgid "Problem status summary"

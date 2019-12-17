@@ -1,0 +1,55 @@
+<%
+%><%@include "priv_includes.csp"
+%><%
+%><%@set getter_name = "csp_get_priv_problem_stats_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_problem_stats_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+// local vars
+    const unsigned char *title = NULL;
+    int enable_main_menu = 0;
+
+    l10n_setlocale(phr->locale_id);
+    title = _("Problem statistics");
+%><%@include "priv_header.csp"
+%>
+</div>
+
+<table class="b0"><tr>
+<td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td>
+<td class="b0"><s:a ac="problem-stats-page"><s:_>Refresh</s:_></s:a></td>
+</tr></table>
+
+<table class="b1">
+    <tr>
+        <th class="b1">Id</th>
+        <th class="b1">Short Name</th>
+        <th class="b1">Long Name</th>
+        <th class="b1">Internal Name</th>
+        <th class="b1">Problem Dir</th>
+    </tr>
+<%
+    for (int prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
+        const struct section_problem_data *prob = cs->probs[prob_id];
+        if (!prob) continue;
+%>
+    <tr>
+        <td class="b1"><s:v value="prob->id" /></td>
+        <td class="b1"><s:v value="prob->short_name" /></td>
+        <td class="b1"><s:v value="prob->long_name" checkExpr="" /></td>
+        <td class="b1"><s:v value="prob->internal_name" checkExpr="" /></td>
+        <td class="b1"><s:v value="prob->problem_dir" checkExpr="" /></td>
+    </tr>
+<%
+    }
+%>
+</table>
+
+<%@include "priv_footer.csp"
+%><%
+cleanup:
+  (void) &&cleanup;
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>

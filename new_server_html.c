@@ -7932,6 +7932,7 @@ static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAS
   [NEW_SRV_ACTION_CROP_AVATAR_PAGE] = "priv_crop_avatar_page",
   [NEW_SRV_ACTION_SAVE_CROPPED_AVATAR_AJAX] = "priv_save_cropped_avatar_ajax",
   [NEW_SRV_ACTION_LANGUAGE_STATS_PAGE] = "priv_language_stats_page",
+  [NEW_SRV_ACTION_PROBLEM_STATS_PAGE] = "priv_problem_stats_page",
 };
 
 static const int external_priv_action_aliases[NEW_SRV_ACTION_LAST] =

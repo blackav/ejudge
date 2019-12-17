@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-09-29 08:36+0300\n"
+"POT-Creation-Date: 2019-12-17 17:04+0300\n"
 "PO-Revision-Date: 2018-09-15 01:16+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -2946,6 +2946,9 @@ msgstr "Приоритет задачи"
 
 msgid "Problem statements"
 msgstr "Условия задач"
+
+msgid "Problem statistics"
+msgstr "Статистика по задачам"
 
 msgid "Problem status summary"
 msgstr "Итог по задачам"

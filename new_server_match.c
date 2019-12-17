@@ -5196,23 +5196,19 @@ int ns_match_action(const unsigned char *str)
                             c = str[11];
                             if (c == 't') {
                               c = str[12];
-                              if (c == 'u') {
+                              if (c == 's') {
                                 c = str[13];
-                                if (c == 's') {
+                                if (c == '-') {
                                   c = str[14];
-                                  if (c == '-') {
+                                  if (c == 'p') {
                                     c = str[15];
-                                    if (c == 'j') {
+                                    if (c == 'a') {
                                       c = str[16];
-                                      if (c == 's') {
+                                      if (c == 'g') {
                                         c = str[17];
-                                        if (c == 'o') {
+                                        if (c == 'e') {
                                           c = str[18];
-                                          if (c == 'n') {
-                                            c = str[19];
-                                            if (!c) return NEW_SRV_ACTION_PROBLEM_STATUS_JSON;
-                                            return 0;
-                                          }
+                                          if (!c) return NEW_SRV_ACTION_PROBLEM_STATS_PAGE;
                                           return 0;
                                         }
                                         return 0;
@@ -5224,7 +5220,7 @@ int ns_match_action(const unsigned char *str)
                                   return 0;
                                 }
                                 return 0;
-                              } else if (c < 'u') {
+                              } else if (c < 's') {
                                 if (c == 'e') {
                                   c = str[13];
                                   if (c == 'm') {
@@ -5267,6 +5263,35 @@ int ns_match_action(const unsigned char *str)
                                   return 0;
                                 }
                               } else {
+                                if (c == 'u') {
+                                  c = str[13];
+                                  if (c == 's') {
+                                    c = str[14];
+                                    if (c == '-') {
+                                      c = str[15];
+                                      if (c == 'j') {
+                                        c = str[16];
+                                        if (c == 's') {
+                                          c = str[17];
+                                          if (c == 'o') {
+                                            c = str[18];
+                                            if (c == 'n') {
+                                              c = str[19];
+                                              if (!c) return NEW_SRV_ACTION_PROBLEM_STATUS_JSON;
+                                              return 0;
+                                            }
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
                               }
                               return 0;
                             }
