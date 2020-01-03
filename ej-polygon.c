@@ -329,6 +329,12 @@ struct DownloadInterface
         const unsigned char *key,
         const unsigned char *secret,
         const unsigned char *contest_id);
+    int (*problems_api)(
+        struct DownloadData *data,
+        struct PolygonState *ps,
+        struct RandomSource *rand,
+        const unsigned char *key,
+        const unsigned char *secret);
 };
 
 static int
@@ -769,6 +775,61 @@ done: ;
     return retval;
 }
 
+static int
+curl_iface_problems_api_func(
+        struct DownloadData *data,
+        struct PolygonState *ps,
+        struct RandomSource *rand,
+        const unsigned char *key,
+        const unsigned char *secret)
+{
+    int retval = 0;
+    char *sigbuf_s = NULL;
+    size_t sigbuf_z = 0;
+    FILE *sigbuf_f = NULL;
+    char *url_s = NULL;
+    size_t url_z = 0;
+    FILE *url_f = NULL;
+
+    if (!(sigbuf_f = open_memstream(&sigbuf_s, &sigbuf_z))) {
+        fprintf(data->log_f, "open_memstream failed\n");
+        retval = 1;
+        goto done;
+    }
+
+    time_t current = time(NULL);
+
+    unsigned char rand6[8];
+    rand->ops->b32_bytes(rand, rand6, 6);
+    fprintf(sigbuf_f, "%s/contest.problems?apiKey=%s&time=%lld#%s",
+            rand6, key, (long long) current, secret);
+    fclose(sigbuf_f); sigbuf_f = NULL;
+
+    unsigned char req_hash[256];
+    sha512b16buf(req_hash, sizeof(req_hash), sigbuf_s, sigbuf_z);
+
+    if (!(url_f = open_memstream(&url_s, &url_z))) {
+        fprintf(data->log_f, "open_memstream failed\n");
+        retval = 1;
+        goto done;
+    }
+    fprintf(url_f, "%s/api/contest.problems?apiKey=%s&time=%lld&apiSig=%s%s",
+            data->pkt->polygon_url, key, (long long) current, rand6, req_hash);
+    fclose(url_f); url_f = NULL;
+
+    if (curl_iface_get_func(data, url_s) != CURLE_OK) {
+        retval = 1;
+        goto done;
+    }
+
+done: ;
+    if (url_f) fclose(url_f);
+    if (url_s) free(url_s);
+    if (sigbuf_f) fclose(sigbuf_f);
+    if (sigbuf_s) free(sigbuf_s);
+    return retval;
+}
+
 static const struct DownloadInterface curl_download_interface =
 {
     curl_iface_create_func,
@@ -786,6 +847,7 @@ static const struct DownloadInterface curl_download_interface =
     curl_iface_contest_page_func,
     curl_iface_problems_multi_page_func,
     curl_iface_contest_api,
+    curl_iface_problems_api_func,
 };
 
 static const struct DownloadInterface *
