@@ -20,4 +20,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+void
+sha512b16buf(
+        char *out,
+        size_t out_size,
+        const unsigned char *in,
+        size_t in_size);
+
 #endif
