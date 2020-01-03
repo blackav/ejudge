@@ -254,6 +254,7 @@ COMMON_CFILES=\
  sha.c\
  sha256.c\
  sha256utils.c\
+ sha512.c\
  blowfish.c\
  t3m_dir_listener.c\
  t3m_submits.c\
@@ -623,6 +624,7 @@ HFILES=\
  ./include/ejudge/sha.h\
  ./include/ejudge/sha256.h\
  ./include/ejudge/sha256utils.h\
+ ./include/ejudge/sha512.h\
  ./include/ejudge/status_plugin.h\
  ./include/ejudge/blowfish.h\
  ./include/ejudge/t3m_dir_listener.h\
