@@ -73,6 +73,7 @@ enum UpdateState
     STATE_ACTUAL,
     STATE_UNCOMMITTED,
     STATE_TIMEOUT,
+    STATE_NOT_AVAILABLE,
 
     STATE_LAST,
 };
@@ -335,6 +336,29 @@ struct DownloadInterface
         struct RandomSource *rand,
         const unsigned char *key,
         const unsigned char *secret);
+    int (*problem_info_api)(
+        struct DownloadData *data,
+        struct PolygonState *ps,
+        struct RandomSource *rand,
+        const unsigned char *key,
+        const unsigned char *secret,
+        int problem_id);
+    int (*problem_packages_api)(
+        struct DownloadData *data,
+        struct PolygonState *ps,
+        struct RandomSource *rand,
+        const unsigned char *key,
+        const unsigned char *secret,
+        int problem_id);
+    int (*problem_package_api)(
+        struct DownloadData *data,
+        struct PolygonState *ps,
+        struct RandomSource *rand,
+        const unsigned char *key,
+        const unsigned char *secret,
+        int problem_id,
+        int package_id,
+        const unsigned char *type);
 };
 
 static int
@@ -801,7 +825,7 @@ curl_iface_problems_api_func(
 
     unsigned char rand6[8];
     rand->ops->b32_bytes(rand, rand6, 6);
-    fprintf(sigbuf_f, "%s/contest.problems?apiKey=%s&time=%lld#%s",
+    fprintf(sigbuf_f, "%s/problems.list?apiKey=%s&time=%lld#%s",
             rand6, key, (long long) current, secret);
     fclose(sigbuf_f); sigbuf_f = NULL;
 
@@ -813,8 +837,182 @@ curl_iface_problems_api_func(
         retval = 1;
         goto done;
     }
-    fprintf(url_f, "%s/api/contest.problems?apiKey=%s&time=%lld&apiSig=%s%s",
+    fprintf(url_f, "%s/api/problems.list?apiKey=%s&time=%lld&apiSig=%s%s",
             data->pkt->polygon_url, key, (long long) current, rand6, req_hash);
+    fclose(url_f); url_f = NULL;
+
+    if (curl_iface_get_func(data, url_s) != CURLE_OK) {
+        retval = 1;
+        goto done;
+    }
+
+done: ;
+    if (url_f) fclose(url_f);
+    if (url_s) free(url_s);
+    if (sigbuf_f) fclose(sigbuf_f);
+    if (sigbuf_s) free(sigbuf_s);
+    return retval;
+}
+
+static int
+curl_iface_problem_info_api_func(
+        struct DownloadData *data,
+        struct PolygonState *ps,
+        struct RandomSource *rand,
+        const unsigned char *key,
+        const unsigned char *secret,
+        int problem_id)
+{
+    int retval = 0;
+    char *sigbuf_s = NULL;
+    size_t sigbuf_z = 0;
+    FILE *sigbuf_f = NULL;
+    char *url_s = NULL;
+    size_t url_z = 0;
+    FILE *url_f = NULL;
+
+    if (!(sigbuf_f = open_memstream(&sigbuf_s, &sigbuf_z))) {
+        fprintf(data->log_f, "open_memstream failed\n");
+        retval = 1;
+        goto done;
+    }
+
+    time_t current = time(NULL);
+
+    unsigned char rand6[8];
+    rand->ops->b32_bytes(rand, rand6, 6);
+    fprintf(sigbuf_f, "%s/problem.info?apiKey=%s&problemId=%d&time=%lld#%s",
+            rand6, key, problem_id, (long long) current, secret);
+    fclose(sigbuf_f); sigbuf_f = NULL;
+
+    unsigned char req_hash[256];
+    sha512b16buf(req_hash, sizeof(req_hash), sigbuf_s, sigbuf_z);
+
+    if (!(url_f = open_memstream(&url_s, &url_z))) {
+        fprintf(data->log_f, "open_memstream failed\n");
+        retval = 1;
+        goto done;
+    }
+    fprintf(url_f, "%s/api/problem.info?apiKey=%s&problemId=%d&time=%lld&apiSig=%s%s",
+            data->pkt->polygon_url, key, problem_id, (long long) current, rand6, req_hash);
+    fclose(url_f); url_f = NULL;
+
+    if (curl_iface_get_func(data, url_s) != CURLE_OK) {
+        retval = 1;
+        goto done;
+    }
+
+done: ;
+    if (url_f) fclose(url_f);
+    if (url_s) free(url_s);
+    if (sigbuf_f) fclose(sigbuf_f);
+    if (sigbuf_s) free(sigbuf_s);
+    return retval;
+}
+
+static int
+curl_iface_problem_packages_api_func(
+        struct DownloadData *data,
+        struct PolygonState *ps,
+        struct RandomSource *rand,
+        const unsigned char *key,
+        const unsigned char *secret,
+        int problem_id)
+{
+    int retval = 0;
+    char *sigbuf_s = NULL;
+    size_t sigbuf_z = 0;
+    FILE *sigbuf_f = NULL;
+    char *url_s = NULL;
+    size_t url_z = 0;
+    FILE *url_f = NULL;
+
+    if (!(sigbuf_f = open_memstream(&sigbuf_s, &sigbuf_z))) {
+        fprintf(data->log_f, "open_memstream failed\n");
+        retval = 1;
+        goto done;
+    }
+
+    time_t current = time(NULL);
+
+    unsigned char rand6[8];
+    rand->ops->b32_bytes(rand, rand6, 6);
+    fprintf(sigbuf_f, "%s/problem.packages?apiKey=%s&problemId=%d&time=%lld#%s",
+            rand6, key, problem_id, (long long) current, secret);
+    fclose(sigbuf_f); sigbuf_f = NULL;
+
+    unsigned char req_hash[256];
+    sha512b16buf(req_hash, sizeof(req_hash), sigbuf_s, sigbuf_z);
+
+    if (!(url_f = open_memstream(&url_s, &url_z))) {
+        fprintf(data->log_f, "open_memstream failed\n");
+        retval = 1;
+        goto done;
+    }
+    fprintf(url_f, "%s/api/problem.packages?apiKey=%s&problemId=%d&time=%lld&apiSig=%s%s",
+            data->pkt->polygon_url, key, problem_id, (long long) current, rand6, req_hash);
+    fclose(url_f); url_f = NULL;
+
+    if (curl_iface_get_func(data, url_s) != CURLE_OK) {
+        retval = 1;
+        goto done;
+    }
+
+done: ;
+    if (url_f) fclose(url_f);
+    if (url_s) free(url_s);
+    if (sigbuf_f) fclose(sigbuf_f);
+    if (sigbuf_s) free(sigbuf_s);
+    return retval;
+}
+
+static int
+curl_iface_problem_package_api_func(
+        struct DownloadData *data,
+        struct PolygonState *ps,
+        struct RandomSource *rand,
+        const unsigned char *key,
+        const unsigned char *secret,
+        int problem_id,
+        int package_id,
+        const unsigned char *type)
+{
+    int retval = 0;
+    char *sigbuf_s = NULL;
+    size_t sigbuf_z = 0;
+    FILE *sigbuf_f = NULL;
+    char *url_s = NULL;
+    size_t url_z = 0;
+    FILE *url_f = NULL;
+
+    if (type && !strcmp(type, "$linux")) {
+        type = "Linux";
+    }
+
+    if (!(sigbuf_f = open_memstream(&sigbuf_s, &sigbuf_z))) {
+        fprintf(data->log_f, "open_memstream failed\n");
+        retval = 1;
+        goto done;
+    }
+
+    time_t current = time(NULL);
+
+    unsigned char rand6[8];
+    rand->ops->b32_bytes(rand, rand6, 6);
+    fprintf(sigbuf_f, "%s/problem.package?apiKey=%s&packageId=%d&problemId=%d&time=%lld&type=%s#%s",
+            rand6, key, package_id, problem_id, (long long) current, type, secret);
+    fclose(sigbuf_f); sigbuf_f = NULL;
+
+    unsigned char req_hash[256];
+    sha512b16buf(req_hash, sizeof(req_hash), sigbuf_s, sigbuf_z);
+
+    if (!(url_f = open_memstream(&url_s, &url_z))) {
+        fprintf(data->log_f, "open_memstream failed\n");
+        retval = 1;
+        goto done;
+    }
+    fprintf(url_f, "%s/api/problem.package?apiKey=%s&packageId=%d&problemId=%d&time=%lld&type=%s&apiSig=%s%s",
+            data->pkt->polygon_url, key, package_id, problem_id, (long long) current, type, rand6, req_hash);
     fclose(url_f); url_f = NULL;
 
     if (curl_iface_get_func(data, url_s) != CURLE_OK) {
@@ -848,6 +1046,9 @@ static const struct DownloadInterface curl_download_interface =
     curl_iface_problems_multi_page_func,
     curl_iface_contest_api_func,
     curl_iface_problems_api_func,
+    curl_iface_problem_info_api_func,
+    curl_iface_problem_packages_api_func,
+    curl_iface_problem_package_api_func,
 };
 
 static const struct DownloadInterface *
@@ -1063,6 +1264,7 @@ const unsigned char * update_statuses[] =
     [STATE_ACTUAL] = "ACTUAL",
     [STATE_UNCOMMITTED] = "UNCOMMITTED",
     [STATE_TIMEOUT] = "TIMEOUT",
+    [STATE_NOT_AVAILABLE] = "NOT_AVAILABLE",
 
     [STATE_LAST] = NULL,
 };
@@ -3016,20 +3218,400 @@ process_contest_json(
 
     int pos = 0;
     for (cJSON *jitem = jresult->child; jitem; jitem = jitem->next, ++pos) {
-        fprintf(stderr, ">>%s\n", jitem->string);
         cJSON *jid = cJSON_GetObjectItem(jitem, "id");
         if (!jid || jid->type != cJSON_Number || jid->valueint <= 0) {
             fprintf(log_f, "invalid json: integer id expected for problem\n");
             retval = 1;
             goto done;
         }
-        fprintf(stderr, ">>>%d\n", jid->valueint);
         probset->infos[pos].key_id = jid->valueint;
     }
 
 done:
     if (root) cJSON_Delete(root);
     return retval;
+}
+
+static int
+process_problems_json(
+        FILE *log_f,
+        struct PolygonState *ps,
+        struct DownloadData *ddata,
+        struct ProblemSet *probset)
+{
+    int retval = 0;
+    cJSON *root = NULL;
+    const unsigned char *text = ddata->iface->get_page_text(ddata);
+    //size_t size = ddata->iface->get_page_size(ddata);
+
+    //fprintf(log_f, "=== %zu ===\n%s\n===\n", size, text);
+
+    root = cJSON_Parse(text);
+    if (!root) {
+        fprintf(log_f, "JSON parse failed\n");
+        retval = 1;
+        goto done;
+    }
+    if (root->type != cJSON_Object) {
+        fprintf(log_f, "invalid contests json, root document expected\n");
+        retval = 1;
+        goto done;
+    }
+    cJSON *jstatus = cJSON_GetObjectItem(root, "status");
+    if (!jstatus || jstatus->type != cJSON_String || strcmp(jstatus->valuestring, "OK")) {
+        fprintf(log_f, "invalid json: invalid or missing 'status'\n");
+        retval = 1;
+        goto done;
+    }
+    cJSON *jresult = cJSON_GetObjectItem(root, "result");
+    if (!jresult || jresult->type != cJSON_Array) {
+        fprintf(log_f, "invalid json: invalid or missing 'result'\n");
+        retval = 1;
+        goto done;
+    }
+    for (cJSON *jitem = jresult->child; jitem; jitem = jitem->next) {
+        if (jitem->type != cJSON_Object) {
+            fprintf(log_f, "invalid json: object expected for problem\n");
+            retval = 1;
+            goto done;
+        }
+        cJSON *jid = cJSON_GetObjectItem(jitem, "id");
+        if (!jid || jid->type != cJSON_Number || jid->valueint <= 0) {
+            fprintf(log_f, "invalid json: integer id expected for problem\n");
+            retval = 1;
+            goto done;
+        }
+        cJSON *jname = cJSON_GetObjectItem(jitem, "name");
+        if (!jname || jname->type != cJSON_String) {
+            fprintf(log_f, "invalid json: string name expected for problem\n");
+            retval = 1;
+            goto done;
+        }
+        struct ProblemInfo *pi = NULL;
+        for (int i = 0; i < probset->count; ++i) {
+            if (probset->infos[i].key_id > 0 && probset->infos[i].key_id == jid->valueint) {
+                pi = &probset->infos[i];
+                break;
+            }
+            if (probset->infos[i].key_name && jname && !strcmp(probset->infos[i].key_name, jname->valuestring)) {
+                pi = &probset->infos[i];
+                break;
+            }
+        }
+        if (!pi) continue;
+
+        pi->problem_id = jid->valueint;
+        pi->problem_name = xstrdup(jname->valuestring);
+
+        cJSON *jrevision = cJSON_GetObjectItem(jitem, "revision");
+        if (jrevision) {
+            if (jrevision->type != cJSON_Number) {
+                fprintf(log_f, "invalid json: integer id expected for revision\n");
+                retval = 1;
+                goto done;
+            }
+            pi->latest_rev = jrevision->valueint;
+        }
+
+        cJSON *jlatest_package = cJSON_GetObjectItem(jitem, "latestPackage");
+        if (jlatest_package) {
+            if (jlatest_package->type != cJSON_Number) {
+                fprintf(log_f, "invalid json: integer id expected for latestPackage\n");
+                retval = 1;
+                goto done;
+            }
+            pi->package_rev = jlatest_package->valueint;
+        }
+        pi->state = STATE_INFO_LOADED;
+    }
+
+    for (int i = 0; i < probset->count; ++i) {
+        struct ProblemInfo *pi = &probset->infos[i];
+        if (!pi->state) {
+            pi->state = STATE_NOT_FOUND;
+            if (pi->key_id > 0) {
+                fprintf(log_f, "problem with id == %d not found\n", pi->key_id);
+            } else if (pi->key_name) {
+                fprintf(log_f, "problem with name == '%s' not found\n", pi->key_name);
+            } else {
+                fprintf(log_f, "problem not found\n");
+            }
+        }
+    }
+
+done:
+    if (root) cJSON_Delete(root);
+    return retval;
+}
+
+static int
+process_problem_info_json(
+        FILE *log_f,
+        struct PolygonState *ps,
+        struct DownloadData *ddata,
+        struct ProblemInfo *pi)
+{
+    int retval = 0;
+    //cJSON *root = NULL;
+    const unsigned char *text = ddata->iface->get_page_text(ddata);
+    size_t size = ddata->iface->get_page_size(ddata);
+
+    fprintf(log_f, "=== %zu ===\n%s\n===\n", size, text);
+
+    return retval;
+}
+
+static int
+process_problem_packages_json(
+        FILE *log_f,
+        struct PolygonState *ps,
+        struct DownloadData *ddata,
+        struct ProblemInfo *pi,
+        int revision,
+        struct RevisionInfo *rinfo)
+{
+    int retval = 0;
+    cJSON *root = NULL;
+    const unsigned char *text = ddata->iface->get_page_text(ddata);
+    size_t size = ddata->iface->get_page_size(ddata);
+
+    fprintf(log_f, "=== %zu ===\n%s\n===\n", size, text);
+
+    root = cJSON_Parse(text);
+    if (!root) {
+        fprintf(log_f, "JSON parse failed\n");
+        retval = 1;
+        pi->state = STATE_FAILED;
+        goto done;
+    }
+    if (root->type != cJSON_Object) {
+        fprintf(log_f, "invalid contests json, root document expected\n");
+        retval = 1;
+        pi->state = STATE_FAILED;
+        goto done;
+    }
+    cJSON *jstatus = cJSON_GetObjectItem(root, "status");
+    if (!jstatus || jstatus->type != cJSON_String || strcmp(jstatus->valuestring, "OK")) {
+        fprintf(log_f, "invalid json: invalid or missing 'status'\n");
+        retval = 1;
+        pi->state = STATE_FAILED;
+        goto done;
+    }
+    cJSON *jresult = cJSON_GetObjectItem(root, "result");
+    if (!jresult || jresult->type != cJSON_Array) {
+        fprintf(log_f, "invalid json: invalid or missing 'result'\n");
+        retval = 1;
+        pi->state = STATE_FAILED;
+        goto done;
+    }
+
+    cJSON *found_jitem = NULL;
+    for (cJSON *jitem = jresult->child; jitem; jitem = jitem->next) {
+        if (jitem->type != cJSON_Object) {
+            fprintf(log_f, "invalid json: object expected for revision\n");
+            retval = 1;
+            pi->state = STATE_FAILED;
+            goto done;
+        }
+        cJSON *jrevision = cJSON_GetObjectItem(jitem, "revision");
+        if (!jrevision || jrevision->type != cJSON_Number) {
+            fprintf(log_f, "invalid json: revision must be number\n");
+            retval = 1;
+            pi->state = STATE_FAILED;
+            goto done;
+        }
+        if (jrevision->valueint == revision) {
+            found_jitem = jitem;
+            break;
+        }
+    }
+    if (!found_jitem) {
+        fprintf(log_f, "revision %d not found\n", revision);
+        retval = 1;
+        pi->state = STATE_NOT_AVAILABLE;
+        goto done;
+    }
+
+    rinfo->revision = revision;
+
+    cJSON *jid = cJSON_GetObjectItem(found_jitem, "id");
+    if (!jid || jid->type != cJSON_Number) {
+        fprintf(log_f, "invalid json: number expected for package id\n");
+        retval = 1;
+        pi->state = STATE_FAILED;
+        goto done;
+    }
+    rinfo->package_id = jid->valueint;
+
+    cJSON *jcreation_time = cJSON_GetObjectItem(found_jitem, "creationTimeSeconds");
+    if (!jcreation_time || jcreation_time->type != cJSON_Number) {
+        fprintf(log_f, "invalid json: number expected for creationTimeSeconds\n");
+        retval = 1;
+        pi->state = STATE_FAILED;
+        goto done;
+    }
+    rinfo->creation_time = (time_t) jcreation_time->valuedouble;
+
+    cJSON *jstate = cJSON_GetObjectItem(found_jitem, "state");
+    if (!jstate || jstate->type != cJSON_String) {
+        fprintf(log_f, "invalid json: string expected for state\n");
+        retval = 1;
+        pi->state = STATE_FAILED;
+        goto done;
+    }
+    if (strcmp(jstate->valuestring, "READY")) {
+        fprintf(log_f, "package in state: %s, not READY\n", jstate->valuestring);
+        retval = 1;
+        pi->state = STATE_NOT_AVAILABLE;
+        goto done;
+    }
+    rinfo->state = xstrdup(jstate->valuestring);
+
+    cJSON *jcomment = cJSON_GetObjectItem(found_jitem, "comment");
+    if (jcomment) {
+        if (jcomment->type != cJSON_String) {
+            fprintf(log_f, "invalid json: string expected for comment\n");
+            retval = 1;
+            pi->state = STATE_FAILED;
+            goto done;
+        }
+        rinfo->comment = xstrdup(jcomment->valuestring);
+    }
+
+done:
+    if (root) cJSON_Delete(root);
+    return retval;
+}
+
+static int
+check_problem_status_api(
+        FILE *log_f,
+        const struct polygon_packet *pkt,
+        struct RandomSource *rand,
+        const struct DownloadInterface *dif,
+        struct DownloadData *ddata,
+        struct PolygonState *ps,
+        const struct ZipInterface *zif,
+        struct ProblemInfo *pi)
+{
+    unsigned char zip_path[PATH_MAX];
+    struct RevisionInfo rinfo;
+    memset(&rinfo, 0, sizeof(rinfo));
+
+    if (pi->state != STATE_INFO_LOADED) goto cleanup;
+
+    // in the API mode automatic regeneration of the latest package is not supported
+    if (pi->package_rev <= 0) {
+        pi->state = STATE_NOT_AVAILABLE;
+        goto cleanup;
+    }
+
+    int package_rev = pi->package_rev;
+    if (package_rev > 0) {
+        struct stat stb;
+        if (snprintf(zip_path, sizeof(zip_path), "%s/%s-%d%s.zip", pkt->download_dir,
+                     pi->problem_name, package_rev, pkt->arch) >= sizeof(zip_path)) {
+            fprintf(log_f, "path '%s' is too long\n", zip_path);
+            pi->state = STATE_FAILED;
+            goto cleanup;
+        }
+        if (stat(zip_path, &stb) >= 0) {
+            if (!S_ISREG(stb.st_mode)) {
+                fprintf(log_f, "file %s is not a regular file\n", zip_path);
+                pi->state = STATE_FAILED;
+                goto cleanup;
+            }
+            if (access(zip_path, R_OK) < 0) {
+                fprintf(log_f, "file %s is not readable\n", zip_path);
+                pi->state = STATE_FAILED;
+                goto cleanup;
+            }
+            if (pkt->create_mode > 0) {
+                pi->state = STATE_ALREADY_EXISTS;
+                goto cleanup;
+            }
+            pi->state = STATE_ACTUAL;
+            goto cleanup;
+        }
+    }
+
+    if (dif->problem_info_api(ddata, ps, rand, pkt->key, pkt->secret, pi->problem_id)) {
+        fprintf(log_f, "failed to access problem.info API\n");
+        pi->state = STATE_FAILED;
+        goto cleanup;
+    }
+    if (process_problem_info_json(log_f, ps, ddata, pi)) {
+        pi->state = STATE_FAILED;
+        goto cleanup;
+    }
+
+    if (dif->problem_packages_api(ddata, ps, rand, pkt->key, pkt->secret, pi->problem_id)) {
+        fprintf(log_f, "failed to access problem.packages API\n");
+        pi->state = STATE_FAILED;
+        goto cleanup;
+    }
+    if (process_problem_packages_json(log_f, ps, ddata, pi, package_rev, &rinfo)) {
+        goto cleanup;
+    }
+
+    fprintf(log_f, "problem %d (%s) revision info:\n", pi->problem_id, pi->problem_name);
+    fprintf(log_f, "    package_id:    %d\n"
+            "    revision:      %d\n"
+            "    creation time: %lld\n"
+            "    state:         %s\n"
+            "    comment:       %s\n",
+            rinfo.package_id, rinfo.revision, (long long) rinfo.creation_time, rinfo.state, rinfo.comment);
+
+    if (dif->problem_package_api(ddata, ps, rand, pkt->key, pkt->secret, pi->problem_id, rinfo.package_id, pkt->arch)) {
+        fprintf(log_f, "failed to access problem.package API\n");
+        pi->state = STATE_FAILED;
+        goto cleanup;
+    }
+
+    const unsigned char *zip_data = dif->get_page_text(ddata);
+    size_t zip_size = dif->get_page_size(ddata);
+
+    if (zip_size <= 2 || zip_data[0] != 'P' || zip_data[1] != 'K') {
+        fprintf(log_f, "not a ZIP file\n");
+        pi->state = STATE_FAILED;
+        goto cleanup;
+    }
+
+    fprintf(log_f, "Archive size: %lld\n", (long long) zip_size);
+
+    snprintf(zip_path, sizeof(zip_path), "%s/%s-%d%s.zip", pkt->download_dir, pi->problem_name, package_rev, pkt->arch);
+
+    if (save_file(log_f, zip_path, zip_data, zip_size, pkt->file_mode, pkt->file_group, NULL)) {
+        pi->state = STATE_FAILED;
+        goto cleanup;
+    }
+
+    //file_downloaded:
+
+    pi->state = STATE_DOWNLOADED;
+    process_polygon_zip(log_f, pkt, zif, zip_path, pi);
+
+cleanup:
+    free_revision_info(&rinfo);
+    return pi->state == STATE_RUNNING;
+}
+
+static int
+check_problem_statuses_api(
+        FILE *log_f,
+        const struct polygon_packet *pkt,
+        struct RandomSource *rand,
+        const struct DownloadInterface *dif,
+        struct DownloadData *ddata,
+        struct PolygonState *ps,
+        const struct ZipInterface *zif,
+        struct ProblemSet *probset)
+{
+    int running_count = 0;
+    for (int num = 0; num < probset->count; ++num) {
+        running_count += check_problem_status_api(log_f, pkt, rand, dif, ddata, ps, zif, &probset->infos[num]);
+    }
+    return running_count;
 }
 
 static int
@@ -3099,6 +3681,17 @@ do_work_api(
         fprintf(log_f, "no problems to update\n");
         goto done;
     }
+
+    if (dif->problems_api(ddata, ps, rand, pkt->key, pkt->secret)) {
+        retval = 1;
+        goto done;
+    }
+    if (process_problems_json(log_f, ps, ddata, probset)) {
+        retval = 1;
+        goto done;
+    }
+
+    check_problem_statuses_api(log_f, pkt, rand, dif, ddata, ps, zif, probset);
 
 done:
     ps = polygon_state_free(ps);
