@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -381,7 +381,7 @@ curl_iface_login_action_func(struct DownloadData *data, struct PolygonState *ps)
         goto cleanup;
     }
     password_esc = curl_easy_escape(data->curl, data->pkt->password, 0);
-    snprintf(param_buf, sizeof(param_buf), "submitted=true&login=%s&password=%s&submit=Login%s", login_esc, password_esc, ps->ccid_amp);
+    snprintf(param_buf, sizeof(param_buf), "submitted=true&login=%s&password=%s&submit=Login&fp=%s", login_esc, password_esc, ps->ccid_amp);
 
     curl_easy_setopt(data->curl, CURLOPT_AUTOREFERER, 1);
     curl_easy_setopt(data->curl, CURLOPT_FOLLOWLOCATION, 1);
@@ -531,7 +531,7 @@ curl_iface_problem_info_page_func(struct DownloadData *data, struct PolygonState
         snprintf(url_buf, sizeof(url_buf), "%s/edit-start?problemId=%d%s",
                  data->pkt->polygon_url, info->problem_id, ps->ccid_amp);
     } else if (info->continue_id) {
-        snprintf(url_buf, sizeof(url_buf), "%s/edit-continue?id=%d%s",
+        snprintf(url_buf, sizeof(url_buf), "%s/edit-continue?workingCopyId=%d%s",
                  data->pkt->polygon_url, info->continue_id, ps->ccid_amp);
     } else {
         abort();
@@ -1136,7 +1136,6 @@ process_login_page(
                 && (attr = html_element_find_attribute(elem, "name")) && attr->value && !strcasecmp(attr->value, "ccid")
                 && (attr = html_element_find_attribute(elem, "value")) && attr->value) {
                 ps->ccid = xstrdup(attr->value);
-                //fprintf(stderr, "ccid: %s\n", ps->ccid);
                 elem = html_element_free(elem);
                 break;
             }
@@ -1316,20 +1315,21 @@ process_problem_row(
     extract_a(buf, &a_tags, &a_count);
     if (a_count > 0) {
         for (int i = 0; i < a_count; ++i) {
+            static const char id_param_string[] = "workingCopyId=";
             if (!strcmp(a_tags[i].text, "Continue")) {
-                unsigned char *p = strstr(a_tags[i].url, "id=");
+                unsigned char *p = strstr(a_tags[i].url, id_param_string);
                 if (p) {
-                    sscanf(p + 3, "%d", &pi->continue_id);
+                    sscanf(p + sizeof(id_param_string) - 1, "%d", &pi->continue_id);
                 }
             } else if (strstr(a_tags[i].text, "Continue ")) {
-                unsigned char *p = strstr(a_tags[i].url, "id=");
+                unsigned char *p = strstr(a_tags[i].url, id_param_string);
                 if (p) {
-                    sscanf(p + 3, "%d", &pi->continue_id);
+                    sscanf(p + sizeof(id_param_string) - 1, "%d", &pi->continue_id);
                 }
             } else if (!strcmp(a_tags[i].text, "Discard")) {
-                unsigned char *p = strstr(a_tags[i].url, "id=");
+                unsigned char *p = strstr(a_tags[i].url, id_param_string);
                 if (p) {
-                    sscanf(p + 3, "%d", &pi->discard_id);
+                    sscanf(p + sizeof(id_param_string) - 1, "%d", &pi->discard_id);
                 }
             } else if (!strcmp(a_tags[i].text, "Start")) {
                 pi->has_start = 1;
