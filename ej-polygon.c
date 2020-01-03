@@ -24,6 +24,8 @@
 #include "ejudge/list_ops.h"
 #include "ejudge/misctext.h"
 #include "ejudge/html_parse.h"
+#include "ejudge/sha512utils.h"
+#include "ejudge/cJSON.h"
 
 #include "ejudge/osdeps.h"
 #include "ejudge/xalloc.h"
@@ -226,6 +228,83 @@ report_version(void)
     exit(0);
 }
 
+struct RandomSource;
+struct RandomSourceOperations
+{
+    void (*destroy)(struct RandomSource *);
+    void (*b32_bytes)(struct RandomSource *, unsigned char *buf, size_t count);
+};
+
+struct RandomSource
+{
+    const struct RandomSourceOperations *ops;
+};
+
+struct RandomSourceURandom
+{
+    struct RandomSource b;
+    int fd;
+};
+
+static void
+random_source_urandom_destroy(struct RandomSource *b)
+{
+    struct RandomSourceURandom *rand = (struct RandomSourceURandom *) b;
+    if (rand->fd >= 0) close(rand->fd);
+    memset(rand, 0, sizeof(*rand));
+    rand->fd = -1;
+    xfree(rand);
+}
+
+static void
+random_source_urandom_b32_bytes(struct RandomSource *b, unsigned char *buf, size_t count)
+{
+    struct RandomSourceURandom *rand = (struct RandomSourceURandom *) b;
+    unsigned value = 0;
+    int available = 0;
+
+    for (; count > 0; --count) {
+        if (available < 5) {
+            if (read(rand->fd, &value, sizeof(value)) != sizeof(value)) {
+                fatal("read error from /dev/urandom: %s", strerror(errno));
+            }
+            available = 32;
+        }
+        unsigned t = value & 0x1f;
+        value >>= 5;
+        available -= 5;
+        if (t <= 9) {
+            *buf++ = '0' + t;
+        } else {
+            *buf++ = 'a' - 10 + t;
+        }
+    }
+    *buf = 0;
+}
+
+struct RandomSource *
+random_source_urandom(void)
+{
+    int fd = open("/dev/urandom", O_RDONLY | O_CLOEXEC, 0);
+    if (fd < 0) {
+        fatal("cannot open /dev/urandom: %s", strerror(errno));
+    }
+
+    struct RandomSourceURandom *rand;
+    XCALLOC(rand, 1);
+    rand->fd = fd;
+
+    static const struct RandomSourceOperations ops =
+    {
+        random_source_urandom_destroy,
+        random_source_urandom_b32_bytes,
+    };
+    rand->b.ops = &ops;
+
+    return &rand->b;
+}
+
+
 struct DownloadData;
 struct DownloadInterface
 {
@@ -243,6 +322,13 @@ struct DownloadInterface
     int (*contests_page)(struct DownloadData *data, struct PolygonState *ps);
     int (*contest_page)(struct DownloadData *data, struct PolygonState *ps, int contest_id);
     int (*problems_multi_page)(FILE *log_f, struct DownloadData *data, struct PolygonState *ps);
+    int (*contest_api)(
+        struct DownloadData *data,
+        struct PolygonState *ps,
+        struct RandomSource *rand,
+        const unsigned char *key,
+        const unsigned char *secret,
+        const unsigned char *contest_id);
 };
 
 static int
@@ -627,6 +713,62 @@ curl_iface_contest_page_func(struct DownloadData *data, struct PolygonState *ps,
     return 0;
 }
 
+static int
+curl_iface_contest_api(
+        struct DownloadData *data,
+        struct PolygonState *ps,
+        struct RandomSource *rand,
+        const unsigned char *key,
+        const unsigned char *secret,
+        const unsigned char *contest_id)
+{
+    int retval = 0;
+    char *sigbuf_s = NULL;
+    size_t sigbuf_z = 0;
+    FILE *sigbuf_f = NULL;
+    char *url_s = NULL;
+    size_t url_z = 0;
+    FILE *url_f = NULL;
+
+    if (!(sigbuf_f = open_memstream(&sigbuf_s, &sigbuf_z))) {
+        fprintf(data->log_f, "open_memstream failed\n");
+        retval = 1;
+        goto done;
+    }
+
+    time_t current = time(NULL);
+
+    unsigned char rand6[8];
+    rand->ops->b32_bytes(rand, rand6, 6);
+    fprintf(sigbuf_f, "%s/contest.problems?apiKey=%s&contestId=%s&time=%lld#%s",
+            rand6, key, contest_id, (long long) current, secret);
+    fclose(sigbuf_f); sigbuf_f = NULL;
+
+    unsigned char req_hash[256];
+    sha512b16buf(req_hash, sizeof(req_hash), sigbuf_s, sigbuf_z);
+
+    if (!(url_f = open_memstream(&url_s, &url_z))) {
+        fprintf(data->log_f, "open_memstream failed\n");
+        retval = 1;
+        goto done;
+    }
+    fprintf(url_f, "%s/api/contest.problems?apiKey=%s&contestId=%s&time=%lld&apiSig=%s%s",
+            data->pkt->polygon_url, key, contest_id, (long long) current, rand6, req_hash);
+    fclose(url_f); url_f = NULL;
+
+    if (curl_iface_get_func(data, url_s) != CURLE_OK) {
+        retval = 1;
+        goto done;
+    }
+
+done: ;
+    if (url_f) fclose(url_f);
+    if (url_s) free(url_s);
+    if (sigbuf_f) fclose(sigbuf_f);
+    if (sigbuf_s) free(sigbuf_s);
+    return retval;
+}
+
 static const struct DownloadInterface curl_download_interface =
 {
     curl_iface_create_func,
@@ -643,6 +785,7 @@ static const struct DownloadInterface curl_download_interface =
     curl_iface_contests_page_func,
     curl_iface_contest_page_func,
     curl_iface_problems_multi_page_func,
+    curl_iface_contest_api,
 };
 
 static const struct DownloadInterface *
@@ -2758,6 +2901,152 @@ check_problem_statuses(
 }
 
 static int
+process_contest_json(
+        FILE *log_f,
+        struct PolygonState *ps,
+        struct DownloadData *ddata,
+        struct ProblemSet *probset)
+{
+    int retval = 0;
+    cJSON *root = NULL;
+    const unsigned char *text = ddata->iface->get_page_text(ddata);
+    size_t size = ddata->iface->get_page_size(ddata);
+
+    fprintf(log_f, "=== %zu ===\n%s\n===\n", size, text);
+
+    root = cJSON_Parse(text);
+    if (!root) {
+        fprintf(log_f, "JSON parse failed\n");
+        retval = 1;
+        goto done;
+    }
+    if (root->type != cJSON_Object) {
+        fprintf(log_f, "invalid contests json, root document expected\n");
+        retval = 1;
+        goto done;
+    }
+    cJSON *jstatus = cJSON_GetObjectItem(root, "status");
+    if (!jstatus || jstatus->type != cJSON_String || strcmp(jstatus->valuestring, "OK")) {
+        fprintf(log_f, "invalid json: invalid or missing 'status'\n");
+        retval = 1;
+        goto done;
+    }
+    cJSON *jresult = cJSON_GetObjectItem(root, "result");
+    if (!jresult || jresult->type != cJSON_Object) {
+        fprintf(log_f, "invalid json: invalid or missing 'result'\n");
+        retval = 1;
+        goto done;
+    }
+
+    int count = 0;
+    for (cJSON *jitem = jresult->child; jitem; jitem = jitem->next, ++count) {
+        if (jitem->type != cJSON_Object) {
+            fprintf(log_f, "invalid json: object expected for problem\n");
+            retval = 1;
+            goto done;
+        }
+    }
+
+    if (count <= 0) goto done;
+
+    probset->count = count;
+    XCALLOC(probset->infos, probset->count);
+
+    int pos = 0;
+    for (cJSON *jitem = jresult->child; jitem; jitem = jitem->next, ++pos) {
+        fprintf(stderr, ">>%s\n", jitem->string);
+        cJSON *jid = cJSON_GetObjectItem(jitem, "id");
+        if (!jid || jid->type != cJSON_Number || jid->valueint <= 0) {
+            fprintf(log_f, "invalid json: integer id expected for problem\n");
+            retval = 1;
+            goto done;
+        }
+        fprintf(stderr, ">>>%d\n", jid->valueint);
+        probset->infos[pos].key_id = jid->valueint;
+    }
+
+done:
+    if (root) cJSON_Delete(root);
+    return retval;
+}
+
+static int
+do_work_api(
+        FILE *log_f,
+        struct polygon_packet *pkt,
+        struct RandomSource *rand,
+        struct ProblemSet *probset)
+{
+    const struct DownloadInterface *dif = NULL;
+    struct DownloadData *ddata = NULL;
+    const struct ZipInterface *zif = NULL;
+    struct PolygonState *ps = NULL;
+    int retval = 0;
+
+    if ((retval = check_directories(log_f, pkt))) goto done;
+
+#if CONF_HAS_LIBCURL - 0 == 0
+    fprintf(log_f, "libcurl library was missing during the complation, functionality is not available\n");
+    retval = 1;
+    goto done;
+#else
+    dif = get_curl_download_interface(log_f, pkt);
+#endif
+    if (!dif) {
+        fprintf(log_f, "download interface is not available\n");
+        retval = 1;
+        goto done;
+    }
+    if (!(ddata = dif->create(log_f, dif, pkt))) {
+        fprintf(log_f, "failed to initialize download interface\n");
+        retval = 1;
+        goto done;
+    }
+
+#if CONF_HAS_LIBZIP - 0 == 0
+    fprintf(log_f, "libzip library was missing during the complation, functionality is not available\n");
+    retval = 1;
+    goto done;
+#else
+    zif = get_zip_interface(log_f, pkt);
+#endif
+    if (!zif) {
+        fprintf(log_f, "zip interface is not available\n");
+        retval = 1;
+        goto done;
+    }
+
+    if (!(ps = polygon_state_create())) {
+        fprintf(log_f, "failed to create PolygonState object\n");
+        retval = 1;
+        goto done;
+    }
+
+    if (pkt->polygon_contest_id && *pkt->polygon_contest_id) {
+        if (dif->contest_api(ddata, ps, rand, pkt->key, pkt->secret, pkt->polygon_contest_id)) {
+            retval = 1;
+            goto done;
+        }
+        if (process_contest_json(log_f, ps, ddata, probset)) {
+            retval = 1;
+            goto done;
+        }
+    }
+
+    if (probset->count <= 0) {
+        fprintf(log_f, "no problems to update\n");
+        goto done;
+    }
+
+done:
+    ps = polygon_state_free(ps);
+    if (ddata) {
+        if (dif) ddata = dif->cleanup(ddata);
+    }
+    return retval;
+}
+
+static int
 do_work(
         FILE *log_f,
         struct polygon_packet *pkt,
@@ -2898,6 +3187,7 @@ main(int argc, char **argv)
 {
     int cur_arg = 1;
     int retval = 0;
+    struct RandomSource *rand = NULL;
 
     signal(SIGPIPE, SIG_IGN);
     signal(SIGINT, sigint_handler);
@@ -2973,6 +3263,8 @@ main(int argc, char **argv)
         pkt->retry_count = DEFAULT_RETRY_COUNT;
     }
 
+    rand = random_source_urandom();
+
     struct ProblemSet problem_set;
     memset(&problem_set, 0, sizeof(problem_set));
 
@@ -3021,7 +3313,11 @@ main(int argc, char **argv)
     } else {
         log_f = stderr;
     }
-    retval = do_work(log_f, pkt, &problem_set);
+    if (pkt->secret && *pkt->secret) {
+        retval = do_work_api(log_f, pkt, rand, &problem_set);
+    } else {
+        retval = do_work(log_f, pkt, &problem_set);
+    }
 
     FILE *st_f = NULL;
     if (pkt->status_file) {
@@ -3069,6 +3365,10 @@ main(int argc, char **argv)
 
     polygon_packet_free((struct generic_section_config *) pkt);
     pkt = NULL;
+    if (rand) {
+        rand->ops->destroy(rand);
+        rand = NULL;
+    }
 
     return retval;
 }
