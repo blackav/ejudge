@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -255,6 +255,7 @@ COMMON_CFILES=\
  sha256.c\
  sha256utils.c\
  sha512.c\
+ sha512utils.c\
  blowfish.c\
  t3m_dir_listener.c\
  t3m_submits.c\
@@ -625,6 +626,7 @@ HFILES=\
  ./include/ejudge/sha256.h\
  ./include/ejudge/sha256utils.h\
  ./include/ejudge/sha512.h\
+ ./include/ejudge/sha512utils.h\
  ./include/ejudge/status_plugin.h\
  ./include/ejudge/blowfish.h\
  ./include/ejudge/t3m_dir_listener.h\
