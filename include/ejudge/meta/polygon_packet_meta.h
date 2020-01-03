@@ -32,6 +32,8 @@ enum
   META_POLYGON_PACKET_testset,
   META_POLYGON_PACKET_language_priority,
   META_POLYGON_PACKET_polygon_contest_id,
+  META_POLYGON_PACKET_key,
+  META_POLYGON_PACKET_secret,
   META_POLYGON_PACKET_id,
   META_POLYGON_PACKET_ejudge_id,
   META_POLYGON_PACKET_ejudge_short_name,

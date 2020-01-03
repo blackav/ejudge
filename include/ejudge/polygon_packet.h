@@ -1,9 +1,8 @@
-/* -*- c -*- */
-/* $Id$ */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 #ifndef __POLYGON_PACKET_H__
 #define __POLYGON_PACKET_H__
 
-/* Copyright (C) 2012-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -61,6 +60,8 @@ struct polygon_packet
     unsigned char *testset;
     unsigned char *language_priority;
     unsigned char *polygon_contest_id;
+    unsigned char *key;
+    unsigned char *secret;
 
     char **id;
     char **ejudge_id;
@@ -77,9 +78,3 @@ void
 polygon_packet_unparse(FILE *out_f, const struct polygon_packet *p);
 
 #endif /* __POLYGON_PACKET_H__ */
-
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */
