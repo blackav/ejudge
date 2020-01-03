@@ -720,7 +720,7 @@ curl_iface_contest_page_func(struct DownloadData *data, struct PolygonState *ps,
 }
 
 static int
-curl_iface_contest_api(
+curl_iface_contest_api_func(
         struct DownloadData *data,
         struct PolygonState *ps,
         struct RandomSource *rand,
@@ -846,7 +846,7 @@ static const struct DownloadInterface curl_download_interface =
     curl_iface_contests_page_func,
     curl_iface_contest_page_func,
     curl_iface_problems_multi_page_func,
-    curl_iface_contest_api,
+    curl_iface_contest_api_func,
     curl_iface_problems_api_func,
 };
 
