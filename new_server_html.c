@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3666,6 +3666,11 @@ priv_submit_clar(
 
   text3 = alloca(subj_len + text_len + 32);
   text3_len = sprintf(text3, "Subject: %s\n\n%s\n", subj2, text2);
+
+  if (text3_len > cs->global->max_clar_size) {
+    ns_error(log_f, NEW_SRV_ERR_MESSAGE_TOO_LONG, text3_len);
+    goto cleanup;
+  }
 
   ej_uuid_t clar_uuid = {};
   gettimeofday(&precise_time, 0);
