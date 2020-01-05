@@ -115,6 +115,9 @@ CE_OBJECTS = ${CE_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 ST_CFILES = ejudge-setup.c version.c
 ST_OBJECTS = ${ST_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 
+SUT_CFILES = ejudge-suid-setup.c
+SUT_OBJECTS = ${SUT_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
+
 ECC_CFILES = ejudge-configure-compilers.c version.c
 ECC_OBJECTS = ${ECC_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 
@@ -152,7 +155,7 @@ PB_CFILES = ej-parblock.c
 PB_OBJECTS = $(PB_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 INSTALLSCRIPT = ejudge-install.sh
-BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd
+BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd ejudge-suid-setup
 SERVERBINTARGETS = ej-compile ej-compile-control ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen ej-parblock
 SUIDBINTARGETS = ej-suid-chown ej-suid-exec ej-suid-ipcrm ej-suid-kill
 CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
@@ -366,6 +369,9 @@ ejudge-edit-users: $(ED_OBJECTS)
 
 ejudge-setup: ${ST_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu${NCURSES_SUFFIX} -lpanel${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX}
+
+ejudge-suid-setup: ${SUT_OBJECTS}
+	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 ejudge-configure-compilers: ${ECC_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu${NCURSES_SUFFIX} -lpanel${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX}
