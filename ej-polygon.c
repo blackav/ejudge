@@ -132,6 +132,7 @@ struct PolygonState
 {
     unsigned char *ccid; // may be NULL for older versions of Polygon
     unsigned char *ccid_amp; // "&ccid=CCID" or ""
+    unsigned char *ccid_q;   // "?ccid=CCID" or "?"
 
     // problem table column indices
     int id_column_num;
@@ -431,7 +432,8 @@ curl_iface_get_func(struct DownloadData *data, const unsigned char *url)
 
     fprintf(data->log_f, "GET: %s\n", url);
 
-    curl_easy_setopt(data->curl, CURLOPT_AUTOREFERER, 1);
+    curl_easy_setopt(data->curl, CURLOPT_ACCEPT_ENCODING, "gzip, deflate, br");
+    //curl_easy_setopt(data->curl, CURLOPT_AUTOREFERER, 1);
     curl_easy_setopt(data->curl, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt(data->curl, CURLOPT_COOKIEFILE, "");
     curl_easy_setopt(data->curl, CURLOPT_USERAGENT, data->pkt->user_agent);
@@ -499,8 +501,10 @@ curl_iface_login_action_func(struct DownloadData *data, struct PolygonState *ps)
     password_esc = curl_easy_escape(data->curl, data->pkt->password, 0);
     snprintf(param_buf, sizeof(param_buf), "submitted=true&login=%s&password=%s&submit=Login&fp=%s", login_esc, password_esc, ps->ccid_amp);
 
-    curl_easy_setopt(data->curl, CURLOPT_AUTOREFERER, 1);
+    curl_easy_setopt(data->curl, CURLOPT_ACCEPT_ENCODING, "gzip, deflate, br");
+    //curl_easy_setopt(data->curl, CURLOPT_AUTOREFERER, 1);
     curl_easy_setopt(data->curl, CURLOPT_FOLLOWLOCATION, 1);
+    curl_easy_setopt(data->curl, CURLOPT_USERAGENT, data->pkt->user_agent);
     curl_easy_setopt(data->curl, CURLOPT_URL, url_buf);
     file = open_memstream(&data->page_text, &data->page_size);
     curl_easy_setopt(data->curl, CURLOPT_WRITEFUNCTION, NULL);
@@ -547,7 +551,7 @@ curl_iface_problems_page_func(struct DownloadData *data, struct PolygonState *ps
     if (page > 0) {
         snprintf(page_buf, sizeof(page_buf), "&page=%d", page);
     }
-    snprintf(url_buf, sizeof(url_buf), "%s/problems?dummy=1%s%s", data->pkt->polygon_url, ps->ccid_amp, page_buf);
+    snprintf(url_buf, sizeof(url_buf), "%s/problems%s%s", data->pkt->polygon_url, ps->ccid_q, page_buf);
     if (curl_iface_get_func(data, url_buf) != CURLE_OK) return 1;
     if (!data->clean_url || !ends_with(data->clean_url, "/problems")) {
         fprintf(data->log_f, "failed to retrieve problems page: redirected to %s\n", data->effective_url);
@@ -718,7 +722,7 @@ curl_iface_contests_page_func(struct DownloadData *data, struct PolygonState *ps
 {
     unsigned char url_buf[1024];
 
-    snprintf(url_buf, sizeof(url_buf), "%s/contests?dummy=1%s", data->pkt->polygon_url, ps->ccid_amp);
+    snprintf(url_buf, sizeof(url_buf), "%s/contests%s", data->pkt->polygon_url, ps->ccid_q);
     if (curl_iface_get_func(data, url_buf) != CURLE_OK) return 1;
     if (!data->clean_url || !ends_with(data->clean_url, "/contests")) {
         fprintf(data->log_f, "failed to retrieve contests page: redirected to %s\n", data->effective_url);
@@ -1247,6 +1251,7 @@ polygon_state_free(struct PolygonState *ps)
     if (!ps) return NULL;
     xfree(ps->ccid);
     xfree(ps->ccid_amp);
+    xfree(ps->ccid_q);
     xfree(ps);
     return NULL;
 }
@@ -1554,8 +1559,11 @@ process_login_page(
         char buf[1024];
         snprintf(buf, sizeof(buf), "&ccid=%s", ps->ccid);
         ps->ccid_amp = xstrdup(buf);
+        snprintf(buf, sizeof(buf), "?ccid=%s", ps->ccid);
+        ps->ccid_q = xstrdup(buf);
     } else {
         ps->ccid_amp = xstrdup("");
+        ps->ccid_q = xstrdup("?");
     }
 
     return 0;
