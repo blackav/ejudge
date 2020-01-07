@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-12-17 17:04+0300\n"
+"POT-Creation-Date: 2020-01-07 20:51+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -1206,6 +1206,9 @@ msgstr ""
 msgid "EOLN Type"
 msgstr ""
 
+msgid "EXAM IS RUNNING"
+msgstr ""
+
 msgid "EXAM IS RUNNING (frozen)"
 msgstr ""
 
@@ -2281,6 +2284,9 @@ msgstr ""
 msgid "NOT REGISTERED"
 msgstr ""
 
+msgid "NOT STARTED"
+msgstr ""
+
 msgid "Name"
 msgstr ""
 
@@ -2863,6 +2869,9 @@ msgid "REGISTERED, PENDING APPROVAL"
 msgstr ""
 
 msgid "REGISTRATION REJECTED"
+msgstr ""
+
+msgid "RUNNING"
 msgstr ""
 
 msgid "RUNNING (frozen)"

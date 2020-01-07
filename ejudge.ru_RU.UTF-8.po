@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-12-17 17:04+0300\n"
+"POT-Creation-Date: 2020-01-07 20:51+0300\n"
 "PO-Revision-Date: 2018-09-15 01:16+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -1261,6 +1261,9 @@ msgstr "ПУСТО"
 msgid "EOLN Type"
 msgstr "Тип концов строк"
 
+msgid "EXAM IS RUNNING"
+msgstr "ЭКЗАМЕН ИДЁТ"
+
 msgid "EXAM IS RUNNING (frozen)"
 msgstr "ЭКЗАМЕН ИДЁТ (заморозка)"
 
@@ -2416,6 +2419,9 @@ msgstr "НЕТ"
 msgid "NOT REGISTERED"
 msgstr "НЕ ЗАРЕГИСТРИРОВАН"
 
+msgid "NOT STARTED"
+msgstr "НЕ НАЧАТ"
+
 msgid "Name"
 msgstr "Имя"
 
@@ -3015,6 +3021,9 @@ msgstr "ЗАРЕГИСТРИРОВАН, ОЖИДАЕТ ПОДТВЕРЖДЕНИ�
 
 msgid "REGISTRATION REJECTED"
 msgstr "РЕГИСТРАЦИЯ ОТКЛОНЕНА"
+
+msgid "RUNNING"
+msgstr "ТУРНИР ИДЁТ"
 
 msgid "RUNNING (frozen)"
 msgstr "ТУРНИР ИДЁТ (заморозка)"
