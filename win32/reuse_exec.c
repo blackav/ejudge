@@ -1270,13 +1270,13 @@ task_Start(tTask *tsk)
   return 0;
 }
 
+void task_update_info(tTask *tsk);
+
 tTask *
 task_Wait(tTask *tsk)
 {
-  unsigned int cur_time, finish_time;
+  unsigned int cur_time;
   int r;
-  JOBOBJECT_BASIC_ACCOUNTING_INFORMATION basic_acct;
-  JOBOBJECT_EXTENDED_LIMIT_INFORMATION ext_limit;
 
   ASSERT(tsk);
 
@@ -1287,15 +1287,30 @@ task_Wait(tTask *tsk)
 
   if (tsk->max_real_time) {
     cur_time = GetTickCount();
-    r = WaitForSingleObject(tsk->pi.hProcess, tsk->max_real_time * 1000 - (cur_time - tsk->start_time));
-    if (r == WAIT_FAILED) {
-      tsk->state = TSK_ERROR;
-      tsk->code = GetLastError();
-      write_log(LOG_REUSE, LOG_ERROR, "WaitForSingleObject failed: %d",
-                GetLastError());
-      return NULL;
+    const int wait_add = 40;
+    int wait_time = tsk->max_real_time * 1000 - (cur_time - tsk->start_time) + wait_add;
+    while (wait_time > 0) {
+      int wait_delta = 100;
+      if (wait_time < wait_delta)
+	wait_delta = wait_time;
+      r = WaitForSingleObject(tsk->pi.hProcess, wait_delta);
+      if (r == WAIT_FAILED) {
+	tsk->state = TSK_ERROR;
+	tsk->code = GetLastError();
+	write_log(LOG_REUSE, LOG_ERROR, "WaitForSingleObject failed: %d",
+		  GetLastError());
+	return NULL;
+      }
+      task_update_info(tsk);
+      if (task_IsTimeout(tsk)) {
+	break;
+      }
+      if (r != WAIT_TIMEOUT) {
+	break;
+      }
+      wait_time -= wait_delta;
     }
-
+    
     if (r == WAIT_TIMEOUT) {
       write_log(LOG_REUSE, LOG_ERROR, "RealTime timeout: %d",
                 GetTickCount() - tsk->start_time);
@@ -1324,15 +1339,26 @@ task_Wait(tTask *tsk)
       return NULL;
     }
   }
-
-  finish_time = GetTickCount();
+  
   GetExitCodeProcess(tsk->pi.hProcess, (DWORD*) &tsk->code);
   if (PROC_SIGNALED(tsk->code)) {
     tsk->state = TSK_SIGNALED;
   } else {
     tsk->state = TSK_EXITED;
   }
+  
+  task_update_info(tsk);
+  return tsk;
+}
 
+void
+task_update_info(tTask *tsk)
+{
+  JOBOBJECT_BASIC_ACCOUNTING_INFORMATION basic_acct;
+  JOBOBJECT_EXTENDED_LIMIT_INFORMATION ext_limit;
+  
+  unsigned int finish_time = GetTickCount();
+  
   if (tsk->job != INVALID_HANDLE_VALUE) {
     if (!QueryInformationJobObject(tsk->job,
                                    JobObjectBasicAccountingInformation,
@@ -1340,14 +1366,14 @@ task_Wait(tTask *tsk)
       // accounting information is not available
       write_log(LOG_REUSE, LOG_ERROR, "QueryInformationJobObject failed: %d",
                 GetLastError());
-      return tsk;
+      return;
     }
     if (!QueryInformationJobObject(tsk->job, JobObjectExtendedLimitInformation,
                                    &ext_limit, sizeof(ext_limit), NULL)) {
       // accounting information is not available
       write_log(LOG_REUSE, LOG_ERROR, "QueryInformationJobObject failed: %d",
                 GetLastError());
-      return tsk;
+      return;
     }
 
     tsk->used_time = (basic_acct.TotalKernelTime.QuadPart + basic_acct.TotalUserTime.QuadPart) / 10000;
@@ -1356,8 +1382,6 @@ task_Wait(tTask *tsk)
     tsk->used_real_time = finish_time - tsk->start_time;
     tsk->used_vm_size = ext_limit.PeakJobMemoryUsed;
   }
-
-  return tsk;
 }
 
 tTask *
