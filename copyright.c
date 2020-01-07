@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -38,7 +38,7 @@ make_copyright(unsigned char *buf, size_t size)
              "<p class=\"ejudge_copyright\">"
              "This program is free software; you can redistribute it and/or modify it under the terms of the <a href=\"http://www.gnu.org/licenses/gpl.html\">GNU General Public License</a> as published by the <a href=\"http://www.fsf.org\">Free Software Foundation</a>; either version 2 of the License, or (at your option) any later version.</p>\n"),
            "http://www.ejudge.ru",
-           compile_version, compile_date, "2000-2019");
+           compile_version, compile_date, "2000-2020");
 }
 
 static unsigned char *copyright_str = 0;
@@ -66,5 +66,5 @@ write_copyright_short(FILE *out_f)
           "<p class=\"ejudge_copyright\"><a href=\"%s\">ejudge %s (%s)</a>.</p>\n"
           "<p class=\"ejudge_copyright\">Copyright &copy; %s Alexander Chernov.</p>\n",
           "http://www.ejudge.ru",
-          compile_version, compile_date, "2000-2019");
+          compile_version, compile_date, "2000-2020");
 }
