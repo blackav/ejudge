@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2632,10 +2632,14 @@ run_one_test(
       goto check_failed;
     }
     unsigned char entry_name[PATH_MAX];
-    snprintf(entry_name, sizeof(entry_name), "%06d_%03d", srgp->run_id, cur_test);
+    if (srgp->exe_sfx) {
+      snprintf(entry_name, sizeof(entry_name), "%06d_%03d%s", srgp->run_id, cur_test, srgp->exe_sfx);
+    } else {
+      snprintf(entry_name, sizeof(entry_name), "%06d_%03d", srgp->run_id, cur_test);
+    }
     unsigned char *bytes_s = NULL;
     ssize_t bytes_z = 0;
-    if (zf->ops->read_file(zf, entry_name, &bytes_s, &bytes_z) < 0) {
+    if (zf->ops->read_file(zf, entry_name, &bytes_s, &bytes_z) < 0 || !bytes_s) {
       if (log_f) {
         fprintf(log_f, "cannot extract entry '%s' from zip archive\n", entry_name);
         fclose(log_f);
