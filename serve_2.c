@@ -543,7 +543,7 @@ serve_build_compile_dirs(
         serve_state_t state)
 {
   int i;
-  const struct section_global_data *global = state->global;
+  const __attribute__((unused)) struct section_global_data *global = state->global;
 
   for (i = 1; i <= state->max_lang; i++) {
     const struct section_language_data *lang = state->langs[i];
@@ -654,6 +654,7 @@ do_build_queue_dirs(
   return state->run_queues_u++;
 }
 
+#if defined EJUDGE_RUN_SPOOL_DIR
 static void
 build_run_dir(
         const struct ejudge_cfg *config,
@@ -687,6 +688,7 @@ build_run_dir(
   snprintf(team_report_dir, sizeof(team_report_dir), "%s/teamreports", d2);
   do_build_run_dirs(state, "", status_dir, report_dir, team_report_dir, full_report_dir);
 }
+#endif
 
 void
 serve_build_run_dirs(
@@ -1372,8 +1374,8 @@ serve_compile_request(
   const unsigned char *compile_queue_dir = 0;
   int errcode = -SERVE_ERR_GENERIC;
   struct sformat_extra_data sformat_extra;
-  unsigned char compile_src_buf[PATH_MAX];
-  unsigned char compile_queue_buf[PATH_MAX];
+  __attribute__((unused)) unsigned char compile_src_buf[PATH_MAX];
+  __attribute__((unused)) unsigned char compile_queue_buf[PATH_MAX];
 
   memset(&sformat_extra, 0, sizeof(sformat_extra));
 

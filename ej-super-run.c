@@ -60,7 +60,7 @@ static unsigned char *run_server_id = NULL;
 
 static const unsigned char *program_name = 0;
 struct ejudge_cfg *ejudge_config = NULL;
-static unsigned char super_run_server_path[PATH_MAX];
+static __attribute__((unused)) unsigned char super_run_server_path[PATH_MAX];
 static unsigned char super_run_path[PATH_MAX];
 static unsigned char super_run_spool_path[PATH_MAX];
 static unsigned char super_run_exe_path[PATH_MAX];

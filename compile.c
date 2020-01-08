@@ -73,7 +73,7 @@ static int daemon_mode;
 static int restart_mode;
 
 static unsigned char *compile_server_id;
-static unsigned char compile_server_spool_dir[PATH_MAX];
+static __attribute__((unused)) unsigned char compile_server_spool_dir[PATH_MAX];
 static unsigned char compile_server_queue_dir[PATH_MAX];
 static unsigned char compile_server_src_dir[PATH_MAX];
 
