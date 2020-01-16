@@ -61,7 +61,7 @@ NCHECK_OBJECTS=$(NCHECK_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 T3M_CFILES=ej-batch.c version.c
 T3M_OBJECTS=$(T3M_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
-SC_CFILES = serve-control.c version.c
+SC_CFILES = cgi-bin/serve-control.c version.c
 SC_OBJECTS = $(SC_CFILES:.c=.o) libuserlist_clnt.a libsuper_clnt.a libcommon.a libplatform.a libcommon.a
 
 UL_CFILES = userlist-server.c version.c
@@ -79,7 +79,7 @@ JSC_OBJECTS = ${JSC_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 JP_CFILES = job-server-cmd.c version.c
 JP_OBJECTS = ${JP_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 
-US_CFILES = users.c version.c
+US_CFILES = cgi-bin/users.c version.c
 US_OBJECTS = ${US_CFILES:.c=.o} libuserlist_clnt.a libcommon.a libplatform.a libcommon.a
 
 ED_CFILES = edit-userlist.c version.c
@@ -127,8 +127,8 @@ EC_OBJECTS = ${EC_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 EX_CFILES = execute.c version.c
 EX_OBJECTS = ${EX_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 
-NC_CFILES=new-client.c version.c
-NC_OBJECTS=$(NC_CFILES:.c=.o) libnew_server_clnt.a libcommon.a libplatform.a libcommon.a
+NC_CFILES = cgi-bin/new-client.c version.c
+NC_OBJECTS = $(NC_CFILES:.c=.o) libnew_server_clnt.a libcommon.a libplatform.a libcommon.a
 
 NS_CFILES=new-server.c version.c
 NS_OBJECTS=$(NS_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
@@ -158,7 +158,7 @@ INSTALLSCRIPT = ejudge-install.sh
 BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd ejudge-suid-setup
 SERVERBINTARGETS = ej-compile ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen ej-parblock
 SUIDBINTARGETS = ej-suid-chown ej-suid-exec ej-suid-ipcrm ej-suid-kill
-CGITARGETS = users${CGI_PROG_SUFFIX} serve-control${CGI_PROG_SUFFIX} new-client${CGI_PROG_SUFFIX}
+CGITARGETS = cgi-bin/users${CGI_PROG_SUFFIX} cgi-bin/serve-control${CGI_PROG_SUFFIX} cgi-bin/new-client${CGI_PROG_SUFFIX}
 TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} newrevinfo ${SUIDBINTARGETS} ej-compile-control
 STYLEFILES = style/logo.gif style/priv.css style/unpriv.css style/unpriv3.css style/ejudge3.css style/priv.js style/priv_prob_dlg.js style/unpriv.js style/filter_expr.html style/sprintf.js style/ejudge3_ss.css style/ejudge_mobile.css style/jquery.min.js style/jquery.timepicker.css style/jquery.timepicker.min.js style/prism.js style/prism.css style/Roboto-Regular.ttf style/Roboto-Bold.ttf style/Roboto-Italic.ttf style/Roboto-BoldItalic.ttf style/croppie.css style/croppie.js
 
@@ -211,13 +211,13 @@ local_install: ${TARGETS} ejudge-config po mo
 	install -m 0755 ejudge-config "${DESTDIR}${bindir}"
 	install -d "${DESTDIR}${cgibindir}"
 	for i in ${CGITARGETS}; do install -m 0755 $$i "${DESTDIR}${cgibindir}"; done
-	cd "${DESTDIR}${cgibindir}"; rm -f new-master${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-master${CGI_PROG_SUFFIX}
-	cd "${DESTDIR}${cgibindir}"; rm -f new-judge${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-judge${CGI_PROG_SUFFIX}
-	cd "${DESTDIR}${cgibindir}"; rm -f new-register${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-register${CGI_PROG_SUFFIX}
-	cd "${DESTDIR}${cgibindir}"; rm -f register${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX}
-	cd "${DESTDIR}${cgibindir}"; rm -f team${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX}
-	cd "${DESTDIR}${cgibindir}"; rm -f judge${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} judge${CGI_PROG_SUFFIX}
-	cd "${DESTDIR}${cgibindir}"; rm -f master${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} master${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f new-master${CGI_PROG_SUFFIX}; ln cgi-bin/new-client${CGI_PROG_SUFFIX} cgi-bin/new-master${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f new-judge${CGI_PROG_SUFFIX}; ln cgi-bin/new-client${CGI_PROG_SUFFIX} cgi-bin/new-judge${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f new-register${CGI_PROG_SUFFIX}; ln cgi-bin/new-client${CGI_PROG_SUFFIX} cgi-bin/new-register${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f register${CGI_PROG_SUFFIX}; ln cgi-bin/new-client${CGI_PROG_SUFFIX} cgi-bin/register${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f team${CGI_PROG_SUFFIX}; ln cgi-bin/new-client${CGI_PROG_SUFFIX} cgi-bin/team${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f judge${CGI_PROG_SUFFIX}; ln cgi-bin/new-client${CGI_PROG_SUFFIX} cgi-bin/judge${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f master${CGI_PROG_SUFFIX}; ln cgi-bin/new-client${CGI_PROG_SUFFIX} cgi-bin/master${CGI_PROG_SUFFIX}
 	if [ x"${ENABLE_NLS}" = x1 ]; then for locale in "ru_RU.${CHARSET}" "uk_UA.${CHARSET}" "kk_KZ.${CHARSET}"; do install -d "${DESTDIR}${datadir}/locale/$${locale}/LC_MESSAGES"; install -m 0644 "locale/$${locale}/LC_MESSAGES/ejudge.mo" "${DESTDIR}${datadir}/locale/$${locale}/LC_MESSAGES"; done; fi
 	install -d "${DESTDIR}${datadir}/ejudge"
 	install -d "${DESTDIR}${datadir}/ejudge/style"
@@ -284,7 +284,7 @@ ej-batch : $(T3M_OBJECTS)
 ej-serve : $(SERVE_OBJECTS)
 	$(LD) $(LDFLAGS) $(SERVE_OBJECTS) -o $@ $(LDLIBS) -ldl ${EXPAT_LIB} ${LIBUUID} $(MONGO_LIBS) $(MONGOC_LIBS)
 
-serve-control${CGI_PROG_SUFFIX}: ${SC_OBJECTS}
+cgi-bin/serve-control${CGI_PROG_SUFFIX}: ${SC_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 ej-users: ${UL_OBJECTS}
@@ -358,7 +358,7 @@ collect-emails: ${CE_OBJECTS}
 slice-userlist: ${SU_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
-users${CGI_PROG_SUFFIX}: ${US_OBJECTS}
+cgi-bin/users${CGI_PROG_SUFFIX}: ${US_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 ejudge-edit-users: $(ED_OBJECTS)
@@ -379,7 +379,7 @@ ejudge-control: ${EC_OBJECTS}
 ejudge-execute : ${EX_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a libplatform.a -o $@ ${LDLIBS} ${EXPAT_LIB}
 
-new-client${CGI_PROG_SUFFIX} : $(NC_OBJECTS)
+cgi-bin/new-client${CGI_PROG_SUFFIX} : $(NC_OBJECTS)
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 ej-contests : $(NS_OBJECTS)
@@ -401,7 +401,7 @@ ejudge-install.sh : ejudge-setup
 	./ejudge-setup -b -i scripts/lang_ids.cfg
 
 local_clean:
-	-rm -f *.o *~ *.a $(TARGETS) revinfo newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c users users${CGI_PROG_SUFFIX} ejudge-config serve-control serve-control${CGI_PROG_SUFFIX} prjutils2/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes *.debug lib/*.o gen/*.o
+	-rm -f *.o *~ *.a $(TARGETS) revinfo newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c cgi-bin/users cgi-bin/users${CGI_PROG_SUFFIX} ejudge-config cgi-bin/serve-control cgu-bin/serve-control${CGI_PROG_SUFFIX} prjutils2/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes *.debug lib/*.o gen/*.o cgi-bin/*.o
 	-rm -rf locale
 clean: subdir_clean local_clean
 
@@ -516,7 +516,7 @@ ejudge.kk_KZ.UTF-8.po: $(CFILES) ejudge.po
 	${MSGMERGE} -U $@ ejudge.po
 
 ejudge.po: $(CFILES) subdirs_all
-	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c lib/*.c csp/contests/*.c csp/super-server/*.c
+	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c lib/*.c cgi-bin/*.c csp/contests/*.c csp/super-server/*.c
 
 ru_all:
 	-mkdir -p locale/ru_RU.${CHARSET}/LC_MESSAGES

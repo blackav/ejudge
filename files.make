@@ -403,14 +403,14 @@ CFILES=\
  job-server-control.c\
  job-server-cmd.c\
  make-js-actions.c\
- new-client.c\
+ cgi-bin/new-client.c\
  new-server.c\
  new-server-cmd.c\
  new-server-control.c\
  nwrun.c\
  run.c\
  serve.c\
- serve-control.c\
+ cgi-bin/serve-control.c\
  slice-userlist.c\
  struct-sizes.c\
  super-serve.c\
@@ -418,7 +418,7 @@ CFILES=\
  testinfo.c\
  userlist-server.c\
  userlist-server-control.c\
- users.c\
+ cgi-bin/users.c\
  unix/cpu.c\
  win32/cpu.c\
  unix/file_perms.c\
