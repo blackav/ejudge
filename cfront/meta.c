@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -166,7 +165,7 @@ main_meta_generate(tree_t tree, const unsigned char *output_name)
   if (!output_name) output_name = "output.c";
   snprintf(bn_buf, sizeof(bn_buf), "%s", output_name);
   strip_suffix(bn_buf);
-  snprintf(c_buf, sizeof(c_buf), "%s_meta.c", bn_buf);
+  snprintf(c_buf, sizeof(c_buf), "gen/%s_meta.c", bn_buf);
   snprintf(h_buf, sizeof(h_buf), "include/ejudge/meta/%s_meta.h", bn_buf);
 
   if (!meta_structs.u) {
@@ -184,7 +183,7 @@ main_meta_generate(tree_t tree, const unsigned char *output_name)
 
   serial = 0;
   do {
-    snprintf(temp_c_buf, sizeof(temp_c_buf), "%s_meta_tmp%d.c", bn_buf, serial);
+    snprintf(temp_c_buf, sizeof(temp_c_buf), "gen/%s_meta_tmp%d.c", bn_buf, serial);
     serial++;
   } while (os_CheckAccess(temp_c_buf, REUSE_F_OK) >= 0);
   serial = 0;
