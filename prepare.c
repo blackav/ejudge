@@ -595,7 +595,6 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(extid, "S"),
   LANGUAGE_PARAM(super_run_dir, "S"),
   LANGUAGE_PARAM(compile_server_id, "S"),
-  LANGUAGE_PARAM(compile_server_id, "S"),
   LANGUAGE_PARAM(multi_header_suffix, "S"),
 
   { 0, 0, 0, 0 }
