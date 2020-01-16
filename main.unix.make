@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2019 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2020 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -516,7 +516,7 @@ ejudge.kk_KZ.UTF-8.po: $(CFILES) ejudge.po
 	${MSGMERGE} -U $@ ejudge.po
 
 ejudge.po: $(CFILES) subdirs_all
-	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c csp/contests/*.c csp/super-server/*.c
+	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c lib/*.c csp/contests/*.c csp/super-server/*.c
 
 ru_all:
 	-mkdir -p locale/ru_RU.${CHARSET}/LC_MESSAGES
@@ -588,12 +588,12 @@ cfront/ej-cfront : reuse/objs/libreuse.a
 include/libdwarf-internal/dwarf.h include/libdwarf-internal/libdwarf.h libdwarf/libdwarf/libdwarf.a:
 	$(MAKE) -C libdwarf all
 
-bson_utils.o : bson_utils.c
+lib/bson_utils.o : lib/bson_utils.c
 	$(CC) $(CFLAGS) $(MONGO_CFLAGS) -c $< -o $@
 
-bson_utils_new.o : bson_utils_new.c
+lib/bson_utils_new.o : lib/bson_utils_new.c
 	$(CC) $(CFLAGS) $(MONGOC_CFLAGS) -c $< -o $@
-testing_report_bson.o : testing_report_bson.c testing_report_tags.c
+lib/testing_report_bson.o : lib/testing_report_bson.c testing_report_tags.c
 	$(CC) $(CFLAGS) $(MONGOC_CFLAGS) -c $< -o $@
 
 include deps.make
