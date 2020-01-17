@@ -64,8 +64,8 @@ csp/contests/priv_main_page.c : ej-page-gen csp/contests/priv_main_page.csp
 csp/contests/%.o : csp/contests/%.c
 	$(CC) $(CFLAGS) -fPIC -DPIC -c $<
 
-genmatcher2 : genmatcher2.c
+tools/genmatcher2 : tools/genmatcher2.c
 	$(CC) $(CFLAGS) $< -o $@
 
-testing_report_tags.c : genmatcher2 testing_report_tags.txt
-	./genmatcher2 < testing_report_tags.txt > testing_report_tags.c
+testing_report_tags.c : tools/genmatcher2 testing_report_tags.txt
+	./tools/genmatcher2 < testing_report_tags.txt > testing_report_tags.c
