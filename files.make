@@ -663,5 +663,5 @@ HFILES=\
 
 OTHERFILES=\
  lib/filter_expr.y\
- filter_scan.lex\
+ lib/filter_scan.lex\
  plugins/userlist-mysql/uldb_mysql.c

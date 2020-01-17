@@ -159,7 +159,7 @@ BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-com
 SERVERBINTARGETS = ej-compile ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen ej-parblock
 SUIDBINTARGETS = ej-suid-chown ej-suid-exec ej-suid-ipcrm ej-suid-kill
 CGITARGETS = cgi-bin/users${CGI_PROG_SUFFIX} cgi-bin/serve-control${CGI_PROG_SUFFIX} cgi-bin/new-client${CGI_PROG_SUFFIX}
-TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} newrevinfo ${SUIDBINTARGETS} ej-compile-control
+TARGETS = ${SERVERBINTARGETS} ${BINTARGETS} ${CGITARGETS} tools/newrevinfo ${SUIDBINTARGETS} ej-compile-control
 STYLEFILES = style/logo.gif style/priv.css style/unpriv.css style/unpriv3.css style/ejudge3.css style/priv.js style/priv_prob_dlg.js style/unpriv.js style/filter_expr.html style/sprintf.js style/ejudge3_ss.css style/ejudge_mobile.css style/jquery.min.js style/jquery.timepicker.css style/jquery.timepicker.min.js style/prism.js style/prism.css style/Roboto-Regular.ttf style/Roboto-Bold.ttf style/Roboto-Italic.ttf style/Roboto-BoldItalic.ttf style/croppie.css style/croppie.js
 
 all: prereq_all local_all subdirs_all mo
@@ -401,7 +401,7 @@ ejudge-install.sh : ejudge-setup
 	./ejudge-setup -b -i scripts/lang_ids.cfg
 
 local_clean:
-	-rm -f *.o *~ *.a $(TARGETS) revinfo newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make gen/filter_expr.[ch] filter_scan.c cgi-bin/users cgi-bin/users${CGI_PROG_SUFFIX} ejudge-config cgi-bin/serve-control cgu-bin/serve-control${CGI_PROG_SUFFIX} prjutils2/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes *.debug lib/*.o gen/*.o cgi-bin/*.o bin/*.o tools/genmatcher2 tools/genmatcher
+	-rm -f *.o *~ *.a $(TARGETS) revinfo tools/newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make gen/filter_expr.[ch] gen/filter_scan.c cgi-bin/users cgi-bin/users${CGI_PROG_SUFFIX} ejudge-config cgi-bin/serve-control cgu-bin/serve-control${CGI_PROG_SUFFIX} prjutils2/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes *.debug lib/*.o gen/*.o cgi-bin/*.o bin/*.o tools/genmatcher2 tools/genmatcher
 	-rm -rf locale
 clean: subdir_clean local_clean
 
@@ -451,8 +451,8 @@ subdir_distclean :
 pristine : distclean
 	rm -f configure
 
-version.c: newrevinfo $(HFILES) $(CFILES) $(OTHERFILES)
-	./newrevinfo
+version.c: tools/newrevinfo $(HFILES) $(CFILES) $(OTHERFILES)
+	./tools/newrevinfo
 #	#@REVINFO_NO_COMMIT=1 ./revinfo -S -C -p -d db/versions -r db/revisions $(HFILES) $(CFILES) $(OTHERFILES)
 version.o: version.c
 
@@ -468,9 +468,9 @@ revinfo: prjutils2/revinfo.o
 	$(LD) $(LDFLAGS) $^ -o $@
 prjutils2/revinfo.o: prjutils2/revinfo.c
 
-newrevinfo : newrevinfo.o
+tools/newrevinfo : tools/newrevinfo.o
 	$(LD) $(LDFLAGS) $^ -o $@
-newrevinfo.o : newrevinfo.c
+tools/newrevinfo.o : tools/newrevinfo.c
 
 mkChangeLog2: prjutils2/mkChangeLog2.o prjutils2/changelog.o prjutils2/expat_iface.o prjutils2/svn_xmllog.o prjutils2/usermap.o prjutils2/xalloc.o
 	${LD} ${LDFLAGS} $^ -o $@ -lexpat -lm
@@ -543,7 +543,7 @@ locale/kk_KZ.${CHARSET}/LC_MESSAGES/ejudge.mo : ejudge.kk_KZ.${CHARSET}.po kk_al
 
 include meta.make
 
-libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o gen/filter_expr.o $(META_O_FILES)
+libcommon.a : $(COMMON_CFILES:.c=.o) gen/filter_scan.o gen/filter_expr.o $(META_O_FILES)
 	ar rcv $@ $^
 
 libplatform.a : $(PLATFORM_CFILES:.c=.o)
@@ -558,17 +558,17 @@ libuserlist_clnt.a: $(USERLIST_CLNT_CFILES:.c=.o)
 libnew_server_clnt.a: $(NEW_SERVER_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
 
-deps.make: cdeps ${CFILES} ${HFILES} gen/filter_expr.c gen/filter_expr.h filter_scan.c $(META_C_FILES) $(META_H_FILES)
-	@./cdeps -I include ${CFILES} gen/filter_expr.c filter_scan.c > deps.make
+deps.make: cdeps ${CFILES} ${HFILES} gen/filter_expr.c gen/filter_expr.h gen/filter_scan.c $(META_C_FILES) $(META_H_FILES)
+	@./cdeps -I include ${CFILES} gen/filter_expr.c gen/filter_scan.c > deps.make
 
-tags : ${CFILES} ${HFILES} gen/filter_expr.c gen/filter_expr.h filter_scan.c 
+tags : ${CFILES} ${HFILES} gen/filter_expr.c gen/filter_expr.h gen/filter_scan.c 
 	@ctags -e $^
 
 gen/filter_expr.c gen/filter_expr.h ./include/ejudge/filter_expr.h : lib/filter_expr.y
 	bison -l -o gen/filter_expr.c -d -p filter_expr_ $<
 	cp -p gen/filter_expr.h ./include/ejudge/filter_expr.h
 
-filter_scan.c : filter_scan.lex
+gen/filter_scan.c : lib/filter_scan.lex
 	flex -p -s -L -8 -B -o$@ -Pfilter_expr_ $<
 
 style/actions.js : make-js-actions
