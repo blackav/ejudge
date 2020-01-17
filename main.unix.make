@@ -496,26 +496,26 @@ log: mkChangeLog2
 
 # localization stuff
 ifdef ENABLE_NLS
-po : ejudge.ru_RU.UTF-8.po ejudge.ru_RU.${CHARSET}.po ejudge.uk_UA.${CHARSET}.po ejudge.kk_KZ.${CHARSET}.po
+po : l10n/ejudge.ru_RU.UTF-8.po l10n/ejudge.ru_RU.${CHARSET}.po l10n/ejudge.uk_UA.${CHARSET}.po l10n/ejudge.kk_KZ.${CHARSET}.po
 else
 po :
 endif
 
 ifneq (${CHARSET}, UTF-8)
-ejudge.ru_RU.${CHARSET}.po : ejudge.ru_RU.UTF-8.po
-	sed "s/UTF-8/${CHARSET}/g" < ejudge.ru_RU.UTF-8.po | ${ICONV} -f UTF-8 -t ${CHARSET} > ejudge.ru_RU.${CHARSET}.po
+l10n/ejudge.ru_RU.${CHARSET}.po : l10n/ejudge.ru_RU.UTF-8.po
+	sed "s/UTF-8/${CHARSET}/g" < l10n/ejudge.ru_RU.UTF-8.po | ${ICONV} -f UTF-8 -t ${CHARSET} > l10n/ejudge.ru_RU.${CHARSET}.po
 endif
 
-ejudge.ru_RU.UTF-8.po: $(CFILES) ejudge.po
-	${MSGMERGE} -U $@ ejudge.po
+l10n/ejudge.ru_RU.UTF-8.po: $(CFILES) l10n/ejudge.po
+	${MSGMERGE} -U $@ l10n/ejudge.po
 
-ejudge.uk_UA.UTF-8.po: $(CFILES) ejudge.po
-	${MSGMERGE} -U $@ ejudge.po
+l10n/ejudge.uk_UA.UTF-8.po: $(CFILES) l10n/ejudge.po
+	${MSGMERGE} -U $@ l10n/ejudge.po
 
-ejudge.kk_KZ.UTF-8.po: $(CFILES) ejudge.po
-	${MSGMERGE} -U $@ ejudge.po
+l10n/ejudge.kk_KZ.UTF-8.po: $(CFILES) l10n/ejudge.po
+	${MSGMERGE} -U $@ l10n/ejudge.po
 
-ejudge.po: $(CFILES) subdirs_all
+l10n/ejudge.po: $(CFILES) subdirs_all
 	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c lib/*.c cgi-bin/*.c bin/*.c csp/contests/*.c csp/super-server/*.c
 
 ru_all:
@@ -534,11 +534,11 @@ else
 mo :
 endif
 
-locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo : ejudge.ru_RU.${CHARSET}.po ru_all
+locale/ru_RU.${CHARSET}/LC_MESSAGES/ejudge.mo : l10n/ejudge.ru_RU.${CHARSET}.po ru_all
 	${MSGFMT} -o $@ -c $<
-locale/uk_UA.${CHARSET}/LC_MESSAGES/ejudge.mo : ejudge.uk_UA.${CHARSET}.po uk_all
+locale/uk_UA.${CHARSET}/LC_MESSAGES/ejudge.mo : l10n/ejudge.uk_UA.${CHARSET}.po uk_all
 	${MSGFMT} -o $@ -c $<
-locale/kk_KZ.${CHARSET}/LC_MESSAGES/ejudge.mo : ejudge.kk_KZ.${CHARSET}.po kk_all
+locale/kk_KZ.${CHARSET}/LC_MESSAGES/ejudge.mo : l10n/ejudge.kk_KZ.${CHARSET}.po kk_all
 	${MSGFMT} -o $@ -c $<
 
 include meta.make
