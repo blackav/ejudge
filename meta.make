@@ -52,10 +52,10 @@ gen/dates_config_meta.c ./include/ejudge/meta/dates_config_meta.h : $(META_CC) .
 gen/compile_packet_meta.c ./include/ejudge/meta/compile_packet_meta.h : $(META_CC) ./include/ejudge/compile_packet.h
 	$(META_CC) $(META_CC_FLAGS) ./include/ejudge/compile_packet.h -o compile_packet.out --force-h --meta --meta-struct compile_request_packet
 
-gen/new_server_match.c : genmatcher lib/new_server_at.c
-	./genmatcher > gen/new_server_match.c
+gen/new_server_match.c : tools/genmatcher lib/new_server_at.c
+	./tools/genmatcher > gen/new_server_match.c
 
-genmatcher : genmatcher.c ./include/ejudge/new-server.h lib/new_server_at.c
+tools/genmatcher : tools/genmatcher.c ./include/ejudge/new-server.h lib/new_server_at.c
 	$(CC) $(CFLAGS) $< -o $@
 
 csp/contests/priv_main_page.c : ej-page-gen csp/contests/priv_main_page.csp
