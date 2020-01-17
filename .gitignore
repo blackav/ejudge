@@ -65,3 +65,4 @@ ej-suid-kill
 ej-suid-ipcrm
 genmatcher2
 ejudge-suid-setup
+make-js-actions

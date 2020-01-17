@@ -402,7 +402,7 @@ CFILES=\
  bin/ej-fix-db.c\
  bin/ej-jobs-control.c\
  bin/ejudge-jobs-cmd.c\
- make-js-actions.c\
+ tools/make-js-actions.c\
  cgi-bin/new-client.c\
  bin/ej-contests.c\
  bin/ejudge-contests-cmd.c\
