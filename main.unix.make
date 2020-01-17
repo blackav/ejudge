@@ -394,14 +394,14 @@ ej-contests-control : $(NSC_OBJECTS)
 tools/make-js-actions : tools/make-js-actions.o
 	$(LD) $(LDFLAGS) tools/make-js-actions.o -o $@ $(LDLIBS)
 
-struct-sizes : struct-sizes.o
+tools/struct-sizes : tools/struct-sizes.o
 	$(LD) $(LDFLAGS) $^ -o $@ $(LDLIBS) ${EXPAT_LIB}
 
 ejudge-install.sh : ejudge-setup
 	./ejudge-setup -b -i scripts/lang_ids.cfg
 
 local_clean:
-	-rm -f *.o *~ *.a $(TARGETS) revinfo tools/newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make gen/filter_expr.[ch] gen/filter_scan.c cgi-bin/users cgi-bin/users${CGI_PROG_SUFFIX} ejudge-config cgi-bin/serve-control cgu-bin/serve-control${CGI_PROG_SUFFIX} prjutils2/*.o tools/make-js-actions new_server_clnt/*.o mktable struct-sizes *.debug lib/*.o gen/*.o cgi-bin/*.o bin/*.o tools/genmatcher2 tools/genmatcher
+	-rm -f *.o *~ *.a $(TARGETS) revinfo tools/newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make gen/filter_expr.[ch] gen/filter_scan.c cgi-bin/users cgi-bin/users${CGI_PROG_SUFFIX} ejudge-config cgi-bin/serve-control cgu-bin/serve-control${CGI_PROG_SUFFIX} prjutils2/*.o tools/make-js-actions new_server_clnt/*.o mktable tools/struct-sizes *.debug lib/*.o gen/*.o cgi-bin/*.o bin/*.o tools/genmatcher2 tools/genmatcher
 	-rm -rf locale
 clean: subdir_clean local_clean
 

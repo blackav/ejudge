@@ -265,7 +265,7 @@ COMMON_CFILES=\
  lib/teamdb_2.c\
  lib/team_extra.c\
  lib/team_extra_xml.c\
- testinfo.c\
+ lib/testinfo.c\
  lib/testing_report_bson.c\
  lib/testing_report_xml.c\
  lib/tex_dom.c\
@@ -412,10 +412,9 @@ CFILES=\
  bin/ej-serve.c\
  cgi-bin/serve-control.c\
  bin/ej-slice-userlist.c\
- struct-sizes.c\
+ tools/struct-sizes.c\
  bin/ej-super-server.c\
  bin/ej-super-server-control.c\
- testinfo.c\
  bin/ej-users.c\
  bin/ej-users-control.c\
  cgi-bin/users.c\
