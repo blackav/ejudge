@@ -40,10 +40,10 @@ CC=gcc
 LD=gcc
 EXPAT_LIB=-lexpat
 
-C_CFILES=compile.c version.c
+C_CFILES=bin/ej-compile.c version.c
 C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
-CC_CFILES=ej-compile-control.c
+CC_CFILES=bin/ej-compile-control.c
 CC_OBJECTS=$(CC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 SERVE_CFILES=serve.c version.c
@@ -52,46 +52,46 @@ SERVE_OBJECTS=$(SERVE_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a
 RUN_CFILES=run.c version.c
 RUN_OBJECTS=$(RUN_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
-NWRUN_CFILES=nwrun.c version.c
+NWRUN_CFILES=bin/ej-nwrun.c version.c
 NWRUN_OBJECTS=$(NWRUN_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a libplatform.a
 
 NCHECK_CFILES=ej-ncheck.c version.c
 NCHECK_OBJECTS=$(NCHECK_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
-T3M_CFILES=ej-batch.c version.c
+T3M_CFILES=bin/ej-batch.c version.c
 T3M_OBJECTS=$(T3M_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
 SC_CFILES = cgi-bin/serve-control.c version.c
 SC_OBJECTS = $(SC_CFILES:.c=.o) libuserlist_clnt.a libsuper_clnt.a libcommon.a libplatform.a libcommon.a
 
-UL_CFILES = userlist-server.c version.c
+UL_CFILES = bin/ej-users.c version.c
 UL_OBJECTS = ${UL_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a libplatform.a
 
-ULC_CFILES = userlist-server-control.c version.c
+ULC_CFILES = bin/ej-users-control.c version.c
 ULC_OBJECTS = ${ULC_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
-JS_CFILES = ej-jobs.c version.c
+JS_CFILES = bin/ej-jobs.c version.c
 JS_OBJECTS = ${JS_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 
-JSC_CFILES = job-server-control.c version.c
+JSC_CFILES = bin/ej-jobs-control.c version.c
 JSC_OBJECTS = ${JSC_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 
-JP_CFILES = job-server-cmd.c version.c
+JP_CFILES = bin/ejudge-jobs-cmd.c version.c
 JP_OBJECTS = ${JP_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 
 US_CFILES = cgi-bin/users.c version.c
 US_OBJECTS = ${US_CFILES:.c=.o} libuserlist_clnt.a libcommon.a libplatform.a libcommon.a
 
-ED_CFILES = edit-userlist.c version.c
+ED_CFILES = bin/ejudge-edit-users.c version.c
 ED_OBJECTS = ${ED_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
-SS_CFILES = super-serve.c version.c
+SS_CFILES = bin/ej-super-server.c version.c
 SS_OBJECTS = ${SS_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
 SR_CFILES = ej-super-run.c version.c
 SR_OBJECTS = ${SR_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 
-SSC_CFILES = super-serve-control.c version.c
+SSC_CFILES = bin/ej-super-server-control.c version.c
 SSC_OBJECTS = ${SSC_CFILES:.c=.o} libcommon.a libsuper_clnt.a libplatform.a libcommon.a
 
 SRC_CFILES = ej-super-run-control.c version.c
@@ -130,13 +130,13 @@ EX_OBJECTS = ${EX_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 NC_CFILES = cgi-bin/new-client.c version.c
 NC_OBJECTS = $(NC_CFILES:.c=.o) libnew_server_clnt.a libcommon.a libplatform.a libcommon.a
 
-NS_CFILES=new-server.c version.c
+NS_CFILES= bin/ej-contests.c version.c
 NS_OBJECTS=$(NS_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
-NSM_CFILES = new-server-cmd.c version.c
+NSM_CFILES = bin/ejudge-contests-cmd.c version.c
 NSM_OBJECTS = $(NSM_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libuserlist_clnt.a libplatform.a libcommon.a
 
-NSC_CFILES=new-server-control.c version.c
+NSC_CFILES=bin/ej-contests-control.c version.c
 NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libplatform.a libcommon.a
 
 NRM_CFILES=ej-normalize.c version.c
@@ -145,7 +145,7 @@ NRM_OBJECTS=$(NRM_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 P_CFILES = ej-polygon.c version.c
 P_OBJECTS = $(P_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
-IC_CFILES = ej-import-contest.c version.c
+IC_CFILES = bin/ej-import-contest.c version.c
 IC_OBJECTS = $(IC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 G_CFILES = ej-page-gen.c 
@@ -401,7 +401,7 @@ ejudge-install.sh : ejudge-setup
 	./ejudge-setup -b -i scripts/lang_ids.cfg
 
 local_clean:
-	-rm -f *.o *~ *.a $(TARGETS) revinfo newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c cgi-bin/users cgi-bin/users${CGI_PROG_SUFFIX} ejudge-config cgi-bin/serve-control cgu-bin/serve-control${CGI_PROG_SUFFIX} prjutils2/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes *.debug lib/*.o gen/*.o cgi-bin/*.o
+	-rm -f *.o *~ *.a $(TARGETS) revinfo newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c cgi-bin/users cgi-bin/users${CGI_PROG_SUFFIX} ejudge-config cgi-bin/serve-control cgu-bin/serve-control${CGI_PROG_SUFFIX} prjutils2/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes *.debug lib/*.o gen/*.o cgi-bin/*.o bin/*.o
 	-rm -rf locale
 clean: subdir_clean local_clean
 
@@ -481,8 +481,8 @@ prjutils2/svn_xmllog.o: prjutils2/svn_xmllog.c
 prjutils2/usermap.o: prjutils2/usermap.c
 prjutils2/xalloc.o: prjutils2/xalloc.c
 
-uudecode.o : uudecode.c
-uudecode : uudecode.o
+bin/uudecode.o : bin/uudecode.c
+uudecode : bin/uudecode.o
 	${LD} ${LDFLAGS} $^ -o $@
 
 cdeps: prjutils2/cdeps.o
@@ -516,7 +516,7 @@ ejudge.kk_KZ.UTF-8.po: $(CFILES) ejudge.po
 	${MSGMERGE} -U $@ ejudge.po
 
 ejudge.po: $(CFILES) subdirs_all
-	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c lib/*.c cgi-bin/*.c csp/contests/*.c csp/super-server/*.c
+	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c lib/*.c cgi-bin/*.c bin/*.c csp/contests/*.c csp/super-server/*.c
 
 ru_all:
 	-mkdir -p locale/ru_RU.${CHARSET}/LC_MESSAGES

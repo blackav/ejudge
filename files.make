@@ -381,15 +381,15 @@ PLATFORM_CFILES =\
 CFILES=\
  clean-users.c\
  collect-emails.c\
- compile.c\
+ bin/ej-compile.c\
  convert-clars.c\
  convert-runs.c\
- edit-userlist.c\
- ej-compile-control.c\
+ bin/ejudge-edit-users.c\
+ bin/ej-compile-control.c\
  ej-ncheck.c\
- ej-batch.c\
- ej-import-contest.c\
- ej-jobs.c\
+ bin/ej-batch.c\
+ bin/ej-import-contest.c\
+ bin/ej-jobs.c\
  ej-normalize.c\
  ej-page-gen.c\
  ej-parblock.c\
@@ -400,24 +400,24 @@ CFILES=\
  ejudge-setup.c\
  execute.c\
  fix-db.c\
- job-server-control.c\
- job-server-cmd.c\
+ bin/ej-jobs-control.c\
+ bin/ejudge-jobs-cmd.c\
  make-js-actions.c\
  cgi-bin/new-client.c\
- new-server.c\
- new-server-cmd.c\
- new-server-control.c\
- nwrun.c\
+ bin/ej-contests.c\
+ bin/ejudge-contests-cmd.c\
+ bin/ej-contests-control.c\
+ bin/ej-nwrun.c\
  run.c\
  serve.c\
  cgi-bin/serve-control.c\
  slice-userlist.c\
  struct-sizes.c\
- super-serve.c\
- super-serve-control.c\
+ bin/ej-super-server.c\
+ bin/ej-super-server-control.c\
  testinfo.c\
- userlist-server.c\
- userlist-server-control.c\
+ bin/ej-users.c\
+ bin/ej-users-control.c\
  cgi-bin/users.c\
  unix/cpu.c\
  win32/cpu.c\
