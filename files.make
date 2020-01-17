@@ -379,27 +379,27 @@ PLATFORM_CFILES =\
  $(ARCH)/reuse_logger.c
 
 CFILES=\
- clean-users.c\
- collect-emails.c\
+ bin/ej-clean-users.c\
+ bin/ej-collect-emails.c\
  bin/ej-compile.c\
- convert-clars.c\
- convert-runs.c\
+ bin/ej-convert-clars.c\
+ bin/ej-convert-runs.c\
  bin/ejudge-edit-users.c\
  bin/ej-compile-control.c\
- ej-ncheck.c\
+ bin/ej-ncheck.c\
  bin/ej-batch.c\
  bin/ej-import-contest.c\
  bin/ej-jobs.c\
- ej-normalize.c\
- ej-page-gen.c\
- ej-parblock.c\
- ej-polygon.c\
- ej-super-run.c\
- ejudge-configure-compilers.c\
- ejudge-control.c\
- ejudge-setup.c\
- execute.c\
- fix-db.c\
+ bin/ej-normalize.c\
+ bin/ej-page-gen.c\
+ bin/ej-parblock.c\
+ bin/ej-polygon.c\
+ bin/ej-super-run.c\
+ bin/ejudge-configure-compilers.c\
+ bin/ejudge-control.c\
+ bin/ejudge-setup.c\
+ bin/ejudge-execute.c\
+ bin/ej-fix-db.c\
  bin/ej-jobs-control.c\
  bin/ejudge-jobs-cmd.c\
  make-js-actions.c\
@@ -408,10 +408,10 @@ CFILES=\
  bin/ejudge-contests-cmd.c\
  bin/ej-contests-control.c\
  bin/ej-nwrun.c\
- run.c\
- serve.c\
+ bin/ej-run.c\
+ bin/ej-serve.c\
  cgi-bin/serve-control.c\
- slice-userlist.c\
+ bin/ej-slice-userlist.c\
  struct-sizes.c\
  bin/ej-super-server.c\
  bin/ej-super-server-control.c\

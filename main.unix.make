@@ -46,16 +46,16 @@ C_OBJECTS=$(C_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 CC_CFILES=bin/ej-compile-control.c
 CC_OBJECTS=$(CC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
-SERVE_CFILES=serve.c version.c
+SERVE_CFILES=bin/ej-serve.c version.c
 SERVE_OBJECTS=$(SERVE_CFILES:.c=.o) libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
-RUN_CFILES=run.c version.c
+RUN_CFILES=bin/ej-run.c version.c
 RUN_OBJECTS=$(RUN_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 NWRUN_CFILES=bin/ej-nwrun.c version.c
 NWRUN_OBJECTS=$(NWRUN_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a libplatform.a
 
-NCHECK_CFILES=ej-ncheck.c version.c
+NCHECK_CFILES=bin/ej-ncheck.c version.c
 NCHECK_OBJECTS=$(NCHECK_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 T3M_CFILES=bin/ej-batch.c version.c
@@ -88,43 +88,43 @@ ED_OBJECTS = ${ED_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a lib
 SS_CFILES = bin/ej-super-server.c version.c
 SS_OBJECTS = ${SS_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
-SR_CFILES = ej-super-run.c version.c
+SR_CFILES = bin/ej-super-run.c version.c
 SR_OBJECTS = ${SR_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 
 SSC_CFILES = bin/ej-super-server-control.c version.c
 SSC_OBJECTS = ${SSC_CFILES:.c=.o} libcommon.a libsuper_clnt.a libplatform.a libcommon.a
 
-SRC_CFILES = ej-super-run-control.c version.c
+SRC_CFILES = bin/ej-super-run-control.c version.c
 SRC_OBJECTS = ${SRC_CFILES:.c=.o} libcommon.a libsuper_clnt.a libplatform.a libcommon.a
 
-CU_CFILES = convert-clars.c version.c
+CU_CFILES = bin/ej-convert-clars.c version.c
 CU_OBJECTS = ${CU_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
-CR_CFILES = convert-runs.c version.c
+CR_CFILES = bin/ej-convert-runs.c version.c
 CR_OBJECTS = ${CR_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
-FIX_DB_CFILES = fix-db.c version.c
+FIX_DB_CFILES = bin/ej-fix-db.c version.c
 FIX_DB_OBJECTS = ${FIX_DB_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
-SU_CFILES = slice-userlist.c version.c
+SU_CFILES = bin/ej-slice-userlist.c version.c
 SU_OBJECTS = ${SU_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
-CE_CFILES = collect-emails.c version.c
+CE_CFILES = bin/ej-collect-emails.c version.c
 CE_OBJECTS = ${CE_CFILES:.c=.o} libcommon.a libuserlist_clnt.a
 
-ST_CFILES = ejudge-setup.c version.c
+ST_CFILES = bin/ejudge-setup.c version.c
 ST_OBJECTS = ${ST_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 
-SUT_CFILES = ejudge-suid-setup.c
+SUT_CFILES = bin/ejudge-suid-setup.c
 SUT_OBJECTS = ${SUT_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 
-ECC_CFILES = ejudge-configure-compilers.c version.c
+ECC_CFILES = bin/ejudge-configure-compilers.c version.c
 ECC_OBJECTS = ${ECC_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 
-EC_CFILES = ejudge-control.c version.c
+EC_CFILES = bin/ejudge-control.c version.c
 EC_OBJECTS = ${EC_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 
-EX_CFILES = execute.c version.c
+EX_CFILES = bin/ejudge-execute.c version.c
 EX_OBJECTS = ${EX_CFILES:.c=.o} libcommon.a libplatform.a libcommon.a
 
 NC_CFILES = cgi-bin/new-client.c version.c
@@ -139,19 +139,19 @@ NSM_OBJECTS = $(NSM_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libuserlist_c
 NSC_CFILES=bin/ej-contests-control.c version.c
 NSC_OBJECTS=$(NSC_CFILES:.c=.o) libcommon.a libnew_server_clnt.a libplatform.a libcommon.a
 
-NRM_CFILES=ej-normalize.c version.c
+NRM_CFILES=bin/ej-normalize.c version.c
 NRM_OBJECTS=$(NRM_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
-P_CFILES = ej-polygon.c version.c
+P_CFILES = bin/ej-polygon.c version.c
 P_OBJECTS = $(P_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 IC_CFILES = bin/ej-import-contest.c version.c
 IC_OBJECTS = $(IC_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
-G_CFILES = ej-page-gen.c 
+G_CFILES = bin/ej-page-gen.c 
 G_OBJECTS = $(G_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
-PB_CFILES = ej-parblock.c
+PB_CFILES = bin/ej-parblock.c
 PB_OBJECTS = $(PB_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 INSTALLSCRIPT = ejudge-install.sh
@@ -340,19 +340,19 @@ ej-fix-db: ${FIX_DB_OBJECTS}
 ej-parblock: ${PB_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -ldl ${LIBUUID}
 
-ej-suid-exec : ej-suid-exec.c
+ej-suid-exec : bin/ej-suid-exec.c
 	${CC} ${CFLAGS} ${LDFLAGS} $^ -o $@
 
-ej-suid-chown : ej-suid-chown.c
+ej-suid-chown : bin/ej-suid-chown.c
 	${CC} ${CFLAGS} ${LDFLAGS} $^ -o $@
 
-ej-suid-kill : ej-suid-kill.c
+ej-suid-kill : bin/ej-suid-kill.c
 	${CC} ${CFLAGS} ${LDFLAGS} $^ -o $@
 
-ej-suid-ipcrm : ej-suid-ipcrm.c
+ej-suid-ipcrm : bin/ej-suid-ipcrm.c
 	${CC} ${CFLAGS} ${LDFLAGS} $^ -o $@
 
-collect-emails: ${CE_OBJECTS}
+ej-collect-emails: ${CE_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 slice-userlist: ${SU_OBJECTS}
