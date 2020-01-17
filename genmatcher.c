@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2013-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 
-#include "new_server_at.c"
+#include "lib/new_server_at.c"
 
 void collect_chars(const int *act_set, int act_count, int pos, unsigned char *out, int *p_has_term)
 {
