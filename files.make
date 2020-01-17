@@ -662,6 +662,6 @@ HFILES=\
  ./include/ejudge/zip_utils.h
 
 OTHERFILES=\
- filter_expr.y\
+ lib/filter_expr.y\
  filter_scan.lex\
  plugins/userlist-mysql/uldb_mysql.c

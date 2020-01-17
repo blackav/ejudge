@@ -401,7 +401,7 @@ ejudge-install.sh : ejudge-setup
 	./ejudge-setup -b -i scripts/lang_ids.cfg
 
 local_clean:
-	-rm -f *.o *~ *.a $(TARGETS) revinfo newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make filter_expr.[ch] filter_scan.c cgi-bin/users cgi-bin/users${CGI_PROG_SUFFIX} ejudge-config cgi-bin/serve-control cgu-bin/serve-control${CGI_PROG_SUFFIX} prjutils2/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes *.debug lib/*.o gen/*.o cgi-bin/*.o bin/*.o tools/genmatcher2 tools/genmatcher
+	-rm -f *.o *~ *.a $(TARGETS) revinfo newrevinfo version.c $(ARCH)/*.o ejudge.po mkChangeLog2 userlist_clnt/*.o xml_utils/*.o super_clnt/*.o cdeps deps.make gen/filter_expr.[ch] filter_scan.c cgi-bin/users cgi-bin/users${CGI_PROG_SUFFIX} ejudge-config cgi-bin/serve-control cgu-bin/serve-control${CGI_PROG_SUFFIX} prjutils2/*.o make-js-actions new_server_clnt/*.o mktable struct-sizes *.debug lib/*.o gen/*.o cgi-bin/*.o bin/*.o tools/genmatcher2 tools/genmatcher
 	-rm -rf locale
 clean: subdir_clean local_clean
 
@@ -543,7 +543,7 @@ locale/kk_KZ.${CHARSET}/LC_MESSAGES/ejudge.mo : ejudge.kk_KZ.${CHARSET}.po kk_al
 
 include meta.make
 
-libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o filter_expr.o $(META_O_FILES)
+libcommon.a : $(COMMON_CFILES:.c=.o) filter_scan.o gen/filter_expr.o $(META_O_FILES)
 	ar rcv $@ $^
 
 libplatform.a : $(PLATFORM_CFILES:.c=.o)
@@ -558,15 +558,15 @@ libuserlist_clnt.a: $(USERLIST_CLNT_CFILES:.c=.o)
 libnew_server_clnt.a: $(NEW_SERVER_CLNT_CFILES:.c=.o)
 	ar rcv $@ $^
 
-deps.make: cdeps ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c $(META_C_FILES) $(META_H_FILES)
-	@./cdeps -I include ${CFILES} filter_expr.c filter_scan.c > deps.make
+deps.make: cdeps ${CFILES} ${HFILES} gen/filter_expr.c gen/filter_expr.h filter_scan.c $(META_C_FILES) $(META_H_FILES)
+	@./cdeps -I include ${CFILES} gen/filter_expr.c filter_scan.c > deps.make
 
-tags : ${CFILES} ${HFILES} filter_expr.c filter_expr.h filter_scan.c 
+tags : ${CFILES} ${HFILES} gen/filter_expr.c gen/filter_expr.h filter_scan.c 
 	@ctags -e $^
 
-filter_expr.c filter_expr.h ./include/ejudge/filter_expr.h : filter_expr.y
-	bison -l -o filter_expr.c -d -p filter_expr_ $<
-	cp -p filter_expr.h ./include/ejudge/filter_expr.h
+gen/filter_expr.c gen/filter_expr.h ./include/ejudge/filter_expr.h : lib/filter_expr.y
+	bison -l -o gen/filter_expr.c -d -p filter_expr_ $<
+	cp -p gen/filter_expr.h ./include/ejudge/filter_expr.h
 
 filter_scan.c : filter_scan.lex
 	flex -p -s -L -8 -B -o$@ -Pfilter_expr_ $<
