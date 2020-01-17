@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2019-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@
 #include <mongoc.h>
 #endif
 
-#include "testing_report_tags.c"
+#include "gen/testing_report_tags.c"
 
 static int
 parse_file(bson_iter_t *bi, struct testing_report_file_content *fc)
