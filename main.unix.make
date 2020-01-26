@@ -211,13 +211,13 @@ local_install: ${TARGETS} ejudge-config po mo
 	install -m 0755 ejudge-config "${DESTDIR}${bindir}"
 	install -d "${DESTDIR}${cgibindir}"
 	for i in ${CGITARGETS}; do install -m 0755 $$i "${DESTDIR}${cgibindir}"; done
-	cd "${DESTDIR}${cgibindir}"; rm -f new-master${CGI_PROG_SUFFIX}; ln cgi-bin/new-client${CGI_PROG_SUFFIX} cgi-bin/new-master${CGI_PROG_SUFFIX}
-	cd "${DESTDIR}${cgibindir}"; rm -f new-judge${CGI_PROG_SUFFIX}; ln cgi-bin/new-client${CGI_PROG_SUFFIX} cgi-bin/new-judge${CGI_PROG_SUFFIX}
-	cd "${DESTDIR}${cgibindir}"; rm -f new-register${CGI_PROG_SUFFIX}; ln cgi-bin/new-client${CGI_PROG_SUFFIX} cgi-bin/new-register${CGI_PROG_SUFFIX}
-	cd "${DESTDIR}${cgibindir}"; rm -f register${CGI_PROG_SUFFIX}; ln cgi-bin/new-client${CGI_PROG_SUFFIX} cgi-bin/register${CGI_PROG_SUFFIX}
-	cd "${DESTDIR}${cgibindir}"; rm -f team${CGI_PROG_SUFFIX}; ln cgi-bin/new-client${CGI_PROG_SUFFIX} cgi-bin/team${CGI_PROG_SUFFIX}
-	cd "${DESTDIR}${cgibindir}"; rm -f judge${CGI_PROG_SUFFIX}; ln cgi-bin/new-client${CGI_PROG_SUFFIX} cgi-bin/judge${CGI_PROG_SUFFIX}
-	cd "${DESTDIR}${cgibindir}"; rm -f master${CGI_PROG_SUFFIX}; ln cgi-bin/new-client${CGI_PROG_SUFFIX} cgi-bin/master${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f new-master${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-master${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f new-judge${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-judge${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f new-register${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} new-register${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f register${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} register${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f team${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} team${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f judge${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} judge${CGI_PROG_SUFFIX}
+	cd "${DESTDIR}${cgibindir}"; rm -f master${CGI_PROG_SUFFIX}; ln new-client${CGI_PROG_SUFFIX} master${CGI_PROG_SUFFIX}
 	if [ x"${ENABLE_NLS}" = x1 ]; then for locale in "ru_RU.${CHARSET}" "uk_UA.${CHARSET}" "kk_KZ.${CHARSET}"; do install -d "${DESTDIR}${datadir}/locale/$${locale}/LC_MESSAGES"; install -m 0644 "locale/$${locale}/LC_MESSAGES/ejudge.mo" "${DESTDIR}${datadir}/locale/$${locale}/LC_MESSAGES"; done; fi
 	install -d "${DESTDIR}${datadir}/ejudge"
 	install -d "${DESTDIR}${datadir}/ejudge/style"
