@@ -3792,7 +3792,6 @@ generate_install_script(FILE *f)
   unsigned char style_prefix[PATH_MAX];
   unsigned char style_dir[PATH_MAX];
   unsigned char style_src_dir[PATH_MAX];
-  unsigned char plugin_path[PATH_MAX];
   unsigned char compile_script_dir[PATH_MAX];
   unsigned char tmp_script_dir[PATH_MAX];
   unsigned char script_file[PATH_MAX];
@@ -3866,6 +3865,7 @@ generate_install_script(FILE *f)
   generate_dir_creation(f, &created_dirs, 0, EJUDGE_COMPILE_SPOOL_DIR);
 #endif
   /*
+  unsigned char plugin_path[PATH_MAX];
   snprintf(plugin_path, sizeof(plugin_path), "%s/plugins",
            config_ejudge_script_dir);
   generate_dir_creation(f, &created_dirs, 0, plugin_path);
