@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2019 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2019-2020 Alexander Chernov <cher@ejudge.ru>
 
 # compiler script interface is as follows
 # <comp>-version [OPTION]
@@ -67,7 +67,7 @@ Module Program
     End Sub
 End Module
 EOF
-  target="netcoreapp3.0"
+  target=`awk 'BEGIN { FS="[<>]" } ; { if ($2 == "TargetFramework") { print $3; } }' < conftest/conftest.csproj`
   "${DOTNETRUN}" build -c Release conftest >/dev/null 2>&1 || failure
   [ -f conftest/bin/Release/${target}/conftest.dll ] || failure
   mv conftest/bin/Release/${target}/conftest.runtimeconfig.json . || failure
@@ -82,6 +82,7 @@ EOF
   common_config
   echo 'DOTNETRUN="'"${DOTNETRUN}"'"'
   echo 'DOTNETDIR="'"${DOTNETDIR}"'"'
+  echo 'DOTNETTARGET="'"${target}"'"'
   [ "${verbose}" = 1 ] && echo "yes, ${DOTNETRUN}, ${version}" >&2
   exit 0
 fi

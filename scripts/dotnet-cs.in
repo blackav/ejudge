@@ -1,5 +1,5 @@
 #! /bin/bash
-# Copyright (c) 2019 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2019-2020 Alexander Chernov <cher@ejudge.ru>
 
 # A script for compilation of C# programs using the dotnet compiler.
 # Usage: dotnet-cs in-file out-file
@@ -44,7 +44,7 @@ fi
 
 cat "$1" > solution/Program.cs
 
-target="netcoreapp3.0"
+target="${DOTNETTARGET}"
 
 if ! "${DOTNETRUN}" build -c Release solution
 then
