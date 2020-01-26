@@ -67,7 +67,7 @@ Module Program
     End Sub
 End Module
 EOF
-  target=`awk 'BEGIN { FS="[<>]" } ; { if ($2 == "TargetFramework") { print $3; } }' < conftest/conftest.csproj`
+  target=`awk 'BEGIN { FS="[<>]" } ; { if ($2 == "TargetFramework") { print $3; } }' < conftest/conftest.vbproj`
   "${DOTNETRUN}" build -c Release conftest >/dev/null 2>&1 || failure
   [ -f conftest/bin/Release/${target}/conftest.dll ] || failure
   mv conftest/bin/Release/${target}/conftest.runtimeconfig.json . || failure
