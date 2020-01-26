@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2004-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3865,9 +3865,11 @@ generate_install_script(FILE *f)
 #if defined EJUDGE_COMPILE_SPOOL_DIR
   generate_dir_creation(f, &created_dirs, 0, EJUDGE_COMPILE_SPOOL_DIR);
 #endif
+  /*
   snprintf(plugin_path, sizeof(plugin_path), "%s/plugins",
            config_ejudge_script_dir);
   generate_dir_creation(f, &created_dirs, 0, plugin_path);
+  */
 
   fprintf(f, "\n");
 
