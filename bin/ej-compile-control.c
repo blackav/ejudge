@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -269,7 +269,9 @@ start_process(
         const unsigned char *exepath,
         int is_parallel,
         int replace_env,
-        int ej_xml_fd)
+        int *ej_xml_fds,
+        int compile_parallelism,
+        int serial)
 {
     int pid = fork();
     if (pid < 0) {
@@ -317,9 +319,9 @@ start_process(
     int argi = 0;
     args[argi++] = (char*) exepath;
     if (is_parallel) args[argi++] = "-p";
-    if (ej_xml_fd >= 0) {
+    if (ej_xml_fds && ej_xml_fds[serial] >= 0) {
         args[argi++] = "-l";
-        snprintf(lbuf, sizeof(lbuf), "%d", ej_xml_fd);
+        snprintf(lbuf, sizeof(lbuf), "%d", ej_xml_fds[serial]);
         args[argi++] = lbuf;
     }
     args[argi++] = "conf/compile.cfg";
@@ -327,6 +329,14 @@ start_process(
 
     if (replace_env) {
         environ = ev->v;
+    }
+
+    if (ej_xml_fds) {
+        for (int i = 0; i < compile_parallelism; ++i) {
+            if (ej_xml_fds[i] >= 0 && i != serial) {
+                close(ej_xml_fds[i]);
+            }
+        }
     }
 
     execve(exepath, args, environ);
@@ -596,6 +606,8 @@ check_directories(int primary_uid, int compile_uid, int primary_gid, int compile
 
 int main(int argc, char *argv[])
 {
+    int *ejudge_xml_fds = NULL;
+
     if (argc < 1) {
         system_error("no arguments");
     }
@@ -709,14 +721,6 @@ int main(int argc, char *argv[])
         system_error("failed to parse '%s'", ejudge_xml_path);
     }
 
-    int ejudge_xml_fd = -1;
-    if (primary_uid != compile_uid) {
-        ejudge_xml_fd = open(ejudge_xml_path, O_RDONLY);
-        if (ejudge_xml_fd < 0) {
-            system_error("cannot open '%s'", ejudge_xml_path);
-        }
-    }
-
     unsigned char **host_names = NULL;
     if (!(host_names = ejudge_get_host_names())) {
         system_error("cannot obtain the list of host names");
@@ -729,6 +733,17 @@ int main(int argc, char *argv[])
     compile_parallelism = ejudge_cfg_get_host_option_int(config, host_names, "compile_parallelism", 1, 0);
     if (compile_parallelism <= 0 || compile_parallelism > 128) {
         system_error("invalid value of compile_parallelism host option");
+    }
+
+    ejudge_xml_fds = malloc(compile_parallelism * sizeof(ejudge_xml_fds[0]));
+    memset(ejudge_xml_fds, -1, compile_parallelism * sizeof(ejudge_xml_fds[0]));
+    if (primary_uid != compile_uid) {
+        for (int i = 0; i < compile_parallelism; ++i) {
+            ejudge_xml_fds[i] = open(ejudge_xml_path, O_RDONLY);
+            if (ejudge_xml_fds[i] < 0) {
+                system_error("cannot open '%s'", ejudge_xml_path);
+            }
+        }
     }
 
     // open log path before changing the user
@@ -860,7 +875,7 @@ int main(int argc, char *argv[])
             }
 
             for (int i = 0; i < compile_parallelism; ++i) {
-                int ret = start_process(config, EJ_COMPILE_PROGRAM, log_fd, workdir, &ev, ej_compile_path, compile_parallelism > 1, 1 /* FIXME */, ejudge_xml_fd);
+                int ret = start_process(config, EJ_COMPILE_PROGRAM, log_fd, workdir, &ev, ej_compile_path, compile_parallelism > 1, 1 /* FIXME */, ejudge_xml_fds, compile_parallelism, i);
                 if (ret < 0) {
                     emergency_stop();
                     return EXIT_SYSTEM_ERROR;
