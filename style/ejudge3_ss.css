@@ -1227,21 +1227,21 @@ button.ui-button::-moz-focus-inner {
 	border-left-width: 1px;
 }
 
-AccessStyleGreen {
+.AccessStyleGreen {
     font-weight: bold;
     color: white;
     background-color: green;
     width: 1.5em;
 }
 
-AccessStyleYellow {
+.AccessStyleYellow {
     font-weight: bold;
     color: white;
     background-color: yellow;
     width: 1.5em;
 }
 
-AccessStyleRed {
+.AccessStyleRed {
     font-weight: bold;
     color: white;
     background-color: red;
