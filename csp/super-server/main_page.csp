@@ -162,7 +162,14 @@
             acc_style = "AccessStyleRed";
         }
 %><span class="<s:v value='acc_style' />">O</span><%
-        %></td>
+        acc_style = "AccessStyleGreen";
+        if (ci->invisible) {
+            acc_style = "AccessStyleRed";
+        }
+        %> <span class="<s:v value='acc_style' />">V</span><%
+        %> <span class="<s:v value='ci->register_access_style' />">R</span><%
+        %> <span class="<s:v value='ci->users_access_style' />">U</span><%
+        %> <span class="<s:v value='ci->client_access_style' />">P</span></td>
         <td><s:v checkexpr="" value="ci->comment" /></td>
     </tr>
 <%
