@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1950,3 +1950,58 @@ contests_get_member_name(int ff)
   ASSERT(ff >= 0 && ff < CONTEST_LAST_MEMBER);
   return member_names[ff];
 }
+
+// 0 - always closed, 1 - so-so, 2 - always open
+int
+contests_get_access_type(const struct contest_desc *cnts, int field)
+{
+  struct contest_access *acc = 0;
+  switch (field) {
+  case CONTEST_REGISTER_ACCESS:      acc = cnts->register_access; break;
+  case CONTEST_USERS_ACCESS:         acc = cnts->users_access; break;
+  case CONTEST_MASTER_ACCESS:        acc = cnts->master_access; break;
+  case CONTEST_JUDGE_ACCESS:         acc = cnts->judge_access; break;
+  case CONTEST_TEAM_ACCESS:          acc = cnts->team_access; break;
+  case CONTEST_SERVE_CONTROL_ACCESS: acc = cnts->serve_control_access; break;
+  default:
+    abort();
+  }
+
+  // default is always closed
+  if (!acc) return 0;
+
+  int allow_count = 0;
+  int deny_count = 0;
+
+  for (const struct contest_ip *p = (const struct contest_ip*) acc->b.first_down;
+       p; p = (const struct contest_ip*) p->b.right) {
+    if (p->allow) ++allow_count;
+    else ++deny_count;
+  }
+
+  if (acc->default_is_allow) ++allow_count;
+  else ++deny_count;
+
+  if (allow_count > 0 && deny_count > 0) return 1; // so-so
+  if (allow_count > 0) return 2; // always allowed
+  return 0;
+}
+
+int
+contests_get_register_access_type(const struct contest_desc *cnts)
+{
+  return contests_get_access_type(cnts, CONTEST_REGISTER_ACCESS);
+}
+
+int
+contests_get_users_access_type(const struct contest_desc *cnts)
+{
+  return contests_get_access_type(cnts, CONTEST_USERS_ACCESS);
+}
+
+int
+contests_get_participant_access_type(const struct contest_desc *cnts)
+{
+  return contests_get_access_type(cnts, CONTEST_TEAM_ACCESS);
+}
+

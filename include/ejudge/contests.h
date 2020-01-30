@@ -3,7 +3,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -599,5 +599,9 @@ struct ejudge_cfg *ejudge_config;
 
 int
 contests_guess_id(const char *path);
+
+int contests_get_register_access_type(const struct contest_desc *cnts);
+int contests_get_users_access_type(const struct contest_desc *cnts);
+int contests_get_participant_access_type(const struct contest_desc *cnts);
 
 #endif /* __CONTESTS_H__ */
