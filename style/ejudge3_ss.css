@@ -1232,6 +1232,8 @@ button.ui-button::-moz-focus-inner {
     color: white;
     background-color: green;
     width: 1.5em;
+    display: inline-block;
+    text-align: center;
 }
 
 .AccessStyleYellow {
@@ -1239,6 +1241,8 @@ button.ui-button::-moz-focus-inner {
     color: white;
     background-color: yellow;
     width: 1.5em;
+    display: inline-block;
+    text-align: center;
 }
 
 .AccessStyleRed {
@@ -1246,4 +1250,6 @@ button.ui-button::-moz-focus-inner {
     color: white;
     background-color: red;
     width: 1.5em;
+    display: inline-block;
+    text-align: center;
 }
