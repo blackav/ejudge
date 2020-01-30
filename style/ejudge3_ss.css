@@ -1227,3 +1227,23 @@ button.ui-button::-moz-focus-inner {
 	border-left-width: 1px;
 }
 
+AccessStyleGreen {
+    font-weight: bold;
+    color: white;
+    background-color: green;
+    width: 1.5em;
+}
+
+AccessStyleYellow {
+    font-weight: bold;
+    color: white;
+    background-color: yellow;
+    width: 1.5em;
+}
+
+AccessStyleRed {
+    font-weight: bold;
+    color: white;
+    background-color: red;
+    width: 1.5em;
+}
