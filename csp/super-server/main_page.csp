@@ -8,6 +8,7 @@
     const unsigned char *title = 0;
     const unsigned char *subtitle = 0;
     opcap_t caps = 0;
+    const unsigned char *acc_style = NULL;
 
     if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
     if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERM_DENIED);
@@ -94,6 +95,7 @@
         <th>Judge</th>
         <th>Master</th>
         <th>User</th>
+        <th>Access</th>
         <th>Comment</th>
     </tr>
 <%
@@ -154,6 +156,13 @@
 %>&nbsp;<%
         }
 %></td>
+        <td><%
+        acc_style = "AccessStyleGreen";
+        if (ci->closed) {
+            acc_style = "AccessStyleRed";
+        }
+%><span class="<s:v value='acc_style' />">O</span><%
+        %></td>
         <td><s:v checkexpr="" value="ci->comment" /></td>
     </tr>
 <%
