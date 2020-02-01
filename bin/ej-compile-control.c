@@ -1,4 +1,4 @@
-/* -*- mode: c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 
 /* Copyright (C) 2006-2020 Alexander Chernov <cher@ejudge.ru> */
 
@@ -41,6 +41,7 @@
 #define DEFAULT_EJUDGE_PRIMARY_USER "ejudge"
 
 #define EJ_COMPILE_PROGRAM "ej-compile"
+#define EJ_COMPILE_PROGRAM_DELETED "ej-compile (deleted)"
 
 #define PROC_DIRECTORY "/proc"
 #define EXE_LINK "exe"
@@ -166,7 +167,10 @@ pv_free(struct PidVector *pv)
 }
 
 static int
-find_all(const unsigned char *process_name, struct PidVector *pv)
+find_all(
+        const unsigned char *process_name,
+        const unsigned char *process_name_deleted,
+        struct PidVector *pv)
 {
     DIR *d = opendir(PROC_DIRECTORY);
     if (!d) {
@@ -193,7 +197,7 @@ find_all(const unsigned char *process_name, struct PidVector *pv)
         } else {
             ++ptr;
         }
-        if (!strcmp(ptr, process_name)) {
+        if (!strcmp(ptr, process_name) || !strcmp(ptr, process_name_deleted)) {
             if (pv->u == pv->a) {
                 if (!(pv->a *= 2)) pv->a = 16;
                 pv->v = realloc(pv->v, pv->a * sizeof(pv->v[0]));
@@ -222,7 +226,10 @@ kill_all(int signal, struct PidVector *pv)
 }
 
 static int
-check_process(int pid, const unsigned char *process_name)
+check_process(
+        int pid,
+        const unsigned char *process_name,
+        const unsigned char *process_name_deleted)
 {
     unsigned char exelink_path[PATH_MAX];
     if (snprintf(exelink_path, sizeof(exelink_path), "%s/%d/%s", PROC_DIRECTORY, pid, EXE_LINK) >= sizeof(exelink_path)) {
@@ -240,14 +247,17 @@ check_process(int pid, const unsigned char *process_name)
     } else {
         ++ptr;
     }
-    return !strcmp(ptr, process_name);
+    return !strcmp(ptr, process_name) || !strcmp(ptr, process_name_deleted);
 }
 
 static int __attribute__((unused))
-check_processes(const unsigned char *process_name, struct PidVector *pv)
+check_processes(
+        const unsigned char *process_name,
+        const unsigned char *process_name_deleted,
+        struct PidVector *pv)
 {
     for (int i = 0; i < pv->u; ) {
-        if (check_process(pv->v[i], process_name)) {
+        if (check_process(pv->v[i], process_name, process_name_deleted)) {
             ++i;
         } else {
             for (int j = i + 1; j < pv->u; ++j) {
@@ -348,7 +358,7 @@ static void
 signal_and_wait(int signo)
 {
     struct PidVector pv = {};
-    if (find_all(EJ_COMPILE_PROGRAM, &pv) < 0) {
+    if (find_all(EJ_COMPILE_PROGRAM, EJ_COMPILE_PROGRAM_DELETED, &pv) < 0) {
         system_error("cannot enumerate processes");
     }
     if (pv.u <= 0) return;
@@ -357,7 +367,7 @@ signal_and_wait(int signo)
     do {
         usleep(100000);
         pv_free(&pv);
-    } while (find_all(EJ_COMPILE_PROGRAM, &pv) >= 0 && pv.u > 0);
+    } while (find_all(EJ_COMPILE_PROGRAM, EJ_COMPILE_PROGRAM_DELETED, &pv) >= 0 && pv.u > 0);
     pv_free(&pv);
 }
 
@@ -862,7 +872,7 @@ int main(int argc, char *argv[])
         {
             struct PidVector pv = {};
 
-            if (find_all(EJ_COMPILE_PROGRAM, &pv) < 0) {
+            if (find_all(EJ_COMPILE_PROGRAM, EJ_COMPILE_PROGRAM_DELETED, &pv) < 0) {
                 system_error("cannot enumerate processes");
             }
             if (pv.u > 0) {
@@ -887,7 +897,7 @@ int main(int argc, char *argv[])
             while (sleep_count < START_WAIT_COUNT) {
                 pv_free(&pv);
                 usleep(100000);
-                if (find_all(EJ_COMPILE_PROGRAM, &pv) < 0) {
+                if (find_all(EJ_COMPILE_PROGRAM, EJ_COMPILE_PROGRAM_DELETED, &pv) < 0) {
                     system_error("cannot enumerate processes");
                 }
                 if (pv.u == compile_parallelism) break;
@@ -908,7 +918,7 @@ int main(int argc, char *argv[])
         {
             struct PidVector pv = {};
 
-            if (find_all(EJ_COMPILE_PROGRAM, &pv) < 0) {
+            if (find_all(EJ_COMPILE_PROGRAM, EJ_COMPILE_PROGRAM_DELETED, &pv) < 0) {
                 system_error("cannot enumerate processes");
             }
             if (pv.u <= 0) {
@@ -921,7 +931,7 @@ int main(int argc, char *argv[])
         {
             struct PidVector pv = {};
 
-            if (find_all(EJ_COMPILE_PROGRAM, &pv) < 0) {
+            if (find_all(EJ_COMPILE_PROGRAM, EJ_COMPILE_PROGRAM_DELETED, &pv) < 0) {
                 system_error("cannot enumerate processes");
             }
             if (pv.u > 0) {
