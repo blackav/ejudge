@@ -220,20 +220,31 @@ install_file(
         int suid_mode,
         int *p_updated_count)
 {
-    const unsigned char *destdir = getenv("DESTDIR");
-    unsigned char destdir_prefix[PATH_MAX];
+    const unsigned char *destdir_env = getenv("DESTDIR");
+    unsigned char full_dst_dir[PATH_MAX];
 
-    destdir_prefix[0] = 0;
-    if (destdir && *destdir) {
-        if (snprintf(destdir_prefix, sizeof(destdir_prefix), "%s/", destdir) >= sizeof(destdir_prefix)) {
-            fprintf(stderr, "%s: path '%s/' is too long\n", progname, destdir);
+    if (destdir_env && *destdir_env) {
+        if (destdir_env[strlen(destdir_env) - 1] == '/' || dst_dir[0] == '/') {
+            if (snprintf(full_dst_dir, sizeof(full_dst_dir), "%s%s", destdir_env, dst_dir) >= sizeof(full_dst_dir)) {
+                fprintf(stderr, "%s: path '%s%s' is too long\n", progname, destdir_env, dst_dir);
+                return 1;
+            }
+        } else {
+            if (snprintf(full_dst_dir, sizeof(full_dst_dir), "%s/%s", destdir_env, dst_dir) >= sizeof(full_dst_dir)) {
+                fprintf(stderr, "%s: path '%s/%s' is too long\n", progname, destdir_env, dst_dir);
+                return 1;
+            }
+        }
+    } else {
+        if (snprintf(full_dst_dir, sizeof(full_dst_dir), "%s", dst_dir) >= sizeof(full_dst_dir)) {
+            fprintf(stderr, "%s: path '%s' is too long\n", progname, dst_dir);
             return 1;
         }
     }
 
     unsigned char dst_file[PATH_MAX];
-    if (snprintf(dst_file, sizeof(dst_file), "%s%s/%s", destdir_prefix, dst_dir, file) >= sizeof(dst_file)) {
-        fprintf(stderr, "%s: path '%s/%s' is too long\n", progname, dst_dir, file);
+    if (snprintf(dst_file, sizeof(dst_file), "%s/%s", full_dst_dir, file) >= sizeof(dst_file)) {
+        fprintf(stderr, "%s: path '%s/%s' is too long\n", progname, full_dst_dir, file);
         return 1;
     }
     unsigned char src_file[PATH_MAX];
@@ -270,20 +281,20 @@ install_file(
     }
     int file_length = stb.st_size;
 
-    int dfd = open(dst_dir, O_RDONLY | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK | O_DIRECTORY | O_PATH, 0);
+    int dfd = open(full_dst_dir, O_RDONLY | O_NOCTTY | O_NOFOLLOW | O_NONBLOCK | O_DIRECTORY | O_PATH, 0);
     if (dfd < 0) {
-        fprintf(stderr, "%s: cannot open directory '%s': %s\n", progname, dst_dir, strerror(errno));
+        fprintf(stderr, "%s: cannot open directory '%s': %s\n", progname, full_dst_dir, strerror(errno));
         close(sfd);
         return 1;
     }
     if (fstat(dfd, &stb) < 0) {
-        fprintf(stderr, "%s: fstat of '%s' failed: %s\n", progname, dst_dir, strerror(errno));
+        fprintf(stderr, "%s: fstat of '%s' failed: %s\n", progname, full_dst_dir, strerror(errno));
         close(sfd);
         close(dfd);
         return 1;
     }
     if (!S_ISDIR(stb.st_mode)) {
-        fprintf(stderr, "%s: '%s' is not a directory\n", progname, dst_dir);
+        fprintf(stderr, "%s: '%s' is not a directory\n", progname, full_dst_dir);
         close(sfd);
         close(dfd);
         return 1;

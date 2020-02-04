@@ -253,13 +253,13 @@ install: local_install
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" install
 	#if [ ! -f "${INSTALLSCRIPT}" ]; then ./ejudge-setup -b; fi
 	if [ -f "${INSTALLSCRIPT}" ]; then install -m 0755 "${INSTALLSCRIPT}" "${DESTDIR}${bindir}"; fi
-	./ejudge-suid-setup --install
+	DESTDIR="${DESTDIR}" ./ejudge-suid-setup --install
 
 suidperms : ejudge-suid-setup
 	./ejudge-suid-setup
 
 suid_install : ${SUIDBINTARGETS} ejudge-suid-setup ej-compile-control
-	./ejudge-suid-setup --install
+	DESTDIR="${DESTDIR}" ./ejudge-suid-setup --install
 
 suid_bins : ${SUIDBINTARGETS}
 
