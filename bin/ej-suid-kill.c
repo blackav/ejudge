@@ -1,3 +1,19 @@
+/* -*- mode: c; c-basic-offset: 4 -*- */
+
+/* Copyright (C) 2015-2020 Alexander Chernov <cher@ejudge.ru> */
+
+/*
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
@@ -11,6 +27,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <sys/wait.h>
 
 #define EXEC_USER "ejexec"
 #define EXEC_GROUP "ejexec"
@@ -55,19 +72,35 @@ main(int argc, char **argv)
         fprintf(stderr, "%s: invalid signal '%s'\n", argv[0], argv[1]);
         abort();
     }
-    if (setgid(grp->gr_gid) < 0) {
-        fprintf(stderr, "%s: setgid failed\n", argv[0]);
-        abort();
+    if (dst_pid == -1) {
+        // kill all mode
+        // fork a subprocess, which changes the user and kill everything of this user (including the forked process)
+        int subpid = fork();
+        if (subpid < 0) {
+            fprintf(stderr, "%s: failed to create a new process: %s\n", argv[0], strerror(errno));
+            return 1;
+        }
+        if (!subpid) {
+            if (setgid(grp->gr_gid) < 0) {
+                fprintf(stderr, "%s: setgid failed\n", argv[0]);
+            } else if (setuid(pwd->pw_uid) < 0) {
+                fprintf(stderr, "%s: setuid failed\n", argv[0]);
+            } else {
+                kill(dst_pid, kill_sig);
+            }
+            _exit(0);
+        }
+        waitpid(subpid, NULL, 0);
+        return 0;
+    } else {
+        if (setgid(grp->gr_gid) < 0) {
+            fprintf(stderr, "%s: setgid failed\n", argv[0]);
+            abort();
+        }
+        if (setuid(pwd->pw_uid) < 0) {
+            fprintf(stderr, "%s: setuid failed\n", argv[0]);
+            abort();
+        }
+        return kill(dst_pid, kill_sig) < 0;
     }
-    if (setuid(pwd->pw_uid) < 0) {
-        fprintf(stderr, "%s: setuid failed\n", argv[0]);
-        abort();
-    }
-    return kill(dst_pid, kill_sig) < 0;
 }
-
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */
