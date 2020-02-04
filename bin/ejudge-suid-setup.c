@@ -220,8 +220,19 @@ install_file(
         int suid_mode,
         int *p_updated_count)
 {
+    const unsigned char *destdir = getenv("DESTDIR");
+    unsigned char destdir_prefix[PATH_MAX];
+
+    destdir_prefix[0] = 0;
+    if (destdir && *destdir) {
+        if (snprintf(destdir_prefix, sizeof(destdir_prefix), "%s/", destdir) >= sizeof(destdir_prefix)) {
+            fprintf(stderr, "%s: path '%s/' is too long\n", progname, destdir);
+            return 1;
+        }
+    }
+
     unsigned char dst_file[PATH_MAX];
-    if (snprintf(dst_file, sizeof(dst_file), "%s/%s", dst_dir, file) >= sizeof(dst_file)) {
+    if (snprintf(dst_file, sizeof(dst_file), "%s%s/%s", destdir_prefix, dst_dir, file) >= sizeof(dst_file)) {
         fprintf(stderr, "%s: path '%s/%s' is too long\n", progname, dst_dir, file);
         return 1;
     }
