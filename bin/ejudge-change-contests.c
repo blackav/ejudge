@@ -387,7 +387,7 @@ main(int argc, char *argv[])
     for (int contest_idx = 0; contest_idx < contest_count; ++contest_idx) {
         int contest_id = contest_ids[contest_idx];
 
-        if (contest_id <= 0 || contest_id > max_contest_id || !requested_map[max_contest_id]) {
+        if (contest_id <= 0 || contest_id > max_contest_id || !requested_map[contest_id]) {
             continue;
         }
 
