@@ -85,6 +85,9 @@ US_OBJECTS = ${US_CFILES:.c=.o} libuserlist_clnt.a libcommon.a libplatform.a lib
 ED_CFILES = bin/ejudge-edit-users.c version.c
 ED_OBJECTS = ${ED_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
+EMC_CFILES = bin/ejudge-change-contests.c version.c
+EMC_OBJECTS = ${EMC_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
+
 SS_CFILES = bin/ej-super-server.c version.c
 SS_OBJECTS = ${SS_CFILES:.c=.o} libcommon.a libuserlist_clnt.a libplatform.a libcommon.a
 
@@ -155,7 +158,7 @@ PB_CFILES = bin/ej-parblock.c
 PB_OBJECTS = $(PB_CFILES:.c=.o) libcommon.a libplatform.a libcommon.a
 
 INSTALLSCRIPT = ejudge-install.sh
-BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd ejudge-suid-setup
+BINTARGETS = ejudge-jobs-cmd ejudge-edit-users ejudge-setup ejudge-configure-compilers ejudge-control ejudge-execute ejudge-contests-cmd ejudge-suid-setup ejudge-change-contests
 SERVERBINTARGETS = ej-compile ej-run ej-nwrun ej-ncheck ej-batch ej-serve ej-users ej-users-control ej-jobs ej-jobs-control ej-super-server ej-super-server-control ej-contests ej-contests-control uudecode ej-convert-clars ej-convert-runs ej-fix-db ej-super-run ej-super-run-control ej-normalize ej-polygon ej-import-contest ej-page-gen ej-parblock
 SUIDBINTARGETS = ej-suid-chown ej-suid-exec ej-suid-ipcrm ej-suid-kill
 CGITARGETS = cgi-bin/users${CGI_PROG_SUFFIX} cgi-bin/serve-control${CGI_PROG_SUFFIX} cgi-bin/new-client${CGI_PROG_SUFFIX}
@@ -363,6 +366,9 @@ cgi-bin/users${CGI_PROG_SUFFIX}: ${US_OBJECTS}
 
 ejudge-edit-users: $(ED_OBJECTS)
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu${NCURSES_SUFFIX} -lpanel${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX}
+
+ejudge-change-contests: $(EMC_OBJECTS)
+	${LD} ${LDFLAGS} $^ libcommon.a libplatform.a -o $@ ${LDLIBS} ${EXPAT_LIB}
 
 ejudge-setup: ${ST_OBJECTS}
 	${LD} ${LDFLAGS} $^ libcommon.a -o $@ ${LDLIBS} ${EXPAT_LIB} -lmenu${NCURSES_SUFFIX} -lpanel${NCURSES_SUFFIX} -lncurses${NCURSES_SUFFIX}

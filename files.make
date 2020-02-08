@@ -397,6 +397,7 @@ CFILES=\
  bin/ej-super-run.c\
  bin/ejudge-configure-compilers.c\
  bin/ejudge-control.c\
+ bin/ejudge-change-contests.c\
  bin/ejudge-setup.c\
  bin/ejudge-execute.c\
  bin/ej-fix-db.c\
