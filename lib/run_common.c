@@ -2846,7 +2846,7 @@ run_one_test(
   }
   */
   task_SetWorkingDir(tsk, working_dir);
-  if (srpp->enable_kill_all > 0) {
+  if (srgp->suid_run > 0 && srpp->enable_kill_all > 0) {
     task_EnableKillAll(tsk);
   }
   if (srpp->enable_process_group > 0) {
@@ -3133,7 +3133,7 @@ run_one_test(
   }
 #endif
 
-  if (srpp->enable_kill_all > 0 && task_TryAnyProcess(tsk) > 0) {
+  if (srgp->suid_run > 0 && srpp->enable_kill_all > 0 && task_TryAnyProcess(tsk) > 0) {
     append_msg_to_log(check_out_path,
                       "There exist processes belonging to the 'ejexec' user\n");
     pg_not_empty = 1;

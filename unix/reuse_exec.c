@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2020 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:33:28 cher> */
 
 /*
@@ -2200,7 +2200,7 @@ task_NewWait(tTask *tsk)
       gettimeofday(&cur_time, NULL);
       if (cur_time.tv_sec > rt_timeout.tv_sec
           || (cur_time.tv_sec == rt_timeout.tv_sec && cur_time.tv_usec >= rt_timeout.tv_usec)) {
-        if (tsk->enable_kill_all > 0) {
+        if (tsk->enable_suid_exec > 0 && tsk->enable_kill_all > 0) {
           do_kill(tsk, -1, tsk->termsig);
         } else if (tsk->enable_process_group > 0) {
           do_kill(tsk, -tsk->pid, tsk->termsig);
@@ -2226,7 +2226,7 @@ task_NewWait(tTask *tsk)
         cur_utime = (cur_utime * 1000) / info.clock_ticks;
         //fprintf(stderr, "CPUTime: %lld\n", cur_utime);
         if (cur_utime >= max_time_ms) {
-          if (tsk->enable_kill_all > 0) {
+          if (tsk->enable_suid_exec > 0 && tsk->enable_kill_all > 0) {
             do_kill(tsk, -1, tsk->termsig);
           } else if (tsk->enable_process_group > 0) {
             do_kill(tsk, -tsk->pid, tsk->termsig);
