@@ -33,6 +33,12 @@
 #endif /* __RCC__ */
 #endif /* META_ATTRIB */
 
+#ifdef __GCC__
+#define GCC_ATTRIB(x) __attribute__(x)
+#else
+#define GCC_ATTRIB(x)
+#endif
+
 enum
   {
     CONTEST_CONTESTS = 1,
@@ -595,7 +601,7 @@ contests_set_member_counts(
 
 /* This is INTENTIONALLY not an `extern' variable */
 struct ejudge_cfg;
-struct ejudge_cfg *ejudge_config;
+struct ejudge_cfg *ejudge_config GCC_ATTRIB((common));
 
 int
 contests_guess_id(const char *path);

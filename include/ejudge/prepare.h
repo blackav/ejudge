@@ -2,7 +2,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,12 @@
 #define META_ATTRIB(x)
 #endif /* __RCC__ */
 #endif /* META_ATTRIB */
+
+#ifdef __GCC__
+#define GCC_ATTRIB(x) __attribute__(x)
+#else
+#define GCC_ATTRIB(x)
+#endif
 
 enum { PREPARE_SERVE, PREPARE_COMPILE, PREPARE_RUN };
 enum { PREPARE_QUIET = 1 };
@@ -1580,7 +1586,7 @@ prepare_parse_tokens(FILE *log_f, const unsigned char *tokens);
 
 /* This is INTENTIONALLY not an `extern' variable */
 struct ejudge_cfg;
-struct ejudge_cfg *ejudge_config;
+struct ejudge_cfg *ejudge_config GCC_ATTRIB((common)) ;
 
 int
 lang_config_configure(
