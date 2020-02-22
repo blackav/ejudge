@@ -839,6 +839,8 @@ int main(int argc, char *argv[])
                 env_set(&ev, "PATH", ep + 1);
             } else if (!strncmp("LANG=", ee, namelen)) {
                 env_set(&ev, "LANG", ep + 1);
+            } else if (!strncmp("EJ_COMPILE_SERVER_ID=", ee, namelen)) {
+                env_set(&ev, "EJ_COMPILE_SERVER_ID", ep + 1);
             }
         }
     }
