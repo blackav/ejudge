@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1305,7 +1305,10 @@ do_loop(void)
     pkt_len = 0;
     r = generic_read_file(&pkt_ptr, 0, &pkt_len, SAFE | REMOVE,
                           global->compile_queue_dir, pkt_name, "");
-    if (r == 0) continue;
+    if (r == 0) {
+      scan_dir_add_ignored(global->compile_queue_dir, pkt_name);
+      continue;
+    }
     if (r < 0 || !pkt_ptr) {
       // it looks like there's no reasonable recovery strategy
       // so, just ignore the error
