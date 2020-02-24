@@ -2931,7 +2931,7 @@ priv_change_password(
     error_page(fout, phr, 1, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     goto cleanup;
   }
-  r = userlist_clnt_set_passwd(ul_conn, cmd, phr->user_id, phr->contest_id, p0, p1, NULL);
+  r = userlist_clnt_set_passwd(ul_conn, cmd, phr->user_id, phr->contest_id, 0, p0, p1, NULL);
   if (r < 0) {
     fprintf(phr->log_f, "%s\n", userlist_strerror(-r));
     error_page(fout, phr, 1, NEW_SRV_ERR_PWD_UPDATE_FAILED);
@@ -8696,7 +8696,7 @@ unpriv_change_password(FILE *fout,
     error_page(fout, phr, 0, NEW_SRV_ERR_USERLIST_SERVER_DOWN);
     goto cleanup;
   }
-  r = userlist_clnt_set_passwd(ul_conn, cmd, phr->user_id, phr->contest_id, p0, p1, NULL);
+  r = userlist_clnt_set_passwd(ul_conn, cmd, phr->user_id, phr->contest_id, 0, p0, p1, NULL);
   if (r < 0) {
     fprintf(phr->log_f, "%s\n", userlist_strerror(-r));
     error_page(fout, phr, 0, NEW_SRV_ERR_PWD_UPDATE_FAILED);

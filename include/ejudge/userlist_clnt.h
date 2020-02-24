@@ -172,13 +172,15 @@ int
 userlist_clnt_set_info(struct userlist_clnt *clnt,
                        int uid, int contest_id, const unsigned char *info);
 int
-userlist_clnt_set_passwd(struct userlist_clnt *clnt,
-                         int cmd,
-                         int user_id,
-                         int contest_id,
-                         const unsigned char *old_pwd,
-                         const unsigned char *new_pwd,
-                         const unsigned char *admin_pwd);
+userlist_clnt_set_passwd(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int user_id,
+        int contest_id,
+        int admin_user_id,
+        const unsigned char *old_pwd,
+        const unsigned char *new_pwd,
+        const unsigned char *admin_pwd);
 int
 userlist_clnt_get_contests(struct userlist_clnt *clnt,
                            int uid, unsigned char **p_info);

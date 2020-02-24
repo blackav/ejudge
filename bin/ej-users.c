@@ -8671,15 +8671,20 @@ cmd_priv_set_passwd_2(
 
   if (is_admin(p, logbuf) < 0) return;
 
-  if (*admin_pwd) {
+  if (data->admin_user_id > 0) {
+    if (!*admin_pwd) {
+      err("%s -> admin password is empty", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
     if (passwd_convert_to_internal(admin_pwd, &adminint) < 0) {
       err("%s -> admin password is invalid", logbuf);
       send_reply(p, -ULS_ERR_NO_PERMS);
       return;
     }
-    if (default_get_user_info_2(p->user_id, 0, &u, &ui) < 0 || !u) {
-      send_reply(p, -ULS_ERR_DB_ERROR);
-      err("%s -> database error", logbuf);
+    if (default_get_user_info_2(data->admin_user_id, 0, &u, &ui) < 0 || !u) {
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      err("%s -> no admin user %d", logbuf, data->admin_user_id);
       return;
     }
     if (passwd_check(&adminint, u->passwd, u->passwd_method) < 0) {

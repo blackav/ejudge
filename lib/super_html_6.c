@@ -1439,7 +1439,7 @@ super_serve_op_USER_CHANGE_PASSWORD_ACTION(
   r = ULS_PRIV_SET_REG_PASSWD_PLAIN;
   if (usesha1) r = ULS_PRIV_SET_REG_PASSWD_SHA1;
 
-  r = userlist_clnt_set_passwd(phr->userlist_clnt, r, other_user_id, 0, "", reg_password1, admin_password);
+  r = userlist_clnt_set_passwd(phr->userlist_clnt, r, other_user_id, 0, phr->user_id, "", reg_password1, admin_password);
   if (r < 0) FAIL(SSERV_ERR_DB_ERROR);
 
   if (next_op == SSERV_CMD_USER_DETAIL_PAGE) {
@@ -1545,7 +1545,7 @@ super_serve_op_USER_CHANGE_CNTS_PASSWORD_ACTION(
     r = ULS_PRIV_SET_CNTS_PASSWD_PLAIN;
     if (usesha1) r = ULS_PRIV_SET_CNTS_PASSWD_SHA1;
 
-    r = userlist_clnt_set_passwd(phr->userlist_clnt, r, other_user_id, contest_id, "", cnts_password1, admin_password);
+    r = userlist_clnt_set_passwd(phr->userlist_clnt, r, other_user_id, contest_id, phr->user_id, "", cnts_password1, admin_password);
   }
   if (r < 0) FAIL(SSERV_ERR_DB_ERROR);
 

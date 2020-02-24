@@ -22,6 +22,7 @@ userlist_clnt_set_passwd(
         int cmd,
         int user_id,
         int contest_id,
+        int admin_user_id,
         const unsigned char *old_pwd,
         const unsigned char *new_pwd,
         const unsigned char *admin_pwd)
@@ -55,6 +56,7 @@ userlist_clnt_set_passwd(
   out->request_id = cmd;
   out->user_id = user_id;
   out->contest_id = contest_id;
+  out->admin_user_id = admin_user_id;
   out->old_len = old_len;
   out->new_len = new_len;
   out->admin_len = admin_len;

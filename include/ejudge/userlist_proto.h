@@ -303,6 +303,7 @@ struct userlist_pk_set_password
   short         request_id;
   int           user_id;
   int           contest_id;
+  int           admin_user_id;
   unsigned char old_len;
   unsigned char new_len;
   unsigned char admin_len;
