@@ -57,6 +57,7 @@ userlist_clnt_set_passwd(
   out->contest_id = contest_id;
   out->old_len = old_len;
   out->new_len = new_len;
+  out->admin_len = admin_len;
   pkt_old_ptr = out->data;
   pkt_new_ptr = pkt_old_ptr + old_len + 1;
   pkt_admin_ptr = pkt_new_ptr + new_len + 1;
