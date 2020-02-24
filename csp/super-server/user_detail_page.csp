@@ -251,7 +251,7 @@ var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
     if (!u->passwd) {
 %><i>NULL</i><%
     } else if (u->passwd_method == USERLIST_PWD_PLAIN) {
-%><tt><s:v value="u->passwd" checkExpr="" /></tt><%
+%><i>Plain text</i><%
     } else if (u->passwd_method == USERLIST_PWD_SHA1) {
 %><i>Hashed with SHA1</i><%
     } else if (u->passwd_method == USERLIST_PWD_SHA256) {
