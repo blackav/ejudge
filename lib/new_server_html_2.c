@@ -7273,23 +7273,23 @@ write_xml_team_testing_report(
             fprintf(f, "%s", ARMOR(t->args));
           }
         }
-        if (t->input.size >= 0) {
+        if (t->input.size >= 0 || t->input.is_too_big) {
           fprintf(f, "<a name=\"%dI\"></a>", t->num);
           html_print_testing_report_file_content(f, &ab, &t->input, TESTING_REPORT_INPUT);
         }
-        if (t->output.size >= 0) {
+        if (t->output.size >= 0 || t->output.is_too_big) {
           fprintf(f, "<a name=\"%dO\"></a>", t->num);
           html_print_testing_report_file_content(f, &ab, &t->output, TESTING_REPORT_OUTPUT);
         }
-        if (t->correct.size >= 0) {
+        if (t->correct.size >= 0 || t->correct.is_too_big) {
           fprintf(f, "<a name=\"%dA\"></a>", t->num);
           html_print_testing_report_file_content(f, &ab, &t->correct, TESTING_REPORT_CORRECT);
         }
-        if (t->error.size >= 0) {
+        if (t->error.size >= 0 || t->error.is_too_big) {
           fprintf(f, "<a name=\"%dE\"></a>", t->num);
           html_print_testing_report_file_content(f, &ab, &t->error, TESTING_REPORT_ERROR);
         }
-        if (t->checker.size >= 0) {
+        if (t->checker.size >= 0 || t->checker.is_too_big) {
           fprintf(f, "<a name=\"%dC\"></a>", t->num);
           html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
         }
@@ -7549,23 +7549,23 @@ write_xml_team_testing_report(
           fprintf(f, "%s", ARMOR(t->args));
         }
       }
-      if (t->input.size >= 0) {
+      if (t->input.size >= 0 || t->input.is_too_big) {
         fprintf(f, "<a name=\"%dI\"></a>", t->num);
         html_print_testing_report_file_content(f, &ab, &t->input, TESTING_REPORT_INPUT);
       }
-      if (t->output.size >= 0) {
+      if (t->output.size >= 0 || t->output.is_too_big) {
         fprintf(f, "<a name=\"%dO\"></a>", t->num);
         html_print_testing_report_file_content(f, &ab, &t->output, TESTING_REPORT_OUTPUT);
       }
-      if (t->correct.size >= 0) {
+      if (t->correct.size >= 0 || t->correct.is_too_big) {
         fprintf(f, "<a name=\"%dA\"></a>", t->num);
         html_print_testing_report_file_content(f, &ab, &t->correct, TESTING_REPORT_CORRECT);
       }
-      if (t->error.size >= 0) {
+      if (t->error.size >= 0 || t->error.is_too_big) {
         fprintf(f, "<a name=\"%dE\"></a>", t->num);
         html_print_testing_report_file_content(f, &ab, &t->error, TESTING_REPORT_ERROR);
       }
-      if (t->checker.size >= 0) {
+      if (t->checker.size >= 0 || t->checker.is_too_big) {
         fprintf(f, "<a name=\"%dC\"></a>", t->num);
         html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
       }
@@ -8012,23 +8012,23 @@ write_xml_team_accepting_report(
         xfree(s);
       }
     }
-    if (t->input.size >= 0) {
+    if (t->input.size >= 0 || t->input.is_too_big) {
       fprintf(f, "<a name=\"%dI\"></a>", t->num);
       html_print_testing_report_file_content(f, &ab, &t->input, TESTING_REPORT_INPUT);
     }
-    if (t->output.size >= 0) {
+    if (t->output.size >= 0 || t->output.is_too_big) {
       fprintf(f, "<a name=\"%dO\"></a>", t->num);
       html_print_testing_report_file_content(f, &ab, &t->output, TESTING_REPORT_OUTPUT);
     }
-    if (t->correct.size >= 0) {
+    if (t->correct.size >= 0 || t->correct.is_too_big) {
       fprintf(f, "<a name=\"%dA\"></a>", t->num);
       html_print_testing_report_file_content(f, &ab, &t->correct, TESTING_REPORT_CORRECT);
     }
-    if (t->error.size >= 0) {
+    if (t->error.size >= 0 || t->error.is_too_big) {
       fprintf(f, "<a name=\"%dE\"></a>", t->num);
       html_print_testing_report_file_content(f, &ab, &t->error, TESTING_REPORT_ERROR);
     }
-    if (t->checker.size >= 0) {
+    if (t->checker.size >= 0 || t->checker.is_too_big) {
       fprintf(f, "<a name=\"%dC\"></a>", t->num);
       html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
     }
@@ -8563,23 +8563,23 @@ write_xml_testing_report(
         xfree(s);
       }
     }
-    if (t->input.size >= 0) {
+    if (t->input.size >= 0 || t->input.is_too_big) {
       fprintf(f, "<a name=\"%dI\"></a>", t->num);
       html_print_testing_report_file_content(f, &ab, &t->input, TESTING_REPORT_INPUT);
     }
-    if (t->output.size >= 0) {
+    if (t->output.size >= 0 || t->output.is_too_big) {
       fprintf(f, "<a name=\"%dO\"></a>", t->num);
       html_print_testing_report_file_content(f, &ab, &t->output, TESTING_REPORT_OUTPUT);
     }
-    if (t->correct.size >= 0) {
+    if (t->correct.size >= 0 || t->correct.is_too_big) {
       fprintf(f, "<a name=\"%dA\"></a>", t->num);
       html_print_testing_report_file_content(f, &ab, &t->correct, TESTING_REPORT_CORRECT);
     }
-    if (t->error.size >= 0) {
+    if (t->error.size >= 0 || t->error.is_too_big) {
       fprintf(f, "<a name=\"%dE\"></a>", t->num);
       html_print_testing_report_file_content(f, &ab, &t->error, TESTING_REPORT_ERROR);
     }
-    if (t->checker.size >= 0) {
+    if (t->checker.size >= 0 || t->checker.is_too_big) {
       fprintf(f, "<a name=\"%dC\"></a>", t->num);
       html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
     }
@@ -9242,23 +9242,23 @@ write_json_run_info(
             fprintf(f, "%s", ARMOR(t->args));
           }
         }
-        if (t->input.size >= 0) {
+        if (t->input.size >= 0 || t->input.is_too_big) {
           fprintf(f, "<a name=\"%dI\"></a>", t->num);
           html_print_testing_report_file_content(f, &ab, &t->input, TESTING_REPORT_INPUT);
         }
-        if (t->output.size >= 0) {
+        if (t->output.size >= 0 || t->output.is_too_big) {
           fprintf(f, "<a name=\"%dO\"></a>", t->num);
           html_print_testing_report_file_content(f, &ab, &t->output, TESTING_REPORT_OUTPUT);
         }
-        if (t->correct.size >= 0) {
+        if (t->correct.size >= 0 || t->correct.is_too_big) {
           fprintf(f, "<a name=\"%dA\"></a>", t->num);
           html_print_testing_report_file_content(f, &ab, &t->correct, TESTING_REPORT_CORRECT);
         }
-        if (t->error.size >= 0) {
+        if (t->error.size >= 0 || t->error.is_too_big) {
           fprintf(f, "<a name=\"%dE\"></a>", t->num);
           html_print_testing_report_file_content(f, &ab, &t->error, TESTING_REPORT_ERROR);
         }
-        if (t->checker.size >= 0) {
+        if (t->checker.size >= 0 || t->checker.is_too_big) {
           fprintf(f, "<a name=\"%dC\"></a>", t->num);
           html_print_testing_report_file_content(f, &ab, &t->checker, TESTING_REPORT_CHECKER);
         }
