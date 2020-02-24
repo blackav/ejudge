@@ -3,7 +3,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -305,7 +305,8 @@ struct userlist_pk_set_password
   int           contest_id;
   unsigned char old_len;
   unsigned char new_len;
-  unsigned char data[2];
+  unsigned char admin_len;
+  unsigned char data[3];
 };
 
 struct userlist_pk_register_contest

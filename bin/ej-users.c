@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1210,8 +1210,8 @@ check_pk_set_password(
         int pkt_len,
         const struct userlist_pk_set_password *data)
 {
-  const char *old_pwd, *new_pwd;
-  int old_len, new_len, exp_len;
+  const char *old_pwd, *new_pwd, *admin_pwd;
+  int old_len, new_len, admin_len, exp_len;
 
   if (pkt_len < sizeof(*data)) {
     CONN_BAD("packet too small: %d instead of %d",
@@ -1233,7 +1233,14 @@ check_pk_set_password(
     return -1;
   }
 
-  exp_len = sizeof(*data) + old_len + new_len;
+  admin_pwd = new_pwd + new_len + 1;
+  admin_len = strlen(admin_pwd);
+  if (admin_len != data->admin_len) {
+    CONN_BAD("admin_len mismatch: %d instead of %d", data->admin_len, admin_len);
+    return -1;
+  }
+
+  exp_len = sizeof(*data) + old_len + new_len + admin_len;
   if (pkt_len != exp_len) {
     CONN_BAD("pkt_len mismatch: %d instead of %d", pkt_len, exp_len);
     return -1;
@@ -8644,9 +8651,10 @@ cmd_priv_set_passwd_2(
         int pkt_len,
         struct userlist_pk_set_password *data)
 {
-  const unsigned char *old_pwd, *new_pwd;
+  const unsigned char *old_pwd, *new_pwd, *admin_pwd;
   unsigned char logbuf[1024];
   struct passwd_internal newint;
+  struct passwd_internal adminint;
   const struct userlist_user *u = 0;
   const struct contest_desc *cnts = 0;
   const struct userlist_user_info *ui = 0;
@@ -8655,12 +8663,32 @@ cmd_priv_set_passwd_2(
 
   old_pwd = data->data;
   new_pwd = old_pwd + data->old_len + 1;
+  admin_pwd = new_pwd + data->new_len + 1;
 
   if (!data->user_id) data->user_id = p->user_id;
   snprintf(logbuf, sizeof(logbuf), "PRIV_SET_PASSWD_2: %d, %d, %d",
            data->request_id, data->user_id, data->contest_id);
 
   if (is_admin(p, logbuf) < 0) return;
+
+  if (*admin_pwd) {
+    if (passwd_convert_to_internal(admin_pwd, &adminint) < 0) {
+      err("%s -> admin password is invalid", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+    if (default_get_user_info_2(p->user_id, 0, &u, &ui) < 0 || !u) {
+      send_reply(p, -ULS_ERR_DB_ERROR);
+      err("%s -> database error", logbuf);
+      return;
+    }
+    if (passwd_check(&adminint, u->passwd, u->passwd_method) < 0) {
+      err("%s -> WRONG ADMIN PASSWORD", logbuf);
+      send_reply(p, -ULS_ERR_NO_PERMS);
+      return;
+    }
+    u = NULL; ui = NULL;
+  }
 
   if (data->new_len <= 0) {
     err("%s -> new password is empty", logbuf);

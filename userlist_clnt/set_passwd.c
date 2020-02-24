@@ -28,10 +28,11 @@ userlist_clnt_set_passwd(
 {
   struct userlist_pk_set_password *out;
   struct userlist_packet *in;
-  int old_len, new_len, r;
+  int old_len, new_len, admin_len, r;
   size_t out_size = 0, in_size = 0;
   unsigned char *pkt_old_ptr;
   unsigned char *pkt_new_ptr;
+  unsigned char *pkt_admin_ptr;
 
 #if !defined PYTHON
   ASSERT(clnt);
@@ -39,11 +40,15 @@ userlist_clnt_set_passwd(
   ASSERT(new_pwd);
 #endif
 
+  if (!admin_pwd) admin_pwd = "";
+
   old_len = strlen(old_pwd);
   new_len = strlen(new_pwd);
+  admin_len = strlen(admin_pwd);
   if (old_len > 255) return -ULS_ERR_INVALID_SIZE;
   if (new_len > 255) return -ULS_ERR_INVALID_SIZE;
-  out_size = sizeof(*out) + old_len + new_len;
+  if (admin_len > 255) return -ULS_ERR_INVALID_SIZE;
+  out_size = sizeof(*out) + old_len + new_len + admin_len;
   out = (struct userlist_pk_set_password *) alloca(out_size);
   if (!out) return -ULS_ERR_OUT_OF_MEM;
   memset(out, 0, out_size);
@@ -54,8 +59,10 @@ userlist_clnt_set_passwd(
   out->new_len = new_len;
   pkt_old_ptr = out->data;
   pkt_new_ptr = pkt_old_ptr + old_len + 1;
+  pkt_admin_ptr = pkt_new_ptr + new_len + 1;
   memcpy(pkt_old_ptr, old_pwd, old_len + 1);
   memcpy(pkt_new_ptr, new_pwd, new_len + 1);
+  memcpy(pkt_admin_ptr, admin_pwd, admin_len + 1);
   if ((r = userlist_clnt_send_packet(clnt, out_size, out)) < 0) return r;
   if ((r = userlist_clnt_read_and_notify(clnt, &in_size, (void*) &in)) < 0)
     return r;
