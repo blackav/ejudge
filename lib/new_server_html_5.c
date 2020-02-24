@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2462,7 +2462,7 @@ change_password(
     goto done;
   }
   r = userlist_clnt_set_passwd(ul_conn, ULS_PRIV_SET_REG_PASSWD,
-                               phr->user_id, phr->contest_id, p0, p1);
+                               phr->user_id, phr->contest_id, p0, p1, NULL);
   if (r < 0) {
     ns_error(log_f, NEW_SRV_ERR_PWD_UPDATE_FAILED, userlist_strerror(-r));
     goto done;

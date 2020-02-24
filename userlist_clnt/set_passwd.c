@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,8 @@ userlist_clnt_set_passwd(
         int user_id,
         int contest_id,
         const unsigned char *old_pwd,
-        const unsigned char *new_pwd)
+        const unsigned char *new_pwd,
+        const unsigned char *admin_pwd)
 {
   struct userlist_pk_set_password *out;
   struct userlist_packet *in;

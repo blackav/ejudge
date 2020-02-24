@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1386,6 +1386,7 @@ super_serve_op_USER_CHANGE_PASSWORD_ACTION(
   struct userlist_user *u = 0;
   opcap_t caps = 0;
   const unsigned char *s = 0;
+  unsigned char *admin_password = NULL;
   unsigned char *reg_password1 = 0;
   unsigned char *reg_password2 = 0;
 
@@ -1395,6 +1396,11 @@ super_serve_op_USER_CHANGE_PASSWORD_ACTION(
   if (contest_id != 0) {
     if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
   }
+
+  s = NULL;
+  if (hr_cgi_param(phr, "admin_password", &s) <= 0 || !s) FAIL(SSERV_ERR_PERM_DENIED);
+  admin_password = fix_string(s);
+  if (!s || !*s) FAIL(SSERV_ERR_PERM_DENIED);
 
   s = 0;
   if (hr_cgi_param(phr, "reg_password1", &s) <= 0 || !s) FAIL(SSERV_ERR_UNSPEC_PASSWD1);
@@ -1433,7 +1439,7 @@ super_serve_op_USER_CHANGE_PASSWORD_ACTION(
   r = ULS_PRIV_SET_REG_PASSWD_PLAIN;
   if (usesha1) r = ULS_PRIV_SET_REG_PASSWD_SHA1;
 
-  r = userlist_clnt_set_passwd(phr->userlist_clnt, r, other_user_id, 0, "", reg_password1);
+  r = userlist_clnt_set_passwd(phr->userlist_clnt, r, other_user_id, 0, "", reg_password1, admin_password);
   if (r < 0) FAIL(SSERV_ERR_DB_ERROR);
 
   if (next_op == SSERV_CMD_USER_DETAIL_PAGE) {
@@ -1447,6 +1453,7 @@ cleanup:
   xfree(xml_text); xml_text = 0;
   xfree(reg_password1); reg_password1 = 0;
   xfree(reg_password2); reg_password2 = 0;
+  xfree(admin_password); admin_password = NULL;
   return retval;
 }
 
@@ -1463,6 +1470,7 @@ super_serve_op_USER_CHANGE_CNTS_PASSWORD_ACTION(
   int useregpasswd = 0, settonull = 0, usesha1 = 0;
   unsigned char *cnts_password1 = 0;
   unsigned char *cnts_password2 = 0;
+  unsigned char *admin_password = NULL;
   const unsigned char *s = 0;
   opcap_t gcaps = 0, ccaps = 0, fcaps = 0;
   struct userlist_user *u = 0;
@@ -1481,6 +1489,11 @@ super_serve_op_USER_CHANGE_CNTS_PASSWORD_ACTION(
   if (settonull != 1) settonull = 0;
   hr_cgi_param_int_opt(phr, "usesha1", &usesha1, 0);
   if (usesha1 != 1) usesha1 = 0;
+
+  s = NULL;
+  if (hr_cgi_param(phr, "admin_password", &s) <= 0 || !s) FAIL(SSERV_ERR_PERM_DENIED);
+  if (!s || !*s) FAIL(SSERV_ERR_PERM_DENIED);
+  admin_password = fix_string(s);
 
   if (!useregpasswd && !settonull) {
     s = 0;
@@ -1532,7 +1545,7 @@ super_serve_op_USER_CHANGE_CNTS_PASSWORD_ACTION(
     r = ULS_PRIV_SET_CNTS_PASSWD_PLAIN;
     if (usesha1) r = ULS_PRIV_SET_CNTS_PASSWD_SHA1;
 
-    r = userlist_clnt_set_passwd(phr->userlist_clnt, r, other_user_id, contest_id, "", cnts_password1);
+    r = userlist_clnt_set_passwd(phr->userlist_clnt, r, other_user_id, contest_id, "", cnts_password1, admin_password);
   }
   if (r < 0) FAIL(SSERV_ERR_DB_ERROR);
 
@@ -1547,6 +1560,7 @@ cleanup:
   xfree(xml_text); xml_text = 0;
   xfree(cnts_password1); cnts_password1 = 0;
   xfree(cnts_password2); cnts_password2 = 0;
+  xfree(admin_password);
   return retval;
 }
 

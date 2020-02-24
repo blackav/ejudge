@@ -3,7 +3,7 @@
 #ifndef __USERLIST_CLNT_H__
 #define __USERLIST_CLNT_H__
 
-/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -177,7 +177,8 @@ userlist_clnt_set_passwd(struct userlist_clnt *clnt,
                          int user_id,
                          int contest_id,
                          const unsigned char *old_pwd,
-                         const unsigned char *new_pwd);
+                         const unsigned char *new_pwd,
+                         const unsigned char *admin_pwd);
 int
 userlist_clnt_get_contests(struct userlist_clnt *clnt,
                            int uid, unsigned char **p_info);
