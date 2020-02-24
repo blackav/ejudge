@@ -175,6 +175,9 @@ extern const unsigned char * const ss_reg_status_strs[];
         default:
             break;
         }
+        if ((reg->flags & ~USERLIST_UC_INCOMPLETE)) {
+            allowed = 0;
+        }
 %>
 <%
         if (!allowed) {
