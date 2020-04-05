@@ -33,30 +33,40 @@ static const char *progname;
 static __attribute__((unused)) const unsigned char config_ejudge_primary_user[]
 #if defined EJUDGE_PRIMARY_USER
 = EJUDGE_PRIMARY_USER
+#else
+= ""
 #endif
 ;
 
 static __attribute__((unused)) const unsigned char config_ejudge_exec_user[]
 #if defined EJUDGE_EXEC_USER
 = EJUDGE_EXEC_USER
+#else
+= ""
 #endif
 ;
 
 static __attribute__((unused)) const unsigned char config_ejudge_compile_user[]
 #if defined EJUDGE_COMPILE_USER
 = EJUDGE_COMPILE_USER
+#else
+= ""
 #endif
 ;
 
 static __attribute__((unused)) const unsigned char config_ejudge_prefix_dir[]
 #if defined EJUDGE_PREFIX_DIR
 = EJUDGE_PREFIX_DIR
+#else
+= ""
 #endif
 ;
 
 static __attribute__((unused)) const unsigned char config_ejudge_server_bin_path[]
 #if defined EJUDGE_SERVER_BIN_PATH
 = EJUDGE_SERVER_BIN_PATH
+#else
+= ""
 #endif
 ;
 
