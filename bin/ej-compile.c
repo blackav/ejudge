@@ -771,7 +771,7 @@ handle_packet(
       if (cur_status == RUN_CHECK_FAILED) {
         status = RUN_CHECK_FAILED;
       } else if (cur_status == RUN_COMPILE_ERR) {
-        if (tinf && tinf->compiler_must_fail > 0 && tinf->source_stub) {
+        if (tinf && (tinf->compiler_must_fail > 0 || tinf->allow_compile_error > 0) && tinf->source_stub) {
           unsigned char source_stub_path[PATH_MAX];
           snprintf(source_stub_path, sizeof(source_stub_path), "%s/%s%s%s", req->header_dir, tinf->source_stub, lang_name_part, lang->src_sfx);
           if (stat(source_stub_path, &stb) < 0) {

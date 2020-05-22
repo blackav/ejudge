@@ -2,7 +2,7 @@
 #ifndef __TESTINFO_H__
 #define __TESTINFO_H__
 
-/* Copyright (C) 2003-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -90,6 +90,8 @@ struct testinfo_struct
   int real_time_limit_ms;
 
   char *program_name;
+
+  int allow_compile_error;
 };
 typedef struct testinfo_struct testinfo_t;
 

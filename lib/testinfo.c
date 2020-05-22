@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -650,6 +650,16 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
         FAIL(TINF_E_INVALID_VALUE);
     }
     pt->compiler_must_fail = x;
+  } else if (!strcmp(name_buf, "allow_compile_error")) {
+    if (cmd.u < 1) {
+      x = 1;
+    } else {
+      if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
+      if (sscanf(cmd.v[0], "%d%n", &x, &n) != 1 || cmd.v[0][n]
+          || x < 0 || x > 1)
+        FAIL(TINF_E_INVALID_VALUE);
+    }
+    pt->allow_compile_error = x;
   } else if (!strcmp(name_buf, "disable_valgrind")) {
     if (cmd.u < 1) {
       x = 1;
