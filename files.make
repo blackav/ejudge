@@ -159,6 +159,7 @@ COMMON_CFILES=\
  lib/dwarf_parse.c\
  lib/ej_import_packet.c\
  lib/ejudge_cfg.c\
+ lib/ejudge_cfg_var.c\
  lib/ej_libzip.c\
  lib/ej_uuid.c\
  lib/errlog.c\

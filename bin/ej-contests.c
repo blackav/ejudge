@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -79,7 +79,7 @@ static struct server_framework_params params =
 
 static struct server_framework_state *state = 0;
 static unsigned char *ejudge_xml_path;
-struct ejudge_cfg *ejudge_config;
+//struct ejudge_cfg *ejudge_config;
 
 struct userlist_clnt *ul_conn;
 int ul_uid;

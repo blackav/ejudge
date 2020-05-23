@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -59,7 +59,7 @@ static unsigned char *super_run_dir = NULL;
 static unsigned char *run_server_id = NULL;
 
 static const unsigned char *program_name = 0;
-struct ejudge_cfg *ejudge_config = NULL;
+//struct ejudge_cfg *ejudge_config = NULL;
 static __attribute__((unused)) unsigned char super_run_server_path[PATH_MAX];
 static unsigned char super_run_path[PATH_MAX];
 static unsigned char super_run_spool_path[PATH_MAX];

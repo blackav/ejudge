@@ -599,9 +599,8 @@ contests_set_member_counts(
 #define CNTS_FIRST_IP_NC(a) ((struct contest_ip*) (a)->b.first_down)
 #define CNTS_NEXT_IP_NC(p)  ((struct contest_ip*) (p)->b.right)
 
-/* This is INTENTIONALLY not an `extern' variable */
 struct ejudge_cfg;
-struct ejudge_cfg *ejudge_config GCC_ATTRIB((common));
+extern struct ejudge_cfg *ejudge_config;
 
 int
 contests_guess_id(const char *path);

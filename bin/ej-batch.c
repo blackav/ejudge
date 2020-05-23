@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2010-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -85,8 +85,7 @@ static struct submit_block_state *global_sb_state = 0;
 static const unsigned char *program_name;
 static unsigned char *program_dir;
 
-/* this is a COMMON variable, so it is not initialized */
-struct ejudge_cfg *ejudge_config;
+//extern struct ejudge_cfg *ejudge_config;
 static unsigned char *t3_mediator_dir;
 static char *t3_var_dir;
 static char *spool_in_dir;

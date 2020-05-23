@@ -1584,9 +1584,8 @@ prepare_insert_variant_num(
 struct token_info *
 prepare_parse_tokens(FILE *log_f, const unsigned char *tokens);
 
-/* This is INTENTIONALLY not an `extern' variable */
 struct ejudge_cfg;
-struct ejudge_cfg *ejudge_config GCC_ATTRIB((common)) ;
+extern struct ejudge_cfg *ejudge_config;
 
 int
 lang_config_configure(
