@@ -10990,7 +10990,7 @@ html_problem_selection(serve_state_t cs,
         snprintf(penalty_str, sizeof(penalty_str), " [%d]", user_penalty);
     }
 
-    if (prob->variant_num > 0) {
+    if (prob->variant_num > 0 && prob->hide_variant <= 0) {
       if ((variant = find_variant(cs, phr->user_id, i, 0)) <= 0) continue;
       snprintf(problem_str, sizeof(problem_str),
                "%s-%d", prob->short_name, variant);
