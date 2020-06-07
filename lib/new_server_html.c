@@ -11162,6 +11162,7 @@ ns_unparse_statement(
   unsigned char b5[1024];
   unsigned char b6[1024];
   unsigned char b7[1024];
+  unsigned char b8[1024];
   struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
   //const unsigned char *vars[8] = { "self", "prob", "get", "getfile", "input_file", "output_file", "variant", 0 };
@@ -11184,6 +11185,7 @@ ns_unparse_statement(
   vars[curvar] = "input_file"; vals[curvar] = b5; ++curvar;
   vars[curvar] = "output_file"; vals[curvar] = b6; ++curvar;
   vars[curvar] = "variant"; vals[curvar] = b7; ++curvar;
+  vars[curvar] = "rawvariant"; vals[curvar] = b8; ++curvar;
   if (prob->statement_env) {
     for (int i = 0; prob->statement_env[i]; ++i) {
       const unsigned char *envvar = prob->statement_env[i];
@@ -11217,6 +11219,8 @@ ns_unparse_statement(
   if (prob->output_file) {
     snprintf(b6, sizeof(b6), "%s", prob->output_file);
   }
+  b8[0] = 0;
+  if (variant > 0) snprintf(b8, sizeof(b8), "%d", variant);
 
   if (bb && *bb && !cnts->exam_mode) fprintf(fout, "%s", bb);
 
