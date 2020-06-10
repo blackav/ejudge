@@ -4482,7 +4482,7 @@ ns_write_olympiads_user_runs(
     if (re.prob_id > 0 && re.prob_id <= cs->max_prob)
       prob = cs->probs[re.prob_id];
     if (prob) {
-      if (prob->variant_num <= 0) {
+      if (prob->variant_num <= 0 || prob->hide_variant > 0) {
         prob_name_ptr = prob->short_name;
       } else {
         variant = re.variant;
