@@ -123,6 +123,7 @@ COMMON_CFILES=\
  lib/avatar_plugin.c\
  lib/base32.c\
  lib/base64.c\
+ lib/base64u.c\
  lib/bitset.c\
  lib/bson_utils.c\
  lib/bson_utils_new.c\
