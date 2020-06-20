@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/errlog.h"
+#include "ejudge/base64.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -821,6 +822,23 @@ parse_spec_func(
       if (xml_parse_full_cookie(row[i], p_uq, p_uq + 1) < 0)
         goto invalid_format;
       break;
+    case 'U': { // base64u-encoded 256 bit
+      char *dst_ptr = XPDEREF(char, data, specs[i].offset);
+      if (!row[i] || !lengths[i]) {
+        memset(dst_ptr, 0, 32);
+      } else if (lengths[i] >= 43) {
+        // exact 256 bits or more
+        int err_flag = 0;
+        base64u_decode(row[i], 43, dst_ptr, &err_flag);
+        if (err_flag) goto invalid_format;
+      } else {
+        memset(dst_ptr, 0, 32);
+        int err_flag = 0;
+        base64u_decode(row[i], lengths[i], dst_ptr, &err_flag);
+        if (err_flag) goto invalid_format;
+      }
+      break;
+    }
     default:
       err("unhandled format %d", specs[i].format);
       abort();
