@@ -3,7 +3,7 @@
 #ifndef __USERLIST_H__
 #define __USERLIST_H__
 
-/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -632,6 +632,19 @@ struct userlist_list
 
   /* group members information */
   struct xml_tree *groupmembers_node;
+};
+
+struct userlist_api_key
+{
+  struct xml_tree b;
+
+  char token[32]; // 256-bit token key in binary form
+  int user_id;
+  int contest_id;
+  time_t create_time;
+  time_t expiry_time;
+  char *payload;
+  char *origin;
 };
 
 // unparse modes

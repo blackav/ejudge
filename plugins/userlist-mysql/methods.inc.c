@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -517,3 +517,19 @@ get_client_key_func(
         void *data,
         ej_cookie_t client_key,
         const struct userlist_cookie **p_cookie);
+static int
+new_api_key_func(
+        void *data,
+        const char *token,
+        int user_id,
+        int contest_id,
+        time_t create_time,
+        time_t expiry_time,
+        const char *payload,
+        const char *origin,
+        const struct userlist_api_key **p_api_key);
+static int
+get_api_key_func(
+        void *,
+        const char *token,
+        const struct userlist_api_key **);

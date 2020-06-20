@@ -169,6 +169,18 @@ CREATE TABLE %sgroupmembers
     FOREIGN KEY u(user_id) REFERENCES logins(user_id)
 );
 
+CREATE TABLE %sapikeys
+(
+    token VARCHAR(64) NOT NULL PRIMARY KEY,
+    user_id INT UNSIGNED NOT NULL,
+    contest_id INT UNSIGNED NOT NULL,
+    create_time DATETIME NOT NULL,
+    expiry_time DATETIME DEFAULT NULL,
+    payload VARCHAR(1024) DEFAULT NULL,
+    origin VARCHAR(128) DEFAULT NULL,
+    FOREIGN KEY u(user_id) REFERENCES logins(user_id)
+);
+
 ALTER TABLE %scntsregs ADD INDEX cntsregs_user_id_idx (user_id),
                        ADD INDEX cntsregs_contest_id_idx (contest_id);
 ALTER TABLE %susers    ADD INDEX users_user_id_idx (user_id),
@@ -179,4 +191,4 @@ ALTER TABLE %smembers  ADD INDEX members_user_id_idx (user_id),
 ALTER TABLE %sgroupmembers ADD INDEX groupmembers_group_id_idx (group_id),
                            ADD INDEX groupmembers_user_id_idx (user_id);
 
-INSERT INTO %sconfig VALUES ('version', '8');
+INSERT INTO %sconfig VALUES ('version', '9');
