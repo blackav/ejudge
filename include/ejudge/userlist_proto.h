@@ -125,6 +125,7 @@ enum
     ULS_LIST_STANDINGS_USERS_2,
     ULS_CHECK_USER_2,
     ULS_CREATE_COOKIE,
+    ULS_NEW_API_KEY,
 
     ULS_LAST_CMD
   };
@@ -147,6 +148,7 @@ enum
     ULS_TEXT_DATA_FAILURE,
     ULS_COUNT,
     ULS_BIN_DATA,
+    ULS_API_KEY_DATA,
   };
 
 /* various error codes */
@@ -464,6 +466,25 @@ struct userlist_pk_create_user_2
   int group_id;
   int register_existing_flag;
   unsigned char data[5];
+};
+
+struct userlist_pk_api_key
+{
+  char token[32];
+  ej_time64_t create_time;
+  ej_time64_t expiry_time;
+  int user_id;
+  int contest_id;
+  int payload_offset;
+  int origin_offset;
+};
+
+struct userlist_pk_api_key_data
+{
+  short request_id;
+  int api_key_count;
+  int string_pool_size;
+  struct userlist_pk_api_key api_keys[0];
 };
 
 /* server->client replies */

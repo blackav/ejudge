@@ -507,4 +507,14 @@ userlist_clnt_create_cookie(
         const struct userlist_cookie *in_c,
         struct userlist_cookie *out_c);
 
+struct userlist_api_key;
+int
+userlist_clnt_api_key_request(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int in_count,
+        const struct userlist_api_key *in_api_keys,
+        int *p_out_count,
+        struct userlist_api_key **p_out_api_keys);
+
 #endif /* __USERLIST_CLNT_H__ */
