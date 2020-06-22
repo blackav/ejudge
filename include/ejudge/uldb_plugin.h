@@ -302,6 +302,11 @@ struct uldb_plugin_iface
         void *,
         const char *token,
         const struct userlist_api_key **);
+  // get API keys for a user
+  int (*get_api_keys_for_user)(
+        void *,
+        int user_id,
+        const struct userlist_api_key ***);
 };
 
 /* default plugin: compiled into userlist-server */

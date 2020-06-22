@@ -248,6 +248,7 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   // create a new API key
   new_api_key_func,
   get_api_key_func,
+  get_api_keys_for_user_func,
 };
 
 // the size of the cookies pool, must be power of 2
@@ -6091,6 +6092,117 @@ get_api_key_func(
   return 1;
 
 fail:
+  state->mi->free_res(state->md);
+  return -1;
+}
+
+static int
+get_api_keys_for_user_func(
+        void *data,
+        int user_id,
+        const struct userlist_api_key ***p_api_keys)
+{
+  ASSERT(user_id > 0);
+
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  struct userlist_api_key *tmp_apks = NULL;
+  const struct userlist_api_key **api_keys = NULL;
+  int tmp_apks_size = 0;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "SELECT * FROM %sapikeys WHERE user_id = '%d' ;", state->md->table_prefix, user_id);
+  fclose(cmd_f); cmd_f = NULL;
+  if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
+  state->md->field_count = mysql_field_count(state->md->conn);
+  if (state->md->field_count != APIKEY_WIDTH)
+    db_error_field_count_fail(state->md, APIKEY_WIDTH);
+  if (!(state->md->res = mysql_store_result(state->md->conn)))
+    db_error_fail(state->md);
+  state->md->row_count = mysql_num_rows(state->md->res);
+  if (state->md->row_count < 0) db_error_fail(state->md);
+  if (!state->md->row_count) {
+    state->mi->free_res(state->md);
+    *p_api_keys = NULL;
+    return 0;
+  }
+
+  tmp_apks_size = state->md->row_count;
+  tmp_apks = xcalloc(state->md->row_count, sizeof(tmp_apks[0]));
+  for (int i = 0; i < state->md->row_count; ++i) {
+    if (!(state->md->row = mysql_fetch_row(state->md->res)))
+      db_error_no_data_fail(state->md);
+    state->md->lengths = mysql_fetch_lengths(state->md->res);
+    if (api_key_parse(state, &tmp_apks[i]) < 0) goto fail;
+  }
+
+  int new_count = 0;
+  for (int i = 0; i < tmp_apks_size; ++i) {
+    new_count += (api_key_cache_index_find(state, tmp_apks[i].token) <= 0);
+  }
+  if (tmp_apks_size > state->api_keys.size - 1) {
+    while (tmp_apks_size > state->api_keys.size - 1) {
+      api_key_extend(state);
+    }
+  }
+
+  api_keys = xcalloc(tmp_apks_size, sizeof(api_keys[0]));
+  int api_keys_last = 0;
+  // rearrange the existing items
+  for (int i = 0; i < tmp_apks_size; ++i) {
+    int cache_index = api_key_cache_index_find(state, tmp_apks[i].token);
+    if (cache_index <= 0) continue;
+    if (cache_index != state->api_keys.first_entry) {
+      api_key_cache_unlink(state, cache_index);
+      api_key_cache_link(state, cache_index, state->api_keys.first_entry);
+    }
+    struct api_key_cache_entry *e = &state->api_keys.entries[cache_index];
+    ASSERT(e->api_key.user_id == user_id);
+    struct userlist_api_key *tmp_e = &tmp_apks[i];
+    e->api_key.contest_id = tmp_e->contest_id;
+    e->api_key.create_time = tmp_e->create_time;
+    e->api_key.expiry_time = tmp_e->expiry_time;
+    e->api_key.all_contests = tmp_e->all_contests;
+    e->api_key.priv_level = tmp_e->priv_level;
+    xfree(e->api_key.payload); e->api_key.payload = tmp_e->payload;
+    xfree(e->api_key.origin); e->api_key.origin = tmp_e->origin;
+    memset(tmp_e, 0, sizeof(*tmp_e));
+    api_keys[api_keys_last++] = &e->api_key;
+  }
+
+  // add the new items
+  for (int i = 0; i < tmp_apks_size; ++i) {
+    struct userlist_api_key *tmp_e = &tmp_apks[i];
+    if (tmp_e->user_id <= 0) continue;
+
+    // new item
+    if (state->api_keys.key_index_count == state->api_keys.size - 1) {
+      int last_index = state->api_keys.last_entry;
+      api_key_cache_index_remove(state, last_index);
+      api_key_cache_unlink(state, last_index);
+      api_key_cache_free(state, last_index);
+    }
+    int new_index = api_key_cache_allocate(state);
+    struct api_key_cache_entry *e = &state->api_keys.entries[new_index];
+    e->api_key = *tmp_e;
+    memset(tmp_e, 0, sizeof(*tmp_e));
+    api_key_cache_link(state, new_index, state->api_keys.first_entry);
+    api_key_cache_index_insert(state, new_index);
+    api_keys[api_keys_last++] = &e->api_key;
+  }
+
+  xfree(tmp_apks); tmp_apks = NULL;
+  *p_api_keys = api_keys; api_keys = NULL;
+  state->mi->free_res(state->md);
+  return tmp_apks_size;
+
+fail:
+  for (int i = 0; i < tmp_apks_size; ++i) {
+    xfree(tmp_apks[i].payload);
+    xfree(tmp_apks[i].origin);
+  }
+  xfree(tmp_apks);
+  xfree(api_keys);
   state->mi->free_res(state->md);
   return -1;
 }
