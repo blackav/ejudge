@@ -10974,6 +10974,55 @@ cmd_get_api_key(
   xfree(out_pkt);
 }
 
+static void
+cmd_get_api_keys_for_user(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_api_key_data *data)
+{
+  if (data->api_key_count != 1) {
+    err("GET_API_KEYS_FOR_USER: -> invalid api_key_count %d", data->api_key_count);
+    send_reply(p, -ULS_ERR_PROTOCOL);
+    return;
+  }
+  if (!dflt_iface->get_api_keys_for_user) {
+    send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
+    return;
+  }
+
+  struct userlist_pk_api_key *in_apk = &data->api_keys[0];
+
+  unsigned char logbuf[1024];
+  snprintf(logbuf, sizeof(logbuf), "GET_API_KEYS_FOR_USER: %d", in_apk->user_id);
+
+  if (in_apk->user_id <= 0) {
+    err("%s -> invalid user_id", logbuf);
+    send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+
+  if (is_admin(p, logbuf) < 0) return;
+  if (is_db_capable(p, OPCAP_LIST_USERS, logbuf) < 0) return;
+
+  const struct userlist_api_key **res_apks = NULL;
+  int r = dflt_iface->get_api_keys_for_user(uldb_default->data, in_apk->user_id, &res_apks);
+  if (r < 0) {
+    err("%s -> api_key fetch failed", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
+
+  /*
+  struct userlist_pk_api_key_data *out_pkt = NULL;
+  int out_size = 0;
+  make_pk_api_key_data(1, res_apk, &out_pkt, &out_size);
+  out_pkt->request_id = ULS_API_KEY_DATA;
+  enqueue_reply_to_client(p, out_size, out_pkt);
+  info("%s -> OK", logbuf);
+  xfree(out_pkt);
+  */
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW] =          cmd_register_new,
@@ -11080,7 +11129,7 @@ static void (*cmd_table[])() =
   [ULS_CREATE_COOKIE] =         cmd_create_cookie,
   [ULS_CREATE_API_KEY] =        cmd_create_api_key,
   [ULS_GET_API_KEY] =           cmd_get_api_key,
-  [ULS_GET_API_KEYS] =          NULL,
+  [ULS_GET_API_KEYS_FOR_USER] = cmd_get_api_keys_for_user,
   [ULS_DELETE_API_KEYS] =       NULL,
 
   [ULS_LAST_CMD] = 0
@@ -11191,7 +11240,7 @@ static int (*check_table[])() =
   [ULS_CREATE_COOKIE] =         NULL,
   [ULS_CREATE_API_KEY] =        check_pk_api_key_data,
   [ULS_GET_API_KEY] =           check_pk_api_key_data,
-  [ULS_GET_API_KEYS] =          check_pk_api_key_data,
+  [ULS_GET_API_KEYS_FOR_USER] = check_pk_api_key_data,
   [ULS_DELETE_API_KEYS] =       check_pk_api_key_data,
 
   [ULS_LAST_CMD] = 0

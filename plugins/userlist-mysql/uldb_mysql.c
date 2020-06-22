@@ -248,6 +248,7 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   // create a new API key
   new_api_key_func,
   get_api_key_func,
+  get_api_keys_count_func,
   get_api_keys_for_user_func,
 };
 
@@ -6019,8 +6020,7 @@ new_api_key_func(
 
   xfree(cmd_t); cmd_t = 0; cmd_z = 0;
 
-  // select
-  return 0;
+  return get_api_key_func(data, in_api_key->token, p_api_key);
 
 fail:
   if (cmd_f) fclose(cmd_f);
@@ -6057,6 +6057,7 @@ get_api_key_func(
   fprintf(cmd_f, "SELECT * FROM %sapikeys WHERE token = '%s' ;", state->md->table_prefix, token_buf);
   fclose(cmd_f); cmd_f = NULL;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = NULL;
   state->md->field_count = mysql_field_count(state->md->conn);
   if (state->md->field_count != APIKEY_WIDTH)
     db_error_field_count_fail(state->md, APIKEY_WIDTH);
@@ -6092,6 +6093,36 @@ get_api_key_func(
   return 1;
 
 fail:
+  xfree(cmd_t);
+  state->mi->free_res(state->md);
+  return -1;
+}
+
+static int
+get_api_keys_count_func(
+        void *data,
+        int user_id)
+{
+  ASSERT(user_id > 0);
+
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_t, &cmd_z);
+  fprintf(cmd_f, "SELECT COUNT(*) FROM %sapikeys WHERE user_id = %d ;", state->md->table_prefix, user_id);
+  fclose(cmd_f); cmd_f = NULL;
+  if (state->mi->query_one_row(state->md, cmd_t, cmd_z, 1) < 0) goto fail;
+  xfree(cmd_t); cmd_t = NULL;
+  int count = 0;
+  if (!state->md->lengths[0])
+    db_error_inv_value_fail(state->md, "value");
+  if (state->mi->parse_int(state->md, state->md->row[0], &count) < 0 || count < 0)
+    db_error_inv_value_fail(state->md, "value");
+  state->mi->free_res(state->md);
+  return count;
+
+fail:
+  xfree(cmd_t);
   state->mi->free_res(state->md);
   return -1;
 }
@@ -6111,9 +6142,10 @@ get_api_keys_for_user_func(
   char *cmd_t = 0;
   size_t cmd_z = 0;
   FILE *cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "SELECT * FROM %sapikeys WHERE user_id = '%d' ;", state->md->table_prefix, user_id);
+  fprintf(cmd_f, "SELECT * FROM %sapikeys WHERE user_id = %d ;", state->md->table_prefix, user_id);
   fclose(cmd_f); cmd_f = NULL;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = NULL;
   state->md->field_count = mysql_field_count(state->md->conn);
   if (state->md->field_count != APIKEY_WIDTH)
     db_error_field_count_fail(state->md, APIKEY_WIDTH);
@@ -6203,6 +6235,7 @@ fail:
   }
   xfree(tmp_apks);
   xfree(api_keys);
+  xfree(cmd_t);
   state->mi->free_res(state->md);
   return -1;
 }

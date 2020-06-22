@@ -528,6 +528,10 @@ get_api_key_func(
         const char *token,
         const struct userlist_api_key **);
 static int
+get_api_keys_count_func(
+        void *,
+        int user_id);
+static int
 get_api_keys_for_user_func(
         void *,
         int user_id,
