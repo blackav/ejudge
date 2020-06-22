@@ -520,13 +520,7 @@ get_client_key_func(
 static int
 new_api_key_func(
         void *data,
-        const char *token,
-        int user_id,
-        int contest_id,
-        time_t create_time,
-        time_t expiry_time,
-        const char *payload,
-        const char *origin,
+        struct userlist_api_key *in_api_key,
         const struct userlist_api_key **p_api_key);
 static int
 get_api_key_func(

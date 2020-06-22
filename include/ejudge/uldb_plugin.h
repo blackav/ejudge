@@ -295,13 +295,7 @@ struct uldb_plugin_iface
   // create a new API key
   int (*new_api_key)(
         void *,
-        const char *token,
-        int user_id,
-        int contest_id,
-        time_t create_time,
-        time_t expiry_time,
-        const char *payload,
-        const char *origin,
+        struct userlist_api_key *,
         const struct userlist_api_key **);
   // get an existing API key
   int (*get_api_key)(

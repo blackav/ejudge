@@ -10750,6 +10750,226 @@ cmd_create_cookie(
        (long long) answer->expire);
 }
 
+static int
+check_pk_api_key_data(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_api_key_data *data)
+{
+  if (pkt_len < sizeof(struct userlist_pk_api_key_data)) {
+    CONN_BAD("packet length mismatch");
+    return -1;
+  }
+  if (!data->api_key_count) {
+    if (pkt_len != sizeof(struct userlist_pk_api_key_data)) {
+      CONN_BAD("packet length mismatch");
+      return -1;
+    }
+    if (data->string_pool_size) {
+      CONN_BAD("invalid string pool size");
+      return -1;
+    }
+    return 0;
+  }
+  if (data->api_key_count < 0 || data->api_key_count > 100) {
+    CONN_BAD("api_key_count value invalid");
+    return -1;
+  }
+  if (data->string_pool_size <= 0 || data->string_pool_size > 100000) {
+    CONN_BAD("string_pool_size value invalid");
+    return -1;
+  }
+
+  // more checks
+  /*
+struct userlist_pk_api_key
+{
+  char token[32];
+  ej_time64_t create_time;
+  ej_time64_t expiry_time;
+  int user_id;
+  int contest_id;
+  int payload_offset;
+  int origin_offset;
+};
+
+struct userlist_pk_api_key_data
+{
+  short request_id;
+  int api_key_count;
+  int string_pool_size;
+  struct userlist_pk_api_key api_keys[0];
+};
+   */
+
+  return 0;
+}
+
+static void
+make_pk_api_key_data(int in_count, const struct userlist_api_key *in_api_keys, struct userlist_pk_api_key_data **p_out_pkt, int *p_out_size)
+{
+  int string_pool_size = 1;
+  int out_size = sizeof(struct userlist_pk_api_key_data);
+
+  if (in_count > 0) {
+    for (int i = 0; i < in_count; ++i) {
+      const struct userlist_api_key *k = &in_api_keys[i];
+      if (k->payload) {
+        string_pool_size += strlen(k->payload) + 1;
+      }
+      if (k->origin) {
+        string_pool_size += strlen(k->origin) + 1;
+      }
+    }
+    out_size += sizeof(struct userlist_pk_api_key) * in_count;
+    out_size += string_pool_size;
+  }
+
+  void *out_data = malloc(out_size);
+  memset(out_data, 0, sizeof(out_size));
+  struct userlist_pk_api_key_data *out_pkt = out_data;
+  if (in_count > 0) {
+    char *out_pool = (char*) out_data + sizeof(struct userlist_pk_api_key) * in_count;
+    int out_offset = 1;
+    for (int i = 0; i < in_count; ++i) {
+      const struct userlist_api_key *in_k = &in_api_keys[i];
+      struct userlist_pk_api_key *out_k = &out_pkt->api_keys[i];
+      memcpy(out_k->token, in_k->token, sizeof(out_k->token));
+      out_k->create_time = in_k->create_time;
+      out_k->expiry_time = in_k->expiry_time;
+      out_k->user_id = in_k->user_id;
+      out_k->contest_id = in_k->contest_id;
+      if (in_k->payload) {
+        out_k->payload_offset = out_offset;
+        int len = strlen(in_k->payload);
+        memcpy(out_pool + out_offset, in_k->payload, len);
+        out_offset += len + 1;
+      }
+      if (in_k->origin) {
+        out_k->origin_offset = out_offset;
+        int len = strlen(in_k->origin);
+        memcpy(out_pool + out_offset, in_k->origin, len);
+        out_offset += len + 1;
+      }
+    }
+  }
+
+  out_pkt->api_key_count = in_count;
+  out_pkt->string_pool_size = string_pool_size;
+
+  *p_out_pkt = out_pkt;
+  *p_out_size = out_size;
+}
+
+static void
+cmd_create_api_key(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_api_key_data *data)
+{
+
+  if (data->api_key_count != 1) {
+    err("CREATE_API_KEY: -> invalid api_key_count %d", data->api_key_count);
+    send_reply(p, -ULS_ERR_PROTOCOL);
+    return;
+  }
+  if (!dflt_iface->new_api_key) {
+    send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
+    return;
+  }
+
+  struct userlist_pk_api_key *in_apk = &data->api_keys[0];
+  char *in_pool = (char*) data + data->api_key_count * sizeof(struct userlist_pk_api_key);
+
+  unsigned char logbuf[1024];
+  snprintf(logbuf, sizeof(logbuf), "CREATE_API_KEY: %d, %d", in_apk->user_id, in_apk->contest_id);
+
+  if (is_admin(p, logbuf) < 0) return;
+  if (is_db_capable(p, OPCAP_CREATE_USER, logbuf) < 0) return;
+
+  static const char zero_token[32] = {};
+  struct userlist_api_key apk;
+  memset(&apk, 0, sizeof(apk));
+  if (!memcmp(in_apk->token, zero_token, 32)) {
+    random_bytes(apk.token, 32);
+  } else {
+    memcpy(&apk.token, in_apk->token, 32);
+  }
+  apk.user_id = in_apk->user_id;
+  apk.contest_id = in_apk->contest_id;
+  apk.create_time = in_apk->create_time;
+  if (apk.create_time <= 0) {
+    apk.create_time = time(NULL);
+  }
+  apk.expiry_time = in_apk->expiry_time;
+  if (in_apk->payload_offset) {
+    apk.payload = in_pool + in_apk->payload_offset;
+  }
+  if (in_apk->origin_offset) {
+    apk.origin = in_pool + in_apk->origin_offset;
+  }
+
+  const struct userlist_api_key *res_apk = NULL;
+  int r = dflt_iface->new_api_key(uldb_default->data, &apk, &res_apk);
+  if (r < 0) {
+    err("%s -> api_key creation failed", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
+
+  struct userlist_pk_api_key_data *out_pkt = NULL;
+  int out_size = 0;
+  make_pk_api_key_data(1, res_apk, &out_pkt, &out_size);
+  out_pkt->request_id = ULS_API_KEY_DATA;
+  enqueue_reply_to_client(p, out_size, out_pkt);
+  info("%s -> OK", logbuf);
+  xfree(out_pkt);
+}
+
+static void
+cmd_get_api_key(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_api_key_data *data)
+{
+  if (data->api_key_count != 1) {
+    err("GET_API_KEY: -> invalid api_key_count %d", data->api_key_count);
+    send_reply(p, -ULS_ERR_PROTOCOL);
+    return;
+  }
+  if (!dflt_iface->get_api_key) {
+    send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
+    return;
+  }
+
+  struct userlist_pk_api_key *in_apk = &data->api_keys[0];
+
+  char token_buf[64];
+  int token_len = base64u_encode(in_apk->token, 32, token_buf);
+  token_buf[token_len] = 0;
+  unsigned char logbuf[1024];
+  snprintf(logbuf, sizeof(logbuf), "GET_API_KEY: %s", token_buf);
+
+  if (is_admin(p, logbuf) < 0) return;
+  if (is_db_capable(p, OPCAP_LIST_USERS, logbuf) < 0) return;
+
+  const struct userlist_api_key *res_apk = NULL;
+  int r = dflt_iface->get_api_key(uldb_default->data, in_apk->token, &res_apk);
+  if (r < 0) {
+    err("%s -> api_key fetch failed", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
+
+  struct userlist_pk_api_key_data *out_pkt = NULL;
+  int out_size = 0;
+  make_pk_api_key_data(1, res_apk, &out_pkt, &out_size);
+  out_pkt->request_id = ULS_API_KEY_DATA;
+  enqueue_reply_to_client(p, out_size, out_pkt);
+  info("%s -> OK", logbuf);
+  xfree(out_pkt);
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW] =          cmd_register_new,
@@ -10854,6 +11074,10 @@ static void (*cmd_table[])() =
   [ULS_LIST_STANDINGS_USERS_2] =cmd_list_standings_users_2,
   [ULS_CHECK_USER_2] =          cmd_check_user_2,
   [ULS_CREATE_COOKIE] =         cmd_create_cookie,
+  [ULS_CREATE_API_KEY] =        cmd_create_api_key,
+  [ULS_GET_API_KEY] =           cmd_get_api_key,
+  [ULS_GET_API_KEYS] =          NULL,
+  [ULS_DELETE_API_KEYS] =       NULL,
 
   [ULS_LAST_CMD] = 0
 };
@@ -10961,6 +11185,10 @@ static int (*check_table[])() =
   [ULS_LIST_STANDINGS_USERS_2] =check_pk_map_contest,
   [ULS_CHECK_USER] =            NULL,
   [ULS_CREATE_COOKIE] =         NULL,
+  [ULS_CREATE_API_KEY] =        check_pk_api_key_data,
+  [ULS_GET_API_KEY] =           check_pk_api_key_data,
+  [ULS_GET_API_KEYS] =          check_pk_api_key_data,
+  [ULS_DELETE_API_KEYS] =       check_pk_api_key_data,
 
   [ULS_LAST_CMD] = 0
 };

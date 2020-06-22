@@ -5970,28 +5970,22 @@ static const char zero_token[32] = {};
 static int
 new_api_key_func(
         void *data,
-        const char *token,
-        int user_id,
-        int contest_id,
-        time_t create_time,
-        time_t expiry_time,
-        const char *payload,
-        const char *origin,
+        struct userlist_api_key *in_api_key,
         const struct userlist_api_key **p_api_key)
 {
   struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
 
-  if (create_time <= 0) {
-    create_time = time(NULL);
+  if (in_api_key->create_time <= 0) {
+    in_api_key->create_time = time(NULL);
   }
 
   // disallow zero key
-  if (!token || !memcmp(token, zero_token, 32)) {
+  if (!in_api_key->token || !memcmp(in_api_key->token, zero_token, 32)) {
     return -1;
   }
 
   if (state->cache_queries) {
-    int index = api_key_cache_index_find(state, token);
+    int index = api_key_cache_index_find(state, in_api_key->token);
     if (index > 0) return -1;
   }
 
@@ -6006,15 +6000,15 @@ new_api_key_func(
 
   fprintf(cmd_f, "INSERT INTO %sapikeys VALUES (", state->md->table_prefix);
   char token_buf[64];
-  int token_len = base64u_encode(token, 32, token_buf);
+  int token_len = base64u_encode(in_api_key->token, 32, token_buf);
   token_buf[token_len] = 0;
   fprintf(cmd_f, "'%s'", token_buf);
-  fprintf(cmd_f, ",%d", user_id);
-  fprintf(cmd_f, ",%d", contest_id);
-  state->mi->write_timestamp(state->md, cmd_f, ",", create_time);
-  state->mi->write_timestamp(state->md, cmd_f, ",", expiry_time);
-  state->mi->write_escaped_string(state->md, cmd_f, ",", payload);
-  state->mi->write_escaped_string(state->md, cmd_f, ",", origin);
+  fprintf(cmd_f, ",%d", in_api_key->user_id);
+  fprintf(cmd_f, ",%d", in_api_key->contest_id);
+  state->mi->write_timestamp(state->md, cmd_f, ",", in_api_key->create_time);
+  state->mi->write_timestamp(state->md, cmd_f, ",", in_api_key->expiry_time);
+  state->mi->write_escaped_string(state->md, cmd_f, ",", in_api_key->payload);
+  state->mi->write_escaped_string(state->md, cmd_f, ",", in_api_key->origin);
   fprintf(cmd_f, " ) ;");
   close_memstream(cmd_f); cmd_f = 0;
 
