@@ -480,6 +480,8 @@ struct userlist_pk_api_key
   int contest_id;
   int payload_offset;
   int origin_offset;
+  int all_contests;
+  int priv_level;
 };
 
 struct userlist_pk_api_key_data

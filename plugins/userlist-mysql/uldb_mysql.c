@@ -630,7 +630,7 @@ check_func(void *data)
     version = 8;
   }
   if (version == 8) {
-    if (state->mi->simple_fquery(state->md, "CREATE TABLE %sapikeys(token VARCHAR(64) NOT NULL PRIMARY KEY, user_id INT UNSIGNED NOT NULL, contest_id INT UNSIGNED NOT NULL, create_time DATETIME NOT NULL, expiry_time DATETIME DEFAULT NULL, payload VARCHAR(1024) DEFAULT NULL, origin VARCHAR(128) DEFAULT NULL, FOREIGN KEY u(user_id) REFERENCES logins(user_id));", state->md->table_prefix) < 0)
+    if (state->mi->simple_fquery(state->md, "CREATE TABLE %sapikeys(token VARCHAR(64) NOT NULL PRIMARY KEY, user_id INT UNSIGNED NOT NULL, contest_id INT UNSIGNED NOT NULL, create_time DATETIME NOT NULL, expiry_time DATETIME DEFAULT NULL, payload VARCHAR(1024) DEFAULT NULL, origin VARCHAR(128) DEFAULT NULL, all_contests TINYINT NOT NULL DEFAULT 0, priv_level TINYINT NOT NULL DEFAULT 0, FOREIGN KEY u(user_id) REFERENCES logins(user_id));", state->md->table_prefix) < 0)
       return -1;
     if (state->mi->simple_fquery(state->md, "UPDATE %sconfig SET config_val = '9' WHERE config_key = 'version' ;", state->md->table_prefix) < 0)
       return -1;
@@ -6009,6 +6009,8 @@ new_api_key_func(
   state->mi->write_timestamp(state->md, cmd_f, ",", in_api_key->expiry_time);
   state->mi->write_escaped_string(state->md, cmd_f, ",", in_api_key->payload);
   state->mi->write_escaped_string(state->md, cmd_f, ",", in_api_key->origin);
+  fprintf(cmd_f, ",%d", in_api_key->all_contests);
+  fprintf(cmd_f, ",%d", in_api_key->priv_level);
   fprintf(cmd_f, " ) ;");
   close_memstream(cmd_f); cmd_f = 0;
 

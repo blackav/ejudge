@@ -57,6 +57,8 @@ userlist_clnt_api_key_request(
       out_k->expiry_time = in_k->expiry_time;
       out_k->user_id = in_k->user_id;
       out_k->contest_id = in_k->contest_id;
+      out_k->all_contests = in_k->all_contests;
+      out_k->priv_level = in_k->priv_level;
       if (in_k->payload) {
         out_k->payload_offset = out_offset;
         int len = strlen(in_k->payload);
@@ -140,6 +142,8 @@ userlist_clnt_api_key_request(
     out_k->expiry_time = in_k->expiry_time;
     out_k->user_id = in_k->user_id;
     out_k->contest_id = in_k->contest_id;
+    out_k->all_contests = in_k->all_contests;
+    out_k->priv_level = in_k->priv_level;
     if (in_k->payload_offset) {
       out_k->payload = xstrdup(in_pool + in_k->payload_offset);
     }

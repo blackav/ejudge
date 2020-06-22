@@ -332,7 +332,7 @@ static struct common_mysql_parse_spec usergroupmember_spec[] =
   { 1, 's', "rights", USERGROUPMEMBER_OFFSET(rights), 0 },
 };
 
-enum { APIKEY_WIDTH = 7 };
+enum { APIKEY_WIDTH = 9 };
 #define APIKEY_OFFSET(f) XOFFSET(struct userlist_api_key, f)
 
 static struct common_mysql_parse_spec apikey_spec[] =
@@ -351,4 +351,8 @@ static struct common_mysql_parse_spec apikey_spec[] =
   { 1, 's', "payload", APIKEY_OFFSET(payload), NULL },
   //[6] origin VARCHAR(128) DEFAULT NULL,
   { 1, 's', "origin", APIKEY_OFFSET(origin), NULL },
+  //[7] all_contests TINYINT NOT NULL DEFAULT 0,
+  { 0, 'd', "all_contests", APIKEY_OFFSET(all_contests), NULL },
+  //[8] priv_level TINYINT NOT NULL DEFAULT 0,
+  { 0, 'd', "priv_level", APIKEY_OFFSET(priv_level), NULL },
 };

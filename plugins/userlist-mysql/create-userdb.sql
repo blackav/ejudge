@@ -178,6 +178,8 @@ CREATE TABLE %sapikeys
     expiry_time DATETIME DEFAULT NULL,
     payload VARCHAR(1024) DEFAULT NULL,
     origin VARCHAR(128) DEFAULT NULL,
+    all_contests TINYINT NOT NULL DEFAULT 0,
+    priv_level TINYINT NOT NULL DEFAULT 0,
     FOREIGN KEY u(user_id) REFERENCES logins(user_id)
 );
 

@@ -645,6 +645,8 @@ struct userlist_api_key
   time_t expiry_time;
   char *payload;
   char *origin;
+  int all_contests;
+  int priv_level;
 };
 
 // unparse modes

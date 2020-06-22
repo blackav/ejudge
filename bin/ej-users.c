@@ -10839,6 +10839,8 @@ make_pk_api_key_data(int in_count, const struct userlist_api_key *in_api_keys, s
       out_k->expiry_time = in_k->expiry_time;
       out_k->user_id = in_k->user_id;
       out_k->contest_id = in_k->contest_id;
+      out_k->all_contests = in_k->all_contests;
+      out_k->priv_level = in_k->priv_level;
       if (in_k->payload) {
         out_k->payload_offset = out_offset;
         int len = strlen(in_k->payload);
@@ -10902,6 +10904,8 @@ cmd_create_api_key(
     apk.create_time = time(NULL);
   }
   apk.expiry_time = in_apk->expiry_time;
+  apk.all_contests = in_apk->all_contests;
+  apk.priv_level = in_apk->priv_level;
   if (in_apk->payload_offset) {
     apk.payload = in_pool + in_apk->payload_offset;
   }
