@@ -250,6 +250,7 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   get_api_key_func,
   get_api_keys_count_func,
   get_api_keys_for_user_func,
+  remove_api_key_func,
 };
 
 // the size of the cookies pool, must be power of 2
@@ -6238,4 +6239,30 @@ fail:
   xfree(cmd_t);
   state->mi->free_res(state->md);
   return -1;
+}
+
+static int
+remove_api_key_func(
+        void *data,
+        int user_id,
+        const char *token)
+{
+  ASSERT(user_id > 0);
+
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+
+  char token_buf[64];
+  int token_len = base64u_encode(token, 32, token_buf);
+  token_buf[token_len] = 0;
+  state->mi->simple_fquery(state->md, "DELETE FROM %sapikeys WHERE user_id = %d AND token = '%s' ;",
+                           state->md->table_prefix, user_id, token_buf);
+
+  int cache_index = api_key_cache_index_find(state, token);
+  if (cache_index > 0) {
+    api_key_cache_index_remove(state, cache_index);
+    api_key_cache_unlink(state, cache_index);
+    api_key_cache_free(state, cache_index);
+  }
+
+  return 0;
 }

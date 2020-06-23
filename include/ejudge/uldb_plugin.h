@@ -311,6 +311,11 @@ struct uldb_plugin_iface
         void *,
         int user_id,
         const struct userlist_api_key ***);
+  // remove API key
+  int (*remove_api_key)(
+        void *,
+        int user_id,
+        const char *token);
 };
 
 /* default plugin: compiled into userlist-server */

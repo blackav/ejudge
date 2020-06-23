@@ -536,3 +536,8 @@ get_api_keys_for_user_func(
         void *,
         int user_id,
         const struct userlist_api_key ***);
+static int
+remove_api_key_func(
+        void *,
+        int user_id,
+        const char *token);
