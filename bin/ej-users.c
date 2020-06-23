@@ -10806,14 +10806,14 @@ struct userlist_pk_api_key_data
 }
 
 static void
-make_pk_api_key_data(int in_count, const struct userlist_api_key *in_api_keys, struct userlist_pk_api_key_data **p_out_pkt, int *p_out_size)
+make_pk_api_key_data(int in_count, const struct userlist_api_key **in_api_keys, struct userlist_pk_api_key_data **p_out_pkt, int *p_out_size)
 {
   int string_pool_size = 1;
   int out_size = sizeof(struct userlist_pk_api_key_data);
 
   if (in_count > 0) {
     for (int i = 0; i < in_count; ++i) {
-      const struct userlist_api_key *k = &in_api_keys[i];
+      const struct userlist_api_key *k = in_api_keys[i];
       if (k->payload) {
         string_pool_size += strlen(k->payload) + 1;
       }
@@ -10832,7 +10832,7 @@ make_pk_api_key_data(int in_count, const struct userlist_api_key *in_api_keys, s
     char *out_pool = (char*) out_data + sizeof(struct userlist_pk_api_key) * in_count;
     int out_offset = 1;
     for (int i = 0; i < in_count; ++i) {
-      const struct userlist_api_key *in_k = &in_api_keys[i];
+      const struct userlist_api_key *in_k = in_api_keys[i];
       struct userlist_pk_api_key *out_k = &out_pkt->api_keys[i];
       memcpy(out_k->token, in_k->token, sizeof(out_k->token));
       out_k->create_time = in_k->create_time;
@@ -10923,7 +10923,7 @@ cmd_create_api_key(
 
   struct userlist_pk_api_key_data *out_pkt = NULL;
   int out_size = 0;
-  make_pk_api_key_data(1, res_apk, &out_pkt, &out_size);
+  make_pk_api_key_data(1, (const struct userlist_api_key *[1]) { res_apk }, &out_pkt, &out_size);
   out_pkt->request_id = ULS_API_KEY_DATA;
   enqueue_reply_to_client(p, out_size, out_pkt);
   info("%s -> OK", logbuf);
@@ -10967,7 +10967,7 @@ cmd_get_api_key(
 
   struct userlist_pk_api_key_data *out_pkt = NULL;
   int out_size = 0;
-  make_pk_api_key_data(1, res_apk, &out_pkt, &out_size);
+  make_pk_api_key_data(1, (const struct userlist_api_key *[1]) { res_apk }, &out_pkt, &out_size);
   out_pkt->request_id = ULS_API_KEY_DATA;
   enqueue_reply_to_client(p, out_size, out_pkt);
   info("%s -> OK", logbuf);
@@ -11012,15 +11012,14 @@ cmd_get_api_keys_for_user(
     return;
   }
 
-  /*
   struct userlist_pk_api_key_data *out_pkt = NULL;
   int out_size = 0;
-  make_pk_api_key_data(1, res_apk, &out_pkt, &out_size);
+  make_pk_api_key_data(r, res_apks, &out_pkt, &out_size);
   out_pkt->request_id = ULS_API_KEY_DATA;
   enqueue_reply_to_client(p, out_size, out_pkt);
   info("%s -> OK", logbuf);
   xfree(out_pkt);
-  */
+  xfree(res_apks);
 }
 
 static void (*cmd_table[])() =
