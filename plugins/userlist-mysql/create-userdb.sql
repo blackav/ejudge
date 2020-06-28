@@ -180,7 +180,7 @@ CREATE TABLE %sapikeys
     origin VARCHAR(128) DEFAULT NULL,
     all_contests TINYINT NOT NULL DEFAULT 0,
     priv_level TINYINT NOT NULL DEFAULT 0,
-    FOREIGN KEY u(user_id) REFERENCES logins(user_id)
+    FOREIGN KEY apikeys_user_id_fk(user_id) REFERENCES logins(user_id)
 );
 
 ALTER TABLE %scntsregs ADD INDEX cntsregs_user_id_idx (user_id),

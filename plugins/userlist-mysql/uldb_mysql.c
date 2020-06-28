@@ -633,7 +633,7 @@ check_func(void *data)
     version = 8;
   }
   if (version == 8) {
-    if (state->mi->simple_fquery(state->md, "CREATE TABLE %sapikeys(token VARCHAR(64) NOT NULL PRIMARY KEY, user_id INT UNSIGNED NOT NULL, contest_id INT UNSIGNED NOT NULL, create_time DATETIME NOT NULL, expiry_time DATETIME DEFAULT NULL, payload VARCHAR(1024) DEFAULT NULL, origin VARCHAR(128) DEFAULT NULL, all_contests TINYINT NOT NULL DEFAULT 0, priv_level TINYINT NOT NULL DEFAULT 0, FOREIGN KEY u(user_id) REFERENCES logins(user_id));", state->md->table_prefix) < 0)
+    if (state->mi->simple_fquery(state->md, "CREATE TABLE %sapikeys(token VARCHAR(64) NOT NULL PRIMARY KEY, user_id INT UNSIGNED NOT NULL, contest_id INT UNSIGNED NOT NULL, create_time DATETIME NOT NULL, expiry_time DATETIME DEFAULT NULL, payload VARCHAR(1024) DEFAULT NULL, origin VARCHAR(128) DEFAULT NULL, all_contests TINYINT NOT NULL DEFAULT 0, priv_level TINYINT NOT NULL DEFAULT 0, FOREIGN KEY apikeys_user_id_fk(user_id) REFERENCES logins(user_id));", state->md->table_prefix) < 0)
       return -1;
     if (state->mi->simple_fquery(state->md, "UPDATE %sconfig SET config_val = '9' WHERE config_key = 'version' ;", state->md->table_prefix) < 0)
       return -1;

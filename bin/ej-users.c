@@ -11022,6 +11022,50 @@ cmd_get_api_keys_for_user(
   xfree(res_apks);
 }
 
+static void
+cmd_delete_api_key(
+        struct client_state *p,
+        int pkt_len,
+        struct userlist_pk_api_key_data *data)
+{
+  if (data->api_key_count != 1) {
+    err("DELETE_API_KEY: -> invalid api_key_count %d", data->api_key_count);
+    send_reply(p, -ULS_ERR_PROTOCOL);
+    return;
+  }
+  if (!dflt_iface->get_api_keys_for_user) {
+    send_reply(p, -ULS_ERR_NOT_IMPLEMENTED);
+    return;
+  }
+
+  struct userlist_pk_api_key *in_apk = &data->api_keys[0];
+
+  char token_buf[64];
+  int token_len = base64u_encode(in_apk->token, 32, token_buf);
+  token_buf[token_len] = 0;
+  unsigned char logbuf[1024];
+  snprintf(logbuf, sizeof(logbuf), "DELETE_API_KEY: %d, %s", in_apk->user_id, token_buf);
+
+  if (in_apk->user_id <= 0) {
+    err("%s -> invalid user_id", logbuf);
+    send_reply(p, -ULS_ERR_BAD_UID);
+    return;
+  }
+
+  if (is_admin(p, logbuf) < 0) return;
+  if (is_db_capable(p, OPCAP_LIST_USERS, logbuf) < 0) return;
+
+  int r = dflt_iface->remove_api_key(uldb_default->data, in_apk->user_id, in_apk->token);
+  if (r < 0) {
+    err("%s -> failed", logbuf);
+    send_reply(p, -ULS_ERR_DB_ERROR);
+    return;
+  }
+
+  send_reply(p, ULS_OK);
+  info("%s -> OK", logbuf);
+}
+
 static void (*cmd_table[])() =
 {
   [ULS_REGISTER_NEW] =          cmd_register_new,
@@ -11129,7 +11173,7 @@ static void (*cmd_table[])() =
   [ULS_CREATE_API_KEY] =        cmd_create_api_key,
   [ULS_GET_API_KEY] =           cmd_get_api_key,
   [ULS_GET_API_KEYS_FOR_USER] = cmd_get_api_keys_for_user,
-  [ULS_DELETE_API_KEYS] =       NULL,
+  [ULS_DELETE_API_KEY] =        cmd_delete_api_key,
 
   [ULS_LAST_CMD] = 0
 };
@@ -11240,7 +11284,7 @@ static int (*check_table[])() =
   [ULS_CREATE_API_KEY] =        check_pk_api_key_data,
   [ULS_GET_API_KEY] =           check_pk_api_key_data,
   [ULS_GET_API_KEYS_FOR_USER] = check_pk_api_key_data,
-  [ULS_DELETE_API_KEYS] =       check_pk_api_key_data,
+  [ULS_DELETE_API_KEY] =        check_pk_api_key_data,
 
   [ULS_LAST_CMD] = 0
 };
@@ -11818,7 +11862,8 @@ arg_expected(const unsigned char *progname)
 void *
 forced_symbols[] =
 {
-  xml_err_elem_undefined_s
+  xml_err_elem_undefined_s,
+  base64u_decode,
 };
 
 int

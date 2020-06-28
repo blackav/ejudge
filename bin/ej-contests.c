@@ -33,6 +33,7 @@
 #include "ejudge/xml_utils.h"
 #include "ejudge/cJSON.h"
 #include "ejudge/misctext.h"
+#include "ejudge/base64.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -889,6 +890,8 @@ static void *forced_symbols[] __attribute__((unused,used)) =
 {
   &ej_bson_force_link_dummy,
   &ej_bson_new_force_link_dummy,
+  &base64u_encode,
+  &base64u_decode,
 };
 
 int
