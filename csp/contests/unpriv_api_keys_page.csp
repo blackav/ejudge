@@ -1,0 +1,45 @@
+<% // -*- mode: html -*-
+%><%@include "unpriv_includes.csp"
+%><%
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set getter_name = "csp_get_unpriv_api_keys_page"
+%><%@page csp_view_unpriv_api_keys_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+  unsigned char title[1024];
+  int summoned_count = 0;
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+  }
+
+  l10n_setlocale(phr->locale_id);
+  snprintf(title, sizeof(title), _("API keys"));
+%><%@include "unpriv_header.csp"
+%><%@include "unpriv_menu.csp"
+%><%@include "unpriv_status.csp"
+%>
+<div class="l14">
+<h2><s:v value="title" escape="false" /></h2>
+
+<h3><s:_>Create new API key</s:_></h3>
+
+<s:form>
+Duration: <s:select name="duration">
+  <option value="0">Indefinite</option>
+  <option value="3600">1h</option>
+  <option value="86400">1d</option>
+  <option value="604800">1w</option>
+  <option value="2592000">30d</option>
+  <option value="31536000">1y</option>
+</s:select>
+<s:submit ac="create-api-key" />
+</s:form>
+
+</div>
+<%@include "unpriv_footer.csp"
+%><%
+  l10n_resetlocale();
+cleanup:;
+  html_armor_free(&ab);
+%>

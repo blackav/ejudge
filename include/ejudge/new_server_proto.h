@@ -3,7 +3,7 @@
 #ifndef __NEW_SERVER_PROTO_H__
 #define __NEW_SERVER_PROTO_H__
 
-/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -355,6 +355,8 @@ enum
   NEW_SRV_ACTION_ENTER_CONTEST,
   NEW_SRV_ACTION_LOCK_FILTER,
   NEW_SRV_ACTION_PROBLEM_STATS_PAGE,
+  NEW_SRV_ACTION_API_KEYS_PAGE,
+  NEW_SRV_ACTION_CREATE_API_KEY,
 
   NEW_SRV_ACTION_LAST,
 };

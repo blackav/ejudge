@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-01-07 20:51+0300\n"
+"POT-Creation-Date: 2020-07-01 15:41+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Ukrainian <uk@li.org>\n"
@@ -259,6 +259,14 @@ msgid "<u>--- Stderr: size %lld ---</u>\n"
 msgstr ""
 
 msgid "ALL PREVIOUS SUBMITS WILL BE LOST!"
+msgstr ""
+
+#, c-format
+msgid "API key created"
+msgstr ""
+
+#, c-format
+msgid "API keys"
 msgstr ""
 
 msgid "Accepted for testing"
@@ -974,6 +982,9 @@ msgid "Create another account"
 msgstr ""
 
 msgid "Create contest!"
+msgstr ""
+
+msgid "Create new API key"
 msgstr ""
 
 msgid "Create user account"

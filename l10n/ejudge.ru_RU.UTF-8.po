@@ -1,13 +1,13 @@
 # -*- mode: po; coding: UTF-8 -*-
 # ejudge messages catalog
-# Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-01-07 20:51+0300\n"
-"PO-Revision-Date: 2018-09-15 01:16+0300\n"
+"POT-Creation-Date: 2020-07-01 15:41+0300\n"
+"PO-Revision-Date: 2020-07-01 15:48+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -302,6 +302,14 @@ msgstr "<u>--- Поток ошибок: размер %lld ---</u>\n"
 
 msgid "ALL PREVIOUS SUBMITS WILL BE LOST!"
 msgstr "ВСЕ СДЕЛАННЫЕ ПОСЫЛКИ БУДУТ ОБНУЛЕНЫ!"
+
+#, c-format
+msgid "API key created"
+msgstr "Ключ API создан"
+
+#, c-format
+msgid "API keys"
+msgstr "Ключи API"
 
 msgid "Accepted for testing"
 msgstr "Принято на проверку"
@@ -1030,6 +1038,9 @@ msgstr "Создать ещё одну учётную запись"
 
 msgid "Create contest!"
 msgstr "Создать турнир!"
+
+msgid "Create new API key"
+msgstr "Создать новый ключ API"
 
 msgid "Create user account"
 msgstr "Создать новую учётную запись"

@@ -228,3 +228,5 @@ function setOperationVisibility(oper, value)
 %>
 </table>
 </div>
+
+<p><s:a ac="api-keys-page">[API keys]</s:a></p>

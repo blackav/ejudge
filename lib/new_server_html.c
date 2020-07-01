@@ -12968,6 +12968,8 @@ static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_L
   [NEW_SRV_ACTION_FORGOT_PASSWORD_1] = "unpriv_recover_1_page",
   [NEW_SRV_ACTION_FORGOT_PASSWORD_2] = "unpriv_recover_2_page",
   [NEW_SRV_ACTION_FORGOT_PASSWORD_3] = "unpriv_recover_3_page",
+  [NEW_SRV_ACTION_API_KEYS_PAGE] = "unpriv_api_keys_page",
+  [NEW_SRV_ACTION_CREATE_API_KEY] = "unpriv_create_api_key",
 };
 
 static int external_unpriv_action_aliases[NEW_SRV_ACTION_LAST] =

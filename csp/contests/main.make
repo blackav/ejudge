@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2019 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2020 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -89,8 +89,10 @@ SOFILES = \
  csp_reg_error_simple_registered.so\
  csp_reg_error_unknown.so\
  csp_reg_error_userlist_server_down.so\
+ csp_unpriv_api_keys_page.so\
  csp_unpriv_clar_page.so\
  csp_unpriv_contests_page.so\
+ csp_unpriv_create_api_key.so\
  csp_unpriv_login_page.so\
  csp_unpriv_main_page.so\
  csp_unpriv_recover_1_page.so\
@@ -185,8 +187,10 @@ csp_priv_error_userlist_server_down.c : priv_error_userlist_server_down.csp priv
 
 UNPRIV_DEPS = unpriv_includes.csp unpriv_stdvars.csp unpriv_header.csp unpriv_simple_header.csp unpriv_menu.csp unpriv_status.csp unpriv_separator.csp unpriv_footer.csp
 
+csp_unpriv_api_keys_page.c : unpriv_api_keys_page.csp $(UNPRIV_DEPS)
 csp_unpriv_clar_page.c : unpriv_clar_page.csp $(UNPRIV_DEPS)
 csp_unpriv_contests_page.c : unpriv_contests_page.csp $(UNPRIV_DEPS)
+csp_unpriv_create_api_key.c : unpriv_create_api_key.csp $(UNPRIV_DEPS)
 csp_unpriv_login_page.c : unpriv_login_page.csp $(UNPRIV_DEPS)
 csp_unpriv_main_page.c : unpriv_main_page.csp unpriv_main_clars.csp unpriv_main_clar_submit.csp unpriv_main_info.csp unpriv_main_runs.csp unpriv_main_run_submit.csp unpriv_main_settings.csp unpriv_main_startstop.csp unpriv_main_statements.csp unpriv_main_summary.csp $(UNPRIV_DEPS)
 csp_unpriv_recover_1_page.c : unpriv_recover_1_page.csp $(UNPRIV_DEPS)
