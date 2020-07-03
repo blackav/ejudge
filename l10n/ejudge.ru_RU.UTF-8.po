@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-07-01 15:41+0300\n"
-"PO-Revision-Date: 2020-07-01 15:48+0300\n"
+"POT-Creation-Date: 2020-07-03 09:58+0300\n"
+"PO-Revision-Date: 2020-07-03 11:02+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -306,6 +306,10 @@ msgstr "ВСЕ СДЕЛАННЫЕ ПОСЫЛКИ БУДУТ ОБНУЛЕНЫ!"
 #, c-format
 msgid "API key created"
 msgstr "Ключ API создан"
+
+#, c-format
+msgid "API key creation failed"
+msgstr "Ошибка создания ключа API"
 
 #, c-format
 msgid "API keys"
@@ -2074,6 +2078,9 @@ msgstr "Неверный текст комментария к предупреж
 msgid "Invalid time specification"
 msgstr "Неверная спецификация времени"
 
+msgid "Invalid token"
+msgstr "Неверный токен"
+
 msgid "Invalid user role"
 msgstr "Неверная роль пользователя"
 
@@ -2198,6 +2205,9 @@ msgstr "Ссылка"
 
 msgid "Links"
 msgstr "Ссылки"
+
+msgid "List of API keys"
+msgstr "Список ключей API"
 
 msgid "List of registered participants"
 msgstr "Список зарегистрировавшихся участников"

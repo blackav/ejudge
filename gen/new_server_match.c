@@ -3254,6 +3254,33 @@ int ns_match_action(const unsigned char *str)
                                   return 0;
                                 }
                                 return 0;
+                              } else if (c < 'v') {
+                                if (c == 'p') {
+                                  c = str[9];
+                                  if (c == 'i') {
+                                    c = str[10];
+                                    if (c == '-') {
+                                      c = str[11];
+                                      if (c == 'k') {
+                                        c = str[12];
+                                        if (c == 'e') {
+                                          c = str[13];
+                                          if (c == 'y') {
+                                            c = str[14];
+                                            if (!c) return NEW_SRV_ACTION_DELETE_API_KEY;
+                                            return 0;
+                                          }
+                                          return 0;
+                                        }
+                                        return 0;
+                                      }
+                                      return 0;
+                                    }
+                                    return 0;
+                                  }
+                                  return 0;
+                                }
+                              } else {
                               }
                               return 0;
                             }
