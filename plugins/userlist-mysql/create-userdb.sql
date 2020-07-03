@@ -172,6 +172,7 @@ CREATE TABLE %sgroupmembers
 CREATE TABLE %sapikeys
 (
     token VARCHAR(64) NOT NULL PRIMARY KEY,
+    secret VARCHAR(64) NOT NULL UNIQUE KEY,
     user_id INT UNSIGNED NOT NULL,
     contest_id INT UNSIGNED NOT NULL,
     create_time DATETIME NOT NULL,

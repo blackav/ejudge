@@ -639,6 +639,7 @@ struct userlist_api_key
   struct xml_tree b;
 
   char token[32]; // 256-bit token key in binary form
+  char secret[32];
   int user_id;
   int contest_id;
   time_t create_time;
@@ -887,5 +888,8 @@ int
 userlist_user_count_contests(struct userlist_user *u);
 int
 userlist_user_count_cookies(struct userlist_user *u);
+
+void
+userlist_api_key_free(struct userlist_api_key *apk);
 
 #endif /* __USERLIST_H__ */

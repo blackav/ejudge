@@ -46,7 +46,8 @@ api_key_extend(struct uldb_mysql_state *state)
 
   if (!apk->size) {
     apk->size = API_KEY_POOL_SIZE;
-    apk->key_index = calloc(apk->size, sizeof(apk->key_index[0]));
+    apk->token_index = calloc(apk->size, sizeof(apk->token_index[0]));
+    apk->secret_index = calloc(apk->size, sizeof(apk->secret_index[0]));
     apk->entries = calloc(apk->size, sizeof(apk->entries[0]));
     // entry [0] is unused
     for (int i = 1; i < apk->size; ++i) {
@@ -62,7 +63,8 @@ api_key_extend(struct uldb_mysql_state *state)
     apk->last_free = apk->size - 1;
   } else {
     int new_size = apk->size * 2;
-    apk->key_index = realloc(apk->key_index, new_size * sizeof(apk->key_index[0]));
+    apk->token_index = realloc(apk->token_index, new_size * sizeof(apk->token_index[0]));
+    apk->secret_index = realloc(apk->secret_index, new_size * sizeof(apk->secret_index[0]));
     apk->entries = realloc(apk->entries, new_size * sizeof(apk->entries[0]));
     memset(apk->entries + apk->size, 0, (new_size - apk->size) * sizeof(apk->entries[0]));
     for (int i = apk->size; i < new_size; ++i) {
@@ -84,12 +86,31 @@ static int
 api_key_cache_index_find(struct uldb_mysql_state *state, const char *token)
 {
   struct api_key_cache *apk = &state->api_keys;
-  int low = 0, high = apk->key_index_count, mid = 0;
+  int low = 0, high = apk->token_index_count, mid = 0;
   while (low < high) {
     mid = (low + high) / 2;
-    int r = apikey_cmp(apk->entries[apk->key_index[mid]].api_key.token, token);
+    int r = apikey_cmp(apk->entries[apk->token_index[mid]].api_key.token, token);
     if (!r) {
-      return apk->key_index[mid];
+      return apk->token_index[mid];
+    } else if (r < 0) {
+      low = mid + 1;
+    } else {
+      high = mid;
+    }
+  }
+  return 0;
+}
+
+static __attribute__((unused)) int
+api_key_cache_secret_find(struct uldb_mysql_state *state, const char *secret)
+{
+  struct api_key_cache *apk = &state->api_keys;
+  int low = 0, high = apk->secret_index_count, mid = 0;
+  while (low < high) {
+    mid = (low + high) / 2;
+    int r = apikey_cmp(apk->entries[apk->secret_index[mid]].api_key.secret, secret);
+    if (!r) {
+      return apk->secret_index[mid];
     } else if (r < 0) {
       low = mid + 1;
     } else {
@@ -104,10 +125,10 @@ api_key_cache_index_insert(struct uldb_mysql_state *state, int index)
 {
   struct api_key_cache *apk = &state->api_keys;
   struct api_key_cache_entry *e = &apk->entries[index];
-  int low = 0, high = apk->key_index_count, mid = 0;
+  int low = 0, high = apk->token_index_count, mid = 0;
   while (low < high) {
     mid = (low + high) / 2;
-    int r = apikey_cmp(apk->entries[apk->key_index[mid]].api_key.token, e->api_key.token);
+    int r = apikey_cmp(apk->entries[apk->token_index[mid]].api_key.token, e->api_key.token);
     if (!r) {
       return 0;
     } else if (r < 0) {
@@ -116,9 +137,32 @@ api_key_cache_index_insert(struct uldb_mysql_state *state, int index)
       high = mid;
     }
   }
-  memmove(&apk->key_index[low + 1], &apk->key_index[low], (apk->key_index_count - low) * sizeof(apk->key_index[0]));
-  apk->key_index[low] = index;
-  ++apk->key_index_count;
+  memmove(&apk->token_index[low + 1], &apk->token_index[low], (apk->token_index_count - low) * sizeof(apk->token_index[0]));
+  apk->token_index[low] = index;
+  ++apk->token_index_count;
+  return 1;
+}
+
+static __attribute__((unused)) int
+api_key_cache_secret_insert(struct uldb_mysql_state *state, int index)
+{
+  struct api_key_cache *apk = &state->api_keys;
+  struct api_key_cache_entry *e = &apk->entries[index];
+  int low = 0, high = apk->secret_index_count, mid = 0;
+  while (low < high) {
+    mid = (low + high) / 2;
+    int r = apikey_cmp(apk->entries[apk->secret_index[mid]].api_key.secret, e->api_key.secret);
+    if (!r) {
+      return 0;
+    } else if (r < 0) {
+      low = mid + 1;
+    } else {
+      high = mid;
+    }
+  }
+  memmove(&apk->secret_index[low + 1], &apk->secret_index[low], (apk->secret_index_count - low) * sizeof(apk->secret_index[0]));
+  apk->secret_index[low] = index;
+  ++apk->secret_index_count;
   return 1;
 }
 
@@ -127,13 +171,35 @@ api_key_cache_index_remove(struct uldb_mysql_state *state, int index)
 {
   struct api_key_cache *apk = &state->api_keys;
   struct api_key_cache_entry *e = &apk->entries[index];
-  int low = 0, high = apk->key_index_count, mid = 0;
+  int low = 0, high = apk->token_index_count, mid = 0;
   while (low < high) {
     mid = (low + high) / 2;
-    int r = apikey_cmp(apk->entries[apk->key_index[mid]].api_key.token, e->api_key.token);
+    int r = apikey_cmp(apk->entries[apk->token_index[mid]].api_key.token, e->api_key.token);
     if (!r) {
-      memmove(&apk->key_index[mid], &apk->key_index[mid + 1], (apk->key_index_count - mid - 1) * sizeof(apk->key_index[0]));
-      --apk->key_index_count;
+      memmove(&apk->token_index[mid], &apk->token_index[mid + 1], (apk->token_index_count - mid - 1) * sizeof(apk->token_index[0]));
+      --apk->token_index_count;
+      return 1;
+    } else if (r < 0) {
+      low = mid + 1;
+    } else {
+      high = mid;
+    }
+  }
+  return 0;
+}
+
+static __attribute__((unused)) int
+api_key_cache_secret_remove(struct uldb_mysql_state *state, int index)
+{
+  struct api_key_cache *apk = &state->api_keys;
+  struct api_key_cache_entry *e = &apk->entries[index];
+  int low = 0, high = apk->secret_index_count, mid = 0;
+  while (low < high) {
+    mid = (low + high) / 2;
+    int r = apikey_cmp(apk->entries[apk->secret_index[mid]].api_key.secret, e->api_key.secret);
+    if (!r) {
+      memmove(&apk->secret_index[mid], &apk->secret_index[mid + 1], (apk->secret_index_count - mid - 1) * sizeof(apk->secret_index[0]));
+      --apk->secret_index_count;
       return 1;
     } else if (r < 0) {
       low = mid + 1;
@@ -225,15 +291,15 @@ api_key_cache_allocate(struct uldb_mysql_state *state)
   }
   assert(apk->last_free);
 
-  int index = apk->last_free;
+  int index = apk->first_free;
   struct api_key_cache_entry *e = &apk->entries[index];
   if (e->next_entry) {
     struct api_key_cache_entry *ne = &apk->entries[e->next_entry];
     ne->prev_entry = 0;
   } else {
-    apk->last_entry = 0;
+    apk->last_free = 0;
   }
-  apk->first_entry = e->next_entry;
+  apk->first_free = e->next_entry;
 
   e->prev_entry = 0;
   e->next_entry = 0;

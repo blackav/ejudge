@@ -302,6 +302,11 @@ struct uldb_plugin_iface
         void *,
         const char *token,
         const struct userlist_api_key **);
+  // get an existing API key by secret part
+  int (*get_api_key_secret)(
+        void *,
+        const char *secret,
+        const struct userlist_api_key **);
   // get the count of the user API keys
   int (*get_api_keys_count)(
         void *,

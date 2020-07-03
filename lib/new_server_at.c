@@ -313,4 +313,5 @@ const unsigned char * const ns_symbolic_action_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_PROBLEM_STATS_PAGE] = "problem-stats-page",
   [NEW_SRV_ACTION_API_KEYS_PAGE] = "api-keys-page",
   [NEW_SRV_ACTION_CREATE_API_KEY] = "create-api-key",
+  [NEW_SRV_ACTION_DELETE_API_KEY] = "delete-api-key",
 };

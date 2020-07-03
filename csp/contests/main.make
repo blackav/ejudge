@@ -93,6 +93,7 @@ SOFILES = \
  csp_unpriv_clar_page.so\
  csp_unpriv_contests_page.so\
  csp_unpriv_create_api_key.so\
+ csp_unpriv_delete_api_key.so\
  csp_unpriv_login_page.so\
  csp_unpriv_main_page.so\
  csp_unpriv_recover_1_page.so\
@@ -191,6 +192,7 @@ csp_unpriv_api_keys_page.c : unpriv_api_keys_page.csp $(UNPRIV_DEPS)
 csp_unpriv_clar_page.c : unpriv_clar_page.csp $(UNPRIV_DEPS)
 csp_unpriv_contests_page.c : unpriv_contests_page.csp $(UNPRIV_DEPS)
 csp_unpriv_create_api_key.c : unpriv_create_api_key.csp $(UNPRIV_DEPS)
+csp_unpriv_delete_api_key.c : unpriv_delete_api_key.csp $(UNPRIV_DEPS)
 csp_unpriv_login_page.c : unpriv_login_page.csp $(UNPRIV_DEPS)
 csp_unpriv_main_page.c : unpriv_main_page.csp unpriv_main_clars.csp unpriv_main_clar_submit.csp unpriv_main_info.csp unpriv_main_runs.csp unpriv_main_run_submit.csp unpriv_main_settings.csp unpriv_main_startstop.csp unpriv_main_statements.csp unpriv_main_summary.csp $(UNPRIV_DEPS)
 csp_unpriv_recover_1_page.c : unpriv_recover_1_page.csp $(UNPRIV_DEPS)

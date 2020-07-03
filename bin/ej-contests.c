@@ -34,6 +34,7 @@
 #include "ejudge/cJSON.h"
 #include "ejudge/misctext.h"
 #include "ejudge/base64.h"
+#include "ejudge/userlist_clnt.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -892,6 +893,7 @@ static void *forced_symbols[] __attribute__((unused,used)) =
   &ej_bson_new_force_link_dummy,
   &base64u_encode,
   &base64u_decode,
+  &userlist_clnt_api_key_request,
 };
 
 int

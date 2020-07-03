@@ -332,27 +332,29 @@ static struct common_mysql_parse_spec usergroupmember_spec[] =
   { 1, 's', "rights", USERGROUPMEMBER_OFFSET(rights), 0 },
 };
 
-enum { APIKEY_WIDTH = 9 };
+enum { APIKEY_WIDTH = 10 };
 #define APIKEY_OFFSET(f) XOFFSET(struct userlist_api_key, f)
 
 static struct common_mysql_parse_spec apikey_spec[] =
 {
   //[0] token VARCHAR(64) NOT NULL PRIMARY KEY,
   { 0, 'U', "token", APIKEY_OFFSET(token), NULL },
-  //[1] user_id INT NOT NULL,
+  //[1] secret VARCHAR(64) NOT NULL PRIMARY KEY,
+  { 0, 'U', "secret", APIKEY_OFFSET(secret), NULL },
+  //[2] user_id INT NOT NULL,
   { 0, 'd', "user_id", APIKEY_OFFSET(user_id), NULL },
-  //[2] contest_id INT UNSIGNED NOT NULL,
+  //[3] contest_id INT UNSIGNED NOT NULL,
   { 0, 'd', "contest_id", APIKEY_OFFSET(contest_id), NULL },
-  //[3] create_time DATETIME NOT NULL,
+  //[4] create_time DATETIME NOT NULL,
   { 0, 't', "create_time", APIKEY_OFFSET(create_time), NULL },
-  //[4] expiry_time DATETIME DEFAULT NULL,
+  //[5] expiry_time DATETIME DEFAULT NULL,
   { 1, 't', "expiry_time", APIKEY_OFFSET(expiry_time), NULL },
-  //[5] payload VARCHAR(1024) DEFAULT NULL,
+  //[6] payload VARCHAR(1024) DEFAULT NULL,
   { 1, 's', "payload", APIKEY_OFFSET(payload), NULL },
-  //[6] origin VARCHAR(128) DEFAULT NULL,
+  //[7] origin VARCHAR(128) DEFAULT NULL,
   { 1, 's', "origin", APIKEY_OFFSET(origin), NULL },
-  //[7] all_contests TINYINT NOT NULL DEFAULT 0,
+  //[8] all_contests TINYINT NOT NULL DEFAULT 0,
   { 0, 'd', "all_contests", APIKEY_OFFSET(all_contests), NULL },
-  //[8] priv_level TINYINT NOT NULL DEFAULT 0,
+  //[9] priv_level TINYINT NOT NULL DEFAULT 0,
   { 0, 'd', "priv_level", APIKEY_OFFSET(priv_level), NULL },
 };

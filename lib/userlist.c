@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2375,4 +2375,13 @@ userlist_user_count_cookies(struct userlist_user *u)
   if (!u->cookies) return 0;
   for (cookie = FIRST_COOKIE(u); cookie; cookie = NEXT_COOKIE(cookie), tot++);
   return tot;
+}
+
+void
+userlist_api_key_free(struct userlist_api_key *apk)
+{
+  if (apk) {
+    xfree(apk->origin);
+    xfree(apk->payload);
+  }
 }

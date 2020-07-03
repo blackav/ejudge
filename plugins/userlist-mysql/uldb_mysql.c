@@ -248,6 +248,7 @@ struct uldb_plugin_iface plugin_uldb_mysql =
   // create a new API key
   new_api_key_func,
   get_api_key_func,
+  get_api_key_secret_func,
   get_api_keys_count_func,
   get_api_keys_for_user_func,
   remove_api_key_func,
@@ -344,10 +345,12 @@ struct api_key_cache_entry
 struct api_key_cache
 {
   struct api_key_cache_entry *entries;
-  int *key_index;
+  int *token_index;
+  int *secret_index;
 
   int size;
-  int key_index_count;
+  int token_index_count;
+  int secret_index_count;
   int first_entry;
   int last_entry;
   int first_free;
@@ -633,7 +636,7 @@ check_func(void *data)
     version = 8;
   }
   if (version == 8) {
-    if (state->mi->simple_fquery(state->md, "CREATE TABLE %sapikeys(token VARCHAR(64) NOT NULL PRIMARY KEY, user_id INT UNSIGNED NOT NULL, contest_id INT UNSIGNED NOT NULL, create_time DATETIME NOT NULL, expiry_time DATETIME DEFAULT NULL, payload VARCHAR(1024) DEFAULT NULL, origin VARCHAR(128) DEFAULT NULL, all_contests TINYINT NOT NULL DEFAULT 0, priv_level TINYINT NOT NULL DEFAULT 0, FOREIGN KEY apikeys_user_id_fk(user_id) REFERENCES logins(user_id));", state->md->table_prefix) < 0)
+    if (state->mi->simple_fquery(state->md, "CREATE TABLE %sapikeys(token VARCHAR(64) NOT NULL PRIMARY KEY, secret VARCHAR(64) NOT NULL UNIQUE KEY, user_id INT UNSIGNED NOT NULL, contest_id INT UNSIGNED NOT NULL, create_time DATETIME NOT NULL, expiry_time DATETIME DEFAULT NULL, payload VARCHAR(1024) DEFAULT NULL, origin VARCHAR(128) DEFAULT NULL, all_contests TINYINT NOT NULL DEFAULT 0, priv_level TINYINT NOT NULL DEFAULT 0, FOREIGN KEY apikeys_user_id_fk(user_id) REFERENCES logins(user_id));", state->md->table_prefix) < 0)
       return -1;
     if (state->mi->simple_fquery(state->md, "UPDATE %sconfig SET config_val = '9' WHERE config_key = 'version' ;", state->md->table_prefix) < 0)
       return -1;
@@ -5983,13 +5986,17 @@ new_api_key_func(
   }
 
   // disallow zero key
-  if (!in_api_key->token || !memcmp(in_api_key->token, zero_token, 32)) {
+  if (!memcmp(in_api_key->token, zero_token, 32)) {
+    return -1;
+  }
+  if (!memcmp(in_api_key->secret, zero_token, 32)) {
     return -1;
   }
 
   if (state->cache_queries) {
     int index = api_key_cache_index_find(state, in_api_key->token);
     if (index > 0) return -1;
+    if (api_key_cache_secret_find(state, in_api_key->secret) > 0) return -1;
   }
 
   char *cmd_t = 0;
@@ -6006,6 +6013,9 @@ new_api_key_func(
   int token_len = base64u_encode(in_api_key->token, 32, token_buf);
   token_buf[token_len] = 0;
   fprintf(cmd_f, "'%s'", token_buf);
+  token_len = base64u_encode(in_api_key->secret, 32, token_buf);
+  token_buf[token_len] = 0;
+  fprintf(cmd_f, ",'%s'", token_buf);
   fprintf(cmd_f, ",%d", in_api_key->user_id);
   fprintf(cmd_f, ",%d", in_api_key->contest_id);
   state->mi->write_timestamp(state->md, cmd_f, ",", in_api_key->create_time);
@@ -6076,9 +6086,10 @@ get_api_key_func(
   state->md->lengths = mysql_fetch_lengths(state->md->res);
   if (api_key_parse(state, &tmp_apk) < 0) goto fail;
 
-  if (state->api_keys.key_index_count >= API_KEY_POOL_SIZE - 1) {
+  if (state->api_keys.token_index_count >= API_KEY_POOL_SIZE - 1) {
     int last_index = state->api_keys.last_entry;
     api_key_cache_index_remove(state, last_index);
+    api_key_cache_secret_remove(state, last_index);
     api_key_cache_unlink(state, last_index);
     api_key_cache_free(state, last_index);
   }
@@ -6089,6 +6100,81 @@ get_api_key_func(
   memset(&tmp_apk, 0, sizeof(tmp_apk));
   api_key_cache_link(state, new_index, state->api_keys.first_entry);
   api_key_cache_index_insert(state, new_index);
+  api_key_cache_secret_insert(state, new_index);
+  *p_api_key = &e->api_key;
+
+  state->mi->free_res(state->md);
+  return 1;
+
+fail:
+  xfree(cmd_t);
+  state->mi->free_res(state->md);
+  return -1;
+}
+
+static int
+get_api_key_secret_func(
+        void *data,
+        const char *secret,
+        const struct userlist_api_key **p_api_key)
+{
+  struct uldb_mysql_state *state = (struct uldb_mysql_state*) data;
+  char *cmd_t = 0;
+  size_t cmd_z = 0;
+  FILE *cmd_f = open_memstream(&cmd_t, &cmd_z);
+  char token_buf[64];
+  int token_len = base64u_encode(secret, 32, token_buf);
+  struct userlist_api_key tmp_apk;
+
+  int cache_index = api_key_cache_secret_find(state, secret);
+  if (cache_index > 0) {
+    if (cache_index != state->api_keys.first_entry) {
+      api_key_cache_unlink(state, cache_index);
+      api_key_cache_link(state, cache_index, state->api_keys.first_entry);
+    }
+    *p_api_key = &state->api_keys.entries[cache_index].api_key;
+    return 1;
+  }
+
+  memset(&tmp_apk, 0, sizeof(tmp_apk));
+  token_buf[token_len] = 0;
+  fprintf(cmd_f, "SELECT * FROM %sapikeys WHERE secret = '%s' ;", state->md->table_prefix, token_buf);
+  fclose(cmd_f); cmd_f = NULL;
+  if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
+  xfree(cmd_t); cmd_t = NULL;
+  state->md->field_count = mysql_field_count(state->md->conn);
+  if (state->md->field_count != APIKEY_WIDTH)
+    db_error_field_count_fail(state->md, APIKEY_WIDTH);
+  if (!(state->md->res = mysql_store_result(state->md->conn)))
+    db_error_fail(state->md);
+  state->md->row_count = mysql_num_rows(state->md->res);
+  if (state->md->row_count < 0) db_error_fail(state->md);
+  if (!state->md->row_count) {
+    state->mi->free_res(state->md);
+    return 0;
+  }
+  if (state->md->row_count > 1) goto fail;
+  if (!(state->md->row = mysql_fetch_row(state->md->res)))
+    db_error_no_data_fail(state->md);
+  state->md->lengths = mysql_fetch_lengths(state->md->res);
+  if (api_key_parse(state, &tmp_apk) < 0) goto fail;
+
+  if (state->api_keys.secret_index_count >= API_KEY_POOL_SIZE - 1) {
+    int last_index = state->api_keys.last_entry;
+    api_key_cache_index_remove(state, last_index);
+    api_key_cache_secret_remove(state, last_index);
+    api_key_cache_unlink(state, last_index);
+    api_key_cache_free(state, last_index);
+  }
+
+  int new_index = api_key_cache_allocate(state);
+  struct api_key_cache_entry *e = &state->api_keys.entries[new_index];
+  e->api_key = tmp_apk;
+  memset(&tmp_apk, 0, sizeof(tmp_apk));
+  api_key_cache_link(state, new_index, state->api_keys.first_entry);
+  api_key_cache_index_insert(state, new_index);
+  api_key_cache_secret_insert(state, new_index);
+  *p_api_key = &e->api_key;
 
   state->mi->free_res(state->md);
   return 1;
@@ -6143,7 +6229,7 @@ get_api_keys_for_user_func(
   char *cmd_t = 0;
   size_t cmd_z = 0;
   FILE *cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "SELECT * FROM %sapikeys WHERE user_id = %d ;", state->md->table_prefix, user_id);
+  fprintf(cmd_f, "SELECT * FROM %sapikeys WHERE user_id = %d ORDER BY create_time ;", state->md->table_prefix, user_id);
   fclose(cmd_f); cmd_f = NULL;
   if (state->mi->simple_query(state->md, cmd_t, cmd_z) < 0) goto fail;
   xfree(cmd_t); cmd_t = NULL;
@@ -6209,9 +6295,10 @@ get_api_keys_for_user_func(
     if (tmp_e->user_id <= 0) continue;
 
     // new item
-    if (state->api_keys.key_index_count == state->api_keys.size - 1) {
+    if (state->api_keys.token_index_count == state->api_keys.size - 1) {
       int last_index = state->api_keys.last_entry;
       api_key_cache_index_remove(state, last_index);
+      api_key_cache_secret_remove(state, last_index);
       api_key_cache_unlink(state, last_index);
       api_key_cache_free(state, last_index);
     }
@@ -6221,6 +6308,7 @@ get_api_keys_for_user_func(
     memset(tmp_e, 0, sizeof(*tmp_e));
     api_key_cache_link(state, new_index, state->api_keys.first_entry);
     api_key_cache_index_insert(state, new_index);
+    api_key_cache_secret_insert(state, new_index);
     api_keys[api_keys_last++] = &e->api_key;
   }
 
@@ -6260,6 +6348,7 @@ remove_api_key_func(
   int cache_index = api_key_cache_index_find(state, token);
   if (cache_index > 0) {
     api_key_cache_index_remove(state, cache_index);
+    api_key_cache_secret_remove(state, cache_index);
     api_key_cache_unlink(state, cache_index);
     api_key_cache_free(state, cache_index);
   }

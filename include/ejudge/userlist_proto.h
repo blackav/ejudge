@@ -194,6 +194,7 @@ enum
     ULS_ERR_SIMPLE_REGISTERED,
     ULS_ERR_GROUP_NAME_USED,
     ULS_ERR_BAD_GROUP_ID,
+    ULS_ERR_TOO_MANY_API_KEYS,
 
     ULS_ERR_LAST
   };
@@ -474,6 +475,7 @@ struct userlist_pk_create_user_2
 struct userlist_pk_api_key
 {
   char token[32];
+  char secret[32];
   ej_time64_t create_time;
   ej_time64_t expiry_time;
   int user_id;

@@ -10811,6 +10811,18 @@ make_pk_api_key_data(int in_count, const struct userlist_api_key **in_api_keys, 
   int string_pool_size = 1;
   int out_size = sizeof(struct userlist_pk_api_key_data);
 
+  if (!in_count) {
+    void *out_data = malloc(out_size);
+    memset(out_data, 0, out_size);
+    struct userlist_pk_api_key_data *out_pkt = out_data;
+    out_pkt->api_key_count = in_count;
+    out_pkt->string_pool_size = 0;
+
+    *p_out_pkt = out_pkt;
+    *p_out_size = out_size;
+    return;
+  }
+
   if (in_count > 0) {
     for (int i = 0; i < in_count; ++i) {
       const struct userlist_api_key *k = in_api_keys[i];
@@ -10826,15 +10838,16 @@ make_pk_api_key_data(int in_count, const struct userlist_api_key **in_api_keys, 
   }
 
   void *out_data = malloc(out_size);
-  memset(out_data, 0, sizeof(out_size));
+  memset(out_data, 0, out_size);
   struct userlist_pk_api_key_data *out_pkt = out_data;
   if (in_count > 0) {
-    char *out_pool = (char*) out_data + sizeof(struct userlist_pk_api_key) * in_count;
+    char *out_pool = (char*) out_pkt->api_keys + sizeof(struct userlist_pk_api_key) * in_count;
     int out_offset = 1;
     for (int i = 0; i < in_count; ++i) {
       const struct userlist_api_key *in_k = in_api_keys[i];
       struct userlist_pk_api_key *out_k = &out_pkt->api_keys[i];
       memcpy(out_k->token, in_k->token, sizeof(out_k->token));
+      memcpy(out_k->secret, in_k->secret, sizeof(out_k->secret));
       out_k->create_time = in_k->create_time;
       out_k->expiry_time = in_k->expiry_time;
       out_k->user_id = in_k->user_id;
@@ -10881,13 +10894,19 @@ cmd_create_api_key(
   }
 
   struct userlist_pk_api_key *in_apk = &data->api_keys[0];
-  char *in_pool = (char*) data + data->api_key_count * sizeof(struct userlist_pk_api_key);
+  char *in_pool = (char*) data->api_keys + data->api_key_count * sizeof(struct userlist_pk_api_key);
 
   unsigned char logbuf[1024];
   snprintf(logbuf, sizeof(logbuf), "CREATE_API_KEY: %d, %d", in_apk->user_id, in_apk->contest_id);
 
   if (is_admin(p, logbuf) < 0) return;
   if (is_db_capable(p, OPCAP_CREATE_USER, logbuf) < 0) return;
+
+  int existing_api_key_count = dflt_iface->get_api_keys_count(uldb_default->data, in_apk->user_id);
+  if (existing_api_key_count >= 10) {
+    send_reply(p, -ULS_ERR_TOO_MANY_API_KEYS);
+    return;
+  }
 
   static const char zero_token[32] = {};
   struct userlist_api_key apk;
@@ -10896,6 +10915,11 @@ cmd_create_api_key(
     random_bytes(apk.token, 32);
   } else {
     memcpy(&apk.token, in_apk->token, 32);
+  }
+  if (!memcmp(in_apk->secret, zero_token, 32)) {
+    random_bytes(apk.secret, 32);
+  } else {
+    memcpy(&apk.secret, in_apk->secret, 32);
   }
   apk.user_id = in_apk->user_id;
   apk.contest_id = in_apk->contest_id;

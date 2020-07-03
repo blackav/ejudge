@@ -44,15 +44,16 @@ userlist_clnt_api_key_request(
   }
 
   void *out_data = malloc(out_size);
-  memset(out_data, 0, sizeof(out_size));
+  memset(out_data, 0, out_size);
   struct userlist_pk_api_key_data *out_pkt = out_data;
   if (in_count > 0) {
-    char *out_pool = (char*) out_data + sizeof(struct userlist_pk_api_key) * in_count;
+    char *out_pool = (char*) out_pkt->api_keys + sizeof(struct userlist_pk_api_key) * in_count;
     int out_offset = 1;
     for (int i = 0; i < in_count; ++i) {
       const struct userlist_api_key *in_k = &in_api_keys[i];
       struct userlist_pk_api_key *out_k = &out_pkt->api_keys[i];
       memcpy(out_k->token, in_k->token, sizeof(out_k->token));
+      memcpy(out_k->secret, in_k->secret, sizeof(out_k->secret));
       out_k->create_time = in_k->create_time;
       out_k->expiry_time = in_k->expiry_time;
       out_k->user_id = in_k->user_id;
@@ -96,6 +97,10 @@ userlist_clnt_api_key_request(
     xfree(in_data);
     return reply_code;
   }
+  if (reply_code == ULS_OK) {
+    xfree(in_data);
+    return 0;
+  }
   if (reply_code != ULS_API_KEY_DATA) {
     xfree(in_data);
     return -ULS_ERR_PROTOCOL;
@@ -131,13 +136,14 @@ userlist_clnt_api_key_request(
     xfree(in_data);
     return -ULS_ERR_PROTOCOL;
   }
-  const char *in_pool = (const char*) in_data + in_pkt->api_key_count * sizeof(struct userlist_pk_api_key);
+  const char *in_pool = (const char*) in_pkt->api_keys + in_pkt->api_key_count * sizeof(struct userlist_pk_api_key);
 
   struct userlist_api_key *out_api_keys = calloc(in_pkt->api_key_count, sizeof(out_api_keys[0]));
   for (int i = 0; i < in_pkt->api_key_count; ++i) {
     const struct userlist_pk_api_key *in_k = &in_pkt->api_keys[i];
     struct userlist_api_key *out_k = &out_api_keys[i];
     memcpy(out_k->token, in_k->token, sizeof(out_k->token));
+    memcpy(out_k->secret, in_k->secret, sizeof(out_k->secret));
     out_k->create_time = in_k->create_time;
     out_k->expiry_time = in_k->expiry_time;
     out_k->user_id = in_k->user_id;

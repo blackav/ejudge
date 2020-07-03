@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -185,6 +185,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_SIMPLE_REGISTERED] = __("User is simple registered"),
   [NEW_SRV_ERR_CNTS_UNAVAILABLE] = __("Contest is not available"),
   [NEW_SRV_ERR_OPERATION_FAILED] = __("Operation failed"),
+  [NEW_SRV_ERR_INV_TOKEN] = __("Invalid token"),
 };
 
 static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
@@ -342,6 +343,7 @@ static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_SIMPLE_REGISTERED] = __("User is simple registered"),
   [NEW_SRV_ERR_CNTS_UNAVAILABLE] = __("Contest is not available"),
   [NEW_SRV_ERR_OPERATION_FAILED] = __("Operation failed"),
+  [NEW_SRV_ERR_INV_TOKEN] = __("Invalid token"),
 };
 
 static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
@@ -498,6 +500,7 @@ static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_SIMPLE_REGISTERED] = "ERR_SIMPLE_REGISTERED",
   [NEW_SRV_ERR_CNTS_UNAVAILABLE] = "ERR_CNTS_UNAVAILABLE",
   [NEW_SRV_ERR_OPERATION_FAILED] = "ERR_OPERATION_FAILED",
+  [NEW_SRV_ERR_INV_TOKEN] = "ERR_INV_TOKEN",
 };
 
 const unsigned char *
