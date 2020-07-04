@@ -14845,6 +14845,53 @@ parse_cookie(struct http_request_info *phr)
   }
 }
 
+static void parse_bearer(struct http_request_info *phr, const unsigned char *str)
+{
+  if (!str) return;
+  const unsigned char *p = str;
+
+  if ((p[0] != 'b' && p[0] != 'B')
+      || (p[1] != 'e' && p[1] != 'E')
+      || (p[2] != 'a' && p[2] != 'A')
+      || (p[3] != 'r' && p[3] != 'R')
+      || (p[4] != 'e' && p[4] != 'E')
+      || (p[5] != 'r' && p[5] != 'R')
+      || p[6] != ' ') return;
+  p += 7;
+
+  // 1:1:<contest_id>:<token>
+  // ^ - 1 - the simple token authentification
+  //   ^ - 1 - the contest access
+  if (*p == '1') {
+    // simple token auth
+    ++p;
+    if (*p++ != ':') return;
+    if (*p++ != '1') return;
+    if (*p++ != ':') return;
+    char *eptr = NULL;
+    errno = 0;
+    long v = strtol(p, &eptr, 10);
+    if (errno || *eptr != ':' || eptr == (char*) p || v < 0 || (int) v != v) {
+      // failed to parse contest_id
+      return;
+    }
+    p = eptr + 1;
+    int token_len = strlen(p);
+    if (token_len != 43) return;
+    char token[32];
+    static const char zero_token[32] = {};
+    int err_flag = 0;
+    base64u_decode(p, 43, token, &err_flag);
+    if (err_flag) return;
+    if (!memcmp(token, zero_token, 32)) return;
+
+    // bearer parsed ok
+    phr->contest_id = v;
+    memcpy(phr->token, token, 32);
+    phr->token_mode = 1;
+  }
+}
+
 // forced linking
 static void *forced_linking[] =
 {
@@ -14863,6 +14910,7 @@ ns_handle_http_request(
   const unsigned char *script_name = NULL;
   const unsigned char *protocol = "http";
   const unsigned char *remote_addr = NULL;
+  const unsigned char *http_authorization = NULL;
   const unsigned char *s;
   path_t self_url;
   path_t context_url;
@@ -15002,6 +15050,11 @@ ns_handle_http_request(
 
   if (!phr->client_key) {
     parse_cookie(phr);
+  }
+
+  http_authorization = hr_getenv(phr, "HTTP_AUTHORIZATION");
+  if (http_authorization) {
+    parse_bearer(phr, http_authorization);
   }
 
   // parse the contest_id
