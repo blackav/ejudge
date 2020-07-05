@@ -10760,8 +10760,13 @@ check_pk_api_key_data(
     CONN_BAD("packet length mismatch");
     return -1;
   }
+  if (data->contest_info_count != 0 && data->contest_info_count != 1) {
+    CONN_BAD("contest_info_count value invalid");
+    return -1;
+  }
+  int contest_info_size = data->contest_info_count * sizeof(struct userlist_pk_contest_info);
   if (!data->api_key_count) {
-    if (pkt_len != sizeof(struct userlist_pk_api_key_data)) {
+    if (pkt_len != sizeof(struct userlist_pk_api_key_data) + contest_info_size) {
       CONN_BAD("packet length mismatch");
       return -1;
     }
@@ -10806,10 +10811,17 @@ struct userlist_pk_api_key_data
 }
 
 static void
-make_pk_api_key_data(int in_count, const struct userlist_api_key **in_api_keys, struct userlist_pk_api_key_data **p_out_pkt, int *p_out_size)
+make_pk_api_key_data(
+        int in_count,
+        const struct userlist_api_key **in_api_keys,
+        struct userlist_contest_info *cnts_info,
+        struct userlist_pk_api_key_data **p_out_pkt,
+        int *p_out_size)
 {
   int string_pool_size = 1;
   int out_size = sizeof(struct userlist_pk_api_key_data);
+
+  ASSERT(in_count >= 0);
 
   if (!in_count) {
     void *out_data = malloc(out_size);
@@ -10823,50 +10835,79 @@ make_pk_api_key_data(int in_count, const struct userlist_api_key **in_api_keys, 
     return;
   }
 
-  if (in_count > 0) {
-    for (int i = 0; i < in_count; ++i) {
-      const struct userlist_api_key *k = in_api_keys[i];
-      if (k->payload) {
-        string_pool_size += strlen(k->payload) + 1;
-      }
-      if (k->origin) {
-        string_pool_size += strlen(k->origin) + 1;
-      }
+  for (int i = 0; i < in_count; ++i) {
+    const struct userlist_api_key *k = in_api_keys[i];
+    if (k->payload) {
+      string_pool_size += strlen(k->payload) + 1;
     }
-    out_size += sizeof(struct userlist_pk_api_key) * in_count;
-    out_size += string_pool_size;
+    if (k->origin) {
+      string_pool_size += strlen(k->origin) + 1;
+    }
   }
+  out_size += sizeof(struct userlist_pk_api_key) * in_count;
+
+  int contest_info_size = 0;
+  if (cnts_info) {
+    contest_info_size = sizeof(struct userlist_pk_contest_info);
+    if (cnts_info->login) {
+      string_pool_size += strlen(cnts_info->login) + 1;
+    }
+    if (cnts_info->name) {
+      string_pool_size += strlen(cnts_info->name) + 1;
+    }
+  }
+  out_size += contest_info_size;
+  out_size += string_pool_size;
 
   void *out_data = malloc(out_size);
   memset(out_data, 0, out_size);
   struct userlist_pk_api_key_data *out_pkt = out_data;
-  if (in_count > 0) {
-    char *out_pool = (char*) out_pkt->api_keys + sizeof(struct userlist_pk_api_key) * in_count;
-    int out_offset = 1;
-    for (int i = 0; i < in_count; ++i) {
-      const struct userlist_api_key *in_k = in_api_keys[i];
-      struct userlist_pk_api_key *out_k = &out_pkt->api_keys[i];
-      memcpy(out_k->token, in_k->token, sizeof(out_k->token));
-      memcpy(out_k->secret, in_k->secret, sizeof(out_k->secret));
-      out_k->create_time = in_k->create_time;
-      out_k->expiry_time = in_k->expiry_time;
-      out_k->user_id = in_k->user_id;
-      out_k->contest_id = in_k->contest_id;
-      out_k->all_contests = in_k->all_contests;
-      out_k->priv_level = in_k->priv_level;
-      if (in_k->payload) {
-        out_k->payload_offset = out_offset;
-        int len = strlen(in_k->payload);
-        memcpy(out_pool + out_offset, in_k->payload, len);
-        out_offset += len + 1;
-      }
-      if (in_k->origin) {
-        out_k->origin_offset = out_offset;
-        int len = strlen(in_k->origin);
-        memcpy(out_pool + out_offset, in_k->origin, len);
-        out_offset += len + 1;
-      }
+  char *out_pool = (char*) out_pkt->api_keys + sizeof(struct userlist_pk_api_key) * in_count + contest_info_size;
+  int out_offset = 1;
+  for (int i = 0; i < in_count; ++i) {
+    const struct userlist_api_key *in_k = in_api_keys[i];
+    struct userlist_pk_api_key *out_k = &out_pkt->api_keys[i];
+    memcpy(out_k->token, in_k->token, sizeof(out_k->token));
+    memcpy(out_k->secret, in_k->secret, sizeof(out_k->secret));
+    out_k->create_time = in_k->create_time;
+    out_k->expiry_time = in_k->expiry_time;
+    out_k->user_id = in_k->user_id;
+    out_k->contest_id = in_k->contest_id;
+    out_k->all_contests = in_k->all_contests;
+    out_k->priv_level = in_k->priv_level;
+    if (in_k->payload) {
+      out_k->payload_offset = out_offset;
+      int len = strlen(in_k->payload);
+      memcpy(out_pool + out_offset, in_k->payload, len);
+      out_offset += len + 1;
     }
+    if (in_k->origin) {
+      out_k->origin_offset = out_offset;
+      int len = strlen(in_k->origin);
+      memcpy(out_pool + out_offset, in_k->origin, len);
+      out_offset += len + 1;
+    }
+  }
+
+  if (cnts_info) {
+    struct userlist_pk_contest_info *out_cnts_info = (struct userlist_pk_contest_info *) ((char*) out_pkt->api_keys + sizeof(struct userlist_pk_api_key) * in_count);
+    out_cnts_info->user_id = cnts_info->user_id;
+    out_cnts_info->contest_id = cnts_info->contest_id;
+    if (cnts_info->login) {
+      out_cnts_info->login_offset = out_offset;
+      int len = strlen(cnts_info->login);
+      memcpy(out_pool + out_offset, cnts_info->login, len);
+      out_offset += len + 1;
+    }
+    if (cnts_info->name) {
+      out_cnts_info->name_offset = out_offset;
+      int len = strlen(cnts_info->name);
+      memcpy(out_pool + out_offset, cnts_info->name, len);
+      out_offset += len + 1;
+    }
+    out_cnts_info->reg_status = cnts_info->reg_status;
+    out_cnts_info->reg_flags = cnts_info->reg_flags;
+    out_pkt->contest_info_count = 1;
   }
 
   out_pkt->api_key_count = in_count;
@@ -10947,7 +10988,7 @@ cmd_create_api_key(
 
   struct userlist_pk_api_key_data *out_pkt = NULL;
   int out_size = 0;
-  make_pk_api_key_data(1, (const struct userlist_api_key *[1]) { res_apk }, &out_pkt, &out_size);
+  make_pk_api_key_data(1, (const struct userlist_api_key *[1]) { res_apk }, NULL, &out_pkt, &out_size);
   out_pkt->request_id = ULS_API_KEY_DATA;
   enqueue_reply_to_client(p, out_size, out_pkt);
   info("%s -> OK", logbuf);
@@ -10991,7 +11032,7 @@ cmd_get_api_key(
 
   struct userlist_pk_api_key_data *out_pkt = NULL;
   int out_size = 0;
-  make_pk_api_key_data(1, (const struct userlist_api_key *[1]) { res_apk }, &out_pkt, &out_size);
+  make_pk_api_key_data(1, (const struct userlist_api_key *[1]) { res_apk }, NULL, &out_pkt, &out_size);
   out_pkt->request_id = ULS_API_KEY_DATA;
   enqueue_reply_to_client(p, out_size, out_pkt);
   info("%s -> OK", logbuf);
@@ -11038,7 +11079,7 @@ cmd_get_api_keys_for_user(
 
   struct userlist_pk_api_key_data *out_pkt = NULL;
   int out_size = 0;
-  make_pk_api_key_data(r, res_apks, &out_pkt, &out_size);
+  make_pk_api_key_data(r, res_apks, NULL, &out_pkt, &out_size);
   out_pkt->request_id = ULS_API_KEY_DATA;
   enqueue_reply_to_client(p, out_size, out_pkt);
   info("%s -> OK", logbuf);
