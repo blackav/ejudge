@@ -24,7 +24,8 @@ userlist_clnt_api_key_request(
         int in_count,
         const struct userlist_api_key *in_api_keys,
         int *p_out_count,
-        struct userlist_api_key **p_out_api_keys)
+        struct userlist_api_key **p_out_api_keys,
+        struct userlist_contest_info *p_cnts_info)
 {
   int string_pool_size = 1;
   int out_size = sizeof(struct userlist_pk_api_key_data);
@@ -42,12 +43,17 @@ userlist_clnt_api_key_request(
     out_size += sizeof(struct userlist_pk_api_key) * in_count;
     out_size += string_pool_size;
   }
+  if (p_cnts_info) {
+    // p_cnts_info is not copied
+    out_size += sizeof(struct userlist_pk_contest_info);
+    memset(p_cnts_info, 0, sizeof(*p_cnts_info));
+  }
 
   void *out_data = malloc(out_size);
   memset(out_data, 0, out_size);
   struct userlist_pk_api_key_data *out_pkt = out_data;
   if (in_count > 0) {
-    char *out_pool = (char*) out_pkt->api_keys + sizeof(struct userlist_pk_api_key) * in_count;
+    char *out_pool = (char*) out_pkt->api_keys + sizeof(struct userlist_pk_api_key) * in_count + sizeof(struct userlist_pk_contest_info) * (p_cnts_info != NULL);
     int out_offset = 1;
     for (int i = 0; i < in_count; ++i) {
       const struct userlist_api_key *in_k = &in_api_keys[i];
@@ -77,6 +83,7 @@ userlist_clnt_api_key_request(
 
   out_pkt->request_id = cmd;
   out_pkt->api_key_count = in_count;
+  out_pkt->contest_info_count = (p_cnts_info != NULL);
   out_pkt->string_pool_size = string_pool_size;
 
   int r = userlist_clnt_send_packet(clnt, out_size, out_data);
@@ -132,11 +139,11 @@ userlist_clnt_api_key_request(
     xfree(in_data);
     return -ULS_ERR_PROTOCOL;
   }
-  if (sizeof(struct userlist_pk_api_key_data) + in_pkt->api_key_count * sizeof(struct userlist_pk_api_key) + in_pkt->string_pool_size != in_size) {
+  if (sizeof(struct userlist_pk_api_key_data) + in_pkt->api_key_count * sizeof(struct userlist_pk_api_key) + in_pkt->contest_info_count * sizeof(struct userlist_pk_contest_info) + in_pkt->string_pool_size != in_size) {
     xfree(in_data);
     return -ULS_ERR_PROTOCOL;
   }
-  const char *in_pool = (const char*) in_pkt->api_keys + in_pkt->api_key_count * sizeof(struct userlist_pk_api_key);
+  const char *in_pool = (const char*) in_pkt->api_keys + in_pkt->api_key_count * sizeof(struct userlist_pk_api_key) + in_pkt->contest_info_count * sizeof(struct userlist_pk_contest_info);
 
   struct userlist_api_key *out_api_keys = calloc(in_pkt->api_key_count, sizeof(out_api_keys[0]));
   for (int i = 0; i < in_pkt->api_key_count; ++i) {
@@ -156,6 +163,16 @@ userlist_clnt_api_key_request(
     if (in_k->origin_offset) {
       out_k->origin = xstrdup(in_pool + in_k->origin_offset);
     }
+  }
+
+  if (p_cnts_info && in_pkt->contest_info_count > 0) {
+    const struct userlist_pk_contest_info *in_cnts_info = (const struct userlist_pk_contest_info *)((const char*) in_pkt->api_keys + in_pkt->api_key_count * sizeof(struct userlist_pk_api_key));
+    p_cnts_info->user_id = in_cnts_info->user_id;
+    p_cnts_info->contest_id = in_cnts_info->contest_id;
+    p_cnts_info->login = xstrdup(in_pool + in_cnts_info->login_offset);
+    p_cnts_info->name = xstrdup(in_pool + in_cnts_info->name_offset);
+    p_cnts_info->reg_status = in_cnts_info->reg_status;
+    p_cnts_info->reg_flags = in_cnts_info->reg_flags;
   }
 
   *p_out_count = in_pkt->api_key_count;

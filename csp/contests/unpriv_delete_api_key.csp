@@ -33,7 +33,7 @@
   }
 
   api_key_params.user_id = phr->user_id;
-  int r = userlist_clnt_api_key_request(ul_conn, ULS_DELETE_API_KEY, 1, &api_key_params, NULL, NULL);
+  int r = userlist_clnt_api_key_request(ul_conn, ULS_DELETE_API_KEY, 1, &api_key_params, NULL, NULL, NULL);
   if (r < 0) {
     FAIL(NEW_SRV_ERR_DATABASE_FAILED);
   }

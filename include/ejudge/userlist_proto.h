@@ -486,10 +486,21 @@ struct userlist_pk_api_key
   int priv_level;
 };
 
+struct userlist_pk_contest_info
+{
+  int user_id;
+  int contest_id;
+  int login_offset;
+  int name_offset;
+  int reg_status;
+  int reg_flags;
+};
+
 struct userlist_pk_api_key_data
 {
   short request_id;
   int api_key_count;
+  int contest_info_count;
   int string_pool_size;
   struct userlist_pk_api_key api_keys[0];
 };

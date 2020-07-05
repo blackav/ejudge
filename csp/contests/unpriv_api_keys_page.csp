@@ -24,7 +24,7 @@
   }
 
   api_key_params.user_id = phr->user_id;
-  int r = userlist_clnt_api_key_request(ul_conn, ULS_GET_API_KEYS_FOR_USER, 1, &api_key_params, &api_key_out_count, &api_key_outs);
+  int r = userlist_clnt_api_key_request(ul_conn, ULS_GET_API_KEYS_FOR_USER, 1, &api_key_params, &api_key_out_count, &api_key_outs, NULL);
   if (r < 0) {
     FAIL(NEW_SRV_ERR_DATABASE_FAILED);
   }

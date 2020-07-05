@@ -634,6 +634,16 @@ struct userlist_list
   struct xml_tree *groupmembers_node;
 };
 
+struct userlist_contest_info
+{
+  int user_id;
+  int contest_id;
+  char *login;
+  char *name;
+  int reg_status;
+  int reg_flags;
+};
+
 struct userlist_api_key
 {
   struct xml_tree b;
@@ -891,5 +901,7 @@ userlist_user_count_cookies(struct userlist_user *u);
 
 void
 userlist_api_key_free(struct userlist_api_key *apk);
+void
+userlist_contest_info_free(struct userlist_contest_info *uci);
 
 #endif /* __USERLIST_H__ */

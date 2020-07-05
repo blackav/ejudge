@@ -507,6 +507,7 @@ userlist_clnt_create_cookie(
         const struct userlist_cookie *in_c,
         struct userlist_cookie *out_c);
 
+struct userlist_contest_info;
 struct userlist_api_key;
 int
 userlist_clnt_api_key_request(
@@ -515,6 +516,7 @@ userlist_clnt_api_key_request(
         int in_count,
         const struct userlist_api_key *in_api_keys,
         int *p_out_count,
-        struct userlist_api_key **p_out_api_keys);
+        struct userlist_api_key **p_out_api_keys,
+        struct userlist_contest_info *p_cnts_info);
 
 #endif /* __USERLIST_CLNT_H__ */
