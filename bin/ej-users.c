@@ -11032,7 +11032,57 @@ cmd_get_api_key(
 
   struct userlist_pk_api_key_data *out_pkt = NULL;
   int out_size = 0;
-  make_pk_api_key_data(1, (const struct userlist_api_key *[1]) { res_apk }, NULL, &out_pkt, &out_size);
+
+  if (!r) {
+    make_pk_api_key_data(0, NULL, NULL, &out_pkt, &out_size);
+  } else {
+    struct userlist_contest_info uci = {};
+    struct userlist_contest_info *puci = NULL;
+
+    if (data->contest_info_count == 1 && res_apk) {
+      int cnts_user_id = res_apk->user_id;
+      int cnts_contest_id = 0;
+      const struct contest_desc *cnts = NULL;
+
+      if (!res_apk->all_contests) {
+        if (res_apk->contest_id > 0 && contests_get(res_apk->contest_id, &cnts) >= 0 && cnts) {
+          cnts_contest_id = res_apk->contest_id;
+        }
+      } else if (!in_apk->contest_id && res_apk->contest_id > 0) {
+        if (res_apk->contest_id > 0 && contests_get(res_apk->contest_id, &cnts) >= 0 && cnts) {
+          cnts_contest_id = res_apk->contest_id;
+        }
+      } else if (in_apk->contest_id > 0) {
+        if (contests_get(in_apk->contest_id, &cnts) >= 0 && cnts) {
+          cnts_contest_id = in_apk->contest_id;
+        }
+      }
+
+      if (cnts_user_id > 0 && cnts_contest_id > 0) {
+        const struct userlist_user *u = NULL;
+        const struct userlist_user_info *ui = NULL;
+        const struct userlist_contest *c = NULL;
+        if (default_get_user_info_3(cnts_user_id, cnts_contest_id, &u, &ui, &c) > 0) {
+          uci.user_id = cnts_user_id;
+          uci.contest_id = cnts_contest_id;
+          if (u && u->login) {
+            uci.login = xstrdup(u->login);
+          }
+          if (ui && ui->name) {
+            uci.name = xstrdup(ui->name);
+          }
+          uci.reg_status = c->status;
+          uci.reg_flags = c->flags;
+          puci = &uci;
+        }
+      }
+    }
+
+    make_pk_api_key_data(1, (const struct userlist_api_key *[1]) { res_apk }, puci, &out_pkt, &out_size);
+    xfree(uci.login);
+    xfree(uci.name);
+  }
+
   out_pkt->request_id = ULS_API_KEY_DATA;
   enqueue_reply_to_client(p, out_size, out_pkt);
   info("%s -> OK", logbuf);
