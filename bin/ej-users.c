@@ -11062,7 +11062,7 @@ cmd_get_api_key(
         const struct userlist_user *u = NULL;
         const struct userlist_user_info *ui = NULL;
         const struct userlist_contest *c = NULL;
-        if (default_get_user_info_3(cnts_user_id, cnts_contest_id, &u, &ui, &c) > 0) {
+        if (default_get_user_info_3(cnts_user_id, cnts_contest_id, &u, &ui, &c) >= 0) {
           uci.user_id = cnts_user_id;
           uci.contest_id = cnts_contest_id;
           if (u && u->login) {

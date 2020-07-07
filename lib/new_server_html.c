@@ -13568,7 +13568,7 @@ unprivileged_entry_point(
     return unpriv_session_info_json(fout, phr);
   }
 
-  if ((phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
+  if (!phr->token_mode && (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
       && !phr->session_id && ejudge_config->enable_contest_select){
     phr->action = NEW_SRV_ACTION_CONTESTS_PAGE;
     phr->cnts = cnts;
@@ -13579,7 +13579,7 @@ unprivileged_entry_point(
 
   phr->cnts = cnts;
 
-  if (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE) {
+  if (!phr->token_mode && (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)) {
     phr->extra = ns_get_contest_extra(phr->cnts, phr->config);
     return unprivileged_page_login(fout, phr);
   }
@@ -13600,6 +13600,47 @@ unprivileged_entry_point(
     //phr->passwd_method = 0;
     phr->login = xstrdup(auth->login);
     phr->name = xstrdup(auth->name);
+  } else if (phr->token_mode) {
+    if (ns_open_ul_connection(phr->fw_state) < 0) {
+      error_page(fout, phr, 0, -NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+      goto cleanup;
+    }
+    struct userlist_api_key in_api_key = {};
+    memcpy(in_api_key.token, phr->token, 32);
+    in_api_key.contest_id = phr->contest_id;
+    struct userlist_contest_info cnts_info = {};
+    struct userlist_api_key *out_keys = NULL;
+    int out_count = 0;
+    r = userlist_clnt_api_key_request(ul_conn, ULS_GET_API_KEY, 1, &in_api_key, &out_count, &out_keys, &cnts_info);
+    phr->login = cnts_info.login; cnts_info.login = NULL;
+    phr->name = cnts_info.name; cnts_info.name = NULL;
+    phr->contest_id = cnts_info.contest_id;
+    phr->user_id = cnts_info.user_id;
+
+    if (r <= 0) {
+      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
+      goto cleanup;
+    }
+    if (out_count != 1) {
+      error_page(fout, phr, 0, -NEW_SRV_ERR_INTERNAL);
+      goto cleanup;
+    }
+    if (cnts_info.user_id == 0 || cnts_info.contest_id == 0) {
+      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
+      goto cleanup;
+    }
+    if (phr->contest_id > 0 && cnts_info.contest_id != phr->contest_id) {
+      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
+      goto cleanup;
+    }
+    if (cnts_info.reg_status != USERLIST_REG_OK) {
+      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
+      goto cleanup;
+    }
+    if ((cnts_info.reg_flags & (USERLIST_UC_BANNED | USERLIST_UC_LOCKED | USERLIST_UC_INCOMPLETE | USERLIST_UC_DISQUALIFIED)) != 0) {
+      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
+      goto cleanup;
+    }
   } else {
     // validate cookie
     if (ns_open_ul_connection(phr->fw_state) < 0) {
@@ -14859,23 +14900,9 @@ static void parse_bearer(struct http_request_info *phr, const unsigned char *str
       || p[6] != ' ') return;
   p += 7;
 
-  // 1:1:<contest_id>:<token>
-  // ^ - 1 - the simple token authentification
-  //   ^ - 1 - the contest access
-  if (*p == '1') {
-    // simple token auth
-    ++p;
-    if (*p++ != ':') return;
-    if (*p++ != '1') return;
-    if (*p++ != ':') return;
-    char *eptr = NULL;
-    errno = 0;
-    long v = strtol(p, &eptr, 10);
-    if (errno || *eptr != ':' || eptr == (char*) p || v < 0 || (int) v != v) {
-      // failed to parse contest_id
-      return;
-    }
-    p = eptr + 1;
+  // AQAA - token type 1
+  if (p[0] == 'A' && p[1] == 'Q' && p[2] == 'A' && p[3] == 'A') {
+    p += 4;
     int token_len = strlen(p);
     if (token_len != 43) return;
     char token[32];
@@ -14886,9 +14913,9 @@ static void parse_bearer(struct http_request_info *phr, const unsigned char *str
     if (!memcmp(token, zero_token, 32)) return;
 
     // bearer parsed ok
-    phr->contest_id = v;
     memcpy(phr->token, token, 32);
     phr->token_mode = 1;
+    phr->json_reply = 1;
   }
 }
 
