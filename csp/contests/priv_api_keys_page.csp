@@ -51,7 +51,7 @@
       <td class="b1"><s:v value="cur_api_key->create_time" /></td>
       <td class="b1"><% if (cur_api_key->expiry_time > 0) { %><s:v value="cur_api_key->expiry_time" /><% } else { %>N/A<% } %></td>
       <td class="b1"><% if (cur_api_key->all_contests) { %><b>All contests</b><% } else if (cur_api_key->contest_id > 0) { %><s:v value="cur_api_key->contest_id" /><% } else { %>&nbsp;<% } %></td>
-      <td class="b1"><s:v value="cur_api_key->priv_level" checkexpr="> 0" defstr="&nbsp;" /></td>
+      <td class="b1"><s:v value="cur_api_key->role" checkexpr="> 0" defstr="&nbsp;" /></td>
       <td class="b1"><s:v value="cur_api_key->payload" checkexpr="" defstr="&nbsp;" /></td>
       <td class="b1">[<s:a url="DeleteUrl">Delete</s:a>]</td>
     </tr>
@@ -83,10 +83,11 @@
   </tr>
   <tr>
     <td border="0">Priv. Level:</td>
-    <td border="0"><s:select name="key_priv_level">
+    <td border="0"><s:select name="key_role">
       <option value="0">User</option>
-      <option value="1">Judge</option>
-      <option value="2">Admin</option>
+      <option value="1">Observer</option>
+      <option value="5">Judge</option>
+      <option value="6">Admin</option>
       </s:select></td>
   </tr>
   <tr><td border="0">&nbsp;</td><td border="0"><s:submit ac="create-api-key" /></td></tr>

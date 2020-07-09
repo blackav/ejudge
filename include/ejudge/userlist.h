@@ -657,7 +657,7 @@ struct userlist_api_key
   char *payload;
   char *origin;
   int all_contests;
-  int priv_level;
+  int role;
 };
 
 // unparse modes

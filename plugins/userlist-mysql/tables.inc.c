@@ -356,5 +356,5 @@ static struct common_mysql_parse_spec apikey_spec[] =
   //[8] all_contests TINYINT NOT NULL DEFAULT 0,
   { 0, 'd', "all_contests", APIKEY_OFFSET(all_contests), NULL },
   //[9] priv_level TINYINT NOT NULL DEFAULT 0,
-  { 0, 'd', "priv_level", APIKEY_OFFSET(priv_level), NULL },
+  { 0, 'd', "role_id", APIKEY_OFFSET(role), NULL },
 };

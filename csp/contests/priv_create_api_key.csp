@@ -19,7 +19,7 @@
     int key_contest_id = 0;
     const struct contest_desc *key_cnts = NULL;
     int all_contests = 1;
-    int key_priv_level = 0;
+    int key_role = 0;
     int key_user_id = phr->user_id;
     char *origin_s = NULL;
     size_t origin_z = 0;
@@ -52,19 +52,18 @@
         all_contests = 0;
     }
 
-%><s:read var="key_priv_level" ignoreerrors="yes" default="0" /><%
+%><s:read var="key_role" ignoreerrors="yes" default="0" /><%
 
-    fprintf(stderr, "P: %d\n", phr->priv_level);
-    if (key_priv_level > 0 && key_priv_level > phr->priv_level) {
+    if (key_role > 0 && key_role > phr->role) {
         FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     }
 
     origin_f = open_memstream(&origin_s, &origin_z);
-    fprintf(origin_f, "{\"ip\":\"%s\",\"ssl\":%s,\"user_id\":%d,\"priv_level\":%d,\"contest_id\":%d,\"session\":\"%016llx-%016llx\"}",
+    fprintf(origin_f, "{\"ip\":\"%s\",\"ssl\":%s,\"user_id\":%d,\"role\":%d,\"contest_id\":%d,\"session\":\"%016llx-%016llx\"}",
             xml_unparse_ipv6(&phr->ip),
             phr->ssl_flag?"true":"false",
             phr->user_id,
-            phr->priv_level,
+            phr->role,
             phr->contest_id,
             phr->session_id,
             phr->client_key);
@@ -113,8 +112,8 @@
     <tr><td class="b1">Contest ID:</td><td class="b1"><tt><s:v value="api_key_outs[0].contest_id" /></tt></td></tr>
 <% } %>
     <tr><td class="b1">Expiry time:</td><td class="b1"><% if (api_key_outs[0].expiry_time > 0) { %><s:v value="api_key_outs[0].expiry_time" /><% } else { %>N/A<% } %></td></tr>
-<% if (api_key_outs[0].priv_level > 0) { %>
-    <tr><td class="b1">Priv. Level:</td><td class="b1"><tt><s:v value="api_key_outs[0].priv_level" /></tt></td></tr>
+<% if (api_key_outs[0].role > 0) { %>
+    <tr><td class="b1">Role:</td><td class="b1"><tt><s:v value="api_key_outs[0].role" /></tt></td></tr>
 <% } %>
 </table>
 

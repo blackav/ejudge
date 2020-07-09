@@ -10874,7 +10874,7 @@ make_pk_api_key_data(
     out_k->user_id = in_k->user_id;
     out_k->contest_id = in_k->contest_id;
     out_k->all_contests = in_k->all_contests;
-    out_k->priv_level = in_k->priv_level;
+    out_k->role = in_k->role;
     if (in_k->payload) {
       out_k->payload_offset = out_offset;
       int len = strlen(in_k->payload);
@@ -10970,7 +10970,7 @@ cmd_create_api_key(
   }
   apk.expiry_time = in_apk->expiry_time;
   apk.all_contests = in_apk->all_contests;
-  apk.priv_level = in_apk->priv_level;
+  apk.role = in_apk->role;
   if (in_apk->payload_offset) {
     apk.payload = in_pool + in_apk->payload_offset;
   }

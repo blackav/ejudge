@@ -180,7 +180,7 @@ CREATE TABLE %sapikeys
     payload VARCHAR(1024) DEFAULT NULL,
     origin VARCHAR(128) DEFAULT NULL,
     all_contests TINYINT NOT NULL DEFAULT 0,
-    priv_level TINYINT NOT NULL DEFAULT 0,
+    role_id TINYINT NOT NULL DEFAULT 0,
     FOREIGN KEY apikeys_user_id_fk(user_id) REFERENCES logins(user_id)
 );
 
