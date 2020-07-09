@@ -74,9 +74,11 @@
     }
 
     api_key_params.user_id = key_user_id;
+    api_key_params.contest_id = key_contest_id;
     api_key_params.create_time = create_time;
     api_key_params.expiry_time = expiry_time;
     api_key_params.all_contests = all_contests;
+    api_key_params.role = key_role;
     api_key_params.origin = origin_s; origin_s = NULL;
     int r = userlist_clnt_api_key_request(ul_conn, ULS_CREATE_API_KEY, 1, &api_key_params, &api_key_out_count, &api_key_outs, NULL);
     if (r == -ULS_ERR_TOO_MANY_API_KEYS) {

@@ -20,6 +20,7 @@
     int i;
     char token_buf[64];
     int token_len;
+    const char *user_role_str = NULL;
 
     if (ns_open_ul_connection(phr->fw_state) < 0) {
         FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
@@ -37,21 +38,27 @@
 %>
 </div>
 
+<table class="b0"><tr>
+<td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td>
+</tr></table>
+
 <h3><s:_>List of API keys</s:_></h3>
 
 <table class="b1">
-  <tr><th class="b1">Token</th><th class="b1">Create Time</th><th class="b1">Expiry Time</th><th class="b1">Contest ID</th><th class="b1">Priv Level</th><th class="b1">Payload</th><th class="b1">Actions</th></tr>
+  <tr><th class="b1">Token</th><th class="b1">Create Time</th><th class="b1">Expiry Time</th><th class="b1">Contest ID</th><th class="b1">Role</th><th class="b1">Payload</th><th class="b1">Actions</th></tr>
 <% for (i = 0; i < api_key_out_count; ++i) {
      cur_api_key = &api_key_outs[i];
      token_len = base64u_encode(cur_api_key->token, 32, token_buf);
      token_buf[token_len] = 0;
+     user_role_str = "";
+     if (cur_api_key->role > 0) user_role_str = userlist_unparse_user_role(cur_api_key->role);
 %><s:url name="DeleteUrl" ac="delete-api-key"><s:param name="token" value="token_buf" /></s:url>
     <tr>
       <td class="b1"><s:v value="token_buf" /></td>
       <td class="b1"><s:v value="cur_api_key->create_time" /></td>
       <td class="b1"><% if (cur_api_key->expiry_time > 0) { %><s:v value="cur_api_key->expiry_time" /><% } else { %>N/A<% } %></td>
       <td class="b1"><% if (cur_api_key->all_contests) { %><b>All contests</b><% } else if (cur_api_key->contest_id > 0) { %><s:v value="cur_api_key->contest_id" /><% } else { %>&nbsp;<% } %></td>
-      <td class="b1"><s:v value="cur_api_key->role" checkexpr="> 0" defstr="&nbsp;" /></td>
+      <td class="b1"><s:v value="user_role_str" defstr="&nbsp;" /></td>
       <td class="b1"><s:v value="cur_api_key->payload" checkexpr="" defstr="&nbsp;" /></td>
       <td class="b1">[<s:a url="DeleteUrl">Delete</s:a>]</td>
     </tr>
@@ -62,10 +69,12 @@
 
 <s:form>
 <table border="0">
+<!--
   <tr>
     <td border="0">User ID/Login:</td>
     <td border="0"><s:textfield name="key_user_id" size="10" value="" /></td>
   </tr>
+  -->
   <tr>
     <td border="0">Duration:</td>
     <td border="0"><s:select name="key_duration">
