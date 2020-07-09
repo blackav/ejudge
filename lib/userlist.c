@@ -2385,3 +2385,24 @@ userlist_api_key_free(struct userlist_api_key *apk)
     xfree(apk->payload);
   }
 }
+
+const char *
+userlist_unparse_user_role(int role)
+{
+  static const char * const strs[] =
+  {
+    "CONTESTANT",
+    "OBSERVER",
+    "EXAMINER",
+    "CHIEF_EXAMINER",
+    "COORDINATOR",
+    "JUDGE",
+    "ADMIN",
+  };
+  if (role >= 0 && role <= USER_ROLE_ADMIN) {
+    return strs[role];
+  }
+  static char buf[64];
+  snprintf(buf, sizeof(buf), "User Role #%d", role);
+  return buf;
+}

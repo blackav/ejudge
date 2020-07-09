@@ -903,5 +903,6 @@ void
 userlist_api_key_free(struct userlist_api_key *apk);
 void
 userlist_contest_info_free(struct userlist_contest_info *uci);
+const char *userlist_unparse_user_role(int role);
 
 #endif /* __USERLIST_H__ */
