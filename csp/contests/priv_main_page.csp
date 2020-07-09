@@ -118,6 +118,7 @@
     <% } %>
             <li><s:a ac="language-stats-page"><s:_>Programming language statistics</s:_></s:a></li><br/>
             <li><s:a ac="problem-stats-page"><s:_>Problem statistics</s:_></s:a></li><br/>
+            <li><s:a ac="api-keys-page"><s:_>API Keys</s:_></s:a></li><br/>
         </ul>
     </li>
 

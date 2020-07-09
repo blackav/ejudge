@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-07-03 09:58+0300\n"
-"PO-Revision-Date: 2020-07-03 11:02+0300\n"
+"POT-Creation-Date: 2020-07-08 22:28+0300\n"
+"PO-Revision-Date: 2020-07-09 14:49+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
 "Language: ru\n"
@@ -302,6 +302,9 @@ msgstr "<u>--- Поток ошибок: размер %lld ---</u>\n"
 
 msgid "ALL PREVIOUS SUBMITS WILL BE LOST!"
 msgstr "ВСЕ СДЕЛАННЫЕ ПОСЫЛКИ БУДУТ ОБНУЛЕНЫ!"
+
+msgid "API Keys"
+msgstr "Ключи API"
 
 #, c-format
 msgid "API key created"

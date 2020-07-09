@@ -36,10 +36,13 @@ SOFILES = \
  csp_int_standings.so\
  csp_int_public_log.so\
  csp_priv_add_review_comment_action.so\
+ csp_priv_api_keys_page.so\
  csp_priv_assign_cyphers_page.so\
  csp_priv_audit_log_page.so\
  csp_priv_clar_page.so\
  csp_priv_crop_avatar_page.so\
+ csp_priv_create_api_key.so\
+ csp_priv_delete_api_key.so\
  csp_priv_download_runs_confirmation_page.so\
  csp_priv_edit_clar_page.so\
  csp_priv_edit_run_page.so\
@@ -145,9 +148,12 @@ contests.po : $(CFILES)
 	${XGETTEXT} -d ejudge --no-location --foreign-user  -k_ -k__ -s -o $@ *.c
 
 csp_priv_add_review_comment_action.c : priv_add_review_comment_action.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_api_keys_page.c : priv_api_keys_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_assign_cyphers_page.c : priv_assign_cyphers_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_audit_log_page.c : priv_audit_log_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_clar_page.c : priv_clar_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_create_api_key.c : priv_create_api_key.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
+csp_priv_delete_api_key.c : priv_delete_api_key.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_download_runs_confirmation_page.c : priv_download_runs_confirmation_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_edit_run_page.c: priv_edit_run_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp
 csp_priv_edit_clar_page.c: priv_edit_clar_page.csp priv_includes.csp priv_stdvars.csp priv_header.csp priv_footer.csp

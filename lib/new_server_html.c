@@ -7938,6 +7938,9 @@ static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAS
   [NEW_SRV_ACTION_SAVE_CROPPED_AVATAR_AJAX] = "priv_save_cropped_avatar_ajax",
   [NEW_SRV_ACTION_LANGUAGE_STATS_PAGE] = "priv_language_stats_page",
   [NEW_SRV_ACTION_PROBLEM_STATS_PAGE] = "priv_problem_stats_page",
+  [NEW_SRV_ACTION_API_KEYS_PAGE] = "priv_api_keys_page",
+  [NEW_SRV_ACTION_CREATE_API_KEY] = "priv_create_api_key",
+  [NEW_SRV_ACTION_DELETE_API_KEY] = "priv_delete_api_key",
 };
 
 static const int external_priv_action_aliases[NEW_SRV_ACTION_LAST] =

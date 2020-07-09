@@ -1,0 +1,102 @@
+<%
+%><%@include "priv_includes.csp"
+%><%
+#include "ejudge/userlist_clnt.h"
+#include "ejudge/userlist_proto.h"
+#include "ejudge/base64.h"
+%><%@set getter_name = "csp_get_priv_api_keys_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_api_keys_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+    // local vars
+    const unsigned char *title = NULL;
+    int enable_main_menu = 0;
+
+    struct userlist_api_key api_key_params = {};
+    int api_key_out_count = 0;
+    struct userlist_api_key *api_key_outs = NULL;
+    struct userlist_api_key *cur_api_key = NULL;
+    int i;
+    char token_buf[64];
+    int token_len;
+
+    if (ns_open_ul_connection(phr->fw_state) < 0) {
+        FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+    }
+
+    api_key_params.user_id = phr->user_id;
+    int r = userlist_clnt_api_key_request(ul_conn, ULS_GET_API_KEYS_FOR_USER, 1, &api_key_params, &api_key_out_count, &api_key_outs, NULL);
+    if (r < 0) {
+        FAIL(NEW_SRV_ERR_DATABASE_FAILED);
+    }
+
+    l10n_setlocale(phr->locale_id);
+    title = _("API Keys");
+%><%@include "priv_header.csp"
+%>
+</div>
+
+<h3><s:_>List of API keys</s:_></h3>
+
+<table class="b1">
+  <tr><th class="b1">Token</th><th class="b1">Create Time</th><th class="b1">Expiry Time</th><th class="b1">Contest ID</th><th class="b1">Priv Level</th><th class="b1">Payload</th><th class="b1">Actions</th></tr>
+<% for (i = 0; i < api_key_out_count; ++i) {
+     cur_api_key = &api_key_outs[i];
+     token_len = base64u_encode(cur_api_key->token, 32, token_buf);
+     token_buf[token_len] = 0;
+%><s:url name="DeleteUrl" ac="delete-api-key"><s:param name="token" value="token_buf" /></s:url>
+    <tr>
+      <td class="b1"><s:v value="token_buf" /></td>
+      <td class="b1"><s:v value="cur_api_key->create_time" /></td>
+      <td class="b1"><% if (cur_api_key->expiry_time > 0) { %><s:v value="cur_api_key->expiry_time" /><% } else { %>N/A<% } %></td>
+      <td class="b1"><% if (cur_api_key->all_contests) { %><b>All contests</b><% } else if (cur_api_key->contest_id > 0) { %><s:v value="cur_api_key->contest_id" /><% } else { %>&nbsp;<% } %></td>
+      <td class="b1"><s:v value="cur_api_key->priv_level" checkexpr="> 0" defstr="&nbsp;" /></td>
+      <td class="b1"><s:v value="cur_api_key->payload" checkexpr="" defstr="&nbsp;" /></td>
+      <td class="b1">[<s:a url="DeleteUrl">Delete</s:a>]</td>
+    </tr>
+<% } %>
+</table>
+
+<h3><s:_>Create new API key</s:_></h3>
+
+<s:form>
+<table border="0">
+  <tr>
+    <td border="0">User ID/Login:</td>
+    <td border="0"><s:textfield name="key_user_id" size="10" value="" /></td>
+  </tr>
+  <tr>
+    <td border="0">Duration:</td>
+    <td border="0"><s:select name="key_duration">
+      <option value="0">Indefinite</option>
+      <option value="3600">1h</option>
+      <option value="86400">1d</option>
+      <option value="604800">1w</option>
+      <option value="2592000">30d</option>
+      <option value="31536000">1y</option>
+      </s:select></td>
+  </tr>
+  <tr>
+    <td border="0">Contest ID:</td>
+    <td border="0"><s:textfield name="key_contest_id" size="10" value="" /></td>
+  </tr>
+  <tr>
+    <td border="0">Priv. Level:</td>
+    <td border="0"><s:select name="key_priv_level">
+      <option value="0">User</option>
+      <option value="1">Judge</option>
+      <option value="2">Admin</option>
+      </s:select></td>
+  </tr>
+  <tr><td border="0">&nbsp;</td><td border="0"><s:submit ac="create-api-key" /></td></tr>
+</table>
+</s:form>
+
+<%@include "priv_footer.csp"
+%><%
+cleanup:
+  (void) &&cleanup;
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>

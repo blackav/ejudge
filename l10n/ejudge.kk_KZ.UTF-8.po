@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 3.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-07-03 09:58+0300\n"
+"POT-Creation-Date: 2020-07-08 22:28+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Kazakh <uk@li.org>\n"
@@ -259,6 +259,9 @@ msgid "<u>--- Stderr: size %lld ---</u>\n"
 msgstr ""
 
 msgid "ALL PREVIOUS SUBMITS WILL BE LOST!"
+msgstr ""
+
+msgid "API Keys"
 msgstr ""
 
 #, c-format
