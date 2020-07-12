@@ -3081,18 +3081,80 @@ priv_submit_run(
   unsigned char *utf8_str = 0;
   int utf8_len = 0;
   int eoln_type = 0;
+  int is_hidden = 1, is_visible = 0;
+  int sender_user_id = -1;
+  int sender_ssl_flag;
+  ej_ip_t sender_ip;
 
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
-  if (hr_cgi_param_int(phr, "problem", &prob_id) < 0) {
-    fprintf(phr->log_f, "'problem' parameter is not set or invalid\n");
-    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  if (hr_cgi_param(phr, "sender_user_login", &s) > 0) {
+    if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+    if ((sender_user_id = teamdb_lookup_login(cs->teamdb_state, s)) <= 0) {
+      FAIL(NEW_SRV_ERR_INV_USER_ID);
+    }
+  } else if (hr_cgi_param_int_opt(phr, "sender_user_id", &sender_user_id, -1) >= 0) {
+    if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+    if (teamdb_lookup(cs->teamdb_state, sender_user_id) <= 0) {
+      FAIL(NEW_SRV_ERR_INV_USER_ID);
+    }
   }
-  if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id])) {
-    fprintf(phr->log_f, "invalid problem id\n");
-    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  if (sender_user_id <= 0) sender_user_id = phr->user_id;
+
+  if (hr_cgi_param(phr, "sender_ip", &s) > 0) {
+    if (!strcmp(s, "::1")) s = "127.0.0.1";
+    if (xml_parse_ipv6(NULL, 0, 0, 0, s, &sender_ip) < 0) {
+      fprintf(phr->log_f, "cannot parse sender_ip");
+      FAIL(NEW_SRV_ERR_INV_PARAM);
+    }
+    hr_cgi_param_int_opt(phr, "sender_ssl_flag", &sender_ssl_flag, 0);
+  } else {
+    sender_ip = phr->ip;
+    sender_ssl_flag = phr->ssl_flag;
+  }
+
+  if (hr_cgi_param(phr, "problem_uuid", &s) > 0) {
+    for (prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
+      prob = cs->probs[prob_id];
+      if (prob) {
+        if (prob->uuid && !strcmp(s, prob->uuid)) {
+          break;
+        }
+      }
+    }
+    if (prob_id > cs->max_prob) {
+      fprintf(phr->log_f, "'problem_name' parameter is not set or invalid\n");
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    }
+  } else if (hr_cgi_param(phr, "problem_name", &s) > 0) {
+    for (prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
+      prob = cs->probs[prob_id];
+      if (prob) {
+        if ((prob->short_name && !strcmp(s, prob->short_name))
+            || (prob->internal_name && !strcmp(s, prob->internal_name))) {
+          break;
+        }
+      }
+    }
+    if (prob_id > cs->max_prob) {
+      fprintf(phr->log_f, "'problem_name' parameter is not set or invalid\n");
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    }
+  } else {
+    if (hr_cgi_param_int(phr, "problem", &prob_id) < 0) {
+      fprintf(phr->log_f, "'problem' parameter is not set or invalid\n");
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    }
+    if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id])) {
+      fprintf(phr->log_f, "invalid problem id\n");
+      FAIL(NEW_SRV_ERR_INV_PROB_ID);
+    }
   }
   if (hr_cgi_param_int_opt(phr, "variant", &variant, 0) < 0) {
     fprintf(phr->log_f, "'variant' parameter is invalid\n");
@@ -3138,23 +3200,39 @@ priv_submit_run(
   */
 
   if (prob->type == PROB_TYPE_STANDARD) {
-    if (hr_cgi_param(phr, "lang_id", &s) <= 0) {
-      fprintf(phr->log_f, "'lang_id' is not set or binary\n");
-      FAIL(NEW_SRV_ERR_INV_LANG_ID);
-    }
-    if (sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n]) {
-      fprintf(phr->log_f, "'lang_id' is invalid\n");
-      FAIL(NEW_SRV_ERR_INV_LANG_ID);
-    }
-    if (lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])){
-      fprintf(phr->log_f, "'lang_id' is invalid\n");
-      FAIL(NEW_SRV_ERR_INV_LANG_ID);
+    if (hr_cgi_param(phr, "language_name", &s) > 0) {
+      for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+        lang = cs->langs[lang_id];
+        if (lang && lang->short_name && !strcmp(lang->short_name, s)) {
+          break;
+        }
+      }
+      if (lang_id > cs->max_lang) {
+        fprintf(phr->log_f, "'lang_id' is invalid\n");
+        FAIL(NEW_SRV_ERR_INV_LANG_ID);
+      }
+    } else {
+      if (hr_cgi_param(phr, "lang_id", &s) <= 0) {
+        fprintf(phr->log_f, "'lang_id' is not set or binary\n");
+        FAIL(NEW_SRV_ERR_INV_LANG_ID);
+      }
+      if (sscanf(s, "%d%n", &lang_id, &n) != 1 || s[n]) {
+        fprintf(phr->log_f, "'lang_id' is invalid\n");
+        FAIL(NEW_SRV_ERR_INV_LANG_ID);
+      }
+      if (lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])){
+        fprintf(phr->log_f, "'lang_id' is invalid\n");
+        FAIL(NEW_SRV_ERR_INV_LANG_ID);
+      }
     }
     if (cs->global->enable_eoln_select > 0) {
       hr_cgi_param_int_opt(phr, "eoln_type", &eoln_type, 0);
       if (eoln_type < 0 || eoln_type > EOLN_CRLF) eoln_type = 0;
     }
   }
+
+  hr_cgi_param_int_opt(phr, "is_visible", &is_visible, 0);
+  if (is_visible > 0) is_hidden = 0;
 
   /* get the submission text */
   switch (prob->type) {
@@ -3394,10 +3472,10 @@ priv_submit_run(
   run_id = run_add_record(cs->runlog_state,
                           precise_time.tv_sec, precise_time.tv_usec * 1000,
                           run_size, shaval, &run_uuid,
-                          &phr->ip, phr->ssl_flag,
-                          phr->locale_id, phr->user_id,
+                          &sender_ip, sender_ssl_flag,
+                          phr->locale_id, sender_user_id,
                           prob_id, lang_id, eoln_type,
-                          variant, 1, mime_type,
+                          variant, is_hidden, mime_type,
                           prob->uuid,
                           store_flags);
   if (run_id < 0) {
@@ -3423,7 +3501,7 @@ priv_submit_run(
     FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
   }
 
-  const struct userlist_user *user = teamdb_get_userlist(cs->teamdb_state, phr->user_id);
+  const struct userlist_user *user = teamdb_get_userlist(cs->teamdb_state, sender_user_id);
 
   if (prob->type == PROB_TYPE_STANDARD) {
     // automatically tested programs
@@ -3438,7 +3516,7 @@ priv_submit_run(
       serve_audit_log(cs, run_id, NULL, phr->user_id, &phr->ip, phr->ssl_flag,
                       "priv-submit", "ok", RUN_COMPILING, NULL);
       if ((r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
-                                     run_id, phr->user_id,
+                                     run_id, sender_user_id,
                                      lang->compile_id, variant,
                                      phr->locale_id, 0,
                                      lang->src_sfx,
@@ -3462,7 +3540,7 @@ priv_submit_run(
                       "priv-submit", "ok", RUN_COMPILING, NULL);
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
-                                  run_id, phr->user_id, 0 /* lang_id */, variant,
+                                  run_id, sender_user_id, 0 /* lang_id */, variant,
                                   0 /* locale_id */, 1 /* output_only*/,
                                   mime_type_get_suffix(mime_type),
                                   NULL /* compiler_env */,
@@ -3484,7 +3562,7 @@ priv_submit_run(
       } else {
         if (serve_run_request(phr->config, cs, cnts, log_f, run_text, run_size,
                               cnts->id, run_id,
-                              phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
+                              sender_user_id, prob_id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                               0 /* rejudge_flag */, 0 /* zip_mode */, store_flags) < 0) {
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
@@ -3505,7 +3583,7 @@ priv_submit_run(
       /* FIXME: check for XML problem */
       if (prob->style_checker_cmd && prob->style_checker_cmd[0]) {
         r = serve_compile_request(phr->config, cs, run_text, run_size, cnts->id,
-                                  run_id, phr->user_id, 0 /* lang_id */, variant,
+                                  run_id, sender_user_id, 0 /* lang_id */, variant,
                                   0 /* locale_id */, 1 /* output_only*/,
                                   mime_type_get_suffix(mime_type),
                                   NULL /* compiler_env */,
@@ -3527,13 +3605,25 @@ priv_submit_run(
       } else {
         if (serve_run_request(phr->config, cs, cnts, log_f, run_text, run_size,
                               cnts->id, run_id,
-                              phr->user_id, prob_id, 0, variant, 0, -1, -1, 0,
+                              sender_user_id, prob_id, 0, variant, 0, -1, -1, 0,
                               mime_type, 0, phr->locale_id, 0, 0, 0, &run_uuid,
                               0 /* rejudge_flag */, 0 /* zip_mode */, store_flags) < 0) {
           FAIL(NEW_SRV_ERR_DISK_WRITE_ERROR);
         }
       }
     }
+  }
+
+  if (phr->json_reply) {
+    fprintf(fout, "Content-type: application/json\n\n");
+    fprintf(fout, "{\n");
+    fprintf(fout, "  \"ok\" : %s", "true");
+    fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
+    fprintf(fout, ",\n  \"result\": {");
+    fprintf(fout, "\n    \"run_id\": %d", run_id);
+    fprintf(fout, ",\n    \"run_uuid\": \"%s\"", ej_uuid_unparse(&run_uuid, ""));
+    fprintf(fout, "\n  }");
+    fprintf(fout, "\n}\n");
   }
 
  cleanup:
@@ -7287,7 +7377,8 @@ priv_generic_operation(FILE *fout,
   if (!r) r = ns_priv_next_state[phr->action];
   if (!rr) rr = ns_priv_prev_state[phr->action];
 
-  if (phr->plain_text) {
+  if (phr->json_reply) {
+  } else if (phr->plain_text) {
     fprintf(fout, "Content-type: text/plain\n\n%d\n", 0);
   } else {
     ns_refresh_page(fout, phr, r, phr->next_extra);
@@ -10310,6 +10401,7 @@ unpriv_submit_run(
     fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
     fprintf(fout, ",\n  \"result\": {");
     fprintf(fout, "\n    \"run_id\": %d", run_id);
+    fprintf(fout, ",\n    \"run_uuid\": \"%s\"", ej_uuid_unparse(&run_uuid, ""));
     fprintf(fout, "\n  }");
     fprintf(fout, "\n}");
   } else {
