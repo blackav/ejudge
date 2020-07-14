@@ -186,6 +186,7 @@ static const unsigned char * const ns_error_messages[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_CNTS_UNAVAILABLE] = __("Contest is not available"),
   [NEW_SRV_ERR_OPERATION_FAILED] = __("Operation failed"),
   [NEW_SRV_ERR_INV_TOKEN] = __("Invalid token"),
+  [NEW_SRV_ERR_INV_UUID] = __("Invalid UUID"),
 };
 
 static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
@@ -344,6 +345,7 @@ static const unsigned char * const ns_error_titles[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_CNTS_UNAVAILABLE] = __("Contest is not available"),
   [NEW_SRV_ERR_OPERATION_FAILED] = __("Operation failed"),
   [NEW_SRV_ERR_INV_TOKEN] = __("Invalid token"),
+  [NEW_SRV_ERR_INV_UUID] = __("Invalid UUID"),
 };
 
 static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
@@ -501,6 +503,7 @@ static const unsigned char * const ns_error_symbols[NEW_SRV_ERR_LAST]=
   [NEW_SRV_ERR_CNTS_UNAVAILABLE] = "ERR_CNTS_UNAVAILABLE",
   [NEW_SRV_ERR_OPERATION_FAILED] = "ERR_OPERATION_FAILED",
   [NEW_SRV_ERR_INV_TOKEN] = "ERR_INV_TOKEN",
+  [NEW_SRV_ERR_INV_UUID] = "ERR_INV_UUID",
 };
 
 const unsigned char *

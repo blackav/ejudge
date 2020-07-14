@@ -97,6 +97,7 @@
 #define ARMOR(s)  html_armor_buf(&ab, (s))
 #define URLARMOR(s)  url_armor_buf(&ab, s)
 #define FAIL(c) do { retval = -(c); goto cleanup; } while (0)
+#define JARMOR(s) (json_armor_buf(&ab, (s)))
 
 #pragma GCC diagnostic ignored "-Wformat-security"
 
@@ -7775,6 +7776,262 @@ cleanup:
   }
 }
 
+static inline const unsigned char *
+to_json_bool(int value)
+{
+  if (value > 0) return "true";
+  else return "false";
+}
+
+static void
+priv_run_status_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const unsigned char *s;
+  ej_uuid_t run_uuid;
+  int run_id = -1;
+  struct run_entry re;
+  int accepting_mode = 0;
+  time_t start_time, stop_time;
+  long long run_time_us = 0;
+  long long duration = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const struct section_problem_data *prob = NULL;
+  const struct section_language_data *lang = NULL;
+
+  phr->json_reply = 1;
+
+  if (hr_cgi_param(phr, "run_uuid", &s) > 0) {
+    if (ej_uuid_parse(s, &run_uuid) < 0) {
+      error_page(fout, phr, 1, NEW_SRV_ERR_INV_UUID);
+      goto cleanup;
+    }
+    if ((run_id = run_find_run_id_by_uuid(cs->runlog_state, &run_uuid)) < 0) {
+      error_page(fout, phr, 1, NEW_SRV_ERR_INV_UUID);
+      goto cleanup;
+    }
+  } else if (hr_cgi_param_int(phr, "run_id", &run_id) > 0) {
+  } else {
+    error_page(fout, phr, 1, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+
+  if (re.status < 0 || re.status > RUN_TRANSIENT_LAST
+      || (re.status > RUN_LOW_LAST && re.status < RUN_TRANSIENT_FIRST)) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+
+  if (re.status == RUN_EMPTY) {
+    fprintf(fout, "Content-type: application/json\n\n");
+    fprintf(fout, "{\n");
+    fprintf(fout, "  \"ok\" : true");
+    fprintf(fout, ",\n    \"server_time\": %lld", (long long) cs->current_time);
+    fprintf(fout, ",\n  \"result\": {");
+    fprintf(fout, "\n    \"run\": {");
+    fprintf(fout, "\n      \"run_id\": %d", re.run_id);
+    fprintf(fout, ",\n      \"status\": %d", re.status);
+    fprintf(fout, "\n    }");
+    fprintf(fout, "\n  }");
+    fprintf(fout, "\n}\n");
+    goto cleanup;
+  }
+
+  if (global->is_virtual) {
+    start_time = run_get_virtual_start_time(cs->runlog_state, re.user_id);
+    stop_time = run_get_virtual_stop_time(cs->runlog_state, re.user_id, cs->current_time);
+    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+  } else {
+    start_time = run_get_start_time(cs->runlog_state);
+    stop_time = run_get_stop_time(cs->runlog_state);
+    accepting_mode = cs->accepting_mode;
+  }
+
+  run_time_us = re.time * 1000000LL + re.nsec / 1000;
+  if (start_time > 0) {
+    duration = (long long) re.time - start_time;
+    if (duration < 0) duration = 0;
+  }
+
+  if (re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP) {
+    fprintf(fout, "Content-type: application/json\n\n");
+    fprintf(fout, "{\n");
+    fprintf(fout, "  \"ok\" : true");
+    fprintf(fout, ",\n    \"server_time\": %lld", (long long) cs->current_time);
+    fprintf(fout, ",\n  \"result\": {");
+    fprintf(fout, "\n    \"run\": {");
+    fprintf(fout, "\n      \"run_id\": %d", re.run_id);
+    fprintf(fout, ",\n      \"status\": %d", re.status);
+    fprintf(fout, ",\n      \"run_time\": %lld", (long long) re.time);
+    fprintf(fout, ",\n      \"nsec\": %d", re.nsec);
+    fprintf(fout, ",\n      \"run_time_us\": %lld", run_time_us);
+    if (duration > 0) {
+      fprintf(fout, ",\n      \"duration\": %lld", duration);
+    }
+    fprintf(fout, ",\n      \"user_id\": %d", re.user_id);
+    s = teamdb_get_login(cs->teamdb_state, re.user_id);
+    if (s && *s) {
+      fprintf(fout, ",\n      \"user_login\": %s", JARMOR(s));
+    }
+    s = teamdb_get_name(cs->teamdb_state, re.user_id);
+    if (s && *s) {
+      fprintf(fout, ",\n      \"user_name\": %s", JARMOR(s));
+    }
+    fprintf(fout, "\n    }");
+    fprintf(fout, "\n  }");
+    fprintf(fout, "\n}\n");
+    goto cleanup;
+  }
+
+  fprintf(fout, "Content-type: application/json\n\n");
+  fprintf(fout, "{\n");
+  fprintf(fout, "  \"ok\" : true");
+  fprintf(fout, ",\n    \"server_time\": %lld", (long long) cs->current_time);
+  fprintf(fout, ",\n  \"result\": {");
+  if (accepting_mode) {
+    fprintf(fout, ",\n    \"accepting_mode\": %s", to_json_bool(accepting_mode));
+  }
+  fprintf(fout, "\n    \"run\": {");
+  fprintf(fout, "\n      \"run_id\": %d", re.run_id);
+  if (ej_uuid_is_nonempty(re.run_uuid)) {
+    fprintf(fout, ",\n      \"run_uuid\": \"%s\"", ej_uuid_unparse(&re.run_uuid, ""));
+  }
+  fprintf(fout, ",\n      \"status\": %d", re.status);
+  fprintf(fout, ",\n      \"status_str\": \"%s\"", run_status_short_str(re.status));
+  fprintf(fout, ",\n      \"run_time\": %lld", (long long) re.time);
+  fprintf(fout, ",\n      \"nsec\": %d", re.nsec);
+  fprintf(fout, ",\n      \"run_time_us\": %lld", run_time_us);
+  if (duration > 0) {
+    fprintf(fout, ",\n      \"duration\": %lld", duration);
+  }
+  fprintf(fout, ",\n      \"user_id\": %d", re.user_id);
+  s = teamdb_get_login(cs->teamdb_state, re.user_id);
+  if (s && *s) {
+    fprintf(fout, ",\n      \"user_login\": \"%s\"", JARMOR(s));
+  }
+  s = teamdb_get_name(cs->teamdb_state, re.user_id);
+  if (s && *s) {
+    fprintf(fout, ",\n      \"user_name\": \"%s\"", JARMOR(s));
+  }
+  fprintf(fout, ",\n      \"prob_id\": %d", re.prob_id);
+  if (re.prob_id > 0 && re.prob_id <= cs->max_prob) prob = cs->probs[re.prob_id];
+  if (prob && prob->short_name && prob->short_name[0]) {
+    fprintf(fout, ",\n      \"prob_name\": \"%s\"", JARMOR(prob->short_name));
+  }
+  if (prob && prob->internal_name && prob->internal_name[0]) {
+    fprintf(fout, ",\n      \"prob_internal_name\": \"%s\"", JARMOR(prob->internal_name));
+  }
+  if (prob && prob->uuid && prob->uuid[0]) {
+    fprintf(fout, ",\n      \"prob_uuid\": \"%s\"", JARMOR(prob->uuid));
+  }
+  if (prob && prob->variant_num > 0) {
+    if (re.variant > 0) {
+      fprintf(fout, ",\n      \"raw_variant\": %d", re.variant);
+      fprintf(fout, ",\n      \"variant\": %d", re.variant);
+    } else {
+      int variant = find_variant(cs, re.user_id, re.prob_id, 0);
+      if (variant > 0) {
+        fprintf(fout, ",\n      \"variant\": %d", re.variant);
+      }
+    }
+  }
+  fprintf(fout, ",\n      \"lang_id\": %d", re.lang_id);
+  if (re.lang_id > 0 && re.lang_id <= cs->max_lang) lang = cs->langs[re.lang_id];
+  if (lang && lang->short_name && lang->short_name[0]) {
+    fprintf(fout, ",\n      \"lang_name\": \"%s\"", JARMOR(lang->short_name));
+  }
+  fprintf(fout, ",\n      \"ip\": \"%s\"", xml_unparse_ip(re.a.ip));
+  if (re.ssl_flag) {
+    fprintf(fout, ",\n      \"ssl_flag\": %s", to_json_bool(re.ssl_flag));
+  }
+  if (re.ipv6_flag) {
+    fprintf(fout, ",\n      \"ipv6_flag\": %s", to_json_bool(re.ipv6_flag));
+  }
+  fprintf(fout, ",\n      \"sha1\": \"%s\"", unparse_sha1(re.sha1));
+  if (re.locale_id > 0) {
+    fprintf(fout, ",\n      \"locale_id\": %d", re.locale_id);
+  }
+  if (re.eoln_type > 0) {
+    fprintf(fout, ",\n      \"eoln_type\": %d", re.eoln_type);
+  }
+  if (re.mime_type) {
+    fprintf(fout, ",\n      \"mime_type\": \"%s\"", mime_type_get_type(re.mime_type));
+  }
+  fprintf(fout, ",\n      \"size\": %lld", (long long) re.size);
+  if (re.store_flags) {
+    fprintf(fout, ",\n      \"store_flags\": %d", re.store_flags);
+  }
+  if (re.is_imported) {
+    fprintf(fout, ",\n      \"is_imported\": %s", to_json_bool(re.is_imported));
+  }
+  if (re.is_hidden) {
+    fprintf(fout, ",\n      \"is_hidden\": %s", to_json_bool(re.is_hidden));
+  }
+  if (re.is_readonly) {
+    fprintf(fout, ",\n      \"is_readonly\": %s", to_json_bool(re.is_readonly));
+  }
+  if (re.passed_mode) {
+    fprintf(fout, ",\n      \"passed_mode\": %d", re.passed_mode);
+  }
+  if (re.score >= 0) {
+    fprintf(fout, ",\n      \"score\": %d", re.score);
+  }
+  if (re.test >= 0) {
+    fprintf(fout, ",\n      \"test\": %d", re.test);
+  }
+  if (re.is_marked) {
+    fprintf(fout, ",\n      \"is_marked\": %s", to_json_bool(re.is_marked));
+  }
+  if (re.score_adj != 0) {
+    fprintf(fout, ",\n      \"score_adj\": %d", re.score_adj);
+  }
+  if (re.judge_id) {
+    fprintf(fout, ",\n      \"judge_id\": %d", re.judge_id);
+  }
+  if (re.pages) {
+    fprintf(fout, ",\n      \"pages\": %d", re.pages);
+  }
+  if (re.token_flags) {
+    fprintf(fout, ",\n      \"token_flags\": %d", re.token_flags);
+  }
+  if (re.token_count) {
+    fprintf(fout, ",\n      \"token_count\": %d", re.token_count);
+  }
+  if (re.is_saved) {
+    fprintf(fout, ",\n      \"is_saved\": %s", to_json_bool(re.is_saved));
+    fprintf(fout, ",\n      \"saved_status\": %d", re.saved_status);
+    fprintf(fout, ",\n      \"saved_status_str\": \"%s\"", run_status_short_str(re.saved_status));
+    if (re.saved_score >= 0) {
+      fprintf(fout, ",\n      \"saved_score\": %d", re.saved_score);
+    }
+    if (re.saved_test >= 0) {
+      fprintf(fout, ",\n      \"saved_test\": %d", re.saved_test);
+    }
+  }
+
+  fprintf(fout, "\n    }");
+  fprintf(fout, "\n  }");
+  fprintf(fout, "\n}\n");
+
+cleanup:
+  ;
+  html_armor_free(&ab);
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -7991,6 +8248,15 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CONFIRM_AVATAR] = priv_generic_operation,
   [NEW_SRV_ACTION_ENTER_CONTEST] = priv_enter_contest,
   [NEW_SRV_ACTION_LOCK_FILTER] = priv_generic_operation,
+  /*
+  [NEW_SRV_ACTION_CONTEST_STATUS_JSON] = unpriv_contest_status_json,
+  [NEW_SRV_ACTION_PROBLEM_STATUS_JSON] = unpriv_problem_status_json,
+  [NEW_SRV_ACTION_PROBLEM_STATEMENT_JSON] = unpriv_problem_statement_json,
+  [NEW_SRV_ACTION_LIST_RUNS_JSON] = unpriv_list_runs_json,
+  [NEW_SRV_ACTION_RUN_MESSAGES_JSON] = unpriv_run_messages_json,
+  [NEW_SRV_ACTION_RUN_TEST_JSON] = unpriv_run_test_json,
+   */
+  [NEW_SRV_ACTION_RUN_STATUS_JSON] = priv_run_status_json,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
@@ -11952,13 +12218,6 @@ unpriv_get_file(
     error_page(fout, phr, 0, -NEW_SRV_ERR_OPERATION_FAILED);
   }
   xfree(file_bytes);
-}
-
-static const unsigned char *
-to_json_bool(int value)
-{
-  if (value > 0) return "true";
-  else return "false";
 }
 
 static void
