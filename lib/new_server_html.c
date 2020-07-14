@@ -3202,7 +3202,7 @@ priv_submit_run(
 
   if (prob->type == PROB_TYPE_STANDARD) {
     if (hr_cgi_param(phr, "language_name", &s) > 0) {
-      for (int lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+      for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
         lang = cs->langs[lang_id];
         if (lang && lang->short_name && !strcmp(lang->short_name, s)) {
           break;
@@ -7815,7 +7815,7 @@ priv_run_status_json(
       error_page(fout, phr, 1, NEW_SRV_ERR_INV_UUID);
       goto cleanup;
     }
-  } else if (hr_cgi_param_int(phr, "run_id", &run_id) > 0) {
+  } else if (hr_cgi_param_int(phr, "run_id", &run_id) >= 0) {
   } else {
     error_page(fout, phr, 1, NEW_SRV_ERR_INV_RUN_ID);
     goto cleanup;
@@ -7840,7 +7840,7 @@ priv_run_status_json(
     fprintf(fout, "Content-type: application/json\n\n");
     fprintf(fout, "{\n");
     fprintf(fout, "  \"ok\" : true");
-    fprintf(fout, ",\n    \"server_time\": %lld", (long long) cs->current_time);
+    fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
     fprintf(fout, ",\n  \"result\": {");
     fprintf(fout, "\n    \"run\": {");
     fprintf(fout, "\n      \"run_id\": %d", re.run_id);
@@ -7871,7 +7871,7 @@ priv_run_status_json(
     fprintf(fout, "Content-type: application/json\n\n");
     fprintf(fout, "{\n");
     fprintf(fout, "  \"ok\" : true");
-    fprintf(fout, ",\n    \"server_time\": %lld", (long long) cs->current_time);
+    fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
     fprintf(fout, ",\n  \"result\": {");
     fprintf(fout, "\n    \"run\": {");
     fprintf(fout, "\n      \"run_id\": %d", re.run_id);
@@ -7900,7 +7900,7 @@ priv_run_status_json(
   fprintf(fout, "Content-type: application/json\n\n");
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\" : true");
-  fprintf(fout, ",\n    \"server_time\": %lld", (long long) cs->current_time);
+  fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
   fprintf(fout, ",\n  \"result\": {");
   if (accepting_mode) {
     fprintf(fout, ",\n    \"accepting_mode\": %s", to_json_bool(accepting_mode));
