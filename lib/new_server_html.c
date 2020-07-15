@@ -8585,6 +8585,14 @@ privileged_entry_point(
   phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
 
   if (phr->token_mode) {
+    // blacklisted for token_mode
+    if (phr->action == NEW_SRV_ACTION_CREATE_API_KEY || phr->action == NEW_SRV_ACTION_API_KEYS_PAGE || phr->action == NEW_SRV_ACTION_DELETE_API_KEY
+        || phr->action == NEW_SRV_ACTION_COOKIE_LOGIN || phr->action == NEW_SRV_ACTION_LOGIN || phr->action == NEW_SRV_ACTION_LOGIN_PAGE
+        || phr->action == NEW_SRV_ACTION_LOGIN_JSON) {
+      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
+      goto cleanup;
+    }
+
     if (ns_open_ul_connection(phr->fw_state) < 0) {
       error_page(fout, phr, 0, -NEW_SRV_ERR_USERLIST_SERVER_DOWN);
       goto cleanup;
@@ -14074,6 +14082,13 @@ unprivileged_entry_point(
     phr->login = xstrdup(auth->login);
     phr->name = xstrdup(auth->name);
   } else if (phr->token_mode) {
+    if (phr->action == NEW_SRV_ACTION_CREATE_API_KEY || phr->action == NEW_SRV_ACTION_API_KEYS_PAGE || phr->action == NEW_SRV_ACTION_DELETE_API_KEY
+        || phr->action == NEW_SRV_ACTION_COOKIE_LOGIN || phr->action == NEW_SRV_ACTION_LOGIN || phr->action == NEW_SRV_ACTION_LOGIN_PAGE
+        || phr->action == NEW_SRV_ACTION_LOGIN_JSON) {
+      error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
+      goto cleanup;
+    }
+
     if (ns_open_ul_connection(phr->fw_state) < 0) {
       error_page(fout, phr, 0, -NEW_SRV_ERR_USERLIST_SERVER_DOWN);
       goto cleanup;
