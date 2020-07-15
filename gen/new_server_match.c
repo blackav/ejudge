@@ -8940,25 +8940,52 @@ int ns_match_action(const unsigned char *str)
                 c = str[3];
                 if (c == '-') {
                   c = str[4];
-                  if (c == 'a') {
+                  if (c == 'r') {
                     c = str[5];
-                    if (c == 'u') {
+                    if (c == 'e') {
                       c = str[6];
-                      if (c == 'd') {
+                      if (c == 'p') {
                         c = str[7];
-                        if (c == 'i') {
+                        if (c == 'o') {
                           c = str[8];
-                          if (c == 't') {
+                          if (c == 'r') {
                             c = str[9];
-                            if (c == '-') {
+                            if (c == 't') {
                               c = str[10];
-                              if (c == 'l') {
-                                c = str[11];
-                                if (c == 'o') {
-                                  c = str[12];
-                                  if (c == 'g') {
-                                    c = str[13];
-                                    if (!c) return NEW_SRV_ACTION_RAW_AUDIT_LOG;
+                              if (!c) return NEW_SRV_ACTION_RAW_REPORT;
+                              return 0;
+                            }
+                            return 0;
+                          }
+                          return 0;
+                        }
+                        return 0;
+                      }
+                      return 0;
+                    }
+                    return 0;
+                  } else if (c < 'r') {
+                    if (c == 'a') {
+                      c = str[5];
+                      if (c == 'u') {
+                        c = str[6];
+                        if (c == 'd') {
+                          c = str[7];
+                          if (c == 'i') {
+                            c = str[8];
+                            if (c == 't') {
+                              c = str[9];
+                              if (c == '-') {
+                                c = str[10];
+                                if (c == 'l') {
+                                  c = str[11];
+                                  if (c == 'o') {
+                                    c = str[12];
+                                    if (c == 'g') {
+                                      c = str[13];
+                                      if (!c) return NEW_SRV_ACTION_RAW_AUDIT_LOG;
+                                      return 0;
+                                    }
                                     return 0;
                                   }
                                   return 0;
@@ -8975,7 +9002,7 @@ int ns_match_action(const unsigned char *str)
                       }
                       return 0;
                     }
-                    return 0;
+                  } else {
                   }
                   return 0;
                 }

@@ -8099,6 +8099,116 @@ cleanup:
   xfree(audit_text);
 }
 
+static void
+priv_raw_report(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const unsigned char *s;
+  ej_uuid_t run_uuid;
+  int run_id = -1;
+  struct run_entry re;
+  path_t rep_path;
+  int rep_flag;
+  char *rep_text = NULL;
+  size_t rep_len = 0;
+  int content_type = 0;
+  const unsigned char *start_ptr = NULL;
+
+  phr->json_reply = 1;
+
+  if (opcaps_check(phr->caps, OPCAP_VIEW_REPORT) < 0) {
+    error_page(fout, phr, 1, NEW_SRV_ERR_PERMISSION_DENIED);
+    goto cleanup;
+  }
+
+  if (hr_cgi_param(phr, "run_uuid", &s) > 0) {
+    if (ej_uuid_parse(s, &run_uuid) < 0) {
+      error_page(fout, phr, 1, NEW_SRV_ERR_INV_UUID);
+      goto cleanup;
+    }
+    if ((run_id = run_find_run_id_by_uuid(cs->runlog_state, &run_uuid)) < 0) {
+      error_page(fout, phr, 1, NEW_SRV_ERR_INV_UUID);
+      goto cleanup;
+    }
+  } else if (hr_cgi_param_int(phr, "run_id", &run_id) >= 0) {
+  } else {
+    error_page(fout, phr, 1, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if (!run_is_normal_status(re.status)) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    goto cleanup;
+  }
+  if (!run_is_report_available(re.status)) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_REPORT_UNAVAILABLE);
+    goto cleanup;
+  }
+
+  rep_flag = serve_make_xml_report_read_path(cs, rep_path, sizeof(rep_path), &re);
+  if (rep_flag >= 0) {
+    if (re.store_flags == STORE_FLAGS_UUID_BSON) {
+      if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0) {
+        error_page(fout, phr, 0, NEW_SRV_ERR_DISK_READ_ERROR);
+        goto cleanup;
+      }
+      content_type = CONTENT_TYPE_BSON;
+    } else {
+      if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0) {
+        error_page(fout, phr, 0, NEW_SRV_ERR_DISK_READ_ERROR);
+        goto cleanup;
+      }
+      content_type = get_content_type(rep_text, &start_ptr);
+    }
+  } else {
+    rep_flag = serve_make_report_read_path(cs, rep_path, sizeof(rep_path), &re);
+    if (rep_flag < 0) {
+      error_page(fout, phr, 0, NEW_SRV_ERR_REPORT_NONEXISTANT);
+      goto cleanup;
+    }
+    if (generic_read_file(&rep_text, 0, &rep_len, rep_flag, 0, rep_path, 0) < 0) {
+      error_page(fout, phr, 0, NEW_SRV_ERR_DISK_READ_ERROR);
+      goto cleanup;
+    }
+    content_type = get_content_type(rep_text, &start_ptr);
+  }
+
+  if (content_type == CONTENT_TYPE_BSON) {
+    fprintf(fout, "Content-type: application/bson\n"
+            "Content-length: %zu\n\n", rep_len);
+    fwrite(rep_text, 1, rep_len, fout);
+  } else if (content_type == CONTENT_TYPE_XML) {
+    fprintf(fout, "Content-type: application/xml\n"
+            "\n%s", start_ptr);
+  } else if (content_type == CONTENT_TYPE_HTML) {
+    fprintf(fout, "Content-type: text/html\n"
+            "\n%s", start_ptr);
+  } else if (content_type == CONTENT_TYPE_TEXT) {
+    fprintf(fout, "Content-type: text/plain\n"
+            "\n%s", start_ptr);
+  } else {
+    fprintf(fout, "Content-type: application/octet-stream\n"
+            "Content-length: %zu\n\n", rep_len);
+    fwrite(rep_text, 1, rep_len, fout);
+  }
+
+cleanup:
+  ;
+  xfree(rep_text);
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -8325,6 +8435,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
    */
   [NEW_SRV_ACTION_RUN_STATUS_JSON] = priv_run_status_json,
   [NEW_SRV_ACTION_RAW_AUDIT_LOG] = priv_raw_audit_log,
+  [NEW_SRV_ACTION_RAW_REPORT] = priv_raw_report,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
