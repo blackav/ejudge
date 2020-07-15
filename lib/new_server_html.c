@@ -8032,6 +8032,73 @@ cleanup:
   html_armor_free(&ab);
 }
 
+static void
+priv_raw_audit_log(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  serve_state_t cs = extra->serve_state;
+  const unsigned char *s;
+  ej_uuid_t run_uuid;
+  int run_id = -1;
+  struct run_entry re;
+
+  int rep_flag;
+  path_t audit_log_path;
+  struct stat stb;
+  char *audit_text = 0;
+  size_t audit_text_size = 0;
+
+  phr->json_reply = 1;
+
+  if (hr_cgi_param(phr, "run_uuid", &s) > 0) {
+    if (ej_uuid_parse(s, &run_uuid) < 0) {
+      error_page(fout, phr, 1, NEW_SRV_ERR_INV_UUID);
+      goto cleanup;
+    }
+    if ((run_id = run_find_run_id_by_uuid(cs->runlog_state, &run_uuid)) < 0) {
+      error_page(fout, phr, 1, NEW_SRV_ERR_INV_UUID);
+      goto cleanup;
+    }
+  } else if (hr_cgi_param_int(phr, "run_id", &run_id) >= 0) {
+  } else {
+    error_page(fout, phr, 1, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+
+  if (run_id < 0 || run_id >= run_get_total(cs->runlog_state)) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if (run_get_entry(cs->runlog_state, run_id, &re) < 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_INV_RUN_ID);
+    goto cleanup;
+  }
+  if ((rep_flag = serve_make_audit_read_path(cs, audit_log_path, sizeof(audit_log_path), &re)) < 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT);
+    goto cleanup;
+  }
+  if (lstat(audit_log_path, &stb) < 0 || !S_ISREG(stb.st_mode)) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_AUDIT_LOG_NONEXISTANT);
+    goto cleanup;
+  }
+  if (generic_read_file(&audit_text, 0, &audit_text_size, 0, 0, audit_log_path, 0) < 0) {
+    error_page(fout, phr, 0, NEW_SRV_ERR_DISK_READ_ERROR);
+    goto cleanup;
+  }
+
+  fprintf(fout, "Content-type: text/plain\n\n");
+  if (audit_text_size > 0) {
+    fwrite(audit_text, 1, audit_text_size, fout);
+  }
+
+cleanup:
+  ;
+  xfree(audit_text);
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -8257,6 +8324,7 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_RUN_TEST_JSON] = unpriv_run_test_json,
    */
   [NEW_SRV_ACTION_RUN_STATUS_JSON] = priv_run_status_json,
+  [NEW_SRV_ACTION_RAW_AUDIT_LOG] = priv_raw_audit_log,
 };
 
 static const unsigned char * const external_priv_action_names[NEW_SRV_ACTION_LAST] =
