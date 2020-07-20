@@ -104,7 +104,7 @@ static const unsigned char * const form_row_attrs[]=
 %><s:form>
     <s:hidden name="prob_id" check="false" />
     <tr bgcolor="#b0b0b0">
-        <td colspan="2" align="center"><s:v value="prob->short_name" />: <s:v value="prob->long_name" /></td>
+        <td colspan="2" align="center"><s:v value="prob->short_name" />: <s:v value="prob->long_name" checkExpr="" /></td>
         <td colspan="2"><s:url name="ProblemPageUrl" ac="cnts-edit-cur-problem-page"><s:param name="prob_id" value="prob_id" /></s:url><s:a class="a-button-style" url="ProblemPageUrl">Show details</s:a><s:submit ac="prob-delete" label="Delete!" /></td>
     </tr>
 </s:form><%

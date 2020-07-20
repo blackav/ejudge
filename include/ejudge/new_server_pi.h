@@ -2,7 +2,7 @@
 #ifndef __NEW_SERVER_PI_H__
 #define __NEW_SERVER_PI_H__
 
-/* Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -114,9 +114,11 @@ TestingQueueArray *testing_queue_array_free(TestingQueueArray *parr, int free_st
 typedef struct UserProblemInfo
 {
     time_t deadline;
+    time_t effective_time; // time to count time-based penalties
     int best_run;
     int attempts;
     int disqualified;
+    int ce_attempts;
     int best_score;
     int prev_successes; // previous successes of other users on this problem
     int all_attempts;
@@ -132,7 +134,151 @@ typedef struct UserProblemInfo
     unsigned char marked_flag;
     unsigned char autook_flag;    // if "OK" is result of "provide_ok" setting
     unsigned char rejected_flag;  // if there are "Rejected" runs
+    unsigned char need_eff_time_flag; // if effective time needs to be recorded
+    unsigned char summoned_flag; // if "Summoned for Defence"
 } UserProblemInfo;
+
+/* */
+
+typedef struct UserInfoPage
+{
+    unsigned char *user_login;
+    unsigned char *user_name;
+    unsigned char *status_str;
+
+    unsigned char *create_time_str;
+    unsigned char *last_login_time_str;
+
+    unsigned char *avatar_store;
+    unsigned char *avatar_id;
+    unsigned char *avatar_suffix;
+
+    size_t run_size;
+
+    int user_id;
+    int status;
+    int run_count;
+    int clar_count;
+    int result_score;
+
+    ejbytebool_t is_banned;
+    ejbytebool_t is_invisible;
+    ejbytebool_t is_locked;
+    ejbytebool_t is_incomplete;
+    ejbytebool_t is_disqualified;
+    ejbytebool_t is_privileged;
+    ejbytebool_t is_reg_readonly;
+} UserInfoPage;
+
+typedef struct UserInfoPageArray
+{
+    int a, u;
+    struct UserInfoPage **v;
+} UserInfoPageArray;
+
+typedef struct PrivViewUsersPage
+{
+    PageInterface b;
+    int result;
+    char *message;
+    UserInfoPageArray *users;
+} PrivViewUsersPage;
+
+typedef struct PublicLogExtraInfo
+{
+    const unsigned char *header_str;
+    const unsigned char *footer_str;
+    int user_mode;
+} PublicLogExtraInfo;
+
+typedef struct StandingsExtraInfo
+{
+    const unsigned char *stand_dir;
+    const unsigned char *file_name;
+    const unsigned char *file_name2;
+    int users_on_page;
+    int page_index;
+    int client_flag;
+    int only_table_flag;
+    int user_id;
+    const unsigned char *header_str;
+    unsigned char const *footer_str;
+    int accepting_mode;
+    const unsigned char *user_name;
+    int force_fancy_style;
+    int charset_id;
+    struct user_filter_info *user_filter;
+    int user_mode;
+    time_t stand_time;
+} StandingsExtraInfo;
+
+typedef struct LanguageStat
+{
+    int total_runs;
+    int transient_runs;
+    int success_runs;
+    int check_failed_runs;
+    int compilation_failed_runs;
+    int pending_runs;
+    int ignored_runs;
+    int disqualified_runs;
+    int partial_runs;
+    int best_score;
+} LanguageStat;
+
+typedef struct RunDisplayInfo
+{
+    unsigned char *prob_str;
+    unsigned char *lang_str;
+    unsigned char *abbrev_sha1;
+    unsigned char *score_str;
+    // in seconds
+    long long run_time;
+    long long duration;
+    long long effective_time;
+    // in microseconds
+    long long run_time_us;
+    int run_id;
+    int user_id;
+    int prob_id;
+    int variant;
+    int lang_id;
+    int size;
+    int token_open_cost;
+    int available_tokens;
+    int token_count;
+    int failed_test;
+    int passed_tests;
+    int score;
+    unsigned char status;
+    unsigned char is_imported;
+    unsigned char is_hidden;
+    unsigned char is_with_variants;
+    unsigned char is_with_duration;
+    unsigned char is_src_enabled;
+    unsigned char is_report_enabled;
+    unsigned char is_use_token_enabled;
+    unsigned char is_printing_enabled;
+    unsigned char is_separate_score;
+    unsigned char is_saved_score;
+    unsigned char is_standard_problem;
+    unsigned char is_scoring_checker;
+    unsigned char is_failed_test_available;
+    unsigned char is_score_available;
+    unsigned char is_success_score;
+    unsigned char is_passed_tests_available;
+    unsigned char is_with_effective_time;
+    unsigned char is_accepting_mode;
+} RunDisplayInfo;
+
+typedef struct RunDisplayInfos
+{
+    RunDisplayInfo *runs;
+    int size;
+    int reserved;
+} RunDisplayInfos;
+
+void run_display_info_free(struct RunDisplayInfo *rdi);
 
 #endif /* __NEW_SERVER_PI_H__ */
 

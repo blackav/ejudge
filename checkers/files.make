@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru>
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -83,6 +83,16 @@ CFILES=\
  read_corr_double.c\
  read_corr_long_double.c\
  read_sexpr.c\
+ require_nl.c\
+ skip_bom.c\
+ kill.c\
+ drain.c\
+ stoi.c\
+ stol.c\
+ stoll.c\
+ stou.c\
+ stoul.c\
+ stoull.c\
  ok.c\
  fatal.c\
  fatal_cf.c\
@@ -128,4 +138,5 @@ CHKCFILES =\
 
 STYLECFILES =\
  style_archive.c\
+ style_asm.c\
  style_c.c

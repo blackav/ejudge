@@ -205,6 +205,10 @@
     if (srs->status == SRS_TESTING) {
       time_t run_queue_time = srs->queue_ts / 1000;
       time_t testing_start_time = srs->testing_start_ts / 1000;
+      int wait_time = -1;
+      if (run_queue_time > 0 && testing_start_time > 0) {
+          wait_time = testing_start_time - run_queue_time;
+      }
 %>
         <td class="b1"><s:v value="srs->contest_id" /></td>
         <td class="b1"><s:v value="srs->run_id" /></td>
@@ -213,7 +217,7 @@
         <td class="b1"><s:v value="lang_short_name" /></td>
         <td class="b1"><s:v value="srs->test_num" /></td>
         <td class="b1"><% if (run_queue_time <= 0) { %>&nbsp;<% } else { %><s:v value="run_queue_time" /><% } %></td>
-        <td class="b1"><% if (testing_start_time <= 0) { %>&nbsp;<% } else { %><s:v value="testing_start_time" /><% } %></td>
+        <td class="b1"><% if (testing_start_time <= 0) { %>&nbsp;<% } else { %><s:v value="testing_start_time" /><% } %><% if (wait_time >= 0) { %> (<s:v value="wait_time" /> s)<% } %></td>
 <%
     } else {
 %>
@@ -221,9 +225,9 @@
 <%
     }
 %><%
-%><s:url name="DeleteInvoker" ac="invoker-delete"><s:param name="queue" value="srsv.v[i]->queue" /><s:param name="file" value="srsv.v[i]->file" /></s:url><%
-%><s:url name="StopInvoker" ac="invoker-stop"><s:param name="queue" value="srsv.v[i]->queue" /><s:param name="file" value="srsv.v[i]->file" /></s:url><%
-%><s:url name="DownInvoker" ac="invoker-down"><s:param name="queue" value="srsv.v[i]->queue" /><s:param name="file" value="srsv.v[i]->file" /></s:url><%
+%><s:url name="DeleteInvoker" ac="invoker-delete"><s:param name="queue" value="queue_name" /><s:param name="file" value="srsv.v[i]->file" /></s:url><%
+%><s:url name="StopInvoker" ac="invoker-stop"><s:param name="queue" value="queue_name" /><s:param name="file" value="srsv.v[i]->file" /></s:url><%
+%><s:url name="DownInvoker" ac="invoker-down"><s:param name="queue" value="queue_name" /><s:param name="file" value="srsv.v[i]->file" /></s:url><%
 %>        <td class="b1"><s:a url="DeleteInvoker" title="Delete Status File">[X]</s:a> <s:a url="StopInvoker" title="Stop Invoker (if supported)">[S]</s:a> <s:a url="DownInvoker" title="Shutdown Invoker Host (if supported)">[D]</s:a></td>
     </tr>
 <%

@@ -624,6 +624,12 @@ enable_option_checking=no
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 subdirs
+ac_cv_exec_user
+ac_cv_compile_user
+ac_cv_primary_user
+ac_cv_libmongoc_libs
+ac_cv_libmongoc_cflags
+ac_cv_has_libmongoc
 ac_cv_libmongo_client_libs
 ac_cv_libmongo_client_cflags
 ac_cv_has_libmongo_client
@@ -652,6 +658,7 @@ ac_cv_ncurses_suffix
 CHARSET_UPPERCASE
 ac_cv_style_prefix
 cgibindir
+ac_cv_gcc_wno_format_truncation
 ac_cv_gcc_wno_pointer_sign
 ac_cv_nls
 ac_cv_no_rpath
@@ -760,6 +767,9 @@ enable_cgi_conf_dir
 enable_ejudge_xml
 enable_contests_dir
 enable_contests_home_dir
+enable_compile_spool_dir
+enable_run_spool_dir
+enable_contests_status_dir
 enable_local_dir
 enable_ajax
 enable_style_prefix
@@ -767,7 +777,11 @@ enable_hidden_server_bins
 enable_werror
 enable_preserve_scripts
 enable_lang_config_dir
+enable_libmongoc
 with_rest
+with_primary_user
+with_exec_user
+with_compile_user
 with_httpd_cgi_bin_dir
 with_httpd_htdocs_dir
 with_festival
@@ -1429,6 +1443,11 @@ Optional Features:
   --enable-contests-home-dir
                           specify the default path to the contests home
                           directory
+  --enable-compile-spool-dir
+                          specify the path to the compile spool directory
+  --enable-run-spool-dir  specify the path to the run spool directory
+  --enable-contests-status-dir
+                          specify the path to the contest status directory
   --enable-local-dir      specify the default path to the local state
                           directory
   --enable-ajax           enable use of the ajax technology for the client web
@@ -1443,6 +1462,7 @@ Optional Features:
   --enable-lang-config-dir
                           install language config scripts into specified
                           directory
+  --enable-libmongoc      enable libmongoc mongo client library
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1463,6 +1483,9 @@ Optional Packages:
                           [[EXPAT-DIR/lib]]
   --with-mysql=MYSQL-DIR  specify the path to the mysql installation directory
   --with-rest             enable RESTful API
+  --with-primary-user     primary ejudge user
+  --with-exec-user        ejudge executer user
+  --with-compile-user     ejudge compiler user
   --with-httpd-cgi-bin-dir
                           specify the path to the web serve CGI directory
   --with-httpd-htdocs-dir specify the path to the web server HTML directory
@@ -5594,6 +5617,27 @@ else
   ac_cv_contests_home_dir=""
 fi
 
+# Check whether --enable-compile-spool-dir was given.
+if test "${enable_compile_spool_dir+set}" = set; then :
+  enableval=$enable_compile_spool_dir; ac_cv_compile_spool_dir="$enableval"
+else
+  ac_cv_compile_spool_dir=""
+fi
+
+# Check whether --enable-run-spool-dir was given.
+if test "${enable_run_spool_dir+set}" = set; then :
+  enableval=$enable_run_spool_dir; ac_cv_run_spool_dir="$enableval"
+else
+  ac_cv_run_spool_dir=""
+fi
+
+# Check whether --enable-contests-status-dir was given.
+if test "${enable_contests_status_dir+set}" = set; then :
+  enableval=$enable_contests_status_dir; ac_cv_contests_status_dir="$enableval"
+else
+  ac_cv_contests_status_dir=""
+fi
+
 # Check whether --enable-local-dir was given.
 if test "${enable_local_dir+set}" = set; then :
   enableval=$enable_local_dir; ac_cv_local_dir="$enableval"
@@ -5644,10 +5688,37 @@ else
 fi
 
 
+# Check whether --enable-libmongoc was given.
+if test "${enable_libmongoc+set}" = set; then :
+  enableval=$enable_libmongoc; ac_cv_enable_libmongoc="${enableval}"
+else
+  ac_cv_enable_libmongoc=
+fi
+
+
 
 # Check whether --with-rest was given.
 if test "${with_rest+set}" = set; then :
   withval=$with_rest; ac_cv_rest="$withval"
+fi
+
+
+
+# Check whether --with-primary-user was given.
+if test "${with_primary_user+set}" = set; then :
+  withval=$with_primary_user; ac_cv_primary_user="$withval"
+fi
+
+
+# Check whether --with-exec-user was given.
+if test "${with_exec_user+set}" = set; then :
+  withval=$with_exec_user; ac_cv_exec_user="$withval"
+fi
+
+
+# Check whether --with-compile-user was given.
+if test "${with_compile_user+set}" = set; then :
+  withval=$with_compile_user; ac_cv_compile_user="$withval"
 fi
 
 
@@ -5799,6 +5870,17 @@ fi
 [ x"${ac_cv_cgi_conf_dir}" = x -o x"${ac_cv_cgi_conf_dir}" = xyes ] && ac_cv_cgi_conf_dir="../cgi-data"
 [ x"${ac_cv_style_prefix}" = x -o x"${ac_cv_style_prefix}" = xyes ] && ac_cv_style_prefix="/ejudge/"
 [ x"${ac_cv_lang_config_dir}" = x -o x"${ac_cv_lang_config_dir}" = xyes ] && ac_cv_lang_config_dir="${ac_cv_contests_home_dir}/compile/conf/lang.d"
+[ x"${ac_cv_compile_spool_dir}" = xyes ] && ac_cv_compile_spool_dir=`dirname "${ac_cv_contests_home_dir}"`/ej-compile-spool
+[ x"${ac_cv_run_spool_dir}" = xyes ] && ac_cv_run_spool_dir=`dirname "${ac_cv_contests_home_dir}"`/ej-run-spool
+if [ x"${ac_cv_contests_status_dir}" = xyes ]
+then
+  if [ x"${ac_cv_local_dir}" != x ]
+  then
+    ac_cv_contests_status_dir="${ac_cv_local_dir}"/status
+  else
+    ac_cv_contests_status_dir=`dirname "${ac_cv_contests_home_dir}"`/ej-status
+  fi
+fi
 
 machine=`uname -m`
 
@@ -7145,8 +7227,8 @@ LIBS="${saved_LIBS}"
 
 saved_CC="${CC}"
 saved_CFLAGS="${CFLAGS}"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for annoying gcc warnings" >&5
-$as_echo_n "checking for annoying gcc warnings... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for -Wno-pointer-sign necessity" >&5
+$as_echo_n "checking for -Wno-pointer-sign necessity... " >&6; }
 CC="${CC} -Wall -Werror"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -7197,6 +7279,75 @@ if ac_fn_c_try_compile "$LINENO"; then :
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 ac_cv_gcc_wno_pointer_sign=-Wno-pointer-sign
+
+else
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+CC="${saved_CC}"
+CFLAGS="${saved_CFLAGS}"
+
+saved_CC="${CC}"
+saved_CFLAGS="${CFLAGS}"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for -Wno-format-truncation necessity" >&5
+$as_echo_n "checking for -Wno-format-truncation necessity... " >&6; }
+CC="${CC} -Wall -Werror"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <string.h>
+#include <stdio.h>
+int main(void)
+{
+  char buf1[32];
+  char buf2[32];
+  if (fgets(buf1, sizeof(buf1), stdin))
+    snprintf(buf2, sizeof(buf2), "prefix%s", buf1);
+}
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+else
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+ac_cv_annoying_warning2=1
+
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+if [ x"${ac_cv_annoying_warning2}" = x1 ]
+then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -Wno-format-truncation" >&5
+$as_echo_n "checking for -Wno-format-truncation... " >&6; }
+  CC="${saved_CC} -Wall -Wno-format-truncation -Werror"
+  CFLAGS=
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <string.h>
+#include <stdio.h>
+int main(void)
+{
+  char buf1[32];
+  char buf2[32];
+  if (fgets(buf1, sizeof(buf1), stdin))
+    snprintf(buf2, sizeof(buf2), "prefix%s", buf1);
+}
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+ac_cv_gcc_wno_format_truncation=-Wno-format-truncation
 
 else
 
@@ -7570,23 +7721,53 @@ fi
 
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libmongo-client" >&5
-$as_echo_n "checking for libmongo-client... " >&6; }
-if pkg-config --exists libmongo-client
+if [ x"${ac_cv_enable_libmongoc}" != xdisable ]
 then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libmongoc" >&5
+$as_echo_n "checking for libmongoc... " >&6; }
+  if pkg-config --atleast-version 1.13.0 libmongoc-1.0
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-  ac_cv_has_libmongo_client=1
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+    ac_cv_has_libmongoc=2
+  elif pkg-config --exists libmongoc-1.0
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    ac_cv_has_libmongoc=1
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-  ac_cv_has_libmongo_client=
+    ac_cv_has_libmongoc=
+  fi
 fi
 
-if [ x"${ac_cv_has_libmongo_client}" = x1 ]
+if [ x"${ac_cv_has_libmongoc}" != x ]
 then
-  ac_cv_libmongo_client_cflags=`pkg-config --cflags libmongo-client`
-  ac_cv_libmongo_client_libs=`pkg-config --libs libmongo-client`
+  ac_cv_libmongoc_cflags=`pkg-config --cflags libmongoc-1.0`
+  ac_cv_libmongoc_libs=`pkg-config --libs libmongoc-1.0`
+fi
+
+if [ x"${ac_cv_has_libmongoc}" = x ]
+then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for libmongo-client" >&5
+$as_echo_n "checking for libmongo-client... " >&6; }
+  if pkg-config --exists libmongo-client
+  then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+    ac_cv_has_libmongo_client=1
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    ac_cv_has_libmongo_client=
+  fi
+
+  if [ x"${ac_cv_has_libmongo_client}" = x1 ]
+  then
+    ac_cv_libmongo_client_cflags=`pkg-config --cflags libmongo-client`
+    ac_cv_libmongo_client_libs=`pkg-config --libs libmongo-client`
+  fi
 fi
 
 
@@ -7728,6 +7909,14 @@ if [ x"${ac_cv_rest}" = x ]
 then
   ac_cv_rest="/ej/"
 fi
+
+
+
+
+
+
+
+
 
 
 
@@ -8011,6 +8200,27 @@ then
 _ACEOF
 
 fi
+if [ x"${ac_cv_compile_spool_dir}" != x ]
+then
+  cat >>confdefs.h <<_ACEOF
+#define EJUDGE_COMPILE_SPOOL_DIR "${ac_cv_compile_spool_dir}"
+_ACEOF
+
+fi
+if [ x"${ac_cv_run_spool_dir}" != x ]
+then
+  cat >>confdefs.h <<_ACEOF
+#define EJUDGE_RUN_SPOOL_DIR "${ac_cv_run_spool_dir}"
+_ACEOF
+
+fi
+if [ x"${ac_cv_contests_status_dir}" != x ]
+then
+  cat >>confdefs.h <<_ACEOF
+#define EJUDGE_CONTESTS_STATUS_DIR "${ac_cv_contests_status_dir}"
+_ACEOF
+
+fi
 
 if [ x"${ac_cv_conf_dos_filenaming}" != x ]
 then
@@ -8050,6 +8260,28 @@ _ACEOF
 
 fi
 
+if [ x"${ac_cv_primary_user}" != x -a x"${ac_cv_primary_user}" != xno ]
+then
+  cat >>confdefs.h <<_ACEOF
+#define EJUDGE_PRIMARY_USER "${ac_cv_primary_user}"
+_ACEOF
+
+fi
+if [ x"${ac_cv_exec_user}" != x -a x"${ac_cv_exec_user}" != xno ]
+then
+  cat >>confdefs.h <<_ACEOF
+#define EJUDGE_EXEC_USER "${ac_cv_exec_user}"
+_ACEOF
+
+fi
+if [ x"${ac_cv_compile_user}" != x -a x"${ac_cv_compile_user}" != xno ]
+then
+  cat >>confdefs.h <<_ACEOF
+#define EJUDGE_COMPILE_USER "${ac_cv_compile_user}"
+_ACEOF
+
+fi
+
 if [ x"${ac_cv_conf_64_bit}" != xyes ]
 then
   $as_echo "#define CONF_64_BIT 1" >>confdefs.h
@@ -8074,6 +8306,16 @@ then
 
 fi
 
+if [ x"${ac_cv_has_libmongoc}" = x2 ]
+then
+  $as_echo "#define HAVE_LIBMONGOC 2" >>confdefs.h
+
+elif [ x"${ac_cv_has_libmongoc}" = x1 ]
+then
+  $as_echo "#define HAVE_LIBMONGOC 1" >>confdefs.h
+
+fi
+
 if [ x"${ac_cv_has_libmongo_client}" = x1 ]
 then
   $as_echo "#define HAVE_LIBMONGO_CLIENT 1" >>confdefs.h
@@ -8088,7 +8330,7 @@ ac_config_headers="$ac_config_headers config.h"
 subdirs="$subdirs libdwarf"
 
 
-ac_config_files="$ac_config_files Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/mysql-common/Makefile plugins/mysql-userlist/Makefile plugins/mysql-clardb/Makefile plugins/mysql-rundb/Makefile plugins/mongo-common/Makefile plugins/mongo-xuser/Makefile style/ejudge-upgrade-web cfront/Makefile reuse/Makefile csp/contests/Makefile csp/super-server/Makefile csp_header.make plugins/telegram/Makefile"
+ac_config_files="$ac_config_files Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/common-mysql/Makefile plugins/userlist-mysql/Makefile plugins/clardb-mysql/Makefile plugins/rundb-mysql/Makefile plugins/common-mongo/Makefile plugins/xuser-mongo/Makefile style/ejudge-upgrade-web cfront/Makefile reuse/Makefile csp/contests/Makefile csp/super-server/Makefile csp_header.make plugins/telegram/Makefile plugins/avatar-mongo/Makefile plugins/status-mongo/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -8791,12 +9033,12 @@ do
     "scripts/Makefile") CONFIG_FILES="$CONFIG_FILES scripts/Makefile" ;;
     "ejudge-config.v") CONFIG_FILES="$CONFIG_FILES ejudge-config.v" ;;
     "scripts/festival") CONFIG_FILES="$CONFIG_FILES scripts/festival" ;;
-    "plugins/mysql-common/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/mysql-common/Makefile" ;;
-    "plugins/mysql-userlist/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/mysql-userlist/Makefile" ;;
-    "plugins/mysql-clardb/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/mysql-clardb/Makefile" ;;
-    "plugins/mysql-rundb/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/mysql-rundb/Makefile" ;;
-    "plugins/mongo-common/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/mongo-common/Makefile" ;;
-    "plugins/mongo-xuser/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/mongo-xuser/Makefile" ;;
+    "plugins/common-mysql/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/common-mysql/Makefile" ;;
+    "plugins/userlist-mysql/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/userlist-mysql/Makefile" ;;
+    "plugins/clardb-mysql/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/clardb-mysql/Makefile" ;;
+    "plugins/rundb-mysql/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/rundb-mysql/Makefile" ;;
+    "plugins/common-mongo/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/common-mongo/Makefile" ;;
+    "plugins/xuser-mongo/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/xuser-mongo/Makefile" ;;
     "style/ejudge-upgrade-web") CONFIG_FILES="$CONFIG_FILES style/ejudge-upgrade-web" ;;
     "cfront/Makefile") CONFIG_FILES="$CONFIG_FILES cfront/Makefile" ;;
     "reuse/Makefile") CONFIG_FILES="$CONFIG_FILES reuse/Makefile" ;;
@@ -8804,6 +9046,8 @@ do
     "csp/super-server/Makefile") CONFIG_FILES="$CONFIG_FILES csp/super-server/Makefile" ;;
     "csp_header.make") CONFIG_FILES="$CONFIG_FILES csp_header.make" ;;
     "plugins/telegram/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/telegram/Makefile" ;;
+    "plugins/avatar-mongo/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/avatar-mongo/Makefile" ;;
+    "plugins/status-mongo/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/status-mongo/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

@@ -1,6 +1,75 @@
 <%
 %><%@include "includes.csp"
 %><%
+#include "ejudge/meta/contests_meta.h"
+%><%
+static const unsigned char MSG_name[] = "Name";
+static const unsigned char MSG_name_en[] = "Name (English)";
+static const unsigned char MSG_main_url[] = "Main URL";
+static const unsigned char MSG_keywords[] = "Keywords";
+static const unsigned char MSG_user_contest[] = "Contest to share users with";
+static const unsigned char MSG_default_locale[] = "Default Locale";
+static const unsigned char MSG_personal[] = "The contest is personal";
+static const unsigned char MSG_closed[] = "Closed for participation";
+static const unsigned char MSG_disable_team_password[] = "Disable separate team password";
+static const unsigned char MSG_force_password_change[] = "Force user password change";
+static const unsigned char MSG_simple_registration[] = "Enable simple registration (no email)";
+static const unsigned char MSG_send_passwd_email[] = "Always send password e-mail";
+static const unsigned char MSG_invisible[] = "Invisible in serve-control";
+static const unsigned char MSG_clean_users[] = "Allow removal of non-active users";
+static const unsigned char MSG_disable_member_delete[] = "Disallow removal of team members";
+static const unsigned char MSG_assign_logins[] = "Auto-assign logins";
+static const unsigned char MSG_force_registration[] = "Force contest registration";
+static const unsigned char MSG_disable_name[] = "Disable user &quot;Name&quot; field";
+static const unsigned char MSG_enable_password_recovery[] = "Enable password recovery";
+static const unsigned char MSG_exam_mode[] = "Examination (simplified) mode";
+static const unsigned char MSG_disable_password_change[] = "Disable password change";
+static const unsigned char MSG_disable_locale_change[] = "Disable locale change";
+static const unsigned char MSG_allow_reg_data_edit[] = "Allow edit registration data during contest";
+static const unsigned char MSG_enable_user_telegram[] = "Enable telegram interaction for users";
+static const unsigned char MSG_enable_avatar[] = "Enable avatars for users";
+static const unsigned char MSG_enable_local_pages[] = "Enable Contest-specific pages";
+static const unsigned char MSG_autoregister[] = "Registration mode";
+static const unsigned char MSG_reg_deadline[] = "Registration deadline";
+static const unsigned char MSG_register_email[] = "Registration email sender (From: field)";
+static const unsigned char MSG_register_url[] = "URL for registration";
+static const unsigned char MSG_register_subject[] = "Registration letter subject";
+static const unsigned char MSG_register_subject_en[] = "Registration letter subject (en)";
+static const unsigned char MSG_register_email_file[] = "Registration letter template file";
+static const unsigned char MSG_sched_time[] = "Contest start date";
+static const unsigned char MSG_open_time[] = "Virtual contest open time";
+static const unsigned char MSG_close_time[] = "Virtual contest close time";
+static const unsigned char MSG_team_url[] = "URL for participation";
+static const unsigned char MSG_standings_url[] = "URL for the current standings";
+static const unsigned char MSG_problems_url[] = "URL for the problemset";
+static const unsigned char MSG_logo_url[] = "URL for the contest logo";
+static const unsigned char MSG_css_url[] = "URL for the contest CSS";
+static const unsigned char MSG_users_header_file[] = "HTML header file for 'users' CGI-program";
+static const unsigned char MSG_users_footer_file[] = "HTML footer file for 'users' CGI-program";
+static const unsigned char MSG_copyright_file[] = "Copyright notice file";
+static const unsigned char MSG_welcome_file[] = "Participant welcome message file";
+static const unsigned char MSG_reg_welcome_file[] = "Registration welcome message file";
+static const unsigned char MSG_users_head_style[] = "HTML attributes for 'users' headers";
+static const unsigned char MSG_users_par_style[] = "HTML attributes for 'users' paragraphs";
+static const unsigned char MSG_users_table_style[] = "HTML attributes for 'users' tables";
+static const unsigned char MSG_users_verb_style[] = "HTML attributes for 'users' verbatim text";
+static const unsigned char MSG_users_table_format[] = "Format specification for users table";
+static const unsigned char MSG_users_table_format_en[] = "Format specification for users table (en)";
+static const unsigned char MSG_users_table_legend[] = "Legend specification for users table";
+static const unsigned char MSG_users_table_legend_en[] = "Legend specification for users table (en)";
+static const unsigned char MSG_user_name_comment[] = "Additional comment for user name field";
+static const unsigned char MSG_cf_notify_email[] = "CHECK FAILED e-mail notification address";
+static const unsigned char MSG_clar_notify_email[] = "Clar request e-mail notification address";
+static const unsigned char MSG_daily_stat_email[] = "Daily statistics email address";
+static const unsigned char MSG_dir_mode[] = "The directory permissions (octal)";
+static const unsigned char MSG_dir_group[] = "The directory group";
+static const unsigned char MSG_file_mode[] = "The file permissions (octal)";
+static const unsigned char MSG_file_group[] = "The file group";
+static const unsigned char MSG_allowed_languages[] = "Allowed programming languages";
+static const unsigned char MSG_allowed_regions[] = "Allowed regions";
+static const unsigned char MSG_login_template[] = "Template for new logins";
+static const unsigned char MSG_login_template_options[] = "Login auto-assign options";
+
 %><%@set getter_name = "csp_get_cnts_edit_cur_contest_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -13,6 +82,9 @@
     opcap_t caps = 0;
     int row = 1;
     int cur_page = 1;
+    int active = 0;
+
+    %><s:read name="active" default="0" ignoreerrors="yes" /><%
 
 static const unsigned char * const form_row_attrs[]=
 {
@@ -30,28 +102,48 @@ static const unsigned char * const form_row_attrs[]=
 %><%@include "header_jqgrid.csp"
 %>
 
+<script type="text/javascript">
+  var SID='<s:v value="phr->session_id" />';
+  var self_url='<s:v value="phr->self_url" escape="false" />';
+  var script_name='<s:v value="phr->script_name" escape="false" />';
+  var current_action=<s:ac ac="cnts-edit-cur-contest-page" />;
+</script>
+
 <%@include "cnts_edit_cur_top_menu.csp"
 %>
+
+<%#define EDIT_TEXT_ROW
+            <label for="@2Dialo_@1"><s:v value="MSG_@1" escape="no" />:</label>
+            <s:textfield size="@3" name="@1" id="@2Dialo_@1" value="" class="text ui-widget-content ui-corner-all" /><br/>
+#%>
+
+<%#define EDIT_BOOL_ROW
+            <input type="checkbox" name="@1" id="@2Dialo_@1" value="1" />
+            <label for="@2Dialo_@1"><s:v value="MSG_@1" escape="no" />?</label>
+            <br/>
+#%>
+
+<%#define EDIT_DATE_TIME_ROW
+            <label for="@2Dialo_@1_time"><s:v value="MSG_@1" escape="no" />:</label>
+            <input id="@2Dialo_@1_time" type="text" name="@1_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
+            <input id="@2Dialo_@1_date" type="text" name="@1_date" size="10" class="text ui-widget-content ui-corner-all" />
+            <br/>
+#%>
 
 <div id="BasicDialogDiv" title="Basic Contest Settings" style="overflow: auto;">
     <s:form id="BasicDialogForm">
         <s:hidden name="action" ac="cnts-save-basic-form" />
         <fieldset>
-            <label for="BasicDialogName">Name:</label>
-            <s:textfield size="48" name="name" id="BasicDialogName" value="" class="text ui-widget-content ui-corner-all" /><br/>
-            <label for="BasicDialogNameEn">Name (English):</label>
-            <s:textfield size="48" name="name_en" id="BasicDialogNameEn" value="" class="text ui-widget-content ui-corner-all" /><br/>
-            <label for="BasicDialogMainUrl">Main URL:</label>
-            <s:textfield size="48" name="main_url" id="BasicDialogMainUrl" value="" class="text ui-widget-content ui-corner-all" /><br/>
-            <label for="BasicDialogKeywords">Keywords:</label>
-            <s:textfield size="48" name="keywords" id="BasicDialogKeywords" value="" class="text ui-widget-content ui-corner-all" /><br/>
-            <label for="BasicDialogUserContest">Contest to share users with:</label>
-            <select id="BasicDialogUserContest" name="user_contest"></select><br/>
-            <label for="BasicDialogDefaultLocale">Default Locale:</label>
-<% l10n_html_locale_select_3(out_f, "BasicDialogDefaultLocale", NULL, "default_locale", NULL, -1); %>
+            <%@expand EDIT_TEXT_ROW "name" "Basic" "48" %>
+            <%@expand EDIT_TEXT_ROW "name_en" "Basic" "48" %>
+            <%@expand EDIT_TEXT_ROW "main_url" "Basic" "48" %>
+            <%@expand EDIT_TEXT_ROW "keywords" "Basic" "48" %>
+            <label for="BasicDialo_user_contest"><s:v value="MSG_user_contest" escape="no" />:</label>
+            <select id="BasicDialo_user_contest" name="user_contest"></select><br/>
+            <label for="BasicDialo_default_locale"><s:v value="MSG_default_locale" escape="no" />:</label>
+<% l10n_html_locale_select_3(out_f, "BasicDialo_default_locale", NULL, "default_locale", NULL, -1); %>
             <br/>
-            <label for="BasicDialogPersonal">The contest is personal?</label>
-            <input type="checkbox" name="personal" id="BasicDialogPersonal" value="1" />
+            <%@expand EDIT_BOOL_ROW "personal" "Basic" %>
         </fieldset>
     </s:form>
 </div>
@@ -60,57 +152,25 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="FlagsDialogForm">
         <s:hidden name="action" ac="cnts-save-flags-form" />
         <fieldset>
-            <input type="checkbox" name="closed" id="FlagsDialogClosed" value="1" />
-            <label for="FlagsDialogClosed">Closed for participation?</label>
-            <br/>
-            <input type="checkbox" name="disable_team_password" id="FlagsDialogDisableTeamPassword" value="1" />
-            <label for="FlagsDialogDisableTeamPassword">Disable separate team password?</label>
-            <br/>
-            <input type="checkbox" name="force_password_change" id="FlagsDialogForcePasswordChange" value="1" />
-            <label for="FlagsDialogForcePasswordChange">Force user password change?</label>
-            <br/>
-            <input type="checkbox" name="simple_registration" id="FlagsDialogSimpleRegistration" value="1" />
-            <label for="FlagsDialogSimpleRegistration">Enable simple registration (no email)?</label>
-            <br/>
-            <input type="checkbox" name="send_passwd_email" id="FlagsDialogSendPasswdEmail" value="1" />
-            <label for="FlagsDialogSendPasswdEmail">Always send password e-mail?</label>
-            <br/>
-            <input type="checkbox" name="invisible" id="FlagsDialogInvisible" value="1" />
-            <label for="FlagsDialogInvisible">Invisible in serve-control?</label>
-            <br/>
-            <input type="checkbox" name="clean_users" id="FlagsDialogCleanUsers" value="1" />
-            <label for="FlagsDialogCleanUsers">Allow removal of non-active users?</label>
-            <br/>
-            <input type="checkbox" name="disable_member_delete" id="FlagsDialogDisableMemberDelete" value="1" />
-            <label for="FlagsDialogDisableMemberDelete">Disallow removal of team members?</label>
-            <br/>
-            <input type="checkbox" name="assign_logins" id="FlagsDialogAssignLogins" value="1" />
-            <label for="FlagsDialogAssignLogins">Auto-assign logins?</label>
-            <br/>
-            <input type="checkbox" name="force_registration" id="FlagsDialogForceRegistration" value="1" />
-            <label for="FlagsDialogForceRegistration">Force contest registration?</label>
-            <br/>
-            <input type="checkbox" name="disable_name" id="FlagsDialogDisableName" value="1" />
-            <label for="FlagsDialogDisableName">Disable user &quot;Name&quot; field?</label>
-            <br/>
-            <input type="checkbox" name="enable_password_recovery" id="FlagsDialogEnablePasswordRecovery" value="1" />
-            <label for="FlagsDialogEnablePasswordRecovery">Enable password recovery?</label>
-            <br/>
-            <input type="checkbox" name="exam_mode" id="FlagsDialogExamMode" value="1" />
-            <label for="FlagsDialogExamMode">Examination (simplified) mode?</label>
-            <br/>
-            <input type="checkbox" name="disable_password_change" id="FlagsDialogDisablePasswordChange" value="1" />
-            <label for="FlagsDialogDisablePasswordChange">Disable password change?</label>
-            <br/>
-            <input type="checkbox" name="disable_locale_change" id="FlagsDialogDisableLocaleChange" value="1" />
-            <label for="FlagsDialogDisableLocaleChange">Disable locale change?</label>
-            <br/>
-            <input type="checkbox" name="allow_reg_data_edit" id="FlagsDialogAllowRegDataEdit" value="1" />
-            <label for="FlagsDialogAllowRegDataEdit">Allow edit registration data during contest?</label>
-            <br/>
-            <input type="checkbox" name="enable_user_telegram" id="FlagsDialogEnableUserTelegram" value="1" />
-            <label for="FlagsDialogEnableUserTelegram">Enable telegram interaction for users?</label>
-            <br/>
+            <%@expand EDIT_BOOL_ROW "closed" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "disable_team_password" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "force_password_change" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "simple_registration" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "send_passwd_email" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "invisible" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "clean_users" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "disable_member_delete" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "assign_logins" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "force_registration" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "disable_name" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "enable_password_recovery" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "exam_mode" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "disable_password_change" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "disable_locale_change" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "allow_reg_data_edit" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "enable_user_telegram" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "enable_avatar" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "enable_local_pages" "Flags" %>
         </fieldset>
     </s:form>
 </div>
@@ -119,29 +179,16 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="RegistrationDialogForm">
         <s:hidden name="action" ac="cnts-save-registration-form" />
         <fieldset>
-            <label for="RegistrationDialogAutoregister">Registration mode:</label>
-            <s:yesno id="RegistrationDialogAutoregister" name="autoregister" noLabel="Moderated registration" yesLabel="Free registration" />
+            <label for="RegistrationDialo_autoregister"><s:v value="MSG_autoregister" escape="no" />:</label>
+            <s:yesno id="RegistrationDialo_autoregister" name="autoregister" noLabel="Moderated registration" yesLabel="Free registration" />
             <br/>
 
-            <label for="RegistrationDialogRegDeadlineTime">Registration deadline:</label>
-            <input id="RegistrationDialogRegDeadlineTime" type="text" name="reg_deadline_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
-            <input id="RegistrationDialogRegDeadlineDate" type="text" name="reg_deadline_date" size="10" class="text ui-widget-content ui-corner-all" />
-            <br/>
-
-            <label for="RegistrationDialogRegisterEmail">Registration email sender (From: field):</label>
-            <s:textfield size="48" name="register_email" id="RegistrationDialogRegisterEmail" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="RegistrationDialogRegisterUrl">URL for registration:</label>
-            <s:textfield size="48" name="register_url" id="RegistrationDialogRegisterUrl" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="RegistrationDialogRegisterSubject">Registration letter subject:</label>
-            <s:textfield size="48" name="register_subject" id="RegistrationDialogRegisterSubject" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="RegistrationDialogRegisterSubjectEn">Registration letter subject (en):</label>
-            <s:textfield size="48" name="register_subject_en" id="RegistrationDialogRegisterSubjectEn" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="RegistrationDialogRegisterEmailFile">Registration letter template file:</label>
-            <s:textfield size="48" name="register_email_file" id="RegistrationDialogRegisterEmailFile" value="" class="text ui-widget-content ui-corner-all" />
+            <%@expand EDIT_DATE_TIME_ROW "reg_deadline" "Registration"  %>
+            <%@expand EDIT_TEXT_ROW "register_email" "Registration" "48" %>
+            <%@expand EDIT_TEXT_ROW "register_url" "Registration" "48" %>
+            <%@expand EDIT_TEXT_ROW "register_subject" "Registration" "48" %>
+            <%@expand EDIT_TEXT_ROW "register_subject_en" "Registration" "48" %>
+            <%@expand EDIT_TEXT_ROW "register_email_file" "Registration" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -150,19 +197,9 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="TimingDialogForm">
         <s:hidden name="action" ac="cnts-save-timing-form" />
         <fieldset>
-            <label for="TimingDialogSchedTime">Contest start date:</label>
-            <input id="TimingDialogSchedTimeTime" type="text" name="sched_time_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
-            <input id="TimingDialogSchedTimeDate" type="text" name="sched_time_date" size="10" class="text ui-widget-content ui-corner-all" />
-            <br/>
-
-            <label for="TimingDialogOpenTime">Virtual contest open time:</label>
-            <input id="TimingDialogOpenTimeTime" type="text" name="open_time_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
-            <input id="TimingDialogOpenTimeDate" type="text" name="open_time_date" size="10" class="text ui-widget-content ui-corner-all" />
-            <br/>
-
-            <label for="TimingDialogCloseTime">Virtual contest close time:</label>
-            <input id="TimingDialogCloseTimeTime" type="text" name="close_time_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
-            <input id="TimingDialogCloseTimeDate" type="text" name="close_time_date" size="10" class="text ui-widget-content ui-corner-all" />
+            <%@expand EDIT_DATE_TIME_ROW "sched_time" "Timing" %>
+            <%@expand EDIT_DATE_TIME_ROW "open_time" "Timing" %>
+            <%@expand EDIT_DATE_TIME_ROW "close_time" "Timing" %>
         </fieldset>
     </s:form>
 </div>
@@ -171,24 +208,11 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="UrlDialogForm">
         <s:hidden name="action" ac="cnts-save-urls-form" />
         <fieldset>
-            <label for="UrlDialogTeamUrl">URL for participation:</label>
-            <s:textfield size="48" name="team_url" id="UrlDialogTeamUrl" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-
-            <label for="UrlDialogStandingsUrl">URL for the current standings:</label>
-            <s:textfield size="48" name="standings_url" id="UrlDialogStandingsUrl" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-
-            <label for="UrlDialogProblemsUrl">URL for the problemset:</label>
-            <s:textfield size="48" name="problems_url" id="UrlDialogProblemsUrl" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-
-            <label for="UrlDialogLogoUrl">URL for the contest logo:</label>
-            <s:textfield size="48" name="logo_url" id="UrlDialogLogoUrl" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-
-            <label for="UrlDialogCssUrl">URL for the contest CSS:</label>
-            <s:textfield size="48" name="css_url" id="UrlDialogCssUrl" value="" class="text ui-widget-content ui-corner-all" />
+            <%@expand EDIT_TEXT_ROW "team_url" "Url" "48" %>
+            <%@expand EDIT_TEXT_ROW "standings_url" "Url" "48" %>
+            <%@expand EDIT_TEXT_ROW "problems_url" "Url" "48" %>
+            <%@expand EDIT_TEXT_ROW "logo_url" "Url" "48" %>
+            <%@expand EDIT_TEXT_ROW "css_url" "Url" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -197,20 +221,11 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="HeadersDialogForm">
         <s:hidden name="action" ac="cnts-save-headers-form" />
         <fieldset>
-            <label for="HeadersDialogUsersHeaderFile">HTML header file for 'users' CGI-program:</label>
-            <s:textfield size="48" name="users_header_file" id="HeadersDialogUsersHeaderFile" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="HeadersDialogUsersFooterFile">HTML footer file for 'users' CGI-program:</label>
-            <s:textfield size="48" name="users_footer_file" id="HeadersDialogUsersFooterFile" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="HeadersDialogCopyrightFile">Copyright notice file:</label>
-            <s:textfield size="48" name="copyright_file" id="HeadersDialogCopyrightFile" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="HeadersDialogWelcomeFile">Participant welcome message file:</label>
-            <s:textfield size="48" name="welcome_file" id="HeadersDialogWelcomeFile" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="HeadersDialogRegWelcomeFile">Registration welcome message file:</label>
-            <s:textfield size="48" name="reg_welcome_file" id="HeadersDialogRegWelcomeFile" value="" class="text ui-widget-content ui-corner-all" />
+            <%@expand EDIT_TEXT_ROW "users_header_file" "Headers" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_footer_file" "Headers" "48" %>
+            <%@expand EDIT_TEXT_ROW "copyright_file" "Headers" "48" %>
+            <%@expand EDIT_TEXT_ROW "welcome_file" "Headers" "48" %>
+            <%@expand EDIT_TEXT_ROW "reg_welcome_file" "Headers" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -219,33 +234,15 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="AttrsDialogForm">
         <s:hidden name="action" ac="cnts-save-attrs-form" />
         <fieldset>
-            <label for="AttrsDialogUsersHeadStyle">HTML attributes for 'users' headers:</label>
-            <s:textfield size="48" name="users_head_style" id="AttrsDialogUsersHeadStyle" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialogUsersParStyle">HTML attributes for 'users' paragraphs:</label>
-            <s:textfield size="48" name="users_par_style" id="AttrsDialogUsersParStyle" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialogUsersTableStyle">HTML attributes for 'users' tables:</label>
-            <s:textfield size="48" name="users_table_style" id="AttrsDialogUsersTableStyle" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialogUsersVerbStyle">HTML attributes for 'users' verbatim text:</label>
-            <s:textfield size="48" name="users_verb_style" id="AttrsDialogUsersVerbStyle" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialogUsersTableFormat">Format specification for users table:</label>
-            <s:textfield size="48" name="users_table_format" id="AttrsDialogUsersTableFormat" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialogUsersTableFormatEn">Format specification for users table (en):</label>
-            <s:textfield size="48" name="users_table_format_en" id="AttrsDialogUsersTableFormatEn" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialogUsersTableLegend">Legend specification for users table:</label>
-            <s:textfield size="48" name="users_table_legend" id="AttrsDialogUsersTableLegend" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialogUsersTableLegendEn">Legend specification for users table (en):</label>
-            <s:textfield size="48" name="users_table_legend_en" id="AttrsDialogUsersTableLegendEn" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AttrsDialogUserNameComment">Additional comment for user name field:</label>
-            <s:textfield size="48" name="user_name_comment" id="AttrsDialogUserNameComment" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
+            <%@expand EDIT_TEXT_ROW "users_head_style" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_par_style" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_table_style" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_verb_style" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_table_format" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_table_format_en" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_table_legend" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "users_table_legend_en" "Attrs" "48" %>
+            <%@expand EDIT_TEXT_ROW "user_name_comment" "Attrs" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -254,15 +251,9 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="NotificationsDialogForm">
         <s:hidden name="action" ac="cnts-save-notifications-form" />
         <fieldset>
-            <label for="NotificationsDialogCfNotifyEmail">CHECK FAILED e-mail notification address:</label>
-            <s:textfield size="48" name="cf_notify_email" id="NotificationsDialogCfNotifyEmail" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="NotificationsDialogClarNotifyEmail">Clar request e-mail notification address:</label>
-            <s:textfield size="48" name="clar_notify_email" id="NotificationsDialogClarNotifyEmail" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="NotificationsDialogDailyStatEmail">Daily statistics email address:</label>
-            <s:textfield size="48" name="daily_stat_email" id="NotificationsDialogDailyStatEmail" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
+            <%@expand EDIT_TEXT_ROW "cf_notify_email" "Notifications" "48" %>
+            <%@expand EDIT_TEXT_ROW "clar_notify_email" "Notifications" "48" %>
+            <%@expand EDIT_TEXT_ROW "daily_stat_email" "Notifications" "48" %>
         </fieldset>
     </s:form>
 </div>
@@ -271,37 +262,21 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="AdvancedDialogForm">
         <s:hidden name="action" ac="cnts-save-advanced-form" />
         <fieldset>
-            <label for="AdvancedDialogDirMode">The directory permissions (octal):</label>
-            <s:textfield size="48" name="dir_mode" id="AdvancedDialogDirMode" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AdvancedDialogDirGroup">The directory group:</label>
-            <s:textfield size="48" name="dir_group" id="AdvancedDialogDirGroup" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AdvancedDialogFileMode">The file permissions (octal):</label>
-            <s:textfield size="48" name="file_mode" id="AdvancedDialogFileMode" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AdvancedDialogFileGroup">The file group:</label>
-            <s:textfield size="48" name="file_group" id="AdvancedDialogFileGroup" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AdvancedDialogAllowedLanguages">Allowed programming languages:</label>
-            <s:textfield size="48" name="allowed_languages" id="AdvancedDialogAllowedLanguages" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AdvancedDialogAllowedRegions">Allowed regions:</label>
-            <s:textfield size="48" name="allowed_regions" id="AdvancedDialogAllowedRegions" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AdvancedDialogLoginTemplate">Template for new logins:</label>
-            <s:textfield size="48" name="login_template" id="AdvancedDialogLoginTemplate" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
-            <label for="AdvancedDialogLoginTemplateOptions">Login auto-assign options:</label>
-            <s:textfield size="48" name="login_template_options" id="AdvancedDialogLoginTemplateOptions" value="" class="text ui-widget-content ui-corner-all" />
-            <br/>
+            <%@expand EDIT_TEXT_ROW "dir_mode" "Advanced" "48" %>
+            <%@expand EDIT_TEXT_ROW "dir_group" "Advanced" "48" %>
+            <%@expand EDIT_TEXT_ROW "file_mode" "Advanced" "48" %>
+            <%@expand EDIT_TEXT_ROW "file_group" "Advanced" "48" %>
+            <%@expand EDIT_TEXT_ROW "allowed_languages" "Advanced" "48" %>
+            <%@expand EDIT_TEXT_ROW "allowed_regions" "Advanced" "48" %>
+            <%@expand EDIT_TEXT_ROW "login_template" "Advanced" "48" %>
+            <%@expand EDIT_TEXT_ROW "login_template_options" "Advanced" "48" %>
         </fieldset>
     </s:form>
 </div>
 
 <script type="text/javascript">
 $(function() {
-    $('#ContestAccordion').accordion({ heightStyle: "content" });
+    $('#ContestAccordion').accordion({ heightStyle: "content" <% if (active > 0) { %>, active: <s:v value="active" /><% } %> });
     dialog = $("#BasicDialogDiv").dialog({
         autoOpen: false,
         height: 300,
@@ -317,10 +292,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=0';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -346,10 +322,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=4';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -375,10 +352,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=1';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -389,8 +367,8 @@ $(function() {
         close : function() {
         }
     });
-    $('#RegistrationDialogRegDeadlineTime').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
-    $('#RegistrationDialogRegDeadlineDate').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
+    $('#RegistrationDialo_reg_deadline_time').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
+    $('#RegistrationDialo_reg_deadline_date').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
 
     timingDialog = $("#TimingDialogDiv").dialog({
         autoOpen: false,
@@ -407,10 +385,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=2';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -421,12 +400,12 @@ $(function() {
         close : function() {
         }
     });
-    $('#TimingDialogSchedTimeTime').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
-    $('#TimingDialogSchedTimeDate').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
-    $('#TimingDialogOpenTimeTime').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
-    $('#TimingDialogOpenTimeDate').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
-    $('#TimingDialogCloseTimeTime').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
-    $('#TimingDialogCloseTimeDate').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
+    $('#TimingDialo_sched_time_time').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
+    $('#TimingDialo_sched_time_date').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
+    $('#TimingDialo_open_time_time').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
+    $('#TimingDialo_open_time_date').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
+    $('#TimingDialo_close_time_time').timepicker({ 'timeFormat': 'H:i', 'step': 30 });
+    $('#TimingDialo_close_time_date').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
 
     urlDialog = $("#UrlDialogDiv").dialog({
         autoOpen: false,
@@ -443,10 +422,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=3';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -473,10 +453,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=8';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -503,10 +484,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=9';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -533,10 +515,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=10';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -563,10 +546,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + current_action + '&active=11';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -588,7 +572,7 @@ function copyCheckbox(dst, src)
 
 function popupBasicDialog(e, skipField)
 {
-    var selWidget=document.getElementById("BasicDialogUserContest");
+    var selWidget=document.getElementById("BasicDialo_user_contest");
     if (selWidget != null) {
         if (selWidget.options.length == 0) {
             jQuery.ajax({
@@ -599,25 +583,25 @@ function popupBasicDialog(e, skipField)
                 },
                 dataType : "text",
                 success : function(data) {
-                    $("#BasicDialogUserContest").html(data);
-                    $("#BasicDialogUserContest").val(document.getElementById("OrigUserContest").value);
+                    $("#BasicDialo_user_contest").html(data);
+                    $("#BasicDialo_user_contest").val(document.getElementById("Ori_user_contest").value);
                 }
             });
         } else {
-            $("#BasicDialogUserContest").val(document.getElementById("OrigUserContest").value);
+            $("#BasicDialo_user_contest").val(document.getElementById("Ori_user_contest").value);
         }
     }
 
-    document.getElementById("BasicDialogName").value = document.getElementById("OrigName").value;
-    document.getElementById("BasicDialogNameEn").value = document.getElementById("OrigNameEn").value;
-    document.getElementById("BasicDialogMainUrl").value = document.getElementById("OrigMainUrl").value;
-    document.getElementById("BasicDialogKeywords").value = document.getElementById("OrigKeywords").value;
-    $("#BasicDialogDefaultLocale").val(document.getElementById("OrigDefaultLocale").value);
-    document.getElementById("BasicDialogPersonal").checked = false;
-    copyCheckbox("BasicDialogPersonal", "OrigPersonal");
+    document.getElementById("BasicDialo_name").value = document.getElementById("Ori_name").value;
+    document.getElementById("BasicDialo_name_en").value = document.getElementById("Ori_name_en").value;
+    document.getElementById("BasicDialo_main_url").value = document.getElementById("Ori_main_url").value;
+    document.getElementById("BasicDialo_keywords").value = document.getElementById("Ori_keywords").value;
+    $("#BasicDialo_default_locale").val(document.getElementById("Ori_default_locale").value);
+    document.getElementById("BasicDialo_personal").checked = false;
+    copyCheckbox("BasicDialo_personal", "Ori_personal");
 
     if (typeof skipField !== 'undefined') {
-        var dst = document.getElementById("BasicDialog" + skipField);
+        var dst = document.getElementById("BasicDialo_" + skipField);
         if (dst != null) {
             dst.value = "";
         }
@@ -629,40 +613,43 @@ function popupBasicDialog(e, skipField)
 
 function popupFlagsDialog()
 {
-    copyCheckbox("FlagsDialogClosed", "OrigClosed");
-    copyCheckbox("FlagsDialogDisableTeamPassword", "OrigDisableTeamPassword");
-    copyCheckbox("FlagsDialogForcePasswordChange", "OrigForcePasswordChange");
-    copyCheckbox("FlagsDialogSimpleRegistration", "OrigSimpleRegistration");
-    copyCheckbox("FlagsDialogSendPasswdEmail", "OrigSendPasswdEmail");
-    copyCheckbox("FlagsDialogInvisible", "OrigInvisible");
-    copyCheckbox("FlagsDialogCleanUsers", "OrigCleanUsers");
-    copyCheckbox("FlagsDialogDisableMemberDelete", "OrigDisableMemberDelete");
-    copyCheckbox("FlagsDialogAssignLogins", "OrigAssignLogins");
-    copyCheckbox("FlagsDialogForceRegistration", "OrigForceRegistration");
-    copyCheckbox("FlagsDialogDisableName", "OrigDisableName");
-    copyCheckbox("FlagsDialogEnablePasswordRecovery", "OrigEnablePasswordRecovery");
-    copyCheckbox("FlagsDialogExamMode", "OrigExamMode");
-    copyCheckbox("FlagsDialogDisablePasswordChange", "OrigDisablePasswordChange");
-    copyCheckbox("FlagsDialogDisableLocaleChange", "OrigDisableLocaleChange");
-    copyCheckbox("FlagsDialogAllowRegDataEdit", "OrigAllowRegDataEdit");
+    copyCheckbox("FlagsDialo_closed", "Ori_closed");
+    copyCheckbox("FlagsDialo_disable_team_password", "Ori_disable_team_password");
+    copyCheckbox("FlagsDialo_force_password_change", "Ori_force_password_change");
+    copyCheckbox("FlagsDialo_simple_registration", "Ori_simple_registration");
+    copyCheckbox("FlagsDialo_send_passwd_email", "Ori_send_passwd_email");
+    copyCheckbox("FlagsDialo_invisible", "Ori_invisible");
+    copyCheckbox("FlagsDialo_clean_users", "Ori_clean_users");
+    copyCheckbox("FlagsDialo_disable_member_delete", "Ori_disable_member_delete");
+    copyCheckbox("FlagsDialo_assign_logins", "Ori_assign_logins");
+    copyCheckbox("FlagsDialo_force_registration", "Ori_force_registration");
+    copyCheckbox("FlagsDialo_disable_name", "Ori_disable_name");
+    copyCheckbox("FlagsDialo_enable_password_recovery", "Ori_enable_password_recovery");
+    copyCheckbox("FlagsDialo_exam_mode", "Ori_exam_mode");
+    copyCheckbox("FlagsDialo_disable_password_change", "Ori_disable_password_change");
+    copyCheckbox("FlagsDialo_disable_locale_change", "Ori_disable_locale_change");
+    copyCheckbox("FlagsDialo_allow_reg_data_edit", "Ori_allow_reg_data_edit");
+    copyCheckbox("FlagsDialo_enable_user_telegram", "Ori_enable_user_telegram");
+    copyCheckbox("FlagsDialo_enable_avatar", "Ori_enable_avatar");
+    copyCheckbox("FlagsDialo_enable_local_pages", "Ori_enable_local_pages");
 
     $("#FlagsDialogDiv").dialog('open');
 }
 
 function popupRegistrationDialog(e, skipField)
 {
-    $("#RegistrationDialogAutoregister").val(document.getElementById("OrigAutoregister").value);
-    document.getElementById("RegistrationDialogRegDeadlineTime").value = document.getElementById("OrigRegDeadline_time").value;
-    document.getElementById("RegistrationDialogRegDeadlineDate").value = document.getElementById("OrigRegDeadline_date").value;
-    document.getElementById("RegistrationDialogRegisterEmail").value = document.getElementById("OrigRegisterEmail").value;
-    document.getElementById("RegistrationDialogRegisterUrl").value = document.getElementById("OrigRegisterUrl").value;
-    document.getElementById("RegistrationDialogRegisterSubject").value = document.getElementById("OrigRegisterSubject").value;
-    document.getElementById("RegistrationDialogRegisterSubjectEn").value = document.getElementById("OrigRegisterSubjectEn").value;
-    document.getElementById("RegistrationDialogRegisterEmailFile").value = document.getElementById("OrigRegisterEmailFile").value;
+    $("#RegistrationDialo_autoregister").val(document.getElementById("Ori_autoregister").value);
+    document.getElementById("RegistrationDialo_reg_deadline_time").value = document.getElementById("Ori_reg_deadline_time").value;
+    document.getElementById("RegistrationDialo_reg_deadline_date").value = document.getElementById("Ori_reg_deadline_date").value;
+    document.getElementById("RegistrationDialo_register_email").value = document.getElementById("Ori_register_email").value;
+    document.getElementById("RegistrationDialo_register_url").value = document.getElementById("Ori_register_url").value;
+    document.getElementById("RegistrationDialo_register_subject").value = document.getElementById("Ori_register_subject").value;
+    document.getElementById("RegistrationDialo_register_subject_en").value = document.getElementById("Ori_register_subject_en").value;
+    document.getElementById("RegistrationDialo_register_email_file").value = document.getElementById("Ori_register_email_file").value;
 
     if (skipField == "RegDeadline") {
-        document.getElementById("RegistrationDialogRegDeadlineTime").value = "";
-        document.getElementById("RegistrationDialogRegDeadlineDate").value = "";
+        document.getElementById("RegistrationDialo_reg_deadline_time").value = "";
+        document.getElementById("RegistrationDialo_reg_deadline_date").value = "";
     } else if (typeof skipField !== 'undefined') {
         var dst = document.getElementById("RegistrationDialog" + skipField);
         if (dst != null) {
@@ -676,25 +663,25 @@ function popupRegistrationDialog(e, skipField)
 
 function popupTimingDialog(e, skipField)
 {
-    var fields = [ "SchedTime", "OpenTime", "CloseTime" ];
+    var fields = [ "sched_time", "open_time", "close_time" ];
     for (var i in fields) {
-        var dst = document.getElementById("TimingDialog" + fields[i] + "Time");
-        var src = document.getElementById("Orig" + fields[i] + "_time");
+        var dst = document.getElementById("TimingDialo_" + fields[i] + "_time");
+        var src = document.getElementById("Ori_" + fields[i] + "_time");
         if (dst != null && src != null) {
             dst.value = src.value;
         }
-        dst = document.getElementById("TimingDialog" + fields[i] + "Date");
-        src = document.getElementById("Orig" + fields[i] + "_date");
+        dst = document.getElementById("TimingDialo_" + fields[i] + "_date");
+        src = document.getElementById("Ori_" + fields[i] + "_date");
         if (dst != null && src != null) {
             dst.value = src.value;
         }
     }
     if (typeof skipField !== 'undefined') {
-        var dst = document.getElementById("TimingDialog" + skipField + "Time");
+        var dst = document.getElementById("TimingDialo_" + skipField + "_time");
         if (dst != null) {
             dst.value = "";
         }
-        dst = document.getElementById("TimingDialog" + skipField + "Date");
+        dst = document.getElementById("TimingDialo_" + skipField + "_date");
         if (dst != null) {
             dst.value = "";
         }
@@ -706,12 +693,12 @@ function popupTimingDialog(e, skipField)
 
 function popupUrlDialog(e, skipField)
 {
-    var fields = ["TeamUrl", "StandingsUrl", "ProblemsUrl", "LogoUrl", "CssUrl"];
+    var fields = ["team_url", "standings_url", "problems_url", "logo_url", "css_url"];
     for (var i in fields) {
-        document.getElementById("UrlDialog" + fields[i]).value = document.getElementById("Orig" + fields[i]).value;
+        document.getElementById("UrlDialo_" + fields[i]).value = document.getElementById("Ori_" + fields[i]).value;
     }
     if (typeof skipField !== 'undefined') {
-        var dst = document.getElementById("UrlDialog" + skipField);
+        var dst = document.getElementById("UrlDialo_" + skipField);
         if (dst != null) {
             dst.value = "";
         }
@@ -723,12 +710,12 @@ function popupUrlDialog(e, skipField)
 
 function popupHeadersDialog(e, skipField)
 {
-    var fields = ["UsersHeaderFile", "UsersFooterFile", "CopyrightFile", "WelcomeFile", "RegWelcomeFile"];
+    var fields = ["users_header_file", "users_footer_file", "copyright_file", "welcome_file", "reg_welcome_file"];
     for (var i in fields) {
-        document.getElementById("HeadersDialog" + fields[i]).value = document.getElementById("Orig" + fields[i]).value;
+        document.getElementById("HeadersDialo_" + fields[i]).value = document.getElementById("Ori_" + fields[i]).value;
     }
     if (typeof skipField !== 'undefined') {
-        var dst = document.getElementById("HeadersDialog" + skipField);
+        var dst = document.getElementById("HeadersDialo_" + skipField);
         if (dst != null) {
             dst.value = "";
         }
@@ -740,13 +727,13 @@ function popupHeadersDialog(e, skipField)
 
 function popupAttrsDialog(e, skipField)
 {
-    var fields = [ "UsersHeadStyle", "UsersParStyle", "UsersTableStyle", "UsersVerbStyle", "UsersTableFormat",
-                   "UsersTableFormatEn", "UsersTableLegend", "UsersTableLegendEn", "UserNameComment" ];
+    var fields = [ "users_head_style", "users_par_style", "users_table_style", "users_verb_style", "users_table_format",
+                   "users_table_format_en", "users_table_legend", "users_table_legend_en", "user_name_comment" ];
     for (var i in fields) {
-        document.getElementById("AttrsDialog" + fields[i]).value = document.getElementById("Orig" + fields[i]).value;
+        document.getElementById("AttrsDialo_" + fields[i]).value = document.getElementById("Ori_" + fields[i]).value;
     }
     if (typeof skipField !== 'undefined') {
-        var dst = document.getElementById("AttrsDialog" + skipField);
+        var dst = document.getElementById("AttrsDialo_" + skipField);
         if (dst != null) {
             dst.value = "";
         }
@@ -758,12 +745,12 @@ function popupAttrsDialog(e, skipField)
 
 function popupNotificationsDialog(e, skipField)
 {
-    var fields = [ "CfNotifyEmail", "ClarNotifyEmail", "DailyStatEmail" ];
+    var fields = [ "cf_notify_email", "clar_notify_email", "daily_stat_email" ];
     for (var i in fields) {
-        document.getElementById("NotificationsDialog" + fields[i]).value = document.getElementById("Orig" + fields[i]).value;
+        document.getElementById("NotificationsDialo_" + fields[i]).value = document.getElementById("Ori_" + fields[i]).value;
     }
     if (typeof skipField !== 'undefined') {
-        var dst = document.getElementById("NotificationsDialog" + skipField);
+        var dst = document.getElementById("NotificationsDialo_" + skipField);
         if (dst != null) {
             dst.value = "";
         }
@@ -775,16 +762,16 @@ function popupNotificationsDialog(e, skipField)
 
 function popupAdvancedDialog(e, skipField)
 {
-    var fields = [ "DirMode", "DirGroup", "FileMode", "FileGroup", "AllowedLanguages", "AllowedRegions", "LoginTemplate", "LoginTemplateOptions" ];
+    var fields = [ "dir_mode", "dir_group", "file_mode", "file_group", "allowed_languages", "allowed_regions", "login_template", "login_template_options" ];
     for (var i in fields) {
-        var dst = document.getElementById("AdvancedDialog" + fields[i]);
-        var src = document.getElementById("Orig" + fields[i]);
+        var dst = document.getElementById("AdvancedDialo_" + fields[i]);
+        var src = document.getElementById("Ori_" + fields[i]);
         if (dst != null && src != null) {
             dst.value = src.value;
         }
     }
     if (typeof skipField !== 'undefined') {
-        var dst = document.getElementById("AdvancedDialog" + skipField);
+        var dst = document.getElementById("AdvancedDialo_" + skipField);
         if (dst != null) {
             dst.value = "";
         }
@@ -805,38 +792,67 @@ function np(e)
     <h3>Basic contest identification</h3>
     <div>
 
+<%#define ORIG_TEXT_ROW
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td><s:v value="MSG_@1" escape="no" />:</td>
+        <td><s:textfield id="Ori_@1" readonly="readonly" size="@3" name="param" value="cnts->@1" notset="yes" /></td>
+        <td><input type="button" onclick="popup@2Dialog(event, '@1');" value="Clear" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:@1" /></td>
+    </s:tr>
+#%>
+
+<%#define ORIG_TEXT_ROW_NO_CLEAR
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td><s:v value="MSG_@1" escape="no" />:</td>
+        <td><s:textfield id="Ori_@1" readonly="readonly" size="@2" name="param" value="cnts->@1" notset="yes" /></td>
+        <td>&nbsp;</td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:@1" /></td>
+    </s:tr>
+#%>
+
+<%#define ORIG_BOOL_ROW
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td><s:v value="MSG_@1" escape="no" />?</td>
+        <td><s:yesno id="Ori_@1" disabled="disabled" name="param" value="cnts->@1" /></td>
+        <td>&nbsp;</td>
+        <td><s:help topic="Contest.xml:@1" /></td>
+    </s:tr>
+#%>
+
+<%#define ORIG_TEXT_ROW_WITH_EDIT
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td><s:v value="MSG_@1" escape="no" />:</td>
+        <td><s:textfield id="Ori_@1" readonly="readonly" size="@3" name="param" value="cnts->@1" notset="yes" /></td>
+        <td onclick="np(event);"><input type="button" onclick="popup@2Dialog(event, '@1');" value="Clear" />[<s:a ac="cnts-edit-@4-page">Edit</s:a>]</td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:@1" /></td>
+    </s:tr>
+#%>
+
+<%#define ORIG_ACCESS_ROW
+    <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
+        <td>@2</td>
+        <td><pre><% super_html_unparse_access_2(out_f, cnts->@1_access); %></pre></td>
+        <td><s:a ac="cnts-edit-@1-access-page">Edit</s:a></td>
+        <td><s:help topic="Contest.xml:@1_access" /></td>
+    </s:tr>
+#%>
+
+<%#define ORIG_DATE_TIME_ROW
+    <s:tr attr="form_row_attrs[row ^= 1]">
+        <td><s:v value="MSG_@1" escape="no" />:</td>
+        <td><% html_date_select_2(out_f, cnts->@1, "Ori_@1", "param", NULL, 1, 0, 0); %></td>
+        <td><input type="button" onclick="popup@2Dialog(event, '@1');" value="Clear" /></td>
+        <td onclick="np(event);"><s:help topic="Contest.xml:@1" /></td>
+    </s:tr>
+#%>
+
 <table border="0" onclick="popupBasicDialog();">
     <s:tr attr="form_row_attrs[row ^= 1]"><td>Contest ID:</td><td><s:v value="cnts->id" /></td><td>&nbsp;</td><td>&nbsp;</td></s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Name:</td>
-        <td><s:textfield id="OrigName" readonly="readonly" size="48" name="param" value="cnts->name" notset="yes" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:name" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Name (English):</td>
-        <td><s:textfield id="OrigNameEn" readonly="readonly" size="48" name="param" value="cnts->name_en" notset="yes" /></td>
-        <td><input type="button" onclick="popupBasicDialog(event, 'NameEn');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:name_en" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Main URL:</td>
-        <td><s:textfield id="OrigMainUrl" readonly="readonly" size="48" name="param" value="cnts->main_url" notset="yes" /></td>
-        <td><input type="button" onclick="popupBasicDialog(event, 'MainUrl');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:main_url" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Keywords:</td>
-        <td><s:textfield id="OrigKeywords" readonly="readonly" size="48" name="param" value="cnts->keywords" notset="yes" /></td>
-        <td><input type="button" onclick="popupBasicDialog(event, 'Keywords');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:keywords" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Contest to share users with:</td>
-        <td><s:textfield id="OrigUserContest" readonly="readonly" size="48" name="param" value="cnts->user_contest" notset="yes" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:user_contest" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW_NO_CLEAR "name" "48" %>
+    <%@expand ORIG_TEXT_ROW "name_en" "Basic" "48" %>
+    <%@expand ORIG_TEXT_ROW "main_url" "Basic" "48" %>
+    <%@expand ORIG_TEXT_ROW "keywords" "Basic" "48" %>
+    <%@expand ORIG_TEXT_ROW "user_contest" "Basic" "48" %>
 <%
   if (cnts->default_locale && *cnts->default_locale) {
     int locale_id = l10n_parse_locale(cnts->default_locale);
@@ -849,18 +865,8 @@ function np(e)
     }
   }
 %>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Default locale:</td>
-        <td><s:textfield id="OrigDefaultLocale" readonly="readonly" size="48" name="param" value="cnts->default_locale" notset="yes" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:default_locale" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>The contest is personal?</td>
-        <td><s:yesno id="OrigPersonal" disabled="disabled" name="param" value="cnts->personal" /></td>
-        <td>&nbsp;</td>
-        <td><s:help topic="Contest.xml:personal" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW_NO_CLEAR "default_locale" "48" %>
+    <%@expand ORIG_BOOL_ROW "personal" %>
 </table>
     </div>
 
@@ -870,47 +876,17 @@ function np(e)
 <table border="0" onclick="popupRegistrationDialog();">
 <% row = 1; %>
     <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Registration mode:</td>
-        <td><s:yesno disabled="disabled" id="OrigAutoregister" name="param" value="cnts->autoregister" noLabel="Moderated registration" yesLabel="Free registration" /></td>
+        <td><s:v value="MSG_autoregister" escape="no" />:</td>
+        <td><s:yesno disabled="disabled" id="Ori_autoregister" name="param" value="cnts->autoregister" noLabel="Moderated registration" yesLabel="Free registration" /></td>
         <td>&nbsp;</td>
         <td onclick="np(event);"><s:help topic="Contest.xml:autoregister" /></td>
     </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Registration deadline:</td>
-        <td><% html_date_select_2(out_f, cnts->reg_deadline, "OrigRegDeadline", "param", NULL, 1, 0, 0); %></td>
-        <td><input type="button" onclick="popupRegistrationDialog(event, 'RegDeadline');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:reg_deadline" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Registration email sender (From: field):</td>
-        <td><s:textfield readonly="readonly" id="OrigRegisterEmail" size="48" name="param" value="cnts->register_email" notset="yes" /></td>
-        <td><input type="button" onclick="popupRegistrationDialog(event, 'RegisterEmail');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:register_email" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>URL for registration:</td>
-        <td><s:textfield readonly="readonly" id="OrigRegisterUrl" size="48" name="param" value="cnts->register_url" notset="yes" /></td>
-        <td><input type="button" onclick="popupRegistrationDialog(event, 'RegisterUrl');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:register_url" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Registration letter subject:</td>
-        <td><s:textfield readonly="readonly" id="OrigRegisterSubject" size="48" name="param" value="cnts->register_subject" notset="yes" /></td>
-        <td><input type="button" onclick="popupRegistrationDialog(event, 'RegisterSubject');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:register_subject" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Registration letter subject (en):</td>
-        <td><s:textfield readonly="readonly" id="OrigRegisterSubjectEn" size="48" name="param" value="cnts->register_subject_en" notset="yes" /></td>
-        <td><input type="button" onclick="popupRegistrationDialog(event, 'RegisterSubjectEn');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:register_subject_en" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Registration letter template file:</td>
-        <td><s:textfield readonly="readonly" id="OrigRegisterEmailFile" size="48" name="param" value="cnts->register_email_file" notset="yes" /></td>
-        <td><input type="button" onclick="popupRegistrationDialog(event, 'RegisterEmailFile');" value="Clear" />[<s:a ac="cnts-edit-register-email-file-page">Edit</s:a>]</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:register_email_file" /></td>
-    </s:tr>
+    <%@expand ORIG_DATE_TIME_ROW "reg_deadline" "Registration" %>
+    <%@expand ORIG_TEXT_ROW "register_email" "Registration" "48" %>
+    <%@expand ORIG_TEXT_ROW "register_url" "Registration" "48" %>
+    <%@expand ORIG_TEXT_ROW "register_subject" "Registration" "48" %>
+    <%@expand ORIG_TEXT_ROW "register_subject_en" "Registration" "48" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "register_email_file" "Registration" "48" "register-email-file" %>
 </table>
     </div>
 
@@ -919,24 +895,9 @@ function np(e)
     <div>
 <table border="0" onclick="popupTimingDialog();">
 <% row = 1; %>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Contest start date:</td>
-        <td><% html_date_select_2(out_f, cnts->sched_time, "OrigSchedTime", "param", NULL, 1, 0, 0); %></td>
-        <td><input type="button" onclick="popupTimingDialog(event, 'SchedTime');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:sched_time" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Virtual contest open date:</td>
-        <td><% html_date_select_2(out_f, cnts->open_time, "OrigOpenTime", "param", NULL, 1, 0, 0); %></td>
-        <td><input type="button" onclick="popupTimingDialog(event, 'OpenTime');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:open_time" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Virtual contest close date:</td>
-        <td><% html_date_select_2(out_f, cnts->close_time, "OrigCloseTime", "param", NULL, 1, 0, 0); %></td>
-        <td><input type="button" onclick="popupTimingDialog(event, 'CloseTime');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:close_time" /></td>
-    </s:tr>
+    <%@expand ORIG_DATE_TIME_ROW "sched_time" "Timing" %>
+    <%@expand ORIG_DATE_TIME_ROW "open_time" "Timing" %>
+    <%@expand ORIG_DATE_TIME_ROW "close_time" "Timing" %>
 </table>
     </div>
 
@@ -946,36 +907,11 @@ function np(e)
 <table border="0" onclick="popupUrlDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>URL for participation:</td>
-        <td><s:textfield id="OrigTeamUrl" readonly="readonly" size="48" name="param" value="cnts->team_url" notset="yes" /></td>
-        <td><input type="button" onclick="popupUrlDialog(event, 'TeamUrl');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:team_url" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>URL for the current standings:</td>
-        <td><s:textfield id="OrigStandingsUrl" readonly="readonly" size="48" name="param" value="cnts->standings_url" notset="yes" /></td>
-        <td><input type="button" onclick="popupUrlDialog(event, 'StandingsUrl');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:standings_url" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>URL for the problemset:</td>
-        <td><s:textfield id="OrigProblemsUrl" readonly="readonly" size="48" name="param" value="cnts->problems_url" notset="yes" /></td>
-        <td><input type="button" onclick="popupUrlDialog(event, 'ProblemsUrl');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:problems_url" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>URL for the contest logo:</td>
-        <td><s:textfield id="OrigLogoUrl" readonly="readonly" size="48" name="param" value="cnts->logo_url" notset="yes" /></td>
-        <td><input type="button" onclick="popupUrlDialog(event, 'LogoUrl');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:logo_url" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>URL for the contest CSS:</td>
-        <td><s:textfield id="OrigCssUrl" readonly="readonly" size="48" name="param" value="cnts->css_url" notset="yes" /></td>
-        <td><input type="button" onclick="popupUrlDialog(event, 'CssUrl');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:css_url" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW "team_url" "Url" "48" %>
+    <%@expand ORIG_TEXT_ROW "standings_url" "Url" "48" %>
+    <%@expand ORIG_TEXT_ROW "problems_url" "Url" "48" %>
+    <%@expand ORIG_TEXT_ROW "logo_url" "Url" "48" %>
+    <%@expand ORIG_TEXT_ROW "css_url" "Url" "48" %>
 </table>
     </div>
 
@@ -985,129 +921,34 @@ function np(e)
 <table border="0" onclick="popupFlagsDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Disable separate team password?</td>
-        <td><s:yesno id="OrigDisableTeamPassword" disabled="disabled" name="param" value="cnts->disable_team_password" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:disable_team_password" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Force user password change?</td>
-        <td><s:yesno id="OrigForcePasswordChange" disabled="disabled" name="param" value="cnts->force_password_change" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:force_password_change" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Enable simple registration (no email)?</td>
-        <td><s:yesno id="OrigSimpleRegistration" disabled="disabled" name="param" value="cnts->simple_registration" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:simple_registration" /></td>
-    </s:tr>
+    <%@expand ORIG_BOOL_ROW "disable_team_password" %>
+    <%@expand ORIG_BOOL_ROW "force_password_change" %>
+    <%@expand ORIG_BOOL_ROW "simple_registration" %>
 <%
   if (cnts->simple_registration) {
 %>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Send e-mail with password anyway?</td>
-        <td><s:yesno id="OrigSendPasswdEmail" disabled="disabled" name="param" value="cnts->send_passwd_email" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:send_passwd_email" /></td>
-    </s:tr>
+    <%@expand ORIG_BOOL_ROW "send_passwd_email" %>
 <%
   } else {
-%><s:hidden id="OrigSendPasswdEmail" name="send_passwd_email" value="cnts->send_passwd_email" check="no" /><%
+%><s:hidden id="Ori_send_passwd_email" name="send_passwd_email" value="cnts->send_passwd_email" check="no" /><%
   }
 %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Allow pruning users?</td>
-        <td><s:yesno id="OrigCleanUsers" disabled="disabled" name="param" value="cnts->clean_users" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:clean_users" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Closed for participation?</td>
-        <td><s:yesno id="OrigClosed" disabled="disabled" name="param" value="cnts->closed" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:closed" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Invisible in serve-control?</td>
-        <td><s:yesno id="OrigInvisible" disabled="disabled" name="param" value="cnts->invisible" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:invisible" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Disallow team member removal?</td>
-        <td><s:yesno id="OrigDisableMemberDelete" disabled="disabled" name="param" value="cnts->disable_member_delete" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:disable_member_delete" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Auto-assign logins?</td>
-        <td><s:yesno id="OrigAssignLogins" disabled="disabled" name="param" value="cnts->assign_logins" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:assign_logins" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Force contest registration?</td>
-        <td><s:yesno id="OrigForceRegistration" disabled="disabled" name="param" value="cnts->force_registration" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:force_registration" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Disable &quot;Name&quot; field?</td>
-        <td><s:yesno id="OrigDisableName" disabled="disabled" name="param" value="cnts->disable_name" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:disable_name" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Enable password recovery?</td>
-        <td><s:yesno id="OrigEnablePasswordRecovery" disabled="disabled" name="param" value="cnts->enable_password_recovery" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:enable_password_recovery" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Examination mode?</td>
-        <td><s:yesno id="OrigExamMode" disabled="disabled" name="param" value="cnts->exam_mode" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:exam_mode" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Disable password change?</td>
-        <td><s:yesno id="OrigDisablePasswordChange" disabled="disabled" name="param" value="cnts->disable_password_change" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:disable_password_change" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Disable locale change?</td>
-        <td><s:yesno id="OrigDisableLocaleChange" disabled="disabled" name="param" value="cnts->disable_locale_change" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:disable_locale_change" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Allow edit registration data during contest?</td>
-        <td><s:yesno id="OrigAllowRegDataEdit" disabled="disabled" name="param" value="cnts->allow_reg_data_edit" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:allow_reg_data_edit" /></td>
-    </s:tr>
-
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Enable telegram interaction for users?</td>
-        <td><s:yesno id="OrigEnableUserTelegram" disabled="disabled" name="param" value="cnts->enable_user_telegram" /></td>
-        <td>&nbsp;</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:enable_user_telegram" /></td>
-    </s:tr>
+    <%@expand ORIG_BOOL_ROW "clean_users" %>
+    <%@expand ORIG_BOOL_ROW "closed" %>
+    <%@expand ORIG_BOOL_ROW "invisible" %>
+    <%@expand ORIG_BOOL_ROW "disable_member_delete" %>
+    <%@expand ORIG_BOOL_ROW "assign_logins" %>
+    <%@expand ORIG_BOOL_ROW "force_registration" %>
+    <%@expand ORIG_BOOL_ROW "disable_name" %>
+    <%@expand ORIG_BOOL_ROW "enable_password_recovery" %>
+    <%@expand ORIG_BOOL_ROW "exam_mode" %>
+    <%@expand ORIG_BOOL_ROW "disable_password_change" %>
+    <%@expand ORIG_BOOL_ROW "disable_locale_change" %>
+    <%@expand ORIG_BOOL_ROW "allow_reg_data_edit" %>
+    <%@expand ORIG_BOOL_ROW "enable_user_telegram" %>
+    <%@expand ORIG_BOOL_ROW "enable_avatar" %>
+    <%@expand ORIG_BOOL_ROW "enable_local_pages" %>
 </table>
     </div>
 
@@ -1117,42 +958,12 @@ function np(e)
 <table border="0">
 <% row = 1; %>
 
-    <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
-        <td>Access to contest registration</td>
-        <td><pre><% super_html_unparse_access_2(out_f, cnts->register_access); %></pre></td>
-        <td><s:a ac="cnts-edit-register-access-page">Edit</s:a></td>
-        <td><s:help topic="Contest.xml:register_access" /></td>
-    </s:tr>
-    <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
-        <td>Access to user list display</td>
-        <td><pre><% super_html_unparse_access_2(out_f, cnts->users_access); %></pre></td>
-        <td><s:a ac="cnts-edit-users-access-page">Edit</s:a></td>
-        <td><s:help topic="Contest.xml:users_access" /></td>
-    </s:tr>
-    <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
-        <td>Access to contest participation</td>
-        <td><pre><% super_html_unparse_access_2(out_f, cnts->team_access); %></pre></td>
-        <td><s:a ac="cnts-edit-team-access-page">Edit</s:a></td>
-        <td><s:help topic="Contest.xml:team_access" /></td>
-    </s:tr>
-    <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
-        <td>Access to contest administration</td>
-        <td><pre><% super_html_unparse_access_2(out_f, cnts->master_access); %></pre></td>
-        <td><s:a ac="cnts-edit-master-access-page">Edit</s:a></td>
-        <td><s:help topic="Contest.xml:master_access" /></td>
-    </s:tr>
-    <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
-        <td>Access to contest judging</td>
-        <td><pre><% super_html_unparse_access_2(out_f, cnts->judge_access); %></pre></td>
-        <td><s:a ac="cnts-edit-judge-access-page">Edit</s:a></td>
-        <td><s:help topic="Contest.xml:judge_access" /></td>
-    </s:tr>
-    <s:tr valign="top" attr="form_row_attrs[row ^= 1]">
-        <td>Access to contest setup</td>
-        <td><pre><% super_html_unparse_access_2(out_f, cnts->serve_control_access); %></pre></td>
-        <td><s:a ac="cnts-edit-serve-control-access-page">Edit</s:a></td>
-        <td><s:help topic="Contest.xml:serve_control_access" /></td>
-    </s:tr>
+    <%@expand ORIG_ACCESS_ROW "register" "Access to contest registration" %>
+    <%@expand ORIG_ACCESS_ROW "users" "Access to user list display" %>
+    <%@expand ORIG_ACCESS_ROW "team" "Access to contest participation" %>
+    <%@expand ORIG_ACCESS_ROW "master" "Access to contest administration" %>
+    <%@expand ORIG_ACCESS_ROW "judge" "Access to contest judging" %>
+    <%@expand ORIG_ACCESS_ROW "serve_control" "Access to contest setup" %>
 </table>
 
     </div>
@@ -1393,36 +1204,11 @@ initial count = <s:v value="memb->init_count" />
 <table border="0" onclick="popupHeadersDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>HTML header file for 'users' CGI-program:</td>
-        <td><s:textfield id="OrigUsersHeaderFile" readonly="readonly" size="48" name="param" value="cnts->users_header_file" notset="yes"/></td>
-        <td onclick="np(event);"><input type="button" onclick="popupHeadersDialog(event, 'UsersHeaderFile');" value="Clear" />[<s:a ac="cnts-edit-users-header-page">Edit</s:a>]</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_header_file" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>HTML footer file for 'users' CGI-program:</td>
-        <td><s:textfield id="OrigUsersFooterFile" readonly="readonly" size="48" name="param" value="cnts->users_footer_file" notset="yes" /></td>
-        <td onclick="np(event);"><input type="button" onclick="popupHeadersDialog(event, 'UsersFooterFile');" value="Clear" />[<s:a ac="cnts-edit-users-footer-page">Edit</s:a>]</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_footer_file" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Copyright notice file:</td>
-        <td><s:textfield id="OrigCopyrightFile" readonly="readonly" size="48" name="param" value="cnts->copyright_file" notset="yes" /></td>
-        <td onclick="np(event);"><input type="button" onclick="popupHeadersDialog(event, 'CopyrightFile');" value="Clear" />[<s:a ac="cnts-edit-copyright-page">Edit</s:a>]</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:copyright_file" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Participant welcome message file:</td>
-        <td><s:textfield id="OrigWelcomeFile" readonly="readonly" size="48" name="param" value="cnts->welcome_file" notset="yes" /></td>
-        <td onclick="np(event);"><input type="button" onclick="popupHeadersDialog(event, 'WelcomeFile');" value="Clear" />[<s:a ac="cnts-edit-welcome-page">Edit</s:a>]</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:welcome_file" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Registration welcome message file:</td>
-        <td><s:textfield id="OrigRegWelcomeFile" readonly="readonly" size="48" name="param" value="cnts->reg_welcome_file" notset="yes" /></td>
-        <td onclick="np(event);"><input type="button" onclick="popupHeadersDialog(event, 'RegWelcomeFile');" value="Clear" />[<s:a ac="cnts-edit-reg-welcome-page">Edit</s:a>]</td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:reg_welcome_file" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "users_header_file" "Headers" "48" "users-header" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "users_footer_file" "Headers" "48" "users-footer" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "copyright_file" "Headers" "48" "copyright" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "welcome_file" "Headers" "48" "welcome" %>
+    <%@expand ORIG_TEXT_ROW_WITH_EDIT "reg_welcome_file" "Headers" "48" "reg-welcome" %>
 </table>
 
     </div>
@@ -1433,60 +1219,15 @@ initial count = <s:v value="memb->init_count" />
 <table border="0" onclick="popupAttrsDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>HTML attributes for 'users' headers:</td>
-        <td><s:textfield id="OrigUsersHeadStyle" readonly="readonly" size="48" name="param" value="cnts->users_head_style" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersHeadStyle');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_head_style" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>HTML attributes for 'users' paragraphs:</td>
-        <td><s:textfield id="OrigUsersParStyle" readonly="readonly" size="48" name="param" value="cnts->users_par_style" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersParStyle');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_par_style" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>HTML attributes for 'users' tables:</td>
-        <td><s:textfield id="OrigUsersTableStyle" readonly="readonly" size="48" name="param" value="cnts->users_table_style" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersTableStyle');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_table_style" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>HTML attributes for 'users' verbatim text:</td>
-        <td><s:textfield id="OrigUsersVerbStyle" readonly="readonly" size="48" name="param" value="cnts->users_verb_style" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersVerbStyle');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_verb_style" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Format specification for users table:</td>
-        <td><s:textfield id="OrigUsersTableFormat" readonly="readonly" size="48" name="param" value="cnts->users_table_format" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersTableFormat');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_table_format" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Format specification for users table (En):</td>
-        <td><s:textfield id="OrigUsersTableFormatEn" readonly="readonly" size="48" name="param" value="cnts->users_table_format_en" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersTableFormatEn');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_table_format_en" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Legend specification for users table:</td>
-        <td><s:textfield id="OrigUsersTableLegend" readonly="readonly" size="48" name="param" value="cnts->users_table_legend" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersTableLegend');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_table_legend" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Legend specification for users table (En):</td>
-        <td><s:textfield id="OrigUsersTableLegendEn" readonly="readonly" size="48" name="param" value="cnts->users_table_legend_en" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'UsersTableLegendEn');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:users_table_legend_en" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Additional comment for user name field:</td>
-        <td><s:textfield id="OrigUserNameComment" readonly="readonly" size="48" name="param" value="cnts->user_name_comment" notset="yes" /></td>
-        <td><input type="button" onclick="popupAttrsDialog(event, 'UserNameComment');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:user_name_comment" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW "users_head_style" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_par_style" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_table_style" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_verb_style" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_table_format" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_table_format_en" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_table_legend" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "users_table_legend_en" "Attrs" "48" %>
+    <%@expand ORIG_TEXT_ROW "user_name_comment" "Attrs" "48" %>
 </table>
 
     </div>
@@ -1497,24 +1238,9 @@ initial count = <s:v value="memb->init_count" />
 <table border="0" onclick="popupNotificationsDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>CHECK FAILED e-mail notification address:</td>
-        <td><s:textfield id="OrigCfNotifyEmail" readonly="readonly" size="48" name="param" value="cnts->cf_notify_email" notset="yes" /></td>
-        <td><input type="button" onclick="popupNotificationsDialog(event, 'CfNotifyEmail');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:cf_notify_email" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Clar request e-mail notification address:</td>
-        <td><s:textfield id="OrigClarNotifyEmail" readonly="readonly" size="48" name="param" value="cnts->clar_notify_email" notset="yes" /></td>
-        <td><input type="button" onclick="popupNotificationsDialog(event, 'ClarNotifyEmail');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:clar_notify_email" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Daily statistics email address:</td>
-        <td><s:textfield id="OrigDailyStatEmail" readonly="readonly" size="48" name="param" value="cnts->daily_stat_email" notset="yes" /></td>
-        <td><input type="button" onclick="popupNotificationsDialog(event, 'DailyStatEmail');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:daily_stat_email" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW "cf_notify_email" "Notifications" "48" %>
+    <%@expand ORIG_TEXT_ROW "clar_notify_email" "Notifications" "48" %>
+    <%@expand ORIG_TEXT_ROW "daily_stat_email" "Notifications" "48" %>
 </table>
 
     </div>
@@ -1525,51 +1251,16 @@ initial count = <s:v value="memb->init_count" />
 <table border="0" onclick="popupAdvancedDialog();">
 <% row = 1; %>
 
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>The directory permissions (octal):</td>
-        <td><s:textfield id="OrigDirMode" readonly="readonly" size="48" name="param" value="cnts->dir_mode" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'DirMode');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:dir_mode" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>The directory group:</td>
-        <td><s:textfield id="OrigDirGroup" readonly="readonly" size="48" name="param" value="cnts->dir_group" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'DirGroup');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:dir_group" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>The file permissions (octal):</td>
-        <td><s:textfield id="OrigFileMode" readonly="readonly" size="48" name="param" value="cnts->file_mode" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'FileMode');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:file_mode" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>The file group:</td>
-        <td><s:textfield id="OrigFileGroup" readonly="readonly" size="48" name="param" value="cnts->file_group" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'FileGroup');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:file_group" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Allowed programming languages:</td>
-        <td><s:textfield id="OrigAllowedLanguages" readonly="readonly" size="48" name="param" value="cnts->allowed_languages" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'AllowedLanguages');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:allowed_languages" /></td>
-    </s:tr>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Allowed regions:</td>
-        <td><s:textfield id="OrigAllowedRegions" readonly="readonly" size="48" name="param" value="cnts->allowed_regions" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'AllowedRegions');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:allowed_regions" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW "dir_mode" "Advanced" "48" %>
+    <%@expand ORIG_TEXT_ROW "dir_group" "Advanced" "48" %>
+    <%@expand ORIG_TEXT_ROW "file_mode" "Advanced" "48" %>
+    <%@expand ORIG_TEXT_ROW "file_group" "Advanced" "48" %>
+    <%@expand ORIG_TEXT_ROW "allowed_languages" "Advanced" "48" %>
+    <%@expand ORIG_TEXT_ROW "allowed_regions" "Advanced" "48" %>
 <%
   if (cnts->assign_logins) {
 %>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Template for new logins:</td>
-        <td><s:textfield id="OrigLoginTemplate" readonly="readonly" size="48" name="param" value="cnts->login_template" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'LoginTemplate');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:login_template" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW "login_template" "Advanced" "48" %>
 <%
   }
 %>
@@ -1577,12 +1268,7 @@ initial count = <s:v value="memb->init_count" />
 <%
   if (cnts->assign_logins) {
 %>
-    <s:tr attr="form_row_attrs[row ^= 1]">
-        <td>Login auto-assign options:</td>
-        <td><s:textfield id="OrigLoginTemplateOptions" readonly="readonly" size="48" name="param" value="cnts->login_template_options" notset="yes" /></td>
-        <td><input type="button" onclick="popupAdvancedDialog(event, 'LoginTemplateOptions');" value="Clear" /></td>
-        <td onclick="np(event);"><s:help topic="Contest.xml:login_template_options" /></td>
-    </s:tr>
+    <%@expand ORIG_TEXT_ROW "login_template_options" "Advanced" "48" %>
 <%
   }
 %>

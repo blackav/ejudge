@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2005-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,10 +30,7 @@ int checker_main(int argc, char **argv)
   checker_l10n_prepare();
 
   if (getenv("EJ_REQUIRE_NL")) {
-    if (fseek(f_out, -1L, SEEK_END) >= 0) {
-      if (getc(f_out) != '\n') fatal_PE(_("No final \\n in the output file"));
-      fseek(f_out, 0L, SEEK_SET);
-    }
+    checker_require_nl(f_out, 1);
   }
 
   if (!(s = getenv("EPS")))
@@ -47,8 +43,10 @@ int checker_main(int argc, char **argv)
     fatal_CF("EPS >= 1");
   abs_flag = getenv("ABSOLUTE");
 
+  checker_skip_bom(f_corr);
   checker_read_corr_long_double(_("correct"), 1, &corr_ans);
   checker_corr_eof();
+  checker_skip_bom(f_out);
   checker_read_out_long_double(_("output"), 1, &out_ans);
   checker_out_eof();
   if (!(abs_flag?checker_eq_long_double_abs:checker_eq_long_double)(out_ans, corr_ans, eps))

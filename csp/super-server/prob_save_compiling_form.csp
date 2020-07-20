@@ -2,8 +2,8 @@
 %><%@include "includes.csp"
 %><%
 
-#define COPYSTR(f) snprintf(prob->f, sizeof(prob->f), "%s", (f))
 #define MOVEENV(f) sarray_free(prob->f); prob->f = f; f = NULL
+#define MOVESTR(f) xfree(prob->f); prob->f = f; f = NULL
 
 %><%@set getter_name = "csp_get_prob_save_compiling_form"
 %><%@set ac_prefix = "SSERV_CMD_"
@@ -22,7 +22,7 @@
     ejintbool_t source_header_dflt = 0;
     unsigned char *source_footer = NULL;
     ejintbool_t source_footer_dflt = 0;
-    
+
     int i;
     struct section_problem_data *prob = NULL;
 
@@ -31,20 +31,39 @@
     FILE *msg_f = open_memstream(&msg_s, &msg_z);
 
 %><s:read var="prob_id" required="yes" /><%
-%><s:read var="style_checker_cmd" normalize="yes" nonnull="yes" /><%
+%><s:read var="style_checker_cmd" normalize="yes" /><%
 %><s:read var="style_checker_cmd_dflt" default="0" /><%
 %><s:read var="style_checker_env" /><%
 %><s:read var="lang_compiler_env" /><%
-%><s:read var="source_header" normalize="yes" nonnull="yes" /><%
+%><s:read var="source_header" normalize="yes" /><%
 %><s:read var="source_header_dflt" default="0" /><%
-%><s:read var="source_footer" normalize="yes" nonnull="yes" /><%
+%><s:read var="source_footer" normalize="yes" /><%
 %><s:read var="source_footer_dflt" default="0" /><%
 
     if (retval || !phr->ss) goto cleanup;
 
-    if (style_checker_cmd_dflt) *style_checker_cmd = 0;
-    if (source_header_dflt) *source_header = 0;
-    if (source_footer_dflt) *source_footer = 0;
+    if (style_checker_cmd_dflt) {
+        xfree(style_checker_cmd);
+        style_checker_cmd = NULL;
+    }
+    if (source_header_dflt) {
+        xfree(source_header);
+        source_header = NULL;
+    }
+    if (source_footer_dflt) {
+        xfree(source_footer);
+        source_footer = NULL;;
+    }
+
+    if (style_checker_cmd && !*style_checker_cmd) {
+        xfree(style_checker_cmd); style_checker_cmd = NULL;
+    }
+    if (source_header && !*source_header) {
+        xfree(source_header); source_header = NULL;
+    }
+    if (source_footer && !*source_footer) {
+        xfree(source_footer); source_footer = NULL;
+    }
 
     if (prob_id <= 0) {
         i = -prob_id;
@@ -59,11 +78,11 @@
     }
 
     if (!retval && phr->ss) {
-        COPYSTR(style_checker_cmd);
+        MOVESTR(style_checker_cmd);
         MOVEENV(style_checker_env);
         MOVEENV(lang_compiler_env);
-        COPYSTR(source_header);
-        COPYSTR(source_footer);
+        MOVESTR(source_header);
+        MOVESTR(source_footer);
     }
 
 cleanup:;

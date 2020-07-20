@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -14,12 +14,15 @@
 
 USERLIST_CLNT_CFILES=\
  userlist_clnt/admin_process.c\
+ userlist_clnt/api_key_request.c\
  userlist_clnt/bytes_available.c\
+ userlist_clnt/bin_data.c\
  userlist_clnt/change_registration.c\
  userlist_clnt/close.c\
  userlist_clnt/cnts_passwd_op.c\
  userlist_clnt/control.c\
  userlist_clnt/copy_user_info.c\
+ userlist_clnt/create_cookie.c\
  userlist_clnt/create_member.c\
  userlist_clnt/create_user.c\
  userlist_clnt/create_user_2.c\
@@ -116,160 +119,176 @@ REUSE_CFILES=\
  reuse/reuse_xstrmerge3.c
 
 COMMON_CFILES=\
- allowed_list.c\
- archive_paths.c\
- base64.c\
- bitset.c\
- bson_utils.c\
- build_support.c\
- cgi.c\
- charsets.c\
- cJSON.c\
- clarlog.c\
- cldb_plugin_file.c\
- clntutil.c\
- common_plugin.c\
- compile_packet_1.c\
- compile_packet_2.c\
- compile_packet_3.c\
- compile_packet_4.c\
- compile_packet_5.c\
- compile_packet_6.c\
- contests.c\
- contests_2.c\
- contest_tmpl.c\
- copyright.c\
- csv.c\
- dates_config.c\
- diff.c\
- digest_1.c\
- digest_2.c\
- digest_3.c\
- digest_4.c\
- digest_5.c\
- dos2unix_str.c\
- dwarf_parse.c\
- ej_import_packet.c\
- ejudge_cfg.c\
- ej_libzip.c\
- ej_uuid.c\
- errlog.c\
- expat_iface.c\
- external_action.c\
- filehash.c\
- filter_eval.c\
- filter_tree.c\
- html.c\
- html_checkbox.c\
- html_date_select.c\
- html_input_password.c\
- html_input_text.c\
- html_hidden.c\
- html_hyperref.c\
- html_parse.c\
- html_start_form.c\
- http_request.c\
- l10n.c\
- lang_config.c\
- lang_config_vis.c\
- master_html.c\
- meta_generic.c\
- mime_type.c\
- misctext.c\
- ncheck_packet.c\
- new_server_html.c\
- new_server_html_2.c\
- new_server_html_3.c\
- new_server_html_4.c\
- new_server_html_5.c\
- new_server_proto.c\
- new_server_tables.c\
- ncurses_utils.c\
- nsdb_plugin_files.c\
- nwrun_packet.c\
- opcaps.c\
- opcaps_2.c\
- packet_name.c\
- parsecfg.c\
- parsecfg_2.c\
- pathutl.c\
- plugin.c\
- polygon_packet.c\
- prepare.c\
- prepare_out.c\
- prepare_serve.c\
- prepare_dates.c\
- printing.c\
- problem_common.c\
- problem_config.c\
- problem_xml.c\
- problem_xml_2.c\
- process_stats.c\
- protocol.c\
- random.c\
- reports.c\
- rldb_plugin_file.c\
- run_common.c\
- run_inverse.c\
- runlog.c\
- runlog_import.c\
- runlog_static.c\
- runlog_xml.c\
- run_packet_4.c\
- run_packet_5.c\
- run_packet_6.c\
- send_job_packet.c\
- server_framework.c\
- serve_2.c\
- serve_state.c\
- session.c\
- sformat.c\
- shellcfg_parse.c\
- stringset.c\
- super_html.c\
- super_html_2.c\
- super_html_3.c\
- super_html_4.c\
- super_html_5.c\
- super_html_6.c\
- super_html_7.c\
- super_html_8.c\
- super_http_request.c\
- super_proto.c\
- super_run_packet.c\
- super_run_status.c\
- super_serve_pi.c\
- sha.c\
- sha256.c\
- sha256utils.c\
- blowfish.c\
- t3m_dir_listener.c\
- t3m_submits.c\
- t3m_zip_packet_class.c\
- t3_packets.c\
- teamdb.c\
- teamdb_2.c\
- team_extra.c\
- team_extra_xml.c\
- testinfo.c\
- testing_report_xml.c\
- tex_dom.c\
- tex_dom_parse.c\
- tex_dom_doc.c\
- tex_dom_render.c\
- tsc.c\
- type_info.c\
- uldb_plugin_xml.c\
- userlist.c\
- userlist_check.c\
- userlist_proto.c\
- userlist_xml.c\
- variant_map.c\
- varsubst.c\
- vcs.c\
- watched_file.c\
- xuser_plugin_file.c\
- zip_utils.c\
+ lib/allowed_list.c\
+ lib/archive_paths.c\
+ lib/avatar_plugin.c\
+ lib/base32.c\
+ lib/base64.c\
+ lib/base64u.c\
+ lib/bitset.c\
+ lib/bson_utils.c\
+ lib/bson_utils_new.c\
+ lib/build_support.c\
+ lib/cgi.c\
+ lib/charsets.c\
+ lib/cJSON.c\
+ lib/clarlog.c\
+ lib/cldb_plugin_file.c\
+ lib/clntutil.c\
+ lib/common_plugin.c\
+ lib/compile_packet_1.c\
+ lib/compile_packet_2.c\
+ lib/compile_packet_3.c\
+ lib/compile_packet_4.c\
+ lib/compile_packet_5.c\
+ lib/compile_packet_6.c\
+ lib/content_plugin.c\
+ lib/content_plugin_file.c\
+ lib/content_plugin_none.c\
+ lib/contests.c\
+ lib/contests_2.c\
+ lib/contest_tmpl.c\
+ lib/copyright.c\
+ lib/csv.c\
+ lib/dates_config.c\
+ lib/diff.c\
+ lib/digest_1.c\
+ lib/digest_2.c\
+ lib/digest_3.c\
+ lib/digest_4.c\
+ lib/digest_5.c\
+ lib/dos2unix_str.c\
+ lib/dwarf_parse.c\
+ lib/ej_import_packet.c\
+ lib/ejudge_cfg.c\
+ lib/ejudge_cfg_var.c\
+ lib/ej_libzip.c\
+ lib/ej_uuid.c\
+ lib/errlog.c\
+ lib/expat_iface.c\
+ lib/external_action.c\
+ lib/filehash.c\
+ lib/filter_eval.c\
+ lib/filter_tree.c\
+ lib/html.c\
+ lib/html_checkbox.c\
+ lib/html_date_select.c\
+ lib/html_input_password.c\
+ lib/html_input_text.c\
+ lib/html_hidden.c\
+ lib/html_hyperref.c\
+ lib/html_parse.c\
+ lib/html_start_form.c\
+ lib/http_request.c\
+ lib/imagemagick.c\
+ lib/l10n.c\
+ lib/lang_config.c\
+ lib/lang_config_vis.c\
+ lib/master_html.c\
+ lib/meta_generic.c\
+ lib/mime_type.c\
+ lib/misctext.c\
+ lib/ncheck_packet.c\
+ lib/new_server_html.c\
+ lib/new_server_html_2.c\
+ lib/new_server_html_3.c\
+ lib/new_server_html_4.c\
+ lib/new_server_html_5.c\
+ lib/new_server_proto.c\
+ lib/new_server_tables.c\
+ lib/ncurses_utils.c\
+ lib/nsdb_plugin_files.c\
+ lib/nwrun_packet.c\
+ lib/opcaps.c\
+ lib/opcaps_2.c\
+ lib/packet_name.c\
+ lib/parsecfg.c\
+ lib/parsecfg_2.c\
+ lib/pathutl.c\
+ lib/plugin.c\
+ lib/polygon_packet.c\
+ lib/prepare.c\
+ lib/prepare_out.c\
+ lib/prepare_serve.c\
+ lib/prepare_dates.c\
+ lib/printing.c\
+ lib/problem_common.c\
+ lib/problem_config.c\
+ lib/problem_xml.c\
+ lib/problem_xml_2.c\
+ lib/process_stats.c\
+ lib/protocol.c\
+ lib/random.c\
+ lib/reports.c\
+ lib/rldb_plugin_file.c\
+ lib/run_common.c\
+ lib/run_inverse.c\
+ lib/runlog.c\
+ lib/runlog_import.c\
+ lib/runlog_static.c\
+ lib/runlog_xml.c\
+ lib/run_packet_4.c\
+ lib/run_packet_5.c\
+ lib/run_packet_6.c\
+ lib/send_job_packet.c\
+ lib/server_framework.c\
+ lib/serve_2.c\
+ lib/serve_state.c\
+ lib/session.c\
+ lib/sformat.c\
+ lib/shellcfg_parse.c\
+ lib/standings.c\
+ lib/statusdb.c\
+ lib/status_plugin_file.c\
+ lib/stringset.c\
+ lib/super_html.c\
+ lib/super_html_2.c\
+ lib/super_html_3.c\
+ lib/super_html_4.c\
+ lib/super_html_5.c\
+ lib/super_html_6.c\
+ lib/super_html_7.c\
+ lib/super_html_8.c\
+ lib/super_http_request.c\
+ lib/super_proto.c\
+ lib/super_run_packet.c\
+ lib/super_run_status.c\
+ lib/super_serve_pi.c\
+ lib/sha.c\
+ lib/sha256.c\
+ lib/sha256utils.c\
+ lib/sha512.c\
+ lib/sha512utils.c\
+ lib/blowfish.c\
+ lib/t3m_dir_listener.c\
+ lib/t3m_submits.c\
+ lib/t3m_zip_packet_class.c\
+ lib/t3_packets.c\
+ lib/teamdb.c\
+ lib/teamdb_2.c\
+ lib/team_extra.c\
+ lib/team_extra_xml.c\
+ lib/testinfo.c\
+ lib/testing_report_bson.c\
+ lib/testing_report_xml.c\
+ lib/tex_dom.c\
+ lib/tex_dom_parse.c\
+ lib/tex_dom_doc.c\
+ lib/tex_dom_render.c\
+ lib/tsc.c\
+ lib/type_info.c\
+ lib/uldb_plugin_xml.c\
+ lib/userlist.c\
+ lib/userlist_bin.c\
+ lib/userlist_check.c\
+ lib/userlist_proto.c\
+ lib/userlist_xml.c\
+ lib/variant_map.c\
+ lib/varsubst.c\
+ lib/vcs.c\
+ lib/watched_file.c\
+ lib/xuser_plugin_file.c\
+ lib/zip_utils.c\
  xml_utils/attr_bool.c\
  xml_utils/attr_bool_byte.c\
  xml_utils/attr_date.c\
@@ -363,46 +382,46 @@ PLATFORM_CFILES =\
  $(ARCH)/reuse_logger.c
 
 CFILES=\
- clean-users.c\
- collect-emails.c\
- compile.c\
- compile-control.c\
- convert-clars.c\
- convert-runs.c\
- edit-userlist.c\
- ej-ncheck.c\
- ej-batch.c\
- ej-import-contest.c\
- ej-normalize.c\
- ej-page-gen.c\
- ej-parblock.c\
- ej-polygon.c\
- ej-super-run.c\
- ejudge-configure-compilers.c\
- ejudge-control.c\
- ejudge-setup.c\
- execute.c\
- fix-db.c\
- job-server.c\
- job-server-control.c\
- job-server-cmd.c\
- make-js-actions.c\
- new-client.c\
- new-server.c\
- new-server-cmd.c\
- new-server-control.c\
- nwrun.c\
- run.c\
- serve.c\
- serve-control.c\
- slice-userlist.c\
- struct-sizes.c\
- super-serve.c\
- super-serve-control.c\
- testinfo.c\
- userlist-server.c\
- userlist-server-control.c\
- users.c\
+ bin/ej-clean-users.c\
+ bin/ej-collect-emails.c\
+ bin/ej-compile.c\
+ bin/ej-convert-clars.c\
+ bin/ej-convert-runs.c\
+ bin/ejudge-edit-users.c\
+ bin/ej-compile-control.c\
+ bin/ej-ncheck.c\
+ bin/ej-batch.c\
+ bin/ej-import-contest.c\
+ bin/ej-jobs.c\
+ bin/ej-normalize.c\
+ bin/ej-page-gen.c\
+ bin/ej-parblock.c\
+ bin/ej-polygon.c\
+ bin/ej-super-run.c\
+ bin/ejudge-configure-compilers.c\
+ bin/ejudge-control.c\
+ bin/ejudge-change-contests.c\
+ bin/ejudge-setup.c\
+ bin/ejudge-execute.c\
+ bin/ej-fix-db.c\
+ bin/ej-jobs-control.c\
+ bin/ejudge-jobs-cmd.c\
+ tools/make-js-actions.c\
+ cgi-bin/new-client.c\
+ bin/ej-contests.c\
+ bin/ejudge-contests-cmd.c\
+ bin/ej-contests-control.c\
+ bin/ej-nwrun.c\
+ bin/ej-run.c\
+ bin/ej-serve.c\
+ cgi-bin/serve-control.c\
+ bin/ej-slice-userlist.c\
+ tools/struct-sizes.c\
+ bin/ej-super-server.c\
+ bin/ej-super-server-control.c\
+ bin/ej-users.c\
+ bin/ej-users-control.c\
+ cgi-bin/users.c\
  unix/cpu.c\
  win32/cpu.c\
  unix/file_perms.c\
@@ -504,6 +523,8 @@ CFILES=\
 
 HFILES=\
  ./include/ejudge/archive_paths.h\
+ ./include/ejudge/avatar_plugin.h\
+ ./include/ejudge/base32.h\
  ./include/ejudge/base64.h\
  ./include/ejudge/bitset.h\
  ./include/ejudge/bson_utils.h\
@@ -519,6 +540,7 @@ HFILES=\
  ./include/ejudge/compat.h\
  ./include/ejudge/compile_packet.h\
  ./include/ejudge/compile_packet_priv.h\
+ ./include/ejudge/content_plugin.h\
  ./include/ejudge/contests.h\
  ./include/ejudge/copyright.h\
  ./include/ejudge/cpu.h\
@@ -550,6 +572,8 @@ HFILES=\
  ./include/ejudge/html.h\
  ./include/ejudge/html_parse.h\
  ./include/ejudge/http_request.h\
+ ./include/ejudge/imagemagick.h\
+ ./include/ejudge/internal_pages.h\
  ./include/ejudge/interrupt.h\
  ./include/ejudge/iterators.h\
  ./include/ejudge/job_packet.h\
@@ -593,6 +617,7 @@ HFILES=\
  ./include/ejudge/shellcfg_parse.h\
  ./include/ejudge/sock_op.h\
  ./include/ejudge/startstop.h\
+ ./include/ejudge/statusdb.h\
  ./include/ejudge/stringset.h\
  ./include/ejudge/super_clnt.h\
  ./include/ejudge/super_html.h\
@@ -603,6 +628,9 @@ HFILES=\
  ./include/ejudge/sha.h\
  ./include/ejudge/sha256.h\
  ./include/ejudge/sha256utils.h\
+ ./include/ejudge/sha512.h\
+ ./include/ejudge/sha512utils.h\
+ ./include/ejudge/status_plugin.h\
  ./include/ejudge/blowfish.h\
  ./include/ejudge/t3m_dir_listener.h\
  ./include/ejudge/t3m_packet_class.h\
@@ -619,6 +647,7 @@ HFILES=\
  ./include/ejudge/type_info.h\
  ./include/ejudge/uldb_plugin.h\
  ./include/ejudge/userlist.h\
+ ./include/ejudge/userlist_bin.h\
  ./include/ejudge/userlist_clnt.h\
  ./include/ejudge/variant_map.h\
  ./include/ejudge/varsubst.h\
@@ -636,6 +665,6 @@ HFILES=\
  ./include/ejudge/zip_utils.h
 
 OTHERFILES=\
- filter_expr.y\
- filter_scan.lex\
- plugins/mysql-userlist/uldb_mysql.c
+ lib/filter_expr.y\
+ lib/filter_scan.lex\
+ plugins/userlist-mysql/uldb_mysql.c

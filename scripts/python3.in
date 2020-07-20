@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2003-2016 Alexander Chernov <cher@ejudge.ru>
+# Copyright (c) 2003-2018 Alexander Chernov <cher@ejudge.ru>
 
 # This is a `compilation' script for the Python language.
 # The idea is to append "#!${PYTHONPATH}" string

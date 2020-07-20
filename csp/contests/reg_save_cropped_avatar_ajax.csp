@@ -1,0 +1,225 @@
+<%
+%><%@include "priv_includes.csp"
+%><%
+// includes
+#include "ejudge/avatar_plugin.h"
+#include "ejudge/imagemagick.h"
+#include "ejudge/userlist_clnt.h"
+#include "ejudge/userlist_proto.h"
+#include "ejudge/errlog.h"
+#include "ejudge/random.h"
+#include "ejudge/base32.h"
+#include "ejudge/mime_type.h"
+#include "ejudge/content_plugin.h"
+
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
+%><%@set getter_name = "csp_get_reg_save_cropped_avatar_ajax"
+%><%@page csp_view_reg_save_cropped_avatar_ajax(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+    const unsigned char *s;
+    const unsigned char *key = NULL;
+    int width = -1;
+    int height = -1;
+    int left = -1;
+    int top = -1;
+    struct avatar_loaded_plugin *avt = NULL;
+    unsigned char message[1024];
+    int result = -1;
+    struct avatar_info_vector avatars;
+    struct avatar_info *av = NULL;
+    unsigned char *av_data = NULL;
+    size_t av_size = 0;
+    char *cvt_s = NULL;
+    size_t cvt_z = 0;
+    FILE *cvt_f = NULL;
+    unsigned char random_key_bin[AVATAR_RANDOM_KEY_SIZE];
+    unsigned char random_key[AVATAR_RANDOM_KEY_SIZE * 2];
+    struct content_loaded_plugin *cp = NULL;
+    int content_enabled = 0;
+
+    message[0] = 0;
+    avatar_vector_init(&avatars, 1);
+
+    if (phr->reg_status != USERLIST_REG_PENDING && phr->reg_status != USERLIST_REG_OK) {
+        snprintf(message, sizeof(message), "permission denied");
+        goto done;
+    }
+    if ((phr->reg_flags & USERLIST_UC_REG_READONLY)) {
+        snprintf(message, sizeof(message), "permission denied");
+        goto done;
+    }
+
+%><s:read var="key" ignoreerrors="yes" /><%
+    if (!key) key = "";
+    s = NULL;
+%><s:read var="s" name="width" ignoreerrors="yes" /><%
+    if (s) {
+        sscanf(s, "%d", &width);
+    }
+    s = NULL;
+%><s:read var="s" name="height" ignoreerrors="yes" /><%
+    if (s) {
+        sscanf(s, "%d", &height);
+    }
+    s = NULL;
+%><s:read var="s" name="left" ignoreerrors="yes" /><%
+    if (s) {
+        sscanf(s, "%d", &left);
+    }
+    s = NULL;
+%><s:read var="s" name="top" ignoreerrors="yes" /><%
+    if (s) {
+        sscanf(s, "%d", &top);
+    }
+
+    avt = avatar_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
+    if (!avt) {
+        snprintf(message, sizeof(message), "failed to load avatar plugin");
+        goto done;
+    }
+
+    cp = content_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
+    if (cp) {
+        content_enabled = cp->iface->is_enabled(cp->data, phr->cnts);
+    }
+
+    if (avt->iface->fetch_by_key(avt->data, key, 0, &avatars) < 0) {
+        snprintf(message, sizeof(message), "database error");
+        goto done;
+    }
+    if (avatars.u > 1) {
+        err("AVATAR_INTERNAL: multiple avatars with random key %s!", key);
+        snprintf(message, sizeof(message), "database error");
+        goto done;
+    }
+    if (avatars.u < 1) {
+        snprintf(message, sizeof(message), "permission denied");
+        goto done;
+    }
+
+    av = &avatars.v[0];
+    if (phr->user_id != av->user_id || phr->contest_id != av->contest_id || av->is_cropped) {
+        snprintf(message, sizeof(message), "permission denied");
+        goto done;
+    }
+
+    if (width <= 0 || height <= 0) {
+        snprintf(message, sizeof(message), "invalid avatar size (%d,%d)", width, height);
+        goto done;
+    }
+    if (width > av->width) width = av->width;
+    if (height > av->height) height = av->height;
+    // width of visible part - 200px
+    // avatar width - 90px
+    // inlays - 55px
+    left = -left;
+    top = -top;
+    if (left < 0 || top < 0 || left >= av->width || top >= av->height) {
+        snprintf(message, sizeof(message), "invalid avatar origin (%d,%d)", left, top);
+        goto done;
+    }
+    if (left + width > av->width) {
+        width = av->width - left;
+    }
+    if (top + height > av->height) {
+        height = av->height - top;
+    }
+    if (width > height) {
+        width = height;
+    } else if (width < height) {
+        height = width;
+    }
+
+    // transform rectangle [left, top] - [left + width, top + height]
+    // to rectangle [0, 0] - [AVATAR_WIDTH, AVATAR_HEIGHT]
+    cvt_f = open_memstream(&cvt_s, &cvt_z);
+    int r = image_convert(cvt_f, NULL, av->mime_type,
+                          left, top, width, height, av->img_data, av->img_size,
+                          av->mime_type, AVATAR_WIDTH, AVATAR_HEIGHT, &av_data, &av_size);
+    fclose(cvt_f); cvt_f = NULL;
+    if (r < 0) {
+        snprintf(message, sizeof(message), "image conversion failed: %s", cvt_s);
+        goto done;
+    }
+
+    // generate 128-bit random key
+    if (random_init() < 0) {
+        snprintf(message, sizeof(message), "failed to initialize random number generator");
+        goto done;
+    }
+    random_bytes(random_key_bin, AVATAR_RANDOM_KEY_SIZE);
+    base32_buf(random_key, random_key_bin, AVATAR_RANDOM_KEY_SIZE, 0);
+
+    r = avt->iface->insert(avt->data, phr->user_id, phr->contest_id,
+                           1 /* is_cropped */,
+                           0 /* is_temporary */,
+                           1 /* is_public */,
+                           av->mime_type, AVATAR_WIDTH, AVATAR_HEIGHT, random_key,
+                           phr->current_time,
+                           av_data, av_size, NULL);
+    if (r < 0) {
+        snprintf(message, sizeof(message), "failed to store avatar");
+        goto done;
+    }
+
+    if (content_enabled > 0) {
+        r = cp->iface->save_content(cp->data, NULL, phr->config, phr->cnts,
+                                    random_key, mime_type_get_suffix(av->mime_type),
+                                    av_data, av_size);
+        if (r < 0) {
+            snprintf(message, sizeof(message), "failed to store avatar");
+            goto done;
+        }
+    }
+
+    if (ns_open_ul_connection(phr->fw_state) < 0) {
+        snprintf(message, sizeof(message), "cannot connect to the userlist server");
+        goto done;
+    }
+
+#define UPDATED_FIELD_COUNT 3
+    int edited_ids[UPDATED_FIELD_COUNT] =
+    {
+        USERLIST_NC_AVATAR_STORE,
+        USERLIST_NC_AVATAR_ID,
+        USERLIST_NC_AVATAR_SUFFIX,
+    };
+    const unsigned char * edited_strs[UPDATED_FIELD_COUNT] =
+    {
+        "mongo",
+        random_key,
+        mime_type_get_suffix(av->mime_type),
+    };
+    r = userlist_clnt_edit_field_seq(ul_conn, ULS_EDIT_FIELD_SEQ,
+                                     phr->user_id, phr->contest_id, 0,
+                                     0, UPDATED_FIELD_COUNT, NULL,
+                                     edited_ids, (const unsigned char**) edited_strs);
+    if (r < 0) {
+        snprintf(message, sizeof(message), "failed to update avatar info");
+        goto done;
+    }
+
+    userlist_free(&phr->session_extra->user_info->b);
+    phr->session_extra->user_info = NULL;
+
+    avt->iface->delete_by_key(avt->data, av->random_key);
+    result = 0;
+%>{
+<%
+done:;
+    if (result < 0) { %>
+    "result" : <s:v value="result" />,
+    "message" : "<s:v value="message" json="yes" />"
+<% } else { %>
+    "result" : <s:v value="result" />,
+    "key" : "<s:v value="random_key" />"
+<% } %>
+}<%
+    html_armor_free(&ab);
+    avatar_vector_free(&avatars);
+    xfree(av_data);
+    if (cvt_f) fclose(cvt_f);
+    free(cvt_s);
+%>

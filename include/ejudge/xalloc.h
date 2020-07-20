@@ -1,9 +1,7 @@
-/* $Id$ */
-
 #ifndef __REUSE_XALLOC_H__
 #define __REUSE_XALLOC_H__
 
-/* Copyright (C) 1996-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1996-2017 Alexander Chernov <cher@ejudge.ru> */
 /* Created: Fri Nov  1 18:58:50 1996 by cher (Alexander Chernov) */
 
 /*
@@ -30,6 +28,7 @@ void *xrealloc(void *ptr, size_t newsize);
 void xfree(void *ptr);
 char *xstrdup(char const*);
 char *xstrdup2(const char *str);
+void xstrdup3(unsigned char **pdst, const char *str);
 char *xmemdup(char const *, size_t size);
 
 #if defined __GNUC__ || defined __REPC__
@@ -52,7 +51,7 @@ char *xmemdup(char const *, size_t size);
 
 /* s1 and s2 both dropped after merging */
 char *xstrmerge0(char *s1, char *s2);
-/* only s1 dropped after merging */  
+/* only s1 dropped after merging */
 char *xstrmerge1(char *s1, char const *s2);
 /* neither s1 nor x2 are dropped after merging */
 char *xstrmerge2(char const *s1, char const *s2);
@@ -89,6 +88,10 @@ void  xexpand3(/* array, elsize */);
 void  xexpand4(/* array, elsize, newsize */);
 
 void  xstrarrayfree(strarray_t *);
+
+int
+usprintf(unsigned char **buf, const char *format, ...)
+  __attribute__((format(printf, 2, 3)));
 
 #ifdef __cplusplus
 }

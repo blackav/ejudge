@@ -45,7 +45,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },

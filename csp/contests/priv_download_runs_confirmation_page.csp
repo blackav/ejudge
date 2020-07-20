@@ -1,5 +1,8 @@
 <%
 %><%@include "priv_includes.csp"
+%><%
+#include "ejudge/team_extra.h"
+#include "ejudge/xuser_plugin.h"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set getter_name = "csp_get_priv_download_runs_confirmation_page"
 %><%@page csp_view_priv_download_runs_confirmation_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
@@ -13,12 +16,19 @@
   int i, j;
   const unsigned char *title = _("Download runs configuration");
   int enable_main_menu = 0;
+  const struct team_extra *t_extra = NULL;
+  const unsigned char *problem_dir_prefix = NULL;
 
   if (opcaps_check(phr->caps, OPCAP_DUMP_RUNS) < 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);  
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
   if (ns_parse_run_mask(phr, &mask_size_str, &mask_str, &mask_size, &mask) < 0)
     FAIL(NEW_SRV_ERR_INV_RUN_SELECTION);
+
+  if (cs->xuser_state) {
+    t_extra = cs->xuser_state->vt->get_entry(cs->xuser_state, phr->user_id);
+    if (t_extra) problem_dir_prefix = t_extra->problem_dir_prefix;
+  }
 
   for (i = 0; i < mask_size; i++) {
     mval = mask[i];
@@ -72,7 +82,7 @@
 
 <tr><td><input type="checkbox" name="use_problem_extid" /></td><td><s:_>Use 'extid' as problem name</s:_></td></tr>
 <tr><td><input type="checkbox" name="use_problem_dir" checked="checked" /></td><td><s:_>Use 'problem_dir' as problem name</s:_></td></tr>
-<tr><td><s:textfield name="problem_dir_prefix" size="32" value="" /></td><td><s:_>Common prefix to remove</s:_></td></tr>
+<tr><td><s:textfield name="problem_dir_prefix" size="32" value="problem_dir_prefix" checkExpr="" /></td><td><s:_>Common prefix to remove</s:_></td></tr>
 </table>
 
 <h2><s:_>Download runs</s:_></h2>

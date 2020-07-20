@@ -2,7 +2,7 @@
 #ifndef __TELEGRAM_USER_H__
 #define __TELEGRAM_USER_H__
 
-/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,15 @@
  * GNU General Public License for more details.
  */
 
+#include "ejudge/config.h"
+
+#if HAVE_LIBMONGOC - 0 > 0
+struct _bson_t;
+typedef struct _bson_t ej_bson_t;
+#elif HAVE_LIBMONGO_CLIENT - 0 == 1
 struct _bson;
+typedef struct _bson ej_bson_t;
+#endif
 
 struct telegram_user
 {
@@ -31,8 +39,8 @@ telegram_user_free(struct telegram_user *tu);
 struct telegram_user *
 telegram_user_create(void);
 struct telegram_user *
-telegram_user_parse_bson(struct _bson *bson);
-struct _bson *
+telegram_user_parse_bson(const ej_bson_t *bson);
+ej_bson_t *
 telegram_user_unparse_bson(const struct telegram_user *tu);
 
 struct mongo_conn;

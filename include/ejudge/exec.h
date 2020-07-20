@@ -1,7 +1,7 @@
 #ifndef __REUSE_EXEC_H__
 #define __REUSE_EXEC_H__
 
-/* Copyright (C) 1998-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2018 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:26:50 cher> */
 
 /*
@@ -25,7 +25,7 @@ extern "C"
 
 /* Task states */
 enum
-{ 
+{
   TSK_ERROR,                    /* error occured */
   TSK_STOPPED,                  /* task is not started */
   TSK_RUNNING,                  /* task is runnning */
@@ -88,9 +88,9 @@ int      task_FormatEnv(tTask *tsk, const char *name, const char *format, ...);
 int      task_ClearEnv(tpTask);
 
 int      task_SetKillSignal(tpTask, char const *);
-int      task_SetStackSize(tpTask, int);
-int      task_SetDataSize(tpTask, int);
-int      task_SetVMSize(tpTask, int);
+int      task_SetStackSize(tpTask, size_t);
+int      task_SetDataSize(tpTask, size_t);
+int      task_SetVMSize(tpTask, size_t);
 int      task_DisableCoreDump(tpTask);
 int      task_EnableMemoryLimitError(tpTask);
 int      task_EnableSecureExec(tpTask);
@@ -98,6 +98,7 @@ int      task_EnableSuidExec(tpTask);
 int      task_EnableAllSignals(tpTask);
 int      task_EnableSecurityViolationError(tpTask);
 int      task_EnableProcessGroup(tpTask);
+int      task_EnableKillAll(tpTask);
 int      task_IgnoreSIGPIPE(tpTask);
 
 int      task_SetSuidHelperDir(tpTask, const char *);
@@ -113,6 +114,8 @@ tpTask   task_NewWait(tpTask);
 int      task_Kill(tpTask);
 int      task_TryProcessGroup(tpTask);
 int      task_KillProcessGroup(tpTask);
+int      task_TryAnyProcess(tpTask);
+int      task_KillAllProcesses(tpTask);
 int      task_Status(tpTask);
 int      task_TermSignal(tpTask);
 int      task_ExitCode(tpTask);

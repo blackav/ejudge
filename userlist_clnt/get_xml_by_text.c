@@ -33,7 +33,8 @@ userlist_clnt_get_xml_by_text(
   if (!request_text) request_text = "";
   request_len = strlen(request_text);
   out_size = sizeof(*out) + request_len;
-  XALLOCAZ(out, 1);
+  out = (typeof(out)) alloca(out_size);
+  memset(out, 0, out_size);
   out->request_id = cmd;
   out->info_len = request_len;
   memcpy(out->data, request_text, request_len + 1);
@@ -53,7 +54,7 @@ userlist_clnt_get_xml_by_text(
 
   in = (struct userlist_pk_xml_data*) in_gen;
   xml_len = strlen(in->data);
-  if (xml_len != in->info_len) goto cleanup; 
+  if (xml_len != in->info_len) goto cleanup;
   if (in_size != sizeof(*in) + xml_len) goto cleanup;
 
   if (reply_text) {

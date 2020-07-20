@@ -2,7 +2,7 @@
 #ifndef __CLARLOG_H__
 #define __CLARLOG_H__
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -167,6 +167,12 @@ void clar_get_user_usage(
         int from,
         int *pn,
         size_t *pz);
+void
+clar_get_all_users_usage(
+        clarlog_state_t state,
+        int map_size,
+        int *clar_counts,
+        size_t *clar_sizes);
 char *clar_flags_html(
         clarlog_state_t state,
         int flags,
@@ -234,5 +240,13 @@ int
 clar_get_unanswered_count(
         clarlog_state_t state,
         time_t thr_time);
+
+int
+clar_count_run_messages(
+        clarlog_state_t state,
+        const ej_uuid_t *p_run_uuid);
+
+int
+clar_fetch_total(clarlog_state_t state);
 
 #endif /* __CLARLOG_H__ */

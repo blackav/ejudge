@@ -2,7 +2,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -36,6 +36,12 @@
 #endif /* __RCC__ */
 #endif /* META_ATTRIB */
 
+#ifdef __GCC__
+#define GCC_ATTRIB(x) __attribute__(x)
+#else
+#define GCC_ATTRIB(x)
+#endif
+
 enum { PREPARE_SERVE, PREPARE_COMPILE, PREPARE_RUN };
 enum { PREPARE_QUIET = 1 };
 
@@ -50,6 +56,7 @@ enum
   MEMLIMIT_TYPE_JAVA,
   MEMLIMIT_TYPE_MONO,
   MEMLIMIT_TYPE_VALGRIND,
+  MEMLIMIT_TYPE_DOTNET,
 
   MEMLIMIT_TYPE_LAST,
 };
@@ -64,6 +71,7 @@ enum
   SEXEC_TYPE_DLL32,
   SEXEC_TYPE_MONO,
   SEXEC_TYPE_VALGRIND,
+  SEXEC_TYPE_DOTNET,
 
   SEXEC_TYPE_LAST,
 };
@@ -128,7 +136,16 @@ struct token_info
 
 struct dates_config;
 
-/* sizeof(struct section_global_data) == 350132/350296 */
+struct virtual_end_info_s
+{
+  int source_mode;
+  int report_mode;
+  int visibility_mode;
+  int score_mode;
+  int checker_comment_mode;
+};
+
+/* sizeof(struct section_global_data) == 1204/1912 */
 struct section_global_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -190,6 +207,8 @@ struct section_global_data
   int time_limit_retry_count;
   /** score n best problems */
   int score_n_best_problems;
+  /** require problem UUID */
+  ejintbool_t require_problem_uuid;
 
   /** do not show submits after this time in the standings */
   time_t stand_ignore_after;
@@ -267,18 +286,18 @@ struct section_global_data
   ejintbool_t enable_virtual_restart;
 
   /** @deprecated the name of the contest */
-  unsigned char name[256];
+  unsigned char *name;
   /** @deprecated the contest root directory */
-  path_t root_dir;
+  unsigned char *root_dir;
   /** @deprecated the contest socket path */
-  path_t serve_socket;
+  unsigned char *serve_socket;
 
   /** enable message translation? */
   ejintbool_t enable_l10n;
   /** message translation catalog */
-  path_t l10n_dir;
+  unsigned char *l10n_dir;
   /** the language of the standings */
-  unsigned char standings_locale[128];
+  unsigned char *standings_locale;
   /** parsed `standings_locale' */
   int standings_locale_id META_ATTRIB((meta_private));
   unsigned char *checker_locale;
@@ -286,188 +305,194 @@ struct section_global_data
   /** the contest number (mandatory) */
   int contest_id;
   /** the `userlist-server' socket path */
-  path_t socket_path;
+  unsigned char *socket_path;
   /** the contest XML directory */
-  path_t contests_dir;
+  unsigned char *contests_dir;
   /** compiler configuration script dir */
-  path_t lang_config_dir;
+  unsigned char *lang_config_dir;
 
   /** html charset */
-  unsigned char charset[128];
+  unsigned char *charset;
   /** charset for the standings */
-  unsigned char standings_charset[128];
+  unsigned char *standings_charset;
   /** charset for the secondary standings */
-  unsigned char stand2_charset[128];
+  unsigned char *stand2_charset;
   /** charset for the submission log */
-  unsigned char plog_charset[128];
+  unsigned char *plog_charset;
 
   /* ====== CONFIGURATION FILES/DIRECTORIES SETUP ====== */
   /** configuration dir */
-  path_t conf_dir;
+  unsigned char *conf_dir;
   /** directory with problem files (for advanced_layout) */
-  path_t problems_dir;
+  unsigned char *problems_dir;
   /** default location of the compile and run scripts */
-  path_t script_dir;
+  unsigned char *script_dir;
   /** directory with the tests */
-  path_t test_dir;
+  unsigned char *test_dir;
   /** directory with the correct answers */
-  path_t corr_dir;
+  unsigned char *corr_dir;
   /** directory with the test info files */
-  path_t info_dir;
+  unsigned char *info_dir;
   /** directory with the working dir tgz archives */
-  path_t tgz_dir;
+  unsigned char *tgz_dir;
   /** directory with the checkers */
-  path_t checker_dir;
+  unsigned char *checker_dir;
   /** directory with the problem statements */
-  path_t statement_dir;
+  unsigned char *statement_dir;
   /** directory with the contest and problem plugins */
-  path_t plugin_dir;
+  unsigned char *plugin_dir;
   /** suffix of the test files */
-  unsigned char test_sfx[32];
+  unsigned char *test_sfx;
   /** suffix of the files with correct answers */
-  unsigned char corr_sfx[32];
+  unsigned char *corr_sfx;
   /** suffix of the files with test info */
-  unsigned char info_sfx[32];
+  unsigned char *info_sfx;
   /** suffix of the tgz archive files */
-  unsigned char tgz_sfx[32];
+  unsigned char *tgz_sfx;
   /** suffix of the working directory master copy */
-  unsigned char tgzdir_sfx[32];
+  unsigned char *tgzdir_sfx;
   /** path to the built-in checkers */
-  path_t ejudge_checkers_dir;
+  unsigned char *ejudge_checkers_dir;
   /** command to run when the contest starts */
-  path_t contest_start_cmd;
+  unsigned char *contest_start_cmd;
   /** command to run when the contest stops */
   unsigned char *contest_stop_cmd;
   /** path to the HTML file with the contest description */
-  path_t description_file;
+  unsigned char *description_file;
   /** path to the contest plugin */
-  path_t contest_plugin_file;
+  unsigned char *contest_plugin_file;
+
+  /** user-visible behavior after the end of virtual contest for the user */
+  unsigned char *virtual_end_options;
+  struct virtual_end_info_s *virtual_end_info META_ATTRIB((meta_private));
 
   /** directory for non-default super-run directory */
   unsigned char *super_run_dir;
 
   /** printf pattern for the files with tests */
-  unsigned char test_pat[32];
+  unsigned char *test_pat;
   /** printf pattern for the files with correct answers */
-  unsigned char corr_pat[32];
+  unsigned char *corr_pat;
   /** printf pattern for the files with test information */
-  unsigned char info_pat[32];
+  unsigned char *info_pat;
   /** printf pattern for the files with the working dir archive */
-  unsigned char tgz_pat[32];
+  unsigned char *tgz_pat;
   /** printf pattern for the files with the working directory master copy */
-  unsigned char tgzdir_pat[32];
+  unsigned char *tgzdir_pat;
 
   /** the clarification base storage plugin (file, mysql) */
-  unsigned char clardb_plugin[32];
+  unsigned char *clardb_plugin;
   /** the run information base storage plugin (file, mysql) */
-  unsigned char rundb_plugin[32];
-  /** the extra user information storage plugin (file, mysql) */
-  unsigned char xuser_plugin[32];
+  unsigned char *rundb_plugin;
+  /** the extra user information storage plugin (file, mongo) */
+  unsigned char *xuser_plugin;
+  /** the contest status plugin */
+  unsigned char *status_plugin;
 
   /* ====== VARIABLE FILES/DIRECTORIES SETUP ====== */
   /** root directory with working files, run sources/reports, etc */
-  path_t var_dir;
+  unsigned char *var_dir;
 
   /* --- server logging --- */
   //path_t log_file;              /* logger log file */
   /** run database file (for file storage) */
-  path_t run_log_file;
+  unsigned char *run_log_file;
   /** clarification database file (for file storage) */
-  path_t clar_log_file;
+  unsigned char *clar_log_file;
   /** root directory for archives */
-  path_t archive_dir;
+  unsigned char *archive_dir;
   /** clar archive directory */
-  path_t clar_archive_dir;
+  unsigned char *clar_archive_dir;
   /** run source code archive directory */
-  path_t run_archive_dir;
+  unsigned char *run_archive_dir;
   /** @deprecated report archive directory */
-  path_t report_archive_dir;
+  unsigned char *report_archive_dir;
   /** @deprecated team report archive directory */
-  path_t team_report_archive_dir;
+  unsigned char *team_report_archive_dir;
   /** XML report archive directory */
-  path_t xml_report_archive_dir;
+  unsigned char *xml_report_archive_dir;
   /** full output archive directory */
-  path_t full_archive_dir;
+  unsigned char *full_archive_dir;
   /** directory for audit logs */
-  path_t audit_log_dir;
+  unsigned char *audit_log_dir;
   /** directory for new UUID-based archives */
-  path_t uuid_archive_dir;
+  unsigned char *uuid_archive_dir;
   /** team extra information directory */
-  path_t team_extra_dir;
+  unsigned char *team_extra_dir;
 
   /* --- server status reporting --- */
   /** server status directory */
-  path_t status_dir;
+  unsigned char *legacy_status_dir;
   /** subdir for working dirs */
-  path_t work_dir;
+  unsigned char *work_dir;
   /** subdir for printing */
-  path_t print_work_dir;
+  unsigned char *print_work_dir;
   /** subdir for comparing */
-  path_t diff_work_dir;
+  unsigned char *diff_work_dir;
 
   /** path to the `a2ps' program (default is /usr/bin/a2ps) */
-  path_t a2ps_path;
+  unsigned char *a2ps_path;
   /** arguments for the `a2ps' program */
   char **a2ps_args;
   /** path to the `lpr' program (default is /usr/bin/lpr) */
-  path_t lpr_path;
+  unsigned char *lpr_path;
   /** arguments for the `lpr' program */
   char **lpr_args;
 
   /** path to the `diff' program */
-  path_t diff_path;
+  unsigned char *diff_path;
 
   /* --- server <-> compile interaction --- */
-  /* global parameters are used by compile utility, whereas 
+  /* global parameters are used by compile utility, whereas
    * language-local parameters are used by serve */
   /** the compile spool root dir */
-  path_t compile_dir;
+  unsigned char *compile_dir;
   /** the compile packets spool directory */
-  path_t compile_queue_dir;
+  unsigned char *compile_queue_dir;
   /** the compile source files spool directory */
-  path_t compile_src_dir;
+  unsigned char *compile_src_dir;
 
   /** additional compile directories */
   char **extra_compile_dirs;
 
-  /* these are used by serve */  
+  /* these are used by serve */
   /* var/compile prefix is implicit and cannot be changed! */
   /** base directory for compile results */
-  path_t compile_out_dir;
+  unsigned char *compile_out_dir;
   /** compile->serve status dir */
-  path_t compile_status_dir;
+  unsigned char *compile_status_dir;
   /** compile->serve report dir */
-  path_t compile_report_dir;
+  unsigned char *compile_report_dir;
 
   /** working directory for compilation */
-  path_t compile_work_dir;
+  unsigned char *compile_work_dir;
 
   /* --- serve <-> run interaction --- */
   /** the run spool root directory */
-  path_t run_dir;
+  unsigned char *run_dir;
   /** common prefix dir for serve->run packets */
-  path_t run_queue_dir;
+  unsigned char *run_queue_dir;
   /** serve->run executables */
-  path_t run_exe_dir;
+  unsigned char *run_exe_dir;
 
   /** base directory for run results */
-  path_t run_out_dir;
+  unsigned char *run_out_dir;
   /** run->serve status dir */
-  path_t run_status_dir;
+  unsigned char *run_status_dir;
   /** run->serve report dir */
-  path_t run_report_dir;
+  unsigned char *run_report_dir;
   /** run->serve team report dir */
-  path_t run_team_report_dir;
+  unsigned char *run_team_report_dir;
   /** run->serve full output archive dir */
-  path_t run_full_archive_dir;
+  unsigned char *run_full_archive_dir;
 
   /** private run's temporary directory */
-  path_t run_work_dir;
+  unsigned char *run_work_dir;
   /** working directory for checked programs */
-  path_t run_check_dir;
+  unsigned char *run_check_dir;
 
   /** httpd server html document root dir */
-  path_t htdocs_dir;
+  unsigned char *htdocs_dir;
 
   /** contest scoring system */
   int score_system;
@@ -488,63 +513,67 @@ struct section_global_data
   ejintsize_t max_cmd_length;
 
   /** URL template for the user information link in the standings */
-  path_t team_info_url;
+  unsigned char *team_info_url;
   /** URL template for the problem link in the standings */
-  path_t prob_info_url;
+  unsigned char *prob_info_url;
   /** public standings file name */
-  unsigned char standings_file_name[256];
+  unsigned char *standings_file_name;
   /** standings header file */
-  path_t stand_header_file;
+  unsigned char *stand_header_file;
   /** standings footer file */
-  path_t stand_footer_file;
+  unsigned char *stand_footer_file;
   /** directory where to install a symlink to the standings file */
-  path_t stand_symlink_dir;
+  unsigned char *stand_symlink_dir;
   /** number of users on page */
   int    users_on_page;
-  unsigned char stand_file_name_2[256];
+  unsigned char *stand_file_name_2;
 
   /** enable fancy standings style */
   ejintbool_t stand_fancy_style;
   /** format for the extra column in the standings */
-  unsigned char stand_extra_format[256];
+  unsigned char *stand_extra_format;
   /** legend for the extra column in the standings*/
-  unsigned char stand_extra_legend[256];
+  unsigned char *stand_extra_legend;
   /** HTML attribute for the extra column in the standings */
-  unsigned char stand_extra_attr[256];
+  unsigned char *stand_extra_attr;
   /** HTML attribute for the whole standings */
-  unsigned char stand_table_attr[256];
+  unsigned char *stand_table_attr;
   /** HTML attribute for the `place' column in the standings */
-  unsigned char stand_place_attr[256];
+  unsigned char *stand_place_attr;
   /** HTML attribute for the `user' column in the standings */
-  unsigned char stand_team_attr[256];
+  unsigned char *stand_team_attr;
   /** HTML attribute for the problem columns in the standings */
-  unsigned char stand_prob_attr[256];
+  unsigned char *stand_prob_attr;
   /** HTML attribute for the `solved' column in the standings */
-  unsigned char stand_solved_attr[256];
+  unsigned char *stand_solved_attr;
   /** HTML attribute for the `score' column in the standings */
-  unsigned char stand_score_attr[256];
+  unsigned char *stand_score_attr;
   /** HTML attribute for the `penalty' column in the standings */
-  unsigned char stand_penalty_attr[256];
+  unsigned char *stand_penalty_attr;
   /** HTML attribute for time in problem cells */
-  unsigned char stand_time_attr[256];
+  unsigned char *stand_time_attr;
   /** HTML attribute for rows corresponding to the current participant */
-  unsigned char stand_self_row_attr[256];
+  unsigned char *stand_self_row_attr;
   /** HTML attribute for rows corresponding to the real participants */
-  unsigned char stand_r_row_attr[256];
+  unsigned char *stand_r_row_attr;
   /** HTML attribute for rows corresponding to the virtual participants */
-  unsigned char stand_v_row_attr[256];
+  unsigned char *stand_v_row_attr;
   /** HTML attribute for rows corresponding to the unknown participants */
-  unsigned char stand_u_row_attr[256];
+  unsigned char *stand_u_row_attr;
   /** HTML attribute for "Last success" information */
-  unsigned char stand_success_attr[256];
+  unsigned char *stand_success_attr;
   /** HTML attribute for cells with "Check failed" submits */
-  unsigned char stand_fail_attr[256];
+  unsigned char *stand_fail_attr;
   /** HTML attribute for cells with transient (being tested) submits */
-  unsigned char stand_trans_attr[256];
+  unsigned char *stand_trans_attr;
   /** HTML attribute for cells with disqualified submits */
-  unsigned char stand_disq_attr[256];
+  unsigned char *stand_disq_attr;
   /** show participant's login instead of name in the standings */
   ejintbool_t stand_use_login;
+  /** show participant's avatar, if supported */
+  ejintbool_t stand_show_avatar;
+  /** show first solver of the problem */
+  ejintbool_t stand_show_first_solver;
   /** show success time in the standings */
   ejintbool_t stand_show_ok_time;
   /** show number of attempts in Kirov standings */
@@ -554,13 +583,13 @@ struct section_global_data
   /** HTML row attributes */
   char **stand_row_attr;
   /** HTML attribute for the page navigation table in multi-page standings */
-  unsigned char stand_page_table_attr[256];
+  unsigned char *stand_page_table_attr;
   /** HTML attribute for the page navigation rows in multi-page standings */
   char **stand_page_row_attr;
   /** HTML attribute for the page navigation columns */
   char **stand_page_col_attr;
   /** HTML attribute for "Page %d out of %d" */
-  unsigned char stand_page_cur_attr[256];
+  unsigned char *stand_page_cur_attr;
   /** collate standings using user name rather then login */
   ejintbool_t stand_collate_name;
   /** calculate penalty for kirov & olympiad */
@@ -572,24 +601,24 @@ struct section_global_data
   unsigned char *stand_footer_txt META_ATTRIB((meta_private));
 
   /** name of the generated file with the secondary standings */
-  unsigned char stand2_file_name[256];
+  unsigned char *stand2_file_name;
   /** secondary standings header file */
-  path_t stand2_header_file;
+  unsigned char *stand2_header_file;
   /** secondary standings footer file */
-  path_t stand2_footer_file;
+  unsigned char *stand2_footer_file;
   /** text of the secondary standings header */
   unsigned char *stand2_header_txt META_ATTRIB((meta_private));
   /** text of the secondary standings footer */
   unsigned char *stand2_footer_txt META_ATTRIB((meta_private));
   /** directory where to install a symlink to the secondary standings file */
-  path_t stand2_symlink_dir;
+  unsigned char *stand2_symlink_dir;
 
   /** name of the generated file with the public submission log */
-  unsigned char plog_file_name[256];
+  unsigned char *plog_file_name;
   /** public submission log header file */
-  path_t plog_header_file;
+  unsigned char *plog_header_file;
   /** public submission log footer file */
-  path_t plog_footer_file;
+  unsigned char *plog_footer_file;
   /** text of the public submission log header */
   unsigned char *plog_header_txt META_ATTRIB((meta_private));
   /** text of the public submission log footer */
@@ -597,7 +626,7 @@ struct section_global_data
   /** public submission log update interval */
   int plog_update_time;
   /** directory where to install a symlink to the public log file */
-  path_t plog_symlink_dir;
+  unsigned char *plog_symlink_dir;
 
   /** internal XML log update interval */
   int internal_xml_update_time;
@@ -605,25 +634,25 @@ struct section_global_data
   int external_xml_update_time;
 
   /** header file name for the user examination protocol */
-  path_t user_exam_protocol_header_file;
+  unsigned char *user_exam_protocol_header_file;
   /** footer file name for the user examination protocol */
-  path_t user_exam_protocol_footer_file;
+  unsigned char *user_exam_protocol_footer_file;
   /** header text for the user examination protocol */
   unsigned char *user_exam_protocol_header_txt META_ATTRIB((meta_private));
   /** footer text for the user examination protocol */
   unsigned char *user_exam_protocol_footer_txt META_ATTRIB((meta_private));
   /** header file name for the problem examination protocol */
-  path_t prob_exam_protocol_header_file;
+  unsigned char *prob_exam_protocol_header_file;
   /** footer file name for the problem examination protocol */
-  path_t prob_exam_protocol_footer_file;
+  unsigned char *prob_exam_protocol_footer_file;
   /** header text for the problem examination protocol */
   unsigned char *prob_exam_protocol_header_txt META_ATTRIB((meta_private));
   /** footer text for the problem examination protocol */
   unsigned char *prob_exam_protocol_footer_txt META_ATTRIB((meta_private));
   /** header file name for the full user examination protocol */
-  path_t full_exam_protocol_header_file;
+  unsigned char *full_exam_protocol_header_file;
   /** footer file name for the full user examination protocol */
-  path_t full_exam_protocol_footer_file;
+  unsigned char *full_exam_protocol_footer_file;
   /** header text for the full user examination protocol */
   unsigned char *full_exam_protocol_header_txt META_ATTRIB((meta_private));
   /** footer text for the full user examination protocol */
@@ -634,21 +663,21 @@ struct section_global_data
   /** disable sound notifications */
   ejintbool_t disable_sound;
   /** path to a sound file player */
-  path_t sound_player;
+  unsigned char *sound_player;
   /** sound to be played in case of success */
-  path_t accept_sound;
+  unsigned char *accept_sound;
   /** sound to be played in case of run-time error */
-  path_t runtime_sound;
+  unsigned char *runtime_sound;
   /** sound to be played in case of time-limit exceeded error */
-  path_t timelimit_sound;
+  unsigned char *timelimit_sound;
   /** sound to be played in case of presentation error */
-  path_t presentation_sound;
+  unsigned char *presentation_sound;
   /** sound to be played in case of wrong answer */
-  path_t wrong_sound;
+  unsigned char *wrong_sound;
   /** sound to be played in case of check failed condition */
-  path_t internal_sound;
+  unsigned char *internal_sound;
   /** sound to be played upon start of the contest */
-  path_t start_sound;
+  unsigned char *start_sound;
 
   /** @deprecated participant's archive download interval */
   int team_download_time;
@@ -693,8 +722,11 @@ struct section_global_data
   ejintbool_t skip_full_testing;
   ejintbool_t skip_accept_testing;
 
+  /** load problem uuid from history.txt file */
+  ejintbool_t enable_problem_history;
+
   /** path to the file with variant assignment */
-  path_t variant_map_file;
+  unsigned char *variant_map_file;
   /** parsed variant map */
   struct variant_map *variant_map META_ATTRIB((meta_private));
 
@@ -730,9 +762,9 @@ struct section_global_data
   /** show the warnings column in the standings */
   ejintbool_t stand_show_warn_number;
   /** HTML attribute for `contestant status' column of the standings */
-  unsigned char stand_contestant_status_attr[256];
+  unsigned char *stand_contestant_status_attr;
   /** HTML attribute for `warnings' column of the standings */
-  unsigned char stand_warn_number_attr[256];
+  unsigned char *stand_warn_number_attr;
 
   /** the user groups to load */
   char **load_user_group;
@@ -759,99 +791,18 @@ struct section_global_data
   ejintbool_t disable_passed_tests META_ATTRIB((meta_private));
 };
 
-/* paths depending on advanced_layout */
-/*
-  +path_t test_dir;
-  +path_t corr_dir;
-  +path_t info_dir;
-  +path_t tgz_dir;
-  path_t statement_file;
-  path_t alternatives_file;
-  +path_t plugin_file;
-  +path_t xml_file;
-  +path_t source_header;
-  +path_t source_footer;
-  +path_t check_cmd;
-  +path_t valuer_cmd;
-  +path_t interactor_cmd;
-  +path_t style_checker_cmd;
-  +unsigned char *test_checker_cmd;
-  +unsigned char *solution_src;
-  +unsigned char *solution_cmd;
- */
-
-/* sizeof(struct section_problem_data) == 65140/65392 */
+/* sizeof(struct section_problem_data) == 764/1208 */
 struct section_problem_data
 {
-  struct generic_section_config g META_ATTRIB((meta_hidden));
+  struct generic_section_config g META_ATTRIB((meta_hidden));   // 32 bytes
 
   /** problem identifier */
   int id;
   int tester_id;
-  /** is this an abstract problem specification */
-  ejintbool_t abstract;
   /** problem type */
   int type;
-  /** 1, if this problem is checked manually */
-  ejintbool_t manual_checking;
-  /** number of independent examinations */
-  int examinator_num;
-  /** 1, if still check for PE */
-  ejintbool_t check_presentation;
-  /** 1, if the checker calculates test score */
-  ejintbool_t scoring_checker;
-  /** 1, if the valuer works in parallel with testing */
-  ejintbool_t interactive_valuer;
-  /** 1, if PEs are converted to WAs */
-  ejintbool_t disable_pe;
-  /** 1, if WTLs are converted to TLs */
-  ejintbool_t disable_wtl;
-  /** 1, if WTLs are treated as CFs */
-  ejintbool_t wtl_is_cf;
-  /** 1, if solution uses stdin for input */
-  ejintbool_t use_stdin;
-  /** 1, if solution uses stdout for output */
-  ejintbool_t use_stdout;
-  /** 1, if combined stdin/files input is enabled */
-  ejintbool_t combined_stdin;
-  /** 1, if combined stdout/files output is enabled */
-  ejintbool_t combined_stdout;
-  /** input data for problem is binary */
-  ejintbool_t binary_input;
-  /** submit is binary */
-  ejintbool_t binary;
-  /** do not treat non-zero exit code as run-time error */
-  ejintbool_t ignore_exit_code;
-  /** for KIROV contests: handle problem in the olympiad mode*/
-  ejintbool_t olympiad_mode;
-  /** for KIROV contests: score the latest submit */
-  ejintbool_t score_latest;
-  /** for KIROV contests: score the latest submit or the best unmarked */
-  ejintbool_t score_latest_or_unmarked;
-  /** for KIROV contests: score the latest marked submit */
-  ejintbool_t score_latest_marked;
-  /** for KIROV contests: score only the tokenized submits (with tokens spent on them) */
-  ejintbool_t score_tokenized;
-  /** maximum astronomical time for a problem (seconds) */
-  int real_time_limit;
-  /** time limit in seconds */
-  int time_limit;
-  /** time limit in milliseconds */
-  int time_limit_millis;
-  /** use AC instead of OK for successful submits */
-  ejintbool_t use_ac_not_ok;
-  /** mark previous AC for this problems as IG */
-  ejintbool_t ignore_prev_ac;
-  /** enable report viewing for contestants */
-  ejintbool_t team_enable_rep_view;
-  /** enable compilation error messages viewing for contestants */
-  ejintbool_t team_enable_ce_view;
-  /** show the full testing report to contestants */
-  ejintbool_t team_show_judge_report;
-  /** always show checker comments */
-  ejintbool_t show_checker_comment;
-  /** do not count compilation errors as failed runs */
-  ejintbool_t ignore_compile_errors;
+  /** number of variants for this problem */
+  int variant_num;
   /** score for successful solution */
   int full_score;
   /** score for successful user-visible solution (separate_user_score mode) */
@@ -860,8 +811,178 @@ struct section_problem_data
   int min_score_1;
   /** min score after all subtractions */
   int min_score_2;
+
+  // offset == 64
+  /** base abstract problem */
+  unsigned char super[32];
+  /** short name of the problem */
+  unsigned char short_name[32];
+
+  // offset == 128
+  /** is this an abstract problem specification */
+  ejbyteflag_t abstract;
+  /** 1, if this problem is checked manually */
+  ejbyteflag_t manual_checking;
+  /** 1, if still check for PE */
+  ejbyteflag_t check_presentation;
+  /** 1, if the checker calculates test score */
+  ejbyteflag_t scoring_checker;
+  /** 1, if the scoring checker also produces a token */
+  ejbyteflag_t enable_checker_token;
+  /** 1, if the valuer works in parallel with testing */
+  ejbyteflag_t interactive_valuer;
+  /** 1, if PEs are converted to WAs */
+  ejbyteflag_t disable_pe;
+  /** 1, if WTLs are converted to TLs */
+  ejbyteflag_t disable_wtl;
+  /** 1, if WTLs are treated as CFs */
+  ejbyteflag_t wtl_is_cf;
+
+  /** 1, if solution uses stdin for input */
+  ejbyteflag_t use_stdin;
+  /** 1, if solution uses stdout for output */
+  ejbyteflag_t use_stdout;
+  /** 1, if combined stdin/files input is enabled */
+  ejbyteflag_t combined_stdin;
+  /** 1, if combined stdout/files output is enabled */
+  ejbyteflag_t combined_stdout;
+  /** input data for problem is binary */
+  ejbyteflag_t binary_input;
+  /** submit is binary */
+  ejbyteflag_t binary;
+  /** do not treat non-zero exit code as run-time error */
+  ejbyteflag_t ignore_exit_code;
+  /** for KIROV contests: handle problem in the olympiad mode*/
+  ejbyteflag_t olympiad_mode;
+
+  /** for KIROV contests: score the latest submit */
+  ejbyteflag_t score_latest;
+  /** for KIROV contests: score the latest submit or the best unmarked */
+  ejbyteflag_t score_latest_or_unmarked;
+  /** for KIROV contests: score the latest marked submit */
+  ejbyteflag_t score_latest_marked;
+  /** for KIROV contests: score only the tokenized submits (with tokens spent on them) */
+  ejbyteflag_t score_tokenized;
+  /** use AC instead of OK for successful submits */
+  ejbyteflag_t use_ac_not_ok;
+  /** mark previous AC for this problems as IG */
+  ejbyteflag_t ignore_prev_ac;
+  /** enable report viewing for contestants */
+  ejbyteflag_t team_enable_rep_view;
+  /** enable compilation error messages viewing for contestants */
+  ejbyteflag_t team_enable_ce_view;
+
+  /** show the full testing report to contestants */
+  ejbyteflag_t team_show_judge_report;
+  /** always show checker comments */
+  ejbyteflag_t show_checker_comment;
+  /** do not count compilation errors as failed runs */
+  ejbyteflag_t ignore_compile_errors;
   /** allow changing the score for successful solutions */
-  ejintbool_t variable_full_score;
+  ejbyteflag_t variable_full_score;
+  /** ignore penalty for this problem in overall penalty calculation */
+  ejbyteflag_t ignore_penalty;
+  /** pass a file with the correct answer to the checker */
+  ejbyteflag_t use_corr;
+  /** pass a file with test information to the checker */
+  ejbyteflag_t use_info;
+  /** use a working directory from the tgz archive */
+  ejbyteflag_t use_tgz;
+
+
+  /** accept solutions that do not pass all accepting tests */
+  ejbyteflag_t accept_partial;
+  /** participants cannot submit this problem */
+  ejbyteflag_t disable_user_submit;
+  /** no problem tab for this problem in problem_navigation mode */
+  ejbyteflag_t disable_tab;
+  /** do show problem statement after problem expiration */
+  ejbyteflag_t unrestricted_statement;
+  /** for compatibility with old configs */
+  ejbyteflag_t restricted_statement;
+  /** enable submit for rejected problems even after deadline */
+  ejbyteflag_t enable_submit_after_reject;
+  /** hide input/output file names from problem submit page */
+  ejbyteflag_t hide_file_names;
+  /** hide information about real time limit */
+  ejbyteflag_t hide_real_time_limit;
+
+  /** enable tokens for this problem */
+  ejbyteflag_t enable_tokens;
+  /** enable tokens only for user AC status */
+  ejbyteflag_t tokens_for_user_ac;
+  /** disable submission after this problem is solved */
+  ejbyteflag_t disable_submit_after_ok;
+  /** do not test this problem automatically */
+  ejbyteflag_t disable_auto_testing;
+  /** disable any testing of this problem */
+  ejbyteflag_t disable_testing;
+  /** check that submission compiles successfully */
+  ejbyteflag_t enable_compilation;
+  /** skip testing this problem */
+  ejbyteflag_t skip_testing;
+  /** hide the problem from standings */
+  ejbyteflag_t hidden;
+
+  /** do not show accept time in standings */
+  ejbyteflag_t stand_hide_time;
+  /** automatically advance to the next problem in navigation mode */
+  ejbyteflag_t advance_to_next;
+  /** disable any control characters except \r, \n in the source code */
+  ejbyteflag_t disable_ctrl_chars;
+  /** enable text area form for output-only problems */
+  ejbyteflag_t enable_text_form;
+  /** ignore the score in total score calculation */
+  ejbyteflag_t stand_ignore_score;
+  /** show the column after the `total' column */
+  ejbyteflag_t stand_last_column;
+  /** disable security restrictions for this problem */
+  ejbyteflag_t disable_security;
+  /** enable suid helpers for this problem */
+  ejbyteflag_t enable_suid_run;
+
+  /** if the valuer also sets the marked flag */
+  ejbyteflag_t valuer_sets_marked;
+  /** ignore unmarked submits in scoring */
+  ejbyteflag_t ignore_unmarked;
+  /** consider any output to stderr as presentation error */
+  ejbyteflag_t disable_stderr;
+  /** use process groups */
+  ejbyteflag_t enable_process_group;
+  /** kill all processes belonging to 'ejexec' user */
+  ejbyteflag_t enable_kill_all;
+  /** hide variant number from user */
+  ejbyteflag_t hide_variant;
+  /** enable testlib-compatibility mode */
+  ejbyteflag_t enable_testlib_mode;
+  /** autoassign variants? */
+  ejbyteflag_t autoassign_variants;
+  /** require any of the specified problem, not all */
+  ejbyteflag_t require_any;
+  /** pass extended info to checker, valuer, interactor */
+  ejbyteflag_t enable_extended_info;
+  /** stop testing after the first failed test (like ACM) */
+  ejbyteflag_t stop_on_first_fail;
+
+  /** enable headers/footers specific for each test */
+  ejbyteflag_t enable_multi_header;
+  /** use lang short name in multi headers */
+  ejbyteflag_t use_lang_multi_header;
+
+  /** send a notification to judges upon submit */
+  ejbyteflag_t notify_on_submit;
+
+  // padding to 8-byte boundary
+  unsigned char _pad1[1];
+
+  /** number of independent examinations */
+  int examinator_num;
+  /** maximum astronomical time for a problem (seconds) */
+  int real_time_limit;
+  /** time limit in seconds */
+  int time_limit;
+  /** time limit in milliseconds */
+  int time_limit_millis;
   /** score for one test */
   int test_score;
   /** penalty for one run for KIROV contests*/
@@ -870,120 +991,58 @@ struct section_problem_data
   int acm_run_penalty;
   /** penalty for one disqualified run */
   int disqualified_penalty;
-  /** ignore penalty for this problem in overall penalty calculation */
-  ejintbool_t ignore_penalty;
-  /** pass a file with the correct answer to the checker */
-  ejintbool_t use_corr;
-  /** pass a file with test information to the checker */
-  ejintbool_t use_info;
-  /** use a working directory from the tgz archive */
-  ejintbool_t use_tgz;
+  /** penalty for a compilation error */
+  int compile_error_penalty;
   /** number of tests to accept solutions in olympiad contests */
   int tests_to_accept;
-  /** accept solutions that do not pass all accepting tests */
-  ejintbool_t accept_partial;
   /** minimal number of tests to accept solutions in olympiad contests */
   int min_tests_to_accept;
   /** real time limit for checkers */
   int checker_real_time_limit;
-  /** participants cannot submit this problem */
-  ejintbool_t disable_user_submit;
-  /** no problem tab for this problem in problem_navigation mode */
-  ejintbool_t disable_tab;
-  /** do show problem statement after problem expiration */
-  ejintbool_t unrestricted_statement;
-  /** for compatibility with old configs */
-  ejintbool_t restricted_statement;
-  /** enable submit for rejected problems even after deadline */
-  ejintbool_t enable_submit_after_reject;
-  /** hide input/output file names from problem submit page */
-  ejintbool_t hide_file_names;
-  /** hide information about real time limit */
-  ejintbool_t hide_real_time_limit;
-  /** enable tokens for this problem */
-  ejintbool_t enable_tokens;
-  /** enable tokens only for user AC status */
-  ejintbool_t tokens_for_user_ac;
-  /** disable submission after this problem is solved */
-  ejintbool_t disable_submit_after_ok;
-  /** do not test this problem automatically */
-  ejintbool_t disable_auto_testing;
-  /** disable any testing of this problem */
-  ejintbool_t disable_testing;
-  /** check that submission compiles successfully */
-  ejintbool_t enable_compilation;
-  /** skip testing this problem */
-  ejintbool_t skip_testing;
-  /** hide the problem from standings */
-  ejintbool_t hidden;
   /** priority adjustment for this problem */
   int priority_adjustment;
-  /** do not show accept time in standings */
-  ejintbool_t stand_hide_time;
   /** additional score multiplier for this problem */
   int score_multiplier;
   /** number of previous runs to show */
   int prev_runs_to_show;
   /** limit for the number of submits for this problem for a user */
   int max_user_run_count;
-  /** automatically advance to the next problem in navigation mode */
-  ejintbool_t advance_to_next;
-  /** disable any control characters except \r, \n in the source code */
-  ejintbool_t disable_ctrl_chars;
-  /** enable text area form for output-only problems */
-  ejintbool_t enable_text_form;
-  /** ignore the score in total score calculation */
-  ejintbool_t stand_ignore_score;
-  /** show the column after the `total' column */
-  ejintbool_t stand_last_column;
-  /** disable security restrictions for this problem */
-  ejintbool_t disable_security;
-  /** enable suid helpers for this problem */
-  ejintbool_t enable_suid_run;
-  /** enable headers/footers specific for each test */
-  ejintbool_t enable_multi_header;
-  /** use lang short name in multi headers */
-  ejintbool_t use_lang_multi_header;
-  /** require any of the specified problem, not all */
-  ejintbool_t require_any;
-  /** base abstract problem */
-  unsigned char super[32];
-  /** short name of the problem */
-  unsigned char short_name[32];
   /** long name of the problem */
-  unsigned char long_name[256];
+  unsigned char *long_name;
   /** name for the standings column */
-  unsigned char stand_name[32];
+  unsigned char *stand_name;
   /** column to collate this problem */
-  unsigned char stand_column[32];
+  unsigned char *stand_column;
   /** group name of the problem */
-  unsigned char group_name[64];
+  unsigned char *group_name;
   /** internal problem name */
-  unsigned char internal_name[32];
+  unsigned char *internal_name;
+  /** problem UUID */
+  unsigned char *uuid;
   /** problem directory (relative to problems or absolute) */
   unsigned char *problem_dir;
   /** directory with tests */
-  path_t test_dir;
+  unsigned char *test_dir;
   /** test files suffix */
-  unsigned char test_sfx[32];
+  unsigned char *test_sfx;
   /** directory with correct answers */
-  path_t corr_dir;
+  unsigned char *corr_dir;
   /** correct files suffix */
-  unsigned char corr_sfx[32];
+  unsigned char *corr_sfx;
   /** directory with info files */
-  path_t info_dir;
+  unsigned char *info_dir;
   /** info files suffix */
-  unsigned char info_sfx[32];
+  unsigned char *info_sfx;
   /** directory with tar test archive */
-  path_t tgz_dir;
+  unsigned char *tgz_dir;
   /** tar test archive suffix */
-  unsigned char tgz_sfx[32];
+  unsigned char *tgz_sfx;
   /** working directory master copy suffix */
-  unsigned char tgzdir_sfx[32];
+  unsigned char *tgzdir_sfx;
   /** input file name */
-  unsigned char input_file[256];
+  unsigned char *input_file;
   /** output file name */
-  unsigned char output_file[256];
+  unsigned char *output_file;
   /** scores for individual tests */
   unsigned char *test_score_list;
   /** token specification */
@@ -1002,48 +1061,40 @@ struct section_problem_data
   struct token_info *token_info META_ATTRIB((meta_private));
 
   /** number of tests for Moscow scoring */
-  unsigned char score_tests[256];
+  unsigned char *score_tests;
   /** name of the built-in checker */
-  path_t standard_checker;
+  unsigned char *standard_checker;
   /** spelling for the festival speach generator */
-  unsigned char spelling[256];
+  unsigned char *spelling;
   /** file with HTML problem statement */
-  path_t statement_file;
+  unsigned char *statement_file;
   /** file with alternatives for select-one or select-many problem */
-  path_t alternatives_file;
+  unsigned char *alternatives_file;
   /** file with the custom problem plugin */
-  path_t plugin_file;
+  unsigned char *plugin_file;
   /** XML file with the problem information */
-  path_t xml_file;
+  unsigned char *xml_file;
   /** HTML attributes for standings column */
-  unsigned char stand_attr[256];
+  unsigned char *stand_attr;
   /** file to insert into the beginning of the source file */
-  path_t source_header;
+  unsigned char *source_header;
   /** file to insert at the end of source file */
-  path_t source_footer;
-  /** if the valuer also sets the marked flag */
-  ejintbool_t valuer_sets_marked;
-  /** ignore unmarked submits in scoring */
-  ejintbool_t ignore_unmarked;
+  unsigned char *source_footer;
   /** time-limit for the interactor */
   int interactor_time_limit;
-  /** consider any output to stderr as presentation error */
-  ejintbool_t disable_stderr;
-  /** use process groups */
-  ejintbool_t enable_process_group;
-  /** hide variant number from user */
-  ejintbool_t hide_variant;
+  /** real time limit for the interactor */
+  int interactor_real_time_limit;
 
   /** printf pattern for the test files */
-  unsigned char test_pat[32];
+  unsigned char *test_pat;
   /** printf pattern for the correct answer files */
-  unsigned char corr_pat[32];
+  unsigned char *corr_pat;
   /** printf pattern for the test information files */
-  unsigned char info_pat[32];
+  unsigned char *info_pat;
   /** printf pattern for the tgz archive pattern */
-  unsigned char tgz_pat[32];
+  unsigned char *tgz_pat;
   /** printf pattern for the working directory master copy */
-  unsigned char tgzdir_pat[32];
+  unsigned char *tgzdir_pat;
 
   /** number of tests found */
   int ntests META_ATTRIB((meta_private));
@@ -1058,17 +1109,13 @@ struct section_problem_data
   struct testset_info *ts_infos META_ATTRIB((meta_private));
 
   /** test normalization type */
-  unsigned char normalization[32];
+  unsigned char *normalization;
   int normalization_val META_ATTRIB((meta_private));
 
   /** deadline for sending this problem */
   time_t deadline;
   /** time for opening this problem for submission */
   time_t start_date;
-  /** autoassign variants? */
-  ejintbool_t autoassign_variants;
-  /** number of variants for this problem */
-  int variant_num;
 
   /** penalty which depends on date */
   char **date_penalty;
@@ -1104,13 +1151,13 @@ struct section_problem_data
   /** environment variables for the program itself */
   ejenvlist_t start_env;
   /** checker program */
-  path_t check_cmd;
+  unsigned char *check_cmd;
   /** valuer program */
-  path_t valuer_cmd;
+  unsigned char *valuer_cmd;
   /** interactor program */
-  path_t interactor_cmd;
+  unsigned char *interactor_cmd;
   /** style checker program */
-  path_t style_checker_cmd;
+  unsigned char *style_checker_cmd;
   /** test checker program */
   unsigned char *test_checker_cmd;
   /** start/stop init-style interactor */
@@ -1131,6 +1178,9 @@ struct section_problem_data
   char **lang_max_vm_size;
   char **lang_max_stack_size;
 
+  /** environment variables for the statement */
+  ejenvlist_t statement_env;
+
   /** alternatives for test-like problems */
   char **alternative;
   /** personal deadline extensions */
@@ -1139,19 +1189,19 @@ struct section_problem_data
   struct pers_dead_info *pd_infos META_ATTRIB((meta_private));
 
   /** bonus for the Nth full solution of the problem */
-  unsigned char score_bonus[256];
+  unsigned char *score_bonus;
   /** parsed: number of entries in score_bonus */
   int score_bonus_total META_ATTRIB((meta_private));
   /** parsed: score_bonus values */
   int *score_bonus_val META_ATTRIB((meta_private));
 
   /** number of tests, open for unprivileged users */
-  unsigned char open_tests[256];
+  unsigned char *open_tests;
   int open_tests_count META_ATTRIB((meta_private));
   int *open_tests_val META_ATTRIB((meta_private));
 
   /** test visibility in the final final mode */
-  unsigned char final_open_tests[256];
+  unsigned char *final_open_tests;
   int final_open_tests_count META_ATTRIB((meta_private));
   int *final_open_tests_val META_ATTRIB((meta_private));
 
@@ -1186,6 +1236,10 @@ struct section_problem_data
   int *score_view_score META_ATTRIB((meta_private));
   char **score_view_text;
 
+  /** full path to xml_file */
+  unsigned char *xml_file_path META_ATTRIB((meta_private));
+  unsigned char **var_xml_file_paths META_ATTRIB((meta_private));
+
   /* parsed XML specs */
   union
   {
@@ -1194,7 +1248,7 @@ struct section_problem_data
   } xml META_ATTRIB((meta_hidden));
 };
 
-/* sizeof(struct section_language_data) == 33688/33736 */
+/* sizeof(struct section_language_data) == 296/376 */
 struct section_language_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -1221,21 +1275,21 @@ struct section_language_data
   /** language short name */
   unsigned char short_name[32];
   /** language long name */
-  unsigned char long_name[256];
+  unsigned char *long_name;
   /** configuration key */
-  unsigned char key[32];
+  unsigned char *key;
   /** language architecture */
-  unsigned char arch[32];
+  unsigned char *arch;
   /** source file suffix */
   unsigned char src_sfx[32];
   /** executable file suffix */
   unsigned char exe_sfx[32];
   /** Content-type: header for downloads */
-  unsigned char content_type[256];
+  unsigned char *content_type;
   /** compile command */
-  path_t cmd;
+  unsigned char *cmd;
   /** style checker */
-  path_t style_checker_cmd;
+  unsigned char *style_checker_cmd;
   /** environment to pass to the style checker */
   ejenvlist_t style_checker_env;
 
@@ -1256,30 +1310,38 @@ struct section_language_data
   ej_size64_t max_stack_size;
   /** max file size limit */
   ej_size64_t max_file_size;
+  /** stack size limit for compiled programs, overrides the problem settings */
+  ej_size64_t run_max_stack_size;
+  /** virtual memory size limit for compiled programs, overrides the problem settings */
+  ej_size64_t run_max_vm_size;
 
   /** index of the compile directory in the list of compile servers */
   int compile_dir_index;
   /** common subdirectory */
-  path_t compile_dir;
+  unsigned char *compile_dir;
   /** directory for serve->compile packets */
-  path_t compile_queue_dir;
+  unsigned char *compile_queue_dir;
   /** directory for source files */
-  path_t compile_src_dir;
+  unsigned char *compile_src_dir;
   /** base directory for compile results */
-  path_t compile_out_dir;
+  unsigned char *compile_out_dir;
   /** directory for compile->serve packets */
-  path_t compile_status_dir;
+  unsigned char *compile_status_dir;
   /** directory for executables/error logs */
-  path_t compile_report_dir;
+  unsigned char *compile_report_dir;
   /** environment to pass to the compiler */
   ejenvlist_t compiler_env;
+  /** ID of compilation server */
+  unsigned char *compile_server_id;
+  /** suffix to use for multi-header setup */
+  unsigned char *multi_header_suffix;
 
   unsigned char *unhandled_vars;
   /** disabled by configuration script */
   int disabled_by_config META_ATTRIB((meta_private));
 };
 
-/* sizeof(struct section_tester_data) == 50204/50232 */
+/* sizeof(struct section_tester_data) == 288/392 */
 struct section_tester_data
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -1306,11 +1368,11 @@ struct section_tester_data
   /** checker architecture */
   unsigned char arch[32];
   /** configuration key */
-  unsigned char key[32];
+  unsigned char *key;
   /** type of memory limit handling */
-  unsigned char memory_limit_type[32];
+  unsigned char *memory_limit_type;
   /** type of secure execution handling */
-  unsigned char secure_exec_type[32];
+  unsigned char *secure_exec_type;
 
   /** is this tester abstract */
   ejintbool_t abstract;
@@ -1325,7 +1387,7 @@ struct section_tester_data
   /** enable memory limit detection */
   ejintbool_t enable_memory_limit_error;
   /** the signal to kill processes */
-  unsigned char kill_signal[32];
+  unsigned char *kill_signal;
   /** max size of the stack */
   size_t max_stack_size;
   /** max size of the data */
@@ -1338,31 +1400,31 @@ struct section_tester_data
   /** have priority over `time_limit_adjustment' */
   int time_limit_adj_millis;
 
-  path_t run_dir;
-  path_t run_queue_dir;
-  path_t run_exe_dir;
-  path_t run_out_dir;
+  unsigned char *run_dir;
+  unsigned char *run_queue_dir;
+  unsigned char *run_exe_dir;
+  unsigned char *run_out_dir;
   /** run->serve status dir */
-  path_t run_status_dir;
+  unsigned char *run_status_dir;
   /** run->serve report dir */
-  path_t run_report_dir;
+  unsigned char *run_report_dir;
   /** run->serve team report dir */
-  path_t run_team_report_dir;
+  unsigned char *run_team_report_dir;
   /** run->serve full output archive dir */
-  path_t run_full_archive_dir;
+  unsigned char *run_full_archive_dir;
 
-  path_t check_dir;
+  unsigned char *check_dir;
   /** file that contains completion status */
-  unsigned char errorcode_file[256];
+  unsigned char *errorcode_file;
   /** stderr output of the checked program */
-  unsigned char error_file[256];
+  unsigned char *error_file;
 
   /** helper to prepare the executable */
-  path_t prepare_cmd;
+  unsigned char *prepare_cmd;
   /** helper to start testing */
-  path_t start_cmd;
+  unsigned char *start_cmd;
   /** nwrun spool directory */
-  path_t nwrun_spool_dir;
+  unsigned char *nwrun_spool_dir;
 
   /** environment variables for start_cmd */
   ejenvlist_t start_env;
@@ -1377,14 +1439,16 @@ int
 prepare(
         const struct contest_desc *cnts,
         serve_state_t,
-        char const *, 
+        char const *,
         int flags,
         int mode,
         char const *opts,
         int managed_flag,
         const unsigned char **,
         const unsigned char **);
-int create_dirs(serve_state_t, int mode);
+int create_dirs(
+        const struct contest_desc *cnts,
+        serve_state_t, int mode);
 int
 prepare_serve_defaults(
         const struct contest_desc *cnts,
@@ -1458,9 +1522,13 @@ void prepare_unparse_unhandled_lang(FILE *f,
                                     const struct section_language_data *lang);
 int prepare_check_forbidden_lang(FILE *f, const struct section_language_data *lang);
 
-void prepare_unparse_prob(FILE *f, const struct section_problem_data *prob,
-                          const struct section_global_data *global,
-                          int score_system_val);
+void
+prepare_unparse_prob(
+        FILE *f,
+        const struct section_problem_data *prob,
+        const struct section_problem_data *aprob,
+        const struct section_global_data *global,
+        int score_system_val);
 void prepare_unparse_unhandled_prob(FILE *f, const struct section_problem_data *prob,
                                     const struct section_global_data *global);
 int prepare_check_forbidden_prob(FILE *f, const struct section_problem_data *prob);
@@ -1516,9 +1584,8 @@ prepare_insert_variant_num(
 struct token_info *
 prepare_parse_tokens(FILE *log_f, const unsigned char *tokens);
 
-/* This is INTENTIONALLY not an `extern' variable */
 struct ejudge_cfg;
-struct ejudge_cfg *ejudge_config;
+extern struct ejudge_cfg *ejudge_config;
 
 int
 lang_config_configure(
@@ -1569,5 +1636,22 @@ void
 prepare_copy_dates(
         struct section_problem_data *prob,
         struct dates_config *dcfg);
+
+unsigned char *
+prepare_varsubst(
+        serve_state_t state,
+        unsigned char *in_str,
+        int free_flag,
+        const struct section_problem_data *prob,
+        const struct section_language_data *lang,
+        const struct section_tester_data *tester);
+
+char **
+prepare_sarray_varsubst(
+        serve_state_t state,
+        const struct section_problem_data *prob,
+        const struct section_language_data *lang,
+        const struct section_tester_data *tester,
+        char **a1);
 
 #endif /* __PREPARE_H__ */

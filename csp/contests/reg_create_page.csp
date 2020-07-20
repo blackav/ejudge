@@ -35,7 +35,7 @@
     for (i = 0; i < CONTEST_LAST_MEMBER; i++)
       if (cnts->members[i] && cnts->members[i]->max_count > 0)
         allowed_info_edit = 1;
-    
+
     (void) allowed_info_edit;
   } else {
 %><s:read var="login" ignoreerrors="yes" /><%
@@ -58,7 +58,7 @@
 %><s:hidden name="locale_id" value="phr->locale_id" /><%
   }
 %>
-<div class="user_actions"><table class="menu"><tr>
+<div class="user_actions user_actions_login_form"><table class="menu"><tr>
 <%
   if (!cnts->assign_logins) {
 %><td class="menu"><div class="user_action_item"><s:_>login</s:_>: <s:textfield name="login" size="20" value="login" checkExpr="" /></div></td><%
@@ -73,15 +73,15 @@
 %>
 <%
     if (!cnts->disable_locale_change) {
-%><td class="menu"><div class="user_action_item"><s:_>language</s:_>: <% l10n_html_locale_select(out_f, phr->locale_id); %></div></td>
+%><td class="menu"><div class="user_action_item user-action-lang"><s:_>language</s:_>: <% l10n_html_locale_select(out_f, phr->locale_id); %></div></td>
 <td class="menu"><div class="user_action_item"><s:submit ac="change-language" label="Change language" /></div></td><%
     }
   } else {
     if (!cnts->disable_locale_change) {
-%><td class="menu"><div class="user_action_item"><s:_>language</s:_>: <% l10n_html_locale_select(out_f, phr->locale_id); %></div></td><%
+%><td class="menu"><div class="user_action_item user-action-lang"><s:_>language</s:_>: <% l10n_html_locale_select(out_f, phr->locale_id); %></div></td><%
     }
     if (phr->config->disable_new_users <= 0) {
-%><td class="menu"><div class="user_action_item"><s:submit ac="reg-create-account" label="Create account" /></div></td><%
+%><td class="menu"><div class="user_action_item"><s:submit ac="reg-create-account" label="Create" /></div></td><%
     }
   }
 %>
@@ -197,7 +197,7 @@ e-mail address. You should try to register later.
 
 <p><s:_><b>Note</b>, that you must log in 24 hours after the form is filled and submitted, or your registration will be cancelled!</s:_></p>
 
-<p><s:_>If you already have an ejudge account on this server, you may use it. If so, follow the link</s:_>: 
+<p><s:_>If you already have an ejudge account on this server, you may use it. If so, follow the link</s:_>:
 <s:url name="LoginUrl" ac="reg-login-page"><s:param name="contest_id" value="phr->contest_id" /><s:param name="locale_id" value="phr->locale_id" /></s:url>
 <s:a url="LoginUrl"><s:_>Use an existing account</s:_></s:a>.
 

@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __SUPER_SERVE_PI_H__
 #define __SUPER_SERVE_PI_H__
 
-/* Copyright (C) 2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +37,10 @@ typedef struct CspContestInfo
     int master_enabled;
     int user_enabled;
     unsigned char *comment;
+
+    const unsigned char *register_access_style;
+    const unsigned char *users_access_style;
+    const unsigned char *client_access_style;
 } CspContestInfo;
 
 typedef struct CspContestsArray

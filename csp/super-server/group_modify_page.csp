@@ -1,0 +1,90 @@
+<%
+%><%@include "includes.csp"
+%><%
+#include "ejudge/userlist_clnt.h"
+#include "ejudge/userlist_proto.h"
+#include "ejudge/userlist.h"
+%><%@set getter_name = "csp_get_group_modify_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_group_modify_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = NULL;
+    unsigned char subtitle_buf[1024];
+    const unsigned char *subtitle = subtitle_buf;
+    opcap_t caps = 0;
+    int group_id = 0;
+    int r;
+    unsigned char *xml_text = NULL;
+    struct userlist_list *users = NULL;
+    const struct userlist_group *g = NULL;
+
+    const unsigned char *marked_str = NULL; // needed for users_top_menu.csp
+    int other_user_id = 0;                  // needed for users_top_menu.csp
+    int contest_id = 0;                     // needed for users_top_menu.csp
+
+    if (ss_get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_EDIT_USER) < 0) {
+        FAIL(SSERV_ERR_PERM_DENIED);
+    }
+
+    %><s:read name="group_id" /><%
+    if (group_id <= 0) FAIL(SSERV_ERR_INV_GROUP_ID);
+
+    if (!phr->userlist_clnt) FAIL(SSERV_ERR_DB_ERROR);
+    r = userlist_clnt_list_all_users(phr->userlist_clnt, ULS_GET_GROUP_INFO,
+                                     group_id, &xml_text);
+    if (r < 0) FAIL(SSERV_ERR_DB_ERROR);
+
+    users = userlist_parse_str(xml_text);
+    if (!users) FAIL(SSERV_ERR_DB_ERROR);
+    if (group_id >= users->group_map_size || !(g = users->group_map[group_id]))
+        FAIL(SSERV_ERR_INV_GROUP_ID);
+
+    snprintf(subtitle_buf, sizeof(subtitle_buf), "modifying group %d", group_id);
+
+%><%@include "header.csp"
+%>
+
+<h2>Deleting group <s:v value="group_id" /></h2>
+
+<%@include "users_top_menu.csp"
+%>
+
+<s:form>
+  <s:hidden name="group_id" />
+
+  <table class="b0">
+    <tr>
+      <td class="b0"><b>Group Id:</b></td>
+      <td class="b0"><s:v value="group_id" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Group Name:</b></td>
+      <td class="b0"><s:textfield name="group_name" size="80" value="g->group_name" checkExpr="" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Description:</b></td>
+      <td class="b0"><s:textfield name="description" size="80" value="g->description" checkExpr="" /></td>
+    </tr>
+
+    <tr>
+      <td class="b0" colspan="2">
+        <s:submit ac="group-cancel-action" text="Cancel" />
+        &nbsp;
+        <s:submit ac="group-delete-page-action" text="Delete the group!" />
+        &nbsp;
+        <s:submit ac="group-modify-action" text="Save changes" />
+      </td>
+    </tr>
+  </table>
+</form>
+
+<%@include "footer.csp"
+%><%
+cleanup:
+    l10n_resetlocale();
+    html_armor_free(&ab);
+    xfree(xml_text);
+    userlist_free(&users->b);
+%>

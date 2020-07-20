@@ -3,7 +3,7 @@
 #ifndef __EJUDGE_CFG_H__
 #define __EJUDGE_CFG_H__ 1
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -66,6 +66,12 @@ struct ejudge_cfg
   int enable_contest_select;
   int disable_new_users;
 
+  // WebSocket port number
+  int contests_ws_port;
+
+  // max loaded contests count for ej-contests
+  int max_loaded_contests;
+
   // these strings actually point into other strings in XML tree
   unsigned char *socket_path;
   unsigned char *db_path;
@@ -104,7 +110,12 @@ struct ejudge_cfg
   unsigned char *default_clardb_plugin;
   unsigned char *default_rundb_plugin;
   unsigned char *default_xuser_plugin;
+  unsigned char *default_avatar_plugin;
+  unsigned char *default_content_plugin;
+  unsigned char *default_content_url_prefix;
+  unsigned char *default_status_plugin;
   unsigned char *caps_file;
+  unsigned char *contest_server_id;
   struct xml_tree *user_map;
   struct xml_tree *compile_servers;
 
@@ -120,6 +131,7 @@ struct ejudge_cfg
 };
 
 struct ejudge_cfg *ejudge_cfg_parse(char const *, int no_system_lookup);
+struct ejudge_cfg *ejudge_cfg_parse_file(const char *path, FILE *in_file, int no_system_lookup);
 struct ejudge_cfg *ejudge_cfg_free(struct ejudge_cfg *);
 struct xml_tree   *ejudge_cfg_free_subtree(struct xml_tree *p);
 void ejudge_cfg_unparse(struct ejudge_cfg *, FILE *);
@@ -154,7 +166,7 @@ ejudge_cfg_free_caps_file(struct ejudge_cfg_caps_file *info);
 int
 ejudge_cfg_opcaps_find(
         const struct ejudge_cfg *cfg,
-        const unsigned char *login_str, 
+        const unsigned char *login_str,
         opcap_t *p_caps);
 const unsigned char *
 ejudge_cfg_user_map_find(

@@ -47,4 +47,3 @@ const unsigned char *
 l10n_normalize(const unsigned char *str);
 
 #endif /* __L10N_H__ */
-

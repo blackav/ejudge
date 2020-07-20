@@ -3,7 +3,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,12 @@
 #define META_ATTRIB(x)
 #endif /* __RCC__ */
 #endif /* META_ATTRIB */
+
+#ifdef __GCC__
+#define GCC_ATTRIB(x) __attribute__(x)
+#else
+#define GCC_ATTRIB(x)
+#endif
 
 enum
   {
@@ -111,7 +117,7 @@ enum
     CONTEST_FILE_GROUP,
     CONTEST_DEFAULT_LOCALE,
     CONTEST_WELCOME_FILE,
-    CONTEST_REG_WELCOME_FILE,    
+    CONTEST_REG_WELCOME_FILE,
     CONTEST_SLAVE_RULES,
     CONTEST_RUN_MANAGED_ON,
     CONTEST_USER_CONTEST,
@@ -127,6 +133,9 @@ enum
     CONTEST_TELEGRAM_BOT_ID,
     CONTEST_TELEGRAM_ADMIN_CHAT_ID,
     CONTEST_TELEGRAM_USER_CHAT_ID,
+    CONTEST_AVATAR_PLUGIN,
+    CONTEST_CONTENT_PLUGIN,
+    CONTEST_CONTENT_URL_PREFIX,
     CONTEST_COMMENT,
 
     CONTEST_LAST_TAG
@@ -172,6 +181,9 @@ enum
     CONTEST_A_READY,
     CONTEST_A_FORCE_PASSWORD_CHANGE,
     CONTEST_A_ENABLE_USER_TELEGRAM,
+    CONTEST_A_ENABLE_AVATAR,
+    CONTEST_A_ENABLE_LOCAL_PAGES,
+    CONTEST_A_IS_PASSWORD,
 
     CONTEST_LAST_ATTR
   };
@@ -263,6 +275,7 @@ struct contest_field
   unsigned char *separator;
   unsigned char *options;
   int checkbox;
+  int is_password;
 };
 
 struct contest_ip
@@ -316,6 +329,8 @@ struct contest_desc
   ejbytebool_t ready;
   ejbytebool_t force_password_change;
   ejbytebool_t enable_user_telegram;
+  ejbytebool_t enable_avatar;
+  ejbytebool_t enable_local_pages;
 
   time_t         reg_deadline;
   time_t         sched_time;
@@ -403,6 +418,9 @@ struct contest_desc
   unsigned char *telegram_bot_id;
   unsigned char *telegram_admin_chat_id;
   unsigned char *telegram_user_chat_id;
+  unsigned char *avatar_plugin;
+  unsigned char *content_plugin;
+  unsigned char *content_url_prefix;
 
   struct xml_tree *slave_rules;
 
@@ -581,11 +599,14 @@ contests_set_member_counts(
 #define CNTS_FIRST_IP_NC(a) ((struct contest_ip*) (a)->b.first_down)
 #define CNTS_NEXT_IP_NC(p)  ((struct contest_ip*) (p)->b.right)
 
-/* This is INTENTIONALLY not an `extern' variable */
 struct ejudge_cfg;
-struct ejudge_cfg *ejudge_config;
+extern struct ejudge_cfg *ejudge_config;
 
 int
 contests_guess_id(const char *path);
+
+int contests_get_register_access_type(const struct contest_desc *cnts);
+int contests_get_users_access_type(const struct contest_desc *cnts);
+int contests_get_participant_access_type(const struct contest_desc *cnts);
 
 #endif /* __CONTESTS_H__ */

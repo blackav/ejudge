@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __VARIANT_MAP_H__
 #define __VARIANT_MAP_H__
 
-/* Copyright (C) 2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -42,8 +41,8 @@ struct variant_map
     int var_prob_num;
     int vintage;
 
-    size_t user_map_size;
-    struct variant_map_item **user_map;
+    size_t user_ind_size;
+    int *user_inds; // indices to 'v' from user_id
 
     size_t a, u;
     struct variant_map_item *v;
@@ -64,7 +63,7 @@ variant_map_unparse(
 int
 variant_map_save(
         FILE *log_f,
-        const struct variant_map *vmap, 
+        const struct variant_map *vmap,
         const unsigned char *path,
         int mode);
 struct variant_map *

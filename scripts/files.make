@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2017-2019 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -64,6 +64,8 @@ SCRIPTS_IN = \
  mzscheme-version.in\
  nasm-x86.in\
  nasm-x86-version.in\
+ node.in\
+ node-version.in\
  qb.in\
  qb-version.in\
  perl.in\
@@ -80,6 +82,8 @@ SCRIPTS_IN = \
  pypy3-version.in\
  ruby.in\
  ruby-version.in\
+ rust.in\
+ rust-version.in\
  tpc.in\
  tpc-version.in\
  yabasic.in\
@@ -88,6 +92,10 @@ SCRIPTS_IN = \
  javac-version.in\
  javac7.in\
  javac7-version.in\
+ scala.in\
+ scala-version.in\
+ kotlin.in\
+ kotlin-version.in\
  mcs.in\
  mcs-version.in\
  vbnc.in\
@@ -112,10 +120,15 @@ SCRIPTS_IN = \
  pasabc-linux-version.in\
  mars.in\
  mars-version.in\
+ dotnet-cs-version.in\
+ dotnet-cs.in\
+ dotnet-vb-version.in\
+ dotnet-vb.in\
  runvg.in\
  runjava.in\
  runmono.in\
- runperl.in
+ runperl.in\
+ rundotnet.in
 
 POLICIES = \
  fileio.policy \

@@ -115,7 +115,7 @@
   for (prob_id = 1; prob_id <= cs->max_prob; ++prob_id) {
     if (cs->probs[prob_id]) {
 %>
-<s:option value="prob_id" selectedExpr="info.prob_id == prob_id"><s:v value="cs->probs[prob_id]->short_name" escape="0" /> - <s:v value="cs->probs[prob_id]->long_name" /></s:option>
+<s:option value="prob_id" selectedExpr="info.prob_id == prob_id"><s:v value="cs->probs[prob_id]->short_name" escape="0" /> - <s:v value="cs->probs[prob_id]->long_name" checkExpr="" /></s:option>
 <%
     }
   }

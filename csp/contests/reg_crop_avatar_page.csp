@@ -1,0 +1,143 @@
+<%
+%><%@include "reg_includes.csp"
+%><%
+// local includes go here
+#include "ejudge/avatar_plugin.h"
+
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
+%><%@set getter_name = "csp_get_reg_crop_avatar_page"
+%><%@page csp_view_reg_crop_avatar_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "reg_stdvars.csp"
+%><%
+  const unsigned char *s;
+  const unsigned char *n;
+  unsigned char title[1024];
+  const unsigned char *key = NULL;
+  const int avatar_width = AVATAR_WIDTH;
+  const int avatar_height = AVATAR_HEIGHT;
+  const int avatar_panel_width = AVATAR_PANEL_WIDTH;
+  const int avatar_panel_height = AVATAR_PANEL_HEIGHT;
+
+%><s:read var="key" ignoreerrors="yes" /><%
+  if (!key) key = "";
+
+  l10n_setlocale(phr->locale_id);
+
+  s = _("Crop avatar");
+  n = phr->name;
+  if (!n || !*n) n = phr->login;
+
+  snprintf(title, sizeof(title), "%s [%s, %s]", s, html_armor_buf(&ab, n), extra->contest_arm);
+%><%@include "reg_header_croppie.csp"
+%>
+<div class="user_actions">
+    <table class="menu">
+        <tr>
+            <td class="menu">
+                <div class="contest_actions_item">&nbsp;</div>
+            </td>
+        </tr>
+    </table>
+</div>
+<div class="white_empty_block">&nbsp;</div>
+<div class="contest_actions">
+    <table class="menu">
+        <tr>
+            <td class="menu">
+                <div class="contest_actions_item">&nbsp;</div>
+            </td>
+        </tr>
+    </table>
+</div>
+<%@include "reg_separator.csp"
+%>
+
+<h2><s:_>Crop avatar</s:_></h2>
+
+<div class="userinfo-avatar-cont"><div id="AvatarCrop"></div></div>
+
+<br/>
+
+<input class="avatar-button" type="button" value="Save" onclick="saveCroppedAvatar()" />
+
+<script type="text/javascript">
+var self_url = "<s:v value="phr->self_url" json="yes" />";
+var SID = "<s:v value="phr->session_id" json="yes" />";
+var key = "<s:v value="key" json="yes" />";
+var get_avatar_ac = <s:ac ac="get-avatar" />;
+var reg_save_cropped_avatar_ajax_ac = <s:ac ac="save-cropped-avatar-ajax" />;
+var reg_view_general_ac = <s:ac ac="reg-view-general" />;
+var croppie = null;
+$(function() {
+    croppie = $('#AvatarCrop').croppie({
+        boundary : {
+            width : <s:v value="avatar_panel_width" />,
+            height: <s:v value="avatar_panel_height" />
+        },
+        viewport: {
+            width: <s:v value="avatar_width" />,
+            height: <s:v value="avatar_height" />
+        }
+        //enableZoom : false
+        });
+
+    croppie.croppie('bind', {
+        url: self_url + "?SID=" + SID + "&key=" + key + "&action=" + get_avatar_ac,
+        points : [0, 0, <s:v value="avatar_width" />, <s:v value="avatar_height" />],
+        zoom : 1
+    });
+});
+
+function saveCroppedAvatar()
+{
+    croppie.croppie('result', 'html').then(function(html) {
+        var result = "";
+        result += " " + html.style.width;
+        result += " " + html.style.height;
+        var c = html.children;
+        if (c.length == 1) {
+            var i = c[0];
+            result += " " + i.height;
+            result += " " + i.width;
+            result += " " + i.naturalHeight;
+            result += " " + i.naturalWidth;
+            result += " " + i.style.left;
+            result += " " + i.style.top;
+            //alert(result);
+            $.ajax({
+                type: "POST",
+                url: self_url,
+                data: {
+                    SID: SID,
+                    action: reg_save_cropped_avatar_ajax_ac,
+                    key: key,
+                    width: html.style.width,
+                    height: html.style.height,
+                    left: i.style.left,
+                    top: i.style.top
+                },
+                contentType: "application/x-www-form-urlencoded; charset=utf-8",
+                dataType: "json",
+                success: function(data) {
+                    if (data.result < 0) {
+                        alert(data.message);
+                    } else {
+                        window.location.href = self_url + '?SID=' + SID + "&action=" + reg_view_general_ac;
+                    }
+                },
+                error: function(data) {
+                    alert("request failed");
+                }
+            });
+         }
+    });
+}
+</script>
+
+<%@include "reg_footer.csp"
+%><%
+  l10n_resetlocale();
+  html_armor_free(&ab);
+  return retval;
+%>

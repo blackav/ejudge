@@ -3,7 +3,7 @@
 #ifndef __SUPER_HTML_6_H__
 #define __SUPER_HTML_6_H__
 
-/* Copyright (C) 2011-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -47,6 +47,8 @@ struct ss_op_param_USER_CREATE_ONE_ACTION
   ej_checkbox_t    is_locked;
   ej_checkbox_t    is_incomplete;
   ej_checkbox_t    is_disqualified;
+  ej_checkbox_t    is_privileged;
+  ej_checkbox_t    is_reg_readonly;
   ej_checkbox_t    cnts_use_reg_passwd;
   ej_checkbox_t    cnts_null_passwd;
   ej_textbox_opt_t cnts_password1;
@@ -84,6 +86,8 @@ struct ss_op_param_USER_CREATE_MANY_ACTION
   ej_checkbox_t    is_locked;
   ej_checkbox_t    is_incomplete;
   ej_checkbox_t    is_disqualified;
+  ej_checkbox_t    is_privileged;
+  ej_checkbox_t    is_reg_readonly;
   ej_checkbox_t    cnts_use_reg_passwd;
   ej_checkbox_t    cnts_null_passwd;
   ej_checkbox_t    cnts_random_passwd;
@@ -119,6 +123,8 @@ struct ss_op_param_USER_CREATE_FROM_CSV_ACTION
   ej_checkbox_t    is_locked;
   ej_checkbox_t    is_incomplete;
   ej_checkbox_t    is_disqualified;
+  ej_checkbox_t    is_privileged;
+  ej_checkbox_t    is_reg_readonly;
   ej_checkbox_t    cnts_use_reg_passwd;
   ej_checkbox_t    cnts_null_passwd;
   ej_checkbox_t    cnts_random_passwd;
@@ -143,6 +149,8 @@ struct ss_op_param_USER_CREATE_REG_ACTION
   ej_checkbox_t    is_locked;
   ej_checkbox_t    is_incomplete;
   ej_checkbox_t    is_disqualified;
+  ej_checkbox_t    is_privileged;
+  ej_checkbox_t    is_reg_readonly;
 };
 
 struct ss_op_param_USER_EDIT_REG_ACTION
@@ -158,6 +166,8 @@ struct ss_op_param_USER_EDIT_REG_ACTION
   ej_checkbox_t    is_locked;
   ej_checkbox_t    is_incomplete;
   ej_checkbox_t    is_disqualified;
+  ej_checkbox_t    is_privileged;
+  ej_checkbox_t    is_reg_readonly;
 };
 
 #endif /* __SUPER_HTML_6_H__ */

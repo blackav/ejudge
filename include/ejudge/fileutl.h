@@ -2,7 +2,7 @@
 #ifndef __FILEUTL_H__
 #define __FILEUTL_H__
 
-/* Copyright (C) 2000-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -16,6 +16,7 @@
  * Lesser General Public License for more details.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 
@@ -80,5 +81,16 @@ write_tmp_file(
         size_t path_size,
         const unsigned char *bytes,
         size_t bytes_count);
+
+int
+write_tmp_file_2(
+        FILE *log_f,
+        const unsigned char *tmp_dir,
+        const unsigned char *name_prefix,
+        const unsigned char *name_suffix,
+        char *path,
+        size_t path_size,
+        const unsigned char *data,
+        size_t size);
 
 #endif /* __FILEUTL_H__ */

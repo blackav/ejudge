@@ -3,7 +3,7 @@
 #ifndef __CLDB_PLUGIN_H__
 #define __CLDB_PLUGIN_H__
 
-/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -85,6 +85,8 @@ struct cldb_plugin_iface
         int uuid_count,
         const ej_uuid_t *p_run_uuid,
         struct full_clar_entry **pfce);
+  int (*fetch_total)(
+        struct cldb_plugin_cnts *);
 };
 
 /* default plugin: compiled into new-server */

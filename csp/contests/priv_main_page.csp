@@ -86,14 +86,14 @@
 
 <ul id="menu-inside-green">
     <li><s:a ac="main-page"><s:_>Refresh</s:_></s:a></li>
-    <li><s:a ac="view-users"><s:_>Regular users</s:_></s:a></li>
+    <li><s:a ac="view-users-new-page"><s:_>Regular users</s:_></s:a></li>
     <li><s:a ac="view-online-users"><s:_>Online users</s:_></s:a></li>
     <li><s:a ac="standings"><s:_>Standings</s:_></s:a></li>
     <li><s:a ac="view-testing-queue"><s:_>Testing queue</s:_></s:a></li>
 
     <li><a><s:_>View</s:_></a>
         <ul>
-            <li><s:a ac="view-users"><s:_>Regular users</s:_></s:a></li><br/>
+            <li><s:a ac="view-users-new-page"><s:_>Regular users</s:_></s:a></li><br/>
             <li><s:a ac="priv-users-view"><s:_>Privileged users</s:_></s:a></li><br/>
             <li><s:a ac="view-exam-info"><s:_>Examination information</s:_></s:a></li><br/>
     <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) >= 0) { %>
@@ -116,6 +116,9 @@
     <% if (need_examiners) { %>
             <li><s:a ac="examiners-page"><s:_>Examiners assignments</s:_></s:a></li>
     <% } %>
+            <li><s:a ac="language-stats-page"><s:_>Programming language statistics</s:_></s:a></li><br/>
+            <li><s:a ac="problem-stats-page"><s:_>Problem statistics</s:_></s:a></li><br/>
+            <li><s:a ac="api-keys-page"><s:_>API Keys</s:_></s:a></li><br/>
         </ul>
     </li>
 
@@ -158,6 +161,9 @@
 <%
   }
 %>
+            <li><s:a ac="priv-regenerate-content"><s:_>Regenerate static content</s:_></s:a></li><br/>
+            <li><s:a ac="reload-contest-pages">Reload Contest-Specific Pages</s:a></li><br/>
+            <li><s:a ac="reload-all-contest-pages">Reload ALL Contest-Specific Pages</s:a></li><br/>
             <li><s:a ac="reset-1"><s:_>Reset the contest!</s:_></s:a></li><br/>
         </ul>
     </li>
@@ -226,6 +232,9 @@
 <%  } %>
 <%  if (cs->online_final_visibility > 0) { %>
 <p><big><b><s:_>Final visibility rules are active</s:_></b></big></p>
+<%  } %>
+<%  if (cs->online_valuer_judge_comments > 0) { %>
+<p><big><b><s:_>Valuer judge comments are displayed</s:_></b></big></p>
 <%  } %>
 
 <%
@@ -367,7 +376,7 @@
         action = NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG; %>
 <s:submit action="action" />
 <%    } %>
-<s:submit ac="reload-server" />
+<s:submit ac="reload-server" /><s:submit ac="reload-server-all" />
 </s:form>
 <%  } else { %>
 <table border="0">
@@ -441,7 +450,7 @@
 <tr><td><s:_>Problem</s:_>:</td><td><select name="problem">
 <%      for (x = 1; x <= cs->max_prob; x++) {
         if (!(prob = cs->probs[x])) continue; %>
-<option value='<s:v value="x" />'><s:v escape="false" value="prob->short_name" /><s:v value="prob->internal_name" checkExpr="[0]" sep=" - " /> - <s:v value="prob->long_name" /></option>
+<option value='<s:v value="x" />'><s:v escape="false" value="prob->short_name" /><s:v value="prob->internal_name" checkExpr="" sep=" - " /> - <s:v value="prob->long_name" checkExpr="" /></option>
 <%      }%>
 </select></td><td><s:submit ac="priv-submit-page" label="Select problem" /></td></tr></table></s:form>
 <%
@@ -451,7 +460,7 @@
       // prob and variant have correct values
 %>
 <hr /><a name="submit"></a>
-<h2><s:_>Submit a solution for</s:_> <s:v escape="0" value="prob->short_name" /><s:v value="prob->internal_name" checkExpr="[0]" sep="-" />-<s:v value="prob->long_name" /><%
+<h2><s:_>Submit a solution for</s:_> <s:v escape="0" value="prob->short_name" /><s:v value="prob->internal_name" checkExpr="" sep="-" />-<s:v value="prob->long_name" checkExpr="" /><%
       if (variant > 0) {
 %> (<s:_>Variant</s:_> <s:v value="variant" />)<%
       }
@@ -471,7 +480,7 @@
 <select name="lang_id"><option value="">
 <%        for (i = 1; i <= cs->max_lang; i++) {
           if (!cs->langs[i]) continue; %>
-<option value='<s:v value="i"/>'><s:v escape="0" value="cs->langs[i]->short_name" /> - <s:v value="cs->langs[i]->long_name" /></option>
+<option value='<s:v value="i"/>'><s:v escape="0" value="cs->langs[i]->short_name" /> - <s:v value="cs->langs[i]->long_name" checkExpr="" /></option>
 <%        } %>
 </select></td></tr>
 <%        if (global->enable_eoln_select > 0) { %>
@@ -515,7 +524,7 @@
         break;
       } %>
 <tr><td><s:_>Send!</s:_></td><td><s:submit ac="submit-run" /></td></tr></table></s:form>
-     
+
 <hr/><a name="submit"></a>
 <h2><s:_>Select another problem</s:_></h2>
 <s:form method="get">
@@ -524,10 +533,10 @@
 <%      for (x = 1; x <= cs->max_prob; x++) {
         if (!(prob = cs->probs[x])) continue;
         if (prob->variant_num <= 0) { %>
-<option value='<s:v value="x" />'><s:v escape="false" value="prob->short_name" /> - <s:v value="prob->long_name" /></option>
+<option value='<s:v value="x" />'><s:v escape="false" value="prob->short_name" /> - <s:v value="prob->long_name" checkExpr="" /></option>
 <%        } else {
           for (y = 1; y <= prob->variant_num; y++) { %>
-<option value='<s:v value="x" />_<s:v value="y"/>'><s:v escape="false" value="prob->short_name" /> - <s:v value="prob->long_name" />, <s:_>Variant</s:_> <s:v value="y" /></option>
+<option value='<s:v value="x" />_<s:v value="y"/>'><s:v escape="false" value="prob->short_name" /> - <s:v value="prob->long_name" checkExpr="" />, <s:_>Variant</s:_> <s:v value="y" /></option>
 <%          }
         }
       } %>

@@ -22,7 +22,7 @@
       is_viewable = (pinfo[prob_id].status & PROB_STATUS_VIEWABLE) != 0;
     }
 
-    if (start_time > 0 && stop_time <= 0 && !prob_id) {
+    if (start_time > 0 && (stop_time <= 0 || cs->upsolving_mode) && !prob_id) {
 %><div class="h2-long"><h2><s:_>View the problem statement and send a submission</s:_></h2></div>
 <s:form>
 <table class="b0">
@@ -31,7 +31,7 @@
 %></td><td class="b0"><s:submit ac="view-problem-submit" label="Select problem" /></td></tr></table>
 </s:form>
 <%
-    } /* 14 */ else if (start_time > 0 && stop_time <= 0 && prob_id > 0) {
+    } /* 14 */ else if (start_time > 0 && (stop_time <= 0 || cs->upsolving_mode) && prob_id > 0) {
       prob = cs->probs[prob_id];
 
       if (!cnts->exam_mode) {
@@ -66,7 +66,7 @@
             }
 %>
 <%
-            if (prob->score_bonus && prob->score_bonus[0] && is_viewable) {
+            if (prob->score_bonus && is_viewable) {
 %>
     <tr><td><b><s:_>Score bonus</s:_>:</b></td><td><tt><s:v value="prob->score_bonus" /></tt></td></tr>
 <%
@@ -76,22 +76,22 @@
           }
 %>
 <%
-          if (prob->combined_stdin > 0 && prob->input_file[0] && prob->hide_file_names <= 0 && is_viewable) {
+          if (prob->combined_stdin > 0 && prob->input_file && prob->input_file[0] && prob->hide_file_names <= 0 && is_viewable) {
 %>
     <tr><td><b><s:_>Input file name</s:_>:</b></td><td><tt><s:v value="prob->input_file" /></tt><s:_> or standard input</s:_></td></tr>
 <%
-          } else if (prob->use_stdin <= 0 && prob->input_file[0] && prob->hide_file_names <= 0 && is_viewable) {
+          } else if (prob->use_stdin <= 0 && prob->input_file && prob->input_file[0] && prob->hide_file_names <= 0 && is_viewable) {
 %>
     <tr><td><b><s:_>Input file name</s:_>:</b></td><td><tt><s:v value="prob->input_file" /></tt></td></tr>
 <%
           }
 %>
 <%
-          if (prob->combined_stdout > 0 && prob->output_file[0] && prob->hide_file_names <= 0 && is_viewable) {
+          if (prob->combined_stdout > 0 && prob->output_file && prob->output_file[0] && prob->hide_file_names <= 0 && is_viewable) {
 %>
     <tr><td><b><s:_>Output file name</s:_>:</b></td><td><tt><s:v value="prob->output_file" /></tt><s:_> or standard output</s:_></td></tr>
 <%
-          } else if (prob->use_stdout <= 0 && prob->output_file[0] && prob->hide_file_names <= 0 && is_viewable) {
+          } else if (prob->use_stdout <= 0 && prob->output_file && prob->output_file[0] && prob->hide_file_names <= 0 && is_viewable) {
 %>
     <tr><td><b><s:_>Output file name</s:_>:</b></td><td><tt><s:v value="prob->output_file" /></tt></td></tr>
 <%
@@ -150,19 +150,58 @@
 %>
 
 <%
-        if ((pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE) && prob->date_penalty) {
-          int dpi;
-%>
-    <tr><td><b><s:_>Date penalty</s:_>:</b></td><td><tt><%
-          for (dpi = 0; prob->date_penalty[dpi]; ++dpi) {
-            char *dp = prob->date_penalty[dpi];
-            if (dp != prob->date_penalty[0]) {
-%>, <%
+        if (pinfo[prob_id].deadline <= 0 || cs->current_time < pinfo[prob_id].deadline) {
+          if ((pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE) && prob->date_penalty) {
+            int dpi;
+            time_t base_time = start_time;
+            if (prob->start_date > 0 && prob->start_date > base_time) {
+              base_time = prob->start_date;
             }
-%><s:v value="dp" /><%
-          }
-%></tt></td></tr>
+            for (dpi = 0; dpi < prob->dp_total; ++dpi) {
+              if (cs->current_time < prob->dp_infos[dpi].date)
+                break;
+            }
+            const struct penalty_info *dp = NULL;
+            if (dpi < prob->dp_total) {
+              if (dpi > 0) {
+                base_time = prob->dp_infos[dpi - 1].date;
+              }
+              dp = &prob->dp_infos[dpi];
+            }
+            if (dp) {
+              const unsigned char *formula = prob->date_penalty[dpi];
+              int penalty = dp->penalty;
+              time_t next_deadline = 0;
+              if (dp->scale > 0) {
+                time_t offset = cs->current_time - base_time;
+                if (offset < 0) offset = 0;
+                penalty += dp->decay * (offset / dp->scale);
+                next_deadline = base_time + (offset / dp->scale + 1) * dp->scale;
+                if (next_deadline >= dp->date) {
+                  next_deadline = dp->date;
+                }
+                if (pinfo[prob_id].deadline > 0 && next_deadline >= pinfo[prob_id].deadline) {
+                  next_deadline = 0;
+                }
+              }
+              penalty = -penalty; // penalty is negative
+%>
+    <tr><td><b><s:_>Date penalty formula</s:_>:</b></td><td><tt><s:v value="formula" /></tt></td></tr>
 <%
+              if (penalty > 0) {
+%>
+    <tr><td><b><s:_>Current penalty</s:_>:</b></td><td><tt><s:v value="penalty" /></tt></td></tr>
+<%
+              }
+              if (next_deadline > 0) {
+%>
+    <tr><td><b><s:_>Next soft deadline</s:_>:</b></td><td><tt><s:v value="next_deadline" /></tt></td></tr>
+<%
+              }
+%>
+<%
+            }
+          }
         }
 %>
 
@@ -194,7 +233,7 @@
         if (px && px->stmts) {
           ns_unparse_statement(out_f, phr, cnts, extra, prob, 0, px, NULL,
                                pinfo[prob_id].status & PROB_STATUS_SUBMITTABLE);
-        } else if (prob->statement_file[0] && is_viewable) {
+        } else if (prob->statement_file && prob->statement_file[0] && is_viewable) {
           if (variant > 0) {
             prepare_insert_variant_num(variant_stmt_file,
                                        sizeof(variant_stmt_file),
@@ -249,7 +288,7 @@
 
           if (lang_count == 1) {
 %><s:hidden name="lang_id" value="lang_id" />
-<tr><td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:v value="cs->langs[lang_id]->short_name" escape="false" /> - <s:v value="cs->langs[lang_id]->long_name" /></td></tr>
+<tr><td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:v value="cs->langs[lang_id]->short_name" escape="false" /> - <s:v value="cs->langs[lang_id]->long_name" checkExpr="" /></td></tr>
 <%
           } else {
             last_lang_id = get_last_language(cs, phr->user_id, &last_eoln_type);
@@ -268,7 +307,7 @@
                     break;
                 if (lang_list[j]) continue;
               }
-%><s:option value="i" selectedExpr="last_lang_id == i"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" /></s:option><%
+%><s:option value="i" selectedExpr="last_lang_id == i"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" checkExpr="" /></s:option><%
             }
 %></s:select></td></tr>
 <%

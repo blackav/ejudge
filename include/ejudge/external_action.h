@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __EXTERNAL_ACTION_H__
 #define __EXTERNAL_ACTION_H__
 
-/* Copyright (C) 2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -38,6 +37,9 @@ typedef struct PageInterface
 typedef struct ExternalActionState
 {
     time_t last_check_time;
+    int contest_id;
+
+    unsigned char *fixed_src_dir;
 
     unsigned char *package;
     unsigned char *action;
@@ -54,12 +56,20 @@ typedef struct ExternalActionState
 } ExternalActionState;
 
 ExternalActionState *
+external_action_state_free(ExternalActionState *state);
+
+ExternalActionState *
 external_action_load(
         ExternalActionState *state,
         const unsigned char *dir,
         const unsigned char *action,
         const unsigned char *name_prefix,
-        time_t current_time);
+        const unsigned char *fixed_src_dir,
+        time_t current_time,
+        int contest_id,
+        int allow_fail);
+
+#define EXTERNAL_ACTION_NONE ((ExternalActionState *) ((size_t) 1))
 
 #endif /* __EXTERNAL_ACTION_H__ */
 

@@ -2,7 +2,7 @@
 #ifndef __SUPER_HTML_H__
 #define __SUPER_HTML_H__
 
-/* Copyright (C) 2004-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -317,5 +317,94 @@ html_select(FILE *f, int value, const unsigned char *param_name,
 
 void
 super_html_activate_problem(struct sid_state *sstate, int prob_id);
+
+int
+ss_get_saved_auth(
+        const unsigned char *ej_login,
+        unsigned char **p_poly_login,
+        unsigned char **p_poly_password,
+        unsigned char **p_poly_url);
+int
+ss_find_free_prob_id(
+        const struct sid_state *ss);
+int
+ss_get_global_caps(
+        const struct http_request_info *phr,
+        opcap_t *pcap);
+int
+ss_get_contest_caps(
+        const struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        opcap_t *pcap);
+
+struct ss_download_status
+{
+  unsigned char *key;
+  unsigned char *status;
+  unsigned char *polygon_id;
+  unsigned char *polygon_name;
+};
+int
+ss_read_download_status(
+        FILE *log_f,
+        const unsigned char *path,
+        FILE *f,
+        int *p_exit_code,
+        int *p_count,
+        struct ss_download_status **p_statuses);
+
+struct ss_user_row_info
+{
+  int field_id;
+  unsigned char *field_desc;
+};
+
+void
+ss_find_elem_positions(
+        unsigned char *text,
+        int size,
+        int *p_user_map_count,
+        int *p_user_map_begin,
+        int *p_user_map_end,
+        int *p_caps_count,
+        int *p_caps_begin,
+        int *p_caps_end);
+
+struct userlist_user;
+struct userlist_user *
+ss_get_user_info(
+        struct http_request_info *phr,
+        int user_id,
+        int contest_id);
+
+int
+ss_is_globally_privileged(
+        const struct http_request_info *phr,
+        const struct userlist_user *u);
+int
+ss_is_contest_privileged(
+        const struct contest_desc *cnts,
+        const struct userlist_user *u);
+
+struct bitset_s;
+unsigned char *
+ss_collect_marked_set(
+        struct http_request_info *phr,
+        struct bitset_s *pms);
+int
+ss_is_privileged(
+        const struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        const struct userlist_user *u);
+
+void
+ss_string_row(
+        FILE *out_f,
+        const unsigned char *tr_class,
+        int is_hidden,
+        const unsigned char *td_class,
+        const unsigned char *legend,
+        const unsigned char *param_suffix,
+        const unsigned char *str);
 
 #endif /* __SUPER_HTML_H__ */

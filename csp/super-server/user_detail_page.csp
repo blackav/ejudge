@@ -1,0 +1,791 @@
+<%
+%><%@include "includes.csp"
+%><%
+#include "ejudge/userlist.h"
+#include "ejudge/userlist_clnt.h"
+#include "ejudge/userlist_proto.h"
+
+#define FIRST_COOKIE(u) ((struct userlist_cookie*) (u)->cookies->first_down)
+#define NEXT_COOKIE(c)  ((struct userlist_cookie*) (c)->b.right)
+#define FIRST_CONTEST(u) ((struct userlist_contest*)(u)->contests->first_down)
+#define NEXT_CONTEST(c)  ((struct userlist_contest*)(c)->b.right)
+%><%
+extern const struct ss_user_row_info ss_user_timestamp_rows[];
+extern const struct ss_user_row_info ss_user_flag_rows[];
+extern const struct ss_user_row_info ss_user_info_rows[];
+extern const struct ss_user_row_info ss_user_info_stat_rows[];
+extern char const * const ss_member_string_pl[];
+extern char const * const ss_member_string[];
+extern const struct ss_user_row_info ss_member_rows[];
+extern const struct ss_user_row_info ss_member_date_rows[];
+extern const struct ss_user_row_info ss_member_time_rows[];
+extern const unsigned char * const ss_reg_status_strs[];
+%><%@set getter_name = "csp_get_user_detail_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_user_detail_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = NULL;
+    unsigned char subtitle_buf[1024];
+    const unsigned char *subtitle = subtitle_buf;
+
+    int other_user_id = 0;
+    int contest_id = 0;
+    int group_id = 0;
+    opcap_t gcaps = 0;
+    opcap_t caps = 0;
+    struct userlist_user *u = NULL;
+    struct userlist_user_info *ui = NULL;
+    int user_detail_page = SSERV_CMD_USER_DETAIL_PAGE;
+    int row;
+    int field_id;
+    int userlist_nc_name = USERLIST_NC_NAME;
+    int userlist_nm_status = USERLIST_NM_STATUS;
+    int userlist_nm_gender = USERLIST_NM_GENDER;
+    int role, pers;
+    struct userlist_member *m;
+    struct userlist_contest *reg;
+    int reg_count = 0;
+    int cookie_count = 0;
+    struct userlist_cookie *cookie;
+
+    const unsigned char *marked_str = NULL; // needed for users_top_menu.csp
+
+    %><s:read name="other_user_id" /><%
+    %><s:read name="contest_id" default="0" /><%
+    %><s:read name="group_id" default="0" /><%
+
+    if (contest_id < 0) contest_id = 0;
+    if (contest_id > 0) {
+        if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
+    }
+    if (group_id < 0) group_id = 0;
+
+    if (other_user_id <= 0) {
+        FAIL(SSERV_ERR_INV_PARAM);
+    }
+
+    if (ss_get_global_caps(phr, &gcaps) >= 0 && opcaps_check(gcaps, OPCAP_GET_USER) >= 0) {
+        // this user can view the full user list and the user list for any contest
+    } else if (!cnts) {
+        // user without global OPCAP_LIST_USERS capability cannot view the full user list
+        FAIL(SSERV_ERR_PERM_DENIED);
+    } else if (ss_get_contest_caps(phr, cnts, &caps) < 0 || opcaps_check(caps, OPCAP_GET_USER) < 0) {
+        FAIL(SSERV_ERR_PERM_DENIED);
+    }
+
+    snprintf(subtitle_buf, sizeof(subtitle_buf), "Viewing user %d", other_user_id);
+%><%@include "header.csp"
+%>
+
+<h2><s:v value="subtitle" /></h2>
+
+<%@include "users_top_menu.csp"
+%>
+
+<script language="javascript">
+function toggleRowsVisibility(value, rows1, rows2)
+{
+    var vis1 = "";
+    var vis2 = "";
+    if (value == true) {
+        vis1 = "none";
+    } else {
+        vis2 = "none";
+    }
+    if (rows1 != null) {
+        for (var row in rows1) {
+            var obj = document.getElementById(rows1[row]);
+            if (obj != null) {
+                obj.style.display = vis1;
+            }
+        }
+    }
+    if (rows2 != null) {
+        for (var row in rows2) {
+            var obj = document.getElementById(rows2[row]);
+            if (obj != null) {
+                obj.style.display = vis2;
+            }
+        }
+    }
+}
+function toggleRowsVisibility2(value, tid, rowclass1, rowclass2)
+{
+    var vis1 = "";
+    var vis2 = "";
+    if (value == true) {
+        vis1 = "none";
+    } else {
+        vis2 = "none";
+    }
+    var tobj = document.getElementById(tid);
+    if (tobj == null) {
+        return;
+    }
+    var trows = tobj.rows;
+    if (trows != null) {
+        for (var row in trows) {
+            if (trows[row].className == rowclass1) {
+                trows[row].style.display = vis1;
+            } else if (trows[row].className == rowclass2) {
+                trows[row].style.display = vis2;
+            }
+        }
+    }
+}
+function toggleStatVisibility(value)
+{
+    toggleRowsVisibility2(value, "UserData", "StatRow1", "StatRow2");
+}
+function toggleFlagVisibility(value)
+{
+    toggleRowsVisibility2(value, "UserData", "FlagRow1", "FlagRow2");
+}
+function toggleUserInfoVisibility(value)
+{
+    toggleRowsVisibility2(value, "UserData", "UserInfoRow1", "UserInfoRow2");
+}
+function toggleMemberInfoVisibility(value)
+{
+    toggleRowsVisibility2(value, "UserData", "MemberInfoRow1", "MemberInfoRow2");
+}
+function showContestRegs()
+{
+    document.getElementById("ContestRegsShowLink").style.display = "none";
+    document.getElementById("ContestRegsTable").style.display = "";
+}
+function hideContestRegs()
+{
+    document.getElementById("ContestRegsShowLink").style.display = "";
+    document.getElementById("ContestRegsTable").style.display = "none";
+}
+function showCookies()
+{
+    document.getElementById("CookiesShowLink").style.display = "none";
+    document.getElementById("CookiesTable").style.display = "";
+}
+function hideCookies()
+{
+    document.getElementById("CookiesShowLink").style.display = "";
+    document.getElementById("CookiesTable").style.display = "none";
+}
+function checkNull(field_id)
+{
+    var form_obj = document.getElementById("UserForm");
+    var checkbox_obj = form_obj["field_null_" + field_id];
+    var text_obj = form_obj["field_" + field_id];
+    if (checkbox_obj != null && checkbox_obj.checked) {
+        if (text_obj) text_obj.value = "";
+    }
+}
+function uncheckNull(field_id)
+{
+    var form_obj = document.getElementById("UserForm");
+    var checkbox_obj = form_obj["field_null_" + field_id];
+    var text_obj = form_obj["field_" + field_id];
+    if (text_obj != null && (text_obj.value != null && text_obj.value != "")) {
+        if (checkbox_obj != null) checkbox_obj.checked = false;
+    }
+}
+var USERLIST_NC_NAME = <s:v value="userlist_nc_name" />;
+</script>
+
+<%
+    if (!(u = ss_get_user_info(phr, other_user_id, contest_id))) FAIL(SSERV_ERR_DB_ERROR);
+    ui = u->cnts0;
+%>
+
+<s:form id="UserForm">
+  <s:hidden name="other_user_id" />
+  <s:hidden name="contest_id" checkExpr="> 0" />
+  <s:hidden name="group_id" checkExpr="> 0" />
+
+  <table class="b1" id="UserData">
+    <tr>
+      <td class="b1" colspan="4" align="center">
+        <s:url name="PrevUrl" ac="user-cancel-and-prev-action">
+          <s:param name="other_user_id"/>
+          <s:param name="contest_id" checkExpr=" > 0" />
+          <s:param name="group_id" checkExpr=" > 0" />
+        </s:url>
+        <s:a url="PrevUrl">Prev user</s:a>
+        &nbsp;
+        <s:url name="NextUrl" ac="user-cancel-and-next-action">
+          <s:param name="other_user_id"/>
+          <s:param name="contest_id" checkExpr=" > 0" />
+          <s:param name="group_id" checkExpr=" > 0" />
+        </s:url>
+        <s:a url="NextUrl">Next user</s:a>
+      </td>
+    </tr>
+    <tr>
+      <th class="b1" width="250px">&nbsp;</th>
+      <th class="b1"><b>NULL?</b></th>
+      <th class="b1">&nbsp;</th>
+      <th class="b1">&nbsp;</th>
+    </tr>
+    <tr>
+      <td class="b1"><b>User ID:</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1"><s:v value="other_user_id" /></td>
+      <td class="b1">&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="b1"><b>User login:</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1"><s:textfield name="other_login" size="50" value="u->login" checkExpr="" /></td>
+      <td class="b1">&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="b1"><b>User e-mail:</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1"><s:textfield name="email" size="50" value="u->email" checkExpr="" /></td>
+      <td class="b1">&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="b1"><b>Password:</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1"><%
+    if (!u->passwd) {
+%><i>NULL</i><%
+    } else if (u->passwd_method == USERLIST_PWD_PLAIN) {
+%><i>Plain text</i><%
+    } else if (u->passwd_method == USERLIST_PWD_SHA1) {
+%><i>Hashed with SHA1</i><%
+    } else if (u->passwd_method == USERLIST_PWD_SHA256) {
+%><i>Hashed with SHA256</i><%
+    } else {
+%><i>Unsupported method</i><%
+    }
+%></td>
+      <s:url name="ChangePasswordUrl" ac="user-password-page">
+        <s:param name="other_user_id" />
+        <s:param name="next_op" value="user_detail_page" />
+        <s:param name="contest_id" checkExpr="> 0" />
+        <s:param name="group_id" checkExpr="> 0" />
+      </s:url>
+      <td class="b1"><s:a url="ChangePasswordUrl">[Change]</s:a></td>
+    </tr>
+    <tr class="StatRow1">
+      <td colspan="4" class="b1" align="center"><a onclick="toggleStatVisibility(true)">[Show user statistics]</a></td>
+    </tr>
+    <tr class="StatRow2" style="display: none;">
+      <td colspan="4" class="b1" align="center"><a onclick="toggleStatVisibility(false)">[Hide user statistics]</a></td>
+    </tr>
+<%
+    for (row = 0; ss_user_timestamp_rows[row].field_id > 0; ++row) {
+        time_t *pt = (time_t*) userlist_get_user_field_ptr(u, ss_user_timestamp_rows[row].field_id);
+%>
+    <tr class="StatRow2" style="display: none;">
+      <td class="b1"><b><s:v value="ss_user_timestamp_rows[row].field_desc" escape="no"/>:</b></td>
+      <td class="b1">&nbsp;</td>
+<%
+        if (pt && *pt > 0) {
+%>
+      <td class="b1"><s:v value="xml_unparse_date(*pt)" escape="no" /></td>
+      <s:url name="ResetUrl" ac="user-clear-field-action">
+        <s:param name="other_user_id" />
+        <s:param name="field_id" value="ss_user_timestamp_rows[row].field_id" />
+        <s:param name="contest_id" checkExpr="> 0" />
+        <s:param name="group_id" checkExpr="> 0" />
+      </s:url>
+      <td class="b1"><s:a url="ResetUrl">[Reset]</s:a></td>
+<%
+        } else if (pt) {
+%>
+        <td class="b1"><i>Not set</i></td>
+        <td class="b1">&nbsp;</td>
+<%
+        } else {
+%>
+        <td class="b1"><i>Invalid field</i></td>
+        <td class="b1">&nbsp;</td>
+<%
+        }
+%>
+    </tr>
+<%
+    }
+%>
+
+    <tr class="FlagRow1">
+      <td colspan="4" class="b1" align="center"><a onclick="toggleFlagVisibility(true)">[Show user flags]</a></td>
+    </tr>
+    <tr class="FlagRow2" style="display: none;">
+      <td colspan="4" class="b1" align="center"><a onclick="toggleFlagVisibility(false)">[Hide user flags]</a></td>
+    </tr>
+
+<%
+    for (row = 0; ss_user_flag_rows[row].field_id > 0; ++row) {
+        int *pi = (int*) userlist_get_user_field_ptr(u, ss_user_flag_rows[row].field_id);
+%>
+    <tr class="FlagRow2" style="display: none;">
+      <td class="b1"><b><s:v value="ss_user_flag_rows[row].field_desc" escape="no" />:</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1">
+<%
+        if (pi) {
+%><input type="checkbox" name="field_<s:v value="ss_user_flag_rows[row].field_id" />" value="1"<% if (*pi > 0) { %> checked="checked"<% } %> /><%
+        } else {
+%><i>Invalid field</i><%
+        }
+%></td>
+      <td class="b1">&nbsp;</td>
+    </tr>
+<%
+    }
+%>
+
+    <tr>
+      <td class="b1" align="center" colspan="4"><b>Generic contest-specific fields</b></td>
+    </tr>
+    <tr>
+      <td class="b1"><b>User data is read-only:</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1"><% field_id = USERLIST_NC_CNTS_READ_ONLY; %><s:checkbox nameserial="field_id" checkedExpr="ui && ui->cnts_read_only > 0" /></td>
+      <td class="b1">&nbsp;</td>
+    </tr>
+    <tr><% field_id = USERLIST_NC_NAME; %>
+      <td class="b1"><b>User name:</b></td>
+      <td class="b1"><input type="checkbox" onchange="checkNull('<s:v value="field_id" />')" name="field_null_<s:v value="field_id" />" value="1"<% if(!ui || !ui->name) { %> checked="checked"<% } %> /></td>
+      <td class="b1"><input type="text" onchange="uncheckNull('<s:v value="field_id" />')" name="field_<s:v value="field_id" />" value="<s:v value="ui->name" fullCheckExpr="ui && ui->name" />" /></td>
+      <td class="b1">&nbsp;</td>
+    </tr>
+<%
+    if (contest_id > 0 && cnts && !cnts->disable_team_password) {
+%>
+    <tr>
+      <td class="b1"><b>Contest password:</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1"><%
+        if (!ui || !ui->team_passwd) {
+%><i>NULL</i><%
+        } else if (ui->team_passwd_method == USERLIST_PWD_PLAIN) {
+%><tt><s:v value="ui->team_passwd" /></tt><%
+        } else if (ui->team_passwd_method == USERLIST_PWD_SHA1) {
+%><i>Hashed with SHA1</i><%
+        } else if (ui->team_passwd_method == USERLIST_PWD_SHA256) {
+%><i>Hashed with SHA256</i><%
+        } else {
+%><i>Unsupported method</i><%
+        }
+%></td>
+      <td class="b1">
+        <s:url name="CntsPasswordChangeUrl" ac="user-cnts-password-page">
+          <s:param name="other_user_id" />
+          <s:param name="contest_id" />
+          <s:param name="group_id" checkExpr="> 0" />
+        </s:url>
+        <s:a url="CntsPasswordChangeUrl">[Change]</s:a>
+      </td>
+    </tr>
+<%
+    }
+%>
+
+    <tr class="UserInfoRow1">
+      <td colspan="4" class="b1" align="center"><a onclick="toggleUserInfoVisibility(true)">[Show more user info fields]</a></td>
+    </tr>
+    <tr class="UserInfoRow2" style="display: none;">
+      <td colspan="4" class="b1" align="center"><a onclick="toggleUserInfoVisibility(false)">[Hide user info fields]</a></td>
+    </tr>
+
+<%
+    for (row = 0; ss_user_info_rows[row].field_id > 0; ++row) {
+        unsigned char buf2[64];
+        const unsigned char *s = NULL;
+        if (ss_user_info_rows[row].field_id == USERLIST_NC_INSTNUM) {
+            if (ui && ui->instnum > 0) {
+                snprintf(buf2, sizeof(buf2), "%d", ui->instnum);
+                s = buf2;
+            }
+        } else if (ui) {
+            unsigned char **ps = (unsigned char**) userlist_get_user_info_field_ptr(ui, ss_user_info_rows[row].field_id);
+            if (!ps) continue;
+            s = *ps;
+        }
+        snprintf(hbuf, sizeof(hbuf), "%d", ss_user_info_rows[row].field_id);
+        ss_string_row(out_f, "UserInfoRow2", 1, "b1", ss_user_info_rows[row].field_desc, hbuf, s);
+  }
+%>
+
+<%
+    if (ui) {
+        for (row = 0; ss_user_info_stat_rows[row].field_id > 0; ++row) {
+            time_t *pt = (time_t*) userlist_get_user_info_field_ptr(ui, ss_user_info_stat_rows[row].field_id);
+%>
+    <tr class="UserInfoRow2" style="display: none;">
+      <td class="b1"><b><s:v value="ss_user_info_stat_rows[row].field_desc" escape="no" />:</b></td>
+      <td class="b1">&nbsp;</td>
+<%
+            if (pt && *pt > 0) {
+%>
+      <td class="b1"><s:v value="*pt" /></td>
+      <s:url name="ResetUrl" ac="user-clear-field-action">
+        <s:param name="other_user_id" />
+        <s:param name="field_id" value="ss_user_info_stat_rows[row].field_id" />
+        <s:param name="contest_id" />
+        <s:param name="group_id" checkExpr="> 0" />
+      </s:url>
+      <td class="b1"><s:a url="ResetUrl">[Reset]</s:a></td>
+<%
+            } else if (pt) {
+%>
+      <td class="b1"><i>Not set</i></td>
+      <td class="b1">&nbsp;</td>
+<%
+            } else {
+%>
+      <td class="b1"><i>Invalid field</i></td>
+      <td class="b1">&nbsp;</td>
+<%
+            }
+%>
+    </tr>
+<%
+        }
+    }
+%>
+
+    <tr class="MemberInfoRow1">
+      <td colspan="4" class="b1" align="center"><a onclick="toggleMemberInfoVisibility(true)">[Show members]</a></td>
+    </tr>
+    <tr class="MemberInfoRow2" style="display: none;">
+      <td colspan="4" class="b1" align="center"><a onclick="toggleMemberInfoVisibility(false)">[Hide members]</a></td>
+    </tr>
+
+<%
+    if (ui && ui->members) {
+        for (role = 0; role < CONTEST_LAST_MEMBER; ++role) {
+            int role_cnt = userlist_members_count(ui->members, role);
+            if (role_cnt <= 0) continue;
+%>
+    <tr class="MemberInfoRow2" style="display: none;">
+      <td colspan="4" class="b1" align="center"><b><s:v value="ss_member_string_pl[role]" escape="no"/> (<s:v value="role_cnt" />)</b></td>
+    </tr>
+<%
+            for (pers = 0; pers < role_cnt; ++pers) {
+                unsigned char buf2[64];
+                const unsigned char *s = NULL;
+                if (!(m = (struct userlist_member*) userlist_members_get_nth(ui->members, role, pers)))
+                    continue;
+%>
+    <tr class="MemberInfoRow2" style="display: none;">
+      <td colspan="3" class="b1" align="center"><b><s:v value="ss_member_string[role]" escape="no" /> <s:v value="pers + 1" /> (<s:v value="m->serial" />)</b></td>
+      <s:url name="DeleteUrl" ac="user-delete-member-page">
+        <s:param name="other_user_id" />
+        <s:param name="serial" value="m->serial" />
+        <s:param name="contest_id" checkExpr="> 0" />
+        <s:param name="group_id" checkExpr="> 0" />
+      </s:url>
+      <td class="b1"><s:a url="DeleteUrl">[Delete]</s:a></td>
+    </tr>
+    <tr class="MemberInfoRow2" style="display: none;">
+      <td class="b1"><b>Member serial Id</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1"><s:v value="m->serial" /></td>
+      <td class="b1">&nbsp;</td>
+    </tr>
+    <tr class="MemberInfoRow2" style="display: none;">
+      <td class="b1"><b>Status</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1">
+        <select name="field_<s:v value="m->serial"/>_<s:v value="userlist_nm_status" />">
+          <s:option value="0" selectedExpr="m->status == 0">Undefined</s:option>
+          <s:option value="1" selectedExpr="m->status == 1">School student</s:option>
+          <s:option value="2" selectedExpr="m->status == 2">Student</s:option>
+          <s:option value="3" selectedExpr="m->status == 3">Magistrant</s:option>
+          <s:option value="4" selectedExpr="m->status == 4">PhD student</s:option>
+          <s:option value="5" selectedExpr="m->status == 5">School teacher</s:option>
+          <s:option value="6" selectedExpr="m->status == 6">Professor</s:option>
+          <s:option value="7" selectedExpr="m->status == 7">Scientist</s:option>
+          <s:option value="8" selectedExpr="m->status == 8">Other</s:option>
+        </select>
+      </td>
+      <td class="b1">&nbsp;</td>
+    </tr>
+    <tr class="MemberInfoRow2" style="display: none;">
+      <td class="b1"><b>Gender</b></td>
+      <td class="b1">&nbsp;</td>
+      <td class="b1">
+        <select name="field_<s:v value="m->serial"/>_<s:v value="userlist_nm_gender" />">
+          <s:option value="0" selectedExpr="m->gender == 0">Undefined</s:option>
+          <s:option value="1" selectedExpr="m->gender == 1">Male</s:option>
+          <s:option value="2" selectedExpr="m->gender == 2">Female</s:option>
+        </select>
+      </td>
+      <td class="b1">&nbsp;</td>
+    </tr>
+<%
+                s = 0;
+                if (m->grade > 0) {
+                    snprintf(buf2, sizeof(buf2), "%d", m->grade);
+                    s = buf2;
+                }
+                snprintf(hbuf, sizeof(hbuf), "%d_%d", USERLIST_NM_GRADE, m->serial);
+                ss_string_row(out_f, "MemberInfoRow2", 1, "b1", "Grade", hbuf, s);
+
+                for (row = 0; ss_member_rows[row].field_id > 0; ++row) {
+                    unsigned char **ps = (unsigned char**) userlist_get_member_field_ptr(m, ss_member_rows[row].field_id);
+                    if (!ps) continue;
+                    s = *ps;
+                    snprintf(hbuf, sizeof(hbuf), "%d_%d", ss_member_rows[row].field_id, m->serial);
+                    ss_string_row(out_f, "MemberInfoRow2", 1, "b1", ss_member_rows[row].field_desc, hbuf, s);
+                }
+
+                for (row = 0; ss_member_date_rows[row].field_id > 0; ++row) {
+                    time_t *pt = (time_t*) userlist_get_member_field_ptr(m, ss_member_date_rows[row].field_id);
+                    if (!pt) continue;
+                    s = 0;
+                    if (*pt > 0) {
+                        userlist_get_member_field_str(buf2, sizeof(buf2), m, ss_member_date_rows[row].field_id, 0, 0);
+                        s = buf2;
+                    }
+                    snprintf(hbuf, sizeof(hbuf), "%d_%d", ss_member_date_rows[row].field_id, m->serial);
+                    ss_string_row(out_f, "MemberInfoRow2", 1, "b1", ss_member_date_rows[row].field_desc, hbuf, s);
+                }
+%>
+<%
+                for (row = 0; ss_member_time_rows[row].field_id > 0; ++row) {
+                    time_t *pt = (time_t*) userlist_get_member_field_ptr(m, ss_member_time_rows[row].field_id);
+%>
+    <tr class="MemberInfoRow2" style="display: none;">
+      <td class="b1"><b><s:v value="ss_member_time_rows[row].field_desc" escape="no" />:</b></td>
+      <td class="b1">&nbsp;</td>
+<%
+                    if (pt && *pt > 0) {
+%>
+      <td class="b1"><s:v value="*pt" /></td>
+      <s:url name="ResetUrl" ac="user-clear-field-action">
+        <s:param name="other_user_id" />
+        <s:param name="member_id" value="m->serial" />
+        <s:param name="field_id" value="ss_member_time_rows[row].field_id" />
+        <s:param name="contest_id" checkExpr="> 0" />
+        <s:param name="group_id" checkExpr="> 0" />
+      </s:url>
+      <td class="b1"><s:a url="ResetUrl">[Reset]</s:a></td>
+<%
+                    } else if (pt) {
+%>
+      <td class="b1"><i>Not set</i></td>
+      <td class="b1">&nbsp;</td>
+<%
+                    } else {
+%>
+      <td class="b1"><i>Invalid field</i></td>
+      <td class="b1">&nbsp;</td>
+<%
+                    }
+%>
+    </tr>
+<%
+                }
+%>
+<%
+            }
+%>
+<%
+        }
+    }
+%>
+
+    <tr>
+      <td class="b1" colspan="4" align="center">
+        <s:submit ac="user-save-and-prev-action" text="Save and goto PREV user" />
+        &nbsp;
+        <s:submit ac="user-save-action" text="Save and goto user list" />
+        &nbsp;
+        <s:submit ac="user-save-and-next-action" text="Save and goto NEXT user" />
+      </td>
+    </tr>
+    <tr>
+      <td class="b1" colspan="4" align="center">
+        <s:submit ac="user-cancel-and-prev-action" text="Cancel and goto PREV user" />
+        &nbsp;
+        <s:submit ac="user-cancel-action" text="Cancel and goto user list" />
+        &nbsp;
+        <s:submit ac="user-cancel-and-next-action" text="Cancel and goto NEXT user" />
+      </td>
+    </tr>
+  </table>
+</s:form>
+
+<s:form>
+  <s:hidden name="other_user_id" />
+  <s:hidden name="contest_id" checkExpr="> 0" />
+  <s:hidden name="group_id" checkExpr="> 0" />
+  Create new member:
+  <select name="role">
+    <option value="0"></option>
+    <option value="1">Contestant</option>
+    <option value="2">Reserve</option>
+    <option value="3">Coach</option>
+    <option value="4">Advisor</option>
+    <option value="5">Guest</option>
+  </select>
+  <s:submit ac="user-create-member-action" text="Create member" />
+</s:form>
+
+<h2>Contest registrations</h2>
+
+<div id="ContestRegsShowLink"><p><a onclick="showContestRegs()">Show Contest Registrations</a></p></div>
+<div id="ContestRegsTable" style="display: none;">
+  <p><a onclick="hideContestRegs()">Hide Contest Registrations</a></p>
+
+<%
+    reg_count = userlist_user_count_contests(u);
+    if (reg_count > 0) {
+%>
+  <table class="b1">
+    <tr>
+      <th class="b1" align="center"><b>Contest Id</b></th>
+      <th class="b1" align="center"><b>Contest name</b></th>
+      <th class="b1" align="center"><b>Status</b></th>
+      <th class="b1" align="center"><b>Flags</b></th>
+      <th class="b1" align="center"><b>Create date</b></th>
+      <th class="b1" align="center"><b>Last change date</b></th>
+      <th class="b1" align="center"><b>Actions</b></th>
+    </tr>
+<%
+        for (reg = FIRST_CONTEST(u); reg; reg = NEXT_CONTEST(reg)) {
+            int r = 0;
+            if (contests_get(reg->id, &cnts) < 0 || !cnts) continue;
+%>
+    <tr>
+      <td class="b1"><s:v value="reg->id" /></td>
+      <td class="b1"><s:v value="cnts->name" checkExpr="" /></td>
+      <td class="b1"><s:v value="ss_reg_status_strs[reg->status]" escape="no" /></td>
+      <td class="b1"><%
+            if ((reg->flags & USERLIST_UC_INVISIBLE)) {
+%><% if (r++) { %>, <% } %>invisible<%
+            }
+            if ((reg->flags & USERLIST_UC_BANNED)) {
+%><% if (r++) { %>, <% } %>banned<%
+            }
+            if ((reg->flags & USERLIST_UC_LOCKED)) {
+%><% if (r++) { %>, <% } %>locked<%
+            }
+            if ((reg->flags & USERLIST_UC_INCOMPLETE)) {
+%><% if (r++) { %>, <% } %>incomplete<%
+            }
+            if ((reg->flags & USERLIST_UC_DISQUALIFIED)) {
+%><% if (r++) { %>, <% } %>disqualified<%
+            }
+            if ((reg->flags & USERLIST_UC_PRIVILEGED)) {
+%><% if (r++) { %>, <% } %>privileged<%
+            }
+            if ((reg->flags & USERLIST_UC_REG_READONLY)) {
+%><% if (r++) { %>, <% } %>reg. read-only<%
+            }
+%></td>
+      <td class="b1"><s:v value="reg->create_time" checkExpr="" defstr="<i>Not set</i>" /></td>
+      <td class="b1"><s:v value="reg->last_change_time" checkExpr="" defstr="" /><i>Not set</i></td>
+      <td class="b1">
+        <s:url name="UserDetailsUrl" ac="user-detail-page">
+          <s:param name="other_user_id" />
+          <s:param name="contest_id" value="reg->id" />
+        </s:url>
+        <s:a url="UserDetailsUrl">[User details]</s:a>
+        &nbsp;
+        <s:url name="ChangeUrl" ac="user-edit-reg-page">
+          <s:param name="next_op" value="user_detail_page" />
+          <s:param name="other_user_id" />
+          <s:param name="other_contest_id" value="reg->id" />
+          <s:param name="contest_id" checkExpr="> 0" />
+          <s:param name="group_id" checkExpr="> 0" />
+        </s:url>
+        <s:a url="ChangeUrl">[Change]</s:a>
+        &nbsp;
+        <s:url name="DeleteUrl" ac="user-delete-reg-page">
+          <s:param name="next_op" value="user_detail_page" />
+          <s:param name="other_user_id" />
+          <s:param name="other_contest_id" value="reg->id" />
+          <s:param name="contest_id" checkExpr="> 0" />
+          <s:param name="group_id" checkExpr="> 0" />
+        </s:url>
+        <s:a url="DeleteUrl">[Delete]</s:a>
+      </td>
+    </tr>
+<%
+        }
+%>
+  </table>
+<%
+    }
+%>
+
+  <s:url name="CreateRegUrl" ac="user-create-reg-page">
+    <s:param name="other_user_id" />
+  </s:url>
+  <p><s:a url="CreateRegUrl">[Create a registration]</s:a></p>
+</div>
+
+<h2>Sessions</h2>
+
+<div id="CookiesShowLink"><p><a onclick="showCookies()">Show Cookies</a></p></div>
+<div id="CookiesTable" style="display: none;">
+  <p><a onclick="hideCookies()">Hide Cookies</a></p>
+<%
+    cookie_count = userlist_user_count_cookies(u);
+    if (cookie_count > 0) {
+%>
+  <table class="b1">
+    <tr>
+      <td class="b1" align="center"><b>IP address</b></td>
+      <td class="b1" align="center"><b>SSL?</b></td>
+      <td class="b1" align="center"><b>Session ID</b></td>
+      <td class="b1" align="center"><b>Expiry time</b></td>
+      <td class="b1" align="center"><b>Contest ID</b></td>
+      <td class="b1" align="center"><b>Locale ID</b></td>
+      <td class="b1" align="center"><b>Privilege Level</b></td>
+      <td class="b1" align="center"><b>Role</b></td>
+      <td class="b1" align="center"><b>Recovery?</b></td>
+      <td class="b1" align="center"><b>Team?</b></td>
+      <td class="b1" align="center"><b>Actions</b></td>
+    </tr>
+<%
+        for (cookie=FIRST_COOKIE(u);cookie;cookie=NEXT_COOKIE(cookie)) {
+%>
+    <tr>
+      <td class="b1"><s:v value="xml_unparse_ipv6(&cookie->ip)" escape="no" /></td>
+      <td class="b1"><s:v value="cookie->ssl" /></td>
+      <td class="b1"><s:v value="cookie->cookie" /></td> <!-- ??? -->
+      <td class="b1"><s:v value="cookie->expire" /></td>
+      <td class="b1"><s:v value="cookie->contest_id" /></td>
+      <td class="b1"><s:v value="cookie->locale_id" /></td>
+      <td class="b1"><s:v value="cookie->priv_level" /></td>
+      <td class="b1"><s:v value="cookie->role" /></td>
+      <td class="b1"><s:v value="cookie->recovery" /></td>
+      <td class="b1"><s:v value="cookie->team_login" /></td>
+      <s:url name="DeleteUrl" ac="user-delete-session-action">
+        <s:param name="other_user_id" />
+        <s:param name="other_SID" value="cookie->cookie" />
+        <s:param name="contest_id" checkExpr="> 0" />
+        <s:param name="group_id" checkExpr="> 0" />
+      </s:url>
+      <td class="b1"><s:a url="DeleteUrl">[Delete]</s:a></td>
+    </tr>
+<%
+        }
+%>
+  </table>
+  <s:url name="DeleteAllUrl" ac="user-delete-all-sessions-action">
+    <s:param name="other_user_id" />
+    <s:param name="contest_id" checkExpr="> 0" />
+    <s:param name="group_id" checkExpr="> 0" />
+  </s:url>
+  <p><s:a url="DeleteAllUrl">[Delete all sessions]</s:a></p>
+<%
+    }
+%>
+</div>
+
+<%@include "footer.csp"
+%><%
+cleanup:
+    l10n_resetlocale();
+    html_armor_free(&ab);
+    userlist_free(&u->b);
+%>

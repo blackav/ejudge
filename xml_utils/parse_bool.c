@@ -37,7 +37,7 @@ xml_parse_bool(
     if (pv) *pv = 1;
     return 1;
   }
-  
+
   if (!strcasecmp(str, "false")
       || !strcasecmp(str, "no")
       || !strcasecmp(str, "0")) {

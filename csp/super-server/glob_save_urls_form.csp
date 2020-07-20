@@ -73,38 +73,44 @@
     if (!retval && phr->ss) {
         struct section_global_data *global = phr->ss->global;
         if (global) {
-            snprintf(global->team_info_url, sizeof(global->team_info_url), "%s", team_info_url);
-            snprintf(global->prob_info_url, sizeof(global->team_info_url), "%s", prob_info_url);
-            snprintf(global->standings_file_name, sizeof(global->standings_file_name), "%s", standings_file_name);
+            xstrdup3(&global->team_info_url, team_info_url);
+            xstrdup3(&global->prob_info_url, prob_info_url);
+            xstrdup3(&global->standings_file_name, standings_file_name);
             global->users_on_page = users_on_page;
-            snprintf(global->stand_header_file, sizeof(global->stand_header_file), "%s", stand_header_file);
-            snprintf(global->stand_footer_file, sizeof(global->stand_footer_file), "%s", stand_footer_file);
-            snprintf(global->stand_symlink_dir, sizeof(global->stand_symlink_dir), "%s", stand_symlink_dir);
+            xstrdup3(&global->stand_header_file, stand_header_file);
+            xstrdup3(&global->stand_footer_file, stand_footer_file);
+            xstrdup3(&global->stand_symlink_dir, stand_symlink_dir);
             global->stand_ignore_after = stand_ignore_after;
             phr->ss->enable_stand2 = enable_stand2;
-            snprintf(global->stand2_file_name, sizeof(global->stand2_file_name), "%s", stand2_file_name);
             if (enable_stand2) {
-                if (!global->stand2_file_name[0]) {
-                    snprintf(global->stand2_file_name, sizeof(global->stand2_file_name), "%s", "standings2.html");
+                if (!stand2_file_name || !*stand2_file_name) {
+                    xstrdup3(&stand2_file_name, "standings2.html");
                 }
+                xfree(global->stand2_file_name);
+                global->stand2_file_name = stand2_file_name;
+                stand2_file_name = NULL;
             } else {
-                global->stand2_file_name[0] = 0;
+                xfree(global->stand2_file_name);
+                global->stand2_file_name = NULL;
             }
-            snprintf(global->stand2_header_file, sizeof(global->stand2_header_file), "%s", stand2_header_file);
-            snprintf(global->stand2_footer_file, sizeof(global->stand2_footer_file), "%s", stand2_footer_file);
-            snprintf(global->stand2_symlink_dir, sizeof(global->stand2_symlink_dir), "%s", stand2_symlink_dir);
+            xstrdup3(&global->stand2_header_file, stand2_header_file);
+            xstrdup3(&global->stand2_footer_file, stand2_footer_file);
+            xstrdup3(&global->stand2_symlink_dir, stand2_symlink_dir);
             phr->ss->enable_plog = enable_plog;
-            snprintf(global->plog_file_name, sizeof(global->plog_file_name), "%s", plog_file_name);
             if (enable_plog) {
-                if (!global->plog_file_name[0]) {
-                    snprintf(global->plog_file_name, sizeof(global->plog_file_name), "%s", "plog.html");
+                if (!plog_file_name || !*plog_file_name) {
+                  xstrdup3(&plog_file_name, "plog.html");
                 }
+                xfree(global->plog_file_name);
+                global->plog_file_name = plog_file_name;
+                plog_file_name = NULL;
             } else {
-                global->plog_file_name[0] = 0;
+                xfree(global->plog_file_name);
+                global->plog_file_name = NULL;
             }
-            snprintf(global->plog_header_file, sizeof(global->plog_header_file), "%s", plog_header_file);
-            snprintf(global->plog_footer_file, sizeof(global->plog_footer_file), "%s", plog_footer_file);
-            snprintf(global->plog_symlink_dir, sizeof(global->plog_symlink_dir), "%s", plog_symlink_dir);
+            xstrdup3(&global->plog_header_file, plog_header_file);
+            xstrdup3(&global->plog_footer_file, plog_footer_file);
+            xstrdup3(&global->plog_symlink_dir, plog_symlink_dir);
             global->plog_update_time = plog_update_time;
             global->external_xml_update_time = external_xml_update_time;
             global->internal_xml_update_time = internal_xml_update_time;

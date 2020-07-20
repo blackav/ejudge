@@ -3,6 +3,7 @@
 %><%
 #include "ejudge/team_extra.h"
 #include "ejudge/xuser_plugin.h"
+#include "ejudge/content_plugin.h"
 %><%@set getter_name = "csp_get_priv_user_info_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"
@@ -24,6 +25,10 @@
     int view_user_id = 0;
     const unsigned char *title = NULL;
     int enable_main_menu = 0;
+    unsigned char avatar_url[1024];
+    int reg_status = 0;
+
+    avatar_url[0] = 0;
 
 %><s:read var="view_user_id" required="yes" name="user_id" error="inv-user-id" /><%
   if (!teamdb_lookup(cs->teamdb_state, view_user_id))
@@ -41,9 +46,25 @@
     clar_get_user_usage(cs->clarlog_state,view_user_id, &clars_num, &clars_total);
     pages_total = run_get_total_pages(cs->runlog_state, view_user_id);
     flags = teamdb_get_flags(cs->teamdb_state, view_user_id);
+    reg_status = teamdb_get_status(cs->teamdb_state, view_user_id);
     u = u_info.user;
     if (u) uc = userlist_get_user_contest(u, phr->contest_id);
     if (u) ui = u->cnts0;
+
+    if (cnts && cnts->enable_avatar > 0 && ui && ui->avatar_id && ui->avatar_id[0]) {
+        struct content_loaded_plugin *cp = content_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
+        int content_enabled = 0;
+        if (cp) {
+            content_enabled = cp->iface->is_enabled(cp->data, phr->cnts);
+        }
+        if (content_enabled) {
+            cp->iface->get_url(cp->data, avatar_url, sizeof(avatar_url),
+                               phr->cnts, ui->avatar_id, ui->avatar_suffix);
+        } else {
+            snprintf(avatar_url, sizeof(avatar_url), "%s?SID=%llx&key=%s&action=%d",
+                     phr->self_url, phr->session_id, ui->avatar_id, NEW_SRV_ACTION_GET_AVATAR);
+        }
+    }
 
     l10n_setlocale(phr->locale_id);
     title = _("Details for user ");
@@ -53,12 +74,40 @@
 
 <ul>
     <li><s:a ac="main-page"><s:_>Main page</s:_></s:a></li>
-    <li><s:a ac="view-users"><s:_>View regular users</s:_></s:a></li>
+    <li><s:a ac="view-users-new-page"><s:_>View regular users</s:_></s:a></li>
     <li><s:a ac="view-reg-pwds"><s:_>View registration passwords</s:_></s:a></li>
 <%  if (!cnts->disable_team_password) { %>
     <li><s:a ac="view-cnts-pwds"><s:_>View contest passwords</s:_></s:a></li>
 <%  } %>
 </ul>
+
+<% if (cnts && cnts->enable_avatar > 0) { %>
+<table class="b1 table-b1 table-users t-left">
+  <tr>
+    <td class="b1 userpic">
+<% if (avatar_url[0]) { %>
+      <img src="<s:v value="avatar_url" escape="no" />" alt="avatar" />
+<% } else { %>
+      &nbsp;
+<% } %>
+    </td>
+    <td class="b1">
+      <s:form enctype="multipart/form-data">
+        <s:hidden name="other_user_id" value="view_user_id" />
+        <input class="avatar-file" type="file" name="img_file" /><br/>
+        <s:submit ac="upload-avatar" text="Upload" />
+      </s:form>
+    </td>
+    <td class="b1">
+      <s:form enctype="multipart/form-data">
+        <s:hidden name="other_user_id" value="view_user_id" />
+        <s:submit ac="delete-avatar" /><br/>
+        <s:submit ac="confirm-avatar" />
+      </s:form>
+    </td>
+  </tr>
+</table>
+<% } %>
 
 <table>
 <tr><td><s:_>User Id</s:_>:</td><td><s:v value="view_user_id" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
@@ -73,7 +122,7 @@
     } else if (u && u->passwd_method != USERLIST_PWD_PLAIN) {
 %><i><s:_>Changed by user</s:_></i><%
     } else if (u) {
-%><tt><s:v value="u->passwd" /></tt><%
+%><i>Unchanged by user</i><%
     }
 %><td>&nbsp;</td><td>&nbsp;</td></tr>
 <% if (!cnts->disable_team_password) { %>
@@ -83,13 +132,51 @@
       } else if (ui && ui->team_passwd_method != USERLIST_PWD_PLAIN) {
 %><i><s:_>Changed by user</s:_></i> <%
       } else if (ui) {
-%><tt><s:v value="ui->team_passwd" /></tt><%
+%><i>Unchanged by user</i><%
       } else {
 %>&nbsp;<%
       }
 %>
 <% } %>
 <% } %>
+
+<%
+  allowed_edit = 0;
+  if (u) {
+    if (u->is_privileged) {
+      if ((flags & TEAM_BANNED)) needed_cap = OPCAP_PRIV_CREATE_REG;
+      else needed_cap = OPCAP_PRIV_DELETE_REG;
+    } else {
+      if ((flags & TEAM_BANNED)) needed_cap = OPCAP_CREATE_REG;
+      else needed_cap = OPCAP_DELETE_REG;
+    }
+    if (opcaps_check(phr->caps, needed_cap) >= 0) allowed_edit = 1;
+  }
+%>
+<%
+  if (allowed_edit) {
+%>
+<s:form>
+<s:hidden name="user_id" value="view_user_id" />
+<%  } %>
+<tr><td><s:_>Status</s:_>:</td><td>
+        <select name="status">
+          <s:option value="0" selectedExpr="reg_status == 0">OK</s:option>
+          <s:option value="1" selectedExpr="reg_status == 1">Pending</s:option>
+          <s:option value="2" selectedExpr="reg_status == 2">Rejected</s:option>
+        </select>
+</td></td><td>&nbsp;</td><td><%
+  if (allowed_edit) {
+%><s:submit ac="user-change-status-2" /><%
+  } else {
+%>&nbsp;<%
+  }
+%></td>
+</tr>
+<%  if (allowed_edit) { %>
+</s:form>
+<%  } %>
+
 <tr><td><s:_>Privileged?</s:_>:</td><td><s:vb value="u &amp;&amp; u->is_privileged" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
 <%
   // invisible, locked, banned status and change buttons
@@ -205,7 +292,7 @@
     if ((flags & TEAM_INCOMPLETE)) {
 %><s:submit ac="toggle-incompleteness" label="Clear" /><%
     } else {
-%><s:submit ac="toggle-incompleteness" label="Clear" /><%
+%><s:submit ac="toggle-incompleteness" label="Set" /><%
     }
   } else {
 %>&nbsp;<%
@@ -216,6 +303,73 @@
 <% } %>
 
 <tr><td><s:_>Disqualified?</s:_>:</td><td><s:vb value="flags &amp; TEAM_DISQUALIFIED" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
+
+<%  allowed_edit = 0;
+  if (u) {
+    if (u->is_privileged) {
+      if ((flags & TEAM_PRIVILEGED)) needed_cap = OPCAP_PRIV_CREATE_REG;
+      else needed_cap = OPCAP_PRIV_DELETE_REG;
+    } else {
+      if ((flags & TEAM_PRIVILEGED)) needed_cap = OPCAP_CREATE_REG;
+      else needed_cap = OPCAP_DELETE_REG;
+    }
+    if (opcaps_check(phr->caps, needed_cap) >= 0) allowed_edit = 1;
+  }
+%>
+<%
+  if (allowed_edit) {
+%>
+<s:form>
+<s:hidden name="user_id" value="view_user_id" />
+<%  } %>
+<tr><td><s:_>Privileged?</s:_>:</td><td><s:vb value="flags &amp; TEAM_PRIVILEGED" /></td><td>&nbsp;</td><td><%
+  if(allowed_edit) {
+    if ((flags & TEAM_PRIVILEGED)) {
+%><s:submit ac="toggle-privileged" label="Clear" /><%
+    } else {
+%><s:submit ac="toggle-privileged" label="Set" /><%
+    }
+  } else {
+%>&nbsp;<%
+  }
+%></td></tr>
+<%  if (allowed_edit) { %>
+</s:form>
+<% } %>
+
+<%  allowed_edit = 0;
+  if (u) {
+    if (u->is_privileged) {
+      if ((flags & TEAM_REG_READONLY)) needed_cap = OPCAP_PRIV_CREATE_REG;
+      else needed_cap = OPCAP_PRIV_DELETE_REG;
+    } else {
+      if ((flags & TEAM_REG_READONLY)) needed_cap = OPCAP_CREATE_REG;
+      else needed_cap = OPCAP_DELETE_REG;
+    }
+    if (opcaps_check(phr->caps, needed_cap) >= 0) allowed_edit = 1;
+  }
+%>
+<%
+  if (allowed_edit) {
+%>
+<s:form>
+<s:hidden name="user_id" value="view_user_id" />
+<%  } %>
+<tr><td><s:_>Reg. read-only?</s:_>:</td><td><s:vb value="flags &amp; TEAM_REG_READONLY" /></td><td>&nbsp;</td><td><%
+  if(allowed_edit) {
+    if ((flags & TEAM_REG_READONLY)) {
+%><s:submit ac="toggle-reg-readonly" label="Clear" /><%
+    } else {
+%><s:submit ac="toggle-reg-readonly" label="Set" /><%
+    }
+  } else {
+%>&nbsp;<%
+  }
+%></td></tr>
+<%  if (allowed_edit) { %>
+</s:form>
+<% } %>
+
 <tr><td><s:_>Number of Runs</s:_>:</td><td><s:v value="runs_num" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
 <tr><td><s:_>Total size of Runs</s:_>:</td><td><s:v value="runs_total" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
 <tr><td><s:_>Number of Clars</s:_>:</td><td><s:v value="clars_num" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
@@ -326,6 +480,21 @@
 %></tr></table>
 </s:form>
 <%  } %>
+
+<%
+  if (phr->role == USER_ROLE_ADMIN) {
+%>
+
+<h2>Impersonate User</h2>
+
+<s:url name="EnterContestUrl" ac="enter-contest">
+    <s:param name="other_user_id" value="view_user_id" />
+</s:url>
+<p><s:a url="EnterContestUrl" target="_blank">Open as this user</s:a></p>
+
+<%
+  }
+%>
 
 <%@include "priv_footer.csp"
 %><%

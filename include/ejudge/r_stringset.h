@@ -216,7 +216,7 @@ extern "C" {
  * User should define a new type as stub in AST tree, e. g.
  * typedef int tGRefTable. Type of it does not matter, only name of the
  * type is used to redefine AST type specific macroses (in our example:
- * WritetGrefTable, ReadtGRefTable, PuttGRefTable, GettGRefTable) to 
+ * WritetGrefTable, ReadtGRefTable, PuttGRefTable, GettGRefTable) to
  * manipulate with concrete String Table, e. g.
  * #define GettGRefTable(x) ssdGet(GRefTable,yyf);
  * (see file Position.h for example of such technique).

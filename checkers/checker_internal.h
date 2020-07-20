@@ -1,7 +1,7 @@
 #ifndef __CHECKER_INTERNAL_H__
 #define __CHECKER_INTERNAL_H__
 
-/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -145,6 +145,8 @@ void fatal_WA(char const *format, ...)
 void fatal_read(int streamno, char const *format, ...)
      LIBCHECKER_ATTRIB((noreturn, format(printf, 2, 3)));
 void checker_OK(void) LIBCHECKER_ATTRIB((noreturn));
+
+void checker_drain(void);
 
 void *xmalloc(size_t size);
 void *xcalloc(size_t nmemb, size_t size);
@@ -385,6 +387,27 @@ valuer_parse_input(
         struct valuer_test_info **p_infos);
 
 void checker_l10n_prepare(void);
+
+int
+checker_require_nl(FILE *f, int allow_fail);
+void
+checker_skip_bom(FILE *f);
+
+int
+checker_kill(int pid, int signal);
+
+int
+checker_stoi(const char *str, int base, int *p_int);
+int
+checker_stou(const char *str, int base, unsigned *p_value);
+int
+checker_stol(const char *str, int base, long *p_value);
+int
+checker_stoul(const char *str, int base, unsigned long *p_value);
+int
+checker_stoll(const char *str, int base, long long *p_value);
+int
+checker_stoull(const char *str, int base, unsigned long long *p_value);
 
 #ifdef __cplusplus
 }

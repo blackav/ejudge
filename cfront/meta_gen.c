@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2008-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -345,6 +344,8 @@ get_type_letter(tree_t ds, tree_t declr)
         return 'b';
       } else if (!strcmp(ident_get(tid), "ejintbool_t")) {
         return 'B';
+      } else if (!strcmp(ident_get(tid), "ejbyteflag_t")) {
+        return 'f';
       } else if (!strcmp(ident_get(tid), "ejintsize_t")) {
         return 'z';
       } else if (!strcmp(ident_get(tid), "path_t")) {

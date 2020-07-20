@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2014-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -50,6 +50,13 @@ destroy_func(
     memset(pp, 0, sizeof(*pp));
     xfree(pp);
 }
+
+static const unsigned char * access_type_styles[] =
+{
+    "AccessStyleRed",
+    "AccessStyleYellow",
+    "AccessStyleGreen"
+};
 
 static int
 execute_func(
@@ -126,6 +133,18 @@ execute_func(
         if (contests_check_team_ip_2(cnts, &phr->ip, phr->ssl_flag)) {
             ci->user_enabled = 1;
         }
+
+        ci->register_access_style = "AccessStyleGreen";
+        int as = contests_get_register_access_type(cnts);
+        if (as >= 0 && as <= 2) ci->register_access_style = access_type_styles[as];
+
+        ci->users_access_style = "AccessStyleGreen";
+        as = contests_get_users_access_type(cnts);
+        if (as >= 0 && as <= 2) ci->users_access_style = access_type_styles[as];
+
+        ci->client_access_style = "AccessStyleGreen";
+        as = contests_get_participant_access_type(cnts);
+        if (as >= 0 && as <= 2) ci->client_access_style = access_type_styles[as];
 
         char *addi_t = 0;
         size_t addi_z = 0;

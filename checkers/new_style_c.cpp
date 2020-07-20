@@ -1027,8 +1027,8 @@ public:
             return false;
         }
         for (int i = 0; i < int(str.size()); ++i) {
-            if (!isupper(str[i]) && str[i] != '_') {
-                fprintf(stderr, "%s: constant name must contain only uppercase letters\n",
+            if (!isupper(str[i]) && !isdigit(str[i]) && str[i] != '_') {
+                fprintf(stderr, "%s: constant name must contain only uppercase letters or digits\n",
                         id.get_begpos().to_string().c_str());
                 ++error_count;
                 return false;

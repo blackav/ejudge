@@ -2,6 +2,8 @@
 %><%@include "includes.csp"
 %><%
 #define COPYSTR(f) snprintf(prob->f, sizeof(prob->f), "%s", (f))
+#define MOVESTR(f) xfree(prob->f); prob->f = f; f = NULL
+#define FREESTR(f) xfree(prob->f); prob->f = NULL
 
 %><%@set getter_name = "csp_get_prob_save_files_form"
 %><%@set ac_prefix = "SSERV_CMD_"
@@ -120,73 +122,63 @@
 
     if (!retval && phr->ss) {
         prob->binary_input = binary_input;
-        snprintf(prob->normalization, sizeof(prob->normalization), "%s", test_normalization_unparse(normalization));
-        COPYSTR(xml_file);
-        COPYSTR(test_dir);
+        xstrdup3(&prob->normalization, test_normalization_unparse(normalization));
+        MOVESTR(xml_file);
+        MOVESTR(test_dir);
         if (!test_pat_dflt) {
-            COPYSTR(test_pat);
+            MOVESTR(test_pat);
         } else {
-            prob->test_pat[0] = 1;
-            prob->test_pat[1] = 0;
+            FREESTR(test_pat);
         }
         if (!test_sfx_dflt) {
-            COPYSTR(test_sfx);
+            MOVESTR(test_sfx);
         } else {
-            prob->test_sfx[0] = 1;
-            prob->test_sfx[1] = 0;
+            FREESTR(test_sfx);
         }
         prob->use_corr = use_corr;
-        COPYSTR(corr_dir);
+        MOVESTR(corr_dir);
         if (!corr_pat_dflt) {
-            COPYSTR(corr_pat);
+            MOVESTR(corr_pat);
         } else {
-            prob->corr_pat[0] = 1;
-            prob->corr_pat[1] = 0;
+            FREESTR(corr_pat);
         }
         if (!corr_sfx_dflt) {
-            COPYSTR(corr_sfx);
+            MOVESTR(corr_sfx);
         } else {
-            prob->corr_sfx[0] = 1;
-            prob->corr_sfx[1] = 0;
+            FREESTR(corr_sfx);
         }
         prob->use_info = use_info;
-        COPYSTR(info_dir);
+        MOVESTR(info_dir);
         if (!info_pat_dflt) {
-            COPYSTR(info_pat);
+            MOVESTR(info_pat);
         } else {
-            prob->info_pat[0] = 1;
-            prob->info_pat[1] = 0;
+            FREESTR(info_pat);
         }
         if (!info_sfx_dflt) {
-            COPYSTR(info_sfx);
+            MOVESTR(info_sfx);
         } else {
-            prob->info_sfx[0] = 1;
-            prob->info_sfx[1] = 0;
+            FREESTR(info_sfx);
         }
         prob->use_tgz = use_tgz;
         if (!tgz_pat_dflt) {
-            COPYSTR(tgz_pat);
+            MOVESTR(tgz_pat);
         } else {
-            prob->tgz_pat[0] = 1;
-            prob->tgz_pat[1] = 0;
+            FREESTR(tgz_pat);
         }
         if (!tgzdir_pat_dflt) {
-            COPYSTR(tgzdir_pat);
+            MOVESTR(tgzdir_pat);
         } else {
-            prob->tgzdir_pat[0] = 1;
-            prob->tgzdir_pat[1] = 0;
+            FREESTR(tgzdir_pat);
         }
         if (!tgz_sfx_dflt) {
-            COPYSTR(tgz_sfx);
+            MOVESTR(tgz_sfx);
         } else {
-            prob->tgz_sfx[0] = 1;
-            prob->tgz_sfx[1] = 0;
+            FREESTR(tgz_sfx);
         }
         if (!tgzdir_sfx_dflt) {
-            COPYSTR(tgzdir_sfx);
+            MOVESTR(tgzdir_sfx);
         } else {
-            prob->tgzdir_sfx[0] = 1;
-            prob->tgzdir_sfx[1] = 0;
+            FREESTR(tgzdir_sfx);
         }
     }
 

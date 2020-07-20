@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __BASE64_H__
 #define __BASE64_H__
 
-/* Copyright (C) 2000-2005 Alexander Chernov <cher@ispras.ru> */
+/* Copyright (C) 2000-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,5 +22,10 @@ int base64_encode(char const *, size_t, char *);
 int base64_encode_str(char const *, char *);
 int base64_decode(char const *, size_t, char *, int *);
 int base64_decode_str(char const *, char *, int *);
+
+int base64u_encode(char const *, size_t, char *);
+int base64u_encode_str(char const *, char *);
+int base64u_decode(char const *, size_t, char *, int *);
+int base64u_decode_str(char const *, char *, int *);
 
 #endif /* __BASE64_H__ */

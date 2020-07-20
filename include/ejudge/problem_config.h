@@ -2,7 +2,7 @@
 #ifndef __PROBLEM_CONFIG_H__
 #define __PROBLEM_CONFIG_H__
 
-/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 #endif /* __RCC__ */
 #endif /* META_ATTRIB */
 
-/* sizeof(struct problem_config_section) == 552 */
+/* sizeof(struct problem_config_section) == 712 */
 struct problem_config_section
 {
   struct generic_section_config g META_ATTRIB((meta_hidden));
@@ -38,6 +38,7 @@ struct problem_config_section
   ejintbool_t manual_checking;
   ejintbool_t check_presentation;
   ejintbool_t scoring_checker;
+  ejintbool_t enable_checker_token;
   ejintbool_t interactive_valuer;
   ejintbool_t disable_pe;
   ejintbool_t disable_wtl;
@@ -96,7 +97,11 @@ struct problem_config_section
   ejintbool_t ignore_unmarked;
   ejintbool_t disable_stderr;
   ejintbool_t enable_process_group;
+  ejintbool_t enable_kill_all;
+  ejintbool_t enable_testlib_mode;
   ejintbool_t hide_variant;
+  ejintbool_t enable_extended_info;
+  ejintbool_t stop_on_first_fail;
 
   int id;
   int real_time_limit;
@@ -110,6 +115,7 @@ struct problem_config_section
   int run_penalty;
   int acm_run_penalty;
   int disqualified_penalty;
+  int compile_error_penalty;
   int min_tests_to_accept;
   int checker_real_time_limit;
   int priority_adjustment;
@@ -117,6 +123,7 @@ struct problem_config_section
   int prev_runs_to_show;
   int max_user_run_count;
   int interactor_time_limit;
+  int interactor_real_time_limit;
   int max_open_file_count;
   int max_process_count;
   int tests_to_accept;
@@ -180,6 +187,7 @@ struct problem_config_section
   unsigned char *header_pat;
   unsigned char *footer_pat;
   unsigned char *compiler_env_pat;
+  unsigned char *uuid;
 
   char **test_sets;
   char **date_penalty;
@@ -205,6 +213,7 @@ struct problem_config_section
   ejenvlist_t test_checker_env;
   ejenvlist_t init_env;
   ejenvlist_t start_env;
+  ejenvlist_t statement_env;
 };
 
 void

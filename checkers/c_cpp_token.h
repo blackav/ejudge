@@ -63,7 +63,7 @@ enum class Token
     RSH_ASSIGN, // >>=
     SCOPE, // :: C++
     SUB_ASSIGN, // -=
-    XOR_ASSIGN, // ^= 
+    XOR_ASSIGN, // ^=
 
     // keywords
     ALIGNAS = 400, // C++11

@@ -1,0 +1,86 @@
+<%
+%><%@include "priv_includes.csp"
+%><%
+// includes
+#include "ejudge/userlist_clnt.h"
+#include "ejudge/userlist_proto.h"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_users_new_ajax(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+    PrivViewUsersPage *pu = (PrivViewUsersPage*) pg;
+    snprintf(phr->content_type, sizeof(phr->content_type), "text/json");
+    int new_contest_id = cnts->id;
+    int i;
+    UserInfoPage *ui = NULL;
+
+    if (cnts->user_contest_num > 0) new_contest_id = cnts->user_contest_num;
+    (void) new_contest_id;
+
+%>{
+    "result" : <s:v value="pu->result" />,<%
+    if (pu->result > 0 && pu->users) {
+    %>
+    "data" : [<%
+        for (i = 0; i < pu->users->u; ++i) {
+            ui = pu->users->v[i];
+            (void) ui;
+    %>
+        <%
+            if (i > 0) {
+        %>,<%
+            }
+        %>
+        {
+            "serial" : <s:v value="i + 1" />,
+            "user_id" : <s:v value="ui->user_id" />,
+            "user_login" : "<s:v value="ui->user_login" json="yes" />",
+            "user_name" : "<s:v value="ui->user_name" json="yes" />",
+            "status" : "<s:v value="ui->status_str" json="yes" />",
+            "is_banned" : <s:v value="ui->is_banned" json="yes" />,
+            "is_invisible" : <s:v value="ui->is_invisible" json="yes" />,
+            "is_locked" : <s:v value="ui->is_locked" json="yes" />,
+            "is_incomplete" : <s:v value="ui->is_incomplete" json="yes" />,
+            "is_disqualified" : <s:v value="ui->is_disqualified" json="yes" />,
+            "is_privileged" : <s:v value="ui->is_privileged" json="yes" />,
+            "is_reg_readonly" : <s:v value="ui->is_reg_readonly" json="yes" />,
+            "create_time" : "<s:v value="ui->create_time_str" json="yes" />",
+            "last_login_time" : "<s:v value="ui->last_login_time_str" json="yes" />",
+<%
+            if (cnts->enable_avatar > 0 && ui->avatar_store) {
+%>
+            "avatar_store" : "<s:v value="ui->avatar_store" json="yes" />",
+<%
+            }
+%>
+<%
+            if (cnts->enable_avatar > 0 && ui->avatar_id) {
+%>
+            "avatar_id" : "<s:v value="ui->avatar_id" json="yes" />",
+<%
+            }
+%>
+<%
+            if (cnts->enable_avatar > 0 && ui->avatar_suffix) {
+%>
+            "avatar_suffix" : "<s:v value="ui->avatar_suffix" json="yes" />",
+<%
+            }
+%>
+            "run_count" : <s:v value="ui->run_count" />,
+            "run_size" : <s:v value="ui->run_size" />,
+            "clar_count" : <s:v value="ui->clar_count" />,
+            "result_score" : <s:v value="ui->result_score" />
+        }
+        <%
+        }
+        %>
+    ],<%
+    } else { %>
+    message : "<s:v value="pu->message" json="yes" />",<%
+    }%>
+    "current_time" : "<s:v value="phr->current_time" />"
+}<%
+//cleanup:
+    html_armor_free(&ab);
+%>

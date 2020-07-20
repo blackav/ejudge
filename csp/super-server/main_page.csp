@@ -8,6 +8,7 @@
     const unsigned char *title = 0;
     const unsigned char *subtitle = 0;
     opcap_t caps = 0;
+    const unsigned char *acc_style = NULL;
 
     if (phr->priv_level < PRIV_LEVEL_JUDGE) FAIL(SSERV_ERR_PERM_DENIED);
     if (ejudge_cfg_opcaps_find(phr->config, phr->login, &caps) < 0) FAIL(SSERV_ERR_PERM_DENIED);
@@ -25,7 +26,7 @@
 
 <div class="icons" style="margin-top: -25px; height: 57px; border-bottom: 1px solid rgb(207, 207, 207); margin-bottom: 0;">
 <div style="float: left;">
-   
+
     <s:a ac="user-browse-page"><img src="<s:config name="style-prefix" />user_sh.png" alt="User editor" title="User editor" /></s:a>
     <s:a ac="user-map-main-page"><img src="<s:config name="style-prefix" />mapping_sh.png" alt="System user mapping" title="System user mapping" /></s:a>
     <s:a ac="caps-main-page"><img src="<s:config name="style-prefix" />capabilities_sh.png" alt="Global user capabilities" title="Global user capabilities" /></s:a>
@@ -94,6 +95,7 @@
         <th>Judge</th>
         <th>Master</th>
         <th>User</th>
+        <th>Access</th>
         <th>Comment</th>
     </tr>
 <%
@@ -154,6 +156,20 @@
 %>&nbsp;<%
         }
 %></td>
+        <td><%
+        acc_style = "AccessStyleGreen";
+        if (ci->closed) {
+            acc_style = "AccessStyleRed";
+        }
+%><span class="<s:v value='acc_style' />">O</span><%
+        acc_style = "AccessStyleGreen";
+        if (ci->invisible) {
+            acc_style = "AccessStyleRed";
+        }
+        %> <span class="<s:v value='acc_style' />">V</span><%
+        %> <span class="<s:v value='ci->register_access_style' />">R</span><%
+        %> <span class="<s:v value='ci->users_access_style' />">U</span><%
+        %> <span class="<s:v value='ci->client_access_style' />">P</span></td>
         <td><s:v checkexpr="" value="ci->comment" /></td>
     </tr>
 <%

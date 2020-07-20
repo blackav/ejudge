@@ -91,4 +91,3 @@ int sha_stream(FILE *stream, void *resblock);
 void *sha_buffer(const char *buffer, size_t len, void *resblock);
 
 #endif /* __SHA_H__ */
-

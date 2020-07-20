@@ -2,7 +2,7 @@
 #ifndef __PREPARE_DFLT_H__
 #define __PREPARE_DFLT_H__
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -170,6 +170,7 @@
 
 #define DFLT_R_UUID_SOURCE        "source"
 #define DFLT_R_UUID_XML_REPORT    "report"
+#define DFLT_R_UUID_BSON_REPORT   "breport"
 #define DFLT_R_UUID_REPORT        "warnings"
 #define DFLT_R_UUID_AUDIT         "audit"
 #define DFLT_R_UUID_FULL_ARCHIVE  "outputs"

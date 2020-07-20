@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "priv_includes.csp"
 %><%
 void
@@ -38,6 +37,7 @@ ns_unparse_answers(
   const struct section_problem_data *prob = 0;
   const struct section_global_data *global = 0;
   int prob_id = 0, variant = 0, i;
+  int lang_id = 0;
   problem_xml_t px = 0;
   struct watched_file *pw = 0;
   const unsigned char *pw_path = 0;
@@ -62,6 +62,9 @@ ns_unparse_answers(
       || (prob && prob->variant_num > 0 && variant > prob->variant_num)) {
     FAIL(NEW_SRV_ERR_INV_VARIANT);
   }
+%><s:read var="lang_id" default="0" /><%
+  if (lang_id <= 0 || lang_id > cs->max_lang || !cs->langs[lang_id]) lang_id = 0;
+
   if (opcaps_check(phr->caps, OPCAP_SUBMIT_RUN) < 0) {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
@@ -79,18 +82,34 @@ ns_unparse_answers(
 </div>
 
 <% if (prob) { %>
-<h2><s:_>Problem</s:_> <s:v value="prob->short_name" escape="false"/><s:v value="prob->internal_name" checkExpr="[0]" sep=": " />: <s:v value="prob->long_name" /></h2>
+<h2><s:_>Problem</s:_> <s:v value="prob->short_name" escape="false"/><s:v value="prob->internal_name" checkExpr="" sep=": " />: <s:v value="prob->long_name" checkExpr="" /></h2>
 <% } %>
 
 <s:form enctype="multipart/form-data">
 
-<table class="b0"><tr>
-<tr><td class="b0"><s:_>Problem</s:_>:</td><td class="b0"><s:select name="problem"><%
+<table class="b0"><tr><%
+  int prev_prob_id = prob_id - 1;
+  while (prev_prob_id > 0 && !cs->probs[prev_prob_id]) {
+    --prev_prob_id;
+  }
+  if (prev_prob_id > 0) {
+%><td><s:url name="PrevProbUrl" ac="priv-submit-page"><s:param name="problem" value="prev_prob_id" /></s:url><s:a url="PrevProbUrl">[Prev Problem]</s:a></td><%
+  }
+%><td class="b0"><s:_>Problem</s:_>:</td><td class="b0"><s:select name="problem"><%
   for (i = 1; i <= cs->max_prob; i++) {
     if (!(cs->probs[i])) continue;
-%><s:option value="i" selectedExpr="prob_id > 0 && i == prob_id"><s:v value="cs->probs[i]->short_name" escape="false" /><s:v value="cs->probs[i]->internal_name" checkExpr="[0]" sep=" - " /> - <s:v value="cs->probs[i]->long_name" /></s:option><%
+%><s:option value="i" selectedExpr="prob_id > 0 && i == prob_id"><s:v value="cs->probs[i]->short_name" escape="false" /><s:v value="cs->probs[i]->internal_name" checkExpr="" sep=" - " /> - <s:v value="cs->probs[i]->long_name" checkExpr="" /></s:option><%
   }
-%></s:select></td><td class="b0"><s:submit ac="priv-submit-page" /></td></tr>
+%></s:select></td><td class="b0"><s:submit ac="priv-submit-page" /></td><%
+  int next_prob_id = prob_id + 1;
+  while (next_prob_id <= cs->max_prob && !cs->probs[next_prob_id]) {
+    ++next_prob_id;
+  }
+%><%
+  if (next_prob_id <= cs->max_prob) {
+%><td><s:url name="NextProbUrl" ac="priv-submit-page"><s:param name="problem" value="next_prob_id" /></s:url><s:a url="NextProbUrl">[Next Problem]</s:a></td><%
+  }
+%></tr>
 <% if (prob && prob->variant_num > 0) { %>
 <tr><td class="b0"><s:_>Variant</s:_>:</td><td class="b0"><s:select name="variant"><%
     for (i = 0; i <= prob->variant_num; i++) {
@@ -114,14 +133,14 @@ ns_unparse_answers(
 %>
     <tr><td><b><s:_>Full score</s:_>:</b></td><td><tt><s:v value="prob->full_score" /></tt></td></tr>
 <%
-            if (prob->run_penalty > 0) {
+            if (prob->run_penalty != -1 && prob->run_penalty != 0) {
 %>
     <tr><td><b><s:_>Run penalty</s:_>:</b></td><td><tt><s:v value="prob->run_penalty" /></tt></td></tr>
 <%
             }
 %>
 <%
-            if (prob->score_bonus && prob->score_bonus[0]) {
+            if (prob->score_bonus) {
 %>
     <tr><td><b><s:_>Score bonus</s:_>:</b></td><td><tt><s:v value="prob->score_bonus" /></tt></td></tr>
 <%
@@ -131,22 +150,22 @@ ns_unparse_answers(
           }
 %>
 <%
-          if (prob->combined_stdin > 0 && prob->input_file[0] && prob->hide_file_names <= 0) {
+          if (prob->combined_stdin > 0 && prob->input_file && prob->input_file[0] && prob->hide_file_names <= 0) {
 %>
     <tr><td><b><s:_>Input file name</s:_>:</b></td><td><tt><s:v value="prob->input_file" /></tt><s:_> or standard input</s:_></td></tr>
 <%
-          } else if (prob->use_stdin <= 0 && prob->input_file[0] && prob->hide_file_names <= 0) {
+          } else if (prob->use_stdin <= 0 && prob->input_file && prob->input_file[0] && prob->hide_file_names <= 0) {
 %>
     <tr><td><b><s:_>Input file name</s:_>:</b></td><td><tt><s:v value="prob->input_file" /></tt></td></tr>
 <%
           }
 %>
 <%
-          if (prob->combined_stdout > 0 && prob->output_file[0] && prob->hide_file_names <= 0) {
+          if (prob->combined_stdout > 0 && prob->output_file && prob->output_file[0] && prob->hide_file_names <= 0) {
 %>
     <tr><td><b><s:_>Output file name</s:_>:</b></td><td><tt><s:v value="prob->output_file" /></tt><s:_> or standard output</s:_></td></tr>
 <%
-          } else if (prob->use_stdout <= 0 && prob->output_file[0] && prob->hide_file_names <= 0) {
+          } else if (prob->use_stdout <= 0 && prob->output_file && prob->output_file[0] && prob->hide_file_names <= 0) {
 %>
     <tr><td><b><s:_>Output file name</s:_>:</b></td><td><tt><s:v value="prob->output_file" /></tt></td></tr>
 <%
@@ -196,10 +215,18 @@ ns_unparse_answers(
         }
 %>
 
+<%
+        if (prob && prob->problem_dir && prob->problem_dir[0]) {
+%>
+    <tr><td><b><s:_>Problem directory</s:_>:</b></td><td><tt><s:v value="prob->problem_dir" /></tt></td></tr>
+<%
+        }
+%>
+
 </table>
 
-
-
+<s:submit ac="reload-statement" />
+<s:submit ac="reload-statement-all" />
 
 <%
   /* output the problem statement */
@@ -214,7 +241,7 @@ ns_unparse_answers(
     ns_unparse_statement(out_f, phr, cnts, extra, prob, variant, px, NULL, 1);
   }
 
-  if (!px && prob && prob->statement_file[0]) {
+  if (!px && prob && prob->statement_file && prob->statement_file[0]) {
     if (prob->variant_num > 0 && variant > 0) {
       prepare_insert_variant_num(variant_stmt_file,
                                  sizeof(variant_stmt_file),
@@ -242,9 +269,24 @@ ns_unparse_answers(
 <tr>
 <td class="b0"><s:_>Language</s:_>:</td><td class="b0"><s:select name="lang_id"><option value=""></option><%
     for (i = 1; i <= cs->max_lang; i++) {
-      if (cs->langs[i]) {
-%><s:option value="i"><s:v value="cs->langs[i]->short_name" escape="false" /> - <s:v value="cs->langs[i]->long_name" /></s:option><%
+      const struct section_language_data *cl = cs->langs[i];
+      if (!cl || cl->disabled > 0) continue;
+      if (prob) {
+        char **ll;
+        int li;
+        if ((ll = prob->enable_language)) {
+          for (li = 0; ll[li]; ++li)
+            if (!strcmp(ll[li], cl->short_name))
+              break;
+          if (!ll[li]) continue;
+        } else if ((ll = prob->disable_language)) {
+          for (li = 0; ll[li]; ++li)
+            if (!strcmp(ll[li], cl->short_name))
+              break;
+          if (ll[li]) continue;
+        }
       }
+%><s:option value="i" selectedExpr="i == lang_id"><s:v value="cl->short_name" escape="false" /> - <s:v value="cl->long_name" checkExpr="" /></s:option><%
     }
 %></s:select></td></tr>
 

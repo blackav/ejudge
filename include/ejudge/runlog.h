@@ -2,7 +2,7 @@
 #ifndef __RUNLOG_H__
 #define __RUNLOG_H__
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -47,7 +47,7 @@ enum
   RUN_SYNC_ERR         = 19,
   OLD_RUN_MAX_STATUS   = 19, // obsoleted
   RUN_NORMAL_LAST      = 19, // may safely overlap pseudo statuses
-  
+
   RUN_PSEUDO_FIRST     = 20,
   RUN_VIRTUAL_START    = 20,
   RUN_VIRTUAL_STOP     = 21,
@@ -70,6 +70,13 @@ enum
 };
 
 enum { RUN_LOG_CREATE = 1, RUN_LOG_READONLY = 2, RUN_LOG_NOINDEX = 4, RUN_LOG_UUID_INDEX = 8 };
+
+enum
+{
+  STORE_FLAGS_DEFAULT,
+  STORE_FLAGS_UUID,      // each run is stored in the separate directory under its uuid
+  STORE_FLAGS_UUID_BSON, // testing report is stored as BSON instead of XML
+};
 
 struct ejudge_cfg;
 struct contest_desc;
@@ -110,6 +117,7 @@ run_add_record(
         int            variant,
         int            is_hidden,
         int            mime_type,
+        const unsigned char *prob_uuid,
         int            store_flags);
 int run_start_contest(runlog_state_t, time_t);
 time_t run_get_start_time(runlog_state_t);
@@ -160,6 +168,8 @@ int  run_set_duration(runlog_state_t, time_t);
 time_t run_get_stop_time(runlog_state_t);
 int    run_stop_contest(runlog_state_t, time_t);
 int    run_sched_contest(runlog_state_t, time_t);
+
+int    run_get_first(runlog_state_t);
 int    run_get_total(runlog_state_t);
 
 void run_get_saved_times(runlog_state_t, time_t *p_sd, time_t *p_sst, time_t*);
@@ -171,7 +181,7 @@ time_t run_get_finish_time(runlog_state_t state);
 time_t run_get_duration(runlog_state_t);
 
 void run_get_team_usage(runlog_state_t, int, int *, size_t*);
-int  run_get_attempts(runlog_state_t, int, int *, int *, int);
+int  run_get_attempts(runlog_state_t, int, int *, int *, int *, time_t *, int, int);
 int run_count_all_attempts(runlog_state_t state, int user_id, int prob_id);
 int run_count_all_attempts_2(runlog_state_t state, int user_id, int prob_id, int ignored_set);
 char *run_status_str(int, char *, int, int, int);
@@ -251,7 +261,8 @@ enum
     RE_PASSED_MODE   = 0x10000000,
     RE_EOLN_TYPE     = 0x20000000,
     RE_STORE_FLAGS   = 0x40000000,
-    RE_ALL           = 0x7FFFFFFF,
+    RE_PROB_UUID     = 0x80000000, // not a part of run_entry structure
+    RE_ALL           = 0xFFFFFFFF,
   };
 
 /* structure size is 128 bytes */
@@ -355,7 +366,9 @@ int run_write_xml(runlog_state_t, void *, const struct contest_desc *cnts,
 int unparse_runlog_xml(serve_state_t,
                        const struct contest_desc *cnts,
                        FILE *, const struct run_header*,
-                       size_t, const struct run_entry*, int, int, time_t);
+                       size_t,
+                       size_t,
+                       const struct run_entry*, int, int, time_t);
 int parse_runlog_xml(const unsigned char *, struct run_header *,
                      size_t *, struct run_entry **, struct run_data **,
                      struct run_xml_helpers *);
@@ -364,10 +377,13 @@ void runlog_import_xml(serve_state_t, struct runlog_state *,
                        const unsigned char *in_xml);
 
 int run_backup(runlog_state_t, const unsigned char *path);
-int run_set_runlog(runlog_state_t, int total_entries,
-                   struct run_entry *entries);
+int run_set_runlog(
+        runlog_state_t,
+        int first_entry,
+        int total_entries,
+        struct run_entry *entries);
 
-int runlog_check(FILE *, const struct run_header *, size_t, const struct run_entry *);
+int runlog_check(FILE *, const struct run_header *, size_t begin, size_t, const struct run_entry *);
 
 int run_get_pages(runlog_state_t, int run_id);
 int run_set_pages(runlog_state_t, int run_id, int pages);
@@ -410,6 +426,7 @@ run_get_all_statistics(
 int
 run_fix_runlog_time(
         FILE *log_f,
+        int run_f,
         int run_u,
         struct run_entry *runs,
         unsigned char *fix_mask);

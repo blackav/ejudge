@@ -1,4 +1,26 @@
 <%
+    if (cnts->enable_avatar) {
+      if (ui && ui->avatar_id && ui->avatar_id[0]) {
+        cp = content_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
+        int content_enabled = 0;
+        if (cp) {
+          content_enabled = cp->iface->is_enabled(cp->data, phr->cnts);
+        }
+        if (content_enabled) {
+          cp->iface->get_url(cp->data, avatar_url, sizeof(avatar_url),
+                             phr->cnts, ui->avatar_id, ui->avatar_suffix);
+        } else {
+          snprintf(avatar_url, sizeof(avatar_url), "%s?SID=%llx&key=%s&action=%d",
+                   phr->self_url, phr->session_id, ui->avatar_id, NEW_SRV_ACTION_GET_AVATAR);
+        }
+%>
+<div class="h2-long"><h2><s:_>Avatar</s:_></h2></div>
+<img class="userpic-img userpic-img-upage" src="<s:v value="avatar_url" escape="no" />" alt="avatar" />
+<%
+      }
+    }
+%>
+<%
     if (telegram_token && *telegram_token) {
 %>
 <div class="h2-long"><h2><s:_>Telegram Token</s:_></h2></div>

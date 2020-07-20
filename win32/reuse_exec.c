@@ -1,4 +1,4 @@
-/* Copyright (C) 1999-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1999-2017 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1999-07-20 11:05:09 cher> */
 
 /*
@@ -96,33 +96,33 @@ struct task_args_s
 };
 
 /*
-typedef struct _PROCESS_INFORMATION { 
-    HANDLE hProcess; 
-    HANDLE hThread; 
-    DWORD dwProcessId; 
-    DWORD dwThreadId; 
-} PROCESS_INFORMATION; 
+typedef struct _PROCESS_INFORMATION {
+    HANDLE hProcess;
+    HANDLE hThread;
+    DWORD dwProcessId;
+    DWORD dwThreadId;
+} PROCESS_INFORMATION;
 
-typedef struct _STARTUPINFO { 
-    DWORD   cb; 
-    LPTSTR  lpReserved; 
-    LPTSTR  lpDesktop; 
-    LPTSTR  lpTitle; 
-    DWORD   dwX; 
-    DWORD   dwY; 
-    DWORD   dwXSize; 
-    DWORD   dwYSize; 
-    DWORD   dwXCountChars; 
-    DWORD   dwYCountChars; 
-    DWORD   dwFillAttribute; 
-    DWORD   dwFlags; 
-    WORD    wShowWindow; 
-    WORD    cbReserved2; 
-    LPBYTE  lpReserved2; 
-    HANDLE  hStdInput; 
-    HANDLE  hStdOutput; 
-    HANDLE  hStdError; 
-} STARTUPINFO, *LPSTARTUPINFO; 
+typedef struct _STARTUPINFO {
+    DWORD   cb;
+    LPTSTR  lpReserved;
+    LPTSTR  lpDesktop;
+    LPTSTR  lpTitle;
+    DWORD   dwX;
+    DWORD   dwY;
+    DWORD   dwXSize;
+    DWORD   dwYSize;
+    DWORD   dwXCountChars;
+    DWORD   dwYCountChars;
+    DWORD   dwFillAttribute;
+    DWORD   dwFlags;
+    WORD    wShowWindow;
+    WORD    cbReserved2;
+    LPBYTE  lpReserved2;
+    HANDLE  hStdInput;
+    HANDLE  hStdOutput;
+    HANDLE  hStdError;
+} STARTUPINFO, *LPSTARTUPINFO;
 */
 
 struct tTask
@@ -280,12 +280,12 @@ task_Delete(tTask *tsk)
     xfree(tsk->args.v[i]);
   }
   xfree(tsk->args.v);
-  
+
   for (i = 0; i < tsk->env.u; i++)
     xfree(tsk->env.v[i]);
   xfree(tsk->env.v);
   xfree(tsk->envblock);
-  
+
   xfree(tsk->redirs.v);
   xfree(tsk);
 }
@@ -307,7 +307,7 @@ task_GetPipe(tTask *tsk, int fd)
       return (int) p->u.p.pipe[1 - p->u.p.idx];
     }
   }
-  
+
   return -1;
 }
 
@@ -506,7 +506,7 @@ task_FormatEnv(tTask *tsk, const char *name, const char *format, ...)
   snprintf(buf2, sizeof(buf2), "%s=%s", name, buf);
   return task_PutEnv(tsk, buf2);
 }
-        
+
 int
 task_ClearEnv(tTask *tsk)
 {
@@ -683,32 +683,29 @@ task_GetErrorMessage(tTask *tsk)
 }
 
 int
-task_SetDataSize(tTask *tsk, int size)
+task_SetDataSize(tTask *tsk, size_t size)
 {
   ASSERT(tsk);
   ASSERT(tsk->state == TSK_STOPPED);
-  ASSERT(size >= 0);
   // 0 means no limit
   tsk->max_data_size = size;
   return 0;
 }
 
 int
-task_SetStackSize(tTask *tsk, int size)
+task_SetStackSize(tTask *tsk, size_t size)
 {
   ASSERT(tsk);
   ASSERT(tsk->state == TSK_STOPPED);
-  ASSERT(size >= 0);
   tsk->max_stack_size = size;
   return 0;
 }
 
 int
-task_SetVMSize(tTask *tsk, int size)
+task_SetVMSize(tTask *tsk, size_t size)
 {
   ASSERT(tsk);
   ASSERT(tsk->state == TSK_STOPPED);
-  ASSERT(size >= 0);
   tsk->max_vm_size = size;
   return 0;
 }
@@ -855,7 +852,7 @@ task_PrintArgs(tTask *tsk)
 
 static int std_handle_names[3] =
 {
-  STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE 
+  STD_INPUT_HANDLE, STD_OUTPUT_HANDLE, STD_ERROR_HANDLE
 };
 
 static HANDLE
@@ -935,7 +932,7 @@ task_Start(tTask *tsk)
     return -1;
   }
 
-  if (verbose_flag) task_PrintArgs(tsk);  
+  if (verbose_flag) task_PrintArgs(tsk);
 
   if (tsk->main) {
     int code;
@@ -1110,7 +1107,7 @@ task_Start(tTask *tsk)
   }
 
   // if no limits are set, just run the process
-  if (!tsk->max_proc_count 
+  if (!tsk->max_proc_count
       && !tsk->max_vm_size && !tsk->max_stack_size && !tsk->max_data_size
       && !tsk->max_time && !tsk->max_time_millis) {
     if (!CreateProcess(NULL, tsk->cmdline, NULL, NULL,
@@ -1273,13 +1270,13 @@ task_Start(tTask *tsk)
   return 0;
 }
 
+void task_update_info(tTask *tsk);
+
 tTask *
 task_Wait(tTask *tsk)
 {
-  unsigned int cur_time, finish_time;
+  unsigned int cur_time;
   int r;
-  JOBOBJECT_BASIC_ACCOUNTING_INFORMATION basic_acct;
-  JOBOBJECT_EXTENDED_LIMIT_INFORMATION ext_limit;
 
   ASSERT(tsk);
 
@@ -1290,15 +1287,30 @@ task_Wait(tTask *tsk)
 
   if (tsk->max_real_time) {
     cur_time = GetTickCount();
-    r = WaitForSingleObject(tsk->pi.hProcess, tsk->max_real_time * 1000 - (cur_time - tsk->start_time));
-    if (r == WAIT_FAILED) {
-      tsk->state = TSK_ERROR;
-      tsk->code = GetLastError();
-      write_log(LOG_REUSE, LOG_ERROR, "WaitForSingleObject failed: %d",
-                GetLastError());
-      return NULL;
+    const int wait_add = 40;
+    int wait_time = tsk->max_real_time * 1000 - (cur_time - tsk->start_time) + wait_add;
+    while (wait_time > 0) {
+      int wait_delta = 100;
+      if (wait_time < wait_delta)
+	wait_delta = wait_time;
+      r = WaitForSingleObject(tsk->pi.hProcess, wait_delta);
+      if (r == WAIT_FAILED) {
+	tsk->state = TSK_ERROR;
+	tsk->code = GetLastError();
+	write_log(LOG_REUSE, LOG_ERROR, "WaitForSingleObject failed: %d",
+		  GetLastError());
+	return NULL;
+      }
+      task_update_info(tsk);
+      if (task_IsTimeout(tsk)) {
+	break;
+      }
+      if (r != WAIT_TIMEOUT) {
+	break;
+      }
+      wait_time -= wait_delta;
     }
-
+    
     if (r == WAIT_TIMEOUT) {
       write_log(LOG_REUSE, LOG_ERROR, "RealTime timeout: %d",
                 GetTickCount() - tsk->start_time);
@@ -1327,30 +1339,41 @@ task_Wait(tTask *tsk)
       return NULL;
     }
   }
-
-  finish_time = GetTickCount();
+  
   GetExitCodeProcess(tsk->pi.hProcess, (DWORD*) &tsk->code);
   if (PROC_SIGNALED(tsk->code)) {
     tsk->state = TSK_SIGNALED;
   } else {
     tsk->state = TSK_EXITED;
   }
+  
+  task_update_info(tsk);
+  return tsk;
+}
 
+void
+task_update_info(tTask *tsk)
+{
+  JOBOBJECT_BASIC_ACCOUNTING_INFORMATION basic_acct;
+  JOBOBJECT_EXTENDED_LIMIT_INFORMATION ext_limit;
+  
+  unsigned int finish_time = GetTickCount();
+  
   if (tsk->job != INVALID_HANDLE_VALUE) {
-    if (!QueryInformationJobObject(tsk->job, 
+    if (!QueryInformationJobObject(tsk->job,
                                    JobObjectBasicAccountingInformation,
                                    &basic_acct, sizeof(basic_acct), NULL)) {
       // accounting information is not available
       write_log(LOG_REUSE, LOG_ERROR, "QueryInformationJobObject failed: %d",
                 GetLastError());
-      return tsk;
+      return;
     }
     if (!QueryInformationJobObject(tsk->job, JobObjectExtendedLimitInformation,
                                    &ext_limit, sizeof(ext_limit), NULL)) {
       // accounting information is not available
       write_log(LOG_REUSE, LOG_ERROR, "QueryInformationJobObject failed: %d",
                 GetLastError());
-      return tsk;
+      return;
     }
 
     tsk->used_time = (basic_acct.TotalKernelTime.QuadPart + basic_acct.TotalUserTime.QuadPart) / 10000;
@@ -1359,8 +1382,6 @@ task_Wait(tTask *tsk)
     tsk->used_real_time = finish_time - tsk->start_time;
     tsk->used_vm_size = ext_limit.PeakJobMemoryUsed;
   }
-
-  return tsk;
 }
 
 tTask *
@@ -1402,7 +1423,7 @@ task_IsTimeout(tTask *tsk)
   if (tsk->was_real_timeout) return 1;
   if (tsk->max_time_millis > 0 && tsk->used_time >= tsk->max_time_millis) return 1;
   if (tsk->max_time > 0 && tsk->used_time >= tsk->max_time * 1000) return 1;
-  return 0;       
+  return 0;
 }
 
 int

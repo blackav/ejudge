@@ -118,6 +118,7 @@ static const unsigned char * const form_row_attrs[]=
         <%@expand MENU_TEXTFIELD "short_name" "id" "Short name" "250" %>
         <%@expand MENU_TEXTFIELD "internal_name" "id" "Internal name" "250" %>
         <%@expand MENU_TEXTFIELD "long_name" "id" "Long name" "250" %>
+        <%@expand MENU_TEXTFIELD "uuid" "id" "UUID" "250" %>
 
 
         <div id="edit-super-div">
@@ -295,7 +296,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -309,6 +310,7 @@ $(function() {
 
     $("#orig-id-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#orig-internal_name-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-uuid-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#orig-super-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#orig-variant_num-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#orig-autoassign_variants-div").toggle(<s:v type="jsbool" value="prob->variant_num > 0" />);
@@ -331,7 +333,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -377,7 +379,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -409,7 +411,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -461,6 +463,7 @@ function popupIdDialog(e, skipField)
     $("#edit-prob_id").val(prob_id);
     <%@expand COPY_SIMPLE "short_name" %>
     <%@expand COPY_SIMPLE "internal_name" %>
+    <%@expand COPY_SIMPLE "uuid" %>
     <%@expand COPY_SIMPLE "long_name" %>
     <%@expand COPY_SIMPLE "super" %>
     <%@expand COPY_SIMPLE "type" %>
@@ -469,6 +472,7 @@ function popupIdDialog(e, skipField)
 
     <%@expand CLEAR_TEXTFIELD "short_name" %>
     <%@expand CLEAR_TEXTFIELD "internal_name" %>
+    <%@expand CLEAR_TEXTFIELD "uuid" %>
     <%@expand CLEAR_TEXTFIELD "long_name" %>
 
     if (e) e.stopPropagation();
@@ -480,6 +484,7 @@ function idDialogOnChange()
 {
     $("#edit-prob_id-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#edit-internal_name-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-uuid-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#edit-super-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#edit-variant_num-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     var num = parseInt($("#edit-variant_num").val());
@@ -492,23 +497,23 @@ function popupFilesDialog(e, skipField)
 
     <%@expand COPY_YESNO3 "binary_input" %>
     <%@expand COPY_SIMPLE "normalization" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "xml_file" "!prob->xml_file[0]" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_dir" "!prob->test_dir[0]" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_pat" "prob->test_pat[0] == 1" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_sfx" "prob->test_sfx[0] == 1" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "xml_file" "!prob->xml_file" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_dir" "!prob->test_dir" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_pat" "!prob->test_pat" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_sfx" "!prob->test_sfx" %>
     <%@expand COPY_YESNO3 "use_corr" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_dir" "!prob->corr_dir[0]" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_pat" "prob->corr_pat[0] == 1" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_sfx" "prob->corr_sfx[0] == 1" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_dir" "!prob->corr_dir" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_pat" "!prob->corr_pat" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "corr_sfx" "!prob->corr_sfx" %>
     <%@expand COPY_YESNO3 "use_info" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_dir" "!prob->info_dir[0]" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_pat" "prob->info_pat[0] == 1" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_sfx" "prob->info_sfx[0] == 1" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_dir" "!prob->info_dir" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_pat" "!prob->info_pat" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "info_sfx" "!prob->info_sfx" %>
     <%@expand COPY_YESNO3 "use_tgz" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgz_pat" "prob->tgz_pat[0] == 1" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgz_sfx" "prob->tgz_sfx[0] == 1" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgzdir_pat" "prob->tgzdir_pat[0] == 1" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgzdir_sfx" "prob->tgzdir_sfx[0] == 1" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgz_pat" "!prob->tgz_pat" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgz_sfx" "!prob->tgz_sfx" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgzdir_pat" "!prob->tgzdir_pat" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "tgzdir_sfx" "!prob->tgzdir_sfx" %>
 
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "xml_file" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "test_dir" %>
@@ -524,7 +529,7 @@ function popupFilesDialog(e, skipField)
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "tgz_sfx" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "tgzdir_pat" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "tgzdir_sfx" %>
-    
+
     if (e) e.stopPropagation();
     filesDialogOnChange();
     $("#FilesDialogDiv").dialog('open');
@@ -646,14 +651,21 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-internal_name-div">
                 <td>Internal name:</td>
-                <td><s:textfield id="orig-internal_name" readonly="readonly" name="param" value="prob->internal_name" size="48" maxlength="1024" check="no" /><% if (!prob->internal_name) { %>(<i>Not set</i>)<% } %></td>
+                <td><s:textfield id="orig-internal_name" readonly="readonly" name="param" value="prob->internal_name" size="48" maxlength="1024" checkExpr="" /><% if (!prob->internal_name) { %>(<i>Not set</i>)<% } %></td>
                 <td><input type="button" onclick="popupIdDialog(event, 'internal_name')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:internal_name" /></td>
             </s:tr>
 
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-uuid-div">
+                <td>UUID (optional):</td>
+                <td><s:textfield id="orig-uuid" readonly="readonly" name="param" value="prob->uuid" size="48" maxlength="1024" checkExpr="" /><% if (!prob->uuid) { %>(<i>Not set</i>)<% } %></td>
+                <td><input type="button" onclick="popupIdDialog(event, 'uuid')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:uuid" /></td>
+            </s:tr>
+
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-long_name-div">
                 <td>Long name:</td>
-                <td><s:textfield id="orig-long_name" readonly="readonly" name="param" value="prob->long_name" size="48" maxlength="1024" check="no" /><% if (!prob->long_name) { %>(<i>Not set</i>)<% } %></td>
+                <td><s:textfield id="orig-long_name" readonly="readonly" name="param" value="prob->long_name" size="48" maxlength="1024" checkExpr="" /><% if (!prob->long_name) { %>(<i>Not set</i>)<% } %></td>
                 <td><input type="button" onclick="popupIdDialog(event, 'long_name')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:long_name" /></td>
             </s:tr>
@@ -736,7 +748,6 @@ function viewDialogOnChange(field)
                 <td>XML File with problem statement:</td>
                 <td><%
   str_value = prob->xml_file;
-  if (str_value && str_value[0] < ' ') str_value = 0;
 %><s:textfield id="orig-xml_file" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
   if (prob_id <= 0) {
 %><% if (!str_value) { %>(<i>Not set</i>)<% } %><%
@@ -744,13 +755,13 @@ function viewDialogOnChange(field)
     if (!str_value) {
 %>(<i>Not set</i>)<%
     } else {
-%>(<i><s:v value="tmp_prob->xml_file" /></i>)<%
+%>(<i><s:v value="tmp_prob->xml_file" checkExpr="" /></i>)<%
     }
   } else {
     if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->xml_file" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->xml_file" checkExpr="" /></i>)<%
     } else {
-%>(<i><s:v value="tmp_prob->xml_file" /></i>)<%
+%>(<i><s:v value="tmp_prob->xml_file" checkExpr="" /></i>)<%
     }
   }
 %></td>
@@ -762,7 +773,6 @@ function viewDialogOnChange(field)
                 <td>Directory with tests:</td>
                 <td><%
     str_value = prob->test_dir;
-    if (str_value && str_value[0] < ' ') str_value = 0;
 %><s:textfield id="orig-test_dir" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value || !sup_prob) {
@@ -772,9 +782,9 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->test_dir" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->test_dir" checkExpr="" /></i>)<%
       } else {
-%>(<i><s:v value="tmp_prob->test_dir" /></i>)<%
+%>(<i><s:v value="tmp_prob->test_dir" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -786,7 +796,6 @@ function viewDialogOnChange(field)
                 <td>Pattern for test file names:</td>
                 <td><%
     str_value = prob->test_pat;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-test_pat" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -796,7 +805,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->test_pat" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->test_pat" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -808,7 +817,6 @@ function viewDialogOnChange(field)
                 <td>Suffix of test files:</td>
                 <td><%
     str_value = prob->test_sfx;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-test_sfx" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -818,7 +826,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->test_sfx" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->test_sfx" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -832,7 +840,6 @@ function viewDialogOnChange(field)
                 <td>Directory with &quot;correct answer&quot; files:</td>
                 <td><%
     str_value = prob->corr_dir;
-    if (str_value && str_value[0] < ' ') str_value = 0;
 %><s:textfield id="orig-corr_dir" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0 || !sup_prob) {
       if (!str_value) {
@@ -842,9 +849,9 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->corr_dir" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->corr_dir" checkExpr="" /></i>)<%
       } else {
-%>(<i><s:v value="tmp_prob->corr_dir" /></i>)<%
+%>(<i><s:v value="tmp_prob->corr_dir" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -856,7 +863,6 @@ function viewDialogOnChange(field)
                 <td>Pattern for &quot;correct answer&quot; file names:</td>
                 <td><%
     str_value = prob->corr_pat;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-corr_pat" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -866,7 +872,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->corr_pat" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->corr_pat" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -878,7 +884,6 @@ function viewDialogOnChange(field)
                 <td>Suffix of &quot;correct answer&quot; files:</td>
                 <td><%
     str_value = prob->corr_sfx;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-corr_sfx" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -888,7 +893,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->corr_sfx" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->corr_sfx" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -902,7 +907,6 @@ function viewDialogOnChange(field)
                 <td>Directory with test info files:</td>
                 <td><%
     str_value = prob->info_dir;
-    if (str_value && str_value[0] < ' ') str_value = 0;
 %><s:textfield id="orig-info_dir" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -912,9 +916,9 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->info_dir" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->info_dir" checkExpr="" /></i>)<%
       } else {
-%>(<i><s:v value="tmp_prob->info_dir" /></i>)<%
+%>(<i><s:v value="tmp_prob->info_dir" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -926,7 +930,6 @@ function viewDialogOnChange(field)
                 <td>Pattern for test info file names:</td>
                 <td><%
     str_value = prob->info_pat;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-info_pat" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -936,7 +939,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->info_pat" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->info_pat" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -948,7 +951,6 @@ function viewDialogOnChange(field)
                 <td>Suffix of test info:</td>
                 <td><%
     str_value = prob->info_sfx;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-info_sfx" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -958,7 +960,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->info_sfx" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->info_sfx" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -972,7 +974,6 @@ function viewDialogOnChange(field)
                 <td>Pattern for working dir archives:</td>
                 <td><%
     str_value = prob->tgz_pat;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-tgz_pat" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -982,7 +983,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->tgz_pat" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->tgz_pat" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -994,7 +995,6 @@ function viewDialogOnChange(field)
                 <td>Pattern for master working dirs:</td>
                 <td><%
     str_value = prob->tgzdir_pat;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-tgzdir_pat" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -1004,7 +1004,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->tgzdir_pat" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->tgzdir_pat" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -1016,7 +1016,6 @@ function viewDialogOnChange(field)
                 <td>Suffix of working dir archives:</td>
                 <td><%
     str_value = prob->tgz_sfx;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-tgz_sfx" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -1026,7 +1025,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->tgz_sfx" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->tgz_sfx" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -1038,7 +1037,6 @@ function viewDialogOnChange(field)
                 <td>Suffix of master working dirs:</td>
                 <td><%
     str_value = prob->tgzdir_sfx;
-    if (str_value[0] == 1) str_value = 0;
 %><s:textfield id="orig-tgzdir_sfx" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -1048,7 +1046,7 @@ function viewDialogOnChange(field)
       if (!sup_prob && !str_value) {
 %>(<i>Not set</i>)<%
       } else if (!str_value) {
-%>(<i>Default: <s:v value="tmp_prob->tgzdir_sfx" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->tgzdir_sfx" checkExpr="" /></i>)<%
       }
     }
 %></td>
@@ -1077,7 +1075,7 @@ function viewDialogOnChange(field)
         if (!tmp_prob->test_checker_cmd) {
 %>(<i>Not set</i>)<%
         } else {
-%>(<i>Default: <s:v value="tmp_prob->test_checker_cmd" /></i>)<%
+%>(<i>Default: <s:v value="tmp_prob->test_checker_cmd" checkExpr="" /></i>)<%
         }
       }
     }
@@ -1183,6 +1181,7 @@ function viewDialogOnChange(field)
             <%@expand ORIG_INHERITABLE_BOOLEAN "disable_ctrl_chars" "Submission" "Disable control characters in the source code" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_text_form" "Submission" "Enable textarea input form" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_submit_after_reject" "Submission" "Enable submission after deadline for rejected runs" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "notify_on_submit" "Submission" "Send notification to judges on submit" %>
             <%@expand ORIG_ENV "disable_language" "Submission" "Disabled languages" %>
             <%@expand ORIG_ENV "enable_language" "Submission" "Enabled languages" %>
             <%@expand ORIG_ENV "require" "Submission" "Required problems" %>
@@ -1213,7 +1212,7 @@ function viewDialogOnChange(field)
                 <td>Style checker name:</td>
                 <td><%
     str_value = prob->style_checker_cmd;
-    if (!str_value[0]) str_value = NULL;
+    //if (!str_value[0]) str_value = NULL;
 %><s:textfield id="orig-style_checker_cmd" readonly="readonly" name="param" value="str_value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
@@ -1221,7 +1220,7 @@ function viewDialogOnChange(field)
       }
     } else {
       if (!str_value) {
-        if (!tmp_prob->style_checker_cmd[0]) {
+        if (!tmp_prob->style_checker_cmd) {
 %>(<i>Not set</i>)<%
         } else {
 %>(<i>Default: <s:v value="tmp_prob->style_checker_cmd" /></i>)<%
@@ -1240,15 +1239,14 @@ function viewDialogOnChange(field)
                 <td>Source header file:</td>
                 <td><%
     str_value = prob->source_header;
-    if (!str_value[0]) str_value = 0;
-%><s:textfield id="orig-source_header" readonly="readonly" name="param" value="prob->source_header" size="48" maxlength="1024" /><%
+%><s:textfield id="orig-source_header" readonly="readonly" name="param" value="prob->source_header" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
-      if (!value) {
+      if (!str_value) {
 %>(<i>Not set</i>)<%
       }
     } else {
       if (!str_value) {
-        if (!tmp_prob->source_header[0]) {
+        if (!tmp_prob->source_header) {
 %>(<i>Default: none</i>)<%
         } else {
 %>(<i>Default: <s:v value="tmp_prob->source_header" /></i>)<%
@@ -1264,15 +1262,14 @@ function viewDialogOnChange(field)
                 <td>Source footer file:</td>
                 <td><%
     str_value = prob->source_footer;
-    if (!str_value[0]) str_value = 0;
-%><s:textfield id="orig-source_footer" readonly="readonly" name="param" value="prob->source_footer" size="48" maxlength="1024" checkExpr="> 0" /><%
+%><s:textfield id="orig-source_footer" readonly="readonly" name="param" value="prob->source_footer" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!str_value) {
 %>(<i>Not set</i>)<%
       }
     } else {
       if (!str_value) {
-        if (!tmp_prob->source_footer[0]) {
+        if (!tmp_prob->source_footer) {
 %>(<i>Default: none</i>)<%
         } else {
 %>(<i>Default: <s:v value="tmp_prob->source_footer" /></i>)<%
@@ -1305,12 +1302,10 @@ function viewDialogOnChange(field)
                 <td><%
     if (!sup_prob) {
       const unsigned char *value = prob->input_file;
-      if (value && value[0] < ' ') value = 0;
 %><s:textfield id="orig-input_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Not set</i>)<% } %><%
     } else {
       const unsigned char *value = prob->input_file;
-      if (value && value[0] < ' ') value = 0;
-%><s:textfield id="orig-input_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->input_file" /></i>)<% } %><%
+%><s:textfield id="orig-input_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->input_file" checkExpr="" /></i>)<% } %><%
     }
 %></td>
                 <td><input type="button" onclick="popupRunningDialog(event, 'input_file')" value="Clear" /></td>
@@ -1325,12 +1320,10 @@ function viewDialogOnChange(field)
                 <td><%
     if (!sup_prob) {
       const unsigned char *value = prob->output_file;
-      if (value && value[0] < ' ') value = 0;
 %><s:textfield id="orig-output_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Not set</i>)<% } %><%
     } else {
       const unsigned char *value = prob->output_file;
-      if (value && value[0] < ' ') value = 0;
-%><s:textfield id="orig-output_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->output_file" /></i>)<% } %><%
+%><s:textfield id="orig-output_file" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><% if (!value) { %>(<i>Default</i>: <i><s:v value="tmp_prob->output_file" checkExpr="" /></i>)<% } %><%
     }
 %></td>
                 <td><input type="button" onclick="popupRunningDialog(event, 'output_file')" value="Clear" /></td>
@@ -1566,6 +1559,7 @@ function viewDialogOnChange(field)
             </s:tr>
 
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_process_group" "Limits" "Use separate process group" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "enable_kill_all" "Limits" "Kill all processes of ejuser" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "disable_security" "Limits" "Disable security restrictions" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_suid_run" "Limits" "Enable SUID helper" %>
             <%@expand ORIG_ENV "lang_time_adj" "Limits" "Language-specific time-limit adjustment (s)" %>
@@ -1587,13 +1581,15 @@ function viewDialogOnChange(field)
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-standard_checker-div">
                 <td>Standard checker:</td>
                 <td><s:hidden id="orig-standard_checker" name="param" value="prob->standard_checker" checkExpr="" /><%
-    int j;
-    for (j = 0; std_checkers[j].name; ++j) {
-      if (!strcmp(prob->standard_checker, std_checkers[j].name)) {
+    if (prob->standard_checker) {
+      int j;
+      for (j = 0; std_checkers[j].name; ++j) {
+        if (!strcmp(prob->standard_checker, std_checkers[j].name)) {
 %><s:v value="std_checkers[j].desc" /> - <%
+        }
       }
     }
-%><tt><s:v value="prob->standard_checker" /></tt></td>
+%><tt><s:v value="prob->standard_checker" checkExpr="" /></tt></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:standard_checker" /></td>
             </s:tr>
@@ -1608,7 +1604,6 @@ function viewDialogOnChange(field)
                 <td>Checker name:</td>
                 <td><%
     const unsigned char *value = prob->check_cmd;
-    if (value && (!value[0] || value[0] == 1)) value = 0;
 %><s:textfield id="orig-check_cmd" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!value) {
@@ -1616,7 +1611,7 @@ function viewDialogOnChange(field)
       }
     } else {
       if (!value) {
-        if (!tmp_prob->check_cmd[0] || tmp_prob->check_cmd[0] == 1) {
+        if (!tmp_prob->check_cmd) {
 %>(<i>Not set</i>)<%
         } else {
 %>(<i>Default: <s:v value="tmp_prob->check_cmd" /></i>)<%
@@ -1658,6 +1653,10 @@ function viewDialogOnChange(field)
 
             <%@expand ORIG_ENV "checker_env" "Checking" "Checker environment" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "scoring_checker" "Checking" "Checker calculates score" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "enable_checker_token" "Checking" "Scoring checker produces token" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "enable_testlib_mode" "Checking" "Enable testlib.h compatibility mode" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "enable_extended_info" "Checking" "Pass extended info to checkers" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "stop_on_first_fail" "Checking" "Stop after the first failed test (like ACM)" %>
 
 <%
   {
@@ -1666,7 +1665,6 @@ function viewDialogOnChange(field)
                 <td>Score valuer name:</td>
                 <td><%
     const unsigned char *value = prob->valuer_cmd;
-    if (value && (!value[0] || value[0] == 1)) value = 0;
 %><s:textfield id="orig-valuer_cmd" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!value) {
@@ -1674,7 +1672,7 @@ function viewDialogOnChange(field)
       }
     } else {
       if (!value) {
-        if (!tmp_prob->valuer_cmd[0] || tmp_prob->valuer_cmd[0] == 1) {
+        if (!tmp_prob->valuer_cmd) {
 %>(<i>Not set</i>)<%
         } else {
 %>(<i>Default: <s:v value="tmp_prob->valuer_cmd" /></i>)<%
@@ -1700,7 +1698,6 @@ function viewDialogOnChange(field)
                 <td>Interactor name:</td>
                 <td><%
     const unsigned char *value = prob->interactor_cmd;
-    if (value && (!value[0] || value[0] == 1)) value = 0;
 %><s:textfield id="orig-interactor_cmd" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0) {
       if (!value) {
@@ -1708,7 +1705,7 @@ function viewDialogOnChange(field)
       }
     } else {
       if (!value) {
-        if (!tmp_prob->interactor_cmd[0] || tmp_prob->interactor_cmd[0] == 1) {
+        if (!tmp_prob->interactor_cmd) {
 %>(<i>Not set</i>)<%
         } else {
 %>(<i>Default: <s:v value="tmp_prob->interactor_cmd" /></i>)<%
@@ -1750,6 +1747,33 @@ function viewDialogOnChange(field)
 %></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:interactor_time_limit" /></td>
+            </s:tr>
+
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-interactor_real_time_limit-div">
+                <td>Time limit for interactor (s):</td>
+                <td><s:textfield id="orig-interactor_real_time_limit" readonly="readonly" name="param" value="prob->interactor_real_time_limit" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0 || !sup_prob) {
+      if (prob->interactor_real_time_limit < 0) {
+%>(<i>Not set</i>)<%
+      } else if (!prob->interactor_real_time_limit) {
+%>(<i>Unlimited</i>)<%
+      }
+    } else {
+      if (prob->interactor_real_time_limit < 0) {
+        if (tmp_prob->interactor_real_time_limit < 0) {
+%>(<i>Not set</i>)<%
+        } else if (!tmp_prob->interactor_real_time_limit) {
+%>(<i>Default: unlimited</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->interactor_real_time_limit" /></i>)<%
+        }
+      } else if (!prob->interactor_real_time_limit) {
+%>(<i>Unlimited</i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:interactor_real_time_limit" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-init_cmd-div">
@@ -1888,6 +1912,27 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:run_penalty" /></td>
             </s:tr>
 
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-compile_error_penalty-div">
+                <td>Penalty for a compilation error:</td>
+                <td><s:textfield id="orig-compile_error_penalty" readonly="readonly" name="param" value="prob->compile_error_penalty" size="48" maxlength="1024" checkExpr=" >= 0" /><%
+    if (prob_id <= 0) {
+      if (prob->compile_error_penalty < 0) {
+%>(<i>Not set</i>)<%
+      }
+    } else {
+      if (prob->compile_error_penalty < 0) {
+        if (tmp_prob->compile_error_penalty < 0) {
+%>(<i>Not set</i>)<%
+        } else {
+%>(<i>Default: <s:v value="tmp_prob->compile_error_penalty" /></i>)<%
+        }
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:compile_error_penalty" /></td>
+            </s:tr>
+
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disqualified_penalty-div">
                 <td>Penalty for a disqualified submission:</td>
                 <td><s:textfield id="orig-disqualified_penalty" readonly="readonly" name="param" value="prob->disqualified_penalty" size="48" maxlength="1024" checkExpr=" >= 0" /><%
@@ -1937,7 +1982,7 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-score_tests-div">
                 <td>Tests for problem scores:</td>
-                <td><s:textfield id="orig-score_tests" readonly="readonly" name="param" value="prob->score_tests" size="48" maxlength="1024" check="no" /></td>
+                <td><s:textfield id="orig-score_tests" readonly="readonly" name="param" value="prob->score_tests" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupScoringDialog(event, 'score_tests')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:score_tests" /></td>
             </s:tr>
@@ -1965,7 +2010,6 @@ function viewDialogOnChange(field)
 <%
   {
     const unsigned char *value = prob->score_bonus;
-    if (value && value[0] == 1) value = 0;
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-score_bonus-div">
                 <td>Additional score bonus:</td>
@@ -1978,7 +2022,7 @@ function viewDialogOnChange(field)
       }
     } else {
       if (!value) {
-        if (!tmp_prob->score_bonus[0] || tmp_prob->score_bonus[0] == 1) {
+        if (!tmp_prob->score_bonus) {
 %>(<i>Not set</i>)<%
         } else {
 %>(<i>Default: <s:v value="tmp_prob->score_bonus" /></i>)<%
@@ -2010,14 +2054,14 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-open_tests-div">
                 <td>Tests open for participants:</td>
-                <td><s:textfield id="orig-open_tests" readonly="readonly" name="param" value="prob->open_tests" size="48" maxlength="1024" check="no" /></td>
+                <td><s:textfield id="orig-open_tests" readonly="readonly" name="param" value="prob->open_tests" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupFeedbackDialog(event, 'open_tests')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:open_tests" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-final_open_tests-div">
                 <td>Tests open for participants finally:</td>
-                <td><s:textfield id="orig-final_open_tests" readonly="readonly" name="param" value="prob->final_open_tests" size="48" maxlength="1024" check="no" /></td>
+                <td><s:textfield id="orig-final_open_tests" readonly="readonly" name="param" value="prob->final_open_tests" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupFeedbackDialog(event, 'final_open_tests')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:final_open_tests" /></td>
             </s:tr>
@@ -2034,7 +2078,7 @@ function viewDialogOnChange(field)
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-token_open_tests-div">
                 <td>Tests open for tokens:</td>
-                <td><s:textfield id="orig-token_open_tests" readonly="readonly" name="param" value="prob->token_open_tests" size="48" maxlength="1024" check="" /></td>
+                <td><s:textfield id="orig-token_open_tests" readonly="readonly" name="param" value="prob->token_open_tests" size="48" maxlength="1024" checkExpr="" /></td>
                 <td><input type="button" onclick="popupFeedbackDialog(event, 'token_open_tests')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="serve.cfg:problem:token_open_tests" /></td>
             </s:tr>
@@ -2093,14 +2137,14 @@ function viewDialogOnChange(field)
         <table border="0" onclick="popupStandingDialog()">
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_name-div">
                 <td>Title for the standings column:</td>
-                <td><s:textfield id="orig-stand_name" readonly="readonly" name="param" value="prob->stand_name" size="48" maxlength="1024" check="no" /><% if (!prob->stand_name) { %>(<i>Not set</i>)<% } %></td>
+                <td><s:textfield id="orig-stand_name" readonly="readonly" name="param" value="prob->stand_name" size="48" maxlength="1024" checkExpr="" /><% if (!prob->stand_name) { %>(<i>Not set</i>)<% } %></td>
                 <td><input type="button" onclick="popupStandingDialog(event, 'stand_name')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_name" /></td>
             </s:tr>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_column-div">
                 <td>Collate this problem with the specified one:</td>
-                <td><s:textfield id="orig-stand_column" readonly="readonly" name="param" value="prob->stand_column" size="48" maxlength="1024" check="no" /><% if (!prob->stand_column) { %>(<i>Not set</i>)<% } %></td>
+                <td><s:textfield id="orig-stand_column" readonly="readonly" name="param" value="prob->stand_column" size="48" maxlength="1024" checkExpr="" /><% if (!prob->stand_column) { %>(<i>Not set</i>)<% } %></td>
                 <td><input type="button" onclick="popupStandingDialog(event, 'stand_column')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:stand_column" /></td>
             </s:tr>
@@ -2115,7 +2159,6 @@ function viewDialogOnChange(field)
                 <td>Standings attributes:</td>
                 <td><%
     const unsigned char *value = prob->stand_attr;
-    if (value && (!value[0] || value[0] == 1)) value = 0;
 %><s:textfield id="orig-stand_attr" readonly="readonly" name="param" value="value" size="48" maxlength="1024" checkExpr="" /><%
     if (prob_id <= 0 || !sup_prob) {
       if (!value) {
@@ -2123,7 +2166,7 @@ function viewDialogOnChange(field)
       }
     } else {
       if (!value) {
-        if (tmp_prob->stand_attr[0] == 1) {
+        if (!tmp_prob->stand_attr) {
 %>(<i>Not set</i>)<%
         } else if (!tmp_prob->stand_attr[0]) {
 %>(<i>Default: empty</i>)<%

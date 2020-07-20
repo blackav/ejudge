@@ -1,9 +1,8 @@
 /* -*- c -*- */
-
 #ifndef __RUNLOG_STATE_H__
 #define __RUNLOG_STATE_H__
 
-/* Copyright (C) 2008-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,7 +16,7 @@
  * GNU General Public License for more details.
  */
 
-#define RUNLOG_MAX_SIZE    (2 * 1024 * 1024)
+#define RUNLOG_MAX_SIZE    15625000         // 2000000000 bytes
 
 enum
   {
@@ -67,6 +66,7 @@ struct runlog_state
 {
   RUNS_ACCESS struct run_header  head;
   RUNS_ACCESS struct run_entry  *runs;
+  RUNS_ACCESS int                run_f;  // first run loaded, runs[0] is information for run run_f
   RUNS_ACCESS int                run_u;
   RUNS_ACCESS int                run_a;
   teamdb_state_t     teamdb_state;
@@ -78,6 +78,7 @@ struct runlog_state
   int max_user_id;
   int user_count;
 
+  int run_extra_f;  // first index offset, i.e. run_extras[0] is actually index for run id run_extra_f, see also run_f
   int run_extra_u, run_extra_a;
   struct run_entry_extra *run_extras; /* run indices */
 

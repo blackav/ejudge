@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # @configure_input@
 
-# Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -35,7 +35,11 @@ MONGO_EXISTS=@ac_cv_has_libmongo_client@
 MONGO_CFLAGS=@ac_cv_libmongo_client_cflags@
 MONGO_LIBS=@ac_cv_libmongo_client_libs@
 
-WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@
+MONGOC_EXISTS=@ac_cv_has_libmongoc@
+MONGOC_CFLAGS=@ac_cv_libmongoc_cflags@
+MONGOC_LIBS=@ac_cv_libmongoc_libs@
+
+WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@ @ac_cv_gcc_wno_format_truncation@
 WERROR=@ac_cv_werror_flag@
 
 ifdef RELEASE
@@ -52,7 +56,7 @@ EXTRALIBS=
 CCOMPFLAGS=-D_GNU_SOURCE -std=gnu11
 LDCOMPFLAGS=
 
-ifneq ($(MONGO_EXISTS),)
+ifneq ($(MONGO_EXISTS)$(MONGOC_EXISTS),)
 ifneq ($(MYSQL_LIBS),)
 include main.make
 else
@@ -61,4 +65,3 @@ endif
 else
 include empty.make
 endif
-

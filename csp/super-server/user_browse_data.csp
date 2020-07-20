@@ -160,6 +160,14 @@ static const unsigned char * const reg_status_strs[] =
                     if (r++) fprintf(flags_f, ", ");
                     fprintf(flags_f, "disqualified");
                 }
+                if ((reg->flags & USERLIST_UC_PRIVILEGED)) {
+                    if (r++) fprintf(flags_f, ", ");
+                    fprintf(flags_f, "privileged");
+                }
+                if ((reg->flags & USERLIST_UC_REG_READONLY)) {
+                    if (r++) fprintf(flags_f, ", ");
+                    fprintf(flags_f, "reg_readonly");
+                }
                 fclose(flags_f); flags_f = NULL;
             }
             if (!flags_s) flags_s = xstrdup("");

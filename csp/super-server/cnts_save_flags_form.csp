@@ -27,6 +27,8 @@
     ejintbool_t disable_locale_change = 0;
     ejintbool_t allow_reg_data_edit = 0;
     ejintbool_t enable_user_telegram = 0;
+    ejintbool_t enable_avatar = 0;
+    ejintbool_t enable_local_pages = 0;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
@@ -48,6 +50,8 @@
 %><s:read var="disable_locale_change" default="0" /><%
 %><s:read var="allow_reg_data_edit" default="0" /><%
 %><s:read var="enable_user_telegram" default="0" /><%
+%><s:read var="enable_avatar" default="0" /><%
+%><s:read var="enable_local_pages" default="0" /><%
 
     if (!retval && phr->ss) {
         struct contest_desc *edited_cnts = phr->ss->edited_cnts;
@@ -69,6 +73,8 @@
             edited_cnts->disable_locale_change = disable_locale_change;
             edited_cnts->allow_reg_data_edit = allow_reg_data_edit;
             edited_cnts->enable_user_telegram = enable_user_telegram;
+            edited_cnts->enable_avatar = enable_avatar;
+            edited_cnts->enable_local_pages = enable_local_pages;
         }
     }
 

@@ -42,22 +42,14 @@
         if (global) {
             global->advanced_layout = advanced_layout;
             global->uuid_run_store = uuid_run_store;
-            global->test_dir[0] = 0;
-            if (test_dir) snprintf(global->test_dir, sizeof(global->test_dir), "%s", test_dir);
-            global->corr_dir[0] = 0;
-            if (corr_dir) snprintf(global->corr_dir, sizeof(global->corr_dir), "%s", corr_dir);
-            global->info_dir[0] = 0;
-            if (info_dir) snprintf(global->info_dir, sizeof(global->info_dir), "%s", info_dir);
-            global->tgz_dir[0] = 0;
-            if (tgz_dir) snprintf(global->tgz_dir, sizeof(global->tgz_dir), "%s", tgz_dir);
-            global->checker_dir[0] = 0;
-            if (checker_dir) snprintf(global->checker_dir, sizeof(global->checker_dir), "%s", checker_dir);
-            global->statement_dir[0] = 0;
-            if (statement_dir) snprintf(global->statement_dir, sizeof(global->statement_dir), "%s", statement_dir);
-            global->contest_start_cmd[0] = 0;
-            if (contest_start_cmd) snprintf(global->contest_start_cmd, sizeof(global->contest_start_cmd), "%s", contest_start_cmd);
-            global->contest_stop_cmd = NULL;
-            global->contest_stop_cmd = xstrdup2(contest_stop_cmd);
+            xstrdup3(&global->test_dir, test_dir);
+            xstrdup3(&global->corr_dir, corr_dir);
+            xstrdup3(&global->info_dir, info_dir);
+            xstrdup3(&global->tgz_dir, tgz_dir);
+            xstrdup3(&global->checker_dir, checker_dir);
+            xstrdup3(&global->statement_dir, statement_dir);
+            xstrdup3(&global->contest_start_cmd, contest_start_cmd);
+            xstrdup3(&global->contest_stop_cmd, contest_stop_cmd);
         }
     }
 

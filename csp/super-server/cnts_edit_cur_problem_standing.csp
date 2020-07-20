@@ -38,7 +38,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -65,7 +65,7 @@ function popupStandingDialog(e, skipField)
     <%@expand COPY_TEXTFIELD "stand_column" %>
     <%@expand COPY_YESNO3 "hidden" %>
     <%@expand COPY_YESNO3 "stand_hide_time" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "stand_attr" "!prob->stand_attr[0]" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "stand_attr" "!prob->stand_attr" %>
     <%@expand COPY_TEXTFIELD "score_view" %>
     <%@expand COPY_YESNO3 "stand_ignore_score" %>
     <%@expand COPY_YESNO3 "stand_last_column" %>

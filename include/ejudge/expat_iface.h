@@ -20,7 +20,7 @@
 
 #include <stdio.h>
 
-/* structure takes 20 bytes (without `name') on ia32 
+/* structure takes 20 bytes (without `name') on ia32
    and 32 bytes (without `name') on x86_64
 */
 struct xml_attr
@@ -32,7 +32,7 @@ struct xml_attr
   char *name[0];                /* when "default" node is enabled */
 };
 
-/* structure takes 40 bytes (without `name') on ia32 
+/* structure takes 40 bytes (without `name') on ia32
    and 72 bytes (without `name') on x86_64
 */
 struct xml_tree

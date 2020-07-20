@@ -1,0 +1,133 @@
+#!/bin/sh
+# Copyright (c) 2019-2020 Alexander Chernov <cher@ejudge.ru>
+
+# compiler script interface is as follows
+# <comp>-version [OPTION]
+# OPTION is:
+#  -r P fully check the availability of the compiler (like configure
+#       script does). P is a proposed path to the compiler (like in
+#       --with-<comp> configure option).
+#       returns failure (exit code 1), if the compiler is not available
+#       or is not functional.
+#       in case of success exit code is 0, and the necessary configuration
+#       variables are written to stdout.
+#  -v   verbose operation (configure mode)
+#  -l   output the compiler name to the stdout (list mode)
+#  -p   write to the stdout the command line of the compiler
+#  -f   write the compiler full name and the compiler version
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+common_config() {
+  echo 'long_name=".NET C# compiler"'
+  echo 'src_sfx=".cs"'
+  echo 'exe_sfx=".dll"'
+  echo 'arch="dotnet"'
+  echo 'insecure=1'
+}
+
+failure() {
+  rm -rf conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'DOTNETRUN=false'
+  echo 'DOTNETDIR='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && DOTNETRUN="$2"
+  [ "${DOTNETRUN}" = "" ] && DOTNETRUN="dotnet"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether .Net C# is available... " >&2
+  "${DOTNETRUN}" --version >/dev/null 2>&1 || failure
+  version=`"${DOTNETRUN}" --version 2>&1`|| failure
+  "${DOTNETRUN}" new console -lang 'c#' -n conftest >/dev/null 2>&1 || failure
+  cat > conftest/Program.cs <<EOF
+using System;
+
+namespace HelloWorld
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            Console.WriteLine("ok");
+        }
+    }
+}
+EOF
+  target=`awk 'BEGIN { FS="[<>]" } ; { if ($2 == "TargetFramework") { print $3; } }' < conftest/conftest.csproj`
+  "${DOTNETRUN}" build -c Release conftest >/dev/null 2>&1 || failure
+  [ -f conftest/bin/Release/${target}/conftest.dll ] || failure
+  mv conftest/bin/Release/${target}/conftest.runtimeconfig.json . || failure
+  mv conftest/bin/Release/${target}/conftest.dll . || failure
+  "${DOTNETRUN}" conftest.dll >/dev/null 2>&1 || failure
+
+  rm -rf ./conftest*
+  DOTNETDIR=`dirname "${DOTNETRUN}"`
+  [ "${DOTNETDIR}" = . ] && DOTNETDIR=""
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'DOTNETRUN="'"${DOTNETRUN}"'"'
+  echo 'DOTNETDIR="'"${DOTNETDIR}"'"'
+  echo 'DOTNETTARGET="'"${target}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${DOTNETRUN}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo ".Net C# compiler [http://dotnet.microsoft.com]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/dotnet-cs.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  DOTNETRUN="dotnet"
+  DOTNETDIR=
+fi
+
+if [ x"${DOTNETRUN}" = x -o x"${DOTNETRUN}" = xfalse ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"${DOTNETDIR}" != x ]
+then
+    PATH="${DOTNETDIR}:${PATH}"
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${DOTNETRUN}"
+    exit 0
+fi
+    
+"${DOTNETRUN}" --version >/dev/null 2>&1 || exit 1
+
+[ x"$1" = x-f ] && echo -n ".Net C# "
+
+exec "${DOTNETRUN}" --version

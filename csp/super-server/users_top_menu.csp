@@ -1,0 +1,46 @@
+<ul>
+  <li><s:a ac="main-page">Main page</s:a></li>
+  <s:url name="UserBrowsePageUrl" ac="user-browse-page">
+    <s:param name="marked" value="marked_str" fullCheckExpr="(marked_str)" />
+  </s:url>
+  <li><s:a url="UserBrowsePageUrl">Browse users</s:a></li>
+  <s:url name="GroupBrowsePageUrl" ac="group-browse-page">
+    <s:param name="marked" value="marked_str" fullCheckExpr="(marked_str)" />
+  </s:url>
+  <li><s:a url="GroupBrowsePageUrl">Browse groups</s:a></li>
+<%
+    if (contest_id > 0) {
+%>
+  <s:url name="ContestUserBrowsePageUrl" ac="user-browse-page">
+    <s:param name="marked" value="marked_str" fullCheckExpr="(marked_str)" />
+    <s:param name="contest_id" value="contest_id" />
+  </s:url>
+  <li><s:a url="ContestUserBrowsePageUrl">Browse users of contest <s:v value="contest_id" /></s:a></li>
+<%
+    }
+%>
+<%
+    if (group_id > 0) {
+%>
+  <s:url name="GroupUserBrowsePageUrl" ac="user-browse-page">
+    <s:param name="marked" value="marked_str" fullCheckExpr="(marked_str)" />
+    <s:param name="group_id" value="group_id" />
+  </s:url>
+  <li><s:a url="GroupUserBrowsePageUrl">Browse users of group <s:v value="group_id" /></s:a></li>
+<%
+    }
+%>
+<%
+    if (other_user_id > 0) {
+%>
+  <s:url name="UserDetailPageUrl" ac="user-detail-page">
+    <s:param name="marked" value="marked_str" fullCheckExpr="(marked_str)" />
+    <s:param name="group_id" value="group_id" fullCheckExpr="group_id > 0" />
+    <s:param name="contest_id" value="contest_id" fullCheckExpr="contest_id > 0" />
+    <s:param name="other_user_id" value="other_user_id" />
+  </s:url>
+  <li><s:a url="UserDetailPageUrl">User details</s:a></li>
+<%
+    }
+%>
+</ul>

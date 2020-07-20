@@ -21,7 +21,7 @@
       if (prob->variant_num > 0
           && (variant = find_variant(cs, phr->user_id, prob_id, 0)) <= 0)
         continue;
-      if (!prob->statement_file[0]) continue;
+      if (!prob->statement_file || !prob->statement_file[0]) continue;
       if (variant > 0) {
         prepare_insert_variant_num(variant_stmt_file, sizeof(variant_stmt_file),
                                    prob->statement_file, variant);

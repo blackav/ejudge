@@ -3,7 +3,7 @@
 #ifndef __RLDB_PLUGIN_H__
 #define __RLDB_PLUGIN_H__
 
-/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@ struct run_header;
 struct run_entry;
 
 /* version of the plugin interface structure */
-#define RLDB_PLUGIN_IFACE_VERSION 2
+#define RLDB_PLUGIN_IFACE_VERSION 3
 
 struct rldb_plugin_data;
 struct rldb_plugin_cnts;
@@ -65,8 +65,11 @@ struct rldb_plugin_iface
   // clear the data
   int (*reset)(struct rldb_plugin_cnts *, time_t, time_t, time_t);
   // set the entire runlog
-  int (*set_runlog)(struct rldb_plugin_cnts *cdata, int total_entries,
-                    struct run_entry *entries);
+  int (*set_runlog)(
+        struct rldb_plugin_cnts *cdata,
+        int id_offset,
+        int total_entries,
+        struct run_entry *entries);
   // backup the runlog
   int (*backup)(struct rldb_plugin_cnts *cdata);
   // flush the whole runlog
@@ -165,6 +168,14 @@ struct rldb_plugin_iface
         int prob_id,
         int *p_count,
         struct run_entry **p_entries);
+
+  // write a new run to the database, including problem UUID
+  int (*add_entry_2)(
+        struct rldb_plugin_cnts *,
+        int i,
+        const struct run_entry *,
+        int,
+        const unsigned char *prob_uuid);
 };
 
 /* default plugin: compiled into new-server */

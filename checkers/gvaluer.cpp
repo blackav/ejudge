@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -128,6 +128,7 @@ class Group
     bool skip = false;
     bool skip_if_not_rejudge = false;
     bool stat_to_judges = false;
+    bool stat_to_users = false;
     bool test_all = false;
     int score = 0;
     int test_score = -1;
@@ -175,6 +176,9 @@ public:
 
     void set_stat_to_judges(bool stat) { this->stat_to_judges = stat; }
     bool get_stat_to_judges() const { return stat_to_judges; }
+
+    void set_stat_to_users(bool stat) { this->stat_to_users = stat; }
+    bool get_stat_to_users() const { return stat_to_users; }
 
     void set_score(int score) { this->score = score; }
     int get_score() const { return score; }
@@ -245,6 +249,35 @@ public:
     }
 };
 
+class Global
+{
+    int stat_to_judges = -1;
+    int stat_to_users = -1;
+
+public:
+    void set_stat_to_judges(int value)
+    {
+        if (value < 0) {
+            value = -1;
+        } else if (value > 0) {
+            value = 1;
+        }
+        stat_to_judges = value;
+    }
+    int get_stat_to_judges() const { return stat_to_judges; }
+
+    void set_stat_to_users(int value)
+    {
+        if (value < 0) {
+            value = -1;
+        } else if (value > 0) {
+            value = 1;
+        }
+        stat_to_users = value;
+    }
+    int get_stat_to_users() const { return stat_to_users; }
+};
+
 class ConfigParser
 {
 public:
@@ -266,6 +299,7 @@ private:
     int t_line;
     int t_pos;
 
+    Global global;
     vector<Group> groups;
 
 public:
@@ -336,9 +370,25 @@ public:
     void scan_error(const string &msg) const;
     void parse_error(const string &msg) const;
 
+    int read_int_opt(int default_value)
+    {
+        int value = default_value;
+        if (t_type == T_IDENT) {
+            try {
+                value = stoi(token);
+            } catch (...) {
+                parse_error("NUM expected");
+            }
+            next_token();
+        }
+        return value;
+    }
+
     void parse_group()
     {
         Group g;
+        bool has_stat_to_judges = false;
+        bool has_stat_to_users = false;
 
         if (token != "group") parse_error("'group' expected");
         next_token();
@@ -445,9 +495,22 @@ public:
                 g.set_skip_if_not_rejudge(true);
             } else if (token == "stat_to_judges") {
                 next_token();
+                int value = read_int_opt(1);
                 if (t_type != ';') parse_error("';' expected");
                 next_token();
-                g.set_stat_to_judges(true);
+                if (value >= 0) {
+                    g.set_stat_to_judges(bool(value));
+                    has_stat_to_judges = true;
+                }
+            } else if (token == "stat_to_users") {
+                next_token();
+                int value = read_int_opt(1);
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
+                if (value >= 0) {
+                    g.set_stat_to_users(bool(value));
+                    has_stat_to_users = true;
+                }
             } else if (token == "test_all") {
                 next_token();
                 if (t_type != ';') parse_error("';' expected");
@@ -510,6 +573,12 @@ public:
         }
         if (t_type != '}') parse_error("'}' expected");
         next_token();
+        if (!has_stat_to_judges && global.get_stat_to_judges() >= 0) {
+            g.set_stat_to_judges(bool(global.get_stat_to_judges()));
+        }
+        if (!has_stat_to_users && global.get_stat_to_users() >= 0) {
+            g.set_stat_to_users(bool(global.get_stat_to_users()));
+        }
         groups.push_back(g);
     }
 
@@ -568,6 +637,35 @@ public:
         }
     }
 
+    void parse_opt_global()
+    {
+        if (token != "global") return;
+        next_token();
+        if (t_type != '{') parse_error("'{' expected");
+        next_token();
+
+        while (1) {
+            if (token == "stat_to_judges") {
+                next_token();
+                int value = read_int_opt(1);
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
+                global.set_stat_to_judges(value);
+            } else if (token == "stat_to_users") {
+                next_token();
+                int value = read_int_opt(1);
+                if (t_type != ';') parse_error("';' expected");
+                next_token();
+                global.set_stat_to_users(value);
+            } else {
+                break;
+            }
+        }
+
+        if (t_type != '}') parse_error("'}' expected");
+        next_token();
+    }
+
     void parse(const string &configpath)
     {
         path = configpath;
@@ -577,6 +675,7 @@ public:
         if (!in_f) die("cannot open config file '%s'", configpath.c_str());
         next_char();
         next_token();
+        parse_opt_global();
         parse_groups();
         if (token != "") {
             parse_error("EOF expected");
@@ -816,6 +915,16 @@ main(int argc, char *argv[])
                         g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
             } else {
                 fprintf(fjcmt, "Test group '%s': tests %d-%d: score %d\n",
+                        g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
+            }
+
+        }
+        if (g.get_stat_to_users() && !g.get_offline()) {
+            if (locale_id == 1) {
+                fprintf(fcmt, "Группа тестов %s: тесты %d-%d: балл %d\n",
+                        g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
+            } else {
+                fprintf(fcmt, "Test group '%s': tests %d-%d: score %d\n",
                         g.get_group_id().c_str(), g.get_first(), g.get_last(), group_score);
             }
 

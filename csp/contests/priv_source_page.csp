@@ -6,6 +6,7 @@
 #include "ejudge/charsets.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/testing_report_xml.h"
+#include "ejudge/content_plugin.h"
 %><%@set getter_name = "csp_get_priv_source_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"
@@ -49,6 +50,11 @@
   struct run_entry *other_runs = NULL;
   int uuid_count = 0;
   ej_uuid_t *other_uuids = NULL;
+  const struct userlist_user *u = NULL;
+  const struct userlist_user_info *ui = NULL;
+  unsigned char avatar_url[1024];
+
+  avatar_url[0] = 0;
 
   if (ns_parse_run_id(out_f, phr, cnts, extra, &run_id, 0) < 0)
     FAIL(NEW_SRV_ERR_INV_RUN_ID);
@@ -149,6 +155,23 @@
     }
   }
 
+  u = teamdb_get_userlist(cs->teamdb_state, info.user_id);
+  if (u) ui = u->cnts0;
+  if (ui && ui->avatar_id && ui->avatar_id[0]) {
+    struct content_loaded_plugin *cp = content_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
+    int content_enabled = 0;
+    if (cp) {
+      content_enabled = cp->iface->is_enabled(cp->data, phr->cnts);
+    }
+    if (content_enabled) {
+      cp->iface->get_url(cp->data, avatar_url, sizeof(avatar_url),
+                         phr->cnts, ui->avatar_id, ui->avatar_suffix);
+    } else {
+      snprintf(avatar_url, sizeof(avatar_url), "%s?SID=%llx&key=%s&action=%d",
+               phr->self_url, phr->session_id, ui->avatar_id, NEW_SRV_ACTION_GET_AVATAR);
+    }
+  }
+
   snprintf(title, sizeof(title), "%s %d", _("Viewing run"), run_id);
 %><%@include "priv_header.csp"
 %>
@@ -188,9 +211,11 @@
 <div class="table-scroll" style="margin-top: -10px; margin-bottom: 5px;">
 <table class="table">
 <tr>
+<% if (avatar_url[0]) { %>
+    <th><s:_>Avatar</s:_></th>
+<% } %>
     <th style="width: 10em;"><s:_>Run ID</s:_></th>
     <th><s:_>Submission time</s:_></th>
-    <th><s:_>Contest time</s:_></th>
     <th><s:_>Originator IP</s:_></th>
     <th><s:_>User ID</s:_></th>
     <th><s:_>User login</s:_></th>
@@ -239,9 +264,11 @@
     <th><s:_>Marked?</s:_></th>
 </tr>
 <tr>
+<% if (avatar_url[0]) { %>
+    <td class="userpic"><img src="<s:v value="avatar_url" escape="no" />" alt="avatar" /></td>
+<% } %>
     <td><s:v value="info.run_id" /></td>
-    <td><s:v value="info.time" />:<s:v value="info.nsec" /></td>
-    <td><s:v type="duration" value="run_time - start_time, info.nsec" /></td>
+    <td><s:v value="info.time" /></td>
 <% snprintf(filtbuf1, sizeof(filtbuf1), "ip == ip(%d)", run_id); %>
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
@@ -259,7 +286,7 @@
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
 </s:url>
-    <td><s:a url="FilteredMainUrl"><s:v value="prob->short_name" escape="false" /> - <s:v value="prob->long_name" /></s:a><%
+    <td><s:a url="FilteredMainUrl"><s:v value="prob->short_name" escape="false" /> - <s:v value="prob->long_name" checkExpr="" /></s:a><%
     if (prob->xml_file && prob->xml_file[0]) {
 %><s:url name="SubmitPageUrl" ac="priv-submit-page"><s:param name="problem" value="prob->id" /></s:url> <s:a url="SubmitPageUrl">[<s:_>Statement</s:_>]</s:a><%
     }
@@ -294,7 +321,7 @@
 <s:url name="FilteredMainUrl" ac="main-page">
     <s:param name="filter_expr" value="filtbuf1" />
 </s:url>
-<td><s:a url="FilteredMainUrl" ><s:v escape="false" value="lang->short_name" /> - <s:v value="lang->long_name" /></s:a></td>
+<td><s:a url="FilteredMainUrl" ><s:v escape="false" value="lang->short_name" /> - <s:v value="lang->long_name" checkExpr="" /></s:a></td>
 <%  } else if (!info.lang_id) { %>
 <td>N/A</td>
 <%  } else { %>
@@ -372,8 +399,10 @@ function setDivVisibility(oper, value)
 <div class="table-scroll" style="margin-top: 7px;">
 <table class="table">
 <tr>
+<th>Full time</th>
+<th>Duration from start</th>
 <% if (!info.lang_id) { %>
-<th><s:_>Content type</s:_></th><td><s:v type="mime_type" value="info.mime_type" /></td>
+<th><s:_>Content type</s:_></th>
 <% } %>
 <% #if CONF_HAS_LIBUUID - 0 != 0 %>
     <th>UUID</th>
@@ -391,6 +420,8 @@ function setDivVisibility(oper, value)
 <th><s:_>Pages printed</s:_>:</th>
 </tr>
 <tr>
+<td><s:v value="info.time" />:<s:v value="info.nsec" /></td>
+<td><s:v type="duration" value="run_time - start_time, info.nsec" /></td>
 <% if (!info.lang_id) { %>
 <td><s:v type="mime_type" value="info.mime_type" /></td>
 <% } %>
@@ -420,7 +451,11 @@ function setDivVisibility(oper, value)
 <s:url name="DownloadRunUrl" ac="download-run">
     <s:param name="run_id" value="run_id" />
 </s:url>
-<p style="display: inline-block;"><s:a url="DownloadRunUrl"><s:_>Download run</s:_></s:a></p>
+<s:url name="ResubmitUrl" ac="priv-submit-page">
+    <s:param name="problem" value="info.prob_id" />
+    <s:param name="lang_id" value="info.lang_id" />
+</s:url>
+<p style="display: inline-block;"><s:a url="ResubmitUrl">Resubmit</s:a>&nbsp;&nbsp;<s:a url="DownloadRunUrl"><s:_>Download run</s:_></s:a></p>
 
 <% if (phr->role == USER_ROLE_ADMIN && opcaps_check(phr->caps, OPCAP_EDIT_RUN) >= 0 && info.is_readonly <= 0) { %>
 <s:form>
@@ -509,10 +544,33 @@ function setDivVisibility(oper, value)
     px = prob->xml.p;
   }
 
-  if (px && px->stmts && px->stmts->review_notes) {
+  if (px && px->review_comments) {
+%><h2><s:_>Review comments</s:_></h2>
+<script>
+function addReviewMsg(serial)
+{
+    var v = document.getElementById("ReviewMsg" + serial).textContent;
+    var o = document.getElementById("msg_text");
+    o.value = o.value + v + "\n";
+}
+</script>
+<%
+    int rc_serial = 0;
+    for (struct xml_tree *rcp = px->review_comments->first_down; rcp; rcp = rcp->right) {
+      if (rcp->tag == PROB_T_COMMENT) {
+%><p><input type="button" value="(+)" onclick="addReviewMsg(<s:v value="rc_serial" />)" /><span id="ReviewMsg<s:v value="rc_serial" />"><%
+        problem_xml_unparse_node(out_f, rcp, NULL, NULL);
+        ++rc_serial;
+%></span></p>
+<%
+      }
+    }
+  }
+
+  if (px && px->review_notes) {
 %>
 <h2><s:_>Review notes</s:_></h2>
-<% problem_xml_unparse_node(out_f, px->stmts->review_notes, NULL, NULL); %>
+<% problem_xml_unparse_node(out_f, px->review_notes, NULL, NULL); %>
 <%
   }
 %>
@@ -696,7 +754,18 @@ Run Id: <s:a url="ViewOtherSourceUrl"><s:v value="fcev2.v[i].e.run_id" /></s:a>
 <s:submit ac="priv-submit-run-comment-and-summon" />
 </div></s:form>
 
+<div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
+  <h2><s:_>Add a permanent problem review comment</s:_></h2>
+</div>
+
+<s:form id="review_comment">
+<s:hidden name="run_id" checkExpr=">=0" />
+<s:textfield name="review_comment" size="80" value="" /><br/>
+<s:submit ac="add-review-comment" />
+</s:form>
+
 <br />
+
 
 <%@include "priv_footer.csp"
 %><%

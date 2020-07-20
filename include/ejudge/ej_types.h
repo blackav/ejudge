@@ -2,7 +2,7 @@
 #ifndef __EJ_TYPES_H__
 #define __EJ_TYPES_H__
 
-/* Copyright (C) 2005-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -52,6 +52,7 @@ typedef struct ej_ip_t
 
 /* types for meta-info generator */
 typedef unsigned char ejbytebool_t;
+typedef signed char ejbyteflag_t;    // < 0 - unknown, 0 - false, > 0 - true
 typedef int ejintbool_t;
 typedef int ejintsize_t;
 typedef char **ejstrlist_t;
@@ -107,8 +108,11 @@ enum user_flags
   USERLIST_UC_LOCKED       = 0x00000004,
   USERLIST_UC_INCOMPLETE   = 0x00000008,
   USERLIST_UC_DISQUALIFIED = 0x00000010,
+  USERLIST_UC_PRIVILEGED   = 0x00000020,
+  USERLIST_UC_REG_READONLY = 0x00000040,
 
-  USERLIST_UC_ALL          = 0x0000001f,
+  USERLIST_UC_NOPASSWD     = 0x0000003f,  // mask for flags to prevent mass password regeneration
+  USERLIST_UC_ALL          = 0x0000007f,
 };
 
 /* test visibility */
@@ -190,11 +194,12 @@ session_parse(
 enum
 {
   TOKEN_FINALSCORE_BIT = 1, // show the final score
-  TOKEN_TESTS_MASK = 6,
+  TOKEN_TESTS_MASK = 14,
   TOKEN_BASICTESTS_BIT = 2, // show the basic test info
   TOKEN_TOKENTESTS_BIT = 4, // show the token test info
   TOKEN_FINALTESTS_BIT = 6, // show the final test info
-  TOKEN_VALUER_JUDGE_COMMENT_BIT = 8 // show the judge's valuer comment
+  TOKEN_VALUER_JUDGE_COMMENT_BIT = 16, // show the judge's valuer comment
+  TOKEN_CHECKER_COMMENT_BIT = 32, // show the checker comment
 };
 
 typedef struct ej_uuid_t

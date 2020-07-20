@@ -2,6 +2,7 @@
 %><%@include "priv_includes.csp"
 %><%
 #include "ejudge/ej_uuid.h"
+#include "ejudge/content_plugin.h"
 #include <ctype.h>
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
 %><%@set err_prefix = "NEW_SRV_ERR_"
@@ -19,7 +20,12 @@
   int enable_main_menu = 0;
   unsigned char *prob_name = NULL;
   const struct section_problem_data *prob = NULL;
-  int user_id = 0;   
+  int user_id = 0;
+  const struct userlist_user *u = NULL;
+  const struct userlist_user_info *ui = NULL;
+  unsigned char avatar_url[1024];
+
+  avatar_url[0] = 0;
 
 %><s:read var="clar_id" required="yes" errors="inv-clar-id" /><%
 
@@ -72,11 +78,30 @@
     xfree(prob_name); prob_name = NULL;
   }
 
+  if (user_id > 0) {
+    u = teamdb_get_userlist(cs->teamdb_state, user_id);
+    if (u) ui = u->cnts0;
+    if (ui && ui->avatar_id && ui->avatar_id[0]) {
+      struct content_loaded_plugin *cp = content_plugin_get(phr->extra, phr->cnts, phr->config, NULL);
+      int content_enabled = 0;
+      if (cp) {
+        content_enabled = cp->iface->is_enabled(cp->data, phr->cnts);
+      }
+      if (content_enabled) {
+        cp->iface->get_url(cp->data, avatar_url, sizeof(avatar_url),
+                           phr->cnts, ui->avatar_id, ui->avatar_suffix);
+      } else {
+        snprintf(avatar_url, sizeof(avatar_url), "%s?SID=%llx&key=%s&action=%d",
+                 phr->self_url, phr->session_id, ui->avatar_id, NEW_SRV_ACTION_GET_AVATAR);
+      }
+    }
+  }
+
   l10n_setlocale(phr->locale_id);
 
   unsigned char title[1024];
   snprintf(title, sizeof(title), "%s %d", _("Viewing clar"), clar_id);
-%><%@include "priv_header.csp" 
+%><%@include "priv_header.csp"
 %>
 </div>
 
@@ -88,7 +113,12 @@
  [<s:a url="EditClarUrl"><s:_>Edit</s:_></s:a>]
 <%  } %>
 </h2>
-<table border="0">
+
+<div class="ib pt-15">
+<% if (avatar_url[0]) { %>
+    <img class="userpic-img userpic-img-left" src="<s:v value="avatar_url" escape="no" />" alt="avatar" />
+<% } %>
+<table border="0" class="info-table mt-0 mw-600">
 <tr><td><s:_>Clar ID</s:_>:</td><td><s:v value="clar_id" /></td></tr>
 <tr><td>Clar UUID:</td><td><s:v type="uuid" value="clar.uuid" /></td></tr>
 <%  if (clar.hide_flag) { %>
@@ -147,7 +177,7 @@
     <s:param name="filter_expr" value="b1" />
   </s:url>
   <s:url name="SubmitPageUrl" ac="priv-submit-page"><s:param name="problem" value="prob->id" /></s:url>
-  <td><s:a url="UserFilterUrl"><s:v value="prob->short_name" /> (<s:v value="prob->long_name" />)</s:a> <s:a url="SubmitPageUrl">[<s:_>Statement</s:_>]</s:a></td>
+  <td><s:a url="UserFilterUrl"><s:v value="prob->short_name" /> (<s:v value="prob->long_name" checkExpr="" />)</s:a> <s:a url="SubmitPageUrl">[<s:_>Statement</s:_>]</s:a></td>
 </tr>
 <%
   }
@@ -167,6 +197,8 @@
 <tr><td><s:_>Locale code</s:_>:</td><td><s:v value="clar.locale_id" /></td></tr>
 <tr><td><s:_>Subject</s:_>:</td><td><s:v value="clar_subj" /></td></tr>
 </table>
+</div>
+
 <hr/>
 <%  if (clar_get_text(cs->clarlog_state, clar_id, &msg_txt, &msg_len) < 0) { %>
 <big><font color="red"><s:_>Cannot read message text!</s:_></font></big>

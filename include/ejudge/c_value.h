@@ -147,7 +147,7 @@ typedef enum c_operation_t
 
   COP_ADD,                      /* 27 */ /* '+' */
   COP_SUB,                      /* 28 */ /* '-' */
-  
+
   COP_MUL,                      /* 29 */ /* '*' */
   COP_DIV,                      /* 30 */ /* '/' */
   COP_MOD,                      /* 31 */ /* '%' */

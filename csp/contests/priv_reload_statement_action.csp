@@ -1,0 +1,40 @@
+<%
+%><%@include "priv_includes.csp"
+%><%@set getter_name = "csp_get_priv_reload_statement_action"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
+%><%@page csp_view_priv_reload_statement_action(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  int prob_id = 0;
+  int variant = 0;
+  const struct section_problem_data *prob = NULL;
+  int reload_all = 0;
+
+%><s:read var="prob_id" name="problem" default="0" error="inv-run-id" /><%
+%><s:read var="variant" error="inv-variant" /><%
+
+  if (prob_id <= 0 || prob_id > cs->max_prob) {
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  }
+  if (!(prob = cs->probs[prob_id])) {
+    FAIL(NEW_SRV_ERR_INV_PROB_ID);
+  }
+  if (prob->variant_num <= 0) {
+    variant = 0;
+  } else {
+    if (variant < 0 || variant > prob->variant_num)
+      FAIL(NEW_SRV_ERR_INV_VARIANT);
+  }
+  if (phr->action == NEW_SRV_ACTION_RELOAD_STATEMENT_ALL)
+     reload_all = 1;
+
+  ns_reload_statement(phr->contest_id, prob_id, variant, reload_all);
+
+%><s:url name="SubmitUrl" ac="priv-submit-page"><s:param name="problem" value="prob_id"/><s:param name="variant" value="variant" fullcheckexpr="variant > 0" /></s:url><s:redirect url="SubmitUrl" /><%
+cleanup:
+  html_armor_free(&ab);
+%>

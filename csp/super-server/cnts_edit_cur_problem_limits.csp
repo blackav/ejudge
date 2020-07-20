@@ -15,6 +15,7 @@
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_process_count" "limits" "Maximum process count" "300" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "umask" "limits" "Umask value" "300" %>
         <%@expand MENU_YESNO3 "enable_process_group" "limits" "Use separate process group" "300" %>
+        <%@expand MENU_YESNO3 "enable_kill_all" "limits" "Kill all processes of ejuser" "300" %>
         <%@expand MENU_YESNO3 "disable_security" "limits" "Disable security restrictions" "300" %>
         <%@expand MENU_YESNO3 "enable_suid_run" "limits" "Enable SUID helper" "300" %>
         <%@expand MENU_TEXTFIELD "lang_time_adj" "limits" "Language-specific time-limit adjustment (s)" "300" %>
@@ -45,7 +46,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -77,6 +78,7 @@ function popupLimitsDialog(e, skipField)
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_process_count" "prob->max_process_count < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "umask" "!prob->umask" %>
     <%@expand COPY_YESNO3 "enable_process_group"  %>
+    <%@expand COPY_YESNO3 "enable_kill_all"  %>
     <%@expand COPY_YESNO3 "disable_security"  %>
     <%@expand COPY_YESNO3 "enable_suid_run"  %>
     <%@expand COPY_TEXTFIELD "lang_time_adj"  %>

@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "reg_includes.csp"
 %><%
 #include "ejudge/ejudge_cfg.h"
@@ -49,12 +48,12 @@
 %><s:hidden name="locale_id" value="phr->locale_id" /><%
   }
 %>
-<div class="user_actions"><table class="menu"><tr>
+<div class="user_actions user_actions_login_form"><table class="menu"><tr>
     <td class="menu"><div class="user_action_item"><s:_>login</s:_>: <s:textfield name="login" size="20" value="login" /></div></td>
     <td class="menu"><div class="user_action_item"><s:_>password</s:_>: <s:password name="password" size="20" value="password" /></div></td>
 <%
   if (!cnts->disable_locale_change) {
-%><td class="menu"><div class="user_action_item"><s:_>language</s:_>: <%
+%><td class="menu"><div class="user_action_item user-action-lang"><s:_>language</s:_>: <%
     l10n_html_locale_select(out_f, phr->locale_id);
 %></div></td><%
   }

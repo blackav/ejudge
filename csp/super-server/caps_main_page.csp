@@ -1,0 +1,89 @@
+<%
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_caps_main_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_caps_main_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = NULL;
+    const unsigned char *subtitle = "global user capabilities";
+    opcap_t caps = 0;
+    int serial = 0;
+
+    if (ss_get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) {
+        FAIL(SSERV_ERR_PERM_DENIED);
+    }
+
+    if (!phr->config->caps_file) {
+        retval = SSERV_CMD_MIGRATION_PAGE;
+        goto cleanup;
+    }
+
+%><%@include "header.csp"
+%>
+
+<h2>Global user capabilities</h2>
+
+<ul>
+  <li><s:a ac="main-page">Main page</s:a></li>
+</ul>
+
+<%
+    ejudge_cfg_refresh_caps_file(phr->config, 1);
+    const struct ejudge_cfg *root = phr->config->caps_file_info->root;
+%>
+
+<table class="b1">
+  <tr>
+    <th class="b1">User</th>
+    <th class="b1">Capabilities</th>
+    <th class="b1">Actions</th>
+  </tr>
+<%
+    if (root) {
+        const struct xml_tree *p;
+        for (p = (struct xml_tree*) root->capabilities.first; p; p = p->right) {
+            ++serial;
+            const struct opcap_list_item *c = (const struct opcap_list_item*) p;
+            unsigned char *str = opcaps_unparse(0, 60, c->caps);
+%>
+  <tr>
+    <td class="b1"><s:v value="c->login" /></td>
+    <td class="b1"><pre><s:v value="str" escape="no" /></pre></td><% xfree(str); str = NULL; %>
+    <td class="b1">
+      <s:url name="EditUrl" ac="caps-edit-page">
+        <s:param name="serial" value="serial" />
+      </s:url>
+      <s:a url="EditUrl">[Edit]</s:a>&nbsp;
+      <s:url name="DeleteUrl" ac="caps-delete-action">
+        <s:param name="serial" value="serial" />
+      </s:url>
+      <s:a url="DeleteUrl" >[Delete]</s:a>
+    </td>
+  </tr>
+<%
+        }
+    }
+%>
+</table>
+
+<h3>Create new global user capability</h3>
+
+<s:form>
+  <table class="b0">
+    <tr>
+      <td class="b0">Login:</td>
+      <td class="b0"><input type="text" size="40" name="ejudge_login" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><s:submit ac="caps-add-action" text="Create" /></td>
+    </tr>
+  </table>
+</form>
+
+<%@include "footer.csp"
+%><%
+cleanup:
+    l10n_resetlocale();
+    html_armor_free(&ab);
+%>

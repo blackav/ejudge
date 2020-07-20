@@ -17,7 +17,7 @@
         }
 %></s:form><%
       }
-    } else if (global->is_virtual && stop_time <= 0) {
+    } else if (global->is_virtual) {
       if (cnts->exam_mode) {
 %><div class="h2-long"><h2><s:_>Finish the exam</s:_></h2></div>
 <p><s:_>Press "Stop exam" button to finish the exam. Your answers will be checked shortly after that.</s:_></p><%
@@ -26,8 +26,8 @@
       if (cnts->exam_mode) {
 %><p><s:submit ac="virtual-stop" label="Stop exam" /></p><%
       } else {
-%><p><s:submit ac="virtual-stop" /></p><%
+%><p><s:submit ac="virtual-stop"/></p><%
       }
 %></s:form><%
-    }
+   }
 %>

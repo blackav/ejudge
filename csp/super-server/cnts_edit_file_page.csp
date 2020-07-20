@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "includes.csp"
 %><%
 #include "ejudge/osdeps.h"
@@ -41,7 +40,7 @@
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->contest_start_cmd;
         if (!file_path1 || !*file_path1) {
-            snprintf(phr->ss->global->contest_start_cmd, sizeof(phr->ss->global->contest_start_cmd), "%s", "start_cmd");
+            xstrdup3(&phr->ss->global->contest_start_cmd, "start_cmd");
             file_path1 = phr->ss->global->contest_start_cmd;
         }
         param_expl = "Contest start script";
@@ -52,7 +51,7 @@
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->contest_stop_cmd;
         if (!file_path1 || !*file_path1) {
-            phr->ss->global->contest_stop_cmd = "stop_cmd";
+            xstrdup3(&phr->ss->global->contest_stop_cmd, "stop_cmd");
             file_path1 = phr->ss->global->contest_stop_cmd;
         }
         param_expl = "Contest stop script";
@@ -63,7 +62,7 @@
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->stand_header_file;
         if (!file_path1 || !*file_path1) {
-            snprintf(phr->ss->global->stand_header_file, sizeof(phr->ss->global->stand_header_file), "%s", "stand_header.html");
+            xstrdup3(&phr->ss->global->stand_header_file, "stand_header.html");
             file_path1 = phr->ss->global->stand_header_file;
         }
         param_expl = "Standings HTML header file";
@@ -75,7 +74,7 @@
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->stand_footer_file;
         if (!file_path1 || !*file_path1) {
-            snprintf(phr->ss->global->stand_footer_file, sizeof(phr->ss->global->stand_footer_file), "%s", "stand_footer.html");
+            xstrdup3(&phr->ss->global->stand_footer_file, "stand_footer.html");
             file_path1 = phr->ss->global->stand_footer_file;
         }
         param_expl = "Standings HTML footer file";
@@ -87,7 +86,7 @@
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->stand2_header_file;
         if (!file_path1 || !*file_path1) {
-            snprintf(phr->ss->global->stand2_header_file, sizeof(phr->ss->global->stand2_header_file), "%s", "stand2_header.html");
+            xstrdup3(&phr->ss->global->stand2_header_file, "stand2_header.html");
             file_path1 = phr->ss->global->stand2_header_file;
         }
         param_expl = "Supplementary standings HTML header file";
@@ -99,7 +98,7 @@
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->stand2_footer_file;
         if (!file_path1 || !*file_path1) {
-            snprintf(phr->ss->global->stand2_footer_file, sizeof(phr->ss->global->stand2_footer_file), "%s", "stand2_footer.html");
+            xstrdup3(&phr->ss->global->stand2_footer_file, "stand2_footer.html");
             file_path1 = phr->ss->global->stand2_footer_file;
         }
         param_expl = "Supplementary standings HTML footer file";
@@ -111,7 +110,7 @@
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
         file_path1 = phr->ss->global->plog_header_file;
         if (!file_path1 || !*file_path1) {
-            snprintf(phr->ss->global->plog_header_file, sizeof(phr->ss->global->plog_header_file), "%s", "plog_header.html");
+            xstrdup3(&phr->ss->global->plog_header_file,"plog_header.html");
             file_path1 = phr->ss->global->plog_header_file;
         }
         param_expl = "Public submission log HTML header file";
@@ -121,9 +120,9 @@
         break;
     case SSERV_CMD_GLOB_EDIT_PLOG_FOOTER_FILE_PAGE:
         if (!phr->ss->global) FAIL(SSERV_ERR_CONTEST_NOT_EDITED);
-        file_path1 = phr->ss->plog_footer_text;
+        file_path1 = phr->ss->global->plog_footer_file;
         if (!file_path1 || !*file_path1) {
-            snprintf(phr->ss->global->plog_footer_file, sizeof(phr->ss->global->plog_footer_file), "%s", "plog_footer.html");
+            xstrdup3(&phr->ss->global->plog_footer_file, "plog_footer.html");
             file_path1 = phr->ss->global->plog_footer_file;
         }
         param_expl = "Public submission log HTML footer file";
@@ -134,7 +133,7 @@
     case SSERV_CMD_CNTS_EDIT_USERS_HEADER_PAGE:
         file_path1 = cnts->users_header_file;
         if (!file_path1 || !*file_path1) {
-            phr->ss->edited_cnts->users_header_file = xstrdup("users_header.html"); 
+            phr->ss->edited_cnts->users_header_file = xstrdup("users_header.html");
             file_path1 = cnts->users_header_file;
         }
         param_expl = "'users' HTML header file";
@@ -144,7 +143,7 @@
     case SSERV_CMD_CNTS_EDIT_USERS_FOOTER_PAGE:
         file_path1 = cnts->users_footer_file;
         if (!file_path1 || !*file_path1) {
-            phr->ss->edited_cnts->users_footer_file = xstrdup("users_footer.html"); 
+            phr->ss->edited_cnts->users_footer_file = xstrdup("users_footer.html");
             file_path1 = cnts->users_footer_file;
         }
         param_expl = "'users' HTML footer file";
@@ -154,7 +153,7 @@
     case SSERV_CMD_CNTS_EDIT_COPYRIGHT_PAGE:
         file_path1 = cnts->copyright_file;
         if (!file_path1 || !*file_path1) {
-            phr->ss->edited_cnts->copyright_file = xstrdup("copyright.html"); 
+            phr->ss->edited_cnts->copyright_file = xstrdup("copyright.html");
             file_path1 = cnts->copyright_file;
         }
         param_expl = "Copyright notice file";
@@ -164,7 +163,7 @@
     case SSERV_CMD_CNTS_EDIT_WELCOME_PAGE:
         file_path1 = cnts->welcome_file;
         if (!file_path1 || !*file_path1) {
-            phr->ss->edited_cnts->welcome_file = xstrdup("welcome.html"); 
+            phr->ss->edited_cnts->welcome_file = xstrdup("welcome.html");
             file_path1 = cnts->welcome_file;
         }
         param_expl = "Participant welcome message";
@@ -174,7 +173,7 @@
     case SSERV_CMD_CNTS_EDIT_REG_WELCOME_PAGE:
         file_path1 = cnts->reg_welcome_file;
         if (!file_path1 || !*file_path1) {
-            phr->ss->edited_cnts->reg_welcome_file = xstrdup("reg_welcome.html"); 
+            phr->ss->edited_cnts->reg_welcome_file = xstrdup("reg_welcome.html");
             file_path1 = cnts->reg_welcome_file;
         }
         param_expl = "Registration welcome message";
@@ -184,7 +183,7 @@
     case SSERV_CMD_CNTS_EDIT_REGISTER_EMAIL_FILE_PAGE:
         file_path1 = cnts->register_email_file;
         if (!file_path1 || !*file_path1) {
-            phr->ss->edited_cnts->register_email_file = xstrdup("register_email.txt"); 
+            phr->ss->edited_cnts->register_email_file = xstrdup("register_email.txt");
             file_path1 = cnts->register_email_file;
         }
         param_expl = "Registration letter template";

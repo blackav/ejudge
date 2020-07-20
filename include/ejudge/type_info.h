@@ -62,7 +62,7 @@ enum
     NODE_STRUCT_TYPE,
     NODE_UNION_TYPE,
     // u32 size == 0 --- sequence of any types, for ellipsis parameters
-    NODE_ANYSEQ_TYPE, 
+    NODE_ANYSEQ_TYPE,
 
     // u32 size, i32 frame_offset, node type, str name
     NODE_PARAM,

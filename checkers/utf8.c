@@ -109,7 +109,7 @@ checker_ucs4_to_utf8_str(unsigned char *buf, size_t size, const int *in)
 {
   const int *pin = in;
   unsigned char *pout = buf;
-  
+
   if (!buf || !size) return "";
   size--;
   while (*pin && size) {

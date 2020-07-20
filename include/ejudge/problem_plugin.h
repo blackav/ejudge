@@ -44,12 +44,12 @@ struct problem_plugin_iface
 
   void *(*init)(void);
   void (*finalize)(void *);
-  unsigned char * (*parse_form)(void *, 
+  unsigned char * (*parse_form)(void *,
                                 FILE *flog,
                                 struct http_request_info *phr,
                                 const struct contest_desc *cnts,
                                 struct contest_extra *extra);
-  unsigned char * (*unparse_form)(void *, 
+  unsigned char * (*unparse_form)(void *,
                                   struct http_request_info *phr,
                                   const struct contest_desc *cnts,
                                   struct contest_extra *extra,

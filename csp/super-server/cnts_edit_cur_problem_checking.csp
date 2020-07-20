@@ -25,6 +25,10 @@
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "checker_real_time_limit" "checking" "Real time limit for checker(s)" "250" %>
         <%@expand MENU_TEXTFIELD "checker_env" "checking" "Checker environment" "250" %>
         <%@expand MENU_YESNO3 "scoring_checker" "checking" "Checker calculates score" "250" %>
+        <%@expand MENU_YESNO3 "enable_checker_token" "checking" "Scoring checker produces a token" "250" %>
+        <%@expand MENU_YESNO3 "enable_testlib_mode" "checking" "Enable testlib.h compatibility mode" "250" %>
+        <%@expand MENU_YESNO3 "enable_extended_info" "checking" "Pass extended info to checkers" "250" %>
+        <%@expand MENU_YESNO3 "stop_on_first_fail" "checking" "Stop after the first failed test (like ACM)" "250" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "valuer_cmd" "checking" "Score valuer name" "250" %>
         <%@expand MENU_YESNO3 "valuer_sets_marked" "checking" "Valuer sets <i>marked</i> flag" "250" %>
         <%@expand MENU_YESNO3 "interactive_valuer" "checking" "Valuer works interactively" "250" %>
@@ -32,6 +36,7 @@
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "interactor_cmd" "checking" "Interactor name" "250" %>
         <%@expand MENU_TEXTFIELD "interactor_env" "checking" "Interactor environment" "250" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "interactor_time_limit" "checking" "Time limit for interactor (s)" "250" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "interactor_real_time_limit" "checking" "Real time limit for interactor (s)" "250" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "init_cmd" "checking" "Init-style interactor name" "250" %>
         <%@expand MENU_TEXTFIELD "init_env" "checking" "Init-style interactor environment" "250" %>
 
@@ -58,7 +63,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -70,17 +75,18 @@ $(function() {
         }
     });
 
-    var has_standard_checker = <s:v type="jsbool" value="tmp_prob->standard_checker[0]" />;
+    var has_standard_checker = <s:v type="jsbool" value="tmp_prob->standard_checker" />;
     $("#orig-check_cmd-div").toggle(!has_standard_checker);
     $("#orig-checker_env-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
 
-    var has_valuer = <s:v type="jsbool" value="tmp_prob->valuer_cmd[0]" />;
+    var has_valuer = <s:v type="jsbool" value="tmp_prob->valuer_cmd" />;
     $("#orig-valuer_sets_marked-div").toggle(has_valuer);
     $("#orig-interactive_valuer-div").toggle(has_valuer);
     $("#orig-valuer_env-div").toggle(has_valuer && <s:v type="jsbool" value="prob_id > 0" />);
 
-    var has_interactor = <s:v type="jsbool" value="tmp_prob->interactor_cmd[0]" />;
+    var has_interactor = <s:v type="jsbool" value="tmp_prob->interactor_cmd" />;
     $("#orig-interactor_time_limit-div").toggle(has_interactor);
+    $("#orig-interactor_real_time_limit-div").toggle(has_interactor);
     $("#orig-interactor_env-div").toggle(has_interactor && <s:v type="jsbool" value="prob_id > 0" />);
 
     var has_init = <s:v type="jsbool" value="tmp_prob->init_cmd && tmp_prob->init_cmd[0]" />;
@@ -92,17 +98,22 @@ function popupCheckingDialog(e, skipField)
     $("#CheckingDialogProbId").val(prob_id);
 
     <%@expand COPY_SIMPLE "standard_checker" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "check_cmd" "!prob->check_cmd[0]" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "check_cmd" "!prob->check_cmd" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "checker_real_time_limit" "prob->checker_real_time_limit < 0" %>
     <%@expand COPY_TEXTFIELD "checker_env" %>
     <%@expand COPY_YESNO3 "scoring_checker" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "valuer_cmd" "!prob->valuer_cmd[0]" %>
+    <%@expand COPY_YESNO3 "enable_checker_token" %>
+    <%@expand COPY_YESNO3 "enable_testlib_mode" %>
+    <%@expand COPY_YESNO3 "enable_extended_info" %>
+    <%@expand COPY_YESNO3 "stop_on_first_fail" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "valuer_cmd" "!prob->valuer_cmd" %>
     <%@expand COPY_YESNO3 "valuer_sets_marked" %>
     <%@expand COPY_YESNO3 "interactive_valuer" %>
     <%@expand COPY_TEXTFIELD "valuer_env" %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "interactor_cmd" "!prob->interactor_cmd[0]" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "interactor_cmd" "!prob->interactor_cmd" %>
     <%@expand COPY_TEXTFIELD "interactor_env" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "interactor_time_limit" "prob->interactor_time_limit < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "interactor_real_time_limit" "prob->interactor_real_time_limit < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "init_cmd" "!prob->init_cmd" %>
     <%@expand COPY_TEXTFIELD "init_env" %>
 
@@ -114,6 +125,7 @@ function popupCheckingDialog(e, skipField)
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "interactor_cmd" %>
     <%@expand CLEAR_TEXTFIELD "interactor_env" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "interactor_time_limit" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "interactor_real_time_limit" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "init_cmd" %>
     <%@expand CLEAR_TEXTFIELD "init_env" %>
 
@@ -129,6 +141,7 @@ function checkingDialogOnChange(field)
     <%@expand ONCHANGE_WITH_DEFAULT "valuer_cmd" %>
     <%@expand ONCHANGE_WITH_DEFAULT "interactor_cmd" %>
     <%@expand ONCHANGE_WITH_DEFAULT "interactor_time_limit" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "interactor_real_time_limit" %>
     <%@expand ONCHANGE_WITH_DEFAULT "init_cmd" %>
 
     var has_standard_checker = $("#edit-standard_checker").val();
@@ -136,14 +149,15 @@ function checkingDialogOnChange(field)
     $("#edit-checker_env-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
 
     var valuer_cmd = $("#edit-valuer_cmd").val();
-    if ($("#edit-valuer_cmd_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->valuer_cmd[0]" />) valuer_cmd = "X";
+    if ($("#edit-valuer_cmd_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->valuer_cmd" />) valuer_cmd = "X";
     $("#edit-valuer_sets_marked-div").toggle(valuer_cmd != "");
     $("#edit-interactive_valuer-div").toggle(valuer_cmd != "");
     $("#edit-valuer_env-div").toggle(valuer_cmd != "" && <s:v type="jsbool" value="prob_id > 0" />);
 
     var interactor_cmd = $("#edit-interactor_cmd").val();
-    if ($("#edit-interactor_cmd_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->interactor_cmd[0]" />) interactor_cmd = "X";
+    if ($("#edit-interactor_cmd_dflt").is(':checked') && <s:v type="jsbool" value="sup_prob && sup_prob->interactor_cmd" />) interactor_cmd = "X";
     $("#edit-interactor_time_limit-div").toggle(interactor_cmd != "");
+    $("#edit-interactor_real_time_limit-div").toggle(interactor_cmd != "");
     $("#edit-interactor_env-div").toggle(interactor_cmd != "" && <s:v type="jsbool" value="prob_id > 0" />);
 
     var init_cmd = $("#edit-init_cmd").val();

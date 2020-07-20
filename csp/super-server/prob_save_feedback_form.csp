@@ -118,8 +118,8 @@
         prob->team_enable_ce_view = team_enable_ce_view;
         prob->team_show_judge_report = team_show_judge_report;
         prob->show_checker_comment = show_checker_comment;
-        COPYSTR(open_tests);
-        COPYSTR(final_open_tests);
+        MOVESTR(open_tests);
+        MOVESTR(final_open_tests);
         prob->enable_tokens = enable_tokens;
         prob->tokens_for_user_ac = tokens_for_user_ac;
         MOVESTR(tokens);

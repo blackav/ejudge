@@ -1,0 +1,131 @@
+<%
+%><%@include "priv_includes.csp"
+%><%
+#include "ejudge/avatar_plugin.h"
+#include "ejudge/content_plugin.h"
+%><%@set getter_name = "csp_get_priv_crop_avatar_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
+%><%@page csp_view_priv_crop_avatar_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+    int enable_main_menu = 0;
+    unsigned char title_buf[1024];
+    const unsigned char *title = title_buf;
+    int other_user_id = 0;
+    const unsigned char *key = NULL;
+    const int avatar_width = AVATAR_WIDTH;
+    const int avatar_height = AVATAR_HEIGHT;
+    const int avatar_panel_width = AVATAR_PANEL_WIDTH;
+    const int avatar_panel_height = AVATAR_PANEL_HEIGHT;
+
+    if (opcaps_check(phr->caps, OPCAP_EDIT_USER) < 0) {
+        FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+
+    %><s:read var="other_user_id" ignoreerrors="yes" /><%
+    if (!teamdb_lookup(cs->teamdb_state, other_user_id)) {
+        FAIL(NEW_SRV_ERR_INV_USER_ID);
+    }
+
+    %><s:read var="key" ignoreerrors="yes" /><%
+    if (!key) key = "";
+
+    snprintf(title_buf, sizeof(title_buf), "Cropping avatar for user %d", 0);
+%><%@include "priv_header_croppie.csp"
+%>
+
+</div>
+
+<h2>Crop avatar</h2>
+
+<div class="userinfo-avatar-cont"><div id="AvatarCrop"></div></div>
+
+<br/>
+
+<input class="avatar-button" type="button" value="Save" onclick="saveCroppedAvatar()" />
+
+<script type="text/javascript">
+var self_url = "<s:v value="phr->self_url" json="yes" />";
+var SID = "<s:v value="phr->session_id" json="yes" />";
+var key = "<s:v value="key" json="yes" />";
+var other_user_id = "<s:v value="other_user_id" json="yes" />";
+var get_avatar_ac = <s:ac ac="get-avatar" />;
+var save_cropped_avatar_ajax_ac = <s:ac ac="save-cropped-avatar-ajax" />;
+var view_user_info_ac = <s:ac ac="view-user-info" />;
+var croppie = null;
+$(function() {
+    croppie = $('#AvatarCrop').croppie({
+        boundary : {
+            width : <s:v value="avatar_panel_width" />,
+            height: <s:v value="avatar_panel_height" />
+        },
+        viewport: {
+            width: <s:v value="avatar_width" />,
+            height: <s:v value="avatar_height" />
+        }
+        //enableZoom : false
+        });
+
+    croppie.croppie('bind', {
+        url: self_url + "?SID=" + SID + "&key=" + key + "&action=" + get_avatar_ac,
+        points : [0, 0, <s:v value="avatar_width" />, <s:v value="avatar_height" />],
+        zoom : 1
+    });
+});
+
+function saveCroppedAvatar()
+{
+    croppie.croppie('result', 'html').then(function(html) {
+        var result = "";
+        result += " " + html.style.width;
+        result += " " + html.style.height;
+        var c = html.children;
+        if (c.length == 1) {
+            var i = c[0];
+            result += " " + i.height;
+            result += " " + i.width;
+            result += " " + i.naturalHeight;
+            result += " " + i.naturalWidth;
+            result += " " + i.style.left;
+            result += " " + i.style.top;
+            //alert(result);
+            $.ajax({
+                type: "POST",
+                url: self_url,
+                data: {
+                    SID: SID,
+                    action: save_cropped_avatar_ajax_ac,
+                    other_user_id: other_user_id,
+                    key: key,
+                    width: html.style.width,
+                    height: html.style.height,
+                    left: i.style.left,
+                    top: i.style.top
+                },
+                contentType: "application/x-www-form-urlencoded; charset=utf-8",
+                dataType: "json",
+                success: function(data) {
+                    if (data.result < 0) {
+                        alert(data.message);
+                    } else {
+                        window.location.href = self_url + '?SID=' + SID + "&action=" + view_user_info_ac + "&user_id=" + other_user_id;
+                    }
+                },
+                error: function(data) {
+                    alert("request failed");
+                }
+            });
+         }
+    });
+}
+</script>
+
+
+
+<%@include "priv_footer.csp"
+%><%
+cleanup:
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>

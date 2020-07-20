@@ -1,6 +1,6 @@
 /* -*- mode:c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This library is free software; you can redistribute it and/or
@@ -16,9 +16,12 @@
 
 #include "ejudge/osdeps.h"
 
+#include <string.h>
+
+#if 0
 /* names of signals */
 #define SIGNUM 31
-static const char *signames[SIGNUM] = 
+static const char *signames[SIGNUM] =
 {
   "(unknown signal)",
   "SIGHUP",     "SIGINT",    "SIGQUIT",   "SIGILL",
@@ -30,6 +33,7 @@ static const char *signames[SIGNUM] =
   "SIGVTALRM",  "SIGPROF",   "SIGWINCH",  "SIGIO",
   "SIGPWR"
 };
+#endif
 
 /**
  * NAME:    os_GetSignalString
@@ -40,7 +44,10 @@ static const char *signames[SIGNUM] =
 const char *
 os_GetSignalString(int s)
 {
+  /*
   if (s <= 0 || s >= SIGNUM)
     return signames[0];
   return signames[s];
+  */
+  return strsignal(s);
 }

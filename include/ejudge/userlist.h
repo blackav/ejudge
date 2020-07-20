@@ -3,7 +3,7 @@
 #ifndef __USERLIST_H__
 #define __USERLIST_H__
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -148,6 +148,9 @@ enum
     USERLIST_T_FIELD7,
     USERLIST_T_FIELD8,
     USERLIST_T_FIELD9,
+    USERLIST_T_AVATAR_STORE,
+    USERLIST_T_AVATAR_ID,
+    USERLIST_T_AVATAR_SUFFIX,
     USERLIST_T_USERGROUPS,
     USERLIST_T_USERGROUP,
     USERLIST_T_USERGROUPMEMBERS,
@@ -175,6 +178,7 @@ enum
     USERLIST_A_LOCKED,
     USERLIST_A_INCOMPLETE,
     USERLIST_A_DISQUALIFIED,
+    USERLIST_A_REG_READONLY,
     USERLIST_A_STATUS,
     USERLIST_A_LAST_PWDCHANGE,
     USERLIST_A_PUBLIC,
@@ -205,6 +209,7 @@ enum
     USERLIST_A_USER_ID,
     USERLIST_A_CLIENT_KEY,
     USERLIST_A_TOTAL,
+    USERLIST_A_IS_WS,
 
     USERLIST_LAST_ATTN,
   };
@@ -284,9 +289,12 @@ enum
     USERLIST_NC_FIELD7,
     USERLIST_NC_FIELD8,
     USERLIST_NC_FIELD9,
+    USERLIST_NC_AVATAR_STORE,
+    USERLIST_NC_AVATAR_ID,
+    /* 140 */
+    USERLIST_NC_AVATAR_SUFFIX,
     USERLIST_NC_CREATE_TIME,
     USERLIST_NC_LAST_LOGIN_TIME,
-    /* 140 */
     USERLIST_NC_LAST_CHANGE_TIME,
     USERLIST_NC_LAST_PWDCHANGE_TIME,
 
@@ -413,6 +421,7 @@ struct userlist_cookie
   int role;
   int recovery;
   int team_login;               /* used in case when team_passwd != reg_passwd*/
+  int is_ws;                    /* for WebSocket use */
 };
 
 struct userlist_contest
@@ -474,6 +483,9 @@ struct userlist_user_info
   unsigned char *field7;
   unsigned char *field8;
   unsigned char *field9;
+  unsigned char *avatar_store;
+  unsigned char *avatar_id;
+  unsigned char *avatar_suffix;
   struct userlist_members *members;
 
   time_t create_time;
@@ -520,9 +532,9 @@ struct userlist_user
   time_t last_access_time;
   time_t last_pwdchange_time;
 
-  /* the contest-specific information */
-  int cntsinfo_a;
-  struct userlist_user_info **cntsinfo;
+  /* the contest-specific information: sorted by contest_id, for bsearch */
+  int cis_a;
+  struct userlist_user_info **cis;
 
   /* the default (legacy) values for contest-specific fields */
   /* also these fields are returned when contest_id is provided for
@@ -620,6 +632,32 @@ struct userlist_list
 
   /* group members information */
   struct xml_tree *groupmembers_node;
+};
+
+struct userlist_contest_info
+{
+  int user_id;
+  int contest_id;
+  char *login;
+  char *name;
+  int reg_status;
+  int reg_flags;
+};
+
+struct userlist_api_key
+{
+  struct xml_tree b;
+
+  char token[32]; // 256-bit token key in binary form
+  char secret[32];
+  int user_id;
+  int contest_id;
+  time_t create_time;
+  time_t expiry_time;
+  char *payload;
+  char *origin;
+  int all_contests;
+  int role;
 };
 
 // unparse modes
@@ -739,7 +777,15 @@ int userlist_build_cookie_hash(struct userlist_list *p);
 int userlist_cookie_hash_add(struct userlist_list *, const struct userlist_cookie *);
 int userlist_cookie_hash_del(struct userlist_list *, const struct userlist_cookie *);
 
-void userlist_expand_cntsinfo(struct userlist_user *u, int contest_id);
+void
+userlist_insert_user_info(
+        struct userlist_user *u,
+        int contest_id,
+        struct userlist_user_info *ui);
+struct userlist_user_info *
+userlist_remove_user_info(
+        struct userlist_user *u,
+        int contest_id);
 
 struct userlist_user_info *
 userlist_new_cntsinfo(struct userlist_user *u, int contest_id,
@@ -847,5 +893,16 @@ enum
 };
 
 int userlist_parse_filter_op(const unsigned char *str);
+
+int
+userlist_user_count_contests(struct userlist_user *u);
+int
+userlist_user_count_cookies(struct userlist_user *u);
+
+void
+userlist_api_key_free(struct userlist_api_key *apk);
+void
+userlist_contest_info_free(struct userlist_contest_info *uci);
+const char *userlist_unparse_user_role(int role);
 
 #endif /* __USERLIST_H__ */

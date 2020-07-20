@@ -2,6 +2,7 @@
 %><%@include "includes.csp"
 %><%
 #define COPYSTR(f) snprintf(prob->f, sizeof(prob->f), "%s", (f))
+#define MOVESTR(f) xfree(prob->f); prob->f = f; f = NULL
 
 %><%@set getter_name = "csp_get_prob_save_id_form"
 %><%@set ac_prefix = "SSERV_CMD_"
@@ -15,6 +16,7 @@
     int prob_id = 0;
     unsigned char *short_name = NULL;
     unsigned char *internal_name = NULL;
+    unsigned char *uuid = NULL;
     unsigned char *long_name = NULL;
     unsigned char *super = NULL;
     const unsigned char *type = NULL;
@@ -31,7 +33,8 @@
 
 %><s:read var="prob_id" required="yes" /><%
 %><s:read var="short_name" normalize="yes" nonnull="yes" /><%
-%><s:read var="internal_name" normalize="yes" nonnull="yes" /><%
+%><s:read var="internal_name" normalize="yes" /><%
+%><s:read var="uuid" normalize="yes" /><%
 %><s:read var="long_name" normalize="yes" nonnull="yes" /><%
 %><s:read var="super" normalize="yes" nonnull="yes" /><%
 %><s:read var="type" /><%
@@ -60,10 +63,10 @@
             fprintf(msg_f, "short_name is not unique<br/>");
             FAIL(SSERV_ERR_INVALID_PARAMETER);
         }
-        if (*internal_name) {
-            xfree(internal_name);
-            internal_name = xstrdup("");
-        }
+        xfree(internal_name);
+        internal_name = NULL;
+        xfree(uuid);
+        uuid = NULL;
         if (*super) {
             xfree(super);
             super = xstrdup("");
@@ -85,7 +88,10 @@
             }
         }
         // internal_name must be unique
-        if (*internal_name) {
+        if (internal_name && !*internal_name) {
+            xfree(internal_name); internal_name = NULL;
+        }
+        if (internal_name) {
             other_prob = super_serve_find_problem(phr->ss, internal_name);
             if (other_prob && other_prob != prob) {
                 fprintf(msg_f, "internal_name is not unique<br/>");
@@ -110,9 +116,10 @@
 
     if (!retval && phr->ss) {
         COPYSTR(short_name);
-        COPYSTR(internal_name);
-        COPYSTR(long_name);
+        MOVESTR(internal_name);
+        MOVESTR(long_name);
         COPYSTR(super);
+        MOVESTR(uuid);
         prob->type = type_val;
         prob->variant_num = variant_num;
         prob->autoassign_variants = autoassign_variants;
@@ -132,6 +139,7 @@ cleanup:;
     xfree(msg_s);
     xfree(short_name);
     xfree(internal_name);
+    xfree(uuid);
     xfree(long_name);
     xfree(super);
 %>

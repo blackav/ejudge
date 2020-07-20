@@ -1,0 +1,976 @@
+<%
+%><%
+// includes here
+#include "ejudge/new-server.h"
+#include "ejudge/new_server_pi.h"
+#include "ejudge/new_server_proto.h"
+#include "ejudge/external_action.h"
+#include "ejudge/misctext.h"
+#include "ejudge/internal_pages.h"
+#include "ejudge/charsets.h"
+#include "ejudge/fileutl.h"
+#include "ejudge/html.h"
+#include "ejudge/contests.h"
+#include "ejudge/prepare.h"
+#include "ejudge/sformat.h"
+#include "ejudge/runlog.h"
+#include "ejudge/teamdb.h"
+#include "ejudge/team_extra.h"
+#include "ejudge/xuser_plugin.h"
+
+#include "ejudge/logger.h"
+
+#include <stdio.h>
+#include <limits.h>
+#include <libintl.h>
+
+#define _(x) gettext(x)
+
+static int
+sec_to_min(int rounding_mode, int secs)
+{
+  switch (rounding_mode) {
+  case SEC_CEIL:
+    return (secs + 59) / 60;
+  case SEC_FLOOR:
+    return secs / 60;
+  case SEC_ROUND:
+    return (secs + 30) / 60;
+  }
+  abort();
+}
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@function write_standings_page(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr, int page_ind, int need_page_table)
+%><%
+    int retval = 0;
+    struct standings_style ss;
+    struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+    StandingsPage *pg = (StandingsPage*) ps;
+    StandingsExtraInfo *sii = (StandingsExtraInfo*) phr->extra_info;
+    const struct contest_desc *cnts = phr->cnts;
+    const unsigned char *head_style = NULL;
+    struct contest_extra *extra = phr->extra;
+    serve_state_t cs = NULL;
+    const struct section_global_data *global = NULL;
+    unsigned char format_buf[1024];
+    unsigned char dur_buf[1024];
+    unsigned char score_buf[1024];
+
+    const unsigned char *r0_attr = "";
+    const unsigned char *r_attrs[2][2] = { { "", "" }, { "", "" } };
+    const unsigned char *rT_attr = "";
+    const unsigned char *pr_attrs[4] = { "", "", "", ""};
+    const unsigned char *pc_attrs[2] = { "", "" };
+
+    if (extra) cs = extra->serve_state;
+    if (cs) global = cs->global;
+    if (sii->client_flag && cnts && cnts->team_head_style && *cnts->team_head_style) {
+        head_style = cnts->team_head_style;
+    } else {
+        head_style = "h2";
+    }
+
+    stand_setup_style(&ss, global, sii->force_fancy_style);
+    int attr_num = sarray_len(global->stand_row_attr);
+    if (attr_num > 0) {
+        int i = 0;
+        if (attr_num >= 5) {
+            r0_attr = global->stand_row_attr[i++];
+            r_attrs[0][0] = global->stand_row_attr[i++];
+            r_attrs[0][1] = global->stand_row_attr[i++];
+            r_attrs[1][0] = global->stand_row_attr[i++];
+            r_attrs[1][1] = global->stand_row_attr[i++];
+            attr_num -= 5;
+        }
+        if (attr_num >= 1) {
+            rT_attr = global->stand_row_attr[i++];
+            attr_num -= 1;
+        }
+    }
+    attr_num = sarray_len(global->stand_page_row_attr);
+    for (int i = 0; i < 4 && i < attr_num; i++) {
+        pr_attrs[i] = global->stand_page_row_attr[i];
+    }
+    attr_num = sarray_len(global->stand_page_col_attr);
+    for (int i = 0; i < 2 && i < attr_num; i++) {
+        pc_attrs[i] = global->stand_page_col_attr[i];
+    }
+
+%><%
+    FILE *saved_out_f = out_f;
+    char *title_s = NULL;
+    size_t title_z = 0;
+    out_f = open_memstream(&title_s, &title_z);
+
+    if (sii->user_name && sii->user_name[0]) {
+        %><s:v value="sii->user_name" /> - <%
+    } else {
+        %><s:_>Contest</s:_> <%
+    }
+    %>&quot;<s:v value="cnts->name" checkExpr="" />&quot; - <%
+    if (pg->user_start_time <= 0) {
+        %><s:_>Contest is not started</s:_><%
+    } else {
+        time_t rel_time = pg->cur_time;
+        if (rel_time < pg->user_start_time) rel_time = pg->user_start_time;
+        if (pg->user_stop_time > 0 && rel_time > pg->user_stop_time) rel_time = pg->user_stop_time;
+        int show_astr_time = global->show_astr_time;
+        if (global->is_virtual && !sii->user_id) {
+            show_astr_time = 1;
+        }
+        if (show_astr_time) {
+            duration_str(1, pg->cur_time, pg->user_start_time, dur_buf, 0);
+        } else {
+            duration_str(0, rel_time, pg->user_start_time, dur_buf, 0);
+        }
+        %>[<s:v value="dur_buf" escape="no" />]<%
+        if (pg->user_stop_time > 0) {
+            %>, <s:_>finished</s:_><%
+            if (pg->fog_flag) {
+                %>, <s:_>frozen</s:_><%
+            }
+        } else {
+            %>, <s:_>in progress</s:_><%
+            if (pg->fog_flag) {
+                %>, <s:_>frozen</s:_><%
+            }
+        }
+    }
+
+    fclose(out_f); out_f = saved_out_f; saved_out_f = NULL;
+
+    if (!sii->only_table_flag) {
+        if (!sii->client_flag) {
+            stand_write_header(out_f, sii->header_str, global->charset, title_s);
+        } else if (sii->user_mode) {
+            %><s:indir value="cnts->team_head_style"><s:v value="title_s" escape="no" checkExpr="" /></s:indir><%
+        } else {
+            %><h2><s:v value="title_s" escape="no" checkExpr="" /></h2><%
+        }
+    }
+    free(title_s); title_s = NULL;
+%><%
+
+    if (pg->not_started_flag) {
+        if (!sii->only_table_flag) {
+%>
+<s:indir value="head_style"><s:_>The contest is not started</s:_></s:indir>
+<%
+        }
+        goto do_footer;
+    }
+%>
+
+<table class="table-14">
+<%
+    if (pg->last_success_run >= 0) {
+        const struct run_entry *pe = &pg->runs[pg->last_success_run];
+        int user_ind = -1;
+        if (pe->user_id > 0 && pe->user_id < pg->t_max) user_ind = pg->t_rev[pe->user_id];
+        StandingsUserRow *row = NULL;
+        if (user_ind >= 0) row = &pg->rows[user_ind];
+        const struct section_problem_data *prob = NULL;
+        if (pe->prob_id > 0 && pe->prob_id <= cs->max_prob) prob = cs->probs[pe->prob_id];
+        duration_str(global->show_astr_time, pe->time, row->start_time, dur_buf, sizeof(dur_buf));
+%>
+  <s:tr attr="ss.success_attr">
+    <td><s:_>Last success</s:_>:</td>
+    <td><s:v value="dur_buf" escape="no" />, <%
+        if (global->team_info_url && global->team_info_url[0]) {
+            struct teamdb_export u_info;
+            teamdb_export_team(cs->teamdb_state, pe->user_id, &u_info);
+            sformat_message(format_buf, sizeof(format_buf), 0, global->team_info_url, NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
+            %><a href="<s:v value="format_buf" escape="no" />"><%
+        }
+        %><s:v value="row->name" fullCheckExpr="row && row->name" /><%
+        if (global->team_info_url && global->team_info_url[0]) {
+            %></a><%
+        }
+        %>, <%
+        if (global->prob_info_url && global->prob_info_url[0]) {
+            sformat_message(format_buf, sizeof(format_buf), 0, global->prob_info_url, NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+            %><a href="<s:v value="format_buf" escape="no" />"><%
+        }
+        if (prob->stand_name) {
+            %><s:v value="prob->stand_name" escape="no" /><%
+        } else {
+            %><s:v value="prob->short_name" escape="no" /><%
+        }
+        if (global->prob_info_url && global->prob_info_url[0]) {
+            %></a><%
+        }
+%>.</td>
+  </s:tr>
+<%
+    }
+%>
+<%
+    if (pg->last_submit_run >= 0) {
+        const struct run_entry *pe = &pg->runs[pg->last_submit_run];
+        int user_ind = -1;
+        if (pe->user_id > 0 && pe->user_id < pg->t_max) user_ind = pg->t_rev[pe->user_id];
+        StandingsUserRow *row = NULL;
+        if (user_ind >= 0) row = &pg->rows[user_ind];
+        const struct section_problem_data *prob = NULL;
+        if (pe->prob_id > 0 && pe->prob_id <= cs->max_prob) prob = cs->probs[pe->prob_id];
+        duration_str(global->show_astr_time, pe->time, row->start_time, dur_buf, sizeof(dur_buf));
+%>
+  <s:tr attr="ss.success_attr">
+    <td><s:_>Last submit</s:_>:</td>
+    <td><s:v value="dur_buf" escape="no" />, <%
+        if (global->team_info_url && global->team_info_url[0]) {
+            struct teamdb_export u_info;
+            teamdb_export_team(cs->teamdb_state, pe->user_id, &u_info);
+            sformat_message(format_buf, sizeof(format_buf), 0, global->team_info_url, NULL, NULL, NULL, NULL, &u_info, 0, 0, 0);
+            %><a href="<s:v value="format_buf" escape="no" />"><%
+        }
+        %><s:v value="row->name" fullCheckExpr="row && row->name" /><%
+        if (global->team_info_url && global->team_info_url[0]) {
+            %></a><%
+        }
+        %>, <%
+        if (global->prob_info_url && global->prob_info_url[0]) {
+            sformat_message(format_buf, sizeof(format_buf), 0, global->prob_info_url, NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+            %><a href="<s:v value="format_buf" escape="no" />"><%
+        }
+        if (prob->stand_name) {
+            %><s:v value="prob->stand_name" escape="no" /><%
+        } else {
+            %><s:v value="prob->short_name" escape="no" /><%
+        }
+        if (global->prob_info_url && global->prob_info_url[0]) {
+            %></a><%
+        }
+%>.</td>
+  </s:tr>
+<%
+    }
+%>
+<%
+    if (pg->total_trans > 0) {
+        const unsigned char *cell_attr = "";
+        if (ss.trans_attr && ss.trans_attr[0]) cell_attr = ss.trans_attr;
+%>
+  <s:tr attr="ss.success_attr">
+    <s:td attr="cell_attr"><s:_>Runs being processed</s:_></s:td>
+    <s:td attr="cell_attr"><s:v value="pg->total_trans" /></s:td>
+  </s:tr>
+<%
+    }
+    if (pg->total_prs > 0) {
+        const unsigned char *cell_attr = "";
+        if (ss.pr_attr && ss.pr_attr[0]) cell_attr = ss.pr_attr;
+%>
+  <s:tr attr="ss.success_attr">
+    <s:td attr="cell_attr"><s:_>Runs pending review</s:_></s:td>
+    <s:td attr="cell_attr"><s:v value="pg->total_prs" /></s:td>
+  </s:tr>
+<%
+    }
+    if (pg->total_summoned > 0) {
+        const unsigned char *cell_attr = "";
+        if (ss.sm_attr && ss.sm_attr[0]) cell_attr = ss.sm_attr;
+%>
+  <s:tr attr="ss.success_attr">
+    <s:td attr="cell_attr"><s:_>Runs summoned for defence</s:_></s:td>
+    <s:td attr="cell_attr"><s:v value="pg->total_summoned" /></s:td>
+  </s:tr>
+<%
+    }
+    if (pg->total_rejected > 0) {
+        const unsigned char *cell_attr = "";
+        if (ss.rj_attr && ss.rj_attr[0]) cell_attr = ss.rj_attr;
+%>
+  <s:tr attr="ss.success_attr">
+    <s:td attr="cell_attr"><s:_>Rejected runs</s:_></s:td>
+    <s:td attr="cell_attr"><s:v value="pg->total_rejected" /></s:td>
+  </s:tr>
+<%
+    }
+    if (pg->total_pending > 0) {
+        const unsigned char *cell_attr = "";
+        if (ss.trans_attr && ss.trans_attr[0]) cell_attr = ss.trans_attr;
+%>
+  <s:tr attr="ss.success_attr">
+    <s:td attr="cell_attr"><s:_>Runs pending testing</s:_></s:td>
+    <s:td attr="cell_attr"><s:v value="pg->total_pending" /></s:td>
+  </s:tr>
+<%
+    }
+    if (pg->total_accepted > 0) {
+        const unsigned char *cell_attr = "";
+        if (ss.trans_attr && ss.trans_attr[0]) cell_attr = ss.trans_attr;
+%>
+  <s:tr attr="ss.success_attr">
+    <s:td attr="cell_attr"><s:_>Runs accepted for testing</s:_></s:td>
+    <s:td attr="cell_attr"><s:v value="pg->total_accepted" /></s:td>
+  </s:tr>
+<%
+    }
+    if (pg->total_disqualified > 0) {
+        const unsigned char *cell_attr = "";
+        if (ss.disq_attr && ss.disq_attr[0]) cell_attr = ss.disq_attr;
+%>
+  <s:tr attr="ss.success_attr">
+    <s:td attr="cell_attr"><s:_>Disqualified runs</s:_></s:td>
+    <s:td attr="cell_attr"><s:v value="pg->total_disqualified" /></s:td>
+  </s:tr>
+<%
+    }
+    if (pg->total_check_failed > 0) {
+        const unsigned char *cell_attr = "";
+        if (ss.fail_attr && ss.fail_attr[0]) cell_attr = ss.fail_attr;
+%>
+  <s:tr attr="ss.success_attr">
+    <s:td attr="cell_attr"><s:_>Check failed runs</s:_></s:td>
+    <s:td attr="cell_attr"><s:v value="pg->total_check_failed" /></s:td>
+  </s:tr>
+<%
+    }
+%>
+</table>
+
+<%
+    if (need_page_table && pg->total_pages > 1 && page_ind >= 0) {
+%>
+<table class="table-14">
+  <s:tr attr="ss.page_cur_attr">
+    <td colspan="2">Page <s:v value="page_ind + 1"/> of <s:v value="pg->total_pages" />.</td> <% /* FIXME: localize */ %>
+  </s:tr>
+</table>
+
+<table<s:v value="ss.page_table_attr" escape="no" />>
+  <s:tr attr="pr_attrs[0]">
+    <s:td attr="pc_attrs[0]">&nbsp;</s:td>
+<%
+        int j;
+        for (j = 0; j < pg->total_pages; ++j) {
+            StandingsTablePage *tp = &pg->pages[j];
+%>
+    <s:td attr="pc_attrs[1]"><%
+            if (page_ind != j) {
+                %><a href="<s:v value="tp->pgref" escape="no" />"><%
+            }
+            %><s:v value="j + 1" /><%
+            if (page_ind != j) {
+                %></a><%
+            }
+%></s:td>
+<%
+        }
+%>
+  </s:tr>
+  <s:tr attr="pr_attrs[1]">
+    <s:td attr="pc_attrs[0]"><s:_>Place</s:_></s:td>
+<%
+        for (j = 0; j < pg->total_pages; ++j) {
+            StandingsTablePage *tp = &pg->pages[j];
+%>
+    <s:td attr="pc_attrs[1]"><%
+            if (page_ind != j) {
+                %><a href="<s:v value="tp->pgref" escape="no" />"><%
+            }
+            %>[<s:v value="tp->pg_n1" />-<s:v value="tp->pg_n2" />]<%
+            if (page_ind != j) {
+                %></a><%
+            }
+%></s:td>
+<%
+        }
+%>
+  </s:tr>
+  <s:tr attr="pr_attrs[2]">
+    <s:td attr="pc_attrs[0]"><s:_>Solved</s:_></s:td>
+<%
+        for (j = 0; j < pg->total_pages; ++j) {
+            StandingsTablePage *tp = &pg->pages[j];
+%>
+    <s:td attr="pc_attrs[1]"><%
+            if (page_ind != j) {
+                %><a href="<s:v value="tp->pgref" escape="no" />"><%
+            }
+            %>[<s:v value="pg->rows[pg->t_sort[tp->pg_n1 - 1]].tot_full" />-<s:v value="pg->rows[pg->t_sort[tp->pg_n2 - 1]].tot_full" />]<%
+            if (page_ind != j) {
+                %></a><%
+            }
+%></s:td>
+<%
+        }
+%>
+  </s:tr>
+  <s:tr attr="pr_attrs[3]">
+    <s:td attr="pc_attrs[0]"><s:_>Score</s:_></s:td>
+<%
+        for (j = 0; j < pg->total_pages; ++j) {
+            StandingsTablePage *tp = &pg->pages[j];
+%>
+    <s:td attr="pc_attrs[1]"><%
+            if (page_ind != j) {
+                %><a href="<s:v value="tp->pgref" escape="no" />"><%
+            }
+            %>[<s:v value="pg->rows[pg->t_sort[tp->pg_n1 - 1]].tot_score" />-<s:v value="pg->rows[pg->t_sort[tp->pg_n2 - 1]].tot_score" />]<%
+            if (page_ind != j) {
+                %></a><%
+            }
+%></s:td>
+<%
+        }
+%>
+  </s:tr>
+</table>
+<%
+    }
+%>
+
+<table<s:v value="ss.table_attr" escape="no" />>
+  <s:tr attr="r0_attr">
+    <s:th attr="ss.place_attr"><s:_>Place</s:_></s:th>
+    <s:th attr="ss.team_attr"><s:_>User</s:_></s:th>
+<%
+    if (global->stand_show_avatar > 0) {
+%>
+    <th width="98px" class="st_avatar userpic"><s:_>Avatar</s:_></th>
+<%
+    }
+    if (global->stand_extra_format && global->stand_extra_format[0]) {
+%>
+    <s:th attr="ss.extra_attr"><%
+        if (global->stand_extra_legend && global->stand_extra_legend[0]) {
+            %><s:v value="global->stand_extra_legend" escape="no" /><%
+        } else {
+            %><s:_>Extra info</s:_><%
+        }
+        %></s:th>
+<%
+    }
+%>
+<%
+    if (global->stand_show_contestant_status && global->contestant_status_num > 0) {
+%>
+    <s:th attr="ss.contestant_status_attr"><s:_>Status</s:_></s:th>
+<%
+    }
+%>
+<%
+    if (global->stand_show_warn_number) {
+%>
+    <s:th attr="ss.warn_number_attr"><s:_>Warnings</s:_></s:th>
+<%
+    }
+%>
+<%
+    int prob_ind;
+    for (prob_ind = 0; prob_ind < pg->p_tot; ++prob_ind) {
+        int prob_id = pg->p_ind[prob_ind];
+        const struct section_problem_data *prob = cs->probs[prob_id];
+        if (prob->stand_last_column > 0) continue;
+        const unsigned char *col_attr = prob->stand_attr;
+        if (!col_attr) col_attr = ss.prob_attr;
+%>
+    <s:th attr="col_attr"><%
+        if (global->prob_info_url && global->prob_info_url[0]) {
+            sformat_message(format_buf, sizeof(format_buf), 0, global->prob_info_url, NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+            %><a href="<s:v value="format_buf" escape="no" />"><%
+        }
+        if (prob->stand_name) {
+            %><s:v value="prob->stand_name" /><%
+        } else {
+            %><s:v value="prob->short_name" /><%
+        }
+        if (global->prob_info_url && global->prob_info_url[0]) {
+            %></a><%
+        }
+%></s:th>
+<%
+    }
+    if (global->score_system == SCORE_ACM) {
+%>
+    <s:th attr="ss.solved_attr"><s:_>Total</s:_></s:th>
+    <s:th attr="ss.penalty_attr"><s:_>Penalty</s:_></s:th>
+<%
+    } else if (global->score_system == SCORE_MOSCOW) {
+%>
+    <s:th attr="ss.score_attr"><s:_>Score</s:_></s:th>
+    <s:th attr="ss.penalty_attr"><s:_>Penalty</s:_></s:th>
+<%
+    } else {
+%>
+    <s:th attr="ss.solved_attr"><s:_>Solved</s:_></s:th>
+    <s:th attr="ss.score_attr"><s:_>Score</s:_></s:th>
+<%
+        if (global->stand_enable_penalty) {
+%>
+    <s:th attr="ss.penalty_attr"><s:_>Penalty</s:_></s:th>
+<%
+        }
+    }
+%>
+<%
+    if (pg->last_col_ind >= 0) {
+        for (prob_ind = 0; prob_ind < pg->p_tot; ++prob_ind) {
+            int prob_id = pg->p_ind[prob_ind];
+            const struct section_problem_data *prob = cs->probs[prob_id];
+            if (prob->stand_last_column <= 0) continue;
+            const unsigned char *col_attr = prob->stand_attr;
+            if (!col_attr) col_attr = ss.prob_attr;
+%>
+    <s:th attr="col_attr"><%
+            if (global->prob_info_url && global->prob_info_url[0]) {
+                sformat_message(format_buf, sizeof(format_buf), 0, global->prob_info_url, NULL, prob, NULL, NULL, NULL, 0, 0, 0);
+                %><a href="<s:v value="format_buf" escape="no" />"><%
+            }
+            if (prob->stand_name) {
+                %><s:v value="prob->stand_name" /><%
+            } else {
+                %><s:v value="prob->short_name" /><%
+            }
+            if (global->prob_info_url && global->prob_info_url[0]) {
+                %></a><%
+            }
+%></s:th>
+<%
+        }
+    }
+%>
+  </s:tr>
+
+<%
+    int ind_low = 0;
+    int ind_high = pg->t_tot;
+    int sorted_ind;
+    if (pg->total_pages > 1 && page_ind >= 0) {
+        if (page_ind >= pg->total_pages) {
+            ind_low = pg->t_tot;
+        } else {
+            ind_low = pg->pages[page_ind].pg_n1 - 1;
+            ind_high = pg->pages[page_ind].pg_n1 - 1;
+        }
+    }
+
+    int prev_prob = -1;
+    int row_ind = 0;
+    int group_ind = 1;
+    for (sorted_ind = ind_low; sorted_ind < ind_high; ++sorted_ind) {
+        int user_ind = pg->t_sort[sorted_ind];
+        int user_id = pg->t_ind[user_ind];
+        struct teamdb_export u_info;
+        teamdb_export_team(cs->teamdb_state, user_id, &u_info);
+        const struct team_extra *t_extra = NULL;
+        if (pg->extras) {
+            t_extra = pg->extras->get(pg->extras, user_id);
+        }
+        StandingsUserRow *row = &pg->rows[user_ind];
+        if (row->tot_full != prev_prob) {
+            prev_prob = row->tot_full;
+            group_ind ^= 1;
+            row_ind = 0;
+        } else {
+            row_ind ^= 1;
+        }
+        const unsigned char *row_attr = r_attrs[group_ind][row_ind];
+        if (sii->user_id > 0 && sii->user_id == user_ind
+            && global->stand_self_row_attr && global->stand_self_row_attr[0]) {
+            row_attr = global->stand_self_row_attr;
+        } else if (global->is_virtual) {
+            int vstat = run_get_virtual_status(cs->runlog_state, user_id);
+            if (vstat == 1 && ss.r_row_attr[0]) {
+                row_attr = ss.r_row_attr;
+            } else if (vstat == 2 && ss.v_row_attr[0]) {
+                row_attr = ss.v_row_attr;
+            } else if (!vstat && ss.u_row_attr[0]) {
+                row_attr = ss.u_row_attr;
+            }
+        }
+
+        if (global->contestant_status_row_attr && t_extra && t_extra->status >= 0 && t_extra->status < global->contestant_status_num) {
+            row_attr = global->contestant_status_row_attr[t_extra->status];
+        }
+        StandingsPlace *place = &pg->places[sorted_ind];
+%>
+  <s:tr attr="row_attr">
+    <s:td attr="ss.place_attr"><%
+        if (place->t_n1 == place->t_n2) {
+            %><s:v value="place->t_n1 + 1" /><%
+        } else {
+            %><s:v value="place->t_n1 + 1" />-<s:v value="place->t_n2 + 1" /><%
+        }
+%></s:td>
+    <s:td attr="ss.team_attr"><%
+        if (global->team_info_url && global->team_info_url[0]) {
+            sformat_message(format_buf, sizeof(format_buf), 0, global->team_info_url,
+                            NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, 0);
+%><a href="<s:v value="format_buf" escape="no" />"><%
+        }
+%><s:v value="row->name" /><%
+        if (global->team_info_url && global->team_info_url[0]) {
+%></a><%
+        }
+%></s:td>
+<%
+        if (global->stand_show_avatar > 0) {
+%>
+    <td class="st_avatar userpic" width="98px"><%
+            if (row->avatar_url && row->avatar_url[0]) {
+                %><img alt="avatar" src="<s:v value="row->avatar_url" escape="no" />" /><%
+            }
+%></td>
+<%
+        }
+        if (global->stand_extra_format && global->stand_extra_format[0]) {
+            struct sformat_extra_data fed;
+            memset(&fed, 0, sizeof(fed));
+            fed.variant = find_user_variant(cs, u_info.id, 0);
+            sformat_message(format_buf, sizeof(format_buf), 1, global->stand_extra_format,
+                            NULL, NULL, NULL, NULL, &u_info, u_info.user, 0, &fed);
+%>
+    <s:td attr="ss.extra_attr"><s:v value="format_buf" /></s:td>
+<%
+        }
+%>
+<%
+        if (global->stand_show_contestant_status && global->contestant_status_num > 0) {
+%>
+    <s:td attr="ss.contestant_status_attr"><%
+            if (t_extra && t_extra->status >= 0 && t_extra->status < global->contestant_status_num) {
+                %><s:v value="global->contestant_status_legend[t_extra->status]" /><%
+            } else {
+                %>?<%
+            }
+%></s:td>
+<%
+        }
+%>
+<%
+        if (global->stand_show_warn_number) {
+%>
+    <s:td attr="ss.warn_number_attr"><%
+            if (t_extra && t_extra->warn_u > 0) {
+                %><s:v value="t_extra->warn_u" /><%
+            } else {
+                %>&nbsp;<%
+            }
+%></s:td>
+<%
+        }
+%>
+<%
+        for (prob_ind = 0; prob_ind < pg->p_tot; ++prob_ind) {
+            int prob_id = pg->p_ind[prob_ind];
+            const struct section_problem_data *prob = cs->probs[prob_id];
+            if (prob->stand_last_column > 0) continue;
+            int up_ind = (user_ind << pg->row_sh) + prob_ind;
+            StandingsCell *cell = &pg->cells[up_ind];
+            StandingsUserRow *row = &pg->rows[user_ind];
+%><%
+%><%@include "int_standings_cell.csp"
+%><%
+        }
+%><%
+        if (global->score_system == SCORE_ACM) {
+%>
+    <s:td attr="ss.solved_attr"><s:v value="row->tot_full" /></s:td>
+    <s:td attr="ss.penalty_attr"><s:v value="row->tot_penalty" /></s:td>
+<%
+        } else if (global->score_system == SCORE_MOSCOW) {
+%>
+    <s:td attr="ss.score_attr"><s:v value="row->tot_score" /></s:td>
+    <s:td attr="ss.penalty_attr"><s:v value="row->tot_penalty" /></s:td>
+<%
+        } else {
+%>
+    <s:td attr="ss.solved_attr"><s:v value="row->tot_full" /></s:td>
+    <s:td attr="ss.score_attr"><s:v value="row->tot_score" /></s:td>
+<%
+            if (global->stand_enable_penalty) {
+%>
+    <s:td attr="ss.penalty_attr"><s:v value="row->tot_penalty" /></s:td>
+<%
+            }
+        }
+%>
+<%
+        if (pg->last_col_ind >= 0) {
+            for (prob_ind = pg->last_col_ind; prob_ind < pg->p_tot; ++prob_ind) {
+                int prob_id = pg->p_ind[prob_ind];
+                const struct section_problem_data *prob = cs->probs[prob_id];
+                if (prob->stand_last_column <= 0) continue;
+                int up_ind = (user_ind << pg->row_sh) + prob_ind;
+                StandingsCell *cell = &pg->cells[up_ind];
+                StandingsUserRow *row = &pg->rows[user_ind];
+%><%
+%><%@include "int_standings_cell.csp"
+%>
+<%
+            }
+        }
+%>
+  </s:tr>
+<%
+    }
+%>
+
+  <s:tr attr="rT_attr">
+    <s:td attr="ss.place_attr">&nbsp;</s:td>
+    <s:td attr="ss.team_attr"><s:_>Total</s:_>:</s:td>
+<%
+    if (global->stand_show_avatar > 0) {
+%>
+    <td class="st_avatar userpic" width="98px">&nbsp;</td>
+<%
+    }
+%>
+<%
+    if (global->stand_extra_format && global->stand_extra_format[0]) {
+%>
+    <s:td attr="ss.extra_attr">&nbsp;</s:td>
+<%
+    }
+    if (global->stand_show_contestant_status && global->contestant_status_num > 0) {
+%>
+    <s:td attr="ss.contestant_status_attr">&nbsp;</s:td>
+<%
+    }
+    if (global->stand_show_warn_number) {
+%>
+    <s:td attr="ss.warn_number_attr">&nbsp;</s:td>
+<%
+    }
+    int ttot_att = 0;
+    for (prob_ind = 0, ttot_att = 0; prob_ind < pg->p_tot; ++prob_ind) {
+        const struct section_problem_data *prob = cs->probs[pg->p_ind[prob_ind]];
+        StandingsProblemColumn *col = &pg->columns[prob_ind];
+        if (prob->stand_last_column > 0) continue;
+        ttot_att += col->tot_att;
+%>
+    <s:td attr="ss.prob_attr"><s:v value="col->tot_att" /></s:td>
+<%
+    }
+%>
+    <s:td attr="ss.solved_attr"><s:v value="ttot_att" /></s:td>
+    <s:td attr="ss.penalty_attr">&nbsp;</s:td>
+<%
+    if (pg->last_col_ind >= 0) {
+        for (prob_ind = pg->last_col_ind; prob_ind < pg->p_tot; ++prob_ind) {
+            const struct section_problem_data *prob = cs->probs[pg->p_ind[prob_ind]];
+            StandingsProblemColumn *col = &pg->columns[prob_ind];
+            if (prob->stand_last_column <= 0) continue;
+%>
+    <s:td attr="ss.prob_attr"><s:v value="col->tot_att" /></s:td>
+<%
+        }
+    }
+%>
+  </s:tr>
+
+  <s:tr attr="rT_attr">
+    <s:td attr="ss.place_attr">&nbsp;</s:td>
+    <s:td attr="ss.team_attr"><s:_>Success</s:_>:</s:td>
+<%
+    if (global->stand_show_avatar > 0) {
+%>
+    <td class="st_avatar userpic" width="98px">&nbsp;</td>
+<%
+    }
+%>
+<%
+    if (global->stand_extra_format && global->stand_extra_format[0]) {
+%>
+    <s:td attr="ss.extra_attr">&nbsp;</s:td>
+<%
+    }
+    if (global->stand_show_contestant_status && global->contestant_status_num > 0) {
+%>
+    <s:td attr="ss.contestant_status_attr">&nbsp;</s:td>
+<%
+    }
+    if (global->stand_show_warn_number) {
+%>
+    <s:td attr="ss.warn_number_attr">&nbsp;</s:td>
+<%
+    }
+    int ttot_succ;
+    for (prob_ind = 0, ttot_succ = 0; prob_ind < pg->p_tot; ++prob_ind) {
+        const struct section_problem_data *prob = cs->probs[pg->p_ind[prob_ind]];
+        StandingsProblemColumn *col = &pg->columns[prob_ind];
+        if (prob->stand_last_column > 0) continue;
+        ttot_succ += col->succ_att;
+%>
+    <s:td attr="ss.prob_attr"><s:v value="col->succ_att" /></s:td>
+<%
+    }
+%>
+    <s:td attr="ss.solved_attr"><s:v value="ttot_succ" /></s:td>
+    <s:td attr="ss.penalty_attr">&nbsp;</s:td>
+<%
+    if (pg->last_col_ind >= 0) {
+        for (prob_ind = pg->last_col_ind; prob_ind < pg->p_tot; ++prob_ind) {
+            const struct section_problem_data *prob = cs->probs[pg->p_ind[prob_ind]];
+            if (prob->stand_last_column <= 0) continue;
+            StandingsProblemColumn *col = &pg->columns[prob_ind];
+%>
+    <s:td attr="ss.prob_attr"><s:v value="col->succ_att" /></s:td>
+<%
+        }
+    }
+%>
+  </s:tr>
+
+  <s:tr attr="rT_attr">
+    <s:td attr="ss.place_attr">&nbsp;</s:td>
+    <s:td attr="ss.team_attr">%:</s:td>
+<%
+    if (global->stand_show_avatar > 0) {
+%>
+    <td class="st_avatar userpic" width="98px">&nbsp;</td>
+<%
+    }
+%>
+<%
+    if (global->stand_extra_format && global->stand_extra_format[0]) {
+%>
+    <s:td attr="ss.extra_attr">&nbsp;</s:td>
+<%
+    }
+    if (global->stand_show_contestant_status && global->contestant_status_num > 0) {
+%>
+    <s:td attr="ss.contestant_status_attr">&nbsp;</s:td>
+<%
+    }
+    if (global->stand_show_warn_number) {
+%>
+    <s:td attr="ss.warn_number_attr">&nbsp;</s:td>
+<%
+    }
+    for (prob_ind = 0; prob_ind < pg->p_tot; ++prob_ind) {
+        const struct section_problem_data *prob = cs->probs[pg->p_ind[prob_ind]];
+        if (prob->stand_last_column > 0) continue;
+        StandingsProblemColumn *col = &pg->columns[prob_ind];
+        int perc = 0;
+        if (col->tot_att > 0) {
+            perc = (int) ((double) col->succ_att / col->tot_att * 100.0 + 0.5);
+        }
+%>
+    <s:td attr="ss.prob_attr"><s:v value="perc" />%</s:td>
+<%
+    }
+    int perc = 0;
+    if (ttot_att > 0) {
+        perc = (int) ((double) ttot_succ / ttot_att * 100.0 + 0.5);
+    }
+%>
+    <s:td attr="ss.solved_attr"><s:v value="perc" />%</s:td>
+    <s:td attr="ss.penalty_attr">&nbsp;</s:td>
+<%
+    if (pg->last_col_ind >= 0) {
+        for (prob_ind = pg->last_col_ind; prob_ind < pg->p_tot; ++prob_ind) {
+            const struct section_problem_data *prob = cs->probs[pg->p_ind[prob_ind]];
+            if (prob->stand_last_column <= 0) continue;
+            StandingsProblemColumn *col = &pg->columns[prob_ind];
+            int perc = 0;
+            if (col->tot_att > 0) {
+                perc = (int) ((double) col->succ_att / col->tot_att * 100.0 + 0.5);
+            }
+%>
+    <s:td attr="ss.prob_attr"><s:v value="perc" />%</s:td>
+<%
+        }
+    }
+%>
+  </s:tr>
+</table>
+
+<%
+do_footer:;
+    if (!sii->client_flag && !sii->only_table_flag) {
+        stand_write_footer(out_f, sii->footer_str);
+    }
+    html_armor_free(&ab);
+%><%@page csp_view_int_standings(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%
+// local vars here
+    int retval = 0;
+    StandingsPage *pg = (StandingsPage*) ps;
+    StandingsExtraInfo *sii = (StandingsExtraInfo*) phr->extra_info;
+
+    // just in case
+    ASSERT(phr->log_f == log_f);
+    ASSERT(phr->out_f == out_f);
+
+    if (pg->total_pages <= 1 && out_f && sii->charset_id <= 0) {
+        // nothing to paginate, output file already opened, no charset recoding
+        write_standings_page(ps, log_f, out_f, phr, -1, 0);
+        goto cleanup;
+    }
+    if (pg->total_pages <= 1 && out_f && sii->charset_id > 0) {
+        size_t z = 0;
+        char *s = NULL;
+        FILE *f = open_memstream(&s, &z);
+        write_standings_page(ps, log_f, f, phr, -1, 0);
+        fclose(f); f = NULL;
+        s = charset_encode_heap(sii->charset_id, s);
+        z = strlen(s);
+        for (size_t i = 0; i < z; ++i) {
+            putc_unlocked(s[i], out_f);
+        }
+        free(s);
+        goto cleanup;
+    }
+    if (pg->total_pages <= 1 && !out_f) {
+        size_t z = 0;
+        char *s = NULL;
+        out_f = open_memstream(&s, &z);
+        write_standings_page(ps, log_f, out_f, phr, -1, 0);
+        fclose(out_f); out_f = NULL;
+        if (sii->charset_id > 0) {
+            s = charset_encode_heap(sii->charset_id, s);
+            z = strlen(s);
+        }
+        generic_write_file(s, z, SAFE, sii->stand_dir, sii->file_name, NULL);
+        free(s);
+        goto cleanup;
+    }
+    ASSERT(pg->total_pages > 1);
+    if (sii->page_index >= 0) {
+        ASSERT(out_f);
+        if (sii->charset_id <= 0) {
+            write_standings_page(ps, log_f, out_f, phr, sii->page_index, 0);
+            goto cleanup;
+        }
+        ASSERT(sii->charset_id > 0);
+        size_t z = 0;
+        char *s = NULL;
+        FILE *f = open_memstream(&s, &z);
+        write_standings_page(ps, log_f, f, phr, sii->page_index, 0);
+        fclose(f); f = NULL;
+        s = charset_encode_heap(sii->charset_id, s);
+        z = strlen(s);
+        for (size_t i = 0; i < z; ++i) {
+            putc_unlocked(s[i], out_f);
+        }
+        free(s);
+        goto cleanup;
+    }
+    ASSERT(sii->page_index < 0);
+    ASSERT(!out_f);
+    for (int page_index = 0; page_index < pg->total_pages; ++page_index) {
+        size_t z = 0;
+        char *s = NULL;
+        FILE *f = open_memstream(&s, &z);
+        write_standings_page(ps, log_f, f, phr, page_index, 1);
+        fclose(f);
+        if (sii->charset_id > 0) {
+            s = charset_encode_heap(sii->charset_id, s);
+            z = strlen(s);
+        }
+        unsigned char n[PATH_MAX];
+        if (!page_index) {
+            snprintf(n, sizeof(n), "%s", sii->file_name);
+        } else {
+            snprintf(n, sizeof(n), sii->file_name2, page_index);
+        }
+        generic_write_file(s, z, SAFE, sii->stand_dir, n, NULL);
+        free(s);
+    }
+
+cleanup:;
+%>

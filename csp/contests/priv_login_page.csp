@@ -28,7 +28,7 @@
 
   l10n_setlocale(phr->locale_id);
   phr->client_key = 0;
-%><%@include "priv_header.csp" 
+%><%@include "priv_header.csp"
 %>
 </div>
 

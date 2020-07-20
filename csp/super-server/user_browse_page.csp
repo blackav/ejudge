@@ -128,7 +128,7 @@ jQuery(document).ready(function()
 {
     jQuery("#usertable").jqGrid({
         url: self_url,
-        postData: { 'SID' : SID, 'contest_id' : contest_id, 'action' : user_browse_data }, 
+        postData: { 'SID' : SID, 'contest_id' : contest_id, 'group_id' : group_id, 'action' : user_browse_data },
         datatype: 'json',
         colNames: [ 'NN', 'UId', 'User Login', 'E-mail', 'Name', 'Status', 'Flags' ],
         colModel: [
@@ -141,7 +141,7 @@ jQuery(document).ready(function()
             { name: 'flags', index: 'flags', sortable: false, search: false },
         ],
         rowNum : 10,
-        rowList : [10,20,30,50,100],
+        rowList : [10,20,30,50,100,500],
         pager : '#pager',
         sortname: 'id',
         sortorder : 'asc',
@@ -358,6 +358,20 @@ function injectSelectedUsers(id)
                 <td class="b0"><input type="radio" name="disqualified_op" value="1" /> Clear</td>
                 <td class="b0"><input type="radio" name="disqualified_op" value="2" /> Set</td>
                 <td class="b0"><input type="radio" name="disqualified_op" value="3" /> Toggle</td>
+            </tr>
+            <tr>
+                <td class="b0"><b>Privileged</b></td>
+                <td class="b0"><input type="radio" name="privileged_op" value="0" checked="checked" /> Do nothing</td>
+                <td class="b0"><input type="radio" name="privileged_op" value="1" /> Clear</td>
+                <td class="b0"><input type="radio" name="privileged_op" value="2" /> Set</td>
+                <td class="b0"><input type="radio" name="privileged_op" value="3" /> Toggle</td>
+            </tr>
+            <tr>
+                <td class="b0"><b>Reg. read-only</b></td>
+                <td class="b0"><input type="radio" name="reg_readonly_op" value="0" checked="checked" /> Do nothing</td>
+                <td class="b0"><input type="radio" name="reg_readonly_op" value="1" /> Clear</td>
+                <td class="b0"><input type="radio" name="reg_readonly_op" value="2" /> Set</td>
+                <td class="b0"><input type="radio" name="reg_readonly_op" value="3" /> Toggle</td>
             </tr>
             <tr><td class="b0"><s:submit ac="user-sel-change-reg-flags-page" value='"Change flags"'/></td></tr>
         </table>

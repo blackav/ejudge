@@ -12,6 +12,7 @@
         <%@expand MENU_YESNO3 "enable_text_form" "submission" "Enable textarea input form" "300" %>
         <%@expand MENU_YESNO3 "enable_submit_after_reject" "submission" "Enable submission after deadline for rejected runs" "300" %>
         <%@expand MENU_YESNO3 "binary" "submission" "Submit is binary" "300" %>
+        <%@expand MENU_YESNO3 "notify_on_submit" "submission" "Send notification to judges upon submission" "300" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_user_run_count" "submission" "Max submissions for the problem" "300" %>
         <%@expand MENU_TEXTFIELD "disable_language" "submission" "Disabled languages" "300" %>
         <%@expand MENU_TEXTFIELD "enable_language" "submission" "Enabled languages" "300" %>
@@ -42,7 +43,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -71,6 +72,7 @@ function popupSubmissionDialog(e, skipField)
     $("#SubmissionDialogProbId").val(prob_id);
 
     <%@expand COPY_YESNO3 "disable_user_submit"  %>
+    <%@expand COPY_YESNO3 "notify_on_submit"  %>
     <%@expand COPY_YESNO3 "disable_submit_after_ok"  %>
     <%@expand COPY_YESNO3 "advance_to_next"  %>
     <%@expand COPY_YESNO3 "disable_ctrl_chars"  %>

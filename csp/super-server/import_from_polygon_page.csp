@@ -1,0 +1,98 @@
+<%
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_import_from_polygon_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_import_from_polygon_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = NULL;
+    const unsigned char *subtitle = "importing problem from polygon";
+    opcap_t caps = 0, lcaps = 0;
+    struct sid_state *ss = phr->ss;
+    unsigned char *saved_login = NULL;
+    unsigned char *saved_password = NULL;
+    unsigned char *saved_url = NULL;
+    unsigned char prob_buf[64];
+    int prob_id;
+    int cur_page = 4;
+
+    prob_buf[0] = 0;
+
+    if (!ss->edited_cnts || !ss->global) {
+        FAIL(SSERV_ERR_NO_EDITED_CNTS);
+    }
+
+    ss_get_global_caps(phr, &caps);
+    ss_get_contest_caps(phr, ss->edited_cnts, &lcaps);
+    caps |= lcaps;
+
+    if (opcaps_check(lcaps, OPCAP_EDIT_CONTEST) < 0) {
+        FAIL(SSERV_ERR_PERM_DENIED);
+    }
+
+    if (ss->global->advanced_layout <= 0) {
+        fprintf(log_f, "advanced_layout must be set\n");
+        FAIL(SSERV_ERR_INV_OPER);
+    }
+
+    if (ss->update_state) {
+        %><s:redirect ac="download-progress-page" /><%
+        goto cleanup;
+    }
+
+    prob_id = ss_find_free_prob_id(ss);
+    problem_id_to_short_name(prob_id - 1, prob_buf);
+
+    ss_get_saved_auth(phr->login, &saved_login, &saved_password, &saved_url);
+    if (!saved_login) saved_login = xstrdup("");
+    if (!saved_password) saved_password = xstrdup("");
+    if (!saved_url) saved_url = xstrdup("");
+
+%><%@include "header.csp"
+%>
+
+<%@include "cnts_edit_cur_top_menu.csp"
+%>
+
+<h2>Importing problem from polygon</h2>
+
+<s:form>
+    <table class="b0">
+        <tr><td colspan="2" align="center" class="b0"><b>Ejudge problem identification</b></td></tr>
+        <tr><td class="b0">Id:</td><td class="b0"><s:textfield size="40" name="ejudge_id" value="" /></td></tr>
+        <tr><td class="b0"><b>Short name</b> *:</td><td class="b0"><s:textfield size="40" name="ejudge_short_name" value="prob_buf" check="no" /></td></tr>
+
+        <tr>
+            <td class="b0"><b>Language priority</b>:</td>
+            <td class="b0">
+                <select name="language_priority">
+                    <option></option>
+                    <option>ru,en</option>
+                    <option>en,ru</option>
+                </select>
+            </td>
+        </tr>
+
+        <tr><td colspan="2" align="center" class="b0"><b>Polygon information</b></td></tr>
+        <tr><td class="b0"><b>Login</b> *:</td><td class="b0"><s:textfield size="40" name="polygon_login" value="saved_login" checkExpr="" /></td></tr>
+        <tr><td class="b0"><b>Password</b> *:</td><td class="b0"><s:password size="40" name="polygon_password" value="saved_password" /></td></tr>
+        <tr><td class="b0">Save auth info:</td><td class="b0"><input type="checkbox" name="save_auth" value="1" checked="checked" /></td></tr>
+        <tr><td class="b0"><b>Problem id/name</b> *:</td><td class="b0"><input type="text" size="60" name="polygon_id" /></td></tr>
+        <tr><td class="b0">Polygon URL:</td><td class="b0"><s:textfield size="60" name="polygon_url" value="saved_url" checkExpr="" /></td></tr>
+        <tr><td class="b0">Assume max_vm_size == max_stack_size:</td><td class="b0"><input type="checkbox" name="max_stack_size" value="1" checked="checked" /></td></tr>
+        <tr><td class="b0">Ignore additional solutions:</td><td class="b0"><input type="checkbox" name="ignore_solutions" value="1" checked="checked" /></td></tr>
+        <tr><td class="b0">Fetch latest available packet (do not generate):</td><td class="b0"><input type="checkbox" name="fetch_latest_available" value="1" /></td></tr>
+
+        <tr><td class="b0"><s:submit ac="import-from-polygon-action" label="Import" /></td></tr>
+    </table>
+</s:form>
+
+<%@include "footer.csp"
+%><%
+cleanup:
+    l10n_resetlocale();
+    html_armor_free(&ab);
+    xfree(saved_login);
+    xfree(saved_password);
+    xfree(saved_url);
+%>

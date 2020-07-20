@@ -2,7 +2,7 @@
 #ifndef __COMPILE_PACKET_H__
 #define __COMPILE_PACKET_H__
 
-/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -34,6 +34,7 @@ struct compile_request_packet
   int use_uuid;
   int multi_header;                // 1, if multi-header/footer mode requested
   int lang_header;                 // 1, if header/footer lang-specific
+  int user_id;
   ej_uuid_t uuid;
   ej_size64_t max_vm_size;
   ej_size64_t max_stack_size;
@@ -45,6 +46,9 @@ struct compile_request_packet
   unsigned char *footer_pat;      // footer number pattern
   unsigned char *header_dir;      // directory with multiple headers and footers
   unsigned char *compiler_env_pat;// pattern for compiler environment files
+  unsigned char *user_login;
+  unsigned char *exam_cypher;
+  unsigned char *contest_server_id; // contest server to pass the compilation result to
   int run_block_len;
   void *run_block;
   int env_num;

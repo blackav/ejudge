@@ -65,5 +65,5 @@ os_CheckAccess(char const *path, int perms)
   }
   */
 
-  return 0;  
+  return 0;
 }

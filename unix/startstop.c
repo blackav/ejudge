@@ -66,7 +66,7 @@ start_switch_user(const unsigned char *user, const unsigned char *group)
   if (group && !*group) group = 0;
 
   if (!user && !getuid()) {
-    fprintf(stderr, 
+    fprintf(stderr,
             "Error: user is not specified\n"
             "Note: since you've invoked program as the root user, you must\n"
             "  specify an unprivileged user login and group to run as.\n"

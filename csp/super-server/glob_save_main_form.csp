@@ -117,9 +117,10 @@
             global->enable_memory_limit_error = enable_memory_limit_error;
             global->detect_violations = detect_violations;
             global->enable_max_stack_size = enable_max_stack_size;
-            global->standings_locale[0] = 0;
+            xfree(global->standings_locale);
+            global->standings_locale = NULL;
             if (standings_locale && *standings_locale) {
-                snprintf(global->standings_locale, sizeof(global->standings_locale), "%s", standings_locale);
+                global->standings_locale = xstrdup2(standings_locale);
             }
             xfree(global->checker_locale);
             global->checker_locale = xstrdup2(checker_locale);

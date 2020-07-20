@@ -29,14 +29,14 @@
 /**
  * NAME:    strip_trailing_slashes
  * PURPOSE: Remove trailing slashes from PATH.
- * ARGS:    path -- directory path 
- *         
+ * ARGS:    path -- directory path
+ *
  * RETURN:  void
- * NOTE: 
+ * NOTE:
    This is useful when using filename completion from a shell that
    adds a "/" after directory names (such as tcsh and bash), because
    the Unix rename and rmdir system calls return an "Invalid argument" error
-   when given a path that ends in "/" (except for the root directory).  
+   when given a path that ends in "/" (except for the root directory).
  */
 
 static void
@@ -58,10 +58,10 @@ struct ptr_list
 /**
  * NAME:    make_path
  * PURPOSE: make directory hierarchy
- * ARGS:     
- *         
- * RETURN:  1 -- error, 0 -- ok 
- * NOTE: 
+ * ARGS:
+ *
+ * RETURN:  1 -- error, 0 -- ok
+ * NOTE:
  * Ensure that the directory ARGPATH exists.
 
    Create any leading directories that don't already exist, with
@@ -199,7 +199,7 @@ make_path (const char *argpath,
          resulting in incorrect permissions.
          On System V, users can give away files with chown and then not
          be able to chmod them.  So don't give files away.  */
-      
+
       if (owner != (uid_t) -1 && group != (gid_t) -1
           && chown (dirpath, owner, group)) {
         //error (0, errno, "%s", dirpath);
@@ -234,13 +234,13 @@ os_MakeDirPath(char const *path, int mode)
   int old_mask = umask(0);
   newmode = 0777 & ~old_mask;
   parent_mode = newmode | 0300; /* u+wx */
-   
+
   errno=0;
   err = make_path (path, newmode, parent_mode,
                      -1, -1, 1);
   umask(old_mask);
   return -err;
-      
+
 }
 
 int

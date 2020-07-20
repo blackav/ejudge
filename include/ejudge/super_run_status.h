@@ -54,14 +54,16 @@ struct super_run_status
     unsigned short prob_idx;     // 66: problem short name
     unsigned short lang_idx;     // 68: language short name
 
-    short          super_run_pid;// 70: pid of ej-super-run
+    short          old_sr_pid;   // 70: always 0 (super-run PID previous version)
     long long      queue_ts;     // 72: time of creating a testing request
     long long      testing_start_ts; // 80: time when testing started
     int            max_test_num; // 88: number of tests for the problem
     unsigned char  stop_pending; // 92: pending stop
     unsigned char  down_pending; // 93: pending shutdown
+    unsigned char  pad5[2];
+    int            super_run_pid;// 96: pid of ej-super-run
 
-    unsigned char  pad5[98];
+    unsigned char  pad6[92];
 
     unsigned char  strings[320]; // string pool
 };

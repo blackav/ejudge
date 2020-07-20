@@ -1,0 +1,10 @@
+USE ejudge;
+DROP TABLE config;
+DROP TABLE logins;
+DROP TABLE cookies;
+DROP TABLE cntsregs;
+DROP TABLE users;
+DROP TABLE members;
+DROP TABLE groups;
+DROP TABLE groupmembers;
+DROP TABLE apikeys;

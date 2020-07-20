@@ -172,7 +172,7 @@ vwrite_log(int facility, int level, char const *format, va_list args)
       btime[--len] = 0;
     }
     strcat(btime, ":");
-  } 
+  }
 #endif
 
   if (level < LOG_MIN_PRIO || level > LOG_MAX_PRIO) {
@@ -268,7 +268,7 @@ _swwarn(char *file, int line, char *format, va_list args)
 {
   char buf[1024];
   int  n;
-  
+
   n = snprintf(buf, 1024, "Internal: %s: %d: ", file, line);
   vsnprintf(buf + n, 1024 - n, format, args);
   buf[1023] = 0;
@@ -281,7 +281,7 @@ _swerr(char *file, int line, jmp_buf *jb, char *format, va_list args)
 {
   char buf[1024];
   int  n;
-  
+
   n = snprintf(buf, 1024, "Internal: %s: %d: ", file, line);
   vsnprintf(buf + n, 1024 - n, format, args);
   buf[1023] = 0;

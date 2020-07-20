@@ -3,6 +3,7 @@
 %><%
 
 #define COPYSTR(f) snprintf(global->f, sizeof(global->f), "%s", (f))
+#define MOVESTR(f) xfree(global->f); global->f = f; f = NULL
 
 %><%@set getter_name = "csp_get_glob_save_attrs_form"
 %><%@set ac_prefix = "SSERV_CMD_"
@@ -23,6 +24,8 @@
     unsigned char *stand_score_attr = NULL;
     unsigned char *stand_penalty_attr = NULL;
     ejintbool_t stand_use_login = 0;
+    ejintbool_t stand_show_avatar = 0;
+    ejintbool_t stand_show_first_solver = 0;
     ejintbool_t stand_show_ok_time = 0;
     ejintbool_t stand_show_att_num = 0;
     ejintbool_t stand_sort_by_solved = 0;
@@ -61,6 +64,8 @@
 %><s:read var="stand_score_attr" normalize="yes" nonnull="yes" prepend="" /><%
 %><s:read var="stand_penalty_attr" normalize="yes" nonnull="yes" prepend="" /><%
 %><s:read var="stand_use_login" default="0" /><%
+%><s:read var="stand_show_avatar" default="0" /><%
+%><s:read var="stand_show_first_solver" default="0" /><%
 %><s:read var="stand_show_ok_time" default="0" /><%
 %><s:read var="stand_show_att_num" default="0" /><%
 %><s:read var="stand_sort_by_solved" default="0" /><%
@@ -89,37 +94,39 @@
         struct section_global_data *global = phr->ss->global;
         if (global) {
             global->stand_fancy_style = stand_fancy_style;
-            COPYSTR(stand_success_attr);
-            COPYSTR(stand_table_attr);
+            MOVESTR(stand_success_attr);
+            MOVESTR(stand_table_attr);
             sarray_free(global->stand_row_attr); global->stand_row_attr = stand_row_attr; stand_row_attr = NULL;
-            COPYSTR(stand_place_attr);
-            COPYSTR(stand_team_attr);
-            COPYSTR(stand_prob_attr);
-            COPYSTR(stand_solved_attr);
-            COPYSTR(stand_score_attr);
-            COPYSTR(stand_penalty_attr);
+            MOVESTR(stand_place_attr);
+            MOVESTR(stand_team_attr);
+            MOVESTR(stand_prob_attr);
+            MOVESTR(stand_solved_attr);
+            MOVESTR(stand_score_attr);
+            MOVESTR(stand_penalty_attr);
             global->stand_use_login = stand_use_login;
+            global->stand_show_avatar = stand_show_avatar;
+            global->stand_show_first_solver = stand_show_first_solver;
             global->stand_show_ok_time = stand_show_ok_time;
             global->stand_show_att_num = stand_show_att_num;
             global->stand_sort_by_solved = stand_sort_by_solved;
             global->stand_enable_penalty = stand_enable_penalty;
             global->ignore_success_time = ignore_success_time;
-            COPYSTR(stand_time_attr);
-            COPYSTR(stand_fail_attr);
-            COPYSTR(stand_trans_attr);
-            COPYSTR(stand_disq_attr);
-            COPYSTR(stand_self_row_attr);
-            COPYSTR(stand_v_row_attr);
-            COPYSTR(stand_r_row_attr);
-            COPYSTR(stand_u_row_attr);
+            MOVESTR(stand_time_attr);
+            MOVESTR(stand_fail_attr);
+            MOVESTR(stand_trans_attr);
+            MOVESTR(stand_disq_attr);
+            MOVESTR(stand_self_row_attr);
+            MOVESTR(stand_v_row_attr);
+            MOVESTR(stand_r_row_attr);
+            MOVESTR(stand_u_row_attr);
             phr->ss->enable_extra_col = enable_extra_col;
-            COPYSTR(stand_extra_format);
-            COPYSTR(stand_extra_legend);
-            COPYSTR(stand_extra_attr);
+            MOVESTR(stand_extra_format);
+            MOVESTR(stand_extra_legend);
+            MOVESTR(stand_extra_attr);
             global->stand_show_warn_number = stand_show_warn_number;
-            COPYSTR(stand_warn_number_attr);
-            COPYSTR(stand_page_table_attr);
-            COPYSTR(stand_page_cur_attr);
+            MOVESTR(stand_warn_number_attr);
+            MOVESTR(stand_page_table_attr);
+            MOVESTR(stand_page_cur_attr);
             sarray_free(global->stand_page_row_attr); global->stand_page_row_attr = stand_page_row_attr; stand_page_row_attr = NULL;
             sarray_free(global->stand_page_col_attr); global->stand_page_col_attr = stand_page_col_attr; stand_page_col_attr = NULL;
         }

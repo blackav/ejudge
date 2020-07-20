@@ -37,6 +37,8 @@
     ejintbool_t run_penalty_dflt = 0;
     int disqualified_penalty = -1;
     ejintbool_t disqualified_penalty_dflt = 0;
+    int compile_error_penalty = -1;
+    ejintbool_t compile_error_penalty_dflt = 0;
     int acm_run_penalty = -1;
     ejintbool_t acm_run_penalty_dflt = 0;
     unsigned char *test_score_list = NULL;
@@ -73,6 +75,8 @@
 %><s:read var="run_penalty_dflt" default="0" /><%
 %><s:read var="disqualified_penalty" default="-1" /><%
 %><s:read var="disqualified_penalty_dflt" default="0" /><%
+%><s:read var="compile_error_penalty" default="-1" /><%
+%><s:read var="compile_error_penalty_dflt" default="0" /><%
 %><s:read var="acm_run_penalty" default="-1" /><%
 %><s:read var="acm_run_penalty_dflt" default="0" /><%
 %><s:read var="test_score_list" normalize="yes" /><%
@@ -95,13 +99,15 @@
     if (full_score_dflt) full_score = -1;
     if (full_user_score < 0) full_user_score = -1;
     if (full_user_score_dflt) full_user_score = -1;
-    if (variable_full_score > 0) score_tokenized = 1;
+    if (variable_full_score > 0) variable_full_score = 1;
     if (test_score < 0) test_score = -1;
     if (test_score_dflt) test_score = -1;
     if (run_penalty < 0) run_penalty = -1;
     if (run_penalty_dflt) run_penalty = -1;
     if (disqualified_penalty < 0) disqualified_penalty = -1;
     if (disqualified_penalty_dflt) disqualified_penalty = -1;
+    if (compile_error_penalty < 0) compile_error_penalty = -1;
+    if (compile_error_penalty_dflt) compile_error_penalty = -1;
     if (acm_run_penalty < 0) acm_run_penalty = -1;
     if (acm_run_penalty_dflt) acm_run_penalty = -1;
 
@@ -156,11 +162,12 @@
         prob->test_score = test_score;
         prob->run_penalty = run_penalty;
         prob->disqualified_penalty = disqualified_penalty;
+        prob->compile_error_penalty = compile_error_penalty;
         prob->acm_run_penalty = acm_run_penalty;
         MOVESTR(test_score_list);
-        COPYSTR(score_tests);
+        MOVESTR(score_tests);
         MOVEENV(test_sets);
-        COPYSTR(score_bonus);
+        MOVESTR(score_bonus);
     }
 
 cleanup:;

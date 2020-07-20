@@ -223,7 +223,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -253,7 +253,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -506,7 +506,7 @@ function mainDialogOnChange()
     <s:tr id="orig-long_name-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Language long name:</td>
-        <td><s:textfield id="orig-long_name" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->long_name" size="48" maxlength="1024" check="false" /></td>
+        <td><s:textfield id="orig-long_name" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->long_name" size="48" maxlength="1024" checkExpr="" /></td>
         <td><input type="button" onclick="popupMainDialog(<s:v value="compile_id" />, event, 'long_name')" value="Clear" /></td>
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:long_name" /></td>
     </s:tr>
@@ -628,7 +628,7 @@ function mainDialogOnChange()
     <s:tr id="orig-content_type-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf" hiddenExpr="lang->binary <= 0">
         <td width="50">&nbsp;</td>
         <td>Content type for files:</td>
-        <td><s:textfield id="orig-content_type" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->content_type" size="48" maxlength="1024" check="false" /></td>
+        <td><s:textfield id="orig-content_type" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->content_type" size="48" maxlength="1024" checkExpr="" /></td>
         <td><input type="button" onclick="popupMainDialog(<s:v value="compile_id" />, event, 'content_type')" value="Clear" /></td>
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:content_type" /></td>
     </s:tr>
@@ -636,7 +636,7 @@ function mainDialogOnChange()
     <s:tr id="orig-style_checker_cmd-div" idSuffix="idsuffix" attr="form_row_attrs[row ^= 1]" onclickExpr="onclickstr_buf">
         <td width="50">&nbsp;</td>
         <td>Style checker command:</td>
-        <td><s:textfield id="orig-style_checker_cmd" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->style_checker_cmd" size="48" maxlength="1024" check="false" /></td>
+        <td><s:textfield id="orig-style_checker_cmd" idSuffix="idsuffix" readonly="readonly" name="param" value="lang->style_checker_cmd" size="48" maxlength="1024" checkExpr="" /></td>
         <td><input type="button" onclick="popupMainDialog(<s:v value="compile_id" />, event, 'style_checker_cmd')" value="Clear" /></td>
         <td onclick="np(event);"><s:help topic="Serve.cfg:language:style_checker_cmd" /></td>
     </s:tr>

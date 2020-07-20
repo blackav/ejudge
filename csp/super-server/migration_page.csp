@@ -1,0 +1,303 @@
+<%
+%><%@include "includes.csp"
+%><%
+#include "ejudge/osdeps.h"
+
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+#include <sys/stat.h>
+
+#define DEFAULT_CAPS_FILE "capabilities.xml"
+
+%><%@set getter_name = "csp_get_migration_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_migration_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = NULL;
+    const unsigned char *subtitle = "upgrade of ejudge.xml";
+
+    unsigned char ejudge_xml_tmp_path[PATH_MAX];
+    unsigned char caps_xml_tmp_path[PATH_MAX];
+    struct ejudge_cfg *file_config = NULL;
+    char *text = NULL;
+    size_t size = 0;
+    FILE *f = NULL;
+    char *new_map_t = NULL;
+    size_t new_map_z = 0;
+    char *new_caps_t = NULL;
+    size_t new_caps_z = 0;
+    char *ext_caps_t = NULL;
+    size_t ext_caps_z = 0;
+    char *new_full_t = NULL;
+    size_t new_full_z = 0;
+    int c;
+    const unsigned char * const default_caps_file = DEFAULT_CAPS_FILE;
+
+    ejudge_xml_tmp_path[0] = 0;
+    caps_xml_tmp_path[0] = 0;
+
+    if (phr->action == SSERV_CMD_MIGRATION_PAGE) {
+        FAIL(SSERV_ERR_INV_PARAM);
+    }
+
+    int sys_user_id = getuid();
+    struct passwd *sys_pwd = getpwuid(sys_user_id);
+    if (!sys_pwd || !sys_pwd->pw_name) {
+        fprintf(log_f, "ejudge processes run as uid %d, which is nonexistant\n", sys_user_id);
+        FAIL(SSERV_ERR_PERM_DENIED);
+    }
+
+    const unsigned char *ejudge_login = ejudge_cfg_user_map_find(phr->config, sys_pwd->pw_name);
+    if (!ejudge_login) {
+        fprintf(log_f, "ejudge unix user %s is not mapped to ejudge internal user\n", sys_pwd->pw_name);
+        FAIL(SSERV_ERR_PERM_DENIED);
+    }
+
+    if (phr->config->caps_file) {
+        fprintf(log_f, "configuration file is already updated\n");
+        FAIL(SSERV_ERR_INV_OPER);
+    }
+    if (!phr->config->ejudge_xml_path) {
+        fprintf(log_f, "ejudge.xml path is undefined\n");
+        FAIL(SSERV_ERR_INV_OPER);
+    }
+
+    file_config = ejudge_cfg_parse(phr->config->ejudge_xml_path, 0);
+    if (!file_config) {
+        fprintf(log_f, "cannot parse ejudge.xml\n");
+        FAIL(SSERV_ERR_INV_OPER);
+    }
+    if (file_config->caps_file) {
+        %><s:redirect ac="ejudge-xml-must-restart" /><%
+        goto cleanup;
+    }
+    file_config = ejudge_cfg_free(file_config);
+
+    if (generic_read_file(&text, 0, &size, 0, 0, phr->config->ejudge_xml_path, 0) < 0) {
+        fprintf(log_f, "failed to read ejudge.xml file from '%s'\n", phr->config->ejudge_xml_path);
+        FAIL(SSERV_ERR_FS_ERROR);
+    }
+    if (size != strlen(text)) {
+        fprintf(log_f, "ejudge.xml '%s' contains \\0 byte\n", phr->config->ejudge_xml_path);
+        FAIL(SSERV_ERR_INV_OPER);
+    }
+
+    int um_count = -1, um_begin = -1, um_end = -1, caps_count = -1, caps_begin = -1, caps_end = -1;
+    ss_find_elem_positions(text, (int) size, &um_count, &um_begin, &um_end,
+                           &caps_count, &caps_begin, &caps_end);
+    if (um_count != 1 || um_begin < 0 || um_end < 0 || caps_count != 1 || caps_begin < 0 || caps_end < 0) {
+        fprintf(log_f, "sorry cannot process '%s'\n", phr->config->ejudge_xml_path);
+        FAIL(SSERV_ERR_INV_OPER);
+    }
+    int p1_begin = um_begin, p1_end = um_end, p2_begin = caps_begin, p2_end = caps_end;
+    if (caps_begin < um_begin) {
+        p1_begin = caps_begin;
+        p1_end = caps_end;
+        p2_begin = um_begin;
+        p2_end = um_end;
+    }
+
+    f = open_memstream(&new_map_t, &new_map_z);
+    fprintf(f, "<user_map>\n"
+            "    <map system_user=\"%s\" local_user=\"%s\" />\n"
+            "  </user_map>",
+            sys_pwd->pw_name, ejudge_login);
+    fclose(f); f = NULL;
+    f = open_memstream(&new_caps_t, &new_caps_z);
+    fprintf(f, "<caps_file>%s</caps_file>\n"
+            "  <caps>\n"
+            "    <cap login=\"%s\">FULL_SET</cap>\n"
+            "  </caps>", DEFAULT_CAPS_FILE, ejudge_login);
+    fclose(f); f = NULL;
+    f = open_memstream(&ext_caps_t, &ext_caps_z);
+    fprintf(f, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
+            "<config>\n", EJUDGE_CHARSET);
+    fprintf(f, "  <user_map>\n");
+    if (phr->config->user_map) {
+        for (const struct xml_tree *p = phr->config->user_map->first_down; p; p = p->right) {
+            const struct ejudge_cfg_user_map *m = (const struct ejudge_cfg_user_map*) p;
+            if (strcmp(m->local_user_str, ejudge_login) != 0) {
+                fprintf(f, "    <map system_user=\"%s\"", html_armor_buf(&ab, m->system_user_str));
+                fprintf(f, " local_user=\"%s\" />\n", html_armor_buf(&ab, m->local_user_str));
+            }
+        }
+    }
+    fprintf(f, "  </user_map>\n");
+    fprintf(f, "  <caps>\n");
+    if (phr->config->capabilities.first) {
+        for (const struct opcap_list_item *p = phr->config->capabilities.first; p;
+             p = (const struct opcap_list_item*) p->b.right) {
+            if (strcmp(p->login, ejudge_login) != 0) {
+                fprintf(f, "    <cap login=\"%s\">\n", html_armor_buf(&ab, p->login));
+                unsigned char *s = opcaps_unparse(6, 60, p->caps);
+                fprintf(f, "%s", s);
+                xfree(s);
+                fprintf(f, "    </cap>\n");
+            }
+        }
+    }
+    fprintf(f, "  </caps>\n");
+    fprintf(f, "</config>\n");
+    fclose(f); f = NULL;
+    f = open_memstream(&new_full_t, &new_full_z);
+    c = text[p1_begin]; text[p1_begin] = 0;
+    fprintf(f, "%s", text);
+    text[p1_begin] = c;
+    fprintf(f, "%s", new_map_t);
+    c = text[p2_begin]; text[p2_begin] = 0;
+    fprintf(f, "%s", text + p1_end);
+    text[p2_begin] = c;
+    fprintf(f, "%s", new_caps_t);
+    fprintf(f, "%s", text + p2_end);
+    fclose(f); f = NULL;
+
+  // FIXME: check, that the new files are correct (can be parsed)
+
+    if (phr->action == SSERV_CMD_EJUDGE_XML_UPDATE_ACTION) {
+        unsigned char dirname[PATH_MAX];
+        dirname[0] = 0;
+        os_rDirName(phr->config->ejudge_xml_path, dirname, sizeof(dirname));
+        if (!dirname[0] || !strcmp(dirname, ".")) FAIL(SSERV_ERR_FS_ERROR);
+        int pid = getpid();
+        time_t cur_time = time(0);
+        struct tm *ptm = localtime(&cur_time);
+        snprintf(ejudge_xml_tmp_path, sizeof(ejudge_xml_tmp_path),
+                 "%s.tmp.%04d%02d%02d.%d", phr->config->ejudge_xml_path,
+                 ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday, pid);
+        snprintf(caps_xml_tmp_path, sizeof(caps_xml_tmp_path),
+                 "%s/%s.tmp.%04d%02d%02d.%d", dirname, DEFAULT_CAPS_FILE,
+                 ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday, pid);
+        unsigned char ejudge_xml_bak_path[PATH_MAX];
+        snprintf(ejudge_xml_bak_path, sizeof(ejudge_xml_bak_path),
+                 "%s.bak.%04d%02d%02d", phr->config->ejudge_xml_path,
+                 ptm->tm_year + 1900, ptm->tm_mon + 1, ptm->tm_mday);
+        if (generic_write_file(new_full_t, new_full_z, 0, NULL, ejudge_xml_tmp_path, NULL) < 0) {
+            fprintf(log_f, "failed to write '%s'\n", ejudge_xml_tmp_path);
+            FAIL(SSERV_ERR_FS_ERROR);
+        }
+        if (generic_write_file(ext_caps_t, ext_caps_z, 0, NULL, caps_xml_tmp_path, NULL) < 0) {
+            fprintf(log_f, "failed to write '%s'\n", caps_xml_tmp_path);
+            FAIL(SSERV_ERR_FS_ERROR);
+        }
+        chmod(caps_xml_tmp_path, 0600);
+        struct stat stb;
+        if (stat(phr->config->ejudge_xml_path, &stb) > 0 && S_ISREG(stb.st_mode)) {
+            chown(ejudge_xml_tmp_path, -1, stb.st_gid);
+            chmod(ejudge_xml_tmp_path, stb.st_mode & 07777);
+        }
+        unsigned char caps_xml_path[PATH_MAX];
+        snprintf(caps_xml_path, sizeof(caps_xml_path), "%s/%s", dirname, DEFAULT_CAPS_FILE);
+        if (rename(caps_xml_tmp_path, caps_xml_path) < 0) {
+            fprintf(log_f, "failed to rename '%s' -> '%s'\n", caps_xml_tmp_path, caps_xml_path);
+            FAIL(SSERV_ERR_FS_ERROR);
+        }
+        caps_xml_tmp_path[0] = 0;
+        if (rename(phr->config->ejudge_xml_path, ejudge_xml_bak_path) < 0) {
+            fprintf(log_f, "failed to rename '%s' -> '%s'\n", phr->config->ejudge_xml_path, ejudge_xml_bak_path);
+            unlink(caps_xml_path);
+            FAIL(SSERV_ERR_FS_ERROR);
+        }
+        if (rename(ejudge_xml_tmp_path, phr->config->ejudge_xml_path) < 0) {
+            fprintf(log_f, "failed to rename '%s' -> '%s'\n", ejudge_xml_tmp_path, phr->config->ejudge_xml_path);
+            rename(ejudge_xml_bak_path, phr->config->ejudge_xml_path);
+            unlink(caps_xml_path);
+            FAIL(SSERV_ERR_FS_ERROR);
+        }
+        ejudge_xml_tmp_path[0] = 0;
+
+        %><s:redirect ac="ejudge-xml-must-restart" /><%
+        goto cleanup;
+    }
+
+%><%@include "header.csp"
+%>
+
+<h2>Upgrade of ejudge.xml</h2>
+
+<ul>
+  <li><s:a ac="main-page">Main page</s:a></li>
+  <li><s:a ac="user-browse-page">Browse users</s:a></li>
+  <li><s:a ac="group-browse-page">Browse groups</s:a></li>
+</ul>
+
+<p>This version of ejudge supports the improved format of the global ejudge.xml
+configuration file. Now, user mappings and global user capabilities are stored
+in a separate file, which can be edited using the web-interface. Updates to
+this file are read on-the-fly, so no ejudge restart will be necessary.</p>
+
+<p>In order to enable this new functionality the ejudge.xml global configuration
+file has to be modified as follows. Ejudge can now apply these updates.</p>
+
+<p>Please, review these updates.</p>
+
+<p>After the updates are applied you have to restart ejudge.</p>
+
+<h3>Changes to ejudge.xml</h3>
+
+<table class="b1">
+  <tr>
+    <th class="b1">Original ejudge.xml</th>
+    <th class="b1">New ejudge.xml</th>
+  </tr>
+  <tr>
+    <td class="b1" valign="top">
+      <pre><%
+    c = text[p1_begin]; text[p1_begin] = 0;
+%><s:v value="text" /><%
+    text[p1_begin] = c; c = text[p1_end]; text[p1_end] = 0;
+%><font color="red"><s:v value="text + p1_begin" /></font><%
+    text[p1_end] = c; c = text[p2_begin]; text[p2_begin] = 0;
+%><s:v value="text + p1_end" /><%
+    text[p2_begin] = c; c = text[p2_end]; text[p2_end] = 0;
+%><font color="red"><s:v value="text + p2_begin" /></font><%
+    text[p2_end] = c;
+%><s:v value="text + p2_end" /></pre>
+    </td>
+    <td class="b1" valign="top">
+      <pre><%
+    c = text[p1_begin]; text[p1_begin] = 0;
+%><s:v value="text" /><%
+    text[p1_begin] = c;
+%><font color="green"><s:v value="new_map_t" /></font><%
+    c = text[p2_begin]; text[p2_begin] = 0;
+%><s:v value="text + p1_end" /><%
+    text[p2_begin] = c;
+%><font color="green"><s:v value="new_caps_t" /></font><s:v value="text + p2_end" /></pre>
+    </td>
+  </tr>
+</table>
+
+<h3>New file <s:v value="default_caps_file" /></h3>
+
+<table class="b1">
+  <tr>
+    <td class="b1" valign="top">
+      <pre><font color="green"><s:v value="ext_caps_t" /></font></pre>
+    </td>
+  </tr>
+</table>
+
+<s:form>
+  <table class="b0">
+    <tr>
+      <td class="b0"><s:submit ac="ejudge-xml-cancel-action" text="No, cancel action" /></td>
+      <td class="b0"><s:submit ac="ejudge-xml-update-action" text="Yes, apply the updates!" /></td>
+    </tr>
+  </table>
+</form>
+
+<%@include "footer.csp"
+%><%
+cleanup:
+    l10n_resetlocale();
+    html_armor_free(&ab);
+    xfree(text);
+    xfree(new_map_t);
+    xfree(new_caps_t);
+    xfree(ext_caps_t);
+    xfree(new_full_t);
+    ejudge_cfg_free(file_config);
+    if (f) fclose(f);
+%>

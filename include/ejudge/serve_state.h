@@ -2,7 +2,7 @@
 #ifndef __SERVE_STATE_H__
 #define __SERVE_STATE_H__
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -39,6 +39,7 @@ struct teamdb_db_callbacks;
 struct userlist_clnt;
 struct ejudge_cfg;
 struct xuser_cnts_state;
+struct statusdb_state;
 
 /* error codes */
 enum
@@ -82,6 +83,10 @@ struct user_filter_info
   struct filter_tree *stand_run_tree;
   struct filter_tree_mem *stand_mem;
   unsigned char *stand_error_msgs;
+  unsigned char *stand_time_expr;
+  int stand_user_mode;
+  int stand_time_expr_mode; /* 0 - nothing, 1 - relative, 2 - absolute */
+  time_t stand_time_expr_time;
 };
 
 struct user_state_info
@@ -195,6 +200,9 @@ struct serve_state
   int max_prob;
   int max_tester;
 
+  /* contest status db state */
+  struct statusdb_state *statusdb_state;
+
   /* clarlog internal state */
   struct clarlog_state *clarlog_state;
 
@@ -272,6 +280,11 @@ struct serve_state
      0 - no, 1 - yes.
    */
   int online_final_visibility;
+  /**
+     Show the judge evaluator comments.
+     0 - no, 1 - yes
+   */
+  int online_valuer_judge_comments;
 
   time_t stat_last_check_time;
   time_t stat_reported_before;
@@ -337,6 +350,7 @@ struct compile_run_extra
 
 serve_state_t serve_state_init(int contest_id);
 serve_state_t serve_state_destroy(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         serve_state_t state,
         const struct contest_desc *cnts,
@@ -346,18 +360,39 @@ serve_state_destroy_stand_expr(struct user_filter_info *u);
 
 void serve_state_set_config_path(serve_state_t state, const unsigned char *);
 
-void serve_update_standings_file(serve_state_t state,
-                                 const struct contest_desc *cnts,
-                                 int force_flag);
-void serve_update_public_log_file(serve_state_t state,
-                                  const struct contest_desc *cnts);
+struct contest_extra;
+
+void
+serve_update_standings_file(
+        struct contest_extra *extra,
+        serve_state_t state,
+        const struct contest_desc *cnts,
+        int force_flag);
+void
+serve_update_public_log_file(
+        struct contest_extra *extra,
+        serve_state_t state,
+        const struct contest_desc *cnts);
 void serve_update_external_xml_log(serve_state_t state,
                                    const struct contest_desc *cnts);
 void serve_update_internal_xml_log(serve_state_t state,
                                    const struct contest_desc *cnts);
-int  serve_update_status_file(serve_state_t state, int force_flag);
-void serve_load_status_file(serve_state_t state);
-void serve_remove_status_file(serve_state_t state);
+int
+serve_update_status_file(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        serve_state_t state,
+        int force_flag);
+void
+serve_load_status_file(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        serve_state_t state);
+void
+serve_remove_status_file(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        serve_state_t state);
 
 int serve_check_user_quota(serve_state_t, int user_id, size_t size);
 int serve_check_clar_quota(serve_state_t, int user_id, size_t size);
@@ -367,10 +402,18 @@ int serve_check_cnts_caps(serve_state_t state, const struct contest_desc *,
 int serve_get_cnts_caps(serve_state_t state, const struct contest_desc *,
                         int user_id, opcap_t *out_caps);
 
-void serve_build_compile_dirs(serve_state_t state);
-void serve_build_run_dirs(serve_state_t state, const struct contest_desc *cnts);
+void serve_build_compile_dirs(
+        const struct ejudge_cfg *config,
+        serve_state_t state);
+void serve_build_run_dirs(
+        const struct ejudge_cfg *config,
+        serve_state_t state,
+        const struct contest_desc *cnts);
 
-int serve_create_symlinks(serve_state_t state);
+int
+serve_create_symlinks(
+        const struct contest_desc *cnts,
+        serve_state_t state);
 
 const unsigned char *serve_get_email_sender(const struct ejudge_cfg *config,
                                             const struct contest_desc *cnts);
@@ -382,16 +425,17 @@ void serve_check_stat_generation(const struct ejudge_cfg *config,
 struct ejudge_cfg;
 int
 serve_state_load_contest_config(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         int contest_id,
         const struct contest_desc *cnts,
         serve_state_t *p_state);
 int serve_state_load_contest(
+        struct contest_extra *extra,
         const struct ejudge_cfg *,
         int contest_id,
         struct userlist_clnt *ul_conn,
         struct teamdb_db_callbacks *teamdb_callbacks,
-        serve_state_t *p_state,
         const struct contest_desc **p_cnts,
         int no_users_flag);
 
@@ -405,6 +449,7 @@ user_filter_info_allocate(serve_state_t state, int user_id,
 void serve_move_files_to_insert_run(serve_state_t state, int run_id);
 
 struct run_entry;
+struct userlist_user;
 void
 serve_audit_log(
         serve_state_t state,
@@ -422,6 +467,7 @@ serve_audit_log(
 
 int
 serve_compile_request(
+        const struct ejudge_cfg *config,
         serve_state_t state,
         unsigned char const *str,
         int len,
@@ -445,7 +491,8 @@ serve_compile_request(
         int no_db_flag,
         const ej_uuid_t *puuid,
         int store_flags,
-        int rejudge_flag)
+        int rejudge_flag,
+        const struct userlist_user *user)
 #if defined __GNUC__
   __attribute__((warn_unused_result))
 #endif
@@ -454,6 +501,7 @@ serve_compile_request(
 struct compile_reply_packet;
 int
 serve_run_request(
+        const struct ejudge_cfg *config,
         serve_state_t state,
         const struct contest_desc *cnts,
         FILE *errf,
@@ -477,7 +525,8 @@ serve_run_request(
         int no_db_flag,
         ej_uuid_t *puuid,
         int rejudge_flag,
-        int zip_mode);
+        int zip_mode,
+        int store_flags);
 
 int serve_is_valid_status(serve_state_t state, int status, int mode);
 
@@ -530,6 +579,14 @@ serve_telegram_user_clar_replied(
         int clar_id,
         const unsigned char *reply);
 void
+serve_telegram_notify_on_submit(
+        const struct ejudge_cfg *config,
+        const struct contest_desc *cnts,
+        const serve_state_t cs,
+        int run_id,
+        const struct run_entry *re,
+        int new_status);
+void
 serve_telegram_check_failed(
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
@@ -539,6 +596,7 @@ serve_telegram_check_failed(
 
 void
 serve_rejudge_run(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *,
         serve_state_t state,
@@ -552,6 +610,7 @@ serve_rejudge_run(
 struct server_framework_job;
 struct server_framework_job *
 serve_rejudge_by_mask(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *,
         serve_state_t state,
@@ -587,6 +646,7 @@ serve_tokenize_by_mask(
 
 struct server_framework_job *
 serve_rejudge_problem(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnst,
         serve_state_t state,
@@ -599,6 +659,7 @@ serve_rejudge_problem(
 
 struct server_framework_job *
 serve_judge_suspended(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state,
@@ -610,6 +671,7 @@ serve_judge_suspended(
 
 struct server_framework_job *
 serve_rejudge_all(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t state,
@@ -621,6 +683,7 @@ serve_rejudge_all(
 
 int
 serve_read_compile_packet(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         serve_state_t state,
         const struct contest_desc *cnts,
@@ -629,6 +692,7 @@ serve_read_compile_packet(
         const unsigned char *pname);
 int
 serve_read_run_packet(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         serve_state_t state,
         const struct contest_desc *cnts,
@@ -641,6 +705,7 @@ struct run_entry;
 struct problem_desc;
 void
 serve_judge_built_in_problem(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         serve_state_t state,
         const struct contest_desc *cnts,
@@ -671,10 +736,12 @@ int serve_event_remove_matching(serve_state_t state, time_t time, int type,
 
 int serve_collect_virtual_stop_events(serve_state_t cs);
 void serve_handle_events(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *cnts,
         serve_state_t cs);
 void serve_judge_virtual_olympiad(
+        struct contest_extra *extra,
         const struct ejudge_cfg *config,
         const struct contest_desc *,
         serve_state_t cs,
@@ -719,7 +786,7 @@ serve_get_user_result_score(
 
 int
 serve_testing_queue_delete(
-        const struct contest_desc *cnts, 
+        const struct contest_desc *cnts,
         serve_state_t state,
         const unsigned char *queue_id,
         const unsigned char *packet,
@@ -735,7 +802,7 @@ serve_testing_queue_change_priority(
 
 int
 serve_testing_queue_delete_all(
-        const struct contest_desc *cnts, 
+        const struct contest_desc *cnts,
         serve_state_t state,
         const unsigned char *user_login);
 

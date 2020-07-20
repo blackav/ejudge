@@ -40,7 +40,10 @@
     }
 %></b></p>
 
-<%    if (cs->upsolving_mode) {
+<%    if (cs->upsolving_mode && !cs->global->is_virtual) {
+%><p><b><s:_>Upsolving mode</s:_></b></p>
+<%  }
+  if (cs->upsolving_mode && cs->global->is_virtual && stop_time > 0) {
 %><p><b><s:_>Upsolving mode</s:_></b></p><%
     }
 %>
@@ -141,7 +144,7 @@
   }
 %>
 <%
-  if (global->description_file[0]) {
+  if (global->description_file && global->description_file[0]) {
     watched_file_update(&cs->description, global->description_file, cs->current_time);
     if (cs->description.text) {
 %><s:v value="cs->description.text" escape="false" /><%
@@ -184,7 +187,7 @@
 %><p><s:submit ac="virtual-stop" /></p><%
     }
 %></s:form><%
-  } else if (!cnts->exam_mode && global->is_virtual && start_time > 0 && stop_time > 0 && global->enable_virtual_restart > 0) {
+  } else if (!cnts->exam_mode && global->is_virtual && start_time > 0 && stop_time > 0 && global->enable_virtual_restart > 0 && !cs->upsolving_mode) {
 %><p><s:form><s:submit ac="virtual-restart" /></s:form></p>
 <p><b><s:_>ALL PREVIOUS SUBMITS WILL BE LOST!</s:_></b></p><%
   }
@@ -225,3 +228,5 @@ function setOperationVisibility(oper, value)
 %>
 </table>
 </div>
+
+<p><s:a ac="api-keys-page">[API keys]</s:a></p>

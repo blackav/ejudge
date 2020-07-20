@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2013 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,14 +26,13 @@ int checker_main(int argc, char **argv)
   checker_l10n_prepare();
 
   if (getenv("EJ_REQUIRE_NL")) {
-    if (fseek(f_out, -1L, SEEK_END) >= 0) {
-      if (getc(f_out) != '\n') fatal_PE(_("No final \\n in the output file"));
-      fseek(f_out, 0L, SEEK_SET);
-    }
+    checker_require_nl(f_out, 1);
   }
 
+  checker_skip_bom(f_corr);
   corr_ans = checker_read_sexpr(2);
   checker_corr_eof();
+  checker_skip_bom(f_out);
   user_ans = checker_read_sexpr(1);
   checker_out_eof();
   if (!checker_eq_sexpr(user_ans, corr_ans))

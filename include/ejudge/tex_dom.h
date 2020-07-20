@@ -3,7 +3,7 @@
 #ifndef __TEX_DOM_H__
 #define __TEX_DOM_H__
 
-/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -142,8 +142,7 @@ int tex_dom_get_width(tex_buffer_t pbuf);
 int tex_dom_get_height(tex_buffer_t pbuf);
 tex_buffer_t tex_dom_free_buffer(tex_buffer_t pbuf);
 
-/* not extern intentionally! */
-int (*(*tex_dom_get_render_func_ptr)(int))(tex_par_t,tex_buffer_t,int);
+extern int (*(*tex_dom_get_render_func_ptr)(int))(tex_par_t,tex_buffer_t,int);
 
 
 #endif /* __TEX_DOM_H__ */

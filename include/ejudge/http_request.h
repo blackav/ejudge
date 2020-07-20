@@ -2,7 +2,7 @@
 #ifndef __HTTP_REQUEST_H__
 #define __HTTP_REQUEST_H__
 
-/* Copyright (C) 2014-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -30,6 +30,7 @@ struct contest_extra;
 struct ejudge_cfg;
 struct sid_state;
 struct userlist_clnt;
+struct cJSON;
 
 struct http_request_info
 {
@@ -49,6 +50,8 @@ struct http_request_info
   const size_t *param_sizes;
   const unsigned char **params;
 
+  struct cJSON *json;
+
   const unsigned char *http_host;
   const unsigned char *self_url;
   const unsigned char *context_url;
@@ -63,6 +66,9 @@ struct http_request_info
   int action;
   unsigned char role_name[32];
   int anonymous_mode; // not authentificated
+  int request_id; // request serial number from the client (for websockets)
+  char token[32];
+  int token_mode;
 
   int priv_level;
   int user_id;
@@ -126,6 +132,8 @@ struct http_request_info
   FILE *log_f;
   char *log_t;
   size_t log_z;
+
+  void *extra_info;
 
   unsigned char data[0];
 };
@@ -193,6 +201,13 @@ hr_cgi_param_bool_opt(
         int default_value);
 
 int
+hr_cgi_param_jsbool_opt(
+        struct http_request_info *phr,
+        const unsigned char *name,
+        int *p_val,
+        int default_value);
+
+int
 hr_cgi_param_int_opt_2(
         struct http_request_info *phr,
         const unsigned char *name,
@@ -226,7 +241,7 @@ hr_client_url(
 void
 hr_set_symbolic_action_table(
         int table_size,
-        const unsigned char * const *table, 
+        const unsigned char * const *table,
         const unsigned char * const *submit_labels,
         const unsigned char * const *helps);
 
@@ -263,6 +278,19 @@ void
 hr_print_help_url(FILE *f, int action);
 void
 hr_print_help_url_2(FILE *f, const unsigned char *topic);
+
+int
+hr_cgi_param_h64(
+        const struct http_request_info *phr,
+        const unsigned char *name,
+        unsigned long long *p_val);
+
+int
+hr_cgi_param_i64_opt(
+        const struct http_request_info *phr,
+        const unsigned char *name,
+        long long *p_val,
+        long long default_value);
 
 #endif /* __HTTP_REQUEST_H__ */
 

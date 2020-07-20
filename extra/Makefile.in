@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2002-2015 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -26,7 +26,7 @@ CGI_PROG_SUFFIX=@ac_cv_cgi_suffix@
 STATIC=@ac_cv_static@
 NO_KERNEL=@ac_cv_no_kernel@
 ENABLE_NLS=@ac_cv_nls@
-WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@
+WPTRSIGN=@ac_cv_gcc_wno_pointer_sign@ @ac_cv_gcc_wno_format_truncation@
 
 XGETTEXT=@XGETTEXT@
 MSGMERGE=@MSGMERGE@

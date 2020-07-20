@@ -1,0 +1,126 @@
+#!/bin/sh
+# Copyright (c) 2017-2018 Alexander Chernov <cher@ejudge.ru>
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+common_config() {
+  echo 'long_name="Scala"'
+  echo 'src_sfx=".scala"'
+  echo 'exe_sfx=".jar"'
+  echo 'arch="java"'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'SCALARUN=false'
+  echo 'SCALACRUN=false'
+  echo 'SCALADIR='
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && SCALACRUN="$2"
+  [ "${SCALACRUN}" = "" ] && SCALACRUN="scalac"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Scala is available..." >&2
+  scalacdir1=`dirname "${SCALACRUN}"`
+  if [ "${scalacdir1}" = . ]
+  then
+    SCALARUN="scala"
+  else
+    SCALARUN="${scalacdir1}/scala"
+  fi
+  "${SCALARUN}" -version >/dev/null 2>/dev/null
+  scalafullpath=`which "${SCALARUN}" 2>/dev/null` || failure
+  [ "${scalafullpath}" != "" ] || failure
+  scalafulldir=`dirname "${scalafullpath}"` || failure
+  [ "${scalafulldir}" != "" -a "${scalafulldir}" != "." ] || failure
+  scalalastdir=`basename "${scalafulldir}"` || failure
+  [ "${scalalastdir}" = "bin" ] || failure
+  SCALADIR=`dirname "${scalafulldir}"` || failure
+  [ "${SCALADIR}" != "" ] || failure
+  version=`${SCALARUN} -version 2>&1 | grep " version" | gawk '{ print $5; }'` || failure
+  [ "${version}" != "" ] || failure
+
+  cat > conftest.scala <<EOF
+object HelloWorld {
+    def main(args: Array[String]): Unit = {
+        println("Hello, world!")
+    }
+}
+EOF
+  "${SCALACRUN}" conftest.scala -d conftest.jar >/dev/null 2>/dev/null || failure
+  [ -f conftest.jar ] || failure
+  "${SCALARUN}" conftest.jar >/dev/null 2>/dev/null || failure
+
+  rm -f ./conftest*
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'SCALARUN="'"${SCALARUN}"'"'
+  echo 'SCALACRUN="'"${SCALACRUN}"'"'
+  echo 'SCALADIR="'"${SCALADIR}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${SCALACRUN}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "Scala compiler [https://www.scala-lang.org/]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/scala.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  SCALARUN="/usr/bin/scala"
+  SCALACRUN="/usr/bin/scalac"
+  SCALADIR="/usr"
+fi
+
+if [ x"${SCALACRUN}" = x -o x"${SCALACRUN}" = xfalse ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+# avoid setting SCALA_HOME if it is already set
+if [ "${SCALA_HOME}" = "" ]
+then
+    SCALA_HOME="${SCALADIR}"
+    PATH="${SCALA_HOME}/bin:${PATH}"
+    export SCALA_HOME PATH
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${SCALACRUN}"
+    exit 0
+fi
+    
+"${SCALARUN}" -version 2>/dev/null >/dev/null
+
+[ x"$1" = x-f ] && echo -n "Scala "
+
+"${SCALARUN}" -version 2>&1 | grep " version" | gawk '{ print $5; }'

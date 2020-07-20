@@ -1,0 +1,73 @@
+<%
+%><%@include "includes.csp"
+%><%
+#include "ejudge/charsets.h"
+%><%@set getter_name = "csp_get_user_import_csv_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_user_import_csv_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = NULL;
+    const unsigned char *subtitle = "import user data from a CSV file";
+    int contest_id = 0, group_id = 0;
+    opcap_t caps = 0LL;
+
+    const unsigned char *marked_str = NULL; // needed for users_top_menu.csp
+    int other_user_id = 0;                  // needed for users_top_menu.csp
+
+%><s:read name="contest_id" /><%
+%><s:read name="group_id" default="0" /><%
+
+    if (contest_id != 0) {
+        if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
+    }
+    if (contest_id <= 0) FAIL(SSERV_ERR_INV_CONTEST);
+    if (group_id < 0) group_id = 0;
+
+    /* FIXME: refine caps */
+    if (ss_get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
+        FAIL(SSERV_ERR_PERM_DENIED);
+    }
+
+%><%@include "header.csp"
+%>
+
+<h2>Import user data from a CSV file</h2>
+
+<%@include "users_top_menu.csp"
+%>
+
+<s:form id="CreateForm" enctype="multipart/form-data">
+  <s:hidden name="contest_id" checkExpr="> 0" />
+  <s:hidden name="group_id" checkExpr="> 0" />
+  <table class="b0" id="CreateUserTable">
+    <tr>
+      <td class="b0"><b>Field separator:</b></td>
+      <td class="b0"><input type="text" name="separator" size="20" value=";"/></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Charset:</b></td>
+      <td class="b0"><% charset_html_select(out_f, NULL, NULL); %></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="b0"><b>CSV File:</b></td>
+      <td class="b0"><input type="file" name="csv_file" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="b0">&nbsp;</td>
+      <td class="b0"><s:submit ac="user-import-csv-action" text="Import data" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+  </table>
+</s:form>
+
+<%@include "footer.csp"
+%><%
+cleanup:
+    l10n_resetlocale();
+    html_armor_free(&ab);
+%>

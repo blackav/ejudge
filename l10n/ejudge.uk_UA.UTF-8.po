@@ -1,0 +1,4892 @@
+# Ukrainian message translation
+# This file is put in the public domain.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-07-13 20:37+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: Ukrainian <uk@li.org>\n"
+"Language: Ukrainian\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#, c-format
+msgid ""
+"\n"
+"\n"
+"%d total tests runs, %d passed, %d failed.\n"
+"\n"
+msgstr ""
+
+#, c-format
+msgid " (%d of %d)"
+msgstr ""
+
+#, c-format
+msgid " (%d token(s) used)"
+msgstr ""
+
+#, c-format
+msgid " / <b>%d summoned for defence runs</b>"
+msgstr ""
+
+#, c-format
+msgid " / <b>%d unread message(s)</b>"
+msgstr ""
+
+msgid " or standard input"
+msgstr ""
+
+msgid " or standard output"
+msgstr ""
+
+msgid "(no subject)"
+msgstr ""
+
+msgid ", REGISTRATION DATA INCOMPLETE"
+msgstr ""
+
+msgid "/&lt;Problem&gt;/&lt;File&gt;"
+msgstr ""
+
+msgid "/&lt;Problem&gt;/&lt;User_Id&gt;/&lt;File&gt;"
+msgstr ""
+
+msgid "/&lt;Problem&gt;/&lt;User_Login&gt;/&lt;File&gt;"
+msgstr ""
+
+msgid "/&lt;Problem&gt;/&lt;User_Name&gt;/&lt;File&gt;"
+msgstr ""
+
+msgid "/&lt;User_Id&gt;/&lt;File&gt;"
+msgstr ""
+
+msgid "/&lt;User_Id&gt;/&lt;Problem&gt;/&lt;File&gt;"
+msgstr ""
+
+msgid "/&lt;User_Login&gt;/&lt;File&gt;"
+msgstr ""
+
+msgid "/&lt;User_Login&gt;/&lt;Problem&gt;/&lt;File&gt;"
+msgstr ""
+
+msgid "/&lt;User_Name&gt;/&lt;File&gt;"
+msgstr ""
+
+msgid "/&lt;User_Name&gt;/&lt;Problem&gt;/&lt;File&gt;"
+msgstr ""
+
+#, c-format
+msgid "<b>====== Test #%d =======</b>\n"
+msgstr ""
+
+msgid ""
+"<b>Note</b>, that you must log in 24 hours after the form is filled and "
+"submitted, or your registration will be cancelled!"
+msgstr ""
+
+msgid ""
+"<b>Note</b>, that you should log in to the system for the first time no "
+"later, than in 24 hours after this moment, or the new account is removed."
+msgstr ""
+
+#, c-format
+msgid "<big>%d total tests runs, %d passed, %d failed.<br/>\n"
+msgstr ""
+
+#, c-format
+msgid "<big>%d total tests runs, %d passed, %d failed.<br>\n"
+msgstr ""
+
+#, c-format
+msgid "<big>Failed test: %d.<br/><br/></big>\n"
+msgstr ""
+
+#, c-format
+msgid "<big>Failed test: %d.<br><br></big>\n"
+msgstr ""
+
+msgid "<font color=\"green\">OK</font>"
+msgstr ""
+
+msgid "<font color=\"magenta\">Pending</font>"
+msgstr ""
+
+msgid "<font color=\"red\">Rejected</font>"
+msgstr ""
+
+#, c-format
+msgid "<i>Command line is too long</i>\n"
+msgstr ""
+
+#, c-format
+msgid "<i>Invalid answer: %d</i>"
+msgstr ""
+
+msgid "<i>Not set</i>"
+msgstr ""
+
+#, c-format
+msgid ""
+"<p class=\"ejudge_copyright\">This is <a href=\"%s\"><b>ejudge</b></a> "
+"contest administration system, version %s, compiled %s.</p>\n"
+"<p class=\"ejudge_copyright\">This program is copyright &copy; %s Alexander "
+"Chernov.</p>\n"
+"<p class=\"ejudge_copyright\">This program is free software; you can "
+"redistribute it and/or modify it under the terms of the <a href=\"http://www."
+"gnu.org/licenses/gpl.html\">GNU General Public License</a> as published by "
+"the <a href=\"http://www.fsf.org\">Free Software Foundation</a>; either "
+"version 2 of the License, or (at your option) any later version.</p>\n"
+msgstr ""
+
+msgid ""
+"<p class=\"fixed_width\">First stage of password recovery is successful. You "
+"should receive an e-mail message with further instructions. <b>Note,</b> "
+"that you should confirm password recovery in 24 hours, or operation will be "
+"cancelled.</p>"
+msgstr ""
+
+msgid ""
+"<p class=\"fixed_width\">Password recovery requires several steps. Now, "
+"please, specify the <b>login</b> and the <b>e-mail</b>, which was specified "
+"when the login was created.</p>\n"
+"<p class=\"fixed_width\">Note, that automatic password recovery is not "
+"possible for invisible, banned, locked, or privileged users!</p>"
+msgstr ""
+
+#, c-format
+msgid ""
+"<p%s>New account <tt>%s</tt> is successfully created. Initial password is "
+"generated automatically. You will be able to change your password later. "
+msgstr ""
+
+#, c-format
+msgid "<p%s>Page %d of %d.</p>\n"
+msgstr ""
+
+#, c-format
+msgid ""
+"<p><font color=\"red\">At least %d examiners must be assigned.</font></p>"
+msgstr ""
+
+#, c-format
+msgid ""
+"<p><font color=\"red\">Maximal number for this contest is %d, but already %d "
+"are defined.</font></p>\n"
+msgstr ""
+
+#, c-format
+msgid ""
+"<p><font color=\"red\">Minimal number for this contest is %d, but only %d "
+"are defined.</font></p>\n"
+msgstr ""
+
+#, c-format
+msgid "<p>You may define up to %d members.</p>"
+msgstr ""
+
+#, c-format
+msgid "<tr%s><td colspan=\"2\">Page %d of %d.</td></tr>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Checker output: file is binary, size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Checker output: file is too large, original size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Checker output: size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Command line arguments ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Correct: file is binary, size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Correct: file is too large, original size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Correct: size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Input: file is binary, size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Input: file is too large, original size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Input: size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Output: file is binary, size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Output: file is too large, original size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Output: size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Stderr: file is binary, size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Stderr: file is too large, original size %lld ---</u>\n"
+msgstr ""
+
+#, c-format
+msgid "<u>--- Stderr: size %lld ---</u>\n"
+msgstr ""
+
+msgid "ALL PREVIOUS SUBMITS WILL BE LOST!"
+msgstr ""
+
+msgid "API Keys"
+msgstr ""
+
+#, c-format
+msgid "API key created"
+msgstr ""
+
+#, c-format
+msgid "API key creation failed"
+msgstr ""
+
+#, c-format
+msgid "API keys"
+msgstr ""
+
+msgid "Accepted for testing"
+msgstr ""
+
+msgid "Access denied"
+msgstr ""
+
+msgid ""
+"Accounts created using simplified registration procedure cannot be used for "
+"participation in contests, which do not allow simplified registration. If "
+"you want a regular account, you may create an account using the"
+msgstr ""
+
+msgid "Actions"
+msgstr ""
+
+msgid "Activate"
+msgstr ""
+
+msgid "Activate new user account"
+msgstr ""
+
+msgid "Add"
+msgstr ""
+
+msgid "Add CHIEF EXAMINER"
+msgstr ""
+
+msgid "Add COORDINATOR"
+msgstr ""
+
+msgid "Add EXAMINER"
+msgstr ""
+
+msgid "Add OBSERVER"
+msgstr ""
+
+msgid "Add Review Comment"
+msgstr ""
+
+msgid "Add a new run comment"
+msgstr ""
+
+msgid "Add a new user specifying his/her User Id"
+msgstr ""
+
+msgid "Add a new user specifying his/her login"
+msgstr ""
+
+msgid "Add a permanent problem review comment"
+msgstr ""
+
+msgid "Add by ID"
+msgstr ""
+
+msgid "Add by login"
+msgstr ""
+
+msgid "Add new"
+msgstr ""
+
+msgid "Add new run"
+msgstr ""
+
+msgid "Add new runs in CSV format"
+msgstr ""
+
+msgid "Add new user"
+msgstr ""
+
+msgid "Add run"
+msgstr ""
+
+msgid "Add runs in CSV format"
+msgstr ""
+
+msgid "Add runs in CSV format!"
+msgstr ""
+
+msgid "Add the CHIEF EXAMINER role to the selected users"
+msgstr ""
+
+msgid "Add the COORDINATOR role to the selected users"
+msgstr ""
+
+msgid "Add the EXAMINER role to the selected users"
+msgstr ""
+
+msgid "Add the OBSERVER role to the selected users"
+msgstr ""
+
+msgid "Add users to another group"
+msgstr ""
+
+msgid "Adding new runs"
+msgstr ""
+
+#, c-format
+msgid "Adding role %d to user %d in contest %d failed"
+msgstr ""
+
+msgid "Adding role to user in contest failed"
+msgstr ""
+
+msgid "Additional information about this error:"
+msgstr ""
+
+msgid "Additional test information"
+msgstr ""
+
+msgid "Administrator"
+msgstr ""
+
+msgid "Advisor"
+msgstr ""
+
+msgid "Advisors"
+msgstr ""
+
+msgid "All changes to the old contest will be lost!"
+msgstr ""
+
+msgid "All clars"
+msgstr ""
+
+msgid "All clars and comments"
+msgstr ""
+
+msgid "All entries"
+msgstr ""
+
+msgid "Allow"
+msgstr ""
+
+msgid "Allow edit registration data during contest"
+msgstr ""
+
+msgid "Allow viewing full protocol"
+msgstr ""
+
+msgid "Allow viewing run report"
+msgstr ""
+
+msgid "Allow viewing source code"
+msgstr ""
+
+msgid "Allow viewing the final scores"
+msgstr ""
+
+msgid "Allow viewing the judge comment of the valuer"
+msgstr ""
+
+#, c-format
+msgid "An e-mail messages is sent to the address <tt>%s</tt>."
+msgstr ""
+
+#, c-format
+msgid "An e-mail with your account parameters is sent to address <tt>%s</tt>. "
+msgstr ""
+
+msgid "An email message will be sent to you just for your convenience."
+msgstr ""
+
+msgid "Answer"
+msgstr ""
+
+msgid "Answer code"
+msgstr ""
+
+msgid "Answer is empty"
+msgstr ""
+
+msgid "Answer is unspecified"
+msgstr ""
+
+msgid "Answer text"
+msgstr ""
+
+msgid "Appeals are disabled"
+msgstr ""
+
+msgid "Appeals deadline is exceeded"
+msgstr ""
+
+msgid "Apr"
+msgstr ""
+
+msgid "Archive creation with tar failed"
+msgstr ""
+
+msgid "Area"
+msgstr ""
+
+msgid "Assign automatically"
+msgstr ""
+
+msgid "Assign chief examiner"
+msgstr ""
+
+msgid "Assign cyphers"
+msgstr ""
+
+msgid "Assign examiner"
+msgstr ""
+
+msgid "Assign manually:"
+msgstr ""
+
+msgid "Assign random cyphers"
+msgstr ""
+
+msgid "Assigned cyphers"
+msgstr ""
+
+msgid "Attempt to submit a binary file"
+msgstr ""
+
+msgid "Audit log"
+msgstr ""
+
+msgid "Audit log file does not exist"
+msgstr ""
+
+msgid "Audit log is empty"
+msgstr ""
+
+msgid "Aug"
+msgstr ""
+
+msgid "Author"
+msgstr ""
+
+msgid "Auto-assign logins"
+msgstr ""
+
+msgid "Available"
+msgstr ""
+
+msgid "Available only after contest start"
+msgstr ""
+
+msgid "Avatar"
+msgstr ""
+
+msgid "Back"
+msgstr ""
+
+msgid "Background jobs"
+msgstr ""
+
+msgid "Bad socket name"
+msgstr ""
+
+msgid "Ban"
+msgstr ""
+
+msgid "Banned?"
+msgstr ""
+
+msgid ""
+"Be careful and type the e-mail address correctly. If you make a mistake, you "
+"will not receive a registration e-mail and be unable to complete the "
+"registration process."
+msgstr ""
+
+msgid "Binary file is not shown"
+msgstr ""
+
+msgid "Birth Date"
+msgstr ""
+
+msgid "COMMIT changes!"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+#, c-format
+msgid "Cannot allocate space to store run row %d\n"
+msgstr ""
+
+msgid "Cannot calculate the file checksum"
+msgstr ""
+
+msgid "Cannot guess the content type"
+msgstr ""
+
+msgid "Cannot participate"
+msgstr ""
+
+msgid "Cannot read file!"
+msgstr ""
+
+msgid "Cannot read message text!"
+msgstr ""
+
+msgid "Cannot read source text!"
+msgstr ""
+
+#, c-format
+msgid "Cannot write run row %d\n"
+msgstr ""
+
+msgid "Change"
+msgstr ""
+
+msgid "Change Language"
+msgstr ""
+
+msgid "Change Status"
+msgstr ""
+
+msgid "Change duration"
+msgstr ""
+
+msgid "Change flags"
+msgstr ""
+
+msgid "Change language"
+msgstr ""
+
+msgid "Change password"
+msgstr ""
+
+msgid "Change status"
+msgstr ""
+
+msgid "Change tokens for displayed runs"
+msgstr ""
+
+msgid "Change!"
+msgstr ""
+
+msgid "Changed by user"
+msgstr ""
+
+#, c-format
+msgid "Changing flags of user %d in contest %d failed: %s"
+msgstr ""
+
+msgid "Changing flags of user in contest failed"
+msgstr ""
+
+#, c-format
+msgid "Changing status of user %d in contest %d failed: %s"
+msgstr ""
+
+msgid "Changing status of user in contest failed"
+msgstr ""
+
+msgid "Charset"
+msgstr ""
+
+msgid "Check again"
+msgstr ""
+
+msgid "Check contest settings"
+msgstr ""
+
+msgid "Check failed"
+msgstr ""
+
+msgid "Check failed runs"
+msgstr ""
+
+msgid "Checker Token"
+msgstr ""
+
+msgid "Checker output"
+msgstr ""
+
+msgid "Chief examiner"
+msgstr ""
+
+msgid "Chief examiner must be assigned."
+msgstr ""
+
+msgid "Choose an answer"
+msgstr ""
+
+msgid "City"
+msgstr ""
+
+msgid "City (En)"
+msgstr ""
+
+msgid "Clar ID"
+msgstr ""
+
+msgid "Clar log update failed"
+msgstr ""
+
+msgid "Clarification"
+msgstr ""
+
+msgid "Clarification requests are disabled"
+msgstr ""
+
+msgid "Clars"
+msgstr ""
+
+msgid "Clars to all"
+msgstr ""
+
+msgid "Clean up"
+msgstr ""
+
+msgid "Clean up and check settings"
+msgstr ""
+
+msgid "Clean up and import settings"
+msgstr ""
+
+msgid "Clear"
+msgstr ""
+
+msgid "Clear BANNED"
+msgstr ""
+
+msgid "Clear DISQUALIFIED flag"
+msgstr ""
+
+msgid "Clear INCOMPLETE"
+msgstr ""
+
+msgid "Clear INVISIBLE"
+msgstr ""
+
+msgid "Clear LOCKED"
+msgstr ""
+
+msgid "Clear contest passwords"
+msgstr ""
+
+msgid "Clear contest passwords!"
+msgstr ""
+
+msgid "Clear displayed runs"
+msgstr ""
+
+msgid "Clear displayed runs!"
+msgstr ""
+
+msgid "Clear disqualification"
+msgstr ""
+
+msgid "Clear finished flag"
+msgstr ""
+
+msgid "Clear runs"
+msgstr ""
+
+msgid "Clear the BANNED flag for the selected users"
+msgstr ""
+
+msgid "Clear the DISQUALIFIED flag for the selected users"
+msgstr ""
+
+msgid "Clear the INCOMPLETE flag for the selected users"
+msgstr ""
+
+msgid "Clear the INVISIBLE flag for the selected users"
+msgstr ""
+
+msgid "Clear the LOCKED flag for the selected users"
+msgstr ""
+
+msgid "Clear this entry"
+msgstr ""
+
+msgid "Clear variants"
+msgstr ""
+
+msgid ""
+"Client's requests are suspended. Please wait until the contest administrator "
+"resumes the contest"
+msgstr ""
+
+msgid "Close"
+msgstr ""
+
+msgid "Coach"
+msgstr ""
+
+msgid "Coaches"
+msgstr ""
+
+msgid "Coding style violation"
+msgstr ""
+
+#, c-format
+msgid "Column name %s is already defined as column %d\n"
+msgstr ""
+
+msgid "Command-line parameters"
+msgstr ""
+
+msgid "Comment"
+msgstr ""
+
+msgid "Comment for other judges (optional)"
+msgstr ""
+
+msgid "Common prefix to remove"
+msgstr ""
+
+msgid "Compare"
+msgstr ""
+
+msgid "Compare this run with run"
+msgstr ""
+
+msgid "Compilation error"
+msgstr ""
+
+msgid "Compiled"
+msgstr ""
+
+msgid "Compiler options"
+msgstr ""
+
+msgid "Compiler output"
+msgstr ""
+
+msgid "Compiler/style checker output"
+msgstr ""
+
+msgid "Compiling and running"
+msgstr ""
+
+msgid "Compiling..."
+msgstr ""
+
+msgid "Compose a message to all participants"
+msgstr ""
+
+msgid "Configuration error"
+msgstr ""
+
+msgid "Confirm Avatar"
+msgstr ""
+
+msgid "Confirm action"
+msgstr ""
+
+msgid "Confirm registration"
+msgstr ""
+
+#, c-format
+msgid "Conflicting user_id (%d) and user_login (%s)"
+msgstr ""
+
+msgid "Conflicting user_id and user_login"
+msgstr ""
+
+msgid "Connection failed"
+msgstr ""
+
+msgid "Content type"
+msgstr ""
+
+#, c-format
+msgid "Content type %s is disabled for problem %s in row %d\n"
+msgstr ""
+
+#, c-format
+msgid "Content type %s is not enabled for problem %s in row %d\n"
+msgstr ""
+
+#, c-format
+msgid "Content type <tt>%s</tt> is disabled for this problem"
+msgstr ""
+
+#, c-format
+msgid "Content type <tt>%s</tt> is not available for this problem"
+msgstr ""
+
+msgid "Content type is disabled for this problem"
+msgstr ""
+
+msgid "Content type is not available for this problem"
+msgstr ""
+
+msgid "Contest"
+msgstr ""
+
+msgid "Contest Flags"
+msgstr ""
+
+msgid "Contest ID"
+msgstr ""
+
+msgid "Contest already finished"
+msgstr ""
+
+msgid "Contest already started"
+msgstr ""
+
+msgid "Contest configuration directory"
+msgstr ""
+
+msgid "Contest directory"
+msgstr ""
+
+msgid "Contest is not available"
+msgstr ""
+
+msgid "Contest is not finished"
+msgstr ""
+
+msgid "Contest is not started"
+msgstr ""
+
+msgid "Contest is not stopped"
+msgstr ""
+
+msgid "Contest is ready for testing"
+msgstr ""
+
+msgid "Contest is unloaded"
+msgstr ""
+
+msgid "Contest load time"
+msgstr ""
+
+msgid "Contest management"
+msgstr ""
+
+msgid "Contest name"
+msgstr ""
+
+msgid "Contest password"
+msgstr ""
+
+msgid "Contest passwords"
+msgstr ""
+
+msgid "Contest passwords are disabled"
+msgstr ""
+
+msgid "Contest priority"
+msgstr ""
+
+msgid "Contest registrations"
+msgstr ""
+
+msgid "Contest selection"
+msgstr ""
+
+msgid "Contest settings"
+msgstr ""
+
+msgid "Contest start date"
+msgstr ""
+
+msgid "Contest start time"
+msgstr ""
+
+msgid "Contest status"
+msgstr ""
+
+msgid "Contest time"
+msgstr ""
+
+msgid "Contest update time"
+msgstr ""
+
+#, c-format
+msgid "Contest: %d (%s)\n"
+msgstr ""
+
+msgid "Contestant"
+msgstr ""
+
+msgid "Contestants"
+msgstr ""
+
+msgid "Continue"
+msgstr ""
+
+msgid "Continue in this session"
+msgstr ""
+
+msgid "Continue suspended editing"
+msgstr ""
+
+msgid "Coordinator"
+msgstr ""
+
+msgid "Copy"
+msgstr ""
+
+msgid "Correct answer"
+msgstr ""
+
+msgid "Correct output"
+msgstr ""
+
+msgid "Country"
+msgstr ""
+
+msgid "Country (En)"
+msgstr ""
+
+msgid "Create"
+msgstr ""
+
+msgid "Create account"
+msgstr ""
+
+msgid "Create another account"
+msgstr ""
+
+msgid "Create contest!"
+msgstr ""
+
+msgid "Create new API key"
+msgstr ""
+
+msgid "Create user account"
+msgstr ""
+
+msgid "Crop avatar"
+msgstr ""
+
+msgid "Current penalty"
+msgstr ""
+
+msgid "Current standings"
+msgstr ""
+
+msgid "Cypher"
+msgstr ""
+
+#, c-format
+msgid "Cypher is empty in row %d\n"
+msgstr ""
+
+msgid "Cypher prefix"
+msgstr ""
+
+msgid "DB time"
+msgstr ""
+
+msgid "DB timestamp"
+msgstr ""
+
+msgid "DISQUALIFY users"
+msgstr ""
+
+msgid "Database error"
+msgstr ""
+
+msgid "Date penalty formula"
+msgstr ""
+
+msgid "Deactivate"
+msgstr ""
+
+msgid "Deadline"
+msgstr ""
+
+msgid "Deadline for this problem is expired"
+msgstr ""
+
+msgid "Dec"
+msgstr ""
+
+msgid "Default"
+msgstr ""
+
+msgid "Default value"
+msgstr ""
+
+msgid "Del CHIEF EXAMINER"
+msgstr ""
+
+msgid "Del COORDINATOR"
+msgstr ""
+
+msgid "Del EXAMINER"
+msgstr ""
+
+msgid "Del OBSERVER"
+msgstr ""
+
+msgid "Delete"
+msgstr ""
+
+msgid "Delete Avatar"
+msgstr ""
+
+msgid "Delete all"
+msgstr ""
+
+msgid "Delete row"
+msgstr ""
+
+msgid "Delete!"
+msgstr ""
+
+#, c-format
+msgid "Deleting role %d of user %d from contest %d failed"
+msgstr ""
+
+msgid "Deleting role of user from contest failed"
+msgstr ""
+
+msgid "Deny"
+msgstr ""
+
+msgid "Desired EOLN Type"
+msgstr ""
+
+msgid "Detailed information about participant"
+msgstr ""
+
+msgid "Detailed information for user (team)"
+msgstr ""
+
+msgid "Details"
+msgstr ""
+
+msgid "Details for user "
+msgstr ""
+
+msgid "Directory structure"
+msgstr ""
+
+msgid "Disable &quot;Name&quot; field"
+msgstr ""
+
+msgid "Disable clarifications"
+msgstr ""
+
+msgid "Disable locale change"
+msgstr ""
+
+msgid "Disable password change"
+msgstr ""
+
+msgid "Disable separate team password"
+msgstr ""
+
+msgid "Disable team member deletion"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
+msgid "Discipline"
+msgstr ""
+
+msgid "Disk read error (nonexistant file?)"
+msgstr ""
+
+msgid "Disk write error (disk full?)"
+msgstr ""
+
+msgid "Disqualification explanation"
+msgstr ""
+
+msgid "Disqualified"
+msgstr ""
+
+msgid "Disqualified runs"
+msgstr ""
+
+msgid "Disqualified?"
+msgstr ""
+
+msgid "Disqualify"
+msgstr ""
+
+msgid "Disqualify displayed runs"
+msgstr ""
+
+msgid "Disqualify displayed runs!"
+msgstr ""
+
+msgid "Disqualify runs"
+msgstr ""
+
+msgid "Disqualify selected users"
+msgstr ""
+
+msgid "Disqualify user"
+msgstr ""
+
+msgid "Do not show before the contest starts?"
+msgstr ""
+
+msgid "Down all"
+msgstr ""
+
+msgid "Download OK and PR runs"
+msgstr ""
+
+msgid "Download OK runs"
+msgstr ""
+
+msgid "Download OK, PR, RJ, IG, PD, DQ runs"
+msgstr ""
+
+msgid "Download all runs"
+msgstr ""
+
+msgid "Download archive of runs"
+msgstr ""
+
+msgid "Download run"
+msgstr ""
+
+msgid "Download runs"
+msgstr ""
+
+msgid "Download runs configuration"
+msgstr ""
+
+msgid "Download selected runs"
+msgstr ""
+
+msgid "Dump data"
+msgstr ""
+
+msgid "Dump runs in CSV format"
+msgstr ""
+
+msgid "Dump users in CSV format"
+msgstr ""
+
+msgid "Duration"
+msgstr ""
+
+msgid "E-mail"
+msgstr ""
+
+msgid "E-mail contains invalid characters"
+msgstr ""
+
+msgid "E-mail is not specified"
+msgstr ""
+
+msgid "EMPTY"
+msgstr ""
+
+msgid "EOLN Type"
+msgstr ""
+
+msgid "EXAM IS RUNNING"
+msgstr ""
+
+msgid "EXAM IS RUNNING (frozen)"
+msgstr ""
+
+msgid "Edit"
+msgstr ""
+
+msgid "Edit Registration Form"
+msgstr ""
+
+msgid "Edit comment"
+msgstr ""
+
+msgid "Editing clar"
+msgstr ""
+
+msgid "Editing general info"
+msgstr ""
+
+msgid "Editing member info"
+msgstr ""
+
+msgid "Editing run"
+msgstr ""
+
+msgid "Elapsed time"
+msgstr ""
+
+msgid "Empty"
+msgstr ""
+
+msgid "Empty submit"
+msgstr ""
+
+msgid "Empty text of warning"
+msgstr ""
+
+msgid "Enable password restoration"
+msgstr ""
+
+msgid "Enable simple registration (no email)"
+msgstr ""
+
+msgid "End time"
+msgstr ""
+
+msgid "Enqueue Time"
+msgstr ""
+
+msgid "Error"
+msgstr ""
+
+msgid "Error details follow"
+msgstr ""
+
+msgid "Error during run comparison"
+msgstr ""
+
+msgid "Exam Id"
+msgstr ""
+
+msgid "Exam finish time"
+msgstr ""
+
+msgid "Exam start time"
+msgstr ""
+
+msgid "Exam status"
+msgstr ""
+
+msgid "Examination information"
+msgstr ""
+
+msgid "Examination mode"
+msgstr ""
+
+msgid "Examiner"
+msgstr ""
+
+msgid "Examiners"
+msgstr ""
+
+msgid "Examiners assignments"
+msgstr ""
+
+msgid "Examples"
+msgstr ""
+
+msgid "Exit code"
+msgstr ""
+
+msgid "Export runs in XML external format"
+msgstr ""
+
+msgid "External ID"
+msgstr ""
+
+msgid "Extra info"
+msgstr ""
+
+msgid "Faculty"
+msgstr ""
+
+msgid "Faculty (En)"
+msgstr ""
+
+msgid "Faculty (abbreviated)"
+msgstr ""
+
+msgid "Faculty (abbreviated) (En)"
+msgstr ""
+
+msgid "Faculty (short)"
+msgstr ""
+
+msgid "Faculty (short) (En)"
+msgstr ""
+
+msgid "Failed test"
+msgstr ""
+
+#, c-format
+msgid "Failed to add row %d to runlog\n"
+msgstr ""
+
+msgid "Failed to fetch run log entry"
+msgstr ""
+
+#, c-format
+msgid "Failed to fetch run log entry %d"
+msgstr ""
+
+msgid "Family name"
+msgstr ""
+
+msgid "Family name (En)"
+msgstr ""
+
+msgid "Feb"
+msgstr ""
+
+msgid "Female"
+msgstr ""
+
+#, c-format
+msgid "Field \"%s\" contains non-printable characters.\n"
+msgstr ""
+
+msgid "Field \"Name\" contains non-printable characters"
+msgstr ""
+
+msgid "Field 0"
+msgstr ""
+
+msgid "Field 1"
+msgstr ""
+
+msgid "Field 2"
+msgstr ""
+
+msgid "Field 3"
+msgstr ""
+
+msgid "Field 4"
+msgstr ""
+
+msgid "Field 5"
+msgstr ""
+
+msgid "Field 6"
+msgstr ""
+
+msgid "Field 7"
+msgstr ""
+
+msgid "Field 8"
+msgstr ""
+
+msgid "Field 9"
+msgstr ""
+
+msgid "File"
+msgstr ""
+
+msgid "File is empty"
+msgstr ""
+
+msgid "File is not specified"
+msgstr ""
+
+msgid "File name pattern"
+msgstr ""
+
+msgid "Filter expression"
+msgstr ""
+
+msgid "Filter expression errors"
+msgstr ""
+
+msgid "Filtered"
+msgstr ""
+
+msgid "Final test visibility rules"
+msgstr ""
+
+msgid "Final visibility rules are active"
+msgstr ""
+
+msgid "Finish session"
+msgstr ""
+
+msgid "Finish the exam"
+msgstr ""
+
+msgid "Finish time"
+msgstr ""
+
+msgid "First User_Id"
+msgstr ""
+
+msgid "First clar"
+msgstr ""
+
+msgid "First name"
+msgstr ""
+
+msgid "First name (En)"
+msgstr ""
+
+msgid "First run"
+msgstr ""
+
+msgid "Flags"
+msgstr ""
+
+msgid "Force contest registration"
+msgstr ""
+
+msgid "Force start virtual contest"
+msgstr ""
+
+msgid "Force virtual contest start for the selected users"
+msgstr ""
+
+msgid "Forget changes"
+msgstr ""
+
+msgid "Forget editing"
+msgstr ""
+
+msgid "Forget it"
+msgstr ""
+
+msgid "Forgot password?"
+msgstr ""
+
+msgid "Formatting rules violation"
+msgstr ""
+
+msgid "Free registration"
+msgstr ""
+
+msgid "Freeze contest standings"
+msgstr ""
+
+msgid "From"
+msgstr ""
+
+msgid "From scratch"
+msgstr ""
+
+msgid "Full path"
+msgstr ""
+
+msgid "Full rejudge displayed runs"
+msgstr ""
+
+msgid "Full score"
+msgstr ""
+
+msgid "Fully rejudge displayed runs"
+msgstr ""
+
+msgid "Fully rejudge displayed runs!"
+msgstr ""
+
+msgid "Fully rejudge runs"
+msgstr ""
+
+msgid "Further testing information is not available"
+msgstr ""
+
+msgid "Gender"
+msgstr ""
+
+msgid "General info"
+msgstr ""
+
+msgid "General information"
+msgstr ""
+
+msgid "General registration form fields"
+msgstr ""
+
+msgid "General settings (contest.xml)"
+msgstr ""
+
+msgid "Generate Token for Telegram"
+msgstr ""
+
+msgid "Generate contest passwords"
+msgstr ""
+
+msgid "Generate random contest passwords"
+msgstr ""
+
+msgid "Generate random contest passwords!"
+msgstr ""
+
+msgid "Generate random registration passwords"
+msgstr ""
+
+msgid "Generate random registration passwords!"
+msgstr ""
+
+msgid "Generate registration passwords"
+msgstr ""
+
+msgid "Generate!"
+msgstr ""
+
+msgid "Global settings (serve.cfg)"
+msgstr ""
+
+msgid "Good!"
+msgstr ""
+
+msgid "Grade"
+msgstr ""
+
+msgid "Group"
+msgstr ""
+
+msgid "Group (En)"
+msgstr ""
+
+msgid "Guest"
+msgstr ""
+
+msgid "Guests"
+msgstr ""
+
+msgid "Hash value"
+msgstr ""
+
+#, c-format
+msgid "Header row defines %d columns, but row %d has %zu columns\n"
+msgstr ""
+
+#, c-format
+msgid ""
+"Hello,\n"
+"\n"
+"New random password was successfully generated!\n"
+"\n"
+msgstr ""
+
+msgid ""
+"Hello,\n"
+"\n"
+"Somebody (probably you) has registered a new account\n"
+"to participate in contest \"%Cn\"%V1\n"
+"using this e-mail address (%Ue).\n"
+"\n"
+"Registration has completed successfully. This message\n"
+"contains your login and password for your convenience.\n"
+"\n"
+"login:    %Ul\n"
+"password: %Uz\n"
+"URL:      %Vu\n"
+"\n"
+"Regards,\n"
+"The ejudge contest administration system (www.ejudge.ru)\n"
+msgstr ""
+
+#, c-format
+msgid ""
+"Hello,\n"
+"\n"
+"Somebody (probably you) have requested registration password\n"
+"regeneration for login `%s'.\n"
+"\n"
+msgstr ""
+
+msgid ""
+"Hello,\n"
+"\n"
+"Somebody (probably you) have specified this e-mail address (%Ue)\n"
+"when registering an account on the %Vn%V1.\n"
+"\n"
+"To confirm registration, you should enter the provided login\n"
+"and password on the login page of the server at the\n"
+"following url: %Vu.\n"
+"\n"
+"Note, that if you do not do this in 24 hours from the moment\n"
+"of sending this letter, registration will be void.\n"
+"\n"
+"login:    %Ul\n"
+"password: %Uz\n"
+"\n"
+"Regards,\n"
+"The ejudge contest administration system (www.ejudge.ru)\n"
+msgstr ""
+
+msgid ""
+"Hello,\n"
+"\n"
+"Somebody (probably you) have specified this e-mail address (%Ue)\n"
+"when registering an account to participate in \"%Cn\"%V1.\n"
+"\n"
+"To confirm registration, you should enter the provided login\n"
+"and password on the login page of the server at the\n"
+"following url: %Vu.\n"
+"\n"
+"Note, that if you do not do this in 24 hours from the moment\n"
+"of sending this letter, registration will be void.\n"
+"\n"
+"login:    %Ul\n"
+"password: %Uz\n"
+"\n"
+"Regards,\n"
+"The ejudge contest administration system (www.ejudge.ru)\n"
+msgstr ""
+
+#, c-format
+msgid ""
+"Hello,\n"
+"\n"
+"User `%s' (email %s) completed password regeneration\n"
+"in contest %d from IP %s\n"
+"\n"
+msgstr ""
+
+#, c-format
+msgid ""
+"Hello,\n"
+"\n"
+"User `%s' (email %s) has initiated password regeneration\n"
+"in contest %d from IP %s\n"
+"\n"
+msgstr ""
+
+msgid "Help"
+msgstr ""
+
+msgid "Hidden?"
+msgstr ""
+
+msgid "Hide closed contests"
+msgstr ""
+
+msgid "Hide compiler options"
+msgstr ""
+
+msgid "Hide details"
+msgstr ""
+
+msgid "Hide extended info"
+msgstr ""
+
+msgid "Hide hidden contests"
+msgstr ""
+
+msgid "Hide unmanageable contests"
+msgstr ""
+
+msgid "Homepage"
+msgstr ""
+
+msgid "IP"
+msgstr ""
+
+msgid "IP address"
+msgstr ""
+
+msgid "IP addresses"
+msgstr ""
+
+msgid "IP addresses for users"
+msgstr ""
+
+msgid "IPC operation failed"
+msgstr ""
+
+msgid ""
+"If you already have an ejudge account on this server, you may use it. If so, "
+"follow the link"
+msgstr ""
+
+msgid "Ignore displayed runs"
+msgstr ""
+
+msgid "Ignore displayed runs!"
+msgstr ""
+
+msgid "Ignore runs"
+msgstr ""
+
+msgid "Ignored"
+msgstr ""
+
+#, c-format
+msgid "Ignoring empty column %d\n"
+msgstr ""
+
+#, c-format
+msgid "Ignoring unsupported column %d (%s)\n"
+msgstr ""
+
+msgid "Import"
+msgstr ""
+
+msgid "Imported?"
+msgstr ""
+
+msgid ""
+"In order to complete the registration procedure, hit the \"Confirm "
+"registration\" link."
+msgstr ""
+
+msgid "In reply to"
+msgstr ""
+
+msgid "Incomplete?"
+msgstr ""
+
+msgid "Info"
+msgstr ""
+
+msgid "Information about run"
+msgstr ""
+
+msgid "Information by your request is not available."
+msgstr ""
+
+msgid "Information is not available"
+msgstr ""
+
+msgid "Information is not available."
+msgstr ""
+
+msgid "Input"
+msgstr ""
+
+msgid "Input file name"
+msgstr ""
+
+msgid "Input format"
+msgstr ""
+
+msgid "Input in"
+msgstr ""
+
+msgid "Institution"
+msgstr ""
+
+msgid "Institution (En)"
+msgstr ""
+
+msgid "Institution (abbreviated)"
+msgstr ""
+
+msgid "Institution (abbreviated) (En)"
+msgstr ""
+
+msgid "Institution (short)"
+msgstr ""
+
+msgid "Institution (short) (En)"
+msgstr ""
+
+msgid "Institution entry date"
+msgstr ""
+
+msgid "Institution graduation date"
+msgstr ""
+
+msgid "Institution number"
+msgstr ""
+
+msgid "Instructions"
+msgstr ""
+
+msgid "Insufficient duration to continue the contest"
+msgstr ""
+
+msgid "Internal error"
+msgstr ""
+
+#, c-format
+msgid "Invalid RunId %s in row %d\n"
+msgstr ""
+
+#, c-format
+msgid "Invalid UId %s in row %d\n"
+msgstr ""
+
+msgid "Invalid UUID"
+msgstr ""
+
+msgid "Invalid action"
+msgstr ""
+
+msgid "Invalid character"
+msgstr ""
+
+msgid "Invalid characters"
+msgstr ""
+
+msgid "Invalid clar_id"
+msgstr ""
+
+msgid "Invalid configuration"
+msgstr ""
+
+msgid "Invalid contest"
+msgstr ""
+
+#, c-format
+msgid "Invalid cypher `%s' in row %d\n"
+msgstr ""
+
+msgid "Invalid directory structure type"
+msgstr ""
+
+msgid "Invalid duration specification"
+msgstr ""
+
+msgid "Invalid error code"
+msgstr ""
+
+msgid "Invalid file name"
+msgstr ""
+
+msgid "Invalid filter expression"
+msgstr ""
+
+msgid "Invalid language"
+msgstr ""
+
+#, c-format
+msgid "Invalid language `%s' in row %d\n"
+msgstr ""
+
+msgid "Invalid locale_id"
+msgstr ""
+
+msgid "Invalid login"
+msgstr ""
+
+#, c-format
+msgid "Invalid login `%s' in row %d\n"
+msgstr ""
+
+#, c-format
+msgid "Invalid name `%s' in row %d\n"
+msgstr ""
+
+msgid "Invalid pages count"
+msgstr ""
+
+msgid "Invalid parameter"
+msgstr ""
+
+msgid "Invalid problem"
+msgstr ""
+
+#, c-format
+msgid "Invalid problem `%s' in row %d\n"
+msgstr ""
+
+#, c-format
+msgid "Invalid problem in run %d in row %d\n"
+msgstr ""
+
+msgid "Invalid role"
+msgstr ""
+
+msgid "Invalid run selection type"
+msgstr ""
+
+msgid "Invalid run to compare to"
+msgstr ""
+
+msgid "Invalid score"
+msgstr ""
+
+msgid "Invalid score adjustment"
+msgstr ""
+
+msgid "Invalid session"
+msgstr ""
+
+msgid "Invalid session identifier. The possible reasons are as follows."
+msgstr ""
+
+msgid "Invalid status"
+msgstr ""
+
+#, c-format
+msgid "Invalid status `%s' (%d) in row %d\n"
+msgstr ""
+
+#, c-format
+msgid "Invalid status `%s' in row %d\n"
+msgstr ""
+
+msgid "Invalid test"
+msgstr ""
+
+msgid "Invalid text of warning"
+msgstr ""
+
+msgid "Invalid text of warning comment"
+msgstr ""
+
+msgid "Invalid time specification"
+msgstr ""
+
+msgid "Invalid token"
+msgstr ""
+
+msgid "Invalid user role"
+msgstr ""
+
+msgid "Invalid user_id"
+msgstr ""
+
+msgid "Invalid user_login"
+msgstr ""
+
+msgid "Invalid variant"
+msgstr ""
+
+msgid "Invisible?"
+msgstr ""
+
+msgid "Issue a warning"
+msgstr ""
+
+msgid "Issue warning"
+msgstr ""
+
+msgid "It's not allowed to answer to judge's messages"
+msgstr ""
+
+msgid "Jan"
+msgstr ""
+
+msgid "Judge"
+msgstr ""
+
+msgid "Judge scores are opened"
+msgstr ""
+
+msgid "Judge suspended runs"
+msgstr ""
+
+msgid "Judge suspended runs!"
+msgstr ""
+
+msgid "Judge's comment"
+msgstr ""
+
+msgid "Judge's report"
+msgstr ""
+
+msgid "Judging priorities"
+msgstr ""
+
+msgid "Jul"
+msgstr ""
+
+msgid "Jump to contest"
+msgstr ""
+
+msgid "Jump to group"
+msgstr ""
+
+msgid "Jun"
+msgstr ""
+
+msgid "Just OK the run"
+msgstr ""
+
+msgid "Just SUMMON the run"
+msgstr ""
+
+msgid "Just ignore the run"
+msgstr ""
+
+msgid "Keywords"
+msgstr ""
+
+msgid "Language"
+msgstr ""
+
+#, c-format
+msgid "Language %s is disabled for problem %s in row %d\n"
+msgstr ""
+
+#, c-format
+msgid "Language %s is disabled in row %d\n"
+msgstr ""
+
+#, c-format
+msgid "Language %s is not enabled for problem %s in row %d\n"
+msgstr ""
+
+#, c-format
+msgid "Language column is undefined\n"
+msgstr ""
+
+#, c-format
+msgid "Language is empty in row %d\n"
+msgstr ""
+
+msgid "Language settings (serve.cfg)"
+msgstr ""
+
+msgid "Language statistics"
+msgstr ""
+
+msgid "Last User_Id (incl.)"
+msgstr ""
+
+msgid "Last clar"
+msgstr ""
+
+msgid "Last login time"
+msgstr ""
+
+msgid "Last run"
+msgstr ""
+
+msgid "Last submit"
+msgstr ""
+
+msgid "Last success"
+msgstr ""
+
+msgid "Link"
+msgstr ""
+
+msgid "Links"
+msgstr ""
+
+msgid "List of API keys"
+msgstr ""
+
+msgid "List of registered participants"
+msgstr ""
+
+msgid "Locale ID"
+msgstr ""
+
+msgid "Locale code"
+msgstr ""
+
+msgid "Location"
+msgstr ""
+
+msgid "Lock"
+msgstr ""
+
+msgid "Lock filter"
+msgstr ""
+
+msgid "Locked?"
+msgstr ""
+
+msgid "Log in"
+msgstr ""
+
+msgid "Log in to edit registration data"
+msgstr ""
+
+msgid "Login"
+msgstr ""
+
+msgid "Login contains invalid characters"
+msgstr ""
+
+#, c-format
+msgid "Login is empty in row %d\n"
+msgstr ""
+
+msgid "Login is not specified"
+msgstr ""
+
+msgid ""
+"Login may contain only latin letters, digits, <tt>.</tt> (dot), <tt>-</tt> "
+"(minus sign), <tt>_</tt> (undescore)."
+msgstr ""
+
+msgid "Login page"
+msgstr ""
+
+msgid "Login successfull. Now entering the main page."
+msgstr ""
+
+msgid "Logout"
+msgstr ""
+
+msgid "Long name"
+msgstr ""
+
+#, c-format
+msgid "Lost password recovery [%s]"
+msgstr ""
+
+msgid "Magistrant"
+msgstr ""
+
+msgid "Main URL"
+msgstr ""
+
+msgid "Main page"
+msgstr ""
+
+msgid "Make invisible"
+msgstr ""
+
+msgid "Make visible"
+msgstr ""
+
+msgid "Male"
+msgstr ""
+
+msgid "Mandatory"
+msgstr ""
+
+msgid "Mar"
+msgstr ""
+
+msgid "Mark BANNED"
+msgstr ""
+
+msgid "Mark INCOMPLETE"
+msgstr ""
+
+msgid "Mark INVISIBLE"
+msgstr ""
+
+msgid "Mark LOCKED"
+msgstr ""
+
+msgid "Mark OK"
+msgstr ""
+
+msgid "Mark PENDING"
+msgstr ""
+
+msgid "Mark REJECTED"
+msgstr ""
+
+msgid "Mark displayed runs"
+msgstr ""
+
+msgid "Marked?"
+msgstr ""
+
+msgid "Master"
+msgstr ""
+
+msgid "Max memory used"
+msgstr ""
+
+msgid "Max number of users was"
+msgstr ""
+
+msgid "Max problem submit count is exceeded"
+msgstr ""
+
+#, c-format
+msgid ""
+"Max. CPU time: %d.%03d\n"
+"\n"
+msgstr ""
+
+#, c-format
+msgid ""
+"Max. CPU time: %d.%03d (time-limit exceeded)\n"
+"\n"
+msgstr ""
+
+msgid "Maximal random number"
+msgstr ""
+
+msgid "May"
+msgstr ""
+
+msgid "May change!"
+msgstr ""
+
+msgid "Memory limit"
+msgstr ""
+
+msgid "Memory limit exceeded"
+msgstr ""
+
+msgid "Merge runs in XML format"
+msgstr ""
+
+msgid "Merging runs"
+msgstr ""
+
+msgid "Message"
+msgstr ""
+
+msgid "Message is empty"
+msgstr ""
+
+msgid "Message length is too big"
+msgstr ""
+
+#, c-format
+msgid "Message length is too big (%zu)"
+msgstr ""
+
+msgid "Messages"
+msgstr ""
+
+msgid "Middle name"
+msgstr ""
+
+msgid "Middle name (En)"
+msgstr ""
+
+msgid "Minimal random number"
+msgstr ""
+
+msgid "Mkdir failed"
+msgstr ""
+
+#, c-format
+msgid "Mkdir(%s) failed: %s"
+msgstr ""
+
+msgid "Moderated registration"
+msgstr ""
+
+msgid "More info"
+msgstr ""
+
+msgid "Move down"
+msgstr ""
+
+msgid "Move to advisors"
+msgstr ""
+
+msgid "Move to coaches"
+msgstr ""
+
+msgid "Move to contestants"
+msgstr ""
+
+msgid "Move to reserves"
+msgstr ""
+
+msgid "Move up"
+msgstr ""
+
+msgid "Mult parameter"
+msgstr ""
+
+msgid "N/A"
+msgstr ""
+
+msgid "NO"
+msgstr ""
+
+msgid "NOT REGISTERED"
+msgstr ""
+
+msgid "NOT STARTED"
+msgstr ""
+
+msgid "Name"
+msgstr ""
+
+msgid "Name (English)"
+msgstr ""
+
+#, c-format
+msgid "Name is empty in row %d\n"
+msgstr ""
+
+#, c-format
+msgid "Neither user_id, login, name, nor cypher are specified\n"
+msgstr ""
+
+#, c-format
+msgid "Neither user_id, login, nor name are specified\n"
+msgstr ""
+
+#, c-format
+msgid "New account <tt>%s</tt> is successfully created."
+msgstr ""
+
+msgid "New account is successfully created."
+msgstr ""
+
+msgid "New duration is too small"
+msgstr ""
+
+msgid "New password"
+msgstr ""
+
+msgid "New password (1) is invalid"
+msgstr ""
+
+msgid "New password (2) is invalid"
+msgstr ""
+
+msgid "New password is generated."
+msgstr ""
+
+msgid "New password is too long"
+msgstr ""
+
+msgid "New passwords do not match"
+msgstr ""
+
+#, c-format
+msgid "New status: %s\n"
+msgstr ""
+
+msgid "New user account is created"
+msgstr ""
+
+msgid "Next problem"
+msgstr ""
+
+msgid "Next soft deadline"
+msgstr ""
+
+msgid "No"
+msgstr ""
+
+msgid "No advisors are allowed in this contest"
+msgstr ""
+
+msgid "No answer"
+msgstr ""
+
+msgid "No answer is given"
+msgstr ""
+
+msgid "No assignable runs."
+msgstr ""
+
+msgid "No assigned variant"
+msgstr ""
+
+msgid "No coaches are allowed in this contest"
+msgstr ""
+
+msgid "No comments"
+msgstr ""
+
+msgid "No comments."
+msgstr ""
+
+msgid "No connection to the server"
+msgstr ""
+
+msgid "No contestants are allowed in this contest"
+msgstr ""
+
+msgid "No directory structure"
+msgstr ""
+
+msgid "No email message at all will be sent to you."
+msgstr ""
+
+#, c-format
+msgid "No entry for %d/%s\n"
+msgstr ""
+
+#, c-format
+msgid "No entry for %s/%s\n"
+msgstr ""
+
+msgid "No guests are allowed in this contest"
+msgstr ""
+
+msgid "No plugin is available for problem"
+msgstr ""
+
+msgid "No reserves are allowed in this contest"
+msgstr ""
+
+msgid "No runs to rejudge"
+msgstr ""
+
+msgid "No users registered for this contest"
+msgstr ""
+
+msgid "No warnings"
+msgstr ""
+
+msgid "No."
+msgstr ""
+
+msgid "Not a virtual contest"
+msgstr ""
+
+msgid "Not all pre-required problems are solved"
+msgstr ""
+
+msgid "Not connected"
+msgstr ""
+
+msgid "Not set"
+msgstr ""
+
+msgid "Note, lines are numbered just for your convinience."
+msgstr ""
+
+#, c-format
+msgid ""
+"Note, that if you do not do this in 24 hours from the moment\n"
+"of sending this letter, operation will be cancelled.\n"
+"\n"
+"If you don't want to regenerate the password, just ignore this\n"
+"message\n"
+"\n"
+msgstr ""
+
+msgid "Note, that the exact reason is not reported due to security reasons."
+msgstr ""
+
+msgid "Notes"
+msgstr ""
+
+msgid "Nov"
+msgstr ""
+
+msgid "Number"
+msgstr ""
+
+msgid "Number of Clars"
+msgstr ""
+
+msgid "Number of Runs"
+msgstr ""
+
+msgid "Number of printed pages"
+msgstr ""
+
+msgid "Number of warnings"
+msgstr ""
+
+msgid "OK"
+msgstr ""
+
+msgid "OVER"
+msgstr ""
+
+msgid "OVER (frozen)"
+msgstr ""
+
+msgid "Observer"
+msgstr ""
+
+msgid "Occupation"
+msgstr ""
+
+msgid "Occupation (En)"
+msgstr ""
+
+msgid "Oct"
+msgstr ""
+
+msgid "Old password"
+msgstr ""
+
+msgid "Old password is invalid"
+msgstr ""
+
+msgid "Old password is too long"
+msgstr ""
+
+msgid "On-line users in this contest"
+msgstr ""
+
+msgid "Online users"
+msgstr ""
+
+msgid "Open"
+msgstr ""
+
+msgid "Open date"
+msgstr ""
+
+msgid "Open for participation"
+msgstr ""
+
+msgid "Operation completed"
+msgstr ""
+
+msgid "Operation completed with errors"
+msgstr ""
+
+msgid "Operation errors"
+msgstr ""
+
+msgid "Operation failed"
+msgstr ""
+
+msgid "Operation is not supported"
+msgstr ""
+
+msgid "Operation succeeded"
+msgstr ""
+
+msgid "Optional"
+msgstr ""
+
+msgid "Originator IP"
+msgstr ""
+
+msgid "Other"
+msgstr ""
+
+msgid "Output"
+msgstr ""
+
+msgid "Output error"
+msgstr ""
+
+msgid "Output file name"
+msgstr ""
+
+msgid "Output format"
+msgstr ""
+
+msgid "Output in"
+msgstr ""
+
+msgid "Packet is too big"
+msgstr ""
+
+msgid "Packet is too small"
+msgstr ""
+
+msgid "Packet name"
+msgstr ""
+
+msgid "Page"
+msgstr ""
+
+msgid "Page generation time"
+msgstr ""
+
+msgid "Pages printed"
+msgstr ""
+
+msgid "Parameter is out of range"
+msgstr ""
+
+msgid "Parameter value"
+msgstr ""
+
+msgid "Partial solution"
+msgstr ""
+
+msgid "Participant"
+msgstr ""
+
+msgid "Participants can view testing reports"
+msgstr ""
+
+msgid "Participants can view their source code"
+msgstr ""
+
+msgid "Participants view judge score"
+msgstr ""
+
+msgid "Participants' requests are suspended"
+msgstr ""
+
+msgid "Participants' solutions are being accepted"
+msgstr ""
+
+msgid "Participants' solutions are being judged"
+msgstr ""
+
+msgid "Participants' solutions are judged"
+msgstr ""
+
+msgid "Participate"
+msgstr ""
+
+msgid "Passed tests"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Password generation failed"
+msgstr ""
+
+#, c-format
+msgid "Password generation failed: %s"
+msgstr ""
+
+#, c-format
+msgid "Password recovery completed [%s, %s]"
+msgstr ""
+
+#, c-format
+msgid "Password recovery error"
+msgstr ""
+
+msgid "Password recovery is not possible because of the following error."
+msgstr ""
+
+#, c-format
+msgid "Password recovery, stage 1 [%s, %s]"
+msgstr ""
+
+msgid "Password regeneration requested"
+msgstr ""
+
+msgid "Password regeneration successful"
+msgstr ""
+
+msgid "Password update failed"
+msgstr ""
+
+#, c-format
+msgid "Password update failed: %s"
+msgstr ""
+
+msgid "Penalty"
+msgstr ""
+
+msgid "Pending XML import already exists"
+msgstr ""
+
+msgid "Pending check"
+msgstr ""
+
+msgid "Pending review"
+msgstr ""
+
+msgid "Permission denied"
+msgstr ""
+
+msgid "Permission denied. The possible reasons are as follows."
+msgstr ""
+
+msgid "PhD student"
+msgstr ""
+
+msgid "Phone"
+msgstr ""
+
+msgid "Place"
+msgstr ""
+
+msgid "Planned start time"
+msgstr ""
+
+msgid ""
+"Please, enter your valid e-mail address and press the \"Create account\" "
+"button."
+msgstr ""
+
+msgid "Please, follow the following link."
+msgstr ""
+
+msgid "Presentation error"
+msgstr ""
+
+msgid ""
+"Press \"Stop exam\" button to finish the exam. Your answers will be checked "
+"shortly after that."
+msgstr ""
+
+msgid "Previous problem"
+msgstr ""
+
+msgid "Previous submissions of this problem"
+msgstr ""
+
+msgid "Print"
+msgstr ""
+
+msgid "Print problem protocol"
+msgstr ""
+
+msgid "Print requests are suspended"
+msgstr ""
+
+msgid "Print sources"
+msgstr ""
+
+msgid "Print the exam full cyphered protocols"
+msgstr ""
+
+msgid "Print the exam full protocols"
+msgstr ""
+
+msgid "Print the exam protocols"
+msgstr ""
+
+msgid "Print the user examination protocols for the selected users"
+msgstr ""
+
+msgid ""
+"Print the user full cyphered examination protocols for the selected users"
+msgstr ""
+
+msgid "Print the user full examination protocols for the selected users"
+msgstr ""
+
+msgid "Print user examination protocol"
+msgstr ""
+
+msgid "Print user full cyphered examination protocol"
+msgstr ""
+
+msgid "Print user full examination protocol"
+msgstr ""
+
+msgid "Printing error"
+msgstr ""
+
+msgid "Printing is disabled"
+msgstr ""
+
+msgid "Printing problem protocol"
+msgstr ""
+
+#, c-format
+msgid "Printing quota (%d pages) is exceeded"
+msgstr ""
+
+msgid "Printing quota is exceeded"
+msgstr ""
+
+msgid "Printing user protocol"
+msgstr ""
+
+msgid "Priority"
+msgstr ""
+
+msgid "Priority adjustment"
+msgstr ""
+
+msgid ""
+"Priority value must be in range [-16, 15]. The less the priority value, the "
+"more the judging priority."
+msgstr ""
+
+msgid "Privileged users"
+msgstr ""
+
+msgid "Privileged users page"
+msgstr ""
+
+msgid "Privileged?"
+msgstr ""
+
+msgid "Problem"
+msgstr ""
+
+#, c-format
+msgid "Problem column is undefined\n"
+msgstr ""
+
+msgid "Problem configuration error"
+msgstr ""
+
+msgid "Problem directory"
+msgstr ""
+
+msgid "Problem filter expression"
+msgstr ""
+
+#, c-format
+msgid "Problem is empty in row %d\n"
+msgstr ""
+
+msgid "Problem priority"
+msgstr ""
+
+msgid "Problem statements"
+msgstr ""
+
+msgid "Problem statistics"
+msgstr ""
+
+msgid "Problem status summary"
+msgstr ""
+
+msgid "Problem summary"
+msgstr ""
+
+msgid "Problems"
+msgstr ""
+
+msgid "Problems (serve.cfg)"
+msgstr ""
+
+msgid "Professor"
+msgstr ""
+
+msgid "Prog. languages"
+msgstr ""
+
+msgid "Program output"
+msgstr ""
+
+msgid "Program output to stderr"
+msgstr ""
+
+msgid "Program stderr output"
+msgstr ""
+
+msgid "Programming language"
+msgstr ""
+
+msgid "Programming language statistics"
+msgstr ""
+
+msgid "Programming languages"
+msgstr ""
+
+msgid "Protocol error"
+msgstr ""
+
+msgid "READ-ONLY"
+msgstr ""
+
+msgid "REFRESH"
+msgstr ""
+
+msgid "REFRESH PAGE MANUALLY!"
+msgstr ""
+
+msgid "REGISTERED"
+msgstr ""
+
+msgid "REGISTERED (INVISIBLE)"
+msgstr ""
+
+msgid "REGISTERED, BANNED"
+msgstr ""
+
+msgid "REGISTERED, LOCKED"
+msgstr ""
+
+msgid "REGISTERED, PENDING APPROVAL"
+msgstr ""
+
+msgid "REGISTRATION REJECTED"
+msgstr ""
+
+msgid "RUNNING"
+msgstr ""
+
+msgid "RUNNING (frozen)"
+msgstr ""
+
+msgid "Random seed"
+msgstr ""
+
+msgid "Random variants"
+msgstr ""
+
+msgid "Re"
+msgstr ""
+
+msgid "Re: Your question"
+msgstr ""
+
+msgid "Read error"
+msgstr ""
+
+msgid "Read the problem"
+msgstr ""
+
+msgid "Read the problem."
+msgstr ""
+
+msgid "Read-only?"
+msgstr ""
+
+msgid "Real time (sec)"
+msgstr ""
+
+msgid "Real time limit"
+msgstr ""
+
+msgid "Recover forgot password"
+msgstr ""
+
+msgid "Recover password"
+msgstr ""
+
+msgid "Refresh"
+msgstr ""
+
+msgid "Reg. read-only?"
+msgstr ""
+
+#, c-format
+msgid ""
+"Regards,\n"
+"The ejudge contest administration system (www.ejudge.ru)\n"
+msgstr ""
+
+msgid "Regenerate contest passwords!"
+msgstr ""
+
+msgid "Regenerate registration passwords!"
+msgstr ""
+
+msgid "Regenerate static content"
+msgstr ""
+
+msgid "Region"
+msgstr ""
+
+msgid "Register for another contest"
+msgstr ""
+
+msgid "Register for another contest and copy data"
+msgstr ""
+
+msgid "Registration"
+msgstr ""
+
+msgid "Registration deadline"
+msgstr ""
+
+msgid "Registration errors"
+msgstr ""
+
+msgid "Registration failed"
+msgstr ""
+
+#, c-format
+msgid "Registration failed: %s"
+msgstr ""
+
+msgid "Registration for contest failed"
+msgstr ""
+
+msgid "Registration incomplete"
+msgstr ""
+
+msgid "Registration is incomplete"
+msgstr ""
+
+msgid "Registration mode"
+msgstr ""
+
+msgid "Registration password"
+msgstr ""
+
+msgid "Registration passwords"
+msgstr ""
+
+msgid "Registration rules"
+msgstr ""
+
+msgid "Registration time"
+msgstr ""
+
+msgid "Regular users"
+msgstr ""
+
+msgid "Rejected"
+msgstr ""
+
+msgid "Rejected runs"
+msgstr ""
+
+msgid "Rejudge all"
+msgstr ""
+
+msgid "Rejudge all runs"
+msgstr ""
+
+msgid "Rejudge all!!!"
+msgstr ""
+
+msgid "Rejudge displayed runs"
+msgstr ""
+
+msgid "Rejudge displayed runs!"
+msgstr ""
+
+msgid "Rejudge problem"
+msgstr ""
+
+msgid "Rejudge problem!"
+msgstr ""
+
+msgid "Rejudge runs"
+msgstr ""
+
+msgid "Reload"
+msgstr ""
+
+msgid "Reload ALL Contest Pages"
+msgstr ""
+
+msgid "Reload Contest Pages"
+msgstr ""
+
+msgid "Reload Statement"
+msgstr ""
+
+msgid "Reload Statement In All Contests"
+msgstr ""
+
+msgid "Reload config files"
+msgstr ""
+
+msgid "Reload config files for ALL contests"
+msgstr ""
+
+msgid "Remaining"
+msgstr ""
+
+msgid "Remaining attempts"
+msgstr ""
+
+msgid "Remaining time"
+msgstr ""
+
+msgid "Remember or write down the password!"
+msgstr ""
+
+#, c-format
+msgid "Removal of privileged user %d from contest %d failed"
+msgstr ""
+
+msgid "Removal of privileged user from contest failed"
+msgstr ""
+
+#, c-format
+msgid "Removal of user %d from contest %d failed: %s"
+msgstr ""
+
+msgid "Removal of user from contest failed"
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
+msgid "Remove ban"
+msgstr ""
+
+msgid "Remove examiner"
+msgstr ""
+
+msgid "Remove from group"
+msgstr ""
+
+msgid "Remove registrations"
+msgstr ""
+
+msgid "Remove the CHIEF EXAMINER role from the selected users"
+msgstr ""
+
+msgid "Remove the COORDINATOR role from the selected users"
+msgstr ""
+
+msgid "Remove the EXAMINER role from the selected users"
+msgstr ""
+
+msgid "Remove the OBSERVER role from the selected users"
+msgstr ""
+
+msgid "Remove the selected users from the list"
+msgstr ""
+
+msgid ""
+"Remove the selected users from the list (ADMINISTRATORs cannot be removed)"
+msgstr ""
+
+msgid "Reply to all"
+msgstr ""
+
+msgid "Reply to sender"
+msgstr ""
+
+msgid "Report"
+msgstr ""
+
+msgid "Report file does not exist"
+msgstr ""
+
+msgid "Report for run"
+msgstr ""
+
+msgid "Report is not available"
+msgstr ""
+
+msgid "Report viewing is disabled"
+msgstr ""
+
+msgid "Reschedule"
+msgstr ""
+
+msgid "Reserve"
+msgstr ""
+
+msgid "Reserves"
+msgstr ""
+
+msgid "Reset filter"
+msgstr ""
+
+msgid "Reset the contest"
+msgstr ""
+
+msgid "Reset the contest!"
+msgstr ""
+
+msgid "Reset the contest!!!"
+msgstr ""
+
+msgid "Restart virtual contest"
+msgstr ""
+
+msgid "Resubmit"
+msgstr ""
+
+msgid "Result"
+msgstr ""
+
+msgid "Resume clients"
+msgstr ""
+
+msgid "Resume printing"
+msgstr ""
+
+msgid "Resume testing"
+msgstr ""
+
+msgid "Return to the main page"
+msgstr ""
+
+msgid "Retype new password"
+msgstr ""
+
+msgid "Review comments"
+msgstr ""
+
+msgid "Review notes"
+msgstr ""
+
+msgid "Role"
+msgstr ""
+
+msgid "Run"
+msgstr ""
+
+msgid "Run ID"
+msgstr ""
+
+msgid "Run comment"
+msgstr ""
+
+msgid "Run comments"
+msgstr ""
+
+msgid "Run comments for previous runs"
+msgstr ""
+
+msgid "Run filter expression"
+msgstr ""
+
+msgid "Run is read-only"
+msgstr ""
+
+msgid "Run log update failed"
+msgstr ""
+
+msgid "Run penalty"
+msgstr ""
+
+msgid "Run selection"
+msgstr ""
+
+msgid "Run to compare to is not specified"
+msgstr ""
+
+msgid "Run-time error"
+msgstr ""
+
+msgid "Running..."
+msgstr ""
+
+msgid "Runs accepted for testing"
+msgstr ""
+
+msgid "Runs being processed"
+msgstr ""
+
+msgid "Runs pending review"
+msgstr ""
+
+msgid "Runs pending testing"
+msgstr ""
+
+msgid "Runs summoned for defence"
+msgstr ""
+
+msgid "Runs to change token info:"
+msgstr ""
+
+msgid "STATUS UPDATE FAILED!"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Saved?"
+msgstr ""
+
+msgid "Scheduled end time"
+msgstr ""
+
+msgid "School student"
+msgstr ""
+
+msgid "School teacher"
+msgstr ""
+
+msgid "Scientist"
+msgstr ""
+
+msgid "Score"
+msgstr ""
+
+msgid "Score adjustment"
+msgstr ""
+
+msgid "Score bonus"
+msgstr ""
+
+#, c-format
+msgid "Score column is undefined\n"
+msgstr ""
+
+msgid "Score gained"
+msgstr ""
+
+#, c-format
+msgid ""
+"Score gained: %d (out of %d).\n"
+"\n"
+msgstr ""
+
+#, c-format
+msgid "Score gained: %d (out of %d).<br/><br/></big>\n"
+msgstr ""
+
+#, c-format
+msgid "Score gained: %d (out of %d).<br><br></big>\n"
+msgstr ""
+
+#, c-format
+msgid "Score is empty in row %d\n"
+msgstr ""
+
+#, c-format
+msgid "Score value `%s' is invalid in row %d\n"
+msgstr ""
+
+msgid "Security violation"
+msgstr ""
+
+msgid "Select another problem"
+msgstr ""
+
+msgid "Select one of available contests"
+msgstr ""
+
+msgid "Select problem"
+msgstr ""
+
+msgid "Select variant"
+msgstr ""
+
+msgid "Send a message"
+msgstr ""
+
+msgid "Send a message to judges"
+msgstr ""
+
+msgid "Send an appeal"
+msgstr ""
+
+msgid "Send clarification"
+msgstr ""
+
+msgid "Send e-mail with password anyway"
+msgstr ""
+
+msgid "Send run comment"
+msgstr ""
+
+msgid "Send run comment and OK run"
+msgstr ""
+
+msgid "Send run comment and REJECT run"
+msgstr ""
+
+msgid "Send run comment and SUMMON run"
+msgstr ""
+
+msgid "Send run comment and ignore run"
+msgstr ""
+
+msgid "Send!"
+msgstr ""
+
+msgid "Sender"
+msgstr ""
+
+msgid "Sent submissions"
+msgstr ""
+
+msgid "Sep"
+msgstr ""
+
+msgid "Serial No"
+msgstr ""
+
+msgid "Server error"
+msgstr ""
+
+msgid "Server is down"
+msgstr ""
+
+msgid "Server start time"
+msgstr ""
+
+msgid "Server status"
+msgstr ""
+
+msgid "Server time"
+msgstr ""
+
+msgid "Service is not available"
+msgstr ""
+
+msgid "Service is not available. Please, come later."
+msgstr ""
+
+msgid "Service not available"
+msgstr ""
+
+msgid "Service that you requested is not available."
+msgstr ""
+
+msgid "Session update failed"
+msgstr ""
+
+#, c-format
+msgid "Session update failed: %s"
+msgstr ""
+
+msgid "Set"
+msgstr ""
+
+msgid "Set REJECTED run status"
+msgstr ""
+
+msgid "Set accepting mode"
+msgstr ""
+
+msgid "Set filter"
+msgstr ""
+
+msgid "Set finished flag"
+msgstr ""
+
+msgid "Set judging mode"
+msgstr ""
+
+msgid "Set permissions"
+msgstr ""
+
+msgid "Set priorities"
+msgstr ""
+
+msgid "Set status"
+msgstr ""
+
+msgid "Set the BANNED flag for the selected users"
+msgstr ""
+
+msgid "Set the INCOMPLETE flag for the selected users"
+msgstr ""
+
+msgid "Set the INVISIBLE flag for the selected users"
+msgstr ""
+
+msgid "Set the LOCKED flag for the selected users"
+msgstr ""
+
+msgid "Set the registration status of the selected users to OK"
+msgstr ""
+
+msgid "Set the registration status of the selected users to PENDING"
+msgstr ""
+
+msgid "Set the registration status of the selected users to REJECTED"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Shift parameter"
+msgstr ""
+
+msgid "Short name"
+msgstr ""
+
+msgid "Show closed contests"
+msgstr ""
+
+msgid "Show hidden contests"
+msgstr ""
+
+msgid "Show tests"
+msgstr ""
+
+msgid "Show unmanageable contests"
+msgstr ""
+
+msgid "Shown"
+msgstr ""
+
+msgid "Signal"
+msgstr ""
+
+msgid "Simplified registration"
+msgstr ""
+
+msgid "Size"
+msgstr ""
+
+msgid "Skipped"
+msgstr ""
+
+msgid "Solved"
+msgstr ""
+
+msgid "Solved<br/>problems"
+msgstr ""
+
+msgid "Source"
+msgstr ""
+
+msgid "Source code"
+msgstr ""
+
+msgid "Source code is closed"
+msgstr ""
+
+msgid "Source code is open"
+msgstr ""
+
+msgid "Source file does not exist"
+msgstr ""
+
+msgid "Source for run"
+msgstr ""
+
+msgid "Source for this run is not available"
+msgstr ""
+
+msgid "Squeeze runs"
+msgstr ""
+
+msgid "Stack limit"
+msgstr ""
+
+msgid "Standings"
+msgstr ""
+
+#, c-format
+msgid "Standings [%s, frozen]"
+msgstr ""
+
+#, c-format
+msgid "Standings [not started]"
+msgstr ""
+
+#, c-format
+msgid "Standings [over, frozen]"
+msgstr ""
+
+#, c-format
+msgid "Standings [over]"
+msgstr ""
+
+msgid "Standings freeze time"
+msgstr ""
+
+msgid "Standings unfreeze time"
+msgstr ""
+
+msgid "Start"
+msgstr ""
+
+msgid "Start at"
+msgstr ""
+
+msgid "Start exam"
+msgstr ""
+
+msgid "Start new"
+msgstr ""
+
+msgid "Start new editing"
+msgstr ""
+
+msgid "Start upsolving"
+msgstr ""
+
+msgid "Start virtual contest"
+msgstr ""
+
+msgid "Statement"
+msgstr ""
+
+msgid "Statements"
+msgstr ""
+
+msgid "Static priority"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+#, c-format
+msgid "Status is empty in row %d\n"
+msgstr ""
+
+#, c-format
+msgid "Status of your submit %d is changed in contest %d"
+msgstr ""
+
+#, c-format
+msgid "Status of your submit is changed\n"
+msgstr ""
+
+msgid "Stop"
+msgstr ""
+
+msgid "Stop exam"
+msgstr ""
+
+msgid "Stop upsolving"
+msgstr ""
+
+msgid "Stop virtual contest"
+msgstr ""
+
+msgid "Street address"
+msgstr ""
+
+msgid "Student"
+msgstr ""
+
+msgid "Subject"
+msgstr ""
+
+msgid "Subject is empty"
+msgstr ""
+
+msgid "Subject length is too big"
+msgstr ""
+
+#, c-format
+msgid "Subject length is too big (%zu)"
+msgstr ""
+
+msgid "Submission log"
+msgstr ""
+
+msgid "Submission time"
+msgstr ""
+
+msgid "Submissions"
+msgstr ""
+
+msgid "Submit"
+msgstr ""
+
+msgid "Submit a solution"
+msgstr ""
+
+msgid "Submit a solution for"
+msgstr ""
+
+msgid "Submit appeal"
+msgstr ""
+
+msgid "Submit clar"
+msgstr ""
+
+msgid "Submit image"
+msgstr ""
+
+msgid "Submit solution!"
+msgstr ""
+
+msgid "Submit source viewing is disabled"
+msgstr ""
+
+msgid "Submit testing mode"
+msgstr ""
+
+msgid "Success"
+msgstr ""
+
+msgid "Summary"
+msgstr ""
+
+msgid "Summoned for defence"
+msgstr ""
+
+msgid "Suspend clients"
+msgstr ""
+
+msgid "Suspend printing"
+msgstr ""
+
+msgid "Suspend testing"
+msgstr ""
+
+msgid "Switch language"
+msgstr ""
+
+msgid "Synchronization error"
+msgstr ""
+
+msgid "System error"
+msgstr ""
+
+msgid "TESTING COMPLETED"
+msgstr ""
+
+msgid "TESTING IN PROGRESS..."
+msgstr ""
+
+msgid "Team name"
+msgstr ""
+
+msgid "Telegram Token"
+msgstr ""
+
+msgid "Terminate download"
+msgstr ""
+
+msgid "Test file does not exist"
+msgstr ""
+
+msgid "Test file is not available"
+msgstr ""
+
+msgid "Test information"
+msgstr ""
+
+msgid "Test input"
+msgstr ""
+
+msgid "Test input data"
+msgstr ""
+
+msgid "Test number"
+msgstr ""
+
+msgid "Testing comments"
+msgstr ""
+
+msgid "Testing is in progress..."
+msgstr ""
+
+msgid "Testing messages"
+msgstr ""
+
+msgid "Testing of participants' submits is suspended"
+msgstr ""
+
+msgid "Testing queue"
+msgstr ""
+
+msgid "Testing reports are closed"
+msgstr ""
+
+msgid "Testing reports are open"
+msgstr ""
+
+msgid "Tests"
+msgstr ""
+
+#, c-format
+msgid "Tests is empty in row %d\n"
+msgstr ""
+
+msgid "Tests passed"
+msgstr ""
+
+#, c-format
+msgid "Tests value `%s' is invalid in row %d\n"
+msgstr ""
+
+msgid "The account parameters are as follows:"
+msgstr ""
+
+msgid "The contest is closed for participation."
+msgstr ""
+
+msgid "The contest is in progress"
+msgstr ""
+
+msgid "The contest is in progress (standings are frozen)"
+msgstr ""
+
+msgid "The contest is not started"
+msgstr ""
+
+msgid "The contest is over"
+msgstr ""
+
+msgid "The contest is over (standings are frozen)"
+msgstr ""
+
+msgid "The contest is personal"
+msgstr ""
+
+msgid ""
+"The contest is temporarily not available. Please, retry the request a bit "
+"later."
+msgstr ""
+
+msgid "The exam is in progress"
+msgstr ""
+
+msgid "The exam is in progress (standings are frozen)"
+msgstr ""
+
+msgid "The exam is not started"
+msgstr ""
+
+msgid "The exam is over"
+msgstr ""
+
+msgid "The exam is over (standings are frozen)"
+msgstr ""
+
+#, c-format
+msgid "The language %s is disabled for this problem"
+msgstr ""
+
+msgid "The language is disabled for this problem"
+msgstr ""
+
+msgid "The problem statement is not available"
+msgstr ""
+
+msgid "The server is down. Try again later."
+msgstr ""
+
+msgid ""
+"The server was unable to send a registration e-mail\n"
+"to the specified address. This is probably due\n"
+"to heavy server load rather than to an invalid\n"
+"e-mail address. You should try to register later.\n"
+msgstr ""
+
+msgid ""
+"The session was created from a different IP-address or protocol, that yours."
+msgstr ""
+
+msgid "The session was removed by an administrator."
+msgstr ""
+
+msgid "The specified session does not exist."
+msgstr ""
+
+msgid "The specified session has expired."
+msgstr ""
+
+msgid "The submission is binary and thus is not shown."
+msgstr ""
+
+msgid ""
+"The user database server is currently not available. Please, retry the "
+"request later."
+msgstr ""
+
+msgid "This contest cannot be continued"
+msgstr ""
+
+msgid ""
+"This contest operates in \"simplified registration\" mode. You will get your "
+"login and password immediately after account is created."
+msgstr ""
+
+msgid ""
+"This contest operates in \\\"simplified registration\\\" mode. You will get "
+"your login and password immediately after account is created."
+msgstr ""
+
+msgid "This language is disabled for use"
+msgstr ""
+
+msgid "This language is not available for this problem"
+msgstr ""
+
+msgid ""
+"This message contains the login name, assigned to you, as well as your "
+"password for initial log in. You will be able to change the password later."
+msgstr ""
+
+msgid ""
+"This message contains the password for the initial log in. You will be able "
+"to change the password later."
+msgstr ""
+
+msgid "This problem is already solved"
+msgstr ""
+
+msgid "This problem is not yet available"
+msgstr ""
+
+msgid ""
+"This program is configured incorrectly and cannot perform normal operation. "
+"Please contact the site (or contest) administrator."
+msgstr ""
+
+msgid "This submit is already printed"
+msgstr ""
+
+msgid "This submit is duplicate of another run"
+msgstr ""
+
+#, c-format
+msgid "This submit is duplicate of the run %d"
+msgstr ""
+
+msgid "This test program is correct, but failed on some tests"
+msgstr ""
+
+msgid "This test program is incorrect, but passed all tests"
+msgstr ""
+
+msgid "Time"
+msgstr ""
+
+msgid "Time (sec)"
+msgstr ""
+
+msgid "Time expression"
+msgstr ""
+
+msgid "Time limit"
+msgstr ""
+
+msgid "Time-limit exceeded"
+msgstr ""
+
+msgid "Timestamp"
+msgstr ""
+
+msgid "To"
+msgstr ""
+
+#, c-format
+msgid ""
+"To confirm password regeneration, you should visit the following URL:\n"
+"%s?contest_id=%d&locale_id=%d&SID=%016llx&action=%d.\n"
+"\n"
+msgstr ""
+
+msgid "To contest details"
+msgstr ""
+
+msgid "To contests list"
+msgstr ""
+
+msgid ""
+"To create an account, please think out, a login and provide your valid e-"
+"mail address in the form above. Then press the \\\"Create account\\\" button."
+msgstr ""
+
+msgid "To main page"
+msgstr ""
+
+msgid "To the top"
+msgstr ""
+
+msgid "To the top (postpone editing)"
+msgstr ""
+
+msgid "To user id"
+msgstr ""
+
+msgid "To user login"
+msgstr ""
+
+msgid ""
+"To validate your e-mail and enable your participation in this contest you "
+"may use the password recovery link below."
+msgstr ""
+
+msgid "Token counter"
+msgstr ""
+
+msgid "Tokenize displayed runs"
+msgstr ""
+
+msgid "Tokenize displayed runs!"
+msgstr ""
+
+msgid "Too few lines in CSV file"
+msgstr ""
+
+msgid "Total"
+msgstr ""
+
+msgid "Total messages"
+msgstr ""
+
+msgid "Total number of sample programs in the test suite"
+msgstr ""
+
+msgid "Total number of submitted tests"
+msgstr ""
+
+msgid "Total priority"
+msgstr ""
+
+msgid "Total score"
+msgstr ""
+
+msgid "Total size of Clars"
+msgstr ""
+
+msgid "Total size of Runs"
+msgstr ""
+
+msgid "Total submissions"
+msgstr ""
+
+msgid "Try again this operation later"
+msgstr ""
+
+msgid ""
+"Type the login and the password in to the form above and press the \"Log in"
+"\" button to activate the account."
+msgstr ""
+
+#, c-format
+msgid "UId is empty in row %d\n"
+msgstr ""
+
+msgid "UPSOLVING"
+msgstr ""
+
+msgid "Unanswered clars"
+msgstr ""
+
+msgid "Undefined user_id and login"
+msgstr ""
+
+msgid "Unexpected EOF"
+msgstr ""
+
+msgid "Unhandled action"
+msgstr ""
+
+#, c-format
+msgid "Unhandled action: %d"
+msgstr ""
+
+msgid "Unknown error"
+msgstr ""
+
+#, c-format
+msgid "Unknown error %d"
+msgstr ""
+
+#, c-format
+msgid "Unknown error %d.\n"
+msgstr ""
+
+#, c-format
+msgid "Unknown: %d"
+msgstr ""
+
+msgid "Unlimited"
+msgstr ""
+
+msgid "Unlock"
+msgstr ""
+
+msgid "Unmark displayed runs"
+msgstr ""
+
+msgid "Up all"
+msgstr ""
+
+msgid "Update public standings"
+msgstr ""
+
+msgid "Update standings!"
+msgstr ""
+
+msgid "Update the public standings"
+msgstr ""
+
+msgid "Update versions"
+msgstr ""
+
+msgid "Upload avatar"
+msgstr ""
+
+msgid "Upload judging protocol"
+msgstr ""
+
+msgid "Upload!"
+msgstr ""
+
+msgid "Upsolving"
+msgstr ""
+
+msgid "Upsolving configuration"
+msgstr ""
+
+msgid "Upsolving mode"
+msgstr ""
+
+msgid "Use 'extid' as problem name"
+msgstr ""
+
+msgid "Use 'problem_dir' as problem name"
+msgstr ""
+
+msgid "Use Contest Id"
+msgstr ""
+
+msgid "Use an existing account"
+msgstr ""
+
+msgid "Use existing contest:"
+msgstr ""
+
+msgid "Use problem short name"
+msgstr ""
+
+msgid "Use programming language short name"
+msgstr ""
+
+msgid "Use run number"
+msgstr ""
+
+msgid "Use source language or content type suffix"
+msgstr ""
+
+msgid "Use submit time"
+msgstr ""
+
+msgid "Use token"
+msgstr ""
+
+msgid "Use user Id"
+msgstr ""
+
+msgid "Use user Login"
+msgstr ""
+
+msgid "Use user Name"
+msgstr ""
+
+msgid "User"
+msgstr ""
+
+#, c-format
+msgid "User <tt>%s</tt> does not exist"
+msgstr ""
+
+msgid "User ID"
+msgstr ""
+
+msgid "User Id"
+msgstr ""
+
+#, c-format
+msgid "User Id %d does not exist"
+msgstr ""
+
+msgid "User Id does not exist"
+msgstr ""
+
+msgid "User Login"
+msgstr ""
+
+msgid "User Name"
+msgstr ""
+
+msgid "User database server is down"
+msgstr ""
+
+msgid "User does not exist"
+msgstr ""
+
+msgid "User filter expression"
+msgstr ""
+
+msgid "User info"
+msgstr ""
+
+msgid "User is simple registered"
+msgstr ""
+
+msgid "User login"
+msgstr ""
+
+msgid "User login page"
+msgstr ""
+
+msgid "User login/ID"
+msgstr ""
+
+msgid "User mode"
+msgstr ""
+
+msgid "User name"
+msgstr ""
+
+msgid "User name (for standings)"
+msgstr ""
+
+msgid ""
+"User quota exceeded. This clarification request is too large, you already "
+"have too many clarification requests, or the total size of your "
+"clarification requests is too big"
+msgstr ""
+
+msgid ""
+"User quota exceeded. This submit is too large, you already have too many "
+"submits,\n"
+"or the total size of your submits is too big"
+msgstr ""
+
+msgid "User report"
+msgstr ""
+
+msgid "User standings"
+msgstr ""
+
+msgid "User's report"
+msgstr ""
+
+msgid "Userlist server is down"
+msgstr ""
+
+msgid "Users"
+msgstr ""
+
+msgid "Users for IP addresses"
+msgstr ""
+
+msgid "Users page"
+msgstr ""
+
+#, c-format
+msgid "Value of field \"%s\" is invalid.\n"
+msgstr ""
+
+msgid "Valuer comments"
+msgstr ""
+
+msgid "Valuer errors"
+msgstr ""
+
+msgid "Valuer information"
+msgstr ""
+
+msgid "Valuer judge comments"
+msgstr ""
+
+msgid "Valuer judge comments are displayed"
+msgstr ""
+
+msgid "Variant"
+msgstr ""
+
+msgid "Variants (variant.map)"
+msgstr ""
+
+msgid "View"
+msgstr ""
+
+msgid "View all"
+msgstr ""
+
+msgid "View check details"
+msgstr ""
+
+msgid "View contest passwords"
+msgstr ""
+
+msgid "View details"
+msgstr ""
+
+msgid "View last 15"
+msgstr ""
+
+msgid "View registration passwords"
+msgstr ""
+
+msgid "View regular users"
+msgstr ""
+
+msgid "View report"
+msgstr ""
+
+msgid "View serve.cfg"
+msgstr ""
+
+msgid "View source"
+msgstr ""
+
+msgid "View submitted answer"
+msgstr ""
+
+msgid "View the problem statement and send a submission"
+msgstr ""
+
+msgid "Viewing advisors"
+msgstr ""
+
+msgid "Viewing audit log for"
+msgstr ""
+
+msgid "Viewing clar"
+msgstr ""
+
+msgid "Viewing coaches"
+msgstr ""
+
+msgid "Viewing contestants"
+msgstr ""
+
+msgid "Viewing general info"
+msgstr ""
+
+msgid "Viewing guests"
+msgstr ""
+
+msgid "Viewing report"
+msgstr ""
+
+msgid "Viewing reserves"
+msgstr ""
+
+msgid "Viewing run"
+msgstr ""
+
+msgid "Viewing settings"
+msgstr ""
+
+msgid "Viewing user report"
+msgstr ""
+
+msgid "Virtual contest close date"
+msgstr ""
+
+msgid "Virtual contest close time"
+msgstr ""
+
+msgid "Virtual contest is not started"
+msgstr ""
+
+msgid "Virtual contest open date"
+msgstr ""
+
+msgid "Virtual contest open time"
+msgstr ""
+
+msgid "Virtual start"
+msgstr ""
+
+msgid "Virtual start failed"
+msgstr ""
+
+msgid "Virtual stop"
+msgstr ""
+
+msgid "Wall time-limit exceeded"
+msgstr ""
+
+msgid "Warning explanation for the user (mandatory)"
+msgstr ""
+
+msgid "Warning text for the user"
+msgstr ""
+
+msgid "Warnings"
+msgstr ""
+
+msgid "Write error"
+msgstr ""
+
+msgid "Write runs in XML internal format"
+msgstr ""
+
+msgid "Write runs in XML internal format with source"
+msgstr ""
+
+msgid "Wrong answer"
+msgstr ""
+
+msgid "Wrong output format"
+msgstr ""
+
+msgid "XML parse error"
+msgstr ""
+
+msgid "YES"
+msgstr ""
+
+msgid "Yes"
+msgstr ""
+
+msgid "Yes."
+msgstr ""
+
+msgid "You are disqualified"
+msgstr ""
+
+msgid "You are disqualified by the contest administration."
+msgstr ""
+
+msgid "You are not registered for this contest."
+msgstr ""
+
+msgid ""
+"You cannot participate in the contest because your registration is "
+"incomplete."
+msgstr ""
+
+msgid ""
+"You cannot participate in this contest. Your account was created using the "
+"simple registration procedure, i.e. your e-mail address was not verified. "
+"This contest requires e-mail verification, so your account cannot be "
+"accepted."
+msgstr ""
+
+msgid "You do not have permissions to use this service"
+msgstr ""
+
+msgid "You do not have permissions to use this service."
+msgstr ""
+
+msgid "You have been registered"
+msgstr ""
+
+msgid "You have no permissions to view this contest."
+msgstr ""
+
+#, c-format
+msgid "You have received a message from judges\n"
+msgstr ""
+
+#, c-format
+msgid "You have received a message from judges in contest %d"
+msgstr ""
+
+#, c-format
+msgid "You have received a reply from judges\n"
+msgstr ""
+
+#, c-format
+msgid "You have received a reply from judges in contest %d"
+msgstr ""
+
+msgid "You have typed an invalid or non-existing login."
+msgstr ""
+
+msgid "You have typed an invalid or wrong password."
+msgstr ""
+
+msgid "You must set up new password!"
+msgstr ""
+
+msgid ""
+"You should receive an e-mail message with a login and a password to the "
+"system. Use this password for the first log in. After the first login you "
+"will be able to change the password."
+msgstr ""
+
+msgid ""
+"You should receive an e-mail message with a password to the system. Use this "
+"password for the first log in. After the first login you will be able to "
+"change the password."
+msgstr ""
+
+msgid ""
+"You will need to specify this token when interacting with Ejudge Telegram "
+"Bot. This token is valid for 300 seconds. The token is good for one Ejudge "
+"Bot interaction."
+msgstr ""
+
+msgid "Your IP-address or protocol is banned."
+msgstr ""
+
+msgid "Your Telegram token:"
+msgstr ""
+
+msgid "Your have been banned by the administrator."
+msgstr ""
+
+msgid "Your registration has not been confirmed."
+msgstr ""
+
+msgid ""
+"Your request has caused an internal server error. Please, report it as a bug."
+msgstr ""
+
+msgid "Your session has expired."
+msgstr ""
+
+#, c-format
+msgid "Your submit has been commented\n"
+msgstr ""
+
+#, c-format
+msgid "Your submit has been commented and accepted\n"
+msgstr ""
+
+#, c-format
+msgid "Your submit has been commented and ignored\n"
+msgstr ""
+
+#, c-format
+msgid "Your submit has been commented and rejected\n"
+msgstr ""
+
+#, c-format
+msgid "Your submit has been commented and summoned for defence\n"
+msgstr ""
+
+#, c-format
+msgid "Your submit has been commented in contest %d"
+msgstr ""
+
+msgid "Zip code"
+msgstr ""
+
+msgid "[Edit current contest]"
+msgstr ""
+
+msgid "`run_id' parameter is undefined"
+msgstr ""
+
+#, c-format
+msgid "`run_id' parameter value %d is out of range"
+msgstr ""
+
+msgid "`run_id' parameter value is invalid."
+msgstr ""
+
+msgid "`run_id' parameter value is out of range"
+msgstr ""
+
+msgid "accepting"
+msgstr ""
+
+msgid "access denied"
+msgstr ""
+
+msgid "action is temporarily unavailable"
+msgstr ""
+
+msgid "all"
+msgstr ""
+
+msgid "allowed only in virtual contest"
+msgstr ""
+
+msgid "bad XML"
+msgstr ""
+
+msgid "bad contest identifier"
+msgstr ""
+
+msgid "bad user identifier"
+msgstr ""
+
+msgid "cannot connect to the server"
+msgstr ""
+
+msgid "clarification requests are disabled"
+msgstr ""
+
+msgid "clients suspended"
+msgstr ""
+
+msgid "contains invalid characters"
+msgstr ""
+
+msgid "contest deadline exceeded"
+msgstr ""
+
+msgid "conversion from string to bool failed"
+msgstr ""
+
+msgid "conversion from string to dur_t failed"
+msgstr ""
+
+msgid "conversion from string to hash_t failed"
+msgstr ""
+
+msgid "conversion from string to int failed"
+msgstr ""
+
+msgid "conversion from string to ip_t failed"
+msgstr ""
+
+msgid "conversion from string to result_t failed"
+msgstr ""
+
+msgid "conversion from string to time_t failed"
+msgstr ""
+
+msgid "data format error"
+msgstr ""
+
+msgid "database error"
+msgstr ""
+
+msgid "division by zero"
+msgstr ""
+
+msgid "duplicated submission"
+msgstr ""
+
+msgid "e-mail sending failed"
+msgstr ""
+
+msgid "error code 1"
+msgstr ""
+
+msgid "finished"
+msgstr ""
+
+msgid "frozen"
+msgstr ""
+
+msgid "generic server error"
+msgstr ""
+
+msgid "group with this name already exists"
+msgstr ""
+
+msgid "in progress"
+msgstr ""
+
+msgid "incomplete registration"
+msgstr ""
+
+msgid "integer overflow"
+msgstr ""
+
+msgid "invalid argument"
+msgstr ""
+
+msgid "invalid argument type"
+msgstr ""
+
+msgid "invalid clar_id"
+msgstr ""
+
+msgid "invalid contest duration"
+msgstr ""
+
+msgid "invalid contest_id"
+msgstr ""
+
+msgid "invalid field"
+msgstr ""
+
+msgid "invalid filter expression"
+msgstr ""
+
+msgid "invalid group id"
+msgstr ""
+
+msgid "invalid language"
+msgstr ""
+
+msgid "invalid login"
+msgstr ""
+
+msgid "invalid member"
+msgstr ""
+
+msgid "invalid password"
+msgstr ""
+
+msgid "invalid prob_id"
+msgstr ""
+
+msgid "invalid run status"
+msgstr ""
+
+msgid "invalid run_id"
+msgstr ""
+
+msgid "invalid socket path"
+msgstr ""
+
+msgid "invalid test number"
+msgstr ""
+
+msgid "invalid user group"
+msgstr ""
+
+msgid "invalid user_id"
+msgstr ""
+
+msgid ""
+"is available for this contest. Note, however, that simplified registration "
+"imposes certain restrictions on further use of the account!"
+msgstr ""
+
+msgid "is commented"
+msgstr ""
+
+msgid "judged"
+msgstr ""
+
+msgid "judges"
+msgstr ""
+
+msgid "judging"
+msgstr ""
+
+msgid "language"
+msgstr ""
+
+msgid "last 15"
+msgstr ""
+
+msgid "login"
+msgstr ""
+
+msgid "login already used"
+msgstr ""
+
+msgid "message subject is too long"
+msgstr ""
+
+msgid "moderated"
+msgstr ""
+
+msgid "ms"
+msgstr ""
+
+msgid "msec"
+msgstr ""
+
+msgid "must be specified"
+msgstr ""
+
+msgid "no connection to server"
+msgstr ""
+
+msgid "no error"
+msgstr ""
+
+msgid "nonexistent cookie"
+msgstr ""
+
+msgid "not connected to server"
+msgstr ""
+
+msgid "not implemented"
+msgstr ""
+
+msgid "open"
+msgstr ""
+
+msgid "operation is not supported"
+msgstr ""
+
+msgid "out of memory"
+msgstr ""
+
+msgid "packet receive failed"
+msgstr ""
+
+msgid "packet sending failed"
+msgstr ""
+
+msgid "password"
+msgstr ""
+
+msgid "peer closed connection"
+msgstr ""
+
+msgid "permission denied"
+msgstr ""
+
+msgid "printing suspended"
+msgstr ""
+
+msgid "protocol error"
+msgstr ""
+
+msgid "range error"
+msgstr ""
+
+msgid "read error"
+msgstr ""
+
+msgid "read error from server"
+msgstr ""
+
+msgid "regular registration"
+msgstr ""
+
+msgid "report is not available"
+msgstr ""
+
+msgid "s"
+msgstr ""
+
+msgid "some component of request is too large"
+msgstr ""
+
+msgid "standings"
+msgstr ""
+
+msgid "submission log"
+msgstr ""
+
+msgid "system call failed"
+msgstr ""
+
+msgid "team pages quota is exceeded"
+msgstr ""
+
+msgid "testing suspended"
+msgstr ""
+
+msgid "the contest is already finished"
+msgstr ""
+
+msgid "the contest is already started"
+msgstr ""
+
+msgid "the contest is not finished"
+msgstr ""
+
+msgid "the contest is not started"
+msgstr ""
+
+msgid "the program is already printed"
+msgstr ""
+
+msgid "the requested file does not exist"
+msgstr ""
+
+msgid "the run is read-only"
+msgstr ""
+
+msgid "the session identifier is invalid"
+msgstr ""
+
+msgid "the user quota is exceeded"
+msgstr ""
+
+msgid "there are transient runs"
+msgstr ""
+
+msgid "this IP address is not allowed to use this service"
+msgstr ""
+
+msgid "this field cannot be changed"
+msgstr ""
+
+msgid "this field cannot be deleted"
+msgstr ""
+
+msgid "this language is disabled for this problem"
+msgstr ""
+
+msgid "this user cannot participate in this contest"
+msgstr ""
+
+msgid "this user is not registered for this contest"
+msgstr ""
+
+msgid "transitive user contest sharing"
+msgstr ""
+
+msgid "unexpected EOF"
+msgstr ""
+
+msgid "unexpected EOF from server"
+msgstr ""
+
+msgid "unknown error"
+msgstr ""
+
+msgid "unspecified error"
+msgstr ""
+
+msgid "user"
+msgstr ""
+
+msgid "user is simple_registered"
+msgstr ""
+
+msgid "user tries to download runs too often"
+msgstr ""
+
+msgid "user's runs downloading disabled"
+msgstr ""
+
+msgid "variant"
+msgstr ""
+
+msgid "viewing report is disabled"
+msgstr ""
+
+msgid "viewing run source is disabled"
+msgstr ""
+
+msgid "write error"
+msgstr ""
+
+msgid "write error to server"
+msgstr ""

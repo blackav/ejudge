@@ -87,4 +87,3 @@ userlist_clnt_get_count(
 
   return ULS_COUNT;
 }
-

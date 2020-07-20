@@ -2,7 +2,7 @@
 #ifndef __MISCTEXT_H__
 #define __MISCTEXT_H__
 
-/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -49,7 +49,7 @@ void html_armor_free(struct html_armor_buffer *pb);
 
 
 //unsigned char *html_armor_string_dupa(const unsigned char *str);
-#define html_armor_string_dupa(s) ({ unsigned char *_dupa_tmp_s = (s); size_t _dupa_tmp_len = strlen(_dupa_tmp_s), _dupa_tmp_len_2 = html_armored_memlen(_dupa_tmp_s, _dupa_tmp_len); unsigned char *_dupa_tmp_str = (unsigned char*) alloca(_dupa_tmp_len_2 + 1); html_armor_text(_dupa_tmp_s, _dupa_tmp_len, _dupa_tmp_str); _dupa_tmp_str; }) 
+#define html_armor_string_dupa(s) ({ unsigned char *_dupa_tmp_s = (s); size_t _dupa_tmp_len = strlen(_dupa_tmp_s), _dupa_tmp_len_2 = html_armored_memlen(_dupa_tmp_s, _dupa_tmp_len); unsigned char *_dupa_tmp_str = (unsigned char*) alloca(_dupa_tmp_len_2 + 1); html_armor_text(_dupa_tmp_s, _dupa_tmp_len, _dupa_tmp_str); _dupa_tmp_str; })
 
 char *duration_str(int show_astr, time_t cur,
                    time_t time, char *buf, int len);
@@ -75,6 +75,7 @@ enum
   CONTENT_TYPE_TEXT = 0,
   CONTENT_TYPE_HTML,
   CONTENT_TYPE_XML,
+  CONTENT_TYPE_BSON,
 };
 int get_content_type(const unsigned char *txt, const unsigned char **p_start_ptr);
 
@@ -102,6 +103,7 @@ void allowed_list_map(
 int check_str(const unsigned char *str, const unsigned char *map);
 int check_str_2(const unsigned char *str, const unsigned char *map,
                 unsigned char *invchars, size_t invsize, int utf8_flag);
+int is_valid_login(const unsigned char *str);
 
 unsigned char *text_input_process_string(const unsigned char *s,
                                          int sep, int sep_repl);
@@ -122,7 +124,7 @@ int utf8_cnt(const unsigned char *s, int width, int *p_w);
  * length is all checks are ok
  */
 int ucs2_to_utf8(unsigned char **pu8str, const unsigned char *u16str,
-                 int u16len); 
+                 int u16len);
 
 /*
  * converts UTF8 buffer `in' of the size `in_size' to UCS4 buffer `out'
@@ -311,5 +313,9 @@ text_substitute(
         const void *p,
         const unsigned char *str,
         unsigned char *(*getvar_func)(const void *, const unsigned char *));
+
+int json_armor_needed(const unsigned char *str, size_t *psz);
+int json_armor_string(const unsigned char *str, char *out);
+const unsigned char *json_armor_buf(struct html_armor_buffer *pb, const unsigned char *s);
 
 #endif /* __MISCTEXT_H__ */

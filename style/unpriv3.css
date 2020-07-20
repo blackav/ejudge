@@ -31,12 +31,25 @@ input[type=file] {
 	padding-left: 0;
 }
 
+h2 {
+	margin: 25px 0 15px 0;
+}
+
 h4 {
 	color: #555555;
 }
 
 #l13 table {
 	margin-bottom: 20px;
+}
+
+.m-25 {
+	margin-left: 25px !important;
+	margin-right: 25px !important;
+}
+
+.mb-m1 {
+	margin-bottom: -1px !important;
 }
 
 body {
@@ -235,6 +248,24 @@ div.server_status_error, div.server_status_alarm, div.server_status_off, div.ser
 
 #footer {
 	padding: 15px 10px 10px 10px;
+}
+
+ .user_actions input[type="text"], .user_actions input[type="password"]{
+	width: 100px;
+	padding: 1px 5px;
+}
+
+.user_actions input[type="submit"], .user_actions select {
+	padding: 1px 5px;
+}
+
+div.user_actions_login_form {
+	margin-bottom: -5px;
+}
+
+.user-action-lang {
+	position: relative;
+	top: 1px;
 }
 
 A.menu, .menu {
@@ -605,6 +636,11 @@ div.server_status_error, div.server_status_alarm, div.server_status_off, div.ser
 	position: relative;
 }
 
+.m-25 div.server_status_error, .m-25 div.server_status_alarm, .m-25 div.server_status_off, .m-25 div.server_status_on {
+	margin-left: -25px;
+	margin-right: -25px;
+}
+
 /**************** TABLES ******************/
 
 .table{
@@ -748,10 +784,18 @@ table.standings {
 	font-size: 14px;
 }
 
+table.standings th {
+	font-size: 11px;
+}
+
 table.standings td {
 	border: 1px solid rgb(151, 151, 151);
 	padding-top: 4px;
 	padding-bottom: 4px;
+}
+
+table.standings .userpic {
+	width: 100px;
 }
 
 .green-tr td {
@@ -764,6 +808,31 @@ table.standings td {
 
 .yellow-tr td {
 	background: #ffffdd;
+}
+
+.table-gray {
+	margin: 10px 0 20px 0;
+	border-collapse: collapse;
+	font-size: 15px;
+}
+
+.table-gray tr {
+	background: #eaeaea;
+}
+
+.table-gray tr:nth-child(odd){
+	background: #dadada;
+}
+
+.table-gray th {
+	background: #b5b5b5;
+    padding: 5px 10px;
+    border: 1px solid #616161;
+}
+
+.table-gray td {
+	border: 1px solid #828282;
+	padding: 5px 10px;
 }
 
 /**************** DIV PROB ******************/
@@ -792,4 +861,19 @@ div.probEmpty {
 	border-left: 1px solid rgb(199, 199, 199);
 	box-shadow: inset #dfdfdf 0 30px 0 0;
 	padding-top: 30px;
+}
+
+/**************** USERPIC ******************/
+
+.userpic img, .userpic-img {
+    width: 90px;
+    height: 90px;
+    margin: 1px;
+    border: 4px solid #fdfdfd;
+    box-shadow: #c0c0c0 0 0 0 1px;
+    vertical-align: middle;
+}
+
+.userpic-img-upage {
+	margin: -5px 0 5px -15px;
 }

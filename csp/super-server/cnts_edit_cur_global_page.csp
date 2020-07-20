@@ -2,6 +2,158 @@
 %><%@include "includes.csp"
 %><%
 #include "ejudge/cpu.h"
+%><%
+
+static const unsigned char MSG_contest_time[] = "Contest time (HH:MM)";
+static const unsigned char MSG_contest_finish_time[] = "Contest end time";
+static const unsigned char MSG_score_system[] = "Scoring System";
+static const unsigned char MSG_board_fog_time[] = "Standings freeze time (HH:MM) before finish";
+static const unsigned char MSG_board_unfog_time[] = "Standings unfreeze time (HH:MM) after finish";
+static const unsigned char MSG_use_compilation_server[] = "Use the default compilation server";
+static const unsigned char MSG_enable_win32_languages[] = "Enable Win32 languages";
+static const unsigned char MSG_separate_user_score[] = "Calculate and store user-visible score separately";
+static const unsigned char MSG_secure_run[] = "Run programs securely";
+static const unsigned char MSG_enable_memory_limit_error[] = "Enable support for MemoryLimit error";
+static const unsigned char MSG_detect_violations[] = "Detect security violations";
+static const unsigned char MSG_enable_max_stack_size[] = "Assume max_stack_size == max_vm_size";
+static const unsigned char MSG_standings_locale[] = "Standings locale";
+static const unsigned char MSG_checker_locale[] = "Checker locale";
+static const unsigned char MSG_enable_32bit_checkers[] = "Compile 32-bit checkers on 64-bit platforms";
+static const unsigned char MSG_team_enable_src_view[] = "Contestants may view submitted source code";
+static const unsigned char MSG_disable_failed_test_view[] = "Contestants may not view failed test number";
+static const unsigned char MSG_team_enable_rep_view[] = "Contestants may view testing protocol";
+static const unsigned char MSG_team_enable_ce_view[] = "Contestants may view compilation errors";
+static const unsigned char MSG_team_show_judge_report[] = "Contestants may view FULL testing protocol";
+static const unsigned char MSG_report_error_code[] = "Contestants may view process exit code";
+static const unsigned char MSG_disable_clars[] = "Clarification requests are disabled";
+static const unsigned char MSG_disable_team_clars[] = "Contestants may not send clarification requests";
+static const unsigned char MSG_enable_eoln_select[] = "Contestants may select desired EOLN type";
+static const unsigned char MSG_disable_submit_after_ok[] = "Disable submit of already solved problems";
+static const unsigned char MSG_ignore_compile_errors[] = "Compilation errors are not counted as failed runs";
+static const unsigned char MSG_ignore_duplicated_runs[] = "Identical submits of one contestant are ignored";
+static const unsigned char MSG_show_deadline[] = "Show submit deadline in problem selection menu";
+static const unsigned char MSG_show_sha1[] = "Show abbreviated SHA1 in the submit list";
+static const unsigned char MSG_show_judge_identity[] = "Disclose judge identity in clar replies";
+static const unsigned char MSG_enable_printing[] = "Contestants may print their submits";
+static const unsigned char MSG_disable_banner_page[] = "Disable banner page on print-outs";
+static const unsigned char MSG_printout_uses_login[] = "Show login (not name) on printouts";
+static const unsigned char MSG_prune_empty_users[] = "Hide contestants without submits in standings";
+static const unsigned char MSG_enable_full_archive[] = "Store FULL program output in an archive";
+static const unsigned char MSG_always_show_problems[] = "Contestants may view Problems link before start";
+static const unsigned char MSG_disable_user_standings[] = "Disable build-in standings in new-client";
+static const unsigned char MSG_disable_language[] = "Disable language column in new-client";
+static const unsigned char MSG_problem_navigation[] = "Advanced problem navigation";
+static const unsigned char MSG_vertical_navigation[] = "Place problem navigation vertically";
+static const unsigned char MSG_disable_virtual_start[] = "Disable user Virtual start button";
+static const unsigned char MSG_disable_virtual_auto_judge[] = "Disable auto-judging after virtual olympiad";
+static const unsigned char MSG_enable_auto_print_protocol[] = "Enable automatic protocol printing";
+static const unsigned char MSG_notify_clar_reply[] = "Enable e-mail clar notifications";
+static const unsigned char MSG_notify_status_change[] = "Enable e-mail status change notifications";
+static const unsigned char MSG_disable_auto_refresh[] = "Disable auto-refreshing";
+static const unsigned char MSG_start_on_first_login[] = "Start virtual contest on first login";
+static const unsigned char MSG_enable_virtual_restart[] = "Enable virtual contest restart option";
+static const unsigned char MSG_advanced_layout[] = "Advanced problem files layout";
+static const unsigned char MSG_uuid_run_store[] = "Use UUID instead of run_id to store runs";
+static const unsigned char MSG_test_dir[] = "Directory for tests";
+static const unsigned char MSG_corr_dir[] = "Directory for correct answers";
+static const unsigned char MSG_info_dir[] = "Directory for test info files";
+static const unsigned char MSG_tgz_dir[] = "Directory for test tgz files";
+static const unsigned char MSG_checker_dir[] = "Directory for checkers";
+static const unsigned char MSG_statement_dir[] = "Directory for problem statements";
+static const unsigned char MSG_contest_start_cmd[] = "Contest start script";
+static const unsigned char MSG_contest_stop_cmd[] = "Contest stop script";
+static const unsigned char MSG_max_run_size[] = "Maximum size of one submitted program";
+static const unsigned char MSG_max_run_total[] = "Maximum total size of all submitted programs";
+static const unsigned char MSG_max_run_num[] = "Maximum number of submits";
+static const unsigned char MSG_max_clar_size[] = "Maximum size of one clarification request";
+static const unsigned char MSG_max_clar_total[] = "Maximum size of all clarification requests";
+static const unsigned char MSG_max_clar_num[] = "Maximum number of clarification requests";
+static const unsigned char MSG_team_page_quota[] = "Maximum number of printed pages";
+static const unsigned char MSG_team_info_url[] = "URL to view detailed contestant information";
+static const unsigned char MSG_prob_info_url[] = "URL to view problem statement";
+static const unsigned char MSG_standings_file_name[] = "Name of the current standings file";
+static const unsigned char MSG_users_on_page[] = "Number of users on standings page";
+static const unsigned char MSG_stand_header_file[] = "HTML header file for the standings";
+static const unsigned char MSG_stand_footer_file[] = "HTML footer file for the standings";
+static const unsigned char MSG_stand_symlink_dir[] = "Directory to make standings symlink";
+static const unsigned char MSG_stand_ignore_after[] = "Ignore submissions after";
+static const unsigned char MSG_enable_stand2[] = "Enable supplementary standings table";
+static const unsigned char MSG_stand2_file_name[] = "Name of the supplementary standings file";
+static const unsigned char MSG_stand2_header_file[] = "HTML header file for the supplementary standings";
+static const unsigned char MSG_stand2_footer_file[] = "HTML footer file for the supplementary standings";
+static const unsigned char MSG_stand2_symlink_dir[] = "Directory to make suppl. standings symlink";
+static const unsigned char MSG_enable_plog[] = "Enable public submission log";
+static const unsigned char MSG_plog_file_name[] = "Name of the public submission log file";
+static const unsigned char MSG_plog_header_file[] = "HTML header file for the public submission log";
+static const unsigned char MSG_plog_footer_file[] = "HTML footer file for the public submission log";
+static const unsigned char MSG_plog_symlink_dir[] = "Directory to make symlink to public submission log";
+static const unsigned char MSG_plog_update_time[] = "Public submission log update interval (sec)";
+static const unsigned char MSG_external_xml_update_time[] = "External XML log update interval (sec)";
+static const unsigned char MSG_internal_xml_update_time[] = "Internal XML log update interval (sec)";
+static const unsigned char MSG_stand_fancy_style[] = "Use fancy decorations";
+static const unsigned char MSG_stand_success_attr[] = "HTML attributes for &quot;Last success&quot; note";
+static const unsigned char MSG_stand_table_attr[] = "HTML attributes for standings table";
+static const unsigned char MSG_stand_row_attr[] = "Standings row attributes";
+static const unsigned char MSG_stand_place_attr[] = "HTML attributes for the &quot;Place&quot; column";
+static const unsigned char MSG_stand_team_attr[] = "HTML attributes for the &quot;Team name&quot; column";
+static const unsigned char MSG_stand_prob_attr[] = "HTML attributes for the &quot;Problems&quot; column";
+static const unsigned char MSG_stand_solved_attr[] = "HTML attributes for the &quot;Solved&quot; column";
+static const unsigned char MSG_stand_score_attr[] = "HTML attributes for the &quot;Score&quot; column";
+static const unsigned char MSG_stand_penalty_attr[] = "HTML attributes for the &quot;Penalty&quot; column";
+static const unsigned char MSG_stand_use_login[] = "Use login instead of name";
+static const unsigned char MSG_stand_show_avatar[] = "Show avatars in standings";
+static const unsigned char MSG_stand_show_first_solver[] = "Show first solver in standings";
+static const unsigned char MSG_stand_show_ok_time[] = "Show success time in standings";
+static const unsigned char MSG_stand_show_att_num[] = "Show number of attempts in standings";
+static const unsigned char MSG_stand_sort_by_solved[] = "Sort participants by the solved problems first";
+static const unsigned char MSG_stand_enable_penalty[] = "Enable time penalties";
+static const unsigned char MSG_ignore_success_time[] = "Ignore success time in penalty calculation";
+static const unsigned char MSG_stand_time_attr[] = "HTML attributes for the success time";
+static const unsigned char MSG_stand_fail_attr[] = "HTML attributes for &quot;Check failed&quot; cells";
+static const unsigned char MSG_stand_trans_attr[] = "HTML attributes for transient cells";
+static const unsigned char MSG_stand_disq_attr[] = "HTML attributes for &quot;Disqualified&quot; cells";
+static const unsigned char MSG_stand_self_row_attr[] = "HTML attributes for the participant's table row";
+static const unsigned char MSG_stand_v_row_attr[] = "HTML attributes for the virtual participant's rows";
+static const unsigned char MSG_stand_r_row_attr[] = "HTML attributes for the real participant's rows";
+static const unsigned char MSG_stand_u_row_attr[] = "HTML attributes for the unknown participant's rows";
+static const unsigned char MSG_enable_extra_col[] = "Show &quot;Extra information&quot; column";
+static const unsigned char MSG_stand_extra_format[] = "Format string for &quot;Extra information&quot; column";
+static const unsigned char MSG_stand_extra_legend[] = "Column title for &quot;Extra information&quot; column";
+static const unsigned char MSG_stand_extra_attr[] = "HTML attributes for &quot;Extra information&quot; column";
+static const unsigned char MSG_stand_show_warn_number[] = "Show &quot;Warnings&quot; column";
+static const unsigned char MSG_stand_warn_number_attr[] = "HTML attributes for &quot;Warnings&quot; column";
+static const unsigned char MSG_stand_page_table_attr[] = "HTML attributes for page table";
+static const unsigned char MSG_stand_page_cur_attr[] = "HTML attributes for current page message";
+static const unsigned char MSG_stand_page_row_attr[] = "Page table row attributes";
+static const unsigned char MSG_stand_page_col_attr[] = "Page table column attributes";
+static const unsigned char MSG_appeal_deadline[] = "Appeal deadline";
+static const unsigned char MSG_autoupdate_standings[] = "Update standings automatically";
+static const unsigned char MSG_use_ac_not_ok[] = "Use PR status instead of OK";
+static const unsigned char MSG_rounding_mode[] = "Seconds to minutes rounding mode";
+static const unsigned char MSG_max_file_length[] = "Maximal file size to be included into testing protocol";
+static const unsigned char MSG_max_line_length[] = "Maximal line length to be included into testing protocol";
+static const unsigned char MSG_inactivity_timeout[] = "Inactivity timeout";
+static const unsigned char MSG_ignore_bom[] = "Ignore BOM in text submits";
+static const unsigned char MSG_disable_testing[] = "Disable any testing of submissions";
+static const unsigned char MSG_disable_auto_testing[] = "Disable automatic testing of submissions";
+static const unsigned char MSG_show_astr_time[] = "Show astronomic time instead of relative time";
+static const unsigned char MSG_enable_report_upload[] = "Enable testing protocol upload";
+static const unsigned char MSG_enable_runlog_merge[] = "Enable run database importing and merging";
+static const unsigned char MSG_disable_user_database[] = "Disable user database loading";
+static const unsigned char MSG_enable_l10n[] = "Enable message translation";
+static const unsigned char MSG_charset[] = "Character set";
+static const unsigned char MSG_standings_charset[] = "Standings character set";
+static const unsigned char MSG_stand2_charset[] = "Aux. standings character set";
+static const unsigned char MSG_plog_charset[] = "Submission log character set";
+static const unsigned char MSG_cpu_bogomips[] = "CPU speed (BogoMIPS)";
+static const unsigned char MSG_load_user_group[] = "User groups to load";
+static const unsigned char MSG_clardb_plugin[] = "ClarDB storage engine";
+static const unsigned char MSG_rundb_plugin[] = "RunDB storage engine";
+static const unsigned char MSG_xuser_plugin[] = "XuserDB storage engine";
+static const unsigned char MSG_status_plugin[] = "Status storage engine";
+static const unsigned char MSG_enable_problem_history[] = "Load problem UUID from history.txt";
+static const unsigned char MSG_require_problem_uuid[] = "Require problem UUID";
+
 %><%@set getter_name = "csp_get_cnts_edit_cur_global_page"
 %><%@set ac_prefix = "SSERV_CMD_"
 %><%@set err_prefix = "SSERV_ERR_"
@@ -14,6 +166,7 @@
     opcap_t caps = 0;
     int row = 1;
     int cur_page = 2;
+    int active = 0;
 
     unsigned char contest_time_str[64];
     unsigned char board_fog_time_str[64];
@@ -21,6 +174,8 @@
     const unsigned char *standings_locale = NULL;
     const unsigned char *checker_locale = NULL;
     int cpu_bogomips = cpu_get_bogomips();
+
+    %><s:read name="active" default="0" ignoreerrors="yes" /><%
 
 static const unsigned char * const form_row_attrs[]=
 {
@@ -37,7 +192,6 @@ static const unsigned char * const form_row_attrs[]=
     cnts = phr->ss->edited_cnts;
     struct section_global_data *global = phr->ss->global;
     int score_system;
-    unsigned char *xstr = 0;
 %><%@include "header_jqgrid.csp"
 %>
 
@@ -63,22 +217,43 @@ static const unsigned char * const form_row_attrs[]=
   }
 %>
 
+<script type="text/javascript">
+  var SID='<s:v value="phr->session_id" />';
+  var self_url='<s:v value="phr->self_url" escape="false" />';
+  var script_name='<s:v value="phr->script_name" escape="false" />';
+  var cnts_edit_cur_global_page_action=<s:ac ac="cnts-edit-cur-global-page" />;
+</script>
+
+<%#define EDIT_TEXT_ROW
+        <div id="@2-@1-div">
+            <div style="width: @4; display: inline-block;"><label for="@2-@1"><s:v value="MSG_@1" escape="no" />:</label></div>
+            <s:textfield size="@3" name="@1" id="@2-@1" value="" class="text ui-widget-content ui-corner-all" onchange="@2DialogOnChange()" />
+        </div>
+#%>
+
+<%#define EDIT_DATE_TIME_ROW
+        <div id="@2-@1-div">
+            <div style="width: @3; display: inline-block;"><label for="@2-@1_time"><s:v value="MSG_@1" escape="no" />:</label></div>
+            <input id="@2-@1_time" type="text" name="@1_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
+            <input id="@2-@1_date" type="text" name="@1_date" size="10" class="text ui-widget-content ui-corner-all" />
+        </div>
+#%>
+
+<%#define EDIT_BOOL_ROW
+        <div id="@2-@1-div">
+            <div style="width: @3; display: inline-block;"><label for="@2-@1"><s:v value="MSG_@1" escape="no" />?</label></div>
+            <input type="checkbox" name="@1" id="@2-@1" value="1" onchange="@2DialogOnChange()" />
+        </div>
+#%>
+
 <div id="MainDialogDiv" title="Main Properties" style="overflow: auto;">
     <s:form id="MainDialogForm">
         <s:hidden name="action" ac="glob-save-main-form" />
-        <div>
-            <div style="width: 300px; display: inline-block;"><label for="main-contest_time">Contest time (HH:MM):</label></div>
-            <s:textfield size="10" name="contest_time" id="main-contest_time" value="" class="text ui-widget-content ui-corner-all" onchange="mainDialogOnChange()" />
-        </div>
-
-        <div id="main-contest_finish_time-div">
-            <div style="width: 300px; display: inline-block;"><label for="main-contest_finish_time_time">Contest end time:</label></div>
-            <input id="main-contest_finish_time_time" type="text" name="contest_finish_time_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
-            <input id="main-contest_finish_time_date" type="text" name="contest_finish_time_date" size="10" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "contest_time" "main" "10" "300px" %>
+        <%@expand EDIT_DATE_TIME_ROW "contest_finish_time" "main" "300px" %>
 
         <div>
-            <div style="width: 300px; display: inline-block;"><label for="main-score_system">Scoring System:</label></div>
+            <div style="width: 300px; display: inline-block;"><label for="main-score_system"><s:v value="MSG_score_system" escape="no" />:</label></div>
             <select id="main-score_system" name="score_system">
                 <option value="0">ACM</option>
                 <option value="1">Kirov</option>
@@ -86,71 +261,33 @@ static const unsigned char * const form_row_attrs[]=
                 <option value="3">Moscow</option>
                 <option value="4">Virtual ACM</option>
                 <option value="5">Virtual Olympiad</option>
+                <option value="6">Virtual Kirov</option>
             </select>
         </div>
 
-        <div id="main-board_fog_time-div">
-            <div style="width: 300px; display: inline-block;"><label for="main-board_fog_time">Standings freeze time (HH:MM) before finish:</label></div>
-            <s:textfield size="10" name="board_fog_time" id="main-board_fog_time" value="" class="text ui-widget-content ui-corner-all" onchange="mainDialogOnChange()" />
-        </div>
-
-        <div id="main-board_unfog_time-div">
-            <div style="width: 300px; display: inline-block;"><label for="main-board_unfog_time">Standings unfreeze time (HH:MM) after finish:</label></div>
-            <s:textfield size="10" name="board_unfog_time" id="main-board_unfog_time" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-
-        <div>
-            <div style="width: 300px; display: inline-block;"><label for="main-use_compilation_server">Use the default compilation server:</label></div>
-            <input type="checkbox" name="use_compilation_server" id="main-use_compilation_server" value="1" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "board_fog_time" "main" "10" "300px" %>
+        <%@expand EDIT_TEXT_ROW "board_unfog_time" "main" "10" "300px" %>
+        <%@expand EDIT_BOOL_ROW "use_compilation_server" "main" "300px" %>
+        <%@expand EDIT_BOOL_ROW "enable_win32_languages" "main" "300px" %>
+        <%@expand EDIT_BOOL_ROW "separate_user_score" "main" "300px" %>
+        <%@expand EDIT_BOOL_ROW "secure_run" "main" "300px" %>
+        <%@expand EDIT_BOOL_ROW "enable_memory_limit_error" "main" "300px" %>
+        <%@expand EDIT_BOOL_ROW "detect_violations" "main" "300px" %>
+        <%@expand EDIT_BOOL_ROW "enable_max_stack_size" "main" "300px" %>
 
         <div>
-            <div style="width: 300px; display: inline-block;"><label for="main-enable_win32_languages">Enable Win32 languages:</label></div>
-            <input type="checkbox" name="enable_win32_languages" id="main-enable_win32_languages" value="1" />
-        </div>
-
-        <div>
-            <div style="width: 300px; display: inline-block;"><label for="main-separate_user_score">Calculate and store user-visible score separately:</label></div>
-            <input type="checkbox" name="separate_user_score" id="main-separate_user_score" value="1" />
-        </div>
-
-        <div>
-            <div style="width: 300px; display: inline-block;"><label for="main-secure_run">Run programs securely:</label></div>
-            <input type="checkbox" name="secure_run" id="main-secure_run" value="1" onchange="mainDialogOnChange()" />
-        </div>
-
-        <div id="main-enable_memory_limit_error-div">
-            <div style="width: 300px; display: inline-block;"><label for="main-enable_memory_limit_error">Enable support for MemoryLimit error:</label></div>
-            <input type="checkbox" name="enable_memory_limit_error" id="main-enable_memory_limit_error" value="1" />
-        </div>
-
-        <div id="main-detect_violations-div">
-            <div style="width: 300px; display: inline-block;"><label for="main-detect_violations">Detect security violations:</label></div>
-            <input type="checkbox" name="detect_violations" id="main-detect_violations" value="1" />
-        </div>
-
-        <div>
-            <div style="width: 300px; display: inline-block;"><label for="main-enable_max_stack_size">Assume max_stack_size == max_vm_size:</label></div>
-            <input type="checkbox" name="enable_max_stack_size" id="main-enable_max_stack_size" value="1" />
-        </div>
-
-        <div>
-            <div style="width: 300px; display: inline-block;"><label for="main-standings_locale">Standings locale:</label></div>
+            <div style="width: 300px; display: inline-block;"><label for="main-standings_locale"><s:v value="MSG_standings_locale" escape="no" />:</label></div>
 <% l10n_html_locale_select_3(out_f, "main-standings_locale", NULL, "standings_locale", NULL, -1); %>
         </div>
-
         <div>
-            <div style="width: 300px; display: inline-block;"><label for="main-checker_locale">Checker locale:</label></div>
+            <div style="width: 300px; display: inline-block;"><label for="main-checker_locale"><s:v value="MSG_checker_locale" escape="no" />:</label></div>
 <% l10n_html_locale_select_3(out_f, "main-checker_locale", NULL, "checker_locale", NULL, -1); %>
         </div>
 
 <%
   if (sizeof(long) == sizeof(long long)) {
 %>
-        <div>
-            <div style="width: 300px; display: inline-block;"><label for="main-enable_32bit_checkers">Compile 32-bit checkers on 64-bit platforms:</label></div>
-            <input type="checkbox" name="enable_32bit_checkers" id="main-enable_32bit_checkers" value="1" />
-        </div>
+        <%@expand EDIT_BOOL_ROW "enable_32bit_checkers" "main" "300px" %>
 <%
   } else {
 %>
@@ -166,56 +303,39 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="CapsDialogForm">
         <s:hidden name="action" ac="glob-save-capabilities-form" />
 
-<%
-  static const unsigned char * caps_fields[][2] =
-  {
-    { "team_enable_src_view", "Contestants may view submitted source code" },
-    { "disable_failed_test_view", "Contestants may not view failed test number" },
-    { "team_enable_rep_view", "Contestants may view testing protocol" },
-    { "team_enable_ce_view", "Contestants may view compilation errors" },
-    { "team_show_judge_report", "Contestants may view FULL testing protocol" },
-    { "report_error_code", "Contestants may view process exit code" },
-    { "disable_clars", "Clarification requests are disabled" },
-    { "disable_team_clars", "Contestants may not send clarification requests" },
-    { "enable_eoln_select", "Contestants may select desired EOLN type" },
-    { "disable_submit_after_ok", "Disable submit of already solved problems" },
-    { "ignore_compile_errors", "Compilation errors are not counted as failed runs" },
-    { "ignore_duplicated_runs", "Identical submits of one contestant are ignored" },
-    { "show_deadline", "Show submit deadline in problem selection menu" },
-    { "show_sha1", "Show abbreviated SHA1 in the submit list" },
-    { "show_judge_identity", "Disclose judge identity in clar replies" },
-    { "enable_printing", "Contestants may print their submits" },
-    { "disable_banner_page", "Disable banner page on print-outs" },
-    { "printout_uses_login", "Show login (not name) on printouts" },
-    { "prune_empty_users", "Hide contestants without submits in standings" },
-    { "enable_full_archive", "Store FULL program output in an archive" },
-    { "always_show_problems", "Contestants may view Problems link before start" },
-    { "disable_user_standings", "Disable build-in standings in new-client" },
-    { "disable_language", "Disable language column in new-client" },
-    { "problem_navigation", "Advanced problem navigation" },
-    { "vertical_navigation", "Place problem navigation vertically" },
-    { "disable_virtual_start", "Disable user Virtual start button" },
-    { "disable_virtual_auto_judge", "Disable auto-judging after virtual olympiad" },
-    { "enable_auto_print_protocol", "Enable automatic protocol printing" },
-    { "notify_clar_reply", "Enable e-mail clar notifications" },
-    { "notify_status_change", "Enable e-mail status change notifications" },
-    { "disable_auto_refresh", "Disable auto-refreshing" },
-    { "start_on_first_login", "Start virtual contest on first login" },
-    { "enable_virtual_restart", "Enable virtual contest restart option" },
-
-    { NULL, NULL },
-  };
-  int caps_ind;
-
-  for (caps_ind = 0; caps_fields[caps_ind][0]; ++caps_ind) {
-%>
-        <div id="caps-<s:v value="caps_fields[caps_ind][0]" escape="false" />-div">
-            <div style="width: 300px; display: inline-block;"><label for="caps-<s:v value="caps_fields[caps_ind][0]" escape="false"/>-cb"><s:v value="caps_fields[caps_ind][1]" escape="false"/>:</label></div>
-            <input type="checkbox" name="<s:v value="caps_fields[caps_ind][0]" escape="false"/>" id="caps-<s:v value="caps_fields[caps_ind][0]" escape="false"/>-cb" value="1" onchange="capsDialogOnChange()" />
-        </div>
-<%
-  }
-%>
+        <%@expand EDIT_BOOL_ROW "team_enable_src_view" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_failed_test_view" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "team_enable_rep_view" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "team_enable_ce_view" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "team_show_judge_report" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "report_error_code" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_clars" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_team_clars" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "enable_eoln_select" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_submit_after_ok" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "ignore_compile_errors" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "ignore_duplicated_runs" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "show_deadline" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "show_sha1" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "show_judge_identity" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "enable_printing" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_banner_page" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "printout_uses_login" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "prune_empty_users" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "enable_full_archive" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "always_show_problems" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_user_standings" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_language" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "problem_navigation" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "vertical_navigation" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_virtual_start" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_virtual_auto_judge" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "enable_auto_print_protocol" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "notify_clar_reply" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "notify_status_change" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_auto_refresh" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "start_on_first_login" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "enable_virtual_restart" "caps" "400px" %>
     </s:form>
 </div>
 
@@ -223,46 +343,17 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="FilesDialogForm">
         <s:hidden name="action" ac="glob-save-files-form" />
 
-        <div id="files-advanced_layout-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-advanced_layout">Advanced problem files layout:</label></div>
-            <input type="checkbox" name="advanced_layout" id="files-advanced_layout" value="1" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-uuid_run_store-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-uuid_run_store">Use UUID instead of run_id to store runs:</label></div>
-            <input type="checkbox" name="uuid_run_store" id="files-uuid_run_store" value="1" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-test_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-test_dir">Directory for tests:</label></div>
-            <s:textfield size="48" name="test_dir" id="files-test_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-corr_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-corr_dir">Directory for correct answers:</label></div>
-            <s:textfield size="48" name="corr_dir" id="files-corr_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-info_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-info_dir">Directory for test info files:</label></div>
-            <s:textfield size="48" name="info_dir" id="files-info_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-tgz_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-tgz_dir">Directory for test tgz files:</label></div>
-            <s:textfield size="48" name="tgz_dir" id="files-tgz_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-checker_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-checker_dir">Directory for checkers:</label></div>
-            <s:textfield size="48" name="checker_dir" id="files-checker_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-statement_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-statement_dir">Directory for problem statements:</label></div>
-            <s:textfield size="48" name="statement_dir" id="files-statement_dir" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-contest_start_cmd-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-contest_start_cmd">Contest start script:</label></div>
-            <s:textfield size="48" name="contest_start_cmd" id="files-contest_start_cmd" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
-        <div id="files-contest_stop_cmd-div">
-            <div style="width: 300px; display: inline-block;"><label for="files-contest_stop_cmd">Contest stop script:</label></div>
-            <s:textfield size="48" name="contest_stop_cmd" id="files-contest_stop_cmd" value="" class="text ui-widget-content ui-corner-all" onchange="filesDialogOnChange()" />
-        </div>
+        <%@expand EDIT_BOOL_ROW "advanced_layout" "files" "300px" %>
+        <%@expand EDIT_BOOL_ROW "uuid_run_store" "files" "300px" %>
+        <%@expand EDIT_TEXT_ROW "test_dir" "files" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "corr_dir" "files" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "info_dir" "files" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "tgz_dir" "files" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "checker_dir" "files" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "statement_dir" "files" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "contest_start_cmd" "files" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "contest_stop_cmd" "files" "48" "300px" %>
+
     </s:form>
 </div>
 
@@ -270,34 +361,13 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="QuotasDialogForm">
         <s:hidden name="action" ac="glob-save-quotas-form" />
 
-        <div id="quotas-max_run_size-div">
-            <div style="width: 300px; display: inline-block;"><label for="quotas-max_run_size">Maximum size of one submitted program:</label></div>
-            <s:textfield size="48" name="max_run_size" id="quotas-max_run_size" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="quotas-max_run_total-div">
-            <div style="width: 300px; display: inline-block;"><label for="quotas-max_run_total">Maximum total size of all submitted programs:</label></div>
-            <s:textfield size="48" name="max_run_total" id="quotas-max_run_total" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="quotas-max_run_num-div">
-            <div style="width: 300px; display: inline-block;"><label for="quotas-max_run_num">Maximum number of submits:</label></div>
-            <s:textfield size="48" name="max_run_num" id="quotas-max_run_num" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="quotas-max_clar_size-div">
-            <div style="width: 300px; display: inline-block;"><label for="quotas-max_clar_size">Maximum size of one clarification request:</label></div>
-            <s:textfield size="48" name="max_clar_size" id="quotas-max_clar_size" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="quotas-max_clar_total-div">
-            <div style="width: 300px; display: inline-block;"><label for="quotas-max_clar_total">Maximum size of all clarification requests:</label></div>
-            <s:textfield size="48" name="max_clar_total" id="quotas-max_clar_total" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="quotas-max_clar_num-div">
-            <div style="width: 300px; display: inline-block;"><label for="quotas-max_clar_num">Maximum number of clarification requests:</label></div>
-            <s:textfield size="48" name="max_clar_num" id="quotas-max_clar_num" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="quotas-team_page_quota-div">
-            <div style="width: 300px; display: inline-block;"><label for="quotas-team_page_quota">Maximum number of printed pages:</label></div>
-            <s:textfield size="48" name="team_page_quota" id="quotas-team_page_quota" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "max_run_size" "quotas" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "max_run_total" "quotas" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "max_run_num" "quotas" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "max_clar_size" "quotas" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "max_clar_total" "quotas" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "max_clar_num" "quotas" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "team_page_quota" "quotas" "48" "300px" %>
     </s:form>
 </div>
 
@@ -305,233 +375,69 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="UrlsDialogForm">
         <s:hidden name="action" ac="glob-save-urls-form" />
 
-        <div id="urls-team_info_url-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-team_info_url">URL to view detailed contestant information:</label></div>
-            <s:textfield size="48" name="team_info_url" id="urls-team_info_url" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-prob_info_url-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-prob_info_url">URL to view problem statement:</label></div>
-            <s:textfield size="48" name="prob_info_url" id="urls-prob_info_url" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-standings_file_name-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-standings_file_name">Name of the current standings file:</label></div>
-            <s:textfield size="48" name="standings_file_name" id="urls-standings_file_name" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-users_on_page-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-users_on_page">Number of users on standings page:</label></div>
-            <s:textfield size="48" name="users_on_page" id="urls-users_on_page" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-stand_header_file-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-stand_header_file">HTML header file for the standings:</label></div>
-            <s:textfield size="48" name="stand_header_file" id="urls-stand_header_file" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-stand_footer_file-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-stand_footer_file">HTML footer file for the standings:</label></div>
-            <s:textfield size="48" name="stand_footer_file" id="urls-stand_footer_file" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-stand_symlink_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-stand_symlink_dir">Directory to make standings symlink:</label></div>
-            <s:textfield size="48" name="stand_symlink_dir" id="urls-stand_symlink_dir" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-stand_ignore_after-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-stand_ignore_after">Ignore submissions after:</label></div>
-            <input id="urls-stand_ignore_after_time" type="text" name="stand_ignore_after_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
-            <input id="urls-stand_ignore_after_date" type="text" name="stand_ignore_after_date" size="10" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-enable_stand2-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-enable_stand2">Enable supplementary standings table:</label></div>
-            <input type="checkbox" name="enable_stand2" id="urls-enable_stand2" value="1" onchange="urlsDialogOnChange()" />
-        </div>
-        <div id="urls-stand2_file_name-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-stand2_file_name">Name of the supplementary standings file:</label></div>
-            <s:textfield size="48" name="stand2_file_name" id="urls-stand2_file_name" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-stand2_header_file-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-stand2_header_file">HTML header file for the supplementary standings:</label></div>
-            <s:textfield size="48" name="stand2_header_file" id="urls-stand2_header_file" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-stand2_footer_file-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-stand2_footer_file">HTML footer file for the supplementary standings:</label></div>
-            <s:textfield size="48" name="stand2_footer_file" id="urls-stand2_footer_file" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-stand2_symlink_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-stand2_symlink_dir">Directory to make suppl. standings symlink:</label></div>
-            <s:textfield size="48" name="stand2_symlink_dir" id="urls-stand2_symlink_dir" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-enable_plog-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-enable_plog">Enable public submission log:</label></div>
-            <input type="checkbox" name="enable_plog" id="urls-enable_plog" value="1" onchange="urlsDialogOnChange()" />
-        </div>
-        <div id="urls-plog_file_name-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-plog_file_name">Name of the public submission log file:</label></div>
-            <s:textfield size="48" name="plog_file_name" id="urls-plog_file_name" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-plog_header_file-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-plog_header_file">HTML header file for the public submission log:</label></div>
-            <s:textfield size="48" name="plog_header_file" id="urls-plog_header_file" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-plog_footer_file-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-plog_footer_file">HTML footer file for the public submission log:</label></div>
-            <s:textfield size="48" name="plog_footer_file" id="urls-plog_footer_file" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-plog_symlink_dir-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-plog_symlink_dir">Directory to make symlink to public submission log:</label></div>
-            <s:textfield size="48" name="plog_symlink_dir" id="urls-plog_symlink_dir" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-plog_update_time-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-plog_update_time">Public submission log update interval (sec):</label></div>
-            <s:textfield size="48" name="plog_update_time" id="urls-plog_update_time" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-external_xml_update_time-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-external_xml_update_time">External XML log update interval (sec):</label></div>
-            <s:textfield size="48" name="external_xml_update_time" id="urls-external_xml_update_time" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="urls-internal_xml_update_time-div">
-            <div style="width: 300px; display: inline-block;"><label for="urls-internal_xml_update_time">Internal XML log update interval (sec):</label></div>
-            <s:textfield size="48" name="internal_xml_update_time" id="urls-internal_xml_update_time" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "team_info_url" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "prob_info_url" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "standings_file_name" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "users_on_page" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_header_file" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_footer_file" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_symlink_dir" "urls" "48" "300px" %>
+        <%@expand EDIT_DATE_TIME_ROW "stand_ignore_after" "urls" "300px" %>
+        <%@expand EDIT_BOOL_ROW "enable_stand2" "urls" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand2_file_name" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand2_header_file" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand2_footer_file" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand2_symlink_dir" "urls" "48" "300px" %>
+        <%@expand EDIT_BOOL_ROW "enable_plog" "urls" "300px" %>
+        <%@expand EDIT_TEXT_ROW "plog_file_name" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "plog_header_file" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "plog_footer_file" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "plog_symlink_dir" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "plog_update_time" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "external_xml_update_time" "urls" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "internal_xml_update_time" "urls" "48" "300px" %>
     </s:form>
 </div>
 
 <div id="AttrsDialogDiv" title="HTML Attributes" style="overflow: auto;">
     <s:form id="AttrsDialogForm">
         <s:hidden name="action" ac="glob-save-attrs-form" />
-        <div id="attrs-stand_fancy_style-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_fancy_style">Use fancy decorations:</label></div>
-            <input type="checkbox" name="stand_fancy_style" id="attrs-stand_fancy_style" value="1" onchange="attrsDialogOnChange()" />
-        </div>
-        <div id="attrs-stand_success_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_success_attr">HTML attributes for &quot;Last success&quot; note:</label></div>
-            <s:textfield size="48" name="stand_success_attr" id="attrs-stand_success_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_table_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_table_attr">HTML attributes for standings table:</label></div>
-            <s:textfield size="48" name="stand_table_attr" id="attrs-stand_table_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_row_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_row_attr">Standings row attributes:</label></div>
-            <s:textfield size="48" name="stand_row_attr" id="attrs-stand_row_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_place_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_place_attr">HTML attributes for the &quot;Place&quot; column:</label></div>
-            <s:textfield size="48" name="stand_place_attr" id="attrs-stand_place_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_team_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_team_attr">HTML attributes for the &quot;Team name&quot; column:</label></div>
-            <s:textfield size="48" name="stand_team_attr" id="attrs-stand_team_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_prob_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_prob_attr">HTML attributes for the &quot;Problems&quot; column:</label></div>
-            <s:textfield size="48" name="stand_prob_attr" id="attrs-stand_prob_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_solved_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_solved_attr">HTML attributes for the &quot;Solved&quot; column:</label></div>
-            <s:textfield size="48" name="stand_solved_attr" id="attrs-stand_solved_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_score_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_score_attr">HTML attributes for the &quot;Score&quot; column:</label></div>
-            <s:textfield size="48" name="stand_score_attr" id="attrs-stand_score_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_penalty_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_penalty_attr">HTML attributes for the &quot;Penalty&quot; column:</label></div>
-            <s:textfield size="48" name="stand_penalty_attr" id="attrs-stand_penalty_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_use_login-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_use_login">Use login instead of name:</label></div>
-            <input type="checkbox" name="stand_use_login" id="attrs-stand_use_login" value="1" onchange="attrsDialogOnChange()" />
-        </div>
-        <div id="attrs-stand_show_ok_time-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_show_ok_time">Show success time in standings:</label></div>
-            <input type="checkbox" name="stand_show_ok_time" id="attrs-stand_show_ok_time" value="1" onchange="attrsDialogOnChange()" />
-        </div>
-        <div id="attrs-stand_show_att_num-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_show_att_num">Show number of attempts in standings:</label></div>
-            <input type="checkbox" name="stand_show_att_num" id="attrs-stand_show_att_num" value="1" onchange="attrsDialogOnChange()" />
-        </div>
-        <div id="attrs-stand_sort_by_solved-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_sort_by_solved">Sort participants by the solved problems first:</label></div>
-            <input type="checkbox" name="stand_sort_by_solved" id="attrs-stand_sort_by_solved" value="1" onchange="attrsDialogOnChange()" />
-        </div>
-        <div id="attrs-stand_enable_penalty-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_enable_penalty">Enable time penalties:</label></div>
-            <input type="checkbox" name="stand_enable_penalty" id="attrs-stand_enable_penalty" value="1" onchange="attrsDialogOnChange()" />
-        </div>
-        <div id="attrs-ignore_success_time-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-ignore_success_time">Ignore success time in penalty calculation:</label></div>
-            <input type="checkbox" name="ignore_success_time" id="attrs-ignore_success_time" value="1" onchange="attrsDialogOnChange()" />
-        </div>
-        <div id="attrs-stand_time_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_time_attr">HTML attributes for the success time:</label></div>
-            <s:textfield size="48" name="stand_time_attr" id="attrs-stand_time_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_fail_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_fail_attr">HTML attributes for &quot;Check failed&quot; cells:</label></div>
-            <s:textfield size="48" name="stand_fail_attr" id="attrs-stand_fail_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_trans_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_trans_attr">HTML attributes for transient cells:</label></div>
-            <s:textfield size="48" name="stand_trans_attr" id="attrs-stand_trans_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_disq_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_disq_attr">HTML attributes for &quot;Disqualified&quot; cells:</label></div>
-            <s:textfield size="48" name="stand_disq_attr" id="attrs-stand_disq_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_self_row_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_self_row_attr">HTML attributes for the participant's table row:</label></div>
-            <s:textfield size="48" name="stand_self_row_attr" id="attrs-stand_self_row_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_v_row_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_v_row_attr">HTML attributes for the virtual participant's rows:</label></div>
-            <s:textfield size="48" name="stand_v_row_attr" id="attrs-stand_v_row_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_r_row_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_r_row_attr">HTML attributes for the real participant's rows:</label></div>
-            <s:textfield size="48" name="stand_r_row_attr" id="attrs-stand_r_row_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_u_row_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_u_row_attr">HTML attributes for the unknown participant's rows:</label></div>
-            <s:textfield size="48" name="stand_u_row_attr" id="attrs-stand_u_row_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-enable_extra_col-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-enable_extra_col">Show &quot;Extra information&quot; column:</label></div>
-            <input type="checkbox" name="enable_extra_col" id="attrs-enable_extra_col" value="1" onchange="attrsDialogOnChange()" />
-        </div>
-        <div id="attrs-stand_extra_format-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_extra_format">Format string for &quot;Extra information&quot; column:</label></div>
-            <s:textfield size="48" name="stand_extra_format" id="attrs-stand_extra_format" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_extra_legend-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_extra_legend">Column title for &quot;Extra information&quot; column:</label></div>
-            <s:textfield size="48" name="stand_extra_legend" id="attrs-stand_extra_legend" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_extra_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_extra_attr">HTML attributes for &quot;Extra information&quot; column:</label></div>
-            <s:textfield size="48" name="stand_extra_attr" id="attrs-stand_extra_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_show_warn_number-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_show_warn_number">Show &quot;Warnings&quot; column:</label></div>
-            <input type="checkbox" name="stand_show_warn_number" id="attrs-stand_show_warn_number" value="1" onchange="attrsDialogOnChange()" />
-        </div>
-        <div id="attrs-stand_warn_number_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_warn_number_attr">HTML attributes for &quot;Warnings&quot; column:</label></div>
-            <s:textfield size="48" name="stand_warn_number_attr" id="attrs-stand_warn_number_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_page_table_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_page_table_attr">HTML attributes for page table:</label></div>
-            <s:textfield size="48" name="stand_page_table_attr" id="attrs-stand_page_table_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_page_cur_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_page_cur_attr">HTML attributes for current page message:</label></div>
-            <s:textfield size="48" name="stand_page_cur_attr" id="attrs-stand_page_cur_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_page_row_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_page_row_attr">Page table row attributes:</label></div>
-            <s:textfield size="48" name="stand_page_row_attr" id="attrs-stand_page_row_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="attrs-stand_page_col_attr-div">
-            <div style="width: 300px; display: inline-block;"><label for="attrs-stand_page_col_attr">Page table column attributes:</label></div>
-            <s:textfield size="48" name="stand_page_col_attr" id="attrs-stand_page_col_attr" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_BOOL_ROW "stand_fancy_style" "attrs" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_success_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_table_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_row_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_place_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_team_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_prob_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_solved_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_score_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_penalty_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_BOOL_ROW "stand_use_login" "attrs" "300px" %>
+        <%@expand EDIT_BOOL_ROW "stand_show_avatar" "attrs" "300px" %>
+        <%@expand EDIT_BOOL_ROW "stand_show_first_solver" "attrs" "300px" %>
+        <%@expand EDIT_BOOL_ROW "stand_show_ok_time" "attrs" "300px" %>
+        <%@expand EDIT_BOOL_ROW "stand_show_att_num" "attrs" "300px" %>
+        <%@expand EDIT_BOOL_ROW "stand_sort_by_solved" "attrs" "300px" %>
+        <%@expand EDIT_BOOL_ROW "stand_enable_penalty" "attrs" "300px" %>
+        <%@expand EDIT_BOOL_ROW "ignore_success_time" "attrs" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_time_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_fail_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_trans_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_disq_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_self_row_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_v_row_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_r_row_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_u_row_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_BOOL_ROW "enable_extra_col" "attrs" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_extra_format" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_extra_legend" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_extra_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_BOOL_ROW "stand_show_warn_number" "attrs" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_warn_number_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_page_table_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_page_cur_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_page_row_attr" "attrs" "48" "300px" %>
+        <%@expand EDIT_TEXT_ROW "stand_page_col_attr" "attrs" "48" "300px" %>
     </s:form>
 </div>
 
@@ -539,113 +445,46 @@ static const unsigned char * const form_row_attrs[]=
     <s:form id="AdvancedDialogForm">
         <s:hidden name="action" ac="glob-save-advanced-form" />
 
-        <div id="adv-appeal_deadline-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-appeal_deadline_time">Appeal deadline:</label></div>
-            <input id="adv-appeal_deadline_time" type="text" name="appeal_deadline_time" class="time" size="6" class="text ui-widget-content ui-corner-all" />
-            <input id="adv-appeal_deadline_date" type="text" name="appeal_deadline_date" size="10" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-autoupdate_standings-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-autoupdate_standings">Update standings automatically:</label></div>
-            <input type="checkbox" name="autoupdate_standings" id="adv-autoupdate_standings" value="1" onchange="advancedDialogOnChange()" />
-        </div>
-        <div id="adv-use_ac_not_ok-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-use_ac_not_ok">Use PR status instead of OK:</label></div>
-            <input type="checkbox" name="use_ac_not_ok" id="adv-use_ac_not_ok" value="1" onchange="advancedDialogOnChange()" />
-        </div>
+        <%@expand EDIT_DATE_TIME_ROW "appeal_deadline" "adv" "400px" %>
+        <%@expand EDIT_BOOL_ROW "autoupdate_standings" "adv" "400px" %>
+        <%@expand EDIT_BOOL_ROW "use_ac_not_ok" "adv" "400px" %>
         <div id="adv-rounding_mode-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-rounding_mode">Seconds to minutes rounding mode:</label></div>
+            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-rounding_mode"><s:v value="MSG_rounding_mode" escape="no" />:</label></div>
             <select id="adv-rounding_mode" name="rounding_mode">
                 <option value="0">Truncating up (ceil)</option>
                 <option value="1">Truncating down (floor)</option>
                 <option value="2">Rounding</option>
             </select>
         </div>
-        <div id="adv-max_file_length-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-max_file_length">Maximal file size to be included into testing protocol:</label></div>
-            <s:textfield size="48" name="max_file_length" id="adv-max_file_length" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-max_line_length-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-max_line_length">Maximal line length to be included into testing protocol:</label></div>
-            <s:textfield size="48" name="max_line_length" id="adv-max_line_length" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-inactivity_timeout-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-inactivity_timeout">Inactivity timeout:</label></div>
-            <s:textfield size="48" name="inactivity_timeout" id="adv-inactivity_timeout" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-ignore_bom-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-ignore_bom">Ignore BOM in text submits:</label></div>
-            <input type="checkbox" name="ignore_bom" id="adv-ignore_bom" value="1" onchange="advancedDialogOnChange()" />
-        </div>
-        <div id="adv-disable_testing-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-disable_testing">Disable any testing of submissions:</label></div>
-            <input type="checkbox" name="disable_testing" id="adv-disable_testing" value="1" onchange="advancedDialogOnChange()" />
-        </div>
-        <div id="adv-disable_auto_testing-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-disable_auto_testing">Disable automatic testing of submissions:</label></div>
-            <input type="checkbox" name="disable_auto_testing" id="adv-disable_auto_testing" value="1" onchange="advancedDialogOnChange()" />
-        </div>
-        <div id="adv-show_astr_time-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-show_astr_time">Show astronomic time instead of relative time:</label></div>
-            <input type="checkbox" name="show_astr_time" id="adv-show_astr_time" value="1" onchange="advancedDialogOnChange()" />
-        </div>
-        <div id="adv-enable_report_upload-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-enable_report_upload">Enable testing protocol upload:</label></div>
-            <input type="checkbox" name="enable_report_upload" id="adv-enable_report_upload" value="1" onchange="advancedDialogOnChange()" />
-        </div>
-        <div id="adv-enable_runlog_merge-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-enable_runlog_merge">Enable run database importing and merging:</label></div>
-            <input type="checkbox" name="enable_runlog_merge" id="adv-enable_runlog_merge" value="1" onchange="advancedDialogOnChange()" />
-        </div>
-        <div id="adv-disable_user_database-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-disable_user_database">Disable user database loading:</label></div>
-            <input type="checkbox" name="disable_user_database" id="adv-disable_user_database" value="1" onchange="advancedDialogOnChange()" />
-        </div>
-        <div id="adv-enable_l10n-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-enable_l10n">Enable message translation:</label></div>
-            <input type="checkbox" name="enable_l10n" id="adv-enable_l10n" value="1" onchange="advancedDialogOnChange()" />
-        </div>
-        <div id="adv-charset-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-charset">Character set:</label></div>
-            <s:textfield size="48" name="charset" id="adv-charset" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-standings_charset-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-standings_charset">Standings character set:</label></div>
-            <s:textfield size="48" name="standings_charset" id="adv-standings_charset" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-stand2_charset-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-stand2_charset">Aux. standings character set:</label></div>
-            <s:textfield size="48" name="stand2_charset" id="adv-stand2_charset" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-plog_charset-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-plog_charset">Submission log character set:</label></div>
-            <s:textfield size="48" name="plog_charset" id="adv-plog_charset" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-cpu_bogomips-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-cpu_bogomips">CPU speed (BogoMIPS):</label></div>
-            <s:textfield size="48" name="cpu_bogomips" id="adv-cpu_bogomips" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-load_user_group-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-load_user_group">User groups to load:</label></div>
-            <s:textfield size="48" name="load_user_group" id="adv-load_user_group" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-clardb_plugin-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-clardb_plugin">ClarDB storage engine:</label></div>
-            <s:textfield size="48" name="clardb_plugin" id="adv-clardb_plugin" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-rundb_plugin-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-rundb_plugin">RunDB storage engine:</label></div>
-            <s:textfield size="48" name="rundb_plugin" id="adv-rundb_plugin" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
-        <div id="adv-xuser_plugin-div">
-            <div style="width: 400px; display: inline-block;"><label style="display:block; width: 400px" for="adv-xuser_plugin">XuserDB storage engine:</label></div>
-            <s:textfield size="48" name="xuser_plugin" id="adv-xuser_plugin" value="" class="text ui-widget-content ui-corner-all" />
-        </div>
+        <%@expand EDIT_TEXT_ROW "max_file_length" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "max_line_length" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "inactivity_timeout" "adv" "48" "400px" %>
+        <%@expand EDIT_BOOL_ROW "ignore_bom" "adv" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_testing" "adv" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_auto_testing" "adv" "400px" %>
+        <%@expand EDIT_BOOL_ROW "show_astr_time" "adv" "400px" %>
+        <%@expand EDIT_BOOL_ROW "enable_report_upload" "adv" "400px" %>
+        <%@expand EDIT_BOOL_ROW "enable_runlog_merge" "adv" "400px" %>
+        <%@expand EDIT_BOOL_ROW "disable_user_database" "adv" "400px" %>
+        <%@expand EDIT_BOOL_ROW "enable_l10n" "adv" "400px" %>
+        <%@expand EDIT_TEXT_ROW "charset" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "standings_charset" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "stand2_charset" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "plog_charset" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "cpu_bogomips" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "load_user_group" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "clardb_plugin" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "rundb_plugin" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "xuser_plugin" "adv" "48" "400px" %>
+        <%@expand EDIT_TEXT_ROW "status_plugin" "adv" "48" "400px" %>
+        <%@expand EDIT_BOOL_ROW "enable_problem_history" "caps" "400px" %>
+        <%@expand EDIT_BOOL_ROW "require_problem_uuid" "adv" "400px" %>
     </s:form>
 </div>
 
 <script type="text/javascript">
 $(function() {
-    $('#GlobalAccordion').accordion({ heightStyle: "content" });
+    $('#GlobalAccordion').accordion({ heightStyle: "content" <% if (active > 0) { %>, active: <s:v value="active" /><% } %> });
 
     mainDialog = $("#MainDialogDiv").dialog({
         autoOpen: false,
@@ -662,10 +501,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + cnts_edit_cur_global_page_action + '&active=0';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -694,10 +534,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + cnts_edit_cur_global_page_action + '&active=1';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -737,10 +578,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + cnts_edit_cur_global_page_action + '&active=2';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -774,10 +616,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + cnts_edit_cur_global_page_action + '&active=3';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -813,10 +656,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + cnts_edit_cur_global_page_action + '&active=4';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -855,10 +699,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + cnts_edit_cur_global_page_action + '&active=5';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -915,10 +760,11 @@ $(function() {
                     data : postData,
                     success:function(data, textStatus, jqXHR) {
                         //data: return data from server
-                        document.location.reload(true);
+                        //document.location.reload(true);
+                        window.location.href = self_url + '?SID=' + SID + '&action=' + cnts_edit_cur_global_page_action + '&active=6';
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -933,8 +779,8 @@ $(function() {
     $('#adv-appeal_deadline_date').datepicker({ dateFormat: "yy-mm-dd", firstDay: 1, showButtonPanel: true });
 
     $("#orig-disable_auto_testing-div").toggle(<s:v type="jsbool" value="global->disable_testing <= 0" />);
-    $("#orig-stand2_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_stand2 && global->stand2_file_name[0]" />);
-    $("#orig-plog_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_plog && global->plog_file_name[0]" />);
+    $("#orig-stand2_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_stand2 && global->stand2_file_name && global->stand2_file_name[0]" />);
+    $("#orig-plog_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_plog && global->plog_file_name && global->plog_file_name[0]" />);
 });
 
 function np(e)
@@ -1023,13 +869,47 @@ function mainDialogOnChange()
 
 function popupCapsDialog(e, skipField)
 {
-<%
-  for (caps_ind = 0; caps_fields[caps_ind][0]; ++caps_ind) {
-%>
-    copyCheckbox("caps-<s:v value="caps_fields[caps_ind][0]" escape="false"/>-cb", "orig-<s:v value="caps_fields[caps_ind][0]" escape="false"/>");
-<%
-  }
-%>
+    var fields =
+    [
+        "team_enable_src_view",
+        "disable_failed_test_view",
+        "team_enable_rep_view",
+        "team_enable_ce_view",
+        "team_show_judge_report",
+        "report_error_code",
+        "disable_clars",
+        "disable_team_clars",
+        "enable_eoln_select",
+        "disable_submit_after_ok",
+        "ignore_compile_errors",
+        "ignore_duplicated_runs",
+        "show_deadline",
+        "show_sha1",
+        "show_judge_identity",
+        "enable_printing",
+        "disable_banner_page",
+        "printout_uses_login",
+        "prune_empty_users",
+        "enable_full_archive",
+        "always_show_problems",
+        "disable_user_standings",
+        "disable_language",
+        "problem_navigation",
+        "vertical_navigation",
+        "disable_virtual_start",
+        "disable_virtual_auto_judge",
+        "enable_auto_print_protocol",
+        "notify_clar_reply",
+        "notify_status_change",
+        "disable_auto_refresh",
+        "start_on_first_login",
+        "enable_virtual_restart"
+    ];
+
+    for (var i in fields) {
+        copyCheckbox("caps-" + fields[i], "orig-" + fields[i]);
+    }
+
     if (e) e.stopPropagation();
     capsDialogOnChange();
     $("#CapsDialogDiv").dialog('open');
@@ -1038,14 +918,14 @@ function popupCapsDialog(e, skipField)
 function capsDialogOnChange()
 {
     $("#caps-disable_failed_test_view-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_ACM || global->score_system == SCORE_MOSCOW" />);
-    $("#caps-team_enable_ce_view-div").toggle(!$("#caps-team_enable_rep_view-cb").is(':checked'));
-    $("#caps-team_show_judge_report-div").toggle($("#caps-team_enable_rep_view-cb").is(':checked'));
-    $("#caps-report_error_code-div").toggle($("#caps-team_enable_rep_view-cb").is(':checked') && !$("#caps-team_show_judge_report-cb").is(':checked'));
-    $("#caps-disable_team_clars-div").toggle(!$("#caps-disable_clars-cb").is(':checked'));
+    $("#caps-team_enable_ce_view-div").toggle(!$("#caps-team_enable_rep_view").is(':checked'));
+    $("#caps-team_show_judge_report-div").toggle($("#caps-team_enable_rep_view").is(':checked'));
+    $("#caps-report_error_code-div").toggle($("#caps-team_enable_rep_view").is(':checked') && !$("#caps-team_show_judge_report").is(':checked'));
+    $("#caps-disable_team_clars-div").toggle(!$("#caps-disable_clars").is(':checked'));
     $("#caps-show_deadline-div").toggle(<s:v type="jsbool" value="global->contest_time <= 0" />);
-    $("#caps-disable_banner_page-div").toggle($("#caps-enable_printing-cb").is(':checked'));
-    $("#caps-printout_uses_login-div").toggle($("#caps-enable_printing-cb").is(':checked') && $("#caps-disable_banner_page-cb").is(':checked'));
-    $("#caps-vertical_navigation-div").toggle($("#caps-problem_navigation-cb").is(':checked'));
+    $("#caps-disable_banner_page-div").toggle($("#caps-enable_printing").is(':checked'));
+    $("#caps-printout_uses_login-div").toggle($("#caps-enable_printing").is(':checked') && $("#caps-disable_banner_page").is(':checked'));
+    $("#caps-vertical_navigation-div").toggle($("#caps-problem_navigation").is(':checked'));
     $("#caps-disable_virtual_start-div").toggle(<s:v type="jsbool" value="global->is_virtual > 0" />);
     $("#caps-disable_virtual_auto_judge-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
     $("#caps-enable_auto_print_protocol-div").toggle(<s:v type="jsbool" value="global->score_system == SCORE_OLYMPIAD" />);
@@ -1105,6 +985,10 @@ function popupQuotasDialog(e, skipField)
 
     if (e) e.stopPropagation();
     $("#QuotasDialogDiv").dialog('open');
+}
+
+function quotasDialogOnChange()
+{
 }
 
 function popupUrlsDialog(e, skipField)
@@ -1175,6 +1059,8 @@ function popupAttrsDialog(e, skipField)
     $("#attrs-stand_score_attr").val($("#orig-stand_score_attr").val());
     $("#attrs-stand_penalty_attr").val($("#orig-stand_penalty_attr").val());
     copyCheckbox("attrs-stand_use_login", "orig-stand_use_login");
+    copyCheckbox("attrs-stand_show_avatar", "orig-stand_show_avatar");
+    copyCheckbox("attrs-stand_show_first_solver", "orig-stand_show_first_solver");
     copyCheckbox("attrs-stand_show_ok_time", "orig-stand_show_ok_time");
     copyCheckbox("attrs-stand_show_att_num", "orig-stand_show_att_num");
     copyCheckbox("attrs-stand_sort_by_solved", "orig-stand_sort_by_solved");
@@ -1259,6 +1145,7 @@ function popupAdvancedDialog(e, skipField)
     copyCheckbox("adv-enable_report_upload", "orig-enable_report_upload");
     copyCheckbox("adv-enable_runlog_merge", "orig-enable_runlog_merge");
     copyCheckbox("adv-disable_user_database", "orig-disable_user_database");
+    copyCheckbox("adv-require_problem_uuid", "orig-require_problem_uuid");
     copyCheckbox("adv-enable_l10n", "orig-enable_l10n");
     $("#adv-charset").val($("#orig-charset").val());
     $("#adv-standings_charset").val($("#orig-standings_charset").val());
@@ -1269,6 +1156,8 @@ function popupAdvancedDialog(e, skipField)
     $("#adv-clardb_plugin").val($("#orig-clardb_plugin").val());
     $("#adv-rundb_plugin").val($("#orig-rundb_plugin").val());
     $("#adv-xuser_plugin").val($("#orig-xuser_plugin").val());
+    $("#adv-status_plugin").val($("#orig-status_plugin").val());
+    copyCheckbox("adv-enable_problem_history", "orig-enable_problem_history");
 
     if (skipField != null) {
         if (skipField == "appeal_deadline") {
@@ -1290,10 +1179,64 @@ function popupAdvancedDialog(e, skipField)
 function advancedDialogOnChange()
 {
     $("#adv-disable_auto_testing-div").toggle(!$("#adv-disable_testing").is(':checked'));
-    $("#adv-stand2_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_stand2 && global->stand2_file_name[0]" />);
-    $("#adv-plog_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_plog && global->plog_file_name[0]" />);
+    $("#adv-stand2_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_stand2 && global->stand2_file_name && global->stand2_file_name[0]" />);
+    $("#adv-plog_charset-div").toggle(<s:v type="jsbool" value="phr->ss->enable_plog && global->plog_file_name && global->plog_file_name[0]" />);
 }
 </script>
+
+<%#define ORIG_BOOL_ROW
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-@1-div">
+                <td><s:v value="MSG_@1" escape="false" />?</td>
+                <td><s:yesno id="orig-@1" disabled="disabled" name="param" value="global->@1" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:@1" /></td>
+            </s:tr>
+#%>
+
+<%#define ORIG_BOOL_ROW_WITH_VALUE
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-@1-div">
+                <td><s:v value="MSG_@1" escape="false" />?</td>
+                <td><s:yesno id="orig-@1" disabled="disabled" name="param" value="@2" /></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);">&nbsp;</td>
+            </s:tr>
+#%>
+
+<%#define ORIG_TEXT_ROW
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-@1-div">
+                <td><s:v value="MSG_@1" escape="false" />:</td>
+                <td><s:textfield id="orig-@1" readonly="readonly" name="param" value="global->@1" size="@3" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popup@2Dialog(event, '@1')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:@1" /></td>
+            </s:tr>
+#%>
+
+<%#define ORIG_TEXT_ROW_WITH_EDIT
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-@1-div">
+                <td><s:v value="MSG_@1" escape="false" />:</td>
+                <td><s:textfield id="orig-@1" readonly="readonly" name="param" value="global->@1" size="@3" maxlength="1024" checkExpr="" /></td>
+                <td onclick="np(event);"><input type="button" onclick="popup@2Dialog(event, '@1')" value="Clear" />[<s:a ac="glob-edit-@1-page">Edit</s:a>]</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:@1" /></td>
+            </s:tr>
+#%>
+
+<%#define ORIG_XSTR_ROW
+<%
+  {
+    unsigned char *xstr = NULL;
+    if (global->@1 && global->@1[0]) xstr = sarray_unparse_2(global->@1);
+%>
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-@1-div">
+                <td><s:v value="MSG_@1" escape="no" />:</td>
+                <td><s:textfield readonly="readonly" id="orig-@1" name="param" value="xstr" size="@3" maxlength="1024" checkExpr="" /></td>
+                <td><input type="button" onclick="popup@2Dialog(event, '@1')" value="Clear" /></td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:global:@1" /></td>
+            </s:tr>
+<%
+    xfree(xstr);
+  }
+%>
+#%>
 
 <div id="GlobalAccordion">
 
@@ -1302,7 +1245,7 @@ function advancedDialogOnChange()
     <div>
         <table border="0" onclick="popupMainDialog();">
             <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Contest time (HH:MM):</td>
+                <td><s:v value="MSG_contest_time" escape="no" />:</td>
 <%
   contest_time_str[0] = 0;
   if (global->contest_time > 0) {
@@ -1322,7 +1265,7 @@ function advancedDialogOnChange()
   if (global->contest_time <= 0) {
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Contest end time:</td>
+                <td><s:v value="MSG_contest_finish_time" escape="no" />:</td>
                 <td><% html_date_select_2(out_f, global->contest_finish_time, "orig-contest_finish_time", "param", NULL, 1, 0, 0); %></td>
                 <td><input type="button" onclick="popupMainDialog(event, 'contest_finish_time')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:contest_finish_time" /></td>
@@ -1344,7 +1287,7 @@ function advancedDialogOnChange()
   }
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Scoring system:</td>
+                <td><s:v value="MSG_score_system" escape="no" />:</td>
                 <td><select id="orig-score_system" disabled="disabled">
                     <s:option value="0" selectedExpr="score_system == 0">ACM</s:option>
                     <s:option value="1" selectedExpr="score_system == 1">Kirov</s:option>
@@ -1366,7 +1309,7 @@ function advancedDialogOnChange()
   if (global->contest_time > 0) {
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Standings freeze time (HH:MM) before finish:</td>
+                <td><s:v value="MSG_board_fog_time" escape="no" />:</td>
                 <td><s:textfield id="orig-board_fog_time" readonly="readonly" check="false" name="param" value="board_fog_time_str" size="8" /><%
     if (global->board_fog_time <= 0) {
 %><i>(No freeze)</i><%
@@ -1391,7 +1334,7 @@ function advancedDialogOnChange()
   if (global->contest_time > 0 && global->board_fog_time > 0) {
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Standings unfreeze time (HH:MM) after finish:</td>
+                <td><s:v value="MSG_board_unfog_time" escape="no" />:</td>
                 <td><s:textfield check="false" id="orig-board_unfog_time" readonly="readonly" name="param" value="board_unfog_time_str" size="8" /><%
     if (global->board_unfog_time <= 0) {
 %><i>(Not unfreeze)</i><%
@@ -1408,50 +1351,16 @@ function advancedDialogOnChange()
   }
 %>
 
-            <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Use the default compilation server:</td>
-                <td><s:yesno disabled="disabled" id="orig-use_compilation_server" name="param" value="!phr->ss->disable_compilation_server" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:use_compilation_server" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Enable Win32 languages:</td>
-                <td><s:yesno disabled="disabled" id="orig-enable_win32_languages" name="param" value="phr->ss->enable_win32_languages" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_win32_languages" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Calculate and store user-visible score separately:</td>
-                <td><s:yesno disabled="disabled" id="orig-separate_user_score" name="param" value="global->separate_user_score" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:separate_user_score" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Run programs securely:</td>
-                <td><s:yesno disabled="disabled" id="orig-secure_run" name="param" value="global->secure_run" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:secure_run" /></td>
-            </s:tr>
+            <%@expand ORIG_BOOL_ROW_WITH_VALUE "use_compilation_server" "!phr->ss->disable_compilation_server" %>
+            <%@expand ORIG_BOOL_ROW_WITH_VALUE "enable_win32_languages" "phr->ss->enable_win32_languages" %>
+            <%@expand ORIG_BOOL_ROW "separate_user_score" %>
+            <%@expand ORIG_BOOL_ROW "secure_run" %>
 
 <%
   if (global->secure_run > 0) {
 %>
-            <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Enable support for MemoryLimit error:</td>
-                <td><s:yesno disabled="disabled" id="orig-enable_memory_limit_error" name="param" value="global->enable_memory_limit_error" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_memory_limit_error" /></td>
-            </s:tr>
-
-            <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Detect security violations:</td>
-                <td><s:yesno disabled="disabled" id="orig-detect_violations" name="param" value="global->detect_violations" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:detect_violations" /></td>
-            </s:tr>
+            <%@expand ORIG_BOOL_ROW "enable_memory_limit_error" %>
+            <%@expand ORIG_BOOL_ROW "detect_violations" %>
 <%
   } else {
 %>
@@ -1461,18 +1370,13 @@ function advancedDialogOnChange()
   }
 %>
 
-            <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Assume max_stack_size == max_vm_size:</td>
-                <td><s:yesno disabled="disabled" id="orig-enable_max_stack_size" name="param" value="global->enable_max_stack_size" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_max_stack_size" /></td>
-            </s:tr>
+            <%@expand ORIG_BOOL_ROW "enable_max_stack_size" %>
 
 <%
   standings_locale = l10n_normalize(global->standings_locale);
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Standings locale:</td>
+                <td><s:v value="MSG_standings_locale" escape="no" />:</td>
                 <td><s:textfield id="orig-standings_locale" readonly="readonly" size="16" name="param" value="standings_locale" notset="yes" /></td>
                 <td><input type="button" onclick="popupMainDialog(event, 'standings_locale')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:standings_locale" /></td>
@@ -1482,7 +1386,7 @@ function advancedDialogOnChange()
   checker_locale = l10n_normalize(global->checker_locale);
 %>
             <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Checker locale:</td>
+                <td><s:v value="MSG_checker_locale" escape="no" />:</td>
                 <td><s:textfield id="orig-checker_locale" readonly="readonly" size="16" name="param" value="checker_locale" notset="yes" /></td>
                 <td><input type="button" onclick="popupMainDialog(event, 'checker_locale')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:checker_locale" /></td>
@@ -1491,12 +1395,7 @@ function advancedDialogOnChange()
 <%
   if (sizeof(long) == sizeof(long long)) {
 %>
-            <s:tr attr="form_row_attrs[row ^= 1]">
-                <td>Compile 32-bit checkers on 64-bit platforms:</td>
-                <td><s:yesno disabled="disabled" id="orig-enable_32bit_checkers" name="param" value="global->enable_32bit_checkers" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_32bit_checkers" /></td>
-            </s:tr>
+            <%@expand ORIG_BOOL_ROW "enable_32bit_checkers" %>
 <%
   } else {
 %>
@@ -1514,204 +1413,39 @@ function advancedDialogOnChange()
 <%
   row = 1;
 %>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_enable_src_view-div">
-                <td><s:v value="caps_fields[0][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-team_enable_src_view" disabled="disabled" name="param" value="global->team_enable_src_view" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:team_enable_src_view" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_failed_test_view-div">
-                <td><s:v value="caps_fields[1][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-disable_failed_test_view" disabled="disabled" name="param" value="global->disable_failed_test_view" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_failed_test_view" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_enable_rep_view-div">
-                <td><s:v value="caps_fields[2][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-team_enable_rep_view" disabled="disabled" name="param" value="global->team_enable_rep_view" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:team_enable_rep_view" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_enable_ce_view-div">
-                <td><s:v value="caps_fields[3][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-team_enable_ce_view" disabled="disabled" name="param" value="global->team_enable_ce_view" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:team_enable_ce_view" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_show_judge_report-div">
-                <td><s:v value="caps_fields[4][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-team_show_judge_report" disabled="disabled" name="param" value="global->team_show_judge_report" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:team_show_judge_report" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-report_error_code-div">
-                <td><s:v value="caps_fields[5][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-report_error_code" disabled="disabled" name="param" value="global->report_error_code" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:report_error_code" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_clars-div">
-                <td><s:v value="caps_fields[6][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-disable_clars" disabled="disabled" name="param" value="global->disable_clars" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_clars" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_team_clars-div">
-                <td><s:v value="caps_fields[7][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-disable_team_clars" disabled="disabled" name="param" value="global->disable_team_clars" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_team_clars" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_eoln_select-div">
-                <td><s:v value="caps_fields[8][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-enable_eoln_select" disabled="disabled" name="param" value="global->enable_eoln_select" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_eoln_select" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_submit_after_ok-div">
-                <td><s:v value="caps_fields[9][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-disable_submit_after_ok" disabled="disabled" name="param" value="global->disable_submit_after_ok" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_submit_after_ok" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_compile_errors-div">
-                <td><s:v value="caps_fields[10][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-ignore_compile_errors" disabled="disabled" name="param" value="global->ignore_compile_errors" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:ignore_compile_errors" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_duplicated_runs-div">
-                <td><s:v value="caps_fields[11][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-ignore_duplicated_runs" disabled="disabled" name="param" value="global->ignore_duplicated_runs" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:ignore_duplicated_runs" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-show_deadline-div">
-                <td><s:v value="caps_fields[12][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-show_deadline" disabled="disabled" name="param" value="global->show_deadline" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:show_deadline" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-show_sha1-div">
-                <td><s:v value="caps_fields[13][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-show_sha1" disabled="disabled" name="param" value="global->show_sha1" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:show_sha1" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-show_judge_identity-div">
-                <td><s:v value="caps_fields[14][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-show_judge_identity" disabled="disabled" name="param" value="global->show_judge_identity" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:show_judge_identity" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_printing-div">
-                <td><s:v value="caps_fields[15][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-enable_printing" disabled="disabled" name="param" value="global->enable_printing" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_printing" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_banner_page-div">
-                <td><s:v value="caps_fields[16][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-disable_banner_page" disabled="disabled" name="param" value="global->disable_banner_page" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_banner_page" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-printout_uses_login-div">
-                <td><s:v value="caps_fields[17][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-printout_uses_login" disabled="disabled" name="param" value="global->printout_uses_login" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:printout_uses_login" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-prune_empty_users-div">
-                <td><s:v value="caps_fields[18][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-prune_empty_users" disabled="disabled" name="param" value="global->prune_empty_users" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:prune_empty_users" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_full_archive-div">
-                <td><s:v value="caps_fields[19][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-enable_full_archive" disabled="disabled" name="param" value="global->enable_full_archive" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_full_archive" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-always_show_problems-div">
-                <td><s:v value="caps_fields[20][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-always_show_problems" disabled="disabled" name="param" value="global->always_show_problems" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:always_show_problems" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_user_standings-div">
-                <td><s:v value="caps_fields[21][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-disable_user_standings" disabled="disabled" name="param" value="global->disable_user_standings" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_user_standings" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_language-div">
-                <td><s:v value="caps_fields[22][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-disable_language" disabled="disabled" name="param" value="global->disable_language" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_language" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-problem_navigation-div">
-                <td><s:v value="caps_fields[23][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-problem_navigation" disabled="disabled" name="param" value="global->problem_navigation" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:problem_navigation" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-vertical_navigation-div">
-                <td><s:v value="caps_fields[24][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-vertical_navigation" disabled="disabled" name="param" value="global->vertical_navigation" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:vertical_navigation" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_virtual_start-div">
-                <td><s:v value="caps_fields[25][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-disable_virtual_start" disabled="disabled" name="param" value="global->disable_virtual_start" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_virtual_start" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_virtual_auto_judge-div">
-                <td><s:v value="caps_fields[26][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-disable_virtual_auto_judge" disabled="disabled" name="param" value="global->disable_virtual_auto_judge" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_virtual_auto_judge" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_auto_print_protocol-div">
-                <td><s:v value="caps_fields[27][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-enable_auto_print_protocol" disabled="disabled" name="param" value="global->enable_auto_print_protocol" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_auto_print_protocol" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-notify_clar_reply-div">
-                <td><s:v value="caps_fields[28][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-notify_clar_reply" disabled="disabled" name="param" value="global->notify_clar_reply" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:notify_clar_reply" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-notify_status_change-div">
-                <td><s:v value="caps_fields[29][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-notify_status_change" disabled="disabled" name="param" value="global->notify_status_change" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:notify_status_change" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_auto_refresh-div">
-                <td><s:v value="caps_fields[30][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-disable_auto_refresh" disabled="disabled" name="param" value="global->disable_auto_refresh" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_auto_refresh" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-start_on_first_login-div">
-                <td><s:v value="caps_fields[31][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-start_on_first_login" disabled="disabled" name="param" value="global->start_on_first_login" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:start_on_first_login" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_virtual_restart-div">
-                <td><s:v value="caps_fields[31][1]" escape="false" />:</td>
-                <td><s:yesno id="orig-enable_virtual_restart" disabled="disabled" name="param" value="global->enable_virtual_restart" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_virtual_restart" /></td>
-            </s:tr>
+            <%@expand ORIG_BOOL_ROW "team_enable_src_view" %>
+            <%@expand ORIG_BOOL_ROW "disable_failed_test_view" %>
+            <%@expand ORIG_BOOL_ROW "team_enable_rep_view" %>
+            <%@expand ORIG_BOOL_ROW "team_enable_ce_view" %>
+            <%@expand ORIG_BOOL_ROW "team_show_judge_report" %>
+            <%@expand ORIG_BOOL_ROW "report_error_code" %>
+            <%@expand ORIG_BOOL_ROW "disable_clars" %>
+            <%@expand ORIG_BOOL_ROW "disable_team_clars" %>
+            <%@expand ORIG_BOOL_ROW "enable_eoln_select" %>
+            <%@expand ORIG_BOOL_ROW "disable_submit_after_ok" %>
+            <%@expand ORIG_BOOL_ROW "ignore_compile_errors" %>
+            <%@expand ORIG_BOOL_ROW "ignore_duplicated_runs" %>
+            <%@expand ORIG_BOOL_ROW "show_deadline" %>
+            <%@expand ORIG_BOOL_ROW "show_sha1" %>
+            <%@expand ORIG_BOOL_ROW "show_judge_identity" %>
+            <%@expand ORIG_BOOL_ROW "enable_printing" %>
+            <%@expand ORIG_BOOL_ROW "disable_banner_page" %>
+            <%@expand ORIG_BOOL_ROW "printout_uses_login" %>
+            <%@expand ORIG_BOOL_ROW "prune_empty_users" %>
+            <%@expand ORIG_BOOL_ROW "enable_full_archive" %>
+            <%@expand ORIG_BOOL_ROW "always_show_problems" %>
+            <%@expand ORIG_BOOL_ROW "disable_user_standings" %>
+            <%@expand ORIG_BOOL_ROW "disable_language" %>
+            <%@expand ORIG_BOOL_ROW "problem_navigation" %>
+            <%@expand ORIG_BOOL_ROW "vertical_navigation" %>
+            <%@expand ORIG_BOOL_ROW "disable_virtual_start" %>
+            <%@expand ORIG_BOOL_ROW "disable_virtual_auto_judge" %>
+            <%@expand ORIG_BOOL_ROW "enable_auto_print_protocol" %>
+            <%@expand ORIG_BOOL_ROW "notify_clar_reply" %>
+            <%@expand ORIG_BOOL_ROW "notify_status_change" %>
+            <%@expand ORIG_BOOL_ROW "disable_auto_refresh" %>
+            <%@expand ORIG_BOOL_ROW "start_on_first_login" %>
+            <%@expand ORIG_BOOL_ROW "enable_virtual_restart" %>
         </table>
     </div>
 
@@ -1723,66 +1457,16 @@ function advancedDialogOnChange()
 <%
   row = 1;
 %>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-advanced_layout-div">
-                <td>Advanced problem files layout:</td>
-                <td><s:yesno id="orig-advanced_layout" disabled="disabled" name="param" value="global->advanced_layout" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:advanced_layout" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-uuid_run_store-div">
-                <td>Use UUID instead of run_id to store runs:</td>
-                <td><s:yesno id="orig-uuid_run_store" disabled="disabled" name="param" value="global->uuid_run_store" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:uuid_run_store" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-test_dir-div">
-                <td>Directory for tests (relative to contest configuration dir):</td>
-                <td><s:textfield id="orig-test_dir" readonly="readonly" name="param" value="global->test_dir" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupFilesDialog(event, 'test_dir')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:test_dir" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-corr_dir-div">
-                <td>Directory for correct answers (relative to contest configuration dir):</td>
-                <td><s:textfield id="orig-corr_dir" readonly="readonly" name="param" value="global->corr_dir" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupFilesDialog(event, 'corr_dir')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:corr_dir" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-info_dir-div">
-                <td>Directory for test info files (relative to contest configuration dir):</td>
-                <td><s:textfield id="orig-info_dir" readonly="readonly" name="param" value="global->info_dir" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupFilesDialog(event, 'info_dir')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:info_dir" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-tgz_dir-div">
-                <td>Directory for test tgz files (relative to contest configuration dir):</td>
-                <td><s:textfield id="orig-tgz_dir" readonly="readonly" name="param" value="global->tgz_dir" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupFilesDialog(event, 'tgz_dir')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:tgz_dir" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-checker_dir-div">
-                <td>Directory for checkers (relative to contest configuration dir):</td>
-                <td><s:textfield id="orig-checker_dir" readonly="readonly" name="param" value="global->checker_dir" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupFilesDialog(event, 'checker_dir')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:checker_dir" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-statement_dir-div">
-                <td>Directory for problem statements (relative to contest configuration dir):</td>
-                <td><s:textfield id="orig-statement_dir" readonly="readonly" name="param" value="global->statement_dir" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupFilesDialog(event, 'statement_dir')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:statement_dir" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-contest_start_cmd-div">
-                <td>Contest start script:</td>
-                <td><s:textfield id="orig-contest_start_cmd" readonly="readonly" name="param" value="global->contest_start_cmd" size="48" maxlength="1024" /></td>
-                <td onclick="np(event);"><input type="button" onclick="popupFilesDialog(event, 'contest_start_cmd')" value="Clear" />[<s:a ac="glob-edit-contest-start-cmd-page">Edit</s:a>]</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:contest_start_cmd" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-contest_stop_cmd-div">
-                <td>Contest stop script:</td>
-                <td><s:textfield id="orig-contest_stop_cmd" readonly="readonly" name="param" value="global->contest_stop_cmd" size="48" maxlength="1024" /></td>
-                <td onclick="np(event);"><input type="button" onclick="popupFilesDialog(event, 'contest_stop_cmd')" value="Clear" />[<s:a ac="glob-edit-contest-stop-cmd-page">Edit</s:a>]</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:contest_stop_cmd" /></td>
-            </s:tr>
+            <%@expand ORIG_BOOL_ROW "advanced_layout" %>
+            <%@expand ORIG_BOOL_ROW "uuid_run_store" %>
+            <%@expand ORIG_TEXT_ROW "test_dir" "Files" "48" %>
+            <%@expand ORIG_TEXT_ROW "corr_dir" "Files" "48" %>
+            <%@expand ORIG_TEXT_ROW "info_dir" "Files" "48" %>
+            <%@expand ORIG_TEXT_ROW "tgz_dir" "Files" "48" %>
+            <%@expand ORIG_TEXT_ROW "checker_dir" "Files" "48" %>
+            <%@expand ORIG_TEXT_ROW "statement_dir" "Files" "48" %>
+            <%@expand ORIG_TEXT_ROW_WITH_EDIT "contest_start_cmd" "Files" "48" %>
+            <%@expand ORIG_TEXT_ROW_WITH_EDIT "contest_stop_cmd" "Files" "48" %>
         </table>
     </div>
 
@@ -1797,7 +1481,7 @@ function advancedDialogOnChange()
   ll_to_size_str(hbuf, sizeof(hbuf), global->max_run_size);
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_run_size-div" >
-                <td>Maximum size of one submitted program:</td>
+                <td><s:v value="MSG_max_run_size" escape="no" />:</td>
                 <td><s:textfield id="orig-max_run_size" readonly="readonly" name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_run_size" /></td>
@@ -1806,13 +1490,13 @@ function advancedDialogOnChange()
   ll_to_size_str(hbuf, sizeof(hbuf), global->max_run_total);
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_run_total-div">
-                <td>Maximum total size of all submitted programs:</td>
+                <td><s:v value="MSG_max_run_total" escape="no" />:</td>
                 <td><s:textfield id="orig-max_run_total" readonly="readonly" name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_run_total" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_run_num-div">
-                <td>Maximum number of submits:</td>
+                <td><s:v value="MSG_max_run_num" escape="no" />:</td>
                 <td><s:textfield id="orig-max_run_num" readonly="readonly" name="param" value="global->max_run_num" size="48" maxlength="1024" check="false" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_run_num" /></td>
@@ -1821,7 +1505,7 @@ function advancedDialogOnChange()
   ll_to_size_str(hbuf, sizeof(hbuf), global->max_clar_size);
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_clar_size-div">
-                <td>Maximum size of one clarification request:</td>
+                <td><s:v value="MSG_max_clar_size" escape="no" />:</td>
                 <td><s:textfield id="orig-max_clar_size" readonly="readonly" name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_clar_size" /></td>
@@ -1830,19 +1514,19 @@ function advancedDialogOnChange()
   num_to_size_str(hbuf, sizeof(hbuf), global->max_clar_total);
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_clar_total-div">
-                <td>Maximum size of all clarification requests:</td>
+                <td><s:v value="MSG_max_clar_total" escape="no" />:</td>
                 <td><s:textfield id="orig-max_clar_total" readonly="readonly" name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_clar_total" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_clar_num-div">
-                <td>Maximum number of clarification requests:</td>
+                <td><s:v value="MSG_max_clar_num" escape="no" />:</td>
                 <td><s:textfield id="orig-max_clar_num" readonly="readonly" name="param" value="global->max_clar_num" size="48" maxlength="1024" check="false" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_clar_num" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_page_quota-div">
-                <td>Maximum number of printed pages:</td>
+                <td><s:v value="MSG_team_page_quota" escape="no" />:</td>
                 <td><s:textfield id="orig-team_page_quota" readonly="readonly" name="param" value="global->team_page_quota" size="48" maxlength="1024" check="false" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:team_page_quota" /></td>
@@ -1854,128 +1538,48 @@ function advancedDialogOnChange()
 
     <div>
         <table border="0" onclick="popupUrlsDialog()">
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-team_info_url-div">
-                <td>URL to view detailed contestant information:</td>
-                <td><s:textfield readonly="readonly" id="orig-team_info_url" name="param" value="global->team_info_url" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupUrlsDialog(event, 'team_info_url')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:team_info_url" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-prob_info_url-div">
-                <td>URL to view problem statement:</td>
-                <td><s:textfield readonly="readonly" id="orig-prob_info_url" name="param" value="global->prob_info_url" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupUrlsDialog(event, 'prob_info_url')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:prob_info_url" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-standings_file_name-div">
-                <td>Name of the current standings file:</td>
-                <td><s:textfield readonly="readonly" id="orig-standings_file_name" name="param" value="global->standings_file_name" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupUrlsDialog(event, 'standings_file_name')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:standings_file_name" /></td>
-            </s:tr>
+            <%@expand ORIG_TEXT_ROW "team_info_url" "Urls" "48" %>
+            <%@expand ORIG_TEXT_ROW "prob_info_url" "Urls" "48" %>
+            <%@expand ORIG_TEXT_ROW "standings_file_name" "Urls" "48" %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-users_on_page-div">
-                <td>Number of users on standings page:</td>
+                <td><s:v value="MSG_users_on_page" escape="no" />:</td>
                 <td><s:textfield readonly="readonly" id="orig-users_on_page" name="param" value="global->users_on_page" size="48" maxlength="1024" checkExpr="> 0" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:users_on_page" /></td>
             </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_header_file-div">
-                <td>HTML header file for the standings:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_header_file" name="param" value="global->stand_header_file" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupUrlsDialog(event, 'stand_header_file')" value="Clear" />[<s:a ac="glob-edit-stand-header-file-page">Edit</s:a>]</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_header_file" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_footer_file-div">
-                <td>HTML footer file for the standings:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_footer_file" name="param" value="global->stand_footer_file" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupUrlsDialog(event, 'stand_footer_file')" value="Clear" />[<s:a ac="glob-edit-stand-footer-file-page">Edit</s:a>]</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_footer_file" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_symlink_dir-div">
-                <td>Directory to make standings symlink (rel. to DocumentRoot):</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_symlink_dir" name="param" value="global->stand_symlink_dir" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupUrlsDialog(event, 'stand_symlink_dir')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_symlink_dir" /></td>
-            </s:tr>
+            <%@expand ORIG_TEXT_ROW_WITH_EDIT "stand_header_file" "Urls" "48" %>
+            <%@expand ORIG_TEXT_ROW_WITH_EDIT "stand_footer_file" "Urls" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_symlink_dir" "Urls" "48" %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_ignore_after-div">
-                <td>Ignore submissions after:</td>
+                <td><s:v value="MSG_stand_ignore_after" escape="no" />:</td>
                 <td><% html_date_select_2(out_f, global->stand_ignore_after, "orig-stand_ignore_after", "param", NULL, 1, 0, 0); %></td>
                 <td><input type="button" onclick="popupUrlsDialog(event, 'stand_ignore_after')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_ignore_after" /></td>
             </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_stand2-div">
-                <td>Enable supplementary standings table:</td>
-                <td><s:yesno disabled="disabled" id="orig-enable_stand2" name="param" value="phr->ss->enable_stand2" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_stand2" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand2_file_name-div">
-                <td>Name of the supplementary standings file:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand2_file_name" name="param" value="global->stand2_file_name" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupUrlsDialog(event, 'stand2_file_name')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand2_file_name" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand2_header_file-div">
-                <td>HTML header file for the supplementary standings:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand2_header_file" name="param" value="global->stand2_header_file" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupUrlsDialog(event, 'stand2_header_file')" value="Clear" />[<s:a ac="glob-edit-stand2-header-file-page">Edit</s:a>]</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand2_header_file" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand2_footer_file-div">
-                <td>HTML footer file for the supplementary standings:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand2_footer_file" name="param" value="global->stand2_footer_file" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupUrlsDialog(event, 'stand2_footer_file')" value="Clear" />[<s:a ac="glob-edit-stand2-footer-file-page">Edit</s:a>]</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand2_footer_file" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand2_symlink_dir-div">
-                <td>Directory to make suppl. standings symlink (rel. to DocumentRoot):</td>
-                <td><s:textfield readonly="readonly" id="orig-stand2_symlink_dir" name="param" value="global->stand2_symlink_dir" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupUrlsDialog(event, 'stand2_symlink_dir')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand2_symlink_dir" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_plog-div">
-                <td>Enable public submission log:</td>
-                <td><s:yesno disabled="disabled" id="orig-enable_plog" name="param" value="phr->ss->enable_plog" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_plog" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_file_name-div">
-                <td>Name of the public submission log file:</td>
-                <td><s:textfield readonly="readonly" id="orig-plog_file_name" name="param" value="global->plog_file_name" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupUrlsDialog(event, 'plog_file_name')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_file_name" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_header_file-div">
-                <td>HTML header file for the public submission log:</td>
-                <td><s:textfield readonly="readonly" id="orig-plog_header_file" name="param" value="global->plog_header_file" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupUrlsDialog(event, 'plog_header_file')" value="Clear" />[<s:a ac="glob-edit-plog-header-file-page">Edit</s:a>]</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_header_file" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_footer_file-div">
-                <td>HTML footer file for the public submission log:</td>
-                <td><s:textfield readonly="readonly" id="orig-plog_footer_file" name="param" value="global->plog_footer_file" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupUrlsDialog(event, 'plog_footer_file')" value="Clear" />[<s:a ac="glob-edit-plog-footer-file-page">Edit</s:a>]</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_footer_file" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_symlink_dir-div">
-                <td>Directory to make symlink to public submission log (rel. to DocumentRoot):</td>
-                <td><s:textfield readonly="readonly" id="orig-plog_symlink_dir" name="param" value="global->plog_symlink_dir" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupUrlsDialog(event, 'plog_symlink_dir')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_symlink_dir" /></td>
-            </s:tr>
+            <%@expand ORIG_BOOL_ROW_WITH_VALUE "enable_stand2" "phr->ss->enable_stand2" %>
+            <%@expand ORIG_TEXT_ROW "stand2_file_name" "Urls" "48" %>
+            <%@expand ORIG_TEXT_ROW_WITH_EDIT "stand2_header_file" "Urls" "48" %>
+            <%@expand ORIG_TEXT_ROW_WITH_EDIT "stand2_footer_file" "Urls" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand2_symlink_dir" "Urls" "48" %>
+            <%@expand ORIG_BOOL_ROW_WITH_VALUE "enable_plog" "phr->ss->enable_plog" %>
+            <%@expand ORIG_TEXT_ROW "plog_file_name" "Urls" "48" %>
+            <%@expand ORIG_TEXT_ROW_WITH_EDIT "plog_header_file" "Urls" "48" %>
+            <%@expand ORIG_TEXT_ROW_WITH_EDIT "plog_footer_file" "Urls" "48" %>
+            <%@expand ORIG_TEXT_ROW "plog_symlink_dir" "Urls" "48" %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_update_time-div">
-                <td>Public submission log update interval (sec):</td>
+                <td><s:v value="MSG_plog_update_time" escape="no" />:</td>
                 <td><s:textfield readonly="readonly" id="orig-plog_update_time" name="param" value="global->plog_update_time" size="48" maxlength="1024" check="> 0" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_update_time" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-external_xml_update_time-div">
-                <td>External XML log update interval (sec):</td>
+                <td><s:v value="MSG_external_xml_update_time" escape="no" />:</td>
                 <td><s:textfield readonly="readonly" id="orig-external_xml_update_time" name="param" value="global->external_xml_update_time" size="48" maxlength="1024" check="> 0" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:external_xml_update_time" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-internal_xml_update_time-div">
-                <td>Internal XML log update interval (sec):</td>
+                <td><s:v value="MSG_internal_xml_update_time" escape="no" />:</td>
                 <td><s:textfield readonly="readonly" id="orig-internal_xml_update_time" name="param" value="global->internal_xml_update_time" size="48" maxlength="1024" check="> 0" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:internal_xml_update_time" /></td>
@@ -1990,231 +1594,42 @@ function advancedDialogOnChange()
 <%
   row = 1;
 %>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_fancy_style-div">
-                <td>Use fancy decorations:</td>
-                <td><s:yesno disabled="disabled" id="orig-stand_fancy_style" name="param" value="global->stand_fancy_style" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_fancy_style" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_success_attr-div">
-                <td>HTML attributes for &quot;Last success&quot; note:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_success_attr" name="param" value="global->stand_success_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_success_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_success_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_table_attr-div">
-                <td>HTML attributes for standings table:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_table_attr" name="param" value="global->stand_table_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_table_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_table_attr" /></td>
-            </s:tr>
-<%
-    xstr = 0;
-    if (global->stand_row_attr && global->stand_row_attr[0]) xstr = sarray_unparse_2(global->stand_row_attr);
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_row_attr-div">
-                <td>Standings row attributes:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_row_attr" name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_row_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_row_attr" /></td>
-            </s:tr>
-<%
-  xfree(xstr); xstr = 0;
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_place_attr-div">
-                <td>HTML attributes for the &quot;Place&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_place_attr" name="param" value="global->stand_place_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_place_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_place_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_team_attr-div">
-                <td>HTML attributes for the &quot;Team name&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_team_attr" name="param" value="global->stand_team_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_team_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_team_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_prob_attr-div">
-                <td>HTML attributes for the &quot;Problems&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_prob_attr" name="param" value="global->stand_prob_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_prob_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_prob_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_solved_attr-div">
-                <td>HTML attributes for the &quot;Solved&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_solved_attr" name="param" value="global->stand_solved_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_solved_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_solved_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_score_attr-div">
-                <td>HTML attributes for the &quot;Score&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_score_attr" name="param" value="global->stand_score_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_score_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_score_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_penalty_attr-div">
-                <td>HTML attributes for the &quot;Penalty&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_penalty_attr" name="param" value="global->stand_penalty_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_penalty_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_penalty_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_use_login-div">
-                <td>Use login instead of name:</td>
-                <td><s:yesno disabled="disabled" id="orig-stand_use_login" name="param" value="global->stand_use_login" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_use_login" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_show_ok_time-div">
-                <td>Show success time in standings:</td>
-                <td><s:yesno disabled="disabled" id="orig-stand_show_ok_time" name="param" value="global->stand_show_ok_time" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_show_ok_time" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_show_att_num-div">
-                <td>Show number of attempts in standings:</td>
-                <td><s:yesno disabled="disabled" id="orig-stand_show_att_num" name="param" value="global->stand_show_att_num" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_show_att_num" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_sort_by_solved-div">
-                <td>Sort participants by the solved problems first:</td>
-                <td><s:yesno disabled="disabled" id="orig-stand_sort_by_solved" name="param" value="global->stand_sort_by_solved" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_sort_by_solved" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_enable_penalty-div">
-                <td>Enable time penalties:</td>
-                <td><s:yesno disabled="disabled" id="orig-stand_enable_penalty" name="param" value="global->stand_enable_penalty" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_enable_penalty" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_success_time-div">
-                <td>Ignore success time in penalty calculation:</td>
-                <td><s:yesno disabled="disabled" id="orig-ignore_success_time" name="param" value="global->ignore_success_time" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:ignore_success_time" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_time_attr-div">
-                <td>HTML attributes for the success time:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_time_attr" name="param" value="global->stand_time_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_time_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_time_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_fail_attr-div">
-                <td>HTML attributes for &quot;Check failed&quot; cells:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_fail_attr" name="param" value="global->stand_fail_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_fail_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_fail_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_trans_attr-div">
-                <td>HTML attributes for transient cells:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_trans_attr" name="param" value="global->stand_trans_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_trans_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_trans_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_disq_attr-div">
-                <td>HTML attributes for &quot;Disqualified&quot; cells:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_disq_attr" name="param" value="global->stand_disq_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_disq_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_disq_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_self_row_attr-div">
-                <td>HTML attributes for the participant's table row:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_self_row_attr" name="param" value="global->stand_self_row_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_self_row_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_self_row_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_v_row_attr-div">
-                <td>HTML attributes for the virtual participant's rows:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_v_row_attr" name="param" value="global->stand_v_row_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_v_row_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_v_row_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_r_row_attr-div">
-                <td>HTML attributes for the real participant's rows:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_r_row_attr" name="param" value="global->stand_r_row_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_r_row_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_r_row_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_u_row_attr-div">
-                <td>HTML attributes for the unknown participant's rows:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_u_row_attr" name="param" value="global->stand_u_row_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_u_row_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_u_row_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_extra_col-div">
-                <td>Show &quot;Extra information&quot; column:</td>
-                <td><s:yesno disabled="disabled" id="orig-enable_extra_col" name="param" value="phr->ss->enable_extra_col" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:globalenable_extra_col:" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_extra_format-div">
-                <td>Format string for &quot;Extra information&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_extra_format" name="param" value="global->stand_extra_format" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_extra_format')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_extra_format" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_extra_legend-div">
-                <td>Column title for &quot;Extra information&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_extra_legend" name="param" value="global->stand_extra_legend" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_extra_legend')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_extra_legend" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_extra_attr-div">
-                <td>HTML attributes for &quot;Extra information&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_extra_attr" name="param" value="global->stand_extra_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_extra_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_extra_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_show_warn_number-div">
-                <td>Show &quot;Warnings&quot; column:</td>
-                <td><s:yesno disabled="disabled" id="orig-stand_show_warn_number" name="param" value="global->stand_show_warn_number" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_show_warn_number" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_warn_number_attr-div">
-                <td>HTML attributes for &quot;Warnings&quot; column:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_warn_number_attr" name="param" value="global->stand_warn_number_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_warn_number_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_warn_number_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_page_table_attr-div">
-                <td>HTML attributes for page table:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_page_table_attr" name="param" value="global->stand_page_table_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_page_table_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_page_table_attr" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_page_cur_attr-div">
-                <td>HTML attributes for current page message:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_page_cur_attr" name="param" value="global->stand_page_cur_attr" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_page_cur_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_page_cur_attr" /></td>
-            </s:tr>
-<%
-    xstr = 0;
-    if (global->stand_page_row_attr && global->stand_page_row_attr[0]) xstr = sarray_unparse_2(global->stand_page_row_attr);
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_page_row_attr-div">
-                <td>Page table row attributes:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_page_row_attr" name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_page_row_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_page_row_attr" /></td>
-            </s:tr>
-<%
-    xfree(xstr); xstr = 0;
-%>
-<%
-    xstr = 0;
-    if (global->stand_page_col_attr && global->stand_page_col_attr[0]) xstr = sarray_unparse_2(global->stand_page_col_attr);
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand_page_col_attr-div">
-                <td>Page table column attributes:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand_page_col_attr" name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupAttrsDialog(event, 'stand_page_col_attr')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand_page_col_attr" /></td>
-            </s:tr>
-<%
-    xfree(xstr); xstr = 0;
-%>
+            <%@expand ORIG_BOOL_ROW "stand_fancy_style" %>
+            <%@expand ORIG_TEXT_ROW "stand_success_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_table_attr" "Attrs" "48" %>
+            <%@expand ORIG_XSTR_ROW "stand_row_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_place_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_team_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_prob_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_solved_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_score_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_penalty_attr" "Attrs" "48" %>
+            <%@expand ORIG_BOOL_ROW "stand_use_login" %>
+            <%@expand ORIG_BOOL_ROW "stand_show_avatar" %>
+            <%@expand ORIG_BOOL_ROW "stand_show_first_solver" %>
+            <%@expand ORIG_BOOL_ROW "stand_show_ok_time" %>
+            <%@expand ORIG_BOOL_ROW "stand_show_att_num" %>
+            <%@expand ORIG_BOOL_ROW "stand_sort_by_solved" %>
+            <%@expand ORIG_BOOL_ROW "stand_enable_penalty" %>
+            <%@expand ORIG_BOOL_ROW "ignore_success_time" %>
+            <%@expand ORIG_TEXT_ROW "stand_time_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_fail_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_trans_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_disq_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_self_row_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_v_row_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_r_row_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_u_row_attr" "Attrs" "48" %>
+            <%@expand ORIG_BOOL_ROW_WITH_VALUE "enable_extra_col" "phr->ss->enable_extra_col" %>
+            <%@expand ORIG_TEXT_ROW "stand_extra_format" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_extra_legend" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_extra_attr" "Attrs" "48" %>
+            <%@expand ORIG_BOOL_ROW "stand_show_warn_number" %>
+            <%@expand ORIG_TEXT_ROW "stand_warn_number_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_page_table_attr" "Attrs" "48" %>
+            <%@expand ORIG_TEXT_ROW "stand_page_cur_attr" "Attrs" "48" %>
+            <%@expand ORIG_XSTR_ROW "stand_page_row_attr" "Attrs" "48" %>
+            <%@expand ORIG_XSTR_ROW "stand_page_col_attr" "Attrs" "48" %>
         </table>
     </div>
 
@@ -2226,25 +1641,15 @@ function advancedDialogOnChange()
   row = 1;
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-appeal_deadline-div">
-                <td>Appeal deadline:</td>
+                <td><s:v value="MSG_appeal_deadline" escape="no" />:</td>
                 <td><% html_date_select_2(out_f, global->appeal_deadline, "orig-appeal_deadline", "param", NULL, 1, 0, 0); %></td>
                 <td><input type="button" onclick="popupAdvancedDialog(event, 'appeal_deadline')" value="Clear" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:appeal_deadline" /></td>
             </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-autoupdate_standings-div">
-                <td>Update standings automatically (except freeze time):</td>
-                <td><s:yesno disabled="disabled" id="orig-autoupdate_standings" name="param" value="global->autoupdate_standings" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:autoupdate_standings" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-use_ac_not_ok-div">
-                <td>Use PR (Pending Review) status instead of OK:</td>
-                <td><s:yesno disabled="disabled" id="orig-use_ac_not_ok" name="param" value="global->use_ac_not_ok" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:use_ac_not_ok" /></td>
-            </s:tr>
+            <%@expand ORIG_BOOL_ROW "autoupdate_standings" %>
+            <%@expand ORIG_BOOL_ROW "use_ac_not_ok" %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-rounding_mode-div">
-                <td>Seconds to minutes rounding mode:</td>
+                <td><s:v value="MSG_rounding_mode" escape="no" />:</td>
                 <td><select id="orig-rounding_mode" name="param" disabled="disabled">
                     <s:option value="0" selectedExpr="global->rounding_mode == 0">Truncating up (ceil)</s:option>
                     <s:option value="1" selectedExpr="global->rounding_mode == 1">Truncating down (floor)</s:option>
@@ -2257,7 +1662,7 @@ function advancedDialogOnChange()
   num_to_size_str(hbuf, sizeof(hbuf), global->max_file_length);
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_file_length-div">
-                <td>Maximal file size to be included into testing protocol:</td>
+                <td><s:v value="MSG_max_file_length" escape="no" />:</td>
                 <td><s:textfield readonly="readonly" id="orig-max_file_length" name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_file_length" /></td>
@@ -2266,146 +1671,62 @@ function advancedDialogOnChange()
   num_to_size_str(hbuf, sizeof(hbuf), global->max_line_length);
 %>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_line_length-div">
-                <td>Maximal line length to be included into testing protocol:</td>
+                <td><s:v value="MSG_max_line_length" escape="no" />:</td>
                 <td><s:textfield readonly="readonly" id="orig-max_line_length" name="param" value="hbuf" size="48" maxlength="1024" check="false" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:max_line_length" /></td>
             </s:tr>
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-inactivity_timeout-div">
-                <td>Inactivity timeout:</td>
+                <td><s:v value="MSG_inactivity_timeout" escape="no" />:</td>
                 <td><s:textfield readonly="readonly" id="orig-inactivity_timeout" name="param" value="global->inactivity_timeout" size="48" maxlength="1024" check="> 0" /></td>
                 <td>&nbsp;</td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:inactivity_timeout" /></td>
             </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-ignore_bom-div">
-                <td>Ignore BOM in text submits:</td>
-                <td><s:yesno disabled="disabled" id="orig-ignore_bom" name="param" value="global->ignore_bom" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:ignore_bom" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_testing-div">
-                <td>Disable any testing of submissions:</td>
-                <td><s:yesno disabled="disabled" id="orig-disable_testing" name="param" value="global->disable_testing" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_testing" /></td>
-            </s:tr>
+            <%@expand ORIG_BOOL_ROW "ignore_bom" %>
+            <%@expand ORIG_BOOL_ROW "disable_testing" %>
 <%
   if (global->disable_testing <= 0) {
 %>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_auto_testing-div">
-                <td>Disable automatic testing of submissions:</td>
-                <td><s:yesno disabled="disabled" id="orig-disable_auto_testing" name="param" value="global->disable_auto_testing" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_auto_testing" /></td>
-            </s:tr>
+            <%@expand ORIG_BOOL_ROW "disable_auto_testing" %>
 <%
   }
 %>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-show_astr_time-div">
-                <td>Show astronomic time instead of relative time:</td>
-                <td><s:yesno disabled="disabled" id="orig-show_astr_time" name="param" value="global->show_astr_time" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:show_astr_time" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_report_upload-div">
-                <td>Enable testing protocol upload:</td>
-                <td><s:yesno disabled="disabled" id="orig-enable_report_upload" name="param" value="global->enable_report_upload" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_report_upload" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_runlog_merge-div">
-                <td>Enable run database importing and merging:</td>
-                <td><s:yesno disabled="disabled" id="orig-enable_runlog_merge" name="param" value="global->enable_runlog_merge" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_runlog_merge" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-disable_user_database-div">
-                <td>Disable user database loading:</td>
-                <td><s:yesno disabled="disabled" id="orig-disable_user_database" name="param" value="global->disable_user_database" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:disable_user_database" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-enable_l10n-div">
-                <td>Enable message translation:</td>
-                <td><s:yesno disabled="disabled" id="orig-enable_l10n" name="param" value="global->enable_l10n" /></td>
-                <td>&nbsp;</td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:enable_l10n" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-charset-div">
-                <td>Character set:</td>
-                <td><s:textfield readonly="readonly" id="orig-charset" name="param" value="global->charset" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupAdvancedDialog(event, 'charset')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:charset" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-standings_charset-div">
-                <td>Standings character set:</td>
-                <td><s:textfield readonly="readonly" id="orig-standings_charset" name="param" value="global->standings_charset" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupAdvancedDialog(event, 'standings_charset')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:standings_charset" /></td>
-            </s:tr>
+            <%@expand ORIG_BOOL_ROW "show_astr_time" %>
+            <%@expand ORIG_BOOL_ROW "enable_report_upload" %>
+            <%@expand ORIG_BOOL_ROW "enable_runlog_merge" %>
+            <%@expand ORIG_BOOL_ROW "disable_user_database" %>
+            <%@expand ORIG_BOOL_ROW "require_problem_uuid" %>
+            <%@expand ORIG_BOOL_ROW "enable_l10n" %>
+            <%@expand ORIG_TEXT_ROW "charset" "Advanced" "48" %>
+            <%@expand ORIG_TEXT_ROW "standings_charset" "Advanced" "48" %>
 <%
-  if (phr->ss->enable_stand2 && global->stand2_file_name[0]) {
+  if (phr->ss->enable_stand2 && global->stand2_file_name && global->stand2_file_name[0]) {
 %>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-stand2_charset-div">
-                <td>Aux. standings character set:</td>
-                <td><s:textfield readonly="readonly" id="orig-stand2_charset" name="param" value="global->stand2_charset" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupAdvancedDialog(event, 'stand2_charset')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:stand2_charset" /></td>
-            </s:tr>
+            <%@expand ORIG_TEXT_ROW "stand2_charset" "Advanced" "48" %>
 <%
   }
 %>
 
 <%
-  if (phr->ss->enable_plog && global->plog_file_name[0]) {
+  if (phr->ss->enable_plog && global->plog_file_name && global->plog_file_name[0]) {
 %>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-plog_charset-div">
-                <td>Submission log character set:</td>
-                <td><s:textfield readonly="readonly" id="orig-plog_charset" name="param" value="global->plog_charset" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupAdvancedDialog(event, 'plog_charset')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:plog_charset" /></td>
-            </s:tr>
+            <%@expand ORIG_TEXT_ROW "plog_charset" "Advanced" "48" %>
 <%
   }
 %>
 
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-cpu_bogomips-div">
-                <td>CPU speed (BogoMIPS):</td>
+                <td><s:v value="MSG_cpu_bogomips" escape="no" />:</td>
                 <td><s:textfield readonly="readonly" id="orig-cpu_bogomips" name="param" value="global->cpu_bogomips" size="48" maxlength="1024" checkExpr=" > 0" /></td>
                 <td><input type="button" onclick="popupAdvancedDialog(event, 'cpu_bogomips')" value="Clear" /><input type="button" onclick="popupAdvancedDialog(event, 'cpu_bogomips_detect')" value="Detect" /></td>
                 <td onclick="np(event);"><s:help topic="Serve.cfg:global:cpu_bogomips" /></td>
             </s:tr>
-<%
-  xstr = 0;
-  if (global->load_user_group && global->load_user_group[0]) xstr = sarray_unparse_2(global->load_user_group);
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-load_user_group-div">
-                <td>User groups to load:</td>
-                <td><s:textfield readonly="readonly" id="orig-load_user_group" name="param" value="xstr" size="48" maxlength="1024" checkExpr="" /></td>
-                <td><input type="button" onclick="popupAdvancedDialog(event, 'load_user_group')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:load_user_group" /></td>
-            </s:tr>
-<%
-  xfree(xstr); xstr = 0;
-%>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-clardb_plugin-div">
-                <td>ClarDB storage engine:</td>
-                <td><s:textfield readonly="readonly" id="orig-clardb_plugin" name="param" value="global->clardb_plugin" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAdvancedDialog(event, 'clardb_plugin')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:clardb_plugin" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-rundb_plugin-div">
-                <td>RunDB storage engine:</td>
-                <td><s:textfield readonly="readonly" id="orig-rundb_plugin" name="param" value="global->rundb_plugin" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAdvancedDialog(event, 'rundb_plugin')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:rundb_plugin" /></td>
-            </s:tr>
-            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-xuser_plugin-div">
-                <td>XuserDB storage engine:</td>
-                <td><s:textfield readonly="readonly" id="orig-xuser_plugin" name="param" value="global->xuser_plugin" size="48" maxlength="1024" check="false" /></td>
-                <td><input type="button" onclick="popupAdvancedDialog(event, 'xuser_plugin')" value="Clear" /></td>
-                <td onclick="np(event);"><s:help topic="Serve.cfg:global:xuser_plugin" /></td>
-            </s:tr>
+            <%@expand ORIG_XSTR_ROW "load_user_group" "Advanced" "48" %>
+            <%@expand ORIG_BOOL_ROW "enable_problem_history" %>
+            <%@expand ORIG_TEXT_ROW "clardb_plugin" "Advanced" "48" %>
+            <%@expand ORIG_TEXT_ROW "rundb_plugin" "Advanced" "48" %>
+            <%@expand ORIG_TEXT_ROW "xuser_plugin" "Advanced" "48" %>
+            <%@expand ORIG_TEXT_ROW "status_plugin" "Advanced" "48" %>
         </table>
     </div>
 

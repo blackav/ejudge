@@ -1,9 +1,9 @@
-/* -*- c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 
 #ifndef __XUSER_PLUGIN_H__
 #define __XUSER_PLUGIN_H__
 
-/* Copyright (C) 2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2015-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
 #include "ejudge/ejudge_cfg.h"
 
 /* version of the plugin interface structure */
-#define XUSER_PLUGIN_IFACE_VERSION 1
+#define XUSER_PLUGIN_IFACE_VERSION 2
 
 struct ejudge_cfg;
 struct contest_desc;
@@ -96,6 +96,10 @@ struct xuser_plugin_iface
         struct xuser_cnts_state *data,
         int count,
         int *user_ids);
+    int (*set_problem_dir_prefix)(
+        struct xuser_cnts_state *data,
+        int user_id,
+        const unsigned char *problem_dir_prefix);
 };
 
 struct xuser_cnts_state
@@ -104,9 +108,3 @@ struct xuser_cnts_state
 };
 
 #endif /* __CLDB_PLUGIN_H__ */
-
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */

@@ -3,7 +3,7 @@
 #ifndef __USERLIST_CLNT_H__
 #define __USERLIST_CLNT_H__
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 #include "ejudge/ej_types.h"
 
 #include <string.h>
+#include <time.h>
 
 struct userlist_clnt;
 typedef struct userlist_clnt *userlist_clnt_t;
@@ -69,17 +70,24 @@ userlist_clnt_login(
         struct userlist_clnt *clnt,
         int cmd,
         const ej_ip_t *origin_ip,
+        ej_cookie_t cookie,
         ej_cookie_t client_key,
+        time_t expire,
         int ssl,
         int contest_id,
         int locale_id,
         int pwd_special,
+        int is_ws,
         unsigned char const *login,
         unsigned char const *passwd,
         int *p_user_id,
         ej_cookie_t *p_cookie,
         ej_cookie_t *p_client_key,
-        unsigned char **p_name);
+        unsigned char **p_name,
+        time_t *p_expire,
+        int *p_priv_level,
+        int *p_reg_status,
+        int *p_reg_flags);
 
 int
 userlist_clnt_lookup_user(struct userlist_clnt *clnt,
@@ -111,6 +119,8 @@ userlist_clnt_get_cookie(
         int *p_reg_status,
         int *p_reg_flags,
         int *p_passwd_method,
+        int *p_is_ws,
+        time_t *p_expire,
         unsigned char **p_login,
         unsigned char **p_name);
 
@@ -162,12 +172,15 @@ int
 userlist_clnt_set_info(struct userlist_clnt *clnt,
                        int uid, int contest_id, const unsigned char *info);
 int
-userlist_clnt_set_passwd(struct userlist_clnt *clnt,
-                         int cmd,
-                         int user_id,
-                         int contest_id,
-                         const unsigned char *old_pwd,
-                         const unsigned char *new_pwd);
+userlist_clnt_set_passwd(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int user_id,
+        int contest_id,
+        int admin_user_id,
+        const unsigned char *old_pwd,
+        const unsigned char *new_pwd,
+        const unsigned char *admin_pwd);
 int
 userlist_clnt_get_contests(struct userlist_clnt *clnt,
                            int uid, unsigned char **p_info);
@@ -478,5 +491,32 @@ userlist_clnt_get_prev_user_id(
         int user_id,
         const unsigned char *filter,
         int *p_user_id);
+
+int
+userlist_clnt_bin_data(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int contest_id,
+        unsigned char **p_data);
+
+struct userlist_cookie;
+int
+userlist_clnt_create_cookie(
+        struct userlist_clnt *clnt,
+        int cmd,
+        const struct userlist_cookie *in_c,
+        struct userlist_cookie *out_c);
+
+struct userlist_contest_info;
+struct userlist_api_key;
+int
+userlist_clnt_api_key_request(
+        struct userlist_clnt *clnt,
+        int cmd,
+        int in_count,
+        const struct userlist_api_key *in_api_keys,
+        int *p_out_count,
+        struct userlist_api_key **p_out_api_keys,
+        struct userlist_contest_info *p_cnts_info);
 
 #endif /* __USERLIST_CLNT_H__ */

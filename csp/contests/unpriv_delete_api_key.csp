@@ -1,0 +1,45 @@
+<% // -*- mode: html -*-
+%><%@include "unpriv_includes.csp"
+%><%
+#include "ejudge/userlist_clnt.h"
+#include "ejudge/userlist_proto.h"
+#include "ejudge/base64.h"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set getter_name = "csp_get_unpriv_delete_api_key"
+%><%@page csp_view_unpriv_delete_api_key(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+  unsigned char *token = NULL;
+  int token_len = 0;
+  int token_err_flag = 0;
+  struct userlist_api_key api_key_params = {};
+
+%><s:read var="token" ignoreerrors="yes" required="no" normalize="yes" /><%
+
+  if (!token) {
+    FAIL(NEW_SRV_ERR_INV_TOKEN);
+  }
+  token_len = strlen(token);
+  if (token_len != 43) {
+    FAIL(NEW_SRV_ERR_INV_TOKEN);
+  }
+  base64u_decode(token, 43, api_key_params.token, &token_err_flag);
+  if (token_err_flag) {
+    FAIL(NEW_SRV_ERR_INV_TOKEN);
+  }
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+  }
+
+  api_key_params.user_id = phr->user_id;
+  int r = userlist_clnt_api_key_request(ul_conn, ULS_DELETE_API_KEY, 1, &api_key_params, NULL, NULL, NULL);
+  if (r < 0) {
+    FAIL(NEW_SRV_ERR_DATABASE_FAILED);
+  }
+
+%><s:url name="ApiKeysPageUrl" ac="api-keys-page" ></s:url><s:redirect url="ApiKeysPageUrl" /><%
+cleanup:;
+  html_armor_free(&ab);
+  xfree(token);
+%>

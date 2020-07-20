@@ -2,6 +2,7 @@
 %><%@include "unpriv_includes.csp"
 %><%
 #include "ejudge/compat.h"
+#include "ejudge/content_plugin.h"
 
 void
 ns_unparse_statement(
@@ -60,6 +61,14 @@ ns_unparse_answers(
   const unsigned char *prob_name = 0;
   UserProblemInfo *pinfo = 0;
   const unsigned char *telegram_token = NULL;
+  const struct userlist_user *u = teamdb_get_userlist(cs->teamdb_state, phr->user_id);
+  const struct userlist_user_info *ui = NULL;
+  if (u) ui = u->cnts0;
+  struct content_loaded_plugin *cp = NULL;
+  unsigned char avatar_url[1024];
+  avatar_url[0] = 0;
+  struct virtual_end_info_s *vend_info = NULL;
+  int summoned_count = 0;
 
 %><s:read var="telegram_token" ignoreerrors="yes" /><%
 %><s:read var="all_runs" ignoreerrors="yes" default="0" /><%
@@ -83,17 +92,18 @@ ns_unparse_answers(
     }
   }
   prob = 0;
-  
+
   XALLOCAZ(pinfo, cs->max_prob + 1);
   for (i = 0; i <= cs->max_prob; ++i) {
     pinfo[i].best_run = -1;
   }
-
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id,
-                                          cs->current_time);
-    if (stop_time <= 0) accepting_mode = 1;
+                                            cs->current_time);
+    if (stop_time <= 0 || cs->upsolving_mode) accepting_mode = 1;
+    if (stop_time > 0 && cs->current_time >= stop_time)
+      vend_info = global->virtual_end_info;
   } else {
     start_time = run_get_start_time(cs->runlog_state);
     stop_time = run_get_stop_time(cs->runlog_state);
@@ -105,7 +115,6 @@ ns_unparse_answers(
   if (fog_start_time < 0) fog_start_time = 0;
 
   l10n_setlocale(phr->locale_id);
-
   if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY) {
     title = _("Problem summary");
   } else if (phr->action == NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS) {
@@ -130,11 +139,14 @@ ns_unparse_answers(
   }
 
   unpriv_load_html_style(phr, cnts, 0, 0);
-%><%@include "unpriv_header.csp" 
+
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, pinfo);
+  for (i = 1; i <= cs->max_prob; ++i) {
+    summoned_count += pinfo[i].summoned_flag;
+  }
+%><%@include "unpriv_header.csp"
 %><%@include "unpriv_menu.csp"
 %><%@include "unpriv_status.csp"
-%><%
-  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, pinfo);
 %><%
   // top navigation
   if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
@@ -248,7 +260,8 @@ ns_unparse_answers(
 %>
 <%
   /* new problem navigation */
-  if (global->problem_navigation > 0 && global->vertical_navigation > 0 && start_time > 0 && stop_time <= 0) {
+  if (global->problem_navigation > 0 && global->vertical_navigation > 0 && start_time > 0
+                                               && (stop_time <= 0 || cs->upsolving_mode)) {
 %><%
     // vertical navigation bar
 %></div></td><td class="b0" id="probNavRightList" valign="top"><%
@@ -258,7 +271,7 @@ ns_unparse_answers(
       if (!(prob = cs->probs[i])) continue;
       if (!(pinfo[i].status & PROB_STATUS_TABABLE)) continue;
 
-      if (prob->group_name[0] && strcmp(prob->group_name, prev_group_name)) {
+      if (prob->group_name && strcmp(prob->group_name, prev_group_name)) {
 %><div class="probDisabled"><s:v value="prob->group_name" escape="false" /></div><%
         snprintf(prev_group_name, sizeof(prev_group_name), "%s", prob->group_name);
       }
@@ -282,7 +295,7 @@ ns_unparse_answers(
     }
 %></td></tr></table>
 <%
-  } else if (global->problem_navigation > 0 && start_time > 0 && stop_time <= 0) {
+  } else if (global->problem_navigation > 0 && start_time > 0 && (stop_time <= 0 || cs->upsolving_mode)) {
 %><%
     // bottom navigation bar
 %></div></td></tr>

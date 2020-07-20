@@ -1,0 +1,90 @@
+<%
+%><%@include "includes.csp"
+%><%
+extern const unsigned char * const ss_global_cap_descs[];
+%><%@set getter_name = "csp_get_caps_edit_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_caps_edit_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = NULL;
+    unsigned char subtitle_buf[1024];
+    const unsigned char *subtitle = subtitle_buf;
+    opcap_t caps = 0;
+    int serial = -1;
+    int cap;
+
+    if (ss_get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) {
+        FAIL(SSERV_ERR_PERM_DENIED);
+    }
+
+    if (!phr->config->caps_file) {
+        fprintf(log_f, "<caps_file> element is undefined in ejudge.xml\n");
+        FAIL(SSERV_ERR_INV_OPER);
+    }
+
+    ejudge_cfg_refresh_caps_file(phr->config, 1);
+
+    if (!phr->config->caps_file_info || !phr->config->caps_file_info->root) {
+        fprintf(log_f, "invalid <caps_file> element in ejudge.xml\n");
+        FAIL(SSERV_ERR_INV_OPER);
+    }
+
+    struct ejudge_cfg *root = phr->config->caps_file_info->root;
+
+    %><s:read name="serial" default="-1" /><%
+    if (serial <= 0) FAIL(SSERV_ERR_INV_OPER);
+
+    int i = 1;
+    struct opcap_list_item *p = root->capabilities.first;
+    for (; p && i != serial; p = (struct opcap_list_item*) p->b.right, ++i) {
+    }
+    if (!p) FAIL(SSERV_ERR_INV_OPER);
+
+    snprintf(subtitle_buf, sizeof(subtitle_buf), "global capabilities for %s", html_armor_buf(&ab, p->login));
+%><%@include "header.csp"
+%>
+
+<h2>Global capabilities for <s:v value="p->login" /></h2>
+
+<ul>
+  <li><s:a ac="main-page">Main page</s:a></li>
+  <li><s:a ac="caps-main-page">Global user capabilities</s:a></li>
+</ul>
+
+<s:form>
+  <s:hidden name="serial" />
+
+  <table class="b1">
+<%
+    for (cap = 0; cap < OPCAP_LAST; ++cap) {
+        if (!ss_global_cap_descs[cap]) continue;
+        const unsigned char *s = "";
+        if (opcaps_check(p->caps, cap) >= 0) s = " checked=\"checked\"";
+%>
+    <tr>
+      <td class="b1"><s:v value="cap" /></td>
+      <td class="b1"><input type="checkbox" name="cap_<s:v value="cap" />"<s:v value="s" escape="no" />></td>
+      <td class="b1"><tt><s:v value="opcaps_get_name(cap)" escape="no" /></tt></td>
+      <td class="b1"><s:v value="ss_global_cap_descs[cap]" /></td>
+    </tr>
+<%
+    }
+%>
+  </table>
+
+  <table class="b0">
+    <tr>
+      <td class="b0"><s:submit ac="caps-edit-cancel-action" text="Cancel" /></td>
+      <td class="b0"><s:submit ac="caps-edit-save-action" text="Save" /></td>
+    </tr>
+  </table>
+</form>
+
+<%@include "footer.csp"
+%><%
+cleanup:
+    l10n_resetlocale();
+    html_armor_free(&ab);
+%>

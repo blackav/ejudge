@@ -1,0 +1,258 @@
+<%
+%><%@include "priv_includes.csp"
+%><%
+%><%@set getter_name = "csp_get_priv_language_stats_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_language_stats_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+// local vars
+    const unsigned char *title = NULL;
+    int enable_main_menu = 0;
+    unsigned char filtbuf[1024];
+
+    LanguageStat *stats = xcalloc(cs->max_lang + 1, sizeof(*stats));
+    int material_run_count = 0;
+    int non_lang_run_count = 0;
+    int invalid_prob_count = 0;
+    int invalid_lang_count = 0;
+    int unhandled_status_count = 0;
+    int total_runs = run_get_total(cs->runlog_state);
+    int lang_id;
+
+    for (int run_id = 0; run_id < total_runs; ++run_id) {
+        struct run_entry re;
+        run_get_entry(cs->runlog_state, run_id, &re);
+        int has_lang_id = 0;
+        switch (re.status) {
+        case RUN_OK:
+        case RUN_COMPILE_ERR:
+        case RUN_RUN_TIME_ERR:
+        case RUN_TIME_LIMIT_ERR:
+        case RUN_PRESENTATION_ERR:
+        case RUN_WRONG_ANSWER_ERR:
+        case RUN_CHECK_FAILED:
+        case RUN_PARTIAL:
+        case RUN_ACCEPTED:
+        case RUN_IGNORED:
+        case RUN_DISQUALIFIED:
+        case RUN_PENDING:
+        case RUN_MEM_LIMIT_ERR:
+        case RUN_SECURITY_ERR:
+        case RUN_STYLE_ERR:
+        case RUN_WALL_TIME_LIMIT_ERR:
+        case RUN_PENDING_REVIEW:
+        case RUN_REJECTED:
+        case RUN_SYNC_ERR:
+        case RUN_SUMMONED:
+            has_lang_id = 1;
+            break;
+
+        case RUN_VIRTUAL_START:
+        case RUN_VIRTUAL_STOP:
+        case RUN_EMPTY:
+            break;
+
+        case RUN_RUNNING:
+        case RUN_COMPILED:
+        case RUN_COMPILING:
+        case RUN_REJUDGE:
+            has_lang_id = 1;
+            break;
+
+        case RUN_SKIPPED:
+        default:
+            ++unhandled_status_count;
+            break;
+        }
+        if (!has_lang_id) continue;
+        ++material_run_count;
+        int prob_id = re.prob_id;
+        const struct section_problem_data *prob = NULL;
+        if (prob_id <= 0 || prob_id > cs->max_prob || !(prob = cs->probs[prob_id])) {
+            ++invalid_prob_count;
+            continue;
+        }
+        if (prob->type) {
+            ++non_lang_run_count;
+            continue;
+        }
+        lang_id = re.lang_id;
+        const struct section_language_data *lang = NULL;
+        if (lang_id <= 0 || lang_id > cs->max_lang || !(lang = cs->langs[lang_id])) {
+            ++invalid_lang_count;
+            continue;
+        }
+        LanguageStat *ls = &stats[lang_id];
+        ++ls->total_runs;
+        switch (re.status) {
+        case RUN_OK:
+        case RUN_PENDING_REVIEW:
+        case RUN_REJECTED:
+        case RUN_SUMMONED:
+            ++ls->success_runs;
+            if (re.score > ls->best_score) {
+                ls->best_score = re.score;
+            }
+            break;
+
+        case RUN_CHECK_FAILED:
+            ++ls->check_failed_runs;
+            break;
+
+        case RUN_COMPILE_ERR:
+        case RUN_STYLE_ERR:
+            ++ls->compilation_failed_runs;
+            break;
+
+        case RUN_ACCEPTED:
+        case RUN_PENDING:
+            ++ls->pending_runs;
+            break;
+
+        case RUN_IGNORED:
+            ++ls->ignored_runs;
+            break;
+        case RUN_DISQUALIFIED:
+            ++ls->disqualified_runs;
+            break;
+
+        case RUN_RUN_TIME_ERR:
+        case RUN_TIME_LIMIT_ERR:
+        case RUN_PRESENTATION_ERR:
+        case RUN_WRONG_ANSWER_ERR:
+        case RUN_PARTIAL:
+        case RUN_MEM_LIMIT_ERR:
+        case RUN_SECURITY_ERR:
+        case RUN_WALL_TIME_LIMIT_ERR:
+        case RUN_SYNC_ERR:
+            ++ls->partial_runs;
+            if (re.score > ls->best_score) {
+                ls->best_score = re.score;
+            }
+            break;
+
+        case RUN_RUNNING:
+        case RUN_COMPILED:
+        case RUN_COMPILING:
+        case RUN_REJUDGE:
+            ++ls->transient_runs;
+            break;
+
+        case RUN_SKIPPED:
+        default:
+            abort();
+            break;
+        }
+    }
+
+    l10n_setlocale(phr->locale_id);
+    title = _("Language statistics");
+%><%@include "priv_header.csp"
+%>
+</div>
+
+<table class="b0"><tr>
+<td class="b0"><s:a ac="main-page"><s:_>Main page</s:_></s:a></td>
+<td class="b0"><s:a ac="language-stats-page"><s:_>Refresh</s:_></s:a></td>
+</tr></table>
+
+<table class="b1">
+    <tr>
+        <th class="b1">Id</th>
+        <th class="b1">Short Name</th>
+        <th class="b1">Long Name</th>
+        <th class="b1">Total</th>
+        <th class="b1">Success</th>
+        <th class="b1">Check Failed</th>
+        <th class="b1">Testing</th>
+        <th class="b1">Compilation Failed</th>
+        <th class="b1">Partial</th>
+        <th class="b1">Pending</th>
+        <th class="b1">Ignored</th>
+        <th class="b1">Disqualified</th>
+        <th class="b1">Best Score</th>
+    </tr>
+<%
+    for (lang_id = 1; lang_id <= cs->max_lang; ++lang_id) {
+        const struct section_language_data *lang = cs->langs[lang_id];
+        if (!lang) continue;
+        LanguageStat *ls = &stats[lang_id];
+%>
+    <tr>
+        <td class="b1"><s:v value="lang_id" /></td>
+        <td class="b1"><s:v value="lang->short_name" /></td>
+        <td class="b1"><s:v value="lang->long_name" checkExpr="" /></td>
+        <td class="b1"><%
+        if (ls->total_runs > 0) {
+            snprintf(filtbuf, sizeof(filtbuf), "lang == \"%s\"",  lang->short_name);
+%><s:url name="FilteredMainUrl" ac="main-page"><s:param name="filter_expr" value="filtbuf" /></s:url><s:a url="FilteredMainUrl"><s:v value="ls->total_runs" /></s:a><%
+        }
+%></td>
+        <td class="b1"><%
+        if (ls->success_runs > 0) {
+            snprintf(filtbuf, sizeof(filtbuf), "lang == \"%s\" && (status == ok || status == pr || status == rj || status == sm)",  lang->short_name);
+%><s:url name="FilteredMainUrl" ac="main-page"><s:param name="filter_expr" value="filtbuf" /></s:url><s:a url="FilteredMainUrl"><s:v value="ls->success_runs" /></s:a><%
+        }
+%></td>
+        <td class="b1"><%
+        if (ls->check_failed_runs > 0) {
+            snprintf(filtbuf, sizeof(filtbuf), "lang == \"%s\" && (status == cf)",  lang->short_name);
+%><s:url name="FilteredMainUrl" ac="main-page"><s:param name="filter_expr" value="filtbuf" /></s:url><s:a url="FilteredMainUrl"><s:v value="ls->check_failed_runs" /></s:a><%
+        }
+%></td>
+        <td class="b1"><%
+        if (ls->transient_runs > 0) {
+            snprintf(filtbuf, sizeof(filtbuf), "lang == \"%s\" && (status == cg || status == ru)",  lang->short_name);
+%><s:url name="FilteredMainUrl" ac="main-page"><s:param name="filter_expr" value="filtbuf" /></s:url><s:a url="FilteredMainUrl"><s:v value="ls->transient_runs" /></s:a><%
+        }
+%></td>
+        <td class="b1"><%
+        if (ls->compilation_failed_runs > 0) {
+            snprintf(filtbuf, sizeof(filtbuf), "lang == \"%s\" && (status == ce || status == sv)",  lang->short_name);
+%><s:url name="FilteredMainUrl" ac="main-page"><s:param name="filter_expr" value="filtbuf" /></s:url><s:a url="FilteredMainUrl"><s:v value="ls->compilation_failed_runs" /></s:a><%
+        }
+%></td>
+        <td class="b1"><%
+        if (ls->partial_runs > 0) {
+            snprintf(filtbuf, sizeof(filtbuf), "lang == \"%s\" && (status == rt || status == tl || status == pe || status == wa || status == pt || status == ml || status == se || status == sy || status == wt)",  lang->short_name);
+%><s:url name="FilteredMainUrl" ac="main-page"><s:param name="filter_expr" value="filtbuf" /></s:url><s:a url="FilteredMainUrl"><s:v value="ls->partial_runs" /></s:a><%
+        }
+%></td>
+        <td class="b1"><%
+        if (ls->pending_runs > 0) {
+            snprintf(filtbuf, sizeof(filtbuf), "lang == \"%s\" && (status == ac || status == pd)",  lang->short_name);
+%><s:url name="FilteredMainUrl" ac="main-page"><s:param name="filter_expr" value="filtbuf" /></s:url><s:a url="FilteredMainUrl"><s:v value="ls->pending_runs" /></s:a><%
+        }
+%></td>
+        <td class="b1"><%
+        if (ls->ignored_runs > 0) {
+            snprintf(filtbuf, sizeof(filtbuf), "lang == \"%s\" && (status == ig)",  lang->short_name);
+%><s:url name="FilteredMainUrl" ac="main-page"><s:param name="filter_expr" value="filtbuf" /></s:url><s:a url="FilteredMainUrl"><s:v value="ls->ignored_runs" /></s:a><%
+        }
+%></td>
+        <td class="b1"><%
+        if (ls->disqualified_runs > 0) {
+            snprintf(filtbuf, sizeof(filtbuf), "lang == \"%s\" && (status == dq)",  lang->short_name);
+%><s:url name="FilteredMainUrl" ac="main-page"><s:param name="filter_expr" value="filtbuf" /></s:url><s:a url="FilteredMainUrl"><s:v value="ls->disqualified_runs" /></s:a><%
+        }
+%></td>
+        <td class="b1"><%
+        if (ls->best_score > 0) {
+%><s:v value="ls->best_score" /><%
+        }
+%></td>
+    </tr>
+<%
+    }
+%>
+</table>
+
+<%@include "priv_footer.csp"
+%><%
+cleanup:
+  (void) &&cleanup;
+  xfree(stats);
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>

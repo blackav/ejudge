@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2016-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -17,10 +17,12 @@
 #include "ejudge/telegram.h"
 #include "ejudge/ej_jobs.h"
 #include "ejudge/xml_utils.h"
+#include "ejudge/random.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/errlog.h"
 #include "ejudge/logger.h"
+#include "ejudge/osdeps.h"
 
 #include "telegram_data.h"
 #include "telegram_pbs.h"
@@ -38,6 +40,7 @@
 #endif
 
 #include <string.h>
+#include <ctype.h>
 
 static struct common_plugin_data *
 init_func(void);
@@ -59,6 +62,8 @@ static void
 packet_handler_telegram_replied(int uid, int argc, char **argv, void *user);
 static void
 packet_handler_telegram_cf(int uid, int argc, char **argv, void *user);
+static void
+packet_handler_telegram_notify(int uid, int argc, char **argv, void *user);
 static void
 packet_handler_telegram_reminder(int uid, int argc, char **argv, void *user);
 
@@ -103,7 +108,63 @@ struct telegram_plugin_data
     } bots;
 
     struct mongo_conn *conn;
+    int curl_verbose_flag;
+    unsigned char *password_file;
 };
+
+static int
+parse_passwd_file(
+        struct telegram_plugin_data *state,
+        const unsigned char *path)
+{
+  FILE *f = 0;
+  const unsigned char *fname = __FUNCTION__;
+  unsigned char buser[1024];
+  unsigned char bpwd[1024];
+  int len, c;
+
+  if (!(f = fopen(path, "r"))) {
+    err("%s: cannot open password file %s", fname, path);
+    goto cleanup;
+  }
+  if (!fgets(buser, sizeof(buser), f)) {
+    err("%s: cannot read the user line from %s", fname, path);
+    goto cleanup;
+  }
+  if ((len = strlen(buser)) > sizeof(buser) - 24) {
+    err("%s: user is too long in %s", fname, path);
+    goto cleanup;
+  }
+  while (len > 0 && isspace(buser[--len]));
+  buser[++len] = 0;
+
+  if (!fgets(bpwd, sizeof(bpwd), f)) {
+    err("%s: cannot read the password line from %s", fname, path);
+    goto cleanup;
+  }
+  if ((len = strlen(bpwd)) > sizeof(bpwd) - 24) {
+    err("%s: password is too long in %s", fname, path);
+    goto cleanup;
+  }
+  while (len > 0 && isspace(bpwd[--len]));
+  bpwd[++len] = 0;
+  while ((c = getc(f)) && isspace(c));
+  if (c != EOF) {
+    err("%s: garbage in %s", fname, path);
+    goto cleanup;
+  }
+  fclose(f); f = 0;
+  state->conn->user = xstrdup(buser);
+  state->conn->password = xstrdup(bpwd);
+
+  // debug
+  //fprintf(stderr, "login: %s\npassword: %s\n", state->user, state->password);
+  return 0;
+
+ cleanup:
+  if (f) fclose(f);
+  return -1;
+}
 
 static struct bot_state *
 add_bot_id(struct telegram_plugin_data *state, const unsigned char *id)
@@ -139,6 +200,7 @@ finish_func(struct common_plugin_data *data)
     struct telegram_plugin_data *state = (struct telegram_plugin_data*) data;
 
     mongo_conn_free(state->conn);
+    xfree(state->password_file);
     memset(state, 0, sizeof(*state));
     xfree(state);
     return 0;
@@ -168,14 +230,49 @@ prepare_func(
                     add_bot_id(state, bot_id);
                 }
             }
+        } else if (!strcmp(p->name[0], "host")) {
+            if (xml_leaf_elem(p, &state->conn->host, 1, 0) < 0) return -1;
+        } else if (!strcmp(p->name[0], "port")) {
+            if (xml_parse_int(NULL, "", p->line, p->column, p->text, &state->conn->port) < 0) return -1;
+            if (state->conn->port < 0 || state->conn->port > 65535) {
+                xml_err_elem_invalid(p);
+                return -1;
+            }
+        } else if (!strcmp(p->name[0], "database")) {
+            if (xml_leaf_elem(p, &state->conn->database, 1, 0) < 0) return -1;
+        } else if (!strcmp(p->name[0], "table_prefix")) {
+            if (xml_leaf_elem(p, &state->conn->table_prefix, 1, 0) < 0) return -1;
+        } else if (!strcmp(p->name[0], "password_file")) {
+            if (xml_leaf_elem(p, &state->password_file, 1, 0) < 0) return -1;
+        } else if (!strcmp(p->name[0], "curl_verbose")) {
+            state->curl_verbose_flag = 1;
         }
     }
-  
+
+    if (state->password_file) {
+        unsigned char ppath[PATH_MAX];
+        ppath[0] = 0;
+        if (os_IsAbsolutePath(state->password_file)) {
+            snprintf(ppath, sizeof(ppath), "%s", state->password_file);
+        }
+#if defined EJUDGE_CONF_DIR
+        if (!ppath[0]) {
+            snprintf(ppath, sizeof(ppath), "%s/%s", EJUDGE_CONF_DIR,
+                     state->password_file);
+        }
+#endif
+        if (!ppath[0]) {
+            snprintf(ppath, sizeof(ppath), "%s", state->password_file);
+        }
+        if (parse_passwd_file(state, ppath) < 0) return -1;
+    }
+
     ej_jobs_add_handler("telegram", packet_handler_telegram, state);
     ej_jobs_add_handler("telegram_token", packet_handler_telegram_token, state);
     ej_jobs_add_handler("telegram_reviewed", packet_handler_telegram_reviewed, state);
     ej_jobs_add_handler("telegram_replied", packet_handler_telegram_replied, state);
     ej_jobs_add_handler("telegram_cf", packet_handler_telegram_cf, state);
+    ej_jobs_add_handler("telegram_notify", packet_handler_telegram_notify, state);
     ej_jobs_add_handler("telegram_reminder", packet_handler_telegram_reminder, state);
     ej_jobs_add_periodic_handler(periodic_handler, state);
     return 0;
@@ -252,6 +349,9 @@ send_message(
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, resp_f);
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, (char*) post_s);
         curl_easy_setopt(curl, CURLOPT_POST, 1);
+        if (state->curl_verbose_flag > 0) {
+            curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+        }
         CURLcode res = curl_easy_perform(curl);
         fclose(resp_f);
         if (res != CURLE_OK) {
@@ -272,7 +372,7 @@ send_message(
             goto cleanup;
         }
     }
-    
+
  cleanup:
     if (root) cJSON_Delete(root);
     xfree(resp_s);
@@ -340,6 +440,9 @@ packet_handler_telegram(int uid, int argc, char **argv, void *user)
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, resp_f);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, (char*) post_s);
     curl_easy_setopt(curl, CURLOPT_POST, 1);
+    if (state->curl_verbose_flag > 0) {
+        curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+    }
     res = curl_easy_perform(curl);
     fclose(resp_f); resp_f = NULL;
     if (res != CURLE_OK) {
@@ -628,7 +731,7 @@ packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
         tc->_id = chat_id;
         telegram_chat_save(state->conn, tc);
     }
-    
+
     {
         size_t msg_z = 0;
         FILE *msg_f = open_memstream(&msg_s, &msg_z);
@@ -637,6 +740,80 @@ packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
         fprintf(msg_f, "    Run Id: %s\n", argv[5]);
         fprintf(msg_f, "    User: %d (%s)\n", user_id, argv[7]);
         fprintf(msg_f, "    Problem: %s\n", argv[8]);
+        fclose(msg_f);
+    }
+
+    send_result = send_message(state, bs, tc, msg_s, NULL, NULL);
+
+cleanup:
+    xfree(msg_s);
+    telegram_subscription_free(sub);
+    telegram_chat_free(tc);
+    if (send_result) send_result->b.destroy(&send_result->b);
+}
+
+/*
+  args[0] = "telegram_notify"
+  args[1] = telegram_bot_id
+  args[2] = telegram_chat_id
+  args[3] = contest_id
+  args[4] = contest_name
+  args[5] = run_id
+  args[6] = user_id
+  args[7] = user_name
+  args[8] = prob_name
+  args[9] = new_status
+  args[10] = NULL
+ */
+static void
+packet_handler_telegram_notify(int uid, int argc, char **argv, void *user)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
+    struct telegram_subscription *sub = NULL;
+    char *msg_s = NULL;
+    struct TeSendMessageResult *send_result = NULL;
+    struct bot_state *bs = NULL;
+    struct telegram_chat *tc = NULL;
+
+    if (argc != 10) {
+        err("wrong number of arguments for telegram_notify: %d", argc);
+        goto cleanup;
+    }
+
+    bs = add_bot_id(state, argv[1]);
+
+    int contest_id, n;
+    if (sscanf(argv[3], "%d%n", &contest_id, &n) != 1 || argv[3][n] || contest_id <= 0) {
+        err("invalid contest_id: %s", argv[3]);
+        goto cleanup;
+    }
+    long long chat_id;
+    if (sscanf(argv[2], "%lld%n", &chat_id, &n) != 1 || argv[2][n]) {
+        err("invalid chat_id: %s", argv[2]);
+        goto cleanup;
+    }
+    int user_id;
+    if (sscanf(argv[6], "%d%n", &user_id, &n) != 1 || argv[6][n] || user_id <= 0) {
+        err("invalid user_id: %s", argv[6]);
+        goto cleanup;
+    }
+
+    tc = telegram_chat_fetch(state->conn, chat_id);
+    if (!tc) {
+        tc = telegram_chat_create();
+        tc->_id = chat_id;
+        telegram_chat_save(state->conn, tc);
+    }
+
+    {
+        size_t msg_z = 0;
+        FILE *msg_f = open_memstream(&msg_s, &msg_z);
+        fprintf(msg_f, "Submit notification.\n");
+        fprintf(msg_f, "    Contest: %d (%s)\n", contest_id, argv[4]);
+        fprintf(msg_f, "    Run Id: %s\n", argv[5]);
+        fprintf(msg_f, "    User: %d (%s)\n", user_id, argv[7]);
+        fprintf(msg_f, "    Problem: %s\n", argv[8]);
+        fprintf(msg_f, "    Status: %s\n", argv[9]);
         fclose(msg_f);
     }
 
@@ -730,6 +907,49 @@ cleanup:
     xfree(msg_s);
     telegram_chat_free(tc);
     if (send_result) send_result->b.destroy(&send_result->b);
+}
+
+static unsigned char *
+get_random_phrase(const unsigned char *filename)
+{
+    unsigned char path[PATH_MAX];
+    FILE *f = NULL;
+    unsigned char *retval = NULL;
+    unsigned char **lines = NULL;
+    size_t lines_a = 0;
+    size_t lines_u = 0;
+    unsigned char linebuf[1024];
+
+    snprintf(path, sizeof(path), "%s/%s", EJUDGE_CONF_DIR, filename);
+    if (!(f = fopen(path, "r"))) goto cleanup;
+    lines_a = 16;
+    XCALLOC(lines, lines_a);
+    while (fgets(linebuf, sizeof(linebuf), f)) {
+        size_t len = strlen(linebuf);
+        while (len > 0 && isspace(linebuf[len - 1])) --len;
+        linebuf[len] = 0;
+        if (len > 0) {
+            if (lines_u == lines_a) {
+                XREALLOC(lines, (lines_a *= 2));
+            }
+            lines[lines_u++] = xstrdup(linebuf);
+        }
+    }
+    if (lines_u > 0) {
+        random_init();
+        int ind = random_range(0, lines_u);
+        retval = lines[ind]; lines[ind] = NULL;
+    }
+
+cleanup:
+    if (lines) {
+        for (size_t i = 0; i < lines_u; ++i) {
+            xfree(lines[i]);
+        }
+        xfree(lines);
+    }
+    if (f) fclose(f);
+    return retval;
 }
 
 static int
@@ -832,7 +1052,22 @@ handle_incoming_message(
             send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
             free(reply_s);
             goto cleanup;
+        } else if (tem->text[0] == '/' && strchr(tem->text, '@')) {
+            char *reply_s = NULL;
+            size_t reply_z = 0;
+            FILE *reply_f = open_memstream(&reply_s, &reply_z);
+            unsigned char *txt = get_random_phrase("phrases_1.txt");
+            if (!txt) {
+                txt = xstrdup("Let's use a private chat!");
+            }
+            fprintf(reply_f, "%s\n", txt);
+            xfree(txt); txt = NULL;
+            fclose(reply_f); reply_f = NULL;
+            send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
+            free(reply_s);
+            goto cleanup;
         } else {
+            /*
             char *reply_s = NULL;
             size_t reply_z = 0;
             FILE *reply_f = open_memstream(&reply_s, &reply_z);
@@ -842,6 +1077,7 @@ handle_incoming_message(
             fclose(reply_f); reply_f = NULL;
             send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
             free(reply_s);
+            */
             goto cleanup;
         }
     }
@@ -884,7 +1120,7 @@ handle_incoming_message(
             send_result = send_message(state, bs, mc, reply_s, NULL, NULL);
             free(reply_s);
             telegram_chat_state_reset(tcs);
-            update_state = 1;            
+            update_state = 1;
         } else if (!strcmp(tem->text, "/help")) {
             send_result = send_message(state, bs, mc,
                                        "List of commands:\n"
@@ -1024,7 +1260,7 @@ cleanup:
     telegram_user_free(mu);
     return 0;
 }
-    
+
 static void
 handle_reply(struct telegram_plugin_data *state,
              struct bot_state *bs,
@@ -1049,10 +1285,14 @@ handle_reply(struct telegram_plugin_data *state,
                 info("{ update_id: %lld }", tu->update_id);
                 if (handle_incoming_message(state, bs, pbs, tu->message))
                     need_update = 1;
+                pbs->update_id = tu->update_id;
+                need_update = 1;
+                /*
                 if (!pbs->update_id || tu->update_id > pbs->update_id) {
                     pbs->update_id = tu->update_id;
                     need_update = 1;
                 }
+                */
             }
             if (need_update) {
                 telegram_pbs_save(state->conn, pbs);
@@ -1104,6 +1344,9 @@ get_updates(struct telegram_plugin_data *state, struct bot_state *bs)
         curl_easy_setopt(curl, CURLOPT_URL, url_s);
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, resp_f);
+        if (state->curl_verbose_flag > 0) {
+            curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+        }
         CURLcode res = curl_easy_perform(curl);
         fclose(resp_f);
         if (res != CURLE_OK) {
@@ -1116,7 +1359,7 @@ get_updates(struct telegram_plugin_data *state, struct bot_state *bs)
 
     //fprintf(stderr, "reply body: %s\n", resp_s);
     handle_reply(state, bs, pbs, resp_s);
-    
+
 cleanup:
     xfree(resp_s);
     xfree(url_s);

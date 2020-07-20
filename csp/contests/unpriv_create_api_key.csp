@@ -1,0 +1,106 @@
+<% // -*- mode: html -*-
+%><%@include "unpriv_includes.csp"
+%><%
+#include "ejudge/userlist_clnt.h"
+#include "ejudge/userlist_proto.h"
+#include "ejudge/base64.h"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set getter_name = "csp_get_unpriv_create_api_key"
+%><%@page csp_view_unpriv_create_api_key(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+  unsigned char title[1024];
+  int summoned_count = 0;
+  int key_duration = 0;
+  char *origin_s = NULL;
+  size_t origin_z = 0;
+  FILE *origin_f = NULL;
+  int api_key_out_count = 0;
+  struct userlist_api_key *api_key_outs = NULL;
+  struct userlist_api_key api_key_params = {};
+  char api_key_buf[64];
+  char secret_buf[64];
+  int is_too_many_api_keys = 0;
+
+%><s:read var="key_duration" ignoreerrors="yes" default="0" /><%
+
+  if (key_duration < 0) {
+    key_duration = 0;
+  }
+  time_t create_time = time(NULL);
+  time_t expiry_time = 0;
+  if (key_duration > 0 && __builtin_add_overflow(create_time, (time_t) key_duration, &expiry_time)) {
+    key_duration = 0;
+    expiry_time = 0;
+  }
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+  }
+
+  origin_f = open_memstream(&origin_s, &origin_z);
+  fprintf(origin_f, "{\"ip\":\"%s\",\"ssl\":%s,\"contest_id\":%d,\"session\":\"%016llx-%016llx\"}",
+          xml_unparse_ipv6(&phr->ip),
+          phr->ssl_flag?"true":"false",
+          phr->contest_id,
+          phr->session_id,
+          phr->client_key);
+  fclose(origin_f); origin_f = NULL;
+
+  api_key_params.user_id = phr->user_id;
+  api_key_params.create_time = create_time;
+  api_key_params.expiry_time = expiry_time;
+  api_key_params.all_contests = 1;
+  api_key_params.origin = origin_s; origin_s = NULL;
+  int r = userlist_clnt_api_key_request(ul_conn, ULS_CREATE_API_KEY, 1, &api_key_params, &api_key_out_count, &api_key_outs, NULL);
+  if (r == -ULS_ERR_TOO_MANY_API_KEYS) {
+    is_too_many_api_keys = 1;
+    l10n_setlocale(phr->locale_id);
+    snprintf(title, sizeof(title), _("API key creation failed"));
+  } else {
+    if (r < 0 || api_key_out_count != 1) {
+      FAIL(NEW_SRV_ERR_DATABASE_FAILED);
+    }
+    int token_len = base64u_encode(api_key_outs[0].token, 32, api_key_buf);
+    api_key_buf[token_len] = 0;
+    token_len = base64u_encode(api_key_outs[0].secret, 32, secret_buf);
+    secret_buf[token_len] = 0;
+
+    l10n_setlocale(phr->locale_id);
+    snprintf(title, sizeof(title), _("API key created"));
+  }
+%><%@include "unpriv_header.csp"
+%><%@include "unpriv_menu.csp"
+%><%@include "unpriv_status.csp"
+%>
+<div class="l14">
+<h2><s:v value="title" escape="false" /></h2>
+
+<% if (is_too_many_api_keys) { %>
+<p>Too many API keys created for this used. Please, remove some API keys.</p>
+<% } else { %>
+<table class="b1">
+<tr><td class="b1">API key token</td><td class="b1"><tt><s:v value="api_key_buf" /></tt></td></tr>
+<tr><td class="b1">API key secret</td><td class="b1"><tt><s:v value="secret_buf" /></tt></td></tr>
+<tr><td class="b1">Expiry time</td><td class="b1"><% if (api_key_outs[0].expiry_time > 0) { %><s:v value="api_key_outs[0].expiry_time" /><% } else { %>N/A<% } %></td></tr>
+</table>
+
+<p><b>Save the API key secret. It will be not shown again.</b></p>
+<% } %>
+
+<p><s:a ac="api-keys-page">[<s:_>Back</s:_>]</s:a></p>
+
+</div>
+<%@include "unpriv_footer.csp"
+%><%
+  l10n_resetlocale();
+cleanup:;
+  for (int i = 0; i < api_key_out_count; ++i) {
+    userlist_api_key_free(&api_key_outs[i]);
+  }
+  xfree(api_key_outs);
+  userlist_api_key_free(&api_key_params);
+  if (origin_f) fclose(origin_f);
+  xfree(origin_s);
+  html_armor_free(&ab);
+%>

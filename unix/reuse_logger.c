@@ -190,12 +190,12 @@ vwrite_log(int facility, int level, char const *format, va_list args)
     r = sprintf(msg, "%s:%s:%s:", atm, pfac, prio);
   }
 
-  
+
   vsnprintf(msg + r, msglen - r, format, args);
   msg[msglen] = 0;
   r = strlen(msg);
   msg[r++] = '\n';
-  
+
   if (r >= 1024) {
     fprintf(stderr, "fatal buffer overrun in logger module\n");
     abort();
@@ -308,7 +308,7 @@ _swwarn(char *file, int line, char *format, va_list args)
  *          jb     - fatal error recovery point
  *          format - message text
  *          args   - extra format specific arguments
- * RETURN:  
+ * RETURN:
  */
 static void
 _swerr(char *file, int line, jmp_buf *jb, char *format, va_list args)

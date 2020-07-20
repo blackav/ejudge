@@ -1,9 +1,8 @@
 /* -*- c -*- */
-/* $Id$ */
 #ifndef __PARSECFG_H__
 #define __PARSECFG_H__
 
-/* Copyright (C) 2000-2012 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,11 +17,18 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
 
 struct generic_section_config
 {
   struct generic_section_config *next;
-  char                           name[32];
+#if INT_MAX == LONG_MAX
+  char                           name[28];
+#elif LONG_MAX == LONG_LONG_MAX
+  char                           name[24];
+#else
+#error "Unsupported architecture"
+#endif
   int                            data[0];
 };
 
@@ -110,5 +116,10 @@ void
 param_subst(unsigned char *buf, size_t size,
             const unsigned char **subst_src,
             const unsigned char **subst_dst);
+void
+param_subst_2(
+        unsigned char **pbuf,
+        const unsigned char **subst_src,
+        const unsigned char **subst_dst);
 
 #endif /* __PARSECFG_H__ */

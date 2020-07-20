@@ -23,6 +23,10 @@
     ejintbool_t checker_real_time_limit_dflt = 0;
     char **checker_env = NULL;
     int scoring_checker = -1;
+    int enable_checker_token = -1;
+    int enable_testlib_mode = -1;
+    int enable_extended_info = -1;
+    int stop_on_first_fail = -1;
     unsigned char *valuer_cmd = NULL;
     ejintbool_t valuer_cmd_dflt = 0;
     int valuer_sets_marked = -1;
@@ -33,10 +37,12 @@
     char **interactor_env = NULL;
     int interactor_time_limit = -1;
     ejintbool_t interactor_time_limit_dflt = 0;
+    int interactor_real_time_limit = -1;
+    ejintbool_t interactor_real_time_limit_dflt = 0;
     unsigned char *init_cmd = NULL;
     ejintbool_t init_cmd_dflt = 0;
     char **init_env = NULL;
-    
+
     int i;
     struct section_problem_data *prob = NULL;
 
@@ -52,6 +58,10 @@
 %><s:read var="checker_real_time_limit_dflt" default="0" /><%
 %><s:read var="checker_env" /><%
 %><s:read var="scoring_checker" default="-1" /><%
+%><s:read var="enable_checker_token" default="-1" /><%
+%><s:read var="enable_testlib_mode" default="-1" /><%
+%><s:read var="enable_extended_info" default="-1" /><%
+%><s:read var="stop_on_first_fail" default="-1" /><%
 %><s:read var="valuer_cmd" normalize="yes" nonnull="yes" /><%
 %><s:read var="valuer_cmd_dflt" default="0" /><%
 %><s:read var="valuer_sets_marked" default="-1" /><%
@@ -62,6 +72,8 @@
 %><s:read var="interactor_env" /><%
 %><s:read var="interactor_time_limit" default="-1" /><%
 %><s:read var="interactor_time_limit_dflt" default="0" /><%
+%><s:read var="interactor_real_time_limit" default="-1" /><%
+%><s:read var="interactor_real_time_limit_dflt" default="0" /><%
 %><s:read var="init_cmd" normalize="yes" nonnull="yes" /><%
 %><s:read var="init_cmd_dflt" default="0" /><%
 %><s:read var="init_env" /><%
@@ -77,16 +89,31 @@
         }
         if (!std_checkers[i].name) standard_checker = "";
     }
-    if (check_cmd_dflt) *check_cmd = 0;
+    if (check_cmd_dflt) {
+        xfree(check_cmd);
+        check_cmd = NULL;
+    }
     if (checker_real_time_limit < 0) checker_real_time_limit = -1;
     if (checker_real_time_limit_dflt) checker_real_time_limit = -1;
     if (scoring_checker > 0) scoring_checker = 1;
-    if (valuer_cmd_dflt) *valuer_cmd = 0;
+    if (enable_checker_token > 0) enable_checker_token = 1;
+    if (enable_testlib_mode > 0) enable_testlib_mode = 1;
+    if (enable_extended_info > 0) enable_extended_info = 1;
+    if (stop_on_first_fail > 0) stop_on_first_fail = 1;
+    if (valuer_cmd_dflt) {
+        xfree(valuer_cmd);
+        valuer_cmd = NULL;
+    }
     if (valuer_sets_marked > 0) valuer_sets_marked = 1;
     if (interactive_valuer > 0) interactive_valuer = 1;
-    if (interactor_cmd_dflt) *interactor_cmd = 0;
+    if (interactor_cmd_dflt) {
+        xfree(interactor_cmd);
+        interactor_cmd = 0;
+    }
     if (interactor_time_limit < 0) interactor_time_limit = -1;
     if (interactor_time_limit_dflt) interactor_time_limit = -1;
+    if (interactor_real_time_limit < 0) interactor_real_time_limit = -1;
+    if (interactor_real_time_limit_dflt) interactor_real_time_limit = -1;
     if (init_cmd_dflt) {
         xfree(init_cmd); init_cmd = NULL;
     }
@@ -97,6 +124,10 @@
         prob = phr->ss->aprobs[i];
         if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
         if (scoring_checker < 0) scoring_checker = 0;
+        if (enable_checker_token < 0) enable_checker_token = 0;
+        if (enable_testlib_mode < 0) enable_testlib_mode = 0;
+        if (enable_extended_info < 0) enable_extended_info = 0;
+        if (stop_on_first_fail < 0) stop_on_first_fail = 0;
         if (valuer_sets_marked < 0) valuer_sets_marked = 0;
         if (interactive_valuer < 0) interactive_valuer = 0;
     } else {
@@ -105,23 +136,32 @@
         prob = phr->ss->probs[i];
         if (!prob) FAIL(SSERV_ERR_INVALID_PARAMETER);
         if (scoring_checker < 0) scoring_checker = -1;
+        if (enable_checker_token < 0) enable_checker_token = -1;
+        if (enable_testlib_mode < 0) enable_testlib_mode = -1;
+        if (enable_extended_info < 0) enable_extended_info = -1;
+        if (stop_on_first_fail < 0) stop_on_first_fail = -1;
         if (valuer_sets_marked < 0) valuer_sets_marked = -1;
         if (interactive_valuer < 0) interactive_valuer = -1;
     }
 
     if (!retval && phr->ss) {
-        COPYSTR(standard_checker);
-        COPYSTR(check_cmd);
+        xstrdup3(&prob->standard_checker, standard_checker);
+        MOVESTR(check_cmd);
         prob->checker_real_time_limit = checker_real_time_limit;
         MOVEENV(checker_env);
         prob->scoring_checker = scoring_checker;
-        COPYSTR(valuer_cmd);
+        prob->enable_checker_token = enable_checker_token;
+        prob->enable_testlib_mode = enable_testlib_mode;
+        prob->enable_extended_info = enable_extended_info;
+        prob->stop_on_first_fail = stop_on_first_fail;
+        MOVESTR(valuer_cmd);
         prob->valuer_sets_marked = valuer_sets_marked;
         prob->interactive_valuer = interactive_valuer;
         MOVEENV(valuer_env);
-        COPYSTR(interactor_cmd);
+        MOVESTR(interactor_cmd);
         MOVEENV(interactor_env);
         prob->interactor_time_limit = interactor_time_limit;
+        prob->interactor_real_time_limit = interactor_real_time_limit;
         MOVESTR(init_cmd);
         MOVEENV(init_env);
     }

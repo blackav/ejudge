@@ -50,7 +50,10 @@
 
     if (hidden > 0) hidden = 1;
     if (stand_hide_time > 0) stand_hide_time = 1;
-    if (stand_attr_dflt) *stand_attr = 0;
+    if (stand_attr_dflt) {
+        xfree(stand_attr);
+        stand_attr = NULL;
+    }
     if (stand_ignore_score > 0) stand_ignore_score = 1;
     if (stand_last_column > 0) stand_last_column = 1;
 
@@ -77,11 +80,11 @@
     }
 
     if (!retval && phr->ss) {
-        COPYSTR(stand_name);
-        COPYSTR(stand_column);
+        MOVESTR(stand_name);
+        MOVESTR(stand_column);
         prob->hidden = hidden;
         prob->stand_hide_time = stand_hide_time;
-        COPYSTR(stand_attr);
+        MOVESTR(stand_attr);
         MOVEENV(score_view);
         prob->stand_ignore_score = stand_ignore_score;
         prob->stand_last_column = stand_last_column;

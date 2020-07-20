@@ -1,0 +1,229 @@
+<%
+%><%@include "includes.csp"
+%><%
+#include "ejudge/polygon_packet.h"
+#include <signal.h>
+%><%@set getter_name = "csp_get_download_progress_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_download_progress_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = NULL;
+    const unsigned char *subtitle = "";
+    struct sid_state *ss = phr->ss;
+    struct update_state *us;
+    FILE *f = NULL;
+    time_t cur_time = time(NULL);
+    int pid;
+    int exit_code = -1, count = 0;
+    struct ss_download_status *statuses = NULL;
+    int start_mode = 0;
+    int cur_page = 4;
+    int successes = 0, failures = 0;
+    int i;
+    const unsigned char *s;
+    struct polygon_packet *pp = NULL;
+    char *cfg_text = NULL;
+    size_t cfg_size = 0;
+
+restart:; // FIXME
+    if (!(us = ss->update_state)) {
+        subtitle = "no download process";
+    } else {
+        if (us->status_file && (f = fopen(us->status_file, "r"))) {
+            ss_read_download_status(stderr, us->status_file, f, &exit_code, &count, &statuses);
+            fclose(f); f = NULL;
+            subtitle = "download complete";
+        } else if (us->pid_file && (f = fopen(us->pid_file, "r"))) {
+            if (fscanf(f, "%d", &pid) <= 0 || pid <= 0) pid = 0;
+            fclose(f); f = NULL;
+
+            // check that the process still exists
+            if (kill(pid, 0) < 0) {
+                // the process does not exists, so create status file
+                if (us->log_file) {
+                    if ((f = fopen(us->log_file, "a")) != NULL) {
+                        fprintf(f, "\nej-polygon process has terminated unexpectedly!\n");
+                        fclose(f); f = NULL;
+                    }
+                }
+                if (us->status_file) {
+                    if ((f = fopen(us->status_file, "w")) != NULL) {
+                        fprintf(f, "127\n0\n");
+                        fclose(f); f = NULL;
+                        goto restart; // FIXME
+                    }
+                }
+            }
+
+            subtitle = "download in progress";
+        } else if (us->start_time > 0 && cur_time < us->start_time + 5) {
+            subtitle = "download started";
+            start_mode = 1;
+        } else {
+            subtitle = "download failed to start";
+        }
+    }
+
+    (void) start_mode;
+
+%><%@include "header.csp"
+%>
+
+<%@include "cnts_edit_cur_top_menu.csp"
+%>
+
+<h2><s:v value="subtitle" /></h2>
+
+<s:url name="RefreshUrl" ac="download-progress-page"></s:url>
+<ul>
+  <li><s:a url="RefreshUrl">Refresh</s:a></li>
+</ul>
+
+<%
+    if (exit_code >= 0) {
+%>
+<h2>Download complete with code <s:v value="exit_code" /></h2>
+
+<table class="b1">
+  <tr>
+    <th class="b1">Key</th>
+    <th class="b1">Status</th>
+    <th class="b1">Polygon Id</th>
+    <th class="b1">Polygon Name</th>
+  </tr>
+<%
+        for (int i = 0; i < count; ++i) {
+            if (statuses[i].status
+                && (!strcmp(statuses[i].status, "ACTUAL")
+                    || !strcmp(statuses[i].status, "UPDATED")
+                    || !strcmp(statuses[i].status, "ALREADY_EXISTS"))) {
+                s = " bgcolor=\"#ddffdd\"";
+                ++successes;
+            } else {
+                s = " bgcolor=\"#ffdddd\"";
+                ++failures;
+            }
+%>
+  <tr<s:v value="s" escape="no" />>
+    <td class="b1"><s:v value="statuses[i].key" checkExpr="" /></td>
+    <td class="b1"><s:v value="statuses[i].status" checkExpr="" /></td>
+    <td class="b1"><s:v value="statuses[i].polygon_id" checkExpr="" /></td>
+    <td class="b1"><s:v value="statuses[i].polygon_name" checkExpr="" /></td>
+  </tr>
+<%
+        }
+%>
+</table>
+
+<p><b>Successes: <s:v value="successes" />, failures: <s:v value="failures" />.</b></p>
+<%
+    } if (pid > 0) {
+%>
+<h2>Download in progress (process pid <s:v value="pid" />)</h2>
+<%
+    }
+%>
+
+<%
+    if (us && us->conf_file) {
+        f = fopen(us->conf_file, "r");
+        if (f) {
+            pp = polygon_packet_parse(us->conf_file, f);
+            f = NULL;
+            if (pp) {
+                if (pp->password) {
+                    xfree(pp->password); pp->password = xstrdup("*");
+                }
+                f = open_memstream(&cfg_text, &cfg_size);
+                polygon_packet_unparse(f, pp);
+                fclose(f); f = NULL;
+            }
+        }
+    }
+%>
+
+<%
+    if (exit_code >= 0) {
+%>
+<s:form>
+<%
+        if (failures > 0) {
+%>
+  <s:submit ac="download-cleanup-action" label="Clean up" />
+<%
+        } else if (us->create_mode || ss->edited_cnts) {
+%>
+  <table class="b0">
+    <tr>
+      <td class="b0"><s:submit ac="download-cleanup-action" label="Clean up" /></td>
+      <td class="b0"><s:submit ac="download-cleanup-and-import-action" label="Clean up and import settings" /></td>
+    </tr>
+  </table>
+<%
+        } else {
+%>
+  <table class="b0">
+    <tr>
+      <td class="b0"><s:submit ac="download-cleanup-action" label="Clean up" /></td>
+      <td class="b0"><s:submit ac="download-cleanup-and-check-action" label="Clean up and check settings" /></td>
+    </tr>
+  </table>
+<p>Note: problem settings, such as time limits, input/output file names, etc will not be updated!</p>
+<%
+        }
+%>
+</s:form>
+<%
+    } else if (pid > 0) {
+%>
+<s:form>
+  <s:submit ac="download-kill-action" label="Terminate download" />
+</s:form>
+<%
+    } else if (us && !start_mode) {
+%>
+<s:form>
+  <s:submit ac="download-cleanup-action" label="Clean up" />
+</s:form>
+<%
+    }
+%>
+
+<%
+    if (cfg_text && *cfg_text) {
+%>
+<h2>Request configuration file</h2>
+<pre><s:v value="cfg_text" checkExpr="" /></pre>
+<%
+        xfree(cfg_text); cfg_text = NULL; cfg_size = 0;
+    }
+%>
+
+<%
+    if (us && us->log_file && generic_read_file(&cfg_text, 0, &cfg_size, 0, 0, us->log_file, 0) >= 0 && cfg_text) {
+%>
+<h2>Log file</h2>
+<pre><s:v value="cfg_text" checkExpr="" /></pre>
+<%
+        xfree(cfg_text); cfg_text = NULL; cfg_size = 0;
+    }
+%>
+
+<%@include "footer.csp"
+%><%
+//cleanup:
+    if (statuses) {
+        for (i = 0; i < count; ++i) {
+            xfree(statuses[i].key);
+            xfree(statuses[i].status);
+            xfree(statuses[i].polygon_id);
+            xfree(statuses[i].polygon_name);
+        }
+        xfree(statuses);
+    }
+    polygon_packet_free((struct generic_section_config*) pp);
+    xfree(cfg_text);
+    l10n_resetlocale();
+    html_armor_free(&ab);
+%>

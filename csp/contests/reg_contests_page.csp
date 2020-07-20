@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "reg_includes.csp"
 %><%
 // local includes go here
@@ -12,16 +11,10 @@
 // local variables go here
   const int *cntslist = 0;
   int cntsnum = 0;
-  int row = 0, i, j;
+  int i, j;
   const unsigned char *login = 0;
   const unsigned char *title = NULL;
   const unsigned char *cnts_name = NULL;
-
-static const unsigned char * const form_row_attrs[]=
-{
-  " bgcolor=\"#d0d0d0\"",
-  " bgcolor=\"#e0e0e0\"",
-};
 
 // initial code goes here
 %><s:read var="login" ignoreerrors="yes" /><%
@@ -44,22 +37,21 @@ static const unsigned char * const form_row_attrs[]=
 </tr></table></div>
 </s:form>
 
-<div class="white_empty_block">&nbsp;</div>
-<div class="contest_actions"><table class="menu"><tr>
-    <td class="menu"><div class="contest_actions_item">&nbsp;</div></td>
-</tr></table></div>
-<%@include "reg_separator.csp"
-%>
+          </div>
+        </div>
+        <div id="l11"><img src="<s:config name="style-prefix" />logo3.png" alt="logo"/></div>
+        <div id="l13" class="m-25">
+
 <h2><s:_>Select one of available contests</s:_></h2>
 <%
   cntsnum = contests_get_list(&cntslist);
 %>
-<table class="b1">
+<table class="table-gray">
     <tr>
-        <td class="b1">N</td>
-        <td class="b1"><s:_>Contest name</s:_></td>
-        <td class="b1"><s:_>Registration mode</s:_></td>
-        <td class="b1"><s:_>Registration deadline</s:_></td>
+        <th>N</th>
+        <th><s:_>Contest name</s:_></th>
+        <th><s:_>Registration mode</s:_></th>
+        <th><s:_>Registration deadline</s:_></th>
     </tr>
 <%
   for (j = 0; j < cntsnum; j++) {
@@ -70,8 +62,8 @@ static const unsigned char * const form_row_attrs[]=
     if (!contests_check_register_ip_2(cnts, &phr->ip, phr->ssl_flag)) continue;
     if (cnts->reg_deadline > 0 && phr->current_time >= cnts->reg_deadline) continue;
 %>
-    <tr<s:v value="form_row_attrs[(row++) & 1]" escape="false" />>
-        <td class="b1"><s:v value="i" /></td>
+    <tr>
+        <td><s:v value="i" /></td>
 <s:url name="LoginUrl" ac="reg-login-page" noSID="true">
     <s:param name="contest_id" value="i" />
     <s:param name="locale_id" value="phr->locale_id" fullCheckExpr="phr->locale_id > 0" />
@@ -81,9 +73,9 @@ static const unsigned char * const form_row_attrs[]=
     if (phr->locale_id == 0 && cnts->name_en) cnts_name = cnts->name_en;
     if (!cnts_name) cnts_name = cnts->name;
 %>
-        <td class="b1"><s:a url="LoginUrl"><s:v value="cnts_name" /></td>
-        <td class="b1"><% if (cnts->autoregister) { %><s:_>open</s:_><% } else { %><s:_>moderated</s:_><% } %></td>
-        <td class="b1"><s:v value="cnts->reg_deadline" checkExpr="> 0" defstr="&nbsp;" /></td>
+        <td><s:a url="LoginUrl"><s:v value="cnts_name" /></s:a></td>
+        <td><% if (cnts->autoregister) { %><s:_>open</s:_><% } else { %><s:_>moderated</s:_><% } %></td>
+        <td><s:v value="cnts->reg_deadline" checkExpr="> 0" defstr="&nbsp;" /></td>
     </tr>
 <%
   }

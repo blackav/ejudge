@@ -1,0 +1,173 @@
+<%
+%><%@include "includes.csp"
+%><%
+#include "ejudge/userlist_clnt.h"
+#include "ejudge/userlist_proto.h"
+#include "ejudge/userlist.h"
+%><%@set getter_name = "csp_get_user_create_reg_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_user_create_reg_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = NULL;
+    unsigned char subtitle_buf[1024];
+    const unsigned char *subtitle = subtitle_buf;
+    int other_user_id = 0;
+    int contest_id = 0;
+    int group_id = 0;
+    struct userlist_user *u = NULL;
+    const int *cnts_id_list = 0;
+    int cnts_id_count;
+    int i, other_contest_id_2;
+
+    const unsigned char *marked_str = NULL; // needed for users_top_menu.csp
+
+    if (phr->priv_level <= 0) FAIL(SSERV_ERR_PERM_DENIED);
+
+    %><s:read name="other_user_id" /><%
+    %><s:read name="contest_id" default="0" /><%
+    %><s:read name="group_id" default="0" /><%
+
+    if (contest_id != 0) {
+        if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
+    }
+    if (group_id < 0) group_id = 0;
+
+    snprintf(subtitle_buf, sizeof(subtitle_buf), "creating a contest registration for user %d", other_user_id);
+%><%@include "header.csp"
+%>
+
+<h2>Creating a contest registration for user <s:v value="other_user_id" /></h2>
+
+<%@include "users_top_menu.csp"
+%>
+
+<script language="javascript">
+function updateCnts1()
+{
+    var obj1 = document.getElementById("cnts1");
+    var obj2 = document.getElementById("cnts2");
+    var value = obj1.value;
+    var i;
+    for (i = 0; i < obj2.options.length; ++i) {
+        if (obj2.options[i].value == value) {
+            obj2.options.selectedIndex = i;
+            break;
+        }
+    }
+}
+function updateCnts2()
+{
+    var obj1 = document.getElementById("cnts1");
+    var obj2 = document.getElementById("cnts2");
+    var value = obj2.options[obj2.selectedIndex].value;
+    obj1.value = value;
+}
+</script>
+
+<%
+    if (!(u = ss_get_user_info(phr, other_user_id, contest_id)))
+        FAIL(SSERV_ERR_DB_ERROR);
+
+    cnts_id_count = contests_get_list(&cnts_id_list);
+    if (cnts_id_count <= 0 || !cnts_id_list) {
+%><hr/><h2>Error</h2>
+<pre>No contests available</pre><%
+        goto do_footer;
+    }
+%>
+
+<s:form>
+  <s:hidden name="other_user_id" />
+  <s:hidden name="contest_id" checkExpr=" > 0" />
+  <s:hidden name="group_id" checkExpr=" > 0" />
+
+  <table class="b0">
+    <tr>
+      <td class="b0"><b>User ID:</b></td>
+      <td class="b0"><s:v value="other_user_id" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>User login:</b></td>
+      <td class="b0"><s:v value="u->login" checkExpr="" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Contest ID:</b></td>
+      <td class="b0"><input id="cnts1" onchange="updateCnts1()" type="text" name="other_contest_id_1" size="20"/></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Contest name:</b></td>
+      <td class="b0">
+        <select id="cnts2" onchange="updateCnts2()" name="other_contest_id_2">
+          <option value="0"></option>
+<%
+    for (i = 0; i < cnts_id_count; ++i) {
+        other_contest_id_2 = cnts_id_list[i];
+        if (other_contest_id_2 <= 0) continue;
+        if (contests_get(other_contest_id_2, &cnts) < 0 || !cnts) continue;
+        if (cnts->closed) continue;
+%>
+          <s:option value="other_contest_id_2"><s:v value="cnts->name" /></s:option>
+<%
+    }
+%>
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Status:</b></td>
+      <td class="b0">
+        <select name="status">
+          <option value="0">OK</option>
+          <option value="1" selected="selected">Pending</option>
+          <option value="2">Rejected</option>
+        </select>
+      </td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Invisible?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_invisible" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Banned?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_banned" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Locked?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_locked" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Incomplete?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_incomplete" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Disqualified?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_disqualified" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Privileged?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_privileged" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Reg. read-only?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_reg_readonly" /></td>
+    </tr>
+    <tr>
+      <td class="b0">&nbsp;</td>
+      <td class="b0"><s:submit ac="user-create-reg-action" text="Create registration" /></td>
+    </tr>
+  </table>
+</form>
+
+<%
+do_footer:;
+%>
+
+<%@include "footer.csp"
+%><%
+cleanup:
+    l10n_resetlocale();
+    html_armor_free(&ab);
+    userlist_free(&u->b);
+%>

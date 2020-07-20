@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -21,17 +21,24 @@ userlist_clnt_login(
         struct userlist_clnt *clnt,
         int cmd,
         const ej_ip_t *origin_ip,
+        ej_cookie_t cookie,
         ej_cookie_t client_key,
+        time_t expire,
         int ssl,
         int contest_id,
         int locale_id,
         int pwd_special,
+        int is_ws,
         unsigned char const *login,
         unsigned char const *passwd,
         int *p_user_id,
         ej_cookie_t *p_cookie,
         ej_cookie_t *p_client_key,
-        unsigned char **p_name)
+        unsigned char **p_name,
+        time_t *p_expire,
+        int *p_priv_level,
+        int *p_reg_status,
+        int *p_reg_flags)
 {
   struct userlist_pk_do_login *out = 0;
   struct userlist_pk_login_ok *in = 0;
@@ -61,11 +68,14 @@ userlist_clnt_login(
   if (origin_ip) {
     out->origin_ip = *origin_ip;
   }
+  out->cookie = cookie;
   out->client_key = client_key;
+  out->expire = expire;
   out->ssl = ssl;
   out->contest_id = contest_id;
   out->locale_id = locale_id;
   out->pwd_special = pwd_special;
+  out->is_ws = is_ws;
   out->login_length = login_len;
   out->password_length = passwd_len;
   strcpy(login_ptr, login);
@@ -112,6 +122,10 @@ userlist_clnt_login(
   if (p_cookie) *p_cookie = in->cookie;
   if (p_client_key) *p_client_key = in->client_key;
   if (p_name) *p_name = xstrdup(name_ptr);
+  if (p_expire) *p_expire = in->expire;
+  if (p_priv_level) *p_priv_level = in->priv_level;
+  if (p_reg_status) *p_reg_status = in->reg_status;
+  if (p_reg_flags) *p_reg_flags = in->reg_flags;
 
   r = in->reply_id;
  cleanup:

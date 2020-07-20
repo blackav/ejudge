@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __FILTER_EVAL_H__
 #define __FILTER_EVAL_H__
 
-/* Copyright (C) 2002-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +32,7 @@ struct filter_env
   const struct section_language_data * const *langs;
   int maxprob;
   const struct section_problem_data * const *probs;
+  int rbegin;
   int rtotal;
   struct run_header rhead;
   const struct run_entry *rentries;

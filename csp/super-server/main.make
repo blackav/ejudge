@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2018 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,7 @@ endif
 CEXTRAFLAGS=
 LDEXTRAFLAGS=
 EXTRALIBS=
-CCOMPFLAGS=-D_GNU_SOURCE -std=gnu99 -I../.. -I../../include -g -DPIC -fPIC
+CCOMPFLAGS=-D_GNU_SOURCE -std=gnu11 -I../.. -I../../include -g -DPIC -fPIC
 LDCOMPFLAGS= -g -shared
 EXESFX=
 
@@ -65,6 +65,10 @@ CFILES = \
  csp_user_browse_page.c\
  csp_user_browse_data.c\
  csp_get_contest_list.c\
+ csp_import_contest_from_polygon_page.c\
+ csp_import_from_polygon_page.c\
+ csp_update_from_polygon_page.c\
+ csp_download_progress_page.c\
  csp_cnts_save_basic_form.c\
  csp_cnts_save_flags_form.c\
  csp_cnts_save_registration_form.c\
@@ -95,6 +99,29 @@ CFILES = \
  csp_prob_save_scoring_form.c\
  csp_prob_save_feedback_form.c\
  csp_prob_save_standing_form.c\
+ csp_group_browse_page.c\
+ csp_group_create_page.c\
+ csp_user_import_csv_page.c\
+ csp_user_create_from_csv_page.c\
+ csp_user_create_many_page.c\
+ csp_user_create_one_page.c\
+ csp_caps_edit_page.c\
+ csp_caps_main_page.c\
+ csp_user_map_main_page.c\
+ csp_migration_page.c\
+ csp_ejudge_xml_must_restart.c\
+ csp_ejudge_xml_update_action.c\
+ csp_group_delete_page.c\
+ csp_group_modify_page.c\
+ csp_user_create_reg_page.c\
+ csp_user_edit_reg_page.c\
+ csp_user_sel_view_passwd_page.c\
+ csp_user_delete_member_page.c\
+ csp_user_delete_reg_page.c\
+ csp_user_password_page.c\
+ csp_user_cnts_password_page.c\
+ csp_user_detail_page.c\
+ csp_user_sel_random_passwd_page.c\
  csp_error_unknown_page.c
 
 SOFILES = $(CFILES:.c=.so)
@@ -180,6 +207,37 @@ csp_prob_save_checking_form.c : prob_save_checking_form.csp includes.csp stdvars
 csp_prob_save_scoring_form.c : prob_save_scoring_form.csp includes.csp stdvars.csp
 csp_prob_save_feedback_form.c : prob_save_feedback_form.csp includes.csp stdvars.csp
 csp_prob_save_standing_form.c : prob_save_standing_form.csp includes.csp stdvars.csp
+
+csp_import_contest_from_polygon_page.c : import_contest_from_polygon_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp
+csp_import_from_polygon_page.c : import_from_polygon_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp
+csp_update_from_polygon_page.c : update_from_polygon_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp
+csp_download_progress_page.c : download_progress_page.csp includes.csp stdvars.csp header.csp footer.csp cnts_edit_cur_top_menu.csp
+
+csp_group_browse_page.c : group_browse_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_group_create_page.c : group_create_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+
+csp_user_import_csv_page.c : user_import_csv_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_user_create_from_csv_page.c : user_create_from_csv_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_user_create_many_page.c : user_create_many_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_user_create_one_page.c : user_create_one_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_group_delete_page.c : group_delete_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_group_modify_page.c : group_modify_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_user_create_reg_page.c : user_create_reg_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_user_edit_reg_page.c : user_edit_reg_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_user_sel_view_passwd_page.c : user_sel_view_passwd_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_user_delete_member_page.c : user_delete_member_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_user_delete_reg_page.c : user_delete_reg_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_user_detail_page.c : user_detail_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_user_password_page.c : user_password_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_user_cnts_password_page.c : user_cnts_password_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+csp_user_sel_random_passwd_page.c : user_sel_random_passwd_page.csp includes.csp stdvars.csp header.csp footer.csp users_top_menu.csp
+
+csp_caps_edit_page.c : caps_edit_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_caps_main_page.c : caps_main_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_user_map_main_page.c : user_map_main_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_migration_page.c : migration_page.csp includes.csp stdvars.csp header.csp footer.csp
+csp_ejudge_xml_must_restart.c : ejudge_xml_must_restart.csp includes.csp stdvars.csp header.csp footer.csp
+csp_ejudge_xml_update_action.c : ejudge_xml_update_action.csp includes.csp stdvars.csp header.csp footer.csp
 
 csp_error_unknown_page.c : error_unknown_page.csp includes.csp stdvars.csp header.csp footer.csp
 

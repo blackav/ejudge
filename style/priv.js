@@ -58,6 +58,7 @@ var ej_valid_statuses =
   9  : "Ignored",
   10 : "Disqualified",
   17 : "Rejected",
+  23 : "Summoned for defence",
   6  : "Check failed",
   11 : "Pending check",
   7  : "Partial solution",

@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "includes.csp"
 %><%@set getter_name = "csp_get_error_unknown_page"
 %><%@set ac_prefix = "SSERV_CMD_"
@@ -30,7 +29,7 @@
 %><%@include "header.csp"
 %>
 
-<h2><s:v value="errmsg" escape="false" />
+<h2><s:v value="errmsg" escape="false" /></h2>
 
 <%
   if (phr->log_t && *phr->log_t) {

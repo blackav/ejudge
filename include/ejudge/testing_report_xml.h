@@ -2,7 +2,7 @@
 #ifndef __TESTING_REPORT_XML_H__
 #define __TESTING_REPORT_XML_H__
 
-/* Copyright (C) 2005-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -27,7 +27,11 @@ enum
   TESTING_REPORT_OUTPUT,
   TESTING_REPORT_CORRECT,
   TESTING_REPORT_ERROR,
-  TESTING_REPORT_CHECKER
+  TESTING_REPORT_CHECKER,
+
+  TESTING_REPORT_ARGS,
+
+  TESTING_REPORT_LAST
 };
 
 struct testing_report_file_content
@@ -37,6 +41,7 @@ struct testing_report_file_content
   unsigned char *data;
   int            is_too_big;
   int            is_base64;
+  int            is_bzip2;
 };
 
 struct testing_report_test
@@ -58,6 +63,10 @@ struct testing_report_test
   int has_info_digest;
   int visibility;
   unsigned long max_memory_used;
+  int has_user;
+  int user_status;
+  int user_score;
+  int user_nominal_score;
 
   // digests are BINARY SHA1 (20 bytes)
   unsigned char input_digest[32];
@@ -68,6 +77,7 @@ struct testing_report_test
   unsigned char *team_comment;
   unsigned char *checker_comment;
   unsigned char *exit_comment;
+  unsigned char *checker_token;
 
   unsigned char *program_stats_str;
   unsigned char *interactor_stats_str;
@@ -135,7 +145,7 @@ typedef struct testing_report_xml
   int user_score;
   int user_max_score;
   int user_run_tests;
-  int compile_error; // only compiler_output is filled 
+  int compile_error; // only compiler_output is filled
   unsigned char *comment;       /* additional testing comment */
   unsigned char *valuer_comment;
   unsigned char *valuer_judge_comment;
@@ -161,13 +171,12 @@ testing_report_test_alloc(int num, int status);
 
 testing_report_xml_t testing_report_alloc(int contest_id, int run_id, int judge_id);
 testing_report_xml_t testing_report_parse_xml(const unsigned char *path);
+struct testing_report_test *testing_report_test_free(struct testing_report_test *p);
 testing_report_xml_t testing_report_free(testing_report_xml_t r);
 void
 testing_report_unparse_xml(
         FILE *out,
         int utf8_mode,
-        int max_file_length,
-        int max_line_length,
         testing_report_xml_t r);
 
 void
@@ -175,15 +184,36 @@ testing_report_to_str(
         char **pstr,
         size_t *psize,
         int utf8_mode,
-        int max_file_length,
-        int max_line_length,
         testing_report_xml_t r);
 int
 testing_report_to_file(
         const unsigned char *path,
         int utf8_mode,
-        int max_file_length,
-        int max_line_length,
+        testing_report_xml_t r);
+
+// BSON format readers/writers
+
+// returns 1, if bson is supported
+int testing_report_bson_available(void);
+
+testing_report_xml_t
+testing_report_parse_bson_data(
+        const unsigned char *data,
+        unsigned int size);
+
+testing_report_xml_t
+testing_report_parse_bson_file(
+        const unsigned char *path);
+
+int
+testing_report_to_mem_bson(
+        char **pstr,
+        size_t *psize,
+        testing_report_xml_t r);
+
+int
+testing_report_to_file_bson(
+        const unsigned char *path,
         testing_report_xml_t r);
 
 #endif /* __TESTING_REPORT_XML_H__ */

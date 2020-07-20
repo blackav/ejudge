@@ -8,13 +8,17 @@
 %><div class=<%
   if (cs->clients_suspended) {
 %>"server_status_off"<%
-  } else if (unread_clars > 0) {
+  } else if (unread_clars > 0 || summoned_count > 0) {
 %>"server_status_alarm"<%
   } else {
 %>"server_status_on"<%
   }
 %> id="statusLine">
 <div id="currentTime"><s:v type="brief_time" value="cs->current_time" /></div><%
+  if (summoned_count > 0) {
+    fprintf(out_f, _(" / <b>%d summoned for defence runs</b>"),
+            summoned_count);
+  }
   if (unread_clars > 0) {
     fprintf(out_f, _(" / <b>%d unread message(s)</b>"),
             unread_clars);
@@ -38,13 +42,13 @@
       }
     } else {
       if (cnts->exam_mode) {
-%>EXAM IS RUNNING<%
+%><s:_>EXAM IS RUNNING</s:_><%
       } else {
-%>RUNNING<%
+%><s:_>RUNNING</s:_><%
       }
     }
   } else {
-%>NOT STARTED<%
+%><s:_>NOT STARTED</s:_><%
   }
 %></b><%
   if (start_time > 0) {
@@ -61,7 +65,7 @@
     }
   }
 %><%
-  if (cs->upsolving_mode) {
+  if (cs->upsolving_mode && !(cs->global->is_virtual && stop_time <= 0)) {
 %> / <b><s:_>UPSOLVING</s:_></b><%
   }
 %><%

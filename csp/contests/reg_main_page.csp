@@ -95,7 +95,7 @@ ns_reg_main_page_view_info(
   shown_items++;
 %><%
   if (phr->reg_status == USERLIST_REG_OK
-      && !(phr->reg_flags &~USERLIST_UC_INVISIBLE)
+      && !(phr->reg_flags &~(USERLIST_UC_INVISIBLE|USERLIST_UC_REG_READONLY|USERLIST_UC_PRIVILEGED))
       && contests_check_team_ip_2(cnts, &phr->ip, phr->ssl_flag)
       && !cnts->closed) {
 %><td class="menu"><div class="contest_actions_item"><%

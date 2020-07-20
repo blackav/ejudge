@@ -78,7 +78,7 @@
     }
 
     if (!retval && phr->ss) {
-        snprintf(lang->long_name, sizeof(lang->long_name), "%s", long_name);
+        xstrdup3(&lang->long_name, long_name);
         xfree(lang->extid); lang->extid = extid; extid = NULL;
         lang->disabled = disabled;
         lang->insecure = insecure;
@@ -91,8 +91,8 @@
         if (max_vm_size >= 0) lang->max_vm_size = max_vm_size;
         if (max_stack_size >= 0) lang->max_stack_size = max_stack_size;
         if (max_file_size >= 0) lang->max_file_size = max_file_size;
-        snprintf(lang->content_type, sizeof(lang->content_type), "%s", content_type);
-        snprintf(lang->style_checker_cmd, sizeof(lang->style_checker_cmd), "%s", style_checker_cmd);
+        xstrdup3(&lang->content_type, content_type);
+        xfree(lang->style_checker_cmd); lang->style_checker_cmd = xstrdup(style_checker_cmd);
         sarray_free(lang->style_checker_env); lang->style_checker_env = style_checker_env; style_checker_env = NULL;
         xfree(phr->ss->lang_opts[compile_id]); phr->ss->lang_opts[compile_id] = opts; opts = NULL;
         xfree(phr->ss->lang_libs[compile_id]); phr->ss->lang_libs[compile_id] = libs; libs = NULL;

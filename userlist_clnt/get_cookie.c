@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,8 @@ userlist_clnt_get_cookie(
         int *p_reg_status,
         int *p_reg_flags,
         int *p_passwd_method,
+        int *p_is_ws,
+        time_t *p_expire,
         unsigned char **p_login,
         unsigned char **p_name)
 {
@@ -93,6 +95,8 @@ userlist_clnt_get_cookie(
   if (p_reg_status) *p_reg_status = in->reg_status;
   if (p_reg_flags) *p_reg_flags = in->reg_flags;
   if (p_passwd_method) *p_passwd_method = in->passwd_method;
+  if (p_is_ws) *p_is_ws = in->is_ws;
+  if (p_expire) *p_expire = in->expire;
   if (p_login) *p_login = xstrdup(login_ptr);
   if (p_name) *p_name = xstrdup(name_ptr);
 

@@ -9,6 +9,7 @@
   time_t cur_time = 0, fog_stop_time = 0;
   unsigned char dur_buf[128];
   unsigned char title[1024];
+  int summoned_count = 0;
 
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
@@ -64,32 +65,42 @@
       }
     }
   }
-%><%@include "unpriv_header.csp" 
+%><%@include "unpriv_header.csp"
 %><%@include "unpriv_menu.csp"
 %><%@include "unpriv_status.csp"
 %>
 <div class="l14">
 <h2><s:v value="title" escape="false" /></h2>
 
-<%  if (global->disable_user_standings > 0) {
+<%
+    if (global->disable_user_standings > 0) {
 %><p><s:_>Information is not available.</s:_></p><%
-  } else if (global->is_virtual) {
-    do_write_standings(cs, cnts, out_f, 1, 1, phr->user_id, 0, 0, 0, 0, 1, cur_time, NULL);
-  } else if (global->score_system == SCORE_ACM) {
-    do_write_standings(cs, cnts, out_f, 1, 1, phr->user_id, 0, 0, 0, 0, 1, cur_time, NULL);
-  } else if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
+    } else if (global->score_system == SCORE_OLYMPIAD && cs->accepting_mode) {
 %><p><s:_>Information is not available.</s:_></p><%
-  } else if (global->score_system == SCORE_OLYMPIAD) {
-%><p><s:_>Information is not available.</s:_></p><%
-    do_write_kirov_standings(cs, cnts, out_f, 0, 1, 1, phr->user_id, 0, 0, 0, 0, 1, cur_time,
-                             0, NULL, 1 /* user_mode */);
-  } else if (global->score_system == SCORE_KIROV) {
-    do_write_kirov_standings(cs, cnts, out_f, 0, 1, 1, phr->user_id, 0, 0, 0, 0, 1, cur_time,
-                             0, NULL, 1 /* user_mode */);
-  } else if (global->score_system == SCORE_MOSCOW) {
-    do_write_moscow_standings(cs, cnts, out_f, 0, 1, 1, phr->user_id,
-                              0, 0, 0, 0, 1, cur_time, 0, NULL);
-  }
+    } else {
+        ns_write_standings(phr /* struct http_request_info *phr */,
+                           NULL /* struct contest_extra *extra */,
+                           cnts /* const struct contest_desc *cnts */,
+                           out_f /* FILE *f */,
+                           NULL /* const unsigned char *stand_dir */,
+                           NULL /* const unsigned char *file_name */,
+                           NULL /* const unsigned char *file_name2 */,
+                           0 /* int users_on_page */,
+                           -1 /* int page_index */,
+                           1 /* int client_flag */,
+                           1 /* int only_table_flag */,
+                           phr->user_id /* int user_id */,
+                           NULL /* const unsigned char *header_str */,
+                           NULL /* unsigned char const *footer_str */,
+                           0 /* int accepting_mode */,
+                           NULL /* const unsigned char *user_name */,
+                           1 /* int force_fancy_style */,
+                           0 /* int charset_id */,
+                           NULL /* struct user_filter_info *user_filter */,
+                           1 /* int user_mode */,
+                           cur_time /* time_t cur_time */,
+                           0 /* int compat_mode */);
+    }
 %>
 </div>
 <%@include "unpriv_footer.csp"

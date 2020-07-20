@@ -21,6 +21,7 @@
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "test_score" "scoring" "Default score for 1 passed test" "300" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "run_penalty" "scoring" "Penalty for a submission" "300" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "disqualified_penalty" "scoring" "Penalty for a disqualified submission" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "compile_error_penalty" "scoring" "Penalty for a compilation error" "300" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "acm_run_penalty" "scoring" "Penalty for a submission (minutes)" "300" %>
         <%@expand MENU_TEXTFIELD "test_score_list" "scoring" "Test scores for tests" "300" %>
         <%@expand MENU_TEXTFIELD "score_tests" "scoring" "Tests for problem scores" "300" %>
@@ -50,7 +51,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -77,6 +78,7 @@ $(function() {
     $("#orig-test_score-div").toggle(global_score_kirov_olympiad);
     $("#orig-run_penalty-div").toggle(global_score_kirov_olympiad);
     $("#orig-disqualified_penalty-div").toggle(global_score_kirov_olympiad);
+    $("#orig-compile_error_penalty-div").toggle(global_score_kirov_olympiad);
     $("#orig-acm_run_penalty-div").toggle(global_score_acm_moscow);
     $("#orig-test_score_list-div").toggle(global_score_kirov_olympiad && <s:v type="jsbool" value="prob_id > 0" />);
     $("#orig-score_tests-div").toggle(global_score_moscow && <s:v type="jsbool" value="prob_id > 0" />);
@@ -104,6 +106,7 @@ function popupScoringDialog(e, skipField)
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "test_score" "prob->test_score < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "run_penalty" "prob->run_penalty < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "disqualified_penalty" "prob->disqualified_penalty < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "compile_error_penalty" "prob->compile_error_penalty < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "acm_run_penalty" "prob->acm_run_penalty < 0" %>
     <%@expand COPY_TEXTFIELD "test_score_list" %>
     <%@expand COPY_TEXTFIELD "score_tests" %>
@@ -116,6 +119,7 @@ function popupScoringDialog(e, skipField)
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "test_score" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "run_penalty" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "disqualified_penalty" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "compile_error_penalty" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "acm_run_penalty" %>
     <%@expand CLEAR_TEXTFIELD "test_score_list" %>
     <%@expand CLEAR_TEXTFIELD "score_tests" %>
@@ -134,6 +138,7 @@ function scoringDialogOnChange(field)
     <%@expand ONCHANGE_WITH_DEFAULT "test_score" %>
     <%@expand ONCHANGE_WITH_DEFAULT "run_penalty" %>
     <%@expand ONCHANGE_WITH_DEFAULT "disqualified_penalty" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "compile_error_penalty" %>
     <%@expand ONCHANGE_WITH_DEFAULT "acm_run_penalty" %>
 
     var use_ac_not_ok = toBool($("#edit-use_ac_not_ok").val(), <s:v type="jsbool" value="sup_prob && sup_prob->use_ac_not_ok > 0" />);
@@ -152,6 +157,7 @@ function scoringDialogOnChange(field)
     $("#edit-test_score-div").toggle(global_score_kirov_olympiad);
     $("#edit-run_penalty-div").toggle(global_score_kirov_olympiad);
     $("#edit-disqualified_penalty-div").toggle(global_score_kirov_olympiad);
+    $("#edit-compile_error_penalty-div").toggle(global_score_kirov_olympiad);
     $("#edit-acm_run_penalty-div").toggle(global_score_acm_moscow);
     $("#edit-test_score_list-div").toggle(global_score_kirov_olympiad && <s:v type="jsbool" value="prob_id > 0" />);
     $("#edit-score_tests-div").toggle(global_score_moscow && <s:v type="jsbool" value="prob_id > 0" />);

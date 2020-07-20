@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2015 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2015-2020 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -54,17 +54,17 @@ CHKXFILES = $(CHKCFILES:.c=)
 STYLEXFILES = $(STYLECFILES:.c=)
 
 ifndef STATIC
-TARGETS = pic libchecker.a libchecker.so ${CHKXFILES} ${STYLEXFILES}
+TARGETS = pic libchecker.a libchecker2.a libchecker.so ${CHKXFILES} ${STYLEXFILES}
 ifdef NEED_COMPAT
-TARGETS += pic32 pic32/libchecker.so m32 m32/libchecker.a
+TARGETS += pic32 pic32/libchecker.so m32 m32/libchecker.a m32/libchecker2.a
 endif
 else
-TARGETS = libchecker.a ${CHKXFILES} ${STYLEXFILES}
+TARGETS = libchecker.a libchecker2.a ${CHKXFILES} ${STYLEXFILES}
 ifdef NEED_COMPAT
-TARGETS += m32 m32/libchecker.a
+TARGETS += m32 m32/libchecker.a m32/libchecker2.a
 endif
 endif
-TARGETLIBS = libchecker.a
+TARGETLIBS = libchecker.a libchecker2.a
 
 all : ${TARGETS} mo
 
@@ -84,12 +84,14 @@ distclean : clean
 
 install : all
 	mkdir -p "${DESTDIR}${includedir}/ejudge"
-	for i in checker.h checker_internal.h checkutils.h testinfo.h; do install -m 644 $$i "${DESTDIR}${includedir}/ejudge"; done
+	for i in checker.h checker2.h checker_internal.h checkutils.h testinfo.h; do install -m 644 $$i "${DESTDIR}${includedir}/ejudge"; done
 	mkdir -p "${DESTDIR}${libdir}"
 	if [ x"${lib32dir}" != x ]; then mkdir -p "${DESTDIR}${lib32dir}"; fi
 	install -m 644 libchecker.a "${DESTDIR}${libdir}"
+	install -m 644 libchecker2.a "${DESTDIR}${libdir}"
 	if [ x"${STATIC}" = x ]; then install -m 755 libchecker.so "${DESTDIR}${libdir}"; else rm -f "${DESTDIR}${libdir}/libchecker.so"; fi
 	if [ -f "m32/libchecker.a" -a x"${lib32dir}" != x ]; then install -m 644 "m32/libchecker.a" "${DESTDIR}/${lib32dir}"; fi
+	if [ -f "m32/libchecker2.a" -a x"${lib32dir}" != x ]; then install -m 644 "m32/libchecker2.a" "${DESTDIR}/${lib32dir}"; fi
 	if [ -f "pic32/libchecker.so" -a x"${lib32dir}" != x ]; then install -m 755 "pic32/libchecker.so" "${DESTDIR}/${lib32dir}"; fi
 	mkdir -p "${DESTDIR}${datadir}/ejudge/testlib"
 	mkdir -p "${DESTDIR}${datadir}/ejudge/testlib/fpc"
@@ -104,9 +106,13 @@ install : all
 
 libchecker.a : ${OFILES}
 	${AR} rcv $@ $^
+libchecker2.a : ${OFILES}
+	${AR} rcv $@ $^
 libchecker.so : ${PICOFILES}
 	${CC} -shared $^ -o $@ -lm
 m32/libchecker.a : ${O32FILES}
+	${AR} rcv $@ $^
+m32/libchecker2.a : ${O32FILES}
 	${AR} rcv $@ $^
 pic32/libchecker.so : ${PIC32OFILES}
 	${CC} -m32 -shared $^ -o $@ -lm
@@ -116,29 +122,29 @@ pic/corr_close.o: corr_close.c checker_internal.h
 corr_eof.o: corr_eof.c checker_internal.h
 pic/corr_eof.o: corr_eof.c checker_internal.h
 eq_double.o : eq_double.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
+	${CC} ${CFLAGS} -std=gnu11 -c $< -o $@
 eq_double_abs.o : eq_double_abs.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
+	${CC} ${CFLAGS} -std=gnu11 -c $< -o $@
 pic/eq_double.o : eq_double.c checker_internal.h
-	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu99 -c $< -o $@
+	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu11 -c $< -o $@
 pic/eq_double_abs.o : eq_double_abs.c checker_internal.h
-	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu99 -c $< -o $@
+	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu11 -c $< -o $@
 eq_float.o : eq_float.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
+	${CC} ${CFLAGS} -std=gnu11 -c $< -o $@
 eq_float_abs.o : eq_float_abs.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
+	${CC} ${CFLAGS} -std=gnu11 -c $< -o $@
 pic/eq_float.o : eq_float.c checker_internal.h
-	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu99 -c $< -o $@
+	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu11 -c $< -o $@
 pic/eq_float_abs.o : eq_float_abs.c checker_internal.h
-	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu99 -c $< -o $@
+	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu11 -c $< -o $@
 eq_long_double.o : eq_long_double.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
+	${CC} ${CFLAGS} -std=gnu11 -c $< -o $@
 eq_long_double_abs.o : eq_long_double_abs.c checker_internal.h
-	${CC} ${CFLAGS} -std=gnu99 -c $< -o $@
+	${CC} ${CFLAGS} -std=gnu11 -c $< -o $@
 pic/eq_long_double.o : eq_long_double.c checker_internal.h
-	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu99 -c $< -o $@
+	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu11 -c $< -o $@
 pic/eq_long_double_abs.o : eq_long_double_abs.c checker_internal.h
-	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu99 -c $< -o $@
+	${CC} ${CFLAGS} -fPIC -DPIC -std=gnu11 -c $< -o $@
 fatal.o: fatal.c checker_internal.h
 pic/fatal.o: fatal.c checker_internal.h
 fatal_cf.o: fatal_cf.c checker_internal.h
@@ -198,8 +204,8 @@ pic/testinfo.o: testinfo.c testinfo.h
 
 testinfo.h: ../include/ejudge/testinfo.h
 	ln -sf ../include/ejudge/testinfo.h .
-testinfo.c: ../testinfo.c
-	ln -sf ../testinfo.c
+testinfo.c: ../lib/testinfo.c
+	ln -sf ../lib/testinfo.c
 
 ifdef STATIC
 cmp_% : cmp_%.c checker.h checker_internal.h libchecker.a

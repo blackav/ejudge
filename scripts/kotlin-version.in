@@ -1,0 +1,106 @@
+#!/bin/sh
+# Copyright (c) 2017 Alexander Chernov <cher@ejudge.ru>
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+common_config() {
+  echo 'long_name="Kotlin"'
+  echo 'src_sfx=".kt"'
+  echo 'exe_sfx=".jar"'
+  echo 'arch="java"'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'KOTLINRUN=false'
+  echo 'KOTLINCRUN=false'
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && KOTLINCRUN="$2"
+  [ "${KOTLINCRUN}" = "" ] && KOTLINCRUN="kotlinc"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether Kotlin is available..." >&2
+  kotlincdir1=`dirname "${KOTLINCRUN}"`
+  if [ "${kotlincdir1}" = . ]
+  then
+    KOTLINRUN="kotlin"
+  else
+    KOTLINRUN="${kotlincdir1}/kotlin"
+  fi
+  "${KOTLINRUN}" -version >/dev/null 2>/dev/null
+  version=`${KOTLINRUN} -version 2>&1 | grep " version" | gawk '{ print $3; }'` || failure
+  [ "${version}" != "" ] || failure
+
+  cat > conftest.kt <<EOF
+fun main(args: Array<String>) {
+    println("Hello, World!")
+}
+EOF
+  "${KOTLINCRUN}" conftest.kt -include-runtime -d conftest.jar >/dev/null 2>/dev/null || failure
+  [ -f conftest.jar ] || failure
+  "${KOTLINRUN}" conftest.jar >/dev/null 2>/dev/null || failure
+
+  rm -f ./conftest*
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'KOTLINRUN="'"${KOTLINRUN}"'"'
+  echo 'KOTLINCRUN="'"${KOTLINCRUN}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${KOTLINCRUN}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "Kotlin compiler [https://kotlinlang.org/]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/kotlin.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  KOTLINRUN="/usr/bin/kotlin"
+  KOTLINCRUN="/usr/bin/kotlinc"
+fi
+
+if [ x"${KOTLINCRUN}" = x -o x"${KOTLINCRUN}" = xfalse ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+# avoid setting KOTLIN_HOME if it is already set
+if [ x"$1" = x-p ]
+then
+    echo "${KOTLINCRUN}"
+    exit 0
+fi
+    
+"${KOTLINRUN}" -version 2>/dev/null >/dev/null
+
+[ x"$1" = x-f ] && echo -n "Kotlin "
+
+"${KOTLINRUN}" -version 2>&1 | grep " version" | gawk '{ print $3; }'

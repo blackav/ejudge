@@ -1,0 +1,214 @@
+<%
+%><%@include "includes.csp"
+%><%
+#include "ejudge/userlist.h"
+#include "ejudge/userlist_clnt.h"
+#include "ejudge/userlist_proto.h"
+%><%
+extern char const * const ss_member_string[];
+extern const struct ss_user_row_info ss_user_timestamp_rows[];
+extern const struct ss_user_row_info ss_user_flag_rows[];
+extern const struct ss_user_row_info ss_user_info_rows[];
+extern const struct ss_user_row_info ss_user_info_stat_rows[];
+extern const struct ss_user_row_info ss_member_rows[];
+extern const struct ss_user_row_info ss_member_date_rows[];
+extern const struct ss_user_row_info ss_member_time_rows[];
+%><%@set getter_name = "csp_get_user_delete_member_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_user_delete_member_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = NULL;
+    unsigned char subtitle_buf[1024];
+    const unsigned char *subtitle = subtitle_buf;
+
+    int other_user_id = 0;
+    int serial = 0;
+    int contest_id = 0;
+    int group_id = 0;
+    opcap_t gcaps = 0, caps = 0;
+    unsigned char *xml_text = NULL;
+    struct userlist_user *u = NULL;
+    const struct userlist_user_info *ui = NULL;
+    struct userlist_member *m = NULL;
+    int role = 0, num = 0;
+    int row;
+    unsigned char buf[1024];
+
+    const unsigned char *marked_str = NULL; // needed for users_top_menu.csp
+
+    %><s:read name="other_user_id" /><%
+    if (other_user_id <= 0) {
+        FAIL(SSERV_ERR_INV_USER_ID);
+    }
+    %><s:read name="serial" /><%
+    if (serial <= 0) {
+        FAIL(SSERV_ERR_INV_SERIAL);
+    }
+    %><s:read name="contest_id" /><%
+    if (contest_id <= 0) {
+        FAIL(SSERV_ERR_INV_CONTEST);
+    }
+    if (contest_id > 0) {
+        if (contests_get(contest_id, &cnts) < 0 || !cnts) {
+            FAIL(SSERV_ERR_INV_CONTEST);
+        }
+    }
+
+    %><s:read name="group_id" default="0" /><%
+    if (group_id < 0) group_id = 0;
+
+    if (phr->priv_level <= 0) FAIL(SSERV_ERR_PERM_DENIED);
+    ss_get_global_caps(phr, &gcaps);
+    ss_get_contest_caps(phr, cnts, &caps);
+    caps = (caps | gcaps) & ((1L << OPCAP_EDIT_USER) | (1L << OPCAP_PRIV_EDIT_USER));
+    if (!caps) FAIL(SSERV_ERR_PERM_DENIED);
+    if (userlist_clnt_get_info(phr->userlist_clnt, ULS_PRIV_GET_USER_INFO,
+                               other_user_id, contest_id, &xml_text) < 0) {
+        FAIL(SSERV_ERR_DB_ERROR);
+    }
+
+    if (!(u = userlist_parse_user_str(xml_text))) FAIL(SSERV_ERR_DB_ERROR);
+    ui = u->cnts0;
+
+    if (ss_is_globally_privileged(phr, u)) {
+        if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(SSERV_ERR_PERM_DENIED);
+    } else if (ss_is_contest_privileged(cnts, u)) {
+        if (opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) FAIL(SSERV_ERR_PERM_DENIED);
+    } else {
+        if (opcaps_check(caps, OPCAP_EDIT_USER) < 0) FAIL(SSERV_ERR_PERM_DENIED);
+    }
+
+    m = NULL;
+    if (u->cnts0 && u->cnts0->members) {
+        m = userlist_get_member_nc(u->cnts0->members, serial, &role, &num);
+    }
+    if (!m) FAIL(SSERV_ERR_INV_SERIAL);
+    if (role < 0 || role >= USERLIST_MB_LAST || num < 0) FAIL(SSERV_ERR_INV_SERIAL);
+
+    snprintf(subtitle_buf, sizeof(subtitle_buf), "Deleting the member '%s'::%d (%d) of user %d, contest %d",
+             ss_member_string[role], num + 1, serial, other_user_id, contest_id);
+
+%><%@include "header.csp"
+%>
+
+<h2><s:v value="subtitle" /></h2>
+
+<%@include "users_top_menu.csp"
+%>
+
+<table class="b1">
+  <tr><td class="b1" width="250px" colspan="2" align="center"><b>User information for user <s:v value="u->id" /></b></td></tr>
+  <tr><td class="b1"><b>User ID:</b></td><td class="b1"><s:v value="u->id" /></td></tr>
+  <tr><td class="b1"><b>User login:</b></td><td class="b1"><s:v value="u->login" checkExpr="" /></td></tr>
+  <tr><td class="b1"><b>User e-mail:</b></td><td class="b1"><s:v value="u->email" checkExpr="" /></td></tr>
+
+  <tr><td colspan="2" class="b1" align="center"><b>User statistics</b></td></tr>
+<%
+    for (row = 0; ss_user_timestamp_rows[row].field_id > 0; ++row) {
+        time_t *pt = (time_t*) userlist_get_user_field_ptr(u, ss_user_timestamp_rows[row].field_id);
+%>
+  <tr>
+    <td class="b1"><b><s:v value="ss_user_timestamp_rows[row].field_desc" escape="no" />:</b></td>
+    <td class="b1"><s:v value="*pt" fullCheckExpr="pt && *pt" defstr="<i>Not set</i>" /></td>
+  </tr>
+<%
+    }
+%>
+<%
+    for (row = 0; ss_user_flag_rows[row].field_id > 0; ++row) {
+        int *pi = (int*) userlist_get_user_field_ptr(u, ss_user_flag_rows[row].field_id);
+%>
+  <tr>
+    <td class="b1"><b><s:v value="ss_user_flag_rows[row].field_desc" escape="no" />:</b></td>
+    <td class="b1"><% if (pi && *pi) { %>YES<% } else { %>NO<% } %></td>
+  </tr>
+<%
+    }
+%>
+<%
+    if (!ui || !cnts) goto skip_user_info;
+%>
+
+  <tr><td class="b1" align="center" colspan="2"><b>Contest-specific fields for contest <s:v value="cnts->id" /></b></td></tr>
+  <tr><td class="b1"><b>User data is read-only:</b></td><td class="b1"><% if (ui->cnts_read_only) { %>YES<% } else { %>NO<% } %></td></tr>
+  <tr><td class="b1"><b>User name:</b></td><td class="b1"><s:v value="ui->name" checkExpr=""/></td></tr>
+<%
+    for (row = 0; ss_user_info_rows[row].field_id > 0; ++row) {
+        userlist_get_user_info_field_str(buf, sizeof(buf), ui, ss_user_info_rows[row].field_id, 1);
+%>
+  <tr><td class="b1"><b><s:v value="ss_user_info_rows[row].field_desc" escape="no" />:</b></td><td class="b1"><s:v value="buf" /></td></tr>
+<%
+    }
+%>
+<%
+    for (row = 0; ss_user_info_stat_rows[row].field_id > 0; ++row) {
+        userlist_get_user_info_field_str(buf, sizeof(buf), ui, ss_user_info_stat_rows[row].field_id, 1);
+%>
+  <tr><td class="b1"><b><s:v value="ss_user_info_stat_rows[row].field_desc" escape="no" />:</b></td><td class="b1"><s:v value="buf" /></td></tr>
+<%
+    }
+
+    if (!m) goto skip_user_info;
+%>
+
+  <tr><td class="b1" align="center" colspan="2"><b>Member <s:v value="ss_member_string[role]" escape="no" />::<s:v value="num + 1" /> (<s:v value="m->serial" />)</b></td></tr>
+  <tr><td class="b1"><b>Member serial Id:</b></td><td class="b1"><s:v value="m->serial" /></td></tr>
+<% userlist_get_member_field_str(buf, sizeof(buf), m, USERLIST_NM_STATUS, 1, 0); %>
+  <tr><td class="b1"><b>Status:</b></td><td class="b1"><s:v value="buf" /></td></tr>
+<% userlist_get_member_field_str(buf, sizeof(buf), m, USERLIST_NM_GENDER, 1, 0); %>
+  <tr><td class="b1"><b>Gender:</b></td><td class="b1"><s:v value="buf" /></td></tr>
+<% userlist_get_member_field_str(buf, sizeof(buf), m, USERLIST_NM_GRADE, 1, 0); %>
+  <tr><td class="b1"><b>Grade:</b></td><td class="b1"><s:v value="buf" /></td></tr>
+
+<%
+    for (row = 0; ss_member_rows[row].field_id > 0; ++row) {
+        userlist_get_member_field_str(buf, sizeof(buf), m, ss_member_rows[row].field_id, 1, 0);
+%>
+  <tr><td class="b1"><b><s:v value="ss_member_rows[row].field_desc" escape="no" />:</b></td><td class="b1"><s:v value="buf" /></td></tr>
+<%
+    }
+%>
+<%
+    for (row = 0; ss_member_date_rows[row].field_id > 0; ++row) {
+        userlist_get_member_field_str(buf, sizeof(buf), m, ss_member_date_rows[row].field_id, 1, 0);
+%>
+  <tr><td class="b1"><b><s:v value="ss_member_date_rows[row].field_desc" escape="no" />:</b></td><td class="b1"><s:v value="buf" /></td></tr>
+<%
+    }
+%>
+<%
+    for (row = 0; ss_member_time_rows[row].field_id > 0; ++row) {
+        userlist_get_member_field_str(buf, sizeof(buf), m, ss_member_time_rows[row].field_id, 1, 0);
+%>
+  <tr><td class="b1"><b><s:v value="ss_member_time_rows[row].field_desc" escape="no" />:</b></td><td class="b1"><s:v value="buf" /></td></tr>
+<%
+    }
+%>
+
+</table>
+
+<% skip_user_info:; %>
+
+<s:url name="CancelUrl" ac="user-detail-page">
+  <s:param name="other_user_id" value="other_user_id" />
+  <s:param name="contest_id" value="contest_id" fullCheckExpr="contest_id > 0" />
+  <s:param name="group_id" value="group_id" fullCheckExpr="group_id > 0" />
+</s:url>
+<s:url name="DeleteUrl" ac="user-delete-member-action">
+  <s:param name="other_user_id" value="other_user_id" />
+  <s:param name="serial" value="m->serial" />
+  <s:param name="contest_id" value="contest_id" fullCheckExpr="contest_id > 0" />
+  <s:param name="group_id" value="group_id" fullCheckExpr="group_id > 0" />
+</s:url>
+<p><s:a url="CancelUrl">[Cancel]</s:a>&nbsp;<s:a url="DeleteUrl">[Delete]</s:a></p>
+
+<%@include "footer.csp"
+%><%
+cleanup:
+    l10n_resetlocale();
+    html_armor_free(&ab);
+    xfree(xml_text);
+    userlist_free(&u->b);
+%>

@@ -2,7 +2,7 @@
 #ifndef __TEAMDB_H__
 #define __TEAMDB_H__
 
-/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,15 +28,20 @@ enum
   TEAM_LOCKED       = 4,
   TEAM_INCOMPLETE   = 8,
   TEAM_DISQUALIFIED = 16,
+  TEAM_PRIVILEGED   = 32,
+  TEAM_REG_READONLY = 64,
+
+  TEAM_NOPASSWD_MASK= 63
 };
 
 struct teamdb_state;
 typedef struct teamdb_state *teamdb_state_t;
 
+struct UserlistBinaryHeader;
 struct teamdb_db_callbacks
 {
   void *user_data;
-  int (*list_all_users)(void *, int, unsigned char **);
+  int (*list_all_users)(void *, int, unsigned char **, struct UserlistBinaryHeader **p_header);
 };
 struct userlist_user;
 
@@ -66,6 +71,7 @@ const unsigned char *teamdb_get_cypher(teamdb_state_t, int);
 const struct userlist_user *teamdb_get_userlist(teamdb_state_t, int);
 int   teamdb_get_max_team_id(teamdb_state_t);
 int   teamdb_get_flags(teamdb_state_t, int);
+int   teamdb_get_status(teamdb_state_t state, int id);
 int   teamdb_get_total_teams(teamdb_state_t);
 int   teamdb_get_vintage(teamdb_state_t);
 

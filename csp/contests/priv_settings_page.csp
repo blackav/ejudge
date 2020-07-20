@@ -1,5 +1,4 @@
 <%
-/* $Id$ */
 %><%@include "priv_includes.csp"
 %><%@set getter_name = "csp_get_priv_settings_page"
 %><%@set ac_prefix = "NEW_SRV_ACTION_"
@@ -76,6 +75,15 @@
 <s:option value="0" selectedExpr="cs->online_final_visibility <= 0"><s:_>No</s:_></s:option>
 <s:option value="1" selectedExpr="cs->online_final_visibility > 0"><s:_>Yes</s:_></s:option>
 </s:select><s:submit ac="admin-change-online-final-visibility" /></s:form></td>
+    </tr>
+
+    <tr>
+        <td class="b0"><s:_>Valuer judge comments</s:_></td>
+        <td class="b0"><s:vb value="cs->online_valuer_judge_comments > 0" /></td>
+        <td class="b0"><s:form><s:select name="param">
+<s:option value="0" selectedExpr="cs->online_valuer_judge_comments <= 0"><s:_>No</s:_></s:option>
+<s:option value="1" selectedExpr="cs->online_valuer_judge_comments > 0"><s:_>Yes</s:_></s:option>
+</s:select><s:submit ac="admin-change-online-valuer-judge-comments" /></s:form></td>
     </tr>
 </table>
 

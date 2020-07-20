@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2020 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:33:28 cher> */
 
 /*
@@ -38,6 +38,8 @@
 #include <string.h>
 #include <time.h>
 #include <limits.h>
+#include <pwd.h>
+#include <dirent.h>
 
 #ifdef __linux__
 #include <sys/ptrace.h>
@@ -90,9 +92,9 @@ struct tTask
   int    was_memory_limit;      /* was the memory limit happened? */
   int    was_security_violation;/* was the security violation happened? */
   int    termsig;               /* termination signal */
-  int    max_stack_size;        /* max size of stack */
-  int    max_data_size;         /* max size of data */
-  int    max_vm_size;           /* max size of virtual memory */
+  size_t max_stack_size;        /* max size of stack */
+  size_t max_data_size;         /* max size of data */
+  size_t max_vm_size;           /* max size of virtual memory */
   int    disable_core;          /* disable core dumps? */
   int    enable_memory_limit_error; /* enable memory limit error detection? */
   int    enable_secure_exec;    /* drop capabilities before exec'ing */
@@ -103,6 +105,7 @@ struct tTask
   int    enable_all_signals;    /* unmask all signals after fork */
   int    ignore_sigpipe;        /* ignore SIGPIPE after fork */
   int    enable_process_group;  /* create a new process group */
+  int    enable_kill_all;       /* kill all processes (using -1 for kill) */
   ssize_t max_core_size;        /* maximum size of core files */
   ssize_t max_file_size;        /* maximum size of created files */
   ssize_t max_locked_mem_size;  /* maximum size of locked memory */
@@ -1092,6 +1095,15 @@ task_EnableProcessGroup(tTask *tsk)
 }
 
 int
+task_EnableKillAll(tTask *tsk)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->enable_kill_all = 1;
+  return 0;
+}
+
+int
 task_SetMaxCoreSize(tTask *tsk, ssize_t max_core_size)
 {
   task_init_module();
@@ -1209,31 +1221,31 @@ task_GetErrorMessage(tTask *tsk)
 }
 
 int
-task_SetDataSize(tTask *tsk, int size)
+task_SetDataSize(tTask *tsk, size_t size)
 {
   task_init_module();
   ASSERT(tsk);
-  if (size < 0) return -1;
+  if (size == ~(size_t) 0) return -1;
   tsk->max_data_size = size;
   return 0;
 }
 
 int
-task_SetStackSize(tTask *tsk, int size)
+task_SetStackSize(tTask *tsk, size_t size)
 {
   task_init_module();
   ASSERT(tsk);
-  if (size < 0) return -1;
+  if (size == ~(size_t) 0) return -1;
   tsk->max_stack_size = size;
   return 0;
 }
 
 int
-task_SetVMSize(tTask *tsk, int size)
+task_SetVMSize(tTask *tsk, size_t size)
 {
   task_init_module();
   ASSERT(tsk);
-  if (size < 0) return -1;
+  if (size == ~(size_t) 0) return -1;
   tsk->max_vm_size = size;
   return 0;
 }
@@ -1567,7 +1579,7 @@ task_Start(tTask *tsk)
         write_log(LOG_REUSE, LOG_ERROR, "%s: %s", __FUNCTION__ , errbuf);
       }
       close(pp[0]); close(pp[1]); close(comm_fd);
-      return -1;      
+      return -1;
     }
     close(pp[0]);
     close(pp[1]);
@@ -1587,7 +1599,7 @@ task_Start(tTask *tsk)
       }
       close(comm_fd);
       close(comm_fd + 1);
-      return -1;      
+      return -1;
     }
   }
 
@@ -1745,7 +1757,7 @@ task_Start(tTask *tsk)
               }
             close(tfd);
             break;
-            
+
           case TSR_DUP:
             errno = 0;
             if (dup2(tsk->redirs.v[i].u.fd2, tsk->redirs.v[i].fd) < 0)
@@ -1795,7 +1807,7 @@ task_Start(tTask *tsk)
             break;
           default:
             /*
-            write_log(LOG_REUSE, LOG_CRIT, 
+            write_log(LOG_REUSE, LOG_CRIT,
                       "task_Start: child: invalid redirection %d",
                       tsk->redirs.v[i].tag);
             */
@@ -1818,7 +1830,7 @@ task_Start(tTask *tsk)
         _exit(TASK_ERR_PUTENV_FAILED);
       }
     }
-    
+
 
     /* change the working directory */
     if (tsk->working_dir) {
@@ -2188,7 +2200,9 @@ task_NewWait(tTask *tsk)
       gettimeofday(&cur_time, NULL);
       if (cur_time.tv_sec > rt_timeout.tv_sec
           || (cur_time.tv_sec == rt_timeout.tv_sec && cur_time.tv_usec >= rt_timeout.tv_usec)) {
-        if (tsk->enable_process_group > 0) {
+        if (tsk->enable_suid_exec > 0 && tsk->enable_kill_all > 0) {
+          do_kill(tsk, -1, tsk->termsig);
+        } else if (tsk->enable_process_group > 0) {
           do_kill(tsk, -tsk->pid, tsk->termsig);
         } else {
           do_kill(tsk, tsk->pid, tsk->termsig);
@@ -2212,7 +2226,9 @@ task_NewWait(tTask *tsk)
         cur_utime = (cur_utime * 1000) / info.clock_ticks;
         //fprintf(stderr, "CPUTime: %lld\n", cur_utime);
         if (cur_utime >= max_time_ms) {
-          if (tsk->enable_process_group > 0) {
+          if (tsk->enable_suid_exec > 0 && tsk->enable_kill_all > 0) {
+            do_kill(tsk, -1, tsk->termsig);
+          } else if (tsk->enable_process_group > 0) {
             do_kill(tsk, -tsk->pid, tsk->termsig);
           } else {
             do_kill(tsk, tsk->pid, tsk->termsig);
@@ -2546,6 +2562,77 @@ task_KillProcessGroup(tTask *tsk)
   return 0;
 }
 
+int
+task_TryAnyProcess(tTask *tsk)
+{
+  static int ejexec_uid = -1;
+
+  task_init_module();
+
+  if (ejexec_uid == -2) {
+    // no 'ejexec' user
+    return -1;
+  } else if (ejexec_uid == -1) {
+    struct passwd *pwd = getpwnam("ejexec");
+    if (pwd && pwd->pw_uid > 0) {
+      ejexec_uid = pwd->pw_uid;
+    } else {
+      ejexec_uid = -2;
+      return -1;
+    }
+  }
+  DIR *d = opendir("/proc");
+  if (!d) {
+    return -1;
+  }
+  int retval = 0;
+  struct dirent *dd;
+  while ((dd = readdir(d))) {
+    errno = 0;
+    char *eptr = NULL;
+    long val = strtol(dd->d_name, &eptr, 10);
+    if (val <= 0 || errno || *eptr || eptr == dd->d_name || (int) val != val) continue;
+    char p[PATH_MAX];
+    if (snprintf(p, sizeof(p), "/proc/%ld", val) >= sizeof(p)) continue;
+    struct stat stb;
+    if (lstat(p, &stb) < 0 || !S_ISDIR(stb.st_mode)) continue;
+    char pp[PATH_MAX];
+    if (snprintf(pp, sizeof(pp), "%s/status", p) >= sizeof(p)) continue;
+    FILE *f = fopen(pp, "r");
+    if (!f) continue;
+    char buf[1024];
+    int uid = -1;
+    while (fgets(buf, sizeof(buf), f)) {
+      int len = strlen(buf);
+      if (len + 1 == sizeof(buf)) break;
+      if (buf[0] == 'U' && buf[1] == 'i' && buf[2] == 'd' && buf[3] == ':' && buf[4] == '\t') {
+        errno = 0;
+        long vv = strtol(buf + 5, &eptr, 10);
+        if (vv < 0 || errno || *eptr != '\t' || eptr == buf + 5 || (int) vv != vv) continue;
+        uid = vv;
+        break;
+      }
+    }
+    fclose(f);
+    if (uid == ejexec_uid) {
+      retval = 1;
+      break;
+    }
+  }
+  closedir(d);
+  return retval;
+}
+
+int
+task_KillAllProcesses(tTask *tsk)
+{
+  task_init_module();
+  if (tsk->pid > 0) {
+    do_kill(tsk, -1, SIGKILL);
+  }
+  return 0;
+}
+
 /**
  * NAME:    task_GetPid
  * PURPOSE: get the pid of the process
@@ -2604,7 +2691,7 @@ linux_set_fix_flag(void)
     linux_ms_time_limit = 0;
     return;
   }
-  
+
   if (mjver >= 3 || (mjver == 2 && mnver >= 6))
     linux_fix_time_flag = 0;
 

@@ -44,7 +44,7 @@ $(function() {
                         document.location.reload(true);
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
-                        //if fails     
+                        //if fails
                     }
                 });
             },
@@ -75,10 +75,10 @@ function popupRunningDialog(e, skipField)
     <%@expand COPY_YESNO3 "check_presentation"  %>
     <%@expand COPY_YESNO3 "use_stdin"  %>
     <%@expand COPY_YESNO3 "combined_stdin"  %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "input_file" "!prob->input_file[0]" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "input_file" "!prob->input_file" %>
     <%@expand COPY_YESNO3 "use_stdout"  %>
     <%@expand COPY_YESNO3 "combined_stdout"  %>
-    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "output_file" "!prob->output_file[0]" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "output_file" "!prob->output_file" %>
     <%@expand COPY_YESNO3 "disable_stderr"  %>
     <%@expand COPY_YESNO3 "ignore_exit_code"  %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "start_cmd" "!prob->start_cmd" %>

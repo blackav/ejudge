@@ -85,4 +85,3 @@ userlist_clnt_get_prev_user_id(
 
   return ULS_LOGIN_OK;
 }
-

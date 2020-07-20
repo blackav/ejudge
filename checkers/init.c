@@ -86,4 +86,3 @@ checker_do_init(int argc, char **argv, int corr_flag, int info_flag,
   }
 #endif
 }
-

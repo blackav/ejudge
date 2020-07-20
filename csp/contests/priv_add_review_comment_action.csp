@@ -1,0 +1,24 @@
+<%
+%><%@include "priv_includes.csp"
+%><%@set getter_name = "csp_get_priv_add_review_comment_action"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
+%><%@page csp_view_priv_add_review_comment_action(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+  if (opcaps_check(phr->caps, OPCAP_CONTROL_CONTEST) < 0)
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+
+  int run_id = 0;
+  unsigned char *review_comment = NULL;
+
+%><s:read var="run_id" name="run_id" default="0" error="inv-run-id" /><%
+%><s:read var="review_comment" normalize="yes" /><%
+
+  ns_add_review_comment(phr->contest_id, cs, run_id, review_comment);
+
+%><s:url name="ViewSourceUrl" ac="view-source"><s:param name="run_id" value="run_id"/></s:url><s:redirect url="ViewSourceUrl" /><%
+cleanup:
+  html_armor_free(&ab);
+  xfree(review_comment);
+%>

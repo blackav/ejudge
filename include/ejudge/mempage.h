@@ -36,11 +36,10 @@ extern "C" {
   void       pgDestroy(tPageDesc *);
   void      *pgMalloc(tPageDesc *,size_t);
   void      *pgCalloc(tPageDesc *, size_t nelem, size_t elem_size);
-  void       pgPageStatistics(tPageDesc *, FILE *);    
+  void       pgPageStatistics(tPageDesc *, FILE *);
 
 #if defined __cplusplus
 }
 #endif /* __cplusplus */
 
 #endif /* __MEMPAGE_H__ */
-

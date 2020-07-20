@@ -1,0 +1,492 @@
+<%
+%><%@include "priv_includes.csp"
+%><%
+// includes
+#include "ejudge/content_plugin.h"
+%><%@set getter_name = "csp_get_priv_users_new_page"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@page csp_view_priv_users_new_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "priv_stdvars.csp"
+%><%
+    int enable_main_menu = 1;
+    const unsigned char *title = _("Users page");
+    const struct section_global_data *global = extra->serve_state->global;
+    struct content_loaded_plugin *cp = NULL;
+    int content_enabled = 0;
+
+    if (cnts && cnts->enable_avatar > 0) {
+        cp = content_plugin_get(extra, cnts, phr->config, NULL);
+    }
+    if (cp) {
+        content_enabled = cp->iface->is_enabled(cp->data, cnts);
+    }
+
+    l10n_setlocale(phr->locale_id);
+%><%@include "priv_header_jq.csp"
+%>
+</div>
+
+<h2>Registered users</h2>
+
+<table class="table-filter"><tr>
+    <td><input type="checkbox" name="show_not_ok" id="ShowNotOkUsers" onchange="showNotOkUsersChange()">Show Pending/Rejected</td>
+    <td><input type="checkbox" name="show_invisible" id="ShowInvisibleUsers" onchange="showInvisibleUsersChange()">Show Invisible</td>
+    <td><input type="checkbox" name="show_banned" id="ShowBannedUsers" onchange="showBannedUsersChange()">Show Banned/Locked/Disqualified</td>
+    <td><input type="checkbox" name="show_only_pending" id="ShowOnlyPendingUsers" onchange="showOnlyPendingUsersChange()">Show Only Pending</td>
+</tr></table>
+
+<div id="UsersTableDiv">
+    <table class="b1 table-b1 table-users<% if (cnts->enable_avatar <= 0) { %> t-left<% } %>">
+        <thead>
+            <tr>
+                <th class="b1"><input id="ToggleAllCheckbox" type="checkbox" onclick="toggleUserSelection()" /></th>
+                <th class="b1">NN</th>
+                <th class="b1">Id</th>
+<%   if (cnts->enable_avatar > 0) { %>
+                <th class="b1">Avatar</th>
+<%   } %>
+                <th class="b1">Login</th>
+                <th class="b1">Name</th>
+                <th class="b1">Status</th>
+                <th class="b1">Flags</th>
+                <th class="b1">Reg. date</th>
+                <th class="b1">Login date</th>
+                <th class="b1">No. of submits</th>
+                <th class="b1">Size of submits</th>
+                <th class="b1">No. of clars</th>
+                <%
+    if (global->memoize_user_results > 0) {
+                %><th class="b1">Score</th><%
+    }
+                %>
+            </tr>
+        </thead>
+        <tbody id="UsersTableTBody">
+        </tbody>
+    </table>
+</div>
+
+<input type="button" value="Clear selection" onclick="clearUserSelection()" /><br/>
+
+<p>Range (UID1-UID2): <input type="text" name="range" value="" id="UserRangeInput" /><input type="button" value="Select Range" onclick="selectUserRange()" /></p>
+
+<h2>Change registration status</h2>
+
+<s:form onsubmit="usersRemoveRegistrationsSubmit()">
+<s:hidden id="UsersRemoveIdList" name="new_user_id_list" value ="" />
+<s:submit ac="users-remove-registrations" />
+</s:form>
+<br/>
+
+<s:form onsubmit="usersChangeRegistrationsSubmit()">
+<s:hidden id="UsersChangeIdList" name="new_user_id_list" value ="" />
+<select name="new_status">
+<option value="-1"></option>
+<option value="0">OK</option>
+<option value="1">PENDING</option>
+<option value="2">REJECTED</option>
+</select>
+<s:submit ac="users-set-status" />
+</s:form>
+
+<s:form onsubmit="usersChangeFlagsSubmit()">
+<s:hidden id="FlagsChangeIdList" name="new_user_id_list" value ="" />
+<table border="0">
+<tr><td>&nbsp;</td><td>BANNED</td><td>INVISIBLE</td><td>LOCKED</td><td>INCOMPLETE</td><td>DISQUALIFIED</td><td>PRIVILEGED</td><td>REG. READ-ONLY</td></tr>
+<tr>
+    <td>No change</td>
+    <td><input type="radio" name="flag_0" value="0" /></td>
+    <td><input type="radio" name="flag_1" value="0" /></td>
+    <td><input type="radio" name="flag_2" value="0" /></td>
+    <td><input type="radio" name="flag_3" value="0" /></td>
+    <td><input type="radio" name="flag_4" value="0" /></td>
+    <td><input type="radio" name="flag_5" value="0" /></td>
+    <td><input type="radio" name="flag_6" value="0" /></td>
+</tr>
+<tr>
+    <td>Set</td>
+    <td><input type="radio" name="flag_0" value="1" /></td>
+    <td><input type="radio" name="flag_1" value="1" /></td>
+    <td><input type="radio" name="flag_2" value="1" /></td>
+    <td><input type="radio" name="flag_3" value="1" /></td>
+    <td><input type="radio" name="flag_4" value="1" /></td>
+    <td><input type="radio" name="flag_5" value="1" /></td>
+    <td><input type="radio" name="flag_6" value="1" /></td>
+</tr>
+<tr>
+    <td>Clear</td>
+    <td><input type="radio" name="flag_0" value="2" /></td>
+    <td><input type="radio" name="flag_1" value="2" /></td>
+    <td><input type="radio" name="flag_2" value="2" /></td>
+    <td><input type="radio" name="flag_3" value="2" /></td>
+    <td><input type="radio" name="flag_4" value="2" /></td>
+    <td><input type="radio" name="flag_5" value="2" /></td>
+    <td><input type="radio" name="flag_6" value="2" /></td>
+</tr>
+<tr>
+    <td>Toggle</td>
+    <td><input type="radio" name="flag_0" value="3" /></td>
+    <td><input type="radio" name="flag_1" value="3" /></td>
+    <td><input type="radio" name="flag_2" value="3" /></td>
+    <td><input type="radio" name="flag_3" value="3" /></td>
+    <td><input type="radio" name="flag_4" value="3" /></td>
+    <td><input type="radio" name="flag_5" value="3" /></td>
+    <td><input type="radio" name="flag_6" value="3" /></td>
+</tr>
+</table>
+<s:submit ac="users-change-flags" />
+</s:form>
+
+<h2><s:_>Disqualify selected users</s:_></h2>
+<s:form onsubmit="usersDisqualifySubmit()">
+<s:hidden id="UsersDisqualifyIdList" name="new_user_id_list" value ="" />
+<p><s:_>Disqualification explanation</s:_>:<br>
+<textarea name="disq_comment" rows="5" cols="60">
+</textarea></p>
+
+<table class="b0"><tr>
+<td class="b0"><s:submit ac="users-set-disqualified" /></td>
+</tr></table>
+</s:form>
+
+<h2><s:_>Add new user</s:_></h2>
+<s:form>
+<table>
+<tr><td><input type="text" size="32" name="add_login"/></td><td><s:submit ac="users-add-by-login" /></td><td><s:_>Add a new user specifying his/her login</s:_></td></tr>
+<tr><td><input type="text" size="32" name="add_user_id"/></td><td><s:submit ac="users-add-by-user-id" /></td><td><s:_>Add a new user specifying his/her User Id</s:_></td></tr>
+</table>
+</s:form>
+
+<% if (global->user_exam_protocol_header_txt || global->full_exam_protocol_header_txt || global->full_exam_protocol_header_txt) { %>
+<h2>Protocol generation</h2>
+
+<s:form onsubmit="printProtocolSubmit()">
+<s:hidden id="ProtocolIdList" name="new_user_id_list" value ="" />
+<table>
+<tr><td><input type="checkbox" name="include_testing_report" />Include testing report</td><td>&nbsp;</td></tr>
+<tr><td><input type="checkbox" name="run_latex" />Run latex automatically</td><td>&nbsp;</td></tr>
+<tr><td><input type="checkbox" name="print_pdfs" />Print generated PDFs</td><td>&nbsp;</td></tr>
+<tr><td><input type="checkbox" name="clear_working_directory" />Clear working directory after printing</td><td>&nbsp;</td></tr>
+<%  if (global->user_exam_protocol_header_txt) { %>
+<tr><td><s:submit ac="print-selected-user-protocol" /></td><td><s:_>Print the user examination protocols for the selected users</s:_></td></tr>
+<% } %>
+<%  if (global->full_exam_protocol_header_txt) { %>
+<tr><td><s:submit ac="print-selected-user-full-protocol" /></td><td><s:_>Print the user full examination protocols for the selected users</s:_></td></tr>
+<% } %>
+<%  if (global->full_exam_protocol_header_txt) { %>
+<tr><td><s:submit ac="print-selected-ufc-protocol" /></td><td><s:_>Print the user full cyphered examination protocols for the selected users</s:_></td></tr>
+<% } %>
+</table>
+</s:form>
+<% } %>
+
+<%  if (global->is_virtual > 0) {%>
+
+<h2>Virtual participation</h2>
+
+<s:form onsubmit="virtualStartSubmit()">
+<s:hidden id="VirtualIdList" name="new_user_id_list" value ="" />
+<table>
+<tr><td><s:submit ac="force-start-virtual" /></td><td><s:_>Force virtual contest start for the selected users</s:_></td></tr>
+</table>
+</s:form>
+<%  }%>
+
+<script type="text/javascript">
+    var SID='<s:v value="phr->session_id" />';
+    var self_url='<s:v value="phr->self_url" escape="false" />';
+    var script_name='<s:v value="phr->script_name" escape="false" />';
+    var contest_id='<s:v value="phr->contest_id" escape="false" />';
+
+    var action_users_new_ajax=<s:ac ac="view-users-new-ajax" />;
+    var action_main_page=<s:ac ac="main-page" />;
+    var action_view_user_info=<s:ac ac="view-user-info" />;
+    var action_get_avatar=<s:ac ac="get-avatar" />;
+
+    var show_not_ok = false;
+    var show_invisible = false;
+    var show_banned = false;
+    var show_only_pending = false;
+</script>
+
+<script type="text/javascript">
+var htmlEscapes = {
+	'&': '&amp;',
+	'<': '&lt;',
+	'>': '&gt;',
+	'"': '&quot;',
+	"'": '&#x27;',
+	'/': '&#x2F;'
+};
+
+// Regex containing the keys listed immediately above.
+var htmlEscaper = /[&<>"'\/]/g;
+
+// Escape a string for HTML interpolation.
+function escapeHtml(string)
+{
+    return ('' + string).replace(htmlEscaper, function(match) { return htmlEscapes[match]; });
+}
+
+function makeUserIdList()
+{
+    var list = "";
+    $("#UsersTableTBody input[type=checkbox]:checked").each(function() {
+        var cb = $(this);
+        var etr = cb.closest("tr");
+        var uid = parseInt(etr.find("td:nth-child(3)").text());
+        list += " " + uid;
+    });
+    return list;
+}
+
+function showNotOkUsersChange()
+{
+    show_not_ok = $("#ShowNotOkUsers").prop("checked");
+    loadTable();
+}
+
+function showInvisibleUsersChange()
+{
+    show_invisible = $("#ShowInvisibleUsers").prop("checked");
+    loadTable();
+}
+
+function showBannedUsersChange()
+{
+    show_banned = $("#ShowBannedUsers").prop("checked");
+    loadTable();
+}
+
+function showOnlyPendingUsersChange()
+{
+    show_only_pending = $("#ShowOnlyPendingUsers").prop("checked");
+    loadTable();
+}
+
+function usersRemoveRegistrationsSubmit()
+{
+    var ids = makeUserIdList();
+    $("#UsersRemoveIdList").val(ids);
+    return true;
+}
+
+function usersChangeRegistrationsSubmit()
+{
+    var ids = makeUserIdList();
+    $("#UsersChangeIdList").val(ids);
+    return true;
+}
+
+function usersChangeFlagsSubmit()
+{
+    var ids = makeUserIdList();
+    $("#FlagsChangeIdList").val(ids);
+    return true;
+}
+
+function usersDisqualifySubmit()
+{
+    var ids = makeUserIdList();
+    $("#UsersDisqualifyIdList").val(ids);
+    return true;
+}
+
+function printProtocolSubmit()
+{
+    var ids = makeUserIdList();
+    $("#ProtocolIdList").val(ids);
+    return true;
+}
+
+function virtualStartSubmit()
+{
+    var ids = makeUserIdList();
+    $("#VirtualIdList").val(ids);
+    return true;
+}
+
+function selectUserRange()
+{
+    var intext = $("#UserRangeInput").val();
+    var pattern = /^\s*(\d+)\s*-\s*(\d+)\s*$/;
+    var result = pattern.exec(intext);
+    var low = parseInt(result[1]);
+    var high = parseInt(result[2]);
+    var userSet = {};
+    for (var i = low; i <= high; ++i) {
+        userSet[i] = 1;
+    }
+    $("#UsersTableTBody input[type=checkbox]").each(function() {
+        var cb = $(this);
+        var etr = cb.closest("tr");
+        var uid = parseInt(etr.find("td:nth-child(3)").text());
+        if (uid in userSet) {
+            cb.prop("checked", true);
+        }
+    });
+    $("#UserRangeInput").val("");
+}
+
+function toggleUserSelection()
+{
+    $("#UsersTableTBody input[type=checkbox]").each(function() {
+        var cb = $(this);
+        cb.prop("checked", !cb.prop("checked"));
+    });
+    $("#ToggleAllCheckbox").prop("checked", false);
+}
+
+function clearUserSelection()
+{
+    $("div#UsersTableDiv input[type=checkbox]").each(function() {
+        var cb = $(this);
+        cb.prop("checked", false);
+    });
+}
+
+<%  if (content_enabled > 0 && cp && cp->iface->generate_url_generator) {
+        cp->iface->generate_url_generator(cp->data, cnts, out_f, "getAvatarUrl");
+    } else { %>
+
+function getAvatarUrl(avatar_id, avatar_suffix)
+{
+    var text = "";
+    text += self_url;
+    text += "?SID=";
+    text += SID;
+    text += "&amp;action=";
+    text += action_get_avatar;
+    text += "&amp;key=";
+    text += avatar_id;
+    return text;
+}
+
+<% } %>
+
+function updateTable(arr)
+{
+    var text = "";
+    for (var i = 0; i < arr.length; ++i) {
+        var v = arr[i];
+        var sep = "";
+        text += "<tr>";
+        text += "<td class=\"b1\"><input type=\"checkbox\" /></td>";
+        text += "<td class=\"b1\">" + v.serial + "</td>";
+        text += "<td class=\"b1\"><a href=\"";
+        text += self_url;
+        text += "?SID=";
+        text += SID;
+        text += "&amp;action=";
+        text += action_main_page;
+        text += "&amp;filter_expr=";
+        text += encodeURIComponent("uid==" + v.user_id);
+        text += "\">";
+        text += v.user_id;
+        text += "</a></td>";
+<% if (cnts->enable_avatar > 0) { %>
+        text += "<td class=\"b1 userpic\">";
+        if (v.hasOwnProperty("avatar_id") && v.avatar_id != null) {
+            text += "<img src=\"";
+            text += getAvatarUrl(v.avatar_id, v.avatar_suffix);
+            text += "\" alt=\"avatar\" />";
+        }
+        text += "</td>";
+<% } %>
+        text += "<td class=\"b1\"><a href=\"";
+        text += self_url;
+        text += "?SID=";
+        text += SID;
+        text += "&amp;action=";
+        text += action_view_user_info;
+        text += "&amp;user_id=";
+        text += v.user_id;
+        text += "\">";
+        text += escapeHtml(v.user_login) + "</a></td>";
+        text += "<td class=\"b1\">" + escapeHtml(v.user_name) + "</td>";
+        text += "<td class=\"b1\">" + escapeHtml(v.status) + "</td>";
+        // flags
+        text += "<td class=\"b1\">";
+        if (v.is_banned) {
+            text += sep;
+            text += "banned";
+            sep = ", ";
+        }
+        if (v.is_invisible) {
+            text += sep;
+            text += "invisible";
+            sep = ", ";
+        }
+        if (v.is_locked) {
+            text += sep;
+            text += "locked";
+            sep = ", ";
+        }
+        if (v.is_incomplete) {
+            text += sep;
+            text += "incomplete";
+            sep = ", ";
+        }
+        if (v.is_disqualified) {
+            text += sep;
+            text += "disqualified";
+            sep = ", ";
+        }
+        if (v.is_privileged) {
+            text += sep;
+            text += "privileged";
+            sep = ", ";
+        }
+        if (v.is_reg_readonly) {
+            text += sep;
+            text += "reg. readonly";
+            sep = ", ";
+        }
+        text += "</td>";
+        text += "<td class=\"b1\">" + escapeHtml(v.create_time) + "</td>";
+        text += "<td class=\"b1\">" + escapeHtml(v.last_login_time) + "</td>";
+        text += "<td class=\"b1\">" + v.run_count + "</td>";
+        text += "<td class=\"b1\">" + v.run_size + "</td>";
+        text += "<td class=\"b1\">" + v.clar_count + "</td>";
+        text += "</tr>\n";
+    }
+    $("#UsersTableDiv > table > tbody").html(text);
+}
+
+function loadTable()
+{
+    $.ajax({
+        type: "GET",
+        url: self_url,
+        data: {
+            SID: SID,
+            action: action_users_new_ajax,
+            show_not_ok : show_not_ok,
+            show_invisible : show_invisible,
+            show_banned : show_banned,
+            show_only_pending : show_only_pending
+        },
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function(data) {
+            if (data.result == 1) {
+                updateTable(data.data);
+            } else {
+                alert("Error: " + data.message);
+            }
+        }
+    });
+}
+
+$(function()
+{
+    loadTable();
+});
+</script>
+
+<%@include "priv_footer.csp"
+%><%
+//cleanup:
+  l10n_resetlocale();
+  html_armor_free(&ab);
+%>

@@ -1,0 +1,92 @@
+#!/bin/sh
+# Copyright (c) 2017 Alexander Chernov <cher@ejudge.ru>
+
+LANG_CONFIG_DIR="@lang_config_dir@"
+
+common_config() {
+  echo 'long_name="NodeJS"'
+  echo 'src_sfx=".js"'
+  echo 'arch="linux-shared"'
+  echo 'insecure=1'
+}
+
+failure() {
+  rm -f conftest*
+  echo 'version='
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'NODEPATH=/bin/false'
+  [ "${verbose}" = 1 ] && echo "no" >&2
+  exit 1
+}
+
+unset LANG
+unset LC_ALL
+unset LC_MESSAGES
+unset LANGUAGE
+
+if [ x"$1" = x-v ]
+then
+  verbose=1
+  shift
+fi
+
+# recheck the language
+if [ x"$1" = x-r ]
+then
+  arg="$2"
+  [ x"$2" != x ] && node="$2"
+  [ "${node}" = "" ] && node="node"
+
+  [ "${verbose}" = 1 ] && echo -n "checking whether NodeJs is available..." >&2
+  "${node}" --version >/dev/null 2>&1 || failure
+  version=`"${node}" --version 2>&1 | sed 's/v//g'` || failure
+  [ "${version}" != "" ] || failure
+  NODEPATH=`which "${node}"` || failure
+  [ "${NODEPATH}" != "" ] || failure
+  echo "#! ${NODEPATH}" > conftest.rb
+  echo "console.log('yes');" >> conftest.rb
+  chmod +x ./conftest.rb || failure
+  ./conftest.rb >/dev/null 2>&1 || failure
+
+  rm -f ./conftest*
+  echo 'version="'"${version}"'"'
+  echo 'arg="'"${arg}"'"'
+  common_config
+  echo 'NODEPATH="'"${NODEPATH}"'"'
+  [ "${verbose}" = 1 ] && echo "yes, ${NODEPATH}, ${version}" >&2
+  exit 0
+fi
+
+if [ x"$1" = x-l ]
+then
+  echo "NodeJS interpreter [https://nodejs.org]"
+  exit 0
+fi
+
+[ "${EJUDGE_LANG_CONFIG}" = "" ] && EJUDGE_LANG_CONFIG="${LANG_CONFIG_DIR}/node.cfg"
+
+if [ -f "${EJUDGE_LANG_CONFIG}" ]
+then
+  . "${EJUDGE_LANG_CONFIG}"
+else
+  NODEPATH=`which node`
+fi
+
+if [ x"${NODEPATH}" = x -o x"${NODEPATH}" = x/bin/false ]
+then
+  echo "This language is not supported." >&2
+  exit 1
+fi
+
+if [ x"$1" = x-p ]
+then
+    echo "${NODEPATH}"
+    exit 0
+fi
+
+"${NODEPATH}" --version 2>/dev/null >/dev/null || exit 1
+    
+[ x"$1" = x-f ] && echo -n "NodeJS "
+
+"${NODEPATH}" --version 2>&1 | sed 's/v//g'

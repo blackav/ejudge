@@ -100,4 +100,3 @@ userlist_clnt_list_users_2(
 
   return ULS_XML_DATA;
 }
-

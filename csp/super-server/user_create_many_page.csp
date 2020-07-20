@@ -1,0 +1,467 @@
+<%
+%><%@include "includes.csp"
+%><%
+extern const struct ss_user_row_info ss_user_flag_rows[];
+%><%@set getter_name = "csp_get_user_create_many_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_user_create_many_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = NULL;
+    const unsigned char *subtitle = "create many new users";
+    int contest_id = 0;
+    int group_id = 0;
+    const int *cnts_id_list = 0;
+    int cnts_id_count = 0;
+    opcap_t caps = 0;
+    int row, i, other_contest_id_2;
+
+    const unsigned char *marked_str = NULL; // needed for users_top_menu.csp
+    int other_user_id = 0;                  // needed for users_top_menu.csp
+
+%><s:read name="contest_id" default="0" /><%
+%><s:read name="group_id" default="0" /><%
+
+    if (contest_id != 0) {
+        if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
+    }
+    if (contest_id < 0) contest_id = 0;
+    if (group_id < 0) group_id = 0;
+
+    if (ss_get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_CREATE_USER) < 0) {
+        FAIL(SSERV_ERR_PERM_DENIED);
+    }
+
+    cnts_id_count = contests_get_list(&cnts_id_list);
+    if (cnts_id_count <= 0 || !cnts_id_list) {
+        cnts_id_count = 0;
+        cnts_id_list = 0;
+    }
+
+%><%@include "header.csp"
+%>
+
+<h2>Create many new users</h2>
+
+<%@include "users_top_menu.csp"
+%>
+
+<script language="javascript" src="<s:config name="style-prefix" />sprintf.js" ></script>
+<script language="javascript">
+function changeEmail(form_obj)
+{
+    if (form_obj.other_email.value != null && form_obj.other_email.value != "") {
+        document.getElementById("SendEmailRow").style.display = "";
+        changeSendEmail(form_obj);
+    } else {
+        document.getElementById("SendEmailRow").style.display = "none";
+        document.getElementById("ConfirmEmailRow").style.display = "none";
+    }
+}
+
+function changeSendEmail(form_obj)
+{
+    if (form_obj.send_email.checked) {
+        document.getElementById("ConfirmEmailRow").style.display = "";
+    } else {
+        document.getElementById("ConfirmEmailRow").style.display = "none";
+    }
+}
+
+function randomChar()
+{
+    var str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    var ind = Math.floor(Math.random() * str.length);
+    if (ind < 0 || ind >= str.length) ind = 0;
+    return str.charAt(ind);
+}
+function randomString(length)
+{
+    var res = "";
+    for (var i = 0; i < length; ++i) {
+        res += randomChar();
+    }
+    return res;
+}
+function generateRandomRegPassword()
+{
+    form_obj = document.getElementById("CreateForm");
+    form_obj.reg_random.value = randomString(16);
+}
+function copyRandomRegPassword()
+{
+    form_obj = document.getElementById("CreateForm");
+    form_obj.reg_password1.value = form_obj.reg_random.value;
+    form_obj.reg_password2.value = form_obj.reg_random.value;
+}
+function generateRandomCntsPassword()
+{
+    form_obj = document.getElementById("CreateForm");
+    form_obj.cnts_random.value = randomString(16);
+}
+function copyRandomCntsPassword()
+{
+    form_obj = document.getElementById("CreateForm");
+    form_obj.cnts_password1.value = form_obj.cnts_random.value;
+    form_obj.cnts_password2.value = form_obj.cnts_random.value;
+}
+function copyRegPassword()
+{
+    form_obj = document.getElementById("CreateForm");
+    form_obj.cnts_random.value = form_obj.reg_random.value;
+    form_obj.cnts_password1.value = form_obj.reg_password1.value;
+    form_obj.cnts_password2.value = form_obj.reg_password2.value;
+    form_obj.cnts_sha1.checked = form_obj.reg_sha1.checked;
+}
+
+function toggleRowsVisibility2(value, tid, rowclass1, rowclass2)
+{
+    var vis1 = "";
+    var vis2 = "";
+    if (value == true) {
+        vis1 = "none";
+    } else {
+        vis2 = "none";
+    }
+    var tobj = document.getElementById(tid);
+    if (tobj == null) {
+        return;
+    }
+    var trows = tobj.rows;
+    if (trows != null) {
+        for (var row in trows) {
+            if (trows[row].className == rowclass1) {
+                trows[row].style.display = vis1;
+            } else if (trows[row].className == rowclass2) {
+                trows[row].style.display = vis2;
+            }
+        }
+    }
+}
+function changeCntsRegCreate(obj)
+{
+    toggleRowsVisibility2(obj.checked, "CreateUserTable", "CntsRegRow0", "CntsRegRow");
+    updateCntsPasswdVisibility();
+}
+function changeGroupCreate(obj)
+{
+    toggleRowsVisibility2(obj.checked, "CreateUserTable", "GroupRow0", "GroupRow");
+}
+
+function updateCnts1()
+{
+    var obj1 = document.getElementById("cnts1");
+    var obj2 = document.getElementById("cnts2");
+    var value = obj1.value;
+    var i;
+    for (i = 0; i < obj2.options.length; ++i) {
+        if (obj2.options[i].value == value) {
+            obj2.options.selectedIndex = i;
+            break;
+        }
+    }
+    updateCntsPasswdVisibility();
+}
+function updateCnts2()
+{
+    var obj1 = document.getElementById("cnts1");
+    var obj2 = document.getElementById("cnts2");
+    var value = obj2.options[obj2.selectedIndex].value;
+    obj1.value = value;
+    updateCntsPasswdVisibility();
+}
+
+var cnts_passwd_enabled = {
+<%
+    row = 0;
+    for (i = 0; i < cnts_id_count; ++i) {
+        other_contest_id_2 = cnts_id_list[i];
+        if (other_contest_id_2 <= 0) continue;
+        if (contests_get(other_contest_id_2, &cnts) < 0 || !cnts) continue;
+        if (!cnts->disable_team_password) {
+            if (row) {
+                %>, <%
+            }
+            ++row;
+            %><s:v value="other_contest_id_2" /> : true<%
+        }
+    }
+%>
+};
+
+// CntsRegRowUseRegPasswd   cnts_use_reg_passwd
+// CntsRegRowSetToNull      cnts_null_passwd
+// CntsRegRowUseRandom      cnts_random_passwd
+// CntsRegRowPasswdTemplate cnts_password_template
+// CntsRegRowPasswdSha1     cnts_sha1
+function updateCntsPasswdVisibility()
+{
+    form_obj = document.getElementById("CreateForm");
+    if (!form_obj.reg_cnts_create.checked || !cnts_passwd_enabled[form_obj.other_contest_id_1.value]) {
+        form_obj.cnts_use_reg_passwd.checked = false;
+        form_obj.cnts_null_passwd.checked = false;
+        form_obj.cnts_random_passwd.checked = false;
+        form_obj.cnts_password_template.value = "";
+        form_obj.cnts_sha1.checked = false;
+        document.getElementById("CntsRegRowUseRegPasswd").style.display = "none";
+        document.getElementById("CntsRegRowSetToNull").style.display = "none";
+        document.getElementById("CntsRegRowUseRandom").style.display = "none";
+        document.getElementById("CntsRegRowPasswdTemplate").style.display = "none";
+        document.getElementById("CntsRegRowPasswdSha1").style.display = "none";
+    } else {
+        document.getElementById("CntsRegRowUseRegPasswd").style.display = "";
+        if (form_obj.cnts_use_reg_passwd.checked) {
+            form_obj.cnts_null_passwd.checked = false;
+            form_obj.cnts_random_passwd.checked = false;
+            form_obj.cnts_password_template.value = "";
+            form_obj.cnts_sha1.checked = false;
+            document.getElementById("CntsRegRowSetToNull").style.display = "none";
+            document.getElementById("CntsRegRowUseRandom").style.display = "none";
+            document.getElementById("CntsRegRowPasswdTemplate").style.display = "none";
+            document.getElementById("CntsRegRowPasswdSha1").style.display = "none";
+        } else {
+            document.getElementById("CntsRegRowSetToNull").style.display = "";
+            if (form_obj.cnts_null_passwd.checked) {
+                form_obj.cnts_random_passwd.checked = false;
+                form_obj.cnts_password_template.value = "";
+                form_obj.cnts_sha1.checked = false;
+                document.getElementById("CntsRegRowUseRandom").style.display = "none";
+                document.getElementById("CntsRegRowPasswdTemplate").style.display = "none";
+                document.getElementById("CntsRegRowPasswdSha1").style.display = "none";
+            } else {
+                document.getElementById("CntsRegRowUseRandom").style.display = "";
+                if (form_obj.cnts_random_passwd.checked) {
+                    form_obj.cnts_password_template.value = "";
+                    form_obj.cnts_sha1.checked = false;
+                    document.getElementById("CntsRegRowPasswdTemplate").style.display = "none";
+                    document.getElementById("CntsRegRowPasswdSha1").style.display = "none";
+                } else {
+                    document.getElementById("CntsRegRowPasswdTemplate").style.display = "";
+                    document.getElementById("CntsRegRowPasswdSha1").style.display = "";
+                }
+            }
+        }
+    }
+}
+
+function formatLogins()
+{
+    var form_obj = document.getElementById("CreateForm");
+    var div_obj = document.getElementById("LoginsCreated");
+    if (div_obj.childNodes.length == 1) {
+        div_obj.removeChild(div_obj.childNodes[0]);
+    }
+    var str = "";
+    var first = parseInt(form_obj.first_serial.value);
+    var last = parseInt(form_obj.last_serial.value);
+    var format = form_obj.login_template.value;
+    if (first != null && first != NaN && last != null && last != NaN && first >= 0 && last >= 0 && first <= last && last - first + 1 <= 10000 && format != null && format.length > 0) {
+        if (last - first + 1 <= 5) {
+            for (var i = first; i <= last; ++i) {
+                str += " " + sprintf(format, i);
+            }
+        } else {
+            str += sprintf(format, first);
+            str += " " + sprintf(format, first + 1);
+            str += " " + sprintf(format, first + 2);
+            str += " ...";
+            str += " " + sprintf(format, last - 1);
+            str += " " + sprintf(format, last);
+        }
+    }
+    var node = document.createTextNode(str);
+    div_obj.appendChild(node);
+}
+</script>
+
+<s:form id="CreateForm">
+  <s:hidden name="contest_id" checkExpr="> 0" />
+  <s:hidden name="group_id" checkExpr="> 0" />
+
+  <table class="b0" id="CreateUserTable">
+    <tr>
+      <td class="b0"><b>First serial number*:</b></td>
+      <td class="b0"><input type="text" size="40" name="first_serial" onchange="formatLogins()" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Last serial number*:</b></td>
+      <td class="b0"><input type="text" size="40" name="last_serial" onchange="formatLogins()" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Login template*:</b></td>
+      <td class="b0"><input type="text" size="40" name="login_template" onchange="formatLogins()" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Logins to be created:</b></td>
+      <td class="b0" colspan="2"><div id="LoginsCreated" style="display: inline;"></div></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Use random password:</b></td>
+      <td class="b0"><input type="checkbox" onchange="changeRandomRegPassword()" name="reg_random" value="1" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr id="RegPasswordTemplateRow">
+      <td class="b0"><b>Password template:</b></td>
+      <td class="b0"><input type="text" size="40" name="reg_password_template" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr id="RegPasswordSha1Row">
+      <td class="b0"><b>Use SHA1:</b></td>
+      <td class="b0"><input type="checkbox" name="reg_sha1" value="1" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+
+<%
+    for (row = 0; ss_user_flag_rows[row].field_id > 0; ++row) {
+%>
+    <tr>
+      <td class="b0"><b><s:v value="ss_user_flag_rows[row].field_desc" escape="no" />:</b></td>
+      <td class="b0"><input type="checkbox" name="field_<s:v value="ss_user_flag_rows[row].field_id" />" value="1" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+<%
+    }
+%>
+
+    <tr>
+      <td class="b0" colspan="3" align="center"><b>Contest registration</b></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Create a contest registration:</b></td>
+      <td class="b0"><input type="checkbox" onchange="changeCntsRegCreate(this)" name="reg_cnts_create" value="1" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>Contest ID:</b></td>
+      <td class="b0"><s:textfield id="cnts1" onchange="updateCnts1()" name="other_contest_id_1" size="20" value="contest_id" fullCheckExpr="contest_id > 0" /></td>
+    </tr>
+<%
+    if (cnts_id_count > 0) {
+%>
+    <tr class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>Contest name:</b></td>
+      <td class="b0">
+        <select id="cnts2" onchange="updateCnts2()" name="other_contest_id_2">
+          <option value="0"></option>
+<%
+        for (i = 0; i < cnts_id_count; ++i) {
+            other_contest_id_2 = cnts_id_list[i];
+            if (other_contest_id_2 <= 0) continue;
+            if (contests_get(other_contest_id_2, &cnts) < 0 || !cnts) continue;
+            if (cnts->closed) continue;
+%>
+          <s:option value="other_contest_id_2" selectedExpr="contest_id > 0 && cnts->id == contest_id"><s:v value="cnts->name" /></s:option>
+<%
+        }
+%>
+        </select>
+      </td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+<%
+    }
+%>
+
+    <tr class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>Status:</b></td>
+      <td class="b0">
+        <select name="cnts_status">
+          <option value="0">OK</option>
+          <option value="1" selected="selected">Pending</option>
+          <option value="2">Rejected</option>
+        </select>
+      </td>
+    </tr>
+    <tr class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>Invisible?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_invisible" /></td>
+    </tr>
+    <tr class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>Banned?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_banned" /></td>
+    </tr>
+    <tr class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>Locked?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_locked" /></td>
+    </tr>
+    <tr class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>Incomplete?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_incomplete" /></td>
+    </tr>
+    <tr class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>Disqualified?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_disqualified" /></td>
+    </tr>
+    <tr class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>Privileged?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_privileged" /></td>
+    </tr>
+    <tr class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>Reg. read-only?</b></td>
+      <td class="b0"><input type="checkbox" value="1" name="is_reg_readonly" /></td>
+    </tr>
+
+    <tr id="CntsRegRowUseRegPasswd" class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>Use registration password:</b></td>
+      <td class="b0"><input type="checkbox" name="cnts_use_reg_passwd" onchange="updateCntsPasswdVisibility()" value="1" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr id="CntsRegRowSetToNull" class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>Set to null:</b></td>
+      <td class="b0"><input type="checkbox" name="cnts_null_passwd" onchange="updateCntsPasswdVisibility()" value="1" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr id="CntsRegRowUseRandom" class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>Random contest password:</b></td>
+      <td class="b0"><input type="checkbox" name="cnts_random_passwd" onchange="updateCntsPasswdVisibility()" value="1" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr id="CntsRegRowPasswdTemplate" class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>Contest password template:</b></td>
+      <td class="b0"><input type="text" name="cnts_password_template" size="40" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr id="CntsRegRowPasswdSha1" class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>Use SHA1:</b></td>
+      <td class="b0"><input type="checkbox" name="cnts_sha1" value="1" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr class="CntsRegRow" style="display: none;" >
+      <td class="b0"><b>User name template:</b></td>
+      <td class="b0"><input type="text" size="40" name="cnts_name_template" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+
+    <tr>
+      <td class="b0" colspan="3" align="center"><b>Group membership</b></td>
+    </tr>
+
+    <tr>
+      <td class="b0"><b>Add user to a group:</b></td>
+      <td class="b0"><input type="checkbox" onchange="changeGroupCreate(this)" name="group_create" value="1" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+    <tr class="GroupRow" style="display: none;" >
+      <td class="b0"><b>Group ID:</b></td>
+      <td class="b0"><s:textfield name="other_group_id" size="20" value="group_id" fullCheckExpr="group_id > 0" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+
+    <tr>
+      <td class="b0">&nbsp;</td>
+      <td class="b0"><s:submit ac="user-create-many-action" text="Create many users" /></td>
+      <td class="b0">&nbsp;</td>
+    </tr>
+  </table>
+</form>
+
+<%@include "footer.csp"
+%><%
+cleanup:
+    l10n_resetlocale();
+    html_armor_free(&ab);
+%>

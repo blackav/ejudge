@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <zlib.h>
+#include <paths.h>
 
 #if HAVE_FERROR_UNLOCKED - 0 == 0
 #define ferror_unlocked(x) ferror(x)
@@ -52,7 +53,7 @@ struct direlem_node
 {
   struct direlem_node *next;
   unsigned char *name;
-}; 
+};
 
 /* remove all files in the specified directory */
 int
@@ -1503,7 +1504,7 @@ remove_directory_recursively(
   ptail = &head->next;
   head->fullpath = xstrdup(rootpath);
   head->node = root;
-  
+
   while (head) {
     /* ignore the errors */
     chmod(head->fullpath, 0770);
@@ -1890,4 +1891,115 @@ failed:
   if (fd >= 0) close(fd);
   if (path[0]) unlink(path);
   return -1;
+}
+
+enum { MAX_TMP_TRIES = 10 };
+
+int
+write_tmp_file_2(
+        FILE *log_f,
+        const unsigned char *tmp_dir,
+        const unsigned char *name_prefix,
+        const unsigned char *name_suffix,
+        char *path,
+        size_t path_size,
+        const unsigned char *data,
+        size_t size)
+{
+  int retval = -1;
+  int fd = -1;
+  int need_unlink = 0;
+
+  ASSERT(path);
+  ASSERT(path_size > 0);
+
+  if (!name_prefix) name_prefix = "ejf_";
+  if (!name_suffix) name_suffix = "";
+  if (!data) {
+    data = "";
+    size = 0;
+  }
+
+  path[0] = 0;
+  if (random_init() < 0) {
+    if (log_f) {
+      fprintf(log_f, "random generator initialization failure");
+    }
+    err("random generator initialization failure");
+    goto cleanup;
+  }
+
+  if (!tmp_dir) tmp_dir = getenv("TMPDIR");
+#if defined P_tmpdir
+  if (!tmp_dir) tmp_dir = P_tmpdir;
+#endif
+#if defined _PATH_TMP
+  if (!tmp_dir) tmp_dir = _PATH_TMP;
+#endif
+  if (!tmp_dir) tmp_dir = "/tmp";
+
+  int tries = 0;
+  while (tries < MAX_TMP_TRIES) {
+    unsigned rr = random_u32();
+    snprintf(path, path_size, "%s/%s%u%s", tmp_dir, name_prefix, rr, name_suffix);
+    fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0600);
+    if (fd >= 0) break;
+    if (errno != EEXIST) {
+      if (log_f) {
+        fprintf(log_f, "cannot create temporary file: %s", strerror(errno));
+      }
+      err("cannot create temporary file: %s", strerror(errno));
+      goto cleanup;
+    }
+    ++tries;
+  }
+  if (tries >= MAX_TMP_TRIES) {
+    if (log_f) {
+      fprintf(log_f, "too many attempts to create a temporary file");
+    }
+    err("too many attempts to create a temporary file");
+    goto cleanup;
+  }
+
+  need_unlink = 1;
+  while (size) {
+    size_t bz = size;
+    if (bz > PIPE_BUF) bz = PIPE_BUF;
+    const unsigned char *p = data;
+    size_t z = bz;
+    while (bz) {
+      ssize_t w = write(fd, p, bz);
+      if (w < 0) {
+        if (log_f) {
+          fprintf(log_f, "write error: %s", strerror(errno));
+        }
+        err("write error: %s", strerror(errno));
+        goto cleanup;
+      }
+      p += w;
+      bz -= w;
+    }
+    data += z;
+    size -= z;
+  }
+  if (close(fd) < 0) {
+    fd = -1;
+    if (log_f) {
+      fprintf(log_f, "write error: %s", strerror(errno));
+    }
+    err("write error: %s", strerror(errno));
+    goto cleanup;
+  }
+  fd = -1;
+  need_unlink = 0;
+  retval = 0;
+
+cleanup:;
+  if (fd >= 0) {
+    close(fd);
+  }
+  if (need_unlink) {
+    unlink(path);
+  }
+  return retval;
 }

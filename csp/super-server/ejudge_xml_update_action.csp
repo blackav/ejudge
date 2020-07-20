@@ -1,0 +1,15 @@
+<%
+%><%@include "includes.csp"
+%><%@set getter_name = "csp_get_ejudge_xml_update_action"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@page csp_view_ejudge_xml_update_action(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    opcap_t caps = 0;
+
+    if (ss_get_global_caps(phr, &caps) < 0 || opcaps_check(caps, OPCAP_PRIV_EDIT_USER) < 0) {
+        FAIL(SSERV_ERR_PERM_DENIED);
+    }
+    retval = SSERV_CMD_MIGRATION_PAGE;
+cleanup:;
+%>

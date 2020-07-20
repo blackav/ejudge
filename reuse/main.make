@@ -1,6 +1,6 @@
 # -*- mode: Makefile -*-
 
-# Copyright (C) 2014-2016 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2014-2018 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -18,16 +18,16 @@ CFLAGS = -O2 -DNDEBUG -DRELEASE -Wall ${WERROR}
 else
 CFLAGS = -Wall $(WERROR)
 endif
-CFLAGSINT = -D_GNU_SOURCE -I../include -I.. -std=gnu99 $(NO_POINTER_SIGN) -g
+CFLAGSINT = -D_GNU_SOURCE -I../include -I.. -std=gnu11 $(NO_POINTER_SIGN) -g
 LDFLAGS = -Wall
-LDFLAGSINT = -std=gnu99 -g
+LDFLAGSINT = -std=gnu11 -g
 LDLIBSINT = -lm
 LDLIBS =
 else
 CFLAGS = -O2 -Wall
-CFLAGSINT = -D_GNU_SOURCE -I../include -I.. -mno-cygwin -std=gnu99 $(NO_POINTER_SIGN)
+CFLAGSINT = -D_GNU_SOURCE -I../include -I.. -mno-cygwin -std=gnu11 $(NO_POINTER_SIGN)
 LDFLAGS = -s
-LDFLAGSINT = -mno-cygwin -std=gnu99
+LDFLAGSINT = -mno-cygwin -std=gnu11
 LDLIBSINT = 
 LDLIBS =
 endif

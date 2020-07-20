@@ -2,7 +2,7 @@
 #ifndef __TESTINFO_H__
 #define __TESTINFO_H__
 
-/* Copyright (C) 2003-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -74,6 +74,24 @@ struct testinfo_struct
   char **style_checker_env_v;
 
   int disable_valgrind;
+  int max_open_file_count;
+  int max_process_count;
+
+  long long max_vm_size;
+  long long max_stack_size;
+  long long max_file_size;
+
+  int ok_language_u;
+  char **ok_language_v;
+
+  char *working_dir;
+
+  int time_limit_ms;
+  int real_time_limit_ms;
+
+  char *program_name;
+
+  int allow_compile_error;
 };
 typedef struct testinfo_struct testinfo_t;
 

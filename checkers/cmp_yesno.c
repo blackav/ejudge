@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,11 @@ int checker_main(int argc, char **argv)
   char user_buf[1024], corr_buf[1024];
 
   if (getenv("EJ_REQUIRE_NL")) {
-    if (fseek(f_out, -1L, SEEK_END) >= 0) {
-      if (getc(f_out) != '\n') fatal_PE(_("No final \\n in the output file"));
-      fseek(f_out, 0L, SEEK_SET);
-    }
+    checker_require_nl(f_out, 1);
   }
+
+  checker_skip_bom(f_corr);
+  checker_skip_bom(f_out);
 
   checker_read_buf_2(1, _("output"), 1, user_buf, sizeof(user_buf), 0, 0);
   checker_read_buf_2(2, _("correct"), 1, corr_buf, sizeof(corr_buf), 0, 0);

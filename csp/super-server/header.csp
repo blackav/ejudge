@@ -40,7 +40,7 @@
         <li><s:a ac="main-page">Main</s:a></li>
     </ul>
     <div id="logout">&nbsp;</div>
-    <!--<div id="logout"><s:a ac="logout">Logout</s:a></div>-->
+    <div id="logout"><s:a ac="logout">Logout</s:a></div>
 </div>
 
 </div>

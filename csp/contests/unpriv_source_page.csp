@@ -36,12 +36,17 @@ ns_unpriv_parse_run_id(
   path_t src_path;
   int view_enabled = 1;
   const unsigned char *language_type = "unknown";
+  int page_enabled = 0;
+  struct virtual_end_info_s *vend_info = NULL;
+  int summoned_count = 0;
 
   start_time = run_get_start_time(cs->runlog_state);
   stop_time = run_get_stop_time(cs->runlog_state);
   if (global->is_virtual) {
     start_time = run_get_virtual_start_time(cs->runlog_state, phr->user_id);
     stop_time = run_get_virtual_stop_time(cs->runlog_state, phr->user_id, cs->current_time);
+    if (stop_time > 0 && cs->current_time >= stop_time && global->virtual_end_info)
+      vend_info = global->virtual_end_info;
   }
 
   if (ns_unpriv_parse_run_id(out_f, phr, cnts, extra, &run_id, &re) < 0)
@@ -57,7 +62,10 @@ ns_unpriv_parse_run_id(
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
-  if (cs->online_view_source < 0 || (!cs->online_view_source && global->team_enable_src_view <= 0)) {
+  if (cs->online_view_source > 0) page_enabled = 1;
+  if (global->team_enable_src_view > 0) page_enabled = 1;
+  if (vend_info && vend_info->source_mode > 0) page_enabled = 1;
+  if (!page_enabled) {
     FAIL(NEW_SRV_ERR_SOURCE_VIEW_DISABLED);
   }
   if (!run_is_normal_or_transient_status(re.status)) {
@@ -118,13 +126,18 @@ ns_unpriv_parse_run_id(
 
   if (ej_uuid_is_nonempty(re.run_uuid)) {
     clar_fetch_run_messages(cs->clarlog_state, &re.run_uuid, &fcev);
+    if (fcev.u > 0 && cs->xuser_state) {
+      for (i = 0; i < fcev.u; ++i) {
+        cs->xuser_state->vt->set_clar_status(cs->xuser_state, phr->user_id, fcev.v[i].e.id, &fcev.v[i].e.uuid);
+      }
+    }
   }
 
   unpriv_load_html_style(phr, cnts, 0, 0);
   l10n_setlocale(phr->locale_id);
   snprintf(title, sizeof(title), "%s %d", _("Source for run"), run_id);
 #define INCLUDE_PRISM 1
-%><%@include "unpriv_header.csp" 
+%><%@include "unpriv_header.csp"
 %><%@include "unpriv_menu.csp"
 %><%@include "unpriv_status.csp"
 %>
@@ -146,7 +159,11 @@ ns_unpriv_parse_run_id(
 <s:url name="DownloadRunUrl" ac="download-run">
     <s:param name="run_id" value="run_id" />
 </s:url>
-<p style="display: inline-block;"><s:a url="DownloadRunUrl"><s:_>Download run</s:_></s:a></p>
+<s:url name="ResubmitUrl" ac="view-problem-submit">
+    <s:param name="prob_id" value="re.prob_id" />
+    <s:param name="lang_id" value="re.lang_id" />
+</s:url>
+<p style="display: inline-block;"><s:a url="ResubmitUrl"><s:_>Resubmit</s:_></s:a>&nbsp;&nbsp;<s:a url="DownloadRunUrl"><s:_>Download run</s:_></s:a></p>
 
 <%
     if (fcev.u > 0) {

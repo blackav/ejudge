@@ -1,4 +1,4 @@
-dnl Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru>
+dnl Copyright (C) 2004-2019 Alexander Chernov <cher@ejudge.ru>
 
 AC_INIT(ejudge,3)
 AC_PREREQ(2.59)
@@ -72,6 +72,9 @@ AC_ARG_ENABLE([cgi-conf-dir], AC_HELP_STRING([--enable-cgi-conf-dir],[specify pa
 AC_ARG_ENABLE([ejudge-xml],AC_HELP_STRING([--enable-ejudge-xml],[specify the default location of ejudge.xml]),[ac_cv_ejudge_xml="$enableval"],[ac_cv_ejudge_xml=""])
 AC_ARG_ENABLE([contests-dir],AC_HELP_STRING([--enable-contests-dir],[specify the default path to the contest configuration directory]),[ac_cv_contests_dir="$enableval"],[ac_cv_contests_dir=""])
 AC_ARG_ENABLE([contests-home-dir],AC_HELP_STRING([--enable-contests-home-dir],[specify the default path to the contests home directory]),[ac_cv_contests_home_dir="$enableval"],[ac_cv_contests_home_dir=""])
+AC_ARG_ENABLE([compile-spool-dir],AC_HELP_STRING([--enable-compile-spool-dir],[specify the path to the compile spool directory]),[ac_cv_compile_spool_dir="$enableval"],[ac_cv_compile_spool_dir=""])
+AC_ARG_ENABLE([run-spool-dir],AC_HELP_STRING([--enable-run-spool-dir],[specify the path to the run spool directory]),[ac_cv_run_spool_dir="$enableval"],[ac_cv_run_spool_dir=""])
+AC_ARG_ENABLE([contests-status-dir],AC_HELP_STRING([--enable-contests-status-dir],[specify the path to the contest status directory]),[ac_cv_contests_status_dir="$enableval"],[ac_cv_contests_status_dir=""])
 AC_ARG_ENABLE([local-dir],AC_HELP_STRING([--enable-local-dir],[specify the default path to the local state directory]),[ac_cv_local_dir="$enableval"],[ac_cv_local_dir=""])
 AC_ARG_ENABLE([ajax],AC_HELP_STRING([--enable-ajax],[enable use of the ajax technology for the client web interface]),[ac_cv_ajax="$enableval"],[ac_cv_ajax=""])
 AC_ARG_ENABLE([style-prefix],AC_HELP_STRING([--enable-style-prefix],[specify the prefix for HTML style files]),[ac_cv_style_prefix="$enableval"],[ac_cv_style_prefix=""])
@@ -80,7 +83,13 @@ AC_ARG_ENABLE([werror],AC_HELP_STRING([--enable-werror],[enable -Werror compilat
 AC_ARG_ENABLE([preserve-scripts],AC_HELP_STRING([--enable-preserve-scripts],[do not overwrite the existing language scripts]), [ac_cv_preserve_scripts=1],[ac_cv_preserve_scripts=])
 AC_ARG_ENABLE([lang-config-dir],AC_HELP_STRING([--enable-lang-config-dir],[install language config scripts into specified directory]),[ac_cv_lang_config_dir="${enableval}"],[ac_cv_lang_config_dir=])
 
+AC_ARG_ENABLE([libmongoc],AC_HELP_STRING([--enable-libmongoc],[enable libmongoc mongo client library]),[ac_cv_enable_libmongoc="${enableval}"],[ac_cv_enable_libmongoc=])
+
 AC_ARG_WITH([rest],AC_HELP_STRING([--with-rest],[enable RESTful API]),[ac_cv_rest="$withval"])
+
+AC_ARG_WITH([primary-user],AC_HELP_STRING([--with-primary-user],[primary ejudge user]),[ac_cv_primary_user="$withval"])
+AC_ARG_WITH([exec-user],AC_HELP_STRING([--with-exec-user],[ejudge executer user]),[ac_cv_exec_user="$withval"])
+AC_ARG_WITH([compile-user],AC_HELP_STRING([--with-compile-user],[ejudge compiler user]),[ac_cv_compile_user="$withval"])
 
 AC_ARG_WITH([httpd-cgi-bin-dir],AC_HELP_STRING([--with-httpd-cgi-bin-dir],[specify the path to the web serve CGI directory]),[ac_cv_httpd_cgi_bin_dir="${withval}"])
 AC_ARG_WITH([httpd-htdocs-dir],AC_HELP_STRING([--with-httpd-htdocs-dir],[specify the path to the web server HTML directory]),[ac_cv_httpd_htdocs_dir="${withval}"])
@@ -136,6 +145,17 @@ fi
 [[ x"${ac_cv_cgi_conf_dir}" = x -o x"${ac_cv_cgi_conf_dir}" = xyes ]] && ac_cv_cgi_conf_dir="../cgi-data"
 [[ x"${ac_cv_style_prefix}" = x -o x"${ac_cv_style_prefix}" = xyes ]] && ac_cv_style_prefix="/ejudge/"
 [[ x"${ac_cv_lang_config_dir}" = x -o x"${ac_cv_lang_config_dir}" = xyes ]] && ac_cv_lang_config_dir="${ac_cv_contests_home_dir}/compile/conf/lang.d"
+[[ x"${ac_cv_compile_spool_dir}" = xyes ]] && ac_cv_compile_spool_dir=`dirname "${ac_cv_contests_home_dir}"`/ej-compile-spool
+[[ x"${ac_cv_run_spool_dir}" = xyes ]] && ac_cv_run_spool_dir=`dirname "${ac_cv_contests_home_dir}"`/ej-run-spool
+if [[ x"${ac_cv_contests_status_dir}" = xyes ]]
+then
+  if [[ x"${ac_cv_local_dir}" != x ]]
+  then
+    ac_cv_contests_status_dir="${ac_cv_local_dir}"/status
+  else
+    ac_cv_contests_status_dir=`dirname "${ac_cv_contests_home_dir}"`/ej-status
+  fi
+fi
 
 machine=`uname -m`
 
@@ -748,7 +768,7 @@ LIBS="${saved_LIBS}"
 dnl compiler warning checking
 saved_CC="${CC}"
 saved_CFLAGS="${CFLAGS}"
-AC_MSG_CHECKING([for annoying gcc warnings])
+AC_MSG_CHECKING([for -Wno-pointer-sign necessity])
 CC="${CC} -Wall -Werror"
 AC_COMPILE_IFELSE([[
 #include <string.h>
@@ -781,6 +801,51 @@ int main(void)
 ]],[
 AC_MSG_RESULT([yes])
 ac_cv_gcc_wno_pointer_sign=-Wno-pointer-sign
+],[
+AC_MSG_RESULT([no])
+])
+fi
+CC="${saved_CC}"
+CFLAGS="${saved_CFLAGS}"
+
+saved_CC="${CC}"
+saved_CFLAGS="${CFLAGS}"
+AC_MSG_CHECKING([for -Wno-format-truncation necessity])
+CC="${CC} -Wall -Werror"
+AC_COMPILE_IFELSE([[
+#include <string.h>
+#include <stdio.h>
+int main(void)
+{
+  char buf1[32];
+  char buf2[32];
+  if (fgets(buf1, sizeof(buf1), stdin))
+    snprintf(buf2, sizeof(buf2), "prefix%s", buf1);
+}
+]],[
+AC_MSG_RESULT([no])
+],[
+AC_MSG_RESULT([yes])
+ac_cv_annoying_warning2=1
+])
+if [[ x"${ac_cv_annoying_warning2}" = x1 ]]
+then
+  AC_MSG_CHECKING([for -Wno-format-truncation])
+  CC="${saved_CC} -Wall -Wno-format-truncation -Werror"
+  CFLAGS=
+  AC_COMPILE_IFELSE([[
+#include <string.h>
+#include <stdio.h>
+int main(void)
+{
+  char buf1[32];
+  char buf2[32];
+  if (fgets(buf1, sizeof(buf1), stdin))
+    snprintf(buf2, sizeof(buf2), "prefix%s", buf1);
+}
+]],[
+AC_MSG_RESULT([yes])
+ac_cv_gcc_wno_format_truncation=-Wno-format-truncation
 ],[
 AC_MSG_RESULT([no])
 ])
@@ -908,20 +973,46 @@ then
   AC_CHECK_HEADER([libintl.h],[],[ac_cv_nls=""])
 fi
 
-AC_MSG_CHECKING([for libmongo-client])
-if pkg-config --exists libmongo-client
+if [[ x"${ac_cv_enable_libmongoc}" != xdisable ]]
 then
-  AC_MSG_RESULT([yes])
-  ac_cv_has_libmongo_client=1
-else
-  AC_MSG_RESULT([no])
-  ac_cv_has_libmongo_client=
+  AC_MSG_CHECKING([for libmongoc])
+  if pkg-config --atleast-version 1.13.0 libmongoc-1.0
+  then
+    AC_MSG_RESULT([yes])
+    ac_cv_has_libmongoc=2
+  elif pkg-config --exists libmongoc-1.0
+  then
+    AC_MSG_RESULT([yes])
+    ac_cv_has_libmongoc=1
+  else
+    AC_MSG_RESULT([no])
+    ac_cv_has_libmongoc=
+  fi
 fi
 
-if [[ x"${ac_cv_has_libmongo_client}" = x1 ]]
+if [[ x"${ac_cv_has_libmongoc}" != x ]]
 then
-  ac_cv_libmongo_client_cflags=`pkg-config --cflags libmongo-client`
-  ac_cv_libmongo_client_libs=`pkg-config --libs libmongo-client`
+  ac_cv_libmongoc_cflags=`pkg-config --cflags libmongoc-1.0`
+  ac_cv_libmongoc_libs=`pkg-config --libs libmongoc-1.0`
+fi
+
+if [[ x"${ac_cv_has_libmongoc}" = x ]]
+then
+  AC_MSG_CHECKING([for libmongo-client])
+  if pkg-config --exists libmongo-client
+  then
+    AC_MSG_RESULT([yes])
+    ac_cv_has_libmongo_client=1
+  else
+    AC_MSG_RESULT([no])
+    ac_cv_has_libmongo_client=
+  fi
+
+  if [[ x"${ac_cv_has_libmongo_client}" = x1 ]]
+  then
+    ac_cv_libmongo_client_cflags=`pkg-config --cflags libmongo-client`
+    ac_cv_libmongo_client_libs=`pkg-config --libs libmongo-client`
+  fi
 fi
 
 dnl Checking for available languages
@@ -1106,6 +1197,7 @@ AC_SUBST(ac_cv_no_kernel)
 AC_SUBST(ac_cv_no_rpath)
 AC_SUBST(ac_cv_nls)
 AC_SUBST(ac_cv_gcc_wno_pointer_sign)
+AC_SUBST(ac_cv_gcc_wno_format_truncation)
 AC_SUBST(cgibindir)
 AC_SUBST(XGETTEXT)
 AC_SUBST(MSGMERGE)
@@ -1138,6 +1230,13 @@ AC_SUBST(ac_cv_lang_config_dir_expanded)
 AC_SUBST(ac_cv_has_libmongo_client)
 AC_SUBST(ac_cv_libmongo_client_cflags)
 AC_SUBST(ac_cv_libmongo_client_libs)
+AC_SUBST(ac_cv_has_libmongoc)
+AC_SUBST(ac_cv_libmongoc_cflags)
+AC_SUBST(ac_cv_libmongoc_libs)
+
+AC_SUBST(ac_cv_primary_user)
+AC_SUBST(ac_cv_compile_user)
+AC_SUBST(ac_cv_exec_user)
 
 if [[ x"${ac_cv_has_regex}" = x1 ]]
 then
@@ -1279,6 +1378,18 @@ if [[ x"${ac_cv_httpd_htdocs_dir}" != x ]]
 then
   AC_DEFINE_UNQUOTED(EJUDGE_HTTPD_HTDOCS_DIR,"${ac_cv_httpd_htdocs_dir}")
 fi
+if [[ x"${ac_cv_compile_spool_dir}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_COMPILE_SPOOL_DIR,"${ac_cv_compile_spool_dir}")
+fi
+if [[ x"${ac_cv_run_spool_dir}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_RUN_SPOOL_DIR,"${ac_cv_run_spool_dir}")
+fi
+if [[ x"${ac_cv_contests_status_dir}" != x ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_CONTESTS_STATUS_DIR,"${ac_cv_contests_status_dir}")
+fi
 
 if [[ x"${ac_cv_conf_dos_filenaming}" != x ]]
 then
@@ -1301,6 +1412,19 @@ then
   AC_DEFINE_UNQUOTED(EJUDGE_REST_PREFIX_LEN,${ac_cv_rest_len})
 fi
 
+if [[ x"${ac_cv_primary_user}" != x -a x"${ac_cv_primary_user}" != xno ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_PRIMARY_USER,"${ac_cv_primary_user}")
+fi
+if [[ x"${ac_cv_exec_user}" != x -a x"${ac_cv_exec_user}" != xno ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_EXEC_USER,"${ac_cv_exec_user}")
+fi
+if [[ x"${ac_cv_compile_user}" != x -a x"${ac_cv_compile_user}" != xno ]]
+then
+  AC_DEFINE_UNQUOTED(EJUDGE_COMPILE_USER,"${ac_cv_compile_user}")
+fi
+
 if [[ x"${ac_cv_conf_64_bit}" != xyes ]]
 then
   AC_DEFINE(CONF_64_BIT, 1)
@@ -1321,6 +1445,14 @@ then
   AC_DEFINE(R_HAS___INT64, 1)
 fi
 
+if [[ x"${ac_cv_has_libmongoc}" = x2 ]]
+then
+  AC_DEFINE(HAVE_LIBMONGOC, 2)
+elif [[ x"${ac_cv_has_libmongoc}" = x1 ]]
+then
+  AC_DEFINE(HAVE_LIBMONGOC, 1)
+fi
+
 if [[ x"${ac_cv_has_libmongo_client}" = x1 ]]
 then
   AC_DEFINE(HAVE_LIBMONGO_CLIENT, 1)
@@ -1330,7 +1462,7 @@ AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_SUBDIRS([libdwarf])
 
-AC_OUTPUT(Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/mysql-common/Makefile plugins/mysql-userlist/Makefile plugins/mysql-clardb/Makefile plugins/mysql-rundb/Makefile plugins/mongo-common/Makefile plugins/mongo-xuser/Makefile style/ejudge-upgrade-web cfront/Makefile reuse/Makefile csp/contests/Makefile csp/super-server/Makefile csp_header.make plugins/telegram/Makefile)
+AC_OUTPUT(Makefile extra/Makefile extra/captest/Makefile checkers/Makefile scripts/Makefile ejudge-config.v scripts/festival plugins/common-mysql/Makefile plugins/userlist-mysql/Makefile plugins/clardb-mysql/Makefile plugins/rundb-mysql/Makefile plugins/common-mongo/Makefile plugins/xuser-mongo/Makefile style/ejudge-upgrade-web cfront/Makefile reuse/Makefile csp/contests/Makefile csp/super-server/Makefile csp_header.make plugins/telegram/Makefile plugins/avatar-mongo/Makefile plugins/status-mongo/Makefile)
 
 #cp -p config.h include/reuse
 cp -p config.h include/ejudge

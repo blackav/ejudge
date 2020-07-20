@@ -1,0 +1,180 @@
+<%
+%><%@include "includes.csp"
+%><%
+#include "ejudge/userlist.h"
+#include "ejudge/userlist_clnt.h"
+#include "ejudge/userlist_proto.h"
+%><%
+#define FIRST_COOKIE(u) ((struct userlist_cookie*) (u)->cookies->first_down)
+#define NEXT_COOKIE(c)  ((struct userlist_cookie*) (c)->b.right)
+#define FIRST_CONTEST(u) ((struct userlist_contest*)(u)->contests->first_down)
+#define NEXT_CONTEST(c)  ((struct userlist_contest*)(c)->b.right)
+%><%
+extern const unsigned char * const ss_reg_status_strs[];
+%><%@set getter_name = "csp_get_user_delete_reg_page"
+%><%@set ac_prefix = "SSERV_CMD_"
+%><%@set err_prefix = "SSERV_ERR_"
+%><%@page csp_view_user_delete_reg_page(PageInterface *pg, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "stdvars.csp"
+%><%
+    const unsigned char *title = NULL;
+    unsigned char subtitle_buf[1024];
+    const unsigned char *subtitle = subtitle_buf;
+
+    int other_user_id = 0;
+    int other_contest_id = 0;
+    int contest_id = 0;
+    int group_id = 0;
+    int next_op = 0;
+    opcap_t gcaps = 0, caps = 0;
+    struct userlist_user *u = NULL;
+    int reg_count = 0;
+    const struct userlist_contest *reg = NULL;
+
+    const unsigned char *marked_str = NULL; // needed for users_top_menu.csp
+
+    %><s:read name="other_user_id" /><%
+    %><s:read name="other_contest_id" /><%
+    %><s:read name="contest_id" default="0" /><%
+    %><s:read name="group_id" default="0" /><%
+    %><s:read name="next_op" default="0" /><%
+
+    if (contest_id != 0) {
+        if (contests_get(contest_id, &cnts) < 0 || !cnts) contest_id = 0;
+    }
+    if (group_id < 0) group_id = 0;
+    if (other_contest_id <= 0) {
+        FAIL(SSERV_ERR_INV_CONTEST);
+    }
+    if (contests_get(other_contest_id, &cnts) < 0 || !cnts) {
+        FAIL(SSERV_ERR_INV_CONTEST);
+    }
+    if (next_op != SSERV_CMD_USER_BROWSE_PAGE && next_op != SSERV_CMD_USER_DETAIL_PAGE) next_op = 0;
+
+    if (phr->priv_level <= 0) FAIL(SSERV_ERR_PERM_DENIED);
+    ss_get_global_caps(phr, &gcaps);
+    if (opcaps_check(gcaps, OPCAP_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_DELETE_REG;
+    if (opcaps_check(gcaps, OPCAP_PRIV_EDIT_USER) >= 0) gcaps |= 1LL << OPCAP_PRIV_DELETE_REG;
+    ss_get_contest_caps(phr, cnts, &caps);
+    caps |= gcaps;
+    if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0 && opcaps_check(caps, OPCAP_DELETE_REG) < 0)
+        FAIL(SSERV_ERR_PERM_DENIED);
+
+    snprintf(subtitle_buf, sizeof(subtitle_buf), "Delete the contest registration for user %d, contest %d",
+             other_user_id, other_contest_id);
+
+%><%@include "header.csp"
+%>
+
+<h2><s:v value="subtitle" /></h2>
+
+<%@include "users_top_menu.csp"
+%>
+
+<%
+    if (!(u = ss_get_user_info(phr, other_user_id, 0))) FAIL(SSERV_ERR_DB_ERROR);
+
+    if (ss_is_globally_privileged(phr, u)) {
+        if (opcaps_check(gcaps, OPCAP_PRIV_DELETE_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
+    } else if (ss_is_contest_privileged(cnts, u)) {
+        if (opcaps_check(caps, OPCAP_PRIV_DELETE_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
+    } else {
+        if (opcaps_check(caps, OPCAP_DELETE_REG) < 0) FAIL(SSERV_ERR_PERM_DENIED);
+    }
+
+    if ((reg_count = userlist_user_count_contests(u)) <= 0) {
+%><hr/><h2>Error</h2>
+<pre>No contest registrations</pre><%
+        goto do_footer;
+    }
+    for (reg = FIRST_CONTEST(u); reg; reg = NEXT_CONTEST(reg)) {
+        if (reg->id == other_contest_id) break;
+    }
+    if (!reg) {
+%><hr/><h2>Error</h2>
+<pre>User is not registered for this contest</pre><%
+        goto do_footer;
+    }
+%>
+
+<s:form>
+  <s:hidden name="other_user_id" />
+  <s:hidden name="other_contest_id" />
+  <s:hidden name="contest_id" checkExpr="> 0" />
+  <s:hidden name="group_id" checkExpr="> 0" />
+  <s:hidden name="next_op" checkExpr="> 0" />
+
+  <table class="b0">
+    <tr>
+      <td class="b0"><b>User ID:</b></td>
+      <td class="b0"><s:v value="other_user_id" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>User login:</b></td>
+      <td class="b0"><s:v value="u->login" checkExpr=""/></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Contest ID:</b></td>
+      <td class="b0"><s:v value="other_contest_id" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Contest name:</b></td>
+      <td class="b0"><s:v value="cnts->name" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Status:</b></td>
+      <td class="b0"><s:v value="ss_reg_status_strs[reg->status]" escape="no" /></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Invisible?</b></td>
+      <td class="b0"><% if ((reg->flags & USERLIST_UC_INVISIBLE)) { %><b>YES</b><% } else { %>no<% } %></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Banned?</b></td>
+      <td class="b0"><% if ((reg->flags & USERLIST_UC_BANNED)) { %><b>YES</b><% } else { %>no<% } %></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Locked?</b></td>
+      <td class="b0"><% if ((reg->flags & USERLIST_UC_LOCKED)) { %><b>YES</b><% } else { %>no<% } %></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Incomplete?</b></td>
+      <td class="b0"><% if ((reg->flags & USERLIST_UC_INCOMPLETE)) { %><b>YES</b><% } else { %>no<% } %></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Disqualified?</b></td>
+      <td class="b0"><% if ((reg->flags & USERLIST_UC_DISQUALIFIED)) { %><b>YES</b><% } else { %>no<% } %></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Privileged?</b></td>
+      <td class="b0"><% if ((reg->flags & USERLIST_UC_PRIVILEGED)) { %><b>YES</b><% } else { %>no<% } %></td>
+    </tr>
+    <tr>
+      <td class="b0"><b>Reg. read-only?</b></td>
+      <td class="b0"><% if ((reg->flags & USERLIST_UC_REG_READONLY)) { %><b>YES</b><% } else { %>no<% } %></td>
+    </tr>
+    <tr>
+      <td class="b0">&nbsp;</td>
+      <td class="b0"><s:submit ac="user-delete-reg-action" text="Confirm delete!" /></td>
+    </tr>
+  </table>
+</form>
+
+<s:url name="EditUrl" ac="user-edit-reg-page">
+  <s:param name="other_user_id" value="other_user_id" />
+  <s:param name="other_contest_id" value="other_contest_id" />
+  <s:param name="contest_id" value="contest_id" fullCheckExpr="contest_id > 0" />
+  <s:param name="group_id" value="group_id" fullCheckExpr="group_id > 0" />
+  <s:param name="next_op" value="next_op" fullCheckExpr="next_op > 0" />
+</s:url>
+<p><s:a url="EditUrl">[Edit]</s:a></p>
+
+<% do_footer:; %>
+
+<%@include "footer.csp"
+%><%
+cleanup:
+    l10n_resetlocale();
+    html_armor_free(&ab);
+    userlist_free(&u->b);
+%>

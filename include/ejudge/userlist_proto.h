@@ -3,7 +3,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -122,6 +122,13 @@ enum
     ULS_LIST_ALL_USERS_4,
     ULS_GET_GROUP_INFO,
     ULS_PRIV_CHECK_PASSWORD,
+    ULS_LIST_STANDINGS_USERS_2,
+    ULS_CHECK_USER_2,
+    ULS_CREATE_COOKIE,
+    ULS_CREATE_API_KEY,
+    ULS_GET_API_KEY,
+    ULS_GET_API_KEYS_FOR_USER,
+    ULS_DELETE_API_KEY,
 
     ULS_LAST_CMD
   };
@@ -143,6 +150,8 @@ enum
     ULS_NEW_PASSWORD,
     ULS_TEXT_DATA_FAILURE,
     ULS_COUNT,
+    ULS_BIN_DATA,
+    ULS_API_KEY_DATA,
   };
 
 /* various error codes */
@@ -185,6 +194,7 @@ enum
     ULS_ERR_SIMPLE_REGISTERED,
     ULS_ERR_GROUP_NAME_USED,
     ULS_ERR_BAD_GROUP_ID,
+    ULS_ERR_TOO_MANY_API_KEYS,
 
     ULS_ERR_LAST
   };
@@ -223,13 +233,16 @@ struct userlist_pk_do_login
 {
   short         request_id;
   ej_ip_t       origin_ip;
+  ej_cookie_t   cookie;
   ej_cookie_t   client_key;
+  ej_time64_t   expire;
   int           ssl;
   int           contest_id;
   signed char   locale_id;
   unsigned char priv_level;
   int           role;
   int           pwd_special;
+  int           is_ws;
   unsigned char login_length;
   unsigned char password_length;
   unsigned char data[2];
@@ -257,6 +270,13 @@ struct userlist_pk_cookie_login
   ej_cookie_t        cookie;
   ej_cookie_t        client_key;
   int                role;
+  // the following fields are used for ULS_CREATE_COOKIE
+  ej_time64_t expire;
+  int user_id;
+  int priv_level;
+  int recovery;
+  int team_login;               /* used in case when team_passwd != reg_passwd*/
+  int is_ws;                    /* for WebSocket use */
 };
 
 struct userlist_pk_do_logout
@@ -289,9 +309,11 @@ struct userlist_pk_set_password
   short         request_id;
   int           user_id;
   int           contest_id;
+  int           admin_user_id;
   unsigned char old_len;
   unsigned char new_len;
-  unsigned char data[2];
+  unsigned char admin_len;
+  unsigned char data[3];
 };
 
 struct userlist_pk_register_contest
@@ -437,6 +459,8 @@ struct userlist_pk_create_user_2
   int cnts_is_locked_flag;
   int cnts_is_incomplete_flag;
   int cnts_is_disqualified_flag;
+  int cnts_is_privileged_flag;
+  int cnts_is_reg_readonly_flag;
   int cnts_use_reg_passwd_flag;
   int cnts_set_null_passwd_flag;
   int cnts_random_password_flag;
@@ -446,6 +470,39 @@ struct userlist_pk_create_user_2
   int group_id;
   int register_existing_flag;
   unsigned char data[5];
+};
+
+struct userlist_pk_api_key
+{
+  char token[32];
+  char secret[32];
+  ej_time64_t create_time;
+  ej_time64_t expiry_time;
+  int user_id;
+  int contest_id;
+  int payload_offset;
+  int origin_offset;
+  int all_contests;
+  int role;
+};
+
+struct userlist_pk_contest_info
+{
+  int user_id;
+  int contest_id;
+  int login_offset;
+  int name_offset;
+  int reg_status;
+  int reg_flags;
+};
+
+struct userlist_pk_api_key_data
+{
+  short request_id;
+  int api_key_count;
+  int contest_info_count;
+  int string_pool_size;
+  struct userlist_pk_api_key api_keys[0];
 };
 
 /* server->client replies */
@@ -462,7 +519,9 @@ struct userlist_pk_login_ok
   int                team_login;
   int                reg_status;
   int                reg_flags;
+  int                is_ws;
   int                passwd_method;
+  ej_time64_t        expire;        // cookie expiration
   unsigned char      login_len;
   unsigned char      name_len;
   char               data[2];
@@ -528,6 +587,14 @@ struct userlist_pk_count
 {
   short reply_id;
   long long count;
+};
+
+struct userlist_pk_bin_data
+{
+    short         reply_id;
+    unsigned char endianness;      // 1 - LE
+    unsigned char ptr_size;        // 4 or 8
+    unsigned      pkt_size;
 };
 
 #endif /* __USERLIST_PROTO_H__ */

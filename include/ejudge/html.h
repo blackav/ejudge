@@ -2,7 +2,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -23,21 +23,26 @@
 #include <stdio.h>
 #include <time.h>
 
+struct contest_extra;
+
 void
 write_standings(
-        const serve_state_t,
-        const struct contest_desc *,
-        char const *,
-        char const *,
-        int,
-        char const *,
-        char const *,
-        int,
-        int,
-        int,
+        struct contest_extra *extra,
+        serve_state_t state,
+        const struct contest_desc *cnts,
+        char const *stat_dir,
+        char const *name,
+        char const *name2,
+        int users_on_page,
+        char const *header_str,
+        char const *footer_str,
+        int accepting_mode,
+        int force_fancy_style,
+        int charset_id,
         int user_mode);
 void
 write_public_log(
+        struct contest_extra *extra,
         const serve_state_t,
         const struct contest_desc *,
         char const *,
@@ -57,58 +62,7 @@ void write_standings_header(const serve_state_t state,
 
 struct user_filter_info;
 
-void
-do_write_kirov_standings(
-        const serve_state_t,
-        const struct contest_desc *cnts,
-        FILE *f,
-        const unsigned char *stand_dir,
-        int client_flag,
-        int only_table_flag,
-        int user_id,
-        const unsigned char *header_str,
-        unsigned char const *footer_str,
-        int raw_flag,
-        int accepting_mode,
-        int force_fancy_style,
-        time_t cur_time,
-        int charset_id,
-        struct user_filter_info *u,
-        int user_mode);
-
-void
-do_write_standings(
-        const serve_state_t,
-        const struct contest_desc *cnts,
-        FILE *f,
-        int client_flag,
-        int only_table_flag,
-        int user_id,
-        const unsigned char *header_str,
-        unsigned char const *footer_str,
-        int raw_flag,
-        const unsigned char *user_name,
-        int force_fancy_style,
-        time_t cur_time,
-        struct user_filter_info *u);
-
-void
-do_write_moscow_standings(
-        const serve_state_t,
-        const struct contest_desc *cnts,
-        FILE *f,
-        const unsigned char *stand_dir,
-        int client_flag, int only_table_flag,
-        int user_id,
-        const unsigned char *header_str,
-        const unsigned char *footer_str,
-        int raw_flag,
-        const unsigned char *user_name,
-        int force_fancy_style,
-        time_t cur_time,
-        int charset_id,
-        struct user_filter_info *u);
-
+void html_lock_filter(serve_state_t, int user_id, ej_cookie_t session_id);
 void html_reset_filter(serve_state_t, int user_id, ej_cookie_t session_id);
 void html_reset_clar_filter(serve_state_t, int user_id, ej_cookie_t session_id);
 
@@ -130,9 +84,11 @@ calc_kirov_score(
         const struct section_problem_data *pr,
         int attempts,
         int disq_attempts,
+        int ce_attempts,
         int prev_successes,
         int *p_date_penalty,
-        int format);
+        int format,
+        time_t effective_time);
 void
 write_html_run_status(
         const serve_state_t,
@@ -143,17 +99,21 @@ write_html_run_status(
         int priv_level,
         int attempts,
         int disq_attempts,
+        int ce_attempts,
         int prev_successes,
         const unsigned char *td_class,
         int disable_failed,
         int enable_js_status_menu,
-        int run_fields);
+        int run_fields,
+        time_t effective_time);
+
+struct testing_report_xml;
 
 int
 write_xml_tests_report(
         FILE *f,
         int user_mode,
-        unsigned char const *txt,
+        const struct testing_report_xml *r,
         ej_cookie_t sid,
         unsigned char const *self_url,
         unsigned char const *extra_args,
@@ -198,7 +158,9 @@ write_text_run_status(
         int priv_level,
         int attempts,
         int disq_attempts,
-        int prev_successes);
+        int ce_attempts,
+        int prev_successes,
+        time_t effective_time);
 
 unsigned char*
 score_view_display(
@@ -267,5 +229,60 @@ html_print_testing_report_file_content(
         struct html_armor_buffer *pab,
         struct testing_report_file_content *fc,
         int type);
+
+/* structure to tune standings style */
+struct standings_style
+{
+  // "last success", "last submit"
+  const unsigned char *success_attr;
+
+  // for tables
+  const unsigned char *table_attr;
+  const unsigned char *place_attr;
+  const unsigned char *team_attr;
+  const unsigned char *extra_attr;
+  const unsigned char *prob_attr;
+  const unsigned char *solved_attr;
+  const unsigned char *score_attr;
+  const unsigned char *penalty_attr;
+  const unsigned char *time_attr;
+  const unsigned char *contestant_status_attr;
+  const unsigned char *warn_number_attr;
+
+  // for virtual contests
+  const unsigned char *self_row_attr;
+  const unsigned char *v_row_attr;
+  const unsigned char *r_row_attr;
+  const unsigned char *u_row_attr;
+
+  // for table cells
+  const unsigned char *fail_attr;
+  const unsigned char *trans_attr;
+  const unsigned char *disq_attr;
+  const unsigned char *pr_attr;   // for pending reviews
+  const unsigned char *sm_attr;   // for summoned for defence
+  const unsigned char *rj_attr;   // for rejected
+  const unsigned char *first_attr; // first to solve
+
+  // for page table
+  const unsigned char *page_table_attr;
+  const unsigned char *page_cur_attr;
+};
+
+void
+stand_setup_style(
+        struct standings_style *ps,
+        const struct section_global_data *global,
+        int force_fancy_style);
+void
+stand_write_header(
+        FILE *f,
+        const unsigned char *header_str,
+        const unsigned char *charset,
+        const unsigned char *header);
+void
+stand_write_footer(
+        FILE *f,
+        const unsigned char *footer_str);
 
 #endif /* __HTML_H__ */

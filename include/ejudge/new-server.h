@@ -3,7 +3,7 @@
 #ifndef __NEW_SERVER_H__
 #define __NEW_SERVER_H__
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -52,10 +52,10 @@ struct contest_desc;
 struct contest_extra;
 
 void
-ns_handle_http_request(struct server_framework_state *state,
-                               struct client_state *p,
-                               FILE *out,
-                               struct http_request_info *phr);
+ns_handle_http_request(
+        struct server_framework_state *state,
+        FILE *out,
+        struct http_request_info *phr);
 
 struct ejudge_cfg;
 struct userlist_clnt;
@@ -80,288 +80,6 @@ enum
 };
 #endif
 
-enum
-{
-  NEW_SRV_ACTION_LOGIN_PAGE = 1,
-  NEW_SRV_ACTION_MAIN_PAGE = 2,
-  NEW_SRV_ACTION_COOKIE_LOGIN = 3, /* number needed for super-serve */
-  NEW_SRV_ACTION_VIEW_USERS,
-  NEW_SRV_ACTION_VIEW_ONLINE_USERS,
-  NEW_SRV_ACTION_USERS_REMOVE_REGISTRATIONS,
-  NEW_SRV_ACTION_USERS_SET_PENDING,
-  NEW_SRV_ACTION_USERS_SET_OK,
-  NEW_SRV_ACTION_USERS_SET_REJECTED,
-  NEW_SRV_ACTION_USERS_SET_INVISIBLE,
-  NEW_SRV_ACTION_USERS_CLEAR_INVISIBLE,
-  NEW_SRV_ACTION_USERS_SET_BANNED,
-  NEW_SRV_ACTION_USERS_CLEAR_BANNED,
-  NEW_SRV_ACTION_USERS_SET_LOCKED,
-  NEW_SRV_ACTION_USERS_CLEAR_LOCKED,
-  NEW_SRV_ACTION_USERS_SET_INCOMPLETE,
-  NEW_SRV_ACTION_USERS_CLEAR_INCOMPLETE,
-  NEW_SRV_ACTION_USERS_SET_DISQUALIFIED,
-  NEW_SRV_ACTION_USERS_CLEAR_DISQUALIFIED,
-  NEW_SRV_ACTION_USERS_ADD_BY_LOGIN,
-  NEW_SRV_ACTION_USERS_ADD_BY_USER_ID,
-  NEW_SRV_ACTION_PRIV_USERS_VIEW,
-  NEW_SRV_ACTION_PRIV_USERS_REMOVE,
-  NEW_SRV_ACTION_PRIV_USERS_ADD_OBSERVER,
-  NEW_SRV_ACTION_PRIV_USERS_DEL_OBSERVER,
-  NEW_SRV_ACTION_PRIV_USERS_ADD_EXAMINER,
-  NEW_SRV_ACTION_PRIV_USERS_DEL_EXAMINER,
-  NEW_SRV_ACTION_PRIV_USERS_ADD_CHIEF_EXAMINER,
-  NEW_SRV_ACTION_PRIV_USERS_DEL_CHIEF_EXAMINER,
-  NEW_SRV_ACTION_PRIV_USERS_ADD_COORDINATOR,
-  NEW_SRV_ACTION_PRIV_USERS_DEL_COORDINATOR,
-  NEW_SRV_ACTION_PRIV_USERS_ADD_BY_LOGIN,
-  NEW_SRV_ACTION_PRIV_USERS_ADD_BY_USER_ID,
-  NEW_SRV_ACTION_CHANGE_LANGUAGE,
-  NEW_SRV_ACTION_CHANGE_PASSWORD,
-  NEW_SRV_ACTION_VIEW_SOURCE,
-  NEW_SRV_ACTION_VIEW_REPORT,
-  NEW_SRV_ACTION_PRINT_RUN,
-  NEW_SRV_ACTION_VIEW_CLAR,
-  NEW_SRV_ACTION_SUBMIT_RUN,
-  NEW_SRV_ACTION_SUBMIT_CLAR,
-  NEW_SRV_ACTION_START_CONTEST,
-  NEW_SRV_ACTION_STOP_CONTEST,
-  NEW_SRV_ACTION_CONTINUE_CONTEST,
-  NEW_SRV_ACTION_SCHEDULE,
-  NEW_SRV_ACTION_CHANGE_DURATION,
-  NEW_SRV_ACTION_UPDATE_STANDINGS_1,
-  NEW_SRV_ACTION_RESET_1,
-  NEW_SRV_ACTION_SUSPEND,
-  NEW_SRV_ACTION_RESUME,
-  NEW_SRV_ACTION_TEST_SUSPEND,
-  NEW_SRV_ACTION_TEST_RESUME,
-  NEW_SRV_ACTION_PRINT_SUSPEND,
-  NEW_SRV_ACTION_PRINT_RESUME,
-  NEW_SRV_ACTION_SET_JUDGING_MODE,
-  NEW_SRV_ACTION_SET_ACCEPTING_MODE,
-  NEW_SRV_ACTION_SET_TESTING_FINISHED_FLAG,
-  NEW_SRV_ACTION_CLEAR_TESTING_FINISHED_FLAG,
-  NEW_SRV_ACTION_GENERATE_PASSWORDS_1,
-  NEW_SRV_ACTION_CLEAR_PASSWORDS_1,
-  NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_1,
-  NEW_SRV_ACTION_RELOAD_SERVER,
-  NEW_SRV_ACTION_PRIV_SUBMIT_CLAR,
-  NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT,
-  NEW_SRV_ACTION_RESET_FILTER,
-  NEW_SRV_ACTION_CLEAR_RUN,
-  NEW_SRV_ACTION_CHANGE_STATUS,
-  NEW_SRV_ACTION_REJUDGE_ALL_1,
-  NEW_SRV_ACTION_REJUDGE_SUSPENDED_1,
-  NEW_SRV_ACTION_REJUDGE_DISPLAYED_1,
-  NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_1,
-  NEW_SRV_ACTION_SQUEEZE_RUNS,
-  NEW_SRV_ACTION_RESET_CLAR_FILTER,
-  NEW_SRV_ACTION_LOGOUT,
-  NEW_SRV_ACTION_CHANGE_RUN_USER_ID,
-  NEW_SRV_ACTION_CHANGE_RUN_USER_LOGIN,
-  NEW_SRV_ACTION_CHANGE_RUN_PROB_ID,
-  NEW_SRV_ACTION_CHANGE_RUN_VARIANT,
-  NEW_SRV_ACTION_CHANGE_RUN_LANG_ID,
-  NEW_SRV_ACTION_CHANGE_RUN_IS_IMPORTED,
-  NEW_SRV_ACTION_CHANGE_RUN_IS_HIDDEN,
-  NEW_SRV_ACTION_CHANGE_RUN_IS_EXAMINABLE,
-  NEW_SRV_ACTION_CHANGE_RUN_IS_READONLY,
-  NEW_SRV_ACTION_CHANGE_RUN_IS_MARKED,
-  NEW_SRV_ACTION_CHANGE_RUN_IS_SAVED,
-  NEW_SRV_ACTION_CHANGE_RUN_STATUS,
-  NEW_SRV_ACTION_CHANGE_RUN_TEST,
-  NEW_SRV_ACTION_CHANGE_RUN_SCORE,
-  NEW_SRV_ACTION_CHANGE_RUN_SCORE_ADJ,
-  NEW_SRV_ACTION_CHANGE_RUN_PAGES,
-  NEW_SRV_ACTION_DOWNLOAD_RUN,
-  NEW_SRV_ACTION_COMPARE_RUNS,
-  NEW_SRV_ACTION_UPLOAD_REPORT,
-  NEW_SRV_ACTION_STANDINGS,
-  NEW_SRV_ACTION_REJUDGE_PROBLEM_1,
-  NEW_SRV_ACTION_CLAR_REPLY,
-  NEW_SRV_ACTION_CLAR_REPLY_ALL,
-  NEW_SRV_ACTION_CLAR_REPLY_READ_PROBLEM,
-  NEW_SRV_ACTION_CLAR_REPLY_NO_COMMENTS,
-  NEW_SRV_ACTION_CLAR_REPLY_YES,
-  NEW_SRV_ACTION_CLAR_REPLY_NO,
-  NEW_SRV_ACTION_REJUDGE_DISPLAYED_2,
-  NEW_SRV_ACTION_FULL_REJUDGE_DISPLAYED_2,
-  NEW_SRV_ACTION_REJUDGE_PROBLEM_2,
-  NEW_SRV_ACTION_REJUDGE_ALL_2,
-  NEW_SRV_ACTION_REJUDGE_SUSPENDED_2,
-  NEW_SRV_ACTION_VIEW_TEST_INPUT,
-  NEW_SRV_ACTION_VIEW_TEST_ANSWER,
-  NEW_SRV_ACTION_VIEW_TEST_INFO,
-  NEW_SRV_ACTION_VIEW_TEST_OUTPUT,
-  NEW_SRV_ACTION_VIEW_TEST_ERROR,
-  NEW_SRV_ACTION_VIEW_TEST_CHECKER,
-  NEW_SRV_ACTION_VIEW_AUDIT_LOG,
-  NEW_SRV_ACTION_UPDATE_STANDINGS_2,
-  NEW_SRV_ACTION_RESET_2,
-  NEW_SRV_ACTION_GENERATE_PASSWORDS_2,
-  NEW_SRV_ACTION_CLEAR_PASSWORDS_2,
-  NEW_SRV_ACTION_GENERATE_REG_PASSWORDS_2,
-  NEW_SRV_ACTION_VIEW_CNTS_PWDS,
-  NEW_SRV_ACTION_VIEW_REG_PWDS,
-  NEW_SRV_ACTION_TOGGLE_VISIBILITY,
-  NEW_SRV_ACTION_TOGGLE_BAN,
-  NEW_SRV_ACTION_TOGGLE_LOCK,
-  NEW_SRV_ACTION_TOGGLE_INCOMPLETENESS,
-  NEW_SRV_ACTION_SET_DISQUALIFICATION,
-  NEW_SRV_ACTION_CLEAR_DISQUALIFICATION,
-  NEW_SRV_ACTION_USER_CHANGE_STATUS,
-  NEW_SRV_ACTION_VIEW_USER_INFO,
-  NEW_SRV_ACTION_ISSUE_WARNING,
-  NEW_SRV_ACTION_NEW_RUN_FORM,
-  NEW_SRV_ACTION_NEW_RUN,
-  NEW_SRV_ACTION_VIEW_USER_DUMP,
-  NEW_SRV_ACTION_FORGOT_PASSWORD_1,
-  NEW_SRV_ACTION_FORGOT_PASSWORD_2,
-  NEW_SRV_ACTION_FORGOT_PASSWORD_3,
-  NEW_SRV_ACTION_SUBMIT_APPEAL,
-  NEW_SRV_ACTION_VIEW_PROBLEM_SUMMARY,
-  NEW_SRV_ACTION_VIEW_PROBLEM_STATEMENTS,
-  NEW_SRV_ACTION_VIEW_PROBLEM_SUBMIT,
-  NEW_SRV_ACTION_VIEW_SUBMISSIONS,
-  NEW_SRV_ACTION_VIEW_CLAR_SUBMIT,
-  NEW_SRV_ACTION_VIEW_CLARS,
-  NEW_SRV_ACTION_VIEW_SETTINGS,
-  NEW_SRV_ACTION_VIRTUAL_START,
-  NEW_SRV_ACTION_VIRTUAL_STOP,
-  NEW_SRV_ACTION_VIRTUAL_RESTART,
-  NEW_SRV_ACTION_VIEW_USER_REPORT,
-  NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_1,
-  NEW_SRV_ACTION_DOWNLOAD_ARCHIVE_2,
-  NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_1,
-  NEW_SRV_ACTION_UPLOAD_RUNLOG_CSV_2,
-  NEW_SRV_ACTION_VIEW_RUNS_DUMP,
-  NEW_SRV_ACTION_EXPORT_XML_RUNS,
-  NEW_SRV_ACTION_WRITE_XML_RUNS,
-  NEW_SRV_ACTION_WRITE_XML_RUNS_WITH_SRC,
-  NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_1,
-  NEW_SRV_ACTION_UPLOAD_RUNLOG_XML_2,
-  NEW_SRV_ACTION_LOGIN,         /* for new-server-cmd */
-  NEW_SRV_ACTION_DUMP_PROBLEMS,
-  NEW_SRV_ACTION_DUMP_LANGUAGES,
-  NEW_SRV_ACTION_SOFT_UPDATE_STANDINGS,
-  NEW_SRV_ACTION_HAS_TRANSIENT_RUNS,
-  NEW_SRV_ACTION_DUMP_RUN_STATUS,
-  NEW_SRV_ACTION_DUMP_SOURCE,
-  NEW_SRV_ACTION_DUMP_CLAR,
-  NEW_SRV_ACTION_GET_CONTEST_NAME,
-  NEW_SRV_ACTION_GET_CONTEST_TYPE,
-  NEW_SRV_ACTION_GET_CONTEST_STATUS,
-  NEW_SRV_ACTION_GET_CONTEST_SCHED,
-  NEW_SRV_ACTION_GET_CONTEST_DURATION,
-  NEW_SRV_ACTION_GET_CONTEST_DESCRIPTION,
-  NEW_SRV_ACTION_DUMP_MASTER_RUNS,
-  NEW_SRV_ACTION_DUMP_REPORT,
-  NEW_SRV_ACTION_FULL_UPLOAD_RUNLOG_XML,
-  NEW_SRV_ACTION_JSON_USER_STATE,
-  NEW_SRV_ACTION_VIEW_STARTSTOP,
-  NEW_SRV_ACTION_CLEAR_DISPLAYED_1,
-  NEW_SRV_ACTION_CLEAR_DISPLAYED_2,
-  NEW_SRV_ACTION_IGNORE_DISPLAYED_1,
-  NEW_SRV_ACTION_IGNORE_DISPLAYED_2,
-  NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_1,
-  NEW_SRV_ACTION_DISQUALIFY_DISPLAYED_2,
-  NEW_SRV_ACTION_TOKENIZE_DISPLAYED_1,
-  NEW_SRV_ACTION_TOKENIZE_DISPLAYED_2,
-  NEW_SRV_ACTION_UPDATE_ANSWER,
-  NEW_SRV_ACTION_UPSOLVING_CONFIG_1,
-  NEW_SRV_ACTION_UPSOLVING_CONFIG_2,
-  NEW_SRV_ACTION_UPSOLVING_CONFIG_3,
-  NEW_SRV_ACTION_UPSOLVING_CONFIG_4,
-  NEW_SRV_ACTION_EXAMINERS_PAGE,
-  NEW_SRV_ACTION_ASSIGN_CHIEF_EXAMINER,
-  NEW_SRV_ACTION_ASSIGN_EXAMINER,
-  NEW_SRV_ACTION_UNASSIGN_EXAMINER,
-  NEW_SRV_ACTION_GET_FILE,
-  NEW_SRV_ACTION_PRINT_USER_PROTOCOL,
-  NEW_SRV_ACTION_PRINT_USER_FULL_PROTOCOL,
-  NEW_SRV_ACTION_PRINT_UFC_PROTOCOL, /* user full cyphered */
-  NEW_SRV_ACTION_FORCE_START_VIRTUAL,
-  NEW_SRV_ACTION_PRINT_SELECTED_USER_PROTOCOL,
-  NEW_SRV_ACTION_PRINT_SELECTED_USER_FULL_PROTOCOL,
-  NEW_SRV_ACTION_PRINT_SELECTED_UFC_PROTOCOL, /* user full cyphered */
-  NEW_SRV_ACTION_PRINT_PROBLEM_PROTOCOL,
-  NEW_SRV_ACTION_ASSIGN_CYPHERS_1,
-  NEW_SRV_ACTION_ASSIGN_CYPHERS_2,
-  NEW_SRV_ACTION_VIEW_EXAM_INFO,
-  NEW_SRV_ACTION_PRIV_SUBMIT_PAGE,
-  NEW_SRV_ACTION_USE_TOKEN,
-  NEW_SRV_ACTION_GENERATE_TELEGRAM_TOKEN,
-
-  /* new-register stuff */
-  NEW_SRV_ACTION_REG_CREATE_ACCOUNT_PAGE,
-  NEW_SRV_ACTION_REG_CREATE_ACCOUNT,
-  NEW_SRV_ACTION_REG_ACCOUNT_CREATED_PAGE,
-  NEW_SRV_ACTION_REG_LOGIN_PAGE,
-  NEW_SRV_ACTION_REG_LOGIN,
-  NEW_SRV_ACTION_REG_VIEW_GENERAL,
-  NEW_SRV_ACTION_REG_VIEW_CONTESTANTS,
-  NEW_SRV_ACTION_REG_VIEW_RESERVES,
-  NEW_SRV_ACTION_REG_VIEW_COACHES,
-  NEW_SRV_ACTION_REG_VIEW_ADVISORS,
-  NEW_SRV_ACTION_REG_VIEW_GUESTS,
-  NEW_SRV_ACTION_REG_ADD_MEMBER_PAGE,
-  NEW_SRV_ACTION_REG_EDIT_GENERAL_PAGE,
-  NEW_SRV_ACTION_REG_EDIT_MEMBER_PAGE,
-  NEW_SRV_ACTION_REG_MOVE_MEMBER,
-  NEW_SRV_ACTION_REG_REMOVE_MEMBER,
-  NEW_SRV_ACTION_REG_SUBMIT_GENERAL_EDITING,
-  NEW_SRV_ACTION_REG_CANCEL_GENERAL_EDITING,
-  NEW_SRV_ACTION_REG_SUBMIT_MEMBER_EDITING,
-  NEW_SRV_ACTION_REG_CANCEL_MEMBER_EDITING,
-  NEW_SRV_ACTION_REG_REGISTER,
-  NEW_SRV_ACTION_REG_DATA_EDIT,
-
-  // more master stuff
-  NEW_SRV_ACTION_PRIO_FORM,
-  NEW_SRV_ACTION_SET_PRIORITIES,
-  NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_IGNORE,
-  NEW_SRV_ACTION_VIEW_USER_IPS,
-  NEW_SRV_ACTION_VIEW_IP_USERS,
-  NEW_SRV_ACTION_CHANGE_FINISH_TIME,
-  NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_OK,
-  NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_REJECT,
-  NEW_SRV_ACTION_PRIV_SUBMIT_RUN_COMMENT_AND_SUMMON,
-  NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_IGNORE,
-  NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_OK,
-  NEW_SRV_ACTION_PRIV_SUBMIT_RUN_JUST_SUMMON,  
-  NEW_SRV_ACTION_PRIV_SET_RUN_REJECTED,
-  NEW_SRV_ACTION_VIEW_TESTING_QUEUE,
-  NEW_SRV_ACTION_TESTING_DELETE,
-  NEW_SRV_ACTION_TESTING_UP,
-  NEW_SRV_ACTION_TESTING_DOWN,
-  NEW_SRV_ACTION_TESTING_DELETE_ALL,
-  NEW_SRV_ACTION_TESTING_UP_ALL,
-  NEW_SRV_ACTION_TESTING_DOWN_ALL,
-  NEW_SRV_ACTION_INVOKER_DELETE,
-  NEW_SRV_ACTION_INVOKER_STOP,
-  NEW_SRV_ACTION_INVOKER_DOWN,  
-  NEW_SRV_ACTION_MARK_DISPLAYED_2,
-  NEW_SRV_ACTION_UNMARK_DISPLAYED_2,
-  NEW_SRV_ACTION_SET_STAND_FILTER,
-  NEW_SRV_ACTION_RESET_STAND_FILTER,
-  NEW_SRV_ACTION_ADMIN_CONTEST_SETTINGS,
-  NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_SOURCE,
-  NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_REPORT,
-  NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_VIEW_JUDGE_SCORE,
-  NEW_SRV_ACTION_ADMIN_CHANGE_ONLINE_FINAL_VISIBILITY,
-  NEW_SRV_ACTION_RELOAD_SERVER_2,
-  NEW_SRV_ACTION_CHANGE_RUN_FIELDS,
-  NEW_SRV_ACTION_PRIV_EDIT_CLAR_PAGE,
-  NEW_SRV_ACTION_PRIV_EDIT_CLAR_ACTION,
-  NEW_SRV_ACTION_PRIV_EDIT_RUN_PAGE,
-  NEW_SRV_ACTION_PRIV_EDIT_RUN_ACTION,
-  NEW_SRV_ACTION_PING,
-  NEW_SRV_ACTION_SUBMIT_RUN_BATCH,
-  NEW_SRV_ACTION_CONTESTS_PAGE,
-  NEW_SRV_ACTION_CONTEST_BATCH,
-
-  NEW_SRV_ACTION_LAST,
-};
-
 struct last_access_info
 {
   ej_ip_t ip;
@@ -382,6 +100,10 @@ struct last_access_idx
   int a;
 };
 
+struct avatar_loaded_plugin;
+struct content_loaded_plugin;
+struct ContestExternalActions;
+
 struct contest_extra
 {
   int contest_id;
@@ -393,6 +115,11 @@ struct contest_extra
   const unsigned char *header_txt;
   const unsigned char *footer_txt;
   const unsigned char *separator_txt;
+
+  const unsigned char *priv_header_txt;
+  const unsigned char *priv_footer_txt;
+  const unsigned char *priv_separator_txt;
+
   const unsigned char *copyright_txt;
   unsigned char *contest_arm;
 
@@ -401,6 +128,15 @@ struct contest_extra
 
   serve_state_t serve_state;
   time_t last_access_time;
+
+  // the main avatar plugin
+  // FIXME: implement multiple avatar plugins per contest
+  struct avatar_loaded_plugin *main_avatar_plugin;
+  // FIXME: the same for content plugin
+  struct content_loaded_plugin *main_content_plugin;
+
+  // contest-specific pages
+  struct ContestExternalActions *cnts_actions;
 };
 
 int nsdb_check_role(int user_id, int contest_id, int role);
@@ -416,8 +152,14 @@ int nsdb_remove_examiner(int user_id, int contest_id, int prob_id);
 int_iterator_t nsdb_get_examiner_user_id_iterator(int contest_id, int prob_id);
 int nsdb_get_examiner_count(int contest_id, int prob_id);
 
+void
+ns_for_each_contest_extra(
+        void (*callback)(struct contest_extra *, void *ptr),
+        void *ptr);
 
-struct contest_extra *ns_get_contest_extra(int contest_id);
+struct contest_extra *ns_get_contest_extra(
+        const struct contest_desc *cnts,
+        const struct ejudge_cfg *config);
 struct contest_extra *ns_try_contest_extra(int contest_id);
 
 void
@@ -444,6 +186,15 @@ unsigned char *
 ns_submit_button(unsigned char *buf, size_t size,
                  const unsigned char *var_name, int action,
                  const unsigned char *label);
+
+unsigned char *
+ns_submit_button_2(
+        unsigned char *buf,
+        size_t size,
+        const unsigned char *class_name,
+        const unsigned char *var_name,
+        int action,
+        const unsigned char *label);
 
 unsigned char *
 ns_url(unsigned char *buf, size_t size,
@@ -745,18 +496,28 @@ new_server_cmd_handler(FILE *fout, struct http_request_info *phr);
 struct server_framework_state;
 int ns_open_ul_connection(struct server_framework_state *state);
 
+struct UserlistBinaryHeader;
+
 int
 ns_list_all_users_callback(
         void *user_data,
         int contest_id,
-        unsigned char **p_xml);
+        unsigned char **p_xml,
+        struct UserlistBinaryHeader **p_header);
 void
-ns_check_contest_events(serve_state_t cs, const struct contest_desc *cnts);
+ns_check_contest_events(
+        struct contest_extra *extra,
+        serve_state_t cs,
+        const struct contest_desc *cnts);
 void ns_contest_unload_callback(serve_state_t cs);
+
 void ns_client_destroy_callback(struct client_state *p);
-struct client_state *ns_get_client_by_id(int client_id);
-void ns_send_reply(struct client_state *p, int answer);
-void ns_new_autoclose(struct client_state *p, void *, size_t);
+
+int ns_is_valid_client_id(int client_id);
+void ns_client_state_clear_contest_id(int client_id);
+void ns_close_client_fds(int client_id);
+void ns_send_reply_2(int client_id, int answer);
+void ns_new_autoclose_2(int client_id, void *write_buf, size_t write_len);
 
 struct UserProblemInfo;
 void
@@ -806,7 +567,11 @@ ns_print_user_exam_protocols(
         int locale_id,
         int use_user_printer,
         int full_report,
-        int use_cypher);
+        int use_cypher,
+        int include_testing_report,
+        int run_latex,
+        int print_pdfs,
+        int clear_working_directory);
 
 int
 ns_olympiad_final_user_report(
@@ -903,6 +668,28 @@ new_write_user_runs(
         int back_action,
         time_t start_time,
         time_t stop_time);
+struct RunDisplayInfos;
+struct RunDisplayInfo;
+void
+fill_user_run_info(
+        const serve_state_t cs,
+        const struct UserProblemInfo *pinfo,
+        int run_id,
+        const struct run_entry *pre,
+        time_t start_time,
+        time_t stop_time,
+        int gen_strings_flag,
+        struct RunDisplayInfo *ri); // out
+void
+filter_user_runs(
+        const serve_state_t cs,
+        struct http_request_info *phr,
+        int prob_id,
+        const struct UserProblemInfo *pinfo,
+        time_t start_time,
+        time_t stop_time,
+        int gen_strings_flag,
+        struct RunDisplayInfos *rinfo);
 
 void
 new_write_user_clars(
@@ -911,6 +698,8 @@ new_write_user_clars(
         struct http_request_info *phr,
         unsigned int show_flags,
         const unsigned char *table_class);
+
+struct testing_report_xml;
 
 int
 write_xml_team_testing_report(
@@ -921,14 +710,14 @@ write_xml_team_testing_report(
         int output_only,
         int is_marked,
         int token_flags,
-        const unsigned char *txt,
+        const struct testing_report_xml *tr,
         const unsigned char *table_class);
 
 int
 write_xml_team_accepting_report(
         FILE *f,
-        struct http_request_info *phr,        
-        const unsigned char *txt,
+        struct http_request_info *phr,
+        const struct testing_report_xml *tr,
         int rid,
         const struct run_entry *re,
         const struct section_problem_data *prob,
@@ -940,15 +729,15 @@ write_xml_team_tests_report(
         const serve_state_t state,
         const struct section_problem_data *prob,
         FILE *f,
-        const unsigned char *txt,
+        const struct testing_report_xml *r,
         const unsigned char *table_class);
 
 int
 write_xml_testing_report(
         FILE *f,
-        struct http_request_info *phr,        
+        struct http_request_info *phr,
         int user_mode,
-        unsigned char const *txt,
+        const struct testing_report_xml *r,
         const unsigned char *class1,
         const unsigned char *class2);
 
@@ -1041,5 +830,120 @@ compute_available_tokens(
         serve_state_t cs,
         const struct section_problem_data *prob,
         time_t start_time);
+
+void
+ns_reload_server_all(void);
+
+void
+ns_reload_statement(
+        int contest_id,
+        int prob_id,
+        int variant,
+        int reload_all);
+
+void
+ns_add_review_comment(
+        int contest_id,
+        serve_state_t cs,
+        int run_id,
+        const unsigned char *review_comment);
+
+struct ExternalActionState;
+typedef struct ContestExternalActions
+{
+  int nref; // reference counter
+  int contest_id;
+  int actions_size;
+  int errors_size;
+  int ints_size; // internal actions
+  struct ExternalActionState **priv_actions;
+  struct ExternalActionState **priv_errors;
+  struct ExternalActionState **unpriv_actions;
+  struct ExternalActionState **unpriv_errors;
+  struct ExternalActionState **reg_actions;
+  struct ExternalActionState **reg_errors;
+  struct ExternalActionState **int_actions; // internal actions
+} ContestExternalActions;
+
+struct ContestExternalActions *
+ns_get_contest_external_actions(
+        int contest_id,
+        time_t current_time);
+
+int
+ns_int_external_action(
+        struct http_request_info *phr,
+        int action);
+
+void
+ns_write_public_log(
+        struct http_request_info *phr,
+        struct contest_extra *extra,
+        const struct contest_desc *cnts,
+        FILE *f,
+        char const *header_str,
+        char const *footer_str,
+        int user_mode);
+
+void
+ns_write_standings(
+        struct http_request_info *phr,
+        struct contest_extra *extra,
+        const struct contest_desc *cnts,
+        FILE *f,
+        const unsigned char *stand_dir,
+        const unsigned char *file_name,
+        const unsigned char *file_name2,
+        int users_on_page,
+        int page_index,
+        int client_flag,
+        int only_table_flag,
+        int user_id,
+        const unsigned char *header_str,
+        const unsigned char *footer_str,
+        int accepting_mode,
+        const unsigned char *user_name,
+        int force_fancy_style,
+        int charset_id,
+        struct user_filter_info *user_filter,
+        int user_mode,
+        time_t cur_time,
+        int compat_mode);
+void
+write_json_run_info(
+        FILE *fout,
+        const serve_state_t cs,
+        const struct http_request_info *phr,
+        int run_id,
+        const struct run_entry *pre,
+        time_t start_time,
+        time_t stop_time,
+        int accepting_mode);
+const unsigned char *
+write_json_content(
+        FILE *fout,
+        const unsigned char *data,
+        size_t size,
+        const unsigned char *sep,
+        const unsigned char *indent);
+
+int
+ns_ws_check_session(
+        struct server_framework_state *state,
+        struct ws_client_state *p,
+        unsigned long long sid_1,
+        unsigned long long sid_2);
+
+int
+ns_ws_create_session(
+        struct server_framework_state *state,
+        struct ws_client_state *p);
+
+int
+ns_load_problem_uuid(
+        FILE *log_f,
+        const struct section_global_data *global,
+        const struct section_problem_data *prob,
+        int variant);
 
 #endif /* __NEW_SERVER_H__ */

@@ -1,5 +1,5 @@
-#!/bin/sh
-# Copyright (c) 2005-2015 Alexander Chernov <cher@ejudge.ru>
+#! /bin/bash
+# Copyright (c) 2005-2017 Alexander Chernov <cher@ejudge.ru>
 
 # A script for compilation of C# programs using the mono compiler.
 # Usage: mcs in-file out-file

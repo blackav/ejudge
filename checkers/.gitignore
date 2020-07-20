@@ -19,6 +19,7 @@ cmp_unsigned_long_long_seq
 cmp_yesno
 ejudgecheckers.po
 style_archive
+style_asm
 style_c
 new_style_c
 testinfo.c

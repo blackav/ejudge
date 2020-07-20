@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -37,11 +37,12 @@ sock_op_put_creds(int sock_fd)
   int val, ret;
   struct ucred *pcred;
   struct msghdr msg;
-  unsigned char msgbuf[512];
+  unsigned char msgbuf[256];
   struct cmsghdr *pmsg;
   struct iovec send_vec[1];
 
   memset(&msg, 0, sizeof(msg));
+  memset(msgbuf, 0, sizeof(msgbuf));
   msg.msg_control = msgbuf;
   msg.msg_controllen = sizeof(msgbuf);
   pmsg = CMSG_FIRSTHDR(&msg);

@@ -36,7 +36,7 @@ userlist_clnt_open(char const *socketpath)
   signal(SIGPIPE, SIG_IGN);
 
   ASSERT(socketpath);
-  max_path_buf = sizeof(struct sockaddr_un) - 
+  max_path_buf = sizeof(struct sockaddr_un) -
     XOFFSET(struct sockaddr_un, sun_path);
   if (strlen(socketpath) >= max_path_buf) {
     err("socket path length is too long (%zu)", strlen(socketpath));

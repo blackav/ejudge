@@ -51,7 +51,7 @@ dir_listener_create(void);
 int
 dir_listener_add(
         struct dir_listener_state *state,
-        const unsigned char *spool_dir, 
+        const unsigned char *spool_dir,
         dir_listener_handler_t handler,
         dir_listener_checker_t checker,
         void *data);
