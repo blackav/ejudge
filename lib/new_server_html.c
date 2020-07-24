@@ -3616,7 +3616,6 @@ priv_submit_run(
   }
 
   if (phr->json_reply) {
-    fprintf(fout, "Content-type: application/json\n\n");
     fprintf(fout, "{\n");
     fprintf(fout, "  \"ok\" : %s", "true");
     fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
