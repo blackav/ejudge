@@ -11071,8 +11071,13 @@ cmd_get_api_key(
           if (ui && ui->name) {
             uci.name = xstrdup(ui->name);
           }
-          uci.reg_status = c->status;
-          uci.reg_flags = c->flags;
+          if (!c) {
+            default_get_user_info_3(cnts_user_id, cnts->user_contest_num, NULL, NULL, &c);
+          }
+          if (c) {
+            uci.reg_status = c->status;
+            uci.reg_flags = c->flags;
+          }
           puci = &uci;
         }
       }
