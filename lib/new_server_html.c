@@ -8209,6 +8209,172 @@ cleanup:
   xfree(rep_text);
 }
 
+static void
+priv_contest_status_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  phr->json_reply = 1;
+  int ok = 1;
+  serve_state_t cs = extra->serve_state;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  const struct section_global_data *global = cs->global;
+  time_t duration = 0, sched_time = 0, finish_time = 0, start_time = 0, stop_time = 0;
+  time_t fog_start_time = 0, fog_stop_time = 0;
+  time_t server_start_time = nsf_get_server_start_time(phr->fw_state);
+  int online_users = 0;
+
+  run_get_times(cs->runlog_state, 0, &sched_time, &duration, 0, &finish_time);
+  start_time = run_get_start_time(cs->runlog_state);
+  stop_time = run_get_stop_time(cs->runlog_state);
+
+  if (duration > 0 && global->is_virtual <= 0 && start_time > 0 && global->board_fog_time > 0) {
+    if (stop_time <= 0) {
+      fog_start_time = start_time + duration - global->board_fog_time;
+      if (fog_start_time < start_time) fog_start_time = start_time;
+    }
+    if (stop_time > 0 && global->board_unfog_time > 0) {
+      fog_stop_time = stop_time + global->board_unfog_time;
+    }
+  }
+
+  for (int i = 0; i < extra->user_access[USER_ROLE_CONTESTANT].u; i++) {
+    struct last_access_info *pa = &extra->user_access[USER_ROLE_CONTESTANT].v[i];
+    if (pa->time + 65 >= cs->current_time) online_users++;
+  }
+
+  fprintf(fout, "{\n");
+  fprintf(fout, "  \"ok\" : %s", to_json_bool(ok));
+  fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
+  fprintf(fout, ",\n  \"result\": {");
+  fprintf(fout, "\n    \"contest\": {");
+  fprintf(fout, "\n      \"id\": %d", cnts->id);
+  fprintf(fout, ",\n      \"name\": \"%s\"", json_armor_buf(&ab, cnts->name));
+  if (cnts->name_en && cnts->name_en[0]) {
+    fprintf(fout, ",\n      \"name_en\": \"%s\"", json_armor_buf(&ab, cnts->name_en));
+  }
+  fprintf(fout, ",\n      \"server_start_time\": %lld", (long long) server_start_time);
+  fprintf(fout, ",\n      \"contest_load_time\": %lld", (long long) cs->load_time);
+  fprintf(fout, ",\n      \"score_system\": %d", global->score_system);
+  if (global->enable_continue) {
+    fprintf(fout, ",\n      \"is_continue_enabled\": %s", to_json_bool(1));
+  }
+  if (global->is_virtual) {
+    fprintf(fout, ",\n      \"is_virtual\": %s", to_json_bool(global->is_virtual));
+  }
+  if (duration <= 0) {
+    fprintf(fout, ",\n      \"is_unlimited\": %s", to_json_bool(duration <= 0));
+  }
+  if (duration > 0) {
+    fprintf(fout, ",\n      \"duration\": %lld", (long long) duration);
+    if (global->board_fog_time > 0) {
+      fprintf(fout, ",\n      \"board_fog_duration\": %lld", (long long) global->board_fog_time);
+      if (global->board_unfog_time > 0) {
+        fprintf(fout, ",\n      \"board_unfog_duration\": %lld", (long long) global->board_unfog_time);
+      }
+    }
+  }
+  if (global->is_virtual > 0 && global->enable_virtual_restart > 0) {
+    fprintf(fout, ",\n      \"is_restartable\": %s", to_json_bool(global->enable_virtual_restart));
+  }
+  if (cs->upsolving_mode > 0) {
+    fprintf(fout, ",\n      \"is_upsolving\": %s", to_json_bool(cs->upsolving_mode));
+  }
+  if (start_time > 0) {
+    fprintf(fout, ",\n      \"is_started\": %s", to_json_bool(start_time > 0));
+  }
+  if (cs->clients_suspended) {
+    fprintf(fout, ",\n      \"is_clients_suspended\": %s", to_json_bool(cs->clients_suspended));
+  }
+  if (cs->testing_suspended) {
+    fprintf(fout, ",\n      \"is_testing_suspended\": %s", to_json_bool(cs->testing_suspended));
+  }
+  if (global->enable_printing && cs->printing_suspended) {
+    fprintf(fout, ",\n      \"is_printing_suspended\": %s", to_json_bool(cs->printing_suspended));
+  }
+  if (cs->online_view_source < 0) {
+    fprintf(fout, ",\n      \"is_source_closed\": %s", to_json_bool(1));
+  } else if (cs->online_view_source > 0) {
+    fprintf(fout, ",\n      \"is_source_open\": %s", to_json_bool(1));
+  }
+  if (cs->online_view_report < 0) {
+    fprintf(fout, ",\n      \"is_report_closed\": %s", to_json_bool(1));
+  } else if (cs->online_view_report > 0) {
+    fprintf(fout, ",\n      \"is_report_open\": %s", to_json_bool(1));
+  }
+  if (cs->online_view_judge_score > 0) {
+    fprintf(fout, ",\n      \"is_judge_score\": %s", to_json_bool(1));
+  }
+  if (cs->online_final_visibility > 0) {
+    fprintf(fout, ",\n      \"is_final_visibility\": %s", to_json_bool(1));
+  }
+  if (cs->online_valuer_judge_comments > 0) {
+    fprintf(fout, ",\n      \"is_valuer_judge_comments\": %s", to_json_bool(1));
+  }
+  if (start_time > 0) {
+    fprintf(fout, ",\n      \"start_time\": %lld", (long long) start_time);
+    if (global->score_system == SCORE_OLYMPIAD && !global->is_virtual) {
+      if (cs->accepting_mode) {
+        fprintf(fout, ",\n      \"is_olympiad_accepting_mode\": %s", to_json_bool(cs->accepting_mode));
+      }
+      if (cs->testing_finished) {
+        fprintf(fout, ",\n      \"is_testing_finished\": %s", to_json_bool(cs->testing_finished));
+      }
+    }
+    if (stop_time > 0) {
+      fprintf(fout, ",\n      \"is_stopped\": %s", to_json_bool(stop_time > 0));
+      fprintf(fout, ",\n      \"stop_time\": %lld", (long long) stop_time);
+      if (fog_stop_time > 0) {
+        fprintf(fout, ",\n      \"is_freezable\": %s", to_json_bool(1));
+        fprintf(fout, ",\n      \"unfreeze_time\": %lld", (long long) fog_stop_time);
+        if (cs->standings_updated) {
+          fprintf(fout, ",\n      \"is_standings_updated\": %s", to_json_bool(1));
+        } else if (cs->current_time < fog_stop_time) {
+          fprintf(fout, ",\n      \"is_frozen\": %s", to_json_bool(1));
+        }
+      }
+    } else {
+      if (fog_start_time > 0) {
+        fprintf(fout, ",\n      \"is_freezable\": %s", to_json_bool(1));
+        fprintf(fout, ",\n      \"freeze_time\": %lld", (long long) fog_start_time);
+        if (cs->current_time >= fog_start_time) {
+          fprintf(fout, ",\n      \"is_frozen\": %s", to_json_bool(1));
+        }
+      }
+      if (duration > 0) {
+        fprintf(fout, ",\n      \"expected_stop_time\": %lld", (long long) (start_time + duration));
+      } else if (finish_time > 0) {
+        fprintf(fout, ",\n      \"scheduled_finish_time\": %lld", (long long) finish_time);
+      }
+    }
+  } else {
+    // not started yet
+    if (global->is_virtual > 0) {
+      if (cnts->open_time > 0) {
+        fprintf(fout, ",\n      \"open_time\": %lld", (long long) cnts->open_time);
+      }
+      if (cnts->close_time > 0) {
+        fprintf(fout, ",\n      \"close_time\": %lld", (long long) cnts->close_time);
+      }
+    } else if (sched_time > 0) {
+      fprintf(fout, ",\n      \"scheduled_start_time\": %lld", (long long) sched_time);
+    }
+  }
+  fprintf(fout, "\n    }");
+
+  fprintf(fout, ",\n    \"online\": {");
+  fprintf(fout, "\n      \"user_count\": %d", online_users);
+  fprintf(fout, ",\n      \"max_user_count\": %d", cs->max_online_count);
+  fprintf(fout, ",\n      \"max_time\": %lld", (long long) cs->max_online_time);
+  fprintf(fout, "\n    }");
+  fprintf(fout, "\n  }");
+  fprintf(fout, "\n}\n");
+
+  html_armor_free(&ab);
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -8425,8 +8591,8 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   [NEW_SRV_ACTION_CONFIRM_AVATAR] = priv_generic_operation,
   [NEW_SRV_ACTION_ENTER_CONTEST] = priv_enter_contest,
   [NEW_SRV_ACTION_LOCK_FILTER] = priv_generic_operation,
+  [NEW_SRV_ACTION_CONTEST_STATUS_JSON] = priv_contest_status_json,
   /*
-  [NEW_SRV_ACTION_CONTEST_STATUS_JSON] = unpriv_contest_status_json,
   [NEW_SRV_ACTION_PROBLEM_STATUS_JSON] = unpriv_problem_status_json,
   [NEW_SRV_ACTION_PROBLEM_STATEMENT_JSON] = unpriv_problem_statement_json,
   [NEW_SRV_ACTION_LIST_RUNS_JSON] = unpriv_list_runs_json,
@@ -12531,7 +12697,7 @@ unpriv_contest_status_json(
         }
       }
       if (duration > 0) {
-        fprintf(fout, ",\n      \"expected_stop_time\": %lld", (long long) (stop_time + duration));
+        fprintf(fout, ",\n      \"expected_stop_time\": %lld", (long long) (start_time + duration));
       } else if (duration <= 0 && finish_time > 0) {
         fprintf(fout, ",\n      \"scheduled_finish_time\": %lld", (long long) finish_time);
       }
