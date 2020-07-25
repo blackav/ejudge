@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
