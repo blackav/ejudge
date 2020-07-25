@@ -2,7 +2,7 @@
 #ifndef __HTML_H__
 #define __HTML_H__
 
-/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -106,6 +106,21 @@ write_html_run_status(
         int enable_js_status_menu,
         int run_fields,
         time_t effective_time);
+void
+write_json_run_status(
+        const serve_state_t state,
+        FILE *f,
+        time_t start_time,
+        const struct run_entry *pe,
+        int priv_level,
+        int attempts,
+        int disq_attempts,
+        int ce_attempts,
+        int prev_successes,
+        int disable_failed,
+        int run_fields,
+        time_t effective_time,
+        const unsigned char *indent);
 
 struct testing_report_xml;
 

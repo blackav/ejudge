@@ -268,6 +268,193 @@ calc_kirov_score(
 }
 
 void
+write_json_run_status(
+        const serve_state_t state,
+        FILE *f,
+        time_t start_time,
+        const struct run_entry *pe,
+        int priv_level,
+        int attempts,
+        int disq_attempts,
+        int ce_attempts,
+        int prev_successes,
+        int disable_failed,
+        int run_fields,
+        time_t effective_time,
+        const unsigned char *indent)
+{
+  const struct section_global_data *global = state->global;
+  struct section_problem_data *prob = NULL;
+
+  if (!indent) indent = "";
+
+  int status, score, test;
+  int separate_user_score = global->separate_user_score > 0 && state->online_view_judge_score <= 0;
+  if (separate_user_score > 0 && pe->is_saved && priv_level <= 0) {
+    if (pe->token_count > 0 && (pe->token_flags & TOKEN_FINALSCORE_BIT)) {
+      status = pe->status;
+      score = pe->score;
+      test = pe->test;
+    } else {
+      status = pe->saved_status;
+      score = pe->saved_score;
+      test = pe->saved_test;
+    }
+  } else {
+    status = pe->status;
+    score = pe->score;
+    test = pe->test;
+  }
+
+  if (pe->prob_id > 0 && pe->prob_id <= state->max_prob && state->probs) {
+    prob = state->probs[pe->prob_id];
+  }
+  if (status >= RUN_PSEUDO_FIRST && status <= RUN_PSEUDO_LAST) {
+    return;
+  }
+  if (!run_is_normal_status(status)) {
+    return;
+  }
+  switch (status) {
+  case RUN_CHECK_FAILED:
+    if (!priv_level) return;
+    break;
+  case RUN_OK:
+    if (global->score_system == SCORE_KIROV || global->score_system == SCORE_OLYMPIAD) break;
+    return;
+  case RUN_IGNORED:
+  case RUN_DISQUALIFIED:
+  case RUN_PENDING:
+  case RUN_COMPILE_ERR:
+  case RUN_STYLE_ERR:
+  case RUN_REJECTED:
+    return;
+  }
+
+  if (global->score_system == SCORE_ACM) {
+    if (run_fields & (1 << RUN_VIEW_TEST)) {
+      if (pe->passed_mode > 0) {
+        ++test;
+      }
+      if (priv_level > 0) {
+        fprintf(f, ",\n%s\"raw_test\": %d", indent, pe->test);
+        fprintf(f, ",\n%s\"passed_mode\": %d", indent, pe->passed_mode);
+        fprintf(f, ",\n%s\"failed_test\": %d", indent, test);
+      } else if (!disable_failed) {
+        if (status != RUN_OK && status != RUN_ACCEPTED && status != RUN_PENDING_REVIEW && status != RUN_SUMMONED && test > 0 && global->disable_failed_test_view <= 0) {
+          fprintf(f, ",\n%s\"failed_test\": %d", indent, test);
+        }
+      }
+    }
+    return;
+  }
+  if (global->score_system == SCORE_MOSCOW) {
+    if (run_fields & (1 << RUN_VIEW_TEST)) {
+      if (pe->passed_mode > 0) {
+        ++test;
+      }
+      if (priv_level > 0) {
+        fprintf(f, ",\n%s\"raw_test\": %d", indent, pe->test);
+        fprintf(f, ",\n%s\"passed_mode\": %d", indent, pe->passed_mode);
+        fprintf(f, ",\n%s\"failed_test\": %d", indent, test);
+      } else if (!disable_failed) {
+        if (status != RUN_OK && status != RUN_ACCEPTED && status != RUN_PENDING_REVIEW && status != RUN_SUMMONED && test > 0 && global->disable_failed_test_view <= 0) {
+          fprintf(f, ",\n%s\"failed_test\": %d", indent, test);
+        }
+      }
+    }
+    if (run_fields & (1 << RUN_VIEW_SCORE)) {
+      if (priv_level > 0) {
+        fprintf(f, ",\n%s\"raw_score\": %d", indent, pe->score);
+      }
+      fprintf(f, ",\n%s\"score\": %d", indent, score);
+    }
+    return;
+  }
+  if (global->score_system == SCORE_OLYMPIAD) {
+    if (run_fields & (1 << RUN_VIEW_TEST)) {
+      if (pe->passed_mode > 0) {
+        if (priv_level > 0) {
+          fprintf(f, ",\n%s\"raw_test\": %d", indent, pe->test);
+          fprintf(f, ",\n%s\"passed_mode\": %d", indent, pe->passed_mode);
+          fprintf(f, ",\n%s\"tests_passed\": %d", indent, test);
+        } else {
+          fprintf(f, ",\n%s\"tests_passed\": %d", indent, test);
+        }
+      } else {
+        if (priv_level > 0) {
+          fprintf(f, ",\n%s\"raw_test\": %d", indent, pe->test);
+          fprintf(f, ",\n%s\"passed_mode\": %d", indent, pe->passed_mode);
+        }
+        if (status == RUN_RUN_TIME_ERR
+            || status == RUN_TIME_LIMIT_ERR
+            || status == RUN_PRESENTATION_ERR
+            || status == RUN_WRONG_ANSWER_ERR
+            || status == RUN_MEM_LIMIT_ERR
+            || status == RUN_SECURITY_ERR
+            || status == RUN_SYNC_ERR
+            || status == RUN_WALL_TIME_LIMIT_ERR) {
+          if (test > 0) {
+            fprintf(f, ",\n%s\"failed_test\": %d", indent, test);
+          }
+        } else {
+          if (test > 0) {
+            fprintf(f, ",\n%s\"tests_passed\": %d", indent, test - 1);
+          }
+        }
+      }
+    }
+    if (run_fields & (1 << RUN_VIEW_SCORE)) {
+      if (priv_level > 0) {
+        fprintf(f, ",\n%s\"raw_score\": %d", indent, pe->score);
+      }
+      if (score >= 0 && prob) {
+        unsigned char score_str[128];
+        int final_score = calc_kirov_score(score_str, sizeof(score_str),
+                                           start_time, separate_user_score, !priv_level, pe->token_flags,
+                                           pe, prob, attempts, disq_attempts, ce_attempts, prev_successes,
+                                           NULL, 1, effective_time);
+        fprintf(f, ",\n%s\"score\": %d", indent, final_score);
+        fprintf(f, ",\n%s\"score_str\": \"%s\"", indent, score_str);
+      }
+    }
+    return;
+  }
+  if (global->score_system == SCORE_KIROV) {
+    if (run_fields & (1 << RUN_VIEW_TEST)) {
+      if (priv_level > 0) {
+        fprintf(f, ",\n%s\"raw_test\": %d", indent, pe->test);
+        fprintf(f, ",\n%s\"passed_mode\": %d", indent, pe->passed_mode);
+      }
+      if (pe->passed_mode > 0) {
+        if (test >= 0) {
+          fprintf(f, ",\n%s\"tests_passed\": %d", indent, test);
+        }
+      } else {
+        if (test > 0) {
+          fprintf(f, ",\n%s\"tests_passed\": %d", indent, test - 1);
+        }
+      }
+    }
+
+    if (run_fields & (1 << RUN_VIEW_SCORE)) {
+      if (priv_level > 0) {
+        fprintf(f, ",\n%s\"raw_score\": %d", indent, pe->score);
+      }
+      if (score >= 0 && prob) {
+        unsigned char score_str[128];
+        int final_score = calc_kirov_score(score_str, sizeof(score_str),
+                                           start_time, separate_user_score, !priv_level, pe->token_flags,
+                                           pe, prob, attempts, disq_attempts, ce_attempts, prev_successes,
+                                           NULL, 1, effective_time);
+        fprintf(f, ",\n%s\"score\": %d", indent, final_score);
+        fprintf(f, ",\n%s\"score_str\": \"%s\"", indent, score_str);
+      }
+    }
+  }
+}
+
+void
 write_html_run_status(
         const serve_state_t state,
         FILE *f,
