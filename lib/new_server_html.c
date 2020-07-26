@@ -7838,7 +7838,6 @@ priv_run_status_json(
   }
 
   if (re.status == RUN_EMPTY) {
-    fprintf(fout, "Content-type: application/json\n\n");
     fprintf(fout, "{\n");
     fprintf(fout, "  \"ok\" : true");
     fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
@@ -7870,7 +7869,6 @@ priv_run_status_json(
   }
 
   if (re.status == RUN_VIRTUAL_START || re.status == RUN_VIRTUAL_STOP) {
-    fprintf(fout, "Content-type: application/json\n\n");
     fprintf(fout, "{\n");
     fprintf(fout, "  \"ok\" : true");
     fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
@@ -7900,7 +7898,6 @@ priv_run_status_json(
     goto cleanup;
   }
 
-  fprintf(fout, "Content-type: application/json\n\n");
   fprintf(fout, "{\n");
   fprintf(fout, "  \"ok\" : true");
   fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
