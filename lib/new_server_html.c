@@ -9317,13 +9317,12 @@ privileged_entry_point(
   long long log_file_pos_2 = -1LL;
   unsigned char *msg = NULL;
 
-  phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
-
   if (phr->token_mode) {
     // blacklisted for token_mode
     if (phr->action == NEW_SRV_ACTION_CREATE_API_KEY || phr->action == NEW_SRV_ACTION_API_KEYS_PAGE || phr->action == NEW_SRV_ACTION_DELETE_API_KEY
         || phr->action == NEW_SRV_ACTION_COOKIE_LOGIN || phr->action == NEW_SRV_ACTION_LOGIN || phr->action == NEW_SRV_ACTION_LOGIN_PAGE
         || phr->action == NEW_SRV_ACTION_LOGIN_JSON) {
+      fprintf(phr->log_f, "invalid action for token auth\n");
       error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
       goto cleanup;
     }
@@ -9345,6 +9344,7 @@ privileged_entry_point(
     phr->user_id = cnts_info.user_id;
 
     if (r <= 0) {
+      fprintf(phr->log_f, "invalid token\n");
       error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
       goto cleanup;
     }
@@ -9353,26 +9353,32 @@ privileged_entry_point(
       goto cleanup;
     }
     if (cnts_info.user_id == 0 || cnts_info.contest_id == 0) {
+      fprintf(phr->log_f, "invalid user_id or contest_id\n");
       error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
       goto cleanup;
     }
     if (phr->contest_id > 0 && cnts_info.contest_id != phr->contest_id) {
+      fprintf(phr->log_f, "invalid contest_id\n");
       error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
       goto cleanup;
     }
     if (cnts_info.reg_status != USERLIST_REG_OK) {
+      fprintf(phr->log_f, "user not registered\n");
       error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
       goto cleanup;
     }
     if ((cnts_info.reg_flags & (USERLIST_UC_BANNED | USERLIST_UC_LOCKED | USERLIST_UC_DISQUALIFIED)) != 0) {
+      fprintf(phr->log_f, "user banned\n");
       error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
       goto cleanup;
     }
     if (phr->role > out_keys[0].role ) {
+      fprintf(phr->log_f, "invalid role\n");
       error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
       goto cleanup;
     }
     if (out_keys[0].expiry_time > 0 && cur_time >= out_keys[0].expiry_time) {
+      fprintf(phr->log_f, "token expired\n");
       error_page(fout, phr, 0, -NEW_SRV_ERR_PERMISSION_DENIED);
       goto cleanup;
     }
@@ -14751,8 +14757,6 @@ unprivileged_entry_point(
   const unsigned char *s = 0;
   int cookie_locale_id = -1;
 
-  phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
-
   if (phr->action == NEW_SRV_ACTION_FORGOT_PASSWORD_1) {
     contests_get(phr->contest_id, &cnts);
     phr->cnts = cnts;
@@ -16113,9 +16117,11 @@ parse_cookie(struct http_request_info *phr)
   }
 }
 
-static void parse_bearer(struct http_request_info *phr, const unsigned char *str)
+/* returns -1 - no bearer header, 0 - parsing failed, 1 - parsed ok */
+static int
+parse_bearer(struct http_request_info *phr, const unsigned char *str)
 {
-  if (!str) return;
+  if (!str) return -1;
   const unsigned char *p = str;
 
   if ((p[0] != 'b' && p[0] != 'B')
@@ -16124,26 +16130,29 @@ static void parse_bearer(struct http_request_info *phr, const unsigned char *str
       || (p[3] != 'r' && p[3] != 'R')
       || (p[4] != 'e' && p[4] != 'E')
       || (p[5] != 'r' && p[5] != 'R')
-      || p[6] != ' ') return;
+      || p[6] != ' ') return -1;
   p += 7;
+
+  phr->token_mode = 1;
+  phr->json_reply = 1;
 
   // AQAA - token type 1
   if (p[0] == 'A' && p[1] == 'Q' && p[2] == 'A' && p[3] == 'A') {
     p += 4;
     int token_len = strlen(p);
-    if (token_len != 43) return;
+    if (token_len != 43) return 0;
     char token[32];
     static const char zero_token[32] = {};
     int err_flag = 0;
     base64u_decode(p, 43, token, &err_flag);
-    if (err_flag) return;
-    if (!memcmp(token, zero_token, 32)) return;
+    if (err_flag) return 0;
+    if (!memcmp(token, zero_token, 32)) return 0;
 
     // bearer parsed ok
     memcpy(phr->token, token, 32);
-    phr->token_mode = 1;
-    phr->json_reply = 1;
+    return 1;
   }
+  return 0;
 }
 
 // forced linking
@@ -16173,6 +16182,8 @@ ns_handle_http_request(
   unsigned char *rest_action = NULL;
 
   (void) forced_linking;
+
+  phr->log_f = open_memstream(&phr->log_t, &phr->log_z);
 
   // make a self-referencing URL
   if (phr->client_state->ops->get_ssl_flag) {
@@ -16287,18 +16298,14 @@ ns_handle_http_request(
   if (!remote_addr) {
     if (!(remote_addr = hr_getenv(phr, "REMOTE_ADDR"))) {
       err("REMOTE_ADDR does not exist");
-      if (phr->log_f) {
-        fprintf(phr->log_f, "REMOTE_ADDR does not exist");
-      }
+      fprintf(phr->log_f, "REMOTE_ADDR does not exist");
       return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
     }
   }
   if (!strcmp(remote_addr, "::1")) remote_addr = "127.0.0.1";
   if (xml_parse_ipv6(NULL, 0, 0, 0, remote_addr, &phr->ip) < 0) {
     err("cannot parse REMOTE_ADDR");
-    if (phr->log_f) {
-      fprintf(phr->log_f, "cannot parse REMOTE_ADDR");
-    }
+    fprintf(phr->log_f, "cannot parse REMOTE_ADDR");
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
 
@@ -16308,15 +16315,17 @@ ns_handle_http_request(
 
   http_authorization = hr_getenv(phr, "HTTP_AUTHORIZATION");
   if (http_authorization) {
-    parse_bearer(phr, http_authorization);
+    int r = parse_bearer(phr, http_authorization);
+    if (r == 0) {
+      fprintf(phr->log_f, "cannot parse authorization bearer");
+      return error_page(fout, phr, 0, NEW_SRV_ERR_PERMISSION_DENIED);
+    }
   }
 
   // parse the contest_id
   if ((r = hr_cgi_param_int_opt(phr, "contest_id", &phr->contest_id, 0)) < 0) {
     err("cannot parse contest_id");
-    if (phr->log_f) {
-      fprintf(phr->log_f, "cannot parse contest_id");
-    }
+    fprintf(phr->log_f, "cannot parse contest_id");
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
   /*
@@ -16341,9 +16350,7 @@ ns_handle_http_request(
   // parse request_id
   if ((r = hr_cgi_param_int_opt(phr, "request_id", &phr->request_id, 0)) < 0) {
     err("cannot parse request_id");
-    if (phr->log_f) {
-      fprintf(phr->log_f, "cannot parse request_id");
-    }
+    fprintf(phr->log_f, "cannot parse request_id");
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
 
@@ -16351,17 +16358,13 @@ ns_handle_http_request(
   if (!phr->session_id) {
     if ((r = hr_cgi_param(phr, "SID", &s)) < 0) {
       err("cannot parse SID");
-      if (phr->log_f) {
-        fprintf(phr->log_f, "cannot parse SID");
-      }
+      fprintf(phr->log_f, "cannot parse SID");
       return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
     }
     if (r > 0) {
       if (sscanf(s, "%llx%n", &phr->session_id, &n) != 1 || s[n] || !phr->session_id) {
         err("cannot parse SID");
-        if (phr->log_f) {
-          fprintf(phr->log_f, "cannot parse SID");
-        }
+        fprintf(phr->log_f, "cannot parse SID");
         return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
       }
     }
@@ -16370,17 +16373,13 @@ ns_handle_http_request(
   // parse the locale_id
   if ((r = hr_cgi_param(phr, "locale_id", &s)) < 0) {
     err("cannot parse locale_id");
-    if (phr->log_f) {
-      fprintf(phr->log_f, "cannot parse locale_id");
-    }
+    fprintf(phr->log_f, "cannot parse locale_id");
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
   if (r > 0) {
     if (sscanf(s, "%d%n", &phr->locale_id, &n) != 1 || s[n] || phr->locale_id < 0) {
       err("cannot parse locale_id");
-      if (phr->log_f) {
-        fprintf(phr->log_f, "cannot parse locale_id");
-      }
+      fprintf(phr->log_f, "cannot parse locale_id");
       return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
     }
   }
@@ -16390,24 +16389,18 @@ ns_handle_http_request(
     phr->action = ns_match_action(rest_action);
     if (phr->action < 0) {
       err("invalid action");
-      if (phr->log_f) {
-        fprintf(phr->log_f, "invalid action");
-      }
+      fprintf(phr->log_f, "invalid action");
       return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
     }
   } else if ((s = hr_cgi_nname(phr, "action_", 7))) {
     if (sscanf(s, "action_%d%n", &phr->action, &n) != 1 || s[n] || phr->action <= 0) {
       err("cannot parse action");
-      if (phr->log_f) {
-        fprintf(phr->log_f, "cannot parse action");
-      }
+      fprintf(phr->log_f, "cannot parse action");
       return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
     }
   } else if ((r = hr_cgi_param(phr, "action", &s)) < 0) {
     err("cannot parse action");
-    if (phr->log_f) {
-      fprintf(phr->log_f, "cannot parse action");
-    }
+    fprintf(phr->log_f, "cannot parse action");
     return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   } else if (r > 0) {
     if (sscanf(s, "%d%n", &phr->action, &n) != 1 || s[n] || phr->action <= 0) {
@@ -16417,9 +16410,7 @@ ns_handle_http_request(
           break;
       if (r == NEW_SRV_ACTION_LAST) {
         err("cannot parse action");
-        if (phr->log_f) {
-          fprintf(phr->log_f, "cannot parse action");
-        }
+        fprintf(phr->log_f, "cannot parse action");
         return error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
       }
       phr->action = r;
@@ -16471,9 +16462,7 @@ ns_handle_http_request(
   if (!script_filename && phr->arg_num > 0) script_filename = phr->args[0];
   if (!script_filename) {
     err("cannot get script filename");
-    if (phr->log_f) {
-      fprintf(phr->log_f, "cannot get script filename");
-    }
+    fprintf(phr->log_f, "cannot get script filename");
     error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
   }
 
