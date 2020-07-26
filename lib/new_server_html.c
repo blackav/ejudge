@@ -8607,6 +8607,12 @@ priv_list_runs_json(
   fprintf(fout, ",\n    \"filtered_runs\": %d", match_tot);
   fprintf(fout, ",\n    \"listed_runs\": %d", list_tot);
   fprintf(fout, ",\n    \"transient_runs\": %d", transient_tot);
+  if (filter_expr && filter_expr[0]) {
+    fprintf(fout, ",\n    \"filter_expr\": \"%s\"", JARMOR(filter_expr));
+  }
+  fprintf(fout, ",\n    \"first_run\": %d", first_run);
+  fprintf(fout, ",\n    \"last_run\": %d", last_run);
+  fprintf(fout, ",\n    \"field_mask\": %llu", (unsigned long long) run_fields);
   fprintf(fout, ",\n    \"runs\": [");
 
   for (int i = 0; i < list_tot; ++i) {
