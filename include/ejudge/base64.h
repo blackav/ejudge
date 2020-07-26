@@ -16,6 +16,7 @@
  * GNU General Public License for more details.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 
 int base64_encode(char const *, size_t, char *);
@@ -27,5 +28,8 @@ int base64u_encode(char const *, size_t, char *);
 int base64u_encode_str(char const *, char *);
 int base64u_decode(char const *, size_t, char *, int *);
 int base64u_decode_str(char const *, char *, int *);
+
+void
+base64u_encode_f(char const *in, size_t size, FILE *fout);
 
 #endif /* __BASE64_H__ */

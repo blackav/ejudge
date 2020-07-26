@@ -98,6 +98,51 @@ base64u_encode(char const *in, size_t size, char *out)
   return s - out;
 }
 
+void
+base64u_encode_f(char const *in, size_t size, FILE *fout)
+{
+  unsigned int   ebuf;
+  int            nw = size / 3;
+  int            l = size - nw * 3;
+  int            i;
+  char const    *p = in;
+
+  for (i = 0; i < nw; i++) {
+    ebuf  = *(unsigned const char*) p++ << 16;
+    ebuf |= *(unsigned const char*) p++ << 8;
+    ebuf |= *(unsigned const char*) p++;
+    ebuf += (ebuf & ~0x3FFFF);
+    ebuf += (ebuf & ~0x3FFFF);
+    ebuf += (ebuf & ~0xFFF);
+    ebuf += (ebuf & ~0xFFF);
+    ebuf += (ebuf & ~0x3F);
+    ebuf += (ebuf & ~0x3F);
+    putc_unlocked(base64u_encode_table[ebuf >> 24], fout);
+    putc_unlocked(base64u_encode_table[(ebuf >> 16) & 0xFF], fout);
+    putc_unlocked(base64u_encode_table[(ebuf >> 8) & 0xFF], fout);
+    putc_unlocked(base64u_encode_table[ebuf & 0xFF], fout);
+  }
+  if (l == 2) {
+    /* make a 18-bit group */
+    ebuf  = *(unsigned const char*) p++ << 10;
+    ebuf |= *(unsigned const char*) p++ << 2;
+    ebuf += (ebuf & ~0xFFF);
+    ebuf += (ebuf & ~0xFFF);
+    ebuf += (ebuf & ~0x3F);
+    ebuf += (ebuf & ~0x3F);
+    putc_unlocked(base64u_encode_table[(ebuf >> 16) & 0xFF], fout);
+    putc_unlocked(base64u_encode_table[(ebuf >> 8) & 0xFF], fout);
+    putc_unlocked(base64u_encode_table[ebuf & 0xFF], fout);
+  } else if (l == 1) {
+    /* make a 12-bit group */
+    ebuf = *(unsigned const char*) p++ << 4;
+    ebuf += (ebuf & ~0x3F);
+    ebuf += (ebuf & ~0x3F);
+    putc_unlocked(base64u_encode_table[(ebuf >> 8) & 0xFF], fout);
+    putc_unlocked(base64u_encode_table[ebuf & 0xFF], fout);
+  }
+}
+
 /**
  * NAME:    base64u_encode_str
  * PURPOSE: convert a string into base64url-encoded string
