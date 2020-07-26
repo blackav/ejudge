@@ -11059,10 +11059,21 @@ cmd_get_api_key(
       }
 
       if (cnts_user_id > 0 && cnts_contest_id > 0) {
+        if (full_get_contest(p, logbuf, &cnts_contest_id, &cnts) < 0) {
+          xfree(out_pkt);
+          return;
+        }
+
         const struct userlist_user *u = NULL;
         const struct userlist_user_info *ui = NULL;
         const struct userlist_contest *c = NULL;
         if (default_get_user_info_3(cnts_user_id, cnts_contest_id, &u, &ui, &c) >= 0) {
+          if (!c) {
+            err("%s -> not registered for contest", logbuf);
+            send_reply(p, -ULS_ERR_NOT_REGISTERED);
+            xfree(out_pkt);
+            return;
+          }
           uci.user_id = cnts_user_id;
           uci.contest_id = cnts_contest_id;
           if (u && u->login) {
@@ -11071,13 +11082,8 @@ cmd_get_api_key(
           if (ui && ui->name) {
             uci.name = xstrdup(ui->name);
           }
-          if (!c) {
-            default_get_user_info_3(cnts_user_id, cnts->user_contest_num, NULL, NULL, &c);
-          }
-          if (c) {
-            uci.reg_status = c->status;
-            uci.reg_flags = c->flags;
-          }
+          uci.reg_status = c->status;
+          uci.reg_flags = c->flags;
           puci = &uci;
         }
       }
