@@ -8779,7 +8779,7 @@ priv_list_runs_json(
         }
 
         write_json_run_status(cs, fout, env.rhead.start_time, pe, 1, attempts, disq_attempts, ce_attempts, prev_successes,
-                              0, run_fields, effective_time, "      ");
+                              0, run_fields, effective_time, indent);
 
         if ((run_fields & (1 << RUN_VIEW_SCORE_ADJ)) && pe->score_adj != 0) {
           fprintf(fout, ",\n%s\"score_adj\": %d", indent, pe->score_adj);
