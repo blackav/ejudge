@@ -67,6 +67,8 @@
 #include "ejudge/userlist_bin.h"
 #include "ejudge/testing_report_xml.h"
 #include "ejudge/cJSON.h"
+#include "ejudge/filter_tree.h"
+#include "ejudge/filter_eval.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/logger.h"
@@ -7844,6 +7846,7 @@ priv_run_status_json(
     fprintf(fout, "\n    \"run\": {");
     fprintf(fout, "\n      \"run_id\": %d", re.run_id);
     fprintf(fout, ",\n      \"status\": %d", re.status);
+    fprintf(fout, ",\n      \"status_str\": \"%s\"", run_status_short_str(re.status));
     fprintf(fout, "\n    }");
     fprintf(fout, "\n  }");
     fprintf(fout, "\n}\n");
@@ -7875,6 +7878,7 @@ priv_run_status_json(
     fprintf(fout, "\n    \"run\": {");
     fprintf(fout, "\n      \"run_id\": %d", re.run_id);
     fprintf(fout, ",\n      \"status\": %d", re.status);
+    fprintf(fout, ",\n      \"status_str\": \"%s\"", run_status_short_str(re.status));
     fprintf(fout, ",\n      \"run_time\": %lld", (long long) re.time);
     fprintf(fout, ",\n      \"nsec\": %d", re.nsec);
     fprintf(fout, ",\n      \"run_time_us\": %lld", run_time_us);
@@ -7987,10 +7991,10 @@ priv_run_status_json(
     fprintf(fout, ",\n      \"passed_mode\": %d", re.passed_mode);
   }
   if (re.score >= 0) {
-    fprintf(fout, ",\n      \"score\": %d", re.score);
+    fprintf(fout, ",\n      \"raw_score\": %d", re.score);
   }
   if (re.test >= 0) {
-    fprintf(fout, ",\n      \"test\": %d", re.test);
+    fprintf(fout, ",\n      \"raw_test\": %d", re.test);
   }
   if (re.is_marked) {
     fprintf(fout, ",\n      \"is_marked\": %s", to_json_bool(re.is_marked));
@@ -8374,6 +8378,456 @@ priv_contest_status_json(
   html_armor_free(&ab);
 }
 
+static void
+parse_error_func(void *data, unsigned char const *format, ...)
+{
+  filter_expr_nerrs++;
+}
+
+#define BITS_PER_LONG (8*sizeof(unsigned long))
+
+static char const base64u_encode_table[]=
+"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+void
+encode_displayed_mask(FILE *outf, int displayed_size, const unsigned long *displayed_mask)
+{
+  if (!displayed_mask || displayed_size <= 0) {
+    return;
+  }
+
+  fprintf(outf, "%d", (int) sizeof(unsigned long));
+  const unsigned long *ptr = displayed_mask;
+  int len = displayed_size;
+  while (len > 0) {
+    int zcnt = 0;
+    while (zcnt < len && !ptr[zcnt]) ++zcnt;
+    while (zcnt > 0) {
+      // ,.:;
+      unsigned zval = zcnt - 1;
+      int zproc = 1;
+      if (zval < 64) {
+        putc_unlocked(',', outf);
+        putc_unlocked(base64u_encode_table[zval], outf);
+        zproc += zval;
+      } else {
+        zval -= 64;
+        zproc += 64;
+        if (zval < 64 * 64) {
+          putc_unlocked('.', outf);
+          putc_unlocked(base64u_encode_table[(zval >> 6) & 63], outf);
+          putc_unlocked(base64u_encode_table[zval & 63], outf);
+          zproc += zval;
+        } else {
+          zval -= 64 * 64;
+          zproc += 64 * 64;
+          if (zval < 64 * 64 * 64) {
+            putc_unlocked(':', outf);
+            putc_unlocked(base64u_encode_table[(zval >> 12) & 63], outf);
+            putc_unlocked(base64u_encode_table[(zval >> 6) & 63], outf);
+            putc_unlocked(base64u_encode_table[zval & 63], outf);
+            zproc += zval;
+          } else {
+            zval -= 64 * 64 * 64;
+            zproc += 64 * 64 * 64;
+            if (zval >= 64 * 64 * 64 * 64) {
+              zval = 64 * 64 * 64 * 64 - 1;
+            }
+            putc_unlocked(';', outf);
+            putc_unlocked(base64u_encode_table[(zval >> 18) & 63], outf);
+            putc_unlocked(base64u_encode_table[(zval >> 12) & 63], outf);
+            putc_unlocked(base64u_encode_table[(zval >> 6) & 63], outf);
+            putc_unlocked(base64u_encode_table[zval & 63], outf);
+            zproc += zval;
+          }
+        }
+      }
+      len -= zproc;
+      zcnt -= zproc;
+      ptr += zproc;
+    }
+    if (len <= 0) break;
+    int vcnt = 0;
+    while (vcnt < len && ptr[vcnt]) ++vcnt;
+    if (vcnt > 0) {
+      base64u_encode_f((const char *) ptr, vcnt * sizeof(unsigned long), outf);
+      len -= vcnt;
+    }
+  }
+}
+
+static void
+priv_list_runs_json(
+        FILE *fout,
+        struct http_request_info *phr,
+        const struct contest_desc *cnts,
+        struct contest_extra *extra)
+{
+  const serve_state_t cs = extra->serve_state;
+  const struct section_global_data *global = cs->global;
+  const unsigned char *filter_expr = NULL;
+  int first_run_set = 0, last_run_set = 0, field_mask_set = 0;
+  int first_run = 0, last_run = 0, field_mask = 0;
+  int intval, r;
+  struct user_filter_info *u = NULL;
+  int run_fields = RUN_VIEW_DEFAULT;
+  int *match_idx = NULL;
+  int match_tot = 0;
+  int transient_tot = 0;
+  int *list_idx = NULL;
+  int list_tot = 0;
+  unsigned long *displayed_mask = NULL;
+  int displayed_size = 0;
+  struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+  struct filter_env env;
+
+  phr->json_reply = 1;
+  memset(&env, 0, sizeof(env));
+
+  if (hr_cgi_param(phr, "filter_expr", &filter_expr) < 0) {
+    goto err_inv_param;
+  }
+  if ((r = hr_cgi_param_int_2(phr, "first_run", &intval)) < 0) {
+    goto err_inv_param;
+  } else if (r > 0) {
+    first_run = intval;
+    first_run_set = 1;
+  }
+  if ((r = hr_cgi_param_int_2(phr, "last_run", &intval)) < 0) {
+    goto err_inv_param;
+  } else if (r > 0) {
+    last_run = intval;
+    last_run_set = 1;
+  }
+  if ((r = hr_cgi_param_int_2(phr, "field_mask", &intval)) < 0) {
+    goto err_inv_param;
+  } else if (r > 0) {
+    field_mask = intval;
+    field_mask_set = 1;
+  }
+  if (field_mask_set) {
+    run_fields = field_mask;
+  }
+
+  XCALLOC(u, 1);
+  if (filter_expr && *filter_expr) {
+    u->prev_filter_expr = xstrdup(filter_expr);
+    u->tree_mem = filter_tree_new();
+    filter_expr_set_string(filter_expr, u->tree_mem, parse_error_func, cs);
+    filter_expr_init_parser(u->tree_mem, parse_error_func, cs);
+    r = filter_expr_parse();
+    if (r + filter_expr_nerrs == 0 && filter_expr_lval && filter_expr_lval->type == FILTER_TYPE_BOOL && !u->error_msgs) {
+      u->prev_tree = filter_expr_lval;
+    } else {
+      error_page(fout, phr, 0, NEW_SRV_ERR_INV_FILTER_EXPR);
+      goto cleanup;
+    }
+  }
+
+  env.teamdb_state = cs->teamdb_state;
+  env.serve_state = cs;
+  env.mem = filter_tree_new();
+  env.maxlang = cs->max_lang;
+  env.langs = (const struct section_language_data * const *) cs->langs;
+  env.maxprob = cs->max_prob;
+  env.probs = (const struct section_problem_data * const *) cs->probs;
+  env.rbegin = run_get_first(cs->runlog_state);
+  env.rtotal = run_get_total(cs->runlog_state);
+  run_get_header(cs->runlog_state, &env.rhead);
+  env.cur_time = time(NULL);
+  env.rentries = run_get_entries_ptr(cs->runlog_state);
+
+  displayed_size = (env.rtotal + BITS_PER_LONG - 1) / BITS_PER_LONG;
+  if (!displayed_size) displayed_size = 1;
+  XCALLOC(displayed_mask, displayed_size);
+
+  XCALLOC(match_idx, env.rtotal + 1 - env.rbegin);
+  XCALLOC(list_idx, (env.rtotal + 1 - env.rbegin));
+  match_tot = 0;
+  transient_tot = 0;
+
+  for (int i = env.rbegin; i < env.rtotal; ++i) {
+    if (env.rentries[i].status >= RUN_TRANSIENT_FIRST && env.rentries[i].status <= RUN_TRANSIENT_LAST) {
+      transient_tot++;
+    }
+    env.rid = i;
+    if (u->prev_tree) {
+      r = filter_tree_bool_eval(&env, u->prev_tree);
+      if (r < 0) {
+        parse_error_func(cs, "run %d: %s", i, filter_strerror(-r));
+        continue;
+      }
+      if (!r) continue;
+    }
+    match_idx[match_tot++] = i;
+  }
+  env.mem = filter_tree_delete(env.mem);
+
+  if (!first_run_set && !last_run_set) {
+    // last 20 in the reverse order
+    first_run = -1;
+    last_run = -20;
+  } else if (!first_run_set) {
+    // from the last in the reverse order
+    first_run = -1;
+  } else if (!last_run_set) {
+    // 20 in the reverse order
+    last_run = first_run - 20 + 1;
+    if (first_run >= 0 && last_run < 0) last_run = 0;
+  }
+
+  if (first_run >= match_tot) {
+    first_run = match_tot - 1;
+    if (first_run < 0) first_run = 0;
+  }
+  if (first_run < 0) {
+    first_run = match_tot + first_run;
+    if (first_run < 0) first_run = 0;
+  }
+  if (last_run >= match_tot) {
+    last_run = match_tot - 1;
+    if (last_run < 0) last_run = 0;
+  }
+  if (last_run < 0) {
+    last_run = match_tot + last_run;
+    if (last_run < 0) last_run = 0;
+  }
+  if (first_run <= last_run) {
+    for (int i = first_run; i <= last_run && i < match_tot; i++) {
+      list_idx[list_tot++] = match_idx[i];
+    }
+  } else {
+    for (int i = first_run; i >= last_run; i--) {
+      list_idx[list_tot++] = match_idx[i];
+    }
+  }
+
+  fprintf(fout, "{\n");
+  fprintf(fout, "  \"ok\" : %s", to_json_bool(1));
+  fprintf(fout, ",\n  \"server_time\": %lld", (long long) cs->current_time);
+  fprintf(fout, ",\n  \"result\": {");
+  fprintf(fout, "\n    \"total_runs\": %d", env.rtotal);
+  fprintf(fout, ",\n    \"filtered_runs\": %d", match_tot);
+  fprintf(fout, ",\n    \"listed_runs\": %d", list_tot);
+  fprintf(fout, ",\n    \"transient_runs\": %d", transient_tot);
+  fprintf(fout, ",\n    \"runs\": [");
+
+  for (int i = 0; i < list_tot; ++i) {
+    int rid = list_idx[i];
+    ASSERT(rid >= env.rbegin && rid < env.rtotal);
+    const struct run_entry *pe = &env.rentries[rid];
+
+    displayed_mask[rid / BITS_PER_LONG] |= (1L << (rid % BITS_PER_LONG));
+
+    if (i > 0) {
+      fprintf(fout, ",");
+    }
+    fprintf(fout, "\n      {");
+    const unsigned char * const indent = "        ";
+    if (run_fields & (1 << RUN_VIEW_RUN_ID)) {
+      fprintf(fout, "\n%s\"run_id\": %d", indent, pe->run_id);
+    }
+    if (run_fields & (1 << RUN_VIEW_STATUS)) {
+      fprintf(fout, ",\n%s\"status\": %d", indent, pe->status);
+      fprintf(fout, ",\n%s\"status_str\": \"%s\"", indent, run_status_short_str(pe->status));
+    }
+    if (pe->status != RUN_EMPTY) {
+      long long run_time_us = pe->time * 1000000LL + pe->nsec / 1000;
+      long long duration = 0;
+      if (env.rhead.start_time > 0 && pe->time >= env.rhead.start_time) {
+        duration = (long long) pe->time - env.rhead.start_time;
+      }
+      if ((run_fields & ((1 << RUN_VIEW_TIME) | (1 << RUN_VIEW_ABS_TIME)))) {
+        fprintf(fout, ",\n%s\"run_time\": %lld", indent, (long long) pe->time);
+        fprintf(fout, ",\n%s\"run_time_us\": %lld", indent, run_time_us);
+      }
+      if (run_fields & (1 << RUN_VIEW_NSEC)) {
+        fprintf(fout, ",\n%s\"nsec\": %d", indent, pe->nsec);
+      }
+      if ((run_fields & (1 << RUN_VIEW_REL_TIME)) && duration > 0) {
+        fprintf(fout, ",\n%s\"duration\": %lld", indent, duration);
+      }
+      if ((run_fields & (1 << RUN_VIEW_USER_ID))) {
+        fprintf(fout, ",\n%s\"user_id\": %d", indent, pe->user_id);
+      }
+      if ((run_fields & (1 << RUN_VIEW_USER_LOGIN))) {
+        const unsigned char *s = teamdb_get_login(cs->teamdb_state, pe->user_id);
+        if (s && *s) {
+          fprintf(fout, ",\n%s\"user_login\": \"%s\"", indent, JARMOR(s));
+        }
+      }
+      if ((run_fields & (1 << RUN_VIEW_USER_NAME))) {
+        const unsigned char *s = teamdb_get_name(cs->teamdb_state, pe->user_id);
+        if (s && *s) {
+          fprintf(fout, ",\n%s\"user_name\": \"%s\"", indent, JARMOR(s));
+        }
+      }
+      if (pe->status == RUN_VIRTUAL_START || pe->status == RUN_VIRTUAL_STOP) {
+        if (pe->judge_id > 0) {
+          fprintf(fout, ",\n%s\"is_examinable\" : %s", indent, to_json_bool(1));
+        }
+      } else {
+        const struct section_problem_data *prob = NULL;
+        if (pe->prob_id > 0 && pe->prob_id <= cs->max_prob) {
+          prob = cs->probs[pe->prob_id];
+        }
+        const struct section_language_data *lang = NULL;
+        if (pe->lang_id > 0 && pe->lang_id <= cs->max_lang) {
+          lang = cs->langs[pe->lang_id];
+        }
+        int prev_successes = RUN_TOO_MANY;
+        if (global->score_system == SCORE_KIROV && pe->status == RUN_OK && prob && prob->score_bonus_total > 0) {
+          if ((prev_successes = run_get_prev_successes(cs->runlog_state, rid)) < 0)
+            prev_successes = RUN_TOO_MANY;
+        }
+
+        time_t effective_time = 0, *p_eff_time = NULL;
+        if (prob && prob->enable_submit_after_reject > 0)
+          p_eff_time = &effective_time;
+
+        int attempts = 0, disq_attempts = 0, ce_attempts = 0;
+        if (global->score_system == SCORE_KIROV && !pe->is_hidden) {
+          int ice = 0, cep = -1;
+          if (prob) {
+            ice = prob->ignore_compile_errors;
+            cep = prob->compile_error_penalty;
+          }
+          run_get_attempts(cs->runlog_state, rid, &attempts, &disq_attempts, &ce_attempts, p_eff_time, ice, cep);
+        }
+
+        if (pe->is_imported > 0) {
+          fprintf(fout, ",\n%s\"is_imported\" : %s", indent, to_json_bool(1));
+        }
+        if (pe->is_hidden > 0) {
+          fprintf(fout, ",\n%s\"is_hidden\" : %s", indent, to_json_bool(1));
+        }
+        if (pe->is_marked > 0) {
+          fprintf(fout, ",\n%s\"is_marked\" : %s", indent, to_json_bool(1));
+        }
+        if (pe->is_saved > 0) {
+          fprintf(fout, ",\n%s\"is_saved\" : %s", indent, to_json_bool(1));
+        }
+        if ((run_fields & (1 << RUN_VIEW_RUN_UUID)) && ej_uuid_is_nonempty(pe->run_uuid)) {
+          fprintf(fout, ",\n%s\"run_uuid\" : \"%s\"", indent, ej_uuid_unparse(&pe->run_uuid, ""));
+        }
+        if ((run_fields & (1 << RUN_VIEW_STORE_FLAGS)) && pe->store_flags) {
+          fprintf(fout, ",\n%s\"store_flags\" : %d", indent, pe->store_flags);
+        }
+        if (run_fields & (1 << RUN_VIEW_SIZE)) {
+          fprintf(fout, ",\n%s\"size\" : %u", indent, pe->size);
+        }
+        if ((run_fields & (1 << RUN_VIEW_MIME_TYPE)) && pe->lang_id <= 0) {
+          fprintf(fout, ",\n%s\"mime_type\" : \"%s\"", indent, mime_type_get_type(pe->mime_type));
+        }
+        if (run_fields & (1 << RUN_VIEW_IP)) {
+          fprintf(fout, ",\n%s\"ip\" : \"%s\"", indent, xml_unparse_ip(pe->a.ip));
+          fprintf(fout, ",\n%s\"ssl_flag\" : %d", indent, pe->ssl_flag);
+        }
+        if (run_fields & (1 << RUN_VIEW_SHA1)) {
+          fprintf(fout, ",\n%s\"sha1\" : \"%s\"", indent, unparse_sha1(pe->sha1));
+        }
+        if (run_fields & (1 << RUN_VIEW_PROB_ID)) {
+          fprintf(fout, ",\n%s\"prob_id\" : %d", indent, pe->prob_id);
+        }
+        int variant = 0;
+        if (prob && prob->variant_num > 0) {
+          variant = pe->variant;
+          if (variant <= 0) {
+            variant = find_variant(cs, pe->user_id, pe->prob_id, 0);
+          }
+          if (run_fields & (1 << RUN_VIEW_VARIANT)) {
+            if (pe->variant > 0) {
+              fprintf(fout, ",\n%s\"raw_variant\": %d", indent, pe->variant);
+            }
+            if (variant > 0) {
+              fprintf(fout, ",\n%s\"variant\": %d", indent, variant);
+            }
+          }
+        }
+        if ((run_fields & (1 << RUN_VIEW_PROB_NAME)) && prob) {
+          if (prob->short_name && prob->short_name[0]) {
+            fprintf(fout, ",\n%s\"prob_name\" : \"%s\"", indent, JARMOR(prob->short_name));
+          }
+          if (prob->internal_name && prob->internal_name[0]) {
+            fprintf(fout, ",\n%s\"prob_internal_name\": \"%s\"", indent, JARMOR(prob->internal_name));
+          }
+          if (prob->uuid && prob->uuid[0]) {
+            fprintf(fout, ",\n%s\"prob_uuid\": \"%s\"", indent, JARMOR(prob->uuid));
+          }
+        }
+        if (run_fields & (1 << RUN_VIEW_LANG_ID)) {
+          fprintf(fout, ",\n%s\"lang_id\" : %d", indent, pe->lang_id);
+        }
+        if ((run_fields & (1 << RUN_VIEW_LANG_NAME)) && lang) {
+          if (lang->short_name && lang->short_name[0]) {
+            fprintf(fout, ",\n%s\"lang_name\": \"%s\"", indent, JARMOR(lang->short_name));
+          }
+        }
+        if (run_fields & (1 << RUN_VIEW_EOLN_TYPE)) {
+          fprintf(fout, ",\n%s\"eoln_type\": %d", indent, pe->eoln_type);
+        }
+        if (run_fields & (1 << RUN_VIEW_TOKENS)) {
+          if (pe->token_flags) {
+            fprintf(fout, ",\n%s\"token_flags\": %d", indent, pe->token_flags);
+          }
+          if (pe->token_count) {
+            fprintf(fout, ",\n%s\"token_count\": %d", indent, pe->token_count);
+          }
+        }
+
+        write_json_run_status(cs, fout, env.rhead.start_time, pe, 1, attempts, disq_attempts, ce_attempts, prev_successes,
+                              0, run_fields, effective_time, "      ");
+
+        if ((run_fields & (1 << RUN_VIEW_SCORE_ADJ)) && pe->score_adj != 0) {
+          fprintf(fout, ",\n%s\"score_adj\": %d", indent, pe->score_adj);
+        }
+        if ((run_fields & (1 << RUN_VIEW_SAVED_STATUS)) && pe->is_saved > 0) {
+          fprintf(fout, ",\n%s\"is_saved\": %s", indent, to_json_bool(pe->is_saved));
+          fprintf(fout, ",\n%s\"saved_status\": %d", indent, pe->saved_status);
+          fprintf(fout, ",\n%s\"saved_status_str\": \"%s\"", indent, run_status_short_str(pe->saved_status));
+        }
+        if ((run_fields & (1 << RUN_VIEW_SAVED_SCORE)) && pe->is_saved > 0 && pe->saved_score >= 0) {
+          fprintf(fout, ",\n%s\"saved_score\": %d", indent, pe->saved_score);
+        }
+        if ((run_fields & (1 << RUN_VIEW_SAVED_TEST)) && pe->is_saved > 0 && pe->saved_test >= 0) {
+          fprintf(fout, ",\n%s\"saved_test\": %d", indent, pe->saved_test);
+        }
+      }
+    }
+    fprintf(fout, "\n      }");
+  }
+
+  fprintf(fout, "\n    ]");
+  if (displayed_size > 0) {
+    fprintf(fout, ",\n    \"displayed_size\": %d", displayed_size);
+    fprintf(fout, ",\n    \"displayed_mask\": \"");
+    encode_displayed_mask(fout, displayed_size, displayed_mask);
+    fprintf(fout, "\"");
+  }
+  fprintf(fout, "\n  }");
+  fprintf(fout, "\n}\n");
+
+cleanup:
+  ;
+  if (u) {
+      xfree(u->prev_filter_expr);
+      xfree(u->error_msgs);
+      filter_tree_delete(u->tree_mem);
+      serve_state_destroy_stand_expr(u);
+      xfree(u);
+  }
+  xfree(match_idx);
+  xfree(list_idx);
+  xfree(displayed_mask);
+  html_armor_free(&ab);
+  return;
+
+  // error handlers
+err_inv_param:
+  error_page(fout, phr, 0, NEW_SRV_ERR_INV_PARAM);
+  goto cleanup;
+}
+
 typedef PageInterface *(*external_action_handler_t)(void);
 
 typedef int (*new_action_handler_t)(
@@ -8594,7 +9048,9 @@ static action_handler_t actions_table[NEW_SRV_ACTION_LAST] =
   /*
   [NEW_SRV_ACTION_PROBLEM_STATUS_JSON] = unpriv_problem_status_json,
   [NEW_SRV_ACTION_PROBLEM_STATEMENT_JSON] = unpriv_problem_statement_json,
-  [NEW_SRV_ACTION_LIST_RUNS_JSON] = unpriv_list_runs_json,
+  */
+  [NEW_SRV_ACTION_LIST_RUNS_JSON] = priv_list_runs_json,
+  /*
   [NEW_SRV_ACTION_RUN_MESSAGES_JSON] = unpriv_run_messages_json,
   [NEW_SRV_ACTION_RUN_TEST_JSON] = unpriv_run_test_json,
    */
