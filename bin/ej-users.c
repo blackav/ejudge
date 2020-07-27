@@ -11059,7 +11059,8 @@ cmd_get_api_key(
       }
 
       if (cnts_user_id > 0 && cnts_contest_id > 0) {
-        if (full_get_contest(p, logbuf, &cnts_contest_id, &cnts) < 0) {
+        int check_contest_id = cnts_contest_id;
+        if (full_get_contest(p, logbuf, &check_contest_id, &cnts) < 0) {
           xfree(out_pkt);
           return;
         }
@@ -11067,7 +11068,7 @@ cmd_get_api_key(
         const struct userlist_user *u = NULL;
         const struct userlist_user_info *ui = NULL;
         const struct userlist_contest *c = NULL;
-        if (default_get_user_info_3(cnts_user_id, cnts_contest_id, &u, &ui, &c) >= 0) {
+        if (default_get_user_info_3(cnts_user_id, check_contest_id, &u, &ui, &c) >= 0) {
           if (!c) {
             err("%s -> not registered for contest", logbuf);
             send_reply(p, -ULS_ERR_NOT_REGISTERED);
