@@ -8051,7 +8051,7 @@ priv_raw_audit_log(
   char *audit_text = 0;
   size_t audit_text_size = 0;
 
-  phr->json_reply = 1;
+  phr->json_reply = 0;
 
   if (hr_cgi_param(phr, "run_uuid", &s) > 0) {
     if (ej_uuid_parse(s, &run_uuid) < 0) {
