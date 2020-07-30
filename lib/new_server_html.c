@@ -8185,6 +8185,7 @@ priv_raw_report(
     content_type = get_content_type(rep_text, &start_ptr);
   }
 
+  phr->json_reply = 0;
   if (content_type == CONTENT_TYPE_BSON) {
     fprintf(fout, "Content-type: application/bson\n"
             "Content-length: %zu\n\n", rep_len);
