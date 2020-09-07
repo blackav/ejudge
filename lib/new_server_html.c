@@ -3100,7 +3100,7 @@ priv_submit_run(
     if ((sender_user_id = teamdb_lookup_login(cs->teamdb_state, s)) <= 0) {
       FAIL(NEW_SRV_ERR_INV_USER_ID);
     }
-  } else if (hr_cgi_param_int_opt(phr, "sender_user_id", &sender_user_id, -1) >= 0) {
+  } else if (hr_cgi_param_int_opt(phr, "sender_user_id", &sender_user_id, -1) >= 0 && sender_user_id > 0) {
     if (opcaps_check(phr->caps, OPCAP_EDIT_RUN) < 0) {
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     }
