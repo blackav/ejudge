@@ -261,7 +261,7 @@ prepare_func(
     if (!state->host) state->host = xstrdup("localhost");
     if (state->port <= 0) state->port = 27017;
     if (!state->table_prefix) state->table_prefix = xstrdup("");
-    state->show_queries = 1;
+    //state->show_queries = 1;
 
 #if HAVE_LIBMONGOC - 0 > 0
     {
