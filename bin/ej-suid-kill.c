@@ -29,8 +29,21 @@
 #include <signal.h>
 #include <sys/wait.h>
 
+#include "config.h"
+
+#if defined EJUDGE_PRIMARY_USER
+#define PRIMARY_USER EJUDGE_PRIMARY_USER
+#else
+#define PRIMARY_USER "ejudge"
+#endif
+
+#if defined EJUDGE_EXEC_USER
+#define EXEC_USER EJUDGE_EXEC_USER
+#define EXEC_GROUP EJUDGE_EXEC_USER
+#else
 #define EXEC_USER "ejexec"
 #define EXEC_GROUP "ejexec"
+#endif
 
 int
 main(int argc, char **argv)
@@ -39,25 +52,52 @@ main(int argc, char **argv)
         fprintf(stderr, "%s: wrong number of arguments\n", argv[0]);
         abort();
     }
-    struct passwd *pwd = getpwnam(EXEC_USER);
-    struct group *grp = getgrnam(EXEC_GROUP);
-    endpwent();
-    endgrent();
-    if (!pwd) {
-        fprintf(stderr, "%s: user '%s' does not exist\n", argv[0], EXEC_USER);
-        abort();
+
+    int primary_uid = -1;
+    int exec_uid = -1;
+    int exec_gid = -1;
+
+    {
+        struct passwd *pwd = getpwnam(EXEC_USER);
+        struct group *grp = getgrnam(EXEC_GROUP);
+        if (!pwd) {
+            fprintf(stderr, "%s: user '%s' does not exist\n", argv[0], EXEC_USER);
+            abort();
+        }
+        exec_uid = pwd->pw_uid;
+        if (exec_uid <= 0) {
+            fprintf(stderr, "%s: user '%s' has uid %d\n", argv[0], EXEC_USER, exec_uid);
+            abort();
+        }
+        if (!grp) {
+            fprintf(stderr, "%s: group '%s' does not exist\n", argv[0], EXEC_GROUP);
+            abort();
+        }
+        exec_gid = grp->gr_gid;
+        if (exec_gid <= 0) {
+            fprintf(stderr, "%s: group '%s' has gid %d\n", argv[0], EXEC_GROUP, exec_gid);
+            abort();
+        }
+        endpwent();
+        endgrent();
     }
-    if (pwd->pw_uid <= 0) {
-        fprintf(stderr, "%s: user '%s' has uid %d\n", argv[0], EXEC_USER, pwd->pw_uid);
-        abort();
-    }
-    if (!grp) {
-        fprintf(stderr, "%s: group '%s' does not exist\n", argv[0], EXEC_GROUP);
-        abort();
-    }
-    if (grp->gr_gid <= 0) {
-        fprintf(stderr, "%s: group '%s' has gid %d\n", argv[0], EXEC_GROUP, grp->gr_gid);
-        abort();
+
+    {
+        struct passwd *pwd = getpwnam(PRIMARY_USER);
+        if (!pwd) {
+            fprintf(stderr, "%s: user '%s' does not exist\n", argv[0], PRIMARY_USER);
+            abort();
+        }
+        primary_uid = pwd->pw_uid;
+        if (primary_uid <= 0) {
+            fprintf(stderr, "%s: user '%s' has uid %d\n", argv[0], PRIMARY_USER, primary_uid);
+            abort();
+        }
+        if (getuid() != primary_uid) {
+            fprintf(stderr, "%s: only user '%s' can run this program\n", argv[0], PRIMARY_USER);
+            abort();
+        }
+        endpwent();
     }
 
     errno = 0;
@@ -81,9 +121,9 @@ main(int argc, char **argv)
             return 1;
         }
         if (!subpid) {
-            if (setgid(grp->gr_gid) < 0) {
+            if (setgid(exec_gid) < 0) {
                 fprintf(stderr, "%s: setgid failed\n", argv[0]);
-            } else if (setuid(pwd->pw_uid) < 0) {
+            } else if (setuid(exec_uid) < 0) {
                 fprintf(stderr, "%s: setuid failed\n", argv[0]);
             } else {
                 kill(dst_pid, kill_sig);
@@ -93,11 +133,11 @@ main(int argc, char **argv)
         waitpid(subpid, NULL, 0);
         return 0;
     } else {
-        if (setgid(grp->gr_gid) < 0) {
+        if (setgid(exec_gid) < 0) {
             fprintf(stderr, "%s: setgid failed\n", argv[0]);
             abort();
         }
-        if (setuid(pwd->pw_uid) < 0) {
+        if (setuid(exec_uid) < 0) {
             fprintf(stderr, "%s: setuid failed\n", argv[0]);
             abort();
         }

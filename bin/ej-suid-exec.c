@@ -29,8 +29,21 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#include "config.h"
+
+#if defined EJUDGE_PRIMARY_USER
+#define PRIMARY_USER EJUDGE_PRIMARY_USER
+#else
+#define PRIMARY_USER "ejudge"
+#endif
+
+#if defined EJUDGE_EXEC_USER
+#define EXEC_USER EJUDGE_EXEC_USER
+#define EXEC_GROUP EJUDGE_EXEC_USER
+#else
 #define EXEC_USER "ejexec"
 #define EXEC_GROUP "ejexec"
+#endif
 
 extern char **environ;
 
@@ -111,30 +124,57 @@ main(int argc, char **argv)
         }
     }
 
-    struct passwd *pwd = getpwnam(EXEC_USER);
-    struct group *grp = getgrnam(EXEC_GROUP);
-    endpwent();
-    endgrent();
-    if (!pwd) {
-        fprintf(stderr, "%s: user '%s' does not exist\n", argv[0], EXEC_USER);
-        abort();
-    }
-    if (pwd->pw_uid <= 0) {
-        fprintf(stderr, "%s: user '%s' has uid %d\n", argv[0], EXEC_USER, pwd->pw_uid);
-        abort();
-    }
-    if (!grp) {
-        fprintf(stderr, "%s: group '%s' does not exist\n", argv[0], EXEC_GROUP);
-        abort();
-    }
-    if (grp->gr_gid <= 0) {
-        fprintf(stderr, "%s: group '%s' has gid %d\n", argv[0], EXEC_GROUP, grp->gr_gid);
-        abort();
-    }
+    int primary_uid = -1;
     int my_uid = getuid();
+    int exec_uid = -1;
+    int exec_gid = -1;
+
+    {
+        struct passwd *pwd = getpwnam(EXEC_USER);
+        struct group *grp = getgrnam(EXEC_GROUP);
+        if (!pwd) {
+            fprintf(stderr, "%s: user '%s' does not exist\n", argv[0], EXEC_USER);
+            abort();
+        }
+        exec_uid = pwd->pw_uid;
+        if (exec_uid <= 0) {
+            fprintf(stderr, "%s: user '%s' has uid %d\n", argv[0], EXEC_USER, exec_uid);
+            abort();
+        }
+        if (!grp) {
+            fprintf(stderr, "%s: group '%s' does not exist\n", argv[0], EXEC_GROUP);
+            abort();
+        }
+        exec_gid = grp->gr_gid;
+        if (exec_gid <= 0) {
+            fprintf(stderr, "%s: group '%s' has gid %d\n", argv[0], EXEC_GROUP, exec_gid);
+            abort();
+        }
+        endpwent();
+        endgrent();
+    }
+
+    {
+        struct passwd *pwd = getpwnam(PRIMARY_USER);
+        if (!pwd) {
+            fprintf(stderr, "%s: user '%s' does not exist\n", argv[0], PRIMARY_USER);
+            abort();
+        }
+        primary_uid = pwd->pw_uid;
+        if (primary_uid <= 0) {
+            fprintf(stderr, "%s: user '%s' has uid %d\n", argv[0], EXEC_USER, primary_uid);
+            abort();
+        }
+        if (my_uid != primary_uid) {
+            fprintf(stderr, "%s: only user '%s' can run this program\n", argv[0], PRIMARY_USER);
+            abort();
+        }
+        endpwent();
+    }
+
     if (chown_flag) {
-        safe_chown(".", pwd->pw_uid, grp->gr_gid, my_uid);
-        chown_rec(".", pwd->pw_uid, grp->gr_gid, my_uid);
+        safe_chown(".", exec_uid, exec_gid, my_uid);
+        chown_rec(".", exec_uid, exec_gid, my_uid);
     }
 
     // fix for https://lore.kernel.org/patchwork/patch/855414/
@@ -143,16 +183,16 @@ main(int argc, char **argv)
     rr.rlim_cur = rr.rlim_max;
     setrlimit(RLIMIT_STACK, &rr);
 
-    if (setgid(grp->gr_gid) < 0) {
+    if (setgid(exec_gid) < 0) {
         fprintf(stderr, "%s: setgid failed\n", argv[0]);
         abort();
     }
-    int supp_groups[1] = { grp->gr_gid };
+    int supp_groups[1] = { exec_gid };
     if (setgroups(1, supp_groups) < 0) {
         fprintf(stderr, "%s: setgroups failed\n", argv[0]);
         abort();
     }
-    if (setuid(pwd->pw_uid) < 0) {
+    if (setuid(exec_uid) < 0) {
         fprintf(stderr, "%s: setuid failed\n", argv[0]);
         abort();
     }
@@ -160,9 +200,3 @@ main(int argc, char **argv)
     fprintf(stderr, "%s: execve '%s' failed\n", argv[0], argv[start_ind]);
     abort();
 }
-
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */

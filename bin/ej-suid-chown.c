@@ -29,18 +29,18 @@
 
 #include "config.h"
 
+#if defined EJUDGE_PRIMARY_USER
+#define PRIMARY_USER EJUDGE_PRIMARY_USER
+#else
+#define PRIMARY_USER "ejudge"
+#endif
+
 #if defined EJUDGE_EXEC_USER
 #define EXEC_USER EJUDGE_EXEC_USER
 #define EXEC_GROUP EJUDGE_EXEC_USER
 #else
 #define EXEC_USER "ejexec"
 #define EXEC_GROUP "ejexec"
-#endif
-
-#if defined EJUDGE_PRIMARY_USER
-#define PRIMARY_USER EJUDGE_PRIMARY_USER
-#else
-#define PRIMARY_USER "ejudge"
 #endif
 
 extern char **environ;
