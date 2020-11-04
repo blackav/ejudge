@@ -1,3 +1,5 @@
+/* -*- mode: c; c-basic-offset: 4 -*- */
+
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
@@ -11,8 +13,21 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include "config.h"
+
+#if defined EJUDGE_EXEC_USER
+#define EXEC_USER EJUDGE_EXEC_USER
+#define EXEC_GROUP EJUDGE_EXEC_USER
+#else
 #define EXEC_USER "ejexec"
 #define EXEC_GROUP "ejexec"
+#endif
+
+#if defined EJUDGE_PRIMARY_USER
+#define PRIMARY_USER EJUDGE_PRIMARY_USER
+#else
+#define PRIMARY_USER "ejudge"
+#endif
 
 extern char **environ;
 
@@ -77,34 +92,55 @@ main(int argc, char **argv)
         fprintf(stderr, "%s: wrong number of arguments\n", argv[0]);
         abort();
     }
-    struct passwd *pwd = getpwnam(EXEC_USER);
-    struct group *grp = getgrnam(EXEC_GROUP);
-    endpwent();
-    endgrent();
-    if (!pwd) {
-        fprintf(stderr, "%s: user '%s' does not exist\n", argv[0], EXEC_USER);
-        abort();
+    int exec_uid = -1;
+    int primary_uid = -1;
+
+    {
+        struct passwd *pwd = getpwnam(EXEC_USER);
+        struct group *grp = getgrnam(EXEC_GROUP);
+        if (!pwd) {
+            fprintf(stderr, "%s: user '%s' does not exist\n", argv[0], EXEC_USER);
+            abort();
+        }
+        exec_uid = pwd->pw_uid;
+        if (exec_uid <= 0) {
+            fprintf(stderr, "%s: user '%s' has uid %d\n", argv[0], EXEC_USER, exec_uid);
+            abort();
+        }
+        if (!grp) {
+            fprintf(stderr, "%s: group '%s' does not exist\n", argv[0], EXEC_GROUP);
+            abort();
+        }
+        if (grp->gr_gid <= 0) {
+            fprintf(stderr, "%s: group '%s' has gid %d\n", argv[0], EXEC_GROUP, grp->gr_gid);
+            abort();
+        }
+        endpwent();
+        endgrent();
     }
-    if (pwd->pw_uid <= 0) {
-        fprintf(stderr, "%s: user '%s' has uid %d\n", argv[0], EXEC_USER, pwd->pw_uid);
-        abort();
+
+    {
+        struct passwd *pwd = getpwnam(PRIMARY_USER);
+        if (!pwd) {
+            fprintf(stderr, "%s: user '%s' does not exist\n", argv[0], PRIMARY_USER);
+            abort();
+        }
+        primary_uid = pwd->pw_uid;
+        if (primary_uid <= 0) {
+            fprintf(stderr, "%s: user '%s' has uid %d\n", argv[0], PRIMARY_USER, primary_uid);
+            abort();
+        }
+        endpwent();
     }
-    if (!grp) {
-        fprintf(stderr, "%s: group '%s' does not exist\n", argv[0], EXEC_GROUP);
-        abort();
-    }
-    if (grp->gr_gid <= 0) {
-        fprintf(stderr, "%s: group '%s' has gid %d\n", argv[0], EXEC_GROUP, grp->gr_gid);
-        abort();
-    }
+
     int my_uid = getuid();
     int my_gid = getgid();
-    safe_chown(argv[1], my_uid, my_gid, pwd->pw_uid);
-    chown_rec(argv[1], my_uid, my_gid, pwd->pw_uid);
-}
 
-/*
- * Local variables:
- *  c-basic-offset: 4
- * End:
- */
+    if (my_uid != primary_uid) {
+        fprintf(stderr, "%s: only user '%s' can run this program\n", argv[0], PRIMARY_USER);
+        abort();
+    }
+
+    safe_chown(argv[1], my_uid, my_gid, exec_uid);
+    chown_rec(argv[1], my_uid, my_gid, exec_uid);
+}
