@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -141,6 +141,7 @@ const opcap_t OPCAP_MASTER_PERMS =
   | (1ULL << OPCAP_PRIV_EDIT_PASSWD)
   | (1ULL << OPCAP_RESTART)
   | (1ULL << OPCAP_COMMENT_RUN);
+const opcap_t OPCAP_FULL_PERMS = (1ULL << OPCAP_LAST) - 1;
 
 int
 opcaps_find(const opcaplist_t *list,
@@ -220,7 +221,7 @@ opcaps_parse(unsigned char const *str, opcap_t *pcap)
       memcpy(str3, q, e - q);
 
       if (!strcmp("FULL_SET", str3)) {
-        lcap |= ((1ULL << OPCAP_LAST) - 1);
+        lcap |= OPCAP_FULL_PERMS;
       } else if (!strcmp("OBSERVER_SET", str3)) {
         lcap |= OPCAP_OBSERVER_PERMS;
       } else if (!strcmp("JUDGE_SET", str3)) {
@@ -266,6 +267,7 @@ opcaps_is_predef_caps(opcap_t cap)
   if (cap == OPCAP_OBSERVER_PERMS) return OPCAP_PREDEF_OBSERVER;
   if (cap == OPCAP_JUDGE_PERMS) return OPCAP_PREDEF_JUDGE;
   if (cap == OPCAP_MASTER_PERMS) return OPCAP_PREDEF_MASTER;
+  if (cap == OPCAP_FULL_PERMS) return OPCAP_PREDEF_FULL;
   return 0;
 }
 
@@ -278,6 +280,7 @@ opcaps_get_predef_caps(int id)
   case OPCAP_PREDEF_OBSERVER: return OPCAP_OBSERVER_PERMS;
   case OPCAP_PREDEF_JUDGE:    return OPCAP_JUDGE_PERMS;
   case OPCAP_PREDEF_MASTER:   return OPCAP_MASTER_PERMS;
+  case OPCAP_PREDEF_FULL:     return OPCAP_FULL_PERMS;
   default:
     abort();
   }

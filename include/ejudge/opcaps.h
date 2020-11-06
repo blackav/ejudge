@@ -1,9 +1,7 @@
 #ifndef __OPCAPS_H__
 #define __OPCAPS_H__
 
-/* $Id$ */
-
-/* Copyright (C) 2003-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -73,6 +71,7 @@ enum
   OPCAP_PREDEF_OBSERVER,
   OPCAP_PREDEF_JUDGE,
   OPCAP_PREDEF_MASTER,
+  OPCAP_PREDEF_FULL,
   OPCAP_PREDEF_LAST,
 };
 
