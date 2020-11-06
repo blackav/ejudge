@@ -560,7 +560,7 @@ contests_remove_nth_permission(struct contest_desc *cnts, int n)
 
   for (j = 0, perms = CNTS_FIRST_PERM(cnts);
        perms && n != j;
-       perms = CNTS_NEXT_PERM_NC(perms), ++j)
+       perms = CNTS_NEXT_PERM_NC(perms), ++j) {}
   if (!perms || n != j) return -1;
 
   xml_unlink_node(&perms->b);
