@@ -531,6 +531,11 @@ contests_set_permission(
         struct contest_desc *cnts,
         int num,
         opcap_t caps);
+int
+contests_upsert_permission(
+        struct contest_desc *cnts,
+        const unsigned char *login,
+        opcap_t caps);
 
 void
 contests_set_default(

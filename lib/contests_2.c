@@ -601,6 +601,33 @@ contests_add_permission(
   return 1;
 }
 
+int
+contests_upsert_permission(
+        struct contest_desc *cnts,
+        const unsigned char *login,
+        opcap_t caps)
+{
+  struct opcap_list_item *cap_node;
+
+  for (cap_node = CNTS_FIRST_PERM(cnts); cap_node;
+       cap_node = CNTS_NEXT_PERM_NC(cap_node))
+    if (!strcmp(cap_node->login, login)) {
+      cap_node->caps = caps;
+      return 0;
+    }
+
+  if (!cnts->caps_node) {
+    cnts->caps_node = contests_new_node(CONTEST_CAPS);
+    xml_link_node_last(&cnts->b, cnts->caps_node);
+  }
+  cap_node = (typeof(cap_node)) contests_new_node(CONTEST_CAP);
+  if (!cnts->capabilities.first) cnts->capabilities.first = cap_node;
+  cap_node->login = xstrdup(login);
+  cap_node->caps = caps;
+  xml_link_node_last(cnts->caps_node, &cap_node->b);
+  return 1;
+}
+
 void
 contests_copy_permissions(
         struct contest_desc *cdst,
