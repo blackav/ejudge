@@ -61,11 +61,46 @@ write_help(void)
            "              disable access to 'client' (aka 'team') CGI from all IPs\n"
            "    --all-participant\n"
            "              enable access to 'client' (aka 'team') CGI from all IPs\n"
+           "    --remove-cap USER\n"
+           "              remove capabilities for the USER\n"
+           "    --add-master-cap USER\n"
+           "              set MASTER capabilities for the USER\n"
+           "    --add-full-cap USER\n"
+           "              set FULL capabilities for the USER\n"
            "  CONTEST-IDS:\n"
            "    NUM       handle this contest\n"
            "    NUM1-NUM2 handle all contests in the range\n",
            progname, progname);
     exit(0);
+}
+
+static int
+find_cap_user(const struct contest_desc *cnts, const char *cap_user_name)
+{
+    const struct opcap_list_item *cap;
+    int index = 0;
+    for (cap = CNTS_FIRST_PERM(cnts); cap; cap = CNTS_NEXT_PERM(cap)) {
+        if (!strcmp(cap->login, cap_user_name)) {
+            return index;
+        }
+        ++index;
+    }
+    return -1;
+}
+
+static int
+find_cap_user_2(const struct contest_desc *cnts, const char *cap_user_name, int id)
+{
+    const struct opcap_list_item *cap;
+    int index = 0;
+    for (cap = CNTS_FIRST_PERM(cnts); cap; cap = CNTS_NEXT_PERM(cap)) {
+        if (!strcmp(cap->login, cap_user_name)) {
+            if (cap->caps == opcaps_get_predef_caps(id)) return index;
+            return -1;
+        }
+        ++index;
+    }
+    return -1;
 }
 
 static int
@@ -177,6 +212,10 @@ main(int argc, char *argv[])
     int all_register_flag = 0;
     int all_participant_flag = 0;
     int no_audit_flag = 0;
+    const char *cap_user_name = NULL;
+    int remove_cap_flag = 0;
+    int add_master_cap_flag = 0;
+    int add_full_cap_flag = 0;
 
     int argi = 1;
     while (argi < argc) {
@@ -256,6 +295,42 @@ main(int argc, char *argv[])
             }
             all_participant_flag = 1;
             ++argi;
+        } else if (!strcmp(argv[argi], "--remove-cap")) {
+            if (argi + 1 >= argc) {
+                fprintf(stderr, "%s: argument expected for --remove-cap\n", progname);
+                exit(1);
+            }
+            if (cap_user_name) {
+                fprintf(stderr, "%s: conflicting options: capability change user already set\n", progname);
+                exit(1);
+            }
+            remove_cap_flag = 1;
+            cap_user_name = argv[argi + 1];
+            argi += 2;
+        } else if (!strcmp(argv[argi], "--add-master-cap")) {
+            if (argi + 1 >= argc) {
+                fprintf(stderr, "%s: argument expected for --add-master-cap\n", progname);
+                exit(1);
+            }
+            if (cap_user_name) {
+                fprintf(stderr, "%s: conflicting options: capability change user already set\n", progname);
+                exit(1);
+            }
+            add_master_cap_flag = 1;
+            cap_user_name = argv[argi + 1];
+            argi += 2;
+        } else if (!strcmp(argv[argi], "--add-full-cap")) {
+            if (argi + 1 >= argc) {
+                fprintf(stderr, "%s: argument expected for --add-full-cap\n", progname);
+                exit(1);
+            }
+            if (cap_user_name) {
+                fprintf(stderr, "%s: conflicting options: capability change user already set\n", progname);
+                exit(1);
+            }
+            add_full_cap_flag = 1;
+            cap_user_name = argv[argi + 1];
+            argi += 2;
         } else if (!strcmp(argv[argi], "--no-audit")) {
             no_audit_flag = 1;
             ++argi;
@@ -429,6 +504,15 @@ main(int argc, char *argv[])
         if (all_participant_flag && contests_get_participant_access_type(cnts) != 2) {
             need_update = 1;
         }
+        if (remove_cap_flag && find_cap_user(cnts, cap_user_name) >= 0) {
+            need_update = 1;
+        }
+        if (add_master_cap_flag && find_cap_user_2(cnts, cap_user_name, OPCAP_PREDEF_MASTER) < 0) {
+            need_update = 1;
+        }
+        if (add_full_cap_flag && find_cap_user_2(cnts, cap_user_name, OPCAP_PREDEF_FULL) < 0) {
+            need_update = 1;
+        }
 
         if (!need_update) {
             continue;
@@ -496,6 +580,26 @@ main(int argc, char *argv[])
             contests_set_default(cnts, &cnts->team_access, CONTEST_TEAM_ACCESS, 1);
             *updates_ptr++ = '+';
             *updates_ptr++ = 'P';
+        }
+        if (remove_cap_flag) {
+            int index = find_cap_user(cnts, cap_user_name);
+            if (index >= 0) {
+                contests_remove_nth_permission(cnts, index);
+                *updates_ptr++ = '-';
+                *updates_ptr++ = 'A';
+            }
+        }
+        if (add_master_cap_flag) {
+            contests_upsert_permission(cnts, cap_user_name, opcaps_get_predef_caps(OPCAP_PREDEF_MASTER));
+            *updates_ptr++ = '+';
+            *updates_ptr++ = 'A';
+            *updates_ptr++ = 'M';
+        }
+        if (add_full_cap_flag) {
+            contests_upsert_permission(cnts, cap_user_name, opcaps_get_predef_caps(OPCAP_PREDEF_FULL));
+            *updates_ptr++ = '+';
+            *updates_ptr++ = 'A';
+            *updates_ptr++ = 'F';
         }
 
         *updates_ptr = 0;
