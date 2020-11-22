@@ -63,6 +63,8 @@ write_help(void)
            "              enable access to 'client' (aka 'team') CGI from all IPs\n"
            "    --remove-cap USER\n"
            "              remove capabilities for the USER\n"
+           "    --add-judge-cap USER\n"
+           "              set JUDGE capabilities for the USER\n"
            "    --add-master-cap USER\n"
            "              set MASTER capabilities for the USER\n"
            "    --add-full-cap USER\n"
@@ -214,6 +216,7 @@ main(int argc, char *argv[])
     int no_audit_flag = 0;
     const char *cap_user_name = NULL;
     int remove_cap_flag = 0;
+    int add_judge_cap_flag = 0;
     int add_master_cap_flag = 0;
     int add_full_cap_flag = 0;
 
@@ -305,6 +308,18 @@ main(int argc, char *argv[])
                 exit(1);
             }
             remove_cap_flag = 1;
+            cap_user_name = argv[argi + 1];
+            argi += 2;
+        } else if (!strcmp(argv[argi], "--add-judge-cap")) {
+            if (argi + 1 >= argc) {
+                fprintf(stderr, "%s: argument expected for --add-judge-cap\n", progname);
+                exit(1);
+            }
+            if (cap_user_name) {
+                fprintf(stderr, "%s: conflicting options: capability change user already set\n", progname);
+                exit(1);
+            }
+            add_judge_cap_flag = 1;
             cap_user_name = argv[argi + 1];
             argi += 2;
         } else if (!strcmp(argv[argi], "--add-master-cap")) {
@@ -510,6 +525,9 @@ main(int argc, char *argv[])
         if (add_master_cap_flag && find_cap_user_2(cnts, cap_user_name, OPCAP_PREDEF_MASTER) < 0) {
             need_update = 1;
         }
+        if (add_judge_cap_flag && find_cap_user_2(cnts, cap_user_name, OPCAP_PREDEF_JUDGE) < 0) {
+            need_update = 1;
+        }
         if (add_full_cap_flag && find_cap_user_2(cnts, cap_user_name, OPCAP_PREDEF_FULL) < 0) {
             need_update = 1;
         }
@@ -588,6 +606,12 @@ main(int argc, char *argv[])
                 *updates_ptr++ = '-';
                 *updates_ptr++ = 'A';
             }
+        }
+        if (add_judge_cap_flag) {
+            contests_upsert_permission(cnts, cap_user_name, opcaps_get_predef_caps(OPCAP_PREDEF_JUDGE));
+            *updates_ptr++ = '+';
+            *updates_ptr++ = 'A';
+            *updates_ptr++ = 'J';
         }
         if (add_master_cap_flag) {
             contests_upsert_permission(cnts, cap_user_name, opcaps_get_predef_caps(OPCAP_PREDEF_MASTER));
