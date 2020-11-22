@@ -70,6 +70,10 @@
 
 <p>Range (UID1-UID2): <input type="text" name="range" value="" id="UserRangeInput" /><input type="button" value="Select Range" onclick="selectUserRange()" /></p>
 
+<%
+  if (phr->role == USER_ROLE_ADMIN) {
+%>
+
 <h2>Change registration status</h2>
 
 <s:form onsubmit="usersRemoveRegistrationsSubmit()">
@@ -156,6 +160,10 @@
 <tr><td><input type="text" size="32" name="add_user_id"/></td><td><s:submit ac="users-add-by-user-id" /></td><td><s:_>Add a new user specifying his/her User Id</s:_></td></tr>
 </table>
 </s:form>
+
+<%
+  }
+%>
 
 <% if (global->user_exam_protocol_header_txt || global->full_exam_protocol_header_txt || global->full_exam_protocol_header_txt) { %>
 <h2>Protocol generation</h2>

@@ -89,13 +89,24 @@
     <li><s:a ac="view-users-new-page"><s:_>Regular users</s:_></s:a></li>
     <li><s:a ac="view-online-users"><s:_>Online users</s:_></s:a></li>
     <li><s:a ac="standings"><s:_>Standings</s:_></s:a></li>
+<%
+  if (phr->role == USER_ROLE_ADMIN) {
+%>
     <li><s:a ac="view-testing-queue"><s:_>Testing queue</s:_></s:a></li>
-
+<%
+  }
+%>
     <li><a><s:_>View</s:_></a>
         <ul>
             <li><s:a ac="view-users-new-page"><s:_>Regular users</s:_></s:a></li><br/>
+<%
+  if (phr->role == USER_ROLE_ADMIN) {
+%>
             <li><s:a ac="priv-users-view"><s:_>Privileged users</s:_></s:a></li><br/>
             <li><s:a ac="view-exam-info"><s:_>Examination information</s:_></s:a></li><br/>
+<%
+  }
+%>
     <% if (phr->role >= USER_ROLE_JUDGE && opcaps_check(phr->caps, OPCAP_EDIT_PASSWD) >= 0) { %>
             <li><s:a ac="view-reg-pwds"><s:_>Registration passwords</s:_></s:a></li><br/>
         <% if (!cnts->disable_team_password) { %>
@@ -136,6 +147,9 @@
         </ul>
     </li>
 
+<%
+  if (phr->role == USER_ROLE_ADMIN) {
+%>
     <li><a><s:_>Actions</s:_></a>
         <ul>
             <li><s:a ac="priv-submit-page"><s:_>Submit a solution</s:_></s:a></li><br/>
@@ -167,6 +181,9 @@
             <li><s:a ac="reset-1"><s:_>Reset the contest!</s:_></s:a></li><br/>
         </ul>
     </li>
+<%
+  }
+%>
 </ul>
 
 <a name="status"></a><h2><s:_>Server status</s:_></h2>

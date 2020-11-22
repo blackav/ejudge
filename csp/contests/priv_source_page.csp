@@ -754,6 +754,10 @@ Run Id: <s:a url="ViewOtherSourceUrl"><s:v value="fcev2.v[i].e.run_id" /></s:a>
 <s:submit ac="priv-submit-run-comment-and-summon" />
 </div></s:form>
 
+<%
+  if (phr->role == USER_ROLE_ADMIN) {
+%>
+
 <div class="h2-long" style="margin-top: 13px; margin-bottom: 5px;">
   <h2><s:_>Add a permanent problem review comment</s:_></h2>
 </div>
@@ -766,6 +770,9 @@ Run Id: <s:a url="ViewOtherSourceUrl"><s:v value="fcev2.v[i].e.run_id" /></s:a>
 
 <br />
 
+<%
+  }
+%>
 
 <%@include "priv_footer.csp"
 %><%

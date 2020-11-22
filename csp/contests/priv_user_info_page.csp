@@ -75,10 +75,16 @@
 <ul>
     <li><s:a ac="main-page"><s:_>Main page</s:_></s:a></li>
     <li><s:a ac="view-users-new-page"><s:_>View regular users</s:_></s:a></li>
+<%
+    if (phr->role == USER_ROLE_ADMIN) {
+%>
     <li><s:a ac="view-reg-pwds"><s:_>View registration passwords</s:_></s:a></li>
-<%  if (!cnts->disable_team_password) { %>
+<%    if (!cnts->disable_team_password) { %>
     <li><s:a ac="view-cnts-pwds"><s:_>View contest passwords</s:_></s:a></li>
-<%  } %>
+<%    } %>
+<%
+    }
+%>
 </ul>
 
 <% if (cnts && cnts->enable_avatar > 0) { %>
@@ -91,6 +97,9 @@
       &nbsp;
 <% } %>
     </td>
+<%
+  if (phr->role == USER_ROLE_ADMIN) {
+%>
     <td class="b1">
       <s:form enctype="multipart/form-data">
         <s:hidden name="other_user_id" value="view_user_id" />
@@ -105,6 +114,9 @@
         <s:submit ac="confirm-avatar" />
       </s:form>
     </td>
+<%
+  }
+%>
   </tr>
 </table>
 <% } %>
@@ -418,6 +430,10 @@
 %><tr><td><s:_>Number of warnings</s:_>:</td><td><s:v value="i" /></td><td>&nbsp;</td><td>&nbsp;</td></tr>
 </table>
 
+<%
+  if (phr->role == USER_ROLE_ADMIN) {
+%>
+
 <s:form>
 <s:hidden name="user_id" value="view_user_id" />
 <p><s:submit ac="print-user-protocol" />
@@ -432,6 +448,10 @@
 <s:hidden name="user_id" value="view_user_id" />
 <p><s:submit ac="print-ufc-protocol" />
 </s:form>
+
+<%
+  }
+%>
 
 <%
   if (!u_extra || !u_extra->warn_u) {
