@@ -10967,6 +10967,7 @@ unpriv_submit_run(
       if (!r1 && !r2) {
         FAIL2(NEW_SRV_ERR_FILE_UNSPECIFIED);
       }
+      if (!run_text) run_text = "";
     } else {
       if (!hr_cgi_param_bin(phr, "file", &run_text, &run_size)) {
         FAIL2(NEW_SRV_ERR_FILE_UNSPECIFIED);
