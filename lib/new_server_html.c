@@ -15686,6 +15686,8 @@ batch_login(
 
         p = ep;
       }
+    } else {
+      check_contests_id[check_contests_count++] = contest_id;
     }
 
     int user_id = 0;
