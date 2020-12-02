@@ -528,6 +528,7 @@ ns_get_user_problems_summary(
         int accepting_mode,
         time_t start_time,
         time_t stop_time,
+        const ej_ip_t *ip,
         struct UserProblemInfo *pinfo); /* user problem info */
 
 int ns_insert_variant_num(unsigned char *buf, size_t size,

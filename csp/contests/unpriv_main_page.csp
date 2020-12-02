@@ -140,7 +140,7 @@ ns_unparse_answers(
 
   unpriv_load_html_style(phr, cnts, 0, 0);
 
-  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, pinfo);
+  ns_get_user_problems_summary(cs, phr->user_id, phr->login, accepting_mode, start_time, stop_time, &phr->ip, pinfo);
   for (i = 1; i <= cs->max_prob; ++i) {
     summoned_count += pinfo[i].summoned_flag;
   }
