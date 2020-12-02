@@ -5696,6 +5696,22 @@ ns_get_user_problems_summary(
     if (!serve_is_problem_started(cs, user_id, cur_prob))
       continue;
 
+    // check the allowed IP list
+    if (cur_prob->allow_ip) {
+      int j;
+      for (j = 0; cur_prob->allow_ip[j]; ++j) {
+        ej_ip_t ip_addr, ip_mask;
+        if (xml_parse_ipv6_mask(NULL, "", 0, 0, cur_prob->allow_ip[j], &ip_addr, &ip_mask) >= 0) {
+          if (ipv6_match_mask(&ip_addr, &ip_mask, ip)) {
+            break;
+          }
+        }
+      }
+      if (!cur_prob->allow_ip[j]) {
+        continue;
+      }
+    }
+
     // the problem is completely disabled before requirements are met
     // check requirements
     if (cur_prob->require) {
