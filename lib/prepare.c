@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2000-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -500,6 +500,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(enable_language, "x"),
   PROBLEM_PARAM(require, "x"),
   PROBLEM_PARAM(provide_ok, "x"),
+  PROBLEM_PARAM(allow_ip, "x"),
   PROBLEM_PARAM(standard_checker, "S"),
   PROBLEM_PARAM(lang_compiler_env, "x"),
   PROBLEM_PARAM(checker_env, "x"),
@@ -1381,6 +1382,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->enable_language);
   sarray_free(p->require);
   sarray_free(p->provide_ok);
+  sarray_free(p->allow_ip);
   sarray_free(p->lang_compiler_env);
   sarray_free(p->checker_env);
   sarray_free(p->valuer_env);
@@ -3796,6 +3798,9 @@ set_defaults(
       }
       if (si != -1 && aprob->provide_ok) {
         prob->provide_ok = sarray_merge_pf(aprob->provide_ok, prob->provide_ok);
+      }
+      if (si != -1 && aprob->allow_ip) {
+        prob->allow_ip = sarray_merge_pf(aprob->allow_ip, prob->allow_ip);
       }
       if (si != -1 && aprob->checker_env) {
         prob->checker_env = sarray_merge_pf(aprob->checker_env,

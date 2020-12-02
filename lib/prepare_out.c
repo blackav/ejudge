@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2020 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1433,6 +1433,7 @@ prepare_unparse_prob(
   do_xstr(f, &ab, "enable_language", prob->enable_language);
   do_xstr(f, &ab, "require", prob->require);
   do_xstr(f, &ab, "provide_ok", prob->provide_ok);
+  do_xstr(f, &ab, "allow_ip", prob->allow_ip);
   do_xstr(f, &ab, "score_view", prob->score_view);
   do_xstr(f, &ab, "statement_env", prob->statement_env);
 
@@ -1849,6 +1850,7 @@ prepare_unparse_actual_prob(
   do_xstr(f, &ab, "enable_language", prob->enable_language);
   do_xstr(f, &ab, "require", prob->require);
   do_xstr(f, &ab, "provide_ok", prob->provide_ok);
+  do_xstr(f, &ab, "allow_ip", prob->allow_ip);
   do_xstr(f, &ab, "score_view", prob->score_view);
   do_xstr(f, &ab, "date_penalty", prob->date_penalty);
   do_xstr(f, &ab, "group_start_date", prob->group_start_date);

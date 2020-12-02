@@ -1134,6 +1134,7 @@ struct section_problem_data
   char **enable_language;
   char **require;
   char **provide_ok;
+  char **allow_ip;
   /** environment variables for compilation */
   ejenvlist_t lang_compiler_env;
   /** environment variables for the problem checker */
