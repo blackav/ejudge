@@ -519,6 +519,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_enable_language] = { CNTSPROB_enable_language, 'x', XSIZE(struct section_problem_data, enable_language), "enable_language", XOFFSET(struct section_problem_data, enable_language) },
   [CNTSPROB_require] = { CNTSPROB_require, 'x', XSIZE(struct section_problem_data, require), "require", XOFFSET(struct section_problem_data, require) },
   [CNTSPROB_provide_ok] = { CNTSPROB_provide_ok, 'x', XSIZE(struct section_problem_data, provide_ok), "provide_ok", XOFFSET(struct section_problem_data, provide_ok) },
+  [CNTSPROB_allow_ip] = { CNTSPROB_allow_ip, 'x', XSIZE(struct section_problem_data, allow_ip), "allow_ip", XOFFSET(struct section_problem_data, allow_ip) },
   [CNTSPROB_lang_compiler_env] = { CNTSPROB_lang_compiler_env, 'X', XSIZE(struct section_problem_data, lang_compiler_env), "lang_compiler_env", XOFFSET(struct section_problem_data, lang_compiler_env) },
   [CNTSPROB_checker_env] = { CNTSPROB_checker_env, 'X', XSIZE(struct section_problem_data, checker_env), "checker_env", XOFFSET(struct section_problem_data, checker_env) },
   [CNTSPROB_valuer_env] = { CNTSPROB_valuer_env, 'X', XSIZE(struct section_problem_data, valuer_env), "valuer_env", XOFFSET(struct section_problem_data, valuer_env) },

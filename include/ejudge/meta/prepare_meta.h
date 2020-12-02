@@ -479,6 +479,7 @@ enum
   CNTSPROB_enable_language,
   CNTSPROB_require,
   CNTSPROB_provide_ok,
+  CNTSPROB_allow_ip,
   CNTSPROB_lang_compiler_env,
   CNTSPROB_checker_env,
   CNTSPROB_valuer_env,
