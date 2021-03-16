@@ -3482,7 +3482,7 @@ set_defaults(
     }
 
     if (mode == PREPARE_COMPILE) {
-      if (!lang->cmd && !lang->cmd[0]) {
+      if (!lang->cmd || !lang->cmd[0]) {
         err("language.%d.cmd must be set", i);
         return -1;
       }
