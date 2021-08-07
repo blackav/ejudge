@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -7367,11 +7367,11 @@ cmd_delete_cookie(
   const struct userlist_user *u;
   const struct userlist_cookie *c;
 
-  if (is_judge(p, logbuf) < 0) return;
-
   snprintf(logbuf, sizeof(logbuf), "DELETE_COOKIE: %d, %d, %s",
            p->user_id, data->user_id,
            xml_unparse_full_cookie(cbuf, sizeof(cbuf), &data->cookie, &data->client_key));
+
+  if (is_judge(p, logbuf) < 0) return;
 
   if (default_check_user(data->user_id) < 0) {
     err("%s -> invalid user", logbuf);
