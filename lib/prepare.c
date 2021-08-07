@@ -4190,10 +4190,11 @@ set_defaults(
       }
 
       if (!state->testers[i]->name[0]) {
-        sprintf(state->testers[i]->name, "tst_%d", state->testers[i]->id);
         if (state->testers[i]->arch[0]) {
-          sprintf(state->testers[i]->name + strlen(state->testers[i]->name),
-                  "_%s", state->testers[i]->arch);
+          snprintf(state->testers[i]->name, sizeof(state->testers[i]->name),
+                   "tst_%d_%s", state->testers[i]->id, state->testers[i]->arch);
+        } else {
+          sprintf(state->testers[i]->name, "tst_%d", state->testers[i]->id);
         }
         vinfo("tester.%d.name set to \"%s\"", i, state->testers[i]->name);
       }
