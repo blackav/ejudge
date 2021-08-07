@@ -31,16 +31,16 @@
     avatar_url[0] = 0;
 
 %><s:read var="view_user_id" required="yes" name="user_id" error="inv-user-id" /><%
-  if (!teamdb_lookup(cs->teamdb_state, view_user_id))
-    FAIL(NEW_SRV_ERR_INV_USER_ID);
+    if (!teamdb_lookup(cs->teamdb_state, view_user_id))
+        FAIL(NEW_SRV_ERR_INV_USER_ID);
 
-  if (opcaps_check(phr->caps, OPCAP_GET_USER) < 0)
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    if (opcaps_check(phr->caps, OPCAP_GET_USER) < 0)
+        FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
 
     // initialization
     teamdb_export_team(cs->teamdb_state, view_user_id, &u_info);
     if (cs->xuser_state) {
-      u_extra = cs->xuser_state->vt->get_entry(cs->xuser_state, view_user_id);
+        u_extra = cs->xuser_state->vt->get_entry(cs->xuser_state, view_user_id);
     }
     run_get_team_usage(cs->runlog_state, view_user_id, &runs_num, &runs_total);
     clar_get_user_usage(cs->clarlog_state,view_user_id, &clars_num, &clars_total);
