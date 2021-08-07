@@ -1,5 +1,3 @@
-2014-08-04:  David Anderson
-     * dwarf_tsearchhash.c: Changed to avoid compiler warnings
-       about const casts whereever possible.
-2014-01-29:  David Anderson
-     * All files: All added. Trailing whitespace removed.
+2021-05-14 David Anderson
+    * scripts/comparator.py,scripts/concatlines.py:
+      Reformatted to standard python style.

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010-2013 David Anderson.  All rights reserved.
+  Copyright (C) 2010-2018 David Anderson.  All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
@@ -24,22 +24,35 @@
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-// createirepfrombinary.cc
+// createirepformfrombinary.cc
 // Reads an object and inserts its dwarf data into
 // an object intended to hold all the dwarf data.
 
 #include "config.h"
+
+#ifdef HAVE_UNUSED_ATTRIBUTE
+#define  UNUSEDARG __attribute__ ((unused))
+#else
+#define  UNUSEDARG
+#endif
+
+/* Windows specific header files */
+#if defined(_WIN32) && defined(HAVE_STDAFX_H)
+#include "stdafx.h"
+#endif /* HAVE_STDAFX_H */
+
+#ifdef HAVE_UNITSTD_H
 #include <unistd.h>
-#include <stdlib.h> // for exit
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h> /* for exit() */
+#endif /* HAVE_STDLIB_H */
 #include <iostream>
 #include <string>
 #include <list>
 #include <map>
 #include <vector>
 #include <string.h> // For memset etc
-#include <sys/stat.h> //open
-#include <fcntl.h> //open
-#include "gelf.h"
 #include "strtabdata.h"
 #include "dwarf.h"
 #include "libdwarf.h"
@@ -78,9 +91,9 @@ private:
 IRForm *formFactory(Dwarf_Debug dbg,
     Dwarf_Attribute attr,IRCUdata &cudata,IRAttr & irattr)
 {
-    Dwarf_Error err = 0;
     IRFormInterface interface(dbg,attr,cudata,irattr);
     enum Dwarf_Form_Class cl = irattr.getFormClass();
+
     switch(cl) {
     case DW_FORM_CLASS_UNKNOWN:
         break;
@@ -92,6 +105,7 @@ IRForm *formFactory(Dwarf_Debug dbg,
             return f;
         }
         break;
+    case DW_FORM_CLASS_EXPRLOC:
     case DW_FORM_CLASS_BLOCK:
         {
             IRFormBlock *f = new IRFormBlock(&interface);
@@ -101,12 +115,6 @@ IRForm *formFactory(Dwarf_Debug dbg,
     case DW_FORM_CLASS_CONSTANT:
         {
             IRFormConstant *f = new IRFormConstant(&interface);
-            return f;
-        }
-        break;
-    case DW_FORM_CLASS_EXPRLOC:
-        {
-            IRFormExprloc *f = new IRFormExprloc(&interface);
             return f;
         }
         break;
@@ -199,7 +207,9 @@ IRFormAddress::IRFormAddress(IRFormInterface * interface)
 
     int res = dwarf_formaddr(interface->attr_,&val, &error);
     if(res != DW_DLV_OK) {
-        cerr << "Unable to read flag value. Impossible error.\n" << endl;
+        cerr << "Unable to read flag value. Impossible error.\n"
+           << " line " << __LINE__ << " file " <<
+           __FILE__ <<  endl;
         exit(1);
     }
     // FIXME do we need to do anything about the symbol here?
@@ -222,7 +232,9 @@ IRFormBlock::IRFormBlock(IRFormInterface * interface)
     Dwarf_Error error = 0;
     int res = dwarf_formblock(interface->attr_,&blockptr, &error);
     if(res != DW_DLV_OK) {
-        cerr << "Unable to read flag value. Impossible error.\n" << endl;
+        cerr << "Unable to read block . Impossible error.\n"
+           << " line " << __LINE__ << " file " <<
+           __FILE__ <<  endl;
         exit(1);
     }
     insertBlock(blockptr);
@@ -239,12 +251,24 @@ IRFormConstant::IRFormConstant(IRFormInterface * interface)
     signedness_=SIGN_NOT_SET;
     uval_=0;
     sval_=0;
+    Dwarf_Error error = 0;
 
 
+    if (finalform == DW_FORM_data16) {
+        Dwarf_Form_Data16 data16;
+        int rd16 = dwarf_formdata16(interface->attr_,&data16,
+            &error);
+        if (rd16 != DW_DLV_OK) {
+            cerr << "Unable to read constant data16  value. "
+                "Impossible error.\n" << endl;
+            exit(1);
+        }
+        setValues16(&data16, SIGN_UNKNOWN);
+        return;
+    }
     enum Signedness oursign = SIGN_NOT_SET;
     Dwarf_Unsigned uval = 0;
     Dwarf_Signed sval = 0;
-    Dwarf_Error error = 0;
     int ress = dwarf_formsdata(interface->attr_, &sval,&error);
     int resu = dwarf_formudata(interface->attr_, &uval,&error);
     if(resu == DW_DLV_OK ) {
@@ -280,7 +304,9 @@ IRFormExprloc::IRFormExprloc(IRFormInterface * interface)
 
     int res = dwarf_formexprloc(interface->attr_,&len, &data, &error);
     if(res != DW_DLV_OK) {
-        cerr << "Unable to read flag value. Impossible error.\n" << endl;
+        cerr << "Unable to read flag value. Impossible error.\n"
+           << " line " << __LINE__ << " file " <<
+           __FILE__ <<  endl;
         exit(1);
     }
     // FIXME: Would be nice to expand to the expression details
@@ -302,7 +328,9 @@ IRFormFlag::IRFormFlag(IRFormInterface * interface)
     Dwarf_Error error = 0;
     int res = dwarf_formflag(interface->attr_,&flagval, &error);
     if(res != DW_DLV_OK) {
-        cerr << "Unable to read flag value. Impossible error.\n" << endl;
+        cerr << "Unable to read flag value. Impossible error.\n"
+           << " line " << __LINE__ << " file " <<
+           __FILE__ <<  endl;
         exit(1);
     }
     setFlagVal(flagval);
@@ -512,6 +540,3 @@ IRFormString::IRFormString(IRFormInterface * interface)
     }
     setString(str);
 }
-
-
-

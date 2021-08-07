@@ -2,39 +2,45 @@
     Copyright (C) 2006 Silicon Graphics, Inc.  All Rights Reserved.
     Portions Copyright 2011 David Anderson. All Rights Reserved.
 
-    This program is free software; you can redistribute it and/or modify it
-    under the terms of version 2 of the GNU General Public License as
-    published by the Free Software Foundation.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of version 2 of the GNU General
+  Public License as published by the Free Software Foundation.
 
-    This program is distributed in the hope that it would be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  This program is distributed in the hope that it would be
+  useful, but WITHOUT ANY WARRANTY; without even the implied
+  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+  PURPOSE.
 
-    Further, this software is distributed without any warranty that it is
-    free of the rightful claim of any third person regarding infringement
-    or the like.  Any license provided herein, whether implied or
-    otherwise, applies only to this software file.  Patent licenses, if
-    any, provided herein do not apply to combinations of this program with
-    other software, or any other product whatsoever.
+  Further, this software is distributed without any warranty
+  that it is free of the rightful claim of any third person
+  regarding infringement or the like.  Any license provided
+  herein, whether implied or otherwise, applies only to this
+  software file.  Patent licenses, if any, provided herein
+  do not apply to combinations of this program with other
+  software, or any other product whatsoever.
 
-    You should have received a copy of the GNU General Public License along
-    with this program; if not, write the Free Software Foundation, Inc., 51
-    Franklin Street - Fifth Floor, Boston MA 02110-1301, USA.
+  You should have received a copy of the GNU General Public
+  License along with this program; if not, write the Free
+  Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+  Boston MA 02110-1301, USA.
 
-    Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
-    Mountain View, CA 94043, or:
+*/
 
-    http://www.sgi.com
+#ifndef DWCONFIG_H
+#define DWCONFIG_H
 
-    For further information regarding this notice, see:
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
-    http://oss.sgi.com/projects/GenInfo/NoticeExplan
+#define FOUND_ABI_START 1
+#define FOUND_OPTION    2
+#define FOUND_ERROR     3
+#define FOUND_DONE      4
 
-
-    $Header: /plroot/cmplrs.src/v7.4.5m/.RCS/PL/dwarfdump/RCS/dwconf.h,v 1.2 2006/04/18 04:29:39 davea Exp $ */
-
-
-/* declarations helping configure the frame reader.  */
+/*  Declarations helping configure the frame reader.
+    We are not allowing negative register numbers.
+    Which could be  allowed if necessary with a little work. */
 struct dwconf_s {
     char *cf_config_file_path;
     char *cf_abi_name;
@@ -44,14 +50,18 @@ struct dwconf_s {
         DWARF3-capable and configureable-abi interface.
 
         Now, anyone who revises dwarf.h and libdwarf.h to match their
-        abi-of-interest will still be able to use cf_interface_number 2
-        as before.  But most folks don't update those header files and
+        abi-of-interest will still be able to use
+        cf_interface_number 2
+        as before.  But most folks don't update those header
+        files and
         instead of making *them* configurable we make dwarfdump (and
-        libdwarf) configurable sufficiently to print frame information
+        libdwarf) configurable sufficiently to print
+        frame information
         sensibly. */
     int cf_interface_number;
 
-    /* The number of table rules , aka columns. For MIPS/IRIX is 66. */
+    /*  The number of table rules , aka columns.
+        For MIPS/IRIX is 66. */
     unsigned long cf_table_entry_count;
 
     /*  Array of cf_table_entry_count reg names. Names not filled in
@@ -68,14 +78,14 @@ struct dwconf_s {
         is DW_FRAME_SAME_VAL(1035). For other ISA/ABIs may be
         DW_FRAME_UNDEFINED_VAL(1034). */
     unsigned cf_initial_rule_value;
-    int cf_same_val;
-    int cf_undefined_val;
+    unsigned cf_same_val;
+    unsigned cf_undefined_val;
 
     /*  The number of the cfa 'register'. For cf_interface_number 2 of
         MIPS this is 0. For other architectures (and anytime using
         cf_interface_number 3) this should be outside the table, a
         special value such as 1436, not a table column at all).  */
-    int cf_cfa_reg;
+    unsigned cf_cfa_reg;
 
     /*  If non-zero it is the number of bytes in an address
         for the frame data.  Normally it will be zero because
@@ -92,15 +102,24 @@ struct dwconf_s {
 };
 
 
-/* Returns DW_DLV_OK if works. DW_DLV_ERROR if cannot do what is asked. */
+/*  Returns DW_DLV_OK if works.
+    Returns DW_DLV_ERROR if cannot do what is asked. */
 int find_conf_file_and_read_config(const char *named_file,
     const char *named_abi, char **defaults,
     struct dwconf_s *conf_out);
 void init_conf_file_data(struct dwconf_s *config_file_data);
 void init_mips_conf_file_data(struct dwconf_s *config_file_data);
 
-void print_reg_from_config_data(Dwarf_Signed reg,
+void print_reg_from_config_data(Dwarf_Unsigned reg,
     struct dwconf_s *config_data);
+
+void free_all_dwconf(struct dwconf_s *config_data);
 
 
 void init_generic_config_1200_regs(struct dwconf_s *conf);
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* DWCONFIG_H */

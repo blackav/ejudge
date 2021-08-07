@@ -1,8 +1,164 @@
+December 26, 2020
+  With mm -> pdf the table of contents of libdwarf2.1.pdf
+  is at the end of the pdf and difficult to locate.
+  Now we extract a companion pdf: libdwarftoc.pdf , which
+  contains the 1 page abstract followed by the table of contents
+  and list of figures.  We hope this will make finding
+  functions of interest easier.
+July 09, 2020
+  Access to .debug_gnu_pubtypes and .debug_gnu_pubnames
+  is possible. See function  dwarf_get_gnu_index_head().
+  Recently support for reading .debug_loclists
+  was added. 
+  Recently support for reading .debug_rnglists
+  was added. 
+  See libdwarf2.1.pdf and libdwarf.h for details.
+March 14, 2020
+  The documentation of dwarf_diename() and dwarf_die_text()
+  has been corrected. Never dwarf_dealloc() the strings
+  returned by these functions.
+  The new function dwarf_set_de_alloc_flag(0) allows
+  consumer code to save memory space at run time.
+  If it is called it leaves all dwarf_dealloc() calls
+  to the libdwarf caller: dwarf_finish() will not be able
+  to free leftover allocations. By default libdwarf
+  does keep track of allocations and dwarf_finish() will
+  clean up any allocations not already dwarf_dealloc()-d.
+  Unless the DWARF one is reading is really large
+  it is best to let libdwarf keep track of its allocations.
+  so there will be no leaks after dwarf_finish().
+November 26, 2019
+  The dwarf_init*() functions no longer use libelf
+  so calling dwarf_get_elf() cannot succeed unless
+  dwarf_elf_init() or dwarf_elf_init_b() was used
+  to open a Dwarf_Debug on an object file.
+  This change actually happened around  5 May 2019
+  but was not documented properly till  26 November.
+January 15, 2019
+  All references to C data types spelled *int16* *int32* or
+  *int64* have been removed.  Dwarf_Unsigned is used instead.
+  This simplifies builds in certain environments.
+December 05, 2018
+  Many new producer functions provided. Now no matter
+  what producer task is to be done there is a version
+  that returns DW_DLV_OK/DW_DLV_ERROR and no ugly
+  casting of return values is needed to check for success/failure.
+  All the old interfaces continue to work.
+  One can switch from
+    Dwarf_P_Attribute dwarf_add_AT_name(Dwarf_P_Die die,
+    char*        name,
+    Dwarf_Error* error);
+    (requires a cast to check return code DW_DLV_BADADDR)
+  to
+    int dwarf_add_AT_comp_dir_a(Dwarf_P_Die ownerdie,
+    char*             current_working_directory,
+    Dwarf_P_Attribute * outattr,
+    Dwarf_Error*    error);
+    (no cast,type safe)
+  for example.
+  The libdwarf2p.1.mm document table-of-contents
+  lists only the latest functions, but all the documentation
+  of all the earlier versions remain in the document as
+  subsections.
+October 24, 2018
+  Now supports reading MacOS dSYM object files. 
+May 17, 2017
+  Now supports some COMDAT groups as well as split-dwarf.
+  Some new functions added so consumer code can know
+  what the sections and groups contain.
+  Some compilers emit groups findable only with relocation
+  data: libdwarf does not understand those groups.
+April 02, 2017
+  The consumer code now reads DWARF5 split-dwarf sections.
+  The functions dwarf_init_b() and dwarf_elf_init_b()
+  and dwarf_object_init_b() have a groupnumber argument
+  added.  For non-split-dwarf objects the original
+  dwarf_init() and dwarf_elf_init() and 
+  dwarf_object_init() functions continue to work properly.
+September 11, 2016
+  The producer code is getting a new batch of functions.
+
+  For each existing producer call returning
+  a value other than DW_DLV_OK/DW_DLV_ERROR/DW_DLV_NO_ENTRY
+  a new function returning one of those three codes with
+  a pointer argument added to return the actual desired
+  value (that used to be the 'return').
+  The existing calls require the caller to do ugly casting
+  to determine whether the call did its work or got an error.
+  The new calls have type-safe interfaces that separate
+  the desired result from the error-indication.
+  So producer calls look more like consumer calls.
+ 
+  The existing historical producer interfaces will remain 
+  unchanged and will continue to be supported. The
+  existing interfaces will simply call the new interfaces
+  so there is no code duplication: Old and new use the same
+  implementation.
+
+  Source and binary compatibility is retained, but
+  users of the producer code can, when they wish, 
+  partially or fully convert to the new interfaces.
+
+  This work will be ongoing and gradual, not 'all at once'.
+  
+August 27, 2016
+  Now the producer is capable of producing .debug_str strings.
+  Strings are never duplicated in .debug_str.
+  See dwarf_pro_set_default_string_form() in libdwarf2p.1.pdf
+May 23, 2016
+  When building a shared-library the soname is set
+  in the dynamic section "libdwarf.so.1".
+  Much more testing of object correctness is done
+  to catch corrupted dwarf and corrupted object files.
+March 14, 2016
+  When libdwarf callers provide neither an error argument nor
+  an error-handler function pointer libdwarf gives up on detecting
+  an error. Before now it emitted a short message on stderr
+  and did abort().  Now it emits a short message on stdout
+  and does abort(). Having libdwarf just stop application
+  processing (stopping the entire application) was never 
+  good application-development policy, so one hopes no one 
+  ever relied on doing no-error-handling themselves.
+  So one hopes no one will actually notice this change.
+  The change makes it much easier to test that the error
+  handling is all behaving as intended.
+March 1, 2016
+  Much support of GNU extensions to dwarf and 
+  of DWARF5 features now exist in libdwarf.
+  Including the ability to deal with the most
+  usual forms of split-dwarf.
+  Handling of zlib compression of dwarf is now
+  automatic (assuming you had zlib visible when
+  configuring libdwarf).
+May 01, 2015
+  dwarf_next_cu_header_d() is the latest extension for CU reading.
+  Earlier versions still supported.
+  dwarf_die_from_hash_signature() added so readers can
+  use a hash to access a dwp package file DIE.
+  New support for some of DWARF5 and for dwp debug-fission
+  package file reading.
+February 25, 2015
+  Now gennames uses dwgetopt() instead of getopt.
+  So it will more easily build where no getopt() available.
+  We copied dwgetopt.h, .c here (rather than reaching around
+  to dwarfdump) to keep the libdwarf build more easily
+  buildable separate from dwarfdump.
+
+January 8, 2015
+  When malloc fails (out of space) dwarfdump will now
+  use a statically-allocated Dwarf_Error_s struct so it can get
+  the original malloc failure (or other error) reported back to
+  the calling client.  
+
+  Some checks for invalid Elf files were changed to actually 
+  report errors properly.  Thanks to Edward Williamson for 
+  providing test cases with odd errors in the Elf and DWARF. 
+
 May 19, 2014
   REASON FOR RELEASE
   Now handles DebugFission (part of the unreleased standard
   named DWARF5) in which debug information can be split from
-  objects and gathered into seperate object files.
+  objects and gathered into separate object files.
 
   MINOR POINT:
 
@@ -302,9 +458,9 @@ February 9, 2007
   as David Anderson has left SGI.
 
 March 29, 2006
-  The March  27, 2006 version accomodates DWARF3.
+  The March  27, 2006 version accommodates DWARF3.
   Some people have been using the library without
-  altering dwarf.h, libdwarf.h to accomodate
+  altering dwarf.h, libdwarf.h to accommodate
   large numbers of registers.  This exposed a bug
   (an off-by-one error) but also makes it clear
   additional documentation is needed.  So 
@@ -472,11 +628,11 @@ Sept 29, 1999
   cygnus is definitely 32bit-offsets for earlier 64bit pointer
   environments.
 
-  At any rate, now the dwarf reader allows and accomodates
-  both and the dwarf producer also accomodates both.
+  At any rate, now the dwarf reader allows and accommodates
+  both and the dwarf producer also accommodates both.
   Some tweaking of the pro_init.c or dwarf_init_finish.c
   files may be necessary in future: no other changes should
-  be needed to accomodate the two 64bit approaches, as
+  be needed to accommodate the two 64bit approaches, as
   the library (and dwarfdump) now deal with both forms.
 
 

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010-2013 David Anderson.  All rights reserved.
+  Copyright (C) 2010-2018 David Anderson.  All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
@@ -31,8 +31,26 @@
 // an object intended to hold all the dwarf data.
 
 #include "config.h"
+
+#ifdef HAVE_UNUSED_ATTRIBUTE
+#define  UNUSEDARG __attribute__ ((unused))
+#else
+#define  UNUSEDARG
+#endif
+
+/* Windows specific header files */
+#if defined(_WIN32) && defined(HAVE_STDAFX_H)
+#include "stdafx.h"
+#endif /* HAVE_STDAFX_H */
+
+#if HAVE_UNISTD_H
 #include <unistd.h>
-#include <stdlib.h> // for exit
+#elif defined(_WIN32) && defined(_MSC_VER)
+#include <io.h>
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h> /* for exit() */
+#endif /* HAVE_STDLIB_H */
 #include <iostream>
 #include <string>
 #include <list>
@@ -41,7 +59,6 @@
 #include <string.h> // For memset etc
 #include <sys/stat.h> //open
 #include <fcntl.h> //open
-#include "gelf.h"
 #include "strtabdata.h"
 #include "dwarf.h"
 #include "libdwarf.h"
@@ -61,6 +78,16 @@ static void readFrameDataFromBinary(Dwarf_Debug dbg, IRepresentation & irep);
 static void readMacroDataFromBinary(Dwarf_Debug dbg, IRepresentation & irep);
 static void readCUDataFromBinary(Dwarf_Debug dbg, IRepresentation & irep);
 static void readGlobals(Dwarf_Debug dbg, IRepresentation & irep);
+
+/*  Use a generic call to open the file, due to issues with Windows */
+extern int open_a_file(const char * name);
+extern int create_a_file(const char * name);
+extern void close_a_file(int f);
+
+static void errprint(Dwarf_Error err)
+{
+    cerr << "Error num: " << dwarf_errno(err) << " " << dwarf_errmsg(err) << endl;
+}
 
 class DbgInAutoCloser {
 public:
@@ -82,22 +109,31 @@ createIrepFromBinary(const std::string &infile,
 {
     Dwarf_Debug dbg = 0;
     Dwarf_Error err;
-    int fd = open(infile.c_str(),O_RDONLY, 0);
+    int fd = open_a_file(infile.c_str());
     if(fd < 0 ) {
         cerr << "Unable to open " << infile <<
             " for reading." << endl;
         exit(1);
     }
     // All reader error handling is via the err argument.
-    int res = dwarf_init(fd,DW_DLC_READ,
+    int res = dwarf_init_b(fd,
+        DW_GROUPNUMBER_ANY,
+        DW_DLC_READ,
         0,
         0,
         &dbg,
         &err);
-    if(res != DW_DLV_OK) {
-        close(fd);
+    if(res == DW_DLV_NO_ENTRY) {
+        close_a_file(fd);
         cerr << "Error init-ing " << infile <<
-            " for reading." << endl;
+            " for reading. dwarf_init_b(). Not object file." << endl;
+        exit(1);
+    } else if(res == DW_DLV_ERROR) {
+        close_a_file(fd);
+        cerr << "Error init-ing " << infile <<
+            " for reading. dwarf_init_b() failed. "
+            << dwarf_errmsg(err)
+            << endl;
         exit(1);
     }
 
@@ -118,6 +154,7 @@ readFrameDataFromBinary(Dwarf_Debug dbg, IRepresentation & irep)
     Dwarf_Signed  cie_count = 0;
     Dwarf_Fde * fde_data = 0;
     Dwarf_Signed  fde_count = 0;
+    bool have_standard_frame = true;
     int res = dwarf_get_fde_list(dbg,
         &cie_data,
         &cie_count,
@@ -125,7 +162,20 @@ readFrameDataFromBinary(Dwarf_Debug dbg, IRepresentation & irep)
         &fde_count,
         &err);
     if(res == DW_DLV_NO_ENTRY) {
-        // No frame data.
+        // No frame data we are dealing with.
+#if 0
+        res = dwarf_get_fde_list_eh(dbg,
+            &cie_data,
+            &cie_count,
+            &fde_data,
+            &fde_count,
+            &err);
+        if(res == DW_DLV_NO_ENTRY) {
+            // No frame data.
+            return;
+        }
+        have_standard_frame = false;
+#endif /* 0 */
         return;
     }
     if(res == DW_DLV_ERROR) {
@@ -148,15 +198,21 @@ readFrameDataFromBinary(Dwarf_Debug dbg, IRepresentation & irep)
             &initial_instructions,&initial_instructions_length,
             &err);
         if(res != DW_DLV_OK) {
+            errprint(err);
             cerr << "Error reading frame data cie index " << i << endl;
             exit(1);
         }
         // Index in cie_data must match index in ciedata_, here
         // correct by construction.
-        IRCie cie(bytes_in_cie,version,augmentation,code_alignment_factor,
+        IRCie cie(bytes_in_cie,version,augmentation,
+            code_alignment_factor,
             data_alignment_factor,return_address_register_rule,
             initial_instructions,initial_instructions_length);
-        irep.framedata().insert_cie(cie);
+        if (have_standard_frame) {
+            irep.framedata().insert_cie(cie);
+        } else {
+            irep.ehframedata().insert_cie(cie);
+        }
     }
     for(Dwarf_Signed i =0; i < fde_count; ++i) {
         Dwarf_Addr low_pc = 0;
@@ -186,7 +242,11 @@ readFrameDataFromBinary(Dwarf_Debug dbg, IRepresentation & irep)
             exit(1);
         }
         fde.get_fde_instrs_into_ir(instr_in,instr_len);
-        irep.framedata().insert_fde(fde);
+        if (have_standard_frame) {
+            irep.framedata().insert_fde(fde);
+        } else {
+            irep.ehframedata().insert_fde(fde);
+        }
     }
     dwarf_fde_cie_list_dealloc(dbg,cie_data,cie_count,
         fde_data,fde_count);
@@ -221,7 +281,7 @@ readCUMacroDataFromBinary(Dwarf_Debug dbg, IRepresentation & irep,
     dwarf_dealloc(dbg, md, DW_DLA_STRING);
 }
 
-void
+static void
 get_basic_attr_data_one_attr(Dwarf_Debug dbg,
     Dwarf_Attribute attr,IRCUdata &cudata,IRAttr & irattr)
 {
@@ -231,17 +291,19 @@ get_basic_attr_data_one_attr(Dwarf_Debug dbg,
     Dwarf_Half initialform = 0;
     int res = dwarf_whatattr(attr,&attrnum,&error);
     if(res != DW_DLV_OK) {
+        errprint(error);
         cerr << "Unable to get attr number " << endl;
         exit(1);
     }
     res = dwarf_whatform(attr,&finalform,&error);
     if(res != DW_DLV_OK) {
+        errprint(error);
         cerr << "Unable to get attr form " << endl;
         exit(1);
     }
-
     res = dwarf_whatform_direct(attr,&initialform,&error);
     if(res != DW_DLV_OK) {
+        errprint(error);
         cerr << "Unable to get attr direct form " << endl;
         exit(1);
     }
@@ -260,26 +322,29 @@ get_basic_attr_data_one_attr(Dwarf_Debug dbg,
     }
     irattr.setFormData(formFactory(dbg,attr,cudata,irattr));
 }
-void
-get_basic_die_data(Dwarf_Debug dbg,
+static void
+get_basic_die_data(Dwarf_Debug dbg UNUSEDARG,
     Dwarf_Die indie,IRDie &irdie)
 {
     Dwarf_Half tagval = 0;
     Dwarf_Error error = 0;
     int res = dwarf_tag(indie,&tagval,&error);
     if(res != DW_DLV_OK) {
+        errprint(error);
         cerr << "Unable to get die tag "<< endl;
         exit(1);
     }
     Dwarf_Off goff = 0;
     res = dwarf_dieoffset(indie,&goff,&error);
     if(res != DW_DLV_OK) {
+        errprint(error);
         cerr << "Unable to get die offset "<< endl;
         exit(1);
     }
     Dwarf_Off localoff = 0;
     res = dwarf_die_CU_offset(indie,&localoff,&error);
     if(res != DW_DLV_OK) {
+        errprint(error);
         cerr << "Unable to get cu die offset "<< endl;
         exit(1);
     }
@@ -290,7 +355,7 @@ get_basic_die_data(Dwarf_Debug dbg,
 static void
 get_attrs_of_die(Dwarf_Die in_die,IRDie &irdie,
     IRCUdata &cudata,
-    IRepresentation &irep,
+    IRepresentation &irep UNUSEDARG,
     Dwarf_Debug dbg)
 {
     Dwarf_Error error = 0;
@@ -298,15 +363,34 @@ get_attrs_of_die(Dwarf_Die in_die,IRDie &irdie,
     Dwarf_Signed atcnt = 0;
     std::list<IRAttr> &attrlist = irdie.getAttributes();
     int res = dwarf_attrlist(in_die, &atlist,&atcnt,&error);
+    std::map<unsigned,unsigned> attrmap;
     if(res == DW_DLV_NO_ENTRY) {
         return;
     }
     if(res == DW_DLV_ERROR) {
+        errprint(error);
         cerr << "dwarf_attrlist failed " << endl;
         exit(1);
     }
     for (Dwarf_Signed i = 0; i < atcnt; ++i) {
         Dwarf_Attribute attr = atlist[i];
+        Dwarf_Half attrnum = 0;
+
+        res = dwarf_whatattr(attr,&attrnum,&error);
+        if (res != DW_DLV_OK) {
+            cout << "ERROR FAIL: unable to get attrnum from attr!"
+                <<endl;
+            return;
+        }
+        std::map<unsigned,unsigned>::iterator m =
+            attrmap.find(attrnum);
+
+        if (m != attrmap.end()) {
+            //  A duplicate! ignore. Compiler bug
+            //  in some gcc versions.
+            continue;
+        }
+        attrmap[attrnum] = i;
         // Use an empty attr to get a placeholder on
         // the attr list for this IRDie.
         IRAttr irattr;
@@ -315,7 +399,6 @@ get_attrs_of_die(Dwarf_Die in_die,IRDie &irdie,
         // recorded for references, not a local temp IRAttr.
         IRAttr & lastirattr = attrlist.back();
         get_basic_attr_data_one_attr(dbg,attr,cudata,lastirattr);
-
     }
     dwarf_dealloc(dbg,atlist, DW_DLA_LIST);
 }
@@ -335,6 +418,7 @@ get_children_of_die(Dwarf_Die in_die,IRDie&irdie,
         return;
     }
     if(res == DW_DLV_ERROR) {
+        errprint(error);
         cerr << "dwarf_child failed " << endl;
         exit(1);
     }
@@ -359,6 +443,7 @@ get_children_of_die(Dwarf_Die in_die,IRDie&irdie,
             break;
         }
         if(res == DW_DLV_ERROR) {
+            errprint(error);
             cerr << "dwarf_siblingof failed " << endl;
             exit(1);
         }
@@ -369,9 +454,9 @@ get_children_of_die(Dwarf_Die in_die,IRDie&irdie,
 }
 
 static void
-get_linedata_of_cu_die(Dwarf_Die in_die,IRDie&irdie,
+get_linedata_of_cu_die(Dwarf_Die in_die,IRDie&irdie UNUSEDARG,
     IRCUdata &ircudata,
-    IRepresentation &irep,
+    IRepresentation &irep UNUSEDARG,
     Dwarf_Debug dbg)
 {
     Dwarf_Error error = 0;
@@ -380,6 +465,7 @@ get_linedata_of_cu_die(Dwarf_Die in_die,IRDie&irdie,
     IRCULineData&culinesdata =  ircudata.getCULines();
     int res = dwarf_srcfiles(in_die,&srcfiles, &srccount,&error);
     if(res == DW_DLV_ERROR) {
+        errprint(error);
         cerr << "dwarf_srcfiles failed " << endl;
         exit(1);
     } else if (res == DW_DLV_NO_ENTRY) {
@@ -399,10 +485,11 @@ get_linedata_of_cu_die(Dwarf_Die in_die,IRDie&irdie,
     Dwarf_Line * linebuf = 0;
     Dwarf_Signed linecnt = 0;
     int res2 = dwarf_srclines(in_die,&linebuf,&linecnt, &error);
-    if(res == DW_DLV_ERROR) {
+    if(res2 == DW_DLV_ERROR) {
+        errprint(error);
         cerr << "dwarf_srclines failed " << endl;
         exit(1);
-    } else if (res == DW_DLV_NO_ENTRY) {
+    } else if (res2 == DW_DLV_NO_ENTRY) {
         // No data.
         cerr << "dwarf_srclines failed NO_ENTRY, crazy "
             "since srcfiles worked" << endl;
@@ -514,10 +601,8 @@ getToplevelOffsetAttr(Dwarf_Die cu_die,Dwarf_Half attrnumber,
     Dwarf_Attribute attr = 0;
     int res = dwarf_attr(cu_die,attrnumber,&attr, &error);
     bool foundit = false;
-    Dwarf_Off sectoff = 0;
+
     if(res == DW_DLV_OK) {
-        Dwarf_Signed sval = 0;
-        Dwarf_Unsigned uval = 0;
         res = dwarf_global_formref(attr,&offset,&error);
         if(res == DW_DLV_OK) {
             foundit = true;
@@ -553,6 +638,7 @@ readCUDataFromBinary(Dwarf_Debug dbg, IRepresentation & irep)
             &offset_size, &extension_size,
             &next_cu_header, &error);
         if(res == DW_DLV_ERROR) {
+            errprint(error);
             cerr <<"Error in dwarf_next_cu_header"<< endl;
             exit(1);
         }
@@ -568,6 +654,7 @@ readCUDataFromBinary(Dwarf_Debug dbg, IRepresentation & irep)
         //  not exactly a sibling, but close enough), a cu_die.
         res = dwarf_siblingof(dbg,no_die,&cu_die,&error);
         if(res == DW_DLV_ERROR) {
+            errprint(error);
             cerr <<"Error in dwarf_siblingof on CU die "<< endl;
             exit(1);
         }
@@ -644,7 +731,6 @@ readGlobals(Dwarf_Debug dbg, IRepresentation & irep)
     Dwarf_Global *globs = 0;
     Dwarf_Type   *types = 0;
     Dwarf_Signed  cnt = 0;
-    Dwarf_Signed  i = 0;
     int res = 0;
     IRPubsData  &pubdata = irep.pubnamedata();
 
@@ -699,4 +785,3 @@ readGlobals(Dwarf_Debug dbg, IRepresentation & irep)
 
 
 }
-

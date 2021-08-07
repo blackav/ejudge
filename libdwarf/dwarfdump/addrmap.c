@@ -2,24 +2,27 @@
   Copyright 2010-2012 David Anderson. All rights reserved.
   Portions Copyright 2012 SN Systems Ltd. All rights reserved.
 
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2 of the GNU General Public License as
-  published by the Free Software Foundation.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of version 2 of the GNU General
+  Public License as published by the Free Software Foundation.
 
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  This program is distributed in the hope that it would be
+  useful, but WITHOUT ANY WARRANTY; without even the implied
+  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+  PURPOSE.
 
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement
-  or the like.  Any license provided herein, whether implied or
-  otherwise, applies only to this software file.  Patent licenses, if
-  any, provided herein do not apply to combinations of this program with
-  other software, or any other product whatsoever.
+  Further, this software is distributed without any warranty
+  that it is free of the rightful claim of any third person
+  regarding infringement or the like.  Any license provided
+  herein, whether implied or otherwise, applies only to this
+  software file.  Patent licenses, if any, provided herein
+  do not apply to combinations of this program with other
+  software, or any other product whatsoever.
 
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write the Free Software Foundation, Inc., 51
-  Franklin Street - Fifth Floor, Boston MA 02110-1301, USA.
+  You should have received a copy of the GNU General Public
+  License along with this program; if not, write the Free
+  Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+  Boston MA 02110-1301, USA.
 
 */
 
@@ -28,6 +31,9 @@
 
 #include "globals.h"
 #include <stdio.h>
+#ifdef HAVE_STDINT_H
+#include <stdint.h> /* For uintptr_t */
+#endif /* HAVE_STDINT_H */
 #include "addrmap.h"
 #include "dwarf_tsearch.h"
 
@@ -36,7 +42,8 @@ static struct Addr_Map_Entry *
 addr_map_create_entry(Dwarf_Unsigned k,char *name)
 {
     struct Addr_Map_Entry *mp =
-        (struct Addr_Map_Entry *)malloc(sizeof(struct Addr_Map_Entry));
+        (struct Addr_Map_Entry *)malloc(
+        sizeof(struct Addr_Map_Entry));
     if (!mp) {
         return 0;
     }
@@ -119,5 +126,7 @@ void
 addr_map_destroy(void *map)
 {
     /* tdestroy is not part of Posix, it is a GNU libc function. */
-    dwarf_tdestroy(map,addr_map_free_func);
+    if (map) {
+        dwarf_tdestroy(map,addr_map_free_func);
+    }
 }

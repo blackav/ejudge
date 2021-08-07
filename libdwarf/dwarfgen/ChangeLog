@@ -1,16 +1,21 @@
-2014-05-08  David Anderson
-     * dwarfgen.cc: Now uses the newest form of dwarf_producer_init().
-       The old forms no longer are supported.
-2014-02-08  David Anderson
-     * dwarfgen.cc: Added commentary about the callback function
-       setting sect_name_index.
-2014-01-29  David Anderson
-     * createirepformfrombinary.cc,createirepfrombinary.cc,createirepfrombinary.h,
-       dwarfgen.cc,general.h,irepattrtodbg.cc,irepattrtodbg.h,irepdie.h,
-       irepform.h,irepframe.h,irepline.h,irepmacro.h,ireppubnames.h,
-       irepresentation.h,ireptodbg.cc,ireptodbg.h,strtabdata.h: Remove
-       trailing whitespace.
-2014-01-10  David Anderson
-     * createirepformfrombinary.cc,createirepfrombinary.cc,dwarfgen.cc,
-       irepattrtodbg.cc,ireptodbg.cc: Removed include of elf.h as it
-       is not needed given the include of gelf.h.
+2021-01-28  David Anderson
+    * createirepformfrombinary.cc: Now adds DW_FORM_CLASS_EXPERLOC
+      as a uniform way to handle dwarf expressions across
+      all DWARF2 and later versions. libdwarf changed a little
+      to support this as the old way just did not work.
+    * dwarfdump.cc: Added option --add-skip-branch-ops to create
+      special DW_OP_skip and DW_OP_bra entries to verify
+      dwarfdump error checking works properly.
+    * general.h: Added bool addskipbranch for the
+      --add-skip-branch-ops option.
+    * irepattrtodbg.c: Corrected EXPRLOC handling
+      to actually emit expressions.
+    * irepdie.h: Reformatted the copyright to fit
+      properly within libdwarf line lengths.
+    * irepform.h: Reformatted copyright.
+      Added new methods so block and EXPRLOC
+      can emit proper expr byte blobs.
+    * ireptodbg.cc: When --add-skip-branch-ops present
+      this emits some special crafted expressions that
+      emit DW_OP_bra and skip with errors so dwarfdump
+      can report on them.

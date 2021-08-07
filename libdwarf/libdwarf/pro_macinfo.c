@@ -1,46 +1,46 @@
 /*
-
   Copyright (C) 2000,2004 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright 2011 David Anderson.  All Rights Reserved.
+  Portions Copyright 2011-2020 David Anderson.  All Rights Reserved.
 
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2.1 of the GNU Lesser General Public License
-  as published by the Free Software Foundation.
+  This program is free software; you can redistribute it
+  and/or modify it under the terms of version 2.1 of the
+  GNU Lesser General Public License as published by the Free
+  Software Foundation.
 
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  This program is distributed in the hope that it would be
+  useful, but WITHOUT ANY WARRANTY; without even the implied
+  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+  PURPOSE.
 
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement
-  or the like.  Any license provided herein, whether implied or
-  otherwise, applies only to this software file.  Patent licenses, if
-  any, provided herein do not apply to combinations of this program with
-  other software, or any other product whatsoever.
+  Further, this software is distributed without any warranty
+  that it is free of the rightful claim of any third person
+  regarding infringement or the like.  Any license provided
+  herein, whether implied or otherwise, applies only to this
+  software file.  Patent licenses, if any, provided herein
+  do not apply to combinations of this program with other
+  software, or any other product whatsoever.
 
-  You should have received a copy of the GNU Lesser General Public
-  License along with this program; if not, write the Free Software
-  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
-  USA.
-
-  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
-  Mountain View, CA 94043, or:
-
-  http://www.sgi.com
-
-  For further information regarding this notice, see:
-
-  http://oss.sgi.com/projects/GenInfo/NoticeExplan
+  You should have received a copy of the GNU Lesser General
+  Public License along with this program; if not, write the
+  Free Software Foundation, Inc., 51 Franklin Street - Fifth
+  Floor, Boston MA 02110-1301, USA.
 
 */
 
-
-
 #include "config.h"
-#include "libdwarfdefs.h"
 #include <stdio.h>
+#ifdef HAVE_STRING_H
 #include <string.h>
+#endif /* HAVE_STRING_H */
+#include <stddef.h>
+#include "libdwarfdefs.h"
 #include "pro_incl.h"
+#include "dwarf.h"
+#include "libdwarf.h"
+#include "pro_opaque.h"
+#include "pro_error.h"
+#include "pro_encode_nm.h"
+#include "pro_alloc.h"
 #include "pro_section.h"
 #include "pro_macinfo.h"
 
@@ -80,8 +80,8 @@ libdwarf_compose_begin(Dwarf_P_Debug dbg, int code,
             blen = 2 * maxlen;
         }
         len = sizeof(struct dw_macinfo_block_s) + blen;
-        newb =
-            (struct dw_macinfo_block_s *) _dwarf_p_get_alloc(dbg, len);
+        newb = (struct dw_macinfo_block_s *)
+            _dwarf_p_get_alloc(dbg, len);
         if (!newb) {
             *compose_error_type = DW_DLE_MACINFO_MALLOC_FAIL;
             return DW_DLV_ERROR;
@@ -105,8 +105,8 @@ libdwarf_compose_begin(Dwarf_P_Debug dbg, int code,
             blen = 2 * maxlen;
         }
         len = sizeof(struct dw_macinfo_block_s) + blen;
-        newb =
-            (struct dw_macinfo_block_s *) _dwarf_p_get_alloc(dbg, len);
+        newb = (struct dw_macinfo_block_s *)
+            _dwarf_p_get_alloc(dbg, len);
         if (!newb) {
             *compose_error_type = DW_DLE_MACINFO_MALLOC_FAIL;
             return DW_DLV_ERROR;
@@ -123,8 +123,8 @@ libdwarf_compose_begin(Dwarf_P_Debug dbg, int code,
     /* now curblk has enough room */
     dbg->de_compose_avail = curblk->mb_avail_len;
     dbg->de_compose_used_len = curblk->mb_used_len;
-    nextchar =
-        (unsigned char *) (curblk->mb_data + dbg->de_compose_used_len);
+    nextchar = (unsigned char *)
+        (curblk->mb_data + dbg->de_compose_used_len);
     *nextchar = code;
     dbg->de_compose_avail--;
     ++dbg->de_compose_used_len;
@@ -134,21 +134,20 @@ libdwarf_compose_begin(Dwarf_P_Debug dbg, int code,
 
 
 static void
-libdwarf_compose_add_string(Dwarf_P_Debug dbg, const char *string, size_t len)
+libdwarf_compose_add_string(Dwarf_P_Debug dbg,
+    const char *string,
+    size_t len)
 {
     struct dw_macinfo_block_s *curblk = dbg->de_current_macinfo;
     unsigned char *nextchar;
 
-    nextchar =
-        (unsigned char *) (curblk->mb_data + dbg->de_compose_used_len);
-
+    nextchar = (unsigned char *)
+        (curblk->mb_data + dbg->de_compose_used_len);
     len += 1;                   /* count the null terminator */
-
     memcpy(nextchar, string, len);
     dbg->de_compose_avail -= len;
     dbg->de_compose_used_len += len;
     return;
-
 }
 static int
 libdwarf_compose_add_line(Dwarf_P_Debug dbg,
@@ -159,8 +158,8 @@ libdwarf_compose_add_line(Dwarf_P_Debug dbg,
     int res;
     int nbytes;
 
-    nextchar =
-        (unsigned char *) (curblk->mb_data + dbg->de_compose_used_len);
+    nextchar = (unsigned char *)
+        (curblk->mb_data + dbg->de_compose_used_len);
 
     /*  Put the created leb number directly into the macro buffer If
         dbg->de_compose_avail is > INT_MAX this will not work as the
@@ -186,7 +185,8 @@ libdwarf_compose_complete(Dwarf_P_Debug dbg, int *compose_error_type)
 {
     struct dw_macinfo_block_s *curblk = dbg->de_current_macinfo;
 
-    if (dbg->de_compose_used_len > curblk->mb_macinfo_data_space_len) {
+    if (dbg->de_compose_used_len >
+        curblk->mb_macinfo_data_space_len) {
         *compose_error_type = DW_DLE_MACINFO_INTERNAL_ERROR_SPACE;
         return DW_DLV_ERROR;
     }
@@ -210,16 +210,16 @@ dwarf_def_macro(Dwarf_P_Debug dbg,
 
     if (dbg == NULL) {
         _dwarf_p_error(NULL, error, DW_DLE_DBG_NULL);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     if (macname == 0) {
         _dwarf_p_error(NULL, error, DW_DLE_MACINFO_STRING_NULL);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     len = strlen(macname) + 1;
     if (len == 0) {
         _dwarf_p_error(NULL, error, DW_DLE_MACINFO_STRING_EMPTY);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     if (macvalue) {
         len2 = strlen(macvalue) + 1;
@@ -234,12 +234,12 @@ dwarf_def_macro(Dwarf_P_Debug dbg,
         &compose_error_type);
     if (res != DW_DLV_OK) {
         _dwarf_p_error(NULL, error, compose_error_type);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     res = libdwarf_compose_add_line(dbg, line, &compose_error_type);
     if (res != DW_DLV_OK) {
         _dwarf_p_error(NULL, error, compose_error_type);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     libdwarf_compose_add_string(dbg, macname, len);
     libdwarf_compose_add_string(dbg, " ", 1);
@@ -250,7 +250,7 @@ dwarf_def_macro(Dwarf_P_Debug dbg,
     res = libdwarf_compose_complete(dbg, &compose_error_type);
     if (res != DW_DLV_OK) {
         _dwarf_p_error(NULL, error, compose_error_type);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     return DW_DLV_OK;
 }
@@ -268,34 +268,34 @@ dwarf_undef_macro(Dwarf_P_Debug dbg,
 
     if (dbg == NULL) {
         _dwarf_p_error(NULL, error, DW_DLE_DBG_NULL);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     if (macname == 0) {
         _dwarf_p_error(NULL, error, DW_DLE_MACINFO_STRING_NULL);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     len = strlen(macname) + 1;
     if (len == 0) {
         _dwarf_p_error(NULL, error, DW_DLE_MACINFO_STRING_EMPTY);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     length_est = COMMAND_LEN + LINE_LEN + len;
     res = libdwarf_compose_begin(dbg, DW_MACINFO_undef, length_est,
         &compose_error_type);
     if (res != DW_DLV_OK) {
         _dwarf_p_error(NULL, error, compose_error_type);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     res = libdwarf_compose_add_line(dbg, line, &compose_error_type);
     if (res != DW_DLV_OK) {
         _dwarf_p_error(NULL, error, compose_error_type);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     libdwarf_compose_add_string(dbg, macname, len);
     res = libdwarf_compose_complete(dbg, &compose_error_type);
     if (res != DW_DLV_OK) {
         _dwarf_p_error(NULL, error, compose_error_type);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     return DW_DLV_OK;
 }
@@ -311,26 +311,27 @@ dwarf_start_macro_file(Dwarf_P_Debug dbg,
 
     if (dbg == NULL) {
         _dwarf_p_error(NULL, error, DW_DLE_DBG_NULL);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     length_est = COMMAND_LEN + LINE_LEN + LINE_LEN;
-    res = libdwarf_compose_begin(dbg, DW_MACINFO_start_file, length_est,
+    res = libdwarf_compose_begin(dbg, DW_MACINFO_start_file,
+        length_est,
         &compose_error_type);
     if (res != DW_DLV_OK) {
         _dwarf_p_error(NULL, error, compose_error_type);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     res = libdwarf_compose_add_line(dbg, fileindex,
         &compose_error_type);
     if (res != DW_DLV_OK) {
         _dwarf_p_error(NULL, error, compose_error_type);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     res = libdwarf_compose_add_line(dbg, linenumber,
         &compose_error_type);
     if (res != DW_DLV_OK) {
         _dwarf_p_error(NULL, error, compose_error_type);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     return DW_DLV_OK;
 }
@@ -344,21 +345,21 @@ dwarf_end_macro_file(Dwarf_P_Debug dbg, Dwarf_Error * error)
 
     if (dbg == NULL) {
         _dwarf_p_error(NULL, error, DW_DLE_DBG_NULL);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     length_est = COMMAND_LEN;
     res = libdwarf_compose_begin(dbg, DW_MACINFO_end_file, length_est,
         &compose_error_type);
-    if (res != DW_DLV_OK) {
-        _dwarf_p_error(NULL, error, compose_error_type);
-        return (DW_DLV_ERROR);
+    if (res == DW_DLV_ERROR) {
+        _dwarf_p_error(dbg, error, compose_error_type);
+        return DW_DLV_ERROR;
     }
     res = libdwarf_compose_complete(dbg, &compose_error_type);
-    if (res != DW_DLV_OK) {
-        _dwarf_p_error(NULL, error, compose_error_type);
-        return (DW_DLV_ERROR);
+    if (res == DW_DLV_ERROR) {
+        _dwarf_p_error(dbg, error, compose_error_type);
+        return res;
     }
-    return DW_DLV_OK;
+    return res;
 }
 
 int
@@ -373,35 +374,33 @@ dwarf_vendor_ext(Dwarf_P_Debug dbg,
 
     if (dbg == NULL) {
         _dwarf_p_error(NULL, error, DW_DLE_DBG_NULL);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     if (string == 0) {
         _dwarf_p_error(NULL, error, DW_DLE_MACINFO_STRING_NULL);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     len = strlen(string) + 1;
     if (len == 0) {
         _dwarf_p_error(NULL, error, DW_DLE_MACINFO_STRING_EMPTY);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     length_est = COMMAND_LEN + LINE_LEN + len;
-    res = libdwarf_compose_begin(dbg, DW_MACINFO_vendor_ext, length_est,
+    res = libdwarf_compose_begin(dbg, DW_MACINFO_vendor_ext,
+        length_est,
         &compose_error_type);
     if (res != DW_DLV_OK) {
         _dwarf_p_error(NULL, error, compose_error_type);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
-    res = libdwarf_compose_add_line(dbg, constant, &compose_error_type);
+    res = libdwarf_compose_add_line(dbg, constant,
+        &compose_error_type);
     if (res != DW_DLV_OK) {
         _dwarf_p_error(NULL, error, compose_error_type);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     libdwarf_compose_add_string(dbg, string, len);
     libdwarf_compose_complete(dbg, &compose_error_type);
-    if (res != DW_DLV_OK) {
-        _dwarf_p_error(NULL, error, compose_error_type);
-        return (DW_DLV_ERROR);
-    }
     return DW_DLV_OK;
 }
 
@@ -409,6 +408,7 @@ dwarf_vendor_ext(Dwarf_P_Debug dbg,
 
 int
 _dwarf_pro_transform_macro_info_to_disk(Dwarf_P_Debug dbg,
+    Dwarf_Signed *nbufs,
     Dwarf_Error * error)
 {
     /* Total num of bytes in .debug_macinfo section. */
@@ -438,10 +438,6 @@ _dwarf_pro_transform_macro_info_to_disk(Dwarf_P_Debug dbg,
 
     GET_CHUNK(dbg, dbg->de_elf_sects[DEBUG_MACINFO],
         macinfo, (unsigned long) mac_num_bytes, error);
-    if (macinfo == NULL) {
-        _dwarf_p_error(dbg, error, DW_DLE_ALLOC_FAIL);
-        return (0);
-    }
 
     macinfo_ptr = macinfo;
     m_prev = 0;
@@ -464,5 +460,6 @@ _dwarf_pro_transform_macro_info_to_disk(Dwarf_P_Debug dbg,
     dbg->de_first_macinfo = NULL;
     dbg->de_current_macinfo = NULL;
 
-    return (int) dbg->de_n_debug_sect;
+    *nbufs = dbg->de_n_debug_sect;
+    return DW_DLV_OK;
 }

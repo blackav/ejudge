@@ -1,0 +1,67 @@
+2021-05-28 David Anderson
+    * UPDATEDWARFDUMPVERSION.sh,baseconfig.h,ddbuild.sh,
+      fixlibdwarfelf.sh,libbuild.sh: Comments added
+      to explain the role each plays.
+2021-05-28 David Anderson
+    * BLDLIBDWARF,BLDLIBDWARFTAR,BLDTESTDIR,CPTARTOWEBDIR,
+      CPTOPUBLIC,CREATINGARELEASE,GETTOTOP,REBLDLIBDWARF,
+      RUNPY,SETUP_GZ_TREE,conddef.py,dateorder,
+      extractrelocdefines.sh,
+      find_pdfpages.py,funcfinderhdr.py,funcfindermm.py,
+      funcfindersrcs.py,haveinclude.py,rebuildpdf.sh,
+      scanconfig.py: None of these play any role
+      in any part of the build, test, or update now.
+      Deleting them.
+2021-05-19 David Anderson
+    * scanconfig.py: Reformatted with the 'black'
+      formatter.
+2021-05-16 David Anderson
+    * buildandreleasetest.sh: Some comments referred to 
+      the wrong test name for F G and H, which
+      caused confusion.
+      Removed 'make test' for cmake, now using ctest -R self
+      (and only that).
+2021-05-16 David Anderson
+    * scanconfig.py: A tool to make it simple to know
+      if config.h.in and config.h.in.cmake match
+      properly.  Is to be run by hand on each file
+      and the diff checked. Only config.h.in
+      should have NO_MINUS_C_MINUS_O as that is a configure
+      thing, not used by cmake.
+2021-05-16 David Anderson
+    * buildandreleasetest.sh. The cmake test H and G
+      script sections were missing -DDO_TESTING=ON so ctest
+      found nothing to run. Fixed.
+2021-05-14 David Anderson
+    * conddef.py,find_pdfpages.py,funcfinderhdr.py,funcfindermm.py,
+      funcfindersrcs.py,scripts/haveinclude.py: Reformatted
+      to standard pythoni3 style.
+2021-05-12 David Anderson
+    * buildandreleasetest.sh: Adds cmake test H (C12)
+      so ctest -R done with -DDWARF_WITH_LIBELF=OFF,
+      the H test adds another libelf off test.
+2020-10-21 David Anderson
+    * run-all-tests.sh: getting directory right
+      for modified regressiontests configre.
+2020-10-21 David Anderson
+    * buildandreleasetest.sh: Now uses temp files under
+      /tmp/bart and if all passes removes that directory
+      to clean up.
+2020-10-20 David Anderson
+    * ddbuild.sh: Changes to sanitized.c meant a bit
+      of changing for tag_tree etc.
+    * buildandreleasetest.sh: A major revision. 
+      Directory naming used in /tmp is now easier to 
+      follow, and using a couple script functions
+      eliminated many busywork lines.
+2020-02-25 David Anderson
+    * run-all-tests.sh: Added echo statments to make
+      it clearer were we are in the run.
+2020-02-16 David Anderson
+    * FIX-CONFIGURE-TIMES: alter the startup message so
+      anyone seeing it will understand it is the code (libdwarf etc)
+      fix script.
+2020-01-14 David Anderson
+    * buildandreleasetest.sh: The script element that finds 
+      the version in configure.ac
+      now also allows for 202xmmdd versions, not just 201xmmdd

@@ -1,26 +1,35 @@
 /*
-  Copyright (C) 2010-2013 David Anderson.  All rights reserved.
+  Copyright (C) 2010-2019 David Anderson.  All rights reserved.
 
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-  * Redistributions of source code must retain the above copyright
-    notice, this list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above copyright
-    notice, this list of conditions and the following disclaimer in the
-    documentation and/or other materials provided with the distribution.
-  * Neither the name of the example nor the
-    names of its contributors may be used to endorse or promote products
-    derived from this software without specific prior written permission.
+  Redistribution and use in source and binary forms, with
+  or without modification, are permitted provided that the
+  following conditions are met:
+
+  * Redistributions of source code must retain the above
+  copyright notice, this list of conditions and the following
+  disclaimer.
+
+  * Redistributions in binary form must reproduce the above
+  copyright notice, this list of conditions and the following
+  disclaimer in the documentation and/or other materials
+  provided with the distribution.
+
+  * Neither the name of the example nor the names of its
+  contributors may be used to endorse or promote products
+  derived from this software without specific prior written
+  permission.
 
   THIS SOFTWARE IS PROVIDED BY David Anderson ''AS IS'' AND ANY
-  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  DISCLAIMED. IN NO EVENT SHALL David Anderson BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+  THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+  PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL David
+  Anderson BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+  NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
@@ -28,17 +37,29 @@
 // ireptodbg.cc
 
 #include "config.h"
+#ifdef HAVE_UNUSED_ATTRIBUTE
+#define  UNUSEDARG __attribute__ ((unused))
+#else
+#define  UNUSEDARG
+#endif
+
+
+/* Windows specific header files */
+#if defined(_WIN32) && defined(HAVE_STDAFX_H)
+#include "stdafx.h"
+#endif /* HAVE_STDAFX_H */
+#if HAVE_UNISTD_H
 #include <unistd.h>
-#include <stdlib.h> // for exit
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h> /* for exit() */
+#endif /* HAVE_STDLIB_H */
 #include <iostream>
 #include <string>
 #include <list>
 #include <map>
 #include <vector>
 #include <string.h> // For memset etc
-#include <sys/stat.h> //open
-#include <fcntl.h> //open
-#include "gelf.h"
 #include "strtabdata.h"
 #include "dwarf.h"
 #include "libdwarf.h"
@@ -56,23 +77,152 @@ using std::map;
 using std::list;
 using std::map;
 
+
 static Dwarf_Error error;
 
 typedef std::map<std::string,unsigned> pathToUnsignedType;
+
+// This set of operations is meaningless.
+const int skipscount = 10;
+struct Skips {
+    Dwarf_Small opcode;
+    Dwarf_Signed sval1;
+    Dwarf_Unsigned uval2;
+} skips[10] = {
+{ DW_OP_breg3,-4,0},
+{ DW_OP_dup,0,0},
+{ DW_OP_const4s,-1000,0},
+{ DW_OP_dup,0,0},
+{ DW_OP_const4s,4000,0},
+{ DW_OP_swap,0,0},
+{ DW_OP_skip,-1,0}, //This will be an error for dwarfdump to note,
+    //not usable offset.
+{ DW_OP_bra,2,0}, //This will be an error for dwarfdump to note,
+    // not usable offset.
+{ DW_OP_const4s,-6000,0},
+{ DW_OP_const4s,8000,0},
+};
+
+static int
+createskipbranchblock(
+    Dwarf_P_Debug dbg,
+    Dwarf_Block &bl)
+{
+    Dwarf_P_Expr ex = 0;
+    int res = 0;
+    Dwarf_Unsigned stream_len = 0;
+
+    error = 0;
+    res = dwarf_new_expr_a(dbg,&ex, &error);
+    if (res != DW_DLV_OK) {
+        cout << "FAIL dwarf_new_expr_a createskipbranchblock "
+            <<endl;
+        error = 0;
+        return res;
+    }
+    for (int i = 0; i < skipscount; ++i) {
+        struct Skips * sp = skips+i;
+        res = dwarf_add_expr_gen_a(ex,sp->opcode,
+            sp->sval1,sp->uval2,&stream_len,&error);
+        if (res != DW_DLV_OK) {
+            cout << 
+                "FAIL dwarf_add_expr_gen_a createskipbranchblock " 
+                << dwarf_errmsg(error) << endl;
+    
+            error = 0;
+            return res;
+        }
+    }
+    Dwarf_Unsigned exlen = 0;
+    Dwarf_Small * exptr = 0;
+    res = dwarf_expr_into_block_a(ex, &exlen,&exptr,&error);
+    if (res != DW_DLV_OK) {
+        cout << "FAIL dwarf_expr_into_block_a createskipbranchblock"
+            <<endl;
+        error = 0;
+        return res;
+    }
+    if (exlen != stream_len) {
+        cout << "FAIL createskipbranchblock " <<
+           "block len:"<< exlen << 
+           " streamlen:" <<stream_len <<endl;
+        error = 0;
+        return DW_DLV_ERROR;
+    }
+    error = 0;
+    bl.bl_len = exlen;
+    bl.bl_data = exptr;
+    bl.bl_from_loclist = false;
+    bl.bl_section_offset = 0; // FAKE
+cout << "debug OK createskipbranchblock " <<
+           "block len:"<< exlen << 
+           " streamlen:" <<stream_len <<endl;
+    return DW_DLV_OK;
+}
+
+static void
+addSkipBranchOps(Dwarf_P_Debug dbg,
+    IRepresentation & Irep UNUSEDARG,
+    Dwarf_P_Die ourdie UNUSEDARG,
+    IRDie &inDie,
+    IRDie &inParent UNUSEDARG,
+    list<IRAttr>& attrs,
+    unsigned level UNUSEDARG)
+{
+    static int done  = false;
+    if (!cmdoptions.addskipbranch) {
+        // No transformation of this sort requested.
+        return;
+    }
+    if (done) {
+        return;
+    }
+    Dwarf_Half dietag = inDie.getTag();
+    if (dietag != DW_TAG_variable) {
+        return;
+    }
+    for (list<IRAttr>::iterator it = attrs.begin();
+        it != attrs.end();
+        it++) {
+        IRAttr & attr = *it;
+        Dwarf_Half attrnum = attr.getAttrNum();
+        Dwarf_Form_Class formclass = attr.getFormClass();
+        if (attrnum == DW_AT_location) {
+            //  Before DW5 there was no DW_FORM_CLASS_EXPRLOC,
+            //  so we would have done this with a different
+            //  test.
+            if (formclass != DW_FORM_CLASS_EXPRLOC) {
+                // Ignore this.
+                return;
+            }
+            IRForm*f = attr.getFormData();
+            IRFormBlock *f2 = dynamic_cast<IRFormBlock *>(f);
+            std::vector<unsigned char> vec= f2->getBlockData();
+            Dwarf_Block bl;
+            int res = createskipbranchblock(dbg,bl);
+            if (res != DW_DLV_OK) {
+                return;
+            }
+            f2->insertBlock(&bl);
+            done = true;
+            break;
+        }
+    }
+}
 
 // The first special transformation is converting DW_AT_high_pc
 // from FORM_addr to an offset and we choose FORM_uleb
 // The attrs ref passed in is (sometimes) used to generate
 // a new attrs list for the caller.
 static void
-specialAttrTransformations(Dwarf_P_Debug dbg,
-    IRepresentation & Irep,
-    Dwarf_P_Die ourdie,
+specialAttrTransformations(Dwarf_P_Debug dbg UNUSEDARG,
+    IRepresentation & Irep UNUSEDARG,
+    Dwarf_P_Die ourdie UNUSEDARG,
     IRDie &inDie,
     list<IRAttr>& attrs,
-    unsigned level)
+    unsigned level UNUSEDARG)
 {
-    if(!transformHighpcToConst) {
+    if(!cmdoptions.transformHighpcToConst) {
         // No transformation of this sort requested.
         return;
     }
@@ -91,7 +241,6 @@ specialAttrTransformations(Dwarf_P_Debug dbg,
         Dwarf_Half attrnum = attr.getAttrNum();
         Dwarf_Half attrform = attr.getFinalForm();
         Dwarf_Form_Class formclass = attr.getFormClass();
-        IRForm * form = attr.getFormData();
         if(attrnum == DW_AT_high_pc) {
             if (attrform == DW_FORM_udata) {
                 // Already the right form for the test.
@@ -130,11 +279,10 @@ specialAttrTransformations(Dwarf_P_Debug dbg,
         it++) {
         IRAttr & attr = *it;
         Dwarf_Half attrnum = attr.getAttrNum();
-        Dwarf_Half attrform = attr.getFinalForm();
-        Dwarf_Form_Class formclass = attr.getFormClass();
         if(attrnum == DW_AT_high_pc) {
-            // Here we want to creat a constant form.
-            // We will assign a FORM of DW_FORM_uleb
+            // Here we want to create a constant form
+            // to test that a const high_pc works.
+            // This is new in DWARF5.
             IRAttr attr2(attrnum,
                 DW_FORM_udata,
                 DW_FORM_udata);
@@ -148,20 +296,254 @@ specialAttrTransformations(Dwarf_P_Debug dbg,
                 0);
             attr2.setFormData(f);
             revisedattrs.push_back(attr2);
-            foundhipc = true;
-            continue;
-        }
-        if(attrnum == DW_AT_low_pc) {
-            foundlopc = true;
-            revisedattrs.push_back(attr);
+            // Avoid memoryleak
+            attr.dropFormData();
             continue;
         }
         revisedattrs.push_back(attr);
         continue;
     }
-    // Now we make the attr list have the revised attribute.
     attrs = revisedattrs;
 }
+
+/* Create a data16 data item out of nothing... */
+static void
+addData16DataItem(Dwarf_P_Debug dbg UNUSEDARG,
+    IRepresentation & Irep UNUSEDARG,
+    Dwarf_P_Die ourdie UNUSEDARG,
+    IRDie &inDie,
+    IRDie &inParent,
+    list<IRAttr>& attrs,
+    unsigned level)
+{
+    static bool alreadydone = false;
+
+    if (alreadydone) {
+        return;
+    }
+    if(!cmdoptions.adddata16) {
+        // No transformation of this sort requested.
+        return;
+    }
+    if (level < 2) {
+        return;
+    }
+
+    Dwarf_Half dietag = inDie.getTag();
+    Dwarf_Half parenttag = inParent.getTag();
+    if(dietag != DW_TAG_variable || parenttag != DW_TAG_subprogram) {
+        return;
+    }
+    list<IRAttr> revisedattrs;
+    for (list<IRAttr>::iterator it = attrs.begin();
+        it != attrs.end();
+        it++) {
+        IRAttr & attr = *it;
+        Dwarf_Half attrnum = attr.getAttrNum();
+        if(attrnum == DW_AT_name){
+            // Avoid memoryleak
+            attr.dropFormData();
+            continue;
+        }
+        if(attrnum == DW_AT_const_value){
+            // Avoid memoryleak
+            attr.dropFormData();
+            continue;
+        }
+        revisedattrs.push_back(attr);
+    }
+
+
+    //    add two new attrs.
+    Dwarf_Half attrnum = DW_AT_name;
+    const char *attrname("vardata16");
+    IRAttr attr2(attrnum,
+        DW_FORM_string,
+        DW_FORM_string);
+    attr2.setFormClass(DW_FORM_CLASS_STRING);
+    IRFormString *f = new IRFormString();
+    f->setInitialForm(DW_FORM_string);
+    f->setFinalForm(DW_FORM_string);
+    f->setString(attrname);
+    attr2.setFormData(f);
+    revisedattrs.push_back(attr2);
+
+
+    Dwarf_Form_Data16  data16 = {
+        0x01,0x08,
+        0x02,0x07,
+        0x03,0x06,
+        0x04,0x05,
+        0x05,0x04,
+        0x06,0x03,
+        0x07,0x02,
+        0x08,0x01
+    };
+    IRAttr attrc(DW_AT_const_value, DW_FORM_data16,DW_FORM_data16);
+    attrc.setFormClass(DW_FORM_CLASS_CONSTANT);
+    IRFormConstant *fc = new IRFormConstant(
+        DW_FORM_data16,
+        DW_FORM_data16,
+        DW_FORM_CLASS_CONSTANT,
+        data16);
+    attrc.setFormData(fc);
+    revisedattrs.push_back(attrc);
+    attrs = revisedattrs;
+    alreadydone = true;
+}
+
+int testvals[3] = {
+-2018,
+-2019,
+-2018
+};
+const char *testnames[3] = {
+"myimplicitconst1",
+"myimplicitconst2newabbrev",
+"myimplicitconst3share1abbrev"
+};
+
+static void
+addSUNfuncoffsets(Dwarf_P_Debug dbg ,
+    IRepresentation & Irep UNUSEDARG,
+    UNUSEDARG Dwarf_P_Die ourdie,
+    IRDie &inDie,
+    UNUSEDARG IRDie &inParent,
+    list<IRAttr>& attrs,
+    UNUSEDARG unsigned level)
+{
+    if(!cmdoptions.addSUNfuncoffsets) {
+        // No transformation of this sort requested.
+        return;
+    }
+    Dwarf_Half dietag = inDie.getTag();
+    if (dietag == DW_TAG_compile_unit) {
+    }
+    if (dietag != DW_TAG_compile_unit) {
+        return;
+    }
+    //    add new attr.
+
+    Dwarf_Half attrnum = DW_AT_SUN_func_offsets;
+    IRFormBlock *f = new IRFormBlock();
+
+    Dwarf_Signed signar[5] = {-1,2000,-2500000000ll,60000000000ll,-2};
+    Dwarf_Unsigned block_len = 0;
+    void *block_ptr;
+
+    int res = dwarf_compress_integer_block_a(dbg,
+        5,signar, &block_len,&block_ptr,&error);
+    if (res == DW_DLV_ERROR) {
+        cerr << " FAIL: Unable to generate via "   <<
+            "dwarf_compress_integer_block_a: err " <<
+            dwarf_errmsg(error) << endl;
+        return;
+    } else if (res == DW_DLV_NO_ENTRY) {
+        cerr << " FAIL: NO_ENTRY impossible but got it" <<
+            " from dwarf_compress_integer_block_a: err " << endl;
+        return;
+    }
+    f->setInitialForm(DW_FORM_block);
+    f->setFinalForm(DW_FORM_block);
+
+    Dwarf_Block bl;
+    bl.bl_len = block_len;
+    bl.bl_data = block_ptr;
+    bl.bl_from_loclist = false;
+    bl.bl_section_offset = 0; // FAKE
+    f->insertBlock(&bl);
+
+    IRAttr attr1(attrnum,
+        DW_FORM_block,
+        DW_FORM_block);
+    attr1.setFormClass(DW_FORM_CLASS_BLOCK);
+    attr1.setFormData(f);
+    attrs.push_back(attr1);
+}
+
+static void
+addImplicitConstItem(Dwarf_P_Debug dbg UNUSEDARG,
+    IRepresentation & Irep UNUSEDARG,
+    Dwarf_P_Die ourdie UNUSEDARG,
+    IRDie &inDie,
+    IRDie &inParent,
+    list<IRAttr>& attrs,
+    unsigned level)
+{
+    static int alreadydone = 0;
+
+    if (alreadydone > 2) {
+        // The limit here MUST be below the size of
+        // testvals[] and testnames[] above.
+        // Some abbrevs should match
+        // if the test case is right. Others not.
+        return;
+    }
+    if(!cmdoptions.addimplicitconst) {
+        // No transformation of this sort requested.
+        return;
+    }
+    if (level < 2) {
+        return;
+    }
+
+    Dwarf_Half dietag = inDie.getTag();
+    Dwarf_Half parenttag = inParent.getTag();
+    if(dietag != DW_TAG_variable || parenttag != DW_TAG_subprogram) {
+        return;
+    }
+    list<IRAttr> revisedattrs;
+    for (list<IRAttr>::iterator it = attrs.begin();
+        it != attrs.end();
+        it++) {
+        IRAttr & attr = *it;
+        Dwarf_Half attrnum = attr.getAttrNum();
+        if(attrnum == DW_AT_name){
+            // Avoid memory leak.
+            attr.dropFormData();
+            continue;
+        }
+        if(attrnum == DW_AT_const_value){
+            // Avoid memory leak.
+            attr.dropFormData();
+            continue;
+        }
+        revisedattrs.push_back(attr);
+    }
+
+
+    //    add two new attrs.
+    Dwarf_Half attrnum = DW_AT_name;
+    const char *attrname(testnames[alreadydone]);
+    IRAttr attr2(attrnum,
+        DW_FORM_string,
+        DW_FORM_string);
+    attr2.setFormClass(DW_FORM_CLASS_STRING);
+    IRFormString *f = new IRFormString();
+    f->setInitialForm(DW_FORM_implicit_const);
+    f->setFinalForm(DW_FORM_implicit_const);
+    f->setString(attrname);
+
+    attr2.setFormData(f);
+    revisedattrs.push_back(attr2);
+
+    Dwarf_Signed myconstval = testvals[alreadydone];
+
+    IRAttr attrc(DW_AT_const_value,
+        DW_FORM_implicit_const,DW_FORM_implicit_const);
+    attrc.setFormClass(DW_FORM_CLASS_CONSTANT);
+    IRFormConstant *fc = new IRFormConstant(
+        DW_FORM_implicit_const,
+        DW_FORM_implicit_const,
+        DW_FORM_CLASS_CONSTANT,
+        IRFormConstant::SIGNED,
+        0,myconstval);
+    attrc.setFormData(fc);
+    revisedattrs.push_back(attrc);
+    attrs = revisedattrs;
+    ++alreadydone;
+}
+
 
 
 // Here we emit all the DIEs for a single Die and
@@ -171,61 +553,73 @@ static Dwarf_P_Die
 HandleOneDieAndChildren(Dwarf_P_Debug dbg,
     IRepresentation &Irep,
     IRCUdata &cu,
-    IRDie    &inDie, unsigned level)
+    IRDie    &inDie,
+    IRDie    &inParent,
+    unsigned level)
 {
     list<IRDie>& children = inDie.getChildren();
     // We create our target DIE first so we can link
     // children to it, but add no content yet.
-    Dwarf_P_Die ourdie = dwarf_new_die(dbg,inDie.getTag(),NULL,NULL,
-        NULL,NULL,&error);
-    if (reinterpret_cast<Dwarf_Signed>(ourdie) == DW_DLV_BADADDR) {
+    Dwarf_P_Die gendie =  0;
+    int res  =dwarf_new_die_a(dbg,inDie.getTag(),NULL,NULL,
+        NULL,NULL,&gendie,&error);
+    if (res != DW_DLV_OK) {
         cerr << "Die creation failure.  "<< endl;
         exit(1);
     }
-    inDie.setGeneratedDie(ourdie);
+    inDie.setGeneratedDie(gendie);
 
     Dwarf_P_Die lastch = 0;
     for ( list<IRDie>::iterator it = children.begin();
         it != children.end();
         it++) {
         IRDie & ch = *it;
-        Dwarf_P_Die chp = HandleOneDieAndChildren(dbg,Irep,cu,ch,level+1);
-        Dwarf_P_Die res = 0;
+        Dwarf_P_Die chp = HandleOneDieAndChildren(dbg,Irep,
+            cu,ch,inDie,level+1);
+        int res2 = 0;
+
         if(lastch) {
             // Link to right of earlier sibling.
-            res = dwarf_die_link(chp,NULL,NULL,lastch,NULL,&error);
+            res2 = dwarf_die_link_a(chp,NULL,NULL,lastch,NULL,&error);
         } else {
             // Link as first child.
-            res  = dwarf_die_link(chp,ourdie,NULL,NULL, NULL,&error);
+            res2  = dwarf_die_link_a(chp,gendie,NULL,NULL, NULL,&error);
         }
-        // Bad cast here, FIXME
-        if (reinterpret_cast<Dwarf_Signed>(res) == DW_DLV_BADADDR) {
+        if (res2 != DW_DLV_OK) {
             cerr << "Die link failure.  "<< endl;
             exit(1);
         }
         lastch = chp;
     }
+    {
     list<IRAttr>& attrs = inDie.getAttributes();
 
     // Now any special transformations to the attrs list.
-    specialAttrTransformations(dbg,Irep,ourdie,inDie,attrs,level);
+    specialAttrTransformations(dbg,Irep,gendie,inDie,attrs,level);
+    addData16DataItem(dbg,Irep,gendie,inDie,inParent,attrs,level);
+    addImplicitConstItem(dbg,Irep,gendie,inDie,inParent,attrs,level);
+    addSUNfuncoffsets(dbg,Irep,gendie,inDie,inParent,attrs,level);
+    addSkipBranchOps( dbg,Irep,gendie,inDie,inParent,attrs,level);
 
     // Now we add attributes (content), if any, to the
-    // output die 'ourdie'.
+    // output die 'gendie'.
     for (list<IRAttr>::iterator it = attrs.begin();
         it != attrs.end();
         it++) {
         IRAttr & attr = *it;
 
-        AddAttrToDie(dbg,Irep,cu,ourdie,inDie,attr);
+        AddAttrToDie(dbg,Irep,cu,gendie,inDie,attr);
     }
-    return ourdie;
+    }
+    return gendie;
 }
 
 static void
-HandleLineData(Dwarf_P_Debug dbg,IRepresentation & Irep, IRCUdata&cu)
+HandleLineData(Dwarf_P_Debug dbg,
+    IRepresentation & Irep UNUSEDARG,
+    IRCUdata&cu)
 {
-    Dwarf_Error error = 0;
+    Dwarf_Error lerror = 0;
     // We refer to files by fileno, this builds an index.
     pathToUnsignedType pathmap;
 
@@ -247,12 +641,14 @@ HandleLineData(Dwarf_P_Debug dbg,IRepresentation & Irep, IRCUdata&cu)
         const std::string&path = li.getpath();
         unsigned pathindex = 0;
         pathToUnsignedType::const_iterator it = pathmap.find(path);
+
         if(it == pathmap.end()) {
-            Dwarf_Error error = 0;
-            Dwarf_Unsigned idx = dwarf_add_file_decl(
+            Dwarf_Error l2error = 0;
+            Dwarf_Unsigned idx = 0;
+            int res = dwarf_add_file_decl_a(
                 dbg,const_cast<char *>(path.c_str()),
-                0,0,0,&error);
-            if(idx == DW_DLV_NOCOUNT) {
+                0,0,0,&idx,&l2error);
+            if(res != DW_DLV_OK) {
                 cerr << "Error from dwarf_add_file_decl() on " <<
                     path << endl;
                 exit(1);
@@ -273,9 +669,9 @@ HandleLineData(Dwarf_P_Debug dbg,IRepresentation & Irep, IRCUdata&cu)
                     endl;
                 exit(1);
             }
-            Dwarf_Unsigned res = dwarf_lne_set_address(dbg,
-                a,elfsymidx,&error);
-            if(res == DW_DLV_NOCOUNT) {
+            int res = dwarf_lne_set_address_a(dbg,
+                a,elfsymidx,&lerror);
+            if(res != DW_DLV_OK) {
                 cerr << "Error building line, dwarf_lne_set_address" <<
                     endl;
                 exit(1);
@@ -283,9 +679,9 @@ HandleLineData(Dwarf_P_Debug dbg,IRepresentation & Irep, IRCUdata&cu)
             addrsetincu = true;
             firstline = false;
         } else if( endsequence) {
-            Dwarf_Unsigned esres = dwarf_lne_end_sequence(dbg,
-                a,&error);
-            if(esres == DW_DLV_NOCOUNT) {
+            int res = dwarf_lne_end_sequence_a(dbg,
+                a,&lerror);
+            if(res != DW_DLV_OK) {
                 cerr << "Error building line, dwarf_lne_end_sequence" <<
                     endl;
                 exit(1);
@@ -307,7 +703,8 @@ HandleLineData(Dwarf_P_Debug dbg,IRepresentation & Irep, IRCUdata&cu)
         Dwarf_Bool isprologueend = li.getprologueend()?1:0;
         Dwarf_Unsigned isa = li.getisa();
         Dwarf_Unsigned discriminator = li.getdiscriminator();
-        Dwarf_Unsigned lires = dwarf_add_line_entry_b(dbg,
+
+        int lires = dwarf_add_line_entry_c(dbg,
             pathindex,
             code_offset,
             lineno,
@@ -318,8 +715,8 @@ HandleLineData(Dwarf_P_Debug dbg,IRepresentation & Irep, IRCUdata&cu)
             isprologueend,
             isa,
             discriminator,
-            &error);
-        if(lires == DW_DLV_NOCOUNT) {
+            &lerror);
+        if(lires != DW_DLV_OK) {
             cerr << "Error building line, dwarf_add_line_entry" <<
                 endl;
             exit(1);
@@ -336,23 +733,24 @@ HandleLineData(Dwarf_P_Debug dbg,IRepresentation & Irep, IRCUdata&cu)
 // defined by the DWARF spec.
 //
 static void
-emitOneCU( Dwarf_P_Debug dbg,IRepresentation & Irep, IRCUdata&cu,
-    int cu_of_input_we_output)
+emitOneCU( Dwarf_P_Debug dbg,IRepresentation & Irep,
+    IRCUdata&cu,
+    int cu_of_input_we_output UNUSEDARG)
 {
     // We descend the the tree, creating DIEs and linking
     // them in as we return back up the tree of recursing
     // on IRDie children.
-    Dwarf_Error error;
+    Dwarf_Error lerror;
 
     IRDie & basedie =  cu.baseDie();
     Dwarf_P_Die cudie = HandleOneDieAndChildren(dbg,Irep,
-        cu,basedie,0);
+        cu,basedie,basedie,0);
 
     // Add base die to debug, this is the CU die.
     // This is not a good design as DWARF3/4 have
     // requirements of multiple CUs in a single creation,
     // which cannot be handled yet.
-    Dwarf_Unsigned res = dwarf_add_die_to_debug(dbg,cudie,&error);
+    Dwarf_Unsigned res = dwarf_add_die_to_debug(dbg,cudie,&lerror);
     if(res != DW_DLV_OK)  {
         cerr << "Unable to add_die_to_debug " << endl;
         exit(1);
@@ -386,13 +784,24 @@ transform_debug_info(Dwarf_P_Debug dbg,
 }
 static void
 transform_cie_fde(Dwarf_P_Debug dbg,
-    IRepresentation & Irep,int cu_of_input_we_output)
+    IRepresentation & Irep,
+    int cu_of_input_we_output UNUSEDARG)
 {
     Dwarf_Error err = 0;
-    std::vector<IRCie> &cie_vec = Irep.framedata().get_cie_vec();
-    std::vector<IRFde> &fde_vec = Irep.framedata().get_fde_vec();
+    std::vector<IRCie> &cie_vec =
+        Irep.framedata().get_cie_vec();
+    std::vector<IRFde> &fde_vec =
+        Irep.framedata().get_fde_vec();
 
-    for(size_t i = 0; i < cie_vec.size(); ++i) {
+    Dwarf_Unsigned cievecsize = cie_vec.size();
+    if (!cievecsize) {
+        // If debug_frame missing try for eh_frame.
+        // Just do one section, not both, for now.
+        cie_vec = Irep.ehframedata().get_cie_vec();
+        fde_vec = Irep.ehframedata().get_fde_vec();
+        cievecsize = cie_vec.size();
+    }
+    for(Dwarf_Unsigned i = 0; i < cievecsize ; ++i) {
         IRCie &ciein = cie_vec[i];
         Dwarf_Unsigned version = 0;
         string aug;
@@ -400,19 +809,21 @@ transform_cie_fde(Dwarf_P_Debug dbg,
         Dwarf_Signed data_align = 0;
         Dwarf_Half ret_addr_reg = -1;
         void * bytes = 0;
-        Dwarf_Unsigned bytes_len;
+        Dwarf_Unsigned bytes_len = 0;
+        Dwarf_Unsigned out_cie_index = 0;
+
         ciein.get_basic_cie_data(&version, &aug,
             &code_align, &data_align, &ret_addr_reg);
         ciein.get_init_instructions(&bytes_len,&bytes);
         // version implied: FIXME, need to let user code set output
         // frame version.
         char *str = const_cast<char *>(aug.c_str());
-        Dwarf_Signed out_cie_index =
-            dwarf_add_frame_cie(dbg, str,
+        int res = dwarf_add_frame_cie_a(dbg, str,
             code_align, data_align, ret_addr_reg,
             bytes,bytes_len,
+            &out_cie_index,
             &err);
-        if(out_cie_index == DW_DLV_NOCOUNT) {
+        if(res != DW_DLV_OK) {
             cerr << "Error creating cie from input cie " << i << endl;
             exit(1);
         }
@@ -422,7 +833,8 @@ transform_cie_fde(Dwarf_P_Debug dbg,
             IRFde &fdein = fde_vec[j];
             Dwarf_Unsigned code_len = 0;
             Dwarf_Addr code_virt_addr = 0;
-            Dwarf_Signed cie_input_index = 0;
+            Dwarf_Unsigned cie_input_index = 0;
+
             fdein.get_fde_base_data(&code_virt_addr,
                 &code_len, &cie_input_index);
             if(cie_input_index != i) {
@@ -431,8 +843,10 @@ transform_cie_fde(Dwarf_P_Debug dbg,
             }
 
 
-            Dwarf_P_Fde fdeout = dwarf_new_fde(dbg,&err);
-            if(reinterpret_cast<Dwarf_Addr>(fdeout) == DW_DLV_BADADDR) {
+            Dwarf_P_Fde fdeout =  0;
+
+            res = dwarf_new_fde_a(dbg,&fdeout,&err);
+            if(res != DW_DLV_OK) {
                 cerr << "Error creating new fde " << j << endl;
                 exit(1);
             }
@@ -440,7 +854,7 @@ transform_cie_fde(Dwarf_P_Debug dbg,
             void *instrs = 0;
             fdein.get_fde_instructions(&ilen, &instrs);
 
-            int res = dwarf_insert_fde_inst_bytes(dbg,
+            res = dwarf_insert_fde_inst_bytes(dbg,
                 fdeout, ilen, instrs,&err);
             if(res != DW_DLV_OK) {
                 cerr << "Error inserting frame instr block " << j << endl;
@@ -452,23 +866,124 @@ transform_cie_fde(Dwarf_P_Debug dbg,
             Dwarf_Unsigned irix_excep_sym = 0;
             Dwarf_Unsigned code_virt_addr_symidx =
                 Irep.getBaseTextSymbol();
-            Dwarf_Unsigned fde_index = dwarf_add_frame_info(
+            Dwarf_Unsigned fde_index =  0;
+            Dwarf_Unsigned end_symbol_index = 0;
+            Dwarf_Unsigned offset_from_end_symbol = 0;
+
+            res = dwarf_add_frame_info_c(
                 dbg, fdeout,irix_die,
                 out_cie_index, code_virt_addr,
-                code_len,code_virt_addr_symidx,
+                code_len,
+                code_virt_addr_symidx,
+                end_symbol_index,
+                offset_from_end_symbol,
                 irix_table_offset,irix_excep_sym,
+                &fde_index,
                 &err);
-            if(fde_index == DW_DLV_BADADDR) {
+            if(res != DW_DLV_OK) {
                 cerr << "Error creating new fde " << j << endl;
                 exit(1);
             }
         }
     }
+    if (cmdoptions.addframeadvanceloc) {
+        // Add a whole new fde, cie, and some instructions
+        Dwarf_Unsigned code_align = 1;
+        Dwarf_Signed data_align = 1;
+        Dwarf_Half ret_addr_reg = 2; // fake, of course.
+        void * bytes = 0;
+        Dwarf_Unsigned bytes_len = 0;
+        Dwarf_Unsigned out_cie_index = 0;
+
+
+        const char *augstr = "";
+        int res = dwarf_add_frame_cie_a(dbg,
+            (char *)augstr,
+            code_align,
+            data_align,
+            ret_addr_reg,
+            bytes,bytes_len,
+            &out_cie_index,
+            &err);
+        if(res != DW_DLV_OK) {
+            cerr << "Error creating made-up addframeadvanceloc cie "
+                << endl;
+            exit(1);
+        }
+        Dwarf_P_Fde fdeout =  0;
+
+        res = dwarf_new_fde_a(dbg,&fdeout,&err);
+        if(res != DW_DLV_OK) {
+            cerr << "Error creating addframeadvance fde " << endl;
+            exit(1);
+        }
+        // These lead to a set of adv_loc ops values in the output
+        // for the fde which looks odd in -f
+        // output (-vvv -f makes more sense), might be
+        // better to have some additional frame instrs in there
+        // so plain -f looks more sensible.
+        std::list<Dwarf_Unsigned> adval;
+        adval.push_back(48);
+        adval.push_back(64);
+        adval.push_back(17219);
+        adval.push_back(4408131);
+        adval.push_back(18308350787ull);
+        // 0x30 0x40 0x4343 0x434343 0x434343434
+        unsigned i = 3;
+        for( list<Dwarf_Unsigned>::iterator it =
+            adval.begin();
+            it != adval.end();it++ , ++i ) {
+
+            Dwarf_Unsigned v = *it;
+            res = dwarf_add_fde_inst_a(fdeout,
+                DW_CFA_advance_loc,v,0,&err);
+            if (res != DW_DLV_OK) {
+                cerr << "Error adding advance_loc" << v << endl;
+                exit(1);
+            }
+            res = dwarf_add_fde_inst_a(fdeout,
+                DW_CFA_same_value,i,0,&err);
+            if (res != DW_DLV_OK) {
+                cerr << "Error adding dummy same_value op" << v << endl;
+                exit(1);
+            }
+        }
+        // We increase code len to account for the
+        // big advance_loc values inserted above.
+        Dwarf_P_Die irix_die = 0;
+        Dwarf_Signed irix_table_offset = 0;
+        Dwarf_Unsigned irix_excep_sym = 0;
+        Dwarf_Unsigned code_virt_addr_symidx =
+            Irep.getBaseTextSymbol();
+        Dwarf_Unsigned fde_index =  0;
+        Dwarf_Unsigned end_symbol_index = 0;
+        Dwarf_Unsigned offset_from_end_symbol = 0;
+        Dwarf_Addr code_virt_addr = 0;
+        Dwarf_Addr code_len = 0x444343434;
+
+        res = dwarf_add_frame_info_c(
+            dbg, fdeout,irix_die,
+            out_cie_index, code_virt_addr,
+            code_len,
+            code_virt_addr_symidx,
+            end_symbol_index,
+            offset_from_end_symbol,
+            irix_table_offset,irix_excep_sym,
+            &fde_index,
+            &err);
+        if(res != DW_DLV_OK) {
+            cerr << "Error creating advance_loc fde " << endl;
+            exit(1);
+        }
+
+    }
+
 }
 
 static void
 transform_macro_info(Dwarf_P_Debug dbg,
-   IRepresentation & Irep,int cu_of_input_we_output)
+   IRepresentation & Irep,
+   int cu_of_input_we_output UNUSEDARG)
 {
     IRMacro &macrodata = Irep.macrodata();
     std::vector<IRMacroRecord> &macrov = macrodata.getMacroVec();
@@ -497,7 +1012,7 @@ transform_macro_info(Dwarf_P_Debug dbg,
 // comparing the input-die global offset.
 static
 Dwarf_P_Die findTargetDieByOffset(IRDie& indie,
-   Dwarf_Unsigned targetglobaloff)
+    Dwarf_Unsigned targetglobaloff)
 {
     Dwarf_Unsigned globoff = indie.getGlobalOffset();
     if(globoff == targetglobaloff) {
@@ -523,17 +1038,16 @@ Dwarf_P_Die findTargetDieByOffset(IRDie& indie,
 // and attach the pubname/type entry to it.
 static void
 transform_debug_pubnames_types_inner(Dwarf_P_Debug dbg,
-   IRepresentation & Irep,int cu_of_input_we_output,
-   IRCUdata&cu)
+    IRepresentation & Irep,
+    int cu_of_input_we_output UNUSEDARG,
+    IRCUdata&cu)
 {
     // First, get the target CU. */
     Dwarf_Unsigned targetcuoff= cu.getCUdieOffset();
-
     IRDie &basedie = cu.baseDie();
-    Dwarf_P_Die p_die = basedie.getGeneratedDie();
-
     IRPubsData& pubs = Irep.pubnamedata();
     std::list<IRPub> &nameslist = pubs.getPubnames();
+
     if(!nameslist.empty()) {
         for ( list<IRPub>::iterator it = nameslist.begin();
         it != nameslist.end();

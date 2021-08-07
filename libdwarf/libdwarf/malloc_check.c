@@ -2,38 +2,30 @@
 
   Copyright (C) 2005 Silicon Graphics, Inc.  All Rights Reserved.
 
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2.1 of the GNU Lesser General Public License
-  as published by the Free Software Foundation.
+  This program is free software; you can redistribute it
+  and/or modify it under the terms of version 2.1 of the
+  GNU Lesser General Public License as published by the Free
+  Software Foundation.
 
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  This program is distributed in the hope that it would be
+  useful, but WITHOUT ANY WARRANTY; without even the implied
+  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+  PURPOSE.
 
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement
-  or the like.  Any license provided herein, whether implied or
-  otherwise, applies only to this software file.  Patent licenses, if
-  any, provided herein do not apply to combinations of this program with
-  other software, or any other product whatsoever.
+  Further, this software is distributed without any warranty
+  that it is free of the rightful claim of any third person
+  regarding infringement or the like.  Any license provided
+  herein, whether implied or otherwise, applies only to this
+  software file.  Patent licenses, if any, provided herein
+  do not apply to combinations of this program with other
+  software, or any other product whatsoever.
 
-  You should have received a copy of the GNU Lesser General Public
-  License along with this program; if not, write the Free Software
-  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
-  USA.
-
-  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
-  Mountain View, CA 94043, or:
-
-  http://www.sgi.com
-
-  For further information regarding this notice, see:
-
-  http://oss.sgi.com/projects/GenInfo/NoticeExplan
+  You should have received a copy of the GNU Lesser General
+  Public License along with this program; if not, write the
+  Free Software Foundation, Inc., 51 Franklin Street - Fifth
+  Floor, Boston MA 02110-1301, USA.
 
 */
-
-
 
 /* malloc_check.c For checking dealloc completeness.
 
@@ -47,8 +39,13 @@
 */
 
 #include <stdio.h>
-#include <stdlib.h>             /* for exit() and various malloc
-    prototypes */
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif /* HAVE_STDLIB_H */
+#ifdef HAVE_MALLOC_H
+/* Useful include for some Windows compilers. */
+#include <malloc.h>
+#endif /* HAVE_MALLOC_H */
 #include "config.h"
 #include "dwarf_incl.h"
 #include "malloc_check.h"
@@ -65,12 +62,12 @@
 
 struct mc_data_s {
     struct mc_data_s *mc_prev;
-    unsigned long mc_address;   /* Assumes this is large enough to hold
-        a pointer! */
+    unsigned long mc_address; /* Assumes this is large
+        enough to hold a pointer! */
 
-    long mc_alloc_number;       /* Assigned in order by when record
+    long mc_alloc_number; /* Assigned in order by when record
         created. */
-    unsigned char mc_alloc_code;        /* Allocation code, libdwarf. */
+    unsigned char mc_alloc_code;   /* Allocation code, libdwarf. */
     unsigned char mc_type;
     unsigned char mc_dealloc_noted;     /* Used on an ALLOC node. */
     unsigned char mc_dealloc_noted_count;       /* Used on an ALLOC
@@ -254,8 +251,8 @@ dwarf_malloc_check_dealloc_data(void *addr_in, unsigned char code)
     newd->mc_alloc_code = code;
     newd->mc_type = MC_TYPE_DEALLOC;
     newd->mc_prev = *base;
-    prev =
-        balanced_by_alloc_p(newd, &addr_match_num, &addr_match, *base);
+    prev = balanced_by_alloc_p(newd, &addr_match_num,
+        &addr_match, *base);
     if (prev < 0) {
         fprintf(stderr,
             "Unbalanced dealloc at index %ld\n", mc_data_list_size);

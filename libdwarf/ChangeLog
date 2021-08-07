@@ -1,0 +1,62 @@
+2021-05-28: David Anderson
+    * CMakeLists.txt:Version string now 20210528
+    * Makefile.am: Added scripts ChangeLogs for 2019,
+      2020. Removed scripts items that were deleted
+      from the source (no longer needed)
+    * Makefile.in: Regenerated.
+    * README.md: Removes reference to deleted script,
+      references 'make dist' instead.
+    * configure.ac: Version 20210528
+    * configure: regenerated
+2021-05-20: David Anderson
+    * CMakeLists.txt, configure.ac: Now version
+      20210520
+    * configure: Regenerated.
+2021-05-17: David Anderson
+    * CMakeLists.txt: Removed test that has been
+      irrelevant for quite a while (and had a serious
+      misspelling too).
+    * config.h.in.cmake: Added two missing header file
+      checks and the associated cmakedefine lines.
+      Removed cmakedefine NO_MINUS_C_MINUS_O as it
+      only applies to configure (not to cmake).
+2021-05-17: David Anderson
+    * README: Removed obsolete reference to libelf source.
+2021-05-14: David Anderson
+    * bugxml/bugrecord.py, bugxml/readbugs.py: Reformatted
+      to standard python style.
+2021-05-14: David Anderson
+    * CMakeLists.txt: Updateing version to match
+      configure.ac and adding comment to keep these
+      files in sync.
+    * configure.ac: Added comment to keep the version
+      here and in CMakeLists.txt in sync. 
+      No other change.
+2021-05-12: David Anderson
+    * CMakeLists.txt: Fixing a disastrous error removing
+      creation of libdwarf.h from the build. The mistake
+      was made in a commit 24 November 2020.
+      Now ctest -R passes again, with or without libelf.
+2021-03-05: David Anderson
+    * configure.ac: Now version 20210305.
+    * configure: Regenerated.
+2021-02-14: David Anderson
+2021-02-19: David Anderson
+    * scripts/ddbuild.sh: needed a -DSKIP_AF_CHECK
+      to allow building a helper program that
+      emits C source for dwarfdump.
+2021-02-15: David Anderson
+    * configure.ac: Now version 20210214.
+    * configure: Regenerated.
+2021-02-14: David Anderson
+    * scripts/ddbuild.sh: Now also builds a table
+      for initializing standard attr/form tables
+      for checking attr/form combinations.
+2021-01-19: David Anderson
+    * scripts/conddef.py,scripts/find_pdfpages.py,
+      scripts/funcfinderhdr.py,scripts/funcfindermm.py,
+      scripts/funcfindersrcs.py,scripts/haveinclude.py:
+      All now are fairly close to following the Python
+      PEP 8 style guide.`
+
+

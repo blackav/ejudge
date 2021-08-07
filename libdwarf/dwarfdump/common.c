@@ -1,94 +1,117 @@
 /*
-  Copyright (C) 2008-2010 SN Systems.  All Rights Reserved.
-  Portions Copyright (C) 2008-2012 David Anderson.  All Rights Reserved.
-  Portions Copyright (C) 2011-2012 SN Systems Ltd.  .  All Rights Reserved.
+Copyright (C) 2008-2010 SN Systems.  All Rights Reserved.
+Portions Copyright (C) 2008-2017 David Anderson.  All Rights Reserved.
+Portions Copyright (C) 2011-2012 SN Systems Ltd.  .  All Rights Reserved.
 
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2 of the GNU General Public License as
-  published by the Free Software Foundation.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of version 2 of the GNU General
+  Public License as published by the Free Software Foundation.
 
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  This program is distributed in the hope that it would be
+  useful, but WITHOUT ANY WARRANTY; without even the implied
+  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+  PURPOSE.
 
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement
-  or the like.  Any license provided herein, whether implied or
-  otherwise, applies only to this software file.  Patent licenses, if
-  any, provided herein do not apply to combinations of this program with
-  other software, or any other product whatsoever.
+  Further, this software is distributed without any warranty
+  that it is free of the rightful claim of any third person
+  regarding infringement or the like.  Any license provided
+  herein, whether implied or otherwise, applies only to this
+  software file.  Patent licenses, if any, provided herein
+  do not apply to combinations of this program with other
+  software, or any other product whatsoever.
 
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write the Free Software Foundation, Inc., 51
-  Franklin Street - Fifth Floor, Boston MA 02110-1301, USA.
-
-  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
-  Mountain View, CA 94043, or:
-
-  http://www.sgi.com
-
-  For further information regarding this notice, see:
-
-  http://oss.sgi.com/projects/GenInfo/NoticeExplan
+  You should have received a copy of the GNU General Public
+  License along with this program; if not, write the Free
+  Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+  Boston MA 02110-1301, USA.
 
 */
 
 /* These do little except on Windows */
 
 #include "config.h"
-#include "common.h"
-#include <stdio.h>
+
+
 /* Windows specific header files */
-#ifdef HAVE_STDAFX_H
+#if defined(_WIN32) && defined(HAVE_STDAFX_H)
 #include "stdafx.h"
 #endif /* HAVE_STDAFX_H */
 
-#define DWARFDUMP_VERSION " Tue Aug  5 08:15:00 PDT 2014  "
+#include "common.h"
+#include "defined_types.h"
+#include "sanitized.h"
+#include "warningcontrol.h"
+#include "libdwarf_version.h" /* for DW_VERSION_DATE_STR */
+#include <stdio.h>
 
-/* The Linux/Unix version does not want a version string to print
-   unless -V is on the command line. */
+#ifndef BUILD_STANDARD_SOURCE
+/*  Must match libdwarf.h.in declaration. */
+const char * dwarf_package_version(void);
+#endif /* BUILD_STANDARD_SOURCE */
+
+/*#define RELEASE_DATE      "20180416" */
+
+/* PACKAGE_VERSION is from config.h */
+
+/*  The Linux/Unix version does not want a version string to print
+    unless -V is on the command line. */
 void
-print_version_details(const char * name,int alwaysprint)
+print_version_details(UNUSEDARG const char * name,
+#ifdef _WIN32
+    UNUSEDARG /* we don't use this arg with Windows */
+#endif
+    int alwaysprint)
 {
-#ifdef WIN32
+#ifdef _WIN32
 #ifdef _DEBUG
     char *acType = "Debug";
 #else
     char *acType = "Release";
 #endif /* _DEBUG */
-    static char acVersion[32];
-    snprintf(acVersion,sizeof(acVersion),
-        "[%s %s %s]",__DATE__,__TIME__,acType);
-    printf("%s %s\n",name,acVersion);
-#else  /* !WIN32 */
+#ifdef _WIN64
+    char *bits = "64";
+#else
+    char *bits = "32";
+#endif /* _WIN64 */
+    printf("%s [%s %s %s Win%s (%s)]\n",
+        sanitized(name),__DATE__,__TIME__,acType,bits,
+        PACKAGE_VERSION);
+#else  /* !_WIN32 */
     if (alwaysprint) {
-        printf("%s\n",DWARFDUMP_VERSION);
+#ifdef BUILD_STANDARD_SOURCE
+        /*  Used by scripts/buildstandardsource.sh */
+        printf("%s\n",DW_VERSION_DATE_STR);
+#else
+        const char *pv = dwarf_package_version();
+        printf("%s Package Version \"%s\"\n",DW_VERSION_DATE_STR,
+            pv);
+#endif
     }
-#endif /* WIN32 */
+#endif /* _WIN32 */
 }
 
-
 void
-print_args(int argc, char *argv[])
+print_args(UNUSEDARG int argc, UNUSEDARG char *argv[])
 {
-#ifdef WIN32
+#ifdef _WIN32
     int index = 1;
     printf("Arguments: ");
     for (index = 1; index < argc; ++index) {
-        printf("%s ",argv[index]);
+        printf("%s ",sanitized(argv[index]));
     }
     printf("\n");
-#endif /* WIN32 */
+#endif /* _WIN32 */
 }
 
+/*  Going to stdout as of April 2018.
+    dwarfdump only calls if requested by user.  */
 void
-print_usage_message(const char *program_name, const char **text)
+print_usage_message(
+    UNUSEDARG const char *program_name_in,
+    const char **text)
 {
     unsigned i = 0;
-#ifndef WIN32
-    fprintf(stderr,"Usage:  %s  <options> <object file>\n", program_name);
-#endif
     for (i = 0; *text[i]; ++i) {
-        fprintf(stderr,"%s\n", text[i]);
+        printf("%s\n", text[i]);
     }
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2010-2013 David Anderson.  All rights reserved.
+  Copyright (C) 2010-2018 David Anderson.  All rights reserved.
 
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
@@ -28,8 +28,23 @@
 // irepattrtodbg.cc
 
 #include "config.h"
+#ifdef HAVE_UNUSED_ATTRIBUTE
+#define  UNUSEDARG __attribute__ ((unused))
+#else
+#define  UNUSEDARG
+#endif
+
+
+/* Windows specific header files */
+#if defined(_WIN32) && defined(HAVE_STDAFX_H)
+#include "stdafx.h"
+#endif /* HAVE_STDAFX_H */
+#if HAVE_UNISTD_H
 #include <unistd.h>
-#include <stdlib.h> // for exit
+#endif
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h> /* for exit() */
+#endif /* HAVE_STDLIB_H */
 #include <iostream>
 #include <sstream> // For BldName
 #include <iomanip> // iomanp for setw etc
@@ -38,27 +53,13 @@
 #include <map>
 #include <vector>
 #include <string.h> // For memset etc
-#include <sys/stat.h> //open
-#include <fcntl.h> //open
 #include "general.h"
-#include "gelf.h"
 #include "strtabdata.h"
 #include "dwarf.h"
 #include "libdwarf.h"
 #include "irepresentation.h"
 #include "ireptodbg.h"
 #include "irepattrtodbg.h"
-
-#ifdef HAVE_INTPTR_T
-#include <stdint.h>
-typedef intptr_t myintfromp; // intptr_t is from C99.
-#else
-// We want an integer that is big enough for a pointer so the
-// pointer return value from the libdwarf producer can be
-// tested for -1.  Ugly overloading of integer and pointer in libdwarf.
-// We just hope it will compile for you.
-typedef long myintfromp;
-#endif
 
 using std::string;
 using std::cout;
@@ -84,23 +85,27 @@ AddAttrToDie(Dwarf_P_Debug dbg,
     IRepresentation & Irep,
     IRCUdata  &cu,
     Dwarf_P_Die outdie,
-    IRDie & irdie,IRAttr &irattr)
+    UNUSEDARG IRDie & irdie,
+    IRAttr &irattr)
 {
     int attrnum = irattr.getAttrNum();
     enum Dwarf_Form_Class formclass = irattr.getFormClass();
     // IRForm is an abstract base class.
-    IRForm *form = irattr.getFormData();
+    IRForm *form_a = irattr.getFormData();
+    int res = 0;
 
     switch(formclass) {
     case DW_FORM_CLASS_UNKNOWN:
-        cerr << "ERROR Impossible DW_FORM_CLASS_UNKNOWN, attrnum "
+        cerr << "ERROR AddAttrToDie: Impossible "
+            "DW_FORM_CLASS_UNKNOWN, attrnum "
             <<attrnum << endl;
         break;
     case DW_FORM_CLASS_ADDRESS:
         {
-        IRFormAddress *f = dynamic_cast<IRFormAddress *>(form);
+        IRFormAddress *f = dynamic_cast<IRFormAddress *>(form_a);
         if (!f) {
-            cerr << "ERROR Impossible DW_FORM_CLASS_ADDRESS cast fails, attrnum "
+            cerr << "ERROR Impossible DW_FORM_CLASS_ADDRESS "
+                "cast fails, attrnum "
                 <<attrnum << endl;
             break;
         }
@@ -117,9 +122,11 @@ AddAttrToDie(Dwarf_P_Debug dbg,
 
         // FIXME: we should  allow for DW_FORM_indirect here.
         // Relocation later will fix value.
-        Dwarf_P_Attribute a = dwarf_add_AT_targ_address_b(dbg,
-            outdie,attrnum,0,sym_index,&error);
-        if( reinterpret_cast<myintfromp>(a) == DW_DLV_BADADDR) {
+        Dwarf_P_Attribute a = 0;
+
+        res = dwarf_add_AT_targ_address_c(dbg,
+            outdie,attrnum,0,sym_index,&a,&error);
+        if(res != DW_DLV_OK) {
             cerr << "ERROR dwarf_add_AT_targ_address fails, attrnum "
                 <<attrnum << endl;
 
@@ -127,70 +134,121 @@ AddAttrToDie(Dwarf_P_Debug dbg,
         }
         break;
     case DW_FORM_CLASS_BLOCK:
+    case DW_FORM_CLASS_EXPRLOC:
         {
-        //FIXME
+        IRFormBlock *f = dynamic_cast<IRFormBlock *>(form_a);
+        if (!f) {
+            cerr << "ERROR Impossible DW_FORM_CLASS_BLOCK/EXPRLOC "
+                "cast fails, attrnum "
+                <<attrnum << endl;
+            break;
+        }
+
+        Dwarf_Unsigned block_len = f->getBlockLen();
+        Dwarf_Small * block_data = f->getBlockBytes();
+        Dwarf_P_Attribute attrb =0;
+
+        /*  Always generates uleb followed by block,
+            sets form based on output dwarf version. */
+        res = dwarf_add_AT_block_a(dbg,outdie,attrnum,
+            block_data,
+            block_len,
+            &attrb,
+            &error);
+        if (res != DW_DLV_OK) {
+            cerr <<
+                "ERROR dwarf_add_AT_block_a: "
+                " fails,"
+                " attrnum " << attrnum <<
+                " res "<< res << endl;
+        }
         }
         break;
     case DW_FORM_CLASS_CONSTANT:
         {
-        IRFormConstant *f = dynamic_cast<IRFormConstant *>(form);
-        Dwarf_Half form = f->getFinalForm();
+        IRFormConstant *f = dynamic_cast<IRFormConstant *>(form_a);
+        Dwarf_Half formv = f->getFinalForm();
         // FIXME: Handle form indirect
         IRFormConstant::Signedness sn = f->getSignedness();
-        Dwarf_Unsigned uval = 0;
         Dwarf_P_Attribute a = 0;
+
+        if (formv == DW_FORM_data16) {
+            Dwarf_Form_Data16 val = f->getData16Val();
+
+            res = dwarf_add_AT_data16(outdie,
+                attrnum,&val,&a,&error);
+            if (res != DW_DLV_OK) {
+                cerr <<
+                "ERROR AddAttrToDie: "
+                "dwarf_add_AT_ data16 class constant fails,"
+                " attrnum " << attrnum <<
+                " res "<<res << endl;
+            }
+            break;
+        } else if (formv == DW_FORM_implicit_const) {
+            Dwarf_Signed sval = f->getSignedVal();
+
+            res = dwarf_add_AT_implicit_const(outdie,attrnum,
+                sval,&a,&error);
+            if (res != DW_DLV_OK) {
+                cerr <<
+                    "ERROR AddAttrToDie: "
+                    "dwarf_add_AT_implicit_const fails,"
+                    " attrnum " << attrnum <<
+                    " res "<<res << endl;
+            }
+            break;
+        }
         if (sn == IRFormConstant::SIGNED) {
             Dwarf_Signed sval = f->getSignedVal();
-            if (form == DW_FORM_sdata) {
-                a = dwarf_add_AT_any_value_sleb(
+            if (formv == DW_FORM_sdata) {
+                res = dwarf_add_AT_any_value_sleb_a(
                     outdie,attrnum,
-                    sval,&error);
+                    sval,&a,&error);
             } else {
                 //cerr << "ERROR how can we know "
                 //    "a non-sdata const is signed?, attrnum " <<
                 //    attrnum <<endl;
-                a = dwarf_add_AT_signed_const(dbg,
+                res = dwarf_add_AT_signed_const_a(dbg,
                     outdie,attrnum,
-                    sval,&error);
+                    sval,&a,&error);
             }
         } else {
-            Dwarf_Unsigned uval = f->getUnsignedVal();
-            if (form == DW_FORM_udata) {
-                a = dwarf_add_AT_any_value_uleb(
+            Dwarf_Unsigned uval_i = f->getUnsignedVal();
+            if (formv == DW_FORM_udata) {
+                res = dwarf_add_AT_any_value_uleb_a(
                     outdie,attrnum,
-                    uval,&error);
+                    uval_i,&a,&error);
             } else {
-                a = dwarf_add_AT_unsigned_const(dbg,
+                res = dwarf_add_AT_unsigned_const_a(dbg,
                     outdie,attrnum,
-                    uval,&error);
+                    uval_i,&a,&error);
             }
         }
-        if( reinterpret_cast<myintfromp>(a) == DW_DLV_BADADDR) {
-            cerr << "ERROR dwarf_add_AT_ class constant fails, attrnum "
-                <<attrnum << endl;
-
+        if(res != DW_DLV_OK) {
+            cerr << "ERROR dwarf_add_AT_ class constant fails," <<
+                dwarf_errmsg(error) <<
+                " attrnum " << attrnum <<
+                " Continuing" << endl;
         }
-        }
-        break;
-    case DW_FORM_CLASS_EXPRLOC:
-        {
-        //FIXME
         }
         break;
     case DW_FORM_CLASS_FLAG:
         {
-        IRFormFlag *f = dynamic_cast<IRFormFlag *>(form);
+        IRFormFlag *f = dynamic_cast<IRFormFlag *>(form_a);
         if (!f) {
-            cerr << "ERROR Impossible DW_FORM_CLASS_FLAG cast fails, attrnum "
+            cerr << "ERROR Impossible DW_FORM_CLASS_FLAG cast fails"
+                ", attrnum "
                 <<attrnum << endl;
             break;
         }
         // FIXME: handle indirect form (libdwarf needs feature).
         // FIXME: handle implicit flag (libdwarf needs feature).
         // FIXME: rel type ok?
-        Dwarf_P_Attribute a =
-            dwarf_add_AT_flag(dbg,outdie,attrnum,f->getFlagVal(),&error);
-        if( reinterpret_cast<myintfromp>(a) == DW_DLV_BADADDR) {
+        Dwarf_P_Attribute a = 0;
+        res = dwarf_add_AT_flag_a(dbg,outdie,attrnum,
+            f->getFlagVal(),&a,&error);
+        if(res != DW_DLV_OK) {
             cerr << "ERROR dwarf_add_AT_flag fails, attrnum "
                 <<attrnum << endl;
         }
@@ -206,7 +264,10 @@ AddAttrToDie(Dwarf_P_Debug dbg,
         // automatic.
         }
         break;
+    case DW_FORM_CLASS_ADDRPTR:
+    case DW_FORM_CLASS_LOCLIST:
     case DW_FORM_CLASS_LOCLISTPTR:
+    case DW_FORM_CLASS_LOCLISTSPTR:
         {
         //FIXME. Needs support in dwarf producer(libdwarf)
         }
@@ -220,6 +281,9 @@ AddAttrToDie(Dwarf_P_Debug dbg,
         // automatic.
         }
         break;
+    case DW_FORM_CLASS_STROFFSETSPTR:
+    case DW_FORM_CLASS_RNGLISTSPTR:
+    case DW_FORM_CLASS_MACROPTR:
     case DW_FORM_CLASS_RANGELISTPTR:
         {
         //FIXME. Needs support in dwarf producer(libdwarf)
@@ -231,14 +295,12 @@ AddAttrToDie(Dwarf_P_Debug dbg,
         // global DIE reference  or a
         // sig8 reference.
         //FIXME
-        IRFormReference *r = dynamic_cast<IRFormReference *>(form);
+        IRFormReference *r = dynamic_cast<IRFormReference *>(form_a);
         if (!r) {
             cerr << "ERROR Impossible DW_FORM_CLASS_REFERENCE cast fails, attrnum "
                 <<attrnum << endl;
             break;
         }
-
-        Dwarf_Half finalform = r->getFinalForm();
 
         IRFormReference::RefType reftype = r->getReferenceType();
         switch (reftype) {
@@ -271,35 +333,41 @@ AddAttrToDie(Dwarf_P_Debug dbg,
                 // could be difficult.
                 // Another option would be two-pass: first create
                 // all the DIEs then all the attributes for each.
-                Dwarf_P_Attribute a =
-                    dwarf_add_AT_reference_b(dbg,outdie,attrnum,
-                    /*targetoutdie */NULL,&error);
-                if( reinterpret_cast<myintfromp>(a) == DW_DLV_BADADDR) {
+                Dwarf_P_Attribute a = 0;
+
+                res = dwarf_add_AT_reference_c(dbg,outdie,attrnum,
+                    /*targetoutdie */NULL,&a,&error);
+                if(res != DW_DLV_OK) {
                     cerr << "ERROR dwarf_add_AT_reference fails, "
                         "attrnum with not yet known targetoutdie "
-                        << IToHex(attrnum) << endl;
+                        << IToHex(attrnum) <<
+                        " " << dwarf_errmsg(error) <<
+                        endl;
                 } else {
                     ClassReferenceFixupData x(dbg,attrnum,outdie,targetofref);
                     cu.insertClassReferenceFixupData(x);
                 }
                 break;
             }
-            Dwarf_P_Attribute a =
-                dwarf_add_AT_reference(dbg,outdie,attrnum,
-                targetoutdie,&error);
-            if( reinterpret_cast<myintfromp>(a) == DW_DLV_BADADDR) {
+            Dwarf_P_Attribute a = 0;
+
+            res = dwarf_add_AT_reference_c(dbg,outdie,attrnum,
+                targetoutdie,&a,&error);
+            if(res != DW_DLV_OK) {
                 cerr << "ERROR dwarf_add_AT_reference fails, "
-                    "attrnum with known targetoutdie "
-                    << IToHex(attrnum) << endl;
+                    "attrnum with known targetoutdie " <<
+                    IToHex(attrnum) <<
+                    " " << dwarf_errmsg(error) <<
+                    endl;
             }
             }
             break;
         case IRFormReference::RT_SIG:
             {
-            Dwarf_P_Attribute a =
-                dwarf_add_AT_with_ref_sig8(outdie,attrnum,
-                r->getSignature(),&error);
-            if( reinterpret_cast<myintfromp>(a) == DW_DLV_BADADDR) {
+            Dwarf_P_Attribute a = 0;
+            res = dwarf_add_AT_with_ref_sig8_a(outdie,attrnum,
+                r->getSignature(),&a,&error);
+            if( res != DW_DLV_OK) {
                 cerr << "ERROR dwarf_add_AT_ref_sig8 fails, attrnum "
                     << IToHex(attrnum) << endl;
             }
@@ -309,7 +377,7 @@ AddAttrToDie(Dwarf_P_Debug dbg,
         break;
     case DW_FORM_CLASS_STRING:
         {
-        IRFormString *f = dynamic_cast<IRFormString *>(form);
+        IRFormString *f = dynamic_cast<IRFormString *>(form_a);
         if (!f) {
             cerr << "ERROR Impossible DW_FORM_CLASS_STRING cast fails, attrnum "
                 <<attrnum << endl;
@@ -322,22 +390,23 @@ AddAttrToDie(Dwarf_P_Debug dbg,
         // FIXME: handle indirect form (libdwarf needs feature).
         // FIXME: rel type ok?
         char *mystr = const_cast<char *>(f->getString().c_str());
+
         switch(attrnum) {
         case DW_AT_name:
-            a = dwarf_add_AT_name(outdie,mystr,&error);
+            res = dwarf_add_AT_name_a(outdie,mystr,&a,&error);
             break;
         case DW_AT_producer:
-            a = dwarf_add_AT_producer(outdie,mystr,&error);
+            res = dwarf_add_AT_producer_a(outdie,mystr,&a,&error);
             break;
         case DW_AT_comp_dir:
-            a = dwarf_add_AT_comp_dir(outdie,mystr,&error);
+            res = dwarf_add_AT_comp_dir_a(outdie,mystr,&a,&error);
             break;
         default:
-            a = dwarf_add_AT_string(dbg,outdie,attrnum,mystr,
-                &error);
+            res = dwarf_add_AT_string_a(dbg,outdie,attrnum,mystr,
+                &a,&error);
             break;
         }
-        if( reinterpret_cast<myintfromp>(a) == DW_DLV_BADADDR) {
+        if(res != DW_DLV_OK) {
             cerr << "ERROR dwarf_add_AT_string fails, attrnum "
                 <<attrnum << endl;
         }
@@ -365,16 +434,16 @@ IRCUdata::updateClassReferenceTargets()
         classReferenceFixupList_.begin();
         it != classReferenceFixupList_.end();
         ++it) {
-            IRDie* d = it->target_;
-            Dwarf_P_Die sourcedie = it->sourcedie_;
-            Dwarf_P_Die targetdie = d->getGeneratedDie();
-            Dwarf_Error error = 0;
-            int res = dwarf_fixup_AT_reference_die(it->dbg_,
-                it->attrnum_,sourcedie,targetdie,&error);
-            if(res != DW_DLV_OK) {
-                cerr << "Improper dwarf_fixup_AT_reference_die call"
-                    << endl;
-            }
-        }
-}
+        IRDie* d = it->target_;
+        Dwarf_P_Die sourcedie = it->sourcedie_;
+        Dwarf_P_Die targetdie = d->getGeneratedDie();
+        Dwarf_Error lerror = 0;
 
+        int res = dwarf_fixup_AT_reference_die(it->dbg_,
+            it->attrnum_,sourcedie,targetdie,&lerror);
+        if(res != DW_DLV_OK) {
+            cerr << "Improper dwarf_fixup_AT_reference_die call"
+                << endl;
+        }
+    }
+}

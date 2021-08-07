@@ -1,27 +1,32 @@
 /*
-  Copyright (C) 2010-2013 David Anderson.  All rights reserved.
+Copyright (C) 2010-2018 David Anderson.  All rights reserved.
 
-  Redistribution and use in source and binary forms, with or without
-  modification, are permitted provided that the following conditions are met:
-  * Redistributions of source code must retain the above copyright
-    notice, this list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above copyright
-    notice, this list of conditions and the following disclaimer in the
-    documentation and/or other materials provided with the distribution.
-  * Neither the name of the example nor the
-    names of its contributors may be used to endorse or promote products
-    derived from this software without specific prior written permission.
+Redistribution and use in source and binary forms, with
+or without modification, are permitted provided that the
+following conditions are met:
 
-  THIS SOFTWARE IS PROVIDED BY David Anderson ''AS IS'' AND ANY
-  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  DISCLAIMED. IN NO EVENT SHALL David Anderson BE LIABLE FOR ANY
-  DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*   Redistributions of source code must retain the above
+    copyright notice, this list of conditions and the following
+    disclaimer.
+
+* Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials
+    provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY David Anderson ''AS IS''
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT
+NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
+NO EVENT SHALL David Anderson BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
@@ -68,6 +73,7 @@ public:
         finalform_ = r.finalform_;
         initialform_ = r.initialform_;
         formclass_ = r.formclass_;
+        return *this;
     };
     enum Dwarf_Form_Class getFormClass() const { return formclass_; };
 private:
@@ -100,6 +106,7 @@ public:
         initialform_ = r.initialform_;
         formclass_ = r.formclass_;
         address_ = r.address_;
+        return *this;
     };
     IRFormAddress(const IRFormAddress &r) {
         finalform_ = r.finalform_;
@@ -142,6 +149,7 @@ public:
         blockdata_ = r.blockdata_;
         fromloclist_ = r.fromloclist_;
         sectionoffset_ = r.sectionoffset_;
+        return *this;
     };
     IRFormBlock(const IRFormBlock &r) {
         finalform_ = r.finalform_;
@@ -158,26 +166,32 @@ public:
     void setFinalForm(Dwarf_Half v) { finalform_ = v;}
     Dwarf_Half getInitialForm() { return initialform_;}
     Dwarf_Half getFinalForm() {return finalform_;}
-
-    enum Dwarf_Form_Class getFormClass() const { return formclass_; };
-private:
-    Dwarf_Half finalform_;
-    // In most cases directform == indirect form.
-    // Otherwise, directform == DW_FORM_indirect.
-    Dwarf_Half initialform_;
-    enum Dwarf_Form_Class formclass_;
-    std::vector<char> blockdata_;
-    Dwarf_Small fromloclist_;
-    Dwarf_Unsigned sectionoffset_;
-
+    Dwarf_Unsigned getBlockLen() {return blockdata_.size();}
+    Dwarf_Small* getBlockBytes() {
+        // Standard guarantees vector content is simply array.
+        return &blockdata_[0];
+    };
+    enum Dwarf_Form_Class getFormClass() const {
+        return formclass_;
+    };
     void insertBlock(Dwarf_Block *bl) {
-        char *d = static_cast<char *>(bl->bl_data);
+        Dwarf_Small *d = static_cast<Dwarf_Small *>(bl->bl_data);
         Dwarf_Unsigned len = bl->bl_len;
         blockdata_.clear();
         blockdata_.insert(blockdata_.end(),d+0,d+len);
         fromloclist_ = bl->bl_from_loclist;
         sectionoffset_ = bl->bl_section_offset;
     };
+    std::vector<Dwarf_Small> getBlockData(){ return blockdata_;};
+private:
+    Dwarf_Half finalform_;
+    // In most cases directform == indirect form.
+    // Otherwise, directform == DW_FORM_indirect.
+    Dwarf_Half initialform_;
+    enum Dwarf_Form_Class formclass_;
+    std::vector<Dwarf_Small> blockdata_;
+    Dwarf_Small fromloclist_;
+    Dwarf_Unsigned sectionoffset_;
 };
 class IRFormConstant : public IRForm {
 public:
@@ -187,7 +201,7 @@ public:
         formclass_(DW_FORM_CLASS_CONSTANT),
         signedness_(SIGN_NOT_SET),
         uval_(0), sval_(0)
-        {}
+        { memset(&data16_,0,sizeof(data16_)); };
     IRFormConstant(IRFormInterface *);
     ~IRFormConstant() {};
     IRFormConstant(Dwarf_Half finalform,
@@ -203,6 +217,18 @@ public:
         uval_ = uval;
         sval_ = sval;
     };
+    IRFormConstant(Dwarf_Half finalform,
+        Dwarf_Half initialform,
+        enum Dwarf_Form_Class formclass UNUSEDARG,
+        Dwarf_Form_Data16 & data16) {
+        finalform_ = finalform;
+        initialform_ = initialform;
+        formclass_ = DW_FORM_CLASS_CONSTANT;
+        signedness_ = SIGN_UNKNOWN;
+        uval_ = 0;
+        sval_ = 0;
+        data16_ = data16;
+    };
     IRFormConstant & operator=(const IRFormConstant &r) {
         if(this == &r) return *this;
         finalform_ = r.finalform_;
@@ -211,6 +237,8 @@ public:
         signedness_ = r.signedness_;
         uval_ = r.uval_;
         sval_ = r.sval_;
+        data16_ = r.data16_;
+        return *this;
     };
     IRFormConstant(const IRFormConstant &r) {
         finalform_ = r.finalform_;
@@ -219,6 +247,7 @@ public:
         signedness_ = r.signedness_;
         uval_ = r.uval_;
         sval_ = r.sval_;
+        data16_ = r.data16_;
     }
     virtual IRFormConstant * clone() const {
         return new IRFormConstant(*this);
@@ -231,6 +260,7 @@ public:
     Signedness getSignedness() const {return signedness_; };
     Dwarf_Signed getSignedVal() const {return sval_;};
     Dwarf_Unsigned getUnsignedVal() const {return uval_;};
+    Dwarf_Form_Data16 getData16Val() const {return data16_;};
 private:
     Dwarf_Half finalform_;
     // In most cases directform == indirect form.
@@ -244,7 +274,14 @@ private:
     // Both uval_ and sval_ are always set to the same bits.
     Dwarf_Unsigned uval_;
     Dwarf_Signed sval_;
+    Dwarf_Form_Data16 data16_;
 
+    void setValues16(Dwarf_Form_Data16 *v,
+        enum Signedness s UNUSEDARG) {
+        uval_ = 0;
+        sval_ = 0;
+        data16_ = *v;
+    }
     void setValues(Dwarf_Signed sval, Dwarf_Unsigned uval,
         enum Signedness s) {
         signedness_ = s;
@@ -267,6 +304,7 @@ public:
         initialform_ = r.initialform_;
         formclass_ = r.formclass_;
         exprlocdata_ = r.exprlocdata_;
+        return *this;
     };
     IRFormExprloc(const IRFormExprloc &r) {
         finalform_ = r.finalform_;
@@ -283,6 +321,12 @@ public:
     Dwarf_Half getInitialForm() { return initialform_;}
     Dwarf_Half getFinalForm() {return finalform_;}
     enum Dwarf_Form_Class getFormClass() const { return formclass_; };
+    std::vector<char> getexprlocdata() const {return exprlocdata_; };
+    void insertBlock(Dwarf_Unsigned len, Dwarf_Ptr data) {
+        char *d = static_cast<char *>(data);
+        exprlocdata_.clear();
+        exprlocdata_.insert(exprlocdata_.end(),d+0,d+len);
+    };
 private:
     Dwarf_Half finalform_;
     // In most cases directform == indirect form.
@@ -290,11 +334,6 @@ private:
     Dwarf_Half initialform_;
     enum Dwarf_Form_Class formclass_;
     std::vector<char> exprlocdata_;
-    void insertBlock(Dwarf_Unsigned len, Dwarf_Ptr data) {
-        char *d = static_cast<char *>(data);
-        exprlocdata_.clear();
-        exprlocdata_.insert(exprlocdata_.end(),d+0,d+len);
-    };
 };
 
 
@@ -314,6 +353,7 @@ public:
         finalform_ = r.finalform_;
         formclass_ = r.formclass_;
         flagval_ = r.flagval_;
+        return *this;
     };
     IRFormFlag(const IRFormFlag &r) {
         initialform_ = r.initialform_;
@@ -356,6 +396,7 @@ public:
         initialform_ = r.initialform_;
         formclass_ = r.formclass_;
         debug_line_offset_ = r.debug_line_offset_;
+        return *this;
     };
     IRFormLinePtr(const IRFormLinePtr &r) {
         finalform_ = r.finalform_;
@@ -400,6 +441,7 @@ public:
         initialform_ = r.initialform_;
         formclass_ = r.formclass_;
         loclist_offset_ = r.loclist_offset_;
+        return *this;
     };
     IRFormLoclistPtr(const IRFormLoclistPtr &r) {
         finalform_ = r.finalform_;
@@ -444,6 +486,7 @@ public:
         initialform_ = r.initialform_;
         formclass_ = r.formclass_;
         macro_offset_ = r.macro_offset_;
+        return *this;
     };
     IRFormMacPtr(const IRFormMacPtr &r) {
         finalform_ = r.finalform_;
@@ -488,6 +531,7 @@ public:
         initialform_ = r.initialform_;
         formclass_ = r.formclass_;
         rangelist_offset_ = r.rangelist_offset_;
+        return *this;
     };
     IRFormRangelistPtr(const IRFormRangelistPtr &r) {
         finalform_ = r.finalform_;
@@ -531,6 +575,7 @@ public:
         initialform_ = r.initialform_;
         formclass_ = r.formclass_;
         frame_offset_ = r.frame_offset_;
+        return *this;
     };
     IRFormFramePtr(const IRFormFramePtr &r) {
         finalform_ = r.finalform_;
@@ -584,6 +629,7 @@ public:
         typeSig8_ = r.typeSig8_;
         targetInputDie_ = r.targetInputDie_;
         target_die_ = r.target_die_;
+        return *this;
     };
     IRFormReference(const IRFormReference &r) {
         finalform_ = r.finalform_;
@@ -674,6 +720,7 @@ public:
         formclass_ = r.formclass_;
         formdata_ = r.formdata_;
         strpoffset_ = r.strpoffset_;
+        return *this;
     };
     void setInitialForm(Dwarf_Half v) { initialform_ = v;}
     void setFinalForm(Dwarf_Half v) { finalform_ = v;}
@@ -696,4 +743,3 @@ private:
 // Factory Method.
 IRForm *formFactory(Dwarf_Debug dbg, Dwarf_Attribute attr,
     IRCUdata &cudata,IRAttr & irattr);
-

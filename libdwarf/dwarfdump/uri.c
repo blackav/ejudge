@@ -1,41 +1,29 @@
 /*
-    Copyright 2011-2012 David Anderson. All rights reserved.
-    Portions Copyright 2012 SN Systems Ltd. All rights reserved.
+Copyright 2011-2012 David Anderson. All rights reserved.
+Portions Copyright 2012 SN Systems Ltd. All rights reserved.
 
-    This program is free software; you can redistribute it and/or modify it
-    under the terms of version 2 of the GNU General Public License as
-    published by the Free Software Foundation.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of version 2 of the GNU General
+  Public License as published by the Free Software Foundation.
 
-    This program is distributed in the hope that it would be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  This program is distributed in the hope that it would be
+  useful, but WITHOUT ANY WARRANTY; without even the implied
+  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+  PURPOSE.
 
-    Further, this software is distributed without any warranty that it is
-    free of the rightful claim of any third person regarding infringement
-    or the like.  Any license provided herein, whether implied or
-    otherwise, applies only to this software file.  Patent licenses, if
-    any, provided herein do not apply to combinations of this program with
-    other software, or any other product whatsoever.
+  Further, this software is distributed without any warranty
+  that it is free of the rightful claim of any third person
+  regarding infringement or the like.  Any license provided
+  herein, whether implied or otherwise, applies only to this
+  software file.  Patent licenses, if any, provided herein
+  do not apply to combinations of this program with other
+  software, or any other product whatsoever.
 
-    You should have received a copy of the GNU General Public License along
-    with this program; if not, write the Free Software Foundation, Inc., 51
-    Franklin Street - Fifth Floor, Boston MA 02110-1301, USA.
+  You should have received a copy of the GNU General Public
+  License along with this program; if not, write the Free
+  Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+  Boston MA 02110-1301, USA.
 
-    Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
-    Mountain View, CA 94043, or:
-
-    http://www.sgi.com
-
-    For further information regarding this notice, see:
-
-    http://oss.sgi.com/projects/GenInfo/NoticeExplan
-
-*/
-
-/*  The address of the Free Software Foundation is
-    Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
-    Boston, MA 02110-1301, USA.
-    SGI has moved from the Crittenden Lane address.
 */
 
 #include "globals.h"
@@ -303,12 +291,6 @@ static char dwarfdump_ctype_table[256] = {
 1, /* 0xfe */
 0, /* other: 0xff */
 };
-static char *
-xchar(int c, char *buf, int size)
-{
-    snprintf(buf, size,"%%%02x",c);
-    return buf;
-}
 
 /* Translate dangerous and some other characters to safe
    %xx form.
@@ -316,8 +298,8 @@ xchar(int c, char *buf, int size)
 void
 translate_to_uri(const char * filename, struct esb_s *out)
 {
-    char buf[8];
     const char *cp = 0;
+
     for (cp = filename  ; *cp; ++cp) {
         char v[2];
         int c = 0xff & (unsigned char)*cp;
@@ -326,8 +308,8 @@ translate_to_uri(const char * filename, struct esb_s *out)
             v[1] = 0;
             esb_append(out,v);
         } else {
-            char *b = xchar(c,buf,sizeof(buf));
-            esb_append(out,b);
+            esb_append(out,"%");
+            esb_append_printf_u(out, "%02x",c&0xff);
         }
     }
 }
@@ -429,7 +411,7 @@ translate_from_uri(const char * input, struct esb_s* out)
 
 #ifdef TEST
 
-unsigned errcnt = 0;
+unsigned int errcnt = 0;
 
 static void
 mytestfrom(const char * in,const char *expected,int testnum)
@@ -453,7 +435,8 @@ mytest(char *in,char *expected,int testnum)
     esb_constructor(&out);
     translate_to_uri(in, &out);
     if (strcmp(expected, esb_get_string(&out))) {
-        printf(" Fail test %d expected %s got %s\n",testnum,expected,esb_get_string(&out));
+        printf(" Fail test %d expected %s got %s\n",
+            testnum,expected,esb_get_string(&out));
         ++errcnt;
     }
     esb_destructor(&out);
@@ -491,4 +474,3 @@ main()
     return errcnt? 1:0;
 }
 #endif
-

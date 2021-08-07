@@ -1,26 +1,28 @@
 /*
-  Copyright (C) 2011 SN Systems Ltd. All Rights Reserved.
-  Portions Copyright (C) 2011-2012 David Anderson. All Rights Reserved.
-  Portions Copyright 2012 SN Systems Ltd. All rights reserved.
+Copyright (C) 2011-2012 SN Systems Ltd. All Rights Reserved.
+Portions Copyright (C) 2011-2019 David Anderson. All Rights Reserved.
 
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2 of the GNU General Public License as
-  published by the Free Software Foundation.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of version 2 of the GNU General
+  Public License as published by the Free Software Foundation.
 
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  This program is distributed in the hope that it would be
+  useful, but WITHOUT ANY WARRANTY; without even the implied
+  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+  PURPOSE.
 
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement
-  or the like.  Any license provided herein, whether implied or
-  otherwise, applies only to this software file.  Patent licenses, if
-  any, provided herein do not apply to combinations of this program with
-  other software, or any other product whatsoever.
+  Further, this software is distributed without any warranty
+  that it is free of the rightful claim of any third person
+  regarding infringement or the like.  Any license provided
+  herein, whether implied or otherwise, applies only to this
+  software file.  Patent licenses, if any, provided herein
+  do not apply to combinations of this program with other
+  software, or any other product whatsoever.
 
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write the Free Software Foundation, Inc., 51
-  Franklin Street - Fifth Floor, Boston MA 02110-1301, USA.
+  You should have received a copy of the GNU General Public
+  License along with this program; if not, write the Free
+  Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+  Boston MA 02110-1301, USA.
 
 */
 /*
@@ -31,8 +33,12 @@
 
 */
 
-#include "globals.h"
+#include "globals.h" /* It includes config.h  */
 #include <assert.h>
+#ifdef HAVE_STDINT_H
+#include <stdint.h> /* For uintptr_t */
+#endif /* HAVE_STDINT_H */
+#include "esb.h"
 
 /* Private function */
 static void DumpFullBucketGroup(Bucket_Group *pBucketGroup);
@@ -41,12 +47,14 @@ static int FindDataIndexInBucket(Bucket_Group *pBucketGroup,
 static void PrintBucketData(Bucket_Group *pBucketGroup,
     Bucket_Data *pBucketData);
 static void ProcessBucketGroup(Bucket_Group *pBucketGroup,
-    void (*pFunction)(Bucket_Group *pBucketGroup,Bucket_Data *pBucketData));
+    void (*pFunction)(Bucket_Group *pBucketGroup,
+        Bucket_Data *pBucketData));
 
 Bucket_Group *
 AllocateBucketGroup(int kind)
 {
-    Bucket_Group *pBucketGroup = (Bucket_Group *)calloc(1,sizeof(Bucket_Group));
+    Bucket_Group *pBucketGroup = (Bucket_Group *)calloc(1,
+        sizeof(Bucket_Group));
     pBucketGroup->kind = kind;
     return pBucketGroup;
 }
@@ -58,7 +66,7 @@ ReleaseBucketGroup(Bucket_Group *pBucketGroup)
     Bucket *pNext = 0;
 
     assert(pBucketGroup);
-    for (pBucket = pBucketGroup->pHead; pBucket; /*pBucket = pBucket->pNext*/) {
+    for (pBucket = pBucketGroup->pHead; pBucket; ) {
         pNext = pBucket->pNext;
         free(pBucket);
         pBucket = pNext;
@@ -74,7 +82,8 @@ ResetBucketGroup(Bucket_Group *pBucketGroup)
     Bucket *pBucket = 0;
 
     assert(pBucketGroup);
-    for (pBucket = pBucketGroup->pHead; pBucket; pBucket = pBucket->pNext) {
+    for (pBucket = pBucketGroup->pHead; pBucket;
+        pBucket = pBucket->pNext) {
         pBucket->nEntries = 0;
     }
     ResetSentinelBucketGroup(pBucketGroup);
@@ -136,18 +145,22 @@ DumpFullBucketGroup(Bucket_Group *pBucketGroup)
     Bucket_Data *pBucketData = 0;
 
     assert(pBucketGroup);
-    printf("\nBucket Group at 0x%lx [lower 0x%lx upper 0x%lx]\n",
-        (unsigned long)pBucketGroup,
-        (unsigned long)pBucketGroup->lower,
-        (unsigned long)pBucketGroup->upper);
+    printf("\nBucket Group at 0x%" DW_PR_DUx
+        " [lower 0x%" DW_PR_DUx " upper 0x%" DW_PR_DUx "]\n",
+        (Dwarf_Unsigned)(uintptr_t)pBucketGroup,
+        (Dwarf_Unsigned)pBucketGroup->lower,
+        (Dwarf_Unsigned)pBucketGroup->upper);
     for (pBucket = pBucketGroup->pHead; pBucket && pBucket->nEntries;
         pBucket = pBucket->pNext) {
 
-        printf("LowPC & HighPC records for bucket %d, at 0x%08lx\n",
-            nBucketNo++,(unsigned long)pBucket);
+        printf("LowPC & HighPC records for bucket %d, at 0x%08"
+            DW_PR_DUx "\n",
+            nBucketNo++,
+            (Dwarf_Unsigned)(uintptr_t)pBucket);
         for (nIndex = 0; nIndex < pBucket->nEntries; ++nIndex) {
             pBucketData = &pBucket->Entries[nIndex];
-            printf("[%06d] Key = 0x%08" DW_PR_DUx ", Base = 0x%08" DW_PR_DUx
+            printf("[%06d] Key = 0x%08" DW_PR_DUx
+                ", Base = 0x%08" DW_PR_DUx
                 ", Low = 0x%08" DW_PR_DUx ", High = 0x%08" DW_PR_DUx
                 ", Flag = %d, Name = '%s'\n",
                 ++nCount,
@@ -161,8 +174,8 @@ DumpFullBucketGroup(Bucket_Group *pBucketGroup)
     }
 }
 
-/* Insert entry into Bucket Group.
-   We make no check for duplicate information. */
+/*  Insert entry into Bucket Group.
+    We make no check for duplicate information. */
 void
 AddEntryIntoBucketGroup(Bucket_Group *pBucketGroup,
     Dwarf_Addr key,Dwarf_Addr base,
@@ -190,7 +203,6 @@ AddEntryIntoBucketGroup(Bucket_Group *pBucketGroup,
         pBucket->Entries[0] = data;
         return;
     }
-
     pBucket = pBucketGroup->pTail;
 
     /*  Check if we have a previous allocated set of
@@ -207,7 +219,8 @@ AddEntryIntoBucketGroup(Bucket_Group *pBucketGroup,
             pBucket->Entries[0] = data;
         }
     } else {
-        /*  We have an allocated bucket with zero entries; search for the
+        /*  We have an allocated bucket with zero entries;
+            search for the
             first available bucket to be used as the current
             insertion point */
         for (pBucket = pBucketGroup->pHead; pBucket;
@@ -221,8 +234,8 @@ AddEntryIntoBucketGroup(Bucket_Group *pBucketGroup,
     }
 }
 
-/* For Groups where entries are individually deleted, this does
-   that work.  */
+/*  For Groups where entries are individually deleted, this does
+    that work.  */
 Dwarf_Bool
 DeleteKeyInBucketGroup(Bucket_Group *pBucketGroup,Dwarf_Addr key)
 {
@@ -245,7 +258,8 @@ DeleteKeyInBucketGroup(Bucket_Group *pBucketGroup,Dwarf_Addr key)
                 for (nStart = nIndex + 1; nStart < pBucket->nEntries;
                     ++nStart) {
 
-                    pBucket->Entries[nIndex] = pBucket->Entries[nStart];
+                    pBucket->Entries[nIndex] =
+                        pBucket->Entries[nStart];
                     ++nIndex;
                 }
                 pBucket->Entries[nIndex] = data;
@@ -262,7 +276,8 @@ DeleteKeyInBucketGroup(Bucket_Group *pBucketGroup,Dwarf_Addr key)
     This matches == if high is exact match (which usually means
     one-past-true-high).  */
 Dwarf_Bool
-FindAddressInBucketGroup(Bucket_Group *pBucketGroup,Dwarf_Addr address)
+FindAddressInBucketGroup(Bucket_Group *pBucketGroup,
+    Dwarf_Addr address)
 {
     int nIndex = 0;
     Bucket *pBucket = 0;
@@ -285,7 +300,8 @@ FindAddressInBucketGroup(Bucket_Group *pBucketGroup,Dwarf_Addr address)
 }
 
 /*  Search an entry (Bucket Data) in the Bucket Set */
-Bucket_Data *FindDataInBucketGroup(Bucket_Group *pBucketGroup,Dwarf_Addr key)
+Bucket_Data *FindDataInBucketGroup(Bucket_Group *pBucketGroup,
+    Dwarf_Addr key)
 {
     int mid = 0;
     int low = 0;
@@ -295,7 +311,8 @@ Bucket_Data *FindDataInBucketGroup(Bucket_Group *pBucketGroup,Dwarf_Addr key)
 
     assert(pBucketGroup);
 
-    for (pBucket = pBucketGroup->pHead; pBucket; pBucket = pBucket->pNext) {
+    for (pBucket = pBucketGroup->pHead; pBucket;
+        pBucket = pBucket->pNext) {
         /* Get lower and upper references */
         if (pBucket->nEntries) {
             low = 0;
@@ -327,7 +344,8 @@ Bucket_Data *FindDataInBucketGroup(Bucket_Group *pBucketGroup,Dwarf_Addr key)
 /*  Find the Bucket that contains a given Bucket Data
     and return its local index. Else return -1.  */
 static int
-FindDataIndexInBucket(Bucket_Group *pBucketGroup,Bucket_Data *pBucketData)
+FindDataIndexInBucket(Bucket_Group *pBucketGroup,
+    Bucket_Data *pBucketData)
 {
     Bucket *pBucket = 0;
     Bucket_Data *pLower = 0;
@@ -343,7 +361,8 @@ FindDataIndexInBucket(Bucket_Group *pBucketGroup,Bucket_Data *pBucketData)
         pBucketData <= pBucketGroup->pLast) {
 
         /* Find bucket that contains the first sentinel */
-        for (pBucket = pBucketGroup->pHead; pBucket && pBucket->nEntries;
+        for (pBucket = pBucketGroup->pHead;
+            pBucket && pBucket->nEntries;
             pBucket = pBucket->pNext) {
 
             pLower = &pBucket->Entries[0];
@@ -358,7 +377,8 @@ FindDataIndexInBucket(Bucket_Group *pBucketGroup,Bucket_Data *pBucketData)
         }
     } else {
         /* Find bucket that contains the entry */
-        for (pBucket = pBucketGroup->pHead; pBucket && pBucket->nEntries;
+        for (pBucket = pBucketGroup->pHead;
+            pBucket && pBucket->nEntries;
             pBucket = pBucket->pNext) {
 
             pLower = &pBucket->Entries[0];
@@ -378,7 +398,8 @@ FindDataIndexInBucket(Bucket_Group *pBucketGroup,Bucket_Data *pBucketData)
 /*  Search an entry (Bucket Data) in the Bucket Group.
     The key is an offset, a DIE offset
     within Visited info. */
-Bucket_Data *FindKeyInBucketGroup(Bucket_Group *pBucketGroup,Dwarf_Addr key)
+Bucket_Data *FindKeyInBucketGroup(Bucket_Group *pBucketGroup,
+    Dwarf_Addr key)
 {
     int nIndex = 0;
     Bucket *pBucket = 0;
@@ -439,7 +460,8 @@ IsValidInBucketGroup(Bucket_Group *pBucketGroup,Dwarf_Addr address)
     /* Check the address is within the allowed limits */
     if (address >= pBucketGroup->lower &&
         address <= pBucketGroup->upper) {
-        for (pBucket = pBucketGroup->pHead;
+        pBucket = pBucketGroup->pHead;
+        for ( ;
             pBucket && pBucket->nEntries;
             pBucket = pBucket->pNext) {
             for (nIndex = 0; nIndex < pBucket->nEntries; ++nIndex) {
@@ -463,7 +485,11 @@ ResetLimitsBucketSet(Bucket_Group *pBucketGroup)
     pBucketGroup->upper = 0;
 }
 
-/*  Limits are set only for ranges, so only in pRangesInfo. */
+/*  Limits are set only for ranges, so only in pRangesInfo.
+    But is used for ranges and location lists.
+    The default is set from object data (virt addr,
+    size in object file) but that does not work
+    sensibly in PE object files. */
 void
 SetLimitsBucketGroup(Bucket_Group *pBucketGroup,
     Dwarf_Addr lower,Dwarf_Addr upper)
@@ -478,7 +504,8 @@ SetLimitsBucketGroup(Bucket_Group *pBucketGroup,
 /* Traverse Bucket Set and execute a supplied function */
 static void
 ProcessBucketGroup(Bucket_Group *pBucketGroup,
-    void (*pFunction)(Bucket_Group *pBucketGroup,Bucket_Data *pBucketData))
+    void (*pFunction)(Bucket_Group *pBucketGroup,
+        Bucket_Data *pBucketData))
 {
     int nIndex = 0;
     int nStart = 0;
@@ -504,7 +531,8 @@ ProcessBucketGroup(Bucket_Group *pBucketGroup,
         pUpper = &pBucket->Entries[pBucket->nEntries - 1];
 
         /* Check if the first sentinel is in this bucket */
-        if (pBucketGroup->pFirst >= pLower && pBucketGroup->pFirst <= pUpper) {
+        if (pBucketGroup->pFirst >= pLower &&
+            pBucketGroup->pFirst <= pUpper) {
             /* Low sentinel is in this bucket */
             bFound = TRUE;
             break;
@@ -550,23 +578,28 @@ Dwarf_Bool IsValidInLinkonce(Bucket_Group *pLo,
 #define SECTION_NAME_LEN 2048 /* Guessing a sensible length */
     static char section_name[SECTION_NAME_LEN];
     Bucket_Data *pBucketData = 0;
-    /*  Since text is quite uniformly just this name, no need to get it
+    /*  Since text is quite uniformly just this name,
+        no need to get it
         from elsewhere, though it will not work for non-elf.  */
     const char *lo_text = ".text.";
 
     /*  Build the name that represents the linkonce section (.text).
         This is not defined in DWARF so not correct for all
         compilers. */
-    snprintf(section_name,sizeof(section_name),"%s%s",lo_text,name);
+    struct esb_s sn;
 
-    pBucketData = FindNameInBucketGroup(pLo,section_name);
+    esb_constructor_fixed(&sn,section_name,sizeof(section_name));
+    esb_append(&sn,lo_text);
+    esb_append(&sn,name);
+    pBucketData = FindNameInBucketGroup(pLo,esb_get_string(&sn));
+    esb_destructor(&sn);
     if (pBucketData) {
         if (lopc >= pBucketData->low && lopc <= pBucketData->high) {
-            if (hipc >= pBucketData->low && hipc <= pBucketData->high) {
+            if (hipc >= pBucketData->low &&
+                hipc <= pBucketData->high) {
                 return TRUE;
             }
         }
     }
     return FALSE;
 }
-

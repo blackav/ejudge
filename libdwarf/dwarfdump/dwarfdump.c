@@ -1,392 +1,489 @@
 /*
-  Copyright (C) 2000,2002,2004,2005 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2007-2013 David Anderson. All Rights Reserved.
-  Portions Copyright 2007-2010 Sun Microsystems, Inc. All rights reserved.
-  Portions Copyright 2012 SN Systems Ltd. All rights reserved.:w
+Copyright (C) 2000,2002,2004,2005 Silicon Graphics, Inc.  All Rights Reserved.
+Portions Copyright (C) 2007-2020 David Anderson. All Rights Reserved.
+Portions Copyright 2007-2010 Sun Microsystems, Inc. All rights reserved.
+Portions Copyright 2012 SN Systems Ltd. All rights reserved.
 
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2 of the GNU General Public License as
-  published by the Free Software Foundation.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of version 2 of the GNU General
+  Public License as published by the Free Software Foundation.
 
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  This program is distributed in the hope that it would be
+  useful, but WITHOUT ANY WARRANTY; without even the implied
+  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+  PURPOSE.
 
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement
-  or the like.  Any license provided herein, whether implied or
-  otherwise, applies only to this software file.  Patent licenses, if
-  any, provided herein do not apply to combinations of this program with
-  other software, or any other product whatsoever.
+  Further, this software is distributed without any warranty
+  that it is free of the rightful claim of any third person
+  regarding infringement or the like.  Any license provided
+  herein, whether implied or otherwise, applies only to this
+  software file.  Patent licenses, if any, provided herein
+  do not apply to combinations of this program with other
+  software, or any other product whatsoever.
 
-  You should have received a copy of the GNU General Public License along
-  with this program; if not, write the Free Software Foundation, Inc., 51
-  Franklin Street - Fifth Floor, Boston MA 02110-1301, USA.
+  You should have received a copy of the GNU General Public
+  License along with this program; if not, write the Free
+  Software Foundation, Inc., 51 Franklin Street - Fifth Floor,
+  Boston MA 02110-1301, USA.
 
-  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
-  Mountain View, CA 94043, or:
-
-  http://www.sgi.com
-
-  For further information regarding this notice, see:
-
-  http://oss.sgi.com/projects/GenInfo/NoticeExplan
-
-
-$Header: /plroot/cmplrs.src/v7.4.5m/.RCS/PL/dwarfdump/RCS/dwarfdump.c,v 1.48 2006/04/18 18:05:57 davea Exp $ */
+*/
 
 /* The address of the Free Software Foundation is
    Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
    Boston, MA 02110-1301, USA.
    SGI has moved from the Crittenden Lane address.
 */
-
 #include "globals.h"
 /* for 'open' */
+#ifdef SYS_TYPES_H
 #include <sys/types.h>
+#endif /* SYS_TYPES_H */
+#ifdef SYS_STAT_H
 #include <sys/stat.h>
+#endif /* SYS_STAT_H */
 #include <fcntl.h>
 #include <limits.h>
-#include <unistd.h>  /* For getopt */
+#ifdef HAVE_UNISTD_H
+#include <unistd.h> /* for dup2() */
+#elif defined(_WIN32) && defined(_MSC_VER)
+#include <io.h>
+#endif
+
 #include "makename.h"
+#include "macrocheck.h"
 #include "dwconf.h"
+#include "dwconf_using_functions.h"
 #include "common.h"
-#include "uri.h"
+#include "helpertree.h"
 #include "esb.h"                /* For flexible string buffer. */
+#include "esb_using_functions.h"
+#include "sanitized.h"
+#include "tag_common.h"
+#include "addrmap.h"
+#include "attr_form.h"
+#include "print_debug_gnu.h"
+#include "naming.h" /* for get_FORM_name() */
+#include "libdwarf_version.h" /* for DW_VERSION_DATE_STR */
+#include "command_options.h"
+#include "compiler_info.h"
 
-#ifdef WIN32
+#ifndef O_RDONLY
+/*  This is for a Windows environment */
+# define O_RDONLY _O_RDONLY
+#endif
+
+#ifdef _O_BINARY
+/*  This is for a Windows environment */
+#define O_BINARY _O_BINARY
+#else
+# ifndef O_BINARY
+# define O_BINARY 0  /* So it does nothing in Linux/Unix */
+# endif
+#endif /* O_BINARY */
+
+#ifdef HAVE_ELF_OPEN
 extern int elf_open(const char *name,int mode);
-#endif /* WIN32 */
+#endif /* HAVE_ELF_OPEN */
 
-#define DWARFDUMP_VERSION " Tue Aug  5 08:15:00 PDT 2014  "
+#ifdef HAVE_CUSTOM_LIBELF
+extern int elf_is_custom_format(void *header, size_t headerlen,
+    size_t *size,
+    unsigned *endian, unsigned *offsetsize, int *errcode);
+#endif /* HAVE_CUSTOM_LIBELF */
 
-extern char *optarg;
-
-
-#define OKAY 0
 #define BYTES_PER_INSTRUCTION 4
-
-static const char* process_args(int argc, char *argv[]);
-
-char * program_name;
-static int check_error = 0;
 
 /*  The type of Bucket. */
 #define KIND_RANGES_INFO       1
 #define KIND_SECTIONS_INFO     2
 #define KIND_VISITED_INFO      3
 
-/* pRangesInfo records the DW_AT_high_pc and DW_AT_low_pc
-   and is used to check that line range info falls inside
-   the known valid ranges.   The data is per CU, and is
-   reset per CU in tag_specific_checks_setup(). */
-Bucket_Group *pRangesInfo = NULL;
-
-/* pLinkonceInfo records data about the link once sections.
-   If a line range is not valid in the current CU it might
-   be valid in a linkonce section, this data records the
-   linkonce sections.  So it is filled in when an
-   object file is read and remains unchanged for an entire
-   object file.  */
-Bucket_Group *pLinkonceInfo = NULL;
-/*  pVisitedInfo records a recursive traversal of DIE attributes
-    DW_AT_specification DW_AT_abstract_origin DW_AT_type
-    that let DWARF refer (as in a general graph) to
-    arbitrary other DIEs.
-    These traversals use pVisitedInfo to
-    detect any compiler errors that introduce circular references.
-    Printing of the traversals is also done on request.
-    Entries are added and deleted as they are visited in
-    a depth-first traversal.  */
-Bucket_Group *pVisitedInfo = NULL;
-
-/* Options to enable debug tracing */
-int nTrace[MAX_TRACE_LEVEL + 1];
-
 /* Build section information */
 void build_linkonce_info(Dwarf_Debug dbg);
-static const char * do_uri_translation(const char *s,
-    const char *context);
-static void reset_overall_CU_error_data();
 
-boolean info_flag = FALSE;
-boolean use_old_dwarf_loclist = FALSE;  /* This so both dwarf_loclist()
-    and dwarf_loclist_n() can be
-    tested. Defaults to new
-    dwarf_loclist_n() */
+struct glflags_s glflags;
 
-boolean line_flag = FALSE;
-boolean line_print_pc = TRUE;    /* Print <pc> addresses. */
-static boolean abbrev_flag = FALSE;
-static boolean frame_flag = FALSE;      /* .debug_frame section. */
-static boolean eh_frame_flag = FALSE;   /* GNU .eh_frame section. */
-static boolean pubnames_flag = FALSE;
-static boolean macinfo_flag = FALSE;
-static boolean loc_flag = FALSE;
-static boolean aranges_flag = FALSE; /* .debug_aranges section. */
-static boolean ranges_flag = FALSE; /* .debug_ranges section. */
-static boolean string_flag = FALSE;
-static boolean reloc_flag = FALSE;
-static boolean static_func_flag = FALSE;
-static boolean static_var_flag = FALSE;
-static boolean type_flag = FALSE;
-static boolean weakname_flag = FALSE;
-static boolean header_flag = FALSE; /* Control printing of Elf header. */
-
-/* Control printing of gdb_index section.*/
-static boolean gdbindex_flag = FALSE;
-
-boolean producer_children_flag = FALSE;   /* List of CUs per compiler */
-
-/* Bitmap for relocations. See globals.h for DW_SECTION_REL_DEBUG_RANGES etc.*/
-static unsigned reloc_map = 0;
-static unsigned section_map = 0;
-
-/*  Start verbose at zero. verbose can
-    be incremented with -v but not decremented. */
-int verbose = 0;
-
-boolean dense = FALSE;
-boolean ellipsis = FALSE;
-boolean show_global_offsets = FALSE; /* Show global and relative offsets */
-boolean show_form_used = FALSE;
-boolean display_offsets = TRUE;  /* Emit offsets */
-
-boolean check_abbrev_code = FALSE;
-boolean check_pubname_attr = FALSE;
-boolean check_reloc_offset = FALSE;
-boolean check_attr_tag = FALSE;
-boolean check_tag_tree = FALSE;
-boolean check_type_offset = FALSE;
-boolean check_decl_file = FALSE;
-boolean check_lines = FALSE;
-boolean check_fdes = FALSE;
-boolean check_ranges = FALSE;
-boolean check_aranges = FALSE;
-boolean check_harmless = FALSE;
-boolean check_abbreviations = FALSE;
-boolean check_dwarf_constants = FALSE;
-boolean check_di_gaps = FALSE;
-boolean check_forward_decl = FALSE;
-boolean check_self_references = FALSE;
-boolean check_attr_encoding = FALSE;   /* Attributes encoding */
-boolean generic_1200_regs = FALSE;
-boolean suppress_check_extensions_tables = FALSE;
-
-/* suppress_nested_name_search is a band-aid.
-   A workaround. A real fix for N**2 behavior is needed.
-*/
-boolean suppress_nested_name_search = FALSE;
-static boolean uri_options_translation = TRUE;
-static boolean do_print_uri_in_input = TRUE;
-
-
-/* break_after_n_units is mainly for testing.
-   It enables easy limiting of output size/running time
-   when one wants the output limited.
-   For example,
-    -H 2
-   limits the -i output to 2 compilation units and
-   the -f or -F output to 2 FDEs and 2 CIEs.
-*/
-int break_after_n_units = INT_MAX;
-
-boolean check_names = FALSE;
-boolean check_verbose_mode = TRUE; /* During '-k' mode, display errors */
-boolean check_frames = FALSE;
-boolean check_frames_extended = FALSE;    /* Extensive frames check */
-boolean check_locations = FALSE;          /* Location list check */
-
-static boolean check_all_compilers = TRUE;
-static boolean check_snc_compiler = FALSE; /* Check SNC compiler */
-static boolean check_gcc_compiler = FALSE;
-static boolean print_summary_all = FALSE;
-
-#define COMPILER_TABLE_MAX 100
-typedef struct anc {
-    struct anc *next;
-    char *item;
-} a_name_chain;
-
-/*  Records information about compilers (producers) found in the
-    debug information, including the check results for several
-    categories (see -k option). */
-typedef struct {
-    const char *name;
-    boolean verified;
-    a_name_chain *cu_list;
-    a_name_chain *cu_last;
-    Dwarf_Check_Result results[LAST_CATEGORY];
-} Compiler;
-
-/* Record compilers  whose CU names have been seen.
-   Full CU names recorded here, though only a portion
-   of the name may have been checked to cause the
-   compiler data  to be entered here.
-   The +1 guarantees we do not overstep the array.
-*/
-static Compiler compilers_detected[COMPILER_TABLE_MAX];
-static int compilers_detected_count = 0;
-
-/* compilers_targeted is a list of indications of compilers
-   on which we wish error checking (and the counts
-   of checks made and errors found).   We do substring
-   comparisons, so the compilers_targeted name might be simply a
-   compiler version number or a short substring of a
-   CU producer name.
-   The +1 guarantees we do not overstep the array.
-*/
-static Compiler compilers_targeted[COMPILER_TABLE_MAX];
-static int compilers_targeted_count = 0;
-static int current_compiler = -1;
-
-static void reset_compiler_entry(Compiler *compiler);
-static void PRINT_CHECK_RESULT(char *str,
-    Compiler *pCompiler, Dwarf_Check_Categories category);
-
-
-/* The check and print flags here make it easy to
-   allow check-only or print-only.  We no longer support
-   check-and-print in a single run.  */
-boolean do_check_dwarf = FALSE;
-boolean do_print_dwarf = FALSE;
-boolean check_show_results = FALSE;  /* Display checks results. */
-boolean record_dwarf_error = FALSE;  /* A test has failed, this
-    is normally set FALSE shortly after being set TRUE, it is
-    a short-range hint we should print something we might not
-    otherwise print (under the circumstances). */
-
-
-/* These names make diagnostic messages more complete, the
-   fixed length is safe, though ultra long names will get
-   truncated. */
-char PU_name[COMPILE_UNIT_NAME_LEN];
-char CU_name[COMPILE_UNIT_NAME_LEN];
-char CU_producer[COMPILE_UNIT_NAME_LEN];
-
-boolean seen_PU = FALSE;              /* Detected a PU */
-boolean seen_CU = FALSE;              /* Detected a CU */
-boolean need_CU_name = TRUE;          /* Need CU name */
-boolean need_CU_base_address = TRUE;  /* Need CU Base address */
-boolean need_CU_high_address = TRUE;  /* Need CU High address */
-boolean need_PU_valid_code = TRUE;    /* Need PU valid code */
-
-boolean seen_PU_base_address = FALSE; /* Detected a Base address for PU */
-boolean seen_PU_high_address = FALSE; /* Detected a High address for PU */
-Dwarf_Addr PU_base_address = 0;       /* PU Base address */
-Dwarf_Addr PU_high_address = 0;       /* PU High address */
-
-Dwarf_Off  DIE_offset = 0;            /* DIE offset in compile unit */
-Dwarf_Off  DIE_overall_offset = 0;    /* DIE offset in .debug_info */
-
-/*  These globals  enable better error reporting. */
-Dwarf_Off  DIE_CU_offset = 0;         /* CU DIE offset in compile unit */
-Dwarf_Off  DIE_CU_overall_offset = 0; /* CU DIE offset in .debug_info */
-int current_section_id = 0;           /* Section being process */
-
-Dwarf_Addr CU_base_address = 0;       /* CU Base address */
-Dwarf_Addr CU_high_address = 0;       /* CU High address */
-
-Dwarf_Addr elf_max_address = 0;       /* Largest representable address offset */
-Dwarf_Half elf_address_size = 0;      /* Target pointer size */
-
-/* Display parent/children when in wide format? */
-boolean display_parent_tree = FALSE;
-boolean display_children_tree = FALSE;
-int stop_indent_level = 0;
-
-/* Print search results in wide format? */
-boolean search_wide_format = FALSE;
-/* -S option: strings for 'any' and 'match' */
-boolean search_is_on = FALSE;
-const char *search_any_text = 0;
-const char *search_match_text = 0;
-const char *search_regex_text = 0;
-int search_occurrences = 0;
-boolean search_print_results = FALSE;
-#ifdef HAVE_REGEX
-/* -S option: the compiled_regex */
-regex_t search_re;
+/* Functions used to manage the unique errors table */
+static void allocate_unique_errors_table(void);
+static void release_unique_errors_table(void);
+#ifdef TESTING
+static void dump_unique_errors_table(void);
 #endif
+static Dwarf_Bool add_to_unique_errors_table(char * error_text);
 
+static struct esb_s esb_short_cu_name;
+static struct esb_s esb_long_cu_name;
+static struct esb_s dwarf_error_line;
+static int global_basefd = -1;
+static int global_tiedfd = -1;
+static struct esb_s global_file_name;
+static struct esb_s global_tied_file_name;
 
-/*  These configure items are for the
-    frame data.  We're flexible in
-    the path to dwarfdump.conf .
-    The HOME strings here are transformed in
-    dwconf.c to reference the environment
-    variable $HOME .
-*/
-static struct esb_s config_file_path;
-static const char *config_file_abi = 0;
-static char *config_file_defaults[] = {
-    "dwarfdump.conf",
-    "./dwarfdump.conf",
-    "HOME/.dwarfdump.conf",
-    "HOME/dwarfdump.conf",
-#ifdef CONFPREFIX
-/* See Makefile.in  "libdir"  and CFLAGS  */
-/* We need 2 levels of macro to get the name turned into
-   the string we want. */
-#define STR2(s) # s
-#define STR(s)  STR2(s)
-    STR(CONFPREFIX)
-        "/dwarfdump.conf",
-#else
-    "/usr/lib/dwarfdump.conf",
+static int process_one_file(int fd, int tiedfd,
+    Elf *efp, Elf * tiedfp,
+    const char * file_name,
+    const char * tied_file_name,
+    char *       tempbuf,
+    unsigned int tempbuflen,
+#ifdef DWARF_WITH_LIBELF
+    int archive,
 #endif
-    0
-};
-static struct dwconf_s config_file_data;
-
-char cu_name[BUFSIZ];
-boolean cu_name_flag = FALSE;
-Dwarf_Unsigned cu_offset = 0;
-
-Dwarf_Error err;
-
-static void suppress_check_dwarf()
-{
-    do_print_dwarf = TRUE;
-    if (do_check_dwarf) {
-        printf("Warning: check flag turned off, "
-            "checking and printing are separate.\n");
-    }
-    do_check_dwarf = FALSE;
-}
-static void suppress_print_dwarf()
-{
-    do_print_dwarf = FALSE;
-    do_check_dwarf = TRUE;
-}
-
-static int process_one_file(Elf * elf, const char * file_name, int archive,
     struct dwconf_s *conf);
+
+static int print_gnu_debuglink(Dwarf_Debug dbg,Dwarf_Error *err);
+
 static int
 open_a_file(const char * name)
 {
     /* Set to a file number that cannot be legal. */
-    int f = -1;
+    int fd = -1;
 
-#if defined(__CYGWIN__) || defined(WIN32)
+#if HAVE_ELF_OPEN
     /*  It is not possible to share file handles
         between applications or DLLs. Each application has its own
         file-handle table. For two applications to use the same file
         using a DLL, they must both open the file individually.
-        Let the 'libelf' dll to open and close the file.  */
-
-    /* For WIN32 open the file as binary */
-    f = elf_open(name, O_RDONLY | O_BINARY);
+        Let the 'libelf' dll open and close the file.  */
+    fd = elf_open(name, O_RDONLY | O_BINARY);
 #else
-    f = open(name, O_RDONLY);
+    fd = open(name, O_RDONLY | O_BINARY);
 #endif
-    return f;
+    return fd;
 
 }
 static void
 close_a_file(int f)
 {
-    close(f);
+    if (f != -1) {
+        close(f);
+    }
+}
+
+static void
+global_destructors(void)
+{
+    makename_destructor();
+    uri_data_destructor();
+    esb_destructor(&esb_long_cu_name);
+    esb_destructor(&esb_short_cu_name);
+    esb_destructor(&dwarf_error_line);
+    esb_destructor(glflags.newprogname);
+    esb_destructor(&global_file_name);
+    esb_destructor(&global_tied_file_name);
+    free_all_dwconf(glflags.config_file_data);
+    sanitized_string_destructor();
+    ranges_esb_string_destructor();
+    /*  Global flags initialization and esb-buffers destruction. */
+    reset_global_flags();
+    close_a_file(global_basefd);
+    close_a_file(global_tiedfd);
+#ifdef _WIN32
+    /* Close the null device used during formatting printing */
+    esb_close_null_device();
+#endif /* _WIN32 */
+    if (glflags.gf_global_debuglink_paths) {
+        unsigned int i = 0;
+
+        for ( ; i < glflags.gf_global_debuglink_count ; ++i ) {
+            free(glflags.gf_global_debuglink_paths[i]);
+            glflags.gf_global_debuglink_paths[i] =  0;
+        }
+        free(glflags.gf_global_debuglink_paths);
+        glflags.gf_global_debuglink_paths = 0;
+    }
+    glflags.gf_global_debuglink_count = 0;
+}
+
+
+#ifdef DWARF_WITH_LIBELF
+static int
+is_it_known_elf_header(Elf *elf)
+{
+    Elf32_Ehdr *eh32;
+
+    eh32 = elf32_getehdr(elf);
+    if (eh32) {
+        return 1;
+    }
+#ifdef HAVE_ELF64_GETEHDR
+    {
+        Elf64_Ehdr *eh64;
+        /* not a 32-bit obj */
+        eh64 = elf64_getehdr(elf);
+        if (eh64) {
+            return 1;
+        }
+    }
+#endif /* HAVE_ELF64_GETEHDR */
+    /* Not something we can handle. */
+    return 0;
+}
+#endif /* DWARF_WITH_LIBELF */
+
+static void
+check_for_notes(void)
+{
+    long int ect = glflags.gf_count_macronotes;
+    const char *w = "was";
+    const char *e = "MACRONOTE";
+    if (!ect) {
+        return;
+    }
+    if (ect > 1) {
+        w = "were";
+        e = "MACRONOTEs";
+    }
+    printf("There %s %ld DWARF %s reported: "
+        "see MACRONOTE above.\n",
+        w, ect,e);
+}
+static void
+check_for_major_errors(void)
+{
+    long int ect = glflags.gf_count_major_errors;
+    const char *w = "was";
+    const char *e = "error";
+    if (!ect) {
+        return;
+    }
+    if (ect > 1) {
+        w = "were";
+        e = "errors";
+    }
+    printf("There %s %ld DWARF %s reported: "
+        "see ERROR above.\n",
+        w, ect,e);
+}
+
+static void
+flag_data_pre_allocation(void)
+{
+    memset(glflags.section_high_offsets_global,0,
+        sizeof(*glflags.section_high_offsets_global));
+    /*  If we are checking .debug_line, .debug_ranges, .debug_aranges,
+        or .debug_loc build the tables containing
+        the pairs LowPC and HighPC. It is safer  (and not
+        expensive) to build all
+        of these at once so mistakes in options do not lead
+        to coredumps (like -ka -p did once). */
+    if (glflags.gf_check_decl_file || glflags.gf_check_ranges ||
+        glflags.gf_check_locations ||
+        glflags.gf_do_check_dwarf ||
+        glflags.gf_check_self_references) {
+        glflags.pRangesInfo = AllocateBucketGroup(KIND_RANGES_INFO);
+        glflags.pLinkonceInfo =
+            AllocateBucketGroup(KIND_SECTIONS_INFO);
+        glflags.pVisitedInfo = AllocateBucketGroup(KIND_VISITED_INFO);
+    }
+    /* Create the unique error table */
+    if (glflags.gf_print_unique_errors) {
+        allocate_unique_errors_table();
+    }
+    /* Allocate range array to be used by all CUs */
+    if (glflags.gf_check_ranges) {
+        allocate_range_array_info();
+    }
+}
+
+static void
+flag_data_post_cleanup(void)
+{
+#ifdef DWARF_WITH_LIBELF
+    clean_up_syms_malloc_data();
+#endif /* DWARF_WITH_LIBELF */
+    if (glflags.pRangesInfo) {
+        ReleaseBucketGroup(glflags.pRangesInfo);
+        glflags.pRangesInfo = 0;
+    }
+    if (glflags.pLinkonceInfo) {
+        ReleaseBucketGroup(glflags.pLinkonceInfo);
+        glflags.pLinkonceInfo = 0;
+    }
+    if (glflags.pVisitedInfo) {
+        ReleaseBucketGroup(glflags.pVisitedInfo);
+        glflags.pVisitedInfo = 0;
+    }
+    /* Release range array to be used by all CUs */
+    if (glflags.gf_check_ranges) {
+        release_range_array_info();
+    }
+    /* Delete the unique error set */
+    if (glflags.gf_print_unique_errors) {
+        release_unique_errors_table();
+    }
+    clean_up_compilers_detected();
+    destruct_abbrev_array();
+}
+
+#ifdef DWARF_WITH_LIBELF
+static int
+process_using_libelf(int fd, int tiedfd,
+    const char *file_name,
+    const char *tied_file_name,
+    int archive)
+{
+    Elf_Cmd cmd = 0;
+    Elf *arf = 0;
+    Elf *elf = 0;
+    Elf *elftied = 0;
+    int archmemnum = 0;
+
+    (void) elf_version(EV_NONE);
+    if (elf_version(EV_CURRENT) == EV_NONE) {
+        (void) fprintf(stderr,
+            "dwarfdump: libelf.a out of date.\n");
+        exit(FAILED);
+    }
+
+    /*  We will use libelf to process an archive
+        so long as is convienient.
+        we don't intend to ever write our own
+        archive reader.  Archive support was never
+        tested and may disappear. */
+    cmd = ELF_C_READ;
+    arf = elf_begin(fd, cmd, (Elf *) 0);
+    if (!arf) {
+        fprintf(stderr, "%s ERROR:  "
+            "Unable to obtain ELF descriptor for %s\n",
+            glflags.program_name,
+            file_name);
+        return (FAILED);
+    }
+    if (esb_string_len(glflags.config_file_tiedpath) > 0) {
+        int isknown = 0;
+        if (tiedfd == -1) {
+            fprintf(stderr, "%s ERROR:  "
+                "can't open tied file.... %s\n",
+                glflags.program_name,
+                tied_file_name);
+            return (FAILED);
+        }
+        elftied = elf_begin(tiedfd, cmd, (Elf *) 0);
+        if (elf_kind(elftied) == ELF_K_AR) {
+            fprintf(stderr, "%s ERROR:  tied file  %s is "
+                "an archive. Not allowed. Giving up.\n",
+                glflags.program_name,
+                tied_file_name);
+            return (FAILED);
+        }
+        isknown = is_it_known_elf_header(elftied);
+        if (!isknown) {
+            fprintf(stderr,
+                "Cannot process tied file %s: unknown format\n",
+                tied_file_name);
+            return FAILED;
+        }
+    }
+    while ((elf = elf_begin(fd, cmd, arf)) != 0) {
+        int isknown = is_it_known_elf_header(elf);
+
+        if (!isknown) {
+            /* not a 64-bit obj either! */
+            /* dwarfdump is almost-quiet when not an object */
+            if (archive) {
+                Elf_Arhdr *mem_header = elf_getarhdr(elf);
+                const char *memname =
+                    (mem_header && mem_header->ar_name)?
+                    mem_header->ar_name:"";
+
+                /*  / and // archive entries are not archive
+                    objects, but are not errors.
+                    For the ATT/USL type of archive. */
+                if (strcmp(memname,"/") && strcmp(memname,"//")) {
+                    fprintf(stderr, "Can't process archive member "
+                        "%d %s of %s: unknown format\n",
+                        archmemnum,
+                        sanitized(memname),
+                        file_name);
+                }
+            } else {
+                fprintf(stderr, "Can't process %s: unknown format\n",
+                    file_name);
+            }
+            glflags.check_error = 1;
+            cmd = elf_next(elf);
+            elf_end(elf);
+            continue;
+        }
+        flag_data_pre_allocation();
+        process_one_file(fd,tiedfd,
+            elf,elftied,
+            file_name,
+            tied_file_name,
+            0,0,
+            archive,
+            glflags.config_file_data);
+        reset_usage_rate_tag_trees();
+        flag_data_post_cleanup();
+        cmd = elf_next(elf);
+        elf_end(elf);
+        archmemnum += 1;
+    }
+    elf_end(arf);
+    if (elftied) {
+        elf_end(elftied);
+        elftied = 0;
+    }
+    return 0; /* normal return. */
+}
+#endif /* DWARF_WITH_LIBELF */
+
+void _dwarf_alloc_tree_counts(Dwarf_Unsigned *allocount,
+    Dwarf_Unsigned *allosum,
+    Dwarf_Unsigned *treecount,
+    Dwarf_Unsigned *treesum,
+    Dwarf_Unsigned *earlydealloccount,
+    Dwarf_Unsigned *earlydeallocsize,
+    Dwarf_Unsigned *unused1,
+    Dwarf_Unsigned *unused2,
+    Dwarf_Unsigned *unused3);
+
+/*  This intended for dwarfdump testing only
+    by the developers.  It's quite odd,
+    really.
+    See regressiontests/scripts/analyzedwalloc.py
+    But handy for some performance analysis. */
+static void
+print_libdwarf_alloc_values(const char *file_name,
+    int argc,char **argv)
+{
+    Dwarf_Unsigned alloct = 0;
+    Dwarf_Unsigned allosum = 0;
+    Dwarf_Unsigned treect = 0;
+    Dwarf_Unsigned treesum = 0;
+    Dwarf_Unsigned earlydelct = 0;
+    Dwarf_Unsigned earlydelsum = 0;
+    FILE *out = 0;
+    int i = 1;
+
+    _dwarf_alloc_tree_counts(&alloct,
+        &allosum,&treect,&treesum,
+        &earlydelct,&earlydelsum,
+        0,0,0);
+
+    out = fopen("libdwallocs","a");
+    if (!out) {
+        return;
+    }
+    fprintf(out,"==== %s ",file_name);
+    for ( ; i < argc; ++i) {
+        fprintf(out," %s",argv[i]);
+    }
+    fprintf(out,"\n");
+    fprintf(out,"%" DW_PR_DSd " ",
+        alloct);
+    fprintf(out,"%" DW_PR_DSd " ",
+        allosum);
+    fprintf(out,"%" DW_PR_DSd " ",
+        treect);
+    fprintf(out,"%" DW_PR_DSd " ",
+        treesum);
+    fprintf(out,"%" DW_PR_DSd " ",
+        earlydelct);
+    fprintf(out,"%" DW_PR_DSd " ",
+        earlydelsum);
+    fprintf(out,"\n");
+    fclose(out);
 }
 
 /*
@@ -396,123 +493,275 @@ int
 main(int argc, char *argv[])
 {
     const char * file_name = 0;
-    int f = 0;
-    Elf_Cmd cmd = 0;
-    Elf *arf = 0;
-    Elf *elf = 0;
-    int archive = 0;
+    unsigned         ftype = 0;
+    unsigned         endian = 0;
+    unsigned         offsetsize = 0;
+    Dwarf_Unsigned   filesize = 0;
+    int      errcode = 0;
+    char *temp_path_buf = 0;
+    unsigned temp_path_buf_len = 0;
+    int res = 0;
+    /* path_source will be DW_PATHSOURCE_basic  */
+    unsigned char path_source = DW_PATHSOURCE_unspecified;
 
-    esb_constructor(&config_file_path);
-#ifdef WIN32
-    /* Windows specific. */
-    /* Redirect stderr to stdout. */
-    /* Tried to use SetStdHandle, but it does not work properly. */
-    //BOOL bbb = SetStdHandle(STD_ERROR_HANDLE,GetStdHandle(STD_OUTPUT_HANDLE));
-    //_iob[2]._file = _iob[1]._file;
-    stderr->_file = stdout->_file;
-#endif /* WIN32 */
+#ifdef _WIN32
+    /*  Open the null device used during formatting printing */
+    if (!esb_open_null_device()) {
+        fprintf(stderr,"dwarfdump: Unable to open null device.\n");
+        exit(FAILED);
+    }
+#endif /* _WIN32 */
+
+    /*  Global flags initialization and esb-buffers construction. */
+    init_global_flags();
+
+    set_checks_off();
+    uri_data_constructor();
+    esb_constructor(&esb_short_cu_name);
+    esb_constructor(&esb_long_cu_name);
+    esb_constructor(&dwarf_error_line);
+#ifdef _WIN32
+    /*  Often we redirect the output to a file, but we have found
+        issues due to the buffering associated with stdout.
+        Some issues were fixed just by the use of 'fflush',
+        but the main issued remained.
+        The stdout stream is buffered, so will only display
+        what's in the buffer after it reaches a newline
+        (or when it's told to).
+        We have a few options to print immediately:
+        - Print to stderr instead using fprintf.
+        - Print to stdout and flush stdout whenever
+            we need it to using fflush.
+        - We can also disable buffering on stdout by using setbuf:
+            setbuf(stdout,NULL);
+            Make stdout unbuffered; this seems to work for all cases.
+        The problem is no longer present. Now, for practical
+        purposes, there is no stderr output, all is stdout.
+        September 2018.  */
+
+    /*  Calling setbuf() with NULL argument, it turns off
+        all buffering for the specified stream.
+        Then writing to and/or reading from the stream
+        will be exactly as directed by the program.
+        But if dwarfdump is used over a network drive,
+        it shows a dramatic
+        slowdown when sending the output to a file.
+        An operation that takes
+        couple of seconds, it was taking few hours. */
+    /*  setbuf(stdout,NULL); */
+    /*  Redirect stderr to stdout. */
+    dup2(fileno(stdout),fileno(stderr));
+#endif /* _WIN32 */
 
     print_version_details(argv[0],FALSE);
-
-    (void) elf_version(EV_NONE);
-    if (elf_version(EV_CURRENT) == EV_NONE) {
-        (void) fprintf(stderr, "dwarfdump: libelf.a out of date.\n");
-        exit(1);
-    }
-
     file_name = process_args(argc, argv);
-
-    /*  Because LibDwarf now generates some new warnings,
-        allow the user to hide them by using command line options */
-    {
-        Dwarf_Cmdline_Options cmd;
-        cmd.check_verbose_mode = check_verbose_mode;
-        dwarf_record_cmdline_options(cmd);
-    }
     print_args(argc,argv);
-    f = open_a_file(file_name);
-    if (f == -1) {
-        fprintf(stderr, "%s ERROR:  can't open %s\n", program_name,
+
+    /*  Redirect stdout and stderr to an specific file */
+    if (glflags.output_file) {
+        if (NULL == freopen(glflags.output_file,"w",stdout)) {
+            fprintf(stderr,
+                "dwarfdump: Unable to redirect output to '%s'\n",
+                glflags.output_file);
+            global_destructors();
+            exit(FAILED);
+        }
+        dup2(fileno(stdout),fileno(stderr));
+        /* Record version and arguments in the output file */
+        print_version_details(argv[0],FALSE);
+        print_args(argc,argv);
+    }
+
+    /*  Allow the user to hide some warnings by using
+        command line options */
+    {
+        Dwarf_Cmdline_Options wcmd;
+        /* The struct has just one field!. */
+        wcmd.check_verbose_mode = glflags.gf_check_verbose_mode;
+        dwarf_record_cmdline_options(wcmd);
+    }
+
+    /* ======= BEGIN FINDING NAMES AND OPENING FDs ===== */
+    /*  The 200+2 etc is more than suffices for the expansion that a
+        MacOS dsym or a GNU debuglink might need, we hope. */
+    temp_path_buf_len = strlen(file_name)*3 + 200 + 2;
+    temp_path_buf = malloc(temp_path_buf_len);
+    if (!temp_path_buf) {
+        fprintf(stderr, "%s ERROR:  Unable to malloc %lu bytes "
+            "for possible path string %s.\n",
+            glflags.program_name,(unsigned long)temp_path_buf_len,
             file_name);
         return (FAILED);
     }
-
-    cmd = ELF_C_READ;
-    arf = elf_begin(f, cmd, (Elf *) 0);
-    if (elf_kind(arf) == ELF_K_AR) {
-        archive = 1;
+    temp_path_buf[0] = 0;
+    /*  This data scan is to find Elf objects and
+        unknown objects early.  If the user
+        asks for libelf with certain options
+        that will rule out handling GNU_debuglink
+        on that object.  This does not concern itself
+        with dSYM or debuglink at all. */
+    res = dwarf_object_detector_path_b(file_name,
+        0,0,
+        0,0,
+        &ftype,&endian,&offsetsize,&filesize,
+        &path_source,&errcode);
+    if (res != DW_DLV_OK) {
+        fprintf(stderr, "%s ERROR:  Can't open %s\n",
+            glflags.program_name, sanitized(file_name));
+        global_destructors();
+        free(temp_path_buf);
+        return (FAILED);
+    }
+    esb_append(&global_file_name,file_name);
+    temp_path_buf[0] = 0;
+    global_basefd = open_a_file(esb_get_string(
+        &global_file_name));
+    if (global_basefd == -1) {
+        fprintf(stderr, "%s ERROR:  can't open.. %s\n",
+            glflags.program_name,
+            esb_get_string(&global_file_name));
+        global_destructors();
+        free(temp_path_buf);
+        return (FAILED);
     }
 
-    /*  If we are checking .debug_line, .debug_ranges, .debug_aranges,
-        or .debug_loc build the tables containing
-        the pairs LowPC and HighPC. It is safer  (and not
-        expensive) to build all
-        of these at once so mistakes in options do not lead
-        to coredumps (like -ka -p did once). */
-    if (check_decl_file || check_ranges || check_locations ||
-        do_check_dwarf || check_self_references) {
-        pRangesInfo = AllocateBucketGroup(KIND_RANGES_INFO);
-        pLinkonceInfo = AllocateBucketGroup(KIND_SECTIONS_INFO);
-        pVisitedInfo = AllocateBucketGroup(KIND_VISITED_INFO);
-    }
+    if (esb_string_len(glflags.config_file_tiedpath) > 0) {
+        unsigned         tftype = 0;
+        unsigned         tendian = 0;
+        unsigned         toffsetsize = 0;
+        Dwarf_Unsigned   tfilesize = 0;
+        const char * tied_file_name = 0;
+        /* path_source will be DW_PATHSOURCE_basic  */
+        unsigned char    tpath_source = 0;
 
-    while ((elf = elf_begin(f, cmd, arf)) != 0) {
-        Elf32_Ehdr *eh32;
-
-#ifdef HAVE_ELF64_GETEHDR
-        Elf64_Ehdr *eh64;
-#endif /* HAVE_ELF64_GETEHDR */
-        eh32 = elf32_getehdr(elf);
-        if (!eh32) {
-#ifdef HAVE_ELF64_GETEHDR
-            /* not a 32-bit obj */
-            eh64 = elf64_getehdr(elf);
-            if (!eh64) {
-                /* not a 64-bit obj either! */
-                /* dwarfdump is almost-quiet when not an object */
-                fprintf(stderr, "Can't process %s: unknown format\n",file_name);
-                check_error = 1;
+        temp_path_buf[0] = 0;
+        tied_file_name = esb_get_string(glflags.config_file_tiedpath);
+        /*  A genuine tiedpath cannot be dsym or debuglink. */
+        res = dwarf_object_detector_path_b (tied_file_name,
+            0,0,
+            0,0,
+            &tftype,&tendian,&toffsetsize,&tfilesize,
+            &tpath_source,&errcode);
+        if (res != DW_DLV_OK) {
+            if (res == DW_DLV_ERROR) {
+                char *errmsg = dwarf_errmsg_by_number(errcode);
+                fprintf(stderr, "%s ERROR:  can't open tied file"
+                    ".. %s: %s\n",
+                    glflags.program_name, sanitized(tied_file_name),
+                    errmsg);
             } else {
-                process_one_file(elf, file_name, archive,
-                    &config_file_data);
+                fprintf(stderr,
+                    "%s ERROR: tied file not an object file '%s'.\n",
+                    glflags.program_name, sanitized(tied_file_name));
             }
-#endif /* HAVE_ELF64_GETEHDR */
-        } else {
-            process_one_file(elf, file_name, archive,
-                &config_file_data);
+            global_destructors();
+            free(temp_path_buf);
+            return (FAILED);
         }
-        cmd = elf_next(elf);
-        elf_end(elf);
+        if (ftype != tftype || endian != tendian ||
+            offsetsize != toffsetsize) {
+            fprintf(stderr, "%s ERROR:  tied file \'%s\' and "
+                "main file \'%s\' not "
+                "the same kind of object!\n",
+                glflags.program_name,
+                sanitized(tied_file_name),
+                esb_get_string(&global_file_name));
+            free(temp_path_buf);
+            global_destructors();
+            return (FAILED);
+        }
+        esb_append(&global_tied_file_name,tied_file_name);
+        global_tiedfd = open_a_file(esb_get_string(
+            &global_tied_file_name));
+        if (global_tiedfd == -1) {
+            fprintf(stderr, "%s ERROR:  can't open tied file"
+                "... %s\n",
+                glflags.program_name,
+                sanitized(esb_get_string(&global_tied_file_name)));
+            global_destructors();
+            free(temp_path_buf);
+            return (FAILED);
+        }
     }
-    elf_end(arf);
-    /* Trivial malloc space cleanup. */
-    clean_up_syms_malloc_data();
+    /* ======= end FINDING NAMES AND OPENING FDs ===== */
+    temp_path_buf[0] = 0;
+    /* ======= BEGIN PROCESSING OBJECT FILES BY TYPE ===== */
+    if ((ftype == DW_FTYPE_ELF && (glflags.gf_reloc_flag ||
+        glflags.gf_header_flag)) ||
+#ifdef HAVE_CUSTOM_LIBELF
+        ftype == DW_FTYPE_CUSTOM_ELF ||
+#endif /* HAVE_CUSTOM_LIBELF */
+        ftype == DW_FTYPE_ARCHIVE) {
+#ifdef DWARF_WITH_LIBELF
+        int excode = 0;
 
-    if (pRangesInfo) {
-        ReleaseBucketGroup(pRangesInfo);
-        pRangesInfo = 0;
+        excode = process_using_libelf(global_basefd,
+            global_tiedfd,
+            esb_get_string(&global_file_name),
+            esb_get_string(&global_tied_file_name),
+            (ftype == DW_FTYPE_ARCHIVE)? TRUE:FALSE);
+        if (excode) {
+            free(temp_path_buf);
+            global_destructors();
+            flag_data_post_cleanup();
+            return(excode);
+        }
+#else /* !DWARF_WITH_LIBELF */
+        fprintf(stderr, "Can't process %s: archives and "
+            "printing elf headers not supported in this dwarfdump "
+            "--disable-libelf build.\n",
+            file_name);
+#endif /* DWARF_WITH_LIBELF */
+    } else if (ftype == DW_FTYPE_ELF ||
+        ftype ==  DW_FTYPE_MACH_O  ||
+        ftype == DW_FTYPE_PE  ) {
+        flag_data_pre_allocation();
+        close_a_file(global_basefd);
+        global_basefd = -1;
+        close_a_file(global_tiedfd);
+        global_tiedfd = -1;
+        process_one_file(-1,-1,
+            0,0,
+            esb_get_string(&global_file_name),
+            esb_get_string(&global_tied_file_name),
+            temp_path_buf, temp_path_buf_len,
+#ifdef DWARF_WITH_LIBELF
+            0 /* elf_archive */,
+#endif
+            glflags.config_file_data);
+        flag_data_post_cleanup();
+    } else {
+        fprintf(stderr, "Can't process %s: unhandled format\n",
+            file_name);
     }
-
-    if (pLinkonceInfo) {
-        ReleaseBucketGroup(pLinkonceInfo);
-        pLinkonceInfo = 0;
+    free(temp_path_buf);
+    temp_path_buf = 0;
+    temp_path_buf_len = 0;
+    if (glflags.gf_print_alloc_sums) {
+        print_libdwarf_alloc_values(file_name,argc,argv);
     }
+    /* ======= END PROCESSING OBJECT FILES BY TYPE ===== */
 
-    if (pVisitedInfo) {
-        ReleaseBucketGroup(pVisitedInfo);
-        pVisitedInfo = 0;
-    }
-
+    /*  These cleanups only necessary once all
+        objects processed. */
 #ifdef HAVE_REGEX
-    if (search_regex_text) {
-        regfree(&search_re);
+    if (glflags.search_regex_text) {
+        regfree(glflags.search_re);
     }
 #endif
-    close_a_file(f);
-    if (check_error)
-        return FAILED;
-    else
-        return OKAY;
+    /*  In case of a serious DWARF error
+        we  try to get here, we try not
+        to  exit(1) by using print_error() */
+    check_for_major_errors();
+    check_for_notes();
+    flag_data_post_cleanup();
+    global_destructors();
+    free(temp_path_buf);
+    /*  As the tool have reached this point, it means there are
+        no internal errors and we should return an OKAY condition,
+        regardless if the file being processed has
+        minor errors. */
+    return OKAY;
 }
 
 void
@@ -525,7 +774,8 @@ print_any_harmless_errors(Dwarf_Debug dbg)
     unsigned totalcount = 0;
     unsigned i = 0;
     unsigned printcount = 0;
-    int res = dwarf_get_harmless_error_list(dbg,LOCAL_PTR_ARY_COUNT,buf,
+    int res = dwarf_get_harmless_error_list(dbg,
+        LOCAL_PTR_ARY_COUNT,buf,
         &totalcount);
     if (res == DW_DLV_NO_ENTRY) {
         return;
@@ -546,1492 +796,1165 @@ print_any_harmless_errors(Dwarf_Debug dbg)
     }
 }
 
-static void
-print_object_header(Elf *elf,Dwarf_Debug dbg,unsigned local_section_map)
-{
-    /* Debug section names to be included in printing */
-    #define DW_SECTNAME_DEBUG_INFO     ".debug_info"
-    #define DW_SECTNAME_DEBUG_LINE     ".debug_line"
-    #define DW_SECTNAME_DEBUG_PUBNAMES ".debug_pubnames"
-    #define DW_SECTNAME_DEBUG_ABBREV   ".debug_abbrev"
-    #define DW_SECTNAME_DEBUG_ARANGES  ".debug_aranges"
-    #define DW_SECTNAME_DEBUG_FRAME    ".debug_frame"
-    #define DW_SECTNAME_DEBUG_LOC      ".debug_loc"
-    #define DW_SECTNAME_DEBUG_RANGES   ".debug_ranges"
-    #define DW_SECTNAME_DEBUG_STR      ".debug_str"
-    #define DW_SECTNAME_DEBUG_PUBTYPES ".debug_pubtypes"
-    #define DW_SECTNAME_DEBUG_TYPES    ".debug_types"
-    #define DW_SECTNAME_TEXT           ".text"
-    #define DW_SECTNAME_GDB_INDEX      ".gdb_index"
-
-    static char *sectnames[] = {
-        DW_SECTNAME_DEBUG_INFO,
-        DW_SECTNAME_DEBUG_LINE,
-        DW_SECTNAME_DEBUG_PUBNAMES,
-        DW_SECTNAME_DEBUG_ABBREV,
-        DW_SECTNAME_DEBUG_ARANGES,
-        DW_SECTNAME_DEBUG_FRAME,
-        DW_SECTNAME_DEBUG_LOC,
-        DW_SECTNAME_DEBUG_RANGES,
-        DW_SECTNAME_DEBUG_STR,
-        DW_SECTNAME_DEBUG_PUBTYPES,
-        DW_SECTNAME_DEBUG_TYPES,
-        DW_SECTNAME_TEXT,
-        DW_SECTNAME_GDB_INDEX,
-        ""
-    };
-
-    /* Preserve original mapping */
-    unsigned map_wrk;
-
-    /* Check if header information is required */
-    if (local_section_map & DW_HDR_HEADER || local_section_map == DW_HDR_ALL) {
-#ifdef WIN32
-    /*  Standard libelf has no function generating the names of the
-        encodings, but this libelf apparently does. */
-    Elf_Ehdr_Literal eh_literals;
-    Elf32_Ehdr *eh32;
-#ifdef HAVE_ELF64_GETEHDR
-    Elf64_Ehdr *eh64;
-#endif /* HAVE_ELF64_GETEHDR */
-
-    eh32 = elf32_getehdr(elf);
-    if (eh32) {
-        /* Get literal strings for header fields */
-        elf32_gethdr_literals(eh32,&eh_literals);
-        /* Print 32-bit obj header */
-        printf("\nObject Header:\ne_ident:\n");
-        printf("  File ID       = %s\n",eh_literals.e_ident_file_id);
-        printf("  File class    = %02x (%s)\n",
-            eh32->e_ident[EI_CLASS],eh_literals.e_ident_file_class);
-        printf("  Data encoding = %02x (%s)\n",
-            eh32->e_ident[EI_DATA],eh_literals.e_ident_data_encoding);
-        printf("  File version  = %02x (%s)\n",
-            eh32->e_ident[EI_VERSION],eh_literals.e_ident_file_version);
-        printf("  OS ABI        = %02x (%s) (%s)\n",eh32->e_ident[EI_OSABI],
-            eh_literals.e_ident_os_abi_s,eh_literals.e_ident_os_abi_l);
-        printf("  ABI version   = %02x (%s)\n",
-            eh32->e_ident[EI_ABIVERSION], eh_literals.e_ident_abi_version);
-        printf("e_type     : 0x%x (%s)\n",
-            eh32->e_type,eh_literals.e_type);
-        printf("e_machine  : 0x%x (%s) (%s)\n",eh32->e_machine,
-            eh_literals.e_machine_s,eh_literals.e_machine_l);
-        printf("e_version  : 0x%x\n", eh32->e_version);
-        printf("e_entry    : 0x%" DW_PR_XZEROS DW_PR_DUx "\n",eh32->e_entry);
-        printf("e_phoff    : 0x%" DW_PR_XZEROS DW_PR_DUx "\n",eh32->e_phoff);
-        printf("e_shoff    : 0x%" DW_PR_XZEROS DW_PR_DUx "\n",eh32->e_shoff);
-        printf("e_flags    : 0x%x\n",eh32->e_flags);
-        printf("e_ehsize   : 0x%x\n",eh32->e_ehsize);
-        printf("e_phentsize: 0x%x\n",eh32->e_phentsize);
-        printf("e_phnum    : 0x%x\n",eh32->e_phnum);
-        printf("e_shentsize: 0x%x\n",eh32->e_shentsize);
-        printf("e_shnum    : 0x%x\n",eh32->e_shnum);
-        printf("e_shstrndx : 0x%x\n",eh32->e_shstrndx);
-    }
-    else {
-#ifdef HAVE_ELF64_GETEHDR
-        /* not a 32-bit obj */
-        eh64 = elf64_getehdr(elf);
-        if (eh64) {
-            /* Get literal strings for header fields */
-            elf64_gethdr_literals(eh64,&eh_literals);
-            /* Print 64-bit obj header */
-            printf("\nObject Header:\ne_ident:\n");
-            printf("  File ID       = %s\n",eh_literals.e_ident_file_id);
-            printf("  File class    = %02x (%s)\n",
-                eh64->e_ident[EI_CLASS],eh_literals.e_ident_file_class);
-            printf("  Data encoding = %02x (%s)\n",
-                eh64->e_ident[EI_DATA],eh_literals.e_ident_data_encoding);
-            printf("  File version  = %02x (%s)\n",
-                eh64->e_ident[EI_VERSION],eh_literals.e_ident_file_version);
-            printf("  OS ABI        = %02x (%s) (%s)\n",eh64->e_ident[EI_OSABI],
-                eh_literals.e_ident_os_abi_s,eh_literals.e_ident_os_abi_l);
-            printf("  ABI version   = %02x (%s)\n",
-                eh64->e_ident[EI_ABIVERSION], eh_literals.e_ident_abi_version);
-            printf("e_type     : 0x%x (%s)\n",
-                eh64->e_type,eh_literals.e_type);
-            printf("e_machine  : 0x%x (%s) (%s)\n",eh64->e_machine,
-                eh_literals.e_machine_s,eh_literals.e_machine_l);
-            printf("e_version  : 0x%x\n", eh64->e_version);
-            printf("e_entry    : 0x%" DW_PR_XZEROS DW_PR_DUx "\n",eh64->e_entry);
-            printf("e_phoff    : 0x%" DW_PR_XZEROS DW_PR_DUx "\n",eh64->e_phoff);
-            printf("e_shoff    : 0x%" DW_PR_XZEROS DW_PR_DUx "\n",eh64->e_shoff);
-            printf("e_flags    : 0x%x\n",eh64->e_flags);
-            printf("e_ehsize   : 0x%x\n",eh64->e_ehsize);
-            printf("e_phentsize: 0x%x\n",eh64->e_phentsize);
-            printf("e_phnum    : 0x%x\n",eh64->e_phnum);
-            printf("e_shentsize: 0x%x\n",eh64->e_shentsize);
-            printf("e_shnum    : 0x%x\n",eh64->e_shnum);
-            printf("e_shstrndx : 0x%x\n",eh64->e_shstrndx);
-        }
-#endif /* HAVE_ELF64_GETEHDR */
-    }
-#endif /* WIN32 */
-    }
-    /* Print basic section information is required */
-    /* Mask only known sections (debug and text) bits */
-    map_wrk = local_section_map;
-    map_wrk &= (~DW_HDR_HEADER);    /* Remove bit Header */
-    map_wrk &= (~DW_HDR_ALL);       /* Remove bit All */
-    if (map_wrk || local_section_map == DW_HDR_ALL) {
-        int nCount = 0;
-        int section_index = 0;
-        int index = 0;
-        int res = 0;
-        const char *section_name = NULL;
-        Dwarf_Addr section_addr = 0;
-        Dwarf_Unsigned section_size = 0;
-        Dwarf_Error error = 0;
-        boolean print_it = FALSE;
-        Dwarf_Unsigned total_bytes = 0;
-        int printed_sections = 0;
-
-        /* Print section information (name, size, address). */
-        nCount = dwarf_get_section_count(dbg);
-        printf("\nInfo for %d sections:\n"
-            "  Nro Index Address    Size(h)    Size(d)  Name\n",nCount);
-        /* Ignore section with index=0 */
-        for (section_index = 1; section_index < nCount; ++section_index) {
-            res = dwarf_get_section_info_by_index(dbg,section_index,
-                &section_name,
-                &section_addr,
-                &section_size,
-                &error);
-            if (res == DW_DLV_OK) {
-                print_it = FALSE;
-                /* Use original mapping */
-                if (local_section_map == DW_HDR_ALL) {
-                    /* Print all sections info */
-                    print_it = TRUE;
-                } else {
-                    /* Check if the section name is a debug section */
-                    for (index = 0; *sectnames[index]; ++index) {
-                        if (!strcmp(sectnames[index],section_name) &&
-                            (local_section_map & (1 << index))) {
-                            print_it = TRUE;
-                            break;
-                        }
-                    }
-                }
-                if (print_it) {
-                    ++printed_sections;
-                    printf("  %3d "                         /* nro */
-                        "0x%03x "                        /* index */
-                        "0x%" DW_PR_XZEROS DW_PR_DUx " " /* address */
-                        "0x%" DW_PR_XZEROS DW_PR_DUx " " /* size (hex) */
-                        "%" DW_PR_XZEROS DW_PR_DUu " "   /* size (dec) */
-                        "%s\n",                          /* name */
-                        printed_sections,
-                        section_index,
-                        section_addr,
-                        section_size, section_size,
-                        section_name);
-                    total_bytes += section_size;
-                }
-            }
-        }
-        printf("*** Summary: %" DW_PR_DUu " bytes for %d section(s) ***\n",
-            total_bytes, printed_sections);
-    }
-}
-
-/* Print checks and errors for a specific compiler */
-static void
-print_specific_checks_results(Compiler *pCompiler)
-{
-    fflush(stdout);
-    fflush(stderr);
-    printf("\nDWARF CHECK RESULT\n");
-        printf("<item>                    <checks>    <errors>\n");
-    if (check_pubname_attr) {
-        PRINT_CHECK_RESULT("pubname_attr", pCompiler, pubname_attr_result);
-    }
-    if (check_attr_tag) {
-        PRINT_CHECK_RESULT("attr_tag", pCompiler, attr_tag_result);
-    }
-    if (check_tag_tree) {
-        PRINT_CHECK_RESULT("tag_tree", pCompiler, tag_tree_result);
-    }
-    if (check_type_offset) {
-        PRINT_CHECK_RESULT("type_offset", pCompiler, type_offset_result);
-    }
-    if (check_decl_file) {
-        PRINT_CHECK_RESULT("decl_file", pCompiler, decl_file_result);
-    }
-    if (check_ranges) {
-        PRINT_CHECK_RESULT("ranges", pCompiler, ranges_result);
-    }
-    if (check_lines) {
-        PRINT_CHECK_RESULT("line_table", pCompiler, lines_result);
-    }
-    if (check_fdes) {
-        PRINT_CHECK_RESULT("fde table", pCompiler, fde_duplication);
-    }
-    if (check_aranges) {
-        PRINT_CHECK_RESULT("aranges", pCompiler, aranges_result);
-    }
-
-    if (check_names) {
-        PRINT_CHECK_RESULT("names",pCompiler, names_result);
-    }
-    if (check_frames) {
-        PRINT_CHECK_RESULT("frames",pCompiler, frames_result);
-    }
-    if (check_locations) {
-        PRINT_CHECK_RESULT("locations",pCompiler, locations_result);
-    }
-
-    if (check_harmless) {
-        PRINT_CHECK_RESULT("harmless_errors", pCompiler, harmless_result);
-    }
-
-    if (check_abbreviations) {
-        PRINT_CHECK_RESULT("abbreviations", pCompiler, abbreviations_result);
-    }
-
-    if (check_dwarf_constants) {
-        PRINT_CHECK_RESULT("dwarf_constants",
-            pCompiler, dwarf_constants_result);
-    }
-
-    if (check_di_gaps) {
-        PRINT_CHECK_RESULT("debug_info_gaps", pCompiler, di_gaps_result);
-    }
-
-    if (check_forward_decl) {
-        PRINT_CHECK_RESULT("forward_declarations",
-            pCompiler, forward_decl_result);
-    }
-
-    if (check_self_references) {
-        PRINT_CHECK_RESULT("self_references",
-            pCompiler, self_references_result);
-    }
-
-    /* Display attributes encoding results */
-    if (check_attr_encoding) {
-        PRINT_CHECK_RESULT("attr_encoding", pCompiler, attr_encoding_result);
-    }
-
-    PRINT_CHECK_RESULT("** Summarize **",pCompiler, total_check_result);
-    fflush(stdout);
-}
-
-static int
-qsort_compare_compiler(const void *elem1,const void *elem2)
-{
-    Compiler cmp1 = *(Compiler *)elem1;
-    Compiler cmp2 = *(Compiler *)elem2;
-    int cnt1 = cmp1.results[total_check_result].errors;
-    int cnt2 = cmp2.results[total_check_result].errors;
-
-    if (cnt1 < cnt2) {
-        return 1;
-    } else if (cnt1 > cnt2) {
-        return -1;
-    }
-    /* When error counts match, sort on name. */
-    {
-        int v = strcmp(cmp2.name, cmp1.name);
-        return v;
-    }
-}
-
 /* Print a summary of search results */
 static void
-print_search_results()
+print_search_results(void)
 {
     const char *search_type = 0;
     const char *search_text = 0;
-    if (search_any_text) {
+    if (glflags.search_any_text) {
         search_type = "any";
-        search_text = search_any_text;
+        search_text = glflags.search_any_text;
     } else {
-        if (search_match_text) {
+        if (glflags.search_match_text) {
             search_type = "match";
-            search_text = search_match_text;
+            search_text = glflags.search_match_text;
         } else {
             search_type = "regex";
-            search_text = search_regex_text;
+            search_text = glflags.search_regex_text;
         }
     }
     fflush(stdout);
     fflush(stderr);
     printf("\nSearch type      : '%s'\n",search_type);
     printf("Pattern searched : '%s'\n",search_text);
-    printf("Occurrences Found: %d\n",search_occurrences);
-    fflush(stdout);
-}
-
-/* Print a summary of checks and errors */
-static void
-print_checks_results()
-{
-    int index = 0;
-    Compiler *pCompilers;
-    Compiler *pCompiler;
-
-    fflush(stdout);
-    fflush(stderr);
-
-    /* Sort based on errors detected; the first entry is reserved */
-    pCompilers = &compilers_detected[1];
-    qsort((void *)pCompilers,compilers_detected_count,
-        sizeof(Compiler),qsort_compare_compiler);
-
-    /* Print list of CUs for each compiler detected */
-    if (producer_children_flag) {
-
-        a_name_chain *nc = 0;
-        a_name_chain *nc_next = 0;
-        int count = 0;
-        int total = 0;
-
-        printf("\n*** CU NAMES PER COMPILER ***\n");
-        for (index = 1; index <= compilers_detected_count; ++index) {
-            pCompiler = &compilers_detected[index];
-            printf("\n%02d: %s",index,pCompiler->name);
-            count = 0;
-            for (nc = pCompiler->cu_list; nc; nc = nc_next) {
-                printf("\n    %02d: '%s'",++count,nc->item);
-                nc_next = nc->next;
-                free(nc);
-            }
-            total += count;
-            printf("\n");
-        }
-        printf("\nDetected %d CU names\n",total);
-    }
-
-    /* Print error report only if errors have been detected */
-    /* Print error report if the -kd option */
-    if ((do_check_dwarf && check_error) || check_show_results) {
-        int count = 0;
-        int compilers_not_detected = 0;
-        int compilers_verified = 0;
-
-        /* Find out how many compilers have been verified. */
-        for (index = 1; index <= compilers_detected_count; ++index) {
-            if (compilers_detected[index].verified) {
-                ++compilers_verified;
-            }
-        }
-        /* Find out how many compilers have been not detected. */
-        for (index = 1; index <= compilers_targeted_count; ++index) {
-            if (!compilers_targeted[index].verified) {
-                ++compilers_not_detected;
-            }
-        }
-
-        /* Print compilers detected list */
-        printf(
-            "\n%d Compilers detected:\n",compilers_detected_count);
-        for (index = 1; index <= compilers_detected_count; ++index) {
-            pCompiler = &compilers_detected[index];
-            printf("%02d: %s\n",index,pCompiler->name);
-        }
-
-        /*  Print compiler list specified by the user with the
-            '-c<str>', that were not detected. */
-        if (compilers_not_detected) {
-            count = 0;
-            printf(
-                "\n%d Compilers not detected:\n",compilers_not_detected);
-            for (index = 1; index <= compilers_targeted_count; ++index) {
-                if (!compilers_targeted[index].verified) {
-                    printf(
-                        "%02d: '%s'\n",
-                        ++count,compilers_targeted[index].name);
-                }
-            }
-        }
-
-        count = 0;
-        printf("\n%d Compilers verified:\n",compilers_verified);
-        for (index = 1; index <= compilers_detected_count; ++index) {
-            pCompiler = &compilers_detected[index];
-            if (pCompiler->verified) {
-                printf("%02d: errors = %5d, %s\n",
-                    ++count,
-                    pCompiler->results[total_check_result].errors,
-                    pCompiler->name);
-            }
-        }
-
-        /*  Print summary if we have verified compilers or
-            if the -kd option used. */
-        if (compilers_verified || check_show_results) {
-            /* Print compilers detected summary*/
-            if (print_summary_all) {
-                count = 0;
-                printf("\n*** ERRORS PER COMPILER ***\n");
-                for (index = 1; index <= compilers_detected_count; ++index) {
-                    pCompiler = &compilers_detected[index];
-                    if (pCompiler->verified) {
-                        printf("\n%02d: %s",
-                            ++count,pCompiler->name);
-                        print_specific_checks_results(pCompiler);
-                    }
-                }
-            }
-
-            /* Print general summary (all compilers checked) */
-            printf("\n*** TOTAL ERRORS FOR ALL COMPILERS ***\n");
-            print_specific_checks_results(&compilers_detected[0]);
-        }
-    }
+    printf("Occurrences Found: %d\n",glflags.search_occurrences);
     fflush(stdout);
 }
 
 /* This is for dwarf_print_lines() */
-void
-printf_callback_for_libdwarf(void *userdata,const char *data)
+static void
+printf_callback_for_libdwarf(UNUSEDARG void *userdata,
+    const char *data)
 {
-    printf("%s",data);
+    printf("%s",sanitized(data));
 }
 
-/*
-  Given a file which we know is an elf file, process
-  the dwarf data.
 
-*/
-static int
-process_one_file(Elf * elf, const char * file_name, int archive,
-    struct dwconf_s *config_file_data)
+int
+get_address_size_and_max(Dwarf_Debug dbg,
+    Dwarf_Half * size,
+    Dwarf_Addr * max,
+    Dwarf_Error *aerr)
 {
-    Dwarf_Debug dbg;
-    int dres;
-    struct Dwarf_Printf_Callback_Info_s printfcallbackdata;
-
-    dres = dwarf_elf_init(elf, DW_DLC_READ, NULL, NULL, &dbg, &err);
-    if (dres == DW_DLV_NO_ENTRY) {
-        printf("No DWARF information present in %s\n", file_name);
-        return 0;
-    }
+    int dres = 0;
+    Dwarf_Half lsize = 4;
+    /* Get address size and largest representable address */
+    dres = dwarf_get_address_size(dbg,&lsize,aerr);
     if (dres != DW_DLV_OK) {
-        print_error(dbg, "dwarf_elf_init", dres, err);
+        return dres;
+    }
+    if (max) {
+        *max = (lsize == 8 ) ? 0xffffffffffffffffULL : 0xffffffff;
+    }
+    if (size) {
+        *size = lsize;
+    }
+    return DW_DLV_OK;
+}
+
+
+/* dbg is often null when dbgtied was passed in. */
+static void
+dbgsetup(Dwarf_Debug dbg,struct dwconf_s *setup_config_file_data)
+{
+    if (!dbg) {
+        return;
+    }
+    dwarf_set_frame_rule_initial_value(dbg,
+        setup_config_file_data->cf_initial_rule_value);
+    dwarf_set_frame_rule_table_size(dbg,
+        setup_config_file_data->cf_table_entry_count);
+    dwarf_set_frame_cfa_value(dbg,
+        setup_config_file_data->cf_cfa_reg);
+    dwarf_set_frame_same_value(dbg,
+        setup_config_file_data->cf_same_val);
+    dwarf_set_frame_undefined_value(dbg,
+        setup_config_file_data->cf_undefined_val);
+    if (setup_config_file_data->cf_address_size) {
+        dwarf_set_default_address_size(dbg,
+            setup_config_file_data->cf_address_size);
+    }
+    dwarf_set_harmless_error_list_size(dbg,50);
+}
+
+/*  Callable at any time, Sets section sizes with the sizes
+    known as of the call.
+    Repeat whenever about to  reference a size that might not
+    have been set as of the last call. */
+static void
+set_global_section_sizes(Dwarf_Debug dbg)
+{
+    dwarf_get_section_max_offsets_c(dbg,
+        &glflags.section_high_offsets_global->debug_info_size,
+        &glflags.section_high_offsets_global->debug_abbrev_size,
+        &glflags.section_high_offsets_global->debug_line_size,
+        &glflags.section_high_offsets_global->debug_loc_size,
+        &glflags.section_high_offsets_global->debug_aranges_size,
+        &glflags.section_high_offsets_global->debug_macinfo_size,
+        &glflags.section_high_offsets_global->debug_pubnames_size,
+        &glflags.section_high_offsets_global->debug_str_size,
+        &glflags.section_high_offsets_global->debug_frame_size,
+        &glflags.section_high_offsets_global->debug_ranges_size,
+        &glflags.section_high_offsets_global->debug_pubtypes_size,
+        &glflags.section_high_offsets_global->debug_types_size,
+        &glflags.section_high_offsets_global->debug_macro_size,
+        &glflags.section_high_offsets_global->debug_str_offsets_size,
+        &glflags.section_high_offsets_global->debug_sup_size,
+        &glflags.section_high_offsets_global->debug_cu_index_size,
+        &glflags.section_high_offsets_global->debug_tu_index_size);
+}
+
+/*  Set limits for Ranges Information.
+    The linker may
+    put parts of the text(code) in additional sections
+    such as .init .fini __libc_freeres_fn
+    .rodata __libc_subfreeres __libc_atexit too. */
+#define LIKELYNAMESMAX 3
+static const char *likely_ns[LIKELYNAMESMAX] = {
+/*  .text is first as it is often the only thing.See below. */
+".init",
+".text",
+".fini"
+};
+#define ORIGLKLYTEXTINDEX  1
+struct likely_names_s {
+    const char *   name;
+    int            origindex;
+    Dwarf_Unsigned low;
+    Dwarf_Unsigned size;
+    Dwarf_Unsigned end;
+};
+static struct likely_names_s likely_names[LIKELYNAMESMAX];
+#if 0 /* FOR DEBUG ONLY */
+static void
+printlnrec(const char *msg,struct likely_names_s * ln,
+    int line,char * fn)
+{
+    printf("%s: name %s origindx %d "
+        "low 0x%lx "
+        "size 0x%lx "
+        "end 0x%lx "
+        " line  %d %s\n",msg,
+        ln->name,ln->origindex,
+        (unsigned long)ln->low,
+        (unsigned long)ln->size,
+        (unsigned long)ln->end,line,fn);
+}
+#endif /* 0 */
+
+static int
+likelycmp(const void *l_in, const void *r_in)
+{
+    struct likely_names_s *l = (struct likely_names_s *)l_in;
+    struct likely_names_s *r = (struct likely_names_s *)r_in;
+
+    if (l->low < r->low) {
+        return -1;
+    }
+    if (l->low > r->low ) {
+        return 1;
+    }
+    if (l->end < r->end) {
+        return -1;
+    }
+    if (l->end > r->end) {
+        return 1;
+    }
+    return 0;
+}
+
+/*  This is a bit slow, but happens only once for a dbg.
+    It is not as much help as I expected in avoiding
+    line table content CHECK warnings because, so far,
+    those come from .init csu code and the DWARF has
+    no subprogram information nor any high/low pc
+    information at all.  */
+static int
+calculate_likely_limits_of_code(Dwarf_Debug dbg,
+    Dwarf_Unsigned *lower,
+    Dwarf_Unsigned *size)
+{
+    struct likely_names_s * ln = 0;
+    int ct = 0;
+    Dwarf_Unsigned baselow = 0;
+    Dwarf_Unsigned basesize = 0;
+    Dwarf_Unsigned baseend = 0;
+    int lnindex = 0;
+    int lncount = 0;
+
+    memset(likely_names,0,sizeof(likely_names));
+    for (ct = 0 ; ct < LIKELYNAMESMAX; ct++) {
+        Dwarf_Unsigned clow = 0;
+        Dwarf_Unsigned csize = 0;
+        int res = 0;
+        Dwarf_Error err = 0;
+        const char *name = likely_ns[ct];
+
+        ln = likely_names + lnindex;
+        res = dwarf_get_section_info_by_name(dbg,name,
+            &clow,&csize,&err);
+        if (res == DW_DLV_ERROR) {
+            dwarf_dealloc_error(dbg,err);
+            if (ct == ORIGLKLYTEXTINDEX) {
+                return DW_DLV_NO_ENTRY;
+            }
+            continue;
+        }
+        if (res == DW_DLV_NO_ENTRY) {
+            if (ct == ORIGLKLYTEXTINDEX) {
+                return DW_DLV_NO_ENTRY;
+            }
+            continue;
+        }
+        ln->name = name;
+        ln->low = clow;
+        ln->size = csize;
+        ln->end = csize +clow;
+        ln->origindex = ct;
+        if (ct == ORIGLKLYTEXTINDEX) {
+            basesize = csize;
+            baselow  = clow;
+            baseend = csize+clow;
+        }
+        ++lnindex;
+    }
+    if (lnindex == 0) {
+        return DW_DLV_NO_ENTRY;
+    }
+    if (lnindex == 1) {
+        *lower = baselow;
+        *size  = basesize;
+        return DW_DLV_OK;
+    }
+    lncount = lnindex;
+    qsort(likely_names,lncount,sizeof(struct likely_names_s),
+        likelycmp);
+    ln = likely_names;
+    baselow =ln->low;
+    basesize =ln->size;
+    baseend = ln->end;
+    for (lnindex = 1; lnindex<lncount; ++lnindex) {
+        ln = likely_names+lnindex;
+        if (ln->end > baseend) {
+            baseend = ln->end;
+            basesize = (baseend - baselow);
+        }
+    }
+    *lower = baselow;
+    *size  = basesize;
+    return DW_DLV_OK;
+}
+/*  Given a file which is an object type
+    we think we can read, process the dwarf data.  */
+static int
+process_one_file(
+    UNUSEDARG int fd,
+    UNUSEDARG int tiedfd,
+    Elf *elf, Elf *tiedelf,
+    const char * file_name,
+    const char * tied_file_name,
+    char *       temp_path_buf,
+    unsigned int temp_path_buf_len,
+#ifdef DWARF_WITH_LIBELF
+    int archive,
+#endif
+    struct dwconf_s *l_config_file_data)
+{
+    Dwarf_Debug dbg = 0;
+    Dwarf_Debug dbgtied = 0;
+    int dres = 0;
+    struct Dwarf_Printf_Callback_Info_s printfcallbackdata;
+    Dwarf_Half elf_address_size = 0;      /* Target pointer size */
+    Dwarf_Error onef_err = 0;
+    const char *title = 0;
+    unsigned char path_source = 0;
+    int localerrno = 0;
+
+    /*  If using a tied file group number should be
+        2 DW_GROUPNUMBER_DWO
+        but in a dwp or separate-split-dwarf object then
+        0 will find the .dwo data automatically. */
+    if (elf) {
+        title = "dwarf_elf_init_b fails exit dwarfdump";
+        dres = dwarf_elf_init_b(elf, DW_DLC_READ,
+            glflags.group_number,
+            NULL, NULL, &dbg, &onef_err);
+
+        if (dres == DW_DLV_OK) {
+            int pres = 0;
+            pres = dwarf_add_file_path(dbg,file_name,&onef_err);
+            if (pres != DW_DLV_OK) {
+                print_error(dbg,"Unable to add file path "
+                    "to object file data", pres, onef_err);
+            }
+        }
+    } else {
+        /*  This will go for the real main file, whether
+            an underlying dSYM or via debuglink or
+            if those find nothing then the original. */
+        char *tb = temp_path_buf;
+        unsigned tblen = temp_path_buf_len;
+        title = "dwarf_init_path_dl fails exit dwarfdump";
+        if (glflags.gf_no_follow_debuglink) {
+            tb = 0;
+            tblen = 0;
+        }
+        dres = dwarf_init_path_dl(file_name,
+            tb,tblen,
+            DW_DLC_READ,
+            glflags.group_number,
+            NULL, NULL, &dbg,
+            glflags.gf_global_debuglink_paths,
+            glflags.gf_global_debuglink_count,
+            &path_source,
+            0,0,0,
+            &onef_err);
+    }
+    if (dres == DW_DLV_NO_ENTRY) {
+        if (glflags.group_number > 0) {
+            printf("No DWARF information present in %s "
+                "for section group %d \n",
+                file_name,glflags.group_number);
+        } else {
+            printf("No DWARF information present in %s\n",file_name);
+        }
+        return dres;
+    }
+    if (dres == DW_DLV_ERROR) {
+        /* Prints error, cleans up Dwarf_Error data. Never returns*/
+        print_error_and_continue(dbg,
+            title,dres,onef_err);
+        DROP_ERROR_INSTANCE(dbg,dres,onef_err);
+        return DW_DLV_ERROR;
+    }
+    if (path_source == DW_PATHSOURCE_dsym) {
+        printf("Filename by dSYM is %s\n",
+            sanitized(temp_path_buf));
+    } else if (path_source == DW_PATHSOURCE_debuglink) {
+        printf("Filename by debuglink is %s\n",
+            sanitized(temp_path_buf));
+        glflags.gf_gnu_debuglink_flag = TRUE;
+    }
+    if (tied_file_name && strlen(tied_file_name)) {
+        if (tiedelf) {
+            dres = dwarf_elf_init_b(tiedelf, DW_DLC_READ,
+                DW_GROUPNUMBER_BASE, NULL, NULL, &dbgtied,
+                &onef_err);
+            if (dres == DW_DLV_OK) {
+                int pres = 0;
+                pres = dwarf_add_file_path(dbgtied,
+                    tied_file_name,&onef_err);
+                if (pres != DW_DLV_ERROR) {
+                    /*  Prints error, cleans up Dwarf_Error data if
+                        any.  Never returns */
+                    print_error(dbg,
+                        "Unable to add tied file name "
+                        "to tied file",
+                        pres, onef_err);
+                }
+            }
+        } else {
+            /*  The tied file we define as group 1, BASE.
+                Cannot follow debuglink or dSYM,
+                is a tied file */
+            dres = dwarf_init_path(tied_file_name,
+                0,0,  /* ignore dSYM & debuglink */
+                DW_DLC_READ,
+                DW_GROUPNUMBER_BASE,
+                0,0,
+                &dbgtied,
+                0,0,0,
+                &onef_err);
+            /* path_source = DW_PATHSOURCE_basic; */
+        }
+        if (dres == DW_DLV_NO_ENTRY) {
+            printf("No DWARF information present in tied file: %s\n",
+                tied_file_name);
+            return dres;
+        }
+        if (dres == DW_DLV_ERROR) {
+            /*  Prints error, cleans up Dwarf_Error data.
+                Never returns*/
+            print_error(dbg,
+                "dwarf_elf_init on tied_file",
+                dres, onef_err);
+        }
     }
 
     memset(&printfcallbackdata,0,sizeof(printfcallbackdata));
     printfcallbackdata.dp_fptr = printf_callback_for_libdwarf;
     dwarf_register_printf_callback(dbg,&printfcallbackdata);
+    if (dbgtied) {
+        dwarf_register_printf_callback(dbgtied,&printfcallbackdata);
+    }
+    memset(&printfcallbackdata,0,sizeof(printfcallbackdata));
 
-
+    dbgsetup(dbg,l_config_file_data);
+    dbgsetup(dbgtied,l_config_file_data);
+    dres = get_address_size_and_max(dbg,&elf_address_size,0,
+        &onef_err);
+    if (dres != DW_DLV_OK) {
+        print_error(dbg,"Unable to read address"
+            " size so unable to continue",
+            dres,onef_err);
+    }
+    if (glflags.gf_check_tag_attr ||
+        glflags.gf_print_usage_tag_attr) {
+        dres = build_attr_form_base_tree(&localerrno);
+        if (dres != DW_DLV_OK) {
+            simple_err_return_msg_either_action(dres,
+                "ERROR: Failed to initialize attribute/form"
+                " tables properly");
+        }
+    }
+#ifdef DWARF_WITH_LIBELF
     if (archive) {
         Elf_Arhdr *mem_header = elf_getarhdr(elf);
+        const char *memname =
+            (mem_header && mem_header->ar_name)?
+            mem_header->ar_name:"";
 
-        printf("\narchive member \t%s\n",
-            mem_header ? mem_header->ar_name : "");
+        printf("\narchive member   %s\n",sanitized(memname));
     }
-    dwarf_set_frame_rule_initial_value(dbg,
-        config_file_data->cf_initial_rule_value);
-    dwarf_set_frame_rule_table_size(dbg,
-        config_file_data->cf_table_entry_count);
-    dwarf_set_frame_cfa_value(dbg,
-        config_file_data->cf_cfa_reg);
-    dwarf_set_frame_same_value(dbg,
-        config_file_data->cf_same_val);
-    dwarf_set_frame_undefined_value(dbg,
-        config_file_data->cf_undefined_val);
-    if (config_file_data->cf_address_size) {
-        dwarf_set_default_address_size(dbg, config_file_data->cf_address_size);
-    }
-    dwarf_set_harmless_error_list_size(dbg,50);
+#endif /* DWARF_WITH_LIBELF */
 
-
-    /* Get address size and largest representable address */
-    dres = dwarf_get_address_size(dbg,&elf_address_size,&err);
+    /*  Ok for dbgtied to be NULL. */
+    dres = dwarf_set_tied_dbg(dbg,dbgtied,&onef_err);
     if (dres != DW_DLV_OK) {
-        print_error(dbg, "get_location_list", dres, err);
+        print_error(dbg, "dwarf_set_tied_dbg() failed",
+            dres, onef_err);
     }
-
-    elf_max_address = (elf_address_size == 8 ) ?
-        0xffffffffffffffffULL : 0xffffffff;
 
     /* Get .text and .debug_ranges info if in check mode */
-    if (do_check_dwarf) {
+    if (glflags.gf_do_check_dwarf) {
         Dwarf_Addr lower = 0;
         Dwarf_Addr upper = 0;
         Dwarf_Unsigned size = 0;
+        Dwarf_Debug dbg_with_code = dbg;
         int res = 0;
-        res = dwarf_get_section_info_by_name(dbg,".text",&lower,&size,&err);
-        if (DW_DLV_OK == res) {
-            upper = lower + size;
-        }
 
-        /* Set limits for Ranges Information */
-        if (pRangesInfo) {
-            SetLimitsBucketGroup(pRangesInfo,lower,upper);
+        if (dbgtied) {
+            /*  Assuming tied is exectuable main is dwo/dwp */
+            dbg_with_code = dbgtied;
         }
-
-        /* Build section information */
+        res = calculate_likely_limits_of_code(dbg_with_code,
+            &lower,&size);
+        upper = lower + size;
+        /*  Set limits for Ranges Information.
+            Some objects have CUs for startup code
+            and the expanded range here turns out
+            not to actually help.   */
+        if (res == DW_DLV_OK && glflags.pRangesInfo) {
+            SetLimitsBucketGroup(glflags.pRangesInfo,lower,upper);
+            AddEntryIntoBucketGroup(glflags.pRangesInfo,
+                1,
+                lower,lower,
+                upper,
+                ".text",
+                TRUE);
+        }
+        /*  Build section information
+            linkonce is an SNR thing, we*/
         build_linkonce_info(dbg);
     }
 
-    if (header_flag) {
-        print_object_header(elf,dbg,section_map);
+    if (glflags.gf_header_flag && elf) {
+#ifdef DWARF_WITH_LIBELF
+        int res = 0;
+        Dwarf_Error err = 0;
+
+        res = print_object_header(dbg,&err);
+        if (res == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing Elf object Header  had a problem.",
+                res,err);
+            DROP_ERROR_INSTANCE(dbg,res,err);
+        }
+#endif /* DWARF_WITH_LIBELF */
     }
+
+    if (glflags.gf_section_groups_flag) {
+        int res = 0;
+        Dwarf_Error err = 0;
+
+        res = print_section_groups_data(dbg,&err);
+        if (res == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing section groups had a problem.",
+                res,err);
+            DROP_ERROR_INSTANCE(dbg,res,err);
+        }
+        /*  If groupnum > 2 this turns off some
+            of the gf_flags here so we don't print
+            section names of things we do not
+            want to print. */
+        update_section_flags_per_groups(dbg);
+    }
+
     reset_overall_CU_error_data();
-    if (info_flag || line_flag || cu_name_flag || search_is_on ||
-        producer_children_flag) {
-        print_infos(dbg,TRUE);
+    if (glflags.gf_info_flag || glflags.gf_line_flag ||
+        glflags.gf_types_flag ||
+        glflags.gf_check_macros || glflags.gf_macinfo_flag ||
+        glflags.gf_macro_flag ||
+        glflags.gf_cu_name_flag || glflags.gf_search_is_on ||
+        glflags.gf_producer_children_flag) {
+        Dwarf_Error err = 0;
+        int res = 0;
+
         reset_overall_CU_error_data();
-        print_infos(dbg,FALSE);
+        res = print_infos(dbg,TRUE,&err);
+        if (res == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing .debug_info had a problem.",
+                res,err);
+            DROP_ERROR_INSTANCE(dbg,res,err);
+        }
+        reset_overall_CU_error_data();
+        res = print_infos(dbg,FALSE,&err);
+        if (res == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing .debug_types had a problem.",
+                res,err);
+            DROP_ERROR_INSTANCE(dbg,res,err);
+        }
+        {
+            set_global_section_sizes(dbg);
+            /*  The statistics are for ALL of the
+                DWARF5 (and DWARF4 with .debug_macro)
+                across all CUs.  */
+            if (macro_check_tree) {
+                /* debug_macro_size is to check the section end */
+                print_macrocheck_statistics("DWARF5 .debug_macro",
+                    &macro_check_tree,
+                    /* DWARF5 */ TRUE,
+                    glflags.section_high_offsets_global->
+                        debug_macro_size,
+                    &err);
+            }
+        }
+        if (glflags.gf_check_macros) {
+            if (macinfo_check_tree) {
+                /* debug_macinfo_size is to check the section end */
+                print_macrocheck_statistics("DWARF2 .debug_macinfo",
+                    &macinfo_check_tree,
+                    /* DWARF5 */ FALSE,
+                    glflags.section_high_offsets_global->
+                        debug_macinfo_size,
+                    &err);
+            }
+        }
+        clear_macrocheck_statistics(&macro_check_tree);
+        clear_macrocheck_statistics(&macinfo_check_tree);
     }
-    if (gdbindex_flag) {
+    if (glflags.gf_gdbindex_flag) {
+        int res = 0;
+        Dwarf_Error err = 0;
+
         reset_overall_CU_error_data();
         /*  By definition if gdb_index is present
             then "cu" and "tu" will not be. And vice versa.  */
-        print_gdb_index(dbg);
-        print_debugfission_index(dbg,"cu");
-        print_debugfission_index(dbg,"tu");
+        res = print_gdb_index(dbg,&err);
+        if (res == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing the gdb index section had a problem "
+                ,res,err);
+        }
+        res = print_debugfission_index(dbg,"cu",&err);
+        if (res == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing the debugfission cu section "
+                "had a problem "
+                ,res,err);
+        }
+        res = print_debugfission_index(dbg,"tu",&err);
+        if (res == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing the debugfission tu section "
+                "had a problem "
+                ,res,err);
+        }
     }
-    if (pubnames_flag) {
+    if (glflags.gf_pubnames_flag) {
+        int res = 0;
+        Dwarf_Error err = 0;
+
         reset_overall_CU_error_data();
-        print_pubnames(dbg);
+        res = print_pubnames(dbg,&err);
+        if (res == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing pubnames data had a problem ",res,err);
+            DROP_ERROR_INSTANCE(dbg,res,err);
+        }
     }
-    if (macinfo_flag) {
+    if (glflags.gf_loc_flag) {
+        int locres = 0;
+        Dwarf_Error locerr = 0;
+
         reset_overall_CU_error_data();
-        print_macinfo(dbg);
+        locres = print_locs(dbg,&locerr);
+        if (locres == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing location data had a problem ",
+                locres,locerr);
+        }
     }
-    if (loc_flag) {
+    if (glflags.gf_abbrev_flag) {
+        Dwarf_Error err = 0;
+        int res = 0;
+
         reset_overall_CU_error_data();
-        print_locs(dbg);
+        res = print_abbrevs(dbg,&err);
+        if (res == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing the .debug_abbrev section"
+                " had a problem.",res,err);
+            DROP_ERROR_INSTANCE(dbg,res,err);
+        }
     }
-    if (abbrev_flag) {
+    if (glflags.gf_string_flag) {
+        Dwarf_Error err = 0;
+        int res = 0;
+
         reset_overall_CU_error_data();
-        print_abbrevs(dbg);
+        res = print_strings(dbg,&err);
+        if (res == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing the .debug_str section"
+                " had a problem.",res,err);
+            DROP_ERROR_INSTANCE(dbg,res,err);
+        }
     }
-    if (string_flag) {
+    if (glflags.gf_aranges_flag) {
+        Dwarf_Error err = 0;
+        int res = 0;
+
         reset_overall_CU_error_data();
-        print_strings(dbg);
+        res = print_aranges(dbg,&err);
+        if (res == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing the aranges section"
+                " had a problem.",res,err);
+            DROP_ERROR_INSTANCE(dbg,res,err);
+        }
     }
-    if (aranges_flag) {
+    if (glflags.gf_ranges_flag) {
+        int res = 0;
+        Dwarf_Error err = 0;
+
         reset_overall_CU_error_data();
-        print_aranges(dbg);
+        res = print_ranges(dbg,&err);
+        if (res == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing the ranges section"
+                " had a problem.",res,err);
+            DROP_ERROR_INSTANCE(dbg,res,err);
+        }
     }
-    if (ranges_flag) {
+    if (glflags.gf_print_raw_loclists) {
+        int res = 0;
+        Dwarf_Error err = 0;
+
         reset_overall_CU_error_data();
-        print_ranges(dbg);
+        res = print_raw_all_loclists(dbg,&err);
+        if (res == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing the raw .debug_loclists section"
+                " had a problem.",res,err);
+            DROP_ERROR_INSTANCE(dbg,res,err);
+        }
     }
-    if (frame_flag || eh_frame_flag) {
+    if (glflags.gf_print_raw_rnglists) {
+        int res = 0;
+        Dwarf_Error err = 0;
+
         reset_overall_CU_error_data();
-        current_cu_die_for_print_frames = 0;
-        print_frames(dbg, frame_flag, eh_frame_flag, config_file_data);
+        res = print_raw_all_rnglists(dbg,&err);
+        if (res == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing the raw .debug_rnglists section"
+                " had a problem.",res,err);
+            DROP_ERROR_INSTANCE(dbg,res,err);
+        }
     }
-    if (static_func_flag) {
+    if (glflags.gf_frame_flag || glflags.gf_eh_frame_flag) {
+        int sres = 0;
+        Dwarf_Error err = 0;
+        int want_eh = 0;
+        /*  These three shared .eh_frame and .debug_frame
+            as they are about the DIEs, not about frames. */
+        Dwarf_Die cu_die_for_print_frames = 0;
+        void *map_lowpc_to_name = 0;
+        void *lowpcSet = 0;
+
         reset_overall_CU_error_data();
-        print_static_funcs(dbg);
+        if (glflags.gf_frame_flag) {
+            want_eh = 0;
+            sres = print_frames(dbg,want_eh,
+                l_config_file_data,
+                &cu_die_for_print_frames,
+                &map_lowpc_to_name,
+                &lowpcSet,
+                &err);
+            if (sres == DW_DLV_ERROR) {
+                print_error_and_continue(dbg,
+                    "printing standard frame data had a problem.",
+                    sres,err);
+                DROP_ERROR_INSTANCE(dbg,sres,err);
+            }
+        }
+        if (glflags.gf_eh_frame_flag) {
+            want_eh = 1;
+            sres = print_frames(dbg, want_eh,
+                l_config_file_data,
+                &cu_die_for_print_frames,
+                &map_lowpc_to_name,
+                &lowpcSet,
+                &err);
+            if (sres == DW_DLV_ERROR) {
+                print_error_and_continue(dbg,
+                    "printing eh frame data had a problem.",sres,
+                    err);
+                DROP_ERROR_INSTANCE(dbg,sres,err);
+            }
+        }
+        addr_map_destroy(lowpcSet);
+        addr_map_destroy(map_lowpc_to_name);
+        if (cu_die_for_print_frames) {
+            dwarf_dealloc_die(cu_die_for_print_frames);
+        }
     }
-    if (static_var_flag) {
+    if (glflags.gf_static_func_flag) {
+        int sres = 0;
+        Dwarf_Error err = 0;
+
         reset_overall_CU_error_data();
-        print_static_vars(dbg);
+        sres = print_static_funcs(dbg,&err);
+        if (sres == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing SGI static funcs had a problem.",sres,err);
+            DROP_ERROR_INSTANCE(dbg,sres,err);
+        }
+
+    }
+    if (glflags.gf_static_var_flag) {
+        int sres = 0;
+        Dwarf_Error err = 0;
+
+        reset_overall_CU_error_data();
+        sres = print_static_vars(dbg,&err);
+        if (sres == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing SGI static vars had a problem.",sres,err);
+            DROP_ERROR_INSTANCE(dbg,sres,err);
+        }
     }
     /*  DWARF_PUBTYPES is the standard typenames dwarf section.
         SGI_TYPENAME is the same concept but is SGI specific ( it was
         defined 10 years before dwarf pubtypes). */
 
-    if (type_flag) {
+    if (glflags.gf_pubtypes_flag) {
+        Dwarf_Error err = 0;
+        int tres = 0;
+
         reset_overall_CU_error_data();
-        print_types(dbg, DWARF_PUBTYPES);
+        tres = print_types(dbg, DWARF_PUBTYPES,&err);
+        if (tres == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing pubtypes had a problem.",tres,err);
+            DROP_ERROR_INSTANCE(dbg,tres,err);
+        }
         reset_overall_CU_error_data();
-        print_types(dbg, SGI_TYPENAME);
+        tres = print_types(dbg, SGI_TYPENAME,&err);
+        if (tres == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing SGI typenames had a problem.",tres,err);
+            DROP_ERROR_INSTANCE(dbg,tres,err);
+        }
     }
-    if (weakname_flag) {
+    if (glflags.gf_weakname_flag) {
+        Dwarf_Error err = 0;
+        int res3 = 0;
+
         reset_overall_CU_error_data();
-        print_weaknames(dbg);
+        res3 = print_weaknames(dbg, &err);
+        if (res3 == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing weaknames had a problem.",res3,err);
+            DROP_ERROR_INSTANCE(dbg,res3,err);
+        }
     }
-    if (reloc_flag) {
+    if (glflags.gf_reloc_flag && elf) {
+#ifdef DWARF_WITH_LIBELF
+        int leres = 0;
+        Dwarf_Error err = 0;
+
         reset_overall_CU_error_data();
-        print_relocinfo(dbg, reloc_map);
+        leres = print_relocinfo(dbg,&err);
+        if (leres == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "printing relocinfo had a problem.",leres,err);
+            DROP_ERROR_INSTANCE(dbg,leres,err);
+        }
+#else
+        reset_overall_CU_error_data();
+#endif /* DWARF_WITH_LIBELF */
+    }
+    if (glflags.gf_debug_names_flag) {
+        int nres = 0;
+        Dwarf_Error err = 0;
+
+        reset_overall_CU_error_data();
+        nres = print_debug_names(dbg,&err);
+        if (nres == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "print .debug_names section failed", nres, err);
+            DROP_ERROR_INSTANCE(dbg,nres,err);
+        }
     }
 
-    /* Print search results */
-    if (search_print_results && search_is_on) {
+    /*  Print search results */
+    if (glflags.gf_search_print_results && glflags.gf_search_is_on) {
+        /* No dwarf errors possible in this function. */
         print_search_results();
     }
 
-    /* The right time to do this is unclear. But we need to do it. */
-    print_any_harmless_errors(dbg);
+    /*  The right time to do this is unclear. But we need to do it. */
+    if (glflags.gf_check_harmless) {
+        /* No dwarf errors possible in this function. */
+        print_any_harmless_errors(dbg);
+    }
 
-    /* Print error report only if errors have been detected */
-    /* Print error report if the -kd option */
+    /*  Print error report only if errors have been detected
+        Print error report if the -kd option.
+        No errors possible in this function. */
     print_checks_results();
 
-    /* Print the detailed attribute usage space */
-    if (check_attr_encoding) {
-        print_attributes_encoding(dbg);
+    /*  Print the detailed attribute usage space
+        and free the attributes_encoding data allocated.
+        Option -kE
+        Also prints the attr/formclass/form reports
+        from attr_form.c  See build_attr_form_base()
+        call above and record_attr_form_use() in print_die.c */
+    if (glflags.gf_check_attr_encoding ) {
+        int ares = 0;
+        Dwarf_Error aerr = 0;
+
+        ares = print_attributes_encoding(dbg,&aerr);
+        if (ares == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "print attributes encoding failed", ares, aerr);
+            DROP_ERROR_INSTANCE(dbg,ares,aerr);
+        }
     }
 
-    dres = dwarf_finish(dbg, &err);
+    /*  Print the tags and attribute usage  -ku or -kuf */
+    if (glflags.gf_print_usage_tag_attr) {
+        int tres = 0;
+        Dwarf_Error err = 0;
+
+        tres = print_tag_attributes_usage();
+        if (tres == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "print tag attributes usage failed", tres, err);
+            DROP_ERROR_INSTANCE(dbg,tres,err);
+        }
+    }
+
+    if (glflags.gf_print_str_offsets) {
+        /*  print the .debug_str_offsets section, if any. */
+        int lres = 0;
+        Dwarf_Error err = 0;
+
+        lres = print_str_offsets_section(dbg,&err);
+        if (lres == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "print .debug_str_offsets failed", lres, err);
+            DROP_ERROR_INSTANCE(dbg,lres,err);
+        }
+    }
+
+    /*  prints nothing unless section .gnu_debuglink is present.
+        Lets print for a few critical sections.  */
+    if (glflags.gf_gnu_debuglink_flag) {
+        int lres = 0;
+        Dwarf_Error err = 0;
+
+        lres = print_gnu_debuglink(dbg,&err);
+        if (lres == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "print gnu_debuglink data failed", lres, err);
+            DROP_ERROR_INSTANCE(dbg,lres,err);
+        }
+    }
+    if (glflags.gf_debug_gnu_flag) {
+        int lres = 0;
+        Dwarf_Error err = 0;
+
+        lres = print_debug_gnu(dbg,&err);
+        if (lres == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "print .debug_gnu* section failed", lres, err);
+            DROP_ERROR_INSTANCE(dbg,lres,err);
+        }
+    }
+    if (glflags.gf_debug_sup_flag) {
+        int lres = 0;
+        Dwarf_Error err = 0;
+
+        lres = print_debug_sup(dbg,&err);
+        if (lres == DW_DLV_ERROR) {
+            print_error_and_continue(dbg,
+                "print .debug_sup* section failed", lres, err);
+            DROP_ERROR_INSTANCE(dbg,lres,err);
+        }
+    }
+    if (glflags.gf_debug_addr_missing) {
+        printf("\nERROR: At some point "
+            "the .debug_addr section was needed but missing, "
+            "meaning some frame information was missing "
+            "relevant function names. See the dwarfdump "
+            " option --file-tied=</path/to/executable>.");
+        glflags.gf_count_major_errors++;
+    }
+    if (glflags.gf_error_code_search_by_address) {
+        printf("\nERROR: At some point "
+            "There was some data corruption in frame data "
+            "so at least the following error occurred: "
+            "%s .\n",
+            dwarf_errmsg_by_number(
+            glflags.gf_error_code_search_by_address));
+        glflags.gf_count_major_errors++;
+    }
+
+    /*  Could finish dbg first. Either order ok. */
+    if (dbgtied) {
+        dres = dwarf_finish(dbgtied,&onef_err);
+        if (dres != DW_DLV_OK) {
+            print_error_and_continue(dbg,
+                "dwarf_finish failed on tied dbg", dres, onef_err);
+            DROP_ERROR_INSTANCE(dbg,dres,onef_err);
+        }
+        dbgtied = 0;
+    }
+    groups_restore_subsidiary_flags();
+    dres = dwarf_finish(dbg, &onef_err);
     if (dres != DW_DLV_OK) {
-        print_error(dbg, "dwarf_finish", dres, err);
+        print_error_and_continue(dbg,
+            "dwarf_finish failed", dres, onef_err);
+        DROP_ERROR_INSTANCE(dbg,dres,onef_err);
+        dbg = 0;
     }
-
     printf("\n");
-    fflush(stderr);
-    fflush(stdout);
+#ifdef DWARF_WITH_LIBELF
+    clean_up_syms_malloc_data();
+#endif /* DWARF_WITH_LIBELF */
+    destroy_attr_form_trees();
+    destruct_abbrev_array();
+    esb_close_null_device();
+    release_range_array_info();
+    helpertree_clear_statistics(&helpertree_offsets_base_info);
+    helpertree_clear_statistics(&helpertree_offsets_base_types);
     return 0;
-
 }
-
-/* Do printing of most sections.
-   Do not do detailed checking.
-*/
-static void
-do_all()
-{
-    info_flag = line_flag = frame_flag = TRUE;
-    pubnames_flag = macinfo_flag = TRUE;
-    aranges_flag = TRUE;
-    /*  Do not do
-        loc_flag = TRUE
-        abbrev_flag = TRUE;
-        ranges_flag = TRUE;
-        because nothing in
-        the DWARF spec guarantees the sections are free of random bytes
-        in areas not referenced by .debug_info */
-    string_flag = TRUE;
-    /*  Do not do
-        reloc_flag = TRUE;
-        as print_relocs makes no sense for non-elf dwarfdump users.  */
-    static_func_flag = static_var_flag = TRUE;
-    type_flag = weakname_flag = TRUE;
-    header_flag = TRUE; /* Dump header info */
-}
-
-static const char *usage_text[] = {
-"Usage: DwarfDump <options> <object file>",
-"options:\t-a\tprint all .debug_* sections",
-"\t\t-b\tprint abbrev section",
-"\t\t-c\tprint loc section",
-"\t\t-c<str>\tcheck only specific compiler objects",
-"\t\t  \t  <str> is described by 'DW_AT_producer'. Examples:",
-"\t\t  \t    -cg       check only GCC compiler objects",
-"\t\t  \t    -cs       check only SNC compiler objects",
-"\t\t  \t    -c'350.1' check only compiler objects with 350.1 in the CU name",
-"\t\t-C\tactivate printing (with -i) of warnings about",
-"\t\t\tcertain common extensions of DWARF.",
-"\t\t-d\tdense: one line per entry (info section only)",
-"\t\t-D\tdo not show offsets",  /* Do not show any offsets */
-"\t\t-e\tellipsis: short names for tags, attrs etc.",
-"\t\t-E[hliaprfoRstxd]\tprint object Header and/or section information",
-"\t\t  \th=header,l=line,i=info,a=abbrev,p=pubnames,r=aranges,",
-"\t\t  \tf=frames,o=loc,R=Ranges,s=strings,t=pubtypes,x=text,",
-"\t\t  \td=default sections, same as -E and {liaprfoRstx}",
-"\t\t-f\tprint dwarf frame section",
-"\t\t-F\tprint gnu .eh_frame section",
-"\t\t-g\t(use incomplete loclist support)",
-"\t\t-G\tshow global die offsets",
-"\t\t-h\tprint IRIX exception tables (unsupported)",
-"\t\t-H <num>\tlimit output to the first <num> major units",
-"\t\t\t  example: to stop after <num> compilation units",
-"\t\t-i\tprint info section",
-"\t\t-I\tprint sections .gdb_index, .debug_cu_index, .debug_tu_index",
-"\t\t-k[abcdeEfFgilmMnrRsStx[e]y] check dwarf information",
-"\t\t   a\tdo all checks",
-"\t\t   b\tcheck abbreviations",     /* Check abbreviations */
-"\t\t   c\texamine DWARF constants", /* Check for valid DWARF constants */
-"\t\t   d\tshow check results",      /* Show check results */
-"\t\t   e\texamine attributes of pubnames",
-"\t\t   E\texamine attributes encodings",  /* Attributes encoding */
-"\t\t   f\texamine frame information (use with -f or -F)",
-"\t\t   F\texamine integrity of files-lines attributes", /* Files-Lines integrity */
-"\t\t   g\tcheck debug info gaps", /* Check for debug info gaps */
-"\t\t   i\tdisplay summary for all compilers", /* Summary all compilers */
-"\t\t   l\tcheck location list (.debug_loc)",  /* Location list integrity */
-"\t\t   m\tcheck ranges list (.debug_ranges)", /* Ranges list integrity */
-"\t\t   M\tcheck ranges list (.debug_aranges)",/* Aranges list integrity */
-"\t\t   n\texamine names in attributes",       /* Check for valid names */
-"\t\t   r\texamine tag-attr relation",
-"\t\t   R\tcheck forward references to DIEs (declarations)", /* Check DW_AT_specification references */
-"\t\t   s\tperform checks in silent mode",
-"\t\t   S\tcheck self references to DIEs",
-"\t\t   t\texamine tag-tag relations",
-"\t\t   x\tbasic frames check (.eh_frame, .debug_frame)",
-"\t\t   xe\textensive frames check (.eh_frame, .debug_frame)",
-"\t\t   y\texamine type info",
-"\t\t\tUnless -C option given certain common tag-attr and tag-tag",
-"\t\t\textensions are assumed to be ok (not reported).",
-"\t\t-l[s]\tprint line section",
-"\t\t   s\tdo not print <pc> address",
-"\t\t-m\tprint macinfo section",
-"\t\t-M\tprint the form name for each attribute",
-"\t\t-n\tsuppress frame information function name lookup",
-"\t\t  \t(when printing frame information from multi-gigabyte",
-"\t\t  \tobject files this option may save significant time).",
-"\t\t-N\tprint ranges section",
-"\t\t-o[liaprfoR]\tprint relocation info",
-"\t\t  \tl=line,i=info,a=abbrev,p=pubnames,r=aranges,f=frames,o=loc,R=Ranges",
-"\t\t-p\tprint pubnames section",
-"\t\t-P\tprint list of compile units per producer", /* List of CUs per compiler */
-"\t\t-Q\tsuppress printing section data",
-"\t\t-r\tprint aranges section",
-"\t\t-R\tPrint frame register names as r33 etc",
-"\t\t  \t    and allow up to 1200 registers.",
-"\t\t  \t    Print using a 'generic' register set.",
-"\t\t-s\tprint string section",
-"\t\t-S[v] <option>=<text>\tsearch for <text> in attributes",
-"\t\t  \tv\tprint number of occurrences",
-"\t\t  \twith <option>:",
-"\t\t  \t-S any=<text>\tany <text>",
-"\t\t  \t-S match=<text>\tmatching <text>",
-#ifdef HAVE_REGEX
-"\t\t  \t-S regex=<text>\tuse regular expression matching",
-#endif
-"\t\t  \t (only one -S option allowed, any= and regex= ",
-"\t\t  \t  only usable if the functions required are ",
-"\t\t  \t  found at configure time)",
-"\t\t-t[afv] static: ",
-"\t\t   a\tprint both sections",
-"\t\t   f\tprint static func section",
-"\t\t   v\tprint static var section",
-"\t\t-u<file> print sections only for specified file",
-"\t\t-v\tverbose: show more information",
-"\t\t-vv verbose: show even more information",
-"\t\t-V print version information",
-"\t\t-x name=<path>\tname dwarfdump.conf",
-"\t\t-x abi=<abi>\tname abi in dwarfdump.conf",
-"\t\t-w\tprint weakname section",
-"\t\t-W\tprint parent and children tree (wide format) with the -S option",
-"\t\t-Wp\tprint parent tree (wide format) with the -S option",
-"\t\t-Wc\tprint children tree (wide format) with the -S option",
-"\t\t-y\tprint type section",
-"",
-0
-};
 
 /* Generic constants for debugging */
-#define DUMP_RANGES_INFO            1   /* Dump RangesInfo Table. */
-#define DUMP_LOCATION_SECTION_INFO  2   /* Dump Location (.debug_loc) Info. */
-#define DUMP_RANGES_SECTION_INFO    3   /* Dump Ranges (.debug_ranges) Info. */
-#define DUMP_LINKONCE_INFO          4   /* Dump Linkonce Table. */
-#define DUMP_VISITED_INFO           5   /* Dump Visited Info. */
+#define DUMP_RANGES_INFO           1 /* Dump RangesInfo Table. */
 
-static const char *usage_debug_text[] = {
-"Usage: DwarfDump <debug_options>",
-"options:\t-0\tprint this information",
-"\t\t-1\tDump RangesInfo Table",
-"\t\t-2\tDump Location (.debug_loc) Info",
-"\t\t-3\tDump Ranges (.debug_ranges) Info",
-"\t\t-4\tDump Linkonce Table",
-"\t\t-5\tDump Visited Info",
-""
-};
+/* Dump Location (.debug_loc) Info. */
+#define DUMP_LOCATION_SECTION_INFO 2
 
-/* Remove matching leading/trailing quotes.
-   Does not alter the passed in string.
-   If quotes removed does a makename on a modified string. */
-static const char *
-remove_quotes_pair(const char *text)
+/* Dump Ranges (.debug_ranges) Info. */
+#define DUMP_RANGES_SECTION_INFO   3
+
+#define DUMP_LINKONCE_INFO         4 /* Dump Linkonce Table. */
+#define DUMP_VISITED_INFO          5 /* Dump Visited Info. */
+
+/*  ==============START of dwarfdump error print functions. */
+int
+simple_err_return_msg_either_action(int res,const char *msg)
 {
-    static char single_quote = '\'';
-    static char double_quote = '\"';
-    char quote = 0;
-    const char *p = text;
-    int len = strlen(text);
-
-    if (len < 2) {
-        return p;
+    const char *etype = "No-entry";
+    if (res == DW_DLV_ERROR) {
+        etype="Major error";
     }
-
-    /* Compare first character with ' or " */
-    if (p[0] == single_quote) {
-        quote = single_quote;
-    } else {
-        if (p[0] == double_quote) {
-            quote = double_quote;
-        }
-        else {
-            return p;
-        }
+    glflags.gf_count_major_errors++;
+    printf("%s fails. %s\n",msg,etype);
+    return res;
+}
+int
+simple_err_return_action(int res,const char *msg)
+{
+    if (res == DW_DLV_ERROR) {
+        const char *etype = "Major error";
+        glflags.gf_count_major_errors++;
+        printf("%s %s\n",msg, etype);
     }
-    {
-        if (p[len - 1] == quote) {
-            char *altered = calloc(1,len+1);
-            const char *str2 = 0;
-            strcpy(altered,p+1);
-            altered[len - 2] = '\0';
-            str2 =  makename(altered);
-            free(altered);
-            return str2;
-        }
-    }
-    return p;
+    return res;
 }
 
-/* process arguments and return object filename */
-static const char *
-process_args(int argc, char *argv[])
+int
+simple_err_only_return_action(int res,const char *msg)
 {
-    extern int optind;
-    int c = 0;
-    boolean usage_error = FALSE;
-    int oarg = 0;
+    const char *etype="Major error";
+    /*const char *msg = "\nERROR: dwarf_get_address_size() fails."; */
 
-    program_name = argv[0];
+    glflags.gf_count_major_errors++;
+    printf("%s %s\n",msg,etype);
+    return res;
+}
 
-    suppress_check_dwarf();
-    if (argv[1] != NULL && argv[1][0] != '-') {
-        do_all();
-    }
 
-    /* j unused */
-    while ((c = getopt(argc, argv,
-        "#:abc::CdDeE::fFgGhH:iIk:l::mMnNo::pPqQrRsS:t:u:UvVwW::x:yz")) != EOF) {
+/* ARGSUSED */
+static void
+print_error_maybe_continue(UNUSEDARG Dwarf_Debug dbg,
+    const char * msg,
+    int dwarf_ret_val,
+    Dwarf_Error lerr,
+    Dwarf_Bool do_continue)
+{
+    unsigned long realmajorerr = glflags.gf_count_major_errors;
+    printf("\n");
+    if (dwarf_ret_val == DW_DLV_ERROR) {
+        /* We do not dwarf_dealloc the error here. */
+        char * errmsg = dwarf_errmsg(lerr);
 
-        switch (c) {
-        /* Internal debug level setting. */
-        case '#':
-        {
-            int nTraceLevel =  atoi(optarg);
-            if (nTraceLevel >= 0 && nTraceLevel <= MAX_TRACE_LEVEL) {
-                nTrace[nTraceLevel] = 1;
-            }
-            /* Display dwarfdump debug options. */
-            if (dump_options) {
-                print_usage_message(program_name,usage_debug_text);
-                exit(OKAY);
-            }
-            break;
+        /*  We now (April 2016) guarantee the
+            error number is in
+            the error string so we do not need to print
+            the dwarf_errno() value to show the number. */
+        if (do_continue) {
+            printf(
+                "%s ERROR:  %s:  %s. "
+                "Attempting to continue.\n",
+                glflags.program_name, msg, errmsg);
+        } else {
+            printf( "%s ERROR:  %s:  %s\n",
+                glflags.program_name, msg, errmsg);
         }
-        case 'M':
-            show_form_used =  TRUE;
-            break;
-        case 'x':               /* Select abi/path to use */
-            {
-                const char *path = 0;
-                const char *abi = 0;
-                /*  -x name=<path> meaning name dwarfdump.conf file -x
-                    abi=<abi> meaning select abi from dwarfdump.conf
-                    file. Must always select abi to use dwarfdump.conf */
-                if (strncmp(optarg, "name=", 5) == 0) {
-                    path = do_uri_translation(&optarg[5],"-x name=");
-                    if (strlen(path) < 1) {
-                        goto badopt;
-                    }
-                    esb_empty_string(&config_file_path);
-                    esb_append(&config_file_path,path);
-                } else if (strncmp(optarg, "abi=", 4) == 0) {
-                    abi = do_uri_translation(&optarg[4],"-x abi=");
-                    if (strlen(abi) < 1) {
-                        goto badopt;
-                    }
-                    config_file_abi = abi;
-                    break;
-                } else {
-                badopt:
-                    fprintf(stderr, "-x name=<path-to-conf> \n");
-                    fprintf(stderr, " and  \n");
-                    fprintf(stderr, "-x abi=<abi-in-conf> \n");
-                    fprintf(stderr, "are legal, not -x %s\n", optarg);
-                    usage_error = TRUE;
-                    break;
-                }
-            }
-            break;
-        case 'C':
-            suppress_check_extensions_tables = TRUE;
-            break;
-        case 'g':
-            use_old_dwarf_loclist = TRUE;
-            info_flag = TRUE;
-            suppress_check_dwarf();
-            break;
-        case 'i':
-            info_flag = TRUE;
-            suppress_check_dwarf();
-            break;
-        case 'I':
-            gdbindex_flag = TRUE;
-            suppress_check_dwarf();
-            break;
-        case 'n':
-            suppress_nested_name_search = TRUE;
-            break;
-        case 'l':
-            line_flag = TRUE;
-            suppress_check_dwarf();
-            /* Enable to suppress offsets printing */
-            if (optarg) {
-                switch (optarg[0]) {
-                /* -ls : suppress <pc> addresses */
-                case 's': line_print_pc = FALSE; break;
-                default: usage_error = TRUE; break;
-                }
-            }
-            break;
-        case 'f':
-            frame_flag = TRUE;
-            suppress_check_dwarf();
-            break;
-        case 'H':
-            {
-                int break_val =  atoi(optarg);
-                if (break_val > 0) {
-                    break_after_n_units = break_val;
-                }
-            }
-            break;
-        case 'F':
-            eh_frame_flag = TRUE;
-            suppress_check_dwarf();
-            break;
-        case 'b':
-            abbrev_flag = TRUE;
-            suppress_check_dwarf();
-            break;
-        case 'p':
-            pubnames_flag = TRUE;
-            suppress_check_dwarf();
-            break;
-        case 'P':
-            /* List of CUs per compiler */
-            producer_children_flag = TRUE;
-            break;
-        case 'r':
-            aranges_flag = TRUE;
-            suppress_check_dwarf();
-            break;
-        case 'N':
-            ranges_flag = TRUE;
-            suppress_check_dwarf();
-            break;
-        case 'R':
-            generic_1200_regs = TRUE;
-            break;
-        case 'm':
-            macinfo_flag = TRUE;
-            suppress_check_dwarf();
-            break;
-        case 'c':
-            /* Specify compiler name. */
-            if (optarg) {
-                if ('s' == optarg[0]) {
-                    /* -cs : Check SNC compiler */
-                    check_snc_compiler = TRUE;
-                    check_all_compilers = FALSE;
-                }
-                else {
-                    if ('g' == optarg[0]) {
-                        /* -cg : Check GCC compiler */
-                        check_gcc_compiler = TRUE;
-                        check_all_compilers = FALSE;
-                    }
-                    else {
-                        /*  Assume a compiler version to check,
-                            most likely a substring of a compiler name.  */
-                        if ((compilers_targeted_count+1) < COMPILER_TABLE_MAX) {
-                            Compiler *pCompiler = 0;
-                            const char *cmp = 0;
-                            cmp = do_uri_translation(optarg,"-c<compiler name>");
-                            /* First compiler at position [1] */
-                            compilers_targeted_count++;
-                            pCompiler = &compilers_targeted[compilers_targeted_count];
-                            reset_compiler_entry(pCompiler);
-                            pCompiler->name = cmp;
-                            check_all_compilers = FALSE;
-                        } else {
-                            fprintf(stderr, "Compiler table max %d exceeded, "
-                                "limiting the tracked compilers to %d\n",
-                                COMPILER_TABLE_MAX,COMPILER_TABLE_MAX);
-                        }
-                    }
-                }
-            } else {
-                loc_flag = TRUE;
-                suppress_check_dwarf();
-            }
-            break;
-        case 'Q':
-            /* Q suppresses section data printing. */
-            do_print_dwarf = FALSE;
-            break;
-        case 'q':
-            /* Suppress uri-did-transate notification */
-            do_print_uri_in_input = FALSE;
-            break;
-        case 's':
-            string_flag = TRUE;
-            suppress_check_dwarf();
-            break;
-        case 'S':
-            /* -S option: strings for 'any' and 'match' */
-            {
-                const char *tempstr = 0;
-                boolean err = TRUE;
-                search_is_on = TRUE;
-                /* 'v' option, to print number of occurrences */
-                /* -S[v]match|any|regex=text*/
-                if (optarg[0] == 'v') {
-                    ++optarg;
-                    search_print_results = TRUE;
-                }
-                /* -S match=<text>*/
-                if (strncmp(optarg,"match=",6) == 0) {
-                    search_match_text = makename(&optarg[6]);
-                    tempstr = remove_quotes_pair(search_match_text);
-                    search_match_text = do_uri_translation(tempstr,"-S match=");
-                    if (strlen(search_match_text) > 0) {
-                        err = FALSE;
-                    }
-                }
-                else {
-                    /* -S any=<text>*/
-                    if (strncmp(optarg,"any=",4) == 0) {
-                        search_any_text = makename(&optarg[4]);
-                        tempstr = remove_quotes_pair(search_any_text);
-                        search_any_text = do_uri_translation(tempstr,"-S any=");
-                        if (strlen(search_any_text) > 0) {
-                            err = FALSE;
-                        }
-                    }
-#ifdef HAVE_REGEX
-                    else {
-                        /* -S regex=<regular expression>*/
-                        if (strncmp(optarg,"regex=",6) == 0) {
-                            search_regex_text = makename(&optarg[6]);
-                            tempstr = remove_quotes_pair(
-                                search_regex_text);
-                            search_regex_text = do_uri_translation(tempstr,
-                                "-S regex=");
-                            if (strlen(search_regex_text) > 0) {
-                                if (regcomp(&search_re,search_regex_text,
-                                    REG_EXTENDED)) {
-                                    fprintf(stderr,
-                                        "regcomp: unable to compile %s\n",
-                                        search_regex_text);
-                                }
-                                else {
-                                    err = FALSE;
-                                }
-                            }
-                        }
-                    }
-#endif /* HAVE_REGEX */
-                }
-                if (err) {
-                    fprintf(stderr,"-S any=<text> or -S match=<text> or -S regex=<text>\n");
-                    fprintf(stderr, "is allowed, not -S %s\n",optarg);
-                    usage_error = TRUE;
-                }
-            }
-            break;
-
-        case 'a':
-            suppress_check_dwarf();
-            do_all();
-            break;
-        case 'v':
-            verbose++;
-            break;
-        case 'V':
-            /* Display dwarfdump compilation date and time */
-            print_version_details(argv[0],TRUE);
-            exit(OKAY);
-            break;
-        case 'd':
-            do_print_dwarf = TRUE;
-            /*  This is sort of useless unless printing,
-                but harmless, so we do not insist we
-                are printing with suppress_check_dwarf(). */
-            dense = TRUE;
-            break;
-        case 'D':
-            /* Do not emit offset in output */
-            display_offsets = FALSE;
-            break;
-        case 'e':
-            suppress_check_dwarf();
-            ellipsis = TRUE;
-            break;
-        case 'E':
-            /* Object Header information (but maybe really print) */
-            header_flag = TRUE;
-            /* Selected printing of section info */
-            if (optarg) {
-                switch (optarg[0]) {
-                case 'h': section_map |= DW_HDR_HEADER; break;
-                case 'i': section_map |= DW_HDR_DEBUG_INFO;
-                    section_map |= DW_HDR_DEBUG_TYPES; break;
-                case 'l': section_map |= DW_HDR_DEBUG_LINE; break;
-                case 'p': section_map |= DW_HDR_DEBUG_PUBNAMES; break;
-                case 'a': section_map |= DW_HDR_DEBUG_ABBREV; break;
-                case 'r': section_map |= DW_HDR_DEBUG_ARANGES; break;
-                case 'f': section_map |= DW_HDR_DEBUG_FRAME; break;
-                case 'o': section_map |= DW_HDR_DEBUG_LOC; break;
-                case 'R': section_map |= DW_HDR_DEBUG_RANGES; break;
-                case 's': section_map |= DW_HDR_DEBUG_STRING; break;
-                case 't': section_map |= DW_HDR_DEBUG_PUBTYPES; break;
-                case 'x': section_map |= DW_HDR_TEXT; break;
-                case 'I': section_map |= DW_HDR_GDB_INDEX; break;
-                /* case 'd', use the default section set */
-                case 'd': section_map |= DW_HDR_DEFAULT; break;
-                default: usage_error = TRUE; break;
-                }
-            } else {
-                /* Display header and all sections info */
-                section_map = DW_HDR_ALL;
-            }
-            break;
-        case 'o':
-            reloc_flag = TRUE;
-            if (optarg) {
-                switch (optarg[0]) {
-                case 'i':
-                    reloc_map |= (1 << DW_SECTION_REL_DEBUG_INFO);
-                    reloc_map |= (1 << DW_SECTION_REL_DEBUG_TYPES); break;
-                case 'l': reloc_map |= (1 << DW_SECTION_REL_DEBUG_LINE); break;
-                case 'p': reloc_map |= (1 << DW_SECTION_REL_DEBUG_PUBNAMES); break;
-                /*  Case a has no effect, no relocations can point out
-                    of the abbrev section. */
-                case 'a': reloc_map |= (1 << DW_SECTION_REL_DEBUG_ABBREV); break;
-                case 'r': reloc_map |= (1 << DW_SECTION_REL_DEBUG_ARANGES); break;
-                case 'f': reloc_map |= (1 << DW_SECTION_REL_DEBUG_FRAME); break;
-                case 'o': reloc_map |= (1 << DW_SECTION_REL_DEBUG_LOC); break;
-                case 'R': reloc_map |= (1 << DW_SECTION_REL_DEBUG_RANGES); break;
-                default: usage_error = TRUE; break;
-                }
-            } else {
-                /* Display all relocs */
-                reloc_map = DW_MASK_PRINT_ALL;
-            }
-            break;
-        case 'k':
-            suppress_print_dwarf();
-            oarg = optarg[0];
-            switch (oarg) {
-            case 'a':
-                check_pubname_attr = TRUE;
-                check_attr_tag = TRUE;
-                check_tag_tree = check_type_offset = TRUE;
-                check_names = TRUE;
-                pubnames_flag = info_flag = TRUE;
-                gdbindex_flag = TRUE;
-                check_decl_file = TRUE;
-                check_frames = TRUE;
-                check_frames_extended = FALSE;
-                check_locations = TRUE;
-                frame_flag = eh_frame_flag = TRUE;
-                check_ranges = TRUE;
-                check_lines = TRUE;
-                check_fdes = TRUE;
-                check_harmless = TRUE;
-                check_aranges = TRUE;
-                aranges_flag = TRUE;  /* Aranges section */
-                check_abbreviations = TRUE;
-                check_dwarf_constants = TRUE;
-                check_di_gaps = TRUE; /* Check debug info gaps */
-                check_forward_decl = TRUE;  /* Check forward declarations */
-                check_self_references = TRUE;  /* Check self references */
-                check_attr_encoding = TRUE;    /* Check attributes encoding */
-                break;
-            /* Abbreviations */
-            case 'b':
-                check_abbreviations = TRUE;
-                info_flag = TRUE;
-                break;
-            /* DWARF constants */
-            case 'c':
-                check_dwarf_constants = TRUE;
-                info_flag = TRUE;
-                break;
-            /* Display check results */
-            case 'd':
-                check_show_results = TRUE;
-                break;
-            case 'e':
-                check_pubname_attr = TRUE;
-                pubnames_flag = TRUE;
-                check_harmless = TRUE;
-                check_fdes = TRUE;
-                break;
-            /* Attributes encoding usage */
-            case 'E':
-                check_attr_encoding = TRUE;
-                info_flag = TRUE;
-                break;
-            case 'f':
-                check_harmless = TRUE;
-                check_fdes = TRUE;
-                break;
-            /* files-lines */
-            case 'F':
-                check_decl_file = TRUE;
-                check_lines = TRUE;
-                info_flag = TRUE;
-                break;
-            /* Check debug info gaps */
-            case 'g':
-                check_di_gaps = TRUE;
-                info_flag = TRUE;
-                break;
-            /* Locations list */
-            case 'l':
-                check_locations = TRUE;
-                info_flag = TRUE;
-                loc_flag = TRUE;
-                break;
-            /* Ranges */
-            case 'm':
-                check_ranges = TRUE;
-                info_flag = TRUE;
-                break;
-            /* Aranges */
-            case 'M':
-                check_aranges = TRUE;
-                aranges_flag = TRUE;
-                break;
-            /* invalid names */
-            case 'n':
-                check_names = TRUE;
-                info_flag = TRUE;
-                break;
-            case 'r':
-                check_attr_tag = TRUE;
-                info_flag = TRUE;
-                check_harmless = TRUE;
-                break;
-            /* forward declarations in DW_AT_specification */
-            case 'R':
-                check_forward_decl = TRUE;
-                info_flag = TRUE;
-                break;
-            /* Check verbose mode */
-            case 's':
-                check_verbose_mode = FALSE;
-                break;
-            /*  self references in:
-                DW_AT_specification, DW_AT_type, DW_AT_abstract_origin */
-            case 'S':
-                check_self_references = TRUE;
-                info_flag = TRUE;
-                break;
-            case 't':
-                check_tag_tree = TRUE;
-                check_harmless = TRUE;
-                info_flag = TRUE;
-                break;
-            case 'y':
-                check_type_offset = TRUE;
-                check_harmless = TRUE;
-                check_decl_file = TRUE;
-                info_flag = TRUE;
-                check_ranges = TRUE;
-                check_aranges = TRUE;
-                break;
-            /* Summary for each compiler */
-            case 'i':
-                print_summary_all = TRUE;
-                break;
-            /* Frames check */
-            case 'x':
-                check_frames = TRUE;
-                frame_flag = TRUE;
-                eh_frame_flag = TRUE;
-                if (optarg[1]) {
-                    if ('e' == optarg[1]) {
-                        /* -xe : Extended frames check */
-                        check_frames = FALSE;
-                        check_frames_extended = TRUE;
-                    } else {
-                        usage_error = TRUE;
-                    }
-                }
-                break;
-            default:
-                usage_error = TRUE;
-                break;
-            }
-            break;
-        case 'u': {             /* compile unit */
-            const char *tstr = 0;
-            cu_name_flag = TRUE;
-            tstr = do_uri_translation(optarg,"-u<cu name>");
-            safe_strcpy(cu_name,sizeof(cu_name), tstr,strlen(tstr));
-            }
-            break;
-        case 'U':
-            uri_options_translation = FALSE;
-            break;
-        case 't':
-            oarg = optarg[0];
-            switch (oarg) {
-            case 'a':
-                /* all */
-                static_func_flag = static_var_flag = TRUE;
-                suppress_check_dwarf();
-                break;
-            case 'f':
-                /* .debug_static_func */
-                static_func_flag = TRUE;
-                suppress_check_dwarf();
-                break;
-            case 'v':
-                /* .debug_static_var */
-                static_var_flag = TRUE;
-                suppress_check_dwarf();
-                break;
-            default:
-                usage_error = TRUE;
-                break;
-            }
-            break;
-        case 'y':               /* .debug_types */
-            suppress_check_dwarf();
-            type_flag = TRUE;
-            break;
-        case 'w':               /* .debug_weaknames */
-            weakname_flag = TRUE;
-            suppress_check_dwarf();
-            break;
-        case 'z':
-            fprintf(stderr, "-z is no longer supported:ignored\n");
-            break;
-        case 'G':
-            show_global_offsets = TRUE;
-            break;
-        case 'W':
-            /* Search results in wide format */
-            search_wide_format = TRUE;
-            if (optarg) {
-                if ('c' == optarg[0]) {
-                    /* -Wc : Display children tree */
-                    display_children_tree = TRUE;
-                } else {
-                    if ('p' == optarg[0]) {
-                        /* -Wp : Display parent tree */
-                        display_parent_tree = TRUE;
-                    } else {
-                        usage_error = TRUE;
-                    }
-                }
-            }
-            else {
-                /* -W : Display parent and children tree */
-                display_children_tree = TRUE;
-                display_parent_tree = TRUE;
-            }
-            break;
-        default:
-            usage_error = TRUE;
-            break;
-        }
+    } else if (dwarf_ret_val == DW_DLV_NO_ENTRY) {
+        printf("%s NO ENTRY:  %s: \n",
+            glflags.program_name, msg);
+    } else if (dwarf_ret_val == DW_DLV_OK) {
+        printf("%s:  %s \n", glflags.program_name, msg);
+    } else {
+        printf("%s InternalError:  %s:  code %d\n",
+            glflags.program_name, msg, dwarf_ret_val);
     }
-
-    init_conf_file_data(&config_file_data);
-    if (config_file_abi && generic_1200_regs) {
-        printf("Specifying both -R and -x abi= is not allowed. Use one "
-            "or the other.  -x abi= ignored.\n");
-        config_file_abi = FALSE;
-    }
-    if (generic_1200_regs) {
-        init_generic_config_1200_regs(&config_file_data);
-    }
-    if (config_file_abi && (frame_flag || eh_frame_flag)) {
-        int res = find_conf_file_and_read_config(
-            esb_get_string(&config_file_path),
-            config_file_abi,
-            config_file_defaults,
-            &config_file_data);
-
-        if (res > 0) {
-            printf
-                ("Frame not configured due to error(s). Giving up.\n");
-            eh_frame_flag = FALSE;
-            frame_flag = FALSE;
-        }
-    }
-    if (usage_error || (optind != (argc - 1))) {
-        print_usage_message(program_name,usage_text);
-        exit(FAILED);
-    }
-
-    if (do_check_dwarf) {
-        /* Reduce verbosity when checking (checking means checking-only). */
-        verbose = 1;
-    }
-    return do_uri_translation(argv[optind],"file-to-process");
+    /* Display compile unit name */
+    PRINT_CU_INFO();
+    glflags.gf_count_major_errors = realmajorerr;
 }
 
 void
 print_error(Dwarf_Debug dbg,
-    char * msg,
-    int dwarf_code,
-    Dwarf_Error err)
+    const char * msg,
+    int dwarf_ret_val,
+    Dwarf_Error lerr)
 {
-    print_error_and_continue(dbg,msg,dwarf_code,err);
-    dwarf_finish(dbg, &err);
+    print_error_maybe_continue(dbg,msg,dwarf_ret_val,lerr,FALSE);
+    glflags.gf_count_major_errors++;
+    if (dwarf_ret_val == DW_DLV_ERROR) {
+        Dwarf_Error ignored_err = 0;
+        /*  If dbg was never initialized
+            this still cleans up the Error data. */
+        DROP_ERROR_INSTANCE(dbg,dwarf_ret_val,lerr);
+        dwarf_finish(dbg, &ignored_err);
+        check_for_major_errors();
+        check_for_notes();
+    }
+    global_destructors();
+    flag_data_post_cleanup();
+    destroy_attr_form_trees();
     exit(FAILED);
 }
 /* ARGSUSED */
 void
 print_error_and_continue(Dwarf_Debug dbg,
-    char * msg,
-    int dwarf_code,
-    Dwarf_Error err)
+    const char * msg,
+    int dwarf_ret_val,
+    Dwarf_Error lerr)
 {
-    fflush(stdout);
-    fflush(stderr);
-
-    printf("\n");
-
-    if (dwarf_code == DW_DLV_ERROR) {
-        string errmsg = dwarf_errmsg(err);
-        Dwarf_Unsigned myerr = dwarf_errno(err);
-
-        printf( "%s ERROR:  %s:  %s (%lu)\n",
-            program_name, msg, errmsg, (unsigned long) myerr);
-    } else if (dwarf_code == DW_DLV_NO_ENTRY) {
-        printf("%s NO ENTRY:  %s: \n", program_name, msg);
-    } else if (dwarf_code == DW_DLV_OK) {
-        printf("%s:  %s \n", program_name, msg);
-    } else {
-        printf("%s InternalError:  %s:  code %d\n",
-            program_name, msg, dwarf_code);
-    }
-    fflush(stdout);
-
-    /* Display compile unit name */
-    PRINT_CU_INFO();
+    glflags.gf_count_major_errors++;
+    print_error_maybe_continue(dbg,
+        msg,dwarf_ret_val,lerr,TRUE);
 }
+/*  ==============END of dwarfdump error print functions. */
 
-/*  Predicate function. Returns 'true' if the CU should
-    be skipped as the DW_AT_name of the CU
+static Dwarf_Bool
+is_a_string_form(int sf)
+{
+    switch(sf){
+        case DW_FORM_string:
+        case DW_FORM_GNU_strp_alt:
+        case DW_FORM_strp_sup:
+        case DW_FORM_GNU_str_index:
+        case DW_FORM_strx:
+        case DW_FORM_strx1:
+        case DW_FORM_strx2:
+        case DW_FORM_strx3:
+        case DW_FORM_strx4:
+        case DW_FORM_strp:
+        case DW_FORM_line_strp:
+            /*  There is some hope we can actually get
+                the string itself, depending on
+                other factors */
+            return TRUE;
+    }
+    /* Nope. No string is possible */
+    return FALSE;
+}
+/*  Always sets the return argument *should_skip,
+    whether it returns DW_DLV_NO_ENTRY or
+    DW_DLV_ERROR or DW_DLV_OK.
+    determines if the CU should be
+    skipped as the DW_AT_name of the CU
     does not match the command-line-supplied
-    cu name.  Else returns false.*/
-boolean
-should_skip_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, Dwarf_Error err)
+    cu name.  The two callers ignore the
+    return value.
+    This suppresses any errors it finds, no
+    Dwarf_Error is lost and none is returned. */
+int
+should_skip_this_cu(Dwarf_Debug dbg, Dwarf_Bool*should_skip,
+    Dwarf_Die cu_die)
 {
     Dwarf_Half tag = 0;
     Dwarf_Attribute attrib = 0;
     Dwarf_Half theform = 0;
+    Dwarf_Error skperr;
     int dares = 0;
     int tres = 0;
     int fres = 0;
 
-    tres = dwarf_tag(cu_die, &tag, &err);
+    tres = dwarf_tag(cu_die, &tag, &skperr);
     if (tres != DW_DLV_OK) {
-        print_error(dbg, "dwarf_tag in aranges",
-            tres, err);
+        print_error_and_continue(dbg, "ERROR: "
+        "Cannot get the TAG of the cu_die to check "
+        " if we should skip this CU or not.",
+            tres, skperr);
+        *should_skip = FALSE;
+        DROP_ERROR_INSTANCE(dbg,tres,skperr);
+        return tres;
     }
-    dares = dwarf_attr(cu_die, DW_AT_name, &attrib,
-        &err);
+    dares = dwarf_attr(cu_die, DW_AT_name, &attrib, &skperr);
     if (dares != DW_DLV_OK) {
-        print_error(dbg, "dwarf_attr arange"
-            " derived die has no name",
-            dares, err);
-        }
-    fres = dwarf_whatform(attrib, &theform, &err);
+        print_error_and_continue(dbg, "should skip this cu? "
+            " cu die has no DW_AT_name attribute!",
+            dares, skperr);
+        *should_skip = FALSE;
+        DROP_ERROR_INSTANCE(dbg,dares,skperr);
+        return dares;
+    }
+    fres = dwarf_whatform(attrib, &theform, &skperr);
     if (fres == DW_DLV_OK) {
-        if (theform == DW_FORM_string
-            || theform == DW_FORM_strp) {
+        if (is_a_string_form(theform)) {
             char * temps = 0;
             int sres = dwarf_formstring(attrib, &temps,
-                &err);
+                &skperr);
             if (sres == DW_DLV_OK) {
+                char *lcun = esb_get_string(glflags.cu_name);
                 char *p = temps;
-                if (cu_name[0] != '/') {
+                if (lcun[0] != '/') {
                     p = strrchr(temps, '/');
                     if (p == NULL) {
                         p = temps;
@@ -2040,179 +1963,328 @@ should_skip_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, Dwarf_Error err)
                     }
                 }
                 /* Ignore case if Windows */
-#if WIN32
-                if (stricmp(cu_name, p)) {
+#if _WIN32
+                if (stricmp(lcun, p)) {
                     /* skip this cu. */
-                    return TRUE;
+                    dwarf_dealloc_attribute(attrib);
+                    *should_skip = TRUE;
+                    return DW_DLV_OK;
                 }
 #else
-                if (strcmp(cu_name, p)) {
+                if (strcmp(lcun, p)) {
                     /* skip this cu. */
-                    return TRUE;
+                    dwarf_dealloc_attribute(attrib);
+                    *should_skip = TRUE;
+                    return DW_DLV_OK;
                 }
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
+            } else if (sres == DW_DLV_ERROR) {
+                struct esb_s m;
+                int dwarf_names_print_on_error = 1;
+
+                dwarf_dealloc_attribute(attrib);
+                esb_constructor(&m);
+                esb_append(&m,"In determining if we should "
+                    "skip this CU dwarf_formstring "
+                    "gets an error on form ");
+                esb_append(&m,get_FORM_name(theform,
+                    dwarf_names_print_on_error));
+                esb_append(&m,".");
+
+                print_error_and_continue(dbg,
+                    esb_get_string(&m),
+                    sres, skperr);
+                *should_skip = FALSE;
+                esb_destructor(&m);
+                return sres;
             } else {
-                print_error(dbg,
-                    "arange: string missing",
-                    sres, err);
+                /* DW_DLV_NO_ENTRY on the string itself */
+                dwarf_dealloc_attribute(attrib);
+                *should_skip = FALSE;
+                return sres;
             }
         }
-    } else {
-        print_error(dbg,
-            "dwarf_whatform unexpected value.",
-            fres, err);
-    }
-    dwarf_dealloc(dbg, attrib, DW_DLA_ATTR);
-    return FALSE;
+    } else if (fres == DW_DLV_ERROR) {
+        /*  DW_DLV_ERROR */
+        print_error_and_continue(dbg,
+            "dwarf_whatform failed on a CU_die when"
+            " attempting to determine if this CU should"
+            " be skipped.",
+            fres, skperr);
+    } /* else DW_DLV_NO_ENTRY */
+    dwarf_dealloc_attribute(attrib);
+    *should_skip = FALSE;
+    return fres;
 }
 
-/* Returns the DW_AT_name of the CU */
-string
-old_get_cu_name(Dwarf_Debug dbg, Dwarf_Die cu_die, Dwarf_Error err)
-{
-    static struct esb_s esb_attr_name;
-    Dwarf_Half tag;
-    Dwarf_Attribute attrib;
-    Dwarf_Half theform;
-    int dares;
-    int tres;
-    int fres;
-
-    /* Initialize flexible string buffer */
-    esb_empty_string(&esb_attr_name);
-
-    tres = dwarf_tag(cu_die, &tag, &err);
-    if (tres != DW_DLV_OK) {
-        print_error(dbg, "dwarf_tag in aranges",
-            tres, err);
-    }
-    dares = dwarf_attr(cu_die, DW_AT_name, &attrib,
-        &err);
-    if (dares != DW_DLV_OK) {
-        print_error(dbg, "dwarf_attr arange"
-            " derived die has no name",
-            dares, err);
-        }
-    fres = dwarf_whatform(attrib, &theform, &err);
-    if (fres == DW_DLV_OK) {
-        if (theform == DW_FORM_string
-            || theform == DW_FORM_strp) {
-            char * temps = 0;
-            int sres = dwarf_formstring(attrib, &temps,
-                &err);
-            if (sres == DW_DLV_OK) {
-                char *p = temps;
-                if (cu_name[0] != '/') {
-                    p = strrchr(temps, '/');
-                    if (p == NULL) {
-                        p = temps;
-                    } else {
-                        p++;
-                    }
-                }
-                esb_append(&esb_attr_name,p);
-            } else {
-                print_error(dbg,
-                "arange: string missing",
-                sres, err);
-            }
-        }
-    } else {
-        print_error(dbg,
-            "dwarf_whatform unexpected value..",
-            fres, err);
-    }
-    dwarf_dealloc(dbg, attrib, DW_DLA_ATTR);
-
-    /* Return the esb internal string */
-    return esb_get_string(&esb_attr_name);
-}
-
-/* Returns the cu of the CU */
-int get_cu_name(Dwarf_Debug dbg, Dwarf_Die cu_die,
-    Dwarf_Error err, string *short_name, string *long_name)
+/*  Returns the cu of the CUn the name fields when it can,
+    else a no-entry
+    else DW_DLV_ERROR.  */
+int
+get_cu_name(Dwarf_Debug dbg, Dwarf_Die cu_die,
+    Dwarf_Off dieprint_cu_offset,
+    char * *short_name, char * *long_name,
+    Dwarf_Error *lerr)
 {
     Dwarf_Attribute name_attr = 0;
-    int ares;
+    int ares = 0;
 
-    ares = dwarf_attr(cu_die, DW_AT_name, &name_attr, &err);
+    ares = dwarf_attr(cu_die, DW_AT_name, &name_attr, lerr);
     if (ares == DW_DLV_ERROR) {
-        print_error(dbg, "hassattr on DW_AT_name", ares, err);
+        print_error_and_continue(dbg,
+            "dwarf_attr fails on DW_AT_name on the CU die",
+            ares, *lerr);
+        return ares;
+    } else if (ares == DW_DLV_NO_ENTRY) {
+        *short_name = "<unknown name>";
+        *long_name = "<unknown name>";
     } else {
-        if (ares == DW_DLV_NO_ENTRY) {
+        /* DW_DLV_OK */
+        /*  The string return is valid until the next call to this
+            function; so if the caller needs to keep the returned
+            string, the string must be copied (makename()). */
+        char *filename = 0;
+
+        esb_empty_string(&esb_long_cu_name);
+        ares = get_attr_value(dbg, DW_TAG_compile_unit,
+            cu_die, /* die_indent */ 0, dieprint_cu_offset,
+            name_attr, NULL, 0, &esb_long_cu_name,
+            0 /*show_form_used*/,0 /* verbose */,lerr);
+        if (ares != DW_DLV_OK)  {
             *short_name = "<unknown name>";
             *long_name = "<unknown name>";
-        } else {
-            /* DW_DLV_OK */
-            /*  The string return is valid until the next call to this
-                function; so if the caller needs to keep the returned
-                string, the string must be copied (makename()). */
-            static struct esb_s esb_short_name;
-            static struct esb_s esb_long_name;
-            char *filename;
-            esb_empty_string(&esb_long_name);
-            get_attr_value(dbg, DW_TAG_compile_unit,
-                cu_die, name_attr, NULL, 0, &esb_long_name,
-                0 /*show_form_used*/,0 /* verbose */);
-            *long_name = esb_get_string(&esb_long_name);
-            /* Generate the short name (filename) */
-            filename = strrchr(*long_name,'/');
-            if (!filename) {
-                filename = strrchr(*long_name,'\\');
-            }
-            if (filename) {
-                ++filename;
-            } else {
-                filename = *long_name;
-            }
-            esb_empty_string(&esb_short_name);
-            esb_append(&esb_short_name,filename);
-            *short_name = esb_get_string(&esb_short_name);
+            return ares;
         }
+        *long_name = esb_get_string(&esb_long_cu_name);
+        /* Generate the short name (filename) */
+        filename = strrchr(*long_name,'/');
+        if (!filename) {
+            filename = strrchr(*long_name,'\\');
+        }
+        if (filename) {
+            ++filename;
+        } else {
+            filename = *long_name;
+        }
+        esb_empty_string(&esb_short_cu_name);
+        esb_append(&esb_short_cu_name,filename);
+        *short_name = esb_get_string(&esb_short_cu_name);
+        dwarf_dealloc_attribute(name_attr);
     }
-
-    dwarf_dealloc(dbg, name_attr, DW_DLA_ATTR);
     return ares;
 }
 
 /*  Returns the producer of the CU
     Caller must ensure producernameout is
-    a valid, constructed, empty esb_s instance before calling. */
-int get_producer_name(Dwarf_Debug dbg, Dwarf_Die cu_die,
-    Dwarf_Error err, struct esb_s *producernameout)
+    a valid, constructed, empty esb_s instance before calling.
+    */
+int
+get_producer_name(Dwarf_Debug dbg, Dwarf_Die cu_die,
+    Dwarf_Off dieprint_cu_offset,
+    struct esb_s *producernameout,
+    Dwarf_Error *err)
 {
     Dwarf_Attribute producer_attr = 0;
+    int ares = 0;
+    /*  See also glflags.c for "<unknown>" as default producer
+        string */
 
-    int ares = dwarf_attr(cu_die, DW_AT_producer, &producer_attr, &err);
-    if (ares == DW_DLV_ERROR) {
-        print_error(dbg, "hassattr on DW_AT_producer", ares, err);
-    } else {
-        if (ares == DW_DLV_NO_ENTRY) {
-            /*  We add extra quotes so it looks more like
-                the names for real producers that get_attr_value
-                produces. */
-            esb_append(producernameout,"\"<CU-missing-DW_AT_producer>\"");
-        } else {
-            /*  DW_DLV_OK */
-            /*  The string return is valid until the next call to this
-                function; so if the caller needs to keep the returned
-                string, the string must be copied (makename()). */
-            get_attr_value(dbg, DW_TAG_compile_unit,
-                cu_die, producer_attr, NULL, 0, producernameout,
-                0 /*show_form_used*/,0 /* verbose */);
-        }
+    if (!cu_die) {
+        glflags.gf_count_major_errors++;
+        esb_append(producernameout,
+            "\"<ERROR: CU-missing-DW_AT_producer (null cu_die)>\"");
+        return DW_DLV_NO_ENTRY;
     }
-    /*  If ares is error or missing case,
-        producer_attr will be left
-        NULL by the call,
-        which is safe when calling dealloc(). */
-    dwarf_dealloc(dbg, producer_attr, DW_DLA_ATTR);
+    ares = dwarf_attr(cu_die, DW_AT_producer,
+        &producer_attr, err);
+    if (ares == DW_DLV_ERROR) {
+        glflags.gf_count_major_errors++;
+        esb_append(producernameout,
+            "\"<ERROR: CU-DW_AT_producer-error>\"");
+        return ares;
+    }
+    if (ares == DW_DLV_NO_ENTRY) {
+        /*  We add extra quotes so it looks more like
+            the names for real producers that get_attr_value
+            produces. */
+        /* Same string is in glflags.c */
+        esb_append(producernameout,
+            "\"<ERROR: CU-missing-DW_AT_producer>\"");
+        dwarf_dealloc_attribute(producer_attr);
+        return ares;
+    }
+    /*  DW_DLV_OK */
+    ares = get_attr_value(dbg, DW_TAG_compile_unit,
+        cu_die,/* die_indent*/ 0, dieprint_cu_offset,
+        producer_attr, NULL, 0, producernameout,
+        0 /*show_form_used*/,0 /* verbose */,err);
+    dwarf_dealloc_attribute(producer_attr);
     return ares;
 }
 
+void
+print_secname(Dwarf_Debug dbg,const char *secname)
+{
+    if (glflags.gf_do_print_dwarf) {
+        struct esb_s truename;
+        char buf[DWARF_SECNAME_BUFFER_SIZE];
+
+        esb_constructor_fixed(&truename,buf,sizeof(buf));
+        get_true_section_name(dbg,secname,
+            &truename,TRUE);
+        printf("\n%s\n",sanitized(esb_get_string(&truename)));
+        esb_destructor(&truename);
+    }
+}
+
+/*  We'll check for errors when checking.
+    print only if printing (as opposed to checking). */
+static int
+print_gnu_debuglink(Dwarf_Debug dbg, Dwarf_Error *err)
+{
+    int         res = 0;
+    char *      name = 0;
+    unsigned char *crcbytes = 0;
+    char *      link_path = 0;
+    unsigned    link_path_len = 0;
+    unsigned    buildidtype = 0;
+    char       *buildidowner = 0;
+    unsigned char *buildidbyteptr = 0;
+    unsigned    buildidlength = 0;
+    char      **paths_array = 0;
+    unsigned    paths_array_length = 0;
+
+    res = dwarf_gnu_debuglink(dbg,
+        &name,
+        &crcbytes,
+        &link_path,     /* free this */
+        &link_path_len,
+        &buildidtype,
+        &buildidowner,
+        &buildidbyteptr, &buildidlength,
+        &paths_array,  /* free this */
+        &paths_array_length,
+        err);
+    if (res == DW_DLV_NO_ENTRY) {
+        return res;
+    } else if (res == DW_DLV_ERROR) {
+        print_secname(dbg,".gnu_debuglink");
+        return res;
+    }
+    if (crcbytes) {
+        print_secname(dbg,".gnu_debuglink");
+        /* Done with error checking, so print if we are printing. */
+        if (glflags.gf_do_print_dwarf)  {
+            printf(" Debuglink name  : %s",sanitized(name));
+            {
+                unsigned char *crc = 0;
+                unsigned char *end = 0;
+
+                crc = crcbytes;
+                end = crcbytes +4;
+                printf("   crc 0X: ");
+                for (; crc < end; crc++) {
+                    printf("%02x ", *crc);
+                }
+            }
+            printf("\n");
+            if (link_path_len) {
+                printf(" Debuglink target: %s\n",
+                    sanitized(link_path));
+            }
+        }
+    }
+    if (buildidlength) {
+        print_secname(dbg,".note.gnu.build-id");
+        if (glflags.gf_do_print_dwarf)  {
+            printf(" Build-id  type     : %u\n", buildidtype);
+            printf(" Build-id  ownername: %s\n",
+                sanitized(buildidowner));
+            printf(" Build-id  length   : %u\n",buildidlength);
+            printf(" Build-id           : ");
+            {
+                const unsigned char *cur = 0;
+                const unsigned char *end = 0;
+
+                cur = buildidbyteptr;
+                end = cur + buildidlength;
+                for (; cur < end; cur++) {
+                    printf("%02x", (unsigned char)*cur);
+                }
+            }
+            printf("\n");
+        }
+    }
+    if (paths_array_length) {
+        unsigned i = 0;
+
+        printf(" Possible "
+            ".gnu_debuglink/.note.gnu.build-id pathnames for\n");
+        printf(" an alternate object file with more detailed "
+            "DWARF\n");
+        for ( ; i < paths_array_length; ++i) {
+            char *path = paths_array[i];
+            char           outpath[2000];
+            unsigned long  outpathlen = sizeof(outpath);
+            unsigned int   ftype = 0;
+            unsigned int   endian = 0;
+            unsigned int   offsetsize = 0;
+            Dwarf_Unsigned filesize = 0;
+            int            errcode  = 0;
+
+            printf("  [%u] %s\n",i,sanitized(path));
+            res = dwarf_object_detector_path(path,
+                outpath,outpathlen,&ftype,&endian,&offsetsize,
+                &filesize, &errcode);
+            if (res == DW_DLV_NO_ENTRY) {
+                if (glflags.verbose) {
+                    printf(" file above does not exist\n");
+                }
+                continue;
+            }
+            if (res == DW_DLV_ERROR) {
+                printf("       access attempt of the above leads"
+                    " to error %s\n",
+                    dwarf_errmsg_by_number(errcode));
+                continue;
+            }
+            switch(ftype) {
+            case DW_FTYPE_ELF:
+                printf("       file above is an Elf object\n");
+                break;
+            case DW_FTYPE_MACH_O:
+                printf("       file above is a Mach-O object\n");
+                break;
+            case DW_FTYPE_PE:
+                printf("       file above is a PE object");
+                break;
+            case DW_FTYPE_CUSTOM_ELF:
+                printf("       file above is a custom elf object");
+                break;
+            case DW_FTYPE_ARCHIVE:
+                if (glflags.verbose) {
+                    printf("       file above is an archive "
+                        "so ignore it.\n");
+                }
+                continue;
+            default:
+                if (glflags.verbose) {
+                    printf("       file above is not"
+                        " any object type we recognize\n");
+                }
+                continue;
+            }
+        }
+        printf("\n");
+    }
+    free(link_path);
+    free(paths_array);
+    return DW_DLV_OK;
+}
+
 /* GCC linkonce names */
-char *lo_text           = ".text.";               /*".gnu.linkonce.t.";*/
+char *lo_text           = ".text."; /*".gnu.linkonce.t.";*/
 char *lo_debug_abbr     = ".gnu.linkonce.wa.";
 char *lo_debug_aranges  = ".gnu.linkonce.wr.";
 char *lo_debug_frame_1  = ".gnu.linkonce.wf.";
@@ -2284,20 +2356,21 @@ build_linkonce_info(Dwarf_Debug dbg)
     nCount = dwarf_get_section_count(dbg);
 
     /* Ignore section with index=0 */
-    for (section_index = 1; section_index < nCount; ++section_index) {
+    for (section_index = 1;
+        section_index < nCount;
+        ++section_index) {
         res = dwarf_get_section_info_by_index(dbg,section_index,
             &section_name,
             &section_addr,
             &section_size,
             &error);
-
         if (res == DW_DLV_OK) {
             for (nIndex = 0; linkonce_names[nIndex]; ++nIndex) {
                 if (section_name == strstr(section_name,
                     *linkonce_names[nIndex])) {
 
                     /* Insert only linkonce sections */
-                    AddEntryIntoBucketGroup(pLinkonceInfo,
+                    AddEntryIntoBucketGroup(glflags.pLinkonceInfo,
                         section_index,
                         section_addr,section_addr,
                         section_addr + section_size,
@@ -2310,333 +2383,334 @@ build_linkonce_info(Dwarf_Debug dbg)
     }
 
     if (dump_linkonce_info) {
-        PrintBucketGroup(pLinkonceInfo,TRUE);
+        PrintBucketGroup(glflags.pLinkonceInfo,TRUE);
     }
 }
 
 /* Check for specific TAGs and initialize some
     information used by '-k' options */
 void
-tag_specific_checks_setup(Dwarf_Half val,int die_indent_level)
+tag_specific_globals_setup(Dwarf_Debug dbg,
+    Dwarf_Half val,int die_indent_level)
 {
     switch (val) {
+    /*  DW_TAG_type unit will not have addresses */
+    /*  DW_TAG_skeleton unit will have addresses, but
+        likely no children. But they are useful
+        as marking glflags.seen_CU TRUE is useful */
+    case DW_TAG_partial_unit:
     case DW_TAG_compile_unit:
+    case DW_TAG_type_unit:
+    case DW_TAG_skeleton_unit:
         /* To help getting the compile unit name */
-        seen_CU = TRUE;
+        glflags.seen_CU = TRUE;
         /*  If we are checking line information, build
             the table containing the pairs LowPC and HighPC */
-        if (check_decl_file || check_ranges || check_locations) {
-            ResetBucketGroup(pRangesInfo);
+        if (glflags.gf_check_decl_file ||
+            glflags.gf_check_ranges ||
+            glflags.gf_check_locations) {
+            Dwarf_Debug td = 0;
+
+            if (!dbg) {
+                ResetBucketGroup(glflags.pRangesInfo);
+            } else {
+                /*  Only returns DW_DLV_OK */
+                dwarf_get_tied_dbg(dbg,&td,0);
+                /*  With a tied-dbg we do not have
+                    detailed address ranges, so
+                    do not reset the single .text-size
+                    bucket group */
+                if (!td) {
+                    ResetBucketGroup(glflags.pRangesInfo);
+                }
+            }
         }
-        /*  The following flag indicate that only low_pc and high_pc
-            values found in DW_TAG_subprograms are going to be considered when
-            building the address table used to check ranges, lines, etc */
-        need_PU_valid_code = TRUE;
+        /*  The following flag indicate that only
+            low_pc and high_pc
+            values found in DW_TAG_subprograms
+            are going to be considered when
+            building the address table used to check
+            ranges, lines, etc */
+        glflags.need_PU_valid_code = TRUE;
         break;
 
     case DW_TAG_subprogram:
         /* Keep track of a PU */
         if (die_indent_level == 1) {
-            /*  A DW_TAG_subprogram can be nested, when is used to
-                declare a member function for a local class; process the DIE
+            /*  A DW_TAG_subprogram can be nested,
+                when is used to
+                declare a member function for a
+                local class; process the DIE
                 only if we are at level zero in the DIEs tree */
-            seen_PU = TRUE;
-            seen_PU_base_address = FALSE;
-            seen_PU_high_address = FALSE;
-            PU_name[0] = 0;
-            need_PU_valid_code = TRUE;
+            glflags.seen_PU = TRUE;
+            glflags.seen_PU_base_address = FALSE;
+            glflags.seen_PU_high_address = FALSE;
+            glflags.PU_name[0] = 0;
+            glflags.need_PU_valid_code = TRUE;
         }
         break;
     }
 }
 
-/* Indicates if the current CU is a target */
-static boolean current_cu_is_checked_compiler = TRUE;
-
-/*  Are we checking for errors from the
-    compiler of the current compilation unit?
-*/
-boolean
-checking_this_compiler()
+/*  Print CU basic information but
+    use the local DIE for the offsets. */
+void PRINT_CU_INFO(void)
 {
-    /*  This flag has been update by 'update_compiler_target()'
-        and indicates if the current CU is in a targeted compiler
-        specified by the user. Default value is TRUE, which
-        means test all compilers until a CU is detected. */
-    return current_cu_is_checked_compiler;
-}
+    Dwarf_Unsigned loff = glflags.DIE_offset;
+    Dwarf_Unsigned goff = glflags.DIE_overall_offset;
+    char lbuf[50];
+    char hbuf[50];
 
-static int
-hasprefix(const char *sample, const char *prefix)
-{
-    unsigned prelen = strlen(prefix);
-    if (strncmp(sample,prefix,prelen) == 0) {
-        return TRUE;
-    }
-    return FALSE;
-}
-
-/*  Record which compiler was used (or notice we saw
-    it before) and set a couple variables as
-    a side effect (which are used all over):
-        current_cu_is_checked_compiler (used in checking_this_compiler() )
-        current_compiler
-    The compiler name is from DW_AT_producer.
-*/
-void
-update_compiler_target(const char *producer_name)
-{
-    Dwarf_Bool cFound = FALSE;
-    int index = 0;
-
-    safe_strcpy(CU_producer,sizeof(CU_producer),producer_name,
-        strlen(producer_name));
-    current_cu_is_checked_compiler = FALSE;
-
-    /* This list of compilers is just a start:
-        GCC id : "GNU"
-        SNC id : "SN Systems" */
-
-    /* Find a compiler version to check */
-    if (compilers_targeted_count) {
-        for (index = 1; index <= compilers_targeted_count; ++index) {
-            if (is_strstrnocase(CU_producer,compilers_targeted[index].name)) {
-                compilers_targeted[index].verified = TRUE;
-                current_cu_is_checked_compiler = TRUE;
-                break;
-            }
-        }
-    } else {
-        /* Internally the strings do not include quotes */
-        boolean snc_compiler = hasprefix(CU_producer,"SN")? TRUE : FALSE;
-        boolean gcc_compiler = hasprefix(CU_producer,"GNU")?TRUE : FALSE;
-        current_cu_is_checked_compiler = check_all_compilers ||
-            (snc_compiler && check_snc_compiler) ||
-            (gcc_compiler && check_gcc_compiler) ;
-    }
-
-    /* Check for already detected compiler */
-    for (index = 1; index <= compilers_detected_count; ++index) {
-        if (
-#if WIN32
-            !stricmp(compilers_detected[index].name,CU_producer)
-#else
-            !strcmp(compilers_detected[index].name,CU_producer)
-#endif
-            ) {
-            /* Set current compiler index */
-            current_compiler = index;
-            cFound = TRUE;
-            break;
-        }
-    }
-    if (!cFound) {
-        /* Record a new detected compiler name. */
-        if (compilers_detected_count + 1 < COMPILER_TABLE_MAX) {
-            Compiler *pCompiler = 0;
-            char *cmp = makename(CU_producer);
-            /* Set current compiler index, first compiler at position [1] */
-            current_compiler = ++compilers_detected_count;
-            pCompiler = &compilers_detected[current_compiler];
-            reset_compiler_entry(pCompiler);
-            pCompiler->name = cmp;
-        }
-    }
-}
-
-/*  Add a CU name to the current compiler entry, specified by the
-    'current_compiler'; the name is added to the 'compilers_detected'
-    table and is printed if the '-P' option is specified in the
-    command line. */
-void
-add_cu_name_compiler_target(char *name)
-{
-    a_name_chain *cu_last = 0;
-    a_name_chain *nc = 0;
-    Compiler *pCompiler = 0;
-
-    if (current_compiler < 1) {
-        fprintf(stderr,"Current  compiler set to %d, cannot add "
-            "Compilation unit name.  Giving up.",current_compiler);
-        exit(1);
-    }
-    pCompiler = &compilers_detected[current_compiler];
-    cu_last = pCompiler->cu_last;
-    /* Record current cu name */
-    nc = (a_name_chain *)malloc(sizeof(a_name_chain));
-    nc->item = makename(name);
-    nc->next = NULL;
-    if (cu_last) {
-        cu_last->next = nc;
-    } else {
-        pCompiler->cu_list = nc;
-    }
-    pCompiler->cu_last = nc;
-}
-
-/* Reset a compiler entry, so all fields are properly set */
-static void
-reset_compiler_entry(Compiler *compiler)
-{
-    memset(compiler,0,sizeof(Compiler));
-}
-
-/*  Making this a named string makes it simpler to change
-    what the reset,or 'I do not know'  value is for
-    CU name or producer name for PRINT_CU_INFO. */
-static const char * default_cu_producer = "<unknown>";
-static void
-reset_overall_CU_error_data()
-{
-   strcpy(CU_name,default_cu_producer);
-   strcpy(CU_producer,default_cu_producer);
-   DIE_offset = 0;
-   DIE_overall_offset = 0;
-   DIE_CU_offset = 0;
-   DIE_CU_overall_offset = 0;
-   CU_base_address = 0;
-   CU_high_address = 0;
-}
-
-
-static boolean
-cu_data_is_set()
-{
-    if (strcmp(CU_name,default_cu_producer) ||
-        strcmp(CU_producer,default_cu_producer)) {
-        return 1;
-    }
-    if (DIE_offset  || DIE_overall_offset) {
-        return 1;
-    }
-    if (CU_base_address || CU_high_address) {
-        return 1;
-    }
-    return 0;
-}
-/* Print CU basic information */
-void PRINT_CU_INFO()
-{
-    if (current_section_id == DEBUG_LINE ||
-        current_section_id == DEBUG_ARANGES) {
-        /*  Only in the DEBUG_LINE/ARANGES case is DIE_CU_offset or
-            DIE_CU_overall_offset what we want to print here.
-            In other cases DIE_CU_offset is not really a CU
-            offset at all. */
-        DIE_offset = DIE_CU_offset;
-        DIE_overall_offset = DIE_CU_overall_offset;
+    if (glflags.current_section_id == DEBUG_LINE ||
+        glflags.current_section_id == DEBUG_FRAME ||
+        glflags.current_section_id == DEBUG_FRAME_EH_GNU ||
+        glflags.current_section_id == DEBUG_ARANGES ||
+        glflags.current_section_id == DEBUG_MACRO ||
+        glflags.current_section_id == DEBUG_PUBNAMES ||
+        glflags.current_section_id == DEBUG_MACINFO ) {
+        /*  These sections involve the CU die, so
+            use the CU offsets.
+            The DEBUG_MAC* cases are logical but
+            not yet useful (Dec 2015).
+            In other cases the local DIE offset makes
+            more sense. */
+        loff = glflags.DIE_CU_offset;
+        goff = glflags.DIE_CU_overall_offset;
     }
     if (!cu_data_is_set()) {
         return;
     }
     printf("\n");
-    printf("CU Name = %s\n",CU_name);
-    printf("CU Producer = %s\n",CU_producer);
-    printf("DIE OFF = 0x%08" DW_PR_DUx
-        " GOFF = 0x%08" DW_PR_DUx ,DIE_offset,DIE_overall_offset);
-    printf(", Low PC = 0x%08" DW_PR_DUx ", High PC = 0x%08" DW_PR_DUx ,
-        CU_base_address,CU_high_address);
+    printf("CU Name = %s\n",sanitized(glflags.CU_name));
+    printf("CU Producer = %s\n",sanitized(glflags.CU_producer));
+    printf("DIE OFF = 0x%" DW_PR_XZEROS DW_PR_DUx
+        " GOFF = 0x%" DW_PR_XZEROS DW_PR_DUx,
+        loff,goff);
+    /* We used to print leftover and incorrect values at times. */
+    if (glflags.need_CU_high_address) {
+        safe_strcpy(hbuf,sizeof(hbuf),"unknown   ",10);
+    } else {
+        /* safe, hbuf is large enough. */
+        sprintf(hbuf,
+            "0x%"  DW_PR_XZEROS DW_PR_DUx,glflags.CU_high_address);
+    }
+    if (glflags.need_CU_base_address) {
+        safe_strcpy(lbuf,sizeof(lbuf),"unknown   ",10);
+    } else {
+        /* safe, lbuf is large enough. */
+        sprintf(lbuf,
+            "0x%"  DW_PR_XZEROS DW_PR_DUx,glflags.CU_low_address);
+    }
+    printf(", Low PC = %s, High PC = %s", lbuf,hbuf);
     printf("\n");
-    fflush(stdout);
-}
-
-void DWARF_CHECK_COUNT(Dwarf_Check_Categories category, int inc)
-{
-    compilers_detected[0].results[category].checks += inc;
-    compilers_detected[0].results[total_check_result].checks += inc;
-    if (current_compiler > 0 && current_compiler <  COMPILER_TABLE_MAX) {
-        compilers_detected[current_compiler].results[category].checks += inc;
-        compilers_detected[current_compiler].results[total_check_result].checks
-            += inc;
-        compilers_detected[current_compiler].verified = TRUE;
-    }
-}
-
-void DWARF_ERROR_COUNT(Dwarf_Check_Categories category, int inc)
-{
-    compilers_detected[0].results[category].errors += inc;
-    compilers_detected[0].results[total_check_result].errors += inc;
-    if (current_compiler > 0 && current_compiler <  COMPILER_TABLE_MAX) {
-        compilers_detected[current_compiler].results[category].errors += inc;
-        compilers_detected[current_compiler].results[total_check_result].errors
-            += inc;
-    }
-}
-
-void PRINT_CHECK_RESULT(char *str,
-    Compiler *pCompiler, Dwarf_Check_Categories category)
-{
-    Dwarf_Check_Result result = pCompiler->results[category];
-    printf("%-24s%10d  %10d\n", str, result.checks, result.errors);
 }
 
 void DWARF_CHECK_ERROR_PRINT_CU()
 {
-    if (check_verbose_mode) {
-        PRINT_CU_INFO();
-    }
-    check_error++;
-    record_dwarf_error = TRUE;
-}
-
-void DWARF_CHECK_ERROR(Dwarf_Check_Categories category,
-    const char *str)
-{
-    if (checking_this_compiler()) {
-        DWARF_ERROR_COUNT(category,1);
-        if (check_verbose_mode) {
-            printf("\n*** DWARF CHECK: %s ***\n", str);
+    if (glflags.gf_check_verbose_mode) {
+        if (glflags.gf_print_unique_errors) {
+            if (!glflags.gf_found_error_message) {
+                PRINT_CU_INFO();
+            }
+        } else {
+            PRINT_CU_INFO();
         }
-        DWARF_CHECK_ERROR_PRINT_CU();
     }
+    glflags.check_error++;
+    glflags.gf_record_dwarf_error = TRUE;
 }
 
-void DWARF_CHECK_ERROR2(Dwarf_Check_Categories category,
-    const char *str1, const char *str2)
+/*  Sometimes is useful, just to know the kind of errors
+    in an object file; not much interest in the number
+    of errors; the specific case is just to have a general
+    idea about the DWARF quality in the file */
+
+char ** set_unique_errors = NULL;
+unsigned int set_unique_errors_entries = 0;
+unsigned int set_unique_errors_size = 0;
+#define SET_UNIQUE_ERRORS_DELTA 64
+
+/*  Create the space to store the unique error messages */
+void
+allocate_unique_errors_table(void)
 {
-    if (checking_this_compiler()) {
-        DWARF_ERROR_COUNT(category,1);
-        if (check_verbose_mode) {
-            printf("\n*** DWARF CHECK: %s: %s ***\n", str1, str2);
-        }
-        DWARF_CHECK_ERROR_PRINT_CU();
+    if (!set_unique_errors) {
+        set_unique_errors = (char **)
+            malloc(SET_UNIQUE_ERRORS_DELTA * sizeof(char*));
+        set_unique_errors_size = SET_UNIQUE_ERRORS_DELTA;
+        set_unique_errors_entries = 0;
     }
 }
 
-void DWARF_CHECK_ERROR3(Dwarf_Check_Categories category,
+#ifdef TESTING
+/* Just for debugging purposes, dump the unique errors table */
+void
+dump_unique_errors_table(void)
+{
+    unsigned int index;
+    printf("*** Unique Errors Table ***\n");
+    printf("Delta  : %d\n",SET_UNIQUE_ERRORS_DELTA);
+    printf("Size   : %d\n",set_unique_errors_size);
+    printf("Entries: %d\n",set_unique_errors_entries);
+    for (index = 0; index < set_unique_errors_entries; ++index) {
+        printf("%3d: '%s'\n",index,set_unique_errors[index]);
+    }
+}
+#endif
+
+/*  Release the space used to store the unique error messages */
+void
+release_unique_errors_table(void)
+{
+    unsigned int index;
+    for (index = 0; index < set_unique_errors_entries; ++index) {
+        free(set_unique_errors[index]);
+    }
+    free(set_unique_errors);
+    set_unique_errors = 0;
+    set_unique_errors_entries = 0;
+    set_unique_errors_size = 0;
+}
+
+/*  Returns TRUE if the text is already in the set; otherwise FALSE */
+Dwarf_Bool
+add_to_unique_errors_table(char * error_text)
+{
+    unsigned int index;
+    size_t len;
+    char * stored_text;
+    char * filtered_text;
+    char * start = NULL;
+    char * end = NULL;
+    char * pattern = "0x";
+    char * white = " ";
+    char * question = "?";
+
+    /* Create a copy of the incoming text */
+    filtered_text = makename(error_text);
+    len = strlen(filtered_text);
+
+    /*  Remove from the error_text, any hexadecimal
+        numbers (start with 0x),
+        because for some errors, an additional
+        information is given in the
+        form of addresses; we are interested just in
+        the general error. */
+    start = strstr(filtered_text,pattern);
+    while (start) {
+        /* We have found the start of the pattern; look for a space */
+        end = strstr(start,white);
+        if (!end) {
+            /* Preserve any line terminator */
+            end = filtered_text + len -1;
+        }
+        memset(start,*question,end - start);
+        start = strstr(filtered_text,pattern);
+    }
+
+    /* Check if the error text is already in the table */
+    for (index = 0; index < set_unique_errors_entries; ++index) {
+        stored_text = set_unique_errors[index];
+        if (!strcmp(stored_text,filtered_text)) {
+            return TRUE;
+        }
+    }
+
+    /*  Store the new text; check if we have space
+        to store the error text */
+    if (set_unique_errors_entries + 1 == set_unique_errors_size) {
+        set_unique_errors_size += SET_UNIQUE_ERRORS_DELTA;
+        set_unique_errors = (char **)realloc(set_unique_errors,
+            set_unique_errors_size * sizeof(char*));
+    }
+
+    set_unique_errors[set_unique_errors_entries] = filtered_text;
+    ++set_unique_errors_entries;
+
+    return FALSE;
+}
+
+/*
+    Print a DWARF error message and if in "reduced" output
+    only print one error of each kind; this feature is useful,
+    when we are interested only in the kind of errors and
+    not on the number of errors.
+
+    PRECONDITION: if s3 non-null so are s1,s2.
+        If  s2 is non-null so is s1.
+        s1 is always non-null. */
+
+static void
+print_dwarf_check_error(const char *s1,
+    const char *s2,
+    const char *s3)
+{
+    static Dwarf_Bool do_init = TRUE;
+    Dwarf_Bool found = FALSE;
+    char * error_text = NULL;
+    static char *leader =  "\n*** DWARF CHECK: ";
+    static char *trailer = " ***\n";
+
+    if (do_init) {
+        esb_constructor(&dwarf_error_line);
+        do_init = FALSE;
+    }
+    esb_empty_string(&dwarf_error_line);
+    esb_append(&dwarf_error_line,leader);
+    if (s3) {
+        esb_append(&dwarf_error_line,s1);
+        esb_append(&dwarf_error_line," -> ");
+        esb_append(&dwarf_error_line,s2);
+        esb_append(&dwarf_error_line,": ");
+        esb_append(&dwarf_error_line,s3);
+    } else if (s2) {
+        esb_append(&dwarf_error_line,s1);
+        esb_append(&dwarf_error_line,": ");
+        esb_append(&dwarf_error_line,s2);
+    } else {
+        esb_append(&dwarf_error_line,s1);
+    }
+    esb_append(&dwarf_error_line,trailer);
+
+    error_text = esb_get_string(&dwarf_error_line);
+    if (glflags.gf_print_unique_errors) {
+        found = add_to_unique_errors_table(error_text);
+        if (!found) {
+            printf("%s",error_text);
+        }
+    } else {
+        printf("%s",error_text);
+    }
+
+    /*  To indicate if the current error message has
+        been found or not */
+    glflags.gf_found_error_message = found;
+}
+
+void
+DWARF_CHECK_ERROR3(Dwarf_Check_Categories category,
     const char *str1, const char *str2, const char *strexpl)
 {
     if (checking_this_compiler()) {
         DWARF_ERROR_COUNT(category,1);
-        if (check_verbose_mode) {
-            printf("\n*** DWARF CHECK: %s -> %s: %s ***\n",
-                str1, str2,strexpl);
+        if (glflags.gf_check_verbose_mode) {
+            print_dwarf_check_error(str1, str2,strexpl);
         }
         DWARF_CHECK_ERROR_PRINT_CU();
     }
 }
 
-/*  The strings whose pointers are returned here
-    from makename are never destructed, but
-    that is ok since there are only about 10 created at most.  */
-static const char *
-do_uri_translation(const char *s,const char *context)
+/*  This is too much to put in the DROP_ERROR_INSTANCE macro,
+    so we put it here rather arbitrarily.  */
+void
+report_caller_error_drop_error(int dwdlv,
+    int line, char *fname)
 {
-    struct esb_s str;
-    char *finalstr = 0;
-    if (!uri_options_translation) {
-        return makename(s);
-    }
-    esb_constructor(&str);
-    translate_from_uri(s,&str);
-    if (do_print_uri_in_input) {
-        if (strcmp(s,esb_get_string(&str))) {
-            printf("Uri Translation on option %s\n",context);
-            printf("    \'%s\'\n",s);
-            printf("    \'%s\'\n",esb_get_string(&str));
-        }
-    }
-    finalstr = makename(esb_get_string(&str));
-    esb_destructor(&str);
-    return finalstr;
+    printf("\nERROR in dwarfdump:"
+        " The value passed to the macro DROP_ERROR_INSTANCE "
+        "is not one of the three allowed values, but is "
+        "%d. dwarfdump has a bug. "
+        " See line %d file %s\n",dwdlv,line,fname);
+    glflags.gf_count_major_errors++;
+
 }

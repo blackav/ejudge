@@ -1,36 +1,30 @@
 /*
 
-  Copyright (C) 2000, 2004, 2006 Silicon Graphics, Inc.  All Rights Reserved.
-  Portions Copyright (C) 2011 David Anderson. All Rights Reserved.
+Copyright (C) 2000, 2004, 2006 Silicon Graphics, Inc.  All Rights Reserved.
+Portions Copyright (C) 2011 David Anderson. All Rights Reserved.
 
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2.1 of the GNU Lesser General Public License
-  as published by the Free Software Foundation.
+  This program is free software; you can redistribute it
+  and/or modify it under the terms of version 2.1 of the
+  GNU Lesser General Public License as published by the Free
+  Software Foundation.
 
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  This program is distributed in the hope that it would be
+  useful, but WITHOUT ANY WARRANTY; without even the implied
+  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+  PURPOSE.
 
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement
-  or the like.  Any license provided herein, whether implied or
-  otherwise, applies only to this software file.  Patent licenses, if
-  any, provided herein do not apply to combinations of this program with
-  other software, or any other product whatsoever.
+  Further, this software is distributed without any warranty
+  that it is free of the rightful claim of any third person
+  regarding infringement or the like.  Any license provided
+  herein, whether implied or otherwise, applies only to this
+  software file.  Patent licenses, if any, provided herein
+  do not apply to combinations of this program with other
+  software, or any other product whatsoever.
 
-  You should have received a copy of the GNU Lesser General Public
-  License along with this program; if not, write the Free Software
-  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
-  USA.
-
-  Contact information:  Silicon Graphics, Inc., 1500 Crittenden Lane,
-  Mountain View, CA 94043, or:
-
-  http://www.sgi.com
-
-  For further information regarding this notice, see:
-
-  http://oss.sgi.com/projects/GenInfo/NoticeExplan
+  You should have received a copy of the GNU Lesser General
+  Public License along with this program; if not, write the
+  Free Software Foundation, Inc., 51 Franklin Street - Fifth
+  Floor, Boston MA 02110-1301, USA.
 
 */
 
@@ -70,7 +64,8 @@
 
 
     ---START SGI-ONLY COMMENT:
-    SGI-IRIX versions of cie or fde  were intended to use "z1", "z2" as the
+    SGI-IRIX versions of cie or fde  were intended
+    to use "z1", "z2" as the
     augmenter strings if required for new augmentation.
     However, that never happened (as of March 2005).
 
@@ -96,16 +91,16 @@
 #define DW_DEBUG_FRAME_VERSION4    4 /* DWARF4 */
 /*  The following is SGI/IRIX specific, and probably no longer
     in use anywhere. */
-#define DW_DEBUG_FRAME_AUGMENTER_STRING     	"mti v1"
+#define DW_DEBUG_FRAME_AUGMENTER_STRING     "mti v1"
 
 /* The value of the offset field for Cie's. */
-#define DW_CIE_OFFSET		~(0x0)
+#define DW_CIE_OFFSET ~(0x0)
 
-/* The augmentation string may be NULL.	*/
-#define DW_EMPTY_STRING		""
+/* The augmentation string may be NULL. */
+#define DW_EMPTY_STRING ""
 
-#define DW_FRAME_INSTR_OPCODE_SHIFT		6
-#define DW_FRAME_INSTR_OFFSET_MASK		0x3f
+#define DW_FRAME_INSTR_OPCODE_SHIFT 6
+#define DW_FRAME_INSTR_OFFSET_MASK  0x3f
 
 /*
     This struct denotes the rule for a register in a row of
@@ -117,10 +112,12 @@ struct Dwarf_Reg_Rule_s {
     /*  Is a flag indicating whether the rule includes the offset
         field, ie whether the ru_offset field is valid or not.
         Applies only if DW_EXPR_OFFSET or DW_EXPR_VAL_OFFSET.
-        It is important, since reg+offset (offset of 0) is different from
+        It is important, since reg+offset (offset of 0)
+        is different from
         just 'register' since the former means 'read memory at address
         given by the sum of register contents plus offset to get the
-        value'. whereas the latter means 'the value is in the register'.
+        value'. whereas the latter
+        means 'the value is in the register'.
 
         The 'register' numbers are either real registers (ie, table
         columns defined as real registers) or defined entries that are
@@ -156,7 +153,7 @@ typedef struct Dwarf_Frame_s *Dwarf_Frame;
     Fr_loc is the pc value for this row, and Fr_reg
     contains the rule for each column.
 
-    Entry DW_FRAME_CFA_COL of fr_reg was the tradional MIPS
+    Entry DW_FRAME_CFA_COL of fr_reg was the traditional MIPS
     way of setting CFA.  cfa_rule is the new one.
 */
 struct Dwarf_Frame_s {
@@ -186,7 +183,8 @@ struct Dwarf_Frame_Op_List_s {
 /* See dwarf_frame.c for the heuristics used to set the
    Dwarf_Cie ci_augmentation_type.
 
-   This succinctly helps interpret the size and meaning of .debug_frame
+   This succinctly helps interpret the size and
+   meaning of .debug_frame
    and (for gcc) .eh_frame.
 
    In the case of gcc .eh_frame (gcc 3.3, 3.4)
@@ -211,8 +209,12 @@ enum Dwarf_augmentation_type {
         Arm C RVCT 3.0 SP1 and later). See
         http://sourceware.org/ml/gdb-patches/2006-12/msg00249.html
         for details. */
-        aug_unknown,      /* Unknown augmentation, we cannot do much. */
-        aug_past_last
+    aug_unknown,      /* Unknown augmentation, we cannot do much. */
+
+    /*  HC, From http://sourceforge.net/p/elftoolchain/tickets/397/ */
+    aug_metaware,
+
+    aug_past_last
 };
 
 
@@ -233,6 +235,7 @@ struct Dwarf_Cie_s {
     Dwarf_Small ci_return_address_register;
     Dwarf_Small *ci_cie_start;
     Dwarf_Small *ci_cie_instr_start;
+    Dwarf_Small *ci_cie_end;
     Dwarf_Debug ci_dbg;
     Dwarf_Frame ci_initial_table;
     Dwarf_Cie ci_next;
@@ -264,7 +267,10 @@ struct Dwarf_Cie_s {
         record the position so fde can get it on fde creation. */
     Dwarf_Unsigned ci_index;
     Dwarf_Small *  ci_section_ptr;
-    /*  DWARF4 adds address size and segment size to the CIE: the .debug_info
+    Dwarf_Unsigned ci_section_length;
+    Dwarf_Small *  ci_section_end;
+    /*  DWARF4 adds address size and segment size to the CIE:
+        the .debug_info
         section may not always be present to allow libdwarf to
         find address_size from the compilation-unit. */
     Dwarf_Half   ci_address_size;
@@ -277,7 +283,7 @@ struct Dwarf_Cie_s {
     Most of the fields are taken straight from the definition.
     fd_cie_index is the index of the Cie associated with this
     Fde in the list of Cie's for this debug_frame.  Fd_cie
-    points to the corresponsing Dwarf_Cie structure.  Fd_fde_start
+    points to the corresponding Dwarf_Cie structure.  Fd_fde_start
     points to the start address of the Fde.  Fd_fde_instr_start
     points to the start of the instructions for this Fde.  Fd_dbg
     points to the associated Dwarf_Debug structure.
@@ -292,6 +298,7 @@ struct Dwarf_Fde_s {
     Dwarf_Addr fd_address_range;
     Dwarf_Small *fd_fde_start;
     Dwarf_Small *fd_fde_instr_start;
+    Dwarf_Small *fd_fde_end;
     Dwarf_Debug fd_dbg;
 
     /*  fd_offset_into_exception_tables is SGI/IRIX exception table
@@ -308,15 +315,29 @@ struct Dwarf_Fde_s {
         Augmentation Data. Set if CIE ci_augmentation_type
         is aug_gcc_eh_z. Zero if unused. */
     Dwarf_Unsigned fd_gnu_eh_augmentation_len;
+    Dwarf_Bool fd_gnu_eh_aug_present;
     Dwarf_Ptr fd_gnu_eh_augmentation_bytes;
     Dwarf_Addr fd_gnu_eh_lsda; /* If 'L' augmentation letter
         present:  is address of the
         Language Specific Data Area (LSDA). If not 'L" is zero. */
 
-    /* The following 3 are about the Elf section the FDEs come from. */
+
+    /* The following 3 are about the Elf section the FDEs come from.*/
     Dwarf_Small * fd_section_ptr;
     Dwarf_Unsigned fd_section_length;
     Dwarf_Unsigned fd_section_index;
+    Dwarf_Small * fd_section_end;
+
+    /*  If fd_eh_table_value_set is true, then fd_eh_table_value is
+        meaningful.  Never meaningful for .debug_frame, is
+        part of .eh_frame. */
+    Dwarf_Unsigned fd_eh_table_value;
+    Dwarf_Bool fd_eh_table_value_set;
+
+    /* The following are memoization to save recalculation. */
+    struct Dwarf_Frame_s fd_fde_table;
+    Dwarf_Addr    fd_fde_pc_requested;
+    Dwarf_Bool    fd_have_fde_tab;
 
 };
 
@@ -346,9 +367,14 @@ _dwarf_get_augmentation_type(Dwarf_Debug dbg,
     Dwarf_Small *augmentation_string,
     int is_gcc_eh_frame);
 
-Dwarf_Unsigned _dwarf_get_return_address_reg(Dwarf_Small *frame_ptr,
+int _dwarf_get_return_address_reg(Dwarf_Small *frame_ptr,
     int version,
-    unsigned long *size);
+    Dwarf_Debug dbg,
+    Dwarf_Byte_Ptr section_end,
+    unsigned long *size,
+    Dwarf_Unsigned *return_address_register,
+    Dwarf_Error *error);
+
 
 /*  Temporary recording of crucial cie/fde prefix data.
     Vastly simplifies some argument lists.  */
@@ -367,7 +393,7 @@ struct cie_fde_prefix_s {
     int            cf_local_length_size;
     int            cf_local_extension_size;
     Dwarf_Unsigned cf_cie_id;
-    Dwarf_Small *  cf_cie_id_addr; /* used for eh_frame calculations. */
+    Dwarf_Small *  cf_cie_id_addr; /*used for eh_frame calculations.*/
 
     /*  Simplifies passing around these values to create fde having
         these here. */
@@ -390,8 +416,10 @@ _dwarf_exec_frame_instr(Dwarf_Bool make_instr,
     Dwarf_Cie cie,
     Dwarf_Debug dbg,
     Dwarf_Half reg_num_of_cfa,
-    Dwarf_Sword * returned_count,
-    int *returned_error);
+    Dwarf_Signed * returned_count,
+    Dwarf_Bool  * has_more_rows,
+    Dwarf_Addr  * subsequent_pc,
+    Dwarf_Error * error);
 
 
 int dwarf_read_cie_fde_prefix(Dwarf_Debug dbg,
@@ -406,6 +434,7 @@ int dwarf_create_fde_from_after_start(Dwarf_Debug dbg,
     struct cie_fde_prefix_s *  prefix,
     Dwarf_Small *section_pointer,
     Dwarf_Small *frame_ptr,
+    Dwarf_Small *section_ptr_end,
     int use_gnu_cie_calc,
     Dwarf_Cie  cie_ptr_in,
     Dwarf_Fde *fde_ptr_out,
@@ -415,6 +444,7 @@ int dwarf_create_cie_from_after_start(Dwarf_Debug dbg,
     struct cie_fde_prefix_s *prefix,
     Dwarf_Small* section_pointer,
     Dwarf_Small* frame_ptr,
+    Dwarf_Small *section_ptr_end,
     Dwarf_Unsigned cie_count,
     int use_gnu_cie_calc,
     Dwarf_Cie *cie_ptr_out,
@@ -423,3 +453,4 @@ int dwarf_create_cie_from_after_start(Dwarf_Debug dbg,
 
 int _dwarf_frame_constructor(Dwarf_Debug dbg,void * );
 void _dwarf_frame_destructor (void *);
+void _dwarf_fde_destructor (void *);

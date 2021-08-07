@@ -1,43 +1,45 @@
 /*
 
-  Copyright (C) 2014-2014 David Anderson. All Rights Reserved.
+  Copyright (C) 2014-2020 David Anderson. All Rights Reserved.
 
-  This program is free software; you can redistribute it and/or modify it
-  under the terms of version 2.1 of the GNU Lesser General Public License
-  as published by the Free Software Foundation.
+  This program is free software; you can redistribute it
+  and/or modify it under the terms of version 2.1 of the
+  GNU Lesser General Public License as published by the Free
+  Software Foundation.
 
-  This program is distributed in the hope that it would be useful, but
-  WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  This program is distributed in the hope that it would be
+  useful, but WITHOUT ANY WARRANTY; without even the implied
+  warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+  PURPOSE.
 
-  Further, this software is distributed without any warranty that it is
-  free of the rightful claim of any third person regarding infringement
-  or the like.  Any license provided herein, whether implied or
-  otherwise, applies only to this software file.  Patent licenses, if
-  any, provided herein do not apply to combinations of this program with
-  other software, or any other product whatsoever.
+  Further, this software is distributed without any warranty
+  that it is free of the rightful claim of any third person
+  regarding infringement or the like.  Any license provided
+  herein, whether implied or otherwise, applies only to this
+  software file.  Patent licenses, if any, provided herein
+  do not apply to combinations of this program with other
+  software, or any other product whatsoever.
 
-  You should have received a copy of the GNU Lesser General Public
-  License along with this program; if not, write the Free Software
-  Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston MA 02110-1301,
-  USA.
-
-
+  You should have received a copy of the GNU Lesser General
+  Public License along with this program; if not, write the
+  Free Software Foundation, Inc., 51 Franklin Street - Fifth
+  Floor, Boston MA 02110-1301, USA.
 */
-/* The address of the Free Software Foundation is
-   Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
-   Boston, MA 02110-1301, USA.
-   SGI has moved from the Crittenden Lane address.
-*/
-
-
-
-
 
 #include "config.h"
-#include "dwarf_incl.h"
 #include <stdio.h>
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif /* HAVE_STDLIB_H */
+#ifdef HAVE_STDINT_H
+#include <stdint.h> /* For uintptr_t */
+#endif /* HAVE_STDINT_H */
+#include "dwarf_incl.h"
+#include "dwarf_alloc.h"
+#include "dwarf_error.h"
+#include "dwarf_util.h"
+#include "dwarfstring.h"
+#include "memcpy_swap.h"
 #include "dwarf_gdbindex.h"
 
 #define TRUE 1
@@ -50,27 +52,27 @@
 */
 
 #if WORDS_BIGENDIAN   /* meaning on this host */
-#define READ_GDBINDEX(dest,desttype, source, length)                     \
-    do {                                                                 \
-        BIGGEST_UINT _ltmp = 0;                                          \
-        _dwarf_memcpy_swap_bytes((((char *)(&_ltmp)) + sizeof(_ltmp) - length), \
-            source, length) ;                                            \
-        dest = (desttype)_ltmp;                                          \
+#define READ_GDBINDEX(dest,desttype, source, length) \
+    do {                                             \
+        BIGGEST_UINT _ltmp = 0;                      \
+        _dwarf_memcpy_swap_bytes((((char *)(&_ltmp)) \
+            + sizeof(_ltmp) - length),               \
+            source, length) ;                        \
+        dest = (desttype)_ltmp;                      \
     } while (0)
 #else /* little-endian on this host */
-#define READ_GDBINDEX(dest,desttype, source, length)                     \
-    do {                                                                 \
-        BIGGEST_UINT _ltmp = 0;                                          \
-        memcpy(((char *)(&_ltmp)) ,            \
-            source, length) ;                                            \
-        dest = (desttype)_ltmp;                                          \
+#define READ_GDBINDEX(dest,desttype, source, length) \
+    do {                                             \
+        BIGGEST_UINT _ltmp = 0;                      \
+        memcpy(((char *)(&_ltmp)) ,                  \
+            source, length) ;                        \
+        dest = (desttype)_ltmp;                      \
     } while (0)
-
 #endif
 
 
 struct gi_fileheader_s {
-    gdbindex_offset_type headerval[6];
+    char gfs [4][6];
 };
 
 struct dwarf_64bitpair {
@@ -83,7 +85,8 @@ set_base(Dwarf_Debug dbg,
     struct Dwarf_Gdbindex_array_instance_s * hdr,
     Dwarf_Small *start,
     Dwarf_Small *end,
-    /* entrylen is the length of a single struct as seen in the object. */
+    /*  entrylen is the length of a single struct as seen
+        in the object. */
     Dwarf_Unsigned entrylen,
     /* The size of each field in the struct in the object. */
     Dwarf_Unsigned fieldlen,
@@ -95,7 +98,7 @@ set_base(Dwarf_Debug dbg,
         /*  cuvec is sort of a fake as a simple
             section, but a useful one. */
         Dwarf_Unsigned count = 0;
-        if( end < start) {
+        if ( end < start) {
             _dwarf_error(dbg, err,DW_DLE_GDB_INDEX_COUNT_ERROR);
             return DW_DLV_ERROR;
         }
@@ -111,19 +114,19 @@ set_base(Dwarf_Debug dbg,
         /* 64bit, 64bit, offset. Then 32bit pad. */
         Dwarf_Unsigned count = 0;
         hdr->dg_base = start;
-        if( end < start) {
+        if ( end < start) {
             _dwarf_error(dbg, err,DW_DLE_GDB_INDEX_COUNT_ADDR_ERROR);
             return DW_DLV_ERROR;
         }
         /* entry length includes pad. */
         hdr->dg_entry_length = 2*sizeof(gdbindex_64) +
-            sizeof(gdbindex_offset_type);
+            DWARF_32BIT_SIZE;
         count = end - start;
         count = count / hdr->dg_entry_length;
         hdr->dg_count = count;
         /*  The dg_fieldlen is a fake, the fields are not
             all the same length. */
-        hdr->dg_fieldlen = sizeof(gdbindex_offset_type);
+        hdr->dg_fieldlen = DWARF_32BIT_SIZE;
         hdr->dg_type = type;
     }
     return DW_DLV_OK;
@@ -158,16 +161,18 @@ dwarf_gdbindex_header(Dwarf_Debug dbg,
         }
     }
 
-    if (dbg->de_debug_gdbindex.dss_size < sizeof(struct gi_fileheader_s) ) {
+    if (dbg->de_debug_gdbindex.dss_size <
+        sizeof(struct gi_fileheader_s) ) {
         _dwarf_error(dbg, error, DW_DLE_ERRONEOUS_GDB_INDEX_SECTION);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
     memcpy(&header,dbg->de_debug_gdbindex.dss_data,
         sizeof(struct gi_fileheader_s));
-    indexptr = (Dwarf_Gdbindex)_dwarf_get_alloc(dbg,DW_DLA_GDBINDEX,1);
+    indexptr = (Dwarf_Gdbindex)_dwarf_get_alloc(dbg,
+        DW_DLA_GDBINDEX,1);
     if (indexptr == NULL) {
         _dwarf_error(dbg, error, DW_DLE_ALLOC_FAIL);
-        return (DW_DLV_ERROR);
+        return DW_DLV_ERROR;
     }
 
     indexptr->gi_dbg = dbg;
@@ -175,60 +180,83 @@ dwarf_gdbindex_header(Dwarf_Debug dbg,
     indexptr->gi_section_length = dbg->de_debug_gdbindex.dss_size;
     READ_GDBINDEX(indexptr->gi_version ,Dwarf_Unsigned,
         dbg->de_debug_gdbindex.dss_data,
-        sizeof(gdbindex_offset_type));
+        DWARF_32BIT_SIZE);
     READ_GDBINDEX(indexptr->gi_cu_list_offset ,Dwarf_Unsigned,
-        dbg->de_debug_gdbindex.dss_data + sizeof(gdbindex_offset_type),
-        sizeof(gdbindex_offset_type));
+        dbg->de_debug_gdbindex.dss_data + DWARF_32BIT_SIZE,
+        DWARF_32BIT_SIZE);
     READ_GDBINDEX(indexptr->gi_types_cu_list_offset ,Dwarf_Unsigned,
-        dbg->de_debug_gdbindex.dss_data + 2*sizeof(gdbindex_offset_type),
-        sizeof(gdbindex_offset_type));
+        dbg->de_debug_gdbindex.dss_data + 2*DWARF_32BIT_SIZE,
+        DWARF_32BIT_SIZE);
     READ_GDBINDEX(indexptr->gi_address_area_offset ,Dwarf_Unsigned,
-        dbg->de_debug_gdbindex.dss_data + 3*sizeof(gdbindex_offset_type),
-        sizeof(gdbindex_offset_type));
+        dbg->de_debug_gdbindex.dss_data + 3*DWARF_32BIT_SIZE,
+        DWARF_32BIT_SIZE);
     READ_GDBINDEX(indexptr->gi_symbol_table_offset ,Dwarf_Unsigned,
-        dbg->de_debug_gdbindex.dss_data + 4*sizeof(gdbindex_offset_type),
-        sizeof(gdbindex_offset_type));
+        dbg->de_debug_gdbindex.dss_data + 4*DWARF_32BIT_SIZE,
+        DWARF_32BIT_SIZE);
     READ_GDBINDEX(indexptr->gi_constant_pool_offset ,Dwarf_Unsigned,
-        dbg->de_debug_gdbindex.dss_data + 5*sizeof(gdbindex_offset_type),
-        sizeof(gdbindex_offset_type));
+        dbg->de_debug_gdbindex.dss_data + 5*DWARF_32BIT_SIZE,
+        DWARF_32BIT_SIZE);
 
     res = set_base(dbg,&indexptr->gi_culisthdr,
-        dbg->de_debug_gdbindex.dss_data + indexptr->gi_cu_list_offset,
-        dbg->de_debug_gdbindex.dss_data + indexptr->gi_types_cu_list_offset,
+        dbg->de_debug_gdbindex.dss_data +
+        indexptr->gi_cu_list_offset,
+        dbg->de_debug_gdbindex.dss_data +
+        indexptr->gi_types_cu_list_offset,
         2*sizeof(gdbindex_64),
         sizeof(gdbindex_64),
         git_std,error);
+    if (res == DW_DLV_ERROR) {
+        return res;
+    }
     res = set_base(dbg,&indexptr->gi_typesculisthdr,
-        dbg->de_debug_gdbindex.dss_data + indexptr->gi_types_cu_list_offset,
-        dbg->de_debug_gdbindex.dss_data + indexptr->gi_address_area_offset,
+        dbg->de_debug_gdbindex.dss_data +
+        indexptr->gi_types_cu_list_offset,
+        dbg->de_debug_gdbindex.dss_data +
+        indexptr->gi_address_area_offset,
         3*sizeof(gdbindex_64),
         sizeof(gdbindex_64),
         git_std,error);
+    if (res == DW_DLV_ERROR) {
+        return res;
+    }
     res = set_base(dbg,&indexptr->gi_addressareahdr,
-        dbg->de_debug_gdbindex.dss_data + indexptr->gi_address_area_offset,
-        dbg->de_debug_gdbindex.dss_data + indexptr->gi_symbol_table_offset,
+        dbg->de_debug_gdbindex.dss_data +
+        indexptr->gi_address_area_offset,
+        dbg->de_debug_gdbindex.dss_data +
+        indexptr->gi_symbol_table_offset,
         3*sizeof(gdbindex_64),
         sizeof(gdbindex_64),
         git_address,error);
+    if (res == DW_DLV_ERROR) {
+        return res;
+    }
     res = set_base(dbg,&indexptr->gi_symboltablehdr,
-        dbg->de_debug_gdbindex.dss_data + indexptr->gi_symbol_table_offset,
-        dbg->de_debug_gdbindex.dss_data + indexptr->gi_constant_pool_offset,
-        2*sizeof(gdbindex_offset_type),
-        sizeof(gdbindex_offset_type),
+        dbg->de_debug_gdbindex.dss_data +
+        indexptr->gi_symbol_table_offset,
+        dbg->de_debug_gdbindex.dss_data +
+            indexptr->gi_constant_pool_offset,
+        2*DWARF_32BIT_SIZE,
+        DWARF_32BIT_SIZE,
         git_std,error);
+    if (res == DW_DLV_ERROR) {
+        return res;
+    }
     res = set_base(dbg,&indexptr->gi_cuvectorhdr,
-        dbg->de_debug_gdbindex.dss_data + indexptr->gi_constant_pool_offset,
+        dbg->de_debug_gdbindex.dss_data +
+            indexptr->gi_constant_pool_offset,
         /*  There is no real single vector size.
             but we'll use the entire rest as if there was. */
         dbg->de_debug_gdbindex.dss_data + indexptr->gi_section_length,
-        sizeof(gdbindex_offset_type),
-        sizeof(gdbindex_offset_type),
+        DWARF_32BIT_SIZE,
+        DWARF_32BIT_SIZE,
         git_cuvec,error);
+    if (res == DW_DLV_ERROR) {
+        return res;
+    }
 
     /* Really just pointing to constant pool area. */
     indexptr->gi_string_pool = dbg->de_debug_gdbindex.dss_data +
         indexptr->gi_constant_pool_offset;
-
     *gdbindexptr          = indexptr;
     *version              = indexptr->gi_version;
     *cu_list_offset       = indexptr->gi_cu_list_offset;
@@ -239,7 +267,6 @@ dwarf_gdbindex_header(Dwarf_Debug dbg,
     *section_size         = indexptr->gi_section_length;
     *unused_reserved = 0;
     *section_name  =        dbg->de_debug_gdbindex.dss_name;
-
     return DW_DLV_OK;
 
 
@@ -249,7 +276,7 @@ dwarf_gdbindex_header(Dwarf_Debug dbg,
 int
 dwarf_gdbindex_culist_array(Dwarf_Gdbindex gdbindexptr,
     Dwarf_Unsigned       * list_length,
-    Dwarf_Error          * error)
+    UNUSEDARG Dwarf_Error          * error)
 {
     *list_length = gdbindexptr->gi_culisthdr.dg_count;
     return DW_DLV_OK;
@@ -270,7 +297,8 @@ dwarf_gdbindex_culist_entry(Dwarf_Gdbindex gdbindexptr,
     unsigned fieldlen = gdbindexptr->gi_culisthdr.dg_fieldlen;
 
     if (entryindex >= max) {
-        _dwarf_error(gdbindexptr->gi_dbg, error,DW_DLE_GDB_INDEX_INDEX_ERROR);
+        _dwarf_error(gdbindexptr->gi_dbg, error,
+            DW_DLE_GDB_INDEX_INDEX_ERROR);
         return DW_DLV_ERROR;
     }
     base = gdbindexptr->gi_culisthdr.dg_base;
@@ -290,7 +318,7 @@ dwarf_gdbindex_culist_entry(Dwarf_Gdbindex gdbindexptr,
 int
 dwarf_gdbindex_types_culist_array(Dwarf_Gdbindex gdbindexptr,
     Dwarf_Unsigned       * list_length,
-    Dwarf_Error          * error)
+    UNUSEDARG Dwarf_Error          * error)
 {
     *list_length = gdbindexptr->gi_typesculisthdr.dg_count;
     return DW_DLV_OK;
@@ -313,7 +341,8 @@ dwarf_gdbindex_types_culist_entry(Dwarf_Gdbindex gdbindexptr,
     unsigned fieldlen = gdbindexptr->gi_typesculisthdr.dg_fieldlen;
 
     if (entryindex >= max) {
-        _dwarf_error(gdbindexptr->gi_dbg, error,DW_DLE_GDB_INDEX_INDEX_ERROR);
+        _dwarf_error(gdbindexptr->gi_dbg, error,
+            DW_DLE_GDB_INDEX_INDEX_ERROR);
         return DW_DLV_ERROR;
     }
     base = gdbindexptr->gi_typesculisthdr.dg_base;
@@ -337,7 +366,7 @@ dwarf_gdbindex_types_culist_entry(Dwarf_Gdbindex gdbindexptr,
 int
 dwarf_gdbindex_addressarea(Dwarf_Gdbindex gdbindexptr,
     Dwarf_Unsigned            * list_length,
-    Dwarf_Error               * error)
+    UNUSEDARG Dwarf_Error               * error)
 {
     *list_length = gdbindexptr->gi_addressareahdr.dg_count;
     return DW_DLV_OK;
@@ -360,7 +389,8 @@ dwarf_gdbindex_addressarea_entry(
     Dwarf_Unsigned cuindex = 0;
 
     if (entryindex >= max) {
-        _dwarf_error(gdbindexptr->gi_dbg, error,DW_DLE_GDB_INDEX_INDEX_ERROR);
+        _dwarf_error(gdbindexptr->gi_dbg, error,
+            DW_DLE_GDB_INDEX_INDEX_ERROR);
         return DW_DLV_ERROR;
     }
     base = gdbindexptr->gi_addressareahdr.dg_base;
@@ -374,7 +404,7 @@ dwarf_gdbindex_addressarea_entry(
         sizeof(gdbindex_64));
     READ_GDBINDEX(cuindex ,Dwarf_Unsigned,
         base+ (2*sizeof(gdbindex_64)),
-        sizeof(gdbindex_offset_type));
+        DWARF_32BIT_SIZE);
     *low_address = lowaddr;
     *high_address = highaddr;
     *cu_index = cuindex;
@@ -384,7 +414,7 @@ dwarf_gdbindex_addressarea_entry(
 int
 dwarf_gdbindex_symboltable_array(Dwarf_Gdbindex gdbindexptr,
     Dwarf_Unsigned            * list_length,
-    Dwarf_Error               * error)
+    UNUSEDARG Dwarf_Error               * error)
 {
     *list_length = gdbindexptr->gi_symboltablehdr.dg_count;
     return DW_DLV_OK;
@@ -406,7 +436,8 @@ dwarf_gdbindex_symboltable_entry(
     unsigned fieldlen = gdbindexptr->gi_symboltablehdr.dg_fieldlen;
 
     if (entryindex >= max) {
-        _dwarf_error(gdbindexptr->gi_dbg, error,DW_DLE_GDB_INDEX_INDEX_ERROR);
+        _dwarf_error(gdbindexptr->gi_dbg, error,
+            DW_DLE_GDB_INDEX_INDEX_ERROR);
         return DW_DLV_ERROR;
     }
     base = gdbindexptr->gi_symboltablehdr.dg_base;
@@ -430,13 +461,15 @@ dwarf_gdbindex_cuvector_length(Dwarf_Gdbindex gdbindex,
     Dwarf_Error    * error)
 {
     Dwarf_Small *base = gdbindex->gi_cuvectorhdr.dg_base;
-    Dwarf_Small *end = gdbindex->gi_section_data + gdbindex->gi_section_length;
+    Dwarf_Small *end = gdbindex->gi_section_data +
+        gdbindex->gi_section_length;
     Dwarf_Unsigned val = 0;
     unsigned fieldlen =  gdbindex->gi_cuvectorhdr.dg_entry_length;
 
     base += cuvector_offset;
     if ((base + fieldlen) >= end) {
-        _dwarf_error(gdbindex->gi_dbg, error,DW_DLE_GDB_INDEX_INDEX_ERROR);
+        _dwarf_error(gdbindex->gi_dbg, error,
+            DW_DLE_GDB_INDEX_INDEX_ERROR);
         return DW_DLV_ERROR;
     }
 
@@ -464,7 +497,8 @@ dwarf_gdbindex_cuvector_inner_attributes(Dwarf_Gdbindex gdbindexptr,
 
     base += cuvector_offset;
     if ((base+fieldlen) >= end) {
-        _dwarf_error(gdbindexptr->gi_dbg, error,DW_DLE_GDB_INDEX_INDEX_ERROR);
+        _dwarf_error(gdbindexptr->gi_dbg, error,
+            DW_DLE_GDB_INDEX_INDEX_ERROR);
         return DW_DLV_ERROR;
     }
     base += fieldlen;
@@ -479,14 +513,14 @@ dwarf_gdbindex_cuvector_inner_attributes(Dwarf_Gdbindex gdbindexptr,
 
 
 int
-dwarf_gdbindex_cuvector_instance_expand_value(Dwarf_Gdbindex gdbindexptr,
-    /* will be an index passed back by FIXME */
+dwarf_gdbindex_cuvector_instance_expand_value(
+    UNUSEDARG Dwarf_Gdbindex gdbindexptr,
     Dwarf_Unsigned   value,
     Dwarf_Unsigned * cu_index,
     Dwarf_Unsigned * reserved1,
     Dwarf_Unsigned * symbol_kind,
     Dwarf_Unsigned * is_static,
-    Dwarf_Error    * error)
+    UNUSEDARG Dwarf_Error    * error)
 {
     *cu_index =    value         & 0xffffff;
     *reserved1 =   (value >> 24) & 0xf;
@@ -504,15 +538,70 @@ dwarf_gdbindex_string_by_offset(Dwarf_Gdbindex gdbindexptr,
     const char    ** string_ptr,
     Dwarf_Error   *  error)
 {
-    Dwarf_Small *pooldata = gdbindexptr->gi_section_data +
-        gdbindexptr->gi_constant_pool_offset;
-    Dwarf_Small *section_end = gdbindexptr->gi_section_data +
-        gdbindexptr->gi_section_length;
+    Dwarf_Small *pooldata = 0;
+    Dwarf_Small *section_end = 0;
+    Dwarf_Small *stringitself = 0;
+    Dwarf_Debug dbg = 0;
+    int res = 0;
 
-    Dwarf_Small *stringitself = pooldata + stringoffsetinpool;
-    if (stringitself > section_end) {
-        _dwarf_error(gdbindexptr->gi_dbg, error,DW_DLE_GDB_INDEX_INDEX_ERROR);
+    if (!gdbindexptr) {
+        dwarfstring m;
+
+        dwarfstring_constructor(&m);
+        dwarfstring_append(&m,"DW_DLE_GDB_INDEX_INDEX_ERROR: "
+            "The gdbindex pointer to "
+            "dwarf_gdbindex_string_by_offset()"
+            " is NULL");
+        _dwarf_error_string(gdbindexptr->gi_dbg, error,
+            DW_DLE_GDB_INDEX_INDEX_ERROR,
+            dwarfstring_string(&m));
+        dwarfstring_destructor(&m);
         return DW_DLV_ERROR;
+    }
+    dbg = gdbindexptr->gi_dbg;
+    if (!dbg) {
+        dwarfstring m;
+
+        dwarfstring_constructor(&m);
+        dwarfstring_append(&m,"DW_DLE_GDB_INDEX_INDEX_ERROR: "
+            "The gdbindex Dwarf_Debug in"
+            "dwarf_gdbindex_string_by_offset()"
+            " is NULL");
+        _dwarf_error_string(dbg, error,
+            DW_DLE_GDB_INDEX_INDEX_ERROR,
+            dwarfstring_string(&m));
+        dwarfstring_destructor(&m);
+        return DW_DLV_ERROR;
+    }
+    pooldata = gdbindexptr->gi_section_data +
+        gdbindexptr->gi_constant_pool_offset;
+    section_end = gdbindexptr->gi_section_data +
+        gdbindexptr->gi_section_length;
+    stringitself = pooldata + stringoffsetinpool;
+    if (stringitself > section_end) {
+        dwarfstring m;
+
+        dwarfstring_constructor(&m);
+        dwarfstring_append_printf_u(&m,
+            "DW_DLE_GDBINDEX_STRING_ERROR: "
+            "The dwarf_gdbindex_string_by_offset() "
+            "string starts past the end of the "
+            "section at section_offset 0x%"
+            DW_PR_XZEROS DW_PR_DUx  ".",
+            (Dwarf_Unsigned)(uintptr_t)
+            (stringitself -gdbindexptr->gi_section_data));
+        _dwarf_error_string(dbg, error,
+            DW_DLE_GDBINDEX_STRING_ERROR,
+            dwarfstring_string(&m));
+        dwarfstring_destructor(&m);
+        return DW_DLV_ERROR;
+    }
+    res = _dwarf_check_string_valid(dbg,pooldata,
+        stringitself, section_end,
+        DW_DLE_GDBINDEX_STRING_ERROR,
+        error);
+    if (res != DW_DLV_OK) {
+        return res;
     }
     *string_ptr = (const char *)stringitself;
     return DW_DLV_OK;
@@ -524,7 +613,7 @@ dwarf_gdbindex_string_by_offset(Dwarf_Gdbindex gdbindexptr,
 void
 dwarf_gdbindex_free(Dwarf_Gdbindex indexptr)
 {
-    if(indexptr) {
+    if (indexptr) {
         Dwarf_Debug dbg = indexptr->gi_dbg;
         dwarf_dealloc(dbg,indexptr,DW_DLA_GDBINDEX);
     }

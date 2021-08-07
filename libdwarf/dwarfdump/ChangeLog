@@ -1,157 +1,257 @@
-2014-08-05  David Anderson
-     * print_gdbindex.c: A couple places: Fixed indents
-       on a comment.
-2014-08-05  David Anderson
-     * dwarfdump.c, common.c: Updated version string.
-2014-08-04  David Anderson
-     * dwarfdump.1: Mention -I option.
-     * dwarfdump.c: Add -I to help output.
-     * print_gdbindex.c: Add cu_list_len argument to
-       print_culist_array  so it can pass back the culist length
-       for use by symboltable code.  So symboltable code can
-       know what indexes are type units and which compilation
-       units.
-2014-08-03  David Anderson
-     * dwarfdump.c: Corrected typo in comment.
-     * print_debugfission.c: Removed trailing whitespace.
-       Fixed some small mistakes in the output.
-     * print_die.c: Removed trailing whitespace.
-       Fixed the section name. It was showing .debug_types
-       when not wanted.
-2014-08-02  David Anderson
-     * print_debugfission.c, print_gdbindex.c: Use the section name
-       strings returned by section-open 
-       for object files that have them (like Elf).
-2014-07-12  David Anderson
-     * print_die.c: Using a new interface to print the
-       actual section name, not just .debug_info or .debug_types.
-       dwarf_get_die_section_name();
-     * dwarfdump.c: Corrected a comment relating to
-       .gdb_index and .debug_[ct]u_index sections
-     * debugfission.c: Fix indentation mistakes.
-2014-07-11  David Anderson
-     * print_debugfission.c: Prints the offset and size tables.
-2014-07-10  David Anderson
-     * print_debugfission.c: Prints the hash table values of
-       the .debug_tu_index and .debug_cu_index sections.
-2014-07-09  David Anderson
-     * print_debugfission.c: Removed trailing whitespace
-       characters.
-2014-07-09  David Anderson
-     * Makefile.n: Add print_debugfission.o to the list.
-     * globals.h: Add print_debugfission_index() interface.
-     * print_debugfission.c: New file beginning to
-       support  print of .debug_tu_index and 
-       .debug_cu_index sections  (DWARF5).
-2014-07-02  David Anderson
-     * dwarfdump.c: A missing comma after DW_SECTNAME_GDB_INDEX
-       lead to a core dump.
-     * print_die.c: The printf format for a warning message was
-       messed up. Fixed.
-2014-07-01  David Anderson
-     * dwarfdump.c, print_gdbindex.c: Fixed indentation and trailing whitespaces.
-2014-07-01  David Anderson
-     * print_gdbindex.c: Now prints gdb_index symboltable.
-2014-06-30  David Anderson
-     * print_gdbindex.c: Add types printing.
-       Add addressarea printing.
-2014-06-29  David Anderson
-     * print_gdbindex.c: Call latest libdwarf interfaces.
-       Fix the formatting a bit.
-2014-06-28  David Anderson
-     * Makefile.in: Add print_dgbindex.o to objects list.
-     * dwarfdump.1: Add -I to options list (for gdb_index section).
-     * dwarfdump.c: Add gdbindex_flag and a call to print_gdb_index().
-     * globals.h: Add DW_HDR_GDB_INDEX to  flags.
-     * print_gdbindex.c: New file, prints .gdb_index section
-       if the section is present in an object.
-2014-05-20  David Anderson
-     * dwarfdump.c, common.c: Updated version string.
-     * print_die.c: now the dwo_id value prints as hex.
-2014-05-19  David Anderson
-     * dwarfdump.cc, common.cc: Updated version string.
-2014-05-19  David Anderson
-     *  print_die.c: Removed two unused local variables.
-2014-05-18  David Anderson
-     *  dwarfdump.c,print_die.c: Fixed indent errors and
-        removed trailing whitespace.
-2014-05-14  David Anderson
-     * print_die.c: Complete printing of DW_FORM_GNU_str_index, 
-       DW_FORM_GNU_addr_index, 
-       DW_FORM_addrx, DW_FORM_constx.
-     * print_frames.c: Now supports DW_FORM_GNU_addr_index, 
-       DW_FORM_addrx, DW_FORM_constx.
-     * dwarfdump.c: Update version string.
-       Trivial text realignment of argument strings
-       in print_error() and print_error_and_continue().
-     * common.c: Update version string.
-2014-05-11  David Anderson
-     * print_die.c: Add printing of DW_FORM_GNU_str_index, partial
-       of DW_FORM_GNU_addr_index.
-       Support for DW_OP_GNU_const_index too.
-     * dwarfdump.c: Trivial change to error strings so each is unique.
-       Update version string.
-     * common.c: Update version string.
-2014-04-15  David Anderson
-     * uri.c(hexdig): was testing 0, fixed to be '0'.
-2014-04-14  David Anderson
-     * dwarfdump.c,common.c: Update version string.
-2014-04-12  David Anderson
-     * dwarfdump.c,common.c: Update version string.
-2014-02-13  David Anderson
-     * dwarfdump.cc: Minor changes in the commentary relating
-       to the search paths for dwarfdump.conf. No code changed.
-2014-02-08  David Anderson
-     * dwarfdump.c,common.c: Update version string.
-2014-02-08  David Anderson
-     * Makefile.in: Having a single rule build two independent things
-       interacted badly with make -j 2 , so now each rule just builds
-       a single target (see tag*.list builds).
-2014-02-02  David Anderson
-     * tag_attr.list,tag_attr_ext.list,tag_tree.list,tag_tree_ext.list:
-       Removed trailing whitespace.
-2014-01-31  David Anderson
-      * addrmap.c: Forgot to add include of dwarf_tsearch.h here. Added.
-      * dwarfdump.c, common.c: Updated version string.
-2014-01-30  David Anderson
-      * print_die.c: Add limited support for DW_FORM_GNU_ref_alt
-        and DW_FORM_GNU_strp_alt.
-2014-01-29  David Anderson
-      * addrmap.c addrmap.h checkutil.c,checkutil.h,
-        common.c common.h,dwarf_tsearch.h,dwarfdump.c,dwconf.c,
-        dwconf.h,esb.c,esb.h,globals.h,makename.h,naming.c,naming.h: 
-        Remove trailing whitespace.
-      * print_abbrevs.c,print_aranges.c,print_die.c,print_frames.c,
-        print_frames.h,
-        print_lines.c,print_locs.c,print_macros.c,print_pubnames.c,
-        print_ranges.c,
-        print_reloc.c,print_reloc.h,print_sections.c,print_sections.h,
-        print_static_funcs.c,
-        print_static_vars.c,print_strings.c,print_types.c,
-        print_weaknames.c,strstrnocase.c,
-        tag_attr.c,tag_common.c,tag_common.h,tag_tree.c,
-        testesb.c,uri.c,uri.h,uritablebuild.c:
-        Remove trailing whitespace.
-2014-01-29  David Anderson
-      * dwarf_tsearchbal.c,dwarf_tsearch.h: New source files.
-      * print_frames.c: dwarf_tsearch now built in, we are
-        no longer using libc tsearch.
-      * addrmap.c: Now uses dwarf_tsearch.
-      * configure.in, config.h.in: No longer need HAVE_TSEARCH or
-        HAVE_TDESTROY
-      * configure: regenerated
-2014-01-10  David Anderson
-      * dwarfdump.c: Change // comments to /* */ comments.
-      * makename.c: Delete blank line and trailing space. Add cast
-        so gcc -ansi compiles without complaint.
-      * print_die.c, uri.c: Change // comments to /* */ comments.
-      * tag_attr.c: Add getopt.h include so gcc -ansi compiles 
-        without complaint.
-      * tag_tree.c: Add getopt.h and string.h include so gcc -ansi compiles 
-        without complaint. Add cast so strdup call to avoid warning.
-      * addr_map.c: Add cast so strdup call does not cause warning gcc -ansi.
-2014-01-04  David Anderson
-      * dwarfdump.c: Initialize a local variable to zero and
-        move a declaration (avoiding a c99-ism, the code
-        is not supposed to be using c99 features).
+2021-05-28 David Anderson
+    * dwarf_names.c,dwarf_names.h,dwarfdump-af-table.h,
+      dwarfdump-ta-ext-table.h,dwarfdump-ta-table.h,
+      dwarfdump-tt-ext-table.h,dwarfdump-tt-table.h:
+      Regenerated with new version string.
+2021-05-25 David Anderson
+    * attr_form.c,command_options.c,compiler_info.c,dwarfdump.c,
+      dwconf.c,print_tag_attributes_usage.c: Fixed indents,
+      removed trailing whitespace.
+2021-05-20 David Anderson
+    * print_die.c: If a DW_OP_skip or DW_OP_bra
+      went to a previous offset the correctness check
+      did not find it and issued an erroneous error.
+2021-05-16 David Anderson
+    * runtests.sh: A few small temporary files were
+      overlooked and left behind. Now they are deleted.
+2021-03-06 David Anderson
+    * command_options.c,dwconf.c: When a dwarfdump.conf
+      is not findable the messages are now more meaningful
+      and not quite so mysterious.
+      Added new option --show-dwarfdump-conf to show
+      the .dwarfdump.conf in use. The old and broken
+      depencence on -v is gone.
+    * glflags.c,glflags.h: New flag gf_show_dwarfdump_conf
+      for the new option. 
+    * dwarfdump.1: Documented new option --show-dwarfdump-conf
+2021-03-05 David Anderson
+    * dwarf_names.c,dwarf_names.h,dwarfdump-af-table.h,
+      dwarfdump-ta-ext-table.h,dwarfdump-ta-table.h,
+      dwarfdump-tt-ext-table.h,dwarfdump-tt-table.h:
+      Regenerated with new version string.
+2021-03-05 David Anderson
+    * dwconf.c: In case no dwarfdump.conf file found
+      in one of the standard places (such as $HOME)
+      the message printed is much clearer
+      and more specific.
+2021-02-24 David Anderson
+    * attr_form_build.c: Catastophic error texts
+      now all have a trailing newline.
+    * attr_formclass_ext.list: The _ghs_
+      attributes are now properly named as GreenHillls
+      spells them
+    * dwarf_names.c: Regenerated with the proper
+      _ghs_ names.
+    * dwarfdump-af-table.h,dwarfdump-ta-ext-table.h: Regenerated
+      with the proper _ghs_ names.
+2021-02-20 David Anderson
+    * tag_attr.c,tag_tree.c: When creating 
+      the tables below insert the precise array
+      length in the array declarations so the 
+      compiler can check them.
+    * dwarfdump-ta-table.h,dwarfdump-tt-table.h:
+      Regenerated, now with precise array sizes
+      everywhere.
+2021-02-19 David Anderson
+    * attr_form.c: Now checks attr/form-class
+      combinations and reports on them. The -ku
+      option lets one see interesting counts
+      without details cluttering the output.
+    * attr_form.h: Argument list updates
+      to support latest functionality.
+    * attr_formclass.list,attr_formclass_ext.list:
+      New declarations of attr/formclass combinations
+      one expects to see. No doubt there will be
+      more such to do.
+    * attr_form_build.c: Deleted unused locals,
+      fixing some compiler warnings.
+    * dwarf_names.h: Regenerated.
+    * dwarfdump-af-table.h: Regenerated the attr/formclass
+      table.
+    * dwarfdump-ta-ext-table.h: New extensions added.
+    * dwarfdump-tt-table.h: Regenerated with explicit
+      array sizes so compilers can check array references.
+    * dwarfdump.c: Added calls to certain cleanups
+      that have long been needed for correct
+      -ku output when reading an Elf Archive
+    * glflags.h: Added a new Dwarf_Check_Catetories entry
+      of attr_formclass_result.
+    * globals.h: New function declarations for
+      form_class and tag-tree tag-attr counts
+      in the Elf archive case.
+    * print_die.c: Added arguments to record_attr_form_use
+      now that we check and count usages.
+    * print_tag_attributes_usage.c(reset_usage_rate_tag_tree): 
+      added reset function so printing of Elf archive
+      member objects usages are correct.
+    * tag_attr_ext.list: Added GHS attributes to list.
+    * tag_common.h: Increased column counts due to 
+      adding the GHS attributes to tag_attr_ext.list.
+    * tag_tree.c: Added array size to emitted C
+      source so compiler can check references when
+      that emitted source is built into dwarfdump.
+2021-02-16 David Anderson
+    * command_options.c,compiler_info.c,glflags.c,
+      glflags.h,print_tag_attributes_usage.c: 
+      sed 's/gf_check_attr_tag/gf_check_tag_attr/' fixed the
+      ever-confusing name reversal unique to this flag.
+    * print_die.c,dwarfdump.c: The above plus correcting
+      minor mistakes in handling of -ku -kuf options.
+    * dwarfdump.1: Clarified the meaning and use of
+      -kr -ku -kuf -C as the descriptions have been
+      misleading for a long time.
+2021-02-16 David Anderson
+    * attr_form.c: Fixed indents and trailing whitespace.
+    * dwarfdump.c: Fixed trailing whitespace.
+    * print_die.c(append_useful_die_name): was not doing
+      proper dealloc (which only mattered if one
+      had turned off automatic cleanup at dwarf_finish()),
+      but now it deallocs as desired.
+2021-02-15 David Anderson
+    * dwarf_names.c,dwarf_names.h,dwarfdump-af-table.h,
+      dwarfdump-ta-ext-table.h,dwarfdump-ta-table.h,
+      dwarfdump-tt-ext-table.h,dwarfdump-tt-table.h:
+      Regenerated with new version string.
+2021-02-15 David Anderson
+    * CMakeLists.txt: Added the new source files.
+    * Makefile.am: Added the new list and build files
+      so they get into releases and the build.
+    * Makefile.in: Regenerated.
+    * attr_form.c: Added printing of attr/form/formclass
+      reports with the existing -kE option.
+    * globals.h: Renamed tag_specific_checks_setup()
+      to tag_specific_globals_setup() to better reflect
+      the meaning of the function.
+    * attr_form.h: Added declaration so dwarfdump.c can
+      call attr_form.c functions. Added idempotency
+      in include and __cplusplus ifdefs.
+    * attr_form_build.c: now we add idempotency
+      code when generating dwarfdump-af-table.h.
+    * dwarf_tsearch.h: Commentary improvements.
+    * dwarfdump-af-table.h: Regenerated.
+    * dwarfdump.c: When doing checks, set up
+      the 3key tables using attr_form.c functions.
+    * naming.c,naming.h: Added new function 
+      get_FORM_CLASS_name() to both.
+    * print_abbrevs.c: Renaming per globals.h function rename.
+    * print_die.c: Include attr_form.h, call
+      record_attr_form_use(). Renamin here too per
+      the globals.h function rename.
+    * attr_form_build.c: Added idempotency
+      and __cplusplus guards to the output 
+      file generated: dwarfdump-af-table.h.
+    * print_tag_attributes_usage.c: Improvements in
+      the specificity of some summary header lines.
+      Now calls print_attr_form_usage() to print
+      the attr/formclass/form tables (option -kE
+      or -ka ).
+    * tag_common.c: Removed unused local variables.
+    * test-mach-o-32.base,testobjLE32PE.base,testuriLE64ELf.base,
+      New baseline based on recent changes.
+2021-02-14 David Anderson
+    * print_die.c: Move the last few hundred lines to 
+      the new file print_tag_attributes_usage.c.
+    * tag_common.c: Fixed large indent botch.
+    * globals.h: Now with  print_tag_attributes_usage,
+      record_tag_usage, legal_tag_attr_combination,
+      legal_tag_tree_combination public for access from
+      print_die.c.
+    * dwarfdump.c: Reflects the simpler arguments to
+      call print_tag_attributes_usage().
+2021-02-14 David Anderson
+    * Makefile.am: Added print_tag_attributes_usage.c
+    * print_tag_attributes_usage.c: New file. Extracted
+      this code (which prints a summary of tag/attr use)
+      from print_die.c and put in this new file.
+    * Makefile.in: Regenerated.  
+    * dwarfdump.1: Made the description of -kE a bit more
+      specific.
+2021-02-14 David Anderson
+    * command_options.c: Improved some commentary.
+    * attr_form.c, attr_form_build.c: Fixed indents,
+      trailing whitespace.
+2021-02-14 David Anderson
+    * attr_form.c,attr_form.h,attr_form_build.c: Code to build
+      and use date for recording and checking attr/form
+      combinations. Not yet used by dwarfdump.
+    * attr_formclass.list: List of standard attr/form-class
+      combinations.
+    * attr_formclass_ext.list: List of extension attr/form-class
+      combinations.
+    * dwarfdump-af-table.h: Generated C array of attr/form-class
+      combinations in easy-to-use form for dwarfdump.
+    * dwarfdump-af-table.h: New, a table to quickly
+      load attr/form(class) standard matches.
+    * tag_common.c: Added code to turn FORM_CLASS
+      names into their enum values.
+    * tag_common.h: Added define of HAVE_USAGE_ATTR_FORMCLASS 
+      (not strictly necessary at this point).
+2021-02-13 David Anderson
+    * print_die.c: Somehow hundreds of lines got indented
+      4 spaces for no reason. Fixed that mistake.
+      Added a trailing > where intended in printing
+      DW_AT_decl_file when the file name is unavailable.
+2021-02-06 David Anderson
+    * print_die.c: Refactoring for clarity and adding
+      following DW_FORM_ref_sig8 links to find DW_AT_type
+      targets. Also reporting line table file numbers
+      as file names.
+2021-01-31 David Anderson
+    * dwarfdump.c: Ensures ERROR printf appear in the error count
+      (A couple errors printed at the end were not counted.)
+    * globals.h: Defining LoHiPc_s struct so we can calculate
+      the high_pc from low_pc and offset-from-low-pc values.
+      Simpler and better type checking than before.
+    * print_die.c: Eliminate sets of 4 arguments,
+      replace with LoHiPc pointer.
+    * print_hipc_lopc_attr.c: Implement filling in
+      LoHiPc_s and printing the calculated high_pc
+      when appropriate.  Much easier to understand than
+      the earlier use of bSawLowp etc. 
+2021-01-29 David Anderson
+   * tag_attr_ext.list: Added some DW_AT_GNU entries to
+     DW_TAG_skeleton unit as common extensions.
+2021-01-29 David Anderson
+   * dwarfdump.c: Added commentary and slightly modified the
+     producer names produced on CU DIE issues with the producer
+     string.
+   * glflags.c: Added commentary about the default producer name.
+2021-01-28 David Anderson
+   * print_die.c: Cleared out dead #if 0 and fixed indents.
+   * compiler_info.c,getopttest.c,makename_test.c,
+     print_hipc_lopc_attr.c,testesb.c: Cleared out dead code
+     and fixed indents.
+2021-01-28 David Anderson
+   * compiler_info.c: Added comments about an unusual
+     aspect of a couple arrays here. 
+   * dwarfdump.c: Removed a stray back-quote from a comment.
+   * print_die.c: Revised printing of dwarf expressions
+     and ensured such appear in more places. Revised error
+     detection of attributes requiring a string yet
+     that do not have any sort of string FORM.
+     Some #if 0 present to be removed shortly.
+   * print_hipc_lopc_attr.c: A new #if 0 here is a non-functional
+     improvment in printing high-pc. Not ready for prime time.
+   * print_origloclist_codes.c: added DW_LLE_start_end case
+     seen in test object.
+2021-01-23 David Anderson
+   * buildopscounttab.c,checkutil.c,command_options.c,common.c,
+     dwarf_tsearch.h,dwarf_tsearchbal.c,dwarfdump-tt-table.h,dwarfdump.c,
+     dwconf.c,dwgetopt.c,esb.c,esb.h,getopttest.c,glflags.h,globals.h,
+     makename.c,naming.c,opscounttab.h,print_die.c,print_frames.c,
+     print_gdbindex.c,print_macro.c,print_pubnames.c,print_ranges.c,
+     print_reloc.c,sanitize.c,section_bitmaps.c,tag_attr.c,
+     tag_common.c,tag_tree.c,testesb.c: Fixed indentation
+     errors.
 
+2021-01-23 David Anderson
+   * print_die.c: Now checks all instances of DW_OP_bra
+     and DW_OP_skip to be sure the target offset actually
+     is a valid target in this expression block.
+2021-01-22 David Anderson
+   * glflags.h: Moved _dwarf_print_one_expr_op() out,
+     it is now static in print_die.c
+   * print_die.c: Now notices if DW_OP_skip or DW_OP_bra
+     is in a set of operations and prefixes each operation
+     with its block offset so its easy to understand the target
+     offset.
