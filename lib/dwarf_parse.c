@@ -318,6 +318,15 @@ s_dwarf_formudata(
         *pvalue = tmp;
         return 0;
     }
+    if (form_num == DW_FORM_implicit_const) {
+        Dwarf_Signed tmp = 0;
+        if (dwarf_formsdata(attr, &tmp, &dwe) != DW_DLV_OK) {
+            fprintf(log_f, "%s: dwarf_formsdata failed: %s\n", path, dwarf_errmsg(dwe));
+            return -1;
+        }
+        *pvalue = tmp;
+        return 0;
+    }
     if (form_num == DW_FORM_block1 || form_num == DW_FORM_block2 || form_num == DW_FORM_block4) {
         Dwarf_Block *dwb = NULL;
         if (dwarf_formblock(attr, &dwb, &dwe) != DW_DLV_OK) {
@@ -342,14 +351,14 @@ s_dwarf_formudata(
             *pvalue = *pp;
             return 0;
         } else {
-            fprintf(log_f, "%s: invalid block length %d\n", path, (int) dwb->bl_len);
+            fprintf(log_f, "%s: %s: invalid block length %d\n", path, __FUNCTION__, (int) dwb->bl_len);
             return -1;
         }
     }
     if (form_num != DW_FORM_data1 && form_num != DW_FORM_data2 && form_num != DW_FORM_data4 && form_num != DW_FORM_data8) {
         const char *s = NULL;
         dwarf_get_FORM_name(form_num, &s);
-        fprintf(log_f, "%s: DW_FORM_data* expected, but %s obtained\n", path, s);
+        fprintf(log_f, "%s: %s: DW_FORM_data* expected, but %s obtained\n", path, __FUNCTION__, s);
         return -1;
     }
     if (dwarf_formudata(attr, pvalue, &dwe) != DW_DLV_OK) {
@@ -384,8 +393,8 @@ s_dwarf_formsdata(
     if (form_num != DW_FORM_sdata) {
         const char *s = NULL;
         dwarf_get_FORM_name(form_num, &s);
-        fprintf(log_f, "%s: DW_FORM_sdata expected, but %s obtained\n",
-                path, s);
+        fprintf(log_f, "%s: %s: DW_FORM_sdata expected, but %s obtained\n",
+                path, __FUNCTION__, s);
         return -1;
     }
     if (dwarf_formsdata(attr, pvalue, &dwe) != DW_DLV_OK) {
@@ -415,6 +424,15 @@ s_dwarf_formdata(
             fprintf(log_f, "%s: dwarf_formsdata failed: %s\n", path, dwarf_errmsg(dwe));
             return -1;
         }
+        return 0;
+    }
+    if (form_num == DW_FORM_implicit_const) {
+        Dwarf_Signed tmp = 0;
+        if (dwarf_formsdata(attr, &tmp, &dwe) != DW_DLV_OK) {
+            fprintf(log_f, "%s: dwarf_formsdata failed: %s\n", path, dwarf_errmsg(dwe));
+            return -1;
+        }
+        *pvalue = tmp;
         return 0;
     }
     if (form_num == DW_FORM_block1 || form_num == DW_FORM_block2 || form_num == DW_FORM_block4) {
@@ -448,7 +466,7 @@ s_dwarf_formdata(
     if (form_num != DW_FORM_data1 && form_num != DW_FORM_data2 && form_num != DW_FORM_data4 && form_num != DW_FORM_data8) {
         const char *s = NULL;
         dwarf_get_FORM_name(form_num, &s);
-        fprintf(log_f, "%s: DW_FORM_data* expected, but %s obtained\n", path, s);
+        fprintf(log_f, "%s: %s: DW_FORM_data* expected, but %s obtained\n", path, __FUNCTION__, s);
         return -1;
     }
     Dwarf_Unsigned tmp = 0;
@@ -605,6 +623,10 @@ dump_die(FILE *out, Dwarf_Debug dbg, Dwarf_Die die)
             Dwarf_Addr value = 0;
             if (dwarf_formaddr(attrs[i], &value, &dwe) != DW_DLV_OK) goto fail;
             fprintf(out, "        %s,%s=%016llx\n", attr_name, form_name, value);
+        } else if (form_num == DW_FORM_implicit_const) {
+            Dwarf_Signed value = 0;
+            if (dwarf_formsdata(attrs[i], &value, &dwe) != DW_DLV_OK) goto fail;
+            fprintf(out, "        %s,%s=<%lld>\n", attr_name, form_name, value);
         } else {
             fprintf(out, "        %s,%s=VALUE UNHANDLED\n", attr_name, form_name);
         }
@@ -813,7 +835,10 @@ parse_pointer_type_die(
 
     Dwarf_Unsigned bs = 0;
     if (bs_attr) {
-        if (s_dwarf_formudata(log_f, path, bs_attr, &bs) < 0) goto done;
+        if (s_dwarf_formudata(log_f, path, bs_attr, &bs) < 0) {
+            dump_die(log_f, dbg, die);
+            goto done;
+        }
     }
 
     if (!type_attr) {
