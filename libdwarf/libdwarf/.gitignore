@@ -1,0 +1,6 @@
+*.lo
+.deps
+.libs
+ar-output-temp
+gennames
+libdwarf.la
