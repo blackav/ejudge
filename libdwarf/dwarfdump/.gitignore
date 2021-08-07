@@ -1,0 +1,13 @@
+tmp-tt-table.c
+tmp-tt-ext-table.c
+.deps
+dwarfdump
+tag_attr_build
+tag_tree_build
+*.tmp
+tmp-t1.c
+tmp-t2.c
+tmp-t3.c
+tmp-t4.c
+tmp-ta-ext-table.c
+tmp-ta-table.c
