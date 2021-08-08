@@ -148,7 +148,7 @@ CREATE TABLE %smembers
        FOREIGN KEY (user_id) REFERENCES logins (user_id)
        ) ENGINE=InnoDB;
 
-CREATE TABLE %sgroups
+CREATE TABLE %sejgroups
 (
     group_id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     group_name VARCHAR(128) NOT NULL UNIQUE KEY,
@@ -165,7 +165,7 @@ CREATE TABLE %sgroupmembers
     user_id INT UNSIGNED NOT NULL,
     rights VARCHAR(512) DEFAULT NULL,
     PRIMARY KEY (group_id, user_id),
-    FOREIGN KEY g(group_id) REFERENCES groups(group_id),
+    FOREIGN KEY g(group_id) REFERENCES ejgroups(group_id),
     FOREIGN KEY u(user_id) REFERENCES logins(user_id)
 ) ENGINE=InnoDB;
 
@@ -194,4 +194,4 @@ ALTER TABLE %smembers  ADD INDEX members_user_id_idx (user_id),
 ALTER TABLE %sgroupmembers ADD INDEX groupmembers_group_id_idx (group_id),
                            ADD INDEX groupmembers_user_id_idx (user_id);
 
-INSERT INTO %sconfig VALUES ('version', '10');
+INSERT INTO %sconfig VALUES ('version', '11');

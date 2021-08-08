@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,8 @@
 #include <assert.h>
 
 #include "methods.inc.c"
+
+#define GROUPS_TABLE_NAME "ejgroups"
 
 /* plugin entry point */
 struct uldb_plugin_iface plugin_uldb_mysql =
@@ -576,7 +578,7 @@ check_func(void *data)
     err("invalid 'version' key value");
     return -1;
   }
-  // current version is 9, so cannot handle future version
+  // current version is 11, so cannot handle future version
   if (version == 1) {
     if (state->mi->simple_fquery(state->md, "CREATE TABLE %sgroups(group_id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, group_name VARCHAR(128) NOT NULL UNIQUE KEY, description VARCHAR(512) DEFAULT NULL, created_by INT NOT NULL, create_time DATETIME NOT NULL, last_change_time DATETIME DEFAULT NULL, FOREIGN KEY (created_by) REFERENCES %slogins(user_id));", state->md->table_prefix, state->md->table_prefix) < 0)
       return -1;
@@ -663,7 +665,13 @@ check_func(void *data)
       return -1;
     version = 10;
   }
-  if (version != 10) {
+  if (version == 10) {
+    if (state->mi->simple_fquery(state->md, "RENAME TABLE %sgroups TO %s%s ;", state->md->table_prefix, state->md->table_prefix, GROUPS_TABLE_NAME) < 0)
+      return -1;
+    if (state->mi->simple_fquery(state->md, "UPDATE %sconfig SET config_val = '11' WHERE config_key = 'version' ;", state->md->table_prefix) < 0)
+      return -1;
+  }
+  if (version != 11) {
     err("cannot handle database version %d", version);
     return -1;
   }
@@ -4538,8 +4546,8 @@ get_group_iterator_func(void *data)
   iter->b = group_iterator_funcs;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "SELECT * FROM %sgroups WHERE 1 ORDER BY group_id ;",
-          state->md->table_prefix);
+  fprintf(cmd_f, "SELECT * FROM %s%s WHERE 1 ORDER BY group_id ;",
+          state->md->table_prefix, GROUPS_TABLE_NAME);
   fclose(cmd_f); cmd_f = 0;
   if (state->mi->query(state->md, cmd_t, cmd_z, USERGROUP_WIDTH) < 0)
     goto fail;
@@ -4594,8 +4602,8 @@ get_group_by_name_func(
   }
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "SELECT * FROM %sgroups WHERE group_name = ",
-          state->md->table_prefix);
+  fprintf(cmd_f, "SELECT * FROM %s%s WHERE group_name = ",
+          state->md->table_prefix, GROUPS_TABLE_NAME);
   state->mi->write_escaped_string(state->md, cmd_f, 0, group_name);
   fprintf(cmd_f, " ;");
   fclose(cmd_f); cmd_f = 0;
@@ -4643,8 +4651,8 @@ try_new_group_name_func(
 
   convert_to_pattern(sql_patt, format);
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "SELECT group_name FROM %sgroups WHERE group_name LIKE(",
-          state->md->table_prefix);
+  fprintf(cmd_f, "SELECT group_name FROM %s%s WHERE group_name LIKE(",
+          state->md->table_prefix, GROUPS_TABLE_NAME);
   state->mi->write_escaped_string(state->md, cmd_f, 0, sql_patt);
   fprintf(cmd_f, ") ;");
   close_memstream(cmd_f); cmd_f = 0;
@@ -4708,7 +4716,7 @@ create_group_func(
   int group_id = 0;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "INSERT INTO %sgroups(group_name, created_by, create_time) VALUES(", state->md->table_prefix);
+  fprintf(cmd_f, "INSERT INTO %s%s(group_name, created_by, create_time) VALUES(", state->md->table_prefix, GROUPS_TABLE_NAME);
   state->mi->write_escaped_string(state->md, cmd_f, 0, group_name);
   fprintf(cmd_f, ", %d, NOW()) ;", created_by);
   close_memstream(cmd_f); cmd_f = 0;
@@ -4737,8 +4745,8 @@ remove_group_func(
                            state->md->table_prefix, group_id);
   state->mi->free_res(state->md);
   state->mi->simple_fquery(state->md,
-                           "DELETE FROM %sgroups WHERE group_id = %d;",
-                           state->md->table_prefix, group_id);
+                           "DELETE FROM %s%s WHERE group_id = %d;",
+                           state->md->table_prefix, GROUPS_TABLE_NAME, group_id);
   state->mi->free_res(state->md);
   group_cache_drop(state);
   return 0;
@@ -4779,7 +4787,7 @@ edit_group_field_func(
   }
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "UPDATE %sgroups SET ", state->md->table_prefix);
+  fprintf(cmd_f, "UPDATE %s%s SET ", state->md->table_prefix, GROUPS_TABLE_NAME);
   switch (field) {
   case USERLIST_GRP_GROUP_NAME:
     fprintf(cmd_f, " group_name = ");
@@ -4834,7 +4842,7 @@ clear_group_field_func(
   }
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "UPDATE %sgroups SET ", state->md->table_prefix);
+  fprintf(cmd_f, "UPDATE %s%s SET ", state->md->table_prefix, GROUPS_TABLE_NAME);
   switch (field) {
   case USERLIST_GRP_DESCRIPTION:
     fprintf(cmd_f, " description = NULL ");
@@ -4874,8 +4882,8 @@ get_group_func(
   }
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "SELECT * FROM %sgroups WHERE group_id = %d ;",
-          state->md->table_prefix, group_id);
+  fprintf(cmd_f, "SELECT * FROM %s%s WHERE group_id = %d ;",
+          state->md->table_prefix, GROUPS_TABLE_NAME, group_id);
   fclose(cmd_f); cmd_f = 0;
   if (state->mi->query_one_row(state->md, cmd_t, cmd_z, USERGROUP_WIDTH) < 0)
     goto fail;
@@ -5822,8 +5830,8 @@ get_group_iterator_2_func(
   iter->b = group_iterator_funcs;
 
   cmd_f = open_memstream(&cmd_t, &cmd_z);
-  fprintf(cmd_f, "SELECT * FROM %sgroups WHERE 1 ORDER BY group_id LIMIT %d, %d;",
-          state->md->table_prefix, offset, count);
+  fprintf(cmd_f, "SELECT * FROM %s%s WHERE 1 ORDER BY group_id LIMIT %d, %d;",
+          state->md->table_prefix, GROUPS_TABLE_NAME, offset, count);
   fclose(cmd_f); cmd_f = 0;
   if (state->mi->query(state->md, cmd_t, cmd_z, USERGROUP_WIDTH) < 0)
     goto fail;
@@ -5864,7 +5872,7 @@ get_group_count_func(
   unsigned char cmdbuf[1024];
   int cmdlen, count = 0;
 
-  snprintf(cmdbuf, sizeof(cmdbuf), "SELECT COUNT(group_id) FROM %sgroups WHERE 1 ;", state->md->table_prefix);
+  snprintf(cmdbuf, sizeof(cmdbuf), "SELECT COUNT(group_id) FROM %s%s WHERE 1 ;", state->md->table_prefix, GROUPS_TABLE_NAME);
 
   cmdlen = strlen(cmdbuf);
   if (state->mi->query_one_row(state->md, cmdbuf, cmdlen, 1) < 0) goto fail;
