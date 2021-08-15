@@ -670,6 +670,7 @@ check_func(void *data)
       return -1;
     if (state->mi->simple_fquery(state->md, "UPDATE %sconfig SET config_val = '11' WHERE config_key = 'version' ;", state->md->table_prefix) < 0)
       return -1;
+    version = 11;
   }
   if (version != 11) {
     err("cannot handle database version %d", version);
