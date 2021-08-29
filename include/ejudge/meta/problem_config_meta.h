@@ -62,6 +62,7 @@ enum
   META_PROBLEM_CONFIG_SECTION_stand_last_column,
   META_PROBLEM_CONFIG_SECTION_disable_security,
   META_PROBLEM_CONFIG_SECTION_enable_suid_run,
+  META_PROBLEM_CONFIG_SECTION_enable_container,
   META_PROBLEM_CONFIG_SECTION_enable_multi_header,
   META_PROBLEM_CONFIG_SECTION_use_lang_multi_header,
   META_PROBLEM_CONFIG_SECTION_require_any,

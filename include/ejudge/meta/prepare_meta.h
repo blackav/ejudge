@@ -384,6 +384,7 @@ enum
   CNTSPROB_stand_last_column,
   CNTSPROB_disable_security,
   CNTSPROB_enable_suid_run,
+  CNTSPROB_enable_container,
   CNTSPROB_valuer_sets_marked,
   CNTSPROB_ignore_unmarked,
   CNTSPROB_disable_stderr,

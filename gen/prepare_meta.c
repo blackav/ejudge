@@ -424,6 +424,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_stand_last_column] = { CNTSPROB_stand_last_column, 'f', XSIZE(struct section_problem_data, stand_last_column), "stand_last_column", XOFFSET(struct section_problem_data, stand_last_column) },
   [CNTSPROB_disable_security] = { CNTSPROB_disable_security, 'f', XSIZE(struct section_problem_data, disable_security), "disable_security", XOFFSET(struct section_problem_data, disable_security) },
   [CNTSPROB_enable_suid_run] = { CNTSPROB_enable_suid_run, 'f', XSIZE(struct section_problem_data, enable_suid_run), "enable_suid_run", XOFFSET(struct section_problem_data, enable_suid_run) },
+  [CNTSPROB_enable_container] = { CNTSPROB_enable_container, 'f', XSIZE(struct section_problem_data, enable_container), "enable_container", XOFFSET(struct section_problem_data, enable_container) },
   [CNTSPROB_valuer_sets_marked] = { CNTSPROB_valuer_sets_marked, 'f', XSIZE(struct section_problem_data, valuer_sets_marked), "valuer_sets_marked", XOFFSET(struct section_problem_data, valuer_sets_marked) },
   [CNTSPROB_ignore_unmarked] = { CNTSPROB_ignore_unmarked, 'f', XSIZE(struct section_problem_data, ignore_unmarked), "ignore_unmarked", XOFFSET(struct section_problem_data, ignore_unmarked) },
   [CNTSPROB_disable_stderr] = { CNTSPROB_disable_stderr, 'f', XSIZE(struct section_problem_data, disable_stderr), "disable_stderr", XOFFSET(struct section_problem_data, disable_stderr) },
