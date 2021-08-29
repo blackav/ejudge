@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2005-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2005-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1497,6 +1497,8 @@ prepare_unparse_prob(
     unparse_bool(f, "disable_security", prob->disable_security);
   if (prob->enable_suid_run >= 0)
     unparse_bool(f, "enable_suid_run", prob->enable_suid_run);
+  if (prob->enable_container >= 0)
+    unparse_bool(f, "enable_container", prob->enable_container);
   if (prob->enable_multi_header >= 0)
     unparse_bool(f, "enable_multi_header", prob->enable_multi_header);
   if (prob->use_lang_multi_header >= 0)
@@ -1913,6 +1915,8 @@ prepare_unparse_actual_prob(
     unparse_bool(f, "disable_security", prob->disable_security);
   if (prob->enable_suid_run > 0)
     unparse_bool(f, "enable_suid_run", prob->enable_suid_run);
+  if (prob->enable_container > 0)
+    unparse_bool(f, "enable_container", prob->enable_container);
   if (prob->enable_multi_header > 0)
     unparse_bool(f, "enable_multi_header", prob->enable_multi_header);
   if (prob->use_lang_multi_header > 0)

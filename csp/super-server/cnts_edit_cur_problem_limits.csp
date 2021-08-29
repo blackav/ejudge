@@ -18,6 +18,7 @@
         <%@expand MENU_YESNO3 "enable_kill_all" "limits" "Kill all processes of ejuser" "300" %>
         <%@expand MENU_YESNO3 "disable_security" "limits" "Disable security restrictions" "300" %>
         <%@expand MENU_YESNO3 "enable_suid_run" "limits" "Enable SUID helper" "300" %>
+        <%@expand MENU_YESNO3 "enable_container" "limits" "Enable Container" "300" %>
         <%@expand MENU_TEXTFIELD "lang_time_adj" "limits" "Language-specific time-limit adjustment (s)" "300" %>
         <%@expand MENU_TEXTFIELD "lang_time_adj_millis" "limits" "Language-specific time-limit adjustment (ms)" "300" %>
         <%@expand MENU_TEXTFIELD "lang_max_vm_size" "limits" "Language-specific memory limit" "300" %>
@@ -81,6 +82,7 @@ function popupLimitsDialog(e, skipField)
     <%@expand COPY_YESNO3 "enable_kill_all"  %>
     <%@expand COPY_YESNO3 "disable_security"  %>
     <%@expand COPY_YESNO3 "enable_suid_run"  %>
+    <%@expand COPY_YESNO3 "enable_container"  %>
     <%@expand COPY_TEXTFIELD "lang_time_adj"  %>
     <%@expand COPY_TEXTFIELD "lang_time_adj_millis"  %>
     <%@expand COPY_TEXTFIELD "lang_max_vm_size"  %>

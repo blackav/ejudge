@@ -2,7 +2,7 @@
 #ifndef __PROBLEM_CONFIG_H__
 #define __PROBLEM_CONFIG_H__
 
-/* Copyright (C) 2012-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
@@ -90,6 +90,7 @@ struct problem_config_section
   ejintbool_t stand_last_column;
   ejintbool_t disable_security;
   ejintbool_t enable_suid_run;
+  ejintbool_t enable_container;
   ejintbool_t enable_multi_header;
   ejintbool_t use_lang_multi_header;
   ejintbool_t require_any;

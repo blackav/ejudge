@@ -426,6 +426,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(disable_submit_after_ok, "L"),
   PROBLEM_PARAM(disable_security, "L"),
   PROBLEM_PARAM(enable_suid_run, "L"),
+  PROBLEM_PARAM(enable_container, "L"),
   PROBLEM_PARAM(enable_multi_header, "L"),
   PROBLEM_PARAM(use_lang_multi_header, "L"),
   PROBLEM_PARAM(require_any, "L"),
@@ -1296,6 +1297,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->disable_submit_after_ok = -1;
   p->disable_security = -1;
   p->enable_suid_run = -1;
+  p->enable_container = -1;
   p->enable_multi_header = -1;
   p->use_lang_multi_header = -1;
   p->require_any = -1;
@@ -3656,6 +3658,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_skip_testing, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_disable_security, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_suid_run, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_enable_container, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_enable_multi_header, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_use_lang_multi_header, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_require_any, prob, aprob, g);
@@ -5992,6 +5995,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->stand_last_column = in->stand_last_column;
   out->disable_security = in->disable_security;
   out->enable_suid_run = in->enable_suid_run;
+  out->enable_container = in->enable_container;
   out->enable_multi_header = in->enable_multi_header;
   out->use_lang_multi_header = in->use_lang_multi_header;
   out->require_any = in->require_any;
@@ -6248,6 +6252,7 @@ prepare_set_prob_value(
   INHERIT_BOOLEAN_2(disable_submit_after_ok);
   INHERIT_BOOLEAN(disable_security);
   INHERIT_BOOLEAN(enable_suid_run);
+  INHERIT_BOOLEAN(enable_container);
   INHERIT_BOOLEAN(enable_multi_header);
   INHERIT_BOOLEAN(use_lang_multi_header);
   INHERIT_BOOLEAN(require_any);
@@ -6844,6 +6849,7 @@ prepare_set_all_prob_values(
     CNTSPROB_stand_last_column,
     CNTSPROB_disable_security,
     CNTSPROB_enable_suid_run,
+    CNTSPROB_enable_container,
     CNTSPROB_enable_multi_header,
     CNTSPROB_use_lang_multi_header,
     CNTSPROB_require_any,

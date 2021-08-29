@@ -2,7 +2,7 @@
 #ifndef __PREPARE_H__
 #define __PREPARE_H__
 
-/* Copyright (C) 2000-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2000-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -940,6 +940,8 @@ struct section_problem_data
   ejbyteflag_t disable_security;
   /** enable suid helpers for this problem */
   ejbyteflag_t enable_suid_run;
+  /** enable container for this problem */
+  ejbyteflag_t enable_container;
 
   /** if the valuer also sets the marked flag */
   ejbyteflag_t valuer_sets_marked;

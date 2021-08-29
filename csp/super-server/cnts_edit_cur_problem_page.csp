@@ -1562,6 +1562,7 @@ function viewDialogOnChange(field)
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_kill_all" "Limits" "Kill all processes of ejuser" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "disable_security" "Limits" "Disable security restrictions" %>
             <%@expand ORIG_INHERITABLE_BOOLEAN "enable_suid_run" "Limits" "Enable SUID helper" %>
+            <%@expand ORIG_INHERITABLE_BOOLEAN "enable_container" "Limits" "Enable Linux Container" %>
             <%@expand ORIG_ENV "lang_time_adj" "Limits" "Language-specific time-limit adjustment (s)" %>
             <%@expand ORIG_ENV "lang_time_adj_millis" "Limits" "Language-specific time-limit adjustment (ms)" %>
             <%@expand ORIG_ENV "lang_max_vm_size" "Limits" "Language-specific memory limit" %>
