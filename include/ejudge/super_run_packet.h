@@ -48,6 +48,7 @@ struct super_run_in_global_packet
   ejintbool_t detect_violations;
   ejintbool_t enable_memory_limit_error;
   ejintbool_t suid_run;
+  ejintbool_t enable_container;
   ejintbool_t enable_max_stack_size;
   int user_id;
   unsigned char *user_login;
@@ -175,6 +176,7 @@ struct super_run_in_problem_packet
   unsigned char *uuid;
   ejintbool_t enable_extended_info;
   ejintbool_t stop_on_first_fail;
+  unsigned char *container_options;
 
   int type_val META_ATTRIB((meta_hidden));
 };
