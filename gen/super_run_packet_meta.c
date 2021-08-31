@@ -28,6 +28,7 @@ static struct meta_info_item meta_info_super_run_in_global_packet_data[] =
   [META_SUPER_RUN_IN_GLOBAL_PACKET_detect_violations] = { META_SUPER_RUN_IN_GLOBAL_PACKET_detect_violations, 'B', XSIZE(struct super_run_in_global_packet, detect_violations), "detect_violations", XOFFSET(struct super_run_in_global_packet, detect_violations) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_enable_memory_limit_error] = { META_SUPER_RUN_IN_GLOBAL_PACKET_enable_memory_limit_error, 'B', XSIZE(struct super_run_in_global_packet, enable_memory_limit_error), "enable_memory_limit_error", XOFFSET(struct super_run_in_global_packet, enable_memory_limit_error) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_suid_run] = { META_SUPER_RUN_IN_GLOBAL_PACKET_suid_run, 'B', XSIZE(struct super_run_in_global_packet, suid_run), "suid_run", XOFFSET(struct super_run_in_global_packet, suid_run) },
+  [META_SUPER_RUN_IN_GLOBAL_PACKET_enable_container] = { META_SUPER_RUN_IN_GLOBAL_PACKET_enable_container, 'B', XSIZE(struct super_run_in_global_packet, enable_container), "enable_container", XOFFSET(struct super_run_in_global_packet, enable_container) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_enable_max_stack_size] = { META_SUPER_RUN_IN_GLOBAL_PACKET_enable_max_stack_size, 'B', XSIZE(struct super_run_in_global_packet, enable_max_stack_size), "enable_max_stack_size", XOFFSET(struct super_run_in_global_packet, enable_max_stack_size) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_user_id] = { META_SUPER_RUN_IN_GLOBAL_PACKET_user_id, 'i', XSIZE(struct super_run_in_global_packet, user_id), "user_id", XOFFSET(struct super_run_in_global_packet, user_id) },
   [META_SUPER_RUN_IN_GLOBAL_PACKET_user_login] = { META_SUPER_RUN_IN_GLOBAL_PACKET_user_login, 's', XSIZE(struct super_run_in_global_packet, user_login), "user_login", XOFFSET(struct super_run_in_global_packet, user_login) },
@@ -201,6 +202,7 @@ static struct meta_info_item meta_info_super_run_in_problem_packet_data[] =
   [META_SUPER_RUN_IN_PROBLEM_PACKET_uuid] = { META_SUPER_RUN_IN_PROBLEM_PACKET_uuid, 's', XSIZE(struct super_run_in_problem_packet, uuid), "uuid", XOFFSET(struct super_run_in_problem_packet, uuid) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_enable_extended_info] = { META_SUPER_RUN_IN_PROBLEM_PACKET_enable_extended_info, 'B', XSIZE(struct super_run_in_problem_packet, enable_extended_info), "enable_extended_info", XOFFSET(struct super_run_in_problem_packet, enable_extended_info) },
   [META_SUPER_RUN_IN_PROBLEM_PACKET_stop_on_first_fail] = { META_SUPER_RUN_IN_PROBLEM_PACKET_stop_on_first_fail, 'B', XSIZE(struct super_run_in_problem_packet, stop_on_first_fail), "stop_on_first_fail", XOFFSET(struct super_run_in_problem_packet, stop_on_first_fail) },
+  [META_SUPER_RUN_IN_PROBLEM_PACKET_container_options] = { META_SUPER_RUN_IN_PROBLEM_PACKET_container_options, 's', XSIZE(struct super_run_in_problem_packet, container_options), "container_options", XOFFSET(struct super_run_in_problem_packet, container_options) },
 };
 
 int meta_super_run_in_problem_packet_get_type(int tag)

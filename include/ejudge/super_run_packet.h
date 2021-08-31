@@ -2,7 +2,7 @@
 #ifndef __SUPER_RUN_PACKET_H__
 #define __SUPER_RUN_PACKET_H__
 
-/* Copyright (C) 2012-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or
