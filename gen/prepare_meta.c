@@ -481,6 +481,7 @@ static struct meta_info_item meta_info_section_problem_data_data[] =
   [CNTSPROB_header_pat] = { CNTSPROB_header_pat, 's', XSIZE(struct section_problem_data, header_pat), "header_pat", XOFFSET(struct section_problem_data, header_pat) },
   [CNTSPROB_footer_pat] = { CNTSPROB_footer_pat, 's', XSIZE(struct section_problem_data, footer_pat), "footer_pat", XOFFSET(struct section_problem_data, footer_pat) },
   [CNTSPROB_compiler_env_pat] = { CNTSPROB_compiler_env_pat, 's', XSIZE(struct section_problem_data, compiler_env_pat), "compiler_env_pat", XOFFSET(struct section_problem_data, compiler_env_pat) },
+  [CNTSPROB_container_options] = { CNTSPROB_container_options, 's', XSIZE(struct section_problem_data, container_options), "container_options", XOFFSET(struct section_problem_data, container_options) },
   [CNTSPROB_token_info] = { CNTSPROB_token_info, '?', XSIZE(struct section_problem_data, token_info), NULL, XOFFSET(struct section_problem_data, token_info) },
   [CNTSPROB_score_tests] = { CNTSPROB_score_tests, 's', XSIZE(struct section_problem_data, score_tests), "score_tests", XOFFSET(struct section_problem_data, score_tests) },
   [CNTSPROB_standard_checker] = { CNTSPROB_standard_checker, 's', XSIZE(struct section_problem_data, standard_checker), "standard_checker", XOFFSET(struct section_problem_data, standard_checker) },

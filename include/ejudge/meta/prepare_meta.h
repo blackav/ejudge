@@ -441,6 +441,7 @@ enum
   CNTSPROB_header_pat,
   CNTSPROB_footer_pat,
   CNTSPROB_compiler_env_pat,
+  CNTSPROB_container_options,
   CNTSPROB_token_info,
   CNTSPROB_score_tests,
   CNTSPROB_standard_checker,
