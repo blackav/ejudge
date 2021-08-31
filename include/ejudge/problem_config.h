@@ -189,6 +189,7 @@ struct problem_config_section
   unsigned char *footer_pat;
   unsigned char *compiler_env_pat;
   unsigned char *uuid;
+  unsigned char *container_options;
 
   char **test_sets;
   char **date_penalty;

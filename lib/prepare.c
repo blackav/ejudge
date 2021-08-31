@@ -553,6 +553,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(footer_pat, "S"),
   PROBLEM_PARAM(compiler_env_pat, "S"),
   PROBLEM_PARAM(statement_env, "x"),
+  PROBLEM_PARAM(container_options, "S"),
 
   { 0, 0, 0, 0 }
 };
@@ -1376,6 +1377,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   xfree(p->header_pat);
   xfree(p->footer_pat);
   xfree(p->compiler_env_pat);
+  xfree(p->container_options);
   sarray_free(p->test_sets);
   sarray_free(p->date_penalty);
   sarray_free(p->group_start_date);
@@ -3637,6 +3639,7 @@ set_defaults(
     prepare_set_prob_value(CNTSPROB_team_show_judge_report, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_show_checker_comment, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_ignore_compile_errors, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_container_options, prob, aprob, g);
 
     prepare_set_prob_value(CNTSPROB_tests_to_accept, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_accept_partial, prob, aprob, g);
@@ -6026,6 +6029,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   xstrdup3(&out->header_pat, in->header_pat);
   xstrdup3(&out->footer_pat, in->footer_pat);
   xstrdup3(&out->compiler_env_pat, in->compiler_env_pat);
+  xstrdup3(&out->container_options, in->container_options);
   //out->token_info = NULL;
   xstrdup3(&out->score_tests, in->score_tests);
   xstrdup3(&out->standard_checker, in->standard_checker);
@@ -6231,6 +6235,11 @@ prepare_set_prob_value(
   case CNTSPROB_compiler_env_pat:
     if (!out->compiler_env_pat && abstr && abstr->compiler_env_pat) {
       out->compiler_env_pat = xstrdup(abstr->compiler_env_pat);
+    }
+    break;
+  case CNTSPROB_container_options:
+    if (!out->container_options && abstr && abstr->container_options) {
+      out->container_options = xstrdup(abstr->container_options);
     }
     break;
 
@@ -6878,6 +6887,7 @@ prepare_set_all_prob_values(
     CNTSPROB_header_pat,
     CNTSPROB_footer_pat,
     CNTSPROB_compiler_env_pat,
+    CNTSPROB_container_options,
     //CNTSPROB_token_info,
     //CNTSPROB_score_tests,
     //CNTSPROB_standard_checker,

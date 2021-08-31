@@ -1059,6 +1059,8 @@ struct section_problem_data
   unsigned char *footer_pat;
   /** compiler environment pattern for multi-header mode */
   unsigned char *compiler_env_pat;
+  /** options for container */
+  unsigned char *container_options;
 
   struct token_info *token_info META_ATTRIB((meta_private));
 
