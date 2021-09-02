@@ -63,6 +63,7 @@ ej-suid-exec
 ej-suid-chown
 ej-suid-kill
 ej-suid-ipcrm
+ej-suid-container
 genmatcher2
 ejudge-suid-setup
 make-js-actions
