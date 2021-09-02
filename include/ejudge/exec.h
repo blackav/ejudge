@@ -160,6 +160,7 @@ int task_SetUmask(tpTask, int);
 
 int task_GetIPCObjectCount(tTask *tsk);
 int task_GetOrphanProcessCount(tTask *tsk);
+int task_WasCheckFailed(tTask *tsk);
 
 #ifdef __cplusplus
 }

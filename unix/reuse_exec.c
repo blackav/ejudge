@@ -141,6 +141,7 @@ struct tTask
   int status_fd;                /* the receiving end of data pipe for container execution */
   int ipc_object_count;         /* the count of the remaining IPC objects */
   int orphan_process_count;     /* the count of the remaining processes */
+  int was_check_failed;         /* container failed */
 };
 
 #define PIDARR_SIZE 32
@@ -1647,7 +1648,7 @@ task_StartContainer(tTask *tsk)
     fprintf(spec_f, "lt%lld", max_time_ms);
   }
   if (tsk->max_real_time > 0) {
-    fprintf(spec_f, "lr%lld", (long long) tsk->max_real_time);
+    fprintf(spec_f, "lr%lld", tsk->max_real_time * 1000LL);
   }
 
   if (tsk->container_options) fputs(tsk->container_options, spec_f);
@@ -2355,6 +2356,9 @@ task_WaitContainer(tTask *tsk)
     pid = wait4(tsk->pid, &stat, 0, &usage);
     if (pid < 0) {
       write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: wait4 failed: %s\n", os_ErrorMsg());
+      xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
+      asprintf(&tsk->last_error_msg, "wait4 failed: %s", os_ErrorMsg());
+      tsk->was_check_failed = 1;
       return NULL;
     }
 
@@ -2366,16 +2370,30 @@ task_WaitContainer(tTask *tsk)
   int resp_z = read(tsk->status_fd, resp_buf, sizeof(resp_buf));
   if (resp_z < 0) {
     write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: response read: %s\n", os_ErrorMsg());
+    xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
+    asprintf(&tsk->last_error_msg, "read failed: %s", os_ErrorMsg());
+    tsk->was_check_failed = 1;
     return NULL;
   }
   close(tsk->status_fd); tsk->status_fd = -1;
   if (resp_z + 1 >= sizeof(resp_buf)) {
     write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: response reply is too big\n");
+    xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
+    asprintf(&tsk->last_error_msg, "response reply is too big");
+    tsk->was_check_failed = 1;
+    return NULL;
+  }
+  if (!resp_z) {
+    write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: empty response\n");
+    xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
+    asprintf(&tsk->last_error_msg, "empty response");
+    tsk->was_check_failed = 1;
     return NULL;
   }
   resp_buf[resp_z] = 0;
   char *resp_p = resp_buf;
   if (*resp_p == '1') {
+    if (*resp_p == 'L') ++resp_p;
     ++resp_p;
     if (*resp_p >= '0' && *resp_p <= '9') {
       char *eptr = NULL;
@@ -2384,13 +2402,22 @@ task_WaitContainer(tTask *tsk)
       if (*eptr == ',') ++eptr;
       if (errno || v < 0 || eptr + v > resp_buf + resp_z) {
         write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
+        xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
+        asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+        tsk->was_check_failed = 1;
         return NULL;
       }
       eptr[v] = 0;
       write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: container failed: %s\n", eptr);
+      xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
+      asprintf(&tsk->last_error_msg, "container failed: %s", eptr);
+      tsk->was_check_failed = 1;
       return NULL;
     } else if (*resp_p) {
       write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
+      xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
+      asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+      tsk->was_check_failed = 1;
       return NULL;
     }
   }
@@ -2411,6 +2438,9 @@ task_WaitContainer(tTask *tsk)
     long v = strtol(resp_p + 1, &eptr, 10);
     if (errno || v < 0 || v > 255) {
       write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid exit code from container: %s\n", resp_buf);
+      xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
+      asprintf(&tsk->last_error_msg, "invalid exit code from container: %s", resp_buf);
+      tsk->was_check_failed = 1;
       return NULL;
     }
     prc_exit_code = v;
@@ -2422,12 +2452,18 @@ task_WaitContainer(tTask *tsk)
     long v = strtol(resp_p + 1, &eptr, 10);
     if (errno || v < 1 || v > 64) {
       write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid termination signal from container: %s\n", resp_buf);
+      xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
+      asprintf(&tsk->last_error_msg, "invalid termination signal from container: %s", resp_buf);
+      tsk->was_check_failed = 1;
       return NULL;
     }
     prc_term_signal = v;
     resp_p = eptr;
   } else {
     write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
+    xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
+    asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+    tsk->was_check_failed = 1;
     return NULL;
   }
 
@@ -2449,6 +2485,9 @@ task_WaitContainer(tTask *tsk)
       long v = strtol(resp_p + 1, &eptr, 10);
       if (errno || eptr == resp_p + 1 || v < 0 || (int) v != v) {
         write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
+        xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
+        asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+        tsk->was_check_failed = 1;
         return NULL;
       }
       if (*resp_p == 'a') prc_nvcsw = v;
@@ -2462,6 +2501,9 @@ task_WaitContainer(tTask *tsk)
       long long v = strtoll(resp_p + 1, &eptr, 10);
       if (errno || eptr == resp_p + 1 || v < 0) {
         write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
+        xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
+        asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+        tsk->was_check_failed = 1;
         return NULL;
       }
       if (*resp_p == 'T') prc_cpu_time_us = v;
@@ -2479,6 +2521,9 @@ task_WaitContainer(tTask *tsk)
       if (*eptr == ',') ++eptr;
       if (errno || eptr == resp_p + 1 || v < 0 || (int) v != v || eptr + v > resp_buf + resp_z) {
         write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
+        xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
+        asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+        tsk->was_check_failed = 1;
         return NULL;
       }
       char tmp = eptr[v];
@@ -3253,4 +3298,12 @@ task_GetOrphanProcessCount(tTask *tsk)
   task_init_module();
   ASSERT(tsk);
   return tsk->orphan_process_count;
+}
+
+int
+task_WasCheckFailed(tTask *tsk)
+{
+  task_init_module();
+  ASSERT(tsk);
+  return tsk->was_check_failed;
 }

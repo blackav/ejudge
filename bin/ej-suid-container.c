@@ -74,6 +74,12 @@
 #define EXEC_GROUP "ejexec"
 #endif
 
+#ifndef EJUDGE_PREFIX_DIR
+#define EJUDGE_PREFIX_DIR "/opt/ejudge"
+#endif
+
+static char safe_dir_path[PATH_MAX];
+
 static const char *program_name = "prog";
 static int response_fd = 2;
 static char *log_s = NULL;
@@ -141,7 +147,7 @@ fatal()
     (void) log_z;
     if (log_s && *log_s) {
         int len = strlen(log_s);
-        dprintf(response_fd, "1%d,%s", len, log_s);
+        dprintf(response_fd, "1L%d,%s", len, log_s);
     } else {
         dprintf(response_fd, "1");
     }
@@ -175,7 +181,7 @@ ffatal(const char *format, ...)
     (void) log_z;
     if (log_s && *log_s) {
         int len = strlen(log_s);
-        dprintf(response_fd, "1%d,%s", len, log_s);
+        dprintf(response_fd, "1L%d,%s", len, log_s);
     } else {
         dprintf(response_fd, "1");
     }
@@ -465,6 +471,9 @@ reconfigure_fs(void)
         }
     }
 
+    char empty_bind_path[PATH_MAX];
+    snprintf(empty_bind_path, sizeof(empty_bind_path), "%s/empty", safe_dir_path);
+
     if (enable_proc) {
         if (enable_pid_ns) {
             // remout /proc to show restricted pids
@@ -474,29 +483,34 @@ reconfigure_fs(void)
         }
     } else {
         // remout /proc to empty directory
-        if ((r = mount("/var/empty", "/proc", NULL, MS_BIND, NULL)) < 0) {
+        if ((r = mount(empty_bind_path, "/proc", NULL, MS_BIND, NULL)) < 0) {
             ffatal("failed to mount /proc: %s", strerror(errno));
         }
     }
 
     if (!enable_sys) {
         // remout /sys to empty directory
-        if ((r = mount("/var/empty", "/sys", NULL, MS_BIND, NULL)) < 0) {
+        if ((r = mount(empty_bind_path, "/sys", NULL, MS_BIND, NULL)) < 0) {
             ffatal("failed to mount /sys: %s", strerror(errno));
         }
     }
 
-    if ((r = mount("/home/cher/clone/root", "/root", NULL, MS_BIND, NULL)) < 0) {
+    if ((r = mount(empty_bind_path, "/boot", NULL, MS_BIND, NULL)) < 0) {
+        ffatal("failed to mount /boot: %s", strerror(errno));
+    }
+
+    char bind_path[PATH_MAX];
+    snprintf(bind_path, sizeof(bind_path), "%s/root", safe_dir_path);
+    if ((r = mount(bind_path, "/root", NULL, MS_BIND, NULL)) < 0) {
         ffatal("failed to mount /root: %s", strerror(errno));
     }
-    if ((r = mount("/home/cher/clone/etc", "/etc", NULL, MS_BIND, NULL)) < 0) {
+    snprintf(bind_path, sizeof(bind_path), "%s/etc", safe_dir_path);
+    if ((r = mount(bind_path, "/etc", NULL, MS_BIND, NULL)) < 0) {
         ffatal("failed to mount /etc: %s", strerror(errno));
     }
-    if ((r = mount("/home/cher/clone/var", "/var", NULL, MS_BIND, NULL)) < 0) {
+    snprintf(bind_path, sizeof(bind_path), "%s/var", safe_dir_path);
+    if ((r = mount(bind_path, "/var", NULL, MS_BIND, NULL)) < 0) {
         ffatal("failed to mount /var: %s", strerror(errno));
-    }
-    if ((r = mount("/home/cher/clone/empty", "/boot", NULL, MS_BIND, NULL)) < 0) {
-        ffatal("failed to mount /boot: %s", strerror(errno));
     }
 
     // mount pristine /tmp, /dev/shm, /run
@@ -514,7 +528,7 @@ reconfigure_fs(void)
     }
 
     if (!enable_home) {
-        if ((r = mount("/var/empty", "/home", NULL, MS_BIND, NULL)) < 0) {
+        if ((r = mount(empty_bind_path, "/home", NULL, MS_BIND, NULL)) < 0) {
             ffatal("failed to mount /home: %s", strerror(errno));
         }
     }
@@ -540,14 +554,14 @@ open_redirections(void)
 
     if (stdin_name && *stdin_name) {
         if ((stdin_fd = open(stdin_name, O_RDONLY | O_CLOEXEC, 0)) < 0) {
-            flog("failed to open %s for stdin", stdin_name);
+            flog("failed to open %s for stdin: %s", stdin_name, strerror(errno));
             goto failed_3;
         }
     } else if (stdin_external_fd >= 0) {
         stdin_fd = stdin_external_fd;
     } else if (enable_redirect_null) {
         if ((stdin_fd = open("/dev/null", O_RDONLY | O_CLOEXEC, 0)) < 0) {
-            flog("failed to open /dev/null for stdin");
+            flog("failed to open /dev/null for stdin: %s", strerror(errno));
             goto failed_3;
         }
     }
@@ -561,14 +575,14 @@ open_redirections(void)
         stdout_fd = stdout_external_fd;
     } else if (enable_redirect_null) {
         if ((stdout_fd = open("/dev/null", stdout_mode | O_CLOEXEC, 0600)) < 0) {
-            flog("failed to open /dev/null for stdout");
+            flog("failed to open /dev/null for stdout: %s", strerror(errno));
             goto failed_3;
         }
     }
 
     if (stderr_name && *stderr_name) {
         if ((stderr_fd = open(stderr_name, stderr_mode | O_CLOEXEC, 0600)) < 0) {
-            flog("failed to open %s for stderr", stderr_name);
+            flog("failed to open %s for stderr: %s", stderr_name, strerror(errno));
             goto failed_3;
         }
     } else if (enable_output_merge) {
@@ -579,7 +593,7 @@ open_redirections(void)
         fcntl(stderr_fd, F_SETFD, fcntl(stderr_fd, F_GETFD) | O_CLOEXEC);
     } else if (enable_redirect_null) {
         if ((stderr_fd = open("/dev/null", stderr_mode | O_CLOEXEC, 0600)) < 0) {
-            flog("failed to open /dev/null for stderr");
+            flog("failed to open /dev/null for stderr: %s", strerror(errno));
             goto failed_3;
         }
     }
@@ -988,6 +1002,9 @@ main(int argc, char *argv[])
     log_f = open_memstream(&log_s, &log_z);
 
     get_user_ids();
+
+    static char safe_dir_path[PATH_MAX];
+    snprintf(safe_dir_path, sizeof(safe_dir_path), "%s/share/ejudge/container", EJUDGE_PREFIX_DIR);
 
 #ifndef ENABLE_ANY_USER
     {
