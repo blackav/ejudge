@@ -484,7 +484,7 @@ reconfigure_fs(void)
     } else {
         // remout /proc to empty directory
         if ((r = mount(empty_bind_path, "/proc", NULL, MS_BIND, NULL)) < 0) {
-            ffatal("failed to mount /proc: %s", strerror(errno));
+            ffatal("failed to mount %s as /proc: %s", empty_bind_path, strerror(errno));
         }
     }
 
@@ -1642,7 +1642,7 @@ main(int argc, char *argv[])
     change_ownership(primary_uid, primary_gid, exec_uid);
 
     if (infop.si_code == CLD_EXITED) {
-        if (infop.si_status == 0 || infop.si_status == 2) _exit(infop.si_status);
+        if (infop.si_status == 0 || infop.si_status == 1) _exit(infop.si_status);
         ffatal("unexpected exit code from container leader: %d", infop.si_status);
     } else if (infop.si_code == CLD_KILLED || infop.si_code == CLD_DUMPED) {
         ffatal("container leader terminated by signal %d", infop.si_status);
