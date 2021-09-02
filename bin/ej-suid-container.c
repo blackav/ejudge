@@ -968,11 +968,26 @@ main(int argc, char *argv[])
 {
     int argi = 1;
 
+    {
+        char *p = strrchr(argv[0], '/');
+        if (p) program_name = p + 1;
+        else program_name = argv[0];
+    }
+
     signal(SIGPIPE, SIG_IGN);
     signal(SIGCHLD, SIG_DFL);
     log_f = open_memstream(&log_s, &log_z);
 
     get_user_ids();
+
+#ifndef ENABLE_ANY_USER
+    {
+        int self_uid = getuid();
+        if (self_uid != primary_uid && self_uid != 0) {
+            ffatal("not allowed");
+        }
+    }
+#endif
 
     if (argc < 1) {
         flog("wrong number of arguments");
@@ -1153,7 +1168,11 @@ main(int argc, char *argv[])
     start_args = argv + argi;
     start_program = argv[argi];
     if (argi == argc) {
+#ifdef ENABLE_BASH
         bash_mode = 1;
+#else
+        ffatal("no program to run");
+#endif
     }
 
     if (enable_chown) {
