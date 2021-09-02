@@ -1003,7 +1003,6 @@ main(int argc, char *argv[])
 
     get_user_ids();
 
-    static char safe_dir_path[PATH_MAX];
     snprintf(safe_dir_path, sizeof(safe_dir_path), "%s/share/ejudge/container", EJUDGE_PREFIX_DIR);
 
 #ifndef ENABLE_ANY_USER
