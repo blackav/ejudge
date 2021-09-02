@@ -502,15 +502,15 @@ reconfigure_fs(void)
     char bind_path[PATH_MAX];
     snprintf(bind_path, sizeof(bind_path), "%s/root", safe_dir_path);
     if ((r = mount(bind_path, "/root", NULL, MS_BIND, NULL)) < 0) {
-        ffatal("failed to mount /root: %s", strerror(errno));
+        ffatal("failed to mount %s as /root: %s", bind_path, strerror(errno));
     }
     snprintf(bind_path, sizeof(bind_path), "%s/etc", safe_dir_path);
     if ((r = mount(bind_path, "/etc", NULL, MS_BIND, NULL)) < 0) {
-        ffatal("failed to mount /etc: %s", strerror(errno));
+        ffatal("failed to mount %s as /etc: %s", bind_path, strerror(errno));
     }
     snprintf(bind_path, sizeof(bind_path), "%s/var", safe_dir_path);
     if ((r = mount(bind_path, "/var", NULL, MS_BIND, NULL)) < 0) {
-        ffatal("failed to mount /var: %s", strerror(errno));
+        ffatal("failed to mount %s as /var: %s", bind_path, strerror(errno));
     }
 
     // mount pristine /tmp, /dev/shm, /run
