@@ -1664,7 +1664,7 @@ task_StartContainer(tTask *tsk)
   }
 
   char helper_path[PATH_MAX];
-  if (snprintf(helper_path, sizeof(helper_path), "%s/%s", tsk->suid_helper_dir, "ej-container") >= sizeof(helper_path)) {
+  if (snprintf(helper_path, sizeof(helper_path), "%s/%s", tsk->suid_helper_dir, "ej-suid-container") >= sizeof(helper_path)) {
     abort();
   }
 
