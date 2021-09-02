@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -2027,6 +2027,7 @@ serve_run_request(
   srgp->enable_full_archive = global->enable_full_archive;
   srgp->secure_run = secure_run;
   srgp->suid_run = suid_run;
+  srgp->enable_container = prob->enable_container;
   srgp->enable_memory_limit_error = global->enable_memory_limit_error;
   srgp->detect_violations = global->detect_violations;
   srgp->time_limit_retry_count = global->time_limit_retry_count;
@@ -2163,6 +2164,7 @@ serve_run_request(
   srpp->internal_name = xstrdup2(prob->internal_name);
   srpp->uuid = xstrdup2(prob->uuid);
   srpp->open_tests = xstrdup2(prob->open_tests);
+  srpp->container_options = xstrdup2(prob->container_options);
 
   if (srgp->advanced_layout > 0) {
     get_advanced_layout_path(pathbuf, sizeof(pathbuf), global, prob, NULL, variant);

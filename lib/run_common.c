@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2012-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1926,7 +1926,9 @@ invoke_interactor(
   if (srgp->checker_locale && srgp->checker_locale[0]) {
     task_SetEnv(tsk_int, "EJUDGE_LOCALE", srgp->checker_locale);
   }
-  if (srgp->suid_run > 0) {
+  if (srgp->enable_container > 0) {
+    task_SetEnv(tsk_int, "EJUDGE_CONTAINER", "1");
+  } else if (srgp->suid_run > 0) {
     task_SetEnv(tsk_int, "EJUDGE_SUID_RUN", "1");
   }
   if (srgp->testlib_mode > 0) {
@@ -3002,7 +3004,10 @@ run_one_test(
     }
   }
 
-  if (tst && srgp->suid_run > 0) {
+  if (tst && srgp->enable_container > 0) {
+    task_SetSuidHelperDir(tsk, EJUDGE_SERVER_BIN_PATH);
+    task_EnableContainer(tsk);
+  } else if (tst && srgp->suid_run > 0) {
     task_SetSuidHelperDir(tsk, EJUDGE_SERVER_BIN_PATH);
     task_EnableSuidExec(tsk);
     switch (tst->secure_exec_type_val) {
@@ -3146,7 +3151,10 @@ run_one_test(
   }
 #endif
 
-  if (srgp->suid_run > 0 && srpp->enable_kill_all > 0 && task_TryAnyProcess(tsk) > 0) {
+  if (srgp->enable_container > 0 && task_GetOrphanProcessCount(tsk) > 0) {
+    append_msg_to_log(check_out_path, "There exist processes belonging to the 'ejexec' user\n");
+    pg_not_empty = 1;
+  } else if (srgp->suid_run > 0 && srpp->enable_kill_all > 0 && task_TryAnyProcess(tsk) > 0) {
     append_msg_to_log(check_out_path,
                       "There exist processes belonging to the 'ejexec' user\n");
     pg_not_empty = 1;
