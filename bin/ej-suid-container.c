@@ -332,8 +332,8 @@ change_ownership(int user_id, int group_id, int from_user_id)
 {
     const char *dir = working_dir;
     if (!dir) dir = ".";
-    safe_chown(".", user_id, group_id, from_user_id);
-    safe_chown_rec(".", user_id, group_id, from_user_id);
+    safe_chown(dir, user_id, group_id, from_user_id);
+    safe_chown_rec(dir, user_id, group_id, from_user_id);
 }
 
 // proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
@@ -554,7 +554,7 @@ open_redirections(void)
 
     if (stdout_name && *stdout_name) {
         if ((stdout_fd = open(stdout_name, stdout_mode | O_CLOEXEC, 0600)) < 0) {
-            flog("failed to open %s for stdout", stdout_name);
+            flog("failed to open %s for stdout: %s", stdout_name, strerror(errno));
             goto failed_3;
         }
     } else if (stdout_external_fd >= 0) {
@@ -927,6 +927,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
         if (__builtin_mul_overflow(v, 1073741824LL, &v)) fatal("size overflow for option %s", opt_name);
     }
     if ((size_t) v != v) ffatal("size overflow for option %s", opt_name);
+    *ppos = eptr;
     return v;
 }
 
