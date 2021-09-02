@@ -42,6 +42,14 @@
 
 #include "config.h"
 
+#ifndef CLONE_NEWCGROUP
+#define CLONE_NEWCGROUP    0x02000000
+#endif
+
+#ifndef CLONE_PIDFD
+#define CLONE_PIDFD   0x00001000
+#endif
+
 #ifndef P_PIDFD
 #define P_PIDFD 3
 #endif
