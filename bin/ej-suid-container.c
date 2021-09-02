@@ -1614,7 +1614,8 @@ main(int argc, char *argv[])
     stdin_fd = -1; stdout_fd = -1; stderr_fd = -1;
 
     siginfo_t infop = {};
-    waitid(P_PIDFD, pidfd, &infop, WEXITED);
+    //waitid(P_PIDFD, pidfd, &infop, WEXITED);
+    waitid(P_PID, pid, &infop, WEXITED);
     if (bash_mode) {
         printf("bash finished\n");
         printf("parent: %d, %d, %d\n", pid, pidfd, tidptr);
