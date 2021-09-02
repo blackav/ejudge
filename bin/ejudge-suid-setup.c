@@ -1,6 +1,6 @@
 /* -*- mode: c; c-basic-offset: 4 -*- */
 
-/* Copyright (C) 2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2020-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -392,6 +392,7 @@ install_mode(void)
         "ej-suid-exec",
         "ej-suid-ipcrm",
         "ej-suid-kill",
+        "ej-suid-container",
         NULL
     };
     for (int i = 0; files[i]; ++i) {
@@ -502,7 +503,7 @@ chmod_mode(void)
     }
 
     if (need_exec) {
-        int retval = set_setuid_bit(bin_path, (const unsigned char *[]) { "ej-suid-chown", "ej-suid-exec", "ej-suid-ipcrm", "ej-suid-kill", NULL });
+        int retval = set_setuid_bit(bin_path, (const unsigned char *[]) { "ej-suid-chown", "ej-suid-exec", "ej-suid-ipcrm", "ej-suid-kill", "ej-suid-container", NULL });
         if (retval) return retval;
     }
 
