@@ -1514,7 +1514,7 @@ task_StartContainer(tTask *tsk)
   int status_pipe[2];
   char errbuf[512];
 
-  if (pipe2(status_pipe, O_CLOEXEC) < 0) {
+  if (pipe(status_pipe) < 0) {
     tsk->state = TSK_ERROR;
     tsk->pid = 1;
     tsk->code = errno;
@@ -1576,20 +1576,16 @@ task_StartContainer(tTask *tsk)
       if (rdr->fd == 0) {
         m = 'i';
       } else if (rdr->fd == 1) {
-        if (rdr->u.s.oflag == TSK_REWRITE) {
-          m = 'o';
-        } else if (rdr->u.s.oflag == TSK_APPEND) {
+        if ((rdr->u.s.oflag & O_APPEND) != 0) {
           m = 'O';
         } else {
-          abort();
+          m = 'o';
         }
       } else if (rdr->fd == 2) {
-        if (rdr->u.s.oflag == TSK_REWRITE) {
-          m = 'e';
-        } else if (rdr->u.s.oflag == TSK_APPEND) {
+        if ((rdr->u.s.oflag & O_APPEND) != 0) {
           m = 'E';
         } else {
-          abort();
+          m = 'e';
         }
       } else {
         abort();
