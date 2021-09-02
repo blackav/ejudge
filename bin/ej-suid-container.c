@@ -55,7 +55,7 @@
 #if defined EJUDGE_PRIMARY_GROUP
 #define PRIMARY_GROUP EJUDGE_PRIMARY_GROUP
 #else
-#define PRIMARY_GROUP "ejudge"
+#define PRIMARY_GROUP PRIMARY_USER
 #endif
 
 #if defined EJUDGE_EXEC_USER
