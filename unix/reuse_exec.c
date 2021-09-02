@@ -1,4 +1,4 @@
-/* Copyright (C) 1998-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 1998-2021 Alexander Chernov <cher@ejudge.ru> */
 /* Created: <1998-01-21 14:33:28 cher> */
 
 /*
@@ -100,6 +100,7 @@ struct tTask
   int    enable_secure_exec;    /* drop capabilities before exec'ing */
   int    enable_suid_exec;      /* change user_id through suid helper binaries */
   int    enable_security_violation_error;/*enable security violation detection*/
+  int    enable_container;      /* enable linux containerization */
   int    clear_env;             /* clear the environment? */
   int    quiet_flag;            /* be quiet */
   int    enable_all_signals;    /* unmask all signals after fork */
@@ -136,6 +137,8 @@ struct tTask
   char *last_error_msg;         /* last error text */
   unsigned long used_vm_size;   /* maximum used VM size (if available) */
   int cleanup_invoked;          /* not to invoke cleanup handler several times */
+  char *container_options;      /* options for containerization */
+  int status_fd;                /* the receiving end of data pipe for container execution */
 };
 
 #define PIDARR_SIZE 32
@@ -400,6 +403,7 @@ task_New(void)
   r->max_prio_value = -1;
   r->max_pending_count = -1;
   r->umask = -1;
+  r->status_fd = -1;
 
   /* find an empty slot */
   for (i = 0; i < task_u; i++)
@@ -462,6 +466,8 @@ task_Delete(tTask *tsk)
   xfree(tsk->working_dir);
   xfree(tsk->last_error_msg);
   xfree(tsk->suid_helper_dir);
+  xfree(tsk->container_options);
+  if (tsk->status_fd >= 0) close(tsk->status_fd);
   xfree(tsk);
 }
 
@@ -1068,6 +1074,15 @@ task_EnableSuidExec(tTask *tsk)
 }
 
 int
+task_EnableContainer(tTask *tsk)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->enable_container = 1;
+  return 0;
+}
+
+int
 task_EnableAllSignals(tTask *tsk)
 {
   task_init_module();
@@ -1247,6 +1262,18 @@ task_SetVMSize(tTask *tsk, size_t size)
   ASSERT(tsk);
   if (size == ~(size_t) 0) return -1;
   tsk->max_vm_size = size;
+  return 0;
+}
+
+int
+task_SetContainerOptions(tTask *tsk, const char *options)
+{
+  task_init_module();
+  ASSERT(tsk);
+  xfree(tsk->container_options); tsk->container_options = NULL;
+  if (options) {
+    tsk->container_options = xstrdup(options);
+  }
   return 0;
 }
 
@@ -1479,6 +1506,183 @@ invoke_execv_helper(tTask *tsk, const char *path, char **args)
   execv(helper_path, new_args);
 }
 
+static int
+task_StartContainer(tTask *tsk)
+{
+  int status_pipe[2];
+  char errbuf[512];
+
+  if (pipe2(status_pipe, O_CLOEXEC) < 0) {
+    tsk->state = TSK_ERROR;
+    tsk->pid = 1;
+    tsk->code = errno;
+    tsk->exit_code = TASK_ERR_PIPE_FAILED;
+    snprintf(errbuf, sizeof(errbuf), "pipe() failed: %s", os_ErrorString());
+    if (tsk->quiet_flag) {
+      xfree(tsk->last_error_msg);
+      tsk->last_error_msg = xstrdup(errbuf);
+    } else {
+      write_log(LOG_REUSE, LOG_ERROR, "%s: %s", __FUNCTION__ , errbuf);
+    }
+    return -1;
+  }
+
+  gettimeofday(&tsk->start_time, 0);
+
+  int pid = fork();
+  if (pid < 0) {
+    tsk->state = TSK_ERROR;
+    tsk->pid = 1;
+    tsk->code = errno;
+    tsk->exit_code = TASK_ERR_FORK_FAILED;
+    snprintf(errbuf, sizeof(errbuf), "fork() failed: %s", os_ErrorMsg());
+    if (tsk->quiet_flag) {
+      xfree(tsk->last_error_msg);
+      tsk->last_error_msg = xstrdup(errbuf);
+    } else {
+      write_log(LOG_REUSE, LOG_ERROR, "%s: %s", __FUNCTION__ , errbuf);
+    }
+    return -1;
+  }
+
+  if (pid > 0) {
+    close(status_pipe[1]);
+    tsk->status_fd = status_pipe[0];
+    tsk->state = TSK_RUNNING;
+    tsk->pid = pid;
+    task_active++;
+
+    return 0;
+  }
+
+  // in child
+  close(status_pipe[0]);
+
+  // make container spec
+  char *spec_s = NULL;
+  size_t spec_z = 0;
+  FILE *spec_f = open_memstream(&spec_s, &spec_z);
+  fprintf(spec_f, "-f%d", status_pipe[1]);
+
+  // add redirections
+  for (int i = 0; i < tsk->redirs.u; i++) {
+    tRedir *rdr = &tsk->redirs.v[i];
+    switch (rdr->tag) {
+    case TSR_FILE: {
+      int len = strlen(rdr->u.s.path);
+      char m = '?';
+      if (rdr->fd == 0) {
+        m = 'i';
+      } else if (rdr->fd == 1) {
+        if (rdr->u.s.oflag == TSK_REWRITE) {
+          m = 'o';
+        } else if (rdr->u.s.oflag == TSK_APPEND) {
+          m = 'O';
+        } else {
+          abort();
+        }
+      } else if (rdr->fd == 2) {
+        if (rdr->u.s.oflag == TSK_REWRITE) {
+          m = 'e';
+        } else if (rdr->u.s.oflag == TSK_APPEND) {
+          m = 'E';
+        } else {
+          abort();
+        }
+      } else {
+        abort();
+      }
+      fprintf(spec_f, "r%c%d%s", m, len, rdr->u.s.path);
+      break;
+    }
+    case TSR_DUP: {
+      char m = '?';
+      if (rdr->fd == 0) {
+        m = 'a';
+      } else if (rdr->fd == 1) {
+        m = 'b';
+      } else {
+        abort();
+      }
+      fprintf(spec_f, "r%c%d", m, rdr->u.fd2);
+      break;
+    }
+
+    case TSR_CLOSE:
+    case TSR_PIPE:
+    default:
+      abort();
+    }
+  }
+
+  if (tsk->working_dir && *tsk->working_dir) {
+    int len = strlen(tsk->working_dir);
+    fprintf(spec_f, "w%d%s", len, tsk->working_dir);
+  }
+
+  if (tsk->max_stack_size > 0) {
+    fprintf(spec_f, "ls%lld", (long long) tsk->max_stack_size);
+  }
+  if (tsk->max_vm_size > 0) {
+    fprintf(spec_f, "lv%lld", (long long) tsk->max_vm_size);
+  }
+  if (tsk->max_file_size >= 0) {
+    fprintf(spec_f, "lf%lld", (long long) tsk->max_file_size);
+  }
+  if (tsk->max_open_file_count >= 0) {
+    fprintf(spec_f, "lo%d", tsk->max_open_file_count);
+  }
+  if (tsk->max_process_count >= 0) {
+    fprintf(spec_f, "lu%d", tsk->max_process_count);
+  }
+  if (tsk->umask >= 0) {
+    fprintf(spec_f, "lm%3o", tsk->umask);
+  }
+
+  long long max_time_ms = 0;
+  if (tsk->max_time_millis > 0) {
+    max_time_ms = tsk->max_time_millis;
+  } else if (tsk->max_time > 0) {
+    max_time_ms = tsk->max_time * 1000LL;
+  }
+  if (max_time_ms > 0) {
+    fprintf(spec_f, "lt%lld", max_time_ms);
+  }
+  if (tsk->max_real_time > 0) {
+    fprintf(spec_f, "lr%lld", (long long) tsk->max_real_time);
+  }
+
+  if (tsk->container_options) fputs(tsk->container_options, spec_f);
+  fclose(spec_f); spec_f = NULL;
+
+  if (tsk->clear_env) {
+    clearenv();
+  }
+
+  for (int i = 0; i < tsk->env.u; i++) {
+    putenv(tsk->env.v[i]);
+  }
+
+  char helper_path[PATH_MAX];
+  if (snprintf(helper_path, sizeof(helper_path), "%s/%s", tsk->suid_helper_dir, "ej-container") >= sizeof(helper_path)) {
+    abort();
+  }
+
+  char **new_args = alloca((tsk->args.u + 3) * sizeof(new_args[0]));
+  new_args[0] = helper_path;
+  new_args[1] = spec_s;
+  for (int i = 0; i < tsk->args.u; ++i) {
+    new_args[i + 2] = tsk->args.v[i];
+  }
+  new_args[tsk->args.u + 2] = NULL;
+
+  execv(helper_path, new_args);
+
+  int len = snprintf(errbuf, sizeof(errbuf), "failed to start container: %s", os_ErrorMsg());
+  dprintf(status_pipe[1], "1%d%s", len, errbuf);
+  _exit(1);
+}
+
 /**
  * NAME:    task_Start
  * PURPOSE: start a task
@@ -1509,6 +1713,10 @@ task_Start(tTask *tsk)
 
   if (!tsk->path && tsk->args.u > 0)
     tsk->path = xstrdup(tsk->args.v[0]);
+
+  if (tsk->enable_container) {
+    return task_StartContainer(tsk);
+  }
 
   //if (verbose_flag) task_PrintArgs(tsk);
 
@@ -2134,10 +2342,212 @@ fail:
 }
 
 tTask *
+task_WaitContainer(tTask *tsk)
+{
+  bury_dead_prc();
+
+  if (tsk->state == TSK_ERROR || tsk->state == TSK_STOPPED)
+    return NULL;
+
+  if (tsk->state == TSK_RUNNING) {
+    int pid, stat = 0;
+    struct rusage usage = {};
+
+    // just wait for the process
+    pid = wait4(tsk->pid, &stat, 0, &usage);
+    if (pid < 0) {
+      write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: wait4 failed: %s\n", os_ErrorMsg());
+      return NULL;
+    }
+
+    find_prc_in_list(pid, stat, &usage);
+  }
+
+  // the helper process is finished
+  char resp_buf[65536];
+  int resp_z = read(tsk->status_fd, resp_buf, sizeof(resp_buf));
+  if (resp_z < 0) {
+    write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: response read: %s\n", os_ErrorMsg());
+    return NULL;
+  }
+  close(tsk->status_fd); tsk->status_fd = -1;
+  if (resp_z + 1 >= sizeof(resp_buf)) {
+    write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: response reply is too big\n");
+    return NULL;
+  }
+  resp_buf[resp_z] = 0;
+  char *resp_p = resp_buf;
+  if (*resp_p == '1') {
+    ++resp_p;
+    if (*resp_p >= '0' && *resp_p <= '9') {
+      char *eptr = NULL;
+      errno = 0;
+      long v = strtol(resp_p, &eptr, 10);
+      if (*eptr == ',') ++eptr;
+      if (errno || v < 0 || eptr + v > resp_buf + resp_z) {
+        write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
+        return NULL;
+      }
+      eptr[v] = 0;
+      write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: container failed: %s\n", eptr);
+      return NULL;
+    } else if (*resp_p) {
+      write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
+      return NULL;
+    }
+  }
+
+  int prc_exit_status = *resp_p;
+  int prc_exit_code = 0;
+  int prc_term_signal = 0;
+  if (*resp_p == 't') {
+    // time-limit exceeded
+    ++resp_p;
+  } else if (*resp_p == 'r') {
+    // real time-limit exceeded
+    ++resp_p;
+  } else if (*resp_p == 'e') {
+    // process exited
+    char *eptr = NULL;
+    errno = 0;
+    long v = strtol(resp_p + 1, &eptr, 10);
+    if (errno || v < 0 || v > 255) {
+      write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid exit code from container: %s\n", resp_buf);
+      return NULL;
+    }
+    prc_exit_code = v;
+    resp_p = eptr;
+  } else if (*resp_p == 's') {
+    // process signaled
+    char *eptr = NULL;
+    errno = 0;
+    long v = strtol(resp_p + 1, &eptr, 10);
+    if (errno || v < 1 || v > 64) {
+      write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid termination signal from container: %s\n", resp_buf);
+      return NULL;
+    }
+    prc_term_signal = v;
+    resp_p = eptr;
+  } else {
+    write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
+    return NULL;
+  }
+
+  long long prc_cpu_time_us = 0;
+  long long prc_real_time_us = 0;
+  long long prc_user_cpu_time_us = 0;
+  long long prc_sys_cpu_time_us = 0;
+  int prc_nvcsw = 0;
+  int prc_nivcsw = 0;
+  int prc_ipc_object_count = 0;
+  int prc_orphan_process_count = 0;
+  long long prc_max_vm_size = 0;
+  long long prc_max_rss_size = 0;
+
+  while (*resp_p) {
+    if (*resp_p == 'a' || *resp_p == 'b' || *resp_p == 'i' || *resp_p == 'o') {
+      errno = 0;
+      char *eptr = NULL;
+      long v = strtol(resp_p + 1, &eptr, 10);
+      if (errno || eptr == resp_p + 1 || v < 0 || (int) v != v) {
+        write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
+        return NULL;
+      }
+      if (*resp_p == 'a') prc_nvcsw = v;
+      else if (*resp_p == 'b') prc_nivcsw = v;
+      else if (*resp_p == 'i') prc_ipc_object_count = v;
+      else if (*resp_p == 'o') prc_orphan_process_count = v;
+      resp_p = eptr;
+    } else if (*resp_p == 'T' || *resp_p == 'R' || *resp_p == 'u' || *resp_p == 'k' || *resp_p == 'v' || *resp_p == 'e') {
+      errno = 0;
+      char *eptr = NULL;
+      long long v = strtoll(resp_p + 1, &eptr, 10);
+      if (errno || eptr == resp_p + 1 || v < 0) {
+        write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
+        return NULL;
+      }
+      if (*resp_p == 'T') prc_cpu_time_us = v;
+      else if (*resp_p == 'R') prc_real_time_us = v;
+      else if (*resp_p == 'u') prc_user_cpu_time_us = v;
+      else if (*resp_p == 'k') prc_sys_cpu_time_us = v;
+      else if (*resp_p == 'v') prc_max_vm_size = v;
+      else if (*resp_p == 'e') prc_max_rss_size = v;
+      resp_p = eptr;
+    } else if (*resp_p == 'L') {
+      // log messages
+      errno = 0;
+      char *eptr = NULL;
+      long v = strtol(resp_p + 1, &eptr, 10);
+      if (*eptr == ',') ++eptr;
+      if (errno || eptr == resp_p + 1 || v < 0 || (int) v != v || eptr + v > resp_buf + resp_z) {
+        write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
+        return NULL;
+      }
+      char tmp = eptr[v];
+      write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: container messages: %s\n", eptr);
+      eptr[v] = tmp;
+      resp_p = eptr;
+    }
+  }
+
+  tsk->was_memory_limit = 0;
+  tsk->was_security_violation = 0;
+  if (prc_exit_status == 't') {
+    tsk->state = TSK_SIGNALED;
+    tsk->was_timeout = 1;
+    tsk->was_real_timeout = 0;
+    tsk->is_exited = 0;
+  } else if (prc_exit_status == 'r') {
+    tsk->state = TSK_SIGNALED;
+    tsk->was_timeout = 0;
+    tsk->was_real_timeout = 1;
+    tsk->is_exited = 0;
+  } else if (prc_exit_status == 'e') {
+    tsk->state = TSK_EXITED;
+    tsk->was_timeout = 0;
+    tsk->was_real_timeout = 0;
+    tsk->is_exited = 1;
+    tsk->exit_code = prc_exit_code;
+  } else if (prc_exit_status == 's') {
+    tsk->state = TSK_SIGNALED;
+    tsk->was_timeout = 0;
+    tsk->was_real_timeout = 0;
+    tsk->is_exited = 0;
+    tsk->code = (prc_term_signal & 0x7f);
+  }
+
+  tsk->used_vm_size = prc_max_vm_size;
+  memset(&tsk->usage, 0, sizeof(tsk->usage));
+  tsk->usage.ru_utime.tv_sec = prc_user_cpu_time_us / 1000000;
+  tsk->usage.ru_utime.tv_usec = prc_user_cpu_time_us % 1000000;
+  tsk->usage.ru_stime.tv_sec = prc_sys_cpu_time_us / 1000000;
+  tsk->usage.ru_stime.tv_usec = prc_sys_cpu_time_us % 1000000;
+
+  // fake stop time
+  long long stop_time_us = tsk->start_time.tv_sec * 1000000LL + tsk->start_time.tv_usec + prc_real_time_us;
+  tsk->stop_time.tv_sec = stop_time_us / 1000000;
+  tsk->stop_time.tv_usec = stop_time_us % 1000000;
+
+  tsk->usage.ru_maxrss = prc_max_rss_size / 1024;
+  tsk->usage.ru_nvcsw = prc_nvcsw;
+  tsk->usage.ru_nivcsw = prc_nivcsw;
+
+  (void) prc_cpu_time_us;
+  (void) prc_orphan_process_count;
+  (void) prc_ipc_object_count;
+
+  return tsk;
+}
+
+tTask *
 task_NewWait(tTask *tsk)
 {
   task_init_module();
   ASSERT(tsk);
+
+  if (tsk->enable_container) {
+    return task_WaitContainer(tsk);
+  }
 
   bury_dead_prc();
 
