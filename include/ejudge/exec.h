@@ -158,6 +158,9 @@ int task_SetMaxPrioValue(tpTask, int);
 int task_SetMaxPendingCount(tpTask, int);
 int task_SetUmask(tpTask, int);
 
+int task_GetIPCObjectCount(tTask *tsk);
+int task_GetOrphanProcessCount(tTask *tsk);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

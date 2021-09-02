@@ -139,6 +139,8 @@ struct tTask
   int cleanup_invoked;          /* not to invoke cleanup handler several times */
   char *container_options;      /* options for containerization */
   int status_fd;                /* the receiving end of data pipe for container execution */
+  int ipc_object_count;         /* the count of the remaining IPC objects */
+  int orphan_process_count;     /* the count of the remaining processes */
 };
 
 #define PIDARR_SIZE 32
@@ -2533,8 +2535,8 @@ task_WaitContainer(tTask *tsk)
   tsk->usage.ru_nivcsw = prc_nivcsw;
 
   (void) prc_cpu_time_us;
-  (void) prc_orphan_process_count;
-  (void) prc_ipc_object_count;
+  tsk->orphan_process_count = prc_orphan_process_count;
+  tsk->ipc_object_count = prc_ipc_object_count;
 
   return tsk;
 }
@@ -3239,4 +3241,20 @@ do_kill(tTask *tsk, int pid, int signal)
   waitpid(helper_pid, &status, 0);
   sigprocmask(SIG_SETMASK, &cur, NULL);
   return (WIFEXITED(status) && !WEXITSTATUS(status))?0:-1;
+}
+
+int
+task_GetIPCObjectCount(tTask *tsk)
+{
+  task_init_module();
+  ASSERT(tsk);
+  return tsk->ipc_object_count;
+}
+
+int
+task_GetOrphanProcessCount(tTask *tsk)
+{
+  task_init_module();
+  ASSERT(tsk);
+  return tsk->orphan_process_count;
 }
