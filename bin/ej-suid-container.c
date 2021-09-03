@@ -46,14 +46,6 @@
 #define CLONE_NEWCGROUP    0x02000000
 #endif
 
-#ifndef CLONE_PIDFD
-#define CLONE_PIDFD   0x00001000
-#endif
-
-#ifndef P_PIDFD
-#define P_PIDFD 3
-#endif
-
 #if defined EJUDGE_PRIMARY_USER
 #define PRIMARY_USER EJUDGE_PRIMARY_USER
 #else
@@ -1204,16 +1196,15 @@ main(int argc, char *argv[])
         fatal();
     }
 
-    unsigned clone_flags = CLONE_PIDFD | CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD;
+    unsigned clone_flags = CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD;
     if (enable_cgroup) clone_flags |= CLONE_NEWCGROUP;
     if (enable_ipc_ns) clone_flags |= CLONE_NEWIPC;
     if (enable_net_ns) clone_flags |= CLONE_NEWNET;
     if (enable_mount_ns) clone_flags |= CLONE_NEWNS;
     if (enable_pid_ns) clone_flags |= CLONE_NEWPID;
 
-    int pidfd = -1;
     pid_t tidptr = 0;
-    int pid = syscall(__NR_clone, clone_flags, NULL, &pidfd, &tidptr);
+    int pid = syscall(__NR_clone, clone_flags, NULL, NULL, &tidptr);
     if (pid < 0) {
         change_ownership(primary_uid, primary_gid, exec_uid);
         ffatal("clone failed: %s", strerror(errno));
@@ -1598,11 +1589,10 @@ main(int argc, char *argv[])
     stdin_fd = -1; stdout_fd = -1; stderr_fd = -1;
 
     siginfo_t infop = {};
-    //waitid(P_PIDFD, pidfd, &infop, WEXITED);
     waitid(P_PID, pid, &infop, WEXITED);
     if (bash_mode) {
         printf("bash finished\n");
-        printf("parent: %d, %d, %d\n", pid, pidfd, tidptr);
+        printf("parent: %d, %d\n", pid, tidptr);
     }
 
     change_ownership(primary_uid, primary_gid, exec_uid);
