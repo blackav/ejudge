@@ -1559,7 +1559,7 @@ main(int argc, char *argv[])
             if (log_f) {
                 fclose(log_f); log_f = NULL;
             }
-            dprintf(response_fd, "tT%lld", limit_cpu_time_ms * 1000LL);
+            dprintf(response_fd, "tT%lldu%lldk%lld", limit_cpu_time_ms * 1000LL, limit_cpu_time_ms * 1000LL, 0LL);
             if (log_s && *log_s) {
                 int len = strlen(log_s);
                 dprintf(response_fd, "L%d,%s", len, log_s);
