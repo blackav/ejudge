@@ -86,6 +86,7 @@ static int enable_mount_ns = 1;
 static int enable_pid_ns = 1;
 static int enable_proc = 1;
 static int enable_sys = 0;
+static int enable_dev = 0;
 static int enable_sandbox_dir = 1;
 static int enable_home = 0;
 static int enable_chown = 1;
@@ -500,6 +501,12 @@ reconfigure_fs(void)
     snprintf(bind_path, sizeof(bind_path), "%s/var", safe_dir_path);
     if ((r = mount(bind_path, "/var", NULL, MS_BIND, NULL)) < 0) {
         ffatal("failed to mount %s as /var: %s", bind_path, strerror(errno));
+    }
+    if (!enable_dev) {
+        snprintf(bind_path, sizeof(bind_path), "%s/dev", safe_dir_path);
+        if ((r = mount(bind_path, "/dev", NULL, MS_BIND, NULL)) < 0) {
+            ffatal("failed to mount %s as /dev: %s", bind_path, strerror(errno));
+        }
     }
 
     // mount pristine /tmp, /dev/shm, /run
@@ -951,6 +958,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   mI     - enable IPC count
  *   ma     - unlimited cpu time
  *   mb     - unlimited real time
+ *   md     - enable /dev filesystem
  *   w<DIR> - working directory (cwd by default)
  *   rn     - redirect to/from /dev/null for standard streams
  *   rm     - merge stdout and stderr output
@@ -1069,6 +1077,9 @@ main(int argc, char *argv[])
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'b') {
                 limit_real_time_ms = -1;
+                opt += 2;
+            } else if (*opt == 'm' && opt[1] == 'd') {
+                enable_dev = 1;
                 opt += 2;
             } else if (*opt == 'w') {
                 working_dir = extract_string(&opt, 1, "w");
