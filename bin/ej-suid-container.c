@@ -91,7 +91,7 @@ static int enable_ipc_ns = 1;
 static int enable_net_ns = 1;
 static int enable_mount_ns = 1;
 static int enable_pid_ns = 1;
-static int enable_proc = 0;
+static int enable_proc = 1;
 static int enable_sys = 0;
 static int enable_sandbox_dir = 1;
 static int enable_home = 0;
@@ -1559,7 +1559,7 @@ main(int argc, char *argv[])
             if (log_f) {
                 fclose(log_f); log_f = NULL;
             }
-            dprintf(response_fd, "tT%d", limit_cpu_time_ms);
+            dprintf(response_fd, "tT%lld", limit_cpu_time_ms * 1000LL);
             if (log_s && *log_s) {
                 int len = strlen(log_s);
                 dprintf(response_fd, "L%d,%s", len, log_s);
@@ -1573,7 +1573,7 @@ main(int argc, char *argv[])
             if (log_f) {
                 fclose(log_f); log_f = NULL;
             }
-            dprintf(response_fd, "rR%d", limit_real_time_ms);
+            dprintf(response_fd, "rR%lld", limit_real_time_ms * 1000LL);
             if (log_s && *log_s) {
                 int len = strlen(log_s);
                 dprintf(response_fd, "L%d,%s", len, log_s);
