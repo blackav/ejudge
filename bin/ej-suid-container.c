@@ -368,7 +368,7 @@ reconfigure_fs(void)
     size_t mnt_z = 0;
     FILE *mnt_f = open_memstream(&mnt_s, &mnt_z);
     int fd = open("/proc/self/mounts", O_RDONLY);
-    if (fd < 0) ffatal("failed to open /proc/self/mounts");
+    if (fd < 0) ffatal("failed to open /proc/self/mounts: %s", strerror(errno));
     char buf[4096];
     ssize_t z;
     while ((z = read(fd, buf, sizeof(buf))) > 0) {
@@ -1052,7 +1052,7 @@ main(int argc, char *argv[])
                 enable_mount_ns = 0;
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'p') {
-                enable_mount_ns = 0;
+                enable_pid_ns = 0;
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'P') {
                 enable_proc = 1;
