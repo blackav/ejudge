@@ -233,7 +233,6 @@ get_user_ids(void)
             if (errno || *eptr || eptr == user_id_str || v <= 0 || (int) v != v)
                 ffatal("invalid uid in /etc/passwd for %s", user_name);
             *dest_uid = (int) v;
-            //printf("user %s uid %d\n", user_name, *dest_uid);
         }
     }
     fclose(f); f = NULL;
@@ -268,7 +267,6 @@ get_user_ids(void)
             if (errno || *eptr || eptr == group_id_str || v <= 0 || (int) v != v)
                 ffatal("invalid uid in /etc/group for %s", group_name);
             *dest_gid = (int) v;
-            //printf("group %s gid %d\n", group_name, *dest_gid);
         }
     }
     fclose(f); f = NULL;
@@ -292,7 +290,6 @@ safe_chown(const char *full, int to_user_id, int to_group_id, int from_user_id)
     if (S_ISDIR(stb.st_mode)) {
         if (stb.st_uid == from_user_id) {
             fchown(fd, to_user_id, to_group_id);
-            //fchmod(fd, (stb.st_mode & 0777) | 0700);
         }
     } else {
         if (stb.st_uid == from_user_id) {
@@ -342,7 +339,6 @@ change_ownership(int user_id, int group_id, int from_user_id)
     safe_chown_rec(dir, user_id, group_id, from_user_id);
 }
 
-// proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
 struct MountInfo
 {
     char *src_path;
@@ -482,7 +478,7 @@ reconfigure_fs(void)
             }
         }
     } else {
-        // remout /proc to empty directory
+        // remout /proc to empty directory, this might break things
         if ((r = mount(empty_bind_path, "/proc", NULL, MS_BIND, NULL)) < 0) {
             ffatal("failed to mount %s as /proc: %s", empty_bind_path, strerror(errno));
         }
@@ -542,7 +538,6 @@ open_redirections(void)
 {
     int retval = -1;
 
-    // change euid
     if (setegid(exec_gid) < 0) {
         flog("setegid failed to group %d: %s", exec_gid, strerror(errno));
         goto failed;
@@ -984,8 +979,6 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   lu<N>  - set user processes limit
  */
 
-/* options to start default bash: */
-
 int
 main(int argc, char *argv[])
 {
@@ -1257,25 +1250,6 @@ main(int argc, char *argv[])
                     _exit(127);
                 }
             }
-            /*
-            if (enable_proc) {
-                if (enable_pid_ns) {
-                    // remout /proc to show restricted pids
-                    int r;
-                    if ((r = mount("proc", "/proc", "proc", 0, NULL)) < 0) {
-                        fprintf(stderr, "failed to mount /proc: %s\n", strerror(errno));
-                        _exit(127);
-                    }
-                }
-            } else {
-                // remout /proc to empty directory
-                int r;
-                if ((r = mount("/var/empty", "/proc", NULL, MS_BIND, NULL)) < 0) {
-                    fprintf(stderr, "failed to mount /proc: %s", strerror(errno));
-                    _exit(127);
-                }
-            }
-            */
 
             if (limit_umask >= 0) {
                 umask(limit_umask & 0777);
@@ -1364,7 +1338,6 @@ main(int argc, char *argv[])
             if (bash_mode) {
                 printf("child: %d, %d, %d\n", getpid(), getppid(), tidptr);
                 printf("init success, starting /bin/bash\n");
-                // FIXME: change prompt
                 execlp("/bin/bash", "/bin/bash", "-i", NULL);
                 fprintf(stderr, "failed to exec /bin/bash: %s\n", strerror(errno));
             } else {
@@ -1382,16 +1355,6 @@ main(int argc, char *argv[])
         // so we can't just fail, we have to kill created processes
 
         // parent
-        /*
-        if (enable_pid_ns) {
-            // remout /proc to show restricted pids
-            int r;
-            if ((r = mount("proc", "/proc", "proc", 0, NULL)) < 0) {
-                kill_all();
-                ffatal("failed to mount /proc: %s", strerror(errno));
-            }
-        }
-        */
 
         if (enable_pgroup) {
             //setpgid(pid2, pid2);
