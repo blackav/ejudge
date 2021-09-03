@@ -2407,6 +2407,7 @@ task_WaitContainer(tTask *tsk)
         tsk->was_check_failed = 1;
         return NULL;
       }
+      if (*eptr == ',') ++eptr;
       eptr[v] = 0;
       write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: container failed: %s\n", eptr);
       xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;

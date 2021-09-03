@@ -514,7 +514,7 @@ reconfigure_fs(void)
     }
 
     // mount pristine /tmp, /dev/shm, /run
-    if ((r = mount("tmpfs", "/tmp", "tmpfs", MS_NOSUID | MS_NODEV, "size=1024m,nr_inodes=1024,inode64")) < 0) {
+    if ((r = mount("tmpfs", "/tmp", "tmpfs", MS_NOSUID | MS_NODEV, "size=1024m,nr_inodes=1024")) < 0) {
         ffatal("failed to mount /tmp: %s", strerror(errno));
     }
     if ((r = mount("mqueue", "/dev/mqueue", "mqueue", MS_NOSUID | MS_NODEV | MS_NOEXEC | MS_RELATIME, NULL)) < 0) {
