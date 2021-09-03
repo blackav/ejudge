@@ -39,6 +39,7 @@
 #include <sys/msg.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
+#include <sys/prctl.h>
 
 #include "config.h"
 
@@ -1323,6 +1324,11 @@ main(int argc, char *argv[])
             }
             if (setuid(exec_uid) < 0) {
                 fprintf(stderr, "setuid setuid failed: %s\n", strerror(errno));
+                _exit(127);
+            }
+
+            if (prctl(PR_SET_NO_NEW_PRIVS, 1L, 0L, 0L, 0L) < 0) {
+                fprintf(stderr, "prctl failed: %s\n", strerror(errno));
                 _exit(127);
             }
 
