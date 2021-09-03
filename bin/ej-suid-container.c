@@ -1257,6 +1257,7 @@ main(int argc, char *argv[])
                     _exit(127);
                 }
             }
+            /*
             if (enable_proc) {
                 if (enable_pid_ns) {
                     // remout /proc to show restricted pids
@@ -1274,6 +1275,7 @@ main(int argc, char *argv[])
                     _exit(127);
                 }
             }
+            */
 
             if (limit_umask >= 0) {
                 umask(limit_umask & 0777);
