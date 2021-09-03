@@ -2393,8 +2393,8 @@ task_WaitContainer(tTask *tsk)
   resp_buf[resp_z] = 0;
   char *resp_p = resp_buf;
   if (*resp_p == '1') {
-    if (*resp_p == 'L') ++resp_p;
     ++resp_p;
+    if (*resp_p == 'L') ++resp_p;
     if (*resp_p >= '0' && *resp_p <= '9') {
       char *eptr = NULL;
       errno = 0;
