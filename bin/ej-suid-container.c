@@ -953,7 +953,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   mn     - disable net namespace
  *   mm     - disable mount namespace
  *   mp     - disable PID namespace
- *   mP     - enable /proc filesystem
+ *   mP     - disable /proc filesystem
  *   mS     - enable /sys filesystem
  *   ms     - disable bindind of working dir to /sandbox
  *   mh     - enable /home filesystem
@@ -1055,7 +1055,7 @@ main(int argc, char *argv[])
                 enable_pid_ns = 0;
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'P') {
-                enable_proc = 1;
+                enable_proc = 0;
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'S') {
                 enable_sys = 1;
