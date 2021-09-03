@@ -3152,7 +3152,7 @@ run_one_test(
 #endif
 
   if (task_WasCheckFailed(tsk)) {
-    append_msg_to_log(check_out_path, "Container failed: %s", task_GetErrorMessage(tsk));
+    append_msg_to_log(check_out_path, "%s", task_GetErrorMessage(tsk));
     goto check_failed;
   } else if (srgp->enable_container > 0 && task_GetOrphanProcessCount(tsk) > 0) {
     append_msg_to_log(check_out_path, "There exist processes belonging to the 'ejexec' user\n");
