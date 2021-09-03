@@ -72,6 +72,7 @@
 #endif
 
 static char safe_dir_path[PATH_MAX];
+static char proc_path[PATH_MAX] = "/proc";
 
 static const char *program_name = "prog";
 static int response_fd = 2;
@@ -84,7 +85,7 @@ static int enable_ipc_ns = 1;
 static int enable_net_ns = 1;
 static int enable_mount_ns = 1;
 static int enable_pid_ns = 1;
-static int enable_proc = 1;
+static int enable_proc = 0;
 static int enable_sys = 0;
 static int enable_dev = 0;
 static int enable_sandbox_dir = 1;
@@ -529,6 +530,18 @@ reconfigure_fs(void)
         }
     }
 
+    if (!enable_proc) {
+        if (mkdir("/run/0", 0700) < 0) {
+            ffatal("failed to mkdir /run/0: %s", strerror(errno));
+        }
+        if (mkdir("/run/0/proc", 0700) < 0) {
+            ffatal("failed to mkdir /run/0/proc: %s", strerror(errno));
+        }
+        if ((r = mount("proc", "/run/0/proc", "proc", 0, NULL)) < 0) {
+            ffatal("failed to mount /run/0/proc: %s", strerror(errno));
+        }
+    }
+
     free(mi);
     free(mnt_s);
 }
@@ -684,9 +697,11 @@ parse_proc_pid_stat(int pid, struct process_info *info)
   int blen;
 
   memset(info, 0, sizeof(*info));
-  snprintf(path, sizeof(path), "/proc/%d/stat", pid);
+  snprintf(path, sizeof(path), "%s/%d/stat", proc_path, pid);
   f = fopen(path, "r");
-  if (!f) goto fail;
+  if (!f) {
+      goto fail;
+  }
   if (!fgets(buf, sizeof(buf), f)) goto fail;
   blen = strlen(buf);
   if (blen + 1 == sizeof(buf)) goto fail;
@@ -746,10 +761,10 @@ fail:
 static int
 count_processes(void)
 {
-    DIR *d = opendir("/proc");
+    DIR *d = opendir(proc_path);
     if (!d) {
         kill_all();
-        ffatal("failed to open /proc: %s", strerror(errno));
+        ffatal("failed to open %s: %s", proc_path, strerror(errno));
     }
     struct dirent *dd;
     int count = 0;
@@ -796,9 +811,11 @@ scan_msg(int search_uid)
 {
     int count = 0;
     char buf[1024];
-    
 
-    FILE *f = fopen("/proc/sysvipc/msg", "r");
+    char full_path[PATH_MAX];
+    snprintf(full_path, sizeof(full_path), "%s/sysvipc/msg", proc_path);
+
+    FILE *f = fopen(full_path, "r");
     if (!f) return 0;
 
     if (getl(buf, sizeof(buf), f) < 0) {
@@ -828,7 +845,10 @@ scan_sem(int search_uid)
     int count = 0;
     char buf[1024];
 
-    FILE *f = fopen("/proc/sysvipc/sem", "r");
+    char full_path[PATH_MAX];
+    snprintf(full_path, sizeof(full_path), "%s/sysvipc/sem", proc_path);
+
+    FILE *f = fopen(full_path, "r");
     if (!f) return 0;
 
     if (getl(buf, sizeof(buf), f) < 0) {
@@ -858,7 +878,10 @@ scan_shm(int search_uid)
     int count = 0;
     char buf[1024];
 
-    FILE *f = fopen("/proc/sysvipc/shm", "r");
+    char full_path[PATH_MAX];
+    snprintf(full_path, sizeof(full_path), "%s/sysvipc/shm", proc_path);
+
+    FILE *f = fopen(full_path, "r");
     if (!f) return 0;
 
     if (getl(buf, sizeof(buf), f) < 0) {
@@ -948,7 +971,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   mn     - disable net namespace
  *   mm     - disable mount namespace
  *   mp     - disable PID namespace
- *   mP     - disable /proc filesystem
+ *   mP     - enable /proc filesystem
  *   mS     - enable /sys filesystem
  *   ms     - disable bindind of working dir to /sandbox
  *   mh     - enable /home filesystem
@@ -1049,7 +1072,7 @@ main(int argc, char *argv[])
                 enable_pid_ns = 0;
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'P') {
-                enable_proc = 0;
+                enable_proc = 1;
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'S') {
                 enable_sys = 1;
@@ -1198,6 +1221,10 @@ main(int argc, char *argv[])
 #else
         ffatal("no program to run");
 #endif
+    }
+
+    if (!enable_proc) {
+        snprintf(proc_path, sizeof(proc_path), "/run/0/proc");
     }
 
     if (enable_chown) {
