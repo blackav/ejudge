@@ -130,7 +130,7 @@ static int limit_open_files = -1;
 static long long limit_stack_size = -1;
 static long long limit_vm_size = 67108864;  // 64M
 static long long limit_file_size = -1;
-static int limit_processes = 20;
+static int limit_processes = 5;
 static int limit_cpu_time_ms = 1000;
 static int limit_real_time_ms = 5000;
 
