@@ -1380,6 +1380,7 @@ main(int argc, char *argv[])
         // so we can't just fail, we have to kill created processes
 
         // parent
+        /*
         if (enable_pid_ns) {
             // remout /proc to show restricted pids
             int r;
@@ -1388,6 +1389,7 @@ main(int argc, char *argv[])
                 ffatal("failed to mount /proc: %s", strerror(errno));
             }
         }
+        */
 
         if (enable_pgroup) {
             //setpgid(pid2, pid2);
