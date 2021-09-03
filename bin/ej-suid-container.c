@@ -1174,6 +1174,9 @@ main(int argc, char *argv[])
                 fatal();
             }
         }
+
+        char *p = argv[argi - 1];
+        while (*p) *p++ = 0;
     }
 
     start_args = argv + argi;
