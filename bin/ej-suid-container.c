@@ -40,6 +40,8 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/prctl.h>
+#include <seccomp.h>
+#include <asm/unistd.h>
 
 #include "config.h"
 
@@ -94,6 +96,10 @@ static int enable_chown = 1;
 static int enable_pgroup = 1;
 static int enable_prc_count = 0;
 static int enable_ipc_count = 0;
+
+static int enable_seccomp = 1;
+static int enable_sys_execve = 0;
+static int enable_sys_fork = 0;
 
 static char *working_dir = NULL;
 
@@ -463,7 +469,7 @@ reconfigure_fs(void)
     }
 
     char empty_bind_path[PATH_MAX];
-    snprintf(empty_bind_path, sizeof(empty_bind_path), "%s/empty", safe_dir_path);
+    if (snprintf(empty_bind_path, sizeof(empty_bind_path), "%s/empty", safe_dir_path) >= sizeof(empty_bind_path)) abort();
 
     if (enable_proc) {
         if (enable_pid_ns) {
@@ -491,20 +497,20 @@ reconfigure_fs(void)
     }
 
     char bind_path[PATH_MAX];
-    snprintf(bind_path, sizeof(bind_path), "%s/root", safe_dir_path);
+    if (snprintf(bind_path, sizeof(bind_path), "%s/root", safe_dir_path) >= sizeof(bind_path)) abort();
     if ((r = mount(bind_path, "/root", NULL, MS_BIND, NULL)) < 0) {
         ffatal("failed to mount %s as /root: %s", bind_path, strerror(errno));
     }
-    snprintf(bind_path, sizeof(bind_path), "%s/etc", safe_dir_path);
+    if (snprintf(bind_path, sizeof(bind_path), "%s/etc", safe_dir_path) >= sizeof(bind_path)) abort();
     if ((r = mount(bind_path, "/etc", NULL, MS_BIND, NULL)) < 0) {
         ffatal("failed to mount %s as /etc: %s", bind_path, strerror(errno));
     }
-    snprintf(bind_path, sizeof(bind_path), "%s/var", safe_dir_path);
+    if (snprintf(bind_path, sizeof(bind_path), "%s/var", safe_dir_path) >= sizeof(bind_path)) abort();
     if ((r = mount(bind_path, "/var", NULL, MS_BIND, NULL)) < 0) {
         ffatal("failed to mount %s as /var: %s", bind_path, strerror(errno));
     }
     if (!enable_dev) {
-        snprintf(bind_path, sizeof(bind_path), "%s/dev", safe_dir_path);
+        if (snprintf(bind_path, sizeof(bind_path), "%s/dev", safe_dir_path) >= sizeof(bind_path)) abort();
         if ((r = mount(bind_path, "/dev", NULL, MS_BIND, NULL)) < 0) {
             ffatal("failed to mount %s as /dev: %s", bind_path, strerror(errno));
         }
@@ -697,7 +703,7 @@ parse_proc_pid_stat(int pid, struct process_info *info)
   int blen;
 
   memset(info, 0, sizeof(*info));
-  snprintf(path, sizeof(path), "%s/%d/stat", proc_path, pid);
+  if (snprintf(path, sizeof(path), "%s/%d/stat", proc_path, pid) >= sizeof(path)) abort();
   f = fopen(path, "r");
   if (!f) {
       goto fail;
@@ -813,7 +819,7 @@ scan_msg(int search_uid)
     char buf[1024];
 
     char full_path[PATH_MAX];
-    snprintf(full_path, sizeof(full_path), "%s/sysvipc/msg", proc_path);
+    if (snprintf(full_path, sizeof(full_path), "%s/sysvipc/msg", proc_path) >= sizeof(full_path)) abort();
 
     FILE *f = fopen(full_path, "r");
     if (!f) return 0;
@@ -846,7 +852,7 @@ scan_sem(int search_uid)
     char buf[1024];
 
     char full_path[PATH_MAX];
-    snprintf(full_path, sizeof(full_path), "%s/sysvipc/sem", proc_path);
+    if (snprintf(full_path, sizeof(full_path), "%s/sysvipc/sem", proc_path) >= sizeof(full_path)) abort();
 
     FILE *f = fopen(full_path, "r");
     if (!f) return 0;
@@ -879,7 +885,7 @@ scan_shm(int search_uid)
     char buf[1024];
 
     char full_path[PATH_MAX];
-    snprintf(full_path, sizeof(full_path), "%s/sysvipc/shm", proc_path);
+    if (snprintf(full_path, sizeof(full_path), "%s/sysvipc/shm", proc_path) >= sizeof(full_path)) abort();
 
     FILE *f = fopen(full_path, "r");
     if (!f) return 0;
@@ -1001,6 +1007,9 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   lv<Z>  - set VM limit
  *   lf<Z>  - set file size limit
  *   lu<N>  - set user processes limit
+ *   s0     - disable syscall filtering
+ *   se     - enable execve(at)
+ *   sf     - enable fork, vfork, clone, clone3
  */
 
 int
@@ -1203,6 +1212,15 @@ main(int argc, char *argv[])
                 if (!v) v = -1;
                 limit_real_time_ms = v;
                 opt = eptr;
+            } else if (*opt == 's' && opt[1] == '0') {
+                enable_seccomp = 0;
+                opt += 2;
+            } else if (*opt == 's' && opt[1] == 'e') {
+                enable_sys_execve = 1;
+                opt += 2;
+            } else if (*opt == 's' && opt[1] == 'f') {
+                enable_sys_fork = 1;
+                opt += 2;
             } else {
                 flog("invalid option: %s", opt);
                 fatal();
@@ -1260,6 +1278,29 @@ main(int argc, char *argv[])
         sigset_t bs;
         sigemptyset(&bs); sigaddset(&bs, SIGCHLD);
         sigprocmask(SIG_BLOCK, &bs, NULL);
+
+        scmp_filter_ctx ctx = NULL;
+        if (enable_seccomp) {
+            ctx = seccomp_init(SCMP_ACT_ALLOW);
+            if (!enable_sys_execve) {
+                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(execve), 1, SCMP_A0(SCMP_CMP_NE, (uintptr_t) start_program));
+                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(execveat), 0);
+            }
+            if (!enable_sys_fork) {
+#if defined __NR_fork
+                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(fork), 0);
+#endif
+#if defined __NR_vfork
+                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(vfork), 0);
+#endif
+#if defined __NR_clone
+                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(clone), 0);
+#endif
+#if defined __NR_clone3
+                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(clone3), 0);
+#endif
+            }
+        }
 
         // we need another child, because this one has PID 1
         int pid2 = fork();
@@ -1371,6 +1412,14 @@ main(int argc, char *argv[])
             if (prctl(PR_SET_NO_NEW_PRIVS, 1L, 0L, 0L, 0L) < 0) {
                 fprintf(stderr, "prctl failed: %s\n", strerror(errno));
                 _exit(127);
+            }
+
+            if (enable_seccomp) {
+                int serr = 0;
+                if ((serr = seccomp_load(ctx)) < 0) {
+                    fprintf(stderr, "seccomp_load failed: %s\n", strerror(-serr));
+                    _exit(127);
+                }
             }
 
             if (bash_mode) {

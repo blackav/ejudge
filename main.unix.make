@@ -356,7 +356,7 @@ ej-suid-ipcrm : bin/ej-suid-ipcrm.c
 	${CC} ${CFLAGS} ${LDFLAGS} $^ -o $@
 
 ej-suid-container : bin/ej-suid-container.c
-	${CC} -static ${CFLAGS} ${LDFLAGS} $^ -o $@
+	${CC} -static ${CFLAGS} ${LDFLAGS} $^ -o $@ -lseccomp
 
 ej-collect-emails: ${CE_OBJECTS}
 	${LD} ${LDFLAGS} $^ -o $@ ${LDLIBS} ${EXPAT_LIB}
