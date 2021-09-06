@@ -1672,13 +1672,13 @@ main(int argc, char *argv[])
         dprintf(response_fd, "a%lldb%lld", (long long) prc_usage.ru_nvcsw, (long long) prc_usage.ru_nivcsw);
         if (ipc_objects > 0) dprintf(response_fd, "i%d", ipc_objects);
         if (orphaned_processes > 0) dprintf(response_fd, "o%d", orphaned_processes);
-            if (log_f) {
-                fclose(log_f); log_f = NULL;
-            }
-            if (log_s && *log_s) {
-                int len = strlen(log_s);
-                dprintf(response_fd, "L%d,%s", len, log_s);
-            }
+        if (log_f) {
+            fclose(log_f); log_f = NULL;
+        }
+        if (log_s && *log_s) {
+            int len = strlen(log_s);
+            dprintf(response_fd, "L%d,%s", len, log_s);
+        }
 
         _exit(0);
     }
