@@ -45,10 +45,6 @@
 
 #include "config.h"
 
-#ifndef CLONE_NEWCGROUP
-#define CLONE_NEWCGROUP    0x02000000
-#endif
-
 #if defined EJUDGE_PRIMARY_USER
 #define PRIMARY_USER EJUDGE_PRIMARY_USER
 #else
@@ -1261,7 +1257,6 @@ main(int argc, char *argv[])
     }
 
     unsigned clone_flags = CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD;
-    if (enable_cgroup) clone_flags |= CLONE_NEWCGROUP;
     if (enable_ipc_ns) clone_flags |= CLONE_NEWIPC;
     if (enable_net_ns) clone_flags |= CLONE_NEWNET;
     if (enable_mount_ns) clone_flags |= CLONE_NEWNS;
