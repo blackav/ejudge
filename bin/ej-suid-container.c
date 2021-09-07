@@ -75,6 +75,10 @@
 
 static char safe_dir_path[PATH_MAX];
 static char proc_path[PATH_MAX] = "/proc";
+static char cgroup_path[PATH_MAX] = "/sys/fs/cgroup";
+static char cgroup_name[PATH_MAX] = "";
+static char cgroup_exec_path[PATH_MAX] = "";
+static char cgroup_procs_path[PATH_MAX] = "";
 
 static const char *program_name = "prog";
 static int response_fd = 2;
@@ -536,15 +540,25 @@ reconfigure_fs(void)
         }
     }
 
-    if (!enable_proc) {
+    if (!enable_proc || (!enable_sys && enable_cgroup)) {
         if (mkdir("/run/0", 0700) < 0) {
             ffatal("failed to mkdir /run/0: %s", strerror(errno));
         }
+    }
+    if (!enable_proc) {
         if (mkdir("/run/0/proc", 0700) < 0) {
             ffatal("failed to mkdir /run/0/proc: %s", strerror(errno));
         }
         if ((r = mount("proc", "/run/0/proc", "proc", 0, NULL)) < 0) {
             ffatal("failed to mount /run/0/proc: %s", strerror(errno));
+        }
+    }
+    if (!enable_sys && enable_cgroup) {
+        if (mkdir("/run/0/cgroup", 0700) < 0) {
+            ffatal("failed to mkdir /run/0/cgroup: %s", strerror(errno));
+        }
+        if ((r = mount("cgroup2", "/run/0/cgroup", "cgroup2", 0, NULL)) < 0) {
+            ffatal("failed to mount /run/0/cgroup: %s", strerror(errno));
         }
     }
 
@@ -1244,6 +1258,9 @@ main(int argc, char *argv[])
     if (!enable_proc) {
         snprintf(proc_path, sizeof(proc_path), "/run/0/proc");
     }
+    if (!enable_sys) {
+        snprintf(cgroup_path, sizeof(cgroup_path), "/run/0/cgroup");
+    }
 
     if (enable_chown) {
         change_ownership(exec_uid, exec_gid, primary_uid);
@@ -1256,6 +1273,28 @@ main(int argc, char *argv[])
         fatal();
     }
 
+    if (enable_cgroup) {
+        if (mkdir("/sys/fs/cgroup/ejudge", 0700) < 0 && errno != EEXIST) {
+            ffatal("cannot create directory /sys/fs/cgroup/ejudge: %s", strerror(errno));
+        }
+        int rfd = open("/dev/urandom", O_RDONLY);
+        if (rfd < 0) ffatal("cannot open /dev/urandom: %s", strerror(errno));
+        unsigned long long ullval = 0;
+        errno = 0;
+        int z;
+        if ((z = read(rfd, &ullval, sizeof(ullval))) != sizeof(ullval)) {
+            ffatal("invalid read from /dev/urandom: %d, %s\n", z, strerror(errno));
+        }
+        close(rfd);
+        snprintf(cgroup_name, sizeof(cgroup_name), "%llx", ullval);
+        if (snprintf(cgroup_exec_path, sizeof(cgroup_exec_path), "/sys/fs/cgroup/ejudge/%s", cgroup_name) >= sizeof(cgroup_exec_path)) {
+            ffatal("invalid cgroup path");
+        }
+        if (mkdir(cgroup_exec_path, 0700) < 0) {
+            ffatal("failed to create %s: %s", cgroup_exec_path, strerror(errno));
+        }
+    }
+
     unsigned clone_flags = CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD;
     if (enable_ipc_ns) clone_flags |= CLONE_NEWIPC;
     if (enable_net_ns) clone_flags |= CLONE_NEWNET;
@@ -1266,6 +1305,7 @@ main(int argc, char *argv[])
     int pid = syscall(__NR_clone, clone_flags, NULL, NULL, &tidptr);
     if (pid < 0) {
         change_ownership(primary_uid, primary_gid, exec_uid);
+        if (cgroup_exec_path[0]) rmdir(cgroup_exec_path);
         ffatal("clone failed: %s", strerror(errno));
     }
 
@@ -1301,6 +1341,15 @@ main(int argc, char *argv[])
             }
         }
 
+        if (enable_cgroup) {
+            if (snprintf(cgroup_exec_path, sizeof(cgroup_exec_path), "%s/ejudge/%s", cgroup_path, cgroup_name) >= sizeof(cgroup_exec_path)) {
+                ffatal("cgroup path too long");
+            }
+            if (snprintf(cgroup_procs_path, sizeof(cgroup_procs_path), "%s/cgroup.procs", cgroup_exec_path) >= sizeof(cgroup_procs_path)) {
+                ffatal("cgroup path too long");
+            }
+        }
+
         // we need another child, because this one has PID 1
         int pid2 = fork();
         if (pid2 < 0) {
@@ -1308,6 +1357,21 @@ main(int argc, char *argv[])
         }
 
         if (!pid2) {
+            if (enable_cgroup) {
+                char buf[64];
+                int len = snprintf(buf, sizeof(buf), "%d", getpid());
+                int fd = open(cgroup_procs_path, O_WRONLY);
+                if (fd < 0) {
+                    fprintf(stderr, "failed to open %s: %s\n", cgroup_procs_path, strerror(errno));
+                    _exit(127);
+                }
+                int z;
+                errno = 0;
+                if ((z = write(fd, buf, len)) != len) {
+                    fprintf(stderr, "failed to write to %s: %d, %s\n", cgroup_procs_path, z, strerror(errno));
+                }
+                close(fd);
+            }
             if (enable_pgroup) {
                 //setpgid(0, 0);
                 if (setsid() < 0) fprintf(stderr, "setsid() failed: %s\n", strerror(errno));
@@ -1691,6 +1755,7 @@ main(int argc, char *argv[])
     }
 
     change_ownership(primary_uid, primary_gid, exec_uid);
+    if (cgroup_exec_path[0]) rmdir(cgroup_exec_path);
 
     if (infop.si_code == CLD_EXITED) {
         if (infop.si_status == 0 || infop.si_status == 1) _exit(infop.si_status);
