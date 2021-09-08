@@ -42,6 +42,7 @@
 #include <sys/prctl.h>
 #include <seccomp.h>
 #include <asm/unistd.h>
+#include <asm/param.h>
 
 #include "config.h"
 
@@ -80,6 +81,15 @@ static char cgroup_name[PATH_MAX] = "";
 static char cgroup_unified_path[PATH_MAX] = "";
 static char cgroup_procs_path[PATH_MAX] = "";
 static int cgroup_v2_detected = 0;
+
+static const char cgroup_v1_memory_default_path[] = "/sys/fs/cgroup/memory";
+static const char cgroup_v1_cpu_default_path[] = "/sys/fs/cgroup/cpu,cpuacct";
+static char cgroup_memory_base_path[PATH_MAX] = "/sys/fs/cgroup/memory";
+static char cgroup_cpu_base_path[PATH_MAX] = "/sys/fs/cgroup/cpu,cpuacct";
+static char cgroup_memory_path[PATH_MAX] = "";
+static char cgroup_cpu_path[PATH_MAX] = "";
+static char cgroup_memory_procs_path[PATH_MAX] = "";
+static char cgroup_cpu_procs_path[PATH_MAX] = "";
 
 static const char *program_name = "prog";
 static int response_fd = 2;
@@ -563,7 +573,18 @@ reconfigure_fs(void)
                 ffatal("failed to mount /run/0/cgroup: %s", strerror(errno));
             }
         } else {
-            // TODO: cgroup v1 support
+            if (mkdir("/run/0/memory", 0700) < 0) {
+                ffatal("failed to mkdir /run/0/memory: %s", strerror(errno));
+            }
+            if ((r = mount("cgroup", "/run/0/memory", "cgroup", 0, "rw,nosuid,nodev,noexec,relatime,memory")) < 0) {
+                ffatal("failed to mount /run/0/memory: %s", strerror(errno));
+            }
+            if (mkdir("/run/0/cpu,cpuacct", 0700) < 0) {
+                ffatal("failed to mkdir /run/0/cpu,cpuacct: %s", strerror(errno));
+            }
+            if ((r = mount("cgroup", "/run/0/cpu,cpuacct", "cgroup", 0, "rw,nosuid,nodev,noexec,relatime,cpu,cpuacct")) < 0) {
+                ffatal("failed to mount /run/0/cpu,cpuacct: %s", strerror(errno));
+            }
         }
     }
 
@@ -956,29 +977,64 @@ create_cgroup(void)
             ffatal("failed to create %s: %s", cgroup_unified_path, strerror(errno));
         }
     } else {
-        // TODO: cgroup v1 support
+        if (snprintf(cgroup_cpu_path, sizeof(cgroup_cpu_path), "%s/ejudge", cgroup_v1_cpu_default_path) >= sizeof(cgroup_cpu_path)) {
+            ffatal("invalid cgroup path");
+        }
+        if (mkdir(cgroup_cpu_path, 0700) < 0 && errno != EEXIST) {
+            ffatal("cannot create directory %s: %s", cgroup_cpu_path, strerror(errno));
+        }
+        if (snprintf(cgroup_cpu_path, sizeof(cgroup_cpu_path), "%s/ejudge/%s", cgroup_v1_cpu_default_path, cgroup_name) >= sizeof(cgroup_cpu_path)) {
+            ffatal("invalid cgroup path");
+        }
+        if (mkdir(cgroup_cpu_path, 0700) < 0) {
+            ffatal("failed to create %s: %s", cgroup_cpu_path, strerror(errno));
+        }
+        if (snprintf(cgroup_memory_path, sizeof(cgroup_memory_path), "%s/ejudge", cgroup_v1_memory_default_path) >= sizeof(cgroup_memory_path)) {
+            ffatal("invalid cgroup path");
+        }
+        if (mkdir(cgroup_memory_path, 0700) < 0 && errno != EEXIST) {
+            ffatal("cannot create directory cgroup_memory_path: %s", strerror(errno));
+        }
+        if (snprintf(cgroup_memory_path, sizeof(cgroup_memory_path), "%s/ejudge/%s", cgroup_v1_memory_default_path, cgroup_name) >= sizeof(cgroup_memory_path)) {
+            ffatal("invalid cgroup path");
+        }
+        if (mkdir(cgroup_memory_path, 0700) < 0) {
+            ffatal("failed to create %s: %s", cgroup_memory_path, strerror(errno));
+        }
+    }
+}
+
+static void
+write_buf_to_file(const char *path, const char *buf, int len)
+{
+    int fd = open(path, O_WRONLY);
+    if (fd < 0) {
+        fprintf(stderr, "failed to open %s: %s\n", path, strerror(errno));
+        _exit(127);
+    }
+    int z;
+    errno = 0;
+    if ((z = write(fd, buf, len)) != len) {
+        fprintf(stderr, "failed to write to %s: %d, %s\n", path, z, strerror(errno));
+        _exit(127);
+    }
+    if (close(fd) < 0) {
+        fprintf(stderr, "failed to close %s: %s\n", path, strerror(errno));
+        _exit(127);
     }
 }
 
 static void
 move_to_cgroup(void)
 {
+    char buf[64];
+    int len = snprintf(buf, sizeof(buf), "%d", getpid());
+
     if (cgroup_v2_detected) {
-        char buf[64];
-        int len = snprintf(buf, sizeof(buf), "%d", getpid());
-        int fd = open(cgroup_procs_path, O_WRONLY);
-        if (fd < 0) {
-            fprintf(stderr, "failed to open %s: %s\n", cgroup_procs_path, strerror(errno));
-            _exit(127);
-        }
-        int z;
-        errno = 0;
-        if ((z = write(fd, buf, len)) != len) {
-            fprintf(stderr, "failed to write to %s: %d, %s\n", cgroup_procs_path, z, strerror(errno));
-        }
-        close(fd);
+        write_buf_to_file(cgroup_procs_path, buf, len);
     } else {
-        // TODO: cgroup v1 support
+        write_buf_to_file(cgroup_memory_procs_path, buf, len);
+        write_buf_to_file(cgroup_cpu_procs_path, buf, len);
     }
 }
 
@@ -1032,12 +1088,52 @@ fail:
 }
 
 static void
+read_cgroup_stats_v1(struct CGroupStat *ps)
+{
+    FILE *f = NULL;
+
+    char cpu_stat_path[PATH_MAX];
+    if (snprintf(cpu_stat_path, sizeof(cpu_stat_path),
+                 "%s/ejudge/%s/cpuacct.stat",
+                 cgroup_cpu_base_path, cgroup_name) >= sizeof(cpu_stat_path)) {
+        goto fail;
+    }
+    if (!(f = fopen(cpu_stat_path, "r"))) {
+        goto fail;
+    }
+    char lbuf[1024];
+    while (fgets(lbuf, sizeof(lbuf), f)) {
+        int llen = strlen(lbuf);
+        if (llen + 1 == sizeof(lbuf)) goto fail;
+        while (isspace((unsigned char) lbuf[llen - 1])) --llen;
+        lbuf[llen] = 0;
+        char vbuf[1024];
+        long long vval;
+        int n;
+        if (sscanf(lbuf, "%s%lld%n", vbuf, &vval, &n) != 2) goto fail;
+        if (lbuf[n]) goto fail;
+        if (!strcmp(vbuf, "user")) {
+            ps->user_us = vval * (HZ * 1000);
+        } else if (!strcmp(vbuf, "system")) {
+            ps->system_us = vval * (HZ * 1000);
+        }
+    }
+    ps->usage_us = ps->user_us + ps->system_us;
+    fclose(f);
+    return;
+
+fail:
+    if (f) fclose(f);
+    return;
+}
+
+static void
 read_cgroup_stats(struct CGroupStat *ps)
 {
     if (cgroup_v2_detected) {
         read_cgroup_stats_v2(ps);
     } else {
-        // TODO: cgroup v1 support
+        read_cgroup_stats_v1(ps);
     }
 }
 
@@ -1371,11 +1467,25 @@ main(int argc, char *argv[])
 #endif
     }
 
+    if (enable_cgroup) {
+        // check cgroup version
+        if (access("/sys/fs/cgroup/cgroup.controllers", F_OK) >= 0) {
+            cgroup_v2_detected = 1;
+        } else {
+            enable_sys = 1;
+        }
+    }
+
     if (!enable_proc) {
         snprintf(proc_path, sizeof(proc_path), "/run/0/proc");
     }
     if (!enable_sys) {
-        snprintf(cgroup_path, sizeof(cgroup_path), "/run/0/cgroup");
+        if (cgroup_v2_detected) {
+            snprintf(cgroup_path, sizeof(cgroup_path), "/run/0/cgroup");
+        } else {
+            snprintf(cgroup_memory_base_path, sizeof(cgroup_memory_base_path), "/run/0/memory");
+            snprintf(cgroup_cpu_base_path, sizeof(cgroup_cpu_base_path), "/run/0/cpu,cpuacct");
+        }
     }
 
     if (enable_chown) {
@@ -1387,15 +1497,6 @@ main(int argc, char *argv[])
             change_ownership(primary_uid, primary_gid, exec_uid);
         }
         fatal();
-    }
-
-    if (enable_cgroup) {
-        // check cgroup version
-        if (access("/sys/fs/cgroup/cgroup.controllers", F_OK) >= 0) {
-            cgroup_v2_detected = 1;
-        } else {
-            enable_cgroup = 0;
-        }
     }
 
     if (enable_cgroup) {
@@ -1413,6 +1514,8 @@ main(int argc, char *argv[])
     if (pid < 0) {
         change_ownership(primary_uid, primary_gid, exec_uid);
         if (cgroup_unified_path[0]) rmdir(cgroup_unified_path);
+        if (cgroup_cpu_path[0]) rmdir(cgroup_cpu_path);
+        if (cgroup_memory_path[0]) rmdir(cgroup_memory_path);
         ffatal("clone failed: %s", strerror(errno));
     }
 
@@ -1457,7 +1560,18 @@ main(int argc, char *argv[])
                     ffatal("cgroup path too long");
                 }
             } else {
-                // TODO: cgroup v1 support
+                if (snprintf(cgroup_memory_path, sizeof(cgroup_memory_path), "%s/ejudge/%s", cgroup_memory_base_path, cgroup_name) >= sizeof(cgroup_memory_path)) {
+                    ffatal("cgroup path too long");
+                }
+                if (snprintf(cgroup_memory_procs_path, sizeof(cgroup_memory_procs_path), "%s/cgroup.procs", cgroup_memory_path) >= sizeof(cgroup_memory_procs_path)) {
+                    ffatal("cgroup path too long");
+                }
+                if (snprintf(cgroup_cpu_path, sizeof(cgroup_cpu_path), "%s/ejudge/%s", cgroup_cpu_base_path, cgroup_name) >= sizeof(cgroup_cpu_path)) {
+                    ffatal("cgroup path too long");
+                }
+                if (snprintf(cgroup_cpu_procs_path, sizeof(cgroup_cpu_procs_path), "%s/cgroup.procs", cgroup_cpu_path) >= sizeof(cgroup_cpu_procs_path)) {
+                    ffatal("cgroup path too long");
+                }
             }
         }
 
@@ -1872,6 +1986,8 @@ main(int argc, char *argv[])
 
     change_ownership(primary_uid, primary_gid, exec_uid);
     if (cgroup_unified_path[0]) rmdir(cgroup_unified_path);
+    if (cgroup_cpu_path[0]) rmdir(cgroup_cpu_path);
+    if (cgroup_memory_path[0]) rmdir(cgroup_memory_path);
 
     if (infop.si_code == CLD_EXITED) {
         if (infop.si_status == 0 || infop.si_status == 1) _exit(infop.si_status);
