@@ -77,7 +77,7 @@ static char safe_dir_path[PATH_MAX];
 static char proc_path[PATH_MAX] = "/proc";
 static char cgroup_path[PATH_MAX] = "/sys/fs/cgroup";
 static char cgroup_name[PATH_MAX] = "";
-static char cgroup_exec_path[PATH_MAX] = "";
+static char cgroup_unified_path[PATH_MAX] = "";
 static char cgroup_procs_path[PATH_MAX] = "";
 static int cgroup_v2_detected = 0;
 
@@ -949,11 +949,11 @@ create_cgroup(void)
         if (mkdir("/sys/fs/cgroup/ejudge", 0700) < 0 && errno != EEXIST) {
             ffatal("cannot create directory /sys/fs/cgroup/ejudge: %s", strerror(errno));
         }
-        if (snprintf(cgroup_exec_path, sizeof(cgroup_exec_path), "/sys/fs/cgroup/ejudge/%s", cgroup_name) >= sizeof(cgroup_exec_path)) {
+        if (snprintf(cgroup_unified_path, sizeof(cgroup_unified_path), "/sys/fs/cgroup/ejudge/%s", cgroup_name) >= sizeof(cgroup_unified_path)) {
             ffatal("invalid cgroup path");
         }
-        if (mkdir(cgroup_exec_path, 0700) < 0) {
-            ffatal("failed to create %s: %s", cgroup_exec_path, strerror(errno));
+        if (mkdir(cgroup_unified_path, 0700) < 0) {
+            ffatal("failed to create %s: %s", cgroup_unified_path, strerror(errno));
         }
     } else {
         // TODO: cgroup v1 support
@@ -1412,7 +1412,7 @@ main(int argc, char *argv[])
     int pid = syscall(__NR_clone, clone_flags, NULL, NULL, &tidptr);
     if (pid < 0) {
         change_ownership(primary_uid, primary_gid, exec_uid);
-        if (cgroup_exec_path[0]) rmdir(cgroup_exec_path);
+        if (cgroup_unified_path[0]) rmdir(cgroup_unified_path);
         ffatal("clone failed: %s", strerror(errno));
     }
 
@@ -1450,10 +1450,10 @@ main(int argc, char *argv[])
 
         if (enable_cgroup) {
             if (cgroup_v2_detected) {
-                if (snprintf(cgroup_exec_path, sizeof(cgroup_exec_path), "%s/ejudge/%s", cgroup_path, cgroup_name) >= sizeof(cgroup_exec_path)) {
+                if (snprintf(cgroup_unified_path, sizeof(cgroup_unified_path), "%s/ejudge/%s", cgroup_path, cgroup_name) >= sizeof(cgroup_unified_path)) {
                     ffatal("cgroup path too long");
                 }
-                if (snprintf(cgroup_procs_path, sizeof(cgroup_procs_path), "%s/cgroup.procs", cgroup_exec_path) >= sizeof(cgroup_procs_path)) {
+                if (snprintf(cgroup_procs_path, sizeof(cgroup_procs_path), "%s/cgroup.procs", cgroup_unified_path) >= sizeof(cgroup_procs_path)) {
                     ffatal("cgroup path too long");
                 }
             } else {
@@ -1871,7 +1871,7 @@ main(int argc, char *argv[])
     }
 
     change_ownership(primary_uid, primary_gid, exec_uid);
-    if (cgroup_exec_path[0]) rmdir(cgroup_exec_path);
+    if (cgroup_unified_path[0]) rmdir(cgroup_unified_path);
 
     if (infop.si_code == CLD_EXITED) {
         if (infop.si_status == 0 || infop.si_status == 1) _exit(infop.si_status);
