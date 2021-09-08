@@ -69,6 +69,7 @@ static const unsigned char MSG_allowed_languages[] = "Allowed programming langua
 static const unsigned char MSG_allowed_regions[] = "Allowed regions";
 static const unsigned char MSG_login_template[] = "Template for new logins";
 static const unsigned char MSG_login_template_options[] = "Login auto-assign options";
+static const unsigned char MSG_read_only_name[] = "Make &quot;Name&quot; field read-only";
 
 %><%@set getter_name = "csp_get_cnts_edit_cur_contest_page"
 %><%@set ac_prefix = "SSERV_CMD_"
@@ -171,6 +172,7 @@ static const unsigned char * const form_row_attrs[]=
             <%@expand EDIT_BOOL_ROW "enable_user_telegram" "Flags" %>
             <%@expand EDIT_BOOL_ROW "enable_avatar" "Flags" %>
             <%@expand EDIT_BOOL_ROW "enable_local_pages" "Flags" %>
+            <%@expand EDIT_BOOL_ROW "read_only_name" "Flags" %>
         </fieldset>
     </s:form>
 </div>
@@ -632,6 +634,7 @@ function popupFlagsDialog()
     copyCheckbox("FlagsDialo_enable_user_telegram", "Ori_enable_user_telegram");
     copyCheckbox("FlagsDialo_enable_avatar", "Ori_enable_avatar");
     copyCheckbox("FlagsDialo_enable_local_pages", "Ori_enable_local_pages");
+    copyCheckbox("FlagsDialo_read_only_name", "Ori_read_only_name");
 
     $("#FlagsDialogDiv").dialog('open');
 }
@@ -949,6 +952,7 @@ function np(e)
     <%@expand ORIG_BOOL_ROW "enable_user_telegram" %>
     <%@expand ORIG_BOOL_ROW "enable_avatar" %>
     <%@expand ORIG_BOOL_ROW "enable_local_pages" %>
+    <%@expand ORIG_BOOL_ROW "read_only_name" %>
 </table>
     </div>
 

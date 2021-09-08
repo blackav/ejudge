@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -959,7 +959,11 @@ ns_reg_main_page_view_info(
       if (ui && ui->name && *ui->name) {
         s = ui->name;
       }
-      info_table_row(fout, cnts->personal?_("User name (for standings)"):_("Team name"), s, 0, 0, 0, name_accept_chars, &ab, 0, u->login);
+      if (cnts->read_only_name) {
+        info_table_row(fout, cnts->personal?_("User name (for standings)"):_("Team name"), s, 0, 0, 0, 0, &ab, 0, 0);
+      } else {
+        info_table_row(fout, cnts->personal?_("User name (for standings)"):_("Team name"), s, 0, 0, 0, name_accept_chars, &ab, 0, u->login);
+      }
     }
     if (ui && cnts->personal && cnts->members[(rr = CONTEST_M_CONTESTANT)]
         && cnts->members[rr]->max_count > 0) {
@@ -2052,7 +2056,7 @@ submit_general_editing(
   // name, param_%d
   // for personal contests, also set the first member
 
-  if (!cnts->disable_name) {
+  if (!cnts->disable_name && !cnts->read_only_name) {
     if ((r = hr_cgi_param(phr, "name", &v)) < 0) {
       fprintf(log_f, "%s.\n",
               _("Field \"Name\" contains non-printable characters"));

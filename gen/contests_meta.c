@@ -38,6 +38,7 @@ static struct meta_info_item meta_info_contest_desc_data[] =
   [CNTS_enable_user_telegram] = { CNTS_enable_user_telegram, 'b', XSIZE(struct contest_desc, enable_user_telegram), "enable_user_telegram", XOFFSET(struct contest_desc, enable_user_telegram) },
   [CNTS_enable_avatar] = { CNTS_enable_avatar, 'b', XSIZE(struct contest_desc, enable_avatar), "enable_avatar", XOFFSET(struct contest_desc, enable_avatar) },
   [CNTS_enable_local_pages] = { CNTS_enable_local_pages, 'b', XSIZE(struct contest_desc, enable_local_pages), "enable_local_pages", XOFFSET(struct contest_desc, enable_local_pages) },
+  [CNTS_read_only_name] = { CNTS_read_only_name, 'b', XSIZE(struct contest_desc, read_only_name), "read_only_name", XOFFSET(struct contest_desc, read_only_name) },
   [CNTS_reg_deadline] = { CNTS_reg_deadline, 't', XSIZE(struct contest_desc, reg_deadline), "reg_deadline", XOFFSET(struct contest_desc, reg_deadline) },
   [CNTS_sched_time] = { CNTS_sched_time, 't', XSIZE(struct contest_desc, sched_time), "sched_time", XOFFSET(struct contest_desc, sched_time) },
   [CNTS_open_time] = { CNTS_open_time, 't', XSIZE(struct contest_desc, open_time), "open_time", XOFFSET(struct contest_desc, open_time) },

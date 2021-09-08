@@ -33,6 +33,7 @@ enum
   CNTS_enable_user_telegram,
   CNTS_enable_avatar,
   CNTS_enable_local_pages,
+  CNTS_read_only_name,
   CNTS_reg_deadline,
   CNTS_sched_time,
   CNTS_open_time,

@@ -139,6 +139,13 @@
         <td></td>
     </tr>
 <% } %>
+<% if (cnts->read_only_name) { %>
+    <tr>
+        <td><s:_>Make &quot;Name&quot; field read-only</s:_>?</td>
+        <td><s:vb value="cnts->read_only_name" /></td>
+        <td></td>
+    </tr>
+<% } %>
 <% if (cnts->enable_password_recovery) { %>
     <tr>
         <td><s:_>Enable password restoration</s:_>?</td>

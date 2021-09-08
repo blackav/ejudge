@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-07-13 20:37+0300\n"
+"POT-Creation-Date: 2021-09-08 16:36+0300\n"
 "PO-Revision-Date: 2020-07-13 22:56+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -2286,6 +2286,9 @@ msgstr "Главный URL"
 
 msgid "Main page"
 msgstr "Главная"
+
+msgid "Make &quot;Name&quot; field read-only"
+msgstr "Запретить редактировать поле &quot;Имя&quot;"
 
 msgid "Make invisible"
 msgstr "Сделать невидимой"

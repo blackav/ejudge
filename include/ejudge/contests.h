@@ -3,7 +3,7 @@
 #ifndef __CONTESTS_H__
 #define __CONTESTS_H__
 
-/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -184,6 +184,7 @@ enum
     CONTEST_A_ENABLE_AVATAR,
     CONTEST_A_ENABLE_LOCAL_PAGES,
     CONTEST_A_IS_PASSWORD,
+    CONTEST_A_READ_ONLY_NAME,
 
     CONTEST_LAST_ATTR
   };
@@ -331,6 +332,7 @@ struct contest_desc
   ejbytebool_t enable_user_telegram;
   ejbytebool_t enable_avatar;
   ejbytebool_t enable_local_pages;
+  ejbytebool_t read_only_name;
 
   time_t         reg_deadline;
   time_t         sched_time;
