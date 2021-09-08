@@ -555,11 +555,15 @@ reconfigure_fs(void)
         }
     }
     if (!enable_sys && enable_cgroup) {
-        if (mkdir("/run/0/cgroup", 0700) < 0) {
-            ffatal("failed to mkdir /run/0/cgroup: %s", strerror(errno));
-        }
-        if ((r = mount("cgroup2", "/run/0/cgroup", "cgroup2", 0, NULL)) < 0) {
-            ffatal("failed to mount /run/0/cgroup: %s", strerror(errno));
+        if (cgroup_v2_detected) {
+            if (mkdir("/run/0/cgroup", 0700) < 0) {
+                ffatal("failed to mkdir /run/0/cgroup: %s", strerror(errno));
+            }
+            if ((r = mount("cgroup2", "/run/0/cgroup", "cgroup2", 0, NULL)) < 0) {
+                ffatal("failed to mount /run/0/cgroup: %s", strerror(errno));
+            }
+        } else {
+            // TODO: cgroup v1 support
         }
     }
 
@@ -926,6 +930,56 @@ scan_shm(int search_uid)
     return count;
 }
 
+static void
+create_cgroup(void)
+{
+    if (cgroup_v2_detected) {
+        if (mkdir("/sys/fs/cgroup/ejudge", 0700) < 0 && errno != EEXIST) {
+            ffatal("cannot create directory /sys/fs/cgroup/ejudge: %s", strerror(errno));
+        }
+        int rfd = open("/dev/urandom", O_RDONLY);
+        if (rfd < 0) ffatal("cannot open /dev/urandom: %s", strerror(errno));
+        unsigned long long ullval = 0;
+        errno = 0;
+        int z;
+        if ((z = read(rfd, &ullval, sizeof(ullval))) != sizeof(ullval)) {
+            ffatal("invalid read from /dev/urandom: %d, %s\n", z, strerror(errno));
+        }
+        close(rfd);
+        snprintf(cgroup_name, sizeof(cgroup_name), "%llx", ullval);
+        if (snprintf(cgroup_exec_path, sizeof(cgroup_exec_path), "/sys/fs/cgroup/ejudge/%s", cgroup_name) >= sizeof(cgroup_exec_path)) {
+            ffatal("invalid cgroup path");
+        }
+        if (mkdir(cgroup_exec_path, 0700) < 0) {
+            ffatal("failed to create %s: %s", cgroup_exec_path, strerror(errno));
+        }
+    } else {
+        // TODO: cgroup v1 support
+    }
+}
+
+static void
+move_to_cgroup(void)
+{
+    if (cgroup_v2_detected) {
+        char buf[64];
+        int len = snprintf(buf, sizeof(buf), "%d", getpid());
+        int fd = open(cgroup_procs_path, O_WRONLY);
+        if (fd < 0) {
+            fprintf(stderr, "failed to open %s: %s\n", cgroup_procs_path, strerror(errno));
+            _exit(127);
+        }
+        int z;
+        errno = 0;
+        if ((z = write(fd, buf, len)) != len) {
+            fprintf(stderr, "failed to write to %s: %d, %s\n", cgroup_procs_path, z, strerror(errno));
+        }
+        close(fd);
+    } else {
+        // TODO: cgroup v1 support
+    }
+}
+
 struct CGroupStat
 {
     // CPU usage stats from cpu.stat
@@ -935,7 +989,7 @@ struct CGroupStat
 };
 
 static void
-read_cgroup_stats(struct CGroupStat *ps)
+read_cgroup_stats_v2(struct CGroupStat *ps)
 {
     FILE *f = NULL;
 
@@ -973,6 +1027,16 @@ read_cgroup_stats(struct CGroupStat *ps)
 fail:
     if (f) fclose(f);
     return;
+}
+
+static void
+read_cgroup_stats(struct CGroupStat *ps)
+{
+    if (cgroup_v2_detected) {
+        read_cgroup_stats_v2(ps);
+    } else {
+        // TODO: cgroup v1 support
+    }
 }
 
 static char *
@@ -1333,25 +1397,7 @@ main(int argc, char *argv[])
     }
 
     if (enable_cgroup) {
-        if (mkdir("/sys/fs/cgroup/ejudge", 0700) < 0 && errno != EEXIST) {
-            ffatal("cannot create directory /sys/fs/cgroup/ejudge: %s", strerror(errno));
-        }
-        int rfd = open("/dev/urandom", O_RDONLY);
-        if (rfd < 0) ffatal("cannot open /dev/urandom: %s", strerror(errno));
-        unsigned long long ullval = 0;
-        errno = 0;
-        int z;
-        if ((z = read(rfd, &ullval, sizeof(ullval))) != sizeof(ullval)) {
-            ffatal("invalid read from /dev/urandom: %d, %s\n", z, strerror(errno));
-        }
-        close(rfd);
-        snprintf(cgroup_name, sizeof(cgroup_name), "%llx", ullval);
-        if (snprintf(cgroup_exec_path, sizeof(cgroup_exec_path), "/sys/fs/cgroup/ejudge/%s", cgroup_name) >= sizeof(cgroup_exec_path)) {
-            ffatal("invalid cgroup path");
-        }
-        if (mkdir(cgroup_exec_path, 0700) < 0) {
-            ffatal("failed to create %s: %s", cgroup_exec_path, strerror(errno));
-        }
+        create_cgroup();
     }
 
     unsigned clone_flags = CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD;
@@ -1401,11 +1447,15 @@ main(int argc, char *argv[])
         }
 
         if (enable_cgroup) {
-            if (snprintf(cgroup_exec_path, sizeof(cgroup_exec_path), "%s/ejudge/%s", cgroup_path, cgroup_name) >= sizeof(cgroup_exec_path)) {
-                ffatal("cgroup path too long");
-            }
-            if (snprintf(cgroup_procs_path, sizeof(cgroup_procs_path), "%s/cgroup.procs", cgroup_exec_path) >= sizeof(cgroup_procs_path)) {
-                ffatal("cgroup path too long");
+            if (cgroup_v2_detected) {
+                if (snprintf(cgroup_exec_path, sizeof(cgroup_exec_path), "%s/ejudge/%s", cgroup_path, cgroup_name) >= sizeof(cgroup_exec_path)) {
+                    ffatal("cgroup path too long");
+                }
+                if (snprintf(cgroup_procs_path, sizeof(cgroup_procs_path), "%s/cgroup.procs", cgroup_exec_path) >= sizeof(cgroup_procs_path)) {
+                    ffatal("cgroup path too long");
+                }
+            } else {
+                // TODO: cgroup v1 support
             }
         }
 
@@ -1417,19 +1467,7 @@ main(int argc, char *argv[])
 
         if (!pid2) {
             if (enable_cgroup) {
-                char buf[64];
-                int len = snprintf(buf, sizeof(buf), "%d", getpid());
-                int fd = open(cgroup_procs_path, O_WRONLY);
-                if (fd < 0) {
-                    fprintf(stderr, "failed to open %s: %s\n", cgroup_procs_path, strerror(errno));
-                    _exit(127);
-                }
-                int z;
-                errno = 0;
-                if ((z = write(fd, buf, len)) != len) {
-                    fprintf(stderr, "failed to write to %s: %d, %s\n", cgroup_procs_path, z, strerror(errno));
-                }
-                close(fd);
+                move_to_cgroup();
             }
             if (enable_pgroup) {
                 //setpgid(0, 0);
