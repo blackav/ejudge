@@ -933,20 +933,22 @@ scan_shm(int search_uid)
 static void
 create_cgroup(void)
 {
+    // generate random cgroup name
+    int rfd = open("/dev/urandom", O_RDONLY);
+    if (rfd < 0) ffatal("cannot open /dev/urandom: %s", strerror(errno));
+    unsigned long long ullval = 0;
+    errno = 0;
+    int z;
+    if ((z = read(rfd, &ullval, sizeof(ullval))) != sizeof(ullval)) {
+        ffatal("invalid read from /dev/urandom: %d, %s\n", z, strerror(errno));
+    }
+    close(rfd);
+    snprintf(cgroup_name, sizeof(cgroup_name), "%llx", ullval);
+
     if (cgroup_v2_detected) {
         if (mkdir("/sys/fs/cgroup/ejudge", 0700) < 0 && errno != EEXIST) {
             ffatal("cannot create directory /sys/fs/cgroup/ejudge: %s", strerror(errno));
         }
-        int rfd = open("/dev/urandom", O_RDONLY);
-        if (rfd < 0) ffatal("cannot open /dev/urandom: %s", strerror(errno));
-        unsigned long long ullval = 0;
-        errno = 0;
-        int z;
-        if ((z = read(rfd, &ullval, sizeof(ullval))) != sizeof(ullval)) {
-            ffatal("invalid read from /dev/urandom: %d, %s\n", z, strerror(errno));
-        }
-        close(rfd);
-        snprintf(cgroup_name, sizeof(cgroup_name), "%llx", ullval);
         if (snprintf(cgroup_exec_path, sizeof(cgroup_exec_path), "/sys/fs/cgroup/ejudge/%s", cgroup_name) >= sizeof(cgroup_exec_path)) {
             ffatal("invalid cgroup path");
         }
