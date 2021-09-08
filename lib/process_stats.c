@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -62,6 +62,18 @@ process_stats_serialize(FILE *fout, const struct ej_process_stats *ps)
     }
     if (ps->nivcsw >= 0) {
         fprintf(fout, "%snivcsw=%d", sep, ps->nivcsw);
+        sep = sep2;
+    }
+    if (ps->cgroup_ptime_us > 0) {
+        fprintf(fout, "%scgptimeus=%lld", sep, ps->cgroup_ptime_us);
+        sep = sep2;
+    }
+    if (ps->cgroup_utime_us > 0) {
+        fprintf(fout, "%scgutimeus=%lld", sep, ps->cgroup_utime_us);
+        sep = sep2;
+    }
+    if (ps->cgroup_stime_us > 0) {
+        fprintf(fout, "%scgstimeus=%lld", sep, ps->cgroup_stime_us);
         sep = sep2;
     }
     fprintf(fout, " }");

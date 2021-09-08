@@ -3,7 +3,7 @@
 #ifndef __PROCESS_STATS_H__
 #define __PROCESS_STATS_H__
 
-/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,10 @@ struct ej_process_stats
     long long maxrss;
     int       nvcsw;  // voluntary context switches
     int       nivcsw; // involuntary context switches
+    // timestamps in useconds
+    long long cgroup_ptime_us;
+    long long cgroup_utime_us;
+    long long cgroup_stime_us;
 };
 
 void

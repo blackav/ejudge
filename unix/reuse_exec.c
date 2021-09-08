@@ -142,6 +142,9 @@ struct tTask
   int ipc_object_count;         /* the count of the remaining IPC objects */
   int orphan_process_count;     /* the count of the remaining processes */
   int was_check_failed;         /* container failed */
+  long long cgroup_ptime_us;
+  long long cgroup_utime_us;
+  long long cgroup_stime_us;
 };
 
 #define PIDARR_SIZE 32
@@ -2478,6 +2481,9 @@ task_WaitContainer(tTask *tsk)
   int prc_orphan_process_count = 0;
   long long prc_max_vm_size = 0;
   long long prc_max_rss_size = 0;
+  long long cgroup_ptime_us = 0;
+  long long cgroup_utime_us = 0;
+  long long cgroup_stime_us = 0;
 
   while (*resp_p) {
     if (*resp_p == 'a' || *resp_p == 'b' || *resp_p == 'i' || *resp_p == 'o') {
@@ -2514,6 +2520,30 @@ task_WaitContainer(tTask *tsk)
       else if (*resp_p == 'v') prc_max_vm_size = v;
       else if (*resp_p == 'e') prc_max_rss_size = v;
       resp_p = eptr;
+    } else if (*resp_p == 'c') {
+      ++resp_p;
+      if (*resp_p == 't' || *resp_p == 'u' || *resp_p == 's') {
+        errno = 0;
+        char *eptr = NULL;
+        long long v = strtoll(resp_p + 1, &eptr, 10);
+        if (errno || eptr == resp_p + 1 || v < 0) {
+          write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
+          xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
+          asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+          tsk->was_check_failed = 1;
+          return NULL;
+        }
+        if (*resp_p == 't') cgroup_ptime_us = v;
+        else if (*resp_p == 'u') cgroup_utime_us = v;
+        else if (*resp_p == 's') cgroup_stime_us = v;
+        resp_p = eptr;
+      } else {
+        write_log(LOG_REUSE, LOG_ERROR, "task_WaitContainer: invalid reply from container: %s\n", resp_buf);
+        xfree(tsk->last_error_msg); tsk->last_error_msg = NULL;
+        asprintf(&tsk->last_error_msg, "invalid reply from container: %s", resp_buf);
+        tsk->was_check_failed = 1;
+        return NULL;
+      }
     } else if (*resp_p == 'L') {
       // log messages
       errno = 0;
@@ -2579,6 +2609,10 @@ task_WaitContainer(tTask *tsk)
   (void) prc_cpu_time_us;
   tsk->orphan_process_count = prc_orphan_process_count;
   tsk->ipc_object_count = prc_ipc_object_count;
+
+  tsk->cgroup_ptime_us = cgroup_ptime_us;
+  tsk->cgroup_utime_us = cgroup_utime_us;
+  tsk->cgroup_stime_us = cgroup_stime_us;
 
   return tsk;
 }
@@ -2926,6 +2960,10 @@ task_GetProcessStats(tTask *tsk, struct ej_process_stats *pstats)
   pstats->maxrss = tsk->usage.ru_maxrss * 1024LL;
   pstats->nvcsw = tsk->usage.ru_nvcsw;
   pstats->nivcsw = tsk->usage.ru_nivcsw;
+
+  pstats->cgroup_ptime_us = tsk->cgroup_ptime_us;
+  pstats->cgroup_utime_us = tsk->cgroup_utime_us;
+  pstats->cgroup_stime_us = tsk->cgroup_stime_us;
 
   return 0;
 }
