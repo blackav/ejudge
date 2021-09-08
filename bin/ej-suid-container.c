@@ -925,6 +925,55 @@ scan_shm(int search_uid)
     return count;
 }
 
+struct CGroupStat
+{
+    // CPU usage stats from cpu.stat
+    long long usage_us;
+    long long user_us;
+    long long system_us;
+};
+
+static void
+read_cgroup_stats(struct CGroupStat *ps)
+{
+    FILE *f = NULL;
+
+    char cpu_stat_path[PATH_MAX];
+    if (snprintf(cpu_stat_path, sizeof(cpu_stat_path),
+                 "%s/ejudge/%s/cpu.stat",
+                 cgroup_path, cgroup_name) >= sizeof(cpu_stat_path)) {
+        goto fail;
+    }
+    if (!(f = fopen(cpu_stat_path, "r"))) {
+        goto fail;
+    }
+    char lbuf[1024];
+    while (fgets(lbuf, sizeof(lbuf), f)) {
+        int llen = strlen(lbuf);
+        if (llen + 1 == sizeof(lbuf)) goto fail;
+        while (isspace((unsigned char) lbuf[llen - 1])) --llen;
+        lbuf[llen] = 0;
+        char vbuf[1024];
+        long long vval;
+        int n;
+        if (sscanf(lbuf, "%s%lld%n", vbuf, &vval, &n) != 2) goto fail;
+        if (lbuf[n]) goto fail;
+        if (!strcmp(vbuf, "usage_usec")) {
+            ps->usage_us = vval;
+        } else if (!strcmp(vbuf, "user_usec")) {
+            ps->user_us = vval;
+        } else if (!strcmp(vbuf, "system_usec")) {
+            ps->system_us = vval;
+        }
+    }
+    fclose(f);
+    return;
+
+fail:
+    if (f) fclose(f);
+    return;
+}
+
 static char *
 extract_string(const char **ppos, int init_offset, const char *opt_name)
 {
@@ -1722,6 +1771,11 @@ main(int argc, char *argv[])
             abort();
         }
 
+        struct CGroupStat cgstat = {};
+        if (enable_cgroup) {
+            read_cgroup_stats(&cgstat);
+        }
+
         long long cpu_utime_us = prc_usage.ru_utime.tv_sec * 1000000LL + prc_usage.ru_utime.tv_usec;
         long long cpu_stime_us = prc_usage.ru_stime.tv_sec * 1000000LL + prc_usage.ru_stime.tv_usec;
         long long cpu_time_us = cpu_utime_us + cpu_stime_us;
@@ -1731,6 +1785,18 @@ main(int argc, char *argv[])
         dprintf(response_fd, "a%lldb%lld", (long long) prc_usage.ru_nvcsw, (long long) prc_usage.ru_nivcsw);
         if (ipc_objects > 0) dprintf(response_fd, "i%d", ipc_objects);
         if (orphaned_processes > 0) dprintf(response_fd, "o%d", orphaned_processes);
+        if (enable_cgroup) {
+            if (cgstat.usage_us > 0) {
+                dprintf(response_fd, "ct%lld", cgstat.usage_us);
+            }
+            if (cgstat.user_us > 0) {
+                dprintf(response_fd, "cu%lld", cgstat.user_us);
+            }
+            if (cgstat.system_us > 0) {
+                dprintf(response_fd, "cs%lld", cgstat.system_us);
+            }
+        }
+
         if (log_f) {
             fclose(log_f); log_f = NULL;
         }
