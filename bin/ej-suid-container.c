@@ -79,6 +79,7 @@ static char cgroup_path[PATH_MAX] = "/sys/fs/cgroup";
 static char cgroup_name[PATH_MAX] = "";
 static char cgroup_exec_path[PATH_MAX] = "";
 static char cgroup_procs_path[PATH_MAX] = "";
+static int cgroup_v2_detected = 0;
 
 static const char *program_name = "prog";
 static int response_fd = 2;
@@ -1320,6 +1321,15 @@ main(int argc, char *argv[])
             change_ownership(primary_uid, primary_gid, exec_uid);
         }
         fatal();
+    }
+
+    if (enable_cgroup) {
+        // check cgroup version
+        if (access("/sys/fs/cgroup/cgroup.controllers", F_OK) >= 0) {
+            cgroup_v2_detected = 1;
+        } else {
+            enable_cgroup = 0;
+        }
     }
 
     if (enable_cgroup) {
