@@ -1606,6 +1606,7 @@ task_StartContainer(tTask *tsk)
       } else {
         abort();
       }
+      fcntl(rdr->u.fd2, F_SETFD, 0);
       fprintf(spec_f, "r%c%d", m, rdr->u.fd2);
       break;
     }
