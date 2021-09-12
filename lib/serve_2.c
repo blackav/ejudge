@@ -2028,6 +2028,7 @@ serve_run_request(
   srgp->secure_run = secure_run;
   srgp->suid_run = suid_run;
   srgp->enable_container = prob->enable_container;
+  if (config->force_container) srgp->enable_container = 1;
   srgp->enable_memory_limit_error = global->enable_memory_limit_error;
   srgp->detect_violations = global->detect_violations;
   srgp->time_limit_retry_count = global->time_limit_retry_count;

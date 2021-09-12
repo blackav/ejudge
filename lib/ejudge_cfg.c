@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -132,6 +132,7 @@ enum
     AT_ENABLE_COOKIE_IP_CHECK,
     AT_ENABLE_CONTEST_SELECT,
     AT_DISABLE_NEW_USERS,
+    AT_FORCE_CONTAINER,
 
     AT__BARRIER,
     AT__DEFAULT,
@@ -228,6 +229,7 @@ static char const * const attr_map[] =
   "enable_cookie_ip_check",
   "enable_contest_select",
   "disable_new_users",
+  "force_container",
   0,
   "_default",
 
@@ -626,6 +628,9 @@ ejudge_cfg_do_parse(char const *path, FILE *in_file, int no_system_lookup)
       break;
     case AT_DISABLE_NEW_USERS:
       if (xml_attr_bool(a, &cfg->disable_new_users) < 0) goto failed;
+      break;
+    case AT_FORCE_CONTAINER:
+      if (xml_attr_bool(a, &cfg->force_container) < 0) goto failed;
       break;
     default:
       xml_err_attr_not_allowed(&cfg->b, a);
