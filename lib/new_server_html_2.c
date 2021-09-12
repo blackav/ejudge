@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -5697,7 +5697,9 @@ ns_get_user_problems_summary(
       continue;
 
     // check the allowed IP list
+    int ip_allowed = 1;
     if (cur_prob->allow_ip) {
+      ip_allowed = 0;
       int j;
       for (j = 0; cur_prob->allow_ip[j]; ++j) {
         ej_ip_t ip_addr, ip_mask;
@@ -5707,8 +5709,8 @@ ns_get_user_problems_summary(
           }
         }
       }
-      if (!cur_prob->allow_ip[j]) {
-        continue;
+      if (cur_prob->allow_ip[j]) {
+        ip_allowed = 1;
       }
     }
 
@@ -5763,6 +5765,7 @@ ns_get_user_problems_summary(
 
     if (start_time > 0 && cs->current_time >= start_time
         && (stop_time <= 0 || cs->current_time < stop_time)
+        && ip_allowed
         && !is_deadlined && cur_prob->disable_user_submit <= 0
         && (cur_prob->disable_submit_after_ok <= 0 || !pinfo[prob_id].solved_flag))
       pinfo[prob_id].status |= PROB_STATUS_SUBMITTABLE;
