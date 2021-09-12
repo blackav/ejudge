@@ -3007,6 +3007,10 @@ run_one_test(
   if (tst && srgp->enable_container > 0) {
     task_SetSuidHelperDir(tsk, EJUDGE_SERVER_BIN_PATH);
     task_EnableContainer(tsk);
+    if (srpp->container_options && srpp->container_options[0])
+      task_AppendContainerOptions(tsk, srpp->container_options);
+    if (srgp->lang_container_options && srgp->lang_container_options[0])
+      task_AppendContainerOptions(tsk, srgp->lang_container_options);
   } else if (tst && srgp->suid_run > 0) {
     task_SetSuidHelperDir(tsk, EJUDGE_SERVER_BIN_PATH);
     task_EnableSuidExec(tsk);

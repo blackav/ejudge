@@ -1284,6 +1284,17 @@ task_SetContainerOptions(tTask *tsk, const char *options)
 }
 
 int
+task_AppendContainerOptions(tTask *tsk, const char *options)
+{
+  task_init_module();
+  ASSERT(tsk);
+
+  tsk->container_options = xstrmerge1(tsk->container_options, options);
+
+  return 0;
+}
+
+int
 task_SetKillSignal(tTask *tsk, char const *signame)
 {
   task_init_module();
