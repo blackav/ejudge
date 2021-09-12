@@ -62,6 +62,7 @@ enum
   META_SUPER_RUN_IN_GLOBAL_PACKET_contest_server_id,
   META_SUPER_RUN_IN_GLOBAL_PACKET_separate_run_spool_mode,
   META_SUPER_RUN_IN_GLOBAL_PACKET_bson_available,
+  META_SUPER_RUN_IN_GLOBAL_PACKET_lang_container_options,
 
   META_SUPER_RUN_IN_GLOBAL_PACKET_LAST_FIELD,
 };

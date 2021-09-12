@@ -2123,6 +2123,9 @@ serve_run_request(
   srgp->zip_mode = zip_mode;
   srgp->contest_server_id = xstrdup(config->contest_server_id);
   srgp->bson_available = (store_flags == STORE_FLAGS_UUID_BSON);
+  if (lang && lang->container_options) {
+    srgp->lang_container_options = xstrdup(lang->container_options);
+  }
 
   struct super_run_in_problem_packet *srpp = srp->problem;
   srpp->type = xstrdup(problem_unparse_type(prob->type));

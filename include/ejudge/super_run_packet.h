@@ -87,6 +87,7 @@ struct super_run_in_global_packet
   unsigned char *contest_server_id;
   ejintbool_t separate_run_spool_mode;
   ejintbool_t bson_available;
+  unsigned char *lang_container_options;
 
   int scoring_system_val META_ATTRIB((meta_hidden));
 };
