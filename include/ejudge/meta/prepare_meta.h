@@ -593,6 +593,7 @@ enum
   CNTSLANG_compiler_env,
   CNTSLANG_compile_server_id,
   CNTSLANG_multi_header_suffix,
+  CNTSLANG_container_options,
   CNTSLANG_unhandled_vars,
   CNTSLANG_disabled_by_config,
 

@@ -599,6 +599,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(super_run_dir, "S"),
   LANGUAGE_PARAM(compile_server_id, "S"),
   LANGUAGE_PARAM(multi_header_suffix, "S"),
+  LANGUAGE_PARAM(container_options, "S"),
 
   { 0, 0, 0, 0 }
 };
@@ -1232,6 +1233,7 @@ prepare_language_free_func(struct generic_section_config *gp)
   xfree(p->arch);
   xfree(p->compile_server_id);
   xfree(p->multi_header_suffix);
+  xfree(p->container_options);
   memset(p, 0xab, sizeof(*p));
   xfree(p);
 }
