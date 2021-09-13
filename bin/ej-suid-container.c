@@ -46,6 +46,8 @@
 
 #include "config.h"
 
+#include "ejudge/unistd_32_fixed.h"
+
 #if defined EJUDGE_PRIMARY_USER
 #define PRIMARY_USER EJUDGE_PRIMARY_USER
 #else
@@ -113,6 +115,7 @@ static int enable_prc_count = 0;
 static int enable_ipc_count = 0;
 
 static int enable_seccomp = 1;
+static int enable_seccomp_32 = 0;
 static int enable_sys_execve = 0;
 static int enable_sys_fork = 0;
 
@@ -1234,6 +1237,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   lf<Z>  - set file size limit
  *   lu<N>  - set user processes limit
  *   s0     - disable syscall filtering
+ *   s3     - enable support for 32-bit programs (i686)
  *   se     - enable execve(at)
  *   sf     - enable fork, vfork, clone, clone3
  */
@@ -1441,6 +1445,9 @@ main(int argc, char *argv[])
             } else if (*opt == 's' && opt[1] == '0') {
                 enable_seccomp = 0;
                 opt += 2;
+            } else if (*opt == 's' && opt[1] == '3') {
+                enable_seccomp_32 = 1;
+                opt += 2;
             } else if (*opt == 's' && opt[1] == 'e') {
                 enable_sys_execve = 1;
                 opt += 2;
@@ -1532,22 +1539,34 @@ main(int argc, char *argv[])
         if (enable_seccomp) {
             ctx = seccomp_init(SCMP_ACT_ALLOW);
             if (!enable_sys_execve) {
-                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(execve), 1, SCMP_A0(SCMP_CMP_NE, (uintptr_t) start_program));
-                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(execveat), 0);
+                if (enable_seccomp_32) {
+                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, __NR_32_execve, 1, SCMP_A0(SCMP_CMP_NE, (uintptr_t) start_program));
+                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, __NR_32_execveat, 0);
+                } else {
+                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(execve), 1, SCMP_A0(SCMP_CMP_NE, (uintptr_t) start_program));
+                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(execveat), 0);
+                }
             }
             if (!enable_sys_fork) {
+                if (enable_seccomp_32) {
+                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, __NR_32_fork, 0);
+                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, __NR_32_vfork, 0);
+                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, __NR_32_clone, 0);
+                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, __NR_32_clone3, 0);
+                } else {
 #if defined __NR_fork
-                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(fork), 0);
+                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(fork), 0);
 #endif
 #if defined __NR_vfork
-                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(vfork), 0);
+                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(vfork), 0);
 #endif
 #if defined __NR_clone
-                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(clone), 0);
+                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(clone), 0);
 #endif
 #if defined __NR_clone3
-                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(clone3), 0);
+                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(clone3), 0);
 #endif
+                }
             }
         }
 
