@@ -9548,7 +9548,9 @@ privileged_entry_point(
     if (log_file_pos_1 >= 0 && log_file_pos_2 >= 0) {
       msg = read_file_range(ejudge_config->new_server_log, log_file_pos_1, log_file_pos_2);
     }
-    fprintf(phr->log_f, "%s", msg);
+    if (msg) {
+      fprintf(phr->log_f, "%s", msg);
+    }
     xfree(msg);
     error_page(fout, phr, 0, NEW_SRV_ERR_CNTS_UNAVAILABLE);
     goto cleanup;
