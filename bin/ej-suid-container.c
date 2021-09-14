@@ -75,8 +75,8 @@
 #define EJUDGE_PREFIX_DIR "/opt/ejudge"
 #endif
 
-#ifndef SCMP_ACT_KILL_PROCESS
-#define SCMP_ACT_KILL_PROCESS SCMP_ACT_KILL
+#ifndef SECCOMP_RET_KILL_PROCESS
+#define SECCOMP_RET_KILL_PROCESS SECCOMP_RET_KILL
 #endif
 
 static char safe_dir_path[PATH_MAX];
