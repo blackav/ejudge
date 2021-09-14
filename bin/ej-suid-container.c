@@ -117,7 +117,6 @@ static int enable_prc_count = 0;
 static int enable_ipc_count = 0;
 
 static int enable_seccomp = 1;
-static int enable_seccomp_32 = 0;
 static int enable_sys_execve = 0;
 static int enable_sys_fork = 0;
 
@@ -1591,9 +1590,6 @@ main(int argc, char *argv[])
             } else if (*opt == 's' && opt[1] == '0') {
                 enable_seccomp = 0;
                 opt += 2;
-            } else if (*opt == 's' && opt[1] == '3') {
-                enable_seccomp_32 = 1;
-                opt += 2;
             } else if (*opt == 's' && opt[1] == 'e') {
                 enable_sys_execve = 1;
                 opt += 2;
@@ -1684,46 +1680,25 @@ main(int argc, char *argv[])
         tune_seccomp();
 
         scmp_filter_ctx ctx = NULL;
-        scmp_filter_ctx ctx_32 = NULL;
         if (enable_seccomp) {
             ctx = seccomp_init(SCMP_ACT_ALLOW);
-            if (enable_seccomp_32) {
-                ctx_32 = seccomp_init(SCMP_ACT_ALLOW);
-                seccomp_arch_add(ctx_32, SCMP_ARCH_X86);
-            }
             if (!enable_sys_execve) {
-                if (enable_seccomp_32) {
-                    seccomp_rule_add(ctx_32, SCMP_ACT_KILL_PROCESS, __NR_32_execve, 1, SCMP_A0(SCMP_CMP_NE, (uintptr_t) start_program));
-                    seccomp_rule_add(ctx_32, SCMP_ACT_KILL_PROCESS, __NR_32_execveat, 0);
-                } else {
-                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(execve), 1, SCMP_A0(SCMP_CMP_NE, (uintptr_t) start_program));
-                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(execveat), 0);
-                }
+                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(execve), 1, SCMP_A0(SCMP_CMP_NE, (uintptr_t) start_program));
+                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(execveat), 0);
             }
             if (!enable_sys_fork) {
-                if (enable_seccomp_32) {
-                    seccomp_rule_add(ctx_32, SCMP_ACT_KILL_PROCESS, __NR_32_fork, 0);
-                    seccomp_rule_add(ctx_32, SCMP_ACT_KILL_PROCESS, __NR_32_vfork, 0);
-                    seccomp_rule_add(ctx_32, SCMP_ACT_KILL_PROCESS, __NR_32_clone, 0);
-                    seccomp_rule_add(ctx_32, SCMP_ACT_KILL_PROCESS, __NR_32_clone3, 0);
-                } else {
 #if defined __NR_fork
-                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(fork), 0);
+                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(fork), 0);
 #endif
 #if defined __NR_vfork
-                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(vfork), 0);
+                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(vfork), 0);
 #endif
 #if defined __NR_clone
-                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(clone), 0);
+                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(clone), 0);
 #endif
 #if defined __NR_clone3
-                    seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(clone3), 0);
+                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(clone3), 0);
 #endif
-                }
-            }
-            if (enable_seccomp_32) {
-                seccomp_merge(ctx, ctx_32);
-                ctx_32 = NULL;
             }
         }
 
