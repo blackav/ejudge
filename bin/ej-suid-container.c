@@ -1195,7 +1195,7 @@ static struct sock_filter seccomp_filter_x86_64[] =
     // we have to allow initial execve into a starting program
     /* 15 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_execve, 0, 3),
     /* 16 */ BPF_STMT(BPF_LD+BPF_W+BPF_ABS, (offsetof(struct seccomp_data, args[0]))),
-    /* 17 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0, 0, 1), // patched in tune_seccomp
+    /* 17 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0, 1, 0), // patched in tune_seccomp
     /* 18 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
 
     // allow remaining
@@ -1245,7 +1245,7 @@ tune_seccomp()
     {
         struct sock_filter patch1[] =
         {
-            BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, (uintptr_t) start_program, 0, 1),
+            BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, (uintptr_t) start_program, 1, 0),
         };
         seccomp_filter_x86_64[17] = patch1[0];  // FIXME: index may change!
     }
