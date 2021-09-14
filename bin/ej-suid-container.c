@@ -40,9 +40,10 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/prctl.h>
-#include <seccomp.h>
 #include <asm/unistd.h>
 #include <asm/param.h>
+#include <linux/audit.h>
+#include <linux/seccomp.h>
 #include <linux/filter.h>
 #include <stddef.h>
 
@@ -1677,29 +1678,8 @@ main(int argc, char *argv[])
         sigemptyset(&bs); sigaddset(&bs, SIGCHLD);
         sigprocmask(SIG_BLOCK, &bs, NULL);
 
-        tune_seccomp();
-
-        scmp_filter_ctx ctx = NULL;
         if (enable_seccomp) {
-            ctx = seccomp_init(SCMP_ACT_ALLOW);
-            if (!enable_sys_execve) {
-                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(execve), 1, SCMP_A0(SCMP_CMP_NE, (uintptr_t) start_program));
-                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(execveat), 0);
-            }
-            if (!enable_sys_fork) {
-#if defined __NR_fork
-                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(fork), 0);
-#endif
-#if defined __NR_vfork
-                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(vfork), 0);
-#endif
-#if defined __NR_clone
-                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(clone), 0);
-#endif
-#if defined __NR_clone3
-                seccomp_rule_add(ctx, SCMP_ACT_KILL_PROCESS, SCMP_SYS(clone3), 0);
-#endif
-            }
+            tune_seccomp();
         }
 
         if (enable_cgroup) {
@@ -1846,13 +1826,6 @@ main(int argc, char *argv[])
                     fprintf(stderr, "seccomp loading failed: %s\n", strerror(errno));
                     _exit(127);
                 }
-                /*
-                int serr = 0;
-                if ((serr = seccomp_load(ctx)) < 0) {
-                    fprintf(stderr, "seccomp_load failed: %s\n", strerror(-serr));
-                    _exit(127);
-                }
-                */
             }
 
             if (bash_mode) {
