@@ -4147,7 +4147,8 @@ serve_rejudge_run(
     err("rejudge_run: bad problem: %d", re.prob_id);
     return;
   }
-  if (prob->manual_checking > 0 || prob->disable_testing > 0) return;
+  if (prob->manual_checking > 0
+      || (prob->disable_testing > 0 && prob->enable_compilation <= 0)) return;
   if (prob->type > 0) {
     if (force_full_rejudge && global->score_system == SCORE_OLYMPIAD) {
       accepting_mode = 0;
