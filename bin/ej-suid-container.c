@@ -1142,6 +1142,60 @@ read_cgroup_stats(struct CGroupStat *ps)
     }
 }
 
+static struct sock_filter seccomp_filter_default[] =
+{
+    // load syscall number
+    /*  0 */ BPF_STMT(BPF_LD+BPF_W+BPF_ABS, (offsetof(struct seccomp_data, nr))),
+
+    // blacklist fork-like syscalls
+#if defined __NR_fork
+    /*  1 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_fork, 0, 1),
+    /*  2 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /*  1 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /*  2 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+#if defined __NR_vfork
+    /*  3 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_vfork, 0, 1),
+    /*  4 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /*  3 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /*  4 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+#if defined __NR_clone
+    /*  5 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_clone, 0, 1),
+    /*  6 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /*  5 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /*  6 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+#if defined __NR_clone3
+    /*  7 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_clone3, 0, 1),
+    /*  8 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /*  7 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /*  8 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
+    // blacklist exec-like syscalls
+#if defined __NR_clone3
+    /*  9 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_execveat, 0, 1),
+    /* 10 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+#else
+    /*  9 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+    /* 10 */ BPF_JUMP(BPF_JMP+BPF_JA, 0, 0, 0),
+#endif
+
+    // we have to allow initial execve into a starting program
+    /* 11 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, __NR_execve, 0, 3),
+    /* 12 */ BPF_STMT(BPF_LD+BPF_W+BPF_ABS, (offsetof(struct seccomp_data, args[0]))),
+    /* 13 */ BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 0, 1, 0), // patched in tune_seccomp
+    /* 14 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_KILL_PROCESS),
+
+    // allow remaining
+    /* 15 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
+};
+
 static struct sock_filter seccomp_filter_x86_64[] =
 {
     /*  0 */ BPF_STMT(BPF_LD+BPF_W+BPF_ABS, (offsetof(struct seccomp_data, arch))),
@@ -1225,11 +1279,19 @@ static struct sock_filter seccomp_filter_x86_64[] =
     /* 33 */ BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
 };
 
-static struct sock_fprog seccomp_prog_x86_64 =
+static __attribute__((unused)) struct sock_fprog seccomp_prog_x86_64 =
 {
     .len = (unsigned short)(sizeof(seccomp_filter_x86_64) / sizeof(seccomp_filter_x86_64[0])),
     .filter = seccomp_filter_x86_64,
 };
+
+static __attribute__((unused)) struct sock_fprog seccomp_prog_default =
+{
+    .len = (unsigned short)(sizeof(seccomp_filter_default) / sizeof(seccomp_filter_default[0])),
+    .filter = seccomp_filter_default,
+};
+
+static const struct sock_fprog *seccomp_prog_active = NULL;
 
 static void
 tune_seccomp()
@@ -1242,6 +1304,7 @@ tune_seccomp()
     if (!enable_seccomp) return;
 
 #if defined __x86_64__
+    seccomp_prog_active = &seccomp_prog_x86_64;
     {
         struct sock_filter patch1[] =
         {
@@ -1279,10 +1342,33 @@ tune_seccomp()
         seccomp_filter_x86_64[31] = nop[0];
         seccomp_filter_x86_64[32] = nop[0];
     }
-#elif defined __i686__
-#error TODO: i686 support
 #else
-#error unsupported
+    seccomp_prog_active = &seccomp_prog_default;
+    {
+        struct sock_filter patch1[] =
+        {
+            BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, (uintptr_t) start_program, 1, 0),
+        };
+        seccomp_filter_default[13] = patch1[0];  // FIXME: index may change!
+    }
+    if (enable_sys_fork) {
+        seccomp_filter_default[1] = nop[0];
+        seccomp_filter_default[2] = nop[0];
+        seccomp_filter_default[3] = nop[0];
+        seccomp_filter_default[4] = nop[0];
+        seccomp_filter_default[5] = nop[0];
+        seccomp_filter_default[6] = nop[0];
+        seccomp_filter_default[7] = nop[0];
+        seccomp_filter_default[8] = nop[0];
+    }
+    if (enable_sys_execve) {
+        seccomp_filter_default[9] = nop[0];
+        seccomp_filter_default[10] = nop[0];
+        seccomp_filter_default[11] = nop[0];
+        seccomp_filter_default[12] = nop[0];
+        seccomp_filter_default[13] = nop[0];
+        seccomp_filter_default[14] = nop[0];
+    }
 #endif
 }
 
@@ -1822,7 +1908,7 @@ main(int argc, char *argv[])
             }
 
             if (enable_seccomp) {
-                if (prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &seccomp_prog_x86_64)) {
+                if (prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, seccomp_prog_active)) {
                     fprintf(stderr, "seccomp loading failed: %s\n", strerror(errno));
                     _exit(127);
                 }
