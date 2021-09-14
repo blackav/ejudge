@@ -1124,7 +1124,9 @@ new_loop(int parallel_mode)
     unlink(exe_path);
 
     unsigned char src_path[PATH_MAX];
-    snprintf(src_path, sizeof(src_path), "%s/%s%s", compile_server_src_dir, pkt_name, req->src_sfx);
+    const unsigned char *src_sfx = "";
+    if (req->src_sfx) src_sfx = req->src_sfx;
+    snprintf(src_path, sizeof(src_path), "%s/%s%s", compile_server_src_dir, pkt_name, src_sfx);
 
     override_exe = 0;
     exe_copied = 0;
