@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2017-2019 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2017-2021 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -125,10 +125,14 @@ SCRIPTS_IN = \
  dotnet-vb-version.in\
  dotnet-vb.in\
  runvg.in\
+ runvg2.in\
  runjava.in\
+ runjava2.in\
  runmono.in\
+ runmono2.in\
  runperl.in\
- rundotnet.in
+ rundotnet.in\
+ rundotnet2.in
 
 POLICIES = \
  fileio.policy \

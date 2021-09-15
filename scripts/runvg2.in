@@ -1,0 +1,17 @@
+#!/bin/bash
+# Copyright (c) 2021 Alexander Chernov <cher@ejudge.ru>
+
+# A helper script to start programs under valgrind.
+# Usage: runvg2 file
+
+runfile="$1"
+shift
+
+#
+#include gcc-vg.cfg
+#
+
+[ x"${EJUDGE_VG_FLAGS}" != x ] || EJUDGE_VG_FLAGS="--quiet --error-exitcode=1 --leak-check=full"
+
+exec valgrind ${EJUDGE_VG_FLAGS} "${runfile}" "$@"
+

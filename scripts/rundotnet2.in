@@ -1,0 +1,32 @@
+#!/bin/bash
+# Copyright (c) 2021 Alexander Chernov <cher@ejudge.ru>
+
+# A helper script to start C#/VB programs using the dotnet runtime.
+# Usage: dotnet file
+
+# EJUDGE_DOTNET_FLAGS may be used to pass additional flags
+# security policy is not yet supported
+
+runfile="$1"
+
+#
+#include dotnet-cs.cfg
+#
+
+[ x"${DOTNETRUN}" != x ] || DOTNETRUN="dotnet"
+[ x"${DOTNETDIR}" != x ] && PATH="${DOTNETDIR}/bin:$PATH"
+
+mv "${runfile}" solution.dll
+cat <<EOF > solution.runtimeconfig.json
+{
+  "runtimeOptions": {
+    "tfm": "netcoreapp3.0",
+    "framework": {
+      "name": "Microsoft.NETCore.App",
+      "version": "3.0.0"
+    }
+  }
+}
+EOF
+
+exec "${DOTNETRUN}" ${EJUDGE_DOTNET_FLAGS} solution.dll
