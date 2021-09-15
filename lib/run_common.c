@@ -2794,7 +2794,48 @@ run_one_test(
     task_AddArg(tsk, start_cmd_arg);
   }
   if (tst && tst->start_cmd && tst->start_cmd[0]) {
-    if (remaps) {
+    if (srgp->enable_container > 0) {
+      // FIXME: remove hardcode
+      char *last = strrchr(tst->start_cmd, '/');
+      if (!last) {
+        fprintf(start_msg_f, " %s", tst->start_cmd);
+        task_AddArg(tsk, tst->start_cmd);
+      } else {
+        ++last;
+        if (!strcmp(last, "runmono")) {
+          static char runmono2_path[PATH_MAX];
+          if (!runmono2_path[0]) {
+            snprintf(runmono2_path, sizeof(runmono2_path), "%s/ejudge/lang/%s", EJUDGE_LIBEXEC_DIR, "runmono2");
+          }
+          fprintf(start_msg_f, " %s", runmono2_path);
+          task_AddArg(tsk, runmono2_path);
+        } else if (!strcmp(last, "runjava")) {
+          static char runjava2_path[PATH_MAX];
+          if (!runjava2_path[0]) {
+            snprintf(runjava2_path, sizeof(runjava2_path), "%s/ejudge/lang/%s", EJUDGE_LIBEXEC_DIR, "runjava2");
+          }
+          fprintf(start_msg_f, " %s", runjava2_path);
+          task_AddArg(tsk, runjava2_path);
+        } else if (!strcmp(last, "rundotnet")) {
+          static char rundotnet2_path[PATH_MAX];
+          if (!rundotnet2_path[0]) {
+            snprintf(rundotnet2_path, sizeof(rundotnet2_path), "%s/ejudge/lang/%s", EJUDGE_LIBEXEC_DIR, "rundotnet2");
+          }
+          fprintf(start_msg_f, " %s", rundotnet2_path);
+          task_AddArg(tsk, rundotnet2_path);
+        } else if (!strcmp(last, "runvg")) {
+          static char runvg2_path[PATH_MAX];
+          if (!runvg2_path[0]) {
+            snprintf(runvg2_path, sizeof(runvg2_path), "%s/ejudge/lang/%s", EJUDGE_LIBEXEC_DIR, "runvg2");
+          }
+          fprintf(start_msg_f, " %s", runvg2_path);
+          task_AddArg(tsk, runvg2_path);
+        } else {
+          fprintf(start_msg_f, " %s", tst->start_cmd);
+          task_AddArg(tsk, tst->start_cmd);
+        }
+      }
+    } else if (remaps) {
       unsigned char *new_cmd = remap_command(tst->start_cmd, remaps);
       fprintf(start_msg_f, " %s", new_cmd);
       task_AddArg(tsk, new_cmd);
