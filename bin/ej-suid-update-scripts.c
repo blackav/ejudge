@@ -199,7 +199,7 @@ process_file(const char *name)
     if (dst_fd < 0) fatal("cannot open '%s': %s", dst_path, strerror(errno));
     struct stat dst_st;
     if (fstat(dst_fd, &dst_st) < 0) fatal("fstat failed: %s", strerror(errno));
-    if (dst_st.st_uid != 0 && dst_st.st_uid != primary_uid && dst_st.st_uid != self_uid)
+    if (dst_st.st_uid != 0 && dst_st.st_uid != primary_uid && dst_st.st_uid != self_uid && dst_st.st_uid != src_stat.st_uid)
         fatal("invalid owner of '%s'", dst_path);
 
     if (dst_st.st_size > 0) {
