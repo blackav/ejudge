@@ -393,6 +393,7 @@ install_mode(void)
         "ej-suid-ipcrm",
         "ej-suid-kill",
         "ej-suid-container",
+        "ej-suid-update-scripts",
         NULL
     };
     for (int i = 0; files[i]; ++i) {
@@ -503,7 +504,7 @@ chmod_mode(void)
     }
 
     if (need_exec) {
-        int retval = set_setuid_bit(bin_path, (const unsigned char *[]) { "ej-suid-chown", "ej-suid-exec", "ej-suid-ipcrm", "ej-suid-kill", "ej-suid-container", NULL });
+        int retval = set_setuid_bit(bin_path, (const unsigned char *[]) { "ej-suid-chown", "ej-suid-exec", "ej-suid-ipcrm", "ej-suid-kill", "ej-suid-container", "ej-suid-update-scripts", NULL });
         if (retval) return retval;
     }
 
