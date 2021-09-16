@@ -4077,14 +4077,6 @@ run_tests(
                       "For example, consider disabling abrtd.\n");
   }
 
-  /*
-  if (tst->secure_exec_type_val == SEXEC_TYPE_JAVA) {
-    // FIXME: why java does not work?
-    // FIXME: ugly hack!
-    ((struct super_run_in_global_packet *) srgp)->enable_container = 0;
-  }
-  */
-
   if (tst) {
     merged_start_env = merge_env_2(merged_start_env, tst->start_env);
   }
