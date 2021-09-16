@@ -2251,6 +2251,34 @@ cleanup:
   return status;
 }
 
+static const char *
+remap_start_cmd_for_container(const char *start_cmd)
+{
+  if (!start_cmd || !*start_cmd) return NULL;
+  char *last = strrchr(start_cmd, '/');
+  if (!last) return start_cmd;
+  ++last;
+
+  static const char * const remaps[][2] =
+  {
+    { "runmono", "runmono2" },
+    { "runjava", "runjava2" },
+    { "rundotnet", "rundotnet2" },
+    { "runvg", "runvg2" },
+    { NULL, NULL },
+  };
+
+  for (int i = 0; remaps[i][0]; ++i) {
+    if (!strcmp(last, remaps[i][0])) {
+      static char remap_buf[PATH_MAX];
+      snprintf(remap_buf, sizeof(remap_buf), "%s/ejudge/lang/%s", EJUDGE_LIBEXEC_DIR, remaps[i][1]);
+      return remap_buf;
+    }
+  }
+
+  return start_cmd;
+}
+
 static int
 is_java_memory_limit(const unsigned char *text, ssize_t size)
 {
@@ -2795,46 +2823,9 @@ run_one_test(
   }
   if (tst && tst->start_cmd && tst->start_cmd[0]) {
     if (srgp->enable_container > 0) {
-      // FIXME: remove hardcode
-      char *last = strrchr(tst->start_cmd, '/');
-      if (!last) {
-        fprintf(start_msg_f, " %s", tst->start_cmd);
-        task_AddArg(tsk, tst->start_cmd);
-      } else {
-        ++last;
-        if (!strcmp(last, "runmono")) {
-          static char runmono2_path[PATH_MAX];
-          if (!runmono2_path[0]) {
-            snprintf(runmono2_path, sizeof(runmono2_path), "%s/ejudge/lang/%s", EJUDGE_LIBEXEC_DIR, "runmono2");
-          }
-          fprintf(start_msg_f, " %s", runmono2_path);
-          task_AddArg(tsk, runmono2_path);
-        } else if (!strcmp(last, "runjava")) {
-          static char runjava2_path[PATH_MAX];
-          if (!runjava2_path[0]) {
-            snprintf(runjava2_path, sizeof(runjava2_path), "%s/ejudge/lang/%s", EJUDGE_LIBEXEC_DIR, "runjava2");
-          }
-          fprintf(start_msg_f, " %s", runjava2_path);
-          task_AddArg(tsk, runjava2_path);
-        } else if (!strcmp(last, "rundotnet")) {
-          static char rundotnet2_path[PATH_MAX];
-          if (!rundotnet2_path[0]) {
-            snprintf(rundotnet2_path, sizeof(rundotnet2_path), "%s/ejudge/lang/%s", EJUDGE_LIBEXEC_DIR, "rundotnet2");
-          }
-          fprintf(start_msg_f, " %s", rundotnet2_path);
-          task_AddArg(tsk, rundotnet2_path);
-        } else if (!strcmp(last, "runvg")) {
-          static char runvg2_path[PATH_MAX];
-          if (!runvg2_path[0]) {
-            snprintf(runvg2_path, sizeof(runvg2_path), "%s/ejudge/lang/%s", EJUDGE_LIBEXEC_DIR, "runvg2");
-          }
-          fprintf(start_msg_f, " %s", runvg2_path);
-          task_AddArg(tsk, runvg2_path);
-        } else {
-          fprintf(start_msg_f, " %s", tst->start_cmd);
-          task_AddArg(tsk, tst->start_cmd);
-        }
-      }
+      const char *remapped_path = remap_start_cmd_for_container(tst->start_cmd);
+      fprintf(start_msg_f, " %s", remapped_path);
+      task_AddArg(tsk, remapped_path);
     } else if (remaps) {
       unsigned char *new_cmd = remap_command(tst->start_cmd, remaps);
       fprintf(start_msg_f, " %s", new_cmd);
@@ -3052,6 +3043,9 @@ run_one_test(
       task_AppendContainerOptions(tsk, srpp->container_options);
     if (srgp->lang_container_options && srgp->lang_container_options[0])
       task_AppendContainerOptions(tsk, srgp->lang_container_options);
+    if (tst->secure_exec_type_val == SEXEC_TYPE_JAVA) {
+      task_PutEnv(tsk, "EJUDGE_JAVA_POLICY=fileio.policy");
+    }
   } else if (tst && srgp->suid_run > 0) {
     task_SetSuidHelperDir(tsk, EJUDGE_SERVER_BIN_PATH);
     task_EnableSuidExec(tsk);
@@ -4083,11 +4077,13 @@ run_tests(
                       "For example, consider disabling abrtd.\n");
   }
 
+  /*
   if (tst->secure_exec_type_val == SEXEC_TYPE_JAVA) {
     // FIXME: why java does not work?
     // FIXME: ugly hack!
     ((struct super_run_in_global_packet *) srgp)->enable_container = 0;
   }
+  */
 
   if (tst) {
     merged_start_env = merge_env_2(merged_start_env, tst->start_env);
