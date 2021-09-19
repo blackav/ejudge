@@ -116,6 +116,7 @@ static int enable_chown = 1;
 static int enable_pgroup = 1;
 static int enable_prc_count = 0;
 static int enable_ipc_count = 0;
+static int enable_subdir_mode = 0;
 
 static int enable_seccomp = 1;
 static int enable_sys_execve = 0;
@@ -354,10 +355,19 @@ safe_chown_rec(const char *path, int user_id, int group_id, int from_user_id)
 static void
 change_ownership(int user_id, int group_id, int from_user_id)
 {
-    const char *dir = working_dir;
-    if (!dir) dir = ".";
-    safe_chown(dir, user_id, group_id, from_user_id);
-    safe_chown_rec(dir, user_id, group_id, from_user_id);
+    if (enable_subdir_mode && working_dir) {
+        char dir[PATH_MAX];
+        if (snprintf(dir, sizeof(dir), "%s/..", working_dir) >= sizeof(dir)) {
+            return;
+        }
+        safe_chown(dir, user_id, group_id, from_user_id);
+        safe_chown_rec(dir, user_id, group_id, from_user_id);
+    } else {
+        const char *dir = working_dir;
+        if (!dir) dir = ".";
+        safe_chown(dir, user_id, group_id, from_user_id);
+        safe_chown_rec(dir, user_id, group_id, from_user_id);
+    }
 }
 
 struct MountInfo
@@ -1449,6 +1459,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   ma     - unlimited cpu time
  *   mb     - unlimited real time
  *   md     - enable /dev filesystem
+ *   mD     - enable subdirectory mode
  *   w<DIR> - working directory (cwd by default)
  *   rn     - redirect to/from /dev/null for standard streams
  *   rm     - merge stdout and stderr output
@@ -1574,6 +1585,9 @@ main(int argc, char *argv[])
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'd') {
                 enable_dev = 1;
+                opt += 2;
+            } else if (*opt == 'm' && opt[1] == 'D') {
+                enable_subdir_mode = 1;;
                 opt += 2;
             } else if (*opt == 'w') {
                 working_dir = extract_string(&opt, 1, "w");
