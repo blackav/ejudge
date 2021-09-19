@@ -141,7 +141,7 @@ static const char * const whitelist[] =
 };
 
 static void
-process_file(const char *name)
+process_file(const char *name, int allow_missing)
 {
     {
         int i;
@@ -159,6 +159,7 @@ process_file(const char *name)
         fatal("path is too long");
     }
     int src_fd = open(src_path, O_RDONLY | O_NONBLOCK | O_NOFOLLOW, 0);
+    if (src_fd < 0 && errno == ENOENT) return;
     if (src_fd < 0)
         fatal("cannot open '%s': %s", src_path, strerror(errno));
     struct stat src_stat;
@@ -248,10 +249,10 @@ main(int argc, char *argv[])
     for (int i = 1; i < argc; ++i) {
         if (!strcmp(argv[i], "all")) {
             for (const char * const *plang = whitelist; *plang; ++plang) {
-                process_file(*plang);
+                process_file(*plang, 1);
             }
         } else {
-            process_file(argv[i]);
+            process_file(argv[i], 0);
         }
     }
 }

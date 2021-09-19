@@ -1857,7 +1857,7 @@ main(int argc, char *argv[])
                 }
             }
 
-            if (limit_stack_size >= 0) {
+            if (limit_stack_size > 0) {
                 struct rlimit lim = { .rlim_cur = limit_stack_size, .rlim_max = limit_stack_size };
                 if (setrlimit(RLIMIT_STACK, &lim) < 0) {
                     fprintf(stderr, "rlimit for RLIMIT_STACK %lld failed: %s", limit_stack_size, strerror(errno));
