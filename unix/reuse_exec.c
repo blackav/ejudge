@@ -1644,7 +1644,7 @@ task_StartContainer(tTask *tsk)
     fprintf(spec_f, "w%d%s", len, tsk->working_dir);
   }
   if (tsk->enable_subdir) {
-    fprintf(spec_f, "mD");
+    fprintf(spec_f, "mDmsmv");
   }
 
   if (tsk->max_stack_size > 0) {

@@ -110,6 +110,7 @@ static int enable_pid_ns = 1;
 static int enable_proc = 0;
 static int enable_sys = 0;
 static int enable_dev = 0;
+static int enable_var = 0;
 static int enable_sandbox_dir = 1;
 static int enable_home = 0;
 static int enable_chown = 1;
@@ -535,9 +536,11 @@ reconfigure_fs(void)
     if ((r = mount(bind_path, "/etc", NULL, MS_BIND, NULL)) < 0) {
         ffatal("failed to mount %s as /etc: %s", bind_path, strerror(errno));
     }
-    if (snprintf(bind_path, sizeof(bind_path), "%s/var", safe_dir_path) >= sizeof(bind_path)) abort();
-    if ((r = mount(bind_path, "/var", NULL, MS_BIND, NULL)) < 0) {
-        ffatal("failed to mount %s as /var: %s", bind_path, strerror(errno));
+    if (!enable_var) {
+        if (snprintf(bind_path, sizeof(bind_path), "%s/var", safe_dir_path) >= sizeof(bind_path)) abort();
+        if ((r = mount(bind_path, "/var", NULL, MS_BIND, NULL)) < 0) {
+            ffatal("failed to mount %s as /var: %s", bind_path, strerror(errno));
+        }
     }
     if (!enable_dev) {
         if (snprintf(bind_path, sizeof(bind_path), "%s/dev", safe_dir_path) >= sizeof(bind_path)) abort();
@@ -1450,6 +1453,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   mp     - disable PID namespace
  *   mP     - enable /proc filesystem
  *   mS     - enable /sys filesystem
+ *   mv     - enable original /var filesystem
  *   ms     - disable bindind of working dir to /sandbox
  *   mh     - enable /home filesystem
  *   mo     - disable chown to ejexec
@@ -1468,7 +1472,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   rO<FI> - redirect stdout >> FI
  *   re<FI> - redirect stderr > FI
  *   rE<FI> - redirect stderr >> FI
- *   rp<S>  - set start program name (argv[0])
+ *   rp<S>  - set start program path if differ from argv[0]
  *   ra<FD> - redirect stdin from FD
  *   rb<FD> - redirect stdout to FD
  *   lt<T>  - set CPU time limit (ms)
@@ -1585,6 +1589,9 @@ main(int argc, char *argv[])
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'd') {
                 enable_dev = 1;
+                opt += 2;
+            } else if (*opt == 'm' && opt[1] == 'v') {
+                enable_var = 1;
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'D') {
                 enable_subdir_mode = 1;;
