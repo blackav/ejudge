@@ -1679,6 +1679,11 @@ task_StartContainer(tTask *tsk)
     fprintf(spec_f, "lr%lld", tsk->max_real_time * 1000LL);
   }
 
+  if (strcmp(tsk->path, tsk->args.v[0])) {
+    int len = strlen(tsk->path);
+    fprintf(spec_f, "rp%d%s", len, tsk->path);
+  }
+
   if (tsk->container_options) fputs(tsk->container_options, spec_f);
   fclose(spec_f); spec_f = NULL;
 

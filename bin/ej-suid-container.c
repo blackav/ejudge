@@ -1715,7 +1715,11 @@ main(int argc, char *argv[])
     }
 
     start_args = argv + argi;
-    start_program = argv[argi];
+    if (start_program_name) {
+        start_program = start_program_name;
+    } else {
+        start_program = argv[argi];
+    }
     if (argi == argc) {
 #ifdef ENABLE_BASH
         bash_mode = 1;
@@ -1941,9 +1945,6 @@ main(int argc, char *argv[])
                 execlp("/bin/bash", "/bin/bash", "-i", NULL);
                 fprintf(stderr, "failed to exec /bin/bash: %s\n", strerror(errno));
             } else {
-                if (start_program_name) {
-                    start_args[0] = start_program_name;
-                }
                 execve(start_program, start_args, environ);
                 fprintf(stderr, "failed to exec '%s': %s\n", start_program, strerror(errno));
             }
