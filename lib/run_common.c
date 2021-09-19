@@ -2903,6 +2903,9 @@ run_one_test(
     task_SetEnv(tsk, "EJ_SUPER_RUN_PID", mem_limit_buf);
 #endif
   }
+  if (srpp->use_tgz) {
+    task_EnableSubdirMode(tsk);
+  }
 
   if (interactor_cmd) {
     task_SetRedir(tsk, 0, TSR_DUP, pfd2[0]);
