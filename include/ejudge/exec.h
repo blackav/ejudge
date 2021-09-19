@@ -100,6 +100,7 @@ int      task_EnableAllSignals(tpTask);
 int      task_EnableSecurityViolationError(tpTask);
 int      task_EnableProcessGroup(tpTask);
 int      task_EnableKillAll(tpTask);
+int      task_EnableSubdirMode(tpTask);
 int      task_IgnoreSIGPIPE(tpTask);
 int      task_SetContainerOptions(tpTask, const char *);
 int      task_AppendContainerOptions(tpTask, const char *);

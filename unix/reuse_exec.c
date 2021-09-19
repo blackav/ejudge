@@ -107,6 +107,7 @@ struct tTask
   int    ignore_sigpipe;        /* ignore SIGPIPE after fork */
   int    enable_process_group;  /* create a new process group */
   int    enable_kill_all;       /* kill all processes (using -1 for kill) */
+  int    enable_subdir;         /* process is started in a subdirectory of the working directory */
   ssize_t max_core_size;        /* maximum size of core files */
   ssize_t max_file_size;        /* maximum size of created files */
   ssize_t max_locked_mem_size;  /* maximum size of locked memory */
@@ -1125,6 +1126,15 @@ task_EnableKillAll(tTask *tsk)
 }
 
 int
+task_EnableSubdirMode(tTask *tsk)
+{
+  task_init_module();
+  ASSERT(tsk);
+  tsk->enable_subdir = 1;
+  return 0;
+}
+
+int
 task_SetMaxCoreSize(tTask *tsk, ssize_t max_core_size)
 {
   task_init_module();
@@ -1632,6 +1642,9 @@ task_StartContainer(tTask *tsk)
   if (tsk->working_dir && *tsk->working_dir) {
     int len = strlen(tsk->working_dir);
     fprintf(spec_f, "w%d%s", len, tsk->working_dir);
+  }
+  if (tsk->enable_subdir) {
+    fprintf(spec_f, "mD");
   }
 
   if (tsk->max_stack_size > 0) {
