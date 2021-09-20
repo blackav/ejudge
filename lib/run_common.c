@@ -3046,6 +3046,8 @@ run_one_test(
       task_AppendContainerOptions(tsk, srpp->container_options);
     if (srgp->lang_container_options && srgp->lang_container_options[0])
       task_AppendContainerOptions(tsk, srgp->lang_container_options);
+    if (srgp->lang_short_name && *srgp->lang_short_name)
+      task_SetLanguageName(tsk, srgp->lang_short_name);
     if (tst->secure_exec_type_val == SEXEC_TYPE_JAVA) {
       task_PutEnv(tsk, "EJUDGE_JAVA_POLICY=fileio.policy");
     }

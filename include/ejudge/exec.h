@@ -104,6 +104,7 @@ int      task_EnableSubdirMode(tpTask);
 int      task_IgnoreSIGPIPE(tpTask);
 int      task_SetContainerOptions(tpTask, const char *);
 int      task_AppendContainerOptions(tpTask, const char *);
+int      task_SetLanguageName(tpTask, const char *);
 
 int      task_SetSuidHelperDir(tpTask, const char *);
 

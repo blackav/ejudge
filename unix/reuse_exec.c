@@ -139,6 +139,7 @@ struct tTask
   unsigned long used_vm_size;   /* maximum used VM size (if available) */
   int cleanup_invoked;          /* not to invoke cleanup handler several times */
   char *container_options;      /* options for containerization */
+  char *language_name;          /* programming language name for container presets */
   int status_fd;                /* the receiving end of data pipe for container execution */
   int ipc_object_count;         /* the count of the remaining IPC objects */
   int orphan_process_count;     /* the count of the remaining processes */
@@ -474,6 +475,7 @@ task_Delete(tTask *tsk)
   xfree(tsk->last_error_msg);
   xfree(tsk->suid_helper_dir);
   xfree(tsk->container_options);
+  xfree(tsk->language_name);
   if (tsk->status_fd >= 0) close(tsk->status_fd);
   xfree(tsk);
 }
@@ -1305,6 +1307,18 @@ task_AppendContainerOptions(tTask *tsk, const char *options)
 }
 
 int
+task_SetLanguageName(tTask *tsk, const char *language_name)
+{
+  task_init_module();
+  ASSERT(tsk);
+  xfree(tsk->language_name); tsk->language_name = NULL;
+  if (language_name) {
+    tsk->language_name = xstrdup(language_name);
+  }
+  return 0;
+}
+
+int
 task_SetKillSignal(tTask *tsk, char const *signame)
 {
   task_init_module();
@@ -1682,6 +1696,11 @@ task_StartContainer(tTask *tsk)
   if (strcmp(tsk->path, tsk->args.v[0])) {
     int len = strlen(tsk->path);
     fprintf(spec_f, "rp%d%s", len, tsk->path);
+  }
+
+  if (tsk->language_name && *tsk->language_name) {
+    int len = strlen(tsk->language_name);
+    fprintf(spec_f, "ol%d%s", len, tsk->language_name);
   }
 
   if (tsk->container_options) fputs(tsk->container_options, spec_f);
