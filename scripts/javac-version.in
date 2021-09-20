@@ -61,6 +61,7 @@ then
   version=`${JAVARUN} -version 2>&1 | grep " version" | sed 's/^.*"\(.*\)".*$/\1/g'` || failure
   [ "${version}" != "" ] || failure
   case x"${version}" in
+    x17*) JAVAVER=17;;
     x16.*) JAVAVER=16;;
     x15.*) JAVAVER=15;;
     x14.*) JAVAVER=14;;
