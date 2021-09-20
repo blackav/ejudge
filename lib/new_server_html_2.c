@@ -5541,7 +5541,7 @@ ns_get_user_problems_summary(
       if (re.status == RUN_SUMMONED) {
         cur_pinfo->summoned_flag = 1;
       }
-      if (re.status == RUN_OK && cur_prob->provide_ok) {
+      if ((re.status == RUN_OK || re.status == RUN_PENDING_REVIEW) && cur_prob->provide_ok) {
         for (int oki = 0; cur_prob->provide_ok[oki]; ++oki) {
           for (int p2i = 1; p2i <= cs->max_prob; ++p2i) {
             const struct section_problem_data *prob2 = cs->probs[p2i];
