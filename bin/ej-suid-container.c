@@ -152,6 +152,7 @@ static int limit_umask = -1;
 static int limit_open_files = -1;
 static long long limit_stack_size = -1;
 static long long limit_vm_size = 67108864;  // 64M
+static long long limit_rss_size = -1;
 static long long limit_file_size = -1;
 static int limit_processes = 5;
 static int limit_cpu_time_ms = 1000;
@@ -1481,10 +1482,10 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   lo<N>  - set limit to file descriptors
  *   ls<Z>  - set stack limit
  *   lv<Z>  - set VM limit
+ *   lR<Z>  - set RSS limit
  *   lf<Z>  - set file size limit
  *   lu<N>  - set user processes limit
  *   s0     - disable syscall filtering
- *   s3     - enable support for 32-bit programs (i686)
  *   se     - enable execve(at)
  *   sf     - enable fork, vfork, clone, clone3
  */
@@ -1663,6 +1664,8 @@ main(int argc, char *argv[])
                 limit_stack_size = extract_size(&opt, 2, "ls");
             } else if (*opt == 'l' && opt[1] == 'v') {
                 limit_vm_size = extract_size(&opt, 2, "lv");
+            } else if (*opt == 'l' && opt[1] == 'R') {
+                limit_rss_size = extract_size(&opt, 2, "lR");
             } else if (*opt == 'l' && opt[1] == 'f') {
                 limit_file_size = extract_size(&opt, 2, "lf");
             } else if (*opt == 'l' && opt[1] == 'u') {
