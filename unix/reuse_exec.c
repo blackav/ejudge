@@ -1706,6 +1706,8 @@ task_StartContainer(tTask *tsk)
   if (tsk->container_options) fputs(tsk->container_options, spec_f);
   fclose(spec_f); spec_f = NULL;
 
+  write_log(LOG_REUSE, LOG_INFO, "task_StartContainer: spec: %s\n", spec_s);
+
   if (tsk->clear_env) {
     clearenv();
   }
