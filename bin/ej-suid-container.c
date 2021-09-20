@@ -146,6 +146,7 @@ static int stderr_fd = -1;
 static char *start_program_name = NULL;
 static int stdin_external_fd = -1;
 static int stdout_external_fd = -1;
+static char *language_name = NULL;
 
 // resource limits
 static int limit_umask = -1;
@@ -1485,6 +1486,7 @@ extract_size(const char **ppos, int init_offset, const char *opt_name)
  *   lR<Z>  - set RSS limit
  *   lf<Z>  - set file size limit
  *   lu<N>  - set user processes limit
+ *   ol<S>  - set programming language name
  *   s0     - disable syscall filtering
  *   se     - enable execve(at)
  *   sf     - enable fork, vfork, clone, clone3
@@ -1707,6 +1709,8 @@ main(int argc, char *argv[])
             } else if (*opt == 's' && opt[1] == 'f') {
                 enable_sys_fork = 1;
                 opt += 2;
+            } else if (*opt == 'o' && opt[1] == 'l') {
+                language_name = extract_string(&opt, 2, "ol");
             } else {
                 flog("invalid option: %s", opt);
                 fatal();
