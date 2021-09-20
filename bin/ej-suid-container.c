@@ -124,6 +124,8 @@ static int enable_sys_execve = 0;
 static int enable_sys_fork = 0;
 
 static char *working_dir = NULL;
+static char *working_dir_parent = NULL;
+static char *working_dir_name = NULL;
 
 static int bash_mode = 0;
 
@@ -358,19 +360,10 @@ safe_chown_rec(const char *path, int user_id, int group_id, int from_user_id)
 static void
 change_ownership(int user_id, int group_id, int from_user_id)
 {
-    if (enable_subdir_mode && working_dir) {
-        char dir[PATH_MAX];
-        if (snprintf(dir, sizeof(dir), "%s/..", working_dir) >= sizeof(dir)) {
-            return;
-        }
-        safe_chown(dir, user_id, group_id, from_user_id);
-        safe_chown_rec(dir, user_id, group_id, from_user_id);
-    } else {
-        const char *dir = working_dir;
-        if (!dir) dir = ".";
-        safe_chown(dir, user_id, group_id, from_user_id);
-        safe_chown_rec(dir, user_id, group_id, from_user_id);
-    }
+    const char *dir = (enable_subdir_mode && working_dir)? working_dir_parent : working_dir;
+    if (!dir) dir = ".";
+    safe_chown(dir, user_id, group_id, from_user_id);
+    safe_chown_rec(dir, user_id, group_id, from_user_id);
 }
 
 struct MountInfo
@@ -486,9 +479,13 @@ reconfigure_fs(void)
     }
 
     if (enable_sandbox_dir) {
-        if (working_dir && *working_dir) {
+        if (working_dir_parent && *working_dir_parent) {
+            if ((r = mount(working_dir_parent, "/sandbox", NULL, MS_BIND, NULL)) < 0) {
+                ffatal("failed to mount '%s' to /sandbox: %s", working_dir_parent, strerror(errno));
+            }
+        } else if (working_dir && *working_dir) {
             if ((r = mount(working_dir, "/sandbox", NULL, MS_BIND, NULL)) < 0) {
-                ffatal("failed to mount /sandbox: %s", strerror(errno));
+                ffatal("failed to mount '%s' to /sandbox: %s", working_dir, strerror(errno));
             }
         } else {
             char wd[PATH_MAX];
@@ -1597,7 +1594,7 @@ main(int argc, char *argv[])
                 enable_var = 1;
                 opt += 2;
             } else if (*opt == 'm' && opt[1] == 'D') {
-                enable_subdir_mode = 1;;
+                enable_subdir_mode = 1;
                 opt += 2;
             } else if (*opt == 'w') {
                 working_dir = extract_string(&opt, 1, "w");
@@ -1721,6 +1718,22 @@ main(int argc, char *argv[])
         while (*p) *p++ = 0;
     }
 
+    if (enable_subdir_mode && working_dir && working_dir[0]) {
+        working_dir_parent = strdup(working_dir);
+        int len = strlen(working_dir_parent);
+        while (len > 0 && working_dir_parent[len - 1] == '/') --len;
+        working_dir_parent[len] = 0;
+        if (!len) ffatal("invalid working directory '%s'", working_dir);
+        char *sl = strrchr(working_dir_parent, '/');
+        if (!sl) ffatal("invalid working directory '%s'", working_dir);
+        working_dir_name = strdup(sl + 1);
+        *sl = 0;
+        len = strlen(working_dir_parent);
+        while (len > 0 && working_dir_parent[len - 1] == '/') --len;
+        working_dir_parent[len] = 0;
+        if (!len) ffatal("invalid working directory '%s'", working_dir);
+    }
+
     start_args = argv + argi;
     if (start_program_name) {
         start_program = start_program_name;
@@ -1842,6 +1855,12 @@ main(int argc, char *argv[])
                 if (chdir("/sandbox") < 0) {
                     fprintf(stderr, "failed to change dir to /sandbox: %s\n", strerror(errno));
                     _exit(127);
+                }
+                if (working_dir_name && *working_dir_name) {
+                    if (chdir(working_dir_name) < 0) {
+                        fprintf(stderr, "failed to change dir to '%s': %s\n", working_dir_name, strerror(errno));
+                        _exit(127);
+                    }
                 }
             } else if (working_dir && *working_dir) {
                 if (chdir(working_dir) < 0) {
