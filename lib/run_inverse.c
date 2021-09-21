@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2010-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2010-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -558,6 +558,9 @@ invoke_test_program(
   }
   if (srpp->max_vm_size > 0) {
     task_SetVMSize(tsk, srpp->max_vm_size);
+  }
+  if (srpp->max_rss_size > 0) {
+    task_SetRSSSize(tsk, srpp->max_rss_size);
   }
   /* no security restrictions and memory limits */
   if (task_Start(tsk) < 0) {
