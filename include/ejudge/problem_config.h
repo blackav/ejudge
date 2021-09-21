@@ -135,6 +135,7 @@ struct problem_config_section
   size_t max_vm_size;
   size_t max_data_size;
   size_t max_stack_size;
+  size_t max_rss_size;
   size_t max_core_size;
   size_t max_file_size;
 
@@ -203,6 +204,7 @@ struct problem_config_section
   char **lang_time_adj_millis;
   char **lang_max_vm_size;
   char **lang_max_stack_size;
+  char **lang_max_rss_size;
   char **personal_deadline;
   char **score_view;
   char **score_view_text;
