@@ -1,12 +1,12 @@
 # -*- mode: po; coding: UTF-8 -*-
 # ejudge messages catalog
-# Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru>
+# Copyright (C) 2002-2021 Alexander Chernov <cher@ejudge.ru>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-09-08 16:36+0300\n"
+"POT-Creation-Date: 2021-09-21 16:07+0300\n"
 "PO-Revision-Date: 2020-07-13 22:56+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -2368,6 +2368,9 @@ msgstr "Май"
 
 msgid "May change!"
 msgstr "Может измениться!"
+
+msgid "Memory RSS limit"
+msgstr "Ограничение физической памяти"
 
 msgid "Memory limit"
 msgstr "Ограничение памяти"
