@@ -2627,6 +2627,10 @@ run_one_test(
         append_msg_to_log(check_out_path, "max_stack_size %lld cannot be represented by size_t\n", tstinfo.max_stack_size);
         goto check_failed;
       }
+      if (tstinfo.max_rss_size > 0 && (size_t) tstinfo.max_rss_size != tstinfo.max_rss_size) {
+        append_msg_to_log(check_out_path, "max_rss_size %lld cannot be represented by size_t\n", tstinfo.max_rss_size);
+        goto check_failed;
+      }
       if (tstinfo.max_file_size > 0 && (size_t) tstinfo.max_file_size != tstinfo.max_file_size) {
         append_msg_to_log(check_out_path, "max_file_size %lld cannot be represented by size_t\n", tstinfo.max_file_size);
         goto check_failed;
@@ -2977,14 +2981,17 @@ run_one_test(
 
   long long max_vm_size = -1LL;
   long long max_stack_size = -1LL;
+  long long max_rss_size = -1LL;
   long long max_file_size = -1LL;
   if (srpp->use_info > 0) {
     if (tstinfo.max_vm_size > 0) max_vm_size = tstinfo.max_vm_size;
     if (tstinfo.max_stack_size > 0) max_stack_size = tstinfo.max_stack_size;
+    if (tstinfo.max_rss_size > 0) max_rss_size = tstinfo.max_rss_size;
     if (tstinfo.max_file_size > 0) max_file_size = tstinfo.max_file_size;
   }
   if (max_vm_size < 0 && srpp->max_vm_size > 0) max_vm_size = srpp->max_vm_size;
   if (max_stack_size < 0 && srpp->max_stack_size > 0) max_stack_size = srpp->max_stack_size;
+  if (max_rss_size < 0 && srpp->max_rss_size > 0) max_rss_size = srpp->max_rss_size;
   if (max_file_size < 0 && srpp->max_file_size > 0) max_file_size = srpp->max_file_size;
 
   if (!tst || tst->memory_limit_type_val < 0) {
@@ -2997,6 +3004,8 @@ run_one_test(
       task_SetDataSize(tsk, srpp->max_data_size);
     if (max_vm_size > 0)
       task_SetVMSize(tsk, max_vm_size);
+    if (max_rss_size > 0)
+      task_SetRSSSize(tsk, max_rss_size);
   } else {
     switch (tst->memory_limit_type_val) {
     case MEMLIMIT_TYPE_DEFAULT:
@@ -3011,6 +3020,8 @@ run_one_test(
         task_SetDataSize(tsk, srpp->max_data_size);
       if (max_vm_size > 0)
         task_SetVMSize(tsk, max_vm_size);
+      if (max_rss_size > 0)
+        task_SetRSSSize(tsk, max_rss_size);
       if (tst->enable_memory_limit_error > 0 && srgp->enable_memory_limit_error > 0 && srgp->secure_run > 0) {
         task_EnableMemoryLimitError(tsk);
       }
@@ -4181,6 +4192,12 @@ run_tests(
     unsigned char sz_buf[64];
     append_msg_to_log(messages_path, "max_stack_size = %s is too big for this platform",
                       ej_size64_t_to_size(sz_buf, sizeof(sz_buf), srpp->max_stack_size));
+    goto check_failed;
+  }
+  if (srpp->max_rss_size > 0 && srpp->max_rss_size != (size_t) srpp->max_rss_size) {
+    unsigned char sz_buf[64];
+    append_msg_to_log(messages_path, "max_rss_size = %s is too big for this platform",
+                      ej_size64_t_to_size(sz_buf, sizeof(sz_buf), srpp->max_rss_size));
     goto check_failed;
   }
   if (srpp->max_file_size > 0 && srpp->max_file_size != (size_t) srpp->max_file_size) {

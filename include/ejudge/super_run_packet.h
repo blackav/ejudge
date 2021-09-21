@@ -165,6 +165,7 @@ struct super_run_in_problem_packet
   ej_size64_t max_vm_size;
   ej_size64_t max_data_size;
   ej_size64_t max_stack_size;
+  ej_size64_t max_rss_size;
   ej_size64_t max_core_size;
   ej_size64_t max_file_size;
   int max_open_file_count;
