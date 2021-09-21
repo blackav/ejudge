@@ -91,6 +91,7 @@ int      task_SetKillSignal(tpTask, char const *);
 int      task_SetStackSize(tpTask, size_t);
 int      task_SetDataSize(tpTask, size_t);
 int      task_SetVMSize(tpTask, size_t);
+int      task_SetRSSSize(tpTask, size_t);
 int      task_DisableCoreDump(tpTask);
 int      task_EnableMemoryLimitError(tpTask);
 int      task_EnableSecureExec(tpTask);

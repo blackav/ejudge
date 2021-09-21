@@ -95,6 +95,7 @@ struct tTask
   size_t max_stack_size;        /* max size of stack */
   size_t max_data_size;         /* max size of data */
   size_t max_vm_size;           /* max size of virtual memory */
+  size_t max_rss_size;          /* max size of resident set (physical memory) */
   int    disable_core;          /* disable core dumps? */
   int    enable_memory_limit_error; /* enable memory limit error detection? */
   int    enable_secure_exec;    /* drop capabilities before exec'ing */
@@ -1284,6 +1285,16 @@ task_SetVMSize(tTask *tsk, size_t size)
 }
 
 int
+task_SetRSSSize(tTask *tsk, size_t size)
+{
+  task_init_module();
+  ASSERT(tsk);
+  if (size == ~(size_t) 0) return -1;
+  tsk->max_rss_size = size;
+  return 0;
+}
+
+int
 task_SetContainerOptions(tTask *tsk, const char *options)
 {
   task_init_module();
@@ -1666,6 +1677,9 @@ task_StartContainer(tTask *tsk)
   }
   if (tsk->max_vm_size > 0) {
     fprintf(spec_f, "lv%lld", (long long) tsk->max_vm_size);
+  }
+  if (tsk->max_rss_size > 0) {
+    fprintf(spec_f, "lR%lld", (long long) tsk->max_rss_size);
   }
   if (tsk->max_file_size >= 0) {
     fprintf(spec_f, "lf%lld", (long long) tsk->max_file_size);
