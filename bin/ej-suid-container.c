@@ -566,6 +566,20 @@ reconfigure_fs(void)
         if ((r = mount(empty_bind_path, "/home", NULL, MS_BIND, NULL)) < 0) {
             ffatal("failed to mount /home: %s", strerror(errno));
         }
+    } else {
+        struct stat stb;
+        if (lstat("/home/judges", &stb) && S_ISDIR(stb.st_mode)) {
+            if (lstat("/home/judges/data", &stb) && S_ISDIR(stb.st_mode)) {
+                if ((r = mount(empty_bind_path, "/home/judges/data", NULL, MS_BIND, NULL)) < 0) {
+                    ffatal("failed to mount /home/judges/data: %s", strerror(errno));
+                }
+            }
+            if (lstat("/home/judges/var", &stb) && S_ISDIR(stb.st_mode)) {
+                if ((r = mount(empty_bind_path, "/home/judges/var", NULL, MS_BIND, NULL)) < 0) {
+                    ffatal("failed to mount /home/judges/var: %s", strerror(errno));
+                }
+            }
+        }
     }
 
     if (!enable_proc || (!enable_sys && enable_cgroup)) {
