@@ -459,6 +459,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_ALIAS(output_only, type, "d"),
   PROBLEM_PARAM(max_vm_size, "E"),
   PROBLEM_PARAM(max_stack_size, "E"),
+  PROBLEM_PARAM(max_rss_size, "E"),
   PROBLEM_PARAM(max_data_size, "E"),
   PROBLEM_PARAM(max_core_size, "E"),
   PROBLEM_PARAM(max_file_size, "E"),
@@ -515,6 +516,7 @@ static const struct config_parse_info section_problem_params[] =
   PROBLEM_PARAM(lang_time_adj_millis, "x"),
   PROBLEM_PARAM(lang_max_vm_size, "x"),
   PROBLEM_PARAM(lang_max_stack_size, "x"),
+  PROBLEM_PARAM(lang_max_rss_size, "x"),
   PROBLEM_PARAM(check_cmd, "S"),
   PROBLEM_PARAM(valuer_cmd, "S"),
   PROBLEM_PARAM(interactor_cmd, "S"),
@@ -590,6 +592,7 @@ static const struct config_parse_info section_language_params[] =
   LANGUAGE_PARAM(max_file_size, "E"),
   LANGUAGE_PARAM(run_max_stack_size, "E"),
   LANGUAGE_PARAM(run_max_vm_size, "E"),
+  LANGUAGE_PARAM(run_max_rss_size, "E"),
 
   LANGUAGE_PARAM(compile_dir, "S"),
   LANGUAGE_PARAM(compile_dir_index, "d"),
@@ -633,6 +636,7 @@ static const struct config_parse_info section_tester_params[] =
   TESTER_PARAM(max_stack_size, "z"),
   TESTER_PARAM(max_data_size, "z"),
   TESTER_PARAM(max_vm_size, "z"),
+  TESTER_PARAM(max_rss_size, "z"),
   TESTER_PARAM(clear_env, "d"),
   TESTER_PARAM(time_limit_adjustment, "d"),
   TESTER_PARAM(time_limit_adj_millis, "d"),
@@ -1332,6 +1336,7 @@ prepare_problem_init_func(struct generic_section_config *gp)
   p->priority_adjustment = -1000;
   p->max_vm_size = -1LL;
   p->max_stack_size = -1LL;
+  p->max_rss_size = -1LL;
   p->max_data_size = -1LL;
   p->max_core_size = -1LL;
   p->max_file_size = -1LL;
@@ -1401,6 +1406,7 @@ prepare_problem_free_func(struct generic_section_config *gp)
   sarray_free(p->lang_time_adj_millis);
   sarray_free(p->lang_max_vm_size);
   sarray_free(p->lang_max_stack_size);
+  sarray_free(p->lang_max_rss_size);
   sarray_free(p->personal_deadline);
   sarray_free(p->alternative);
   sarray_free(p->statement_env);
@@ -1497,6 +1503,7 @@ tester_init_func(struct generic_section_config *gp)
   p->priority_adjustment = -1000;
   p->max_vm_size = -1L;
   p->max_stack_size = -1L;
+  p->max_rss_size = -1L;
   p->max_data_size = -1L;
   p->memory_limit_type_val = -1;
   p->secure_exec_type_val = -1;
@@ -1651,6 +1658,7 @@ static const struct inheritance_info tester_inheritance_info[] =
   TESTER_INH(max_stack_size, size, size),
   TESTER_INH(max_data_size, size, size),
   TESTER_INH(max_vm_size, size, size),
+  TESTER_INH(max_rss_size, size, size),
   TESTER_INH(is_dos, int, int),
   TESTER_INH(skip_testing, int, int),
   TESTER_INH(no_redirect, int, int),
@@ -3748,6 +3756,7 @@ set_defaults(
 
     prepare_set_prob_value(CNTSPROB_max_vm_size, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_max_stack_size, prob, aprob, g);
+    prepare_set_prob_value(CNTSPROB_max_rss_size, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_max_data_size, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_max_core_size, prob, aprob, g);
     prepare_set_prob_value(CNTSPROB_max_file_size, prob, aprob, g);
@@ -4329,6 +4338,11 @@ set_defaults(
         tp->max_vm_size = atp->max_vm_size;
         vinfo("tester.%d.max_vm_size inherited from tester.%s (%" EJ_PRINTF_ZSPEC "u)",
               i, sish, EJ_PRINTF_ZCAST(tp->max_vm_size));
+      }
+      if (tp->max_rss_size == -1L && atp && atp->max_rss_size != -1L) {
+        tp->max_rss_size = atp->max_rss_size;
+        vinfo("tester.%d.max_rss_size inherited from tester.%s (%" EJ_PRINTF_ZSPEC "u)",
+              i, sish, EJ_PRINTF_ZCAST(tp->max_rss_size));
       }
       if (tp->memory_limit_type) {
         tp->memory_limit_type_val = prepare_parse_memory_limit_type(tp->memory_limit_type);
@@ -5120,6 +5134,13 @@ prepare_tester_refinement(serve_state_t state, struct section_tester_data *out,
     out->max_vm_size = atp->max_vm_size;
   }
   if (out->max_vm_size == -1L) out->max_vm_size = 0;
+
+  /* copy max_rss_size */
+  out->max_rss_size = tp->max_rss_size;
+  if (out->max_rss_size == -1L && atp) {
+    out->max_rss_size = atp->max_rss_size;
+  }
+  if (out->max_rss_size == -1L) out->max_rss_size = 0;
 
   if (tp->memory_limit_type) {
     out->memory_limit_type_val = prepare_parse_memory_limit_type(tp->memory_limit_type);
@@ -6104,6 +6125,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   xstrdup3(&out->super_run_dir, in->super_run_dir);
   out->lang_max_vm_size = sarray_copy(in->lang_max_vm_size);
   out->lang_max_stack_size = sarray_copy(in->lang_max_stack_size);
+  out->lang_max_rss_size = sarray_copy(in->lang_max_rss_size);
   out->statement_env = sarray_copy(in->statement_env);
   //out->alternative = NULL;
   //out->personal_deadline = NULL;
@@ -6124,6 +6146,7 @@ prepare_copy_problem(const struct section_problem_data *in)
   out->max_vm_size = in->max_vm_size;
   out->max_data_size = in->max_data_size;
   out->max_stack_size = in->max_stack_size;
+  out->max_rss_size = in->max_rss_size;
   out->max_core_size = in->max_core_size;
   out->max_file_size = in->max_file_size;
   out->max_open_file_count = in->max_open_file_count;
@@ -6362,6 +6385,10 @@ prepare_set_prob_value(
 
   case CNTSPROB_max_stack_size:
     if (out->max_stack_size < 0 && abstr) out->max_stack_size = abstr->max_stack_size;
+    break;
+
+  case CNTSPROB_max_rss_size:
+    if (out->max_rss_size < 0 && abstr) out->max_rss_size = abstr->max_rss_size;
     break;
 
   case CNTSPROB_max_data_size:
@@ -6958,6 +6985,7 @@ prepare_set_all_prob_values(
     CNTSPROB_max_vm_size,
     CNTSPROB_max_data_size,
     CNTSPROB_max_stack_size,
+    CNTSPROB_max_rss_size,
     CNTSPROB_max_core_size,
     CNTSPROB_max_file_size,
     CNTSPROB_max_open_file_count,

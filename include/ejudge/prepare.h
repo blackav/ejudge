@@ -1182,6 +1182,7 @@ struct section_problem_data
   /** language-specific memory limit */
   char **lang_max_vm_size;
   char **lang_max_stack_size;
+  char **lang_max_rss_size;
 
   /** environment variables for the statement */
   ejenvlist_t statement_env;
@@ -1221,6 +1222,8 @@ struct section_problem_data
   ej_size64_t max_data_size;
   /** max stack size limit */
   ej_size64_t max_stack_size;
+  /** max resident set size limit  */
+  ej_size64_t max_rss_size;
   /** max allowed size of the core file */
   ej_size64_t max_core_size;
   /** max file size */
@@ -1319,6 +1322,8 @@ struct section_language_data
   ej_size64_t run_max_stack_size;
   /** virtual memory size limit for compiled programs, overrides the problem settings */
   ej_size64_t run_max_vm_size;
+  /** max resident set size limit for compiled programs, overrides the problem settings */
+  ej_size64_t run_max_rss_size;
 
   /** index of the compile directory in the list of compile servers */
   int compile_dir_index;
@@ -1401,6 +1406,8 @@ struct section_tester_data
   size_t max_data_size;
   /** max size of the virtual memory */
   size_t max_vm_size;
+  /** max size of the resident set */
+  size_t max_rss_size;
   /** whether the environment is cleared */
   ejintbool_t clear_env;
   int time_limit_adjustment;

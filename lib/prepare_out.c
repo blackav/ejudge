@@ -912,6 +912,9 @@ prepare_unparse_lang(
   if (lang->run_max_vm_size > 0) {
     fprintf(f, "run_max_vm_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), lang->run_max_vm_size));
   }
+  if (lang->run_max_rss_size > 0) {
+    fprintf(f, "run_max_rss_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), lang->run_max_rss_size));
+  }
 
   if (lang->compiler_env) {
     for (i = 0; lang->compiler_env[i]; i++) {
@@ -1277,6 +1280,8 @@ prepare_unparse_prob(
     fprintf(f, "max_vm_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_vm_size));
   if (prob->max_stack_size >= 0)
     fprintf(f, "max_stack_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_stack_size));
+  if (prob->max_rss_size >= 0)
+    fprintf(f, "max_rss_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_rss_size));
   if (prob->max_data_size >= 0)
     fprintf(f, "max_data_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_data_size));
   if (prob->max_core_size >= 0)
@@ -1428,6 +1433,7 @@ prepare_unparse_prob(
   do_xstr(f, &ab, "lang_time_adj_millis", prob->lang_time_adj_millis);
   do_xstr(f, &ab, "lang_max_vm_size", prob->lang_max_vm_size);
   do_xstr(f, &ab, "lang_max_stack_size", prob->lang_max_stack_size);
+  do_xstr(f, &ab, "lang_max_rss_size", prob->lang_max_rss_size);
   do_xstr(f, &ab, "test_sets", prob->test_sets);
   do_xstr(f, &ab, "disable_language", prob->disable_language);
   do_xstr(f, &ab, "enable_language", prob->enable_language);
@@ -1733,6 +1739,8 @@ prepare_unparse_actual_prob(
     fprintf(f, "max_vm_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_vm_size));
   if (prob->max_stack_size >= 0)
     fprintf(f, "max_stack_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_stack_size));
+  if (prob->max_rss_size >= 0)
+    fprintf(f, "max_rss_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_rss_size));
   if (prob->max_data_size >= 0)
     fprintf(f, "max_data_size = %s\n", ll_to_size_str(size_buf, sizeof(size_buf), prob->max_data_size));
   if (prob->max_core_size >= 0)
@@ -1849,6 +1857,7 @@ prepare_unparse_actual_prob(
   do_xstr(f, &ab, "lang_time_adj_millis", prob->lang_time_adj_millis);
   do_xstr(f, &ab, "lang_max_vm_size", prob->lang_max_vm_size);
   do_xstr(f, &ab, "lang_max_stack_size", prob->lang_max_stack_size);
+  do_xstr(f, &ab, "lang_max_rss_size", prob->lang_max_rss_size);
   do_xstr(f, &ab, "test_sets", prob->test_sets);
   do_xstr(f, &ab, "disable_language", prob->disable_language);
   do_xstr(f, &ab, "enable_language", prob->enable_language);
