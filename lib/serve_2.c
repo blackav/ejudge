@@ -2364,6 +2364,7 @@ serve_run_request(
   srpp->max_vm_size = prob->max_vm_size;
   srpp->max_data_size = prob->max_data_size;
   srpp->max_stack_size = prob->max_stack_size;
+  srpp->max_rss_size = prob->max_rss_size;
   srpp->max_core_size = prob->max_core_size;
   srpp->max_file_size = prob->max_file_size;
   srpp->max_open_file_count = prob->max_open_file_count;
@@ -2383,11 +2384,17 @@ serve_run_request(
   if (find_lang_specific_size(prob->lang_max_stack_size, lang, &lang_specific_size) > 0) {
     srpp->max_stack_size = lang_specific_size;
   }
+  if (find_lang_specific_size(prob->lang_max_rss_size, lang, &lang_specific_size) > 0) {
+    srpp->max_rss_size = lang_specific_size;
+  }
   if (lang && lang->run_max_stack_size > 0) {
     srpp->max_stack_size = lang->run_max_stack_size;
   }
   if (lang && lang->run_max_vm_size > 0) {
     srpp->max_vm_size = lang->run_max_vm_size;
+  }
+  if (lang && lang->run_max_rss_size > 0) {
+    srpp->max_rss_size = lang->run_max_rss_size;
   }
 
   if (tester) {

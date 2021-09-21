@@ -13516,6 +13516,9 @@ unpriv_problem_status_json(
   if (prob->max_stack_size != 0 && prob->max_stack_size != ~(ej_size64_t) 0) {
     fprintf(fout, ",\n      \"max_stack_size\": \"%llu\"", prob->max_stack_size);
   }
+  if (prob->max_rss_size != 0 && prob->max_rss_size != ~(ej_size64_t) 0) {
+    fprintf(fout, ",\n      \"max_rss_size\": \"%llu\"", prob->max_rss_size);
+  }
   // whether statement is available
   if (variant > 0 && prob->xml.a[variant - 1]) {
     fprintf(fout, ",\n      \"is_statement_avaiable\": %s", to_json_bool(1));
