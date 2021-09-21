@@ -3,7 +3,7 @@
 #ifndef __PROBLEM_XML_H__
 #define __PROBLEM_XML_H__
 
-/* Copyright (C) 2007-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -48,6 +48,7 @@ enum
   PROB_T_REVIEW_COMMENTS,
   PROB_T_COMMENT,
   PROB_T_KEYWORDS,
+  PROB_T_MAX_RSS_SIZE,
 
   PROB_T__BARRIER,
   PROB_T__DEFAULT,
@@ -114,6 +115,7 @@ struct problem_desc
 
   size_t max_vm_size;
   size_t max_stack_size;
+  size_t max_rss_size;
 
   unsigned char *package;       /* package */
   unsigned char *id;            /* corresponds to short_name */

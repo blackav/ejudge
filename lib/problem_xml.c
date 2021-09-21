@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2007-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2007-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -50,6 +50,7 @@ static char const * const elem_map[] =
   "review_comments",
   "comment",
   "keywords",
+  "max_rss_size",
   0,
   "_default",
   "_text",
@@ -467,6 +468,11 @@ parse_tree(problem_xml_t tree)
     case PROB_T_MAX_VM_SIZE:
       if (tree->max_vm_size) return xml_err_elem_redefined(p1);
       if (parse_size(p1->text, &tree->max_vm_size) < 0)
+        return xml_err_elem_invalid(p1);
+      break;
+    case PROB_T_MAX_RSS_SIZE:
+      if (tree->max_rss_size) return xml_err_elem_redefined(p1);
+      if (parse_size(p1->text, &tree->max_rss_size) < 0)
         return xml_err_elem_invalid(p1);
       break;
     case PROB_T_MAX_STACK_SIZE:
