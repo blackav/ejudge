@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2003-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2003-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -610,6 +610,10 @@ parse_line(const unsigned char *str, size_t len, testinfo_t *pt, struct testinfo
     if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
     if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
     if (parse_size(cmd.v[0], &pt->max_file_size) < 0) FAIL(TINF_E_INVALID_VALUE);
+  } else if (!strcmp(name_buf, "max_rss_size")) {
+    if (cmd.u < 1) FAIL(TINF_E_EMPTY_VALUE);
+    if (cmd.u > 1) FAIL(TINF_E_MULTIPLE_VALUE);
+    if (parse_size(cmd.v[0], &pt->max_rss_size) < 0) FAIL(TINF_E_INVALID_VALUE);
   } else if (!strcmp(name_buf, "check_stderr")) {
     if (cmd.u < 1) {
       x = 1;
@@ -724,6 +728,7 @@ testinfo_parse(const char *path, testinfo_t *pt, struct testinfo_subst_handler *
   pt->max_vm_size = -1LL;
   pt->max_stack_size = -1LL;
   pt->max_file_size = -1LL;
+  pt->max_rss_size = -1LL;
   if (!(fin = fopen(path, "r"))) {
     memset(pt, 0, sizeof(*pt));
     return -TINF_E_CANNOT_OPEN;
