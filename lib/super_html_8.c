@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2012-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2012-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -74,7 +74,7 @@ super_html_read_serve(
   struct section_problem_data *prob, *aprob;
   struct section_tester_data *tst, *atst;
   struct section_language_data *lang;
-  size_t vm_size, st_size;
+  size_t vm_size, st_size, rss_size;
   size_t *mem_lims, *st_lims;
   int *mem_cnt, *st_cnt;
   //int mem_u, st_u, max_i;
@@ -582,6 +582,8 @@ super_html_read_serve(
     if (vm_size == -1L && atst) vm_size = atst->max_vm_size;
     st_size = tst->max_stack_size;
     if (st_size == -1L && atst) st_size = atst->max_stack_size;
+    rss_size = tst->max_rss_size;
+    if (rss_size == -1L && atst) rss_size = atst->max_rss_size;
     if (vm_size != -1L) {
       if (prob->max_vm_size < 0) prob->max_vm_size = vm_size;
       if (prob->max_vm_size != vm_size) {
@@ -593,6 +595,13 @@ super_html_read_serve(
       if (prob->max_stack_size < 0) prob->max_stack_size = st_size;
       if (prob->max_stack_size != st_size) {
         fprintf(flog, "Conflicting max_stack_size specifications for problem `%s'\n", prob->short_name);
+        return -1;
+      }
+    }
+    if (rss_size != -1L) {
+      if (prob->max_rss_size < 0) prob->max_rss_size = rss_size;
+      if (prob->max_rss_size != rss_size) {
+        fprintf(flog, "Conflicting max_rss_size specifications for problem `%s'\n", prob->short_name);
         return -1;
       }
     }
@@ -623,6 +632,8 @@ super_html_read_serve(
       if (vm_size == -1L && atst) vm_size = atst->max_vm_size;
       st_size = tst->max_stack_size;
       if (st_size == -1L && atst) st_size = atst->max_stack_size;
+      rss_size = tst->max_rss_size;
+      if (rss_size == -1L && atst) rss_size = atst->max_rss_size;
       if (vm_size != -1L) {
         if (prob->max_vm_size < 0) prob->max_vm_size = vm_size;
         if (prob->max_vm_size != vm_size) {
@@ -634,6 +645,13 @@ super_html_read_serve(
         if (prob->max_stack_size < 0) prob->max_stack_size = st_size;
         if (prob->max_stack_size != st_size) {
           fprintf(flog, "Conflicting max_stack_size specifications for problem `%s'\n", prob->short_name);
+          return -1;
+        }
+      }
+      if (rss_size != -1L) {
+        if (prob->max_rss_size < 0) prob->max_rss_size = rss_size;
+        if (prob->max_rss_size != rss_size) {
+          fprintf(flog, "Conflicting max_rss_size specifications for problem `%s'\n", prob->short_name);
           return -1;
         }
       }

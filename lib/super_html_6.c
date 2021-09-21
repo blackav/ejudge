@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -5003,6 +5003,9 @@ do_import_problem(
   }
   if (cfg->max_stack_size != (size_t) -1L && cfg->max_stack_size) {
     prob->max_stack_size = cfg->max_stack_size;
+  }
+  if (cfg->max_rss_size != (size_t) -1L && cfg->max_rss_size) {
+    prob->max_rss_size = cfg->max_rss_size;
   }
   if (cfg->test_pat && cfg->test_pat[0]) {
     xstrdup3(&prob->test_pat, cfg->test_pat);
