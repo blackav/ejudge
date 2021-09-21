@@ -1484,6 +1484,31 @@ function viewDialogOnChange(field)
                 <td onclick="np(event);"><s:help topic="Serve.cfg:problem:max_stack_size" /></td>
             </s:tr>
 
+            <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_rss_size-div">
+                <td>Maximum RSS limit:</td>
+                <td><s:textfield id="orig-max_rss_size" readonly="readonly" name="param" value="prob->max_rss_size" size="48" maxlength="1024" checkExpr=">= 0" format="V" /><%
+    if (prob_id <= 0) {
+      if (prob->max_rss_size <= 0) {
+%>(<i>OS Limit</i>)<%
+      }
+    } else {
+      if (prob->max_rss_size < 0) {
+        if (tmp_prob->max_rss_size < 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else if (tmp_prob->max_rss_size == 0) {
+%>(<i>Default: OS Limit</i>)<%
+        } else {
+%>(<i>Default: <s:v format="V" value="tmp_prob->max_rss_size" escape="false"/></i>)<%
+        }
+      } else if (prob->max_rss_size == 0) {
+%>(<i>OS Limit</i>)<%
+      }
+    }
+%></td>
+                <td>&nbsp;</td>
+                <td onclick="np(event);"><s:help topic="Serve.cfg:problem:max_rss_size" /></td>
+            </s:tr>
+
             <s:tr attr="form_row_attrs[row ^= 1]" id="orig-max_file_size-div">
                 <td>Maximum output file size:</td>
                 <td><s:textfield id="orig-max_file_size" readonly="readonly" name="param" value="prob->max_file_size" size="48" maxlength="1024" checkExpr=">= 0" format="V" /><%
@@ -1567,6 +1592,7 @@ function viewDialogOnChange(field)
             <%@expand ORIG_ENV "lang_time_adj_millis" "Limits" "Language-specific time-limit adjustment (ms)" %>
             <%@expand ORIG_ENV "lang_max_vm_size" "Limits" "Language-specific memory limit" %>
             <%@expand ORIG_ENV "lang_max_stack_size" "Limits" "Language-specific stack limit" %>
+            <%@expand ORIG_ENV "lang_max_rss_size" "Limits" "Language-specific RSS limit" %>
 
         </table>
     </div>

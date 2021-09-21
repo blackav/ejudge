@@ -26,6 +26,8 @@
     ejintbool_t max_vm_size_dflt = 0;
     ej_size64_t max_stack_size = -1LL;
     ejintbool_t max_stack_size_dflt = 0;
+    ej_size64_t max_rss_size = -1LL;
+    ejintbool_t max_rss_size_dflt = 0;
     ej_size64_t max_file_size = -1LL;
     ejintbool_t max_file_size_dflt = 0;
     int max_open_file_count = -1;
@@ -43,6 +45,7 @@
     char **lang_time_adj_millis = NULL;
     char **lang_max_vm_size = NULL;
     char **lang_max_stack_size = NULL;
+    char **lang_max_rss_size = NULL;
 
     int i;
     struct section_problem_data *prob = NULL;
@@ -62,6 +65,8 @@
 %><s:read var="max_vm_size_dflt" default="0" /><%
 %><s:read var="max_stack_size" default="-1LL" /><%
 %><s:read var="max_stack_size_dflt" default="0" /><%
+%><s:read var="max_rss_size" default="-1LL" /><%
+%><s:read var="max_rss_size_dflt" default="0" /><%
 %><s:read var="max_file_size" default="-1LL" /><%
 %><s:read var="max_file_size_dflt" default="0" /><%
 %><s:read var="max_open_file_count" default="-1" /><%
@@ -79,6 +84,7 @@
 %><s:read var="lang_time_adj_millis" /><%
 %><s:read var="lang_max_vm_size" /><%
 %><s:read var="lang_max_stack_size" /><%
+%><s:read var="lang_max_rss_size" /><%
 
     if (retval || !phr->ss) goto cleanup;
 
@@ -98,6 +104,12 @@
     if (max_stack_size_dflt) max_stack_size = -1LL;
     if (max_stack_size > 0 && max_stack_size != (size_t) max_stack_size) {
         fprintf(msg_f, "max_stack_size is too large<br/>");
+        FAIL(SSERV_ERR_INVALID_PARAMETER);
+    }
+    if (max_rss_size < 0) max_rss_size = -1LL;
+    if (max_rss_size_dflt) max_rss_size = -1LL;
+    if (max_rss_size > 0 && max_rss_size != (size_t) max_rss_size) {
+        fprintf(msg_f, "max_rss_size is too large<br/>");
         FAIL(SSERV_ERR_INVALID_PARAMETER);
     }
     if (max_file_size < 0) max_file_size = -1LL;
@@ -155,6 +167,11 @@
         } else {
             prob->max_stack_size = -1LL;
         }
+        if (max_rss_size >= 0) {
+            prob->max_rss_size = (size_t) max_rss_size;
+        } else {
+            prob->max_rss_size = -1LL;
+        }
         if (max_file_size >= 0) {
             prob->max_file_size = (size_t) max_file_size;
         } else {
@@ -172,6 +189,7 @@
         MOVEENV(lang_time_adj_millis);
         MOVEENV(lang_max_vm_size);
         MOVEENV(lang_max_stack_size);
+        MOVEENV(lang_max_rss_size);
     }
 
 cleanup:;
@@ -191,4 +209,5 @@ cleanup:;
     sarray_free(lang_time_adj_millis);
     sarray_free(lang_max_vm_size);
     sarray_free(lang_max_stack_size);
+    sarray_free(lang_max_rss_size);
 %>

@@ -10,6 +10,7 @@
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "real_time_limit" "limits" "Real time limit (s)" "300" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_vm_size" "limits" "Maximum virtual memory size" "300" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_stack_size" "limits" "Maximum stack size" "300" %>
+        <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_rss_size" "limits" "Maximum RSS" "300" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_file_size" "limits" "Maximum output file size" "300" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_open_file_count" "limits" "Maximum open file count" "300" %>
         <%@expand MENU_TEXTFIELD_WITH_DEFAULT "max_process_count" "limits" "Maximum process count" "300" %>
@@ -23,6 +24,7 @@
         <%@expand MENU_TEXTFIELD "lang_time_adj_millis" "limits" "Language-specific time-limit adjustment (ms)" "300" %>
         <%@expand MENU_TEXTFIELD "lang_max_vm_size" "limits" "Language-specific memory limit" "300" %>
         <%@expand MENU_TEXTFIELD "lang_max_stack_size" "limits" "Language-specific stack limit" "300" %>
+        <%@expand MENU_TEXTFIELD "lang_max_rss_size" "limits" "Language-specific RSS limit" "300" %>
 
     </s:form>
 </div>
@@ -63,6 +65,7 @@ $(function() {
     $("#orig-lang_time_adj_millis-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#orig-lang_max_vm_size-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#orig-lang_max_stack_size-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#orig-lang_max_rss_size-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
 });
 
 function popupLimitsDialog(e, skipField)
@@ -74,6 +77,7 @@ function popupLimitsDialog(e, skipField)
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "real_time_limit" "prob->real_time_limit < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_vm_size" "prob->max_vm_size < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_stack_size" "prob->max_stack_size < 0" %>
+    <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_rss_size" "prob->max_rss_size < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_file_size" "prob->max_file_size < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_open_file_count" "prob->max_open_file_count < 0" %>
     <%@expand COPY_TEXTFIELD_WITH_DEFAULT "max_process_count" "prob->max_process_count < 0" %>
@@ -87,12 +91,14 @@ function popupLimitsDialog(e, skipField)
     <%@expand COPY_TEXTFIELD "lang_time_adj_millis"  %>
     <%@expand COPY_TEXTFIELD "lang_max_vm_size"  %>
     <%@expand COPY_TEXTFIELD "lang_max_stack_size"  %>
+    <%@expand COPY_TEXTFIELD "lang_max_rss_size"  %>
 
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "time_limit" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "time_limit_millis" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "real_time_limit" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "max_vm_size" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "max_stack_size" %>
+    <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "max_rss_size" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "max_file_size" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "max_open_file_count" %>
     <%@expand CLEAR_TEXTFIELD_WITH_DEFAULT "max_process_count" %>
@@ -101,6 +107,7 @@ function popupLimitsDialog(e, skipField)
     <%@expand CLEAR_TEXTFIELD "lang_time_adj_millis" %>
     <%@expand CLEAR_TEXTFIELD "lang_max_vm_size" %>
     <%@expand CLEAR_TEXTFIELD "lang_max_stack_size" %>
+    <%@expand CLEAR_TEXTFIELD "lang_max_rss_size" %>
 
     if (e) e.stopPropagation();
     limitsDialogOnChange();
@@ -114,6 +121,7 @@ function limitsDialogOnChange(field)
     <%@expand ONCHANGE_WITH_DEFAULT "real_time_limit" %>
     <%@expand ONCHANGE_WITH_DEFAULT "max_vm_size" %>
     <%@expand ONCHANGE_WITH_DEFAULT "max_stack_size" %>
+    <%@expand ONCHANGE_WITH_DEFAULT "max_rss_size" %>
     <%@expand ONCHANGE_WITH_DEFAULT "max_file_size" %>
     <%@expand ONCHANGE_WITH_DEFAULT "max_open_file_count" %>
     <%@expand ONCHANGE_WITH_DEFAULT "max_process_count" %>
@@ -123,6 +131,7 @@ function limitsDialogOnChange(field)
     $("#edit-lang_time_adj_millis-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#edit-lang_max_vm_size-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
     $("#edit-lang_max_stack_size-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
+    $("#edit-lang_max_rss_size-div").toggle(<s:v type="jsbool" value="prob_id > 0" />);
 }
 
 
