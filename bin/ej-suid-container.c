@@ -983,6 +983,26 @@ scan_shm(int search_uid)
 }
 
 static void
+write_buf_to_file(const char *path, const char *buf, int len)
+{
+    int fd = open(path, O_WRONLY);
+    if (fd < 0) {
+        fprintf(stderr, "failed to open %s: %s\n", path, strerror(errno));
+        _exit(127);
+    }
+    int z;
+    errno = 0;
+    if ((z = write(fd, buf, len)) != len) {
+        fprintf(stderr, "failed to write to %s: %d, %s\n", path, z, strerror(errno));
+        _exit(127);
+    }
+    if (close(fd) < 0) {
+        fprintf(stderr, "failed to close %s: %s\n", path, strerror(errno));
+        _exit(127);
+    }
+}
+
+static void
 create_cgroup(void)
 {
     // generate random cgroup name
@@ -1032,26 +1052,6 @@ create_cgroup(void)
         if (mkdir(cgroup_memory_path, 0700) < 0) {
             ffatal("failed to create %s: %s", cgroup_memory_path, strerror(errno));
         }
-    }
-}
-
-static void
-write_buf_to_file(const char *path, const char *buf, int len)
-{
-    int fd = open(path, O_WRONLY);
-    if (fd < 0) {
-        fprintf(stderr, "failed to open %s: %s\n", path, strerror(errno));
-        _exit(127);
-    }
-    int z;
-    errno = 0;
-    if ((z = write(fd, buf, len)) != len) {
-        fprintf(stderr, "failed to write to %s: %d, %s\n", path, z, strerror(errno));
-        _exit(127);
-    }
-    if (close(fd) < 0) {
-        fprintf(stderr, "failed to close %s: %s\n", path, strerror(errno));
-        _exit(127);
     }
 }
 
