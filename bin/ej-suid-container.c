@@ -1018,8 +1018,12 @@ create_cgroup(void)
     snprintf(cgroup_name, sizeof(cgroup_name), "%llx", ullval);
 
     if (cgroup_v2_detected) {
-        if (mkdir("/sys/fs/cgroup/ejudge", 0700) < 0 && errno != EEXIST) {
+        int r;
+        if ((r = mkdir("/sys/fs/cgroup/ejudge", 0700)) < 0 && errno != EEXIST) {
             ffatal("cannot create directory /sys/fs/cgroup/ejudge: %s", strerror(errno));
+        }
+        if (r >= 0) {
+            write_buf_to_file("/sys/fs/cgroup/ejudge/cgroup.subtree_control", "+cpu +memory", 12);
         }
         if (snprintf(cgroup_unified_path, sizeof(cgroup_unified_path), "/sys/fs/cgroup/ejudge/%s", cgroup_name) >= sizeof(cgroup_unified_path)) {
             ffatal("invalid cgroup path");
