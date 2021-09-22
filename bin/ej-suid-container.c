@@ -1398,6 +1398,44 @@ tune_seccomp()
 #endif
 }
 
+static void
+set_cgroup_rss_limit(void)
+{
+    int fd = -1, len, z;
+    char path[PATH_MAX], data[1024];
+
+    if (cgroup_v2_detected) {
+        if (snprintf(path, sizeof(path), "%s/memory.max", cgroup_unified_path) >= sizeof(path)) {
+            ffatal("path too long");
+        }
+        if ((fd = open(path, O_WRONLY | O_TRUNC, 0)) < 0) {
+            ffatal("cannot open '%s': %s", path, strerror(errno));
+        }
+        if ((len = snprintf(data, sizeof(data), "%lld", limit_rss_size)) >= sizeof(data)) {
+            ffatal("data too long");
+        }
+        errno = 0;
+        if ((z = write(fd, data, len)) != len) {
+            ffatal("failed to write to '%s': %d, %s", path, z, strerror(errno));
+        }
+        close(fd); fd = -1;
+
+        if (snprintf(path, sizeof(path), "%s/memory.swap.max", cgroup_unified_path) >= sizeof(path)) {
+            ffatal("path too long");
+        }
+        if ((fd = open(path, O_WRONLY | O_TRUNC, 0)) < 0) {
+            ffatal("cannot open '%s': %s", path, strerror(errno));
+        }
+        errno = 0;
+        if ((z = write(fd, "0", 1)) != 1) {
+            ffatal("failed to write to '%s': %d, %s", path, z, strerror(errno));
+        }
+        close(fd); fd = -1;
+    } else {
+        ffatal("RSS limit not supported");
+    }
+}
+
 static char *
 extract_string(const char **ppos, int init_offset, const char *opt_name)
 {
@@ -1849,6 +1887,10 @@ main(int argc, char *argv[])
                     ffatal("cgroup path too long");
                 }
             }
+        }
+
+        if (enable_cgroup && limit_rss_size > 0) {
+            set_cgroup_rss_limit();
         }
 
         // we need another child, because this one has PID 1
