@@ -1436,7 +1436,14 @@ set_cgroup_rss_limit(void)
         }
         close(fd); fd = -1;
     } else {
-        ffatal("RSS limit not supported");
+        if (snprintf(path, sizeof(path), "%s/memory.memsw.max_usage_in_bytes", cgroup_memory_path) >= sizeof(path)) {
+            ffatal("path too long");
+        }
+        int z;
+        if ((z = snprintf(data, sizeof(data), "%lld", limit_rss_size)) >= sizeof(data)) {
+            ffatal("data too long");
+        }
+        write_buf_to_file(path, data, z);
     }
 }
 
