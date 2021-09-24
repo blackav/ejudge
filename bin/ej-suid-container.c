@@ -1003,6 +1003,23 @@ write_buf_to_file(const char *path, const char *buf, int len)
 }
 
 static void
+write_buf_to_file_fatal(const char *path, const char *buf, int len)
+{
+    int fd = open(path, O_WRONLY);
+    if (fd < 0) {
+        ffatal("failed to open %s: %s", path, strerror(errno));
+    }
+    int z;
+    errno = 0;
+    if ((z = write(fd, buf, len)) != len) {
+        ffatal("failed to write to %s: %d, %s", path, z, strerror(errno));
+    }
+    if (close(fd) < 0) {
+        ffatal("failed to close %s: %s", path, strerror(errno));
+    }
+}
+
+static void
 create_cgroup(void)
 {
     // generate random cgroup name
@@ -1023,7 +1040,7 @@ create_cgroup(void)
             ffatal("cannot create directory /sys/fs/cgroup/ejudge: %s", strerror(errno));
         }
         if (r >= 0) {
-            write_buf_to_file("/sys/fs/cgroup/ejudge/cgroup.subtree_control", "+cpu +memory", 12);
+            write_buf_to_file_fatal("/sys/fs/cgroup/ejudge/cgroup.subtree_control", "+cpu +memory", 12);
         }
         if (snprintf(cgroup_unified_path, sizeof(cgroup_unified_path), "/sys/fs/cgroup/ejudge/%s", cgroup_name) >= sizeof(cgroup_unified_path)) {
             ffatal("invalid cgroup path");
@@ -1415,12 +1432,12 @@ set_cgroup_rss_limit(void)
         if ((len = snprintf(data, sizeof(data), "%lld", limit_rss_size)) >= sizeof(data)) {
             ffatal("data too long");
         }
-        write_buf_to_file(path, data, len);
+        write_buf_to_file_fatal(path, data, len);
 
         if (snprintf(path, sizeof(path), "%s/memory.swap.max", cgroup_unified_path) >= sizeof(path)) {
             ffatal("path too long");
         }
-        write_buf_to_file(path, "0", 1);
+        write_buf_to_file_fatal(path, "0", 1);
     } else {
         if ((len = snprintf(data, sizeof(data), "%lld", limit_rss_size)) >= sizeof(data)) {
             ffatal("data too long");
@@ -1428,11 +1445,11 @@ set_cgroup_rss_limit(void)
         if (snprintf(path, sizeof(path), "%s/memory.limit_in_bytes", cgroup_memory_path) >= sizeof(path)) {
             ffatal("path too long");
         }
-        write_buf_to_file(path, data, len);
+        write_buf_to_file_fatal(path, data, len);
         if (snprintf(path, sizeof(path), "%s/memory.memsw.limit_in_bytes", cgroup_memory_path) >= sizeof(path)) {
             ffatal("path too long");
         }
-        write_buf_to_file(path, data, len);
+        write_buf_to_file_fatal(path, data, len);
     }
 }
 
