@@ -1405,7 +1405,7 @@ tune_seccomp()
 static void
 set_cgroup_rss_limit(void)
 {
-    int fd = -1, len, z;
+    int len;
     char path[PATH_MAX], data[1024];
 
     if (cgroup_v2_detected) {
