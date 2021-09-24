@@ -1422,11 +1422,15 @@ set_cgroup_rss_limit(void)
         }
         write_buf_to_file(path, "0", 1);
     } else {
-        if (snprintf(path, sizeof(path), "%s/memory.memsw.max_usage_in_bytes", cgroup_memory_path) >= sizeof(path)) {
+        if (snprintf(path, sizeof(path), "%s/memory.memsw.limit_in_bytes", cgroup_memory_path) >= sizeof(path)) {
             ffatal("path too long");
         }
         if ((len = snprintf(data, sizeof(data), "%lld", limit_rss_size)) >= sizeof(data)) {
             ffatal("data too long");
+        }
+        write_buf_to_file(path, data, len);
+        if (snprintf(path, sizeof(path), "%s/memory.limit_in_bytes", cgroup_memory_path) >= sizeof(path)) {
+            ffatal("path too long");
         }
         write_buf_to_file(path, data, len);
     }
