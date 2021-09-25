@@ -1458,7 +1458,7 @@ apply_language_profiles(void)
 {
     if (!language_name || !*language_name) return;
 
-    if (!strcmp(language_name, "javac7") || !strcmp(language_name, "java")) {
+    if (!strcmp(language_name, "javac7") || !strcmp(language_name, "javac")) {
         enable_sys_fork = 1;
         enable_sys_execve = 1;
         //enable_proc = 1;
