@@ -1458,10 +1458,13 @@ apply_language_profiles(void)
 {
     if (!language_name || !*language_name) return;
 
-    if (!strcmp(language_name, "javac7") || !strcmp(language_name, "javac")) {
+    if (!strcmp(language_name, "javac7")
+        || !strcmp(language_name, "javac")
+        || !strcmp(language_name, "kotlin")
+        || !strcmp(language_name, "scala")) {
         enable_sys_fork = 1;
         enable_sys_execve = 1;
-        //enable_proc = 1;
+        enable_proc = 1;
         limit_vm_size = -1;     // VM limit set by environment var
         limit_stack_size = 1024 * 1024; // 1M
         limit_processes = 20;
@@ -1471,6 +1474,8 @@ apply_language_profiles(void)
         enable_sys_execve = 1;
         enable_proc = 1;
         limit_stack_size = 1024 * 1024; // 1M
+    } else if (!strcmp(language_name, "pypy") || !strcmp(language_name, "pypy3")) {
+        enable_proc = 1;
     }
 }
 
