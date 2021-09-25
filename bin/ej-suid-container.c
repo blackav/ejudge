@@ -1453,6 +1453,27 @@ set_cgroup_rss_limit(void)
     }
 }
 
+static void
+apply_language_profiles(void)
+{
+    if (!language_name || !*language_name) return;
+
+    if (!strcmp(language_name, "javac7") || !strcmp(language_name, "java")) {
+        enable_sys_fork = 1;
+        enable_sys_execve = 1;
+        //enable_proc = 1;
+        limit_vm_size = -1;     // VM limit set by environment var
+        limit_stack_size = 1024 * 1024; // 1M
+        limit_processes = 20;
+    } else if (!strcmp(language_name, "mcs") || !strcmp(language_name, "vbnc")
+               || !strcmp(language_name, "pasabc-linux")) {
+        enable_sys_fork = 1;
+        enable_sys_execve = 1;
+        enable_proc = 1;
+        limit_stack_size = 1024 * 1024; // 1M
+    }
+}
+
 static char *
 extract_string(const char **ppos, int init_offset, const char *opt_name)
 {
@@ -1786,6 +1807,8 @@ main(int argc, char *argv[])
         char *p = argv[argi - 1];
         while (*p) *p++ = 0;
     }
+
+    apply_language_profiles();
 
     if (enable_subdir_mode && working_dir && working_dir[0]) {
         working_dir_parent = strdup(working_dir);
