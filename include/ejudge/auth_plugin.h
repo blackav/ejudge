@@ -31,6 +31,12 @@ struct auth_plugin_iface
     // open the database
     int (*open)(void *);
     int (*check)(void *);
+
+    unsigned char * (*get_redirect_url)(
+        void *data,
+        const char *cookie,
+        int contest_id,
+        const char *extra_data);
 };
 
 #endif /* __AUTH_PLUGIN_H__ */
