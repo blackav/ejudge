@@ -3072,7 +3072,7 @@ run_one_test(
     }
   }
 
-  if (tst && tst->secure_exec_type_val > 0 && srgp->secure_run > 0) {
+  if (tst && tst->secure_exec_type_val > 0 && srgp->secure_run > 0 && srgp->enable_container <= 0) {
     switch (tst->secure_exec_type_val) {
     case SEXEC_TYPE_STATIC:
       if (task_EnableSecureExec(tsk) < 0) {
@@ -3106,7 +3106,7 @@ run_one_test(
     }
   }
 
-  if (tst && tst->secure_exec_type_val == SEXEC_TYPE_JAVA && srgp->secure_run <= 0) {
+  if (tst && tst->secure_exec_type_val == SEXEC_TYPE_JAVA && srgp->secure_run <= 0 && srgp->enable_container <= 0) {
     task_PutEnv(tsk, "EJUDGE_JAVA_POLICY=none");
   }
 
@@ -3114,7 +3114,7 @@ run_one_test(
     task_FormatEnv(tsk, "EJUDGE_JAVA_COMPILER", "%s", srgp->lang_short_name);
   }
 
-  if (tst && tst->enable_memory_limit_error > 0 && srgp->secure_run > 0 && srgp->detect_violations > 0) {
+  if (tst && tst->enable_memory_limit_error > 0 && srgp->secure_run > 0 && srgp->detect_violations > 0 && srgp->enable_container <= 0) {
     switch (tst->secure_exec_type_val) {
     case SEXEC_TYPE_STATIC:
     case SEXEC_TYPE_DLL:
