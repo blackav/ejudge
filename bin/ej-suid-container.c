@@ -1476,6 +1476,11 @@ apply_language_profiles(void)
         limit_stack_size = 1024 * 1024; // 1M
     } else if (!strcmp(language_name, "pypy") || !strcmp(language_name, "pypy3")) {
         enable_proc = 1;
+    } else if (!strcmp(language_name, "gcc-vg") || !strcmp(language_name, "g++-vg")) {
+        enable_sys_fork = 1;
+        enable_sys_execve = 1;
+        enable_proc = 1;
+        limit_vm_size = -1;
     }
 }
 
