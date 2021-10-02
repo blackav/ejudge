@@ -50,7 +50,9 @@ find_provider(const unsigned char *provider)
 }
 
 static struct ProviderInfo *
-get_provider(const unsigned char *provider)
+get_provider(
+        const struct ejudge_cfg *config,
+        const unsigned char *provider)
 {
     if (!provider || !*provider) {
         err("oauth_get_provider: empty provider");
@@ -70,9 +72,25 @@ get_provider(const unsigned char *provider)
 
     const struct common_loaded_plugin *loaded_plugin = plugin_get("auth", provider);
     if (!loaded_plugin) {
-        err("oauth_get_provider: auth plugin for '%s' failed to load", provider);
-        info->failed = 1;
-        return NULL;
+        const struct xml_tree *p;
+        const struct ejudge_plugin *plg;
+
+        // find an appropriate plugin
+        for (p = config->plugin_list; p; p = p->right) {
+            plg = (const struct ejudge_plugin*) p;
+            if (plg->load_flag && !strcmp(plg->type, "auth")
+                && !strcmp(plg->name, provider))
+                break;
+        }
+        if (!p) {
+            err("oauth_get_provider: plugin '%s' not registered", provider);
+            return NULL;
+        }
+        loaded_plugin = plugin_load_external(plg->path, plg->type, plg->name, config);
+        if (!loaded_plugin) {
+            err("oauth_get_provider: cannot load plugin '%s'", provider);
+            return NULL;
+        }
     }
     info->i = (struct auth_plugin_iface *) loaded_plugin->iface;
     info->d = loaded_plugin->data;
@@ -92,11 +110,13 @@ get_provider(const unsigned char *provider)
 
 unsigned char *
 oauth_get_redirect_url(
+        const struct ejudge_cfg *config,
         const unsigned char *provider,
         const unsigned char *cookie,
         int contest_id,
         const unsigned char *extra_data)
 {
-    struct ProviderInfo *info = get_provider(provider);
+    struct ProviderInfo *info = get_provider(config, provider);
+    if (!info) return NULL;
     return info->i->get_redirect_url(info->d, cookie, contest_id, extra_data);
 }
