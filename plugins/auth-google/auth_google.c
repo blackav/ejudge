@@ -24,6 +24,7 @@
 #include "ejudge/base64.h"
 #include "ejudge/random.h"
 #include "ejudge/misctext.h"
+#include "ejudge/osdeps.h"
 #include "../common-mysql/common_mysql.h"
 
 #if CONF_HAS_LIBCURL - 0 == 1
@@ -33,6 +34,11 @@
 #endif
 
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
 
 static struct common_plugin_data*
 init_func(void);
@@ -53,6 +59,12 @@ get_redirect_url_func(
         const char *cookie,
         int contest_id,
         const char *extra_data);
+static unsigned char *
+process_auth_callback_func(
+        void *data,
+        const unsigned char *state_id,
+        const unsigned char *code,
+        void (*fd_register_func)(int fd, void (*callback)(void *, int fd), void *data));
 
 struct auth_plugin_iface plugin_auth_google =
 {
@@ -72,6 +84,7 @@ struct auth_plugin_iface plugin_auth_google =
     open_func,
     check_func,
     get_redirect_url_func,
+    process_auth_callback_func,
 };
 
 struct auth_google_state
@@ -81,10 +94,78 @@ struct auth_google_state
     struct common_mysql_state *md;
     // curl for auth endpoint discovery
     CURL *curl;
-    char *authorization_endpoint;
+    unsigned char *authorization_endpoint;
+    unsigned char *token_endpoint;
 
     unsigned char *client_id;
+    unsigned char *client_secret;
     unsigned char *redirect_uri;
+
+    int bg_w_fd;
+    int bg_r_fd;
+    int bg_pid;
+};
+
+struct ga_stage1_internal
+{
+    unsigned char *state_id;
+    unsigned char *cookie;
+    int contest_id;
+    unsigned char *extra_data;
+    time_t create_time;
+    time_t expiry_time;
+};
+
+enum { GA_STAGE1_ROW_WIDTH = 6 };
+
+#define GA_STAGE1_OFFSET(f) XOFFSET(struct ga_stage1_internal, f)
+
+static const struct common_mysql_parse_spec ga_stage1_spec[GA_STAGE1_ROW_WIDTH] =
+{
+    { 1, 's', "state_id", GA_STAGE1_OFFSET(state_id), 0 },
+    { 1, 's', "cookie", GA_STAGE1_OFFSET(cookie), 0 },
+    { 0, 'd', "contest_id", GA_STAGE1_OFFSET(contest_id), 0 },
+    { 1, 's', "extra_data", GA_STAGE1_OFFSET(extra_data), 0 },
+    { 0, 't', "create_time", GA_STAGE1_OFFSET(create_time), 0 },
+    { 0, 't', "expiry_time", GA_STAGE1_OFFSET(expiry_time), 0 },
+};
+
+struct ga_stage2_internal
+{
+    unsigned char *request_id;
+    int request_state;
+    unsigned char *request_code;
+    unsigned char *cookie;
+    int contest_id;
+    unsigned char *extra_data;
+    time_t create_time;
+    time_t update_time;
+    unsigned char *response_email;
+    unsigned char *response_name;
+    unsigned char *access_token;
+    unsigned char *id_token;
+    unsigned char *error_message;
+};
+
+enum { GA_STAGE2_ROW_WIDTH = 13 };
+
+#define GA_STAGE2_OFFSET(f) XOFFSET(struct ga_stage2_internal, f)
+
+static const struct common_mysql_parse_spec ga_stage2_spec[GA_STAGE2_ROW_WIDTH] =
+{
+    { 1, 's', "request_id", GA_STAGE2_OFFSET(request_id), 0 },
+    { 0, 'd', "request_state", GA_STAGE2_OFFSET(request_state), 0 },
+    { 1, 's', "request_code", GA_STAGE2_OFFSET(request_code), 0 },
+    { 1, 's', "cookie", GA_STAGE2_OFFSET(cookie), 0 },
+    { 0, 'd', "contest_id", GA_STAGE2_OFFSET(contest_id), 0 },
+    { 1, 's', "extra_data", GA_STAGE2_OFFSET(extra_data), 0 },
+    { 0, 't', "create_time", GA_STAGE2_OFFSET(create_time), 0 },
+    { 1, 't', "update_time", GA_STAGE2_OFFSET(update_time), 0 },
+    { 1, 's', "response_email", GA_STAGE2_OFFSET(response_email), 0 },
+    { 1, 's', "response_name", GA_STAGE2_OFFSET(response_name), 0 },
+    { 1, 's', "access_token", GA_STAGE2_OFFSET(access_token), 0 },
+    { 1, 's', "id_token", GA_STAGE2_OFFSET(id_token), 0 },
+    { 1, 's', "error_message", GA_STAGE2_OFFSET(error_message), 0 },
 };
 
 static struct common_plugin_data*
@@ -95,6 +176,8 @@ init_func(void)
     XCALLOC(state, 1);
 
     state->curl = curl_easy_init();
+    state->bg_w_fd = -1;
+    state->bg_r_fd = -1;
 
     return (struct common_plugin_data*) state;
 }
@@ -131,6 +214,8 @@ prepare_func(
 
         if (!strcmp(p->name[0], "client_id")) {
             if (xml_leaf_elem(p, &state->client_id, 1, 0) < 0) return -1;
+        } else if (!strcmp(p->name[0], "client_secret")) {
+            if (xml_leaf_elem(p, &state->client_secret, 1, 0) < 0) return -1;
         } else if (!strcmp(p->name[0], "redirect_uri")) {
             if (xml_leaf_elem(p, &state->redirect_uri, 1, 0) < 0) return -1;
         }
@@ -185,8 +270,14 @@ fetch_google_endpoints(struct auth_google_state *state)
         err("invalid json, invalid authorization_endpoint");
         goto fail;
     }
-
     state->authorization_endpoint = xstrdup(jauth->valuestring);
+
+    cJSON *jtoken = cJSON_GetObjectItem(root, "token_endpoint");
+    if (!jtoken || jtoken->type != cJSON_String) {
+        err("invalid json, invalid token_endpoint");
+        goto fail;
+    }
+    state->token_endpoint = xstrdup(jtoken->valuestring);
 
     return 0;
 
@@ -196,6 +287,33 @@ fail:
     free(page_text);
     return -1;
 }
+
+static const char ga_state1_create_str[] =
+"CREATE TABLE %sga_stage1 ( \n"
+"    state_id VARCHAR(64) NOT NULL PRIMARY KEY,\n"
+"    cookie VARCHAR(64) NOT NULL,\n"
+"    contest_id INT NOT NULL DEFAULT 0,\n"
+"    extra_data VARCHAR(512) DEFAULT NULL,\n"
+"    create_time DATETIME NOT NULL,\n"
+"    expiry_time DATETIME NOT NULL\n"
+") DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
+
+static const char ga_state2_create_str[] =
+"CREATE TABLE %sga_stage2 ( \n"
+"    request_id VARCHAR(64) NOT NULL PRIMARY KEY,\n"
+"    request_state INT NOT NULL DEFAULT 0,\n"
+"    request_code VARCHAR(64) NOT NULL,\n"
+"    cookie VARCHAR(64) NOT NULL,\n"
+"    contest_id INT NOT NULL DEFAULT 0,\n"
+"    extra_data VARCHAR(512) DEFAULT NULL,\n"
+"    create_time DATETIME NOT NULL,\n"
+"    update_time DATETIME DEFAULT NULL,\n"
+"    response_email VARCHAR(64) DEFAULT NULL,\n"
+"    response_name VARCHAR(64) DEFAULT NULL,\n"
+"    access_token VARCHAR(256) DEFAULT NULL,\n"
+"    id_token VARCHAR(512) DEFAULT NULL,\n"
+"    error_message VARCHAR(256) DEFAULT NULL\n"
+") DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
 
 static int
 check_func(void *data)
@@ -218,7 +336,10 @@ check_func(void *data)
     state->md->row_count = mysql_num_rows(state->md->res);
     if (!state->md->row_count) {
         int version = 1;
-        if (state->mi->simple_fquery(state->md, "CREATE TABLE %sga_state ( state_id VARCHAR(64) NOT NULL PRIMARY KEY, cookie VARCHAR(64) NOT NULL, contest_id INT NOT NULL DEFAULT 0, extra_data VARCHAR(512) DEFAULT NULL, create_time DATETIME NOT NULL, expiry_time DATETIME NOT NULL ) DEFAULT CHARSET=utf8 COLLATE=utf8_bin;",
+        if (state->mi->simple_fquery(state->md, ga_state1_create_str,
+                                     state->md->table_prefix) < 0)
+            return -1;
+        if (state->mi->simple_fquery(state->md, ga_state2_create_str,
                                      state->md->table_prefix) < 0)
             return -1;
         if (state->mi->simple_fquery(state->md, "INSERT INTO %sconfig SET config_key='ga_version', config_val='%d';",
@@ -238,6 +359,7 @@ check_func(void *data)
             return -1;
         }
     }
+    state->mi->free_res(state->md);
 
     fetch_google_endpoints(state);
 
@@ -270,7 +392,7 @@ get_redirect_url_func(
     ebuf[len] = 0;
 
     req_f = open_memstream(&req_s, &req_z);
-    fprintf(req_f, "INSERT INTO %sga_state VALUES (", state->md->table_prefix);
+    fprintf(req_f, "INSERT INTO %sga_stage1 VALUES (", state->md->table_prefix);
     fprintf(req_f, "'%s'", ebuf);
     state->mi->write_escaped_string(state->md, req_f, ",", cookie);
     fprintf(req_f, ", %d", contest_id);
@@ -297,6 +419,525 @@ get_redirect_url_func(
 
 fail:
     html_armor_free(&ab);
+    free(req_s);
+    return NULL;
+}
+
+static unsigned char *
+handle_ga_query(struct auth_google_state *state, const unsigned char *data)
+{
+    struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+    char *resp_s = NULL;
+    size_t resp_z = 0;
+    FILE *resp_f = open_memstream(&resp_s, &resp_z);
+    int request_status = 2;   // failed
+    const char *error_message = "unknown error";
+    cJSON *root = NULL;
+    const unsigned char *request_id = NULL;
+    const unsigned char *request_code = NULL;
+    char *post_s = NULL;
+    size_t post_z = 0;
+    FILE *post_f = NULL;
+    char *json_s = NULL;
+    size_t json_z = 0;
+    FILE *json_f = NULL;
+    CURLcode res = 0;
+    const unsigned char *access_token = NULL;
+    int expires_in = 0;
+    const unsigned char *id_token = NULL;
+    const unsigned char *scope = NULL;
+    const unsigned char *token_type = NULL;
+    unsigned char *jwt_payload = NULL;
+    cJSON *jwt = NULL;
+    const unsigned char *response_email = NULL;
+    const unsigned char *response_name = NULL;
+
+    if (!(root = cJSON_Parse(data))) {
+        error_message = "JSON parse failed";
+        goto done;
+    }
+    if (root->type != cJSON_Object) {
+        error_message = "root document expected";
+        goto done;
+    }
+    cJSON *jid = cJSON_GetObjectItem(root, "request_id");
+    if (!jid || jid->type != cJSON_String) {
+        error_message = "invalid json: request_id";
+        goto done;
+    }
+    request_id = jid->valuestring;
+    cJSON *jcode = cJSON_GetObjectItem(root, "request_code");
+    if (!jcode || jcode->type != cJSON_String) {
+        error_message = "invalid json: request_code";
+        goto done;
+    }
+    request_code = jcode->valuestring;
+
+    post_f = open_memstream(&post_s, &post_z);
+    fprintf(post_f, "grant_type=authorization_code");
+    fprintf(post_f, "&code=%s", url_armor_buf(&ab, request_code));
+    fprintf(post_f, "&client_id=%s", url_armor_buf(&ab, state->client_id));
+    fprintf(post_f, "&client_secret=%s", url_armor_buf(&ab, state->client_secret));
+    fprintf(post_f, "&redirect_uri=%s", url_armor_buf(&ab, state->redirect_uri));
+    fclose(post_f); post_f = NULL;
+    cJSON_Delete(root); root = NULL;
+
+    json_f = open_memstream(&json_s, &json_z);
+    curl_easy_setopt(state->curl, CURLOPT_FOLLOWLOCATION, 1);
+    curl_easy_setopt(state->curl, CURLOPT_COOKIEFILE, "");
+    curl_easy_setopt(state->curl, CURLOPT_URL, state->token_endpoint);
+    curl_easy_setopt(state->curl, CURLOPT_POST, 1);
+    curl_easy_setopt(state->curl, CURLOPT_POSTFIELDS, post_s);
+    curl_easy_setopt(state->curl, CURLOPT_WRITEFUNCTION, NULL);
+    curl_easy_setopt(state->curl, CURLOPT_WRITEDATA, json_f);
+    res = curl_easy_perform(state->curl);
+    fclose(json_f); json_f = NULL;
+    free(post_s); post_s = NULL; post_z = 0;
+    if (res != CURLE_OK) {
+        err("Request failed: %s", curl_easy_strerror(res));
+        error_message = "request failed";
+        goto done;
+    }
+
+    if (!(root = cJSON_Parse(json_s))) {
+        error_message = "google JSON parse failed";
+        goto done;
+    }
+    if (root->type != cJSON_Object) {
+        error_message = "google root document expected";
+        goto done;
+    }
+
+    cJSON *j = cJSON_GetObjectItem(root, "access_token");
+    if (!j || j->type != cJSON_String) {
+        error_message = "invalid google json: access_token";
+        goto done;
+    }
+    access_token = j->valuestring;
+
+    if (!(j = cJSON_GetObjectItem(root, "expires_in")) || j->type != cJSON_Number) {
+        error_message = "invalid google json: expires_in";
+        goto done;
+    }
+    expires_in = j->valueint;
+
+    if (!(j = cJSON_GetObjectItem(root, "id_token")) || j->type != cJSON_String) {
+        error_message = "invalid google json: id_token";
+        goto done;
+    }
+    id_token = j->valuestring;
+
+    if (!(j = cJSON_GetObjectItem(root, "scope")) || j->type != cJSON_String) {
+        error_message = "invalid google json: scope";
+        goto done;
+    }
+    scope = j->valuestring;
+
+    if (!(j = cJSON_GetObjectItem(root, "token_type")) || j->type != cJSON_String) {
+        error_message = "invalid google json: token_type";
+        goto done;
+    }
+    token_type = j->valuestring;
+
+    // parse payload of JWT
+
+    {
+        char *p1 = strchr(id_token, '.');
+        if (!p1) {
+            error_message = "invalid google json: invalid JWT (1)";
+            goto done;
+        }
+        char *p2 = strchr(p1 + 1, '.');
+        if (!p2) {
+            error_message = "invalid google json: invalid JWT (2)";
+            goto done;
+        }
+
+        jwt_payload = xmalloc(strlen(id_token) + 1);
+        int err = 0;
+        int len = base64u_decode(p1 + 1, p2 - p1 - 1, jwt_payload, &err);
+        if (err) {
+            error_message = "invalid google json: base64u payload decode error";
+            goto done;
+        }
+        jwt_payload[len] = 0;
+    }
+
+    if (!(jwt = cJSON_Parse(jwt_payload))) {
+        error_message = "JWT payload parse failed";
+        goto done;
+    }
+    if (jwt->type != cJSON_Object) {
+        error_message = "JWT payload root document expected";
+        goto done;
+    }
+
+    if (!(j = cJSON_GetObjectItem(jwt, "email")) || j->type != cJSON_String) {
+        error_message = "JWT payload email expected";
+        goto done;
+    }
+    response_email = j->valuestring;
+
+    if ((j = cJSON_GetObjectItem(jwt, "name")) && j->type == cJSON_String) {
+        response_name = j->valuestring;
+    }
+
+    // success
+    request_status = 3;
+    error_message = NULL;
+
+done:
+    fprintf(resp_f, "{ \"request_status\" = %d", request_status);
+    if (error_message) fprintf(resp_f, ", \"error_message\" = \"%s\"", json_armor_buf(&ab, error_message));
+    if (request_id) fprintf(resp_f, ", \"request_id\" = \"%s\"", json_armor_buf(&ab, request_id));
+    if (access_token) fprintf(resp_f, ", \"access_token\" = \"%s\"", json_armor_buf(&ab, access_token));
+    if (expires_in) fprintf(resp_f, ", \"expires_in\" = %d", expires_in);
+    if (id_token) fprintf(resp_f, ", \"id_token\" = \"%s\"", json_armor_buf(&ab, id_token));
+    if (scope) fprintf(resp_f, ", \"scope\" = \"%s\"", json_armor_buf(&ab, scope));
+    if (token_type) fprintf(resp_f, ", \"token_type\" = \"%s\"", json_armor_buf(&ab, token_type));
+    if (response_email) fprintf(resp_f, ", \"response_email\" = \"%s\"", json_armor_buf(&ab, response_email));
+    if (response_name) fprintf(resp_f, ", \"response_name\" = \"%s\"", json_armor_buf(&ab, response_name));
+    fprintf(resp_f, " }");
+    fclose(resp_f);
+    if (post_f) fclose(post_f);
+    free(post_s);
+    if (root) cJSON_Delete(root);
+    if (json_f) fclose(json_f);
+    free(json_s);
+    html_armor_free(&ab);
+    free(jwt_payload);
+    if (jwt) cJSON_Delete(jwt);
+    return resp_s;
+}
+
+static void
+do_background_ga_queries(struct auth_google_state *state, int rfd, int wfd)
+{
+    fcntl(rfd, F_SETFL, fcntl(rfd, F_GETFL) & ~O_NONBLOCK);
+
+    unsigned length;
+    int r;
+    unsigned char inbuf[32768];
+    unsigned char outbuf[32768];
+
+    while ((r = read(rfd, &length, sizeof(length))) == sizeof(length)) {
+        if (length > 32000) {
+            err("auth_google: background: length is too big: %u", length);
+            _exit(1);
+        }
+        r = read(rfd, inbuf, length);
+        if (r < 0) {
+            err("auth_google: background: read failed: %s", os_ErrorMsg());
+            _exit(1);
+        }
+        if (!r) {
+            err("auth_google: background: unexpected EOF");
+            _exit(1);
+        }
+        if (r != length) {
+            err("auth_google: background: invalid length:");
+            _exit(1);
+        }
+        inbuf[r] = 0;
+
+        unsigned char *result = handle_ga_query(state, inbuf);
+        length = strlen(result);
+        if (length > 32000) {
+            err("auth_google: background: response is too big: %u", length);
+        } else {
+            memcpy(outbuf, &length, sizeof(length));
+            memcpy(outbuf + sizeof(length), result, length);
+            length += sizeof(length);
+            if ((r = write(wfd, outbuf, length)) != length) {
+                err("auth_google: background: invalid write: %d", r);
+            }
+        }
+        free(result);
+    }
+    if (!r) return;
+    if (r < 0) {
+        err("auth_google: background: read failed: %s", os_ErrorMsg());
+        _exit(1);
+    }
+    err("auth_google: background: invalid length length: %d", r);
+    _exit(1);
+}
+
+static int
+send_background_request(
+        struct auth_google_state *state,
+        const unsigned char *request_id,
+        const unsigned char *request_code)
+{
+    int retval = -1;
+    struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+    char *json_s = NULL;
+    size_t json_z = 0;
+    FILE *json_f = open_memstream(&json_s, &json_z);
+    fprintf(json_f, "{ \"request_id\" = \"%s\"", json_armor_buf(&ab, request_id));
+    fprintf(json_f, ", \"request_code\" = \"%s\" }", json_armor_buf(&ab, request_code));
+    fclose(json_f); json_f = NULL;
+    if (json_z > 30000) {
+        err("auth_google: background: request is too large: %zu", json_z);
+        goto done;
+    }
+    unsigned length = json_z;
+    unsigned char buf[32768];
+    memcpy(buf, &length, sizeof(length));
+    memcpy(buf + sizeof(length), json_s, length);
+    length += sizeof(length);
+    int r = write(state->bg_w_fd, buf, length);
+    if (r < 0 && errno == EAGAIN) {
+        err("auth_google: background: PIPE IS FULL");
+        goto done;
+    }
+    if (r < 0) {
+        err("auth_google: background: write error: %s", os_ErrorMsg());
+        goto done;
+    }
+    if (r != length) {
+        err("auth_google: background: invalid write: %d", r);
+        goto done;
+    }
+    retval = 0;
+
+done:
+    html_armor_free(&ab);
+    free(json_s);
+    return retval;
+}
+
+static void
+fd_ready_handle(struct auth_google_state *state, const char *str)
+{
+    cJSON *root = NULL;
+    const unsigned char *request_id = NULL;
+    const char *error_message = "unknown error";
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+
+    if (!(root = cJSON_Parse(str))) {
+        err("auth_google: callback: fd_ready: json parse failed");
+        goto done;
+    }
+    if (root->type != cJSON_Object) {
+        err("auth_google: callback: fd_ready: root object expected");
+        goto done;
+    }
+    cJSON *jid = cJSON_GetObjectItem(root, "request_id");
+    if (!jid || jid->type != cJSON_String) {
+        err("auth_google: callback: fd_ready: invalid request_id");
+        goto done;
+    }
+    request_id = jid->valuestring;
+    cJSON *jstate = cJSON_GetObjectItem(root, "request_state");
+    if (!jstate || jstate->type != cJSON_Number) {
+        error_message = "invalid request_state";
+        goto save_error_to_db;
+    }
+    int request_state = jstate->valueint;
+    if (request_state != 2 && request_state != 3) {
+        error_message = "invalid request_state";
+        goto save_error_to_db;
+    }
+    if (request_state == 2) {
+        cJSON *jerrmsg = cJSON_GetObjectItem(root, "error_message");
+        if (jerrmsg && jerrmsg->type == cJSON_String) {
+            error_message = jerrmsg->valuestring;
+        }
+        goto save_error_to_db;
+    }
+
+    goto done;
+
+save_error_to_db:
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "UPDATE %sga_stage2 SET request_state = 2, error_message = ", state->md->table_prefix);
+    state->mi->write_escaped_string(state->md, cmd_f, "", error_message);
+    fprintf(cmd_f, ", update_time = NOW() WHERE request_id = ");
+    state->mi->write_escaped_string(state->md, cmd_f, "", request_id);
+    fprintf(cmd_f, " ;");
+    fclose(cmd_f); cmd_f = NULL;
+    state->mi->simple_query(state->md, cmd_s, cmd_z); // error is ignored
+    free(cmd_s); cmd_s = NULL;
+
+done:
+    if (cmd_f) fclose(cmd_f);
+    free(cmd_s);
+    if (root) cJSON_Delete(root);
+}
+
+static void
+fd_ready_callback_func(
+        void *data,
+        int fd)
+{
+    struct auth_google_state *state = (struct auth_google_state*) data;
+    unsigned length;
+    unsigned char buf[32768];
+
+    while (1) {
+        int r = read(fd, &length, sizeof(length));
+        if (r < 0 && errno == EAGAIN) break;
+        if (r < 0) {
+            err("auth_google: callback: fd_ready: read error: %s", os_ErrorMsg());
+            break;
+        }
+        if (!r) {
+            err("auth_google: callback: fd_ready: unexpected EOF");
+            break;
+        }
+        if (r != sizeof(length)) {
+            err("auth_google: callback: fd_ready: invalid size %d", r);
+            break;
+        }
+        r = read(fd, buf, length);
+        if (r < 0) {
+            err("auth_google: callback: fd_ready: read error: %s", os_ErrorMsg());
+            break;
+        }
+        if (!r) {
+            err("auth_google: callback: fd_ready: unexpected EOF");
+            break;
+        }
+        if (r != length) {
+            err("auth_google: callback: fd_ready: invalid size %d", r);
+            break;
+        }
+        buf[r] = 0;
+
+        fd_ready_handle(state, buf);
+    }
+}
+
+static unsigned char *
+process_auth_callback_func(
+        void *data,
+        const unsigned char *state_id,
+        const unsigned char *code,
+        void (*fd_register_func)(int fd, void (*callback)(void *, int fd), void *data))
+{
+    struct auth_google_state *state = (struct auth_google_state*) data;
+
+    char *req_s = NULL;
+    size_t req_z = 0;
+    FILE *req_f = NULL;
+    struct ga_stage1_internal gas1 = {};
+    struct ga_stage2_internal gas2 = {};
+    unsigned char rbuf[16];
+    unsigned char ebuf[32] = {};
+
+    req_f = open_memstream(&req_s, &req_z);
+    fprintf(req_f, "SELECT * FROM %sga_stage1 WHERE state_id = ", state->md->table_prefix);
+    state->mi->write_escaped_string(state->md, req_f, ",", state_id);
+    fprintf(req_f, ";");
+    fclose(req_f); req_f = NULL;
+
+    if (state->mi->query(state->md, req_s, req_z, GA_STAGE1_ROW_WIDTH) < 0) goto fail;
+    free(req_s); req_s = NULL; req_z = 0;
+
+    if (state->md->row_count > 1) {
+        err("auth_google: callback: row_count == %d", state->md->row_count);
+        goto fail;
+    }
+    if (!state->md->row_count) {
+        err("auth_google: callback: state_id '%s' does not exist", state_id);
+        goto fail;
+    }
+
+    if (state->mi->next_row(state->md) < 0) goto fail;
+    if (state->mi->parse_spec(state->md, state->md->field_count, state->md->row, state->md->lengths,
+                              GA_STAGE1_ROW_WIDTH, ga_stage1_spec, &gas1) < 0)
+        goto fail;
+    state->mi->free_res(state->md);
+
+    req_f = open_memstream(&req_s, &req_z);
+    fprintf(req_f, "DELETE FROM %sga_stage1 WHERE state_id = ", state->md->table_prefix);
+    state->mi->write_escaped_string(state->md, req_f, ",", state_id);
+    fprintf(req_f, ";");
+    fclose(req_f); req_f = NULL;
+    if (state->mi->simple_query(state->md, req_s, req_z) , 0)
+        goto fail;
+    free(req_s); req_s = NULL; req_z = 0;
+
+    random_bytes(rbuf, sizeof(rbuf));
+    int len = base64u_encode(rbuf, sizeof(rbuf), ebuf);
+    ebuf[len] = 0;
+    ASSERT(len == 43);
+
+    gas2.request_id = ebuf;
+    gas2.request_code = xstrdup(code);
+    gas2.cookie = gas1.cookie; gas1.cookie = NULL;
+    gas2.contest_id = gas1.contest_id;
+    gas2.extra_data = gas1.extra_data; gas1.extra_data = NULL;
+    gas2.create_time = time(NULL);
+
+    req_f = open_memstream(&req_s, &req_z);
+    fprintf(req_f, "INSERT INTO %sga_stage2 VALUES ( ", state->md->table_prefix);
+    state->mi->unparse_spec(state->md, req_f, GA_STAGE2_ROW_WIDTH, ga_stage2_spec, &gas2);
+    fprintf(req_f, ") ;");
+    fclose(req_f); req_f = NULL;
+    if (state->mi->simple_query(state->md, req_s, req_z) < 0) goto fail;
+    free(req_s); req_s = NULL;
+
+    if (state->bg_w_fd < 0) {
+        int p1[2];
+        if (pipe2(p1, O_CLOEXEC | O_NONBLOCK) < 0) {
+            err("auth_google: callback: pipe2 failed: %s", os_ErrorMsg());
+            goto remove_stage2_and_fail;
+        }
+        int p2[2];
+        if (pipe2(p2, O_CLOEXEC | O_NONBLOCK) < 0) {
+            close(p1[0]); close(p1[1]);
+            err("auth_google: callback: pipe2 failed: %s", os_ErrorMsg());
+            goto remove_stage2_and_fail;
+        }
+        int pid = fork();
+        if (pid < 0) {
+            close(p1[0]); close(p1[1]);
+            close(p2[0]); close(p2[1]);
+            err("auth_google: callback: fork() failed: %s", os_ErrorMsg());
+            goto remove_stage2_and_fail;
+        }
+        if (!pid) {
+            close(p1[1]); close(p2[0]);
+            do_background_ga_queries(state, p1[0], p2[1]);
+            _exit(0);
+        }
+
+        close(p1[0]); close(p2[1]);
+        state->bg_w_fd = p1[1];
+        state->bg_r_fd = p2[0];
+        state->bg_pid = pid;
+        if (fd_register_func) {
+            fd_register_func(state->bg_r_fd, fd_ready_callback_func, data);
+        }
+    }
+
+    if (send_background_request(state, gas2.request_id, gas2.request_code) < 0) goto fail;
+
+    free(gas1.state_id);
+    free(gas1.cookie);
+    free(gas1.extra_data);
+    free(gas2.request_code);
+    free(gas2.cookie);
+    free(gas2.extra_data);
+
+    return xstrdup(gas2.request_code);
+
+remove_stage2_and_fail:
+    state->mi->simple_fquery(state->md, "DELETE FROM %sga_stage2 WHERE request_id = '%s' ; ", state->md->table_prefix, ebuf);
+
+fail:
+    free(gas1.state_id);
+    free(gas1.cookie);
+    free(gas1.extra_data);
+    free(gas2.request_code);
+    free(gas2.cookie);
+    free(gas2.extra_data);
+    state->mi->free_res(state->md);
+    if (req_f) fclose(req_f);
     free(req_s);
     return NULL;
 }

@@ -37,6 +37,11 @@ struct auth_plugin_iface
         const char *cookie,
         int contest_id,
         const char *extra_data);
+    unsigned char * (*process_auth_callback)(
+        void *data,
+        const unsigned char *state_id,
+        const unsigned char *code,
+        void (*fd_register_func)(int fd, void (*callback)(void *, int fd), void *data));
 };
 
 #endif /* __AUTH_PLUGIN_H__ */
