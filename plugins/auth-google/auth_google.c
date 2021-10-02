@@ -194,6 +194,8 @@ prepare_func(
         const struct ejudge_cfg *config,
         struct xml_tree *tree)
 {
+    const struct xml_parse_spec *spec = ejudge_cfg_get_spec();
+
     // load common_mysql plugin
     const struct common_loaded_plugin *mplg;
     if (!(mplg = plugin_load_external(0, "common", "mysql", config))) {
@@ -206,11 +208,11 @@ prepare_func(
     state->md = (struct common_mysql_state*) mplg->data;
 
     // handle config section
-    ASSERT(tree->tag == xml_err_spec->default_elem);
+    ASSERT(tree->tag == spec->default_elem);
     ASSERT(!strcmp(tree->name[0], "config"));
 
     for (struct xml_tree *p = tree->first_down; p; p = p->right) {
-        ASSERT(p->tag == xml_err_spec->default_elem);
+        ASSERT(p->tag == spec->default_elem);
 
         if (!strcmp(p->name[0], "client_id")) {
             if (xml_leaf_elem(p, &state->client_id, 1, 0) < 0) return -1;
