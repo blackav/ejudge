@@ -5334,6 +5334,11 @@ int ns_match_action(const unsigned char *str)
                                   return 0;
                                 }
                               } else {
+                                if (c == '3') {
+                                  c = str[13];
+                                  if (!c) return NEW_SRV_ACTION_OAUTH_LOGIN_3;
+                                  return 0;
+                                }
                               }
                               return 0;
                             }
