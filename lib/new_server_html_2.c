@@ -170,6 +170,7 @@ ns_write_priv_all_runs(
     u->tree_mem = filter_tree_new();
     filter_expr_set_string(filter_expr, u->tree_mem, parse_error_func, cs);
     filter_expr_init_parser(u->tree_mem, parse_error_func, cs);
+    filter_expr_nerrs = 0;
     i = filter_expr_parse();
     if (i + filter_expr_nerrs == 0 && filter_expr_lval &&
         filter_expr_lval->type == FILTER_TYPE_BOOL) {
