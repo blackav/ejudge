@@ -41,6 +41,7 @@
 
 %><s:read var="provider" ignoreerrors="yes" /><%
 
+/*
   if (ns_open_ul_connection(phr->fw_state) < 0) {
     FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
   }
@@ -67,6 +68,8 @@
 
   phr->client_key = out_c.client_key;
   snprintf(cookie, sizeof(cookie), "%016llx-%016llx", out_c.cookie, out_c.client_key);
+*/
+  snprintf(cookie, sizeof(cookie), "%016llx-%016llx", phr->session_id, phr->client_key);
 
   redirect_url = oauth_get_redirect_url(provider, cookie, phr->contest_id, NULL);
   if (!redirect_url) {
