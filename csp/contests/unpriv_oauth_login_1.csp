@@ -1,0 +1,82 @@
+<%
+%><%@include "unpriv_includes.csp"
+%><%
+#include "ejudge/ejudge_cfg.h"
+#include "ejudge/oauth.h"
+#include "ejudge/userlist_clnt.h"
+#include "ejudge/userlist_proto.h"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
+%><%@set getter_name = "csp_get_unpriv_oauth_login_1"
+%><%@page csp_view_unpriv_oauth_login_1(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+  const unsigned char *provider = NULL;
+  unsigned char cookie[128];
+  unsigned char *redirect_url = NULL;
+
+  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
+    FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
+  }
+  if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+    fprintf(log_f, "%s://%s is not allowed for USER for contest %d\n",
+            ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+  if (cnts->closed) {
+    fprintf(log_f, "contest %d is closed", cnts->id);
+    FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+  }
+  if (!cnts->managed) {
+    fprintf(log_f, "contest %d is not managed", cnts->id);
+    FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+  }
+  if (cnts->enable_oauth) {
+    fprintf(log_f, "contest %d OAUTH disabled", cnts->id);
+    FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+  }
+
+  extra = ns_get_contest_extra(cnts, phr->config);
+  if (!extra) FAIL(NEW_SRV_ERR_INTERNAL);
+
+%><s:read var="provider" ignoreerrors="yes" /><%
+
+  if (ns_open_ul_connection(phr->fw_state) < 0) {
+    FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
+  }
+
+  struct userlist_cookie in_c;
+  struct userlist_cookie out_c;
+
+  memset(&in_c, 0, sizeof(in_c));
+  memcpy(&in_c.ip, &phr->ip, sizeof(in_c.ip));
+  in_c.ssl = phr->ssl_flag;
+  in_c.user_id = 0;
+  in_c.contest_id = phr->contest_id;
+  in_c.locale_id = 0;
+  in_c.priv_level = 0;
+  in_c.role = USER_ROLE_CONTESTANT;
+  in_c.recovery = 0;
+  in_c.team_login = 1;
+  in_c.client_key = phr->client_key;
+
+  int r = userlist_clnt_create_cookie(ul_conn, ULS_CREATE_COOKIE, &in_c, &out_c);
+  if (r < 0) {
+    FAIL(NEW_SRV_ERR_INV_USER_ID);
+  }
+
+  phr->client_key = out_c.client_key;
+  snprintf(cookie, sizeof(cookie), "%016llx-%016llx", out_c.cookie, out_c.client_key);
+
+  redirect_url = oauth_get_redirect_url(provider, cookie, phr->contest_id, NULL);
+  if (!redirect_url) {
+    fprintf(log_f, "get_redirect_url failed");
+    FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+  }
+  phr->redirect = redirect_url;
+
+cleanup:;
+  l10n_resetlocale();
+  html_armor_free(&ab);
+  xfree(redirect_url);
+%>

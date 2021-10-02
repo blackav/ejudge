@@ -14200,6 +14200,7 @@ static const unsigned char * const external_unpriv_action_names[NEW_SRV_ACTION_L
   [NEW_SRV_ACTION_API_KEYS_PAGE] = "unpriv_api_keys_page",
   [NEW_SRV_ACTION_CREATE_API_KEY] = "unpriv_create_api_key",
   [NEW_SRV_ACTION_DELETE_API_KEY] = "unpriv_delete_api_key",
+  [NEW_SRV_ACTION_OAUTH_LOGIN_1] = "unpriv_oauth_login_1",
 };
 
 static int external_unpriv_action_aliases[NEW_SRV_ACTION_LAST] =
@@ -14809,6 +14810,12 @@ unprivileged_entry_point(
   if (!phr->token_mode && (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)) {
     phr->extra = ns_get_contest_extra(phr->cnts, phr->config);
     return unprivileged_page_login(fout, phr);
+  }
+
+  if (!phr->token_mode && phr->action == NEW_SRV_ACTION_OAUTH_LOGIN_1) {
+    phr->extra = ns_get_contest_extra(cnts, phr->config);
+    unpriv_external_action(fout, phr);
+    return;
   }
 
   const struct client_auth *auth = NULL;

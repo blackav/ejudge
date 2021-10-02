@@ -127,6 +127,17 @@
 
 <br/>
 <br/>
+<%
+  if (cnts && cnts->enable_oauth) {
+%>
+<s:url name="LoginWithGoogleUrl" ac="oauth-login-1">
+    <s:param name="contest_id" value="phr->contest_id" />
+    <s:param name="provider" value='"google"' />
+</s:url>
+<p>[<s:a url="LoginWithGoogleUrl"><img src="<s:config name="style-prefix" />icons/btn_google_signin_dark_normal_web.png" alt="google auth"></img></s:a>]</p>
+<%
+  }
+%>
 <br/>
 <br/>
 <%
