@@ -120,3 +120,23 @@ oauth_get_redirect_url(
     if (!info) return NULL;
     return info->i->get_redirect_url(info->d, cookie, contest_id, extra_data);
 }
+
+static oauth_register_fd_func oauth_register_fd = NULL;
+
+void
+oauth_set_register_fd_func(oauth_register_fd_func func)
+{
+    oauth_register_fd = func;
+}
+
+unsigned char *
+oauth_server_callback(
+        const struct ejudge_cfg *config,
+        const unsigned char *provider,
+        const unsigned char *state_id,
+        const unsigned char *code)
+{
+    struct ProviderInfo *info = get_provider(config, provider);
+    if (!info) return NULL;
+    return info->i->process_auth_callback(info->d, state_id, code, oauth_register_fd);
+}

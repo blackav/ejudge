@@ -1,0 +1,44 @@
+<%
+%><%@include "unpriv_includes.csp"
+%><%
+#include "ejudge/ejudge_cfg.h"
+#include "ejudge/oauth.h"
+#include "ejudge/userlist_clnt.h"
+#include "ejudge/userlist_proto.h"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
+%><%@set getter_name = "csp_get_unpriv_oauth_login_2"
+%><%@page csp_view_unpriv_oauth_login_2(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+  const unsigned char *state = NULL;
+  const unsigned char *code = NULL;
+  unsigned char *job_id = NULL;
+  const unsigned char *provider = NULL;
+%><s:read var="state" ignoreerrors="yes" /><%
+%><s:read var="code" ignoreerrors="yes" /><%
+
+  if (!state || !*state) {
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+  if (!code || !*code) {
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+  if (phr->session_id == 1) {
+    provider = "google";
+  }
+  if (provider == NULL) {
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+
+  job_id = oauth_server_callback(phr->config, provider, state, code);
+  if (!job_id) {
+    FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+  }
+
+
+
+cleanup:;
+  html_armor_free(&ab);
+  free(job_id);
+%>

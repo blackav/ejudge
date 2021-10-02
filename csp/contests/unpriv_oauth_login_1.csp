@@ -79,7 +79,6 @@
   phr->redirect = redirect_url; redirect_url = NULL;
 
 cleanup:;
-  l10n_resetlocale();
   html_armor_free(&ab);
   xfree(redirect_url);
 %>

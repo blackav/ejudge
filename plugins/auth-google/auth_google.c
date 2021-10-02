@@ -64,7 +64,7 @@ process_auth_callback_func(
         void *data,
         const unsigned char *state_id,
         const unsigned char *code,
-        void (*fd_register_func)(int fd, void (*callback)(void *, int fd), void *data));
+        void (*fd_register_func)(int fd, void (*callback)(int fd, void *), void *data));
 
 struct auth_plugin_iface plugin_auth_google =
 {
@@ -411,7 +411,7 @@ get_redirect_url_func(
     fprintf(url_f, "%s?client_id=%s&response_type=code",
             state->authorization_endpoint,
             url_armor_buf(&ab, state->client_id));
-    fprintf(url_f, "&redirect_uri=%s", url_armor_buf(&ab, state->redirect_uri));
+    fprintf(url_f, "&redirect_uri=%s/S1", url_armor_buf(&ab, state->redirect_uri));
     fprintf(url_f, "&state=%s", ebuf);
     fprintf(url_f, "&scope=openid%%20profile%%20email");
     fclose(url_f); url_f = NULL;
@@ -772,8 +772,8 @@ done:
 
 static void
 fd_ready_callback_func(
-        void *data,
-        int fd)
+        int fd,
+        void *data)
 {
     struct auth_google_state *state = (struct auth_google_state*) data;
     unsigned length;
@@ -818,7 +818,7 @@ process_auth_callback_func(
         void *data,
         const unsigned char *state_id,
         const unsigned char *code,
-        void (*fd_register_func)(int fd, void (*callback)(void *, int fd), void *data))
+        void (*fd_register_func)(int fd, void (*callback)(int fd, void *), void *data))
 {
     struct auth_google_state *state = (struct auth_google_state*) data;
 

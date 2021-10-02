@@ -25,4 +25,20 @@ oauth_get_redirect_url(
         int contest_id,
         const unsigned char *extra_data);
 
+// callback called when this fd is ready for reading
+typedef void (*oauth_fd_ready_callback_func)(int fd, void *data);
+
+// function for registering callback
+typedef void (*oauth_register_fd_func)(int fd, oauth_fd_ready_callback_func cb, void *data);
+
+void
+oauth_set_register_fd_func(oauth_register_fd_func func);
+
+unsigned char *
+oauth_server_callback(
+        const struct ejudge_cfg *config,
+        const unsigned char *provider,
+        const unsigned char *state_id,
+        const unsigned char *code);
+
 #endif /* __OAUTH_H__ */
