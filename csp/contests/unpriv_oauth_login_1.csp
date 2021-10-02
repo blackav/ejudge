@@ -31,7 +31,7 @@
     fprintf(log_f, "contest %d is not managed", cnts->id);
     FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
   }
-  if (cnts->enable_oauth) {
+  if (!cnts->enable_oauth) {
     fprintf(log_f, "contest %d OAUTH disabled", cnts->id);
     FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
   }
