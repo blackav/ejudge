@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1091,7 +1091,7 @@ X-Forwarded-Server: localhost.localdomain
             shabuf);
     if (p->auth && (p->auth->session_id || p->auth->client_key)) {
       fprintf(ws_reply_f,
-              "Set-Cookie: EJWSSESSION=%016llx%016llx; HttpOnly; Path=/\r\n",
+              "Set-Cookie: EJWSSESSION=%016llx%016llx; HttpOnly; Path=/; SameSite=Strict\r\n",
               p->auth->session_id, p->auth->client_key);
     }
     fprintf(ws_reply_f, "\r\n");

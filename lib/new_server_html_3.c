@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -232,7 +232,7 @@ ns_header(
           "Cache-Control: no-cache\n"
           "Pragma: no-cache\n", content_type, charset);
   if (client_key) {
-    fprintf(out, "Set-Cookie: EJSID=%016llx; Path=/\n", client_key);
+    fprintf(out, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Strict\n", client_key);
   }
   putc('\n', out);
 

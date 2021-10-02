@@ -486,7 +486,7 @@ cmd_http_request(
     hr.out_z = 0;
     hr.out_f = open_memstream(&hr.out_t, &hr.out_z);
     if (hr.client_key) {
-      fprintf(hr.out_f, "Set-Cookie: EJSID=%016llx; Path=/\n", hr.client_key);
+      fprintf(hr.out_f, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Strict\n", hr.client_key);
     }
     fprintf(hr.out_f, "Location: %s\n\n", hr.redirect);
     fclose(hr.out_f); hr.out_f = NULL;
@@ -518,7 +518,7 @@ cmd_http_request(
     fprintf(hdr_f, "Cache-Control: no-cache\n");
     fprintf(hdr_f, "Pragma: no-cache\n");
     if (hr.client_key) {
-      fprintf(hdr_f, "Set-Cookie: EJSID=%016llx; Path=/\n", hr.client_key);
+      fprintf(hdr_f, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Strict\n", hr.client_key);
     }
     putc('\n', hdr_f);
     if (hr.out_z > 0) {

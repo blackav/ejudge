@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2011-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2011-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -137,7 +137,7 @@ ss_redirect_2(
 
   fprintf(fout, "Location: %s\n", url);
   if (phr->client_key) {
-    fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/\n", phr->client_key);
+    fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Strict\n", phr->client_key);
   }
   putc('\n', fout);
 }

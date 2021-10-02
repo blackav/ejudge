@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -1192,7 +1192,7 @@ ns_refresh_page(
   }
 
   if (phr->client_key) {
-    fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/\n", phr->client_key);
+    fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Strict\n", phr->client_key);
   }
   fprintf(fout, "Location: %s\n\n", url);
 }
@@ -1204,7 +1204,7 @@ ns_refresh_page_2(
         const unsigned char *url)
 {
   if (client_key) {
-    fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/\n", client_key);
+    fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Strict\n", client_key);
   }
   fprintf(fout, "Location: %s\n\n", url);
 }

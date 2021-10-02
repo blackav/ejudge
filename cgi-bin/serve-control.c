@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2004-2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2004-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -707,7 +707,7 @@ client_put_refresh_header(
   fputs("\n</h1>\n", stdout);
   */
   if (client_key) {
-    printf("Set-Cookie: EJSID=%016llx; Path=/\n", client_key);
+    printf("Set-Cookie: EJSID=%016llx; Path=/; SameSite=Strict\n", client_key);
   }
   printf("Location: %s\n\n", url);
 }

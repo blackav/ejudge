@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2008-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2008-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -139,7 +139,7 @@ refresh_page(
 
   fprintf(out_f, "Location: %s\n", url);
   if (phr->client_key) {
-    fprintf(out_f, "Set-Cookie: EJSID=%016llx; Path=/\n", phr->client_key);
+    fprintf(out_f, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Strict\n", phr->client_key);
   }
   putc('\n', out_f);
 }
@@ -788,7 +788,7 @@ redo_action:
 
         FILE *tmp_f = open_memstream(p_out_t, p_out_z);
         if (phr->client_key) {
-          fprintf(tmp_f, "Set-Cookie: EJSID=%016llx; Path=/\n", phr->client_key);
+          fprintf(tmp_f, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Strict\n", phr->client_key);
         }
         fprintf(tmp_f, "Location: %s\n\n", phr->redirect);
         fclose(tmp_f); tmp_f = NULL;
