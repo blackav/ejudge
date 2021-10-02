@@ -30,6 +30,7 @@
     ejintbool_t enable_avatar = 0;
     ejintbool_t enable_local_pages = 0;
     ejintbool_t read_only_name = 0;
+    ejintbool_t enable_oauth = 0;
 
     char *msg_s = NULL;
     size_t msg_z = 0;
@@ -54,6 +55,7 @@
 %><s:read var="enable_avatar" default="0" /><%
 %><s:read var="enable_local_pages" default="0" /><%
 %><s:read var="read_only_name" default="0" /><%
+%><s:read var="enable_oauth" default="0" /><%
 
     if (!retval && phr->ss) {
         struct contest_desc *edited_cnts = phr->ss->edited_cnts;
@@ -78,6 +80,7 @@
             edited_cnts->enable_avatar = enable_avatar;
             edited_cnts->enable_local_pages = enable_local_pages;
             edited_cnts->read_only_name = read_only_name;
+            edited_cnts->enable_oauth = enable_oauth;
         }
     }
 

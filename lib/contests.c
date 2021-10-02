@@ -170,6 +170,7 @@ const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
   [CONTEST_A_ENABLE_AVATAR] = CNTS_enable_avatar,
   [CONTEST_A_ENABLE_LOCAL_PAGES] = CNTS_enable_local_pages,
   [CONTEST_A_READ_ONLY_NAME] = CNTS_read_only_name,
+  [CONTEST_A_ENABLE_OAUTH] = CNTS_enable_oauth,
 };
 
 char const * const contests_elem_map[] =
@@ -320,6 +321,7 @@ char const * const contests_attr_map[] =
   "enable_local_pages",
   "is_password",
   "read_only_name",
+  "enable_oauth",
 
   0
 };
@@ -858,6 +860,7 @@ static const unsigned char contest_bool_attr_set[CONTEST_LAST_ATTR] =
   [CONTEST_A_ENABLE_AVATAR] = 1,
   [CONTEST_A_ENABLE_LOCAL_PAGES] = 1,
   [CONTEST_A_READ_ONLY_NAME] = 1,
+  [CONTEST_A_ENABLE_OAUTH] = 1,
 };
 
 static void
