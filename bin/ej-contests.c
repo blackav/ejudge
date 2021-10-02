@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,7 @@
 #include "ejudge/misctext.h"
 #include "ejudge/base64.h"
 #include "ejudge/userlist_clnt.h"
+#include "ejudge/oauth.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
@@ -894,6 +895,7 @@ static void *forced_symbols[] __attribute__((unused,used)) =
   &base64u_encode,
   &base64u_decode,
   &userlist_clnt_api_key_request,
+  &oauth_get_redirect_url,
 };
 
 int
