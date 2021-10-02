@@ -14807,15 +14807,15 @@ unprivileged_entry_point(
 
   phr->cnts = cnts;
 
-  if (!phr->token_mode && (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)) {
-    phr->extra = ns_get_contest_extra(phr->cnts, phr->config);
-    return unprivileged_page_login(fout, phr);
-  }
-
   if (!phr->token_mode && phr->action == NEW_SRV_ACTION_OAUTH_LOGIN_1) {
     phr->extra = ns_get_contest_extra(cnts, phr->config);
     unpriv_external_action(fout, phr);
     return;
+  }
+
+  if (!phr->token_mode && (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)) {
+    phr->extra = ns_get_contest_extra(phr->cnts, phr->config);
+    return unprivileged_page_login(fout, phr);
   }
 
   const struct client_auth *auth = NULL;
