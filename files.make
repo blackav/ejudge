@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-# Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
+# Copyright (C) 2002-2021 Alexander Chernov <cher@ejudge.ru> */
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -199,6 +199,7 @@ COMMON_CFILES=\
  lib/ncurses_utils.c\
  lib/nsdb_plugin_files.c\
  lib/nwrun_packet.c\
+ lib/oauth.c\
  lib/opcaps.c\
  lib/opcaps_2.c\
  lib/packet_name.c\
@@ -589,6 +590,7 @@ HFILES=\
  ./include/ejudge/new-server.h\
  ./include/ejudge/nsdb_plugin.h\
  ./include/ejudge/nwrun_packet.h\
+ ./include/ejudge/oauth.h\
  ./include/ejudge/opcaps.h\
  ./include/ejudge/packet_name.h\
  ./include/ejudge/parsecfg.h\
