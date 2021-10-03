@@ -56,10 +56,10 @@ check_func(void *data);
 static unsigned char *
 get_redirect_url_func(
         void *data,
-        const char *cookie,
+        const unsigned char *cookie,
         const unsigned char *provider,
         int contest_id,
-        const char *extra_data);
+        const unsigned char *extra_data);
 static unsigned char *
 process_auth_callback_func(
         void *data,
@@ -375,10 +375,10 @@ check_func(void *data)
 static unsigned char *
 get_redirect_url_func(
         void *data,
-        const char *cookie,
+        const unsigned char *cookie,
         const unsigned char *provider,
         int contest_id,
-        const char *extra_data)
+        const unsigned char *extra_data)
 {
     struct auth_google_state *state = (struct auth_google_state*) data;
 
