@@ -18,6 +18,7 @@
 #include "ejudge/auth_plugin.h"
 #include "ejudge/oauth.h"
 #include "ejudge/errlog.h"
+#include "ejudge/xalloc.h"
 
 #include <string.h>
 
@@ -139,4 +140,24 @@ oauth_server_callback(
     struct ProviderInfo *info = get_provider(config, provider);
     if (!info) return NULL;
     return info->i->process_auth_callback(info->d, state_id, code, oauth_register_fd);
+}
+
+void
+oauth_free_result(struct OAuthLoginResult *res)
+{
+    xfree(res->provider);
+    xfree(res->email);
+    xfree(res->name);
+    xfree(res->access_token);
+    xfree(res->id_token);
+    xfree(res->error_message);
+}
+
+struct OAuthLoginResult
+oauth_get_result(
+        const struct ejudge_cfg *config,
+        const unsigned char *provider,
+        const unsigned char *job_id)
+{
+    return (struct OAuthLoginResult) { .status = 2, .error_message = xstrdup("unknown error") };
 }
