@@ -32,7 +32,7 @@ typedef void (*oauth_fd_ready_callback_func_t)(int fd, void *data);
 typedef void (*oauth_register_fd_func_t)(int fd, oauth_fd_ready_callback_func_t cb, void *data);
 
 void
-oauth_set_register_fd_func(oauth_register_fd_func_t func);
+oauth_set_register_fd_func(oauth_register_fd_func_t func, void *register_data);
 
 unsigned char *
 oauth_server_callback(
