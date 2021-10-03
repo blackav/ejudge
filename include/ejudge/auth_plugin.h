@@ -33,6 +33,9 @@ struct auth_plugin_iface
     int (*open)(void *);
     int (*check)(void *);
 
+    void (*set_register_fd_func)(
+        void *data,
+        oauth_register_fd_func func);
     unsigned char * (*get_redirect_url)(
         void *data,
         const unsigned char *cookie,
