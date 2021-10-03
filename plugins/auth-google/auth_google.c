@@ -785,14 +785,41 @@ fd_ready_handle(struct auth_google_state *state, const char *str)
         goto save_error_to_db;
     }
 
+    const unsigned char *response_email = NULL;
+    cJSON *js = cJSON_GetObjectItem(root, "response_email");
+    if (js && js->type == cJSON_String) response_email = js->valuestring;
+    const unsigned char *response_name = NULL;
+    js = cJSON_GetObjectItem(root, "response_name");
+    if (js && js->type == cJSON_String) response_name = js->valuestring;
+    const unsigned char *access_token = NULL;
+    js = cJSON_GetObjectItem(root, "access_token");
+    if (js && js->type == cJSON_String) access_token = js->valuestring;
+    const unsigned char *id_token = NULL;
+    js = cJSON_GetObjectItem(root, "id_token");
+    if (js && js->type == cJSON_String) id_token = js->valuestring;
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "UPDATE %soauth_stage2 SET request_state = 3, response_email = ", state->md->table_prefix);
+    state->mi->write_escaped_string(state->md, cmd_f, "", response_email);
+    fprintf(cmd_f, ", response_name = ");
+    state->mi->write_escaped_string(state->md, cmd_f, "", response_name);
+    fprintf(cmd_f, ", access_token = ");
+    state->mi->write_escaped_string(state->md, cmd_f, "", access_token);
+    fprintf(cmd_f, ", id_token = ");
+    state->mi->write_escaped_string(state->md, cmd_f, "", id_token);
+    fprintf(cmd_f, ", update_time = NOW() WHERE request_id = ");
+    state->mi->write_escaped_string(state->md, cmd_f, "", request_id);
+    fprintf(cmd_f, " ;");
+    fclose(cmd_f); cmd_f = NULL;
+    state->mi->simple_query(state->md, cmd_s, cmd_z); // error is ignored
+    free(cmd_s); cmd_s = NULL;
+
     goto done;
 
 save_error_to_db:
     cmd_f = open_memstream(&cmd_s, &cmd_z);
     fprintf(cmd_f, "UPDATE %soauth_stage2 SET request_state = 2, error_message = ", state->md->table_prefix);
     state->mi->write_escaped_string(state->md, cmd_f, "", error_message);
-    fprintf(cmd_f, ", provider = ");
-    state->mi->write_escaped_string(state->md, cmd_f, "", "google");
     fprintf(cmd_f, ", update_time = NOW() WHERE request_id = ");
     state->mi->write_escaped_string(state->md, cmd_f, "", request_id);
     fprintf(cmd_f, " ;");
@@ -987,9 +1014,72 @@ fail:
 static struct OAuthLoginResult
 get_result_func(
         void *data,
-        const unsigned char *job_id)
+        const unsigned char *request_id)
 {
     struct auth_google_state *state = (struct auth_google_state*) data;
+    unsigned char *error_message = NULL;
+    char *req_s = NULL;
+    size_t req_z = 0;
+    FILE *req_f = NULL;
+    struct oauth_stage2_internal oas2 = {};
+    struct OAuthLoginResult res = {};
 
-    return (struct OAuthLoginResult) { .status = 2, .error_message = xstrdup("not implemented") };
+    if (state->bg_r_fd >= 0) {
+        fd_ready_callback_func(data, state->bg_r_fd);
+    }
+
+    req_f = open_memstream(&req_s, &req_z);
+    fprintf(req_f, "SELECT * FROM %soauth_stage2 WHERE request_id = ", state->md->table_prefix);
+    state->mi->write_escaped_string(state->md, req_f, ",", request_id);
+    fprintf(req_f, ";");
+    fclose(req_f); req_f = NULL;
+
+    if (state->mi->query(state->md, req_s, req_z, OAUTH_STAGE2_ROW_WIDTH) < 0) {
+        error_message = xstrdup("query failed");
+        goto fail;
+    }
+    free(req_s); req_s = NULL; req_z = 0;
+    if (state->md->row_count > 1) {
+        err("auth_google: get_result: row_count == %d", state->md->row_count);
+        error_message = xstrdup("non unique row");
+        goto fail;
+    }
+    if (!state->md->row_count) {
+        err("auth_google: get_result: request_id '%s' does not exist", request_id);
+        error_message = xstrdup("nonexisting request");
+        goto fail;
+    }
+    if (state->mi->next_row(state->md) < 0) goto fail;
+    if (state->mi->parse_spec(state->md, state->md->field_count, state->md->row, state->md->lengths,
+                              OAUTH_STAGE2_ROW_WIDTH, oauth_stage2_spec, &oas2) < 0)
+        goto fail;
+    state->mi->free_res(state->md);
+
+    // FIXME: remove completed requests
+
+    res.status = oas2.request_state;
+    res.provider = oas2.provider; oas2.provider = NULL;
+    res.email = oas2.response_email; oas2.response_email = NULL;
+    res.name = oas2.response_name; oas2.response_name = NULL;
+    res.access_token = oas2.access_token; oas2.access_token = NULL;
+    res.id_token = oas2.id_token; oas2.id_token = NULL;
+    res.error_message = oas2.error_message; oas2.error_message = NULL;
+    return res;
+
+fail:
+    free(oas2.request_id);
+    free(oas2.provider);
+    free(oas2.request_code);
+    free(oas2.cookie);
+    free(oas2.extra_data);
+    free(oas2.response_email);
+    free(oas2.response_name);
+    free(oas2.access_token);
+    free(oas2.id_token);
+    free(oas2.error_message);
+    state->mi->free_res(state->md);
+    if (req_f) fclose(req_f);
+    free(req_s);
+    if (!error_message) error_message = xstrdup("unknown error");
+    return (struct OAuthLoginResult) { .status = 2, .error_message = error_message };
 }
