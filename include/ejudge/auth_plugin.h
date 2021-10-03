@@ -46,8 +46,7 @@ struct auth_plugin_iface
     unsigned char * (*process_auth_callback)(
         void *data,
         const unsigned char *state_id,
-        const unsigned char *code,
-        void (*fd_register_func)(int fd, void (*callback)(int fd, void *), void *data));
+        const unsigned char *code);
 };
 
 #endif /* __AUTH_PLUGIN_H__ */

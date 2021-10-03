@@ -69,8 +69,7 @@ static unsigned char *
 process_auth_callback_func(
         void *data,
         const unsigned char *state_id,
-        const unsigned char *code,
-        void (*fd_register_func)(int fd, void (*callback)(int fd, void *), void *data));
+        const unsigned char *code);
 
 struct auth_plugin_iface plugin_auth_google =
 {
@@ -849,8 +848,7 @@ static unsigned char *
 process_auth_callback_func(
         void *data,
         const unsigned char *state_id,
-        const unsigned char *code,
-        void (*fd_register_func)(int fd, void (*callback)(int fd, void *), void *data))
+        const unsigned char *code)
 {
     struct auth_google_state *state = (struct auth_google_state*) data;
 
