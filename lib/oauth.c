@@ -109,7 +109,7 @@ get_provider(
         return NULL;
     }
     if (info->i->set_register_fd_func) {
-        info->i->set_register_fd_func(info->d, oauth_register_fd_func);
+        info->i->set_register_fd_func(info->d, oauth_register_fd_func, oauth_register_fd_data);
     }
 
     return info;
