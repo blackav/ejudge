@@ -109,6 +109,7 @@ struct auth_google_state
 struct oauth_stage1_internal
 {
     unsigned char *state_id;
+    unsigned char *provider;
     unsigned char *cookie;
     int contest_id;
     unsigned char *extra_data;
@@ -116,13 +117,14 @@ struct oauth_stage1_internal
     time_t expiry_time;
 };
 
-enum { OAUTH_STAGE1_ROW_WIDTH = 6 };
+enum { OAUTH_STAGE1_ROW_WIDTH = 7 };
 
 #define OAUTH_STAGE1_OFFSET(f) XOFFSET(struct oauth_stage1_internal, f)
 
 static const struct common_mysql_parse_spec oauth_stage1_spec[OAUTH_STAGE1_ROW_WIDTH] =
 {
     { 1, 's', "state_id", OAUTH_STAGE1_OFFSET(state_id), 0 },
+    { 1, 's', "provider", OAUTH_STAGE1_OFFSET(provider), 0 },
     { 1, 's', "cookie", OAUTH_STAGE1_OFFSET(cookie), 0 },
     { 0, 'd', "contest_id", OAUTH_STAGE1_OFFSET(contest_id), 0 },
     { 1, 's', "extra_data", OAUTH_STAGE1_OFFSET(extra_data), 0 },
@@ -293,6 +295,7 @@ fail:
 static const char oauth_stage1_create_str[] =
 "CREATE TABLE %soauth_stage1 ( \n"
 "    state_id VARCHAR(64) NOT NULL PRIMARY KEY,\n"
+"    provider VARCHAR(64) NOT NULL,\n"
 "    cookie VARCHAR(64) NOT NULL,\n"
 "    contest_id INT NOT NULL DEFAULT 0,\n"
 "    extra_data VARCHAR(512) DEFAULT NULL,\n"
@@ -396,6 +399,7 @@ get_redirect_url_func(
     req_f = open_memstream(&req_s, &req_z);
     fprintf(req_f, "INSERT INTO %soauth_stage1 VALUES (", state->md->table_prefix);
     fprintf(req_f, "'%s'", ebuf);
+    fprintf(req_f, ", 'google'");
     state->mi->write_escaped_string(state->md, req_f, ",", cookie);
     fprintf(req_f, ", %d", contest_id);
     state->mi->write_escaped_string(state->md, req_f, ",", extra_data);
@@ -920,6 +924,7 @@ process_auth_callback_func(
     if (send_background_request(state, oas2.request_id, oas2.request_code) < 0) goto fail;
 
     free(oas1.state_id);
+    free(oas1.provider);
     free(oas1.cookie);
     free(oas1.extra_data);
     free(oas2.request_code);
@@ -933,6 +938,7 @@ remove_stage2_and_fail:
 
 fail:
     free(oas1.state_id);
+    free(oas1.provider);
     free(oas1.cookie);
     free(oas1.extra_data);
     free(oas2.request_code);
