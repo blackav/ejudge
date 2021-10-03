@@ -106,7 +106,7 @@ struct auth_google_state
     int bg_pid;
 };
 
-struct ga_stage1_internal
+struct oauth_stage1_internal
 {
     unsigned char *state_id;
     unsigned char *cookie;
@@ -116,21 +116,21 @@ struct ga_stage1_internal
     time_t expiry_time;
 };
 
-enum { GA_STAGE1_ROW_WIDTH = 6 };
+enum { OAUTH_STAGE1_ROW_WIDTH = 6 };
 
-#define GA_STAGE1_OFFSET(f) XOFFSET(struct ga_stage1_internal, f)
+#define OAUTH_STAGE1_OFFSET(f) XOFFSET(struct oauth_stage1_internal, f)
 
-static const struct common_mysql_parse_spec ga_stage1_spec[GA_STAGE1_ROW_WIDTH] =
+static const struct common_mysql_parse_spec oauth_stage1_spec[OAUTH_STAGE1_ROW_WIDTH] =
 {
-    { 1, 's', "state_id", GA_STAGE1_OFFSET(state_id), 0 },
-    { 1, 's', "cookie", GA_STAGE1_OFFSET(cookie), 0 },
-    { 0, 'd', "contest_id", GA_STAGE1_OFFSET(contest_id), 0 },
-    { 1, 's', "extra_data", GA_STAGE1_OFFSET(extra_data), 0 },
-    { 0, 't', "create_time", GA_STAGE1_OFFSET(create_time), 0 },
-    { 0, 't', "expiry_time", GA_STAGE1_OFFSET(expiry_time), 0 },
+    { 1, 's', "state_id", OAUTH_STAGE1_OFFSET(state_id), 0 },
+    { 1, 's', "cookie", OAUTH_STAGE1_OFFSET(cookie), 0 },
+    { 0, 'd', "contest_id", OAUTH_STAGE1_OFFSET(contest_id), 0 },
+    { 1, 's', "extra_data", OAUTH_STAGE1_OFFSET(extra_data), 0 },
+    { 0, 't', "create_time", OAUTH_STAGE1_OFFSET(create_time), 0 },
+    { 0, 't', "expiry_time", OAUTH_STAGE1_OFFSET(expiry_time), 0 },
 };
 
-struct ga_stage2_internal
+struct oauth_stage2_internal
 {
     unsigned char *request_id;
     int request_state;
@@ -147,25 +147,25 @@ struct ga_stage2_internal
     unsigned char *error_message;
 };
 
-enum { GA_STAGE2_ROW_WIDTH = 13 };
+enum { OAUTH_STAGE2_ROW_WIDTH = 13 };
 
-#define GA_STAGE2_OFFSET(f) XOFFSET(struct ga_stage2_internal, f)
+#define OAUTH_STAGE2_OFFSET(f) XOFFSET(struct oauth_stage2_internal, f)
 
-static const struct common_mysql_parse_spec ga_stage2_spec[GA_STAGE2_ROW_WIDTH] =
+static const struct common_mysql_parse_spec oauth_stage2_spec[OAUTH_STAGE2_ROW_WIDTH] =
 {
-    { 1, 's', "request_id", GA_STAGE2_OFFSET(request_id), 0 },
-    { 0, 'd', "request_state", GA_STAGE2_OFFSET(request_state), 0 },
-    { 1, 's', "request_code", GA_STAGE2_OFFSET(request_code), 0 },
-    { 1, 's', "cookie", GA_STAGE2_OFFSET(cookie), 0 },
-    { 0, 'd', "contest_id", GA_STAGE2_OFFSET(contest_id), 0 },
-    { 1, 's', "extra_data", GA_STAGE2_OFFSET(extra_data), 0 },
-    { 0, 't', "create_time", GA_STAGE2_OFFSET(create_time), 0 },
-    { 1, 't', "update_time", GA_STAGE2_OFFSET(update_time), 0 },
-    { 1, 's', "response_email", GA_STAGE2_OFFSET(response_email), 0 },
-    { 1, 's', "response_name", GA_STAGE2_OFFSET(response_name), 0 },
-    { 1, 's', "access_token", GA_STAGE2_OFFSET(access_token), 0 },
-    { 1, 's', "id_token", GA_STAGE2_OFFSET(id_token), 0 },
-    { 1, 's', "error_message", GA_STAGE2_OFFSET(error_message), 0 },
+    { 1, 's', "request_id", OAUTH_STAGE2_OFFSET(request_id), 0 },
+    { 0, 'd', "request_state", OAUTH_STAGE2_OFFSET(request_state), 0 },
+    { 1, 's', "request_code", OAUTH_STAGE2_OFFSET(request_code), 0 },
+    { 1, 's', "cookie", OAUTH_STAGE2_OFFSET(cookie), 0 },
+    { 0, 'd', "contest_id", OAUTH_STAGE2_OFFSET(contest_id), 0 },
+    { 1, 's', "extra_data", OAUTH_STAGE2_OFFSET(extra_data), 0 },
+    { 0, 't', "create_time", OAUTH_STAGE2_OFFSET(create_time), 0 },
+    { 1, 't', "update_time", OAUTH_STAGE2_OFFSET(update_time), 0 },
+    { 1, 's', "response_email", OAUTH_STAGE2_OFFSET(response_email), 0 },
+    { 1, 's', "response_name", OAUTH_STAGE2_OFFSET(response_name), 0 },
+    { 1, 's', "access_token", OAUTH_STAGE2_OFFSET(access_token), 0 },
+    { 1, 's', "id_token", OAUTH_STAGE2_OFFSET(id_token), 0 },
+    { 1, 's', "error_message", OAUTH_STAGE2_OFFSET(error_message), 0 },
 };
 
 static struct common_plugin_data*
@@ -290,8 +290,8 @@ fail:
     return -1;
 }
 
-static const char ga_state1_create_str[] =
-"CREATE TABLE %sga_stage1 ( \n"
+static const char oauth_stage1_create_str[] =
+"CREATE TABLE %soauth_stage1 ( \n"
 "    state_id VARCHAR(64) NOT NULL PRIMARY KEY,\n"
 "    cookie VARCHAR(64) NOT NULL,\n"
 "    contest_id INT NOT NULL DEFAULT 0,\n"
@@ -300,8 +300,8 @@ static const char ga_state1_create_str[] =
 "    expiry_time DATETIME NOT NULL\n"
 ") DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
 
-static const char ga_state2_create_str[] =
-"CREATE TABLE %sga_stage2 ( \n"
+static const char oauth_stage2_create_str[] =
+"CREATE TABLE %soauth_stage2 ( \n"
 "    request_id VARCHAR(64) NOT NULL PRIMARY KEY,\n"
 "    request_state INT NOT NULL DEFAULT 0,\n"
 "    request_code VARCHAR(64) NOT NULL,\n"
@@ -324,7 +324,7 @@ check_func(void *data)
 
     if (!state->md->conn) return -1;
 
-    if (state->mi->simple_fquery(state->md, "SELECT config_val FROM %sconfig WHERE config_key = 'ga_version' ;", state->md->table_prefix) < 0) {
+    if (state->mi->simple_fquery(state->md, "SELECT config_val FROM %sconfig WHERE config_key = 'oauth_version' ;", state->md->table_prefix) < 0) {
         err("probably the database is not created. use --convert or --create");
         return -1;
     }
@@ -338,13 +338,13 @@ check_func(void *data)
     state->md->row_count = mysql_num_rows(state->md->res);
     if (!state->md->row_count) {
         int version = 1;
-        if (state->mi->simple_fquery(state->md, ga_state1_create_str,
+        if (state->mi->simple_fquery(state->md, oauth_stage1_create_str,
                                      state->md->table_prefix) < 0)
             return -1;
-        if (state->mi->simple_fquery(state->md, ga_state2_create_str,
+        if (state->mi->simple_fquery(state->md, oauth_stage2_create_str,
                                      state->md->table_prefix) < 0)
             return -1;
-        if (state->mi->simple_fquery(state->md, "INSERT INTO %sconfig SET config_key='ga_version', config_val='%d';",
+        if (state->mi->simple_fquery(state->md, "INSERT INTO %sconfig SET config_key='oauth_version', config_val='%d';",
                                      state->md->table_prefix, version) < 0)
             return -1;
     } else {
@@ -394,7 +394,7 @@ get_redirect_url_func(
     ebuf[len] = 0;
 
     req_f = open_memstream(&req_s, &req_z);
-    fprintf(req_f, "INSERT INTO %sga_stage1 VALUES (", state->md->table_prefix);
+    fprintf(req_f, "INSERT INTO %soauth_stage1 VALUES (", state->md->table_prefix);
     fprintf(req_f, "'%s'", ebuf);
     state->mi->write_escaped_string(state->md, req_f, ",", cookie);
     fprintf(req_f, ", %d", contest_id);
@@ -426,7 +426,7 @@ fail:
 }
 
 static unsigned char *
-handle_ga_query(struct auth_google_state *state, const unsigned char *data)
+handle_oauth_query(struct auth_google_state *state, const unsigned char *data)
 {
     struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
     char *resp_s = NULL;
@@ -613,7 +613,7 @@ done:
 }
 
 static void
-do_background_ga_queries(struct auth_google_state *state, int rfd, int wfd)
+do_background_oauth_queries(struct auth_google_state *state, int rfd, int wfd)
 {
     fcntl(rfd, F_SETFL, fcntl(rfd, F_GETFL) & ~O_NONBLOCK);
 
@@ -642,7 +642,7 @@ do_background_ga_queries(struct auth_google_state *state, int rfd, int wfd)
         }
         inbuf[r] = 0;
 
-        unsigned char *result = handle_ga_query(state, inbuf);
+        unsigned char *result = handle_oauth_query(state, inbuf);
         length = strlen(result);
         if (length > 32000) {
             err("auth_google: background: response is too big: %u", length);
@@ -755,7 +755,7 @@ fd_ready_handle(struct auth_google_state *state, const char *str)
 
 save_error_to_db:
     cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "UPDATE %sga_stage2 SET request_state = 2, error_message = ", state->md->table_prefix);
+    fprintf(cmd_f, "UPDATE %soauth_stage2 SET request_state = 2, error_message = ", state->md->table_prefix);
     state->mi->write_escaped_string(state->md, cmd_f, "", error_message);
     fprintf(cmd_f, ", update_time = NOW() WHERE request_id = ");
     state->mi->write_escaped_string(state->md, cmd_f, "", request_id);
@@ -825,18 +825,18 @@ process_auth_callback_func(
     char *req_s = NULL;
     size_t req_z = 0;
     FILE *req_f = NULL;
-    struct ga_stage1_internal gas1 = {};
-    struct ga_stage2_internal gas2 = {};
+    struct oauth_stage1_internal oas1 = {};
+    struct oauth_stage2_internal oas2 = {};
     unsigned char rbuf[16];
     unsigned char ebuf[32] = {};
 
     req_f = open_memstream(&req_s, &req_z);
-    fprintf(req_f, "SELECT * FROM %sga_stage1 WHERE state_id = ", state->md->table_prefix);
+    fprintf(req_f, "SELECT * FROM %soauth_stage1 WHERE state_id = ", state->md->table_prefix);
     state->mi->write_escaped_string(state->md, req_f, ",", state_id);
     fprintf(req_f, ";");
     fclose(req_f); req_f = NULL;
 
-    if (state->mi->query(state->md, req_s, req_z, GA_STAGE1_ROW_WIDTH) < 0) goto fail;
+    if (state->mi->query(state->md, req_s, req_z, OAUTH_STAGE1_ROW_WIDTH) < 0) goto fail;
     free(req_s); req_s = NULL; req_z = 0;
 
     if (state->md->row_count > 1) {
@@ -850,12 +850,12 @@ process_auth_callback_func(
 
     if (state->mi->next_row(state->md) < 0) goto fail;
     if (state->mi->parse_spec(state->md, state->md->field_count, state->md->row, state->md->lengths,
-                              GA_STAGE1_ROW_WIDTH, ga_stage1_spec, &gas1) < 0)
+                              OAUTH_STAGE1_ROW_WIDTH, oauth_stage1_spec, &oas1) < 0)
         goto fail;
     state->mi->free_res(state->md);
 
     req_f = open_memstream(&req_s, &req_z);
-    fprintf(req_f, "DELETE FROM %sga_stage1 WHERE state_id = ", state->md->table_prefix);
+    fprintf(req_f, "DELETE FROM %soauth_stage1 WHERE state_id = ", state->md->table_prefix);
     state->mi->write_escaped_string(state->md, req_f, ",", state_id);
     fprintf(req_f, ";");
     fclose(req_f); req_f = NULL;
@@ -868,16 +868,16 @@ process_auth_callback_func(
     ebuf[len] = 0;
     ASSERT(len == 43);
 
-    gas2.request_id = ebuf;
-    gas2.request_code = xstrdup(code);
-    gas2.cookie = gas1.cookie; gas1.cookie = NULL;
-    gas2.contest_id = gas1.contest_id;
-    gas2.extra_data = gas1.extra_data; gas1.extra_data = NULL;
-    gas2.create_time = time(NULL);
+    oas2.request_id = ebuf;
+    oas2.request_code = xstrdup(code);
+    oas2.cookie = oas1.cookie; oas1.cookie = NULL;
+    oas2.contest_id = oas1.contest_id;
+    oas2.extra_data = oas1.extra_data; oas1.extra_data = NULL;
+    oas2.create_time = time(NULL);
 
     req_f = open_memstream(&req_s, &req_z);
-    fprintf(req_f, "INSERT INTO %sga_stage2 VALUES ( ", state->md->table_prefix);
-    state->mi->unparse_spec(state->md, req_f, GA_STAGE2_ROW_WIDTH, ga_stage2_spec, &gas2);
+    fprintf(req_f, "INSERT INTO %soauth_stage2 VALUES ( ", state->md->table_prefix);
+    state->mi->unparse_spec(state->md, req_f, OAUTH_STAGE2_ROW_WIDTH, oauth_stage2_spec, &oas2);
     fprintf(req_f, ") ;");
     fclose(req_f); req_f = NULL;
     if (state->mi->simple_query(state->md, req_s, req_z) < 0) goto fail;
@@ -904,7 +904,7 @@ process_auth_callback_func(
         }
         if (!pid) {
             close(p1[1]); close(p2[0]);
-            do_background_ga_queries(state, p1[0], p2[1]);
+            do_background_oauth_queries(state, p1[0], p2[1]);
             _exit(0);
         }
 
@@ -917,27 +917,27 @@ process_auth_callback_func(
         }
     }
 
-    if (send_background_request(state, gas2.request_id, gas2.request_code) < 0) goto fail;
+    if (send_background_request(state, oas2.request_id, oas2.request_code) < 0) goto fail;
 
-    free(gas1.state_id);
-    free(gas1.cookie);
-    free(gas1.extra_data);
-    free(gas2.request_code);
-    free(gas2.cookie);
-    free(gas2.extra_data);
+    free(oas1.state_id);
+    free(oas1.cookie);
+    free(oas1.extra_data);
+    free(oas2.request_code);
+    free(oas2.cookie);
+    free(oas2.extra_data);
 
-    return xstrdup(gas2.request_code);
+    return xstrdup(oas2.request_code);
 
 remove_stage2_and_fail:
-    state->mi->simple_fquery(state->md, "DELETE FROM %sga_stage2 WHERE request_id = '%s' ; ", state->md->table_prefix, ebuf);
+    state->mi->simple_fquery(state->md, "DELETE FROM %soauth_stage2 WHERE request_id = '%s' ; ", state->md->table_prefix, ebuf);
 
 fail:
-    free(gas1.state_id);
-    free(gas1.cookie);
-    free(gas1.extra_data);
-    free(gas2.request_code);
-    free(gas2.cookie);
-    free(gas2.extra_data);
+    free(oas1.state_id);
+    free(oas1.cookie);
+    free(oas1.extra_data);
+    free(oas2.request_code);
+    free(oas2.cookie);
+    free(oas2.extra_data);
     state->mi->free_res(state->md);
     if (req_f) fclose(req_f);
     free(req_s);
