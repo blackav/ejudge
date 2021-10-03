@@ -26,13 +26,13 @@ oauth_get_redirect_url(
         const unsigned char *extra_data);
 
 // callback called when this fd is ready for reading
-typedef void (*oauth_fd_ready_callback_func)(int fd, void *data);
+typedef void (*oauth_fd_ready_callback_func_t)(int fd, void *data);
 
 // function for registering callback
-typedef void (*oauth_register_fd_func)(int fd, oauth_fd_ready_callback_func cb, void *data);
+typedef void (*oauth_register_fd_func_t)(int fd, oauth_fd_ready_callback_func_t cb, void *data);
 
 void
-oauth_set_register_fd_func(oauth_register_fd_func func);
+oauth_set_register_fd_func(oauth_register_fd_func_t func);
 
 unsigned char *
 oauth_server_callback(

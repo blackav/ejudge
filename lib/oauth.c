@@ -37,7 +37,7 @@ static struct ProviderInfo providers[PROVIDER_COUNT] =
     { "google" },
 };
 
-static oauth_register_fd_func oauth_register_fd = NULL;
+static oauth_register_fd_func_t oauth_register_fd = NULL;
 
 static struct ProviderInfo *
 find_provider(const unsigned char *provider)
@@ -128,7 +128,7 @@ oauth_get_redirect_url(
 }
 
 void
-oauth_set_register_fd_func(oauth_register_fd_func func)
+oauth_set_register_fd_func(oauth_register_fd_func_t func)
 {
     oauth_register_fd = func;
 }
