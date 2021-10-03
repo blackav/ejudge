@@ -20,6 +20,7 @@
 #include "ejudge/ejudge_plugin.h"
 #include "ejudge/common_plugin.h"
 #include "ejudge/ej_types.h"
+#include "ejudge/oauth.h"
 
 #define AUTH_PLUGIN_IFACE_VERSION 1
 

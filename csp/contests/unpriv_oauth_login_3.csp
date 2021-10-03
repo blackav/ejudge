@@ -1,0 +1,30 @@
+<%
+%><%@include "unpriv_includes.csp"
+%><%
+#include "ejudge/ejudge_cfg.h"
+#include "ejudge/oauth.h"
+#include "ejudge/userlist_clnt.h"
+#include "ejudge/userlist_proto.h"
+%><%@set ac_prefix = "NEW_SRV_ACTION_"
+%><%@set err_prefix = "NEW_SRV_ERR_"
+%><%@set getter_name = "csp_get_unpriv_oauth_login_3"
+%><%@page csp_view_unpriv_oauth_login_3(PageInterface *ps, FILE *log_f, FILE *out_f, struct http_request_info *phr)
+%><%@include "unpriv_stdvars.csp"
+%><%
+  const unsigned char *provider = NULL;
+  const unsigned char *job_id = NULL;
+%><s:read var="provider" ignoreerrors="yes" /><%
+%><s:read var="job_id" ignoreerrors="yes" /><%
+
+  if (!provider || !*provider) {
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+  if (!job_id || !*job_id) {
+    FAIL(NEW_SRV_ERR_INV_PARAM);
+  }
+
+
+%><s:url name="Login3Url" ac="oauth-login-3" ><s:param name="job_id" value="job_id" /><s:param name="provider" value="provider" /></s:url><s:redirect url="Login3Url" /><%
+cleanup:;
+  html_armor_free(&ab);
+%>

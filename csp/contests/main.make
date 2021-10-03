@@ -101,6 +101,7 @@ SOFILES = \
  csp_unpriv_main_page.so\
  csp_unpriv_oauth_login_1.so\
  csp_unpriv_oauth_login_2.so\
+ csp_unpriv_oauth_login_3.so\
  csp_unpriv_recover_1_page.so\
  csp_unpriv_recover_2_page.so\
  csp_unpriv_recover_3_page.so\
@@ -205,6 +206,7 @@ csp_unpriv_login_page.c : unpriv_login_page.csp $(UNPRIV_DEPS)
 csp_unpriv_main_page.c : unpriv_main_page.csp unpriv_main_clars.csp unpriv_main_clar_submit.csp unpriv_main_info.csp unpriv_main_runs.csp unpriv_main_run_submit.csp unpriv_main_settings.csp unpriv_main_startstop.csp unpriv_main_statements.csp unpriv_main_summary.csp $(UNPRIV_DEPS)
 csp_unpriv_oauth_login_1.c : unpriv_oauth_login_1.csp $(UNPRIV_DEPS)
 csp_unpriv_oauth_login_2.c : unpriv_oauth_login_2.csp $(UNPRIV_DEPS)
+csp_unpriv_oauth_login_3.c : unpriv_oauth_login_3.csp $(UNPRIV_DEPS)
 csp_unpriv_recover_1_page.c : unpriv_recover_1_page.csp $(UNPRIV_DEPS)
 csp_unpriv_recover_2_page.c : unpriv_recover_2_page.csp $(UNPRIV_DEPS)
 csp_unpriv_recover_3_page.c : unpriv_recover_3_page.csp $(UNPRIV_DEPS)

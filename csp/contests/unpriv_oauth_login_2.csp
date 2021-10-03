@@ -36,8 +36,7 @@
     FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
   }
 
-
-
+%><s:url name="Login3Url" ac="oauth-login-3" ><s:param name="job_id" value="job_id" /><s:param name="provider" value="provider" /></s:url><s:redirect url="Login3Url" /><%
 cleanup:;
   html_armor_free(&ab);
   free(job_id);

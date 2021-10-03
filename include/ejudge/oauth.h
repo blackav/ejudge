@@ -1,4 +1,4 @@
-/* -*- c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 
 #ifndef __OAUTH_H__
 #define __OAUTH_H__
@@ -40,5 +40,20 @@ oauth_server_callback(
         const unsigned char *provider,
         const unsigned char *state_id,
         const unsigned char *code);
+
+struct OAuthLoginResult
+{
+    int status; // 0, 1 - progress; 2 - fail, 3 - success
+    unsigned char *email;
+    unsigned char *name;
+    unsigned char *access_token;
+    unsigned char *id_token;
+};
+
+struct OAuthLoginResult
+oauth_get_auth_result(
+        const struct ejudge_cfg *config,
+        const unsigned char *provider,
+        const unsigned char *job_id);
 
 #endif /* __OAUTH_H__ */
