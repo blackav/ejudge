@@ -944,7 +944,7 @@ process_auth_callback_func(
         state->bg_r_fd = p2[0];
         state->bg_pid = pid;
         if (state->register_fd_func) {
-            state->register_fd_func(state->bg_r_fd, fd_ready_callback_func, data);
+            state->register_fd_func(state->register_fd_data, state->bg_r_fd, fd_ready_callback_func, data);
         }
     }
 
