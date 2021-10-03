@@ -808,8 +808,8 @@ done:
 
 static void
 fd_ready_callback_func(
-        int fd,
-        void *data)
+        void *data,
+        int fd)
 {
     struct auth_google_state *state = (struct auth_google_state*) data;
     unsigned length;
