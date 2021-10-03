@@ -138,6 +138,10 @@ const int contests_tag_to_meta_map[CONTEST_LAST_TAG] =
   [CONTEST_CONTENT_PLUGIN] = CNTS_content_plugin,
   [CONTEST_CONTENT_URL_PREFIX] = CNTS_content_url_prefix,
   [CONTEST_COMMENT] = CNTS_comment,
+  /*
+  [CONTEST_OAUTH_RULES] = CNTS_oauth_rules,
+  [CONTEST_OAUTH_RULE] = CNTS_oauth_rule,
+  */
 };
 const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
 {
@@ -171,6 +175,10 @@ const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
   [CONTEST_A_ENABLE_LOCAL_PAGES] = CNTS_enable_local_pages,
   [CONTEST_A_READ_ONLY_NAME] = CNTS_read_only_name,
   [CONTEST_A_ENABLE_OAUTH] = CNTS_enable_oauth,
+  /*
+  [CONTEST_A_DOMAIN] = CNTS_domain,
+  [CONTEST_A_STRIP_DOMAIN] = CNTS_strip_domain,
+  */
 };
 
 char const * const contests_elem_map[] =
@@ -272,6 +280,8 @@ char const * const contests_elem_map[] =
   "content_plugin",
   "content_url_prefix",
   "comment",
+  "oauth_rules",
+  "oauth_rule",
 
   0
 };
@@ -322,6 +332,8 @@ char const * const contests_attr_map[] =
   "is_password",
   "read_only_name",
   "enable_oauth",
+  "domain",
+  "strip_domain",
 
   0
 };
@@ -991,6 +1003,10 @@ parse_contest(
       break;
     case CONTEST_SLAVE_RULES:
       cnts->slave_rules = t;
+      break;
+
+    case CONTEST_OAUTH_RULES:
+      cnts->oauth_rules = t;
       break;
 
     case CONTEST_CAPS:
@@ -2011,3 +2027,68 @@ contests_get_participant_access_type(const struct contest_desc *cnts)
   return contests_get_access_type(cnts, CONTEST_TEAM_ACCESS);
 }
 
+int
+contests_apply_oauth_rules(
+        const struct contest_desc *cnts,
+        const unsigned char *email,
+        unsigned char **p_login)
+{
+  const unsigned char *domain_part = strchr(email, '@');
+  if (!domain_part) return 0;
+  ++domain_part;
+  if (!*domain_part) return 0;
+  int name_len = domain_part - email - 1;
+
+  if (!cnts->oauth_rules) {
+    if (p_login) *p_login = xstrdup(email);
+    return 1;
+  }
+  for (const struct xml_tree *p = cnts->oauth_rules->first_down; p; p = p->right) {
+    if (p->tag == CONTEST_OAUTH_RULE) {
+      const unsigned char *domain = NULL;
+      int allow = -1, deny = -1, strip_domain = -1;
+      for (struct xml_attr *a = p->first; a; a = a->next) {
+        switch (a->tag) {
+        case CONTEST_A_DOMAIN:
+          domain = a->text;
+          break;
+        case CONTEST_A_ALLOW:
+          xml_parse_bool(NULL, NULL, 0, 0, a->text, &allow);
+          break;
+        case CONTEST_A_DENY:
+          xml_parse_bool(NULL, NULL, 0, 0, a->text, &deny);
+          break;
+        case CONTEST_A_STRIP_DOMAIN:
+          xml_parse_bool(NULL, NULL, 0, 0, a->text, &strip_domain);
+          break;
+        }
+      }
+      if (!domain || !*domain) {
+        // catch-all rule
+        if (allow > 0 || deny == 0 || (allow < 0 && deny < 0)) {
+          if (strip_domain <= 0) {
+            if (p_login) *p_login = xstrdup(email);
+          } else {
+            if (p_login) *p_login = xmemdup(email, name_len);
+          }
+          return 1;
+        }
+        return 0;
+      }
+      if (!strcasecmp(domain, domain_part)) {
+        if (allow > 0 || deny == 0 || (allow < 0 && deny < 0)) {
+          if (strip_domain <= 0) {
+            if (p_login) *p_login = xstrdup(email);
+          } else {
+            if (p_login) *p_login = xmemdup(email, name_len);
+          }
+          return 1;
+        }
+        return 0;
+      }
+    }
+  }
+
+  if (p_login) *p_login = xstrdup(email);
+  return 1;
+}

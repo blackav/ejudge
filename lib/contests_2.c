@@ -367,6 +367,20 @@ contests_unparse(
     }
     fprintf(f, "  </%s>\n", contests_elem_map[CONTEST_SLAVE_RULES]);
   }
+  if (cnts->oauth_rules) {
+    fprintf(f, "  <%s>\n", contests_elem_map[CONTEST_OAUTH_RULES]);
+    for (p = cnts->oauth_rules->first_down; p; p = p->right) {
+      if (p->tag == CONTEST_OAUTH_RULE) {
+        fprintf(f, "    <%s", contests_elem_map[CONTEST_OAUTH_RULE]);
+        for (struct xml_attr *a = p->first; a; a = a->next) {
+          // FIXME: XML escape?
+          fprintf(f, " %s=\"%s\"", contests_attr_map[a->tag], a->text);
+        }
+        fprintf(f, " />\n");
+      }
+    }
+    fprintf(f, "  </%s>\n", contests_elem_map[CONTEST_OAUTH_RULES]);
+  }
   fprintf(f, "</%s>", contests_elem_map[CONTEST_CONTEST]);
 }
 

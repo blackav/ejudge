@@ -127,6 +127,7 @@ static struct meta_info_item meta_info_contest_desc_data[] =
   [CNTS_content_plugin] = { CNTS_content_plugin, 's', XSIZE(struct contest_desc, content_plugin), "content_plugin", XOFFSET(struct contest_desc, content_plugin) },
   [CNTS_content_url_prefix] = { CNTS_content_url_prefix, 's', XSIZE(struct contest_desc, content_url_prefix), "content_url_prefix", XOFFSET(struct contest_desc, content_url_prefix) },
   [CNTS_slave_rules] = { CNTS_slave_rules, '?', XSIZE(struct contest_desc, slave_rules), "slave_rules", XOFFSET(struct contest_desc, slave_rules) },
+  [CNTS_oauth_rules] = { CNTS_oauth_rules, '?', XSIZE(struct contest_desc, oauth_rules), "oauth_rules", XOFFSET(struct contest_desc, oauth_rules) },
   [CNTS_user_contest_num] = { CNTS_user_contest_num, 'i', XSIZE(struct contest_desc, user_contest_num), "user_contest_num", XOFFSET(struct contest_desc, user_contest_num) },
   [CNTS_default_locale_num] = { CNTS_default_locale_num, 'i', XSIZE(struct contest_desc, default_locale_num), "default_locale_num", XOFFSET(struct contest_desc, default_locale_num) },
 };

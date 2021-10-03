@@ -137,6 +137,8 @@ enum
     CONTEST_CONTENT_PLUGIN,
     CONTEST_CONTENT_URL_PREFIX,
     CONTEST_COMMENT,
+    CONTEST_OAUTH_RULES,
+    CONTEST_OAUTH_RULE,
 
     CONTEST_LAST_TAG
   };
@@ -186,6 +188,8 @@ enum
     CONTEST_A_IS_PASSWORD,
     CONTEST_A_READ_ONLY_NAME,
     CONTEST_A_ENABLE_OAUTH,
+    CONTEST_A_DOMAIN,
+    CONTEST_A_STRIP_DOMAIN,
 
     CONTEST_LAST_ATTR
   };
@@ -427,6 +431,7 @@ struct contest_desc
   unsigned char *content_url_prefix;
 
   struct xml_tree *slave_rules;
+  struct xml_tree *oauth_rules;
 
   int user_contest_num;
   int default_locale_num;
@@ -617,5 +622,7 @@ contests_guess_id(const char *path);
 int contests_get_register_access_type(const struct contest_desc *cnts);
 int contests_get_users_access_type(const struct contest_desc *cnts);
 int contests_get_participant_access_type(const struct contest_desc *cnts);
+
+int contests_apply_oauth_rules(const struct contest_desc *cnts, const unsigned char *email, unsigned char **p_login);
 
 #endif /* __CONTESTS_H__ */
