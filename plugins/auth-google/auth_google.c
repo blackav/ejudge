@@ -535,6 +535,8 @@ handle_oauth_query(struct auth_google_state *state, const unsigned char *data)
         goto done;
     }
 
+    fprintf(stderr, ">>%s<<\n", json_s);
+
     if (!(root = cJSON_Parse(json_s))) {
         error_message = "google JSON parse failed";
         goto done;
