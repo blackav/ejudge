@@ -211,4 +211,10 @@ ejudge_cfg_get_telegram_bot_id(
         const struct ejudge_cfg *cfg,
         const unsigned char *bot_user_id);
 
+const unsigned char *
+ejudge_cfg_oauth_user_map_find(
+        const struct ejudge_cfg *cfg,
+        const unsigned char *oauth_user_str,
+        const unsigned char *provider);
+
 #endif /* __EJUDGE_CFG_H__ */
