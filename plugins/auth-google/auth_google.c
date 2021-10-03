@@ -136,6 +136,7 @@ static const struct common_mysql_parse_spec oauth_stage1_spec[OAUTH_STAGE1_ROW_W
 struct oauth_stage2_internal
 {
     unsigned char *request_id;
+    unsigned char *provider;
     int request_state;
     unsigned char *request_code;
     unsigned char *cookie;
@@ -150,13 +151,14 @@ struct oauth_stage2_internal
     unsigned char *error_message;
 };
 
-enum { OAUTH_STAGE2_ROW_WIDTH = 13 };
+enum { OAUTH_STAGE2_ROW_WIDTH = 14 };
 
 #define OAUTH_STAGE2_OFFSET(f) XOFFSET(struct oauth_stage2_internal, f)
 
 static const struct common_mysql_parse_spec oauth_stage2_spec[OAUTH_STAGE2_ROW_WIDTH] =
 {
     { 1, 's', "request_id", OAUTH_STAGE2_OFFSET(request_id), 0 },
+    { 1, 's', "provider", OAUTH_STAGE2_OFFSET(provider), 0 },
     { 0, 'd', "request_state", OAUTH_STAGE2_OFFSET(request_state), 0 },
     { 1, 's', "request_code", OAUTH_STAGE2_OFFSET(request_code), 0 },
     { 1, 's', "cookie", OAUTH_STAGE2_OFFSET(cookie), 0 },
@@ -307,6 +309,7 @@ static const char oauth_stage1_create_str[] =
 static const char oauth_stage2_create_str[] =
 "CREATE TABLE %soauth_stage2 ( \n"
 "    request_id VARCHAR(64) NOT NULL PRIMARY KEY,\n"
+"    provider VARCHAR(64) NOT NULL,\n"
 "    request_state INT NOT NULL DEFAULT 0,\n"
 "    request_code VARCHAR(64) NOT NULL,\n"
 "    cookie VARCHAR(64) NOT NULL,\n"
@@ -763,6 +766,8 @@ save_error_to_db:
     cmd_f = open_memstream(&cmd_s, &cmd_z);
     fprintf(cmd_f, "UPDATE %soauth_stage2 SET request_state = 2, error_message = ", state->md->table_prefix);
     state->mi->write_escaped_string(state->md, cmd_f, "", error_message);
+    fprintf(cmd_f, ", provider = ");
+    state->mi->write_escaped_string(state->md, cmd_f, "", "google");
     fprintf(cmd_f, ", update_time = NOW() WHERE request_id = ");
     state->mi->write_escaped_string(state->md, cmd_f, "", request_id);
     fprintf(cmd_f, " ;");
@@ -877,6 +882,7 @@ process_auth_callback_func(
     oas2.request_id = ebuf;
     oas2.request_code = xstrdup(code);
     oas2.cookie = oas1.cookie; oas1.cookie = NULL;
+    oas2.provider = oas1.provider; oas1.provider = NULL;
     oas2.contest_id = oas1.contest_id;
     oas2.extra_data = oas1.extra_data; oas1.extra_data = NULL;
     oas2.create_time = time(NULL);
@@ -930,6 +936,7 @@ process_auth_callback_func(
     free(oas1.cookie);
     free(oas1.extra_data);
     free(oas2.request_code);
+    free(oas2.provider);
     free(oas2.cookie);
     free(oas2.extra_data);
 
@@ -944,6 +951,7 @@ fail:
     free(oas1.cookie);
     free(oas1.extra_data);
     free(oas2.request_code);
+    free(oas2.provider);
     free(oas2.cookie);
     free(oas2.extra_data);
     state->mi->free_res(state->md);
