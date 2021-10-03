@@ -35,6 +35,11 @@
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
 
+  phr->contest_id = oauth_res.contest_id;
+  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
+    FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
+  }
+
 
 %><s:url name="Login3Url" ac="oauth-login-3" ><s:param name="request_id" value="request_id" /><s:param name="provider" value="provider" /></s:url><s:redirect url="Login3Url" /><%
 cleanup:;

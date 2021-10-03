@@ -44,6 +44,15 @@ struct ejudge_cfg_user_map
   unsigned char *local_user_str;
 };
 
+struct ejudge_cfg_oauth_user_map
+{
+  struct xml_tree b;
+
+  unsigned char *oauth_user_str;
+  unsigned char *local_user_str;
+  unsigned char *provider;
+};
+
 struct ejudge_cfg;
 struct ejudge_cfg_caps_file
 {
@@ -118,6 +127,7 @@ struct ejudge_cfg
   unsigned char *caps_file;
   unsigned char *contest_server_id;
   struct xml_tree *user_map;
+  struct xml_tree *oauth_user_map;
   struct xml_tree *compile_servers;
 
   opcaplist_t capabilities;

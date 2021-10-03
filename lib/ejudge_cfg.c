@@ -109,6 +109,8 @@ enum
     TG_CONTESTS_WS_PORT,
     TG_MAX_LOADED_CONTESTS,
     TG_DEFAULT_STATUS_PLUGIN,
+    TG_OAUTH_USER_MAP,
+    TG_OAUTH_ENTRY,
 
     TG__BARRIER,
     TG__DEFAULT,
@@ -133,6 +135,8 @@ enum
     AT_ENABLE_CONTEST_SELECT,
     AT_DISABLE_NEW_USERS,
     AT_FORCE_CONTAINER,
+    AT_OAUTH_USER,
+    AT_PROVIDER,
 
     AT__BARRIER,
     AT__DEFAULT,
@@ -205,6 +209,8 @@ static char const * const elem_map[] =
   "contests_ws_port",
   "max_loaded_contests",
   "default_status_plugin",
+  "oauth_user_map",
+  "oauth_entry",
   0,
   "_default",
 
@@ -230,6 +236,8 @@ static char const * const attr_map[] =
   "enable_contest_select",
   "disable_new_users",
   "force_container",
+  "oauth_user",
+  "provider",
   0,
   "_default",
 
@@ -242,6 +250,7 @@ static size_t elem_sizes[TG_LAST_TAG] =
   [TG_MAP] = sizeof(struct ejudge_cfg_user_map),
   [TG_CAP] = sizeof(struct opcap_list_item),
   [TG_PLUGIN] = sizeof(struct ejudge_plugin),
+  [TG_OAUTH_ENTRY] = sizeof(struct ejudge_cfg_oauth_user_map),
 };
 
 static const unsigned char verbatim_flags[TG_LAST_TAG] =
@@ -330,6 +339,14 @@ node_free(struct xml_tree *t)
       xfree(p->path);
     }
     break;
+  case TG_OAUTH_ENTRY:
+    {
+      struct ejudge_cfg_oauth_user_map *p = (struct ejudge_cfg_oauth_user_map *) t;
+      xfree(p->oauth_user_str);
+      xfree(p->local_user_str);
+      xfree(p->provider);
+    }
+    break;
   }
 }
 
@@ -407,6 +424,45 @@ parse_user_map(char const *path, struct xml_tree *p, int no_system_lookup)
       case AT_LOCAL_USER:
       case AT_EJUDGE_USER:
         m->local_user_str = a->text; a->text = 0;
+        break;
+      default:
+        xml_err_attr_not_allowed(q, a);
+        return 0;
+      }
+    }
+  }
+  return p;
+}
+
+static struct xml_tree *
+parse_oauth_user_map(char const *path, struct xml_tree *p)
+{
+  ASSERT(p);
+  ASSERT(p->tag == TG_OAUTH_USER_MAP);
+  xfree(p->text); p->text = 0;
+
+  for (struct xml_tree *q = p->first_down; q; q = q->right) {
+    if (q->tag != TG_OAUTH_ENTRY) {
+      xml_err_elem_not_allowed(q);
+      return 0;
+    }
+    if (xml_empty_text(q)) return 0;
+    if (q->first_down) {
+      xml_err_nested_elems(q);
+      return 0;
+    }
+    struct ejudge_cfg_oauth_user_map *m = (struct ejudge_cfg_oauth_user_map *) q;
+    for (struct xml_attr *a = q->first; a; a = a->next) {
+      switch (a->tag) {
+      case AT_OAUTH_USER:
+        m->oauth_user_str = a->text; a->text = NULL;
+        break;
+      case AT_LOCAL_USER:
+      case AT_EJUDGE_USER:
+        xfree(m->local_user_str); m->local_user_str = a->text; a->text = NULL;
+        break;
+      case AT_PROVIDER:
+        m->provider = a->text; a->text = NULL;
         break;
       default:
         xml_err_attr_not_allowed(q, a);
@@ -647,6 +703,9 @@ ejudge_cfg_do_parse(char const *path, FILE *in_file, int no_system_lookup)
     switch (p->tag) {
     case TG_USER_MAP:
       if (!(cfg->user_map = parse_user_map(path, p, 0))) goto failed;
+      break;
+    case TG_OAUTH_USER_MAP:
+      if (!(cfg->oauth_user_map = parse_oauth_user_map(path, p))) goto failed;
       break;
     case TG_CAPS:
       if (parse_capabilities(cfg, p) < 0) goto failed;
@@ -1356,4 +1415,36 @@ ejudge_cfg_get_telegram_bot_id(
   }
   if (bot_count > 1) bot_token = NULL;
   return bot_token;
+}
+
+const unsigned char *
+ejudge_cfg_oauth_user_map_find(
+        const struct ejudge_cfg *cfg,
+        const unsigned char *oauth_user_str,
+        const unsigned char *provider)
+{
+  if (!oauth_user_str || !*oauth_user_str) return NULL;
+  if (!cfg || !cfg->oauth_user_map) return NULL;
+  for (const struct xml_tree *p = cfg->oauth_user_map->first_down; p; p = p->right) {
+    const struct ejudge_cfg_oauth_user_map *m = (const struct ejudge_cfg_oauth_user_map *) p;
+    if (m->oauth_user_str && !strcmp(oauth_user_str, m->oauth_user_str)) {
+      if (!m->provider || !*m->provider) return m->local_user_str;
+      if (!provider || !*provider) return m->local_user_str;
+      if (!strcmp(provider, m->provider)) return m->local_user_str;
+    }
+  }
+
+  ejudge_cfg_refresh_caps_file(cfg, 0);
+  if (!cfg->caps_file_info || !cfg->caps_file_info->root || !cfg->caps_file_info->root->oauth_user_map) return NULL;
+
+  for (const struct xml_tree *p = cfg->caps_file_info->root->oauth_user_map->first_down; p; p = p->right) {
+    const struct ejudge_cfg_oauth_user_map *m = (const struct ejudge_cfg_oauth_user_map *) p;
+    if (m->oauth_user_str && !strcmp(oauth_user_str, m->oauth_user_str)) {
+      if (!m->provider || !*m->provider) return m->local_user_str;
+      if (!provider || !*provider) return m->local_user_str;
+      if (!strcmp(provider, m->provider)) return m->local_user_str;
+    }
+  }
+
+  return NULL;
 }
