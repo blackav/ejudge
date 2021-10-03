@@ -53,6 +53,11 @@ static int
 open_func(void *data);
 static int
 check_func(void *data);
+static void
+set_register_fd_func_func(
+        void *data,
+        oauth_register_fd_func_t func,
+        void *register_fd_data);
 static unsigned char *
 get_redirect_url_func(
         void *data,
@@ -84,7 +89,7 @@ struct auth_plugin_iface plugin_auth_google =
     AUTH_PLUGIN_IFACE_VERSION,
     open_func,
     check_func,
-    NULL,
+    set_register_fd_func_func,
     get_redirect_url_func,
     process_auth_callback_func,
 };
@@ -102,6 +107,9 @@ struct auth_google_state
     unsigned char *client_id;
     unsigned char *client_secret;
     unsigned char *redirect_uri;
+
+    oauth_register_fd_func_t register_fd_func;
+    void *register_fd_data ;
 
     int bg_w_fd;
     int bg_r_fd;
@@ -374,6 +382,18 @@ check_func(void *data)
     fetch_google_endpoints(state);
 
     return 0;
+}
+
+static void
+set_register_fd_func_func(
+        void *data,
+        oauth_register_fd_func_t func,
+        void *register_fd_data)
+{
+    struct auth_google_state *state = (struct auth_google_state*) data;
+
+    state->register_fd_func = func;
+    state->register_fd_data = data;
 }
 
 static unsigned char *
@@ -925,8 +945,8 @@ process_auth_callback_func(
         state->bg_w_fd = p1[1];
         state->bg_r_fd = p2[0];
         state->bg_pid = pid;
-        if (fd_register_func) {
-            fd_register_func(state->bg_r_fd, fd_ready_callback_func, data);
+        if (state->register_fd_func) {
+            state->register_fd_func(state->bg_r_fd, fd_ready_callback_func, data);
         }
     }
 
