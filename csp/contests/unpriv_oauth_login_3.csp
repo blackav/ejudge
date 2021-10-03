@@ -22,6 +22,7 @@
   struct userlist_user *u = NULL;
   struct userlist_cookie in_c = {};
   struct userlist_cookie out_c = {};
+  unsigned char *user_login_dup = NULL;
 %><s:read var="provider" ignoreerrors="yes" /><%
 %><s:read var="request_id" ignoreerrors="yes" /><%
 
@@ -71,7 +72,11 @@
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
   const unsigned char *user_login = ejudge_cfg_oauth_user_map_find(phr->config, oauth_res.email, oauth_res.provider);
-  // ... try other options
+  if (contests_apply_oauth_rules(cnts, oauth_res.email, &user_login_dup) > 0) {
+    user_login = user_login_dup;
+  } else {
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
   if (!user_login) {
     user_login = oauth_res.email;
   }
@@ -216,6 +221,7 @@
   }
 
 cleanup:;
+  xfree(user_login_dup);
   userlist_free(&u->b);
   xfree(xml_text);
   oauth_free_result(&oauth_res);
