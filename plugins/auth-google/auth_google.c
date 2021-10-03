@@ -989,5 +989,7 @@ get_result_func(
         void *data,
         const unsigned char *job_id)
 {
+    struct auth_google_state *state = (struct auth_google_state*) data;
+
     return (struct OAuthLoginResult) { .status = 2, .error_message = xstrdup("not implemented") };
 }
