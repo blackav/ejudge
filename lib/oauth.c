@@ -164,5 +164,7 @@ oauth_get_result(
         const unsigned char *provider,
         const unsigned char *job_id)
 {
-    return (struct OAuthLoginResult) { .status = 2, .error_message = xstrdup("unknown error") };
+    struct ProviderInfo *info = get_provider(config, provider);
+    if (!info) return (struct OAuthLoginResult) { .status = 2, .error_message = xstrdup("invalid provider") };
+    return info->i->get_result(info->d, job_id);
 }

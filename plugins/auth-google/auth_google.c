@@ -70,6 +70,10 @@ process_auth_callback_func(
         void *data,
         const unsigned char *state_id,
         const unsigned char *code);
+static struct OAuthLoginResult
+get_result_func(
+        void *data,
+        const unsigned char *job_id);
 
 struct auth_plugin_iface plugin_auth_google =
 {
@@ -91,6 +95,7 @@ struct auth_plugin_iface plugin_auth_google =
     set_register_fd_func_func,
     get_redirect_url_func,
     process_auth_callback_func,
+    get_result_func,
 };
 
 struct auth_google_state
@@ -977,4 +982,12 @@ fail:
     if (req_f) fclose(req_f);
     free(req_s);
     return NULL;
+}
+
+static struct OAuthLoginResult
+get_result_func(
+        void *data,
+        const unsigned char *job_id)
+{
+    return (struct OAuthLoginResult) { .status = 2, .error_message = xstrdup("not implemented") };
 }

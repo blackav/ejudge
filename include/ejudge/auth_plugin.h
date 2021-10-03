@@ -47,6 +47,9 @@ struct auth_plugin_iface
         void *data,
         const unsigned char *state_id,
         const unsigned char *code);
+    struct OAuthLoginResult (*get_result)(
+        void *data,
+        const unsigned char *job_id);
 };
 
 #endif /* __AUTH_PLUGIN_H__ */
