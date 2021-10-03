@@ -1059,11 +1059,14 @@ get_result_func(
 
     res.status = oas2.request_state;
     res.provider = oas2.provider; oas2.provider = NULL;
+    res.cookie = oas2.cookie; oas2.cookie = NULL;
+    res.extra_data = oas2.extra_data; oas2.extra_data = NULL;
     res.email = oas2.response_email; oas2.response_email = NULL;
     res.name = oas2.response_name; oas2.response_name = NULL;
     res.access_token = oas2.access_token; oas2.access_token = NULL;
     res.id_token = oas2.id_token; oas2.id_token = NULL;
     res.error_message = oas2.error_message; oas2.error_message = NULL;
+    res.contest_id = oas2.contest_id;
     return res;
 
 fail:

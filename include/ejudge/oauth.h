@@ -45,18 +45,21 @@ struct OAuthLoginResult
 {
     int status; // 0, 1 - progress; 2 - fail, 3 - success
     unsigned char *provider;
+    unsigned char *cookie;
+    unsigned char *extra_data;
     unsigned char *email;
     unsigned char *name;
     unsigned char *access_token;
     unsigned char *id_token;
     unsigned char *error_message;
+    int contest_id;
 };
 
 struct OAuthLoginResult
 oauth_get_result(
         const struct ejudge_cfg *config,
         const unsigned char *provider,
-        const unsigned char *job_id);
+        const unsigned char *request_id);
 
 void
 oauth_free_result(struct OAuthLoginResult *res);

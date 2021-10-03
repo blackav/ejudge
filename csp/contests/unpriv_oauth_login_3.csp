@@ -12,19 +12,32 @@
 %><%@include "unpriv_stdvars.csp"
 %><%
   const unsigned char *provider = NULL;
-  const unsigned char *job_id = NULL;
+  const unsigned char *request_id = NULL;
+  struct OAuthLoginResult oauth_res = {};
 %><s:read var="provider" ignoreerrors="yes" /><%
-%><s:read var="job_id" ignoreerrors="yes" /><%
+%><s:read var="request_id" ignoreerrors="yes" /><%
 
   if (!provider || !*provider) {
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (!job_id || !*job_id) {
+  if (!request_id || !*request_id) {
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
 
+  oauth_res = oauth_get_result(phr->config, provider, request_id);
+  if (oauth_res.status == 0 || oauth_res.status == 1) {
+    %><html><head><meta http-equiv="Refresh" content="1" /></head><body><p>waiting...</p></body></html><%
+    goto cleanup;
+  }
 
-%><s:url name="Login3Url" ac="oauth-login-3" ><s:param name="job_id" value="job_id" /><s:param name="provider" value="provider" /></s:url><s:redirect url="Login3Url" /><%
+  if (oauth_res.status == 2) {
+    fprintf(log_f, "request failed with error: %s\n", oauth_res.error_message);
+    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+  }
+
+
+%><s:url name="Login3Url" ac="oauth-login-3" ><s:param name="request_id" value="request_id" /><s:param name="provider" value="provider" /></s:url><s:redirect url="Login3Url" /><%
 cleanup:;
+  oauth_free_result(&oauth_res);
   html_armor_free(&ab);
 %>
