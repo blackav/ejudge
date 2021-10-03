@@ -57,6 +57,7 @@ static unsigned char *
 get_redirect_url_func(
         void *data,
         const char *cookie,
+        const unsigned char *provider,
         int contest_id,
         const char *extra_data);
 static unsigned char *
@@ -375,6 +376,7 @@ static unsigned char *
 get_redirect_url_func(
         void *data,
         const char *cookie,
+        const unsigned char *provider,
         int contest_id,
         const char *extra_data)
 {
@@ -399,7 +401,7 @@ get_redirect_url_func(
     req_f = open_memstream(&req_s, &req_z);
     fprintf(req_f, "INSERT INTO %soauth_stage1 VALUES (", state->md->table_prefix);
     fprintf(req_f, "'%s'", ebuf);
-    fprintf(req_f, ", 'google'");
+    state->mi->write_escaped_string(state->md, req_f, ",", provider);
     state->mi->write_escaped_string(state->md, req_f, ",", cookie);
     fprintf(req_f, ", %d", contest_id);
     state->mi->write_escaped_string(state->md, req_f, ",", extra_data);

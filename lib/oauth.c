@@ -118,7 +118,7 @@ oauth_get_redirect_url(
 {
     struct ProviderInfo *info = get_provider(config, provider);
     if (!info) return NULL;
-    return info->i->get_redirect_url(info->d, cookie, contest_id, extra_data);
+    return info->i->get_redirect_url(info->d, cookie, provider, contest_id, extra_data);
 }
 
 static oauth_register_fd_func oauth_register_fd = NULL;

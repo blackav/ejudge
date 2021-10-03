@@ -36,6 +36,7 @@ struct auth_plugin_iface
     unsigned char * (*get_redirect_url)(
         void *data,
         const char *cookie,
+        const unsigned char *provider,
         int contest_id,
         const char *extra_data);
     unsigned char * (*process_auth_callback)(
