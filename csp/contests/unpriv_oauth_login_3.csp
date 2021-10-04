@@ -112,6 +112,7 @@
 
     struct userlist_pk_create_user_2 up = {};
     up.confirm_email_flag = 1;
+    up.use_sha1_flag = 1;
 
     r = userlist_clnt_create_user_2(ul_conn, ULS_CREATE_USER_2, &up,
                                     user_login, oauth_res.email,
@@ -218,8 +219,7 @@
     phr->client_key = out_c.client_key;
     phr->session_id = out_c.cookie;
 
-    // FIXME: redirect to register: support script="register"
-%><s:url name="RegisterUrl" ac="main-page" ></s:url><s:redirect url="RegisterUrl" /><%
+%><s:url name="RegisterUrl" ac="main-page" script="register" ></s:url><s:redirect url="RegisterUrl" /><%
   } else {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }

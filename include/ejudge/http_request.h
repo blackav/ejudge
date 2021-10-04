@@ -2,7 +2,7 @@
 #ifndef __HTTP_REQUEST_H__
 #define __HTTP_REQUEST_H__
 
-/* Copyright (C) 2014-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -273,6 +273,17 @@ hr_redirect_2(
         FILE *out_f,
         const struct http_request_info *phr,
         int action);
+
+const unsigned char *
+hr_redirect_3(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        int action);
+
+void
+hr_register_redirect(
+        FILE *out_f,
+        const struct http_request_info *phr);
 
 void
 hr_print_help_url(FILE *f, int action);
