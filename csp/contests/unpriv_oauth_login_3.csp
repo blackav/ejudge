@@ -206,13 +206,13 @@
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
     }
 
+    in_c.ip = phr->ip;
     in_c.ssl = phr->ssl_flag;
     in_c.user_id = user_id;
     in_c.contest_id = phr->contest_id;
     in_c.role = USER_ROLE_CONTESTANT;
-    in_c.team_login = 1;
     in_c.client_key = phr->client_key;
-    if (userlist_clnt_create_cookie(ul_conn, ULS_CREATE_COOKIE, &in_c, &out_c)) {
+    if (userlist_clnt_create_cookie(ul_conn, ULS_CREATE_COOKIE, &in_c, &out_c) < 0) {
       FAIL(NEW_SRV_ERR_DATABASE_FAILED);
     }
 
