@@ -105,6 +105,7 @@
 
     unsigned char rbuf[16];
     unsigned char ebuf[32];
+    random_init();
     random_bytes(rbuf, sizeof(rbuf));
     int len = base64u_encode(rbuf, sizeof(rbuf), ebuf);
     ebuf[len] = 0;

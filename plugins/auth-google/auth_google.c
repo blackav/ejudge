@@ -423,6 +423,7 @@ get_redirect_url_func(
     FILE *url_f = NULL;
     struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
 
+    random_init();
     random_bytes(rbuf, sizeof(rbuf));
     int len = base64u_encode(rbuf, sizeof(rbuf), ebuf);
     ebuf[len] = 0;
@@ -959,6 +960,7 @@ process_auth_callback_func(
         goto fail;
     free(req_s); req_s = NULL; req_z = 0;
 
+    random_init();
     random_bytes(rbuf, sizeof(rbuf));
     int len = base64u_encode(rbuf, sizeof(rbuf), ebuf);
     ebuf[len] = 0;
