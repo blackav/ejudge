@@ -13,7 +13,7 @@
 %><%
   const unsigned char *state = NULL;
   const unsigned char *code = NULL;
-  unsigned char *request_id = NULL;
+  unsigned char *job_id = NULL;
   const unsigned char *provider = NULL;
 %><s:read var="state" ignoreerrors="yes" /><%
 %><s:read var="code" ignoreerrors="yes" /><%
@@ -31,13 +31,15 @@
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
 
-  request_id = oauth_server_callback(phr->config, provider, state, code);
-  if (!request_id) {
+  job_id = oauth_server_callback(phr->config, provider, state, code);
+  if (!job_id) {
     FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
   }
 
-%><s:url name="Login3Url" ac="oauth-login-3" ><s:param name="request_id" value="request_id" /><s:param name="provider" value="provider" /></s:url><s:redirect url="Login3Url" /><%
+  phr->session_id = 0;
+
+%><s:url name="Login3Url" ac="oauth-login-3" ><s:param name="job_id" value="job_id" /><s:param name="provider" value="provider" /></s:url><s:redirect url="Login3Url" /><%
 cleanup:;
   html_armor_free(&ab);
-  free(request_id);
+  free(job_id);
 %>

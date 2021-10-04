@@ -39,6 +39,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <dirent.h>
 
 static struct common_plugin_data*
 init_func(void);
@@ -324,7 +325,7 @@ static const char oauth_stage2_create_str[] =
 "    request_id VARCHAR(64) NOT NULL PRIMARY KEY,\n"
 "    provider VARCHAR(64) NOT NULL,\n"
 "    request_state INT NOT NULL DEFAULT 0,\n"
-"    request_code VARCHAR(64) NOT NULL,\n"
+"    request_code VARCHAR(256) NOT NULL,\n"
 "    cookie VARCHAR(64) NOT NULL,\n"
 "    contest_id INT NOT NULL DEFAULT 0,\n"
 "    extra_data VARCHAR(512) DEFAULT NULL,\n"
@@ -878,6 +879,31 @@ fd_ready_callback_func(
     }
 }
 
+static void
+close_other_fds(int fd1, int fd2)
+{
+    const char *dir = "/proc/self/fd";
+    DIR *d = opendir(dir);
+    if (!d) return;
+
+    struct dirent *dd;
+    while ((dd = readdir(d))) {
+        const char *name = dd->d_name;
+        errno = 0;
+        char *eptr = NULL;
+        long value = strtol(name, &eptr, 10);
+        if (errno || *eptr || eptr == name || value <= 0 || (int) value != value) continue;
+        if (value == fd1 || value == fd2) continue;
+        char path[PATH_MAX];
+        if (snprintf(path, sizeof(path), "%s/%s", dir, name) >= sizeof(path)) continue;
+        struct stat stb;
+        if (lstat(path, &stb) < 0) continue;
+        if (stat(path, &stb) >= 0) continue;
+        close(value);
+    }
+    closedir(d);
+}
+
 static unsigned char *
 process_auth_callback_func(
         void *data,
@@ -896,7 +922,7 @@ process_auth_callback_func(
 
     req_f = open_memstream(&req_s, &req_z);
     fprintf(req_f, "SELECT * FROM %soauth_stage1 WHERE state_id = ", state->md->table_prefix);
-    state->mi->write_escaped_string(state->md, req_f, ",", state_id);
+    state->mi->write_escaped_string(state->md, req_f, "", state_id);
     fprintf(req_f, ";");
     fclose(req_f); req_f = NULL;
 
@@ -920,7 +946,7 @@ process_auth_callback_func(
 
     req_f = open_memstream(&req_s, &req_z);
     fprintf(req_f, "DELETE FROM %soauth_stage1 WHERE state_id = ", state->md->table_prefix);
-    state->mi->write_escaped_string(state->md, req_f, ",", state_id);
+    state->mi->write_escaped_string(state->md, req_f, "", state_id);
     fprintf(req_f, ";");
     fclose(req_f); req_f = NULL;
     if (state->mi->simple_query(state->md, req_s, req_z) , 0)
@@ -930,7 +956,6 @@ process_auth_callback_func(
     random_bytes(rbuf, sizeof(rbuf));
     int len = base64u_encode(rbuf, sizeof(rbuf), ebuf);
     ebuf[len] = 0;
-    ASSERT(len == 43);
 
     oas2.request_id = ebuf;
     oas2.request_code = xstrdup(code);
@@ -969,6 +994,7 @@ process_auth_callback_func(
         }
         if (!pid) {
             close(p1[1]); close(p2[0]);
+            close_other_fds(p1[0], p2[1]);
             do_background_oauth_queries(state, p1[0], p2[1]);
             _exit(0);
         }
@@ -993,7 +1019,7 @@ process_auth_callback_func(
     free(oas2.cookie);
     free(oas2.extra_data);
 
-    return xstrdup(oas2.request_code);
+    return xstrdup(oas2.request_id);
 
 remove_stage2_and_fail:
     state->mi->simple_fquery(state->md, "DELETE FROM %soauth_stage2 WHERE request_id = '%s' ; ", state->md->table_prefix, ebuf);

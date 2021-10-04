@@ -14,7 +14,7 @@
 %><%@include "unpriv_stdvars.csp"
 %><%
   const unsigned char *provider = NULL;
-  const unsigned char *request_id = NULL;
+  const unsigned char *job_id = NULL;
   struct OAuthLoginResult oauth_res = {};
   int r;
   int user_id;
@@ -24,16 +24,16 @@
   struct userlist_cookie out_c = {};
   unsigned char *user_login_dup = NULL;
 %><s:read var="provider" ignoreerrors="yes" /><%
-%><s:read var="request_id" ignoreerrors="yes" /><%
+%><s:read var="job_id" ignoreerrors="yes" /><%
 
   if (!provider || !*provider) {
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (!request_id || !*request_id) {
+  if (!job_id || !*job_id) {
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
 
-  oauth_res = oauth_get_result(phr->config, provider, request_id);
+  oauth_res = oauth_get_result(phr->config, provider, job_id);
   if (oauth_res.status == 0 || oauth_res.status == 1) {
     %><html><head><meta http-equiv="Refresh" content="1" /></head><body><p>waiting...</p></body></html><%
     goto cleanup;
