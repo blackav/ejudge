@@ -334,7 +334,7 @@ static const char oauth_stage2_create_str[] =
 "    response_email VARCHAR(64) DEFAULT NULL,\n"
 "    response_name VARCHAR(64) DEFAULT NULL,\n"
 "    access_token VARCHAR(256) DEFAULT NULL,\n"
-"    id_token VARCHAR(512) DEFAULT NULL,\n"
+"    id_token VARCHAR(2048) DEFAULT NULL,\n"
 "    error_message VARCHAR(256) DEFAULT NULL\n"
 ") DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
 
@@ -470,7 +470,7 @@ handle_oauth_query(struct auth_google_state *state, const unsigned char *data)
     int request_status = 2;   // failed
     const char *error_message = "unknown error";
     cJSON *root = NULL;
-    const unsigned char *request_id = NULL;
+    unsigned char *request_id = NULL;
     const unsigned char *request_code = NULL;
     char *post_s = NULL;
     size_t post_z = 0;
@@ -502,7 +502,7 @@ handle_oauth_query(struct auth_google_state *state, const unsigned char *data)
         error_message = "invalid json: request_id";
         goto done;
     }
-    request_id = jid->valuestring;
+    request_id = xstrdup(jid->valuestring);
     cJSON *jcode = cJSON_GetObjectItem(root, "request_code");
     if (!jcode || jcode->type != cJSON_String) {
         error_message = "invalid json: request_code";
@@ -515,7 +515,7 @@ handle_oauth_query(struct auth_google_state *state, const unsigned char *data)
     fprintf(post_f, "&code=%s", url_armor_buf(&ab, request_code));
     fprintf(post_f, "&client_id=%s", url_armor_buf(&ab, state->client_id));
     fprintf(post_f, "&client_secret=%s", url_armor_buf(&ab, state->client_secret));
-    fprintf(post_f, "&redirect_uri=%s", url_armor_buf(&ab, state->redirect_uri));
+    fprintf(post_f, "&redirect_uri=%s/S1", url_armor_buf(&ab, state->redirect_uri));
     fclose(post_f); post_f = NULL;
     cJSON_Delete(root); root = NULL;
 
@@ -536,7 +536,7 @@ handle_oauth_query(struct auth_google_state *state, const unsigned char *data)
         goto done;
     }
 
-    fprintf(stderr, ">>%s<<\n", json_s);
+    //fprintf(stderr, ">>%s<<\n", json_s);
 
     if (!(root = cJSON_Parse(json_s))) {
         error_message = "google JSON parse failed";
@@ -626,16 +626,16 @@ handle_oauth_query(struct auth_google_state *state, const unsigned char *data)
     error_message = NULL;
 
 done:
-    fprintf(resp_f, "{ \"request_status\" = %d", request_status);
-    if (error_message) fprintf(resp_f, ", \"error_message\" = \"%s\"", json_armor_buf(&ab, error_message));
-    if (request_id) fprintf(resp_f, ", \"request_id\" = \"%s\"", json_armor_buf(&ab, request_id));
-    if (access_token) fprintf(resp_f, ", \"access_token\" = \"%s\"", json_armor_buf(&ab, access_token));
-    if (expires_in) fprintf(resp_f, ", \"expires_in\" = %d", expires_in);
-    if (id_token) fprintf(resp_f, ", \"id_token\" = \"%s\"", json_armor_buf(&ab, id_token));
-    if (scope) fprintf(resp_f, ", \"scope\" = \"%s\"", json_armor_buf(&ab, scope));
-    if (token_type) fprintf(resp_f, ", \"token_type\" = \"%s\"", json_armor_buf(&ab, token_type));
-    if (response_email) fprintf(resp_f, ", \"response_email\" = \"%s\"", json_armor_buf(&ab, response_email));
-    if (response_name) fprintf(resp_f, ", \"response_name\" = \"%s\"", json_armor_buf(&ab, response_name));
+    fprintf(resp_f, "{ \"request_state\" : %d", request_status);
+    if (error_message) fprintf(resp_f, ", \"error_message\" : \"%s\"", json_armor_buf(&ab, error_message));
+    if (request_id) fprintf(resp_f, ", \"request_id\" : \"%s\"", json_armor_buf(&ab, request_id));
+    if (access_token) fprintf(resp_f, ", \"access_token\" : \"%s\"", json_armor_buf(&ab, access_token));
+    if (expires_in) fprintf(resp_f, ", \"expires_in\" : %d", expires_in);
+    if (id_token) fprintf(resp_f, ", \"id_token\" : \"%s\"", json_armor_buf(&ab, id_token));
+    if (scope) fprintf(resp_f, ", \"scope\" : \"%s\"", json_armor_buf(&ab, scope));
+    if (token_type) fprintf(resp_f, ", \"token_type\" : \"%s\"", json_armor_buf(&ab, token_type));
+    if (response_email) fprintf(resp_f, ", \"response_email\" : \"%s\"", json_armor_buf(&ab, response_email));
+    if (response_name) fprintf(resp_f, ", \"response_name\" : \"%s\"", json_armor_buf(&ab, response_name));
     fprintf(resp_f, " }");
     fclose(resp_f);
     if (post_f) fclose(post_f);
@@ -646,6 +646,7 @@ done:
     html_armor_free(&ab);
     free(jwt_payload);
     if (jwt) cJSON_Delete(jwt);
+    free(request_id);
     return resp_s;
 }
 
@@ -680,6 +681,7 @@ do_background_oauth_queries(struct auth_google_state *state, int rfd, int wfd)
         inbuf[r] = 0;
 
         unsigned char *result = handle_oauth_query(state, inbuf);
+
         length = strlen(result);
         if (length > 32000) {
             err("auth_google: background: response is too big: %u", length);
@@ -713,8 +715,8 @@ send_background_request(
     char *json_s = NULL;
     size_t json_z = 0;
     FILE *json_f = open_memstream(&json_s, &json_z);
-    fprintf(json_f, "{ \"request_id\" = \"%s\"", json_armor_buf(&ab, request_id));
-    fprintf(json_f, ", \"request_code\" = \"%s\" }", json_armor_buf(&ab, request_code));
+    fprintf(json_f, "{ \"request_id\" : \"%s\"", json_armor_buf(&ab, request_id));
+    fprintf(json_f, ", \"request_code\" : \"%s\" }", json_armor_buf(&ab, request_code));
     fclose(json_f); json_f = NULL;
     if (json_z > 30000) {
         err("auth_google: background: request is too large: %zu", json_z);
@@ -898,7 +900,11 @@ close_other_fds(int fd1, int fd2)
         if (snprintf(path, sizeof(path), "%s/%s", dir, name) >= sizeof(path)) continue;
         struct stat stb;
         if (lstat(path, &stb) < 0) continue;
-        if (stat(path, &stb) >= 0) continue;
+	char link[PATH_MAX];
+	int r = readlink(path, link, sizeof(path));
+	if (r <= 0 || r >= sizeof(path)) continue;
+	link[r] = 0;
+	if (strncmp(link, "socket", 6) != 0 && strncmp(link, "pipe", 4)) continue;
         close(value);
     }
     closedir(d);
@@ -1058,7 +1064,7 @@ get_result_func(
 
     req_f = open_memstream(&req_s, &req_z);
     fprintf(req_f, "SELECT * FROM %soauth_stage2 WHERE request_id = ", state->md->table_prefix);
-    state->mi->write_escaped_string(state->md, req_f, ",", request_id);
+    state->mi->write_escaped_string(state->md, req_f, "", request_id);
     fprintf(req_f, ";");
     fclose(req_f); req_f = NULL;
 
