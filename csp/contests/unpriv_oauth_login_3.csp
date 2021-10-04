@@ -219,7 +219,7 @@
     phr->client_key = out_c.client_key;
     phr->session_id = out_c.cookie;
 
-%><s:url name="RegisterUrl" ac="main-page" script="register" ></s:url><s:redirect url="RegisterUrl" /><%
+%><s:url name="RegisterUrl" ac="main-page" script="register" ><s:param name="contest_id" value="phr->contest_id" /></s:url><s:redirect url="RegisterUrl" /><%
   } else {
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }

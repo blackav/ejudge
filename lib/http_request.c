@@ -724,7 +724,7 @@ hr_redirect_3(
 {
     if (phr->rest_mode > 0 && symbolic_action_table) {
         if (action < 0 || action >= symbolic_action_table_size) action = 0;
-        fprintf(out_f, "%s", symbolic_action_table[action]);
+        fprintf(out_f, "/%s", symbolic_action_table[action]);
         if (phr->session_id) {
             fprintf(out_f, "/S%016llx", phr->session_id);
         }
