@@ -1424,13 +1424,15 @@ ejudge_cfg_oauth_user_map_find(
         const unsigned char *provider)
 {
   if (!oauth_user_str || !*oauth_user_str) return NULL;
-  if (!cfg || !cfg->oauth_user_map) return NULL;
-  for (const struct xml_tree *p = cfg->oauth_user_map->first_down; p; p = p->right) {
-    const struct ejudge_cfg_oauth_user_map *m = (const struct ejudge_cfg_oauth_user_map *) p;
-    if (m->oauth_user_str && !strcmp(oauth_user_str, m->oauth_user_str)) {
-      if (!m->provider || !*m->provider) return m->local_user_str;
-      if (!provider || !*provider) return m->local_user_str;
-      if (!strcmp(provider, m->provider)) return m->local_user_str;
+  if (!cfg) return NULL;
+  if (cfg->oauth_user_map) {
+    for (const struct xml_tree *p = cfg->oauth_user_map->first_down; p; p = p->right) {
+      const struct ejudge_cfg_oauth_user_map *m = (const struct ejudge_cfg_oauth_user_map *) p;
+      if (m->oauth_user_str && !strcmp(oauth_user_str, m->oauth_user_str)) {
+        if (!m->provider || !*m->provider) return m->local_user_str;
+        if (!provider || !*provider) return m->local_user_str;
+        if (!strcmp(provider, m->provider)) return m->local_user_str;
+      }
     }
   }
 
