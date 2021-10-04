@@ -707,7 +707,7 @@ client_put_refresh_header(
   fputs("\n</h1>\n", stdout);
   */
   if (client_key) {
-    printf("Set-Cookie: EJSID=%016llx; Path=/; SameSite=Strict\n", client_key);
+    printf("Set-Cookie: EJSID=%016llx; Path=/; SameSite=Lax\n", client_key);
   }
   printf("Location: %s\n\n", url);
 }

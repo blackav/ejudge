@@ -137,7 +137,7 @@ ss_redirect_2(
 
   fprintf(fout, "Location: %s\n", url);
   if (phr->client_key) {
-    fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Strict\n", phr->client_key);
+    fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Lax\n", phr->client_key);
   }
   putc('\n', fout);
 }

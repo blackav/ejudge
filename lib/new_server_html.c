@@ -1192,7 +1192,7 @@ ns_refresh_page(
   }
 
   if (phr->client_key) {
-    fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Strict\n", phr->client_key);
+    fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Lax\n", phr->client_key);
   }
   fprintf(fout, "Location: %s\n\n", url);
 }
@@ -1204,7 +1204,7 @@ ns_refresh_page_2(
         const unsigned char *url)
 {
   if (client_key) {
-    fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Strict\n", client_key);
+    fprintf(fout, "Set-Cookie: EJSID=%016llx; Path=/; SameSite=Lax\n", client_key);
   }
   fprintf(fout, "Location: %s\n\n", url);
 }

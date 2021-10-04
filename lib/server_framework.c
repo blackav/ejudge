@@ -1091,7 +1091,7 @@ X-Forwarded-Server: localhost.localdomain
             shabuf);
     if (p->auth && (p->auth->session_id || p->auth->client_key)) {
       fprintf(ws_reply_f,
-              "Set-Cookie: EJWSSESSION=%016llx%016llx; HttpOnly; Path=/; SameSite=Strict\r\n",
+              "Set-Cookie: EJWSSESSION=%016llx%016llx; HttpOnly; Path=/; SameSite=Lax\r\n",
               p->auth->session_id, p->auth->client_key);
     }
     fprintf(ws_reply_f, "\r\n");
