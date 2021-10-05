@@ -72,8 +72,10 @@
     FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
   }
   const unsigned char *user_login = ejudge_cfg_oauth_user_map_find(phr->config, oauth_res.email, oauth_res.provider);
+  int disable_email_check = 1;
   if (!user_login) {
-    if(contests_apply_oauth_rules(cnts, oauth_res.email, &user_login_dup) > 0) {
+    disable_email_check = -1;
+    if(contests_apply_oauth_rules(cnts, oauth_res.email, &user_login_dup, &disable_email_check) > 0) {
       user_login = user_login_dup;
     } else {
       FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
@@ -81,6 +83,7 @@
   }
   if (!user_login) {
     user_login = oauth_res.email;
+    disable_email_check = -1;
   }
 
   phr->session_id = 0;
@@ -130,6 +133,17 @@
   }
   if (!(u = userlist_parse_user_str(xml_text))) {
     FAIL(NEW_SRV_ERR_DATABASE_FAILED);
+  }
+  if (disable_email_check <= 0) {
+    if (!u->email || !*u->email) {
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+    if (strcasecmp(u->email, oauth_res.email) != 0) {
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+    if (u->simple_registration > 0) {
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
   }
   const struct userlist_contest *uc = NULL;
   if (u->contests) {
