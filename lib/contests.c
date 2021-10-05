@@ -334,6 +334,7 @@ char const * const contests_attr_map[] =
   "enable_oauth",
   "domain",
   "strip_domain",
+  "disable_email_check",
 
   0
 };
@@ -2031,7 +2032,8 @@ int
 contests_apply_oauth_rules(
         const struct contest_desc *cnts,
         const unsigned char *email,
-        unsigned char **p_login)
+        unsigned char **p_login,
+        int *p_disable_email_check)
 {
   const unsigned char *domain_part = strchr(email, '@');
   if (!domain_part) return 0;
@@ -2041,12 +2043,13 @@ contests_apply_oauth_rules(
 
   if (!cnts->oauth_rules) {
     if (p_login) *p_login = xstrdup(email);
+    if (p_disable_email_check) *p_disable_email_check = -1;
     return 1;
   }
   for (const struct xml_tree *p = cnts->oauth_rules->first_down; p; p = p->right) {
     if (p->tag == CONTEST_OAUTH_RULE) {
       const unsigned char *domain = NULL;
-      int allow = -1, deny = -1, strip_domain = -1;
+      int allow = -1, deny = -1, strip_domain = -1, disable_email_check = -1;
       for (struct xml_attr *a = p->first; a; a = a->next) {
         switch (a->tag) {
         case CONTEST_A_DOMAIN:
@@ -2061,6 +2064,9 @@ contests_apply_oauth_rules(
         case CONTEST_A_STRIP_DOMAIN:
           xml_parse_bool(NULL, NULL, 0, 0, a->text, &strip_domain);
           break;
+        case CONTEST_A_DISABLE_EMAIL_CHECK:
+          xml_parse_bool(NULL, NULL, 0, 0, a->text, &disable_email_check);
+          break;
         }
       }
       if (!domain || !*domain) {
@@ -2068,8 +2074,10 @@ contests_apply_oauth_rules(
         if (allow > 0 || deny == 0 || (allow < 0 && deny < 0)) {
           if (strip_domain <= 0) {
             if (p_login) *p_login = xstrdup(email);
+            if (p_disable_email_check) *p_disable_email_check = disable_email_check;
           } else {
             if (p_login) *p_login = xmemdup(email, name_len);
+            if (p_disable_email_check) *p_disable_email_check = disable_email_check;
           }
           return 1;
         }
@@ -2079,8 +2087,10 @@ contests_apply_oauth_rules(
         if (allow > 0 || deny == 0 || (allow < 0 && deny < 0)) {
           if (strip_domain <= 0) {
             if (p_login) *p_login = xstrdup(email);
+            if (p_disable_email_check) *p_disable_email_check = disable_email_check;
           } else {
             if (p_login) *p_login = xmemdup(email, name_len);
+            if (p_disable_email_check) *p_disable_email_check = disable_email_check;
           }
           return 1;
         }
@@ -2090,5 +2100,6 @@ contests_apply_oauth_rules(
   }
 
   if (p_login) *p_login = xstrdup(email);
+  if (p_disable_email_check) *p_disable_email_check = -1;
   return 1;
 }

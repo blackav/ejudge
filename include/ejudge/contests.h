@@ -190,6 +190,7 @@ enum
     CONTEST_A_ENABLE_OAUTH,
     CONTEST_A_DOMAIN,
     CONTEST_A_STRIP_DOMAIN,
+    CONTEST_A_DISABLE_EMAIL_CHECK,
 
     CONTEST_LAST_ATTR
   };
@@ -623,6 +624,10 @@ int contests_get_register_access_type(const struct contest_desc *cnts);
 int contests_get_users_access_type(const struct contest_desc *cnts);
 int contests_get_participant_access_type(const struct contest_desc *cnts);
 
-int contests_apply_oauth_rules(const struct contest_desc *cnts, const unsigned char *email, unsigned char **p_login);
+int contests_apply_oauth_rules(
+        const struct contest_desc *cnts,
+        const unsigned char *email,
+        unsigned char **p_login,
+        int *p_disable_email_check);
 
 #endif /* __CONTESTS_H__ */
