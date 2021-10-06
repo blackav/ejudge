@@ -179,6 +179,7 @@ const int contests_attr_to_meta_map[CONTEST_LAST_ATTR] =
   [CONTEST_A_DOMAIN] = CNTS_domain,
   [CONTEST_A_STRIP_DOMAIN] = CNTS_strip_domain,
   */
+  [CONTEST_A_ENABLE_REMINDERS] = CNTS_enable_reminders,
 };
 
 char const * const contests_elem_map[] =
@@ -335,6 +336,7 @@ char const * const contests_attr_map[] =
   "domain",
   "strip_domain",
   "disable_email_check",
+  "enable_reminders",
 
   0
 };
@@ -874,6 +876,7 @@ static const unsigned char contest_bool_attr_set[CONTEST_LAST_ATTR] =
   [CONTEST_A_ENABLE_LOCAL_PAGES] = 1,
   [CONTEST_A_READ_ONLY_NAME] = 1,
   [CONTEST_A_ENABLE_OAUTH] = 1,
+  [CONTEST_A_ENABLE_REMINDERS] = 1,
 };
 
 static void

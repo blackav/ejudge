@@ -35,6 +35,7 @@ enum
   CNTS_enable_local_pages,
   CNTS_read_only_name,
   CNTS_enable_oauth,
+  CNTS_enable_reminders,
   CNTS_reg_deadline,
   CNTS_sched_time,
   CNTS_open_time,

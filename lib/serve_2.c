@@ -951,6 +951,8 @@ serve_check_telegram_reminder(
         serve_state_t state,
         const struct contest_desc *cnts)
 {
+  if (cnts->enable_reminders <= 0) return;
+
   // if current time hour >= 10 and time from the last reminder > 24h, try hard
   struct tm *ptm = localtime(&state->current_time);
   if (ptm->tm_hour >= 10 && (state->last_daily_reminder <= 0 || state->last_daily_reminder + 24 * 60 * 60 <= state->current_time)) {

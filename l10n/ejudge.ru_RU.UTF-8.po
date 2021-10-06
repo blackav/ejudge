@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ejudge 3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-10-02 17:29+0300\n"
+"POT-Creation-Date: 2021-10-06 09:53+0300\n"
 "PO-Revision-Date: 2020-07-13 22:56+0300\n"
 "Last-Translator: Alexander Chernov <cher@ejudge.ru>\n"
 "Language-Team: Russian <ru@li.org>\n"
@@ -1320,6 +1320,9 @@ msgstr "Текст предупреждения пуст"
 
 msgid "Enable OAUTH for login"
 msgstr "Разрешить OAUTH для входа"
+
+msgid "Enable daily reminders"
+msgstr "Разрешить ежедневные напоминания"
 
 msgid "Enable password restoration"
 msgstr "Разрешить восстановление пароля"

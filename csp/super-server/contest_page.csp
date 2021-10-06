@@ -153,6 +153,13 @@
         <td></td>
     </tr>
 <% } %>
+<% if (cnts->enable_reminders) { %>
+    <tr>
+        <td><s:_>Enable daily reminders</s:_>?</td>
+        <td><s:vb value="cnts->enable_reminders" /></td>
+        <td></td>
+    </tr>
+<% } %>
 <% if (cnts->enable_password_recovery) { %>
     <tr>
         <td><s:_>Enable password restoration</s:_>?</td>

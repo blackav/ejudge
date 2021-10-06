@@ -191,6 +191,7 @@ enum
     CONTEST_A_DOMAIN,
     CONTEST_A_STRIP_DOMAIN,
     CONTEST_A_DISABLE_EMAIL_CHECK,
+    CONTEST_A_ENABLE_REMINDERS,
 
     CONTEST_LAST_ATTR
   };
@@ -340,6 +341,7 @@ struct contest_desc
   ejbytebool_t enable_local_pages;
   ejbytebool_t read_only_name;
   ejbytebool_t enable_oauth;
+  ejbytebool_t enable_reminders;
 
   time_t         reg_deadline;
   time_t         sched_time;
