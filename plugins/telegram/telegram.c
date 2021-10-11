@@ -68,20 +68,20 @@ start_func(void *data);
 static void
 queue_packet_handler_telegram(int uid, int argc, char **argv, void *user);
 static void
-packet_handler_telegram_token(int uid, int argc, char **argv, void *user);
+queue_packet_handler_telegram_token(int uid, int argc, char **argv, void *user);
 static void
-packet_handler_telegram_reviewed(int uid, int argc, char **argv, void *user);
+queue_packet_handler_telegram_reviewed(int uid, int argc, char **argv, void *user);
 static void
-packet_handler_telegram_replied(int uid, int argc, char **argv, void *user);
+queue_packet_handler_telegram_replied(int uid, int argc, char **argv, void *user);
 static void
-packet_handler_telegram_cf(int uid, int argc, char **argv, void *user);
+queue_packet_handler_telegram_cf(int uid, int argc, char **argv, void *user);
 static void
-packet_handler_telegram_notify(int uid, int argc, char **argv, void *user);
+queue_packet_handler_telegram_notify(int uid, int argc, char **argv, void *user);
 static void
-packet_handler_telegram_reminder(int uid, int argc, char **argv, void *user);
+queue_packet_handler_telegram_reminder(int uid, int argc, char **argv, void *user);
 
 static void
-periodic_handler(void *user);
+queue_periodic_handler(void *user);
 
 struct telegram_plugin_iface plugin_sn_telegram =
 {
@@ -371,24 +371,24 @@ start_func(void *data)
                                queue_packet_handler_telegram, state);
     state->set_command_handler(state->set_command_handler_self,
                                "telegram_token",
-                               packet_handler_telegram_token, state);
+                               queue_packet_handler_telegram_token, state);
     state->set_command_handler(state->set_command_handler_self,
                                "telegram_reviewed",
-                               packet_handler_telegram_reviewed, state);
+                               queue_packet_handler_telegram_reviewed, state);
     state->set_command_handler(state->set_command_handler_self,
                                "telegram_replied",
-                               packet_handler_telegram_replied, state);
+                               queue_packet_handler_telegram_replied, state);
     state->set_command_handler(state->set_command_handler_self,
                                "telegram_cf",
-                               packet_handler_telegram_cf, state);
+                               queue_packet_handler_telegram_cf, state);
     state->set_command_handler(state->set_command_handler_self,
                                "telegram_notify",
-                               packet_handler_telegram_notify, state);
+                               queue_packet_handler_telegram_notify, state);
     state->set_command_handler(state->set_command_handler_self,
                                "telegram_reminder",
-                               packet_handler_telegram_reminder, state);
+                               queue_packet_handler_telegram_reminder, state);
     state->set_timer_handler(state->set_timer_handler_self,
-                             periodic_handler, state);
+                             queue_periodic_handler, state);
 
     return 0;
 }
@@ -656,6 +656,13 @@ cleanup:
     telegram_token_free(other_token);
 }
 
+static void
+queue_packet_handler_telegram_token(int uid, int argc, char **argv, void *user)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
+    put_to_queue(state, packet_handler_telegram_token, uid, argc, argv);
+}
+
 /*
   args[0] = "telegram_reviewed"
   args[1] = telegram_bot_id
@@ -727,6 +734,13 @@ cleanup:
     telegram_subscription_free(sub);
     telegram_chat_free(tc);
     if (send_result) send_result->b.destroy(&send_result->b);
+}
+
+static void
+queue_packet_handler_telegram_reviewed(int uid, int argc, char **argv, void *user)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
+    put_to_queue(state, packet_handler_telegram_reviewed, uid, argc, argv);
 }
 
 /*
@@ -802,6 +816,13 @@ cleanup:
     if (send_result) send_result->b.destroy(&send_result->b);
 }
 
+static void
+queue_packet_handler_telegram_replied(int uid, int argc, char **argv, void *user)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
+    put_to_queue(state, packet_handler_telegram_replied, uid, argc, argv);
+}
+
 /*
   args[0] = "telegram_cf"
   args[1] = telegram_bot_id
@@ -872,6 +893,13 @@ cleanup:
     telegram_subscription_free(sub);
     telegram_chat_free(tc);
     if (send_result) send_result->b.destroy(&send_result->b);
+}
+
+static void
+queue_packet_handler_telegram_cf(int uid, int argc, char **argv, void *user)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
+    put_to_queue(state, packet_handler_telegram_cf, uid, argc, argv);
 }
 
 /*
@@ -946,6 +974,13 @@ cleanup:
     telegram_subscription_free(sub);
     telegram_chat_free(tc);
     if (send_result) send_result->b.destroy(&send_result->b);
+}
+
+static void
+queue_packet_handler_telegram_notify(int uid, int argc, char **argv, void *user)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
+    put_to_queue(state, packet_handler_telegram_notify, uid, argc, argv);
 }
 
 /*
@@ -1029,6 +1064,13 @@ cleanup:
     xfree(msg_s);
     telegram_chat_free(tc);
     if (send_result) send_result->b.destroy(&send_result->b);
+}
+
+static void
+queue_packet_handler_telegram_reminder(int uid, int argc, char **argv, void *user)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
+    put_to_queue(state, packet_handler_telegram_reminder, uid, argc, argv);
 }
 
 static unsigned char *
@@ -1491,13 +1533,20 @@ cleanup:
 }
 
 static void
-periodic_handler(void *user)
+periodic_handler(int uid, int argc, char **argv, void *user)
 {
     struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
 
     for (int i = 0; i < state->bots.u; ++i) {
         get_updates(state, state->bots.v[i]);
     }
+}
+
+static void
+queue_periodic_handler(void *user)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
+    put_to_queue(state, periodic_handler, 0, 0, 0);
 }
 
 /*
