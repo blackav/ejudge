@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2016-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -15,7 +15,6 @@
  */
 
 #include "ejudge/telegram.h"
-#include "ejudge/ej_jobs.h"
 #include "ejudge/xml_utils.h"
 #include "ejudge/random.h"
 
@@ -53,6 +52,19 @@ prepare_func(
         struct xml_tree *tree);
 
 static void
+set_set_command_handler_func(
+        void *data,
+        tg_set_command_handler_t setter,
+        void *setter_self);
+static void
+set_set_timer_handler_func(
+        void *data,
+        tg_set_timer_handler_t setter,
+        void *setter_self);
+static int
+start_func(void *data);
+
+static void
 packet_handler_telegram(int uid, int argc, char **argv, void *user);
 static void
 packet_handler_telegram_token(int uid, int argc, char **argv, void *user);
@@ -85,6 +97,9 @@ struct telegram_plugin_iface plugin_sn_telegram =
         prepare_func,
     },
     TELEGRAM_PLUGIN_IFACE_VERSION,
+    set_set_command_handler_func,
+    set_set_timer_handler_func,
+    start_func,
 };
 
 struct persistent_bot_state
@@ -110,6 +125,12 @@ struct telegram_plugin_data
     struct mongo_conn *conn;
     int curl_verbose_flag;
     unsigned char *password_file;
+
+    tg_set_command_handler_t set_command_handler;
+    void *set_command_handler_self;
+
+    tg_set_timer_handler_t set_timer_handler;
+    void *set_timer_handler_self;
 };
 
 static int
@@ -267,14 +288,60 @@ prepare_func(
         if (parse_passwd_file(state, ppath) < 0) return -1;
     }
 
-    ej_jobs_add_handler("telegram", packet_handler_telegram, state);
-    ej_jobs_add_handler("telegram_token", packet_handler_telegram_token, state);
-    ej_jobs_add_handler("telegram_reviewed", packet_handler_telegram_reviewed, state);
-    ej_jobs_add_handler("telegram_replied", packet_handler_telegram_replied, state);
-    ej_jobs_add_handler("telegram_cf", packet_handler_telegram_cf, state);
-    ej_jobs_add_handler("telegram_notify", packet_handler_telegram_notify, state);
-    ej_jobs_add_handler("telegram_reminder", packet_handler_telegram_reminder, state);
-    ej_jobs_add_periodic_handler(periodic_handler, state);
+    return 0;
+}
+
+static void
+set_set_command_handler_func(
+        void *data,
+        tg_set_command_handler_t setter,
+        void *setter_self)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) data;
+    state->set_command_handler = setter;
+    state->set_command_handler_self = setter_self;
+}
+
+static void
+set_set_timer_handler_func(
+        void *data,
+        tg_set_timer_handler_t setter,
+        void *setter_self)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) data;
+    state->set_timer_handler = setter;
+    state->set_timer_handler_self = setter_self;
+}
+
+static int
+start_func(void *data)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) data;
+
+    state->set_command_handler(state->set_command_handler_self,
+                               "telegram",
+                               packet_handler_telegram, state);
+    state->set_command_handler(state->set_command_handler_self,
+                               "telegram_token",
+                               packet_handler_telegram_token, state);
+    state->set_command_handler(state->set_command_handler_self,
+                               "telegram_reviewed",
+                               packet_handler_telegram_reviewed, state);
+    state->set_command_handler(state->set_command_handler_self,
+                               "telegram_replied",
+                               packet_handler_telegram_replied, state);
+    state->set_command_handler(state->set_command_handler_self,
+                               "telegram_cf",
+                               packet_handler_telegram_cf, state);
+    state->set_command_handler(state->set_command_handler_self,
+                               "telegram_notify",
+                               packet_handler_telegram_notify, state);
+    state->set_command_handler(state->set_command_handler_self,
+                               "telegram_reminder",
+                               packet_handler_telegram_reminder, state);
+    state->set_timer_handler(state->set_timer_handler_self,
+                             periodic_handler, state);
+
     return 0;
 }
 

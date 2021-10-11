@@ -2,7 +2,7 @@
 #ifndef __TELEGRAM_H__
 #define __TELEGRAM_H__
 
-/* Copyright (C) 2016 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2016-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,13 @@
 
 #include "ejudge/common_plugin.h"
 
-#define TELEGRAM_PLUGIN_IFACE_VERSION 1
+typedef void (*tg_command_handler_t)(int uid, int argc, char **argv, void *self);
+typedef void (*tg_timer_handler_t)(void *self);
+
+typedef void (*tg_set_command_handler_t)(void *set_self, const unsigned char *cmd, tg_command_handler_t handler, void *tg_self);
+typedef void (*tg_set_timer_handler_t)(void *set_self, tg_timer_handler_t handler, void *tg_self);
+
+#define TELEGRAM_PLUGIN_IFACE_VERSION 2
 
 struct telegram_plugin_data;
 
@@ -26,6 +32,10 @@ struct telegram_plugin_iface
 {
     struct common_plugin_iface b;
     int telegram_plugin_iface_version;
+
+    void (*set_set_command_handler)(void *data, tg_set_command_handler_t setter, void *setter_self);
+    void (*set_set_timer_handler)(void *data, tg_set_timer_handler_t setter, void *setter_self);
+    int (*start)(void *data);
 };
 
 #endif
