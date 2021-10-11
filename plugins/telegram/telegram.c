@@ -34,6 +34,8 @@
 
 #include "ejudge/cJSON.h"
 
+#define CONNECT_TIMEOUT 30L
+
 #if CONF_HAS_LIBCURL - 0 == 1
 #include <curl/curl.h>
 #endif
@@ -495,6 +497,7 @@ send_message(
     {
         size_t resp_z = 0;
         FILE *resp_f = open_memstream(&resp_s, &resp_z);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, CONNECT_TIMEOUT);
         curl_easy_setopt(curl, CURLOPT_AUTOREFERER, 1);
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
         curl_easy_setopt(curl, CURLOPT_URL, url_s);
@@ -586,6 +589,7 @@ packet_handler_telegram(int uid, int argc, char **argv, void *user)
 
     resp_f = open_memstream(&resp_s, &resp_z);
 
+    curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, CONNECT_TIMEOUT);
     curl_easy_setopt(curl, CURLOPT_AUTOREFERER, 1);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt(curl, CURLOPT_URL, url_s);
@@ -1541,6 +1545,7 @@ get_updates(struct telegram_plugin_data *state, struct bot_state *bs)
 
     {
         FILE *resp_f = open_memstream(&resp_s, &resp_z);
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, CONNECT_TIMEOUT);
         curl_easy_setopt(curl, CURLOPT_AUTOREFERER, 1);
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
         curl_easy_setopt(curl, CURLOPT_URL, url_s);
