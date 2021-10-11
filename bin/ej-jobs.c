@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -600,6 +600,16 @@ ej_jobs_add_handler(const char *cmd, void (*handler)(int, int, char **, void *),
   memset(&current_handlers[total], 0, sizeof(current_handlers[0]));
 }
 
+static void
+add_handler_wrapper(
+        void *self,
+        const unsigned char *cmd,
+        tg_command_handler_t handler,
+        void *tg_self)
+{
+  ej_jobs_add_handler(cmd, handler, tg_self);
+}
+
 void
 ej_jobs_remove_handler(const char *cmd)
 {
@@ -638,6 +648,15 @@ ej_jobs_add_periodic_handler(
   periodics[periodics_u].handler = handler;
   periodics[periodics_u].user = user;
   ++periodics_u;
+}
+
+static void
+add_timer_wrapper(
+        void *self,
+        tg_timer_handler_t handler,
+        void *tg_self)
+{
+  ej_jobs_add_periodic_handler(handler, tg_self);
 }
 
 static void
@@ -730,6 +749,14 @@ load_plugins(struct ejudge_cfg *config)
     return -1;
   }
   telegram_data = (struct telegram_plugin_data *) telegram_plugin->data;
+
+  telegram_iface->set_set_command_handler(telegram_data, add_handler_wrapper, NULL);
+  telegram_iface->set_set_timer_handler(telegram_data, add_timer_wrapper, NULL);
+
+  if (telegram_iface->start(telegram_data) < 0) {
+    err("Telegram plugin start failed\n");
+    return -1;
+  }
 
   return 0;
 }
