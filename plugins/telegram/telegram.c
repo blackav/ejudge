@@ -143,6 +143,9 @@ struct telegram_plugin_data
     tg_set_timer_handler_t set_timer_handler;
     void *set_timer_handler_self;
 
+    pthread_t worker_thread;
+    _Atomic bool worker_thread_finish_request;
+
     pthread_mutex_t q_m;
     pthread_cond_t  q_c;
     int q_first;
@@ -361,6 +364,35 @@ set_set_timer_handler_func(
     state->set_timer_handler_self = setter_self;
 }
 
+static void *
+thread_func(void *data)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) data;
+    while (!state->worker_thread_finish_request) {
+        pthread_mutex_lock(&state->q_m);
+        while (state->q_len == 0 && !state->worker_thread_finish_request) {
+            pthread_cond_wait(&state->q_c, &state->q_m);
+        }
+        if (state->worker_thread_finish_request) {
+            pthread_mutex_unlock(&state->q_m);
+            break;
+        }
+        // this is local copy of the queue item
+        struct queue_item item = state->queue[state->q_first];
+        memset(&state->queue[state->q_first], 0, sizeof(item));
+        state->q_first = (state->q_first + 1) % QUEUE_SIZE;
+        pthread_mutex_unlock(&state->q_m);
+
+        item.handler(item.uid, item.argc, item.argv, state);
+
+        for (int i = 0; i < item.argc; ++i) {
+            free(item.argv[i]);
+        }
+        free(item.argv);
+    }
+    return NULL;
+}
+
 static int
 start_func(void *data)
 {
@@ -389,6 +421,12 @@ start_func(void *data)
                                queue_packet_handler_telegram_reminder, state);
     state->set_timer_handler(state->set_timer_handler_self,
                              queue_periodic_handler, state);
+
+    int r = pthread_create(&state->worker_thread, NULL, thread_func, state);
+    if (r) {
+        err("telegram: cannot create worker thread: %s", os_ErrorMsg());
+        return -1;
+    }
 
     return 0;
 }
