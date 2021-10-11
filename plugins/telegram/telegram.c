@@ -38,6 +38,7 @@
 #include <curl/curl.h>
 #endif
 
+#include <pthread.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -65,7 +66,7 @@ static int
 start_func(void *data);
 
 static void
-packet_handler_telegram(int uid, int argc, char **argv, void *user);
+queue_packet_handler_telegram(int uid, int argc, char **argv, void *user);
 static void
 packet_handler_telegram_token(int uid, int argc, char **argv, void *user);
 static void
@@ -114,6 +115,16 @@ struct bot_state
     struct telegram_pbs *pbs;
 };
 
+struct queue_item
+{
+    void (*handler)(int uid, int argc, char **argv, void *user);
+    int uid;
+    int argc;
+    char **argv;
+};
+
+enum { QUEUE_SIZE = 64 };
+
 struct telegram_plugin_data
 {
     struct
@@ -131,7 +142,42 @@ struct telegram_plugin_data
 
     tg_set_timer_handler_t set_timer_handler;
     void *set_timer_handler_self;
+
+    pthread_mutex_t q_m;
+    pthread_cond_t  q_c;
+    int q_first;
+    int q_len;
+    struct queue_item queue[QUEUE_SIZE];
 };
+
+static void
+put_to_queue(
+        struct telegram_plugin_data *state,
+        void (*handler)(int uid, int argc, char **argv, void *user),
+        int uid,
+        int argc,
+        char **argv)
+{
+    pthread_mutex_lock(&state->q_m);
+    if (state->q_len == QUEUE_SIZE) {
+        err("telegram_plugin: request queue overflow, request dropped");
+        goto done;
+    }
+    struct queue_item *item = &state->queue[(state->q_first + state->q_len++) % QUEUE_SIZE];
+    memset(item, 0, sizeof(*item));
+    item->handler = handler;
+    item->uid = uid;
+    item->argc = argc;
+    item->argv = calloc(argc + 1, sizeof(item->argv[0]));
+    for (int i = 0; i < argc; ++i) {
+        item->argv[i] = strdup(argv[i]);
+    }
+    if (state->q_len == 1)
+        pthread_cond_signal(&state->q_c);
+
+done:
+    pthread_mutex_unlock(&state->q_m);
+}
 
 static int
 parse_passwd_file(
@@ -212,6 +258,8 @@ init_func(void)
     struct telegram_plugin_data *state = NULL;
     XCALLOC(state, 1);
     state->conn = mongo_conn_create();
+    pthread_mutex_init(&state->q_m, NULL);
+    pthread_cond_init(&state->q_c, NULL);
     return (struct common_plugin_data*) state;
 }
 
@@ -320,7 +368,7 @@ start_func(void *data)
 
     state->set_command_handler(state->set_command_handler_self,
                                "telegram",
-                               packet_handler_telegram, state);
+                               queue_packet_handler_telegram, state);
     state->set_command_handler(state->set_command_handler_self,
                                "telegram_token",
                                packet_handler_telegram_token, state);
@@ -535,6 +583,13 @@ packet_handler_telegram(int uid, int argc, char **argv, void *user)
     if (curl) {
         curl_easy_cleanup(curl);
     }
+}
+
+static void
+queue_packet_handler_telegram(int uid, int argc, char **argv, void *user)
+{
+    struct telegram_plugin_data *state = (struct telegram_plugin_data*) user;
+    put_to_queue(state, packet_handler_telegram, uid, argc, argv);
 }
 
 /*
