@@ -383,6 +383,7 @@ thread_func(void *data)
         struct queue_item item = state->queue[state->q_first];
         memset(&state->queue[state->q_first], 0, sizeof(item));
         state->q_first = (state->q_first + 1) % QUEUE_SIZE;
+        --state->q_len;
         pthread_mutex_unlock(&state->q_m);
 
         item.handler(item.uid, item.argc, item.argv, state);
