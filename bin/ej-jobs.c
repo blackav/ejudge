@@ -1688,9 +1688,15 @@ app_state_disarm(struct AppState *as, struct FDInfo *fdi)
     fdi->events = 0;
 }
 
+static void dummy_handler(int s) {}
+
 static int
 app_state_prepare(struct AppState *as)
 {
+    sigaction(SIGINT, &(struct sigaction) { .sa_handler = dummy_handler }, NULL);
+    sigaction(SIGTERM, &(struct sigaction) { .sa_handler = dummy_handler }, NULL);
+    sigaction(SIGHUP, &(struct sigaction) { .sa_handler = dummy_handler }, NULL);
+
     sigset_t ss;
     sigemptyset(&ss);
     sigaddset(&ss, SIGINT);
