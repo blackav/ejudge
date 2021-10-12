@@ -1818,7 +1818,7 @@ prepare_config_vars(struct AppState *as)
             as->job_server_log = xstrdup(buf);
         }
     } else {
-        asprintf((char**) &as->config->job_server_log, "%s/%s", as->config->var_dir, "ej-jobs.log");
+        asprintf((char**) &as->job_server_log, "%s/%s", as->config->var_dir, "ej-jobs.log");
     }
 
     if (as->config->job_server_spool) {
