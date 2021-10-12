@@ -1,4 +1,4 @@
-/* -*- mode: c -*- */
+/* -*- mode: c; c-basic-offset: 4 -*- */
 
 /* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
 
