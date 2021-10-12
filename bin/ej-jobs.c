@@ -1225,6 +1225,8 @@ app_state_destroy(struct AppState *as)
     if (as->ifd >= 0) close(as->ifd);
     if (as->tfd >= 0) close(as->tfd);
     if (as->sfd >= 0) close(as->sfd);
+
+    if (as->job_server_socket) unlink(as->job_server_socket);
 }
 
 static void
@@ -1247,7 +1249,7 @@ add_handler_wrapper(
         tg_command_handler_t handler,
         void *tg_self)
 {
-    app_add_command_handler((struct AppState *) self, cmd, handler, self);
+    app_add_command_handler((struct AppState *) self, cmd, handler, tg_self);
 }
 
 static struct CommandItem *
@@ -1345,11 +1347,68 @@ static const struct FDInfoOps timer_ops =
     .op_read = timer_read_func,
 };
 
+static __attribute__((unused)) const unsigned char *
+inotify_mask_to_string(unsigned char *buf, uint32_t mask)
+{
+    char *p = buf;
+    char *s = "";
+    if ((mask & IN_ACCESS)) {
+        p = stpcpy(stpcpy(p, s), "ACCESS"); s = "|";
+    }
+    if ((mask & IN_ATTRIB)) {
+        p = stpcpy(stpcpy(p, s), "ATTRIB"); s = "|";
+    }
+    if ((mask & IN_CLOSE_WRITE)) {
+        p = stpcpy(stpcpy(p, s), "CLOSE_WRITE"); s = "|";
+    }
+    if ((mask & IN_CLOSE_NOWRITE)) {
+        p = stpcpy(stpcpy(p, s), "CLOSE_NOWRITE"); s = "|";
+    }
+    if ((mask & IN_CREATE)) {
+        p = stpcpy(stpcpy(p, s), "CREATE"); s = "|";
+    }
+    if ((mask & IN_DELETE)) {
+        p = stpcpy(stpcpy(p, s), "DELETE"); s = "|";
+    }
+    if ((mask & IN_DELETE_SELF)) {
+        p = stpcpy(stpcpy(p, s), "DELETE_SELF"); s = "|";
+    }
+    if ((mask & IN_MODIFY)) {
+        p = stpcpy(stpcpy(p, s), "MODIFY"); s = "|";
+    }
+    if ((mask & IN_MOVE_SELF)) {
+        p = stpcpy(stpcpy(p, s), "MOVE_SELF"); s = "|";
+    }
+    if ((mask & IN_MOVED_FROM)) {
+        p = stpcpy(stpcpy(p, s), "MOVED_FROM"); s = "|";
+    }
+    if ((mask & IN_MOVED_TO)) {
+        p = stpcpy(stpcpy(p, s), "MOVED_TO"); s = "|";
+    }
+    if ((mask & IN_OPEN)) {
+        p = stpcpy(stpcpy(p, s), "OPEN"); s = "|";
+    }
+    if ((mask & IN_IGNORED)) {
+        p = stpcpy(stpcpy(p, s), "IGNORED"); s = "|";
+    }
+    if ((mask & IN_ISDIR)) {
+        p = stpcpy(stpcpy(p, s), "ISDIR"); s = "|";
+    }
+    if ((mask & IN_Q_OVERFLOW)) {
+        p = stpcpy(stpcpy(p, s), "Q_OVERFLOW"); s = "|";
+    }
+    if ((mask & IN_UNMOUNT)) {
+        p = stpcpy(stpcpy(p, s), "UNMOUNT"); s = "|";
+    }
+    return buf;
+}
+
 static void
 inotify_read_func(struct AppState *as, struct FDInfo *fdi)
 {
     while (1) {
         unsigned char buf[4096];
+	__attribute__((unused)) unsigned char sbuf[4096];
         errno = 0;
         int r = read(fdi->fd, buf, sizeof(buf));
         if (r < 0 && errno == EAGAIN) {
@@ -1368,6 +1427,7 @@ inotify_read_func(struct AppState *as, struct FDInfo *fdi)
         while (p < bend) {
             const struct inotify_event *ev = (const struct inotify_event *) p;
             p += sizeof(*ev) + ev->len;
+	    //fprintf(stderr, "inotify event: %d,%s,%s\n", ev->wd, inotify_mask_to_string(sbuf, ev->mask), ev->name);
             if (as->spool_wd != ev->wd) {
                 err("inotify_read_func: unknown watch descriptor %d", ev->wd);
                 continue;
@@ -1673,7 +1733,7 @@ app_state_prepare(struct AppState *as)
         return -1;
     }
 
-    if ((as->spool_wd = inotify_add_watch(as->ifd, as->job_server_spool_watch, IN_CREATE)) < 0) {
+    if ((as->spool_wd = inotify_add_watch(as->ifd, as->job_server_spool_watch, IN_CREATE | IN_MOVED_TO)) < 0) {
         err("inotify_add_watch failed: %s", os_ErrorMsg());
         return -1;
     }
@@ -1954,6 +2014,15 @@ process_timer_event(struct AppState *as)
     for (int i = 0; i < as->tmrs_u; ++i) {
         struct TimerItem *item = &as->tmrs[i];
         item->handler(item->self);
+    }
+
+    char pkt_name[256];
+    if (scan_dir(as->job_server_spool, pkt_name, sizeof(pkt_name), 0) > 0) {
+        if (as->inq_u == as->inq_a) {
+            if (!(as->inq_a *= 2)) as->inq_a = 32;
+            as->inq = xrealloc(as->inq, as->inq_a * sizeof(as->inq[0]));
+        }
+        as->inq[as->inq_u++] = xstrdup(pkt_name);
     }
 }
 
@@ -2243,17 +2312,17 @@ do_loop(struct AppState *as)
             as->rd_first = as->rd_last = NULL;
         }
 
+        if (as->timer_flag) {
+            process_timer_event(as);
+            as->timer_flag = 0;
+        }
+
         for (int i = 0; i < as->inq_u; ++i) {
             process_job_file(as, as->inq[i]);
             xfree(as->inq[i]);
             as->inq[i] = NULL;
         }
         as->inq_u = 0;
-
-        if (as->timer_flag) {
-            process_timer_event(as);
-            as->timer_flag = 0;
-        }
 
         if (as->child_flag) {
             process_child_event(as);
