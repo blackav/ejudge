@@ -43,6 +43,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <ctype.h>
+#include <signal.h>
 
 static struct common_plugin_data *
 init_func(void);
@@ -369,6 +370,10 @@ set_set_timer_handler_func(
 static void *
 thread_func(void *data)
 {
+    sigset_t ss;
+    sigfillset(&ss);
+    pthread_sigmask(SIG_BLOCK, &ss, NULL);
+
     struct telegram_plugin_data *state = (struct telegram_plugin_data*) data;
     while (!state->worker_thread_finish_request) {
         pthread_mutex_lock(&state->q_m);
