@@ -1892,10 +1892,42 @@ close_client(struct AppState *as, struct ClientState *cs)
     client_delete(cs);
 }
 
+static int
+parse_incoming_packet(
+        const char *data,
+        size_t length,
+        int *p_argc,
+        char ***p_argv);
+
 static void
 process_data(struct AppState *as, struct ClientState *cs)
 {
+    int argc = 0;
+    char **argv = NULL;
 
+    while (1) {
+        if (parse_incoming_packet(cs->read_buf, cs->read_len, &argc, &argv) < 0) {
+            err("packet parsing error");
+            break;
+        }
+        if (!argc || !argv || !argv[0]) {
+            err("empty packet");
+            break;
+        }
+        struct CommandItem *item = app_find_command_handler(as, argv[0]);
+        if (!item) {
+            err("invalid command '%s'", argv[0]);
+            break;
+        }
+
+        item->handler(cs->peer_uid, argc, argv, item->self);
+        break;
+    }
+
+    for (int i = 0; i < argc; ++i) {
+        free(argv[i]);
+    }
+    free(argv);
 
     // prepare for the next command
     cs->data_ready_flag = 0;
