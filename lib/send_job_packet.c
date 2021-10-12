@@ -20,14 +20,19 @@
 #include "ejudge/errlog.h"
 #include "ejudge/pathutl.h"
 #include "ejudge/fileutl.h"
+#include "ejudge/sock_op.h"
 
 #include "ejudge/xalloc.h"
+#include "ejudge/osdeps.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <limits.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 
 int
 send_job_packet(
@@ -65,6 +70,64 @@ send_job_packet(
   for (i = 0; i < argc; i++) {
     memcpy(p, args[i], argl[i]);
     p += argl[i];
+  }
+
+  unsigned char socket_path[PATH_MAX];
+  socket_path[0] = 0;
+
+#if defined EJUDGE_LOCAL_DIR
+  if (snprintf(socket_path, sizeof(socket_path), "%s/%s", EJUDGE_LOCAL_DIR, "sockets/jobs") >= sizeof(socket_path)) {
+    err("socket path is too long");
+    return -1;
+  }
+#else
+  if (snprintf(socket_path, sizeof(socket_path), "%s/%s", config->var_dir, "socket/jobs") >= sizeof(socket_path)) {
+    err("socket path is too long");
+    return -1;
+  }
+#endif
+
+  while (1) {
+    int sfd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sfd < 0) {
+      err("send_job_packet: socket() failed: %s", os_ErrorMsg());
+      break;
+    }
+
+    struct sockaddr_un addr = {};
+    addr.sun_family = AF_UNIX;
+    snprintf(addr.sun_path, sizeof(addr.sun_path), "%s", socket_path);
+    if (connect(sfd, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
+      err("send_job_packet: connect() failed: %s", os_ErrorMsg());
+      close(sfd);
+      break;
+    }
+    if (sock_op_put_creds(sfd) < 0) {
+      err("send_job_packet: failed to send credentials");
+      close(sfd);
+      break;
+    }
+
+    int len = pktlen;
+    unsigned char *p = pkt;
+    while (len > 0) {
+      int r = write(sfd, p, len);
+      if (r < 0) {
+        err("send_job_packet: write failed: %s", os_ErrorMsg());
+        close(sfd);
+        return -1;
+      }
+      if (!r) {
+        err("send_job_packet: write returned 0");
+        close(sfd);
+        return -1;
+      }
+      len -= r;
+      p += r;
+    }
+
+    close(sfd);
+    return 0;
   }
 
 #if defined EJUDGE_LOCAL_DIR
