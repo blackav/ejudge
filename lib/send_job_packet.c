@@ -32,7 +32,6 @@
 int
 send_job_packet(
         const struct ejudge_cfg *config,
-        const unsigned char *q_dir,
         unsigned char **args,
         unsigned char **p_path)
 {
@@ -68,18 +67,14 @@ send_job_packet(
     p += argl[i];
   }
 
-  if (q_dir) {
-    snprintf(q_path, sizeof(q_path), "%s", q_dir);
-  } else {
 #if defined EJUDGE_LOCAL_DIR
-    snprintf(q_path, sizeof(q_path), "%s/jspool", EJUDGE_LOCAL_DIR);
+  snprintf(q_path, sizeof(q_path), "%s/jspool", EJUDGE_LOCAL_DIR);
 #elif defined EJUDGE_CONTESTS_HOME_DIR
-    snprintf(q_path, sizeof(q_path), "%s/var/jspool", EJUDGE_CONTESTS_HOME_DIR);
+  snprintf(q_path, sizeof(q_path), "%s/var/jspool", EJUDGE_CONTESTS_HOME_DIR);
 #else
-    err("send_job_packet: no queue dir defined");
-    return -1;
+  err("send_job_packet: no queue dir defined");
+  return -1;
 #endif
-  }
 
   gettimeofday(&t, 0);
   pid = getpid();

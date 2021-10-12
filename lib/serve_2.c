@@ -990,7 +990,7 @@ serve_check_telegram_reminder(
     snprintf(unans_clar_buf, sizeof(unans_clar_buf), "%d", trdata.unans_clars);
     args[7] = unans_clar_buf;
     args[8] = NULL;
-    send_job_packet(config, NULL, (unsigned char**) args, 0);
+    send_job_packet(config, (unsigned char**) args, 0);
   }
 
   struct tm stm;
@@ -1064,7 +1064,7 @@ generate_statistics_email(
   mail_args[4] = cnts->daily_stat_email;
   mail_args[5] = ftxt;
   mail_args[6] = 0;
-  send_job_packet(config, NULL, (unsigned char **) mail_args, 0);
+  send_job_packet(config, (unsigned char **) mail_args, 0);
   xfree(ftxt); ftxt = 0;
   xfree(etxt); etxt = 0;
 }
@@ -2502,7 +2502,7 @@ serve_send_clar_notify_telegram(
   args[2] = cnts->telegram_admin_chat_id;
   args[3] = text_s;
   args[4] = NULL;
-  send_job_packet(config, NULL, (unsigned char**) args, 0);
+  send_job_packet(config, (unsigned char**) args, 0);
 
   free(text_s); text_s = NULL;
 }
@@ -2550,7 +2550,7 @@ serve_send_telegram_token(
   args[7] = contest_id_buf;
   args[8] = expiry_buf;
   args[9] = NULL;
-  send_job_packet(config, NULL, (unsigned char**) args, 0);
+  send_job_packet(config, (unsigned char**) args, 0);
 }
 
 void
@@ -2591,7 +2591,7 @@ serve_send_clar_notify_email(
   mail_args[4] = cnts->clar_notify_email;
   mail_args[5] = ftxt;
   mail_args[6] = 0;
-  send_job_packet(config, NULL, (unsigned char**) mail_args, 0);
+  send_job_packet(config, (unsigned char**) mail_args, 0);
   xfree(ftxt); ftxt = 0;
 }
 
@@ -2645,7 +2645,7 @@ serve_telegram_notify_on_submit(
   args[8] = probname;
   args[9] = run_status_str(new_status, buf4, sizeof(buf4), 0, 0);
   args[10] = NULL;
-  send_job_packet(config, NULL, (unsigned char **) args, 0);
+  send_job_packet(config, (unsigned char **) args, 0);
 }
 
 void
@@ -2695,7 +2695,7 @@ serve_telegram_check_failed(
   }
   args[8] = probname;
   args[9] = NULL;
-  send_job_packet(config, NULL, (unsigned char **) args, 0);
+  send_job_packet(config, (unsigned char **) args, 0);
 }
 
 void
@@ -2731,7 +2731,7 @@ serve_send_check_failed_email(
   mail_args[4] = cnts->cf_notify_email;
   mail_args[5] = ftxt;
   mail_args[6] = 0;
-  send_job_packet(config, NULL, (unsigned char **) mail_args, 0);
+  send_job_packet(config, (unsigned char **) mail_args, 0);
   xfree(ftxt); ftxt = 0;
 }
 
@@ -2760,7 +2760,7 @@ serve_send_email_to_user(
   mail_args[4] = u->email;
   mail_args[5] = text;
   mail_args[6] = 0;
-  send_job_packet(config, NULL, (unsigned char**) mail_args, 0);
+  send_job_packet(config, (unsigned char**) mail_args, 0);
 }
 
 void
@@ -2801,7 +2801,7 @@ serve_telegram_user_run_reviewed(
     args[8] = run_status_str(new_status, buf4, sizeof(buf4), 0, 0);
   }
   args[9] = NULL;
-  send_job_packet(config, NULL, (unsigned char **) args, 0);
+  send_job_packet(config, (unsigned char **) args, 0);
 }
 
 void
@@ -2837,7 +2837,7 @@ serve_telegram_user_clar_replied(
   args[7] = buf3;
   args[8] = reply;
   args[9] = NULL;
-  send_job_packet(config, NULL, (unsigned char **) args, 0);
+  send_job_packet(config, (unsigned char **) args, 0);
 }
 
 void

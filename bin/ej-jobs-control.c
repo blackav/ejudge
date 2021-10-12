@@ -160,7 +160,7 @@ main(int argc, char *argv[])
   }
 
   // check, that job-server is running
-  if (send_job_packet(config, NULL, check_args, &pkt_path) < 0)
+  if (send_job_packet(config, check_args, &pkt_path) < 0)
     op_error("packet write error");
   cur_wait = 100000;
   tot_wait = 0;
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
     }
   }
 
-  if (send_job_packet(config, NULL, job_args, &pkt_path) < 0)
+  if (send_job_packet(config, job_args, &pkt_path) < 0)
     op_error("packet write error");
   cur_wait = 100000;
   while (1) {
