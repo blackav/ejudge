@@ -108,7 +108,7 @@ send_job_packet(
       break;
     }
 
-    int len = pktlen;
+    int len = pktlen + 4;
     unsigned char *p = pkt;
     while (len > 0) {
       int r = write(sfd, p, len);
