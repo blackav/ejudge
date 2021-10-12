@@ -1,7 +1,6 @@
 /* -*- mode: c -*- */
-/* $Id$ */
 
-/* Copyright (C) 2006-2014 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +27,7 @@ main(int argc, char **argv)
   int r;
   unsigned char **args = (unsigned char**) argv + 1;
 
-  r = send_job_packet(NULL, args, NULL);
+  r = send_job_packet(NULL, NULL, args, NULL);
   if (r >= 0) return 0;
   return 1;
 }

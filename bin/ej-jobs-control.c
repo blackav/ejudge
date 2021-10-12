@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2015 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -160,7 +160,7 @@ main(int argc, char *argv[])
   }
 
   // check, that job-server is running
-  if (send_job_packet(NULL, check_args, &pkt_path) < 0)
+  if (send_job_packet(config, NULL, check_args, &pkt_path) < 0)
     op_error("packet write error");
   cur_wait = 100000;
   tot_wait = 0;
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
     }
   }
 
-  if (send_job_packet(NULL, job_args, &pkt_path) < 0)
+  if (send_job_packet(config, NULL, job_args, &pkt_path) < 0)
     op_error("packet write error");
   cur_wait = 100000;
   while (1) {

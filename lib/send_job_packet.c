@@ -30,8 +30,11 @@
 #include <unistd.h>
 
 int
-send_job_packet(const unsigned char *q_dir, unsigned char **args,
-                unsigned char **p_path)
+send_job_packet(
+        const struct ejudge_cfg *config,
+        const unsigned char *q_dir,
+        unsigned char **args,
+        unsigned char **p_path)
 {
   path_t q_path;
   int argc, pktlen, i, pid;

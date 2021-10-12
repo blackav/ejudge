@@ -1,10 +1,9 @@
 /* -*- c -*- */
-/* $Id$ */
 
 #ifndef __JOB_PACKET_H__
 #define __JOB_PACKET_H__ 1
 
-/* Copyright (C) 2006 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -18,7 +17,12 @@
  * GNU General Public License for more details.
  */
 
-int send_job_packet(const unsigned char *q_dir, unsigned char **args,
-                    unsigned char **p_path);
+struct ejudge_cfg;
+
+int send_job_packet(
+        const struct ejudge_cfg *config,
+        const unsigned char *q_dir,
+        unsigned char **args,
+        unsigned char **p_path);
 
 #endif
