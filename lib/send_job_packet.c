@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2006-2019 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2006-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,26 @@ send_job_packet(const unsigned char *q_dir, unsigned char **args,
     err("send_job_packet: no arguments");
     return -1;
   }
+
+  for (argc = 0; args[argc]; argc++);
+  XALLOCA(argl, argc);
+  for (i = 0, pktlen = 0; i < argc; i++)
+    pktlen += argl[i] = strlen(args[i]);
+  pktlen += sizeof(int) + argc * sizeof(int);
+  if (pktlen <= 0 || pktlen > 1 * 1024 * 1024) {
+    err("send_job_packet: packet is too big");
+    return -1;
+  }
+  XALLOCA(pkt, pktlen + sizeof(int));
+  p = pkt;
+  memcpy(p, &pktlen, sizeof(int)); p += sizeof(int);
+  memcpy(p, &argc, sizeof(int)); p += sizeof(int);
+  memcpy(p, argl, argc * sizeof(int)); p += argc * sizeof(int);
+  for (i = 0; i < argc; i++) {
+    memcpy(p, args[i], argl[i]);
+    p += argl[i];
+  }
+
   if (q_dir) {
     snprintf(q_path, sizeof(q_path), "%s", q_dir);
   } else {
@@ -58,29 +78,11 @@ send_job_packet(const unsigned char *q_dir, unsigned char **args,
 #endif
   }
 
-  for (argc = 0; args[argc]; argc++);
-  XALLOCA(argl, argc);
-  for (i = 0, pktlen = 0; i < argc; i++)
-    pktlen += argl[i] = strlen(args[i]);
-  pktlen += sizeof(int) + argc * sizeof(int);
-  if (pktlen <= 0 || pktlen > 1 * 1024 * 1024) {
-    err("send_job_packet: packet is too big");
-    return -1;
-  }
-  XALLOCA(pkt, pktlen);
-  p = pkt;
-  memcpy(p, &argc, sizeof(int)); p += sizeof(int);
-  memcpy(p, argl, argc * sizeof(int)); p += argc * sizeof(int);
-  for (i = 0; i < argc; i++) {
-    memcpy(p, args[i], argl[i]);
-    p += argl[i];
-  }
-
   gettimeofday(&t, 0);
   pid = getpid();
   snprintf(pkt_name, sizeof(pkt_name),
            "%08x%08x%04x", (unsigned )t.tv_sec, (unsigned) t.tv_usec, pid);
-  if (generic_write_file(pkt, pktlen, SAFE, q_path, pkt_name, "") < 0) {
+  if (generic_write_file(pkt + sizeof(int), pktlen, SAFE, q_path, pkt_name, "") < 0) {
     return -1;
   }
 
