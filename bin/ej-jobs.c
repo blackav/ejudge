@@ -2482,8 +2482,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if (load_plugins(&as) < 0) return 1;
-
     if (daemon_mode) {
         if (start_open_log(as.job_server_log) < 0)
             return 1;
@@ -2495,6 +2493,8 @@ int main(int argc, char *argv[])
         if (start_open_log(as.job_server_log) < 0)
             return 1;
     }
+
+    if (load_plugins(&as) < 0) return 1;
 
     if (app_state_prepare(&as) < 0) {
         return 1;
