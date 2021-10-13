@@ -2321,7 +2321,7 @@ do_loop(struct AppState *as)
         as->rd_first = as->rd_last = NULL;
         for (int i = 0; i < n; ++i) {
             struct epoll_event *ev = &evs[i];
-            if ((ev->events & EPOLLIN) != 0) {
+            if ((ev->events & (EPOLLIN | EPOLLHUP)) != 0) {
                 struct FDInfo *fdi = (struct FDInfo *) ev->data.ptr;
                 fdi->ops->op_read(as, fdi);
             }
