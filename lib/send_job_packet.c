@@ -37,15 +37,13 @@
 int
 send_job_packet(
         const struct ejudge_cfg *config,
-        unsigned char **args,
-        unsigned char **p_path)
+        unsigned char **args)
 {
   path_t q_path;
   int argc, pktlen, i, pid;
   int *argl;
   char *pkt, *p;
   unsigned char pkt_name[64];
-  path_t pkt_path;
   struct timeval t;
 
   if (!args || !args[0]) {
@@ -147,9 +145,5 @@ send_job_packet(
     return -1;
   }
 
-  if (p_path) {
-    snprintf(pkt_path, sizeof(pkt_path), "%s/dir/%s", q_path, pkt_name);
-    *p_path = xstrdup(pkt_path);
-  }
   return 0;
 }

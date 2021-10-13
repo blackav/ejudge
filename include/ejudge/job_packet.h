@@ -21,7 +21,6 @@ struct ejudge_cfg;
 
 int send_job_packet(
         const struct ejudge_cfg *config,
-        unsigned char **args,
-        unsigned char **p_path);
+        unsigned char **args);
 
 #endif
