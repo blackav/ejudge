@@ -102,10 +102,6 @@ main(int argc, char *argv[])
   const char *command = 0;
   const char *ejudge_xml_path = 0;
   struct ejudge_cfg *config = 0;
-  unsigned char *job_args[2] = { "", 0 };
-  unsigned char *check_args[2] = { "nop", 0 };
-  unsigned char *pkt_path = 0;
-  int tot_wait = 0, cur_wait = 0;
   const unsigned char *signame = "";
   int signum = 0, pid;
 
@@ -138,11 +134,9 @@ main(int argc, char *argv[])
   if (!(config = ejudge_cfg_parse(ejudge_xml_path, 0))) return 1;
 
   if (!strcmp(command, "stop")) {
-    job_args[0] = "stop";
     signame = "TERM";
     signum = START_STOP;
   } else if (!strcmp(command, "restart")) {
-    job_args[0] = "restart";
     signame = "HUP";
     signum = START_RESTART;
   } else {
@@ -159,31 +153,8 @@ main(int argc, char *argv[])
     return 0;
   }
 
-  // check, that job-server is running
-  if (send_job_packet(config, check_args, &pkt_path) < 0)
-    op_error("packet write error");
-  cur_wait = 100000;
-  tot_wait = 0;
-  while (1) {
-    usleep(cur_wait);
-    tot_wait += cur_wait;
-    cur_wait += 100000;
-    if (access(pkt_path, F_OK) < 0) break;
-    if (tot_wait >= 5000000) {
-      unlink(pkt_path);
-      op_error("ej-jobs seems to not running");
-    }
-  }
-
-  if (send_job_packet(config, job_args, &pkt_path) < 0)
-    op_error("packet write error");
-  cur_wait = 100000;
-  while (1) {
-    usleep(cur_wait);
-    cur_wait += 100000;
-    if (cur_wait > 1000000) cur_wait = 1000000;
-    if (access(pkt_path, F_OK) < 0) break;
-  }
+  // should never get here
+  abort();
 
   return 0;
 }
