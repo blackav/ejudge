@@ -41,6 +41,9 @@ static struct ProviderInfo providers[PROVIDER_COUNT] =
 static oauth_register_fd_func_t oauth_register_fd_func = NULL;
 static void *oauth_register_fd_data = NULL;
 
+static oauth_set_command_handler_t oauth_set_command_handler_func = NULL;
+static void *oauth_set_command_handler_data = NULL;
+
 static int
 send_job_packet_fwd(void *self, unsigned char **args)
 {
@@ -123,6 +126,10 @@ get_provider(
         info->i->set_send_job_handler(info->d, send_job_packet_fwd, (void*) config);
     }
 
+    if (info->i->set_set_command_handler && oauth_set_command_handler_func) {
+        info->i->set_set_command_handler(info->d, oauth_set_command_handler_func, oauth_set_command_handler_data);
+    }
+
     return info;
 }
 
@@ -180,4 +187,13 @@ oauth_get_result(
     struct ProviderInfo *info = get_provider(config, provider);
     if (!info) return (struct OAuthLoginResult) { .status = 2, .error_message = xstrdup("invalid provider") };
     return info->i->get_result(info->d, job_id);
+}
+
+void
+oauth_set_set_command_handler(
+        oauth_set_command_handler_t handler,
+        void *data)
+{
+    oauth_set_command_handler_func = handler;
+    oauth_set_command_handler_data = data;
 }

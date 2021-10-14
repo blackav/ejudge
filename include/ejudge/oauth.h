@@ -31,6 +31,12 @@ typedef void (*oauth_fd_ready_callback_func_t)(void *data, int fd);
 // function for registering callback
 typedef void (*oauth_register_fd_func_t)(void *register_data, int fd, oauth_fd_ready_callback_func_t cb, void *data);
 
+// function for command handling
+typedef void (*oauth_command_handler_t)(int uid, int argc, char **argv, void *self);
+
+// function for registering command handler
+typedef void (*oauth_set_command_handler_t)(void *set_self, const unsigned char *cmd, oauth_command_handler_t handler, void *auth_self);
+
 void
 oauth_set_register_fd_func(oauth_register_fd_func_t func, void *register_data);
 
@@ -63,5 +69,10 @@ oauth_get_result(
 
 void
 oauth_free_result(struct OAuthLoginResult *res);
+
+void
+oauth_set_set_command_handler(
+        oauth_set_command_handler_t handler,
+        void *data);
 
 #endif /* __OAUTH_H__ */
