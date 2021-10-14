@@ -93,7 +93,10 @@ struct auth_plugin_iface plugin_auth_google =
     AUTH_PLUGIN_IFACE_VERSION,
     open_func,
     check_func,
+    NULL, // start_thread
     set_register_fd_func_func,
+    NULL, // set_set_command_handler
+    NULL, // set_send_job_handler
     get_redirect_url_func,
     process_auth_callback_func,
     get_result_func,

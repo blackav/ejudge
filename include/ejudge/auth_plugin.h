@@ -24,6 +24,11 @@
 
 #define AUTH_PLUGIN_IFACE_VERSION 1
 
+typedef void (*auth_command_handler_t)(int uid, int argc, char **argv, void *self);
+typedef void (*auth_set_command_handler_t)(void *set_self, const unsigned char *cmd, auth_command_handler_t handler, void *auth_self);
+
+typedef void (*auth_send_job_handler_t)(void *self, unsigned char **args);
+
 struct auth_plugin_iface
 {
     struct common_plugin_iface b;
@@ -32,11 +37,20 @@ struct auth_plugin_iface
     // open the database
     int (*open)(void *);
     int (*check)(void *);
+    int (*start_thread)(void *);
 
     void (*set_register_fd_func)(
         void *data,
         oauth_register_fd_func_t func,
         void *register_fd_data);
+    void (*set_set_command_handler)(
+        void *data,
+        auth_set_command_handler_t setter,
+        void *setter_self);
+    void (*set_send_job_handler)(
+        void *data,
+        auth_send_job_handler_t handler,
+        void *handler_self);
     unsigned char * (*get_redirect_url)(
         void *data,
         const unsigned char *cookie,
