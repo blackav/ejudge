@@ -75,4 +75,9 @@ oauth_set_set_command_handler(
         oauth_set_command_handler_t handler,
         void *data);
 
+int
+oauth_start_thread(
+        const struct ejudge_cfg *config,
+        const unsigned char *provider);
+
 #endif /* __OAUTH_H__ */

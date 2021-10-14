@@ -197,3 +197,13 @@ oauth_set_set_command_handler(
     oauth_set_command_handler_func = handler;
     oauth_set_command_handler_data = data;
 }
+
+int
+oauth_start_thread(
+        const struct ejudge_cfg *config,
+        const unsigned char *provider)
+{
+    struct ProviderInfo *info = get_provider(config, provider);
+    if (!info || !info->i->start_thread) return -1;
+    return info->i->start_thread(info->d);
+}
