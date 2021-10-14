@@ -27,7 +27,7 @@
 typedef void (*auth_command_handler_t)(int uid, int argc, char **argv, void *self);
 typedef void (*auth_set_command_handler_t)(void *set_self, const unsigned char *cmd, auth_command_handler_t handler, void *auth_self);
 
-typedef void (*auth_send_job_handler_t)(void *self, unsigned char **args);
+typedef int (*auth_send_job_handler_t)(void *self, unsigned char **args);
 
 struct auth_plugin_iface
 {

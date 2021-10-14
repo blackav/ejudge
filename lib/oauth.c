@@ -19,6 +19,7 @@
 #include "ejudge/oauth.h"
 #include "ejudge/errlog.h"
 #include "ejudge/xalloc.h"
+#include "ejudge/job_packet.h"
 
 #include <string.h>
 
@@ -39,6 +40,12 @@ static struct ProviderInfo providers[PROVIDER_COUNT] =
 
 static oauth_register_fd_func_t oauth_register_fd_func = NULL;
 static void *oauth_register_fd_data = NULL;
+
+static int
+send_job_packet_fwd(void *self, unsigned char **args)
+{
+    return send_job_packet((const struct ejudge_cfg *) self, args);
+}
 
 static struct ProviderInfo *
 find_provider(const unsigned char *provider)
@@ -110,6 +117,10 @@ get_provider(
     }
     if (info->i->set_register_fd_func) {
         info->i->set_register_fd_func(info->d, oauth_register_fd_func, oauth_register_fd_data);
+    }
+
+    if (info->i->set_send_job_handler) {
+        info->i->set_send_job_handler(info->d, send_job_packet_fwd, (void*) config);
     }
 
     return info;
