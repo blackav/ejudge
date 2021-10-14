@@ -147,7 +147,7 @@ struct telegram_plugin_data
     void *set_timer_handler_self;
 
     pthread_t worker_thread;
-    _Atomic bool worker_thread_finish_request;
+    _Atomic _Bool worker_thread_finish_request;
 
     pthread_mutex_t q_m;
     pthread_cond_t  q_c;
