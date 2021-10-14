@@ -40,6 +40,8 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <dirent.h>
+#include <signal.h>
+#include <pthread.h>
 
 static struct common_plugin_data*
 init_func(void);
@@ -54,6 +56,18 @@ static int
 open_func(void *data);
 static int
 check_func(void *data);
+static int
+start_thread_func(void *data);
+static void
+set_set_command_handler_func(
+        void *data,
+        auth_set_command_handler_t setter,
+        void *setter_self);
+static void
+set_send_job_handler_func(
+        void *data,
+        auth_send_job_handler_t handler,
+        void *handler_self);
 static void
 set_register_fd_func_func(
         void *data,
@@ -93,14 +107,24 @@ struct auth_plugin_iface plugin_auth_google =
     AUTH_PLUGIN_IFACE_VERSION,
     open_func,
     check_func,
-    NULL, // start_thread
+    start_thread_func,
     set_register_fd_func_func,
-    NULL, // set_set_command_handler
-    NULL, // set_send_job_handler
+    set_set_command_handler_func,
+    set_send_job_handler_func,
     get_redirect_url_func,
     process_auth_callback_func,
     get_result_func,
 };
+
+struct queue_item
+{
+    void (*handler)(int uid, int argc, char **argv, void *user);
+    int uid;
+    int argc;
+    char **argv;
+};
+
+enum { QUEUE_SIZE = 64 };
 
 struct auth_google_state
 {
@@ -122,6 +146,22 @@ struct auth_google_state
     int bg_w_fd;
     int bg_r_fd;
     int bg_pid;
+
+    // background request thread
+    pthread_t worker_thread;
+    _Atomic _Bool worker_thread_finish_request;
+
+    auth_set_command_handler_t set_command_handler_func;
+    void *set_command_handler_data;
+
+    auth_send_job_handler_t send_job_handler_func;
+    void *send_job_handler_data;
+
+    pthread_mutex_t q_m;
+    pthread_cond_t  q_c;
+    int q_first;
+    int q_len;
+    struct queue_item queue[QUEUE_SIZE];
 };
 
 struct oauth_stage1_internal
@@ -190,6 +230,69 @@ static const struct common_mysql_parse_spec oauth_stage2_spec[OAUTH_STAGE2_ROW_W
     { 1, 's', "error_message", OAUTH_STAGE2_OFFSET(error_message), 0 },
 };
 
+static void
+put_to_queue(
+        struct auth_google_state *state,
+        void (*handler)(int uid, int argc, char **argv, void *user),
+        int uid,
+        int argc,
+        char **argv)
+{
+    pthread_mutex_lock(&state->q_m);
+    if (state->q_len == QUEUE_SIZE) {
+        err("telegram_plugin: request queue overflow, request dropped");
+        goto done;
+    }
+    struct queue_item *item = &state->queue[(state->q_first + state->q_len++) % QUEUE_SIZE];
+    memset(item, 0, sizeof(*item));
+    item->handler = handler;
+    item->uid = uid;
+    item->argc = argc;
+    item->argv = calloc(argc + 1, sizeof(item->argv[0]));
+    for (int i = 0; i < argc; ++i) {
+        item->argv[i] = strdup(argv[i]);
+    }
+    if (state->q_len == 1)
+        pthread_cond_signal(&state->q_c);
+
+done:
+    pthread_mutex_unlock(&state->q_m);
+}
+
+static void *
+thread_func(void *data)
+{
+    sigset_t ss;
+    sigfillset(&ss);
+    pthread_sigmask(SIG_BLOCK, &ss, NULL);
+
+    struct auth_google_state *state = (struct auth_google_state*) data;
+    while (!state->worker_thread_finish_request) {
+        pthread_mutex_lock(&state->q_m);
+        while (state->q_len == 0 && !state->worker_thread_finish_request) {
+            pthread_cond_wait(&state->q_c, &state->q_m);
+        }
+        if (state->worker_thread_finish_request) {
+            pthread_mutex_unlock(&state->q_m);
+            break;
+        }
+        // this is local copy of the queue item
+        struct queue_item item = state->queue[state->q_first];
+        memset(&state->queue[state->q_first], 0, sizeof(item));
+        state->q_first = (state->q_first + 1) % QUEUE_SIZE;
+        --state->q_len;
+        pthread_mutex_unlock(&state->q_m);
+
+        item.handler(item.uid, item.argc, item.argv, state);
+
+        for (int i = 0; i < item.argc; ++i) {
+            free(item.argv[i]);
+        }
+        free(item.argv);
+    }
+    return NULL;
+}
+
 static struct common_plugin_data*
 init_func(void)
 {
@@ -200,6 +303,9 @@ init_func(void)
     state->curl = curl_easy_init();
     state->bg_w_fd = -1;
     state->bg_r_fd = -1;
+
+    pthread_mutex_init(&state->q_m, NULL);
+    pthread_cond_init(&state->q_c, NULL);
 
     return (struct common_plugin_data*) state;
 }
@@ -402,6 +508,56 @@ set_register_fd_func_func(
 
     state->register_fd_func = func;
     state->register_fd_data = data;
+}
+
+static void
+set_set_command_handler_func(
+        void *data,
+        auth_set_command_handler_t setter,
+        void *setter_self)
+{
+    struct auth_google_state *state = (struct auth_google_state*) data;
+
+    state->set_command_handler_func = setter;
+    state->set_command_handler_data = setter_self;
+}
+
+static void
+set_send_job_handler_func(
+        void *data,
+        auth_send_job_handler_t handler,
+        void *handler_self)
+{
+    struct auth_google_state *state = (struct auth_google_state*) data;
+
+    state->send_job_handler_func = handler;
+    state->send_job_handler_data = handler_self;
+}
+
+static void
+queue_packet_handler_auth_google(int uid, int argc, char **argv, void *user);
+
+static int
+start_thread_func(void *data)
+{
+    struct auth_google_state *state = (struct auth_google_state*) data;
+
+    if (!state->set_command_handler_func) {
+        return 0;
+    }
+
+    state->set_command_handler_func(state->set_command_handler_data,
+                                    "auth_google",
+                                    queue_packet_handler_auth_google,
+                                    data);
+
+    int r = pthread_create(&state->worker_thread, NULL, thread_func, state);
+    if (r) {
+        err("auth_google: cannot create worker thread: %s", os_ErrorMsg());
+        return -1;
+    }
+
+    return 0;
 }
 
 static unsigned char *
@@ -1124,4 +1280,16 @@ fail:
     free(req_s);
     if (!error_message) error_message = xstrdup("unknown error");
     return (struct OAuthLoginResult) { .status = 2, .error_message = error_message };
+}
+
+static void
+packet_handler_auth_google(int uid, int argc, char **argv, void *user)
+{
+}
+
+static void
+queue_packet_handler_auth_google(int uid, int argc, char **argv, void *user)
+{
+    struct auth_google_state *state = (struct auth_google_state*) user;
+    put_to_queue(state, packet_handler_auth_google, uid, argc, argv);
 }
