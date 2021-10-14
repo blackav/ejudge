@@ -21,6 +21,7 @@
 #include "ejudge/pathutl.h"
 #include "ejudge/fileutl.h"
 #include "ejudge/sock_op.h"
+#include "ejudge/ejudge_cfg.h"
 
 #include "ejudge/xalloc.h"
 #include "ejudge/osdeps.h"
