@@ -894,6 +894,7 @@ main(int argc, char *argv[])
 #include "ejudge/xml_utils.h"
 #include "ejudge/cJSON.h"
 #include "ejudge/bson_utils.h"
+#include "ejudge/auth_plugin.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -1037,6 +1038,10 @@ struct AppState
     // Telegram API plugin
     const struct telegram_plugin_iface *telegram_iface;
     struct telegram_plugin_data *telegram_data;
+
+    // Google Auth plugin
+    const struct auth_plugin_iface *auth_google_iface;
+    void *auth_google_data;
 
     int child_flag;
     int term_flag;
@@ -2418,9 +2423,56 @@ load_telegram_plugin(struct AppState *as)
 }
 
 static int
+load_auth_google_plugin(struct AppState *as)
+{
+    struct xml_tree *google_cfg = ejudge_cfg_get_plugin_config(as->config, "auth", "google");
+    if (!google_cfg) return 0;
+
+    const struct common_loaded_plugin *google_plugin = plugin_load_external(NULL, "auth", "google", as->config);
+    if (!google_plugin) {
+        err("failed to load auth_google plugin");
+        return -1;
+    }
+
+    if (google_plugin->iface->b.size != sizeof(struct auth_plugin_iface)) {
+        err("auth_google plugin interface size mismatch");
+        return -1;
+    }
+
+    const struct auth_plugin_iface *auth_iface = (const struct auth_plugin_iface *) google_plugin->iface;
+    if (auth_iface->auth_version != AUTH_PLUGIN_IFACE_VERSION) {
+        err("auth plugin interface version mismatch");
+        return -1;
+    }
+
+    as->auth_google_iface = auth_iface;
+    as->auth_google_data = google_plugin->data;
+
+    as->auth_google_iface->set_set_command_handler(as->auth_google_data, add_handler_wrapper, as);
+
+    if (as->auth_google_iface->open(as->auth_google_data) < 0) {
+        err("auth_google plugin 'open' failed");
+        return -1;
+    }
+
+    if (as->auth_google_iface->check(as->auth_google_data) < 0) {
+        err("auth_google plugin 'check' failed");
+        return -1;
+    }
+
+    if (as->auth_google_iface->start_thread(as->auth_google_data) < 0) {
+        err("auth_google plugin 'start_thread' failed");
+        return -1;
+    }
+
+    return 0;
+}
+
+static int
 load_plugins(struct AppState *as)
 {
     if (load_telegram_plugin(as) < 0) return -1;
+    if (load_auth_google_plugin(as) < 0) return -1;
 
     return 0;
 }
