@@ -1140,42 +1140,47 @@ process_auth_callback_func(
     if (state->mi->simple_query(state->md, req_s, req_z) < 0) goto fail;
     free(req_s); req_s = NULL;
 
-    if (state->bg_w_fd < 0) {
-        int p1[2];
-        if (pipe2(p1, O_CLOEXEC | O_NONBLOCK) < 0) {
-            err("auth_google: callback: pipe2 failed: %s", os_ErrorMsg());
-            goto remove_stage2_and_fail;
-        }
-        int p2[2];
-        if (pipe2(p2, O_CLOEXEC | O_NONBLOCK) < 0) {
-            close(p1[0]); close(p1[1]);
-            err("auth_google: callback: pipe2 failed: %s", os_ErrorMsg());
-            goto remove_stage2_and_fail;
-        }
-        int pid = fork();
-        if (pid < 0) {
-            close(p1[0]); close(p1[1]);
-            close(p2[0]); close(p2[1]);
-            err("auth_google: callback: fork() failed: %s", os_ErrorMsg());
-            goto remove_stage2_and_fail;
-        }
-        if (!pid) {
-            close(p1[1]); close(p2[0]);
-            close_other_fds(p1[0], p2[1]);
-            do_background_oauth_queries(state, p1[0], p2[1]);
-            _exit(0);
+    if (state->send_job_handler_func) {
+        unsigned char *args[] = { "auth_google", oas2.request_id, oas2.request_code, NULL };
+        state->send_job_handler_func(state->send_job_handler_data, args);
+    } else {
+        if (state->bg_w_fd < 0) {
+            int p1[2];
+            if (pipe2(p1, O_CLOEXEC | O_NONBLOCK) < 0) {
+                err("auth_google: callback: pipe2 failed: %s", os_ErrorMsg());
+                goto remove_stage2_and_fail;
+            }
+            int p2[2];
+            if (pipe2(p2, O_CLOEXEC | O_NONBLOCK) < 0) {
+                close(p1[0]); close(p1[1]);
+                err("auth_google: callback: pipe2 failed: %s", os_ErrorMsg());
+                goto remove_stage2_and_fail;
+            }
+            int pid = fork();
+            if (pid < 0) {
+                close(p1[0]); close(p1[1]);
+                close(p2[0]); close(p2[1]);
+                err("auth_google: callback: fork() failed: %s", os_ErrorMsg());
+                goto remove_stage2_and_fail;
+            }
+            if (!pid) {
+                close(p1[1]); close(p2[0]);
+                close_other_fds(p1[0], p2[1]);
+                do_background_oauth_queries(state, p1[0], p2[1]);
+                _exit(0);
+            }
+
+            close(p1[0]); close(p2[1]);
+            state->bg_w_fd = p1[1];
+            state->bg_r_fd = p2[0];
+            state->bg_pid = pid;
+            if (state->register_fd_func) {
+                state->register_fd_func(state->register_fd_data, state->bg_r_fd, fd_ready_callback_func, data);
+            }
         }
 
-        close(p1[0]); close(p2[1]);
-        state->bg_w_fd = p1[1];
-        state->bg_r_fd = p2[0];
-        state->bg_pid = pid;
-        if (state->register_fd_func) {
-            state->register_fd_func(state->register_fd_data, state->bg_r_fd, fd_ready_callback_func, data);
-        }
+        if (send_background_request(state, oas2.request_id, oas2.request_code) < 0) goto fail;
     }
-
-    if (send_background_request(state, oas2.request_id, oas2.request_code) < 0) goto fail;
 
     free(oas1.state_id);
     free(oas1.provider);
