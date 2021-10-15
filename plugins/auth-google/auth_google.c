@@ -448,12 +448,8 @@ static const char oauth_stage2_create_str[] =
 ") DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
 
 static int
-check_func(void *data)
+do_check_database(struct auth_google_state *state)
 {
-    struct auth_google_state *state = (struct auth_google_state*) data;
-
-    if (!state->md->conn) return -1;
-
     if (state->mi->simple_fquery(state->md, "SELECT config_val FROM %sconfig WHERE config_key = 'oauth_version' ;", state->md->table_prefix) < 0) {
         err("probably the database is not created. use --convert or --create");
         return -1;
@@ -492,6 +488,37 @@ check_func(void *data)
         }
     }
     state->mi->free_res(state->md);
+    return 0;
+}
+
+static int
+check_database(struct auth_google_state *state)
+{
+    int result = -1;
+    time_t current_time = time(NULL);
+
+    if (state->mi->simple_fquery(state->md, "INSERT INTO %sconfig SET config_key='oauth_update_lock', config_val='%ld';",
+                                 state->md->table_prefix, (long) current_time) < 0) {
+        // FIXME: check for DUPLICATE PKEY error
+        // FIXME: sleep for some time and then reattempt
+        // FIXME: fail after some attempts
+        return 0;
+    }
+
+    result = do_check_database(state);
+
+    state->mi->simple_fquery(state->md, "DELETE FROM %sconfig WHERE config_key = 'oauth_update_lock';", state->md->table_prefix);
+    return result;
+}
+
+static int
+check_func(void *data)
+{
+    struct auth_google_state *state = (struct auth_google_state*) data;
+
+    if (!state->md->conn) return -1;
+
+    check_database(state);
 
     fetch_google_endpoints(state);
 
