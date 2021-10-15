@@ -2381,7 +2381,7 @@ do_loop(struct AppState *as)
 }
 
 static int
-load_plugins(struct AppState *as)
+load_telegram_plugin(struct AppState *as)
 {
     struct xml_tree *telegram_cfg = ejudge_cfg_get_plugin_config(as->config, "sn", "telegram");
     if (!telegram_cfg) return 0;
@@ -2413,6 +2413,14 @@ load_plugins(struct AppState *as)
         err("Telegram plugin start failed\n");
         return -1;
     }
+
+    return 0;
+}
+
+static int
+load_plugins(struct AppState *as)
+{
+    if (load_telegram_plugin(as) < 0) return -1;
 
     return 0;
 }
