@@ -39,10 +39,6 @@ struct auth_plugin_iface
     int (*check)(void *);
     int (*start_thread)(void *);
 
-    void (*set_register_fd_func)(
-        void *data,
-        oauth_register_fd_func_t func,
-        void *register_fd_data);
     void (*set_set_command_handler)(
         void *data,
         auth_set_command_handler_t setter,

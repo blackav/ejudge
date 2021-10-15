@@ -118,9 +118,6 @@ get_provider(
         info->failed = 1;
         return NULL;
     }
-    if (info->i->set_register_fd_func) {
-        info->i->set_register_fd_func(info->d, oauth_register_fd_func, oauth_register_fd_data);
-    }
 
     if (info->i->set_send_job_handler) {
         info->i->set_send_job_handler(info->d, send_job_packet_fwd, (void*) config);

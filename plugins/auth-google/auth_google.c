@@ -68,11 +68,6 @@ set_send_job_handler_func(
         void *data,
         auth_send_job_handler_t handler,
         void *handler_self);
-static void
-set_register_fd_func_func(
-        void *data,
-        oauth_register_fd_func_t func,
-        void *register_fd_data);
 static unsigned char *
 get_redirect_url_func(
         void *data,
@@ -108,7 +103,6 @@ struct auth_plugin_iface plugin_auth_google =
     open_func,
     check_func,
     start_thread_func,
-    set_register_fd_func_func,
     set_set_command_handler_func,
     set_send_job_handler_func,
     get_redirect_url_func,
@@ -139,9 +133,6 @@ struct auth_google_state
     unsigned char *client_id;
     unsigned char *client_secret;
     unsigned char *redirect_uri;
-
-    oauth_register_fd_func_t register_fd_func;
-    void *register_fd_data ;
 
     // background request thread
     pthread_t worker_thread;
@@ -517,18 +508,6 @@ check_func(void *data)
     fetch_google_endpoints(state);
 
     return 0;
-}
-
-static void
-set_register_fd_func_func(
-        void *data,
-        oauth_register_fd_func_t func,
-        void *register_fd_data)
-{
-    struct auth_google_state *state = (struct auth_google_state*) data;
-
-    state->register_fd_func = func;
-    state->register_fd_data = data;
 }
 
 static void
