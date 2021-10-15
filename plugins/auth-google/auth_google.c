@@ -1282,9 +1282,178 @@ fail:
     return (struct OAuthLoginResult) { .status = 2, .error_message = error_message };
 }
 
+/*
+  args[0] = "auth_google"
+  args[1] = request_id
+  args[2] = request_code
+  args[3] = NULL;
+ */
 static void
 packet_handler_auth_google(int uid, int argc, char **argv, void *user)
 {
+    struct auth_google_state *state = (struct auth_google_state*) user;
+
+    const unsigned char *request_id = argv[1];
+    const unsigned char *request_code = argv[2];
+
+    char *post_s = NULL;
+    size_t post_z = 0;
+    FILE *post_f = NULL;
+    char *json_s = NULL;
+    size_t json_z = 0;
+    FILE *json_f = NULL;
+    struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+    CURLcode res = 0;
+    int request_status = 2;   // failed
+    const char *error_message = "unknown error";
+    char *cmd_s = NULL;
+    size_t cmd_z = 0;
+    FILE *cmd_f = NULL;
+    const unsigned char *response_email = NULL;
+    const unsigned char *response_name = NULL;
+    const unsigned char *access_token = NULL;
+    const unsigned char *id_token = NULL;
+    cJSON *root = NULL;
+    cJSON *jwt = NULL;
+    unsigned char *jwt_payload = NULL;
+
+    post_f = open_memstream(&post_s, &post_z);
+    fprintf(post_f, "grant_type=authorization_code");
+    fprintf(post_f, "&code=%s", url_armor_buf(&ab, request_code));
+    fprintf(post_f, "&client_id=%s", url_armor_buf(&ab, state->client_id));
+    fprintf(post_f, "&client_secret=%s", url_armor_buf(&ab, state->client_secret));
+    fprintf(post_f, "&redirect_uri=%s/S1", url_armor_buf(&ab, state->redirect_uri));
+    fclose(post_f); post_f = NULL;
+
+    json_f = open_memstream(&json_s, &json_z);
+    curl_easy_setopt(state->curl, CURLOPT_FOLLOWLOCATION, 1);
+    curl_easy_setopt(state->curl, CURLOPT_COOKIEFILE, "");
+    curl_easy_setopt(state->curl, CURLOPT_URL, state->token_endpoint);
+    curl_easy_setopt(state->curl, CURLOPT_POST, 1);
+    curl_easy_setopt(state->curl, CURLOPT_POSTFIELDS, post_s);
+    curl_easy_setopt(state->curl, CURLOPT_WRITEFUNCTION, NULL);
+    curl_easy_setopt(state->curl, CURLOPT_WRITEDATA, json_f);
+    res = curl_easy_perform(state->curl);
+    fclose(json_f); json_f = NULL;
+    free(post_s); post_s = NULL; post_z = 0;
+    if (res != CURLE_OK) {
+        err("Request failed: %s", curl_easy_strerror(res));
+        error_message = "request failed";
+        goto done;
+    }
+
+    //fprintf(stderr, ">>%s<<\n", json_s);
+
+    if (!(root = cJSON_Parse(json_s))) {
+        error_message = "google JSON parse failed";
+        goto done;
+    }
+    free(json_s); json_s = NULL; json_z = 0;
+
+    if (root->type != cJSON_Object) {
+        error_message = "google root document expected";
+        goto done;
+    }
+
+    cJSON *j = cJSON_GetObjectItem(root, "access_token");
+    if (!j || j->type != cJSON_String) {
+        error_message = "invalid google json: access_token";
+        goto done;
+    }
+    access_token = j->valuestring;
+
+    if (!(j = cJSON_GetObjectItem(root, "id_token")) || j->type != cJSON_String) {
+        error_message = "invalid google json: id_token";
+        goto done;
+    }
+    id_token = j->valuestring;
+
+    // parse payload of JWT
+    {
+        char *p1 = strchr(id_token, '.');
+        if (!p1) {
+            error_message = "invalid google json: invalid JWT (1)";
+            goto done;
+        }
+        char *p2 = strchr(p1 + 1, '.');
+        if (!p2) {
+            error_message = "invalid google json: invalid JWT (2)";
+            goto done;
+        }
+
+        jwt_payload = xmalloc(strlen(id_token) + 1);
+        int err = 0;
+        int len = base64u_decode(p1 + 1, p2 - p1 - 1, jwt_payload, &err);
+        if (err) {
+            error_message = "invalid google json: base64u payload decode error";
+            goto done;
+        }
+        jwt_payload[len] = 0;
+    }
+
+    if (!(jwt = cJSON_Parse(jwt_payload))) {
+        error_message = "JWT payload parse failed";
+        goto done;
+    }
+    if (jwt->type != cJSON_Object) {
+        error_message = "JWT payload root document expected";
+        goto done;
+    }
+
+    if (!(j = cJSON_GetObjectItem(jwt, "email")) || j->type != cJSON_String) {
+        error_message = "JWT payload email expected";
+        goto done;
+    }
+    response_email = j->valuestring;
+
+    if ((j = cJSON_GetObjectItem(jwt, "name")) && j->type == cJSON_String) {
+        response_name = j->valuestring;
+    }
+
+    // success
+    request_status = 3;
+    error_message = NULL;
+
+done:
+
+    cmd_f = open_memstream(&cmd_s, &cmd_z);
+    fprintf(cmd_f, "UPDATE %soauth_stage2 SET request_state = %d",
+            state->md->table_prefix, request_status);
+    if (error_message && *error_message) {
+        fprintf(cmd_f, ", error_message = ");
+        state->mi->write_escaped_string(state->md, cmd_f, "", error_message);
+    }
+    if (response_name && *response_name) {
+        fprintf(cmd_f, ", response_name = ");
+        state->mi->write_escaped_string(state->md, cmd_f, "", response_name);
+    }
+    if (response_email && *response_email) {
+        fprintf(cmd_f, ", response_email = ");
+        state->mi->write_escaped_string(state->md, cmd_f, "", response_email);
+    }
+    if (access_token && *access_token) {
+        fprintf(cmd_f, ", access_token = ");
+        state->mi->write_escaped_string(state->md, cmd_f, "", access_token);
+    }
+    if (id_token && *id_token) {
+        fprintf(cmd_f, ", id_token = ");
+        state->mi->write_escaped_string(state->md, cmd_f, "", id_token);
+    }
+    fprintf(cmd_f, ", update_time = NOW() WHERE request_id = ");
+    state->mi->write_escaped_string(state->md, cmd_f, "", request_id);
+    fprintf(cmd_f, " ;");
+    fclose(cmd_f); cmd_f = NULL;
+    state->mi->simple_query(state->md, cmd_s, cmd_z); // error is ignored
+    free(cmd_s); cmd_s = NULL;
+
+    free(jwt_payload);
+    if (root) cJSON_Delete(root);
+    html_armor_free(&ab);
+    if (json_f) fclose(json_f);
+    free(json_s);
+    if (post_f) fclose(post_f);
+    free(post_s);
+    if (jwt) cJSON_Delete(jwt);
 }
 
 static void
