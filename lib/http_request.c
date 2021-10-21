@@ -740,6 +740,24 @@ hr_register_redirect(
   }
 }
 
+void
+hr_super_serve_redirect(
+        FILE *out_f,
+        const struct http_request_info *phr)
+{
+  if (phr->rest_mode > 0) {
+    fprintf(out_f, "%s/register", phr->context_url);
+  } else if (phr->cnts && phr->cnts->register_url) {
+    fprintf(out_f, "%s", phr->cnts->register_url);
+  } else {
+#if defined CGI_PROG_SUFFIX
+    fprintf(out_f, "%s/super-serve%s", phr->context_url, CGI_PROG_SUFFIX);
+#else
+    fprintf(out_f, "%s/super-serve", phr->context_url);
+#endif
+  }
+}
+
 const unsigned char *
 hr_redirect_3(
         FILE *out_f,
@@ -763,6 +781,30 @@ hr_redirect_3(
             fprintf(out_f, "%saction=%d", sep, action);
             sep = "&";
         }
+        return sep;
+    }
+}
+
+const unsigned char *
+hr_redirect_4(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        const unsigned char *action_str)
+{
+    if (phr->rest_mode > 0 && symbolic_action_table) {
+        fprintf(out_f, "/%s", action_str);
+        if (phr->session_id) {
+            fprintf(out_f, "/S%016llx", phr->session_id);
+        }
+        return "?";
+    } else {
+        const unsigned char *sep = "?";
+        if (phr->session_id) {
+            fprintf(out_f, "%sSID=%016llx", sep, phr->session_id);
+            sep = "&";
+        }
+        fprintf(out_f, "%saction=%s", sep, action_str);
+        sep = "&";
         return sep;
     }
 }

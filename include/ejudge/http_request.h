@@ -284,9 +284,18 @@ hr_redirect_3(
         FILE *out_f,
         const struct http_request_info *phr,
         int action);
+const unsigned char *
+hr_redirect_4(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        const unsigned char *action_str);
 
 void
 hr_register_redirect(
+        FILE *out_f,
+        const struct http_request_info *phr);
+void
+hr_super_serve_redirect(
         FILE *out_f,
         const struct http_request_info *phr);
 
