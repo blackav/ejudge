@@ -745,17 +745,18 @@ hr_super_serve_redirect(
         FILE *out_f,
         const struct http_request_info *phr)
 {
-  if (phr->rest_mode > 0) {
-    fprintf(out_f, "%s/super-serve", phr->context_url);
-  } else if (phr->cnts && phr->cnts->register_url) {
-    fprintf(out_f, "%s", phr->cnts->register_url);
-  } else {
+    // hack
+    int len = strlen(phr->context_url);
+    if (len > 3 && phr->context_url[len - 1] == 'j'
+        && phr->context_url[len - 2] == 'e'
+        && phr->context_url[len - 3] == '/') {
+        len -= 3;
+    }
 #if defined CGI_PROG_SUFFIX
-    fprintf(out_f, "%s/super-serve%s", phr->context_url, CGI_PROG_SUFFIX);
+    fprintf(out_f, "%.*s/super-serve%s", len, phr->context_url, CGI_PROG_SUFFIX);
 #else
-    fprintf(out_f, "%s/super-serve", phr->context_url);
+    fprintf(out_f, "%.*s/super-serve", len, phr->context_url);
 #endif
-  }
 }
 
 const unsigned char *

@@ -86,6 +86,7 @@
 
     phr->client_key = out_c.client_key;
     phr->session_id = out_c.cookie;
+    phr->rest_mode = 0;
 
 %><s:url name="MainUrl" script="super_serve" ac="'main-page'" ></s:url><s:redirect url="MainUrl" /><%
 
