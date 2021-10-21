@@ -3708,7 +3708,11 @@ handle_redirect_open(
             if (nosid_flag) {
                 fprintf(prg_f, "sep = hr_redirect_4(out_f, phr, %s);\n", buf);
             } else {
-                fprintf(prg_f, "sep = hr_redirect_3(out_f, phr, %s);\n", buf);
+                if (buf[0] == '\"') {
+                    fprintf(prg_f, "sep = hr_redirect_5(out_f, phr, %s);\n", buf);
+                } else {
+                    fprintf(prg_f, "sep = hr_redirect_3(out_f, phr, %s);\n", buf);
+                }
             }
         } else {
             fprintf(prg_f, "sep = hr_redirect_2(out_f, phr, %s);\n", buf);
@@ -3765,7 +3769,11 @@ handle_redirect_open(
             if (nosid_flag) {
                 fprintf(prg_f, "sep = hr_redirect_4(out_f, phr, %s);\n", buf);
             } else {
-                fprintf(prg_f, "sep = hr_redirect_3(out_f, phr, %s);\n", buf);
+                if (buf[0] == '\"') {
+                    fprintf(prg_f, "sep = hr_redirect_5(out_f, phr, %s);\n", buf);
+                } else {
+                    fprintf(prg_f, "sep = hr_redirect_3(out_f, phr, %s);\n", buf);
+                }
             }
         } else {
             fprintf(prg_f, "sep = hr_redirect_2(out_f, phr, %s);\n", buf);
