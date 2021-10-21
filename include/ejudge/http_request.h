@@ -260,6 +260,11 @@ hr_url_4(
         FILE *out_f,
         const struct http_request_info *phr,
         int action);
+const unsigned char *
+hr_url_5(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        const unsigned char *action);
 
 void
 hr_submit_button(

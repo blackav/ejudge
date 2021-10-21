@@ -650,6 +650,30 @@ hr_url_4(
     }
 }
 
+const unsigned char *
+hr_url_5(
+        FILE *out_f,
+        const struct http_request_info *phr,
+        const unsigned char *action_str)
+{
+    if (phr->rest_mode > 0 && symbolic_action_table) {
+        fprintf(out_f, "/%s", action_str);
+        if (phr->session_id) {
+            fprintf(out_f, "/S%016llx", phr->session_id);
+        }
+        return "?";
+    } else {
+        const unsigned char *sep = "?";
+        if (phr->session_id) {
+            fprintf(out_f, "%sSID=%016llx", sep, phr->session_id);
+            sep = "&amp;";
+        }
+        fprintf(out_f, "%saction=%s", sep, action_str);
+        sep = "&amp;";
+        return sep;
+    }
+}
+
 void
 hr_submit_button(
         FILE *out_f,
