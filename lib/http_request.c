@@ -743,7 +743,7 @@ hr_register_redirect(
 }
 
 void
-hr_super_serve_redirect(
+hr_control_redirect(
         FILE *out_f,
         const struct http_request_info *phr)
 {

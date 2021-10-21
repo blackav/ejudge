@@ -89,7 +89,7 @@
     phr->session_id = out_c.cookie;
     phr->rest_mode = 0;
 
-%><s:url name="MainUrl" script="super_serve" ac="''" ></s:url><s:redirect url="MainUrl" /><%
+%><s:url name="MainUrl" script="control" ac="''" ></s:url><s:redirect url="MainUrl" /><%
 
     goto cleanup;
   }
