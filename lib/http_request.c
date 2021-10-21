@@ -753,9 +753,9 @@ hr_super_serve_redirect(
         len -= 3;
     }
 #if defined CGI_PROG_SUFFIX
-    fprintf(out_f, "%.*s/super-serve%s", len, phr->context_url, CGI_PROG_SUFFIX);
+    fprintf(out_f, "%.*s/serve-control%s", len, phr->context_url, CGI_PROG_SUFFIX);
 #else
-    fprintf(out_f, "%.*s/super-serve", len, phr->context_url);
+    fprintf(out_f, "%.*s/serve-control", len, phr->context_url);
 #endif
 }
 
