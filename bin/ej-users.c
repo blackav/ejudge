@@ -10717,8 +10717,10 @@ cmd_create_cookie(
     0 /* expire */,     // ignore data->expire
     data->contest_id,
     0 /* locale_id */,  // ignore data->locale_id
-    0 /* priv_level */, // ignore data->priv_level
-    0 /* role*/,        // ignore data->role
+    //0 /* priv_level */, // ignore data->priv_level
+    data->priv_level,
+    //0 /* role*/,        // ignore data->role
+    data->role,
     0 /* recovery */,   // ignore data->recovery
     data->team_login,
     0 /* is_ws */,
