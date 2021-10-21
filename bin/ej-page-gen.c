@@ -1,6 +1,6 @@
 /* -*- c -*- */
 
-/* Copyright (C) 2014-2017 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2014-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -3460,6 +3460,13 @@ process_ac_attr(
         parser_error_2(ps, "'ac_prefix' global parameter must be of type 'STRING'");
         return -1;
     }
+    int at_len = strlen(at->value);
+    if (at_len > 2 &&
+        ((at->value[0] == '\'' && at->value[at_len - 1] == '\'')
+         || (at->value[0] == '"' && at->value[at_len - 1] == '"'))) {
+        snprintf(buf, bufsize, "\"%.*s\"", at_len - 2, at->value + 1);
+        return 1;
+    }
     snprintf(buf, bufsize, "%s%s", ac_prefix->s.str, at->value);
     int len = strlen(buf);
     for (int i = 0; i < len; ++i) {
@@ -3548,7 +3555,11 @@ handle_a_open(
             if (nosid_flag) {
                 fprintf(prg_f, "sep = hr_url_4(out_f, phr, %s);\n", buf);
             } else {
-                fprintf(prg_f, "sep = hr_url_3(out_f, phr, %s);\n", buf);
+                if (buf[0] == '\"') {
+                    fprintf(prg_f, "sep = hr_url_5(out_f, phr, %s);\n", buf);
+                } else {
+                    fprintf(prg_f, "sep = hr_url_3(out_f, phr, %s);\n", buf);
+                }
             }
         } else {
             fprintf(prg_f, "sep = hr_url_2(out_f, phr, %s);\n", buf);

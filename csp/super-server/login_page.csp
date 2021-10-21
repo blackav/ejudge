@@ -37,7 +37,7 @@
 <%
   if (phr->config && phr->config->enable_oauth) {
 %>
-<s:url name="LoginWithGoogleUrl" script="client" ac="login-page">
+<s:url name="LoginWithGoogleUrl" script="client" ac="'oauth-login-1'">
     <s:param name="role" value='"admin"' />
     <s:param name="provider" value='"google"' />
 </s:url>
