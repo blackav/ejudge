@@ -24,11 +24,6 @@
       fprintf(log_f, "admin OAUTH disabled");
       FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
     }
-    if (!contests_check_serve_control_ip(0, &phr->ip, phr->ssl_flag)) {
-      fprintf(log_f, "%s://%s is not allowed for SERVE-CONTROL\n",
-              ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip));
-      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-    }
   } else {
     role = NULL;
     if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
