@@ -16,31 +16,42 @@
   unsigned char cookie[128];
   unsigned char *redirect_url = NULL;
 
-  if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
-    FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
-  }
-  if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
-    fprintf(log_f, "%s://%s is not allowed for USER for contest %d\n",
-            ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
-    FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
-  }
-  if (cnts->closed) {
-    fprintf(log_f, "contest %d is closed", cnts->id);
-    FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
-  }
-  if (!cnts->managed) {
-    fprintf(log_f, "contest %d is not managed", cnts->id);
-    FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
-  }
-  if (!cnts->enable_oauth) {
-    fprintf(log_f, "contest %d OAUTH disabled", cnts->id);
-    FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
-  }
-
-  extra = ns_get_contest_extra(cnts, phr->config);
-  if (!extra) FAIL(NEW_SRV_ERR_INTERNAL);
-
 %><s:read var="provider" ignoreerrors="yes" /><%
+%><s:read var="role" ignoreerrors="yes" /><%
+
+  if (role && !strcmp(role, "admin")) {
+    if (phr->config->enable_oauth <= 0) {
+      fprintf(log_f, "admin OAUTH disabled");
+      FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+    }
+    if (!contests_check_serve_control_ip(0, &phr->ip, phr->ssl_flag)) {
+      fprintf(log_f, "%s://%s is not allowed for SERVE-CONTROL\n",
+              ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip));
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+  } else {
+    role = NULL;
+    if (phr->contest_id <= 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts) {
+      FAIL(NEW_SRV_ERR_INV_CONTEST_ID);
+    }
+    if (!contests_check_team_ip(phr->contest_id, &phr->ip, phr->ssl_flag)) {
+      fprintf(log_f, "%s://%s is not allowed for USER for contest %d\n",
+              ns_ssl_flag_str[phr->ssl_flag], xml_unparse_ipv6(&phr->ip), phr->contest_id);
+      FAIL(NEW_SRV_ERR_PERMISSION_DENIED);
+    }
+    if (cnts->closed) {
+      fprintf(log_f, "contest %d is closed", cnts->id);
+      FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+    }
+    if (!cnts->managed) {
+      fprintf(log_f, "contest %d is not managed", cnts->id);
+      FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+    }
+    if (!cnts->enable_oauth) {
+      fprintf(log_f, "contest %d OAUTH disabled", cnts->id);
+      FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
+    }
+  }
 
   snprintf(cookie, sizeof(cookie), "%016llx-%016llx", phr->session_id, phr->client_key);
 
