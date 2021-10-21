@@ -32,6 +32,20 @@
     </table>
 </s:form>
 
+<br/>
+<br/>
+<%
+  if (phr->config && phr->config->enable_oauth) {
+%>
+<s:url name="LoginWithGoogleUrl" script="client" ac="login-page">
+    <s:param name="role" value='"admin"' />
+    <s:param name="provider" value='"google"' />
+</s:url>
+<p><s:a url="LoginWithGoogleUrl"><img src="<s:config name="style-prefix" />icons/btn_google_signin_dark_normal_web.png" alt="google auth"></img></s:a></p>
+<%
+  }
+%>
+
 <%@include "footer.csp"
 %><%
 //cleanup:
