@@ -51,6 +51,7 @@ struct auth_plugin_iface
         void *data,
         const unsigned char *cookie,
         const unsigned char *provider,
+        const unsigned char *role,
         int contest_id,
         const unsigned char *extra_data);
     unsigned char * (*process_auth_callback)(

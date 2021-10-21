@@ -21,6 +21,7 @@ unsigned char *
 oauth_get_redirect_url(
         const struct ejudge_cfg *config,
         const unsigned char *provider,
+        const unsigned char *role,
         const unsigned char *cookie,
         int contest_id,
         const unsigned char *extra_data);

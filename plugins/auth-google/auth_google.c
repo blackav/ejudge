@@ -73,6 +73,7 @@ get_redirect_url_func(
         void *data,
         const unsigned char *cookie,
         const unsigned char *provider,
+        const unsigned char *role,
         int contest_id,
         const unsigned char *extra_data);
 static unsigned char *
@@ -565,6 +566,7 @@ get_redirect_url_func(
         void *data,
         const unsigned char *cookie,
         const unsigned char *provider,
+        const unsigned char *role,
         int contest_id,
         const unsigned char *extra_data)
 {

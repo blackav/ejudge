@@ -12,6 +12,7 @@
 %><%@include "unpriv_stdvars.csp"
 %><%
   const unsigned char *provider = NULL;
+  const unsigned char *role = NULL;
   unsigned char cookie[128];
   unsigned char *redirect_url = NULL;
 
@@ -43,7 +44,7 @@
 
   snprintf(cookie, sizeof(cookie), "%016llx-%016llx", phr->session_id, phr->client_key);
 
-  redirect_url = oauth_get_redirect_url(phr->config, provider, cookie, phr->contest_id, NULL);
+  redirect_url = oauth_get_redirect_url(phr->config, provider, role, cookie, phr->contest_id, NULL);
   if (!redirect_url) {
     fprintf(log_f, "get_redirect_url failed");
     FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);

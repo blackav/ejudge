@@ -131,13 +131,14 @@ unsigned char *
 oauth_get_redirect_url(
         const struct ejudge_cfg *config,
         const unsigned char *provider,
+        const unsigned char *role,
         const unsigned char *cookie,
         int contest_id,
         const unsigned char *extra_data)
 {
     struct ProviderInfo *info = get_provider(config, provider);
     if (!info) return NULL;
-    return info->i->get_redirect_url(info->d, cookie, provider, contest_id, extra_data);
+    return info->i->get_redirect_url(info->d, cookie, provider, role, contest_id, extra_data);
 }
 
 unsigned char *
