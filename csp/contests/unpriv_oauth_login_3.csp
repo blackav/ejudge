@@ -81,7 +81,7 @@
     in_c.role = USER_ROLE_ADMIN;
     in_c.team_login = 0;
     in_c.client_key = phr->client_key;
-    if (userlist_clnt_create_cookie(ul_conn, ULS_CREATE_COOKIE, &in_c, &out_c) < 0) {
+    if (userlist_clnt_create_cookie(ul_conn, ULS_PRIV_CREATE_COOKIE, &in_c, &out_c) < 0) {
       FAIL(NEW_SRV_ERR_DATABASE_FAILED);
     }
 

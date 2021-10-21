@@ -3,7 +3,7 @@
 #ifndef __USERLIST_PROTO_H__
 #define __USERLIST_PROTO_H__
 
-/* Copyright (C) 2002-2020 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -129,6 +129,7 @@ enum
     ULS_GET_API_KEY,
     ULS_GET_API_KEYS_FOR_USER,
     ULS_DELETE_API_KEY,
+    ULS_PRIV_CREATE_COOKIE,
 
     ULS_LAST_CMD
   };

@@ -1,6 +1,6 @@
 /* -*- mode: c -*- */
 
-/* Copyright (C) 2002-2018 Alexander Chernov <cher@ejudge.ru> */
+/* Copyright (C) 2002-2021 Alexander Chernov <cher@ejudge.ru> */
 
 /*
  * This program is free software; you can redistribute it and/or modify
@@ -158,6 +158,7 @@ static const unsigned char * const requests[] =
   [ULS_LIST_STANDINGS_USERS_2]    = "LIST_STANDINGS_USERS_2",
   [ULS_CHECK_USER_2]              = "CHECK_USER_2",
   [ULS_CREATE_COOKIE]             = "CREATE_COOKIE",
+  [ULS_PRIV_CREATE_COOKIE]        = "PRIV_CREATE_COOKIE",
 
   NULL,
 };
