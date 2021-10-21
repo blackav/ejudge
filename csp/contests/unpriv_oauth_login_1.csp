@@ -41,34 +41,6 @@
 
 %><s:read var="provider" ignoreerrors="yes" /><%
 
-/*
-  if (ns_open_ul_connection(phr->fw_state) < 0) {
-    FAIL(NEW_SRV_ERR_USERLIST_SERVER_DOWN);
-  }
-
-  struct userlist_cookie in_c;
-  struct userlist_cookie out_c;
-
-  memset(&in_c, 0, sizeof(in_c));
-  memcpy(&in_c.ip, &phr->ip, sizeof(in_c.ip));
-  in_c.ssl = phr->ssl_flag;
-  in_c.user_id = 0;
-  in_c.contest_id = phr->contest_id;
-  in_c.locale_id = 0;
-  in_c.priv_level = 0;
-  in_c.role = USER_ROLE_CONTESTANT;
-  in_c.recovery = 0;
-  in_c.team_login = 1;
-  in_c.client_key = phr->client_key;
-
-  int r = userlist_clnt_create_cookie(ul_conn, ULS_CREATE_COOKIE, &in_c, &out_c);
-  if (r < 0) {
-    FAIL(NEW_SRV_ERR_INV_USER_ID);
-  }
-
-  phr->client_key = out_c.client_key;
-  snprintf(cookie, sizeof(cookie), "%016llx-%016llx", out_c.cookie, out_c.client_key);
-*/
   snprintf(cookie, sizeof(cookie), "%016llx-%016llx", phr->session_id, phr->client_key);
 
   redirect_url = oauth_get_redirect_url(phr->config, provider, cookie, phr->contest_id, NULL);
