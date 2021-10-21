@@ -668,8 +668,10 @@ hr_url_5(
             fprintf(out_f, "%sSID=%016llx", sep, phr->session_id);
             sep = "&amp;";
         }
-        fprintf(out_f, "%saction=%s", sep, action_str);
-        sep = "&amp;";
+        if (action_str && *action_str) {
+            fprintf(out_f, "%saction=%s", sep, action_str);
+            sep = "&amp;";
+        }
         return sep;
     }
 }
@@ -804,8 +806,10 @@ hr_redirect_5(
             fprintf(out_f, "%sSID=%016llx", sep, phr->session_id);
             sep = "&";
         }
-        //fprintf(out_f, "%saction=%s", sep, action_str);
-        //sep = "&";
+        if (action_str && *action_str) {
+            fprintf(out_f, "%saction=%s", sep, action_str);
+            sep = "&";
+        }
         return sep;
     }
 }

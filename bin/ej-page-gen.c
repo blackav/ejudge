@@ -3461,7 +3461,7 @@ process_ac_attr(
         return -1;
     }
     int at_len = strlen(at->value);
-    if (at_len > 2 &&
+    if (at_len >= 2 &&
         ((at->value[0] == '\'' && at->value[at_len - 1] == '\'')
          || (at->value[0] == '"' && at->value[at_len - 1] == '"'))) {
         snprintf(buf, bufsize, "\"%.*s\"", at_len - 2, at->value + 1);
