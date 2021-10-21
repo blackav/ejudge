@@ -157,6 +157,7 @@ void
 oauth_free_result(struct OAuthLoginResult *res)
 {
     xfree(res->provider);
+    xfree(res->role);
     xfree(res->cookie);
     xfree(res->extra_data);
     xfree(res->email);

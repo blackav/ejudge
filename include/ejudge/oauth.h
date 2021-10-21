@@ -43,6 +43,7 @@ struct OAuthLoginResult
 {
     int status; // 0, 1 - progress; 2 - fail, 3 - success
     unsigned char *provider;
+    unsigned char *role;
     unsigned char *cookie;
     unsigned char *extra_data;
     unsigned char *email;

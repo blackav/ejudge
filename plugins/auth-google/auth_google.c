@@ -156,6 +156,7 @@ struct oauth_stage1_internal
 {
     unsigned char *state_id;
     unsigned char *provider;
+    unsigned char *role;
     unsigned char *cookie;
     int contest_id;
     unsigned char *extra_data;
@@ -163,7 +164,7 @@ struct oauth_stage1_internal
     time_t expiry_time;
 };
 
-enum { OAUTH_STAGE1_ROW_WIDTH = 7 };
+enum { OAUTH_STAGE1_ROW_WIDTH = 8 };
 
 #define OAUTH_STAGE1_OFFSET(f) XOFFSET(struct oauth_stage1_internal, f)
 
@@ -171,6 +172,7 @@ static const struct common_mysql_parse_spec oauth_stage1_spec[OAUTH_STAGE1_ROW_W
 {
     { 1, 's', "state_id", OAUTH_STAGE1_OFFSET(state_id), 0 },
     { 1, 's', "provider", OAUTH_STAGE1_OFFSET(provider), 0 },
+    { 1, 's', "role", OAUTH_STAGE1_OFFSET(role), 0 },
     { 1, 's', "cookie", OAUTH_STAGE1_OFFSET(cookie), 0 },
     { 0, 'd', "contest_id", OAUTH_STAGE1_OFFSET(contest_id), 0 },
     { 1, 's', "extra_data", OAUTH_STAGE1_OFFSET(extra_data), 0 },
@@ -182,6 +184,7 @@ struct oauth_stage2_internal
 {
     unsigned char *request_id;
     unsigned char *provider;
+    unsigned char *role;
     int request_state;
     unsigned char *request_code;
     unsigned char *cookie;
@@ -196,7 +199,7 @@ struct oauth_stage2_internal
     unsigned char *error_message;
 };
 
-enum { OAUTH_STAGE2_ROW_WIDTH = 14 };
+enum { OAUTH_STAGE2_ROW_WIDTH = 15 };
 
 #define OAUTH_STAGE2_OFFSET(f) XOFFSET(struct oauth_stage2_internal, f)
 
@@ -204,6 +207,7 @@ static const struct common_mysql_parse_spec oauth_stage2_spec[OAUTH_STAGE2_ROW_W
 {
     { 1, 's', "request_id", OAUTH_STAGE2_OFFSET(request_id), 0 },
     { 1, 's', "provider", OAUTH_STAGE2_OFFSET(provider), 0 },
+    { 1, 's', "role", OAUTH_STAGE2_OFFSET(role), 0 },
     { 0, 'd', "request_state", OAUTH_STAGE2_OFFSET(request_state), 0 },
     { 1, 's', "request_code", OAUTH_STAGE2_OFFSET(request_code), 0 },
     { 1, 's', "cookie", OAUTH_STAGE2_OFFSET(cookie), 0 },
@@ -408,6 +412,7 @@ static const char oauth_stage1_create_str[] =
 "CREATE TABLE %soauth_stage1 ( \n"
 "    state_id VARCHAR(64) NOT NULL PRIMARY KEY,\n"
 "    provider VARCHAR(64) NOT NULL,\n"
+"    role VARCHAR(64) DEFAULT NULL,\n"
 "    cookie VARCHAR(64) NOT NULL,\n"
 "    contest_id INT NOT NULL DEFAULT 0,\n"
 "    extra_data VARCHAR(512) DEFAULT NULL,\n"
@@ -419,6 +424,7 @@ static const char oauth_stage2_create_str[] =
 "CREATE TABLE %soauth_stage2 ( \n"
 "    request_id VARCHAR(64) NOT NULL PRIMARY KEY,\n"
 "    provider VARCHAR(64) NOT NULL,\n"
+"    role VARCHAR(64) DEFAULT NULL,\n"
 "    request_state INT NOT NULL DEFAULT 0,\n"
 "    request_code VARCHAR(256) NOT NULL,\n"
 "    cookie VARCHAR(64) NOT NULL,\n"
@@ -593,6 +599,7 @@ get_redirect_url_func(
     fprintf(req_f, "INSERT INTO %soauth_stage1 VALUES (", state->md->table_prefix);
     fprintf(req_f, "'%s'", ebuf);
     state->mi->write_escaped_string(state->md, req_f, ",", provider);
+    state->mi->write_escaped_string(state->md, req_f, ",", role);
     state->mi->write_escaped_string(state->md, req_f, ",", cookie);
     fprintf(req_f, ", %d", contest_id);
     state->mi->write_escaped_string(state->md, req_f, ",", extra_data);
@@ -680,6 +687,7 @@ process_auth_callback_func(
     oas2.request_code = xstrdup(code);
     oas2.cookie = oas1.cookie; oas1.cookie = NULL;
     oas2.provider = oas1.provider; oas1.provider = NULL;
+    oas2.role = oas1.role; oas1.role = NULL;
     oas2.contest_id = oas1.contest_id;
     oas2.extra_data = oas1.extra_data; oas1.extra_data = NULL;
     oas2.create_time = time(NULL);
@@ -702,10 +710,12 @@ process_auth_callback_func(
 
     free(oas1.state_id);
     free(oas1.provider);
+    free(oas1.role);
     free(oas1.cookie);
     free(oas1.extra_data);
     free(oas2.request_code);
     free(oas2.provider);
+    free(oas2.role);
     free(oas2.cookie);
     free(oas2.extra_data);
 
@@ -714,10 +724,12 @@ process_auth_callback_func(
 fail:
     free(oas1.state_id);
     free(oas1.provider);
+    free(oas1.role);
     free(oas1.cookie);
     free(oas1.extra_data);
     free(oas2.request_code);
     free(oas2.provider);
+    free(oas2.role);
     free(oas2.cookie);
     free(oas2.extra_data);
     state->mi->free_res(state->md);
@@ -770,6 +782,7 @@ get_result_func(
 
     res.status = oas2.request_state;
     res.provider = oas2.provider; oas2.provider = NULL;
+    res.role = oas2.role; oas2.role = NULL;
     res.cookie = oas2.cookie; oas2.cookie = NULL;
     res.extra_data = oas2.extra_data; oas2.extra_data = NULL;
     res.email = oas2.response_email; oas2.response_email = NULL;
@@ -783,6 +796,7 @@ get_result_func(
 fail:
     free(oas2.request_id);
     free(oas2.provider);
+    free(oas2.role);
     free(oas2.request_code);
     free(oas2.cookie);
     free(oas2.extra_data);
