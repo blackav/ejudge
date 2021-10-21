@@ -746,7 +746,7 @@ hr_super_serve_redirect(
         const struct http_request_info *phr)
 {
   if (phr->rest_mode > 0) {
-    fprintf(out_f, "%s/register", phr->context_url);
+    fprintf(out_f, "%s/super-serve", phr->context_url);
   } else if (phr->cnts && phr->cnts->register_url) {
     fprintf(out_f, "%s", phr->cnts->register_url);
   } else {
@@ -791,7 +791,7 @@ hr_redirect_5(
         const struct http_request_info *phr,
         const unsigned char *action_str)
 {
-    if (phr->rest_mode > 0 && symbolic_action_table) {
+    if (phr->rest_mode > 0) {
         fprintf(out_f, "/%s", action_str);
         if (phr->session_id) {
             fprintf(out_f, "/S%016llx", phr->session_id);
