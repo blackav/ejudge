@@ -285,7 +285,7 @@ hr_redirect_3(
         const struct http_request_info *phr,
         int action);
 const unsigned char *
-hr_redirect_4(
+hr_redirect_5(
         FILE *out_f,
         const struct http_request_info *phr,
         const unsigned char *action_str);
