@@ -10697,6 +10697,7 @@ cmd_create_cookie(
   struct userlist_pk_login_ok *answer = NULL;
   int ans_len = 0;
   const struct userlist_cookie *cookie = NULL;
+  time_t current_time = time(NULL);
 
   if (pkt_len != sizeof(*data)) {
     CONN_BAD("packet size is invalid: %d instead of %d", pkt_len, (int) sizeof(*data));
@@ -10743,6 +10744,8 @@ cmd_create_cookie(
   answer->role = cookie->role;
   answer->team_login = cookie->team_login;
   answer->expire = cookie->expire;
+
+  default_touch_login_time(data->user_id, data->contest_id, current_time);
 
   enqueue_reply_to_client(p, ans_len, answer);
   info("%s -> OK, %d, %s, %lld", logbuf, data->user_id,
