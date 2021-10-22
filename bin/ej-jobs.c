@@ -2331,7 +2331,7 @@ do_loop(struct AppState *as)
                 struct FDInfo *fdi = (struct FDInfo *) ev->data.ptr;
                 fdi->ops->op_read(as, fdi);
             }
-            if ((ev->events & EPOLLOUT) != 0) {
+            if ((ev->events & (EPOLLOUT | EPOLLERR)) != 0) {
                 struct FDInfo *fdi = (struct FDInfo *) ev->data.ptr;
                 fdi->ops->op_write(as, fdi);
             }
