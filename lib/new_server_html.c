@@ -14806,6 +14806,13 @@ unprivileged_entry_point(
     return;
   }
 
+  if (!phr->token_mode && phr->action == NEW_SRV_ACTION_OAUTH_LOGIN_1) {
+    phr->extra = ns_get_contest_extra(cnts, phr->config);
+    phr->cnts = cnts;
+    unpriv_external_action(fout, phr);
+    return;
+  }
+
   if (!phr->token_mode && (phr->contest_id < 0 || contests_get(phr->contest_id, &cnts) < 0 || !cnts)
       && !phr->session_id && ejudge_config->enable_contest_select){
     phr->action = NEW_SRV_ACTION_CONTESTS_PAGE;
@@ -14816,12 +14823,6 @@ unprivileged_entry_point(
   }
 
   phr->cnts = cnts;
-
-  if (!phr->token_mode && phr->action == NEW_SRV_ACTION_OAUTH_LOGIN_1) {
-    phr->extra = ns_get_contest_extra(cnts, phr->config);
-    unpriv_external_action(fout, phr);
-    return;
-  }
 
   if (!phr->token_mode && (!phr->session_id || phr->action == NEW_SRV_ACTION_LOGIN_PAGE)) {
     phr->extra = ns_get_contest_extra(phr->cnts, phr->config);
