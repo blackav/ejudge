@@ -50,9 +50,12 @@ struct auth_base_plugin_iface
         const unsigned char *extra_data,
         time_t create_time,
         time_t expiry_time);
-    int (*extract_stage1_func)(
+    int (*extract_stage1)(
         void *data,
         const unsigned char *state_id,
+        struct oauth_stage1_internal *poas1);
+    void (*free_stage1)(
+        void *data,
         struct oauth_stage1_internal *poas1);
 };
 

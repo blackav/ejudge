@@ -73,6 +73,10 @@ extract_stage1_func(
         void *data,
         const unsigned char *state_id,
         struct oauth_stage1_internal *poas1);
+static void
+free_stage1_func(
+        void *data,
+        struct oauth_stage1_internal *poas1);
 
 struct auth_base_plugin_iface plugin_auth_base =
 {
@@ -95,6 +99,7 @@ struct auth_base_plugin_iface plugin_auth_base =
     enqueue_action_func,
     insert_stage1_func,
     extract_stage1_func,
+    free_stage1_func,
 };
 
 enum { OAUTH_STAGE1_ROW_WIDTH = 8 };
@@ -484,4 +489,18 @@ fail:;
     if (req_f) fclose(req_f);
     free(req_s);
     return retval;
+}
+
+static void
+free_stage1_func(
+        void *data,
+        struct oauth_stage1_internal *poas1)
+{
+    free(poas1->state_id);
+    free(poas1->provider);
+    free(poas1->role);
+    free(poas1->cookie);
+    free(poas1->extra_data);
+
+    memset(poas1, 0, sizeof(*poas1));
 }
