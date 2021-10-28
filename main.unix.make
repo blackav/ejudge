@@ -189,6 +189,7 @@ subdirs_all:
 	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" all
+	$(MAKE) -C plugins/auth-base DESTDIR="${DESTDIR}" all
 	$(MAKE) -C plugins/auth-google DESTDIR="${DESTDIR}" all
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" all
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" all
@@ -253,6 +254,7 @@ install: local_install
 	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" install
+	$(MAKE) -C plugins/auth-base DESTDIR="${DESTDIR}" install
 	$(MAKE) -C plugins/auth-google DESTDIR="${DESTDIR}" install
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" install
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" install
@@ -431,6 +433,7 @@ subdir_clean:
 	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" clean
+	$(MAKE) -C plugins/auth-base DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C plugins/auth-google DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" clean
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" clean
@@ -457,6 +460,7 @@ subdir_distclean :
 	$(MAKE) -C plugins/avatar-mongo DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/status-mongo DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/telegram DESTDIR="${DESTDIR}" distclean
+	$(MAKE) -C plugins/auth-base DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C plugins/auth-google DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C csp/contests DESTDIR="${DESTDIR}" distclean
 	$(MAKE) -C csp/super-server DESTDIR="${DESTDIR}" distclean

@@ -26,6 +26,7 @@
 #include "ejudge/misctext.h"
 #include "ejudge/osdeps.h"
 #include "../common-mysql/common_mysql.h"
+#include "ejudge/auth_base_plugin.h"
 
 #if CONF_HAS_LIBCURL - 0 == 1
 #include <curl/curl.h>
@@ -123,6 +124,9 @@ enum { QUEUE_SIZE = 64 };
 
 struct auth_google_state
 {
+    struct auth_base_plugin_iface *bi;
+    struct auth_base_plugin_state *bd;
+
     // mysql access
     struct common_mysql_iface *mi;
     struct common_mysql_state *md;
@@ -312,6 +316,7 @@ prepare_func(
         const struct ejudge_cfg *config,
         struct xml_tree *tree)
 {
+    struct auth_google_state *state = (struct auth_google_state*) data;
     const struct xml_parse_spec *spec = ejudge_cfg_get_spec();
 
     // load common_mysql plugin
@@ -321,9 +326,16 @@ prepare_func(
         return -1;
     }
 
-    struct auth_google_state *state = (struct auth_google_state*) data;
     state->mi = (struct common_mysql_iface*) mplg->iface;
     state->md = (struct common_mysql_state*) mplg->data;
+
+    // load auth base plugin
+    if (!(mplg = plugin_load_external(0, "auth", "base", config))) {
+        err("cannot load auth_base plugin");
+        return -1;
+    }
+    state->bi = (struct auth_base_plugin_iface *) mplg->iface;
+    state->bd = (struct auth_base_plugin_state *) mplg->data;
 
     // handle config section
     ASSERT(tree->tag == spec->default_elem);
