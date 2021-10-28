@@ -102,16 +102,6 @@ struct auth_plugin_iface plugin_auth_google =
     get_result_func,
 };
 
-struct queue_item
-{
-    void (*handler)(int uid, int argc, char **argv, void *user);
-    int uid;
-    int argc;
-    char **argv;
-};
-
-enum { QUEUE_SIZE = 64 };
-
 struct auth_google_state
 {
     struct auth_base_plugin_iface *bi;
