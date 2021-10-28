@@ -68,6 +68,11 @@ insert_stage1_func(
         const unsigned char *extra_data,
         time_t create_time,
         time_t expiry_time);
+static int
+extract_stage1_func(
+        void *data,
+        const unsigned char *state_id,
+        struct oauth_stage1_internal *poas1);
 
 struct auth_base_plugin_iface plugin_auth_base =
 {
@@ -89,6 +94,46 @@ struct auth_base_plugin_iface plugin_auth_base =
     start_thread_func,
     enqueue_action_func,
     insert_stage1_func,
+    extract_stage1_func,
+};
+
+enum { OAUTH_STAGE1_ROW_WIDTH = 8 };
+
+#define OAUTH_STAGE1_OFFSET(f) XOFFSET(struct oauth_stage1_internal, f)
+
+static const struct common_mysql_parse_spec oauth_stage1_spec[OAUTH_STAGE1_ROW_WIDTH] =
+{
+    { 1, 's', "state_id", OAUTH_STAGE1_OFFSET(state_id), 0 },
+    { 1, 's', "provider", OAUTH_STAGE1_OFFSET(provider), 0 },
+    { 1, 's', "role", OAUTH_STAGE1_OFFSET(role), 0 },
+    { 1, 's', "cookie", OAUTH_STAGE1_OFFSET(cookie), 0 },
+    { 0, 'd', "contest_id", OAUTH_STAGE1_OFFSET(contest_id), 0 },
+    { 1, 's', "extra_data", OAUTH_STAGE1_OFFSET(extra_data), 0 },
+    { 0, 't', "create_time", OAUTH_STAGE1_OFFSET(create_time), 0 },
+    { 0, 't', "expiry_time", OAUTH_STAGE1_OFFSET(expiry_time), 0 },
+};
+
+enum { OAUTH_STAGE2_ROW_WIDTH = 15 };
+
+#define OAUTH_STAGE2_OFFSET(f) XOFFSET(struct oauth_stage2_internal, f)
+
+static __attribute__((unused)) const struct common_mysql_parse_spec oauth_stage2_spec[OAUTH_STAGE2_ROW_WIDTH] =
+{
+    { 1, 's', "request_id", OAUTH_STAGE2_OFFSET(request_id), 0 },
+    { 1, 's', "provider", OAUTH_STAGE2_OFFSET(provider), 0 },
+    { 1, 's', "role", OAUTH_STAGE2_OFFSET(role), 0 },
+    { 0, 'd', "request_state", OAUTH_STAGE2_OFFSET(request_state), 0 },
+    { 1, 's', "request_code", OAUTH_STAGE2_OFFSET(request_code), 0 },
+    { 1, 's', "cookie", OAUTH_STAGE2_OFFSET(cookie), 0 },
+    { 0, 'd', "contest_id", OAUTH_STAGE2_OFFSET(contest_id), 0 },
+    { 1, 's', "extra_data", OAUTH_STAGE2_OFFSET(extra_data), 0 },
+    { 0, 't', "create_time", OAUTH_STAGE2_OFFSET(create_time), 0 },
+    { 1, 't', "update_time", OAUTH_STAGE2_OFFSET(update_time), 0 },
+    { 1, 's', "response_email", OAUTH_STAGE2_OFFSET(response_email), 0 },
+    { 1, 's', "response_name", OAUTH_STAGE2_OFFSET(response_name), 0 },
+    { 1, 's', "access_token", OAUTH_STAGE2_OFFSET(access_token), 0 },
+    { 1, 's', "id_token", OAUTH_STAGE2_OFFSET(id_token), 0 },
+    { 1, 's', "error_message", OAUTH_STAGE2_OFFSET(error_message), 0 },
 };
 
 enum { QUEUE_SIZE = 64 };
@@ -340,7 +385,7 @@ start_thread_func(void *data)
 
     int r = pthread_create(&state->worker_thread, NULL, thread_func, state);
     if (r) {
-        err("auth_google: cannot create worker thread: %s", os_ErrorMsg());
+        err("auth_base: cannot create worker thread: %s", os_ErrorMsg());
         return -1;
     }
 
@@ -386,5 +431,57 @@ insert_stage1_func(
 fail:;
     if (req_f) fclose(req_f);
     free(req_f);
+    return retval;
+}
+
+static int
+extract_stage1_func(
+        void *data,
+        const unsigned char *state_id,
+        struct oauth_stage1_internal *poas1)
+{
+    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+
+    char *req_s = NULL;
+    size_t req_z = 0;
+    FILE *req_f = NULL;
+    int retval = -1;
+
+    req_f = open_memstream(&req_s, &req_z);
+    fprintf(req_f, "SELECT * FROM %soauth_stage1 WHERE state_id = ", state->md->table_prefix);
+    state->mi->write_escaped_string(state->md, req_f, "", state_id);
+    fprintf(req_f, ";");
+    fclose(req_f); req_f = NULL;
+
+    if (state->mi->query(state->md, req_s, req_z, OAUTH_STAGE1_ROW_WIDTH) < 0) goto fail;
+    free(req_s); req_s = NULL; req_z = 0;
+
+    if (state->md->row_count > 1) {
+        err("auth_base: extract_stage1: row_count == %d", state->md->row_count);
+        goto fail;
+    }
+    if (!state->md->row_count) {
+        err("auth_base: extract_stage1: callback: state_id '%s' does not exist", state_id);
+        retval = 0;
+        goto fail;
+    }
+    if (state->mi->next_row(state->md) < 0) goto fail;
+    if (state->mi->parse_spec(state->md, state->md->field_count, state->md->row, state->md->lengths,
+                              OAUTH_STAGE1_ROW_WIDTH, oauth_stage1_spec, poas1) < 0)
+        goto fail;
+    state->mi->free_res(state->md);
+
+    req_f = open_memstream(&req_s, &req_z);
+    fprintf(req_f, "DELETE FROM %soauth_stage1 WHERE state_id = ", state->md->table_prefix);
+    state->mi->write_escaped_string(state->md, req_f, "", state_id);
+    fprintf(req_f, ";");
+    fclose(req_f); req_f = NULL;
+    state->mi->simple_query(state->md, req_s, req_z);
+    free(req_s); req_s = NULL; req_z = 0;
+    retval = 1;
+
+fail:;
+    if (req_f) fclose(req_f);
+    free(req_s);
     return retval;
 }

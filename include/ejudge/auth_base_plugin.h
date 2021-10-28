@@ -22,6 +22,9 @@
 
 #define AUTH_BASE_PLUGIN_IFACE_VERSION 1
 
+struct oauth_stage1_internal;
+struct oauth_stage2_internal;
+
 struct auth_base_plugin_iface
 {
     struct common_plugin_iface b;
@@ -47,6 +50,10 @@ struct auth_base_plugin_iface
         const unsigned char *extra_data,
         time_t create_time,
         time_t expiry_time);
+    int (*extract_stage1_func)(
+        void *data,
+        const unsigned char *state_id,
+        struct oauth_stage1_internal *poas1);
 };
 
 struct auth_base_plugin_state;
