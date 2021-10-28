@@ -195,7 +195,7 @@ static const struct common_mysql_parse_spec oauth_stage2_spec[OAUTH_STAGE2_ROW_W
     { 1, 's', "error_message", OAUTH_STAGE2_OFFSET(error_message), 0 },
 };
 
-static void
+static __attribute__((unused)) void
 put_to_queue(
         struct auth_google_state *state,
         void (*handler)(int uid, int argc, char **argv, void *user),
@@ -224,7 +224,7 @@ done:
     pthread_mutex_unlock(&state->q_m);
 }
 
-static void *
+static __attribute__((unused)) void *
 thread_func(void *data)
 {
     sigset_t ss;
@@ -539,7 +539,7 @@ start_thread_func(void *data)
                                     queue_packet_handler_auth_google,
                                     data);
 
-    int r = pthread_create(&state->worker_thread, NULL, thread_func, state);
+    int r = state->bi->start_thread(state->bd);
     if (r) {
         err("auth_google: cannot create worker thread: %s", os_ErrorMsg());
         return -1;
@@ -971,5 +971,6 @@ static void
 queue_packet_handler_auth_google(int uid, int argc, char **argv, void *user)
 {
     struct auth_google_state *state = (struct auth_google_state*) user;
-    put_to_queue(state, packet_handler_auth_google, uid, argc, argv);
+    state->bi->enqueue_action(state->bd, packet_handler_auth_google,
+                              uid, argc, argv, user);
 }
