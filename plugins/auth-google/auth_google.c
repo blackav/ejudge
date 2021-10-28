@@ -34,16 +34,6 @@
 #error curl required
 #endif
 
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <dirent.h>
-#include <signal.h>
-#include <pthread.h>
-
 static struct common_plugin_data*
 init_func(void);
 static int
@@ -139,21 +129,11 @@ struct auth_google_state
     unsigned char *client_secret;
     unsigned char *redirect_uri;
 
-    // background request thread
-    pthread_t worker_thread;
-    _Atomic _Bool worker_thread_finish_request;
-
     auth_set_command_handler_t set_command_handler_func;
     void *set_command_handler_data;
 
     auth_send_job_handler_t send_job_handler_func;
     void *send_job_handler_data;
-
-    pthread_mutex_t q_m;
-    pthread_cond_t  q_c;
-    int q_first;
-    int q_len;
-    struct queue_item queue[QUEUE_SIZE];
 };
 
 enum { OAUTH_STAGE1_ROW_WIDTH = 8 };
@@ -195,69 +175,6 @@ static const struct common_mysql_parse_spec oauth_stage2_spec[OAUTH_STAGE2_ROW_W
     { 1, 's', "error_message", OAUTH_STAGE2_OFFSET(error_message), 0 },
 };
 
-static __attribute__((unused)) void
-put_to_queue(
-        struct auth_google_state *state,
-        void (*handler)(int uid, int argc, char **argv, void *user),
-        int uid,
-        int argc,
-        char **argv)
-{
-    pthread_mutex_lock(&state->q_m);
-    if (state->q_len == QUEUE_SIZE) {
-        err("telegram_plugin: request queue overflow, request dropped");
-        goto done;
-    }
-    struct queue_item *item = &state->queue[(state->q_first + state->q_len++) % QUEUE_SIZE];
-    memset(item, 0, sizeof(*item));
-    item->handler = handler;
-    item->uid = uid;
-    item->argc = argc;
-    item->argv = calloc(argc + 1, sizeof(item->argv[0]));
-    for (int i = 0; i < argc; ++i) {
-        item->argv[i] = strdup(argv[i]);
-    }
-    if (state->q_len == 1)
-        pthread_cond_signal(&state->q_c);
-
-done:
-    pthread_mutex_unlock(&state->q_m);
-}
-
-static __attribute__((unused)) void *
-thread_func(void *data)
-{
-    sigset_t ss;
-    sigfillset(&ss);
-    pthread_sigmask(SIG_BLOCK, &ss, NULL);
-
-    struct auth_google_state *state = (struct auth_google_state*) data;
-    while (!state->worker_thread_finish_request) {
-        pthread_mutex_lock(&state->q_m);
-        while (state->q_len == 0 && !state->worker_thread_finish_request) {
-            pthread_cond_wait(&state->q_c, &state->q_m);
-        }
-        if (state->worker_thread_finish_request) {
-            pthread_mutex_unlock(&state->q_m);
-            break;
-        }
-        // this is local copy of the queue item
-        struct queue_item item = state->queue[state->q_first];
-        memset(&state->queue[state->q_first], 0, sizeof(item));
-        state->q_first = (state->q_first + 1) % QUEUE_SIZE;
-        --state->q_len;
-        pthread_mutex_unlock(&state->q_m);
-
-        item.handler(item.uid, item.argc, item.argv, state);
-
-        for (int i = 0; i < item.argc; ++i) {
-            free(item.argv[i]);
-        }
-        free(item.argv);
-    }
-    return NULL;
-}
-
 static struct common_plugin_data*
 init_func(void)
 {
@@ -266,9 +183,6 @@ init_func(void)
     XCALLOC(state, 1);
 
     state->curl = curl_easy_init();
-
-    pthread_mutex_init(&state->q_m, NULL);
-    pthread_cond_init(&state->q_c, NULL);
 
     return (struct common_plugin_data*) state;
 }
