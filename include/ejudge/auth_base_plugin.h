@@ -29,8 +29,47 @@ struct auth_base_plugin_iface
 
     int (*open)(void *);
     int (*check)(void *);
+    int (*start_thread)(void *);
+    void (*enqueue_action)(
+        void *data,
+        void (*handler)(int uid, int argc, char **argv, void *user),
+        int uid,
+        int argc,
+        char **argv,
+        void *user);
 };
 
 struct auth_base_plugin_state;
+
+struct oauth_stage1_internal
+{
+    unsigned char *state_id;
+    unsigned char *provider;
+    unsigned char *role;
+    unsigned char *cookie;
+    int contest_id;
+    unsigned char *extra_data;
+    time_t create_time;
+    time_t expiry_time;
+};
+
+struct oauth_stage2_internal
+{
+    unsigned char *request_id;
+    unsigned char *provider;
+    unsigned char *role;
+    int request_state;
+    unsigned char *request_code;
+    unsigned char *cookie;
+    int contest_id;
+    unsigned char *extra_data;
+    time_t create_time;
+    time_t update_time;
+    unsigned char *response_email;
+    unsigned char *response_name;
+    unsigned char *access_token;
+    unsigned char *id_token;
+    unsigned char *error_message;
+};
 
 #endif /* __AUTH_BASE_PLUGIN_H__ */

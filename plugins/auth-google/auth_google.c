@@ -156,18 +156,6 @@ struct auth_google_state
     struct queue_item queue[QUEUE_SIZE];
 };
 
-struct oauth_stage1_internal
-{
-    unsigned char *state_id;
-    unsigned char *provider;
-    unsigned char *role;
-    unsigned char *cookie;
-    int contest_id;
-    unsigned char *extra_data;
-    time_t create_time;
-    time_t expiry_time;
-};
-
 enum { OAUTH_STAGE1_ROW_WIDTH = 8 };
 
 #define OAUTH_STAGE1_OFFSET(f) XOFFSET(struct oauth_stage1_internal, f)
@@ -182,25 +170,6 @@ static const struct common_mysql_parse_spec oauth_stage1_spec[OAUTH_STAGE1_ROW_W
     { 1, 's', "extra_data", OAUTH_STAGE1_OFFSET(extra_data), 0 },
     { 0, 't', "create_time", OAUTH_STAGE1_OFFSET(create_time), 0 },
     { 0, 't', "expiry_time", OAUTH_STAGE1_OFFSET(expiry_time), 0 },
-};
-
-struct oauth_stage2_internal
-{
-    unsigned char *request_id;
-    unsigned char *provider;
-    unsigned char *role;
-    int request_state;
-    unsigned char *request_code;
-    unsigned char *cookie;
-    int contest_id;
-    unsigned char *extra_data;
-    time_t create_time;
-    time_t update_time;
-    unsigned char *response_email;
-    unsigned char *response_name;
-    unsigned char *access_token;
-    unsigned char *id_token;
-    unsigned char *error_message;
 };
 
 enum { OAUTH_STAGE2_ROW_WIDTH = 15 };
