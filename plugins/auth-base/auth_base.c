@@ -46,6 +46,8 @@ prepare_func(
 static int
 open_func(void *data);
 static int
+check_func(void *data);
+static int
 start_thread_func(void *data);
 static void
 enqueue_action_func(
@@ -72,7 +74,7 @@ struct auth_base_plugin_iface plugin_auth_base =
     },
     AUTH_BASE_PLUGIN_IFACE_VERSION,
     open_func,
-    NULL, // check_func
+    check_func,
     start_thread_func,
     enqueue_action_func,
 };
@@ -140,6 +142,113 @@ open_func(void *data)
 
     if (state->mi->connect(state->md) < 0)
         return -1;
+
+    return 0;
+}
+
+static const char oauth_stage1_create_str[] =
+"CREATE TABLE %soauth_stage1 ( \n"
+"    state_id VARCHAR(64) NOT NULL PRIMARY KEY,\n"
+"    provider VARCHAR(64) NOT NULL,\n"
+"    role VARCHAR(64) DEFAULT NULL,\n"
+"    cookie VARCHAR(64) NOT NULL,\n"
+"    contest_id INT NOT NULL DEFAULT 0,\n"
+"    extra_data VARCHAR(512) DEFAULT NULL,\n"
+"    create_time DATETIME NOT NULL,\n"
+"    expiry_time DATETIME NOT NULL\n"
+") DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
+
+static const char oauth_stage2_create_str[] =
+"CREATE TABLE %soauth_stage2 ( \n"
+"    request_id VARCHAR(64) NOT NULL PRIMARY KEY,\n"
+"    provider VARCHAR(64) NOT NULL,\n"
+"    role VARCHAR(64) DEFAULT NULL,\n"
+"    request_state INT NOT NULL DEFAULT 0,\n"
+"    request_code VARCHAR(256) NOT NULL,\n"
+"    cookie VARCHAR(64) NOT NULL,\n"
+"    contest_id INT NOT NULL DEFAULT 0,\n"
+"    extra_data VARCHAR(512) DEFAULT NULL,\n"
+"    create_time DATETIME NOT NULL,\n"
+"    update_time DATETIME DEFAULT NULL,\n"
+"    response_email VARCHAR(64) DEFAULT NULL,\n"
+"    response_name VARCHAR(64) DEFAULT NULL,\n"
+"    access_token VARCHAR(256) DEFAULT NULL,\n"
+"    id_token VARCHAR(2048) DEFAULT NULL,\n"
+"    error_message VARCHAR(256) DEFAULT NULL\n"
+") DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
+
+static int
+do_check_database(struct auth_base_plugin_state *state)
+{
+    if (state->mi->simple_fquery(state->md, "SELECT config_val FROM %sconfig WHERE config_key = 'oauth_version' ;", state->md->table_prefix) < 0) {
+        err("probably the database is not created. use --convert or --create");
+        return -1;
+    }
+    if((state->md->field_count = mysql_field_count(state->md->conn)) != 1) {
+        err("wrong database format: field_count == %d", state->md->field_count);
+        return -1;
+    }
+    if (!(state->md->res = mysql_store_result(state->md->conn)))
+        return state->mi->error(state->md);
+
+    state->md->row_count = mysql_num_rows(state->md->res);
+    if (!state->md->row_count) {
+        int version = 1;
+        if (state->mi->simple_fquery(state->md, oauth_stage1_create_str,
+                                     state->md->table_prefix) < 0)
+            return -1;
+        if (state->mi->simple_fquery(state->md, oauth_stage2_create_str,
+                                     state->md->table_prefix) < 0)
+            return -1;
+        if (state->mi->simple_fquery(state->md, "INSERT INTO %sconfig SET config_key='oauth_version', config_val='%d';",
+                                     state->md->table_prefix, version) < 0)
+            return -1;
+    } else {
+        if (state->md->row_count > 1) {
+            err("wrong database format: row_count == %d", state->md->row_count);
+            return -1;
+        }
+        int version = 0;
+        if (state->mi->int_val(state->md, &version, 0) < 0) {
+            return -1;
+        }
+        if (version != 1) {
+            err("invalid version %d", version);
+            return -1;
+        }
+    }
+    state->mi->free_res(state->md);
+    return 0;
+}
+
+static int
+check_database(struct auth_base_plugin_state *state)
+{
+    int result = -1;
+    time_t current_time = time(NULL);
+
+    if (state->mi->simple_fquery(state->md, "INSERT INTO %sconfig SET config_key='oauth_update_lock', config_val='%ld';",
+                                 state->md->table_prefix, (long) current_time) < 0) {
+        // FIXME: check for DUPLICATE PKEY error
+        // FIXME: sleep for some time and then reattempt
+        // FIXME: fail after some attempts
+        return 0;
+    }
+
+    result = do_check_database(state);
+
+    state->mi->simple_fquery(state->md, "DELETE FROM %sconfig WHERE config_key = 'oauth_update_lock';", state->md->table_prefix);
+    return result;
+}
+
+static int
+check_func(void *data)
+{
+    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+
+    if (!state->md->conn) return -1;
+
+    check_database(state);
 
     return 0;
 }

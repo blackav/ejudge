@@ -232,12 +232,15 @@ prepare_func(
 static int
 open_func(void *data)
 {
-  struct auth_google_state *state = (struct auth_google_state*) data;
+    struct auth_google_state *state = (struct auth_google_state*) data;
 
-  if (state->mi->connect(state->md) < 0)
-    return -1;
+    if (state->mi->connect(state->md) < 0)
+        return -1;
 
-  return 0;
+    if (state->bi->open(state->bd) < 0)
+        return 1;
+
+    return 0;
 }
 
 static int
@@ -394,6 +397,9 @@ check_func(void *data)
     struct auth_google_state *state = (struct auth_google_state*) data;
 
     if (!state->md->conn) return -1;
+
+    if (state->bi->check(state->bd) < 0)
+        return -1;
 
     check_database(state);
 
