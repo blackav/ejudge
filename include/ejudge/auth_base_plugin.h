@@ -37,6 +37,16 @@ struct auth_base_plugin_iface
         int argc,
         char **argv,
         void *user);
+    int (*insert_stage1)(
+        void *data,
+        const unsigned char *state_id,
+        const unsigned char *provider,
+        const unsigned char *role,
+        const unsigned char *cookie,
+        int contest_id,
+        const unsigned char *extra_data,
+        time_t create_time,
+        time_t expiry_time);
 };
 
 struct auth_base_plugin_state;

@@ -57,6 +57,17 @@ enqueue_action_func(
         int argc,
         char **argv,
         void *user);
+static int
+insert_stage1_func(
+        void *data,
+        const unsigned char *state_id,
+        const unsigned char *provider,
+        const unsigned char *role,
+        const unsigned char *cookie,
+        int contest_id,
+        const unsigned char *extra_data,
+        time_t create_time,
+        time_t expiry_time);
 
 struct auth_base_plugin_iface plugin_auth_base =
 {
@@ -77,6 +88,7 @@ struct auth_base_plugin_iface plugin_auth_base =
     check_func,
     start_thread_func,
     enqueue_action_func,
+    insert_stage1_func,
 };
 
 enum { QUEUE_SIZE = 64 };
@@ -333,4 +345,46 @@ start_thread_func(void *data)
     }
 
     return 0;
+}
+
+static int
+insert_stage1_func(
+        void *data,
+        const unsigned char *state_id,
+        const unsigned char *provider,
+        const unsigned char *role,
+        const unsigned char *cookie,
+        int contest_id,
+        const unsigned char *extra_data,
+        time_t create_time,
+        time_t expiry_time)
+{
+    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+    char *req_s = NULL;
+    size_t req_z = 0;
+    FILE *req_f = NULL;
+    int retval = -1;
+
+    req_f = open_memstream(&req_s, &req_z);
+    fprintf(req_f, "INSERT INTO %soauth_stage1 VALUES (", state->md->table_prefix);
+    fprintf(req_f, "'%s'", state_id);
+    state->mi->write_escaped_string(state->md, req_f, ",", provider);
+    state->mi->write_escaped_string(state->md, req_f, ",", role);
+    state->mi->write_escaped_string(state->md, req_f, ",", cookie);
+    fprintf(req_f, ", %d", contest_id);
+    state->mi->write_escaped_string(state->md, req_f, ",", extra_data);
+    state->mi->write_timestamp(state->md, req_f, ",", create_time);
+    state->mi->write_timestamp(state->md, req_f, ",", expiry_time);
+    fprintf(req_f, ") ;");
+    fclose(req_f); req_f = NULL;
+
+    if (state->mi->simple_query(state->md, req_s, req_z) < 0) goto fail;
+    free(req_s); req_s = NULL;
+
+    retval = 0;
+
+fail:;
+    if (req_f) fclose(req_f);
+    free(req_f);
+    return retval;
 }
