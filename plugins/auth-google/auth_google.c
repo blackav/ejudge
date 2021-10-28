@@ -374,9 +374,6 @@ get_redirect_url_func(
 
     unsigned char rbuf[16];
     unsigned char ebuf[32];
-    char *req_s = NULL;
-    size_t req_z = 0;
-    FILE *req_f = NULL;
     time_t create_time = time(NULL);
     time_t expiry_time = create_time + 60;
     char *url_s = NULL;
@@ -389,21 +386,11 @@ get_redirect_url_func(
     int len = base64u_encode(rbuf, sizeof(rbuf), ebuf);
     ebuf[len] = 0;
 
-    req_f = open_memstream(&req_s, &req_z);
-    fprintf(req_f, "INSERT INTO %soauth_stage1 VALUES (", state->md->table_prefix);
-    fprintf(req_f, "'%s'", ebuf);
-    state->mi->write_escaped_string(state->md, req_f, ",", provider);
-    state->mi->write_escaped_string(state->md, req_f, ",", role);
-    state->mi->write_escaped_string(state->md, req_f, ",", cookie);
-    fprintf(req_f, ", %d", contest_id);
-    state->mi->write_escaped_string(state->md, req_f, ",", extra_data);
-    state->mi->write_timestamp(state->md, req_f, ",", create_time);
-    state->mi->write_timestamp(state->md, req_f, ",", expiry_time);
-    fprintf(req_f, ") ;");
-    fclose(req_f); req_f = NULL;
-
-    if (state->mi->simple_query(state->md, req_s, req_z) < 0) goto fail;
-    free(req_s); req_s = NULL;
+    if (state->bi->insert_stage1(state->bd,
+                                 ebuf, provider, role, cookie, contest_id,
+                                 extra_data, create_time, expiry_time) < 0) {
+        goto fail;
+    }
 
     url_f = open_memstream(&url_s, &url_z);
     fprintf(url_f, "%s?client_id=%s&response_type=code",
@@ -419,7 +406,6 @@ get_redirect_url_func(
 
 fail:
     html_armor_free(&ab);
-    free(req_s);
     return NULL;
 }
 
