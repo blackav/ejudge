@@ -130,7 +130,7 @@ enum { OAUTH_STAGE1_ROW_WIDTH = 8 };
 
 #define OAUTH_STAGE1_OFFSET(f) XOFFSET(struct oauth_stage1_internal, f)
 
-static const struct common_mysql_parse_spec oauth_stage1_spec[OAUTH_STAGE1_ROW_WIDTH] =
+static __attribute__((unused)) const struct common_mysql_parse_spec oauth_stage1_spec[OAUTH_STAGE1_ROW_WIDTH] =
 {
     { 1, 's', "state_id", OAUTH_STAGE1_OFFSET(state_id), 0 },
     { 1, 's', "provider", OAUTH_STAGE1_OFFSET(provider), 0 },
@@ -425,38 +425,9 @@ process_auth_callback_func(
     unsigned char rbuf[16];
     unsigned char ebuf[32] = {};
 
-    req_f = open_memstream(&req_s, &req_z);
-    fprintf(req_f, "SELECT * FROM %soauth_stage1 WHERE state_id = ", state->md->table_prefix);
-    state->mi->write_escaped_string(state->md, req_f, "", state_id);
-    fprintf(req_f, ";");
-    fclose(req_f); req_f = NULL;
-
-    if (state->mi->query(state->md, req_s, req_z, OAUTH_STAGE1_ROW_WIDTH) < 0) goto fail;
-    free(req_s); req_s = NULL; req_z = 0;
-
-    if (state->md->row_count > 1) {
-        err("auth_google: callback: row_count == %d", state->md->row_count);
+    if (state->bi->extract_stage1(state->bd, state_id, &oas1) <= 0) {
         goto fail;
     }
-    if (!state->md->row_count) {
-        err("auth_google: callback: state_id '%s' does not exist", state_id);
-        goto fail;
-    }
-
-    if (state->mi->next_row(state->md) < 0) goto fail;
-    if (state->mi->parse_spec(state->md, state->md->field_count, state->md->row, state->md->lengths,
-                              OAUTH_STAGE1_ROW_WIDTH, oauth_stage1_spec, &oas1) < 0)
-        goto fail;
-    state->mi->free_res(state->md);
-
-    req_f = open_memstream(&req_s, &req_z);
-    fprintf(req_f, "DELETE FROM %soauth_stage1 WHERE state_id = ", state->md->table_prefix);
-    state->mi->write_escaped_string(state->md, req_f, "", state_id);
-    fprintf(req_f, ";");
-    fclose(req_f); req_f = NULL;
-    if (state->mi->simple_query(state->md, req_s, req_z) , 0)
-        goto fail;
-    free(req_s); req_s = NULL; req_z = 0;
 
     random_init();
     random_bytes(rbuf, sizeof(rbuf));
@@ -488,11 +459,7 @@ process_auth_callback_func(
         goto fail;
     }
 
-    free(oas1.state_id);
-    free(oas1.provider);
-    free(oas1.role);
-    free(oas1.cookie);
-    free(oas1.extra_data);
+    state->bi->free_stage1(state->bd, &oas1);
     free(oas2.request_code);
     free(oas2.provider);
     free(oas2.role);
@@ -502,11 +469,7 @@ process_auth_callback_func(
     return xstrdup(oas2.request_id);
 
 fail:
-    free(oas1.state_id);
-    free(oas1.provider);
-    free(oas1.role);
-    free(oas1.cookie);
-    free(oas1.extra_data);
+    state->bi->free_stage1(state->bd, &oas1);
     free(oas2.request_code);
     free(oas2.provider);
     free(oas2.role);
