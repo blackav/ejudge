@@ -85,7 +85,7 @@ static int
 extract_stage2_func(
         void *data,
         const unsigned char *request_id,
-        struct oauth_stage1_internal *poas2);
+        struct oauth_stage2_internal *poas2);
 static void
 free_stage2_func(
         void *data,
@@ -572,7 +572,7 @@ static int
 extract_stage2_func(
         void *data,
         const unsigned char *request_id,
-        struct oauth_stage1_internal *poas2)
+        struct oauth_stage2_internal *poas2)
 {
     struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
     char *req_s = NULL;

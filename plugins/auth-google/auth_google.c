@@ -146,7 +146,7 @@ enum { OAUTH_STAGE2_ROW_WIDTH = 15 };
 
 #define OAUTH_STAGE2_OFFSET(f) XOFFSET(struct oauth_stage2_internal, f)
 
-static const struct common_mysql_parse_spec oauth_stage2_spec[OAUTH_STAGE2_ROW_WIDTH] =
+static __attribute__((unused)) const struct common_mysql_parse_spec oauth_stage2_spec[OAUTH_STAGE2_ROW_WIDTH] =
 {
     { 1, 's', "request_id", OAUTH_STAGE2_OFFSET(request_id), 0 },
     { 1, 's', "provider", OAUTH_STAGE2_OFFSET(provider), 0 },
@@ -470,40 +470,12 @@ get_result_func(
 {
     struct auth_google_state *state = (struct auth_google_state*) data;
     unsigned char *error_message = NULL;
-    char *req_s = NULL;
-    size_t req_z = 0;
-    FILE *req_f = NULL;
     struct oauth_stage2_internal oas2 = {};
     struct OAuthLoginResult res = {};
 
-    req_f = open_memstream(&req_s, &req_z);
-    fprintf(req_f, "SELECT * FROM %soauth_stage2 WHERE request_id = ", state->md->table_prefix);
-    state->mi->write_escaped_string(state->md, req_f, "", request_id);
-    fprintf(req_f, ";");
-    fclose(req_f); req_f = NULL;
-
-    if (state->mi->query(state->md, req_s, req_z, OAUTH_STAGE2_ROW_WIDTH) < 0) {
-        error_message = xstrdup("query failed");
+    if (state->bi->extract_stage2(state->bd, request_id, &oas2) <= 0) {
         goto fail;
     }
-    free(req_s); req_s = NULL; req_z = 0;
-    if (state->md->row_count > 1) {
-        err("auth_google: get_result: row_count == %d", state->md->row_count);
-        error_message = xstrdup("non unique row");
-        goto fail;
-    }
-    if (!state->md->row_count) {
-        err("auth_google: get_result: request_id '%s' does not exist", request_id);
-        error_message = xstrdup("nonexisting request");
-        goto fail;
-    }
-    if (state->mi->next_row(state->md) < 0) goto fail;
-    if (state->mi->parse_spec(state->md, state->md->field_count, state->md->row, state->md->lengths,
-                              OAUTH_STAGE2_ROW_WIDTH, oauth_stage2_spec, &oas2) < 0)
-        goto fail;
-    state->mi->free_res(state->md);
-
-    // FIXME: remove completed requests
 
     res.status = oas2.request_state;
     res.provider = oas2.provider; oas2.provider = NULL;
@@ -516,23 +488,11 @@ get_result_func(
     res.id_token = oas2.id_token; oas2.id_token = NULL;
     res.error_message = oas2.error_message; oas2.error_message = NULL;
     res.contest_id = oas2.contest_id;
+    state->bi->free_stage2(state->bd, &oas2);
     return res;
 
 fail:
-    free(oas2.request_id);
-    free(oas2.provider);
-    free(oas2.role);
-    free(oas2.request_code);
-    free(oas2.cookie);
-    free(oas2.extra_data);
-    free(oas2.response_email);
-    free(oas2.response_name);
-    free(oas2.access_token);
-    free(oas2.id_token);
-    free(oas2.error_message);
-    state->mi->free_res(state->md);
-    if (req_f) fclose(req_f);
-    free(req_s);
+    state->bi->free_stage2(state->bd, &oas2);
     if (!error_message) error_message = xstrdup("unknown error");
     return (struct OAuthLoginResult) { .status = 2, .error_message = error_message };
 }
