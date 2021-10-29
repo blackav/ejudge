@@ -417,9 +417,6 @@ process_auth_callback_func(
 {
     struct auth_google_state *state = (struct auth_google_state*) data;
 
-    char *req_s = NULL;
-    size_t req_z = 0;
-    FILE *req_f = NULL;
     struct oauth_stage1_internal oas1 = {};
     struct oauth_stage2_internal oas2 = {};
     unsigned char rbuf[16];
@@ -434,7 +431,7 @@ process_auth_callback_func(
     int len = base64u_encode(rbuf, sizeof(rbuf), ebuf);
     ebuf[len] = 0;
 
-    oas2.request_id = ebuf;
+    oas2.request_id = xstrdup(ebuf);
     oas2.request_code = xstrdup(code);
     oas2.cookie = oas1.cookie; oas1.cookie = NULL;
     oas2.provider = oas1.provider; oas1.provider = NULL;
@@ -443,13 +440,9 @@ process_auth_callback_func(
     oas2.extra_data = oas1.extra_data; oas1.extra_data = NULL;
     oas2.create_time = time(NULL);
 
-    req_f = open_memstream(&req_s, &req_z);
-    fprintf(req_f, "INSERT INTO %soauth_stage2 VALUES ( ", state->md->table_prefix);
-    state->mi->unparse_spec(state->md, req_f, OAUTH_STAGE2_ROW_WIDTH, oauth_stage2_spec, &oas2);
-    fprintf(req_f, ") ;");
-    fclose(req_f); req_f = NULL;
-    if (state->mi->simple_query(state->md, req_s, req_z) < 0) goto fail;
-    free(req_s); req_s = NULL;
+    if (state->bi->insert_stage2(state->bd, &oas2) < 0) {
+        goto fail;
+    }
 
     if (state->send_job_handler_func) {
         unsigned char *args[] = { "auth_google", oas2.request_id, oas2.request_code, NULL };
@@ -460,24 +453,13 @@ process_auth_callback_func(
     }
 
     state->bi->free_stage1(state->bd, &oas1);
-    free(oas2.request_code);
-    free(oas2.provider);
-    free(oas2.role);
-    free(oas2.cookie);
-    free(oas2.extra_data);
+    state->bi->free_stage2(state->bd, &oas2);
 
-    return xstrdup(oas2.request_id);
+    return xstrdup(ebuf);
 
 fail:
     state->bi->free_stage1(state->bd, &oas1);
-    free(oas2.request_code);
-    free(oas2.provider);
-    free(oas2.role);
-    free(oas2.cookie);
-    free(oas2.extra_data);
-    state->mi->free_res(state->md);
-    if (req_f) fclose(req_f);
-    free(req_s);
+    state->bi->free_stage2(state->bd, &oas2);
     return NULL;
 }
 

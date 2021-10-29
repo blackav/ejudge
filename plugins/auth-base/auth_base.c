@@ -496,6 +496,7 @@ extract_stage1_func(
     retval = 1;
 
 fail:;
+    state->mi->free_res(state->md);
     if (req_f) fclose(req_f);
     free(req_s);
     return retval;
