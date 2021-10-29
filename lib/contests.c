@@ -1303,6 +1303,13 @@ contests_merge(struct contest_desc *pold, struct contest_desc *pnew)
   pold->slave_rules = p;
   pnew->slave_rules = 0;
 
+  if ((p = pnew->oauth_rules)) {
+    xml_unlink_node(p);
+    xml_link_node_last(&pold->b, p);
+  }
+  pold->oauth_rules = p;
+  pnew->oauth_rules = NULL;
+
   pold->reg_deadline = pnew->reg_deadline;
   pold->sched_time = pnew->sched_time;
   pold->disable_member_delete = pnew->disable_member_delete;
