@@ -521,9 +521,6 @@ packet_handler_auth_google(int uid, int argc, char **argv, void *user)
     CURLcode res = 0;
     int request_status = 2;   // failed
     const char *error_message = "unknown error";
-    char *cmd_s = NULL;
-    size_t cmd_z = 0;
-    FILE *cmd_f = NULL;
     const unsigned char *response_email = NULL;
     const unsigned char *response_name = NULL;
     const unsigned char *access_token = NULL;
@@ -630,36 +627,10 @@ packet_handler_auth_google(int uid, int argc, char **argv, void *user)
     error_message = NULL;
 
 done:
-
-    cmd_f = open_memstream(&cmd_s, &cmd_z);
-    fprintf(cmd_f, "UPDATE %soauth_stage2 SET request_state = %d",
-            state->md->table_prefix, request_status);
-    if (error_message && *error_message) {
-        fprintf(cmd_f, ", error_message = ");
-        state->mi->write_escaped_string(state->md, cmd_f, "", error_message);
-    }
-    if (response_name && *response_name) {
-        fprintf(cmd_f, ", response_name = ");
-        state->mi->write_escaped_string(state->md, cmd_f, "", response_name);
-    }
-    if (response_email && *response_email) {
-        fprintf(cmd_f, ", response_email = ");
-        state->mi->write_escaped_string(state->md, cmd_f, "", response_email);
-    }
-    if (access_token && *access_token) {
-        fprintf(cmd_f, ", access_token = ");
-        state->mi->write_escaped_string(state->md, cmd_f, "", access_token);
-    }
-    if (id_token && *id_token) {
-        fprintf(cmd_f, ", id_token = ");
-        state->mi->write_escaped_string(state->md, cmd_f, "", id_token);
-    }
-    fprintf(cmd_f, ", update_time = NOW() WHERE request_id = ");
-    state->mi->write_escaped_string(state->md, cmd_f, "", request_id);
-    fprintf(cmd_f, " ;");
-    fclose(cmd_f); cmd_f = NULL;
-    state->mi->simple_query(state->md, cmd_s, cmd_z); // error is ignored
-    free(cmd_s); cmd_s = NULL;
+    state->bi->update_stage2(state->bd, request_id,
+                             request_status, error_message,
+                             response_name, response_email,
+                             access_token, id_token);
 
     free(jwt_payload);
     if (root) cJSON_Delete(root);
