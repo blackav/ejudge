@@ -170,7 +170,7 @@ static const struct common_mysql_parse_spec oauth_stage2_spec[OAUTH_STAGE2_ROW_W
 
 enum { QUEUE_SIZE = 64 };
 
-struct auth_base_plugin_state
+struct auth_base_state
 {
     // mysql access
     struct common_mysql_iface *mi;
@@ -189,7 +189,7 @@ struct auth_base_plugin_state
 static struct common_plugin_data*
 init_func(void)
 {
-    struct auth_base_plugin_state *state;
+    struct auth_base_state *state;
 
     XCALLOC(state, 1);
 
@@ -217,7 +217,7 @@ prepare_func(
         return -1;
     }
 
-    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+    struct auth_base_state *state = (struct auth_base_state*) data;
     state->mi = (struct common_mysql_iface*) mplg->iface;
     state->md = (struct common_mysql_state*) mplg->data;
 
@@ -227,7 +227,7 @@ prepare_func(
 static int
 open_func(void *data)
 {
-    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+    struct auth_base_state *state = (struct auth_base_state*) data;
 
     if (state->mi->connect(state->md) < 0)
         return -1;
@@ -267,7 +267,7 @@ static const char oauth_stage2_create_str[] =
 ") DEFAULT CHARSET=utf8 COLLATE=utf8_bin;";
 
 static int
-do_check_database(struct auth_base_plugin_state *state)
+do_check_database(struct auth_base_state *state)
 {
     if (state->mi->simple_fquery(state->md, "SELECT config_val FROM %sconfig WHERE config_key = 'oauth_version' ;", state->md->table_prefix) < 0) {
         err("probably the database is not created. use --convert or --create");
@@ -311,7 +311,7 @@ do_check_database(struct auth_base_plugin_state *state)
 }
 
 static int
-check_database(struct auth_base_plugin_state *state)
+check_database(struct auth_base_state *state)
 {
     int result = -1;
     time_t current_time = time(NULL);
@@ -333,7 +333,7 @@ check_database(struct auth_base_plugin_state *state)
 static int
 check_func(void *data)
 {
-    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+    struct auth_base_state *state = (struct auth_base_state*) data;
 
     if (!state->md->conn) return -1;
 
@@ -351,7 +351,7 @@ enqueue_action_func(
         char **argv,
         void *user)
 {
-    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+    struct auth_base_state *state = (struct auth_base_state*) data;
 
     pthread_mutex_lock(&state->q_m);
     if (state->q_len == QUEUE_SIZE) {
@@ -378,7 +378,7 @@ done:
 static void *
 thread_func(void *data)
 {
-    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+    struct auth_base_state *state = (struct auth_base_state*) data;
 
     sigset_t ss;
     sigfillset(&ss);
@@ -413,7 +413,7 @@ thread_func(void *data)
 static int
 start_thread_func(void *data)
 {
-    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+    struct auth_base_state *state = (struct auth_base_state*) data;
 
     int r = pthread_create(&state->worker_thread, NULL, thread_func, state);
     if (r) {
@@ -436,7 +436,7 @@ insert_stage1_func(
         time_t create_time,
         time_t expiry_time)
 {
-    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+    struct auth_base_state *state = (struct auth_base_state*) data;
     char *req_s = NULL;
     size_t req_z = 0;
     FILE *req_f = NULL;
@@ -472,7 +472,7 @@ extract_stage1_func(
         const unsigned char *state_id,
         struct oauth_stage1_internal *poas1)
 {
-    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+    struct auth_base_state *state = (struct auth_base_state*) data;
 
     char *req_s = NULL;
     size_t req_z = 0;
@@ -538,7 +538,7 @@ insert_stage2_func(
         void *data,
         struct oauth_stage2_internal *poas2)
 {
-    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+    struct auth_base_state *state = (struct auth_base_state*) data;
     char *req_s = NULL;
     size_t req_z;
     FILE *req_f = NULL;
@@ -585,7 +585,7 @@ extract_stage2_func(
         const unsigned char *request_id,
         struct oauth_stage2_internal *poas2)
 {
-    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+    struct auth_base_state *state = (struct auth_base_state*) data;
     char *req_s = NULL;
     size_t req_z;
     FILE *req_f = NULL;
@@ -638,7 +638,7 @@ update_stage2_func(
         const unsigned char *access_token,
         const unsigned char *id_token)
 {
-    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+    struct auth_base_state *state = (struct auth_base_state*) data;
     char *req_s = NULL;
     size_t req_z;
     FILE *req_f = NULL;

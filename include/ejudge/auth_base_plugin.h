@@ -78,8 +78,6 @@ struct auth_base_plugin_iface
         struct oauth_stage2_internal *poas2);
 };
 
-struct auth_base_plugin_state;
-
 struct oauth_stage1_internal
 {
     unsigned char *state_id;
