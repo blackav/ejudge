@@ -108,8 +108,8 @@ struct auth_google_state
     struct auth_base_plugin_state *bd;
 
     // mysql access
-    struct common_mysql_iface *mi;
-    struct common_mysql_state *md;
+    //struct common_mysql_iface *mi;
+    //struct common_mysql_state *md;
     // curl for auth endpoint discovery
     CURL *curl;
     unsigned char *authorization_endpoint;
