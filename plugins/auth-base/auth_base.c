@@ -24,6 +24,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <signal.h>
+#include <stdatomic.h>
 
 struct auth_base_queue_item
 {
@@ -184,6 +185,9 @@ struct auth_base_state
     int q_first;
     int q_len;
     struct auth_base_queue_item queue[QUEUE_SIZE];
+
+    _Atomic _Bool open_called;
+    _Atomic _Bool check_called;
 };
 
 static struct common_plugin_data*
@@ -228,6 +232,9 @@ static int
 open_func(void *data)
 {
     struct auth_base_state *state = (struct auth_base_state*) data;
+
+    if (atomic_exchange(&state->open_called, 1))
+        return 0;
 
     if (state->mi->connect(state->md) < 0)
         return -1;
@@ -334,6 +341,9 @@ static int
 check_func(void *data)
 {
     struct auth_base_state *state = (struct auth_base_state*) data;
+
+    if (atomic_exchange(&state->check_called, 1))
+        return 0;
 
     if (!state->md->conn) return -1;
 
