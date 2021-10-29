@@ -86,6 +86,16 @@ extract_stage2_func(
         void *data,
         const unsigned char *request_id,
         struct oauth_stage2_internal *poas2);
+static int
+update_stage2_func(
+        void *data,
+        const unsigned char *request_id,
+        int request_status,
+        const unsigned char *error_message,
+        const unsigned char *response_name,
+        const unsigned char *response_email,
+        const unsigned char *access_token,
+        const unsigned char *id_token);
 static void
 free_stage2_func(
         void *data,
@@ -115,6 +125,7 @@ struct auth_base_plugin_iface plugin_auth_base =
     free_stage1_func,
     insert_stage2_func,
     extract_stage2_func,
+    update_stage2_func,
     free_stage2_func,
 };
 
@@ -138,7 +149,7 @@ enum { OAUTH_STAGE2_ROW_WIDTH = 15 };
 
 #define OAUTH_STAGE2_OFFSET(f) XOFFSET(struct oauth_stage2_internal, f)
 
-static __attribute__((unused)) const struct common_mysql_parse_spec oauth_stage2_spec[OAUTH_STAGE2_ROW_WIDTH] =
+static const struct common_mysql_parse_spec oauth_stage2_spec[OAUTH_STAGE2_ROW_WIDTH] =
 {
     { 1, 's', "request_id", OAUTH_STAGE2_OFFSET(request_id), 0 },
     { 1, 's', "provider", OAUTH_STAGE2_OFFSET(provider), 0 },
@@ -613,5 +624,54 @@ done:;
     state->mi->free_res(state->md);
     if (req_f) fclose(req_f);
     free(req_s);
+    return retval;
+}
+
+static int
+update_stage2_func(
+        void *data,
+        const unsigned char *request_id,
+        int request_status,
+        const unsigned char *error_message,
+        const unsigned char *response_name,
+        const unsigned char *response_email,
+        const unsigned char *access_token,
+        const unsigned char *id_token)
+{
+    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+    char *req_s = NULL;
+    size_t req_z;
+    FILE *req_f = NULL;
+    int retval = -1;
+
+    req_f = open_memstream(&req_s, &req_z);
+    fprintf(req_f, "UPDATE %soauth_stage2 SET request_state = %d",
+            state->md->table_prefix, request_status);
+    if (error_message && *error_message) {
+        fprintf(req_f, ", error_message = ");
+        state->mi->write_escaped_string(state->md, req_f, "", error_message);
+    }
+    if (response_name && *response_name) {
+        fprintf(req_f, ", response_name = ");
+        state->mi->write_escaped_string(state->md, req_f, "", response_name);
+    }
+    if (response_email && *response_email) {
+        fprintf(req_f, ", response_email = ");
+        state->mi->write_escaped_string(state->md, req_f, "", response_email);
+    }
+    if (access_token && *access_token) {
+        fprintf(req_f, ", access_token = ");
+        state->mi->write_escaped_string(state->md, req_f, "", access_token);
+    }
+    if (id_token && *id_token) {
+        fprintf(req_f, ", id_token = ");
+        state->mi->write_escaped_string(state->md, req_f, "", id_token);
+    }
+    fprintf(req_f, ", update_time = NOW() WHERE request_id = ");
+    state->mi->write_escaped_string(state->md, req_f, "", request_id);
+    fprintf(req_f, " ;");
+    fclose(req_f); req_f = NULL;
+    retval = state->mi->simple_query(state->md, req_s, req_z);
+    free(req_s); req_s = NULL;
     return retval;
 }
