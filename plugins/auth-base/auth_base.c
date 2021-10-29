@@ -81,6 +81,11 @@ static int
 insert_stage2_func(
         void *data,
         struct oauth_stage2_internal *poas2);
+static int
+extract_stage2_func(
+        void *data,
+        const unsigned char *request_id,
+        struct oauth_stage1_internal *poas2);
 static void
 free_stage2_func(
         void *data,
@@ -109,6 +114,7 @@ struct auth_base_plugin_iface plugin_auth_base =
     extract_stage1_func,
     free_stage1_func,
     insert_stage2_func,
+    extract_stage2_func,
     free_stage2_func,
 };
 
@@ -560,4 +566,52 @@ free_stage2_func(
     free(poas2->error_message);
 
     memset(poas2, 0, sizeof(*poas2));
+}
+
+static int
+extract_stage2_func(
+        void *data,
+        const unsigned char *request_id,
+        struct oauth_stage1_internal *poas2)
+{
+    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+    char *req_s = NULL;
+    size_t req_z;
+    FILE *req_f = NULL;
+    int retval = -1;
+
+    req_f = open_memstream(&req_s, &req_z);
+    fprintf(req_f, "SELECT * FROM %soauth_stage2 WHERE request_id = ", state->md->table_prefix);
+    state->mi->write_escaped_string(state->md, req_f, "", request_id);
+    fprintf(req_f, ";");
+    fclose(req_f); req_f = NULL;
+
+    if (state->mi->query(state->md, req_s, req_z, OAUTH_STAGE2_ROW_WIDTH) < 0) {
+        //error_message = xstrdup("query failed");
+        goto done;
+    }
+    free(req_s); req_s = NULL; req_z = 0;
+    if (state->md->row_count > 1) {
+        err("auth_base: get_result: row_count == %d", state->md->row_count);
+        //error_message = xstrdup("non unique row");
+        goto done;
+    }
+    if (!state->md->row_count) {
+        err("auth_base: get_result: request_id '%s' does not exist", request_id);
+        //error_message = xstrdup("nonexisting request");
+        retval = 0;
+        goto done;
+    }
+
+    if (state->mi->next_row(state->md) < 0) goto done;
+    if (state->mi->parse_spec(state->md, state->md->field_count, state->md->row, state->md->lengths,
+                              OAUTH_STAGE2_ROW_WIDTH, oauth_stage2_spec, poas2) < 0)
+        goto done;
+    retval = 1;
+
+done:;
+    state->mi->free_res(state->md);
+    if (req_f) fclose(req_f);
+    free(req_s);
+    return retval;
 }
