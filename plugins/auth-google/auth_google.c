@@ -25,7 +25,6 @@
 #include "ejudge/random.h"
 #include "ejudge/misctext.h"
 #include "ejudge/osdeps.h"
-#include "../common-mysql/common_mysql.h"
 #include "ejudge/auth_base_plugin.h"
 
 #if CONF_HAS_LIBCURL - 0 == 1
@@ -107,9 +106,6 @@ struct auth_google_state
     struct auth_base_plugin_iface *bi;
     struct auth_base_plugin_state *bd;
 
-    // mysql access
-    //struct common_mysql_iface *mi;
-    //struct common_mysql_state *md;
     // curl for auth endpoint discovery
     CURL *curl;
     unsigned char *authorization_endpoint;
@@ -153,17 +149,8 @@ prepare_func(
     struct auth_google_state *state = (struct auth_google_state*) data;
     const struct xml_parse_spec *spec = ejudge_cfg_get_spec();
 
-    // load common_mysql plugin
-    const struct common_loaded_plugin *mplg;
-    if (!(mplg = plugin_load_external(0, "common", "mysql", config))) {
-        err("cannot load common_mysql plugin");
-        return -1;
-    }
-
-    state->mi = (struct common_mysql_iface*) mplg->iface;
-    state->md = (struct common_mysql_state*) mplg->data;
-
     // load auth base plugin
+    const struct common_loaded_plugin *mplg;
     if (!(mplg = plugin_load_external(0, "auth", "base", config))) {
         err("cannot load auth_base plugin");
         return -1;
@@ -194,9 +181,6 @@ static int
 open_func(void *data)
 {
     struct auth_google_state *state = (struct auth_google_state*) data;
-
-    if (state->mi->connect(state->md) < 0)
-        return -1;
 
     if (state->bi->open(state->bd) < 0)
         return 1;
@@ -261,8 +245,6 @@ static int
 check_func(void *data)
 {
     struct auth_google_state *state = (struct auth_google_state*) data;
-
-    if (!state->md->conn) return -1;
 
     if (state->bi->check(state->bd) < 0)
         return -1;
