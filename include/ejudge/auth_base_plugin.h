@@ -57,6 +57,12 @@ struct auth_base_plugin_iface
     void (*free_stage1)(
         void *data,
         struct oauth_stage1_internal *poas1);
+    int (*insert_stage2)(
+        void *data,
+        struct oauth_stage2_internal *poas2);
+    void (*free_stage2)(
+        void *data,
+        struct oauth_stage2_internal *poas2);
 };
 
 struct auth_base_plugin_state;

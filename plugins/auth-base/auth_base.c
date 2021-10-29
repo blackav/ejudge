@@ -77,6 +77,14 @@ static void
 free_stage1_func(
         void *data,
         struct oauth_stage1_internal *poas1);
+static int
+insert_stage2_func(
+        void *data,
+        struct oauth_stage2_internal *poas2);
+static void
+free_stage2_func(
+        void *data,
+        struct oauth_stage2_internal *poas2);
 
 struct auth_base_plugin_iface plugin_auth_base =
 {
@@ -100,6 +108,8 @@ struct auth_base_plugin_iface plugin_auth_base =
     insert_stage1_func,
     extract_stage1_func,
     free_stage1_func,
+    insert_stage2_func,
+    free_stage2_func,
 };
 
 enum { OAUTH_STAGE1_ROW_WIDTH = 8 };
@@ -503,4 +513,50 @@ free_stage1_func(
     free(poas1->extra_data);
 
     memset(poas1, 0, sizeof(*poas1));
+}
+
+static int
+insert_stage2_func(
+        void *data,
+        struct oauth_stage2_internal *poas2)
+{
+    struct auth_base_plugin_state *state = (struct auth_base_plugin_state*) data;
+    char *req_s = NULL;
+    size_t req_z;
+    FILE *req_f = NULL;
+    int retval = -1;
+
+    req_f = open_memstream(&req_s, &req_z);
+    fprintf(req_f, "INSERT INTO %soauth_stage2 VALUES ( ", state->md->table_prefix);
+    state->mi->unparse_spec(state->md, req_f, OAUTH_STAGE2_ROW_WIDTH, oauth_stage2_spec, poas2);
+    fprintf(req_f, ") ;");
+    fclose(req_f); req_f = NULL;
+    if (state->mi->simple_query(state->md, req_s, req_z) < 0) goto done;
+    free(req_s); req_s = NULL;
+    retval = 0;
+
+done:;
+    if (req_f) fclose(req_f);
+    free(req_s);
+    return retval;
+}
+
+static void
+free_stage2_func(
+        void *data,
+        struct oauth_stage2_internal *poas2)
+{
+    free(poas2->request_id);
+    free(poas2->provider);
+    free(poas2->role);
+    free(poas2->request_code);
+    free(poas2->cookie);
+    free(poas2->extra_data);
+    free(poas2->response_email);
+    free(poas2->response_name);
+    free(poas2->access_token);
+    free(poas2->id_token);
+    free(poas2->error_message);
+
+    memset(poas2, 0, sizeof(*poas2));
 }
