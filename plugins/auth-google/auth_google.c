@@ -126,45 +126,6 @@ struct auth_google_state
     void *send_job_handler_data;
 };
 
-enum { OAUTH_STAGE1_ROW_WIDTH = 8 };
-
-#define OAUTH_STAGE1_OFFSET(f) XOFFSET(struct oauth_stage1_internal, f)
-
-static __attribute__((unused)) const struct common_mysql_parse_spec oauth_stage1_spec[OAUTH_STAGE1_ROW_WIDTH] =
-{
-    { 1, 's', "state_id", OAUTH_STAGE1_OFFSET(state_id), 0 },
-    { 1, 's', "provider", OAUTH_STAGE1_OFFSET(provider), 0 },
-    { 1, 's', "role", OAUTH_STAGE1_OFFSET(role), 0 },
-    { 1, 's', "cookie", OAUTH_STAGE1_OFFSET(cookie), 0 },
-    { 0, 'd', "contest_id", OAUTH_STAGE1_OFFSET(contest_id), 0 },
-    { 1, 's', "extra_data", OAUTH_STAGE1_OFFSET(extra_data), 0 },
-    { 0, 't', "create_time", OAUTH_STAGE1_OFFSET(create_time), 0 },
-    { 0, 't', "expiry_time", OAUTH_STAGE1_OFFSET(expiry_time), 0 },
-};
-
-enum { OAUTH_STAGE2_ROW_WIDTH = 15 };
-
-#define OAUTH_STAGE2_OFFSET(f) XOFFSET(struct oauth_stage2_internal, f)
-
-static __attribute__((unused)) const struct common_mysql_parse_spec oauth_stage2_spec[OAUTH_STAGE2_ROW_WIDTH] =
-{
-    { 1, 's', "request_id", OAUTH_STAGE2_OFFSET(request_id), 0 },
-    { 1, 's', "provider", OAUTH_STAGE2_OFFSET(provider), 0 },
-    { 1, 's', "role", OAUTH_STAGE2_OFFSET(role), 0 },
-    { 0, 'd', "request_state", OAUTH_STAGE2_OFFSET(request_state), 0 },
-    { 1, 's', "request_code", OAUTH_STAGE2_OFFSET(request_code), 0 },
-    { 1, 's', "cookie", OAUTH_STAGE2_OFFSET(cookie), 0 },
-    { 0, 'd', "contest_id", OAUTH_STAGE2_OFFSET(contest_id), 0 },
-    { 1, 's', "extra_data", OAUTH_STAGE2_OFFSET(extra_data), 0 },
-    { 0, 't', "create_time", OAUTH_STAGE2_OFFSET(create_time), 0 },
-    { 1, 't', "update_time", OAUTH_STAGE2_OFFSET(update_time), 0 },
-    { 1, 's', "response_email", OAUTH_STAGE2_OFFSET(response_email), 0 },
-    { 1, 's', "response_name", OAUTH_STAGE2_OFFSET(response_name), 0 },
-    { 1, 's', "access_token", OAUTH_STAGE2_OFFSET(access_token), 0 },
-    { 1, 's', "id_token", OAUTH_STAGE2_OFFSET(id_token), 0 },
-    { 1, 's', "error_message", OAUTH_STAGE2_OFFSET(error_message), 0 },
-};
-
 static struct common_plugin_data*
 init_func(void)
 {
