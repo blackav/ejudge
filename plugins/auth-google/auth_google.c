@@ -24,7 +24,6 @@
 #include "ejudge/base64.h"
 #include "ejudge/random.h"
 #include "ejudge/misctext.h"
-#include "ejudge/osdeps.h"
 #include "ejudge/auth_base_plugin.h"
 
 #if CONF_HAS_LIBCURL - 0 == 1
@@ -296,12 +295,7 @@ start_thread_func(void *data)
                                     data);
 
     int r = state->bi->start_thread(state->bd);
-    if (r) {
-        err("auth_google: cannot create worker thread: %s", os_ErrorMsg());
-        return -1;
-    }
-
-    return 0;
+    return r;
 }
 
 static unsigned char *
