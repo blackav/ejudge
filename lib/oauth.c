@@ -31,11 +31,12 @@ struct ProviderInfo
     int failed;
 };
 
-enum { PROVIDER_COUNT = 1 };
+enum { PROVIDER_COUNT = 2 };
 
 static struct ProviderInfo providers[PROVIDER_COUNT] =
 {
     { "google" },
+    { "vk" },
 };
 
 static oauth_set_command_handler_t oauth_set_command_handler_func = NULL;
