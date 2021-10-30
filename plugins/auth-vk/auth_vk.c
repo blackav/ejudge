@@ -30,6 +30,10 @@
 
 #include <string.h>
 
+static const char authorization_endpoint[] = "https://oauth.vk.com/authorize";
+static const char api_version[] = "5.131";
+static const unsigned long long vk_cookie = 2;
+
 static struct common_plugin_data*
 init_func(void);
 static int
@@ -55,6 +59,14 @@ set_send_job_handler_func(
         void *data,
         auth_send_job_handler_t handler,
         void *handler_self);
+static unsigned char *
+get_redirect_url_func(
+        void *data,
+        const unsigned char *cookie,
+        const unsigned char *provider,
+        const unsigned char *role,
+        int contest_id,
+        const unsigned char *extra_data);
 
 struct auth_plugin_iface plugin_auth_vk =
 {
@@ -76,6 +88,7 @@ struct auth_plugin_iface plugin_auth_vk =
     start_thread_func,
     set_set_command_handler_func,
     set_send_job_handler_func,
+    get_redirect_url_func,
 };
 
 struct auth_vk_state
@@ -215,4 +228,54 @@ start_thread_func(void *data)
                                     data);
 
     return state->bi->start_thread(state->bd);
+}
+
+static unsigned char *
+get_redirect_url_func(
+        void *data,
+        const unsigned char *cookie,
+        const unsigned char *provider,
+        const unsigned char *role,
+        int contest_id,
+        const unsigned char *extra_data)
+{
+    struct auth_vk_state *state = (struct auth_vk_state*) data;
+
+    unsigned char rbuf[16];
+    unsigned char ebuf[32];
+    time_t create_time = time(NULL);
+    time_t expiry_time = create_time + 60;
+    char *url_s = NULL;
+    size_t url_z = 0;
+    FILE *url_f = NULL;
+    struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+
+    random_init();
+    random_bytes(rbuf, sizeof(rbuf));
+    int len = base64u_encode(rbuf, sizeof(rbuf), ebuf);
+    ebuf[len] = 0;
+
+    if (state->bi->insert_stage1(state->bd,
+                                 ebuf, provider, role, cookie, contest_id,
+                                 extra_data, create_time, expiry_time) < 0) {
+        goto fail;
+    }
+
+    url_f = open_memstream(&url_s, &url_z);
+    fprintf(url_f, "%s?client_id=%s&response_type=code",
+            authorization_endpoint,
+            url_armor_buf(&ab, state->client_id));
+    fprintf(url_f, "&redirect_uri=%s/S%llx",
+            url_armor_buf(&ab, state->redirect_uri), vk_cookie);
+    fprintf(url_f, "&state=%s", ebuf);
+    fprintf(url_f, "&scope=openid%%20profile%%20email");
+    fprintf(url_f, "&v=%s", api_version);
+    fclose(url_f); url_f = NULL;
+
+    html_armor_free(&ab);
+    return url_s;
+
+fail:
+    html_armor_free(&ab);
+    return NULL;
 }
