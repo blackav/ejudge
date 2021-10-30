@@ -234,6 +234,7 @@ local_install: ${TARGETS} ejudge-config po mo
 	tar x -C "${DESTDIR}${datadir}/ejudge/style" -f style/jqgrid.tbz
 	install -d "${DESTDIR}${datadir}/ejudge/style/icons"
 	for i in style/icons/*.png; do install -m 0644 $$i "${DESTDIR}${datadir}/ejudge/style/icons"; done
+	for i in style/icons/*.jpeg; do install -m 0644 $$i "${DESTDIR}${datadir}/ejudge/style/icons"; done
 	install -m 0755 style/ejudge-upgrade-web "${DESTDIR}${bindir}"
 	cp -rpd include "${DESTDIR}${prefix}"
 	install -d "${DESTDIR}${prefix}/lib/ejudge/make"
