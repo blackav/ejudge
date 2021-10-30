@@ -15,6 +15,7 @@
   const unsigned char *code = NULL;
   unsigned char *job_id = NULL;
   const unsigned char *provider = NULL;
+  unsigned long long provider_id = 0;
 %><s:read var="state" ignoreerrors="yes" /><%
 %><s:read var="code" ignoreerrors="yes" /><%
 
@@ -24,14 +25,9 @@
   if (!code || !*code) {
     FAIL(NEW_SRV_ERR_INV_PARAM);
   }
-  if (phr->session_id == 1) {
-    provider = "google";
-  }
-  if (provider == NULL) {
-    FAIL(NEW_SRV_ERR_INV_PARAM);
-  }
+  provider_id = phr->session_id;
 
-  job_id = oauth_server_callback(phr->config, provider, state, code);
+  job_id = oauth_server_callback_num(phr->config, provider_id, state, code);
   if (!job_id) {
     FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
   }

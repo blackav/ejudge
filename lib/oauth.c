@@ -128,6 +128,18 @@ get_provider(
     return info;
 }
 
+static struct ProviderInfo *
+get_provider_num(
+        const struct ejudge_cfg *config,
+        unsigned long long provider_id)
+{
+    if (provider_id <= 0 || provider_id > PROVIDER_COUNT) {
+        err("oauth_get_provider_num: invalid provider_id %llx", provider_id);
+        return NULL;
+    }
+    return get_provider(config, providers[provider_id - 1].name);
+}
+
 unsigned char *
 oauth_get_redirect_url(
         const struct ejudge_cfg *config,
@@ -150,6 +162,18 @@ oauth_server_callback(
         const unsigned char *code)
 {
     struct ProviderInfo *info = get_provider(config, provider);
+    if (!info) return NULL;
+    return info->i->process_auth_callback(info->d, state_id, code);
+}
+
+unsigned char *
+oauth_server_callback_num(
+        const struct ejudge_cfg *config,
+        unsigned long long provider_id,
+        const unsigned char *state_id,
+        const unsigned char *code)
+{
+    struct ProviderInfo *info = get_provider_num(config, provider_id);
     if (!info) return NULL;
     return info->i->process_auth_callback(info->d, state_id, code);
 }

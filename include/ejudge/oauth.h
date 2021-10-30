@@ -39,6 +39,13 @@ oauth_server_callback(
         const unsigned char *state_id,
         const unsigned char *code);
 
+unsigned char *
+oauth_server_callback_num(
+        const struct ejudge_cfg *config,
+        unsigned long long provider_id,
+        const unsigned char *state_id,
+        const unsigned char *code);
+
 struct OAuthLoginResult
 {
     int status; // 0, 1 - progress; 2 - fail, 3 - success
