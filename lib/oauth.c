@@ -221,3 +221,13 @@ oauth_start_thread(
     if (!info || !info->i->start_thread) return -1;
     return info->i->start_thread(info->d);
 }
+
+const unsigned char *
+oauth_get_provider(
+        const struct ejudge_cfg *config,
+        unsigned long long provider_id)
+{
+    struct ProviderInfo *info = get_provider_num(config, provider_id);
+    if (!info) return NULL;
+    return info->name;
+}

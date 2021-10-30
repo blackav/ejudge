@@ -31,6 +31,7 @@
   if (!job_id) {
     FAIL(NEW_SRV_ERR_SERVICE_NOT_AVAILABLE);
   }
+  provider = oauth_get_provider(phr->config, provider_id);
 
   phr->session_id = 0;
 
