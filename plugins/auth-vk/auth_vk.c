@@ -36,6 +36,7 @@
 static const char authorization_endpoint[] = "https://oauth.vk.com/authorize";
 static const char api_version[] = "5.131";
 static const unsigned long long vk_cookie = 2;
+static const char token_endpoint[] = "https://oauth.vk.com/access_token";
 
 static struct common_plugin_data*
 init_func(void);
@@ -70,6 +71,15 @@ get_redirect_url_func(
         const unsigned char *role,
         int contest_id,
         const unsigned char *extra_data);
+static unsigned char *
+process_auth_callback_func(
+        void *data,
+        const unsigned char *state_id,
+        const unsigned char *code);
+static struct OAuthLoginResult
+get_result_func(
+        void *data,
+        const unsigned char *request_id);
 
 struct auth_plugin_iface plugin_auth_vk =
 {
@@ -92,6 +102,8 @@ struct auth_plugin_iface plugin_auth_vk =
     set_set_command_handler_func,
     set_send_job_handler_func,
     get_redirect_url_func,
+    process_auth_callback_func,
+    get_result_func,
 };
 
 struct auth_vk_state
@@ -209,10 +221,13 @@ set_send_job_handler_func(
 }
 
 static void
+packet_handler_auth_vk(int uid, int argc, char **argv, void *user);
+
+static void
 queue_packet_handler_auth_vk(int uid, int argc, char **argv, void *user)
 {
     struct auth_vk_state *state = (struct auth_vk_state*) user;
-    state->bi->enqueue_action(state->bd, NULL, /*packet_handler_auth_vk,*/
+    state->bi->enqueue_action(state->bd, packet_handler_auth_vk,
                               uid, argc, argv, user);
 }
 
@@ -281,4 +296,249 @@ get_redirect_url_func(
 fail:
     html_armor_free(&ab);
     return NULL;
+}
+
+static unsigned char *
+process_auth_callback_func(
+        void *data,
+        const unsigned char *state_id,
+        const unsigned char *code)
+{
+    struct auth_vk_state *state = (struct auth_vk_state*) data;
+
+    struct oauth_stage1_internal oas1 = {};
+    struct oauth_stage2_internal oas2 = {};
+    unsigned char rbuf[16];
+    unsigned char ebuf[32] = {};
+
+    if (state->bi->extract_stage1(state->bd, state_id, &oas1) <= 0) {
+        goto fail;
+    }
+
+    random_init();
+    random_bytes(rbuf, sizeof(rbuf));
+    int len = base64u_encode(rbuf, sizeof(rbuf), ebuf);
+    ebuf[len] = 0;
+
+    oas2.request_id = xstrdup(ebuf);
+    oas2.request_code = xstrdup(code);
+    oas2.cookie = oas1.cookie; oas1.cookie = NULL;
+    oas2.provider = oas1.provider; oas1.provider = NULL;
+    oas2.role = oas1.role; oas1.role = NULL;
+    oas2.contest_id = oas1.contest_id;
+    oas2.extra_data = oas1.extra_data; oas1.extra_data = NULL;
+    oas2.create_time = time(NULL);
+
+    if (state->bi->insert_stage2(state->bd, &oas2) < 0) {
+        goto fail;
+    }
+
+    if (state->send_job_handler_func) {
+        unsigned char *args[] = { "auth_vk", oas2.request_id, oas2.request_code, NULL };
+        state->send_job_handler_func(state->send_job_handler_data, args);
+    } else {
+        err("send_job_handler_func is not installed");
+        goto fail;
+    }
+
+    state->bi->free_stage1(state->bd, &oas1);
+    state->bi->free_stage2(state->bd, &oas2);
+
+    return xstrdup(ebuf);
+
+fail:
+    state->bi->free_stage1(state->bd, &oas1);
+    state->bi->free_stage2(state->bd, &oas2);
+    return NULL;
+}
+
+/*
+  args[0] = "auth_vk"
+  args[1] = request_id
+  args[2] = request_code
+  args[3] = NULL;
+ */
+static void
+packet_handler_auth_vk(int uid, int argc, char **argv, void *user)
+{
+    struct auth_vk_state *state = (struct auth_vk_state*) user;
+    const unsigned char *request_id = argv[1];
+    const unsigned char *request_code = argv[2];
+    const char *error_message = "unknown error";
+    const unsigned char *response_name = NULL;
+    const unsigned char *response_email = NULL;
+    const unsigned char *access_token = NULL;
+    int request_status = 2;
+    char *url_s = NULL;
+    size_t url_z = 0;
+    FILE *url_f = NULL;
+    struct html_armor_buffer ab = HTML_ARMOR_INITIALIZER;
+    char *json_s = NULL;
+    size_t json_z = 0;
+    FILE *json_f = NULL;
+    CURLcode res = 0;
+
+    url_f = open_memstream(&url_s, &url_z);
+    fprintf(url_f, "%s", token_endpoint);
+    fprintf(url_f, "?client_id=%s", url_armor_buf(&ab, state->client_id));
+    fprintf(url_f, "&client_secret=%s", url_armor_buf(&ab, state->client_secret));
+    fprintf(url_f, "&code=%s", url_armor_buf(&ab, request_code));
+    fprintf(url_f, "&redirect_uri=%s/S%llx", url_armor_buf(&ab, state->redirect_uri), vk_cookie);
+    fclose(url_f); url_f = NULL;
+
+    json_f = open_memstream(&json_s, &json_z);
+    curl_easy_setopt(state->curl, CURLOPT_FOLLOWLOCATION, 1);
+    curl_easy_setopt(state->curl, CURLOPT_COOKIEFILE, "");
+    curl_easy_setopt(state->curl, CURLOPT_URL, url_s);
+    curl_easy_setopt(state->curl, CURLOPT_WRITEFUNCTION, NULL);
+    curl_easy_setopt(state->curl, CURLOPT_WRITEDATA, json_f);
+    res = curl_easy_perform(state->curl);
+    fclose(json_f); json_f = NULL;
+    free(url_s); url_s = NULL; url_z = 0;
+    if (res != CURLE_OK) {
+        err("Request failed: %s", curl_easy_strerror(res));
+        error_message = "request failed";
+        goto done;
+    }
+
+    fprintf(stderr, ">>%s<<\n", json_s);
+
+    /*
+
+
+    if (!(root = cJSON_Parse(json_s))) {
+        error_message = "google JSON parse failed";
+        goto done;
+    }
+    free(json_s); json_s = NULL; json_z = 0;
+
+    if (root->type != cJSON_Object) {
+        error_message = "google root document expected";
+        goto done;
+    }
+
+    cJSON *j = cJSON_GetObjectItem(root, "access_token");
+    if (!j || j->type != cJSON_String) {
+        error_message = "invalid google json: access_token";
+        goto done;
+    }
+    access_token = j->valuestring;
+
+    if (!(j = cJSON_GetObjectItem(root, "id_token")) || j->type != cJSON_String) {
+        error_message = "invalid google json: id_token";
+        goto done;
+    }
+    id_token = j->valuestring;
+
+    // parse payload of JWT
+    {
+        char *p1 = strchr(id_token, '.');
+        if (!p1) {
+            error_message = "invalid google json: invalid JWT (1)";
+            goto done;
+        }
+        char *p2 = strchr(p1 + 1, '.');
+        if (!p2) {
+            error_message = "invalid google json: invalid JWT (2)";
+            goto done;
+        }
+
+        jwt_payload = xmalloc(strlen(id_token) + 1);
+        int err = 0;
+        int len = base64u_decode(p1 + 1, p2 - p1 - 1, jwt_payload, &err);
+        if (err) {
+            error_message = "invalid google json: base64u payload decode error";
+            goto done;
+        }
+        jwt_payload[len] = 0;
+    }
+
+    if (!(jwt = cJSON_Parse(jwt_payload))) {
+        error_message = "JWT payload parse failed";
+        goto done;
+    }
+    if (jwt->type != cJSON_Object) {
+        error_message = "JWT payload root document expected";
+        goto done;
+    }
+
+    if (!(j = cJSON_GetObjectItem(jwt, "email")) || j->type != cJSON_String) {
+        error_message = "JWT payload email expected";
+        goto done;
+    }
+    response_email = j->valuestring;
+
+    if ((j = cJSON_GetObjectItem(jwt, "name")) && j->type == cJSON_String) {
+        response_name = j->valuestring;
+    }
+
+    // success
+    request_status = 3;
+    error_message = NULL;
+
+done:
+    state->bi->update_stage2(state->bd, request_id,
+                             request_status, error_message,
+                             response_name, response_email,
+                             access_token, id_token);
+
+    free(jwt_payload);
+    if (root) cJSON_Delete(root);
+    html_armor_free(&ab);
+    if (json_f) fclose(json_f);
+    free(json_s);
+    if (post_f) fclose(post_f);
+    free(post_s);
+    if (jwt) cJSON_Delete(jwt);
+    */
+
+    // success
+    //request_status = 3;
+    //error_message = NULL;
+
+done:;
+    state->bi->update_stage2(state->bd, request_id,
+                             request_status, error_message,
+                             response_name, response_email,
+                             access_token, NULL /*id_token*/);
+
+    if (url_f) fclose(url_f);
+    if (json_f) fclose(json_f);
+    free(url_s);
+    free(json_s);
+    html_armor_free(&ab);
+}
+
+static struct OAuthLoginResult
+get_result_func(
+        void *data,
+        const unsigned char *request_id)
+{
+    struct auth_vk_state *state = (struct auth_vk_state*) data;
+    unsigned char *error_message = NULL;
+    struct oauth_stage2_internal oas2 = {};
+    struct OAuthLoginResult res = {};
+
+    if (state->bi->extract_stage2(state->bd, request_id, &oas2) <= 0) {
+        goto fail;
+    }
+
+    res.status = oas2.request_state;
+    res.provider = oas2.provider; oas2.provider = NULL;
+    res.role = oas2.role; oas2.role = NULL;
+    res.cookie = oas2.cookie; oas2.cookie = NULL;
+    res.extra_data = oas2.extra_data; oas2.extra_data = NULL;
+    res.email = oas2.response_email; oas2.response_email = NULL;
+    res.name = oas2.response_name; oas2.response_name = NULL;
+    res.access_token = oas2.access_token; oas2.access_token = NULL;
+    res.id_token = oas2.id_token; oas2.id_token = NULL;
+    res.error_message = oas2.error_message; oas2.error_message = NULL;
+    res.contest_id = oas2.contest_id;
+    state->bi->free_stage2(state->bd, &oas2);
+    return res;
+
+fail:
+    state->bi->free_stage2(state->bd, &oas2);
+    if (!error_message) error_message = xstrdup("unknown error");
+    return (struct OAuthLoginResult) { .status = 2, .error_message = error_message };
 }
